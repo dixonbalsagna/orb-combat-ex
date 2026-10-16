@@ -1017,6 +1017,35 @@
             "patternProperties": {
               "^_": true
             }
+          },
+          "beam": {
+            "type": "object",
+            "required": [
+              "charge",
+              "fire"
+            ],
+            "properties": {
+              "charge": {
+                "type": "string",
+                "pattern": "^[a-z]+[0-9]*.[a-z0-9_.]+$",
+                "description": "The sequence of a parked wave the fighter holds while the signature beam charges."
+              },
+              "fire": {
+                "type": "string",
+                "pattern": "^[a-z]+[0-9]*.[a-z0-9_.]+$",
+                "description": "The sequence of a parked wave the fighter plays as the beam fires."
+              },
+              "bone": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$",
+                "description": "The bone the beam leaves from."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            },
+            "description": "Optional. The fighter's cast poses for the signature beam: charge, fire and the bone it leaves from (docs/animation/combat-pieces.md)."
           }
         },
         "additionalProperties": false,

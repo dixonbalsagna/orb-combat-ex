@@ -120,6 +120,65 @@
       ]
     },
     {
+      "id": "mashdummy",
+      "slotsList": [
+        [
+          "PROTAGONIST",
+          "REFERENCE"
+        ],
+        [
+          "RIVAL",
+          "REFERENCE"
+        ]
+      ],
+      "minTicks": 1500,
+      "minEvents": {
+        "damage": 60,
+        "launch": 1
+      },
+      "ticks": 1800,
+      "seeds": [
+        12345
+      ]
+    },
+    {
+      "id": "ring",
+      "slotsList": [
+        [
+          "PROTAGONIST",
+          "RIVAL",
+          "RIVAL"
+        ],
+        [
+          "PROTAGONIST",
+          "RIVAL",
+          "RIVAL",
+          "RIVAL",
+          "RIVAL"
+        ]
+      ],
+      "minTicks": 1500,
+      "minEvents": {
+        "damage": 60
+      },
+      "ticks": 1800,
+      "seeds": [
+        12345
+      ]
+    },
+    {
+      "id": "launchai",
+      "minTicks": 1500,
+      "minEvents": {
+        "damage": 60,
+        "launch": 1
+      },
+      "ticks": 1800,
+      "seeds": [
+        12345
+      ]
+    },
+    {
       "id": "ai",
       "minTicks": 1200,
       "minEvents": {

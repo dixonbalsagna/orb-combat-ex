@@ -1,0 +1,88 @@
+diff --git a/render/tools/flash_capture.gd b/render/tools/flash_capture.gd
+index bbb11a6..d0b7987 100644
+--- a/render/tools/flash_capture.gd
++++ b/render/tools/flash_capture.gd
+@@ -30,11 +30,11 @@ extends RefCounted
+ ## The scenarios' rules are a copy of tools/flash/flash_worst.gd's (tools/ is not in an export). Tools' drift check
+ ## fails when the two differ (docs/tools/flash-check.md): change them together.
+ 
+-const SCENARIOS: Array = ["mash", "mashcity", "clash", "signature", "signaturecity", "rushcity", "transform", "collapse", "ai"]
++const SCENARIOS: Array = ["mash", "mashcity", "clash", "signature", "signaturecity", "rushcity", "transform", "collapse", "mashdummy", "ring", "launchai", "ai"]
+ const SEED: int = 12345
+ const FORM_TICKS: Array = [300, 1500]
+ ## Which slots are the AI's (true) in each scenario.
+-const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true]}
++const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true], "mashdummy": [false, true], "ring": [false, true], "launchai": [false, true]}
+ 
+ var main: Node
+ var scenario: String = ""
+@@ -87,7 +87,10 @@ func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int
+ 	var ai: Array = AI_SLOTS[sc]
+ 	var host: SimHost = main.host
+ 	# a pairing other than the roster's first two: the page's `slots` (two fighter ids, tools/flash/capture-web.mjs --slots), as flash_worst.gd's --slots does
+-	main.start_match(seed if seed != 0 else SEED, {"p1": ai[0], "p2": ai[1]}, {} if slots.size() != 2 else {"slots": slots})   # its own setup: no intro, not filed
++	var ai_set: Dictionary = {"p1": ai[0], "p2": ai[1]}
++	for i in range(2, slots.size()):
++		ai_set["p%d" % (i + 1)] = sc == "ring"   # the ring's bodies past the pair fight; any other scene's stand
++	main.start_match(seed if seed != 0 else SEED, ai_set, {} if slots.size() < 2 else {"slots": slots})   # its own setup: no intro, not filed
+ 	# Camera's travel budget (off by default): the page's `budget=1`, set by tools/flash/run-pixels.mjs --budget, so a run with and without it is the same sim
+ 	var applied: Dictionary = {"budget": false, "hold": false, "mergezoom": false}   # what the hook really switched on: capture-web.mjs refuses a clip whose switch was asked for and not applied
+ 	if main.split_view != null and _page_flag("budget"):
+@@ -211,6 +214,12 @@ func drive(sc: String, t: int, S: SimState) -> void:
+ 			_ready_forms(S, t, [60, 500, 1000])
+ 		"collapse":     # AI against AI, a blast through a row of buildings every 150 ticks
+ 			_stage_collapse(S, t)
++		"mashdummy":  # player one against the idle training dummy: mash, burst, energy mash, blast, launcher chain
++			_mash_dummy(t, S)
++		"ring":         # player one against the ring: the AI and his guards
++			_ring(t, S)
++		"launchai":     # player one launches the AI
++			_launch_ai(t, S)
+ 		"ai":           # the real AI match, forms readied at 300 and 1500, a tier raised at 900
+ 			_ready_forms(S, t, FORM_TICKS)
+ 			if t == 900:
+@@ -248,6 +257,44 @@ func _rush(t: int, S: SimState) -> void:
+ 	_btn(0, "lt", true)
+ 
+ 
++## Player one against the idle training dummy (Legal RL-139: a mash-on-the-dummy scene for each fighter, in both modes), on a cycle of 600 ticks: the light mashed at the fastest tap
++## (every 4 ticks), the medium mashed, the light held (the burst), the light mashed with energy held (RB: the energy mash in reach), the blast (energy held, the heavy), then a heavy
++## to launch and the light after it (the launcher chain). Ki kept full; he walks to the dummy and stays in reach.
++func _mash_dummy(t: int, S: SimState) -> void:
++	_walk_in(S, 200.0)
++	S.fighters[0].ki = 100.0
++	var u: int = t % 600
++	_btn(0, "rb", u >= 300 and u < 480)
++	_btn(0, "west", (u < 120 and _tap(t, 4, 0)) or (u >= 240 and u < 300) or (u >= 300 and u < 420 and _tap(t, 4, 0)) or (u >= 500 and _tap(t, 6, 0)))
++	_btn(0, "north", u >= 120 and u < 240 and _tap(t, 6, 0))
++	_btn(0, "east", (u >= 420 and u < 480 and u % 30 < 12) or (u >= 480 and u < 490))
++
++
++## Player one against the ring, the AI and his guards: the light mashed, the medium now and then, the signature once in a cycle of 300.
++func _ring(t: int, S: SimState) -> void:
++	_walk_in(S, 250.0)
++	S.fighters[0].ki = 100.0
++	var u: int = t % 300
++	_btn(0, "rt", u >= 200 and u < 260)
++	_btn(0, "east", u >= 203 and u < 215)
++	_btn(0, "west", (u < 200 or u >= 260) and _tap(t, 4, 0))
++	_btn(0, "north", t % 53 < 2)
++
++
++## Player one launches the AI: a heavy every 45 ticks against the real AI (in the 1,800 ticks of the seed it launches the AI twice and is launched once; a launch is rare).
++func _launch_ai(t: int, S: SimState) -> void:
++	_walk_in(S, 250.0)
++	S.fighters[0].ki = 100.0
++	_btn(0, "east", t % 45 < 8)
++
++
++## Player one goes to the other fighter and stops in reach (the other is the AI's or the dummy's): he walks, and sprints (dodge held) when a launch has sent them 900 units or more apart.
++func _walk_in(S: SimState, near: float) -> void:
++	var dx: float = SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)
++	_stick(0, signf(dx) if absf(dx) > near else 0.0)
++	_btn(0, "lt", absf(dx) > 900.0)
++
++
+ ## The pair set down again `variant` x 450 units along the world from where the scene put them.
+ func _apply_variant(S: SimState, variant: int) -> void:
+ 	for f in S.fighters:

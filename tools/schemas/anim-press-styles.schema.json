@@ -804,6 +804,92 @@
               "patternProperties": {
                 "^_": true
               }
+            },
+            "breath_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Optional. A held breath before the blow: the chamber is reached this many ticks early and held in plain sight (the medium's held breath)."
+            },
+            "press_run": {
+              "type": "object",
+              "required": [
+                "gap",
+                "deg_per_blow",
+                "max_deg"
+              ],
+              "properties": {
+                "gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A run: blows with gaps of this many ticks or less."
+                },
+                "deg_per_blow": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Degrees of forward lean each blow of a run adds."
+                },
+                "max_deg": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The most the run leans the body forward, in degrees."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. A forward lean that grows with each blow of a run, with a dip of the head, so a mashed press is pressure and not a repeat (docs/animation/many-bodies-and-runs.md)."
+            },
+            "march": {
+              "type": "object",
+              "required": [
+                "gap",
+                "step",
+                "dip",
+                "dip_ticks"
+              ],
+              "properties": {
+                "gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A march: a second blow within this many ticks of the last."
+                },
+                "step": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far each blow of a march steps the body on."
+                },
+                "dip": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How much of the squash pose the body takes at the contact."
+                },
+                "dip_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "How long the dip lasts, in ticks."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. The mashed heavy's march: a step on and a dip at the contact for each blow of a run."
+            },
+            "squash_pose": {
+              "type": "object",
+              "minProperties": 1,
+              "propertyNames": {
+                "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+              },
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. The squash pose this style takes by fighter, in place of the file's squash_pose (rule pressstyles-squash: a fighter of fighters.json and a real pose)."
             }
           },
           "additionalProperties": false,
@@ -1148,6 +1234,92 @@
               "patternProperties": {
                 "^_": true
               }
+            },
+            "breath_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Optional. A held breath before the blow: the chamber is reached this many ticks early and held in plain sight (the medium's held breath)."
+            },
+            "press_run": {
+              "type": "object",
+              "required": [
+                "gap",
+                "deg_per_blow",
+                "max_deg"
+              ],
+              "properties": {
+                "gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A run: blows with gaps of this many ticks or less."
+                },
+                "deg_per_blow": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Degrees of forward lean each blow of a run adds."
+                },
+                "max_deg": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The most the run leans the body forward, in degrees."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. A forward lean that grows with each blow of a run, with a dip of the head, so a mashed press is pressure and not a repeat (docs/animation/many-bodies-and-runs.md)."
+            },
+            "march": {
+              "type": "object",
+              "required": [
+                "gap",
+                "step",
+                "dip",
+                "dip_ticks"
+              ],
+              "properties": {
+                "gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A march: a second blow within this many ticks of the last."
+                },
+                "step": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far each blow of a march steps the body on."
+                },
+                "dip": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How much of the squash pose the body takes at the contact."
+                },
+                "dip_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "How long the dip lasts, in ticks."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. The mashed heavy's march: a step on and a dip at the contact for each blow of a run."
+            },
+            "squash_pose": {
+              "type": "object",
+              "minProperties": 1,
+              "propertyNames": {
+                "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+              },
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. The squash pose this style takes by fighter, in place of the file's squash_pose (rule pressstyles-squash: a fighter of fighters.json and a real pose)."
             }
           },
           "additionalProperties": false,
@@ -1492,6 +1664,92 @@
               "patternProperties": {
                 "^_": true
               }
+            },
+            "breath_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Optional. A held breath before the blow: the chamber is reached this many ticks early and held in plain sight (the medium's held breath)."
+            },
+            "press_run": {
+              "type": "object",
+              "required": [
+                "gap",
+                "deg_per_blow",
+                "max_deg"
+              ],
+              "properties": {
+                "gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A run: blows with gaps of this many ticks or less."
+                },
+                "deg_per_blow": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Degrees of forward lean each blow of a run adds."
+                },
+                "max_deg": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The most the run leans the body forward, in degrees."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. A forward lean that grows with each blow of a run, with a dip of the head, so a mashed press is pressure and not a repeat (docs/animation/many-bodies-and-runs.md)."
+            },
+            "march": {
+              "type": "object",
+              "required": [
+                "gap",
+                "step",
+                "dip",
+                "dip_ticks"
+              ],
+              "properties": {
+                "gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A march: a second blow within this many ticks of the last."
+                },
+                "step": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far each blow of a march steps the body on."
+                },
+                "dip": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How much of the squash pose the body takes at the contact."
+                },
+                "dip_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "How long the dip lasts, in ticks."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. The mashed heavy's march: a step on and a dip at the contact for each blow of a run."
+            },
+            "squash_pose": {
+              "type": "object",
+              "minProperties": 1,
+              "propertyNames": {
+                "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+              },
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. The squash pose this style takes by fighter, in place of the file's squash_pose (rule pressstyles-squash: a fighter of fighters.json and a real pose)."
             }
           },
           "additionalProperties": false,
@@ -1836,6 +2094,92 @@
               "patternProperties": {
                 "^_": true
               }
+            },
+            "breath_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Optional. A held breath before the blow: the chamber is reached this many ticks early and held in plain sight (the medium's held breath)."
+            },
+            "press_run": {
+              "type": "object",
+              "required": [
+                "gap",
+                "deg_per_blow",
+                "max_deg"
+              ],
+              "properties": {
+                "gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A run: blows with gaps of this many ticks or less."
+                },
+                "deg_per_blow": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Degrees of forward lean each blow of a run adds."
+                },
+                "max_deg": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The most the run leans the body forward, in degrees."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. A forward lean that grows with each blow of a run, with a dip of the head, so a mashed press is pressure and not a repeat (docs/animation/many-bodies-and-runs.md)."
+            },
+            "march": {
+              "type": "object",
+              "required": [
+                "gap",
+                "step",
+                "dip",
+                "dip_ticks"
+              ],
+              "properties": {
+                "gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A march: a second blow within this many ticks of the last."
+                },
+                "step": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far each blow of a march steps the body on."
+                },
+                "dip": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How much of the squash pose the body takes at the contact."
+                },
+                "dip_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "How long the dip lasts, in ticks."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. The mashed heavy's march: a step on and a dip at the contact for each blow of a run."
+            },
+            "squash_pose": {
+              "type": "object",
+              "minProperties": 1,
+              "propertyNames": {
+                "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+              },
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. The squash pose this style takes by fighter, in place of the file's squash_pose (rule pressstyles-squash: a fighter of fighters.json and a real pose)."
             }
           },
           "additionalProperties": false,
@@ -2218,6 +2562,92 @@
                   "minItems": 1
                 }
               }
+            },
+            "breath_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Optional. A held breath before the blow: the chamber is reached this many ticks early and held in plain sight (the medium's held breath)."
+            },
+            "press_run": {
+              "type": "object",
+              "required": [
+                "gap",
+                "deg_per_blow",
+                "max_deg"
+              ],
+              "properties": {
+                "gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A run: blows with gaps of this many ticks or less."
+                },
+                "deg_per_blow": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Degrees of forward lean each blow of a run adds."
+                },
+                "max_deg": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The most the run leans the body forward, in degrees."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. A forward lean that grows with each blow of a run, with a dip of the head, so a mashed press is pressure and not a repeat (docs/animation/many-bodies-and-runs.md)."
+            },
+            "march": {
+              "type": "object",
+              "required": [
+                "gap",
+                "step",
+                "dip",
+                "dip_ticks"
+              ],
+              "properties": {
+                "gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A march: a second blow within this many ticks of the last."
+                },
+                "step": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far each blow of a march steps the body on."
+                },
+                "dip": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How much of the squash pose the body takes at the contact."
+                },
+                "dip_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "How long the dip lasts, in ticks."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. The mashed heavy's march: a step on and a dip at the contact for each blow of a run."
+            },
+            "squash_pose": {
+              "type": "object",
+              "minProperties": 1,
+              "propertyNames": {
+                "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+              },
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. The squash pose this style takes by fighter, in place of the file's squash_pose (rule pressstyles-squash: a fighter of fighters.json and a real pose)."
             }
           },
           "additionalProperties": false,
@@ -2563,6 +2993,92 @@
               "patternProperties": {
                 "^_": true
               }
+            },
+            "breath_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Optional. A held breath before the blow: the chamber is reached this many ticks early and held in plain sight (the medium's held breath)."
+            },
+            "press_run": {
+              "type": "object",
+              "required": [
+                "gap",
+                "deg_per_blow",
+                "max_deg"
+              ],
+              "properties": {
+                "gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A run: blows with gaps of this many ticks or less."
+                },
+                "deg_per_blow": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Degrees of forward lean each blow of a run adds."
+                },
+                "max_deg": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The most the run leans the body forward, in degrees."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. A forward lean that grows with each blow of a run, with a dip of the head, so a mashed press is pressure and not a repeat (docs/animation/many-bodies-and-runs.md)."
+            },
+            "march": {
+              "type": "object",
+              "required": [
+                "gap",
+                "step",
+                "dip",
+                "dip_ticks"
+              ],
+              "properties": {
+                "gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A march: a second blow within this many ticks of the last."
+                },
+                "step": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far each blow of a march steps the body on."
+                },
+                "dip": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How much of the squash pose the body takes at the contact."
+                },
+                "dip_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "How long the dip lasts, in ticks."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. The mashed heavy's march: a step on and a dip at the contact for each blow of a run."
+            },
+            "squash_pose": {
+              "type": "object",
+              "minProperties": 1,
+              "propertyNames": {
+                "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+              },
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. The squash pose this style takes by fighter, in place of the file's squash_pose (rule pressstyles-squash: a fighter of fighters.json and a real pose)."
             }
           },
           "additionalProperties": false,
@@ -2917,6 +3433,92 @@
                 "minimum": 0,
                 "maximum": 1
               }
+            },
+            "breath_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Optional. A held breath before the blow: the chamber is reached this many ticks early and held in plain sight (the medium's held breath)."
+            },
+            "press_run": {
+              "type": "object",
+              "required": [
+                "gap",
+                "deg_per_blow",
+                "max_deg"
+              ],
+              "properties": {
+                "gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A run: blows with gaps of this many ticks or less."
+                },
+                "deg_per_blow": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Degrees of forward lean each blow of a run adds."
+                },
+                "max_deg": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The most the run leans the body forward, in degrees."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. A forward lean that grows with each blow of a run, with a dip of the head, so a mashed press is pressure and not a repeat (docs/animation/many-bodies-and-runs.md)."
+            },
+            "march": {
+              "type": "object",
+              "required": [
+                "gap",
+                "step",
+                "dip",
+                "dip_ticks"
+              ],
+              "properties": {
+                "gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A march: a second blow within this many ticks of the last."
+                },
+                "step": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far each blow of a march steps the body on."
+                },
+                "dip": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How much of the squash pose the body takes at the contact."
+                },
+                "dip_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "How long the dip lasts, in ticks."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. The mashed heavy's march: a step on and a dip at the contact for each blow of a run."
+            },
+            "squash_pose": {
+              "type": "object",
+              "minProperties": 1,
+              "propertyNames": {
+                "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+              },
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. The squash pose this style takes by fighter, in place of the file's squash_pose (rule pressstyles-squash: a fighter of fighters.json and a real pose)."
             }
           },
           "additionalProperties": false,
@@ -2924,6 +3526,437 @@
             "^_": true
           },
           "description": "PROVISIONAL (the flurry look study): the top strength, B. A whole-body blow that reads as far bigger than a medium. A beat names it as its `style`."
+        },
+        "cash_in": {
+          "type": "object",
+          "required": [
+            "prof",
+            "alternate",
+            "carry",
+            "carry_ticks",
+            "squash",
+            "lean_back",
+            "back",
+            "stretch",
+            "twist",
+            "twist_ticks",
+            "ghosts"
+          ],
+          "properties": {
+            "prof": {
+              "type": "object",
+              "required": [
+                "solve_hz",
+                "snap_ticks",
+                "load_ease",
+                "load_ticks",
+                "hold_ticks",
+                "follow_ticks",
+                "recover_ticks",
+                "overshoot",
+                "lag"
+              ],
+              "properties": {
+                "solve_hz": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 120,
+                  "description": "The in-betweener's solve rate."
+                },
+                "snap_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks of snap."
+                },
+                "load_ease": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "description": "The wind-up's ease exponent."
+                },
+                "load_ticks": {
+                  "type": "object",
+                  "required": [
+                    "light",
+                    "heavy"
+                  ],
+                  "properties": {
+                    "light": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "heavy": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  },
+                  "description": "The wind-up's length by the blow's weight.",
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "hold_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The contact key is held this long before the follow-through starts (new in this file)."
+                },
+                "follow_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The follow-through."
+                },
+                "recover_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The return."
+                },
+                "overshoot": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far past the pose the limb swings."
+                },
+                "lag": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The loose body's lag."
+                }
+              },
+              "description": "Overrides of the part's timing profile (data/anim/profiles.json fields; hold_ticks is new).",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "alternate": {
+              "type": "boolean",
+              "description": "The striking limb alternates blow to blow."
+            },
+            "carry": {
+              "type": "boolean",
+              "description": "A blow that starts in the last one's follow or recover blends out of that pose instead of the guard."
+            },
+            "carry_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The blend's length when carry is on."
+            },
+            "squash": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How much of the squash pose's legs, pelvis and spine the wind-up takes (scaled by the blow's weight)."
+            },
+            "lean_back": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Extra spine lean back at full squash, radians."
+            },
+            "back": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The body drawn this far back at full squash, model units."
+            },
+            "stretch": {
+              "type": "object",
+              "required": [
+                "spine",
+                "rise",
+                "lead",
+                "ticks",
+                "smear_ticks"
+              ],
+              "properties": {
+                "spine": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Spine extension, radians."
+                },
+                "rise": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Hips up, model units."
+                },
+                "lead": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The body drawn this far ahead, model units."
+                },
+                "ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Ticks to settle after contact."
+                },
+                "smear_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "The ticks before contact that count as the smear frame."
+                }
+              },
+              "description": "The release.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "twist": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The loose body's spine yaw toward the striking side, radians."
+            },
+            "twist_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The twist's length."
+            },
+            "ghosts": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Afterimage copies VFX is asked for (press.ghosts)."
+            },
+            "gap_amp": {
+              "type": "object",
+              "required": [
+                "from",
+                "to",
+                "min"
+              ],
+              "properties": {
+                "from": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 30
+                },
+                "to": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 60
+                },
+                "min": {
+                  "type": "number",
+                  "minimum": 0.1,
+                  "maximum": 1
+                }
+              },
+              "additionalProperties": false,
+              "description": "A blow thrown within `to` ticks of the last one narrows: the blow's pose is mixed toward the guard it came from by 1 - amp, where amp runs from `min` at `from` ticks to 1 at `to` ticks. A burst of tight blows reads as short quick jabs that grow as it slows."
+            },
+            "set": {
+              "type": "object",
+              "required": [
+                "pose",
+                "from",
+                "to_before",
+                "in",
+                "out",
+                "w",
+                "min_gap"
+              ],
+              "description": "Optional. The pose a style's first blow sets from (the burst's set): a fighter's pose, and how it is blended in and out.",
+              "properties": {
+                "pose": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "A fighter key to the pose he sets from (rule pressstyles-set: a fighter of fighters.json and a real pose)."
+                },
+                "from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks before the blow at which the set begins."
+                },
+                "to_before": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks before the blow by which the set has been reached."
+                },
+                "in": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks the set takes to blend in."
+                },
+                "out": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 30,
+                  "description": "Ticks the set takes to blend out."
+                },
+                "w": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much of the pose is taken."
+                },
+                "min_gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 60,
+                  "description": "The shortest gap, in ticks, between blows at which the set is used."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "hold": {
+              "type": "object",
+              "required": [
+                "from",
+                "to",
+                "squash",
+                "lean_back"
+              ],
+              "description": "Optional. A style held through a stretch of its blow: the ticks it is held from and to (from below to: rule pressstyles-hold), how much of the squash it takes and how far the body leans back.",
+              "properties": {
+                "from": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120,
+                  "description": "Tick at which the hold begins."
+                },
+                "to": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 120,
+                  "description": "Tick at which the hold ends (above from)."
+                },
+                "squash": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "How much of the squash pose the hold takes."
+                },
+                "lean_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 0.5,
+                  "description": "How far the body leans back in the hold."
+                },
+                "pose": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "propertyNames": {
+                    "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+                  },
+                  "additionalProperties": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "A fighter of fighters.json to the pose the hold is held in (rule pressstyles-hold: a fighter of fighters.json and a real pose)."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "breath_ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Optional. A held breath before the blow: the chamber is reached this many ticks early and held in plain sight (the medium's held breath)."
+            },
+            "press_run": {
+              "type": "object",
+              "required": [
+                "gap",
+                "deg_per_blow",
+                "max_deg"
+              ],
+              "properties": {
+                "gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A run: blows with gaps of this many ticks or less."
+                },
+                "deg_per_blow": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Degrees of forward lean each blow of a run adds."
+                },
+                "max_deg": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The most the run leans the body forward, in degrees."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. A forward lean that grows with each blow of a run, with a dip of the head, so a mashed press is pressure and not a repeat (docs/animation/many-bodies-and-runs.md)."
+            },
+            "march": {
+              "type": "object",
+              "required": [
+                "gap",
+                "step",
+                "dip",
+                "dip_ticks"
+              ],
+              "properties": {
+                "gap": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A march: a second blow within this many ticks of the last."
+                },
+                "step": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How far each blow of a march steps the body on."
+                },
+                "dip": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "How much of the squash pose the body takes at the contact."
+                },
+                "dip_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "How long the dip lasts, in ticks."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. The mashed heavy's march: a step on and a dip at the contact for each blow of a run."
+            },
+            "squash_pose": {
+              "type": "object",
+              "minProperties": 1,
+              "propertyNames": {
+                "pattern": "^(_.*|[A-Za-z][A-Za-z0-9_]*)$"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+              },
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "Optional. The squash pose this style takes by fighter, in place of the file's squash_pose (rule pressstyles-squash: a fighter of fighters.json and a real pose)."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "Optional. The cash-in (RT + B inside a perfect window; the beat field `cash_in`): a heavy thrown at once, two ticks to the contact, with no tell and no hold of the wind-up (docs/animation/combat-pieces.md)."
         }
       },
       "additionalProperties": false,

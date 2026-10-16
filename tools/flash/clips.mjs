@@ -12,9 +12,10 @@ export function requiredClips(sources, roster) {
   const ros = roster || JSON.parse(readFileSync(join(here, '..', '..', 'data', 'fighters', 'roster.json'), 'utf8'));
   const jobs = [];
   for (const sc of src.scenarios) {
-    const runs = sc.pairings ? src.pairings.map((p) => ({ slots: p.slots, seeds: p.seeds })) : [{ slots: null, seeds: [12345] }];
+    // `pairings`: the AI-match set; `slotsList`: the scene's own lists of fighters (a dummy scene per fighter, a ring of three to five bodies), one seed each; else the default pair
+    const runs = sc.pairings ? src.pairings.map((p) => ({ slots: p.slots, seeds: p.seeds })) : sc.slotsList ? sc.slotsList.map((s) => ({ slots: s, seeds: [12345] })) : [{ slots: null, seeds: [12345] }];
     for (const r of runs) {
-      const dflt = !r.slots || (r.slots[0] === ros[0] && r.slots[1] === ros[1]);
+      const dflt = !r.slots || (r.slots.length === 2 && r.slots[0] === ros[0] && r.slots[1] === ros[1]);
       const label = dflt ? '' : '-' + r.slots.join('-');
       for (const seed of r.seeds) for (const reduced of [false, true]) {
         const id = `${sc.id}${label}${r.seeds.length > 1 ? '-' + seed : ''}-${reduced ? 'reduced' : 'normal'}`;

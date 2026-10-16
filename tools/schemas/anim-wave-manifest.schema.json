@@ -12,7 +12,7 @@
   "properties": {
     "wave": {
       "type": "string",
-      "pattern": "^(wave|protag|rival)[0-9]+$"
+      "pattern": "^(wave|protag|rival|guard)[0-9]+$"
     },
     "strikes": {
       "type": "array",
@@ -280,6 +280,10 @@
               }
             ],
             "description": "What the second take (a `~b` variant) does differently, or null."
+          },
+          "named": {
+            "type": "boolean",
+            "description": "True: the strike is one of Combat's named pieces (docs/animation/combat-pieces.md)."
           }
         },
         "additionalProperties": false,

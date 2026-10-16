@@ -281693,6 +281693,377 @@
         "rule": "xref:recipes-brawl",
         "pointer": "/brawl/bolt"
       }
+    },
+    {
+      "id": "recipes-brawl-mash-keys-ok",
+      "schema": "combat-recipes.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/recipes.json",
+          "set": {
+            "/brawl/mediumMash": "brawl.medium",
+            "/brawl/heavyMash": "brawl.heavy",
+            "/fallback/lower/mediumMash": "brawl.light",
+            "/fallback/lower/heavyMash": "brawl.heavy.lower"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "recipes-brawl-mash-pool-missing",
+      "schema": "combat-recipes.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/recipes.json",
+          "set": {
+            "/brawl/mediumMash": "brawl.no.such.pool"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:recipes-brawl",
+        "pointer": "/brawl/mediumMash"
+      }
+    },
+    {
+      "id": "recipes-fallback-lower-unknown-kind",
+      "schema": "combat-recipes.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/recipes.json",
+          "set": {
+            "/fallback/lower/mashedMedium": "brawl.light"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/fallback/lower/mashedMedium"
+      }
+    },
+    {
+      "id": "anim-pressstyles-run-keys-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/speed/press_run": {
+              "gap": 10,
+              "deg_per_blow": 2,
+              "max_deg": 10
+            },
+            "/styles/medium/breath_ticks": 2,
+            "/styles/super/march": {
+              "gap": 140,
+              "step": 5,
+              "dip": 0.3,
+              "dip_ticks": 5
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-run-needs-gap",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/speed/press_run": {
+              "deg_per_blow": 2,
+              "max_deg": 10
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/styles/speed/press_run"
+      }
+    },
+    {
+      "id": "anim-pressstyles-march-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super/march": {
+              "gap": 140,
+              "step": 5,
+              "dip": 0.3,
+              "dip_ticks": 5,
+              "hop": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/super/march/hop"
+      }
+    },
+    {
+      "id": "anim-pressstyles-breath-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/medium/breath_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/medium/breath_ticks"
+      }
+    },
+    {
+      "id": "anim-pressstyles-style-squash-fighter-unknown",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/super/squash_pose": {
+              "nobody": "ch.b_p.load"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:pressstyles-squash",
+        "pointer": "/styles/super/squash_pose/nobody"
+      }
+    },
+    {
+      "id": "anim-fighters-ease-ok",
+      "schema": "anim-fighters.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/fighters.json",
+          "set": {
+            "/fighters/protagonist/ease": {
+              "speed": {
+                "prof": {
+                  "overshoot": 0.3,
+                  "follow_ticks": 5
+                },
+                "carry_ticks": 6,
+                "twist": 0.2
+              }
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-fighters-ease-unknown-style",
+      "schema": "anim-fighters.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/fighters.json",
+          "set": {
+            "/fighters/protagonist/ease": {
+              "turbo": {
+                "twist": 0.1
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:fighters-ease",
+        "pointer": "/fighters/protagonist/ease/turbo"
+      }
+    },
+    {
+      "id": "anim-fighters-ease-unknown-key",
+      "schema": "anim-fighters.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/fighters.json",
+          "set": {
+            "/fighters/protagonist/ease": {
+              "speed": {
+                "hop": 1
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/fighters/protagonist/ease/speed/hop"
+      }
+    },
+    {
+      "id": "anim-pressstyles-cash-in-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/cash_in": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-cash-in-unknown-key",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/cash_in": {
+              "prof": {
+                "solve_hz": 60,
+                "snap_ticks": 0,
+                "load_ease": 3,
+                "load_ticks": {
+                  "light": 6,
+                  "heavy": 6
+                },
+                "hold_ticks": 10,
+                "follow_ticks": 4,
+                "recover_ticks": 6,
+                "overshoot": 0,
+                "lag": 0.1
+              },
+              "alternate": false,
+              "carry": false,
+              "carry_ticks": 0,
+              "squash": 0,
+              "lean_back": 0,
+              "back": 0,
+              "stretch": {
+                "spine": 0,
+                "rise": 0,
+                "lead": 0,
+                "ticks": 3,
+                "smear_ticks": 0
+              },
+              "twist": 0,
+              "twist_ticks": 6,
+              "ghosts": 3,
+              "hop": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/styles/cash_in/hop"
+      }
+    },
+    {
+      "id": "anim-pairlive-beam-needs-fire",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/beam": {
+              "charge": "bm.hold.charge_protagonist"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/roles/protagonist/beam"
+      }
+    },
+    {
+      "id": "anim-pairlive-beam-unknown-key",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/roles/protagonist/beam": {
+              "charge": "bm.hold.c",
+              "fire": "bm.hold.f",
+              "hop": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/roles/protagonist/beam/hop"
+      }
+    },
+    {
+      "id": "anim-wave-manifest-bad-wave-name",
+      "schema": "anim-wave-manifest.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag1.manifest.json",
+          "set": {
+            "/wave": "ghost1"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/wave"
+      }
+    },
+    {
+      "id": "anim-wave-manifest-named-not-boolean",
+      "schema": "anim-wave-manifest.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/waves/protag1.manifest.json",
+          "set": {
+            "/strikes/0/named": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/strikes/0/named"
+      }
     }
   ],
   "text": [

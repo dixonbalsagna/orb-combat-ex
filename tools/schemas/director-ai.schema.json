@@ -488,6 +488,12 @@
                   "type": "number",
                   "minimum": 0,
                   "description": "The slowest gap, in ticks, between the AI taps in a brawl (at least tapGap: rule brawl-order). Added 2026-10-11 on the EP request."
+                },
+                "chargeGuess": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The share of a rival's charged heavies the AI tries to perfect-block, by guessing the release (it never reacts to it)."
                 }
               },
               "description": "The AI's brawl play at this level.",
@@ -936,6 +942,12 @@
                   "type": "number",
                   "minimum": 0,
                   "description": "The slowest gap, in ticks, between the AI taps in a brawl (at least tapGap: rule brawl-order). Added 2026-10-11 on the EP request."
+                },
+                "chargeGuess": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The share of a rival's charged heavies the AI tries to perfect-block, by guessing the release (it never reacts to it)."
                 }
               },
               "description": "The AI's brawl play at this level.",
@@ -1384,6 +1396,12 @@
                   "type": "number",
                   "minimum": 0,
                   "description": "The slowest gap, in ticks, between the AI taps in a brawl (at least tapGap: rule brawl-order). Added 2026-10-11 on the EP request."
+                },
+                "chargeGuess": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The share of a rival's charged heavies the AI tries to perfect-block, by guessing the release (it never reacts to it)."
                 }
               },
               "description": "The AI's brawl play at this level.",

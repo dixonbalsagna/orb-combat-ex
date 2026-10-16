@@ -1856,6 +1856,16 @@
                   "type": "integer",
                   "minimum": 0,
                   "description": "Ticks after which the AI releases it."
+                },
+                "guessTicks": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "description": "The span, in the charge's own live ticks from its wind-up, across which the AI picks the tick of its guessed guard press."
                 }
               },
               "additionalProperties": false,
@@ -2978,6 +2988,134 @@
       "patternProperties": {
         "^_": true
       }
+    },
+    "beamStruggle": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "The beam struggle as a tug of war on the pulse; false: the clash as before."
+        },
+        "pulseTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ticks between pulses."
+        },
+        "pulses": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Pulses in a struggle."
+        },
+        "surgeTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "A press within this many ticks of a pulse is a surge."
+        },
+        "sharpTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "... within this many, a sharp surge."
+        },
+        "surge": {
+          "type": "number",
+          "minimum": 0,
+          "description": "A surge moves the meeting point this share of the line toward the rival."
+        },
+        "sharp": {
+          "type": "number",
+          "minimum": 0,
+          "description": "... a sharp surge, this share."
+        },
+        "stray": {
+          "type": "number",
+          "minimum": 0,
+          "description": "A press off the pulse moves it this share back toward himself."
+        },
+        "comebackZone": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Within this share of the line from his own hands ..."
+        },
+        "comebackMul": {
+          "type": "number",
+          "minimum": 0,
+          "description": "... a surge is times this."
+        },
+        "headPerPoint": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The head start, a share of the line for each point of power between them."
+        },
+        "headMax": {
+          "type": "number",
+          "minimum": 0,
+          "description": "... at most this share."
+        },
+        "drawBand": {
+          "type": "number",
+          "minimum": 0,
+          "description": "On time, within this share of the middle: the beams detonate."
+        },
+        "aiHit": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "description": "The share of pulses the AI hits at this level."
+          },
+          "description": "By AI level."
+        },
+        "aiOffsets": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "The ticks off the pulse the AI presses, one drawn a pulse."
+        },
+        "overwhelm": {
+          "type": "object",
+          "properties": {
+            "winnerBeam": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The overwhelmed fighter takes this share of the winner's beam ..."
+            },
+            "ownBeam": {
+              "type": "number",
+              "minimum": 0,
+              "description": "... and this share of his own."
+            }
+          },
+          "additionalProperties": false
+        },
+        "detonate": {
+          "type": "object",
+          "properties": {
+            "otherBeam": {
+              "type": "number",
+              "minimum": 0,
+              "description": "On a detonation each takes this share of the other's beam."
+            }
+          },
+          "additionalProperties": false
+        },
+        "timeLoss": {
+          "type": "object",
+          "properties": {
+            "share": {
+              "type": "number",
+              "minimum": 0,
+              "description": "On time, the side the point is on takes this share of the beam."
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The beam struggle (rule-of-cool.md section 2)."
     }
   },
   "additionalProperties": false,

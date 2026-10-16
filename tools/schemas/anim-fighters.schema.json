@@ -176,6 +176,107 @@
             "patternProperties": {
               "^_": true
             }
+          },
+          "ease": {
+            "type": "object",
+            "propertyNames": {
+              "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "prof": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "properties": {
+                    "overshoot": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "Overshoot past the target."
+                    },
+                    "lag": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "Lag of the trailing bones."
+                    },
+                    "load_ease": {
+                      "type": "number",
+                      "exclusiveMinimum": 0,
+                      "description": "The wind-up's ease exponent."
+                    },
+                    "hold_ticks": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Ticks held at the contact."
+                    },
+                    "follow_ticks": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Ticks of follow-through."
+                    },
+                    "recover_ticks": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Ticks of return."
+                    },
+                    "snap_ticks": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Ticks of snap."
+                    }
+                  },
+                  "additionalProperties": false,
+                  "patternProperties": {
+                    "^_": true
+                  },
+                  "description": "Merged key by key into the style row's prof. The clock does not move: hold + follow + recover of the row sums to the global row's."
+                },
+                "carry_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Replaces the row's carry blend."
+                },
+                "twist": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Replaces the row's twist."
+                },
+                "twist_ticks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Replaces the row's twist length."
+                },
+                "squash": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Replaces the row's squash."
+                },
+                "lean_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Replaces the row's lean back."
+                },
+                "back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Replaces the row's step back."
+                },
+                "ghosts": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Replaces the row's afterimages."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              },
+              "description": "One press-style row's overrides: prof merged key by key, any other key replaced."
+            },
+            "patternProperties": {
+              "^_": true
+            },
+            "description": "Optional. How this fighter eases the press styles (docs/animation/tenth-round.md section 2): a map of a press style of press_styles.json to its overrides, read by AnimFighter._style_row. Inside one clock (rule fighters-ease: every key is a style)."
           }
         },
         "additionalProperties": false,

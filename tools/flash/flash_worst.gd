@@ -24,7 +24,7 @@ const FORM_TICKS: Array = [300, 1500]
 ## The scenarios, their lengths and the AI-match set (seeds and pairings) are tools/flash/sources.json's, so the headless runs, check-log.js and run-pixels.mjs read one list.
 const SOURCES: String = "res://tools/flash/sources.json"
 ## Which slots are AI (true) in each scenario.
-const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true]}
+const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true], "mashdummy": [false, true], "ring": [false, true], "launchai": [false, true]}
 
 var main: Node
 var out_dir: String = "build/flash"
@@ -116,6 +116,10 @@ func _run() -> void:
 		if sd.get("pairings", false):
 			for pr in defs["pairings"]:
 				runs.append({"slots": pr["slots"], "seeds": pr["seeds"]})
+		elif sd.has("slotsList"):
+			# one run for each of the scenario's own pairings or rings (a dummy scene per fighter, a ring of three to five bodies): sources.json's `slotsList`, one seed
+			for sl in sd["slotsList"]:
+				runs.append({"slots": sl, "seeds": [12345]})
 		else:
 			runs.append({"slots": [], "seeds": [12345]})
 		if not slots_override.is_empty():
@@ -157,7 +161,10 @@ static func _top(ev: Dictionary) -> String:
 
 func _play(sc: String, seed: int, reduced: bool, ticks: int, slots: Array = []) -> Dictionary:
 	var ai: Array = AI_SLOTS[sc]
-	main.start_match(seed, {"p1": ai[0], "p2": ai[1]}, null if slots.is_empty() else {"slots": slots})
+	var ai_set: Dictionary = {"p1": ai[0], "p2": ai[1]}
+	for i in range(2, slots.size()):
+		ai_set["p%d" % (i + 1)] = sc == "ring"   # the ring's bodies past the pair fight; any other scene's stand
+	main.start_match(seed, ai_set, null if slots.is_empty() else {"slots": slots})
 	var host: SimHost = main.host
 	host.vfx.force_reduced = reduced
 	_release_all()
@@ -308,6 +315,12 @@ func _drive(sc: String, t: int, S: SimState) -> void:
 			_ready_forms(S, t, [60, 500, 1000])
 		"collapse":
 			_stage_collapse(S, t)
+		"mashdummy":
+			_mash_dummy(t, S)
+		"ring":
+			_ring(t, S)
+		"launchai":
+			_launch_ai(t, S)
 		"ai":
 			_ready_forms(S, t, FORM_TICKS)
 			if t == 900:
@@ -334,6 +347,44 @@ func _rush(t: int, S: SimState) -> void:
 	# P1 sprints (stick held, dodge held: the sprint) along the front street, turning every 150 ticks so the run stays in the city; the AI fights him
 	_stick(0, 1.0 if (t / 150) % 2 == 0 else -1.0)
 	_btn(0, "lt", true)
+
+
+## Player one against the idle training dummy (Legal RL-139: a mash-on-the-dummy scene for each fighter, in both modes), on a cycle of 600 ticks: the light mashed at the fastest tap
+## (every 4 ticks), the medium mashed, the light held (the burst), the light mashed with energy held (RB: the energy mash in reach), the blast (energy held, the heavy), then a heavy
+## to launch and the light after it (the launcher chain). Ki kept full; he walks to the dummy and stays in reach.
+func _mash_dummy(t: int, S: SimState) -> void:
+	_walk_in(S, 200.0)
+	S.fighters[0].ki = 100.0
+	var u: int = t % 600
+	_btn(0, "rb", u >= 300 and u < 480)
+	_btn(0, "west", (u < 120 and _tap(t, 4, 0)) or (u >= 240 and u < 300) or (u >= 300 and u < 420 and _tap(t, 4, 0)) or (u >= 500 and _tap(t, 6, 0)))
+	_btn(0, "north", u >= 120 and u < 240 and _tap(t, 6, 0))
+	_btn(0, "east", (u >= 420 and u < 480 and u % 30 < 12) or (u >= 480 and u < 490))
+
+
+## Player one against the ring, the AI and his guards: the light mashed, the medium now and then, the signature once in a cycle of 300.
+func _ring(t: int, S: SimState) -> void:
+	_walk_in(S, 250.0)
+	S.fighters[0].ki = 100.0
+	var u: int = t % 300
+	_btn(0, "rt", u >= 200 and u < 260)
+	_btn(0, "east", u >= 203 and u < 215)
+	_btn(0, "west", (u < 200 or u >= 260) and _tap(t, 4, 0))
+	_btn(0, "north", t % 53 < 2)
+
+
+## Player one launches the AI: a heavy every 45 ticks against the real AI (in the 1,800 ticks of the seed it launches the AI twice and is launched once; a launch is rare).
+func _launch_ai(t: int, S: SimState) -> void:
+	_walk_in(S, 250.0)
+	S.fighters[0].ki = 100.0
+	_btn(0, "east", t % 45 < 8)
+
+
+## Player one goes to the other fighter and stops in reach (the other is the AI's or the dummy's): he walks, and sprints (dodge held) when a launch has sent them 900 units or more apart.
+func _walk_in(S: SimState, near: float) -> void:
+	var dx: float = SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)
+	_stick(0, signf(dx) if absf(dx) > near else 0.0)
+	_btn(0, "lt", absf(dx) > 900.0)
 
 
 ## The pair set down again `variant` x 450 units along the world from where the scene put them.

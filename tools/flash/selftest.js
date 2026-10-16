@@ -211,7 +211,7 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
 {
   const fs = require('fs'), path = require('path');
   const root = path.join(__dirname, '..', '..');
-  const read = (f) => fs.readFileSync(path.join(root, f), 'utf8');
+  const read = (f) => fs.readFileSync(path.join(root, f), 'utf8').replace(/\r\n/g, '\n');   // either line ending: a patch applied outside a repo writes CRLF, and the function bodies are compared line by line
   const slots = (txt) => {
     const m = txt.match(/const AI_SLOTS: Dictionary = \{([^\n]*)\}/);
     if (!m) return null;
@@ -262,7 +262,7 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
     check('the launch hold switch (hold=1 on the web hook, --hold on flash_worst.gd) sets the same rule', /"hold"/.test(theirs) && /set_launch_hold\(true\)/.test(theirs) && /--hold/.test(mine) && /set_launch_hold\(true\)/.test(mine));
     check('the merge-zoom switch (mergezoom=1 on the web hook, --merge-zoom on flash_worst.gd) sets the same rule', theirs.includes('"mergezoom"') && theirs.includes('set_merge_zoom_limit(true)') && /--merge-zoom/.test(mine) && mine.includes('set_merge_zoom_limit(true)'));
     check('the hook reads its page switches from location.search itself (main.parse_args keeps only URL_ARGS, so budget=1 and hold=1 never reached main.args) and reports what it applied', theirs.includes('_page_flag("budget")') && theirs.includes('_page_flag("hold")') && theirs.includes('location.search') && theirs.includes('__flashcap.switches'));
-    for (const name of ['_to_the_city', '_stage_collapse', '_ready_forms', '_mash', '_signature', '_rush', '_apply_variant']) {
+    for (const name of ['_to_the_city', '_stage_collapse', '_ready_forms', '_mash', '_signature', '_rush', '_mash_dummy', '_ring', '_launch_ai', '_walk_in', '_apply_variant']) {
       const a = fn(mine, name), b = fn(theirs, name);
       check(`Rendering's capture hook stages the same collapse ${name} as flash_worst.gd`, !!a && !!b && JSON.stringify(a) === JSON.stringify(b), JSON.stringify([a && a.length, b && b.length]));
     }

@@ -477,6 +477,16 @@
         "lift": {
           "type": "string",
           "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "mediumMash": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "A mashed medium (a press inside the gap that makes it a flurry) draws on this pool when the recipes name it, else on the tap's cell (medium). Optional."
+        },
+        "heavyMash": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "A mashed heavy draws on this pool when the recipes name it, else on the tap's cell (heavy). Optional."
         }
       },
       "additionalProperties": false,
@@ -696,6 +706,8 @@
               "juggle",
               "medium",
               "mediumHeld",
+              "heavyMash",
+              "mediumMash",
               "reversal",
               "heavy",
               "heavyHeld",

@@ -1598,6 +1598,25 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
         if (typeof sty === 'string' && !(sty in pst.styles)) err(PS, `/riposte/style/${w}`, 'pressstyles-riposte', `riposte style "${sty}" is not a key of styles (${Object.keys(pst.styles).filter((k) => !k.startsWith('_')).join(', ')})`);
       }
     }
+    // a style's own squash pose, by fighter (the runs' look): fighters of fighters.json and real poses
+    for (const [sid, st] of Object.entries(isObj(pst.styles) ? pst.styles : {})) {
+      if (sid.startsWith('_') || !isObj(st) || !isObj(st.squash_pose)) continue;
+      const fgsSq = get('data/anim/fighters.json');
+      const fidsSq = isObj(fgsSq) && isObj(fgsSq.fighters) ? Object.keys(fgsSq.fighters).filter((k) => !k.startsWith('_')) : [];
+      for (const [fk, pid] of Object.entries(st.squash_pose)) {
+        if (fk.startsWith('_')) continue;
+        if (fidsSq.length && !fidsSq.includes(fk)) err(PS, `/styles/${esc(sid)}/squash_pose/${esc(fk)}`, 'pressstyles-squash', `"${fk}" is not a fighter of fighters.json (${fidsSq.join(', ')})`);
+        if (typeof pid === 'string' && allPosesPs.size && !allPosesPs.has(pid)) err(PS, `/styles/${esc(sid)}/squash_pose/${esc(fk)}`, 'pressstyles-squash', `pose "${pid}" is not in poses.json nor a wave's poses`);
+      }
+    }
+    // a fighter's ease (fighters.json): every key is a style of this file
+    {
+      const fgsEz = get('data/anim/fighters.json');
+      if (isObj(fgsEz) && isObj(fgsEz.fighters) && isObj(pst.styles)) for (const [fid, fg] of Object.entries(fgsEz.fighters)) {
+        if (fid.startsWith('_') || !isObj(fg) || !isObj(fg.ease)) continue;
+        for (const k of Object.keys(fg.ease)) if (!k.startsWith('_') && !(k in pst.styles)) err('data/anim/fighters.json', `/fighters/${esc(fid)}/ease/${esc(k)}`, 'fighters-ease', `ease names "${k}", which is not a style of press_styles.json (${Object.keys(pst.styles).filter((x) => !x.startsWith('_')).join(', ')})`);
+      }
+    }
     for (const [sid, st] of Object.entries(isObj(pst.styles) ? pst.styles : {})) {
       if (sid.startsWith('_') || !isObj(st) || !isObj(st.set) || !isObj(st.set.pose)) continue;
       const fgsSet = get('data/anim/fighters.json');
