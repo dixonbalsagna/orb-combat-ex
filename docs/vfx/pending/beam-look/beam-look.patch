@@ -1,0 +1,1214 @@
+diff --git a/render/vfx/beam_look.gd b/render/vfx/beam_look.gd
+new file mode 100644
+--- /dev/null
++++ b/render/vfx/beam_look.gd
+@@ -0,0 +1,168 @@
++class_name VfxBeamLook
++extends RefCounted
++## The look of a signature beam (docs/vfx/beam-look.md; Orb, 2026-10-16: "the beams are too thin ... cool, rippling, glowing, fluid-looking shaders, each character should have their own flavor").
++## Rendering's BeamView draws a beam as three additive prisms (a sheath, a body and a core); this gives each of them its material and its size:
++##   - a real width by default (the sheath 4 times the sim's beam width, the body 2.2, the core 0.9, times the fighter's `width_k`): one fighter may keep a thin beam as his particular move
++##   - the beam shader (shaders/beam.gdshader): a slow travelling hue ripple between two tints of the SAME luminance, so it looks fluid while its brightness stays steady; turbulence on the soft edge
++##     only; rounded ends and a swelling heel. Never a white core: the core is the lane colour lightened, as Art's aura rule has it (core at most L* 86)
++##   - each fighter's flavour (data/vfx/energy.json): the colour is the fighter's lane colour (so a colour-vision preset follows), the second tint a hue shift of it at the same luminance, and the
++##     motion character (ripple wavelength and rate, edge turbulence, the heel) is his
++## Legal fx03: the beam stays a plain straight line (nothing goes round its axis), its ripple is 2 Hz or slower with a luminance step under 10%, and its start and end flashes are the register's
++## (SimHost.beam_flash: unchanged). Presentation only: reads the beam and its owner, draws no random number, writes nothing.
++
++const DEFAULTS: Dictionary = {
++	"beam": {
++		"default": {"width_k": 1.0, "hue_shift": 28.0, "hz": 1.0, "wavelength": 130.0, "flow": 70.0, "turb": 0.15, "heel": 0.5, "seed": 0.0, "wob_k": 1.0, "fil": 0.6},
++		"protagonist": {"width_k": 1.15, "hue_shift": 30.0, "hz": 1.1, "wavelength": 150.0, "flow": 80.0, "turb": 0.12, "heel": 0.7, "seed": 0.0, "wob_k": 0.6, "fil": 0.7},
++		"rival": {"width_k": 1.3, "hue_shift": -34.0, "hz": 0.8, "wavelength": 95.0, "flow": 60.0, "turb": 0.34, "heel": 0.35, "seed": 2.1, "wob_k": 1.6, "fil": 0.5},
++		"anti_hero": {"width_k": 0.42, "hue_shift": 16.0, "hz": 1.4, "wavelength": 220.0, "flow": 90.0, "turb": 0.0, "heel": 0.2, "seed": 4.2, "wob_k": 0.0, "fil": 0.0},
++	},
++	"layers": [
++		{"k": 4.0, "px": 6.0, "alpha": 0.36, "soft": 2.0, "turb_k": 1.6, "lum_amp": 0.16, "sat": 2.2, "val": 0.7, "lighten": 0.0, "flow_k": 0.8, "wob": 0.22},
++		{"k": 2.2, "px": 4.0, "alpha": 0.90, "soft": 1.4, "turb_k": 1.0, "lum_amp": 0.07, "sat": 2.0, "val": 0.88, "lighten": 0.0, "flow_k": 1.0, "wob": 0.12},
++		{"k": 0.9, "px": 2.0, "alpha": 1.0, "soft": 0.9, "turb_k": 0.0, "lum_amp": 0.04, "sat": 0.85, "val": 1.0, "lighten": 0.1, "flow_k": 1.4, "wob": 0.05},
++	],
++	"calm": {"strength": 0.86, "rise_s": 0.3},
++	"cap": 40.0,
++}
++
++static var _data: Dictionary = {}
++static var _loaded: bool = false
++
++
++static func warm() -> void:
++	if _loaded:
++		return
++	_loaded = true
++	var path := "res://data/vfx/energy.json"
++	if FileAccess.file_exists(path):
++		var v = JSON.parse_string(FileAccess.get_file_as_string(path))
++		if v is Dictionary:
++			_data = v
++
++
++static func _group(name: String):
++	warm()
++	var g = _data.get(name)
++	return g if g != null else DEFAULTS[name]
++
++
++## A fighter's flavour key: his roster id, lower case, with a hyphen as an underscore ("ANTI-HERO" is `anti_hero`); `default` for any id with no flavour of its own, and for no fighter.
++static func key_of(f) -> String:
++	if f == null:
++		return "default"
++	var raw = f.get("id")
++	var id: String = String(raw).to_lower().replace("-", "_").replace(" ", "_") if raw != null else ""
++	var beams = _group("beam")
++	return id if (id != "" and beams is Dictionary and beams.has(id)) else "default"
++
++
++static var _fcache: Dictionary = {}
++
++
++static func flavour(f) -> Dictionary:
++	var key: String = key_of(f)
++	if _fcache.has(key):
++		return _fcache[key]
++	var beams = _group("beam")
++	var base: Dictionary = DEFAULTS["beam"]["default"].duplicate()
++	if beams is Dictionary:
++		if beams.has("default"):
++			base.merge(beams["default"], true)
++		if key != "default" and beams.has(key):
++			base.merge(beams[key], true)
++	_fcache[key] = base
++	return base
++
++
++static func layer(i: int) -> Dictionary:
++	var ls = _group("layers")
++	if ls is Array and i >= 0 and i < ls.size():
++		return ls[i]
++	return DEFAULTS["layers"][clampi(i, 0, 2)]
++
++
++## How wide the body layer is against the sim's beam width for this fighter: what the flash register weighs a beam's area by (SimHost.beam_px) and what its tail is paced by.
++static func body_k(f) -> float:
++	return float(layer(1)["k"]) * float(flavour(f)["width_k"])
++
++
++static func luma(c: Color) -> float:
++	return 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b
++
++
++## The second tint: the colour's hue turned by `deg`, at the same luminance (a search on the value, then on the saturation where the hue cannot be as bright), so the ripple between the two moves
++## hue and not brightness.
++static func shifted(c: Color, deg: float) -> Color:
++	var h: float = fposmod(c.h + deg / 360.0, 1.0)
++	var target: float = luma(c)
++	var sat: float = c.s
++	for k in range(14):
++		if luma(Color.from_hsv(h, sat, 1.0)) >= target or sat < 0.05:
++			break
++		sat *= 0.9
++	var lo: float = 0.0
++	var hi: float = 1.0
++	for k in range(12):
++		var mid: float = (lo + hi) * 0.5
++		if luma(Color.from_hsv(h, sat, mid)) > target:
++			hi = mid
++		else:
++			lo = mid
++	var d: Color = Color.from_hsv(h, sat, (lo + hi) * 0.5)
++	d.a = 1.0
++	return d
++
++
++## A layer's tints: the lane colour with the layer's own saturation and value (the sheath deeper, the core the lane colour itself, lightened by a tenth at most, never white), and the shifted one at the same luminance.
++static func tints(f, lane: Color, i: int) -> Array:
++	var fl: Dictionary = flavour(f)
++	var ly: Dictionary = layer(i)
++	var a: Color = Color.from_hsv(lane.h, clampf(lane.s * float(ly["sat"]), 0.0, 1.0), clampf(lane.v * float(ly["val"]), 0.0, 1.0)).lightened(float(ly["lighten"]))
++	a.a = 1.0
++	var b: Color = shifted(a, float(fl["hue_shift"]))
++	return [a, b]
++
++
++## The thickness of layer i of a beam of the sim's width w, in world units, at the view's zoom z (the glow's own pixel allowance added).
++static func thickness(f, w: float, i: int, z: float) -> float:
++	var fl: Dictionary = flavour(f)
++	var ly: Dictionary = layer(i)
++	return w * float(ly["k"]) * float(fl["width_k"]) + float(ly["px"]) / z
++
++
++## The slower rise a calm beam takes (seconds): a beam the register refused, or under reduced flashing, comes up over this instead of the tenth of a second.
++static func calm_rise() -> float:
++	return float(_group("calm")["rise_s"])
++
++
++static func new_material(layer_index: int = 0) -> ShaderMaterial:
++	var m := ShaderMaterial.new()
++	m.shader = preload("res://render/vfx/shaders/beam_glow.gdshader") if layer_index == 0 else preload("res://render/vfx/shaders/beam.gdshader")
++	m.render_priority = layer_index       # the sheath first, the body over it, the core last (alpha blending is order-dependent)
++	return m
++
++
++## Everything a layer's material needs this frame. k: the beam's strength 0..1 (its own rise and fall); calm: the register refused it or reduced flashing is on (the same look at `calm.strength`
++## and a slower rise, never a thinner beam); t: the sim's clock; length: the beam's drawn length in world units; at_heel: the firer's end is still the beam's tail.
++static func set_layer(m: ShaderMaterial, f, lane: Color, i: int, k: float, calm: bool, t: float, length: float, at_heel: bool, beam_id: float = 0.0) -> void:
++	var fl: Dictionary = flavour(f)
++	var ly: Dictionary = layer(i)
++	var tt: Array = tints(f, lane, i)
++	var calm_k: float = float(_group("calm")["strength"]) if calm else 1.0
++	m.set_shader_parameter("tint_a", tt[0])
++	m.set_shader_parameter("tint_b", tt[1])
++	m.set_shader_parameter("strength", float(ly["alpha"]) * k * calm_k)
++	m.set_shader_parameter("soft", float(ly["soft"]))
++	m.set_shader_parameter("time", t)
++	m.set_shader_parameter("len", maxf(length, 1.0))
++	m.set_shader_parameter("flow", float(fl["flow"]) * float(ly["flow_k"]))
++	m.set_shader_parameter("wavelength", float(fl["wavelength"]))
++	m.set_shader_parameter("hz", minf(float(fl["hz"]), 2.0))
++	m.set_shader_parameter("turb", clampf(float(fl["turb"]) * float(ly["turb_k"]), 0.0, 1.0))
++	m.set_shader_parameter("lum_amp", float(ly["lum_amp"]))
++	m.set_shader_parameter("cap", float(_group("cap")))
++	m.set_shader_parameter("heel", float(fl["heel"]) if at_heel else 0.0)
++	m.set_shader_parameter("seed", float(fl["seed"]) + beam_id * 1.37)
++	m.set_shader_parameter("wob", float(ly["wob"]) * float(fl["wob_k"]))
++	m.set_shader_parameter("fil", float(fl["fil"]))
+diff --git a/render/vfx/beam_look.gd.uid b/render/vfx/beam_look.gd.uid
+new file mode 100644
+--- /dev/null
++++ b/render/vfx/beam_look.gd.uid
+@@ -0,0 +1 @@
++uid://dccrcqbubmjd8
+diff --git a/render/vfx/shaders/beam.gdshader b/render/vfx/shaders/beam.gdshader
+new file mode 100644
+--- /dev/null
++++ b/render/vfx/shaders/beam.gdshader
+@@ -0,0 +1,5 @@
++// A signature beam's body and core (render/vfx/beam_look.gd; docs/vfx/beam-look.md): alpha-blended prisms, back faces only, with the ortho projection of the glow shader. See beam_core.gdshaderinc.
++shader_type spatial;
++render_mode unshaded, blend_mix, depth_draw_never, cull_front;
++
++#include "res://render/vfx/shaders/beam_core.gdshaderinc"
+diff --git a/render/vfx/shaders/beam.gdshader.uid b/render/vfx/shaders/beam.gdshader.uid
+new file mode 100644
+--- /dev/null
++++ b/render/vfx/shaders/beam.gdshader.uid
+@@ -0,0 +1 @@
++uid://buy4fiv0yt11f
+diff --git a/render/vfx/shaders/beam_glow.gdshader b/render/vfx/shaders/beam_glow.gdshader
+new file mode 100644
+--- /dev/null
++++ b/render/vfx/shaders/beam_glow.gdshader
+@@ -0,0 +1,5 @@
++// A signature beam's sheath (render/vfx/beam_look.gd; docs/vfx/beam-look.md): additive prisms, back faces only, with the ortho projection of the glow shader. See beam_core.gdshaderinc.
++shader_type spatial;
++render_mode unshaded, blend_add, depth_draw_never, cull_front;
++
++#include "res://render/vfx/shaders/beam_core.gdshaderinc"
+diff --git a/render/vfx/shaders/beam_glow.gdshader.uid b/render/vfx/shaders/beam_glow.gdshader.uid
+new file mode 100644
+--- /dev/null
++++ b/render/vfx/shaders/beam_glow.gdshader.uid
+@@ -0,0 +1 @@
++uid://1pvtjrkthon6
+diff --git a/render/vfx/shaders/beam_core.gdshaderinc b/render/vfx/shaders/beam_core.gdshaderinc
+new file mode 100644
+--- /dev/null
++++ b/render/vfx/shaders/beam_core.gdshaderinc
+@@ -0,0 +1,70 @@
++// The beam's layer: uniforms, the noise and the fragment (render/vfx/beam_look.gd; docs/vfx/beam-look.md). Included by beam.gdshader (alpha-blended: the body and the core) and beam_glow.gdshader
++// (additive: the sheath's soft glow, kept thin in alpha because three additive layers add up to white and this beam has no white core).
++// A slow travelling ripple of HUE between two tints of the same luminance (so it flows while its brightness stays steady: Legal fx03, 2 Hz or slower, under a tenth of luminance), turbulence on the
++// soft edge only (shape, never the middle), rounded ends and a swelling heel. The beam stays a plain straight line (e04, e07): nothing goes round the axis. UV.y runs along the prism.
++#include "res://render/shaders/ortho.gdshaderinc"
++
++uniform vec4 tint_a : source_color = vec4(0.5, 0.8, 1.0, 1.0);
++uniform vec4 tint_b : source_color = vec4(0.5, 0.8, 1.0, 1.0);
++uniform float strength = 1.0;       // the layer's alpha, with the beam's own rise and fall folded in
++uniform float soft = 1.6;           // the edge's falloff, as the glow's
++uniform float time = 0.0;           // the sim's clock in seconds (frozen with the sim)
++uniform float len = 600.0;          // the beam's length in world units
++uniform float flow = 90.0;          // units a second the turbulence slides toward the head (kept slow: a feature is about 80 units, so a point sees about 1 Hz)
++uniform float wavelength = 120.0;   // units between two ripples
++uniform float hz = 1.0;             // how often a point of the beam passes through its two tints (2 or slower: Legal fx03); the ripple travels at hz x wavelength
++uniform float turb = 0.2;           // edge turbulence, 0 to 1
++uniform float lum_amp = 0.06;       // the most the alpha moves with the shimmer
++uniform float cap = 40.0;           // the rounded ends, in units
++uniform float heel = 0.0;           // how much the firer's end swells (0 for a beam already detached)
++uniform float seed = 0.0;
++uniform float wob = 0.0;            // how much the width swells and thins along the beam (a share of the radius): the silhouette flows, the axis stays a straight line
++uniform float fil = 0.5;            // the filaments: long thin streaks along the beam, in hue and saturation, within `lum_amp` in brightness
++uniform float head_at_zero = 1.0;   // 1: UV.y is 0 at the head, as the cylinder is built
++
++float h21(vec2 p) {
++	p = fract(p * vec2(123.34, 456.21));
++	p += dot(p, p + 45.32);
++	return fract(p.x * p.y);
++}
++
++float vn(vec2 p) {
++	vec2 i = floor(p);
++	vec2 f = fract(p);
++	f = f * f * (3.0 - 2.0 * f);
++	return mix(mix(h21(i), h21(i + vec2(1.0, 0.0)), f.x), mix(h21(i + vec2(0.0, 1.0)), h21(i + vec2(1.0, 1.0)), f.x), f.y);
++}
++
++void vertex() {
++	vec3 v = VERTEX;
++	if (wob > 0.0) {
++		float s0 = (head_at_zero > 0.5 ? 1.0 - UV.y : UV.y) * len;
++		float sw = (vn(vec2(s0 * 0.011 - time * flow * 0.012, seed + 3.0)) - 0.5) * 2.0;
++		v.xz *= 1.0 + wob * sw;
++	}
++	if (ortho > 0.5) {
++		POSITION = ortho_clip(MODEL_MATRIX, VIEW_MATRIX, PROJECTION_MATRIX, v);
++	} else {
++		POSITION = PROJECTION_MATRIX * (MODELVIEW_MATRIX * vec4(v, 1.0));
++	}
++}
++
++void fragment() {
++	float facing = abs(dot(normalize(NORMAL), ortho > 0.5 ? vec3(0.0, 0.0, 1.0) : normalize(VIEW)));
++	float from_tail = (head_at_zero > 0.5 ? 1.0 - UV.y : UV.y) * len;
++	float lat = (UV.x < 0.5 ? UV.x : 1.0 - UV.x) * 2.0;           // across the prism, mirrored so there is no seam
++	float travel = from_tail - time * flow;
++	float rip = sin((from_tail - time * hz * wavelength) * 6.2831853 / max(wavelength, 1.0) + seed);
++	float n1 = vn(vec2(travel * 0.012, lat * 1.7 + seed));
++	float f1 = vn(vec2(travel * 0.0035 + 11.0, lat * 6.0 + seed * 2.3));    // long thin streaks along the beam
++	float m = clamp(0.5 + 0.38 * rip + 0.5 * (n1 - 0.5) + fil * (f1 - 0.5), 0.0, 1.0);
++	vec3 col = mix(tint_a.rgb, tint_b.rgb, m);
++	// the edge: shape turbulence, strongest where the edge is
++	float nn = vn(vec2(travel * 0.02 + 7.0, lat * 2.3 + seed * 1.7));
++	float edge = pow(facing, soft) * mix(1.0, 0.35 + 1.3 * nn, turb * (1.0 - facing));
++	float shim = 1.0 + lum_amp * (0.6 * rip + (n1 - 0.5) + 0.8 * (f1 - 0.5));
++	float ends = smoothstep(0.0, cap, from_tail) * smoothstep(0.0, cap, len - from_tail);
++	float swell = 1.0 + heel * exp(-from_tail / 70.0);
++	ALBEDO = col;
++	ALPHA = clamp(tint_a.a * strength * edge * shim * ends * swell, 0.0, 1.0);
++}
+diff --git a/render/vfx/shaders/beam_core.gdshaderinc.uid b/render/vfx/shaders/beam_core.gdshaderinc.uid
+new file mode 100644
+--- /dev/null
++++ b/render/vfx/shaders/beam_core.gdshaderinc.uid
+@@ -0,0 +1 @@
++uid://1gka3husi1jh
+diff --git a/render/vfx/explode.gd b/render/vfx/explode.gd
+--- a/render/vfx/explode.gd
++++ b/render/vfx/explode.gd
+@@ -17,8 +17,12 @@
+ ## a body), the sparks Art's ember ramp, the smoke and the chunks the biome's own shades. Presentation only.
+ 
+ const DEFAULTS: Dictionary = {
+-	"explode": {"flames": 5.0, "sparks": 9.0, "chunks": 5.0, "smoke": 4.0, "ring_r0": 0.3, "ring_r1": 1.15, "ring_life": 0.42,
+-		"smoulder": 6.0, "smoulder_from": 0.5, "smoulder_to": 3.6, "steam": 5.0, "fighter_k": 0.55, "flame_cap": 40.0, "ref_bh": 1.5},
++	"explode": {"flames": 7.5, "sparks": 9.0, "chunks": 5.0, "smoke": 4.0, "ring_r0": 0.3, "ring_r1": 1.15, "ring_life": 0.42,
++		"smoulder": 6.0, "smoulder_from": 0.5, "smoulder_to": 3.6, "steam": 5.0, "fighter_k": 0.75, "flame_cap": 48.0, "ref_bh": 1.5,
++		# Orb, 2026-10-16: the small energy attacks' explosions "more explosive, flames and smoke". The scale of a small blast never falls under `scale_floor`; its flames go off in three waves
++		# (`wave1_s`, `wave2_s` seconds after the first, `wave_split` the shares of the three) and grow in over a few ticks (shard_view), so no single frame is a flash; `calm` is the share
++		# a blast the register refused keeps of its sparks.
++		"scale_floor": 0.62, "wave1_s": 0.07, "wave2_s": 0.14, "wave_split": 0.45, "wave_split2": 0.3, "smoke_late": 2.0, "smoke_k": 1.35, "calm": 0.7, "lane_cinders": 0.0},
+ }
+ 
+ static var _data: Dictionary = {}
+@@ -81,7 +85,7 @@
+ 
+ ## The share of the full effect a blast of this radius makes: 1 at 1.5 bh.
+ static func scale_for(radius: float) -> float:
+-	return clampf(radius / (p("ref_bh") * VfxLook.BH), 0.25, 2.4)
++	return clampf(radius / (p("ref_bh") * VfxLook.BH), p("scale_floor"), 2.4)
+ 
+ 
+ static func _q(d: VfxDebris) -> float:
+@@ -91,7 +95,7 @@
+ ## radius: the blast radius (radius_for). surface: "ground", "fighter" (a body), "air" (a burst in the air: no ground), "wall" (against a
+ ## building's face: concrete chips and dust, no ring) or "water". mode: "burst" (a flame burst, the default), "spark" (sparks and smoke only: a guard or a deflect).
+ ## Returns how many bits it asked the pool for (the tests and the budget).
+-static func at(S: SimState, d: VfxDebris, x: float, y: float, z: float, radius: float, surface: String, mode: String = "burst") -> int:
++static func at(S: SimState, d: VfxDebris, x: float, y: float, z: float, radius: float, surface: String, mode: String = "burst", lane: Color = Color(0.0, 0.0, 0.0, 0.0)) -> int:
+ 	var rd: SimRng = d._rd
+ 	var q: float = _q(d)
+ 	var s: float = scale_for(radius) * (p("fighter_k") if surface == "fighter" else (0.8 if surface == "air" else (0.75 if surface == "wall" else 1.0)))
+@@ -99,29 +103,38 @@
+ 	var biome: String = VfxPalette.biome_key(x)
+ 	var asked: int = 0
+ 	var flame_cap: int = int(round(p("flame_cap") * (0.5 + 0.5 * q)))
+-	# Flames: a burst going up and out, the larger ones taller.
+-	var nf: int = 0 if (mode == "spark" or surface == "water") else clampi(int(round(p("flames") * s * (0.6 if surface == "wall" else 1.0))), 1, 9)
+-	for i in range(nf):
+-		var side: float = -1.0 + 2.0 * (float(i) + 0.5) / float(nf)
+-		var vx: float = side * rd.range_(80.0, 220.0) * s + rd.range_(-30.0, 30.0)
+-		var vy: float = rd.range_(90.0, 200.0) * (0.6 + 0.4 * s)       # local and in proportion: a flame tongue rises about its blast radius, never a pillar
+-		var sz: float = rd.range_(26.0, 52.0) * (0.55 + 0.6 * s)
+-		var life: float = rd.range_(0.45, 0.85) * (0.7 + 0.3 * s)
+-		var keep: bool = rd.next() < q and d._flame_alive < flame_cap
+-		if keep:
+-			d.flame(x + rd.range_(-30.0, 30.0) * s, y + rd.range_(0.0, 24.0), z + 6.0, vx, vy, sz, life)
+-			asked += 1
++	# Flames: a burst going up and out, the larger ones taller. In three waves (the first now, the others a few ticks on, as jobs) and each flame grows in over a few ticks (shard_view): so the
++	# burst is never one frame's flash (Legal fx03: an explosion's fire grows over several ticks).
++	var nf: int = 0 if (mode == "spark" or surface == "water") else clampi(int(round(p("flames") * s * (0.6 if surface == "wall" else 1.0))), 3 if surface != "wall" else 2, 11)
++	if nf > 0:
++		var n0: int = maxi(1, int(round(float(nf) * p("wave_split"))))
++		var n1: int = maxi(1, int(round(float(nf) * p("wave_split2"))))
++		var n2: int = maxi(0, nf - n0 - n1)
++		asked += _flame_wave(d, rd, x, y, z, s, n0, q, flame_cap, 0.0)
++		var wave_job := func(delay: float, n: int, spread: float) -> void:
++			if n <= 0:
++				return
++			var j := VfxDebris.Job.new()
++			j.at = d.now + delay
++			j.kind = "xwave"
++			j.a = {"x": x, "y": y, "z": z, "s": s, "n": n, "q": q, "cap": flame_cap, "spread": spread, "smoke": int(round(p("smoke_late"))) if delay > p("wave1_s") else 0, "sm": smoke_life}
++			d.jobs.append(j)
++		wave_job.call(p("wave1_s"), n1, 1.25)
++		wave_job.call(p("wave2_s"), n2, 1.5)
+ 	# Sparks: bright cinders thrown out, stepped through Art's ember ramp by age.
+-	var nsp: int = clampi(int(round(p("sparks") * s)), 2, 18)
++	var nsp: int = clampi(int(round(p("sparks") * s * (p("calm") if mode == "calm" else 1.0))), 3, 18)
+ 	for i in range(nsp):
+ 		var ang: float = rd.range_(0.15, PI - 0.15)
+ 		var spd: float = rd.range_(220.0, 520.0) * (0.6 + 0.4 * s)
+-		var life2: float = rd.range_(0.45, 1.05)
+-		var len: float = rd.range_(22.0, 48.0) * (0.7 + 0.3 * s)
++		var life2: float = rd.range_(0.45, 1.05) * (0.7 if surface == "fighter" else 1.0)         # on a body the cinders are smaller and shorter-lived: a chip of char the size of a hand across a close fight read as debris
++		var len: float = rd.range_(22.0, 48.0) * (0.7 + 0.3 * s) * (0.55 if surface == "fighter" else 1.0)
+ 		var keep2: bool = rd.next() < q and d._ember_tick < VfxLook.EMBER_PER_TICK and d._ember_alive < VfxLook.EMBER_CAP
+ 		if keep2:
+ 			var b: VfxDebris.Bit = d._bit(VfxDebris.EMBER, x + rd.range_(-14.0, 14.0), y + 8.0, z + 10.0, cos(ang) * spd, sin(ang) * spd, 0.5, life2)
+ 			b.col = VfxPalette.ember("hot")
++			if lane.a > 0.0 and rd.next() < p("lane_cinders"):
++				b.col = lane.lightened(0.25)            # a cinder of the shooter's own energy: the fighter's flavour in the blast (never white)
++				b.col2 = Color(0.0, 0.0, 0.0, 0.0)      # off Art's ember ramp, so it keeps the lane colour
+ 			b.sx = len
+ 			b.sy = 8.0
+ 			b.grav = 520.0
+@@ -132,9 +145,9 @@
+ 			d._add(b)
+ 			asked += 1
+ 	# Smoke: dark puffs rising off the burst.
+-	var nsm: int = clampi(int(round(p("smoke") * s)), 1, 8)
++	var nsm: int = clampi(int(round(p("smoke") * s * p("smoke_k"))), 2, 9)
+ 	for i in range(nsm):
+-		var sz2: float = rd.range_(44.0, 78.0) * (0.55 + 0.6 * s)
++		var sz2: float = rd.range_(44.0, 78.0) * (0.55 + 0.6 * s) * 1.15
+ 		var life3: float = rd.range_(0.6, 1.0) * smoke_life
+ 		var dx: float = rd.range_(-26.0, 26.0)
+ 		var keep3: bool = rd.next() < q
+@@ -203,8 +216,32 @@
+ 	return asked
+ 
+ 
+-## A job that came due: one wisp of the smouldering scorch.
++## One wave of flames: n tongues going up and out from (x, y), the first wave tight and the later ones spread wider (`spread`), at the blast's scale s. Returns how many it asked the pool for.
++static func _flame_wave(d: VfxDebris, rd: SimRng, x: float, y: float, z: float, s: float, n: int, q: float, cap: int, spread: float) -> int:
++	var asked: int = 0
++	var k: float = 1.0 + spread
++	for i in range(n):
++		var side: float = -1.0 + 2.0 * (float(i) + 0.5) / float(maxi(n, 1))
++		var vx: float = side * rd.range_(80.0, 220.0) * s * k + rd.range_(-30.0, 30.0)
++		var vy: float = rd.range_(90.0, 200.0) * (0.6 + 0.4 * s) * (1.0 + 0.1 * spread)       # local and in proportion: a flame tongue rises about its blast radius, never a pillar
++		var sz: float = rd.range_(26.0, 52.0) * (0.55 + 0.6 * s) * (1.0 + 0.12 * spread)
++		var life: float = rd.range_(0.45, 0.85) * (0.7 + 0.3 * s)
++		var keep: bool = rd.next() < q and d._flame_alive < cap
++		if keep:
++			d.flame(x + rd.range_(-30.0, 30.0) * s * k, y + rd.range_(0.0, 24.0), z + 6.0, vx, vy, sz, life)
++			asked += 1
++	return asked
++
++
++## A job that came due: one wisp of the smouldering scorch, or a later wave of a blast's flames (`xwave`) with the smoke that rises with it.
+ static func run_job(d: VfxDebris, kind: String, a: Dictionary) -> void:
++	if kind == "xwave":
++		var rdw: SimRng = d._rd
++		_flame_wave(d, rdw, a.x, a.y, a.z, a.s, int(a.n), float(a.q), int(a.cap), float(a.spread))
++		for i in range(int(a.smoke)):
++			if rdw.next() < float(a.q) and not (d.reduced and i > 0):
++				d.smoke(a.x + rdw.range_(-30.0, 30.0), a.y + 40.0 + rdw.range_(0.0, 40.0), a.z - 2.0, rdw.range_(54.0, 92.0) * (0.55 + 0.6 * float(a.s)), rdw.range_(0.7, 1.0) * float(a.sm))
++		return
+ 	if kind != "smoulder":
+ 		return
+ 	var rd: SimRng = d._rd
+diff --git a/render/vfx/debris.gd b/render/vfx/debris.gd
+--- a/render/vfx/debris.gd
++++ b/render/vfx/debris.gd
+@@ -190,7 +190,7 @@
+ 			_vent(S, j.a)
+ 		"blast_ring", "blast_pebbles", "blast_settle":
+ 			VfxBlast.run_job(self, S, j.kind, j.a)
+-		"smoulder":
++		"smoulder", "xwave":
+ 			VfxExplode.run_job(self, j.kind, j.a)
+ 		"colpuff":
+ 			var a: Dictionary = j.a
+diff --git a/render/vfx/shard_view.gd b/render/vfx/shard_view.gd
+--- a/render/vfx/shard_view.gd
++++ b/render/vfx/shard_view.gd
+@@ -82,9 +82,11 @@
+ 						c.a *= 0.6
+ 					puffs += 1
+ 				VfxDebris.FLAME:
+-					c.a = 1.0 - smoothstep(0.7, 1.0, f)
+-					sx = maxf(b.sx * (1.0 - 0.45 * f), minpx)
+-					sy = maxf(b.sy * (1.0 - 0.45 * f), minpx)
++					# A flame grows in over its first 0.1 s (a third of its size to full, its alpha with it) and then burns down: a burst is never one frame's pop (Legal fx03).
++					var grow: float = clampf(b.age / 0.1, 0.0, 1.0)
++					c.a = (1.0 - smoothstep(0.7, 1.0, f)) * grow
++					sx = maxf(b.sx * (1.0 - 0.45 * f) * (0.35 + 0.65 * grow), minpx)
++					sy = maxf(b.sy * (1.0 - 0.45 * f) * (0.35 + 0.65 * grow), minpx)
+ 					shards += 1
+ 				VfxDebris.RING:
+ 					c.a = 0.6 * (1.0 - f)
+diff --git a/render/vfx/shots.gd b/render/vfx/shots.gd
+--- a/render/vfx/shots.gd
++++ b/render/vfx/shots.gd
+@@ -194,13 +194,13 @@
+ 
+ 
+ ## A flame burst is a full flash and asks the register; refused, it is sparks and smoke only (VfxExplode's "spark" mode).
+-func _explode(S: SimState, d: VfxDebris, x: float, y: float, z: float, radius: float, surface: String, mode: String = "burst") -> int:
++func _explode(S: SimState, d: VfxDebris, x: float, y: float, z: float, radius: float, surface: String, mode: String = "burst", lane: Color = Color(0.0, 0.0, 0.0, 0.0)) -> int:
+ 	if mode == "burst" and flashes != null:
+ 		if flashes.ask("explosion", Color(1.0, 0.62, 0.2), S.tick, VfxFlashRegistry.disc_px(radius * 0.7, flashes.ppu_at(z)), 0.3):
+ 			_burst_tick = S.tick
+ 		else:
+-			mode = "spark"
+-	return VfxExplode.at(S, d, x, y, z, radius, surface, mode)
++			mode = "calm"        # refused (or Reduce flashing, the default): the flames still go off, in their waves and growing in, with fewer cinders (Orb, 2026-10-16: "flames and smoke")
++	return VfxExplode.at(S, d, x, y, z, radius, surface, mode, lane)
+ 
+ 
+ func _add(kind: String, x: float, y: float, z: float, size: float, life: float, col: Color, col2: Color = Color.WHITE, dx: float = 1.0, dy: float = 0.0) -> Fx:
+@@ -376,7 +376,7 @@
+ 	if explode_enabled and debris != null and oc != "dodge":
+ 		explosions += 1
+ 		last_radius = VfxExplode.radius_for(kn, dmg, VfxReact.tier_of(S.fighters[owner]) if owner >= 0 and owner < S.fighters.size() else 1)
+-		_explode(S, debris, x, y, z, last_radius, "fighter", "burst" if (oc == "hit" or oc == "stop") else "spark")
++		_explode(S, debris, x, y, z, last_radius, "fighter", "burst" if (oc == "hit" or oc == "stop") else "spark", col)
+ 	match oc:
+ 		"guard":
+ 			_add("splash", x, y, z, 80.0, life, col, col, back, 0.0)
+@@ -414,7 +414,7 @@
+ 			if explode_enabled and debris != null:
+ 				explosions += 1
+ 				last_radius = rad
+-				_explode(S, debris, x, y, z, rad, "ground")
++				_explode(S, debris, x, y, z, rad, "ground", "burst", lane_of(S, own))
+ 			elif debris != null:
+ 				var q: float = VfxLook.QUALITY_SHARDS[clampi(quality, 0, 2)] * (0.5 if reduced else 1.0)
+ 				var biome: String = VfxPalette.biome_key(x)
+@@ -442,7 +442,7 @@
+ 			if explode_enabled and debris != null:
+ 				explosions += 1
+ 				last_radius = rad
+-				_explode(S, debris, x, y, z, rad, "water")
++				_explode(S, debris, x, y, z, rad, "water", "burst", lane_of(S, own))
+ 		"mine":
+ 			# A mine's blast (a chain's too): a full-size burst where it lay, on the ground or in the air, and its blast radius shown as a ring.
+ 			var mine_ground: bool = bool(info[2]) if info != null else (y - WorldTerrain.groundY(S, x) < 1.2 * VfxLook.BH)
+@@ -450,7 +450,7 @@
+ 				explosions += 1
+ 				last_radius = rad
+ 				var low: bool = y - WorldTerrain.groundY(S, x) < 1.2 * VfxLook.BH
+-				_explode(S, debris, x, y, z, rad, "ground" if (mine_ground or low) else "air")
++				_explode(S, debris, x, y, z, rad, "ground" if (mine_ground or low) else "air", "burst", lane_of(S, own))
+ 			_add("ring", x, y, z, rad * 0.85, p("shots", "hit_life") * 1.4, lane_of(S, own))
+ 			_fuse_total.erase(int(VfxHub._g(e, "id", -1)))
+ 		"building":
+@@ -459,7 +459,7 @@
+ 			if explode_enabled and debris != null:
+ 				explosions += 1
+ 				last_radius = rad
+-				_explode(S, debris, x, y, z, rad, "wall")
++				_explode(S, debris, x, y, z, rad, "wall", "burst", lane_of(S, own))
+ 			_add("ring", x, y, z, 50.0 * big, p("shots", "end_life") * 0.8, lane_of(S, own))
+ 		"life":
+ 			if kind == "mine":
+diff --git a/render/vfx/shots_view.gd b/render/vfx/shots_view.gd
+--- a/render/vfx/shots_view.gd
++++ b/render/vfx/shots_view.gd
+@@ -114,7 +114,26 @@
+ 		shots_drawn += 1
+ 		var tcol: Color = lane
+ 		tcol.a = alpha * 0.8
+-		n = _put(n, Vector2(px, py) - dirv * tail * 0.5, dirv, tail, rad * 1.5, pz - 0.6, tcol, 0.55, 0.04, SHAPE_STREAK)
++		if hub.reduced_motion or tumbling or sp.owner >= S.fighters.size():
++			n = _put(n, Vector2(px, py) - dirv * tail * 0.5, dirv, tail, rad * 1.5, pz - 0.6, tcol, 0.55, 0.04, SHAPE_STREAK)
++		else:
++			# The shooter's flavour (data/vfx/energy.json, docs/vfx/beam-look.md): the tail is a ribbon of five segments that swims a little as it goes (the Protagonist's laminar, the Rival's ragged,
++			# the Anti-hero's a straight thin line), stepping between the fighter's two tints at the same luminance. Steady in brightness: only its shape moves.
++			var fo = S.fighters[int(sp.owner)]
++			var flv: Dictionary = VfxBeamLook.flavour(fo)
++			var tt2: Array = VfxBeamLook.tints(fo, lane, 1)
++			var amp: float = rad * 0.38 * float(flv["wob_k"])
++			var perp := Vector2(-dirv.y, dirv.x)
++			var org := Vector2(px, py)
++			var prev := org
++			var clk: float = float(sh.clock) + a
++			for si in range(1, 6):
++				var tq: float = float(si) / 5.0
++				var cur: Vector2 = org - dirv * tail * tq + perp * (sin(clk * 0.21 * float(flv["hz"]) * 6.2831853 / 3.0 - tq * 5.2 + float(sp.id)) * amp * tq)
++				var rc2: Color = (tt2[0] as Color).lerp(tt2[1], tq)
++				rc2.a = alpha * 0.85 * (1.0 - 0.8 * tq)
++				n = _line(n, prev, cur, lerpf(rad * 1.25, rad * 0.3, tq), pz - 0.6, rc2)
++				prev = cur
+ 		if look["halo"]:
+ 			var hc: Color = lane
+ 			hc.a = alpha * 0.7
+diff --git a/render/vfx/tools/effects_check.gd b/render/vfx/tools/effects_check.gd
+--- a/render/vfx/tools/effects_check.gd
++++ b/render/vfx/tools/effects_check.gd
+@@ -204,6 +204,8 @@
+ 	_reach()
+ 	_flashes()
+ 	_brawl()
++	_small_blasts()
++	_beam_look()
+ 	_ghosts()
+ 	_vision()
+ 	_wall_outcome()
+@@ -2116,7 +2118,9 @@
+ 		if b.kind == VfxDebris.CHUNK and b.grav <= 0.0:
+ 			falling = false
+ 	_check(falling, "the chunks are thrown and fall")
+-	_check(d3.jobs.size() > 0 and d3.jobs[0].kind == "smoulder", "the scorch smoulders: %d wisps queued over the next seconds" % d3.jobs.size())
++	var wisps: int = d3.jobs.filter(func(j): return j.kind == "smoulder").size()
++	var waves: int = d3.jobs.filter(func(j): return j.kind == "xwave").size()
++	_check(wisps > 0 and waves == 2, "the scorch smoulders: %d wisps queued over the next seconds, and the flames come in two later waves (%d)" % [wisps, waves])
+ 	var before: int = d3.spawned
+ 	for k in range(260):
+ 		S.T += SimConst.DT
+@@ -2126,7 +2130,7 @@
+ 	var dfi: VfxDebris = fresh.call()
+ 	VfxExplode.at(S, dfi, f1.x, g + 40.0, 0.0, R3, "fighter")
+ 	var kf: Dictionary = kinds_of.call(dfi)
+-	_check(kf.has(VfxDebris.FLAME) and not kf.has(VfxDebris.CHUNK) and not kf.has(VfxDebris.RING) and dfi.jobs.is_empty(), "on a fighter: flame, sparks, smoke; no chunks, ring or scorch")
++	_check(kf.has(VfxDebris.FLAME) and not kf.has(VfxDebris.CHUNK) and not kf.has(VfxDebris.RING) and dfi.jobs.all(func(j): return j.kind != "smoulder"), "on a fighter: flame, sparks, smoke; no chunks, ring or scorch")
+ 	var dsp: VfxDebris = fresh.call()
+ 	VfxExplode.at(S, dsp, f1.x, g + 40.0, 0.0, R3, "fighter", "spark")
+ 	var ksp: Dictionary = kinds_of.call(dsp)
+@@ -2205,7 +2209,7 @@
+ 	var plain_quads: int = view.count
+ 	sh.deflected = 1
+ 	view.update(ht, host, 1.0, plains + 600.0, 0.7, 1200.0)
+-	_check(view.count == plain_quads + 2, "and it is drawn tumbling: a turning cross of light on it (%d quads against %d)" % [view.count, plain_quads])
++	_check(view.count == plain_quads - 2, "and it is drawn tumbling: a turning cross of light on it and a straight tail in place of the flavoured ribbon (%d quads against %d)" % [view.count, plain_quads])
+ 	S.shots = []
+ 	# The mines of concept: arm, hold, the fuse, the blast; each fighter's own look; hovering and on the ground.
+ 	var hm := VfxHub.new()
+@@ -2254,7 +2258,7 @@
+ 	view.queue_free()
+ 	var saved: Dictionary = VfxExplode._data
+ 	VfxExplode._data = {}
+-	var fallback: bool = VfxExplode.p("flames") == 5.0
++	var fallback: bool = VfxExplode.p("flames") == 7.5 and VfxExplode.p("scale_floor") == 0.62
+ 	VfxExplode._data = saved
+ 	_check(fallback, "missing data falls back to the defaults")
+ 	SimCore.dispose(S)
+@@ -2536,7 +2540,7 @@
+ 	var wild_q: int = view.count
+ 	ws.wild = false
+ 	view.update(hw, host, 1.0, plains + 600.0, 0.7, 1200.0)
+-	_check(wild_q - view.count == 2, "a wild shot is drawn tumbling even if the sim has not counted a deflect (%d quads against %d)" % [wild_q, view.count])
++	_check(view.count - wild_q == 2, "a wild shot is drawn tumbling even if the sim has not counted a deflect (%d quads against the plain shot's %d)" % [wild_q, view.count])
+ 	ws.wild = true
+ 	for k in range(30):
+ 		_tick(S, hw, [])
+@@ -4717,3 +4721,104 @@
+ 	var evs: Array = events.duplicate()
+ 	evs.append(tk)
+ 	h.consume(S, evs)
++
++
++## The beams' look (docs/vfx/beam-look.md; Legal fx03): a real width by default, a thin one as a fighter's own, a ripple that moves hue at steady luminance, 2 Hz or slower, no white core, the flavour by roster id.
++func _beam_look() -> void:
++	print("the beams' look")
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 6)
++	var fp = S.fighters[0]
++	var fr = S.fighters[1]
++	_check(VfxBeamLook.key_of(fp) == "protagonist" and VfxBeamLook.key_of(fr) == "rival" and VfxBeamLook.key_of(null) == "default", "a fighter's flavour is his roster id's (%s, %s, %s)" % [VfxBeamLook.key_of(fp), VfxBeamLook.key_of(fr), VfxBeamLook.key_of(null)])
++	var ah := {"id": "ANTI-HERO"}
++	_check(VfxBeamLook.key_of(ah) == "anti_hero", "a hyphen is an underscore (ANTI-HERO is anti_hero)")
++	# Width: a real beam by default (the body layer at 2.2 times the sim's width, the old look had 1.3), the Anti-hero's the thin one.
++	var w: float = 33.0
++	var body_default: float = VfxBeamLook.thickness(null, w, 1, 1.0)
++	_check(body_default >= 1.6 * 1.3 * w, "the default beam is a real width: its body is %.0f units against the old %.0f" % [body_default, 1.3 * w])
++	_check(VfxBeamLook.thickness(ah, w, 1, 1.0) < 0.5 * VfxBeamLook.thickness(fp, w, 1, 1.0), "one fighter keeps a thin beam as his own move (%.0f against %.0f)" % [VfxBeamLook.thickness(ah, w, 1, 1.0), VfxBeamLook.thickness(fp, w, 1, 1.0)])
++	# Colour: the second tint has the first's luminance (the ripple moves hue, not brightness), and no layer is white.
++	var lane := Color("#8fd6ff")
++	var worst_luma: float = 0.0
++	var white: bool = false
++	for who in [fp, fr, ah, null]:
++		for i in range(3):
++			var tt: Array = VfxBeamLook.tints(who, lane, i)
++			worst_luma = maxf(worst_luma, absf(VfxBeamLook.luma(tt[0]) - VfxBeamLook.luma(tt[1])))
++			for c in tt:
++				if c.r > 0.93 and c.g > 0.93 and c.b > 0.93:
++					white = true
++	_check(worst_luma < 0.02, "the two tints of a layer have the same luminance (worst difference %.4f)" % worst_luma)
++	_check(not white, "no layer of any flavour is white, the core included")
++	# The ripple: 2 Hz or slower, whatever the data says; the material sets its parameters.
++	var m: ShaderMaterial = VfxBeamLook.new_material(2)
++	VfxBeamLook.set_layer(m, fp, lane, 2, 1.0, false, 3.0, 600.0, true, 0.0)
++	_check(float(m.get_shader_parameter("hz")) <= 2.0 and float(m.get_shader_parameter("lum_amp")) <= 0.1, "the ripple is 2 Hz or slower and its brightness moves by at most a tenth (%.2f Hz, %.2f)" % [float(m.get_shader_parameter("hz")), float(m.get_shader_parameter("lum_amp"))])
++	var strong: float = float(m.get_shader_parameter("strength"))
++	VfxBeamLook.set_layer(m, fp, lane, 2, 1.0, true, 3.0, 600.0, true, 0.0)
++	var calm: float = float(m.get_shader_parameter("strength"))
++	_check(calm < strong and calm > 0.7 * strong, "a calm beam (refused, or Reduce flashing) is the same beam a little dimmer, not a thin line (%.2f against %.2f)" % [calm, strong])
++	var sh0: String = VfxBeamLook.new_material(0).shader.code
++	var sh1: String = VfxBeamLook.new_material(1).shader.code
++	_check(sh0.contains("blend_add") and sh1.contains("blend_mix"), "the sheath adds its glow and the body and core are alpha-blended: layers do not add up to white")
++	_check(VfxBeamLook.new_material(2).render_priority > VfxBeamLook.new_material(0).render_priority, "the core is drawn after the sheath")
++	_check(VfxBeamLook.body_k(fr) > VfxBeamLook.body_k(fp) and VfxBeamLook.body_k(fp) > VfxBeamLook.body_k(ah), "the flash register weighs each beam by its own width (rival %.2f, protagonist %.2f, anti-hero %.2f)" % [VfxBeamLook.body_k(fr), VfxBeamLook.body_k(fp), VfxBeamLook.body_k(ah)])
++
++
++## The small energy attacks' explosions (Orb, 2026-10-16): a bolt's blast has flames and smoke, in waves, with or without the register's flash, and the flames grow in.
++func _small_blasts() -> void:
++	print("small energy attacks' explosions")
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 6)
++	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
++	var g: float = WorldTerrain.groundY(S, plains)
++	var bolt_r: float = VfxExplode.radius_for("bolt", 13.0, 1)
++	var fresh := func() -> VfxDebris:
++		var d := VfxDebris.new()
++		d.reset(6)
++		d.now = S.T
++		return d
++	var kinds_of := func(d: VfxDebris) -> Dictionary:
++		var k: Dictionary = {}
++		for b in d.bits:
++			k[b.kind] = int(k.get(b.kind, 0)) + 1
++		return k
++	var d0: VfxDebris = fresh.call()
++	VfxExplode.at(S, d0, plains, g + 20.0, 0.0, bolt_r, "ground", "burst")
++	var k0: Dictionary = kinds_of.call(d0)
++	var waves: int = d0.jobs.filter(func(j): return j.kind == "xwave").size()
++	_check(int(k0.get(VfxDebris.FLAME, 0)) >= 1 and waves == 2 and int(k0.get(VfxDebris.PUFF, 0)) >= 3, "a bolt's blast on the ground: flames now (%d), two later waves queued (%d), and smoke (%d puffs)" % [int(k0.get(VfxDebris.FLAME, 0)), waves, int(k0.get(VfxDebris.PUFF, 0))])
++	var dc: VfxDebris = fresh.call()
++	VfxExplode.at(S, dc, plains, g + 20.0, 0.0, bolt_r, "ground", "calm", Color("#8fd6ff"))
++	var kc: Dictionary = kinds_of.call(dc)
++	_check(int(kc.get(VfxDebris.FLAME, 0)) >= 1 and dc.jobs.filter(func(j): return j.kind == "xwave").size() == 2, "refused by the register (Reduce flashing, the default) the flames still go off: a 'calm' blast keeps them and loses some cinders")
++	var ds: VfxDebris = fresh.call()
++	VfxExplode.at(S, ds, plains, g + 20.0, 0.0, bolt_r, "ground", "spark")
++	_check(not kinds_of.call(ds).has(VfxDebris.FLAME), "a guard's or a deflect's blast (spark) is still sparks and smoke only")
++	# The waves arrive and run: after 0.2 s every flame of the blast has been made.
++	var total0: int = int(kinds_of.call(d0).get(VfxDebris.FLAME, 0))
++	for k in range(14):
++		S.T += SimConst.DT
++		d0.now = S.T
++		d0.step(S, SimConst.DT)
++	_check(int(kinds_of.call(d0).get(VfxDebris.FLAME, 0)) > total0 and d0.jobs.filter(func(j): return j.kind == "xwave").is_empty(), "the later waves come due and add their flames (%d, then %d alive)" % [total0, int(kinds_of.call(d0).get(VfxDebris.FLAME, 0))])
++	# A point-blank bolt or blast (the energy arts in reach) goes off at the contact the same way; a guard's is sparks and smoke.
++	S.fighters[0].x = plains
++	S.fighters[0].y = g
++	S.fighters[1].x = SimWrap.wrap(plains + 70.0)
++	S.fighters[1].y = g
++	var land := func(src: String, text: String) -> VfxHub:
++		var hp := VfxHub.new()
++		hp.press_enabled = true
++		hp.reset(S, 6)
++		_tick(S, hp, [])
++		_tick(S, hp, [VfxMock.ev("cue", {"actor": 0, "kind": "energy_land", "text": text, "source": src, "target": 1, "k": 0.0, "x": 1.0, "y": 0.0})])
++		return hp
++	var hbolt: VfxHub = land.call("hit", "bolt")
++	var kb: Dictionary = kinds_of.call(hbolt.debris)
++	_check(int(kb.get(VfxDebris.FLAME, 0)) >= 1 and hbolt.debris.jobs.filter(func(j): return j.kind == "xwave").size() == 2 and int(kb.get(VfxDebris.PUFF, 0)) >= 2, "a point-blank bolt that hits: flames now (%d), two later waves and smoke (%d puffs)" % [int(kb.get(VfxDebris.FLAME, 0)), int(kb.get(VfxDebris.PUFF, 0))])
++	var hguard: VfxHub = land.call("guard", "bolt")
++	_check(not kinds_of.call(hguard.debris).has(VfxDebris.FLAME), "a point-blank bolt that meets a guard is sparks and smoke only")
++	# A small blast is no longer a blink: its scale never falls under the floor.
++	_check(VfxExplode.scale_for(bolt_r) >= VfxExplode.p("scale_floor") - 1e-6, "the smallest blast keeps the floor of its scale (%.2f)" % VfxExplode.scale_for(bolt_r))
+diff --git a/data/vfx/energy.json b/data/vfx/energy.json
+new file mode 100644
+--- /dev/null
++++ b/data/vfx/energy.json
+@@ -0,0 +1,100 @@
++{
++ "version": 1,
++ "_note": "VFX's energy look (docs/vfx/beam-look.md): the signature beams' layers and each fighter's flavour. Read by render/vfx/beam_look.gd, never by the sim. A beam's colour is its owner's lane colour (data/art/colour-vision.json follows); a flavour sets the second tint's hue shift (the ripple moves hue at the same luminance), the ripple's wavelength and rate in Hz (2 or slower, Legal fx03), the edge turbulence, the heel's swell and `width_k`, how thick the beam is against the sim's width (one fighter may keep a thin one as his particular move). Written by the VFX Director session (Claude, claude-sonnet-5-5), 2026-10-16. A missing key falls back to the same default in code.",
++ "beam": {
++  "default": {
++   "width_k": 1.0,
++   "hue_shift": 28,
++   "hz": 1.0,
++   "wavelength": 130,
++   "flow": 70,
++   "turb": 0.15,
++   "heel": 0.5,
++   "seed": 0,
++   "wob_k": 1.0,
++   "fil": 0.6
++  },
++  "protagonist": {
++   "width_k": 1.15,
++   "hue_shift": 30,
++   "hz": 1.1,
++   "wavelength": 150,
++   "flow": 80,
++   "turb": 0.12,
++   "heel": 0.7,
++   "seed": 0,
++   "wob_k": 0.6,
++   "fil": 0.7
++  },
++  "rival": {
++   "width_k": 1.3,
++   "hue_shift": -34,
++   "hz": 0.8,
++   "wavelength": 95,
++   "flow": 60,
++   "turb": 0.34,
++   "heel": 0.35,
++   "seed": 2.1,
++   "wob_k": 1.6,
++   "fil": 0.5
++  },
++  "anti_hero": {
++   "width_k": 0.42,
++   "hue_shift": 16,
++   "hz": 1.4,
++   "wavelength": 220,
++   "flow": 90,
++   "turb": 0.0,
++   "heel": 0.2,
++   "seed": 4.2,
++   "wob_k": 0.0,
++   "fil": 0.0
++  }
++ },
++ "layers": [
++  {
++   "k": 4.0,
++   "px": 6,
++   "alpha": 0.36,
++   "soft": 2.0,
++   "turb_k": 1.6,
++   "lum_amp": 0.16,
++   "sat": 2.2,
++   "val": 0.7,
++   "lighten": 0.0,
++   "flow_k": 0.8,
++   "wob": 0.22
++  },
++  {
++   "k": 2.2,
++   "px": 4,
++   "alpha": 0.9,
++   "soft": 1.4,
++   "turb_k": 1.0,
++   "lum_amp": 0.07,
++   "sat": 2.0,
++   "val": 0.88,
++   "lighten": 0.0,
++   "flow_k": 1.0,
++   "wob": 0.12
++  },
++  {
++   "k": 0.9,
++   "px": 2,
++   "alpha": 1.0,
++   "soft": 0.9,
++   "turb_k": 0.0,
++   "lum_amp": 0.04,
++   "sat": 0.85,
++   "val": 1.0,
++   "lighten": 0.1,
++   "flow_k": 1.4,
++   "wob": 0.05
++  }
++ ],
++ "calm": {
++  "strength": 0.86,
++  "rise_s": 0.3
++ },
++ "cap": 40
++}
+diff --git a/tools/schemas/vfx-energy.schema.json b/tools/schemas/vfx-energy.schema.json
+new file mode 100644
+--- /dev/null
++++ b/tools/schemas/vfx-energy.schema.json
+@@ -0,0 +1,176 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "meridian/vfx-energy",
++  "title": "vfx energy look (version 1)",
++  "description": "data/vfx/energy.json: the signature beams' layers and each fighter's flavour (docs/vfx/beam-look.md). Presentation only: read by render/vfx/beam_look.gd, never by the sim. Version field: version. Policy: closed except keys starting with an underscore. A flavour is keyed by the roster id in lower case with a hyphen as an underscore; `hz` is the ripple rate at any point of the beam and may not pass 2 (Legal fx03); a layer's `lum_amp` is the most its alpha moves with the shimmer and may not pass 0.2.",
++  "type": "object",
++  "required": [
++    "version"
++  ],
++  "properties": {
++    "version": {
++      "const": 1
++    },
++    "beam": {
++      "type": "object",
++      "patternProperties": {
++        "^[a-z][a-z0-9_]*$": {
++          "type": "object",
++          "properties": {
++            "width_k": {
++              "type": "number",
++              "exclusiveMinimum": 0,
++              "maximum": 3
++            },
++            "hue_shift": {
++              "type": "number",
++              "minimum": -90,
++              "maximum": 90
++            },
++            "hz": {
++              "type": "number",
++              "exclusiveMinimum": 0,
++              "maximum": 2
++            },
++            "wavelength": {
++              "type": "number",
++              "minimum": 20,
++              "maximum": 600
++            },
++            "flow": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 200
++            },
++            "turb": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 1
++            },
++            "heel": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 2
++            },
++            "seed": {
++              "type": "number"
++            },
++            "wob_k": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 3
++            },
++            "fil": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 1
++            }
++          },
++          "additionalProperties": false,
++          "patternProperties": {
++            "^_": true
++          }
++        }
++      },
++      "additionalProperties": false,
++      "properties": {}
++    },
++    "layers": {
++      "type": "array",
++      "minItems": 3,
++      "maxItems": 3,
++      "items": {
++        "type": "object",
++        "required": [
++          "k",
++          "px",
++          "alpha",
++          "soft",
++          "turb_k",
++          "lum_amp",
++          "sat",
++          "val",
++          "lighten",
++          "flow_k",
++          "wob"
++        ],
++        "properties": {
++          "k": {
++            "type": "number",
++            "exclusiveMinimum": 0
++          },
++          "px": {
++            "type": "number",
++            "minimum": 0
++          },
++          "alpha": {
++            "type": "number",
++            "minimum": 0,
++            "maximum": 1
++          },
++          "soft": {
++            "type": "number",
++            "exclusiveMinimum": 0
++          },
++          "turb_k": {
++            "type": "number",
++            "minimum": 0
++          },
++          "lum_amp": {
++            "type": "number",
++            "minimum": 0,
++            "maximum": 0.2
++          },
++          "sat": {
++            "type": "number",
++            "exclusiveMinimum": 0
++          },
++          "val": {
++            "type": "number",
++            "exclusiveMinimum": 0,
++            "maximum": 1.2
++          },
++          "lighten": {
++            "type": "number",
++            "minimum": 0,
++            "maximum": 0.2
++          },
++          "flow_k": {
++            "type": "number",
++            "minimum": 0
++          },
++          "wob": {
++            "type": "number",
++            "minimum": 0,
++            "maximum": 0.5
++          }
++        },
++        "additionalProperties": false
++      }
++    },
++    "calm": {
++      "type": "object",
++      "properties": {
++        "strength": {
++          "type": "number",
++          "exclusiveMinimum": 0,
++          "maximum": 1
++        },
++        "rise_s": {
++          "type": "number",
++          "minimum": 0,
++          "maximum": 2
++        }
++      },
++      "additionalProperties": false
++    },
++    "cap": {
++      "type": "number",
++      "minimum": 0
++    }
++  },
++  "additionalProperties": false,
++  "patternProperties": {
++    "^_": true
++  }
++}
+diff --git a/tools/schemas/map.json b/tools/schemas/map.json
+--- a/tools/schemas/map.json
++++ b/tools/schemas/map.json
+@@ -456,6 +456,10 @@
+       "schema": "vfx-power.schema.json"
+     },
+     {
++      "match": "data/vfx/energy.json",
++      "schema": "vfx-energy.schema.json"
++    },
++    {
+       "match": "data/narrative/combat_barks.json",
+       "schema": "narrative-barks.schema.json"
+     },
+diff --git a/render/core/beam_view.gd b/render/core/beam_view.gd
+--- a/render/core/beam_view.gd
++++ b/render/core/beam_view.gd
+@@ -9,6 +9,9 @@
+ ## its strength; a calm clash has no flare and its two beams are the same.
+ ## A beam comes and goes once: its strength rises over RenderLook.BEAM_RISE_S, holds and falls to nothing at its end
+ ## (strength()), and a clash's flare and beams rise and fall the same way (clash_strength()). Nothing pulses.
++## The layers' look is VFX's (render/vfx/beam_look.gd, shaders/beam.gdshader; docs/vfx/beam-look.md): a real width, a slow hue ripple at steady luminance, turbulence on the soft edge, no white core,
++## and each fighter's own flavour. The register's decision (`bright`) now only paces the tail and decides the rise: refused, or under reduced flashing, a beam is the same beam at 0.78 of its
++## strength with a slower rise, never a thin line in place of the core.
+ 
+ const LAYERS: Array = [[2.4, 4.0, 0.25], [1.3, 3.0, 0.6], [0.5, 2.0, 0.95]]   # width factor, extra pixels, alpha
+ 
+@@ -22,8 +25,8 @@
+ 	_cyl.top_radius = 0.5
+ 	_cyl.bottom_radius = 0.5
+ 	_cyl.height = 1.0
+-	_cyl.radial_segments = 12
+-	_cyl.rings = 0
++	_cyl.radial_segments = 16
++	_cyl.rings = 24            # rings along the beam: the width swells and thins along it (VfxBeamLook, the shader's `wob`)
+ 	var s := SphereMesh.new()
+ 	s.radius = 0.5
+ 	s.height = 1.0
+@@ -39,14 +42,14 @@
+ 	# beam's tail at the same place in the world); a tool's posed state has only this view's own.
+ 	var ppu: float = host.vfx.px_per_unit if host != null else z
+ 	for b in S.beams:
+-		var k: float = strength(b.t, b.life)
++		var bright: bool = host == null or host.beam_flash(b)
++		var k: float = strength(b.t, b.life, 0.0 if bright else VfxBeamLook.calm_rise())
+ 		var s: float = b.p * b.len
+-		var bright: bool = host == null or host.beam_flash(b)
+ 		var tail: float = tail_at(b, ppu if bright else 0.0)
+ 		var x0: float = SimWrap.sdx(cam_x, b.ox + b.ux * tail)
+ 		var a := Vector2(x0, b.oy + b.uy * tail)
+ 		var e := Vector2(x0 + b.ux * (s - tail), b.oy + b.uy * s)
+-		_beam(n, a, e, b.w, RenderLook.col(b.col), k, z, bright, b.oz + b.zs * tail, b.oz + b.zs * s)
++		_beam(n, a, e, b.w, RenderLook.col(b.col), k, z, bright, b.oz + b.zs * tail, b.oz + b.zs * s, b.A, String(b.col), S.T, tail <= 0.5)
+ 		n += 1
+ 	var c = S.game.clash
+ 	var clash_ok: bool = host == null or host.clash_flash
+@@ -59,8 +62,8 @@
+ 		var dx: float = SimWrap.sdx(c.A.x, c.D.x)
+ 		var m := Vector2(ax + dx * mid, c.A.y + 38.0 + (c.D.y - c.A.y) * mid)
+ 		var mz: float = c.A.z + (c.D.z - c.A.z) * mid   # the fighters' depths (0 on the plane): the beams meet between them
+-		_beam(n, Vector2(ax, c.A.y + 38.0), m, 26.0 + c.A.tier * 8.0, RenderLook.col(c.A.aura), ck, z, clash_ok, c.A.z, mz)
+-		_beam(n + 1, Vector2(ax + dx, c.D.y + 38.0), m, 26.0 + c.D.tier * 8.0, RenderLook.col(c.D.aura), ck, z, clash_ok, c.D.z, mz)
++		_beam(n, Vector2(ax, c.A.y + 38.0), m, 26.0 + c.A.tier * 8.0, RenderLook.col(c.A.aura), ck, z, clash_ok, c.A.z, mz, c.A, String(c.A.aura), S.T, true)
++		_beam(n + 1, Vector2(ax + dx, c.D.y + 38.0), m, 26.0 + c.D.tier * 8.0, RenderLook.col(c.D.aura), ck, z, clash_ok, c.D.z, mz, c.D, String(c.D.aura), S.T, true)
+ 		RenderMats.set_glow(_flare.material_override, Color.WHITE, ck)
+ 		n += 2
+ 		_flare.position = Vector3(m.x, m.y, RenderLook.Z_BEAMS + 2.0 + mz)
+@@ -84,14 +87,14 @@
+ 	var own: float = clampf((b.t - 0.4) / (b.life - 0.4), 0.0, 1.0) * b.len
+ 	if ppu <= 0.0:
+ 		return own
+-	var a_tick: float = RenderLook.BEAM_TAIL_PX / (b.w * float(LAYERS[1][0]) * ppu * ppu)
++	var a_tick: float = RenderLook.BEAM_TAIL_PX / (b.w * VfxBeamLook.body_k(b.A) * ppu * ppu)
+ 	return minf(own, (b.t - 0.4) / SimConst.DT * a_tick)
+ 
+ 
+ ## A beam's strength at age t of its life: one rise, a hold, one fall.
+-static func strength(t: float, life: float) -> float:
++static func strength(t: float, life: float, rise: float = 0.0) -> float:
+ 	var fall: float = 1.0 if t < 0.3 else maxf(0.0, 1.0 - (t - 0.3) / (life - 0.3))
+-	return smoothstep(0.0, RenderLook.BEAM_RISE_S, t) * fall
++	return smoothstep(0.0, maxf(RenderLook.BEAM_RISE_S, rise), t) * fall
+ 
+ 
+ ## A clash's strength t seconds into its dur: up over CLASH_RISE_S, down over its last CLASH_FALL_S.
+@@ -101,13 +104,14 @@
+ 
+ ## One beam from a to e (this view's x and the world's y). za, ze: the depth at each end (the sim's Beam.oz and zs; 0 on
+ ## the fighter plane). A beam with no depth is placed exactly as it always was.
+-func _beam(i: int, a: Vector2, e: Vector2, w: float, c: Color, k: float, z: float, bright: bool = true, za: float = 0.0, ze: float = 0.0) -> void:
++func _beam(i: int, a: Vector2, e: Vector2, w: float, c: Color, k: float, z: float, bright: bool = true, za: float = 0.0, ze: float = 0.0, who = null, hex: String = "", t: float = 0.0, at_heel: bool = true) -> void:
+ 	while _pool.size() <= i:
+ 		var layers: Array = []
+ 		for j in range(LAYERS.size()):
+ 			var mi := MeshInstance3D.new()
+ 			mi.mesh = _cyl
+-			mi.material_override = RenderMats.glow(Color.WHITE, 1.0, RenderLook.BEAM_EDGE[j])
++			mi.material_override = VfxBeamLook.new_material(j)
++			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+ 			add_child(mi)
+ 			layers.append(mi)
+ 		_pool.append(layers)
+@@ -119,15 +123,7 @@
+ 		if not mi.visible:
+ 			continue
+ 		var u: Vector2 = d / l
+-		var th: float = w * LAYERS[j][0] + LAYERS[j][1] / z
+-		var cj: Color = Color.WHITE if j == 2 else c
+-		var aj: float = LAYERS[j][2] * k
+-		if not bright:
+-			if j == 2:   # the calm form: a thin line in the beam's own colour where the white core was
+-				th = w * LAYERS[j][0] * RenderLook.BEAM_LINE + LAYERS[j][1] / z
+-				cj = c.lerp(Color.WHITE, 0.35)
+-			else:
+-				aj *= RenderLook.BEAM_SOFT
++		var th: float = VfxBeamLook.thickness(who, w, j, z)
+ 		if za == 0.0 and ze == 0.0:
+ 			mi.transform = Transform3D(Basis(Vector3(u.y, -u.x, 0.0) * th, Vector3(u.x, u.y, 0.0) * (l + th * 0.5), Vector3(0.0, 0.0, th)), Vector3((a.x + e.x) * 0.5, (a.y + e.y) * 0.5, RenderLook.Z_BEAMS))
+ 		else:
+@@ -137,4 +133,4 @@
+ 			dir /= l3
+ 			var side := Vector3(u.y, -u.x, 0.0)
+ 			mi.transform = Transform3D(Basis(side * th, dir * (l3 + th * 0.5), side.cross(dir) * th), Vector3((a.x + e.x) * 0.5, (a.y + e.y) * 0.5, RenderLook.Z_BEAMS + (za + ze) * 0.5))
+-		RenderMats.set_glow(mi.material_override, cj, aj)
++		VfxBeamLook.set_layer(mi.material_override, who, VfxAura.lane_color(hex) if hex != "" else c, j, k, not bright, t, l, at_heel, float(i))
+diff --git a/render/core/sim_host.gd b/render/core/sim_host.gd
+--- a/render/core/sim_host.gd
++++ b/render/core/sim_host.gd
+@@ -203,9 +203,9 @@
+ ## What a beam of length len and width w (world units; the sim's b.w) covers in one of the standard's windows: its body
+ ## layer's width, along as much of its length as a window holds.
+ ## z: the depth it is drawn at (the plane's scale with depth off).
+-func beam_px(len: float, w: float, z: float = 0.0) -> float:
++func beam_px(len: float, w: float, z: float = 0.0, who = null) -> float:
+ 	var ppu: float = vfx.flashes.ppu_at(z - flash_focus_z)
+-	return minf(len * ppu, RenderLook.FLASH_WINDOW_DIAG) * w * float(BeamView.LAYERS[1][0]) * ppu
++	return minf(len * ppu, RenderLook.FLASH_WINDOW_DIAG) * w * VfxBeamLook.body_k(who) * ppu
+ 
+ 
+ ## A clash's flare and its two beams, each reaching half way between the fighters.
+@@ -214,7 +214,7 @@
+ 	var ppu: float = vfx.flashes.ppu_at(z - flash_focus_z)
+ 	var half: float = 0.5 * absf(SimWrap.sdx(c.A.x, c.D.x))
+ 	var r: float = (RenderLook.FLASH_CLASH_R + 20.0 / maxf(ppu, 0.01)) * RenderLook.FLASH_GLOW_R
+-	return VfxFlashRegistry.disc_px(r, ppu) + beam_px(half, 26.0 + c.A.tier * 8.0, z) + beam_px(half, 26.0 + c.D.tier * 8.0, z)
++	return VfxFlashRegistry.disc_px(r, ppu) + beam_px(half, 26.0 + c.A.tier * 8.0, z, c.A) + beam_px(half, 26.0 + c.D.tier * 8.0, z, c.D)
+ 
+ 
+ ## Whether a beam's bright form (its white core, at full strength) was granted. One the host has not seen in a tick
+@@ -229,7 +229,7 @@
+ 	var live: Dictionary = {}
+ 	for b in S.beams:
+ 		var id: int = b.get_instance_id()
+-		live[id] = bool(_beam_ok[id]) if _beam_ok.has(id) else (not vfx.flashes.reduced and ask_flash("beam", RenderLook.col(b.col), beam_px(b.len, b.w, b.oz + 0.5 * b.zs * b.len), RenderLook.FLASH_STEP.beam))
++		live[id] = bool(_beam_ok[id]) if _beam_ok.has(id) else (not vfx.flashes.reduced and ask_flash("beam", RenderLook.col(b.col), beam_px(b.len, b.w, b.oz + 0.5 * b.zs * b.len, b.A), RenderLook.FLASH_STEP.beam))
+ 	_beam_ok = live
+ 	var on: bool = S.game.clash != null
+ 	if on and not _clash_on:
+diff --git a/render/tools/flash_reg_check.gd b/render/tools/flash_reg_check.gd
+--- a/render/tools/flash_reg_check.gd
++++ b/render/tools/flash_reg_check.gd
+@@ -124,7 +124,7 @@
+ 	host.S.beams.append(b)
+ 	host._ask_beams()
+ 	var rows: Array = host.vfx.flashes.log_rows()
+-	var res: Array = [_rows_of(host, "beam") - before, host.beam_flash(b), float(rows[-1][6]) if _rows_of(host, "beam") > before else 0.0, host.vfx.flashes.weight_of("beam", host.beam_px(b.len, b.w))]
++	var res: Array = [_rows_of(host, "beam") - before, host.beam_flash(b), float(rows[-1][6]) if _rows_of(host, "beam") > before else 0.0, host.vfx.flashes.weight_of("beam", host.beam_px(b.len, b.w, 0.0, b.A))]
+ 	host.S.beams.erase(b)
+ 	host._ask_beams()
+ 	return res
+@@ -220,7 +220,7 @@
+ 	reg4.ppu = 0.3   # a wide framing: the same beam is a thin strip
+ 	var w_far: float = reg4.weight_of("beam", host.beam_px(3000.0, 33.0))
+ 	reg4.ppu = ppu_was
+-	_expect(absf(wts[0] - 0.17) < 0.03 and absf(wts[1] - 0.07) < 0.02 and absf(wts[2] - 0.2) < 0.03 and wts[3] == 1.0 and wts[4] < 0.2 and w_far < 0.3, "at the close framing a body's white weighs %.2f, a head flash %.2f and a guard flash %.2f (VFX's estimates: 0.17, 0.07, 0.2); a tier 4 beam weighs %.0f, a short one %.2f, and a beam seen from far %.2f" % [wts[0], wts[1], wts[2], wts[3], wts[4], w_far])
++	_expect(absf(wts[0] - 0.17) < 0.03 and absf(wts[1] - 0.07) < 0.02 and absf(wts[2] - 0.2) < 0.03 and wts[3] == 1.0 and wts[4] < 0.3 and w_far < 0.5, "at the close framing a body's white weighs %.2f, a head flash %.2f and a guard flash %.2f (VFX's estimates: 0.17, 0.07, 0.2); a tier 4 beam weighs %.0f, a short one %.2f, and a beam seen from far %.2f" % [wts[0], wts[1], wts[2], wts[3], wts[4], w_far])
+ 	# The weighted rule through the host's ask, with areas given (A is a full-weight area; the register's clock is stepped by hand so the match adds nothing).
+ 	var A: float = VfxFlashRegistry.AREA_FULL
+ 	var a: bool = host.ask_flash("cue_flare", cyan, A, 0.5)             # low, weight 1
+diff --git a/render/tools/depth_check.gd b/render/tools/depth_check.gd
+--- a/render/tools/depth_check.gd
++++ b/render/tools/depth_check.gd
+@@ -98,10 +98,10 @@
+ 	var d: Vector2 = e - a
+ 	var u: Vector2 = d / d.length()
+ 	for j in range(BeamView.LAYERS.size()):
+-		var th: float = 30.0 * BeamView.LAYERS[j][0] + BeamView.LAYERS[j][1] / 1.15
++		var th: float = VfxBeamLook.thickness(null, 30.0, j, 1.15)
+ 		var old := Transform3D(Basis(Vector3(u.y, -u.x, 0.0) * th, Vector3(u.x, u.y, 0.0) * (d.length() + th * 0.5), Vector3(0.0, 0.0, th)), Vector3((a.x + e.x) * 0.5, (a.y + e.y) * 0.5, RenderLook.Z_BEAMS))
+ 		same = same and (bv._pool[0][j] as MeshInstance3D).transform == old
+-	_expect(same, "a beam with no depth is placed by the old formula, to the bit (%d layers)" % BeamView.LAYERS.size())
++	_expect(same, "a beam with no depth is placed by the old formula, with VFX's widths, to the bit (%d layers)" % BeamView.LAYERS.size())
+ 	# --- a beam in depth
+ 	var za: float = -40.0
+ 	var ze: float = -640.0
+diff --git a/render/vfx/reach.gd b/render/vfx/reach.gd
+--- a/render/vfx/reach.gd
++++ b/render/vfx/reach.gd
+@@ -232,6 +232,11 @@
+ 		made["land"] = int(made.get("land", 0)) + 1
+ 		if l.big:
+ 			made["full_flash"] = int(made.get("full_flash", 0)) + 1
++		# Orb, 2026-10-16: the small energy attacks' explosions "more explosive, flames and smoke". A point-blank bolt or blast goes off at the contact as the ranged ones do (VfxExplode on the
++		# body: a few flame tongues in waves, growing in, cinders in the shooter's colour, smoke; a guard's is sparks and smoke only). Never a flash: the register's ask above is the only one.
++		if debris != null and int(debris.quality) > 0:
++			var rad: float = VfxExplode.radius_for("lob" if blast else "bolt", 0.0, 1)
++			made["boom"] = int(made.get("boom", 0)) + VfxExplode.at(S, debris, l.x, l.y, fv.z, rad, "fighter", "spark" if guard else "calm", col)
+ 		# The rim: the near side of each fighter, 3 ticks.
+ 		for who in [slot, vic]:
+ 			var r := Fx.new()

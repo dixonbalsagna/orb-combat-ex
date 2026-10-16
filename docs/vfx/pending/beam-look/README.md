@@ -1,0 +1,6 @@
+# Parked by VFX (2026-10-16): the energy look
+
+Built in scratch on HEAD 32029623, measured on Tools' path, not applied. The plan and the numbers: `docs/vfx/beam-look.md`.
+
+- `beam-look.patch` (22 files; `files.txt` lists them): the beam's layers and flavours (`render/vfx/beam_look.gd`, `shaders/beam.gdshader`, `beam_glow.gdshader`, `beam_core.gdshaderinc`, `data/vfx/energy.json` with its schema and map entry), the bolts' ribbon tails (`shots_view.gd`), the explosions' waves, flames always and the point-blank landing (`explode.gd`, `debris.gd`, `shard_view.gd`, `shots.gd`, `reach.gd`), tests (`effects_check.gd`: the new checks), and **four Rendering files** that the new widths touch: `render/core/beam_view.gd` (the layers' materials and sizes, the rise), `render/core/sim_host.gd` (the register weighs a beam by its own width), and the two checks that encode the old sizes (`render/tools/flash_reg_check.gd`, `render/tools/depth_check.gd`). Apply from the repo root with `git apply --ignore-whitespace docs/vfx/pending/beam-look/beam-look.patch` (`debris.gd` is CRLF in the working tree). It touches no sim file.
+- Gates in the scratch copy: effects_check, hash_check (plain and press styles), determinism (plain and `--intro`), the negative control failing as it must, `flash_reg_check`, `depth_check`, `after_check`, `node tools/validate.js` (0 errors, 0 warnings).
