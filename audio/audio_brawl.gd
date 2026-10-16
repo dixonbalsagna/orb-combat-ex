@@ -28,7 +28,7 @@ var _landed: Dictionary = {}              # victim slot -> the tick an energy_la
 var _double_n: int = -1                   # the tick a double hit's two blows land on (-1 for none)
 var _double_done: bool = false            # the one sound for the pair has been made
 var _held: Dictionary = {}                # attacker slot -> {q: the gaps (ticks) of its held burst's blows not yet heard}
-var _perfects: Dictionary = {}            # attacker slot -> the perfect follow-up in flight {n, k, text, link, foe}
+var _perfects: Dictionary = {}            # attacker slot -> the perfect follow-up in flight {n, k}
 var _meds: Dictionary = {}                # attacker slot -> the ticks of its recent medium hits (the grind)
 var _last_hit: Dictionary = {}            # attacker slot -> the tick of its last melee hit (a spark waits for the hit's transient to pass)
 var _double_x: float = 0.0                # the double hit's centre (the cue's x and y)
@@ -417,6 +417,16 @@ func hit(S: SimState, e) -> Array:
 	var a: int = int(e.attacker)
 	var closing: bool = _close.get(a, -1) == S.tick
 	var sound: String = String(meta.sound)
+	var pf = _perfects.get(a)      # a perfect follow-up in flight: this hit may be its own
+	if pf != null and S.tick > int(pf.n) + int(cfg.perfect.land.after):
+		_perfects.erase(a)
+		pf = null
+	if pf != null and S.tick >= int(pf.n) - int(cfg.perfect.land.before):
+		var PH: Dictionary = cfg.perfect.hit
+		pitch *= pow(2.0, minf(float(PH.max_st), float(PH.st_per_count) * float(pf.k)) / 12.0)
+		if int(pf.k) >= 3:
+			gain += float(PH.close_db)
+		_perfects.erase(a)
 	var held_gap: int = -1
 	if st == "light" and not guarded and _held.has(a) and not (_held[a].q as Array).is_empty():
 		held_gap = int((_held[a].q as Array).pop_front())
@@ -455,13 +465,6 @@ func hit(S: SimState, e) -> Array:
 		gain += float(cfg.flurry.close_db)
 	out.append(cues.make_cue(sound, float(e.x), float(e.y), gain, pitch, int(meta.priority), "Sfx", String(meta.cls), int(meta.cap), String(meta.caption), S))
 	_last_hit[a] = S.tick
-	var pf = _perfects.get(a)
-	if pf != null:
-		if S.tick > int(pf.n) + int(cfg.perfect.land.after):
-			_perfects.erase(a)
-		elif S.tick >= int(pf.n) - int(cfg.perfect.land.before):
-			out.append_array(_perfect_note(S, pf, e))
-			_perfects.erase(a)
 	var v: int = int(e.victim)
 	if not guarded and _winding.has(v) and bool(_winding[v].heavy) and (st == "light" or st == "medium"):
 		var A: Dictionary = cfg.charge.armour
@@ -488,44 +491,32 @@ func _fixed(sound: String, x: float, y: float, gain_db: float, pitch: float, pri
 	return c
 
 
-## The AI's chain, heard by a human it is made against: its colour is the opponent's. (Two humans, or two AIs, share one.)
-func _is_foe(S: SimState, a: int) -> bool:
-	if a < 0 or S.fighters.size() < 2 or a >= S.fighters.size():
-		return false
-	return S.fighters[a].ai != null and S.fighters[1 - a].ai == null
-
-
-func _family(S: SimState, a: int) -> Dictionary:
-	return cfg.perfect.foe if _is_foe(S, a) else cfg.perfect.own
-
-
 ## A plain light's pose lets go and its window opens (k 1): a dry tick for the attacker, who has no hit to tap on. Every other
 ## window opens on the hit itself, which is the cue.
 func _window_open(S: SimState, e, out: Array) -> void:
 	if int(e.k) != 1:
 		return
 	var a: int = int(e.actor)
-	if a < 0 or a >= S.fighters.size() or _is_foe(S, a):
+	if a < 0 or a >= S.fighters.size():
 		return
 	var P: Dictionary = cfg.perfect
 	var f = S.fighters[a]
-	out.append(_fixed(String(P.tick.sound), f.x, f.y, float(P.tick.gain_db), 1.0, int(P.priority.tick), String(P.bus), String(P.cls.tick), int(P.cap.tick), String(P.tick.caption)))
+	out.append(_fixed(String(P.tick.sound), f.x, f.y, float(P.tick.gain_db), 1.0, int(P.tick.priority), String(P.bus), String(P.tick.cls), int(P.tick.cap), String(P.tick.caption)))
 
 
-## A tap inside the window: the follow-up is thrown. A spark at the tap, at the chain's note (the confirmation, and the
-## defender's tell), and the note itself waits for the follow-up's hit. `k` is the chain's count with this perfect in it, `text`
-## the follow-up's strength, `n` its landing tick, `source` "link" for a follow-up of another strength than the blow that landed.
+## A tap inside the window: the follow-up is thrown. One low tok at the tap, a semitone higher for each count (the confirmation,
+## and the defender's tell; one sound for both sides). The follow-up's own hit leans up a little for the count (see hit()).
+## `k` is the chain's count with this perfect in it, `n` the follow-up's landing tick.
 func _perfect(S: SimState, e, out: Array) -> void:
 	var a: int = int(e.actor)
 	if a < 0 or a >= S.fighters.size():
 		return
 	var P: Dictionary = cfg.perfect
-	var fam: Dictionary = _family(S, a)
 	var k: int = maxi(int(e.k), 1)
-	var ratio: float = float(fam.ratios[mini(k, fam.ratios.size()) - 1])
+	var ratio: float = float(P.spark.ratios[mini(k, P.spark.ratios.size()) - 1])
 	var f = S.fighters[a]
-	var spark = _fixed(String(fam.spark), f.x, f.y, float(P.gain_db.spark), ratio, int(P.priority.spark), String(P.bus), String(P.cls.spark), int(P.cap.spark))
-	# a spark that lands on a hit's first 30 ms is buried by its transient (measured, beat_check): it waits until the hit's
+	var spark = _fixed(String(P.spark.sound), f.x, f.y, float(P.spark.gain_db), ratio, int(P.spark.priority), String(P.bus), String(P.spark.cls), int(P.spark.cap))
+	# a tok that lands on a hit's first 30 ms is buried by its transient (measured, beat_check): it waits until the hit's
 	# transient is clear, which is `clear_ticks` after the hit (the last hit landed, or the one due in the next 3 ticks)
 	var hit_at: int = int(_last_hit.get(a, -99))
 	for b in _blows.get(a, []):
@@ -536,29 +527,10 @@ func _perfect(S: SimState, e, out: Array) -> void:
 		_pending.append({"actor": a, "wait": wait, "cue": spark, "what": "spark"})
 	else:
 		out.append(spark)
-	_perfects[a] = {"n": int(e.n), "k": k, "text": String(e.text), "link": String(e.source) == "link", "foe": _is_foe(S, a)}
+	_perfects[a] = {"n": int(e.n), "k": k}
 
 
-## The follow-up's own hit lands: the chain's note rides on it. The third (and a link that closes it) is the resolving chord.
-func _perfect_note(S: SimState, pf: Dictionary, e) -> Array:
-	var out: Array = []
-	var P: Dictionary = cfg.perfect
-	var fam: Dictionary = P.foe if bool(pf.foe) else P.own
-	var k: int = int(pf.k)
-	var closing: bool = k >= fam.ratios.size()
-	var x: float = float(e.x)
-	var y: float = float(e.y)
-	if closing:
-		out.append(_fixed(String(fam.close), x, y, float(P.gain_db.close), 1.0, int(P.priority.close), String(P.bus), String(P.cls.close), int(P.cap.close)))
-	else:
-		var sound: String = String(fam.note) if bool(pf.foe) else String(fam.by_strength.get(String(pf.text), fam.by_strength.light))
-		out.append(_fixed(sound, x, y, float(P.gain_db.note), float(fam.ratios[k - 1]), int(P.priority.note), String(P.bus), String(P.cls.note), int(P.cap.note)))
-	if bool(pf.link) and not bool(pf.foe):
-		out.append(_fixed(String(P.link.sound), x, y, float(P.link.gain_db), 1.0 if closing else float(fam.ratios[k - 1]), int(P.priority.note), String(P.bus), String(P.cls.link), int(P.cap.link)))
-	return out
-
-
-## The string goes on, the chain does not: a quiet downward droop from the last note. Silent for a lapse (90 ticks) and for a
+## The string goes on, the chain does not: a quiet downward droop from the last tok. Silent for a lapse (90 ticks) and for a
 ## count of nothing; there is no buzzer.
 func _chain_broken(S: SimState, e, out: Array) -> void:
 	var a: int = int(e.actor)
@@ -571,11 +543,10 @@ func _chain_broken(S: SimState, e, out: Array) -> void:
 	var k: int = int(e.k)
 	if k < 1 or not (text in B.texts):
 		return
-	var fam: Dictionary = _family(S, a)
-	var ratio: float = float(fam.ratios[mini(k, fam.ratios.size()) - 1])
-	var f = S.fighters[a]
 	var P: Dictionary = cfg.perfect
-	out.append(_fixed(String(B.sound), f.x, f.y, float(B.gain_db), ratio, int(P.priority.break), String(P.bus), String(P.cls.break), int(P.cap.break)))
+	var ratio: float = float(P.spark.ratios[mini(k, P.spark.ratios.size()) - 1])
+	var f = S.fighters[a]
+	out.append(_fixed(String(B.sound), f.x, f.y, float(B.gain_db), ratio, int(B.priority), String(P.bus), String(B.cls), int(B.cap)))
 
 
 ## An opening that will not launch (the launcher rests): a dull knock where the ping would have been, so a player learns

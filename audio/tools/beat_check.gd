@@ -76,42 +76,30 @@ func _run() -> void:
 	var light_end: float = _db(_rms_at(bank.buffer("impact.light", 0), bank.rate_of("impact.light"), 83.0, 10.0) / _loudest_frame(bank.buffer("impact.light", 0), bank.rate_of("impact.light")))
 	ok(light_end < -10.0, "a light is mostly gone when its window closes (%.1f dB)" % light_end)
 
-	print("2. can the spark and the notes be heard on top of the hit they ride on, and do they hide it")
+	print("2. can the tok be heard on top of the hit it follows, and does it hide the hit")
 	var cfgj: Dictionary = AudioBank.load_json("res://audio/data/beat_cues.json")
-	var ratios: Array = cfgj.perfect.own.ratios
-	var notes: Array = [["spark", "perfect.spark", 1652.0], ["light", "perfect.light", 1652.0], ["medium", "perfect.medium", 1652.0], ["heavy", "perfect.heavy", 1652.0], ["close", "perfect.close", 2200.0]]
-	var imp: Dictionary = {"spark": "impact.light", "light": "impact.light", "medium": "impact.medium", "heavy": "impact.heavy", "close": "impact.light"}
-	print("   offset = how long after the hit's start the sound plays; SNR = the sound's band over the hit's own energy in that band, over the sound's first 60 ms")
-	for nrow in notes:
-		var kind: String = nrow[0]
-		var nid: String = nrow[1]
-		var f0: float = nrow[2]
-		var iid: String = imp[kind]
-		var worst: float = 99.0
-		var line: String = ""
-		for ratio in ([1.0, ratios[1], ratios[2]] if kind != "close" else [1.0]):
-			var fnote: float = f0 * ratio
-			for off in [0.0, 17.0, 33.0, 50.0, 100.0, 133.0]:
-				var nb: PackedFloat32Array = bank.buffer(nid, 0)
-				var ib: PackedFloat32Array = bank.buffer(iid, 0)
-				var n_rms: float = _band_rms(nb, bank.rate_of(nid), fnote, 2.0, 0.0, 60.0)
-				# the recipe's playback pitch shifts the note's frequency, not its level; a cue's gain is 0 dB
-				var i_rms: float = _band_rms(ib, bank.rate_of(iid), fnote, 2.0, off, 60.0)
-				var snr: float = _db(n_rms / maxf(i_rms, 1e-9))
-				worst = minf(worst, snr)
-				if ratio == 1.0 or kind == "close":
-					line += "  +%3.0f ms: %5.1f dB" % [off, snr]
-		print("   %-6s on %-12s%s" % [kind, iid, line])
-		ok(worst > -6.0, "%s is not buried by %s at any offset (worst %.1f dB)" % [kind, iid, worst])
-
-	print("3. does a note hide the hit (the hit's own band over the note's, at the hit's start)")
-	for pair in [["perfect.light", "impact.light"], ["perfect.medium", "impact.medium"], ["perfect.heavy", "impact.heavy"], ["perfect.close", "impact.light"]]:
-		var nbuf: PackedFloat32Array = bank.buffer(pair[0], 0)
-		var ibuf: PackedFloat32Array = bank.buffer(pair[1], 0)
-		var n_all: float = _rms_at(nbuf, bank.rate_of(pair[0]), 0.0, 60.0)
-		var i_all: float = _rms_at(ibuf, bank.rate_of(pair[1]), 0.0, 60.0)
-		var d: float = _db(i_all / maxf(n_all, 1e-9))
-		print("   %-14s over %-14s the hit's first 60 ms is %.1f dB above the note's" % [pair[1], pair[0], d])
-		ok(d > 3.0 or pair[0] == "perfect.close", "%s still leads %s in its first 60 ms" % [pair[1], pair[0]])
+	var ratios: Array = cfgj.perfect.spark.ratios
+	var tok: PackedFloat32Array = bank.buffer("perfect.tok", 0)
+	var hit_buf: PackedFloat32Array = bank.buffer("impact.light", 0)
+	print("   offset = how long after the hit's start the tok plays; SNR = the tok's band over the hit's own energy in that band, over the tok's first 60 ms")
+	var worst: float = 99.0
+	var line: String = ""
+	for off in [0.0, 17.0, 33.0, 50.0, 100.0]:
+		var w: float = 99.0
+		for ratio in ratios:
+			var fnote: float = 330.0 * ratio       # the tok glides 420 to 300 Hz: its middle
+			var n_rms: float = _band_rms(tok, bank.rate_of("perfect.tok"), fnote, 1.5, 0.0, 60.0)
+			var i_rms: float = _band_rms(hit_buf, bank.rate_of("impact.light"), fnote, 1.5, off, 60.0)
+			w = minf(w, _db(n_rms / maxf(i_rms, 1e-9)))
+		line += "  +%3.0f ms: %5.1f dB" % [off, w]
+		if off >= 33.0:
+			worst = minf(worst, w)
+	print("   tok on impact.light (worst over the three steps)%s" % line)
+	ok(worst > 3.0, "from 33 ms into a hit (where the tok is made to start) the tok is over the hit in its own band (worst %.1f dB)" % worst)
+	var n_all: float = _rms_at(tok, bank.rate_of("perfect.tok"), 0.0, 60.0)
+	var i_all: float = _rms_at(hit_buf, bank.rate_of("impact.light"), 0.0, 60.0)
+	var d: float = _db(i_all / maxf(n_all, 1e-9))
+	print("   impact.light over perfect.tok: the hit's first 60 ms is %.1f dB above the tok's" % d)
+	ok(d > 6.0, "a hit leads a tok in its first 60 ms, so a tok never hides it")
 	print("\nbeat check %s" % ("FAILED (%d)" % fails if fails > 0 else "passed"))
 	quit(1 if fails > 0 else 0)

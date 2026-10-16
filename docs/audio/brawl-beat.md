@@ -2,6 +2,8 @@
 
 Owner: Audio and Music. 2026-10-12. Answers the EP's brief on Orb's direction (`docs/design/brawl-second-pass.md` §15 the nine cells, §16 the perfect follow-up). Paper first; what needs no new cue is built and checked. Every number here is a first value, and each is data in `audio/data/beat_cues.json` (a file of its own, so `brawl_cues.json` keeps its schema until Tools adds one for this) or a recipe in `audio/data/impacts.json`.
 
+**Reworked 2026-10-16 after Orb's listen:** the rising note, the shimmer, the chord and the opponent's voicing described in 1.3 to 1.6 below were too much and too metallic, and are gone; the current sound is one low tok per perfect and a hit that leans up for the count. See `docs/audio/brawl-rework.md`. The measurements of how long each hit rings against its window (1.1) and the nine cells (2) stand.
+
 **To hear it:** `audio/preview/perfect-chain.wav` (8.3 s, over the 180 BPM reference loop): a chain of three lights that closes with the ping and the launch; a chain that breaks and the string going on; a link (a medium, then a heavy that closes); and the opponent's chain heard from the player's side. It is made from staged events by the real mapper (`render_brawl_demo.gd --scene=perfect`). Encounter's pass 3 cues do not exist yet, so everything under 1 is **built and dormant**: it sounds the day the cues are sent.
 
 ## What is built, staged, or waits

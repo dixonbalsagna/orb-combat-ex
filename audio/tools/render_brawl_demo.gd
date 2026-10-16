@@ -9,7 +9,8 @@ extends SceneTree
 ## Without --match it plays a STAGED sequence made by the real mapper: an X flurry that closes on a stagger, the ping, the B
 ## wind-up and the launch, a mashed bolt, a blast, a double hit, and B's held charge. With --match=SEED it runs that seeded
 ## AI-vs-AI match on the real sim, feeds each tick's events to the mapper, and renders the busiest window (default 10 s:
-## the one with the most launcher, charge, wind-up and heavy cues) of it. Mono 16-bit at 22.05 kHz.
+## the one with the most launcher, charge, wind-up and heavy cues) of it. Add --dry for no music underneath (the hits alone).
+## Mono 16-bit at 22.05 kHz.
 
 const RATE := 22050
 
@@ -18,10 +19,13 @@ func _init() -> void:
 	var out_path: String = ProjectSettings.globalize_path("res://audio/preview/brawl-demo.wav")
 	var match_seed: int = -1
 	var scene: String = ""
+	var dry: bool = false                        # --dry: no music underneath, so the hits are heard alone
 	var window_s: float = 10.0
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
 			out_path = a.substr(6)
+		elif a == "--dry":
+			dry = true
 		elif a.begins_with("--scene="):
 			scene = a.substr(8)
 		elif a.begins_with("--match="):
@@ -73,7 +77,7 @@ func _init() -> void:
 	var mus: PackedFloat32Array = _wav_samples("res://audio/preview/suno-reference/suno-ref-riff-180bpm-E.wav")
 	var mg: float = AudioDsp.db_to_lin(-8.0 - 1.3)
 	for i in range(n):
-		music[i] = mus[i % mus.size()] * mg if mus.size() > 0 else 0.0
+		music[i] = mus[i % mus.size()] * mg if (mus.size() > 0 and not dry) else 0.0
 	for d in ducks:
 		var target: PackedFloat32Array = music if d.bus == "Music" else (sfx if d.bus == "Sfx" else PackedFloat32Array())
 		if target.is_empty():

@@ -1,9 +1,9 @@
 'use strict';
 // Cross-reference rules for Audio's audio/data/beat_cues.json, copied to tools/lib/xref-beat-cues.js by docs/tools/pending/apply-audio-beat-cues.cjs and called from xref-fight.js:
-//   beat-cue-sound  every sound a cue names (a `sound`, `close`, `spark` or `note` value of the chain's blocks, `by_strength.*`, `grind.sound`, `rest.sound`, `charge_y.*.sound`) is synthesised in
+//   beat-cue-sound  every sound a cue names (a `sound` value: `perfect.spark`, `tick`, `broken`, `grind`, `rest`, `charge_y.*`) is synthesised in
 //                   audio/data/impacts.json `sounds`
 //   beat-cue-bus    every bus (perfect.bus, charge_y.full.bus) is a bus of audio/data/mix.json
-//   beat-cue-order  the chord ratios of perfect.own and perfect.foe rise strictly; spark_clear.ticks is at most spark_clear.max_wait
+//   beat-cue-order  the chord ratios of perfect.spark (the one chain sound for both sides, reworked 2026-10-16) rise strictly; spark_clear.ticks is at most spark_clear.max_wait
 
 const CUES = 'audio/data/beat_cues.json';
 const SOUND_KEYS = new Set(['sound', 'close', 'spark']);
@@ -24,7 +24,6 @@ function xrefBeatCues({ get, err, esc, isObj }) {
       const here = `${path}/${esc(k)}`;
       if (inStrength) checkSound(v, here);
       else if (SOUND_KEYS.has(k)) checkSound(v, here);
-      else if (k === 'note' && path.endsWith('/foe')) checkSound(v, here);   // the opponent's note: this key names a sound there
       if (k === 'bus' && typeof v === 'string' && buses && !buses.has(v)) err(CUES, here, 'beat-cue-bus', `bus "${v}" is not a bus of audio/data/mix.json (${[...buses].join(', ')})`);
       if (isObj(v)) walk(v, here, k === 'by_strength');
     }
@@ -37,8 +36,7 @@ function xrefBeatCues({ get, err, esc, isObj }) {
     }
   };
   if (isObj(d.perfect)) {
-    if (isObj(d.perfect.own)) rise(d.perfect.own.ratios, '/perfect/own/ratios');
-    if (isObj(d.perfect.foe)) rise(d.perfect.foe.ratios, '/perfect/foe/ratios');
+    if (isObj(d.perfect.spark)) rise(d.perfect.spark.ratios, '/perfect/spark/ratios');
     const sc = d.perfect.spark_clear;
     if (isObj(sc) && typeof sc.ticks === 'number' && typeof sc.max_wait === 'number' && sc.ticks > sc.max_wait) err(CUES, '/perfect/spark_clear/ticks', 'beat-cue-order', `ticks ${sc.ticks} is above max_wait ${sc.max_wait}`);
   }

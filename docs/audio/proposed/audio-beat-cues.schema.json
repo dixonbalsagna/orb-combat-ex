@@ -1,0 +1,557 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/audio-beat-cues",
+  "title": "audio beat cues (schema 1)",
+  "description": "audio/data/beat_cues.json: the beat (docs/audio/brawl-beat.md): the perfect follow-up's tick, tok and droop (one chain sound for both sides, reworked 2026-10-16), the held X's settle, the mashed Y's grind, the Y's charge hum and full tick, the launcher's rest. Kept apart from brawl_cues.json so that file keeps its shape; audio/audio_brawl.gd merges the two. Cross-references in tools/lib/xref-beat-cues.js (beat-cue-sound, beat-cue-bus, beat-cue-order). Version field: schema. Policy: closed except keys starting with an underscore (and the `note` string beside the numbers).",
+  "type": "object",
+  "required": [
+    "schema",
+    "perfect",
+    "held",
+    "grind",
+    "rest",
+    "charge_y",
+    "note"
+  ],
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "perfect": {
+      "type": "object",
+      "required": [
+        "bus",
+        "land",
+        "spark",
+        "hit",
+        "spark_clear",
+        "tick",
+        "broken"
+      ],
+      "properties": {
+        "bus": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "description": "The bus every perfect-chain sound plays on (Alert: the launcher ping's duck does not take it). (a bus of mix.json: beat-cue-bus)"
+        },
+        "land": {
+          "type": "object",
+          "required": [
+            "before",
+            "after"
+          ],
+          "properties": {
+            "before": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks before the follow-up's landing it is looked for."
+            },
+            "after": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks after the landing it is looked for."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "spark": {
+          "type": "object",
+          "required": [
+            "sound",
+            "ratios",
+            "gain_db",
+            "priority",
+            "cls",
+            "cap"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The tok at the tap. (a sound synthesised in impacts.json: beat-cue-sound)"
+            },
+            "ratios": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "description": "Pitch ratios of the chain's counts, rising (beat-cue-order); a count past the last uses the last."
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain."
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Priority."
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Class."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Cap."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "hit": {
+          "type": "object",
+          "required": [
+            "st_per_count",
+            "max_st",
+            "close_db"
+          ],
+          "properties": {
+            "st_per_count": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Semitones the follow-up's hit leans up for each count of the chain."
+            },
+            "max_st": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Most semitones."
+            },
+            "close_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "How much louder the close (count 3 or more) is, dB."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "spark_clear": {
+          "type": "object",
+          "required": [
+            "ticks",
+            "look_ahead",
+            "max_wait"
+          ],
+          "properties": {
+            "ticks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks the spark waits clear."
+            },
+            "look_ahead": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "How far ahead it looks."
+            },
+            "max_wait": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The longest it waits (at least ticks: beat-cue-order)."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "tick": {
+          "type": "object",
+          "required": [
+            "sound",
+            "gain_db",
+            "caption",
+            "priority",
+            "cls",
+            "cap"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The tick. (a sound synthesised in impacts.json: beat-cue-sound)"
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain."
+            },
+            "caption": {
+              "type": "string",
+              "description": "Caption (may be empty)."
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Priority."
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Class."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Cap."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "broken": {
+          "type": "object",
+          "required": [
+            "sound",
+            "gain_db",
+            "texts",
+            "priority",
+            "cls",
+            "cap"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The droop. (a sound synthesised in impacts.json: beat-cue-sound)"
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain."
+            },
+            "texts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The chain_broken texts that sound (the others are silent)."
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Priority."
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Class."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Cap."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "note": {
+          "type": "string",
+          "description": "A note for the next person (Audio keeps one beside its numbers)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "held": {
+      "type": "object",
+      "required": [
+        "after_gap_ticks",
+        "complete_blows",
+        "lite_gap_max",
+        "pitch_from_gap",
+        "pitch_st_per_tick",
+        "pitch_min_st",
+        "gain_db"
+      ],
+      "properties": {
+        "after_gap_ticks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ticks."
+        },
+        "complete_blows": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Blows."
+        },
+        "lite_gap_max": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ticks."
+        },
+        "pitch_from_gap": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ticks."
+        },
+        "pitch_st_per_tick": {
+          "type": "number",
+          "description": "Semitones a tick."
+        },
+        "pitch_min_st": {
+          "type": "number",
+          "description": "Semitones."
+        },
+        "gain_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 24,
+          "description": "Gain."
+        },
+        "note": {
+          "type": "string",
+          "description": "A note for the next person (Audio keeps one beside its numbers)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "grind": {
+      "type": "object",
+      "required": [
+        "sound",
+        "window_ticks",
+        "after",
+        "step_db",
+        "drop_st_per_blow",
+        "max_drop_st"
+      ],
+      "properties": {
+        "sound": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The grind. (a sound synthesised in impacts.json: beat-cue-sound)"
+        },
+        "window_ticks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Ticks."
+        },
+        "after": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Medium blows before it starts."
+        },
+        "step_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 24,
+          "description": "Step, dB."
+        },
+        "drop_st_per_blow": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Semitones."
+        },
+        "max_drop_st": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Most semitones."
+        },
+        "note": {
+          "type": "string",
+          "description": "A note for the next person (Audio keeps one beside its numbers)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "rest": {
+      "type": "object",
+      "required": [
+        "sound",
+        "gain_db",
+        "priority",
+        "cls",
+        "cap",
+        "caption"
+      ],
+      "properties": {
+        "sound": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The launcher's rest. (a sound synthesised in impacts.json: beat-cue-sound)"
+        },
+        "gain_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 24,
+          "description": "Gain."
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Priority."
+        },
+        "cls": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Class."
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Cap."
+        },
+        "caption": {
+          "type": "string",
+          "description": "Caption."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "charge_y": {
+      "type": "object",
+      "required": [
+        "hum",
+        "full"
+      ],
+      "properties": {
+        "hum": {
+          "type": "object",
+          "required": [
+            "sound",
+            "gain_db",
+            "priority",
+            "cls",
+            "cap",
+            "stop_ms"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The hum. (a sound synthesised in impacts.json: beat-cue-sound)"
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain."
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Priority."
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Class."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Cap."
+            },
+            "stop_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Fade, ms."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "full": {
+          "type": "object",
+          "required": [
+            "sound",
+            "gain_db",
+            "priority",
+            "bus",
+            "cls",
+            "cap",
+            "caption"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The tick. (a sound synthesised in impacts.json: beat-cue-sound)"
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 24,
+              "description": "Gain."
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Priority."
+            },
+            "bus": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+              "description": "Bus. (a bus of mix.json: beat-cue-bus)"
+            },
+            "cls": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Class."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Cap."
+            },
+            "caption": {
+              "type": "string",
+              "description": "Caption."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The beat cues in one paragraph."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

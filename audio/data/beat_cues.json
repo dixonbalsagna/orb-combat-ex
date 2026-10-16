@@ -2,72 +2,41 @@
   "schema": 1,
   "note": "The beat (docs/audio/brawl-beat.md): the perfect follow-up's tick, spark, notes, close, link shimmer and droop; the held X's settle; the mashed Y's grind; the Y's charge hum and full tick; the launcher's rest. A separate file from brawl_cues.json so that file keeps its shape; audio/audio_brawl.gd merges the two. Needs a schema from Tools (a warning until then).",
   "perfect": {
-    "note": "The perfect follow-up (docs/audio/brawl-beat.md). At the tap: a spark (a pitched tick, the confirmation). On the follow-up's own hit: a note stepping up with the chain's count (own: G#6, A#6, then the close on C#7, the octave of the launcher's ping, a resolved 5-6-1; the opponent's: the same start with a diminished stack, unresolved), coloured by the follow-up's strength; a link adds a shimmer. Never louder than a hit; everything on the Alert bus so the ping's duck does not take it.",
+    "note": "The perfect follow-up, reworked after Orb's listen (2026-10-16: the rising note is too much, the opponent's chain needn't differ, it sounded metallic and high). One chain sound for both sides: a low wooden tok at the tap, a semitone higher for each count; and the follow-up's own hit leans up half a semitone a count (to 1.5), the close a little louder. No note, no chord, no shimmer. Unducked (Alert bus).",
     "bus": "Alert",
     "land": {
       "before": 3,
       "after": 12
     },
-    "own": {
+    "spark": {
+      "sound": "perfect.tok",
       "ratios": [
         1.0,
-        1.12246,
-        1.33484
+        1.05946,
+        1.12246
       ],
-      "by_strength": {
-        "light": "perfect.light",
-        "medium": "perfect.medium",
-        "heavy": "perfect.heavy"
-      },
-      "close": "perfect.close",
-      "spark": "perfect.spark"
+      "gain_db": 0.0,
+      "priority": 78,
+      "cls": "perfect.spark",
+      "cap": 1
     },
-    "foe": {
-      "ratios": [
-        1.0,
-        1.18921,
-        1.41421
-      ],
-      "note": "perfect.foe",
-      "close": "perfect.foe.close",
-      "spark": "perfect.spark"
+    "hit": {
+      "st_per_count": 0.5,
+      "max_st": 1.5,
+      "close_db": 2.0
     },
-    "link": {
-      "sound": "perfect.link",
-      "gain_db": 0.0
-    },
-    "gain_db": {
-      "spark": 0.0,
-      "note": 0.0,
-      "close": 0.0
-    },
-    "priority": {
-      "spark": 78,
-      "note": 80,
-      "close": 90,
-      "tick": 70,
-      "break": 60
-    },
-    "cls": {
-      "spark": "perfect.spark",
-      "note": "perfect",
-      "close": "perfect.close",
-      "link": "perfect.link",
-      "tick": "perfect.tick",
-      "break": "perfect.break"
-    },
-    "cap": {
-      "spark": 1,
-      "note": 2,
-      "close": 1,
-      "link": 1,
-      "tick": 1,
-      "break": 1
+    "spark_clear": {
+      "ticks": 2,
+      "look_ahead": 3,
+      "max_wait": 6
     },
     "tick": {
       "sound": "perfect.tick",
       "gain_db": 0.0,
-      "caption": ""
+      "caption": "",
+      "priority": 70,
+      "cls": "perfect.tick",
+      "cap": 1
     },
     "broken": {
       "sound": "perfect.break",
@@ -76,12 +45,10 @@
         "missed",
         "stopped",
         "blocked"
-      ]
-    },
-    "spark_clear": {
-      "ticks": 2,
-      "look_ahead": 3,
-      "max_wait": 6
+      ],
+      "priority": 60,
+      "cls": "perfect.break",
+      "cap": 1
     }
   },
   "held": {

@@ -52,15 +52,15 @@
       "gain_db": -2.0,
       "caption": "[blocked]",
       "pitch": {
-        "light": 1.25,
+        "light": 1.1,
         "medium": 1.0,
         "heavy": 0.8
       }
     },
     "size_ref": 40.0,
     "pitch_exp": -0.12,
-    "pitch_min": 0.85,
-    "pitch_max": 1.15,
+    "pitch_min": 0.78,
+    "pitch_max": 1.0,
     "gain_exp": 0.35,
     "gain_db_min": -3.0,
     "gain_db_max": 2.0
@@ -69,8 +69,8 @@
     "window_ticks": 60,
     "after": 3,
     "step_db": -2.0,
-    "climb_st_per_blow": 0.33,
-    "climb_max_st": 3.0,
+    "climb_st_per_blow": 0.15,
+    "climb_max_st": 1.5,
     "close_db": 3.0,
     "lite": {
       "sound": "impact.light.lite",
