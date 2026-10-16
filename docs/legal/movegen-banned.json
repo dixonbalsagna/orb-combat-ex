@@ -568,6 +568,11 @@
       "id": "w04",
       "rule": "the sun and moon discs are flat, never pure white, with no glow, bloom or flash; clouds and mountains pass in front of them only with soft edges at the sky's slew rate; the discs are in the flash set (a fast pan across a tall skyline and a town with the sun in frame, both modes), because a disc of about 15,000 px is most of the area threshold on its own",
       "why": "photosensitivity; sky screen 2026-10-16"
+    },
+    {
+      "id": "w05",
+      "rule": "facade contrast is budgeted between adjacent elements as well as against the wall: any two neighbouring tones on a facade (glass against fin, spandrel against glass, cornice against shaft) differ by at most 0.085 of relative luminance, so a bright glass beside a fin on the sun side must not differ from it by 0.14; asserted on the data and read in the street flyby clips",
+      "why": "striped tower faces under camera shake were a flash class; spatial stripes of 0.14 alternating at a pixel exceed the 10% step"
     }
   ],
   "withdrawn": [
@@ -626,6 +631,53 @@
       "id": "fx05",
       "rule": "the calm beam (every beam under Reduce flashing, the default): the full beam at 0.86 strength with a 0.3 s rise, never a thin line and never a white core, is accepted only if the release set reads it at or under the primary limit in both modes; the explosion flame is read for red by the standard's own test on linear values (R/(R+G+B) of 0.8 or more with a chromaticity change over 0.2), where a cel orange can sit near 0.8 even though its gamma-encoded ratio is 0.56: the analyser, not the colour code, is the authority and must read red flashes 0 on the set with the explosions in",
       "why": "beam look and explosions, 2026-10-16"
+    }
+  ],
+  "catastrophe": [
+    {
+      "id": "c01",
+      "rule": "photosensitivity: every catastrophe effect (a beam through the crust, magma and its glow, a mushroom cloud, an exosphere bombardment, the darkening sky) is added to the required flash set as its own worst-case clips in both modes before it ships, on the commit that carries it, under the combined rule and the margin; a planet-scale image is far larger than the 21,824 px threshold, so any luminance event on it counts as a flash at full area",
+      "why": "the brightest and largest images in the game"
+    },
+    {
+      "id": "c02",
+      "rule": "a catastrophe light event is at most one flash (one rise and one fall) per two seconds anywhere on the screen, over any effect together (the flash registry counts it), rises over at least 0.3 s and falls over at least 1 s, and has a calm form under Reduce flashing (lower peak, slower rise, no repeats) measured in the set; the darker the sky, the larger the absolute step of any glow or explosion, so a catastrophe in a darkened sky is measured in the darkened sky",
+      "why": "a dark baseline makes the same event a bigger step"
+    },
+    {
+      "id": "c03",
+      "rule": "red and magma: no saturated-red flash (R/(R+G+B) of 0.8 or more on linear values with a chromaticity change over 0.2) at any rate; magma is amber-orange with slow change; bubbling or pulsing in magma is low contrast (under a 10% step), 2 Hz or slower, irregular and unsynchronised, never a regular spot or stripe pattern over a large area; read red flashes 0 by the analyser",
+      "why": "red-flash and pattern tests on the largest fire image"
+    },
+    {
+      "id": "c04",
+      "rule": "a bombardment from the exosphere: explosions on the surface are small in screen area or fired no faster than two a second within any one screen window, never synchronised, their glow slow; the fighters' exosphere glow is a steady edge, not a pulse",
+      "why": "combined area in a window"
+    },
+    {
+      "id": "c05",
+      "rule": "a darkening sky changes under the sky's own slew limit (no band faster than 0.05 relative luminance a second, the mean 0.02) over minutes; fighters keep Art's lane-colour contrast (24 or more at the extremes) in the darkest sky; no lightning, no pulse, no reaction to a single hit",
+      "why": "dynamic sky rules extended"
+    },
+    {
+      "id": "c06",
+      "rule": "originality: avoid the genre's best-known planet-destruction images: the planet cracking along glowing fissures into a fireball (the famous anime planet blast), a ring-shaped shockwave leaving a planet or station (the Death Star), a single superlaser through a planet, a perfect hemisphere of light consuming a city (Akira), a beam piercing the planet and exiting the far side, and a villain charging a giant sphere with raised arms over his head; no ball charged above a head or in a hand; the boss's variants of abilities are our own abilities at world scale, not another fighter's named attack",
+      "why": "specific echoes"
+    },
+    {
+      "id": "c07",
+      "rule": "the mushroom cloud: a stem-and-cap cloud is the natural shape of a very large blast and may be drawn, but it carries real-world associations: no radiation trefoil, no words 'nuclear', 'atomic', 'A-bomb' or 'H-bomb', no real city, date or event, no countdown or siren sound that evokes a real alert; in copy call it a blast cloud; it is a rating and sensitivity note, not a ban",
+      "why": "real-world associations; Japan-market sensitivity"
+    },
+    {
+      "id": "c08",
+      "rule": "civilian deaths across a run: casualties are shown as a count and an environmental result, not as depicted bodies or close-ups; no score, bonus, achievement, trophy or unlock for civilian deaths and no celebratory sound or flourish when the count rises; the menace meter is a power meter, not a score; no schools, hospitals or places of worship as staged targets; children are not shown as victims of graphic violence",
+      "why": "classification boards treat rewarded violence against defenceless people as aggravating; platform achievements are public"
+    },
+    {
+      "id": "c09",
+      "rule": "store and rating: the Mature target is the working assumption; the content survey and IARC are answered from the real build and the run mode (mass destruction, civilian casualties tracked, graphic violence, the Cyborg's consumption); the store descriptors and age gate match; trailers and screenshots use each platform's mature marking; console programmes (behind NDA) may be stricter on mass-casualty and real-world-referencing imagery; GitHub-hosted pages keep graphic imagery off (p01)",
+      "why": "labelling and hosting"
     }
   ]
 }

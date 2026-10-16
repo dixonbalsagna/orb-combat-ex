@@ -1,0 +1,37 @@
+# The city's tints and facades, and the world-catastrophe boss and the run mode: screen
+
+Owner: Legal and IP Compliance. 2026-10-16. Screens `docs/art/city-facades.md` and `art/concepts/city/city-palettes.svg` (Art, 2806e3a8), and, ahead of the work, Orb's roguelike run and world-catastrophe boss fight (`docs/ep/vision.md`, "Orb on the stored planet"). Read from the documents and the sheet; the boss and the run are spitballs on paper. A screen, not legal advice or a medical opinion. RL-144 and RL-145; new rows w05 and c01 to c09.
+
+## 1. The city
+| Item | Verdict |
+| :-- | :-- |
+| The tints (warm bronze, rose-grey, steel, limestone, graphite, sage, sandstone; buff, cream, clay, slate) | **Pass.** Low chroma throughout; a colour is not protected; no fire orange, blood red, lane hues or the sea's blue, as Art kept; nothing near a saturated red, so no red-flash risk |
+| The facade types: ribbon, punched with spandrels, vertical fins | **Pass** on originality (generic architecture). **One flash condition (w05)** below |
+| The crown tower's stubs: four square prisms, a battlement, the wall tone plus 0.05, unlit, no pair taller than wide | **Pass; RL-127's recommendation is met** and closed |
+
+**The condition (w05).** Art's budget keeps every pane within 0.085 of relative luminance of **its wall**, below the 0.10 step that counts as a flash, and was set for exactly this reason. But on the vertical fins the glass is the wall plus or minus 0.07 and the fin is the wall minus 0.07 (or plus 0.07 on the sun side): **a bright glass beside a sun-side fin is 0.14 apart**, and a stripe pattern of 0.14 passing a pixel under a camera shake is a luminance alternation over the step. The budget must hold **between neighbouring elements** (glass against fin, spandrel against glass, cornice against shaft), at most 0.085, asserted on the data and read in the street flyby clips; striped tower faces under shake were already a flash class.
+
+## 2. The world-catastrophe boss and the run (paper)
+Orb's spitball: a roguelike run of stages on slices of one planet with short story beats; cities stay damaged between fights; a final boss fight with world-catastrophe variants of abilities: a beam through the crust to magma, a mushroom cloud darkening the planet's sky, and fighters in the exosphere bombarding the surface. **Nothing here is banned; these are the conditions to set before anyone draws it (c01 to c09).**
+
+### Photosensitivity (c01 to c05): the largest risk in the game
+- **The images are far larger than the threshold.** The area threshold is 21,824 px at 1024 x 768; a planet-scale glow or fireball covers many times that, so **any luminance event on it counts as a flash at full area.** Each effect (the crust beam, magma and its glow, the blast cloud, the exosphere bombardment, the darkening sky) joins the required flash set as its own worst-case clips, both modes, on the commit that carries it (c01).
+- **At most one flash per two seconds** from any catastrophe light event, counted across everything on the screen (the registry), **rising over at least 0.3 s and falling over at least 1 s**, with a **calm form** under Reduce flashing (a lower peak, a slower rise, no repeats) measured in the set (c02). **The darker the sky, the larger the absolute step of any glow:** the same explosion is a bigger luminance step in a darkened sky, so the boss fight is measured in the darkened sky.
+- **Red and magma (c03):** magma is amber-orange with slow change; no saturated-red flash; **bubbling is low contrast (under a 10% step), 2 Hz or slower, irregular and unsynchronised**, never a regular spot or stripe pattern over a large area (a regular pattern is its own test, apart from flashes). The analyser must read red flashes 0 with the effects in.
+- **The bombardment (c04):** explosions far below are small in screen area or fired no faster than two a second within any one screen window, never in step with each other; the fighters' exosphere glow is a steady edge.
+- **The darkening sky (c05):** minutes long, under the sky's slew limit; fighters keep their lane-colour contrast in the darkest sky.
+- **Between stages:** story beats, fades and wipes follow the same rules (a cut or a fade is a whole-screen change).
+
+### Originality (c06): the specific echoes to avoid
+Planet-scale destruction is a genre staple and free; the following are signatures. **Avoid:** the planet cracking along glowing fissures into a fireball (the best-known anime planet blast); a ring-shaped shockwave leaving a planet or station (the space-station superweapon's destruction); a single superlaser through a planet; a perfect hemisphere of light consuming a city (the famous anime city-destruction dome); a beam that pierces the planet and exits the far side; and **a villain charging a giant sphere above his head with raised arms**, which is also banned by our own rules (no ball in or above a hand, no raised charging pose). The boss's variants are **our own abilities at world scale**, never another fighter's named attack.
+
+### The mushroom cloud (c07): sensitivity, not a ban
+A stem-and-cap cloud is the natural shape of a very large blast and may be drawn. It carries real-world associations (nuclear weapons and their victims), strongest in Japan, the genre's home market. **Draw it as our own blast cloud:** no radiation trefoil, none of the words "nuclear", "atomic", "A-bomb" or "H-bomb", no real city, date or event, no countdown or siren that evokes a real alert; in copy, call it a blast cloud. For a Japanese release or a console programme, ask counsel and the platform.
+
+### Civilian deaths across a run, and ratings (c08, c09)
+- **Casualties accumulate** across a run, so the tally grows well past the 200 to 350 of one match. **Depiction drives the rating more than the number:** show the toll as a count and an environmental result, not as depicted bodies or close-ups; **no score, bonus, achievement, trophy or unlock for civilian deaths**, no celebratory sound when the count rises, and the **menace meter is a power meter, not a score**. Classification boards treat rewarded violence against defenceless people as aggravating (PEGI's own descriptor for violence towards defenceless people; Germany and Australia are the stricter markets: general knowledge, not checked today), and **Steam achievements are public**.
+- **Do not stage** schools, hospitals or places of worship as targets, and **do not show children as victims of graphic violence.**
+- **Store and rating notes:** the working target is Mature (graphic violence, the Cyborg's consumption); answer the **content survey and IARC from the real build and the run mode** (mass destruction, civilian casualties tracked, graphic violence), match the descriptors and the age gate, and use each platform's mature marking for trailers and screenshots. Console programmes (behind NDA) may be stricter on mass-casualty and real-world-referencing imagery, and GitHub-hosted pages keep graphic imagery off (p01). **Saves** of a persistent planet are local state and contain no personal data; keep them that way.
+
+## What I must see before any of it ships
+Storyboards of the four effects at their worst frame; the calm forms; the boss's ability names and silhouettes against the c06 list; the casualty presentation; then the flash clips (both modes, margin rule, red flashes 0) and a rating questionnaire run on the real build.
