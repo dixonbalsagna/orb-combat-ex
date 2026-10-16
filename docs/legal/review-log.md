@@ -160,6 +160,9 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-138 | Sun and moon discs (discs-for-legal.png) | Rendering | Low | Pass; w04: flat, never white, no glow; in the flash set (pan across a skyline with the sun in frame) | Open until measured |
 | RL-139 | Training dummy joins the roster (pairings: Protagonist v dummy, Anti-hero v dummy) | Tools | Low | Release rules need only: each new pairing at least 3 captures, and a mash-on-the-dummy scene per fighter in both modes (hit white at the maximum rate) | Open |
 | RL-140 | VFX's parked marks (shine, cash-in cut, barrage disc); preview of thick rippling beams and fiery explosions (fx01 to fx03) | VFX | Medium | Marks pass on paper, drawn later; beams and explosions screened drawn before they ship | Open |
+| RL-141 | VFX beams and explosions as drawn (beam-look.md); the calm form; the beam struggle's marks (energy-and-pieces-screen.md) | VFX | Medium | Pass with conditions: set re-run both modes with the margin rule; red flashes 0 by the standard's linear test; marks steady or 1.5 Hz under Reduce flashing (fx04, fx05) | Open until the set is re-run |
+| RL-142 | Animation's eight pieces, the beam casts (RL-038 closed: no wrist grip, e10), the launch opening | Animation | Low | Pass; RL-038 closed; opening is a 7-tick reaction | Closed |
+| RL-143 | UI's launch marks: the recharging ring (1 Hz) and the tug ring (3 Hz) as moving marks | UI | Low | Pass; listed under fx04 and k06 | Closed |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 

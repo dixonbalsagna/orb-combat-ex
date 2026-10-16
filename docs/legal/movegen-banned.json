@@ -380,6 +380,11 @@
       "id": "e09",
       "rule": "a mashed run of point-blank bolts must read as varied on screen, not only in data: no two bolts in a row with the same arm, path and place; no regular left-right alternation (an irregular order, with the free arm taking a bolt now and then); at least three different paths (line, outward arc, inward arc) in any five; each hand lands below the collar line on the chest or gut and never at the neck, throat or face; the two bodies keep a hand's width between the heads",
       "why": "e06 for a mashed run: the same arm pumping, or two palms pumping in turn, is the barrage image"
+    },
+    {
+      "id": "e10",
+      "rule": "a beam cast pose (the signature beam and any other): one arm out, the palm or its heel leading, is allowed when the other hand never grips, braces or cups the firing wrist or forearm and stays at least shoulder width from it (open, in guard, or low at the rear); never both palms; no ball, sphere or glow held in either hand; no scream; the charge pose keeps h05 (one arm drawn back at shoulder height or lower, never at a hip); the beam is a plain straight line (e04, e07)",
+      "why": "RL-038's condition was the wrist-gripped palm-forward brace; the palm-forward one-arm release without that brace is an ordinary energy-in-reach hand. Closed 2026-10-16"
     }
   ],
   "grabs": [
@@ -611,6 +616,16 @@
       "id": "fx03",
       "rule": "preview of Orb's thick glowing rippling beams and fiery explosions (to be screened drawn): a beam stays a plain straight line (e04, e07); its ripple is a slow, low-contrast shimmer (2 Hz or slower, under 10% luminance step) in the lane colour and never a strobing core; its start and end flashes go through the flash registry; a beam may not spiral, drill or twist; an explosion's fire is never a saturated-red flash (the red test: R/(R+G+B) of 0.8 or more with a chromaticity change over 0.2), grows over several ticks rather than a single-frame flash, is never a white or gold full-screen flash with a shouted name, and is not combined with a rubble ring, cracks and lightning on bodies (k01); both go into the required flash set before they ship",
       "why": "area, red flash and stacking risks of large glowing effects"
+    },
+    {
+      "id": "fx04",
+      "rule": "moving marks that repeat while a state lasts, listed with their rates and held to k06: the recharging ring steps once a second (1 Hz); the beam struggle's thin rings and lines and UI's tug ring pulse on a 20-tick beat (3 Hz, at the limit): they stay steady or at 1.5 Hz or slower under Reduce flashing (the shipped default) and Reduced motion, are strokes only with no brightness change, and are in the HUD and effects rate lists that hud_check and the flash set read",
+      "why": "persistent repeating marks"
+    },
+    {
+      "id": "fx05",
+      "rule": "the calm beam (every beam under Reduce flashing, the default): the full beam at 0.86 strength with a 0.3 s rise, never a thin line and never a white core, is accepted only if the release set reads it at or under the primary limit in both modes; the explosion flame is read for red by the standard's own test on linear values (R/(R+G+B) of 0.8 or more with a chromaticity change over 0.2), where a cel orange can sit near 0.8 even though its gamma-encoded ratio is 0.56: the analyser, not the colour code, is the authority and must read red flashes 0 on the set with the explosions in",
+      "why": "beam look and explosions, 2026-10-16"
     }
   ]
 }

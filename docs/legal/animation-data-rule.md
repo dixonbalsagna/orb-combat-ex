@@ -36,3 +36,5 @@ Mostly. Section 6.6 already follows the policy's shape: showcase poses posed or 
 | Finisher launch | **GO** | A lunge into an upward two-handed strike. No arms held overhead. |
 
 Logged as RL-038. The beam release stays open until Animation changes it.
+
+**RL-038 closed 2026-10-16.** The beam release's condition was the well-known stance of one arm out, palm forward, with the other hand gripping the wrist. Animation's casts (`bm.hold.*`) have no wrist grip: the free hand is open and at least a shoulder width away. A palm-forward one-arm release with that brace removed is an ordinary energy-in-reach hand (R1, e10). The condition is met.
