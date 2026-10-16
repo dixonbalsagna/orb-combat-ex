@@ -57,3 +57,7 @@ Gates: `hud_check` including `_block_toggle_rules` and `_sim_untouched_rules`, `
 ## 6. The rival pointer (built this round; the HUD's part of ruling 5)
 
 Orb: "I felt like I had no idea what they were doing until they rushed back at me at full speed." The pointer and the warning are in `docs/ui/hud-spec.md` section 60.
+
+## 7. Built in scratch (2026-10-16)
+
+The `launch_marks` flag, the gauge's full state, the lit B with LAUNCH, the rest's ring, the once-only hint and the pad's pulse are built and gated, parked as a patch: `docs/ui/pending/launch-marks/` (README there). Flag off it changes nothing. The hint's wording is the placeholder "Keep hitting, then press the lit button to launch him." until Narrative words it.

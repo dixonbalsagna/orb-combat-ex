@@ -48,7 +48,7 @@
     "colour_vision": { "off": "Off", "protan": "Protanopia", "deutan": "Deuteranopia", "tritan": "Tritanopia" },
     "you_marker": { "always": "Always", "intro": "Intro", "off": "Off" },
     "hud_sides": { "fixed": "Fixed", "follow": "Follow" },
-    "camera_launch_follow": { "auto": "Auto", "chase": "Chase", "split": "Split" },
+    "camera_launch_follow": { "auto": "Auto", "chase": "Chase", "split": "Split", "hold": "Hold" },
     "camera_panels": { "full": "Full", "still": "Still", "off": "Off" },
     "thickness": { "0.75": "Thin", "1.0": "Normal", "1.5": "Thick" }
   },

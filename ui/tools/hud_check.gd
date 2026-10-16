@@ -725,7 +725,7 @@ func _layer_rules() -> void:
 			in_camera = true
 	_ok(in_camera, "options: camera_panels is on the Settings screen's Camera section")
 	var clf: Dictionary = UiData.options()["camera_launch_follow"]
-	_ok(clf["default"] == "auto" and clf["choices"] == ["auto", "chase", "split"] and clf["group"] == "display" and hud.opts["camera_launch_follow"] == "auto", "options: camera_launch_follow offers auto, chase and split, default auto")
+	_ok(clf["default"] == "auto" and clf["choices"] == ["auto", "chase", "split", "hold"] and clf["group"] == "display" and hud.opts["camera_launch_follow"] == "auto" and str(UiData.settings()["labels"]["camera_launch_follow"]["hold"]) == "Hold", "options: camera_launch_follow offers auto, chase, split and hold (the old hybrid), default auto")
 	hud.set_option("force_redraw", true)
 	var base3: int = hud.redraw_count()
 	for i in range(30):

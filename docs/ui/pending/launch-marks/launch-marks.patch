@@ -1,0 +1,785 @@
+diff -ruN a/ui/core/ui_event_hub.gd b/ui/core/ui_event_hub.gd
+--- a/ui/core/ui_event_hub.gd	2026-10-16 12:21:47.417050000 -0700
++++ b/ui/core/ui_event_hub.gd	2026-10-16 12:21:47.562111400 -0700
+@@ -73,6 +73,9 @@
+ var banner: Dictionary = {}      # {text, col, dur, age} or empty
+ var struggle: Dictionary = {}    # the finisher struggle on the brink fighter: {actor, beats, half, resolve, t, res, end_t, last}
+ var telegraph: Dictionary = {}   # the finisher's kind while it winds up: {actor, target, kind, age, end}; the read that answers it is a stance
++var tug: Dictionary = {}         # the beam struggle (Encounter's beam_struggle, beam_pulse, beam_surge, beam_stray and beam_end cues, and Clash.mid): {a, d, end_n, k, pulse_t, age, mid (0 at a's hands to 1 at d's, -1 unknown), marks: [{slot, kind, age}], end, end_t}
++const TUG_MARK_LIFE := 0.45      # seconds a surge or a stray mark stays at the meeting point
++const TUG_END_HOLD := 1.0        # seconds the end of a struggle stays drawn
+ var hint: Dictionary = {}        # the tutorial's hint line: {id, key, text, kind (hint, nudge, done), age}
+ var beats: Dictionary = {}       # tutorial beat id to state (start, done, skipped)
+ var keep_hints: bool = false     # accessibility: a hint stays up after its beat is done, until the next one
+@@ -118,6 +121,7 @@
+ 	struggle = {}
+ 	telegraph = {}
+ 	hint = {}
++	tug = {}
+ 	beats = {}
+ 	match_over = false
+ 	act = 1
+@@ -405,6 +409,8 @@
+ 				m.launcher_open = false
+ 			elif ck == "blow":
+ 				_on_blow(m, d)
++			elif ck.begins_with("beam_"):
++				_on_tug_cue(ck, d)
+ 			elif ck == "miss":
+ 				_on_miss(m, d)
+ 			elif ck == "energy_land" and m != null:
+@@ -753,6 +759,42 @@
+ 			tm.run_t = 0.0
+ 
+ 
++## The beam struggle's five cues (docs/director/pending/beam-struggle/README.md): `beam_struggle` text start (actor the beam's owner, target the other, `n` the tick it ends by at the latest),
++## `beam_pulse` (`k` the pulse, `n` its tick), `beam_surge` (text surge or sharp), `beam_stray`, and `beam_end` (text overwhelmed, detonate or time; `x` the point). The meeting point itself
++## comes each tick from the bridge (`set_clash_mid`). Read-only: nothing here writes the sim.
++func _on_tug_cue(kind: String, d: Dictionary) -> void:
++	if kind == "beam_struggle":
++		tug = {"a": int(d.get("actor", 0)), "d": int(d.get("target", 1)), "end_n": int(d.get("n", 0)), "k": 0, "pulse_t": 99.0, "age": 0.0, "mid": 0.5, "marks": [], "end": "", "end_t": 0.0}
++		return
++	if tug.is_empty():
++		tug = {"a": int(d.get("actor", 0)), "d": 1 - int(d.get("actor", 0)), "end_n": 0, "k": 0, "pulse_t": 99.0, "age": 0.0, "mid": 0.5, "marks": [], "end": "", "end_t": 0.0}
++	match kind:
++		"beam_pulse":
++			tug["k"] = int(d.get("k", 0))
++			tug["pulse_t"] = 0.0
++		"beam_surge", "beam_stray":
++			var marks: Array = tug["marks"]
++			marks.append({"slot": int(d.get("actor", 0)), "kind": ("stray" if kind == "beam_stray" else ("sharp" if str(d.get("text", "")) == "sharp" else "surge")), "age": 0.0})
++			if marks.size() > 8:
++				marks.pop_front()
++		"beam_end":
++			tug["end"] = str(d.get("text", "time"))
++			tug["end_t"] = 0.0
++			if d.has("x"):
++				tug["mid"] = clampf(float(d["x"]), 0.0, 1.0)
++
++
++## The meeting point of the beams, 0 at the first fighter's hands to 1 at the second's, from the bridge each tick (-1: none).
++func set_clash_mid(v: float) -> void:
++	if tug.is_empty() or v < 0.0 or str(tug["end"]) != "":
++		return
++	tug["mid"] = clampf(v, 0.0, 1.0)
++
++
++func show_launch_hint(text: String) -> void:
++	hint = {"id": "launch", "key": "launch", "text": text, "kind": "hint", "age": 0.0}
++
++
+ ## The brawl's miss cue: the swinger is the actor, the rival the target; `n` the ticks he is open. OPEN on the swinger's plate, and the target's medium glyph lit for as long.
+ func _on_miss(m: UiFighterModel, d: Dictionary) -> void:
+ 	var secs: float = clampf(float(d.get("n", 20)), 1.0, 90.0) / 60.0
+@@ -1144,6 +1186,23 @@
+ 		hint["age"] = float(hint["age"]) + sdt
+ 		if str(hint["kind"]) == "done" and not keep_hints and float(hint["age"]) > 2.6:
+ 			hint = {}
++		elif str(hint["id"]) == "launch" and float(hint["age"]) > 6.0:
++			hint = {}   # the launch hint is shown once and goes by itself
++	if not tug.is_empty():
++		tug["age"] = float(tug["age"]) + sdt
++		tug["pulse_t"] = float(tug["pulse_t"]) + sdt
++		var live: Array = []
++		for mk in tug["marks"]:
++			mk["age"] = float(mk["age"]) + sdt
++			if float(mk["age"]) < TUG_MARK_LIFE:
++				live.append(mk)
++		tug["marks"] = live
++		if str(tug["end"]) != "":
++			tug["end_t"] = float(tug["end_t"]) + sdt
++			if float(tug["end_t"]) > TUG_END_HOLD:
++				tug = {}
++		elif float(tug["age"]) > 12.0:
++			tug = {}   # an end cue that never came: the struggle does not stay drawn
+ 	for m in models:
+ 		m.advance(dt, sdt)
+ 		if _lost_trail_left.has(m.slot):
+@@ -1151,6 +1210,10 @@
+ 			if _lost_trail_left[m.slot] <= 0.0:
+ 				_lost_trail_left.erase(m.slot)
+ 				m.lost_trail = false
++	if models.size() == 2:
++		for gm in models:
++			var rv: UiFighterModel = models[1 - gm.slot] if (gm.slot == 0 or gm.slot == 1) else null
++			gm.gauge_full = rv != null and rv.run_to > 0 and rv.run_n >= rv.run_to and rv.run_t < 2.5 and (not gm.launcher_known or gm.launcher_ready)
+ 	cinematic_left = maxf(0.0, cinematic_left - dt)
+ 	hazard_left = maxf(0.0, hazard_left - dt)
+ 	if crown_locked():
+diff -ruN a/ui/core/ui_fighter_model.gd b/ui/core/ui_fighter_model.gd
+--- a/ui/core/ui_fighter_model.gd	2026-10-16 12:21:47.397784800 -0700
++++ b/ui/core/ui_fighter_model.gd	2026-10-16 12:21:47.553085400 -0700
+@@ -90,6 +90,7 @@
+ var run_t: float = 99.0
+ var flurry_dots: int = 0                # the flurry's blows by this fighter in the current burst, for X's ring of dots (0 to 10)
+ var flurry_t: float = 99.0
++var gauge_full: bool = false           # the rival's run of unanswered blows is full (4 of 4) and this fighter's launcher is ready: B lights with the word LAUNCH (the HUD derives it; docs/ui/launch-teaching.md)
+ var launcher_open: bool = false        # this fighter may launch the staggered rival now (the `launcher_open` cue): B's glyph is lit
+ var parry_clean: float = 0.0        # retired (timing presses are gone): always 0
+ var you_label: String = ""           # YOU (or P1 and P2) for a human fighter, "" for an AI: set by the HUD, shown on the plate
+diff -ruN a/ui/core/ui_sim_bridge.gd b/ui/core/ui_sim_bridge.gd
+--- a/ui/core/ui_sim_bridge.gd	2026-10-16 12:21:47.394779200 -0700
++++ b/ui/core/ui_sim_bridge.gd	2026-10-16 12:21:47.551080800 -0700
+@@ -89,6 +89,7 @@
+ 	for i in range(mini(2, windows.size())):
+ 		hud.hub.patch(i, {"beats": windows[i]})
+ 	hud.hub.set_move_names(move_names)
++	hud.hub.set_clash_mid(clash_mid(S))   # the beam struggle's meeting point (-1 until Encounter's park is applied)
+ 	var w = S.world
+ 	hud.hub.consume({"type": "world", "civilians": int(round(float(w.casualties))), "pop0": int(w.pop0), "structures": int(w.structuresLost), "craters": int(w.craters)})
+ 	patch_input(hud, input_hub)   # the arming, when the host passes its input hub (SimHost.hub)
+@@ -145,6 +146,17 @@
+ 
+ 
+ ## The planet strip's data. cam_x and cam_w are the reference camera's centre and its view width in world units.
++## The beam struggle's meeting point (Clash.mid: 0 at the first fighter's hands, 1 at the second's; -1 when there is no struggle or the field is not there yet). Read only.
++static func clash_mid(S) -> float:
++	if S == null or S.game == null:
++		return -1.0
++	var c = S.game.clash if "clash" in S.game else null
++	if c == null:
++		return -1.0
++	var v = c.get("mid") if c is Object or c is Dictionary else null
++	return float(v) if v != null else -1.0
++
++
+ static func strip_data(S, cam_x: float, cam_w: float) -> Dictionary:
+ 	var dead: Array = []
+ 	for b in S.buildings:
+diff -ruN a/ui/core/ui_stance.gd b/ui/core/ui_stance.gd
+--- a/ui/core/ui_stance.gd	2026-10-16 12:21:47.395786200 -0700
++++ b/ui/core/ui_stance.gd	2026-10-16 12:21:47.552088100 -0700
+@@ -68,6 +68,11 @@
+ 	return UiData.feature("three_strengths")
+ 
+ 
++## Whether the launch's teaching marks are on: their own flag (features.json `launch_marks`), or the three-strength layout that already includes them.
++static func launch_marks() -> bool:
++	return UiData.feature("launch_marks") or three()
++
++
+ ## The word for a martial face button's action under the three strengths: the action ids stay light, heavy, context and signature (the sim, Controls and the
+ ## remap data use them), so a row whose id says `signature` reads Heavy and `heavy` reads Medium. "" when the flag is off or the action is not one of the four.
+ static func three_word(action: String) -> String:
+diff -ruN a/ui/data/features.json b/ui/data/features.json
+--- a/ui/data/features.json	2026-10-16 12:21:47.293016700 -0700
++++ b/ui/data/features.json	2026-10-16 12:21:47.519485500 -0700
+@@ -1,6 +1,6 @@
+ {
+   "schema": 1,
+-  "note": "Feature flags for HUD code that is written but not part of the base game. hiding: Orb removed hiding from the base game and holds it for a future stealth-specialist fighter (docs/ep/vision.md). With it off the HUD ignores the hidden state and the lost-trail cue everywhere (plate chips, the eye-slash marker, the strip's ping and last-seen mark, the silhouette's fading); the code stays for that fighter. Turn it on in a fighter's data when that fighter exists. touch_full and remap: the Settings screen lists the Full touch layout and the Remap controls entry, dimmed and marked Soon, until Controls' touch-full layout and the remap screen exist; both are on now. about_music and about_voice: the About page's two sentences that are true only once they are (the music was generated with Suno; there is no voice acting) are shown only while their flag is on; both are off until the music ships and Orb confirms the voice sentence (docs/legal/go-to-market.md section 1). A page item whose icon is named about_music or about_voice is that sentence. three_strengths: the martial face buttons are X light, Y medium, B heavy and the signature is the power button held with B (docs/design/brawl-second-pass.md, docs/ui/hud-spec.md section 48); flipped with Encounter's slice C2a, and with it the legend, the Full touch words, the Remap and How to play words, the weight mark's third value and the latched-charge and charges-off settings follow. reduce_flashing: the Reduce flashing setting row and the flashing notice's reworded line (VFX's register); on when Legal has approved the words.",
++  "note": "Feature flags for HUD code that is written but not part of the base game. hiding: Orb removed hiding from the base game and holds it for a future stealth-specialist fighter (docs/ep/vision.md). With it off the HUD ignores the hidden state and the lost-trail cue everywhere (plate chips, the eye-slash marker, the strip's ping and last-seen mark, the silhouette's fading); the code stays for that fighter. Turn it on in a fighter's data when that fighter exists. touch_full and remap: the Settings screen lists the Full touch layout and the Remap controls entry, dimmed and marked Soon, until Controls' touch-full layout and the remap screen exist; both are on now. about_music and about_voice: the About page's two sentences that are true only once they are (the music was generated with Suno; there is no voice acting) are shown only while their flag is on; both are off until the music ships and Orb confirms the voice sentence (docs/legal/go-to-market.md section 1). A page item whose icon is named about_music or about_voice is that sentence. three_strengths: the martial face buttons are X light, Y medium, B heavy and the signature is the power button held with B (docs/design/brawl-second-pass.md, docs/ui/hud-spec.md section 48); flipped with Encounter's slice C2a, and with it the legend, the Full touch words, the Remap and How to play words, the weight mark's third value and the latched-charge and charges-off settings follow. launch_marks: the marks that teach the launch without the three-strength button names (docs/ui/launch-teaching.md): the run of four pips on the rival, the plate's LAUNCH or RESTING chip with the rest's ring, OPEN, a full gauge that lights B with the word LAUNCH, the once-only hint and the pad's pulse at an opening; off until Game Design rules and Encounter's blow cue carries run and run_to. three_strengths turns these on too. reduce_flashing: the Reduce flashing setting row and the flashing notice's reworded line (VFX's register); on when Legal has approved the words.",
+   "features": {
+     "hiding": false,
+     "touch_full": true,
+@@ -9,6 +9,7 @@
+     "about_voice": false,
+     "three_strengths": false,
+     "reduce_flashing": true,
+-    "start_menu": true
++    "start_menu": true,
++    "launch_marks": false
+   }
+ }
+diff -ruN a/ui/data/terms.json b/ui/data/terms.json
+--- a/ui/data/terms.json	2026-10-16 12:21:47.286084200 -0700
++++ b/ui/data/terms.json	2026-10-16 12:21:47.517981200 -0700
+@@ -90,7 +90,7 @@
+     "full_light": "LIGHT", "full_heavy": "HEAVY", "full_signature": "SIGN", "full_context": "CONTEXT", "full_mode": "ENERGY", "full_transform": "FORM", "full_dodge": "DODGE",
+     "pause_title": "PAUSED", "pause_resume": "Resume", "pause_howto": "How to play", "pause_settings": "Settings", "pause_feedback": "Send feedback", "not_yet": "not yet", "three_light": "Light", "three_medium": "Medium", "three_heavy": "Heavy", "three_context": "Context", "three_sig_chord": "Signature (hold)", "three_attack": "Attack (hold: stronger)", "three_full_heavy": "MEDIUM", "three_full_signature": "HEAVY", "three_howto_heavy": "Medium", "three_howto_signature": "Heavy (hold the power button with it for your signature, 45 Charge)", "three_remap_heavy": "Medium", "three_remap_signature": "Heavy", "photo_title": "This game contains flashing effects.", "photo_body_a": "Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them.", "photo_settings_line": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_settings_line_rf": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_body_b": "No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version.", "photo_start": "I understand, start", "photo_settings": "Open Settings", "photo_more": "Scroll for more", "menu_notice": "This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.", "menu_rf_on": "Reduce flashing is on. It lowers some effects but does not remove the flagged scenes.", "menu_rf_off": "Reduce flashing is off.", "menu_not_now": "Not now", "menu_holding_url": "../", "menu_players": "Players", "menu_one": "1 player", "menu_two": "2 players", "menu_one_note": "One player plays against the computer.", "menu_p1": "Player 1", "menu_p2": "Player 2", "menu_kb": "Keyboard", "menu_pad": "Controller", "menu_intros": "Intros", "menu_reduce_flashing": "Reduce flashing", "menu_shake": "Screen shake", "menu_captions": "Captions", "menu_guide": "Move guide", "menu_start": "I understand, start", "menu_back": "Back to the match", "menu_both_kb": "Both on the keyboard: you share it, and the guide shows each player's keys.", "menu_no_pad": "No controller found yet. Press a button on it.", "pause_menu": "Main menu", "pause_again": "Play again", "pause_over_title": "MATCH OVER", "turn_title": "Turn your phone", "turn_body": "This game plays sideways. Turn your phone to landscape and the match carries on; it waits for you.", "turn_anyway": "Play upright anyway", "photo_close": "Close", "pause_about": "About", "pause_new": "New match",
+     "pause_new_ask": "Start a new match?", "pause_new_yes": "New match", "pause_new_no": "Keep playing", "pause_resume_key": "P", "pause_howto_key": "F1", "pause_new_key": "N",
+-    "join": "P2: press any button to join", "join_short": "P2: press a button", "join_key": "P2: press T to join", "join_key_short": "P2: T to join", "form_hold": "Hold", "form_tap": "Tap", "form_boost": "hit harder until the match ends", "form_boost_short": "hit harder from now on", "intro_skip_kbd": "Press any key to skip", "intro_skip_pad": "Press any button to skip", "intro_skip_touch": "Tap to skip", "recipe_light": "light", "recipe_heavy": "heavy", "recipe_sig": "signature", "recipe_energy": "energy", "inc_rush": "RUSH", "inc_closing": "CLOSING", "mode_hold": "Energy (hold)", "mode_toggle": "Energy (toggle)", "remap_player": "Player", "remap_p1": "Player 1", "remap_p2": "Player 2", "join_tiny": "P2: any button", "join_key_tiny": "P2: press T", "left_short": "P2 left", "joined": "P2 joined", "left": "P2 handed back to the computer", "pause_p2_leave": "Player two: hand back to the computer", "pause_p2_join": "Player two: press any button to join" },
++    "join": "P2: press any button to join", "join_short": "P2: press a button", "join_key": "P2: press T to join", "join_key_short": "P2: T to join", "form_hold": "Hold", "form_tap": "Tap", "form_boost": "hit harder until the match ends", "form_boost_short": "hit harder from now on", "intro_skip_kbd": "Press any key to skip", "intro_skip_pad": "Press any button to skip", "intro_skip_touch": "Tap to skip", "recipe_light": "light", "recipe_heavy": "heavy", "recipe_sig": "signature", "recipe_energy": "energy", "launch_hint": "Keep hitting, then press the lit button to launch him.", "inc_rush": "RUSH", "inc_closing": "CLOSING", "mode_hold": "Energy (hold)", "mode_toggle": "Energy (toggle)", "remap_player": "Player", "remap_p1": "Player 1", "remap_p2": "Player 2", "join_tiny": "P2: any button", "join_key_tiny": "P2: press T", "left_short": "P2 left", "joined": "P2 joined", "left": "P2 handed back to the computer", "pause_p2_leave": "Player two: hand back to the computer", "pause_p2_join": "Player two: press any button to join" },
+   "planet": "EVERHOLD",
+   "places": [
+     { "x0": 0,    "x1": 1200, "name": "LONGWATER" },
+diff -ruN a/ui/hud/ui_hud.gd b/ui/hud/ui_hud.gd
+--- a/ui/hud/ui_hud.gd	2026-10-16 12:21:47.464527900 -0700
++++ b/ui/hud/ui_hud.gd	2026-10-16 12:21:47.586710500 -0700
+@@ -18,6 +18,7 @@
+ ## The demo (ui/demo/hud_demo.tscn) shows all of it driven by the mock feed.
+ 
+ signal layout_changed
++signal haptic_requested(slot: int, kind: String)   # a pulse for a human's pad (the host plays it; never the only cue): "launch_open" when a launch opens for him (launch marks on)
+ signal form_prompt_shown(slot: int, device: String)   # a human fighter's form became ready (the rising edge): the host gives a 15 ms haptic on that player's pad (Input.start_joy_vibration) or a phone (Input.vibrate_handheld(15)); never the only cue
+ signal howto_opened(first_run: bool)   # the How to play card opened: the host pauses the sim and releases held keys
+ signal feedback_opened(context: String)   # the feedback panel opened ("pause" or "match_end"): the host pauses the sim and releases held keys
+@@ -103,6 +104,8 @@
+ var _chips: Array = []
+ var _chip_text: Array = ["", ""]
+ var _chip_text_t: Array = [-1.0, -1.0]
++var _open_prev: Array = [false, false]    # launcher_open last frame, per fighter (the pad's pulse is the rising edge)
++var _gauge_prev: Array = [false, false]   # gauge_full last frame (the once-only hint is the rising edge)
+ var _inc_keep: Array = [null, null]   # the last incoming chip of each pane and when it was last wanted (UiIncoming.held)
+ var _many_keep: Dictionary = {}       # the many-body markers that have just gone, held for UiMany.HOLD
+ var _many_marks: Array = []
+@@ -237,6 +240,8 @@
+ var _l_ring_base: UiLayer
+ var _l_chips: Array = []       # one small node per pane: an edge pointer chip, moved by position
+ var _l_ring: UiLayer
++var _l_tug: UiLayer           # the beam struggle's track, meeting point and beat (UiTug), only while one is on
++var _tug_plan: Dictionary = {}
+ var _l_many: UiLayer          # the many-body markers (UiMany): one layer for all of them
+ var _l_struggle: UiLayer
+ var recipe_fn: Callable = Callable()   # (slot) -> Dictionary: the mix of the last presses {light, heavy, sig, energy} (SimPressRead.classify's mix_long) when the host has the press reader; read only while the Show recipe option is on
+@@ -296,6 +301,7 @@
+ 	_l_ring_base = _layer(_paint_ring_base)
+ 	_l_ring = _layer(_paint_ring)
+ 	_l_many = _layer(_paint_many)
++	_l_tug = _layer(_paint_tug)
+ 	_l_events = _layer(_paint_events)
+ 	_l_feed = _layer(_paint_feed)
+ 	_l_debug = _layer(_paint_debug)
+@@ -372,7 +378,7 @@
+ 
+ 
+ func _all_layers() -> Array:
+-	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_many, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_notice, _l_gate_back]
++	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_many, _l_tug, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_notice, _l_gate_back]
+ 
+ 
+ ## Total redraws of every layer so far, for the perf counters.
+@@ -645,7 +651,7 @@
+ 		_l_plate[m.slot].update_sig([m.name, m.ai, m.stance, m.tier, int(m.momentum), int(m.charge), int(m.ego), m.hidden, m.lost_trail,
+ 			m.charging, m.chain_n if m.chain_t >= 0.0 else 0, m.brink, m.shame, full, _plate_alpha(m), pulse, m.you_label,
+ 			m.weight, (m.blow_kind if (UiStance.three() and m.blow_t < UiPlate.BLOW_HOLD) else ""), m.open_left > 0.0, (m.land_kind if m.land_t < UiPlate.LAND_HOLD else ""),
+-			(m.run_n if m.run_t < UiPlate.RUN_HOLD else 0), m.launcher_known and m.launcher_ready, m.launcher_known and UiStance.three(), m.weight_fallback_t < 1.5, m.sig_queued, m.sig_funded, int(m.sig_cap_t * 6.0) if m.sig_funded else 0, m.sig_note if m.sig_note_t < 1.4 else "",
++			(m.run_n if m.run_t < UiPlate.RUN_HOLD else 0), m.launcher_known and m.launcher_ready, m.launcher_known and UiStance.launch_marks(), m.weight_fallback_t < 1.5, m.run_n >= m.run_to, (int(m.launcher_rest_left) if (m.launcher_known and not m.launcher_ready and UiStance.launch_marks()) else -1), m.sig_queued, m.sig_funded, int(m.sig_cap_t * 6.0) if m.sig_funded else 0, m.sig_note if m.sig_note_t < 1.4 else "",
+ 			0 if reduced else int(clampf(1.0 - m.stance_flash_t / 0.8, 0.0, 1.0) * 5.0), int(m.last_stand_left * 6.0), int(m.last_stand_dur), m.energy, m.stance_kind, int(clampf(m.stance_armed, 0.0, 1.0) * 12.0) if (m.stance_armed > 0.0 and not reduced) else (1 if m.stance_armed > 0.0 else 0)])
+ 		_l_sil[m.slot].update_sig(_sil_sig(m, reduced) if layout.silhouette_on else null)
+ 
+@@ -684,6 +690,12 @@
+ 		_inc_keep = [null, null]
+ 		_many_marks = UiMany.held([], _many_keep, _t) if not _many_keep.is_empty() else []
+ 	_l_many.update_sig(UiMany.sig(_many_marks, hub) if (not _many_marks.is_empty() and _lb < 0.5) else null)
++	# The beam struggle's tug of war: between the two fighters' hands while one is on (UiTug); nothing otherwise.
++	if not hub.tug.is_empty() and anchor_fn.is_valid() and _lb < 0.5:
++		_tug_plan = UiTug.plan(layout, hub.tug, [anchor_fn.call(int(hub.tug["a"])), anchor_fn.call(int(hub.tug["d"]))], layout.s, bool(opts["reduced_motion"]) or bool(opts["reduce_flashing"]))
++	else:
++		_tug_plan = {}
++	_l_tug.update_sig(UiTug.sig(_tug_plan))
+ 	_chips = chips
+ 	var psz: Vector2 = UiSplit.pointer_size(layout.s, _chip_big)
+ 	for i in range(2):
+@@ -770,6 +782,7 @@
+ 			_l_prompts[m.slot].update_sig(UiPrompts.sig(m, prompts_on, touch_on, UiHints.preset_id(m, _o())) if (UiPrompts.has_content(m, prompts_on, touch_on) and layout.prompts[m.slot].size.y > 0.0 and not (m.slot == 1 and not _join_note.is_empty())) else null)
+ 		_l_pause.update_sig([layout.pause_btn, layout.touch_ui] if layout.pause_btn.size.y > 0.0 else null)
+ 	_update_form(reduced)
++	_update_launch()
+ 	_l_fbpill.update_sig([layout.feedback_btn, layout.touch_ui] if _pill_visible() else null)
+ 	_l_fb.update_sig(UiFeedback.sig(layout.vp, _fb_state, _fb_tags, _fb_status_ok, dp, layout.s, bool(opts["touch_ui"]), "%s|%s" % [_fb_opened, bool(_fb_issue.get("fallback", false))]) if _fb_open else null)
+ 	_l_tele.update_sig(UiReads.telegraph_sig(hub, bool(opts["show_prompts"]), reduced))
+@@ -3197,13 +3210,13 @@
+ 			for aid3 in UiHints.FACE_CELLS:
+ 				if str(UiHints.FACE_CELLS[aid3]) == m.charge_cell:
+ 					out["charge"] = {"name": aid3, "frac": cf, "armoured": m.charge_cell == "b"}
+-		if m.launcher_open:
+-			(out["lit"] as Array).append("signature")   # the launch window is on B
++		if UiHints.lit_b(m):
++			(out["lit"] as Array).append("signature")   # the launch window is on B (or the rival's gauge is full)
+ 		if UiStance.three() and m.punish_left > 0.0:
+ 			(out["lit"] as Array).append("heavy")   # he missed and is open: Y (the medium) is lit with three ticks
+ 		if UiStance.three() and m.flurry_dots > 0:
+ 			out["dots"] = m.flurry_dots
+-		if UiStance.three() and m.launcher_known:
++		if UiStance.launch_marks() and m.launcher_known:
+ 			out["launcher"] = "ready" if m.launcher_ready else "rest"
+ 		var a: float = UiHints.ack_alpha(m, bool(opts["reduced_motion"]))
+ 		if a > 0.0:
+@@ -3415,6 +3428,21 @@
+ 
+ ## The form-ready chips (UiFormPrompt): shown while a form is ready and the fighter is free, pulsed by the layer's scale and alpha (no redraw), with a
+ ## steady highlight under reduced motion. Also the rising edge of a ready form, for the host's haptic.
++## The launch marks' two edge events: the pad's pulse when a launch opens for a human, and the once-only hint when his rival's gauge first fills (never again, never with Control hints off).
++func _update_launch() -> void:
++	for i in range(mini(2, hub.models.size())):
++		var m: UiFighterModel = hub.models[i]
++		var open_now: bool = m.launcher_open and not m.ai
++		if open_now and not bool(_open_prev[i]) and UiStance.launch_marks():
++			haptic_requested.emit(i, "launch_open")
++		_open_prev[i] = open_now
++		var full_now: bool = m.gauge_full and not m.ai and UiStance.launch_marks()
++		if full_now and not bool(_gauge_prev[i]) and str(opts["control_hints"]) != "off" and hub.hint.is_empty() and not UiPrefs.get_bool("taught_launch"):
++			hub.show_launch_hint(UiData.t("prompt.launch_hint"))
++			UiPrefs.set_bool("taught_launch", true)
++		_gauge_prev[i] = full_now
++
++
+ func _update_form(reduced: bool) -> void:
+ 	var o: Dictionary = _o()
+ 	for i in range(2):
+@@ -3564,6 +3592,10 @@
+ 	UiSplit.draw_ring_marks(ci, layout, hub, _split, layout.s, _o())
+ 
+ 
++func _paint_tug(ci: CanvasItem) -> void:
++	UiTug.draw(ci, hub, _tug_plan, _o())
++
++
+ func _paint_many(ci: CanvasItem) -> void:
+ 	UiMany.draw(ci, hub, _many_marks, layout.s, _o())
+ 
+diff -ruN a/ui/tools/hud_check.gd b/ui/tools/hud_check.gd
+--- a/ui/tools/hud_check.gd	2026-10-16 12:21:47.435130100 -0700
++++ b/ui/tools/hud_check.gd	2026-10-16 12:21:47.572169500 -0700
+@@ -59,6 +59,8 @@
+ 	await _menu_rules()
+ 	await _rival_pointer_rules()
+ 	await _many_marker_rules()
++	await _launch_marks_rules()
++	await _tug_rules()
+ 	await _brawl_marks_rules()
+ 	_rate_rules()
+ 	await _block_toggle_rules()
+@@ -5767,6 +5769,199 @@
+ 	hud.queue_free()
+ 	await process_frame
+ 
++
++## The launch marks behind their own flag (docs/ui/launch-teaching.md) and the beam struggle's tug of war (docs/ui/hud-spec.md section 62).
++func _launch_marks_rules() -> void:
++	UiPrefs.path = "user://ui_prefs_test_launch.json"
++	if FileAccess.file_exists(UiPrefs.path):
++		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
++	root.size = Vector2i(1280, 720)
++	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
++	hud.size = Vector2(1280, 720)
++	root.add_child(hud)
++	await process_frame
++	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
++	hud.hub.patch(0, {"ai": false})
++	hud.hub.patch(1, {"ai": true})
++	var m0: UiFighterModel = hud.hub.model(0)
++	var m1: UiFighterModel = hud.hub.model(1)
++	var gauge := func(n: int) -> void:
++		hud.hub.consume({"type": "cue", "actor": 0, "kind": "blow", "text": "light", "target": 1, "run": n, "run_to": 4})
++		hud.advance(1.0 / 60.0)
++	# Off (the default): nothing about the launch is drawn or asked, even with a full gauge.
++	_ok(not UiStance.launch_marks() and not UiData.feature("launch_marks"), "launch marks: off by default")
++	gauge.call(4)
++	_ok(m0.gauge_full and not UiHints.lit_b(m0) and not UiPlate.marks_up(m1), "launch marks: with the flag off a full gauge lights no B and puts no mark on the plate")
++	var rows_off: Array = UiHints.rows(m0, "today")
++	var note_off := ""
++	for r in rows_off:
++		if str(r.get("cell", "")) == "b":
++			note_off = str(r.get("note", ""))
++	_ok(note_off == "" and hud.hub.hint.is_empty(), "launch marks: and no word LAUNCH and no hint")
++	hud.advance(3.0)
++	# On: the gauge, the lit B with its word, the once-only hint, the pad's pulse.
++	UiData.set_feature("launch_marks", true)
++	var pulses := {"n": 0, "kind": ""}
++	hud.haptic_requested.connect(func(_slot, kind): pulses["n"] += 1; pulses["kind"] = kind)
++	hud.hub.patch(0, {"launcher_ready": true, "launcher_rest_left": 0.0})
++	hud.hub.patch(1, {"launcher_ready": true, "launcher_rest_left": 0.0})
++	gauge.call(3)
++	_ok(not m0.gauge_full and not UiHints.lit_b(m0), "launch marks: three of four lights nothing")
++	gauge.call(4)
++	hud.advance(1.0 / 60.0)
++	await process_frame
++	_ok(m1.run_n == 4 and m0.gauge_full and UiHints.lit_b(m0) and UiPlate.marks_up(m1), "launch marks: four of four fills the gauge on the rival, lights B and puts the run on his plate")
++	var note_on := ""
++	for r in UiHints.rows(m0, "today"):
++		if str(r.get("cell", "")) == "b":
++			note_on = str(r.get("note", ""))
++	_ok(note_on == "LAUNCH", "launch marks: the B row says LAUNCH (%s)" % note_on)
++	_ok(not hud.hub.hint.is_empty() and str(hud.hub.hint["id"]) == "launch" and str(hud.hub.hint["text"]) == UiData.t("prompt.launch_hint") and UiPrefs.get_bool("taught_launch"), "launch marks: the first full gauge shows the hint, once, and remembers it")
++	hud.hub.hint = {}
++	hud.advance(3.0)
++	gauge.call(4)
++	hud.advance(1.0 / 60.0)
++	_ok(hud.hub.hint.is_empty(), "launch marks: and never again")
++	hud.advance(3.0)   # the run lapses after 2.5 s
++	_ok(not m0.gauge_full and not UiHints.lit_b(m0), "launch marks: the gauge empties when the run lapses, and B goes out")
++	# A launcher that is resting keeps the gauge from calling for a launch.
++	hud.hub.patch(0, {"launcher_ready": false, "launcher_rest_left": 20.0})
++	gauge.call(4)
++	_ok(not m0.gauge_full, "launch marks: no lit B while his launcher rests")
++	# The rest's ring fills a step a second: the plate redraws on the step and not between.
++	hud.hub.patch(1, {"launcher_ready": false, "launcher_rest_left": 19.9})
++	hud.advance(1.0 / 60.0)
++	var s1: Variant = hud._l_plate[1].sig
++	hud.hub.patch(1, {"launcher_ready": false, "launcher_rest_left": 19.5})
++	hud.advance(1.0 / 60.0)
++	var s2: Variant = hud._l_plate[1].sig
++	hud.hub.patch(1, {"launcher_ready": false, "launcher_rest_left": 18.9})
++	hud.advance(1.0 / 60.0)
++	var s3: Variant = hud._l_plate[1].sig
++	_ok(s1 == s2 and s2 != s3, "launch marks: the rest's ring steps once a second (a redraw per whole second, none between)")
++	# The pulse for the pad: the rising edge of a launch opening for a human, once; none for the computer.
++	var before: int = int(pulses["n"])
++	hud.hub.consume({"type": "cue", "actor": 0, "kind": "launcher_open", "target": 1, "n": 200})
++	hud.advance(1.0 / 60.0)
++	hud.advance(1.0 / 60.0)
++	hud.hub.consume({"type": "cue", "actor": 1, "kind": "launcher_open", "target": 0, "n": 200})
++	hud.advance(1.0 / 60.0)
++	_ok(int(pulses["n"]) == before + 1 and str(pulses["kind"]) == "launch_open", "launch marks: the pad is asked for one pulse when a launch opens for a human, none for the computer")
++	# Control hints off: no hint.
++	UiPrefs.set_bool("taught_launch", false)
++	hud.hub.hint = {}
++	hud.set_option("control_hints", "off")
++	hud.advance(3.0)
++	gauge.call(4)
++	hud.hub.patch(0, {"launcher_ready": true, "launcher_rest_left": 0.0})
++	gauge.call(4)
++	hud.advance(1.0 / 60.0)
++	_ok(hud.hub.hint.is_empty(), "launch marks: with Control hints off there is no hint")
++	hud.set_option("control_hints", "auto")
++	UiData.set_feature("launch_marks", null)
++	hud.queue_free()
++	await process_frame
++	DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
++	UiPrefs.path = "user://ui_prefs.json"
++
++
++func _tug_rules() -> void:
++	var hub := UiEventHub.new()
++	hub.setup_fighters(["protagonist", "anti_hero"], ["ONE", "TWO"])
++	_ok(hub.tug.is_empty(), "tug: none until a struggle starts")
++	hub.consume({"type": "cue", "actor": 0, "kind": "beam_struggle", "text": "start", "target": 1, "n": 400})
++	_ok(not hub.tug.is_empty() and int(hub.tug["a"]) == 0 and int(hub.tug["d"]) == 1 and absf(float(hub.tug["mid"]) - 0.5) < 0.001, "tug: beam_struggle opens it, the point in the middle")
++	hub.set_clash_mid(0.62)
++	hub.consume({"type": "cue", "actor": 0, "kind": "beam_pulse", "k": 1, "n": 20})
++	hub.advance(0.1)
++	_ok(absf(float(hub.tug["mid"]) - 0.62) < 0.001 and absf(float(hub.tug["pulse_t"]) - 0.1) < 0.01, "tug: the point follows Clash.mid and the beat's clock runs from each pulse")
++	hub.consume({"type": "cue", "actor": 0, "kind": "beam_surge", "text": "sharp"})
++	hub.consume({"type": "cue", "actor": 1, "kind": "beam_stray"})
++	hub.consume({"type": "cue", "actor": 1, "kind": "beam_surge", "text": "surge"})
++	var kinds := PackedStringArray()
++	for mk in hub.tug["marks"]:
++		kinds.append(str(mk["kind"]))
++	hub.advance(UiEventHub.TUG_MARK_LIFE + 0.05)
++	_ok(kinds == PackedStringArray(["sharp", "stray", "surge"]) and (hub.tug["marks"] as Array).is_empty(), "tug: a sharp surge, a stray and a surge are marked, and each mark goes after %.2f s" % UiEventHub.TUG_MARK_LIFE)
++	hub.set_clash_mid(-1.0)
++	_ok(absf(float(hub.tug["mid"]) - 0.62) < 0.001, "tug: a missing Clash.mid (-1) leaves the point where it was")
++	hub.consume({"type": "cue", "actor": 0, "kind": "beam_end", "text": "overwhelmed", "x": 0.97})
++	hub.set_clash_mid(0.4)
++	_ok(str(hub.tug["end"]) == "overwhelmed" and absf(float(hub.tug["mid"]) - 0.97) < 0.001, "tug: the end freezes the point where it ended")
++	hub.advance(UiEventHub.TUG_END_HOLD + 0.1)
++	_ok(hub.tug.is_empty(), "tug: it is drawn for a second after the end, then goes")
++	hub.consume({"type": "cue", "actor": 0, "kind": "beam_struggle", "text": "start", "target": 1, "n": 400})
++	hub.advance(12.5)
++	_ok(hub.tug.is_empty(), "tug: an end cue that never came does not leave it up")
++	_ok(UiSimBridge.clash_mid(null) == -1.0, "tug: the bridge reads no meeting point from nothing (read only)")
++	# The plan at several sizes: the points are inside the screen, the marker is between the hands, and the picture follows what changes.
++	var bad := PackedStringArray()
++	for cs in [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(844, 390), 1.0], [Vector2(2532, 1170), 3.0], [Vector2(390, 844), 1.0]]:
++		var sz: Vector2 = cs[0]
++		var lay := UiLayout.new()
++		lay.dp = cs[1]
++		lay.compute(sz, false)
++		var tg := {"a": 0, "d": 1, "end_n": 0, "k": 1, "pulse_t": 0.1, "age": 1.0, "mid": 0.3, "marks": [{"slot": 0, "kind": "surge", "age": 0.1}], "end": "", "end_t": 0.0}
++		var anc: Array = [{"pos": Vector2(sz.x * 0.3, sz.y * 0.55), "h": sz.y * 0.12, "visible": true}, {"pos": Vector2(sz.x * 0.75, sz.y * 0.55), "h": sz.y * 0.12, "visible": true}]
++		var p: Dictionary = UiTug.plan(lay, tg, anc, lay.s, false)
++		if p.is_empty() or not lay.safe.has_point(p["pm"]) or not lay.safe.has_point(p["a"]) or not lay.safe.has_point(p["d"]):
++			bad.append("%s outside" % str(sz))
++			continue
++		var pm: Vector2 = p["pm"]
++		var want: Vector2 = (p["a"] as Vector2).lerp(p["d"], 0.3)
++		if pm.distance_to(want) > 0.5:
++			bad.append("%s point" % str(sz))
++	_ok(bad.is_empty(), "tug: at five sizes the track and the point are on the screen, the point at its fraction of the way (%d bad %s)" % [bad.size(), str(bad.slice(0, 3))])
++	# The beat: the ring closes in steps over a pulse (so the layer redraws a few dozen times a second, never every frame), and under steady the picture changes only for the beat bar.
++	var lay2 := UiLayout.new()
++	lay2.compute(Vector2(1280, 720), false)
++	var anc2: Array = [{"pos": Vector2(400, 400), "h": 90.0, "visible": true}, {"pos": Vector2(900, 400), "h": 90.0, "visible": true}]
++	var moving := {}
++	var steady_sigs := {}
++	for tick in range(60):
++		var tg2 := {"a": 0, "d": 1, "end_n": 0, "k": 1, "pulse_t": float(tick % 20) / 60.0, "age": 1.0, "mid": 0.5, "marks": [], "end": "", "end_t": 0.0}
++		moving[str(UiTug.sig(UiTug.plan(lay2, tg2, anc2, lay2.s, false)))] = true
++		steady_sigs[str(UiTug.sig(UiTug.plan(lay2, tg2, anc2, lay2.s, true)))] = true
++	_ok(moving.size() <= UiTug.RING_STEPS + 2 and steady_sigs.size() == 2, "tug: a second of beat is %d pictures with the ring closing (at most %d) and 2 when steady (the bar filled or not)" % [moving.size(), UiTug.RING_STEPS + 2])
++	_ok(UiTug.PERIOD >= 1.0 / 3.0 - 0.001, "tug: the beat is no faster than three a second (%.3f s)" % UiTug.PERIOD)
++	# In the HUD: the layer holds a signature only while a struggle is on, in each mode, and draws without error.
++	root.size = Vector2i(1280, 720)
++	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
++	hud.size = Vector2(1280, 720)
++	root.add_child(hud)
++	await process_frame
++	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
++	var vp2: Vector2 = hud.layout.vp
++	hud.anchor_fn = func(slot: int) -> Dictionary:
++		return {"pos": Vector2(vp2.x * (0.3 if slot == 0 else 0.7), vp2.y * 0.55), "h": vp2.y * 0.12, "visible": true}
++	for i in range(5):
++		hud.advance(1.0 / 60.0)
++	var none_first: bool = hud._l_tug.sig == null
++	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_struggle", "text": "start", "target": 1, "n": 600})
++	var drew := 0
++	for i in range(80):
++		if i % 20 == 0:
++			hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_pulse", "k": i / 20 + 1, "n": i})
++		if i == 30:
++			hud.hub.consume({"type": "cue", "actor": 1, "kind": "beam_surge", "text": "sharp"})
++		hud.hub.set_clash_mid(0.5 + float(i) * 0.002)
++		hud.advance(1.0 / 60.0)
++		await process_frame
++		if hud._l_tug.sig != null:
++			drew += 1
++	var on_during: bool = drew == 80
++	hud.set_option("reduce_flashing", true)
++	hud.advance(1.0 / 60.0)
++	await process_frame
++	var steady_sig_ok: bool = hud._l_tug.sig != null and bool((hud._l_tug.sig as Array)[7])
++	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_end", "text": "time", "x": 0.5})
++	hud.advance(UiEventHub.TUG_END_HOLD + 0.2)
++	await process_frame
++	_ok(none_first and on_during and steady_sig_ok and hud._l_tug.sig == null, "tug: the HUD shows it from the struggle's start to a second after its end, steady under Reduce flashing, and nothing before or after")
++	hud.set_option("reduce_flashing", false)
++	hud.queue_free()
++	await process_frame
++
+ 
+ ## The photosensitivity rule for the HUD (docs/ui/hud-spec.md section 57): no block of the HUD may come and go twice inside 60 ticks, whatever the presses do. A mash is played at the HUD
+ ## (a refused or empty press every 4 ticks, a wind-up on and off every 6, a stance change every 10, the launch window, banners, the touch flag flipping), at a keyboard-and-pad size and on a
+diff -ruN a/ui/widgets/ui_hints.gd b/ui/widgets/ui_hints.gd
+--- a/ui/widgets/ui_hints.gd	2026-10-16 12:21:47.204497500 -0700
++++ b/ui/widgets/ui_hints.gd	2026-10-16 12:21:47.622332000 -0700
+@@ -49,7 +49,7 @@
+ 	var pop: float = clampf((3.0 - m.stance_kind_t) / 0.5, 0.0, 1.0)
+ 	if POP_ACKS.has(m.press_ack_kind):
+ 		pop = maxf(pop, clampf((ACK_POP - m.press_ack_t) / 0.3, 0.0, 1.0))
+-	if m.charge_on or m.launcher_open or (UiStance.three() and m.punish_left > 0.0):
++	if m.charge_on or lit_b(m) or (UiStance.three() and m.punish_left > 0.0):
+ 		pop = 1.0   # a wind-up on Y or B, or the launch window on B: the legend is up while it lasts
+ 	return maxf(base, pop)
+ 
+@@ -234,6 +234,8 @@
+ 		var row_note: String = UiData.t("prompt.not_yet") if dim else ""
+ 		if UiStance.three() and m.launcher_known and aid == "signature" and by_stance and m.stance_kind != UiStance.CHARGING and not dim:
+ 			row_note = UiData.t("state.launcher_note_ready" if m.launcher_ready else "state.launcher_note_rest")   # the heavy row says whether a launch is ready (steady words, no countdown)
++		if UiStance.launch_marks() and m.gauge_full and row_cell == "b" and not dim:
++			row_note = UiData.t("state.launcher_ready")   # the word LAUNCH beside the lit B
+ 		out.append({"acts": acts, "label": label, "held": held, "dim": dim, "note": row_note, "cell": row_cell})
+ 	if UiStance.three():
+ 		if by_stance and m.stance_kind != UiStance.CHARGING:
+@@ -325,11 +327,16 @@
+ 	return w
+ 
+ 
++## B is lit: the launch window is open (the `launcher_open` cue), or the rival's gauge is full and the launcher is ready, so the next opening can be launched (the launch marks).
++static func lit_b(m: UiFighterModel) -> bool:
++	return m.launcher_open or (UiStance.launch_marks() and m.gauge_full)
++
++
+ static func sig(m: UiFighterModel, alpha: float, preset: String, energy: String = "hold", reduced: bool = false) -> Array:
+ 	var ack_step: int = 0 if m.press_ack_kind == "" or m.press_ack_t >= ACK_SECONDS else (1 if reduced else 1 + int(m.press_ack_t / ACK_SECONDS * 6.0))
+ 	var cf: float = charge_frac(m, reduced)
+ 	return [m.device, m.slot, int(alpha * 10.0), preset, m.avail["transform"], m.left_side, m.form_shown, energy, m.stance_kind, m.press_ack_kind, m.press_ack_cell, ack_step,
+-		int(cf * 8.0) if cf >= 0.0 else -1, m.charge_cell if m.charge_on else "", m.launcher_open, UiStance.three(), m.punish_left > 0.0, m.flurry_dots]
++		int(cf * 8.0) if cf >= 0.0 else -1, m.charge_cell if m.charge_on else "", lit_b(m), UiStance.three(), m.punish_left > 0.0, m.flurry_dots, UiStance.launch_marks() and m.gauge_full]
+ 
+ 
+ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Dictionary, alpha: float) -> void:
+@@ -371,7 +378,7 @@
+ 			var gc := Vector2(rect.position.x + float(p["pad"]) + shift + gh * 0.5, float(r["y"]))
+ 			if m.charge_on and str(r["cell"]) == m.charge_cell:
+ 				draw_charge(ci, gc, gh * 0.62, charge_frac(m, bool(o.get("reduced_motion", false))), m.charge_cell == "b", alpha)
+-			if m.launcher_open and str(r["cell"]) == "b":
++			if lit_b(m) and str(r["cell"]) == "b":
+ 				draw_lit(ci, gc, gh * 0.52, alpha)
+ 			if UiStance.three() and m.punish_left > 0.0 and str(r["cell"]) == "y":
+ 				draw_lit(ci, gc, gh * 0.52, alpha, 3)   # he missed and is open: the medium (Y) stops him, a lit ring with three ticks (B's launcher has four)
+diff -ruN a/ui/widgets/ui_plate.gd b/ui/widgets/ui_plate.gd
+--- a/ui/widgets/ui_plate.gd	2026-10-16 12:21:47.178545500 -0700
++++ b/ui/widgets/ui_plate.gd	2026-10-16 12:21:47.606766700 -0700
+@@ -6,9 +6,13 @@
+ 
+ ## Whether one of the brawl's small marks is up on this plate (the weight chip naming a blow, OPEN, a run, a bolt's land): under the three strengths only.
+ static func marks_up(m: UiFighterModel) -> bool:
+-	if not UiStance.three():
++	if not UiStance.launch_marks():
+ 		return false
+-	return (m.blow_kind != "" and m.blow_t < BLOW_HOLD) or m.open_left > 0.0 or (m.run_n > 0 and m.run_t < RUN_HOLD) or (m.land_kind != "" and m.land_t < LAND_HOLD)
++	return (UiStance.three() and m.blow_kind != "" and m.blow_t < BLOW_HOLD) or m.open_left > 0.0 or (m.run_n > 0 and m.run_t < RUN_HOLD) or (m.land_kind != "" and m.land_t < LAND_HOLD)
++
++
++## The launcher's rest in seconds (Game Design's eleventh round: 30, from 40); the ring round the resting mark fills over it. Data later, with the director's own number.
++const REST_TOTAL := 30.0
+ 
+ 
+ ## How long the weight chip names the blow just thrown, how long a bolt's land and a run of unanswered blows stay on the plate (seconds).
+@@ -235,10 +239,10 @@
+ 	if blow_on:
+ 		weight_word = UiData.t("state.blow_" + m.blow_kind)
+ 	chips.append(["weight", weight_word, UiLook.col(UiLook.WARN) if fallback else UiLook.col(UiLook.INK if m.weight == "heavy" else UiLook.INK_DIM)])
+-	if UiStance.three() and m.launcher_known:
++	if UiStance.launch_marks() and m.launcher_known:
+ 		# The launcher: LAUNCH (a filled mark, bright) while a launch is ready, RESTING (a hollow mark, dim) after one landed. Steady, two states, no countdown.
+ 		chips.append(["launcher", UiData.t("state.launcher_ready" if m.launcher_ready else "state.launcher_rest"), UiLook.col(UiLook.INK if m.launcher_ready else UiLook.INK_DIM)])
+-	if UiStance.three():
++	if UiStance.launch_marks():
+ 		# OPEN, a bolt's land and the run are short, urgent reads: the most urgent takes the weight chip's place (a plate has room for one chip beside the pips), the rest follow if there is room.
+ 		var specials: Array = []
+ 		if m.open_left > 0.0:
+@@ -274,7 +278,8 @@
+ 			w = chip_h * 0.9 + 12.0 * s
+ 		if cur + w > chip_limit:
+ 			break
+-		_chip(ci, rect, left, pad, cur, w, chip_y, chip_h, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(ch[2]), 1.6)
++		var gauge_full: bool = ch[0] == "run" and m.run_n >= m.run_to   # four of four: the next blow opens him; a steady heavier edge (never a blink)
++		_chip(ci, rect, left, pad, cur, w, chip_y, chip_h, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(ch[2]), 3.6 if gauge_full else 1.6)
+ 		var icx: float = (x0 + cur + 8.0 * s + chip_h * 0.35) if left else (x1 - cur - 8.0 * s - chip_h * 0.35)
+ 		var icp := Vector2(icx, chip_y + chip_h * 0.5)
+ 		match ch[0]:
+@@ -298,6 +303,10 @@
+ 					var closed: PackedVector2Array = tri.duplicate()
+ 					closed.append(tri[0])
+ 					ci.draw_polyline(closed, _c(ch[2]), maxf(2.0, lr * 0.4), true)
++					if m.launcher_rest_left > 0.0:
++						# The rest: a ring round the hollow mark that fills as it passes. No number, one step a second (Game Design's eleventh round; docs/ui/launch-teaching.md).
++						var rf: float = clampf(1.0 - m.launcher_rest_left / REST_TOTAL, 0.0, 1.0)
++						ci.draw_arc(icp, lr * 1.6, -PI * 0.5, -PI * 0.5 + TAU * float(int(rf * REST_TOTAL)) / REST_TOTAL, 28, _c(ch[2]), maxf(2.0, lr * 0.35), true)
+ 			"open":
+ 				# Two brackets facing in: a gap, "he is open".
+ 				var bw: float = chip_h * 0.3
+@@ -330,7 +339,11 @@
+ 					else:
+ 						ci.draw_rect(pr, _c(ch[2]), false, maxf(1.5, pw * 0.2))
+ 				var cxx: float = px0 + (float(m.run_to) * pw * 1.6 if left else -float(m.run_to) * pw * 1.6) + pw * 0.5
+-				ci.draw_polyline(PackedVector2Array([Vector2(cxx - pw * 0.7, icp.y + ph * 0.5), Vector2(cxx, icp.y - ph * 0.5), Vector2(cxx + pw * 0.7, icp.y + ph * 0.5)]), _c(ch[2]), maxf(1.8, pw * 0.25), true)
++				var caret := PackedVector2Array([Vector2(cxx - pw * 0.7, icp.y + ph * 0.5), Vector2(cxx, icp.y - ph * 0.5), Vector2(cxx + pw * 0.7, icp.y + ph * 0.5)])
++				if gauge_full:
++					UiIcons.fill_poly(ci, caret, _c(ch[2]))
++				else:
++					ci.draw_polyline(caret, _c(ch[2]), maxf(1.8, pw * 0.25), true)
+ 			"hidden":
+ 				UiIcons.eye_slash(ci, icp, chip_h * 0.75, _c(ch[2]))
+ 			"lost":
+diff -ruN a/ui/widgets/ui_tug.gd b/ui/widgets/ui_tug.gd
+--- a/ui/widgets/ui_tug.gd	1969-12-31 16:00:00.000000000 -0800
++++ b/ui/widgets/ui_tug.gd	2026-10-16 12:21:47.646499000 -0700
+@@ -0,0 +1,129 @@
++class_name UiTug
++## The beam struggle as a tug of war (Game Design's eleventh round, docs/design/rule-of-cool.md section 2; Encounter's park docs/director/pending/beam-struggle). HUD's part:
++## where the beams meet, the beat the players press on, and what each press did. Drawn between the two fighters' hands while a struggle is on, and only then.
++##   - the track: a thin line from one fighter's hands to the other's, with the quarter nearest each fighter's hands thicker in his ring colour (the comeback's zone, where a surge is worth half again);
++##   - the meeting point: a diamond on the track at `Clash.mid` (0 at the first fighter's hands, 1 at the second's), moved by the sim each tick;
++##   - the beat: a thin ring round the point that closes over the 20 ticks between pulses (`beam_pulse`) and meets the point on the next one: press as it closes. Under Reduced motion or Reduce
++##     flashing the ring does not move: it is a steady double ring, and a short bar beside the point is filled for the instant after each pulse;
++##   - a surge (`beam_surge`): short rays at the point in the presser's colour, three for a surge and five for a sharp one; a stray (`beam_stray`): a small cross, grey, on the presser's side;
++##   - the end (`beam_end`): the point and its ring stay a second where it ended.
++## All strokes, no filled area that changes: under any block threshold, and nothing changes state more than three times a second (the pulse is every 20 ticks). Nothing here is read by the sim.
++
++const PERIOD := 20.0 / 60.0    # seconds between pulses (data/director/interrupts.json beamStruggle.pulse, 20 ticks)
++const RING_STEPS := 12         # the closing ring redraws in this many steps a pulse (36 a second), not every frame
++const MIN_SPAN := 40.0
++
++
++## The plan, or {} when there is no struggle or a fighter cannot be placed. `anchors` is the host's anchor_fn for the two slots ({pos, h, visible}); `steady` is Reduced motion or Reduce flashing.
++static func plan(lay: UiLayout, tug: Dictionary, anchors: Array, s: float, steady: bool) -> Dictionary:
++	if tug.is_empty() or anchors.size() < 2:
++		return {}
++	var aa: Dictionary = anchors[0]
++	var ad: Dictionary = anchors[1]
++	if aa.is_empty() or ad.is_empty():
++		return {}
++	var inset: float = 24.0 * s
++	var box := Rect2(lay.safe.position + Vector2(inset, inset), lay.safe.size - Vector2(inset, inset) * 2.0)
++	var pa: Vector2 = _clamp(aa["pos"], box)
++	var pd: Vector2 = _clamp(ad["pos"], box)
++	if pa.distance_to(pd) < MIN_SPAN * s:
++		pd = pa + Vector2(MIN_SPAN * s, 0.0)
++	var mid: float = clampf(float(tug.get("mid", 0.5)), 0.0, 1.0)
++	var pm: Vector2 = pa.lerp(pd, mid)
++	var h: float = maxf(float(aa.get("h", 80.0)), float(ad.get("h", 80.0)))
++	var r1: float = clampf(h * 0.22, 14.0 * s, 40.0 * s)   # the ring's rest radius (the point's own)
++	var pulse_t: float = float(tug.get("pulse_t", 99.0))
++	var phase: float = clampf(pulse_t / PERIOD, 0.0, 1.0)   # 0 just after a pulse, 1 at the next
++	var step: int = int(phase * float(RING_STEPS))
++	var marks: Array = []
++	for mk in tug.get("marks", []):
++		marks.append({"slot": int(mk["slot"]), "kind": str(mk["kind"]), "age": float(mk["age"]), "side": 0 if int(mk["slot"]) == int(tug["a"]) else 1})
++	return {"a": pa, "d": pd, "pm": pm, "mid": mid, "r1": r1, "phase": phase, "step": step, "steady": steady, "s": s, "slot_a": int(tug["a"]), "slot_d": int(tug["d"]),
++		"marks": marks, "ended": str(tug.get("end", "")) != "", "beat": pulse_t < 0.12}
++
++
++static func _clamp(p: Vector2, box: Rect2) -> Vector2:
++	return Vector2(clampf(p.x, box.position.x, box.end.x), clampf(p.y, box.position.y, box.end.y))
++
++
++## What the picture depends on: the point (a pixel), the ring's step, the marks' ages (to a fifth of their life), and whether the beat bar is up.
++static func sig(p: Dictionary) -> Variant:
++	if p.is_empty():
++		return null
++	var pm: Vector2 = p["pm"]
++	var ms: Array = []
++	for mk in p["marks"]:
++		ms.append([int(mk["slot"]), str(mk["kind"]), int(float(mk["age"]) / UiEventHub.TUG_MARK_LIFE * 5.0)])
++	var pa: Vector2 = p["a"]
++	var pd: Vector2 = p["d"]
++	return [int(pm.x), int(pm.y), int(pa.x), int(pa.y), int(pd.x), int(pd.y), 0 if bool(p["steady"]) else int(p["step"]), bool(p["steady"]), bool(p["beat"]), p["ended"], ms]
++
++
++static func draw(ci: CanvasItem, hub: UiEventHub, p: Dictionary, o: Dictionary) -> void:
++	if p.is_empty():
++		return
++	var a: float = float(o.get("plate_alpha", 1.0))
++	var s: float = float(p["s"])
++	var pa: Vector2 = p["a"]
++	var pd: Vector2 = p["d"]
++	var pm: Vector2 = p["pm"]
++	var ink := Color(UiLook.col(UiLook.INK), 0.95 * a)
++	var key := Color(0, 0, 0, 0.7 * a)
++	var ma: UiFighterModel = hub.model(int(p["slot_a"]))
++	var md: UiFighterModel = hub.model(int(p["slot_d"]))
++	var ca: Color = Color(ma.aura, a) if ma != null else ink
++	var cd: Color = Color(md.aura, a) if md != null else ink
++	var w: float = maxf(2.0, 2.4 * s)
++	# The track: a dark keyline under a light line; the quarter nearest each fighter's hands in his colour.
++	ci.draw_line(pa, pd, key, w + 3.0, true)
++	ci.draw_line(pa, pd, Color(ink, 0.55 * a), w, true)
++	ci.draw_line(pa, pa.lerp(pd, 0.25), key, w + 5.0, true)
++	ci.draw_line(pa, pa.lerp(pd, 0.25), ca, w + 2.0, true)
++	ci.draw_line(pd, pd.lerp(pa, 0.25), key, w + 5.0, true)
++	ci.draw_line(pd, pd.lerp(pa, 0.25), cd, w + 2.0, true)
++	var hr: float = 7.0 * s
++	ci.draw_arc(pa, hr, 0.0, TAU, 20, key, w + 3.0, true)
++	ci.draw_arc(pa, hr, 0.0, TAU, 20, ca, w, true)
++	ci.draw_arc(pd, hr, 0.0, TAU, 20, key, w + 3.0, true)
++	ci.draw_arc(pd, hr, 0.0, TAU, 20, cd, w, true)
++	# The beat: a ring closing on the point (or, steady, two rings and a bar that fills for an instant after each pulse).
++	var r1: float = float(p["r1"])
++	if bool(p["steady"]):
++		for rr in [r1, r1 * 1.7]:
++			ci.draw_arc(pm, float(rr), 0.0, TAU, 32, key, w + 2.0, true)
++			ci.draw_arc(pm, float(rr), 0.0, TAU, 32, Color(ink, 0.8 * a), w, true)
++		var bw: float = r1 * 1.4
++		var br := Rect2(pm + Vector2(-bw * 0.5, -r1 * 2.5), Vector2(bw, maxf(4.0 * s, 4.0)))
++		ci.draw_rect(br, Color(ink, 0.8 * a), false, 1.6)
++		if bool(p["beat"]):
++			ci.draw_rect(br, Color(ink, 0.9 * a))
++	else:
++		var rr2: float = r1 * (1.0 + 1.4 * (1.0 - float(p["step"]) / float(RING_STEPS)))   # wide just after a pulse, meeting the point at the next
++		ci.draw_arc(pm, rr2, 0.0, TAU, 32, key, w + 2.0, true)
++		ci.draw_arc(pm, rr2, 0.0, TAU, 32, Color(ink, 0.9 * a), w, true)
++	# The point: a diamond.
++	var dr: float = r1 * 0.55
++	var dia := PackedVector2Array([pm + Vector2(0, -dr), pm + Vector2(dr, 0), pm + Vector2(0, dr), pm + Vector2(-dr, 0), pm + Vector2(0, -dr)])
++	ci.draw_polyline(dia, key, w + 3.0, true)
++	UiIcons.fill_poly(ci, PackedVector2Array([dia[0], dia[1], dia[2], dia[3]]), ink)
++	# What the presses did.
++	for mk in p["marks"]:
++		var life: float = clampf(float(mk["age"]) / UiEventHub.TUG_MARK_LIFE, 0.0, 1.0)
++		var col: Color = ca if int(mk["slot"]) == int(p["slot_a"]) else cd
++		var side: float = -1.0 if int(mk["slot"]) == int(p["slot_a"]) else 1.0
++		if str(mk["kind"]) == "stray":
++			var cp: Vector2 = pm + (pd - pa).normalized() * (side * (r1 * 1.4 + 8.0 * s))
++			var cr: float = r1 * 0.35
++			var gc := Color(UiLook.col(UiLook.INK_DIM), (1.0 - life) * a)
++			ci.draw_line(cp + Vector2(-cr, -cr), cp + Vector2(cr, cr), gc, w, true)
++			ci.draw_line(cp + Vector2(-cr, cr), cp + Vector2(cr, -cr), gc, w, true)
++		else:
++			var rays: int = 5 if str(mk["kind"]) == "sharp" else 3
++			var base: float = (pd - pa).angle() + (PI if side < 0.0 else 0.0)   # the rays fan toward the rival's side of the point
++			for i in range(rays):
++				var ang: float = base + (float(i) - float(rays - 1) * 0.5) * 0.42
++				var dir := Vector2.from_angle(ang)
++				var r_in: float = r1 * (0.9 + 0.8 * life)
++				var r_out: float = r_in + r1 * (0.6 if rays == 3 else 0.9)
++				ci.draw_line(pm + dir * r_in, pm + dir * r_out, Color(0, 0, 0, (1.0 - life) * 0.7 * a), w + 2.0, true)
++				ci.draw_line(pm + dir * r_in, pm + dir * r_out, Color(col, (1.0 - life) * a), w, true)
+diff -ruN a/ui/widgets/ui_tug.gd.uid b/ui/widgets/ui_tug.gd.uid
+--- a/ui/widgets/ui_tug.gd.uid	1969-12-31 16:00:00.000000000 -0800
++++ b/ui/widgets/ui_tug.gd.uid	2026-10-16 12:21:47.647003900 -0700
+@@ -0,0 +1 @@
++uid://0q30ivw4glxf
