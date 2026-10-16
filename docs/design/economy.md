@@ -110,6 +110,8 @@ In a 55-second match, escalation usually stops halfway. QA §8 gives a mean high
 
 ### 4.1 The prototype's placeholders
 
+> **The Protagonist's anguish is reworked** in `hero-forms.md` (2026-10-16, Orb's homework 5): his power never comes from a death, his forms branch by what the fight was like, and only his own kills still cost him.
+
 | | Menace (villain) | Anguish (hero) |
 | :--- | :--- | :--- |
 | Gain | +0.9 per casualty the villain causes (`L272`) | +0.5 per casualty the villain causes, +0.9 per casualty the hero causes (`L274`) |

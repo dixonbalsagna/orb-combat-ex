@@ -92,7 +92,7 @@ Orb's compromise, made structural, so that it is plain on the pad.
 
 ### What the core counts, with more than two bodies
 
-Ruled for Simulation's stage 1 (`docs/architecture/pending/n-bodies/`) and World's notes (`docs/world/scratch-build/near-offers/README.md`), 2026-10-15. "The principals" are the two fighters the match is between: the Empress and the one she fights.
+Ruled for Simulation's stage 1 (`docs/architecture/one-v-many-core.md`) and World's notes (`docs/world/scratch-build/near-offers/README.md`), 2026-10-15. "The principals" are the two fighters the match is between: the Empress and the one she fights.
 
 | | The ruling | Why |
 | :--- | :--- | :--- |

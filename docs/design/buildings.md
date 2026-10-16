@@ -13,7 +13,7 @@ World's second experiment, taken, with one addition for houses.
 | Tier | A house, under five floors | A tower | The chain |
 | ---: | :--- | :--- | :--- |
 | 1 | **He goes through it** | **It holds him.** The face breaks and he comes back off it: the wall slam (§2) | One tower, or two houses |
-| 2 | Through | He punches one tower. The next holds him | 2 |
+| 2 | Through | He punches one tower. The next holds him (towers re-ruled in §6.1) | 2 |
 | 3 | Through | Through | 3 |
 | 4 | Through | Through, and the breach is most of the building's width | 4 |
 | A finisher | | | 5 |
@@ -35,10 +35,10 @@ World's second experiment, taken, with one addition for houses.
 | Rule | Ruling | First values |
 | :--- | :--- | :--- |
 | **The wall slam.** A launched body that meets a building which holds him | **Yes.** It turns a launch at tier 1 or 2 into a play: aim at what you can't break. A floor that is punched gives no slam | He takes twice the building's hit. He is staggered at the wall for 24 ticks. And the attacker has the first move: he can't start an approach until 45 ticks after he is free (`brawl-second-pass.md` §14). World's "free rush" is that first move, and not a blow given for nothing |
-| **The falling stack.** A collapse takes seconds, and what stands under it is hurt | **Yes.** It is the largest single step toward what Orb describes | A tower comes down over at least 2 s. It warns for at least 1.5 s first, by sound and dust, and always for 0.6 s longer than any hold a fighter there is in. Under it: 6 damage for each floor that lands on him, 100 at most, and he is buried for 0.5 to 1 s. It hurts either fighter |
+| **The falling stack.** A collapse takes seconds, and what stands under it is hurt | **Yes.** It is the largest single step toward what Orb describes | A tower comes down over at least 2 s. It warns for at least 1.5 s first, by sound and dust, and always for 0.6 s longer than any hold a fighter there is in. Under it: 6 damage for each floor that lands on him, 100 at most, and he is buried for 0.5 to 1 s. It hurts only the fighter it was aimed at (§6.3, re-ruled 2026-10-16; it hurt either fighter) |
 | **Cover from a beam.** A standing building in a beam's line takes it for him | **Yes, with beams in depth, and not before.** Along a street a beam's line is clear, so there is no cover to take until a beam can be aimed across the band. And it must never make a fighter safe for good | A beam of tier 1 or 2 is stopped while the building stands, and carves it stage by stage. At tier 3 it cuts through after 1 s. At tier 4 it cuts through at once, at 0.7 of its power. The people inside are on the firer's account |
 
-- **The fighter who cares pays for all three.** A wall slam into a full tower, a stack brought down, a beam through cover: the people inside feed his anguish. He can still do each one. That is the Protagonist as Orb wrote him: he fights to protect, and his fixation on the fight breaks things.
+- **The fighter who cares pays for all three.** A wall slam into a full tower, a stack brought down, a beam through cover: the people inside cost him, as every person he kills does (`hero-forms.md` §7). He can still do each one. That is the Protagonist as Orb wrote him: he fights to protect, and his fixation on the fight breaks things.
 - **A drifting brawl still never damages a building** (`depth.md` §2). Flights do: a launch, a throw, a rush that ploughs.
 
 ## 3. Aiming for it, and staying in town
@@ -103,3 +103,72 @@ World's second experiment, taken, with one addition for houses.
 | Camera | A chain through buildings, and a collapse, held in frame |
 | Legal | The collapse through the flash check |
 | QA | §4 |
+
+## 6. Orb's answers (homework 5, 2026-10-16)
+
+Orb's words are in `docs/ep/vision.md`, "Orb answers homework 5". World, Rendering and Encounter build from this section. Where it differs from §1 to §3, this section wins.
+
+### 6.1 Towers are earned by power (5b)
+
+Orb: early, "a well-earned power hit could send an opponent through the side of a skyscraper and they recover inside", and at max power "the same hit could launch the fighter through three skyscrapers, causing them to pancake-collapse, then propelling into a crater that levels nearby skyscrapers".
+
+- **A power send is one the attacker earned:** a launch (B in an opening, or a charged heavy at full), a finisher, a perfect B's ender, the duel of perfects' send, or a beam struggle's overwhelm.
+- **Every other send is a plain send:** a knock-back, a throw, a blast's push, or a rebound off a wall.
+
+| Tier | A power send into towers | A plain send into a tower |
+| ---: | :--- | :--- |
+| 1 | **Into the tower.** He goes in through the face, lodges inside it and recovers there (§6.4) | The wall slam (§2): it holds him |
+| 2 | Through one tower, and into the second | The wall slam |
+| 3 | Through two, and into the third. The two he went through are cracked at the core (§6.2) | Into it |
+| 4 | **Through three, which pancake,** and on into the ground beyond them: **a crater whose blast levels the towers near it** | Through one, and into the second |
+| A finisher | As tier 4, through four | |
+
+- **This replaces §1's ladder for towers.** Houses are as §1: through at every tier, as half a link. §1's five things a tier-1 hit shows now belong to the wall slam.
+- **The pancake.** Each tower he went through at tier 4 comes down floor onto floor from the breach up. They fall in the order he went through them, 0.3 s apart, each over 1.5 to 2.5 s. The breach is their warning, and no fighter is under them to be hurt (§6.3).
+- **The crater beyond.** The send ends on the ground past the last tower in a crater of a tier-4 impact (World's size). Its blast brings down every tower within 1,200 units of it as a falling stack, with §2's warning.
+- **The budget still holds.** The collateral window and ceiling go by the highest tier, and the chain spends them. When they are spent, the director picks sends that miss buildings, as now. **World's ask:** the tier-4 budget leaves room for one full chain, pancakes and crater, the first time a match reaches it.
+
+### 6.2 The three rules (5c), all confirmed
+
+- **The wall slam,** as §2: twice the building's hit, a 24-tick stagger at the wall, and the attacker's first move (he can't be approached for 45 ticks after he is free).
+- **Cover from a beam,** as §2, with beams in depth and not before. At tiers 1 and 2 a beam is stopped while the building stands, and carves it. At tier 3 it cuts through after 1 s, and at tier 4 at once, at 0.7 of its power.
+- **The falling stack: crack the core, a clear warning, and it comes down.**
+  - **A tower's core cracks** from a power send through it at tier 3 or more (§6.1), a beam that carves through its middle third, or its fourth mark (§1's marks).
+  - **The warning** lasts at least 1.5 s, and always 0.6 s longer than any hold a fighter there is in. The crack is heard, dust jets from the floors at the crack, the tower leans a few degrees, and windows burst up its face.
+  - **It comes down** over at least 2 s.
+- **The live picture-in-picture of a dodged beam hitting a tower** (Orb's note to 5c) is Camera's to propose.
+
+### 6.3 A falling building hurts only the fighter it was aimed at (5d)
+
+- **The fighter it was aimed at** is the target of the blow that cracked its core: the one sent through it, or the one the beam was fired at. If he is under it, he takes §2's damage (6 a floor, at most 100) and is buried for 0.5 to 1 s.
+- **Nobody else is hurt by it:** never the attacker who brought it down, and never a guard.
+- **The people in it and under it** are on the account of whoever cracked it, as every casualty is.
+- This replaces "It hurts either fighter" in §2.
+
+### 6.4 Lodged in a building (5f): two versions, as switches
+
+Orb plays both before choosing. The switch is `lodge.mode` in World's data. Both start the same way: the last building of a chain takes the rest of the send, and he is inside the breach.
+
+| | **Brief** (`brief`, the default, and §1 as it was) | **Pinned** (`pinned`) |
+| :--- | :--- | :--- |
+| **Who is held, and for how long** | Only the lodged fighter: 0.5 s at tiers 1 and 2, 0.7 s at 3, 0.9 s at 4 and in a finisher | Only the lodged fighter, longer: 1.2 s at tiers 1 and 2, 1.5 s at 3, 1.8 s at 4 and in a finisher |
+| **What lodges** | A power send's last building, and a plain send into a tower from tier 3 | The same. **Also any knock-back into a tower, at any tier,** in place of the wall slam: the reward for knock-back attacks Orb asked for |
+| **The attacker** | Free. The lodged fighter's way back is the return rule's (Encounter's tell and approach) | Free, with **the barrage window.** While he is pinned, the attacker's energy at range (bolts, blasts, the barrage signature) can't miss him, is worth 1.5 times, and carves the building with every shot. A barrage's volleys come twice as fast |
+| **His way out** | When the hold ends, out of the breach the way his stick points | When the hold ends, or sooner: a perfect block on a shot bursts him out of the breach toward the attacker, as a deflect does |
+| **The building coming down on him** | Only if it was aimed at him (§6.3) | The same. A barrage that cracks the core brings it down on him |
+| **Why** | Fast: the fight never waits for a lodge | Knock-backs pay: a knock-back into a tower opens the heaviest barrage in the game |
+
+- **Control comes first.** The hold is part of the send, so it is inside "except in knock-backs". At 1.8 s the pinned hold is the longest in the game. That is the version's cost, and why it is a switch.
+- **The AI** at medium uses the barrage window in 60% of pins.
+
+### 6.5 QA's rows for this section
+
+| Row | Bound |
+| :--- | :--- |
+| A power send at tier 1 into a tower | Lodges inside it, every time (hard) |
+| A power send at tier 4 with three towers on its line | Goes through all three, and all three come down (hard) |
+| A falling stack hurts anybody but the fighter it was aimed at | Never (hard) |
+| The holds, in each mode | As the table (hard) |
+| Pinned: the attacker lands energy on the pinned fighter | In at least half of pins |
+| The median match length, pinned against brief | Within 15 s |
+| The first tier-4 chain of a match, when there are three towers on its line | Plays in full (hard, while the budget is World's ask above) |
