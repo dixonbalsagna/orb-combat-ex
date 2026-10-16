@@ -157,6 +157,9 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-135 | The barrage as the Anti-hero's signature (barrage-signature.md) | Combat, Encounter, VFX | Medium | Pass on paper with conditions (sg01); seen drawn first; flash plan right (one full flash on the last volley) | Open until drawn |
 | RL-136 | Interim return of the playable build (Orb's decision, 2026-10-14): conditions, waivers for seven days, the first screen's words, About and notices, fighters' looks (photosensitivity-note.md addendum 8) | EP, Tools, UI | High | Acceptable for seven days with a click-through, Reduce flashing on, truthful notice, measured commit, kill switch; stops at once on any new scene over 3 | Open; expires 7 days from the return |
 | RL-137 | RL-136 on the full facts (56 clips on d3f1ca0e: none over 3 on the primary reading) | EP, Tools | High | Holds, with one wording change ('reach ... and a few that go over it on stricter readings'); extra AI seeds nightly during the interim | Open; expires 2026-10-22 |
+| RL-138 | Sun and moon discs (discs-for-legal.png) | Rendering | Low | Pass; w04: flat, never white, no glow; in the flash set (pan across a skyline with the sun in frame) | Open until measured |
+| RL-139 | Training dummy joins the roster (pairings: Protagonist v dummy, Anti-hero v dummy) | Tools | Low | Release rules need only: each new pairing at least 3 captures, and a mash-on-the-dummy scene per fighter in both modes (hit white at the maximum rate) | Open |
+| RL-140 | VFX's parked marks (shine, cash-in cut, barrage disc); preview of thick rippling beams and fiery explosions (fx01 to fx03) | VFX | Medium | Marks pass on paper, drawn later; beams and explosions screened drawn before they ship | Open |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 

@@ -558,6 +558,11 @@
       "id": "w03",
       "rule": "a landmark has no clock face, no red and white striping, no stripes or beams of light, no antenna mast on a stepped tower, no multicolour night lighting on a tower top, and no pair of thin pale spires on a dark tower that reads as horns",
       "why": "originality: no real landmark's likeness and none of the earlier look-alike conditions (clock face, red and white striping, stripes or beams of light); the horns reading is a recommendation, not a condition. Kept on its own grounds; not from the withdrawn sensitivity rule"
+    },
+    {
+      "id": "w04",
+      "rule": "the sun and moon discs are flat, never pure white, with no glow, bloom or flash; clouds and mountains pass in front of them only with soft edges at the sky's slew rate; the discs are in the flash set (a fast pan across a tall skyline and a town with the sun in frame, both modes), because a disc of about 15,000 px is most of the area threshold on its own",
+      "why": "photosensitivity; sky screen 2026-10-16"
     }
   ],
   "withdrawn": [
@@ -589,6 +594,23 @@
       "id": "sg01",
       "rule": "the barrage signature: three volleys, each one motion of one hand and each different (a sweep fanning five shards, a thrust sending three in a line, a flick sending one shot that splits), thrown from an upright, unhurried walk with the hands open and low between volleys; never both palms in turn, never one hand pumping, no shouted syllable repeated across the three (e05, e06, f03); the hand lit as a thin edge, never a ball; no aura, no crouch, no charge pose in the walk (k01, k02, h01); the close by hand is a heavy from his cleared pool; the three volleys carry at most one full flash (the last) and two lesser ones in any second, counted over the whole screen (k05, the margin rule); a rim on the rival on a landing, no whole-screen flash",
       "why": "built from cleared parts; screened as a whole 2026-10-12"
+    }
+  ],
+  "effects": [
+    {
+      "id": "fx01",
+      "rule": "the shine on a striking hand (timing cue): two thin edge lines and a small hollow ring in his colour lightened, steady (no pulse or flicker), never a ball or glow, never white, on one hand at a time (k01), gone when the window closes; it is a rendering cue and not a property of the strike piece, so b09 is not engaged",
+      "why": "duel window"
+    },
+    {
+      "id": "fx02",
+      "rule": "the cash-in: a thin committed line and four closing corner brackets (no numbers or text, not on the face), then a double ring, a crossed crack, one thin vertical cut and two puffs of dust, 10 ticks or fewer, in lane colours",
+      "why": "lock-on without a readout"
+    },
+    {
+      "id": "fx03",
+      "rule": "preview of Orb's thick glowing rippling beams and fiery explosions (to be screened drawn): a beam stays a plain straight line (e04, e07); its ripple is a slow, low-contrast shimmer (2 Hz or slower, under 10% luminance step) in the lane colour and never a strobing core; its start and end flashes go through the flash registry; a beam may not spiral, drill or twist; an explosion's fire is never a saturated-red flash (the red test: R/(R+G+B) of 0.8 or more with a chromaticity change over 0.2), grows over several ticks rather than a single-frame flash, is never a white or gold full-screen flash with a shouted name, and is not combined with a rubble ring, cracks and lightning on bodies (k01); both go into the required flash set before they ship",
+      "why": "area, red flash and stacking risks of large glowing effects"
     }
   ]
 }
