@@ -13,9 +13,9 @@
         { "icon": "plan", "col": 0, "text": "You are the fighter. Fly, dodge, guard, hit light or heavy, hold power, call your signature, transform. Transform when the prompt shows: you hit harder for the rest of the match." },
         { "icon": "auto", "col": 0, "text": "No combo inputs to learn. Blows and combos play out on their own." },
         { "icon": "body", "col": 0, "text": "No health bars. Damage shows on the bodies." },
-        { "icon": "finisher", "col": 0, "text": "A finisher ends the fight, not a clock." },
+        { "icon": "finisher", "col": 0, "text": "A finishing move ends the fight, not a clock." },
         { "heading": "Your stance", "col": 1 },
-        { "icon": "stance5_0", "col": 1, "text": "Nothing held: your martial arts. Hold a shoulder button to change stance." },
+        { "icon": "stance5_0", "col": 1, "text": "Nothing held: you fight with martial arts. Hold a shoulder button to change stance." },
         { "icon": "stance5_2", "col": 1, "text": "Each stance changes what your four buttons do: see Stances." }
       ]
     },
@@ -63,13 +63,12 @@
       "id": "reads",
       "title": "Reading the fight",
       "items": [
-        { "icon": "crown", "col": 0, "text": "A ring flashes when a body part gets worse." },
-        { "icon": "card", "col": 0, "text": "Cards name what changed." },
-        { "icon": "brink", "col": 0, "text": "A faint ring: on the brink. A finisher can end it." },
-        { "icon": "reads", "col": 0, "text": "Read your rival: stance, weight, finisher kind." },
-        { "icon": "three_launch", "col": 0, "text": "A launch needs an opening, and the launcher rests after it lands: until it is ready again the same button only knocks him back." },
-        { "icon": "struggle", "col": 1, "text": "Finisher rings show hold or slip. GUARD a launch, DODGE a melee, PRESS a beam." },
-        { "icon": "toll", "col": 1, "text": "The top chip counts what the fight costs the world." },
+        { "icon": "crown", "col": 0, "text": "A ring flashes when part of a body is hurt more, and a card says which." },
+        { "icon": "brink", "col": 0, "text": "A faint ring: he is nearly beaten. A finishing move can end it." },
+        { "icon": "reads", "col": 0, "text": "Watch your rival: his stance and his finishing move." },
+        { "icon": "launch_info", "col": 0, "text": "Get an opening, then press launch. It recharges; until then it only hits hard." },
+        { "icon": "struggle", "col": 1, "text": "Finishing-move rings: hold or slip. Guard a launch, dodge a close-up attack, press to answer a beam." },
+        { "icon": "toll", "col": 1, "text": "The box at the top counts the damage to the world." },
         { "icon": "strip", "col": 1, "text": "The strip is the whole planet. It wraps." },
         { "note": "reopen", "col": 1, "text": "" },
         { "icon": "first_run_about", "col": 1, "text": "About this game and its licences: Pause, then About." }

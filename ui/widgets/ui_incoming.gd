@@ -24,8 +24,10 @@ static func data(sp: Dictionary, slot: int) -> Dictionary:
 	var d = (arr as Array)[slot]
 	if not (d is Dictionary):
 		return {}
-	if not bool(d.get("active", false)) or bool(d.get("shown", false)) or float(d.get("eta", -1.0)) < 0.0:
+	if not bool(d.get("active", false)) or bool(d.get("shown", false)):
 		return {}
+	if float(d.get("eta", -1.0)) < 0.0 and not bool(d.get("lost", false)):
+		return {}   # no countdown and not lost: nothing to say
 	return d
 
 
@@ -70,6 +72,7 @@ static func entry(lay: UiLayout, sp: Dictionary, inc: Dictionary, anchor: Dictio
 	var h: float = float(anchor.get("h", 0.0))
 	var eta: float = float(inc.get("eta", 0.0))
 	var aimed: bool = bool(inc.get("aimed", false))
+	var lost: bool = bool(inc.get("lost", false)) and eta < 0.0   # off both panes and not rushing or closing: the arrow, the distance and the words OFF SCREEN, no countdown
 	for compact in [false, true]:
 		var sz: Vector2 = size(s, compact)
 		var pos: Vector2 = _on_edge(zone, p, dir, sz, s)
@@ -78,8 +81,8 @@ static func entry(lay: UiLayout, sp: Dictionary, inc: Dictionary, anchor: Dictio
 		pos = _clear_of(pos, dir, sz, p, h, zone)
 		if pos.x < -1e8:
 			continue
-		return {"slot": slot, "kind": "incoming", "pos": pos, "dir": dir, "text": dist_text, "size": sz, "compact": compact, "aimed": aimed,
-			"eta": eta, "eta_text": eta_text(eta, aimed), "urgent": aimed and eta < URGENT_ETA, "dist_bh": float(inc.get("dist_bh", 0.0))}
+		return {"slot": slot, "kind": "incoming", "pos": pos, "dir": dir, "text": dist_text, "size": sz, "compact": compact, "aimed": aimed, "lost": lost,
+			"eta": eta, "eta_text": "" if lost else eta_text(eta, aimed), "urgent": aimed and not lost and eta < URGENT_ETA, "dist_bh": float(inc.get("dist_bh", 0.0))}
 	return {}
 
 
@@ -145,7 +148,7 @@ static func _clear_of(pos: Vector2, dir: Vector2, sz: Vector2, p: Vector2, h: fl
 ## the countdown text, the distance, which kind it is, whether it is urgent and which size.
 static func sig(ch: Dictionary, aura: String = "") -> Array:
 	var dir: Vector2 = ch["dir"]
-	return [int(ch["slot"]), int(dir.x * 12.0), int(dir.y * 12.0), str(ch["eta_text"]), str(ch["text"]), bool(ch["aimed"]), bool(ch["urgent"]), bool(ch["compact"]), aura]
+	return [int(ch["slot"]), int(dir.x * 12.0), int(dir.y * 12.0), str(ch["eta_text"]), str(ch["text"]), bool(ch["aimed"]), bool(ch["urgent"]), bool(ch["compact"]), aura, bool(ch.get("lost", false))]
 
 
 ## How long a chip stays once it has shown (seconds): the read it gives is steady, and the kind of chip cannot change faster than about twice a second.
@@ -187,6 +190,7 @@ static func draw(ci: Control, hub: UiEventHub, ch: Dictionary, s: float, o: Dict
 	var aimed: bool = bool(ch["aimed"])
 	var urgent: bool = bool(ch["urgent"])
 	var compact: bool = bool(ch["compact"])
+	var lost: bool = bool(ch.get("lost", false))
 	var dir: Vector2 = ch["dir"]
 	var ink := Color(UiLook.col(UiLook.INK), a)
 	var dark := Color(UiLook.col(UiLook.INK_DARK), a)
@@ -197,6 +201,8 @@ static func draw(ci: Control, hub: UiEventHub, ch: Dictionary, s: float, o: Dict
 	UiText.no_outline = true
 	if aimed:
 		UiIcons.rrect(ci, r, rad, fill, ink, maxf(3.0, 3.0 * s))
+	elif lost:
+		UiIcons.rrect(ci, r, rad, fill, Color(ink, 0.7), maxf(2.0, 2.0 * s))   # a plain edge: a fact, not an estimate
 	else:
 		# Dashed: the estimate. A plain fill, then the edge in dashes along the straight sides.
 		UiIcons.rrect(ci, r, rad, fill, Color(0, 0, 0, 0), 0.0)
@@ -215,7 +221,12 @@ static func draw(ci: Control, hub: UiEventHub, ch: Dictionary, s: float, o: Dict
 	# His ring colour on the arrow (a dark keyline under it so it reads on any ground); the shape still says aimed or closing.
 	var rv: UiFighterModel = hub.model(1 - int(ch["slot"])) if hub != null else null
 	var rc: Color = Color(rv.aura, a) if (rv != null and not urgent) else fg
-	if aimed:
+	if lost:
+		# One solid arrow in his colour: where he is.
+		var big := PackedVector2Array([ic + dir * ir * 0.95, ic - dir * ir * 0.55 + perp * ir * 0.75, ic - dir * ir * 0.55 - perp * ir * 0.75])
+		UiIcons.fill_poly(ci, PackedVector2Array([ic + dir * ir * 1.2, ic - dir * ir * 0.75 + perp * ir * 0.95, ic - dir * ir * 0.75 - perp * ir * 0.95]), Color(0, 0, 0, 0.7 * a))
+		UiIcons.fill_poly(ci, big, rc)
+	elif aimed:
 		# A target ring round a solid arrow: it is aimed at you.
 		ci.draw_arc(ic, ir, 0.0, TAU, 28, Color(0, 0, 0, 0.7 * a), lw + 2.0, true)
 		ci.draw_arc(ic, ir, 0.0, TAU, 28, rc, lw, true)
@@ -231,20 +242,22 @@ static func draw(ci: Control, hub: UiEventHub, ch: Dictionary, s: float, o: Dict
 	var tx: float = sz.y * 1.05
 	var fs1: int = UiText.px(30.0 if not compact else 25.0, s)
 	var fs2: int = UiText.px(16.0, s)
-	var eta_t: String = str(ch["eta_text"])
+	var eta_t: String = str(ch["text"]) if lost else str(ch["eta_text"])   # lost: the distance is the big number
 	var tw: float = UiText.width(eta_t, fs1)
 	var y1: float = sz.y * (0.4 if not compact else 0.5)
 	UiText.draw(ci, eta_t, Vector2(tx, y1 + float(fs1) * 0.35), fs1, fg, -1)
-	UiText.draw(ci, "s", Vector2(tx + tw + 3.0 * s, y1 + float(fs1) * 0.35), fs2, Color(fg, 0.9), -1)
+	if not lost:
+		UiText.draw(ci, "s", Vector2(tx + tw + 3.0 * s, y1 + float(fs1) * 0.35), fs2, Color(fg, 0.9), -1)
 	if not compact:
-		var word: String = UiData.t("prompt.inc_rush" if aimed else "prompt.inc_closing")
+		var word: String = UiData.t("prompt.inc_lost" if lost else ("prompt.inc_rush" if aimed else "prompt.inc_closing"))
 		var y2: float = sz.y * 0.8
 		UiText.draw(ci, word, Vector2(tx, y2 + float(fs2) * 0.35), fs2, Color(fg, 0.95), -1)
-		var ww: float = UiText.width(word, fs2)
-		var dx: float = tx + ww + 8.0 * s
-		var dist_t: String = str(ch["text"])
-		UiText.draw(ci, dist_t, Vector2(dx, y2 + float(fs2) * 0.35), fs2, fg, -1)
-		var hx: float = dx + UiText.width(dist_t, fs2) + 5.0 * s
-		var hh: float = float(fs2) * 0.36
-		ci.draw_multiline(PackedVector2Array([Vector2(hx, y2 - hh), Vector2(hx, y2 + hh), Vector2(hx - 2.5 * s, y2 - hh), Vector2(hx + 2.5 * s, y2 - hh), Vector2(hx - 2.5 * s, y2 + hh), Vector2(hx + 2.5 * s, y2 + hh)]), Color(fg, 0.8), 1.5)
+		if not lost:
+			var ww: float = UiText.width(word, fs2)
+			var dx: float = tx + ww + 8.0 * s
+			var dist_t: String = str(ch["text"])
+			UiText.draw(ci, dist_t, Vector2(dx, y2 + float(fs2) * 0.35), fs2, fg, -1)
+			var hx: float = dx + UiText.width(dist_t, fs2) + 5.0 * s
+			var hh: float = float(fs2) * 0.36
+			ci.draw_multiline(PackedVector2Array([Vector2(hx, y2 - hh), Vector2(hx, y2 + hh), Vector2(hx - 2.5 * s, y2 - hh), Vector2(hx + 2.5 * s, y2 - hh), Vector2(hx - 2.5 * s, y2 + hh), Vector2(hx + 2.5 * s, y2 + hh)]), Color(fg, 0.8), 1.5)
 	UiText.no_outline = false

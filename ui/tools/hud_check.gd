@@ -59,6 +59,9 @@ func _run() -> void:
 	await _menu_rules()
 	await _rival_pointer_rules()
 	await _many_marker_rules()
+	await _lost_rival_rules()
+	await _launch_marks_rules()
+	await _tug_rules()
 	await _brawl_marks_rules()
 	_rate_rules()
 	await _block_toggle_rules()
@@ -1374,7 +1377,7 @@ func _howto_rules() -> void:
 			all_text += " " + str(it.get("text", "")) + " " + str(it.get("heading", ""))
 	_ok(not all_text.contains("Press Light") and not all_text.contains("parry") and not all_text.contains("timing"), "howto: no copy asks for a timed press (the director times every blow)")
 	var page0: String = str((UiData.howto()["pages"] as Array)[0]["title"])
-	_ok(page0 == "What you control" and all_text.contains("You are the fighter") and all_text.to_lower().contains("no combo inputs") and all_text.contains("play out on their own") and all_text.to_lower().contains("no health bars") and all_text.contains("finisher"), "howto: the first page is What you control: you are the fighter, there are no combo inputs, the blows play out on their own, no health bars, a finisher ends it")
+	_ok(page0 == "What you control" and all_text.contains("You are the fighter") and all_text.to_lower().contains("no combo inputs") and all_text.contains("play out on their own") and all_text.to_lower().contains("no health bars") and all_text.contains("finishing move"), "howto: the first page is What you control: you are the fighter, there are no combo inputs, the blows play out on their own, no health bars, a finisher ends it")
 	var p0text := ""
 	for it in (UiData.howto()["pages"] as Array)[0]["items"]:
 		p0text += " " + str(it.get("text", ""))
@@ -5188,15 +5191,19 @@ func _launcher_rules() -> void:
 	var mb: UiFighterModel = hud.hub.model(1)
 	hud.hub.patch(0, {"launcher_ready": true, "launcher_rest_left": 0.0})
 	hud.hub.patch(1, {"launcher_ready": false, "launcher_rest_left": 22.0})
-	_ok(note_of.call(ma) == "" and note_of.call(mb) == "", "launcher: with three_strengths off the heavy row says nothing about it")
+	UiData.set_feature("launch_marks", false)
+	_ok(note_of.call(ma) == "" and note_of.call(mb) == "", "launcher: with launch_marks and three_strengths off the heavy row says nothing about it")
+	UiData.set_feature("launch_marks", true)
+	_ok(note_of.call(ma) == "launch ready" and note_of.call(mb) == "launch recharging", "launcher: with launch_marks alone the legend's B row says launch ready or launch recharging")
+	UiData.set_feature("launch_marks", false)
 	UiData.set_feature("three_strengths", true)
 	var n_ready: String = note_of.call(ma)
 	var n_rest: String = note_of.call(mb)
-	_ok(n_ready == "launcher ready" and n_rest == "launcher resting", "launcher: with it on the legend's heavy row says launcher ready or launcher resting (steady words, two states)")
+	_ok(n_ready == "launch ready" and n_rest == "launch recharging", "launcher: with it on the legend's heavy row says launch ready or launch recharging (steady words, two states)")
 	hud.hub.patch(0, {"launcher_ready": false, "launcher_rest_left": 38.0})
 	var n_rest0: String = note_of.call(ma)
 	hud.hub.patch(0, {"launcher_ready": true, "launcher_rest_left": 0.0})
-	_ok(n_rest0 == "launcher resting" and note_of.call(ma) == "launcher ready", "launcher: the words follow the state and carry no countdown (the rest time left is not drawn)")
+	_ok(n_rest0 == "launch recharging" and note_of.call(ma) == "launch ready", "launcher: the words follow the state and carry no countdown (the rest time left is not drawn)")
 	var fresh_m := UiFighterModel.new()
 	fresh_m.setup(0, "protagonist", "ONE")
 	_ok(note_of.call(fresh_m) == "", "launcher: nothing shows until the director sends it")
@@ -5254,15 +5261,22 @@ func _launcher_rules() -> void:
 		var p: Dictionary = UiHowto.plan(cs[0], lay.s, cs[1], false, reads, "kbd", 0)
 		fits_on = fits_on and bool(p["fits"])
 		for rec in p["items"]:
-			if str(rec["kind"]) == "icon" and " ".join(PackedStringArray(rec["lines"])).begins_with("A launch needs an opening"):
+			if str(rec["kind"]) == "icon" and " ".join(PackedStringArray(rec["lines"])).begins_with("Get an opening"):
 				has_line_on = true
 	UiData.set_feature("three_strengths", null)
+	UiData.set_feature("launch_marks", false)
 	var p_off: Dictionary = UiHowto.plan(Vector2(1280, 720), 0.67, 1.0, false, reads, "kbd", 0)
 	var line_off := false
 	for rec in p_off["items"]:
-		if str(rec["kind"]) == "icon" and " ".join(PackedStringArray(rec["lines"])).begins_with("A launch needs an opening"):
+		if str(rec["kind"]) == "icon" and " ".join(PackedStringArray(rec["lines"])).begins_with("Get an opening"):
 			line_off = true
-	_ok(fits_on and has_line_on and not line_off, "launcher: How to play's Reading the fight page says a launch needs an opening and the launcher rests after it lands, under the three strengths only, and every page fits at 15 sizes with it")
+	UiData.set_feature("launch_marks", null)
+	var p_def: Dictionary = UiHowto.plan(Vector2(1280, 720), 0.67, 1.0, false, reads, "kbd", 0)
+	var line_default := false
+	for rec in p_def["items"]:
+		if str(rec["kind"]) == "icon" and " ".join(PackedStringArray(rec["lines"])).begins_with("Get an opening"):
+			line_default = true
+	_ok(fits_on and has_line_on and not line_off and line_default, "launcher: How to play's Reading the fight page says how to launch and that it recharges (true since the fourth round: the same button still hits hard), with the launch marks on (the default) and not off, and every page fits at 15 sizes with it")
 	hud.queue_free()
 	await process_frame
 
@@ -5365,10 +5379,11 @@ func _brawl_marks_rules() -> void:
 		return out
 	# With the flag off nothing of it draws, whatever the cues say.
 	UiData.set_feature("three_strengths", false)
+	UiData.set_feature("launch_marks", false)
 	hud.consume({"type": "cue", "actor": 0, "kind": "blow", "text": "medium", "k": 0, "target": 1})
 	hud.consume({"type": "cue", "actor": 1, "kind": "miss", "text": "reach", "n": 20, "target": 0})
 	var off_text: String = await drawn.call(4)
-	_ok(not off_text.contains("MEDIUM") and not off_text.contains("OPEN"), "brawl marks: with three_strengths off the blow and the miss draw nothing")
+	_ok(not off_text.contains("MEDIUM") and not off_text.contains("OPEN"), "brawl marks: with three_strengths and launch_marks off the blow and the miss draw nothing")
 	UiData.set_feature("three_strengths", true)
 	# The weight chip names the blow, then falls back.
 	hud.consume({"type": "cue", "actor": 0, "kind": "blow", "text": "heavy", "k": 0, "target": 1})
@@ -5377,10 +5392,11 @@ func _brawl_marks_rules() -> void:
 	for kind in ["light", "medium", "bolt", "blast", "release"]:
 		hud.consume({"type": "cue", "actor": 0, "kind": "blow", "text": kind, "k": 0, "target": 1})
 		var tx: String = await drawn.call(2)
-		_ok(tx.contains(kind.to_upper()), "brawl marks: the chip says %s" % kind.to_upper())
+		var shown_word: String = {"bolt": "SHOT", "release": "CHARGED"}.get(kind, kind.to_upper())
+		_ok(tx.contains(shown_word), "brawl marks: the chip says %s" % shown_word)
 	var gone: String = await drawn.call(90)
 	var later: String = await drawn.call(3)
-	_ok(not later.contains("RELEASE") and m0.blow_t > UiPlate.BLOW_HOLD, "brawl marks: and the chip falls back after %.1f s" % UiPlate.BLOW_HOLD)
+	_ok(not later.contains("CHARGED") and m0.blow_t > UiPlate.BLOW_HOLD, "brawl marks: and the chip falls back after %.1f s" % UiPlate.BLOW_HOLD)
 	# A miss: OPEN on the swinger's plate, the target's medium glyph lit, both for the ticks it says.
 	hud.consume({"type": "cue", "actor": 1, "kind": "miss", "text": "reach", "n": 30, "target": 0, "source": "y"})
 	var miss_text: String = await drawn.call(3)
@@ -5400,7 +5416,7 @@ func _brawl_marks_rules() -> void:
 	# A bolt's land.
 	hud.consume({"type": "cue", "actor": 0, "kind": "energy_land", "text": "bolt", "source": "armour"})
 	var land_text: String = await drawn.call(2)
-	_ok(m0.land_kind == "armour" and land_text.contains("ARMOUR"), "brawl marks: a bolt's land shows how it landed")
+	_ok(m0.land_kind == "armour" and land_text.contains("ABSORBED"), "brawl marks: a shot's land shows how it landed")
 	# The run of unanswered blows on the target.
 	hud.consume({"type": "cue", "actor": 0, "kind": "blow", "text": "light", "k": 1, "target": 1, "run": 3, "run_to": 4})
 	_ok(m1.run_n == 3 and m1.run_to == 4 and m0.flurry_dots == 1, "brawl marks: a flurry blow with a run sets the target's run (%d of %d) and lights a dot (%d)" % [m1.run_n, m1.run_to, m0.flurry_dots])
@@ -5424,6 +5440,7 @@ func _brawl_marks_rules() -> void:
 	# The hub counts what it has no reading for, and no longer counts the ones it reads.
 	hud.consume({"type": "cue", "actor": 0, "kind": "double_hit"})
 	_ok(int(hud.hub.stats.get("cue_unread_double_hit", 0)) == 1 and int(hud.hub.stats.get("cue_unread_blow", 0)) == 0 and int(hud.hub.stats.get("cue_unread_miss", 0)) == 0, "brawl marks: the unread counter holds only what has no reading")
+	UiData.set_feature("launch_marks", null)
 	UiData.set_feature("three_strengths", null)
 	hud.queue_free()
 	await process_frame
@@ -5764,6 +5781,257 @@ func _many_marker_rules() -> void:
 	for i in range(int(UiMany.HOLD * 60.0) + 20):
 		hud.advance(1.0 / 60.0)
 	_ok(idle_none and shown_two and seen.has("1") and seen.has("2") and hud._l_many.sig == null, "many markers: the HUD draws none in a two-body fight, one for each body left out (numbered 1 and 2 for slots 2 and 3), and clears them after the hold")
+	hud.queue_free()
+	await process_frame
+
+
+## The launch marks behind their own flag (docs/ui/launch-teaching.md) and the beam struggle's tug of war (docs/ui/hud-spec.md section 62).
+func _launch_marks_rules() -> void:
+	UiPrefs.path = "user://ui_prefs_test_launch.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.patch(0, {"ai": false})
+	hud.hub.patch(1, {"ai": true})
+	var m0: UiFighterModel = hud.hub.model(0)
+	var m1: UiFighterModel = hud.hub.model(1)
+	var gauge := func(n: int) -> void:
+		hud.hub.consume({"type": "cue", "actor": 0, "kind": "blow", "text": "light", "target": 1, "run": n, "run_to": 4})
+		hud.advance(1.0 / 60.0)
+	# On by default (Game Design, 2026-10-16); with the flag off nothing about the launch is drawn or asked, even with a full gauge.
+	_ok(UiStance.launch_marks() and UiData.feature("launch_marks"), "launch marks: on by default")
+	UiData.set_feature("launch_marks", false)
+	gauge.call(4)
+	_ok(m0.gauge_full and not UiHints.lit_b(m0) and not UiPlate.marks_up(m1), "launch marks: with the flag off a full gauge lights no B and puts no mark on the plate")
+	var rows_off: Array = UiHints.rows(m0, "today")
+	var note_off := ""
+	for r in rows_off:
+		if str(r.get("cell", "")) == "b":
+			note_off = str(r.get("note", ""))
+	_ok(note_off == "" and hud.hub.hint.is_empty(), "launch marks: and no word LAUNCH and no hint")
+	hud.advance(3.0)
+	# On: the gauge, the lit B with its word, the once-only hint, the pad's pulse.
+	UiData.set_feature("launch_marks", true)
+	var pulses := {"n": 0, "kind": ""}
+	hud.haptic_requested.connect(func(_slot, kind): pulses["n"] += 1; pulses["kind"] = kind)
+	hud.hub.patch(0, {"launcher_ready": true, "launcher_rest_left": 0.0})
+	hud.hub.patch(1, {"launcher_ready": true, "launcher_rest_left": 0.0})
+	gauge.call(3)
+	_ok(not m0.gauge_full and not UiHints.lit_b(m0), "launch marks: three of four lights nothing")
+	gauge.call(4)
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(m1.run_n == 4 and m0.gauge_full and UiHints.lit_b(m0) and UiPlate.marks_up(m1), "launch marks: four of four fills the gauge on the rival, lights B and puts the run on his plate")
+	var note_on := ""
+	for r in UiHints.rows(m0, "today"):
+		if str(r.get("cell", "")) == "b":
+			note_on = str(r.get("note", ""))
+	_ok(note_on == "LAUNCH", "launch marks: the B row says LAUNCH (%s)" % note_on)
+	_ok(not hud.hub.hint.is_empty() and str(hud.hub.hint["id"]) == "launch" and str(hud.hub.hint["text"]) == UiData.t("prompt.launch_hint") and UiPrefs.get_bool("taught_launch"), "launch marks: the first full gauge shows the hint, once, and remembers it")
+	hud.hub.hint = {}
+	hud.advance(3.0)
+	gauge.call(4)
+	hud.advance(1.0 / 60.0)
+	_ok(hud.hub.hint.is_empty(), "launch marks: and never again")
+	hud.advance(3.0)   # the run lapses after 2.5 s
+	_ok(not m0.gauge_full and not UiHints.lit_b(m0), "launch marks: the gauge empties when the run lapses, and B goes out")
+	# A launcher that is resting keeps the gauge from calling for a launch.
+	hud.hub.patch(0, {"launcher_ready": false, "launcher_rest_left": 20.0})
+	gauge.call(4)
+	_ok(not m0.gauge_full, "launch marks: no lit B while his launcher rests")
+	# The rest's ring fills a step a second: the plate redraws on the step and not between.
+	hud.hub.patch(1, {"launcher_ready": false, "launcher_rest_left": 19.9})
+	hud.advance(1.0 / 60.0)
+	var s1: Variant = hud._l_plate[1].sig
+	hud.hub.patch(1, {"launcher_ready": false, "launcher_rest_left": 19.5})
+	hud.advance(1.0 / 60.0)
+	var s2: Variant = hud._l_plate[1].sig
+	hud.hub.patch(1, {"launcher_ready": false, "launcher_rest_left": 18.9})
+	hud.advance(1.0 / 60.0)
+	var s3: Variant = hud._l_plate[1].sig
+	_ok(s1 == s2 and s2 != s3, "launch marks: the rest's ring steps once a second (a redraw per whole second, none between)")
+	# The pulse for the pad: the rising edge of a launch opening for a human, once; none for the computer.
+	var before: int = int(pulses["n"])
+	hud.hub.consume({"type": "cue", "actor": 0, "kind": "launcher_open", "target": 1, "n": 200})
+	hud.advance(1.0 / 60.0)
+	hud.advance(1.0 / 60.0)
+	hud.hub.consume({"type": "cue", "actor": 1, "kind": "launcher_open", "target": 0, "n": 200})
+	hud.advance(1.0 / 60.0)
+	_ok(int(pulses["n"]) == before + 1 and str(pulses["kind"]) == "launch_open", "launch marks: the pad is asked for one pulse when a launch opens for a human, none for the computer")
+	# Control hints off: no hint.
+	UiPrefs.set_bool("taught_launch", false)
+	hud.hub.hint = {}
+	hud.set_option("control_hints", "off")
+	hud.advance(3.0)
+	gauge.call(4)
+	hud.hub.patch(0, {"launcher_ready": true, "launcher_rest_left": 0.0})
+	gauge.call(4)
+	hud.advance(1.0 / 60.0)
+	_ok(hud.hub.hint.is_empty(), "launch marks: with Control hints off there is no hint")
+	hud.set_option("control_hints", "auto")
+	UiData.set_feature("launch_marks", null)
+	hud.queue_free()
+	await process_frame
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	UiPrefs.path = "user://ui_prefs.json"
+
+
+func _tug_rules() -> void:
+	var hub := UiEventHub.new()
+	hub.setup_fighters(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	_ok(hub.tug.is_empty(), "tug: none until a struggle starts")
+	hub.consume({"type": "cue", "actor": 0, "kind": "beam_struggle", "text": "start", "target": 1, "n": 400})
+	_ok(not hub.tug.is_empty() and int(hub.tug["a"]) == 0 and int(hub.tug["d"]) == 1 and absf(float(hub.tug["mid"]) - 0.5) < 0.001, "tug: beam_struggle opens it, the point in the middle")
+	hub.set_clash_mid(0.62)
+	hub.consume({"type": "cue", "actor": 0, "kind": "beam_pulse", "k": 1, "n": 20})
+	hub.advance(0.1)
+	_ok(absf(float(hub.tug["mid"]) - 0.62) < 0.001 and absf(float(hub.tug["pulse_t"]) - 0.1) < 0.01, "tug: the point follows Clash.mid and the beat's clock runs from each pulse")
+	hub.consume({"type": "cue", "actor": 0, "kind": "beam_surge", "text": "sharp"})
+	hub.consume({"type": "cue", "actor": 1, "kind": "beam_stray"})
+	hub.consume({"type": "cue", "actor": 1, "kind": "beam_surge", "text": "surge"})
+	var kinds := PackedStringArray()
+	for mk in hub.tug["marks"]:
+		kinds.append(str(mk["kind"]))
+	hub.advance(UiEventHub.TUG_MARK_LIFE + 0.05)
+	_ok(kinds == PackedStringArray(["sharp", "stray", "surge"]) and (hub.tug["marks"] as Array).is_empty(), "tug: a sharp surge, a stray and a surge are marked, and each mark goes after %.2f s" % UiEventHub.TUG_MARK_LIFE)
+	hub.set_clash_mid(-1.0)
+	_ok(absf(float(hub.tug["mid"]) - 0.62) < 0.001, "tug: a missing Clash.mid (-1) leaves the point where it was")
+	hub.consume({"type": "cue", "actor": 0, "kind": "beam_end", "text": "overwhelmed", "x": 0.97})
+	hub.set_clash_mid(0.4)
+	_ok(str(hub.tug["end"]) == "overwhelmed" and absf(float(hub.tug["mid"]) - 0.97) < 0.001, "tug: the end freezes the point where it ended")
+	hub.advance(UiEventHub.TUG_END_HOLD + 0.1)
+	_ok(hub.tug.is_empty(), "tug: it is drawn for a second after the end, then goes")
+	hub.consume({"type": "cue", "actor": 0, "kind": "beam_struggle", "text": "start", "target": 1, "n": 400})
+	hub.advance(12.5)
+	_ok(hub.tug.is_empty(), "tug: an end cue that never came does not leave it up")
+	_ok(UiSimBridge.clash_mid(null) == -1.0, "tug: the bridge reads no meeting point from nothing (read only)")
+	# The plan at several sizes: the points are inside the screen, the marker is between the hands, and the picture follows what changes.
+	var bad := PackedStringArray()
+	for cs in [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(844, 390), 1.0], [Vector2(2532, 1170), 3.0], [Vector2(390, 844), 1.0]]:
+		var sz: Vector2 = cs[0]
+		var lay := UiLayout.new()
+		lay.dp = cs[1]
+		lay.compute(sz, false)
+		var tg := {"a": 0, "d": 1, "end_n": 0, "k": 1, "pulse_t": 0.1, "age": 1.0, "mid": 0.3, "marks": [{"slot": 0, "kind": "surge", "age": 0.1}], "end": "", "end_t": 0.0}
+		var anc: Array = [{"pos": Vector2(sz.x * 0.3, sz.y * 0.55), "h": sz.y * 0.12, "visible": true}, {"pos": Vector2(sz.x * 0.75, sz.y * 0.55), "h": sz.y * 0.12, "visible": true}]
+		var p: Dictionary = UiTug.plan(lay, tg, anc, lay.s, false)
+		if p.is_empty() or not lay.safe.has_point(p["pm"]) or not lay.safe.has_point(p["a"]) or not lay.safe.has_point(p["d"]):
+			bad.append("%s outside" % str(sz))
+			continue
+		var pm: Vector2 = p["pm"]
+		var want: Vector2 = (p["a"] as Vector2).lerp(p["d"], 0.3)
+		if pm.distance_to(want) > 0.5:
+			bad.append("%s point" % str(sz))
+	_ok(bad.is_empty(), "tug: at five sizes the track and the point are on the screen, the point at its fraction of the way (%d bad %s)" % [bad.size(), str(bad.slice(0, 3))])
+	# The beat: the ring closes in steps over a pulse (so the layer redraws a few dozen times a second, never every frame), and under steady the picture changes only for the beat bar.
+	var lay2 := UiLayout.new()
+	lay2.compute(Vector2(1280, 720), false)
+	var anc2: Array = [{"pos": Vector2(400, 400), "h": 90.0, "visible": true}, {"pos": Vector2(900, 400), "h": 90.0, "visible": true}]
+	var moving := {}
+	var steady_sigs := {}
+	for tick in range(60):
+		var tg2 := {"a": 0, "d": 1, "end_n": 0, "k": 1, "pulse_t": float(tick % 20) / 60.0, "age": 1.0, "mid": 0.5, "marks": [], "end": "", "end_t": 0.0}
+		moving[str(UiTug.sig(UiTug.plan(lay2, tg2, anc2, lay2.s, false)))] = true
+		steady_sigs[str(UiTug.sig(UiTug.plan(lay2, tg2, anc2, lay2.s, true)))] = true
+	_ok(moving.size() <= UiTug.RING_STEPS + 2 and steady_sigs.size() == 2, "tug: a second of beat is %d pictures with the ring closing (at most %d) and 2 when steady (the bar filled or not)" % [moving.size(), UiTug.RING_STEPS + 2])
+	_ok(UiTug.PERIOD >= 1.0 / 3.0 - 0.001, "tug: the beat is no faster than three a second (%.3f s)" % UiTug.PERIOD)
+	# In the HUD: the layer holds a signature only while a struggle is on, in each mode, and draws without error.
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	var vp2: Vector2 = hud.layout.vp
+	hud.anchor_fn = func(slot: int) -> Dictionary:
+		return {"pos": Vector2(vp2.x * (0.3 if slot == 0 else 0.7), vp2.y * 0.55), "h": vp2.y * 0.12, "visible": true}
+	for i in range(5):
+		hud.advance(1.0 / 60.0)
+	var none_first: bool = hud._l_tug.sig == null
+	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_struggle", "text": "start", "target": 1, "n": 600})
+	var drew := 0
+	for i in range(80):
+		if i % 20 == 0:
+			hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_pulse", "k": i / 20 + 1, "n": i})
+		if i == 30:
+			hud.hub.consume({"type": "cue", "actor": 1, "kind": "beam_surge", "text": "sharp"})
+		hud.hub.set_clash_mid(0.5 + float(i) * 0.002)
+		hud.advance(1.0 / 60.0)
+		await process_frame
+		if hud._l_tug.sig != null:
+			drew += 1
+	var on_during: bool = drew == 80
+	hud.set_option("reduce_flashing", true)
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	var steady_sig_ok: bool = hud._l_tug.sig != null and bool((hud._l_tug.sig as Array)[7])
+	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_end", "text": "time", "x": 0.5})
+	hud.advance(UiEventHub.TUG_END_HOLD + 0.2)
+	await process_frame
+	_ok(none_first and on_during and steady_sig_ok and hud._l_tug.sig == null, "tug: the HUD shows it from the struggle's start to a second after its end, steady under Reduce flashing, and nothing before or after")
+	hud.set_option("reduce_flashing", false)
+	hud.queue_free()
+	await process_frame
+
+
+## The rival is off both panes (Camera's incoming read, key `lost`, 2026-10-16): a chip with the arrow in his colour, the distance and the words OFF SCREEN, no countdown; and the rest's length from the director's data.
+func _lost_rival_rules() -> void:
+	var lost_read := {"active": true, "aimed": false, "eta": -1.0, "dist_u": 9000.0, "dist_bh": 120.0, "closing": 0.0, "side": 1, "shown": false, "lost": true, "screen_dir": Vector2(1.0, 0.0)}
+	_ok(UiIncoming.data({"incoming": [lost_read, {}]}, 0).has("lost") and UiIncoming.data({"incoming": [{"active": true, "eta": -1.0, "shown": false}, {}]}, 0).is_empty(), "lost rival: an active read with no countdown counts only when he is lost")
+	var bad := PackedStringArray()
+	for cs in [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(844, 390), 1.0], [Vector2(390, 844), 1.0], [Vector2(2532, 1170), 3.0]]:
+		var sz: Vector2 = cs[0]
+		var lay := UiLayout.new()
+		lay.dp = cs[1]
+		lay.compute(sz, false)
+		var anc: Array = [{"pos": Vector2(sz.x * 0.4, sz.y * 0.55), "h": sz.y * 0.11, "visible": true}, {"pos": Vector2(sz.x * 1.6, sz.y * 0.55), "h": sz.y * 0.11, "visible": false}]
+		# one view, and a split
+		var one := {"sep": 0.0, "c": sz * 0.5, "n": Vector2(1.0, 0.0), "pointer": "always", "dist_bh": 120.0, "sigma": 1.0,
+			"ring": {"angle_A": 1.0, "angle_B": 1.0 + 9000.0 / SimConst.W * TAU, "sigma": 1, "arc_A": 0.3, "arc_B": 0.3, "swing": 0.0, "sep": 0.0}, "incoming": [lost_read, {}]}
+		var split: Dictionary = _incoming_record(sz, lost_read, {})
+		for rec in [one, split]:
+			var mine: Dictionary = {}
+			for ch in UiSplit.pointers(lay, rec, anc, lay.s):
+				if int(ch["slot"]) == 0:
+					mine = ch
+			if str(mine.get("kind", "")) != "incoming" or not bool(mine.get("lost", false)) or str(mine.get("eta_text", "x")) != "":
+				bad.append("%s %s" % [str(sz), "one" if rec == one else "split"])
+	_ok(bad.is_empty(), "lost rival: in one view and in a split, at five sizes, the chip shows with no countdown (%d bad %s)" % [bad.size(), str(bad.slice(0, 3))])
+	_ok(UiData.t("prompt.inc_lost") == "OFF SCREEN", "lost rival: the words are OFF SCREEN")
+	# In the HUD it draws the words and the distance.
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	var vp2: Vector2 = hud.layout.vp
+	hud.anchor_fn = func(slot: int) -> Dictionary:
+		return {"pos": Vector2(vp2.x * 0.35, vp2.y * 0.55), "h": vp2.y * 0.11, "visible": true} if slot == 0 else {"pos": Vector2(vp2.x * 1.6, vp2.y * 0.55), "h": vp2.y * 0.11, "visible": false}
+	hud.split_fn = func() -> Dictionary:
+		return {"sep": 0.0, "c": vp2 * 0.5, "n": Vector2(1.0, 0.0), "pointer": "always", "dist_bh": 120.0, "sigma": 1.0,
+			"ring": {"angle_A": 1.0, "angle_B": 1.0 + 9000.0 / SimConst.W * TAU, "sigma": 1, "arc_A": 0.3, "arc_B": 0.3, "swing": 0.0, "sep": 0.0}, "incoming": [lost_read, {}]}
+	for i in range(20):
+		hud.advance(1.0 / 60.0)
+	UiText.tracing = true
+	UiText.trace = []
+	hud._l_chips[0].invalidate()
+	for i in range(3):
+		await process_frame
+	UiText.tracing = false
+	var seen: Array = UiText.trace.duplicate()
+	UiText.trace = []
+	_ok(seen.has("OFF SCREEN"), "lost rival: the HUD draws OFF SCREEN on the chip (%s)" % str(seen.slice(0, 6)))
+	# The rest's length is the director's (40 s today, 30 later), and the ring steps in whole seconds of it.
+	var m1: UiFighterModel = hud.hub.model(1)
+	_ok(is_equal_approx(m1.launcher_rest_total, 40.0), "launch ring: the rest's length starts at today's 40 s")
+	hud.hub.patch(1, {"launcher_ready": false, "launcher_rest_left": 20.0, "launcher_rest_total": 30.0})
+	_ok(is_equal_approx(m1.launcher_rest_total, 30.0), "launch ring: and follows the director's number when it sends one (30 s later)")
 	hud.queue_free()
 	await process_frame
 

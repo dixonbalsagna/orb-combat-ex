@@ -34,6 +34,14 @@ static func fighters(S) -> Array:
 ## The live ticks for which the brawl's launcher still rests on fighter f (0: a launch is ready on him), or -1 when the brawl is off or the sim has no such slot. A READ ONLY copy
 ## of DirBrawl.launcherRest: that one sizes the fighter's director slots on the way (`_g` calls `_size`, which resizes f.act.dirI, a field the gameplay hash includes), so calling it
 ## from here changed the hash when an intro played (determinism.gd --intro, tick 60). This reads the slot only if it is already there, from the sim's own constant and config.
+## The launcher's rest in seconds, from the director's data (launcher.restS), 0 when the brawl is off.
+static func _launcher_rest_total() -> float:
+	var cmap: Dictionary = (DirBrawl as GDScript).get_script_constant_map()
+	if not cmap.has("LAUNCH_AT") or not DirBrawl.on():
+		return 0.0
+	return float((DirBrawl.cfg().get("launcher", {}) as Dictionary).get("restS", 0.0))
+
+
 static func _launcher_rest_ticks(S, f) -> int:
 	var cmap: Dictionary = (DirBrawl as GDScript).get_script_constant_map()
 	if not cmap.has("LAUNCH_AT") or not DirBrawl.on():
@@ -71,6 +79,9 @@ static func patch(hud: UiHud, S, input_hub = null) -> void:
 		if rest_ticks >= 0:
 			lp["launcher_ready"] = rest_ticks == 0
 			lp["launcher_rest_left"] = float(rest_ticks) / 60.0
+			var rest_total: float = _launcher_rest_total()
+			if rest_total > 0.0:
+				lp["launcher_rest_total"] = rest_total
 		if not lp.is_empty():
 			hud.hub.patch(i, lp)
 		hud.hub.patch(i, {
@@ -89,6 +100,7 @@ static func patch(hud: UiHud, S, input_hub = null) -> void:
 	for i in range(mini(2, windows.size())):
 		hud.hub.patch(i, {"beats": windows[i]})
 	hud.hub.set_move_names(move_names)
+	hud.hub.set_clash_mid(clash_mid(S))   # the beam struggle's meeting point (-1 until Encounter's park is applied)
 	var w = S.world
 	hud.hub.consume({"type": "world", "civilians": int(round(float(w.casualties))), "pop0": int(w.pop0), "structures": int(w.structuresLost), "craters": int(w.craters)})
 	patch_input(hud, input_hub)   # the arming, when the host passes its input hub (SimHost.hub)
@@ -145,6 +157,17 @@ static func feed(hud: UiHud, lines: Array) -> void:
 
 
 ## The planet strip's data. cam_x and cam_w are the reference camera's centre and its view width in world units.
+## The beam struggle's meeting point (Clash.mid: 0 at the first fighter's hands, 1 at the second's; -1 when there is no struggle or the field is not there yet). Read only.
+static func clash_mid(S) -> float:
+	if S == null or S.game == null:
+		return -1.0
+	var c = S.game.clash if "clash" in S.game else null
+	if c == null:
+		return -1.0
+	var v = c.get("mid") if c is Object or c is Dictionary else null
+	return float(v) if v != null else -1.0
+
+
 static func strip_data(S, cam_x: float, cam_w: float) -> Dictionary:
 	var dead: Array = []
 	for b in S.buildings:

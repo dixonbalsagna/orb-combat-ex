@@ -1,6 +1,6 @@
 # Launch marks and the beam struggle's tug of war (parked, UI, 2026-10-16)
 
-Owner: UI & UX. Built and gated in a scratch copy of main 0ca6f670 plus the tree's own `ui/` changes; **not applied**. One patch, all inside `ui/` (my own paths), so the EP may apply it at any time:
+Owner: UI & UX. **APPLIED to the tree on 2026-10-16 (the EP's go, Game Design's ruling 8c8368b3) with `launch_marks` ON; kept here as the record.** Built and gated first in a scratch copy of main 0ca6f670. One patch, all inside `ui/` (my own paths), so the EP may apply it at any time:
 
 ```bash
 cd <repo root>

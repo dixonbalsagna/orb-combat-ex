@@ -6,9 +6,9 @@ class_name UiPlate
 
 ## Whether one of the brawl's small marks is up on this plate (the weight chip naming a blow, OPEN, a run, a bolt's land): under the three strengths only.
 static func marks_up(m: UiFighterModel) -> bool:
-	if not UiStance.three():
+	if not UiStance.launch_marks():
 		return false
-	return (m.blow_kind != "" and m.blow_t < BLOW_HOLD) or m.open_left > 0.0 or (m.run_n > 0 and m.run_t < RUN_HOLD) or (m.land_kind != "" and m.land_t < LAND_HOLD)
+	return (UiStance.three() and m.blow_kind != "" and m.blow_t < BLOW_HOLD) or m.open_left > 0.0 or (m.run_n > 0 and m.run_t < RUN_HOLD) or (m.land_kind != "" and m.land_t < LAND_HOLD)
 
 
 ## How long the weight chip names the blow just thrown, how long a bolt's land and a run of unanswered blows stay on the plate (seconds).
@@ -235,10 +235,10 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 	if blow_on:
 		weight_word = UiData.t("state.blow_" + m.blow_kind)
 	chips.append(["weight", weight_word, UiLook.col(UiLook.WARN) if fallback else UiLook.col(UiLook.INK if m.weight == "heavy" else UiLook.INK_DIM)])
-	if UiStance.three() and m.launcher_known:
+	if UiStance.launch_marks() and m.launcher_known:
 		# The launcher: LAUNCH (a filled mark, bright) while a launch is ready, RESTING (a hollow mark, dim) after one landed. Steady, two states, no countdown.
 		chips.append(["launcher", UiData.t("state.launcher_ready" if m.launcher_ready else "state.launcher_rest"), UiLook.col(UiLook.INK if m.launcher_ready else UiLook.INK_DIM)])
-	if UiStance.three():
+	if UiStance.launch_marks():
 		# OPEN, a bolt's land and the run are short, urgent reads: the most urgent takes the weight chip's place (a plate has room for one chip beside the pips), the rest follow if there is room.
 		var specials: Array = []
 		if m.open_left > 0.0:
@@ -274,7 +274,8 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 			w = chip_h * 0.9 + 12.0 * s
 		if cur + w > chip_limit:
 			break
-		_chip(ci, rect, left, pad, cur, w, chip_y, chip_h, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(ch[2]), 1.6)
+		var gauge_full: bool = ch[0] == "run" and m.run_n >= m.run_to   # four of four: the next blow opens him; a steady heavier edge (never a blink)
+		_chip(ci, rect, left, pad, cur, w, chip_y, chip_h, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(ch[2]), 3.6 if gauge_full else 1.6)
 		var icx: float = (x0 + cur + 8.0 * s + chip_h * 0.35) if left else (x1 - cur - 8.0 * s - chip_h * 0.35)
 		var icp := Vector2(icx, chip_y + chip_h * 0.5)
 		match ch[0]:
@@ -298,6 +299,12 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 					var closed: PackedVector2Array = tri.duplicate()
 					closed.append(tri[0])
 					ci.draw_polyline(closed, _c(ch[2]), maxf(2.0, lr * 0.4), true)
+					if m.launcher_rest_left > 0.0:
+						# The rest: a ring round the hollow mark that fills as it passes. No number, one step a second (Game Design's eleventh round; docs/ui/launch-teaching.md).
+						# The rest's length is the director's (UiFighterModel.launcher_rest_total); full is the last second, and nothing flashes there.
+						var tot: float = maxf(m.launcher_rest_total, 1.0)
+						var rf: float = clampf(1.0 - m.launcher_rest_left / tot, 0.0, 1.0)
+						ci.draw_arc(icp, lr * 1.6, -PI * 0.5, -PI * 0.5 + TAU * float(int(rf * tot)) / tot, 28, _c(ch[2]), maxf(2.0, lr * 0.35), true)
 			"open":
 				# Two brackets facing in: a gap, "he is open".
 				var bw: float = chip_h * 0.3
@@ -330,7 +337,11 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 					else:
 						ci.draw_rect(pr, _c(ch[2]), false, maxf(1.5, pw * 0.2))
 				var cxx: float = px0 + (float(m.run_to) * pw * 1.6 if left else -float(m.run_to) * pw * 1.6) + pw * 0.5
-				ci.draw_polyline(PackedVector2Array([Vector2(cxx - pw * 0.7, icp.y + ph * 0.5), Vector2(cxx, icp.y - ph * 0.5), Vector2(cxx + pw * 0.7, icp.y + ph * 0.5)]), _c(ch[2]), maxf(1.8, pw * 0.25), true)
+				var caret := PackedVector2Array([Vector2(cxx - pw * 0.7, icp.y + ph * 0.5), Vector2(cxx, icp.y - ph * 0.5), Vector2(cxx + pw * 0.7, icp.y + ph * 0.5)])
+				if gauge_full:
+					UiIcons.fill_poly(ci, caret, _c(ch[2]))
+				else:
+					ci.draw_polyline(caret, _c(ch[2]), maxf(1.8, pw * 0.25), true)
 			"hidden":
 				UiIcons.eye_slash(ci, icp, chip_h * 0.75, _c(ch[2]))
 			"lost":

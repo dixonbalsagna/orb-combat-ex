@@ -73,6 +73,9 @@ var feed: Array = []             # {t, tag, sub}
 var banner: Dictionary = {}      # {text, col, dur, age} or empty
 var struggle: Dictionary = {}    # the finisher struggle on the brink fighter: {actor, beats, half, resolve, t, res, end_t, last}
 var telegraph: Dictionary = {}   # the finisher's kind while it winds up: {actor, target, kind, age, end}; the read that answers it is a stance
+var tug: Dictionary = {}         # the beam struggle (Encounter's beam_struggle, beam_pulse, beam_surge, beam_stray and beam_end cues, and Clash.mid): {a, d, end_n, k, pulse_t, age, mid (0 at a's hands to 1 at d's, -1 unknown), marks: [{slot, kind, age}], end, end_t}
+const TUG_MARK_LIFE := 0.45      # seconds a surge or a stray mark stays at the meeting point
+const TUG_END_HOLD := 1.0        # seconds the end of a struggle stays drawn
 var hint: Dictionary = {}        # the tutorial's hint line: {id, key, text, kind (hint, nudge, done), age}
 var beats: Dictionary = {}       # tutorial beat id to state (start, done, skipped)
 var keep_hints: bool = false     # accessibility: a hint stays up after its beat is done, until the next one
@@ -118,6 +121,7 @@ func reset() -> void:
 	struggle = {}
 	telegraph = {}
 	hint = {}
+	tug = {}
 	beats = {}
 	match_over = false
 	act = 1
@@ -405,6 +409,8 @@ func consume(e) -> void:
 				m.launcher_open = false
 			elif ck == "blow":
 				_on_blow(m, d)
+			elif ck.begins_with("beam_"):
+				_on_tug_cue(ck, d)
 			elif ck == "miss":
 				_on_miss(m, d)
 			elif ck == "energy_land" and m != null:
@@ -487,7 +493,7 @@ func patch(actor: int, d: Dictionary) -> void:
 	if m == null:
 		return
 	var old_stance: int = m.stance
-	for k in ["stance", "tier", "charge", "momentum", "ego", "hidden", "charging", "sig_cost", "name", "title", "ai", "chip_station", "device", "form_free", "form_cue_left", "last_stand_left", "energy", "recipe", "stance_armed", "launcher_ready", "launcher_rest_left"]:
+	for k in ["stance", "tier", "charge", "momentum", "ego", "hidden", "charging", "sig_cost", "name", "title", "ai", "chip_station", "device", "form_free", "form_cue_left", "last_stand_left", "energy", "recipe", "stance_armed", "launcher_ready", "launcher_rest_left", "launcher_rest_total"]:
 		if d.has(k):
 			# Hiding is removed from the base game (a future fighter); with the flag off the hidden state is ignored.
 			m.set(k, (bool(d[k]) and UiData.feature("hiding")) if k == "hidden" else (UiData.display_name(str(d[k])) if k == "name" else d[k]))
@@ -751,6 +757,42 @@ func _on_blow(m: UiFighterModel, d: Dictionary) -> void:
 			tm.run_n = clampi(int(d["run"]), 0, 8)
 			tm.run_to = clampi(int(d.get("run_to", 4)), 1, 8)
 			tm.run_t = 0.0
+
+
+## The beam struggle's five cues (docs/director/pending/beam-struggle/README.md): `beam_struggle` text start (actor the beam's owner, target the other, `n` the tick it ends by at the latest),
+## `beam_pulse` (`k` the pulse, `n` its tick), `beam_surge` (text surge or sharp), `beam_stray`, and `beam_end` (text overwhelmed, detonate or time; `x` the point). The meeting point itself
+## comes each tick from the bridge (`set_clash_mid`). Read-only: nothing here writes the sim.
+func _on_tug_cue(kind: String, d: Dictionary) -> void:
+	if kind == "beam_struggle":
+		tug = {"a": int(d.get("actor", 0)), "d": int(d.get("target", 1)), "end_n": int(d.get("n", 0)), "k": 0, "pulse_t": 99.0, "age": 0.0, "mid": 0.5, "marks": [], "end": "", "end_t": 0.0}
+		return
+	if tug.is_empty():
+		tug = {"a": int(d.get("actor", 0)), "d": 1 - int(d.get("actor", 0)), "end_n": 0, "k": 0, "pulse_t": 99.0, "age": 0.0, "mid": 0.5, "marks": [], "end": "", "end_t": 0.0}
+	match kind:
+		"beam_pulse":
+			tug["k"] = int(d.get("k", 0))
+			tug["pulse_t"] = 0.0
+		"beam_surge", "beam_stray":
+			var marks: Array = tug["marks"]
+			marks.append({"slot": int(d.get("actor", 0)), "kind": ("stray" if kind == "beam_stray" else ("sharp" if str(d.get("text", "")) == "sharp" else "surge")), "age": 0.0})
+			if marks.size() > 8:
+				marks.pop_front()
+		"beam_end":
+			tug["end"] = str(d.get("text", "time"))
+			tug["end_t"] = 0.0
+			if d.has("x"):
+				tug["mid"] = clampf(float(d["x"]), 0.0, 1.0)
+
+
+## The meeting point of the beams, 0 at the first fighter's hands to 1 at the second's, from the bridge each tick (-1: none).
+func set_clash_mid(v: float) -> void:
+	if tug.is_empty() or v < 0.0 or str(tug["end"]) != "":
+		return
+	tug["mid"] = clampf(v, 0.0, 1.0)
+
+
+func show_launch_hint(text: String) -> void:
+	hint = {"id": "launch", "key": "launch", "text": text, "kind": "hint", "age": 0.0}
 
 
 ## The brawl's miss cue: the swinger is the actor, the rival the target; `n` the ticks he is open. OPEN on the swinger's plate, and the target's medium glyph lit for as long.
@@ -1144,6 +1186,23 @@ func advance(dt: float) -> void:
 		hint["age"] = float(hint["age"]) + sdt
 		if str(hint["kind"]) == "done" and not keep_hints and float(hint["age"]) > 2.6:
 			hint = {}
+		elif str(hint["id"]) == "launch" and float(hint["age"]) > 6.0:
+			hint = {}   # the launch hint is shown once and goes by itself
+	if not tug.is_empty():
+		tug["age"] = float(tug["age"]) + sdt
+		tug["pulse_t"] = float(tug["pulse_t"]) + sdt
+		var live: Array = []
+		for mk in tug["marks"]:
+			mk["age"] = float(mk["age"]) + sdt
+			if float(mk["age"]) < TUG_MARK_LIFE:
+				live.append(mk)
+		tug["marks"] = live
+		if str(tug["end"]) != "":
+			tug["end_t"] = float(tug["end_t"]) + sdt
+			if float(tug["end_t"]) > TUG_END_HOLD:
+				tug = {}
+		elif float(tug["age"]) > 12.0:
+			tug = {}   # an end cue that never came: the struggle does not stay drawn
 	for m in models:
 		m.advance(dt, sdt)
 		if _lost_trail_left.has(m.slot):
@@ -1151,6 +1210,10 @@ func advance(dt: float) -> void:
 			if _lost_trail_left[m.slot] <= 0.0:
 				_lost_trail_left.erase(m.slot)
 				m.lost_trail = false
+	if models.size() == 2:
+		for gm in models:
+			var rv: UiFighterModel = models[1 - gm.slot] if (gm.slot == 0 or gm.slot == 1) else null
+			gm.gauge_full = rv != null and rv.run_to > 0 and rv.run_n >= rv.run_to and rv.run_t < 2.5 and (not gm.launcher_known or gm.launcher_ready)
 	cinematic_left = maxf(0.0, cinematic_left - dt)
 	hazard_left = maxf(0.0, hazard_left - dt)
 	if crown_locked():

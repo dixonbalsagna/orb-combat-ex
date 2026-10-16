@@ -18,6 +18,7 @@ extends Control
 ## The demo (ui/demo/hud_demo.tscn) shows all of it driven by the mock feed.
 
 signal layout_changed
+signal haptic_requested(slot: int, kind: String)   # a pulse for a human's pad (the host plays it; never the only cue): "launch_open" when a launch opens for him (launch marks on)
 signal form_prompt_shown(slot: int, device: String)   # a human fighter's form became ready (the rising edge): the host gives a 15 ms haptic on that player's pad (Input.start_joy_vibration) or a phone (Input.vibrate_handheld(15)); never the only cue
 signal howto_opened(first_run: bool)   # the How to play card opened: the host pauses the sim and releases held keys
 signal feedback_opened(context: String)   # the feedback panel opened ("pause" or "match_end"): the host pauses the sim and releases held keys
@@ -103,6 +104,8 @@ var _anchors: Array = [{}, {}]
 var _chips: Array = []
 var _chip_text: Array = ["", ""]
 var _chip_text_t: Array = [-1.0, -1.0]
+var _open_prev: Array = [false, false]    # launcher_open last frame, per fighter (the pad's pulse is the rising edge)
+var _gauge_prev: Array = [false, false]   # gauge_full last frame (the once-only hint is the rising edge)
 var _inc_keep: Array = [null, null]   # the last incoming chip of each pane and when it was last wanted (UiIncoming.held)
 var _many_keep: Dictionary = {}       # the many-body markers that have just gone, held for UiMany.HOLD
 var _many_marks: Array = []
@@ -237,6 +240,8 @@ var _div_key: Array = []
 var _l_ring_base: UiLayer
 var _l_chips: Array = []       # one small node per pane: an edge pointer chip, moved by position
 var _l_ring: UiLayer
+var _l_tug: UiLayer           # the beam struggle's track, meeting point and beat (UiTug), only while one is on
+var _tug_plan: Dictionary = {}
 var _l_many: UiLayer          # the many-body markers (UiMany): one layer for all of them
 var _l_struggle: UiLayer
 var recipe_fn: Callable = Callable()   # (slot) -> Dictionary: the mix of the last presses {light, heavy, sig, energy} (SimPressRead.classify's mix_long) when the host has the press reader; read only while the Show recipe option is on
@@ -296,6 +301,7 @@ func _ready() -> void:
 	_l_ring_base = _layer(_paint_ring_base)
 	_l_ring = _layer(_paint_ring)
 	_l_many = _layer(_paint_many)
+	_l_tug = _layer(_paint_tug)
 	_l_events = _layer(_paint_events)
 	_l_feed = _layer(_paint_feed)
 	_l_debug = _layer(_paint_debug)
@@ -372,7 +378,7 @@ func _chip_layer(slot: int) -> UiLayer:
 
 
 func _all_layers() -> Array:
-	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_many, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_notice, _l_gate_back]
+	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_many, _l_tug, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_notice, _l_gate_back]
 
 
 ## Total redraws of every layer so far, for the perf counters.
@@ -645,7 +651,7 @@ func _update_layers() -> void:
 		_l_plate[m.slot].update_sig([m.name, m.ai, m.stance, m.tier, int(m.momentum), int(m.charge), int(m.ego), m.hidden, m.lost_trail,
 			m.charging, m.chain_n if m.chain_t >= 0.0 else 0, m.brink, m.shame, full, _plate_alpha(m), pulse, m.you_label,
 			m.weight, (m.blow_kind if (UiStance.three() and m.blow_t < UiPlate.BLOW_HOLD) else ""), m.open_left > 0.0, (m.land_kind if m.land_t < UiPlate.LAND_HOLD else ""),
-			(m.run_n if m.run_t < UiPlate.RUN_HOLD else 0), m.launcher_known and m.launcher_ready, m.launcher_known and UiStance.three(), m.weight_fallback_t < 1.5, m.sig_queued, m.sig_funded, int(m.sig_cap_t * 6.0) if m.sig_funded else 0, m.sig_note if m.sig_note_t < 1.4 else "",
+			(m.run_n if m.run_t < UiPlate.RUN_HOLD else 0), m.launcher_known and m.launcher_ready, m.launcher_known and UiStance.launch_marks(), m.weight_fallback_t < 1.5, m.run_n >= m.run_to, (int(m.launcher_rest_left) if (m.launcher_known and not m.launcher_ready and UiStance.launch_marks()) else -1), m.sig_queued, m.sig_funded, int(m.sig_cap_t * 6.0) if m.sig_funded else 0, m.sig_note if m.sig_note_t < 1.4 else "",
 			0 if reduced else int(clampf(1.0 - m.stance_flash_t / 0.8, 0.0, 1.0) * 5.0), int(m.last_stand_left * 6.0), int(m.last_stand_dur), m.energy, m.stance_kind, int(clampf(m.stance_armed, 0.0, 1.0) * 12.0) if (m.stance_armed > 0.0 and not reduced) else (1 if m.stance_armed > 0.0 else 0)])
 		_l_sil[m.slot].update_sig(_sil_sig(m, reduced) if layout.silhouette_on else null)
 
@@ -684,6 +690,12 @@ func _update_layers() -> void:
 		_inc_keep = [null, null]
 		_many_marks = UiMany.held([], _many_keep, _t) if not _many_keep.is_empty() else []
 	_l_many.update_sig(UiMany.sig(_many_marks, hub) if (not _many_marks.is_empty() and _lb < 0.5) else null)
+	# The beam struggle's tug of war: between the two fighters' hands while one is on (UiTug); nothing otherwise.
+	if not hub.tug.is_empty() and anchor_fn.is_valid() and _lb < 0.5:
+		_tug_plan = UiTug.plan(layout, hub.tug, [anchor_fn.call(int(hub.tug["a"])), anchor_fn.call(int(hub.tug["d"]))], layout.s, bool(opts["reduced_motion"]) or bool(opts["reduce_flashing"]))
+	else:
+		_tug_plan = {}
+	_l_tug.update_sig(UiTug.sig(_tug_plan))
 	_chips = chips
 	var psz: Vector2 = UiSplit.pointer_size(layout.s, _chip_big)
 	for i in range(2):
@@ -770,6 +782,7 @@ func _update_layers() -> void:
 			_l_prompts[m.slot].update_sig(UiPrompts.sig(m, prompts_on, touch_on, UiHints.preset_id(m, _o())) if (UiPrompts.has_content(m, prompts_on, touch_on) and layout.prompts[m.slot].size.y > 0.0 and not (m.slot == 1 and not _join_note.is_empty())) else null)
 		_l_pause.update_sig([layout.pause_btn, layout.touch_ui] if layout.pause_btn.size.y > 0.0 else null)
 	_update_form(reduced)
+	_update_launch()
 	_l_fbpill.update_sig([layout.feedback_btn, layout.touch_ui] if _pill_visible() else null)
 	_l_fb.update_sig(UiFeedback.sig(layout.vp, _fb_state, _fb_tags, _fb_status_ok, dp, layout.s, bool(opts["touch_ui"]), "%s|%s" % [_fb_opened, bool(_fb_issue.get("fallback", false))]) if _fb_open else null)
 	_l_tele.update_sig(UiReads.telegraph_sig(hub, bool(opts["show_prompts"]), reduced))
@@ -3197,13 +3210,13 @@ func _touch_extra() -> Dictionary:
 			for aid3 in UiHints.FACE_CELLS:
 				if str(UiHints.FACE_CELLS[aid3]) == m.charge_cell:
 					out["charge"] = {"name": aid3, "frac": cf, "armoured": m.charge_cell == "b"}
-		if m.launcher_open:
-			(out["lit"] as Array).append("signature")   # the launch window is on B
+		if UiHints.lit_b(m):
+			(out["lit"] as Array).append("signature")   # the launch window is on B (or the rival's gauge is full)
 		if UiStance.three() and m.punish_left > 0.0:
 			(out["lit"] as Array).append("heavy")   # he missed and is open: Y (the medium) is lit with three ticks
 		if UiStance.three() and m.flurry_dots > 0:
 			out["dots"] = m.flurry_dots
-		if UiStance.three() and m.launcher_known:
+		if UiStance.launch_marks() and m.launcher_known:
 			out["launcher"] = "ready" if m.launcher_ready else "rest"
 		var a: float = UiHints.ack_alpha(m, bool(opts["reduced_motion"]))
 		if a > 0.0:
@@ -3415,6 +3428,21 @@ func _paint_hints(ci: CanvasItem, slot: int) -> void:
 
 ## The form-ready chips (UiFormPrompt): shown while a form is ready and the fighter is free, pulsed by the layer's scale and alpha (no redraw), with a
 ## steady highlight under reduced motion. Also the rising edge of a ready form, for the host's haptic.
+## The launch marks' two edge events: the pad's pulse when a launch opens for a human, and the once-only hint when his rival's gauge first fills (never again, never with Control hints off).
+func _update_launch() -> void:
+	for i in range(mini(2, hub.models.size())):
+		var m: UiFighterModel = hub.models[i]
+		var open_now: bool = m.launcher_open and not m.ai
+		if open_now and not bool(_open_prev[i]) and UiStance.launch_marks():
+			haptic_requested.emit(i, "launch_open")
+		_open_prev[i] = open_now
+		var full_now: bool = m.gauge_full and not m.ai and UiStance.launch_marks()
+		if full_now and not bool(_gauge_prev[i]) and str(opts["control_hints"]) != "off" and hub.hint.is_empty() and not UiPrefs.get_bool("taught_launch"):
+			hub.show_launch_hint(UiData.t("prompt.launch_hint"))
+			UiPrefs.set_bool("taught_launch", true)
+		_gauge_prev[i] = full_now
+
+
 func _update_form(reduced: bool) -> void:
 	var o: Dictionary = _o()
 	for i in range(2):
@@ -3562,6 +3590,10 @@ func _paint_ring_base(ci: CanvasItem) -> void:
 
 func _paint_ring(ci: CanvasItem) -> void:
 	UiSplit.draw_ring_marks(ci, layout, hub, _split, layout.s, _o())
+
+
+func _paint_tug(ci: CanvasItem) -> void:
+	UiTug.draw(ci, hub, _tug_plan, _o())
 
 
 func _paint_many(ci: CanvasItem) -> void:

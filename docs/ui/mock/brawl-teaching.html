@@ -1,5 +1,5 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>Brawl teaching mocks</title>
+<html><head><meta charset="utf-8"><title>What the fight tells you</title>
 <style>
  html,body{margin:0;background:#0b0d14;color:#f4f1ea;font:15px/1.3 "Segoe UI",Arial,sans-serif}
  .wrap{width:1600px;padding:18px 24px 30px}
@@ -8,16 +8,16 @@
  svg{background:#10131c;border:1px solid #2a2f3d;border-radius:8px}
  .row{display:flex;gap:14px;flex-wrap:wrap}
 </style></head><body><div class="wrap">
-<h1>The brawl's teaching marks (mock, UI 2026-10-12)</h1>
-<p class="note">Shapes and rings only; colour is never the meaning. Ink on the dark scrim. Sizes are at the 1024-wide reference the flash analyser reads.</p>
+<h1>What the fight tells you: the marks on screen</h1>
+<p class="note">Every mark is a shape, never just a colour, so you can read it even if you cannot tell colours apart.</p>
 
-<h2>A. The nine cells on one button (legend row or touch button): what each way of pressing shows</h2>
+<h2>A. One button, three ways to press it: what you see for each</h2>
 <div id="a"></div>
-<h2>B. A perfect follow-up, frame by frame (pad legend and the attacker's plate)</h2>
+<h2>B. Chaining perfect hits, one step at a time</h2>
 <div id="b"></div>
-<h2>C. Simple layout and phone: one Attack button reads a hold as strength, so two ring families that cannot be confused</h2>
+<h2>C. One Attack button (simple controls and phones): hold it longer for a stronger hit</h2>
 <div id="c"></div>
-<h2>D. The small marks: weight chip, a miss, the bolt's land, the launcher's close</h2>
+<h2>D. Small marks: how hard you hit, when a miss leaves him open, where your energy shot lands, when the launch is used</h2>
 <div id="d"></div>
 
 <script>
@@ -62,29 +62,29 @@ function plate(g,x,y,w,name){el(g,'rect',{x,y,width:w,height:62,rx:8,fill:'#0b0d
 
 // ---------- A. the nine cells
 {const s=svg('a',1540,470);
- const cols=['TAPPED: the beat (a window opens on his own hit)','MASHED: the run climbs to a close','HELD: a ring by the button'];
+ const cols=['TAP: press just as your hit lands','MASH: keep hitting and the row fills, then he is open','HOLD: a ring fills around the button'];
  const rows=[['X','light'],['Y','medium'],['B','heavy']];
  cols.forEach((c,i)=>text(s,250+i*430,28,c,14,DIM));
  rows.forEach((rw,ri)=>{
   const y=110+ri*135; text(s,40,y+6,rw[0]+' '+rw[1],17,INK,'start','700');
   // tapped: closing ring on the glyph
   glyph(s,250,y,rw[0],26); ringClosing(s,250,y,26,0.5);
-  text(s,250,y+62,rw[0]==='X'?'10 ticks, worth 4':rw[0]==='Y'?'6 ticks, worth 6':'14 ticks, worth 9',12,DIM);
+  text(s,250,y+62,rw[0]==='X'?'a short window, a small bonus':rw[0]==='Y'?'a short window, a bigger bonus':'a long window, the biggest bonus',12,DIM);
   // mashed: the run on the target's plate (X); the climbing pace (Y: ki cost mark; B: heavy after heavy)
   glyph(s,680,y,rw[0],26);
-  if(rw[0]==='X'){runPips(s,730,y-8,3);text(s,760,y+34,'the 4th unanswered blow, and the next one closes',12,DIM)}
-  if(rw[0]==='Y'){runPips(s,730,y-8,2);text(s,760,y+34,'the grind: chips a guard twice as hard',12,DIM)}
-  if(rw[0]==='B'){runPips(s,730,y-8,1);text(s,760,y+34,'heavy after heavy walks through lights',12,DIM)}
+  if(rw[0]==='X'){runPips(s,730,y-8,3);text(s,780,y+62,'four hits in a row and the next one opens him up',12,DIM)}
+  if(rw[0]==='Y'){runPips(s,730,y-8,2);text(s,780,y+62,'keep pressing and his guard wears down twice as fast',12,DIM)}
+  if(rw[0]==='B'){runPips(s,730,y-8,1);text(s,780,y+62,'heavy after heavy beats through his light hits',12,DIM)}
   // held
   glyph(s,1110,y,rw[0],26);
-  if(rw[0]==='X'){dotRing(s,1110,y,26,6,10);text(s,1110,y+62,'the burst lights the dots fast, then one per blow at a pace',12,DIM)}
-  if(rw[0]==='Y'){arcFill(s,1110,y,26,0.62,false,false);text(s,1110,y+62,'charged medium: fills to the click, then closes',12,DIM)}
-  if(rw[0]==='B'){arcFill(s,1110,y,26,1,true,true);text(s,1110,y+62,'held heavy: armoured ring; full = closed thick ring and four ticks',12,DIM)}
+  if(rw[0]==='X'){dotRing(s,1110,y,26,6,10);text(s,1110,y+62,'hold it: the dots light fast, then one for each hit',12,DIM)}
+  if(rw[0]==='Y'){arcFill(s,1110,y,26,0.62,false,false);text(s,1110,y+62,'charging a medium: the ring fills until it is ready',12,DIM)}
+  if(rw[0]==='B'){arcFill(s,1110,y,26,1,true,true);text(s,1110,y+62,'charging a heavy: an extra ring; a thick full ring means ready',12,DIM)}
  });
 }
 // ---------- B. a perfect, frame by frame
 {const s=svg('b',1540,330);
- const frames=['1  His hit lands: the window opens','2  A tap inside it: perfect','3  The follow-up lands; the chain is two','4  The third perfect: the close','5  A missed window: the chain breaks'];
+ const frames=['1  Your hit lands: a ring starts to close','2  Tap as the ring closes: perfect','3  The next hit lands: two in a row','4  The third perfect hit: a finishing blow','5  Too late: the chain breaks'];
  frames.forEach((f,i)=>{
   const x0=20+i*305; el(s,'rect',{x:x0,y:36,width:290,height:270,rx:8,fill:'#0b0d14',stroke:'#2a2f3d'});
   text(s,x0+145,24,f,13,DIM);
@@ -92,17 +92,17 @@ function plate(g,x,y,w,name){el(g,'rect',{x,y,width:w,height:62,rx:8,fill:'#0b0d
   const g=s;
   const bx=[x0+70,x0+145,x0+220], by=200;
   ['X','Y','B'].forEach((l,k)=>glyph(g,bx[k],by,l,26));
-  if(i===0){ bx.forEach(x=>ringClosing(g,x,by,26,0.6)); pips(g,x0+20,120,0); text(g,x0+145,262,'the ring is on all three: any may follow',12,DIM)}
-  if(i===1){ glyph(g,bx[1],by,'Y',26,{fill:INK,ink:DARK}); spark(g,bx[1],by,26); pips(g,x0+20,120,1); text(g,x0+145,262,'the ring snaps shut and sparks (about 1,100 px)',12,DIM)}
-  if(i===2){ pips(g,x0+20,120,2); bx.forEach(x=>ringClosing(g,x,by,26,0.8,{op:0.9})); text(g,x0+145,262,'a new window; a link counts double',12,DIM)}
-  if(i===3){ glyph(g,bx[2],by,'B',26,{fill:INK,ink:DARK}); spark(g,bx[2],by,26); pips(g,x0+20,120,3,3,true); text(g,x0+20,160,'CLOSE',13,INK,'start','700'); text(g,x0+145,262,'the only mark that may flash (it asks the register)',12,DIM)}
-  if(i===4){ pips(g,x0+20,120,0); el(g,'path',{d:`M ${x0+30} ${123} L ${x0+80} ${135} M ${x0+80} ${123} L ${x0+30} ${135}`,stroke:INK,'stroke-width':2.5,opacity:0.8}); bx.forEach(x=>ringClosing(g,x,by,26,1,{op:0.3})); text(g,x0+145,262,'the pips drop; the ring fades 0.4 s after the window',12,DIM)}
+  if(i===0){ bx.forEach(x=>ringClosing(g,x,by,26,0.6)); pips(g,x0+20,120,0); text(g,x0+145,262,'the ring shows on all three buttons: any of them can follow',12,DIM)}
+  if(i===1){ glyph(g,bx[1],by,'Y',26,{fill:INK,ink:DARK}); spark(g,bx[1],by,26); pips(g,x0+20,120,1); text(g,x0+145,262,'the ring snaps shut with a spark',12,DIM)}
+  if(i===2){ pips(g,x0+20,120,2); bx.forEach(x=>ringClosing(g,x,by,26,0.8,{op:0.9})); text(g,x0+145,262,'a new ring; a different button counts double',12,DIM)}
+  if(i===3){ glyph(g,bx[2],by,'B',26,{fill:INK,ink:DARK}); spark(g,bx[2],by,26); pips(g,x0+20,120,3,3,true); text(g,x0+20,160,'FINISH',13,INK,'start','700'); text(g,x0+145,262,'the only mark that flashes, and not with Reduce flashing on',12,DIM)}
+  if(i===4){ pips(g,x0+20,120,0); el(g,'path',{d:`M ${x0+30} ${123} L ${x0+80} ${135} M ${x0+80} ${123} L ${x0+30} ${135}`,stroke:INK,'stroke-width':2.5,opacity:0.8}); bx.forEach(x=>ringClosing(g,x,by,26,1,{op:0.3})); text(g,x0+145,262,'the dots drop and the ring fades',12,DIM)}
  });
 }
 // ---------- C. Simple / touch
 {const s=svg('c',1540,300);
  const cx=[230,620,1010], cy=150;
- [['hold ring: progress arc with notches at 12 and 28 ticks','hold'],['window ring: a ring closing in, after a hit lands','win'],['both at once: the arc is outside, the closing ring is inside','both']].forEach((c,i)=>{
+ [['hold: an arc fills the longer you hold; each notch is a stronger hit','hold'],['tap: a ring closes in after your hit lands','win'],['both at once: the arc outside, the closing ring inside','both']].forEach((c,i)=>{
   el(s,'circle',{cx:cx[i],cy:cy,r:56,fill:'#1b2030',stroke:EDGE,'stroke-width':3});
   // star glyph
   el(s,'path',{d:`M ${cx[i]} ${cy-34} L ${cx[i]+9} ${cy-9} L ${cx[i]+34} ${cy} L ${cx[i]+9} ${cy+9} L ${cx[i]} ${cy+34} L ${cx[i]-9} ${cy+9} L ${cx[i]-34} ${cy} L ${cx[i]-9} ${cy-9} Z`,fill:INK});
@@ -116,28 +116,28 @@ function plate(g,x,y,w,name){el(g,'rect',{x,y,width:w,height:62,rx:8,fill:'#0b0d
   if(c[1]==='win'||c[1]==='both'){const rr=c[1]==='both'?R*0.84:R*1.1; el(s,'circle',{cx:cx[i],cy:cy,r:rr,fill:'none',stroke:INK,'stroke-width':3,'stroke-dasharray':c[1]==='both'?'':''}); for(let k=0;k<4;k++){const a=k*Math.PI/2;el(s,'line',{x1:cx[i]+Math.cos(a)*(rr-6),y1:cy+Math.sin(a)*(rr-6),x2:cx[i]+Math.cos(a)*(rr+6),y2:cy+Math.sin(a)*(rr+6),stroke:INK,'stroke-width':3})}}
   text(s,cx[i],270,c[0],13,DIM);
  });
- text(s,620,30,'On Simple the release is the tap: the window ring is for the release; the arc is for how long it was held',13,DIM);
+ text(s,620,30,'With one button, let go as the ring closes; the arc shows how long you have held',13,DIM);
 }
 // ---------- D. small marks
 {const s=svg('d',1540,360);
  // weight chips
- text(s,120,26,'The plate chip follows the blow cue (about 1.2 s)',13,DIM,'start');
- ['LIGHT','MEDIUM','HEAVY','BOLT','BLAST','RELEASE'].forEach((w,i)=>{
+ text(s,120,26,'The fighter panel names the hit you just threw',13,DIM,'start');
+ ['LIGHT','MEDIUM','HEAVY','SHOT','BLAST','CHARGED'].forEach((w,i)=>{
    const x=20+i*118; el(s,'rect',{x,y:40,width:104,height:30,rx:15,fill:'none',stroke:INK,'stroke-width':i>=2?3:1.8});
    text(s,x+52,61,w,13,INK,'middle','700');
    if(i===3||i===4){el(s,'path',{d:`M ${x+10} 55 l 6 -8 l 0 5 l 6 0 l -6 8 z`,fill:INK})}
  });
  // miss: OPEN mark on the swinger's plate and a lit Y for the punisher
- text(s,20,118,'A miss: he is open for n ticks',13,DIM,'start');
+ text(s,20,118,'When he misses, he is open for a moment',13,DIM,'start');
  plate(s,20,128,260,'RIVAL');
  el(s,'path',{d:'M 200 140 L 190 140 L 190 164 L 200 164 M 232 140 L 242 140 L 242 164 L 232 164',stroke:INK,'stroke-width':3,fill:'none'});
  text(s,216,158,'OPEN',12,INK,'middle','700');
  glyph(s,400,160,'Y',26); el(s,'circle',{cx:400,cy:160,r:26*1.3,fill:'none',stroke:INK,'stroke-width':3});
  for(let i=0;i<3;i++){const a=-Math.PI/2+i*2*Math.PI/3;el(s,'line',{x1:400+Math.cos(a)*(26*1.3+3),y1:160+Math.sin(a)*(26*1.3+3),x2:400+Math.cos(a)*(26*1.3+13),y2:160+Math.sin(a)*(26*1.3+13),stroke:INK,'stroke-width':4})}
- text(s,400,212,'Y lit with three ticks: the stop answers a miss',12,DIM);
+ text(s,400,212,'Y lights up: press it to stop him while he is open',12,DIM);
  // energy land
- text(s,560,118,'A bolt lands: the result at the energy button',13,DIM,'start');
- [['HIT','dot'],['GUARD','bar'],['ARMOUR','arc'],['MISS','hollow']].forEach((r,i)=>{
+ text(s,560,118,'Your energy shot lands: a mark by the energy button says what happened',13,DIM,'start');
+ [['HIT','dot'],['BLOCKED','bar'],['ABSORBED','arc'],['MISSED','hollow']].forEach((r,i)=>{
    const x=600+i*110,y=165; glyph(s,x,y,'E',22);
    const mx=x+26,my=y-26;
    if(r[1]==='dot')el(s,'circle',{cx:mx,cy:my,r:8,fill:INK});
@@ -147,11 +147,11 @@ function plate(g,x,y,w,name){el(g,'rect',{x,y,width:w,height:62,rx:8,fill:'#0b0d
    text(s,x,y+52,r[0],12,DIM);
  });
  // launcher close
- text(s,1060,118,'The launcher closes',13,DIM,'start');
+ text(s,1060,118,'When the launch is used up',13,DIM,'start');
  const tri=(x,y,fill)=>el(s,'path',{d:`M ${x} ${y-14} L ${x+14} ${y+12} L ${x-14} ${y+12} Z`,fill:fill?INK:'none',stroke:INK,'stroke-width':2.5});
  tri(1100,165,true); text(s,1100,212,'USED',12,DIM);
- tri(1210,165,false); el(s,'line',{x1:1196,y1:150,x2:1224,y2:180,stroke:INK,'stroke-width':3}); text(s,1210,212,'LAPSED',12,DIM);
- text(s,1320,165,'a steady triangle while ready, hollow while it rests; no countdown',12,DIM,'start');
- text(s,20,320,'Every mark is a shape; none is bigger than 5,000 px at 1024x768; none asks the flash register except the close.',13,DIM,'start');
+ tri(1210,165,false); el(s,'line',{x1:1196,y1:150,x2:1224,y2:180,stroke:INK,'stroke-width':3}); text(s,1210,212,'TOO LATE',12,DIM);
+ text(s,1060,250,'a solid triangle when a launch is ready, a hollow one while it recharges',12,DIM,'start');
+ text(s,20,320,'Every mark is a small, steady shape, so none gets in the way of the fight.',13,DIM,'start');
 }
 </script></div></body></html>

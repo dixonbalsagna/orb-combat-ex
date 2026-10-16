@@ -49,7 +49,7 @@ static func legend_alpha(m: UiFighterModel, mode: String, prompts_on: bool, t: f
 	var pop: float = clampf((3.0 - m.stance_kind_t) / 0.5, 0.0, 1.0)
 	if POP_ACKS.has(m.press_ack_kind):
 		pop = maxf(pop, clampf((ACK_POP - m.press_ack_t) / 0.3, 0.0, 1.0))
-	if m.charge_on or m.launcher_open or (UiStance.three() and m.punish_left > 0.0):
+	if m.charge_on or lit_b(m) or (UiStance.three() and m.punish_left > 0.0):
 		pop = 1.0   # a wind-up on Y or B, or the launch window on B: the legend is up while it lasts
 	return maxf(base, pop)
 
@@ -232,8 +232,10 @@ static func rows(m: UiFighterModel, scheme: String, energy: String = "hold") -> 
 				continue
 			dim = true   # the Specials row stays until the charging stance is live, and its moves do not exist yet
 		var row_note: String = UiData.t("prompt.not_yet") if dim else ""
-		if UiStance.three() and m.launcher_known and aid == "signature" and by_stance and m.stance_kind != UiStance.CHARGING and not dim:
+		if UiStance.launch_marks() and m.launcher_known and row_cell == "b" and by_stance and m.stance_kind != UiStance.CHARGING and not dim:
 			row_note = UiData.t("state.launcher_note_ready" if m.launcher_ready else "state.launcher_note_rest")   # the heavy row says whether a launch is ready (steady words, no countdown)
+		if UiStance.launch_marks() and m.gauge_full and row_cell == "b" and not dim:
+			row_note = UiData.t("state.launcher_ready")   # the word LAUNCH beside the lit B
 		out.append({"acts": acts, "label": label, "held": held, "dim": dim, "note": row_note, "cell": row_cell})
 	if UiStance.three():
 		if by_stance and m.stance_kind != UiStance.CHARGING:
@@ -325,11 +327,16 @@ static func _widest_label(placed: Array, fs: int) -> float:
 	return w
 
 
+## B is lit: the launch window is open (the `launcher_open` cue), or the rival's gauge is full and the launcher is ready, so the next opening can be launched (the launch marks).
+static func lit_b(m: UiFighterModel) -> bool:
+	return m.launcher_open or (UiStance.launch_marks() and m.gauge_full)
+
+
 static func sig(m: UiFighterModel, alpha: float, preset: String, energy: String = "hold", reduced: bool = false) -> Array:
 	var ack_step: int = 0 if m.press_ack_kind == "" or m.press_ack_t >= ACK_SECONDS else (1 if reduced else 1 + int(m.press_ack_t / ACK_SECONDS * 6.0))
 	var cf: float = charge_frac(m, reduced)
 	return [m.device, m.slot, int(alpha * 10.0), preset, m.avail["transform"], m.left_side, m.form_shown, energy, m.stance_kind, m.press_ack_kind, m.press_ack_cell, ack_step,
-		int(cf * 8.0) if cf >= 0.0 else -1, m.charge_cell if m.charge_on else "", m.launcher_open, UiStance.three(), m.punish_left > 0.0, m.flurry_dots]
+		int(cf * 8.0) if cf >= 0.0 else -1, m.charge_cell if m.charge_on else "", lit_b(m), UiStance.three(), m.punish_left > 0.0, m.flurry_dots, UiStance.launch_marks() and m.gauge_full]
 
 
 static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Dictionary, alpha: float) -> void:
@@ -371,7 +378,7 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Di
 			var gc := Vector2(rect.position.x + float(p["pad"]) + shift + gh * 0.5, float(r["y"]))
 			if m.charge_on and str(r["cell"]) == m.charge_cell:
 				draw_charge(ci, gc, gh * 0.62, charge_frac(m, bool(o.get("reduced_motion", false))), m.charge_cell == "b", alpha)
-			if m.launcher_open and str(r["cell"]) == "b":
+			if lit_b(m) and str(r["cell"]) == "b":
 				draw_lit(ci, gc, gh * 0.52, alpha)
 			if UiStance.three() and m.punish_left > 0.0 and str(r["cell"]) == "y":
 				draw_lit(ci, gc, gh * 0.52, alpha, 3)   # he missed and is open: the medium (Y) stops him, a lit ring with three ticks (B's launcher has four)

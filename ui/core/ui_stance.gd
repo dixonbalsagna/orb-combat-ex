@@ -68,6 +68,11 @@ static func three() -> bool:
 	return UiData.feature("three_strengths")
 
 
+## Whether the launch's teaching marks are on: their own flag (features.json `launch_marks`), or the three-strength layout that already includes them.
+static func launch_marks() -> bool:
+	return UiData.feature("launch_marks") or three()
+
+
 ## The word for a martial face button's action under the three strengths: the action ids stay light, heavy, context and signature (the sim, Controls and the
 ## remap data use them), so a row whose id says `signature` reads Heavy and `heavy` reads Medium. "" when the flag is off or the action is not one of the four.
 static func three_word(action: String) -> String:
