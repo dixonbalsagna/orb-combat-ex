@@ -41,4 +41,9 @@ QA keeps one **fixed planet** for baselines and gets a random-planet arm for cov
 
 1. Arena length: today's 153,600 (recommended), or longer (the planet and its places grow four times for twice the length)?
 2. Touch-down: pure random, or random but always within sight of a town, city or landmark?
-3. Should damage carry over? A city levelled in one fight stays levelled in the next on the same planet (a short wear list per place, a few KB), or every fight starts whole?
+3. Should damage carry over? **Answered (Orb, 2026-10-16): yes, across a run** (see the next section).
+
+## Orb's direction after seeing picture A (2026-10-16; no design work yet)
+
+- **Damage persists across a run.** Orb spitballed a roguelike brawler mode: a run of stages on different slices of one planet, short story beats between stages, **cities staying damaged between fights until the final boss fight**, where "world-catastrophe" variants of abilities can cause large-scale destruction: beams through the crust with magma bubbling up from the mantle, mushroom clouds that darken the whole planet's sky, fighters in the upper exosphere throwing energy blasts that glow and explode on the surface far below. Recorded in `docs/ep/vision.md`. Nothing is designed or built for the run mode. What this note's design already gives it: a planet is a seed plus a places list, so a run is a planet seed plus a short wear list per place (craters and levelled buildings, a few KB), read back when a later slice crosses the same city.
+- **Polar ice caps** (Orb: a big icy landmass in the south, broken icebergs, floes and sea ice in the north): built as planet prototype v2 in `docs/world/planet-ice.md`.

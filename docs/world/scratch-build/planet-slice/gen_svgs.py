@@ -56,13 +56,15 @@ def globe_svg(g, grid, places, circles, pins, labels=False):
     o = []
     o.append('<circle cx="%.1f" cy="%.1f" r="%.1f" fill="#dfe8f1" stroke="%s" stroke-width="1.5"/>' % (g.cx, g.cy, g.rad, INK))
     nlat, nlon = len(grid), len(grid[0])
+    stp = 180.0 / nlat
     for j in range(nlat):
-        la = math.radians(-87.5 + 5*j)
+        la = math.radians(-90 + stp * (j + 0.5))
         for i in range(nlon):
-            lo = math.radians(-177.5 + 5*i)
+            lo = math.radians(-180 + stp * (i + 0.5))
             ps = []
             ok = True
-            for dla, dlo in ((-2.5, -2.5), (-2.5, 2.5), (2.5, 2.5), (2.5, -2.5)):
+            h2 = stp / 2
+            for dla, dlo in ((-h2, -h2), (-h2, h2), (h2, h2), (h2, -h2)):
                 a = la + math.radians(dla); b = lo + math.radians(dlo)
                 p = (math.cos(a)*math.cos(b), math.sin(a), math.cos(a)*math.sin(b))
                 q = g.proj(p)
