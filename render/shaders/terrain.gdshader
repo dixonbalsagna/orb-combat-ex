@@ -53,7 +53,7 @@ varying float v_rubble;
 varying vec2 v_px;
 varying float v_wz;
 varying float v_street;
-varying float v_new;          // under reduced flashing: how much of its own colour the ground keeps under a crater dug moments ago (ground.gdshaderinc crater_new); 0 otherwise
+varying float v_new;          // how much of its own colour the ground keeps under a crater dug moments ago (ground.gdshaderinc crater_new; over CRATER_OPEN_S, over CRATER_CALM_S with reduced flashing)
 
 void vertex() {
 	int i = int(UV.x + 0.5) % nc;
@@ -84,7 +84,7 @@ void vertex() {
 	v_rubble = abs(z) <= -z_band_back ? rubble_at(i, z) : 0.0;
 	v_px = vec2(xw, z);
 	v_street = street_n > 0 ? street_weight(xw) : 0.0;
-	v_new = calm_ease > 0.0 ? crater_new(i, xw, z) : 0.0;
+	v_new = crater_new(i, xw, z, calm_ease > 0.0 ? crater_calm_s : crater_open_s);   // a new crater's colours come with its opening (more slowly with reduced flashing)
 	v_back = clamp((z_front - z) / (z_front - z_band_back), 0.0, 1.0);
 	vec4 bw = bent_world(MODEL_MATRIX, VERTEX);
 	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;   // from the camera, in world axes (the camera may be pitched)
@@ -137,7 +137,8 @@ void fragment() {
 	float hh = clamp(v_heat, 0.0, 1.6);
 	vec3 glow = mix(heat_lo.rgb, heat_hi.rgb, clamp(hh - 0.6, 0.0, 1.0));
 	// The glow's tint comes in gently at low heat (a weak beam's groove is a faint red, not a dark one, at first).
-	c = mix(c, glow, smoothstep(0.2, 1.0, hh) * 0.85 * heat_gain) + glow * max(0.0, hh - 1.0) * 0.6 * heat_gain * heat_gain;
+	float opened = 1.0 - v_new;   // a new crater's glow comes with its opening too
+	c = mix(c, glow, smoothstep(0.2, 1.0, hh) * 0.85 * heat_gain * opened) + glow * max(0.0, hh - 1.0) * 0.6 * heat_gain * heat_gain * opened;
 	// Aerial perspective: hazing toward the horizon, the ground takes the sky's colour in its own direction.
 	ALBEDO = haze_ground(c, v_view, -v_wz, fog_far);   // the haze by depth (skycol.gdshaderinc)
 }

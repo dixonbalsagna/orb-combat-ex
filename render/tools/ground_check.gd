@@ -12,6 +12,8 @@ extends SceneTree
 ##    mesh's stride depths (RenderLook.STRIDES), by which it gives way to the plane's lowest ground in view near the
 ##    lens. The pane's reading of that lowest ground is set, is what the materials hold, is no higher than the plane's
 ##    highest ground within three times its reach (it eases), and its top (with water) is no lower than its ground.
+## 5. clock: both materials that draw the ground (terrain and water) hold this tick's match time, so a new crater opens
+##    by its age in both, and RenderLook.CRATER_OPEN_S, the time it takes.
 ## Then, on a staged state, a crater on the wrap seam (x = 0) must be mirror-symmetric across it at every depth.
 ## Also checks the mesh: every column has exactly one top-grid vertex on z = 0, flagged exact.
 ##   godot --headless --path . --script res://render/tools/ground_check.gd [-- --seeds=4,12345,7 --ticks=5400]
@@ -136,6 +138,10 @@ func _check(S: SimState, label: String) -> void:
 		hi = maxf(hi, S.base[i] + S.deform[i])
 	if is_nan(pw.fore_low.x) or pw.fore_low.x > hi + 0.01 or pw.fore_low.y < pw.fore_low.x - 0.001:
 		fails.append("%s: the pane's lowest ground in view (%s) is unset, above the plane's highest ground there (%.1f), or its top is lower than its ground" % [label, str(pw.fore_low), hi])
+	for m in [main.planet._terrain_mat, main.planet._water_mat]:
+		if float(m.get_shader_parameter("crater_now")) != S.T or float(m.get_shader_parameter("crater_open_s")) != RenderLook.CRATER_OPEN_S:
+			fails.append("%s: a ground material's crater clock (%s against %.3f) or opening time is not the game's" % [label, str(m.get_shader_parameter("crater_now")), S.T])
+			break
 	var wet: int = 0
 	var burnt: int = 0
 	for i in range(SimConst.NC):

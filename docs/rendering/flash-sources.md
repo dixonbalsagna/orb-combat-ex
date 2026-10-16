@@ -302,7 +302,7 @@ What draws it is the **foreground rule** (`fore_fall` in `ground.gdshaderinc`). 
 - **The other 21 clips** were swept on 3dda977f with the fix at three columns, against Tools' table on 3198301f; nothing that runs in a clip changed between those two commits. Not re-run at two columns. Lower: ai-12345 normal 2 / 2.5 / 2 to 2 / 2 / 2 and reduced 2.5 / 2.5 / 2 to 2 / 2 / 2 (out of the second capture); clash reduced 2 / 2 / 2 to 1 / 2 / 1; ai-5 reduced 1.5 / 1.5 / 2 to 1 / 2 / 1. Higher, all passing: ai-5 normal 1.5 / 1.5 / 1.5 to 2 / 2 / 2.5; ai-3 reduced 1.5 / 1.5 / 1.5 to 2 / 2 / 1.5; ai-7 normal 2.5 / 2.5 / 2 to 2.5 / 3 / 2.5 and reduced 2 / 2 / 2 to 2 / 2.5 / 2; signature reduced 2 / 2 / 2.5 to 2.5 / 2.5 / 2.5. The same: both mash clips and both mashcity clips, clash normal, signature normal, both transform clips, both ai-1 clips, ai-3 normal, and ai-39 reduced (still **FAIL** 3 / 3.5 / 2.5 at the divider's slam, Camera's).
 - On 39f93535, before the chain, the fix took ai seed 38 from 4 / 5 to 2.5 in both modes. That was the clip the brief named.
 
-**A crater that opens: built, measured, parked** (`pending/crater-open/`). A new crater's bowl, colours and glow came in one tick, the largest one-tick change left at a blast. A version opens them from the crater's centre to the edge of its apron over 0.4 s. On 39f93535, built together with the first foreground fix, collapse normal went from 3.5 to 2.5 (its swings at ticks 733 and 734 went); which of the two did that was not separated. On the chain's scenes it costs ai seed 38 normal half a flash and its lower-area run 1.5 (1.5 / 2.5 to 2 / 4). A crater that appears at once sinks inside its tick's larger brightening, since only a tick's dominant direction is pooled; opened over 24 ticks, its darkening becomes a run of its own between brightenings. Spreading is not always better for this count. It waits for a decision.
+**A crater that opens: built, measured, parked; landed 2026-10-16** (see "A crater opens: ai seed 104" below). A new crater's bowl, colours and glow came in one tick, the largest one-tick change left at a blast. A version opens them from the crater's centre to the edge of its apron over 0.4 s. On 39f93535, built together with the first foreground fix, collapse normal went from 3.5 to 2.5 (its swings at ticks 733 and 734 went); which of the two did that was not separated. On the chain's scenes it costs ai seed 38 normal half a flash and its lower-area run 1.5 (1.5 / 2.5 to 2 / 4). A crater that appears at once sinks inside its tick's larger brightening, since only a tick's dominant direction is pooled; opened over 24 ticks, its darkening becomes a run of its own between brightenings. Spreading is not always better for this count. It waits for a decision.
 
 **Tried and dropped:** under reduced flashing, a crater's earth drawn at a third of its strength. It took one stretch of ai seed 38 reduced from 3 to 1 and another from 2.5 to 3.5.
 
@@ -363,6 +363,29 @@ What was tried first:
 - **The front row only, as first asked:** buildings in front of the focus plane hazed in a fast pan, eased over 0.3 s. It did nothing (4 / 5 / 4 and 4 / 4 / 4): the houses stand behind the fight, and the ease came too late for a camera that whips in four ticks. Dropped. It cost nothing on collapse normal, ai-4, ai-38 or ai-39 normal.
 - **The whole town's pan haze switched on for a whip only** (from 1.5 widths a second, at its own 70%): the houses' turns went, but a launch at tick 428 throws the other pane's camera at 10 to 20 widths a second through the towers for about a second and a half, and the pale towers it left sweeping made new turns at 444 to 510 (4 / 4 / 4 in both modes).
 - **The same, melted fully into the sky and ground behind:** what ships.
+
+## A crater opens: ai seed 104 (2026-10-16)
+
+**What failed.** ai seed 104 normal was the one clip over the line in the demo's recorded pass and on main since (2.5 / 3.5 / 2): at the area threshold 15% lower its worst second, ticks 290 to 343, held seven turns. Two craters formed in a brawl, at ticks 289 and 327, each in one tick: the bowl in front of the fighters darkened by 30,000 to 74,000 pixels at once, with brightenings between (the debris, Camera's inset panel, the rings).
+
+**The fix, in every match: the crater opening** (built 2026-10-14, parked; `RenderLook.CRATER_OPEN_S`). A new crater's bowl, colours and glow open from its centre to the edge of its apron over 0.4 s of match time instead of in one tick; under reduced flashing its colours still take `CRATER_CALM_S`. The fighter plane's own row opens with it, so the band has no step at the plane; for those ticks a fighter standing in the crater stands below the ground drawn under him; props stand on the opened crater at once. It was parked because it cost ai seed 38 normal on the chain's scenes (1.5 / 2.5 to 2 / 4); ai seed 38 has left the set since (06b0200e).
+
+**Measured** with Tools' `check-clip` (primary / area threshold 15% lower / two-second memory), main and main with the opening both on 0ca6f670:
+
+| Clip | Main | With the opening |
+| :-- | :-- | :-- |
+| ai-104-normal | **FAIL** 2.5 / 3.5 / 2.5 | 2 / 2 / 2 |
+| ai-104-reduced | **FAIL** 2 / 3.5 / 2 | 2 / 2 / 2 |
+| ai-4-normal | 2.5 / 2.5 / 2 | 2 / 2.5 / 2 |
+| ai-4-reduced | 2 / 2.5 / 2 | 2 / 2 / 2 |
+| ai-7-normal | 2.5 / 2.5 / 2.5 | 2.5 / 2.5 / 2.5 |
+| ai-7-reduced | 2.5 / 3 / 2.5 | 2.5 / 2.5 / 2.5 |
+| collapse-normal | 1.5 / 2 / 0.5 | 2 / 2.5 / 0.5 |
+| collapse-reduced | 2 / 2.5 / 0.5 | 2 / 2.5 / 0.5 |
+
+The opening changes every crater, so Tools' full set (62 clips) is the final word; these are the clips most marked by craters, and ai seed 7, which read 3 (over the gate) in the demo's pass.
+
+Gated on 0ca6f670 (render unchanged up to ee822c5e but for Camera's files): all 16 of render's gates, the flight check among them.
 
 ## The capture hook for Tools' frame analyser
 

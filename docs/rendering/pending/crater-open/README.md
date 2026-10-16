@@ -1,7 +1,0 @@
-# A crater that opens (parked, 2026-10-14)
-
-A new crater's bowl, colours and glow open from its centre to the edge of its apron over `CRATER_OPEN_S` (0.4 s) of match time, in every match, instead of in one tick. With reduced flashing its colours still take `CRATER_CALM_S`. The fighter plane's own row opens with it, so the band has no step at the plane. For those ticks a fighter standing in the crater stands below the ground drawn under him. Props stand on the opened crater at once.
-
-- **Files:** `render/core/look.gd`, `render/core/planet_view.gd` (the crater clock on both ground materials every frame), `render/shaders/ground.gdshaderinc` (`crater_open`, `ground_offset4`, the fighter-plane row less what has not opened), `render/shaders/terrain.gdshader` (colours and glow with the opening). `crater-open.patch` is against main 4cc7319a with the foreground fix (two columns); check it with `git apply --check` before applying.
-- **Measured:** on 39f93535, with the first foreground fix, collapse normal went from 3.5 to 2.5 (not separated from that fix). On the chain's scenes (7fef83e3) it took ai seed 38 normal from 1.5 / 2.5 to 2 / 4. A crater that appears at once sinks inside its tick's larger brightening, and opened over 24 ticks its darkening becomes a run of its own. `docs/rendering/flash-sources.md` has the rest.
-- **Why parked:** it was asked for as spreading in time; on today's scenes it adds a counted swing. If wanted, it needs a pass of the whole set and probably a shorter opening, or the colours at once with only the bowl opening.

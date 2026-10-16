@@ -210,8 +210,11 @@ func build(S: SimState) -> void:
 ## pane's planet only; a second pane's draws what that one made). heat is the render-side glow of fresh grooves
 ## (ImpactFx).
 func update(S: SimState, cam_x: float, heat: PackedFloat32Array = PackedFloat32Array(), heat_changed: bool = false) -> void:
-	if _calm and _terrain_mat != null:
-		_terrain_mat.set_shader_parameter("crater_now", S.T)   # the calm form's clock: a new crater's age
+	if _terrain_mat != null and _crater_now != S.T:
+		# A new crater's age, for its opening (and the calm form's colours): on both materials that draw the ground.
+		_crater_now = S.T
+		_terrain_mat.set_shader_parameter("crater_now", S.T)
+		_water_mat.set_shader_parameter("crater_now", S.T)
 	for c in _copies:
 		c.position.x = float(c.get_meta("k")) * SimConst.W - cam_x
 	if source != null:
@@ -873,6 +876,7 @@ func _mm_child(parent: Node3D, n: String, mm: MultiMesh, mat: Material = null) -
 
 
 var _calm: bool = false              # the grooves are drawn calm (set_calm)
+var _crater_now: float = -1.0        # the match time last sent to the ground's materials (a new crater's age)
 
 
 func _make_materials() -> void:
@@ -924,6 +928,8 @@ func _make_materials() -> void:
 	_terrain_mat.set_shader_parameter("heat_hi", RenderLook.col(RenderLook.HEAT_HI))
 	_terrain_mat.set_shader_parameter("char_fresh", RenderLook.CHAR_FRESH)
 	_terrain_mat.set_shader_parameter("crater_calm_s", RenderLook.CRATER_CALM_S)
+	for m in [_terrain_mat, _water_mat]:
+		m.set_shader_parameter("crater_open_s", RenderLook.CRATER_OPEN_S)
 	_terrain_mat.set_shader_parameter("z_front", RenderLook.Z_TERRAIN_FRONT)
 	_terrain_mat.set_shader_parameter("snow", RenderLook.col(RenderLook.SNOW))
 	_terrain_mat.set_shader_parameter("snow_from", RenderLook.SNOW_FROM)

@@ -318,6 +318,10 @@ const HEAT_HI := "#ffd27a"               # a fresh groove from a strong beam
 const FURROW_W_R: float = 0.3            # a furrow's half width across the band, per unit of its crater's r ...
 const FURROW_W_MIN: float = 20.0 * WS    # ... and at least this
 const GROUND_SPREAD: float = 60.0 * WS   # half width across the band of dents with no record (dropped craters, clips)
+## A new crater opens from its centre to the edge of its apron over CRATER_OPEN_S of match time: its bowl, its colours
+## and its glow together, in every match, where they came in one tick. The fighter plane's row opens with it, so the
+## band has no step there; for those ticks the ground drawn under a fighter standing in it is above the sim's.
+const CRATER_OPEN_S: float = 0.4
 const RUBBLE_EDGE: float = 30.0 * WS     # a rubble heap eases off over this depth past the range it spans
 const RUBBLE_TINT_H: float = 20.0        # heap height at which the rubble tint is full
 const RUBBLE := "#6f675d"                # rubble: broken concrete and brick dust

@@ -3,8 +3,9 @@ extends RefCounted
 ## Evacuation, seen: people who flee a blow run away from it and are gone. World's `evacuate` event {b, x, z, n, cx,
 ## reason, owner} (docs/world/collateral-caps.md section 5) comes in the same tick as the building's popAlive falls.
 ## The planet view hands over the figures that just vanished. This decides which of them run. From a building a blow
-## hit this frame (its `debris` event: the sim's damage always throws it), as many run as the building's events have
-## reported fled, farthest from the blow first; the rest, nearest the blow, were casualties and are simply gone.
+## hit this frame (its `debris` event: the sim's damage always throws it; or World's `building_hit` or `floor_hit`, a
+## held hit into its floors, which throws none), as many run as the building's events have reported fled, farthest
+## from the blow first; the rest, nearest the blow, were casualties and are simply gone.
 ## From a building no blow hit, everyone who vanished left on foot (people die only by damage), so they all run at
 ## once, even before the event that reports them (World reports a building's fled people in lots of half a person). Then it animates the runners on sim time (so pause and hit-stop hold them): away from the
 ## event's x at a run, faster the closer they were, and drifting back behind their own row's face; a share look back
@@ -66,7 +67,7 @@ func reset(nb: int) -> void:
 ## The evacuate events among one tick's fx events.
 func consume(events: Array) -> void:
 	for e in events:
-		if e.type == "debris":
+		if e.type == "debris" or e.type == "building_hit" or e.type == "floor_hit":
 			_hit_x.append(e.x)
 			_blow_x = e.x
 			continue

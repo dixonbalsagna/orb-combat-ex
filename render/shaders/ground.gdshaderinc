@@ -14,6 +14,7 @@ uniform float dent_min = 6.0;        // a dent deeper than this colours as a cra
 uniform float calm_ease = 0.0;       // 1 under reduced flashing: a new crater's colours spread in (crater_new); 0: at once, as ever
 uniform float crater_now = 0.0;      // the match time (SimState.T), for a crater's age; set only while calm_ease is on
 uniform float crater_calm_s = 1.5;   // RenderLook.CRATER_CALM_S
+uniform float crater_open_s = 0.4;   // RenderLook.CRATER_OPEN_S: a new crater opens from its centre to the edge of its apron over this, bowl, colours and glow
 uniform float col_w = 8.0;
 uniform float world_w = 9600.0;
 uniform float rim_in = 0.3;          // WorldCrater.RIM_IN
@@ -111,8 +112,23 @@ float rubble_at(int i, float z) {
 
 // (height offset added to base, d/dx, d/dz) at column i, world x xw, depth z; the height is not used on the
 // fighter-plane row, which reads the sim's deform directly. The gradient gives the terrain smooth normals.
-vec3 ground_offset3(int i, float xw, float z) {
+// How far a new crater has opened at dx, z: 1 where its front has passed (and for any crater older than the opening,
+// or when the clock is not set), 0 beyond the front. The front runs from its centre to the edge of its apron (and its
+// furrow's tail) over crater_open_s of match time.
+float crater_open(vec4 a, vec4 b, float dx, float z) {
+	float u = (crater_now - b.w) / crater_open_s;
+	if (u < 0.0 || u >= 1.2) {
+		return 1.0;
+	}
+	float rho = sqrt(dx * dx + z * z) / max(a.y * (1.0 + rim_out) + abs(b.x), 1.0);
+	return 1.0 - smoothstep(u - 0.1, u + 0.1, rho);
+}
+
+// ground_offset3, and `closed`: the height of the craters over this point that has not opened yet (what the fighter
+// plane's exact row takes off the sim's deform while a crater opens).
+vec3 ground_offset4(int i, float xw, float z, out float closed) {
 	vec3 s = vec3(0.0);
+	closed = 0.0;
 	for (int k = 0; k < 6; k++) {
 		float fi = gf(i, 6 + k);
 		if (fi < 0.0) {
@@ -126,7 +142,10 @@ vec3 ground_offset3(int i, float xw, float z) {
 		float rho = sqrt(dx * dx + z * z);
 		vec2 p = crater_profile(rho / a.y, a.z, a.w);
 		float k2 = rho > 0.0001 ? p.y / (a.y * rho) : 0.0;
-		s += vec3(p.x, k2 * dx, k2 * z) + furrow(dx, z, a.y, b.x, b.y);
+		vec3 ck = vec3(p.x, k2 * dx, k2 * z) + furrow(dx, z, a.y, b.x, b.y);
+		float op = crater_open(a, b, dx, z);
+		s += ck * op;
+		closed += ck.x * (1.0 - op);
 	}
 	// The residual less the heap, spread across the band; the heap as its own plateau in depth (ground_field.gd).
 	int il = (i + nc - 1) % nc;
@@ -148,6 +167,12 @@ vec3 ground_offset3(int i, float xw, float z) {
 }
 
 
+vec3 ground_offset3(int i, float xw, float z) {
+	float closed;
+	return ground_offset4(i, xw, z, closed);
+}
+
+
 float ground_offset(int i, float xw, float z) {
 	return ground_offset3(i, xw, z).x;
 }
@@ -156,7 +181,7 @@ float ground_offset(int i, float xw, float z) {
 // crater dug moments ago (1: all of it; 0: none, the crater's colours as ever). A crater's colours spread from its
 // centre to the edge of its apron over crater_calm_s of match time (the record's time is the sim's). Ground that any
 // crater has already coloured is not given back: the least of the craters over a point decides.
-float crater_new(int i, float xw, float z) {
+float crater_new(int i, float xw, float z, float dur) {
 	float keep = 1.0;
 	bool any = false;
 	for (int k = 0; k < 6; k++) {
@@ -173,7 +198,7 @@ float crater_new(int i, float xw, float z) {
 		if (rho >= 1.15) {
 			continue;
 		}
-		float u = (crater_now - b.w) / crater_calm_s;
+		float u = (crater_now - b.w) / dur;
 		float kk = 0.0;   // an older crater: its colours are all there
 		if (u >= 0.0 && u < 1.0) {
 			kk = smoothstep(u - 0.08, u + 0.08, rho);
@@ -338,8 +363,9 @@ void fore_fall(inout float h, inout vec2 grad, inout float top, float xr, float 
 // copy's world offset, for the foreground rule (fore_fall), which sees the water the water shader draws there.
 vec4 ground4(int i, float xw, float z, bool exact, float ox) {
 	float b = gf(i, 0);
-	vec3 o = abs(z) <= -z_band_back + 0.5 ? ground_offset3(i, xw, z) : vec3(0.0);
-	float off = exact ? gf(i, 1) : o.x;
+	float closed = 0.0;
+	vec3 o = abs(z) <= -z_band_back + 0.5 ? ground_offset4(i, xw, z, closed) : vec3(0.0);
+	float off = exact ? gf(i, 1) - closed : o.x;   // the fighter plane's row is the sim's deform, less what of a new crater has not opened
 	float h = b + off;
 	vec2 grad = vec2(base_slope(i) + o.y, o.z);
 	float s = far_weight(z);
