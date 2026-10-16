@@ -33,8 +33,11 @@ static func dispose(S: SimState) -> void:
 
 
 ## ai is {"p1": bool, "p2": bool}; a missing entry keeps the previous fighter's setting, or true with no fighters yet.
+## With more than two slots, "p3" to "p5" say whether those bodies are the AI's; a missing one is false: he stands idle.
 ## setup (D1a; the replay header's `setup`): {"slots": [id, id]} picks any two fighters the data has, from the roster
-## or the bench (default: the roster's first two; slots that are not two such fighters play the default, with an error),
+## or the bench (default: the roster's first two; slots that are not such fighters play the default, with an error). Up
+## to SimRoster.MAX_BODIES slots make a match of one versus many: slot 0 is the one, and slots 2 and up stand beyond the
+## second (docs/director/one-v-many.md, stage 1),
 ## "names": [name, name] renames them (the mirror arms), "flip": true swaps the spawn sides. {} is the default match.
 ## Fight lanes: "depth": true makes depth physical for this match (S.depthOn).
 ## The intro phase: "intro": true plays the entrance before the clock; "intro": "skip" (the default) applies its effects at
@@ -50,10 +53,10 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
 	var p2ai: bool = bool(ai["p2"]) if ai.has("p2") and ai["p2"] != null else (S.fighters[1].ai != null if S.fighters.size() > 1 else true)
 	dispose(S)
 	var slots: Array = setup.get("slots", FighterData.order().slice(0, 2))
-	if slots.size() != 2 or not (slots[0] is String and slots[1] is String) or not FighterData.has(slots[0]) or not FighterData.has(slots[1]):
-		# slots that are not two fighters the data has (the roster's or the bench's): the default pairing plays
+	if not SimRoster.slotsOk(slots):
+		# slots that are not 2 to MAX_BODIES fighters the data has (the roster's or the bench's): the default pairing plays
 		if not FighterData.quiet:
-			push_error("SimCore.newMatch: the setup's slots %s are not two fighters the data has; the default pairing plays" % str(slots))
+			push_error("SimCore.newMatch: the setup's slots %s are not 2 to %d fighters the data has; the default pairing plays" % [str(slots), SimRoster.MAX_BODIES])
 		slots = FighterData.order().slice(0, 2)
 	var start_x: float = SimConst.START_X
 	if setup.get("start", "") == "crossing":   # a demo start astride a crossing of the city (World: lanes.json demo_start); default off
@@ -62,15 +65,19 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
 	var x1: float = start_x + SimConst.START_GAP
 	var flip: bool = setup.get("flip", false)
 	S.fighters = [SimRoster.createFighter(FighterData.def(slots[0]), x1 if flip else x0, "p1", p1ai), SimRoster.createFighter(FighterData.def(slots[1]), x0 if flip else x1, "p2", p2ai)]
+	# the bodies past the pair (one versus many): beyond the second, away from the first, facing back at him
+	var away: float = -1.0 if flip else 1.0
+	for k in range(2, slots.size()):
+		var gx: float = SimWrap.wrap(S.fighters[1].x + away * SimRoster.GUARD_SPACING * float(k - 1))
+		var key: String = "p%d" % (k + 1)
+		S.fighters.append(SimRoster.createFighter(FighterData.def(slots[k]), gx, key, ai.get(key, false) == true))
 	if setup.has("names"):
-		S.fighters[0].name = setup.names[0]
-		S.fighters[1].name = setup.names[1]
-	S.fighters[0].y = 60.0
-	S.fighters[1].y = 60.0
-	S.fighters[0].face = -1.0 if flip else 1.0
-	S.fighters[1].face = 1.0 if flip else -1.0
-	S.fighters[0].stance = 0.0
-	S.fighters[1].stance = 0.0
+		for k in range(mini(setup.names.size(), S.fighters.size())):
+			S.fighters[k].name = setup.names[k]
+	for k in range(S.fighters.size()):
+		S.fighters[k].y = 60.0
+		S.fighters[k].face = (-1.0 if flip else 1.0) if k == 0 else (1.0 if flip else -1.0)
+		S.fighters[k].stance = 0.0
 	S.beams.clear()
 	S.T = 0.0
 	S.game.ko = null
@@ -100,7 +107,8 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
 	S.dt = 0.0
 
 
-## One fixed step (sim.js step). inputs is [intent or null, intent or null], or null (AI fighters ignore it). Returns
+## One fixed step (sim.js step). inputs is [intent or null, ...] a slot, or null (AI fighters ignore it; a slot past the
+## list's end has none). Returns
 ## false during hit-stop (no input consumed; the host keeps its key presses for the next tick), true otherwise.
 static func step(S: SimState, inputs = null) -> bool:
 	var dtReal: float = SimConst.DT
@@ -124,8 +132,10 @@ static func step(S: SimState, inputs = null) -> bool:
 		if S.game.koT > 2.2:
 			S.game.ts = 1.0
 	var ord: Array = [0, 1] if S.rng.next() < 0.5 else [1, 0]
+	for k in range(2, S.fighters.size()):   # the bodies past the pair, after it, in slot order: one draw a tick, as with two
+		ord.append(k)
 	for k in ord:
-		SimControl.control(S, S.fighters[k], inputs[k] if inputs != null else null)
+		SimControl.control(S, S.fighters[k], inputs[k] if inputs != null and k < inputs.size() else null)
 	for f in S.fighters:
 		SimFighter.stepFighter(S, f, dt)
 	DirExchange.dirUpdate(S, dt)

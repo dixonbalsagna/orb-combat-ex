@@ -1,0 +1,27 @@
+{
+  "_about": "Validator fixture, not game data: a reference fighter (the training dummy's role) in no roster and on no bench.",
+  "schema": "fighter/1",
+  "id": "FIXTURE_REFERENCE",
+  "identity": {
+    "role": "reference",
+    "col": "#8a3b3b",
+    "aura": "#d99694",
+    "hair": "#5b3a8a"
+  },
+  "stats": {
+    "care": -0.8,
+    "dmgMul": 1.05,
+    "spd": 0.95,
+    "maxhp": 1700
+  },
+  "kit": {
+    "canHide": false
+  },
+  "rally": {
+    "rule": "spite"
+  },
+  "finishers": {
+    "base": "generic"
+  },
+  "sigCooldown": 120
+}

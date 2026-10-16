@@ -65,6 +65,10 @@
     "rival": {
       "col": "#a52a2a",
       "aura": "#9a80d8"
+    },
+    "reference": {
+      "col": "#b9b9b9",
+      "aura": "#c6bade"
     }
   },
   "presets": {
@@ -76,6 +80,10 @@
       "rival": {
         "col": "#a52a2a",
         "aura": "#6b0bcb"
+      },
+      "reference": {
+        "col": "#b9b9b9",
+        "aura": "#c6bade"
       },
       "chosen_by": "the first round's pair with the Protagonist's aura darkened a little (#46b9b9 to #30a6a6): it sat 13 from UI's neutral \"fresh\" mark, now 18.5",
       "measured_dE00_under_this_vision": {
@@ -103,6 +111,10 @@
         "col": "#a52a2a",
         "aura": "#5b0bcb"
       },
+      "reference": {
+        "col": "#b9b9b9",
+        "aura": "#c6bade"
+      },
       "chosen_by": "unchanged: it clears UI's marks (18.3 and 32.3)",
       "measured_dE00_under_this_vision": {
         "between_the_two": 36.8,
@@ -128,6 +140,10 @@
       "rival": {
         "col": "#a52a2a",
         "aura": "#6b0bcb"
+      },
+      "reference": {
+        "col": "#b9b9b9",
+        "aura": "#c6bade"
       },
       "chosen_by": "a revised pair (was #b7aaf8 and #7243d0): the first Protagonist aura sat 13.5 from UI's neutral \"fresh\" mark, now 20.4",
       "measured_dE00_under_this_vision": {

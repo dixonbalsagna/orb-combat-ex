@@ -278293,6 +278293,3406 @@
         "rule": "minimum",
         "pointer": "/reach/after/rival/0/0"
       }
+    },
+    {
+      "id": "recipes-brawl-reference-without-reach-ok",
+      "schema": "combat-recipes.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/recipes.json",
+          "set": {
+            "/pools/fixture_reference": {
+              "blur.base": [
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.palm_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.twin_spear",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.front_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.side_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.snap_round",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_jab",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.tail_sweep",
+                  "status": "waiting"
+                }
+              ],
+              "blur.toward": [
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                }
+              ],
+              "blur.ender": [
+                {
+                  "id": "strike.overhand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.haymaker",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_palm",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_whip",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.body_hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rib_shot",
+                  "status": "posed"
+                }
+              ],
+              "combo.link": [
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.palm_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.twin_spear",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.front_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.side_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.snap_round",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_jab",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.tail_sweep",
+                  "status": "waiting"
+                }
+              ],
+              "combo.accent": [
+                {
+                  "id": "strike.haymaker",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_palm",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross_arm_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.drop_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.body_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_whip",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.rib_shot",
+                  "status": "posed"
+                }
+              ],
+              "power": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.overhand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.haymaker",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.dropping_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_palm",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross_arm_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.axe_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.stomp",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.drop_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.body_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_whip",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.tail_spike",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.body_hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rib_shot",
+                  "status": "posed"
+                }
+              ],
+              "power.last": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.overhand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.haymaker",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.dropping_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_palm",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.axe_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.stomp",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_whip",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.tail_spike",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.body_hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rib_shot",
+                  "status": "posed"
+                }
+              ],
+              "brawl.flurry": [
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_lift",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.gut_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_hook",
+                  "status": "posed"
+                }
+              ],
+              "brawl.skill": [
+                {
+                  "id": "strike.elbow_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.front_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.side_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.snap_round",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.forearm_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.arm_chop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.lift_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_thrust",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_hammer",
+                  "status": "posed"
+                }
+              ],
+              "brawl.lift": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_rise",
+                  "status": "posed"
+                }
+              ],
+              "brawl.medium": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.dropping_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.stomp",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.heel_backhand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                }
+              ],
+              "brawl.medium.held": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.dropping_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.stomp",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross_arm_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.drop_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.heel_backhand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                }
+              ],
+              "brawl.heavy": [
+                {
+                  "id": "strike.su_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_plate",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_elbow_heave",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_fist_heave",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_edge_legs",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_plate_arm",
+                  "status": "posed"
+                }
+              ],
+              "burst.fast": [
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.gut_rise",
+                  "status": "posed"
+                }
+              ],
+              "burst.mid": [
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_lift",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.gut_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_hook",
+                  "status": "posed"
+                }
+              ],
+              "burst.slow": [
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.elbow_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.front_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.side_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.snap_round",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.forearm_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_lift",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.arm_chop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.lift_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_thrust",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.gut_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_hook",
+                  "status": "posed"
+                }
+              ],
+              "brawl.launcher": [
+                {
+                  "id": "strike.su_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_plate",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_elbow_heave",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_fist_heave",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_hammer",
+                  "status": "posed"
+                }
+              ],
+              "brawl.launcher.lower": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.dropping_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.stomp",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                }
+              ],
+              "brawl.heavy.lower": [
+                {
+                  "id": "strike.double_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.drop_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross_arm_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_heel",
+                  "status": "posed"
+                }
+              ],
+              "brawl.reversal": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                }
+              ],
+              "brawl.light": [
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.elbow_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.front_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.side_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.snap_round",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.forearm_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_lift",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.arm_chop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.lift_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_thrust",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.gut_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_hook",
+                  "status": "posed"
+                }
+              ],
+              "brawl.light.toward": [
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.elbow_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_lift",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_hook",
+                  "status": "posed"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "recipes-brawl-reference-without-another-pool-fails",
+      "schema": "combat-recipes.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/recipes.json",
+          "set": {
+            "/pools/fixture_reference": {
+              "blur.base": [
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.palm_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.twin_spear",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.front_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.side_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.snap_round",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_jab",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.tail_sweep",
+                  "status": "waiting"
+                }
+              ],
+              "blur.toward": [
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                }
+              ],
+              "blur.ender": [
+                {
+                  "id": "strike.overhand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.haymaker",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_palm",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_whip",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.body_hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rib_shot",
+                  "status": "posed"
+                }
+              ],
+              "combo.link": [
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.palm_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.twin_spear",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.front_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.side_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.snap_round",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_jab",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.tail_sweep",
+                  "status": "waiting"
+                }
+              ],
+              "combo.accent": [
+                {
+                  "id": "strike.haymaker",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_palm",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross_arm_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.drop_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.body_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_whip",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.rib_shot",
+                  "status": "posed"
+                }
+              ],
+              "power": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.overhand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.haymaker",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.dropping_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_palm",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross_arm_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.axe_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.stomp",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.drop_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.body_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_whip",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.tail_spike",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.body_hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rib_shot",
+                  "status": "posed"
+                }
+              ],
+              "power.last": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.overhand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.haymaker",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.dropping_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_palm",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.axe_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.stomp",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_whip",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.tail_spike",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.body_hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rib_shot",
+                  "status": "posed"
+                }
+              ],
+              "brawl.flurry": [
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_lift",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.gut_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_hook",
+                  "status": "posed"
+                }
+              ],
+              "brawl.skill": [
+                {
+                  "id": "strike.elbow_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.front_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.side_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.snap_round",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.forearm_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.arm_chop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.lift_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_thrust",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_hammer",
+                  "status": "posed"
+                }
+              ],
+              "brawl.lift": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_rise",
+                  "status": "posed"
+                }
+              ],
+              "brawl.medium.held": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.dropping_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.stomp",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross_arm_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.drop_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.heel_backhand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                }
+              ],
+              "brawl.heavy": [
+                {
+                  "id": "strike.su_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_plate",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_elbow_heave",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_fist_heave",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_edge_legs",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_plate_arm",
+                  "status": "posed"
+                }
+              ],
+              "burst.fast": [
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.gut_rise",
+                  "status": "posed"
+                }
+              ],
+              "burst.mid": [
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_lift",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.gut_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_hook",
+                  "status": "posed"
+                }
+              ],
+              "burst.slow": [
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.elbow_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.front_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.side_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.snap_round",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.forearm_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_lift",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.arm_chop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.lift_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_thrust",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.gut_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_hook",
+                  "status": "posed"
+                }
+              ],
+              "brawl.launcher": [
+                {
+                  "id": "strike.su_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_plate",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_elbow_heave",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_fist_heave",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_hammer",
+                  "status": "posed"
+                }
+              ],
+              "brawl.launcher.lower": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.dropping_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.stomp",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                }
+              ],
+              "brawl.heavy.lower": [
+                {
+                  "id": "strike.double_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.drop_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross_arm_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_heel",
+                  "status": "posed"
+                }
+              ],
+              "brawl.reversal": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                }
+              ],
+              "brawl.light": [
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.elbow_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.front_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.side_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.snap_round",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.forearm_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_lift",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.arm_chop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.lift_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_thrust",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.gut_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_hook",
+                  "status": "posed"
+                }
+              ],
+              "brawl.light.toward": [
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.elbow_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_lift",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_hook",
+                  "status": "posed"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:recipes-brawl",
+        "pointer": "/brawl/medium"
+      }
+    },
+    {
+      "id": "recipes-brawl-other-fighter-without-reach-fails",
+      "schema": "combat-recipes.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/recipes.json",
+          "set": {
+            "/pools/fixture_other": {
+              "blur.base": [
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.palm_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.twin_spear",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.front_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.side_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.snap_round",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_jab",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.tail_sweep",
+                  "status": "waiting"
+                }
+              ],
+              "blur.toward": [
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                }
+              ],
+              "blur.ender": [
+                {
+                  "id": "strike.overhand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.haymaker",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_palm",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_whip",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.body_hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rib_shot",
+                  "status": "posed"
+                }
+              ],
+              "combo.link": [
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.palm_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.twin_spear",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.front_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.side_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.snap_round",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_jab",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.tail_sweep",
+                  "status": "waiting"
+                }
+              ],
+              "combo.accent": [
+                {
+                  "id": "strike.haymaker",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_palm",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross_arm_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.drop_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.body_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_whip",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.rib_shot",
+                  "status": "posed"
+                }
+              ],
+              "power": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.overhand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.haymaker",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.dropping_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_palm",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross_arm_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.axe_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.stomp",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.drop_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.body_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_whip",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.tail_spike",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.body_hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rib_shot",
+                  "status": "posed"
+                }
+              ],
+              "power.last": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.overhand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.haymaker",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.dropping_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_palm",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.axe_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.stomp",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.tail_whip",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.tail_spike",
+                  "status": "waiting"
+                },
+                {
+                  "id": "strike.body_hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rib_shot",
+                  "status": "posed"
+                }
+              ],
+              "brawl.flurry": [
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_lift",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.gut_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_hook",
+                  "status": "posed"
+                }
+              ],
+              "brawl.skill": [
+                {
+                  "id": "strike.elbow_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.front_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.side_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.snap_round",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.forearm_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.arm_chop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.lift_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_thrust",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_hammer",
+                  "status": "posed"
+                }
+              ],
+              "brawl.lift": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_rise",
+                  "status": "posed"
+                }
+              ],
+              "brawl.medium": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.dropping_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.stomp",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.heel_backhand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                }
+              ],
+              "brawl.medium.held": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.double_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.dropping_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.stomp",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross_arm_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.drop_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.heel_backhand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                }
+              ],
+              "brawl.heavy": [
+                {
+                  "id": "strike.su_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_plate",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_elbow_heave",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_fist_heave",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_edge_legs",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_plate_arm",
+                  "status": "posed"
+                }
+              ],
+              "burst.fast": [
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.gut_rise",
+                  "status": "posed"
+                }
+              ],
+              "burst.mid": [
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_lift",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.gut_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_hook",
+                  "status": "posed"
+                }
+              ],
+              "burst.slow": [
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.elbow_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.front_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.side_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.snap_round",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.forearm_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_lift",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.arm_chop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.lift_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_thrust",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.gut_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_hook",
+                  "status": "posed"
+                }
+              ],
+              "brawl.launcher": [
+                {
+                  "id": "strike.su_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_heel",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_plate",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_elbow_heave",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_fist_heave",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.su_hammer",
+                  "status": "posed"
+                }
+              ],
+              "brawl.launcher.lower": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.dropping_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.stomp",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.roundhouse",
+                  "status": "posed"
+                }
+              ],
+              "reach.blast": [
+                {
+                  "id": "strike.blast_chest",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.blast_gut",
+                  "status": "posed"
+                }
+              ],
+              "brawl.heavy.lower": [
+                {
+                  "id": "strike.double_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.drop_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross_arm_ram",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spinning_heel",
+                  "status": "posed"
+                }
+              ],
+              "brawl.reversal": [
+                {
+                  "id": "strike.uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.driving_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.headbutt",
+                  "status": "posed"
+                }
+              ],
+              "brawl.light": [
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.elbow_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.front_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.side_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.snap_round",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.jab",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.backfist",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.spear_hand",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.hook",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.forearm_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_uppercut",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.cross",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_lift",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.arm_chop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.lift_kick",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.fist_sweep",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.low_thrust",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.gut_rise",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.plate_hammer",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_hook",
+                  "status": "posed"
+                }
+              ],
+              "brawl.light.toward": [
+                {
+                  "id": "strike.short_knee",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.rising_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.shoulder_check",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.short_elbow",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.elbow_drop",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_lift",
+                  "status": "posed"
+                },
+                {
+                  "id": "strike.knee_hook",
+                  "status": "posed"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:recipes-brawl",
+        "pointer": "/brawl/bolt"
+      }
     }
   ],
   "text": [

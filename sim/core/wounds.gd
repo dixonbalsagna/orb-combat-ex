@@ -208,6 +208,8 @@ static func updateStages(S: SimState, f) -> void:
 	for r in range(4):
 		if f.wd.brinkRegion[r] and f.stage[r] == 3:
 			brink = true
+	if brink and not SimRoster.isPrincipal(S, f):   # a guard has no brink and no finisher (empress-guards.md)
+		brink = false
 	if brink != f.brink:
 		f.brink = brink
 		# The brink chapter: entering or leaving the brink (a Rally) starts the set-up count over; an open fighter closes.

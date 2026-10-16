@@ -44,8 +44,10 @@ func _init() -> void:
 	check("roster data", _roster(g))
 	check("roster loader rejects bad data", _rosterRejects())
 	check("the game's wounds and ladder files, and a fighter's differences", _sharedFiles())
-	check("the bench, and the reference fighter", _benchFighter())
+	check("the training dummy in the roster", _dummyFighter())
 	check("a match's slots name two fighters the data has", _slotGuard())
+	check("one versus many: a match of three to five bodies", _nBodies())
+	check("one versus many: what the core counts of a guard", _guardRules())
 	check("wired numbers change a match", _wiredNumbers())
 	check("keyed draws", _keyedDraws(g))
 	check("arm setups", _armSetups())
@@ -3276,7 +3278,7 @@ func _replayModule() -> String:
 func _roster(g: Dictionary) -> String:
 	if not FighterData.errors().is_empty():
 		return "data/fighters: " + "; ".join(FighterData.errors())
-	if FighterData.order() != ["PROTAGONIST", "RIVAL"]:
+	if FighterData.order() != ["PROTAGONIST", "RIVAL", "REFERENCE"]:
 		return "roster order " + str(FighterData.order())
 	if FighterData.dataHash() != g.get("rosterHash", ""):
 		return "the roster data hash differs (data/fighters/ changed): %s vs golden %s; regenerate the goldens if the edit is meant" % [FighterData.dataHash(), g.get("rosterHash", "")]
@@ -3316,9 +3318,11 @@ func _sharedFiles() -> String:
 	FighterData.quiet = true
 	var mk := func(tag: String, files: Dictionary) -> String:
 		var dir: String = "user://shared_files/%s/" % tag
-		for id in ["PROTAGONIST", "RIVAL"]:
+		for id in FighterData.order():
 			DirAccess.make_dir_recursive_absolute(dir + id)
 			for fname in ["fighter.json", "meters.json"]:
+				if not FileAccess.file_exists(FighterData.ROOT + id + "/" + fname):
+					continue
 				var fw := FileAccess.open(dir + id + "/" + fname, FileAccess.WRITE)
 				fw.store_string(_fighterText(id, fname))
 				fw.close()
@@ -3330,7 +3334,7 @@ func _sharedFiles() -> String:
 			fo.store_string(files[key])
 			fo.close()
 		var rf := FileAccess.open(dir + "roster.json", FileAccess.WRITE)
-		rf.store_string("[\"PROTAGONIST\", \"RIVAL\"]")
+		rf.store_string(JSON.stringify(FighterData.order()))
 		rf.close()
 		return dir
 	# no file of his own: the game's, and the same hash
@@ -3340,7 +3344,7 @@ func _sharedFiles() -> String:
 	# a full copy in each folder: the same hash again
 	if out == "":
 		var full := {}
-		for id in ["PROTAGONIST", "RIVAL"]:
+		for id in FighterData.order():
 			for fname in ["wounds.json", "ladder.json"]:
 				full[id + "/" + fname] = FileAccess.get_file_as_string(FighterData.SHARED + fname)
 		FighterData.loadFrom(mk.call("full", full))
@@ -3382,32 +3386,34 @@ func _sharedFiles() -> String:
 	return out
 
 
-## The bench (data/fighters/bench.json): fighters that load and can be named in a match's setup but are not in the
-## roster. The reference fighter is on it: base stats, no care, no meter, the game's wounds and ladder. The roster, its
-## order and its hash are as they were (the roster check above holds them to the golden). A match can name him in either
-## slot, or twice. A replay that names him carries his data in its data hash, plays back, and is refused when his data
-## change; a replay that does not name him is as it was.
-func _benchFighter() -> String:
-	if FighterData.bench() != ["REFERENCE"] or not FighterData.has("REFERENCE") or FighterData.order().has("REFERENCE") or FighterData.has("NOBODY"):
-		return "the bench reads %s" % str(FighterData.bench())
+## The training dummy (fighter-pipeline.md section 8): the reference fighter, in the roster, last. His numbers are frozen:
+## base stats, no care, no meter, the game's wounds and ladder. The bench is empty. Every fighter has a hash of his own, and
+## a replay's data hash takes only the fighters in its slots: a change to the dummy's data moves the roster's hash and his
+## own replays, and leaves a replay of the other two alone. He plays in either slot, and against himself.
+func _dummyFighter() -> String:
+	if FighterData.order() != ["PROTAGONIST", "RIVAL", "REFERENCE"] or not FighterData.bench().is_empty():
+		return "the roster reads %s and the bench %s" % [str(FighterData.order()), str(FighterData.bench())]
 	var d: Dictionary = FighterData.def("REFERENCE")
 	var p: Dictionary = FighterData.def("PROTAGONIST")
 	if d.dmgMul != 1.0 or d.spd != 1.0 or d.care != 0.0 or d.anguish or d.menace or d.role != "reference":
-		return "the reference fighter is not plain: damage %s, speed %s, care %s" % [str(d.dmgMul), str(d.spd), str(d.care)]
+		return "the dummy's numbers are not the frozen base: damage %s, speed %s, care %s" % [str(d.dmgMul), str(d.spd), str(d.care)]
+	for fname in ["wounds.json", "ladder.json", "meters.json"]:
+		if FileAccess.file_exists(FighterData.ROOT + "REFERENCE/" + fname):
+			return "the dummy has a %s of his own: his numbers are the game's" % fname
 	if d.wd.wearPerDamage != p.wd.wearPerDamage or d.wd.family.light != p.wd.family.light or d.ld.taken != p.ld.taken or d.ld.thresholds != p.ld.thresholds:
-		return "the reference fighter's wounds or ladder are not the game's"
+		return "the dummy's wounds or ladder are not the game's"
 	var hs := {}
-	for id in ["PROTAGONIST", "RIVAL", "REFERENCE"]:
+	for id in FighterData.order():
 		var hx: String = FighterData.hashOf(id)
 		if hx == "" or hs.has(hx):
 			return "the hash of %s is empty, or another fighter's" % id
 		hs[hx] = true
 	var d0: String = SimReplay.dataHash()
-	if SimReplay.dataHash({"slots": ["RIVAL", "PROTAGONIST"]}) != d0 or SimReplay.dataHash({"flip": true}) != d0:
-		return "a replay of the roster's fighters changed its data hash"
+	if SimReplay.dataHash({"slots": ["PROTAGONIST", "RIVAL"]}) != d0:
+		return "a replay of the default pairing named or not reads two data hashes"
 	var dref: String = SimReplay.dataHash({"slots": ["REFERENCE", "RIVAL"]})
 	if dref == d0:
-		return "a replay that names the reference fighter does not carry his data"
+		return "a replay of the dummy does not carry his data"
 	for slots in [["REFERENCE", "REFERENCE"], ["REFERENCE", "PROTAGONIST"], ["RIVAL", "REFERENCE"]]:
 		var S := SimCore.createSim()
 		var su := {"slots": slots}
@@ -3420,7 +3426,7 @@ func _benchFighter() -> String:
 			S.out.feed.clear()
 		for i in range(2):
 			var f = S.fighters[i]
-			if f.id != slots[i] or not is_finite(f.x) or not is_finite(f.y) or (f.id == "REFERENCE" and (f.hasAnguish or f.hasMenace or f.dmgMul != 1.0)):
+			if f.id != slots[i] or not is_finite(f.x) or not is_finite(f.y):
 				return "a match of %s: slot %d did not play as %s" % [str(slots), i, slots[i]]
 		SimCore.dispose(S)
 	var R := SimCore.createSim()
@@ -3431,15 +3437,12 @@ func _benchFighter() -> String:
 		R.out.feed.clear()
 	var rp: Dictionary = rec.finish()
 	SimCore.dispose(R)
-	if rp.data != dref:
-		return "a recorded match of the reference fighter does not carry his data hash"
-	var res: Dictionary = SimReplay.play(JSON.parse_string(JSON.stringify(rp)))
-	if not res.ok:
-		return "a replay of the reference fighter: %s at tick %d" % [res.reason, res.firstBadTick]
-	# his data change: the roster's hash and a roster replay hold, and his own replay is refused
+	if rp.data != dref or not SimReplay.play(JSON.parse_string(JSON.stringify(rp))).ok:
+		return "a replay of the dummy does not carry his data hash, or does not play back"
+	# his data change: the roster's hash and his own replays move; a replay of the other two does not
 	var h0: String = FighterData.dataHash()
-	var dir := "user://bench_fixture/"
-	for id in ["PROTAGONIST", "RIVAL", "REFERENCE"]:
+	var dir := "user://dummy_fixture/"
+	for id in FighterData.order():
 		DirAccess.make_dir_recursive_absolute(dir + id)
 		for fname in ["fighter.json", "meters.json"]:
 			if not FileAccess.file_exists(FighterData.ROOT + id + "/" + fname):
@@ -3447,7 +3450,7 @@ func _benchFighter() -> String:
 			var text: String = FileAccess.get_file_as_string(FighterData.ROOT + id + "/" + fname)
 			if id == "REFERENCE" and fname == "fighter.json":
 				if text.count("\"dmgMul\": 1.0") != 1:
-					return "the fixture's pattern is not in the reference fighter's file once"
+					return "the fixture's pattern is not in the dummy's file once"
 				text = text.replace("\"dmgMul\": 1.0", "\"dmgMul\": 1.04")
 			var fw := FileAccess.open(dir + id + "/" + fname, FileAccess.WRITE)
 			fw.store_string(text)
@@ -3460,18 +3463,229 @@ func _benchFighter() -> String:
 	FighterData.loadFrom(dir)
 	var out: String = ""
 	if not FighterData.errors().is_empty():
-		out = "the bench fixture: " + "; ".join(FighterData.errors())
-	elif FighterData.dataHash() != h0 or SimReplay.dataHash() != d0:
-		out = "a change to a bench fighter's data changed the roster's hash, or a roster replay's"
+		out = "the dummy fixture: " + "; ".join(FighterData.errors())
+	elif FighterData.dataHash() == h0:
+		out = "a change to the dummy's data did not move the roster's hash"
+	elif SimReplay.dataHash() != d0:
+		out = "a change to the dummy's data moved a replay of the other two"
 	elif SimReplay.dataHash({"slots": ["REFERENCE", "RIVAL"]}) == dref or SimReplay.play(JSON.parse_string(JSON.stringify(rp))).reason != "data":
-		out = "a replay of the reference fighter was not refused after his data changed"
+		out = "a replay of the dummy was not refused after his data changed"
 	FighterData.quiet = false
 	FighterData.loadFrom()
 	return out
 
 
-## A match's setup names any two fighters the data has. Slots that are not two such fighters (an id nobody has, one id,
-## three, a number) play the default pairing: the match is the default match to the hash.
+## One versus many: Game Design's rulings on what the core counts of a guard (docs/design/empress-guards.md). Only a
+## principal's KO ends the match, and a principal felled by a guard loses to the guard's principal. A guard has no brink.
+## A guard's stance never sets the mood's AGGRESSIVE column, and his landed blow feeds the mood at half. The acts count the
+## principals' form steps and wounds only. The hit-stop stays one for the whole match.
+func _guardRules() -> String:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"slots": ["PROTAGONIST", "RIVAL", "REFERENCE"], "intro": false})
+	var one = S.fighters[0]
+	var emp = S.fighters[1]
+	var guard = S.fighters[2]
+	if not SimRoster.isPrincipal(S, one) or not SimRoster.isPrincipal(S, emp) or SimRoster.isPrincipal(S, guard):
+		return "the principals are not slots 0 and 1"
+	# KO
+	SimDamage.ko(S, guard, one)
+	if S.game.ko != null:
+		return "a guard's KO ended the match"
+	S.out.fx.clear()
+	SimDamage.ko(S, one, guard)
+	var won: float = -1.0
+	for e in S.out.fx:
+		if e.type == "ko":
+			won = e.winner
+	if S.game.ko != one or won != 1.0:
+		return "a principal felled by a guard: the KO is %s, won by slot %s" % [str(S.game.ko != null), str(won)]
+	SimCore.dispose(S)
+	# the brink
+	var B := SimCore.createSim()
+	SimCore.newMatch(B, 5, {"p1": false, "p2": false}, {"slots": ["PROTAGONIST", "RIVAL", "REFERENCE"], "intro": false})
+	for k in [0, 2]:
+		var f = B.fighters[k]
+		f.wear[SimWounds.CORE] = f.wd.stageAt[2]
+		SimWounds.updateStages(B, f)
+		if f.brink != (k == 0):
+			return "slot %d's core broken: the brink reads %s" % [k, str(f.brink)]
+	SimCore.dispose(B)
+	# the mood: a blow's units by who threw it, and the stance column
+	var M := SimCore.createSim()
+	SimCore.newMatch(M, 5, {"p1": false, "p2": false}, {"slots": ["PROTAGONIST", "RIVAL", "REFERENCE"], "intro": false})
+	var gain := func(make: Callable) -> int:
+		var out: Array = [0, 0]
+		for pass_ in range(2):
+			M.mood.v = SimMood.mood.range / 2
+			M.out.fx.clear()
+			if pass_ == 1:
+				make.call()
+			var v0: int = M.mood.v
+			SimMood.tick(M)
+			out[pass_] = M.mood.v - v0
+		M.out.fx.clear()
+		return out[1] - out[0]
+	var I: Dictionary = SimMood.imp
+	for f in M.fighters:
+		f.stance = 1.0
+	M.fighters[2].stance = 0.0   # the guard AGGRESSIVE: it must not pick the AGGRESSIVE column
+	var byOne: int = gain.call(func(): SimFx.damage(M, M.fighters[1], M.fighters[0], 5.0, "core", "light", "", true, "brawl"))
+	var byGuard: int = gain.call(func(): SimFx.damage(M, M.fighters[0], M.fighters[2], 5.0, "core", "light", "", true, "brawl"))
+	if byOne != I.brawlLight[0] or byGuard != int(SimMathx.jround(float(I.brawlLight[0]) * 0.5)):
+		return "a brawl's light fed %d from a principal and %d from a guard; the data say %d and half of it" % [byOne, byGuard, I.brawlLight[0]]
+	# both principals AGGRESSIVE add to the mood; a guard's stance changes nothing
+	for f in M.fighters:
+		f.stance = 1.0
+	M.fighters[2].stance = 0.0
+	var calm: int = gain.call(func(): pass)
+	M.mood.v = SimMood.mood.range / 2
+	M.out.fx.clear()
+	var v1: int = M.mood.v
+	SimMood.tick(M)
+	var withGuard: int = M.mood.v - v1
+	M.fighters[2].stance = 1.0
+	M.mood.v = SimMood.mood.range / 2
+	M.out.fx.clear()
+	var v2: int = M.mood.v
+	SimMood.tick(M)
+	if M.mood.v - v2 != withGuard or calm != 0:
+		return "a guard's stance changed the mood's tick"
+	SimCore.dispose(M)
+	# the acts: a guard's tier and wounds do not count
+	var A := SimCore.createSim()
+	SimCore.newMatch(A, 5, {"p1": false, "p2": false}, {"slots": ["PROTAGONIST", "RIVAL", "REFERENCE"], "intro": false})
+	var a0: int = SimMood.act(A)
+	var mask0: int = A.mood.onceMask
+	A.fighters[2].tier = 4.0
+	SimMood.onStage(A, A.fighters[2], SimWounds.ARMS, 2, 1)
+	SimMood.onStage(A, A.fighters[2], SimWounds.CORE, 3, 2)
+	if SimMood.act(A) != a0 or A.mood.onceMask != mask0:
+		return "a guard's tier or wounds moved the act (%d, was %d)" % [SimMood.act(A), a0]
+	SimMood.onStage(A, A.fighters[1], SimWounds.ARMS, 2, 1)
+	if A.mood.onceMask == mask0:
+		return "a principal's battered limb made no act beat"
+	SimCore.dispose(A)
+	return ""
+
+
+## One versus many, stage 1 (docs/director/one-v-many.md): a match holds 2 to SimRoster.MAX_BODIES fighters. Slots 0
+## and 1 are the pair; a body past them stands beyond the second, GUARD_SPACING apart, facing the first, with the first
+## as his opponent; he is idle unless the setup's ai names him. Matches of 3, 4 and 5 bodies run with the pair's AI and
+## replay to the same hash; the hash walks every body; the replay records every slot (a 1v1's header is as it was); an
+## intro brings in the pair only, and digs no crater under a guard; six slots, or an unknown id, play the default pairing.
+func _nBodies() -> String:
+	var three: Array = ["PROTAGONIST", "RIVAL", "REFERENCE"]
+	var five: Array = ["PROTAGONIST", "RIVAL", "REFERENCE", "REFERENCE", "REFERENCE"]
+	for flip in [false, true]:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 5, {}, {"slots": five, "names": ["PROTAGONIST", "RIVAL", "GUARD-A", "GUARD-B", "GUARD-C"], "flip": flip, "intro": false})
+		if S.fighters.size() != 5:
+			return "a five-slot setup made %d fighters" % S.fighters.size()
+		var away: float = -1.0 if flip else 1.0
+		for k in range(5):
+			var f = S.fighters[k]
+			if f.id != five[k] or f.keys != "p%d" % (k + 1):
+				return "slot %d is %s (keys %s)" % [k, f.id, f.keys]
+			if k >= 2:
+				var want: float = SimWrap.wrap(S.fighters[1].x + away * SimRoster.GUARD_SPACING * float(k - 1))
+				if f.x != want or f.ai != null or f.face != -away or SimRoster.opp(S, f) != S.fighters[0] or f.name != ["GUARD-A", "GUARD-B", "GUARD-C"][k - 2]:
+					return "guard %d (flip %s): at %s (want %s), ai %s, face %s" % [k, str(flip), str(f.x), str(want), str(f.ai != null), str(f.face)]
+		if SimRoster.opp(S, S.fighters[0]) != S.fighters[1] or SimRoster.opp(S, S.fighters[1]) != S.fighters[0]:
+			return "the pair's opponents changed with guards present"
+		SimCore.dispose(S)
+	# matches of 3, 4 and 5 bodies, the pair the AI's and the rest idle: they run, stay in the world, and replay alike
+	for n in [3, 4, 5]:
+		var hs: Array = []
+		for run in range(2):
+			var M := SimCore.createSim()
+			SimCore.newMatch(M, 7 + n, {}, {"slots": five.slice(0, n)})
+			var stand: Array = []
+			for k in range(2, n):
+				stand.append(M.fighters[k].x)
+			for t in range(1500):
+				SimCore.step(M)
+				M.out.fx.clear()
+				M.out.feed.clear()
+			for k in range(n):
+				var f = M.fighters[k]
+				if not is_finite(f.x) or not is_finite(f.y) or f.x < 0.0 or f.x >= SimConst.W:
+					return "%d bodies: fighter %d left the world (%s, %s)" % [n, k, str(f.x), str(f.y)]
+			hs.append(SimHash.stateHash(M).gameplay)
+			SimCore.dispose(M)
+		if hs[0] != hs[1]:
+			return "a match of %d bodies did not replay to the same hash" % n
+	# the hash walks every body
+	var H := SimCore.createSim()
+	SimCore.newMatch(H, 5, {}, {"slots": five, "intro": false})
+	var h0: String = SimHash.stateHash(H).gameplay
+	H.fighters[4].x += 1.0
+	if SimHash.stateHash(H).gameplay == h0:
+		return "the hash does not see the fifth body"
+	SimCore.dispose(H)
+	# a recorded match of four bodies, with a human guard, plays back; a 1v1's header names two
+	var R := SimCore.createSim()
+	var rec := SimReplay.recorder(R, 9, {"p1": true, "p2": true, "p3": false, "p4": true}, {"slots": five.slice(0, 4), "intro": false})
+	if rec.replay.ai.keys().size() != 4 or rec.replay.ai.p3 != false or rec.replay.ai.p4 != true or R.fighters[3].ai == null:
+		return "a four-body replay's header reads %s" % str(rec.replay.ai)
+	var walk := SimIntent.new()
+	walk.mx = 1.0
+	var quiet := SimIntent.new()
+	var x2: float = R.fighters[2].x
+	for t in range(600):
+		rec.step([null, null, walk if (t / 40) % 2 == 0 else quiet, null])
+		R.out.fx.clear()
+		R.out.feed.clear()
+	if R.fighters[2].x == x2:
+		return "a guard given intents did not move"
+	var rp: Dictionary = rec.finish()
+	SimCore.dispose(R)
+	var slots2: int = 0
+	for inp in rp.inputs:
+		if int(inp[1]) == 2:
+			slots2 += 1
+	if slots2 == 0:
+		return "the replay recorded nothing for the third slot"
+	var res: Dictionary = SimReplay.play(JSON.parse_string(JSON.stringify(rp)))
+	if not res.ok:
+		return "a four-body replay: %s at tick %d" % [res.reason, res.firstBadTick]
+	var bad: Dictionary = JSON.parse_string(JSON.stringify(rp))
+	bad.inputs.append([1, 7, 0, 0])
+	if SimReplay.play(bad).reason != "format":
+		return "a replay with a slot the match does not have was not refused"
+	var R2 := SimCore.createSim()
+	var rec2 := SimReplay.recorder(R2, 9, {}, {})
+	if rec2.replay.ai.keys() != ["p1", "p2"]:
+		return "a 1v1 replay's header changed: %s" % str(rec2.replay.ai)
+	SimCore.dispose(R2)
+	# an intro brings in the pair only: the guard stands on the ground, and only two craters are dug
+	var I := SimCore.createSim()
+	SimCore.newMatch(I, 5, {}, {"slots": three, "intro": true})
+	var g: float = WorldTerrain.groundY(I, I.fighters[2].x)
+	if I.fighters[2].y != g:
+		return "with an intro the guard stands at %s, and the ground is at %s" % [str(I.fighters[2].y), str(g)]
+	if I.fighters[0].state != "intro" or I.fighters[2].state == "intro":
+		return "the intro took the guard in, or left the pair out"
+	SimCore.dispose(I)
+	var K := SimCore.createSim()
+	SimCore.newMatch(K, 5, {}, {"slots": three})
+	if K.craters.size() != 2:
+		return "the skipped intro dug %d craters with a guard present" % K.craters.size()
+	SimCore.dispose(K)
+	# six slots, and an unknown id among five, play the default pairing
+	FighterData.quiet = true
+	var out: String = ""
+	for badSlots in [five + ["RIVAL"], ["PROTAGONIST", "RIVAL", "NOBODY"]]:
+		var D := SimCore.createSim()
+		SimCore.newMatch(D, 5, {}, {"slots": badSlots})
+		if D.fighters.size() != 2 or D.fighters[0].id != "PROTAGONIST":
+			out = "slots %s did not play the default pairing" % str(badSlots)
+		SimCore.dispose(D)
+	FighterData.quiet = false
+	return out
+
+
+## A match's setup names the fighters the data has. Slots that are not 2 to 5 such fighters (an id nobody has, one id,
+## six, a number) play the default pairing: the match is the default match to the hash.
 func _slotGuard() -> String:
 	var want: String = ""
 	var D := SimCore.createSim()
@@ -3484,7 +3698,7 @@ func _slotGuard() -> String:
 	SimCore.dispose(D)
 	FighterData.quiet = true
 	var out: String = ""
-	for bad in [["NOBODY", "RIVAL"], ["PROTAGONIST"], ["PROTAGONIST", "RIVAL", "REFERENCE"], [1, 2], []]:
+	for bad in [["NOBODY", "RIVAL"], ["PROTAGONIST"], ["PROTAGONIST", "RIVAL", "REFERENCE", "REFERENCE", "REFERENCE", "REFERENCE"], [1, 2], []]:
 		var S := SimCore.createSim()
 		SimCore.newMatch(S, 5, {}, {"slots": bad})
 		if S.fighters.size() != 2 or S.fighters[0].id != "PROTAGONIST" or S.fighters[1].id != "RIVAL":
@@ -3670,7 +3884,7 @@ const WIRED: Array = [
 
 func _wiredNumbers() -> String:
 	var files := {}
-	for id in FighterData.order():
+	for id in ["PROTAGONIST", "RIVAL"]:   # the wired probes play the default pairing, in a roster of the two
 		for fname in ["fighter.json", "wounds.json", "meters.json", "ladder.json"]:
 			files[id + "/" + fname] = _fighterText(id, fname)
 	var base := {}

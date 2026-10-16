@@ -325,11 +325,14 @@ static func setup(S: SimState, su: Dictionary) -> void:
 		it.gestures = c.gestures
 		it.facts = c.facts   # the record's own, or the data's default when it sent none (DirIntro.compose)
 		it.left = it.clock
-		for f in S.fighters:
+		for k in range(2):   # the pair arrives; a body past it (one versus many) stands where the setup put him
+			var f = S.fighters[k]
 			f.state = "intro"
 			f.vx = 0.0
 			f.vy = 0.0
 			f.y = WorldTerrain.groundY(S, f.x) + fallHeight
+		for k in range(2, S.fighters.size()):
+			S.fighters[k].y = WorldTerrain.groundY(S, S.fighters[k].x)
 	elif mode is String and mode == "skip":
 		for k in _order(S):
 			_land(S, k)
@@ -499,11 +502,12 @@ static func _stand(S: SimState) -> void:
 		f.y = WorldTerrain.groundY(S, f.x)
 
 
-## The slots in the order of the start spots: the left one, then the other.
+## The pair's slots in the order of the start spots: the left one, then the other. The bodies past the pair (one versus
+## many) are not in it: they take no entrance and dig no crater.
 static func _order(S: SimState) -> Array:
-	if S.fighters.size() == 2 and S.fighters[1].x < S.fighters[0].x:
+	if S.fighters[1].x < S.fighters[0].x:
 		return [1, 0]
-	return range(S.fighters.size())
+	return [0, 1]
 
 
 static func _pressed(S: SimState, inputs) -> bool:

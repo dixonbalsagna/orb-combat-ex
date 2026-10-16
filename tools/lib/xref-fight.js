@@ -1309,9 +1309,11 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
       if (Array.isArray(g.fighters)) g.fighters.forEach((x, i) => { if (!fighters.includes(x)) err(RC, `/patternGates/${esc(gname)}/fighters/${i}`, 'recipes-gates', `gate fighter "${x}" is no key of pools (${fighters.join(', ')})`); });
     }
     // the brawl: its pools exist for every fighter, a power.last piece has sends, the beat covers every path in use
+    // A reference fighter (fighter.json identity.role "reference": the training dummy) fights with the common pool and goes without reach.bolt and reach.blast.
+    const referenceIds = new Set(docsFor(/^data\/fighters\/[^/]+\/fighter\.json$/).map((rel) => get(rel)).filter((d) => isObj(d) && isObj(d.identity) && d.identity.role === 'reference' && typeof d.id === 'string').map((d) => d.id.toLowerCase()));
     if (isObj(rec.brawl)) for (const [kind, pn] of Object.entries(rec.brawl)) {
       if (kind.startsWith('_') || typeof pn !== 'string') continue;
-      for (const fid of fighters) if (isObj(pools[fid]) && !(pn in pools[fid])) err(RC, `/brawl/${esc(kind)}`, 'recipes-brawl', `brawl ${kind} draws on pool "${pn}", which fighter "${fid}" does not have`);
+      for (const fid of fighters) if (isObj(pools[fid]) && !(pn in pools[fid]) && !((pn === 'reach.bolt' || pn === 'reach.blast') && referenceIds.has(fid.toLowerCase()))) err(RC, `/brawl/${esc(kind)}`, 'recipes-brawl', `brawl ${kind} draws on pool "${pn}", which fighter "${fid}" does not have`);
     }
     if (prow) {
       const noSends = new Set();

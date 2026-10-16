@@ -121,6 +121,13 @@ static func hit(S: SimState, ex, A, D, dmg: float, o = null) -> float:
 static func ko(S: SimState, D, A) -> void:
 	if S.game.ko != null:
 		return
+	# One versus many: only a principal's KO ends the match. A guard's fall is the director's (he leaves the field, and
+	# his place reopens after its cooldown). A principal felled by a guard's blow loses to the principal that guard
+	# fights for.
+	if not SimRoster.isPrincipal(S, D):
+		return
+	if not SimRoster.isPrincipal(S, A):
+		A = S.fighters[1] if D == S.fighters[0] else S.fighters[0]
 	S.game.ko = D
 	S.game.koT = 0.0
 	S.game.ts = 0.35

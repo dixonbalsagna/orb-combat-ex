@@ -261,8 +261,8 @@ static func act(S: SimState) -> int:
 	# Q10 (spec-wounds.md section 8b): 1 + the larger of (form steps, wound beats) + region breaks. Form steps are the
 	# most ladder steps any one fighter has taken; wound beats are the once-per-match beats reached so far.
 	var steps: int = 0
-	for f in S.fighters:
-		steps = maxi(steps, int(f.tier) - 1)
+	for k in range(mini(2, S.fighters.size())):   # the principals' form steps only: a guard has no forms (empress-guards.md)
+		steps = maxi(steps, int(S.fighters[k].tier) - 1)
 	var wounds: int = 0
 	for b in range(ONCE.size()):
 		if (S.mood.onceMask & (1 << b)) != 0:
@@ -274,6 +274,8 @@ static func act(S: SimState) -> int:
 ## cause for act_change.
 static func onForm(S: SimState, f = null) -> void:
 	_ensure()
+	if f != null and not SimRoster.isPrincipal(S, f):   # the acts and the mood count the principals' forms only
+		return
 	if formSteps:
 		S.mood.cause = CAUSES.find("form")
 	# The form impulse (spec-wounds.md section 9), given here and not from the tier_up event: the break of a full or short
@@ -286,6 +288,8 @@ static func onForm(S: SimState, f = null) -> void:
 ## match each whichever fighter reaches it ("oncePerMatch").
 static func onStage(S: SimState, f, r: int, st: int, prev: int) -> void:
 	_ensure()
+	if not SimRoster.isPrincipal(S, f):   # the acts count the principals' wounds only (empress-guards.md)
+		return
 	if st == 3 and beatsEvery.has("regionBreak"):
 		beat(S, "regionBreak")
 	if st > prev:
@@ -341,16 +345,16 @@ static func tick(S: SimState) -> void:
 				# the form (brawl_light, brawl_medium, brawl_heavy) for a hit of another kind: a point-blank shot is a blast
 				# and feeds as a brawl's light or medium (brawl-second-pass.md section 2).
 				if e.number and BRAWL_FORMS.has(e.mode):
-					add += _imp(fs, BRAWL_FORMS[e.mode], int(e.attacker))
+					add += _impBlow(fs, BRAWL_FORMS[e.mode], int(e.attacker))
 				elif e.number and (e.kind == "light" or e.kind == "medium" or e.kind == "heavy"):
 					if e.mode == "brawl":
-						add += _imp(fs, "brawlHeavy" if e.kind == "heavy" else ("brawlMedium" if e.kind == "medium" else "brawlLight"), int(e.attacker))
+						add += _impBlow(fs, "brawlHeavy" if e.kind == "heavy" else ("brawlMedium" if e.kind == "medium" else "brawlLight"), int(e.attacker))
 					elif e.mode == "skill":
-						add += _imp(fs, "skillStrike", int(e.attacker))
+						add += _impBlow(fs, "skillStrike", int(e.attacker))
 					else:
-						add += _imp(fs, "heavyStrike" if e.kind == "heavy" else "strike", int(e.attacker))
+						add += _impBlow(fs, "heavyStrike" if e.kind == "heavy" else "strike", int(e.attacker))
 				elif e.number and e.kind == "guard":
-					add += _imp(fs, "blocked", int(e.attacker))
+					add += _impBlow(fs, "blocked", int(e.attacker))
 			"cue":
 				# the brawl's own cues (docs/director/brawl-b1.md section 4): a flurry's close, and a guard broken by a heavy;
 				# target is who did it
@@ -405,7 +409,7 @@ static func tick(S: SimState) -> void:
 	var a: int = act(S)
 	var fl: int = mood.floors[a - 1]
 	var v: int = m.v + add
-	if fs[0].stance == 0.0 and fs[1].stance == 0.0:
+	if fs[0].stance == 0.0 and fs[1].stance == 0.0:   # the principals' stances: a guard's never sets the mood
 		v += mood.bothAggressive
 	if v > fl:
 		var dec: int = mood.decay
@@ -440,7 +444,7 @@ static func tick(S: SimState) -> void:
 	# style counters
 	for k in range(fs.size()):
 		var f = fs[k]
-		var o = fs[1 - k]
+		var o = SimRoster.opp(S, f)   # his opponent (with two, the other one; with more, the one for every other)
 		var st = f.style
 		st.cur[int(f.stance)] += 1
 		var vt: float = f.vx * SimMathx.jsign(SimWrap.sdx(f.x, o.x))
@@ -458,7 +462,14 @@ static func tick(S: SimState) -> void:
 
 
 static func _imp(fs: Array, name: String, slot: int) -> int:
-	return imp[name][1] if slot >= 0 and fs[slot].stance == 0.0 else imp[name][0]
+	# a guard's stance is his order, not a choice: it never sets the AGGRESSIVE column (empress-guards.md)
+	return imp[name][1] if slot >= 0 and slot < 2 and fs[slot].stance == 0.0 else imp[name][0]
+
+
+## A blow's impulse: a guard's landed blow feeds the mood at half its units, as it is worth half (empress-guards.md).
+static func _impBlow(fs: Array, name: String, slot: int) -> int:
+	var u: int = _imp(fs, name, slot)
+	return u if slot < 2 else int(SimMathx.jround(float(u) * 0.5))
 
 
 static func _guarded(f) -> bool:

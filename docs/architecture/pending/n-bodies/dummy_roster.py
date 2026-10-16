@@ -1,7 +1,7 @@
 # PARKED BUILD (Simulation): Orb's homework 3 answer, the reference fighter goes into the roster as a training dummy
 # (docs/design/fighter-pipeline.md section 8). Apply after n_bodies.py.
-#   data  data/fighters/roster.json gains REFERENCE, third; data/fighters/bench.json is left empty (the Empress's guards
-#         will stand there)
+#   data  data/fighters/roster.json gains REFERENCE, third; data/fighters/bench.json is emptied (a fighter in both fails
+#         Tools' xref:bench-id; the Empress's guards will stand there); his aura becomes Art's neutral #c6bade
 #   code  sim/core/replay.gd: a replay's data hash takes the fighters in its slots, one hash each, in place of the
 #         whole roster's; sim/core/tools/parity.gd: the roster's order, and the dummy's check in place of the bench's
 #   golden: the roster's hash moves once (rosterHash) and with it the replays' data hash. No match moves: the default
@@ -20,6 +20,10 @@ assert json.load(open('data/fighters/roster.json',encoding='utf-8')) == ["PROTAG
 assert json.load(open('data/fighters/bench.json',encoding='utf-8')) == ["REFERENCE"]
 open('data/fighters/roster.json','w',encoding='utf-8',newline='\n').write('["PROTAGONIST", "RIVAL", "REFERENCE"]\n')
 open('data/fighters/bench.json','w',encoding='utf-8',newline='\n').write('[]\n')
+# Art's best neutral for his aura (the colour-vision row for "reference" lands in the same commit, from Art)
+fj=open('data/fighters/REFERENCE/fighter.json',encoding='utf-8').read()
+assert fj.count('"aura": "#e8e8e8"')==1
+open('data/fighters/REFERENCE/fighter.json','w',encoding='utf-8',newline='\n').write(fj.replace('"aura": "#e8e8e8"','"aura": "#c6bade"'))
 
 edit('sim/core/replay.gd', [
 ('''	h.text(DirData.dataHash())

@@ -6,7 +6,8 @@ extends RefCounted
 ##   intent       SimIntent.VERSION: the intent schema the inputs are packed in. Another version is refused.
 ##   data         dataHash(): the combat data and the roster data the match ran on (S4, D1a). It plays back only on the
 ##                same data.
-##   setup        newMatch's setup (D1a): {"slots", "names", "flip"}, {} for the default match.
+##   setup        newMatch's setup (D1a): {"slots", "names", "flip"}, {} for the default match. Up to five slots
+##                (one versus many); "ai" then names p3 to p5 too.
 ##   inputs       [tick, slot, low, high], only where a slot's intent changed from its previous one: SimIntent.pack(), one
 ##                integer for the whole record, written as two numbers (split: its low 32 bits, and the bits above
 ##                them), because a JSON number is exact only below 2^53 and the record may grow past that. Both are null
@@ -28,7 +29,7 @@ const CHECK_EVERY: int = 60
 
 var S: SimState
 var replay: Dictionary
-var _last: Array = [-1, -1]   # the last packed intent per slot; -1 for none (null)
+var _last: Array = []   # the last packed intent per slot; -1 for none (null)
 
 
 ## Start recording a match: runs newMatch(S, seed, ai). Use rec.step and rec.toggle instead of SimCore.step and toggleAI.
@@ -39,15 +40,20 @@ static func recorder(S_: SimState, seed: int, ai: Dictionary = {}, setup: Dictio
 	rec.replay = {"format": FORMAT, "v": V, "intent": SimIntent.VERSION, "data": dataHash(setup), "seed": seed, "setup": setup.duplicate(true),
 		"ai": {"p1": S_.fighters[0].ai != null, "p2": S_.fighters[1].ai != null},
 		"ticks": 0, "inputs": [], "toggles": [], "checkpoints": [], "final": ""}
+	for k in range(2, S_.fighters.size()):   # one versus many: the bodies past the pair (a 1v1's header is as it was)
+		rec.replay.ai["p%d" % (k + 1)] = S_.fighters[k].ai != null
+	for k in range(S_.fighters.size()):
+		rec._last.append(-1)
 	return rec
 
 
-## One recorded step. inputs: [SimIntent or null, SimIntent or null], or null, as for SimCore.step. The sim is stepped
-## with each intent's canonical form.
+## One recorded step. inputs: [SimIntent or null, ...] a slot, or null, as for SimCore.step. The sim is stepped with
+## each intent's canonical form. An AI body's intent is the AI's, and nothing of his is recorded.
 func step(inputs = null) -> bool:
-	var cur: Array = [null, null]
-	for k in range(2):
-		var i = inputs[k] if inputs != null else null
+	var cur: Array = []
+	cur.resize(S.fighters.size())
+	for k in range(S.fighters.size()):
+		var i = inputs[k] if inputs != null and k < inputs.size() else null
 		var p: int = SimIntent.pack(i) if i != null else -1
 		if i != null:
 			cur[k] = SimIntent.unpack(p)
@@ -117,7 +123,12 @@ static func play(rp: Dictionary) -> Dictionary:
 	var checks := {}
 	for c in rp.checkpoints:
 		checks[int(c[0])] = c[1]
-	var cur: Array = [null, null]
+	var cur: Array = []
+	cur.resize(S_.fighters.size())
+	for inp in rp.get("inputs", []):
+		if int(inp[1]) < 0 or int(inp[1]) >= S_.fighters.size():   # a slot the match does not have
+			SimCore.dispose(S_)
+			return refuse
 	var ii: int = 0
 	var ti: int = 0
 	var out := {"ok": true, "firstBadTick": -1, "reason": "", "final": ""}
@@ -143,12 +154,10 @@ static func play(rp: Dictionary) -> Dictionary:
 
 ## The data a replay depends on: Combat's data (DirData), the roster (FighterData) and the fight's mood and style data
 ## (SimMood, M1), one hash.
-## setup is the match's: a fighter from the bench that its slots name is folded in too. He is not in the roster, so he is
-## not in the roster's hash; a replay that does not name him is the same whatever his data are.
+## setup is the match's: the fighters its slots name are folded in, one hash each, and nobody else.
 static func dataHash(setup: Dictionary = {}) -> String:
 	var h := SimHash.Hasher.new()
 	h.text(DirData.dataHash())
-	h.text(FighterData.dataHash())
 	h.text(SimMood.dataHash())
 	h.text(SimPause.dataHash())   # Q10: data/fight/pause.json
 	h.text(SimIntro.dataHash())   # the intro phase: data/fight/intro.json
@@ -158,8 +167,9 @@ static func dataHash(setup: Dictionary = {}) -> String:
 	h.text(WorldBlast.dataHash())     # World's shot blast: data/biomes/blast.json
 	h.text(WorldStructures.stagesHash())   # World's building stages: data/biomes/stages.json
 	h.text(WorldBrunt.dataHash())          # World's brunt ladder and lodge: data/biomes/brunt.json
-	for id in setup.get("slots", []):
-		if id is String and FighterData.bench().has(id):
-			h.text(id)
-			h.text(FighterData.hashOf(id))
+	# the fighters in its slots, one hash each (FighterData.hashOf): a change to a fighter who is not in the match, the
+	# training dummy's say, leaves the replay alone. The default pairing is the roster's first two.
+	for id in setup.get("slots", FighterData.order().slice(0, 2)):
+		h.text(String(id))
+		h.text(FighterData.hashOf(String(id)))
 	return h.hex()

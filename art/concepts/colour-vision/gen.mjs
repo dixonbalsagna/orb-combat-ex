@@ -28,6 +28,8 @@ function metrics(P, A, kind) {
   const p = scoreOne(P, kind), a = scoreOne(A, kind);
   return { between: dE00(p.x, a.x), P: { cue: p.dCue, cueName: p.wc, hl: p.dHL, all: p.dSky }, A: { cue: a.dCue, cueName: a.wc, hl: a.dHL, all: a.dSky } };
 }
+// the training dummy (the reference fighter, 2026-10-15): a quiet pale lavender-grey ring, the same under every vision (no neutral clears the full rule: docs/art/fighter-picks-round1.md note and the report)
+const REFERENCE = { col: '#b9b9b9', aura: '#c6bade' };
 const MET = { default: {} };
 for (const k of ['default', ...KINDS]) { MET.default[k] = metrics(DEFAULT_LANES.protagonist.aura, DEFAULT_LANES.rival.aura, k); }
 for (const k of KINDS) MET[k] = metrics(PRESET[k].P, PRESET[k].A, k);
@@ -47,8 +49,8 @@ function writeData() {
     version: 1,
     note: 'Colour-vision presets for the two launch fighters (docs/art/colour-vision.md). Written by art/concepts/colour-vision/gen.mjs; do not edit by hand. The default look is unchanged: a preset remaps only the two lane colours (the auras). The body colour (col) pair is 48 or more apart (CIEDE2000) under every preset, so it is not remapped. UI owns the setting and the cue remap; Tools adds the schema.',
     simulation: { model: 'Machado, Oliveira and Fernandes 2009, severity 1.0, applied in linear RGB', matrices: MACHADO },
-    default: { protagonist: DEFAULT_LANES.protagonist, rival: DEFAULT_LANES.rival },
-    presets: Object.fromEntries(KINDS.map(k => [k, { protagonist: { col: DEFAULT_LANES.protagonist.col, aura: PRESET[k].P }, rival: { col: DEFAULT_LANES.rival.col, aura: PRESET[k].A }, chosen_by: PRESET[k].how, measured_dE00_under_this_vision: { between_the_two: +MET[k].between.toFixed(1), protagonist: { to_wound_and_guard_marks: +MET[k].P.cue.toFixed(1), nearest_mark: MET[k].P.cueName, to_sky_near_the_fighters: +MET[k].P.hl.toFixed(1), to_any_sky_band: +MET[k].P.all.toFixed(1) }, rival: { to_wound_and_guard_marks: +MET[k].A.cue.toFixed(1), nearest_mark: MET[k].A.cueName, to_sky_near_the_fighters: +MET[k].A.hl.toFixed(1), to_any_sky_band: +MET[k].A.all.toFixed(1) } } }])),
+    default: { protagonist: DEFAULT_LANES.protagonist, rival: DEFAULT_LANES.rival, reference: REFERENCE },
+    presets: Object.fromEntries(KINDS.map(k => [k, { protagonist: { col: DEFAULT_LANES.protagonist.col, aura: PRESET[k].P }, rival: { col: DEFAULT_LANES.rival.col, aura: PRESET[k].A }, reference: REFERENCE, chosen_by: PRESET[k].how, measured_dE00_under_this_vision: { between_the_two: +MET[k].between.toFixed(1), protagonist: { to_wound_and_guard_marks: +MET[k].P.cue.toFixed(1), nearest_mark: MET[k].P.cueName, to_sky_near_the_fighters: +MET[k].P.hl.toFixed(1), to_any_sky_band: +MET[k].P.all.toFixed(1) }, rival: { to_wound_and_guard_marks: +MET[k].A.cue.toFixed(1), nearest_mark: MET[k].A.cueName, to_sky_near_the_fighters: +MET[k].A.hl.toFixed(1), to_any_sky_band: +MET[k].A.all.toFixed(1) } } }])),
     _non_colour_marks: MARKS,
     _biome_patterns: { note: 'A pattern per biome on the planet strip (colour only today), 12 by 12 tiles; ink is the base colour moved 0.2 in OKLab lightness away from the middle. Sheet: art/concepts/colour-vision/biome-patterns.svg.', ...patternData() },
     _ui_wound_sets: uiSets(),

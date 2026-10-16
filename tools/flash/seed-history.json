@@ -1,7 +1,42 @@
 {
   "_about": "What the seed pick (tools/flash/pick-seeds.mjs, Legal's RL-131) remembers between releases. failed: a seed that failed in an earlier candidate stays in the pick until its cause is fixed and recorded (set fixed to true with the cause). coverage: the date each pairing was last captured in a release pass (null: never), so the rolling cycle takes the uncaptured first.",
-  "failed": [],
+  "failed": [
+    {
+      "pairing": "PROTAGONIST,RIVAL",
+      "seed": 4,
+      "candidate": "10c2d177",
+      "reading": "FAIL 4/4/1.5",
+      "fixed": false,
+      "note": "a body down at 2505: Rendering's ground batch read it 2 at d3cd19d5; stays until the recorded pass for the commit shows it"
+    },
+    {
+      "pairing": "PROTAGONIST,RIVAL",
+      "seed": 39,
+      "candidate": "10c2d177",
+      "reading": "FAIL 3/3.5/3",
+      "fixed": false,
+      "note": "a launch pan (Camera); reads 3/3.5/3 on d3f1ca0e"
+    },
+    {
+      "pairing": "PROTAGONIST,RIVAL",
+      "seed": 104,
+      "candidate": "10c2d177",
+      "reading": "FAIL 5/5/5",
+      "fixed": false,
+      "note": "a merged brawl, world 12 of 12; 2.5/3.5/2 on d3f1ca0e"
+    },
+    {
+      "pairing": "PROTAGONIST,RIVAL",
+      "seed": 106,
+      "candidate": "10c2d177",
+      "reading": "FAIL 7.5/9.5/6.5",
+      "fixed": false,
+      "note": "the foreground ground strobe; 2.5 and 2 on d3f1ca0e"
+    }
+  ],
   "coverage": {
-    "PROTAGONIST,RIVAL": null
+    "PROTAGONIST,RIVAL": null,
+    "PROTAGONIST,REFERENCE": null,
+    "RIVAL,REFERENCE": null
   }
 }

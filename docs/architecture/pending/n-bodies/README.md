@@ -76,7 +76,7 @@ With two fighters both are principals, so each rule is today's rule.
 
 ## The dummy (dummy_roster.py)
 
-- `data/fighters/roster.json` becomes `["PROTAGONIST", "RIVAL", "REFERENCE"]`: he is listed last, and the default pairing is still the first two. `data/fighters/bench.json` is left empty, for the Empress's guards.
+- `data/fighters/roster.json` becomes `["PROTAGONIST", "RIVAL", "REFERENCE"]`: he is listed last, and the default pairing is still the first two. `data/fighters/bench.json` is emptied, since a fighter in both fails Tools' `xref:bench-id`; the Empress's guards will stand there. His aura becomes Art's best neutral, `#c6bade`.
 - **A replay's data hash takes the fighters in its slots,** one hash each, in place of the whole roster's. So the dummy's data can change without turning away a replay of the other two; his own replays are refused when they do. (This was planned for the first window that regenerates anyway.)
 - **His numbers are frozen** (Game Design's §8): the check holds him to base stats, no care, no meter and no wounds or ladder file of his own.
 - **The golden:** only `rosterHash` moves. The golden's replays and matches are the same.
@@ -96,7 +96,7 @@ With two fighters both are principals, so each rule is today's rule.
 
 **Stage 1 with the rulings,** on a clean export of 88d13195: parity against the committed golden, unregenerated, **56 of 56** with no script error, and the golden regenerated **byte-identical**. The new check, "one versus many: what the core counts of a guard": a guard's KO does not end the match, and a principal felled by a guard loses to slot 1; a guard's broken core puts him on no brink; a guard's landed light feeds the mood half the data's units, and his AGGRESSIVE stance changes nothing; a guard's tier and wounds move no act, while a principal's battered limb makes its beat.
 
-**With the dummy in the roster,** on a clean export of 4a3ecb74, both scripts: the golden regenerated differs from HEAD's in `rosterHash` alone (golden_cmp: light digests, tick counts and checkpoints identical); parity on it, **56 of 56** with no script error. The new check, "the training dummy in the roster", replaces the bench's. Two earlier checks built their fixtures for a roster of two and now take the roster as it is.
+**With the dummy in the roster** (and Art's neutral aura, `#c6bade`), on a clean export of f3e1a713, both scripts: the golden regenerated differs from HEAD's in `rosterHash` alone (golden_cmp: light digests, tick counts and checkpoints identical); parity on it, **56 of 56** with no script error. The new check, "the training dummy in the roster", replaces the bench's. Two earlier checks built their fixtures for a roster of two and now take the roster as it is.
 
 **Stage 1 as first parked,** on a clean export of 63e3b9b4:
 
