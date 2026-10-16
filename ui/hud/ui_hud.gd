@@ -103,6 +103,9 @@ var _anchors: Array = [{}, {}]
 var _chips: Array = []
 var _chip_text: Array = ["", ""]
 var _chip_text_t: Array = [-1.0, -1.0]
+var _inc_keep: Array = [null, null]   # the last incoming chip of each pane and when it was last wanted (UiIncoming.held)
+var _many_keep: Dictionary = {}       # the many-body markers that have just gone, held for UiMany.HOLD
+var _many_marks: Array = []
 var _chip_big := false           # the larger, slower chip (rival over 100 fighter heights away)
 var _chip_at: Array = [Vector2.ZERO, Vector2.ZERO]   # where each chip node sits: it eases toward its target so a dodge slides, not pops
 var _chip_seen: Array = [false, false]
@@ -234,6 +237,7 @@ var _div_key: Array = []
 var _l_ring_base: UiLayer
 var _l_chips: Array = []       # one small node per pane: an edge pointer chip, moved by position
 var _l_ring: UiLayer
+var _l_many: UiLayer          # the many-body markers (UiMany): one layer for all of them
 var _l_struggle: UiLayer
 var recipe_fn: Callable = Callable()   # (slot) -> Dictionary: the mix of the last presses {light, heavy, sig, energy} (SimPressRead.classify's mix_long) when the host has the press reader; read only while the Show recipe option is on
 var _l_intro: UiLayer                # the skip hint, shown over the hidden HUD while the intro runs and a press can skip it
@@ -291,6 +295,7 @@ func _ready() -> void:
 	_l_strip_marks = _layer(_paint_strip_marks)
 	_l_ring_base = _layer(_paint_ring_base)
 	_l_ring = _layer(_paint_ring)
+	_l_many = _layer(_paint_many)
 	_l_events = _layer(_paint_events)
 	_l_feed = _layer(_paint_feed)
 	_l_debug = _layer(_paint_debug)
@@ -367,7 +372,7 @@ func _chip_layer(slot: int) -> UiLayer:
 
 
 func _all_layers() -> Array:
-	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_notice, _l_gate_back]
+	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_many, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_notice, _l_gate_back]
 
 
 ## Total redraws of every layer so far, for the perf counters.
@@ -671,8 +676,14 @@ func _update_layers() -> void:
 		var bh: float = UiSplit.distance_bh(_split)
 		_chip_big = bh >= UiSplit.BIG_FROM or (_chip_big and bh >= UiSplit.BIG_UNTIL)   # a far rival gets the larger chip, with a margin so it does not flicker
 		chips = UiSplit.pointers(layout, _split, _anchors, layout.s, _chip_big)
+		chips = UiIncoming.held(chips, _inc_keep, _t)   # the warning of his coming back does not blink as the closing speed crosses its threshold
+		# The bodies the camera left out of the frame (more than two in the fight): one steady marker each.
+		_many_marks = UiMany.held(UiMany.marks(layout, _split), _many_keep, _t)
 	else:
 		_chip_big = false
+		_inc_keep = [null, null]
+		_many_marks = UiMany.held([], _many_keep, _t) if not _many_keep.is_empty() else []
+	_l_many.update_sig(UiMany.sig(_many_marks, hub) if (not _many_marks.is_empty() and _lb < 0.5) else null)
 	_chips = chips
 	var psz: Vector2 = UiSplit.pointer_size(layout.s, _chip_big)
 	for i in range(2):
@@ -698,13 +709,13 @@ func _update_layers() -> void:
 		chip.position = (_chip_at[i] as Vector2) - csz * 0.5
 		if str(found.get("kind", "")) == "incoming":
 			# The countdown changes every tenth of a second and is not held back; the picture redraws only when a number, the arrow or the kind changes.
-			chip.update_sig(UiIncoming.sig(found))
+			chip.update_sig(UiIncoming.sig(found, _aura_of(1 - i)))
 			continue
 		# The number holds for at least a quarter second, so a fast-changing distance redraws the chip at most four times a second.
 		if str(found["text"]) != _chip_text[i] and (_t - float(_chip_text_t[i]) >= (0.6 if _chip_big else 0.25) or _chip_text[i] == ""):
 			_chip_text[i] = str(found["text"])
 			_chip_text_t[i] = _t
-		chip.update_sig(UiSplit.chip_sig(i, found["dir"], _chip_text[i], 1.0, _chip_big))
+		chip.update_sig(UiSplit.chip_sig(i, found["dir"], _chip_text[i], 1.0, _chip_big, [_aura_of(1 - i)]))
 
 	# The finisher struggle (beat rings on the brink fighter) and each column's prompt row.
 	_l_struggle.update_sig(UiStruggle.sig(hub, _frame) if (anchor_fn.is_valid() and not layout.portrait) else null)
@@ -3551,6 +3562,16 @@ func _paint_ring_base(ci: CanvasItem) -> void:
 
 func _paint_ring(ci: CanvasItem) -> void:
 	UiSplit.draw_ring_marks(ci, layout, hub, _split, layout.s, _o())
+
+
+func _paint_many(ci: CanvasItem) -> void:
+	UiMany.draw(ci, hub, _many_marks, layout.s, _o())
+
+
+## A fighter's ring colour as text (the chips redraw when it changes, as it can with a colour-vision preset).
+func _aura_of(slot: int) -> String:
+	var m: UiFighterModel = hub.model(slot)
+	return m.aura.to_html(false) if m != null else ""
 
 
 func _paint_chip(ci: CanvasItem, slot: int) -> void:

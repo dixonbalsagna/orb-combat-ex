@@ -215,7 +215,14 @@ static func pointers(lay: UiLayout, sp: Dictionary, anchors: Array, s: float, bi
 				continue   # no clear place along the edge: the chip hides rather than cover a fighter
 			out.append({"slot": i, "pos": pos, "dir": dirn, "text": txt})
 		elif mode == "always":
-			# One camera: point only when the rival is off screen, at the edge toward it.
+			# One camera: the incoming marker when he is coming back at this fighter from off the screen (it stands in for the ordinary pointer) ...
+			var inc1: Dictionary = UiIncoming.data(sp, i)
+			if not inc1.is_empty():
+				var ent1: Dictionary = UiIncoming.entry(lay, sp, inc1, an, i, s, txt, true)
+				if not ent1.is_empty():
+					out.append(ent1)
+					continue
+			# ... else point only when the rival is off screen, at the edge toward it.
 			var rival: Dictionary = anchors[1 - i]
 			var rp: Vector2 = rival.get("pos", p)
 			var off: bool = rival.is_empty() or not bool(rival.get("visible", true)) or not Rect2(Vector2.ZERO, lay.vp).grow(-margin).has_point(rp)
@@ -329,8 +336,15 @@ static func draw_chip(ci: Control, hub: UiEventHub, slot: int, dir: Vector2, tex
 	var perp := Vector2(-dir.y, dir.x)
 	var hl: float = sz.y * 0.32
 	var ink := Color(UiLook.col(UiLook.INK), 0.95 * a)
-	ci.draw_line(ax - dir * hl * 1.6, ax, ink, maxf(2.0, sz.y * 0.09), true)
-	UiIcons.fill_poly(ci, PackedVector2Array([ax + dir * hl * 0.9, ax - dir * hl * 0.3 + perp * hl * 0.8, ax - dir * hl * 0.3 - perp * hl * 0.8]), ink)
+	# The arrow takes the rival's ring colour (the ring map's, the plate's), on a dark keyline; the number and the unit stay light.
+	var ac: Color = Color(rival.aura, 0.98 * a) if rival != null else ink
+	var kl := Color(0, 0, 0, 0.75 * a)
+	var lw0: float = maxf(2.0, sz.y * 0.09)
+	var head := PackedVector2Array([ax + dir * hl * 0.9, ax - dir * hl * 0.3 + perp * hl * 0.8, ax - dir * hl * 0.3 - perp * hl * 0.8])
+	ci.draw_line(ax - dir * hl * 1.6, ax, kl, lw0 + 2.4, true)
+	UiIcons.fill_poly(ci, PackedVector2Array([ax + dir * hl * 1.15, ax - dir * hl * 0.45 + perp * hl * 1.0, ax - dir * hl * 0.45 - perp * hl * 1.0]), kl)
+	ci.draw_line(ax - dir * hl * 1.6, ax, ac, lw0, true)
+	UiIcons.fill_poly(ci, head, ac)
 	# The rival's marker on the far end.
 	var mc: Vector2 = p - dir * (sz.x * 0.5 - sz.y * 0.55)
 	var col: Color = rival.aura if rival != null else Color.WHITE

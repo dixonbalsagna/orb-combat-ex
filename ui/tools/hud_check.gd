@@ -57,6 +57,8 @@ func _run() -> void:
 	await _gate_short_rules()
 	await _phone_rules()
 	await _menu_rules()
+	await _rival_pointer_rules()
+	await _many_marker_rules()
 	await _brawl_marks_rules()
 	_rate_rules()
 	await _block_toggle_rules()
@@ -2435,7 +2437,7 @@ func _incoming_rules() -> void:
 	var single_inc := false
 	for ch in single_chips:
 		single_inc = single_inc or str(ch.get("kind", "")) == "incoming"
-	_ok(not single_inc, "incoming: nothing in a single view")
+	_ok(single_inc, "incoming: in a single view too, when the rival is off the screen (Orb, 2026-10-16: he rushed back unseen); hud-spec section 60")
 	var no_key: Dictionary = base_rec.duplicate(true)
 	no_key.erase("incoming")
 	var bad_type: Dictionary = base_rec.duplicate(true)
@@ -2529,7 +2531,7 @@ func _incoming_rules() -> void:
 	_ok(str(c1.get("kind", "")) == "incoming" and not bool(c1["aimed"]) and str(c1["eta_text"]).begins_with("~"), "incoming hud: with reduced motion it is the same chip (the number is the movement), and an estimate wears its ~")
 	hud.set_option("reduced_motion", false)
 	st["on"] = false
-	await _frames(hud, 3)
+	await _frames(hud, int(UiIncoming.HOLD * 60.0) + 12)   # the warning is held for UiIncoming.HOLD after it stops
 	var back: Dictionary = {}
 	for ch in hud._chips:
 		if int(ch["slot"]) == 0:
@@ -5601,6 +5603,169 @@ func _menu_rules() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
 	UiPrefs.path = "user://ui_prefs.json"
 	root.size = Vector2i(1280, 720)
+
+
+## The rival pointer in one view, the warning of his coming back, and the many-body markers (docs/ui/hud-spec.md sections 60 and 61).
+func _rival_pointer_rules() -> void:
+	var sizes: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(844, 390), 1.0], [Vector2(2532, 1170), 3.0], [Vector2(390, 844), 1.0], [Vector2(1170, 2532), 3.0]]
+	var bad := PackedStringArray()
+	for cs in sizes:
+		var sz: Vector2 = cs[0]
+		var lay := UiLayout.new()
+		lay.dp = cs[1]
+		lay.compute(sz, false)
+		var fh: float = sz.y * 0.11
+		var anc: Array = [{"pos": Vector2(sz.x * 0.4, sz.y * 0.55), "h": fh, "visible": true}, {"pos": Vector2(sz.x * 1.5, sz.y * 0.55), "h": fh, "visible": false}]
+		for slot in range(2):
+			var rec := {"sep": 0.0, "c": sz * 0.5, "n": Vector2(1.0, 0.0), "pointer": "always", "dist_bh": 120.0, "sigma": 1.0,
+				"ring": {"angle_A": 1.0, "angle_B": 1.0 + 9000.0 / SimConst.W * TAU, "sigma": 1, "arc_A": 0.3, "arc_B": 0.3, "swing": 0.0, "sep": 0.0},
+				"incoming": [_inc(true, 1.1, Vector2(1.0, 0.0)) if slot == 0 else {}, _inc(true, 1.1, Vector2(-1.0, 0.0)) if slot == 1 else {}]}
+			var ancs: Array = anc if slot == 0 else [anc[1], anc[0]]
+			var chips: Array = UiSplit.pointers(lay, rec, ancs, lay.s)
+			var mine: Dictionary = {}
+			for ch in chips:
+				if int(ch["slot"]) == slot:
+					mine = ch
+			var okc: bool = str(mine.get("kind", "")) == "incoming" and lay.safe.encloses(Rect2((mine["pos"] as Vector2) - (mine["size"] as Vector2) * 0.5, mine["size"]))
+			if not okc:
+				bad.append("%s slot %d" % [str(sz), slot])
+		# He is on the screen (shown): no chip.
+		var rec2 := {"sep": 0.0, "c": sz * 0.5, "n": Vector2(1.0, 0.0), "pointer": "always", "dist_bh": 120.0, "sigma": 1.0,
+			"ring": {"angle_A": 1.0, "angle_B": 1.0 + 9000.0 / SimConst.W * TAU, "sigma": 1, "arc_A": 0.3, "arc_B": 0.3, "swing": 0.0, "sep": 0.0},
+			"incoming": [_inc(true, 1.1, Vector2(1.0, 0.0), true), {}]}
+		var anc_on: Array = [{"pos": Vector2(sz.x * 0.4, sz.y * 0.55), "h": fh, "visible": true}, {"pos": Vector2(sz.x * 0.6, sz.y * 0.55), "h": fh, "visible": true}]
+		for ch in UiSplit.pointers(lay, rec2, anc_on, lay.s):
+			if str(ch.get("kind", "")) == "incoming":
+				bad.append("shown but chipped %s" % str(sz))
+	_ok(bad.is_empty(), "rival pointer: in one view the warning of his coming back shows at six sizes, inside the screen, and not while he is on it (%d bad %s)" % [bad.size(), str(bad.slice(0, 3))])
+	# The warning is held: it does not drop to the plain pointer for HOLD seconds, so it cannot blink faster than about twice a second.
+	var keep: Array = [null, null]
+	var inc_chip := {"slot": 0, "kind": "incoming", "pos": Vector2(10, 10), "dir": Vector2(1, 0), "text": "60", "size": Vector2(100, 50), "compact": false, "aimed": true, "eta": 1.0, "eta_text": "1.0", "urgent": false, "dist_bh": 60.0}
+	var plain := {"slot": 0, "pos": Vector2(20, 20), "dir": Vector2(1, 0), "text": "60"}
+	var o1: Array = UiIncoming.held([inc_chip], keep, 0.0)
+	var o2: Array = UiIncoming.held([plain], keep, 0.2)
+	var o3: Array = UiIncoming.held([plain], keep, UiIncoming.HOLD + 0.1)
+	var hold_ok: bool = o1.size() == 1 and o2.size() == 1 and str(o2[0].get("kind", "")) == "incoming" and o3.size() == 1 and str(o3[0].get("kind", "")) == "" and keep[0] == null
+	_ok(hold_ok and UiIncoming.HOLD >= 0.4, "rival pointer: an incoming chip stays for the hold after it stops (%.2f s), then the plain pointer returns" % UiIncoming.HOLD)
+	# His ring colour is in what the chip draws from: the signatures differ with it, so a colour-vision preset or another fighter redraws the chip.
+	_ok(UiSplit.chip_sig(0, Vector2(1, 0), "60", 1.0, false, ["ff0000"]) != UiSplit.chip_sig(0, Vector2(1, 0), "60", 1.0, false, ["00ff00"]) and UiIncoming.sig(inc_chip, "ff0000") != UiIncoming.sig(inc_chip, "00ff00"), "rival pointer: the pointer and the incoming chip are drawn in his ring colour (the picture follows it)")
+	# In the real HUD: a warning input that flickers does not make the chip change kind more than twice a second.
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	var vp2: Vector2 = hud.layout.vp
+	hud.anchor_fn = func(slot: int) -> Dictionary:
+		return {"pos": Vector2(vp2.x * 0.35, vp2.y * 0.55), "h": vp2.y * 0.11, "visible": true} if slot == 0 else {"pos": Vector2(vp2.x * 1.6, vp2.y * 0.55), "h": vp2.y * 0.11, "visible": false}
+	var phase := {"inc": false}
+	hud.split_fn = func() -> Dictionary:
+		return {"sep": 0.0, "c": vp2 * 0.5, "n": Vector2(1.0, 0.0), "pointer": "always", "dist_bh": 90.0, "sigma": 1.0,
+			"ring": {"angle_A": 1.0, "angle_B": 1.0 + 6000.0 / SimConst.W * TAU, "sigma": 1, "arc_A": 0.3, "arc_B": 0.3, "swing": 0.0, "sep": 0.0},
+			"incoming": [_inc(true, 1.4, Vector2(1.0, 0.0)) if bool(phase["inc"]) else {}, {}]}
+	for i in range(30):
+		hud.advance(1.0 / 60.0)
+	var flips := 0
+	var last := ""
+	var saw_inc := false
+	for i in range(240):
+		phase["inc"] = (i >= 60 and i < 150) or (i >= 160 and i < 170) or (i >= 180 and i < 240)   # a flickering input
+		hud.advance(1.0 / 60.0)
+		await process_frame   # the chips draw (in his colour) on every change
+		var k0 := ""
+		for ch in hud._chips:
+			if int(ch["slot"]) == 0:
+				k0 = str(ch.get("kind", "chip"))
+		saw_inc = saw_inc or k0 == "incoming"
+		if k0 != last:
+			flips += 1
+			last = k0
+	_ok(saw_inc and float(flips) / 4.0 <= 2.0, "rival pointer: with a flickering warning input the chip changes kind %d times in four seconds (at most two a second)" % flips)
+	hud.queue_free()
+	await process_frame
+
+
+func _many_marker_rules() -> void:
+	var sizes: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(844, 390), 1.0], [Vector2(667, 375), 1.0], [Vector2(2532, 1170), 3.0], [Vector2(2400, 1080), 2.6], [Vector2(390, 844), 1.0], [Vector2(1170, 2532), 3.0]]
+	var rec := {"many_off": [[3, -1], [2, 1], [4, 0], [5, 1], [2, 1], [1, -1]]}
+	_ok(UiMany.listed({}).is_empty() and UiMany.listed({"many_off": []}).is_empty(), "many markers: none without Camera's list")
+	var l4: Array = UiMany.listed(rec)
+	_ok(l4.size() == 4 and int(l4[0]["slot"]) == 2 and int(l4[1]["slot"]) == 3 and int(l4[3]["slot"]) == 5, "many markers: the list is de-duplicated, never a principal, in slot order, at most four")
+	var bad := PackedStringArray()
+	for cs in sizes:
+		var sz: Vector2 = cs[0]
+		var lay := UiLayout.new()
+		lay.dp = cs[1]
+		lay.touch_ui = true
+		lay.compute(sz, false)
+		if lay.clear_zone.size.x <= 0.0 or lay.clear_zone.size.y <= 0.0:
+			continue
+		var ms: Array = UiMany.marks(lay, rec)
+		if ms.size() < 3:
+			bad.append("%s only %d" % [str(sz), ms.size()])
+		var boxes: Array = []
+		for k in lay.touch_keys():
+			if lay.touch_ctrl.has(k):
+				boxes.append(UiTouchControls.rect_of(lay.touch_ctrl[k]))
+		for i in range(ms.size()):
+			var ri := Rect2((ms[i]["pos"] as Vector2) - (ms[i]["size"] as Vector2) * 0.5, ms[i]["size"])
+			if not lay.clear_zone.grow(0.5).encloses(ri):
+				bad.append("%s outside" % str(sz))
+			for b in boxes:
+				if ri.intersects(b):
+					bad.append("%s on a button" % str(sz))
+			for j in range(i + 1, ms.size()):
+				if ri.intersects(Rect2((ms[j]["pos"] as Vector2) - (ms[j]["size"] as Vector2) * 0.5, ms[j]["size"])):
+					bad.append("%s overlap" % str(sz))
+	_ok(bad.is_empty(), "many markers: at eight sizes (phone landscape and upright, desktop) each marker is inside the fighters' space, clear of the touch buttons and of each other (%d bad %s)" % [bad.size(), str(bad.slice(0, 3))])
+	# Held: a marker the camera stops listing stays for the hold, then goes.
+	var keep := {}
+	var lay3 := UiLayout.new()
+	lay3.compute(Vector2(1280, 720), false)
+	var m1: Array = UiMany.marks(lay3, {"many_off": [[2, 1]]})
+	var h1: Array = UiMany.held(m1, keep, 0.0)
+	var h2: Array = UiMany.held([], keep, 0.2)
+	var h3: Array = UiMany.held([], keep, UiMany.HOLD + 0.1)
+	_ok(h1.size() == 1 and h2.size() == 1 and h3.is_empty() and keep.is_empty(), "many markers: a marker stays %.1f s after the camera stops listing it, then goes (no flicker at the frame's edge)" % UiMany.HOLD)
+	# In the HUD: the layer holds a signature only while there is something to show, and the marker carries the body's number.
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	var vp2: Vector2 = hud.layout.vp
+	hud.anchor_fn = func(slot: int) -> Dictionary:
+		return {"pos": Vector2(vp2.x * (0.4 if slot == 0 else 0.6), vp2.y * 0.55), "h": vp2.y * 0.11, "visible": true}
+	var on := {"v": false}
+	hud.split_fn = func() -> Dictionary:
+		var d := {"sep": 0.0, "c": vp2 * 0.5, "n": Vector2(1.0, 0.0), "pointer": "always", "dist_bh": 12.0, "sigma": 1.0,
+			"ring": {"angle_A": 1.0, "angle_B": 1.0 + 900.0 / SimConst.W * TAU, "sigma": 1, "arc_A": 0.3, "arc_B": 0.3, "swing": 0.0, "sep": 0.0}, "incoming": [{}, {}]}
+		if bool(on["v"]):
+			d["many_off"] = [[2, 1], [3, -1]]
+		return d
+	for i in range(20):
+		hud.advance(1.0 / 60.0)
+	var idle_none: bool = hud._l_many.sig == null
+	on["v"] = true
+	for i in range(10):
+		hud.advance(1.0 / 60.0)
+	var shown_two: bool = hud._l_many.sig != null and (hud._l_many.sig as Array).size() == 2
+	UiText.tracing = true
+	UiText.trace = []
+	hud._l_many.invalidate()
+	for i in range(2):
+		await process_frame
+	UiText.tracing = false
+	var seen: Array = UiText.trace.duplicate()
+	UiText.trace = []
+	on["v"] = false
+	for i in range(int(UiMany.HOLD * 60.0) + 20):
+		hud.advance(1.0 / 60.0)
+	_ok(idle_none and shown_two and seen.has("1") and seen.has("2") and hud._l_many.sig == null, "many markers: the HUD draws none in a two-body fight, one for each body left out (numbered 1 and 2 for slots 2 and 3), and clears them after the hold")
+	hud.queue_free()
+	await process_frame
 
 
 ## The photosensitivity rule for the HUD (docs/ui/hud-spec.md section 57): no block of the HUD may come and go twice inside 60 ticks, whatever the presses do. A mash is played at the HUD

@@ -44,12 +44,13 @@ static func eta_text(eta: float, aimed: bool) -> String:
 ## pane's half of the screen, inside the safe area and the divider's margin, between the plates and the strip), the chip's rectangle held inside
 ## it (and the layout's clear zone, so never over the columns) and a fighter height clear of the fighter. Tries the full chip, then the compact one; {} when neither has room (the ordinary pointer then
 ## stands in). The returned entry is a pointer chip of kind "incoming" for UiSplit.pointers.
-static func entry(lay: UiLayout, sp: Dictionary, inc: Dictionary, anchor: Dictionary, slot: int, s: float, dist_text: String) -> Dictionary:
+static func entry(lay: UiLayout, sp: Dictionary, inc: Dictionary, anchor: Dictionary, slot: int, s: float, dist_text: String, one_view: bool = false) -> Dictionary:
 	if inc.has("dist_bh"):
 		dist_text = UiSplit.dist_text(float(inc["dist_bh"]))   # the attacker's own distance, not the held one
-	if anchor.is_empty() or not sp.has("c") or not sp.has("n"):
+	if anchor.is_empty() or (not one_view and (not sp.has("c") or not sp.has("n"))):
 		return {}
-	var zone: PackedVector2Array = lay.pane_zone(slot == 1, sp["c"], sp["n"])
+	# In a split the pane's own space; in one view (he is off the screen, or about to be) the fighters' space of the whole screen.
+	var zone: PackedVector2Array = lay.pane_zone(slot == 1, sp["c"], sp["n"]) if not one_view else PackedVector2Array([lay.safe.position, Vector2(lay.safe.end.x, lay.safe.position.y), lay.safe.end, Vector2(lay.safe.position.x, lay.safe.end.y)])
 	# The fighters' space only: not the columns of plates, cards and legend either side (the layout's clear zone).
 	var cz: Rect2 = lay.clear_zone
 	if cz.size.x <= 0.0 or cz.size.y <= 0.0:
@@ -142,9 +143,41 @@ static func _clear_of(pos: Vector2, dir: Vector2, sz: Vector2, p: Vector2, h: fl
 
 ## What the picture depends on (the chip is a node the HUD moves, so following the fighter costs no redraw): the arrow turns about 5 degrees,
 ## the countdown text, the distance, which kind it is, whether it is urgent and which size.
-static func sig(ch: Dictionary) -> Array:
+static func sig(ch: Dictionary, aura: String = "") -> Array:
 	var dir: Vector2 = ch["dir"]
-	return [int(ch["slot"]), int(dir.x * 12.0), int(dir.y * 12.0), str(ch["eta_text"]), str(ch["text"]), bool(ch["aimed"]), bool(ch["urgent"]), bool(ch["compact"])]
+	return [int(ch["slot"]), int(dir.x * 12.0), int(dir.y * 12.0), str(ch["eta_text"]), str(ch["text"]), bool(ch["aimed"]), bool(ch["urgent"]), bool(ch["compact"]), aura]
+
+
+## How long a chip stays once it has shown (seconds): the read it gives is steady, and the kind of chip cannot change faster than about twice a second.
+const HOLD := 0.45
+
+
+## The chips with the incoming ones held: `keep` is two slots of {ch, t} (the last incoming chip of each pane and when it was last
+## wanted). A pane whose incoming chip has just stopped keeps showing it for HOLD seconds instead of the ordinary chip, so the warning
+## never blinks as the closing speed crosses its threshold. Returns the chips to draw; `keep` is updated in place.
+static func held(chips: Array, keep: Array, now: float) -> Array:
+	var out: Array = []
+	var have := [false, false]
+	for ch in chips:
+		var sl: int = int(ch["slot"])
+		if str(ch.get("kind", "")) == "incoming" and sl >= 0 and sl < 2:
+			keep[sl] = {"ch": ch, "t": now}
+			have[sl] = true
+	for ch in chips:
+		var sl2: int = int(ch["slot"])
+		if str(ch.get("kind", "")) != "incoming" and sl2 >= 0 and sl2 < 2 and not have[sl2]:
+			var k = keep[sl2]
+			if k is Dictionary and now - float((k as Dictionary)["t"]) < HOLD:
+				continue   # the held incoming chip stands in for it
+		out.append(ch)
+	for i in range(2):
+		var k2 = keep[i]
+		if not have[i] and k2 is Dictionary:
+			if now - float((k2 as Dictionary)["t"]) < HOLD:
+				out.append((k2 as Dictionary)["ch"])
+			else:
+				keep[i] = null
+	return out
 
 
 ## One chip, drawn in `ci` (a node of the chip's size).
@@ -179,15 +212,21 @@ static func draw(ci: Control, hub: UiEventHub, ch: Dictionary, s: float, o: Dict
 	var ir: float = sz.y * 0.36
 	var perp := Vector2(-dir.y, dir.x)
 	var lw: float = maxf(2.0, ir * 0.22)
+	# His ring colour on the arrow (a dark keyline under it so it reads on any ground); the shape still says aimed or closing.
+	var rv: UiFighterModel = hub.model(1 - int(ch["slot"])) if hub != null else null
+	var rc: Color = Color(rv.aura, a) if (rv != null and not urgent) else fg
 	if aimed:
 		# A target ring round a solid arrow: it is aimed at you.
-		ci.draw_arc(ic, ir, 0.0, TAU, 28, fg, lw, true)
-		UiIcons.fill_poly(ci, PackedVector2Array([ic + dir * ir * 0.62, ic - dir * ir * 0.38 + perp * ir * 0.5, ic - dir * ir * 0.38 - perp * ir * 0.5]), fg)
+		ci.draw_arc(ic, ir, 0.0, TAU, 28, Color(0, 0, 0, 0.7 * a), lw + 2.0, true)
+		ci.draw_arc(ic, ir, 0.0, TAU, 28, rc, lw, true)
+		UiIcons.fill_poly(ci, PackedVector2Array([ic + dir * ir * 0.62, ic - dir * ir * 0.38 + perp * ir * 0.5, ic - dir * ir * 0.38 - perp * ir * 0.5]), rc)
 	else:
 		# Two open chevrons: he is closing.
 		for k in range(2):
 			var tip: Vector2 = ic + dir * ir * (0.55 - 0.7 * float(k))
-			ci.draw_polyline(PackedVector2Array([tip - dir * ir * 0.5 + perp * ir * 0.6, tip, tip - dir * ir * 0.5 - perp * ir * 0.6]), fg, lw, true)
+			var pts := PackedVector2Array([tip - dir * ir * 0.5 + perp * ir * 0.6, tip, tip - dir * ir * 0.5 - perp * ir * 0.6])
+			ci.draw_polyline(pts, Color(0, 0, 0, 0.7 * a), lw + 2.0, true)
+			ci.draw_polyline(pts, rc, lw, true)
 	# The countdown, with its unit; the word and the distance under it (the full chip only).
 	var tx: float = sz.y * 1.05
 	var fs1: int = UiText.px(30.0 if not compact else 25.0, s)
