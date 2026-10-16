@@ -22,7 +22,8 @@ On a checkout with stage 1 applied: `node s2.cjs <root>` from this folder (it co
 **The interjection.**
 - **The grant.** Granted on an opening the one gave: open after his own miss, or staggered where he stands (not sent). At most one in `everyS` (1.5 s), to the nearest free guard in the ring. Not while the partner holds a blow past its wind-up, nor when the partner's blow is due within `clearTicks` (8) of where it would land.
 - **The blow.** The guard moves in at the lunge's speed (`inTicksMax` 12 at most) and follows the one while his blow winds up in sight, `windTicks` (10). It lands as a beat of the partner's brawl that names him (`args.a` "X", `args.who`). So it is guarded, chipped and perfect-blocked by `DirMelee.strike` as any blow is. It is a light at `worthMul` (0.5) of a principal's, the one reels at most `reelTicks` (2), and it freezes as a light does. It builds no run and sends nobody.
-- **Never within 8 ticks of the partner's blow.** An AI partner's line waits for it, from the grant to `clearTicks` after it lands: his presses are held, his new exchange waits, his double hit and his held X's burst wait. A player partner is never held before it: his press wins, and the guard yields (the grant is pulled). After it lands, a player's line waits `clearTicks` at most.
+- **Never within 8 ticks of the partner's blow.** An AI partner's line waits for it, from the grant to `clearTicks` after it lands: his presses are held, his new exchange waits, his double hit and his held X's burst wait.
+- **A player partner is never held** (Game Design, 2026-10-15, d7831fad). Her guards interject only while her own line is committed past the landing and `clearTicks` more: a blow of hers on its way that lands after it, or a stagger or a reel that holds her until then (`DirRing._committedUntil`). A charge she holds doesn't count, since it lands whenever she lets go. If her blow comes due near it anyway, the guard yields (the grant is pulled).
 
 **The guards' rules (Game Design's section 5).**
 - **What guards never do.** A guard closes on the one never, launches him never, knocks him back never: his blows build no run, his B in an opening is the hammer, and his win in a planned exchange leaves the one in reach.
@@ -53,8 +54,19 @@ On a checkout with stage 1 applied: `node s2.cjs <root>` from this folder (it co
 - **The cost rose by about 80 to 110 µs a tick over stage 2.** At 4v1 it is 561 µs, still under the paper's 0.92 ms estimate.
 - **About 2.7 interjections land a minute of fight at 3v1.** Whether that reads as "the gang punishing a mistake" is Game Design's and Orb's to judge in play.
 
+**With a player as the partner** (`probes/ring4.gd`: slot 1 is a scripted player, X every 10 ticks and B held 34 ticks every 60, his stick toward the one; the one and the guards are the AI; 4 matches of up to 5 minutes for each count).
+
+| Row | 3 bodies | 4 bodies | 5 bodies |
+| :--- | ---: | ---: | ---: |
+| Ticks the ring held her line | 0 | 0 | 0 |
+| Blows from two fighters on him within 8 ticks | 0 | 0 | 0 |
+| A guard closing on, launching or knocking back the one; a stray ring blow | 0 | 0 | 0 |
+| Interjections granted; landed | 4; 2 | 17; 11 | 13; 4 |
+
+With the rule in, the AI-everywhere rows are as above (every hard row 0; 58, 36 and 46 interjections landed of 71, 57 and 63 granted), and the 1v1 golden is still byte-identical (parity 56 of 56, determinism). **Her guards go quiet with a player who keeps pressing:** about 0.1 to 0.55 interjections land a minute, where an AI partner gets 2 to 3. Game Design's fallback, if that is too quiet, is the hold as first built.
+
 ## Not built, and what is open
 
 - **Not built:** a guard's covering volley as an interjection by bolt; a medium interjection (the data allows `kinds` ["medium"]; the first build throws lights); the Empress's orders; the resummon on a cooldown; a guard's KO not ending the match (stage 5, a few core lines of Simulation's).
-- **For Game Design:** a player Empress partner's press waits at most 8 ticks after an interjection lands, so that two blows never land on him within 8 ticks. The other way is to let her press land and pull nothing, which breaks the hard row.
+- **For Game Design:** with a player who keeps pressing, her guards interject 0.1 to 0.55 times a minute (above). Whether that is too quiet is for play to show.
 - **For Animation:** the interjection's tell is a `windup` cue with text `interject`, naming the guard and its landing tick; its blow is a `blow`-less beat (the brawl's own `blow` cue isn't sent for it). Animation reads which it needs.

@@ -292,10 +292,10 @@ static func aiInput(S: SimState, f) -> void:
 
 # ---------------------------------------------------------------- stage 3: guards, the step in, the interjection
 
-## True while f is the one's partner and his line waits for an interjection (DirBrawl._free reads it): an AI partner from
-## the grant to clearTicks after it lands, a player's only for clearTicks after it lands (before it, the guard yields).
+## True while f is the one's partner and his line waits for an interjection (DirBrawl._free reads it): an AI partner, from
+## the grant to clearTicks after it lands. A player's press is never held (Game Design, 2026-10-15, d7831fad).
 static func holds(S: SimState, f) -> bool:
-	return on(S) and f == partner(S, S.fighters[0]) and DirBrawl._now(S) < _g(S.fighters[0], HOLD_UNTIL)
+	return on(S) and f.ai != null and f == partner(S, S.fighters[0]) and DirBrawl._now(S) < _g(S.fighters[0], HOLD_UNTIL)
 
 
 ## True while an interjection is in flight or its clearTicks after landing run: the brawl's double hit waits for it.
@@ -304,6 +304,17 @@ static func interjecting(S: SimState) -> bool:
 		return false
 	var one = S.fighters[0]
 	return _g(one, GRANT) != 0 or DirBrawl._now(S) < _g(one, HOLD_UNTIL)
+
+
+## True when no blow of p's can land before `until` (a live tick): his blow on its way lands after it, or a stagger or a
+## reel holds him until it, less a light's 2 ticks. A charge he holds may land whenever he lets go, so it doesn't count.
+static func _committedUntil(S: SimState, p, until: int) -> bool:
+	var now: int = DirBrawl._now(S)
+	if DirBrawl._g(p, DirBrawl.LINE) == 1 and DirBrawl._g(p, DirBrawl.CONTACT) >= until:
+		return true
+	if p.stunTicks > 0 and now + p.stunTicks >= until - 2:
+		return true
+	return DirBrawl._g(p, DirBrawl.REEL_AT) >= until - 2
 
 
 ## True for one of the many who is not a principal: a guard (slot 2 and up). Slots 0 and 1 are the principals (Game
@@ -393,6 +404,8 @@ static func _interject(S: SimState, one, now: int) -> void:
 	if DirBrawl._g(pp, DirBrawl.LINE) == 2:
 		return   # the partner holds a blow past its wind-up: it may land at any moment
 	var est: int = now + int(ic.get("inTicksMax", 12)) / 2 + maxi(8, int(ic.get("windTicks", 10)))
+	if pp.ai == null and not _committedUntil(S, pp, now + int(ic.get("inTicksMax", 12)) + maxi(8, int(ic.get("windTicks", 10))) + clear):
+		return   # a player partner: her guards interject only while her own line is committed (a wind-up landing after it, a stagger, a reel)
 	if DirBrawl._g(pp, DirBrawl.LINE) == 1 and absi(DirBrawl._g(pp, DirBrawl.CONTACT) - est) < clear:
 		return
 	var g = _nearestRing(S, one)
@@ -486,4 +499,5 @@ static func landX(S: SimState, ex, b) -> void:
 		return
 	DirBrawl._s(one, DirBrawl.REEL_AT, maxi(DirBrawl._g(one, DirBrawl.REEL_AT), now + int(ic.get("reelTicks", 2))))
 	var p = partner(S, one)
-	_s(one, HOLD_UNTIL, maxi(_g(one, HOLD_UNTIL), now + int(ic.get("clearTicks", 8)) + 1))   # any partner's line waits clearTicks after it
+	if p.ai != null:
+		_s(one, HOLD_UNTIL, maxi(_g(one, HOLD_UNTIL), now + int(ic.get("clearTicks", 8)) + 1))   # an AI partner's line waits clearTicks after it
