@@ -319,7 +319,7 @@ The press throws the light, as always. **The burst starts when the hold is certa
 
 - **The rule.** A tap of B while the rival is staggered by an opening is the launcher. The openings are the staggers a fighter earns: a flurry's close, a broken guard, a perfect block, a zip's tech counter and a punished taunt. A landed heavy's stagger isn't one, and a shove's isn't.
 - **It always lands.** Its wind-up is halved to 14 ticks, as on the beat (§9), and the stagger holds until it lands.
-- **It always lands, and it launches when the launcher is ready.** When it launches, the stick nudges the launch and the director stages it, as for every launch. After any launch of a fighter, the launcher rests on him for 40 s of fight time. **In that time the same B is the hammer:** it still always lands, as a full heavy worth 6, and the brawl goes on. It doesn't part them (re-ruled in §14's fourth round: as a knock-back it cost the launcher's player matches). The launching blow is worth 3 brawl lights, which is half a heavy for half the wind-up. The sixth round put it at 6, and the ninth put it back: at 6 the route was over both its edges, and the B masher halved. Either one costs a heavy's 5 ki. The launch's landing is the rest of its worth.
+- **It always lands, and it launches when the launcher is ready.** When it launches, the stick nudges the launch and the director stages it, as for every launch. After any launch of a fighter, the launcher rests on him for 30 s of fight time (40 s until §14's eleventh round, after Orb played it). **In that time the same B is the hammer:** it still always lands, as a full heavy worth 6, and the brawl goes on. It doesn't part them (re-ruled in §14's fourth round: as a knock-back it cost the launcher's player matches). The launching blow is worth 3 brawl lights, which is half a heavy for half the wind-up. The sixth round put it at 6, and the ninth put it back: at 6 the route was over both its edges, and the B masher halved. Either one costs a heavy's 5 ki. The launch's landing is the rest of its worth.
 - **A B pressed early is kept.** Pressed in the 10 ticks before the stagger begins, it is held and thrown as the launcher, by §2's rule for a held press. So "X, then B" rolled off the closing blow works, and so does a B pressed on seeing the stagger. A kept B goes before any X pressed after it, so mashing on doesn't lose it (Encounter's decision, confirmed).
 - **A held B loses the guarantee.** The stagger holds for the 14 ticks only. Held past that, it is a charged heavy like any other.
 - **The staggered fighter keeps half his nudge** (§1), so he has a say in where he is launched from. Nothing gets him out: a stagger takes his buttons, as it does today.
@@ -1361,3 +1361,38 @@ Orb answered homework 2 (`docs/ep/vision.md`, "Orb answers homework 2"). Most an
 - **The heavy's count is dropped.** A heavy counts toward the run as any blow does, 1 each way, as before the sixth round. The medium AI lands about 8.5 heavies a match on the masher, and at 4 each that closed on him. It cost a cell 9 points and helped nobody, and it was ruled on a reading that turned out to be noise. Encounter's other form, 4 only for a second running heavy, has nothing measured behind it either. The B masher's lever stays the ki discount inside a B flurry.
 - **`digIn` stays at 0.55,** and the ninth round's 0.4 is withdrawn. Moving it bought two matches in a hundred, which is inside the noise, and cost the masher seven points. **The band for matches with a double hit becomes 35 to 70%,** so that a row three over its top on 100 matches isn't chased again.
 - **The held X's full point stays.**
+
+### The eleventh round: Orb's first match against the computer (2026-10-16)
+
+Orb played the live demo (`docs/ep/vision.md`, last section): "in a lot of ways its in a good spot." Three items are mine. Nothing below has been run: every new value is a first value.
+
+| | Orb said | The ruling | Who builds |
+| ---: | :--- | :--- | :--- |
+| 1 | "I couldn't quite figure out how to launch my opponent, I did successfully maybe once or twice" | **The opening is hidden more than it is rare.** It gets a gauge, a prompt and a wider window. The rest goes to 30 s | UI, Encounter, Animation, VFX, Audio |
+| 2 | The beam struggle felt decided when the beams were fired | **A tug of war on the pulse, with state as a head start only** (`rule-of-cool.md` §2) | Encounter, with VFX, Camera, Audio, UI |
+| 3 | "the CPU opponent was able to easily perfect block every charged attack I used" | **The AI may not react to a release.** It reads a charge as a player has to: by guessing when he will let go | Encounter |
+
+**1. Finding the launch.**
+- **Why Orb missed it.** A launch comes from an opening, mostly a flurry's close, and then a B. The close staggers him for 12 ticks, a fifth of a second. Nothing on screen says the close is coming, nothing says B now, and a fifth of a second is shorter than anyone's reaction. The 40 s rest then turns most later Bs into hammers, with no sign that it has.
+- **What a first-time player should see and do:**
+  1. **A gauge on the rival fills as his blows land:** four pips, one for each point of the run. It empties as the rival answers.
+  2. **At four the gauge flashes, and the B on his HUD lights with the word "launch".** The next blow opens him.
+  3. **He lands one more blow, then presses B,** or presses B as the gauge flashes: the early press is kept.
+  4. **The opening is unmistakable:** the rival's head snaps back and his arms fly open, a ring shows on his chest, the ping sounds, and the pad pulses.
+  5. **The launch is followed by the camera** (Camera's fix from the same playtest).
+- **The window is wider.** A B counts as the launcher from 10 ticks before the close until 24 ticks after it. Inside the stagger it always lands, as now. After the stagger it is still the launcher, with its 14-tick wind-up, but he can answer it. A player who reacts late still launches if it connects.
+- **The launcher's readiness shows.** Beside the B, a lit mark means a launch is ready. A dim mark with a ring filling is the rest, and B in an opening is the hammer then.
+- **The rest goes from 40 s to 30 s,** the value named for "Orb finds launches too rare". It is read with the route's edge (the eighth round): if the route passes its 70%, the rest comes back first.
+- **The first-time hint,** once, at the first full gauge: "Gauge full: hit, then B to launch." UI and Narrative word it. The training dummy's "stand" with the readout is where it is learnt properly (`fighter-pipeline.md` §8).
+- **QA's row:** a first launch inside 60 s of the first brawl in at least 90% of matches for a scripted newcomer, who presses B within 20 ticks of the gauge's flash.
+
+**3. The computer and charged attacks.**
+- **Why it blocks them all.** A charged blow lands 4 ticks after the release. No player can react in 4 ticks, but the AI reads the release on the tick it happens. That is a reaction no human has.
+- **The rule: the AI never reacts to a release.** It decides to perfect-block a charge before he lets go, at a tick it picks across the charge, and the block works only if that tick falls inside the window when the blow comes. Its picks aren't keyed to the full charge's flash, so a player who releases on the flash isn't punished for timing it well.
+- **Its shares:** it tries against 0.1, 0.3 and 0.5 of the charged blows it sees, by level. With guessing, that comes to about 3, 10 and 20% of charged heavies and charged mediums perfect-blocked.
+- **The same holds for every blow whose landing follows a release:** the held X's set, a signature's hold, a tackle's coil.
+- **QA's row, a hard test:** the AI never starts a perfect block within its reaction time of a release. A band: at medium, 5 to 15% of the charged blows thrown at it are perfect-blocked.
+
+**Two small rulings.**
+- **The held X's floor draws from the burst's mid class** (Combat's ask). Its pace is 8 ticks, which is the mid class's, and the slow class is for longer gaps.
+- **A guard's cues count at full,** as Simulation built them, and I withdraw my "half" (`empress-guards.md`). Only one fighter strikes at a time, so a guard's blows replace hers in the brawl and don't add to them. At half, a 3v1 would read calmer than a 1v1.

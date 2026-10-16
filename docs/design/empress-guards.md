@@ -97,7 +97,7 @@ Ruled for Simulation's stage 1 (`docs/architecture/pending/n-bodies/`) and World
 | | The ruling | Why |
 | :--- | :--- | :--- |
 | **A guard knocked out** | **Doesn't end the match.** Only a principal's KO does. A guard falls: he salutes, leaves the field, and his place reopens after its cooldown (§1). Only a principal can win a finisher | A guard has no brink and no finisher (§4) |
-| **The mood's "both aggressive" and "both guarded"** | **The principals' stances only.** A guard's landed blow feeds the mood at half its units, as it is worth half | A guard's stance is his order, not a choice. Counting it would let the AI set the mood |
+| **The mood's "both aggressive" and "both guarded"** | **The principals' stances only.** A guard's landed blow feeds the mood at full, as Simulation built it (re-ruled 2026-10-16: one striker at a time means his blows replace hers, so at half a 3v1 would read calmer than a 1v1) | A guard's stance is his order, not a choice. Counting it would let the AI set the mood |
 | **The acts** | **The principals' forms and wounds only.** Guards have neither. Their falls reach the acts through her Wrath, which drives her revisions | |
 | **The hit-stop and the pauses** | **One for the whole match, as now.** It is one fight: a partner, a ring, and one interjection at most. Freezes that overlap merge and don't add. An interjection or a volley's bolt freezes as a light does, 2 ticks at most | So the freeze share stays readable, and nobody is frozen twice by one moment |
 | **Later, when a 2v2 splits into two 1v1s** | **Each fight gets its own hit-stop.** A hit in one fight mustn't still the other | Not needed for the Empress's 3v1. It is written down now so the core isn't built against it |

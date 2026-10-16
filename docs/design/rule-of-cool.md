@@ -37,6 +37,38 @@ Orb set spectacle at **4 of 10** and the top-tier finisher at **7 of 10**.
 - The score still starts from state (tier, ki and meters), as today. The pulses swing it by up to 30 either way.
 - The AI hits 40%, 65% or 85% of pulses (easy, medium, hard).
 
+**The beam struggle, redesigned** (2026-10-16, after Orb played it: "it felt like the winner of the beam struggle was determined as soon as the beams were fired and that nothing I pressed during it could affect the outcome"). It replaces the three pulses above for a beam struggle. The fist clash, the blur exchange and the grapple lock keep them. Every number is a first value. Encounter builds it.
+
+**Why it felt decided.** The score started from state (tier, ki, meters), and three pulses could swing it by 30 at most. Any real difference in state was already more than three pulses could move.
+
+**The rule: a tug of war with a meeting point that everyone can see.**
+
+| | The rule | First value |
+| :--- | :--- | :--- |
+| **The meeting point** | Where the two beams meet. It starts in the middle, and moves along the line between the two fighters' hands. Whoever it reaches is overwhelmed | |
+| **State is a head start, and no more** | Tier, the beam's own tier, and ki move the start toward the weaker side | At most 15% of the distance |
+| **The pulse** | Shown and heard, as a beat the player can follow. Both fighters press on the same pulse | One every 20 ticks |
+| **A surge** | Any face button pressed on the pulse | Inside 4 ticks of it: the point moves 10% toward the rival. Inside 1 tick: 15% |
+| **A stray** | A press off the pulse moves nothing, and costs a half step back | 5% toward himself. So mashing does no better than not pressing, as in the finisher's struggle |
+| **The comeback** | Surges from close to his own hands push harder | Inside the quarter of the line nearest his hands, ×1.5 |
+| **Its length** | Until the point reaches a fighter, or a time limit | 15 pulses, 5 s |
+| **The stick** | Held toward the rival, it leans the fighter in, so it can be seen who is pushing. It adds nothing to the point | |
+
+**How it ends.**
+- **The point reaches him:** he is overwhelmed. He takes the winner's beam and half of his own, and is launched along the beam's line, carving what is there by the winner's tier. It counts as a launch for the rest.
+- **The time runs out with the point within 10% of the middle:** the beams detonate where they meet. Both are thrown back, both take a quarter of the other's beam, and the ground there craters by the higher tier.
+- **The time runs out with the point further over:** the side it is on loses, with half the damage and no launch.
+
+**What a player sees and hears.** Each surge bulges the meeting point toward the rival and pushes his beam back. A stray flickers his own. The camera holds both fighters side-on and tightens as the point nears a side. The pulse is a beat the music and the pad follow. The sound rises as the point nears either fighter. This is VFX's, Camera's and Audio's to make look and sound like a fight.
+
+**The AI** hits 40%, 65% and 85% of pulses by level, as in every clash, and never makes a 1-tick surge. A player who keeps the beat usually overwhelms the medium AI before the time runs out from an even start, and still wins on time from a 15% deficit, with the comeback's help. Two players who keep the beat equally swing it back and forth, and the comeback keeps either from running away with it.
+
+**QA's rows:**
+- the winner is the one who made more surges in at least 80% of struggles where the head start was under 10%;
+- a scripted masher wins no more often than a fighter who doesn't press;
+- in at least 25% of struggles the point crosses the middle at least once;
+- at least 15% of struggles are won from behind, by the side that was more than 10% down at some point.
+
 **Answering a beam costs tight timing only.** The three answers Orb picked are the three looks of a perfect block against a signature, which is already a DEFLECT (`control-rules.md` §1). The direction held on the press picks the look:
 
 | Held | Answer | What happens |
