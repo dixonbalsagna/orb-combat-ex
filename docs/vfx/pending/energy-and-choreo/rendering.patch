@@ -1,0 +1,188 @@
+diff --git a/render/core/beam_view.gd b/render/core/beam_view.gd
+--- a/render/core/beam_view.gd
++++ b/render/core/beam_view.gd
+@@ -9,6 +9,9 @@
+ ## its strength; a calm clash has no flare and its two beams are the same.
+ ## A beam comes and goes once: its strength rises over RenderLook.BEAM_RISE_S, holds and falls to nothing at its end
+ ## (strength()), and a clash's flare and beams rise and fall the same way (clash_strength()). Nothing pulses.
++## The layers' look is VFX's (render/vfx/beam_look.gd, shaders/beam.gdshader; docs/vfx/beam-look.md): a real width, a slow hue ripple at steady luminance, turbulence on the soft edge, no white core,
++## and each fighter's own flavour. The register's decision (`bright`) now only paces the tail and decides the rise: refused, or under reduced flashing, a beam is the same beam at 0.78 of its
++## strength with a slower rise, never a thin line in place of the core.
+ 
+ const LAYERS: Array = [[2.4, 4.0, 0.25], [1.3, 3.0, 0.6], [0.5, 2.0, 0.95]]   # width factor, extra pixels, alpha
+ 
+@@ -22,8 +25,8 @@
+ 	_cyl.top_radius = 0.5
+ 	_cyl.bottom_radius = 0.5
+ 	_cyl.height = 1.0
+-	_cyl.radial_segments = 12
+-	_cyl.rings = 0
++	_cyl.radial_segments = 16
++	_cyl.rings = 24            # rings along the beam: the width swells and thins along it (VfxBeamLook, the shader's `wob`)
+ 	var s := SphereMesh.new()
+ 	s.radius = 0.5
+ 	s.height = 1.0
+@@ -39,14 +42,14 @@
+ 	# beam's tail at the same place in the world); a tool's posed state has only this view's own.
+ 	var ppu: float = host.vfx.px_per_unit if host != null else z
+ 	for b in S.beams:
+-		var k: float = strength(b.t, b.life)
++		var bright: bool = host == null or host.beam_flash(b)
++		var k: float = strength(b.t, b.life, 0.0 if bright else VfxBeamLook.calm_rise())
+ 		var s: float = b.p * b.len
+-		var bright: bool = host == null or host.beam_flash(b)
+ 		var tail: float = tail_at(b, ppu if bright else 0.0)
+ 		var x0: float = SimWrap.sdx(cam_x, b.ox + b.ux * tail)
+ 		var a := Vector2(x0, b.oy + b.uy * tail)
+ 		var e := Vector2(x0 + b.ux * (s - tail), b.oy + b.uy * s)
+-		_beam(n, a, e, b.w, RenderLook.col(b.col), k, z, bright, b.oz + b.zs * tail, b.oz + b.zs * s)
++		_beam(n, a, e, b.w, RenderLook.col(b.col), k, z, bright, b.oz + b.zs * tail, b.oz + b.zs * s, b.A, String(b.col), S.T, tail <= 0.5, VfxBeamLook.is_short(b))
+ 		n += 1
+ 	var c = S.game.clash
+ 	var clash_ok: bool = host == null or host.clash_flash
+@@ -55,12 +58,15 @@
+ 		var p: float = clampf((S.T - c.t0) / c.dur, 0.0, 1.0)
+ 		var ck: float = clash_strength(S.T - c.t0, c.dur)
+ 		var mid: float = 0.5 + (1.0 if c.aw else -1.0) * 0.35 * p
++		var mid_v = c.get("mid")                  # Encounter's beam struggle: the meeting point it holds, 0 at A's hands to 1 at D's (Clash.mid; absent or -1: the glide above)
++		if mid_v != null and float(mid_v) >= 0.0:
++			mid = float(mid_v)
+ 		var ax: float = SimWrap.sdx(cam_x, c.A.x)
+ 		var dx: float = SimWrap.sdx(c.A.x, c.D.x)
+ 		var m := Vector2(ax + dx * mid, c.A.y + 38.0 + (c.D.y - c.A.y) * mid)
+ 		var mz: float = c.A.z + (c.D.z - c.A.z) * mid   # the fighters' depths (0 on the plane): the beams meet between them
+-		_beam(n, Vector2(ax, c.A.y + 38.0), m, 26.0 + c.A.tier * 8.0, RenderLook.col(c.A.aura), ck, z, clash_ok, c.A.z, mz)
+-		_beam(n + 1, Vector2(ax + dx, c.D.y + 38.0), m, 26.0 + c.D.tier * 8.0, RenderLook.col(c.D.aura), ck, z, clash_ok, c.D.z, mz)
++		_beam(n, Vector2(ax, c.A.y + 38.0), m, 26.0 + c.A.tier * 8.0, RenderLook.col(c.A.aura), ck, z, clash_ok, c.A.z, mz, c.A, String(c.A.aura), S.T, true)
++		_beam(n + 1, Vector2(ax + dx, c.D.y + 38.0), m, 26.0 + c.D.tier * 8.0, RenderLook.col(c.D.aura), ck, z, clash_ok, c.D.z, mz, c.D, String(c.D.aura), S.T, true)
+ 		RenderMats.set_glow(_flare.material_override, Color.WHITE, ck)
+ 		n += 2
+ 		_flare.position = Vector3(m.x, m.y, RenderLook.Z_BEAMS + 2.0 + mz)
+@@ -84,14 +90,14 @@
+ 	var own: float = clampf((b.t - 0.4) / (b.life - 0.4), 0.0, 1.0) * b.len
+ 	if ppu <= 0.0:
+ 		return own
+-	var a_tick: float = RenderLook.BEAM_TAIL_PX / (b.w * float(LAYERS[1][0]) * ppu * ppu)
++	var a_tick: float = RenderLook.BEAM_TAIL_PX / (b.w * VfxBeamLook.body_k(b.A, VfxBeamLook.is_short(b)) * ppu * ppu)
+ 	return minf(own, (b.t - 0.4) / SimConst.DT * a_tick)
+ 
+ 
+ ## A beam's strength at age t of its life: one rise, a hold, one fall.
+-static func strength(t: float, life: float) -> float:
++static func strength(t: float, life: float, rise: float = 0.0) -> float:
+ 	var fall: float = 1.0 if t < 0.3 else maxf(0.0, 1.0 - (t - 0.3) / (life - 0.3))
+-	return smoothstep(0.0, RenderLook.BEAM_RISE_S, t) * fall
++	return smoothstep(0.0, maxf(RenderLook.BEAM_RISE_S, rise), t) * fall
+ 
+ 
+ ## A clash's strength t seconds into its dur: up over CLASH_RISE_S, down over its last CLASH_FALL_S.
+@@ -101,13 +107,14 @@
+ 
+ ## One beam from a to e (this view's x and the world's y). za, ze: the depth at each end (the sim's Beam.oz and zs; 0 on
+ ## the fighter plane). A beam with no depth is placed exactly as it always was.
+-func _beam(i: int, a: Vector2, e: Vector2, w: float, c: Color, k: float, z: float, bright: bool = true, za: float = 0.0, ze: float = 0.0) -> void:
++func _beam(i: int, a: Vector2, e: Vector2, w: float, c: Color, k: float, z: float, bright: bool = true, za: float = 0.0, ze: float = 0.0, who = null, hex: String = "", t: float = 0.0, at_heel: bool = true, short: bool = false) -> void:
+ 	while _pool.size() <= i:
+ 		var layers: Array = []
+ 		for j in range(LAYERS.size()):
+ 			var mi := MeshInstance3D.new()
+ 			mi.mesh = _cyl
+-			mi.material_override = RenderMats.glow(Color.WHITE, 1.0, RenderLook.BEAM_EDGE[j])
++			mi.material_override = VfxBeamLook.new_material(j)
++			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+ 			add_child(mi)
+ 			layers.append(mi)
+ 		_pool.append(layers)
+@@ -119,15 +126,7 @@
+ 		if not mi.visible:
+ 			continue
+ 		var u: Vector2 = d / l
+-		var th: float = w * LAYERS[j][0] + LAYERS[j][1] / z
+-		var cj: Color = Color.WHITE if j == 2 else c
+-		var aj: float = LAYERS[j][2] * k
+-		if not bright:
+-			if j == 2:   # the calm form: a thin line in the beam's own colour where the white core was
+-				th = w * LAYERS[j][0] * RenderLook.BEAM_LINE + LAYERS[j][1] / z
+-				cj = c.lerp(Color.WHITE, 0.35)
+-			else:
+-				aj *= RenderLook.BEAM_SOFT
++		var th: float = VfxBeamLook.thickness(who, w, j, z, short)
+ 		if za == 0.0 and ze == 0.0:
+ 			mi.transform = Transform3D(Basis(Vector3(u.y, -u.x, 0.0) * th, Vector3(u.x, u.y, 0.0) * (l + th * 0.5), Vector3(0.0, 0.0, th)), Vector3((a.x + e.x) * 0.5, (a.y + e.y) * 0.5, RenderLook.Z_BEAMS))
+ 		else:
+@@ -137,4 +136,4 @@
+ 			dir /= l3
+ 			var side := Vector3(u.y, -u.x, 0.0)
+ 			mi.transform = Transform3D(Basis(side * th, dir * (l3 + th * 0.5), side.cross(dir) * th), Vector3((a.x + e.x) * 0.5, (a.y + e.y) * 0.5, RenderLook.Z_BEAMS + (za + ze) * 0.5))
+-		RenderMats.set_glow(mi.material_override, cj, aj)
++		VfxBeamLook.set_layer(mi.material_override, who, VfxAura.lane_color(hex) if hex != "" else c, j, k, not bright, t, l, at_heel, float(i), short)
+diff --git a/render/core/sim_host.gd b/render/core/sim_host.gd
+--- a/render/core/sim_host.gd
++++ b/render/core/sim_host.gd
+@@ -203,9 +203,9 @@
+ ## What a beam of length len and width w (world units; the sim's b.w) covers in one of the standard's windows: its body
+ ## layer's width, along as much of its length as a window holds.
+ ## z: the depth it is drawn at (the plane's scale with depth off).
+-func beam_px(len: float, w: float, z: float = 0.0) -> float:
++func beam_px(len: float, w: float, z: float = 0.0, who = null, short: bool = false) -> float:
+ 	var ppu: float = vfx.flashes.ppu_at(z - flash_focus_z)
+-	return minf(len * ppu, RenderLook.FLASH_WINDOW_DIAG) * w * float(BeamView.LAYERS[1][0]) * ppu
++	return minf(len * ppu, RenderLook.FLASH_WINDOW_DIAG) * w * VfxBeamLook.body_k(who, short) * ppu
+ 
+ 
+ ## A clash's flare and its two beams, each reaching half way between the fighters.
+@@ -214,7 +214,7 @@
+ 	var ppu: float = vfx.flashes.ppu_at(z - flash_focus_z)
+ 	var half: float = 0.5 * absf(SimWrap.sdx(c.A.x, c.D.x))
+ 	var r: float = (RenderLook.FLASH_CLASH_R + 20.0 / maxf(ppu, 0.01)) * RenderLook.FLASH_GLOW_R
+-	return VfxFlashRegistry.disc_px(r, ppu) + beam_px(half, 26.0 + c.A.tier * 8.0, z) + beam_px(half, 26.0 + c.D.tier * 8.0, z)
++	return VfxFlashRegistry.disc_px(r, ppu) + beam_px(half, 26.0 + c.A.tier * 8.0, z, c.A) + beam_px(half, 26.0 + c.D.tier * 8.0, z, c.D)
+ 
+ 
+ ## Whether a beam's bright form (its white core, at full strength) was granted. One the host has not seen in a tick
+@@ -229,7 +229,7 @@
+ 	var live: Dictionary = {}
+ 	for b in S.beams:
+ 		var id: int = b.get_instance_id()
+-		live[id] = bool(_beam_ok[id]) if _beam_ok.has(id) else (not vfx.flashes.reduced and ask_flash("beam", RenderLook.col(b.col), beam_px(b.len, b.w, b.oz + 0.5 * b.zs * b.len), RenderLook.FLASH_STEP.beam))
++		live[id] = bool(_beam_ok[id]) if _beam_ok.has(id) else (not vfx.flashes.reduced and ask_flash("beam", RenderLook.col(b.col), beam_px(b.len, b.w, b.oz + 0.5 * b.zs * b.len, b.A, VfxBeamLook.is_short(b)), RenderLook.FLASH_STEP.beam))
+ 	_beam_ok = live
+ 	var on: bool = S.game.clash != null
+ 	if on and not _clash_on:
+diff --git a/render/tools/flash_reg_check.gd b/render/tools/flash_reg_check.gd
+--- a/render/tools/flash_reg_check.gd
++++ b/render/tools/flash_reg_check.gd
+@@ -124,7 +124,7 @@
+ 	host.S.beams.append(b)
+ 	host._ask_beams()
+ 	var rows: Array = host.vfx.flashes.log_rows()
+-	var res: Array = [_rows_of(host, "beam") - before, host.beam_flash(b), float(rows[-1][6]) if _rows_of(host, "beam") > before else 0.0, host.vfx.flashes.weight_of("beam", host.beam_px(b.len, b.w))]
++	var res: Array = [_rows_of(host, "beam") - before, host.beam_flash(b), float(rows[-1][6]) if _rows_of(host, "beam") > before else 0.0, host.vfx.flashes.weight_of("beam", host.beam_px(b.len, b.w, 0.0, b.A))]
+ 	host.S.beams.erase(b)
+ 	host._ask_beams()
+ 	return res
+@@ -220,7 +220,7 @@
+ 	reg4.ppu = 0.3   # a wide framing: the same beam is a thin strip
+ 	var w_far: float = reg4.weight_of("beam", host.beam_px(3000.0, 33.0))
+ 	reg4.ppu = ppu_was
+-	_expect(absf(wts[0] - 0.17) < 0.03 and absf(wts[1] - 0.07) < 0.02 and absf(wts[2] - 0.2) < 0.03 and wts[3] == 1.0 and wts[4] < 0.2 and w_far < 0.3, "at the close framing a body's white weighs %.2f, a head flash %.2f and a guard flash %.2f (VFX's estimates: 0.17, 0.07, 0.2); a tier 4 beam weighs %.0f, a short one %.2f, and a beam seen from far %.2f" % [wts[0], wts[1], wts[2], wts[3], wts[4], w_far])
++	_expect(absf(wts[0] - 0.17) < 0.03 and absf(wts[1] - 0.07) < 0.02 and absf(wts[2] - 0.2) < 0.03 and wts[3] == 1.0 and wts[4] < 0.3 and w_far < 0.5, "at the close framing a body's white weighs %.2f, a head flash %.2f and a guard flash %.2f (VFX's estimates: 0.17, 0.07, 0.2); a tier 4 beam weighs %.0f, a short one %.2f, and a beam seen from far %.2f" % [wts[0], wts[1], wts[2], wts[3], wts[4], w_far])
+ 	# The weighted rule through the host's ask, with areas given (A is a full-weight area; the register's clock is stepped by hand so the match adds nothing).
+ 	var A: float = VfxFlashRegistry.AREA_FULL
+ 	var a: bool = host.ask_flash("cue_flare", cyan, A, 0.5)             # low, weight 1
+diff --git a/render/tools/depth_check.gd b/render/tools/depth_check.gd
+--- a/render/tools/depth_check.gd
++++ b/render/tools/depth_check.gd
+@@ -98,10 +98,10 @@
+ 	var d: Vector2 = e - a
+ 	var u: Vector2 = d / d.length()
+ 	for j in range(BeamView.LAYERS.size()):
+-		var th: float = 30.0 * BeamView.LAYERS[j][0] + BeamView.LAYERS[j][1] / 1.15
++		var th: float = VfxBeamLook.thickness(null, 30.0, j, 1.15)
+ 		var old := Transform3D(Basis(Vector3(u.y, -u.x, 0.0) * th, Vector3(u.x, u.y, 0.0) * (d.length() + th * 0.5), Vector3(0.0, 0.0, th)), Vector3((a.x + e.x) * 0.5, (a.y + e.y) * 0.5, RenderLook.Z_BEAMS))
+ 		same = same and (bv._pool[0][j] as MeshInstance3D).transform == old
+-	_expect(same, "a beam with no depth is placed by the old formula, to the bit (%d layers)" % BeamView.LAYERS.size())
++	_expect(same, "a beam with no depth is placed by the old formula, with VFX's widths, to the bit (%d layers)" % BeamView.LAYERS.size())
+ 	# --- a beam in depth
+ 	var za: float = -40.0
+ 	var ze: float = -640.0

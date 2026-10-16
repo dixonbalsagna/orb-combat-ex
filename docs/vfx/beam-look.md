@@ -25,16 +25,23 @@ The old look was 2.4, 1.3 and 0.5 in three additive layers, which add up to whit
 - **Ends and heel.** The ends are rounded off over 40 units; the firer's end swells while the beam is still attached to him (the Protagonist's, from the heel of the palm: 0.7).
 - **Never a strobe.** The ripple rate is `hz` times the wavelength, at most 2 Hz at any point (1.1 for the Protagonist, 0.8 for the Rival, 1.4 for the Anti-hero); nothing goes round the axis.
 
-## Each fighter's own energy (data/vfx/energy.json; Art to confirm the families)
+## Each fighter's own energy (data/vfx/energy.json, keyed by roster id; corrected 2026-10-16: the Anti-hero IS the roster's RIVAL)
 
-The colour is the fighter's lane colour (so the colour-vision presets follow), the second tint a hue shift of it at the same luminance.
+The colour is the fighter's lane colour (so the colour-vision presets follow), the second tint a hue shift of it at the same luminance. Art confirms the families (the EP is asking).
 
-| Fighter | Family (from Art's lane) | Second tint | Width | Motion character |
-| :-- | :-- | :-- | ---: | :-- |
-| Protagonist | cool cyan to azure (#8fd6ff) | +30° | 1.15 | laminar: a long wavelength (150 units), clean edge, a strong heel swell; a bolt's tail is a calm straight ribbon |
-| Rival | violet to magenta (#9a80d8) | -34° | 1.3 | ragged: a short wavelength (95), the edge breaks up 3 times as much, a slower ripple (0.8 Hz); a bolt's tail swims |
-| Anti-hero (the thin one) | the 260 to 320 hue range of Art's aura file | +16° (stays in range) | 0.42 | a blade of light: no swell, no edge turbulence, no filaments; his shards are straight thin lines |
-| Anyone else | their lane colour | +28° | 1.0 | the default |
+| Roster id | Who | Family (Art's lane) | Second tint | Width | Motion character |
+| :-- | :-- | :-- | :-- | ---: | :-- |
+| PROTAGONIST | the hero | cool cyan to azure (#8fd6ff) | +30° | 1.15 | **flowing**: a long soft wavelength (150 units), a soft edge that swells and thins, a strong heel swell (0.7); a bolt's tail swims a little |
+| RIVAL | the Anti-hero | violet to magenta (#9a80d8) | -34° | 1.1 | **exact and cold**: a short wavelength (80), long hard-edged filaments (0.9) in place of swell, almost no edge turbulence (0.05) and a crisper edge (1.35), a small heel; a bolt's tail is a straight ribbon |
+| RIVAL, a short beam | the Anti-hero's particular thin beam | the same | -34° | **0.4** | a needle of light: no swell, no turbulence, no filaments, the crisp edge |
+| REFERENCE | the training dummy | a quiet neutral (+12°) | +12° | 0.8 | **quiet**: 0.5 Hz, a long wavelength (160), almost no swell, turbulence or filaments |
+| anyone else | | their lane colour | +28° | 1.0 | the default |
+
+**The thin beam, and why it is that one.** Orb: "it would be cool if a particular beam attack for one fighter in the roster was thin, but for all of them to be tiny doesn't look right." I picked **the Anti-hero's short beam** (the energy stance's beam of about half a second, held past a charged blast's full charge, 20 ki: `agency-pass.md`):
+- **It fits him.** His identity is exactness (a blade of light, the barrage's thin shards, "regal and cold"); a needle is what precision looks like, and it separates him from the Protagonist's broad flowing beam.
+- **It is the right attack to be thin.** A poke of half a second reads as a thrust of a needle; the signature, the beam Orb found too thin, stays thick for both fighters.
+- **It is cheap on the register**, so a fighter can throw it often.
+- **Not built yet in the sim:** today only the signature beam exists (0.95 s). The look is keyed `rival_short` and applies to a beam of 0.7 s or less, or one that carries a `short` field, the moment Simulation adds it; until then nothing is thin in the demo.
 
 The bolts and blasts (`shots_view.gd`) take the same two tints and character: a tail of five segments that swims a little (not in reduced motion), stepping between the tints.
 
@@ -54,30 +61,32 @@ The bolts and blasts (`shots_view.gd`) take the same two tints and character: a 
 | never a strobing core | the core's alpha moves 4%, its colour the lane colour; no white in any layer (asserted) |
 | start and end flashes through the registry | unchanged: `SimHost.beam_flash` and the clash's ask; the area they weigh is now the real body width (`beam_px` takes the owner) |
 | an explosion's fire is not a red flash, grows over several ticks, no white or gold full-screen flash, not combined with a rubble ring, cracks and lightning on bodies | the orange cel flame, three waves and a grow-in; no ring, crack or lightning on a body |
+| no franchise echo: no twin helix, no two-colour twist, no ball charging in the hand | the two tints alternate **along** the beam and never around it (the ripple's phase is the distance from the firer's end only), nothing is wound about the axis; the firing hand has no charge ball (the gather ring is the wind-up's, thin and hollow, e01) |
+| fx01, fx02 (the shine, the cash-in) | the shine: two thin edge lines and a small hollow ring, steady, one hand at a time, only on a light's window, gone at the close, `perfect_made` or `perfect_broken`; the cash-in: a thin line and four closing brackets, then a double ring, a crossed crack, one thin cut and two puffs, 10 ticks or fewer |
 | both go into the required flash set | measured below, both modes |
 
 ## Also in the build: point-blank bolts and blasts
 
 The energy arts in reach (RB with X or Y, `VfxReach._land`) had a crack, a ring and sparks and no fire at all. A hit now also calls the same explosion on the body (`VfxExplode.at(..., "fighter", "calm")`): flame tongues in waves, smoke, short cinders; a guard's is sparks and smoke only. Legal e06 and e08 still hold: the flash at the hand is the register's one ask, the rim and the thin edge are unchanged, and nothing here is a flash over the body.
 
-## Measured (HEAD 32029623 against HEAD with this look; Tools' path, 1024 by 768, session vfx, one capture at a time, both modes)
+## Measured (re-run 2026-10-16 on HEAD 0ca6f670, same-commit baseline; Tools' path, 1024 by 768, session vfx, one capture at a time, both modes)
 
-The whole set below reads the same or within 0.5 of HEAD, and every clip passes (primary at most 2.5). Primary / area-15% / area+15% / 2-second memory.
+Primary / area-15% / area+15% / 2-second memory. Every clip passes in both modes and reads the same as HEAD or within 0.5 of it.
 
-| Clip | HEAD normal / reduced | This look, normal / reduced |
+| Clip | HEAD normal / reduced | This work, normal / reduced |
 | :-- | :-- | :-- |
-| clash (1500 ticks) | 2/2/2/2 PASS, 2/2/2/2 PASS | 2/2/2/2 PASS, 2/2/2/2 PASS |
-| signature | 1.5/2/1.5/2 PASS, 1.5/2/1.5/2.5 PASS | 1.5/2/1.5/2 PASS, 1.5/2/1.5/1.5 PASS |
-| signaturecity | 2/3/2/1.5 PASS, 2/2/2/1.5 PASS | 2/2.5/2/1.5 PASS, 2/2/2/1.5 PASS |
-| bolts (a scratch scene: bolts every 14 ticks and a blast every 90, point blank) | 0 and 0.5 | 0.5 and 0.5 (flames on every hit) |
-| ai windows round the beams and the bolts (12345, 4, 5, 39; eight windows of 130 to 340 ticks) | 0.5 to 1.5 | 0.5 to 1.5, but ai 39 ticks 41 to 240 (a deflected beam) reads 2.5 against 1.5, and ai 4 ticks 1091 to 1230 1.0 against 0.5 |
+| **collapse** (run first: the brief) | 2/2/2/1.5 and 2/2.5/1.5/1.5 | 2/2/2/1.5 and 2/2/2/1.5 |
+| **choreo** (scratch: the clash scene with the beam struggle's cues scripted into every clash, an opening, a shine, a cash-in, a chase, a tech and an interjection on a 400-tick cycle, 700 ticks) | with the hub off: 2/2/2/2 both modes | 2/2/2/2 and 2/2/1/2, Reduce flashing off 1/1/1/1 |
+| ai windows round beams, clashes, bolts, mines and charged shots (12345 x2, 4 x3, 5, 39 x2; 130 to 340 ticks each) | 0.5 to 2.5 | 0.5 to 2.5, equal in 15 of 16, one window +0.5 (ai 4 ticks 1691 to 1820, normal: 1 against 0.5) |
+| ai 39 ticks 41 to 240 (the deflected beam on screen) | 2.5, 2.5 | 2.5, 2.5: HEAD itself reads 2.5 here now; the earlier "+1" against the previous HEAD is gone |
+| clash, signature, signaturecity, a bolts scene (previous round, on 32029623) | | the same as that HEAD (2, 1.5, 2, 0.5) |
 
-The one clip that moves is the one with a beam on screen for a second: its beam is now a real width, a deeper colour than the sand or sky behind it, so its start and end are changes of about 1.6 times the area threshold where a thin pale line was none (events at 135-, 144+ and 163+ of ai 39). The primary is 2.5, inside the gate; a slower rise (0.3 s for a calm beam, 0.5 s tried) does not move them, so the lever if Legal wants more margin is the body layer's alpha.
+Gates in the scratch copy: effects_check, hash_check (plain and press styles; the register in real matches 408 granted, 8,748 refused, at most 3 in any second, weight 1.00), determinism (plain and `--intro`), the negative control FAILED as it must, `node tools/validate.js` (190 files, 0 errors, 0 warnings), `flash_reg_check`, `depth_check`.
 
-**Web build cost** (`tools/bench-web.mjs`, `/bench/` page, seed 4 for 2400 frames, which holds two beams and a few bolts; this PC, GPU, not idle; two runs each): HEAD 6.60 and 6.08 ms a frame (CPU x4: 34.6 and 32.9), this look 6.63 and 6.64 (CPU x4: 33.9 and 32.8): no cost visible inside the run-to-run spread. Not measured: an old laptop, a software-GL floor, or a beam-heavy scene. By construction a beam is three prisms of 16 by 24 vertices and two value-noise reads a pixel per layer, a few thousand pixels wide at most, on one to three beams at a time.
+**Web build cost** (previous round, `tools/bench-web.mjs` seed 4, 2400 frames): HEAD 6.60 and 6.08 ms a frame (CPU x4: 34.6 and 32.9), the beam look 6.63 and 6.64 (CPU x4: 33.9 and 32.8). Nothing here since adds a draw call or a shader; the struggle's marks are a handful of rings. Not measured: an old laptop, a software floor, a beam-heavy scene.
 
 ## Open for Art, Legal and Orb
 
-- **Art:** the colour families are derived from the lane colours in `data/art/colour-vision.json` and the Anti-hero's hue range: the second tint's hue shifts (+30, -34, +16 degrees) are mine; confirm or send a pair per fighter.
+- **Art:** the colour families (kept as the EP asked: the Protagonist cyan to azure +30 degrees, the Rival violet to magenta -34) are derived from the lane colours in `data/art/colour-vision.json`: confirm or send a pair per fighter.
 - **Legal:** fx03 asks for the set drawn; this is it, with the flash clips above. The two new things to read are the beam's width and its start and end events (1.6 times the threshold in one clip), and the flames at a point-blank hit.
 - **Orb:** the Protagonist's beam "from the heel of the palm" is a swell of the beam's firing end (0.7), not a drawn gather at the hand: the gather needs Animation's palm pose at the beam's origin.

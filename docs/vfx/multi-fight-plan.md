@@ -74,3 +74,34 @@ The cues add no counted event: every event in the window is in the hub-off run (
 - The "camera closes in", "the sound rises a step" and "the pads pulse" of the duel are Camera's, Audio's and Controls'; VFX draws only the sparks and the wave.
 - A distinct `duel` colour pairing for guards (two guards and the one in a duel) is not defined: the cues take two bodies; a duel is always a pair.
 - The chase's "drawn travel inside Legal's travel floor" is Camera's contract; the trail here is only the body's own path.
+
+## Updated to Encounter's agreed list (2026-10-16: `docs/director/pending/return/cues.md`), and three more pieces
+
+The nine names above were proposals; Encounter's list fixes them. What changed in the build (scratch, parked with the energy look: `docs/vfx/pending/energy-and-choreo/`):
+
+| Agreed cue | What VFX does | Change from the proposal |
+| :-- | :-- | :-- |
+| `windup` text `interject` (actor the ring guard, target the one, `n` the contact tick, `source` x, y or bolt, `dur` 10 or more) | the chevrons over his head and, in the last 6 ticks, the committed line | was a cue of its own, `interject`; now routed from `windup` (no hand ring: one mark on him) |
+| `windup` text `return` | the existing wind-up ring on his lead hand (`reach.gd` draws any `windup` but `end`) | nothing to build |
+| `return` (text charge, lunge or far; `n` the approach's length) | a thin trail behind him along his real path for the approach: the chase's trail | new |
+| `perfect_window` (text the landed hit's strength; `n` the tick it closes) | the shine on the striking hand, **for a light only** (a medium's and a heavy's windows have no hold) | the text was `open` or `close`; now the strength, and it closes at `n`, or on `perfect_made` or `perfect_broken` |
+| `perfect_made`, `perfect_broken` | end the shine at once | new (the shine's close) |
+| `tech` (actor the rival who techs, target the chaser) | the chase's trail goes and the arrival's brackets and a flat ring show on the techer | new |
+| `chase`, `duel`, `duel_end`, `cash_in`, `barrage_hand`, `barrage_land`, `guard_volley` | as proposed | none |
+| `return_met` | Camera's and UI's: nothing drawn here | none |
+
+**The opening's look** (Game Design's eleventh round, item 1: "the rival's head snaps back and his arms fly open, a ring shows on his chest"; the head and arms are Animation's). On `launcher_open`, besides the B-now chevrons: **a thin hollow ring on his chest** in the launcher's colour, closing in from 30 to 20 units over 4 ticks and then **steady** until `launcher_close` or the launch (a second pass for its edge: 2 quads). Never filled, never pulsing, the same in reduced motion; the chevrons and the ring are the two marks a staggered fighter carries (k01).
+
+**The beam struggle** (Encounter's tug of war on the pulse: `docs/director/pending/beam-struggle/README.md`; `S.game.clash.mid` the meeting point, 0 at A's hands to 1 at D's). The marks read the point each frame (`VfxShotsView._clash_pt`: `mid` when present, else the glide the beams are drawn with), so they sit where the beams meet. All thin hollow rings and lines in lane colours; none is a flash; none changes a beam's brightness; no register ask.
+
+| Cue | What is drawn |
+| :-- | :-- |
+| `beam_struggle` text `start` | one thin ring opens at the point (10 to 40 units over 10 ticks) in the mix of the two colours, lightened |
+| `beam_pulse` (`k` the pulse 1 to 15, `n` its tick) | **the beat, followed before it comes:** a thin ring contracts onto the point over the 10 ticks before each pulse (from 56 to 12 units) and, on it, one ring leaves (12 to 44); the next pulse's contraction is shown the moment this one is (from the 20-tick period), so a player can see the beat coming |
+| `beam_surge` (actor who pressed; text `surge` or `sharp`) | a thin ring rides his beam from his hand to the point in 6 ticks, and a ring **bulges at the point toward the rival** (14 to 26 units, the sharp one 1.45 times bigger) |
+| `beam_stray` (actor) | **a hiccup in his own beam:** a short broken line across it near his hand, darker lane colour, 8 ticks. Shape only: nothing flickers (the design's "a stray flickers his own", without a brightness change) |
+| `beam_end` text `overwhelmed` (x the point) | three thin rings run down the winner's beam from the point to the loser's hands, two ticks apart |
+| `beam_end` text `detonate` | two rings at the point (90 and 56 units) and a fire there in waves, as any blast's (the explosion's waves and grow-in), no flash |
+| `beam_end` text `time` | one ring at the point |
+
+`BeamView` meets the beams at `mid` when there is one (the line in Rendering's patch, Encounter's table lists it too).
