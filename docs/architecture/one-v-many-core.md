@@ -1,13 +1,8 @@
-# One versus many, stage 1: N bodies in the core, and the training dummy in the roster (parked builds)
+# One versus many in the core: N bodies, and the training dummy in the roster
 
-Owner: Simulation and Engine. 2026-10-15. **Built and proved in scratch; nothing is in the tree.** It is the core's part of stage 1 in Encounter's `docs/director/one-v-many.md`: N bodies in the roster, the hash and the replay. The director's part of stage 1 (`DirBrawl.partner`, the keyed draws given a namespace of their own) is Encounter's.
+Owner: Simulation and Engine. Built 2026-10-15; **applied in 06b0200e (2026-10-16)** with one golden regeneration (`rosterHash` only). It is the core's part of stage 1 in Encounter's `docs/director/one-v-many.md`: N bodies in the roster, the hash and the replay. The director's part of stage 1 (`DirBrawl.partner`, the keyed draws given a namespace of their own) is Encounter's.
 
-**Two scripts, applied in this order from the repo root, with one golden regeneration after the second:**
-
-1. `python docs/architecture/pending/n-bodies/n_bodies.py .`: stage 1, with Game Design's four rulings on what the core counts of a guard. **No golden moves.**
-2. `python docs/architecture/pending/n-bodies/dummy_roster.py .`: the reference fighter into the roster as the training dummy (Orb, homework 3). **The golden's `rosterHash` moves, and nothing else in it.** It needs other owners' rows in the same commit (section "The dummy").
-
-No class is new, so no import is needed. Re-run the proof below on the HEAD of the day first.
+It was applied as two scripts, now deleted: `n_bodies.py` (stage 1 with Game Design's four rulings on a guard; no golden moved), then `dummy_roster.py` (the reference fighter into the roster as the training dummy, Orb's homework 3; the golden's `rosterHash` moved and nothing else in it).
 
 ## What a match of N bodies is
 
@@ -18,7 +13,7 @@ No class is new, so no import is needed. Re-run the proof below on the HEAD of t
 - **The step** controls the pair in today's order (one draw of the seeded stream a tick, as now) and the bodies past it after them, in slot order. A host that passes two intents gives the others none.
 - **The intro** brings in the pair only. The others stand on the ground from tick 0, take no entrance and dig no crater.
 
-## Game Design's rulings on a guard (docs/design/empress-guards.md), in the build
+## Game Design's rulings on a guard (docs/design/empress-guards.md), in the core
 
 | Ruling | In the core |
 | :--- | :--- |
@@ -40,7 +35,7 @@ With two fighters both are principals, so each rule is today's rule.
 
 ## Every place in sim/core that assumes two
 
-**Changed by the build** (each is the same as today with two fighters):
+**Changed by stage 1** (each is the same as before with two fighters):
 
 | Where | What it assumed | Now |
 | :--- | :--- | :--- |
@@ -62,26 +57,26 @@ With two fighters both are principals, so each rule is today's rule.
 | `fx.gd` | Events carry slots as numbers |
 | `roster.gd`, `opp`; its users in `fighter.gd`, `hiding.gd`, `act.gd`, `damage.gd` | Every fighter but the first has the first as his opponent |
 
-**Questions for later stages, not plumbing:**
+**Questions for later stages, not plumbing** (the first three were ruled by Game Design and are in the core, section above):
 
 | Where | The question | Whose |
 | :--- | :--- | :--- |
-| `damage.gd`, `ko` | Any fighter's KO ends the match. A guard knocked out must not; he comes back on a cooldown (stage 5) | Game Design rules it; a few core lines |
-| `mood.gd` lines 408 and 415 | "Both aggressive" and "both guarded" read the pair. Whether a guard's stance counts | Game Design |
-| `mood.gd`, the act | The act counts every fighter's form steps and wounds. Whether a guard's count | Game Design |
+| `damage.gd`, `ko` | Any fighter's KO ended the match. **Ruled:** only a principal's ends it. His coming back on a cooldown is the director's (stage 5) | Encounter |
+| `mood.gd` lines 408 and 415 | "Both aggressive" and "both guarded" read the pair. **Ruled:** a guard's stance does not count | Done |
+| `mood.gd`, the act | The act counted every fighter's form steps and wounds. **Ruled:** the principals' only | Done |
 | The hit-stop and the pauses | One for the whole match: a hit anywhere stills everyone. It is what keeps a brawl's freeze share readable | Encounter, with the freeze-share row |
 | `view/camera.gd` | It frames the pair; a guard can be off the frame | Camera |
 
 **The director** (Encounter's count, for the record): `S.dirS.ex` read in 116 places, 26 calls of `opp`, 21 "the other one", 8 keyed draws built as `n * 2 + slot`. With the guards idle none of them reaches a guard in stage 1.
 
-## The dummy (dummy_roster.py)
+## The training dummy in the roster
 
 - `data/fighters/roster.json` becomes `["PROTAGONIST", "RIVAL", "REFERENCE"]`: he is listed last, and the default pairing is still the first two. `data/fighters/bench.json` is emptied, since a fighter in both fails Tools' `xref:bench-id`; the Empress's guards will stand there. His aura becomes Art's best neutral, `#c6bade`.
 - **A replay's data hash takes the fighters in its slots,** one hash each, in place of the whole roster's. So the dummy's data can change without turning away a replay of the other two; his own replays are refused when they do. (This was planned for the first window that regenerates anyway.)
 - **His numbers are frozen** (Game Design's §8): the check holds him to base stats, no care, no meter and no wounds or ladder file of his own.
 - **The golden:** only `rosterHash` moves. The golden's replays and matches are the same.
 
-**What the others need in the same commit** (from running their checks with him in the roster):
+**What the others needed in the same commit** (found by running their checks with him in the roster):
 
 | Who | What | Without it |
 | :--- | :--- | :--- |
@@ -92,7 +87,11 @@ With two fighters both are principals, so each rule is today's rule.
 | UI, Audio | Nothing found: UI's two checks and Audio's two pass with him in the roster | |
 | Animation, Rendering | Not run here: his rows for the select screen and the training mode are theirs to check | |
 
+In 06b0200e: Art's colour row, Tools' pairings with its xref line (a fighter whose role is `reference` goes without `reach.bolt` and `reach.blast`) and its fixtures, and Combat's `reference` pool in `data/combat/recipes.json` (the common pieces only, frozen). Legal's pairing list and the select-screen and training-mode rows are their owners'.
+
 ## Proof
+
+**As committed (06b0200e),** both scripts and Combat's `reference_recipes.py` on a9e8f9cd, one regeneration: the golden differs from the one before in `rosterHash` alone (`304fea69b386c745` to `1f127fcc32218996`; light digests, tick counts and checkpoints identical); parity **56 of 56** with no script error; the full gates passed on the tree (the sim's npm stages, determinism plain and with the intro, the seam sweep, the flash count, the validator and its self-test, QA's run-all, the director's loader check, the flash self-test). The EP verified the commit on a clean export.
 
 **Stage 1 with the rulings,** on a clean export of 88d13195: parity against the committed golden, unregenerated, **56 of 56** with no script error, and the golden regenerated **byte-identical**. The new check, "one versus many: what the core counts of a guard": a guard's KO does not end the match, and a principal felled by a guard loses to slot 1; a guard's broken core puts him on no brink; a guard's landed light feeds the mood half the data's units, and his AGGRESSIVE stance changes nothing; a guard's tier and wounds move no act, while a principal's battered limb makes its beat.
 

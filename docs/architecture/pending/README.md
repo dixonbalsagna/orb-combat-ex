@@ -4,7 +4,7 @@ Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator
 
 Windows 2 and 3 of `../fighters-as-data.md` (the reference fighter on a bench, the selection guards) were applied on f5c001e6 (2026-10-13) and their scripts are deleted.
 
-**A parked build:** `n-bodies/`: stage 1 of Encounter's `docs/director/one-v-many.md`, the core's plumbing for one versus many: a match of 2 to 5 bodies, the replay's slots, the intro and the mood made general, and the inventory of every place in `sim/core` that assumed two. No golden moves. Its page has the proof and the cost a tick at 2 to 5 bodies.
+Stage 1 of one versus many and the training dummy in the roster (`n-bodies/`) were applied in 06b0200e (2026-10-16); the page is `../one-v-many-core.md` and the scripts are deleted.
 
 The weight on the damage event (`weight_event.py`) was applied with Encounter's chain (3198301f), and its script is deleted.
 

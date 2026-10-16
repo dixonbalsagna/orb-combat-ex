@@ -60,6 +60,7 @@ Owner: Simulation and Engine. 2026-10-12. **Windows 1, 2 and 3 are built (sectio
 - **A hash a fighter.** The loader keeps the hash of what each fighter resolves to (`FighterData.hashOf`). A replay's data hash is what it was, and a bench fighter's hash is folded in only when the replay's slots name him. So his data can change without turning away a replay of the roster's fighters, and a replay of his own is refused when they do.
 - **No golden moves in window 2:** the roster file, its order and its hash are untouched.
 - Moving him into the roster later, if Orb wants him on the select screen, is one line in each of the two lists, and then the roster's hash moves once.
+- **Done in 06b0200e (Orb, homework 3):** he is in the roster, third, as the training dummy, and the bench is empty. A replay's data hash now takes the fighters in its slots, one hash each, in place of the roster's (`one-v-many-core.md`).
 - **The roster's own fighters still share one hash.** The Cyborg will move it when he joins, and with it every stored replay. Making the roster's hash one a fighter as well changes the golden's replay line, so it rides with a window that regenerates anyway.
 
 **The reference fighter, as built.** `data/fighters/REFERENCE/fighter.json`: damage 1.0, speed 1.0, care 0, no meter file, no wounds or ladder file of his own, so the game's. Three values are provisional until Game Design rules: his role word (`reference`, which the loader now accepts), his Rally rule (`second_wind`, as the two in the build have) and his finisher (`generic`, which belongs to nobody).
@@ -113,7 +114,7 @@ Owner: Simulation and Engine. 2026-10-12. **Windows 1, 2 and 3 are built (sectio
 
 - Windows 1 to 3 change no match and no golden, so each is proved against the golden as it stands and can land between other people's work. Windows 2 and 3 landed together.
 - Window 1 is worth doing first whatever follows: it ends the double edit that Encounter's tunes made.
-- The parked `weight_event.py` moves every golden's event digest and no state. It can ride with window 4's regeneration, proved alone first.
+- The weight on the damage event (`weight_event.py`) landed with Encounter's chain (3198301f).
 
 ## 8. Open
 
@@ -121,5 +122,5 @@ Owner: Simulation and Engine. 2026-10-12. **Windows 1, 2 and 3 are built (sectio
 | :--- | :--- |
 | Game Design | The reference fighter's role word, his Rally rule and his finisher. The build has `reference`, `second_wind` and `generic` |
 | Tools | A schema for `data/fighters/bench.json`, and the rule that a bench id has a folder and is not in the roster |
-| Orb | The reference fighter on the select screen, or out of sight. He is out of sight on the bench; the roster is one line away |
+| Orb | ~~The reference fighter on the select screen, or out of sight.~~ Answered (homework 3): in the roster as the training dummy, 06b0200e |
 | Game Design and Tools | Whether the stat band (0.95 to 1.05) is held by the schema |
