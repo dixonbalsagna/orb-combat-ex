@@ -4,7 +4,7 @@ Owner: VFX. Built in scratch on HEAD 32029623 and parked (`docs/vfx/pending/beam
 
 ## Why the demo's beams read as thin lines
 
-Reduce flashing is on by default, so the flash register is never asked for a beam's bright form: every beam was drawn **calm**, which was "a thin line where the white core was and the glow at 0.18". The same refusal also turned every small blast's flame burst into sparks and smoke. So what Orb saw was the fallback form, in every fight. The new look has no thin fallback: the same beam, a little dimmer (0.78) and a slower rise (0.3 s), in either setting; and the blast keeps its flames either way.
+Reduce flashing is on by default, so the flash register is never asked for a beam's bright form: every beam was drawn **calm**, which was "a thin line where the white core was and the glow at 0.18". The same refusal also turned every small blast's flame burst into sparks and smoke. So what Orb saw was the fallback form, in every fight. The new look has no thin fallback: the same beam, a little dimmer (0.86) and a slower rise (0.3 s), in either setting; and the blast keeps its flames either way.
 
 ## The beam
 
@@ -63,7 +63,12 @@ The bolts and blasts (`shots_view.gd`) take the same two tints and character: a 
 | an explosion's fire is not a red flash, grows over several ticks, no white or gold full-screen flash, not combined with a rubble ring, cracks and lightning on bodies | the orange cel flame, three waves and a grow-in; no ring, crack or lightning on a body |
 | no franchise echo: no twin helix, no two-colour twist, no ball charging in the hand | the two tints alternate **along** the beam and never around it (the ripple's phase is the distance from the firer's end only), nothing is wound about the axis; the firing hand has no charge ball (the gather ring is the wind-up's, thin and hollow, e01) |
 | fx01, fx02 (the shine, the cash-in) | the shine: two thin edge lines and a small hollow ring, steady, one hand at a time, only on a light's window, gone at the close, `perfect_made` or `perfect_broken`; the cash-in: a thin line and four closing brackets, then a double ring, a crossed crack, one thin cut and two puffs, 10 ticks or fewer |
+| **the calm form** (a beam the register refused, and every beam under Reduce flashing, the shipped default) | written up here for Legal: it is **the full beam** (the same width, layers, flavour and shimmer) at **0.86 of its strength** (the data's `calm.strength`; 0.78 in the first build) **with a slower rise** (0.3 s against 0.1 s, `calm.rise_s`), never a thin line and never a white core. Its brightness steps are the bright form's times 0.86, spread over three times the rise, so it is the form with the lower counted change; the clips below are all read in it (the demo's "normal" clips already run with Reduce flashing on) and with it off |
 | both go into the required flash set | measured below, both modes |
+
+## Why two of Rendering's checks loosen (`render/tools/flash_reg_check.gd`)
+
+The register weighs a beam by the width it is drawn at, and the beam's body layer is now 2.2 times the sim's width (the old look's was 1.3), times the fighter's `width_k`. So the same beam weighs about 1.7 times more: **a beam seen from far goes from "under 0.3" to "under 0.5" and the short beam (the "5th" figure) from "under 0.2" to "under 0.3"**; the tier-4 beam still weighs 1.0 (capped) and a new beam still asks the register with its own weight (the check now passes the beam's owner to `beam_px`). The register's budget is unchanged: the wider beam asks for more of it, and is refused sooner, in which case it is drawn calm.
 
 ## Also in the build: point-blank bolts and blasts
 
