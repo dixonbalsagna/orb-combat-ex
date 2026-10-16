@@ -153,8 +153,8 @@ const PAIR_MARK_HOLD_S: float = 1.0      # ... and once asked for stays this lon
 ## Camera's near-clip rule (docs/camera/city-in-depth.md section 1), in a match with depth on: a building of the
 ## patch's kind whose face is nearer the lens than NEAR_CLIP.x is not drawn, and one nearer than NEAR_CLIP.y stands as
 ## its stub, whatever the action's size: so near, it is in the lens, not something to open. A tall building is not
-## touched by it (a tower opens its lobby or takes the patch); an open lobby's columns and beam thin to ghosts between
-## the two distances (OPEN_GHOST), so a travelling camera does not sweep solid columns across the lens.
+## touched by it (a tower opens its lobby or takes the patch); an open lobby's columns and beam thin out between the
+## two distances and are gone nearer (OPEN_GHOST), so a travelling camera does not sweep solid columns across the lens.
 const NEAR_CLIP := Vector2(300.0, 600.0)
 const NEAR_SINK: float = 30.0            # a building not drawn is sunk this far under its footing
 ## VFX's clear query (docs/vfx/depth.md section 4): what the patch and the opened floors leave to be seen of a thing a
@@ -183,8 +183,9 @@ const OPEN_BEAM: float = 26.0            # the beam the columns carry: this deep
 const OPEN_CORE := Vector2(0.24, 0.4)    # the core in the middle of the lobby (the lift and stair shafts that hold a tower up: "a spine"): its width and depth as shares of the shell's,
 const OPEN_CORE_TONE: float = 0.8        # ... its stone against the columns',
 const OPEN_DOOR: float = 105.0           # ... and a lift door's height (three doors a face; a lit sign over each where the tower is whole)
-const OPEN_CORE_GHOST: float = 0.85      # inside the patch the core is thinned more than a column: it is the widest thing in a lobby and stands in its middle
-const OPEN_DAMAGED: bool = false         # whether a damaged tower opens its lobby (and shows its stage in it). Off: a damaged tower takes the patch, as committed in 60f82149. Orb has the question
+const OPEN_CORE_GHOST: float = 1.0       # inside the patch the core is cleared like the columns (Orb, homework 4: see all the way through the inner lobby pieces)
+const OPEN_CORE_VARY: float = 0.2        # ... and its width and depth vary this much either way from tower to tower (Orb: "some variety in size per building")
+const OPEN_DAMAGED: bool = true          # a damaged tower opens its lobby and shows its stage in it (Orb, homework 4: "a damaged tower keeps its lobby"; off, as committed in 60f82149, it took the patch)
 ## What holds a brunt's cleared floor up (building.gdshader item 3; Orb, 2026-10-12): the frame's columns (OPEN_COL,
 ## the lobby's own) on the outermost walls, the plates' edges, and the core. The core's state is the building's hit
 ## points (World's reading, docs/world/destruction-state.md): cracked under CORE_HP.x of them, broken under CORE_HP.y.
@@ -227,7 +228,7 @@ const OPEN_FAR: float = 0.7              # the far side's columns and beam, in t
 const OPEN_CEIL: String = "#a39679"      # the lobby's ceiling, lit warm (a lit lobby, not the tower's dark inside),
 const OPEN_LAMP: String = "#b7a785"      # ... and its lamp panels, a square a bay: 0.08 of relative luminance over the ceiling, inside the contrast budget (PATTERN_BUDGET), so a shaking camera does not flip rows of them. The shader holds them to the budget whatever is set here
 const OPEN_GRID: float = 75.0            # a ceiling bay
-const OPEN_GHOST: float = 0.72           # inside the patch a column or the beam is thinned to a ghost (this share of its pixels gone), not removed: the row still reads as standing and the fight shows through it. At 0.55 a fighter standing behind a column was veiled (the clip of 2026-10-12)
+const OPEN_GHOST: float = 1.0            # inside the patch a column or the beam is cleared (this share of its pixels gone): Orb, homework 4, "fighters are still obscured partly, would be better to see all the way thru the inner lobby pieces" (ghosts at 0.72 distracted; at 0.55 a fighter behind a column was veiled, the clip of 2026-10-12). Outside the patch the colonnade stands whole
 const OPEN_FADE_S: float = 0.3           # the lobby and the patch on a tower fade in and out over at least this long,
 const OPEN_CLOSE: float = 0.5            # ... a closing at this share of the area an opening may turn a tick,
 const OPEN_HOLD_S: float = 0.75          # ... and only when nothing has asked for it this long (PATCH_HOLD_S)

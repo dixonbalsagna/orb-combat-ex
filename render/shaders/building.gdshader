@@ -127,6 +127,7 @@ uniform vec4 open_lamp : source_color = vec4(0.72, 0.65, 0.52, 1.0);    // Rende
 uniform float open_grid = 75.0;      // RenderLook.OPEN_GRID: a ceiling bay
 uniform float open_ghost = 0.72;
 uniform vec2 open_core = vec2(0.24, 0.4);   // RenderLook.OPEN_CORE: the lift and stair core in the middle of a lobby, as shares of the shell's width and depth
+uniform float open_core_vary = 0.2;          // RenderLook.OPEN_CORE_VARY: how much it varies either way from tower to tower
 uniform float open_core_tone = 0.8;  // ... its stone against the columns'
 uniform float open_door = 105.0;     // RenderLook.OPEN_DOOR: a lift door's height
 uniform float open_core_ghost = 0.85; // RenderLook.OPEN_CORE_GHOST: the share of the core's pixels gone inside the patch (it is the widest thing in a lobby)
@@ -291,8 +292,13 @@ bool on_column(float at, float len, float edge, out float which, out float acros
 // The core (the lift and stair shafts that hold a tower up): a box in the middle of the shell's footprint (shell: xy
 // its middle across and in depth, zw half its width and depth). Where the ray eye + view * t enters it: t (this pixel
 // is at 1), or -1 when it misses. xface: it enters by a face that looks along x.
-float core_in(vec4 shell, vec3 eye, vec3 view, out bool xface) {
-	vec2 h = open_core * shell.zw;
+// The core's width and depth as shares of the shell's, a little different from tower to tower (open_core_vary).
+vec2 core_share(float bid) {
+	return open_core * (1.0 + open_core_vary * (2.0 * win_hash(vec3(bid, 5.0, 31.0)) - 1.0));
+}
+
+float core_in(vec4 shell, vec3 eye, vec3 view, float bid, out bool xface) {
+	vec2 h = core_share(bid) * shell.zw;
 	vec2 dir = vec2(abs(view.x) < 0.0001 ? 0.0001 : view.x, abs(view.z) < 0.0001 ? 0.0001 : view.z);
 	vec2 ta = (-h - (eye.xz - shell.xy)) / dir;
 	vec2 tb = (h - (eye.xz - shell.xy)) / dir;
@@ -306,7 +312,7 @@ float core_in(vec4 shell, vec3 eye, vec3 view, out bool xface) {
 // The core's face where that ray meets it, shaded. stone: the frame's stone here; floor_y and room: the storey's
 // floor and its height; state: 0 whole, 1 cracked, 2 broken (the building's hit points); lit: the lift signs are on.
 vec3 core_look(vec4 shell, vec3 eye, vec3 view, float t, bool xface, vec3 stone, float floor_y, float room, float state, bool lit, float bid, mat4 to_view) {
-	vec2 h = max(open_core * shell.zw, vec2(0.001));
+	vec2 h = max(core_share(bid) * shell.zw, vec2(0.001));
 	vec3 nrm = xface ? vec3(-sign(view.x), 0.0, 0.0) : vec3(0.0, 0.0, -sign(view.z));
 	float along = xface ? (eye.z + view.z * t - shell.y) / h.y : (eye.x + view.x * t - shell.x) / h.x;   // -1 to 1 across the face
 	float up = eye.y + view.y * t - floor_y;
@@ -663,7 +669,7 @@ void fragment() {
 				// The far wall's dark inside, and in front of it the core where the ray passes through it on a
 				// cleared floor.
 				col = inside.rgb;
-				core_t = core_in(v_shell, eye, v_view, core_x);
+				core_t = core_in(v_shell, eye, v_view, bid, core_x);
 				if (core_t > 0.0 && core_t < 1.0) {
 					float ck = floor((eye.y + v_view.y * core_t - v_base.x) / v_cut.w);
 					if (ck >= 0.0 && ck < v_base.y && cleared(ck, v_cut.xyz)) {
@@ -685,7 +691,7 @@ void fragment() {
 		// The lobby's stone, by the tower's stage: sooted with its walls from "a part gone" (wallc carries it), the bare
 		// frame's tone in a shell.
 		vec3 frame = st > 2.5 ? mix(wallc, dmg_frame.rgb, 0.6) : mix(wallc, open_frame_col.rgb, 0.5);
-		core_t = core_in(v_shell, eye, v_view, core_x);
+		core_t = core_in(v_shell, eye, v_view, bid, core_x);
 		float core_y = eye.y + v_view.y * core_t;
 		bool core_hit = core_t > 1.0 && core_y < ceil_y && core_y >= v_winb.x;   // the core, beyond this wall, between the lobby's floor and its ceiling
 		bool col_on = on_column(v_face.x, v_face.y, edge_x, col_i, col_u, col_w);

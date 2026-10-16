@@ -1691,6 +1691,7 @@ func _building_mat() -> ShaderMaterial:
 	m.set_shader_parameter("open_ghost", RenderLook.OPEN_GHOST)
 	m.set_shader_parameter("open_near", RenderLook.NEAR_CLIP)
 	m.set_shader_parameter("open_core", RenderLook.OPEN_CORE)
+	m.set_shader_parameter("open_core_vary", RenderLook.OPEN_CORE_VARY)
 	m.set_shader_parameter("open_core_tone", RenderLook.OPEN_CORE_TONE)
 	m.set_shader_parameter("open_door", RenderLook.OPEN_DOOR)
 	m.set_shader_parameter("open_core_ghost", RenderLook.OPEN_CORE_GHOST)
