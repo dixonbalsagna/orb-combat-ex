@@ -1,0 +1,25 @@
+{
+  "_why": "The nightly seed run of the interim (tools/flash/nightly-seeds.mjs): one row a night, the seeds read, so none is read twice.",
+  "runs": [
+    {
+      "date": "2026-10-16",
+      "commit": "d3f1ca0e22f39110d69feceb4913ff799d11db5d",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "read": 16,
+      "clips": 16,
+      "max": 3,
+      "maxClip": "ai-1005-normal",
+      "over": [],
+      "missing": []
+    }
+  ]
+}
