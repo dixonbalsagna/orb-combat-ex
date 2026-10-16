@@ -1390,6 +1390,10 @@ func _many_row(kind: String) -> Dictionary:
 		_check(bool(cur2.hud_anchor(0, g2.x, g2.y, float(g2.z))["visible"]), "%s: the guard with the one is not in the one's pane" % _label)
 		_check(cur2.apparent_height(0, one.x, one.y, float(one.z)) >= 31.0 * vh / 720.0, "%s: the one is drawn at %.1f px" % [_label, cur2.apparent_height(0, one.x, one.y, float(one.z))])
 		_check(cur2.many_off.is_empty(), "%s: a marker for a body that is in a pane (%s)" % [_label, str(cur2.many_off)])
+		var rc: Dictionary = cur2.clear[0]
+		if rc.has("rect"):
+			var gp: Vector2 = cur2.screen_pos(0, g2.x, g2.y + CamParams.CHEST, float(g2.z))
+			_check(Rect2(rc["rect"]).grow(24.0).has_point(gp), "%s: the foreground's opening %s does not cover the guard with the one (%s)" % [_label, str(rc["rect"]), str(gp)])
 	stats["detail " + _label] = "worst travel %.4f, worst zoom step %.4f, off screen %d, markers %s, mode %s" % [worst_travel, worst_zstep, off_screen, str(cur2.many_off), cur2.mode]
 	return {}
 

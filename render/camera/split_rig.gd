@@ -771,7 +771,7 @@ func _read_move_cue(S: SimState, ev, kind: String) -> void:
 		# The governor is armed from the cue, not from the speed: the pursuit that follows is at the capped speed (6,000 units a
 		# second at most), and the zoom takes 0.35 s to come out; armed at the tell it is out when the flight starts.
 		_gov_arm_speed = CamParams.GOV_ARM_SPEED
-		_gov_arm_until = time + (wind + mv) * DT + 0.3
+		_gov_arm_until = time + (wind + mv) * DT + CamParams.GOV_ARM_TAIL
 		return   # a charge is a rush as before: a long one is cut ahead for (measured: following it costs 230 jolts in 13 matches)
 	if solo_kind != "" or _ov_kind != "" or fold_active or intro_active or _slam_slot >= 0:
 		return
@@ -3434,14 +3434,25 @@ func _incoming_for(S: SimState, i: int, f: SplitFrame) -> Dictionary:
 		shown = (w1 >= 0.5) if pi == 1 else (w1 < 0.5)
 	var mine: Vector2 = f.screen_pos(pi, me.x, me.y + CamParams.CHEST, float(me.z))
 	var dir: Vector2 = (pos - mine).normalized() if (pos - mine).length() > 1.0 else Vector2(1.0 if d >= 0.0 else -1.0, 0.0)
-	return {"active": eta >= 0.0 and (aimed or not shown), "aimed": aimed, "eta": eta, "dist_u": dist, "dist_bh": dist / CamParams.BODY_H,
-		"closing": closing, "side": 1 if d >= 0.0 else -1, "shown": shown, "screen_dir": dir}
+	# `lost`: the rival is in neither pane (Orb, 2026-10-16: a launched rival flew off the picture and nothing said where he was). The read is active
+	# then whether or not he is closing: a rival who flies away, lands far off and gets up is still somewhere the player cannot see.
+	var seen: bool = bool(f.hud_anchor(0, other.x, other.y, float(other.z))["visible"]) or bool(f.hud_anchor(1, other.x, other.y, float(other.z))["visible"])
+	var lost: bool = not seen
+	return {"active": (eta >= 0.0 and (aimed or not shown)) or lost, "aimed": aimed, "eta": eta, "dist_u": dist, "dist_bh": dist / CamParams.BODY_H,
+		"closing": closing, "side": 1 if d >= 0.0 else -1, "shown": shown, "lost": lost, "screen_dir": dir}
 
 
 ## The pane's picture's boxes the foreground must open for the action (section 2.1 of docs/camera/city-in-depth.md), as one
 ## rectangle in pane pixels plus the top of the action in world units. Empty size when the pane is not shown.
 func _clear_demand(S: SimState, f: SplitFrame, i: int, region: Rect2) -> Dictionary:
 	var subj: Array = [0, 1] if (f.sep < 0.5 and solo_slot < 0) else ([solo_slot] if solo_slot >= 0 else [i])
+	var n_base: int = subj.size()
+	if many_framing and S.fighters.size() > 2 and solo_slot < 0:
+		# the bodies in the framing set are acted on too (one versus many): the shared view's set, or the pane's assigned bodies
+		for mk in range(2, mini(S.fighters.size(), 5)):
+			var wk: float = float(_many_w[mk]) if f.sep < 0.5 else float(_many_pw[i][mk])
+			if wk >= 0.5:
+				subj.append(mk)
 	var box: Rect2 = Rect2()
 	var have: bool = false
 	var y_top: float = -1.0e9
@@ -3459,7 +3470,7 @@ func _clear_demand(S: SimState, f: SplitFrame, i: int, region: Rect2) -> Diction
 			var vstep: Vector2 = pos - Vector2(_cl_pc[i])
 			if vstep.length() < 0.5 * vw:
 				pts.append([pos + vstep * CamParams.CLEAR_LEAD_TICKS, h])
-		if subj.size() == 1 or kk == 0:
+		if n_base == 1 or kk == 0:
 			_cl_pc[i] = pos
 			_cl_pc_slot[i] = kk
 			_cl_pc_ok[i] = true
@@ -3471,9 +3482,9 @@ func _clear_demand(S: SimState, f: SplitFrame, i: int, region: Rect2) -> Diction
 				pts.append([f.screen_pos(i, lx, ly + CamParams.CHEST, float(fk.z)), h])
 				y_top = maxf(y_top, ly + 1.2 * CamParams.BODY_H)
 	# the strip between the fighters: in one view the two chests; in a split, his own toward the rival, to the pane's edge
-	if subj.size() == 2:
+	if n_base == 2:
 		pass   # both boxes are in pts; the bounding rectangle spans the gap
-	elif subj.size() == 1 and f.sep >= 0.5:
+	elif n_base == 1 and f.sep >= 0.5:
 		var rv = S.fighters[1 - i]
 		var rp: Vector2 = f.screen_pos(i, rv.x, rv.y + CamParams.CHEST, float(rv.z))
 		var own: Vector2 = pts[0][0]

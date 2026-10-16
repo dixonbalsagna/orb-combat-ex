@@ -35,7 +35,7 @@ var fade: float = 0.0                # 0..1: a safety cut's brightness dip, fadi
 var pitch: float = 0.0               # the cameras' pitch in degrees (0: straight on); Rendering's CameraRig takes it
 var focus_z: PackedFloat64Array = PackedFloat64Array([0.0, 0.0])   # per pane: the depth the zoom is defined at, the pivot of the camera's orbit (units, positive toward the camera). 0 with depth off or the dolly off: the fighter plane
 var scroll: Array = [0.0, 0.0]          # per pane: how fast the scenery crosses it, in px a tick at 1024 wide (eased; in one view both are the shared camera's). Rendering fades the windows' and facades' contrast with it
-var incoming: Array = [{}, {}]       # per fighter: the other fighter coming at him: {active, aimed, eta, dist_u, dist_bh, closing, side, shown, screen_dir} (the HUD's edge marker reads it)
+var incoming: Array = [{}, {}]       # per fighter: the other fighter coming at him: {active, aimed, eta, dist_u, dist_bh, closing, side, shown, lost (he is in neither pane: active whether or not he is closing), screen_dir} (the HUD's edge marker reads it)
 var panel: Dictionary = {}           # the panel cut-in, or {}: kind, slot, open (0..1), still, rect (px), slant (px, signed), size, cam_x, cam_y, cam_z (the inset's own viewport)
 var cutaway: Array = [{}, {}]        # per pane: the occlusion hole's request {request, radius_px, only}
 var clear: Array = [{}, {}]          # per pane: what the foreground must open (docs/camera/city-in-depth.md sections 2 and 3): {rect (px, the action's, already held and rate-limited), p (its share of the pane), sigma (0 patch only .. 1 stubs), y_top (world units, the top of the action), x0, x1 (world x of the rect's sides at the focus plane), holding (a hold is running: nothing narrows), cut (true on a cut tick: jump to the target), hole (the floor's radius, px)}
@@ -176,6 +176,7 @@ func split_record(pointer_always: bool = false) -> Dictionary:
 	d["dist_bh"] = absf(held_u) / CamParams.BODY_H
 	d["pointer"] = "always" if (pointer_always or sep < 0.5) else "split"
 	d["incoming"] = incoming
+	d["many_off"] = many_off   # the bodies outside the frame, [slot, side]: UI's markers (empty with two bodies)
 	d["scroll"] = scroll
 	d["ring"] = {
 		"angle_A": ring[0], "angle_B": ring[1], "sigma": sigma, "arc_A": viewed_arc(0), "arc_B": viewed_arc(1),

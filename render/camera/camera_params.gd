@@ -73,6 +73,7 @@ const CHASE_LEAD_T: float = 0.25        # seconds of his velocity (the lead befo
 const CHASE_LEAD_TAU: float = 0.3       # the lead is smoothed with this time constant
 const RUSH_LEAD_MAX: float = 0.12        # the follow point's velocity lead in a rush is at most this share of the pane width
 const ZIP_FRAME_TAU: float = 0.20        # the zip frame (the box the camera holds) is followed with this time constant
+const GOV_ARM_TAIL: float = 0.1         # the arming outlasts the charge's move by this many seconds
 const GOV_ARM_SPEED: float = 6000.0     # a charge's cue arms the scroll governor as if the view were already moving this fast
 const SWEEP_FEATHER_FRAC: float = 0.30   # the feathered sweep (a switch): the blend's half-width at its widest, a fraction of the width
 # The re-frame at an impact (a body's velocity steps from rest: a beam's launch out of hit-stop, ground that falls away):
