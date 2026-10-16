@@ -35,6 +35,21 @@
     "releaseGrace": 2,
     "oneshotTicks": 90
   },
+  "haptics": {
+    "minGapMs": 80,
+    "launch_open": {
+      "weak": 0.7,
+      "strong": 0.0,
+      "ms": 25,
+      "handheldMs": 25
+    },
+    "form_prompt": {
+      "weak": 0.3,
+      "strong": 0.3,
+      "ms": 15,
+      "handheldMs": 15
+    }
+  },
   "aim": {
     "deadZone": 0.35,
     "latchTicks": 12,

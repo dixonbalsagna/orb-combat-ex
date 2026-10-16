@@ -1,0 +1,38 @@
+diff -ruN a/render/core/main.gd b/render/core/main.gd
+--- a/render/core/main.gd	2026-10-16 15:22:50.213352100 -0700
++++ b/render/core/main.gd	2026-10-16 15:22:50.230935600 -0700
+@@ -165,6 +165,7 @@
+ 	# The pause menu's "hand player two back to the AI" entry.
+ 	ui_hud.player_two_leave_requested.connect(_on_player_two_leave)
+ 	ui_hud.form_prompt_shown.connect(_on_form_prompt)
++	ui_hud.haptic_requested.connect(_on_haptic)
+ 	ui_hud.pause_menu_opened.connect(_on_pause_menu_opened)
+ 	ui_hud.pause_menu_closed.connect(_on_pause_menu_closed)
+ 	ui_hud.new_match_requested.connect(func(): start_match(fresh_seed()))
+@@ -596,6 +597,26 @@
+ 		Input.start_joy_vibration(int(host.hub.slot_pad[slot]), 0.3, 0.3, 0.015)
+ 
+ 
++## A pulse UI asks for on a human's own device (`haptic_requested`: "launch_open", the lit B). What to play, and whether, is Controls' pure
++## SimHaptics.plan (docs/controls/haptics.md): a pad's rumble on its own joypad id, a phone's vibration, nothing on a keyboard or an
++## empty slot, nothing with the haptics option off, and not twice inside 80 ms. Host time only; nothing here reads or writes the sim.
++var _haptic_last_ms: Array = [-100000, -100000]
++
++
++func _on_haptic(slot: int, kind: String) -> void:
++	if slot < 0 or slot > 1:
++		return
++	var now: int = Time.get_ticks_msec()
++	var plan: Dictionary = SimHaptics.plan(kind, host.hub.rumble_target(slot), bool(ui_hud.opts.get("haptics", true)), int(_haptic_last_ms[slot]), now)
++	if plan.is_empty():
++		return
++	_haptic_last_ms[slot] = now
++	if str(plan["via"]) == "handheld":
++		Input.vibrate_handheld(int(plan["ms"]))
++	else:
++		Input.start_joy_vibration(int(plan["id"]), float(plan["weak"]), float(plan["strong"]), float(plan["seconds"]))
++
++
+ ## The pause menu handed player two back to the AI: the hub frees their device (it can join again), and the slot
+ ## changes hands now, with the sim still frozen, so the menu shows it.
+ func _on_player_two_leave() -> void:

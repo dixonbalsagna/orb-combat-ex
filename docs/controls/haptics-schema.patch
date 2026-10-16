@@ -1,0 +1,49 @@
+diff -ruN a/tools/schemas/input-timing.schema.json b/tools/schemas/input-timing.schema.json
+--- a/tools/schemas/input-timing.schema.json	2026-10-16 15:23:15.061952900 -0700
++++ b/tools/schemas/input-timing.schema.json	2026-10-16 15:23:15.070964900 -0700
+@@ -261,6 +261,45 @@
+         "^_": true
+       }
+     },
++    "haptics": {
++      "type": "object",
++      "description": "The pulses the host plays on a pad or a phone when UI asks (docs/controls/haptics.md, sim/input/haptics.gd). Optional: the code defaults are these values. Never the only cue.",
++      "properties": {
++        "minGapMs": {
++          "type": "integer",
++          "minimum": 0,
++          "description": "A second pulse for the same slot inside this many milliseconds is dropped (80)."
++        },
++        "launch_open": {
++          "type": "object",
++          "description": "A launch has opened for him (the lit B): a sharp tick.",
++          "properties": {
++            "weak": { "type": "number", "minimum": 0, "maximum": 1, "description": "The high-frequency motor, 0 to 1 (0.7)." },
++            "strong": { "type": "number", "minimum": 0, "maximum": 1, "description": "The low-frequency motor, 0 to 1 (0)." },
++            "ms": { "type": "integer", "minimum": 0, "maximum": 500, "description": "A pad's pulse, in milliseconds (25)." },
++            "handheldMs": { "type": "integer", "minimum": 0, "maximum": 500, "description": "A phone's vibration, in milliseconds (25)." }
++          },
++          "additionalProperties": false,
++          "patternProperties": { "^_": true }
++        },
++        "form_prompt": {
++          "type": "object",
++          "description": "His form is ready: a soft thump.",
++          "properties": {
++            "weak": { "type": "number", "minimum": 0, "maximum": 1, "description": "The high-frequency motor, 0 to 1 (0.3)." },
++            "strong": { "type": "number", "minimum": 0, "maximum": 1, "description": "The low-frequency motor, 0 to 1 (0.3)." },
++            "ms": { "type": "integer", "minimum": 0, "maximum": 500, "description": "A pad's pulse, in milliseconds (15)." },
++            "handheldMs": { "type": "integer", "minimum": 0, "maximum": 500, "description": "A phone's vibration, in milliseconds (15)." }
++          },
++          "additionalProperties": false,
++          "patternProperties": { "^_": true }
++        }
++      },
++      "additionalProperties": false,
++      "patternProperties": {
++        "^_": true
++      }
++    },
+     "read": {
+       "type": "object",
+       "description": "The press reader (docs/controls/agency-input.md 1a, sim/input/press_read.gd): how holds, mashes and taps in time with the blows are told apart, and the contact debounce. Optional: the code defaults are these values.",
