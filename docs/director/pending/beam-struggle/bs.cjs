@@ -5,11 +5,11 @@
 //                              start (keyed), the pulse, surges and strays, the comeback, and its three ends
 //   sim/director/exchange.gd   a player's clash press is scored (requestAttack); the struggle's tick (the exchange tick)
 //   data/director/interrupts.json, its schema (Tools')   beamStruggle
-// GRANTS (not Encounter's files; the meeting point is one field the director writes and the views read):
-//   sim/core/state.gd          Clash.mid (Simulation)
-//   sim/core/hash.gd           mid hashed while a struggle holds it (Simulation; a clash with no struggle hashes as today)
-//   sim/core/sim.gd            the clash's sparks at mid (Simulation)
-//   render/core/beam_view.gd   the beams meet at mid (Rendering)
+// GRANTS, first, as patches in this folder (not Encounter's files; the meeting point is one field the director writes
+// and the views read). The script refuses until Clash.mid is there.
+//   grant-simulation.patch     sim/core/state.gd Clash.mid; sim/core/hash.gd mid hashed while a struggle holds it (a
+//                              clash with no struggle hashes as today); sim/core/sim.gd the clash's sparks at mid
+//   grant-rendering.patch      render/core/beam_view.gd the beams meet at mid
 // Every anchor is exact text; the script stops at the first missing. --check reads every anchor and writes nothing.
 const fs = require('fs');
 const path = require('path');
@@ -34,22 +34,11 @@ function edit(rel, fn) {
   console.log(rel + (check ? ': anchors ok' : ': ok'));
 }
 
-const MIDV = 'var mid: float = 0.5 + (1.0 if c.aw else -1.0) * 0.35 * p';
-const MIDN = 'var mid: float = c.mid if c.mid >= 0.0 else 0.5 + (1.0 if c.aw else -1.0) * 0.35 * p   # a struggle\'s meeting point, else the old clash\'s glide';
-
-edit('sim/core/state.gd', rep => {
-  rep('\tvar aw: bool = false\n',
-      '\tvar aw: bool = false\n' +
-      '\tvar mid: float = -1.0     # the beam struggle\'s meeting point, 0 at A\'s hands to 1 at D\'s (Encounter writes it); -1 none\n');
-});
-edit('sim/core/hash.gd', rep => {
-  rep('\t\t_obj(out, g.clash, ["t0", "dur", "aw"])\n',
-      '\t\t_obj(out, g.clash, ["t0", "dur", "aw"])\n' +
-      '\t\tif float(g.clash.mid) >= 0.0:\n' +
-      '\t\t\t_obj(out, g.clash, ["mid"])   # a beam struggle\'s meeting point (a clash with no struggle hashes as before)\n');
-});
-edit('sim/core/sim.gd', rep => { rep('\t\t' + MIDV + '\n', '\t\t' + MIDN + '\n'); });
-edit('render/core/beam_view.gd', rep => { rep('\t\t' + MIDV + '\n', '\t\t' + MIDN + '\n'); });
+// The grants come first: the director writes S.game.clash.mid, so Simulation's field must be there.
+{
+  const st = fs.readFileSync(path.join(root, 'sim/core/state.gd'), 'utf8').replace(/\r\n/g, '\n');
+  if (!st.includes('\n\tvar mid: float = -1.0')) throw new Error('the grants first: grant-simulation.patch (Clash.mid is not in sim/core/state.gd) and grant-rendering.patch');
+}
 
 edit('sim/director/exchange.gd', rep => {
   rep('\tif DirBeam.inClash(S, A):\n\t\treturn\n',

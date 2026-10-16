@@ -4,7 +4,7 @@ Owner: Encounter Systems Director. Stage 2 of `docs/director/one-v-many.md`, bui
 
 ## To build it
 
-On a checkout with stage 1 applied (`python docs/architecture/pending/n-bodies/n_bodies.py .`): `node s2.cjs <root>` (it stops unless stage 1 is in), then an import (`DirRing` is a new class).
+On main (stage 1 is on main since 06b0200e): `node s2.cjs <root>` (it stops unless stage 1 is in), then an import (`DirRing` is a new class).
 
 | File | Change |
 | :--- | :--- |
@@ -23,7 +23,26 @@ On a checkout with stage 1 applied (`python docs/architecture/pending/n-bodies/n
 - **The hit-stop** is stage 1's, one for the whole match.
 - **Not built:** the interjection (stage 3); a sweep that hits several; a guard knocked out leaving the match (any KO still ends it, stage 5).
 
-## What it read
+## Re-based on main 4db309ea (2026-10-16)
+
+Stage 1 is on main as Simulation committed it, and `s2.cjs` applies to it as it is: nothing in this folder changed. On a fresh export of 4db309ea:
+
+- **The 1v1 golden is main's, byte for byte.**
+- Parity and determinism, plain and with intros, all pass. The validator passes.
+
+The probes on the same seeds:
+
+| Row | 3 bodies | 4 bodies | 5 bodies |
+| :--- | ---: | ---: | ---: |
+| Blows that land on the one, a second of brawl | 5.50 | 5.70 | 5.54 |
+| The brawl's share in hit freeze | 25.7% | 26.4% | 25.8% |
+| A blow from a ring guard lands on the one, in 20 minutes | 7 | 1 | 2 |
+| The scripted one's blows a press | 0.764 | 0.713 | 0.709 |
+
+- At 3 bodies the stray ring blows rose from 2 to 7, and five of the seven are landings (`impact`).
+- Stage 3 closes every way a ring blow lands: it reads 0 at every count (`../one-v-many-s3/`). The two stages land together.
+
+## What it read (on stage 1's park, 2026-10-15)
 
 `probes/ring1.gd` (the AI on every body) and `probes/ring2.gd` (the one is a scripted player, X every 8 ticks, stick toward his partner), 4 and 3 matches of up to 5 minutes for each body count, seeds 1 to 4.
 

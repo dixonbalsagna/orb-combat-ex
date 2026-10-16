@@ -4,7 +4,7 @@ Owner: Encounter Systems Director. Stage 3 of `docs/director/one-v-many.md`, to 
 
 ## To build it
 
-On a checkout with stage 1 applied: `node s2.cjs <root>` from this folder (it copies this folder's `ring.gd`, stage 3's `DirRing`), then `node s3.cjs <root>`, then an import. Every anchor is exact text, and each script stops at the first one missing.
+On main (stage 1 is on main since 06b0200e): `node s2.cjs <root>` from this folder (it copies this folder's `ring.gd`, stage 3's `DirRing`), then `node s3.cjs <root>`, then an import. Every anchor is exact text, and each script stops at the first one missing.
 
 | File | Change (all inert with two bodies) |
 | :--- | :--- |
@@ -30,7 +30,27 @@ On a checkout with stage 1 applied: `node s2.cjs <root>` from this folder (it co
 - **Tags.** The one's run is carried across a tag; the new partner's is fresh. The Empress (slot 1) as partner has no slice. A guard made partner by a tag steps in to striking distance (`tagStepTicks` 12 at most, at the lunge's speed).
 - **The ring.** A guard in the ring never fires.
 
-## What it read
+## Re-based on main 4db309ea (2026-10-16)
+
+Stage 1 is on main as Simulation committed it, and `s2.cjs` and `s3.cjs` apply to it as they are: nothing in this folder changed. On a fresh export of 4db309ea:
+
+- **The full gate list passes, 35 of 35, and the 1v1 golden is main's byte for byte.**
+- They also apply, with the validator passing, after every window the EP has ordered before them: the return fix, then the levers. The eleventh round's two parks apply after them.
+
+The probes on the same seeds:
+
+| Row | 3 bodies | 4 bodies | 5 bodies |
+| :--- | ---: | ---: | ---: |
+| Blows from two fighters on him within 8 ticks; a guard closing, launching or knocking back; a stray ring blow | 0; 0; 0 | 0; 0; 0 | 0; 0; 0 |
+| Interjections landed of granted (the AI on every body) | 61 of 73 | 36 of 57 | 46 of 63 |
+| Blows that land on the one, a second of brawl | 5.55 | 5.35 | 5.36 |
+| The brawl's share in hit freeze | 26.2% | 26.1% | 26.0% |
+| The scripted one's blows a press | 0.840 | 0.744 | 0.782 |
+| A player partner: ticks her line was held; interjections landed of granted | 0; 1 of 4 | 0; 9 of 12 | 0; 11 of 27 |
+
+Every hard row is still 0. The cost a tick read 442, 562 and 679 µs, but on a machine other sessions were loading (about 53%), so those times are not comparable with the ones below.
+
+## What it read (on stage 1's park, 2026-10-15)
 
 `probes/ring3.gd` (the AI on every body) and `probes/ring2.gd` (the one a scripted player: X every 8 ticks, stick toward his partner), 4 and 3 matches of up to 5 minutes for each count, seeds 1 to 4.
 

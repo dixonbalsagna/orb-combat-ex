@@ -10,7 +10,7 @@ Owner: Encounter Systems Director. One list for VFX (`docs/vfx/multi-fight-plan.
 - `text` names the moment.
 - `source` names the cell (`x`, `y`, `b`) where there is one.
 - `dur` is in live ticks.
-- `x` and `y` give the lean.
+- `x` and `y` give the lean. The beam struggle's cues are the exception: their `x` is the meeting point.
 - A 1v1 match never sends `interject` or `guard_volley`.
 
 ## Built (live, or in a park)
@@ -21,6 +21,22 @@ Owner: Encounter Systems Director. One list for VFX (`docs/vfx/multi-fight-plan.
 | `windup` | `return` | The fighter back from a send, then the defender | The landing tick of his first blow back | `source`: his cell (`""` in a planned exchange). `dur`: the tell, 10 | VFX (`reach.gd` already draws a wind-up ring on any `windup` but `end`). Animation |
 | `return` | `charge`, `lunge` or `far` | The same two | The approach's length | `amount`: its crouch in ticks | Camera (to catch him on his way back). VFX, Animation, Audio |
 | `return_met` | none | The defender who pressed into his approach | none | The meeting's own `meet` events follow | Camera, UI |
+| `beam_struggle` | `start` | The fighter who fired, then the other | The tick it ends by at the latest | `x`: the meeting point (0 at the actor's hands, 1 at the target's) | VFX, Camera, Audio, UI |
+| `beam_pulse` | none | The same two | The pulse's tick | `k`: the pulse, 1 to 15. `x`: the point | Audio (the beat), VFX, UI, Controls (the pad) |
+| `beam_surge` | `surge` or `sharp` | The fighter who surged, then the other | none | `k`: the pulse. `x`: the point after it | VFX (the bulge), Audio |
+| `beam_stray` | none | The fighter who strayed, then the other | none | `k`: the nearest pulse. `x`: the point after it | VFX (his own beam flickers) |
+| `beam_end` | `overwhelmed`, `detonate` or `time` | The winner, then the loser (none for `detonate`) | none | `x`: the point | VFX, Camera, Audio |
+
+The beam struggle's views also read `S.game.clash.mid` each tick (`beam-struggle/README.md`).
+
+## Asked for since (to build)
+
+| `kind` | New fields | Meaning | Read by |
+| :--- | :--- | :--- | :--- |
+| `blow` | `run`, `run_to` | **`run`:** the striker's run on the target as the blow is thrown, in whole points, 0 to `runToClose` (4). **`run_to`:** the blows he must still land for the close, this one included, counted as lights: 1 when this blow, if it lands, is the close (so also after a trade he won) | UI (`brawl-teaching.md` section 3: the run as pips and a caret on the target's plate) |
+
+- **The event class has neither field.** It is two new fields on `SimState.FxEvent` (Simulation's `sim/core/state.gd`), and a few lines in the brawl's `blow` cue.
+- **The hash is untouched:** a cue hashes only its actor, kind, text and source.
 
 ## To build (Game Design's tenth round): the names and fields are agreed
 

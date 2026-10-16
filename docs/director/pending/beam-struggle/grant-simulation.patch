@@ -1,0 +1,32 @@
+--- a/sim/core/state.gd
++++ b/sim/core/state.gd
+@@ -144,6 +144,7 @@
+ 	var t0: float = 0.0
+ 	var dur: float = 0.0
+ 	var aw: bool = false
++	var mid: float = -1.0     # the beam struggle's meeting point, 0 at A's hands to 1 at D's (Encounter writes it); -1 none
+ 
+ 
+ class DirS:
+--- a/sim/core/hash.gd
++++ b/sim/core/hash.gd
+@@ -101,6 +101,8 @@
+ 		out.append(_idx(fs, g.clash.A))
+ 		out.append(_idx(fs, g.clash.D))
+ 		_obj(out, g.clash, ["t0", "dur", "aw"])
++		if float(g.clash.mid) >= 0.0:
++			_obj(out, g.clash, ["mid"])   # a beam struggle's meeting point (a clash with no struggle hashes as before)
+ 	else:
+ 		out.append(null)
+ 	var d := S.dirS
+--- a/sim/core/sim.gd
++++ b/sim/core/sim.gd
+@@ -148,7 +148,7 @@
+ 	if S.game.clash != null:
+ 		var c = S.game.clash
+ 		var p: float = SimMathx.jclamp((S.T - c.t0) / c.dur, 0.0, 1.0)
+-		var mid: float = 0.5 + (1.0 if c.aw else -1.0) * 0.35 * p
++		var mid: float = c.mid if c.mid >= 0.0 else 0.5 + (1.0 if c.aw else -1.0) * 0.35 * p   # a struggle's meeting point, else the old clash's glide
+ 		var ax: float = c.A.x
+ 		var dx: float = SimWrap.sdx(ax, c.D.x)
+ 		var sx: float = SimWrap.wrap(ax + dx * mid)

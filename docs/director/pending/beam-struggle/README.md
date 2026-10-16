@@ -6,18 +6,26 @@ That was true. On main the clash's winner is drawn from state and a random term 
 
 ## To build it
 
-`node bs.cjs <root>` from this folder, then regenerate the golden. `--check` reads every anchor and writes nothing; any other option is refused.
+1. **The grants first,** each by its owner, as patches in this folder:
+   - `grant-simulation.patch` (Simulation): `sim/core/state.gd`, `hash.gd` and `sim.gd`.
+   - `grant-rendering.patch` (Rendering): `render/core/beam_view.gd`.
+   - Each keeps today's clash when there is no struggle. Applied with `git apply` in the repo. Outside a repo, `git apply` here writes CRLF; the content is the same.
+2. **Then `node bs.cjs <root>`** from this folder, and regenerate the golden.
+   - It refuses until `Clash.mid` is in `sim/core/state.gd`.
+   - `--check` reads every anchor and writes nothing; any other option is refused.
+
+**Proved on scratch exports of main 4db309ea:** the two patches and then `bs.cjs` give the same 425 files as the gated build, ignoring line endings.
 
 | File | Owner | Change |
 | :--- | :--- | :--- |
-| `sim/director/beam.gd` | Encounter | The struggle: `_startStruggle`, `clashTick`, `clashPress`, `_press`, `_resolveStruggle` |
-| `sim/director/exchange.gd` | Encounter | A player's press in a clash is scored (`requestAttack`); the struggle's tick |
-| `data/director/interrupts.json` | Encounter | `beamStruggle`, every number Game Design named. `enabled` false is the clash as before |
-| `tools/schemas/director-interrupts.schema.json` | **Tools** | `beamStruggle` |
-| `sim/core/state.gd` | **Simulation** | One field, `Clash.mid`: the meeting point, 0 at A's hands to 1 at D's. -1 for a clash with no struggle |
-| `sim/core/hash.gd` | **Simulation** | `mid` hashed while a struggle holds it. A clash with no struggle hashes as before |
-| `sim/core/sim.gd` | **Simulation** | The clash's sparks at `mid` when there is one, else the old glide |
-| `render/core/beam_view.gd` | **Rendering** | The two beams meet at `mid` when there is one, else the old glide |
+| `sim/director/beam.gd` | Encounter (`bs.cjs`) | The struggle: `_startStruggle`, `clashTick`, `clashPress`, `_press`, `_resolveStruggle` |
+| `sim/director/exchange.gd` | Encounter (`bs.cjs`) | A player's press in a clash is scored (`requestAttack`); the struggle's tick |
+| `data/director/interrupts.json` | Encounter (`bs.cjs`) | `beamStruggle`, every number Game Design named. `enabled` false is the clash as before |
+| `tools/schemas/director-interrupts.schema.json` | **Tools** (`bs.cjs`) | `beamStruggle` |
+| `sim/core/state.gd` | **Simulation** (the patch) | One field, `Clash.mid`: the meeting point, 0 at A's hands to 1 at D's. -1 for a clash with no struggle |
+| `sim/core/hash.gd` | **Simulation** (the patch) | `mid` hashed while a struggle holds it. A clash with no struggle hashes as before |
+| `sim/core/sim.gd` | **Simulation** (the patch) | The clash's sparks at `mid` when there is one, else the old glide |
+| `render/core/beam_view.gd` | **Rendering** (the patch) | The two beams meet at `mid` when there is one, else the old glide |
 
 **With `enabled` false, the golden is main's byte for byte.** With it on, 9 cases move.
 

@@ -1,0 +1,11 @@
+--- a/render/core/beam_view.gd
++++ b/render/core/beam_view.gd
+@@ -54,7 +54,7 @@
+ 	if c != null:
+ 		var p: float = clampf((S.T - c.t0) / c.dur, 0.0, 1.0)
+ 		var ck: float = clash_strength(S.T - c.t0, c.dur)
+-		var mid: float = 0.5 + (1.0 if c.aw else -1.0) * 0.35 * p
++		var mid: float = c.mid if c.mid >= 0.0 else 0.5 + (1.0 if c.aw else -1.0) * 0.35 * p   # a struggle's meeting point, else the old clash's glide
+ 		var ax: float = SimWrap.sdx(cam_x, c.A.x)
+ 		var dx: float = SimWrap.sdx(c.A.x, c.D.x)
+ 		var m := Vector2(ax + dx * mid, c.A.y + 38.0 + (c.D.y - c.A.y) * mid)
