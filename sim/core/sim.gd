@@ -148,7 +148,7 @@ static func step(S: SimState, inputs = null) -> bool:
 	if S.game.clash != null:
 		var c = S.game.clash
 		var p: float = SimMathx.jclamp((S.T - c.t0) / c.dur, 0.0, 1.0)
-		var mid: float = 0.5 + (1.0 if c.aw else -1.0) * 0.35 * p
+		var mid: float = c.mid if c.mid >= 0.0 else 0.5 + (1.0 if c.aw else -1.0) * 0.35 * p   # a struggle's meeting point, else the old clash's glide
 		var ax: float = c.A.x
 		var dx: float = SimWrap.sdx(ax, c.D.x)
 		var sx: float = SimWrap.wrap(ax + dx * mid)

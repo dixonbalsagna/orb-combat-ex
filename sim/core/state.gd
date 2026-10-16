@@ -144,6 +144,7 @@ class Clash:
 	var t0: float = 0.0
 	var dur: float = 0.0
 	var aw: bool = false
+	var mid: float = -1.0     # the beam struggle's meeting point, 0 at A's hands to 1 at D's (Encounter writes it); -1 none
 
 
 class DirS:
@@ -418,6 +419,8 @@ class FxEvent:
 	var source: String = ""      # hazard_telegraph, danger: what is coming (brunt, windup, ambush; World adds collapse, landslide, lava)
 	var eta: float = 0.0         # hazard_telegraph, danger: seconds until it lands, 0 when unknown
 	var hold: float = 0.0        # lodge: the seconds the body is held in the building
+	var run: int = 0             # cue blow (Encounter): the striker's run on the target as the blow is thrown, 0 to 4. Not hashed
+	var run_to: int = 0          # cue blow (Encounter): the blows still to land for the close, this one included; 0 not set. Not hashed
 
 
 class Fighter:

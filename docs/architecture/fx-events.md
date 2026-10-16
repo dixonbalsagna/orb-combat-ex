@@ -88,7 +88,7 @@ Fields are listed in their canonical order, the order the golden hash reads them
 | `danger` | actor, source, eta | `actor` is about to be hit: `source` windup (a parryable strike winds up, `eta` until it lands) or ambush | nothing; Art's danger-sense flash |
 | `launch` | actor, target, amount, face, ux, uy, n | `actor` was launched by `target` at speed `amount`, horizontally toward `face` (+1 or -1). `amount` is the drawn speed, `hypot(vx, vy)` of the fighter as it leaves: the horizontal part already carries the launch's traversal factor (`launchT`, up to TRAV_LAUNCH). Divide `vx` by `launchT` for the unboosted speed that impact damage and energy use `ux`, `uy`: the launch's unit direction before the traversal boost (L0). `n`: the launch number that pairs a journey's ground-contact events to it (0 until World's ground contact sets it) | nothing; Camera's launch follow |
 | `rush` | actor, target, n | `actor` rushes to `target`, arriving at tick `n` | nothing; Camera |
-| `cue` | actor, kind, text, source | a render-only cue from Combat's templates and finishers (the `cue` op, S3b; no state change, no draw): `kind` the cue name (the `cues` vocabulary in `data/combat/finishers.json` says what each looks like), `actor` the fighter the cue names (-1 for both), `text` a camera hint (push_in, tight, freeze_zoom and so on; empty for none), `source` a bark trigger id (finisher_landed, finisher_survived), `"true"` for a bark pause with no trigger yet, empty for none | nothing; VFX, Camera, Audio and UI |
+| `cue` | actor, kind, text, source | a render-only cue from Combat's templates and finishers (the `cue` op, S3b; no state change, no draw): `kind` the cue name (the `cues` vocabulary in `data/combat/finishers.json` says what each looks like), `actor` the fighter the cue names (-1 for both), `text` a camera hint (push_in, tight, freeze_zoom and so on; empty for none), `source` a bark trigger id (finisher_landed, finisher_survived), `"true"` for a bark pause with no trigger yet, empty for none The brawl's `blow` cue also carries `run` (the striker's run on the target, 0 to 4) and `run_to` (the blows still to land for the close, this one included; 0 when not set): view fields, outside the hash (Encounter fills them) | nothing; VFX, Camera, Audio and UI |
 | `struggle_press` | actor, kind, n | the finisher struggle scored a press by `actor`, the fighter on the brink (S3b): `kind` hit (on beat `n`, 1 to 3) or stray (off every beat, `n` 0). A press inside the debounce is not scored and sends nothing | nothing; UI's press marks |
 
 ### The `crater` and `scorch` events
@@ -129,7 +129,7 @@ A renderer can use GPU particles or any other method: the stream contract only m
 Events carry only transient effects. Persistent visuals come from sim state, read after each tick and never written:
 - fighters: `x, y, face, rot, state, stance, tier, hidden, beamCharge, aura, col, hair, name`
 - `S.beams`: origin, direction, length, progress `p`, age `t`, `life`, width `w`, `col`
-- `S.game.clash`: the beam-clash midpoint and its progress
+- `S.game.clash`: the beam-clash midpoint and its progress, and `mid`: the beam struggle's meeting point, 0 at A's hands to 1 at D's, while a struggle holds it (Encounter writes it); -1 for a clash with no struggle, whose midpoint glides as before. It is hashed only when it is 0 or more
 - `S.game.ko`
 - `S.dirS.ex.combo`: the chain counter
 - terrain height: `groundY` and `seaAt`, or `S.base` and `S.deform`

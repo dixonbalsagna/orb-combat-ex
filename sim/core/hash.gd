@@ -101,6 +101,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 		out.append(_idx(fs, g.clash.A))
 		out.append(_idx(fs, g.clash.D))
 		_obj(out, g.clash, ["t0", "dur", "aw"])
+		if float(g.clash.mid) >= 0.0:
+			_obj(out, g.clash, ["mid"])   # a beam struggle's meeting point (a clash with no struggle hashes as before)
 	else:
 		out.append(null)
 	var d := S.dirS

@@ -79,6 +79,8 @@ func _init() -> void:
 	check("shots", _plainShots())
 	check("shots: buildings, wild deflects, the spray, mines", _shots2())
 	check("agency lines", _agencyLines())
+	check("a clash's meeting point", _clashMid())
+	check("the blow cue's run stays out of the hash", _cueRun())
 	check("the intro phase (golden)", "" if SimGolden.introHash() == g.get("intro", "") else "differs")
 	check("composed intros (golden)", "" if SimGolden.introComposedHash() == g.get("introComposed", "") else "differs")
 	check("replay module", _replayModule())
@@ -4152,3 +4154,91 @@ static func _dist(v: PackedInt64Array) -> String:
 	for x in s:
 		tot += x
 	return "mean %.1f us, p50 %d, p99 %d, p99.9 %d, max %d us over %d ticks of 10 matches" % [float(tot) / n, s[n / 2], s[int(n * 0.99)], s[int(n * 0.999)], s[n - 1], n]
+
+
+## The beam struggle's meeting point (Encounter's beam struggle): `S.game.clash.mid`, 0 at A's hands to 1 at D's, written by
+## the director while a struggle holds it, -1 for none. A clash with none hashes as before (a negative value is not read)
+## and throws its sparks on the old glide; one with a meeting point moves the hash and throws the sparks there.
+func _clashMid() -> String:
+	if SimState.Clash.new().mid != -1.0:
+		return "a new clash's meeting point is not -1"
+	var hs: Array = []
+	for mid in [-1.0, -0.25, 0.3, 0.7]:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 9, {"p1": false, "p2": false})
+		for t in range(30):
+			SimCore.step(S)
+			S.out.fx.clear()
+			S.out.feed.clear()
+		var c := SimState.Clash.new()
+		c.A = S.fighters[0]
+		c.D = S.fighters[1]
+		c.t0 = S.T - 0.4
+		c.dur = 1.6
+		c.aw = mid != -0.25   # both sides of the glide
+		c.mid = mid
+		S.game.clash = c
+		hs.append(SimHash.stateHash(S).gameplay)
+		SimCore.step(S)
+		var sp = null
+		for e in S.out.fx:
+			if e.type == "spark":
+				sp = e
+		if sp == null or sp.n != 3 or sp.col != "#ffffff":
+			return "a clash with meeting point %s threw no clash spark" % str(mid)
+		var A = c.A
+		var D = c.D
+		var m: float = mid
+		if mid < 0.0:
+			m = 0.5 + (1.0 if c.aw else -1.0) * 0.35 * SimMathx.jclamp((S.T - c.t0) / c.dur, 0.0, 1.0)
+		var ex: float = SimWrap.wrap(A.x + SimWrap.sdx(A.x, D.x) * m)
+		var ey: float = (A.y + (D.y - A.y) * m) + 38.0
+		if absf(sp.x - ex) > 1e-9 or absf(sp.y - ey) > 1e-9:
+			return "meeting point %s: the spark is at %.3f, %.3f, not %.3f, %.3f" % [str(mid), sp.x, sp.y, ex, ey]
+		SimCore.dispose(S)
+	# the same match and clash: no meeting point hashes alike whatever the negative value and the side; a point moves it
+	if hs[2] == hs[0] or hs[3] == hs[2]:
+		return "a meeting point did not move the hash"
+	var S2 := SimCore.createSim()
+	SimCore.newMatch(S2, 9, {"p1": false, "p2": false})
+	for t in range(30):
+		SimCore.step(S2)
+		S2.out.fx.clear()
+		S2.out.feed.clear()
+	var c2 := SimState.Clash.new()
+	c2.A = S2.fighters[0]
+	c2.D = S2.fighters[1]
+	c2.t0 = S2.T - 0.4
+	c2.dur = 1.6
+	c2.aw = true
+	S2.game.clash = c2
+	var hNone: String = SimHash.stateHash(S2).gameplay
+	c2.mid = -0.25
+	var hNeg: String = SimHash.stateHash(S2).gameplay
+	SimCore.dispose(S2)
+	if hNone != hs[0] or hNeg != hNone:
+		return "a clash with no meeting point does not hash as before"
+	return ""
+
+
+## UI's blow cue (Encounter fills it): `run` and `run_to` ride on the cue as view fields. A cue hashes only its actor, kind,
+## text and source, so they move no hash; a fresh event has both at 0 (run_to 0: not set).
+func _cueRun() -> String:
+	var a := SimState.FxEvent.new()
+	if a.run != 0 or a.run_to != 0:
+		return "a fresh event's run or run_to is not 0"
+	var b := SimState.FxEvent.new()
+	for e in [a, b]:
+		e.type = "cue"
+		e.actor = 0.0
+		e.kind = "blow"
+		e.text = "light"
+	b.run = 3
+	b.run_to = 1
+	var ha := SimHash.Hasher.new()
+	SimHash.hashFx(ha, [a])
+	var hb := SimHash.Hasher.new()
+	SimHash.hashFx(hb, [b])
+	if ha.hex() != hb.hex():
+		return "a cue's run or run_to moved the events' hash"
+	return ""
