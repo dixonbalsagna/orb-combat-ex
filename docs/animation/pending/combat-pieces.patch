@@ -1,0 +1,1256 @@
+diff --git a/data/anim/fighters.json b/data/anim/fighters.json
+index f808669..6ba3fda 100644
+--- a/data/anim/fighters.json
++++ b/data/anim/fighters.json
+@@ -17,7 +17,8 @@
+      "pair2",
+      "protag9",
+      "protag10",
+-     "protag11"
++     "protag11",
++     "protag12"
+     ]
+    },
+    "pose_profile": {
+@@ -84,7 +85,8 @@
+      "pair2",
+      "rival6",
+      "rival7",
+-     "rival8"
++     "rival8",
++     "rival9"
+     ]
+    },
+    "pose_profile": {
+@@ -138,6 +140,38 @@
+      }
+     }
+    }
++  },
++  "common": {
++   "_about": "The common pool: the training dummy (REFERENCE) and the Empress's guards (alias `guard`), who have no waves of their own. They play the key sets the fighters share by name (Combat's `w1.*`, `rm.*`, `rb.*` and the guards' heavy), so a beat that names a piece reaches the same key set a fighter's would. Nothing here is a pick list for the fighters: it is read only for a body whose roster id names this row.",
++   "replaces": "REFERENCE",
++   "shape": "A",
++   "waves": {
++    "strikes": "wave1",
++    "entries": "wave2",
++    "more": [
++     "rival2",
++     "rival4",
++     "rival10",
++     "pair1",
++     "pair2"
++    ]
++   },
++   "pose_profile": {
++    "hand_states": {},
++    "rise": 0,
++    "stance": 1.0,
++    "twist": 1.0,
++    "guard_raise": 0,
++    "head_pitch": 0
++   },
++   "timing": {
++    "light": "snappy",
++    "heavy": "fluid",
++    "fluid_bias": 0.0
++   },
++   "arc": {
++    "bias": 0.0
++   }
+   }
+  }
+ }
+diff --git a/data/anim/pair_live.json b/data/anim/pair_live.json
+index 6d56ec7..2b8b030 100644
+--- a/data/anim/pair_live.json
++++ b/data/anim/pair_live.json
+@@ -3,7 +3,9 @@
+  "aliases": {
+   "rival": "antihero",
+   "anti-hero": "antihero",
+-  "anti_hero": "antihero"
++  "anti_hero": "antihero",
++  "guard": "common",
++  "ring_guard": "common"
+  },
+  "_about": "How the launch pair's parked waves play in a live match (docs/animation/pair-live.md). aliases: other names for a fighter of fighters.json (the neutral id rival is the antihero). A roster id is mapped to a fighter of data/anim/fighters.json (its key, or the id it `replaces`: PROTAGONIST is the protagonist, RIVAL the antihero), whose waves are baked when his first body is built. shared: waves baked for both. gated: a strike that joins its fighter's pick list only while its gate is open (both_ground: both fighters near the ground; striker_air: the striker well above it); the other strikes of his strike waves (the manifest's light and heavy ones, never the tail) are the pick lists, walked as the go-live step 1 lists are. kinds: a shot kind (data/fight/shots.json) to the energy role it plays. cues: the sim's render cues (SimFx.cue) to what they start. spray_gap: ticks between a fighter's bolts under which the next one is a spray beat (the spread window of agency-pass.md 15.4). roles: per fighter, what each role plays: seq (a sequence of a parked wave, started where the cue or the shot says), hold (a pose held and eased: ticks, in and out seconds, w the weight), charged (charge: the pose held from the charge cue, full: the pose it takes at the flash, release: the hold on the shot), taunts (the far taunts: one is picked by a hash of the tick), taunt_first (the gesture a stand-off opens with, before any blow has landed), taunt_close, taunt_close_air (the close taunt when he is in the air), drop_the_act, crown_release, shove (events the sim does not send yet: they play when it does). Render only, outside the sim's data hash. gesture_groups: the groups of bones an intro gesture plays on (head, torso, arms, legs). roles.<fighter>.gestures: for each of Narrative's ten gesture intents (docs/narrative/dynamic-intros.md section 11) the fighter's own small motion: seq (a sequence or a pose id), w (a weight, optional), mask (the groups it plays on, default head, torso and arms), hold (seconds, for a pose). An intent a fighter has no entry for plays nothing. Started by the sim's `intro_gesture {actor, intent, at}` (the intent in `kind`, the point in `text`).",
+  "shared": [
+@@ -11,7 +13,7 @@
+   "burst1",
+   "launch1",
+   "miss1",
+-  "charge1", "depth1", "round10"
++  "charge1", "depth1", "round10", "beam1"
+  ],
+  "gated": [
+   {
+@@ -51,7 +53,18 @@
+   "energy_shove": "shove"
+  },
+  "roles": {
++  "common": {
++   "bolt": {
++    "seq": "bm.guard_bolt",
++    "wind_ticks": 4
++   }
++  },
+   "protagonist": {
++   "beam": {
++    "charge": "bm.hold.charge_protagonist",
++    "fire": "bm.hold.fire_protagonist",
++    "bone": "hand_r"
++   },
+    "bolt": {
+     "seq": "pg.bolt",
+     "wind_ticks": 4
+@@ -196,6 +209,11 @@
+    }
+   },
+   "antihero": {
++   "beam": {
++    "charge": "bm.hold.charge_antihero",
++    "fire": "bm.hold.fire_antihero",
++    "bone": "hand_r"
++   },
+    "bolt": {
+     "seq": "rw.bolt",
+     "wind_ticks": 4
+diff --git a/data/anim/press_styles.json b/data/anim/press_styles.json
+index b69916d..6defc83 100644
+--- a/data/anim/press_styles.json
++++ b/data/anim/press_styles.json
+@@ -46,6 +46,14 @@
+    "twist": 0.0, "twist_ticks": 6, "ghosts": 2,
+    "hold": {"from": 28, "to": 46, "squash": 0.6, "lean_back": 0.12, "pose": {"protagonist": "ch.b_p.load", "antihero": "ch.b_r.load"}}
+   },
++  "cash_in": {
++   "_about": "The cash-in (RT + B inside a perfect window; the beat field `cash_in`): a heavy thrown AT ONCE. Two ticks to the contact, no snap, no sink, no tell and no hold of the wind-up (nothing to read, nothing to perfect-block); the follow-through is the super row's, a little shorter, and it ends the chain (no carry into a next blow). The press still says style `super` to VFX, with `cash_in` set for its flash.",
++   "prof": {"solve_hz": 60, "snap_ticks": 0, "load_ease": 1.0, "load_ticks": {"light": 2, "heavy": 2}, "hold_ticks": 6, "follow_ticks": 8, "recover_ticks": 10, "overshoot": 0.1, "lag": 0.45},
++   "alternate": false, "carry": false, "carry_ticks": 0,
++   "squash": 0.0, "lean_back": 0.12, "back": 3.0,
++   "stretch": {"spine": 0.34, "rise": 3.0, "lead": 9.0, "ticks": 5, "smear_ticks": 2},
++   "twist": 0.0, "twist_ticks": 6, "ghosts": 2
++  },
+   "tech": {
+    "prof": {"solve_hz": 60, "snap_ticks": 0, "load_ease": 3.0, "load_ticks": {"light": 6, "heavy": 6}, "hold_ticks": 10, "follow_ticks": 4, "recover_ticks": 6, "overshoot": 0.0, "lag": 0.1},
+    "alternate": false, "carry": false, "carry_ticks": 0,
+diff --git a/data/anim/reach.json b/data/anim/reach.json
+index 9f05d80..7260f7c 100644
+--- a/data/anim/reach.json
++++ b/data/anim/reach.json
+@@ -2,6 +2,7 @@
+  "schema": "anim.reach/1",
+  "_about": "How many units beyond its own striking distance (the manifest row's range.offset) the rival may stand and a strike key set still lands: the hand, foot, elbow or knee ends within 1.5 units of the target at the contact, with the body's own lunge and step (render only; a negative number is how far it ends short even at its own striking distance). Measured on the real solve by render/anim/tools/anim_check.gd `_reach_scan` (a wind-up of 2 ticks for a bolt, 4 for a light, 12 for a medium or a blast, 28 for the super-heavy tier), at most 160. Encounter's closing rule keeps a blow's slack inside this number (docs/animation/cues-c2.md section 2).",
+  "cover": {
++  "gd.su_sole_fall": 32,
+   "ph.body_hook": 61,
+   "pk.blast_chest": 37,
+   "pk.blast_gut": 40,
+@@ -69,6 +70,9 @@
+   "pu.su_knee_legs": 41,
+   "pu.su_palm_heave": 56,
+   "pu.su_turn": 79,
++  "pv.palm_turn": 42,
++  "pv.su_blade_fall": 81,
++  "pv.su_palm_arm": 80,
+   "rb.body_hook": 64,
+   "rb.body_ram": 23,
+   "rb.rib_shot": 43,
+@@ -93,6 +97,10 @@
+   "rm.plate_drop": 56,
+   "rm.plate_hammer": 46,
+   "rm.short_uppercut": 43,
++  "rq.cross_fist": 60,
++  "rq.jab_fist": 48,
++  "rq.spear_fist": 57,
++  "rq.su_fist_unwind": 49,
+   "ru.su_edge_legs": 64,
+   "ru.su_elbow_heave": 46,
+   "ru.su_fist_heave": 61,
+diff --git a/hp11/data/anim/waves/beam1.poses.json b/data/anim/waves/beam1.poses.json
+new file mode 100644
+index 0000000..31e088b
+--- /dev/null
++++ b/data/anim/waves/beam1.poses.json
+@@ -0,0 +1,10 @@
++{"schema":"anim.wave.poses/1","_about":"beam1: poses for Encounter's step 3 cue events, generated by render/anim/tools/wave_gen.mjs from render/anim/tools/waves/beam1.mjs. Played by AnimFighter (step 3 cues and ground contact). Render only, outside the sim's data hash.",
++ "poses": {
++  "bm.guard_bolt.wind": {"family":"upright","lean":4,"hips":[0,-4,0],"spine":{"lean":2,"twist":-14},"head":{"pitch":2,"yaw":4},"hand_r":[10,60,18],"pole_hand_r":[-4,4,14],"hand_l":[16,54,-8],"foot_r":[-14,2.5,10],"foot_l":[14,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: the guard readying a measured bolt: the open palm drawn back to the shoulder, the other hand open at his chest, both feet planted","_legal":["hands_open_or_claw","not_at_hip"]},
++  "bm.guard_bolt.fire": {"family":"upright","lean":8,"hips":[4,-4,0],"spine":{"lean":2,"twist":16},"head":{"pitch":0,"yaw":4},"hand_r":[48,60,10],"pole_hand_r":[2,0,8],"hand_l":[14,54,-8],"foot_r":[-14,2.5,10],"foot_l":[14,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: the bolt leaving: the open palm thrown flat to shoulder height, the feet where they were","_legal":["hands_open_or_claw","not_at_hip"]},
++  "bm.guard_bolt.settle": {"family":"upright","lean":8,"hips":[2,-4,0],"spine":{"lean":6,"twist":-12},"head":{"pitch":6,"yaw":8},"hand_r":[14,57,13],"hand_l":[24,55,-5],"foot_r":[-9,2.5,8],"foot_l":[11,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"PROVISIONAL: back to the stance, the hand open","_legal":["hands_open_or_claw","not_at_hip"]},
++  "bm.hold.charge_protagonist": {"family":"upright","lean":-2,"hip_twist":34,"hips":[-4,-6,0],"spine":{"lean":2,"twist":-26},"head":{"pitch":2,"yaw":18},"hand_r":[4,62,22],"pole_hand_r":[-12,8,18],"hand_l":[20,54,-9],"foot_r":[-14,2.5,10],"foot_l":[14,2.5,-8],"hands":{"r":"open","l":"open"},"_legal":["hands_open_or_claw","not_at_hip","not_both_arms_back","wrists_apart"],"_orig":"PROVISIONAL: the Protagonist charging a beam: side-on with the weight back, one arm drawn back at shoulder height and the open palm at the shoulder facing forward, flat, the other hand open in guard at the chest a shoulder width away; nothing held in the hand"},
++  "bm.hold.fire_protagonist": {"family":"upright_lunge","lean":14,"hip_twist":18,"hips":[16,-8,0],"spine":{"lean":6,"twist":16},"head":{"pitch":0,"yaw":4},"hand_r":[58,62,9],"pole_hand_r":[4,2,8],"hand_l":[10,48,-12],"foot_r":[-12,2.5,10],"foot_l":[24,2.5,-8],"hands":{"r":"open","l":"open"},"_legal":["hands_open_or_claw","not_at_hip","wrists_apart"],"_orig":"PROVISIONAL: the Protagonist casting: the arm thrown straight out at shoulder height with the heel of the open palm leading, the fingers up, the body lunged behind it, the other hand open and low at the rear"},
++  "bm.hold.charge_antihero": {"family":"upright","lean":4,"hip_twist":30,"hips":[-2,-6,0],"spine":{"lean":4,"twist":-24},"head":{"pitch":2,"yaw":16},"hand_r":[6,62,20],"pole_hand_r":[-12,10,16],"hand_l":[22,56,-6],"foot_r":[-14,2.5,10],"foot_l":[14,2.5,-8],"hands":{"r":"fist","l":"open"},"_legal":["not_at_hip","not_both_arms_back","wrists_apart"],"_orig":"PROVISIONAL: the Anti-hero charging a beam: side-on, the closed fist drawn back along the shoulder line with the forearm plate up, the rear hand open and forward in guard, never pointing; nothing held in the hand"},
++  "bm.hold.fire_antihero": {"family":"upright_lunge","lean":14,"hip_twist":20,"hips":[16,-8,0],"spine":{"lean":6,"twist":20},"head":{"pitch":0,"yaw":4},"hand_r":[58,63,8],"pole_hand_r":[4,2,8],"hand_l":[14,54,-8],"foot_r":[-12,2.5,10],"foot_l":[24,2.5,-8],"hands":{"r":"fist","l":"open"},"_legal":["not_at_hip","wrists_apart"],"_orig":"PROVISIONAL: the Anti-hero casting: the closed fist driven straight out at shoulder height, the forearm plate behind it, the other hand open in guard"}
++ }}
+diff --git a/hp11/data/anim/waves/beam1.sequences.json b/data/anim/waves/beam1.sequences.json
+new file mode 100644
+index 0000000..9b6436b
+--- /dev/null
++++ b/data/anim/waves/beam1.sequences.json
+@@ -0,0 +1,4 @@
++{"schema":"anim.wave.sequences/1","_about":"beam1: sequences for Encounter's step 3 cue events, generated by render/anim/tools/wave_gen.mjs from render/anim/tools/waves/beam1.mjs. Played by AnimFighter (step 3 cues and ground contact). Render only, outside the sim's data hash.",
++ "sequences": {
++  "bm.guard_bolt": {"dur":12,"phases":[{"pose":"bm.guard_bolt.wind","ticks":4},{"pose":"bm.guard_bolt.fire","ticks":3},{"pose":"bm.guard_bolt.settle","ticks":5}],"_wave":"beam1","name":"guard_bolt","alt":null}
++ }}
+diff --git a/data/anim/waves/launch1.poses.json b/data/anim/waves/launch1.poses.json
+index 908cbcb..848d329 100644
+--- a/data/anim/waves/launch1.poses.json
++++ b/data/anim/waves/launch1.poses.json
+@@ -1,6 +1,7 @@
+ {"schema":"anim.wave.poses/1","_about":"launch1: poses for Encounter's step 3 cue events, generated by render/anim/tools/wave_gen.mjs from render/anim/tools/waves/launch1.mjs. Played by AnimFighter (step 3 cues and ground contact). Render only, outside the sim's data hash.",
+  "poses": {
+-  "lq.open.reel": {"family":"upright","lean":-14,"hips":[-8,2,0],"spine":{"lean":-10,"twist":0},"head":{"pitch":-16},"hand_r":[8,62,16],"hand_l":[10,60,-16],"foot_r":[-10,2.5,9],"foot_l":[8,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: the push of the blow: the weight thrown back on the rear leg, the head snapped back, the arms flung up and apart for an instant","_legal":["reaction"]},
++  "lq.open.snap": {"family":"upright","lean":-16,"hips":[-10,2,0],"spine":{"lean":-14,"twist":0},"head":{"pitch":-28},"hand_r":[26,76,24],"hand_l":[-26,70,-24],"foot_r":[-12,2.5,10],"foot_l":[8,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL (the eleventh round, Orb: \"his head snaps back and his arms fly open\"): the push of the blow at its peak: the weight thrown back on the rear leg, the head snapped well back, the arms flung apart in the side-on view, one up and forward, one up and back, the palms open; four ticks, a recoil and not a stance","_legal":["reaction"]},
++  "lq.open.open": {"family":"upright","lean":-10,"hips":[-6,0,0],"spine":{"lean":-8,"twist":0},"head":{"pitch":-18},"hand_r":[24,64,26],"hand_l":[-22,62,-26],"foot_r":[-10,2.5,9],"foot_l":[8,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: the arms still open at shoulder height and coming in, the head still back, the chest bare to the rival; three ticks, then the daze takes him (the open arms never last 12 ticks: Legal h07)","_legal":["reaction"]},
+   "lq.open.daze": {"family":"crouched","lean":26,"hips":[-2,-16,0],"spine":{"lean":22,"twist":0},"head":{"pitch":30},"hand_r":[20,32,14],"hand_l":[18,34,-14],"foot_r":[-8,2.5,9],"foot_l":[12,2.5,-8],"hands":{"r":"relaxed","l":"relaxed"},"_orig":"PROVISIONAL: dazed: doubled over with the knees bent, the arms hanging low and loose in front of him a shoulder width apart, the head down; nothing guarding him","_legal":["reaction"]},
+   "lq.open.come_up": {"family":"upright","lean":10,"hips":[-2,-6,0],"spine":{"lean":6,"twist":-12},"head":{"pitch":12,"yaw":8},"hand_r":[14,57,13],"hand_l":[24,55,-5],"foot_r":[-9,2.5,8],"foot_l":[11,2.5,-7],"hands":{"l":"fist","r":"fist"},"_orig":"PROVISIONAL: the head lifting and the guard coming back as the daze ends","_legal":["reaction"]}
+  }}
+diff --git a/data/anim/waves/launch1.sequences.json b/data/anim/waves/launch1.sequences.json
+index 4061751..8f4e01c 100644
+--- a/data/anim/waves/launch1.sequences.json
++++ b/data/anim/waves/launch1.sequences.json
+@@ -1,4 +1,4 @@
+ {"schema":"anim.wave.sequences/1","_about":"launch1: sequences for Encounter's step 3 cue events, generated by render/anim/tools/wave_gen.mjs from render/anim/tools/waves/launch1.mjs. Played by AnimFighter (step 3 cues and ground contact). Render only, outside the sim's data hash.",
+  "sequences": {
+-  "lq.open": {"dur":30,"phases":[{"pose":"lq.open.reel","w":0.14},{"pose":"lq.open.daze","w":0.7},{"pose":"lq.open.come_up","w":0.16}],"_wave":"launch1","name":"open","alt":null}
++  "lq.open": {"dur":30,"phases":[{"pose":"lq.open.snap","ticks":4},{"pose":"lq.open.open","ticks":3},{"pose":"lq.open.daze","w":0.7},{"pose":"lq.open.come_up","w":0.16}],"_wave":"launch1","name":"open","alt":null}
+  }}
+diff --git a/hp11/data/anim/waves/protag12.keysets.json b/data/anim/waves/protag12.keysets.json
+new file mode 100644
+index 0000000..65e3fad
+--- /dev/null
++++ b/data/anim/waves/protag12.keysets.json
+@@ -0,0 +1,6 @@
++{"schema":"anim.wave.keysets/1","_about":"protag12: keysets of the Anti-hero's key strikes, generated by render/anim/tools/wave_gen.mjs from render/anim/tools/waves/protag12.mjs and docs/combat/pending/strikes.antihero.protag12.json. Parked: baked only with --waves, no live match plays them. Render only, outside the sim's data hash.",
++ "keysets": {
++  "pv.su_blade_fall": {"limb":"hand_r","target":"chest","weight":"heavy","step_max":22,"tell_at":0.5,"squash_w":0,"drive":"fall","_combat":"strike.su_blade_fall","_wave":"protag12","keys":[{"role":"load","pose":"pv.su_blade_fall.chamber"},{"role":"contact","pose":"pv.su_blade_fall.contact"},{"role":"follow","pose":"pv.su_blade_fall.follow"}],"tip":"blade","path":"drop"},
++  "pv.su_palm_arm": {"limb":"hand_r","target":"arm_r","weight":"heavy","step_max":22,"tell_at":0.5,"squash_w":0.3,"drive":"step_through","_combat":"strike.su_palm_arm","_wave":"protag12","keys":[{"role":"load","pose":"pv.su_palm_arm.chamber"},{"role":"contact","pose":"pv.su_palm_arm.contact"},{"role":"follow","pose":"pv.su_palm_arm.follow"}],"tip":"palm","path":"line"},
++  "pv.palm_turn": {"limb":"hand_r","target":"chest","weight":"light","_combat":"strike.palm_turn","_wave":"protag12","keys":[{"role":"load","pose":"pv.palm_turn.chamber"},{"role":"contact","pose":"pv.palm_turn.contact"},{"role":"follow","pose":"pv.palm_turn.follow"}],"tip":"heel","path":"arc_out"}
++ }}
+diff --git a/hp11/data/anim/waves/protag12.manifest.json b/data/anim/waves/protag12.manifest.json
+new file mode 100644
+index 0000000..4aba814
+--- /dev/null
++++ b/data/anim/waves/protag12.manifest.json
+@@ -0,0 +1,127 @@
++{
++ "wave": "protag12",
++ "strikes": [
++  {
++   "id": "pv.su_blade_fall",
++   "combat": "strike.su_blade_fall",
++   "name": "su_blade_fall",
++   "weight": "heavy",
++   "target": "chest",
++   "limb": "hand_r",
++   "limb2": null,
++   "offset": 50,
++   "reach": 92,
++   "band": "mid",
++   "ticks": {
++    "load": 28,
++    "follow": 8,
++    "recover": 14
++   },
++   "ground": "ok",
++   "uses": {
++    "arms": 1
++   },
++   "from": null,
++   "named": true,
++   "legal": [
++    "hands_open_or_claw",
++    "no_held_raise",
++    "not_at_hip"
++   ],
++   "look": "PROVISIONAL. He rises tall with one blade hand cocked at the shoulder and the other hand up in guard, then folds down behind it and the edge of the hand falls on a slant onto the chest.",
++   "orig": "PROVISIONAL: he rises tall with one blade hand cocked at the shoulder and the other hand up in guard, then folds down behind it and the edge of the hand falls on a slant onto the chest",
++   "poses": [
++    "pv.su_blade_fall.chamber",
++    "pv.su_blade_fall.contact",
++    "pv.su_blade_fall.follow"
++   ],
++   "alt": null,
++   "_genericAb": false,
++   "_family": null,
++   "tip": "blade",
++   "path": "drop",
++   "flags": []
++  },
++  {
++   "id": "pv.su_palm_arm",
++   "combat": "strike.su_palm_arm",
++   "name": "su_palm_arm",
++   "weight": "heavy",
++   "target": "arm_r",
++   "limb": "hand_r",
++   "limb2": null,
++   "offset": 54,
++   "reach": 108,
++   "band": "mid",
++   "ticks": {
++    "load": 28,
++    "follow": 8,
++    "recover": 14
++   },
++   "ground": "ok",
++   "uses": {
++    "arms": 1
++   },
++   "from": null,
++   "named": true,
++   "legal": [
++    "hands_open_or_claw",
++    "not_at_hip"
++   ],
++   "look": "PROVISIONAL. A stepping palm: the striking hand drawn back close, then one straight line as the body steps through, the heel of the palm set on the rival arm.",
++   "orig": "PROVISIONAL: a stepping palm: the striking hand drawn back close to him, then one straight line to the arm as the body steps through, the heel of the palm set on it; the lead hand open in guard",
++   "poses": [
++    "pv.su_palm_arm.chamber",
++    "pv.su_palm_arm.contact",
++    "pv.su_palm_arm.follow"
++   ],
++   "alt": null,
++   "_genericAb": false,
++   "_family": null,
++   "tip": "palm",
++   "path": "line",
++   "flags": []
++  },
++  {
++   "id": "pv.palm_turn",
++   "combat": "strike.palm_turn",
++   "name": "palm_turn",
++   "weight": "light",
++   "target": "chest",
++   "limb": "hand_r",
++   "limb2": null,
++   "offset": 58,
++   "reach": 88,
++   "band": "long",
++   "ticks": {
++    "load": 6,
++    "follow": 4,
++    "recover": 6
++   },
++   "ground": "ok",
++   "uses": {
++    "arms": 1
++   },
++   "from": null,
++   "named": true,
++   "legal": [
++    "hands_open_or_claw",
++    "not_at_hip"
++   ],
++   "look": "PROVISIONAL. A turning palm-heel: the open hand carried out and round on the backfist arc and the heel of it set on the chest, the palm leading; he is turned away from the rival at the end of it.",
++   "orig": "PROVISIONAL: a turning palm-heel: the open hand carried out and round on the backfist arc, the arm bent through the turn, the heel of the palm set on the chest, the palm leading",
++   "poses": [
++    "pv.palm_turn.chamber",
++    "pv.palm_turn.contact",
++    "pv.palm_turn.follow"
++   ],
++   "alt": null,
++   "_genericAb": false,
++   "_family": null,
++   "tip": "heel",
++   "path": "arc_out",
++   "flags": []
++  }
++ ],
++ "skipped": []
++}
+\ No newline at end of file
+diff --git a/hp11/data/anim/waves/protag12.poses.json b/data/anim/waves/protag12.poses.json
+new file mode 100644
+index 0000000..85b5177
+--- /dev/null
++++ b/data/anim/waves/protag12.poses.json
+@@ -0,0 +1,12 @@
++{"schema":"anim.wave.poses/1","_about":"protag12: poses of the Anti-hero's key strikes, generated by render/anim/tools/wave_gen.mjs from render/anim/tools/waves/protag12.mjs and docs/combat/pending/strikes.antihero.protag12.json. Parked: baked only with --waves, no live match plays them. Render only, outside the sim's data hash.",
++ "poses": {
++  "pv.su_blade_fall.chamber": {"family":"upright","lean":-8,"hips":[-2,3,0],"spine":{"lean":-8,"twist":-10},"head":{"pitch":-4,"yaw":8},"hand_r":[-2,66,15],"hand_l":[16,58,-8],"foot_r":[-6,2.5,9],"foot_l":[8,2.5,-8],"hands":{"r":"open","l":"open"},"pole_hand_r":[-10,10,12],"_orig":"PROVISIONAL: he rises tall with one blade hand cocked at the shoulder and the other hand up in guard, then folds down behind it and the edge of the hand falls on a slant onto the chest (the wind-up)","_legal":["hands_open_or_claw","no_held_raise","not_at_hip"]},
++  "pv.su_blade_fall.contact": {"family":"upright_lunge","lean":34,"hips":[26,-12,0],"spine":{"lean":24,"twist":14},"head":{"pitch":22},"hand_r":[56,44,7],"pole_hand_r":[-2,22,10],"hand_l":[20,50,-11],"foot_r":[-2,4,9],"foot_l":[34,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: he rises tall with one blade hand cocked at the shoulder and the other hand up in guard, then folds down behind it and the edge of the hand falls on a slant onto the chest","_legal":["hands_open_or_claw","no_held_raise","not_at_hip"]},
++  "pv.su_blade_fall.follow": {"family":"upright","lean":28,"hips":[22,-12,0],"spine":{"lean":24,"twist":8},"head":{"pitch":22,"yaw":3.5},"hand_r":[38,36,8],"pole_hand_r":[-2,22,10],"hand_l":[26,58,-12],"foot_r":[-5,3,8],"foot_l":[23.5,2.5,-7.5],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: he rises tall with one blade hand cocked at the shoulder and the other hand up in guard, then folds down behind it and the edge of the hand falls on a slant onto the chest (the follow-through)","_legal":["hands_open_or_claw","no_held_raise","not_at_hip"]},
++  "pv.su_palm_arm.chamber": {"family":"upright","lean":-6,"hips":[-6,-2,0],"spine":{"lean":-4,"twist":-18},"head":{"pitch":-2,"yaw":8},"hand_r":[0,58,14],"hand_l":[16,62,-8],"foot_r":[-14,2.5,10],"foot_l":[12,2.5,-8],"hands":{"r":"open","l":"open"},"pole_hand_r":[-10,4,10],"_orig":"PROVISIONAL: a stepping palm: the striking hand drawn back close to him, then one straight line to the arm as the body steps through, the heel of the palm set on it; the lead hand open in guard (the wind-up)","_legal":["hands_open_or_claw","not_at_hip"]},
++  "pv.su_palm_arm.contact": {"family":"upright_lunge","lean":18,"hips":[30,-8,0],"spine":{"lean":10,"twist":24},"head":{"pitch":8},"hand_r":[62,56,8],"pole_hand_r":[2,6,8],"hand_l":[8,52,-12],"foot_r":[-4,6,9],"foot_l":[32,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a stepping palm: the striking hand drawn back close to him, then one straight line to the arm as the body steps through, the heel of the palm set on it; the lead hand open in guard","_legal":["hands_open_or_claw","not_at_hip"]},
++  "pv.su_palm_arm.follow": {"family":"upright","lean":14.5,"hips":[24,-8,0],"spine":{"lean":8,"twist":8},"head":{"pitch":7,"yaw":3.5},"hand_r":[42,56,6],"pole_hand_r":[2,6,8],"hand_l":[8,52,-12],"foot_r":[-4,4,9],"foot_l":[22.5,2.5,-7.5],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a stepping palm: the striking hand drawn back close to him, then one straight line to the arm as the body steps through, the heel of the palm set on it; the lead hand open in guard (the follow-through)","_legal":["hands_open_or_claw","not_at_hip"]},
++  "pv.palm_turn.chamber": {"family":"upright","lean":10,"hips":[3,-4,0],"spine":{"lean":4,"twist":-27.5,"bend":8},"head":{"pitch":3,"yaw":8},"hand_r":[10,58,25],"hand_l":[20,59,-6],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"r":"open","l":"open"},"pole_hand_r":[-4,-2,12],"_orig":"PROVISIONAL: a turning palm-heel: the open hand carried out and round on the backfist arc, the arm bent through the turn, the heel of the palm set on the chest, the palm leading (the wind-up)","_legal":["hands_open_or_claw","not_at_hip"]},
++  "pv.palm_turn.contact": {"family":"upright_lunge","lean":14,"hips":[18,-3,0],"spine":{"lean":0,"twist":-30,"bend":-4},"head":{"pitch":0,"yaw":-10},"hand_r":[44,58,11],"pole_hand_r":[4,4,9],"hand_l":[12,61,-8],"foot_r":[-6,2.5,9],"foot_l":[26,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a turning palm-heel: the open hand carried out and round on the backfist arc, the arm bent through the turn, the heel of the palm set on the chest, the palm leading","_legal":["hands_open_or_claw","not_at_hip"]},
++  "pv.palm_turn.follow": {"family":"upright","lean":22,"hips":[12,-4,0],"spine":{"lean":4,"twist":34.5,"bend":-2},"head":{"pitch":3,"yaw":4},"hand_r":[32,60,10],"pole_hand_r":[4,4,9],"hand_l":[18,61,-6],"foot_r":[-7.5,2.5,8.5],"foot_l":[19.5,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a turning palm-heel: the open hand carried out and round on the backfist arc, the arm bent through the turn, the heel of the palm set on the chest, the palm leading (the follow-through)","_legal":["hands_open_or_claw","not_at_hip"]}
++ }}
+diff --git a/hp11/data/anim/waves/rival10.keysets.json b/data/anim/waves/rival10.keysets.json
+new file mode 100644
+index 0000000..7025d98
+--- /dev/null
++++ b/data/anim/waves/rival10.keysets.json
+@@ -0,0 +1,4 @@
++{"schema":"anim.wave.keysets/1","_about":"rival10: keysets of the Anti-hero's key strikes, generated by render/anim/tools/wave_gen.mjs from render/anim/tools/waves/rival10.mjs and docs/combat/pending/strikes.antihero.rival10.json. Parked: baked only with --waves, no live match plays them. Render only, outside the sim's data hash.",
++ "keysets": {
++  "gd.su_sole_fall": {"limb":"foot_r","target":"chest","weight":"heavy","step_max":12,"tell_at":0.5,"squash_w":0,"drive":"fall","_combat":"strike.su_sole_fall","_wave":"rival10","keys":[{"role":"load","pose":"gd.su_sole_fall.chamber"},{"role":"contact","pose":"gd.su_sole_fall.contact"},{"role":"follow","pose":"gd.su_sole_fall.follow"}],"tip":"sole","path":"drop"}
++ }}
+diff --git a/hp11/data/anim/waves/rival10.manifest.json b/data/anim/waves/rival10.manifest.json
+new file mode 100644
+index 0000000..52c8ca3
+--- /dev/null
++++ b/data/anim/waves/rival10.manifest.json
+@@ -0,0 +1,45 @@
++{
++ "wave": "rival10",
++ "strikes": [
++  {
++   "id": "gd.su_sole_fall",
++   "combat": "strike.su_sole_fall",
++   "name": "su_sole_fall",
++   "weight": "heavy",
++   "target": "chest",
++   "limb": "foot_r",
++   "limb2": null,
++   "offset": 48,
++   "reach": 75,
++   "band": "mid",
++   "ticks": {
++    "load": 28,
++    "follow": 8,
++    "recover": 14
++   },
++   "ground": "plant",
++   "uses": {
++    "legs": 1
++   },
++   "from": null,
++   "named": true,
++   "legal": [
++    "no_leap"
++   ],
++   "look": "PROVISIONAL. The knee lifted to the hip with the foot above it, then the leg drives down and the sole is set on the chest; the standing foot keeps its place.",
++   "orig": "PROVISIONAL: the knee lifted to the hip with the foot above it, then the leg drives down and the sole is set on the chest; the standing foot keeps its place",
++   "poses": [
++    "gd.su_sole_fall.chamber",
++    "gd.su_sole_fall.contact",
++    "gd.su_sole_fall.follow"
++   ],
++   "alt": null,
++   "_genericAb": false,
++   "_family": null,
++   "tip": "sole",
++   "path": "drop",
++   "flags": []
++  }
++ ],
++ "skipped": []
++}
+\ No newline at end of file
+diff --git a/hp11/data/anim/waves/rival10.poses.json b/data/anim/waves/rival10.poses.json
+new file mode 100644
+index 0000000..cb4cfe9
+--- /dev/null
++++ b/data/anim/waves/rival10.poses.json
+@@ -0,0 +1,6 @@
++{"schema":"anim.wave.poses/1","_about":"rival10: poses of the Anti-hero's key strikes, generated by render/anim/tools/wave_gen.mjs from render/anim/tools/waves/rival10.mjs and docs/combat/pending/strikes.antihero.rival10.json. Parked: baked only with --waves, no live match plays them. Render only, outside the sim's data hash.",
++ "poses": {
++  "gd.su_sole_fall.chamber": {"family":"upright","lean":-10,"hips":[-2,0,0],"spine":{"lean":-8,"twist":-6},"head":{"pitch":4,"yaw":6},"hand_r":[-4,56,18],"hand_l":[4,60,-16],"foot_r":[10,68,8],"foot_l":[2,2.5,-7],"hands":{"r":"open","l":"open"},"pole_foot_r":[14,40,0],"_orig":"PROVISIONAL: the knee lifted to the hip with the foot above it, then the leg drives down and the sole is set on the chest; the standing foot keeps its place (the wind-up)","_legal":["no_leap"]},
++  "gd.su_sole_fall.contact": {"family":"upright_lunge","lean":-4,"hips":[8,0,0],"spine":{"lean":-8},"head":{"pitch":4},"hand_r":[-4,56,18],"hand_l":[4,60,-16],"foot_r":[32,52,6],"pole_foot_r":[14,28,0],"foot_l":[10,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: the knee lifted to the hip with the foot above it, then the leg drives down and the sole is set on the chest; the standing foot keeps its place","_legal":["no_leap"]},
++  "gd.su_sole_fall.follow": {"family":"upright","lean":3.5,"hips":[5.5,-2,0],"spine":{"lean":-1.5,"twist":-5.5},"head":{"pitch":5,"yaw":3.5},"hand_r":[4,56.5,16],"hand_l":[13,58,-11],"foot_r":[14,33,7],"pole_foot_r":[14,28,0],"foot_l":[10.5,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: the knee lifted to the hip with the foot above it, then the leg drives down and the sole is set on the chest; the standing foot keeps its place (the follow-through)","_legal":["no_leap"]}
++ }}
+diff --git a/hp11/data/anim/waves/rival9.keysets.json b/data/anim/waves/rival9.keysets.json
+new file mode 100644
+index 0000000..aca2fbe
+--- /dev/null
++++ b/data/anim/waves/rival9.keysets.json
+@@ -0,0 +1,7 @@
++{"schema":"anim.wave.keysets/1","_about":"rival9: keysets of the Anti-hero's key strikes, generated by render/anim/tools/wave_gen.mjs from render/anim/tools/waves/rival9.mjs and docs/combat/pending/strikes.antihero.rival9.json. Parked: baked only with --waves, no live match plays them. Render only, outside the sim's data hash.",
++ "keysets": {
++  "rq.jab_fist": {"limb":"hand_r","target":"head","weight":"light","_combat":"strike.jab_fist","_wave":"rival9","keys":[{"role":"load","pose":"rq.jab_fist.chamber"},{"role":"contact","pose":"rq.jab_fist.contact"},{"role":"follow","pose":"rq.jab_fist.follow"}],"tip":"fist","path":"line"},
++  "rq.cross_fist": {"limb":"hand_r","target":"chest","weight":"light","_combat":"strike.cross_fist","_wave":"rival9","keys":[{"role":"load","pose":"rq.cross_fist.chamber"},{"role":"contact","pose":"rq.cross_fist.contact"},{"role":"follow","pose":"rq.cross_fist.follow"}],"tip":"fist","path":"line"},
++  "rq.spear_fist": {"limb":"hand_r","target":"gut","weight":"light","_combat":"strike.spear_fist","_wave":"rival9","keys":[{"role":"load","pose":"rq.spear_fist.chamber"},{"role":"contact","pose":"rq.spear_fist.contact"},{"role":"follow","pose":"rq.spear_fist.follow"}],"tip":"fist","path":"line"},
++  "rq.su_fist_unwind": {"limb":"hand_r","target":"jaw","weight":"heavy","step_max":14,"tell_at":0.5,"squash_w":0,"drive":"unwind","_combat":"strike.su_fist_unwind","_wave":"rival9","keys":[{"role":"load","pose":"rq.su_fist_unwind.chamber"},{"role":"contact","pose":"rq.su_fist_unwind.contact"},{"role":"follow","pose":"rq.su_fist_unwind.follow"}],"tip":"fist","path":"arc_out"}
++ }}
+diff --git a/hp11/data/anim/waves/rival9.manifest.json b/data/anim/waves/rival9.manifest.json
+new file mode 100644
+index 0000000..acedda6
+--- /dev/null
++++ b/data/anim/waves/rival9.manifest.json
+@@ -0,0 +1,154 @@
++{
++ "wave": "rival9",
++ "strikes": [
++  {
++   "id": "rq.jab_fist",
++   "combat": "strike.jab_fist",
++   "name": "jab_fist",
++   "weight": "light",
++   "target": "head",
++   "limb": "hand_r",
++   "limb2": null,
++   "offset": 58,
++   "reach": 98,
++   "band": "long",
++   "ticks": {
++    "load": 6,
++    "follow": 4,
++    "recover": 5
++   },
++   "ground": "ok",
++   "uses": {
++    "arms": 1
++   },
++   "from": null,
++   "named": true,
++   "legal": [],
++   "look": "PROVISIONAL. The jab as a fist: a straight fist from the lead shoulder, the forearm plate behind it, the arm one line with the rear leg.",
++   "orig": "PROVISIONAL: the jab as a fist: a straight fist from the lead shoulder, the forearm plate behind it",
++   "poses": [
++    "rq.jab_fist.chamber",
++    "rq.jab_fist.contact",
++    "rq.jab_fist.follow"
++   ],
++   "alt": null,
++   "_genericAb": false,
++   "_family": null,
++   "tip": "fist",
++   "path": "line",
++   "flags": []
++  },
++  {
++   "id": "rq.cross_fist",
++   "combat": "strike.cross_fist",
++   "name": "cross_fist",
++   "weight": "light",
++   "target": "chest",
++   "limb": "hand_r",
++   "limb2": null,
++   "offset": 58,
++   "reach": 98,
++   "band": "long",
++   "ticks": {
++    "load": 6,
++    "follow": 4,
++    "recover": 5
++   },
++   "ground": "ok",
++   "uses": {
++    "arms": 1
++   },
++   "from": null,
++   "named": true,
++   "legal": [],
++   "look": "PROVISIONAL. The cross as a fist: the rear fist driven through the chest with the hips turned full, the lead forearm folded across the ribs.",
++   "orig": "PROVISIONAL: the cross as a fist: the rear fist driven through the chest, the hips turned full",
++   "poses": [
++    "rq.cross_fist.chamber",
++    "rq.cross_fist.contact",
++    "rq.cross_fist.follow"
++   ],
++   "alt": null,
++   "_genericAb": false,
++   "_family": null,
++   "tip": "fist",
++   "path": "line",
++   "flags": []
++  },
++  {
++   "id": "rq.spear_fist",
++   "combat": "strike.spear_fist",
++   "name": "spear_fist",
++   "weight": "light",
++   "target": "gut",
++   "limb": "hand_r",
++   "limb2": null,
++   "offset": 54,
++   "reach": 98,
++   "band": "mid",
++   "ticks": {
++    "load": 6,
++    "follow": 4,
++    "recover": 5
++   },
++   "ground": "ok",
++   "uses": {
++    "arms": 1
++   },
++   "from": null,
++   "named": true,
++   "legal": [],
++   "look": "PROVISIONAL. The spear hand as a fist: a low straight fist from the crouch into the gut, the spine and the arm one long diagonal.",
++   "orig": "PROVISIONAL: the spear hand as a fist: a low straight fist from the crouch into the gut",
++   "poses": [
++    "rq.spear_fist.chamber",
++    "rq.spear_fist.contact",
++    "rq.spear_fist.follow"
++   ],
++   "alt": null,
++   "_genericAb": false,
++   "_family": null,
++   "tip": "fist",
++   "path": "line",
++   "flags": []
++  },
++  {
++   "id": "rq.su_fist_unwind",
++   "combat": "strike.su_fist_unwind",
++   "name": "su_fist_unwind",
++   "weight": "heavy",
++   "target": "jaw",
++   "limb": "hand_r",
++   "limb2": null,
++   "offset": 58,
++   "reach": 108,
++   "band": "long",
++   "ticks": {
++    "load": 28,
++    "follow": 8,
++    "recover": 14
++   },
++   "ground": "ok",
++   "uses": {
++    "arms": 1
++   },
++   "from": null,
++   "named": true,
++   "legal": [],
++   "look": "PROVISIONAL. An unwinding fist: coiled with the fist carried across to the far shoulder, then the body opens out and the fist comes round level at the jaw; one turn, never two.",
++   "orig": "PROVISIONAL: an unwinding fist: coiled with the fist carried across to the far shoulder, the body opening out so the fist comes round level at the jaw, the elbow leading the turn; one turn",
++   "poses": [
++    "rq.su_fist_unwind.chamber",
++    "rq.su_fist_unwind.contact",
++    "rq.su_fist_unwind.follow"
++   ],
++   "alt": null,
++   "_genericAb": false,
++   "_family": null,
++   "tip": "fist",
++   "path": "arc_out",
++   "flags": []
++  }
++ ],
++ "skipped": []
++}
+\ No newline at end of file
+diff --git a/hp11/data/anim/waves/rival9.poses.json b/data/anim/waves/rival9.poses.json
+new file mode 100644
+index 0000000..1594283
+--- /dev/null
++++ b/data/anim/waves/rival9.poses.json
+@@ -0,0 +1,15 @@
++{"schema":"anim.wave.poses/1","_about":"rival9: poses of the Anti-hero's key strikes, generated by render/anim/tools/wave_gen.mjs from render/anim/tools/waves/rival9.mjs and docs/combat/pending/strikes.antihero.rival9.json. Parked: baked only with --waves, no live match plays them. Render only, outside the sim's data hash.",
++ "poses": {
++  "rq.jab_fist.chamber": {"family":"upright","lean":12,"hips":[4,-3,0],"spine":{"lean":5,"twist":-6},"head":{"pitch":6,"yaw":6},"hand_r":[14,60,11],"hand_l":[20,56,-6],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: the jab as a fist: a straight fist from the lead shoulder, the forearm plate behind it (the wind-up)"},
++  "rq.jab_fist.contact": {"family":"upright_lunge","lean":24,"hips":[19,-3,0],"spine":{"lean":4,"twist":22},"head":{"pitch":6,"yaw":4},"hand_r":[59,66,7],"hand_l":[20,58,-6],"foot_r":[-8,2.5,9],"foot_l":[25,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: the jab as a fist: a straight fist from the lead shoulder, the forearm plate behind it"},
++  "rq.jab_fist.follow": {"family":"upright","lean":20,"hips":[11,-3,0],"spine":{"lean":4,"twist":16},"head":{"pitch":6,"yaw":4},"hand_r":[42,64,8],"hand_l":[20,58,-6],"foot_r":[-8,2.5,9],"foot_l":[18,2.5,-7],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: the jab as a fist: a straight fist from the lead shoulder, the forearm plate behind it (the follow-through)"},
++  "rq.cross_fist.chamber": {"family":"upright","lean":10,"hips":[2,-4,0],"spine":{"lean":4,"twist":-28},"head":{"pitch":6,"yaw":8},"hand_r":[4,58,13],"hand_l":[22,56,-6],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: the cross as a fist: the rear fist driven through the chest, the hips turned full (the wind-up)"},
++  "rq.cross_fist.contact": {"family":"upright_lunge","lean":26,"hips":[21,-4,0],"spine":{"lean":4,"twist":36},"head":{"pitch":6,"yaw":2},"hand_r":[61,62,5],"hand_l":[10,50,-4],"foot_r":[-6,2.5,9],"foot_l":[27,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: the cross as a fist: the rear fist driven through the chest, the hips turned full"},
++  "rq.cross_fist.follow": {"family":"upright","lean":20,"hips":[12,-4,0],"spine":{"lean":4,"twist":24},"head":{"pitch":6,"yaw":4},"hand_r":[43,60,8],"hand_l":[10,50,-4],"foot_r":[-6,2.5,9],"foot_l":[20,2.5,-7],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: the cross as a fist: the rear fist driven through the chest, the hips turned full (the follow-through)"},
++  "rq.spear_fist.chamber": {"family":"upright","lean":10,"hips":[2,-4,0],"spine":{"lean":4,"twist":-28},"head":{"pitch":6,"yaw":8},"hand_r":[4,58,13],"hand_l":[22,56,-6],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: the spear hand as a fist: a low straight fist from the crouch into the gut (the wind-up)"},
++  "rq.spear_fist.contact": {"family":"crouched","lean":26,"hips":[14,-12,0],"spine":{"lean":8,"twist":30},"head":{"pitch":6,"yaw":2},"hand_r":[50,46,6],"hand_l":[8,50,-4],"foot_r":[-6,2.5,9],"foot_l":[27,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: the spear hand as a fist: a low straight fist from the crouch into the gut"},
++  "rq.spear_fist.follow": {"family":"upright","lean":20,"hips":[12,-4,0],"spine":{"lean":4,"twist":24},"head":{"pitch":6,"yaw":4},"hand_r":[38,46,8],"hand_l":[16,58,-8],"foot_r":[-6,2.5,9],"foot_l":[20,2.5,-7],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: the spear hand as a fist: a low straight fist from the crouch into the gut (the follow-through)"},
++  "rq.su_fist_unwind.chamber": {"family":"upright","lean":4,"hips":[-4,-4,0],"spine":{"lean":2,"twist":-56},"head":{"pitch":0,"yaw":-14},"hand_r":[14,64,-10],"hand_l":[10,42,-19],"foot_r":[-10,2.5,9],"foot_l":[10,2.5,-8],"hands":{"r":"fist","l":"open"},"hip_twist":-22,"pole_hand_r":[-4,8,-2],"_orig":"PROVISIONAL: an unwinding fist: coiled with the fist carried across to the far shoulder, the body opening out so the fist comes round level at the jaw, the elbow leading the turn; one turn (the wind-up)"},
++  "rq.su_fist_unwind.contact": {"family":"upright_lunge","lean":12,"hip_twist":40,"hips":[18,-4,0],"spine":{"lean":4,"twist":50},"head":{"pitch":2,"yaw":-16},"hand_r":[46,74,22],"pole_hand_r":[10,8,14],"hand_l":[12,60,-9],"foot_r":[-6,2.5,9],"foot_l":[28,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: an unwinding fist: coiled with the fist carried across to the far shoulder, the body opening out so the fist comes round level at the jaw, the elbow leading the turn; one turn"},
++  "rq.su_fist_unwind.follow": {"family":"upright","lean":11,"hip_twist":18,"hips":[14,-4,0],"spine":{"lean":5,"twist":22},"head":{"pitch":4,"yaw":-5},"hand_r":[30,66,12],"pole_hand_r":[10,8,14],"hand_l":[16,60,-9],"foot_r":[-7.5,2.5,8.5],"foot_l":[20.5,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: an unwinding fist: coiled with the fist carried across to the far shoulder, the body opening out so the fist comes round level at the jaw, the elbow leading the turn; one turn (the follow-through)"}
++ }}
+diff --git a/render/anim/anim_data.gd b/render/anim/anim_data.gd
+index 621b8db..3419e55 100644
+--- a/render/anim/anim_data.gd
++++ b/render/anim/anim_data.gd
+@@ -259,6 +259,8 @@ static func ensure_fighter(roster_id: String) -> String:
+ 				var cid: String = String(st.get("combat", ""))
+ 				if cid.begins_with("strike.") and cid.substr(7) != nm:
+ 					lst.by_name[cid.substr(7)] = String(st.id)   # the piece's own Combat id when it differs from the set's name (one id a fighter in the pieces table: the rival's strike.bolt_flick_gut is rk.bolt_flick)
++				if bool(st.get("named", false)):
++					continue   # a piece Combat names (manifest `named`: the Protagonist's palm_turn, the Anti-hero's fist jabs): findable by the beat's `piece`, in no pick list until the pool is the hook
+ 				if nm.begins_with("su_") or nm.begins_with("bolt_") or nm.begins_with("blast_"):
+ 					continue   # the super-heavy tier and the energy-in-reach pieces are named by the director's beat (`piece`), never picked at random: they are findable by name and in no pick list
+ 				if gated.has(nm):
+diff --git a/render/anim/anim_fighter.gd b/render/anim/anim_fighter.gd
+index 09b2758..615c65b 100644
+--- a/render/anim/anim_fighter.gd
++++ b/render/anim/anim_fighter.gd
+@@ -274,7 +274,10 @@ var hand_shine: float = 0.0              # the striking hand's shine while a hel
+ var hand_shine_limb: String = ""
+ var tech_cue: float = -1.0               # the time of the last air tech (cue `tech`)
+ var chase_state: String = ""             # "", start, blow, end: the chase's cue (cue `chase`), for the body and for VFX
+-var chase_n: int = 0
++var cast: Dictionary = {}                # the beam being cast now: {state: charge or fire, pose, w, bone} (the beam layer's own pose; `cast_origin()` is where it leaves); empty when none
++var chase_n: int = 0                     # the number of the chase's blow now (1 to 6, from the cue's `k`)
++var chase_tick: int = 0                  # the contact tick of the last `blow` or `arrive` (the cue's `n`, an absolute tick)
++var _chase_arrived_t: float = -1.0       # the time of the `arrive` cue: the dive eases out over 4 ticks after it
+ var interject: Dictionary = {}           # a ring guard's interjection, from its windup cue: {land, dur}
+ var _cash_in_now: bool = false
+ var _mr_blow: int = -1                   # the march's memory: the blow being drawn, the contact of this one and of the one before
+@@ -995,10 +998,19 @@ func on_tech(T: float) -> void:
+ 
+ ## The chase (cue `chase`, text start, blow or end; `n` the blow's number): the chaser follows his own send as drawn travel and beats the rival down in the air, up to six blows. The body shows it as the dive
+ ## `rt.chase.dive` mixed over the travel from the start to the end; each blow is an ordinary beat (in the air, on the stance of the air).
+-func on_chase(text: String, n: int, T: float) -> void:
++func on_chase(text: String, k: int, n: int, T: float, tick: int = 0) -> void:
++	# Encounter's agreed list (docs/director/pending/return/cues.md): `k` the blow's number (1 to 6) on `blow`; `n` is always an absolute tick: the contact tick on `blow` and `arrive`
++	if text == "arrive":
++		_chase_arrived_t = T
++		chase_tick = n
++		debug["chase_arrive"] = int(debug.get("chase_arrive", 0)) + 1
++		return   # the state stays what it was (`start` or `blow`): the dive eases out in `_waiting_layer`
+ 	chase_state = text
+-	chase_n = n if text == "blow" else (0 if text == "start" else chase_n)
+-	if text == "start" or text == "blow":
++	chase_n = k if text == "blow" else (0 if text == "start" else chase_n)
++	if text == "blow":
++		chase_tick = n
++	if text == "start":
++		_chase_arrived_t = -1.0
+ 		_chase_t = T
+ 	debug["chase_" + text] = int(debug.get("chase_" + text, 0)) + 1
+ 
+@@ -1314,6 +1326,8 @@ func _waiting_layer(S: SimState, f) -> void:
+ 	# the chase: the chaser is dived toward the rival from the start cue to the end cue (two bodies or many)
+ 	if chase_state == "start" or chase_state == "blow":
+ 		var cw: float = smoothstep(0.0, 4.0 * DT, S.T - _chase_t) if chase_state == "start" else 1.0
++		if _chase_arrived_t >= 0.0:
++			cw *= 1.0 - 0.75 * smoothstep(0.0, 4.0 * DT, S.T - _chase_arrived_t)   # arrived: the blows' own beats draw the body, the dive keeps a quarter
+ 		if AnimData.pose_exists("rt.chase.dive") and f.state == "free":
+ 			_mix_pose(AnimData.pose("rt.chase.dive", vface < 0.0), 0.55 * cw)
+ 	elif chase_state == "end":
+@@ -2433,8 +2447,10 @@ func _press_style(S: SimState, f, ex, sk: Array) -> String:
+ 			var sv: String = String(args.get("strength", ""))
+ 			if sm.has(sv) and rows.has(String(sm[sv])):
+ 				st = String(sm[sv])
+-	if bool(args.get("cash_in", false)) and rows.has("super"):
+-		st = "super"   # the cash-in is a heavy: the super row's follow-through, with no tell
++	if bool(args.get("cash_in", false)) and rows.has("cash_in"):
++		st = "cash_in"   # the cash-in's own row (data `styles.cash_in`): a heavy thrown at once, no tell
++	elif bool(args.get("cash_in", false)) and rows.has("super"):
++		st = "super"   # no row of its own in the data: the super row's follow-through, with no tell
+ 	if st != "":
+ 		pass
+ 	elif rows.has(String(args.get("style", ""))):
+@@ -2496,8 +2512,9 @@ func _press_prof(sp: Dictionary, style: String, args: Dictionary = {}) -> Dictio
+ 	var out: Dictionary = sp.duplicate()
+ 	out.merge(_style_row(style, String(args.get("piece", "")).begins_with("strike.bolt_") or String(args.get("piece", "")).begins_with("strike.blast_")).get("prof", {}), true)
+ 	if bool(args.get("cash_in", false)):
+-		out["load_ticks"] = {"light": 2, "heavy": 2}   # the cash-in (RT + B inside a perfect window): a heavy thrown at once, 2 ticks, no tell
+-		out["snap_ticks"] = 0
++		if style != "cash_in":   # the cash-in (RT + B inside a perfect window) has its row's load of 2 ticks and no snap; without the row it is the super row at 2 ticks
++			out["load_ticks"] = {"light": 2, "heavy": 2}
++			out["snap_ticks"] = 0
+ 	elif args.has("windup"):
+ 		# a held blow winds up for as long as it was held (the sim's or the study's count, in ticks): the whole window is the wind-up
+ 		var wu: int = clampi(int(args.windup), 1, 120)
+@@ -2863,7 +2880,7 @@ func _press_body(row: Dictionary, style: String, ul: float, dtc: float, sn: floa
+ 	var bone: String = limb.replace("elbow", "forearm").replace("knee", "shin")
+ 	if not ix.has(bone):
+ 		bone = "hand_r"
+-	press = {"style": style, "phase": phase, "blow": blow_id, "ordinal": nth, "ticks_to_contact": roundi((tc - T) / DT), "limb": limb, "bone": bone, "side": side, "smear": smear, "ghosts": int(row.get("ghosts", 0)), "weight": bw, "squash": s, "stretch": e, "twist": twk, "dx": _pr_dx}
++	press = {"style": "super" if style == "cash_in" else style, "phase": phase, "blow": blow_id, "ordinal": nth, "ticks_to_contact": roundi((tc - T) / DT), "limb": limb, "bone": bone, "side": side, "smear": smear, "ghosts": int(row.get("ghosts", 0)), "weight": bw, "squash": s, "stretch": e, "twist": twk, "dx": _pr_dx}
+ 	if _pr_q.size() != AnimRig.N:
+ 		_pr_q.resize(AnimRig.N)
+ 	for i in range(AnimRig.N):
+@@ -3892,19 +3909,40 @@ func _form_pose(spec: Dictionary, e: float, live: bool) -> void:
+ 
+ 
+ func _beam_layer(S: SimState, f, T: float) -> void:
++	cast = {}
+ 	if f.beamCharge != null:
+ 		var p: float = clampf((T - float(f.beamCharge)) / 0.8, 0.0, 1.0)
+-		_mix_pose(AnimData.pose("beam.charge"), smoothstep(0.0, 0.35, p))
++		var cid: String = _cast_id("charge")
++		_mix_pose(AnimData.pose(cid), smoothstep(0.0, 0.35, p))
+ 		_aim_arms(_aim_angle(S, f, null), smoothstep(0.2, 0.6, p))
++		cast = {"state": "charge", "pose": cid, "w": smoothstep(0.0, 0.35, p), "bone": _cast_bone()}
+ 		return
+ 	for b in S.beams:
+ 		if b.A == f and b.t < b.life:
+ 			var bwt: float = 1.0 - smoothstep(0.55, 0.95, b.t)
+-			_mix_pose(AnimData.pose("beam.fire"), bwt)
++			var fid: String = _cast_id("fire")
++			_mix_pose(AnimData.pose(fid), bwt)
+ 			_aim_arms(_aim_angle(S, f, b), bwt)
++			cast = {"state": "fire", "pose": fid, "w": bwt, "bone": _cast_bone()}
+ 			return
+ 
+ 
++## The fighter's own casting pose for a beam (data/anim/pair_live.json `roles.<fighter>.beam`: `charge` and `fire` pose ids, `bone` the firing hand): the generic closed-fist pair (beam.charge, beam.fire) when
++## he has none. A beam is cast with ONE hand, open or closed, drawn back to the shoulder and thrown out; there is never anything held in it, between the hands or at the hip (Legal's franchise rule).
++func _cast_id(state: String) -> String:
++	var id: String = String(_en_role("beam").get(state, ""))
++	return id if id != "" and AnimData.pose_exists(id) else "beam." + state
++
++
++func _cast_bone() -> String:
++	return String(_en_role("beam").get("bone", "hand_r"))
++
++
++## Where the beam leaves the body, for VFX (model space, root offset included; Vector3.ZERO when no beam is being cast): the heel of the palm for the Protagonist, the fist for the Anti-hero.
++func cast_origin() -> Vector3:
++	return socket(String(cast.bone)) if not cast.is_empty() else Vector3.ZERO
++
++
+ ## The angle the signature is aimed at, in the body frame (0 forward, positive up): the beam's own direction once it is fired, the
+ ## opponent's direction while it charges.
+ func _aim_angle(S: SimState, f, b) -> float:
+diff --git a/render/anim/anim_held_lint.gd b/render/anim/anim_held_lint.gd
+index 0a2e224..49206f3 100644
+--- a/render/anim/anim_held_lint.gd
++++ b/render/anim/anim_held_lint.gd
+@@ -38,9 +38,9 @@ const CLASS_RULES := [
+ 	["rs.hold.sig_tell", "tell"], ["ps.hold.sig_tell", "tell"], ["rs.tell.", "tell"], ["ps.tell.", "tell"],
+ 	["rs.hold.sig_end", "tell"], ["ps.hold.sig_end", "tell"], ["rs.end.", "tell"], ["ps.end.", "tell"],
+ 	["rs.", "tell"], ["ps.", "tell"], ["st.", "tell"], ["stance.", "tell"], ["cue.", "tell"],
+-	["ag.hold.charge", "charge"], ["pn.hold.brace", "charge"], ["charge.hold", "charge"], ["beam.charge", "charge"],
++	["ag.hold.charge", "charge"], ["pn.hold.brace", "charge"], ["charge.hold", "charge"], ["beam.charge", "charge"], ["bm.hold.charge", "charge"],
+ 	["ag.taunt", "gesture"], ["pg.taunt", "gesture"], ["rw.taunt", "gesture"], ["rw.drop_the_act", "gesture"], ["pi.", "gesture"], ["ri.", "gesture"], ["in.cuff", "gesture"], ["emote.", "gesture"],
+-	["ls.ready_e.", "energy"], ["ls.ready_", "rest"], ["ls.", "rest"], ["rv.", "energy"], ["pn.", "energy"], ["pg.", "energy"], ["en.", "energy"], ["rw.", "energy"], ["pf.", "energy"], ["beam.", "energy"], ["pe.", "energy"],
++	["ls.ready_e.", "energy"], ["ls.ready_", "rest"], ["ls.", "rest"], ["rv.", "energy"], ["pn.", "energy"], ["pg.", "energy"], ["en.", "energy"], ["rw.", "energy"], ["pf.", "energy"], ["beam.", "energy"], ["bm.", "energy"], ["pe.", "energy"],
+ 	["zp.hold", "hold"],
+ 	# one-off motion and reaction poses that nothing emits from (knock-backs, the buried fighter, get-ups, intro landings, the stagger and block reactions, the pair's clash, check and grab poses)
+ 	["lq.", "rest"], ["mi.", "rest"], ["ag.", "rest"], ["gc.", "rest"], ["in.", "rest"], ["pp.", "rest"], ["s3.", "rest"], ["zp.", "rest"],
+diff --git a/render/anim/render_anim.gd b/render/anim/render_anim.gd
+index 7ca881c..50fd1cd 100644
+--- a/render/anim/render_anim.gd
++++ b/render/anim/render_anim.gd
+@@ -327,7 +327,7 @@ static func consume(S: SimState, events: Array) -> void:
+ 					elif kd == "tech":
+ 						fighter(S, S.fighters[who]).on_tech(t_cue)   # the rival's tech in the air (the chase's answer): a guard press timed to the chaser's arrival
+ 					elif kd == "chase":
+-						fighter(S, S.fighters[who]).on_chase(String(e.text), int(_ev(e, "n", 0)), t_cue)
++						fighter(S, S.fighters[who]).on_chase(String(e.text), int(roundf(float(_ev(e, "k", 0.0)))), int(_ev(e, "n", 0)), t_cue, S.tick)
+ 					elif kd == "windup":
+ 						fighter(S, S.fighters[who]).on_windup(String(e.text), String(_ev(e, "source", "")), float(_ev(e, "dur", 0.0)), int(_ev(e, "n", 0)), int(roundf(float(_ev(e, "k", 0.0)))), t_cue, S.tick)
+ 					elif kd == "miss":
+diff --git a/render/anim/tools/anim_check.gd b/render/anim/tools/anim_check.gd
+index 08833d4..df5a50a 100644
+--- a/render/anim/tools/anim_check.gd
++++ b/render/anim/tools/anim_check.gd
+@@ -596,12 +596,12 @@ var _tier_damage: bool = false   # a tier scene sends the damage event of every
+ func _tier_scene(S: SimState, who: String, style: String, pieces: Array, contacts: Array, extra: Dictionary = {}, kind: String = "light") -> Dictionary:
+ 	var f0 = S.fighters[0]
+ 	var f1 = S.fighters[1]
+-	f0.id = "PROTAGONIST" if who == "protagonist" else "RIVAL"
++	f0.id = "PROTAGONIST" if who == "protagonist" else ("REFERENCE" if who == "common" else "RIVAL")   # `common`: the training dummy (data/anim/fighters.json `common`)
+ 	f1.id = "RIVAL" if who == "protagonist" else "PROTAGONIST"
+ 	RenderAnim._fighters.clear()
+ 	var key: String = String(AnimData.ensure_fighter(String(f0.id)))
+ 	AnimData.ensure_fighter(String(f1.id))
+-	var su_pre: String = "pu.su_" if who == "protagonist" else "ru.su_"   # the super-heavy tier is parked (no fighter's wave list names it): every piece of it is findable by name
++	var su_pre: String = "pu.su_" if who == "protagonist" else ("gd.su_" if who == "common" else "ru.su_")   # the super-heavy tier is parked (no fighter's wave list names it): every piece of it is findable by name
+ 	var rc_pre: String = "pk." if who == "protagonist" else "rk."   # the energy-in-reach pieces (C2t) are parked too
+ 	for kid in AnimData.keysets:
+ 		if String(kid).begins_with(su_pre) or String(kid).begins_with(rc_pre):
+@@ -1280,12 +1280,12 @@ func _test_round10() -> void:
+ 		if k == 5:
+ 			sa.on_windup("interject", "guard", 18, S.tick + 18, 0, S.T, S.tick)
+ 		if k == 40:
+-			sa.on_chase("start", 0, S.T)
++			sa.on_chase("start", 0, 0, S.T)
+ 		if k > 5 and sa.waiting_kind == "interject":
+ 			shown += 1
+ 		if k == 50 and sa.chase_state == "start":
+ 			chased = true
+-			sa.on_chase("end", 0, S.T)
++			sa.on_chase("end", 0, 0, S.T)
+ 		if k == 53 and sa.chase_state == "":
+ 			cleared = true
+ 		AnimMany.detach(S, stands)
+@@ -1294,6 +1294,62 @@ func _test_round10() -> void:
+ 	print("round 10: ease keeps the clock; cash-in 2 ticks; held hit hangs; air tech plays; interjection tell shown %d ticks; chase dive starts and clears" % shown)
+ 
+ 
++func _test_pieces() -> void:
++	AnimData.load_every_wave()
++	RenderAnim._fighters.clear()
++	# the mannequin and the guards play the common pool: the same key sets by the same names
++	_expect(AnimData.ensure_fighter("REFERENCE") == "common" and AnimData.ensure_fighter("guard") == "common", "pieces: the training dummy and the guard play the common row (%s, %s)" % [AnimData.ensure_fighter("REFERENCE"), AnimData.ensure_fighter("guard")])
++	_expect(AnimData.ensure_fighter("PROTAGONIST") == "protagonist" and AnimData.ensure_fighter("RIVAL") == "antihero", "pieces: the pair keeps its own rows")
++	var cl: Dictionary = AnimData.pair_lists["common"]
++	var shared_ok: bool = true
++	for nm in ["jab", "cross", "backfist", "stomp", "uppercut", "palm_heel", "axe_kick", "rib_shot", "plate_drop", "su_sole_fall"]:
++		if not cl.by_name.has(nm) or not AnimData.keysets.has(String(cl.by_name[nm])):
++			shared_ok = false
++			print("  pieces: the common row has no key set named ", nm)
++	_expect(shared_ok, "pieces: the common row names the shared strikes (w1.*, rb.*, rm.*) and the guards' heavy")
++	_expect(AnimData.resolve_strike("common", "strike.cross") == "w1.cross" and AnimData.resolve_strike("common", "strike.su_sole_fall") == "gd.su_sole_fall", "pieces: a beat's piece reaches the same key set for the dummy as for the Anti-hero")
++	# Combat's new pieces: each is findable by its name, in no pick list, and its contact is solved
++	var table := {"protagonist": ["su_blade_fall", "su_palm_arm", "palm_turn"], "antihero": ["jab_fist", "cross_fist", "spear_fist", "su_fist_unwind"], "common": ["su_sole_fall"]}
++	var pre := {"protagonist": "pv.", "antihero": "rq.", "common": "gd."}
++	main.start_match(4, {"p1": false, "p2": false})
++	for i in range(10):
++		main.frame(1.0 / 60.0)
++	var S: SimState = main.host.S
++	for who in table:
++		for nm in table[who]:
++			var id: String = String(pre[who]) + String(nm)
++			var lst: Dictionary = AnimData.pair_lists[who]
++			var listed: bool = (lst.light as Array).has(id) or (lst.heavy as Array).has(id)
++			_expect(AnimData.keysets.has(id) and String(lst.by_name.get(nm, "")) == id and not listed, "pieces: %s is findable by name and in no pick list (listed: %s)" % [id, str(listed)])
++			var heavy: bool = String(AnimData.keysets[id].weight) == "heavy"
++			var sc: Dictionary = _tier_scene(S, who, "super" if heavy else "speed", [nm], [44, 80] if heavy else [30, 50], {}, "heavy" if heavy else "light")
++			_expect(int(sc.nan) == 0 and int(sc.screen) == 0 and int(sc.frames) == 2 and float(sc.err) < 0.25 and String(sc.parts[0]) == id, "pieces: %s plays (%d NaN, %d joint violations on screen, contact %.3f rad, played %s)" % [id, int(sc.nan), int(sc.screen), float(sc.err), str(sc.parts)])
++	# the beam's cast poses, one a fighter, and the generic pair for a body with none
++	var cp := AnimFighter.new(0)
++	cp.pair_key = "protagonist"
++	var ca := AnimFighter.new(1)
++	ca.pair_key = "antihero"
++	var cc := AnimFighter.new(0)
++	cc.pair_key = "common"
++	_expect(cp._cast_id("fire") == "bm.hold.fire_protagonist" and ca._cast_id("charge") == "bm.hold.charge_antihero" and cc._cast_id("fire") == "beam.fire", "pieces: each fighter casts in his own pose, a body with none in the generic one")
++	# the cash-in has its own row, which reaches VFX as the super style
++	var af0 := AnimFighter.new(0)
++	af0.pair_key = "antihero"
++	var ci: Dictionary = af0._press_prof({}, "cash_in", {"cash_in": true})
++	_expect(AnimData.press.styles.has("cash_in") and int(ci.load_ticks.heavy) == 2 and int(ci.snap_ticks) == 0 and float(AnimData.press.styles.cash_in.squash) == 0.0, "pieces: the cash-in row loads in 2 ticks with no snap and no sink (%s)" % str(ci.load_ticks))
++	# the chase's agreed cue: k the blow's number, n an absolute tick; arrive eases the dive out
++	var ch := AnimFighter.new(0)
++	ch.on_chase("start", 0, 0, 1.0, 100)
++	ch.on_chase("blow", 3, 140, 1.5, 120)
++	_expect(ch.chase_n == 3 and ch.chase_tick == 140 and ch.chase_state == "blow", "chase: blow 3 is in k (%d) and its contact tick in n (%d)" % [ch.chase_n, ch.chase_tick])
++	ch.on_chase("arrive", 0, 150, 1.6, 130)
++	_expect(ch.chase_tick == 150 and ch.chase_state == "blow" and ch._chase_arrived_t == 1.6, "chase: arrive keeps the state and records the tick")
++	# the opening (the eleventh round): the head snapped back and the arms thrown open, for a few ticks
++	var op = AnimData.entries.get("lq.open")
++	_expect(op != null and String(op.phases[0].pose) == "lq.open.snap" and String(op.phases[1].pose) == "lq.open.open" and int(op.phases[0].ticks) + int(op.phases[1].ticks) < 12, "opening: the stagger begins with the snap and the open arms, under 12 ticks in all")
++	print("pieces: the common row, the new pieces, the cast poses, the cash-in row, the chase cue and the opening")
++
++
+ func _test_march() -> void:
+ 	AnimData.load_every_wave()
+ 	main.start_match(4, {"p1": false, "p2": false})
+@@ -3773,6 +3829,7 @@ func _run() -> void:
+ 	_test_many_bodies()
+ 	_test_march()
+ 	_test_round10()
++	_test_pieces()
+ 	_test_medium_wind()
+ 	_test_energy_reach()
+ 	_test_free_arm()
+diff --git a/render/anim/tools/flurry_study.gd b/render/anim/tools/flurry_study.gd
+index 5a631f1..9e26db5 100644
+--- a/render/anim/tools/flurry_study.gd
++++ b/render/anim/tools/flurry_study.gd
+@@ -51,6 +51,8 @@ const CUE_SCENARIOS := {
+ 	"cue_dodge": {"kind": "miss", "actor": 0, "target": -1, "text": "dodge", "span": 20, "label": "miss dodge: open for 20 ticks (the left one)"},
+ 	"cue_tech": {"kind": "tech", "actor": 0, "target": -1, "text": "", "span": 14, "label": "the air tech (the tenth round's chase answer): thrown open, then tucked, 14 ticks (the left one)"},
+ 	"cue_chase": {"kind": "chase", "actor": 0, "target": -1, "text": "start", "span": 0, "end_k": 50, "end_text": "end", "label": "the chase: the chaser's dive from tick 10 to tick 50 (the left one)"},
++	"cue_cast_charge": {"kind": "beam", "actor": 0, "target": -1, "text": "charge", "span": 0, "label": "a beam charging (the left one): the fighter's own casting pose (data/anim/pair_live.json roles.<fighter>.beam)"},
++	"cue_cast_fire": {"kind": "beam", "actor": 0, "target": -1, "text": "fire", "span": 0, "label": "a beam fired (the left one): the fighter's own casting pose, the arm thrown out"},
+ 	"cue_interject": {"kind": "windup", "actor": 0, "target": -1, "text": "interject", "span": 24, "dur": 24.0, "label": "an interjection's tell: the guard (the left one) shows a 24-tick wind-up"},
+ }
+ const PAL_A := {"body": Color("#3d8fdc"), "legs": Color("#1b1f2a"), "arms": Color("#e6b995"), "skin": Color("#efc7a2"), "gear": Color("#cdd6e4"), "accent": Color("#4fb9a8"), "hair": Color("#22c7a0")}
+@@ -85,6 +87,16 @@ var k: int = 0
+ var n_ticks: int = 0
+ var ex
+ var sent: Array = []
++
++
++## a stand-in for the sim's beam, for the cast pose's stills (`_beam_layer` reads A, t, life and the direction)
++class FakeBeam extends RefCounted:
++	var A = null
++	var t: float = 0.0
++	var life: float = 1.0
++	var ux: float = 1.0
++	var uy: float = 0.0
++
+ var acc: float = 0.0
+ var adv_done: int = 0
+ var ready_to_run: bool = false
+@@ -221,6 +233,7 @@ func _build_view() -> void:
+ func _tier_pieces() -> Array:
+ 	var pre: String = "pu." if fighter == "protagonist" else "ru."
+ 	var pre2: String = "pk." if fighter == "protagonist" else "rk."   # the energy-in-reach pieces
++	var pre3: String = "pv." if fighter == "protagonist" else "rq."
+ 	var out: Array = []
+ 	for nm in tier_names:
+ 		var s: String = String(nm)
+@@ -232,6 +245,8 @@ func _tier_pieces() -> Array:
+ 			out.append(s)
+ 		elif AnimData.keysets.has(pre2 + s):
+ 			out.append(s)
++		elif AnimData.keysets.has(pre3 + s) or (fighter == "antihero" and AnimData.keysets.has("gd." + s)):
++			out.append(s)   # Combat's pieces of 2026-10-16 (pv. the Protagonist, rq. the rival; the guards' falling sole, gd., shown on the rival's body)
+ 	return out
+ 
+ 
+@@ -266,7 +281,7 @@ func _start_scenario() -> void:
+ 	var su_pre: String = "pu.su_" if fighter == "protagonist" else "ru.su_"
+ 	var rc_pre: String = "pk." if fighter == "protagonist" else "rk."
+ 	for kid in AnimData.keysets:
+-		if String(kid).begins_with(su_pre) or String(kid).begins_with(rc_pre):
++		if String(kid).begins_with(su_pre) or String(kid).begins_with(rc_pre) or (fighter == "antihero" and String(kid).begins_with("gd.")):
+ 			by[String(kid).substr(3)] = String(kid)
+ 	# the parked lights the burst draws on (a rise, an arc, a drop), named by their wave prefix (pm. the Protagonist, rm. the rival)
+ 	for pre in ["pm.", "rm."]:
+@@ -283,6 +298,8 @@ func _start_scenario() -> void:
+ 		f.vx = 0.0
+ 		f.vy = 0.0
+ 		f.state = "free"
++		f.beamCharge = null
++	S.beams = []
+ 	if sc.has("cue"):
+ 		ex = null
+ 		S.dirS.ex = null
+@@ -329,7 +346,15 @@ func _step_tick() -> void:
+ 	te.dt = DT
+ 	te.frozen = false
+ 	RenderAnim.consume(S, [te])
+-	if sc.has("cue") and k == 10:
++	if sc.has("cue") and k == 10 and String(sc.cue.kind) == "beam":
++		# the beam layer reads the sim's own state: the charge's start time, or a beam of the fighter's that is alive
++		if String(sc.cue.text) == "charge":
++			f0.beamCharge = S.T - 0.9
++		else:
++			var fb := FakeBeam.new()
++			fb.A = f0
++			S.beams = [fb]
++	if sc.has("cue") and k == 10 and String(sc.cue.kind) != "beam":
+ 		var cd: Dictionary = sc.cue
+ 		var ce := SimState.FxEvent.new()
+ 		ce.type = "cue"
+diff --git a/render/anim/tools/wave_gen.mjs b/render/anim/tools/wave_gen.mjs
+index 35dc47b..f2f5573 100644
+--- a/render/anim/tools/wave_gen.mjs
++++ b/render/anim/tools/wave_gen.mjs
+@@ -16,7 +16,7 @@ const wave = argv[0] || 'wave1';
+ const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 ? argv[i + 1] : d; };
+ const project = resolve(opt('project', '.'));
+ const outDir = resolve(opt('out', join(project, 'data/anim/waves')));
+-const prefix = wave === 'ground1' ? 'gc' : wave === 'intro1' ? 'in' : wave === 'laststand1' ? 'ls' : wave === 'agency1' ? 'ag' : wave === 'energy1' ? 'en' : wave === 'protag1' ? 'pr' : wave === 'protag2' ? 'pe' : wave === 'protag3' ? 'pn' : wave === 'protag4' ? 'pf' : wave === 'rival1' ? 'rv' : wave === 'rival2' ? 'rb' : wave === 'rival3' ? 'rw' : wave === 'protag5' ? 'pg' : wave === 'pair1' ? 'pp' : wave === 'protag6' ? 'ph' : wave === 'protag10' ? 'pu' : wave === 'rival7' ? 'ru' : wave === 'protag11' ? 'pk' : wave === 'rival8' ? 'rk' : wave === 'burst1' ? 'bu' : wave === 'round10' ? 'rt' : wave === 'depth1' ? 'dp' : wave === 'launch1' ? 'lq' : wave === 'charge1' ? 'ch' : wave === 'miss1' ? 'mi' : wave === 'protag9' ? 'pi' : wave === 'rival6' ? 'ri' : wave === 'pair2' ? 'zp' : wave === 'protag7' ? 'pm' : wave === 'protag8' ? 'ps' : wave === 'rival4' ? 'rm' : wave === 'rival5' ? 'rs' : wave.startsWith('step') ? 's' + wave.slice(4) : wave.replace('wave', 'w');   // w1, s3
++const prefix = wave === 'ground1' ? 'gc' : wave === 'intro1' ? 'in' : wave === 'laststand1' ? 'ls' : wave === 'agency1' ? 'ag' : wave === 'energy1' ? 'en' : wave === 'protag1' ? 'pr' : wave === 'protag2' ? 'pe' : wave === 'protag3' ? 'pn' : wave === 'protag4' ? 'pf' : wave === 'rival1' ? 'rv' : wave === 'rival2' ? 'rb' : wave === 'rival3' ? 'rw' : wave === 'protag5' ? 'pg' : wave === 'pair1' ? 'pp' : wave === 'protag6' ? 'ph' : wave === 'protag10' ? 'pu' : wave === 'rival7' ? 'ru' : wave === 'protag11' ? 'pk' : wave === 'rival8' ? 'rk' : wave === 'protag12' ? 'pv' : wave === 'rival9' ? 'rq' : wave === 'rival10' ? 'gd' : wave === 'beam1' ? 'bm' : wave === 'burst1' ? 'bu' : wave === 'round10' ? 'rt' : wave === 'depth1' ? 'dp' : wave === 'launch1' ? 'lq' : wave === 'charge1' ? 'ch' : wave === 'miss1' ? 'mi' : wave === 'protag9' ? 'pi' : wave === 'rival6' ? 'ri' : wave === 'pair2' ? 'zp' : wave === 'protag7' ? 'pm' : wave === 'protag8' ? 'ps' : wave === 'rival4' ? 'rm' : wave === 'rival5' ? 'rs' : wave.startsWith('step') ? 's' + wave.slice(4) : wave.replace('wave', 'w');   // w1, s3
+ 
+ const poses = JSON.parse(readFileSync(join(project, 'data/anim/poses.json'), 'utf8')).poses;
+ const mod = await import(pathToFileURL(resolve(project, 'render/anim/tools/waves/' + wave + '.mjs')).href);
+@@ -315,7 +315,7 @@ for (const row of combat.strikes) {
+   }
+   manifest.push({ id, combat: sp.combat || row.id, name, weight: row.weight, target: ks.target, limb: L, limb2: ks.limb2 || null,
+     offset: row.range.offset, reach: row.range.reach, band: row.range.band, ticks: row.ticks, ground: row.ground, uses: row.uses,
+-    from: sp.from || null, legal: sp.legal || [], look: row.look, orig: sp.orig, poses: ks.keys.map(k => k.pose), alt: sp.alt ? sp.alt.label : null, _genericAb: !!sp.genericAb, _family: sp.family || null });
++    from: sp.from || null, named: !!sp.named, legal: sp.legal || [], look: row.look, orig: sp.orig, poses: ks.keys.map(k => k.pose), alt: sp.alt ? sp.alt.label : null, _genericAb: !!sp.genericAb, _family: sp.family || null });
+ }
+ // a fighter's wave over wave 1 (`reuse`): every wave 1 slot the spec does not redo is the rival's three poses with the fighter's profile applied (data/anim/fighters.json)
+ if (mod.reuse) {
+diff --git a/hp11/render/anim/tools/waves/beam1.mjs b/render/anim/tools/waves/beam1.mjs
+new file mode 100644
+index 0000000..0570982
+--- /dev/null
++++ b/render/anim/tools/waves/beam1.mjs
+@@ -0,0 +1,38 @@
++// PROVISIONAL (VFX's thick beams, docs/vfx/beam-look.md "Open for Orb": the Protagonist's beam "from the heel of the palm" needs Animation's palm pose at the beam's origin; the Empress's guards' measured bolt,
++// docs/combat/pending/roster/moveset.guard.json energy.x.01). Legal has not screened these; the rule for them is Legal's franchise rule: NO BALL CHARGING IN THE HAND. Parked (--waves). Prefix bm.
++//   holds (the beam layer: data/anim/pair_live.json roles.<fighter>.beam, read by AnimFighter._beam_layer):
++//     charge_protagonist / fire_protagonist   The Protagonist's cast. Charging: side-on, the weight back, ONE arm drawn back with the elbow out and the OPEN palm at the shoulder facing forward, flat, the fingers
++//                                             together and up, nothing in it and nothing between the palm and the other hand; the other hand open in guard at the chest, a shoulder width away (never together
++//                                             with it, never cupped, never at the hip). Firing: the arm thrown straight out at shoulder height with the HEEL of the palm leading (the beam leaves the heel of the palm),
++//                                             the fingers up, the body lunged behind it, the other hand open and low at the rear.
++//     charge_antihero / fire_antihero         The Anti-hero's cast, in his straight lines. Charging: the CLOSED fist drawn back along the shoulder line with the forearm plate up, the rear hand open and forward in guard
++//                                             (never pointing); firing: the fist driven straight out at shoulder height, the forearm plate behind it (the light sits on the plate and the knuckle edges, VFX).
++//   sequences:
++//     guard_bolt   The guards' measured bolt from an open palm, planted: the palm drawn back to the shoulder (4 ticks), thrown flat to shoulder height (3), back to the stance (5).
++const OPEN = { hands: { r: 'open', l: 'open' } };
++const FIST = { hands: { r: 'fist', l: 'open' } };
++const WIDE = { foot_r: [-14, 2.5, 10], foot_l: [14, 2.5, -8] };
++export const holds = {
++  charge_protagonist: { sketch: { family: 'upright', lean: -2, hip_twist: 34, hips: [-4, -6, 0], spine: { lean: 2, twist: -26 }, head: { pitch: 2, yaw: 18 }, hand_r: [4, 62, 22], pole_hand_r: [-12, 8, 18], hand_l: [20, 54, -9], ...WIDE, ...OPEN,
++      _legal: ['hands_open_or_claw', 'not_at_hip', 'not_both_arms_back', 'wrists_apart'] },
++    orig: 'PROVISIONAL: the Protagonist charging a beam: side-on with the weight back, one arm drawn back at shoulder height and the open palm at the shoulder facing forward, flat, the other hand open in guard at the chest a shoulder width away; nothing held in the hand' },
++  fire_protagonist: { sketch: { family: 'upright_lunge', lean: 14, hip_twist: 18, hips: [16, -8, 0], spine: { lean: 6, twist: 16 }, head: { pitch: 0, yaw: 4 }, hand_r: [58, 62, 9], pole_hand_r: [4, 2, 8], hand_l: [10, 48, -12],
++      foot_r: [-12, 2.5, 10], foot_l: [24, 2.5, -8], ...OPEN, _legal: ['hands_open_or_claw', 'not_at_hip', 'wrists_apart'] },
++    orig: 'PROVISIONAL: the Protagonist casting: the arm thrown straight out at shoulder height with the heel of the open palm leading, the fingers up, the body lunged behind it, the other hand open and low at the rear' },
++  charge_antihero: { sketch: { family: 'upright', lean: 4, hip_twist: 30, hips: [-2, -6, 0], spine: { lean: 4, twist: -24 }, head: { pitch: 2, yaw: 16 }, hand_r: [6, 62, 20], pole_hand_r: [-12, 10, 16], hand_l: [22, 56, -6], ...WIDE, ...FIST,
++      _legal: ['not_at_hip', 'not_both_arms_back', 'wrists_apart'] },
++    orig: 'PROVISIONAL: the Anti-hero charging a beam: side-on, the closed fist drawn back along the shoulder line with the forearm plate up, the rear hand open and forward in guard, never pointing; nothing held in the hand' },
++  fire_antihero: { sketch: { family: 'upright_lunge', lean: 14, hip_twist: 20, hips: [16, -8, 0], spine: { lean: 6, twist: 20 }, head: { pitch: 0, yaw: 4 }, hand_r: [58, 63, 8], pole_hand_r: [4, 2, 8], hand_l: [14, 54, -8],
++      foot_r: [-12, 2.5, 10], foot_l: [24, 2.5, -8], ...FIST, _legal: ['not_at_hip', 'wrists_apart'] },
++    orig: 'PROVISIONAL: the Anti-hero casting: the closed fist driven straight out at shoulder height, the forearm plate behind it, the other hand open in guard' },
++};
++
++export const sequences = {
++  guard_bolt: { dur: 12, legal: ['hands_open_or_claw', 'not_at_hip'], phases: [
++    { id: 'wind', ticks: 4, sketch: { family: 'upright', lean: 4, hips: [0, -4, 0], spine: { lean: 2, twist: -14 }, head: { pitch: 2, yaw: 4 }, hand_r: [10, 60, 18], pole_hand_r: [-4, 4, 14], hand_l: [16, 54, -8], ...WIDE, ...OPEN },
++      orig: 'PROVISIONAL: the guard readying a measured bolt: the open palm drawn back to the shoulder, the other hand open at his chest, both feet planted' },
++    { id: 'fire', ticks: 3, sketch: { family: 'upright', lean: 8, hips: [4, -4, 0], spine: { lean: 2, twist: 16 }, head: { pitch: 0, yaw: 4 }, hand_r: [48, 60, 10], pole_hand_r: [2, 0, 8], hand_l: [14, 54, -8], ...WIDE, ...OPEN },
++      orig: 'PROVISIONAL: the bolt leaving: the open palm thrown flat to shoulder height, the feet where they were' },
++    { id: 'settle', ticks: 5, from: 'stance.aggressive', over: { lean: 8, ...OPEN }, orig: 'PROVISIONAL: back to the stance, the hand open' },
++  ] },
++};
+diff --git a/render/anim/tools/waves/launch1.mjs b/render/anim/tools/waves/launch1.mjs
+index 39edf76..4c466ed 100644
+--- a/render/anim/tools/waves/launch1.mjs
++++ b/render/anim/tools/waves/launch1.mjs
+@@ -2,11 +2,13 @@
+ // The staggered fighter, for the ticks the stagger lasts (cue `n`, the tick it ends): knocked back, then doubled over and dazed with his arms hanging low and loose in front of him and his head down, then
+ // coming up. It has to read at a glance as "he is out of it, hit him now", without any glow. A pose sequence fitted to the stagger's length by the cue handler (a `fit` sequence: the weights divide the ticks).
+ // Prefix lq. A reaction (class rest in the held lint): hands low and apart, never at the hip zone together, no light.
+-//   open   reel (the blow's push: the head snapped back, the arms thrown up and apart for a few ticks), daze (doubled over, hands hanging, head down: the long part), come-up (the head lifting, the guard returning)
++//   open   snap (the head snapped back, the arms flung open: 4 ticks) and open (the arms coming in: 3 ticks), daze (doubled over, hands hanging, head down: the long part), come-up (the head lifting, the guard returning)
+ export const sequences = {
+   open: { dur: 30, legal: ['reaction'], phases: [
+-    { id: 'reel', w: 0.14, sketch: { family: 'upright', lean: -14, hips: [-8, 2, 0], spine: { lean: -10, twist: 0 }, head: { pitch: -16 }, hand_r: [8, 62, 16], hand_l: [10, 60, -16], foot_r: [-10, 2.5, 9], foot_l: [8, 2.5, -8], hands: { r: 'open', l: 'open' } },
+-      orig: 'PROVISIONAL: the push of the blow: the weight thrown back on the rear leg, the head snapped back, the arms flung up and apart for an instant' },
++    { id: 'snap', ticks: 4, sketch: { family: 'upright', lean: -16, hips: [-10, 2, 0], spine: { lean: -14, twist: 0 }, head: { pitch: -28 }, hand_r: [26, 76, 24], hand_l: [-26, 70, -24], foot_r: [-12, 2.5, 10], foot_l: [8, 2.5, -8], hands: { r: 'open', l: 'open' } },
++      orig: 'PROVISIONAL (the eleventh round, Orb: "his head snaps back and his arms fly open"): the push of the blow at its peak: the weight thrown back on the rear leg, the head snapped well back, the arms flung apart in the side-on view, one up and forward, one up and back, the palms open; four ticks, a recoil and not a stance' },
++    { id: 'open', ticks: 3, sketch: { family: 'upright', lean: -10, hips: [-6, 0, 0], spine: { lean: -8, twist: 0 }, head: { pitch: -18 }, hand_r: [24, 64, 26], hand_l: [-22, 62, -26], foot_r: [-10, 2.5, 9], foot_l: [8, 2.5, -8], hands: { r: 'open', l: 'open' } },
++      orig: 'PROVISIONAL: the arms still open at shoulder height and coming in, the head still back, the chest bare to the rival; three ticks, then the daze takes him (the open arms never last 12 ticks: Legal h07)' },
+     { id: 'daze', w: 0.7, sketch: { family: 'crouched', lean: 26, hips: [-2, -16, 0], spine: { lean: 22, twist: 0 }, head: { pitch: 30 }, hand_r: [20, 32, 14], hand_l: [18, 34, -14], foot_r: [-8, 2.5, 9], foot_l: [12, 2.5, -8], hands: { r: 'relaxed', l: 'relaxed' } },
+       orig: 'PROVISIONAL: dazed: doubled over with the knees bent, the arms hanging low and loose in front of him a shoulder width apart, the head down; nothing guarding him' },
+     { id: 'come_up', w: 0.16, from: 'stance.aggressive', over: { lean: 10, hips: [-2, -6, 0], head: { pitch: 12 } },
+diff --git a/hp11/render/anim/tools/waves/protag12.mjs b/render/anim/tools/waves/protag12.mjs
+new file mode 100644
+index 0000000..8be4d1f
+--- /dev/null
++++ b/render/anim/tools/waves/protag12.mjs
+@@ -0,0 +1,52 @@
++// PROVISIONAL (Combat's four missing pieces, a9e8f9cd, docs/combat/split-and-pieces.md section 5b; Legal has not screened these): three of the Protagonist's pieces, all NAMED ONLY (`named`: findable by the
++// beat's `piece`, in no random pick list, so today's brawl is unchanged until Combat's pool is the hook). Parked (--waves): nothing plays them until the pool does. Prefix pv.
++//   su_blade_fall   A falling blade hand to the chest: the second of his spike ender's launchers. Legal's conditions: L3 a dropping blow by ONE hand, the two hands apart and never clasped; L6 charged with one arm
++//                   back at shoulder height; W1 a wind-up of 12 ticks or more (the tier's 28); D5 the rise is the body straightening, never a leap (both feet keep the ground), the limb stays at shoulder height until he starts down.
++//                   Not su_drive: that one is a PALM that falls onto the chest with the body tall; this is the EDGE of the hand chopped down on a slant from the shoulder, the elbow high and the body folding behind it.
++//   su_palm_arm     A stepping palm to the arm (heavy): the heel of the open palm set on the rival's arm as the body steps through; one hand, the other open in guard.
++//   palm_turn       A turning palm-heel to the chest (a light, his perfect follow-up): the backfist's outward arc, re-aimed from the head to the chest. To read as a palm and not a backfist the PALM LEADS: the hand
++//                   is open and the heel of it arrives first, the fingers up, the arm bent through the turn and not whipped to full length.
++const OPEN = { hands: { r: 'open', l: 'open' } };
++const NEW = {
++  su_blade_fall: { like: 'double_hammer', limb: 'hand', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. He rises tall with one blade hand cocked at the shoulder and the other hand up in guard, then folds down behind it and the edge of the hand falls on a slant onto the chest.' },
++  su_palm_arm: { like: 'spear_hand', limb: 'hand', target: 'arm_r', weight: 'heavy', look: 'PROVISIONAL. A stepping palm: the striking hand drawn back close, then one straight line as the body steps through, the heel of the palm set on the rival arm.' },
++  palm_turn: { like: 'backfist', limb: 'hand', target: 'chest', weight: 'light', look: 'PROVISIONAL. A turning palm-heel: the open hand carried out and round on the backfist arc and the heel of it set on the chest, the palm leading; he is turned away from the rival at the end of it.' },
++};
++export function rows(wave1) {
++  const by = Object.fromEntries(wave1.map(r => [r.id.replace('strike.', ''), r]));
++  return Object.entries(NEW).map(([n, o]) => {
++    const b = by[o.like];
++    if (o.weight === 'light') return { ...b, id: 'strike.' + n, limb: o.limb, target: o.target, weight: o.weight, look: o.look,
++      _estimate: 'PROVISIONAL: range and ticks borrowed from strike.' + o.like + ' (the backfist)' };
++    return { ...b, id: 'strike.' + n, limb: o.limb, limb2: null, uses: { arms: 1 }, target: o.target, weight: o.weight, look: o.look,
++      range: { ...b.range, lunge: Math.round(b.range.lunge * 1.25), reach: Math.round(b.range.reach * 1.1) }, ticks: { load: 28, follow: 8, recover: 14 },
++      _estimate: 'PROVISIONAL: range and ticks borrowed from strike.' + o.like + ' (lunge 1.25 times, reach 1.1 times); the load is the 28-tick wind-up of B (docs/design/brawl-second-pass.md)' };
++  });
++}
++
++export const strikes = {
++  // the blade hand cocked at the shoulder (L6: one arm back at shoulder height), the free hand up and apart (L3); the contact is lower and slanted where su_drive's palm falls straight
++  su_blade_fall: { named: true, tell_at: 0.5, squash_w: 0.0, drive: 'fall', kind: 'hand', target: 'chest', step_max: 22, legal: ['hands_open_or_claw', 'no_held_raise', 'not_at_hip'],
++    chamber: { family: 'upright', lean: -8, hips: [-2, 3, 0], spine: { lean: -8, twist: -10 }, head: { pitch: -4 }, hand_r: [-2, 66, 15], pole_hand_r: [-10, 10, 12], hand_l: [16, 58, -8],
++      foot_r: [-6, 2.5, 9], foot_l: [8, 2.5, -8], ...OPEN },
++    contact: { family: 'upright_lunge', lean: 34, hips: [26, -12, 0], spine: { lean: 24, twist: 14 }, head: { pitch: 22 }, hand_r: [56, 44, 7], pole_hand_r: [-2, 22, 10], hand_l: [20, 50, -11],
++      foot_r: [-2, 4, 9], foot_l: [34, 2.5, -8], ...OPEN },
++    follow: { lean: 28, hips: [22, -12, 0], spine: { lean: 24, twist: 8 }, head: { pitch: 22 }, hand_r: [38, 36, 8], hand_l: [26, 58, -12], foot_r: [-5, 3, 8] },
++    orig: 'PROVISIONAL: he rises tall with one blade hand cocked at the shoulder and the other hand up in guard, then folds down behind it and the edge of the hand falls on a slant onto the chest' },
++  // the stepping palm to the arm: the su_blade_jaw line carried lower, the palm open and flat
++  su_palm_arm: { named: true, tell_at: 0.5, squash_w: 0.3, drive: 'step_through', kind: 'hand', target: 'arm_r', step_max: 22, legal: ['hands_open_or_claw', 'not_at_hip'],
++    chamber: { family: 'upright', lean: -6, hips: [-6, -2, 0], spine: { lean: -4, twist: -18 }, head: { pitch: -2 }, hand_r: [0, 58, 14], pole_hand_r: [-10, 4, 10], hand_l: [16, 62, -8],
++      foot_r: [-14, 2.5, 10], foot_l: [12, 2.5, -8], ...OPEN },
++    contact: { family: 'upright_lunge', lean: 18, hips: [30, -8, 0], spine: { lean: 10, twist: 24 }, head: { pitch: 8 }, hand_r: [62, 56, 8], pole_hand_r: [2, 6, 8], hand_l: [8, 52, -12],
++      foot_r: [-4, 6, 9], foot_l: [32, 2.5, -8], ...OPEN },
++    follow: { hips: [24, -8, 0], hand_r: [42, 56, 6], hand_l: [8, 52, -12], foot_r: [-4, 4, 9] },
++    orig: 'PROVISIONAL: a stepping palm: the striking hand drawn back close to him, then one straight line to the arm as the body steps through, the heel of the palm set on it; the lead hand open in guard' },
++  // the backfist's arc, re-aimed to the chest: the arm stays bent through the turn (the palm leads, not the back of the fist) and the open hand arrives heel first
++  palm_turn: { named: true, kind: 'hand', target: 'chest', legal: ['hands_open_or_claw', 'not_at_hip'],
++    chamber: { family: 'upright', lean: 10, hips: [3, -4, 0], spine: { lean: 4, twist: -27.5, bend: 8 }, head: { pitch: 3, yaw: 8 }, hand_r: [10, 58, 25], pole_hand_r: [-4, -2, 12], hand_l: [20, 59, -6],
++      foot_r: [-10, 2.5, 9], foot_l: [12, 2.5, -7], ...OPEN },
++    contact: { family: 'upright_lunge', lean: 14, hips: [18, -3, 0], spine: { lean: 0, twist: -30, bend: -4 }, head: { pitch: 0, yaw: -10 }, hand_r: [44, 58, 11], pole_hand_r: [4, 4, 9], hand_l: [12, 61, -8],
++      foot_r: [-6, 2.5, 9], foot_l: [26, 2.5, -7], ...OPEN },
++    follow: { lean: 22, hips: [12, -4, 0], spine: { lean: 4, twist: 34.5 }, head: { pitch: 3, yaw: 4 }, hand_r: [32, 60, 10], hand_l: [18, 61, -6] },
++    orig: 'PROVISIONAL: a turning palm-heel: the open hand carried out and round on the backfist arc, the arm bent through the turn, the heel of the palm set on the chest, the palm leading' },
++};
+diff --git a/hp11/render/anim/tools/waves/rival10.mjs b/render/anim/tools/waves/rival10.mjs
+new file mode 100644
+index 0000000..0f8fd24
+--- /dev/null
++++ b/render/anim/tools/waves/rival10.mjs
+@@ -0,0 +1,27 @@
++// PROVISIONAL (Combat's roster pieces, a9e8f9cd, docs/combat/pending/roster/moveset.guard.json; docs/design/empress-guards.md section 4: "lights and mediums from the common pool, one heavy, a bolt"): the Empress's
++// guards' two pieces and the mannequin's. Parked (--waves): nothing plays them until the roster does. Prefix gd. (the wave is called rival10 only because the manifest schema names waves wave, protag or rival followed by a number). The guards and the training dummy play the COMMON pool (data/anim/fighters.json `common`).
++//   su_sole_fall   A falling sole to the chest (heavy, a launcher that sends down; named only): a trooper's blow, plain and heavy. Legal L6 (charged with one leg raised), W1 (28 ticks), D5 (the rise is the body
++//                  straightening, the standing foot keeps its place, no leap): the knee is lifted to the hip with the foot above it, then the leg drives down and the sole is set on the chest.
++//   bolt_palm      The measured bolt from an open palm, planted (a sequence, the energy press `bolt` of the common role): the open palm drawn back at the shoulder, thrown flat to shoulder height, the feet
++//                  where they were. One hand, open and flat, never cupped, never at the hip, nothing between the fingers (Legal e01, R1).
++const OPEN = { hands: { r: 'open', l: 'open' } };
++const NEW = {
++  su_sole_fall: { like: 'axe_kick', limb: 'foot', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. The knee lifted to the hip with the foot above it, then the leg drives down and the sole is set on the chest; the standing foot keeps its place.' },
++};
++export function rows(wave1) {
++  const by = Object.fromEntries(wave1.map(r => [r.id.replace('strike.', ''), r]));
++  return Object.entries(NEW).map(([n, o]) => {
++    const b = by[o.like];
++    return { ...b, id: 'strike.' + n, limb: o.limb, limb2: null, uses: { legs: 1 }, target: o.target, weight: o.weight, look: o.look,
++      range: { ...b.range, lunge: Math.round(b.range.lunge * 1.25), reach: Math.round(b.range.reach * 1.1) }, ticks: { load: 28, follow: 8, recover: 14 },
++      _estimate: 'PROVISIONAL: range and ticks borrowed from strike.' + o.like + ' (lunge 1.25 times, reach 1.1 times); the load is the 28-tick wind-up of B' };
++  });
++}
++
++export const strikes = {
++  su_sole_fall: { named: true, tell_at: 0.5, squash_w: 0.0, drive: 'fall', kind: 'foot', target: 'chest', step_max: 12, legal: ['no_leap'],
++    chamber: { family: 'upright', lean: -10, hips: [-2, 0, 0], spine: { lean: -8, twist: -6 }, head: { pitch: 4, yaw: 6 }, hand_r: [-4, 56, 18], hand_l: [4, 60, -16], foot_r: [10, 68, 8], pole_foot_r: [14, 40, 0], foot_l: [2, 2.5, -7], ...OPEN },
++    contact: { family: 'upright_lunge', lean: -4, hips: [8, 0, 0], spine: { lean: -8 }, head: { pitch: 4 }, hand_r: [-4, 56, 18], hand_l: [4, 60, -16], foot_r: [32, 52, 6], pole_foot_r: [14, 28, 0], foot_l: [10, 2.5, -7], ...OPEN },
++    follow: { lean: 3.5, hips: [5.5, -2, 0], foot_r: [14, 33, 7], hand_r: [4, 56.5, 16], hand_l: [13, 58, -11] },
++    orig: 'PROVISIONAL: the knee lifted to the hip with the foot above it, then the leg drives down and the sole is set on the chest; the standing foot keeps its place' },
++};
+diff --git a/hp11/render/anim/tools/waves/rival9.mjs b/render/anim/tools/waves/rival9.mjs
+new file mode 100644
+index 0000000..e1abe6b
+--- /dev/null
++++ b/render/anim/tools/waves/rival9.mjs
+@@ -0,0 +1,46 @@
++// PROVISIONAL (Combat's pieces, a9e8f9cd, docs/combat/split-and-pieces.md sections 5 and 5b; Legal has not screened these): the Anti-hero's fists, all NAMED ONLY (`named`: findable by the beat's `piece`, in no
++// random pick list, so today's brawl is unchanged until Combat's pool is the hook). Parked (--waves): nothing plays them until the pool does. Prefix rq.
++//   jab_fist, cross_fist, spear_fist   The jab, the cross and the spear hand as FISTS: the same three poses as wave 1's blade versions, the hand closed (a hand-state swap, so the line, the step and the reach are
++//                                      the same), the forearm plate behind the fist. The jab is the straight light of his perfect follow-up. They are different pieces from the blade versions, which stay.
++//   su_fist_unwind                     An unwinding fist to the jaw (heavy): the body coiled with the fist carried across to the far shoulder, then unwound so the fist swings out and round level at the jaw; one turn.
++//                                      The arm is bent through the swing and the elbow leads the turn: it is a fist and not a backfist.
++import { readFileSync } from 'node:fs';
++import { fileURLToPath } from 'node:url';
++const W1 = JSON.parse(readFileSync(fileURLToPath(new URL('../../../../data/anim/waves/wave1.poses.json', import.meta.url)), 'utf8')).poses;
++const FIST = { hands: { r: 'fist', l: 'open' } };
++const OPEN = { hands: { r: 'open', l: 'open' } };
++// a wave 1 key as it is, the striking hand closed
++const w1 = (name, part) => { const p = JSON.parse(JSON.stringify(W1[`w1.${name}.${part}`])); for (const k of Object.keys(p)) if (k.startsWith('_')) delete p[k]; return { ...p, ...FIST }; };
++const NEW = {
++  jab_fist: { like: 'jab', limb: 'hand', target: 'head', weight: 'light', look: 'PROVISIONAL. The jab as a fist: a straight fist from the lead shoulder, the forearm plate behind it, the arm one line with the rear leg.' },
++  cross_fist: { like: 'cross', limb: 'hand', target: 'chest', weight: 'light', look: 'PROVISIONAL. The cross as a fist: the rear fist driven through the chest with the hips turned full, the lead forearm folded across the ribs.' },
++  spear_fist: { like: 'spear_hand', limb: 'hand', target: 'gut', weight: 'light', look: 'PROVISIONAL. The spear hand as a fist: a low straight fist from the crouch into the gut, the spine and the arm one long diagonal.' },
++  su_fist_unwind: { like: 'haymaker', limb: 'hand', target: 'jaw', weight: 'heavy', look: 'PROVISIONAL. An unwinding fist: coiled with the fist carried across to the far shoulder, then the body opens out and the fist comes round level at the jaw; one turn, never two.' },
++};
++export function rows(wave1) {
++  const by = Object.fromEntries(wave1.map(r => [r.id.replace('strike.', ''), r]));
++  return Object.entries(NEW).map(([n, o]) => {
++    const b = by[o.like];
++    if (o.weight === 'light') return { ...b, id: 'strike.' + n, limb: o.limb, target: o.target, weight: o.weight, look: o.look,
++      _estimate: 'PROVISIONAL: range and ticks are strike.' + o.like + ' (a hand-state swap)' };
++    return { ...b, id: 'strike.' + n, limb: o.limb, limb2: null, uses: { arms: 1 }, target: o.target, weight: o.weight, look: o.look,
++      range: { ...b.range, lunge: Math.round(b.range.lunge * 1.25), reach: Math.round(b.range.reach * 1.1) }, ticks: { load: 28, follow: 8, recover: 14 },
++      _estimate: 'PROVISIONAL: range and ticks borrowed from strike.' + o.like + ' (lunge 1.25 times, reach 1.1 times); the load is the 28-tick wind-up of B' };
++  });
++}
++
++export const strikes = {
++  jab_fist: { named: true, kind: 'hand', target: 'head', chamber: w1('jab', 'chamber'), contact: w1('jab', 'contact'), follow: w1('jab', 'follow'),
++    orig: 'PROVISIONAL: the jab as a fist: a straight fist from the lead shoulder, the forearm plate behind it' },
++  cross_fist: { named: true, kind: 'hand', target: 'chest', chamber: w1('cross', 'chamber'), contact: w1('cross', 'contact'), follow: w1('cross', 'follow'),
++    orig: 'PROVISIONAL: the cross as a fist: the rear fist driven through the chest, the hips turned full' },
++  spear_fist: { named: true, kind: 'hand', target: 'gut', chamber: w1('spear_hand', 'chamber'), contact: w1('spear_hand', 'contact'), follow: w1('spear_hand', 'follow'),
++    orig: 'PROVISIONAL: the spear hand as a fist: a low straight fist from the crouch into the gut' },
++  su_fist_unwind: { named: true, tell_at: 0.5, squash_w: 0.0, drive: 'unwind', kind: 'hand', target: 'jaw', step_max: 14,
++    chamber: { family: 'upright', lean: 4, hips: [-4, -4, 0], hip_twist: -22, spine: { lean: 2, twist: -56 }, head: { pitch: 0, yaw: -14 }, hand_r: [14, 64, -10], pole_hand_r: [-4, 8, -2], hand_l: [10, 42, -19],
++      foot_r: [-10, 2.5, 9], foot_l: [10, 2.5, -8], ...FIST },
++    contact: { family: 'upright_lunge', lean: 12, hip_twist: 40, hips: [18, -4, 0], spine: { lean: 4, twist: 50 }, head: { pitch: 2, yaw: -16 }, hand_r: [46, 74, 22], pole_hand_r: [10, 8, 14], hand_l: [12, 60, -9],
++      foot_r: [-6, 2.5, 9], foot_l: [28, 2.5, -7], ...FIST },
++    follow: { hip_twist: 18, spine: { twist: 22 }, hips: [14, -4, 0], hand_r: [30, 66, 12], hand_l: [16, 60, -9] },
++    orig: 'PROVISIONAL: an unwinding fist: coiled with the fist carried across to the far shoulder, the body opening out so the fist comes round level at the jaw, the elbow leading the turn; one turn' },
++};
+diff --git a/render/anim/tools/waves/tip_path.mjs b/render/anim/tools/waves/tip_path.mjs
+index f4e65f2..18bee82 100644
+--- a/render/anim/tools/waves/tip_path.mjs
++++ b/render/anim/tools/waves/tip_path.mjs
+@@ -102,6 +102,15 @@ export const TIP_PATH = {
+   su_plate_arm: { tip: 'plate', path: 'drop' },
+   su_knee_legs: { tip: 'cap', path: 'arc_in' },
+   su_elbow_jaw: { tip: 'point', path: 'arc_in' },
++  // Combat's pieces of 2026-10-16 (a9e8f9cd): the Protagonist's falling blade hand, his turning palm-heel and stepping palm; the Anti-hero's straight fists and unwinding fist; the guards' falling sole
++  su_blade_fall: { tip: 'blade', path: 'drop' },
++  su_palm_arm: { tip: 'palm', path: 'line' },
++  palm_turn: { tip: 'heel', path: 'arc_out' },
++  jab_fist: { tip: 'fist', path: 'line' },
++  cross_fist: { tip: 'fist', path: 'line' },
++  spear_fist: { tip: 'fist', path: 'line' },
++  su_fist_unwind: { tip: 'fist', path: 'arc_out' },
++  su_sole_fall: { tip: 'sole', path: 'drop' },
+   // energy in reach (C2t): the point-blank bolts and the blast, as blows (Combat's c2t-content.md section 2)
+   'pk.bolt_thrust': { tip: 'palm', path: 'line' },
+   'pk.bolt_flat': { tip: 'palm', path: 'line' },
