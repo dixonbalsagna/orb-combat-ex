@@ -1338,3 +1338,24 @@ Orb's marks, in short (their words quoted where they matter):
 - **Each fighter moving his own way:** yes, they move like different people. In cue-tech the legs fold up and look strange.
 - **The flight round the planet:** the direction is right; the distant mountains and the sky colour look right. The fighters flew underwater around dusk, so the evening light was mostly dark ocean: show it again over land.
 - **Clarified the same day:** "thinner still" for the core meant the depth of the see-through effect, not the core's size. Orb likes the core's size as it is; some variety in size per building is welcome. Orb wants more city variety: the skyscrapers' "black and grey grid" look should get more visual appeal.
+
+## Orb answers homework 5, the city and depth (2026-10-16)
+
+- **Depth:** no direct steering; depth follows from pushing, pulling and sidestepping, as built.
+- **The street grid:** see three streets with fighters moving first. "the four-by-four was just illustrative, whatever we can do to make immersive city environments that are fully destructible and reactive is okay by me."
+- **The crown tower:** Orb's call to us. EP decision: Legal's recommendation, short stubs in the tower's own tone.
+- **The civilian count:** shown another way; our call. EP decision: no running number during the fight (a small bar for the share lost); the exact count on the results screen. UI to propose the bar.
+- **Where fights happen (verbatim):**
+
+  > a big issue with this is the spawn-in location just seems to be very far away from the city. ideally fighters should touch down in a random spot on the world, or a spot pre-determined by the level once we get to story mode. I want the planet to be procedurally built every time, just spitballing here: if the entire planet could be stored somehow, and then the shape the fight takes is a random slice going along the entire diameter of the planet, so the same cities and towns and landmarks can be seen from fight to fight, but different ones might pop up. please return some early prototype diagrams of how this could work to me so I can see if we're on the right track. Ideally I want a fight to have at least two cities, multiple towns, and a few different biomes spread across the length of the arena.
+
+- **Towers and power:** yes, a tower holds early and going through towers is earned. "early in the fight a well-earned power hit could send an opponent through the side of a skyscraper and they recover inside, but later in the fight at max power the same hit could launch the fighter through three skyscrapers, causing them to pancake-collapse, then propelling into a crater that levels nearby skyscrapers."
+- **Buildings that matter:** all three: the wall slam, cover from a beam at lower power, and the falling stack. Plus: "dodging a beam that hits a skyscraper behind you should give a live picture-in-picture view of the damage, depending on how significant it is".
+- **A falling building hurts:** only the fighter it was aimed at.
+- **A fighter lodged in a building:** wait until Orb plays it. Orb wants fights fast; holding only the lodged fighter is good if it gives the attacker openings (heavier energy barrages), an incentive for knock-back attacks.
+- **The hero and buildings (anguish), verbatim:**
+
+  > the anguish mechanic might need to be reworked somehow, lets keep working on this because building up anguish by intentionally killing civilians is a perverse incentive for the protagonist, and a fight against another "good guy" once there are more fighters might be lame and boring if neither can power up because they're avoiding civilian deaths. we could solve this potentially with Protagonist having multiple branching forms, one branch achieved by witnessing civilian deaths at the hands of his opponent, perhaps one achieved by allowing his opponent to power up first and testing himself against a higher form
+
+- **A staredown before the clock:** wait until Orb plays it. "I want dynamic fighter introductions, I want them to play out different every time based on who is fighting, where they spawn in at, any other variables we can think of."
+- **The city overall:** "its looking great". The high-altitude skyline impressed Orb: taller high-rises clustered in a denser centre, smaller buildings on the outskirts. Today's stills lessened the worry that the towers were too packed and the black-and-grey grid confusing up close.
