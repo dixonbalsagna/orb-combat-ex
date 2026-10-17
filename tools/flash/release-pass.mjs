@@ -147,6 +147,49 @@ export function redProblems(r) {
   return out;
 }
 
+export const EXTRA_SEEDS_MIN = 22;            // seeds 1008 and 1009 and at least 20 further nightly-style seeds on the same commit (RL-156)
+export const EXTRA_SEEDS_MUST = [1008, 1009];  // the seeds of the nightly that took the demo down
+export const CANARY = 'blastdummy-PROTAGONIST-REFERENCE';   // a clip whose two modes are known to differ measurably (a blast: the calm ground and the soft flames against the full ones)
+
+/** Legal addendum 10 (RL-156): every clip records the Reduce flashing state READ BACK from the running game, the two modes of a clip must show different pictures (frame probes), and the canary
+ *  pair, whose modes are known to differ, must not read the same: a pair that does not differ means the hook did not set the mode (the bug of 2026-10-17: every earlier record was calm in both). */
+export function modeProblems(rows) {
+  const out = [];
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  for (const r of rows) {
+    const reduced = /-reduced$/.test(r.id);
+    if (typeof r.reduceFlashing !== 'boolean' || typeof r.flashCalm !== 'boolean') out.push(`${r.id} has no Reduce flashing state read back from the running game (Legal addendum 10)`);
+    else if (r.reduceFlashing !== reduced || r.flashCalm !== reduced) out.push(`${r.id}: the game reported Reduce flashing ${r.reduceFlashing ? 'on' : 'off'} and the calm look ${r.flashCalm ? 'on' : 'off'}, which is not the mode of the clip`);
+  }
+  for (const r of rows) {
+    if (!/-normal$/.test(r.id)) continue;
+    const o = byId.get(r.id.replace(/-normal$/, '-reduced'));
+    if (!o) continue;
+    if (!r.probe || !o.probe) { out.push(`${r.id}: no frame probe to compare its two modes with`); continue; }
+    const ticks = Object.keys(r.probe).filter((k) => k in o.probe);
+    if (!ticks.length || ticks.every((k) => r.probe[k] === o.probe[k])) out.push(`${r.id} and ${o.id} show the same pictures: the two modes were not measured`);
+  }
+  const cn = byId.get(CANARY + '-normal'), cr = byId.get(CANARY + '-reduced');
+  if (cn && cr && cn.primary === cr.primary && cn.areaLower === cr.areaLower && cn.stricter === cr.stricter) out.push(`the canary pair ${CANARY} reads the same in both modes (${cn.primary} / ${cn.areaLower} / ${cn.stricter}): the modes were not measured`);
+  return out;
+}
+
+/** The nightly-style seeds a record carries (`extraSeeds`: the seeds, the largest primary reading, the rows): at least 22 seeds, 1008 and 1009 among them, none over 3 on the primary reading, each read in its own mode. */
+export function extraSeedProblems(x) {
+  if (!x || !Array.isArray(x.seeds)) return [`the record has no nightly-style seeds (extraSeeds): seeds ${EXTRA_SEEDS_MUST.join(' and ')} and at least ${EXTRA_SEEDS_MIN - EXTRA_SEEDS_MUST.length} further, on the same commit (Legal RL-156)`];
+  const out = [];
+  const seeds = new Set(x.seeds);
+  if (seeds.size < EXTRA_SEEDS_MIN) out.push(`only ${seeds.size} nightly-style seeds are recorded; ${EXTRA_SEEDS_MIN} are needed (1008, 1009 and 20 more)`);
+  for (const s of EXTRA_SEEDS_MUST) if (!seeds.has(s)) out.push(`nightly-style seed ${s} is not in the record`);
+  const rows = Array.isArray(x.rows) ? x.rows : [];
+  for (const s of seeds) for (const m of ['normal', 'reduced']) if (!rows.some((r) => r.id === `ai-${s}-${m}`)) out.push(`nightly-style seed ${s} has no ${m} row`);
+  for (const r of rows) {
+    if (typeof r.primary !== 'number' || r.primary > 3) out.push(`${r.id} reads ${r.primary} on the primary reading (over 3 is a fail, not a waiver)`);
+    if (r.reduceFlashing !== /-reduced$/.test(r.id)) out.push(`${r.id}: the game did not report the mode of the clip (Reduce flashing ${r.reduceFlashing})`);
+  }
+  return out;
+}
+
 /** The reasons a record does not hold for the hashes of a commit and the required clip ids (an empty list: it holds). Pure, so it can be tested without git. */
 export function problemsWith(record, now, ids, opts = {}) {
   const out = [];
@@ -175,6 +218,10 @@ export function problemsWith(record, now, ids, opts = {}) {
     for (const m of captureProblems(r, { interim })) out.push(m);
     if (typeof r.shortestDipGapTicks === 'number' && r.shortestDipGapTicks < DIP_GAP_TICKS) out.push(`${r.id} has two whole-screen dips ${r.shortestDipGapTicks} ticks apart (the cap is ${DIP_GAP_TICKS})`);
   }
+  // the hook that left Reduce flashing on made every earlier record calm in both modes: a record holds only if it was made with the fixed hook (RL-156), and the pass file prints the mode per clip
+  if (record.hookFixed !== true) out.push("the record was measured before the capture hook set the game's Reduce flashing from the clip's mode (2026-10-17): every clip of it is the calm look, so it is not a pass of full effects (Legal RL-156)");
+  for (const m of modeProblems(rows)) out.push(m);
+  for (const m of extraSeedProblems(record.extraSeeds)) out.push(m);
   // the HUD's own rate, a separate line of the pass (k06), and the seeds with the rule that picked them
   if (!record.hud || typeof record.hud.perSecond !== 'number') out.push('the record has no HUD line (the HUD\'s own flicker rate from hud_check, against ' + HUD_LIMIT + ' a second)');
   else if (record.hud.perSecond > HUD_LIMIT) out.push(`the HUD's own rate is ${record.hud.perSecond} a second (the limit is ${HUD_LIMIT})`);
@@ -196,7 +243,7 @@ export function rowOf(entry) {
   const r = entry.result;
   const c = r.combined;
   return {
-    id: entry.id, verdict: c.verdict, primary: r.general.flashes, red: r.red.flashes, areaLower: c.lower, stricter: c.stricter,
+    id: entry.id, verdict: c.verdict, primary: r.general.flashes, red: r.red.flashes, reduceFlashing: entry.mode ? entry.mode.reduce_flashing : undefined, flashCalm: entry.mode ? entry.mode.flash_calm : undefined, probe: entry.probe || undefined, areaLower: c.lower, stricter: c.stricter,
     marginal: `${r.general.marginal + r.red.marginal}/${r.general.worstSecond.length + r.red.worstSecond.length}`,
     marginalCount: r.general.marginal + r.red.marginal, secondChanges: r.general.worstSecond.length + r.red.worstSecond.length,
     spread: Math.round(spreadOf({ primary: r.general.flashes, areaLower: c.lower, stricter: c.stricter }) * 100) / 100,
@@ -241,6 +288,17 @@ function main(argv) {
       interim = { legal: interimId, from: opt('--from'), expires: opt('--expires'), waives: INTERIM_WAIVES.slice() };
       if (!/^RL-\d+/.test(interimId) || !isDate(interim.from) || !isDate(interim.expires)) { console.error('--interim needs a Legal id (RL-<n>), --from <YYYY-MM-DD> and --expires <YYYY-MM-DD>'); return 2; }
     }
+    // the nightly-style seeds on the same commit (run-pixels --seeds ...): their own summary
+    let extraSeeds = null;
+    const ex = opt('--extra');
+    if (ex) {
+      const es = JSON.parse(readFileSync(ex, 'utf8'));
+      for (const e of es) if (e.error) bad.push(`${e.id}: capture failed (nightly-style seeds)`);
+      const erows = es.filter((e) => !e.error && e.result).map((e) => ({ id: e.id, primary: e.result.general.flashes, red: e.result.red.flashes, reduceFlashing: e.mode ? e.mode.reduce_flashing : undefined }));
+      const eseeds = [...new Set(erows.map((r) => Number((/^ai-(\d+)-/.exec(r.id) || [])[1])).filter(Number.isFinite))].sort((a, b) => a - b);
+      extraSeeds = { seeds: eseeds, clips: erows.length, maxPrimary: Math.max(0, ...erows.map((r) => r.primary)), rows: erows };
+      for (const m of extraSeedProblems(extraSeeds)) bad.push(m);
+    } else bad.push('no nightly-style seeds: pass --extra <the run-pixels summary of seeds 1008, 1009 and 20 more> (Legal RL-156)');
     const hudRate = opt('--hud-rate');
     const hud = hudRate === undefined ? null : { perSecond: Number(hudRate), limit: HUD_LIMIT, source: opt('--hud-source') || 'ui/tools/hud_check.gd' };
     const pick = opt('--seed-pick');
@@ -248,6 +306,7 @@ function main(argv) {
     for (const id of ids) if (!rows.some((r) => r.id === id)) bad.push(`no result for ${id}`);
     for (const e of entries) if (e.error) bad.push(`${e.id}: capture failed`);
     for (const r of rows) for (const m of redProblems(r)) bad.push(m);
+    for (const m of modeProblems(rows)) bad.push(m);
     if (!interim) for (const r of rows) if (r.verdict !== 'PASS') bad.push(`${r.id} is ${r.verdict}`);
     if (!interim) for (const r of rows) for (const m of marginProblems(r)) bad.push(m);
     for (const r of rows) for (const m of captureProblems(r, { interim })) bad.push(m);
@@ -266,7 +325,7 @@ function main(argv) {
         needSecondCapture: rows.filter((r) => captureProblems(r).some((p) => /needs a second independent capture/.test(p))).map((r) => r.id),
       };
     }
-    const record = { _why: 'A recorded full-set pass of the pixel check (tools/flash/release-pass.mjs --record). tools/build-site.mjs refuses to publish the playable site unless this file matches the commit being published and every row is PASS. Do not edit by hand.', commit: full, recorded: new Date().toISOString().slice(0, 10), ...hashesAt(REPO, full), rows: ids.map((id) => rows.find((r) => r.id === id)), hud, seedPick, ...(interim ? { interim } : {}) };
+    const record = { hookFixed: true, extraSeeds, _why: 'A recorded full-set pass of the pixel check (tools/flash/release-pass.mjs --record). tools/build-site.mjs refuses to publish the playable site unless this file matches the commit being published and every row is PASS. Do not edit by hand.', commit: full, recorded: new Date().toISOString().slice(0, 10), ...hashesAt(REPO, full), rows: ids.map((id) => rows.find((r) => r.id === id)), hud, seedPick, ...(interim ? { interim } : {}) };
     writeFileSync(RECORD, JSON.stringify(record, null, 2) + '\n');
     console.log(`recorded ${interim ? `an INTERIM pass (${interim.legal}, until ${interim.expires}; ${interim.standing.pass} of ${interim.standing.clips} clips PASS)` : `a pass of ${ids.length} clips`} for ${full.slice(0, 8)} in tools/flash/release-pass.json`);
     return 0;

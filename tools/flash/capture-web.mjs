@@ -16,6 +16,7 @@
 // The driver calls start(), then for each of `ticks` ticks step() followed by Page.captureScreenshot, so no frame is skipped or doubled whatever the machine's speed.
 // Output: <out>/frame-000001.png ... and <out>/clip.json ({ scenario, reduced, fps: 60, ticks, width, height, page }).
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Cdp, launchBrowser, serve, browserExe, cpuLoad } from '../machine/browser.mjs';   // the one guarded launcher (docs/tools/machine-captures.md)
@@ -28,7 +29,7 @@ const usage = () => {
     '       [--ticks 1800] [--reduced] [--seed N] [--slots A,B] [--skip N] [--width 960] [--height 540] [--software] [--browser chrome|edge] [--browser-path <exe>] [--timeout 900]\n       [--session <name>] [--time-limit <hard limit, seconds>] [--cpu-cap 25]');
   process.exit(2);
 };
-const known = new Set(['--dir', '--path', '--url', '--mock', '--scenario', '--out', '--ticks', '--reduced', '--seed', '--slots', '--skip', '--variant', '--width', '--height', '--software', '--budget', '--hold', '--merge-zoom', '--browser', '--browser-path', '--timeout', '--session', '--purpose', '--time-limit', '--cpu-cap']);
+const known = new Set(['--dir', '--path', '--url', '--mock', '--scenario', '--out', '--ticks', '--reduced', '--seed', '--slots', '--skip', '--variant', '--width', '--height', '--software', '--budget', '--hold', '--merge-zoom', '--legacy-hook', '--browser', '--browser-path', '--timeout', '--session', '--purpose', '--time-limit', '--cpu-cap']);
 for (const a of argv) if (a.startsWith('--') && !known.has(a)) { console.error(`unknown option ${a}`); usage(); }
 const here = dirname(fileURLToPath(import.meta.url));
 const DIR = has('--mock') ? join(here, 'mock-page') : opt('--dir');
@@ -93,6 +94,8 @@ try {
   let last = -1;
   const tStart = Date.now();
   const inWindow = [];
+  let modeRead = null;   // the mode the running game reports after its first tick: UI's Reduce flashing and the calm look (Legal addendum 10: read back, per clip)
+  const probe = {};      // md5 of the frame at a few ticks: the pass file compares a clip's two modes with them (a pair that shows the same pictures was not measured in two modes)
   for (let i = 1; i <= TICKS; i++) {
     if (Date.now() > deadline) throw new Error(`timed out after ${i - 1} ticks`);
     const got = await page.eval('window.__flashcap.step().then((t) => ({ tick: t, win: window.__flashcap.in_window, err: window.__flashcap.error || null, sw: window.__flashcap.switches || null, mode: window.__flashcap.mode || null }))', true);
@@ -106,20 +109,23 @@ try {
         if (has(flag) && !has('--mock') && !(applied && applied[key] === true)) throw new Error(`${flag} was asked for and the page did not apply it (the hook reports ${JSON.stringify(applied)}): the build's hook is older than flash-capture-page-flags.patch`);
       }
     }
-    if (i === 1 && !has('--mock')) {
+    if (i === 1 && !has('--mock') && !has('--legacy-hook')) {
       // the clip's mode is UI's Reduce flashing and the calm look, not only the register's cap (the option defaults to ON: until flash-capture-reduce-flashing.patch a normal clip was the calm look).
       // A hook that does not report it, or reports the other mode, makes a clip of the wrong look: refuse it.
       if (!(applied && applied.reduce_flashing === REDUCED) || !(got && got.mode && got.mode.reduce_flashing === REDUCED && got.mode.flash_calm === REDUCED)) throw new Error(`the page did not take the clip's mode (${REDUCED ? 'reduced' : 'normal'}): it reports ${JSON.stringify({ applied: applied && applied.reduce_flashing, mode: got && got.mode })}; the build's hook is older than flash-capture-reduce-flashing.patch`);
     }
+    if (i === 1) modeRead = got && got.mode ? got.mode : null;
     inWindow.push(got && typeof got.win === 'number' ? got.win : null);
     if (typeof tick !== 'number' || tick <= last) throw new Error(`step() returned ${tick} after ${last}: the page did not advance exactly one tick`);
     last = tick;
     const shot = await page.send('Page.captureScreenshot', { format: 'png', fromSurface: true });
-    writeFileSync(join(OUT, `frame-${String(i).padStart(6, '0')}.png`), Buffer.from(shot.data, 'base64'));
+    const png = Buffer.from(shot.data, 'base64');
+    if (i === 60 || i === 180 || i === 300 || i === 600 || i === 1200 || i === 2400) probe[i] = createHash('md5').update(png).digest('hex');
+    writeFileSync(join(OUT, `frame-${String(i).padStart(6, '0')}.png`), png);
   }
   const loadAfter = await cpuLoad(1000);
   const guard = browser ? { tag: String(browser.profile).split(/[\\/]/).pop(), session: browser.entry.session, purpose: browser.entry.purpose, cpuPercent: browser.entry.cpuPercent, timeoutS: browser.entry.timeoutS, priority: 'below-normal', hardEndMs: browser.deadlineMs } : null;
-  writeFileSync(join(OUT, 'clip.json'), JSON.stringify({ scenario: SCENARIO, seed: SEED, reduced: REDUCED, fps: 60, inWindow, ticks: TICKS, width: WIDTH, height: HEIGHT, budget: has('--budget'), hold: has('--hold'), mergeZoom: has('--merge-zoom'), applied, variant: VARIANT, page: pageUrl, guard, loadBefore, loadAfter, framesPerSecond: Math.round((TICKS / Math.max(1, (Date.now() - tStart) / 1000)) * 100) / 100 }, null, 2) + '\n');
+  writeFileSync(join(OUT, 'clip.json'), JSON.stringify({ scenario: SCENARIO, seed: SEED, reduced: REDUCED, fps: 60, inWindow, ticks: TICKS, width: WIDTH, height: HEIGHT, mode: modeRead, probe, budget: has('--budget'), hold: has('--hold'), mergeZoom: has('--merge-zoom'), applied, variant: VARIANT, page: pageUrl, guard, loadBefore, loadAfter, framesPerSecond: Math.round((TICKS / Math.max(1, (Date.now() - tStart) / 1000)) * 100) / 100 }, null, 2) + '\n');
   log(`${TICKS} frames in ${Math.round((Date.now() - tStart) / 1000)} s of capture (${(TICKS / Math.max(1, (Date.now() - tStart) / 1000)).toFixed(2)} frames a second${has('--software') ? ', software rendering' : ''})`);
   log(`wrote ${TICKS} frames to ${OUT}; next: node tools/flash/analyse-frames.js ${OUT}`);
 } catch (e) {

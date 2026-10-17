@@ -11,7 +11,8 @@
     "charge_full",
     "cut_dip",
     "cut_in_panel",
-    "transform_cut"
+    "transform_cut",
+    "double_hit"
   ],
   "reserved": [
     "body_hit",

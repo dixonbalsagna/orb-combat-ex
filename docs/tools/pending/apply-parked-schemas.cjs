@@ -2,7 +2,7 @@
 // data/fighters/<id>/forms.json). Each is written by docs/tools/pending/infer-schema.cjs from the file itself, so run this in the commit that lands the files (a schema with no document
 // fails the data job's coverage check, which is why these are not in the tree already):
 //     node docs/tools/pending/apply-parked-schemas.cjs            every one whose file is in the tree
-//     node docs/tools/pending/apply-parked-schemas.cjs brake      one of: brake, chain, guard-pass, throws, forms
+//     node docs/tools/pending/apply-parked-schemas.cjs brake      one of: brake (the animation), brake-fight (the sim), chain, guard-pass, throws, forms, brake-fight
 // Proved on a scratch export of main with Animation's whole stack (many-bodies to study-poses, 18 patches) and Simulation's forms park: validate 0 errors, with the five files each mapped.
 // Re-runnable: a second run changes nothing. Not run by CI or the validator.
 const fs = require('fs');
@@ -14,6 +14,7 @@ const JOBS = {
   chain: [['data/anim/chain.json', 'anim-chain', 'schema', ['--policy', 'the chain inside a tower: ceiling, lodge and rebound poses and rules']]],
   'guard-pass': [['data/anim/guard_pass.json', 'anim-guard-pass', 'schema', ['--maps', 'contacts', '--policy', 'the contact-key pass: how far each contact key\'s free hand was and is from the guard (docs/animation/guard-pass.md)']]],
   throws: [['data/anim/throws.json', 'anim-throws', 'schema', ['--maps', 'sends,grip', '--policy', 'the grapple\'s throws by the send and where each throw\'s hands take hold']]],
+  'brake-fight': [['data/fight/brake.json', 'fight-brake', 'schema', ['--policy', 'the switch and numbers of the air brake (docs/architecture/brake-core.md)']]],
   forms: [
     ['data/fight/forms.json', 'fight-forms', 'schema', ['--policy', 'the forms\' switch and what every fighter shares (docs/architecture/forms-core.md)']],
     ['data/fighters/PROTAGONIST/forms.json', 'fighters-forms', 'schema', ['--match', 'data/fighters/*/forms.json', '--case-file', 'data/fighters/FIXTURE_HERO/forms.json', '--policy', 'a fighter\'s own steps, gains, coil, patience and release (docs/design/hero-forms.md)']],

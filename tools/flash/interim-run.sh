@@ -55,6 +55,22 @@ if [ -n "$SECOND" ]; then
   [ -f "$W/clips_second/summary.json" ] && SECOND_ARGS=(--seconds "$W/clips_second/summary.json")
 fi
 
+# NIGHTLY-STYLE seeds on the same commit (Legal RL-156, addendum 10): seeds 1008 and 1009 and 20 fresh ones, both modes, none over 3 on the primary reading
+say "nightly-style seeds"
+EXTRA_SEEDS=$(node --input-type=module -e "
+import { nextSeeds } from "./tools/flash/nightly-seeds.mjs";
+import { readFileSync, existsSync } from "node:fs";
+const src = JSON.parse(readFileSync("tools/flash/sources.json", "utf8"));
+const recorded = new Set((src.pairings || []).flatMap((p) => p.seeds || []));
+const hist = existsSync("tools/flash/nightly-seeds.json") ? JSON.parse(readFileSync("tools/flash/nightly-seeds.json", "utf8")) : { runs: [] };
+const used = hist.runs.flatMap((r) => r.seeds).filter((s) => s !== 1008 && s !== 1009);
+console.log([1008, 1009, ...nextSeeds(20, 1010, recorded, used).filter((s) => s !== 1008 && s !== 1009)].join(","));
+")
+echo "nightly-style seeds: $EXTRA_SEEDS" | tee -a "$LOG"
+mkdir -p "$W/clips_extra"
+node tools/flash/run-pixels.mjs "${CLIP_ARGS[@]}" --out "$W/clips_extra" --seeds "$EXTRA_SEEDS" > "$W/pixels_extra.txt" 2>&1
+echo "extra exit $?" | tee -a "$LOG"
+
 say "margins"
 node tools/flash/margins.mjs "$W/clips" --json "$W/margins.json" --md "$W/margins.md" > "$W/margins.txt" 2>&1
 [ -n "$SECOND" ] && node tools/flash/margins.mjs "$W/clips_second" --json "$W/margins_second.json" > "$W/margins_second.txt" 2>&1
@@ -69,8 +85,10 @@ for (const e of base) { if (e.error || !e.result) { out.push(e.id + ' (no result
   const s = sec.find((x) => x.id === e.id && !x.error && x.result);
   const p = Math.max(e.result.general.flashes, s ? s.result.general.flashes : 0);
   if (p > 3) out.push(e.id + ' primary ' + p + ' (' + [e.result.combined.primary, e.result.combined.lower, e.result.combined.stricter].join('/') + ')'); }
+const ex = rd(process.argv[3]);
+for (const e of ex) { if (e.error || !e.result) { out.push(e.id + ' (no result, nightly-style seed)'); continue; } if (e.result.general.flashes > 3) out.push(e.id + ' primary ' + e.result.general.flashes + ' (nightly-style seed)'); }
 console.log(out.join('; '));
-" "$W/clips/summary.json" "$W/clips_second/summary.json")
+" "$W/clips/summary.json" "$W/clips_second/summary.json" "$W/clips_extra/summary.json")
 if [ -n "$OVER" ]; then
   echo "NOT RECORDED: clips over 3 on the primary reading: $OVER" | tee -a "$LOG"
   echo "$OVER" > "$W/NOT-RECORDED.txt"
@@ -89,7 +107,7 @@ const hz = [...look.matchAll(/const HZ_[A-Z_]+ := ([0-9.]+)/g)].map((m) => Numbe
 fs.writeFileSync(process.argv[3], JSON.stringify({ rule: 'tools/flash/pick-seeds.mjs: the seeds of tools/flash/sources.json at the commit', seeds, pairings: (src.pairings || []).map((p) => ({ slots: p.slots, seeds: p.seeds })) }, null, 2));
 fs.writeFileSync(process.argv[4], String(hz.length ? Math.max(...hz) : 0));
 " "$W/sources.at.commit.json" "$W/ui_look.at.commit.gd" "$W/pick.json" "$W/hud-rate.txt"
-node tools/flash/release-pass.mjs --record --summary "$W/clips/summary.json" "${SECOND_ARGS[@]}" --hud-rate "$(cat "$W/hud-rate.txt")" --hud-source "ui/core/ui_look.gd HZ_* (the largest, read from the commit)" \
+node tools/flash/release-pass.mjs --record --summary "$W/clips/summary.json" --extra "$W/clips_extra/summary.json" "${SECOND_ARGS[@]}" --hud-rate "$(cat "$W/hud-rate.txt")" --hud-source "ui/core/ui_look.gd HZ_* (the largest, read from the commit)" \
   --seed-pick "$W/pick.json" --interim RL-136 --from "$FROM" --expires "$EXPIRES" --commit "$FULL" 2>&1 | tee -a "$LOG"
 node tools/flash/release-pass.mjs --verify --commit "$FULL" 2>&1 | tee -a "$LOG"
 
