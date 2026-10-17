@@ -61,10 +61,10 @@ index ccc361f..54420f8 100644
  
 diff --git b/docs/rendering/geometry-and-warmup.md b/docs/rendering/geometry-and-warmup.md
 new file mode 100644
-index 0000000..b72281d
+index 0000000..6ccb45f
 --- /dev/null
 +++ b/docs/rendering/geometry-and-warmup.md
-@@ -0,0 +1,79 @@
+@@ -0,0 +1,85 @@
 +# Geometry the picture does not need, and the warm-up draw (Rendering, 2026-10-17)
 +
 +Performance's audit (`docs/perf/audit-2026-10-16.md`, sections 3.6 and 5) gave Rendering four items:
@@ -137,11 +137,17 @@ index 0000000..b72281d
 +
 +## The HUDs' redraw
 +
-+`main.gd`'s `render_view()` calls `queue_redraw()` on both HUDs every frame. Only UI knows when a HUD has changed, and UI is sending a patch. It goes into Rendering's next batch as it comes.
++`main.gd`'s `render_view()` asked both HUDs to rebuild their draw lists every frame. Now:
++- **UiHud is no longer asked.** It draws nothing itself: its layers redraw when their own content changes. This is UI's line (`docs/ui/pending/hud-cache/main-redraw.patch`), taken as it is.
++- **The greybox HUD redraws when what it draws changes** (`hud.gd` `redraw_key`). That covers the demo's prompt, the overlay, touch, the screen's size, the seed, the tick and the pause; the legacy view and the perf readout redraw every frame.
++  - UI's patch redrew it on every tenth frame instead. In a match its corner line shows the tick, so that would leave the number behind for up to nine frames and change those pixels.
++  - With the change rule, a match still redraws it every tick. Pauses, frozen ticks and the demo's still prompt no longer do.
++- UI's `hud_check` passes before and after: 4,719 checks.
++- The HUD's real cost, 330 of 382 draw calls, is UiHud's layers. UI's texture cache (`docs/ui/pending/hud-cache/`) addresses that.
 +
 +## Proof
 +
-+- **Determinism and the sim:** all 17 render gates pass on the batch, including determinism plain and `--intro`, the pane, flight, ground, seam and shape checks, and the new city check. The sim is not touched.
++- **Determinism and the sim:** on af5151b5 all 17 render gates pass on the batch. On d9cbba71 all pass but the depth check, which fails the same way on HEAD alone: since Simulation's depth window (46734840), a held pair drifts in depth inside a tick, and the lane cues hold the pair's mark at their level. Determinism passes plain and `--intro`, as do the pane, flight, ground, seam, shape and city checks and UI's `hud_check`. The sim is not touched.
 +- **Pixels:** the plan is frame-for-frame captures of `mashcity`, `signaturecity`, `ring` and `collapse` before and after, against a repeat of the same build as the noise floor. Pose stills differ by 1 to 2 k pixels in the street's crowd band between two captures of one build, and collapse in reduced mode diverges after tick 910 between two runs of one export. These wait for the end of Tools' record run.
 +- **Primitives and the hitches:** Performance's frame-bench against the same commit, after the record run.
 diff --git b/render/core/crowd_chunks.gd b/render/core/crowd_chunks.gd
@@ -304,6 +310,30 @@ index 2e037bc..35743d2 100644
  		var nc2: int = SimConst.NC
  		for c0 in range(0, nc2, SHORE_CHUNK):
  			var c1: int = mini(c0 + SHORE_CHUNK, nc2)
+diff --git a/render/core/hud.gd b/render/core/hud.gd
+index a5bb628..663f234 100644
+--- a/render/core/hud.gd
++++ b/render/core/hud.gd
+@@ -27,6 +27,19 @@ func _ready() -> void:
+ 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+ 
+ 
++## Everything _draw reads, so main.gd asks for a redraw only when it changes: the full greybox HUD (legacy) and the perf
++## readout change every frame; UI's view draws only _prompt's lines.
++func redraw_key() -> Array:
++	if main == null or main.host == null:
++		return []
++	if legacy or show_perf:
++		return [Engine.get_process_frames()]
++	var host: SimHost = main.host
++	var card: bool = main.ui_hud != null and main.ui_hud.is_overlay_open()
++	var touch: bool = main.ui_hud != null and bool(main.ui_hud.opts.get("touch_ui", false))
++	return [size, _dp(), main.started, host.intro_running(), card, touch, main.touch_layout() if touch else null, host.seed, host.ticks, host.paused]
++
++
+ func _draw() -> void:
+ 	if main == null or main.host == null:
+ 		return
 diff --git a/render/core/look.gd b/render/core/look.gd
 index 1d77c16..a6e2d99 100644
 --- a/render/core/look.gd
@@ -351,10 +381,18 @@ index 1d77c16..a6e2d99 100644
  const SHADOW_W: float = 56.0             # a fighter's ground shadow: across, and
  const SHADOW_D: float = 26.0             # ... in depth, in world units at his feet
 diff --git a/render/core/main.gd b/render/core/main.gd
-index 4670953..026cde4 100644
+index 4670953..d6a6d97 100644
 --- a/render/core/main.gd
 +++ b/render/core/main.gd
-@@ -121,6 +121,12 @@ func _ready() -> void:
+@@ -83,6 +83,7 @@ var view_cam_x: float = 0.0       # the interpolated camera's wrapped world x th
+ var args: Dictionary = {}
+ var frames: int = 0
+ var _ring: Array = [PackedFloat64Array(), PackedFloat64Array(), PackedFloat64Array(), PackedFloat64Array()]   # frame, tick, fx, view ms
++var _hud_key: Array = []          # what the greybox HUD last drew from (hud.gd redraw_key)
+ var _bench: Array = [PackedFloat64Array(), PackedFloat64Array(), PackedFloat64Array(), PackedFloat64Array()]
+ var _render_cpu := PackedFloat64Array()
+ var _render_gpu := PackedFloat64Array()
+@@ -121,6 +122,12 @@ func _ready() -> void:
  	add_child(pane)
  	move_child(pane, 0)
  	panes = [pane]
@@ -367,7 +405,7 @@ index 4670953..026cde4 100644
  	cam_rig = pane.cam_rig
  	planet = pane.planet
  	fighters_root = pane.fighters_root
-@@ -165,6 +171,7 @@ func _ready() -> void:
+@@ -165,6 +172,7 @@ func _ready() -> void:
  	# The pause menu's "hand player two back to the AI" entry.
  	ui_hud.player_two_leave_requested.connect(_on_player_two_leave)
  	ui_hud.form_prompt_shown.connect(_on_form_prompt)
@@ -375,7 +413,24 @@ index 4670953..026cde4 100644
  	ui_hud.pause_menu_opened.connect(_on_pause_menu_opened)
  	ui_hud.pause_menu_closed.connect(_on_pause_menu_closed)
  	ui_hud.new_match_requested.connect(func(): start_match(fresh_seed()))
-@@ -596,6 +603,36 @@ func _on_form_prompt(slot: int, device: String) -> void:
+@@ -555,8 +563,14 @@ func render_view(a: float) -> void:
+ 	view_cam_x = pane.view_cam_x
+ 	host.impact.heat_changed = false
+ 	UiSimBridge.patch(ui_hud, S, host.hub)   # the hub is read for the armed stance's badge (UI's bridge writes nothing to it)
+-	ui_hud.queue_redraw()
+-	hud.queue_redraw()
++	# UiHud draws nothing itself: its layers redraw when their own content changes (UI, docs/ui/pending/hud-cache/
++	# main-redraw.patch), so it is not asked to every frame. The greybox HUD redraws when what it draws changes
++	# (Performance's audit, hot spot 1): every tick in a match, as its corner line shows the tick, and not while a
++	# pause, a frozen tick or the demo's prompt holds it still.
++	var hk: Array = hud.redraw_key()
++	if hk != _hud_key:
++		_hud_key = hk
++		hud.queue_redraw()
+ 
+ 
+ ## Each tick's events and feed lines, as SimHost drains them: the planet's flight, and UI's HUD.
+@@ -596,6 +610,36 @@ func _on_form_prompt(slot: int, device: String) -> void:
  		Input.start_joy_vibration(int(host.hub.slot_pad[slot]), 0.3, 0.3, 0.015)
  
  
