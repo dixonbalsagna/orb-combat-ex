@@ -1,0 +1,24 @@
+--- a/render/core/main.gd	2026-10-17 03:23:09.159506700 -0700
++++ b/render/core/main.gd	2026-10-17 03:23:09.241346300 -0700
+@@ -80,6 +80,7 @@
+ var fighter_views: Array = []
+ var _insets_vp := Vector2.ZERO       # the view's size when the safe-area insets were last read
+ var view_cam_x: float = 0.0       # the interpolated camera's wrapped world x this frame
++var _hud_redraw_frame: int = 0   # counts frames for the greybox HUD's slow redraw (render_view)
+ var args: Dictionary = {}
+ var frames: int = 0
+ var _ring: Array = [PackedFloat64Array(), PackedFloat64Array(), PackedFloat64Array(), PackedFloat64Array()]   # frame, tick, fx, view ms
+@@ -555,8 +556,11 @@
+ 	view_cam_x = pane.view_cam_x
+ 	host.impact.heat_changed = false
+ 	UiSimBridge.patch(ui_hud, S, host.hub)   # the hub is read for the armed stance's badge (UI's bridge writes nothing to it)
+-	ui_hud.queue_redraw()
+-	hud.queue_redraw()
++	# UiHud draws nothing itself (its layers redraw when their own signature changes), so it is not asked to redraw every frame. The greybox HUD's text is the legacy panels (F2) and the key help,
++	# which change slowly: it redraws every frame only in the legacy view and six times a second otherwise (Performance's audit af5151b5, hot spot 1).
++	_hud_redraw_frame += 1
++	if hud.legacy or _hud_redraw_frame % 10 == 0:
++		hud.queue_redraw()
+ 
+ 
+ ## Each tick's events and feed lines, as SimHost drains them: the planet's flight, and UI's HUD.

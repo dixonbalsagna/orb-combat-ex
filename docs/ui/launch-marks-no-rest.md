@@ -42,3 +42,7 @@ Goes: RECHARGING, "launch recharging", "launch ready", "launcher", "recharges". 
 ## 6. How small the change is when ruled
 
 Delete the unused words and data (`launcher_rest`, the two legend notes, `launcher_rest_total`, `launcher_rest_left`, `REST_TOTAL`'s remains), change one How to play line and the hint's trigger, update the tests that assert RECHARGING, and optionally add the aim mark and the strength ring. About two files of data, three of code and the tests. Nothing in the sim is touched.
+
+## 7. Built in scratch (2026-10-17), after Game Design's thirteenth round
+
+`docs/design/launch-anywhere.md` ruled it, and the marks are built and parked behind `features.json` `launch_anywhere` (off): `docs/ui/pending/launch-anywhere/` (README there). What changed from this page's plan: Game Design's own marks are the ones built (**the lit B with a solid ring when the launch is sure and a broken ring when it can be answered; pips for the power, one to five; a rose of four arrows, filled for a fresh kind of send and hollow for a familiar one**); the optional aim arrow and the strength ring of section 3 are not built (the ruling's marks cover what they were for). The hint is Orb's pick C, once, at the first sure launcher. The cue fields are proposed for Encounter in the README.

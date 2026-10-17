@@ -1,8 +1,8 @@
 # The brawl's teaching marks: the nine cells, the perfect follow-up, and the small marks (UI, 2026-10-12)
 
-Owner: UI & UX. **Paper only; nothing here is built.** Against `docs/design/brawl-second-pass.md` sections 15 and 16 and `docs/design/depth.md`; the cue names are the director's (`docs/director/brawl-c2.md` section 7) and the perfect's three cues Encounter will build in pass 3. Mock: `docs/ui/img/brawl-teaching-mock.png` (source `docs/ui/mock/brawl-teaching.html`).
+Owner: UI & UX. **Paper only; nothing here is built.** Against `docs/design/brawl-second-pass.md` sections 15 and 16 and `docs/design/depth.md`; the cue names are the director's (`docs/director/brawl-c2.md` section 7) and the perfect's three cues Encounter will build in pass 3. Mock: kept local (`homework/mocks/ui/`).
 
-![the marks](img/brawl-teaching-mock.png)
+*The teaching sheet (a mock of these marks) is kept local, in `homework/mocks/ui/brawl-teaching-mock.png`; it is not in the repo.*
 
 ## 0. The rules these marks keep
 

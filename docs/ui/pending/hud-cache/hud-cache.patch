@@ -1,0 +1,509 @@
+diff -ruN a/ui/data/features.json b/ui/data/features.json
+--- a/ui/data/features.json	2026-10-17 03:38:07.667363800 -0700
++++ b/ui/data/features.json	2026-10-17 03:38:07.794597700 -0700
+@@ -1,6 +1,6 @@
+ {
+   "schema": 1,
+-  "note": "Feature flags for HUD code that is written but not part of the base game. hiding: Orb removed hiding from the base game and holds it for a future stealth-specialist fighter (docs/ep/vision.md). With it off the HUD ignores the hidden state and the lost-trail cue everywhere (plate chips, the eye-slash marker, the strip's ping and last-seen mark, the silhouette's fading); the code stays for that fighter. Turn it on in a fighter's data when that fighter exists. touch_full and remap: the Settings screen lists the Full touch layout and the Remap controls entry, dimmed and marked Soon, until Controls' touch-full layout and the remap screen exist; both are on now. about_music and about_voice: the About page's two sentences that are true only once they are (the music was generated with Suno; there is no voice acting) are shown only while their flag is on; both are off until the music ships and Orb confirms the voice sentence (docs/legal/go-to-market.md section 1). A page item whose icon is named about_music or about_voice is that sentence. three_strengths: the martial face buttons are X light, Y medium, B heavy and the signature is the power button held with B (docs/design/brawl-second-pass.md, docs/ui/hud-spec.md section 48); flipped with Encounter's slice C2a, and with it the legend, the Full touch words, the Remap and How to play words, the weight mark's third value and the latched-charge and charges-off settings follow. civilian_bar: no running civilian count in the fight (EP decision on Orb's homework 5): the top chip shows a small steady bar for the share of the city's people lost, the structures and craters line stops brightening, and the exact counts are on the match-over card (docs/ui/civilian-bar.md); off, the chip is the count as before. launch_anywhere: Game Design's thirteenth round (docs/design/launch-anywhere.md, docs/ui/launch-marks-no-rest.md): a B within 24 ticks of a landed blow is the launcher, no rest. With it on the RECHARGING chip, the ring and the legend's rest note are not drawn whatever the director sends, the run's pips on the rival go, and the lit B carries the marks: a solid or broken ring by safety, pips for power, a rose of four arrows for fresh and familiar kinds. Off until Encounter's launcher window sends the fields. run_mode: the run mode's screens (the offers, the beats between fights and the last night, the results: ui/widgets/ui_run.gd, docs/ui/run-mode-screens.md); off until Game Design's run mode and the host exist; the HUD draws a record the host passes and never writes the sim. launch_marks: the marks that teach the launch without the three-strength button names (docs/ui/launch-teaching.md): the run of four pips on the rival, the plate's LAUNCH or RESTING chip with the rest's ring, OPEN, a full gauge that lights B with the word LAUNCH, the once-only hint and the pad's pulse at an opening; on since Game Design's ruling of 2026-10-16; the run's pips, the full gauge and the hint stay dark until the blow cue carries run and run_to. three_strengths turns these on too. reduce_flashing: the Reduce flashing setting row and the flashing notice's reworded line (VFX's register); on when Legal has approved the words.",
++  "note": "Feature flags for HUD code that is written but not part of the base game. hiding: Orb removed hiding from the base game and holds it for a future stealth-specialist fighter (docs/ep/vision.md). With it off the HUD ignores the hidden state and the lost-trail cue everywhere (plate chips, the eye-slash marker, the strip's ping and last-seen mark, the silhouette's fading); the code stays for that fighter. Turn it on in a fighter's data when that fighter exists. touch_full and remap: the Settings screen lists the Full touch layout and the Remap controls entry, dimmed and marked Soon, until Controls' touch-full layout and the remap screen exist; both are on now. about_music and about_voice: the About page's two sentences that are true only once they are (the music was generated with Suno; there is no voice acting) are shown only while their flag is on; both are off until the music ships and Orb confirms the voice sentence (docs/legal/go-to-market.md section 1). A page item whose icon is named about_music or about_voice is that sentence. three_strengths: the martial face buttons are X light, Y medium, B heavy and the signature is the power button held with B (docs/design/brawl-second-pass.md, docs/ui/hud-spec.md section 48); flipped with Encounter's slice C2a, and with it the legend, the Full touch words, the Remap and How to play words, the weight mark's third value and the latched-charge and charges-off settings follow. civilian_bar: no running civilian count in the fight (EP decision on Orb's homework 5): the top chip shows a small steady bar for the share of the city's people lost, the structures and craters line stops brightening, and the exact counts are on the match-over card (docs/ui/civilian-bar.md); off, the chip is the count as before. launch_anywhere: Game Design's thirteenth round (docs/design/launch-anywhere.md, docs/ui/launch-marks-no-rest.md): a B within 24 ticks of a landed blow is the launcher, no rest. With it on the RECHARGING chip, the ring and the legend's rest note are not drawn whatever the director sends, the run's pips on the rival go, and the lit B carries the marks: a solid or broken ring by safety, pips for power, a rose of four arrows for fresh and familiar kinds. Off until Encounter's launcher window sends the fields. run_mode: the run mode's screens (the offers, the beats between fights and the last night, the results: ui/widgets/ui_run.gd, docs/ui/run-mode-screens.md); off until Game Design's run mode and the host exist; the HUD draws a record the host passes and never writes the sim. hud_cache: the HUD's steadiest layers (the plates, the toll chip, the prompt rows, the legends, the silhouettes, the strip's base and the ring map's base) are painted into small textures when they change and drawn as one rectangle a frame (docs/ui/hud-cache.md; Performance's audit af5151b5: the HUD is 344 of 364 draw calls); off until the stills match and the layer cut has been read. launch_marks: the marks that teach the launch without the three-strength button names (docs/ui/launch-teaching.md): the run of four pips on the rival, the plate's LAUNCH or RESTING chip with the rest's ring, OPEN, a full gauge that lights B with the word LAUNCH, the once-only hint and the pad's pulse at an opening; on since Game Design's ruling of 2026-10-16; the run's pips, the full gauge and the hint stay dark until the blow cue carries run and run_to. three_strengths turns these on too. reduce_flashing: the Reduce flashing setting row and the flashing notice's reworded line (VFX's register); on when Legal has approved the words.",
+   "features": {
+     "hiding": false,
+     "touch_full": true,
+@@ -11,6 +11,7 @@
+     "reduce_flashing": true,
+     "start_menu": true,
+     "launch_marks": true,
++    "hud_cache": false,
+     "run_mode": false,
+     "launch_anywhere": false,
+     "civilian_bar": true
+diff -ruN a/ui/demo/hud_demo.gd b/ui/demo/hud_demo.gd
+--- a/ui/demo/hud_demo.gd	2026-10-17 03:38:07.690383700 -0700
++++ b/ui/demo/hud_demo.gd	2026-10-17 03:38:07.861813500 -0700
+@@ -31,6 +31,8 @@
+ func _ready() -> void:
+ 	args = _parse_args()
+ 	UiHud.notice_auto = args.has("notice")
++	if args.has("cache"):
++		UiData.set_feature("hud_cache", true)   # the texture cache on, for the stills that prove its pixels match (docs/ui/hud-cache.md)
+ 	if args.has("three"):
+ 		UiData.set_feature("three_strengths", true)   # the three-strength HUD (--three)
+ 	if args.has("rf"):
+@@ -52,6 +54,8 @@
+ 		var target: float = float(args["at"])
+ 		while feed.t < target:
+ 			_step(1.0 / 60.0)
++	if args.has("hold"):
++		paused = true   # stop the feed's clock after the fast-forward: two loads of the page then show the same frame (the cache's pixel proof)
+ 	if args.has("nolegend"):
+ 		legend = false
+ 	if args.has("split"):
+diff -ruN a/ui/hud/ui_hud.gd b/ui/hud/ui_hud.gd
+--- a/ui/hud/ui_hud.gd	2026-10-17 03:38:07.677871100 -0700
++++ b/ui/hud/ui_hud.gd	2026-10-17 03:38:07.803600600 -0700
+@@ -273,7 +273,7 @@
+ 	opts.merge(UiData.option_defaults(), true)   # the options' defaults live in ui/data/options.json
+ 	UiLook.set_vision(str(opts["colour_vision"]))   # the preset is a per-process setting: a new HUD starts from its own option
+ 	_l_letter = _layer(_paint_letterbox)
+-	_l_strip_base = _layer(_paint_strip_base)
++	_l_strip_base = _layer(_paint_strip_base, func() -> Rect2: return layout.strip)
+ 	_div_dark = _bar()
+ 	_div_light = _bar()
+ 	_l_crown = _layer(_paint_crown)
+@@ -282,9 +282,9 @@
+ 		_l_chips.append(_chip_layer(i))
+ 	_l_struggle = _layer(_paint_struggle)
+ 	for i in range(2):
+-		_l_prompts.append(_layer(_paint_prompts.bind(i)))
++		_l_prompts.append(_layer(_paint_prompts.bind(i), func() -> Rect2: return layout.prompts[i]))
+ 	for i in range(2):
+-		_l_hints.append(_layer(_paint_hints.bind(i)))
++		_l_hints.append(_layer(_paint_hints.bind(i), func() -> Rect2: return layout.hints[i]))
+ 	for i in range(2):
+ 		var holder := Node2D.new()
+ 		add_child(holder)
+@@ -299,12 +299,12 @@
+ 	_l_intro = _layer(_paint_intro)
+ 	_l_touchctl = _layer(_paint_touchctl)
+ 	for i in range(2):
+-		_l_plate.append(_layer(_paint_plate.bind(i)))
++		_l_plate.append(_layer(_paint_plate.bind(i), func() -> Rect2: return layout.plate[i]))
+ 	for i in range(2):
+-		_l_sil.append(_layer(_paint_sil.bind(i)))
+-	_l_toll = _layer(_paint_toll)
++		_l_sil.append(_layer(_paint_sil.bind(i), func() -> Rect2: return layout.silhouette[i]))
++	_l_toll = _layer(_paint_toll, func() -> Rect2: return layout.toll)
+ 	_l_strip_marks = _layer(_paint_strip_marks)
+-	_l_ring_base = _layer(_paint_ring_base)
++	_l_ring_base = _layer(_paint_ring_base, func() -> Rect2: return layout.ring)
+ 	_l_ring = _layer(_paint_ring)
+ 	_l_many = _layer(_paint_many)
+ 	_l_run = _layer(_paint_run)
+@@ -360,9 +360,10 @@
+ 	_relayout()
+ 
+ 
+-func _layer(painter: Callable) -> UiLayer:
++func _layer(painter: Callable, rect_fn: Callable = Callable()) -> UiLayer:
+ 	var l := UiLayer.new()
+ 	l.painter = painter
++	l.rect_fn = rect_fn
+ 	add_child(l)
+ 	return l
+ 
+diff -ruN a/ui/hud/ui_layer.gd b/ui/hud/ui_layer.gd
+--- a/ui/hud/ui_layer.gd	2026-10-17 03:38:07.679878800 -0700
++++ b/ui/hud/ui_layer.gd	2026-10-17 03:38:07.805602600 -0700
+@@ -10,6 +10,25 @@
+ var redraws: int = 0                 # how many times this layer has been redrawn (the perf counters read it)
+ 
+ 
++## Texture caching (features.json `hud_cache`, docs/ui/hud-cache.md): a layer that has a `rect_fn` and whose picture changes seldom is painted into a small SubViewport when its signature changes, and
++## drawn as one textured rectangle every frame: a layer of fifty draw calls becomes one. The painter runs unchanged, with a canvas the size of the layer; the viewport sees only the layer's rectangle.
++var rect_fn: Callable = Callable()   # returns the layer's bounding rectangle in layer coordinates (the layout's rectangle for it); empty = never cached
++var cached_paints: int = 0           # how many times the cache has been repainted (the tests read it)
++var _vp: SubViewport
++var _cv: Control
++var _crect := Rect2()
++const CACHE_MAX_PX := 400000.0      # a layer whose rectangle is larger than this is drawn directly (a full-screen layer would cost more memory than it saves)
++const CACHE_MARGIN := 16.0           # the layout's rectangle grown by this, so an edge, a shadow or a ring that overhangs it is kept
++
++
++class PaintCanvas extends Control:
++	var layer: UiLayer
++
++	func _draw() -> void:
++		if layer != null and layer.sig != null and layer.painter.is_valid():
++			layer.painter.call(self)
++
++
+ var dirty: bool = false
+ var force: bool = false              # bench only: redraw every frame whatever the signature (the cost of not caching)
+ 
+@@ -39,8 +58,61 @@
+ 	dirty = true
+ 
+ 
++## True when this layer should be drawn through its texture: the switch is on, it has a rectangle, and the rectangle is a size worth caching.
++func has_cache() -> bool:
++	return _vp != null
++
++
++func uses_cache() -> bool:
++	if not rect_fn.is_valid() or not UiData.feature("hud_cache"):
++		return false
++	var r: Rect2 = _cache_rect()
++	return r.size.x >= 4.0 and r.size.y >= 4.0 and r.size.x * r.size.y <= CACHE_MAX_PX
++
++
++func _cache_rect() -> Rect2:
++	var r: Rect2 = (rect_fn.call() as Rect2).grow(CACHE_MARGIN).intersection(Rect2(Vector2.ZERO, size))
++	var p0 := Vector2(floorf(r.position.x), floorf(r.position.y))
++	var p1 := Vector2(ceilf(r.end.x), ceilf(r.end.y))
++	return Rect2(p0, p1 - p0)
++
++
+ func _draw() -> void:
+ 	if sig == null or not painter.is_valid():
+ 		return
+ 	redraws += 1
++	if uses_cache():
++		_draw_cached()
++		return
+ 	painter.call(self)
++
++
++func _draw_cached() -> void:
++	var r: Rect2 = _cache_rect()
++	if _vp == null:
++		_vp = SubViewport.new()
++		_vp.transparent_bg = true
++		_vp.disable_3d = true
++		_vp.gui_disable_input = true
++		_vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
++		add_child(_vp)
++		var cv := PaintCanvas.new()
++		cv.layer = self
++		cv.mouse_filter = Control.MOUSE_FILTER_IGNORE
++		cv.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED   # the bars' tiled stripe
++		_vp.add_child(cv)
++		_cv = cv
++		var mat := CanvasItemMaterial.new()
++		mat.blend_mode = CanvasItemMaterial.BLEND_MODE_PREMULT_ALPHA   # the viewport holds premultiplied colour
++		material = mat
++		texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
++	if Vector2i(r.size) != _vp.size:
++		_vp.size = Vector2i(r.size)
++	_vp.canvas_transform = Transform2D(0.0, -r.position)
++	_cv.size = size
++	_cv.position = Vector2.ZERO
++	_cv.queue_redraw()
++	_vp.render_target_update_mode = SubViewport.UPDATE_ONCE
++	cached_paints += 1
++	_crect = r
++	draw_texture_rect(_vp.get_texture(), r, false)
+diff -ruN a/ui/tools/hud_cache_stills.mjs b/ui/tools/hud_cache_stills.mjs
+--- a/ui/tools/hud_cache_stills.mjs	1969-12-31 16:00:00.000000000 -0800
++++ b/ui/tools/hud_cache_stills.mjs	2026-10-17 03:38:07.859805500 -0700
+@@ -0,0 +1,40 @@
++// The pixel proof for the HUD's texture cache (docs/ui/hud-cache.md): the same still of the HUD demo, taken twice (layers drawn directly, and through the cache), compared pixel by pixel.
++// Needs a web export of the HUD demo scene (scratch copy with run/main_scene=res://ui/demo/hud_demo.tscn, --export-release "Web") and the capture launcher; takes headless Chrome, so it waits for
++// the machine's quiet window. Run from the repo root:
++//   node ui/tools/hud_cache_stills.mjs <built site dir> [--tol 2] [--out stills-folder] [--session ui-ux]
++// For each scenario and size it writes <out>/<name>-direct.png and -cache.png, runs ui/tools/png_diff.mjs and prints the result; exit code 1 if any pair differs by more than --max-bad pixels (default 0).
++import { spawnSync } from 'node:child_process';
++import { mkdirSync } from 'node:fs';
++import { decodePng, diffPng } from './png_diff.mjs';
++import { readFileSync } from 'node:fs';
++
++const args = process.argv.slice(2);
++const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
++const dir = args.find((a) => !a.startsWith('--') && a !== opt('--tol') && a !== opt('--out') && a !== opt('--session') && a !== opt('--max-bad'));
++if (!dir) { console.error('usage: node ui/tools/hud_cache_stills.mjs <built demo site dir> [--tol 2] [--out folder] [--session name] [--max-bad 0]'); process.exit(2); }
++const out = opt('--out', 'scratch-stills'), tol = Number(opt('--tol', 2)), maxBad = Number(opt('--max-bad', 0)), session = opt('--session', 'ui-ux');
++mkdirSync(out, { recursive: true });
++// scenario, query, width, height. `at` fast-forwards the mock feed, `hold` stops its clock so both loads show the same frame.
++const cases = [
++  ['hero-720', 'scenario=hero_vs_proud&at=12&hold&nolegend', 1280, 720],
++  ['hero-legend-720', 'scenario=hero_vs_proud&at=12&hold', 1280, 720],
++  ['hero-phone', 'scenario=hero_vs_proud&at=12&hold&touch=ready', 844, 390],
++  ['hero-portrait', 'scenario=hero_vs_proud&at=12&hold&portrait', 390, 844],
++  ['toll-720', 'scenario=hero_vs_proud&at=12&hold&toll=134:425:9:14&nolegend', 1280, 720],
++  ['empress-cyborg', 'scenario=empress_vs_cyborg&at=14&hold', 1280, 720],
++  ['stress', 'scenario=stress&at=10&hold', 1280, 720],
++];
++let worst = 0;
++for (const [name, q, w, h] of cases) {
++  const files = {};
++  for (const mode of ['direct', 'cache']) {
++    files[mode] = `${out}/${name}-${mode}.png`;
++    const r = spawnSync('node', ['tools/machine/capture.mjs', 'still', '--dir', dir, '--path', `/index.html?${q}${mode === 'cache' ? '&cache' : ''}`, '--out', files[mode], '--width', String(w), '--height', String(h),
++      '--wait-ms', '45000', '--session', session, '--purpose', 'hudcache', '--time-limit', '300', '--software', '--quiet'], { stdio: 'inherit' });
++    if (r.status !== 0) { console.error(`capture failed for ${name} ${mode}`); process.exit(2); }
++  }
++  const d = diffPng(decodePng(readFileSync(files.direct)), decodePng(readFileSync(files.cache)), tol);
++  console.log(`${name}: ${d.error ? d.error : `${d.bad} pixels over ${tol} of ${d.w * d.h} (max difference ${d.maxDiff}, worst at ${d.worst})`}`);
++  worst = Math.max(worst, d.bad < 0 ? 1e9 : d.bad);
++}
++process.exit(worst <= maxBad ? 0 : 1);
+diff -ruN a/ui/tools/hud_check.gd b/ui/tools/hud_check.gd
+--- a/ui/tools/hud_check.gd	2026-10-17 03:38:07.689379700 -0700
++++ b/ui/tools/hud_check.gd	2026-10-17 03:38:07.858304400 -0700
+@@ -60,6 +60,7 @@
+ 	await _rival_pointer_rules()
+ 	await _many_marker_rules()
+ 	await _lost_rival_rules()
++	await _hud_cache_rules()
+ 	await _run_mode_rules()
+ 	await _launch_anywhere_rules()
+ 	await _civilian_bar_rules()
+@@ -6501,6 +6502,90 @@
+ 	hud.queue_free()
+ 	await process_frame
+ 
++
++## The texture cache (docs/ui/hud-cache.md), behind features.json hud_cache: which layers, how big, repainted only when their signature changes, and the same words drawn.
++func _hud_cache_rules() -> void:
++	root.size = Vector2i(1280, 720)
++	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
++	hud.size = Vector2(1280, 720)
++	root.add_child(hud)
++	await process_frame
++	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
++	var words_of := func(layer: UiLayer) -> String:
++		UiText.tracing = true
++		UiText.trace = []
++		layer.invalidate()
++		hud.advance(1.0 / 60.0)
++		for i in range(3):
++			await process_frame
++		UiText.tracing = false
++		var seen := {}
++		for x in UiText.trace:
++			seen[str(x)] = true
++		var keys: Array = seen.keys()
++		keys.sort()
++		UiText.trace = []
++		return " ".join(PackedStringArray(keys))   # the distinct strings drawn: a texture repaint draws once, a direct layer once for each redraw
++	hud.advance(1.0 / 60.0)
++	await process_frame
++	var plate: UiLayer = hud._l_plate[0]
++	_ok(not UiData.feature("hud_cache") and not plate.uses_cache() and not plate.has_cache(), "hud cache: off by default, and a layer draws directly")
++	var direct: String = await words_of.call(plate)
++	UiData.set_feature("hud_cache", true)
++	var cached: String = await words_of.call(plate)
++	_ok(plate.uses_cache() and plate.has_cache() and plate.cached_paints >= 1, "hud cache: with the switch on the plate paints into a texture (%d paints)" % plate.cached_paints)
++	var same_words: bool = cached != "" and direct != ""
++	for tok in cached.split(" "):
++		same_words = same_words and direct.split(" ").has(tok)
++	_ok(same_words and cached.contains("ONE") and cached.contains("MARTIAL"), "hud cache: the plate's words are drawn through the texture's canvas as through the layer (the direct trace holds both plates: %s | %s)" % [cached, direct])
++	# Repainted only when the signature changes.
++	var p0: int = plate.cached_paints
++	for i in range(30):
++		hud.advance(1.0 / 60.0)
++		await process_frame
++	_ok(plate.cached_paints - p0 <= 1, "hud cache: thirty still frames repaint the texture at most once (%d)" % (plate.cached_paints - p0))
++	hud.hub.patch(0, {"charge": 55.0})
++	hud.advance(1.0 / 60.0)
++	await process_frame
++	_ok(plate.cached_paints > p0, "hud cache: a change of the plate's state repaints it")
++	# The rectangle: the layout's, grown, inside the layer; small enough; and the total memory is small at every size.
++	var bad := PackedStringArray()
++	for cs in [[Vector2(1280, 720), 1.0], [Vector2(1920, 1080), 1.0], [Vector2(844, 390), 1.0], [Vector2(390, 844), 1.0], [Vector2(2532, 1170), 3.0]]:
++		var h2: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
++		h2.size = cs[0]
++		root.add_child(h2)
++		await process_frame
++		h2.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
++		h2.advance(1.0 / 60.0)
++		var total := 0.0
++		for l in h2._all_layers():
++			if l != null and (l as UiLayer).rect_fn.is_valid():
++				var r: Rect2 = (l as UiLayer)._cache_rect()
++				var raw: Rect2 = (l as UiLayer).rect_fn.call()
++				total += r.size.x * r.size.y
++				if raw.size.x > 4.0 and not (Rect2(Vector2.ZERO, h2.layout.vp)).encloses(r) and r.size.x * r.size.y > 0.0:
++					bad.append("%s outside %s" % [str(cs[0]), str(r)])
++				if raw.size.x > 4.0 and not r.encloses(raw.intersection(Rect2(Vector2.ZERO, h2.layout.vp))):
++					bad.append("%s does not hold its layout rect %s" % [str(cs[0]), str(raw)])
++		if total > 2000000.0:
++			bad.append("%s total %d px" % [str(cs[0]), int(total)])
++		h2.queue_free()
++		await process_frame
++	_ok(bad.is_empty(), "hud cache: at five sizes every cached rectangle holds its layout's and stays on screen, and all of them together are under two million pixels (8 MB) (%d bad %s)" % [bad.size(), str(bad.slice(0, 3))])
++	# A layer too big to cache is drawn directly; with the switch off nothing is cached.
++	var big := UiLayer.new()
++	big.size = Vector2(1280, 720)
++	big.rect_fn = func() -> Rect2: return Rect2(0, 0, 1280, 720)
++	_ok(not big.uses_cache(), "hud cache: a full-screen layer is not cached (the memory would cost more than the draw calls saved)")
++	big.free()
++	UiData.set_feature("hud_cache", null)
++	hud.hub.patch(0, {"charge": 20.0})
++	hud.advance(1.0 / 60.0)
++	await process_frame
++	_ok(not plate.uses_cache(), "hud cache: switched off, the layer draws directly again")
++	hud.queue_free()
++	await process_frame
++
+ 
+ ## The photosensitivity rule for the HUD (docs/ui/hud-spec.md section 57): no block of the HUD may come and go twice inside 60 ticks, whatever the presses do. A mash is played at the HUD
+ ## (a refused or empty press every 4 ticks, a wind-up on and off every 6, a stance change every 10, the launch window, banners, the touch flag flipping), at a keyboard-and-pad size and on a
+diff -ruN a/ui/tools/hud_layers.gd b/ui/tools/hud_layers.gd
+--- a/ui/tools/hud_layers.gd	1969-12-31 16:00:00.000000000 -0800
++++ b/ui/tools/hud_layers.gd	2026-10-17 03:38:07.859302500 -0700
+@@ -0,0 +1,81 @@
++extends SceneTree
++## Which of the HUD's layers redraw, and how often, in a real brawl: plays AI against AI through the sim host with a moving anchor for each fighter, feeds the HUD the way the game does, and
++## counts every layer's redraws (UiLayer.redraws) and the frames it had something to draw (a signature). A layer that redraws on a few frames in a hundred is worth caching as a texture
++## (docs/ui/hud-cache.md); one that redraws on most is not. Headless: no draw calls are counted here (the engine's renderer is off); Performance's layer cut reads those.
++## Run: godot --headless --path . --script res://ui/tools/hud_layers.gd [-- --seed=4 --ticks=1800 --cache]
++
++func _initialize() -> void:
++	_run.call_deferred()
++
++
++func _run() -> void:
++	var seed: int = 4
++	var ticks: int = 1800
++	var cache: bool = false
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--seed="):
++			seed = int(a.substr(7))
++		elif a.begins_with("--ticks="):
++			ticks = int(a.substr(8))
++		elif a == "--cache":
++			cache = true
++	if cache:
++		UiData.set_feature("hud_cache", true)
++	var host := SimHost.new()
++	host.new_match(seed)
++	root.size = Vector2i(1280, 720)
++	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
++	hud.size = Vector2(1280, 720)
++	root.add_child(hud)
++	await process_frame
++	var f: Array = UiSimBridge.fighters(host.S)
++	hud.setup(f[0], f[1])
++	var vp: Vector2 = hud.layout.vp
++	hud.anchor_fn = func(slot: int) -> Dictionary:
++		var fi = host.S.fighters[slot]
++		var mid: float = float(host.S.fighters[0].x) + SimWrap.sdx(float(host.S.fighters[0].x), float(host.S.fighters[1].x)) * 0.5
++		var dx: float = SimWrap.sdx(mid, float(fi.x))
++		return {"pos": Vector2(vp.x * 0.5 + dx * 0.35, vp.y * 0.62 - float(fi.y) * 0.35), "h": vp.y * 0.11, "visible": true}
++	host.drained.connect(func(evs: Array, _lines: Array): hud.consume_all(evs))
++	var layers: Array = hud._all_layers()
++	var base: Dictionary = {}
++	var drawn: Dictionary = {}
++	for l in layers:
++		if l != null:
++			base[l] = 0
++			drawn[l] = 0
++	for i in range(ticks):
++		host.tick(1280.0, 720.0)
++		UiSimBridge.patch(hud, host.S)
++		UiSimBridge.feed(hud, host.feed.slice(maxi(0, host.feed.size() - 1)))
++		hud.hub.model(0).ai = false
++		hud.advance(1.0 / 60.0)
++		await process_frame
++		if i == 60:
++			for l in layers:
++				if l != null:
++					base[l] = l.redraws
++					drawn[l] = 0
++		elif i > 60:
++			for l in layers:
++				if l != null and l.sig != null:
++					drawn[l] += 1
++	var n: int = ticks - 61
++	var rows: Array = []
++	var names := {}
++	for l in layers:
++		if l == null:
++			continue
++		var nm: String = str(l.painter.get_method()) if l.painter.is_valid() else "?"
++		if l.painter.is_valid() and l.painter.get_bound_arguments_count() > 0:
++			nm += str(l.painter.get_bound_arguments())
++		rows.append([nm, int(l.redraws) - int(base[l]), int(drawn[l])])
++	rows.sort_custom(func(a, b): return int(a[1]) > int(b[1]))
++	print("HUD layers over %d frames (seed %d, cache %s): redraws, frames with something to draw" % [n, seed, str(cache)])
++	var total_draw_frames := 0
++	for r in rows:
++		print("  %-34s redraws %5d (%3d%%)   drawn %5d (%3d%%)" % [r[0], r[1], int(round(100.0 * float(r[1]) / float(n))), r[2], int(round(100.0 * float(r[2]) / float(n)))])
++		total_draw_frames += int(r[2])
++	print("layers drawn per frame on average: %.1f" % (float(total_draw_frames) / float(n)))
++	hud.queue_free()
++	quit()
+diff -ruN a/ui/tools/png_diff.mjs b/ui/tools/png_diff.mjs
+--- a/ui/tools/png_diff.mjs	1969-12-31 16:00:00.000000000 -0800
++++ b/ui/tools/png_diff.mjs	2026-10-17 03:38:07.859805500 -0700
+@@ -0,0 +1,90 @@
++// Compares two PNG stills pixel by pixel, with no dependencies (node's zlib only): the proof that the HUD's texture cache draws what the layers draw (docs/ui/hud-cache.md).
++//   node ui/tools/png_diff.mjs a.png b.png [--tol 2] [--max-bad 0] [--out diff.png]
++// Prints one JSON line: {w, h, bad (pixels whose largest channel difference is over tol), maxDiff, worst: [x, y], share}. Exit code 0 when bad <= max-bad, 1 otherwise, 2 on a read error.
++// Reads 8-bit RGB and RGBA PNGs without interlacing (what headless Chrome and the capture launcher write). --out writes the difference (red where bad) as an RGBA PNG.
++import { readFileSync, writeFileSync } from 'node:fs';
++import { inflateSync, deflateSync } from 'node:zlib';
++
++export function decodePng(buf) {
++  const sig = [137, 80, 78, 71, 13, 10, 26, 10];
++  for (let i = 0; i < 8; i++) if (buf[i] !== sig[i]) throw new Error('not a PNG');
++  let pos = 8, w = 0, h = 0, depth = 0, ctype = 0, interlace = 0;
++  const idat = [];
++  while (pos < buf.length) {
++    const len = buf.readUInt32BE(pos), type = buf.toString('ascii', pos + 4, pos + 8);
++    const data = buf.subarray(pos + 8, pos + 8 + len);
++    if (type === 'IHDR') { w = data.readUInt32BE(0); h = data.readUInt32BE(4); depth = data[8]; ctype = data[9]; interlace = data[12]; }
++    else if (type === 'IDAT') idat.push(data);
++    else if (type === 'IEND') break;
++    pos += 12 + len;
++  }
++  if (depth !== 8 || interlace !== 0 || (ctype !== 6 && ctype !== 2)) throw new Error(`unsupported PNG (depth ${depth}, colour type ${ctype}, interlace ${interlace})`);
++  const bpp = ctype === 6 ? 4 : 3, stride = w * bpp;
++  const raw = inflateSync(Buffer.concat(idat));
++  const out = Buffer.alloc(w * h * 4);
++  let prev = Buffer.alloc(stride), cur = Buffer.alloc(stride), p = 0;
++  for (let y = 0; y < h; y++) {
++    const f = raw[p++];
++    for (let i = 0; i < stride; i++) {
++      const x = raw[p++];
++      const a = i >= bpp ? cur[i - bpp] : 0, b = prev[i], c = i >= bpp ? prev[i - bpp] : 0;
++      let v;
++      if (f === 0) v = x;
++      else if (f === 1) v = x + a;
++      else if (f === 2) v = x + b;
++      else if (f === 3) v = x + ((a + b) >> 1);
++      else { const pa = Math.abs(b - c), pb = Math.abs(a - c), pc = Math.abs(a + b - 2 * c); v = x + (pa <= pb && pa <= pc ? a : pb <= pc ? b : c); }
++      cur[i] = v & 255;
++    }
++    for (let xx = 0; xx < w; xx++) {
++      const o = (y * w + xx) * 4;
++      out[o] = cur[xx * bpp]; out[o + 1] = cur[xx * bpp + 1]; out[o + 2] = cur[xx * bpp + 2]; out[o + 3] = bpp === 4 ? cur[xx * bpp + 3] : 255;
++    }
++    [prev, cur] = [cur, prev];
++  }
++  return { w, h, rgba: out };
++}
++
++function crc32(buf) {
++  let c, crc = 0xffffffff;
++  for (let n = 0; n < buf.length; n++) { c = (crc ^ buf[n]) & 255; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; crc = (crc >>> 8) ^ c; }
++  return (crc ^ 0xffffffff) >>> 0;
++}
++
++export function encodePng(w, h, rgba) {
++  const rows = Buffer.alloc((w * 4 + 1) * h);
++  for (let y = 0; y < h; y++) { rows[y * (w * 4 + 1)] = 0; rgba.copy(rows, y * (w * 4 + 1) + 1, y * w * 4, (y + 1) * w * 4); }
++  const chunk = (type, data) => { const b = Buffer.alloc(12 + data.length); b.writeUInt32BE(data.length, 0); b.write(type, 4, 'ascii'); data.copy(b, 8); b.writeUInt32BE(crc32(b.subarray(4, 8 + data.length)), 8 + data.length); return b; };
++  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 6;
++  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', deflateSync(rows)), chunk('IEND', Buffer.alloc(0))]);
++}
++
++export function diffPng(a, b, tol = 2) {
++  if (a.w !== b.w || a.h !== b.h) return { w: a.w, h: a.h, error: `sizes differ: ${a.w}x${a.h} and ${b.w}x${b.h}`, bad: -1 };
++  let bad = 0, maxDiff = 0, worst = [0, 0];
++  const diff = Buffer.alloc(a.w * a.h * 4);
++  for (let i = 0; i < a.w * a.h; i++) {
++    let d = 0;
++    for (let c = 0; c < 4; c++) d = Math.max(d, Math.abs(a.rgba[i * 4 + c] - b.rgba[i * 4 + c]));
++    if (d > maxDiff) { maxDiff = d; worst = [i % a.w, Math.floor(i / a.w)]; }
++    const isBad = d > tol;
++    if (isBad) bad++;
++    diff[i * 4] = isBad ? 255 : a.rgba[i * 4] >> 2; diff[i * 4 + 1] = isBad ? 0 : a.rgba[i * 4 + 1] >> 2; diff[i * 4 + 2] = isBad ? 0 : a.rgba[i * 4 + 2] >> 2; diff[i * 4 + 3] = 255;
++  }
++  return { w: a.w, h: a.h, bad, maxDiff, worst, share: bad / (a.w * a.h), diff };
++}
++
++if (process.argv[1] && process.argv[1].endsWith('png_diff.mjs')) {
++  const args = process.argv.slice(2);
++  const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
++  const files = args.filter((x, i) => !x.startsWith('--') && !(i > 0 && args[i - 1].startsWith('--')));
++  try {
++    const A = decodePng(readFileSync(files[0])), B = decodePng(readFileSync(files[1]));
++    const r = diffPng(A, B, Number(opt('--tol', 2)));
++    const out = opt('--out');
++    if (out && r.diff) writeFileSync(out, encodePng(r.w, r.h, r.diff));
++    delete r.diff;
++    console.log(JSON.stringify(r));
++    process.exit(r.bad >= 0 && r.bad <= Number(opt('--max-bad', 0)) ? 0 : 1);
++  } catch (e) { console.error(String(e.message || e)); process.exit(2); }
++}

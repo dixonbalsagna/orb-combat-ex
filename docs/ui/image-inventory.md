@@ -4,7 +4,7 @@ Orb's homework 8: **HUD mock sheets stay private.** Every tracked file in `docs/
 
 **A local folder for mocks from now on: `homework/mocks/ui/`.** `homework/` is already git-ignored (`.gitignore`: "Orb's homework folder: review sheets, questionnaires ... Local only"), so a mock there never reaches the repo and Orb finds it with the other review sheets. Mock pages are served from it by `tools/machine/capture.mjs --dir homework/mocks/ui`. The docs then describe a mock in words and name it by its local path, and carry no image link to it.
 
-## MOCK (18): take these out of the repo
+## MOCK, now kept local in `homework/mocks/ui/` (18): done: removed from the repo
 
 - `docs/ui/img/brawl-teaching-mock.png`
 - `docs/ui/img/run/approach-1280x720.png`

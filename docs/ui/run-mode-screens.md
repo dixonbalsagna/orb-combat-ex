@@ -1,13 +1,8 @@
 # The run mode's screens: the offers, the beats between stages, the results (UI, 2026-10-17)
 
-Owner: UI & UX. **Paper and a scratch mock; nothing here is built in the game.** Against `docs/design/run-mode.md` (Game Design, 7022b7df), `docs/narrative/story-beats.md`, World's stored planet and its strips (`docs/world/planet-slice.md`), and Legal's c08 (`docs/legal/catastrophe-and-city-screen.md`). The mock is `docs/ui/mock/run-screens.html` (one page, `?screen=offers|beats|approach|results|resultslost&w=&h=&page=`); the pictures are in `docs/ui/img/run/`.
+Owner: UI & UX. **Paper and a scratch mock; nothing here is built in the game.** Against `docs/design/run-mode.md` (Game Design, 7022b7df), `docs/narrative/story-beats.md`, World's stored planet and its strips (`docs/world/planet-slice.md`), and Legal's c08 (`docs/legal/catastrophe-and-city-screen.md`). The mock is kept local (see below).
 
-| Screen | Desktop 1280x720 | Phone on its side 844x390 | Phone upright 390x844 |
-| :-- | :-- | :-- | :-- |
-| **Where to next?** (the offers) | [img](img/run/offers-1280x720.png) | [img](img/run/offers-844x390.png) | [img](img/run/offers-390x844.png) |
-| **After the fight** (a beat) | [img](img/run/beats-1280x720.png) | [img](img/run/beats-844x390.png) | [img](img/run/beats-390x844.png) |
-| **The last night** (the final approach) | [img](img/run/approach-1280x720.png) | [img](img/run/approach-844x390.png) | [img](img/run/approach-390x844.png) |
-| **The run is over** (results; lost run: `resultslost`) | [img](img/run/results-1280x720.png), [lost](img/run/resultslost-1280x720.png) | [page 1](img/run/results-p1-844x390.png), [page 2](img/run/results-p2-844x390.png) | [img](img/run/results-390x844.png), [lost](img/run/resultslost-390x844.png) |
+**The mock and its pictures are kept local** (Orb: HUD mock sheets stay private): `homework/mocks/ui/mock/run-screens.html` (one page, `?screen=offers|beats|approach|results|resultslost&w=&h=&page=`) and `homework/mocks/ui/run/`, fifteen pictures: the offers, the beat, the final approach and the results (and a lost run) at 1280x720, 844x390 (the results in two pages) and 390x844. They are not in the repo; this page says all that the pictures show.
 
 ## 0. The rules these screens keep
 
@@ -116,3 +111,7 @@ Where to next? | Fight {n} of {total} | The planet: {a} of {b} cities standing, 
 1. **The villain's-run score** (section 4, flag 1): will Game Design change it, or does Legal want to see it first?
 2. **Offer cards on a short phone:** is it acceptable that the one line, "what it holds" and "how hard" wait on a second tap, or should a phone on its side get a two-page offers screen instead?
 3. **Are cards in the first build?** The Proving ground's reward reads "Pick two cards" only with them; without them it is "Score 1,500", which is the one reward that is a number.
+
+## 8. Built in scratch (2026-10-17)
+
+The widgets are built and parked behind `features.json` `run_mode` (off): `docs/ui/pending/run-mode/` (README there): `UiRun` (the offers, the beats, the final approach, the results), the HUD's `show_run_offers`, `show_run_beat` and `show_run_results`, four signals, 57 plain strings and 17 checks. The records the host passes are in the header of `ui/widgets/ui_run.gd`. Questions 1 and 3 of section 7 are still open (the villain's-run score; plan cards in the first build); question 2 was answered as mocked (a phone on its side gets compact cards).

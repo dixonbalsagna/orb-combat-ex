@@ -4,7 +4,7 @@ Orb, homework 4: "definitely needs editing and language improvement. 'The bolt's
 
 ## Done this round
 
-- **The teaching sheet** (`docs/ui/img/brawl-teaching-mock.png`): every heading, caption and label rewritten ("TAP: press just as your hit lands", "When he misses, he is open for a moment", "Your energy shot lands: a mark by the energy button says what happened", "FINISH" for the old CLOSE). No ticks, chips, cues, registers, scrims or pixel counts.
+- **The teaching sheet** (a mock, kept local in `homework/mocks/ui/`): every heading, caption and label rewritten ("TAP: press just as your hit lands", "When he misses, he is open for a moment", "Your energy shot lands: a mark by the energy button says what happened", "FINISH" for the old CLOSE). No ticks, chips, cues, registers, scrims or pixel counts.
 - **On the plate and legend:** RESTING became RECHARGING; "launcher ready / resting" became "launch ready / recharging"; BOLT became SHOT; RELEASE became CHARGED; a shot's result words became HIT, BLOCKED, ABSORBED, MISSED.
 - **How to play, Reading the fight:** the ring and card lines joined and reworded; "brink", "finisher", "chip" gone from it ("A faint ring: he is nearly beaten. A finishing move can end it.", "The box at the top counts the damage to the world.").
 - **Options:** Info flashes, Always show damage rings (was "wear crown"), Hit pause (no "ticks"), Effects quality, Vibration, Damage ring thickness, Reduced motion, Colour-blind mode.

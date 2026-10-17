@@ -1,0 +1,1216 @@
+diff -ruN a/ui/data/features.json b/ui/data/features.json
+--- a/ui/data/features.json	2026-10-17 03:38:06.911963400 -0700
++++ b/ui/data/features.json	2026-10-17 03:38:07.084898500 -0700
+@@ -1,6 +1,6 @@
+ {
+   "schema": 1,
+-  "note": "Feature flags for HUD code that is written but not part of the base game. hiding: Orb removed hiding from the base game and holds it for a future stealth-specialist fighter (docs/ep/vision.md). With it off the HUD ignores the hidden state and the lost-trail cue everywhere (plate chips, the eye-slash marker, the strip's ping and last-seen mark, the silhouette's fading); the code stays for that fighter. Turn it on in a fighter's data when that fighter exists. touch_full and remap: the Settings screen lists the Full touch layout and the Remap controls entry, dimmed and marked Soon, until Controls' touch-full layout and the remap screen exist; both are on now. about_music and about_voice: the About page's two sentences that are true only once they are (the music was generated with Suno; there is no voice acting) are shown only while their flag is on; both are off until the music ships and Orb confirms the voice sentence (docs/legal/go-to-market.md section 1). A page item whose icon is named about_music or about_voice is that sentence. three_strengths: the martial face buttons are X light, Y medium, B heavy and the signature is the power button held with B (docs/design/brawl-second-pass.md, docs/ui/hud-spec.md section 48); flipped with Encounter's slice C2a, and with it the legend, the Full touch words, the Remap and How to play words, the weight mark's third value and the latched-charge and charges-off settings follow. civilian_bar: no running civilian count in the fight (EP decision on Orb's homework 5): the top chip shows a small steady bar for the share of the city's people lost, the structures and craters line stops brightening, and the exact counts are on the match-over card (docs/ui/civilian-bar.md); off, the chip is the count as before. launch_anywhere: Game Design's thirteenth round (docs/design/launch-anywhere.md, docs/ui/launch-marks-no-rest.md): a B within 24 ticks of a landed blow is the launcher, no rest. With it on the RECHARGING chip, the ring and the legend's rest note are not drawn whatever the director sends, the run's pips on the rival go, and the lit B carries the marks: a solid or broken ring by safety, pips for power, a rose of four arrows for fresh and familiar kinds. Off until Encounter's launcher window sends the fields. launch_marks: the marks that teach the launch without the three-strength button names (docs/ui/launch-teaching.md): the run of four pips on the rival, the plate's LAUNCH or RESTING chip with the rest's ring, OPEN, a full gauge that lights B with the word LAUNCH, the once-only hint and the pad's pulse at an opening; on since Game Design's ruling of 2026-10-16; the run's pips, the full gauge and the hint stay dark until the blow cue carries run and run_to. three_strengths turns these on too. reduce_flashing: the Reduce flashing setting row and the flashing notice's reworded line (VFX's register); on when Legal has approved the words.",
++  "note": "Feature flags for HUD code that is written but not part of the base game. hiding: Orb removed hiding from the base game and holds it for a future stealth-specialist fighter (docs/ep/vision.md). With it off the HUD ignores the hidden state and the lost-trail cue everywhere (plate chips, the eye-slash marker, the strip's ping and last-seen mark, the silhouette's fading); the code stays for that fighter. Turn it on in a fighter's data when that fighter exists. touch_full and remap: the Settings screen lists the Full touch layout and the Remap controls entry, dimmed and marked Soon, until Controls' touch-full layout and the remap screen exist; both are on now. about_music and about_voice: the About page's two sentences that are true only once they are (the music was generated with Suno; there is no voice acting) are shown only while their flag is on; both are off until the music ships and Orb confirms the voice sentence (docs/legal/go-to-market.md section 1). A page item whose icon is named about_music or about_voice is that sentence. three_strengths: the martial face buttons are X light, Y medium, B heavy and the signature is the power button held with B (docs/design/brawl-second-pass.md, docs/ui/hud-spec.md section 48); flipped with Encounter's slice C2a, and with it the legend, the Full touch words, the Remap and How to play words, the weight mark's third value and the latched-charge and charges-off settings follow. civilian_bar: no running civilian count in the fight (EP decision on Orb's homework 5): the top chip shows a small steady bar for the share of the city's people lost, the structures and craters line stops brightening, and the exact counts are on the match-over card (docs/ui/civilian-bar.md); off, the chip is the count as before. launch_anywhere: Game Design's thirteenth round (docs/design/launch-anywhere.md, docs/ui/launch-marks-no-rest.md): a B within 24 ticks of a landed blow is the launcher, no rest. With it on the RECHARGING chip, the ring and the legend's rest note are not drawn whatever the director sends, the run's pips on the rival go, and the lit B carries the marks: a solid or broken ring by safety, pips for power, a rose of four arrows for fresh and familiar kinds. Off until Encounter's launcher window sends the fields. run_mode: the run mode's screens (the offers, the beats between fights and the last night, the results: ui/widgets/ui_run.gd, docs/ui/run-mode-screens.md); off until Game Design's run mode and the host exist; the HUD draws a record the host passes and never writes the sim. launch_marks: the marks that teach the launch without the three-strength button names (docs/ui/launch-teaching.md): the run of four pips on the rival, the plate's LAUNCH or RESTING chip with the rest's ring, OPEN, a full gauge that lights B with the word LAUNCH, the once-only hint and the pad's pulse at an opening; on since Game Design's ruling of 2026-10-16; the run's pips, the full gauge and the hint stay dark until the blow cue carries run and run_to. three_strengths turns these on too. reduce_flashing: the Reduce flashing setting row and the flashing notice's reworded line (VFX's register); on when Legal has approved the words.",
+   "features": {
+     "hiding": false,
+     "touch_full": true,
+@@ -11,6 +11,7 @@
+     "reduce_flashing": true,
+     "start_menu": true,
+     "launch_marks": true,
++    "run_mode": false,
+     "launch_anywhere": false,
+     "civilian_bar": true
+   }
+diff -ruN a/ui/data/terms.json b/ui/data/terms.json
+--- a/ui/data/terms.json	2026-10-17 03:38:06.918964100 -0700
++++ b/ui/data/terms.json	2026-10-17 03:38:07.092944800 -0700
+@@ -90,7 +90,7 @@
+     "full_light": "LIGHT", "full_heavy": "HEAVY", "full_signature": "SIGNATURE", "full_context": "ACTION", "full_mode": "ENERGY", "full_transform": "TRANSFORM", "full_dodge": "DODGE",
+     "pause_title": "PAUSED", "pause_resume": "Resume", "pause_howto": "How to play", "pause_settings": "Settings", "pause_feedback": "Send feedback", "not_yet": "not yet", "three_light": "Light", "three_medium": "Medium", "three_heavy": "Heavy", "three_context": "Action", "three_sig_chord": "Signature (hold)", "three_attack": "Attack (hold: stronger)", "three_full_heavy": "MEDIUM", "three_full_signature": "HEAVY", "three_howto_heavy": "Medium", "three_howto_signature": "Heavy (hold the power button with it for your signature, 45 Charge)", "three_remap_heavy": "Medium", "three_remap_signature": "Heavy", "photo_title": "This game contains flashing effects.", "photo_body_a": "Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them.", "photo_settings_line": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_settings_line_rf": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_body_b": "No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version.", "photo_start": "I understand, start", "photo_settings": "Open Settings", "photo_more": "Scroll for more", "menu_notice": "This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.", "menu_rf_on": "Reduce flashing is on. It lowers some effects but does not remove the flagged scenes.", "menu_rf_off": "Reduce flashing is off.", "menu_not_now": "Not now", "menu_holding_url": "../", "menu_players": "Players", "menu_one": "1 player", "menu_two": "2 players", "menu_one_note": "One player plays against the computer.", "menu_p1": "Player 1", "menu_p2": "Player 2", "menu_kb": "Keyboard", "menu_pad": "Controller", "menu_intros": "Intros", "menu_reduce_flashing": "Reduce flashing", "menu_shake": "Screen shake", "menu_captions": "Captions", "menu_guide": "Move guide", "menu_start": "I understand, start", "menu_back": "Back to the match", "menu_both_kb": "Both on the keyboard: you share it, and the guide shows each player's keys.", "menu_no_pad": "No controller found yet. Press a button on it.", "pause_menu": "Main menu", "pause_again": "Play again", "pause_over_title": "MATCH OVER", "turn_title": "Turn your phone", "turn_body": "This game plays sideways. Turn your phone to landscape and the match carries on; it waits for you.", "turn_anyway": "Play upright anyway", "photo_close": "Close", "pause_about": "About", "pause_new": "New match",
+     "pause_new_ask": "Start a new match?", "pause_new_yes": "New match", "pause_new_no": "Keep playing", "pause_resume_key": "P", "pause_howto_key": "F1", "pause_new_key": "N",
+-    "join": "P2: press any button to join", "join_short": "P2: press a button", "join_key": "P2: press T to join", "join_key_short": "P2: T to join", "form_hold": "Hold", "form_tap": "Tap", "form_boost": "hit harder until the match ends", "form_boost_short": "hit harder from now on", "intro_skip_kbd": "Press any key to skip", "intro_skip_pad": "Press any button to skip", "intro_skip_touch": "Tap to skip", "recipe_light": "light", "recipe_heavy": "heavy", "recipe_sig": "signature", "recipe_energy": "energy", "launch_hint": "He's open! Press B and send him flying!", "over_civilians": "Civilians lost: {n} of {total}", "over_structures": "Buildings lost: {n}", "over_craters": "Craters: {n}", "inc_lost": "OFF SCREEN", "inc_rush": "RUSH", "inc_closing": "CLOSING", "mode_hold": "Energy (hold)", "mode_toggle": "Energy (toggle)", "remap_player": "Player", "remap_p1": "Player 1", "remap_p2": "Player 2", "join_tiny": "P2: any button", "join_key_tiny": "P2: press T", "left_short": "P2 left", "joined": "P2 joined", "left": "P2 handed back to the computer", "pause_p2_leave": "Player two: hand back to the computer", "pause_p2_join": "Player two: press any button to join" },
++    "join": "P2: press any button to join", "join_short": "P2: press a button", "join_key": "P2: press T to join", "join_key_short": "P2: T to join", "form_hold": "Hold", "form_tap": "Tap", "form_boost": "hit harder until the match ends", "form_boost_short": "hit harder from now on", "intro_skip_kbd": "Press any key to skip", "intro_skip_pad": "Press any button to skip", "intro_skip_touch": "Tap to skip", "recipe_light": "light", "recipe_heavy": "heavy", "recipe_sig": "signature", "recipe_energy": "energy", "launch_hint": "He's open! Press B and send him flying!", "over_civilians": "Civilians lost: {n} of {total}", "over_structures": "Buildings lost: {n}", "over_craters": "Craters: {n}", "run_where": "Where to next?", "run_last": "The last fight", "run_fight": "Fight {n} of {total}", "run_planet": "The planet: {a} of {b} cities standing, {c} damaged, {d} fallen.", "run_rampage": "RAMPAGE", "run_proving": "PROVING GROUND", "run_crossing": "CROSSING", "run_boss_kind": "THE BOSS", "run_holds": "The fight holds {cities} cities, {towns} towns", "run_holds_short": "{cities} cities, {towns} towns", "run_opp": "Opponent: {who}", "run_harder": "stronger than you: a level harder", "run_harder_short": "a level harder", "run_starts": "Starts at {a}, rises to {b}", "run_reward": "Reward", "run_go": "Fight here", "run_rw_rampage": "People you save count double", "run_rw_proving_cards": "Pick two cards", "run_rw_proving_score": "Score 1,500", "run_rw_crossing": "A rest: broken body parts heal a little", "run_fresh": "untouched", "run_damaged": "damaged", "run_fallen": "fallen", "run_strip_note": "The triangle is where the fight starts. The strip wraps: it is the whole way round.", "run_strip_note_short": "Triangle: start. The strip wraps.", "run_after": "After the fight", "run_last_night": "The last night", "run_step": "Step {n} of {total}", "run_changed": "Changed this fight: {text}", "run_lost_fight": "People lost this fight: {n} of {total}", "run_beat_of": "Beat {n} of {total}", "run_skip": "Press any button to skip", "run_skip_touch": "Tap to skip", "run_next": "Next", "run_who_hero": "PROTAGONIST", "run_who_rival": "THE RIVAL", "run_who_boss": "THE BOSS", "run_who_crowd": "A CIVILIAN", "run_who_radio": "THE RADIO", "run_over_won": "The boss is beaten", "run_over_won_long": "The run is over: the boss is beaten", "run_over_lost": "The run is over", "run_route": "Your route", "run_won": "Won", "run_lost": "Lost", "run_chances": "Chances used: {n} of {total}", "run_time": "Fight time: {m}:{s}", "run_path": "The hero's path: Witness {w}, Trial {t}", "run_planet_h": "The planet", "run_cities": "Cities: {a} standing, {b} damaged, {c} fallen", "run_towns": "Towns: {a} standing, {b} damaged, {c} fallen", "run_people": "People lost: {n} of {total} ({p}%)", "run_sky": "Sky: {s}", "run_sky_dark": "dark", "run_sky_clear": "clear", "run_score": "Score", "run_score_tap": "Tap Score for the parts", "run_total": "Total", "run_new": "New run", "run_again": "Same planet again", "run_menu": "Main menu", "run_page": "Page {n} of {total}", "inc_lost": "OFF SCREEN", "inc_rush": "RUSH", "inc_closing": "CLOSING", "mode_hold": "Energy (hold)", "mode_toggle": "Energy (toggle)", "remap_player": "Player", "remap_p1": "Player 1", "remap_p2": "Player 2", "join_tiny": "P2: any button", "join_key_tiny": "P2: press T", "left_short": "P2 left", "joined": "P2 joined", "left": "P2 handed back to the computer", "pause_p2_leave": "Player two: hand back to the computer", "pause_p2_join": "Player two: press any button to join" },
+   "planet": "EVERHOLD",
+   "places": [
+     { "x0": 0,    "x1": 1200, "name": "LONGWATER" },
+diff -ruN a/ui/hud/ui_hud.gd b/ui/hud/ui_hud.gd
+--- a/ui/hud/ui_hud.gd	2026-10-17 03:38:06.923046900 -0700
++++ b/ui/hud/ui_hud.gd	2026-10-17 03:38:07.094945300 -0700
+@@ -19,6 +19,10 @@
+ 
+ signal layout_changed
+ signal haptic_requested(slot: int, kind: String)   # a pulse for a human's pad (the host plays it; never the only cue): "launch_open" when a launch opens for him (launch marks on)
++signal run_offer_chosen(index: int)               # the run mode's offers: the player chose a card and pressed Fight here
++signal run_beat_next()                            # a beat's Next: the host shows the next beat (show_run_beat again) or the next screen (hide_run)
++signal run_beat_skipped()                         # a beat skipped: the host goes to the next screen (the HUD has hidden itself)
++signal run_results_action(action: String)         # the results: "new", "again" or "menu" (the HUD has hidden itself)
+ signal form_prompt_shown(slot: int, device: String)   # a human fighter's form became ready (the rising edge): the host gives a 15 ms haptic on that player's pad (Input.start_joy_vibration) or a phone (Input.vibrate_handheld(15)); never the only cue
+ signal howto_opened(first_run: bool)   # the How to play card opened: the host pauses the sim and releases held keys
+ signal feedback_opened(context: String)   # the feedback panel opened ("pause" or "match_end"): the host pauses the sim and releases held keys
+@@ -106,6 +110,8 @@
+ var _chip_text_t: Array = [-1.0, -1.0]
+ var _open_prev: Array = [false, false]    # launcher_open last frame, per fighter (the pad's pulse is the rising edge)
+ var _gauge_prev: Array = [false, false]   # gauge_full last frame (the once-only hint is the rising edge)
++var _run: Dictionary = {}                 # the run screen up: {kind: offers|beat|results, rec, sel, btn, page, parts, focus}; empty when none
++var _l_run: UiLayer
+ var _inc_keep: Array = [null, null]   # the last incoming chip of each pane and when it was last wanted (UiIncoming.held)
+ var _many_keep: Dictionary = {}       # the many-body markers that have just gone, held for UiMany.HOLD
+ var _many_marks: Array = []
+@@ -301,6 +307,7 @@
+ 	_l_ring_base = _layer(_paint_ring_base)
+ 	_l_ring = _layer(_paint_ring)
+ 	_l_many = _layer(_paint_many)
++	_l_run = _layer(_paint_run)
+ 	_l_tug = _layer(_paint_tug)
+ 	_l_events = _layer(_paint_events)
+ 	_l_feed = _layer(_paint_feed)
+@@ -378,7 +385,7 @@
+ 
+ 
+ func _all_layers() -> Array:
+-	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_many, _l_tug, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_notice, _l_gate_back]
++	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_many, _l_tug, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_run, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_notice, _l_gate_back]
+ 
+ 
+ ## Total redraws of every layer so far, for the perf counters.
+@@ -700,6 +707,17 @@
+ 	else:
+ 		_tug_plan = {}
+ 	_l_tug.update_sig(UiTug.sig(_tug_plan))
++	if _run.is_empty():
++		_l_run.update_sig(null)
++	else:
++		var rp: Dictionary = run_plan()
++		match str(_run["kind"]):
++			"offers":
++				_l_run.update_sig(UiRun.offers_sig(rp) + [int(layout.vp.x), int(layout.vp.y)])
++			"beat":
++				_l_run.update_sig(UiRun.beat_sig(rp) + [int(layout.vp.x), int(layout.vp.y)])
++			"results":
++				_l_run.update_sig(UiRun.results_sig(rp) + [int(layout.vp.x), int(layout.vp.y)])
+ 	_chips = chips
+ 	var psz: Vector2 = UiSplit.pointer_size(layout.s, _chip_big)
+ 	for i in range(2):
+@@ -1078,6 +1096,9 @@
+ 
+ 
+ func _unhandled_input(event: InputEvent) -> void:
++	if not _run.is_empty():
++		_run_input(event)
++		return
+ 	if _turn_open:
+ 		_turn_input(event)
+ 		return
+@@ -3609,6 +3630,199 @@
+ 	UiSplit.draw_ring_marks(ci, layout, hub, _split, layout.s, _o())
+ 
+ 
++# --- the run mode's screens (docs/ui/run-mode-screens.md): a record from the host, drawn by UiRun; the HUD never writes the sim ------------------------------------------
++
++func _run_open_screen(kind: String, rec: Dictionary, extra: Dictionary = {}) -> void:
++	if not UiData.feature("run_mode"):
++		return
++	var was_open: bool = not _run.is_empty()
++	_run = {"kind": kind, "rec": rec, "sel": 0, "btn": false, "page": 1, "parts": false, "focus": 0}
++	_run.merge(extra, true)
++	if not was_open:
++		howto_opened.emit(false)   # the host holds the match, as for every card
++	if _pm_open:
++		_pm_close("run")
++
++
++func show_run_offers(rec: Dictionary) -> void:
++	_run_open_screen("offers", rec)
++
++
++func show_run_beat(rec: Dictionary) -> void:
++	_run_open_screen("beat", rec)
++
++
++func show_run_results(rec: Dictionary) -> void:
++	_run_open_screen("results", rec)
++
++
++func hide_run() -> void:
++	if _run.is_empty():
++		return
++	_run = {}
++	howto_closed.emit(false)
++
++
++func is_run_open() -> bool:
++	return not _run.is_empty()
++
++
++func run_plan() -> Dictionary:
++	if _run.is_empty():
++		return {}
++	var dp: float = layout.dp if "dp" in layout else 1.0
++	var st: Dictionary = _run
++	match str(_run["kind"]):
++		"offers":
++			return UiRun.offers_plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), st)
++		"beat":
++			return UiRun.beat_plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), st)
++		"results":
++			return UiRun.results_plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), st)
++	return {}
++
++
++## A key, pad or tap, as an action: "left", "right", "up", "down", "accept", "skip" (any button on a beat), "page" (not used by the host). Returns true when the screen took it.
++func run_action(act: String) -> bool:
++	if _run.is_empty():
++		return false
++	var kind: String = str(_run["kind"])
++	if kind == "offers":
++		var n: int = ((_run["rec"] as Dictionary).get("offers", []) as Array).size()
++		match act:
++			"left", "up":
++				if bool(_run["btn"]):
++					_run["btn"] = false
++				else:
++					_run["sel"] = maxi(int(_run["sel"]) - 1, 0)
++			"right":
++				if not bool(_run["btn"]):
++					_run["sel"] = mini(int(_run["sel"]) + 1, maxi(n - 1, 0))
++			"down":
++				if not bool(_run["btn"]):
++					if UiRun.upright(layout.vp) and int(_run["sel"]) < n - 1:
++						_run["sel"] = int(_run["sel"]) + 1
++					else:
++						_run["btn"] = true
++			"accept":
++				if bool(_run["btn"]) or n <= 1:
++					_run_confirm()
++				else:
++					_run["btn"] = true
++		return true
++	if kind == "beat":
++		if act == "accept":
++			run_beat_next.emit()
++		else:
++			hide_run()
++			run_beat_skipped.emit()
++		return true
++	if kind == "results":
++		var plan: Dictionary = run_plan()
++		var btns: Array = plan.get("buttons", [])
++		match act:
++			"left", "up":
++				_run["focus"] = maxi(int(_run["focus"]) - 1, 0)
++			"right", "down":
++				_run["focus"] = mini(int(_run["focus"]) + 1, maxi(btns.size() - 1, 0))
++			"accept":
++				if not btns.is_empty():
++					_run_results_press(str(btns[clampi(int(_run["focus"]), 0, btns.size() - 1)]["id"]))
++		return true
++	return false
++
++
++func _run_results_press(id: String) -> void:
++	if id == "next":
++		_run["page"] = 2
++		_run["focus"] = 0
++		return
++	hide_run()
++	run_results_action.emit(id)
++
++
++func _run_input(event: InputEvent) -> void:
++	var act := ""
++	if event is InputEventKey and event.pressed and not event.echo:
++		match event.keycode:
++			KEY_LEFT, KEY_A:
++				act = "left"
++			KEY_RIGHT, KEY_D:
++				act = "right"
++			KEY_UP, KEY_W:
++				act = "up"
++			KEY_DOWN, KEY_S:
++				act = "down"
++			KEY_ENTER, KEY_KP_ENTER, KEY_SPACE:
++				act = "accept"
++			_:
++				act = "skip" if event.keycode != KEY_ESCAPE else ""
++	elif event is InputEventJoypadButton and event.pressed:
++		match event.button_index:
++			JOY_BUTTON_DPAD_LEFT:
++				act = "left"
++			JOY_BUTTON_DPAD_RIGHT:
++				act = "right"
++			JOY_BUTTON_DPAD_UP:
++				act = "up"
++			JOY_BUTTON_DPAD_DOWN:
++				act = "down"
++			JOY_BUTTON_A:
++				act = "accept"
++			_:
++				act = "skip"
++	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
++		_run_tap(event.position)
++		get_viewport().set_input_as_handled()
++		return
++	if act != "":
++		run_action(act)
++	get_viewport().set_input_as_handled()
++
++
++func _run_tap(pos: Vector2) -> void:
++	var plan: Dictionary = run_plan()
++	match str(_run["kind"]):
++		"offers":
++			var h: Dictionary = UiRun.offers_hit(plan, pos)
++			if str(h.get("kind", "")) == "card":
++				if int(_run["sel"]) == int(h["idx"]) and not bool(_run["btn"]):
++					_run["btn"] = true   # a second tap on the chosen card confirms
++				else:
++					_run["sel"] = int(h["idx"])
++					_run["btn"] = false
++			elif str(h.get("kind", "")) == "button":
++				_run_confirm()
++		"beat":
++			var hb: Dictionary = UiRun.beat_hit(plan, pos)
++			run_action("accept" if str(hb.get("kind", "")) == "next" else "skip")
++		"results":
++			var hr: Dictionary = UiRun.results_hit(plan, pos)
++			if str(hr.get("kind", "")) == "button":
++				_run_results_press(str(hr["id"]))
++			elif str(hr.get("kind", "")) == "score":
++				_run["parts"] = not bool(_run["parts"])
++
++
++func _run_confirm() -> void:
++	var chosen: int = int(_run["sel"])
++	hide_run()
++	run_offer_chosen.emit(chosen)
++
++
++func _paint_run(ci: CanvasItem) -> void:
++	if _run.is_empty():
++		return
++	var plan: Dictionary = run_plan()
++	match str(_run["kind"]):
++		"offers":
++			UiRun.offers_draw(ci, plan, layout.s)
++		"beat":
++			UiRun.beat_draw(ci, plan, layout.s)
++		"results":
++			UiRun.results_draw(ci, plan, layout.s)
++
++
+ func _paint_tug(ci: CanvasItem) -> void:
+ 	UiTug.draw(ci, hub, _tug_plan, _o())
+ 
+diff -ruN a/ui/tools/hud_check.gd b/ui/tools/hud_check.gd
+--- a/ui/tools/hud_check.gd	2026-10-17 03:38:06.932047300 -0700
++++ b/ui/tools/hud_check.gd	2026-10-17 03:38:07.107967900 -0700
+@@ -60,6 +60,7 @@
+ 	await _rival_pointer_rules()
+ 	await _many_marker_rules()
+ 	await _lost_rival_rules()
++	await _run_mode_rules()
+ 	await _launch_anywhere_rules()
+ 	await _civilian_bar_rules()
+ 	await _plain_words_rules()
+@@ -6326,6 +6327,181 @@
+ 	UiPrefs.path = "user://ui_prefs.json"
+ 
+ 
++## The run mode's screens (docs/ui/run-mode-screens.md; UiRun), behind features.json run_mode, from records.
++func _run_offers_rec(n: int, boss: bool = false) -> Dictionary:
++	var kinds: Array = ["rampage", "proving", "crossing"]
++	var names: Array = ["Harbourgate", "Greywater Ridge", "The Saltmarsh Delta"]
++	var out: Array = []
++	for i in range(n):
++		var kind: String = "boss" if boss else str(kinds[i])
++		out.append({"kind": kind, "name": names[i] if not boss else "Old Brasswick", "line": "He got here first. People are still in the streets.", "opp": "The Rival", "harder": i == 1, "tiers": ["QUAKE", "UPHEAVAL"],
++			"holds": {"cities": 3, "towns": 3}, "reward": ["rampage", "proving_cards", "crossing"][i % 3],
++			"strip": {"start": 0.4, "biomes": [["sea", 0.2], ["plain", 0.4], ["forest", 0.2], ["sea", 0.2]], "places": [{"at": 0.3, "kind": "city", "state": "fresh"}, {"at": 0.5, "kind": "town", "state": "damaged"}, {"at": 0.7, "kind": "city", "state": "fallen"}]}})
++	return {"fight": 2, "of": 4, "boss": boss, "planet": {"cities": {"standing": 10, "damaged": 3, "fallen": 2}}, "offers": out}
++
++
++func _run_beat_rec(approach: bool) -> Dictionary:
++	return {"approach": approach, "place": "Greywater Ridge", "step": 3, "of_steps": 8, "states": ["fresh", "fresh", "damaged", "fresh", "fallen", "fresh", "damaged", "fresh", "fresh", "fresh", "damaged", "fresh"], "changed": [2, 4],
++		"changed_text": "Harbourgate is damaged. Old Brasswick has fallen.", "lost": 312, "present": 1800, "beat_n": 1, "beat_of": 2,
++		"lines": [{"who": "hero", "text": "I broke that street. I know it."}, {"who": "crowd", "text": "Look at the windows. All of them."}, {"who": "hero", "text": "Next time I am taking it somewhere empty."}]}
++
++
++func _run_results_rec(won: bool) -> Dictionary:
++	return {"won": won, "ending": "Half the planet is standing. The sky is still dark.", "route": [{"place": "Harbourgate", "kind": "rampage", "won": true}, {"place": "Greywater Ridge", "kind": "proving", "won": won}, {"place": "Old Brasswick", "kind": "boss", "won": won}],
++		"chances": [1, 2], "ticks": 41 * 3600 + 8 * 60, "path": {"witness": 2, "trial": 1},
++		"planet": {"states": ["fresh", "damaged", "fallen", "fresh", "fresh", "fresh", "damaged", "fresh", "fresh", "fresh", "fresh", "fresh"], "cities": {"standing": 9, "damaged": 2, "fallen": 1}, "towns": {"standing": 24, "damaged": 5, "fallen": 2}, "lost": 7030, "present": 14200, "sky_dark": won},
++		"score": [{"label": "Fights won", "points": 3000}, {"label": "People you saved (51%)", "points": 1020}, {"label": "Chances used", "points": -500}], "total": 3520}
++
++
++func _run_mode_rules() -> void:
++	var sizes: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 576), 1.0], [Vector2(2400, 1080), 2.6], [Vector2(2532, 1170), 3.0], [Vector2(844, 390), 1.0], [Vector2(667, 375), 1.0],
++		[Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0], [Vector2(1170, 2532), 3.0]]
++	var bad := PackedStringArray()
++	for cs in sizes:
++		var vp: Vector2 = cs[0]
++		var lay := UiLayout.new()
++		lay.dp = cs[1]
++		lay.compute(vp, false)
++		for n in [3, 2, 1]:
++			var p: Dictionary = UiRun.offers_plan(vp, lay.s, cs[1], false, {"rec": _run_offers_rec(n), "sel": 0})
++			if not bool(p["fits"]) or (p["cards"] as Array).size() != n:
++				bad.append("offers %s n=%d %s" % [str(vp), n, str(p["mode"])])
++		var pb: Dictionary = UiRun.offers_plan(vp, lay.s, cs[1], false, {"rec": _run_offers_rec(1, true), "sel": 0})
++		if not bool(pb["fits"]):
++			bad.append("boss %s" % str(vp))
++		for approach in [false, true]:
++			var pt: Dictionary = UiRun.beat_plan(vp, lay.s, cs[1], false, {"rec": _run_beat_rec(approach)})
++			if not bool(pt["fits"]) or (pt["lines"] as Array).size() != (_run_beat_rec(approach)["lines"] as Array).size():
++				bad.append("beat %s approach %s" % [str(vp), str(approach)])
++		for won in [true, false]:
++			for page in [1, 2]:
++				var pr: Dictionary = UiRun.results_plan(vp, lay.s, cs[1], false, {"rec": _run_results_rec(won), "page": page})
++				if not bool(pr["fits"]):
++					bad.append("results %s won %s page %d" % [str(vp), str(won), page])
++	_ok(bad.is_empty(), "run mode: the offers, the beats and the results fit at ten sizes (phone on its side and upright, desktop), every button a 48 dp target (%d bad %s)" % [bad.size(), str(bad.slice(0, 4))])
++	# The modes by shape, and the hit tests.
++	var d: Dictionary = UiRun.offers_plan(Vector2(1280, 720), 0.667, 1.0, false, {"rec": _run_offers_rec(3), "sel": 1})
++	var cp: Dictionary = UiRun.offers_plan(Vector2(844, 390), 0.4, 1.0, false, {"rec": _run_offers_rec(3), "sel": 0})
++	var ru: Dictionary = UiRun.offers_plan(Vector2(390, 844), 0.4, 1.0, false, {"rec": _run_offers_rec(3), "sel": 0})
++	_ok(d["mode"] == "full" and cp["mode"] == "compact" and ru["mode"] == "rows" and int(d["focus"]) == 1, "run mode: three cards side by side on a desktop, compact on a phone on its side, rows upright")
++	var c1: Rect2 = (d["cards"] as Array)[1]["rect"]
++	_ok(UiRun.offers_hit(d, c1.get_center()).get("idx", -1) == 1 and UiRun.offers_hit(d, (d["button"] as Rect2).get_center()).get("kind", "") == "button" and UiRun.offers_hit(d, Vector2(2, 2)).is_empty(), "run mode: a tap finds a card, the button, or nothing")
++	var two: Dictionary = UiRun.offers_plan(Vector2(1280, 720), 0.667, 1.0, false, {"rec": _run_offers_rec(2), "sel": 0})
++	var cx0: Rect2 = (two["cards"] as Array)[0]["rect"]
++	var cx1: Rect2 = (two["cards"] as Array)[1]["rect"]
++	_ok(absf((cx0.position.x + cx1.end.x) * 0.5 - 640.0) < 1.0, "run mode: two offers are recentred, never a greyed card")
++	var pbo: Dictionary = UiRun.offers_plan(Vector2(1280, 720), 0.667, 1.0, false, {"rec": _run_offers_rec(1, true), "sel": 0})
++	_ok(pbo["boss"] and pbo["title"] == "The last fight" and (pbo["cards"] as Array).size() == 1, "run mode: the boss is one card under The last fight")
++	# The results: two pages on a phone on its side, a score that opens on a tap upright, and the c08 rows.
++	var r1: Dictionary = UiRun.results_plan(Vector2(844, 390), 0.4, 1.0, false, {"rec": _run_results_rec(true), "page": 1})
++	var r2: Dictionary = UiRun.results_plan(Vector2(844, 390), 0.4, 1.0, false, {"rec": _run_results_rec(true), "page": 2})
++	_ok((r1["buttons"] as Array).size() == 1 and r1["buttons"][0]["id"] == "next" and (r2["buttons"] as Array).size() == 3 and r1["page_text"] == "Page 1 of 2", "run mode: a phone on its side has two results pages: Next, then New run, Same planet again and Main menu")
++	var ru2: Dictionary = UiRun.results_plan(Vector2(390, 844), 0.4, 1.0, false, {"rec": _run_results_rec(true), "parts": false})
++	var ru3: Dictionary = UiRun.results_plan(Vector2(390, 844), 0.4, 1.0, false, {"rec": _run_results_rec(true), "parts": true})
++	var parts2 := 0
++	var parts3 := 0
++	for r in ru2["rows"]:
++		parts2 += 1 if r["t"] == "part" else 0
++	for r in ru3["rows"]:
++		parts3 += 1 if r["t"] == "part" else 0
++	_ok(parts2 == 0 and parts3 == 3, "run mode: upright, the score shows its total and its parts open on a tap")
++	var rd: Dictionary = UiRun.results_plan(Vector2(1280, 720), 0.667, 1.0, false, {"rec": _run_results_rec(true)})
++	var people_t := ""
++	var cities_t := ""
++	var banned := false
++	for r in rd["rows"]:
++		var tx: String = str(r.get("text", ""))
++		if tx.begins_with("People lost"):
++			people_t = str(r["t"])
++		if tx.begins_with("Cities:"):
++			cities_t = str(r["t"])
++		for bw in ["kill", "body count", "victim", "bonus", "trophy", "achievement", "casualt"]:
++			banned = banned or tx.to_lower().contains(bw)
++	_ok(people_t != "" and people_t == cities_t and not banned, "run mode: the people-lost line is drawn as the same kind of row as the cities line, in words with none of the c08 banned ones (Legal c08)")
++	var scored := true
++	for r in rd["rows"]:
++		if r["t"] == "part":
++			scored = scored and not str(r["text"]).to_lower().contains("lost") and not str(r["text"]).to_lower().contains("death")
++	_ok(scored, "run mode: no score part is named for people lost or deaths")
++	# The HUD: off does nothing; on holds the match once, takes keys, a tap, and emits.
++	root.size = Vector2i(1280, 720)
++	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
++	hud.size = Vector2(1280, 720)
++	root.add_child(hud)
++	await process_frame
++	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
++	var seen := {"open": 0, "close": 0, "chosen": [], "next": 0, "skipped": 0, "act": []}
++	hud.howto_opened.connect(func(_f): seen["open"] += 1)
++	hud.howto_closed.connect(func(_f): seen["close"] += 1)
++	hud.run_offer_chosen.connect(func(i): seen["chosen"].append(i))
++	hud.run_beat_next.connect(func(): seen["next"] += 1)
++	hud.run_beat_skipped.connect(func(): seen["skipped"] += 1)
++	hud.run_results_action.connect(func(a): seen["act"].append(a))
++	hud.show_run_offers(_run_offers_rec(3))
++	_ok(not hud.is_run_open() and seen["open"] == 0, "run mode: with the switch off the HUD ignores a run screen")
++	UiData.set_feature("run_mode", true)
++	hud.show_run_offers(_run_offers_rec(3))
++	hud.advance(1.0 / 60.0)
++	await process_frame
++	_ok(hud.is_run_open() and seen["open"] == 1 and hud._l_run.sig != null, "run mode: the offers hold the match once and the layer draws")
++	hud.run_action("right")
++	hud.run_action("right")
++	hud.run_action("left")
++	hud.run_action("accept")   # the first accept takes the button, the second confirms
++	hud.run_action("accept")
++	_ok(seen["chosen"] == [1] and not hud.is_run_open() and seen["close"] == 1, "run mode: right, right, left picks the middle card; accept twice chooses it and releases the match (%s)" % str(seen["chosen"]))
++	hud.show_run_offers(_run_offers_rec(3))
++	var plan_t: Dictionary = hud.run_plan()
++	var tap_card: Vector2 = ((plan_t["cards"] as Array)[2]["rect"] as Rect2).get_center()
++	var ev := InputEventMouseButton.new()
++	ev.button_index = MOUSE_BUTTON_LEFT
++	ev.pressed = true
++	ev.position = tap_card
++	hud._unhandled_input(ev)
++	hud._unhandled_input(ev)   # a second tap confirms the chosen card
++	hud.advance(1.0 / 60.0)
++	var btn_pos: Vector2 = ((hud.run_plan()["button"]) as Rect2).get_center()
++	ev.position = btn_pos
++	hud._unhandled_input(ev)
++	_ok(seen["chosen"] == [1, 2] and not hud.is_run_open(), "run mode: a tap selects a card, the Fight here button chooses it (%s)" % str(seen["chosen"]))
++	hud.show_run_beat(_run_beat_rec(false))
++	hud.run_action("accept")
++	_ok(hud.is_run_open() and seen["next"] == 1, "run mode: a beat's Next tells the host and the screen stays for it to swap")
++	hud.run_action("skip")
++	_ok(not hud.is_run_open() and seen["skipped"] == 1, "run mode: any other button skips, the HUD hides itself and says so")
++	hud.show_run_results(_run_results_rec(true))
++	hud.run_action("down")
++	hud.run_action("accept")
++	_ok(not hud.is_run_open() and (seen["act"] == ["next"] or seen["act"] == ["again"] or seen["act"] == ["new"] or seen["act"] == ["menu"]), "run mode: the results' buttons reach the host (%s)" % str(seen["act"]))
++	# Drawn: the words of each screen.
++	var screens: Array = [["offers", _run_offers_rec(3), "Where to next?"], ["beat", _run_beat_rec(false), "After the fight"], ["results", _run_results_rec(false), "The run is over"]]
++	var drawn_ok := true
++	for sc in screens:
++		match str(sc[0]):
++			"offers":
++				hud.show_run_offers(sc[1])
++			"beat":
++				hud.show_run_beat(sc[1])
++			_:
++				hud.show_run_results(sc[1])
++		hud.advance(1.0 / 60.0)
++		UiText.tracing = true
++		UiText.trace = []
++		hud._l_run.invalidate()
++		for i in range(3):
++			await process_frame
++		UiText.tracing = false
++		var wds := " ".join(PackedStringArray(UiText.trace))
++		UiText.trace = []
++		if not wds.contains(str(sc[2])):
++			drawn_ok = false
++		hud.hide_run()
++	_ok(drawn_ok, "run mode: each screen draws its heading")
++	UiData.set_feature("run_mode", null)
++	hud.queue_free()
++	await process_frame
++
++
+ ## The photosensitivity rule for the HUD (docs/ui/hud-spec.md section 57): no block of the HUD may come and go twice inside 60 ticks, whatever the presses do. A mash is played at the HUD
+ ## (a refused or empty press every 4 ticks, a wind-up on and off every 6, a stance change every 10, the launch window, banners, the touch flag flipping), at a keyboard-and-pad size and on a
+ ## phone, and every layer's presence is sampled each tick; a layer that changes state twice in 60 ticks (after the first 30 ticks) fails.
+diff -ruN a/ui/widgets/ui_run.gd b/ui/widgets/ui_run.gd
+--- a/ui/widgets/ui_run.gd	1969-12-31 16:00:00.000000000 -0800
++++ b/ui/widgets/ui_run.gd	2026-10-17 03:38:07.059879500 -0700
+@@ -0,0 +1,715 @@
++class_name UiRun
++extends RefCounted
++## The run mode's screens (docs/ui/run-mode-screens.md; Game Design's docs/design/run-mode.md; Legal c08): the offers ("Where to next?"), the beats between fights and the last night, and the results.
++## All static draws from a record the host passes (the HUD reads, never writes the sim), behind features.json `run_mode`. Every function here is pure: `*_plan` is geometry (so hud_check proves the fit
++## and the 48 dp targets at every size), `*_hit` says what a point is on, `*_draw` paints from a plan.
++##
++## Legal c08 holds in every line below: a count is a plain line of the same type as its neighbours (no icon, no colour, no emphasis, no counting up, no sound); nothing scores a death; the
++## menace meter and Dread appear nowhere. Words are in terms.json (prompt.run_*), plain, Narrative's to own. A mark is a shape, never a hue; the strip's biome blocks are scenery.
++##
++## Records (every key optional; a missing one draws nothing rather than a wrong thing):
++##   offers  {fight, of, planet: {cities: {standing, damaged, fallen}}, boss: bool, offers: [{kind: rampage|proving|crossing|boss, name, line, opp, harder, tiers: [from, to], holds: {cities, towns}, reward,
++##            strip: {biomes: [[biome, share]], places: [{at, kind: city|town, state: fresh|damaged|fallen}], start}}]}
++##   beat    {approach: bool, place, step, of_steps, states: [state x12], changed: [index], changed_text, lost, present, beat_n, beat_of, lines: [{who, text}]}
++##   results {won: bool, ending, route: [{place, kind, won}], chances: [used, total], ticks, path: {witness, trial}, planet: {states, cities: {standing, damaged, fallen}, towns: {...}, lost, present, sky_dark},
++##            score: [{label, points}], total}
++
++const BIOMES := {"sea": "#3b6a94", "plain": "#7f9a58", "forest": "#4a7a52", "desert": "#b79b62", "mountain": "#7c7a78", "ice": "#aab7c4"}
++const REWARDS := {"rampage": "run_rw_rampage", "proving_cards": "run_rw_proving_cards", "proving_score": "run_rw_proving_score", "crossing": "run_rw_crossing"}
++const SPEAKERS := {"hero": "run_who_hero", "rival": "run_who_rival", "boss": "run_who_boss", "crowd": "run_who_crowd", "radio": "run_who_radio"}
++
++
++static func w(key: String) -> String:
++	return UiData.t("prompt." + key)
++
++
++static func u(s: float) -> float:
++	return maxf(1.5 * s, 1.0)   # one design pixel of this file's layout: 1 at the smallest, the HUD's scale otherwise
++
++
++static func fs(x: float, s: float) -> int:
++	return maxi(int(round(x * u(s))), int(UiLook.text_floor))
++
++
++static func compact(vp: Vector2, dp: float = 1.0, limit: float = 500.0) -> bool:
++	return vp.y / maxf(dp, 1.0) < limit and vp.x >= vp.y   # a phone on its side (a dense screen's size is in CSS pixels)
++
++
++static func upright(vp: Vector2) -> bool:
++	return vp.y > vp.x * 1.05
++
++
++# --- shared drawing --------------------------------------------------------------------------------------------------------------------------
++
++static func _col(id: String) -> Color:
++	return Color(UiLook.col(id))
++
++
++## A mark for a place on the strip: a city is tall and a town short; untouched is solid, damaged half-filled with a crack, fallen hollow with a slash. Shape carries it, never a hue.
++static func place_mark(ci: CanvasItem, bx: float, base: float, kind: String, state: String, k: float) -> void:
++	var big: bool = kind == "city"
++	var pw: float = (15.0 if big else 9.0) * k
++	var ph: float = (26.0 if big else 13.0) * k
++	var ink: Color = _col(UiLook.INK)
++	var dark: Color = _col(UiLook.INK_DARK)
++	var gx: float = bx - pw * 0.5
++	var gy: float = base - ph
++	match state:
++		"damaged":
++			ci.draw_rect(Rect2(gx, gy, pw, ph), dark)
++			ci.draw_rect(Rect2(gx, gy, pw, ph), ink, false, maxf(1.6, 1.8 * k))
++			ci.draw_rect(Rect2(gx, gy + ph * 0.5, pw, ph * 0.5), ink)
++			ci.draw_line(Vector2(gx, gy + ph * 0.28), Vector2(gx + pw, gy + ph * 0.5), dark, maxf(1.4, 1.6 * k))
++		"fallen":
++			ci.draw_rect(Rect2(gx, gy + ph * 0.55, pw, ph * 0.45), dark)
++			ci.draw_rect(Rect2(gx, gy + ph * 0.55, pw, ph * 0.45), ink, false, maxf(1.6, 1.8 * k))
++			ci.draw_line(Vector2(gx - 1.0, gy + ph * 0.45), Vector2(gx + pw + 1.0, base + 1.0), ink, maxf(1.6, 1.8 * k))
++		_:
++			ci.draw_rect(Rect2(gx, gy, pw, ph), ink)
++			ci.draw_rect(Rect2(gx, gy, pw, ph), dark, false, maxf(1.2, 1.4 * k))
++
++
++## World's strip: the arena as a bar of biome blocks with the places on it and a small triangle where the fight starts.
++static func strip_draw(ci: CanvasItem, r: Rect2, spec: Dictionary, k: float) -> void:
++	var cx: float = r.position.x
++	for b in spec.get("biomes", []):
++		var bw: float = r.size.x * float(b[1])
++		ci.draw_rect(Rect2(cx, r.position.y, bw, r.size.y), Color(BIOMES.get(str(b[0]), "#7f9a58")))
++		cx += bw
++	UiIcons.rrect(ci, r, 3.0 * k, Color(0, 0, 0, 0), _col(UiLook.EDGE), maxf(1.2, 1.2 * k))
++	for p in spec.get("places", []):
++		place_mark(ci, r.position.x + r.size.x * float(p["at"]), r.end.y - 3.0 * k, str(p.get("kind", "town")), str(p.get("state", "fresh")), k)
++	if spec.has("start"):
++		var sx: float = r.position.x + r.size.x * float(spec["start"])
++		ci.draw_colored_polygon(PackedVector2Array([Vector2(sx, r.position.y + 1.0), Vector2(sx - 6.0 * k, r.position.y - 10.0 * k), Vector2(sx + 6.0 * k, r.position.y - 10.0 * k)]), _col(UiLook.INK))
++
++
++## The planet's places as one row of marks (up to twelve), the ones a fight changed ringed with a dashed ring.
++static func planet_row(ci: CanvasItem, r: Rect2, states: Array, changed: Array, k: float) -> void:
++	UiIcons.rrect(ci, r, 8.0 * k, Color(0.06, 0.08, 0.13, 1.0), Color(UiLook.col(UiLook.EDGE), 0.3), 1.0)
++	var n: int = maxi(states.size(), 1)
++	for i in range(states.size()):
++		var gx: float = r.position.x + 12.0 * k + (r.size.x - 24.0 * k) * (float(i) + 0.5) / float(n)
++		var base: float = r.end.y - 8.0 * k
++		place_mark(ci, gx, base, "city", str(states[i]), k * 0.9)
++		if changed.has(i):
++			for seg in range(8):
++				var a0: float = float(seg) * TAU / 8.0
++				ci.draw_arc(Vector2(gx, base - 11.0 * k), 16.0 * k, a0, a0 + TAU / 14.0, 6, _col(UiLook.INK), maxf(1.6, 2.0 * k), true)   # a dashed ring: this fight changed it
++
++
++static func button_draw(ci: CanvasItem, r: Rect2, label: String, primary: bool, focus: bool, f: int) -> void:
++	var ink: Color = _col(UiLook.INK)
++	UiIcons.rrect(ci, r, r.size.y * 0.3, Color(ink, 0.95) if primary else Color(UiLook.col(UiLook.SCRIM), 0.9), _col(UiLook.EDGE), 2.0)
++	UiText.draw(ci, label, Vector2(r.get_center().x, r.get_center().y - UiText.height(f) * 0.5 + UiText.ascent(f)), f, _col(UiLook.INK_DARK) if primary else ink, 0)
++	if focus:
++		UiIcons.rrect(ci, r.grow(3.0), r.size.y * 0.34, Color(0, 0, 0, 0), Color(1.0, 0.85, 0.35), 3.0)
++
++
++static func kind_mark(ci: CanvasItem, c: Vector2, r: float, kind: String) -> void:
++	var ink: Color = _col(UiLook.INK)
++	match kind:
++		"rampage":
++			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(0, -r), c + Vector2(r, r * 0.8), c + Vector2(-r, r * 0.8)]), ink)
++		"proving":
++			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(0, -r), c + Vector2(r, 0), c + Vector2(0, r), c + Vector2(-r, 0)]), ink)
++		_:
++			var lw: float = maxf(2.0, r * 0.3)
++			ci.draw_polyline(PackedVector2Array([c + Vector2(-r, -r * 0.35), c + Vector2(r, -r * 0.35)]), ink, lw)
++			ci.draw_polyline(PackedVector2Array([c + Vector2(r * 0.5, -r * 0.9), c + Vector2(r, -r * 0.35), c + Vector2(r * 0.5, r * 0.2)]), ink, lw)
++			ci.draw_polyline(PackedVector2Array([c + Vector2(r, r * 0.45), c + Vector2(-r, r * 0.45)]), ink, lw)
++			ci.draw_polyline(PackedVector2Array([c + Vector2(-r * 0.5, 0), c + Vector2(-r, r * 0.45), c + Vector2(-r * 0.5, r * 0.95)]), ink, lw)
++
++
++static func kind_word(kind: String) -> String:
++	match kind:
++		"rampage":
++			return w("run_rampage")
++		"proving":
++			return w("run_proving")
++		"crossing":
++			return w("run_crossing")
++		"boss":
++			return w("run_boss_kind")
++	return ""
++
++
++static func _draw_lines(ci: CanvasItem, x: float, y: float, text: String, f: int, wd: float, col: Color) -> float:
++	var lines: PackedStringArray = UiText.wrap(text, f, wd)
++	var lh: float = UiText.height(f) * 1.2
++	for i in range(lines.size()):
++		UiText.draw(ci, lines[i], Vector2(x, y + UiText.ascent(f) + float(i) * lh), f, col, -1)
++	return float(lines.size()) * lh
++
++
++static func _text_h(text: String, f: int, wd: float) -> float:
++	return float(UiText.wrap(text, f, wd).size()) * UiText.height(f) * 1.2
++
++
++# --- the offers ------------------------------------------------------------------------------------------------------------------------------
++
++static func _offer_opp(o: Dictionary, short: bool) -> String:
++	var who: String = str(o.get("opp", ""))
++	if who == "":
++		return ""
++	if bool(o.get("harder", false)):
++		who += (", " + w("run_harder_short")) if short else (", " + w("run_harder"))
++	return who if short else UiData.fmt("prompt.run_opp", {"who": who})   # a compact card drops the word Opponent: the name says it
++
++
++static func _offer_reward(o: Dictionary) -> String:
++	return w(str(REWARDS.get(str(o.get("reward", "")), ""))) if REWARDS.has(str(o.get("reward", ""))) else str(o.get("reward", ""))
++
++
++## The geometry of the offers screen for a viewport. `st`: {rec, sel (the selected card), btn (the button has focus)}. Returns {mode, cards: [{rect, idx, ...parts}], button, title_pos, sub_pos, fight_pos,
++## legend_pos, note_pos, fits, tm}. Modes: "full" (three cards side by side), "compact" (a phone on its side: the one line, what it holds and how hard it is wait), "rows" (a phone upright).
++static func offers_plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) -> Dictionary:
++	var rec: Dictionary = st.get("rec", {})
++	var offers: Array = rec.get("offers", [])
++	var k: float = u(s)
++	var tm: float = maxf(48.0 * dp, 44.0)
++	var mode: String = "rows" if upright(vp) else ("compact" if compact(vp, dp, 620.0) else "full")   # the offers need more height than the other screens: under 620 CSS px they are compact
++	var m: float = (14.0 if mode == "compact" else 20.0) * k
++	var boss: bool = bool(rec.get("boss", false)) or (offers.size() == 1 and str(offers[0].get("kind", "")) == "boss")
++	var fb: int = fs(14.0, s)
++	var plan := {"mode": mode, "cards": [], "tm": tm, "fits": true, "boss": boss}
++	var title: String = w("run_last") if boss else w("run_where")
++	var f_title: int = fs(26.0 if mode == "compact" else (30.0 if mode != "rows" else 28.0), s)
++	plan["title"] = title
++	plan["f_title"] = f_title
++	plan["title_pos"] = Vector2(m, m + UiText.ascent(f_title))
++	var y: float = m + UiText.height(f_title) * 1.1
++	var planet: Dictionary = (rec.get("planet", {}) as Dictionary).get("cities", {})
++	plan["sub"] = UiData.fmt("prompt.run_planet", {"a": int(planet.get("standing", 0)), "b": int(planet.get("standing", 0)) + int(planet.get("damaged", 0)) + int(planet.get("fallen", 0)), "c": int(planet.get("damaged", 0)), "d": int(planet.get("fallen", 0))}) if not planet.is_empty() else ""
++	plan["sub_pos"] = Vector2(m, y + UiText.ascent(fb))
++	if plan["sub"] != "":
++		y += UiText.height(fb) * 1.3
++	plan["fight"] = UiData.fmt("prompt.run_fight", {"n": int(rec.get("fight", 1)), "total": int(rec.get("of", 4))}) if rec.has("fight") else ""
++	plan["fight_pos"] = Vector2(vp.x - m, m + UiText.ascent(fb))
++	plan["fb"] = fb
++	var btn_h: float = maxf(tm, 48.0 * k)
++	var foot: float = btn_h + m
++	var n: int = offers.size()
++	var area_top: float = y + 10.0 * k
++	var area_bot: float = vp.y - foot - 8.0 * k
++	if mode == "rows":
++		var gap: float = 8.0 * k
++		var rh: float = minf((area_bot - area_top - 26.0 * k - gap * float(maxi(n - 1, 0))) / float(maxi(n, 1)), 175.0 * k)
++		for i in range(n):
++			plan["cards"].append({"rect": Rect2(m, area_top + float(i) * (rh + gap), vp.x - 2.0 * m, rh), "idx": i})
++		plan["legend_pos"] = Vector2(m, area_top + float(n) * (rh + gap) + 14.0 * k)
++	else:
++		var gap2: float = 16.0 * k
++		var ncol: int = maxi(n, 1)
++		var cw: float = (vp.x - 2.0 * m - gap2 * float(ncol - 1)) / float(ncol)
++		if boss:
++			cw = minf(cw, 460.0 * k)
++		var ch: float = minf(area_bot - area_top - 6.0 * k, (270.0 if mode == "compact" else 430.0) * k)
++		var total_w: float = cw * float(ncol) + gap2 * float(ncol - 1)
++		var x0: float = (vp.x - total_w) * 0.5
++		for i in range(n):
++			plan["cards"].append({"rect": Rect2(x0 + float(i) * (cw + gap2), area_top, cw, ch), "idx": i})
++		plan["legend_pos"] = Vector2(m, vp.y - m - 8.0 * k)
++	var bw: float = (vp.x - 2.0 * m) if mode == "rows" else minf(260.0 * k, vp.x * 0.4)
++	plan["button"] = Rect2(vp.x - m - bw, vp.y - m - btn_h, bw, btn_h)
++	plan["note_pos"] = Vector2(m + (270.0 if mode == "compact" else 300.0) * k, vp.y - m - 6.0 * k)
++	# the fit: every card and the button inside the screen, none overlapping, the button a 48 dp target, and each card's own content inside its rect
++	var fits: bool = Rect2(Vector2.ZERO, vp).encloses(plan["button"]) and (plan["button"] as Rect2).size.y >= tm - 0.01
++	for c in plan["cards"]:
++		var rr: Rect2 = c["rect"]
++		if not Rect2(Vector2.ZERO, vp).encloses(rr) or rr.size.y < 60.0 or rr.intersects(plan["button"]):
++			fits = false
++		if rr.size.y < _card_need(offers[int(c["idx"])], mode, rr.size.x, s) - 0.5:
++			fits = false
++	plan["fits"] = fits
++	plan["focus"] = clampi(int(st.get("sel", 0)), 0, maxi(n - 1, 0))
++	plan["btn"] = bool(st.get("btn", false))
++	plan["rec"] = rec
++	return plan
++
++
++## The height a card's content needs at a width (so the plan can say it fits).
++static func _card_need(o: Dictionary, mode: String, cw: float, s: float) -> float:
++	var k: float = u(s)
++	var pad: float = (11.0 if mode == "compact" else 14.0) * k
++	var inner: float = cw - 2.0 * pad
++	var f: int = fs(14.0, s)
++	if mode == "rows":
++		return pad + 86.0 * k + UiText.height(f) * 1.3 + pad * 0.5
++	var hh: float = pad + (24.0 if mode == "compact" else 32.0) * k + (24.0 if mode == "compact" else 40.0) * k + (48.0 if mode == "compact" else 106.0) * k
++	hh += _text_h(_offer_opp(o, mode == "compact"), f, inner) + 6.0 * k
++	if mode == "full":
++		hh += UiText.height(f) * 1.5 + 24.0 * k + 8.0 * k + 18.0 * k
++		hh += _text_h(_offer_reward(o), fs(15.0, s), inner) + 12.0 * k + _text_h(str(o.get("line", "")), f, inner)
++	else:
++		hh += 4.0 * k + _text_h(_offer_reward(o), fs(15.0, s), inner) + 8.0 * k
++	return hh + pad * 0.5
++
++
++static func offers_hit(p: Dictionary, pos: Vector2) -> Dictionary:
++	if (p["button"] as Rect2).has_point(pos):
++		return {"kind": "button", "idx": -1}
++	for c in p["cards"]:
++		if (c["rect"] as Rect2).has_point(pos):
++			return {"kind": "card", "idx": int(c["idx"])}
++	return {}
++
++
++static func offers_sig(p: Dictionary) -> Array:
++	var c: Rect2 = p["button"]
++	return ["offers", int(p["focus"]), p["btn"], int(c.position.x), int(c.position.y), int(c.size.x), (p["cards"] as Array).size(), hash(str(p["rec"]))]
++
++
++static func offers_draw(ci: CanvasItem, p: Dictionary, s: float) -> void:
++	var vp: Vector2 = ci.size if ci is Control else Vector2(1280, 720)
++	var k: float = u(s)
++	var ink: Color = _col(UiLook.INK)
++	var dim: Color = _col(UiLook.INK_DIM)
++	var mode: String = str(p["mode"])
++	var fb: int = int(p["fb"])
++	UiText.no_outline = true
++	ci.draw_rect(Rect2(Vector2.ZERO, vp), Color(0.04, 0.05, 0.08, 1.0))
++	UiText.draw(ci, str(p["title"]), p["title_pos"], int(p["f_title"]), ink, -1)
++	if str(p["sub"]) != "":
++		UiText.draw(ci, str(p["sub"]), p["sub_pos"], fb, dim, -1)
++	if str(p["fight"]) != "":
++		UiText.draw(ci, str(p["fight"]), p["fight_pos"], fb, dim, 1)
++	var offers: Array = (p["rec"] as Dictionary).get("offers", [])
++	for c in p["cards"]:
++		_card_draw(ci, c["rect"], offers[int(c["idx"])], int(c["idx"]) == int(p["focus"]) and not bool(p["btn"]), mode, s)
++	if mode != "rows" or true:
++		_legend_draw(ci, p["legend_pos"], fb, k)
++	if mode != "rows":
++		UiText.draw(ci, w("run_strip_note_short" if mode == "compact" else "run_strip_note"), p["note_pos"], maxi(fb - 2, int(UiLook.text_floor)), dim, -1)
++	button_draw(ci, p["button"], w("run_go"), true, bool(p["btn"]), fs(20.0, s))
++	UiText.no_outline = false
++
++
++static func _legend_draw(ci: CanvasItem, pos: Vector2, f: int, k: float) -> void:
++	var x: float = pos.x
++	for it in [["fresh", "run_fresh"], ["damaged", "run_damaged"], ["fallen", "run_fallen"]]:
++		place_mark(ci, x + 5.0 * k, pos.y, "city", str(it[0]), k * 0.6)
++		var wd: float = UiText.draw(ci, w(str(it[1])), Vector2(x + 14.0 * k, pos.y - UiText.height(f) * 0.5 + UiText.ascent(f) - 2.0 * k), f, _col(UiLook.INK_DIM), -1)
++		x += 14.0 * k + wd + 16.0 * k
++
++
++static func _card_draw(ci: CanvasItem, r: Rect2, o: Dictionary, selected: bool, mode: String, s: float) -> void:
++	var k: float = u(s)
++	var ink: Color = _col(UiLook.INK)
++	var dim: Color = _col(UiLook.INK_DIM)
++	var pad: float = (11.0 if mode == "compact" else 14.0) * k
++	var inner: float = r.size.x - 2.0 * pad
++	var f: int = fs(14.0, s)
++	UiIcons.rrect(ci, r, 12.0 * k, Color(0.09, 0.10, 0.15, 1.0), ink if selected else Color(0.17, 0.19, 0.24, 1.0), 3.0 if selected else 1.4)
++	var kind: String = str(o.get("kind", ""))
++	var spec: Dictionary = o.get("strip", {})
++	if mode == "rows":
++		kind_mark(ci, Vector2(r.position.x + pad + 8.0 * k, r.position.y + pad + 9.0 * k), 8.0 * k, kind)
++		UiText.draw(ci, kind_word(kind), Vector2(r.position.x + pad + 26.0 * k, r.position.y + pad + UiText.ascent(f) - 2.0 * k), f, dim, -1)
++		UiText.draw(ci, str(o.get("name", "")), Vector2(r.position.x + pad + 26.0 * k, r.position.y + pad + 20.0 * k + UiText.ascent(fs(19.0, s))), fs(19.0, s), ink, -1)
++		strip_draw(ci, Rect2(r.position.x + pad, r.position.y + pad + 50.0 * k, inner, 24.0 * k), spec, k)
++		var ry: float = r.position.y + pad + 86.0 * k
++		UiText.draw(ci, _offer_reward(o), Vector2(r.position.x + pad, ry + UiText.ascent(f)), f, ink, -1)
++		var h: Dictionary = o.get("holds", {})
++		if not h.is_empty():
++			UiText.draw(ci, UiData.fmt("prompt.run_holds_short", {"cities": int(h.get("cities", 0)), "towns": int(h.get("towns", 0))}), Vector2(r.end.x - pad, ry + UiText.ascent(f)), f, dim, 1)
++		return
++	var cy: float = r.position.y + pad
++	kind_mark(ci, Vector2(r.position.x + pad + 8.0 * k, cy + 9.0 * k), 8.0 * k, kind)
++	UiText.draw(ci, kind_word(kind), Vector2(r.position.x + pad + 26.0 * k, cy + UiText.ascent(f) + 1.0 * k), f, dim, -1)
++	cy += (24.0 if mode == "compact" else 32.0) * k
++	var fn: int = fs(20.0 if mode == "compact" else 26.0, s)
++	UiText.draw(ci, str(o.get("name", "")), Vector2(r.position.x + pad, cy + UiText.ascent(fn)), fn, ink, -1)
++	cy += (24.0 if mode == "compact" else 40.0) * k
++	strip_draw(ci, Rect2(r.position.x + pad, cy + 12.0 * k, inner, (30.0 if mode == "compact" else 70.0) * k), spec, k)
++	cy += (48.0 if mode == "compact" else 106.0) * k
++	if mode == "full":
++		var hd: Dictionary = o.get("holds", {})
++		if not hd.is_empty():
++			UiText.draw(ci, UiData.fmt("prompt.run_holds", {"cities": int(hd.get("cities", 0)), "towns": int(hd.get("towns", 0))}), Vector2(r.position.x + pad, cy + UiText.ascent(f)), f, dim, -1)
++			cy += UiText.height(f) * 1.5
++	cy += _draw_lines(ci, r.position.x + pad, cy, _offer_opp(o, mode == "compact"), f, inner, ink) + 6.0 * k
++	if mode == "full":
++		var tiers: Array = o.get("tiers", [])
++		if tiers.size() == 2:
++			UiText.draw(ci, UiData.fmt("prompt.run_starts", {"a": str(tiers[0]), "b": str(tiers[1])}), Vector2(r.position.x + pad, cy + UiText.ascent(f)), f, dim, -1)
++		cy += 24.0 * k
++		ci.draw_rect(Rect2(r.position.x + pad, cy - 8.0 * k, inner, 1.0), Color(0.17, 0.19, 0.24, 1.0))
++		cy += 4.0 * k
++		UiText.draw(ci, w("run_reward"), Vector2(r.position.x + pad, cy + UiText.ascent(maxi(f - 2, 14))), maxi(f - 2, int(UiLook.text_floor)), dim, -1)
++		cy += 18.0 * k
++		cy += _draw_lines(ci, r.position.x + pad, cy, _offer_reward(o), fs(15.0, s), inner, ink) + 12.0 * k
++		_draw_lines(ci, r.position.x + pad, cy, str(o.get("line", "")), f, inner, dim)
++	else:
++		cy += 4.0 * k
++		_draw_lines(ci, r.position.x + pad, cy, _offer_reward(o), fs(15.0, s), inner, ink)   # a compact card says the reward without its label: the line reads as one
++
++
++# --- the beats -------------------------------------------------------------------------------------------------------------------------------
++
++static func _speaker(l: Dictionary) -> String:
++	var who: String = str(l.get("who", ""))
++	if SPEAKERS.has(who):
++		return w(str(SPEAKERS[who]))
++	return who.to_upper()
++
++
++## `st`: {rec}. Returns {panel, next, skip (the whole screen but the button), lines: [{who, text, y}], planet (the places row rect), top..., fits}.
++static func beat_plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) -> Dictionary:
++	var rec: Dictionary = st.get("rec", {})
++	var approach: bool = bool(rec.get("approach", false))
++	var k: float = u(s)
++	var small: bool = compact(vp, dp)
++	var m: float = (14.0 if small else 24.0) * k
++	var tm: float = maxf(48.0 * dp, 44.0)
++	var pw: float = minf(vp.x - 2.0 * m, 820.0 * k) if not upright(vp) else vp.x - 2.0 * m
++	var px: float = (vp.x - pw) * 0.5
++	var f: int = fs(14.0, s)
++	var fl: int = fs(16.0 if (small or vp.x < 460.0) else 20.0, s)
++	var plan := {"approach": approach, "fits": true, "tm": tm, "f": f, "fl": fl, "px": px, "pw": pw}
++	var y: float = m
++	plan["head_l"] = w("run_last_night") if approach else w("run_after")
++	plan["head_r"] = UiData.fmt("prompt.run_step", {"n": int(rec.get("step", 1)), "total": int(rec.get("of_steps", 8))}) if approach else str(rec.get("place", ""))
++	plan["head_y"] = y + UiText.ascent(f)
++	y += UiText.height(f) * 1.6
++	if approach:
++		plan["pips_y"] = y + 6.0 * k
++		y += 26.0 * k
++		plan["planet"] = Rect2()
++	else:
++		var rh: float = (26.0 if small else 70.0) * k
++		plan["planet"] = Rect2(px, y, pw, rh)
++		y += rh + 6.0 * k
++		plan["changed"] = UiText.wrap(UiData.fmt("prompt.run_changed", {"text": str(rec.get("changed_text", ""))}), f, pw) if (str(rec.get("changed_text", "")) != "" and not small) else PackedStringArray()   # a phone on its side keeps the ringed places and the count, and drops this line
++		plan["changed_y"] = y
++		y += float((plan["changed"] as PackedStringArray).size()) * UiText.height(f) * 1.25 + 4.0 * k
++		if rec.has("lost"):
++			plan["lost"] = UiData.fmt("prompt.run_lost_fight", {"n": _num(int(rec.get("lost", 0))), "total": _num(int(rec.get("present", 0)))})
++			plan["lost_y"] = y
++			y += UiText.height(f) * 1.3 + (3.0 if small else 14.0) * k
++	var btn_h: float = maxf(tm, 46.0 * k)
++	var by: float = vp.y - m - btn_h
++	var ph: float = by - 16.0 * k - y
++	if not small and not upright(vp):
++		ph = minf(ph, 310.0 * k)
++		by = minf(by, y + ph + 16.0 * k)
++	plan["panel"] = Rect2(px, y, pw, ph)
++	var ip: float = (10.0 if small else 18.0) * k
++	var ly: float = y + ip + (3.0 if small else 12.0) * k
++	var lines: Array = []
++	for l in rec.get("lines", []):
++		var tw: PackedStringArray = UiText.wrap(str(l.get("text", "")), fl, pw - 2.0 * ip)
++		var need: float = UiText.height(int(fl * 0.82)) * 1.1 + float(tw.size()) * UiText.height(fl) * 1.15 + 8.0 * k
++		if ly + need > y + ph - ip * 0.5 and not lines.is_empty():
++			plan["fits"] = false
++			break
++		lines.append({"who": _speaker(l), "lines": tw, "y": ly})
++		ly += need
++	plan["lines"] = lines
++	plan["ip"] = ip
++	plan["next"] = Rect2(px + pw - 150.0 * k, by, 150.0 * k, btn_h)
++	plan["skip_pos"] = Vector2(px, by + btn_h * 0.5)
++	plan["foot"] = (w("run_skip_touch") if touch else w("run_skip"))
++	plan["beat_of"] = UiData.fmt("prompt.run_beat_of", {"n": int(rec.get("beat_n", 1)), "total": int(rec.get("beat_of", 2))}) if rec.has("beat_of") else ""
++	plan["skip"] = Rect2(Vector2.ZERO, vp)
++	plan["rec"] = rec
++	if ph < 60.0 * k or lines.is_empty() and not (rec.get("lines", []) as Array).is_empty():
++		plan["fits"] = false
++	if not Rect2(Vector2.ZERO, vp).encloses(plan["next"]) or (plan["next"] as Rect2).size.y < tm - 0.01:
++		plan["fits"] = false
++	return plan
++
++
++static func _num(n: int) -> String:
++	var t: String = str(n)
++	var out: String = ""
++	while t.length() > 3:
++		out = "," + t.substr(t.length() - 3) + out
++		t = t.substr(0, t.length() - 3)
++	return t + out
++
++
++## What a point is on: the Next button, else the screen (a tap to skip).
++static func beat_hit(p: Dictionary, pos: Vector2) -> Dictionary:
++	if (p["next"] as Rect2).has_point(pos):
++		return {"kind": "next"}
++	return {"kind": "skip"}
++
++
++static func beat_sig(p: Dictionary) -> Array:
++	return ["beat", int((p["panel"] as Rect2).size.y), (p["lines"] as Array).size(), hash(str(p["rec"]))]
++
++
++static func beat_draw(ci: CanvasItem, p: Dictionary, s: float) -> void:
++	var vp: Vector2 = ci.size if ci is Control else Vector2(1280, 720)
++	var k: float = u(s)
++	var ink: Color = _col(UiLook.INK)
++	var dim: Color = _col(UiLook.INK_DIM)
++	var f: int = int(p["f"])
++	var fl: int = int(p["fl"])
++	var px: float = float(p["px"])
++	var pw: float = float(p["pw"])
++	UiText.no_outline = true
++	ci.draw_rect(Rect2(Vector2.ZERO, vp), Color(0.08, 0.07, 0.11, 1.0) if bool(p["approach"]) else Color(0.04, 0.05, 0.08, 1.0))
++	UiText.draw(ci, str(p["head_l"]), Vector2(px, float(p["head_y"])), f, dim, -1)
++	UiText.draw(ci, str(p["head_r"]), Vector2(px + pw, float(p["head_y"])), f, dim, 1)
++	var rec: Dictionary = p["rec"]
++	if bool(p["approach"]):
++		var of: int = int(rec.get("of_steps", 8))
++		for i in range(of):
++			var c := Vector2(px + 5.0 * k + float(i) * 13.0 * k, float(p["pips_y"]))
++			if i < int(rec.get("step", 1)):
++				ci.draw_circle(c, 5.0 * k, ink)
++			else:
++				ci.draw_arc(c, 5.0 * k, 0.0, TAU, 14, ink, 1.6, true)
++	else:
++		planet_row(ci, p["planet"], rec.get("states", []), rec.get("changed", []), k)
++		var cy: float = float(p["changed_y"])
++		for ln in p["changed"]:
++			UiText.draw(ci, str(ln), Vector2(px, cy + UiText.ascent(f)), maxi(f - 1, int(UiLook.text_floor)), dim, -1)
++			cy += UiText.height(f) * 1.25
++		if p.has("lost"):
++			UiText.draw(ci, str(p["lost"]), Vector2(px, float(p["lost_y"]) + UiText.ascent(f)), f, ink, -1)   # a count, in the same type as the rest: no icon, no colour, no emphasis, no counting up
++	var panel: Rect2 = p["panel"]
++	UiIcons.rrect(ci, panel, 14.0 * k, Color(0.09, 0.10, 0.15, 1.0), Color(0.17, 0.19, 0.24, 1.0), 1.4)
++	var ip: float = float(p["ip"])
++	for l in p["lines"]:
++		var ty: float = float(l["y"])
++		UiText.draw(ci, str(l["who"]), Vector2(px + ip, ty + UiText.ascent(int(fl * 0.82))), int(fl * 0.82), dim, -1)
++		ty += UiText.height(int(fl * 0.82)) * 1.1
++		for tl in l["lines"]:
++			UiText.draw(ci, str(tl), Vector2(px + ip, ty + UiText.ascent(fl)), fl, ink, -1)
++			ty += UiText.height(fl) * 1.15
++	if str(p["beat_of"]) != "":
++		UiText.draw(ci, str(p["beat_of"]), Vector2(panel.end.x - ip, panel.end.y - 10.0 * k), maxi(f - 2, int(UiLook.text_floor)), dim, 1)
++	UiText.draw(ci, str(p["foot"]), Vector2((p["skip_pos"] as Vector2).x, (p["skip_pos"] as Vector2).y - UiText.height(f) * 0.5 + UiText.ascent(f)), f, dim, -1)
++	button_draw(ci, p["next"], w("run_next"), true, true, fs(20.0, s))
++	UiText.no_outline = false
++
++
++# --- the results -----------------------------------------------------------------------------------------------------------------------------
++
++## `st`: {rec, page (1 or 2 on a phone on its side), parts (the score's parts are open: a phone upright)}. Returns the rows to draw and the buttons.
++static func results_plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) -> Dictionary:
++	var rec: Dictionary = st.get("rec", {})
++	var k: float = u(s)
++	var m: float = 24.0 * k
++	var tm: float = maxf(48.0 * dp, 44.0)
++	var f: int = fs(14.0, s)
++	var two_page: bool = compact(vp, dp)
++	var page: int = clampi(int(st.get("page", 1)), 1, 2) if two_page else 0
++	var up: bool = upright(vp)
++	var plan := {"two_page": two_page, "page": page, "up": up, "fits": true, "tm": tm, "f": f, "rows": [], "buttons": []}
++	var won: bool = bool(rec.get("won", false))
++	var f_title: int = fs(26.0 if up else 28.0, s)
++	plan["title"] = w("run_over_won") if (won and up) else (w("run_over_won_long") if won else w("run_over_lost"))
++	plan["f_title"] = f_title
++	plan["title_pos"] = Vector2(m, m + UiText.ascent(f_title))
++	var y: float = m + UiText.height(f_title) * 1.15
++	var show_planet: bool = not two_page or page == 1
++	var show_route: bool = not two_page or page == 2
++	if two_page:
++		plan["page_text"] = UiData.fmt("prompt.run_page", {"n": page, "total": 2})
++		plan["page_pos"] = Vector2(vp.x - m, m + UiText.ascent(f))
++	var fe: int = fs(15.0 if two_page else 17.0, s)
++	plan["f_end"] = fe
++	if show_planet and str(rec.get("ending", "")) != "":
++		plan["ending"] = UiText.wrap(str(rec["ending"]), fe, vp.x - 2.0 * m)
++		plan["ending_y"] = y
++		y += float((plan["ending"] as PackedStringArray).size()) * UiText.height(fe) * 1.25 + 8.0 * k
++	var colw: float = (vp.x - 2.0 * m) if (up or two_page) else (vp.x - 2.0 * m - 30.0 * k) * 0.5
++	var rows: Array = plan["rows"]
++	var ly: float = y
++	var rx: float = m
++	var ry: float = y
++	if not up and not two_page:
++		rx = m + colw + 30.0 * k
++	# route
++	if show_route:
++		if two_page:
++			ly = m + 54.0 * k
++		rows.append({"t": "h", "text": w("run_route"), "x": m, "y": ly})
++		ly += UiText.height(f) * 1.9
++		var rh: float = (26.0 if two_page else 32.0) * k
++		var cw: float = ((vp.x - 2.0 * m) * 0.5 - 20.0 * k) if two_page else colw
++		var i: int = 0
++		for r in rec.get("route", []):
++			rows.append({"t": "route", "n": str(i + 1), "place": str(r.get("place", "")), "kind": kind_word(str(r.get("kind", ""))) if str(r.get("kind", "")) != "" else "", "won": bool(r.get("won", false)), "x": m, "w": cw, "y": ly})
++			ly += rh
++			i += 1
++		ly += 10.0 * k
++		var ch: Array = rec.get("chances", [])
++		var ticks: int = int(rec.get("ticks", 0))
++		var secs: int = ticks / 60
++		var line1: String = ""
++		if ch.size() == 2:
++			line1 = UiData.fmt("prompt.run_chances", {"n": int(ch[0]), "total": int(ch[1])})
++		if ticks > 0:
++			line1 += ("   " if line1 != "" else "") + UiData.fmt("prompt.run_time", {"m": secs / 60, "s": "%02d" % (secs % 60)})
++		if line1 != "":
++			rows.append({"t": "small", "text": line1, "x": m, "y": ly})
++			ly += UiText.height(f) * 1.5
++		var pth: Dictionary = rec.get("path", {})
++		if not pth.is_empty():
++			rows.append({"t": "small", "text": UiData.fmt("prompt.run_path", {"w": int(pth.get("witness", 0)), "t": int(pth.get("trial", 0))}), "x": m, "y": ly})
++			ly += UiText.height(f) * 1.7
++		if up:
++			ry = ly
++		if two_page:
++			rx = vp.x * 0.5 + 10.0 * k
++			ry = m + 54.0 * k
++	if show_planet:
++		if two_page:
++			ry = y
++			rx = m
++		rows.append({"t": "h", "text": w("run_planet_h"), "x": rx, "y": ry})
++		ry += UiText.height(f) * 1.6
++		var prh: float = (48.0 if two_page else 64.0) * k
++		var pr := Rect2(rx, ry, (vp.x - 2.0 * m) if two_page else colw, prh)
++		rows.append({"t": "planet", "rect": pr, "states": (rec.get("planet", {}) as Dictionary).get("states", [])})
++		ry += prh + 8.0 * k
++		var pl: Dictionary = rec.get("planet", {})
++		var lh: float = UiText.height(f) * 1.35
++		var cs: Dictionary = pl.get("cities", {})
++		if not cs.is_empty():
++			rows.append({"t": "line", "text": UiData.fmt("prompt.run_cities", {"a": int(cs.get("standing", 0)), "b": int(cs.get("damaged", 0)), "c": int(cs.get("fallen", 0))}), "x": rx, "y": ry})
++			ry += lh
++		var ts: Dictionary = pl.get("towns", {})
++		if not ts.is_empty():
++			rows.append({"t": "line", "text": UiData.fmt("prompt.run_towns", {"a": int(ts.get("standing", 0)), "b": int(ts.get("damaged", 0)), "c": int(ts.get("fallen", 0))}), "x": rx, "y": ry})
++			ry += lh
++		if pl.has("lost"):
++			var present: int = maxi(int(pl.get("present", 0)), 1)
++			rows.append({"t": "line", "text": UiData.fmt("prompt.run_people", {"n": _num(int(pl.get("lost", 0))), "total": _num(present), "p": int(round(100.0 * float(pl.get("lost", 0)) / float(present)))}), "x": rx, "y": ry})   # a count: the same type as the lines around it
++			ry += lh
++		if pl.has("sky_dark"):
++			rows.append({"t": "line", "text": UiData.fmt("prompt.run_sky", {"s": w("run_sky_dark") if bool(pl["sky_dark"]) else w("run_sky_clear")}), "x": rx, "y": ry})
++			ry += lh + 8.0 * k
++	if show_route:
++		var sw: float = ((vp.x - 2.0 * m) * 0.5 - 10.0 * k) if two_page else colw
++		var sx: float = rx if not up else m
++		var sy: float = ry if not up else ly
++		if two_page:
++			sx = vp.x * 0.5 + 10.0 * k
++			sy = m + 54.0 * k
++		var parts: Array = rec.get("score", [])
++		var open_parts: bool = (not up) or bool(st.get("parts", false))
++		if up:
++			rows.append({"t": "total", "text": w("run_score"), "points": _num(int(rec.get("total", 0))), "x": sx, "y": sy, "w": sw})
++			sy += UiText.height(f) * 1.8
++			if not parts.is_empty() and not open_parts:
++				rows.append({"t": "small", "text": w("run_score_tap"), "x": sx, "y": sy})
++				sy += UiText.height(f) * 1.4
++		else:
++			rows.append({"t": "h", "text": w("run_score"), "x": sx, "y": sy})
++			sy += UiText.height(f) * 1.7
++		if open_parts:
++			for pt in parts:
++				rows.append({"t": "part", "text": str(pt.get("label", "")), "points": _num(int(pt.get("points", 0))), "x": sx, "y": sy, "w": sw})
++				sy += UiText.height(f) * 1.45
++		if not up:
++			sy += 4.0 * k
++			rows.append({"t": "rule", "x": sx, "y": sy, "w": sw})
++			rows.append({"t": "total", "text": w("run_total"), "points": _num(int(rec.get("total", 0))), "x": sx, "y": sy + 4.0 * k, "w": sw})
++	# buttons
++	var bh: float = maxf(tm, 48.0 * k)
++	var by: float = vp.y - m - bh
++	var labels: Array = []
++	if two_page and page == 1:
++		labels = [["next", w("run_next")]]
++	else:
++		labels = [["new", w("run_new")], ["again", w("run_again")], ["menu", w("run_menu")]]
++	var btns: Array = plan["buttons"]
++	if up:
++		for i in range(labels.size()):
++			btns.append({"id": labels[i][0], "label": labels[i][1], "rect": Rect2(m, by - float(labels.size() - 1 - i) * (bh + 8.0 * k), vp.x - 2.0 * m, bh)})
++	else:
++		var bw: float = minf(220.0 * k, (vp.x - 2.0 * m - 12.0 * k * 2.0) / 3.0) if labels.size() > 1 else 160.0 * k
++		for i in range(labels.size()):
++			btns.append({"id": labels[i][0], "label": labels[i][1], "rect": Rect2(vp.x - m - float(labels.size() - i) * bw - float(labels.size() - 1 - i) * 12.0 * k, by, bw, bh)})
++	plan["focus"] = clampi(int(st.get("focus", 0)), 0, maxi(btns.size() - 1, 0))
++	# fit: the buttons on screen at 48 dp, and (not upright) nothing below the buttons' line
++	for b in btns:
++		var rr: Rect2 = b["rect"]
++		if not Rect2(Vector2.ZERO, vp).encloses(rr) or rr.size.y < tm - 0.01:
++			plan["fits"] = false
++		if UiText.width(str(b["label"]), fs(20.0, s)) + 16.0 > rr.size.x:
++			plan["fits"] = false
++	var lowest: float = 0.0
++	for r in rows:
++		if r.has("y"):
++			lowest = maxf(lowest, float(r["y"]))
++		if r.has("rect"):
++			lowest = maxf(lowest, (r["rect"] as Rect2).end.y)
++	plan["lowest"] = lowest
++	if lowest > (btns[0]["rect"] as Rect2).position.y - (0.0 if up else 4.0) - (UiText.height(f) if not up else 0.0) and not up:
++		plan["fits"] = false
++	plan["rec"] = rec
++	plan["parts"] = bool(st.get("parts", false))
++	return plan
++
++
++static func results_hit(p: Dictionary, pos: Vector2) -> Dictionary:
++	for b in p["buttons"]:
++		if (b["rect"] as Rect2).has_point(pos):
++			return {"kind": "button", "id": str(b["id"])}
++	if bool(p["up"]):
++		for r in p["rows"]:
++			if str(r.get("t", "")) == "total" and Rect2(float(r["x"]), float(r["y"]) - 4.0, float(r["w"]), 36.0).has_point(pos):
++				return {"kind": "score"}
++	return {}
++
++
++static func results_sig(p: Dictionary) -> Array:
++	return ["results", int(p["page"]), int(p["focus"]), bool(p["parts"]), hash(str(p["rec"]))]
++
++
++static func results_draw(ci: CanvasItem, p: Dictionary, s: float) -> void:
++	var vp: Vector2 = ci.size if ci is Control else Vector2(1280, 720)
++	var k: float = u(s)
++	var ink: Color = _col(UiLook.INK)
++	var dim: Color = _col(UiLook.INK_DIM)
++	var f: int = int(p["f"])
++	UiText.no_outline = true
++	ci.draw_rect(Rect2(Vector2.ZERO, vp), Color(0.04, 0.05, 0.08, 1.0))
++	UiText.draw(ci, str(p["title"]), p["title_pos"], int(p["f_title"]), ink, -1)
++	if p.has("page_text"):
++		UiText.draw(ci, str(p["page_text"]), p["page_pos"], f, dim, 1)
++	if p.has("ending"):
++		var ey: float = float(p["ending_y"])
++		for ln in p["ending"]:
++			UiText.draw(ci, str(ln), Vector2(24.0 * k, ey + UiText.ascent(int(p["f_end"]))), int(p["f_end"]), dim, -1)
++			ey += UiText.height(int(p["f_end"])) * 1.25
++	for r in p["rows"]:
++		var rx: float = float(r.get("x", 0.0))
++		var ry: float = float(r.get("y", 0.0))
++		match str(r["t"]):
++			"h":
++				UiText.draw(ci, str(r["text"]), Vector2(rx, ry + UiText.ascent(f)), f, ink, -1)
++			"small":
++				UiText.draw(ci, str(r["text"]), Vector2(rx, ry + UiText.ascent(f)), maxi(f - 1, int(UiLook.text_floor)), dim, -1)
++			"line":
++				UiText.draw(ci, str(r["text"]), Vector2(rx, ry + UiText.ascent(f)), f, ink, -1)   # the people-lost line is drawn exactly like the cities line above it (Legal c08)
++			"route":
++				var wd: float = float(r["w"])
++				UiText.draw(ci, str(r["n"]), Vector2(rx, ry + UiText.ascent(f)), f, dim, -1)
++				UiText.draw(ci, str(r["place"]), Vector2(rx + 26.0 * k, ry + UiText.ascent(f)), f, ink, -1)
++				if str(r["kind"]) != "":
++					UiText.draw(ci, str(r["kind"]), Vector2(rx + wd - 72.0 * k, ry + UiText.ascent(f)), maxi(f - 1, int(UiLook.text_floor)), dim, 1)
++				UiText.draw(ci, w("run_won") if bool(r["won"]) else w("run_lost"), Vector2(rx + wd, ry + UiText.ascent(f)), f, ink, 1)
++			"planet":
++				planet_row(ci, r["rect"], r["states"], [], k)
++			"part":
++				UiText.draw(ci, str(r["text"]), Vector2(rx, ry + UiText.ascent(f)), f, dim, -1)
++				UiText.draw(ci, str(r["points"]), Vector2(rx + float(r["w"]), ry + UiText.ascent(f)), f, ink, 1)
++			"rule":
++				ci.draw_rect(Rect2(rx, ry, float(r["w"]), 1.0), Color(0.17, 0.19, 0.24, 1.0))
++			"total":
++				var ft: int = fs(17.0, s)
++				UiText.draw(ci, str(r["text"]), Vector2(rx, ry + UiText.ascent(ft)), ft, ink, -1)
++				UiText.draw(ci, str(r["points"]), Vector2(rx + float(r["w"]), ry + UiText.ascent(ft)), ft, ink, 1)
++	var i: int = 0
++	for b in p["buttons"]:
++		button_draw(ci, b["rect"], str(b["label"]), i == 0, i == int(p["focus"]), fs(20.0, s))
++		i += 1
++	UiText.no_outline = false
+diff -ruN a/ui/widgets/ui_run.gd.uid b/ui/widgets/ui_run.gd.uid
+--- a/ui/widgets/ui_run.gd.uid	1969-12-31 16:00:00.000000000 -0800
++++ b/ui/widgets/ui_run.gd.uid	2026-10-17 03:38:07.060879700 -0700
+@@ -0,0 +1 @@
++uid://ca6e8luttcb81
