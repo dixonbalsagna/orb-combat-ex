@@ -48,3 +48,7 @@ The whole calls on the same PC: places 0.63 s, pick 12 ms, slice 0.67 s. **No fr
 ## Lines in files that are not World's
 
 None. (`planet.gd`, its tools and this folder are World's.)
+
+## Re-cut on the stored places (2026-10-17)
+
+`planet-slicing.diff` and `mk_slicejob.py` are re-cut to apply **after** `../planet-stored/` (the stored places for Everhold): `PlaceJob` returns a story planet done at once, so on the canon planet the coarse ground is ready after 64 to 86 ms and the whole load is about 130 to 150 frames of 4 ms (measure.txt: planet 7); the generated planet 11 is as before (1.6 s of work). `planet_job_check.gd` steps the places job on planet 13, which has no story entry, and checks that a story planet is done at once. The chain (stored, slicing) applies on HEAD ff68e994 and the three checks pass.

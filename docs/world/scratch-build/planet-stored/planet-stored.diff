@@ -1,0 +1,574 @@
+diff --git a/data/biomes/planet.json b/data/biomes/planet.json
+index 82c3f00..c66d827 100644
+--- a/data/biomes/planet.json
++++ b/data/biomes/planet.json
+@@ -130,5 +130,307 @@
+   "offerCount": 3,
+   "offerTries": 48,
+   "offerMinSep": 20000.0,
+-  "story": {}
++  "story": {
++    "everhold": {
++      "seed": 7,
++      "name": "Everhold",
++      "_about": "The canon planet (docs/world/canon-planet.md): planet seed 7 with its places stored, so a load does not place them (0.5 to 0.7 s). Each place: kind 0 city or 1 town, x y z the unit vector as float64 bits (16 hex digits, high word first), r its radius. WorldPlanet.makeGenerated is the check that this list equals what the generator makes.",
++      "places": [
++        {
++          "kind": 0,
++          "r": 6500.0,
++          "x": "3fe2a954ba15cf97",
++          "y": "3fe79cdbaf800000",
++          "z": "3fd5be34c8ff7406"
++        },
++        {
++          "kind": 0,
++          "r": 6500.0,
++          "x": "bfe2aad5d0da7f5e",
++          "y": "3fa35b2d94000000",
++          "z": "3fe9f67aa7bc43bc"
++        },
++        {
++          "kind": 0,
++          "r": 6500.0,
++          "x": "3fe3581f1e4f4ee4",
++          "y": "bfb02b120a000000",
++          "z": "bfe969340c09ae5c"
++        },
++        {
++          "kind": 0,
++          "r": 6500.0,
++          "x": "3fe53130e73075f4",
++          "y": "bfe0892432400000",
++          "z": "3fe15cd946a682e3"
++        },
++        {
++          "kind": 0,
++          "r": 6500.0,
++          "x": "bfe5ace451574b64",
++          "y": "3fdde64888800000",
++          "z": "bfe22f482baf5274"
++        },
++        {
++          "kind": 0,
++          "r": 6500.0,
++          "x": "bfc0448983a6139d",
++          "y": "3fe6a2cdb9400000",
++          "z": "3fe64010989d6669"
++        },
++        {
++          "kind": 0,
++          "r": 6500.0,
++          "x": "3fcf99aa177eb2de",
++          "y": "3fe7bf9041800000",
++          "z": "bfe3f0aa3d6215ef"
++        },
++        {
++          "kind": 0,
++          "r": 6500.0,
++          "x": "bfd2b797998d8c5d",
++          "y": "bfdd1a7254000000",
++          "z": "bfeaeb6cc2fb0356"
++        },
++        {
++          "kind": 0,
++          "r": 6500.0,
++          "x": "3fe68c1cc72c8710",
++          "y": "3fc94a164e000000",
++          "z": "3fe5cf2fb2e0f5e6"
++        },
++        {
++          "kind": 0,
++          "r": 6500.0,
++          "x": "3fe3473fde26b85e",
++          "y": "bfe76a5a7f800000",
++          "z": "bfd466fd16d75f3f"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3feb6ddbcce77d04",
++          "y": "3fd0eeed3d000000",
++          "z": "bfdc4804d785b902"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fbc15113afc308a",
++          "y": "bfd671125b000000",
++          "z": "3fedc30bbd4e31f2"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "bfbac1ec1c8b530f",
++          "y": "3fe222e07a800000",
++          "z": "bfea26bae704a2d6"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fd17c3ffc2f585c",
++          "y": "bfe7423862c00000",
++          "z": "bfe42a10ce44ae70"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fee7db0967ec574",
++          "y": "bfbc826eac000000",
++          "z": "bfd2110cd4620333"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fe805471b0494ba",
++          "y": "3fe45c7e4f800000",
++          "z": "bfc6c72bc00b3913"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "bfe5d9db2331aeae",
++          "y": "bfc56f2dbd000000",
++          "z": "bfe6c1721dc37cf3"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fd3516eaad6c167",
++          "y": "3fe14b1398c00000",
++          "z": "3fe921ef9bcd587a"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fc4b2d02e61d599",
++          "y": "bfe5d60034c00000",
++          "z": "3fe6d006edf94902"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3febf55e01811635",
++          "y": "bfd73b9b2b000000",
++          "z": "bfd4b9a3d73ddb07"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fcd9b40951ecb08",
++          "y": "bfe031a92e800000",
++          "z": "bfea96c3b87e777e"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "bfa26c7b4ca0c33c",
++          "y": "bfe81712cd000000",
++          "z": "bfe50828d71d2560"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fd78b3b51ba555b",
++          "y": "3fdaa9fce1000000",
++          "z": "bfea9a2c48ad3d55"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "bfdc9715aff6ef06",
++          "y": "3fc6854202000000",
++          "z": "bfec120b3a648a42"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fec084be6cca51e",
++          "y": "bf9d5952f0000000",
++          "z": "bfdecfd71649e011"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "bfd4673bbffed0c6",
++          "y": "3fe4015a00800000",
++          "z": "bfe6cc19f99ef55d"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "bfeaf6680c595f20",
++          "y": "bfb41f8898000000",
++          "z": "bfe10cbe69c25fcb"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "bfd65ba7bf6c8987",
++          "y": "3fdaccad40800000",
++          "z": "bfead2b380f3307c"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fd2f2d4da6118ff",
++          "y": "3fc48f9f32000000",
++          "z": "bfee214677eef123"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fd6c0db9b777de1",
++          "y": "bfe997a5c2800000",
++          "z": "3fdef5490a66756b"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "bfcd034137601ed4",
++          "y": "bfe12ad5bd800000",
++          "z": "3fea0351baa5bdd3"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "bfea7dcf6ed3f2f7",
++          "y": "3fc8571cde000000",
++          "z": "3fe0e31afc05b514"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fed8e1b1dad5edf",
++          "y": "bfcfd02568000000",
++          "z": "3fd2ae3e098ea554"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "bfcda90d40093b8d",
++          "y": "3fd8e646a9800000",
++          "z": "3fec87f1edf3a9cb"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fdf0ca840a5fb85",
++          "y": "3fe1e1e4b8000000",
++          "z": "3fe585ab9e5de3d3"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fec537405c9e500",
++          "y": "3fdb358f35800000",
++          "z": "bfc82f01e7a9d8d6"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fb85c813b5be88a",
++          "y": "3fdf0764fb800000",
++          "z": "bfebd245c6be873b"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fd43b04220a24e6",
++          "y": "bfdf58dfd0800000",
++          "z": "3fea001976e58c14"
++        },
++        {
++          "kind": 0,
++          "r": 6500.0,
++          "x": "bfd2b3f7c0a23d66",
++          "y": "bfe955e48c000000",
++          "z": "3fe12a6abc6343ca"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "bfd94d755623bd2f",
++          "y": "3fe977b4e1c00000",
++          "z": "bfdd596f2b9689eb"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "bfd59b73e659d300",
++          "y": "bfe9555c55800000",
++          "z": "bfe04b4c07114c82"
++        },
++        {
++          "kind": 1,
++          "r": 2437.5,
++          "x": "3fdd96d3e691e1b1",
++          "y": "bfe14fcbd3400000",
++          "z": "bfe67b4e3ca8931d"
++        }
++      ]
++    }
++  }
+ }
+diff --git a/sim/world/planet.gd b/sim/world/planet.gd
+index a909f9a..22fc5e1 100644
+--- a/sim/world/planet.gd
++++ b/sim/world/planet.gd
+@@ -71,6 +71,20 @@ static func _cLoad() -> void:
+ 			continue
+ 		if not (j[k] is float or j[k] is int):
+ 			_cErrors.append("planet.json: %s is not a number" % k)
++	var st = j.get("story", {})
++	if st is Dictionary:
++		for id in st:
++			var e = st[id]
++			if not (e is Dictionary) or not e.has("seed") or not e.has("places") or not (e.places is Array):
++				_cErrors.append("planet.json: story %s needs a seed and a places list" % id)
++				continue
++			for i in range(e.places.size()):
++				var pl = e.places[i]
++				var okp: bool = pl is Dictionary and pl.has("kind") and pl.has("r") and (int(pl.kind) == 0 or int(pl.kind) == 1)
++				for k in ["x", "y", "z"]:
++					okp = okp and pl.has(k) and str(pl[k]).length() == 16 and str(pl[k]).is_valid_hex_number()
++				if not okp:
++					_cErrors.append("planet.json: story %s place %d is not {kind, x, y, z (16 hex digits each), r}" % [id, i])
+ 	_cHash = str(text.hash())
+ 
+ 
+@@ -227,13 +241,51 @@ static func make(seed: int) -> Planet:
+ 	P.c = cfg()
+ 	P.L = float(SimConst.NC) * SimConst.COL
+ 	P.R = P.L / (2.0 * PI)
+-	_placeAll(P)
++	var st: Dictionary = storyFor(seed)
++	if st.is_empty():
++		_placeAll(P)
++	else:
++		_loadStored(P, st)   # a story planet's places are data: no placement to do
++	_register(P)
++	return P
++
++
++static func _register(P: Planet) -> void:
+ 	if _planets.size() > 6:
+ 		_planets.clear()
+-	_planets[key] = P
++	_planets[P.seed] = P
++
++
++## The same planet as `make` would build, but always by the generator, never from the story data (the check that the stored list equals the generated one reads it).
++static func makeGenerated(seed: int) -> Planet:
++	var P := Planet.new()
++	P.seed = seed
++	P.c = cfg()
++	P.L = float(SimConst.NC) * SimConst.COL
++	P.R = P.L / (2.0 * PI)
++	_placeAll(P)
+ 	return P
+ 
+ 
++## The story planet (planet.json "story") whose seed this is, or {}. A story planet stores its places: cities then towns, each a kind (0 city, 1 town), a unit vector as three
++## float64 bit patterns (16 hex digits, high word first: exact, and read with SimMathx.f64) and a radius.
++static func storyFor(seed: int) -> Dictionary:
++	var st = cfg().get("story", {})
++	if not (st is Dictionary):
++		return {}
++	for id in st:
++		var e = st[id]
++		if e is Dictionary and e.has("seed") and int(e.seed) == seed and e.has("places") and (e.places is Array) and e.places.size() > 0:
++			return e
++	return {}
++
++
++static func _loadStored(P: Planet, st: Dictionary) -> void:
++	for pl in st.places:
++		_addPlace(P, int(pl.kind), [SimMathx.f64(str(pl.x)), SimMathx.f64(str(pl.y)), SimMathx.f64(str(pl.z))], float(pl.r))
++	_finishPeople(P)
++
++
+ static func forget() -> void:
+ 	_planets.clear()
+ 	_slices.clear()
+@@ -443,16 +495,27 @@ static func _tryPlace(P: Planet, r: SimRng, kind: int, radius: float, tries: int
+ 			bs = sc
+ 			best = p
+ 	if best != null:
+-		P.kind.append(kind)
+-		P.px.append(best[0])
+-		P.py.append(best[1])
+-		P.pz.append(best[2])
+-		P.rad.append(radius)
+-		P.n += 1
++		_addPlace(P, kind, best, radius)
+ 		return true
+ 	return false
+ 
+ 
++static func _addPlace(P: Planet, kind: int, p: Array, radius: float) -> void:
++	P.kind.append(kind)
++	P.px.append(p[0])
++	P.py.append(p[1])
++	P.pz.append(p[2])
++	P.rad.append(radius)
++	P.n += 1
++
++
++## A place's weight is its area (radius squared), so a city holds about seven towns' people (as Bellgate and the villages do).
++static func _finishPeople(P: Planet) -> void:
++	P.people.resize(P.n)
++	for i in range(P.n):
++		P.people[i] = int(P.rad[i] * P.rad[i] / 1000000.0 * 100.0)
++
++
+ ## The places of a planet: first as picture A placed them (one stream, the ordinary ground), then the ones that fell inside a polar cap are placed again outside it
+ ## from a second stream. Cities first, then towns.
+ static func _placeAll(P: Planet) -> void:
+@@ -491,10 +554,7 @@ static func _placeAll(P: Planet) -> void:
+ 		_tryPlace(P, r2, KIND_CITY, c.cityRadius, int(c.replaceTries), true)
+ 	for k in range(dropped[KIND_TOWN]):
+ 		_tryPlace(P, r2, KIND_TOWN, c.townRadius, int(c.replaceTries), true)
+-	# people: a place's weight is its area (radius squared), so a city holds about seven towns' people (as Bellgate and the villages do)
+-	P.people.resize(P.n)
+-	for i in range(P.n):
+-		P.people[i] = int(P.rad[i] * P.rad[i] / 1000000.0 * 100.0)
++	_finishPeople(P)
+ 
+ 
+ ## The people of a place at full, by weight (relative). A slice's people are these over its held places, normalised to the slice's total (slicePeople).
+diff --git a/sim/world/tools/planet_store_check.gd b/sim/world/tools/planet_store_check.gd
+new file mode 100644
+index 0000000..181a4bf
+--- /dev/null
++++ b/sim/world/tools/planet_store_check.gd
+@@ -0,0 +1,55 @@
++extends SceneTree
++# A story planet's stored places: the list equals what the generator makes, bit for bit; a load needs no placement.
++#   godot --headless --path . --script res://sim/world/tools/planet_store_check.gd
++var fails: int = 0
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func hexd(x: float) -> String:
++	var b := PackedByteArray()
++	b.resize(8)
++	b.encode_double(0, x)
++	return b.hex_encode()
++
++
++func key(P: WorldPlanet.Planet) -> String:
++	var s: String = "%d:" % P.n
++	for i in range(P.n):
++		s += "%s%s%s%d%s%d;" % [hexd(P.px[i]), hexd(P.py[i]), hexd(P.pz[i]), P.kind[i], hexd(P.rad[i]), P.people[i]]
++	return s
++
++
++func _init() -> void:
++	ok(WorldPlanet.dataErrors().is_empty(), "planet.json loads clean with its story entry (%s)" % str(WorldPlanet.dataErrors()))
++	var st: Dictionary = WorldPlanet.storyFor(7)
++	ok(not st.is_empty() and st.name == "Everhold" and st.places.size() == 42, "the story section holds Everhold: seed 7, %d places" % st.places.size())
++	ok(WorldPlanet.storyFor(11).is_empty() and WorldPlanet.storyFor(1).is_empty(), "other seeds have no story entry: they are generated")
++	WorldPlanet.forget()
++	var stored: WorldPlanet.Planet = WorldPlanet.make(7)
++	var gen: WorldPlanet.Planet = WorldPlanet.makeGenerated(7)
++	ok(key(stored) == key(gen) and stored.n == 42, "the stored places equal the generated ones bit for bit (positions, kinds, radii, people): %d places" % stored.n)
++	# the cost: a load of the stored planet against the generator
++	WorldPlanet.forget()
++	var t0: int = Time.get_ticks_usec()
++	WorldPlanet.make(7)
++	var tStored: int = Time.get_ticks_usec() - t0
++	t0 = Time.get_ticks_usec()
++	WorldPlanet.makeGenerated(7)
++	var tGen: int = Time.get_ticks_usec() - t0
++	print("        stored load %.2f ms, generated %.0f ms" % [tStored / 1000.0, tGen / 1000.0])
++	ok(tStored * 20 < tGen, "a stored planet loads at least 20 times faster than a generated one")
++	# the slices of the stored planet are the generated planet's slices
++	WorldPlanet.forget()
++	var Ps: WorldPlanet.Planet = WorldPlanet.make(7)
++	var rs: Dictionary = WorldPlanet.pick(Ps, 3)
++	var sliceS: WorldPlanet.Slice = WorldPlanet.readSlice(Ps, rs.circle, rs.T)
++	var rg: Dictionary = WorldPlanet.pick(gen, 3)
++	var sliceG: WorldPlanet.Slice = WorldPlanet.readSlice(gen, rg.circle, rg.T)
++	ok(WorldPlanet.sliceHash(sliceS) == WorldPlanet.sliceHash(sliceG) and rs.index == rg.index, "a slice of the stored planet is the generated planet's slice (hash %08x)" % WorldPlanet.sliceHash(sliceS))
++	print("PLANETSTORE: %d check(s) failed" % fails)
++	quit()
+diff --git a/tools/schemas/biomes-planet.schema.json b/tools/schemas/biomes-planet.schema.json
+index 56e238e..7ee4f7d 100644
+--- a/tools/schemas/biomes-planet.schema.json
++++ b/tools/schemas/biomes-planet.schema.json
+@@ -662,7 +662,69 @@
+     },
+     "story": {
+       "type": "object",
+-      "description": "story planets by id: {seed, places}; empty for now"
++      "description": "story planets by id: a fixed seed, its name and its places list (so a load does not place them)",
++      "additionalProperties": {
++        "type": "object",
++        "required": [
++          "seed",
++          "places"
++        ],
++        "properties": {
++          "seed": {
++            "type": "integer",
++            "minimum": 0
++          },
++          "name": {
++            "type": "string"
++          },
++          "_about": {
++            "type": "string"
++          },
++          "places": {
++            "type": "array",
++            "minItems": 1,
++            "items": {
++              "type": "object",
++              "required": [
++                "kind",
++                "x",
++                "y",
++                "z",
++                "r"
++              ],
++              "additionalProperties": false,
++              "properties": {
++                "kind": {
++                  "enum": [
++                    0,
++                    1
++                  ]
++                },
++                "x": {
++                  "type": "string",
++                  "pattern": "^[0-9a-f]{16}$",
++                  "description": "a float64 as 16 hex digits, high word first"
++                },
++                "y": {
++                  "type": "string",
++                  "pattern": "^[0-9a-f]{16}$",
++                  "description": "a float64 as 16 hex digits, high word first"
++                },
++                "z": {
++                  "type": "string",
++                  "pattern": "^[0-9a-f]{16}$",
++                  "description": "a float64 as 16 hex digits, high word first"
++                },
++                "r": {
++                  "type": "number",
++                  "exclusiveMinimum": 0
++                }
++              }
++            }
++          }
++        },
++        "additionalProperties": false
++      }
+     }
+   },
+   "additionalProperties": false,

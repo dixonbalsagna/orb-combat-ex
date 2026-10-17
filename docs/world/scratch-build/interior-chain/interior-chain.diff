@@ -1,0 +1,850 @@
+diff --git a/sim/world/brunt.gd b/sim/world/brunt.gd
+index 66b99c8..ae517d9 100644
+--- a/sim/world/brunt.gd
++++ b/sim/world/brunt.gd
+@@ -34,6 +34,12 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
+ 	"keepHi": 0.8, "keepK": 0.45, "keepRef": 3000.0, "keepMin": 0.35, "keepFree": 0.95, "heavyKeep": 0.7,
+ 	# the wall slam (buildings.md section 2): twice the building's hit, a stagger at the wall
+ 	"wallSlamMul": 2.0, "wallStaggerTicks": 24,
++	# the chain inside a tower (buildings.md section 7.3, world/interior.gd): 0 off (today's behaviour) or 1 on; the send's angle (tangents of 15 and 60 degrees),
++	# the speed kept through a ceiling and through a slab or face that breaks, the contact and bounce caps, the face's stop in ticks, the cap in seconds,
++	# the effective tier that reaches the ceiling and the tier whose far face breaks, the share of a hit's damage a slab does him
++	"interiorChain": 0, "interiorTanMin": 0.26795, "interiorTanMax": 1.73205, "interiorCeilKeep": 0.4, "interiorFloorKeep": 0.7,
++	"interiorMaxContacts": 5, "interiorMaxBounces": 3, "interiorFaceStop": 15, "interiorCapSeconds": 2.5, "interiorCeilTier": 3,
++	"interiorExitTier": 3, "interiorHurt": 0.5,
+ }
+ const BRUNT_STRINGS: Dictionary = {   # the switches that are words: their values and the default (today's behaviour)
+ 	"lodgeHold": [["world", "body"], "world"],   # does a lodge hold the whole fight (a hit-stop) or only the body (he is stunned, the fight goes on)
+@@ -591,6 +597,7 @@ static func stepZ(S: SimState, f, dt: float) -> void:
+ 
+ ## The flight is over (a landing, a slide, water, a rebound): drop the aim, close the chain's token, release the depth.
+ static func endFlight(S: SimState, f) -> void:
++	f.interior = null
+ 	f.aimB = -1
+ 	if f.chainEvt != 0.0:
+ 		WorldCollateral.endEvent(S, f.chainEvt)
+@@ -671,6 +678,10 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+ 		if not b.alive:
+ 			hitText = "collapse"
+ 	var passes: bool = oc.pass or hitText == "collapse" or hitText == "pancake"
++	var broke: bool = passes
++	var inside: bool = WorldInterior.eligible(S, f, b)   # the chain inside a tower (world/interior.gd), behind brunt.json interiorChain: he goes on inside, the face is passed either way
++	if inside:
++		passes = true
+ 	var far: float = SimWrap.wrap(b.x + dir * b.w * 0.5)
+ 	# --- what comes next: decided before the splash, so the splash can never take the next link of a chain away ---
+ 	var cm: Dictionary = cfg()
+@@ -679,10 +690,10 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+ 		f.splashed.append(MARK_HOUSE if isHouse(b) else MARK_TOWER)   # this flight went through it
+ 	var nx: Dictionary = {"b": -1}
+ 	var spLeft: float = SimDetMath.hypot(f.vx * keep / trav, f.vy * keep)
+-	if passes and chainUsed(f) < chainCap(by.tier, f.launchSpecial) - 0.0001 and spLeft >= CHAIN_MIN_SP:
++	if passes and not inside and chainUsed(f) < chainCap(by.tier, f.launchSpecial) - 0.0001 and spLeft >= CHAIN_MIN_SP:
+ 		nx = next(S, b, y, f.vx * keep, f.vy * keep, trav)
+ 	# the lodge: the last building of a chain takes what is left; he ends inside it
+-	var lodge: bool = passes and nx.b < 0
++	var lodge: bool = passes and nx.b < 0 and not inside
+ 	var oce: Dictionary = oc
+ 	if lodge:
+ 		oce = oc.duplicate()
+@@ -695,8 +706,12 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+ 	# --- the fighter ---
+ 	SimDamage.hurt(S, f, spN * FIGHTER_DMG, by)
+ 	SimFx.debris(S, f.x, y + 20.0, 6, "#77808f", 500.0)
+-	var stop: float = STOP_FIRST if link == 1 else STOP_LINK
+-	S.dirS.stop = SimMathx.jmax(S.dirS.stop, minf(stop, STOP_TOTAL))
++	if not inside:
++		var stop: float = STOP_FIRST if link == 1 else STOP_LINK
++		S.dirS.stop = SimMathx.jmax(S.dirS.stop, minf(stop, STOP_TOTAL))
++	else:
++		WorldInterior.begin(S, f, b, y, edge, dir, by, keep, broke)   # the face's stop is the data's ticks; the rest is the chain's (interior.gd step)
++		return
+ 	if lodge:
+ 		# what is left of the launch is one more hit on the building (the core wears most), and he is held in the breach
+ 		var tfac: float = float(cm.tierFactor[tierIx(by.tier, f.launchSpecial)])
+diff --git a/sim/world/contact.gd b/sim/world/contact.gd
+index afabe96..1591604 100644
+--- a/sim/world/contact.gd
++++ b/sim/world/contact.gd
+@@ -665,6 +665,9 @@ static func fromBody(f, b: Body) -> void:
+ ## Called from SimFighter.stepLaunched when S.contactOn: one tick of a launched fighter's flight, skid or tumble, with every
+ ## side effect (craters, trenches, damage, dust, events). Replaces the old slide step and impact.
+ static func stepFighter(S: SimState, f, dt: float) -> void:
++	if f.interior != null:
++		WorldInterior.step(S, f, dt)   # the chain inside a tower (world/interior.gd): the ground's contact waits for it
++		return
+ 	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
+ 	var b: Body = toBody(S, f)
+ 	var ev: Array = _ev
+diff --git a/sim/core/state.gd b/sim/core/state.gd
+index 8c363bf..49ed121 100644
+--- a/sim/core/state.gd
++++ b/sim/core/state.gd
+@@ -428,6 +428,11 @@ class FxEvent:
+ 	var hold: float = 0.0        # lodge: the seconds the body is held in the building
+ 	var run: int = 0             # cue blow (Encounter): the striker's run on the target as the blow is thrown, 0 to run_to. Not hashed
+ 	var run_to: int = 0          # cue blow (Encounter): the run at which his next light closes (runToClose, 4 today); UI's gauge is full when run reaches it; 0 not set. Not hashed
++	var nx: float = 0.0           # interior_contact: the surface's normal on the body's side
++	var ny: float = 0.0
++	var punch: bool = false       # interior_contact: the slab or face broke
++	var end: String = ""          # interior_end: lodge, exit, fall_out or capped
++	var t: float = 0.0            # interior_end: seconds from the face
+ 	var stop: int = 0             # damage (a hit): the hit-stop ticks in force after it, as SimCore.step spends them (Animation). Not hashed
+ 
+ 
+@@ -481,6 +486,7 @@ class Fighter:
+ 	var brinkOpen: bool = false      # ... it is open: the rival's next decisive win, in a later exchange, is the finisher
+ 	var brinkEx: int = -1            # ... the exchange index (ex.n) of the last set-up win: a set-up and a finisher never share one
+ 	var flightHits: int = 0          # M1: buildings hit in the current launched flight (building_hit's n)
++	var interior = null              # World: the chain inside a tower (world/interior.gd): a Dictionary while he is in it, else null. Hashed only while set
+ 	var act := ActState.new()        # I2a: what the fighter's presses mean now (sim/core/act.gd)
+ 	var style = null                 # M1: StyleState (sim/core/mood.gd)
+ 	var wd = null                    # D1a: the fighter's FighterData.WoundsDef (data; covered by the data hash, not hashed here)
+diff --git a/sim/core/hash.gd b/sim/core/hash.gd
+index a2b1102..cef9abe 100644
+--- a/sim/core/hash.gd
++++ b/sim/core/hash.gd
+@@ -155,6 +155,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
+ 		out.append(float(f.limbBreaks))
+ 		out.append(float(f.brinkSetups)); out.append(f.brinkOpen); out.append(float(f.brinkEx))
+ 		out.append(float(f.flightHits))
++		if f.interior != null:   # World's chain inside a tower (world/interior.gd): only while it runs, so a match without it hashes as before
++			_obj(out, f.interior, ["b", "dir", "E", "k", "bn", "t", "i"])
+ 		var act = f.act
+ 		_obj(out, act, ["v2", "guardSince", "dodgeTick", "dodgeCool", "burstCool", "mode", "assist", "formReady", "burstFired", "breakIn", "flow"])
+ 		out.append(float(act.dirI.size())); for v in act.dirI: out.append(float(v))   # the director's per-fighter integers
+@@ -306,6 +308,7 @@ const FX_FIELDS: Dictionary = {
+ 	"left_ground": ["actor", "x", "y", "z", "spd", "n", "cause", "vx", "vy", "slope", "contacts", "dur"], "bounce": ["actor", "x", "y", "z", "spd", "n", "k", "keep", "vn", "vt", "surface", "sina", "slope", "contacts", "dur"],
+ 	"land": ["actor", "x", "y", "z", "spd", "n", "kind", "sina", "slope", "surface", "vn", "vt", "contacts", "dur"], "tumble_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "dur"],
+ 	"journey_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "lips", "nb", "dur"],
++	"interior_contact": ["actor", "x", "y", "z", "spd", "n", "b", "floor", "kind", "nx", "ny", "vn", "vt", "keep", "punch", "k", "stop"], "interior_end": ["actor", "x", "y", "z", "spd", "n", "b", "end", "contacts", "t"],
+ 	"cue": ["actor", "kind", "text", "source"], "struggle_press": ["actor", "kind", "n"],
+ }
+ 
+diff --git a/data/biomes/brunt.json b/data/biomes/brunt.json
+index a9e5651..ec53d23 100644
+--- a/data/biomes/brunt.json
++++ b/data/biomes/brunt.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": "biomes.brunt/1",
+-  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge or a wall hold the whole sim (world, a hit-stop) or only the body (body: he is stunned and the fight goes on): Orb's homework.",
++  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge or a wall hold the whole sim (world, a hit-stop) or only the body (body: he is stunned and the fight goes on): Orb's homework. The chain inside a tower (buildings.md section 7.3, ruled 2026-10-17; WorldInterior): interiorChain 0 off or 1 on; interiorTanMin and interiorTanMax the send's angle (tangents of 15 and 60 degrees); interiorCeilKeep and interiorFloorKeep the speed kept through a ceiling and through a slab or face that breaks; interiorMaxContacts and interiorMaxBounces the caps (no bounce is produced yet); interiorFaceStop the entry face's stop in ticks; interiorCapSeconds the ragdolled time from the face; interiorCeilTier the effective tier that reaches the ceiling; interiorExitTier the tier whose far face breaks; interiorHurt the share of a hit's damage a slab does him.",
+   "bruntMul": 1.8,
+   "tierFactor": [
+     0.12,
+@@ -44,5 +44,17 @@
+   "heavyKeep": 0.7,
+   "wallSlamMul": 2.0,
+   "wallStaggerTicks": 24,
+-  "lodgeHold": "world"
++  "lodgeHold": "world",
++  "interiorChain": 0,
++  "interiorTanMin": 0.26795,
++  "interiorTanMax": 1.73205,
++  "interiorCeilKeep": 0.4,
++  "interiorFloorKeep": 0.7,
++  "interiorMaxContacts": 5,
++  "interiorMaxBounces": 3,
++  "interiorFaceStop": 15,
++  "interiorCapSeconds": 2.5,
++  "interiorCeilTier": 3,
++  "interiorExitTier": 3,
++  "interiorHurt": 0.5
+ }
+diff --git a/tools/schemas/biomes-brunt.schema.json b/tools/schemas/biomes-brunt.schema.json
+index c5aabe6..ee507ca 100644
+--- a/tools/schemas/biomes-brunt.schema.json
++++ b/tools/schemas/biomes-brunt.schema.json
+@@ -185,6 +185,79 @@
+         "body"
+       ],
+       "description": "Does a lodge or a wall hold the whole sim (world: a hit-stop) or only the body (body: he is stunned for the seconds and the fight goes on)."
++    },
++    "interiorChain": {
++      "enum": [
++        0,
++        1
++      ],
++      "description": "The chain inside a tower: 0 off (today's behaviour), 1 on."
++    },
++    "interiorTanMin": {
++      "type": "number",
++      "exclusiveMinimum": 0,
++      "maximum": 10,
++      "description": "The shallowest send that goes on inside: the tangent of 15 degrees."
++    },
++    "interiorTanMax": {
++      "type": "number",
++      "exclusiveMinimum": 0,
++      "maximum": 10,
++      "description": "The steepest send that goes on inside: the tangent of 60 degrees."
++    },
++    "interiorCeilKeep": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 1,
++      "description": "The speed kept off a ceiling (Game Design: 0.4)."
++    },
++    "interiorFloorKeep": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 1,
++      "description": "The speed kept through a floor, or a face, that breaks (Game Design: 0.7)."
++    },
++    "interiorMaxContacts": {
++      "type": "integer",
++      "minimum": 1,
++      "maximum": 8,
++      "description": "The most slab and wall contacts of a chain (Game Design: 5)."
++    },
++    "interiorMaxBounces": {
++      "type": "integer",
++      "minimum": 0,
++      "maximum": 8,
++      "description": "The most bounces of a chain (Game Design: 3); no bounce is produced yet."
++    },
++    "interiorFaceStop": {
++      "type": "integer",
++      "minimum": 0,
++      "maximum": 120,
++      "description": "The entry face's hit-stop in ticks (Game Design: 15)."
++    },
++    "interiorCapSeconds": {
++      "type": "number",
++      "exclusiveMinimum": 0,
++      "maximum": 4,
++      "description": "The ragdolled time from the face to the end (Game Design: 2.5 s, inside the journey's 4 s)."
++    },
++    "interiorCeilTier": {
++      "type": "integer",
++      "minimum": 1,
++      "maximum": 4,
++      "description": "The effective tier from which a send reaches the ceiling (Game Design: 3)."
++    },
++    "interiorExitTier": {
++      "type": "integer",
++      "minimum": 1,
++      "maximum": 4,
++      "description": "The effective tier from which the far face breaks and he leaves; below it he lodges against it."
++    },
++    "interiorHurt": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 2,
++      "description": "The share of the face's per-speed damage a slab does him."
+     }
+   },
+   "additionalProperties": false,
+diff --git a/j1/sim/world/interior.gd b/sim/world/interior.gd
+new file mode 100644
+index 0000000..10915dc
+--- /dev/null
++++ b/sim/world/interior.gd
+@@ -0,0 +1,339 @@
++class_name WorldInterior
++## The chain inside a tower (docs/design/buildings.md section 7.3, ruled 2026-10-17; the events are Animation's ABI, docs/animation/ragdoll-physics-paper.md section 5).
++##
++## A power send that enters a tower's face at 15 to 60 degrees up or down goes on inside along the floors. WorldBrunt.hit starts it (begin); WorldContact.stepFighter
++## calls step each live tick until it ends. A slab (a floor, or the ceiling above him) is a contact: it breaks when the send's effective tier is high enough
++## for it, and a slab that holds lodges him (a bounce off a held slab is not modelled yet: Game Design's question). Each broken slab is half a link of the chain
++## (houseLink); the floors go through WorldBrunt.applyFloors, so their people, the budget and the collateral token are the brunt's own.
++##
++## The script of slabs is a pure function of the tower and the entry (plan): it is made at the face, so a plan is always its own outcome, and the per-tick
++## driver only walks it. The motion is straight legs at the speed the last contact left (no gravity, no drag: the brake is off in the chain), so a shallow send
++## usually leaves by the far face before the next slab, and a steep one meets slabs.
++##
++## Behind a switch (brunt.json interiorChain, 0 by default): off, nothing here runs and no event or hash field exists, so every golden is unchanged. Not
++## written to the sim's hash while off. Needs S.contactOn (every shipped match has it).
++##
++## Events (one per contact, in order, then one end), made with SimFx.contactEvent, so they carry actor, x, y, z, spd and n (the launch number):
++##   interior_contact: b, floor (the slab's index, -1 for the face), kind (face, floor, ceiling, wall), nx, ny (the surface's normal on the body's side), vn (the speed into
++##                     it: negative into the surface), vt (along it), keep (the speed share he keeps, 0 when he stays), punch (the slab or face broke), k (the contact's number,
++##                     0 for the entry face), stop (ticks held: the entry face's only)
++##   interior_end:     b, end (lodge, exit, fall_out, capped), contacts, t (seconds from the face)
++
++# the plan's entries are Dictionaries {"slab": int, "kind": "floor" or "ceiling", "act": "hold", "break" or "through", "turn": bool}
++# slab j is the floor of storey j (j from 1: the storey's bit in fmask); slab 0 is the ground; slab R = topFloor + 1 is the roof (no bit)
++
++
++static func on(S: SimState) -> bool:
++	return S.contactOn and int(WorldBrunt.cfg().interiorChain) == 1
++
++
++## The send's effective tier 1 to 4 (a finisher reads at least as the data's specialTier).
++static func effTier(by, special: bool) -> int:
++	return WorldBrunt.tierIx(by.tier, special) + 1
++
++
++## Does this hit start the chain? The first building of the flight, a tower, and the send at 15 to 60 degrees to the horizontal (the data's tangents).
++static func eligible(S: SimState, f, b) -> bool:
++	if not on(S) or f.interior != null or f.flightHits != 1 or WorldBrunt.isHouse(b) or WorldBrunt.topFloor(b) < 0:
++		return false
++	var c: Dictionary = WorldBrunt.cfg()
++	var ax: float = absf(f.vx) / f.launchT
++	if ax <= 0.0:
++		return false
++	var r: float = absf(f.vy) / ax
++	return r >= float(c.interiorTanMin) and r <= float(c.interiorTanMax)
++
++
++# ===================================================================== the plan
++
++## The standing slab below j (0, the ground, at the lowest), or -1 for j = 0.
++static func _below(b, j: int) -> int:
++	if j <= 0:
++		return -1
++	var k: int = j - 1
++	while k > 0 and not WorldBrunt.isStanding(b, k):
++		k -= 1
++	return k
++
++
++## The standing slab above j, up to the roof slab R.
++static func _above(b, j: int, R: int) -> int:
++	var k: int = j + 1
++	while k < R and not WorldBrunt.isStanding(b, k):
++		k += 1
++	return mini(k, R)
++
++
++## Add one entry; false when the plan is over (the ground is reached, or the roof is broken).
++static func _add(out: Array, R: int, slab: int, kind: String, act: String, turn: bool) -> bool:
++	if slab < 0:
++		return false
++	if slab == 0:
++		out.append({"slab": 0, "kind": "floor", "act": "hold", "turn": false})
++		return false
++	out.append({"slab": slab, "kind": kind, "act": act, "turn": turn})
++	return slab < R or act == "hold"
++
++
++## The slabs of the chain, in order, for a send entering at height y of tower b (ground gy) going down or up, at effective tier E.
++## Below the ceiling tier: E - 1 slabs broken in the direction of travel, then the next holds and lodges him (tier 1: the first holds). From the ceiling tier
++## (Orb's picture): down, the floor he is on breaks, he is thrown up off the ceiling of his storey (it breaks), and he goes down through the next floor, and the
++## next holds (a finisher, tier 4, keeps breaking floors down to the contact cap); up, the ceiling breaks and turns him, then the floors break down the same way.
++static func plan(b, y: float, gy: float, down: bool, E: int, c: Dictionary) -> Array:
++	var fh: float = WorldBrunt.floorH(b)
++	var R: int = WorldBrunt.topFloor(b) + 1
++	var maxC: int = int(c.interiorMaxContacts)
++	var k0: int = clampi(int(floor((y - gy) / fh)), 0, R - 1)
++	var lo: int = k0
++	while lo > 0 and not WorldBrunt.isStanding(b, lo):
++		lo -= 1
++	var up: int = _above(b, k0, R)
++	var out: Array = []
++	var live: bool = true
++	if E < int(c.interiorCeilTier):
++		var cur: int = lo if down else up
++		var kind: String = "floor" if down else "ceiling"
++		for i in range(E - 1):
++			live = _add(out, R, cur, kind, "through", false)
++			if not live:
++				break
++			cur = _below(b, cur) if down else _above(b, cur, R)
++		if live:
++			_add(out, R, cur, kind, "hold", false)
++	else:
++		var cur2: int = lo
++		if down:
++			live = _add(out, R, lo, "floor", "break", true)
++			if live:
++				live = _add(out, R, up, "ceiling", "break", true)
++		else:
++			live = _add(out, R, up, "ceiling", "break", true)
++			if live:
++				live = _add(out, R, lo, "floor", "break", false)
++		# the floors below the one he stood on (lo is gone already): the ceiling tier going down breaks one more, a finisher fills to the cap
++		var extra: int = (1 if down else 0) if E == int(c.interiorCeilTier) else maxC
++		var added: int = 0
++		while live and added < extra and out.size() < maxC - 1:
++			cur2 = _below(b, cur2)
++			if cur2 < 0:
++				live = false
++				break
++			live = _add(out, R, cur2, "floor", "break", false)
++			added += 1
++		if live:
++			cur2 = _below(b, cur2)
++			if cur2 >= 0:
++				_add(out, R, cur2, "floor", "hold", false)
++	while out.size() > maxC:
++		out.pop_back()
++	if out.size() == maxC and out[maxC - 1].act != "hold" and out[maxC - 1].slab < R:
++		out[maxC - 1].act = "hold"
++		out[maxC - 1].turn = false
++	return out
++
++
++# ===================================================================== start
++
++## The face is hit and the chain starts (WorldBrunt.hit, after the building took the hit and the fighter his): keep the speed share kept through the face,
++## punch whether the face broke, dir the way he travels. Sets the hit-stop (the face's ticks), emits the entry contact and puts him just inside.
++static func begin(S: SimState, f, b, y: float, edge: float, dir: float, by, keep: float, punch: bool) -> void:
++	var c: Dictionary = WorldBrunt.cfg()
++	var trav: float = f.launchT
++	var gy: float = WorldStructures.baseY(S, b)
++	var E: int = effTier(by, f.launchSpecial)
++	var down: bool = f.vy < 0.0
++	var pl: Array = plan(b, y, gy, down, E, c)
++	var vxn: float = f.vx / trav
++	var sp: float = SimDetMath.hypot(vxn, f.vy)
++	f.interior = {"b": b.idx, "dir": dir, "E": E, "k": 0, "bn": 0, "t": 0, "i": 0, "gy": gy, "R": WorldBrunt.topFloor(b) + 1, "plan": pl}
++	f.aimB = -1
++	var ev := SimFx.contactEvent(S, "interior_contact", f, f.x, y, sp)
++	ev.b = float(b.idx)
++	ev.floor = -1
++	ev.kind = "face"
++	ev.nx = -dir
++	ev.ny = 0.0
++	ev.vn = -absf(vxn)
++	ev.vt = f.vy
++	ev.keep = keep
++	ev.punch = punch
++	ev.k = 0.0
++	var stopTicks: int = int(c.interiorFaceStop)
++	ev.stop = stopTicks
++	S.dirS.stop = SimMathx.jmax(S.dirS.stop, float(stopTicks) * SimConst.DT)
++	f.vx *= keep
++	f.vy *= keep
++	f.x = SimWrap.wrap(edge + dir * 2.0)
++	f.y = y
++
++
++# ===================================================================== the tick
++
++## One live tick of the chain (WorldContact.stepFighter calls it while f.interior is set).
++static func step(S: SimState, f, dt: float) -> void:
++	var s: Dictionary = f.interior
++	var b = S.buildings[int(s.b)]
++	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
++	var c: Dictionary = WorldBrunt.cfg()
++	s.t += 1
++	if not b.alive:
++		_end(S, f, b, by, "fall_out")   # the tower went (its core): he falls with it, and the ground's own events play
++		return
++	if int(s.t) >= int(round(float(c.interiorCapSeconds) / SimConst.DT)):   # the cap, in whole ticks
++		_end(S, f, b, by, "capped")
++		return
++	var dir: float = float(s.dir)
++	var ox: float = f.x
++	var oy: float = f.y
++	var dx: float = f.vx * dt
++	var dy: float = f.vy * dt
++	var gy: float = float(s.gy)
++	var fh: float = WorldBrunt.floorH(b)
++	# the far face
++	var farX: float = SimWrap.wrap(b.x + dir * b.w * 0.5)
++	var frF: float = WorldBrunt.crossFrac(ox, SimWrap.wrap(ox + dx), farX, dir)
++	# the next slab of the plan
++	var pl: Array = s.plan
++	var e = pl[int(s.i)] if int(s.i) < pl.size() else null
++	var frS: float = -1.0
++	if e != null and dy != 0.0:
++		var h: float = gy + float(e.slab) * fh
++		if e.kind == "floor":
++			if f.vy < 0.0 and oy >= h and oy + dy <= h:
++				frS = (oy - h) / (-dy)
++		else:
++			if f.vy > 0.0 and oy <= h and oy + dy >= h:
++				frS = (h - oy) / dy
++	if frS >= 0.0 and (frF < 0.0 or frS <= frF):
++		f.x = SimWrap.wrap(ox + dx * frS)
++		f.y = oy + dy * frS
++		_slab(S, f, b, by, s, e)
++		return
++	if frF >= 0.0:
++		f.x = SimWrap.wrap(ox + dx * frF)
++		f.y = oy + dy * frF
++		_face(S, f, b, by, s, farX, dir)
++		return
++	f.x = SimWrap.wrap(ox + dx)
++	f.y = oy + dy
++	if f.y <= gy:
++		f.y = gy
++		_end(S, f, b, by, "fall_out")
++	elif f.y > gy + float(int(s.R)) * fh + 1.0:
++		_end(S, f, b, by, "exit")   # out through the roof's line
++
++
++## A contact with a slab of the plan.
++static func _slab(S: SimState, f, b, by, s: Dictionary, e: Dictionary) -> void:
++	var c: Dictionary = WorldBrunt.cfg()
++	var trav: float = f.launchT
++	var vxn: float = f.vx / trav
++	var sp: float = SimDetMath.hypot(vxn, f.vy)
++	if int(e.slab) == 0:
++		_end(S, f, b, by, "fall_out")   # the ground floor is the ground: its events are the ground's
++		return
++	var isFloor: bool = e.kind == "floor"
++	var ny: float = 1.0 if isFloor else -1.0
++	s.k += 1
++	var breaks: bool = e.act != "hold"
++	var keep: float = 0.0
++	if breaks:
++		keep = float(c.interiorCeilKeep) if (not isFloor and e.act == "break") else float(c.interiorFloorKeep)
++		_breakSlab(S, f, b, by, int(e.slab), sp)
++		f.splashed.append(WorldBrunt.MARK_HOUSE)   # half a link (houseLink)
++	var ev := SimFx.contactEvent(S, "interior_contact", f, f.x, f.y, sp)
++	ev.b = float(b.idx)
++	ev.floor = int(e.slab)
++	ev.kind = String(e.kind)
++	ev.nx = 0.0
++	ev.ny = ny
++	ev.vn = f.vy * ny
++	ev.vt = vxn
++	ev.keep = keep
++	ev.punch = breaks
++	ev.k = float(s.k)
++	ev.stop = 0
++	SimDamage.hurt(S, f, sp * WorldBrunt.FIGHTER_DMG * float(c.interiorHurt), by)
++	if not breaks:
++		_end(S, f, b, by, "lodge")
++		return
++	f.vx *= keep
++	f.vy *= keep
++	if e.turn:
++		f.vy = -f.vy
++	s.i += 1
++	if int(e.slab) >= int(s.R):
++		_end(S, f, b, by, "exit")   # through the roof: the flight goes on from there
++	elif int(s.i) >= s.plan.size():
++		_end(S, f, b, by, "capped")
++
++
++## The slab's floor goes through the brunt's own floors machinery (people, budget, token, the pancake rule), as a punch.
++static func _breakSlab(S: SimState, f, b, by, j: int, sp: float) -> void:
++	if j >= b.floors or not WorldBrunt.isStanding(b, j):
++		return
++	var c: Dictionary = WorldBrunt.cfg()
++	var dmg: float = sp * float(c.tierFactor[WorldBrunt.tierIx(by.tier, f.launchSpecial)]) * float(c.bruntMul)
++	var oc: Dictionary = {"floors": true, "dmg": dmg, "ratio": maxf(dmg / WorldBrunt.floorStr(b, j), 1.0), "outcome": "punch", "k": j, "hit": [j], "pass": true, "keep": float(c.interiorFloorKeep), "deaths": 0.0}
++	WorldBrunt.applyFloors(S, b, oc, by, f.chainEvt, f.x, f, f.y)
++
++
++## The far face: it breaks from the exit tier (he leaves, with the floor keep), or it holds (a wall: he lodges against it).
++static func _face(S: SimState, f, b, by, s: Dictionary, farX: float, dir: float) -> void:
++	var c: Dictionary = WorldBrunt.cfg()
++	var trav: float = f.launchT
++	var vxn: float = f.vx / trav
++	var sp: float = SimDetMath.hypot(vxn, f.vy)
++	s.k += 1
++	var breaks: bool = int(s.E) >= int(c.interiorExitTier)
++	var keep: float = float(c.interiorFloorKeep) if breaks else 0.0
++	var ev := SimFx.contactEvent(S, "interior_contact", f, f.x, f.y, sp)
++	ev.b = float(b.idx)
++	ev.floor = -1
++	ev.kind = "face" if breaks else "wall"
++	ev.nx = -dir
++	ev.ny = 0.0
++	ev.vn = -absf(vxn)
++	ev.vt = f.vy
++	ev.keep = keep
++	ev.punch = breaks
++	ev.k = float(s.k)
++	ev.stop = 0
++	SimDamage.hurt(S, f, sp * WorldBrunt.FIGHTER_DMG * float(c.interiorHurt), by)
++	if not breaks:
++		_end(S, f, b, by, "lodge")
++		return
++	f.vx *= keep
++	f.vy *= keep
++	f.x = SimWrap.wrap(farX + dir * 2.0)
++	_end(S, f, b, by, "exit")
++
++
++# ===================================================================== the end
++
++## The chain is over: lodge and capped hold him where he is (the lodge's own hold, the last of his speed one more hit on the building), exit and fall_out
++## hand the flight back (the brake is back; the ground's events play). Always the end event last.
++static func _end(S: SimState, f, b, by, end: String) -> void:
++	var s: Dictionary = f.interior
++	var trav: float = f.launchT
++	var spLeft: float = SimDetMath.hypot(f.vx / trav, f.vy)
++	var cm: Dictionary = WorldBrunt.cfg()
++	var held: bool = end == "lodge" or end == "capped"
++	if held:
++		var tfac: float = float(cm.tierFactor[WorldBrunt.tierIx(by.tier, f.launchSpecial)])
++		var rest: float = spLeft * tfac * float(cm.bruntMul) * float(cm.lodgeDump)
++		if b.alive and rest > 0.0:
++			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", f.x, f.chainEvt, true)
++		SimDamage.hurt(S, f, spLeft * WorldBrunt.FIGHTER_DMG, by)
++		var holdS: float = WorldBrunt.lodgeSeconds(by.tier, f.launchSpecial)
++		WorldBrunt._hold(S, f, holdS)
++		f.vx = 0.0
++		f.vy = 0.0
++		SimFx.lodge(S, f, b, f.x, f.y, holdS, f.flightHits, by)
++	var ev := SimFx.contactEvent(S, "interior_end", f, f.x, f.y, spLeft)
++	ev.b = float(b.idx)
++	ev.end = end
++	ev.contacts = int(s.k)
++	ev.t = float(s.t) * SimConst.DT
++	f.interior = null
++	WorldBrunt.endFlight(S, f)
+diff --git a/j1/sim/world/interior.gd.uid b/sim/world/interior.gd.uid
+new file mode 100644
+index 0000000..af30f0b
+--- /dev/null
++++ b/sim/world/interior.gd.uid
+@@ -0,0 +1 @@
++uid://dkjnn1q4juh47
+diff --git a/j1/sim/world/tools/interior_check.gd b/sim/world/tools/interior_check.gd
+new file mode 100644
+index 0000000..1b33d8d
+--- /dev/null
++++ b/sim/world/tools/interior_check.gd
+@@ -0,0 +1,247 @@
++extends SceneTree
++# The chain inside a tower (docs/design/buildings.md section 7.3; world/interior.gd; data/biomes/brunt.json interior*):
++#   godot --headless --path . --script res://sim/world/tools/interior_check.gd [-- --show]
++# A launch is made by hand (the tower, the angle, the speed, the tier) so the angle is the check's; the events are read in order.
++var fails: int = 0
++var show: bool = false
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func fresh(seed: int = 1) -> SimState:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, seed, {}, {"intro": false})
++	S.out.fx.clear()
++	return S
++
++
++## The tallest standing tower on the plane's row.
++func tower(S: SimState, lo: int = 9):
++	var best = null
++	for b in S.buildings:
++		if b.floors >= lo and int(b.row) == 1 and b.alive and (best == null or b.floors > best.floors or (b.floors == best.floors and b.w > best.w)):
++			best = b
++	return best
++
++
++## One launch at tower tw: effective tier `tier`, the tangent `tn` of the send above or below the horizontal, `down` its sense, `sp` the speed, entering at `frac` of the tower's height.
++## Steps the flight until it lands (or the chain and the flight are over). Returns the events.
++func chain(S: SimState, tw, tier: float, tn: float, down: bool, sp: float, frac: float = 0.5, special: bool = false) -> Array:
++	var A = S.fighters[1]
++	var D = S.fighters[0]
++	A.tier = tier
++	A.hp = 1.0e9
++	D.hp = 1.0e9
++	var dir: float = 1.0
++	var gy: float = WorldStructures.baseY(S, tw)
++	var y: float = gy + tw.h * frac
++	var edge: float = SimWrap.wrap(tw.x - dir * tw.w * 0.5)
++	D.state = "launched"
++	D.stateT = 0.0
++	D.launchBy = A
++	D.launchT = 1.0
++	D.launchSpecial = special
++	D.launchN += 1
++	D.flightHits = 0
++	D.splashed = PackedInt32Array()
++	D.jContacts = 0
++	D.jT = 0
++	D.slide = 0.0
++	D.chainEvt = WorldCollateral.beginEvent(S, "chain", A)
++	var vx: float = sp / sqrt(1.0 + tn * tn)
++	D.vx = vx * dir
++	D.vy = vx * tn * (-1.0 if down else 1.0)
++	D.x = SimWrap.wrap(edge - dir * 6.0)
++	D.y = y
++	S.out.fx.clear()
++	WorldBrunt.hit(S, D, tw, y, edge, dir)
++	var ev: Array = []
++	for e in S.out.fx:
++		ev.append(e)
++	S.out.fx.clear()
++	var g: int = 0
++	while D.state == "launched" and g < 900:
++		S.dirS.stop = 0.0
++		SimFighter.stepLaunched(S, D, SimConst.DT)
++		for e in S.out.fx:
++			ev.append(e)
++		S.out.fx.clear()
++		g += 1
++		if D.interior == null and g > 400:
++			break
++	return ev
++
++
++func S_step_once(S: SimState, D) -> void:
++	S.dirS.stop = 0.0
++	SimFighter.stepLaunched(S, D, SimConst.DT)
++	S.out.fx.clear()
++
++
++func names(ev: Array) -> String:
++	var out: Array = []
++	for e in ev:
++		if e.type == "interior_contact":
++			out.append("%s%s%s" % [e.kind, "!" if e.punch else "", "" if e.floor < 0 else str(e.floor)])
++		elif e.type == "interior_end":
++			out.append("END:" + e.end)
++	return " ".join(out)
++
++
++func shape(ev: Array) -> Dictionary:
++	var cs: Array = ev.filter(func(e): return e.type == "interior_contact")
++	var en: Array = ev.filter(func(e): return e.type == "interior_end")
++	return {"cs": cs, "en": en}
++
++
++func fingerprint(ev: Array) -> String:
++	var h := SimHash.Hasher.new()
++	SimHash.hashFx(h, ev.filter(func(e): return e.type == "interior_contact" or e.type == "interior_end"))
++	return h.hex()
++
++
++func _init() -> void:
++	for a in OS.get_cmdline_user_args():
++		if a == "--show":
++			show = true
++	var c: Dictionary = WorldBrunt.cfg()
++	ok(WorldBrunt.dataErrors().is_empty(), "brunt.json loads clean (%s)" % str(WorldBrunt.dataErrors()))
++	ok(int(c.interiorChain) == 0, "the switch is off in the data (interiorChain %d)" % int(c.interiorChain))
++	ok(float(c.interiorCeilKeep) == 0.4 and float(c.interiorFloorKeep) == 0.7 and int(c.interiorMaxContacts) == 5 and int(c.interiorMaxBounces) == 3 and int(c.interiorFaceStop) == 15 and float(c.interiorCapSeconds) == 2.5 and int(c.interiorCeilTier) == 3,
++		"Game Design's values stand in the data (keep 0.4 and 0.7, 5 contacts, 3 bounces, stop 15, cap 2.5 s, ceiling from tier 3)")
++	# --- off: nothing of the chain exists
++	var S0 := fresh(1)
++	var tw0 = tower(S0)
++	ok(tw0 != null, "there is a tower to launch at (%d floors, %.0f wide)" % [tw0.floors, tw0.w])
++	var ev0: Array = chain(S0, tw0, 3.0, 1.0, true, 3000.0)
++	ok(ev0.filter(func(e): return e.type == "interior_contact" or e.type == "interior_end").is_empty() and S0.fighters[0].interior == null, "switch off: no interior event, no interior state")
++	c.interiorChain = 1
++	# --- the tiers, a steep send (60 degrees) at the middle of a tall tower, down and up
++	var seen: Dictionary = {}
++	for down in [true, false]:
++		for tier in [1.0, 2.0, 3.0, 4.0]:
++			var S := fresh(1)
++			var tw = tower(S)
++			var ev: Array = chain(S, tw, tier, 1.7, down, 3500.0, 0.5)
++			var sh: Dictionary = shape(ev)
++			var cs: Array = sh.cs
++			var en: Array = sh.en
++			var tag: String = "tier %d %s" % [int(tier), "down" if down else "up"]
++			seen[tag] = names(ev)
++			if show:
++				print("   ", tag, ": ", names(ev), "  t=", (en[0].t if en.size() > 0 else -1.0))
++			ok(cs.size() >= 1 and cs[0].kind == "face" and cs[0].k == 0.0 and cs[0].stop == 15 and cs[0].nx == -1.0, "%s: the entry face first (k 0, stop 15, nx -1)" % tag)
++			ok(en.size() == 1 and ev.back().type == "interior_end" or (en.size() == 1 and ev.find(en[0]) >= ev.find(cs.back())), "%s: one interior_end, after the last contact" % tag)
++			var inOrder: bool = true
++			for i in range(cs.size()):
++				if int(cs[i].k) != i:
++					inOrder = false
++			ok(inOrder, "%s: the contacts are numbered 0, 1, 2 ... in order" % tag)
++			ok(cs.size() - 1 <= 5 and en.size() == 1 and en[0].contacts == cs.size() - 1 and en[0].t <= 2.5001, "%s: at most 5 contacts after the face (%d), t %.2f s <= 2.5, the end counts them" % [tag, cs.size() - 1, en[0].t if en.size() > 0 else -1.0])
++			var wellFormed: bool = true
++			for e in cs:
++				var n2: float = e.nx * e.nx + e.ny * e.ny
++				if absf(n2 - 1.0) > 0.0001 or e.vn >= 0.0 or not (e.kind in ["face", "floor", "ceiling", "wall"]):
++					wellFormed = false
++			ok(wellFormed, "%s: every contact has a unit normal, a speed into the surface (vn < 0) and a kind of face, floor, ceiling or wall" % tag)
++			for e in cs:
++				if e.kind == "ceiling" and e.punch and e.k > 0.0:
++					var wantK: float = 0.4 if tier >= 3.0 and e.keep != 0.7 else 0.7
++					ok(e.keep == wantK and e.ny == -1.0, "%s: a ceiling that breaks keeps %.1f (0.4 turning him from tier 3, 0.7 going through below it) and its normal points down" % [tag, wantK])
++				if e.kind == "floor" and e.punch:
++					ok(e.keep == 0.7 and e.ny == 1.0, "%s: a floor he goes through keeps 0.7 and its normal points up" % tag)
++			if tier >= 3.0:
++				var hasCeil: bool = cs.any(func(e): return e.kind == "ceiling" and e.punch)
++				ok(hasCeil or en[0].end in ["exit", "fall_out"], "%s: from tier 3 the ceiling is reached (or he left first: %s)" % [tag, en[0].end])
++			else:
++				ok(not cs.any(func(e): return e.kind == "ceiling" and e.punch and e.keep == 0.4), "%s: below tier 3 no ceiling reverses him" % tag)
++			if tier == 1.0:
++				ok(cs.size() <= 2 and not cs.any(func(e): return e.k > 0.0 and e.punch), "%s: tier 1 breaks no slab" % tag)
++			var fhits: int = ev.filter(func(e): return e.type == "floor_hit" and e.outcome == "punch").size()
++			var brk: int = cs.filter(func(e): return e.k > 0.0 and e.punch and e.kind in ["floor", "ceiling"]).size()
++			ok(fhits >= brk - 0, "%s: each broken slab went through the floors machinery (%d floor_hit punches for %d broken slabs)" % [tag, fhits, brk])
++	# --- the angle gate
++	for tn in [0.15, 2.5]:
++		var Sg := fresh(1)
++		var evg: Array = chain(Sg, tower(Sg), 3.0, tn, true, 3500.0)
++		ok(shape(evg).cs.is_empty(), "a send at tangent %.2f (outside 15 to 60 degrees) takes today's path" % tn)
++	# --- a house is not a tower
++	var Sh := fresh(1)
++	var house = null
++	for b in Sh.buildings:
++		if b.floors < WorldBrunt.FLOORS_MIN and int(b.row) == 1:
++			house = b
++			break
++	if house != null:
++		var evh: Array = chain(Sh, house, 3.0, 1.0, true, 3500.0, 0.3)
++		ok(shape(evh).cs.is_empty(), "a house takes today's path")
++	# --- determinism: the same launch twice gives the same events and the same end
++	var fp: Array = []
++	for r in range(2):
++		var Sd := fresh(1)
++		var evd: Array = chain(Sd, tower(Sd), 4.0, 1.7, true, 3500.0)
++		fp.append(fingerprint(evd) + "|" + names(evd) + "|" + str(SimHash.stateHash(Sd).gameplay))
++	ok(fp[0] == fp[1], "the same launch twice: the same events, the same state hash (%s)" % fp[0].substr(0, 8))
++	# --- mid-chain the state hashes (the fighter's chain fields are folded in only while it runs)
++	var Sm := fresh(1)
++	var twm = tower(Sm)
++	var Dm = Sm.fighters[0]
++	var evm: Array = chain(Sm, twm, 4.0, 1.7, true, 3500.0)
++	var Sm2 := fresh(1)
++	var tw2 = tower(Sm2)
++	Sm2.fighters[0].hp = 1.0e9
++	Sm2.fighters[1].tier = 4.0
++	var Dm2 = Sm2.fighters[0]
++	var h_before: String = str(SimHash.stateHash(Sm2).gameplay)
++	# launch by hand and stop at the first tick inside
++	Dm2.state = "launched"
++	Dm2.launchBy = Sm2.fighters[1]
++	Dm2.launchT = 1.0
++	Dm2.chainEvt = WorldCollateral.beginEvent(Sm2, "chain", Sm2.fighters[1])
++	var gy2: float = WorldStructures.baseY(Sm2, tw2)
++	var edge2: float = SimWrap.wrap(tw2.x - tw2.w * 0.5)
++	Dm2.vx = 2400.0
++	Dm2.vy = -2400.0 * 0.9
++	Dm2.x = edge2 - 6.0
++	Dm2.y = gy2 + tw2.h * 0.5
++	Dm2.flightHits = 0
++	WorldBrunt.hit(Sm2, Dm2, tw2, Dm2.y, edge2, 1.0)
++	var h_in1: String = str(SimHash.stateHash(Sm2).gameplay)
++	S_step_once(Sm2, Dm2)
++	var h_in2: String = str(SimHash.stateHash(Sm2).gameplay)
++	ok(Dm2.interior != null and h_in1 != h_before and h_in1 != h_in2, "mid-chain the state hashes and the hash moves with it (inside: %s then %s, before %s)" % [h_in1.substr(0, 8), h_in2.substr(0, 8), h_before.substr(0, 8)])
++	# --- the caps hold over many towers, tiers, angles and speeds
++	var rg := SimRng.new(11)
++	var runs: int = 0
++	var worstC: int = 0
++	var worstT: float = 0.0
++	var ends: Dictionary = {}
++	var bad: int = 0
++	for n in range(160):
++		var Sr := fresh(1 + n % 6)
++		var cand: Array = Sr.buildings.filter(func(b): return b.floors >= 5 and b.alive)
++		if cand.is_empty():
++			continue
++		var twr = cand[int(rg.next() * float(cand.size()))]
++		var tn2: float = 0.3 + rg.next() * 1.4
++		var evr: Array = chain(Sr, twr, float(1 + n % 4), tn2, rg.next() < 0.5, 1500.0 + rg.next() * 3000.0, 0.15 + rg.next() * 0.7, n % 9 == 0)
++		var shr: Dictionary = shape(evr)
++		if shr.cs.is_empty():
++			continue
++		runs += 1
++		if shr.en.size() != 1:
++			bad += 1
++			continue
++		worstC = maxi(worstC, int(shr.en[0].contacts))
++		worstT = maxf(worstT, shr.en[0].t)
++		ends[shr.en[0].end] = int(ends.get(shr.en[0].end, 0)) + 1
++		if Sr.fighters[0].interior != null:
++			bad += 1
++	ok(runs > 60 and bad == 0 and worstC <= 5 and worstT <= 2.5001, "%d random chains: one end each, at most %d contacts, longest %.2f s, none left running (ends %s)" % [runs, worstC, worstT, str(ends)])
++	c.interiorChain = 0
++	print("INTERIOR: %d check(s) failed" % fails)
++	quit()
+diff --git a/j1/sim/world/tools/interior_check.gd.uid b/sim/world/tools/interior_check.gd.uid
+new file mode 100644
+index 0000000..3041ceb
+--- /dev/null
++++ b/sim/world/tools/interior_check.gd.uid
+@@ -0,0 +1 @@
++uid://ysscu7ci7boc

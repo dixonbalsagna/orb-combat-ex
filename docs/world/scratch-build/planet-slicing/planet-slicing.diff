@@ -1,25 +1,8 @@
 diff --git a/sim/world/planet.gd b/sim/world/planet.gd
-index a909f9a..57373d8 100644
+index 22fc5e1..ff38f59 100644
 --- a/sim/world/planet.gd
 +++ b/sim/world/planet.gd
-@@ -228,10 +228,14 @@ static func make(seed: int) -> Planet:
- 	P.L = float(SimConst.NC) * SimConst.COL
- 	P.R = P.L / (2.0 * PI)
- 	_placeAll(P)
-+	_register(P)
-+	return P
-+
-+
-+static func _register(P: Planet) -> void:
- 	if _planets.size() > 6:
- 		_planets.clear()
--	_planets[key] = P
--	return P
-+	_planets[P.seed] = P
- 
- 
- static func forget() -> void:
-@@ -422,46 +426,49 @@ static func _arc(P: Planet, a: Array, bx: float, by: float, bz: float) -> float:
+@@ -474,57 +474,40 @@ static func _arc(P: Planet, a: Array, bx: float, by: float, bz: float) -> float:
  	return P.R * acosf(a[0] * bx + a[1] * by + a[2] * bz)
  
  
@@ -47,15 +30,6 @@ index a909f9a..57373d8 100644
 +		acc[0] = p
 +
 +
-+static func _addPlace(P: Planet, kind: int, p: Array, radius: float) -> void:
-+	P.kind.append(kind)
-+	P.px.append(p[0])
-+	P.py.append(p[1])
-+	P.pz.append(p[2])
-+	P.rad.append(radius)
-+	P.n += 1
-+
-+
 +static func _tryPlace(P: Planet, r: SimRng, kind: int, radius: float, tries: int, polar: bool) -> bool:
 +	var acc: Array = [null, -1.0e9]
  	for k in range(tries):
@@ -75,12 +49,7 @@ index a909f9a..57373d8 100644
 -			bs = sc
 -			best = p
 -	if best != null:
--		P.kind.append(kind)
--		P.px.append(best[0])
--		P.py.append(best[1])
--		P.pz.append(best[2])
--		P.rad.append(radius)
--		P.n += 1
+-		_addPlace(P, kind, best, radius)
 +		_candidate(P, r, radius, polar, acc)
 +	if acc[0] != null:
 +		_addPlace(P, kind, acc[0], radius)
@@ -88,6 +57,22 @@ index a909f9a..57373d8 100644
  	return false
  
  
+-static func _addPlace(P: Planet, kind: int, p: Array, radius: float) -> void:
+-	P.kind.append(kind)
+-	P.px.append(p[0])
+-	P.py.append(p[1])
+-	P.pz.append(p[2])
+-	P.rad.append(radius)
+-	P.n += 1
+-
+-
+-## A place's weight is its area (radius squared), so a city holds about seven towns' people (as Bellgate and the villages do).
+-static func _finishPeople(P: Planet) -> void:
+-	P.people.resize(P.n)
+-	for i in range(P.n):
+-		P.people[i] = int(P.rad[i] * P.rad[i] / 1000000.0 * 100.0)
+-
+-
 -## The places of a planet: first as picture A placed them (one stream, the ordinary ground), then the ones that fell inside a polar cap are placed again outside it
 -## from a second stream. Cities first, then towns.
 -static func _placeAll(P: Planet) -> void:
@@ -102,11 +87,20 @@ index a909f9a..57373d8 100644
  	var kept := PackedInt32Array()
  	var dropped := [0, 0]
  	for i in range(P.n):
-@@ -486,15 +493,32 @@ static func _placeAll(P: Planet) -> void:
+@@ -549,6 +532,35 @@ static func _placeAll(P: Planet) -> void:
  	P.pz = pz2
  	P.rad = rad2
  	P.n = kept.size()
 +	return dropped
++
++
++static func _addPlace(P: Planet, kind: int, p: Array, radius: float) -> void:
++	P.kind.append(kind)
++	P.px.append(p[0])
++	P.py.append(p[1])
++	P.pz.append(p[2])
++	P.rad.append(radius)
++	P.n += 1
 +
 +
 +## A place's weight is its area (radius squared), so a city holds about seven towns' people (as Bellgate and the villages do).
@@ -129,17 +123,7 @@ index a909f9a..57373d8 100644
  	var r2 := SimRng.new(P.seed * int(c.placeSeedMul) + 2)
  	for k in range(dropped[KIND_CITY]):
  		_tryPlace(P, r2, KIND_CITY, c.cityRadius, int(c.replaceTries), true)
- 	for k in range(dropped[KIND_TOWN]):
- 		_tryPlace(P, r2, KIND_TOWN, c.townRadius, int(c.replaceTries), true)
--	# people: a place's weight is its area (radius squared), so a city holds about seven towns' people (as Bellgate and the villages do)
--	P.people.resize(P.n)
--	for i in range(P.n):
--		P.people[i] = int(P.rad[i] * P.rad[i] / 1000000.0 * 100.0)
-+	_finishPeople(P)
- 
- 
- ## The people of a place at full, by weight (relative). A slice's people are these over its held places, normalised to the slice's total (slicePeople).
-@@ -504,7 +528,7 @@ static func placeWeight(P: Planet, id: int) -> int:
+@@ -564,7 +576,7 @@ static func placeWeight(P: Planet, id: int) -> int:
  
  ## ===================================================================== reading a circle: the minimum
  ## What the circle (normal n, frame u v) holds. standing: PackedByteArray of 1 for a place that has not fallen (empty: all stand). Returns a dictionary.
@@ -148,7 +132,7 @@ index a909f9a..57373d8 100644
  	var c: Dictionary = P.c
  	var n: Array = circ.n
  	var cities: int = 0
-@@ -519,18 +543,21 @@ static func evalCircle(P: Planet, circ: Dictionary, standing: PackedByteArray, m
+@@ -579,18 +591,21 @@ static func evalCircle(P: Planet, circ: Dictionary, standing: PackedByteArray, m
  				cities += 1
  			else:
  				towns += 1
@@ -180,7 +164,7 @@ index a909f9a..57373d8 100644
  	var kinds: int = 0
  	for s in seen:
  		if float(s) / float(cnt) >= c.biomeShare:
-@@ -540,6 +567,23 @@ static func evalCircle(P: Planet, circ: Dictionary, standing: PackedByteArray, m
+@@ -600,6 +615,23 @@ static func evalCircle(P: Planet, circ: Dictionary, standing: PackedByteArray, m
  	return {"cities": cities, "towns": towns, "biomes": kinds, "land": land, "ice": ice, "seen": seen}
  
  
@@ -204,7 +188,7 @@ index a909f9a..57373d8 100644
  static func meets(c: Dictionary, e: Dictionary, relaxed: bool) -> bool:
  	if relaxed:
  		return e.cities >= int(c.relaxCities) and e.towns >= int(c.relaxTowns) and e.biomes >= int(c.relaxBiomes) and e.land >= c.relaxLand
-@@ -642,37 +686,41 @@ class Slice extends RefCounted:
+@@ -702,37 +734,41 @@ class Slice extends RefCounted:
  	var circ: Dictionary = {}
  	var T: Array = []
  	var seed: int = 0
@@ -271,7 +255,7 @@ index a909f9a..57373d8 100644
  	var n: Array = circ.n
  	for i in range(P.n):
  		var lat: float = P.R * asinf(n[0] * P.px[i] + n[1] * P.py[i] + n[2] * P.pz[i])
-@@ -685,12 +733,40 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
+@@ -745,12 +781,40 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
  		var half: float = sqrt(maxf(0.0, P.rad[i] * P.rad[i] - lat * lat))
  		S.held.append({"id": i, "kind": int(P.kind[i]), "col": col, "d": lat, "half": half, "r": P.rad[i],
  			"standing": standing.size() == 0 or standing[i] != 0})
@@ -313,7 +297,7 @@ index a909f9a..57373d8 100644
  	if _slices.has(key):
  		return _slices[key]
  	var P: Planet = make(seed)
-@@ -698,9 +774,7 @@ static func sliceFor(seed: int, touch: int, standing: PackedByteArray = PackedBy
+@@ -758,9 +822,7 @@ static func sliceFor(seed: int, touch: int, standing: PackedByteArray = PackedBy
  	if not r.ok:
  		return null
  	var S: Slice = readSlice(P, r.circle, r.T, standing)
@@ -324,7 +308,7 @@ index a909f9a..57373d8 100644
  	return S
  
  
-@@ -990,3 +1064,364 @@ static func applyBowls(S: Slice, marks: Array) -> void:
+@@ -1050,3 +1112,364 @@ static func applyBowls(S: Slice, marks: Array) -> void:
  			var t: float = 1.0 - (dx * dx + lat * lat) / (r * r)
  			if t > 0.0:
  				S.heights[col] = S.heights[col] - dep * t * t
@@ -366,8 +350,8 @@ index a909f9a..57373d8 100644
 +	var total: int = 0            # the first pass's candidates: the progress denominator
 +
 +	func _init(seed: int) -> void:
-+		if WorldPlanet._planets.has(seed):
-+			P = WorldPlanet._planets[seed]
++		if WorldPlanet._planets.has(seed) or not WorldPlanet.storyFor(seed).is_empty():
++			P = WorldPlanet.make(seed)   # memoised, or a story planet: its places are stored, there is nothing to place
 +			done = true
 +			return
 +		var c: Dictionary = WorldPlanet.cfg()
@@ -691,10 +675,10 @@ index a909f9a..57373d8 100644
 +	return LoadJob.new(seed, touch, standing, relaxed)
 diff --git a/sim/world/tools/planet_job_check.gd b/sim/world/tools/planet_job_check.gd
 new file mode 100644
-index 0000000..0d1ca7a
+index 0000000..7d91c34
 --- /dev/null
 +++ b/sim/world/tools/planet_job_check.gd
-@@ -0,0 +1,169 @@
+@@ -0,0 +1,176 @@
 +extends SceneTree
 +# WorldPlanet's time-sliced loading: a job gives the same bits as the whole call however it is stepped.
 +#   godot --headless --path . --script res://sim/world/tools/planet_job_check.gd
@@ -732,7 +716,7 @@ index 0000000..0d1ca7a
 +	ok(ord.size() == SimConst.NC and seen.size() == SimConst.NC and ord[0] == WorldPlanet.TOUCH_COL and ord[1] == WorldPlanet.TOUCH_COL + 1 and ord[2] == WorldPlanet.TOUCH_COL - 1, "the columns come nearest the touch-down first, each once (%d)" % ord.size())
 +	# ---- the places: a job gives the planet the whole call gives, for any chunk
 +	WorldPlanet.forget()
-+	var Pw: WorldPlanet.Planet = WorldPlanet.make(7)
++	var Pw: WorldPlanet.Planet = WorldPlanet.make(13)   # a planet with no story entry: Everhold's places are stored, there is nothing to step
 +	var want: String = placesKey(Pw)
 +	var p11w: WorldPlanet.Planet = WorldPlanet.make(11)
 +	var want11: String = placesKey(p11w)
@@ -740,14 +724,14 @@ index 0000000..0d1ca7a
 +	var chunks := [1, 37, 1000000]
 +	for ch in chunks:
 +		WorldPlanet.forget()
-+		var job := WorldPlanet.PlaceJob.new(7)
++		var job := WorldPlanet.PlaceJob.new(13)
 +		var guard: int = 0
 +		while not job.done and guard < 100000:
 +			job.step(ch)
 +			guard += 1
 +		if placesKey(job.P) != want:
 +			allSame = false
-+	ok(allSame, "the places of planet 7 are the same bits stepped by 1, 37 or all at once")
++	ok(allSame, "the places of planet 13 are the same bits stepped by 1, 37 or all at once")
 +	WorldPlanet.forget()
 +	var j11 := WorldPlanet.PlaceJob.new(11)
 +	while not j11.done:
@@ -755,6 +739,9 @@ index 0000000..0d1ca7a
 +	ok(placesKey(j11.P) == want11, "and planet 11's")
 +	var memo := WorldPlanet.PlaceJob.new(11)
 +	ok(memo.done and memo.P == j11.P, "a finished planet is memoised: the next job is done at once")
++	WorldPlanet.forget()
++	var story := WorldPlanet.PlaceJob.new(7)
++	ok(story.done and story.P.n == 42, "a story planet (Everhold) is done at once: its places are stored")
 +	# ---- the pick
 +	WorldPlanet.forget()
 +	var P: WorldPlanet.Planet = WorldPlanet.make(7)
@@ -846,14 +833,18 @@ index 0000000..0d1ca7a
 +	ok(lj.done and lj.ok and WorldPlanet.sliceHash(lj.slice) == wantHash and ref == lj.slice, "a load job (planet, pick, slice) finishes in %d frames of 30 units to the same slice, and the memo holds it" % frames)
 +	ok(lj.slice != null and not lj.slice.provisional and lj.progress() == 1.0, "and reports done")
 +	WorldPlanet.forget()
-+	var lj2 := WorldPlanet.beginLoad(7, 3)
++	var P13: WorldPlanet.Planet = WorldPlanet.make(13)   # no story entry: the places are generated, so the load has a first stage to step through
++	var pr13: Dictionary = WorldPlanet.pick(P13, 3)
++	var want13: int = WorldPlanet.sliceHash(WorldPlanet.readSlice(P13, pr13.circle, pr13.T))
++	WorldPlanet.forget()
++	var lj2 := WorldPlanet.beginLoad(13, 3)
 +	lj2.step(5)
 +	var prov: bool = lj2.stage == 0
 +	lj2.step(9000)
 +	var sawProv: bool = lj2.slice != null and lj2.slice.provisional
 +	lj2.finishNow()
-+	ok(prov and sawProv and lj2.done and WorldPlanet.sliceHash(lj2.slice) == wantHash, "finishNow after a partial step gives the same bits (a skipped intro does not skip the load)")
-+	var lj3 := WorldPlanet.beginLoad(7, 3)
++	ok(prov and sawProv and lj2.done and WorldPlanet.sliceHash(lj2.slice) == want13, "finishNow after a partial step gives the same bits (a skipped intro does not skip the load)")
++	var lj3 := WorldPlanet.beginLoad(13, 3)
 +	ok(lj3.done and lj3.slice == lj2.slice, "a load of a slice already memoised is done at once")
 +	# a touch-down with no slice: ok is false and the job ends
 +	WorldPlanet.forget()

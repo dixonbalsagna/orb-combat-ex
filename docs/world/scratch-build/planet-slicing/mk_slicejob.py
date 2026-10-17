@@ -74,25 +74,10 @@ static func evalCircle(P: Planet, circ: Dictionary, standing: PackedByteArray, m
 	var seed: int = 0
 	var provisional: bool = false             # a job is still filling it in: the heights are the coarse read (every 8th column, the rest interpolated) until it is false
 ''')
-    # ---- make(): the memo store is a function the job shares
-    s = rep(s, '''	_placeAll(P)
-	if _planets.size() > 6:
-		_planets.clear()
-	_planets[key] = P
-	return P
-''', '''	_placeAll(P)
-	_register(P)
-	return P
-
-
-static func _register(P: Planet) -> void:
-	if _planets.size() > 6:
-		_planets.clear()
-	_planets[P.seed] = P
-''')
     # ---- a place search by candidates
     a = s.index("static func _tryPlace(")
     b = s.index("## The places of a planet: first as picture A")
+    keep = s[s.index("static func _addPlace("):b]   # _addPlace and _finishPeople stay as the stored-places patch made them
     s = s[:a] + '''## One candidate of a place search: a random point from the stream, kept in acc = [best point or null, its score] if it is the best so far. The search is a loop of these,
 ## so a job can take them a few at a time and give the same places.
 static func _candidate(P: Planet, r: SimRng, radius: float, polar: bool, acc: Array) -> void:
@@ -112,15 +97,6 @@ static func _candidate(P: Planet, r: SimRng, radius: float, polar: bool, acc: Ar
 	if sc > acc[1]:
 		acc[1] = sc
 		acc[0] = p
-
-
-static func _addPlace(P: Planet, kind: int, p: Array, radius: float) -> void:
-	P.kind.append(kind)
-	P.px.append(p[0])
-	P.py.append(p[1])
-	P.pz.append(p[2])
-	P.rad.append(radius)
-	P.n += 1
 
 
 static func _tryPlace(P: Planet, r: SimRng, kind: int, radius: float, tries: int, polar: bool) -> bool:
@@ -163,14 +139,7 @@ static func _filterPolar(P: Planet) -> Array:
 	return dropped
 
 
-## A place's weight is its area (radius squared), so a city holds about seven towns' people (as Bellgate and the villages do).
-static func _finishPeople(P: Planet) -> void:
-	P.people.resize(P.n)
-	for i in range(P.n):
-		P.people[i] = int(P.rad[i] * P.rad[i] / 1000000.0 * 100.0)
-
-
-''' + s[b:]
+''' + keep + s[b:]
     # ---- _placeAll uses the helpers
     a = s.index("static func _placeAll(P: Planet) -> void:")
     b = s.index("## The people of a place at full, by weight")
@@ -317,8 +286,8 @@ class PlaceJob extends RefCounted:
 	var total: int = 0            # the first pass's candidates: the progress denominator
 
 	func _init(seed: int) -> void:
-		if WorldPlanet._planets.has(seed):
-			P = WorldPlanet._planets[seed]
+		if WorldPlanet._planets.has(seed) or not WorldPlanet.storyFor(seed).is_empty():
+			P = WorldPlanet.make(seed)   # memoised, or a story planet: its places are stored, there is nothing to place
 			done = true
 			return
 		var c: Dictionary = WorldPlanet.cfg()

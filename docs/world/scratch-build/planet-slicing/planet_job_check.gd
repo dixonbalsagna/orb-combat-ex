@@ -35,7 +35,7 @@ func _init() -> void:
 	ok(ord.size() == SimConst.NC and seen.size() == SimConst.NC and ord[0] == WorldPlanet.TOUCH_COL and ord[1] == WorldPlanet.TOUCH_COL + 1 and ord[2] == WorldPlanet.TOUCH_COL - 1, "the columns come nearest the touch-down first, each once (%d)" % ord.size())
 	# ---- the places: a job gives the planet the whole call gives, for any chunk
 	WorldPlanet.forget()
-	var Pw: WorldPlanet.Planet = WorldPlanet.make(7)
+	var Pw: WorldPlanet.Planet = WorldPlanet.make(13)   # a planet with no story entry: Everhold's places are stored, there is nothing to step
 	var want: String = placesKey(Pw)
 	var p11w: WorldPlanet.Planet = WorldPlanet.make(11)
 	var want11: String = placesKey(p11w)
@@ -43,14 +43,14 @@ func _init() -> void:
 	var chunks := [1, 37, 1000000]
 	for ch in chunks:
 		WorldPlanet.forget()
-		var job := WorldPlanet.PlaceJob.new(7)
+		var job := WorldPlanet.PlaceJob.new(13)
 		var guard: int = 0
 		while not job.done and guard < 100000:
 			job.step(ch)
 			guard += 1
 		if placesKey(job.P) != want:
 			allSame = false
-	ok(allSame, "the places of planet 7 are the same bits stepped by 1, 37 or all at once")
+	ok(allSame, "the places of planet 13 are the same bits stepped by 1, 37 or all at once")
 	WorldPlanet.forget()
 	var j11 := WorldPlanet.PlaceJob.new(11)
 	while not j11.done:
@@ -58,6 +58,9 @@ func _init() -> void:
 	ok(placesKey(j11.P) == want11, "and planet 11's")
 	var memo := WorldPlanet.PlaceJob.new(11)
 	ok(memo.done and memo.P == j11.P, "a finished planet is memoised: the next job is done at once")
+	WorldPlanet.forget()
+	var story := WorldPlanet.PlaceJob.new(7)
+	ok(story.done and story.P.n == 42, "a story planet (Everhold) is done at once: its places are stored")
 	# ---- the pick
 	WorldPlanet.forget()
 	var P: WorldPlanet.Planet = WorldPlanet.make(7)
@@ -149,14 +152,18 @@ func _init() -> void:
 	ok(lj.done and lj.ok and WorldPlanet.sliceHash(lj.slice) == wantHash and ref == lj.slice, "a load job (planet, pick, slice) finishes in %d frames of 30 units to the same slice, and the memo holds it" % frames)
 	ok(lj.slice != null and not lj.slice.provisional and lj.progress() == 1.0, "and reports done")
 	WorldPlanet.forget()
-	var lj2 := WorldPlanet.beginLoad(7, 3)
+	var P13: WorldPlanet.Planet = WorldPlanet.make(13)   # no story entry: the places are generated, so the load has a first stage to step through
+	var pr13: Dictionary = WorldPlanet.pick(P13, 3)
+	var want13: int = WorldPlanet.sliceHash(WorldPlanet.readSlice(P13, pr13.circle, pr13.T))
+	WorldPlanet.forget()
+	var lj2 := WorldPlanet.beginLoad(13, 3)
 	lj2.step(5)
 	var prov: bool = lj2.stage == 0
 	lj2.step(9000)
 	var sawProv: bool = lj2.slice != null and lj2.slice.provisional
 	lj2.finishNow()
-	ok(prov and sawProv and lj2.done and WorldPlanet.sliceHash(lj2.slice) == wantHash, "finishNow after a partial step gives the same bits (a skipped intro does not skip the load)")
-	var lj3 := WorldPlanet.beginLoad(7, 3)
+	ok(prov and sawProv and lj2.done and WorldPlanet.sliceHash(lj2.slice) == want13, "finishNow after a partial step gives the same bits (a skipped intro does not skip the load)")
+	var lj3 := WorldPlanet.beginLoad(13, 3)
 	ok(lj3.done and lj3.slice == lj2.slice, "a load of a slice already memoised is done at once")
 	# a touch-down with no slice: ok is false and the job ends
 	WorldPlanet.forget()
