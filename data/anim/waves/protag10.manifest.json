@@ -22,6 +22,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [
     "hands_open_or_claw",
     "no_held_raise",
@@ -62,6 +63,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [
     "hands_open_or_claw"
    ],
@@ -87,8 +89,8 @@
    "target": "gut",
    "limb": "foot_r",
    "limb2": null,
-   "offset": 54,
-   "reach": 90,
+   "offset": 66,
+   "reach": 102,
    "band": "mid",
    "ticks": {
     "load": 28,
@@ -100,6 +102,7 @@
     "legs": 1
    },
    "from": null,
+   "named": false,
    "legal": [],
    "look": "PROVISIONAL. A stepping kick with the edge of the foot: compact, hands up, the whole body carried a pace behind one straight leg to the gut.",
    "orig": "PROVISIONAL: a stepping kick with the edge of the foot: the leg chambered close, hands up, the body carried a pace behind one straight leg into the gut",
@@ -136,6 +139,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [
     "hands_open_or_claw"
    ],
@@ -161,8 +165,8 @@
    "target": "gut",
    "limb": "foot_r",
    "limb2": null,
-   "offset": 50,
-   "reach": 86,
+   "offset": 58,
+   "reach": 94,
    "band": "mid",
    "ticks": {
     "load": 28,
@@ -174,6 +178,7 @@
     "legs": 1
    },
    "from": null,
+   "named": false,
    "legal": [],
    "look": "PROVISIONAL. An unwinding kick with the edge of the foot: the leg crossed over his own centre, the chin over his shoulder, the body opening out as the foot comes back through the gut.",
    "orig": "PROVISIONAL: an unwinding kick with the edge of the foot: the leg crossed over his own centre with the chin over his shoulder, the body opening out as the foot comes back through the gut",
@@ -210,6 +215,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [
     "hands_open_or_claw",
     "no_leap"
@@ -249,6 +255,7 @@
     "legs": 1
    },
    "from": null,
+   "named": false,
    "legal": [
     "no_leap"
    ],
@@ -287,6 +294,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [
     "no_clasp",
     "no_held_raise"
@@ -326,6 +334,7 @@
     "legs": 1
    },
    "from": null,
+   "named": false,
    "legal": [
     "no_clasp"
    ],
@@ -364,6 +373,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [
     "single_turn",
     "hands_open_or_claw"

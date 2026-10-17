@@ -639,13 +639,6 @@
     6.3
    ]
   },
-  "w1.hammer.contact": {
-   "pole_hand_l": [
-    -4.0,
-    15.5,
-    -0.3
-   ]
-  },
   "w1.hammer.follow": {
    "pole_hand_l": [
     7.0,
@@ -721,13 +714,6 @@
     -0.8
    ]
   },
-  "w1.spear_hand.contact": {
-   "pole_hand_l": [
-    -6.7,
-    14.4,
-    2.2
-   ]
-  },
   "w1.spinning_heel.contact": {
    "pole_hand_l": [
     11.3,
@@ -740,13 +726,6 @@
     -2.4,
     -15.0,
     5.1
-   ]
-  },
-  "w1.sweep.contact": {
-   "pole_hand_r": [
-    -3.0,
-    13.4,
-    8.2
    ]
   },
   "w1.twin_spear.contact": {

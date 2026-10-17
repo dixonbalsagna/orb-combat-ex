@@ -29,6 +29,18 @@ static var pair_live: bool = true           # the launch pair play their own wav
 static var hand_tips: bool = true             # a blow shows the hand state of its tip (data/anim/tips.json: the rival's heavies close to a fist); --no-hand-tips switches it off
 static var intro_gestures: bool = true         # the sim's intro_gesture events play the fighter's own motion for the intent (docs/animation/intro-gestures.md); inert until the composer sends them; --no-intro-gestures switches it off
 static var strength_styles: bool = false      # force a brawl beat's strength and burst number over the beat's own explicit `style` (`speed` for a light, `heavy` for a wound blow): the nine cells' looks (Y the medium row, B the super row, a held X's blows the burst row, the wind-ups whole, the held charge, the armour read) on a sim that still stamps the style. false (the shipped default) is today's picture.
+static var fighter_ease: bool = true          # each fighter's own ease rows (data fighters.json `ease`): fluid arcs for one, snappy lines for the other, inside the one clock; false is the before
+static var free_arm_slew: bool = true         # the free arm of a blow turns at a bounded rate (data joints.json slew); false is the before
+static var source_limits: bool = true          # the contact solve and the join smoothing keep their limbs inside the joint limits themselves (no hard correction left for the last pass); false is the before
+static var hand_retreat: bool = true          # a hand blow whose target is behind the shoulder gives ground the same way (its own switch: Combat rules on it, and the answer is data too, limbs.hand.min_fwd 0); false is the before
+static var rd_variety: bool = true           # RG0 (docs/animation/ragdoll-physics-paper.md): each launch flails its own way (a hash of the slot and the launch number) and a bounce folds or arches by the side that hit; false is the before
+static var rd_weight: bool = true            # RG1: the ragdoll has weight: impulses by the opponent's tier over the body's mass, and a blow travels down the body (head first, legs last); false is the before
+static var rd_oop: bool = false             # RG3: six more degrees of freedom out of the plane (spine twist and side bend, head roll, each upper arm's twist, the pelvis's twist): a flailing body turns about its long axis as a rag does. Off by default until Orb has seen the before and after; --rd-oop switches it on
+static var air_brake: bool = true            # RG2: the sim's air brake braces a launched fighter against his velocity (an `air_brake` event; inert without one); --no-air-brake is the before
+static var chain_poses: bool = true          # RG4: World's interior contacts and its lodge play the ceiling's slam and rebound and the climb out (data/anim/chain.json); inert without those events; --no-chain-poses is the before
+static var kick_retreat: bool = true          # a kick whose hips are past its target gives ground instead of swinging the thigh back through its limit (data sockets.json limbs.foot.min_fwd); false is the before
+static var mash_press: bool = true            # a run of mashed blows leans in (data styles.<style>.press_run); false is the before
+static var march: bool = true                  # a mashed heavy takes a footfall (data styles.super.march); false is the before
 static var dig_in: bool = true               # the held X digs in: the legs keep the set pose through a burst's stream (data styles.burst.dig); false is the before
 static var plain_pin: bool = true              # a plain light (one light, no flurry, no chain) keeps its hand set on the target for the data's `beat.plain_light.pin_ticks` while the body goes on (the perfect follow-up's window opens as it lets go); a beat's own `plain: true` does the same. false is today's picture
 static var hook_seen: bool = false            # set by the first brawl beat that carries a strength and no style row of its own: Encounter's hook (the brawl asks by cell and no longer names a style) has landed, so the nine cells' looks are the picture with no switch to flip
@@ -102,6 +114,12 @@ static func _read_args() -> void:
 			intro_poses = false
 		elif a == "--no-ground-poses":
 			ground_poses = false
+		elif a == "--rd-oop":
+			rd_oop = true
+		elif a == "--no-air-brake":
+			air_brake = false
+		elif a == "--no-chain-poses":
+			chain_poses = false
 		elif a == "--step3-cues":
 			step3_cues = true
 		elif a == "--no-step3-cues":
@@ -215,6 +233,21 @@ static func consume(S: SimState, events: Array) -> void:
 					var dxc: float = absf(SimWrap.sdx(f.x, float(e.x)))
 					if dxc < 700.0:
 						fighter(S, f).on_shock(S.T, clampf(float(_ev(e, "energy", 1.0)) / 8.0, 0.2, 1.0) * (1.0 - dxc / 700.0))
+			"interior_contact":
+				# World's contact inside a building (kind the surface: face, floor, ceiling or wall; the normal nx, ny; vn, vt; punch: the slab broke; stop the ticks held): docs/animation/ragdoll-physics-paper.md section 5
+				var ic: int = int(_ev(e, "actor", -1))
+				if ic >= 0 and ic < S.fighters.size():
+					fighter(S, S.fighters[ic]).on_interior_contact({"surface": String(_ev(e, "kind", "floor")), "nx": float(_ev(e, "nx", 0.0)), "ny": float(_ev(e, "ny", 1.0)), "vn": float(_ev(e, "vn", 0.0)), "vt": float(_ev(e, "vt", 0.0)), "punch": bool(_ev(e, "punch", false)), "stop": int(_ev(e, "stop", 0))}, S.T)
+			"lodge":
+				# the last building of a chain holds him (hold seconds): the slump, the climb out and the stand
+				var lg: int = int(_ev(e, "actor", -1))
+				if lg >= 0 and lg < S.fighters.size():
+					fighter(S, S.fighters[lg]).on_lodge(float(_ev(e, "hold", 0.6)), S.T)
+			"air_brake":
+				# the sim's brake in the air (text start or end, kind the reason, amount the speed at the start)
+				var ba: int = int(_ev(e, "actor", -1))
+				if ba >= 0 and ba < S.fighters.size():
+					fighter(S, S.fighters[ba]).on_air_brake(String(_ev(e, "text", "")), String(_ev(e, "kind", "")), float(_ev(e, "amount", 0.0)), S.T)
 			"skim":
 				# a launched fighter skipped off water: the event carries no actor, so it is the launched one at that x
 				for f in S.fighters:
@@ -321,6 +354,10 @@ static func consume(S: SimState, events: Array) -> void:
 							fighter(S, S.fighters[ic]).on_launcher_close(String(e.text))
 					elif kd == "charge_full":
 						fighter(S, S.fighters[who]).on_charge_full(t_cue)
+					elif kd == "tech":
+						fighter(S, S.fighters[who]).on_tech(t_cue)   # the rival's tech in the air (the chase's answer): a guard press timed to the chaser's arrival
+					elif kd == "chase":
+						fighter(S, S.fighters[who]).on_chase(String(e.text), int(roundf(float(_ev(e, "k", 0.0)))), int(_ev(e, "n", 0)), t_cue, S.tick)
 					elif kd == "windup":
 						fighter(S, S.fighters[who]).on_windup(String(e.text), String(_ev(e, "source", "")), float(_ev(e, "dur", 0.0)), int(_ev(e, "n", 0)), int(roundf(float(_ev(e, "k", 0.0)))), t_cue, S.tick)
 					elif kd == "miss":
@@ -353,7 +390,11 @@ static func consume(S: SimState, events: Array) -> void:
 							dm = Vector2(dw.x * fighter(S, vf).vface, dw.y).normalized()
 					var vfa: AnimFighter = fighter(S, vf)
 					vfa.armoured = RenderAnim.second_pass() and bool(DirBrawl.winding(S, vf).get("armoured", false))   # a heavy winding or charging: a light does not shift him (the nine cells)
-					vfa.on_hit(S.T, String(e.region), front, float(e.amount) / 70.0, String(e.kind), dm, float(e.amount) / 60.0, S.tick)
+					# the tenth round: a plain light's hit is held (the attacker's hand stays on him for its pin: the flinch hangs that long); a duel of perfects' amplified send carries its level (`duel`, absent today)
+					var hang: float = 0.0
+					if a >= 0 and a < S.fighters.size() and String(e.kind) == "light":
+						hang = clampf(fighter(S, S.fighters[a])._pin_until - S.T, 0.0, 0.2)
+					vfa.on_hit(S.T, String(e.region), front, float(e.amount) / 70.0, String(e.kind), dm, float(e.amount) / 60.0, S.tick, hang, int(_ev(e, "duel", 0)))
 					if String(e.kind) == "guard" and a >= 0 and a < S.fighters.size():
 						fighter(S, S.fighters[a]).on_blocked(S.T)
 

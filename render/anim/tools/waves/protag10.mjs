@@ -7,9 +7,9 @@ const OPEN = { hands: { r: 'open', l: 'open' } };
 const NEW = {
   su_drive: { like: 'double_hammer', limb: 'hand', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. He rises tall with one palm at his shoulder, the other hand up in guard, then comes down with his whole weight and the palm falls onto the chest.' },
   su_turn: { like: 'haymaker', limb: 'hand', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. A full turn of the body, one blade hand swung out at the end of it, the rear foot trailing.' },
-  su_edge_step: { like: 'front_kick', limb: 'foot', target: 'gut', weight: 'heavy', look: 'PROVISIONAL. A stepping kick with the edge of the foot: compact, hands up, the whole body carried a pace behind one straight leg to the gut.' },
+  su_edge_step: { like: 'front_kick', off: 12, limb: 'foot', target: 'gut', weight: 'heavy', look: 'PROVISIONAL. A stepping kick with the edge of the foot: compact, hands up, the whole body carried a pace behind one straight leg to the gut.' },
   su_blade_jaw: { like: 'spear_hand', limb: 'hand', target: 'jaw', weight: 'heavy', look: 'PROVISIONAL. A stepping blade hand: the striking side drawn back close to him, then one straight line to the jaw as the body steps through; a strike, never a grip.' },
-  su_edge_unwind: { like: 'roundhouse', limb: 'foot', target: 'gut', weight: 'heavy', look: 'PROVISIONAL. An unwinding kick with the edge of the foot: the leg crossed over his own centre, the chin over his shoulder, the body opening out as the foot comes back through the gut.' },
+  su_edge_unwind: { like: 'roundhouse', off: 8, limb: 'foot', target: 'gut', weight: 'heavy', look: 'PROVISIONAL. An unwinding kick with the edge of the foot: the leg crossed over his own centre, the chin over his shoulder, the body opening out as the foot comes back through the gut.' },
   su_palm_heave: { like: 'uppercut', limb: 'hand', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. A heaving palm: sunk deep with the palm loaded low and the other hand up, both legs drive it up into the chest; no leap, the arm lowers at once.' },
   su_ball_heave: { like: 'front_kick', limb: 'foot', target: 'gut', weight: 'heavy', look: 'PROVISIONAL. A heaving kick with the ball of the foot: sunk deep on the standing leg, the legs drive him up and the foot up into the gut; the standing foot keeps its place.' },
   su_hammer_arm: { like: 'hammer', limb: 'hand', target: 'arm_r', weight: 'heavy', look: 'PROVISIONAL. A falling hammer fist to the arm: risen tall with one fist at his shoulder, the body comes down and the fist drops onto the rival arm; back in his guard at once.' },
@@ -23,7 +23,7 @@ export function rows(wave1) {
     const b = by[o.like];
     // one limb, one arm or one leg: the base row's second limb and `uses` are the double hammer's, which su_drive is not (Legal RL-133: drawn and worded as one arm)
     return { ...b, id: 'strike.' + n, limb: o.limb, limb2: null, uses: (o.limb === 'foot' || o.limb === 'knee') ? { legs: 1 } : { arms: 1 }, target: o.target, weight: o.weight, look: o.look,
-      range: { ...b.range, lunge: Math.round(b.range.lunge * 1.25), reach: Math.round(b.range.reach * 1.1) }, ticks: { load: 28, follow: 8, recover: 14 },
+      range: { ...b.range, offset: b.range.offset + (o.off || 0), lunge: Math.round(b.range.lunge * 1.25), reach: Math.round(b.range.reach * 1.1) + (o.off || 0) }, ticks: { load: 28, follow: 8, recover: 14 },
       _estimate: 'PROVISIONAL: range and ticks borrowed from strike.' + o.like + ' (lunge 1.25 times, reach 1.1 times); the load is the 28-tick wind-up of B (docs/design/brawl-second-pass.md) for the look study' };
   });
 }

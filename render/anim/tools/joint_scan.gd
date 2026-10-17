@@ -17,6 +17,7 @@ const DT := 1.0 / 60.0
 var seeds: Array = [4, 12345, 7, 99]
 var max_ticks: int = 3000
 var json_out: String = ""
+var bodies: int = 2     # --bodies=N: N-2 stand-ins in a ring about the pair (AnimMany: one versus many), scanned in the live source with the real two
 var strict: bool = false
 var nopass: bool = false
 var legacy: bool = false
@@ -30,7 +31,9 @@ var report: Dictionary = {}
 
 func _initialize() -> void:
 	for a in OS.get_cmdline_user_args():
-		if a.begins_with("--seeds="):
+		if a.begins_with("--bodies="):
+			bodies = clampi(int(a.substr(9)), 2, 5)
+		elif a.begins_with("--seeds="):
 			seeds = Array(a.substr(8).split(",")).map(func(s): return int(s))
 		elif a.begins_with("--ticks="):
 			max_ticks = int(a.substr(8))
@@ -106,8 +109,13 @@ func _live() -> void:
 	for seed in seeds:
 		main.start_match(seed, {"p1": true, "p2": true})
 		var S: SimState = main.host.S
+		var stands: Array = AnimMany.make(S, bodies - 2) if bodies > 2 else []
 		while main.host.ticks < max_ticks and not (S.game.ko != null and S.game.koT > 3.0):
+			if not stands.is_empty():
+				AnimMany.detach(S, stands)   # the sim never steps with a stand-in in its list
 			main.frame(DT)
+			if not stands.is_empty():
+				AnimMany.step(S, stands, DT)
 			for f in S.fighters:
 				var af: AnimFighter = RenderAnim.fighter(S, f)
 				if af.version == 0:

@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-chain",
+  "title": "anim-chain (schema \"anim.chain/1\")",
+  "description": "data/anim/chain.json: Inferred by the EP with Tools' helper from Animation's file; Animation tightens values.. A shape check inferred from the file (docs/tools/pending/infer-schema.cjs): every key present is required, a key outside is refused unless it starts with an underscore, a number is bounded only below by zero where all its values are, a colour is a hex string; the owner tightens the values. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "ceiling",
+    "face_stop_ticks",
+    "lodge_climb_ticks",
+    "poses",
+    "rules"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.chain/1"
+    },
+    "ceiling": {
+      "type": "object",
+      "required": [
+        "ref",
+        "min"
+      ],
+      "properties": {
+        "ref": {
+          "type": "number",
+          "minimum": 0
+        },
+        "min": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "face_stop_ticks": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "lodge_climb_ticks": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "poses": {
+      "type": "object",
+      "required": [
+        "slam",
+        "rebound",
+        "climb"
+      ],
+      "properties": {
+        "slam": {
+          "type": "string"
+        },
+        "rebound": {
+          "type": "string"
+        },
+        "climb": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "rules": {
+      "type": "object",
+      "required": [
+        "ceiling_keep",
+        "floor_through_keep",
+        "max_contacts",
+        "max_bounces",
+        "cap_seconds"
+      ],
+      "properties": {
+        "ceiling_keep": {
+          "type": "number",
+          "minimum": 0
+        },
+        "floor_through_keep": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max_contacts": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max_bounces": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cap_seconds": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

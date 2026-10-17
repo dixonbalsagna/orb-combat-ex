@@ -20,6 +20,7 @@ var strict: bool = false
 var max_bad: int = 0
 var json_out: String = ""
 var n_examples: int = 14
+var bodies: int = 2     # --bodies=N: N-2 stand-ins in a ring about the pair (AnimMany: one versus many), scanned with the real two
 var main: Node
 
 
@@ -37,6 +38,8 @@ func _initialize() -> void:
 			json_out = a.substr(7)
 		elif a.begins_with("--examples="):
 			n_examples = int(a.substr(11))
+		elif a.begins_with("--bodies="):
+			bodies = clampi(int(a.substr(9)), 2, 5)
 		elif a.begins_with("--max="):
 			max_bad = int(a.substr(6))
 		elif a == "--strict":
@@ -69,14 +72,20 @@ func _run() -> void:
 	var fast := 0
 	var bad := 0
 	var allowed := 0
+	var braked := 0
 	var by_key: Dictionary = {}
 	var examples: Array = []
 	var prev: Dictionary = {}
 	for seed in seeds:
 		main.start_match(seed, {"p1": true, "p2": true})
 		var S: SimState = main.host.S
+		var stands: Array = AnimMany.make(S, bodies - 2) if bodies > 2 else []
 		while main.host.ticks < max_ticks and not (S.game.ko != null and S.game.koT > 3.0):
+			if not stands.is_empty():
+				AnimMany.detach(S, stands)   # the sim never steps with a stand-in in its list
 			main.frame(DT)
+			if not stands.is_empty():
+				AnimMany.step(S, stands, DT)
 			for f in S.fighters:
 				var af: AnimFighter = RenderAnim.fighter(S, f)
 				if af.version == 0:
@@ -100,6 +109,9 @@ func _run() -> void:
 					continue   # a steep fall feet first is a landing, upright: not laid out along the flight line
 				if not (f.state == "launched" and f.slide <= 0.0) and absf(ax.y) > 0.64:
 					continue   # on his feet or driven back in an exchange and tilted under 50 degrees from upright: leaning, not laid out
+				if af.braking():
+					braked += 1   # braced against the velocity on the sim's air brake: feet leading is right for these frames, counted apart
+					continue
 				var tumbling: bool = absf(f.spin) > tumble_min   # the sim spins the body (a launched one, or a locked fighter thrown on a bounce): a tumble in any state
 				if tumbling:
 					allowed += 1
@@ -109,9 +121,11 @@ func _run() -> void:
 				by_key[key] = int(by_key.get(key, 0)) + 1
 				if examples.size() < n_examples:
 					examples.append("seed %d tick %d fighter %d: %s speed %.0f v (%.0f, %.0f) sim v (%.0f, %.0f) rot %.0f deg spin %.1f face %.0f (sim %.0f) axis (%.2f, %.2f) axis.vel %.2f lead w %.2f d %.0f phi %.0f hold '%s' ag %s toward-rival %.0f" % [seed, S.tick, S.fighters.find(f), key, sp, v.x, v.y, f.vx, f.vy, rad_to_deg(f.rot), f.spin, af.vface, f.face, ax.x, ax.y, lead, float(af.debug.get("lead_w", 0.0)), rad_to_deg(float(af.debug.get("lead_d", 0.0))), rad_to_deg(float(af.debug.get("lead_phi", 0.0))), af._ag_hold, (af._ag_kind if af._ag_t0 >= 0.0 else "-"), signf(SimWrap.sdx(f.x, S.fighters[1 - S.fighters.find(f)].x))])
+		if not stands.is_empty():
+			AnimMany.detach(S, stands)
 		print("seed %d done" % seed)
 	print("\n== feet first (speed over %.0f, not a tumble over %.1f rad/s) ==" % [speed_min, tumble_min])
-	print("fighter-frames %d, fast %d, feet leading in a tumble (allowed) %d, feet leading and not a tumble %d" % [frames, fast, allowed, bad])
+	print("fighter-frames %d, fast %d, feet leading in a tumble (allowed) %d, feet leading and not a tumble %d, braking in the air (exempt) %d" % [frames, fast, allowed, bad, braked])
 	var keys: Array = by_key.keys()
 	keys.sort_custom(func(a, b): return by_key[a] > by_key[b])
 	for k in keys:

@@ -1,0 +1,23 @@
+{
+  "schema": "anim.throws/1",
+  "_about": "The throws of the grapple on A, by the send (docs/combat/grapple-hybrid.md section 2): for each send (across toward, across away, down, up) the thrower's sequence for each fighter (the wave pair3, render/anim/tools/waves/pair3.mjs, prefix zq: the load, the release and the follow, the thrower's own side only; the held body is the sim's and the ragdoll's). Nothing plays them until the sim has a held state and the grip layer (docs/animation/clinch-sizing.md slice C2) puts the hands on the rival's body; the data is here so the layer, the scans and Combat's table agree. Render only, outside the sim's data hash.",
+  "sends": {
+    "across_toward": {"protagonist": "zq.hurl", "antihero": "zq.sling"},
+    "across_away": {"protagonist": "zq.turn_throw", "antihero": "zq.back_throw"},
+    "across_none": {"protagonist": "zq.hurl", "antihero": "zq.sling"},
+    "down": {"protagonist": "zq.drive_down", "antihero": "zq.spike"},
+    "up": {"protagonist": "zq.lift", "antihero": "zq.jolt"}
+  },
+  "grip": {
+    "_note": "where each throw's hands take hold on the rival (the regions in sockets.json); the clinch's grip layer will solve each hand onto its region",
+    "zq.hurl": {"hand_r": "collar_r", "hand_l": "waist"},
+    "zq.sling": {"hand_r": "collar_r"},
+    "zq.turn_throw": {"hand_r": "collar_r"},
+    "zq.back_throw": {"hand_r": "waist", "hand_l": "waist"},
+    "zq.drive_down": {"hand_r": "upper_arm_r", "hand_l": "upper_arm_l"},
+    "zq.spike": {"hand_r": "collar_r"},
+    "zq.lift": {"hand_r": "shoulder_r", "hand_l": "shoulder_l"},
+    "zq.jolt": {"hand_r": "collar_r"}
+  },
+  "wrists_apart_min": 16
+}

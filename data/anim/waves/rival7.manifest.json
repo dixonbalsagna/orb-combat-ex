@@ -22,6 +22,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [],
    "look": "PROVISIONAL. A long low lunge, the whole body behind one straight fist.",
    "orig": "PROVISIONAL: a long low lunge, the whole body behind one straight fist",
@@ -45,7 +46,7 @@
    "target": "chest",
    "limb": "foot_r",
    "limb2": null,
-   "offset": 48,
+   "offset": 72,
    "reach": 75,
    "band": "mid",
    "ticks": {
@@ -58,6 +59,7 @@
     "legs": 1
    },
    "from": null,
+   "named": false,
    "legal": [],
    "look": "PROVISIONAL. The leg raised high, the heel dropped from above onto the chest, the body folding over it.",
    "orig": "PROVISIONAL: the leg raised high, the heel dropped from above onto the chest, the body folding over it",
@@ -94,6 +96,7 @@
     "legs": 1
    },
    "from": null,
+   "named": false,
    "legal": [],
    "look": "PROVISIONAL. A stepping knee: the striking side drawn back, the whole body travels a pace and the knee arrives in the gut as the foot lands.",
    "orig": "PROVISIONAL: a stepping knee, the striking side drawn back at shoulder height and the other hand open toward the rival, the body carried a full pace behind the knee",
@@ -130,6 +133,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [
     "hands_open_or_claw"
    ],
@@ -168,6 +172,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [],
    "look": "PROVISIONAL. A turning fist: the shoulders wound away in a low stance, then unwound through the jaw.",
    "orig": "PROVISIONAL: a turning fist from a low stance, the shoulders wound away with the fist behind him, unwound through the jaw and ending across his own centre",
@@ -204,6 +209,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [],
    "look": "PROVISIONAL. A heaving elbow: sunk deep with the elbow loaded low, the other hand up; the legs drive him tall and the elbow up the centre line; his feet keep their place.",
    "orig": "PROVISIONAL: a heaving elbow: sunk deep with the elbow loaded low and the other hand up in guard, both legs drive him tall with the elbow up the centre line; his feet keep their place",
@@ -240,6 +246,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [
     "no_leap"
    ],
@@ -278,6 +285,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [
     "no_clasp",
     "no_held_raise"
@@ -317,6 +325,7 @@
     "legs": 1
    },
    "from": null,
+   "named": false,
    "legal": [],
    "look": "PROVISIONAL. A stepping kick with the edge of the foot, low: the leg chambered close and the whole body carried a pace behind it, one straight line into the rival legs; chin up, a show of it.",
    "orig": "PROVISIONAL: a stepping low kick with the edge of the foot: the leg chambered close, the body carried a pace behind one straight leg, the edge into the rival legs",
@@ -353,6 +362,7 @@
     "arms": 1
    },
    "from": null,
+   "named": false,
    "legal": [
     "hands_open_or_claw",
     "no_clasp",

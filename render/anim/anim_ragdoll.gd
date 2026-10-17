@@ -7,14 +7,16 @@ extends RefCounted
 ## an early-launch limb flail, and by impulses (a crumple, a hit). It is stepped once per sim tick, never per frame, so the
 ## picture is the same in a replay at any frame rate, draws no random number and writes nothing to the sim.
 
-const N := 12
+const N := 18          # the first 12 are the sagittal ones; the last 6 (flagged oop in the data) are out of the plane and run only with RenderAnim.rd_oop
+const N_BASE := 12
 const REGIONS := {"head": 0, "core": 1, "arms": 2, "legs": 3}
 
 static var loaded: bool = false
 static var bone_a := PackedInt32Array()
 static var bone_b := PackedInt32Array()
 static var share_a := PackedFloat32Array()
-static var is_x := PackedByteArray()
+static var is_x := PackedByteArray()           # the sideways partner of the degree before it (a shoulder's sweep): solved with it as one turn
+static var axis_c := PackedByteArray()         # the axis of each degree of freedom: 0 z, 1 x, 2 y
 static var beta_c := PackedFloat32Array()
 static var beta_s := PackedFloat32Array()
 static var k_stiff := PackedFloat32Array()
@@ -28,6 +30,15 @@ static var tsg := PackedFloat32Array()
 static var tuck_t := PackedFloat32Array()      # the generic shape, used when a fighter has none of its own
 static var brace_t := PackedFloat32Array()
 static var crumple_k := PackedFloat32Array()
+static var arch_k := PackedFloat32Array()        # per degree of freedom: the multiplier of its crumple when the BACK met the surface (an arch, not a fold)
+static var var_hz: float = 0.18                  # RG0: how far one launch's flail may differ from the data's (shares of the frequency, the amplitude; radians of phase)
+static var var_phase: float = 0.6
+static var var_amp: float = 0.2
+static var side_dead: float = 0.25               # the side-of-hit score under which a crumple is a plain fold
+static var lag := PackedInt32Array()             # RG1: ticks a blow takes to reach each degree of freedom (it travels down the body)
+static var tier_gain := PackedFloat32Array()     # RG1: the multiplier on impulses and the flail by the opponent's power tier (index tier - 1)
+static var mass_of: Dictionary = {}              # RG1: roster id -> mass
+static var mass_exp: float = 1.0
 static var flail_amp := PackedFloat32Array()
 static var flail_hz := PackedFloat32Array()
 static var flail_fade := Vector2(0.35, 1.2)
@@ -66,6 +77,15 @@ var w_crumple: float = 0.0
 var w_flail: float = 0.0
 var shape := {}                # this fighter's tuck, brace, skid and crumple targets
 var phase: float = 0.0
+var fv_hz := PackedFloat32Array()              # this launch's own flail: a factor on each degree of freedom's frequency and amplitude, and a phase shift (set_flail_seed)
+var fv_amp := PackedFloat32Array()
+var fv_ph := PackedFloat32Array()
+var n_on: int = N_BASE                         # how many degrees of freedom run: all with RenderAnim.rd_oop, else the sagittal twelve
+var weighted: bool = false                     # RG1 on: impulses are scaled by tier and mass and arrive down the body by the lag (set each tick by the fighter)
+var mass: float = 1.0
+var tier: float = 1.0
+var _tick: int = 0
+var _pend: Array = []                          # [due tick, degree of freedom, impulse] waiting for the lag
 
 
 static func _varcode(s: String) -> int:
@@ -89,19 +109,23 @@ static func setup() -> void:
 	var dofs: Array = d.get("dofs", [])
 	bone_a.resize(N)
 	bone_b.resize(N)
-	for a in [share_a, beta_c, beta_s, k_stiff, k_loose, damp, drag, inertia, lo, hi, tsg, tuck_t, brace_t, crumple_k, flail_amp, flail_hz, hit_vx]:
+	for a in [share_a, beta_c, beta_s, k_stiff, k_loose, damp, drag, inertia, lo, hi, tsg, tuck_t, brace_t, crumple_k, arch_k, flail_amp, flail_hz, hit_vx]:
 		a.resize(N)
+	lag.resize(N)
+	tier_gain.resize(4)
 	for a in [hit_kx, hit_ky, hit_kc]:
 		a.resize(N * 4)
 	hit_vx_var.resize(N)
 	hit_kc_var.resize(N)
 	is_x.resize(N)
+	axis_c.resize(N)
 	for i in range(mini(N, dofs.size())):
 		var e: Dictionary = dofs[i]
 		bone_a[i] = AnimRig.index[String(e.bone)]
 		bone_b[i] = AnimRig.index[String(e.bone2)] if e.has("bone2") else -1
 		share_a[i] = float(e.get("share", 1.0))
-		is_x[i] = 1 if String(e.axis) == "x" else 0
+		is_x[i] = 1 if (String(e.axis) == "x" and not bool(e.get("oop", false))) else 0
+		axis_c[i] = 1 if String(e.axis) == "x" else (2 if String(e.axis) == "y" else 0)
 		beta_c[i] = cos(float(e.beta))
 		beta_s[i] = sin(float(e.beta))
 		k_stiff[i] = float(e.k_stiff)
@@ -115,6 +139,19 @@ static func setup() -> void:
 		tuck_t[i] = float(e.tuck)
 		brace_t[i] = float(e.brace)
 		crumple_k[i] = float(e.crumple)
+		arch_k[i] = float(e.get("arch", 1.0))
+		lag[i] = int(e.get("lag", 0))
+	var wd: Dictionary = m.get("weight", {})
+	mass_of = wd.get("mass", {})
+	mass_exp = float(wd.get("mass_exp", 1.0))
+	var tg: Array = wd.get("tier_gain", [1.0, 1.0, 1.0, 1.0])
+	for ti in range(4):
+		tier_gain[ti] = float(tg[mini(ti, tg.size() - 1)])
+	var vr: Dictionary = d.get("variety", {})
+	var_hz = float(vr.get("hz", 0.18))
+	var_phase = float(vr.get("phase", 0.6))
+	var_amp = float(vr.get("amp", 0.2))
+	side_dead = float(vr.get("side_dead", 0.25))
 	var dr: Dictionary = d.get("drive", {})
 	v0 = float(dr.get("v0", 1500.0))
 	a0 = float(dr.get("a0", 6000.0))
@@ -168,6 +205,13 @@ static func setup() -> void:
 
 
 func _init() -> void:
+	fv_hz.resize(N)
+	fv_amp.resize(N)
+	fv_ph.resize(N)
+	for k in range(N):
+		fv_hz[k] = 1.0
+		fv_amp[k] = 1.0
+		fv_ph[k] = 0.0
 	setup()
 	th.resize(N)
 	om.resize(N)
@@ -212,6 +256,7 @@ func reset() -> void:
 	w_skid = 0.0
 	w_crumple = 0.0
 	w_flail = 0.0
+	_pend.clear()
 
 
 ## One sim tick. v and a are the body's velocity (u/s) and non-gravitational acceleration (u/s^2) in the body frame (x
@@ -220,6 +265,18 @@ func reset() -> void:
 func step(dt: float, v: Vector2, a: Vector2, free_t: float, amp: float, tt: float) -> void:
 	# reduced motion also narrows every joint's range (a hard tumble saturates the limits at any amplitude, so the drive alone does not calm it)
 	var lk: float = REDUCED_LIMIT if amp < 0.999 else 1.0
+	_tick += 1
+	for zi in range(n_on, N):
+		th[zi] = 0.0
+		om[zi] = 0.0
+	if not _pend.is_empty():
+		var keep: Array = []
+		for pi in _pend:
+			if int(pi[0]) <= _tick:
+				om[int(pi[1])] += float(pi[2])
+			else:
+				keep.append(pi)
+		_pend = keep
 	free = move_toward(free, free_t, dt * free_rate)
 	var sp: float = clampf(v.length() / v0, 0.0, 2.0)
 	var h: float = dt * 0.5
@@ -232,13 +289,13 @@ func step(dt: float, v: Vector2, a: Vector2, free_t: float, amp: float, tt: floa
 	var wb: float = w_brace * amp
 	var ws: float = w_skid * amp
 	var wc: float = w_crumple * amp
-	var wf: float = w_flail * amp
+	var wf: float = w_flail * amp * gain()
 	for _s in range(2):
-		for i in range(N):
+		for i in range(n_on):
 			var kk: float = lerpf(k_stiff[i], k_loose[i], free)
 			var target: float = tsg[i] * sp * free + wt * s_tuck[i] + wb * s_brace[i] + ws * s_skid[i] + wc * s_crum[i]
 			if wf > 0.001:
-				target += wf * flail_amp[i] * sin(tt * TAU * flail_hz[i] + phase + float(i) * 1.7)
+				target += wf * flail_amp[i] * fv_amp[i] * sin(tt * TAU * flail_hz[i] * fv_hz[i] + phase + fv_ph[i] + float(i) * 1.7)
 			var nx: float = beta_c[i]
 			var ny: float = beta_s[i]
 			var drive: float = (-drag[i] * (v.x * nx + v.y * ny) / v0 - inertia[i] * (a.x * nx + a.y * ny) / a0) * g * amp
@@ -253,15 +310,57 @@ func step(dt: float, v: Vector2, a: Vector2, free_t: float, amp: float, tt: floa
 				om[i] = minf(om[i], 0.0)
 
 
+## RG1: the scale of an impulse and of the flail: the opponent's tier over the body's mass. 1 with weighting off.
+func gain() -> float:
+	if not weighted:
+		return 1.0
+	var tf: float = clampf(tier, 1.0, 4.0) - 1.0
+	var i0: int = int(floor(tf))
+	var i1: int = mini(i0 + 1, 3)
+	var tg: float = lerpf(tier_gain[i0], tier_gain[i1], tf - float(i0))
+	return tg / pow(maxf(mass, 0.2), mass_exp)
+
+
+## One impulse on one degree of freedom, scaled by gain() and, when weighted, held for the degree's lag so a blow travels down the body.
+func _imp(i: int, w: float) -> void:
+	if i >= n_on:
+		return
+	var v: float = w * gain()
+	if weighted and lag[i] > 0:
+		_pend.append([_tick + lag[i], i, v])
+	else:
+		om[i] += v
+
+
 ## An impulse on every degree of freedom along its crumple direction: a slam folds the body.
-func crumple(sev: float, amp: float) -> void:
+func crumple(sev: float, amp: float, side: float = 1.0) -> void:
+	# side: +1 the front met the surface (a fold, as always), -1 the back (an arch: the data's `arch` multiplier), between them a blend; 0 a head or a foot first
+	var m: float = clampf((side + 1.0) * 0.5, 0.0, 1.0)
 	for i in range(N):
-		om[i] += crumple_k[i] * sev * amp
+		_imp(i, crumple_k[i] * lerpf(arch_k[i], 1.0, m) * sev * amp)
+
+
+## RG0: the flail of this launch, from a hash of the fighter's slot, the launch number and the render's count of his flights (an integer hash, no random draw: the same launch flails the
+## same way in every replay). Called once as a flight begins; the factors it sets stay until the next one.
+func set_flail_seed(slot: int, launch_n: int, flights: int) -> void:
+	phase = hash01(slot, launch_n, flights * 7 + 1) * TAU
+	for i in range(N):
+		fv_hz[i] = 1.0 + var_hz * (2.0 * hash01(slot * 31 + i, launch_n, flights * 7 + 2) - 1.0)
+		fv_amp[i] = 1.0 + var_amp * (2.0 * hash01(slot * 31 + i, launch_n, flights * 7 + 3) - 1.0)
+		fv_ph[i] = var_phase * (2.0 * hash01(slot * 31 + i, launch_n, flights * 7 + 4) - 1.0)
+
+
+## 0 to 1 from three integers, by a fixed integer mix (the same on every machine: no float in the mix, no random generator).
+static func hash01(a: int, b: int, c: int) -> float:
+	var h: int = (a * 73856093) ^ (b * 19349663) ^ (c * 83492791)
+	h = (h ^ (h >> 13)) * 1274126177
+	h = (h ^ (h >> 16)) & 0x7fffffff
+	return float(h) / 2147483647.0
 
 
 ## An impulse on one degree of freedom (rad/s).
 func kick(i: int, w: float) -> void:
-	om[i] += w
+	_imp(i, w)
 
 
 ## The hit-reaction kicks from the data table: dx, dy the blow's push in the body frame, force the scaled strength (wear and
@@ -284,7 +383,7 @@ func hit(dx: float, dy: float, force: float, region: int, u: float, u2: float) -
 				cv = u2
 			3:
 				cv = 1.0
-		om[i] += f * (hit_k[i] if i < hit_k.size() else 1.0) * (hit_kx[k] * dx * (1.0 + hit_vx[i] * vv) + hit_ky[k] * dy + hit_kc[k] * cv)
+		_imp(i, f * (hit_k[i] if i < hit_k.size() else 1.0) * (hit_kx[k] * dx * (1.0 + hit_vx[i] * vv) + hit_ky[k] * dy + hit_kc[k] * cv))
 
 
 ## Adds the motion to the solved pose, shown at weight w; `scale` (one factor a degree of freedom, optional) lets a limb move less (a broken arm hangs heavy).
@@ -307,7 +406,7 @@ func apply(q: Array[Quaternion], w: float, scale: PackedFloat32Array = PackedFlo
 		if absf(t) < 0.0005 and absf(t2) < 0.0005:
 			i += adv
 			continue
-		var axis: Vector3 = Vector3(1, 0, 0) if is_x[i] == 1 else Vector3(0, 0, 1)
+		var axis: Vector3 = Vector3(1, 0, 0) if axis_c[i] == 1 else (Vector3(0, 1, 0) if axis_c[i] == 2 else Vector3(0, 0, 1))
 		if not limited:
 			if b2 < 0:
 				q[ab] = q[ab] * Quaternion(axis, t)

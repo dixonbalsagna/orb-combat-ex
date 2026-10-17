@@ -1,0 +1,292 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-throws",
+  "title": "anim-throws (schema \"anim.throws/1\")",
+  "description": "data/anim/throws.json: Inferred by the EP with Tools' helper from Animation's file; Animation tightens values.. A shape check inferred from the file (docs/tools/pending/infer-schema.cjs): every key present is required, a key outside is refused unless it starts with an underscore, a number is bounded only below by zero where all its values are, a colour is a hex string; the owner tightens the values. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "sends",
+    "grip",
+    "wrists_apart_min"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.throws/1"
+    },
+    "sends": {
+      "type": "object",
+      "required": [
+        "across_toward",
+        "across_away",
+        "across_none",
+        "down",
+        "up"
+      ],
+      "properties": {
+        "across_toward": {
+          "type": "object",
+          "required": [
+            "protagonist",
+            "antihero"
+          ],
+          "properties": {
+            "protagonist": {
+              "type": "string"
+            },
+            "antihero": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "across_away": {
+          "type": "object",
+          "required": [
+            "protagonist",
+            "antihero"
+          ],
+          "properties": {
+            "protagonist": {
+              "type": "string"
+            },
+            "antihero": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "across_none": {
+          "type": "object",
+          "required": [
+            "protagonist",
+            "antihero"
+          ],
+          "properties": {
+            "protagonist": {
+              "type": "string"
+            },
+            "antihero": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "down": {
+          "type": "object",
+          "required": [
+            "protagonist",
+            "antihero"
+          ],
+          "properties": {
+            "protagonist": {
+              "type": "string"
+            },
+            "antihero": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "up": {
+          "type": "object",
+          "required": [
+            "protagonist",
+            "antihero"
+          ],
+          "properties": {
+            "protagonist": {
+              "type": "string"
+            },
+            "antihero": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "grip": {
+      "type": "object",
+      "required": [
+        "zq.hurl",
+        "zq.sling",
+        "zq.turn_throw",
+        "zq.back_throw",
+        "zq.drive_down",
+        "zq.spike",
+        "zq.lift",
+        "zq.jolt"
+      ],
+      "properties": {
+        "zq.hurl": {
+          "type": "object",
+          "required": [
+            "hand_r",
+            "hand_l"
+          ],
+          "properties": {
+            "hand_r": {
+              "type": "string"
+            },
+            "hand_l": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "zq.sling": {
+          "type": "object",
+          "required": [
+            "hand_r"
+          ],
+          "properties": {
+            "hand_r": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "zq.turn_throw": {
+          "type": "object",
+          "required": [
+            "hand_r"
+          ],
+          "properties": {
+            "hand_r": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "zq.back_throw": {
+          "type": "object",
+          "required": [
+            "hand_r",
+            "hand_l"
+          ],
+          "properties": {
+            "hand_r": {
+              "type": "string"
+            },
+            "hand_l": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "zq.drive_down": {
+          "type": "object",
+          "required": [
+            "hand_r",
+            "hand_l"
+          ],
+          "properties": {
+            "hand_r": {
+              "type": "string"
+            },
+            "hand_l": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "zq.spike": {
+          "type": "object",
+          "required": [
+            "hand_r"
+          ],
+          "properties": {
+            "hand_r": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "zq.lift": {
+          "type": "object",
+          "required": [
+            "hand_r",
+            "hand_l"
+          ],
+          "properties": {
+            "hand_r": {
+              "type": "string"
+            },
+            "hand_l": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "zq.jolt": {
+          "type": "object",
+          "required": [
+            "hand_r"
+          ],
+          "properties": {
+            "hand_r": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "wrists_apart_min": {
+      "type": "integer",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

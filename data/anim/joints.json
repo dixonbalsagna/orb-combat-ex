@@ -162,6 +162,8 @@
   "straight_below_deg": 15.0,
   "bent_above_deg": 45.0,
   "arm_back_soft": 0.8,
-  "retarget_units": 12.0,
+  "retarget_units": 24.0,
+  "slew": {"free_arm_deg": 30},
+  "wing": {"fix": true, "runtime": 0.85, "suffixes": [".contact", ".follow", ".chamber"], "skip": ["ru.su_heel.follow"], "flex_deg": 50, "up": 2, "drop": 8, "margin": 4, "back": 4},
   "comfort_twist_deg": 75.0
 }

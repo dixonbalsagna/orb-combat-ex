@@ -49,6 +49,14 @@ const CUE_SCENARIOS := {
 	"cue_gave_ground": {"kind": "miss", "actor": 0, "target": -1, "text": "gave_ground", "span": 20, "label": "miss gave_ground: open for 20 ticks (the left one)"},
 	"cue_reach": {"kind": "miss", "actor": 0, "target": -1, "text": "reach", "span": 20, "label": "miss reach: open for 20 ticks (the left one)"},
 	"cue_dodge": {"kind": "miss", "actor": 0, "target": -1, "text": "dodge", "span": 20, "label": "miss dodge: open for 20 ticks (the left one)"},
+	"cue_tech": {"kind": "tech", "actor": 0, "target": -1, "text": "", "span": 14, "label": "the air tech (the tenth round's chase answer): thrown open, then tucked, 14 ticks (the left one)"},
+	"cue_chase": {"kind": "chase", "actor": 0, "target": -1, "text": "start", "span": 0, "end_k": 50, "end_text": "end", "label": "the chase: the chaser's dive from tick 10 to tick 50 (the left one)"},
+	"cue_cast_charge": {"kind": "beam", "actor": 0, "target": -1, "text": "charge", "span": 0, "label": "a beam charging (the left one): the fighter's own casting pose (data/anim/pair_live.json roles.<fighter>.beam)"},
+	"cue_cast_fire": {"kind": "beam", "actor": 0, "target": -1, "text": "fire", "span": 0, "label": "a beam fired (the left one): the fighter's own casting pose, the arm thrown out"},
+	"rd_launch": {"kind": "rd", "actor": 0, "target": -1, "text": "launch", "span": 0, "label": "a launch (the left one): a heavy blow at tick 6, then 84 ticks of flight with the ragdoll (RG0 to RG3: `window.__oop = 1` for the out-of-plane joints)"},
+	"rd_brake": {"kind": "rd", "actor": 0, "target": -1, "text": "brake", "span": 0, "label": "the mid-air skid (the left one): launched at 1,500 u/s, the sim's air brake from tick 30 to 60 (RG2)"},
+	"rd_poses": {"kind": "rd", "actor": 0, "target": -1, "text": "poses", "span": 0, "label": "pose sheet (the left one): the poses named in `window.__poses` (a comma list), ten ticks each, up to nine, standing in place"},
+	"cue_interject": {"kind": "windup", "actor": 0, "target": -1, "text": "interject", "span": 24, "dur": 24.0, "label": "an interjection's tell: the guard (the left one) shows a 24-tick wind-up"},
 }
 const PAL_A := {"body": Color("#3d8fdc"), "legs": Color("#1b1f2a"), "arms": Color("#e6b995"), "skin": Color("#efc7a2"), "gear": Color("#cdd6e4"), "accent": Color("#4fb9a8"), "hair": Color("#22c7a0")}
 const PAL_B := {"body": Color("#2a2043"), "legs": Color("#181228"), "arms": Color("#b98462"), "skin": Color("#b98462"), "gear": Color("#cbd3e2"), "accent": Color("#9a80d8"), "hair": Color("#1d1630")}
@@ -67,6 +75,9 @@ var near: bool = false          # RL-105: a close view, the dummy drawn `offset`
 var offset: float = 0.0
 var tier_style: String = "super"   # the style, the gap, the wind-up and the first contact of the tier scene (`window.__style`, `__gap`, `__windup`, `__first`): the energy-in-reach stills play the speed style at 6 ticks a blow
 var tier_gap: int = 80
+var rd_launch_n: int = 0
+var rd_opp_tier: float = 1.0
+var rd_poses: Array = []
 var tier_windup: int = 28
 var tier_first: int = 44
 var tier_hands_pk: Array = []   # the arm of each blow of a tier run (`window.__hands_pk`, `__hands_rk`: "r,r,l,..."): the free arm (l) mirrors the key set (Legal e09: the arm is chosen per throw)
@@ -82,6 +93,16 @@ var k: int = 0
 var n_ticks: int = 0
 var ex
 var sent: Array = []
+
+
+## a stand-in for the sim's beam, for the cast pose's stills (`_beam_layer` reads A, t, life and the direction)
+class FakeBeam extends RefCounted:
+	var A = null
+	var t: float = 0.0
+	var life: float = 1.0
+	var ux: float = 1.0
+	var uy: float = 0.0
+
 var acc: float = 0.0
 var adv_done: int = 0
 var ready_to_run: bool = false
@@ -110,6 +131,23 @@ func _ready() -> void:
 			only = "tier"
 	if OS.has_feature("web"):
 		cap = float(_js("window.__cap || 0", 0.0)) > 0.0
+		RenderAnim.fighter_ease = float(_js("window.__noease || 0", 0.0)) <= 0.0   # the moveset distinction's before: `window.__noease = 1`
+		if float(_js("window.__nolimits || 0", 0.0)) > 0.0:   # the homework 4 pass's before: the limbs left to the last pass, no giving ground, no free-arm rate limit
+			RenderAnim.source_limits = false
+			RenderAnim.kick_retreat = false
+			RenderAnim.hand_retreat = false
+			RenderAnim.free_arm_slew = false
+		if float(_js("window.__noab || 0", 0.0)) > 0.0:   # RG2's before: no mid-air skid
+			RenderAnim.air_brake = false
+		if float(_js("window.__novary || 0", 0.0)) > 0.0:   # RG0's before: every launch flails the same, a hit always folds
+			RenderAnim.rd_variety = false
+		if float(_js("window.__noweight || 0", 0.0)) > 0.0:   # RG1's before: no tier, no mass, no lag down the body
+			RenderAnim.rd_weight = false
+		rd_launch_n = int(_js("window.__launchn || 0", 0.0))   # the launch number of the rd scenarios (RG0 hashes it)
+		rd_opp_tier = float(_js("window.__optier || 1", 1.0))   # the power tier of the opponent in them (RG1's gain)
+		rd_poses = String(_js("window.__poses || ''", "")).split(",", false)   # the poses of the rd_poses sheet
+		if float(_js("window.__oop || 0", 0.0)) > 0.0:   # RG3's after: the out-of-plane degrees of freedom on (`window.__oop = 1`)
+			RenderAnim.rd_oop = true
 		sil = sil or float(_js("window.__sil || 0", 0.0)) > 0.0
 		far = far or float(_js("window.__far || 0", 0.0)) > 0.0
 		near = float(_js("window.__near || 0", 0.0)) > 0.0
@@ -217,6 +255,7 @@ func _build_view() -> void:
 func _tier_pieces() -> Array:
 	var pre: String = "pu." if fighter == "protagonist" else "ru."
 	var pre2: String = "pk." if fighter == "protagonist" else "rk."   # the energy-in-reach pieces
+	var pre3: String = "pv." if fighter == "protagonist" else "rq."
 	var out: Array = []
 	for nm in tier_names:
 		var s: String = String(nm)
@@ -228,6 +267,13 @@ func _tier_pieces() -> Array:
 			out.append(s)
 		elif AnimData.keysets.has(pre2 + s):
 			out.append(s)
+		elif AnimData.keysets.has(pre3 + s) or (fighter == "antihero" and AnimData.keysets.has("gd." + s)):
+			out.append(s)   # Combat's pieces of 2026-10-16 (pv. the Protagonist, rq. the rival; the guards' falling sole, gd., shown on the rival's body)
+		else:
+			# any strike the fighter plays by name (a common piece: the front kick, the roundhouse, the jab): the names of his own pick lists, so a kick can be seen at any distance with `window.__slack`
+			var kk: String = String(AnimData.ensure_fighter(String(FIGHTERS[fighter])))
+			if kk != "" and AnimData.pair_lists.has(kk) and AnimData.pair_lists[kk].by_name.has(s):
+				out.append(s)
 	return out
 
 
@@ -262,7 +308,7 @@ func _start_scenario() -> void:
 	var su_pre: String = "pu.su_" if fighter == "protagonist" else "ru.su_"
 	var rc_pre: String = "pk." if fighter == "protagonist" else "rk."
 	for kid in AnimData.keysets:
-		if String(kid).begins_with(su_pre) or String(kid).begins_with(rc_pre):
+		if String(kid).begins_with(su_pre) or String(kid).begins_with(rc_pre) or (fighter == "antihero" and String(kid).begins_with("gd.")):
 			by[String(kid).substr(3)] = String(kid)
 	# the parked lights the burst draws on (a rise, an arc, a drop), named by their wave prefix (pm. the Protagonist, rm. the rival)
 	for pre in ["pm.", "rm."]:
@@ -279,6 +325,8 @@ func _start_scenario() -> void:
 		f.vx = 0.0
 		f.vy = 0.0
 		f.state = "free"
+		f.beamCharge = null
+	S.beams = []
 	if sc.has("cue"):
 		ex = null
 		S.dirS.ex = null
@@ -325,7 +373,47 @@ func _step_tick() -> void:
 	te.dt = DT
 	te.frozen = false
 	RenderAnim.consume(S, [te])
-	if sc.has("cue") and k == 10:
+	if sc.has("cue") and k == 10 and String(sc.cue.kind) == "beam":
+		# the beam layer reads the sim's own state: the charge's start time, or a beam of the fighter's that is alive
+		if String(sc.cue.text) == "charge":
+			f0.beamCharge = S.T - 0.9
+		else:
+			var fb := FakeBeam.new()
+			fb.A = f0
+			S.beams = [fb]
+	if sc.has("cue") and String(sc.cue.kind) == "rd":
+		# a launched body flying free (no ground): the flail, the brace and, with the brake event, the skid. The study draws a body in place, so only its shape shows
+		if k == 0:
+			f0.state = "launched"
+			f0.launchN = rd_launch_n
+			f1.tier = rd_opp_tier
+			f0.vx = 1500.0
+			f0.vy = 40.0
+			f0.y = 90.0
+			f0.slide = 0.0
+			f0.spin = 0.0
+		f0.stateT = float(k) * DT
+		if String(sc.cue.text) == "brake" and k >= 30 and k < 60:
+			f0.vx = maxf(f0.vx - 40.0, 0.0)
+		f0.x += f0.vx * DT
+		if String(sc.cue.text) == "brake" and (k == 30 or k == 60):
+			var be := SimState.FxEvent.new()
+			be.type = "air_brake"
+			be.actor = 0.0
+			be.text = "start" if k == 30 else "end"
+			be.kind = "released"
+			be.amount = 1500.0
+			RenderAnim.consume(S, [be])
+		if k == 6:
+			var he := SimState.FxEvent.new()
+			he.type = "damage"
+			he.victim = 0.0
+			he.attacker = 1.0
+			he.kind = "heavy"
+			he.amount = 90.0
+			he.region = "core"
+			RenderAnim.consume(S, [he])
+	if sc.has("cue") and k == 10 and String(sc.cue.kind) != "beam" and String(sc.cue.kind) != "rd":
 		var cd: Dictionary = sc.cue
 		var ce := SimState.FxEvent.new()
 		ce.type = "cue"
@@ -335,7 +423,18 @@ func _step_tick() -> void:
 		ce.text = String(cd.text)
 		ce.n = float(S.tick + int(cd.span))
 		ce.tick = S.tick
+		if cd.has("dur"):
+			ce.dur = float(cd.dur)
 		RenderAnim.consume(S, [ce])
+	if sc.has("cue") and sc.cue.has("end_k") and k == int(sc.cue.end_k):
+		var ce2 := SimState.FxEvent.new()
+		ce2.type = "cue"
+		ce2.kind = String(sc.cue.kind)
+		ce2.actor = float(sc.cue.actor)
+		ce2.target = float(sc.cue.target)
+		ce2.text = String(sc.cue.end_text)
+		ce2.tick = S.tick
+		RenderAnim.consume(S, [ce2])
 	var contacts: Array = sc.contacts
 	for bi in range(contacts.size()):
 		if not sent[bi] and k >= int(contacts[bi]):
@@ -367,6 +466,14 @@ func _step_tick() -> void:
 			pivots[bi].scale = Vector3(af.vface, 1.0, 1.0)
 			var wx: float = -DIST * 0.5 if i == 0 else DIST * 0.5 + offset + tier_slack
 			pivots[bi].position = Vector3(wx, -43.0, 0.0)
+			if sc.has("cue") and String(sc.cue.text) == "poses" and i == 0 and not rd_poses.is_empty():
+				var pid: String = String(rd_poses[(k / 10) % rd_poses.size()])
+				if AnimData.pose_exists(pid):
+					var pp: AnimPose = AnimData.pose(pid)
+					bodies[bi].apply(pp.q, pp.hips, pp.curl, Vector3.ZERO)
+					label.text = pid
+					bodies[bi].set_tint(body_tint)
+					continue
 			bodies[bi].apply(af.q, af.hips, af.curl, af.root_off)
 			bodies[bi].set_tint(body_tint)
 		var st: String = "%s %s" % [String(FIGHTERS[fighter]), String(sc.label)]

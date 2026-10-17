@@ -510,6 +510,22 @@
     {
       "match": "data/fighters/*/forms.json",
       "schema": "fighters-forms.schema.json"
+    },
+    {
+      "match": "data/anim/brake.json",
+      "schema": "anim-brake.schema.json"
+    },
+    {
+      "match": "data/anim/chain.json",
+      "schema": "anim-chain.schema.json"
+    },
+    {
+      "match": "data/anim/guard_pass.json",
+      "schema": "anim-guard-pass.schema.json"
+    },
+    {
+      "match": "data/anim/throws.json",
+      "schema": "anim-throws.schema.json"
     }
   ]
 }

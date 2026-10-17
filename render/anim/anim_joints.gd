@@ -22,6 +22,26 @@ static var ik_limits: bool = true                     # the limb solves keep the
 static var give: float = 0.05                         # radians of give past a hinge's end
 static var retarget_max: float = 0.0                 # the pose bake may slide a hand target this far forward when no comfortable bend reaches it (0: never)
 static var comfort: float = 1.3                       # the twist (rad) past which a bend is not comfortable
+static var slew_free_arm: float = 0.0                 # degrees the free arm of a blow may turn in a 60th of a second (data `slew.free_arm_deg`; 0 off; AnimFighter._free_arm_slew)
+static var wing_runtime: float = 0.0                  # how far a free arm caught in a wing between two keys is drawn to the guard arm (data `wing.runtime`; 0 off; AnimFighter._free_arm_slew)
+static var wing_fix: bool = false                     # the pose bake slides a free hand forward when the solve would make a chicken wing (`wing` in joints.json; AnimPose._is_wing)
+static var wing_suffixes: Array = []                  # ... in the poses whose id ends in one of these (the strikes' contact and follow keys: a dash's arms swept back are meant)
+static var wing_skip: Array = []                      # ... except these poses (a heavy's follow whose free arm the fix moved far enough to pull its blow's leg through the limit pass)
+static var wing_now: bool = false                     # set by the bake while it solves a pose the fix applies to
+static func wing_for(pid: String) -> bool:
+	if not wing_fix or wing_skip.has(pid):
+		return false
+	for sfx in wing_suffixes:
+		if pid.ends_with(String(sfx)):
+			return true
+	return false
+
+
+static var wing_margin: float = 4.0                   # ... and a wing's way out is taken this much farther than the first legal place
+static var wing_psi: float = 0.87                     # a wing's elbow is bent at least this much (rad)
+static var wing_up: float = 2.0                       # ... carried this far above its shoulder, units
+static var wing_drop: float = 8.0                     # ... with the hand this far below the elbow
+static var wing_back: float = 4.0                     # ... and this far behind it
 static var arm_back_soft: float = 0.8                 # an upper arm may not point straight back along the body: its last reach is squeezed into 0.8 to 0.9 of the axis
 static var kind := PackedInt32Array()                 # per bone
 static var swing_max := PackedFloat32Array()          # ball: the narrowest the swing cone is in any direction (rad): what a quick test uses
@@ -83,6 +103,17 @@ static func setup(d: Dictionary) -> void:
 	arm_back_soft = float(d.get("arm_back_soft", 0.8))
 	retarget_max = float(d.get("retarget_units", 0.0))
 	comfort = deg_to_rad(float(d.get("comfort_twist_deg", 75.0)))
+	slew_free_arm = float(d.get("slew", {}).get("free_arm_deg", 0.0))
+	var wg: Dictionary = d.get("wing", {})
+	wing_fix = bool(wg.get("fix", false))
+	wing_suffixes = Array(wg.get("suffixes", []))
+	wing_skip = Array(wg.get("skip", []))
+	wing_psi = deg_to_rad(float(wg.get("flex_deg", 50.0)))
+	wing_margin = float(wg.get("margin", 4.0))
+	wing_runtime = float(wg.get("runtime", 0.0))
+	wing_up = float(wg.get("up", 2.0))
+	wing_drop = float(wg.get("drop", 8.0))
+	wing_back = float(wg.get("back", 4.0))
 	relax_from = deg_to_rad(float(d.get("straight_below_deg", 15.0)))
 	relax_to = deg_to_rad(float(d.get("bent_above_deg", 45.0)))
 	var hinges: Dictionary = d.get("hinges", {})
@@ -412,6 +443,32 @@ static func _arm_back(lq: Array[Quaternion], i2: int) -> float:
 	var to := Vector3(xn, v2.y * k, v2.z * k).normalized()
 	lq[i2] = Quaternion(v2, to) * lq[i2]
 	return acos(clampf(v2.normalized().dot(to), -1.0, 1.0))
+
+
+## The arm-back rule for one upper arm, for a solve that keeps its own arm legal (the last pass applies the same squeeze to whatever is left): an upper arm pointing back past
+## `arm_back_soft` of the axis has its swing taken out of the blind spot. Returns how far it was turned (radians).
+static func squeeze_arm_back(lq: Array[Quaternion], i: int, shape: String = "") -> float:
+	var qa: Quaternion = lq[i]
+	if 2.0 * (qa.w * qa.z - qa.x * qa.y) >= -arm_back_soft:
+		return 0.0
+	var w: float = _arm_back(lq, i)
+	if not fast_ok(lq[i], i, shape):
+		w = maxf(w, _fix_bone(lq, i, shape, scale_of(shape, "hinge")))
+	return w
+
+
+## How far a bone is past its limits, one number (radians; 0 inside): a hinge by how far past its end, the wrong way or sideways, a ball joint by its twist and swing excess together.
+## Not the arm-back rule, which is a whole-arm test. The solve's own measure for "is this legal" (the join smoothing trims its offset until it is).
+static func bone_excess(lq: Array[Quaternion], i: int, shape: String = "") -> float:
+	var kd: int = kind[i]
+	if kd == KIND_HINGE:
+		var st: Vector2 = hinge_state(lq[i], i)
+		var hs: float = scale_of(shape, "hinge")
+		return maxf(hinge_min[i] - st.x, 0.0) + maxf(st.x - hinge_max[i] * hs, 0.0) + maxf(absf(st.y) - 0.02, 0.0)
+	if kd == KIND_BALL:
+		var e: Vector2 = ball_excess(lq, i, shape)
+		return e.x + e.y
+	return 0.0
 
 
 ## What a limb solve has to know: is this bone's candidate rotation inside its limits (ball joints only; a hinge is made one by the solve).

@@ -17,7 +17,8 @@
      "pair2",
      "protag9",
      "protag10",
-     "protag11"
+     "protag11",
+     "protag12"
     ]
    },
    "pose_profile": {
@@ -37,6 +38,37 @@
    },
    "arc": {
     "bias": 0.25
+   },
+   "ease": {
+    "_about": "Fluid: arcs and a follow-through that carries on. The one clock is unchanged: hold + follow + recover of each row sums to the global row's (speed and burst 11, medium 13, super 24).",
+    "speed": {
+     "prof": {
+      "overshoot": 0.32,
+      "follow_ticks": 5,
+      "recover_ticks": 6,
+      "lag": 0.8
+     },
+     "carry_ticks": 6,
+     "twist": 0.22
+    },
+    "burst": {
+     "prof": {
+      "overshoot": 0.35,
+      "follow_ticks": 5,
+      "recover_ticks": 6,
+      "lag": 0.8
+     },
+     "carry_ticks": 6,
+     "twist": 0.3
+    },
+    "medium": {
+     "prof": {
+      "overshoot": 0.14,
+      "follow_ticks": 6,
+      "recover_ticks": 4
+     },
+     "twist": 0.1
+    }
    }
   },
   "antihero": {
@@ -53,7 +85,75 @@
      "pair2",
      "rival6",
      "rival7",
-     "rival8"
+     "rival8",
+     "rival9"
+    ]
+   },
+   "pose_profile": {
+    "hand_states": {},
+    "rise": 0,
+    "stance": 1.0,
+    "twist": 1.0,
+    "guard_raise": 0,
+    "head_pitch": 0
+   },
+   "timing": {
+    "light": "snappy",
+    "heavy": "fluid",
+    "fluid_bias": 0.0
+   },
+   "arc": {
+    "bias": 0.0
+   },
+   "ease": {
+    "_about": "Snappy: straight lines and a dead stop at the end. The one clock is unchanged: hold + follow + recover of each row sums to the global row's.",
+    "speed": {
+     "prof": {
+      "overshoot": 0.0,
+      "hold_ticks": 1,
+      "follow_ticks": 3,
+      "recover_ticks": 7,
+      "lag": 1.0,
+      "load_ease": 2.0
+     },
+     "carry_ticks": 2,
+     "twist": 0.08
+    },
+    "burst": {
+     "prof": {
+      "overshoot": 0.0,
+      "hold_ticks": 1,
+      "follow_ticks": 2,
+      "recover_ticks": 8,
+      "lag": 1.0,
+      "load_ease": 2.2
+     },
+     "carry_ticks": 1,
+     "twist": 0.04
+    },
+    "medium": {
+     "prof": {
+      "overshoot": 0.0,
+      "hold_ticks": 4,
+      "follow_ticks": 4,
+      "recover_ticks": 5
+     }
+    }
+   }
+  },
+  "common": {
+   "_about": "The common pool: the training dummy (REFERENCE) and the Empress's guards (alias `guard`), who have no waves of their own. They play the key sets the fighters share by name (Combat's `w1.*`, `rm.*`, `rb.*` and the guards' heavy), so a beat that names a piece reaches the same key set a fighter's would. Nothing here is a pick list for the fighters: it is read only for a body whose roster id names this row.",
+   "replaces": "REFERENCE",
+   "shape": "A",
+   "waves": {
+    "strikes": "wave1",
+    "entries": "wave2",
+    "more": [
+     "rival2",
+     "rival4",
+     "guard1",
+     "pair1",
+     "pair2"
     ]
    },
    "pose_profile": {

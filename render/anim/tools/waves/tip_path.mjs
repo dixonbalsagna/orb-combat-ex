@@ -102,6 +102,15 @@ export const TIP_PATH = {
   su_plate_arm: { tip: 'plate', path: 'drop' },
   su_knee_legs: { tip: 'cap', path: 'arc_in' },
   su_elbow_jaw: { tip: 'point', path: 'arc_in' },
+  // Combat's pieces of 2026-10-16 (a9e8f9cd): the Protagonist's falling blade hand, his turning palm-heel and stepping palm; the Anti-hero's straight fists and unwinding fist; the guards' falling sole
+  su_blade_fall: { tip: 'blade', path: 'drop' },
+  su_palm_arm: { tip: 'palm', path: 'line' },
+  palm_turn: { tip: 'heel', path: 'arc_out' },
+  jab_fist: { tip: 'fist', path: 'line' },
+  cross_fist: { tip: 'fist', path: 'line' },
+  spear_fist: { tip: 'fist', path: 'line' },
+  su_fist_unwind: { tip: 'fist', path: 'arc_out' },
+  su_sole_fall: { tip: 'sole', path: 'drop' },
   // energy in reach (C2t): the point-blank bolts and the blast, as blows (Combat's c2t-content.md section 2)
   'pk.bolt_thrust': { tip: 'palm', path: 'line' },
   'pk.bolt_flat': { tip: 'palm', path: 'line' },

@@ -1,0 +1,154 @@
+{
+ "wave": "rival9",
+ "strikes": [
+  {
+   "id": "rq.jab_fist",
+   "combat": "strike.jab_fist",
+   "name": "jab_fist",
+   "weight": "light",
+   "target": "head",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 6,
+    "follow": 4,
+    "recover": 5
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [],
+   "look": "PROVISIONAL. The jab as a fist: a straight fist from the lead shoulder, the forearm plate behind it, the arm one line with the rear leg.",
+   "orig": "PROVISIONAL: the jab as a fist: a straight fist from the lead shoulder, the forearm plate behind it",
+   "poses": [
+    "rq.jab_fist.chamber",
+    "rq.jab_fist.contact",
+    "rq.jab_fist.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "fist",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "rq.cross_fist",
+   "combat": "strike.cross_fist",
+   "name": "cross_fist",
+   "weight": "light",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 98,
+   "band": "long",
+   "ticks": {
+    "load": 6,
+    "follow": 4,
+    "recover": 5
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [],
+   "look": "PROVISIONAL. The cross as a fist: the rear fist driven through the chest with the hips turned full, the lead forearm folded across the ribs.",
+   "orig": "PROVISIONAL: the cross as a fist: the rear fist driven through the chest, the hips turned full",
+   "poses": [
+    "rq.cross_fist.chamber",
+    "rq.cross_fist.contact",
+    "rq.cross_fist.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "fist",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "rq.spear_fist",
+   "combat": "strike.spear_fist",
+   "name": "spear_fist",
+   "weight": "light",
+   "target": "gut",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 54,
+   "reach": 98,
+   "band": "mid",
+   "ticks": {
+    "load": 6,
+    "follow": 4,
+    "recover": 5
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [],
+   "look": "PROVISIONAL. The spear hand as a fist: a low straight fist from the crouch into the gut, the spine and the arm one long diagonal.",
+   "orig": "PROVISIONAL: the spear hand as a fist: a low straight fist from the crouch into the gut",
+   "poses": [
+    "rq.spear_fist.chamber",
+    "rq.spear_fist.contact",
+    "rq.spear_fist.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "fist",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "rq.su_fist_unwind",
+   "combat": "strike.su_fist_unwind",
+   "name": "su_fist_unwind",
+   "weight": "heavy",
+   "target": "jaw",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 108,
+   "band": "long",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [],
+   "look": "PROVISIONAL. An unwinding fist: coiled with the fist carried across to the far shoulder, then the body opens out and the fist comes round level at the jaw; one turn, never two.",
+   "orig": "PROVISIONAL: an unwinding fist: coiled with the fist carried across to the far shoulder, the body opening out so the fist comes round level at the jaw, the elbow leading the turn; one turn",
+   "poses": [
+    "rq.su_fist_unwind.chamber",
+    "rq.su_fist_unwind.contact",
+    "rq.su_fist_unwind.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "fist",
+   "path": "arc_out",
+   "flags": []
+  }
+ ],
+ "skipped": []
+}

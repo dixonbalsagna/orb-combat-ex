@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-brake",
+  "title": "anim-brake (schema \"anim.brake/1\")",
+  "description": "data/anim/brake.json: Inferred by the EP with Tools' helper from Animation's file; Animation tightens values.. A shape check inferred from the file (docs/tools/pending/infer-schema.cjs): every key present is required, a key outside is refused unless it starts with an underscore, a number is bounded only below by zero where all its values are, a colour is a hex string; the owner tightens the values. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "poses",
+    "lean_deg",
+    "decel_ref",
+    "min_w",
+    "enter_ticks",
+    "exit_ticks",
+    "lead_rate",
+    "whip"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.brake/1"
+    },
+    "poses": {
+      "type": "object",
+      "required": [
+        "enter",
+        "hold",
+        "exit"
+      ],
+      "properties": {
+        "enter": {
+          "type": "string"
+        },
+        "hold": {
+          "type": "string"
+        },
+        "exit": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "lean_deg": {
+      "type": "array",
+      "items": {
+        "type": "number"
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "decel_ref": {
+      "type": "number",
+      "minimum": 0
+    },
+    "min_w": {
+      "type": "number",
+      "minimum": 0
+    },
+    "enter_ticks": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "exit_ticks": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "lead_rate": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "whip": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

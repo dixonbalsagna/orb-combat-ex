@@ -16,7 +16,7 @@ const wave = argv[0] || 'wave1';
 const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 ? argv[i + 1] : d; };
 const project = resolve(opt('project', '.'));
 const outDir = resolve(opt('out', join(project, 'data/anim/waves')));
-const prefix = wave === 'ground1' ? 'gc' : wave === 'intro1' ? 'in' : wave === 'laststand1' ? 'ls' : wave === 'agency1' ? 'ag' : wave === 'energy1' ? 'en' : wave === 'protag1' ? 'pr' : wave === 'protag2' ? 'pe' : wave === 'protag3' ? 'pn' : wave === 'protag4' ? 'pf' : wave === 'rival1' ? 'rv' : wave === 'rival2' ? 'rb' : wave === 'rival3' ? 'rw' : wave === 'protag5' ? 'pg' : wave === 'pair1' ? 'pp' : wave === 'protag6' ? 'ph' : wave === 'protag10' ? 'pu' : wave === 'rival7' ? 'ru' : wave === 'protag11' ? 'pk' : wave === 'rival8' ? 'rk' : wave === 'burst1' ? 'bu' : wave === 'depth1' ? 'dp' : wave === 'launch1' ? 'lq' : wave === 'charge1' ? 'ch' : wave === 'miss1' ? 'mi' : wave === 'protag9' ? 'pi' : wave === 'rival6' ? 'ri' : wave === 'pair2' ? 'zp' : wave === 'protag7' ? 'pm' : wave === 'protag8' ? 'ps' : wave === 'rival4' ? 'rm' : wave === 'rival5' ? 'rs' : wave.startsWith('step') ? 's' + wave.slice(4) : wave.replace('wave', 'w');   // w1, s3
+const prefix = wave === 'ground1' ? 'gc' : wave === 'intro1' ? 'in' : wave === 'laststand1' ? 'ls' : wave === 'agency1' ? 'ag' : wave === 'energy1' ? 'en' : wave === 'protag1' ? 'pr' : wave === 'protag2' ? 'pe' : wave === 'protag3' ? 'pn' : wave === 'protag4' ? 'pf' : wave === 'rival1' ? 'rv' : wave === 'rival2' ? 'rb' : wave === 'rival3' ? 'rw' : wave === 'protag5' ? 'pg' : wave === 'pair1' ? 'pp' : wave === 'protag6' ? 'ph' : wave === 'protag10' ? 'pu' : wave === 'rival7' ? 'ru' : wave === 'protag11' ? 'pk' : wave === 'rival8' ? 'rk' : wave === 'protag12' ? 'pv' : wave === 'rival9' ? 'rq' : wave === 'guard1' ? 'gd' : wave === 'beam1' ? 'bm' : wave === 'burst1' ? 'bu' : wave === 'round10' ? 'rt' : wave === 'depth1' ? 'dp' : wave === 'pair3' ? 'zq' : wave === 'chain1' ? 'ce' : wave === 'lodge1' ? 'lg' : wave === 'brake1' ? 'ab' : wave === 'launch1' ? 'lq' : wave === 'charge1' ? 'ch' : wave === 'miss1' ? 'mi' : wave === 'protag9' ? 'pi' : wave === 'rival6' ? 'ri' : wave === 'pair2' ? 'zp' : wave === 'protag7' ? 'pm' : wave === 'protag8' ? 'ps' : wave === 'rival4' ? 'rm' : wave === 'rival5' ? 'rs' : wave.startsWith('step') ? 's' + wave.slice(4) : wave.replace('wave', 'w');   // w1, s3
 
 const poses = JSON.parse(readFileSync(join(project, 'data/anim/poses.json'), 'utf8')).poses;
 const mod = await import(pathToFileURL(resolve(project, 'render/anim/tools/waves/' + wave + '.mjs')).href);
@@ -25,6 +25,9 @@ const seqMode = !!mod.sequences;
 const combatFile = resolve(opt('combat', join(project, 'docs/combat/pending/' + (entriesMode ? 'entries' : 'strikes') + '.antihero.' + wave + '.json')));
 const combat = seqMode ? { strikes: [], entries: [] } : mod.rows ? (entriesMode ? { entries: mod.rows(JSON.parse(readFileSync(join(project, 'docs/combat/pending/entries.antihero.wave2.json'), 'utf8')).entries) } : { strikes: mod.rows(JSON.parse(readFileSync(join(project, 'docs/combat/pending/strikes.antihero.wave1.json'), 'utf8')).strikes, existsSync(join(project, 'docs/combat/pending/strikes.launchpair.json')) ? JSON.parse(readFileSync(join(project, 'docs/combat/pending/strikes.launchpair.json'), 'utf8')) : null) }) : JSON.parse(readFileSync(combatFile, 'utf8'));
 const spec = mod.strikes;
+// the contact-key pass (docs/animation/guard-pass.md): the free hand of a listed contact key is set where data/anim/guard_pass.json puts it
+const guardPass = existsSync(join(project, 'data/anim/guard_pass.json')) ? JSON.parse(readFileSync(join(project, 'data/anim/guard_pass.json'), 'utf8')).contacts || {} : {};
+const passGuard = (pid, ct) => { const r = guardPass[pid]; if (r) for (const h of ['hand_l', 'hand_r']) if (r[h]) ct[h] = clone(r[h]); return ct; };
 
 const clone = o => JSON.parse(JSON.stringify(o));
 const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
@@ -247,10 +250,11 @@ for (const row of combat.strikes) {
     ct = merge(merge(b('contact'), o.all || {}), o.contact || {});
     fo = merge(merge(b('follow'), o.all || {}), o.follow || {});
     if (sp.contact) ct = merge(ct, sp.contact);   // a new contact over a derived family (the backfist, the overhand)
+    passGuard(`${id}.contact`, ct);
     if (sp.chamber) ch = merge(ch, sp.chamber);
     if (sp.follow) fo = merge(fo, sp.follow);
   } else {
-    ct = clone(sp.contact);
+    ct = passGuard(`${id}.contact`, clone(sp.contact));
     const tpl = FAMILY[sp.family] || TEMPLATE[sp.kind];
     if (!tpl) throw new Error('no chamber template for ' + sp.kind);
     ch = merge(tpl, sp.chamber || {});
@@ -315,7 +319,7 @@ for (const row of combat.strikes) {
   }
   manifest.push({ id, combat: sp.combat || row.id, name, weight: row.weight, target: ks.target, limb: L, limb2: ks.limb2 || null,
     offset: row.range.offset, reach: row.range.reach, band: row.range.band, ticks: row.ticks, ground: row.ground, uses: row.uses,
-    from: sp.from || null, legal: sp.legal || [], look: row.look, orig: sp.orig, poses: ks.keys.map(k => k.pose), alt: sp.alt ? sp.alt.label : null, _genericAb: !!sp.genericAb, _family: sp.family || null });
+    from: sp.from || null, named: !!sp.named, legal: sp.legal || [], look: row.look, orig: sp.orig, poses: ks.keys.map(k => k.pose), alt: sp.alt ? sp.alt.label : null, _genericAb: !!sp.genericAb, _family: sp.family || null });
 }
 // a fighter's wave over wave 1 (`reuse`): every wave 1 slot the spec does not redo is the rival's three poses with the fighter's profile applied (data/anim/fighters.json)
 if (mod.reuse) {
@@ -348,6 +352,7 @@ if (mod.reuse) {
     for (const [role, part] of [['load', 'chamber'], ['contact', 'contact'], ['follow', 'follow']]) {
       const src = srcPoses[`${m.id}.${part}`];
       const q = apply(src, m.limb, two);
+      if (part === 'contact') passGuard(`${id}.contact`, q);
       q._orig = String(src._orig || '').replace(/ \((the wind-up|the follow-through)\)$/, '') + ' (the rival\'s pose in his profile)' + (part === 'chamber' ? ' (the wind-up)' : part === 'follow' ? ' (the follow-through)' : '');
       outPoses[`${id}.${part}`] = q;
       ks.keys.push({ role, pose: `${id}.${part}` });

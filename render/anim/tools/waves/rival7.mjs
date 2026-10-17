@@ -7,7 +7,7 @@ const OPEN = { hands: { r: 'open', l: 'open' } };
 const FIST = { hands: { r: 'fist', l: 'open' } };
 const NEW = {
   su_ram: { like: 'overhand', limb: 'hand', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. A long low lunge, the whole body behind one straight fist.' },
-  su_heel: { like: 'axe_kick', limb: 'foot', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. The leg raised high, the heel dropped from above onto the chest, the body folding over it.' },
+  su_heel: { like: 'axe_kick', offset: 72, limb: 'foot', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. The leg raised high, the heel dropped from above onto the chest, the body folding over it.' },
   su_knee: { like: 'driving_knee', offset: 40, limb: 'knee', target: 'gut', weight: 'heavy', look: 'PROVISIONAL. A stepping knee: the striking side drawn back, the whole body travels a pace and the knee arrives in the gut as the foot lands.' },
   su_plate: { like: 'hook', limb: 'hand', target: 'head', weight: 'heavy', look: 'PROVISIONAL. A turning forearm: his back half turned with the forearm carried behind, then the hips and shoulders unwind through the head.' },
   su_hook: { like: 'overhand', limb: 'hand', target: 'jaw', weight: 'heavy', look: 'PROVISIONAL. A turning fist: the shoulders wound away in a low stance, then unwound through the jaw.' },

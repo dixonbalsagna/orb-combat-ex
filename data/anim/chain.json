@@ -1,0 +1,9 @@
+{
+  "schema": "anim.chain/1",
+  "_about": "The chain inside a tower (docs/animation/ragdoll-physics-paper.md section 4; Game Design's values in docs/design/buildings.md section 7.3). AnimFighter.on_interior_contact plays these for World's interior_contact events and on_lodge for its lodge event. ceiling: the slam weight from the contact's normal speed (ref the speed for the full weight, min the least weight). face_stop_ticks: the stop at the face when the event carries none (Game Design: 15). lodge_climb_ticks: the climb and the stand after the lodge's hold. poses: the sequences played (render/anim/tools/waves/chain1.mjs and lodge1.mjs). The chain's own rules (the ceiling keeps 0.4 of the speed, a floor he goes through 0.7, at most 5 contacts and 3 bounces, 2.5 s of ragdolled time, the brake off inside) are the sim's and World's; they are here only so the scan's scripted chain uses the same numbers. Render only, outside the sim's data hash. First values, Animation's.",
+  "ceiling": {"ref": 1800, "min": 0.35},
+  "face_stop_ticks": 15,
+  "lodge_climb_ticks": 20,
+  "poses": {"slam": "ce.slam", "rebound": "ce.rebound", "climb": "lg.climb"},
+  "rules": {"ceiling_keep": 0.4, "floor_through_keep": 0.7, "max_contacts": 5, "max_bounces": 3, "cap_seconds": 2.5}
+}

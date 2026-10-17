@@ -288161,6 +288161,4238 @@
       }
     },
     {
+      "id": "anim-brake-valid",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/schema": "anim.brake/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-brake-key-required-schema",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-brake-key-required-poses",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "del": [
+            "/poses"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-brake-key-required-lean-deg",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "del": [
+            "/lean_deg"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-brake-key-required-decel-ref",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "del": [
+            "/decel_ref"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-brake-key-required-min-w",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "del": [
+            "/min_w"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-brake-key-required-enter-ticks",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "del": [
+            "/enter_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-brake-key-required-exit-ticks",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "del": [
+            "/exit_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-brake-key-required-lead-rate",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "del": [
+            "/lead_rate"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-brake-key-required-whip",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "del": [
+            "/whip"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-brake-unknown-key",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-brake-underscore-key-ok",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-brake-version-wrong",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/schema": "x/99"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-brake-unknown-key-poses",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/poses/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/poses/extra"
+      }
+    },
+    {
+      "id": "anim-brake-type-poses-enter",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/poses/enter": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/poses/enter"
+      }
+    },
+    {
+      "id": "anim-brake-type-poses-hold",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/poses/hold": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/poses/hold"
+      }
+    },
+    {
+      "id": "anim-brake-type-poses-exit",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/poses/exit": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/poses/exit"
+      }
+    },
+    {
+      "id": "anim-brake-type-decel-ref",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/decel_ref": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/decel_ref"
+      }
+    },
+    {
+      "id": "anim-brake-negative-decel-ref",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/decel_ref": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/decel_ref"
+      }
+    },
+    {
+      "id": "anim-brake-type-min-w",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/min_w": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/min_w"
+      }
+    },
+    {
+      "id": "anim-brake-negative-min-w",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/min_w": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/min_w"
+      }
+    },
+    {
+      "id": "anim-brake-type-enter-ticks",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/enter_ticks": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enter_ticks"
+      }
+    },
+    {
+      "id": "anim-brake-negative-enter-ticks",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/enter_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/enter_ticks"
+      }
+    },
+    {
+      "id": "anim-brake-type-exit-ticks",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/exit_ticks": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/exit_ticks"
+      }
+    },
+    {
+      "id": "anim-brake-negative-exit-ticks",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/exit_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/exit_ticks"
+      }
+    },
+    {
+      "id": "anim-brake-type-lead-rate",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/lead_rate": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lead_rate"
+      }
+    },
+    {
+      "id": "anim-brake-negative-lead-rate",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/lead_rate": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/lead_rate"
+      }
+    },
+    {
+      "id": "anim-brake-type-whip",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/whip": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/whip"
+      }
+    },
+    {
+      "id": "anim-brake-negative-whip",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/whip": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/whip"
+      }
+    },
+    {
+      "id": "anim-chain-valid",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/schema": "anim.chain/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-chain-key-required-schema",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-chain-key-required-ceiling",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "del": [
+            "/ceiling"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-chain-key-required-face-stop-ticks",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "del": [
+            "/face_stop_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-chain-key-required-lodge-climb-ticks",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "del": [
+            "/lodge_climb_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-chain-key-required-poses",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "del": [
+            "/poses"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-chain-key-required-rules",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "del": [
+            "/rules"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-chain-unknown-key",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-chain-underscore-key-ok",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-chain-version-wrong",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/schema": "x/99"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-chain-unknown-key-ceiling",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/ceiling/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/ceiling/extra"
+      }
+    },
+    {
+      "id": "anim-chain-type-ceiling-ref",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/ceiling/ref": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/ceiling/ref"
+      }
+    },
+    {
+      "id": "anim-chain-negative-ceiling-ref",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/ceiling/ref": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/ceiling/ref"
+      }
+    },
+    {
+      "id": "anim-chain-type-ceiling-min",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/ceiling/min": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/ceiling/min"
+      }
+    },
+    {
+      "id": "anim-chain-negative-ceiling-min",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/ceiling/min": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/ceiling/min"
+      }
+    },
+    {
+      "id": "anim-chain-type-face-stop-ticks",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/face_stop_ticks": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/face_stop_ticks"
+      }
+    },
+    {
+      "id": "anim-chain-negative-face-stop-ticks",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/face_stop_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/face_stop_ticks"
+      }
+    },
+    {
+      "id": "anim-chain-type-lodge-climb-ticks",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/lodge_climb_ticks": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lodge_climb_ticks"
+      }
+    },
+    {
+      "id": "anim-chain-negative-lodge-climb-ticks",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/lodge_climb_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/lodge_climb_ticks"
+      }
+    },
+    {
+      "id": "anim-chain-unknown-key-poses",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/poses/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/poses/extra"
+      }
+    },
+    {
+      "id": "anim-chain-type-poses-slam",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/poses/slam": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/poses/slam"
+      }
+    },
+    {
+      "id": "anim-chain-type-poses-rebound",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/poses/rebound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/poses/rebound"
+      }
+    },
+    {
+      "id": "anim-chain-type-poses-climb",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/poses/climb": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/poses/climb"
+      }
+    },
+    {
+      "id": "anim-chain-unknown-key-rules",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/rules/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/rules/extra"
+      }
+    },
+    {
+      "id": "anim-chain-type-rules-ceiling-keep",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/rules/ceiling_keep": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rules/ceiling_keep"
+      }
+    },
+    {
+      "id": "anim-chain-negative-rules-ceiling-keep",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/rules/ceiling_keep": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/rules/ceiling_keep"
+      }
+    },
+    {
+      "id": "anim-chain-type-rules-floor-through-keep",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/rules/floor_through_keep": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rules/floor_through_keep"
+      }
+    },
+    {
+      "id": "anim-chain-negative-rules-floor-through-keep",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/rules/floor_through_keep": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/rules/floor_through_keep"
+      }
+    },
+    {
+      "id": "anim-chain-type-rules-max-contacts",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/rules/max_contacts": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rules/max_contacts"
+      }
+    },
+    {
+      "id": "anim-chain-negative-rules-max-contacts",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/rules/max_contacts": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/rules/max_contacts"
+      }
+    },
+    {
+      "id": "anim-chain-type-rules-max-bounces",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/rules/max_bounces": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rules/max_bounces"
+      }
+    },
+    {
+      "id": "anim-chain-negative-rules-max-bounces",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/rules/max_bounces": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/rules/max_bounces"
+      }
+    },
+    {
+      "id": "anim-chain-type-rules-cap-seconds",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/rules/cap_seconds": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rules/cap_seconds"
+      }
+    },
+    {
+      "id": "anim-chain-negative-rules-cap-seconds",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/rules/cap_seconds": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/rules/cap_seconds"
+      }
+    },
+    {
+      "id": "anim-guard-pass-valid",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/schema": "anim.guard_pass/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-guard-pass-key-required-schema",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-guard-pass-key-required-goal",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "del": [
+            "/goal"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-guard-pass-key-required-keep",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "del": [
+            "/keep"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-guard-pass-key-required-contacts",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "del": [
+            "/contacts"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-underscore-key-ok",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-guard-pass-version-wrong",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/schema": "x/99"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-goal",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/goal/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/goal/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-goal-hand",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/goal/hand": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/goal/hand"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-goal-hand",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/goal/hand": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/goal/hand"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-goal-foot",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/goal/foot": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/goal/foot"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-goal-foot",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/goal/foot": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/goal/foot"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-keep",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/keep": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/keep"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-keep",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/keep": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/keep"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-pk-blast-chest-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pk.blast_chest.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/pk.blast_chest.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pk-blast-chest-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pk.blast_chest.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pk.blast_chest.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pk-blast-chest-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pk.blast_chest.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pk.blast_chest.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pk-blast-chest-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pk.blast_chest.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pk.blast_chest.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pk-blast-chest-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pk.blast_chest.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pk.blast_chest.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-pk-blast-gut-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pk.blast_gut.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/pk.blast_gut.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pk-blast-gut-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pk.blast_gut.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pk.blast_gut.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pk-blast-gut-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pk.blast_gut.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pk.blast_gut.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pk-blast-gut-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pk.blast_gut.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pk.blast_gut.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pk-blast-gut-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pk.blast_gut.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pk.blast_gut.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-pm-palm-rise-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pm.palm_rise.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/pm.palm_rise.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pm-palm-rise-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pm.palm_rise.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pm.palm_rise.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pm-palm-rise-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pm.palm_rise.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pm.palm_rise.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pm-palm-rise-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pm.palm_rise.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pm.palm_rise.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pm-palm-rise-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pm.palm_rise.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pm.palm_rise.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-pr-backfist-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.backfist.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/pr.backfist.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pr-backfist-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.backfist.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pr.backfist.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pr-backfist-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.backfist.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pr.backfist.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pr-backfist-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.backfist.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pr.backfist.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pr-backfist-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.backfist.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pr.backfist.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-pr-hammer-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.hammer.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/pr.hammer.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pr-hammer-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.hammer.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pr.hammer.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pr-hammer-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.hammer.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pr.hammer.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pr-hammer-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.hammer.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pr.hammer.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pr-hammer-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.hammer.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pr.hammer.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-pr-jab-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.jab.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/pr.jab.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pr-jab-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.jab.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pr.jab.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pr-jab-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.jab.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pr.jab.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pr-jab-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.jab.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pr.jab.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pr-jab-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.jab.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pr.jab.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-pr-side-kick-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.side_kick.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/pr.side_kick.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pr-side-kick-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.side_kick.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pr.side_kick.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pr-side-kick-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.side_kick.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pr.side_kick.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pr-side-kick-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.side_kick.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pr.side_kick.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pr-side-kick-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.side_kick.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pr.side_kick.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-pu-su-blade-jaw-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_blade_jaw.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/pu.su_blade_jaw.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pu-su-blade-jaw-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_blade_jaw.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pu.su_blade_jaw.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pu-su-blade-jaw-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_blade_jaw.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pu.su_blade_jaw.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pu-su-blade-jaw-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_blade_jaw.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pu.su_blade_jaw.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pu-su-blade-jaw-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_blade_jaw.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pu.su_blade_jaw.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-pu-su-drive-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_drive.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/pu.su_drive.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pu-su-drive-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_drive.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pu.su_drive.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pu-su-drive-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_drive.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pu.su_drive.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pu-su-drive-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_drive.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pu.su_drive.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pu-su-drive-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_drive.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pu.su_drive.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-pu-su-hammer-arm-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_hammer_arm.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/pu.su_hammer_arm.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pu-su-hammer-arm-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_hammer_arm.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pu.su_hammer_arm.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pu-su-hammer-arm-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_hammer_arm.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pu.su_hammer_arm.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pu-su-hammer-arm-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_hammer_arm.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pu.su_hammer_arm.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pu-su-hammer-arm-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_hammer_arm.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pu.su_hammer_arm.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-pu-su-turn-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_turn.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/pu.su_turn.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pu-su-turn-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_turn.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pu.su_turn.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pu-su-turn-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_turn.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pu.su_turn.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pu-su-turn-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_turn.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pu.su_turn.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pu-su-turn-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pu.su_turn.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pu.su_turn.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-pv-palm-turn-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pv.palm_turn.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/pv.palm_turn.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pv-palm-turn-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pv.palm_turn.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pv.palm_turn.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pv-palm-turn-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pv.palm_turn.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pv.palm_turn.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pv-palm-turn-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pv.palm_turn.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pv.palm_turn.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pv-palm-turn-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pv.palm_turn.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pv.palm_turn.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-pv-su-blade-fall-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pv.su_blade_fall.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/pv.su_blade_fall.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pv-su-blade-fall-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pv.su_blade_fall.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pv.su_blade_fall.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pv-su-blade-fall-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pv.su_blade_fall.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pv.su_blade_fall.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pv-su-blade-fall-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pv.su_blade_fall.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pv.su_blade_fall.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pv-su-blade-fall-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pv.su_blade_fall.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pv.su_blade_fall.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-pv-su-palm-arm-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pv.su_palm_arm.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/pv.su_palm_arm.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pv-su-palm-arm-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pv.su_palm_arm.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pv.su_palm_arm.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pv-su-palm-arm-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pv.su_palm_arm.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pv.su_palm_arm.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-pv-su-palm-arm-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pv.su_palm_arm.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/pv.su_palm_arm.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-pv-su-palm-arm-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pv.su_palm_arm.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/pv.su_palm_arm.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-rk-blast-chest-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rk.blast_chest.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/rk.blast_chest.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-rk-blast-chest-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rk.blast_chest.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/rk.blast_chest.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-rk-blast-chest-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rk.blast_chest.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/rk.blast_chest.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-rk-blast-chest-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rk.blast_chest.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/rk.blast_chest.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-rk-blast-chest-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rk.blast_chest.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/rk.blast_chest.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-rk-blast-gut-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rk.blast_gut.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/rk.blast_gut.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-rk-blast-gut-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rk.blast_gut.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/rk.blast_gut.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-rk-blast-gut-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rk.blast_gut.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/rk.blast_gut.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-rk-blast-gut-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rk.blast_gut.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/rk.blast_gut.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-rk-blast-gut-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rk.blast_gut.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/rk.blast_gut.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-rk-bolt-flick-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rk.bolt_flick.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/rk.bolt_flick.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-rk-bolt-flick-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rk.bolt_flick.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/rk.bolt_flick.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-rk-bolt-flick-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rk.bolt_flick.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/rk.bolt_flick.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-rk-bolt-flick-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rk.bolt_flick.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/rk.bolt_flick.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-rk-bolt-flick-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rk.bolt_flick.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/rk.bolt_flick.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-rm-fist-rise-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rm.fist_rise.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/rm.fist_rise.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-rm-fist-rise-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rm.fist_rise.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/rm.fist_rise.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-rm-fist-rise-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rm.fist_rise.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/rm.fist_rise.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-rm-fist-rise-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rm.fist_rise.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/rm.fist_rise.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-rm-fist-rise-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rm.fist_rise.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/rm.fist_rise.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-rm-heel-backhand-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rm.heel_backhand.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/rm.heel_backhand.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-rm-heel-backhand-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rm.heel_backhand.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/rm.heel_backhand.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-rm-heel-backhand-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rm.heel_backhand.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/rm.heel_backhand.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-rm-heel-backhand-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rm.heel_backhand.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/rm.heel_backhand.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-rm-heel-backhand-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/rm.heel_backhand.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/rm.heel_backhand.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-ru-su-fist-heave-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_fist_heave.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/ru.su_fist_heave.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-ru-su-fist-heave-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_fist_heave.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/ru.su_fist_heave.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-ru-su-fist-heave-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_fist_heave.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/ru.su_fist_heave.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-ru-su-fist-heave-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_fist_heave.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/ru.su_fist_heave.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-ru-su-fist-heave-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_fist_heave.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/ru.su_fist_heave.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-ru-su-hammer-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_hammer.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/ru.su_hammer.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-ru-su-hammer-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_hammer.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/ru.su_hammer.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-ru-su-hammer-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_hammer.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/ru.su_hammer.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-ru-su-hammer-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_hammer.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/ru.su_hammer.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-ru-su-hammer-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_hammer.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/ru.su_hammer.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-ru-su-plate-arm-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_plate_arm.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/ru.su_plate_arm.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-ru-su-plate-arm-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_plate_arm.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/ru.su_plate_arm.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-ru-su-plate-arm-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_plate_arm.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/ru.su_plate_arm.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-ru-su-plate-arm-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_plate_arm.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/ru.su_plate_arm.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-ru-su-plate-arm-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_plate_arm.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/ru.su_plate_arm.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-ru-su-ram-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_ram.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/ru.su_ram.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-ru-su-ram-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_ram.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/ru.su_ram.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-ru-su-ram-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_ram.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/ru.su_ram.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-ru-su-ram-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_ram.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/ru.su_ram.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-ru-su-ram-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/ru.su_ram.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/ru.su_ram.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-w1-hammer-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.hammer.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/w1.hammer.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-w1-hammer-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.hammer.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/w1.hammer.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-w1-hammer-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.hammer.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/w1.hammer.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-w1-hammer-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.hammer.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/w1.hammer.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-w1-hammer-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.hammer.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/w1.hammer.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-w1-overhand-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.overhand.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/w1.overhand.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-w1-overhand-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.overhand.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/w1.overhand.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-w1-overhand-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.overhand.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/w1.overhand.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-w1-overhand-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.overhand.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/w1.overhand.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-w1-overhand-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.overhand.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/w1.overhand.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-w1-side-kick-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.side_kick.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/w1.side_kick.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-w1-side-kick-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.side_kick.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/w1.side_kick.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-w1-side-kick-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.side_kick.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/w1.side_kick.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-w1-side-kick-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.side_kick.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/w1.side_kick.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-w1-side-kick-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.side_kick.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/w1.side_kick.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-w1-spear-hand-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.spear_hand.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/w1.spear_hand.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-w1-spear-hand-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.spear_hand.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/w1.spear_hand.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-w1-spear-hand-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.spear_hand.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/w1.spear_hand.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-w1-spear-hand-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.spear_hand.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/w1.spear_hand.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-w1-spear-hand-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.spear_hand.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/w1.spear_hand.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-unknown-key-contacts-w1-sweep-contact",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.sweep.contact/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/contacts/w1.sweep.contact/extra"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-w1-sweep-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.sweep.contact/was": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/w1.sweep.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-w1-sweep-contact-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.sweep.contact/was": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/w1.sweep.contact/was"
+      }
+    },
+    {
+      "id": "anim-guard-pass-type-contacts-w1-sweep-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.sweep.contact/now": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/contacts/w1.sweep.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-negative-contacts-w1-sweep-contact-now",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/w1.sweep.contact/now": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/contacts/w1.sweep.contact/now"
+      }
+    },
+    {
+      "id": "anim-throws-valid",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/schema": "anim.throws/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-throws-key-required-schema",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-throws-key-required-sends",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "del": [
+            "/sends"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-throws-key-required-grip",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "del": [
+            "/grip"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-throws-key-required-wrists-apart-min",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "del": [
+            "/wrists_apart_min"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-throws-unknown-key",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-throws-underscore-key-ok",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-throws-version-wrong",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/schema": "x/99"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-throws-unknown-key-sends",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/sends/extra"
+      }
+    },
+    {
+      "id": "anim-throws-unknown-key-sends-across-toward",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/across_toward/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/sends/across_toward/extra"
+      }
+    },
+    {
+      "id": "anim-throws-type-sends-across-toward-protagonist",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/across_toward/protagonist": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/sends/across_toward/protagonist"
+      }
+    },
+    {
+      "id": "anim-throws-type-sends-across-toward-antihero",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/across_toward/antihero": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/sends/across_toward/antihero"
+      }
+    },
+    {
+      "id": "anim-throws-unknown-key-sends-across-away",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/across_away/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/sends/across_away/extra"
+      }
+    },
+    {
+      "id": "anim-throws-type-sends-across-away-protagonist",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/across_away/protagonist": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/sends/across_away/protagonist"
+      }
+    },
+    {
+      "id": "anim-throws-type-sends-across-away-antihero",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/across_away/antihero": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/sends/across_away/antihero"
+      }
+    },
+    {
+      "id": "anim-throws-unknown-key-sends-across-none",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/across_none/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/sends/across_none/extra"
+      }
+    },
+    {
+      "id": "anim-throws-type-sends-across-none-protagonist",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/across_none/protagonist": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/sends/across_none/protagonist"
+      }
+    },
+    {
+      "id": "anim-throws-type-sends-across-none-antihero",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/across_none/antihero": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/sends/across_none/antihero"
+      }
+    },
+    {
+      "id": "anim-throws-unknown-key-sends-down",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/down/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/sends/down/extra"
+      }
+    },
+    {
+      "id": "anim-throws-type-sends-down-protagonist",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/down/protagonist": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/sends/down/protagonist"
+      }
+    },
+    {
+      "id": "anim-throws-type-sends-down-antihero",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/down/antihero": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/sends/down/antihero"
+      }
+    },
+    {
+      "id": "anim-throws-unknown-key-sends-up",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/up/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/sends/up/extra"
+      }
+    },
+    {
+      "id": "anim-throws-type-sends-up-protagonist",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/up/protagonist": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/sends/up/protagonist"
+      }
+    },
+    {
+      "id": "anim-throws-type-sends-up-antihero",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/up/antihero": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/sends/up/antihero"
+      }
+    },
+    {
+      "id": "anim-throws-unknown-key-grip",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grip/extra"
+      }
+    },
+    {
+      "id": "anim-throws-unknown-key-grip-zq-hurl",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.hurl/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grip/zq.hurl/extra"
+      }
+    },
+    {
+      "id": "anim-throws-type-grip-zq-hurl-hand-r",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.hurl/hand_r": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grip/zq.hurl/hand_r"
+      }
+    },
+    {
+      "id": "anim-throws-type-grip-zq-hurl-hand-l",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.hurl/hand_l": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grip/zq.hurl/hand_l"
+      }
+    },
+    {
+      "id": "anim-throws-unknown-key-grip-zq-sling",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.sling/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grip/zq.sling/extra"
+      }
+    },
+    {
+      "id": "anim-throws-type-grip-zq-sling-hand-r",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.sling/hand_r": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grip/zq.sling/hand_r"
+      }
+    },
+    {
+      "id": "anim-throws-unknown-key-grip-zq-turn-throw",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.turn_throw/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grip/zq.turn_throw/extra"
+      }
+    },
+    {
+      "id": "anim-throws-type-grip-zq-turn-throw-hand-r",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.turn_throw/hand_r": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grip/zq.turn_throw/hand_r"
+      }
+    },
+    {
+      "id": "anim-throws-unknown-key-grip-zq-back-throw",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.back_throw/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grip/zq.back_throw/extra"
+      }
+    },
+    {
+      "id": "anim-throws-type-grip-zq-back-throw-hand-r",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.back_throw/hand_r": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grip/zq.back_throw/hand_r"
+      }
+    },
+    {
+      "id": "anim-throws-type-grip-zq-back-throw-hand-l",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.back_throw/hand_l": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grip/zq.back_throw/hand_l"
+      }
+    },
+    {
+      "id": "anim-throws-unknown-key-grip-zq-drive-down",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.drive_down/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grip/zq.drive_down/extra"
+      }
+    },
+    {
+      "id": "anim-throws-type-grip-zq-drive-down-hand-r",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.drive_down/hand_r": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grip/zq.drive_down/hand_r"
+      }
+    },
+    {
+      "id": "anim-throws-type-grip-zq-drive-down-hand-l",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.drive_down/hand_l": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grip/zq.drive_down/hand_l"
+      }
+    },
+    {
+      "id": "anim-throws-unknown-key-grip-zq-spike",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.spike/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grip/zq.spike/extra"
+      }
+    },
+    {
+      "id": "anim-throws-type-grip-zq-spike-hand-r",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.spike/hand_r": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grip/zq.spike/hand_r"
+      }
+    },
+    {
+      "id": "anim-throws-unknown-key-grip-zq-lift",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.lift/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grip/zq.lift/extra"
+      }
+    },
+    {
+      "id": "anim-throws-type-grip-zq-lift-hand-r",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.lift/hand_r": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grip/zq.lift/hand_r"
+      }
+    },
+    {
+      "id": "anim-throws-type-grip-zq-lift-hand-l",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.lift/hand_l": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grip/zq.lift/hand_l"
+      }
+    },
+    {
+      "id": "anim-throws-unknown-key-grip-zq-jolt",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.jolt/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grip/zq.jolt/extra"
+      }
+    },
+    {
+      "id": "anim-throws-type-grip-zq-jolt-hand-r",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.jolt/hand_r": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grip/zq.jolt/hand_r"
+      }
+    },
+    {
+      "id": "anim-throws-type-wrists-apart-min",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/wrists_apart_min": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/wrists_apart_min"
+      }
+    },
+    {
+      "id": "anim-throws-negative-wrists-apart-min",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/wrists_apart_min": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/wrists_apart_min"
+      }
+    },
+    {
       "id": "collateral-norm-unknown",
       "schema": "biomes-collateral.schema.json",
       "mutate": [

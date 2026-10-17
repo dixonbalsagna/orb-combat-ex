@@ -39,6 +39,8 @@ static var _waves_done: Dictionary = {}
 static var flight: Dictionary = {}       # data/anim/flight.json: the flight lead, a launched body turned head first along its velocity (docs 9.23)
 static var agency: Dictionary = {}       # data/anim/agency.json: how the agency slice's events (knockback, embed, taunt, charges) map to poses
 static var intro: Dictionary = {}        # data/anim/intro.json: the opening's timings and each shape's staredown beat
+static var brake: Dictionary = {}        # data/anim/brake.json: the mid-air skid (docs/animation/ragdoll-physics-paper.md section 3a)
+static var chain: Dictionary = {}        # data/anim/chain.json: the chain inside a tower (docs/animation/ragdoll-physics-paper.md section 4)
 static var ground: Dictionary = {}       # data/anim/ground.json: how ground contact scales its poses (surface, speed, hold times)
 static var cue_map: Dictionary = {}      # data/anim/waves/step3.cues.json: cue kind -> {actor, other, other_if_shoved} sequence ids (only with --step3-cues)
 static var live: Dictionary = {}         # data/anim/waves/wave1.live.json: the go-live step 1 pick lists, gates and shapes (used only with --wave1-live)
@@ -111,15 +113,17 @@ static func load_all() -> void:
 	var a_flag: bool = RenderAnim.agency_poses and not OS.get_cmdline_user_args().has("--no-agency-poses")
 	var i_flag: bool = RenderAnim.intro_poses and not OS.get_cmdline_user_args().has("--no-intro-poses")
 	var g_flag: bool = RenderAnim.ground_poses and not OS.get_cmdline_user_args().has("--no-ground-poses")
+	var b_flag: bool = RenderAnim.air_brake and not OS.get_cmdline_user_args().has("--no-air-brake")
+	var c_flag: bool = RenderAnim.chain_poses and not OS.get_cmdline_user_args().has("--no-chain-poses")
 	var s3_flag: bool = (OS.get_cmdline_user_args().has("--step3-cues") or RenderAnim.step3_cues) and not OS.get_cmdline_user_args().has("--no-step3-cues")
-	if load_waves or live_flag or s3_flag or g_flag or i_flag or l_flag or a_flag or OS.get_cmdline_user_args().has("--waves"):
+	if load_waves or live_flag or s3_flag or g_flag or i_flag or l_flag or a_flag or b_flag or c_flag or OS.get_cmdline_user_args().has("--waves"):
 		var da := DirAccess.open(DIR + "waves")
 		if da != null:
 			var names: Array = []
 			for fn in da.get_files():
 				if fn.ends_with(".poses.json"):
 					var wn0: String = fn.trim_suffix(".poses.json")
-					if load_waves or OS.get_cmdline_user_args().has("--waves") or (live_flag and wn0 == "wave1") or (s3_flag and wn0 == "step3") or (g_flag and wn0 == "ground1") or (i_flag and wn0 == "intro1") or (l_flag and wn0 == "laststand1") or (a_flag and wn0 == "agency1"):   # the live flag loads wave 1 only, the step 3 flag its own cues
+					if load_waves or OS.get_cmdline_user_args().has("--waves") or (live_flag and wn0 == "wave1") or (s3_flag and wn0 == "step3") or (g_flag and wn0 == "ground1") or (i_flag and wn0 == "intro1") or (l_flag and wn0 == "laststand1") or (a_flag and wn0 == "agency1") or (b_flag and wn0 == "brake1") or (c_flag and (wn0 == "chain1" or wn0 == "lodge1")):   # the live flag loads wave 1 only, the step 3 flag its own cues
 						names.append(wn0)
 			names.sort()
 			for wn in names:
@@ -142,6 +146,8 @@ static func load_all() -> void:
 	form_poses = fj.get("poses", {})
 	ragdoll = _read("ragdoll.json")
 	ragdoll_motion = _read("ragdoll_motion.json")
+	brake = _read("brake.json")
+	chain = _read("chain.json")
 	personality = _read("personality.json")
 	winner = _read("winner.json")
 	quality_levels = _read("quality.json").get("levels", {})
@@ -259,6 +265,8 @@ static func ensure_fighter(roster_id: String) -> String:
 				var cid: String = String(st.get("combat", ""))
 				if cid.begins_with("strike.") and cid.substr(7) != nm:
 					lst.by_name[cid.substr(7)] = String(st.id)   # the piece's own Combat id when it differs from the set's name (one id a fighter in the pieces table: the rival's strike.bolt_flick_gut is rk.bolt_flick)
+				if bool(st.get("named", false)):
+					continue   # a piece Combat names (manifest `named`: the Protagonist's palm_turn, the Anti-hero's fist jabs): findable by the beat's `piece`, in no pick list until the pool is the hook
 				if nm.begins_with("su_") or nm.begins_with("bolt_") or nm.begins_with("blast_"):
 					continue   # the super-heavy tier and the energy-in-reach pieces are named by the director's beat (`piece`), never picked at random: they are findable by name and in no pick list
 				if gated.has(nm):

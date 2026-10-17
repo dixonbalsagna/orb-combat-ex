@@ -1,0 +1,12 @@
+{
+  "schema": "anim.brake/1",
+  "_about": "The mid-air skid (docs/animation/ragdoll-physics-paper.md section 3a). While the sim's air brake is on (an `air_brake` event: text start or end, kind the reason, amount the speed at the start), a launched fighter is braced against his own velocity: the poses ab.skid.enter, ab.skid.hold and ab.skid.exit (render/anim/tools/waves/brake1.mjs) are mixed in at a weight that follows the deceleration he is actually showing, the flight lead turns the body to lean back against the way he travels (not head first: the lead scan's feet-first rule is exempt for these frames, reported apart), and the ragdoll's inertial whip is stronger so limbs and cloth stream forward as he slows. lean_deg: the lean of the body from upright against the velocity, at the weakest and strongest brake. decel_ref: the deceleration (u/s2) at which the brake is at full strength; it never drops below min_w. enter_ticks and exit_ticks: the ramps. lead_rate: how fast the lead turns the body to the lean (1/s). whip: the multiplier of the ragdoll's acceleration drive at full strength. Render only, outside the sim's data hash. First values, Animation's.",
+  "poses": {"enter": "ab.skid.enter", "hold": "ab.skid.hold", "exit": "ab.skid.exit"},
+  "lean_deg": [18, 45],
+  "decel_ref": 3000,
+  "min_w": 0.35,
+  "enter_ticks": 4,
+  "exit_ticks": 8,
+  "lead_rate": 18,
+  "whip": 2.0
+}

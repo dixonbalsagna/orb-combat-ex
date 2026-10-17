@@ -106,7 +106,7 @@ static func ik2(lq: Array[Quaternion], gq: Array[Quaternion], gp: PackedVector3A
 ## `s` is the hinge's sign (+1 elbow, -1 knee). The end never moves, so a blow's contact point and a foot on the ground stay put, except when `retarget`
 ## (a number of units, used by the pose bake only) allows an authored target that no comfortable bend can reach (a hand behind its own shoulder) to
 ## slide forward by up to that much, to the nearest place a comfortable bend can.
-static func ik_limb(lq: Array[Quaternion], gq: Array[Quaternion], gp: PackedVector3Array, a: int, b: int, c: int, target: Vector3, pole: Vector3, s: float, shape: String = "", retarget: float = 0.0) -> void:
+static func ik_limb(lq: Array[Quaternion], gq: Array[Quaternion], gp: PackedVector3Array, a: int, b: int, c: int, target: Vector3, pole: Vector3, s: float, shape: String = "", retarget: float = 0.0, clamp_excess: bool = false) -> void:
 	if not AnimJoints.ik_limits or not AnimJoints.loaded:
 		ik2(lq, gq, gp, a, b, c, target, pole)
 		hinge_fix(lq, gq, gp, a, b, c, s)
@@ -139,17 +139,24 @@ static func ik_limb(lq: Array[Quaternion], gq: Array[Quaternion], gp: PackedVect
 		gp[b] = sp_b
 		gp[c] = sp_c
 	var plan: Dictionary = _plan_limb(gq, gp, a, b, c, target, pole, s, shape, retarget <= 0.0)
-	if retarget > 0.0 and absf(float(plan.twist)) > AnimJoints.comfort:
+	var wing_asked: bool = retarget > 0.0 and _is_wing(plan, gp[a], s)
+	if retarget > 0.0 and (absf(float(plan.twist)) > AnimJoints.comfort or wing_asked):
 		var dx: float = 2.0
 		while dx <= retarget + 0.001:
 			var p2: Dictionary = _plan_limb(gq, gp, a, b, c, target + Vector3(dx, 0, 0), pole + Vector3(dx, 0, 0), s, shape)
-			if absf(float(p2.twist)) <= AnimJoints.comfort and float(p2.excess) <= 0.0001:
+			if absf(float(p2.twist)) <= AnimJoints.comfort and float(p2.excess) <= 0.0001 and not _is_wing(p2, gp[a], s):
 				plan = p2
+				if wing_asked and dx + AnimJoints.wing_margin <= retarget + 0.001:
+					# a wing's way out is taken a little farther than the first legal place, so that the layers over the pose (a lean, a lunge) do not carry the upper arm back past its limit
+					var dm: float = dx + AnimJoints.wing_margin
+					var p3: Dictionary = _plan_limb(gq, gp, a, b, c, target + Vector3(dm, 0, 0), pole + Vector3(dm, 0, 0), s, shape)
+					if absf(float(p3.twist)) <= AnimJoints.comfort and float(p3.excess) <= 0.0001 and not _is_wing(p3, gp[a], s):
+						plan = p3
 				break
 			dx += 2.0
 	ik2(lq, gq, gp, a, b, c, plan.tgt, plan.E)
 	hinge_fix(lq, gq, gp, a, b, c, s)
-	if float(plan.excess) > 0.0001 and retarget > 0.0:   # (the bake only: a contact or a foot on the ground keeps its end where it is asked)
+	if float(plan.excess) > 0.0001 and (retarget > 0.0 or clamp_excess):   # (the bake, and the contact solve with `clamp_excess`: no legal plane reaches the end, so the limb is the nearest legal one and the end is short of its target, rather than a limb the last pass pulls)
 		# no legal plane reaches the target (a hand behind a leaned-over shoulder, a foot at the hip of a tuck): the upper bone is brought inside its range, and the joint
 		# below folds, within its hinge, to bring the end as near the target as that allows. The limb keeps its shape (a tuck stays tucked) instead of the end being flung out
 		AnimJoints.clamp_bone(lq, a, shape)
@@ -220,7 +227,18 @@ static func _plan_limb(gq: Array[Quaternion], gp: PackedVector3Array, a: int, b:
 		phi = bphi
 		ev = _plane_eval(a0, a1, phi, u, l1, d, cos_a, sin_a, psi, P, s, a, shape)
 	var E: Vector3 = A + u * (l1 * cos_a) + (a0 * cos(phi) + a1 * sin(phi)) * (l1 * sin_a)
-	return {"E": E, "tgt": tgt, "phi": phi, "excess": ev.x, "twist": ev.y}
+	return {"E": E, "tgt": tgt, "phi": phi, "excess": ev.x, "twist": ev.y, "psi": psi}
+
+
+## A chicken wing: an elbow (s = +1) carried above and behind its shoulder while the forearm hangs down from it and the arm is bent well past straight. Reach alone can make the
+## solve choose it (a free hand authored behind a leaned-over shoulder), and it reads as an arm bent the wrong way; the pose bake slides such a hand forward (data `retarget_units`)
+## to the nearest place a natural bend reaches. A cocked arm (the hand level with the elbow or above it) is not one. A knee is never judged.
+static func _is_wing(plan: Dictionary, A: Vector3, s: float) -> bool:
+	if s < 0.0 or not AnimJoints.wing_now:
+		return false
+	var E: Vector3 = plan.E
+	var T: Vector3 = plan.tgt
+	return float(plan.psi) > AnimJoints.wing_psi and E.y > A.y + AnimJoints.wing_up and E.y - T.y > AnimJoints.wing_drop and E.x < A.x - AnimJoints.wing_back
 
 
 ## For the joint placed with its plane turned `phi` from neutral, the upper bone's frame as hinge_fix would give it: Vector2(the excess past the limits (rad,
@@ -355,7 +373,9 @@ static func bake(pid: String, d: Dictionary) -> AnimPose:
 			fk(p.q, p.hips, gq, gp)
 		if d.has("hand_" + s):
 			var pole: Vector3 = gp[up] + (_v3(d["pole_hand_" + s]) if d.has("pole_hand_" + s) else Vector3(-3.0, -10.0, 6.0 * zs))
+			AnimJoints.wing_now = AnimJoints.wing_for(pid)
 			ik_limb(p.q, gq, gp, up, lo, en, _v3(d["hand_" + s]), pole, 1.0, "", AnimJoints.retarget_max)
+			AnimJoints.wing_now = false
 		var th: int = ix["thigh_" + s]
 		var sh: int = ix["shin_" + s]
 		var ft: int = ix["foot_" + s]

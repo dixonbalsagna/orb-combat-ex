@@ -1,0 +1,928 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-guard-pass",
+  "title": "anim-guard-pass (schema \"anim.guard_pass/1\")",
+  "description": "data/anim/guard_pass.json: Inferred by the EP with Tools' helper from Animation's file; Animation tightens values.. A shape check inferred from the file (docs/tools/pending/infer-schema.cjs): every key present is required, a key outside is refused unless it starts with an underscore, a number is bounded only below by zero where all its values are, a colour is a hex string; the owner tightens the values. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "goal",
+    "keep",
+    "contacts"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.guard_pass/1"
+    },
+    "goal": {
+      "type": "object",
+      "required": [
+        "hand",
+        "foot"
+      ],
+      "properties": {
+        "hand": {
+          "type": "number",
+          "minimum": 0
+        },
+        "foot": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "keep": {
+      "type": "number",
+      "minimum": 0
+    },
+    "contacts": {
+      "type": "object",
+      "required": [
+        "pk.blast_chest.contact",
+        "pk.blast_gut.contact",
+        "pm.palm_rise.contact",
+        "pr.backfist.contact",
+        "pr.hammer.contact",
+        "pr.jab.contact",
+        "pr.side_kick.contact",
+        "pu.su_blade_jaw.contact",
+        "pu.su_drive.contact",
+        "pu.su_hammer_arm.contact",
+        "pu.su_turn.contact",
+        "pv.palm_turn.contact",
+        "pv.su_blade_fall.contact",
+        "pv.su_palm_arm.contact",
+        "rk.blast_chest.contact",
+        "rk.blast_gut.contact",
+        "rk.bolt_flick.contact",
+        "rm.fist_rise.contact",
+        "rm.heel_backhand.contact",
+        "ru.su_fist_heave.contact",
+        "ru.su_hammer.contact",
+        "ru.su_plate_arm.contact",
+        "ru.su_ram.contact",
+        "w1.hammer.contact",
+        "w1.overhand.contact",
+        "w1.side_kick.contact",
+        "w1.spear_hand.contact",
+        "w1.sweep.contact"
+      ],
+      "properties": {
+        "pk.blast_chest.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "pk.blast_gut.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "pm.palm_rise.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "pr.backfist.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "pr.hammer.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "pr.jab.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "pr.side_kick.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "pu.su_blade_jaw.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "pu.su_drive.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "pu.su_hammer_arm.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "pu.su_turn.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "pv.palm_turn.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "pv.su_blade_fall.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "pv.su_palm_arm.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "rk.blast_chest.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "rk.blast_gut.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "rk.bolt_flick.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "rm.fist_rise.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "rm.heel_backhand.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "ru.su_fist_heave.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "ru.su_hammer.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "ru.su_plate_arm.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "ru.su_ram.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "w1.hammer.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "w1.overhand.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "w1.side_kick.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "w1.spear_hand.contact": {
+          "type": "object",
+          "required": [
+            "hand_l",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_l": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "w1.sweep.contact": {
+          "type": "object",
+          "required": [
+            "hand_r",
+            "was",
+            "now"
+          ],
+          "properties": {
+            "hand_r": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "was": {
+              "type": "number",
+              "minimum": 0
+            },
+            "now": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

@@ -1,0 +1,127 @@
+{
+ "wave": "protag12",
+ "strikes": [
+  {
+   "id": "pv.su_blade_fall",
+   "combat": "strike.su_blade_fall",
+   "name": "su_blade_fall",
+   "weight": "heavy",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 50,
+   "reach": 92,
+   "band": "mid",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "hands_open_or_claw",
+    "no_held_raise",
+    "not_at_hip"
+   ],
+   "look": "PROVISIONAL. He rises tall with one blade hand cocked at the shoulder and the other hand up in guard, then folds down behind it and the edge of the hand falls on a slant onto the chest.",
+   "orig": "PROVISIONAL: he rises tall with one blade hand cocked at the shoulder and the other hand up in guard, then folds down behind it and the edge of the hand falls on a slant onto the chest",
+   "poses": [
+    "pv.su_blade_fall.chamber",
+    "pv.su_blade_fall.contact",
+    "pv.su_blade_fall.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "blade",
+   "path": "drop",
+   "flags": []
+  },
+  {
+   "id": "pv.su_palm_arm",
+   "combat": "strike.su_palm_arm",
+   "name": "su_palm_arm",
+   "weight": "heavy",
+   "target": "arm_r",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 54,
+   "reach": 108,
+   "band": "mid",
+   "ticks": {
+    "load": 28,
+    "follow": 8,
+    "recover": 14
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "hands_open_or_claw",
+    "not_at_hip"
+   ],
+   "look": "PROVISIONAL. A stepping palm: the striking hand drawn back close, then one straight line as the body steps through, the heel of the palm set on the rival arm.",
+   "orig": "PROVISIONAL: a stepping palm: the striking hand drawn back close to him, then one straight line to the arm as the body steps through, the heel of the palm set on it; the lead hand open in guard",
+   "poses": [
+    "pv.su_palm_arm.chamber",
+    "pv.su_palm_arm.contact",
+    "pv.su_palm_arm.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "palm",
+   "path": "line",
+   "flags": []
+  },
+  {
+   "id": "pv.palm_turn",
+   "combat": "strike.palm_turn",
+   "name": "palm_turn",
+   "weight": "light",
+   "target": "chest",
+   "limb": "hand_r",
+   "limb2": null,
+   "offset": 58,
+   "reach": 88,
+   "band": "long",
+   "ticks": {
+    "load": 6,
+    "follow": 4,
+    "recover": 6
+   },
+   "ground": "ok",
+   "uses": {
+    "arms": 1
+   },
+   "from": null,
+   "named": true,
+   "legal": [
+    "hands_open_or_claw",
+    "not_at_hip"
+   ],
+   "look": "PROVISIONAL. A turning palm-heel: the open hand carried out and round on the backfist arc and the heel of it set on the chest, the palm leading; he is turned away from the rival at the end of it.",
+   "orig": "PROVISIONAL: a turning palm-heel: the open hand carried out and round on the backfist arc, the arm bent through the turn, the heel of the palm set on the chest, the palm leading",
+   "poses": [
+    "pv.palm_turn.chamber",
+    "pv.palm_turn.contact",
+    "pv.palm_turn.follow"
+   ],
+   "alt": null,
+   "_genericAb": false,
+   "_family": null,
+   "tip": "heel",
+   "path": "arc_out",
+   "flags": []
+  }
+ ],
+ "skipped": []
+}
