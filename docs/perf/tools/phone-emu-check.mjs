@@ -10,15 +10,15 @@
 //   - the manifest as Chrome parsed it, and Chrome's installability errors
 //   - the full-screen call from a (simulated) tap: result, fullscreen element, orientation lock outcome
 //   - a screenshot (the first screen must be the flashing-effects notice: look at the picture)
+// Started through tools/machine/browser.mjs; one scenario at a time.
 // WHAT THIS DOES NOT PROVE: an emulated phone is a desktop Chrome with a phone-sized window. It has no Safari, no notch, no browser bars, no
 // Home Screen install and no system gestures. The "iphone" scenarios REMOVE the Fullscreen API before the page loads, to mimic iPhone Safari
 // (caniuse: iPad only). Real phones decide everything listed under "real phone only" in docs/perf/phone-web-fullscreen.md.
-import { spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { extname, join, resolve, sep } from 'node:path';
-import { platform } from 'node:process';
+import { Cdp, browserExe, launchBrowser } from '../../../tools/machine/browser.mjs';
+// The browser starts through the project's guarded launcher (below-normal priority, a core mask, a time limit, a session-named profile; CLAUDE.md, machine discipline).
 
 const args = process.argv.slice(2);
 const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
@@ -29,8 +29,8 @@ if (shots) mkdirSync(shots, { recursive: true });
 const only = opt('--only') ? opt('--only').split(',') : null;
 const TIMEOUT_S = Number(opt('--timeout', '120'));
 
-const EXES = { win32: ['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'], darwin: ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'], linux: ['/usr/bin/google-chrome', '/usr/bin/chromium'] };
-const exe = opt('--browser-path') || (EXES[platform] || EXES.linux).find((p) => existsSync(p));
+const exe = opt('--browser-path') || browserExe('chrome');
+const SESSION = opt('--session', process.env.MERIDIAN_SESSION || 'meridian-performance-platform');
 if (!exe) { console.error('no Chrome or Edge found; pass --browser-path'); process.exit(2); }
 
 const UA_IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
@@ -67,31 +67,20 @@ function serve(root) {
   return new Promise((ok) => server.listen(0, '127.0.0.1', () => ok(server)));
 }
 
-class Cdp {
-  constructor(ws) { this.ws = ws; this.id = 0; this.pending = new Map(); ws.addEventListener('message', (e) => { const m = JSON.parse(e.data); if (m.id && this.pending.has(m.id)) { const { ok, fail } = this.pending.get(m.id); this.pending.delete(m.id); if (m.error) fail(new Error(m.error.message)); else ok(m.result); } }); }
-  static open(url) { return new Promise((ok, fail) => { const ws = new WebSocket(url); ws.addEventListener('open', () => ok(new Cdp(ws))); ws.addEventListener('error', () => fail(new Error('DevTools socket error'))); }); }
-  send(method, params = {}) { const id = ++this.id; return new Promise((ok, fail) => { this.pending.set(id, { ok, fail }); this.ws.send(JSON.stringify({ id, method, params })); }); }
-  async eval(expression, gesture = false) { const r = await this.send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true, userGesture: gesture }); if (r.exceptionDetails) throw new Error(r.exceptionDetails.text + ' ' + JSON.stringify(r.exceptionDetails.exception && r.exceptionDetails.exception.description)); return r.result ? r.result.value : undefined; }
-  close() { try { this.ws.close(); } catch { /* closed */ } }
+// A page expression run with an optional user gesture (the guarded launcher's Cdp.eval has none), awaiting a returned promise.
+async function ev(page, expression, gesture = false) {
+  const r = await page.send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true, userGesture: gesture });
+  if (r.exceptionDetails) throw new Error(r.exceptionDetails.text + ' ' + JSON.stringify(r.exceptionDetails.exception && r.exceptionDetails.exception.description));
+  return r.result ? r.result.value : undefined;
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function runScenario(sc, origin) {
-  const profile = mkdtempSync(join(tmpdir(), 'phone-emu-'));
-  const flags = [`--user-data-dir=${profile}`, '--remote-debugging-port=0', '--headless=new', '--no-first-run', '--no-default-browser-check', '--disable-extensions', '--disable-sync', '--disable-component-update', '--autoplay-policy=no-user-gesture-required', `--window-size=${sc.w},${sc.h}`, 'about:blank'];
-  const child = spawn(exe, flags, { stdio: 'ignore' });
-  const cleanup = () => {
-    try { if (platform === 'win32') spawnSync('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', timeout: 15000 }); else child.kill('SIGKILL'); } catch { /* gone */ }
-    for (let i = 0; i < 5; i++) { try { rmSync(profile, { recursive: true, force: true }); break; } catch { spawnSync(process.execPath, ['-e', 'setTimeout(()=>{},400)']); } }
-  };
   const out = { name: sc.name, viewport: `${sc.w}x${sc.h} @${sc.dpr}`, note: sc.note || '' };
-  let page;
+  let page, b;
   try {
-    const portFile = join(profile, 'DevToolsActivePort');
-    let port; for (let i = 0; i < 100 && !port; i++) { if (existsSync(portFile)) port = Number(readFileSync(portFile, 'utf8').split('\n')[0]); else await sleep(200); }
-    if (!port) throw new Error('no DevTools port');
-    let target; for (let i = 0; i < 50 && !target; i++) { try { target = (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find((t) => t.type === 'page'); } catch { /* wait */ } if (!target) await sleep(200); }
-    page = await Cdp.open(target.webSocketDebuggerUrl);
+    b = await launchBrowser({ exe, session: SESSION, purpose: 'phoneemu', timeoutS: TIMEOUT_S + 120, log: () => {}, flags: ['--autoplay-policy=no-user-gesture-required', `--window-size=${sc.w},${sc.h}`] });
+    page = await Cdp.open(b.target.webSocketDebuggerUrl);
     await page.send('Page.enable');
     await page.send('Emulation.setDeviceMetricsOverride', { width: sc.w, height: sc.h, deviceScaleFactor: sc.dpr, mobile: sc.mobile, screenWidth: sc.w, screenHeight: sc.h, screenOrientation: { type: sc.w > sc.h ? 'landscapePrimary' : 'portraitPrimary', angle: sc.w > sc.h ? 90 : 0 } });
     if (sc.mobile) await page.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
@@ -104,11 +93,11 @@ async function runScenario(sc, origin) {
     // wait for the engine to finish booting: the page removes #status when the game is running
     const deadline = Date.now() + TIMEOUT_S * 1000;
     let booted = false;
-    while (Date.now() < deadline) { await sleep(1000); const s = await page.eval(`!!window.__ocx && !document.getElementById('status') && !!document.getElementById('canvas') && document.getElementById('canvas').width > 100`).catch(() => false); if (s) { booted = true; break; } }
+    while (Date.now() < deadline) { await sleep(1000); const s = await ev(page, `!!window.__ocx && !document.getElementById('status') && !!document.getElementById('canvas') && document.getElementById('canvas').width > 100`).catch(() => false); if (s) { booted = true; break; } }
     out.booted = booted;
     await sleep(2500); // let the first frames and the notice draw
-    out.ocx = await page.eval(`(() => { const o = window.__ocx; return o ? { v: o.v, touch: o.touch, phone: o.phone, portrait: o.portrait, w: o.w, h: o.h, standalone: o.standalone, canFullscreen: o.canFullscreen, fs: o.fs } : null; })()`);
-    out.layout = await page.eval(`(() => { const c = document.getElementById('canvas'); const r = c.getBoundingClientRect(); const b = getComputedStyle(document.body); const h = getComputedStyle(document.documentElement); return { inner: [innerWidth, innerHeight], canvasCss: [Math.round(r.width), Math.round(r.height)], canvasPx: [c.width, c.height], scroll: [document.documentElement.scrollWidth, document.documentElement.scrollHeight], bodyPosition: b.position, touchAction: [h.touchAction, b.touchAction, getComputedStyle(c).touchAction], viewportScale: window.visualViewport ? window.visualViewport.scale : null }; })()`);
+    out.ocx = await ev(page, `(() => { const o = window.__ocx; return o ? { v: o.v, touch: o.touch, phone: o.phone, portrait: o.portrait, w: o.w, h: o.h, standalone: o.standalone, canFullscreen: o.canFullscreen, fs: o.fs } : null; })()`);
+    out.layout = await ev(page, `(() => { const c = document.getElementById('canvas'); const r = c.getBoundingClientRect(); const b = getComputedStyle(document.body); const h = getComputedStyle(document.documentElement); return { inner: [innerWidth, innerHeight], canvasCss: [Math.round(r.width), Math.round(r.height)], canvasPx: [c.width, c.height], scroll: [document.documentElement.scrollWidth, document.documentElement.scrollHeight], bodyPosition: b.position, touchAction: [h.touchAction, b.touchAction, getComputedStyle(c).touchAction], viewportScale: window.visualViewport ? window.visualViewport.scale : null }; })()`);
     out.fillsViewport = !!out.layout && Math.abs(out.layout.canvasCss[0] - out.layout.inner[0]) <= 1 && Math.abs(out.layout.canvasCss[1] - out.layout.inner[1]) <= 1;
     out.noScroll = !!out.layout && out.layout.scroll[0] <= out.layout.inner[0] && out.layout.scroll[1] <= out.layout.inner[1];
     // manifest as Chrome sees it
@@ -121,22 +110,22 @@ async function runScenario(sc, origin) {
     // the first screen
     if (shots) { const s = await page.send('Page.captureScreenshot', { format: 'png' }); writeFileSync(join(shots, `${sc.name}-first-screen.png`), Buffer.from(s.data, 'base64')); }
     // full screen from a (simulated) tap: Runtime.evaluate with userGesture stands in for the tap on the notice's button
-    const r1 = await page.eval(`(() => { const o = window.__ocx; const ret = o.enterFullscreen(); return ret; })()`, true);
+    const r1 = await ev(page, `(() => { const o = window.__ocx; const ret = o.enterFullscreen(); return ret; })()`, true);
     await sleep(1500);
-    out.fullscreenCall = await page.eval(`(() => { const o = window.__ocx; return { returned: ${JSON.stringify(r1)}, fs: o.fs, fullscreenElement: document.fullscreenElement ? document.fullscreenElement.id || document.fullscreenElement.tagName : null, locked: o.locked, orientationType: screen.orientation && screen.orientation.type }; })()`);
-    out.afterFullscreen = await page.eval(`(() => { const c = document.getElementById('canvas'); const r = c.getBoundingClientRect(); return { inner: [innerWidth, innerHeight], canvasCss: [Math.round(r.width), Math.round(r.height)], portraitFlag: window.__ocx.portrait }; })()`);
+    out.fullscreenCall = await ev(page, `(() => { const o = window.__ocx; return { returned: ${JSON.stringify(r1)}, fs: o.fs, fullscreenElement: document.fullscreenElement ? document.fullscreenElement.id || document.fullscreenElement.tagName : null, locked: o.locked, orientationType: screen.orientation && screen.orientation.type }; })()`);
+    out.afterFullscreen = await ev(page, `(() => { const c = document.getElementById('canvas'); const r = c.getBoundingClientRect(); return { inner: [innerWidth, innerHeight], canvasCss: [Math.round(r.width), Math.round(r.height)], portraitFlag: window.__ocx.portrait }; })()`);
     // calls made without a tap, and the wake lock, on a bare page that holds only the phone block (a fresh page has no user activation)
     await page.send('Page.navigate', { url: `${origin}/__probe.html` });
     await sleep(800);
-    out.withoutTap = await page.eval(`(() => { const o = window.__ocx; let threw = false; try { o.enterFullscreen(); } catch (e) { threw = true; } return new Promise((ok) => setTimeout(() => ok({ threw, fs: o.fs, fullscreenElement: !!document.fullscreenElement }), 800)); })()`, false);
-    out.wakeLock = await page.eval(`(() => { const o = window.__ocx; o.keepAwake(); return new Promise((ok) => setTimeout(() => ok({ api: !!navigator.wakeLock, awake: o.awake }), 800)); })()`, true);
+    out.withoutTap = await ev(page, `(() => { const o = window.__ocx; let threw = false; try { o.enterFullscreen(); } catch (e) { threw = true; } return new Promise((ok) => setTimeout(() => ok({ threw, fs: o.fs, fullscreenElement: !!document.fullscreenElement }), 800)); })()`, false);
+    out.wakeLock = await ev(page, `(() => { const o = window.__ocx; o.keepAwake(); return new Promise((ok) => setTimeout(() => ok({ api: !!navigator.wakeLock, awake: o.awake }), 800)); })()`, true);
     return out;
   } catch (e) {
     out.error = String(e.message || e);
     return out;
   } finally {
     if (page) page.close();
-    cleanup();
+    if (b) await b.close();
   }
 }
 
