@@ -26,7 +26,7 @@ func _init() -> void:
 	var react: int = int(DirAI.skill().get("reactTicks", 14))
 	var r := {"mode": mode, "level": DirAI.level, "matches": n, "ticks": 0, "launchers": 0, "launchers0": 0, "bySafety": {}, "bySafety0": {},
 		"powerSum": 0.0, "fate0": {}, "fateBySafety0": {}, "launches": {"by0": 0, "on0": 0, "byKind0": {}, "byKindAll": {}},
-		"aiGuardOnLauncher": 0, "aiGuardSoon": 0, "opensCue": [0, 0], "opensRead": 0, "reactTicks": react, "kos": 0, "wins0": 0}
+		"aiGuardOnLauncher": 0, "aiGuardSoon": 0, "opensCue": [0, 0], "opensRead": 0, "full": {"by0": 0, "on0": 0, "all": 0, "allSends": 0}, "anywhere": DirBrawl.anywhere(), "reactTicks": react, "kos": 0, "wins0": 0}
 	var kindNames := ["up", "across", "down", "behind", "building"]
 	for m in range(n):
 		var S := SimCore.createSim()
@@ -96,7 +96,15 @@ func _init() -> void:
 				var ty: String = String(e.type)
 				if ty == "cue":
 					var ck: String = String(e.kind)
-					if ck == "launcher_open":
+					if ck == "launch_power":
+						r.full.allSends += 1
+						if int(e.k) == 1:
+							r.full.all += 1
+							if int(e.actor) == 0:
+								r.full.by0 += 1
+							if int(e.target) == 0:
+								r.full.on0 += 1
+					elif ck == "launcher_open":
 						r.opensCue[int(e.actor)] += 1
 					elif ck == "perfect_block":
 						for q in open:
@@ -119,7 +127,7 @@ func _init() -> void:
 						r.launches.byKind0[kn] = int(r.launches.byKind0.get(kn, 0)) + 1
 					if int(e.target) == 0:
 						r.launches.on0 += 1
-			if human and mode == "spam" and bAt < 0 and DirBrawl._g(me, DirBrawl.LINK_AT) == S.tick:
+			if human and mode == "spam" and bAt < 0 and DirBrawl._lg(me, DirBrawl.LA_LINK) == S.tick:
 				bAt = S.tick + 6
 			# the AI's guard presses while a launcher that isn't sure is open on it
 			for s in [0, 1]:
@@ -151,6 +159,17 @@ func _init() -> void:
 	r["powerMean"] = snappedf(float(r.powerSum) / maxf(1.0, float(r.launchers)), 0.001)
 	r["minutes"] = snappedf(float(r.ticks) / 3600.0, 0.1)
 	r["launchesByAMatch"] = snappedf(float(r.launches.by0) / maxf(1.0, float(n)), 0.1)
+	r["fullByAMatch"] = snappedf(float(r.full.by0) / maxf(1.0, float(n)), 0.1)
+	r["fullOnAMatch"] = snappedf(float(r.full.on0) / maxf(1.0, float(n)), 0.1)
+	r["fullAMatchAFighter"] = snappedf(float(r.full.all) / maxf(1.0, 2.0 * float(n)), 0.1)
+	var ns: int = 0
+	var ans: int = 0
+	for kk in r.fateBySafety0:
+		if not String(kk).begins_with("1:"):
+			ns += int(r.fateBySafety0[kk])
+			if not String(kk).ends_with(":launched"):
+				ans += int(r.fateBySafety0[kk])
+	r["answeredShare0"] = snappedf(float(ans) / maxf(1.0, float(ns)), 0.001)
 	print(JSON.stringify(r))
 	quit()
 
