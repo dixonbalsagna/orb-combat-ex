@@ -658,6 +658,24 @@
         "^_": true
       }
     },
+    "switches": {
+      "type": "object",
+      "description": "Parked behaviours (docs/controls/brake-and-grapple.md): each is off until its owner switches it on. Optional: absent is off.",
+      "properties": {
+        "airBrakeGuard": {
+          "type": "boolean",
+          "description": "While the host says a Simple slot's fighter is sent, Guard held sets stanceMask bit 8, the air brake's (off)."
+        },
+        "grappleReads": {
+          "type": "boolean",
+          "description": "SimPressRead.a_read drops the shove and the clinch-by-mash; the grapple's catch_read and brace_read replace them (off)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
     "read": {
       "type": "object",
       "description": "The press reader (docs/controls/agency-input.md 1a, sim/input/press_read.gd): how holds, mashes and taps in time with the blows are told apart, and the contact debounce. Optional: the code defaults are these values.",
@@ -835,6 +853,11 @@
           "type": "integer",
           "minimum": 1,
           "description": "The Simple layout's attack: held this many live ticks, the release is the medium (12)."
+        },
+        "catchTell": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The grapple's catch: the tell from the press of A in reach (10); the carry and the brace decide at the tell plus windupGrace (14)."
         },
         "simpleHeavyStart": {
           "type": "integer",

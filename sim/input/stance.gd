@@ -55,6 +55,18 @@ static func _lowest(m: int) -> int:
 	return 0
 
 
+## The air brake (docs/controls/brake-and-grapple.md): while a fighter is SENT (launched), the core reads `stanceMask` bit 8, the manoeuvre
+## stance's hold, as the brake. LT held already sets it. On a Simple slot (pad or touch) there is no LT, so Guard held while sent sets it
+## instead: the defensive bit (1) becomes the manoeuvre bit (8). Parked behind `switches.airBrakeGuard` (off): with it off, or not sent, or
+## not a Simple slot, the mask is returned as it came.
+static func air_brake_mask(mask: int, sent: bool, simple: bool) -> int:
+	if not sent or not simple or (mask & DEFENSIVE) == 0:
+		return mask
+	if not bool(SimInputData.t(["switches", "airBrakeGuard"], false)):
+		return mask
+	return (mask & ~DEFENSIVE) | MANOEUVRE
+
+
 ## The bit that went on last: `since` maps a bit to the tick it went on; the later tick wins and a tie goes to the higher bit.
 static func newest_of(on: int, since: Dictionary) -> int:
 	var best: int = 0

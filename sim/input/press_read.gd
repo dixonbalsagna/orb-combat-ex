@@ -75,6 +75,7 @@ const DEFAULTS: Dictionary = {
 	"mixupSwitches": 2,   # button changes in one chain that make a mix-up (X Y X)
 	"simpleMediumStart": 12,   # the Simple layout: the hold is the wind-up; from this many live ticks the release is the medium ...
 	"simpleHeavyStart": 28,    # ... and from this many the heavy
+	"catchTell": 10,      # the grapple's catch (docs/design/grapple.md): the tell from the press of A in reach; the carry decides at tell + grace
 }
 
 
@@ -238,6 +239,34 @@ static func burst_read(entry: Dictionary, live_now: int, p: Dictionary = {}) -> 
 	return {"held": held, "ready": ready, "since": maxi(0, held - int(q["burstStart"])) if ready else 0, "stance": int(entry.get("stance", 0))}
 
 
+## The grapple's catch (docs/controls/grapple-input.md, docs/design/grapple.md): an A pressed in reach, on the live clock. "tell" while it is down
+## inside the tell plus the grace (`catchTell` 10 + `windupGrace` 4 = 14 live ticks), "tap" if it was let go by then (the catch lands at the
+## tell's end, or at the release if later: the clinch, or the throw at once on an open fighter), "carry" if it is still down at 14 or was let
+## go after (the catch keeps the grip and drives the rival along the stick). "none" for anything but A.
+static func catch_read(entry: Dictionary, live_now: int, p: Dictionary = {}) -> String:
+	var q: Dictionary = p if not p.is_empty() else params()
+	if int(entry.get("kind", LIGHT)) != CONTEXT:
+		return "none"
+	var dec: int = int(q["catchTell"]) + int(q["windupGrace"])
+	var held: int = held_ticks(entry, live_now, live_now)
+	if int(entry["up"]) >= 0:
+		return "tap" if held <= dec else "carry"
+	return "tell" if held < dec else "carry"
+
+
+## The brace (A held in a clinch): {braced, since}. A is braced once it is still down at the catch's decision point (14 live ticks), so the same
+## number tells a tap from a hold for the catch, the carry and the brace and a touch tap (5 to 12 ticks) never braces. A pummel is the press itself,
+## on the pulse; a braced fighter's press at 14 or more is already past it. `since` counts live ticks past the start; letting go ends it.
+static func brace_read(entry: Dictionary, live_now: int, p: Dictionary = {}) -> Dictionary:
+	var q: Dictionary = p if not p.is_empty() else params()
+	if int(entry.get("kind", LIGHT)) != CONTEXT:
+		return {"braced": false, "since": 0}
+	var dec: int = int(q["catchTell"]) + int(q["windupGrace"])
+	var held: int = held_ticks(entry, live_now, live_now)
+	var braced: bool = int(entry["up"]) < 0 and held >= dec
+	return {"braced": braced, "since": (held - dec) if braced else 0}
+
+
 ## The beam struggle's press (docs/controls/struggle-input.md; rule-of-cool.md section 2): what THIS tick's intent is, against the last one
 ## the sim consumed, as "surge", "letgo" or "none". X, Y and B surge alike, A lets go; a stray (a second press in a window, or one off the
 ## pulse) is the director's to judge, so this only says WHAT was pressed, on the tick it was pressed. `prev` is the intent before this one
@@ -261,6 +290,8 @@ static func struggle_press(prev, i: SimIntent, opts: Dictionary = {}) -> String:
 		letgo = i.guardPress or i.context
 		var none_before: bool = not (pv.lightHeld or pv.heavyHeld or pv.sigHeld)
 		surge = (i.lightHeld and none_before) or (i.sig and i.sigHeld) or i.special != 0
+		if bool(opts.get("a_only", false)):
+			surge = false   # a Simple slot in a clinch: only A (LB's context, or Guard standing for it on touch) counts; the director throws its blows
 	else:
 		var rt: bool = (i.stanceMask & 4) != 0
 		letgo = i.context or (rt and i.special == 3)
@@ -475,6 +506,9 @@ static func alternation(log: Array, now: int, opts: Dictionary = {}) -> Dictiona
 static func a_read(log: Array, live_now: int, opts: Dictionary = {}) -> Dictionary:
 	var p: Dictionary = opts.get("p", params())
 	var out: Dictionary = {"read": "none", "held": 0, "taps": 0, "since": 0, "throw_at": -1, "frac": 0.0}
+	# The grapple replaces the shove and the clinch-by-mash (`switches.grappleReads`, off): only the tackle's coil is read here, a tap is a
+	# plain "tap" with no throw, and a second A is a new press. The catch and the brace are catch_read and brace_read.
+	var grapple: bool = bool(opts.get("grapple", SimInputData.t(["switches", "grappleReads"], false)))
 	var runs: Array = []
 	for e in log:
 		if int(e["kind"]) == CONTEXT:
@@ -488,7 +522,7 @@ static func a_read(log: Array, live_now: int, opts: Dictionary = {}) -> Dictiona
 	while start > 0 and lv.call(last) - lv.call(runs[start - 1]) <= clinch_max:
 		start -= 1
 	var w: int = int(p["windupContext"])
-	if runs.size() - start >= 2:
+	if runs.size() - start >= 2 and not grapple:
 		var first: Dictionary = runs[start]
 		var second: Dictionary = runs[start + 1]
 		if lv.call(second) - lv.call(first) < w:
@@ -502,8 +536,8 @@ static func a_read(log: Array, live_now: int, opts: Dictionary = {}) -> Dictiona
 		"winding":
 			out["read"] = "winding"
 		"tap":
-			out["read"] = "shove"
-			out["throw_at"] = tap_throw_at(last, p)
+			out["read"] = "tap" if grapple else "shove"
+			out["throw_at"] = -1 if grapple else tap_throw_at(last, p)
 		"charge":
 			out["read"] = "coil"
 			var dec: int = decision_for(last, p)

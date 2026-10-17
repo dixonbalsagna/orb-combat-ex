@@ -102,6 +102,7 @@ var hold_start: int
 var simple_medium_start: int = 12
 var simple_heavy_start: int = 28
 var live: int = 0                  # the live steps the sim took (consumed() calls): the clock a hit freeze stops
+var sent: bool = false             # the host says this fighter is sent (launched): on a Simple slot Guard held is then the air brake's bit
 var latch_charge: bool = false     # the slow buttons: a press latches the charge, the next press lets it go
 var charges_off: bool = false      # the slow buttons never report held beyond the press tick
 var _wound: Dictionary = {}        # action -> true for an edge the Simple attack made on its release: the blow is already wound, its level is off
@@ -269,6 +270,12 @@ func set_charges_off(on: bool) -> void:
 	_latched.clear()
 	_latch_ctl.clear()
 	_latch_swallow.clear()
+
+
+## The host's word, each tick, that this slot's fighter is sent (launched). It reads sim state and changes only the intent the layout builds,
+## which is recorded: a replay carries the bit it made. Only a Simple slot and only with `switches.airBrakeGuard` on (SimStance.air_brake_mask).
+func set_sent(on: bool) -> void:
+	sent = on
 
 
 ## Switch the one-shot stance arming on or off. Switching it off disarms.
@@ -698,6 +705,7 @@ func build() -> SimIntent:
 	i.guardPress = i.guardPress and (mask & SimStance.DEFENSIVE) != 0
 	sprinting = sprinting and (mask & SimStance.MANOEUVRE) != 0
 	i.sprint = sprinting
+	i.stanceMask = SimStance.air_brake_mask(mask, sent, _auto_mode)   # a Simple slot's Guard held while sent is the brake's bit (switch, off)
 	if not _auto_mode:
 		i.mode = 1 if ((mode_on or _armed.has(SimStance.ENERGY)) and (mask & SimStance.ENERGY) != 0) else 0   # an armed one-shot energy stance makes the next blow energy
 	if not _armed.is_empty() and (i.light or i.heavy or i.sig or i.context or i.special != 0):

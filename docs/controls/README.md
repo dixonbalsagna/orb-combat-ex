@@ -5,6 +5,7 @@ Owner: Controls and Game Feel. Date: 2026-09-29. Design first; code in `sim/inpu
 | File | What it is |
 | :--- | :--- |
 | [haptics.md](haptics.md) | **The pulse for a launch opening** (`SimHaptics`, pure; the host's one connect as a patch), device rules, proof |
+| [brake-and-grapple.md](brake-and-grapple.md) | **Built, parked behind switches:** the air brake's bit on a Simple slot, `struggle_press`'s A only, `catch_read` and `brace_read`, `a_read`'s shove and clinch retired |
 | [grapple-input.md](grapple-input.md) | **The grapple's inputs** (paper): the catch and the clinch on A, the carry and the brace, every layout, touch Simple's three options |
 | [struggle-input.md](struggle-input.md) | **The beam struggle's inputs on every layout** (paper): the surge, the stray, the let-go, Simple and touch, the traps |
 | [local-two-player.md](local-two-player.md) | **Local two-player:** the join rule, every pairing of devices, leaving, per-player layouts, what Rendering and UI wire, and Orb's manual checks |

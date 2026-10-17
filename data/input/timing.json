@@ -35,6 +35,10 @@
     "releaseGrace": 2,
     "oneshotTicks": 90
   },
+  "switches": {
+    "airBrakeGuard": false,
+    "grappleReads": false
+  },
   "haptics": {
     "minGapMs": 80,
     "padMinMs": 20,
@@ -174,6 +178,7 @@
     "mixupSwitches": 2,
     "simpleMediumStart": 12,
     "simpleHeavyStart": 28,
+    "catchTell": 10,
     "debounce": 2
   },
   "touch": {

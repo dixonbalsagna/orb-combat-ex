@@ -55,6 +55,10 @@ Under RT (the charging stance) the face buttons are the layer: A is `special` 3,
 
 The pulse is "a flex of the grip, a creak, a pad pulse" (`grapple.md` section 2). The same hardware rules as the struggle apply (`haptics.md`): a floor of 20 ms on a pad, a pulse that carries nothing alone, none on a keyboard or iOS Safari. I would **add `clinch_pulse` to the data** with the struggle beat's numbers softened (a low thud, strong 0.3, 20 ms) and a `clinch_grip` for a pummel that moves the grip (30 ms, strong 0.3, weak 0.4), for UI to raise from the grip's cues. Not built until UI names the signal.
 
+## Built (2026-10-17, parked behind switches): see brake-and-grapple.md
+
+`catch_read`, `brace_read` (with `read.catchTell` 10), `struggle_press`'s `a_only` option for a Simple slot in a clinch, and `a_read`'s shove and clinch-by-mash retired behind `switches.grappleReads` (off) are built and tested. The rest of this section is what was not built:
+
 ## What I would build, if asked
 
 - **`SimPressRead.catch_read(entry, live_now, p)`**: "tell", "tap" or "carry" for an A pressed in reach (a one-line wrapper of `charge_read` with `windupContext` 10 and the grace), and **`brace_read`** (A still down 14 live ticks after the press, on the live clock): both pure, with tests, so Encounter, QA and the AI read one function. Data: `read.catchTell` 10 and `read.braceStart` 14.

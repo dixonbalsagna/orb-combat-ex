@@ -42,6 +42,8 @@ var stance_oneshot_pref: Array = ["", ""]
 var trigger_pref: Array = [0.0, 0.0]
 ## The two slow-button settings (Y, B, A; accessibility, layout only): a latched charge, and charges off. Per player, off by default.
 var latch_charge_pref: Array = [false, false]
+## Whether each slot's fighter is sent (launched), as the host says each tick (set_sent): a Simple slot's Guard held is then the air brake.
+var sent_pref: Array = [false, false]
 var charges_off_pref: Array = [false, false]
 var _was: Array = [false, false]
 
@@ -319,6 +321,7 @@ func intent(slot: int) -> SimIntent:
 			if pads.has(d):
 				pads[d].set_mode_style(style)
 				pads[d].set_stance_oneshot(stance_oneshot_of(slot))
+				pads[d].set_sent(bool(sent_pref[slot]))
 				pads[d].set_latch_charge(bool(latch_charge_pref[slot]))
 				pads[d].set_charges_off(bool(charges_off_pref[slot]))
 				if float(trigger_pref[slot]) > 0.0:
@@ -329,6 +332,7 @@ func intent(slot: int) -> SimIntent:
 		"touch":
 			touch.set_mode_style(style)
 			touch.set_stance_oneshot(stance_oneshot_of(slot))
+			touch.set_sent(bool(sent_pref[slot]))
 			touch.set_latch_charge(bool(latch_charge_pref[slot]))
 			touch.set_charges_off(bool(charges_off_pref[slot]))
 			i = touch.build()
@@ -336,6 +340,7 @@ func intent(slot: int) -> SimIntent:
 			var kl: SimLayout = _kb_layout(slot)
 			kl.set_mode_style(style)
 			kl.set_stance_oneshot(stance_oneshot_of(slot))
+			kl.set_sent(bool(sent_pref[slot]))
 			kl.set_latch_charge(bool(latch_charge_pref[slot]))
 			kl.set_charges_off(bool(charges_off_pref[slot]))
 			i = kl.build()
@@ -455,6 +460,13 @@ func set_charges_off(on: bool, slot: int = -1) -> void:
 	for s in range(2):
 		if slot < 0 or s == slot:
 			charges_off_pref[s] = on
+
+
+## The host's word that slot's fighter is sent (launched) this tick, read from the sim before the intent is built (the air brake on a Simple
+## slot: Guard held while sent is `stanceMask` bit 8). A recorded intent carries the result, so a replay needs no state. Off unless
+## `switches.airBrakeGuard` is on.
+func set_sent(slot: int, on: bool) -> void:
+	sent_pref[slot] = on
 
 
 func latch_charge_of(slot: int) -> bool:

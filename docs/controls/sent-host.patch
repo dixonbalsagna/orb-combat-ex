@@ -1,0 +1,11 @@
+diff -ruN a/render/core/sim_host.gd b/render/core/sim_host.gd
+--- a/render/core/sim_host.gd	2026-10-17 12:32:00.547275100 -0700
++++ b/render/core/sim_host.gd	2026-10-17 12:32:00.559617800 -0700
+@@ -286,6 +286,7 @@
+ 	hub.set_humans(S.fighters[0].ai == null, S.fighters[1].ai == null)
+ 	for k in range(2):
+ 		if S.fighters[k].ai == null:
++			hub.set_sent(k, S.fighters[k].state == "launched")   # the air brake on a Simple slot: Guard held while sent is the brake's bit (switches.airBrakeGuard, off); sim state read, the recorded intent carries the result
+ 			inputs[k] = hub.intent(k)
+ 	var pausing: bool = S.pause.left > 0   # Q10: this tick is one of a pausing set piece's frozen ticks
+ 	var pre: bool = intro_running()        # the intro phase: this tick is a pre-clock tick

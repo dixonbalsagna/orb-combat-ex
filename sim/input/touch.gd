@@ -84,6 +84,7 @@ var _power_press: bool = false
 var _power_tap: bool = false
 var _power_t0: int = 0
 var live: int = 0                 # the live steps the sim took (consumed() calls): the clock a hit freeze stops (the Simple attack's hold)
+var sent: bool = false            # the host says this fighter is sent (launched): Simple's Guard held is then the air brake's bit (a switch, off)
 var _power_voided: bool = false   # a layer press (Attack with Power held) fired during this hold
 var _special_edge: int = 0
 var _tf_t0: int = -1              # the Transform button's press tick, or -1
@@ -158,6 +159,11 @@ func armed_stance() -> int:
 
 func energy_latched() -> bool:
 	return _full != null and _full.energy_latched()
+
+
+## The host's word, each tick, that this fighter is sent (launched). Full touch has its Dodge hold (LT's bit) and ignores it.
+func set_sent(on: bool) -> void:
+	sent = on
 
 
 ## The two slow-button settings (Full touch only; the Simple attack's hold is a weight, not a charge): a latched charge, and charges off.
@@ -520,6 +526,7 @@ func build() -> SimIntent:
 	i.guard = i.guard and (mask & SimStance.DEFENSIVE) != 0
 	i.guardPress = i.guardPress and (mask & SimStance.DEFENSIVE) != 0
 	i.sprint = i.sprint and (mask & SimStance.MANOEUVRE) != 0
+	i.stanceMask = SimStance.air_brake_mask(mask, sent, true)   # Guard held while sent is the air brake's bit (switch, off)
 	# Today's fields, until I3: a flick's dash or a sprint is the dash; Power held past holdTicks is the channel.
 	i.dash = dashing or i.sprint
 	i.charge = power and not _power_voided and (tick - _power_t0) >= int(cfg.holdTicks)
