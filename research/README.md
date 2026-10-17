@@ -14,6 +14,7 @@ Owner: Research & Prototyping director. Spikes are fast, throwaway experiments t
 | [engine-spike](engine-spike/) | Godot 4.7.2 or the web stack for the real build (ADR 0001)? | Done 2026-09-29: [RESULT.md](engine-spike/RESULT.md) |
 | [band-proto](band-proto/) | Option B: does a fighting ground with real depth (true collisions) feel and read better than the flat plane? | Built 2026-10-01: playable prototype and [README](band-proto/README.md); waiting for Orb to play it |
 | [co-op brawler study](../docs/research/co-op-brawler.md) | How could today's versus systems carry two players against AI opponents, as part of a bigger game? | Part 1 committed; [part 2](../docs/research/co-op-brawler-part-2.md) written 2026-10-11 after Orb's answers (recommends "pair and satellite"; study only, nothing built) |
+| [world catastrophe](../docs/research/world-catastrophe.md) | Can the engine and budgets do Orb's world-catastrophe boss fight (magma through the crust, a mushroom cloud darkening the sky, an exosphere fight, mass collapse)? | Written 2026-10-16: feasible for all four; prototypes and stills in docs/research/world-catastrophe/; flash clips pass; timings invalid (machine saturated) |
 | [info-hiding](info-hiding/) | How can hiding work when both players share one screen: split-screen, fog of war or picture-in-picture? | **Parked** 2026-09-29 (lean-team directive, ADR 0005). See "Where info-hiding stopped" below. |
 
 ### Where info-hiding stopped

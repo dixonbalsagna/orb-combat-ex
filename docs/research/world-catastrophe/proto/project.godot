@@ -1,0 +1,24 @@
+; World catastrophe render prototype (Research & Prototyping, 2026-10-16). Throwaway and standalone: its own project, so
+; the game's project ignores this folder (docs/research/world-catastrophe/.gdignore). Never loaded by the game or the sim.
+
+config_version=5
+
+[application]
+
+config/name="World catastrophe prototype"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.7")
+boot_splash/show_image=false
+boot_splash/bg_color=Color(0, 0, 0, 1)
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/vsync/vsync_mode=0
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0, 0, 0, 1)
