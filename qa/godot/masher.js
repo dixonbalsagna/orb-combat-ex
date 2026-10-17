@@ -59,6 +59,23 @@ function _runPair(tag, a, b, n, base, extra = []) {
   });
 }
 
+// A probe script (qa/godot/ret.gd, charge.gd): one Godot process, one JSON line with "probe" in it. The same wall cap and budget as the pairs, and the same validity fields.
+function _runProbe(tag, script, args) {
+  const g = godot();
+  if (!g) return Promise.reject(new Error('Godot 4.7 not found'));
+  return new Promise((resolve, reject) => {
+    const p = guard(spawn(g.exe, ['--headless', '--path', ROOT, '--script', 'res://qa/godot/' + script, '--', ...args, ...capArgs()], { stdio: ['ignore', 'pipe', 'pipe'] }));
+    let out = '';
+    p.stdout.on('data', d => { out += d; }); p.stderr.on('data', d => { out += d; });
+    p.on('error', reject);
+    p.on('close', code => {
+      const line = out.split(String.fromCharCode(10)).find(l => l.startsWith('{') && l.includes('"probe"'));
+      if (code !== 0 || !line) return reject(new Error(script + ' failed for ' + tag + ' (exit ' + code + ')' + String.fromCharCode(10) + out.slice(0, 1200)));
+      resolve({ probeTag: tag, ...JSON.parse(line) });
+    });
+  });
+}
+
 // The wall cap (real seconds one match may take) and the budget (real seconds a job may keep starting matches): the defaults are the scripts' own, 300 and 3600; QA_WALL and QA_BUDGET raise them for a machine that other
 // sessions share. A job in which a match was wall-capped, or that stopped starting matches at its budget, is NOT a measurement of the build: it is returned marked `invalid` and is not saved, so a resume runs it again.
 const capArgs = () => [`--wall=${process.env.QA_WALL || '300'}`, `--budget=${process.env.QA_BUDGET || '3600'}`];
@@ -79,6 +96,7 @@ function gate(name, spawn) {
 const runLevel = (level, n, base, forms = false, gap = 8) => gate(`level:${level}:${forms ? 'forms' : 'noforms'}:${gap}`, () => _runLevel(level, n, base, forms, gap));
 const runMirror = (n, base, specA = 'masher:forms=1', specB = null, tag = 'live') => gate('mirror:' + tag, () => _runMirror(n, base, specA, specB, tag));
 const runPair = (tag, a, b, n, base, extra = []) => gate(tag, () => _runPair(tag, a, b, n, base, extra));
+const runProbe = (tag, script, args) => gate(tag, () => _runProbe(tag, script, args));
 
 // At most `k` Godot jobs at once (the standing cap is three): the tasks are thunks, run by k workers, results in order.
 async function pool(tasks, k = 3) {
@@ -141,6 +159,15 @@ async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'
   T.push(() => runPair('cell-b-held', 'holder:forms=1:kind=B:hold=46:rest=4', ai, nm, base));   // B held to its flash (44) and let go, again and again
   T.push(() => runPair('x-medium', W, ai, nm, base));   // the pair script's X masher against medium: the route is read against THIS masher, not masher.gd's
   for (const lv of ['easy', 'medium', 'hard']) T.push(() => runPair('route-' + lv, 'route:forms=1:clock=tick:gap=8', 'ai:level=' + lv, nm, base));
+  // The eleventh round (brawl-second-pass.md section 14, 2026-10-16): a scripted newcomer who launches (X every 10 ticks, B within 20 ticks of his gauge filling), the return from a launch, and the AI against charged blows.
+  for (const lv of ['easy', 'medium']) T.push(() => runPair('newcomer-' + lv, 'newcomer:forms=1:clock=tick:gap=10:react=20', 'ai:level=' + lv, nm, base));
+  // the twelfth round: the route against medium is read on 200 matches (seeds 1 to 200), with its masher on the same seeds
+  T.push(() => runPair('rb-medium', 'route:forms=1:clock=tick:gap=8', 'ai:level=medium', nm, base + nm));
+  T.push(() => runPair('xb-medium', W, ai, nm, base + nm));
+  const nr = Math.min(n, 60);
+  for (const d of ['striker', 'guarder', 'idle']) T.push(() => runProbe('ret-' + d, 'ret.gd', [String(nr), String(base), '--def=' + d, '--react=15', '--from=cue', '--level=medium']));
+  for (const lv of ['easy', 'medium', 'hard']) T.push(() => runProbe(`charge-b-${lv}`, 'charge.gd', [String(nr), String(base), '--cell=b', '--level=' + lv]));
+  T.push(() => runProbe('charge-y-medium', 'charge.gd', [String(nr), String(base), '--cell=y', '--level=medium']));   // a medium has no charge on 0ca6f670 (brawl.gd: "a medium has no charge yet"): 0 releases there; the job is the proof
   // Giving ground (Orb's test 2): a fighter who presses nothing and takes his stick away from a seeded tick of the rival's wind-up, against a B or Y tapper who does not follow and one who does.
   T.push(() => runPair('give-b-free', 'giver:forms=1', W + ':btn=B:gap=40:tap=4:off=7', n1, base, caps));
   T.push(() => runPair('give-b-follow', 'giver:forms=1', W + ':btn=B:gap=40:tap=4:off=7:follow=1', n1, base, caps));
@@ -167,6 +194,85 @@ const BANDS = { easy: [0.60, 1, 'at least 60%'], medium: [0.35, 0.50, '35 to 50%
 // The lights-only mirror's rows (agency pass 13 and 23; melee-press-feel.md sections 3, 9 and 9d), for each variant: 'live' counts live ticks (every earlier baseline), 'tick' counts S.tick
 // (the real tap rate; the brawl's flurry counts it), 'fast-slow' is a 6-tick tapper against a 12-tick tapper (reported).
 const LATE_OK = 4;   // ticks a trade's break may come after its limit: a hit-stop holds the sim (Encounter measured at most 2)
+
+// The eleventh round's rows (Orb's playtest, 2026-10-16): the newcomer's first launch, the return from a launch, the AI against charged blows, and the beam struggle (stubs until Encounter's window lands).
+function elevenRows(results) {
+  const rows = [], pct = x => (100 * x).toFixed(1) + '%', bad = r => !!(r && r.invalid);
+  const inv = (id, ref, what, band, r) => ({ id, ref, what, status: 'PENDING', value: `the job was marked invalid (${r.n} of ${r.requested || '?'} matches, ${r.wallCapped || 0} wall-capped, budget stop ${!!r.budgetStopped}): not a measurement`, band, note: '' });
+  // 1. a newcomer launches: X every 10 ticks, B within 20 ticks of his gauge filling; a first launch inside 60 s of the first brawl in at least 90% of matches
+  for (const lv of ['medium', 'easy']) {
+    const r = results.find(x => x.pair === 'newcomer-' + lv);
+    if (!r) continue;
+    const id = 'newcomer.first60.' + lv, what = `A scripted newcomer (X every 10 ticks, B within 20 ticks of his gauge filling) makes a first launch inside 60 s of the first brawl, against the ${lv} AI (at least 90% of matches; Game Design's eleventh round)`;
+    if (bad(r)) { rows.push(inv(id, '§14 eleventh round', what, 'at least 90%', r)); continue; }
+    const lc = ((r.brawl || {}).launcher) || {}, by = lc.routeBy || [], on = lc.routeOn || [], fl = (lc.firstLaunchSec || []).filter(x => x >= 0), dec = r.aWins + r.bWins;
+    if (!by.length) { rows.push({ id, ref: '§14 eleventh round', what, status: 'PENDING', value: 'no launcher records in this build', band: 'at least 90%', note: '' }); continue; }
+    const f30 = fl.filter(x => x <= 30).length / by.length, f60 = fl.filter(x => x <= 60).length / by.length, mean = a => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
+    rows.push({ id, ref: '§14 eleventh round', what, status: lv === 'medium' ? (f60 >= 0.90 ? 'PASS' : 'FAIL') : 'INFO', value: `${pct(f60)} of ${by.length} matches inside 60 s (${fl.length} had a launch at all); inside 30 s ${pct(f30)}`, band: lv === 'medium' ? 'at least 90%' : 'reported (the band is at medium)', note: `${r.n} matches; the newcomer wins ${dec ? pct(r.aWins / dec) : '-'}; ${mean(by).toFixed(2)} launches a match by him, ${mean(on).toFixed(2)} on him` });
+  }
+  // 2. the return from a launch: the AI's first blow back lands unanswered (main 775968bc: 97% against a striker; Encounter's parked fix 41%)
+  for (const d of ['striker', 'guarder', 'idle']) {
+    const r = results.find(x => x.probeTag === 'ret-' + d);
+    if (!r) continue;
+    const id = 'return.unanswered.' + d, what = `The AI's first blow back after a launch lands unanswered (clean, and the ${d === 'idle' ? 'player pressing nothing' : d === 'striker' ? 'player striking X every 8 ticks from 15 ticks after the approach starts' : 'player guarding, a fresh guard press at the cue and after each wind-up'} landed nothing first), medium AI; Encounter's return probe (reported)`;
+    if (bad(r)) { rows.push(inv(id, '§14 eleventh round', what, 'reported', r)); continue; }
+    const share = r.returns ? r.unanswered / r.returns : NaN, ranged = r.ranged || 0;
+    rows.push({ id, ref: '§14 eleventh round', what, status: r.returns ? 'INFO' : 'PENDING', value: r.returns ? `${r.unanswered} of ${r.returns} unanswered (${pct(share)}); ${r.guarded} guarded, ${r.perfect} perfect, ${r.playerFirst} landed first by the player; ${r.met} meetings in the middle; ${ranged} first blows from range` : `no return in ${r.n} matches (${r.launches} launches)`, band: d === 'striker' ? 'reported (main 97%; the parked fix 41%)' : 'reported', note: `${r.n} matches from seed 1, ${r.launches} launches, ${r.noReturn} never came back; mid-band ticks before the blow: median ${(r.midTicks || {}).median}` });
+  }
+  // 3. the AI against charged blows (the twelfth round): the perfect block alone is held to 2 to 5% at medium; what rises by level is the share of charges ANSWERED (a perfect block, a blow that stops the
+  // charge before the release, or giving ground); the hard tests: no guard press on or just after a release, and no perfect block from a press made more than the window before the blow lands (a stale mark)
+  const cr = results.filter(x => x.probe === 'charge'), at = (c, lv) => results.find(x => x.probeTag === `charge-${c}-${lv}`), ans = {};
+  for (const lv of ['easy', 'medium', 'hard']) {
+    const b = at('b', lv), y = at('y', lv);
+    if (!b && !y) continue;
+    const parts = [b, y].filter(Boolean), id = 'charge.pb.' + lv;
+    const what = `Charged blows (heavies held 36 to 72 ticks, mediums held 14 to 40) perfect-blocked by the ${lv} AI, of those he let go (Game Design's twelfth round: 2 to 5% at medium)`;
+    if (parts.some(bad)) { rows.push(inv(id, '§14 twelfth round', what, lv === 'medium' ? '2 to 5%' : 'reported', parts.find(bad))); continue; }
+    const rel = parts.reduce((a, x) => a + x.releases, 0), pb = parts.reduce((a, x) => a + x.perfect, 0), sh = rel ? pb / rel : NaN;
+    const split = parts.map(x => `${x.cell === 'y' ? 'mediums' : 'heavies'} ${x.perfect} of ${x.releases} (${pct(x.perfect / Math.max(1, x.releases))})`).join('; ');
+    rows.push({ id, ref: '§14 twelfth round', what, status: lv === 'medium' ? (Number.isFinite(sh) ? (sh >= 0.02 && sh <= 0.05 ? 'PASS' : 'FAIL') : 'PENDING') : 'INFO', value: Number.isFinite(sh) ? `${pct(sh)} (${pb} of ${rel}); ${split}` : 'no charged blow released', band: lv === 'medium' ? '2 to 5%' : 'reported', note: `${parts.map(x => x.n).join(' and ')} matches` });
+    // the answers, of the charges he began (heavies; a medium has no charge on a build that has not built it)
+    const ch = parts.reduce((a, x) => a + (x.charges || 0), 0), an = parts.reduce((a, x) => a + x.perfect + (x.stopped || 0) + (x.gaveGround || 0), 0);
+    if (ch && parts.every(x => x.charges !== undefined)) {
+      ans[lv] = an / ch;
+      rows.push({ id: 'charge.answered.' + lv, ref: '§14 twelfth round', what: `Charges the ${lv} AI answers, of those he begins: a perfect block, a blow that stops the charge before the release, or giving ground (reported; the share rises from easy to hard)`, status: 'INFO', value: `${pct(an / ch)} (${an} of ${ch}): perfect block ${parts.reduce((a, x) => a + x.perfect, 0)}, stopped ${parts.reduce((a, x) => a + (x.stopped || 0), 0)}, gave ground ${parts.reduce((a, x) => a + (x.gaveGround || 0), 0)}`, band: 'reported', note: `${parts.map(x => x.n).join(' and ')} matches` });
+    }
+  }
+  if (ans.easy !== undefined && ans.medium !== undefined && ans.hard !== undefined) rows.push({ id: 'charge.answered.order', ref: '§14 twelfth round', what: 'The share of charges answered rises from easy to medium to hard (point estimates)', status: ans.easy < ans.medium && ans.medium < ans.hard ? 'PASS' : 'FAIL', value: `easy ${pct(ans.easy)}, medium ${pct(ans.medium)}, hard ${pct(ans.hard)}`, band: 'easy < medium < hard', note: 'one run a level' });
+  { const ym = at('y', 'medium');
+    if (ym && !bad(ym)) rows.push({ id: 'charge.y.built', ref: '§14 twelfth round', what: 'A held Y is a charged medium that can be let go (the eleventh round names charged heavies and charged mediums; the twelfth gives the medium the same guess)', status: ym.releases > 0 ? 'INFO' : 'PENDING', value: ym.releases > 0 ? `${ym.perfect} of ${ym.releases} charged mediums perfect-blocked by the medium AI` : `0 charged mediums let go in ${ym.n} matches: a medium has no charge on this build (brawl.gd, "a medium has no charge yet")`, band: 'reported', note: 'the band 2 to 5% at medium reads the charged heavies until a medium charges' }); }
+  if (cr.length) {
+    const live = cr.filter(x => !bad(x)), same = live.reduce((a, x) => a + x.pressSameTick, 0), aft = live.reduce((a, x) => a + x.pressAfterRelease, 0), rel = live.reduce((a, x) => a + x.releases, 0);
+    rows.push({ id: 'charge.noreact', ref: '§14 twelfth round', what: 'The AI never reacts to a release: it starts no guard press on a charged blow\'s release tick or in the 14 ticks after it, before the blow lands (hard test, every level, both cells)', status: live.length && rel ? (same + aft === 0 ? 'PASS' : 'FAIL') : 'PENDING', value: live.length ? `${same} presses on the release tick and ${aft} within 14 ticks after it, over ${rel} releases at ${live.length} of ${cr.length} level and cell runs` : 'no valid charge job', band: 'none', note: 'a fresh guard press (DirInterrupt GUARD_AT); a press before the release is the AI\'s guess or, on a build that keeps the wind-up\'s mark, its stale mark: see charge.stale' });
+    const withStale = live.filter(x => x.stale !== undefined), perf = withStale.reduce((a, x) => a + x.perfect, 0), stale = withStale.reduce((a, x) => a + x.stale, 0);
+    rows.push({ id: 'charge.stale', ref: '§14 twelfth round', what: 'No perfect block of a charge comes from a press made more than the perfect window (14 ticks) before the blow landed: a block must depend on its timing, not on a mark left at the wind-up (hard test; the fault Encounter found on main)', status: withStale.length && perf ? (stale === 0 ? 'PASS' : 'FAIL') : 'PENDING', value: withStale.length ? `${stale} of ${perf} perfect blocks followed a press more than 14 ticks before the blow landed` : 'no charge job with the stale-mark count', band: 'none', note: `${withStale.length} level and cell runs` });
+    // the rate by hold length (the EP's ask): a rate that is flat across hold lengths, short holds included, is a block that does not depend on the release
+    const bins = {};
+    for (const x of live.filter(y => y.cell === 'b' && y.level === 'medium')) for (const [k, v] of Object.entries(x.byHold || {})) { const o = bins[k] || [0, 0]; o[0] += v[0]; o[1] += v[1]; bins[k] = o; }
+    const keys = Object.keys(bins).sort((a, b) => parseInt(a) - parseInt(b));
+    if (keys.length) rows.push({ id: 'charge.byhold', ref: '§14 twelfth round', what: 'Perfect blocks of a charged heavy by how long it was held (ticks from the charge cue to the release), medium AI (reported: a rate that is flat across hold lengths, the shortest included, means the block does not depend on the release)', status: 'INFO', value: keys.map(k => `${k}: ${bins[k][1]} of ${bins[k][0]} (${pct(bins[k][1] / Math.max(1, bins[k][0]))})`).join('; '), band: 'reported', note: 'bins of 10 ticks; one run' });
+  }
+  // the route against medium on 200 matches (the twelfth round): at most 80%, and 0 to 25 points over its masher
+  { const ra = results.find(x => x.pair === 'route-medium'), rb = results.find(x => x.pair === 'rb-medium'), xa = results.find(x => x.pair === 'x-medium'), xb = results.find(x => x.pair === 'xb-medium');
+    const R = [ra, rb].filter(x => x && !bad(x)), X = [xa, xb].filter(x => x && !bad(x)), tot = L => ({ w: L.reduce((a, x) => a + x.aWins, 0), d: L.reduce((a, x) => a + x.aWins + x.bWins, 0), n: L.reduce((a, x) => a + x.n, 0) });
+    if (ra && xa) {
+      const r = tot(R), m = tot(X), rs = r.d ? r.w / r.d : NaN, ms = m.d ? m.w / m.d : NaN, full = R.length === 2 && X.length === 2;
+      rows.push({ id: 'route.win.medium', ref: '§14 twelfth round', what: 'The route\'s player wins at most 80% against the medium AI, read on 200 matches (seeds 1 to 200)', status: Number.isFinite(rs) && full ? (rs <= 0.80 ? 'PASS' : 'FAIL') : 'PENDING', value: Number.isFinite(rs) ? `${pct(rs)} (${r.w} of ${r.d}) on ${r.n} matches` : 'no decided match', band: 'at most 80%', note: full ? '200 matches' : 'fewer than 200 valid matches: not a reading' });
+      rows.push({ id: 'route.over.masher', ref: '§14 twelfth round', what: 'The route wins 0 to 25 points over the same script\'s masher, both against the medium AI, on the same 200 seeds', status: Number.isFinite(rs) && Number.isFinite(ms) && full ? (rs - ms >= 0 && rs - ms <= 0.25 ? 'PASS' : 'FAIL') : 'PENDING', value: Number.isFinite(rs) && Number.isFinite(ms) ? `${((rs - ms) * 100).toFixed(1)} points (route ${pct(rs)}, masher ${pct(ms)} of ${m.d})` : 'no decided match', band: '0 to 25 points', note: full ? '200 matches each' : 'fewer than 200 valid matches: not a reading' });
+    }
+  }
+  // 4. the beam struggle as a tug of war (rule-of-cool.md section 2): stubs until Encounter's window lands; the reader is written against its cues (beam_struggle, beam_pulse, beam_surge, beam_stray, beam_end) and clash.mid
+  const wait = 'waits for Encounter\'s beam struggle window (docs/director/pending/beam-struggle): no beam_struggle cue on main';
+  for (const [id, what, band] of [
+    ['beam.struggle.more', 'The side with more surges wins in at least 80% of struggles whose head start was under 10%', 'at least 80%'],
+    ['beam.struggle.crosses', 'The point crosses the middle at least once in at least 25% of struggles', 'at least 25%'],
+    ['beam.struggle.behind', 'At least 15% of the struggles that end with a winner are won from behind (the side more than 10% down at some point; a detonation has no winner)', 'at least 15% of struggles with a winner'],
+    ['beam.struggle.masher', 'A scripted masher wins no more often than a fighter who does not press, and his struggles last about as long: the medians within 20% (hard test)', 'no more often; medians within 20%'],
+    ['beam.struggle.off2', 'A scripted player 2 ticks off the beat overwhelms the medium AI in at least 75% of struggles from an even start', 'at least 75%'],
+    ['beam.struggle.late3', 'A scripted player 3 ticks late still wins at least 90% of struggles against the medium AI', 'at least 90%'],
+    ['beam.struggle.pulse', 'The pulse hit rate by AI level (reported: 40, 65 and 85%)', 'reported']]) rows.push({ id, ref: 'rule-of-cool §2', what, status: 'PENDING', value: wait, band, note: 'a stub: the per-struggle record (surges per side, head start, crossings, the winner, how it ended) is read from the cues once they exist' });
+  return rows;
+}
 
 function mirrorRows(m) {
   const b = m.brawl || {}, sfx = m.tag === 'live' ? '' : '.' + m.tag, lab = m.tag === 'live' ? '' : ` (${m.tag === 'tick' ? 'taps on S.tick, both on the same ticks: the exact tie' : m.tag === 'tickoff' ? 'taps on S.tick, the second player starting on a seeded offset of 0 to 7 ticks' : m.tag === 'uneven' ? 'an 8-tick tapper against a 10-tick tapper' : 'a 6-tick tapper against a 12-tick tapper'})`;
@@ -367,7 +473,7 @@ function c2Rows(r, results) {
 }
 
 function masherRows(results) {
-  const rows = results.filter(r => !r.mirror && !r.pair).map(r => {
+  const rows = results.filter(r => !r.mirror && !r.pair && !r.probe).map(r => {
     const [lo, hi, text] = BANDS[r.level], decided = r.wins + r.losses, v = decided ? r.wins / decided : NaN, ok = decided && v >= lo && v <= hi, forms = !!r.forms;
     const odd = r.gap !== 8;   // 6 and 10 are reported beside the banded 8-tick script (Game Design's ruling 4)
     return { id: 'masher.' + (forms ? '' : 'noforms.') + r.level + (odd ? '.g' + r.gap : ''), ref: '§6 masher', what: `The banded masher (masher.gd: a human slot that presses light on every ${r.gap}th ${r.clock === 'live' ? 'live ' : 'S.'}tick by the absolute count; ${r.gap} ${r.clock === 'live' ? 'live ' : 'S.'}ticks, ${forms ? 'takes forms' : 'no forms'}) wins against the ${r.level} AI`, status: decided ? (forms && !odd ? (ok ? 'PASS' : 'FAIL') : 'INFO') : 'PENDING', value: decided ? `${(v * 100).toFixed(1)}% (${r.wins} of ${decided})` : 'no decided matches', band: forms ? text : `(${text} if forms are taken)`, note: `${r.n} matches, ${r.timeouts} timed out, median ${r.medianSec} s; point estimate only${forms ? '' : '; a beginner who never transforms fights at tier 1 (Game Design to rule)'}; per match: launches by the masher ${r.launchesByMasher}, of which air catches ${r.airCatchesOfAI}; launches on the masher ${r.launchesOnMasher}, air catches ${r.airCatchesOfMasher}` };
@@ -391,6 +497,7 @@ function masherRows(results) {
     else if (r.pair === 'blast-medium') rows.push({ id: 'masher.blast.medium', ref: '§6 masher', what: 'A mixed blaster (a bolt about every 14 ticks, a tapped heavy now and then) wins against the medium AI (agency pass section 22: 30 to 50%)', status: dec ? (r.aWins / dec >= 0.30 && r.aWins / dec <= 0.50 ? 'PASS' : 'FAIL') : 'PENDING', value: dec ? `${(100 * r.aWins / dec).toFixed(1)}% (${r.aWins} of ${dec})` : 'no decided matches', band: '30 to 50%', note: `${r.n} matches, ${r.timeouts} ran to the cap; point estimate` });
   }
   for (const m of results.filter(r => r.mirror)) rows.push(...mirrorRows(m));
+  rows.push(...elevenRows(results));
   for (const b of ['X', 'Y', 'B']) rows.push({ id: `cell.${b.toLowerCase()}.tapped`, ref: '§15 second pass', what: `${b} tapped on every beat, alone against the medium AI (40 to 75%)`, status: 'PENDING', value: 'the beat (the skill strike on all three) is C3, not built', band: '40 to 75%', note: 'needs the skill strike and a script that presses on the beat' });
   rows.push({ id: 'masher.expert', ref: '§6 masher', what: 'An expert script (guards, punishes with a heavy, perfect-blocks heavies and enders) wins against the medium AI (at most 15%)', status: 'PENDING', value: '', band: 'at most 15%', note: 'needs the expert script: it reads the rival tells (Encounter scratch build has one, not in the tree)' });
   return rows;

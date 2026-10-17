@@ -277,6 +277,30 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     assert.strictEqual(id(low, 'x.bodies').status, 'FAIL'); assert.strictEqual(id(low, 'x.wall').status, 'FAIL');
     assert.strictEqual(id(good, 'x.depth.cap').status, 'PENDING'); assert.strictEqual(id(good, 'x.depth.streets').status, 'PENDING');
   });
+  await t('eleventh-round rows: the newcomer inside 60 s (90% at medium), the return reported, charged blows perfect-blocked 2 to 5% at medium, the answers rise by level, no reaction to a release and no stale mark; the beam struggle PENDING; an invalid job is not a measurement', async () => {
+    const { masherRows } = require('./masher');
+    const nc = (firsts) => ({ pair: 'newcomer-medium', n: firsts.length, aWins: 60, bWins: 40, brawl: { launcher: { routeBy: firsts.map(() => 5), routeOn: firsts.map(() => 4), firstLaunchSec: firsts } } });
+    const ch = (c, lv, rel, pb, over = {}) => ({ probe: 'charge', probeTag: `charge-${c}-${lv}`, cell: c, level: lv, n: 60, requested: 60, wallCapped: 0, releases: rel, perfect: pb, pressBefore: pb, pressAfter: 0, sameTick: 0, pressSameTick: 0, pressAfterRelease: 0, ...over });
+    const rowsOf = rs => masherRows(rs), id = (rows, k) => rows.find(r => r.id === k);
+    const good = rowsOf([nc(Array(100).fill(20)), { probe: 'ret', probeTag: 'ret-striker', n: 60, requested: 60, wallCapped: 0, launches: 150, returns: 110, unanswered: 107, guarded: 2, perfect: 0, playerFirst: 1, met: 0, noReturn: 0, ranged: 3, midTicks: { median: 23 } },
+      ch('b', 'easy', 590, 35, { charges: 800, stopped: 10, gaveGround: 5, stale: 0 }), ch('b', 'medium', 700, 25, { charges: 900, stopped: 90, gaveGround: 40, stale: 0 }), ch('y', 'medium', 500, 10, { charges: 0 }), ch('b', 'hard', 600, 31, { charges: 800, stopped: 200, gaveGround: 100, stale: 0 })]);
+    assert.strictEqual(id(good, 'newcomer.first60.medium').status, 'PASS');
+    assert.strictEqual(id(good, 'return.unanswered.striker').status, 'INFO'); assert.ok(/107 of 110/.test(id(good, 'return.unanswered.striker').value));
+    assert.strictEqual(id(good, 'charge.pb.medium').status, 'PASS');   // 35 of 1,200: 2.9%, in 2 to 5%
+    assert.strictEqual(id(good, 'charge.answered.order').status, 'PASS');   // easy 50 of 800, medium 155 of 900, hard 331 of 800
+    assert.strictEqual(id(good, 'charge.stale').status, 'PASS');
+    assert.strictEqual(id(good, 'charge.pb.easy').status, 'INFO');
+    assert.strictEqual(id(good, 'charge.noreact').status, 'PASS');
+    assert.strictEqual(id(good, 'beam.struggle.more').status, 'PENDING');
+    const slow = rowsOf([nc([...Array(80).fill(20), ...Array(20).fill(90)]), ch('b', 'medium', 700, 245, { pressAfterRelease: 3 }), ch('y', 'medium', 500, 5)]);
+    assert.strictEqual(id(slow, 'newcomer.first60.medium').status, 'FAIL');   // 80% inside 60 s
+    assert.strictEqual(id(slow, 'charge.pb.medium').status, 'FAIL');   // 250 of 1,200 is 20.8%
+    assert.strictEqual(id(slow, 'charge.noreact').status, 'FAIL');
+    const stale = rowsOf([ch('b', 'medium', 700, 30, { stale: 12 })]);
+    assert.strictEqual(id(stale, 'charge.stale').status, 'FAIL');   // 12 of 30 blocks followed a press more than 14 ticks before the blow
+    const inv = rowsOf([ch('b', 'medium', 700, 50, { wallCapped: 2, invalid: true }), ch('y', 'medium', 500, 40)]);
+    assert.strictEqual(id(inv, 'charge.pb.medium').status, 'PENDING');
+  });
   console.log(`godot qa selftest: ${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
 })();

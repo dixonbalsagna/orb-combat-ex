@@ -54,6 +54,8 @@ class Pl:
 	var tap_left: int = 0
 	var open_n: int = -1           # route: the S.tick the rival's stagger ends, while a launcher_open is on (the B may be thrown until then)
 	var route_b: int = -1000       # route: the S.tick of the last B
+	var nc_at: int = -1             # newcomer: the S.tick he presses B (his gauge filled plus a seeded 0 to react ticks), -1 none
+	var nc_was: bool = false        # newcomer: his gauge was full on the last read
 	var winding_n: int = -1        # follow: the landing tick of this player's own wind-up, while it runs
 	var gv_from: int = -1          # giver: the tick his stick goes away (the rival's wind-up start plus a seeded offset) and the tick it stops
 	var gv_to: int = -1
@@ -258,6 +260,21 @@ class Pl:
 			zip_mask = 0
 			zip_next = S.tick + 120
 		return -1
+
+	## Is f's run (the gauge of the eleventh round: four pips, one for each point of the run) at the points that close? 0 when the build has no run.
+	static func gauge_full(f) -> bool:
+		if brawl == null or not has_m(brawl, "_g"):
+			return false
+		var cm: Dictionary = brawl.get_script_constant_map()
+		if not cm.has("RUN") or not cm.has("RUN_U"):
+			return false
+		var c = brawl.call("cfg")
+		var close: int = int(c.flurry.runToClose) if (typeof(c) == TYPE_DICTIONARY and c.has("flurry")) else 4
+		return int(brawl.call("_g", f, cm["RUN"])) >= int(cm["RUN_U"]) * close
+
+	## Does this kind's launches count as the route's (the first launch, launches by and on him)?
+	static func counts_as_route(k: String) -> bool:
+		return k == "route" or k == "newcomer"
 
 	## Whether a loaded script defines the method (has_method does not see a script's own static functions on every build).
 	static func has_m(sc, name: String) -> bool:
@@ -594,6 +611,21 @@ class Pl:
 					return 2
 				# one clock with the pair masher (clock=tick: the absolute S.tick cadence): the route's X count differs from its masher's only by the B's it pressed
 				if _due(S, lt, String(P.get("clock", "since"))):
+					return 0
+			"newcomer":
+				# the eleventh round's scripted newcomer (brawl-second-pass.md section 14): mashes X on a slow clock (default 10) and presses B within `react` ticks (a seeded 0 to react, default 20) of his
+				# gauge filling (his run at the close), as a first-time player would after the gauge shows; the press is dropped if the gauge empties first; one B in 40 ticks. No reaction to the opening itself.
+				if not Pl.gauge_full(S.fighters[slot]):
+					nc_at = -1
+					nc_was = false
+				elif not nc_was:
+					nc_was = true
+					nc_at = S.tick + rng.randi_range(0, int(P.get("react", "20")))
+				if nc_at >= 0 and S.tick >= nc_at and S.tick - route_b > 40:
+					route_b = S.tick
+					nc_at = -1
+					return 2
+				if _due(S, lt, String(P.get("clock", "tick"))):
 					return 0
 			"mix":
 				var gap2: int = int(P.get("gap", "12"))
@@ -1020,11 +1052,11 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 				elif e.type == "launch":
 					var lac: int = int(e.actor)
 					var ltg: int = int(e.target)
-					if m_fb >= 0 and lac >= 0 and lac < 2 and by_slot[lac].kind == "route":
+					if m_fb >= 0 and lac >= 0 and lac < 2 and Pl.counts_as_route(by_slot[lac].kind):
 						m_rby += 1
 						if m_fl < 0:
 							m_fl = S.tick
-					if ltg >= 0 and ltg < 2 and by_slot[ltg].kind == "route":
+					if ltg >= 0 and ltg < 2 and Pl.counts_as_route(by_slot[ltg].kind):
 						m_ron += 1
 				elif e.type == "knockback":
 					# the blast's own: from its actor to its target within 3 ticks (a string's ender; a cold blast has none)
@@ -1350,7 +1382,7 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 		g.firstCloser.append(m_fc)
 		g.dblPer.append(g.doubleHits - m_dbl0)
 		for rp in pl:
-			if rp.kind == "route":
+			if Pl.counts_as_route(rp.kind):
 				g.routeBy.append(m_rby)
 				g.routeOn.append(m_ron)
 				g.firstLaunchSec.append(snappedf(float(m_fl - m_fb) / 60.0, 0.1) if (m_fb >= 0 and m_fl >= 0) else -1.0)
