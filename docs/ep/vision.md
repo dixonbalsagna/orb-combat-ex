@@ -1392,3 +1392,13 @@ What follows from it:
 - Where a 2v2's second fight goes, and whether finished fights merge: our call. EP: the winner of one joins the other (a 2v1); placement waits for co-op.
 - If four on one looks messy: wait to see it.
 - Who else fights one versus many: "I don't want the cyborg to have minions. A future fighter may indeed have some partners. A story boss would be great. A brawler co-op with two partners engaging in their own 4v1s simultaneously could be extremely entertaining, or confusing and too overwhelming."
+
+## Orb answers homework 8, housekeeping (2026-10-16)
+
+- About page: dropping "edits the dialogue by hand" until Orb has marked the first batch is fine.
+- Public pictures: city diagrams and stills without fighters may be public; stills of the two fighters as they are in the build may be public; **HUD mock sheets stay private**. (In-progress character art stays private as before.)
+- The public page when the build returns: three short versions to choose from. "these need to be high quality before you show me, don't be afraid to iterate on it until it reads perfectly."
+- A store home: not yet, our call, meaning "I'd like honest recommendations, steps to follow, all written for a beginner to this type of business. I've never sold a game before so I need guidance in order that I don't spin my wheels, so to speak."
+- The licence: Orb wants Legal's one-page rundown.
+- Individual or company: not yet; "give recommendations for starting a company for the purposes of selling the game more effectively, state of oregon, USA".
+- A stomp on a downed opponent's head: our call, but "I kind of understand that there are contexts, like a brutal curb stomp versus over-the-top crashing down from the sky should be judged differently, definitely give me more context on this before it affects any rulings."
