@@ -35,6 +35,17 @@
       "_note": "planner score points (no unit), except highAlt, which is the target's height above the ground in units. The base score is base + perTier x tier, + high when the target is over highAlt up. The planner's shared terms (personality, repeats, water, noise) are added as for any launch"
     }
   },
+  "town": {
+    "biomes": ["city", "village"],
+    "haulTarget": 3500.0,
+    "haulMin": 2400.0,
+    "distMul": 0.5,
+    "newBiomeEveryS": 60.0,
+    "bruntFromTier": 2,
+    "bruntPrefer": 40.0,
+    "stickWins": 200.0,
+    "_note": "Staying in town and aiming for a building (docs/design/buildings.md section 3). biomes: the settlement biomes. haulTarget, haulMin: from a settlement SMASH ACROSS carries him haulTarget units along the street and no further, kept while he lands inside the settlement and at least haulMin on; where the street does not run that far it is the long haul. distMul: from a settlement the distance bonus of a landing on open ground is this share of itself. newBiomeEveryS: the new-biome bonus is paid once in this many seconds of the match. bruntFromTier, bruntPrefer: with no stick held, a building on the line scores bruntPrefer more from this tier. stickWins: with the stick toward a building that has a plan, it scores this much more, which is always enough"
+  },
   "knockBack": {
     "score": 25.0,
     "distBh": [3.5, 5.0, 6.5, 8.0],

@@ -86,10 +86,21 @@ static func driveDir(alt: float) -> Array:
 	return [SimDetMath.cos(a), -SimDetMath.sin(a)]
 
 
-## S.dirS.craterT holds the match time of each slot's last CRATER SLAM; it is sized here on first use.
+## S.dirS.craterT holds the match time of each slot's last CRATER SLAM; it is sized here on first use. With the town
+## rules one more number follows them: the match time the planner last paid its new-biome bonus (0 never).
 static func _sizeCraterT(S: SimState) -> void:
 	if S.dirS.craterT.size() < S.fighters.size():
 		S.dirS.craterT.resize(S.fighters.size())
+
+
+## Whether the new-biome bonus may be paid now: once in town.newBiomeEveryS seconds of the match (always, with no
+## such number). A read: it sizes nothing.
+static func _newBiomeDue(S: SimState, town: Dictionary) -> bool:
+	var every: float = float(town.get("newBiomeEveryS", 0.0))
+	if every <= 0.0 or S.dirS.craterT.size() <= S.fighters.size():
+		return true
+	var paid: float = S.dirS.craterT[S.fighters.size()]
+	return paid <= 0.0 or S.T - paid >= every
 
 
 ## Whether CRATER SLAM is offered: the rival is directly below the launcher, or the launcher is at the set piece's tier
@@ -110,6 +121,8 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 	var alt: float = D.y - g
 	var bio: String = WorldBiomes.biomeAt(D.x)
 	var f: float = A.face
+	var town: Dictionary = data().get("town", {})   # buildings.md section 3: staying in town, and aiming for a building
+	var inTown: bool = (town.get("biomes", []) as Array).has(bio)
 	var c: Array = []
 	if not longOnly:
 		var up: Dictionary = data().uppercut   # the slam lever: more forward carry, so the fall lands under 70 degrees
@@ -135,6 +148,8 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 		if plan != null:
 			hadBrunt = true
 			plan.s = bruntScore(S, A, plan)
+			if tilt == 0 and not town.is_empty() and A.tier >= float(town.get("bruntFromTier", 99.0)):
+				plan.s += float(town.get("bruntPrefer", 0.0))   # a building on the line, no stick held: preferred from this tier
 			c.append(plan)
 	for sign in [-1.0, 1.0]:
 		if fwdOnly and sign * f < 0.0:
@@ -164,6 +179,9 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 			var near: Array = c.filter(func(k): return k.name == "KNOCK BACK" or (k.ux * tx + k.uy * ty) / (tl * SimMathx.jmax(SimDetMath.hypot(k.ux, k.uy), 0.000001)) >= TILT_CONE)
 			if near.any(func(k): return k.name != "KNOCK BACK"):
 				c = near
+				for k in c:
+					if k.has("brunt"):
+						k.s += float(town.get("stickWins", 0.0))   # the player's stick is a vote that wins: a building on the side he leans to is taken when a plan to it exists
 	for k in c:
 		k.s += S.rng.range_(0.0, NOISE)
 		if k.name == "KNOCK BACK":
@@ -184,12 +202,25 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 			continue
 		var fm: float = k.fm if k.has("fm") else 1.0
 		var p: Dictionary = predictFlight(S, D.x, D.y, WorldSlide.launchVX(k.ux, k.uy, force * fm * tierF), k.uy * force * fm * tierF, WorldSlide.launchTravel(k.ux, k.uy))
-		if k.name == "SMASH ACROSS" and p.travel < HAUL_TARGET:
+		var street: bool = false
+		if k.name == "SMASH ACROSS" and inTown and not longOnly and float(town.get("haulTarget", 0.0)) > 0.0:
+			# A launch along a street stays in the street: the force is set (once, square-root rule) so the flight carries
+			# him town.haulTarget and no further. It is kept while he still lands inside the settlement, town.haulMin on at
+			# least; where the street does not run that far it is the long haul, below.
+			var fmT: float = clampf(fm * sqrt(float(town.haulTarget) / SimMathx.jmax(p.travel, 1.0)), 0.05, HAUL_FM_MAX)
+			var pT: Dictionary = predictFlight(S, D.x, D.y, WorldSlide.launchVX(k.ux, k.uy, force * fmT * tierF), k.uy * force * fmT * tierF, WorldSlide.launchTravel(k.ux, k.uy))
+			if pT.travel >= float(town.get("haulMin", 0.0)) and not pT.water and (town.biomes as Array).has(WorldBiomes.biomeAt(pT.x)):
+				street = true
+				fm = fmT
+				k.fm = fm
+				k.street = true
+				p = pT
+		if k.name == "SMASH ACROSS" and not street and p.travel < HAUL_TARGET:
 			# The long haul: raise the force (once, square-root rule, capped) so the predicted flight reaches HAUL_TARGET.
 			fm = SimMathx.jmin(HAUL_FM_MAX, fm * sqrt(HAUL_TARGET / SimMathx.jmax(p.travel, 1.0)))
 			k.fm = fm
 			p = predictFlight(S, D.x, D.y, WorldSlide.launchVX(k.ux, k.uy, force * fm * tierF), k.uy * force * fm * tierF, WorldSlide.launchTravel(k.ux, k.uy))
-		if k.name == "SMASH ACROSS" and p.travel < HAUL_MIN and not longOnly:
+		if k.name == "SMASH ACROSS" and not street and p.travel < HAUL_MIN and not longOnly:
 			# SMASH ACROSS is the long haul or nothing: when it cannot carry the target HAUL_MIN, it is not offered.
 			k.s -= HAUL_SHORT
 		k.p = p
@@ -199,10 +230,11 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 		k.s += (-A.care) * CARE_W * popL
 		# Distance and new ground only count when the landing is open ground: long hauls carry the fight to empty land.
 		if popL <= OPEN_POP:
-			k.s += DIST_W * SimMathx.jmin(k.travel, DIST_CAP) / DIST_UNIT
+			k.s += DIST_W * SimMathx.jmin(k.travel, DIST_CAP) / DIST_UNIT * (float(town.get("distMul", 1.0)) if inTown else 1.0)   # from a settlement the haul out is worth less
 		var lb: String = WorldBiomes.biomeAt(lx)
-		if lb != bio and lb != "ocean" and popL <= OPEN_POP:
+		if lb != bio and lb != "ocean" and popL <= OPEN_POP and _newBiomeDue(S, town):
 			k.s += NEW_BIOME_W
+			k.newBiome = true
 		if p.water and not k.has("land"):
 			k.s -= WATER_W
 		if k.name == S.dirS.lastLaunch:
@@ -217,6 +249,11 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 			c[j + 1] = c[j]
 			j -= 1
 		c[j + 1] = key
+	if c[0].get("newBiome", false) and float(town.get("newBiomeEveryS", 0.0)) > 0.0:
+		_sizeCraterT(S)
+		if S.dirS.craterT.size() < S.fighters.size() + 1:
+			S.dirS.craterT.resize(S.fighters.size() + 1)   # one more number after the slots' own: the match time the bonus was last paid
+		S.dirS.craterT[S.fighters.size()] = S.T + 0.001   # the new-biome bonus was paid: not again for town.newBiomeEveryS
 	# The pity counter: launches that had a building in reach and chose something else make the next brunt likelier.
 	if hadBrunt:
 		if c[0].name == "BUILDING SMASH":

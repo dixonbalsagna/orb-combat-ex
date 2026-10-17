@@ -13,7 +13,7 @@ class_name WorldBrunt
 const WS: float = SimConst.WS
 const BH: float = 75.0
 # ---- candidates and aim ----
-const BR_MIN: float = 90.0 * WS            # buildings nearer than this (in x) are not candidates
+const BR_MIN: float = 20.0 * WS            # buildings nearer than this (in x) are not candidates
 const BR_MAX: float = 1300.0 * WS          # nor farther than this
 const BR_PRESELECT: int = 2                # best per side by the cheap score
 const AIM_UY: Array = [0.05, 0.12, 0.25, 0.4]
@@ -503,12 +503,18 @@ static func candidates(S: SimState, D) -> Array:
 			continue
 		if D.y > WorldStructures.baseY(S, b) + WorldStructures.curH(b) + 40.0:
 			continue
-		sides[0 if dx < 0.0 else 1].append([_cheap(b, popCap), bi])
+		sides[0 if dx < 0.0 else 1].append([_cheap(b, popCap), bi, d])
 	var out: Array = []
 	for s in sides:
 		s.sort_custom(func(p, q): return p[0] > q[0] or (p[0] == q[0] and p[1] < q[1]))
 		for k in range(mini(BR_PRESELECT, s.size())):
 			out.append(s[k][1])
+		var nearest = null   # the nearest building on this side, whatever its score: the street's own front
+		for e in s:
+			if nearest == null or e[2] < nearest[2] or (e[2] == nearest[2] and e[1] < nearest[1]):
+				nearest = e
+		if nearest != null and not out.has(nearest[1]):
+			out.append(nearest[1])
 	return out
 
 

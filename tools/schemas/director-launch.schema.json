@@ -177,6 +177,57 @@
         "^_": true
       }
     },
+    "town": {
+      "type": "object",
+      "properties": {
+        "biomes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The settlement biomes."
+        },
+        "haulTarget": {
+          "type": "number",
+          "minimum": 0,
+          "description": "From a settlement SMASH ACROSS carries him this many units along the street and no further (0: off)."
+        },
+        "haulMin": {
+          "type": "number",
+          "minimum": 0,
+          "description": "... kept while he lands inside the settlement and at least this far on."
+        },
+        "distMul": {
+          "type": "number",
+          "minimum": 0,
+          "description": "From a settlement the distance bonus is this share of itself."
+        },
+        "newBiomeEveryS": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The new-biome bonus is paid once in this many seconds of the match (0: every time)."
+        },
+        "bruntFromTier": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "With no stick held, a building on the line is preferred from this tier."
+        },
+        "bruntPrefer": {
+          "type": "number",
+          "minimum": 0,
+          "description": "... by this much on its score."
+        },
+        "stickWins": {
+          "type": "number",
+          "minimum": 0,
+          "description": "With the stick toward a building that has a plan, it scores this much more."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
     "knockBack": {
       "type": "object",
       "required": [
