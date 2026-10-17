@@ -149,9 +149,11 @@ static func nextTier(S: SimState, f) -> float:
 # ------------------------------------------------------------------------------------------------- the steps and the coil
 
 ## Each live tick, for a fighter with steps, in place of the ladder's thresholds (SimFighter.stepFighter). The steps his
-## power has reached and he has not taken are ready, and banked while he waits; the coil fills from the first one, at
-## coilPerSec a second, coilBehind times that while the opponent's tier is above his; the surge runs down. Nothing comes
-## ready while a taken release waits for its break, as today.
+## power has reached and he has not taken are ready, and banked while he waits. The coil starts at the first break in
+## the fight after a step came ready (canTake: the first moment it could have been taken and wasn't), so a step that
+## comes ready mid-brawl coils nothing until then; from there it fills at coilPerSec a second, coilBehind times that
+## while the opponent's tier is above his. The surge runs down. Nothing comes ready while a taken release waits for its
+## break, as today.
 static func readyTick(S: SimState, f, dt: float) -> void:
 	var fs = f.form
 	if fs.surgeT > 0:
@@ -166,7 +168,8 @@ static func readyTick(S: SimState, f, dt: float) -> void:
 		if not f.act.formReady:
 			SimFx.transformReady(S, f, nextTier(S, f), DirExchange.transformSource(f))   # the rising edge, as today
 		f.act.formReady = true
-		fs.coiling = true
+		if not fs.coiling and canTake(S, f):
+			fs.coiling = true
 	if fs.coiling:
 		fs.coil = SimMathx.jmin(f.fd.coilMax, fs.coil + f.fd.coilPerSec * _behind(S, f) * dt)
 
@@ -179,6 +182,12 @@ static func traded(S: SimState, f, by, amt: float) -> void:
 	for x in [f, by]:
 		if x != null and has(S, x) and x.form.coiling:
 			x.form.coil = SimMathx.jmin(x.fd.coilMax, x.form.coil + amt * x.fd.coilPerDamage * _behind(S, x))
+
+
+## True when a ready form could be taken now: between exchanges, before a KO, with no approach running, and he is free
+## or charging. It is the director's own rule for taking a transform (DirExchange._transforms), and must stay so.
+static func canTake(S: SimState, f) -> bool:
+	return S.dirS.ex == null and S.game.ko == null and DirBands.who(S) < 0 and (f.state == "free" or f.state == "charging")
 
 
 static func _behind(S: SimState, f) -> float:
@@ -262,7 +271,6 @@ static func rise(S: SimState, f) -> void:
 	var more: int = byPower(f) - fs.step
 	if more > 0:
 		fs.ready = more
-		fs.coiling = true
 		f.act.formReady = true
 		SimFx.transformReady(S, f, nextTier(S, f), DirExchange.transformSource(f))
 	DirExchange.formBreak(S, f)   # the rival in reach is pushed back at the break, as at every step

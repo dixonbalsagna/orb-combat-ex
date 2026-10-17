@@ -19,12 +19,12 @@
   },
   "_gains": "each step taken, in place of the shared ladder's gains a tier: free-flight speed, damage and launch force x (1 + value x steps); a guarded hit's damage that reaches him x (1 - chip x steps); ki regen x (1 + regen x steps); a launch's recovery after x (1 - recover x steps). Five steps: speed and damage +25%, launch +40%",
   "coil": {
-    "perSec": 1.0,
-    "perDamage": 0.05,
+    "perSec": 0.5,
+    "perDamage": 0.005,
     "behindMul": 2.0,
     "max": 100.0
   },
-  "_coil": "the slingshot's coil fills from the moment his first banked step is ready: perSec a second of fight time, and perDamage a point of damage traded, dealt or taken (a point for every 20); both times behindMul while the opponent's tier is above his. It goes up to max, never decays, and the release spends it",
+  "_coil": "the slingshot's coil starts at the first break in the fight after a step came ready (the first moment it could have been taken and wasn't: Game Design, 2026-10-17), and fills at perSec a second of fight time and perDamage a point of damage traded, dealt or taken after patience; both times behindMul while the opponent's tier is above his. It goes up to max, never decays, and the release spends it",
   "patience": {
     "perTier": 0.04,
     "max": 0.12

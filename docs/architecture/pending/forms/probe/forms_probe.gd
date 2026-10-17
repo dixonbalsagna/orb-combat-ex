@@ -44,12 +44,20 @@ func _sling(seed: int) -> Dictionary:
 		i.light = (S.tick % 12) == 0
 		if not asking and p.act.formReady and (p.power >= 65.0 or S.tick >= 14400):
 			asking = true
+			var keep: Dictionary = info.duplicate()
 			info = {"ready": p.form.ready, "coil": snappedf(p.form.coil, 0.01), "power": snappedf(p.power, 0.01), "tick": S.tick, "rtier": o.tier, "step0": p.form.step}
+			info.merge(keep)
 		if asking:
 			i.light = false
 			i.mx = 0.0
 			i.transform = true   # held until the director takes it (between exchanges)
 		SimCore.step(S, [i, null])
+		if p.form.coiling and not info.has("coilFrom") and not asking:
+			info["coilFrom"] = S.tick
+		if p.form.coil >= 100.0 and not info.has("coilFull"):
+			info["coilFull"] = S.tick
+		if o.tier > p.tier:
+			info["behindTicks"] = int(info.get("behindTicks", 0)) + (1 if p.form.coiling else 0)
 		S.out.fx.clear()
 		S.out.feed.clear()
 		if asking and not p.act.formReady and p.act.breakIn < 0:

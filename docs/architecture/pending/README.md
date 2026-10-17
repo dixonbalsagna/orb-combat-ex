@@ -2,9 +2,11 @@
 
 Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator, the sim or Godot (`docs/` is hidden from Godot). It holds slices that are built and proven in a scratch copy and wait for the sim slot.
 
+**A parked build:** `brake/`: the air brake (Game Design's `buildings.md` section 7.2) and Animation's `air_brake` event, behind `data/fight/brake.json` (off); with World's one function as `grant_world.py`. No golden moves. Its page is `../brake-core.md`.
+
 **A parked build:** `forms/`: the Protagonist's five steps and the slingshot (Game Design's `hero-forms.md` sections 4 and 4b), with the hold and release signals for the waiting game, behind `data/fight/forms.json` (off); with Encounter's four director lines as `grant_encounter.py`. No golden moves. Its page is `../forms-core.md`.
 
-**A parked build:** `anim-events/`: Animation's view fields outside the hash (a launch's tier; a hit's hit-stop ticks and the hitter's tier). No golden moves. The air brake waits for its rule.
+Animation's view fields (`anim-events/`: a launch's tier; a hit's hit-stop ticks and the hitter's tier, outside the hash) were applied in 97a7cf73 (2026-10-17), and the scripts are deleted; the fields are in `../fx-events.md`.
 
 Windows 2 and 3 of `../fighters-as-data.md` (the reference fighter on a bench, the selection guards) were applied on f5c001e6 (2026-10-13) and their scripts are deleted.
 

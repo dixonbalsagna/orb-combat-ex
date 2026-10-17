@@ -74,27 +74,27 @@ func _forms() -> String:
 	for t in range(120):
 		SimForms.readyTick(B, p, dt)
 		SimForms.holdTick(B, p)
-		coil = SimMathx.jmin(100.0, coil + 1.0 * 1.0 * dt)
+		coil = SimMathx.jmin(100.0, coil + p.fd.coilPerSec * 1.0 * dt)
 	if p.form.ready != 4 or not p.act.formReady or p.form.step != 0 or p.form.coil != coil:
 		return "at power 65, waiting: ready %d, step %d, coil %s (want 4, 0, %s)" % [p.form.ready, p.form.step, str(p.form.coil), str(coil)]
 	r.tier = 3.0   # the rival two tiers above: the coil runs at double, and patience holds
 	for t in range(60):
 		SimForms.readyTick(B, p, dt)
 		SimForms.holdTick(B, p)
-		coil = SimMathx.jmin(100.0, coil + 1.0 * 2.0 * dt)
+		coil = SimMathx.jmin(100.0, coil + p.fd.coilPerSec * 2.0 * dt)
 	if p.form.coil != coil:
 		return "the coil two tiers behind: %s, not %s" % [str(p.form.coil), str(coil)]
 	var m2: float = 1.0 - SimMathx.jmin(0.12, 0.04 * 2.0)
 	if SimForms.taken(B, p, 10.0, "spread") != 10.0 * m2:
 		return "patience two tiers behind: %s of 10" % str(SimForms.taken(B, p, 10.0, "spread"))
 	SimDamage.hurt(B, p, 20.0, r)
-	coil = SimMathx.jmin(100.0, coil + (20.0 * m2) * 0.05 * 2.0)
+	coil = SimMathx.jmin(100.0, coil + (20.0 * m2) * p.fd.coilPerDamage * 2.0)
 	if p.form.coil != coil:
 		return "the coil from damage traded: %s, not %s" % [str(p.form.coil), str(coil)]
 	p.power = 100.0
 	SimForms.readyTick(B, p, dt)
 	SimForms.holdTick(B, p)
-	coil = SimMathx.jmin(100.0, coil + 1.0 * 2.0 * dt)
+	coil = SimMathx.jmin(100.0, coil + p.fd.coilPerSec * 2.0 * dt)
 	var holds: Array = []
 	for e in B.out.fx:
 		if e.type == "form_hold":
@@ -137,6 +137,21 @@ func _forms() -> String:
 	if p.form.coil != 100.0:
 		return "the coil passed its max: %s" % str(p.form.coil)
 	SimCore.dispose(B)
+	# the coil starts at the first break after the step came ready: inside an exchange it coils nothing
+	var X := SimCore.createSim()
+	SimCore.newMatch(X, 5, {"p1": false, "p2": false}, {"forms": true})
+	p = X.fighters[0]
+	X.dirS.ex = SimState.Exchange.new()
+	p.power = 20.0
+	for t in range(30):
+		SimForms.readyTick(X, p, dt)
+	if not p.act.formReady or p.form.coiling or p.form.coil != 0.0:
+		return "a step that came ready inside an exchange coiled %s (coiling %s)" % [str(p.form.coil), str(p.form.coiling)]
+	X.dirS.ex = null
+	SimForms.readyTick(X, p, dt)
+	if not p.form.coiling or p.form.coil != p.fd.coilPerSec * 1.0 * dt:
+		return "at the break after it came ready the coil did not start: %s" % str(p.form.coil)
+	SimCore.dispose(X)
 	# a release of live steps never pauses the fight
 	var L := SimCore.createSim()
 	SimCore.newMatch(L, 5, {"p1": false, "p2": false}, {"forms": true})
