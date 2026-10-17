@@ -106,6 +106,16 @@
               "hunch_max": {
                 "type": "number",
                 "minimum": 0
+              },
+              "min_fwd": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Optional. The least a kick's target is placed forward of the hips, in units: a kick gives ground when the hips are past its target (docs/animation/pulled-frames.md)."
+              },
+              "retreat_max": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Optional. The most the hips give ground to reach such a target, in units."
               }
             },
             "description": "A two-bone chain solved onto the target.",

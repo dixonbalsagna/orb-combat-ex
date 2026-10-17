@@ -6,6 +6,8 @@
 // It does NOT edit data/. Re-runnable (a second run changes nothing). Policy: closed except keys starting with an underscore (Simulation keeps a `_note` beside every number).
 // enabled: the one switch (boolean). maxBhPerSec: the cap, in body heights a second (above 0). faceMarginBh: how far a fighter keeps from a standing building's face (0 or more).
 // capExempt: the causes of depth the cap does not hold, distinct, each one of push, carry, home, magnet, shove, sidestep, giveGround (SimDepth.CAUSES).
+// director (optional: the director's own depth numbers, which Encounter's d1a.cjs adds in its window): lineSinMin and lineSinMax (the sines of the least and the most angle a brawl's line makes with
+// the street, 0 to 1, the least at most the most: rule depth-line-order), arriveSin (0 to 1), homeAfterTicks (whole ticks), homeBhPerSec (above 0).
 const fs = require('fs');
 const rj = (f) => JSON.parse(fs.readFileSync(f, 'utf8'));
 const wj = (f, o) => fs.writeFileSync(f, JSON.stringify(o, null, 2) + '\n');
@@ -30,6 +32,20 @@ const closed = { additionalProperties: false, patternProperties: { '^_': true } 
       enabled: { type: 'boolean', description: 'The one switch: fighters in depth on or off (a setup may set its own "depth").' },
       maxBhPerSec: { type: 'number', exclusiveMinimum: 0, description: 'The cap: the most a drift in depth moves a fighter, in body heights a second, outside a flight or a rush.' },
       faceMarginBh: { type: 'number', minimum: 0, description: 'A fighter outside a flight keeps his centre this far from a standing building\'s face, in body heights.' },
+      director: {
+        type: 'object',
+        required: ['lineSinMin', 'lineSinMax', 'arriveSin', 'homeAfterTicks', 'homeBhPerSec'],
+        properties: {
+          lineSinMin: { type: 'number', minimum: 0, maximum: 1, description: 'The sine of the least angle a brawl line makes with the street.' },
+          lineSinMax: { type: 'number', minimum: 0, maximum: 1, description: 'The sine of the most angle (at least lineSinMin: depth-line-order).' },
+          arriveSin: { type: 'number', minimum: 0, maximum: 1, description: 'An approach ends this share of its street offset to one side in depth, as a sine.' },
+          homeAfterTicks: { type: 'integer', minimum: 0, description: 'Ticks a fighter waits before easing back to his home depth.' },
+          homeBhPerSec: { type: 'number', exclusiveMinimum: 0, description: 'How fast he eases back, in body heights a second.' },
+        },
+        additionalProperties: false,
+        patternProperties: { '^_': true },
+        description: 'Optional. The directors own depth numbers (sim/director/brawl.gd; docs/director/depth-d1.md).',
+      },
       capExempt: {
         type: 'array',
         uniqueItems: true,
@@ -85,6 +101,15 @@ const closed = { additionalProperties: false, patternProperties: { '^_': true } 
   cs('cap-exempt-item-type', { set: { '/capExempt': [1] } }, { rule: 'enum', pointer: '/capExempt/0' });
   cs('cap-exempt-duplicate', { set: { '/capExempt': ['push', 'push'] } }, { rule: 'uniqueItems', pointer: '/capExempt/1' });
   cs('cap-exempt-all-ok', { set: { '/capExempt': CAUSES } }, null);
+  const DIR = { lineSinMin: 0.1736, lineSinMax: 0.5, arriveSin: 0.342, homeAfterTicks: 30, homeBhPerSec: 0.5 };
+  cs('director-ok', { set: { '/director': DIR } }, null);
+  cs('director-required', { set: { '/director': { lineSinMin: 0.1, lineSinMax: 0.5 } } }, { rule: 'required', pointer: '/director' });
+  cs('director-unknown-key', { set: { '/director': { ...DIR, extra: 1 } } }, { rule: 'additionalProperties', pointer: '/director/extra' });
+  cs('director-sine-above-one', { set: { '/director': { ...DIR, lineSinMax: 1.5 } } }, { rule: 'maximum', pointer: '/director/lineSinMax' });
+  cs('director-ticks-integer', { set: { '/director': { ...DIR, homeAfterTicks: 2.5 } } }, { rule: 'type', pointer: '/director/homeAfterTicks' });
+  cs('director-home-zero', { set: { '/director': { ...DIR, homeBhPerSec: 0 } } }, { rule: 'exclusiveMinimum', pointer: '/director/homeBhPerSec' });
+  cs('director-line-order', { set: { '/director': { ...DIR, lineSinMin: 0.6 } } }, { rule: 'xref:depth-line-order', pointer: '/director/lineSinMin' });
+  cs('director-line-equal-ok', { set: { '/director': { ...DIR, lineSinMin: 0.5 } } }, null);
   let n = 0;
   for (const k of out) {
     const i = c.cases.findIndex((y) => y.id === k.id);
@@ -98,4 +123,26 @@ const closed = { additionalProperties: false, patternProperties: { '^_': true } 
   const f = 'docs/tools/README.md';
   const t = fs.readFileSync(f, 'utf8');
   void t;
+}
+
+// ---- the cross-reference: the director's least line angle is at most its most
+{
+  const xf = 'tools/lib/xref-fight.js';
+  let x = fs.readFileSync(xf, 'utf8');
+  const CR = String.fromCharCode(13), LF = String.fromCharCode(10);
+  const crlf = x.includes(CR + LF);
+  if (crlf) x = x.split(CR + LF).join(LF);
+  if (x.includes('depth-line-order')) console.log('xref: already');
+  else {
+    const a = "  // ---- fight shots: a lobbed kind has both its numbers";
+    if (!x.includes(a)) throw new Error('depth xref anchor');
+    const block = [
+      "  // ---- combat depth: the directors least line angle is at most its most",
+      "  const depthD = get('data/combat/depth.json');",
+      "  if (isObj(depthD) && isObj(depthD.director) && typeof depthD.director.lineSinMin === 'number' && typeof depthD.director.lineSinMax === 'number' && depthD.director.lineSinMin > depthD.director.lineSinMax) err('data/combat/depth.json', '/director/lineSinMin', 'depth-line-order', `lineSinMin ${depthD.director.lineSinMin} is above lineSinMax ${depthD.director.lineSinMax}`);",
+      "", ""].join(LF);
+    x = x.replace(a, () => block + a);
+    fs.writeFileSync(xf, crlf ? x.split(LF).join(CR + LF) : x);
+    console.log('xref: depth-line-order added');
+  }
 }

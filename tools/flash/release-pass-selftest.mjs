@@ -59,13 +59,16 @@ try {
 const now = { contentHash: 'c', requiredSetHash: 's', analyserHash: 'a', hookHash: 'h' };
 const ids = ['collapse-normal', 'collapse-reduced'];
 const GUARD = { cpuPercent: 25, timeoutS: 3600, tag: 'cap-tools-flash-abc123', framesPerSecond: 4, loadBefore: 20, loadAfter: 35 };
-const row = (id, extra = {}) => ({ id, verdict: 'PASS', shortestDipGapTicks: null, guard: GUARD, ...extra });
+const row = (id, extra = {}) => ({ id, verdict: 'PASS', red: 0, shortestDipGapTicks: null, guard: GUARD, ...extra });
 const RECORD_LINES = { hud: { perSecond: 1.5, limit: 3, source: 'hud_check' }, seedPick: { rule: 'pick-seeds.mjs', seeds: [12345, 4] } };
 const good = { ...now, ...RECORD_LINES, rows: ids.map((i) => row(i)) };
 check('a record matching the hashes with every required clip PASS holds', problemsWith(good, now, ids).length === 0);
 check('no record at all does not hold', problemsWith(null, now, ids).length === 1);
 for (const k of Object.keys(now)) check(`a different ${k} does not hold`, problemsWith({ ...good, [k]: 'x' }, now, ids).some((p) => p.startsWith(k)));
 check('a missing row does not hold', problemsWith({ ...good, rows: [row('collapse-normal')] }, now, ids).some((p) => /no row for required clip collapse-reduced/.test(p)));
+check('a row with a red flash does not hold, interim or not (red flashes 0)', problemsWith({ ...good, rows: [row('collapse-normal'), row('collapse-reduced', { red: 1 })] }, now, ids).some((p) => /red flashes/.test(p)));
+check('a row with no red count does not hold', problemsWith({ ...good, rows: [row('collapse-normal'), row('collapse-reduced', { red: undefined })] }, now, ids).some((p) => /no red count/.test(p)));
+check('a second capture with a red flash does not hold (red flashes 0 in every capture)', problemsWith({ ...good, rows: [row('collapse-normal'), row('collapse-reduced', { second: { red: 2 } })] }, now, ids).some((p) => /second capture\) reads 2 red/.test(p)));
 check('an extra row does not hold', problemsWith({ ...good, rows: [...good.rows, row('mash-normal')] }, now, ids).some((p) => /not in the required set/.test(p)));
 check('a row that is OVER GATE or FAIL does not hold', problemsWith({ ...good, rows: [row('collapse-normal'), row('collapse-reduced', { verdict: 'OVER GATE' })] }, now, ids).some((p) => /OVER GATE, not PASS/.test(p)) && problemsWith({ ...good, rows: [row('collapse-normal', { verdict: 'FAIL' }), row('collapse-reduced')] }, now, ids).length === 1);
 check(`two whole-screen dips closer than ${DIP_GAP_TICKS} ticks do not hold`, problemsWith({ ...good, rows: [row('collapse-normal', { shortestDipGapTicks: DIP_GAP_TICKS - 1 }), row('collapse-reduced')] }, now, ids).some((p) => /dips/.test(p)));

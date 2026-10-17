@@ -137,6 +137,16 @@ export function marginProblems(r) {
   return out;
 }
 
+/** Red flashes must be 0 in every capture of every clip, interim or not (Legal RL-141 to RL-143: the analyser's red count is the authority on the explosions' reds). */
+export function redProblems(r) {
+  const out = [];
+  for (const [what, x] of [['', r], [' (second capture)', r.second], [' (re-capture)', r.recapture]]) {
+    if (!x) continue;
+    if (x === r ? x.red !== 0 : typeof x.red === 'number' && x.red > 0) out.push(`${r.id}${what} reads ${x.red === undefined ? 'no red count' : x.red + ' red flashes'}: the pass must show red flashes at 0`);
+  }
+  return out;
+}
+
 /** The reasons a record does not hold for the hashes of a commit and the required clip ids (an empty list: it holds). Pure, so it can be tested without git. */
 export function problemsWith(record, now, ids, opts = {}) {
   const out = [];
@@ -159,6 +169,8 @@ export function problemsWith(record, now, ids, opts = {}) {
   for (const r of rows) {
     if (!ids.includes(r.id)) out.push(`the record has a row for ${r.id}, which is not in the required set`);
     if (r.verdict !== 'PASS' && !interim) out.push(`${r.id} is ${r.verdict}, not PASS`);
+    // red flashes are 0 in every clip, interim or not (Legal RL-141 to RL-143: the analyser is the authority on the explosions' reds)
+    for (const m of redProblems(r)) out.push(m);
     if (!interim) for (const m of marginProblems(r)) out.push(m);
     for (const m of captureProblems(r, { interim })) out.push(m);
     if (typeof r.shortestDipGapTicks === 'number' && r.shortestDipGapTicks < DIP_GAP_TICKS) out.push(`${r.id} has two whole-screen dips ${r.shortestDipGapTicks} ticks apart (the cap is ${DIP_GAP_TICKS})`);
@@ -235,6 +247,7 @@ function main(argv) {
     const seedPick = pick ? JSON.parse(readFileSync(pick, 'utf8')) : null;
     for (const id of ids) if (!rows.some((r) => r.id === id)) bad.push(`no result for ${id}`);
     for (const e of entries) if (e.error) bad.push(`${e.id}: capture failed`);
+    for (const r of rows) for (const m of redProblems(r)) bad.push(m);
     if (!interim) for (const r of rows) if (r.verdict !== 'PASS') bad.push(`${r.id} is ${r.verdict}`);
     if (!interim) for (const r of rows) for (const m of marginProblems(r)) bad.push(m);
     for (const r of rows) for (const m of captureProblems(r, { interim })) bad.push(m);

@@ -58,7 +58,7 @@ try {
   const A = commit('the measured commit');
   // the record of a pass for A, with an interim (the clips are not the point: the hashes are)
   const ids = ['collapse-normal'];
-  const record = { ...hashesAt(dir, A), commit: A, hud: { perSecond: 2, limit: 3 }, seedPick: { seeds: [1] }, rows: ids.map((id) => ({ id, verdict: 'PASS', guard: { framesPerSecond: 5 }, shortestDipGapTicks: null })), interim: { legal: 'RL-136', from: '2026-10-15', expires: '2026-10-22', waives: INTERIM_WAIVES } };
+  const record = { ...hashesAt(dir, A), commit: A, hud: { perSecond: 2, limit: 3 }, seedPick: { seeds: [1] }, rows: ids.map((id) => ({ id, verdict: 'PASS', red: 0, guard: { framesPerSecond: 5 }, shortestDipGapTicks: null })), interim: { legal: 'RL-136', from: '2026-10-15', expires: '2026-10-22', waives: INTERIM_WAIVES } };
   const recFile = join(dir, '..', `record-${process.pid}.json`);
   writeFileSync(recFile, JSON.stringify(record));
   const online = { offline: false, approved: '2026-10-15', interim: { legal: 'RL-136', expires: '2026-10-22' } };

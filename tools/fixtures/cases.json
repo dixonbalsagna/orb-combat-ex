@@ -281382,6 +281382,91 @@
         "rule": "maximum",
         "pointer": "/districts/downtown/tint_weights/steel"
       }
+    },
+    {
+      "id": "anim-sockets-foot-fwd-ok",
+      "schema": "anim-sockets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/sockets.json",
+          "set": {
+            "/limbs/foot": {
+              "mode": "ik",
+              "chain": [
+                "thigh",
+                "shin",
+                "foot"
+              ],
+              "end_len": 8,
+              "lunge_max": 7,
+              "step_max": 22,
+              "reach_z": 9,
+              "hunch_max": 0,
+              "min_fwd": 28,
+              "retreat_max": 30
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-sockets-foot-fwd-negative",
+      "schema": "anim-sockets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/sockets.json",
+          "set": {
+            "/limbs/foot": {
+              "mode": "ik",
+              "chain": [
+                "thigh",
+                "shin",
+                "foot"
+              ],
+              "end_len": 8,
+              "lunge_max": 7,
+              "step_max": 22,
+              "reach_z": 9,
+              "hunch_max": 0,
+              "min_fwd": -1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "oneOf",
+        "pointer": "/limbs/foot"
+      }
+    },
+    {
+      "id": "anim-sockets-foot-retreat-type",
+      "schema": "anim-sockets.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/sockets.json",
+          "set": {
+            "/limbs/foot": {
+              "mode": "ik",
+              "chain": [
+                "thigh",
+                "shin",
+                "foot"
+              ],
+              "end_len": 8,
+              "lunge_max": 7,
+              "step_max": 22,
+              "reach_z": 9,
+              "hunch_max": 0,
+              "retreat_max": "far"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "oneOf",
+        "pointer": "/limbs/foot"
+      }
     }
   ],
   "text": [
