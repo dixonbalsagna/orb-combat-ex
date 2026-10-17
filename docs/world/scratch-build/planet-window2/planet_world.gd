@@ -1,0 +1,124 @@
+class_name WorldPlanetWorld
+## Planet window 2 (DRAFT, scratch): a match on a slice of the stored planet. For a setup with a `planet` key the world is read from WorldPlanet instead of built by genWorld:
+## the ground (S.base) from the slice's heights, the biome of each column from its biomes, and the settlements from the places the line passes, laid by today's D1 generator
+## (a stand-in for window 3's city from its plan). A setup without `planet` is genWorld as it was.
+##
+## Stand-ins and decisions this draft makes (each is a question for the EP, Game Design or Rendering; see docs/world/planet-window2.md):
+##  - the two ice biomes read as existing biome names (BIOME_NAME below) because the director's and the renderer's tables know only those;
+##  - a city is Bellgate's archetype and a town the outskirts village's, with the span set from the place's chord on the line and the people from the place's weight;
+##  - a place that crosses the seam is cut at it (the seam is the antipode of the touch-down: rare);
+##  - the fighters start astride the touch-down (the middle column).
+
+## Planet biome ids 0 to 6 (ocean, plains, forest, desert, mountains, ice sheet, sea ice) as WorldBiomes names, and 7 and 8 for a town's and a city's ground.
+const BIOME_NAME: Array = ["ocean", "plains", "forest", "desert", "mountains", "mountains", "plains", "village", "city"]
+const ARCH_CITY: String = "bellgate"
+const ARCH_TOWN: String = "outskirts"
+
+
+static func gen(S: SimState, setup: Dictionary) -> bool:
+	var seed: int = int(setup.planet)
+	var touch: int = int(setup.get("touch", 0))
+	var sl: WorldPlanet.Slice = WorldPlanet.sliceFor(seed, touch)
+	if sl == null:
+		return false
+	var P: WorldPlanet.Planet = WorldPlanet.make(seed)
+	var NC: int = SimConst.NC
+	var COL: float = SimConst.COL
+	var PS: float = SimConst.PS
+	S.deform.resize(NC)
+	S.deform.fill(0.0)
+	S.base = sl.heights.duplicate()
+	S.buildings.clear()
+	S.trees.clear()
+	# the biome of each column, and a town's or a city's ground over its chord
+	var cols := PackedByteArray()
+	cols.resize(NC)
+	for i in range(NC):
+		cols[i] = sl.biomes[i]
+	var chords: Array = []   # [id, kind, col0, col1] trimmed to the line and to dry ground
+	for h in sl.held:
+		if not h.standing:
+			continue
+		var hc: int = int(h.half / COL)
+		var c0: int = maxi(0, h.col - hc)
+		var c1: int = mini(NC - 1, h.col + hc)
+		while c0 < c1 and S.base[c0] < WorldTerrain.TRIM_G:
+			c0 += 1
+		while c1 > c0 and S.base[c1] < WorldTerrain.TRIM_G:
+			c1 -= 1
+		if c1 - c0 < 8:
+			continue
+		chords.append([h.id, h.kind, c0, c1])
+		for i in range(c0, c1 + 1):
+			if S.base[i] >= 0.0:
+				cols[i] = 8 if h.kind == WorldPlanet.KIND_CITY else 7
+	WorldBiomes.planetCols = cols
+	# the platform under each settlement: the ground inside is lifted to at least SETTLE_FLOOR with a blend at each end (genWorld's _platforms)
+	for ch in chords:
+		var i0: int = ch[2]
+		var i1: int = ch[3]
+		for i in range(i0 - WorldTerrain.PLATFORM_BLEND, i1 + WorldTerrain.PLATFORM_BLEND + 1):
+			var j: int = (i + NC) % NC
+			var g: float = S.base[j]
+			if g >= WorldTerrain.SETTLE_FLOOR or g < WorldTerrain.TRIM_G:
+				continue
+			var w: float = 1.0
+			if i < i0 + WorldTerrain.PLATFORM_BLEND:
+				w = clampf(float(i - (i0 - WorldTerrain.PLATFORM_BLEND)) / float(2 * WorldTerrain.PLATFORM_BLEND), 0.0, 1.0)
+			if i > i1 - WorldTerrain.PLATFORM_BLEND:
+				w = minf(w, clampf(float((i1 + WorldTerrain.PLATFORM_BLEND) - i) / float(2 * WorldTerrain.PLATFORM_BLEND), 0.0, 1.0))
+			w = w * w * (3.0 - 2.0 * w)
+			S.base[j] = g + (WorldTerrain.SETTLE_FLOOR - g) * w
+	# the settlements, by D1's generator
+	var arch: Dictionary = {}
+	for sd in WorldSettle.data().settlements:
+		arch[sd.id] = sd
+	var wsum: float = 0.0
+	for ch in chords:
+		wsum += float(P.people[ch[0]])
+	var newPop: float = 0.0
+	var dOff: int = 0
+	var si: int = -1
+	var dlist: Array = []
+	for ch in chords:
+		si += 1
+		var sd: Dictionary = (arch[ARCH_CITY] if ch[1] == WorldPlanet.KIND_CITY else arch[ARCH_TOWN]).duplicate(true)
+		sd.id = "p%d" % ch[0]
+		sd.span = [float(ch[2]) * COL / PS, float(ch[3]) * COL / PS]
+		sd.pop_share = float(P.people[ch[0]]) / maxf(wsum, 1.0)
+		var g: Dictionary = WorldSettle.generate(S, sd)
+		for dd in g.districts:
+			dd["settlement"] = si
+			dlist.append(dd)
+		for ei in range(g.buildings.size()):
+			var e = g.buildings[ei]
+			var nb := SimState.Building.new()
+			nb.place = ch[0]
+			nb.plan = ei
+			nb.x = e.x; nb.w = e.w; nb.d = e.d; nb.h = e.h; nb.kind = e.kind; nb.row = float(e.row); nb.z = e.z; nb.seed = e.seed
+			nb.district = dOff + int(e.district); nb.shape = String(e.shape); nb.landmark = int(e.landmark)
+			nb.floors = e.floors
+			nb.fmask = (1 << nb.floors) - 1
+			nb.maxhp = e.maxhp; nb.hp = e.maxhp; nb.alive = true
+			nb.pop = float(e.pop); nb.popAlive = nb.pop
+			newPop += nb.pop
+			S.buildings.append(nb)
+		dOff += g.districts.size()
+	S.lanes = WorldLanes.build(S, dlist)
+	S.world = SimState.World.new()
+	S.world.pop0 = maxf(newPop, 1.0)
+	S.rubble = PackedFloat32Array()
+	S.rubble.resize(NC)
+	S.rubble.fill(0.0)
+	WorldStructures.buildIndex(S)
+	S.scorch = PackedFloat32Array()
+	S.scorch.resize(NC)
+	S.scorch.fill(0.0)
+	S.craters.clear()
+	S.crack = PackedFloat32Array()
+	S.crack.resize(NC)
+	S.crack.fill(0.0)
+	S.slides.clear()
+	WorldWater.init(S)
+	WorldCollateral.init(S)
+	return true

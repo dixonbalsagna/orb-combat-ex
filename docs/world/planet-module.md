@@ -111,3 +111,7 @@ The photosensitivity items (c01 to c05) and the originality items (c06, c07) bin
 ## 9. What is left (the windows after this one)
 
 Window 2 reads the slice in place of `genWorld` for a setup with a planet (heights smoothed, mountains with several summits, `WorldCrater`'s shape for the marks): golden keys. Window 3 lays a city from its plan (rings, wedges, landmarks) into the lanes and rows. Window 4 puts `planet`, `touch` and `pick` in the setup and `world` in the replay header, with the start's safe columns. None of them is begun.
+
+## 10. Time-sliced loading, and the draft of window 2 (2026-10-17; parked)
+
+The read of a slice (0.7 to 1.4 s in the browser, 7 to 14 s on a slow phone: `docs/perf/audit-2026-10-16.md`) is built as a time-sliced job in scratch: `scratch-build/planet-slicing/` (README there). The coarse read (every 8th column) is ready first, the full read fills in nearest the touch-down first, the result is bit-identical however it is stepped, and the module owns no clock; no frame passes 8 ms (median 4.2 ms at a 4 ms budget). It meets the intro on this PC but not the audit's 5 s on a weak machine; the levers are in its README. The draft of window 2 (a match on a slice) is `planet-window2.md`.

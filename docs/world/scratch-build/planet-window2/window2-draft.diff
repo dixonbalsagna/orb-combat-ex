@@ -1,0 +1,268 @@
+diff --git a/sim/core/sim.gd b/sim/core/sim.gd
+index 47673aa..f6d1c70 100644
+--- a/sim/core/sim.gd
++++ b/sim/core/sim.gd
+@@ -47,7 +47,9 @@ static func dispose(S: SimState) -> void:
+ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Dictionary = {}) -> void:
+ 	S.game.seed = float(seed & 0xFFFFFFFF)
+ 	S.rng = SimRng.new(seed & 0xFFFFFFFF)
+-	WorldTerrain.genWorld(S)
++	WorldBiomes.planetCols = PackedByteArray()
++	if not (setup.has("planet") and WorldPlanetWorld.gen(S, setup)):   # a setup with a planet reads its world from the slice; without one, today's world
++		WorldTerrain.genWorld(S)
+ 	S.contactOn = WorldContact.enabled()   # World's ground contact (world/contact.gd): a copy of the data's switch
+ 	var p1ai: bool = bool(ai["p1"]) if ai.has("p1") and ai["p1"] != null else (S.fighters[0].ai != null if S.fighters.size() > 0 else true)
+ 	var p2ai: bool = bool(ai["p2"]) if ai.has("p2") and ai["p2"] != null else (S.fighters[1].ai != null if S.fighters.size() > 1 else true)
+@@ -61,6 +63,8 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
+ 	var start_x: float = SimConst.START_X
+ 	if setup.get("start", "") == "crossing":   # a demo start astride a crossing of the city (World: lanes.json demo_start); default off
+ 		start_x = WorldLanes.demoStartX(S, SimConst.START_GAP, SimConst.START_X)
++	if setup.has("planet"):
++		start_x = float(WorldPlanet.TOUCH_COL) * SimConst.COL - SimConst.START_GAP * 0.5   # astride the touch-down
+ 	var x0: float = start_x
+ 	var x1: float = start_x + SimConst.START_GAP
+ 	var flip: bool = setup.get("flip", false)
+diff --git a/sim/world/biomes.gd b/sim/world/biomes.gd
+index e881f8c..ebc14b8 100644
+--- a/sim/world/biomes.gd
++++ b/sim/world/biomes.gd
+@@ -6,8 +6,14 @@ const P: float = SimConst.PS
+ const SEG: Array = [[0.0 * P, 1200.0 * P, "ocean"], [1200.0 * P, 1800.0 * P, "village"], [1800.0 * P, 2350.0 * P, "plains"], [2350.0 * P, 3850.0 * P, "city"], [3850.0 * P, 4500.0 * P, "village"], [4500.0 * P, 5500.0 * P, "forest"], [5500.0 * P, 6500.0 * P, "desert"], [6500.0 * P, 7600.0 * P, "mountains"], [7600.0 * P, 8000.0 * P, "village"], [8000.0 * P, 8300.0 * P, "plains"], [8300.0 * P, 9600.0 * P, "ocean"]]
+ 
+ 
++## A match on a planet's slice (WorldPlanetWorld.gen): the biome of each column, as an index into WorldPlanetWorld.BIOME_NAME; empty for the hand-made world.
++static var planetCols := PackedByteArray()
++
++
+ static func biomeAt(x: float) -> String:
+ 	x = SimWrap.wrap(x)
++	if planetCols.size() > 0:
++		return WorldPlanetWorld.BIOME_NAME[planetCols[mini(int(x / SimConst.COL), planetCols.size() - 1)]]
+ 	for s in SEG:
+ 		if x >= s[0] and x < s[1]:
+ 			return s[2]
+diff --git a/sim/world/planet_world.gd b/sim/world/planet_world.gd
+new file mode 100644
+index 0000000..17ac030
+--- /dev/null
++++ b/sim/world/planet_world.gd
+@@ -0,0 +1,124 @@
++class_name WorldPlanetWorld
++## Planet window 2 (DRAFT, scratch): a match on a slice of the stored planet. For a setup with a `planet` key the world is read from WorldPlanet instead of built by genWorld:
++## the ground (S.base) from the slice's heights, the biome of each column from its biomes, and the settlements from the places the line passes, laid by today's D1 generator
++## (a stand-in for window 3's city from its plan). A setup without `planet` is genWorld as it was.
++##
++## Stand-ins and decisions this draft makes (each is a question for the EP, Game Design or Rendering; see docs/world/planet-window2.md):
++##  - the two ice biomes read as existing biome names (BIOME_NAME below) because the director's and the renderer's tables know only those;
++##  - a city is Bellgate's archetype and a town the outskirts village's, with the span set from the place's chord on the line and the people from the place's weight;
++##  - a place that crosses the seam is cut at it (the seam is the antipode of the touch-down: rare);
++##  - the fighters start astride the touch-down (the middle column).
++
++## Planet biome ids 0 to 6 (ocean, plains, forest, desert, mountains, ice sheet, sea ice) as WorldBiomes names, and 7 and 8 for a town's and a city's ground.
++const BIOME_NAME: Array = ["ocean", "plains", "forest", "desert", "mountains", "mountains", "plains", "village", "city"]
++const ARCH_CITY: String = "bellgate"
++const ARCH_TOWN: String = "outskirts"
++
++
++static func gen(S: SimState, setup: Dictionary) -> bool:
++	var seed: int = int(setup.planet)
++	var touch: int = int(setup.get("touch", 0))
++	var sl: WorldPlanet.Slice = WorldPlanet.sliceFor(seed, touch)
++	if sl == null:
++		return false
++	var P: WorldPlanet.Planet = WorldPlanet.make(seed)
++	var NC: int = SimConst.NC
++	var COL: float = SimConst.COL
++	var PS: float = SimConst.PS
++	S.deform.resize(NC)
++	S.deform.fill(0.0)
++	S.base = sl.heights.duplicate()
++	S.buildings.clear()
++	S.trees.clear()
++	# the biome of each column, and a town's or a city's ground over its chord
++	var cols := PackedByteArray()
++	cols.resize(NC)
++	for i in range(NC):
++		cols[i] = sl.biomes[i]
++	var chords: Array = []   # [id, kind, col0, col1] trimmed to the line and to dry ground
++	for h in sl.held:
++		if not h.standing:
++			continue
++		var hc: int = int(h.half / COL)
++		var c0: int = maxi(0, h.col - hc)
++		var c1: int = mini(NC - 1, h.col + hc)
++		while c0 < c1 and S.base[c0] < WorldTerrain.TRIM_G:
++			c0 += 1
++		while c1 > c0 and S.base[c1] < WorldTerrain.TRIM_G:
++			c1 -= 1
++		if c1 - c0 < 8:
++			continue
++		chords.append([h.id, h.kind, c0, c1])
++		for i in range(c0, c1 + 1):
++			if S.base[i] >= 0.0:
++				cols[i] = 8 if h.kind == WorldPlanet.KIND_CITY else 7
++	WorldBiomes.planetCols = cols
++	# the platform under each settlement: the ground inside is lifted to at least SETTLE_FLOOR with a blend at each end (genWorld's _platforms)
++	for ch in chords:
++		var i0: int = ch[2]
++		var i1: int = ch[3]
++		for i in range(i0 - WorldTerrain.PLATFORM_BLEND, i1 + WorldTerrain.PLATFORM_BLEND + 1):
++			var j: int = (i + NC) % NC
++			var g: float = S.base[j]
++			if g >= WorldTerrain.SETTLE_FLOOR or g < WorldTerrain.TRIM_G:
++				continue
++			var w: float = 1.0
++			if i < i0 + WorldTerrain.PLATFORM_BLEND:
++				w = clampf(float(i - (i0 - WorldTerrain.PLATFORM_BLEND)) / float(2 * WorldTerrain.PLATFORM_BLEND), 0.0, 1.0)
++			if i > i1 - WorldTerrain.PLATFORM_BLEND:
++				w = minf(w, clampf(float((i1 + WorldTerrain.PLATFORM_BLEND) - i) / float(2 * WorldTerrain.PLATFORM_BLEND), 0.0, 1.0))
++			w = w * w * (3.0 - 2.0 * w)
++			S.base[j] = g + (WorldTerrain.SETTLE_FLOOR - g) * w
++	# the settlements, by D1's generator
++	var arch: Dictionary = {}
++	for sd in WorldSettle.data().settlements:
++		arch[sd.id] = sd
++	var wsum: float = 0.0
++	for ch in chords:
++		wsum += float(P.people[ch[0]])
++	var newPop: float = 0.0
++	var dOff: int = 0
++	var si: int = -1
++	var dlist: Array = []
++	for ch in chords:
++		si += 1
++		var sd: Dictionary = (arch[ARCH_CITY] if ch[1] == WorldPlanet.KIND_CITY else arch[ARCH_TOWN]).duplicate(true)
++		sd.id = "p%d" % ch[0]
++		sd.span = [float(ch[2]) * COL / PS, float(ch[3]) * COL / PS]
++		sd.pop_share = float(P.people[ch[0]]) / maxf(wsum, 1.0)
++		var g: Dictionary = WorldSettle.generate(S, sd)
++		for dd in g.districts:
++			dd["settlement"] = si
++			dlist.append(dd)
++		for ei in range(g.buildings.size()):
++			var e = g.buildings[ei]
++			var nb := SimState.Building.new()
++			nb.place = ch[0]
++			nb.plan = ei
++			nb.x = e.x; nb.w = e.w; nb.d = e.d; nb.h = e.h; nb.kind = e.kind; nb.row = float(e.row); nb.z = e.z; nb.seed = e.seed
++			nb.district = dOff + int(e.district); nb.shape = String(e.shape); nb.landmark = int(e.landmark)
++			nb.floors = e.floors
++			nb.fmask = (1 << nb.floors) - 1
++			nb.maxhp = e.maxhp; nb.hp = e.maxhp; nb.alive = true
++			nb.pop = float(e.pop); nb.popAlive = nb.pop
++			newPop += nb.pop
++			S.buildings.append(nb)
++		dOff += g.districts.size()
++	S.lanes = WorldLanes.build(S, dlist)
++	S.world = SimState.World.new()
++	S.world.pop0 = maxf(newPop, 1.0)
++	S.rubble = PackedFloat32Array()
++	S.rubble.resize(NC)
++	S.rubble.fill(0.0)
++	WorldStructures.buildIndex(S)
++	S.scorch = PackedFloat32Array()
++	S.scorch.resize(NC)
++	S.scorch.fill(0.0)
++	S.craters.clear()
++	S.crack = PackedFloat32Array()
++	S.crack.resize(NC)
++	S.crack.fill(0.0)
++	S.slides.clear()
++	WorldWater.init(S)
++	WorldCollateral.init(S)
++	return true
+diff --git a/sim/world/tools/planet_world_check.gd b/sim/world/tools/planet_world_check.gd
+new file mode 100644
+index 0000000..cd78e44
+--- /dev/null
++++ b/sim/world/tools/planet_world_check.gd
+@@ -0,0 +1,89 @@
++extends SceneTree
++# Planet window 2 (draft): a match on a slice. A smoke run, determinism, and the golden keys a regeneration would add.
++#   godot --headless --path . --script res://sim/world/tools/planet_world_check.gd [-- <ticks>]
++var fails: int = 0
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func planetMatch(seed: int, planet: int, touch: int) -> SimState:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, seed, {}, {"intro": false, "planet": planet, "touch": touch})
++	S.out.fx.clear()
++	return S
++
++
++func run(S: SimState, ticks: int) -> int:
++	var n: int = 0
++	for t in range(ticks):
++		SimCore.step(S)
++		S.out.fx.clear()
++		n += 1
++		if (S.game.ko != null):
++			break
++	return n
++
++
++func _init() -> void:
++	var args := OS.get_cmdline_user_args()
++	var ticks: int = int(args[0]) if args.size() > 0 else 1800
++	# ---- the hand-made world is as it was
++	var S0 := SimCore.createSim()
++	SimCore.newMatch(S0, 1, {}, {"intro": false})
++	ok(S0.buildings.size() == 118 and WorldBiomes.planetCols.size() == 0 and WorldBiomes.biomeAt(50000.0) == "city", "a setup without a planet is today's world (118 buildings, the city at x 50,000)")
++	# ---- the planet world
++	var S := planetMatch(1, 7, 3)
++	var sl: WorldPlanet.Slice = WorldPlanet.sliceFor(7, 3)
++	ok(S.buildings.size() > 20 and S.world.pop0 > 100.0, "a match on planet 7, touch 3: %d buildings, %d people, %d places held" % [S.buildings.size(), int(S.world.pop0), sl.held.size()])
++	var near: bool = true
++	for f in S.fighters:
++		if absf(SimWrap.sdx(float(WorldPlanet.TOUCH_COL) * SimConst.COL, f.x)) > 1000.0:
++			near = false
++	ok(near, "the fighters start astride the touch-down (x %.0f and %.0f)" % [S.fighters[0].x, S.fighters[1].x])
++	var same: int = 0
++	for i in range(0, SimConst.NC, 7):
++		var b: String = WorldBiomes.biomeAt(float(i) * SimConst.COL + 1.0)
++		if b == WorldPlanetWorld.BIOME_NAME[sl.biomes[i]] or b == "city" or b == "village":
++			same += 1
++	ok(same * 100 >= 99 * int(ceil(SimConst.NC / 7.0)), "biomeAt reads the slice's biomes (and a settlement's ground as village or city)")
++	var placed: bool = true
++	var seen := {}
++	for b in S.buildings:
++		var key: String = "%d/%d" % [b.place, b.plan]
++		if b.place < 0 or b.plan < 0 or seen.has(key):
++			placed = false
++		seen[key] = true
++		if b.x < 0.0 or b.x >= SimConst.W:
++			placed = false
++	ok(placed, "every building has a place and a plan index, unique, inside the world")
++	var groundOk: bool = true
++	for b in S.buildings:
++		if WorldTerrain.groundY(S, b.x) < 0.0:
++			groundOk = false
++	ok(groundOk, "every building stands on dry ground")
++	# ---- a smoke run, twice (determinism)
++	var n: int = run(S, ticks)
++	var h1: String = SimHash.stateHash(S).gameplay
++	var S2 := planetMatch(1, 7, 3)
++	run(S2, ticks)
++	var h2: String = SimHash.stateHash(S2).gameplay
++	ok(n == ticks or (S.game.ko != null), "ran %d ticks (%.0f s of match) without an error; casualties %.1f, craters %d, structures lost %d" % [n, S.T, S.world.casualties, S.craters.size(), int(S.world.structuresLost)])
++	ok(h1 == h2, "the same planet, touch and seed play to the same hash twice (%s)" % h1)
++	# ---- a second slice
++	var S3 := planetMatch(2, 11, 2)
++	run(S3, 600)
++	ok(S3.buildings.size() > 0, "planet 11, touch 2: %d buildings, %d people; 600 ticks run" % [S3.buildings.size(), int(S3.world.pop0)])
++	# ---- the golden keys a regeneration would add
++	print("GOLDEN KEYS (planet window 2):")
++	for pt in [[7, 3], [7, 9], [11, 2]]:
++		print("  planetSlice %d/%d: slice hash %08x" % [pt[0], pt[1], WorldPlanet.sliceHash(WorldPlanet.sliceFor(pt[0], pt[1]))])
++	for pt in [[7, 3], [11, 2]]:
++		var St := planetMatch(1, pt[0], pt[1])
++		print("  tick 0 of %d/%d: gameplay hash %s" % [pt[0], pt[1], SimHash.stateHash(St).gameplay])
++	print("  AI match 7/3 seed 1 after %d ticks: %s" % [n, h1])
++	print("PLANETWORLD: %d check(s) failed" % fails)
++	quit()
