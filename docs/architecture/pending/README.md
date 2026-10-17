@@ -2,6 +2,8 @@
 
 Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator, the sim or Godot (`docs/` is hidden from Godot). It holds slices that are built and proven in a scratch copy and wait for the sim slot.
 
+**A parked build:** `forms-branches/`: the forms' second window, Witness and Trial (Game Design's `hero-forms.md` section 3 and the pick), behind the forms switch; with World's two lines (`grant_world.py`) and Tools' schema lines (`grant_tools.py`, same commit). No golden moves. Its page is `../forms-core.md` section 7.
+
 **A parked build:** `brake/`: the air brake (Game Design's `buildings.md` section 7.2) and Animation's `air_brake` event, behind `data/fight/brake.json` (off); with World's one function as `grant_world.py`. No golden moves. Its page is `../brake-core.md`.
 
 **A parked build:** `forms/`: the Protagonist's five steps and the slingshot (Game Design's `hero-forms.md` sections 4 and 4b), with the hold and release signals for the waiting game, behind `data/fight/forms.json` (off); with Encounter's four director lines as `grant_encounter.py`. No golden moves. Its page is `../forms-core.md`.

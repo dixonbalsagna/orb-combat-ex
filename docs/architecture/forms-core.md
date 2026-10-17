@@ -75,10 +75,39 @@ Owner: Simulation and Engine. 2026-10-17 (the coil re-ruled the same day, edd7dc
 
 | What | Whose |
 | :--- | :--- |
-| Witness and Trial, the fills, the pick at II and IV, the branch extras (section 3 of Game Design's page), and the coil as Trial's road | The next window (Simulation), with Narrative's form ids |
+| Witness and Trial (section 7) | Built and parked at `pending/forms-branches/`, with World's two lines |
 | The director's four lines: the transform event's tier, the speed estimate and the launch planner's two tier factors | Encounter granted them (`pending/forms/grant_encounter.py`, applied after `forms.py`) |
 | The AI's holds (up to 10 s at medium while its rival is above it; up to 30 s at hard while its coil is under 60) | Encounter |
 | Spending the armour on a blow that lands (`SimForms.armoured`, `useArmour`) | Encounter |
 | A launch's recovery: the core's water path reads his gain. The ground-contact journey's and the planner's prediction (`predictFlight` reads no fighter) do not | World, Encounter |
 | The schemas for the two files | Tools |
 | The HUD's fills and the form names; the looks; the release's showpiece | UI, Narrative, Art, Animation, VFX |
+
+## 7. The branches: Witness and Trial (parked at `pending/forms-branches/`)
+
+The second window: Game Design's section 3 and section 4's pick. Behind the same switch, so with forms off nothing moves.
+
+| Rule (Game Design's) | As built |
+| :--- | :--- |
+| **Witness fills** by each person his opponent kills within 3,000 units of him, shortest arc: +1 times 425 / pop0. A guard's kills are his principal's. Each person he kills takes 2 off it | `SimForms.casualty`, from World's `WorldCollateral.kill` (one line: where they died, and who caused it). Never below 0 |
+| **His anguish** takes only his own kills; the opponent's go to Witness | `SimForms.anguishOther` in World's `_feed` (one token): 0 for a fighter with branches, today's number for anyone else |
+| **Trial fills** when the opponent takes a form while his tier is no higher (+15; +25 if his own form was ready and he held it); +1 a second of fight time while the opponent's tier is above his; +2 for each blow of a medium or more he lands while it is; +5 each time the opponent commits fully; every coil point | `SimForms.events` reads the tick's events after the mood: `tier_up`, `damage` (landed, medium or heavy), `finisher_start`, `beam_outcome` CLASH, `brink_enter`. The deficit seconds and the coil are counted in `readyTick` and `traded` |
+| **Neither decays.** Taking a form empties its branch's fill; the other keeps its own | As ruled |
+| **The pick** at II and IV: the higher fill; a tie to the branch he is on; the first tie to Trial | `_pick` at the break, for a release that passes a branch step |
+| **A Witness form:** damage +4%, launch force +8%, care +0.5 | On the gains (`damageMul`, `launchMul`); his `care` (which the director's launch planner reads) |
+| **A Trial form:** speed +4%; the perfect-block window 1 tick wider at II and 2 at IV; perfect follow-ups worth 1 more | Speed on `speedMul`. The window and the follow-up are the director's: `SimForms.blockWiden` and `followBonus` return them, and Encounter reads them |
+| **A cross** at IV is a story | `form_step` carries the branch (`text`) and `source` cross |
+
+**My readings, for Game Design to confirm:**
+- **A release picks once.** It is one transformation, so a slingshot from base to IV takes one branch for both II and IV, and empties one fill.
+- **The extras belong to the form he is in, and don't stack** between II and IV: a Witness form gives +4% damage at II, at III and at IV. The block window is the one that grows: 1 tick at II's level, 2 at IV's.
+- **V picks nothing and empties nothing.** It wears the branch he came by, and keeps that branch's extras.
+- **"Commits fully"** is read as three events: the opponent's finisher, a beam clash he is in, and the opponent entering the brink. "A clash at full ki" is read as any beam clash.
+- **"His tier is no higher"** compares his tier with the opponent's before the opponent's rise.
+- **The fills have no cap.**
+
+**In play** (`pending/forms-branches/probe/branches_probe.gd`, 12 AI matches of 14,400 ticks, the Protagonist against the rival):
+- **Trial is taken in all 12. Witness is taken in none, and nothing crosses.**
+- When the picks came, Witness's fill was 0 to 6, and Trial's 4 to 16.
+- Each person the rival kills near the hero is worth 0.24 at an arena of 1,800 people, and the hero's AI leads the fight away from people. Trial meanwhile takes 5 for every commitment and 15 or 25 for every form the rival takes.
+- **Game Design's row** (each branch taken in at least 25% of matches) **fails by its numbers, not by the build.** It needs Witness's `perPerson` about four times higher, or Trial's `commit` and `opponentForm` lower: theirs to rule. Each match played the same twice.
