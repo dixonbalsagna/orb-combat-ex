@@ -1,0 +1,230 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Run mode screens</title>
+<style>
+ html,body{margin:0;background:#0b0d14;font:15px/1.3 "Segoe UI",Arial,sans-serif;color:#f4f1ea}
+ svg{display:block}
+</style></head><body>
+<div id="root"></div>
+<script>
+// Run mode screens (UI mock, 2026-10-17): the touch-down offers, the between-stage beats, the run results.
+// ?screen=offers|beats|approach|results|resultslost  &w=1280 &h=720 . One layout function per screen, three sizes: desktop, phone landscape, phone upright.
+const Q = new URLSearchParams(location.search);
+const SCREEN = Q.get('screen') || 'offers';
+const W = parseInt(Q.get('w') || '1280'), H = parseInt(Q.get('h') || '720');
+const PORT = H > W * 1.05, SMALL = (!PORT && H < 500) || (PORT && W < 500);
+const S = SMALL ? 1 : Math.max(0.8, Math.min(1.4, (PORT ? W / 390 : H / 720)));   // the layout scale; a phone keeps 1 so the text stays at 14 px or more
+const PAGE = parseInt(Q.get('page') || '1');
+const INK = '#f4f1ea', DIM = '#b9b6ad', DARK = '#10121a', EDGE = '#e8e4d8', PANEL = '#161a26', BG = '#0b0d14';
+const NS = 'http://www.w3.org/2000/svg';
+const svg = document.createElementNS(NS, 'svg');
+svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+document.getElementById('root').appendChild(svg);
+function el(t, a, txt, p) { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (txt !== undefined) e.textContent = txt; (p || svg).appendChild(e); return e; }
+function rect(x, y, w, h, fill, stroke, sw, rx) { return el('rect', { x, y, width: Math.max(0, w), height: Math.max(0, h), rx: rx || 0, fill: fill || 'none', stroke: stroke || 'none', 'stroke-width': sw || 1 }); }
+function text(x, y, t, fs, col, anchor, wt) { return el('text', { x, y, fill: col || INK, 'font-size': fs, 'text-anchor': anchor || 'start', 'font-weight': wt || '400', 'font-family': 'Segoe UI,Arial,sans-serif' }, t); }
+function wrap(t, fs, w) { const words = t.split(' '), out = []; let cur = ''; const cw = fs * 0.52; for (const wd of words) { const tr = cur ? cur + ' ' + wd : wd; if (tr.length * cw > w && cur) { out.push(cur); cur = wd; } else cur = tr; } if (cur) out.push(cur); return out; }
+function para(x, y, t, fs, w, col, wt, lh) { const ls = wrap(t, fs, w); ls.forEach((l, i) => text(x, y + i * (lh || fs * 1.28), l, fs, col, 'start', wt)); return ls.length * (lh || fs * 1.28); }
+function line(x1, y1, x2, y2, col, sw, dash) { return el('line', { x1, y1, x2, y2, stroke: col || INK, 'stroke-width': sw || 1, 'stroke-dasharray': dash || '' }); }
+rect(0, 0, W, H, BG);
+
+// ---- shared pieces ---------------------------------------------------------------------------------------------------------------------
+// Seeded numbers so the three cards and the results always draw the same planet.
+function rnd(seed) { let s = seed >>> 0; return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; }; }
+const BIOMES = { sea: '#3b6a94', plain: '#7f9a58', forest: '#4a7a52', desert: '#b79b62', mountain: '#7c7a78', ice: '#aab7c4' };
+// One slice as World draws it: the arena as a strip of biome blocks, the places on it (state: fresh, damaged, fallen), and where the fight starts.
+function strip(x, y, w, h, spec) {
+  const R = rnd(spec.seed); let cx = x;
+  spec.biomes.forEach(([b, f]) => { const bw = w * f; rect(cx, y, bw, h, BIOMES[b], 'none'); cx += bw; });
+  rect(x, y, w, h, 'none', EDGE, 1.2, 3);
+  spec.places.forEach(p => {
+    const px = x + w * p.at, big = p.kind === 'city', pw = (big ? 15 : 9) * S, ph = (big ? 26 : 13) * S, base = y + h - 3;
+    const gx = px - pw / 2, gy = base - ph;
+    if (p.state === 'fresh') { rect(gx, gy, pw, ph, INK, DARK, 1.4); }
+    else if (p.state === 'damaged') { rect(gx, gy, pw, ph, DARK, INK, 1.8); rect(gx, gy + ph * 0.5, pw, ph * 0.5, INK); line(gx, gy + ph * 0.28, gx + pw, gy + ph * 0.5, DARK, 1.6); }
+    else { rect(gx, gy + ph * 0.55, pw, ph * 0.45, DARK, INK, 1.8); line(gx - 1, gy + ph * 0.45, gx + pw + 1, base + 1, INK, 1.8); }
+  });
+  // the start mark: a triangle above the strip at the touch-down column
+  if (spec.start !== undefined) { const sx = x + w * spec.start; el('path', { d: `M ${sx} ${y + 1} l ${-6 * S} ${-10 * S} l ${12 * S} 0 z`, fill: INK, stroke: DARK, 'stroke-width': 1 }); }
+}
+function legend(x, y, fs) { // what the shapes mean, in words
+  let cx = x; const it = [['fresh', 'untouched'], ['damaged', 'damaged'], ['fallen', 'fallen']];
+  it.forEach(([st, wd]) => { const g = { kind: 'city', state: st };
+    const pw = 10 * S, ph = 16 * S, gx = cx, gy = y - ph;
+    if (st === 'fresh') rect(gx, gy, pw, ph, INK, DARK, 1.2);
+    else if (st === 'damaged') { rect(gx, gy, pw, ph, DARK, INK, 1.6); rect(gx, gy + ph * 0.5, pw, ph * 0.5, INK); }
+    else { rect(gx, gy + ph * 0.55, pw, ph * 0.45, DARK, INK, 1.6); line(gx - 1, gy + ph * 0.45, gx + pw + 1, y + 1, INK, 1.6); }
+    text(cx + pw + 5 * S, y - 1, wd, fs, DIM); cx += pw + 5 * S + wd.length * fs * 0.55 + 14 * S; });
+  return cx;
+}
+function button(x, y, w, h, label, primary, focus) {
+  rect(x, y, w, h, primary ? INK : PANEL, EDGE, 2, h * 0.3);
+  text(x + w / 2, y + h / 2 + 6 * S, label, 20 * S, primary ? DARK : INK, 'middle', '700');
+  if (focus) rect(x - 4, y - 4, w + 8, h + 8, 'none', '#ffd860', 3, h * 0.34);
+}
+function pips(x, y, n, of, r) { for (let i = 0; i < of; i++) { const cx = x + i * r * 2.6; el('circle', { cx, cy: y, r, fill: i < n ? INK : 'none', stroke: INK, 'stroke-width': 1.6 }); } }
+const PLACES = { harbour: 'Harbourgate', ridge: 'Greywater Ridge', delta: 'The Saltmarsh Delta' };
+
+// ---- the three offers ------------------------------------------------------------------------------------------------------------------
+const OFFERS = [
+  { kind: 'RAMPAGE', shape: 'tri', name: 'Harbourgate', line: 'He got here first. People are still in the streets.', opp: 'The Rival, already in the city', hard: false,
+    strength: 'QUAKE to UPHEAVAL', holds: '3 cities, 3 towns', reward: 'People you save count double',
+    spec: { seed: 11, start: 0.36, biomes: [['sea', .16], ['plain', .22], ['plain', .18], ['forest', .14], ['plain', .16], ['sea', .14]],
+      places: [{ at: .26, kind: 'city', state: 'fresh' }, { at: .34, kind: 'town', state: 'fresh' }, { at: .5, kind: 'city', state: 'fresh' }, { at: .62, kind: 'town', state: 'fresh' }, { at: .78, kind: 'city', state: 'fresh' }, { at: .88, kind: 'town', state: 'fresh' }] } },
+  { kind: 'PROVING GROUND', shape: 'dia', name: 'Greywater Ridge', line: 'Mountains and a few towns. Nobody to hurt, and he is ready for you.', opp: 'The Rival, stronger than you: a level harder', hard: true,
+    strength: 'UPHEAVAL to UPHEAVAL', holds: '2 cities, 4 towns', reward: 'Pick two cards',
+    spec: { seed: 23, start: 0.52, biomes: [['mountain', .24], ['ice', .1], ['mountain', .2], ['desert', .16], ['plain', .12], ['mountain', .18]],
+      places: [{ at: .12, kind: 'town', state: 'fresh' }, { at: .3, kind: 'city', state: 'fresh' }, { at: .44, kind: 'town', state: 'fresh' }, { at: .66, kind: 'town', state: 'fresh' }, { at: .74, kind: 'city', state: 'damaged' }, { at: .9, kind: 'town', state: 'fresh' }] } },
+  { kind: 'CROSSING', shape: 'arr', name: 'The Saltmarsh Delta', line: 'You pass places the fight already hurt. After it you can rest.', opp: 'The Rival', hard: false,
+    strength: 'QUAKE to UPHEAVAL', holds: '3 cities, 3 towns', reward: 'A rest: broken body parts heal a little',
+    spec: { seed: 37, start: 0.4, biomes: [['sea', .14], ['plain', .2], ['forest', .2], ['plain', .18], ['desert', .12], ['sea', .16]],
+      places: [{ at: .2, kind: 'city', state: 'damaged' }, { at: .32, kind: 'town', state: 'fresh' }, { at: .46, kind: 'city', state: 'fallen' }, { at: .6, kind: 'town', state: 'damaged' }, { at: .76, kind: 'city', state: 'fresh' }, { at: .86, kind: 'town', state: 'fresh' }] } },
+];
+function kindMark(cx, cy, r, shape) {
+  if (shape === 'tri') el('path', { d: `M ${cx} ${cy - r} L ${cx + r} ${cy + r * 0.8} L ${cx - r} ${cy + r * 0.8} Z`, fill: INK });
+  else if (shape === 'dia') el('path', { d: `M ${cx} ${cy - r} L ${cx + r} ${cy} L ${cx} ${cy + r} L ${cx - r} ${cy} Z`, fill: INK });
+  else { el('path', { d: `M ${cx - r} ${cy - r * 0.35} H ${cx + r * 0.5} M ${cx + r * 0.5} ${cy - r * 0.9} L ${cx + r} ${cy - r * 0.35} L ${cx + r * 0.5} ${cy + r * 0.2} M ${cx + r} ${cy + r * 0.45} H ${cx - r * 0.5} M ${cx - r * 0.5} ${cy + r * 0.0} L ${cx - r} ${cy + r * 0.45} L ${cx - r * 0.5} ${cy + r * 0.95}`, fill: 'none', stroke: INK, 'stroke-width': 2.4 }); }
+}
+function offerCard(x, y, w, h, o, sel, mode) { // mode: full, compact, row
+  rect(x, y, w, h, PANEL, sel ? INK : '#2a2f3d', sel ? 3 : 1.4, 12 * S);
+  const pad = 14 * S; let cy = y + pad;
+  if (mode === 'row') {
+    kindMark(x + pad + 8 * S, y + pad + 9 * S, 8 * S, o.shape);
+    text(x + pad + 26 * S, y + pad + 8 * S, o.kind, 13 * S, DIM, 'start', '700');
+    text(x + pad + 26 * S, y + pad + 27 * S, o.name, 19 * S, INK, 'start', '700');
+    strip(x + pad, y + pad + 44 * S, w - 2 * pad, 24 * S, o.spec);
+    text(x + pad, y + pad + 88 * S, o.reward, 13 * S, INK);
+    text(x + w - pad, y + pad + 88 * S, o.holds, 13 * S, DIM, 'end');
+    return;
+  }
+  kindMark(x + pad + 8 * S, cy + 9 * S, 8 * S, o.shape);
+  text(x + pad + 26 * S, cy + 14 * S, o.kind, 14 * S, DIM, 'start', '700'); cy += (mode === 'compact' ? 24 : 32) * S;
+  text(x + pad, cy + 14 * S, o.name, (mode === 'compact' ? 20 : 26) * S, INK, 'start', '700'); cy += (mode === 'compact' ? 26 : 40) * S;
+  strip(x + pad, cy + 12 * S, w - 2 * pad, (mode === 'compact' ? 34 : 70) * S, o.spec); cy += (mode === 'compact' ? 66 : 106) * S;
+  if (mode !== 'compact') { text(x + pad, cy, 'The fight holds ' + o.holds, 14 * S, DIM); cy += 22 * S; }
+  const sh = para(x + pad, cy, 'Opponent: ' + (mode === 'compact' ? o.opp.replace(', stronger than you: a level harder', ', a level harder').replace(', already in the city', ', in the city') : o.opp), 14 * S, w - 2 * pad, INK); cy += sh + 6 * S;
+  if (mode === 'compact') { cy += 4 * S; } else
+  text(x + pad, cy, 'Starts at ' + o.strength.replace(' to ', ', rises to '), 14 * S, DIM); if (mode !== 'compact') cy += 24 * S;
+  if (mode !== 'compact') { rect(x + pad, cy - 14 * S, w - 2 * pad, 1, '#2a2f3d'); cy += 8 * S; }
+  if (mode !== 'compact') { text(x + pad, cy, 'Reward', 12 * S, DIM, 'start', '700'); cy += 18 * S; }
+  cy += para(x + pad, cy, (mode === 'compact' ? 'Reward: ' : '') + o.reward, 15 * S, w - 2 * pad, INK, '700') + 6 * S;
+  if (mode === 'full') { cy += 6 * S; para(x + pad, cy, o.line, 14 * S, w - 2 * pad, DIM); }
+}
+function screenOffers() {
+  const m = 20 * S, top = m;
+  text(m, top + 24 * S, 'Where to next?', 30 * S, INK, 'start', '700');
+  text(W - m, top + 14 * S, 'Fight 2 of 4', 15 * S, DIM, 'end', '700'); pips(W - m - 3 * 2.6 * 6 * S - 3 * S, top + 30 * S, 1, 4, 6 * S);
+  // the planet's state: places, never a score
+  const sy = top + 52 * S;
+  text(m, sy, 'The planet: 10 of 12 cities standing, 3 damaged, 2 fallen.', 14 * S, DIM);
+  if (!PORT) {
+    const gap = 16 * S, cw = (W - 2 * m - 2 * gap) / 3, cy0 = sy + 20 * S, bh = 56 * S, ch = Math.min(H - cy0 - bh - m - 10 * S, (SMALL ? 270 : 420) * S);
+    OFFERS.forEach((o, i) => offerCard(m + i * (cw + gap), cy0, cw, ch, o, i === 0, SMALL ? 'compact' : 'full'));
+    legend(m, H - m - 22 * S, 12 * S);
+    text(m + (SMALL ? 270 : 300) * S, H - m - 23 * S, SMALL ? '▼ start. The strip wraps.' : '▼ where the fight starts. The strip wraps: it is the whole way round.', 12 * S, DIM);
+    button(W - m - 260 * S, H - m - 48 * S, 260 * S, 48 * S, 'Fight here', true, true);
+  } else {
+    const cw = W - 2 * m, rh = 118 * S, y0 = sy + 14 * S;
+    OFFERS.forEach((o, i) => offerCard(m, y0 + i * (rh + 10 * S), cw, rh, o, i === 0, 'row'));
+    legend(m, y0 + 3 * (rh + 10 * S) + 14 * S, 11 * S);
+    button(m, H - m - 52 * S, cw, 52 * S, 'Fight here', true, true);
+  }
+}
+
+// ---- the beats --------------------------------------------------------------------------------------------------------------------------
+function planetRow(x, y, w, h, changed) { // the planet's places as one strip of marks, the ones this fight changed ringed
+  rect(x, y, w, h, '#101421', '#2a2f3d', 1, 8 * S);
+  const states = ['fresh', 'fresh', 'damaged', 'fresh', 'fallen', 'fresh', 'damaged', 'fresh', 'fresh', 'fresh', 'damaged', 'fresh'];
+  const names = ['', '', 'Harbourgate', '', 'Old Brasswick', '', '', '', '', '', '', ''];
+  states.forEach((st, i) => { const gx = x + (w - 24 * S) * (i + 0.5) / 12 + 12 * S, pw = 14 * S, ph = 22 * S, base = y + h - 8 * S;
+    if (st === 'fresh') rect(gx - pw / 2, base - ph, pw, ph, INK, DARK, 1.2);
+    else if (st === 'damaged') { rect(gx - pw / 2, base - ph, pw, ph, DARK, INK, 1.8); rect(gx - pw / 2, base - ph * 0.5, pw, ph * 0.5, INK); }
+    else { rect(gx - pw / 2, base - ph * 0.45, pw, ph * 0.45, DARK, INK, 1.8); line(gx - pw / 2 - 1, base - ph * 0.55, gx + pw / 2 + 1, base + 1, INK, 1.8); }
+    if (changed.includes(i)) el('circle', { cx: gx, cy: base - ph / 2, r: 16 * S, fill: 'none', stroke: INK, 'stroke-width': 2, 'stroke-dasharray': '4 3' }); });
+}
+function speakerLine(x, y, w, who, t, fs, col) {
+  text(x, y, who, fs * 0.82, DIM, 'start', '700');
+  return 14 * S + para(x, y + fs * 1.15, t, fs, w, col || INK, '400') + 10 * S;
+}
+function screenBeats(approach) {
+  const m = 24 * S;
+  if (approach) { // the sky changes: the backdrop darkens in steps, never a flash
+    rect(0, 0, W, H, '#14111c'); rect(0, H * 0.62, W, H * 0.38, '#1a1620');
+  }
+  const pw = Math.min(W - 2 * m, PORT ? W - 2 * m : 820 * S), px = (W - pw) / 2;
+  let y = m;
+  if (!approach) {
+    text(px, y + 18 * S, 'After the fight', 15 * S, DIM, 'start', '700'); text(px + pw, y + 18 * S, 'Greywater Ridge', 15 * S, DIM, 'end', '700'); y += 30 * S;
+    const rh = (SMALL ? 38 : 70) * S; planetRow(px, y, pw, rh, [2, 4]); y += rh + 6 * S;
+    y += para(px, y + 14 * S, 'Changed this fight: Harbourgate is damaged. Old Brasswick has fallen.', 13 * S, pw, DIM) + 4 * S;
+    text(px, y + 14 * S, 'People lost this fight: 312 of 1,800', 14 * S, INK); y += (SMALL ? 22 : 30) * S;
+  } else {
+    text(px, y + 18 * S, 'The last night', 15 * S, DIM, 'start', '700'); text(px + pw, y + 18 * S, 'Step 3 of 8', 15 * S, DIM, 'end', '700'); y += 24 * S; pips(px, y + 6 * S, 3, 8, 5 * S); y += 28 * S;
+  }
+  const ch = SMALL ? H - y - m - 56 * S : Math.min(H - y - m - 60 * S, 250 * S);
+  rect(px, y, pw, ch, PANEL, '#2a2f3d', 1.4, 14 * S);
+  const ip = (SMALL ? 12 : 18) * S; let ly = y + ip + (SMALL ? 6 : 12) * S; const lw = pw - 2 * ip, fs = (SMALL ? 16 : 20) * S;
+  const lines = approach
+    ? [['THE RIVAL', 'Do not misunderstand. I just want the first hit.'], ['PROTAGONIST', 'Everyone is inside. It is just us.']]
+    : [['PROTAGONIST', 'I broke that street. I know it.'], ['A CIVILIAN', 'Look at the windows. All of them.'], ['PROTAGONIST', 'Next time I am taking it somewhere empty.']];
+  lines.forEach(([who, t], i) => { if (ly + 40 * S < y + ch) ly += speakerLine(px + ip, ly, lw, who, t, fs, i === lines.length - 1 ? INK : INK); });
+  text(px + pw - ip, y + ch - 12 * S, approach ? '' : 'Beat 1 of 2', 12 * S, DIM, 'end');
+  const by = SMALL ? H - m - 46 * S : Math.min(H - m - 46 * S, y + ch + 16 * S);
+  text(px, by + 28 * S, PORT ? 'Tap to skip' : 'Press any button to skip', 14 * S, DIM);
+  button(px + pw - 150 * S, by, 150 * S, 46 * S, 'Next', true, true);
+}
+
+// ---- the results ------------------------------------------------------------------------------------------------------------------------
+function screenResults(lost) {
+  const m = 24 * S, twoPage = SMALL && !PORT;   // a phone on its side has two pages: the planet, then the route and the score
+  const showPlanet = !twoPage || PAGE === 1, showRoute = !twoPage || PAGE === 2;
+  let y = m;
+  text(m, y + 28 * S, lost ? 'The run is over' : (PORT ? 'The boss is beaten' : 'The run is over: the boss is beaten'), (PORT ? 26 : 28) * S, INK, 'start', '700'); y += 44 * S;
+  if (twoPage) text(W - m, m + 22 * S, 'Page ' + PAGE + ' of 2', 14 * S, DIM, 'end', '700');
+  const colw = (PORT || twoPage) ? W - 2 * m : (W - 2 * m - 30 * S) / 2;
+  const endTxt = lost ? 'You lost the last chance at Greywater Ridge. The planet went on without you.' : 'Half the planet is standing. The sky is still dark. The Protagonist walks back toward the harbour.';
+  if (showPlanet) y += para(m, y + 6 * S, endTxt, (SMALL ? 15 : 17) * S, W - 2 * m, DIM) + 12 * S;
+  const y0 = y;
+  let ly = y0;
+  const route = lost ? [['Harbourgate', 'Rampage', 'won'], ['Greywater Ridge', 'Proving ground', 'lost'], ['The Saltmarsh Delta', 'Crossing', 'lost']]
+    : [['Harbourgate', 'Rampage', 'won'], ['Greywater Ridge', 'Proving ground', 'won'], ['The Saltmarsh Delta', 'Crossing', 'won'], ['Old Brasswick', 'The boss', 'won']];
+  const rh = (SMALL ? 26 : 32) * S;
+  if (showRoute) {
+    if (twoPage) ly = m + 54 * S;
+    text(m, ly + 14 * S, 'Your route', 15 * S, INK, 'start', '700'); ly += 28 * S;
+    route.forEach(([pl, k, r], i) => { const ry = ly + i * rh, cw = twoPage ? (W - 2 * m) / 2 - 20 * S : colw; text(m, ry + 14 * S, (i + 1) + '', 14 * S, DIM); text(m + 24 * S, ry + 14 * S, pl, 15 * S, INK, 'start', '700'); text(m + cw - 70 * S, ry + 14 * S, k, 13 * S, DIM, 'end'); text(m + cw, ry + 14 * S, r === 'won' ? 'Won' : 'Lost', 14 * S, INK, 'end', '700'); });
+    ly += route.length * rh + 12 * S;
+    text(m, ly + 12 * S, 'Chances used: ' + (lost ? '2 of 2' : '1 of 2') + '   Fight time: 41:08', 13 * S, DIM); ly += 22 * S;
+    text(m, ly + 12 * S, "The hero's path: Witness 2, Trial 1", 13 * S, DIM); ly += 26 * S;
+  }
+  let rx = (PORT) ? m : (twoPage ? m : m + colw + 30 * S), ry = PORT ? ly : y0;
+  if (showPlanet) {
+    text(rx, ry + 14 * S, 'The planet', 15 * S, INK, 'start', '700'); ry += 24 * S;
+    const ph = (SMALL ? 48 : 64) * S; planetRow(rx, ry, twoPage ? W - 2 * m : colw, ph, []); ry += ph + 8 * S;
+    text(rx, ry + 12 * S, 'Cities: 9 standing, 2 damaged, 1 fallen', 14 * S, INK); ry += 20 * S;
+    text(rx, ry + 12 * S, 'Towns: 24 standing, 5 damaged, 2 fallen', 14 * S, INK); ry += 20 * S;
+    text(rx, ry + 12 * S, 'People lost: 7,030 of 14,200 (49%)', 14 * S, INK); ry += 20 * S;   // a count, in the same type as every other fact: no icon, no colour, no emphasis, no counting up
+    text(rx, ry + 12 * S, 'Sky: ' + (lost ? 'clear' : 'dark'), 14 * S, INK); ry += 30 * S;
+  }
+  if (showRoute) {
+    if (twoPage) { rx = W / 2 + 10 * S; ry = m + 54 * S; }
+    const sw = twoPage ? W / 2 - m - 10 * S : colw;
+    if (!PORT) { text(rx, ry + 14 * S, 'Score', 15 * S, INK, 'start', '700'); ry += 24 * S; }
+    if (PORT) { text(rx, ry + 16 * S, 'Score', 15 * S, INK, 'start', '700'); text(rx + sw, ry + 16 * S, lost ? '1,020' : '6,920', 17 * S, INK, 'end', '700'); text(rx, ry + 38 * S, 'Tap Score for the parts', 12 * S, DIM); } else {
+    const parts = lost ? [['Fights won', '1,000'], ['People you saved (51%)', '1,020'], ['Chances used', '-1,000']] : [['Fights won', '3,000'], ['The boss', '3,000'], ['People you saved (51%)', '1,020'], ['Chances used', '-500'], ['Style', '400']];
+    const lh = (SMALL ? 22 : 21) * S;
+    parts.forEach(([a, b], i) => { text(rx, ry + 12 * S + i * lh, a, 14 * S, DIM); text(rx + sw, ry + 12 * S + i * lh, b, 14 * S, INK, 'end'); });
+    ry += parts.length * lh + 4 * S;
+    line(rx, ry, rx + sw, ry, '#2a2f3d', 1); text(rx, ry + 20 * S, 'Total', 17 * S, INK, 'start', '700'); text(rx + sw, ry + 20 * S, lost ? '1,020' : '6,920', 17 * S, INK, 'end', '700');
+  } }
+  const bh = 48 * S, by = H - m - bh, bw = PORT ? (W - 2 * m) : 220 * S;
+  if (PORT) { button(m, by - 2 * (bh + 8 * S), bw, bh, 'New run', true, true); button(m, by - (bh + 8 * S), bw, bh, 'Same planet again', false, false); button(m, by, bw, bh, 'Main menu', false, false); }
+  else if (twoPage && PAGE === 1) { button(W - m - 160 * S, by, 160 * S, bh, 'Next', true, true); }
+  else { button(W - m - 3 * bw - 2 * 12 * S, by, bw, bh, 'New run', true, true); button(W - m - 2 * bw - 12 * S, by, bw, bh, 'Same planet again', false, false); button(W - m - bw, by, bw, bh, 'Main menu', false, false); }
+}
+
+if (SCREEN === 'offers') screenOffers();
+else if (SCREEN === 'beats') screenBeats(false);
+else if (SCREEN === 'approach') screenBeats(true);
+else if (SCREEN === 'results') screenResults(false);
+else screenResults(true);
+</script></body></html>

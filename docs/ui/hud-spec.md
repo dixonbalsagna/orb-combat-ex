@@ -1473,3 +1473,7 @@ No running civilian count in the fight (EP decision on Orb's homework 5). With `
 - **Narrative's plain words** are in (table in `docs/ui/plain-words.md`): RATTLED, ARMOUR OPEN, WEAK SPOT, NEW FORM, NEARLY BEATEN, OVERHEATED, LOST HIM, COMBO, BLOWS, SIGNATURE, ACTION, TRANSFORM.
 - **A run needs a length:** the blow cue's `run` counts only with `run_to` above 0 (Simulation's FxEvent fields are 0 on every cue by default).
 - **The struggle's legend** is parked (`docs/ui/pending/tug-legend/`): LET GO on A (on Guard for Simple), "on the beat" on the buttons that surge, a tap (never a swipe) taught by a caption on touch.
+
+## 66. The run mode's screens (2026-10-17, paper and a scratch mock)
+
+The offers on World's strip, the beat panel between stages (and the final approach) and the run results are designed in `docs/ui/run-mode-screens.md` with a mock (`docs/ui/mock/run-screens.html`, pictures in `docs/ui/img/run/`). Legal c08 binds the counts (a count and an environmental result, never a score, nothing celebrating a rising count). Nothing is built; it waits on the EP's go and the records named there.
