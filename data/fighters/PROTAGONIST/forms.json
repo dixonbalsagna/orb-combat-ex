@@ -3,9 +3,9 @@
   "schema": "fighter.forms/1",
   "steps": [
     {"power": 20.0, "tier": 1, "kind": "live", "id": "marks_base"},
-    {"power": 35.0, "tier": 2, "kind": "pausing", "id": "form_ii"},
+    {"power": 35.0, "tier": 2, "kind": "pausing", "id": "form_ii", "branch": true},
     {"power": 50.0, "tier": 2, "kind": "live", "id": "marks_ii"},
-    {"power": 65.0, "tier": 3, "kind": "pausing", "id": "form_iv"},
+    {"power": 65.0, "tier": 3, "kind": "pausing", "id": "form_iv", "branch": true},
     {"power": 100.0, "tier": 4, "kind": "pausing", "id": "top"}
   ],
   "_steps": "in order of power: at each one he is ready, and he takes it by holding Transform (a step is never forced). tier is his tier for the world (the collateral budgets, structure reach, the building ladder), which steps at 35, 65 and 100 as everyone's does. A live step is a beat with no pause; a pausing one may pause the fight (data/fight/pause.json)",
@@ -39,5 +39,27 @@
     "lastingPer": 0.005,
     "lastingMax": 1.5
   },
+  "branches": {
+    "witness": {
+      "range": 3000.0,
+      "perPerson": 1.0,
+      "ownKill": 2.0,
+      "damage": 0.04,
+      "launch": 0.08,
+      "care": 0.5
+    },
+    "trial": {
+      "opponentForm": 15.0,
+      "opponentFormHeld": 25.0,
+      "deficitPerSec": 1.0,
+      "blowUp": 2.0,
+      "commit": 5.0,
+      "speed": 0.04,
+      "block": [1, 2],
+      "followUp": 1
+    },
+    "firstTie": "trial"
+  },
+  "_branches": "Game Design's hero-forms.md section 3, at the steps marked branch (II and IV). Witness fills by perPerson for each person his opponent kills within range of him (shortest arc; a guard's kills are his principal's), times 425 / pop0 as every gain a person, and each person he kills takes ownKill off it. Trial fills by opponentForm when the opponent takes a form while his tier is no higher (opponentFormHeld when his own form was ready and he held it), deficitPerSec a second of fight time while the opponent's tier is above his, blowUp for each blow of a medium or more he lands while it is, commit when the opponent commits fully (a finisher, a beam clash, fighting on at the brink), and every coil point. Neither decays. A release picks once, the higher fill (a tie to the branch he is on; the first tie to firstTie), and empties it. In a Witness form: damage x (1 + damage), launch force x (1 + launch), his care + care. In a Trial form: speed x (1 + speed), the perfect-block window block[level - 1] ticks wider and a perfect follow-up worth followUp more (the director reads these two)",
   "_release": "holding Transform takes every banked step at once. At a coil of c (minCoil or more: a step taken at once carries a sliver of coil, and adds nothing), by c / 100: a burst like a ground power-up at burst times its damage and its crater, with a push burst times wider and harder; for surgeTicks, speed and damage x (1 + surge); armour on his next armour blows (rounded); and for the rest of the match his step gains x (1 + c x lastingPer), at most lastingMax (the largest release so far)"
 }

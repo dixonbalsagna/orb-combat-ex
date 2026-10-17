@@ -40,6 +40,10 @@
           },
           "id": {
             "type": "string"
+          },
+          "branch": {
+            "type": "boolean",
+            "description": "true at a step that picks a branch (II and IV: hero-forms.md section 4)"
           }
         },
         "additionalProperties": false,
@@ -179,6 +183,135 @@
         "lastingMax": {
           "type": "number",
           "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "branches": {
+      "type": "object",
+      "description": "the two branches (hero-forms.md section 3): Witness's and Trial's fills and each branch's extras; firstTie the pick's first tie",
+      "required": [
+        "witness",
+        "trial",
+        "firstTie"
+      ],
+      "properties": {
+        "witness": {
+          "type": "object",
+          "required": [
+            "range",
+            "perPerson",
+            "ownKill",
+            "damage",
+            "launch",
+            "care"
+          ],
+          "properties": {
+            "range": {
+              "type": "number",
+              "minimum": 0
+            },
+            "perPerson": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "ownKill": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "damage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "launch": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "care": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "trial": {
+          "type": "object",
+          "required": [
+            "opponentForm",
+            "opponentFormHeld",
+            "deficitPerSec",
+            "blowUp",
+            "commit",
+            "speed",
+            "block",
+            "followUp"
+          ],
+          "properties": {
+            "opponentForm": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "opponentFormHeld": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "deficitPerSec": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "blowUp": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "commit": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "speed": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "block": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "followUp": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "firstTie": {
+          "enum": [
+            "witness",
+            "trial"
+          ]
         }
       },
       "additionalProperties": false,

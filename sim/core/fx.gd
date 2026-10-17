@@ -201,9 +201,11 @@ static func formRelease(S: SimState, f, n: int, coil: float, dur: float, k: int,
 
 ## Forms: f's taken steps rise at the break: he stands at step k, of kind live or pausing (the last one taken), at tier
 ## for the world, and coil is what the release spent (0 for a step taken at once). A tier_up comes first when the tier rose.
-static func formStep(S: SimState, f, k: int, kind: String, tier: float, coil: float) -> void:
+## text is the branch of the form he is in ("" before II), and source "cross" when this rise changed it.
+static func formStep(S: SimState, f, k: int, kind: String, tier: float, coil: float, branch: String = "", cross: bool = false) -> void:
 	var e := _ev(S, "form_step")
 	e.actor = float(S.fighters.find(f)); e.k = float(k); e.kind = kind; e.tier = tier; e.amount = coil
+	e.text = branch; e.source = "cross" if cross else ""
 
 
 static func transformReady(S: SimState, f, tier: float, source: String) -> void:

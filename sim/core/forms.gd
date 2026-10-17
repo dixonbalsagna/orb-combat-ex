@@ -14,7 +14,7 @@ extends RefCounted
 const FILE: String = "forms.json"
 const KINDS: Array = ["live", "pausing"]
 ## The form state the gameplay hash reads, only while S.formsOn (hash.gd).
-const HASHED: Array = ["step", "ready", "coil", "coiling", "holdT", "held", "pend", "pendCoil", "surgeT", "surgeMul", "armour", "lasting"]
+const HASHED: Array = ["step", "ready", "coil", "coiling", "holdT", "held", "pend", "pendCoil", "surgeT", "surgeMul", "armour", "lasting", "witness", "trial", "branch", "crossed"]
 
 
 ## One fighter's steps and slingshot (his forms.json). Read-only after load.
@@ -39,6 +39,23 @@ class FormsDef:
 	var armour: int = 0            # blows with armour at a full coil (rounded by the coil's share)
 	var lastingPer: float = 0.0    # the lasting gain: the step gains x (1 + coil x lastingPer), at most lastingMax
 	var lastingMax: float = 1.0
+	# The branches (hero-forms.md section 3): the steps that pick one, the fills' sources and each branch's extras
+	var branchAt: Array = []      # the steps (1-based) at which a release picks a branch: II and IV
+	var wRange: float = 0.0       # Witness: an opponent's kill this near him (shortest arc) fills it ...
+	var wPerPerson: float = 0.0   # ... by this a person, times 425 / pop0 as every gain a person
+	var wOwnKill: float = 0.0     # ... and each person he kills takes this off it
+	var wDamage: float = 0.0      # in a Witness form: damage and launch force x (1 + these), his care + wCare
+	var wLaunch: float = 0.0
+	var wCare: float = 0.0
+	var tForm: float = 0.0        # Trial: the opponent takes a form while his tier is no higher ...
+	var tFormHeld: float = 0.0    # ... this instead when his own form was ready and he held it
+	var tPerSec: float = 0.0      # ... a second of fight time while the opponent's tier is above his
+	var tBlow: float = 0.0        # ... a blow of a medium or more he lands while it is
+	var tCommit: float = 0.0      # ... the opponent commits fully: a finisher, a beam clash, fighting on at the brink
+	var tSpeed: float = 0.0       # in a Trial form: speed x (1 + this); the perfect-block window wider by tBlock[level - 1]
+	var tBlock: Array = [0, 0]    # ticks; perfect follow-ups worth tFollow more (the director reads both)
+	var tFollow: int = 0
+	var firstTie: String = "trial"   # the pick's first tie (he is on no branch yet)
 
 
 static var _defs = null          # id -> FormsDef, for the fighters whose folder has a forms.json
@@ -160,6 +177,8 @@ static func readyTick(S: SimState, f, dt: float) -> void:
 		fs.surgeT -= 1
 		if fs.surgeT == 0:
 			fs.surgeMul = 1.0
+	if SimRoster.opp(S, f).tier > f.tier:   # Trial: a second of fight time fought a tier down
+		fs.trial += f.fd.tPerSec * dt
 	if f.act.breakIn >= 0:
 		return
 	var n: int = byPower(f) - fs.step
@@ -171,7 +190,9 @@ static func readyTick(S: SimState, f, dt: float) -> void:
 		if not fs.coiling and canTake(S, f):
 			fs.coiling = true
 	if fs.coiling:
+		var c0: float = fs.coil
 		fs.coil = SimMathx.jmin(f.fd.coilMax, fs.coil + f.fd.coilPerSec * _behind(S, f) * dt)
+		fs.trial += fs.coil - c0   # each coil point is a Trial point (the coil is Trial's road: hero-forms.md section 4b)
 
 
 ## Damage traded (SimDamage.hurt, after what reaches him): every coil that is filling takes coilPerDamage a point, its
@@ -181,7 +202,9 @@ static func traded(S: SimState, f, by, amt: float) -> void:
 		return
 	for x in [f, by]:
 		if x != null and has(S, x) and x.form.coiling:
+			var c0: float = x.form.coil
 			x.form.coil = SimMathx.jmin(x.fd.coilMax, x.form.coil + amt * x.fd.coilPerDamage * _behind(S, x))
+			x.form.trial += x.form.coil - c0
 
 
 ## True when a ready form could be taken now: between exchanges, before a KO, with no approach running, and he is free
@@ -251,13 +274,15 @@ static func rise(S: SimState, f) -> void:
 	fs.pendCoil = 0.0
 	if n <= 0:
 		return
+	var from: int = fs.step
 	fs.step = mini(f.fd.steps.size(), fs.step + n)
+	var cross: bool = _pick(S, f, from)
 	var s: Dictionary = f.fd.steps[fs.step - 1]
 	var t: float = float(s.tier)
 	if t > f.tier:
 		f.tier = t
 		SimFighter.tierUp(S, f)
-	SimFx.formStep(S, f, fs.step, String(s.kind), f.tier, c)
+	SimFx.formStep(S, f, fs.step, String(s.kind), f.tier, c, fs.branch, cross)
 	fs.coil = 0.0
 	fs.coiling = false
 	var big: bool = c >= f.fd.minCoil and c > 0.0
@@ -343,21 +368,21 @@ static func _surge(f) -> float:
 static func speedMul(S: SimState, f) -> float:
 	if not has(S, f):
 		return 1.0 + f.ld.speed * (f.tier - 1.0)
-	return _g(f, f.fd.gSpeed) * _surge(f)
+	return _g(f, f.fd.gSpeed) * _surge(f) * (1.0 + (f.fd.tSpeed if f.form.branch == "trial" else 0.0))
 
 
 ## Damage's tier factor (SimDamage.hit). Without steps, today's.
 static func damageMul(S: SimState, f) -> float:
 	if not has(S, f):
 		return 1.0 + f.ld.damage * (f.tier - 1.0)
-	return _g(f, f.fd.gDamage) * _surge(f)
+	return _g(f, f.fd.gDamage) * _surge(f) * (1.0 + (f.fd.wDamage if f.form.branch == "witness" else 0.0))
 
 
 ## Launch force's tier factor (the director's launch planner and doLaunch). Without steps, today's.
 static func launchMul(S: SimState, f) -> float:
 	if not has(S, f):
 		return 1.0 + f.ld.launch * (f.tier - 1.0)
-	return _g(f, f.fd.gLaunch)
+	return _g(f, f.fd.gLaunch) * (1.0 + (f.fd.wLaunch if f.form.branch == "witness" else 0.0))
 
 
 ## His ki regen's step gain (SimFighter.stepFighter reads it only for a fighter with steps).
@@ -381,6 +406,122 @@ static func armoured(S: SimState, f) -> bool:
 static func useArmour(S: SimState, f) -> void:
 	if armoured(S, f):
 		f.form.armour -= 1
+
+
+# ----------------------------------------------------------------------------------------------------------- the branches
+
+## The pick (hero-forms.md section 4): a release whose steps pass a branch step (II, IV) takes the branch with the higher
+## fill; a tie goes to the branch he is on, and the first tie (no branch yet) to firstTie. A release is one transformation,
+## so it picks once, however many branch steps it passes. Taking the form empties its branch's fill, and the other keeps
+## its own. A Witness form adds wCare to his care, so his launches lean further from people. True when the branch changed
+## from one he was on: a cross.
+static func _pick(S: SimState, f, from: int) -> bool:
+	var fs = f.form
+	var at: bool = false
+	for k in f.fd.branchAt:
+		if int(k) > from and int(k) <= fs.step:
+			at = true
+	if not at:
+		fs.crossed = false
+		return false
+	var b: String = fs.branch
+	if fs.witness > fs.trial:
+		b = "witness"
+	elif fs.trial > fs.witness:
+		b = "trial"
+	elif b == "":
+		b = f.fd.firstTie
+	var cross: bool = fs.branch != "" and b != fs.branch
+	fs.crossed = cross
+	fs.branch = b
+	if b == "witness":
+		fs.witness = 0.0
+	else:
+		fs.trial = 0.0
+	f.care = float(FighterData.def(f.id).care) + (f.fd.wCare if b == "witness" else 0.0)
+	return cross
+
+
+## A casualty (WorldCollateral.kill, World's line; only while forms are on): n people died at x, and cause did it (a
+## fighter, or none). A fighter with branches fills Witness by his opponent's kills within wRange of him, shortest arc
+## (a guard's kills are his principal's), at wPerPerson a person times 425 / the meters' norm (pop0), as every gain a person; each person he
+## kills himself takes wOwnKill off it. Nothing he does to the world fills it.
+static func casualty(S: SimState, n: float, cause, x: float) -> void:
+	if n <= 0.0 or cause == null or WorldCollateral.normPeople(S) <= 0.0:
+		return
+	var c = cause if SimRoster.isPrincipal(S, cause) else S.fighters[1]
+	var norm: float = WorldCollateral.POP_REF / WorldCollateral.normPeople(S)   # as the meters' gains a person (data/biomes/collateral.json meterNorm)
+	for h in S.fighters:
+		if not has(S, h) or h.fd.wPerPerson <= 0.0:
+			continue
+		if c == h:
+			h.form.witness = SimMathx.jmax(0.0, h.form.witness - n * h.fd.wOwnKill * norm)
+		elif c == SimRoster.opp(S, h) and absf(SimWrap.sdx(h.x, x)) <= h.fd.wRange:
+			h.form.witness += n * h.fd.wPerPerson * norm
+
+
+## What a casualty someone else caused feeds his anguish (WorldCollateral._feed, World's line). For a fighter with
+## branches, nothing: only his own kills cost him now, and his opponent's go to Witness (hero-forms.md section 7). For
+## anyone else, as today.
+static func anguishOther(S: SimState, f) -> float:
+	if has(S, f) and f.fd.wPerPerson > 0.0:
+		return 0.0
+	return f.md.anguishCasOther
+
+
+## This tick's events, for the Trial fill (SimCore.step, after the mood; only while forms are on):
+##   tier_up        the opponent takes a form while his own tier is no higher: tForm, or tFormHeld when his own form was
+##                  ready and he held it
+##   damage         a blow of his, a medium or more, lands on the opponent while the opponent's tier is above his: tBlow
+##   finisher_start, beam_outcome CLASH, brink_enter   the opponent commits fully: a finisher, a beam clash, fighting on at
+##                  the brink: tCommit each
+static func events(S: SimState) -> void:
+	for h in S.fighters:
+		if not has(S, h):
+			continue
+		var o = SimRoster.opp(S, h)
+		var hi: float = float(S.fighters.find(h))
+		var oi: float = float(S.fighters.find(o))
+		for e in S.out.fx:
+			match e.type:
+				"tier_up":
+					if e.actor == oi and h.tier <= e.tier - 1.0:
+						h.form.trial += h.fd.tFormHeld if h.act.formReady else h.fd.tForm
+				"damage":
+					if e.attacker == hi and e.victim == oi and e.kind != "guard" and (e.weight == "medium" or e.weight == "heavy") and o.tier > h.tier:
+						h.form.trial += h.fd.tBlow
+				"finisher_start", "brink_enter":
+					if e.actor == oi:
+						h.form.trial += h.fd.tCommit
+				"beam_outcome":
+					if e.kind == "CLASH" and (e.actor == oi or e.target == oi):
+						h.form.trial += h.fd.tCommit
+
+
+## His form's level for the branch extras: 0 before the first branch step, 1 from it (II, and III on it), 2 from the
+## second (IV, and V, which wears the branch he came by).
+static func level(f) -> int:
+	var n: int = 0
+	for k in f.fd.branchAt:
+		if f.form.step >= int(k):
+			n += 1
+	return n
+
+
+## The perfect-block window's extra ticks in a Trial form (the director's perfect block reads it): tBlock by level. 0
+## without steps or out of a Trial form.
+static func blockWiden(S: SimState, f) -> int:
+	if not has(S, f) or f.form.branch != "trial":
+		return 0
+	var lv: int = level(f)
+	return int(f.fd.tBlock[mini(lv, f.fd.tBlock.size()) - 1]) if lv > 0 else 0
+
+
+## What a perfect follow-up of his is worth more in a Trial form (the director's follow-up reads it). 0 otherwise.
+static func followBonus(S: SimState, f) -> int:
+	if not has(S, f) or f.form.branch != "trial":
+		return 0
+	return f.fd.tFollow
 
 
 # --------------------------------------------------------------------------------------------------------------- the data
@@ -413,6 +554,10 @@ static func _def(id: String, j: Dictionary):
 		lastP = p
 		lastT = float(t)
 		d.steps.append({"power": p, "tier": t, "kind": String(s.get("kind", "live")), "id": String(s.get("id", ""))})
+		if s.has("branch") and not (s.branch is bool):
+			_err(at + ".branch: true or false")
+		if s.get("branch") == true:
+			d.branchAt.append(i + 1)
 	var g = j.get("gains", {})
 	var c = j.get("coil", {})
 	var pa = j.get("patience", {})
@@ -440,7 +585,47 @@ static func _def(id: String, j: Dictionary):
 	d.armour = _int(w + ": release.armour", r.get("armour"), 0)
 	d.lastingPer = _num(w + ": release.lastingPer", r.get("lastingPer"), 0.0, 0.1)
 	d.lastingMax = _num(w + ": release.lastingMax", r.get("lastingMax"), 1.0, 3.0)
+	if not _branches(w, d, j.get("branches")):
+		return null
 	return d
+
+
+## forms.json's branches (hero-forms.md section 3): the two fills' sources and the extras. False when it does not parse.
+static func _branches(w: String, d: FormsDef, b) -> bool:
+	if not (b is Dictionary):
+		_err(w + ": branches must be an object")
+		return false
+	var wi = b.get("witness", {})
+	var tr = b.get("trial", {})
+	if not (wi is Dictionary) or not (tr is Dictionary):
+		_err(w + ": branches.witness and branches.trial must be objects")
+		return false
+	if d.branchAt.size() != 2:
+		_err(w + ": two steps are branch steps (II and IV)")
+	d.wRange = _num(w + ": branches.witness.range", wi.get("range"), 0.0, 100000.0)
+	d.wPerPerson = _num(w + ": branches.witness.perPerson", wi.get("perPerson"), 0.0, 100.0)
+	d.wOwnKill = _num(w + ": branches.witness.ownKill", wi.get("ownKill"), 0.0, 100.0)
+	d.wDamage = _num(w + ": branches.witness.damage", wi.get("damage"), 0.0, 1.0)
+	d.wLaunch = _num(w + ": branches.witness.launch", wi.get("launch"), 0.0, 1.0)
+	d.wCare = _num(w + ": branches.witness.care", wi.get("care"), 0.0, 2.0)
+	d.tForm = _num(w + ": branches.trial.opponentForm", tr.get("opponentForm"), 0.0, 100.0)
+	d.tFormHeld = _num(w + ": branches.trial.opponentFormHeld", tr.get("opponentFormHeld"), 0.0, 100.0)
+	d.tPerSec = _num(w + ": branches.trial.deficitPerSec", tr.get("deficitPerSec"), 0.0, 100.0)
+	d.tBlow = _num(w + ": branches.trial.blowUp", tr.get("blowUp"), 0.0, 100.0)
+	d.tCommit = _num(w + ": branches.trial.commit", tr.get("commit"), 0.0, 100.0)
+	d.tSpeed = _num(w + ": branches.trial.speed", tr.get("speed"), 0.0, 1.0)
+	var bl = tr.get("block")
+	if not (bl is Array) or bl.size() != 2:
+		_err(w + ": branches.trial.block needs two values (at II and at IV)")
+		bl = [0, 0]
+	d.tBlock = [_int(w + ": branches.trial.block[0]", bl[0], 0), _int(w + ": branches.trial.block[1]", bl[1], 0)]
+	d.tFollow = _int(w + ": branches.trial.followUp", tr.get("followUp"), 0)
+	var ft = b.get("firstTie")
+	if ft != "witness" and ft != "trial":
+		_err(w + ": branches.firstTie is witness or trial")
+		ft = "trial"
+	d.firstTie = String(ft)
+	return true
 
 
 static func _num(where: String, x, lo: float, hi: float) -> float:

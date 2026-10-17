@@ -450,6 +450,10 @@ class FormState:
 	var surgeMul: float = 1.0  # ... its speed and damage factor
 	var armour: int = 0        # his next blows that land with armour (the director spends them)
 	var lasting: float = 1.0   # his step gains' lasting factor (the largest release so far)
+	var witness: float = 0.0   # the Witness fill: his opponent's kills near him; his own take from it (hero-forms.md section 3)
+	var trial: float = 0.0     # the Trial fill: the opponent risen first, a deficit fought out, his commitments met, the coil
+	var branch: String = ""    # the branch of the form he is in: "", witness or trial
+	var crossed: bool = false  # his last branch step changed branch (a cross: Narrative voices the turn)
 
 
 class Fighter:

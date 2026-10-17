@@ -152,6 +152,8 @@ static func step(S: SimState, inputs = null) -> bool:
 	SimShots.step(S, dt)   # energy blasts in flight: they move, trade, and meet fighters and the ground
 	WorldWater.step(S)
 	SimMood.tick(S)   # M1: reads this tick's events; writes only its own state and events
+	if S.formsOn:
+		SimForms.events(S)   # forms: the Trial fill reads this tick's events (the opponent's forms, his blows, the opponent's commitments)
 	WorldCollateral.tick(S)
 	SimFx.tickMark(S, dt, false)
 	if S.game.clash != null:

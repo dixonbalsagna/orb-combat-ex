@@ -242,6 +242,8 @@ static func kill(S: SimState, bi: int, want: float, cause, evt: float, cx: float
 	var evac: float = want - granted
 	if granted > 0.0:
 		_feed(S, granted, cause)
+		if S.formsOn:   # forms: where they died and who caused it, for the hero's Witness fill (sim/core/forms.gd)
+			SimForms.casualty(S, granted, cause, b.x if b != null else cx)
 	if evt != 0.0 and evt == w.evtToken:
 		w.evtDead += granted
 		w.evtEvac += evac
@@ -270,7 +272,7 @@ static func _feed(S: SimState, n: float, cause) -> void:
 		cause.power = SimMathx.jmin(100.0, cause.power + n * 0.09 * norm)
 	for f in S.fighters:
 		if f.hasAnguish:
-			f.anguish = SimMathx.jmin(100.0, f.anguish + n * (f.md.anguishCasSelf if cause == f else f.md.anguishCasOther) * norm)   # D1b: meters.json
+			f.anguish = SimMathx.jmin(100.0, f.anguish + n * (f.md.anguishCasSelf if cause == f else SimForms.anguishOther(S, f)) * norm)   # D1b: meters.json
 
 
 ## Once per unfrozen tick: advance the window, report the state once a second, and run the district flight.
