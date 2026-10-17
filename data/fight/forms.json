@@ -1,0 +1,10 @@
+{
+  "_note": "Forms: the match's switch and what every fighter shares (sim/core/forms.gd; docs/architecture/forms-core.md). A fighter's own steps and slingshot are in data/fighters/<id>/forms.json (the Protagonist's: Game Design, docs/design/hero-forms.md sections 4 and 4b).",
+  "schema": "fight.forms/1",
+  "enabled": false,
+  "_enabled": "the one switch. SimCore.newMatch copies it into S.formsOn unless the match's setup has its own \"forms\". Off: no fighter takes his own steps, no form state is hashed, no form event is sent, and neither this file nor a fighter's forms.json is in a replay's data hash",
+  "hold": {
+    "signalTicks": 60,
+    "_signalTicks": "a ready form held this many live ticks is told (form_hold), and told again for each step banked since: the waiting game's lines play through the hold (docs/narrative/waiting-game-lines.md). Every fighter's, while forms are on"
+  }
+}

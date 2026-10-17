@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/fight-forms",
+  "title": "fight-forms (schema \"fight.forms/1\")",
+  "description": "data/fight/forms.json: the forms' switch and what every fighter shares (docs/architecture/forms-core.md). A shape check inferred from the file (docs/tools/pending/infer-schema.cjs): every key present is required, a key outside is refused unless it starts with an underscore, a number is bounded only below by zero where all its values are, a colour is a hex string; the owner tightens the values. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "enabled",
+    "hold"
+  ],
+  "properties": {
+    "schema": {
+      "const": "fight.forms/1"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "hold": {
+      "type": "object",
+      "required": [
+        "signalTicks"
+      ],
+      "properties": {
+        "signalTicks": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

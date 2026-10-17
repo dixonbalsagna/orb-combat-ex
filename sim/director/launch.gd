@@ -134,7 +134,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 			var cs: Dictionary = data().craterSlam
 			c.append({"name": "CRATER SLAM", "ux": float(cs.ux) * f, "uy": float(cs.uy), "s": float(cs.score.base) + float(cs.score.perTier) * A.tier + (float(cs.score.high) if alt > float(cs.score.highAlt) else 0.0)})
 	c.append({"name": "SMASH ACROSS", "ux": f, "uy": ACROSS_UY, "fm": ACROSS_FORCE, "s": 8.0})
-	var tierF: float = 1.0 + A.ld.launch * (A.tier - 1.0)   # D1b: ladder.json
+	var tierF: float = SimForms.launchMul(S, A)   # D1b: ladder.json (forms: his own steps)
 	# BUILDING SMASH (B2, docs/world/b2-plan.md section 4): one candidate per building the launch can be aimed at, in any row,
 	# scored by personality first and drama on top; a chain through several buildings is part of the candidate.
 	var hadBrunt: bool = false
@@ -340,7 +340,7 @@ static func predictFlight(S: SimState, x0: float, y0: float, vx0: float, vy0: fl
 ## special marks a signature, a finisher or a break launch: its ground impact may leave a big crater (world/crater.gd).
 static func doLaunch(S: SimState, att, tgt, plan: Dictionary, force: float, special: bool = false) -> void:
 	var fm: float = plan.fm if plan.has("fm") else 1.0
-	var f: float = force * fm * (1.0 + att.ld.launch * (att.tier - 1.0))   # D1b: ladder.json
+	var f: float = force * fm * SimForms.launchMul(S, att)   # D1b: ladder.json (forms: his own steps)
 	if S.dirS.ex != null and String(plan.get("name", "")) != "KNOCK BACK":
 		DirInterrupt.si(S.dirS.ex.A, DirInterrupt.LAST_END, DirInterrupt.END_LAUNCH)
 	tgt.state = "launched"

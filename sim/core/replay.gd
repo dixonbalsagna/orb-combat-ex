@@ -168,6 +168,8 @@ static func dataHash(setup: Dictionary = {}) -> String:
 	h.text(WorldStructures.stagesHash())   # World's building stages: data/biomes/stages.json
 	if SimDepth.enabled():   # fighters in depth: data/combat/depth.json, once its switch is on (a match with depth off reads none of it)
 		h.text(SimDepth.dataHash())
+	if setup.get("forms", SimForms.enabled()) == true:   # forms: data/fight/forms.json and each fighter's forms.json, only for a match with them on
+		h.text(SimForms.dataHash())
 	h.text(WorldBrunt.dataHash())          # World's brunt ladder and lodge: data/biomes/brunt.json
 	# the fighters in its slots, one hash each (FighterData.hashOf): a change to a fighter who is not in the match, the
 	# training dummy's say, leaves the replay alone. The default pairing is the roster's first two.

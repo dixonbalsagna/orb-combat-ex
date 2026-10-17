@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/fighters-forms",
+  "title": "fighters-forms (schema \"fighter.forms/1\")",
+  "description": "data/fighters/PROTAGONIST/forms.json: a fighter's own steps, gains, coil, patience and release (docs/design/hero-forms.md). A shape check inferred from the file (docs/tools/pending/infer-schema.cjs): every key present is required, a key outside is refused unless it starts with an underscore, a number is bounded only below by zero where all its values are, a colour is a hex string; the owner tightens the values. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "steps",
+    "gains",
+    "coil",
+    "patience",
+    "release"
+  ],
+  "properties": {
+    "schema": {
+      "const": "fighter.forms/1"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "power",
+          "tier",
+          "kind",
+          "id"
+        ],
+        "properties": {
+          "power": {
+            "type": "number",
+            "minimum": 0
+          },
+          "tier": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "kind": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      }
+    },
+    "gains": {
+      "type": "object",
+      "required": [
+        "speed",
+        "damage",
+        "launch",
+        "chip",
+        "regen",
+        "recover"
+      ],
+      "properties": {
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "damage": {
+          "type": "number",
+          "minimum": 0
+        },
+        "launch": {
+          "type": "number",
+          "minimum": 0
+        },
+        "chip": {
+          "type": "number",
+          "minimum": 0
+        },
+        "regen": {
+          "type": "number",
+          "minimum": 0
+        },
+        "recover": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "coil": {
+      "type": "object",
+      "required": [
+        "perSec",
+        "perDamage",
+        "behindMul",
+        "max"
+      ],
+      "properties": {
+        "perSec": {
+          "type": "number",
+          "minimum": 0
+        },
+        "perDamage": {
+          "type": "number",
+          "minimum": 0
+        },
+        "behindMul": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "patience": {
+      "type": "object",
+      "required": [
+        "perTier",
+        "max"
+      ],
+      "properties": {
+        "perTier": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "release": {
+      "type": "object",
+      "required": [
+        "minCoil",
+        "burst",
+        "surgeTicks",
+        "surge",
+        "armour",
+        "lastingPer",
+        "lastingMax"
+      ],
+      "properties": {
+        "minCoil": {
+          "type": "number",
+          "minimum": 0
+        },
+        "burst": {
+          "type": "number"
+        },
+        "surgeTicks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "surge": {
+          "type": "number",
+          "minimum": 0
+        },
+        "armour": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lastingPer": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lastingMax": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

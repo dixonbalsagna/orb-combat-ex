@@ -802,7 +802,7 @@ static func _transforms(S: SimState) -> void:
 		# hold below, as before. The tier, the burst and the push come at the break in every version.
 		var pz: Dictionary = SimPause.request(S, SimPause.TRANSFORM, S.fighters.find(f))
 		var hold: float = float(pz.ticks) / DirData.TICKS_PER_SEC
-		SimFx.transform(S, f, f.tier + 1.0, transformSource(f), hold, SimPause.VERSIONS[pz.version])
+		SimFx.transform(S, f, SimForms.nextTier(S, f), transformSource(f), hold, SimPause.VERSIONS[pz.version])   # (forms: the tier his release brings)
 		SimFighter.transform(S, f)
 		f.state = "free"
 		f.vx = 0.0

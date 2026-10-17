@@ -170,7 +170,8 @@ static func request(S: SimState, kind: int, slot: int, final: bool = false) -> D
 	if kind == TRANSFORM and slot >= 0:
 		var f = S.fighters[slot]
 		var step: int = int(f.tier) - 1   # the step being taken: called before the tier rises
-		if step >= 0 and step < f.ld.stepKinds.size() and f.ld.stepKinds[step] == "live":
+		var live: bool = SimForms.releaseLive(f) if SimForms.has(S, f) else (step >= 0 and step < f.ld.stepKinds.size() and f.ld.stepKinds[step] == "live")   # forms: a release of live steps only
+		if live:
 			f.act.breakIn = gather[LIVE]
 			return {"version": LIVE, "ticks": liveTicks}
 	var bit: int = 1 << (maxi(slot, 0) * 4 + kind)

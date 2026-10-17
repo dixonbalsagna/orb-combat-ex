@@ -119,7 +119,7 @@ static func stepLaunched(S: SimState, f, dt: float) -> void:
 		f.vy += WATER_BUOY * dt
 		f.vx *= SimDetMath.pow(0.05, dt)
 		f.vy *= SimDetMath.pow(0.1, dt)
-		if SimDetMath.hypot(f.vx, f.vy) < 200.0 and f.stateT > 0.3:
+		if SimDetMath.hypot(f.vx, f.vy) < 200.0 and f.stateT > SimForms.recoverAfter(S, f, 0.3):   # (forms: sooner by his steps)
 			f.state = "free"
 			spin(S, f, dt, SPIN_STOP)
 			f.launchT = 1.0
@@ -461,12 +461,16 @@ static func topTier(f) -> float:
 ## placeholder transform calls it between exchanges (I2b). Returns false if nothing was ready, or if he is on the
 ## ladder's last tier: the form is dropped, with any gather asked for it.
 static func transform(S: SimState, f) -> bool:
+	if SimForms.has(S, f):   # forms: the release takes every banked step (sim/core/forms.gd)
+		return SimForms.take(S, f)
 	if not f.act.formReady:
 		return false
 	f.act.formReady = false
 	if f.tier >= topTier(f):
 		f.act.breakIn = -1
 		return false
+	if S.formsOn:   # forms: a one-step take is told too, for the waiting game
+		SimForms.released(S, f, 1, 0.0, 0, f.tier + 1.0)
 	if f.act.breakIn <= 0:   # no gather was asked for (SimPause.request sets it), or it is 0: the break is now
 		formBreak(S, f)
 	return true
@@ -478,6 +482,9 @@ static func transform(S: SimState, f) -> bool:
 ## ready at once.
 static func formBreak(S: SimState, f) -> void:
 	f.act.breakIn = -1
+	if SimForms.has(S, f):   # forms: his taken steps rise, with the coil's release
+		SimForms.rise(S, f)
+		return
 	if f.tier >= topTier(f):   # the one line that raises a tier by a step never passes the ladder's last
 		return
 	f.tier += 1.0
@@ -492,7 +499,7 @@ static func formBreak(S: SimState, f) -> void:
 ## (dash: he holds it; far from the rival it is the traversal dash) and the sea. The free branch of stepFighter steers his
 ## velocity toward the stick times this (the vertical toward 0.85 of it). One read for the director and the view.
 static func flightSpeed(S: SimState, f, dash: bool) -> float:
-	var sp: float = 430.0 * f.spd * (1.0 + f.ld.speed * (f.tier - 1.0))
+	var sp: float = 430.0 * f.spd * SimForms.speedMul(S, f)   # the tier's step (with forms: his own steps and the surge)
 	if SimWounds.battered(f, SimWounds.LEGS):
 		sp *= f.wd.legsSpeed
 	if f.stance == 2.0:
@@ -534,19 +541,24 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 	var i: SimIntent = f.input
 	f.power = SimMathx.jmin(100.0, f.power + f.ld.fill * dt)
 	var nt: float = tierByPower(f)
-	if f.act.formReady and f.tier >= topTier(f):   # a form readied with no tier above it is dropped, before the director can take it
+	var steps: bool = SimForms.has(S, f)   # forms: his own steps (sim/core/forms.gd) in place of the ladder's thresholds
+	if f.act.formReady and not steps and f.tier >= topTier(f):   # a form readied with no tier above it is dropped, before the director can take it
 		f.act.formReady = false
 	if f.act.breakIn > 0 and S.game.ko == null:   # a live transformation's gather: the break lands here
 		f.act.breakIn -= 1
 		if f.act.breakIn == 0:
 			formBreak(S, f)
-	if nt > f.tier and f.act.breakIn < 0:   # (not while a taken step waits for its break)
+	if steps:
+		SimForms.readyTick(S, f, dt)   # his ready steps, banked while he waits; the coil; the surge
+	elif nt > f.tier and f.act.breakIn < 0:   # (not while a taken step waits for its break)
 		if f.ld.manualTierUp:
 			if not f.act.formReady: SimFx.transformReady(S, f, f.tier + 1.0, DirExchange.transformSource(f))   # I2b: the rising edge
 			f.act.formReady = true   # I2a: the tier waits for the transform (transform())
 		else:
 			f.tier = nt
 			tierUp(S, f)
+	if S.formsOn:
+		SimForms.holdTick(S, f)   # forms: how long a ready form is held, told for the waiting game (every fighter's)
 	if f.lastStandLeft > 0 and (f.state == "free" or f.state == "charging") and f.stunTicks == 0 and S.game.ko == null:
 		f.lastStandLeft -= 1   # the last stand's window
 		if f.lastStandLeft == 0:
@@ -575,6 +587,8 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 	f.casSeen = S.world.casualties
 	if SimWounds.battered(f, SimWounds.CORE):
 		regen *= f.wd.coreKiRegen
+	if steps:
+		regen *= SimForms.regenMul(f)   # forms: his steps' regen gain
 	if f.state == "free" or f.state == "locked" or f.state == "down":
 		f.ki = SimMathx.jmin(100.0, f.ki + regen * dt)
 	if f.hidden and f.canHide:

@@ -498,6 +498,14 @@
     {
       "match": "audio/data/babble_ab.json",
       "schema": "audio-babble-ab.schema.json"
+    },
+    {
+      "match": "data/fight/forms.json",
+      "schema": "fight-forms.schema.json"
+    },
+    {
+      "match": "data/fighters/*/forms.json",
+      "schema": "fighters-forms.schema.json"
     }
   ]
 }

@@ -40,6 +40,7 @@ var mood := MoodState.new()           # M1 (sim/core/mood.gd): the fight's mood,
 var pause := PauseState.new()         # Q10 (sim/core/pause.gd): the pausing set pieces' bank and the running pause
 var intro := IntroState.new()         # the intro phase (sim/core/intro.gd): the pre-clock ticks of a match that asks for it
 var depthOn: bool = false             # fight lanes: depth is physical (the director's depth.json switch, or the setup's "depth"); off until L4
+var formsOn: bool = false             # forms (sim/core/forms.gd): the Protagonist's five steps and the slingshot (data/fight/forms.json, or the setup's "forms"); off
 var out := Out.new()
 
 
@@ -431,6 +432,22 @@ class FxEvent:
 	var stop: int = 0             # damage (a hit): the hit-stop ticks in force after it, as SimCore.step spends them (Animation). Not hashed
 
 
+## A fighter's forms while S.formsOn (sim/core/forms.gd): his steps, the coil and the release, and the hold's signal.
+class FormState:
+	var step: int = 0          # steps taken (0 his base; his forms.json's count at the top)
+	var ready: int = 0         # steps his power has reached that he has not taken: banked while he waits
+	var coil: float = 0.0      # the slingshot's coil, 0 to its max
+	var coiling: bool = false  # the coil fills (from his first banked step until the release spends it)
+	var holdT: int = 0         # live ticks a ready form has been held (every fighter's)
+	var held: int = 0          # the ready steps the last form_hold told
+	var pend: int = 0          # the steps a taken release raises at its break
+	var pendCoil: float = 0.0  # ... and the coil it spends there
+	var surgeT: int = 0        # live ticks of a release's surge left
+	var surgeMul: float = 1.0  # ... its speed and damage factor
+	var armour: int = 0        # his next blows that land with armour (the director spends them)
+	var lasting: float = 1.0   # his step gains' lasting factor (the largest release so far)
+
+
 class Fighter:
 	var name: String = ""
 	var role: String = ""
@@ -483,6 +500,8 @@ class Fighter:
 	var flightHits: int = 0          # M1: buildings hit in the current launched flight (building_hit's n)
 	var act := ActState.new()        # I2a: what the fighter's presses mean now (sim/core/act.gd)
 	var style = null                 # M1: StyleState (sim/core/mood.gd)
+	var form = null                  # forms: FormState while S.formsOn (sim/core/forms.gd), null otherwise
+	var fd = null                    # forms: his FormsDef while S.formsOn, when his data has steps; not hashed (data)
 	var wd = null                    # D1a: the fighter's FighterData.WoundsDef (data; covered by the data hash, not hashed here)
 	var md = null                    # D1b: its FighterData.MetersDef (the same)
 	var ld = null                    # D1b: its FighterData.LadderDef (the same)

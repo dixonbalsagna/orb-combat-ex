@@ -19,6 +19,9 @@ static func jor(v: float, d: float) -> float:
 ## (SimWounds.BLOCK_HEAVY and the rest). named: the region a landed blow names (0 to 3), or -1 to draw it by the family.
 ## weight: the blow's weight for the event (light, medium, heavy), or empty.
 static func hurt(S: SimState, f, amt: float, by, fam: String = "spread", kind: String = "impact", col: String = "", number: bool = false, form: String = "", block: int = 0, named: int = -1, weight: String = "") -> int:
+	if S.formsOn:   # forms: patience and his guard's step gain on what reaches him; the coil counts what is traded
+		amt = SimForms.taken(S, f, amt, fam)
+		SimForms.traded(S, f, by, amt)
 	# Since S2 hp is a readout only (the HUD bar): it floors at 0, and wounds and finishers decide the match.
 	f.hp = f.hp - amt if SimWounds.HP_ENDS_MATCH else SimMathx.jmax(0.0, f.hp - amt)
 	f.hurtT = S.T
@@ -43,7 +46,7 @@ static func hurt(S: SimState, f, amt: float, by, fam: String = "spread", kind: S
 static func hit(S: SimState, ex, A, D, dmg: float, o = null) -> float:
 	if o == null:
 		o = {}
-	var m: float = A.dmgMul * (1.0 + A.ld.damage * (A.tier - 1.0))
+	var m: float = A.dmgMul * SimForms.damageMul(S, A)   # the tier's step (with forms: his own steps and the surge)
 	if A.hasMenace:
 		m *= 1.0 + A.md.menaceDmgCap * (A.menace / 100.0)
 	elif A.hasAnguish:

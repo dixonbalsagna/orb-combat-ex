@@ -1,0 +1,43 @@
+{
+  "_note": "The Protagonist's five steps and his slingshot (Game Design, docs/design/hero-forms.md sections 4 and 4b; read by sim/core/forms.gd only while forms are on: data/fight/forms.json). Every number is Game Design's first value. The branches (Witness, Trial) and their extras at II and IV come with the branches' window; until then a step's id names the step, not the form.",
+  "schema": "fighter.forms/1",
+  "steps": [
+    {"power": 20.0, "tier": 1, "kind": "live", "id": "marks_base"},
+    {"power": 35.0, "tier": 2, "kind": "pausing", "id": "form_ii"},
+    {"power": 50.0, "tier": 2, "kind": "live", "id": "marks_ii"},
+    {"power": 65.0, "tier": 3, "kind": "pausing", "id": "form_iv"},
+    {"power": 100.0, "tier": 4, "kind": "pausing", "id": "top"}
+  ],
+  "_steps": "in order of power: at each one he is ready, and he takes it by holding Transform (a step is never forced). tier is his tier for the world (the collateral budgets, structure reach, the building ladder), which steps at 35, 65 and 100 as everyone's does. A live step is a beat with no pause; a pausing one may pause the fight (data/fight/pause.json)",
+  "gains": {
+    "speed": 0.05,
+    "damage": 0.05,
+    "launch": 0.08,
+    "chip": 0.05,
+    "regen": 0.05,
+    "recover": 0.05
+  },
+  "_gains": "each step taken, in place of the shared ladder's gains a tier: free-flight speed, damage and launch force x (1 + value x steps); a guarded hit's damage that reaches him x (1 - chip x steps); ki regen x (1 + regen x steps); a launch's recovery after x (1 - recover x steps). Five steps: speed and damage +25%, launch +40%",
+  "coil": {
+    "perSec": 0.5,
+    "perDamage": 0.005,
+    "behindMul": 2.0,
+    "max": 100.0
+  },
+  "_coil": "the slingshot's coil starts at the first break in the fight after a step came ready (the first moment it could have been taken and wasn't: Game Design, 2026-10-17), and fills at perSec a second of fight time and perDamage a point of damage traded, dealt or taken after patience; both times behindMul while the opponent's tier is above his. It goes up to max, never decays, and the release spends it",
+  "patience": {
+    "perTier": 0.04,
+    "max": 0.12
+  },
+  "_patience": "while he holds banked steps and the opponent's tier is above his, he takes perTier less damage a tier between them, at most max",
+  "release": {
+    "minCoil": 1.0,
+    "burst": 1.0,
+    "surgeTicks": 600,
+    "surge": 0.15,
+    "armour": 3,
+    "lastingPer": 0.005,
+    "lastingMax": 1.5
+  },
+  "_release": "holding Transform takes every banked step at once. At a coil of c (minCoil or more: a step taken at once carries a sliver of coil, and adds nothing), by c / 100: a burst like a ground power-up at burst times its damage and its crater, with a push burst times wider and harder; for surgeTicks, speed and damage x (1 + surge); armour on his next armour blows (rounded); and for the rest of the match his step gains x (1 + c x lastingPer), at most lastingMax (the largest release so far)"
+}

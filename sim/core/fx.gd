@@ -185,6 +185,27 @@ static func beamOutcome(S: SimState, f, target, kind: String) -> void:
 ## I2b, the placeholder transform (ADR 0008): actor's power crossed a threshold and tier waits for the transform input.
 ## source is the input that takes it: triggers (the two-trigger chord), power (the power hold of the Simple layout and of
 ## today's keyboard and touch) or ai.
+## Forms (sim/core/forms.gd; only while S.formsOn): f has held a ready form for dur seconds, with n steps ready (banked)
+## and his coil. Sent once the hold has lasted data/fight/forms.json's signal, and again for each step banked since.
+static func formHold(S: SimState, f, n: int, dur: float, coil: float) -> void:
+	var e := _ev(S, "form_hold")
+	e.actor = float(S.fighters.find(f)); e.n = n; e.dur = dur; e.amount = coil
+
+
+## Forms: f takes n steps at once (the release), spending a coil, after holding the ready form dur seconds; k is the
+## step it reaches (0 for a fighter without steps), tier the tier for the world it brings. Sent at the take.
+static func formRelease(S: SimState, f, n: int, coil: float, dur: float, k: int, tier: float) -> void:
+	var e := _ev(S, "form_release")
+	e.actor = float(S.fighters.find(f)); e.n = n; e.amount = coil; e.dur = dur; e.k = float(k); e.tier = tier
+
+
+## Forms: f's taken steps rise at the break: he stands at step k, of kind live or pausing (the last one taken), at tier
+## for the world, and coil is what the release spent (0 for a step taken at once). A tier_up comes first when the tier rose.
+static func formStep(S: SimState, f, k: int, kind: String, tier: float, coil: float) -> void:
+	var e := _ev(S, "form_step")
+	e.actor = float(S.fighters.find(f)); e.k = float(k); e.kind = kind; e.tier = tier; e.amount = coil
+
+
 static func transformReady(S: SimState, f, tier: float, source: String) -> void:
 	var e := _ev(S, "transform_ready")
 	e.actor = float(S.fighters.find(f)); e.tier = tier; e.source = source

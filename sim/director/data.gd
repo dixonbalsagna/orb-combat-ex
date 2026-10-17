@@ -185,7 +185,7 @@ static func _flags(S: SimState, ctx: Dictionary, A, D) -> void:
 	if DirExchange.planMeet:
 		ctx.defQueued = true   # the meeting after an answered taunt: both rushed in, so the rival is pressing too
 	var sp: float = SimDetMath.hypot(D.vx, D.vy)
-	var top: float = 430.0 * D.spd * (1.0 + D.ld.speed * (D.tier - 1.0))
+	var top: float = 430.0 * D.spd * SimForms.speedMul(S, D)   # (forms: his own steps and the surge)
 	var away: bool = D.vx * SimMathx.jsign(SimWrap.sdx(A.x, D.x)) > 0.0
 	ctx.defClipped = sp > 0.5 * top and (away or absf(D.vy) > absf(D.vx))
 	if D.stunTicks > 0 and DirInterrupt.on():
