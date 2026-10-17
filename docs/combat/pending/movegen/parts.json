@@ -2494,6 +2494,24 @@
     ],
     "rule": "a clinch is a collar-and-elbow or waist hold; the trip and the throw never lift by the throat, hair or a tail, and the two fighters' hands are never locked or laced together; no sparks or glow at the hands in the clinch",
     "why": "g01 and g02 applied to the clinch"
+   },
+   {
+    "id": "g06",
+    "rule": "the tied pose (the clinch hold): collar-and-elbow or waist (g05); the holder's hands never lock or lace with the held fighter's; the held fighter's hands stay free and are never drawn limp, bound or pinned behind the back; both fighters upright, heads and torsos at least a forearm's length apart (a fight hold, not an embrace)",
+    "why": "grapple held poses, RL-150",
+    "_form": "none: a pose rule for the tied pose: carried as an ask on the tie and grip phases of pending/grapple/hybrid.json; the held lint checks it on every tick"
+   },
+   {
+    "id": "g07",
+    "rule": "the pin is vertical against a surface (wall, building, cliff) at the shoulder, collar or upper arm; no forearm or hand across the throat or face, no choke (g01); no ground pin, mount or straddle of a downed fighter (s09's defenceless case); hips apart; the pinned fighter bears weight on his feet and is drawn struggling or bracing",
+    "why": "the held fighter always has a way out; avoids the defenceless-victim reading",
+    "_form": "none: a pose rule for the pin: an ask on hybrid.json's pin phase; the held lint on every tick"
+   },
+   {
+    "id": "g08",
+    "rule": "the carry: over the shoulder or by the collar and waist; never by the head, neck, hair or tail; the carried body is drawn whole and in view every tick (g03, g04), face and chest never hidden or pressed to the holder; no sparks or glow at the hands (g02); the throw at its end is a launch through the planner, never a vanish. The tied, pinned and carried poses are class hold (h04) and the lint runs on every tick of up to 90",
+    "why": "grapple held poses, RL-150",
+    "_form": "none: a pose rule for the carry: an ask on hybrid.json's carry phase; the held lint on every tick"
    }
   ],
   "held": [
@@ -2564,6 +2582,12 @@
     "owner": "Animation (a lint on poses held 12 ticks or more)",
     "rule": "a heave (the deep-sink rising blow) may take one sliding half step of up to about 22 units when the closing slack needs it: the rear foot stays on the ground, no leap, no rise before the blow (the stand is the heave's own), the other foot never leaves the ground; reach beyond that is a stepping drive's job, so Encounter limits a heave's slack to what the step covers",
     "why": "D4 and L1: grounded, never the jumping rising uppercut; a small slide is not a leap"
+   },
+   {
+    "id": "h09",
+    "rule": "folded arms are a held crossed-forearms pose and fail h02 at 12 ticks or more: allowed on a sheet and as a moment under 12 ticks, never as an idle, stand-off or intro pose; a one-arm fold (a single forearm across the body, the other hand free or at the chin) is allowed",
+    "why": "the Anti-hero's hybrid A 'arms folded high', RL-151",
+    "_form": "none: a pose rule: no crossed-forearms held 12 ticks or more; binds the brace (up to 40 ticks) and any stand-off: a one-arm fold only"
    }
   ],
   "stacking": [

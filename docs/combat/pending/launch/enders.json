@@ -1,0 +1,3066 @@
+{
+ "schema": "combat.launch.enders/1",
+ "_about": "PARKED: a launch ender for any blow of a string (docs/combat/launch-enders.md; Orb, 2026-10-16: launchers can start and be aimed at any point in a string). For each fighter: his last blow's family (limb group: hands, legs, close) and path, and the send the stick asks, give his launch pieces in order. step 1: its path follows the last one (parts.json strike.links) and it is his family; 2: it follows; 3: his family, with a re-chamber; 4: any, with a re-chamber; 5: the step lower, a medium that sends that way. A re-chamber is the tell made longer by the join, so it is always there and always readable. The alchemist picks within a step (section 3 of the note). Not loaded or hashed",
+ "launchLinks": {
+  "line": [
+   "arc_in",
+   "drop",
+   "line",
+   "rise"
+  ],
+  "arc_in": [
+   "arc_out",
+   "drop",
+   "line",
+   "rise",
+   "spin"
+  ],
+  "arc_out": [
+   "arc_in",
+   "drop",
+   "line",
+   "rise"
+  ],
+  "rise": [
+   "arc_in",
+   "drop",
+   "line"
+  ],
+  "drop": [
+   "line",
+   "rise"
+  ],
+  "spin": [
+   "arc_in",
+   "drop",
+   "line",
+   "rise"
+  ]
+ },
+ "_launchLinks": "a string's links (parts.json strike.links) plus what a launch can follow that a string doesn't: the hook into the uppercut or the hammer, the spin into a rise or a fall, the outward arc into a rise",
+ "steps": {
+  "1": "follows and his family",
+  "2": "follows",
+  "3": "his family, a re-chamber",
+  "4": "any, a re-chamber",
+  "5": "the step lower: a medium"
+ },
+ "fighters": {
+  "protagonist": {
+   "enders": {
+    "hands.line": {
+     "up": [
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 1
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_edge_step",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "hands.rise": {
+     "up": [
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 3
+      },
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 4
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 1
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_edge_step",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "hands.drop": {
+     "up": [
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 3
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 3
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_edge_step",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 4
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "hands.arc_in": {
+     "up": [
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 1
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_edge_step",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 4
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "hands.arc_out": {
+     "up": [
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 1
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_edge_step",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "hands.spin": {
+     "up": [
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 1
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_edge_step",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "legs.line": {
+     "up": [
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 2
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_edge_step",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 3
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "legs.rise": {
+     "up": [
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 3
+      },
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 4
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 2
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_edge_step",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 3
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "legs.drop": {
+     "up": [
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 4
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 4
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_edge_step",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 3
+      },
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 4
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "legs.arc_in": {
+     "up": [
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 2
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_edge_step",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 4
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "legs.arc_out": {
+     "up": [
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 2
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_edge_step",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 3
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "legs.spin": {
+     "up": [
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 2
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_edge_step",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 3
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "close.line": {
+     "up": [
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 2
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_edge_step",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "close.rise": {
+     "up": [
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 4
+      },
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 4
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 2
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_edge_step",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "close.drop": {
+     "up": [
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 4
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 4
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_edge_step",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 3
+      },
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "close.arc_in": {
+     "up": [
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 2
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_edge_step",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 3
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "close.arc_out": {
+     "up": [
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 2
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_edge_step",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    },
+    "close.spin": {
+     "up": [
+      {
+       "strike": "strike.su_ball_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_palm_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.rising_palm",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_blade_fall",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_drive",
+       "step": 2
+      },
+      {
+       "strike": "strike.axe_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_blade_jaw",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_edge_step",
+       "step": 2
+      },
+      {
+       "strike": "strike.palm_push",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_elbow_jaw",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_edge_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.haymaker",
+       "step": 5
+      },
+      {
+       "strike": "strike.crescent_kick",
+       "step": 5
+      },
+      {
+       "strike": "strike.body_hook",
+       "step": 5
+      }
+     ]
+    }
+   },
+   "holes": [
+    "hands rise -> up",
+    "hands drop -> down",
+    "hands drop -> turned",
+    "legs rise -> up",
+    "legs drop -> down",
+    "legs drop -> turned",
+    "close rise -> up",
+    "close drop -> down",
+    "close drop -> turned"
+   ],
+   "pieces": {
+    "strike.su_drive": {
+     "limb": "hand",
+     "path": "drop",
+     "target": "chest",
+     "sends": "down"
+    },
+    "strike.su_edge_step": {
+     "limb": "foot",
+     "path": "line",
+     "target": "gut",
+     "sends": "across"
+    },
+    "strike.su_blade_jaw": {
+     "limb": "hand",
+     "path": "line",
+     "target": "jaw",
+     "sends": "across"
+    },
+    "strike.su_edge_unwind": {
+     "limb": "foot",
+     "path": "arc_out",
+     "target": "gut",
+     "sends": "turned"
+    },
+    "strike.su_palm_heave": {
+     "limb": "hand",
+     "path": "rise",
+     "target": "chest",
+     "sends": "up"
+    },
+    "strike.su_ball_heave": {
+     "limb": "foot",
+     "path": "rise",
+     "target": "gut",
+     "sends": "up"
+    },
+    "strike.su_elbow_jaw": {
+     "limb": "elbow",
+     "path": "arc_in",
+     "target": "jaw",
+     "sends": "turned"
+    },
+    "strike.su_blade_fall": {
+     "limb": "hand",
+     "path": "drop",
+     "target": "chest",
+     "sends": "down"
+    }
+   }
+  },
+  "rival": {
+   "enders": {
+    "hands.line": {
+     "up": [
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_hammer",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_heel",
+       "step": 2
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_ram",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_knee",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_hook",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 3
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "hands.rise": {
+     "up": [
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 3
+      },
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 4
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_hammer",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_heel",
+       "step": 2
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_ram",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_knee",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_hook",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 3
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "hands.drop": {
+     "up": [
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_hammer",
+       "step": 3
+      },
+      {
+       "strike": "strike.su_heel",
+       "step": 4
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_ram",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_knee",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 3
+      },
+      {
+       "strike": "strike.su_hook",
+       "step": 3
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 3
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "hands.arc_in": {
+     "up": [
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_hammer",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_heel",
+       "step": 2
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_ram",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_knee",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_hook",
+       "step": 3
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 3
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "hands.arc_out": {
+     "up": [
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_hammer",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_heel",
+       "step": 2
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_ram",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_knee",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_hook",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 3
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "hands.spin": {
+     "up": [
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_hammer",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_heel",
+       "step": 2
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_ram",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_knee",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_hook",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 3
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "legs.line": {
+     "up": [
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_heel",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_hammer",
+       "step": 2
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_knee",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_ram",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_hook",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "legs.rise": {
+     "up": [
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 4
+      },
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 4
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_heel",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_hammer",
+       "step": 2
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_knee",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_ram",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_hook",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "legs.drop": {
+     "up": [
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_heel",
+       "step": 3
+      },
+      {
+       "strike": "strike.su_hammer",
+       "step": 4
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_knee",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_ram",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.su_hook",
+       "step": 4
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 4
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "legs.arc_in": {
+     "up": [
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_heel",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_hammer",
+       "step": 2
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_knee",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_ram",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_hook",
+       "step": 4
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 4
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "legs.arc_out": {
+     "up": [
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_heel",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_hammer",
+       "step": 2
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_knee",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_ram",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_hook",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "legs.spin": {
+     "up": [
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_heel",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_hammer",
+       "step": 2
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_knee",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_ram",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_hook",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "close.line": {
+     "up": [
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_hammer",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_heel",
+       "step": 2
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_knee",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_ram",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_hook",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "close.rise": {
+     "up": [
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 3
+      },
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 4
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_hammer",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_heel",
+       "step": 2
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_knee",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_ram",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_hook",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "close.drop": {
+     "up": [
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_hammer",
+       "step": 4
+      },
+      {
+       "strike": "strike.su_heel",
+       "step": 4
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_knee",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_ram",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.su_hook",
+       "step": 4
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 4
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "close.arc_in": {
+     "up": [
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_hammer",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_heel",
+       "step": 2
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_knee",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_ram",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_hook",
+       "step": 4
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 4
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "close.arc_out": {
+     "up": [
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_hammer",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_heel",
+       "step": 2
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_knee",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_ram",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_hook",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    },
+    "close.spin": {
+     "up": [
+      {
+       "strike": "strike.su_elbow_heave",
+       "step": 1
+      },
+      {
+       "strike": "strike.su_fist_heave",
+       "step": 2
+      },
+      {
+       "strike": "strike.uppercut",
+       "step": 5
+      },
+      {
+       "strike": "strike.rising_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.fist_rise",
+       "step": 5
+      }
+     ],
+     "down": [
+      {
+       "strike": "strike.su_hammer",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_heel",
+       "step": 2
+      },
+      {
+       "strike": "strike.dropping_elbow",
+       "step": 5
+      },
+      {
+       "strike": "strike.stomp",
+       "step": 5
+      },
+      {
+       "strike": "strike.hammer",
+       "step": 5
+      }
+     ],
+     "across": [
+      {
+       "strike": "strike.su_knee",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_ram",
+       "step": 2
+      },
+      {
+       "strike": "strike.driving_knee",
+       "step": 5
+      },
+      {
+       "strike": "strike.headbutt",
+       "step": 5
+      }
+     ],
+     "turned": [
+      {
+       "strike": "strike.su_hook",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_plate",
+       "step": 2
+      },
+      {
+       "strike": "strike.su_fist_unwind",
+       "step": 4
+      },
+      {
+       "strike": "strike.roundhouse",
+       "step": 5
+      }
+     ]
+    }
+   },
+   "holes": [
+    "hands rise -> up",
+    "hands drop -> down",
+    "hands drop -> turned",
+    "legs rise -> up",
+    "legs drop -> down",
+    "legs drop -> turned",
+    "close rise -> up",
+    "close drop -> down",
+    "close drop -> turned"
+   ],
+   "pieces": {
+    "strike.su_ram": {
+     "limb": "hand",
+     "path": "line",
+     "target": "chest",
+     "sends": "across"
+    },
+    "strike.su_heel": {
+     "limb": "foot",
+     "path": "drop",
+     "target": "chest",
+     "sends": "down"
+    },
+    "strike.su_knee": {
+     "limb": "knee",
+     "path": "line",
+     "target": "gut",
+     "sends": "across"
+    },
+    "strike.su_plate": {
+     "limb": "hand",
+     "path": "arc_in",
+     "target": "head",
+     "sends": "turned"
+    },
+    "strike.su_hook": {
+     "limb": "hand",
+     "path": "arc_in",
+     "target": "jaw",
+     "sends": "turned"
+    },
+    "strike.su_elbow_heave": {
+     "limb": "elbow",
+     "path": "rise",
+     "target": "jaw",
+     "sends": "up"
+    },
+    "strike.su_fist_heave": {
+     "limb": "hand",
+     "path": "rise",
+     "target": "gut",
+     "sends": "up"
+    },
+    "strike.su_hammer": {
+     "limb": "hand",
+     "path": "drop",
+     "target": "head",
+     "sends": "down"
+    },
+    "strike.su_fist_unwind": {
+     "limb": "hand",
+     "path": "arc_out",
+     "target": "jaw",
+     "sends": "turned"
+    }
+   }
+  }
+ }
+}

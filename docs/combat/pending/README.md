@@ -2,7 +2,9 @@
 
 **Start here (2026-10-12): `nine-cells.md`.** It is the next thing to land: `recipes.brawl.json` with a pool for every cell of the brawl, the heavy tier and the energy pieces in them, how it was measured, the apply list, and the lists for Tools and Animation. The change that reads it is `../brawl-hook.md`, for Encounter.
 
-`grapple/` (2026-10-16) holds `hybrid.json`: the grapple on A as Orb picked it (the catch and the clinch, the clinch first), its paired phases as data, and each fighter's vicious blows. The note is `../grapple-hybrid.md`.
+`grapple/` (2026-10-16) holds `hybrid.json`: the grapple on A as Orb picked it (the catch and the clinch, the clinch first), its paired phases as data with Game Design's numbers (`docs/design/grapple.md`), each fighter's throws by send and vicious blows, and Legal's asks on each phase. The note is `../grapple-hybrid.md`.
+
+`launch/` (2026-10-17) holds `enders.json`: a launch ender for any blow of a string, by the last blow's family and the stick's send (the note is `../launch-enders.md`).
 
 `roster/` holds sketches for fighters who are not in the build: identity rows for the Demon Cyborg (three options) and the Empress, their generated movesets, and the builder that makes them (`../roster-rows.md`). Their cards are in `cards/` beside the first two. None of it is part of the recipes window.
 

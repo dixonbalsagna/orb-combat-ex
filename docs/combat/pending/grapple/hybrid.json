@@ -1,26 +1,53 @@
 {
  "schema": "combat.grapple.hybrid/1",
  "_about": "PARKED: the grapple on A as Orb picked it, a hybrid of the catch and the clinch with the clinch first (docs/combat/grapple-hybrid.md). The paired phases as data: each phase's ticks (first values; Game Design rules them), the holder's anchor on the held body (Legal g05: collar and elbow, or the waist), and the poses each side needs. This is the input a `pair` kind of part in Combat's generator would read (Animation's ask, docs/animation/brawl-second-pass-view.md section 3); it is not built. Nothing here is loaded or hashed",
- "grip": {
-  "min": -2,
-  "max": 2,
-  "start": 0,
-  "pummel": 1,
-  "offBeat": -1,
-  "throwAt": 2,
-  "reversalAt": -2,
-  "_about": "one meter seen from both sides: his step ahead is the other's step behind. The beat is the brawl's own (the perfect follow-up's)"
+ "_rules": "docs/design/grapple.md (Game Design, 56d4b581): every number below is its first value",
+ "catch": {
+  "tellTicks": 10,
+  "techTicks": 8,
+  "whiffOpenTicks": 20,
+  "leadOnGuardOrCharge": 1,
+  "perfectLead": 1,
+  "onOpen": "the throw at once"
+ },
+ "clinch": {
+  "maxTicks": 90,
+  "pulseTicks": 20,
+  "windowTicks": 4,
+  "sharpTicks": 2,
+  "grip": [
+   -2,
+   2
+  ],
+  "stray": "voids his next pummel",
+  "viciousPerFighter": 4,
+  "viciousDamage": 0.5,
+  "viciousWear": 3,
+  "leadOrPinWear": 1.5,
+  "braceTicks": 40,
+  "braceRestTicks": 20,
+  "pushOffBh": 3,
+  "partBh": 1.5,
+  "leaderWalk": 0.5
+ },
+ "carry": {
+  "maxTicks": 90,
+  "pulseTicks": 20,
+  "breakOut": "the carried fighter's A on the carry's pulse: the clinch, even"
+ },
+ "throw": {
+  "acrossBh": 8,
+  "upBh": 4,
+  "upOpenTicks": 16,
+  "downBuryTicks": 20,
+  "wallSlamStagger": 24,
+  "launch": false
  },
  "limits": {
-  "maxTicks": 90,
-  "viciousMax": 4,
-  "sameplaceMax": 2,
   "lockoutTicks": 90,
   "noRegrabTicks": 120,
-  "techTicks": 8,
-  "carryMaxTicks": 90,
-  "carryFifthPerPress": true,
-  "_about": "lockout and no-regrab are Game Design's shared grab rules; sameplaceMax is Legal's s08"
+  "sameplaceMax": 2,
+  "_about": "the lockout and the no-regrab are shared by every grab; sameplaceMax is Legal's s08, counted by place (docs/combat/grapple-hybrid.md section 5)"
  },
  "regions": {
   "up": "head",
@@ -31,14 +58,17 @@
  },
  "phases": [
   {
-   "id": "reach",
+   "id": "catch",
    "ticks": 10,
    "holder": [
     "reach"
    ],
    "held": [],
    "anchor": null,
-   "note": "the tie-up's tell; a blow that lands first, or a dodge, beats it"
+   "asks": [
+    "g01"
+   ],
+   "note": "a blow that lands in the tell, or a dodge, beats it"
   },
   {
    "id": "tie",
@@ -47,12 +77,12 @@
     "tie"
    ],
    "held": [
-    "tied"
+    "tie"
    ],
    "anchor": {
     "holder": [
      "hand_r",
-     "forearm_l"
+     "hand_l or a one-arm fold"
     ],
     "held": [
      "collar",
@@ -61,7 +91,12 @@
     "or": [
      "waist"
     ]
-   }
+   },
+   "asks": [
+    "g05",
+    "g06"
+   ],
+   "note": "both bodies play their own tie: the clinch is a contest, there is no victim pose set (Animation)"
   },
   {
    "id": "grip",
@@ -71,9 +106,14 @@
     "grip_even",
     "grip_ahead"
    ],
-   "held": [],
+   "held": [
+    "the same three"
+   ],
    "anchor": "as tie",
-   "note": "his three positions serve both sides: one fighter's ahead is the other's behind"
+   "asks": [
+    "g06"
+   ],
+   "note": "five steps as mixes of three authored grades; each fighter plays his own grade, opposite signs on the two sides"
   },
   {
    "id": "pummel",
@@ -83,25 +123,35 @@
    ],
    "held": [],
    "anchor": "as tie",
-   "note": "A on the beat: a step ahead"
+   "asks": [
+    "g06"
+   ],
+   "note": "A inside 4 ticks of the pulse"
   },
   {
    "id": "brace",
-   "ticks": null,
+   "ticks": "up to 40",
    "holder": [
     "brace"
    ],
    "held": [],
    "anchor": "as tie",
-   "note": "held A, even or behind: he can't be thrown, carried or pinned"
+   "asks": [
+    "g06",
+    "h09"
+   ],
+   "note": "held A: never the crossed-arm fold (h09)"
   },
   {
    "id": "vicious",
    "ticks": "the piece's own",
    "holder": [],
    "held": [],
-   "anchor": "the grip arm stays on; the blow is the free limb's",
-   "note": "X, Y and B: a generated piece of his clinch cell (below) on the stick's region; B with the grip even or ahead is the break-off (a 12-tick stagger)"
+   "anchor": "the grip hand kept (limb2); the blow is the free limb's",
+   "asks": [
+    "s08"
+   ],
+   "note": "X, Y or B: a piece of his clinch cell (below) on the stick's region"
   },
   {
    "id": "carry",
@@ -110,10 +160,24 @@
     "carry"
    ],
    "held": [
-    "carried (the zip tackle's)"
+    "carried"
    ],
-   "anchor": "as tie",
-   "note": "held A while ahead: drawn travel along the stick, at most 3 bh a tick (Legal g03, g04); let go: the throw; a surface: the wall slam"
+   "anchor": {
+    "holder": [
+     "hand_r",
+     "hand_l"
+    ],
+    "held": [
+     "collar",
+     "waist"
+    ]
+   },
+   "asks": [
+    "g03",
+    "g04",
+    "g08"
+   ],
+   "note": "drawn travel along the stick, at most 3 bh a tick; let go or the cap: the throw; a building: the wall slam; the ground: both in the crater, a 24-tick stagger"
   },
   {
    "id": "pin",
@@ -124,40 +188,57 @@
    "held": [
     "pinned"
    ],
-   "anchor": "as tie",
-   "note": "the pair's back to a building's face: vicious wear x1.5; the throw is the wall slam at once"
+   "anchor": {
+    "holder": [
+     "shoulder",
+     "forearm on the collar"
+    ],
+    "held": [
+     "collar",
+     "shoulder",
+     "upper_arm"
+    ]
+   },
+   "asks": [
+    "g07"
+   ],
+   "note": "vertical against a building that holds, never on the ground; the pinned fighter struggles or braces, his feet bearing weight"
   },
   {
    "id": "throw",
    "ticks": 8,
    "holder": [
-    "throw_up",
-    "throw_down",
-    "throw_across",
-    "throw_turned"
+    "by send, below"
    ],
    "held": [
-    "the ragdoll the sim launches"
+    "the body the planner sends"
    ],
    "anchor": "released on the last tick",
-   "note": "A at two ahead, or a carry let go: a launch by the stick's quarter through the planner (Legal g03); a resting launcher: a knock-back of 8 bh"
+   "asks": [
+    "g03"
+   ],
+   "note": "a plain send through the planner, never a launch"
   },
   {
-   "id": "break",
+   "id": "part",
    "ticks": 6,
    "holder": [],
    "held": [],
    "anchor": null,
-   "note": "the tech, the time-out, the escape: both pushed 1.5 bh apart (the shove's poses, if drawn)"
+   "asks": [],
+   "note": "the tech, the push-off, the time, a burst, an interjection: the push-off is the old shove"
   }
  ],
  "fighters": {
   "protagonist": {
-   "look": "playful and technical: collar and elbow, open-handed; hand-fighting for the grip; a turning carry; throws up and away with a turn",
-   "favours": [
-    "the reversal",
-    "the throw"
-   ],
+   "look": "playful and technical: a boxer's tie-up, open hands at the collar and the elbow; hand-fighting for the grip; a wide brace; a turning carry",
+   "throws": {
+    "toward": "hurl",
+    "away": "turn_throw",
+    "none": "hurl",
+    "down": "drive_down",
+    "up": "lift (new)"
+   },
    "vicious": {
     "head": [
      {
@@ -300,11 +381,14 @@
    }
   },
   "rival": {
-   "look": "exact and punishing: a collar tie with the forearm plate across; pressure for the grip; a straight march into the nearest wall; throws down and back into buildings",
-   "favours": [
-    "the pin",
-    "the break-off"
-   ],
+   "look": "exact and punishing: one hand on the collar, the other arm a one-arm fold (h09); pressure for the grip; a narrow, still brace; a straight march into the nearest wall",
+   "throws": {
+    "toward": "sling",
+    "away": "back_throw",
+    "none": "sling",
+    "down": "spike",
+    "up": "jolt (new)"
+   },
    "vicious": {
     "head": [
      {
@@ -448,9 +532,19 @@
   }
  },
  "cost": {
-  "holderPoses": 13,
-  "heldPoses": 2,
-  "perFighter": 15,
-  "_about": "an estimate for Animation to confirm (docs/combat/grapple-hybrid.md section 5); the vicious blows add none"
+  "animation": "docs/animation/clinch-sizing.md: 24 new poses for the two fighters (12 shared, 6 flavour each) and pair3's throws",
+  "throws": [
+   "hurl",
+   "sling",
+   "drive_down",
+   "spike",
+   "back_throw",
+   "turn_throw"
+  ],
+  "newThrows": [
+   "lift (the Protagonist)",
+   "jolt (the Anti-hero)"
+  ],
+  "_about": "the vicious blows name existing key sets with the grip hand kept: if that holds, Animation's five close blows a fighter are not needed"
  }
 }
