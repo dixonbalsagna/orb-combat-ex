@@ -428,6 +428,7 @@ class FxEvent:
 	var hold: float = 0.0        # lodge: the seconds the body is held in the building
 	var run: int = 0             # cue blow (Encounter): the striker's run on the target as the blow is thrown, 0 to run_to. Not hashed
 	var run_to: int = 0          # cue blow (Encounter): the run at which his next light closes (runToClose, 4 today); UI's gauge is full when run reaches it; 0 not set. Not hashed
+	var stop: int = 0             # damage (a hit): the hit-stop ticks in force after it, as SimCore.step spends them (Animation). Not hashed
 
 
 class Fighter:

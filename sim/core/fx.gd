@@ -611,10 +611,22 @@ static func contactEvent(S: SimState, type: String, f, x: float, y: float, speed
 ## Camera: actor was launched by target at speed amount, horizontally toward face (+1 or -1). ux, uy: the launch's unit
 ## direction before the traversal boost (from the fighter's velocity, which the launch has just set), so Animation's first
 ## frame points the right way. n: the launch number that pairs a journey's events (World's launchN; 0 until it lands).
+## The hit-stop's length in live ticks as SimCore.step spends it: each frozen tick takes SimConst.DT off it while it is
+## above 0 (a hit's damage event carries it, for Animation).
+static func stopTicks(stop: float) -> int:
+	var n: int = 0
+	var s: float = stop
+	while s > 0.0 and n < 3600:
+		s -= SimConst.DT
+		n += 1
+	return n
+
+
 static func launch(S: SimState, f, by, speed: float, dir: float, n: int = 0) -> void:
 	var e := _ev(S, "launch")
 	e.actor = float(S.fighters.find(f)); e.target = float(S.fighters.find(by)) if by != null else -1.0
 	e.amount = speed; e.face = dir; e.n = n
+	e.tier = by.tier if by != null else 1.0   # a view field outside the hash: the launch's power tier, the launcher's (Animation)
 	var hx: float = f.vx / f.launchT
 	var d: float = SimDetMath.hypot(hx, f.vy)
 	if d > 0.0:

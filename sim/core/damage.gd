@@ -111,7 +111,11 @@ static func hit(S: SimState, ex, A, D, dmg: float, o = null) -> float:
 	var named: int = SimWounds.REGIONS.find(String(o.get("region", ""))) if fam != "guard" else -1
 	# The blow's weight, for the event: the exchange's kind, kept when the blow is guarded (the event's kind is then guard).
 	var weight: String = ex.kind if (ex != null and (ex.kind == "light" or ex.kind == "medium" or ex.kind == "heavy")) else ""
+	var n0: int = S.out.fx.size()
 	var region: int = hurt(S, D, dd, A, fam, kind, "#ffd45a" if o.get("ignoreStance", false) else "#ffffff", true, form, block, named, weight)
+	if n0 < S.out.fx.size() and S.out.fx[n0].type == "damage":   # view fields outside the hash (Animation): the hit-stop in force after this hit, and the hitter's tier
+		S.out.fx[n0].stop = SimFx.stopTicks(S.dirS.stop)
+		S.out.fx[n0].tier = A.tier
 	if kind == "heavy" and dd > 0.0:
 		SimWounds.stagger(S, D)
 	SimWounds.noteBlow(S, ex, A, D, region, kind, o)
