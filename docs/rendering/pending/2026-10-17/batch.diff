@@ -1,0 +1,952 @@
+diff --git a/docs/rendering/README.md b/docs/rendering/README.md
+index 85b00f5..99d7229 100644
+--- a/docs/rendering/README.md
++++ b/docs/rendering/README.md
+@@ -268,7 +268,8 @@ A stand-in compositor in the tool: fighter 0 behind the block in the main view,
+ The depth aids of the fight-lanes plan (`fight-lanes-render.md` section 4), besides the ground shadow. Both are drawn by the ground shader (`ground.gdshaderinc`), so neither costs a draw call, and both follow craters and slopes.
+ 
+ - **The lane table** is the sim's: `S.lanes`, a flat packed array (`docs/world/fight-lanes-world.md` section 10), read through `render/core/lanes.gd`. The stand-in built from the plan's numbers is gone since World's lanes window (2026-10-11); a world with no table paints no streets. The re-laid city's look (shapes, district looks, row haze, avenues and paved lots) is in `lanes-look.md`.
+-- **City variety** (2026-10-16, Orb's homework 4; `city-variety.md`). Art's tints, facade types, lobby storey and set-back crown on the downtown and mid-rise towers, and glass that takes the sky. Built and gated, and held off behind `RenderLook.CITY_VARIETY` until the collapse clip's normal-mode reading has margin; off, every tower draws as it did.
++- **City variety** (2026-10-16, Orb's homework 4; `city-variety.md`). Art's tints, facade types, lobby storey and set-back crown on the downtown and mid-rise towers, and glass that takes the sky. Two switches: `RenderLook.CITY_TINTS` (the sky glass and the tints) and `CITY_FACADES` (the facade types, the lobby storey and the crown; off). `city_check.gd` holds every pair of neighbouring tones to the budget (Legal's w05, RL-144).
++- **What the picture does not need** (2026-10-17, Performance's audit; `geometry-and-warmup.md`). The crowd is drawn in chunks the camera culls. A water chunk no water can reach is hidden. Every effect's shader is drawn once at boot, off-screen, so no first draw lands in a fight.
+ - **Painted streets.** In a district the ground under the street lanes is painted by strip: sidewalks with slab joints, kerb parking with bay marks, and carriageways with a dashed centre line (`STREET_*`). The paint fades in over 120 units at a district's ends, lies under craters, rubble, cracks and scorch, and its thin lines fade out before they alias at far zoom. The district weight is found in the vertex stage (up to 16 districts); a pixel walks at most 16 strips (three streets of five), and on a sidewalk or a kerb the avenues, to open a crossing. `--nostreets` leaves the ground unpainted, for A/B. Avenues (the cross streets), crossings and the districts' own looks are in `lanes-look.md`.
+ - **The lane cue.** A soft stripe on the ground, or on the water, at a fighter's depth, in his colour, 450 units each way along the street (`LANE_CUE_*`). It shows only while it says something: the two fighters are more than 40 units apart in depth, or his own depth is changing faster than 60 units a second. It comes up in 0.15 s and goes in 0.6 s, on tick time. It is never thinner than about a pixel. In today's sim that means during brunt launches only.
+ - **The pair's mark** (2026-10-12; `PAIR_MARK_*`, `fighters-in-depth.md`; its look is VFX's, `docs/vfx/depth.md` section 6). Only in a match with depth on: a stroke on the ground, or on the water, from under one fighter to under the other while they brawl. A wedge in width and in value, broader and brighter under the one nearer the camera, drawn against its own ground and never more than a tenth of relative luminance from it. Quiet while the line is steady, full for a moment when it turns. With depth off it sets nothing.
+@@ -683,6 +684,7 @@ All commands run from the repo root; each exits 0 on success.
+ | Seam sweep | `godot --headless --path . --script res://render/tools/seam_sweep.gd -- --size=1280x720` | passed at 1280×720, 2560×720 and 720×1280 |
+ | Determinism | `godot --headless --path . --script res://render/tools/determinism.gd` (add `-- --intro` to start every rendered run as the game does: a composed intro with the host's intro memory on, each run against the sim alone from the setup the host sent) | passed (seeds 12345 and 4), and with `--intro`; `--intro --negative-control` fails as it must |
+ | Ground check | `godot --headless --path . --script res://render/tools/ground_check.gd` | passed (seeds 4, 12345, 7) |
++| City check | `godot --headless --path . --script res://render/tools/city_check.gd` | passed: 6 checks (Art's tints fit the shader's arrays; for each facade type, the lobby storey and the crown, no two neighbouring tones as drawn differ by more than the budget: the widest step 0.030, Legal's w05) |
+ | Flight check | `godot --headless --path . --script res://render/tools/flight_check.gd` | passed (seeds 4, 12345, 7; World's evacuate events; a building hit by `debris`, `building_hit` or `floor_hit`; worst building off by 1.07 of 2) |
+ | Flash check | `godot --headless --path . --script res://render/tools/flash_check.gd` | 185 checks on data version 3: all of the code's pass (the hash is the same on and off at 12345 and 4); 10 keep-out cases fail on the data (see Head flashes) |
+ | Pane check | `godot --headless --path . --script res://render/tools/pane_check.gd` | passed (37 checks; hash with and without a compositor; the cut-away request, the pitch, the inset, attaching again) |
+diff --git a/docs/rendering/city-variety.md b/docs/rendering/city-variety.md
+index ccc361f..54420f8 100644
+--- a/docs/rendering/city-variety.md
++++ b/docs/rendering/city-variety.md
+@@ -2,7 +2,10 @@
+ 
+ Orb, homework 4: from far off the skyline "looks great", but up close the towers are "a bunch of dark grid lines". The pitch was `homework4-pitch.md` (steps A to D). Art's palettes and facade types are `docs/art/city-facades.md`, with the data in `data/art/city-looks.json`. This page covers what is built: A, B and C, Art's lobby storey and set-back crown, and the crown tower's stubs. D (lit detail) is not built: "show me first" applies to lit windows.
+ 
+-**The crown tower's stubs are on. City variety is built, gated and switched off** (`RenderLook.CITY_VARIETY`), because the collapse clip in normal mode fails with it on. The reason is the analyser's pooling at a marginal event, not a busier picture (see "Measured"). The stills below show it switched on.
++**The crown tower's stubs are on. City variety has two switches** (2026-10-17, the EP after Legal's w05):
++- **`RenderLook.CITY_TINTS`, on: A and B.** The glass takes the sky, and each tower takes one of Art's tints. Their own flash clips are still to run (see "Measured").
++- **`RenderLook.CITY_FACADES`, off: C.** That covers Art's facade types, the lobby storey and the set-back crown. It builds on the tints and does nothing with them off. It waits for the EP's go now that Art's re-cut meets the neighbour rule (below).
++With all of it on, the collapse clip in normal mode failed. The cause is the analyser's pooling at a marginal event, not a busier picture (see "Measured"). The stills below show all of it on.
+ 
+ **Where it applies.** Downtown and mid-rise towers only: the looks with the contrast budget. Landmarks keep their own treatment, and houses, villages and industry are unchanged. Without Art's data file the towers draw exactly as before. The sim reads none of it. A tower's picks come from its own seed, so they are the same in every match and on every machine.
+ 
+@@ -33,13 +36,21 @@ Orb, homework 4: from far off the skyline "looks great", but up close the towers
+ 4. **The base and crown need floors.** The base needs at least 5 floors, and the crown needs at least 9 and a straight shaft. A four-floor mid-rise would otherwise be all base and crown. Stepped, spire and crown towers keep their own tops.
+ 5. **The crown tower's gem stays.** Art wrote "nothing taller than the stubs". Lowering the gem would cut the tower's top from Orb's skyline. The horns are gone either way.
+ 
++## Legal's neighbour rule (w05, RL-144)
++
++The budget (0.085 of relative luminance) holds between neighbouring elements as well as against the wall: glass beside a fin, a spandrel beside the glass, the cornice beside the shaft, a fin's sun side beside its shade.
++
++**`render/tools/city_check.gd` asserts it** for every one of Art's tints and every facade type, the lobby storey and the crown. It takes each tone as the shader draws it: scaled to the tower's mass tone, and held to the wall by the budget. Lit panes are light, not facade, and are left out.
++
++On Art's re-cut (2e41d4f8) the widest neighbouring step is 0.030: the bright glass beside a punched spandrel or a fin, on mid-rise cream. A fin's two sides step 0.060 on Art's mid tone, as the data gives them, and 0.024 as drawn on the mass tone. Art's first cut reached 0.140 there, and 0.057 as drawn.
++
+ ## For Art
+ 
+ At the towers' dark mass tone, the warm tints (buff, clay, cream, sandstone) read as browns and olives (`img/city/street-midrise.png`). Lifting their chroma, or choosing cooler tints, is Art's call. Every number is in the data.
+ 
+ ## Measured, and why it is switched off
+ 
+-**`RenderLook.CITY_VARIETY` is false.** Off, every tower draws exactly as it did without this code: no data is read, no tint or facade is picked, and the glass does not take the sky. All 16 render gates pass on the city build, both on and off.
++**The switches.** With `CITY_TINTS` and `CITY_FACADES` both off, every tower draws exactly as it did without this code: no data is read, no tint or facade is picked, and the glass does not take the sky. With the facades off, the shader skips their tones as well. All the render gates pass, with everything on and with everything off, and with the tints alone on (2026-10-17, 17 gates with the city check).
+ 
+ **The city flash clips** on HEAD 8895f688 (Tools' `check-clip`, primary / area threshold 15% lower / two-second memory):
+ 
+diff --git b/docs/rendering/geometry-and-warmup.md b/docs/rendering/geometry-and-warmup.md
+new file mode 100644
+index 0000000..b72281d
+--- /dev/null
++++ b/docs/rendering/geometry-and-warmup.md
+@@ -0,0 +1,79 @@
++# Geometry the picture does not need, and the warm-up draw (Rendering, 2026-10-17)
++
++Performance's audit (`docs/perf/audit-2026-10-16.md`, sections 3.6 and 5) gave Rendering four items:
++- **The water mesh** is the terrain's grid: 171 k primitives drawn under a city with no sea in view.
++- **The whole crowd** is drawn every frame: 259 k primitives.
++- **Both HUDs** are rebuilt every frame by `main.gd`.
++- **First-use hitches** of 150 to 510 ms at the same ticks of every match.
++
++The rule for each answer: the sim and every pixel stay as they were.
++
++## The crowd: chunks the camera culls
++
++The crowd was one MultiMesh of every figure on the planet. It had a planet-wide culling box, so all of it was drawn whenever its copy was in view.
++
++**What changed.** `render/core/crowd_chunks.gd` (`RenderCrowdChunks`) cuts the crowd into chunks. A chunk is a contiguous run of crowd indices whose spots lie within `RenderLook.CROWD_CHUNK` (4,000 units) of each other along the planet. Each chunk is its own MultiMesh with a culling box around its figures, padded by `CROWD_CHUNK_PAD` (400 units: a figure is 59 units tall, twice that boosted). The planet view and the flight make the same calls as before, by crowd index.
++
++**Why the pixels are the same:**
++- **The idle hop's phase** comes from the figure's index. Each chunk's material carries its first index (`id_base`), and `INSTANCE_ID + id_base` in `crowd.gdshader` is the index the single MultiMesh had.
++- **A runner the flight carries out of its chunk's box** (to a shelter, or across the seam) widens that box. The box is not narrowed again in the match, so no figure is culled while it could be seen.
++- **The figures are opaque and depth-tested**, so drawing the chunks in another order changes nothing.
++
++**What it saves.** On seed 1 the city has 751 figures, not the audit's 1,800: the crowd's spacing (`city-variety.md`) already cut them. They fall into 11 chunks. A camera window draws, on average over the planet:
++- 3,000 units wide: 5% of them;
++- 8,000 units wide: 8%;
++- 20,000 units wide: 16%.
++
++The crowd's primitives therefore fall from 259 k to a few tens of thousands at fight framing. The cost is a few more draw calls: one per chunk in view, about 2 to 4 instead of 1.
++
++## The water: drawn only where it can be
++
++**When a water chunk draws nothing.** A water chunk's surface shows only:
++- on a column holding water;
++- on a land column within `SHORE_COLS` (16) of one, where the shore keeps the water's level;
++- in the far rows, on a column whose far terrain the meander takes from up to `MEANDER` (9,600 units, 300 columns) away.
++
++So a chunk with no column holding water within the wider reach (plus `WATER_REACH_SLACK`, 4 columns) of its own draws no pixel. The sea's columns are always full, and water only spreads a column a step from a wet one (`sim/world/water.gd`). So this holds whatever a match digs.
++
++**What changed.**
++- `PlanetView._water_show` hides those chunks.
++- The ground field counts the water's changes (`GroundField.water_version`), and each pane decides again only when the count moves. A second pane can see a change a frame late, which the slack covers.
++- The far mesh (the whole planet at the coarsest stride) is always drawn.
++
++**What it saves.** On seed 1, 14 of the 31 water chunks have no water within reach: 231 k of the planet's 558 k water triangles, and each of the 5 planet copies hides them.
++
++The EP's brief said "a coarse mesh". A coarser grid would move the shoreline and the horizon's bend between vertices and change pixels. Hiding the chunks that cannot draw does not.
++
++## The warm-up draw
++
++**The probe.** The hitches land at the same ticks every match, so I ran a first-draw probe: Tools' staged scenes, headless through the capture hook. Each tick it lists every shader drawn for the first time. Its ticks are one after Performance's:
++
++| Scene | Performance's hitch | First drawn at that tick |
++| --- | --- | --- |
++| beam in the city (`signaturecity`) | 427 (155 to 230 ms) | 428: VFX's `trail.gdshader` |
++| ring of three | 211 (216 to 307 ms) | 212: VFX's `crack.gdshader` |
++| ring of three | 279 (363 to 484 ms) | 280: VFX's `beam.gdshader`, `beam_glow.gdshader` and Camera's `panel_mask.gdshader` (the inset) |
++| ring of three | 154 (300 to 396 ms) | nothing drawn for the first time: not a shader. Perhaps a first sound, the HUD's first glyphs or the inset's render target; for Performance to time with the warm-up on |
++
++The beam scene's first beam, crack and shards come at tick 83. That is inside Performance's 120 frames of warm-up, so it was not measured.
++
++**What changed.**
++- `render/core/warmup.gd` (`RenderWarmup`) draws each effect's shader once at boot, behind the flashing-effects notice:
++  - VFX's beam, beam glow, crack, trail, shard and transform;
++  - Rendering's particle, flash, glow and guard;
++  - Camera's two masks.
++- MultiMesh shaders are drawn with each mix of instance colours and custom data.
++- It draws into its own 64-pixel viewport, which no one shows. That viewport shares the pane's world, so the shaders are built as the game builds them. Its camera and quads stand a million units under the planet, and it frees itself after three frames.
++- `main.gd` starts it after the pane is built. It does not run in a tool's main, and the page argument `nowarmup` skips it, to measure with and without.
++
++**Who keeps the list.** A new effect's shader joins `RenderWarmup.SHADERS`. Performance's budget table asks for "no new first-use hitch", and VFX and Camera own most of the entries.
++
++## The HUDs' redraw
++
++`main.gd`'s `render_view()` calls `queue_redraw()` on both HUDs every frame. Only UI knows when a HUD has changed, and UI is sending a patch. It goes into Rendering's next batch as it comes.
++
++## Proof
++
++- **Determinism and the sim:** all 17 render gates pass on the batch, including determinism plain and `--intro`, the pane, flight, ground, seam and shape checks, and the new city check. The sim is not touched.
++- **Pixels:** the plan is frame-for-frame captures of `mashcity`, `signaturecity`, `ring` and `collapse` before and after, against a repeat of the same build as the noise floor. Pose stills differ by 1 to 2 k pixels in the street's crowd band between two captures of one build, and collapse in reduced mode diverges after tick 910 between two runs of one export. These wait for the end of Tools' record run.
++- **Primitives and the hitches:** Performance's frame-bench against the same commit, after the record run.
+diff --git b/render/core/crowd_chunks.gd b/render/core/crowd_chunks.gd
+new file mode 100644
+index 0000000..e124343
+--- /dev/null
++++ b/render/core/crowd_chunks.gd
+@@ -0,0 +1,97 @@
++class_name RenderCrowdChunks
++extends RefCounted
++## The crowd in spatial chunks (Performance's audit, docs/perf/audit-2026-10-16.md: the whole crowd, 1,800 people and
++## 259 k primitives, was one MultiMesh drawn whole every frame). Each chunk is its own MultiMesh holding a contiguous run
++## of crowd indices whose spots lie within RenderLook.CROWD_CHUNK of each other along the planet, with a culling box
++## round them, so the camera draws only the chunks it can see. The same calls as a MultiMesh's, by the crowd index (ci)
++## the planet view and the flight use.
++##
++## Nothing drawn changes. The crowd shader's idle hop takes its phase from the figure's index: a chunk's material
++## carries its first index (id_base), and INSTANCE_ID + id_base is the index the whole crowd's MultiMesh had. A figure
++## the flight carries out of its chunk's box (a runner to a shelter, across the seam) widens that box, and it is not
++## narrowed again in the match, so no figure is ever culled while it could be seen. Presentation only.
++
++var chunks: Array = []                  # one MultiMesh a chunk
++var firsts := PackedInt32Array()        # each chunk's first crowd index (its material's id_base)
++var chunk_of := PackedInt32Array()      # per crowd index: its chunk
++var _x0 := PackedFloat32Array()         # each chunk's box along x (planet x, 0 to W), its figures' spots and the pad
++var _x1 := PackedFloat32Array()
++var _box: AABB                          # the y and z of every chunk's box
++var _pad: float = 0.0
++
++
++## The crowd's chunks for spots xs (planet x per crowd index, in index order): a new chunk starts where the next spot
++## would take a chunk's spread over width. mesh: the figure; box: the y and z every chunk's box spans (its x is set
++## here); pad: how far a figure reaches from its spot (boosted, cowering or turned).
++static func build(mesh: Mesh, xs: PackedFloat64Array, width: float, pad: float, box: AABB) -> RenderCrowdChunks:
++	var c := RenderCrowdChunks.new()
++	c._box = box
++	c._pad = pad
++	c.chunk_of.resize(xs.size())
++	var first: int = 0
++	var lo: float = 0.0
++	var hi: float = 0.0
++	for ci in range(xs.size() + 1):
++		var x: float = xs[ci] if ci < xs.size() else 0.0
++		if ci > first and (ci == xs.size() or maxf(hi, x) - minf(lo, x) > width):
++			c._add(mesh, first, ci - first, lo, hi)
++			first = ci
++		if ci == first:
++			lo = x
++			hi = x
++		else:
++			lo = minf(lo, x)
++			hi = maxf(hi, x)
++	return c
++
++
++func _add(mesh: Mesh, first: int, count: int, lo: float, hi: float) -> void:
++	var k: int = chunks.size()
++	var mm := MultiMesh.new()
++	mm.transform_format = MultiMesh.TRANSFORM_3D
++	mm.use_colors = true
++	mm.use_custom_data = true
++	mm.mesh = mesh
++	mm.instance_count = count
++	chunks.append(mm)
++	firsts.append(first)
++	_x0.append(lo - _pad)
++	_x1.append(hi + _pad)
++	_set_box(k)
++	for ci in range(first, first + count):
++		chunk_of[ci] = k
++
++
++func _set_box(k: int) -> void:
++	(chunks[k] as MultiMesh).custom_aabb = AABB(Vector3(_x0[k], _box.position.y, _box.position.z), Vector3(_x1[k] - _x0[k], _box.size.y, _box.size.z))
++
++
++## How many figures in all.
++func count() -> int:
++	return chunk_of.size()
++
++
++func set_instance_transform(ci: int, t: Transform3D) -> void:
++	var k: int = chunk_of[ci]
++	(chunks[k] as MultiMesh).set_instance_transform(ci - firsts[k], t)
++	# A figure drawn outside its chunk's box widens the box (a hidden one, scaled to nothing, does not).
++	var x: float = t.origin.x
++	if t.basis.get_scale().x > 0.0 and (x - _pad < _x0[k] or x + _pad > _x1[k]):
++		_x0[k] = minf(_x0[k], x - _pad)
++		_x1[k] = maxf(_x1[k], x + _pad)
++		_set_box(k)
++
++
++func set_instance_color(ci: int, c: Color) -> void:
++	var k: int = chunk_of[ci]
++	(chunks[k] as MultiMesh).set_instance_color(ci - firsts[k], c)
++
++
++func set_instance_custom_data(ci: int, d: Color) -> void:
++	var k: int = chunk_of[ci]
++	(chunks[k] as MultiMesh).set_instance_custom_data(ci - firsts[k], d)
++
++
++func get_instance_transform(ci: int) -> Transform3D:
++	var k: int = chunk_of[ci]
++	return (chunks[k] as MultiMesh).get_instance_transform(ci - firsts[k])
+diff --git b/render/core/crowd_chunks.gd.uid b/render/core/crowd_chunks.gd.uid
+new file mode 100644
+index 0000000..12fcd5f
+--- /dev/null
++++ b/render/core/crowd_chunks.gd.uid
+@@ -0,0 +1 @@
++uid://bhohwq8cmotaj
+diff --git a/render/core/crowd_flight.gd b/render/core/crowd_flight.gd
+index f8ce355..a54f1cc 100644
+--- a/render/core/crowd_flight.gd
++++ b/render/core/crowd_flight.gd
+@@ -163,7 +163,7 @@ static func street(b, out: float) -> float:
+ 
+ ## Per frame, before the planet view places its figures: hide the runners whose run is over. One that reached its
+ ## shelter is counted there (`arrived`), so the building shows a figure for it in the same frame.
+-func arrive(S: SimState, mm: MultiMesh) -> void:
++func arrive(S: SimState, mm: RenderCrowdChunks) -> void:
+ 	if _runs.is_empty():
+ 		return
+ 	var done: Array = []
+@@ -182,7 +182,7 @@ func arrive(S: SimState, mm: MultiMesh) -> void:
+ 
+ 
+ ## Per frame, after the planet view placed its figures (which starts this frame's runners): move every runner.
+-func step(S: SimState, mm: MultiMesh) -> void:
++func step(S: SimState, mm: RenderCrowdChunks) -> void:
+ 	_hit_x.clear()
+ 	if _runs.is_empty():
+ 		return
+diff --git a/render/core/ground_field.gd b/render/core/ground_field.gd
+index 2e037bc..35743d2 100644
+--- a/render/core/ground_field.gd
++++ b/render/core/ground_field.gd
+@@ -77,6 +77,7 @@ var _crack_seen := PackedFloat32Array()
+ var _deform_seen := PackedFloat32Array()
+ var _scorch_seen := PackedFloat32Array()
+ var _water_seen := PackedFloat32Array()
++var water_version: int = 0           # counts the changes to the water (rebuilt, or S.water moved): the planet view's water chunks follow it
+ var _ncr: int = 0
+ var _first = null
+ var _last = null
+@@ -134,6 +135,7 @@ func rebuild(S: SimState) -> void:
+ 	_scorch_seen = S.scorch.duplicate()
+ 	_water_seen = S.water.duplicate()
+ 	_crack_seen = S.crack.duplicate()
++	water_version += 1
+ 	_upload(S, true)
+ 
+ 
+@@ -197,6 +199,7 @@ func update(S: SimState, heat: PackedFloat32Array, heat_changed: bool) -> bool:
+ 		any_dirty = true
+ 	var other: bool = S.scorch != _scorch_seen or S.water != _water_seen or S.crack != _crack_seen
+ 	if S.water != _water_seen:
++		water_version += 1
+ 		var nc2: int = SimConst.NC
+ 		for c0 in range(0, nc2, SHORE_CHUNK):
+ 			var c1: int = mini(c0 + SHORE_CHUNK, nc2)
+diff --git a/render/core/look.gd b/render/core/look.gd
+index 1d77c16..a6e2d99 100644
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -120,10 +120,14 @@ const DMG_HOLES: float = 0.18
+ const PATTERN_BUDGET: float = 0.085
+ ## City variety (Orb, homework 4: up close the towers were "a bunch of dark grid lines"; Art's palettes and facade types,
+ ## docs/art/city-facades.md and data/art/city-looks.json; building.gdshader 7c), on the downtown and mid-rise towers.
+-## CITY_VARIETY switches all of it (A, B, C, the lobby storey, the crown). Off since 2026-10-16: on, the collapse clip in
+-## normal mode reads 2.5 / 3.5 (FAIL on the area reading) though the picture turns fewer pixels; see
+-## docs/rendering/city-variety.md, "Measured". Off, every tower draws as it did without it.
+-const CITY_VARIETY: bool = false
++## Two switches (2026-10-16). CITY_TINTS: A, the glass takes the sky, and B, Art's tints. CITY_FACADES: C, Art's facade
++## types, the lobby storey and the set-back crown; it builds on the tints (it does nothing with them off). C waits for
++## Art's re-cut of the fins under Legal's neighbour rule (RL-144: the budget holds between neighbouring elements as well
++## as against the wall; render/tools/city_check.gd asserts it), A and B for their own flash clips: with all of it on, the
++## collapse clip in normal mode read 2.5 / 3.5 (docs/rendering/city-variety.md, "Measured"). Off, every tower draws as it
++## did without them.
++const CITY_TINTS: bool = true
++const CITY_FACADES: bool = false
+ ## GLASS_SKY: how far a tower's glass takes the sky's colour in its direction, at the glass's own luminance (no pane
+ ## changes value), and the least height over the horizon it takes it from, in half screens (at noon the sky's blue, not
+ ## the pale band at the horizon; a pane under the eye never takes the ground).
+@@ -282,6 +286,11 @@ const CROWD_DEEP: float = 120.0
+ ## many of its figures as it has people alive.
+ const CROWD_FACE: float = 40.0
+ const CROWD_MAX: int = 12
++## The crowd is drawn in chunks (render/core/crowd_chunks.gd; Performance's audit, 2026-10-16): runs of figures whose
++## spots lie within CROWD_CHUNK of each other along the planet, each culled by the camera. CROWD_CHUNK_PAD: how far a
++## drawn figure reaches from its spot, boosted, cowering or turned (59 units tall, at most twice that boosted).
++const CROWD_CHUNK: float = 4000.0
++const CROWD_CHUNK_PAD: float = 400.0
+ const Z_TREE_MIN: float = -120.0 * WS
+ const Z_TREE_MAX: float = -30.0 * WS
+ const TREE_W: float = 26.0 * WS
+@@ -357,6 +366,10 @@ const RUBBLE_EDGE: float = 30.0 * WS     # a rubble heap eases off over this dep
+ const RUBBLE_TINT_H: float = 20.0        # heap height at which the rubble tint is full
+ const RUBBLE := "#6f675d"                # rubble: broken concrete and brick dust
+ const SHORE_COLS: int = 16               # a land vertex this many columns from water (twice the band mesh's widest stride) keeps its level
++## A water chunk is drawn only while a column holding water lies within this many columns of its own (PlanetView
++## _water_show; Performance's audit, 2026-10-16): the shore's reach or the far meander's, whichever is wider, and a
++## few columns of slack, as water spreads a column a step at most and a second pane may see a change a frame late.
++const WATER_REACH_SLACK: int = 4
+ const OUTLINE_MIN_PX: float = 0.75       # ... and the thinnest it gets on a fighter deep in the rows
+ const SHADOW_W: float = 56.0             # a fighter's ground shadow: across, and
+ const SHADOW_D: float = 26.0             # ... in depth, in world units at his feet
+diff --git a/render/core/main.gd b/render/core/main.gd
+index 4670953..026cde4 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -121,6 +121,12 @@ func _ready() -> void:
+ 	add_child(pane)
+ 	move_child(pane, 0)
+ 	panes = [pane]
++	# Every effect's shader drawn once, off-screen and behind the notice, so the driver's compile is not a fight's
++	# first beam or crack (render/core/warmup.gd; Performance's audit 3.6). Not in a tool's main; `nowarmup` skips it.
++	if not manual and not args.has("nowarmup"):
++		var warm := RenderWarmup.new()
++		add_child(warm)
++		warm.start(pane.get_world_3d())
+ 	cam_rig = pane.cam_rig
+ 	planet = pane.planet
+ 	fighters_root = pane.fighters_root
+@@ -165,6 +171,7 @@ func _ready() -> void:
+ 	# The pause menu's "hand player two back to the AI" entry.
+ 	ui_hud.player_two_leave_requested.connect(_on_player_two_leave)
+ 	ui_hud.form_prompt_shown.connect(_on_form_prompt)
++	ui_hud.haptic_requested.connect(_on_haptic)
+ 	ui_hud.pause_menu_opened.connect(_on_pause_menu_opened)
+ 	ui_hud.pause_menu_closed.connect(_on_pause_menu_closed)
+ 	ui_hud.new_match_requested.connect(func(): start_match(fresh_seed()))
+@@ -596,6 +603,36 @@ func _on_form_prompt(slot: int, device: String) -> void:
+ 		Input.start_joy_vibration(int(host.hub.slot_pad[slot]), 0.3, 0.3, 0.015)
+ 
+ 
++## A pulse UI asks for on a human's own device (`haptic_requested`: "launch_open", the lit B). What to play, and whether, is Controls' pure
++## SimHaptics.plan (docs/controls/haptics.md): a pad's rumble on its own joypad id, a phone's vibration, nothing on a keyboard or an
++## empty slot, nothing with the haptics option off, and not twice inside 80 ms. A plan is a few steps (a thump, then a ring 90 ms later):
++## the first now, the rest on host timers. Host time only; nothing here reads or writes the sim.
++var _haptic_last_ms: Array = [-100000, -100000]
++
++
++func _on_haptic(slot: int, kind: String) -> void:
++	if slot < 0 or slot > 1:
++		return
++	var now: int = Time.get_ticks_msec()
++	var plan: Dictionary = SimHaptics.plan(kind, host.hub.rumble_target(slot), bool(ui_hud.opts.get("haptics", true)), int(_haptic_last_ms[slot]), now)
++	if plan.is_empty():
++		return
++	_haptic_last_ms[slot] = now
++	for s in plan["steps"]:
++		var at: int = int(s["at"])
++		if at <= 0:
++			_play_haptic_step(plan, s)
++		else:
++			get_tree().create_timer(float(at) / 1000.0).timeout.connect(_play_haptic_step.bind(plan, s))
++
++
++func _play_haptic_step(plan: Dictionary, s: Dictionary) -> void:
++	if str(plan["via"]) == "handheld":
++		Input.vibrate_handheld(int(s["ms"]))
++	else:
++		Input.start_joy_vibration(int(plan["id"]), float(s["weak"]), float(s["strong"]), float(s["seconds"]))
++
++
+ ## The pause menu handed player two back to the AI: the hub frees their device (it can join again), and the slot
+ ## changes hands now, with the sim still frozen, so the menu shows it.
+ func _on_player_two_leave() -> void:
+diff --git a/render/core/planet_view.gd b/render/core/planet_view.gd
+index 388d874..cc7395c 100644
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -37,6 +37,9 @@ var mats: RenderMats = RenderMats.new()   # this pane's material state (PaneWorl
+ var source: PlanetView = null         # a second pane's planet: the planet it draws (built first each match)
+ var _terrain_meshes: Array = []   # [ArrayMesh]: every chunk of the near and middle tiers, then the far tier
+ var _water_meshes: Array = []
++var _water_cols := PackedInt32Array()   # per water mesh: its first and last column (-1, -1: the far mesh, the whole planet)
++var _water_nodes: Array = []            # this pane's water nodes per mesh, one a copy
++var _water_drawn: int = -1              # the ground's water_version this pane last decided its water chunks for
+ var _crowd_mat: ShaderMaterial
+ var _terrain_mat: ShaderMaterial
+ var _water_mat: ShaderMaterial
+@@ -45,7 +48,8 @@ var _tree: MultiMesh
+ var _tree_mat: ShaderMaterial        # this pane's trees (their own, so the world's light tints them alone)
+ var _wl: Array = []                  # the world's light (SkyDrive.world_at), kept for materials made later
+ var _wl_win: float = RenderLook.WINDOW_LIT_SHARE
+-var _crowd: MultiMesh
++var _crowd: RenderCrowdChunks        # the crowd, in chunks the camera culls (crowd_chunks.gd); shared by panes
++var _crowd_mats: Array = []          # this pane's crowd material for each chunk (its first index: the hop's phase)
+ var _bld0: MultiMesh                 # row 0, in front of the fighter plane: its own MultiMesh (bodies by row-0 index, then the other parts)
+ var _parts: Array = []               # per building: its parts as it stands whole (RenderShapes.parts), the body first; shared by panes
+ var _inst: Array = []                # per building: each part's instance in its MultiMesh (PackedInt32Array, the body's first)
+@@ -123,6 +127,7 @@ func build(S: SimState) -> void:
+ 		ground = source.ground
+ 		_terrain_meshes = source._terrain_meshes
+ 		_water_meshes = source._water_meshes
++		_water_cols = source._water_cols
+ 	if _terrain_mat == null:
+ 		_make_materials()
+ 		if source == null:
+@@ -189,7 +194,15 @@ func build(S: SimState) -> void:
+ 		m.set_shader_parameter("windows", 1.0 if windows else 0.0)
+ 		m.set_shader_parameter("spread_now", 0.0)
+ 	_spread_sent = -1.0
++	_water_nodes.clear()
++	_water_drawn = -1
+ 	_set_lanes(S)
++	# This pane's crowd material for each chunk, with the chunk's first index for the hop's phase (crowd_chunks.gd).
++	_crowd_mats.clear()
++	for c in range(_crowd.chunks.size()):
++		var cm: ShaderMaterial = _crowd_mat.duplicate() as ShaderMaterial
++		cm.set_shader_parameter("id_base", _crowd.firsts[c])
++		_crowd_mats.append(cm)
+ 	for k in range(-RenderLook.PLANET_COPIES, RenderLook.PLANET_COPIES + 1):
+ 		var n := Node3D.new()
+ 		n.name = "Copy%d" % (k + RenderLook.PLANET_COPIES)
+@@ -198,16 +211,48 @@ func build(S: SimState) -> void:
+ 		for m in range(_terrain_meshes.size()):
+ 			_mesh_child(n, "Terrain%d" % m, _terrain_meshes[m], _terrain_mat)
+ 			_mesh_child(n, "Water%d" % m, _water_meshes[m], _water_mat)
++			if _water_nodes.size() <= m:
++				_water_nodes.append([])
++			_water_nodes[m].append(n.get_node("Water%d" % m))
+ 		if absi(k) <= 1:
+ 			_mm_child(n, "Buildings", _bld, _bld_mat)
+ 			_mm_child(n, "Buildings0", _bld0, _front_mat)
+ 			_mm_child(n, "Trees", _tree, _tree_mat)
+-			_mm_child(n, "Crowd", _crowd, _crowd_mat)
++			for c in range(_crowd.chunks.size()):
++				_mm_child(n, "Crowd%d" % c, _crowd.chunks[c], _crowd_mats[c])
+ 		_copies.append(n)
+ 	if source == null:
+ 		refresh(S, true)
+ 
+ 
++## Which water chunks can draw anything, decided again whenever the water changes (Performance's audit, 2026-10-16:
++## the water's grid is the terrain's, drawn whole under a city with no sea in view). A chunk's surface shows only on a
++## column holding water, a land column within SHORE_COLS of one, or a far-row column whose far terrain the meander takes
++## from up to MEANDER away; so a chunk with no column holding water within the wider of those reaches (and
++## WATER_REACH_SLACK) of its own draws no pixel, and is hidden. The far mesh, the whole planet, is always drawn.
++func _water_show(S: SimState) -> void:
++	var nc: int = SimConst.NC
++	if _water_nodes.is_empty() or S.water.size() < nc:
++		return
++	var reach: int = maxi(RenderLook.SHORE_COLS, int(ceil(RenderLook.MEANDER / SimConst.COL))) + RenderLook.WATER_REACH_SLACK
++	var wet := PackedInt32Array()
++	wet.resize(nc + 1)
++	for i in range(nc):
++		wet[i + 1] = wet[i] + (1 if S.water[i] > 0.0 else 0)
++	for m in range(mini(_water_nodes.size(), _water_cols.size() / 2)):
++		var c0: int = _water_cols[2 * m]
++		var c1: int = _water_cols[2 * m + 1]
++		var show: bool = c0 < 0
++		if not show:
++			for off in [-nc, 0, nc]:
++				var a: int = clampi(c0 - reach + off, 0, nc)
++				var b: int = clampi(c1 + reach + 1 + off, 0, nc)
++				if b > a and wet[b] - wet[a] > 0:
++					show = true
++		for node in _water_nodes[m]:
++			(node as Node3D).visible = show
++
++
+ ## Per frame: place the copies around the camera's wrapped x and apply whatever changed in the world (the first
+ ## pane's planet only; a second pane's draws what that one made). heat is the render-side glow of fresh grooves
+ ## (ImpactFx).
+@@ -219,6 +264,9 @@ func update(S: SimState, cam_x: float, heat: PackedFloat32Array = PackedFloat32A
+ 		_water_mat.set_shader_parameter("crater_now", S.T)
+ 	for c in _copies:
+ 		c.position.x = float(c.get_meta("k")) * SimConst.W - cam_x
++	if ground != null and ground.water_version != _water_drawn:
++		_water_drawn = ground.water_version
++		_water_show(S)
+ 	if source != null:
+ 		_send_spread(S, source)
+ 		return
+@@ -443,12 +491,14 @@ func set_crowd_near(on: bool) -> void:
+ 	if on == _crowd_near or _crowd_mat == null:
+ 		return
+ 	_crowd_near = on
+-	_crowd_mat.set_shader_parameter("crowd_near", RenderLook.NEAR_CLIP if on else Vector2.ZERO)
++	for m in [_crowd_mat] + _crowd_mats:
++		m.set_shader_parameter("crowd_near", RenderLook.NEAR_CLIP if on else Vector2.ZERO)
+ 
+ 
+ func set_crowd_view(boost: float, outline: float) -> void:
+-	_crowd_mat.set_shader_parameter("boost", boost)
+-	_crowd_mat.set_shader_parameter("outline", outline)
++	for m in [_crowd_mat] + _crowd_mats:
++		m.set_shader_parameter("boost", boost)
++		m.set_shader_parameter("outline", outline)
+ 
+ 
+ ## The copy nodes, left to right (for tools and tests).
+@@ -1062,7 +1112,7 @@ func set_world_light(world: Array, win: float) -> void:
+ func _apply_wl() -> void:
+ 	if _wl.is_empty() or _terrain_mat == null:
+ 		return
+-	var by: Dictionary = {"ground": [_terrain_mat], "water": [_water_mat], "buildings": [_bld_mat, _front_mat], "trees": [_tree_mat], "civilians": [_crowd_mat]}
++	var by: Dictionary = {"ground": [_terrain_mat], "water": [_water_mat], "buildings": [_bld_mat, _front_mat], "trees": [_tree_mat], "civilians": [_crowd_mat] + _crowd_mats}
+ 	for li in range(RenderLook.WORLD_LAYERS.size()):
+ 		for m in by.get(RenderLook.WORLD_LAYERS[li], []):
+ 			if m != null:
+@@ -1160,6 +1210,7 @@ func _make_ground_meshes() -> void:
+ 				continue
+ 			_terrain_meshes.append(_finish(tv[0], c0 * SimConst.COL, (c0 + cc) * SimConst.COL, false))
+ 			_water_meshes.append(_finish(tv[1], c0 * SimConst.COL, (c0 + cc) * SimConst.COL, true))
++			_water_cols.append_array([c0, c0 + cc])
+ 	var far: Array = [[], []]
+ 	for k in range(runs.size()):
+ 		if runs[k][1] == largest:
+@@ -1167,6 +1218,7 @@ func _make_ground_meshes() -> void:
+ 			_grid(far[1], 0, SimConst.NC, runs[k][0], largest, 0, 0, true)
+ 	_terrain_meshes.append(_finish(far[0], 0.0, SimConst.W, false))
+ 	_water_meshes.append(_finish(far[1], 0.0, SimConst.W, true))
++	_water_cols.append_array([-1, -1])
+ 
+ 
+ ## A top grid (ground) or surface grid (water) over columns c0..c1 at the given stride and rows, appended to the
+@@ -1711,7 +1763,7 @@ func _building_mat() -> ShaderMaterial:
+ 	var cu: Dictionary = RenderShapes.city_uniforms()
+ 	for key in cu:
+ 		m.set_shader_parameter(key, cu[key])
+-	m.set_shader_parameter("glass_sky", RenderLook.GLASS_SKY if RenderLook.CITY_VARIETY else Vector2(0.0, RenderLook.GLASS_SKY.y))
++	m.set_shader_parameter("glass_sky", RenderLook.GLASS_SKY if RenderLook.CITY_TINTS else Vector2(0.0, RenderLook.GLASS_SKY.y))
+ 	m.set_shader_parameter("row_haze", RenderLook.ROW_HAZE if row_haze else Vector3(0.0, RenderLook.ROW_HAZE.y, RenderLook.ROW_HAZE.z))
+ 	mats.track(m)
+ 	return m
+@@ -1866,7 +1918,8 @@ func _make_props(S: SimState) -> void:
+ 			var shirt: Color = RenderLook.col(RenderLook.CROWD[int(cr.next() * RenderLook.CROWD.size())]).lerp(RenderLook.col(RenderShapes.look(_look[bi])["wall"][1]), RenderLook.CROWD_DISTRICT).srgb_to_linear()
+ 			looks.append(Color(shirt.r, shirt.g, shirt.b, cr.next()))
+ 	_crowd_first[nb] = _crowd_x.size()
+-	_crowd = _multimesh(CrowdMesh.build(), _crowd_x.size(), 80.0, true, true, z0, z1)
++	# In chunks the camera culls (Performance's audit; crowd_chunks.gd): only the stretches in view are drawn.
++	_crowd = RenderCrowdChunks.build(CrowdMesh.build(), _crowd_x, RenderLook.CROWD_CHUNK, RenderLook.CROWD_CHUNK_PAD, _planet_aabb(-1000.0 * RenderLook.WS, 80.0 * RenderLook.WS, z0, z1))
+ 	for ci in range(looks.size()):
+ 		_crowd.set_instance_custom_data(ci, looks[ci])
+ 		_crowd.set_instance_color(ci, Color.WHITE)
+diff --git a/render/core/shapes.gd b/render/core/shapes.gd
+index 8d607f5..076319f 100644
+--- a/render/core/shapes.gd
++++ b/render/core/shapes.gd
+@@ -23,7 +23,8 @@ const SETTLEMENTS: String = "res://data/biomes/settlements.json"
+ ## and a facade each (city_look); without it they are drawn in their look as before.
+ const CITY_LOOKS: String = "res://data/art/city-looks.json"
+ const FACADES: Array = ["ribbon", "punched", "fins"]   # building.gdshader's facade index
+-const CITY_TINTS: int = 12                              # building.gdshader's city arrays
++const NO_FACADE: int = 3                                # ... the look's own windows (RenderLook.CITY_FACADES off)
++const CITY_SLOTS: int = 12                              # building.gdshader's city arrays: Art's tints, at most
+ ## A part's flags.
+ const ROOF: int = 1     # a roof facet: its own colour, no windows, gone from a shell
+ const PLAIN: int = 2    # no windows
+@@ -123,20 +124,26 @@ static func look(k: int) -> Dictionary:
+ 	return LOOK.get(n, LOOK[FALLBACK])
+ 
+ 
+-## Art's city data (data/art/city-looks.json), or {} without the file or with RenderLook.CITY_VARIETY off.
+-static func city() -> Dictionary:
++## Art's city data (data/art/city-looks.json) whatever the switches say, or {} without the file: the checks and the
++## shader's arrays read it.
++static func city_data() -> Dictionary:
+ 	if not _city_read:
+ 		_city_read = true
+-		if RenderLook.CITY_VARIETY and FileAccess.file_exists(CITY_LOOKS):
++		if FileAccess.file_exists(CITY_LOOKS):
+ 			var j = JSON.parse_string(FileAccess.get_file_as_string(CITY_LOOKS))
+ 			_city = j if j is Dictionary else {}
+ 	return _city
+ 
+ 
++## Art's city data as the towers wear it: {} with RenderLook.CITY_TINTS off (the facades build on the tints).
++static func city() -> Dictionary:
++	return city_data() if RenderLook.CITY_TINTS else {}
++
++
+ ## Every tint in Art's data, the looks' in the data's order: [look name, tint]. A tint's index here is building.gdshader's.
+ static func city_tints() -> Array:
+ 	if _tints.is_empty():
+-		var looks: Dictionary = city().get("looks", {})
++		var looks: Dictionary = city_data().get("looks", {})
+ 		for ln in looks:
+ 			for t in looks[ln]:
+ 				_tints.append([str(ln), t])
+@@ -197,7 +204,7 @@ static func city_look(b, k: int) -> Dictionary:
+ 	var fi: int = FACADES.find(_pick(dd.get("facade_weights", {}), _mix(float(b.seed), 2)))
+ 	var tints: Array = city_tints()
+ 	var ti: int = -1
+-	for i in range(mini(tints.size(), CITY_TINTS)):
++	for i in range(mini(tints.size(), CITY_SLOTS)):
+ 		if str(tints[i][0]) == str(lnames[k]) and str((tints[i][1] as Dictionary).get("id", "")) == tid:
+ 			ti = i
+ 	if ti < 0 or fi < 0:
+@@ -208,7 +215,9 @@ static func city_look(b, k: int) -> Dictionary:
+ 	out["roof"] = str(wl["shadow"])
+ 	out["trim"] = str(wl["shadow"])
+ 	out["tint"] = ti
+-	out["facade"] = fi
++	out["facade"] = fi if RenderLook.CITY_FACADES else NO_FACADE
++	if not RenderLook.CITY_FACADES:
++		return out
+ 	# The facade's windows as a look's (what building.gdshader draws from fac_a and fac_b), for VFX's pane grid.
+ 	var fu: Dictionary = city_uniforms()
+ 	var fa: Vector4 = fu["fac_a"][fi]
+@@ -223,7 +232,8 @@ static func city_look(b, k: int) -> Dictionary:
+ 
+ 
+ ## What building.gdshader reads of a building's city look (win_tex's fifth texel, a): 0 for none; else 1 plus its tint,
+-## plus 16 times its facade, plus 64 with a lobby storey, plus 128 times the floor its crown starts at.
++## plus 16 times its facade (NO_FACADE: the look's own windows), plus 64 with a lobby storey, plus 128 times the floor its
++## crown starts at.
+ static func city_code(lk: Dictionary, floors: int) -> float:
+ 	if not lk.has("tint"):
+ 		return 0.0
+@@ -257,7 +267,7 @@ static func city_uniforms() -> Dictionary:
+ 	var hi: Array = []
+ 	var trim: Array = []
+ 	var kk: Array = []
+-	var c: Dictionary = city()
++	var c: Dictionary = city_data()
+ 	var tints: Array = city_tints()
+ 	var fac: Dictionary = c.get("facades", {})
+ 	var bc: Dictionary = c.get("base_and_crown", {})
+@@ -269,7 +279,7 @@ static func city_uniforms() -> Dictionary:
+ 	var off_fin: float = float((fin.get("fin", {}) as Dictionary).get("lum_offset", 0.0))
+ 	var off_sun: float = float((fin.get("fin", {}) as Dictionary).get("sun_side_offset", 0.0))
+ 	var off_base: float = float((bc.get("base", {}) as Dictionary).get("wall_lum_offset", 0.0))
+-	for i in range(CITY_TINTS):
++	for i in range(CITY_SLOTS):
+ 		if i >= tints.size():
+ 			glass.append(Color(0, 0, 0, 1))
+ 			hi.append(Color(0, 0, 0, 1))
+diff --git b/render/core/warmup.gd b/render/core/warmup.gd
+new file mode 100644
+index 0000000..632af28
+--- /dev/null
++++ b/render/core/warmup.gd
+@@ -0,0 +1,103 @@
++class_name RenderWarmup
++extends Node
++## A warm-up draw at boot (Performance's audit, docs/perf/audit-2026-10-16.md 3.6: single frames of 150 to 510 ms at the
++## same ticks of every match). Each of those ticks is the first time a shader is drawn in the match (Rendering's
++## first-draw probe, docs/rendering/warmup.md): VFX's trail at the beam scene's tick 427; in the ring, VFX's crack at 211
++## and the beam, its glow and Camera's inset mask at 279. The graphics driver compiles a shader the first time it is
++## drawn. So at boot, behind the flashing-effects notice, every effect's shader is drawn once here, and no first draw
++## is left for a fight.
++##
++## Nothing the game shows changes. The warm-up draws into its own small viewport, which no one shows, sharing the
++## pane's world so the shaders are built as the game builds them. Its camera and quads stand WARM_DEPTH under the
++## planet, far outside every game camera's view, and are freed WARM_FRAMES frames after the first draw. Presentation
++## only: it reads nothing of the sim.
++
++## [shader, how the game draws it]: "mesh" (a MeshInstance3D), "multimesh" (a MultiMeshInstance3D, drawn with each
++## mix of instance colours and custom data, as the effects' pools differ), "canvas" (a CanvasItem). Another director's
++## effect is added here when it is new (Performance's budget table: "no new first-use hitch").
++const SHADERS: Array = [
++	["res://render/vfx/shaders/beam.gdshader", "mesh"],          # VFX: the beams (ring tick 279)
++	["res://render/vfx/shaders/beam_glow.gdshader", "mesh"],
++	["res://render/vfx/shaders/crack.gdshader", "mesh"],         # VFX: ground cracks (ring tick 211)
++	["res://render/vfx/shaders/trail.gdshader", "multimesh"],    # VFX: trails (beam scene tick 427)
++	["res://render/vfx/shaders/shard.gdshader", "multimesh"],    # VFX: shards
++	["res://render/vfx/shaders/transform.gdshader", "multimesh"],   # VFX: shots and the transformation
++	["res://render/shaders/particle.gdshader", "multimesh"],     # Rendering: particles
++	["res://render/shaders/flash.gdshader", "multimesh"],        # Rendering: hit flashes
++	["res://render/shaders/glow.gdshader", "mesh"],              # Rendering: glows
++	["res://render/shaders/guard.gdshader", "mesh"],             # Rendering: the guard's look
++	["res://render/camera/panel_mask.gdshader", "canvas"],       # Camera: the inset panel (ring tick 279)
++	["res://render/camera/split_mask.gdshader", "canvas"],       # Camera: the split
++]
++const WARM_DEPTH: float = -1.0e6
++const WARM_FRAMES: int = 3
++
++var _vp: SubViewport
++var _frames: int = 0
++var drawn: Array = []        # the shaders drawn (for the checks)
++
++
++## Draws the warm-up into world (the pane's) and frees itself WARM_FRAMES frames later. A shader file that is missing
++## is skipped.
++func start(world: World3D) -> void:
++	_vp = SubViewport.new()
++	_vp.size = Vector2i(64, 64)
++	_vp.world_3d = world
++	_vp.transparent_bg = true
++	_vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
++	add_child(_vp)
++	var cam := Camera3D.new()
++	cam.position = Vector3(0.0, WARM_DEPTH, 0.0)
++	cam.near = 0.05
++	cam.far = 100.0
++	_vp.add_child(cam)
++	cam.current = true
++	var quad := QuadMesh.new()
++	quad.size = Vector2(1.0, 1.0)
++	var x: float = -4.0
++	for e in SHADERS:
++		if not ResourceLoader.exists(str(e[0])):
++			continue
++		var sh: Shader = load(str(e[0]))
++		if sh == null:
++			continue
++		var mat := ShaderMaterial.new()
++		mat.shader = sh
++		match str(e[1]):
++			"mesh":
++				var mi := MeshInstance3D.new()
++				mi.mesh = quad
++				mi.material_override = mat
++				mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
++				mi.position = Vector3(x, WARM_DEPTH, -5.0)
++				_vp.add_child(mi)
++			"multimesh":
++				for flags in [[false, false], [true, false], [false, true], [true, true]]:
++					var mm := MultiMesh.new()
++					mm.transform_format = MultiMesh.TRANSFORM_3D
++					mm.use_colors = flags[0]
++					mm.use_custom_data = flags[1]
++					mm.mesh = quad
++					mm.instance_count = 1
++					mm.set_instance_transform(0, Transform3D.IDENTITY)
++					var mmi := MultiMeshInstance3D.new()
++					mmi.multimesh = mm
++					mmi.material_override = mat
++					mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
++					mmi.position = Vector3(x, WARM_DEPTH, -5.0)
++					_vp.add_child(mmi)
++			"canvas":
++				var r := ColorRect.new()
++				r.size = Vector2(8.0, 8.0)
++				r.material = mat
++				_vp.add_child(r)
++		drawn.append(str(e[0]))
++		x += 0.5
++
++
++func _process(_delta: float) -> void:
++	if _vp == null:
++		return
++	_frames += 1
++	if _frames >= WARM_FRAMES:
++		queue_free()
+diff --git b/render/core/warmup.gd.uid b/render/core/warmup.gd.uid
+new file mode 100644
+index 0000000..66b42ab
+--- /dev/null
++++ b/render/core/warmup.gd.uid
+@@ -0,0 +1 @@
++uid://djn4g8mynk1eh
+diff --git a/render/shaders/building.gdshader b/render/shaders/building.gdshader
+index 8dbe978..2e187bc 100644
+--- a/render/shaders/building.gdshader
++++ b/render/shaders/building.gdshader
+@@ -487,16 +487,15 @@ void fragment() {
+ 		vec4 lb = look_b[lk];
+ 		float fy = (v_wy - v_winb.x) / v_win.w;
+ 		float fr = fy * v_look.y;                 // rows of windows: a tall floor carries several
+-		// 7c: a tower in one of Art's tints wears one of Art's facade types; its lobby storey has city_base.w rows of
+-		// punched panes (under the lintel, none), its crown starts at crown_f.
++		// 7c: a tower in one of Art's tints wears one of Art's facade types (3: the look's own windows); its lobby storey
++		// has city_base.w rows of punched panes (under the lintel, none), its crown starts at crown_f.
+ 		int city = int(v_look.w + 0.5);
+ 		int tint = (city & 15) - 1;
+ 		int fac = (city >> 4) & 3;
+ 		float crown_f = tint >= 0 ? float(city >> 7) : 0.0;
+ 		bool in_base = tint >= 0 && (city & 64) != 0 && fy < 2.0;
+ 		vec4 fc = vec4(0.0);
+-		if (tint >= 0) {
+-			fac = min(fac, 2);
++		if (tint >= 0 && fac < 3) {
+ 			la = vec4(la.x * fac_a[fac].x, fac_a[fac].yzw);
+ 			lb = fac_b[fac];
+ 			fc = fac_c[fac];
+@@ -616,7 +615,7 @@ void fragment() {
+ 				glass = bright;   // Art's crown: its panes are the bright glass
+ 			}
+ 			vec3 wall_far = col;   // the wall between the panes as a whole, for a wall too far to draw them
+-			if (tint >= 0) {
++			if (tint >= 0 && fac < 3) {
+ 				// 7c (C): this pixel's wall, a spandrel, a fin, the lobby storey, its lintel or the crown's cornice line,
+ 				// each held to the wall by the budget.
+ 				vec4 kk = city_k[tint];
+diff --git a/render/shaders/crowd.gdshader b/render/shaders/crowd.gdshader
+index acc6713..0a7f395 100644
+--- a/render/shaders/crowd.gdshader
++++ b/render/shaders/crowd.gdshader
+@@ -16,6 +16,7 @@ render_mode unshaded, cull_back;
+ uniform vec3 wl_mul = vec3(1.0);   // the world's light (SkyDrive.world_at), this layer's multiply in linear light
+ uniform vec3 wl_add = vec3(0.0);   // ... and its night lift
+ uniform float boost = 1.0;
++uniform int id_base = 0;   // the first crowd index of this chunk (render/core/crowd_chunks.gd): INSTANCE_ID + id_base is the figure's own
+ uniform vec2 crowd_near = vec2(0.0, 0.0);   // RenderLook.NEAR_CLIP in a match with depth on: a figure nearer the lens than y shrinks, and is nothing nearer than x. (0, 0): off
+ uniform float outline = 0.7;
+ uniform vec4 outline_col : source_color = vec4(0.05, 0.05, 0.08, 1.0);
+@@ -48,7 +49,7 @@ void vertex() {
+ 	float run = 1.0 - COLOR.g;
+ 	vec3 v = VERTEX;
+ 	vec3 nrm = NORMAL;
+-	float ph = fract(float(INSTANCE_ID) * 0.618034);
++	float ph = fract(float(INSTANCE_ID + id_base) * 0.618034);
+ 	if (run > 0.0) {
+ 		// Parts by place (crowd_mesh.gd): the legs below the hip (7.2), the arms beyond the torso's sides (2.4).
+ 		float s = sin(TIME * run_hz * 6.2831853 + ph * 40.0);
+diff --git b/render/tools/city_check.gd b/render/tools/city_check.gd
+new file mode 100644
+index 0000000..0737476
+--- /dev/null
++++ b/render/tools/city_check.gd
+@@ -0,0 +1,92 @@
++extends SceneTree
++## City check (docs/rendering/city-variety.md): Art's city palettes and facade types as building.gdshader draws them
++## (7c), against the contrast budget (RenderLook.PATTERN_BUDGET, 0.085 of relative luminance) between neighbouring
++## elements as well as against the wall: Legal's w05 (RL-144). For each of Art's tints and each facade type, the tones
++## the shader draws side by side (the wall, the dark and bright glass, the spandrel band, a fin and its sun side, the
++## lobby storey's wall, its lintel and the crown's cornice; each first held to the wall, as the shader holds it) must
++## differ by no more than the budget. Lit panes are not held to it (they are light, not facade). Reads the data whatever
++## RenderLook.CITY_TINTS and CITY_FACADES say; with no data it checks nothing and says so.
++##   godot --headless --path . --script res://render/tools/city_check.gd
++
++var fails: int = 0
++
++
++func _initialize() -> void:
++	_run()
++	quit(1 if fails > 0 else 0)
++
++
++func _expect(ok: bool, what: String) -> void:
++	print("%s %s" % ["ok   " if ok else "FAIL ", what])
++	if not ok:
++		fails += 1
++
++
++## Relative luminance of an sRGB colour, in linear light (building.gdshader's lum).
++static func _lum(c: Color) -> float:
++	var l: Color = c.srgb_to_linear()
++	return 0.2126 * l.r + 0.7152 * l.g + 0.0722 * l.b
++
++
++## A tone held to the wall's luminance by the budget (building.gdshader's toward, in luminance).
++static func _held(wall: float, x: float) -> float:
++	return clampf(x, wall - RenderLook.PATTERN_BUDGET, wall + RenderLook.PATTERN_BUDGET)
++
++
++func _run() -> void:
++	var c: Dictionary = RenderShapes.city_data()
++	var tints: Array = RenderShapes.city_tints()
++	if c.is_empty() or tints.is_empty():
++		_expect(true, "no city data (data/art/city-looks.json): the towers draw in their looks; nothing to check")
++		return
++	_expect(tints.size() <= RenderShapes.CITY_SLOTS, "Art's %d tints fit building.gdshader's arrays (%d)" % [tints.size(), RenderShapes.CITY_SLOTS])
++	var u: Dictionary = RenderShapes.city_uniforms()
++	var budget: float = RenderLook.PATTERN_BUDGET
++	var worst: Dictionary = {}     # a facade type (and the base and crown): [the widest step, between what, in which tint]
++	for key in RenderShapes.FACADES + ["base", "crown"]:
++		worst[key] = [0.0, "", ""]
++	for i in range(mini(tints.size(), RenderShapes.CITY_SLOTS)):
++		var t: Dictionary = tints[i][1]
++		var name: String = "%s %s" % [tints[i][0], t.get("id", "")]
++		var w: float = _lum(RenderLook.col(str(t["wall"]["shadow"])))
++		var k: Vector4 = u["city_k"][i]
++		var g: float = _held(w, _lum(u["city_glass"][i]))
++		var gb: float = _held(w, _lum(u["city_hi"][i]))
++		var tr: float = _held(w, _lum(u["city_trim"][i]))
++		var tones: Dictionary = {
++			"wall": w, "glass": g, "bright glass": gb, "cornice": tr,
++			"ribbon spandrel": _held(w, w * k.x), "punched spandrel": _held(w, w * k.y),
++			"fin": _held(w, w * k.z), "fin's sun side": _held(w, w * k.w),
++			"lobby wall": _held(w, w * float((u["city_glass"][i] as Color).a)),
++		}
++		# What stands beside what on each (building.gdshader 7c): a pane beside the wall and the band under it, a fin
++		# beside its other side, the wall and the glass; the lobby storey's wall beside its panes and the lintel, the
++		# lintel beside the wall over it; the crown's bright panes beside the wall and the cornice line.
++		var pairs: Dictionary = {
++			"ribbon": [["glass", "wall"], ["bright glass", "wall"], ["glass", "ribbon spandrel"], ["bright glass", "ribbon spandrel"], ["ribbon spandrel", "wall"]],
++			"punched": [["glass", "wall"], ["bright glass", "wall"], ["glass", "punched spandrel"], ["bright glass", "punched spandrel"], ["punched spandrel", "wall"]],
++			"fins": [["glass", "wall"], ["bright glass", "wall"], ["glass", "fin"], ["glass", "fin's sun side"], ["bright glass", "fin"], ["bright glass", "fin's sun side"], ["fin", "fin's sun side"], ["fin", "wall"], ["fin's sun side", "wall"]],
++			"base": [["lobby wall", "glass"], ["lobby wall", "bright glass"], ["lobby wall", "cornice"], ["cornice", "wall"]],
++			"crown": [["bright glass", "wall"], ["cornice", "wall"], ["cornice", "bright glass"]],
++		}
++		for key in pairs:
++			for p in pairs[key]:
++				var d: float = absf(float(tones[p[0]]) - float(tones[p[1]]))
++				if d > float(worst[key][0]):
++					worst[key] = [d, "%s and %s" % [p[0], p[1]], name]
++	for key in worst:
++		var wst: Array = worst[key]
++		_expect(float(wst[0]) <= budget + 1e-6, "%s: no two neighbouring tones differ by more than the budget (the widest step %.3f of relative luminance, %s, %s; the budget %.3f)" % [key, float(wst[0]), wst[1], wst[2], budget])
++	# For comparison, the same fin on Art's mid tone as the data gives it (Art's sheet), before the render scales a facade
++	# to the shadow tone it masses a tower in: the step Legal's w05 measured.
++	var art_fin: float = 0.0
++	var fin_scaled: float = 0.0
++	for i in range(mini(tints.size(), RenderShapes.CITY_SLOTS)):
++		var t: Dictionary = tints[i][1]
++		var lm: float = _lum(RenderLook.col(str(t["wall"]["mid"])))
++		var k: Vector4 = u["city_k"][i]
++		var w: float = _lum(RenderLook.col(str(t["wall"]["shadow"])))
++		art_fin = maxf(art_fin, (k.w - k.z) * lm)
++		fin_scaled = maxf(fin_scaled, absf(_held(w, w * k.w) - _held(w, w * k.z)))
++	print("      a fin's two sides on Art's mid tone, as the data gives them: %.3f; as drawn on the tower's mass tone: %.3f" % [art_fin, fin_scaled])
++	print("      switches: CITY_TINTS %s, CITY_FACADES %s" % [str(RenderLook.CITY_TINTS), str(RenderLook.CITY_FACADES)])
+diff --git b/render/tools/city_check.gd.uid b/render/tools/city_check.gd.uid
+new file mode 100644
+index 0000000..f00a266
+--- /dev/null
++++ b/render/tools/city_check.gd.uid
+@@ -0,0 +1 @@
++uid://b84aa2u7v8266
