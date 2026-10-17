@@ -1,0 +1,4 @@
+# Web builds of the prototype (about 40 MB each): rebuild with
+# godot --headless --path docs/research/world-catastrophe/proto --export-release Web <abs>/build/web/index.html
+build/
+.godot/
