@@ -9,13 +9,14 @@
 //     scales the launching blow's worth (worth x power) and the send's force; it is handed to the building ladder and
 //     the landing as tgt.launchPower when that field exists (Simulation's and World's grant).
 //   4 Freshness by kind (up, across, down, behind, into a building): each launch marks its kind on the fighter it sends;
-//     x factor (0.75) a mark within windowS (60 s), never under floor (0.4). Retires launcher.restS and the hammer.
+//     x factor (0.75) a mark within windowS (60 s), never under floor (0.4). Retires the rest and the hammer (restS stays in the data, unread).
 //     The planner prefers a fresh kind (preferW a mark). The stick's kind is kept (a send filter), and the bend inside
 //     it is at most aim.bendCos (30 degrees).
 //   5 The AI: in a string at a hard-to-answer moment it launches at launchInString. It can't react to a launcher in
 //     time (its reaction time is the wind-up's length), so it answers only by a guess: when a blow lands clean on it,
-//     at answerLauncher it picks a tick in answerSpan after the landing, and presses guard then if a launcher that
-//     isn't sure is on his line. It never reacts to the launcher, and never perfect-blocks his other blows by it.
+//     it decides at answerLauncher that a launcher will follow inside the link; if one that isn't sure does, it
+//     presses guard its reaction time after the wind-up began (never sooner), which is still inside the perfect window.
+//     It never perfect-blocks his other blows by it.
 //   6 For UI: DirBrawl.launcherNow(S, f): whether a B would launch, sure or not, its power in pips, the fresh kinds.
 //   Combat's enders (docs/combat/pending/launch/enders.json): read from res://data/combat/enders.json when Combat lands
 //   it there; until then the launcher's piece is picked as before.
@@ -55,7 +56,7 @@ edit('sim/director/brawl.gd', (rep, t0) => {
       `const LINK_AT: int = BASE + ${n}    # S.tick his last blow landed clean: B within launcher.link of it is the launcher\n` +
       `const HIT_K: int = BASE + ${n + 1}      # the kind of the last blow that landed clean on him, plus 1 (a reel from a medium or a heavy is hard to answer)\n` +
       `const LA_POW: int = BASE + ${n + 2}     # the landing launcher's power x 1000, for its send; 0 none\n` +
-      `const LA_ANS: int = BASE + ${n + 3}     # S.tick the AI's guessed answer to a launcher comes due; 0 none\n` +
+      `const LA_ANS: int = BASE + ${n + 3}     # S.tick until which the AI's guess that a launcher follows holds; 0 none\n` +
       `const AI_LINKW: int = BASE + ${n + 4}   # the landing the AI last weighed a launch in its string for\n` +
       `const LP_FP: int = BASE + ${n + 5}      # his last blow's family and path for Combat's enders: family x 8 + path, plus 1\n` +
       `const FRESH0: int = BASE + ${n + 6}     # the kinds of send marked on him (up, across, down, behind, building), four live ticks each; kept across brawls\n` +
@@ -73,7 +74,7 @@ edit('sim/director/brawl.gd', (rep, t0) => {
       '\t\targs["safety"] = safety\n' +
       '\t\targs["power"] = _power(S, f, o, safety)   # string x state x timing; wounds at its landing, freshness at its send\n' +
       '\t\tif safety != 1:\n' +
-      '\t\t\to2["weighed"] = true   # the AI never reacts to a launcher: it answers only by a guess made before it began (_laAnswerPlan)\n');
+      '\t\t\to2["weighed"] = true   # the AI cannot react to a launcher in time: it answers only by a guess made at the landing before it (_laAnswerPlan)\n');
   // the launcher's piece by Combat's enders (when loaded), and his last blow's family and path for the next one
   rep('\t_s(f, BOLT_N, (_g(f, BOLT_N) + 1) if bolt else 0)\n\tif piece != "":\n\t\targs["piece"] = piece\n',
       '\t_s(f, BOLT_N, (_g(f, BOLT_N) + 1) if bolt else 0)\n' +
@@ -83,9 +84,14 @@ edit('sim/director/brawl.gd', (rep, t0) => {
   rep('\tif st == 0 and (_g(f, HELD_P) & 7) == 3 and _g(f, LC_UNTIL) > 0:\n',
       '\tif st == 0 and (_g(f, HELD_P) & 7) == 3 and (_g(f, LC_UNTIL) > 0 or _linked(S, f, _g(f, HELD_AT))):\n');
   // the link's clock, and what he was hit with, at a clean landing
-  rep('\t_s(f, STRING_N, _g(f, STRING_N) + 1)\n\tif armour:\n',
-      '\t_s(f, STRING_N, _g(f, STRING_N) + 1)\n\t_s(f, LINK_AT, S.tick)   # his string\'s link: B within launcher.link of this is the launcher\n\t_s(o, HIT_K, kind + 1)\n' +
-      '\t_laAnswerPlan(S, f, o)   # an AI he hits may guess now that a launcher follows (never by reacting to one)\n\tif armour:\n');
+  rep('\n\t_s(f, STRING_N, _g(f, STRING_N) + 1)\n',
+      '\n\t_s(f, STRING_N, _g(f, STRING_N) + 1)\n\t_s(f, LINK_AT, S.tick)   # his string\'s link: B within launcher.link of this is the launcher\n\t_s(o, HIT_K, kind + 1)\n' +
+      '\t_laAnswerPlan(S, f, o)   # an AI he hits may guess now that a launcher follows (never by reacting to one)\n' +
+      '\t_linkCue(S, f, o)   # UI\'s lit B: his B is the launcher for the link\n');
+  rep('\tif lau:\n\t\to.stunTicks = maxi(o.stunTicks, lead + 2)   # the stagger holds until it lands\n',
+      '\tif lau and safety == 1:\n\t\to.stunTicks = maxi(o.stunTicks, lead + 2)   # a sure launcher holds the stagger until it lands (one that isn\'t sure can be answered)\n\tif lau:\n');
+  rep('\te.dur = float(ticks)   # the stagger: inside it his B always lands\n',
+      '\te.dur = float(ticks)   # the stagger: inside it his B always lands\n\t_marks(S, e, f, o, 1)   # an opening\'s launcher is sure: its marks for UI\n');
   // any blow that lands on a launcher winding ends it (it has no armour)
   rep('\tif wound and oWinding and _g(o, LINE) != 0:\n',
       '\tif (wound or _g(o, FLAV) == 2) and oWinding and _g(o, LINE) != 0:   # a launcher has no armour: any blow that lands ends its wind-up\n');
@@ -245,37 +251,40 @@ static func markKind(S: SimState, o, kind: int) -> void:
 	_s(o, FRESH0 + kind * 4 + at, maxi(1, _now(S)))
 
 
-## The AI against a launcher (section 8): it can't react to one in time (its reaction time is the wind-up's length), so
-## its only answer is one it was already guessing. When f's blow lands clean on an AI o (a launcher can follow), it
-## decides once, at its level's brawl.answerLauncher, that one will, and picks the tick of its guard press across the
-## span a launcher's contact could fall in (launcher.answerSpan, after the landing). Keyed draws.
+## The AI against a launcher that isn't sure (section 8): its reaction time is the wind-up's length, so it can't
+## answer one it sees. Its only answer is one it was already guessing: when f's blow lands clean on an AI o, it decides
+## once, at its level's brawl.answerLauncher, that a launcher will follow while a B of his would still be one (the
+## link). Keyed draws.
 static func _laAnswerPlan(S: SimState, f, o) -> void:
 	_s(o, LA_ANS, 0)
-	if o.ai == null or o.stunTicks > 0:
-		return   # a player answers for himself; a staggered rival can't answer (the launcher is sure)
+	if o.ai == null:
+		return   # a player answers for himself
 	var share: float = float(DirAI.lv().get("brawl", {}).get("answerLauncher", 0.0))
-	var key: int = S.tick * 8 + S.fighters.find(o)
-	if share <= 0.0 or SimRng.keyed(int(S.game.seed), "brawl.answerLauncher", key) >= share:
+	if share <= 0.0 or SimRng.keyed(int(S.game.seed), "brawl.answerLauncher", S.tick * 8 + S.fighters.find(o)) >= share:
 		return
-	var sp: Array = cfg().launcher.get("answerSpan", [8, 38])
-	var span: int = maxi(1, int(sp[1]) - int(sp[0]) + 1)
-	_s(o, LA_ANS, S.tick + int(sp[0]) + mini(span - 1, int(SimRng.keyed(int(S.game.seed), "brawl.answerLauncherAt", key) * float(span))))
+	_s(o, LA_ANS, S.tick + int(cfg().launcher.get("link", 24)) + 1)
 
 
-## The AI's guess comes due: it presses guard only if his rival has a launcher on his line that isn't sure, since its
-## guess was against a launcher (it never perfect-blocks his other blows by it). The tick was fixed at the landing,
-## before any launcher began, so it is never a reaction.
+## The AI's guess, once a tick: a launcher that isn't sure winds on it, thrown while the guess held, and its reaction time
+## has passed since it was thrown: it presses guard (never sooner, so it never answers within its reaction time; the
+## contact is still inside the perfect window). The guess is spent with the press, or lapses.
 static func _laAnswerTick(S: SimState, f) -> void:
-	var at: int = _g(f, LA_ANS)
-	if at <= 0 or S.tick < at:
+	var until: int = _g(f, LA_ANS)
+	if until <= 0:
 		return
-	_s(f, LA_ANS, 0)
 	var ex = S.dirS.ex
-	if f.ai == null or f.stunTicks > 0 or ex == null or (f != ex.A and f != ex.D):
+	if f.ai == null or ex == null or (f != ex.A and f != ex.D):
+		_s(f, LA_ANS, 0)
 		return
 	var o = ex.D if f == ex.A else ex.A
-	if _g(o, FLAV) == 2 and _g(o, LINE) == 1:
-		DirInterrupt.guardPress(S, f)
+	var began: int = _g(o, LAND_AT)   # S.tick his launcher was thrown (his line is busy until it lands)
+	if _g(o, FLAV) == 2 and _g(o, LINE) == 1 and _g(o, LC_LATE) == 1 and began <= until:
+		if f.stunTicks <= 0 and S.tick - began >= int(DirAI.skill().get("reactTicks", 14)):
+			_s(f, LA_ANS, 0)
+			DirInterrupt.guardPress(S, f)
+		return
+	if S.tick > until:
+		_s(f, LA_ANS, 0)   # no launcher came while the guess held
 
 
 ## The AI launches in its string at a hard-to-answer moment (section 8): once a landed blow, at its level's
@@ -364,6 +373,36 @@ static func launcherNow(S: SimState, f) -> Dictionary:
 	return {"on": true, "sure": sf == 1, "safety": sf, "pips": clampi(int(round(_power(S, f, o, sf) * 5.0)), 1, 5), "fresh": fresh}
 
 
+
+## UI's launcher marks as a cue's fields (the cue list's rules: k a count, amount a value). source: sure, hard or
+## answerable; k: its power in pips (1 to 5); amount: the kinds fresh on his rival as a mask (1 up, 2 across, 4 down,
+## 8 behind; a set bit is fresh).
+static func _marks(S: SimState, e, f, o, sf: int) -> void:
+	e.source = ["", "sure", "hard", "answerable"][clampi(sf, 1, 3)]
+	e.k = float(clampi(int(round(_power(S, f, o, sf) * 5.0)), 1, 5))
+	var m: int = 0
+	for kd in range(4):
+		if freshMarks(S, o, kd) == 0:
+			m |= 1 << kd
+	e.amount = float(m)
+
+
+## A blow of f's landed clean: his B is the launcher for launcher.link ticks. The cue launcher_link says so, for UI's lit
+## B (an opening keeps its own cue, launcher_open, which Audio and Animation read as an opening). n: the S.tick the link
+## ends; dur: its length. Its safety is read as the landing leaves him: sure in an opening, hard after a medium or a
+## heavy, answerable after a light or a bolt (the hit's own stun is no opening). Only when he has the ki.
+static func _linkCue(S: SimState, f, o) -> void:
+	if f.ki < float(cfg().launcher.ki) or quiet(S.dirS.ex):
+		return
+	var k: int = _g(o, HIT_K) - 1
+	var sf: int = 1 if _g(f, LC_UNTIL) > 0 else (2 if (k == MEDIUM or k == BIG) else 3)
+	var link: int = int(cfg().launcher.get("link", 24))
+	var e = _ev(S, f, "launcher_link", "link")
+	e.target = float(S.fighters.find(o))
+	e.n = S.tick + link
+	e.dur = float(link)
+	_marks(S, e, f, o, sf)
+
 ## An opening (brawl-second-pass.md section 3, as re-ruled):`);
 });
 
@@ -414,13 +453,12 @@ edit('sim/director/launch.gd', (rep, t0) => {
 
 edit('data/director/interrupts.json', rep => {
   rep('      "restS": 30,\n      "lateTicks": 24,\n      "flightMul": 1\n    }',
-      '      "lateTicks": 24,\n      "flightMul": 1,\n' +
+      '      "restS": 30,\n      "lateTicks": 24,\n      "flightMul": 1,\n' +
       '      "link": 24,\n      "kept": 10,\n      "mashTicks": 9,\n' +
       '      "power": {"string": [0.55, 0.7, 0.85, 1.0], "state": {"sure": 1.0, "hard": 0.9, "answerable": 0.8}, "perfect": 1.25, "chain": 0.05, "max": 1.5, "wounds": {"battered": 1.1, "broken": 1.2}},\n' +
       '      "fresh": {"windowS": 60, "factor": 0.75, "floor": 0.4, "airSense": 0.25, "preferW": 12},\n' +
       '      "aim": {"bendCos": 0.866},\n' +
-      '      "answerSpan": [8, 38],\n' +
-      '      "_launchAnywhere": "The thirteenth round (docs/design/launch-anywhere.md): B within link ticks of one of his landed blows is the launcher, kept ticks before one lands too, never within mashTicks of his last B. power: string by his run (1 to 4 points) x state x timing (perfect, chain, max: waiting on the perfect window) x wounds; it scales the launching blow and the send. fresh: each launch marks its kind on the fighter it sends; x factor for each mark within windowS, never under floor; the planner takes preferW off a candidate for each mark of its kind; airSense is for the flight\'s recovery (Simulation\'s, when granted). aim: the bend inside the stick\'s kind (the cosine of 30 degrees); answerSpan: the ticks after a landed blow across which an AI guessing a launcher picks its guard press. restS (the rest) and the hammer are retired; the 15% extension for a set piece waits (it would part the prediction of the planner from the flight)."\n    }');
+      '      "_launchAnywhere": "The thirteenth round (docs/design/launch-anywhere.md): B within link ticks of one of his landed blows is the launcher, kept ticks before one lands too, never within mashTicks of his last B. power: string by his run (1 to 4 points) x state x timing (perfect, chain, max: waiting on the perfect window) x wounds; it scales the launching blow and the send. fresh: each launch marks its kind on the fighter it sends; x factor for each mark within windowS, never under floor; the planner takes preferW off a candidate for each mark of its kind; airSense is for the flight\'s recovery (Simulation\'s, when granted). aim: the bend inside the stick\'s kind (the cosine of 30 degrees). restS (the rest) and the hammer are retired: nothing reads restS, which stays until Tools retires its fixture cases; the 15% extension for a set piece waits (it would part the prediction of the planner from the flight)."\n    }');
 });
 
 edit('data/director/ai.json', rep => {
@@ -436,8 +474,6 @@ edit('data/director/ai.json', rep => {
   if (!l || !l.properties) throw new Error('director-interrupts schema: no brawl.launcher');
   const num = d => ({ type: 'number', minimum: 0, description: d });
   const int = d => ({ type: 'integer', minimum: 0, description: d });
-  delete l.properties.restS;
-  if (Array.isArray(l.required)) l.required = l.required.filter(k => k !== 'restS');
   l.properties.link = int('A B within this many ticks of one of his landed blows is the launcher.');
   l.properties.kept = int('... and a B pressed this many ticks or fewer before one lands, held and thrown as the launcher.');
   l.properties.mashTicks = int('A B within this many ticks of his last B is the heavy flurry, never the launcher.');
@@ -449,7 +485,6 @@ edit('data/director/ai.json', rep => {
   l.properties.fresh = { type: 'object', description: 'Freshness by kind of send, in place of the rest.', properties: {
     windowS: num('A mark lasts this many seconds of fight time.'), factor: num('Each mark of the kind multiplies by this ...'), floor: num('... never under this.'),
     airSense: num('A fighter sent by a kind marked on him recovers this much sooner for each mark.'), preferW: num("The planner takes this off a candidate's score for each mark of its kind.") }, additionalProperties: false };
-  l.properties.answerSpan = { type: 'array', items: { type: 'integer', minimum: 0 }, minItems: 2, maxItems: 2, description: 'The span after a landed blow across which an AI guessing a launcher picks its guard press.' };
   l.properties.aim = { type: 'object', description: "The choreographer's bend inside the stick's kind.", properties: {
     bendCos: num('The cosine of the most it bends a send from the stick.') }, additionalProperties: false };
   if (!check) fs.writeFileSync(sp, JSON.stringify(s, null, 2) + '\n');
@@ -462,7 +497,7 @@ edit('data/director/ai.json', rep => {
     const b = s.properties.levels.properties[k].properties.brawl;
     if (!b || !b.properties) throw new Error('director-ai schema: no brawl block for ' + k);
     b.properties.launchInString = { type: 'number', minimum: 0, maximum: 1, description: 'The share of hard-to-answer moments in its string at which the AI launches.' };
-    b.properties.answerLauncher = { type: 'number', minimum: 0, maximum: 1, description: 'The share of launchers that are not sure the AI answers, by a guess made as the wind-up began (never sooner than its reaction time).' };
+    b.properties.answerLauncher = { type: 'number', minimum: 0, maximum: 1, description: 'The share of launchers that are not sure the AI answers, by a guess made at a landed blow of his before it (it never reacts to one).' };
   }
   if (!check) fs.writeFileSync(sp, JSON.stringify(s, null, 2) + '\n');
   console.log('tools/schemas/director-ai.schema.json: launchInString, answerLauncher' + (check ? ' (checked)' : ''));

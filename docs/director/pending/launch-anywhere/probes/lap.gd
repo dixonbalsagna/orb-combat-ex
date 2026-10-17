@@ -26,7 +26,7 @@ func _init() -> void:
 	var react: int = int(DirAI.skill().get("reactTicks", 14))
 	var r := {"mode": mode, "level": DirAI.level, "matches": n, "ticks": 0, "launchers": 0, "launchers0": 0, "bySafety": {}, "bySafety0": {},
 		"powerSum": 0.0, "fate0": {}, "fateBySafety0": {}, "launches": {"by0": 0, "on0": 0, "byKind0": {}, "byKindAll": {}},
-		"aiGuardOnLauncher": 0, "reactTicks": react, "kos": 0, "wins0": 0}
+		"aiGuardOnLauncher": 0, "aiGuardSoon": 0, "opensCue": [0, 0], "opensRead": 0, "reactTicks": react, "kos": 0, "wins0": 0}
 	var kindNames := ["up", "across", "down", "behind", "building"]
 	for m in range(n):
 		var S := SimCore.createSim()
@@ -37,6 +37,8 @@ func _init() -> void:
 		var bAt := -1
 		var bUp := -1
 		var turn := 0
+		var wasOpen := false
+		var wantB := false
 		var seen := {}
 		var open := []       # [owner slot, safety, the tick it was seen, the press tick, done]
 		var guardWas := [DirInterrupt.gi(S.fighters[0], DirInterrupt.GUARD_AT), DirInterrupt.gi(S.fighters[1], DirInterrupt.GUARD_AT)]
@@ -45,6 +47,7 @@ func _init() -> void:
 			if human:
 				if S.tick == bAt:
 					it.sig = true
+					it.sigHeld = true   # a pad's press: the edge with the level down (an edge alone is a Simple Attack, already wound)
 					bUp = S.tick + 2
 					bAt = -1
 					if mode == "varied":
@@ -56,10 +59,21 @@ func _init() -> void:
 						turn += 1
 				elif S.tick < bUp:
 					it.sigHeld = true
-				elif S.tick - last >= 8 and bAt < 0:
+				elif S.tick - last >= 8 and bAt < 0 and not wantB:
 					it.light = true
 					last = S.tick
 			SimCore.step(S, [it, null] if human else null)
+			# the route and the varied route: one B at each opening of his, read as QA's route reads it (DirBrawl.launcherOpen)
+			var lo: int = DirBrawl.launcherOpen(S, me)
+			if human and (mode == "route" or mode == "varied") and lo >= 0 and not wasOpen:
+				wantB = true
+				r.opensRead += 1
+			if lo < 0:
+				wantB = false
+			if wantB and bAt < 0 and not DirBrawl.busy(S, me):
+				bAt = S.tick + 1   # as QA's route: B once his line is free, inside the opening
+				wantB = false
+			wasOpen = lo >= 0
 			var ex = S.dirS.ex
 			if ex != null:
 				for b in ex.beats:
@@ -82,8 +96,8 @@ func _init() -> void:
 				var ty: String = String(e.type)
 				if ty == "cue":
 					var ck: String = String(e.kind)
-					if human and ck == "launcher_open" and int(e.actor) == 0 and (mode == "route" or mode == "varied"):
-						bAt = S.tick + 1
+					if ck == "launcher_open":
+						r.opensCue[int(e.actor)] += 1
 					elif ck == "perfect_block":
 						for q in open:
 							if not q[3] and int(q[0]) == 1 - int(e.actor) and S.tick - int(q[2]) <= 60:
@@ -115,7 +129,9 @@ func _init() -> void:
 					if S.fighters[s].ai != null:
 						for q in open:
 							if not q[3] and int(q[0]) == 1 - s and int(q[1]) != 1 and g - int(q[2]) <= 30:
-								r.aiGuardOnLauncher += 1   # a guess fixed at an earlier landing (the director's AI never reacts to a launcher)
+								r.aiGuardOnLauncher += 1   # a guess made at an earlier landing, pressed its reaction time into the wind-up
+								if g - int(q[2]) < react - 2:
+									r.aiGuardSoon += 1   # sooner than its reaction time after the launcher was seen (2 ticks of slack for the beat's scheduling)
 								break
 			var keep := []
 			for q in open:
