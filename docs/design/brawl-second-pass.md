@@ -315,6 +315,8 @@ The press throws the light, as always. **The burst starts when the hold is certa
 - **The rule decides, and the content follows it.** Each fighter needs one heavy that lands on an arm and one that lands on a leg. The Protagonist has both. The rival's ten have neither, so two of his are re-aimed. He doesn't need two more (Combat's question). Until then his wrench plays his nearest heavy, and the crippling moment's own beat carries the read.
 - **A wrench doesn't launch,** even at a full charge: a blow to a limb doesn't send the whole body. He is knocked back, as by any charged heavy. A tapped heavy and the launcher never wrench.
 
+> **Re-ruled by §14's thirteenth round** (`launch-anywhere.md`, 2026-10-16): B launches from any point in a string, aimed by the stick, with its power and safety from the fight's context. The rest and the hammer are retired. An opening makes the launcher sure, and is no longer the only way to launch.
+
 **The launcher: a heavy on a staggered rival.** New, for Orb's third test: "can I reliably launch my opponent?" Until now a launch came from a full charged heavy, which takes 48 ticks and has no set-up that makes it sure. So a player couldn't launch on purpose.
 
 - **The rule.** A tap of B while the rival is staggered by an opening is the launcher. The openings are the staggers a fighter earns: a flurry's close, a broken guard, a perfect block, a zip's tech counter and a punished taunt. A landed heavy's stagger isn't one, and a shove's isn't.
@@ -1427,3 +1429,18 @@ Three conditions:
 - **Two of UI's asks from the same paper.** The full gauge is a steady state, not a repeated flash, with at most one 0.2 s step up through the register (Legal's k06): I meant a mark you can't miss, not a blink. The hint is UI's option A, "Keep hitting, then press B to launch him." Narrative may polish it, and Orb has the last word.
 
 **4. The rest's ring is a countdown in shape, and it is meant.** It is the one exception to "nothing counts down in a fight", because the question it answers, "is the launcher broken?", is the one Orb hit. It stays a countdown nobody has to watch: no number, steps no faster than one a second, and no flash or pulse when it fills. Full, it simply becomes the lit mark.
+
+### The thirteenth round: launch anywhere (2026-10-16)
+
+Orb (homework 23): launchers "should have an intuitive way to activate and aim at any point in a combo string", and no "cooldowns" or "recharging" "except in limited circumstances". The ruling is its own page, `launch-anywhere.md`.
+
+- **B in a string launches,** aimed by the stick: any B within 24 ticks of one of his landed blows. B cold is the heavy, a mashed B is the heavy flurry, and a held B is the charge, as before.
+- **Its power and safety come from the fight,** never from a counter or a timer:
+  - the string so far, as a gradient (0.55 at one blow up to 1.0 at four or more), not a gate;
+  - the rival's state: sure in an opening, hard to answer after a medium or harder, answerable after a light;
+  - a perfect B, which is the best launcher;
+  - the wounds.
+- **What replaces the rest is freshness by kind of send** (up, across, down, behind, into a building). A kind repeated on the same fighter within 60 s is ×0.75 each time, never under ×0.4, and a new kind is always full. **The rest, the hammer and the rest's ring are retired.**
+- **The route stays honest** by soft costs only, with the twelfth round's edges and new rows for a spammer and a varied route (`launch-anywhere.md` §7).
+- **Encounter's next window** follows window 1 (9d0530dc) as listed there (§9).
+- **The eleventh round's marks are re-purposed:** the lit B whenever a B would launch, with a solid or broken ring; the pips as power; a rose of four arrows for fresh and familiar kinds. The hint is Orb's C: "He's open! Press B and send him flying!"

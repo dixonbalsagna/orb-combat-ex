@@ -211,7 +211,7 @@ The line and the face cut-in always play, whatever the meter does. Narrative's d
 - **He has control again** when his speed drops under a third of the launch's speed. He can also let go early and fly on.
 - **An earned launch can't be braked for its first 12 ticks,** so the hit reads.
 - **It never works** on a crippling blow's launch, a finisher's launch or a hard impact (§7).
-- **With no ki he can't brake.**
+- **With no ki he can't brake.** *Re-ruled 2026-10-16 (`buildings.md` §7.2): with no ki it works at half the rate, it can start 8 to 20 ticks after the send by its power, and he is back in control within about 1 s if he brakes at once. Its look is the midair skid.*
 - **Counterplay:** the brake shows as a flare against his direction of flight. A follow-up can arrive before he stops, and he stops in a place the attacker can read.
 - A small steer is free: the stick bends his path by up to 15 degrees.
 - The ground recovery stays: a dodge tap on a bounce or in a tumble, for 15 ki (`balance-targets.md` §20).

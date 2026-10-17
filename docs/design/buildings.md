@@ -172,3 +172,66 @@ Orb plays both before choosing. The switch is `lodge.mode` in World's data. Both
 | Pinned: the attacker lands energy on the pinned fighter | In at least half of pins |
 | The median match length, pinned against brief | Within 15 s |
 | The first tier-4 chain of a match, when there are three towers on its line | Plays in full (hard, while the budget is World's ask above) |
+
+## 7. Orb's notes: ragdolls, recovery and the chain inside a tower (homework 23, 2026-10-16)
+
+Orb said §6 "Sounds right", and added this note (`docs/ep/vision.md`): "entertaining ragdoll physics-based combat should be a goal, rule-of-cool always takes precedence, player agency should always be respected but when rule-of-cool demands it, the fight choreographer should determine the direction the fight takes." Recovery should come "in a reasonable amount of time", bigger blows should send fighters "flying backwards", and "skidding in midair" should regain control and show velocity. A launch into a building's side can go through the floor inside, bounce off the ceiling and crash down through the next floor. "The fight choreographer should always be aware of cool scenarios as the fight progresses and use the combat alchemy system to choose emergent combat situations."
+
+### 7.1 Ragdolls, and who decides where a body goes
+
+- **The ragdoll is the look, and the sim's journey is the truth.** A sent body's path is the knocked-about journey (`balance-targets.md` §20): deterministic, decided by speed, angle and surface. Animation's physics hangs the limbs, the tumble and every impact on that path, and never moves it. So it is entertaining to watch, and every replay is the same.
+- **Bigger blows send him flying backwards.** A send leaves along the blow's line, away from the attacker unless it is aimed up or down. Its speed comes from its power (`launch-anywhere.md` §4). From a power of 0.8 he tumbles head over heels, ragdolled, rather than sliding upright.
+- **Agency first, then the rule of cool.**
+  - With the stick held, the player's direction wins, and the choreographer may bend it by up to 30° inside its kind toward a cool target.
+  - With no stick, the choreographer picks, by combat alchemy's score: a building's face, the chain inside a tower (§7.3), a ridge, a crater's lip, the open sky.
+  - It never turns a send back against the stick (`launch-anywhere.md` §6).
+
+### 7.2 Getting control back in the air: the brake and the midair skid
+
+Orb's hold to brake stands (`agency-pass.md` §4, on LT). Here it is re-ruled so recovery always comes in a reasonable time.
+
+| | The rule | First value |
+| :--- | :--- | :--- |
+| **When he can start it** | Once the hit has read: sooner after a light send, later after a full launch | From 8 ticks (power 0.55 or less) to 20 ticks (power 1 or more) after the send. Never later, except for the set pieces below |
+| **How long it takes** | The brake slows him at a fixed rate. He has control again when his speed falls under a third of the send's | At most 0.6 s of braking, even from the hardest send. So he is back in control within about 1 s of being launched, if he brakes at once |
+| **Its cost** | Ki, as before: 20 a second held. **With no ki it still works, at half the rate.** Never denied: Orb's "no strict caps" | |
+| **Air sense** | A fighter sent by a kind of launch already marked on him (`launch-anywhere.md` §5) can start braking 25% sooner for each mark | |
+| **Steering** | Free: the stick bends his path by up to 15°, as before | |
+| **Never** | On a finisher's send, a crippling blow's send, a hard impact (`agency-pass.md` §7), or inside the chain of §7.3 until it lodges. These are set pieces | |
+
+**The midair skid** is how the brake looks and sounds, and it shows his speed.
+- He turns to face along his flight with his arms and legs braced against it, as if digging his heels into the air.
+- An air trail runs behind him. Its length shows his speed, so a long skid reads as a big hit.
+- Clouds and dust he passes ripple and part.
+- The sound rises with his speed and drops as he slows.
+- It ends in a catch pose when control comes back.
+- The camera keeps the trail in frame.
+- **A stronger send skids further,** since the brake's rate is fixed. That is the velocity Orb asked to see.
+
+### 7.3 The chain inside a tower: floor, ceiling, floor
+
+- **When a power send enters a tower's face** at 15° to 60° up or down, the body goes on inside along the floors.
+- **Each slab he meets is a contact,** by the knocked-about rules (a bounce between 40° and 70° keeps its share of speed). A slab breaks when the send's effective tier is high enough for it, and a slab that holds is a bounce.
+- **A broken slab collapses locally:** the floor gives way over two or three bays and its debris falls to the floor below, never a whole floor vanishing. Each one counts as half a link of the chain (§1).
+
+| Effective tier of the send | Inside the tower |
+| ---: | :--- |
+| 1 | He breaks no slab. He lodges on the first floor and recovers inside (§6.1) |
+| 2 | Down (or up) through one floor, and he lodges on the next |
+| 3 | **Orb's picture:** through the floor, up off the ceiling (breaking it), and down through the next floor, then he lodges |
+| 4, or a finisher | Up to five slabs. Then the tower's core cracks, and it comes down as a falling stack, aimed at him (§6.3) |
+
+- **The journey's bounds hold:** at most 8 contacts and 4 s from the first contact. Past either, he lodges where he is.
+- **Rule of cool:** with no stick, or within the 30° bend, the choreographer takes an inside chain when a tower stands in the send's kind and the angle fits. It is a high score in combat alchemy.
+- **The camera** cuts to the tower's cutaway, or holds it from the street. That is Camera's, with Rendering's open floors.
+
+### 7.4 QA's rows for this section
+
+| Row | Bound |
+| :--- | :--- |
+| The brake can start within 20 ticks of a send, set pieces apart | Every time (hard) |
+| Braking at once, he has control within 1 s of the launch | Every time (hard) |
+| With no ki, the brake still works | Every time (hard) |
+| The inside chain's slabs, by effective tier | As the table (hard) |
+| A sent body's path the same on every replay, ragdoll or not | Every time (hard) |
+| Inside chains a match, in matches with three or more fights in town at tier 3 and up | 0.3 to 1.5 |

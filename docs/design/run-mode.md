@@ -2,27 +2,31 @@
 
 Owner: Game Design. Date: 2026-10-16. **Paper only.** Nothing here is built or run by me, and **every number is a first value.** It builds on World's stored planet (`docs/world/planet-slice.md`), on `hero-forms.md` and `buildings.md` §6, and it answers Narrative's run state (`docs/narrative/story-beats.md` §2 and §8). It meets Legal's RL-145 (`docs/legal/catastrophe-and-city-screen.md`, c01 to c09). Co-op is not designed here (it is held). The working mode id is `run`.
 
+**Reshaped by Orb's answers to homework 26** (2026-10-16 evening, `docs/ep/vision.md`): every fight starts from the base form, and higher forms become reachable through boons and unlocked abilities; five fights and a boss; a lost fight is retried or ends the run, with extra lives; bosses vary by the run's story; between runs, looks and harder challenges, with a reward economy to shower players with. Rule of cool takes precedence everywhere.
+
 **Orb** (2026-10-16, `docs/ep/vision.md`, "Orb on the stored planet"): "the brawler game-mode could be like a roguelike, with multiple stages across different slices of the planet, small dynamic storyline exposition between each stage. the cities would remain damaged between fights, until the final fight against the boss, where world-catastrophe level variants of abilities can cause large scale destruction".
 
 ## 0. The run in one paragraph
 
-**A run is one planet seed, one fighter, and a chain of stages.** Each stage is a full match on its own slice of that planet, and the player picks it from three offers on the globe. Between stages, two short story beats read what happened. The planet keeps every wound: craters, fallen towers and the people lost. The player's fighter keeps his form and his broken bones. **Each stage takes him one tier higher, so the run climbs as a match does, but across the planet.** It ends in a boss fight that opens a fifth tier, the catastrophe tier, where beams reach the magma, a blast cloud darkens the sky, and the fight can rise into the exosphere.
+**A run is one planet seed, one fighter, and a chain of fights.** Each fight is a full match on its own slice of that planet, and the player picks it from three offers on the globe. Between fights, two short story beats read what happened, and **the player takes a boon:** a form unlocked, an ability, a lifeline, or now and then a temptation that changes the story. The planet keeps every wound: craters, fallen towers and the people lost. **Every fight starts from the base form,** and the boons decide how high the player can climb in it. It ends in a boss fight that opens a fifth tier, the catastrophe tier, where beams reach the magma, a blast cloud darkens the sky, and the fight can rise into the exosphere.
 
-**Where the run's growth lives.** Every opponent arrives at the player's tier and draws what he draws, so the player is never stronger *relative to his opponent* than in versus. What grows is the scale (tiers, destruction, the planet's state), the story, and what the player knows and chooses. This keeps one balance for versus, the AI's bands and the run.
+**Where the run's growth lives.** In the boons: how high the player can transform, and the abilities he has gathered. Opponents climb by the chapter whatever the player picked, so a run that skips form unlocks for something else is a real gamble. The fighters' balance is still versus's, since every boon is a run-only gain and nothing carries past the run but looks (§4.4).
 
 ## 1. The run's shape
 
-### 1.1 Stages, tiers and length
+### 1.1 Fights, forms and length
 
-| | Stage 1 | Stage 2 | Stage 3 | Stage 4 | Stage 5 | The boss |
+| | Fight 1 | Fight 2 | Fight 3 | Fight 4 | Fight 5 | The boss |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **The MVP run (§8)** | Tier 1 to 2 | 2 to 3 | 3 to 4 | | | 4 to 5 |
-| **The full run** (recommended, §9) | Tier 1 to 2 | 2 to 3 | 3 to 4 | At 4 | At 4 | 4 to 5 |
+| **The full run** (Orb's pick) | Base, up to the forms unlocked | The same | The same | The same | The same | Base, up to the forms unlocked, then tier 5 at the tremor |
+| **What the opponent can reach** | Tier 2 | 2 | 3 | 3 | 4 | The boss's arc decides its start (§5.1); tier 5 at the tremor |
+| **The MVP run** (§8) | Three fights and the boss, the opponent reaching 2, 3 and 4 | | | | | |
 
-- **A stage is a full match in its rules.** It has the brawl, the wounds, the brink and the finisher, and Orb's floor of five minutes or more holds for each one (the 10th percentile at 300 s or more). Target: 5 to 7 minutes.
-- **Each stage has one step.** A stage starts at the run's tier, with power at that tier's floor (35, 65 or 100 on today's ladder), and its ceiling is one tier higher. So the step comes inside the stage, about 1:30 in, as the first form does in a match. The rest of the stage is fought one tier up. Stages at tier 4 have no step, and climb by their wounds, the mood and the AI.
-- **The acts are the run's chapters.** A stage's act is its tier. The mood and the plan's act gating read it.
-- **Lengths:** MVP about 30 minutes (four fights and the beats). Full run about 45 minutes.
+- **A stage and a fight are the same thing here.**
+- **Every fight starts from the base form,** with power at 0, and climbs its ladder as a match does. **How high the player can go is the run's ceiling:** at the run's start, the first step (tier 2). Each form boon (§1.4) raises it one tier, to 4 at most.
+- **A fight is a full match in its rules.** It has the brawl, the wounds, the brink and the finisher, and Orb's floor of five minutes or more holds for each one (the 10th percentile at 300 s or more). Target: 5 to 7 minutes.
+- **The slingshot** (`hero-forms.md` §4b) is the Protagonist's answer to an opponent who climbs higher than his ceiling allows him yet: he banks and coils.
+- **Lengths:** the full run is six fights, about 50 minutes with the beats and the boons. The MVP is about 30.
 
 ### 1.2 Choosing each stage: three offers on the globe
 
@@ -31,8 +35,8 @@ Before each stage the globe turns, and **three touch-downs are offered**, each a
 | Kind (working names) | What it is | What it does to the hero's branches | Its reward |
 | :--- | :--- | :--- | :--- |
 | **Rampage** | A populated place, and the opponent has touched down first. The stage opens 15 s after his arrival, with him already in the streets | Witness fills: he is feeding where the hero can see | People saved count double in the score |
-| **Proving ground** | A sparse place: mountains, desert, ice or open sea with a town. The opponent starts one tier above the run's tier (at most 4), at one AI level harder (at most hard) | Trial fills: the opponent has risen first | Two picks of a plan card, where other stages give one (full run). In the MVP, which has no cards, the stage scores 1,500 |
-| **Crossing** | A plain stage. From the second chapter it touches down by, or crosses, a place damaged earlier in the run | Either | **A rest:** after the stage, each broken region heals to battered |
+| **Proving ground** | A sparse place: mountains, desert, ice or open sea with a town. The opponent starts one tier above the run's tier (at most 4), at one AI level harder (at most hard) | Trial fills: the opponent has risen first | Two boons to pick from, one after the other, where other fights give one |
+| **Crossing** | A plain stage. From the second chapter it touches down by, or crosses, a place damaged earlier in the run | Either | **A rest:** after the fight, every region healed to fresh |
 
 - **One of each kind** when the planet allows it. A good opponent (a hero, §5.3) never makes a Rampage offer.
 - **An offer card shows:** the place's name and kind, what the slice holds (cities, towns, biomes), each place's state (fresh, damaged, fallen), the opponent, the stage's tier, the reward, and one line (Narrative's).
@@ -43,6 +47,7 @@ Before each stage the globe turns, and **three touch-downs are offered**, each a
   - **No school, hospital or place of worship is ever a staged target** (Legal c08). No offer, beat or card names one, World's landmarks leave them out as kinds, and the AI's planner never seeks one.
   - The minimum counts only standing places: at least 2 cities that haven't fallen, 3 towns and 3 biomes. In late runs it may relax to World's fallback, 1 standing city and 4 towns.
 - **The boss's place is fixed by the rule, not offered:** the most populous city still standing. The boss goes where there is most left to lose.
+- **The landing dial** (Orb, homework 22: "truly random, with a dial"). World's touch-down is drawn anywhere on the planet at one end of the dial, and always within sight of a place at the other. The run's offers sit at the place end, since a fight needs cities. In versus the dial is a match setup option. **Story mode** (later; it is the co-operative mode, which is held) picks its set pieces dynamically, nearly anywhere.
 
 ### 1.3 What persists, and what resets
 
@@ -52,16 +57,32 @@ Before each stage the globe turns, and **three touch-downs are offered**, each a
 | **A place's people** | **Persist.** The dead stay dead, by cause. The people who fled a standing place come home before the next stage. The people who fled a fallen place are gone for good | So a revisited city has its start, less its dead |
 | **A place's status** | **Persists.** Fresh, damaged (5% or more of its buildings or its people lost) or fallen (under 40% of its buildings standing, or of its people present) | Fallen is for the beats and the offers. A fallen place still stands in the slice as ruins |
 | **The sky** | Persists from the boss's first blast cloud to the end (§3) | |
-| **The player's tier** | **Persists**, one step a stage (§1.1) | Power resets to the tier's floor at each stage's start |
-| **The hero's two fills** (Witness, Trial) | **Persist.** Spent at each step as in `hero-forms.md` | |
-| **The player's wounds** | **Broken regions stay broken** until a rest. Every other region heals one stage: battered to bruised, bruised to fresh | A rest (a Crossing's reward) heals broken regions to battered |
+| **The player's form** | **Resets:** every fight starts from base (Orb) | The run's **ceiling** persists: the forms unlocked so far |
+| **Boons** | **Persist** for the run (§1.4) | None carries past the run |
+| **Lives** | **Persist** (§4.1) | |
+| **The hero's two fills** (Witness, Trial) | **Carry at half.** The story leans, and each fight earns its own | Spent at each step, as in `hero-forms.md` |
+| **The player's wounds** | **Every region heals one stage:** broken to battered, battered to bruised, bruised to fresh | A rest (a Crossing's reward) heals everything to fresh |
 | **The player's ki** | Resets to 60 | As survival's rule |
-| **Plan cards** (full run) | **Persist.** One pick of three after each won stage (two after a Proving ground), from the plan's pool, with its limits: no stacking, and at most five | A card is on from the next stage, with no act gating. Not in the MVP |
-| **The opponent** | **Arrives fresh,** at the run's tier (one above at a Proving ground), and draws a card when the player does | Only the player carries wounds: the run is his attrition |
+| **The opponent** | **Arrives fresh,** at base, and can climb to his chapter's tier (one above at a Proving ground, at most 4) | Only the player carries wounds: the run is his attrition |
 | **The villain's menace** | Starts each stage at 100 × the run's **Dread** (§5.2) | Within a stage it rises and decays as now |
 | **Cosmetic wear on fighters** | Persists as a look: a cracked lens stays cracked | No rule effect |
-| **Chances, score and the ledger** | Persist (§4, §2) | |
-| **Everything else** | **Resets:** the mood, hit-stop, the launcher's rest, signature cooldowns, the hero's cost meter, the brawl's state, every in-match timer | |
+| **The score and the ledger** | Persist (§4, §2) | |
+| **Everything else** | **Resets:** the mood, hit-stop, signature cooldowns, the hero's cost meter, the brawl's state, every in-match timer | |
+
+### 1.4 Boons: what the player takes between fights
+
+After each won fight the player picks **one boon of three** (two in a row after a Proving ground). The offer is drawn from the run's seed, and is the same for the same history.
+
+| Kind | What it gives | Rules |
+| :--- | :--- | :--- |
+| **A form** | The run's ceiling rises one tier: the next form becomes reachable in every fight from now on | **Every offer holds one while a form is still locked,** so the player can always climb. Turning it down is a choice |
+| **An ability** | A run-only power: a plan card from the plan's pool (`upgrade-plan.md` §2: Might, Tempo, Short Fuse and the rest), or a fighter's run boon (a signature variant, a world change, a stronger slingshot) | The plan's limits hold: at most +10% of a stat, and no stacking. At most five |
+| **A lifeline** | One more life (§4.1) | At most three lives held |
+| **A rest** | Every region healed to fresh | Also a Crossing's reward |
+| **A temptation** | A strong gain with a story price: a form at once **and** an ability, or an ability past the plan's limits. **It changes the run's final arc** (§5.1) | Offered once a run, between fights 2 and 3, on a seeded share of runs (a half). Its card says it will be remembered, never what it brings |
+
+- **Choices with weight, never traps:** each card says what it gives in plain words. A temptation is always optional, and its price is a harder ending, never a lost run.
+- **The AI's opponents** don't take boons. They climb by the chapter.
 
 ## 2. Story beats between stages
 
@@ -90,7 +111,10 @@ Before each stage the globe turns, and **three touch-downs are offered**, each a
 - `revisit`: the next stage crosses a place the run has damaged, with its name and its state;
 - `fallen_name`: the place that fell in the last stage;
 - `wound_carried`: the hero goes in with a region broken;
-- `sky`: the sky has darkened (boss only).
+- `sky`: the sky has darkened (boss only);
+- `arc`: the run's final arc (§5.1), once it is known;
+- `temptation`: a temptation was taken, and which;
+- `lives`: lives left, and whether the last fight was a retry.
 
 **What Narrative supplies:**
 - the beats for the added fields;
@@ -102,15 +126,15 @@ Before each stage the globe turns, and **three touch-downs are offered**, each a
 **What the ledger keeps:**
 - for each place: its dead, by cause (player, opponent, other), its people who fled, its buildings lost by cause, its status, and the stage that changed it;
 - for each stage: the offer kind, the opponent, the result, how it ended, the finisher;
-- for the player: the forms taken and their branches, the wounds carried, the cards;
-- for the run: Dread, chances spent, and the planet's share of its people lost.
+- for the player: the forms taken and their branches, the wounds carried, the boons;
+- for the run: Dread, lives spent, the arc, and the planet's share of its people lost.
 
 **How the toll is shown** (Legal c08): as a count and as the planet's state, never as bodies or close-ups and never as points, with no celebratory sound or show when it rises. No child is shown as a victim of graphic violence.
 
 ## 3. Escalation, and the boss's catastrophe tier
 
 **Across the run:**
-- **The tier ceiling** rises a step a stage (§1.1). So the collateral budget rises with it, by tier (`balance-targets.md` §4b: 2, 4, 8 and 15% of the people a minute, and ceilings of 10, 30, 60 and 90%). Early stages dent a city, and late ones can level one.
+- **The tiers the fighters can reach** rise by chapter for the opponent and by boons for the player (§1.1, §1.4). So the collateral budget rises with them, by tier (`balance-targets.md` §4b: 2, 4, 8 and 15% of the people a minute, and ceilings of 10, 30, 60 and 90%). Early fights dent a city, and late ones can level one.
 - **The AI's level** rises by chapter. Story: easy, easy, medium, and the boss at medium. Standard: medium, medium, hard, and the boss at hard. A Proving ground is one level up.
 - **The villain's starting menace** rises with Dread.
 - **The planet's state** worsens, and later slices cross what earlier ones broke.
@@ -119,7 +143,7 @@ Before each stage the globe turns, and **three touch-downs are offered**, each a
 
 - **It exists only in the boss fight.** Everywhere else the ladder ends at 4.
 - **The boss fight has two phases.**
-  - **Phase 1** is fought at tier 4.
+  - **Phase 1** is fought on the ladder, from base. The player climbs to his ceiling, and the boss starts where its arc puts it (§5.1). Power fills half again as fast in a boss fight, so the climb fits inside it.
   - **The tremor.** When the boss's first region breaks, or after 150 s of fight time if that comes first, the ground answers: a quake runs through the slice, with dust, heaving ground and swaying towers (a live set piece, no pause). It is never glowing fissures across the planet, and never a ring leaving it (Legal c06). Both fighters' tier-5 form becomes ready, taken by holding Transform. The boss takes his at once.
   - **Phase 2** is fought at tier 5.
 - **Tier 5 in numbers.**
@@ -149,16 +173,18 @@ Each needs tier 5. Each is credited to the fighter who started it, so the people
 
 ## 4. Failure, replay, scoring and variety
 
-### 4.1 Losing a stage
+### 4.1 Losing a fight: retries and lives
 
-- **The default is to fail forward, with two chances a run** (three on Story, one on Hard).
-  - A lost stage spends a chance. **The place falls:** the opponent takes it, its people flee for good (they are not killed), and the villain's Dread rises by 0.1.
-  - The run goes on to the next offers.
-  - A loss with no chance left ends the run.
-  - The beats read it (`result`: lost or lost_close).
-- **The boss:** a loss with a chance left replays the boss fight once from its start. A second loss ends the run.
-- **An assist, "Retry stages",** at the run's start: any stage may be replayed from its start, without limit. The score is marked assisted and isn't ranked.
-- **Why fail forward:** a 45-minute run lost to one bad stage is too harsh for a fighting game. A run that goes on with a city lost is a story.
+- **A lost fight spends a life and is retried from its start:** the same slice, the same seed and the run state it began with. The planet is as it was when that fight began.
+- **With no life left, a loss ends the run.** The haul is still paid (§4.4).
+- **Lives** (Orb: "a mechanic that gives you extra lives"):
+  - the start: two on Story, one on Standard, none on Hard;
+  - **a clean win** (no region broken at the end) earns one;
+  - a lifeline boon gives one;
+  - at most three are held.
+- **The boss** is retried like any fight.
+- **An assist, "Endless retries,"** is a setting at the run's start. The score is then marked assisted, and isn't ranked.
+- **The beats** read a retry (`lives`) and a run that ended (`result`: lost).
 
 ### 4.2 Scoring
 
@@ -168,7 +194,7 @@ Each needs tier 5. Each is credited to the fighter who started it, so the people
 | The boss | 3,000 |
 | A hero's run: each 1% of the planet's people alive at the end | 20 |
 | A villain's run: each place taken (a stage he won there) | 500 |
-| Each chance spent | −500 |
+| Each life spent | −300 |
 | Style: each chain through two or more buildings, each duel of perfects won, the boss's finisher | 100 each, at most 1,000 |
 
 Fight time breaks ties: less is better, counted in ticks, never the wall clock.
@@ -181,37 +207,73 @@ Fight time breaks ties: less is better, counted in ticks, never the wall clock.
 - **The player's choices give the route.** The same seed and the same choices give the same offers, so a seed can be shared and a run raced.
 - **The ending** reads the planet: most of its people alive, half lost, or most lost. It also reads the sky and the hero's branch history (all Witness, all Trial, or crossing).
 
-### 4.4 Meta-progression: none that makes a fighter stronger
+### 4.4 Between runs: looks, titles, styles and challenges
 
-- **Cosmetics only,** as `unlocks.md` rules: a run's progress counts as every mode's does, and nothing is earned by a death (Legal c08).
-- **Challenge levels** unlock as runs are won (working name: Pressure 1 to 5). Each adds a burden:
-  - the AI one level harder;
-  - one chance fewer;
-  - the villain starting with Dread 0.3;
-  - no rests;
-  - the boss arriving at tier 5.
-- **An atlas** records the planets played and the cities saved and lost. It is a record, and it does nothing.
-- **Why nothing stronger:** the fighters' balance is one balance, shared with versus and the AI's bands. A run that made a fighter stronger next time would need a second balance, and would make an early loss a grind rather than a story. A roguelike's variety here comes from the planet and the choices.
+Orb: "find an approachable, fun, exhilarating game loop for this type of episodic brawler. Ideally I'd like to be able to give players tons of customization options, so lets find out what kinds of rewards we can shower them with for playing." **Nothing that makes a fighter stronger carries past a run.** It is the same balance as versus, and `unlocks.md`'s rules hold: earned through play only, no purchases, no random rolls, nothing missable, and nothing earned by a death (Legal c08).
+
+**The loop: something after every fight, and a haul at the end.**
+
+| When | What the player gets |
+| :--- | :--- |
+| **After every fight won** | Mastery points for his fighter (`unlocks.md` §3), half again a match's, and **a keepsake:** a small trophy of what just happened (a brick from the tower he went through, the rival's cracked lens, a scorched banner). Keepsakes are shown in the haul and on a shelf in the menu |
+| **At the run's end, win or lose** | **The haul:** mastery points by fights won and styles shown, every feat met, the run's keepsakes. A won run adds a pick of three items from his fighter's pool |
+| **The first clear of each final arc** (§5.1) | A showpiece: an outfit set, a victory scene or a finisher style |
+| **Styles in a run** | Every kind of launch used, a chain through three towers, an inside chain, a slingshot from a full coil, a duel of perfects won, a run with no life spent, a city defended to the end. Each one gives an item, and ten of them give a title |
+| **Challenge tiers** | Pressure 1 to 10 (below). Each tier cleared gives a border and an aura tint step; tier 10 gives a showpiece |
+| **The atlas** | A stamp for every place defended, every planet played, every arc seen. Protecting goals are fine; none counts the dead |
+| **The seed of the day** | A run on a shared seed, from the date, offline. A small item for each week played. Leaderboards come with online play, later |
+
+**The kinds of reward,** with Art's pool of about 122 items a fighter and 38 shared (`unlocks.md` §3), plus these run kinds:
+- **titles,** about 40, shown on the fighter-select card and in the beats' cut-ins (Narrative words them);
+- **finisher styles:** for each finisher, three variants of its camera, colour and closing pose. A style never changes a finisher's rules;
+- **intro variants** for the dynamic introductions Orb asked for;
+- **keepsakes;**
+- **HUD frames** and **victory scenes.**
+
+**Pacing.** A first run of about 30 minutes gives at least five things the player can see. A full run gives eight to ten. Early on, a mastery level comes every one or two fights.
+
+**Challenge tiers** (Pressure 1 to 10). Each adds one burden, and they stack:
+1. the AI one level harder;
+2. one life fewer;
+3. the villain starting with Dread 0.3;
+4. no rests offered;
+5. offers of two boons, not three;
+6. opponents reach one tier higher;
+7. no temptation;
+8. clean wins earn no life;
+9. the boss arriving at tier 5;
+10. all nine together.
+
+**What never counts:** deaths, purchases, random rolls, and anything missable.
 
 ### 4.5 Endless (the old `survival`)
 
-Stages until a loss, with no boss and tier 4 from stage 3. It ends when the planet runs out of standing cities (§6). The score is stages won and people saved.
+Fights until a run would end, with no boss: the opponent reaching tier 4 from fight 3, and boons as in a run. It ends when the planet runs out of standing cities (§6). The score is stages won and people saved.
 
 ## 5. The branches, menace and the cast across a run
 
-### 5.1 The cast
+### 5.1 The cast, and the final arcs
 
 - **The player's fighter:** any fighter. The MVP is the Protagonist.
-- **The rival:** the recurring opponent, and the stages' usual face. In the MVP he is every opponent and the boss: the rival at his worst.
-- **The boss**, once the roster has a villain built for it: the Empress or the Cyborg, by the run seed. The rival then stays a stage opponent.
-- **The rival beside the hero at the boss** (Narrative's final approach, steps 3 and 6) is a later option. It would be an AI partner under the one-v-many rules (one striker at a time, the partner's interjections, `empress-guards.md` §5). It is not co-op: co-op stays held.
+- **The rival:** the recurring opponent, and the fights' usual face.
+- **The boss varies with the run's story** (Orb: "there should be different story beats allowing for different final bosses"). Which **final arc** plays is decided by the run's state, deterministically, and the ledger keeps it as `arc`:
+
+| Arc | When it plays | Fight 5 | The boss |
+| :--- | :--- | :--- | :--- |
+| **The hidden hand** | A temptation was taken between fights 2 and 3 | The Empress, with her guards. She falls | **The Demon Cyborg appears,** one transformation short of his final form. The tremor gives it to him |
+| **The rival's debt** | No temptation, and the player has beaten the rival in two or more fights | The boss. At its brink, **the rival steps between them and lets it get away,** a set piece. The fight goes on against the rival, from where it stood | The boss, recovered, in the city it fled to |
+| **The court** | Otherwise | The rival, or one of the boss's own | The Empress at the catastrophe tier |
+| **The MVP** | While only the two fighters exist | The rival | **The rival at his worst** |
+
+- **The arcs are content to come,** since the Empress and the Cyborg aren't built. Narrative writes each arc's beats and the final approach's variants. New arcs are data.
+- **The rival beside the hero at the boss** (Narrative's final approach) stays a later option, as an AI partner under the one-v-many rules. It is not co-op: co-op stays held.
 - **A villain's run:** the player plays the villain, and the boss is the planet's last defender. It is designed here and comes after hero runs.
 
 ### 5.2 A run that keeps pressing the hero
 
-- **His fills carry.** The run's offers let him steer. A Rampage fills Witness and a Proving ground fills Trial, and the map says which is which. The route he takes is his branch.
+- **His fills carry, at half.** The run's offers let him steer. A Rampage fills Witness and a Proving ground fills Trial, and the map says which is which. The route he takes is his branch.
 - **His own kills keep costing him,** as now (`hero-forms.md` §7). The ledger keeps them, and the beats grow heavier with them (`casualty_cause`: hero). They never power him.
-- **Dread** is the share of the planet's people the villains have killed in the run, divided by 0.4, plus 0.1 for each place taken by a lost stage (§4.1), at most 1.
+- **Dread** is the share of the planet's people the villains have killed in the run, divided by 0.4, at most 1.
   - It sets the villain's starting menace each stage (100 × Dread).
   - It sets the boss's tier-5 damage: up to +10% at a Dread of 1.
   - **It is a power meter, never a score** (Legal c08). If the HUD shows it at all, it shows the boss's strength.
@@ -220,7 +282,7 @@ Stages until a loss, with no boss and tier 4 from stage 3. It ends when the plan
 
 ### 5.3 Good against good
 
-- **A stage against another hero** (a mirror, or a hero fighter later) is a trial. Escalation needs no deaths there: the run's tier carries it, and the first to step up fills the other's Trial (`hero-forms.md` §5). Such an opponent makes no Rampage offers.
+- **A stage against another hero** (a mirror, or a hero fighter later) is a trial. Escalation needs no deaths there: the ladder carries it, and the first to step up fills the other's Trial (`hero-forms.md` §5). Such an opponent makes no Rampage offers.
 - **A run's boss is always a threat to the planet:** a villain, or in a villain's run the planet's defender. The catastrophe tier is what the boss threatens.
 
 ## 6. The planet's capacity
@@ -240,12 +302,12 @@ My estimates for a run, for World and QA to measure:
 | ... at tier 4 | about 1 | 1 or 2 cities |
 | The boss, at tier 5 | 1 or 2 | the rest of its slice |
 | **The MVP run** | **about 3 of 12** | most of what its four slices crossed |
-| **The full run** | **about 5 of 12, and up to 7 with two lost stages** | |
+| **The full run** | **about 5 of 12** | |
 
 - **How long the planet lasts.**
   - Any two standing cities lie on one great circle, so a slice through two standing cities exists as long as two stand.
   - Three different offers need about four standing cities, which give six pairs.
-  - **So a planet can take about 8 fallen cities before the offers run dry.** A full run stays inside that, even with every chance spent. Endless mode ends when fewer than four cities stand.
+  - **So a planet can take about 8 fallen cities before the offers run dry.** A full run stays inside that. Endless mode ends when fewer than four cities stand.
 - **Towns** fall more easily, at about one a stage, about 6 of 31 in a full run.
 - **People.**
   - The planet's people are the sum of its places, normalised as World does, so a slice at full has the 1,800 of today's arena. A slice through ruins has fewer, and the meters read what is really there: a villain can't feed in ruins.
@@ -260,11 +322,12 @@ My estimates for a run, for World and QA to measure:
 - **The run state** is what passes from stage to stage:
   - each place's wear list, its people and its status;
   - the ledger;
-  - the player's carry: tier, fills, branch history, wear by region, cards;
-  - Dread, chances and the score parts.
+  - the player's carry: the ceiling and the boons, the fills (at half), branch history, wear by region, lives;
+  - Dread, the arc and the score parts.
 
   It is a pure function of the state before and the stage's end. It is hashed, and it is a few KB.
 - **A stage replays on its own:** its header holds the stage seed, the slice (T and bearing), the run state's hash and the run state itself, plus the input log. Bit-identical, like any match (ADR 0004).
+- **A retry** starts again from the fight's own header: the same seed and the same run state in.
 - **A run replays** as its seed, the choices and each stage's inputs, in order. Each stage's end state is checked against the next one's header.
 - **The beats and the offer cards' lines** are drawn in the presentation layer from the ledger and the run seed (Narrative's rule 6). The sim never reads them.
 - **No wall clock** anywhere: time is ticks. Float64 and our own trig, as World's planet function already is.
@@ -275,12 +338,13 @@ My estimates for a run, for World and QA to measure:
 **The MVP cut:**
 - the Protagonist against the rival;
 - three stages and the boss, with three offers a chapter, shown as cards with World's strip diagram rather than a globe;
-- the wear list, fail forward, the ledger and Narrative's beats;
+- every fight from base; boons (forms, a few plan cards, a lifeline, rests); lives and retries;
+- the wear list, the ledger and Narrative's beats;
 - tier 5 with the tremor;
 - **the crust breach and the blast cloud;**
 - the score.
 
-**Not in the MVP:** the exosphere, plan cards, the globe map, villain runs, the rival as a partner, challenge levels, endless.
+**Not in the MVP:** the exosphere, temptations and the other arcs, the globe map, villain runs, the rival as a partner, challenge tiers past 3, endless.
 
 **The order:**
 
@@ -288,13 +352,13 @@ My estimates for a run, for World and QA to measure:
 | ---: | :--- | :--- |
 | 1 | The planet, the slices and the touch-down: World's windows 1 to 4 (`planet-slice.md`) | World |
 | 2 | **A city stays damaged:** the wear list per place, written at a stage's end and read back into a later slice. This is the run's heart, and it is testable alone: two scripted matches on crossing slices | World |
-| 3 | The run state, its hash, the carry (tier floor and ceiling, fills, wounds, ki), stage seeds, the run log and its replay | Simulation, Tools |
+| 3 | The run state, its hash, the carry (the ceiling, boons, fills at half, wounds, lives), fight seeds, the run log, retries and the replay | Simulation, Tools |
 | 4 | The offers and the run screens: cards, the stage, the beats, the results | UI, with Narrative |
 | 5 | The ledger's fields, wired to Narrative's beats, and the new ones | Simulation, Narrative |
 | 6 | Tier 5, the tremor and the crust breach, with the catastrophe allowance and its blast flag (§10.1). Research's smallest first build starts it: the breach and its magma model in one boss scene | Simulation, World, Encounter, VFX |
 | 7 | The blast cloud's rules, and the sky (`ash`) | Simulation, Rendering, VFX |
-| 8 | Fail forward, chances, the assist and the score | Simulation, UI |
-| After | The exosphere (a height band, falling shots, a camera that can hold the planet); plan cards; the globe map; the full run; villain runs | Many |
+| 8 | Boons, lives and retries, the score and the haul | Simulation, UI |
+| After | The exosphere (a height band, falling shots, a camera that can hold the planet); temptations and the arcs; the globe map; the full run; villain runs | Many |
 
 **The MVP's QA rows:**
 
@@ -302,6 +366,8 @@ My estimates for a run, for World and QA to measure:
 | :--- | :--- |
 | A building marked, breached or downed in a stage is in the same state when a later slice crosses it | Every time (hard) |
 | A stage replays bit-identical from its header alone | Every time (hard) |
+| A retry starts from the same run state as the fight it retries | Every time (hard) |
+| Every boon offer holds a form while one is still locked | Every time (hard) |
 | The run state at a stage's start is the one the last stage ended with | Every time (hard) |
 | No offer touches down in a fallen place, and no stage starts with a fighter in a crater or under water | Never (hard) |
 | Each stage's length | 10th percentile 300 s or more, median 5 to 7 min |
@@ -315,14 +381,15 @@ My estimates for a run, for World and QA to measure:
 | Catastrophe light events, across everything on the screen | At most one every 2 s, rising over 0.3 s or more and falling over 1 s or more (hard, c02) |
 | A score, achievement, unlock or challenge that counts a death | None (hard, c08) |
 
-## 9. Questions for Orb
+## 9. Orb's answers (homework 26), and what is asked next
 
-In `homework/26-run-mode.md`:
-1. Losing a stage: the city falls and you go on (recommended), retry it, or the run ends?
-2. Your form between stages: you keep it, a step a stage (recommended), or every stage starts from your base?
-3. The full run's length: three stages and the boss, five (recommended), or seven?
-4. The final boss: the rival for now, and later a bigger villain with the rival at your side (recommended), always the rival, or a bigger villain alone?
-5. Between runs: only looks and harder challenges (recommended), or something that makes you stronger?
+- **Losing:** a retry of the same fight, or the run ends, with extra lives (§4.1).
+- **Power between fights:** every fight starts from base, and boons make the higher forms reachable (§1.1, §1.4).
+- **Length:** five fights and a boss.
+- **The boss:** different final arcs by the run's story (§5.1).
+- **Between runs:** looks and harder challenges, and a reward economy to shower players with (§4.4).
+
+The next questions are in `homework/30-run-and-launch.md`.
 
 ## 10. Answers to Research, Simulation and Narrative (2026-10-16)
 
@@ -357,10 +424,10 @@ In `homework/26-run-mode.md`:
   - The collateral budget and the ceilings (`balance-targets.md` §4b) are shares of the people present at the stage's start.
   - The meters' gains per person stay normalised by 425 / `pop0`, the run-start figure. So a person counts the same everywhere in the run, and a villain feeds less in ruins because fewer people are there.
 - **What carries between stages** (§1.3):
-  - the tier, with power reset to the tier's floor;
-  - Witness and Trial, spent at a step;
-  - broken regions, with the rest of the wear healed one stage;
-  - the plan cards (full run);
+  - the ceiling (the forms unlocked), with every fight starting from base;
+  - Witness and Trial, at half;
+  - the wear, every region healed one stage;
+  - the boons and the lives;
   - the villain's feeding meter, which starts each stage at 100 × Dread (menace now, and Pride by the same rule when it lands).
 
   Reset: ki to 60, the hero's cost meter, the mood, the cooldowns and the timers.
@@ -376,12 +443,12 @@ In `homework/26-run-mode.md`:
 
 - **The fields are aligned in §2:** Narrative's fourteen with their bands, and four more: `revisit`, `fallen_name`, `wound_carried` and `sky`.
 - **`boss` gains `rival`,** since the MVP's boss is the rival at his worst.
-- **A loss doesn't end the run while a chance is left** (§4.1): the place falls and the run goes on. So `lost` and `lost_close` lead into the fall, not into a retry. A loss with no chance left ends the run, and plays the end-of-run beat. The boss is the one stage that is replayed: once, if a chance is left.
+- **A loss is retried while a life is left** (§4.1, re-ruled by Orb's homework 26). So `lost_close` leads into the retry beat, as Narrative first wrote it, and a loss with no life left ends the run and plays the end-of-run beat.
 - **Legal's c07 and c08 apply to the beats:** no siren or countdown that evokes a real alert in the final approach, no real city, date or event, and no line that cheers a death.
 
 ### 10.4 Simulation's three, from `docs/architecture/run-core.md` §9
 
 - **A Rampage's 15 s head start is played,** as part of the match and its replay. The opponent lands at tick 0 and the player's fighter arrives from the sky above the slice. **The player steers his descent from tick 0:** where along the slice he comes down, and how fast. A dive lands him as soon as 6 s; otherwise he lands at 15 s. A fast landing is an impact like a ground power-up, and its people are on his account. Witness counts what the opponent does within 3,000 units of him while he comes down. Laid-on wear would give the player nothing to see and Witness nothing to count. The head start's casualties stay inside the stage's budget at its floor tier.
 - **The roundings to thousandths are accepted,** at the hand-over only and never inside a stage, by one rule everywhere: to the nearest, half away from zero. Fills run to 100, so a thousandth is far below anything a band reads. Dread's thousandth moves the boss's damage by a hundredth of a percent.
-- **A stage that ends before its step still steps his tier.** The run's tier is the chapter's, not the power he earned: the next stage's floor is the run's tier plus one, whether the stage was won or lost, and the opponents step with him, so nothing is gained relative to them. A form he didn't take is taken at the hand-over, by the branch rule on his fills at the stage's end. He opens the next stage in it, with its 0.3 s beat as he lands.
+- **A fight that ends before its step:** nothing steps between fights any more, since every fight starts from base (Orb's homework 26). The run's ceiling rises only by a form boon.
 - **One correction for the core:** since Legal's c05 the ash rises over at least 120 s (§3.2), not 20 s.
