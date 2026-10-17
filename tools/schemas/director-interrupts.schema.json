@@ -692,6 +692,45 @@
           "patternProperties": {
             "^_": true
           }
+        },
+        "return": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "The return from a send: a readable approach back and a tell on the first blow back."
+            },
+            "minTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "His approach back lasts this many live ticks at least."
+            },
+            "windTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "... and crouches this many before it moves."
+            },
+            "firstWindTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "His first blow back lands this many live ticks later than it would, with a windup cue."
+            },
+            "forTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "He is returning for this many live ticks at most after he comes free."
+            },
+            "meetMinTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "A press of his rival on his approach back, this many live ticks or more before he arrives, meets it in the middle."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "The return from a send (Orb, 2026-10-15)."
         }
       },
       "description": "The ranged press (agency-pass.md section 1; sim/director/bands.gd). Orders (engageBh at most closeBh, closeBh below midBh, minTicks at most maxTicks) are checked by tools/lib/xref-fight.js (bands-order).",
@@ -2402,6 +2441,11 @@
               "exclusiveMinimum": 0,
               "maximum": 1,
               "description": "The flight multiplier of the launched fighter: above 0, at most 1 (tuned down to 0.6)."
+            },
+            "lateTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "A B counts as the launcher until this many ticks after the close (the stagger, if longer). After the stagger he can answer it."
             }
           },
           "additionalProperties": false,

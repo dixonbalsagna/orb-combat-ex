@@ -66,6 +66,8 @@ static func requestAttack(S: SimState, A, kind: String) -> void:
 	var entry: int = 1 if m > SimAct.awayDead else (-1 if m < -SimAct.awayDead else 0)   # toward, neutral or away (step 4 reads it)
 	if kind != "sig" and A.act.mode == 1 and DirBlast.press(S, A, KIND.find(kind)):
 		return   # the energy family, outside an exchange: the press fires a blast from where he stands, in any band
+	if kind != "sig" and DirBands.meetReturn(S, A, KIND.find(kind), entry):
+		return   # his rival is on his way back from a send: they meet in the middle (bands.return)
 	if kind != "sig" and not DirBury.followUp(S, A, SimRoster.opp(S, A)) and DirBands.farPressNow(S, A, KIND.find(kind), entry):
 		return   # the far band: the press fires on its tick as a taunt, an answer or (held) a charge; it never waits
 	SimAct.push(A, KIND.find(kind), A.act.mode, entry, S.tick)
@@ -316,6 +318,8 @@ static func _start(S: SimState, A, kind: String) -> int:
 		ex.loser = S.fighters.find(D)
 	else:
 		var fav: String = DirMelee.planMelee(S, ex)
+		if DirBrawl.returning(S, A):
+			DirBrawl.returnTell(S, ex, A, D)   # his first blow back from a send has a tell (bands.return)
 		ex.loser = S.fighters.find(D) if fav == "attacker" else (S.fighters.find(A) if fav == "defender" else -1)
 	planDefStance = -1
 	planContext = ""

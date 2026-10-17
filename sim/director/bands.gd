@@ -116,6 +116,12 @@ static func begin(S: SimState, A, D, weight: int, entry: int, pressTick: int, op
 	var n: int = clampi(int(ceil(maxf(0.0, d - eng) / float(m.speed) * DirData.TICKS_PER_SEC)), int(m.minTicks), int(m.maxTicks))
 	# The mid-band lunge winds up before it moves (melee-press-feel.md section 2b): a crouch the defender can read.
 	var wind: int = int(c.lunge.get("windupTicks", {}).get(_weightName(weight), 0)) if (b == MID and not charge) else 0
+	var ret: bool = DirBrawl.returning(S, A)
+	if ret:
+		# His approach back from a send (bands.return): long enough to read, and a crouch before it moves.
+		var rc: Dictionary = c.get("return", {})
+		n = maxi(n, int(rc.get("minTicks", 40)))
+		wind = maxi(wind, int(rc.get("windTicks", 10)))
 	A.state = "free"
 	A.hideT = 0.0
 	A.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(A.x, D.x)), A.face)
@@ -134,6 +140,8 @@ static func begin(S: SimState, A, D, weight: int, entry: int, pressTick: int, op
 	SimFx.rush(S, A, D, S.tick + wind + n)
 	if charge or b == MID:
 		_startCue(S, A, D, ("charge_" if charge else "lunge_") + _weightName(weight), "charge" if charge else "lunge", wind, n)
+	if ret:
+		_startCue(S, A, D, "return", "charge" if charge else ("lunge" if b == MID else "far"), wind, n)   # for Camera to catch him, and VFX and Animation to show him coming
 	var what: String = ": CHARGES" if charge else (": LUNGE" if b == MID else ": FLIES IN")
 	SimEvents.feed(S, A.name + " " + String(DirExchange.KIND[weight]).to_upper() + what, NAMES[b] + " band, " + SimMathx.jstr(SimMathx.jround(d / BH)) + " bh; " + ("he winds up for " + str(wind) + " ticks; " if wind > 0 else "") + "the exchange starts at the wind-up, in " + str(wind + n) + " ticks")
 	_aiChoose(S, D, wind + n)
@@ -194,6 +202,32 @@ static func farPressNow(S: SimState, A, weight: int, entry: int) -> bool:
 		begin(S, A, D, weight, entry, S.tick)   # the first move is his: his press from afar flies in, where a tap would open a taunt
 	else:
 		farPress(S, A, D, weight, entry, S.tick)
+	return true
+
+
+## A press of R's while his rival is returning from a send (bands.return), on his approach back and past its crouch, at
+## least return.meetMinTicks before he arrives: the two meet in the middle, a trade (a clash for a heavy), as a far
+## taunt that is answered does. So his arrival is never a free hit on a fighter who acted. False when it doesn't apply.
+static func meetReturn(S: SimState, R, weight: int, entry: int) -> bool:
+	if not on() or S.dirS.ex != null or S.game.ko != null:
+		return false
+	var k: int = who(S)
+	if k < 0:
+		return false
+	var T = S.fighters[k]
+	if T == R or not DirBrawl.returning(S, T) or DirInterrupt.gi(T, DirInterrupt.APPR_WIND) > 0:
+		return false
+	if DirInterrupt.gi(T, DirInterrupt.APPR_LEFT) < int(data().get("return", {}).get("meetMinTicks", 8)):
+		return false   # he is all but there: the press waits, as any
+	if (R.state != "free" and R.state != "charging") or R.stunTicks > 0:
+		return false
+	var tw: int = DirInterrupt.gi(T, DirInterrupt.APPR_REQ) & 3
+	DirInterrupt.si(T, DirInterrupt.APPR_LEFT, 0)
+	DirInterrupt.si(T, DirInterrupt.APPR_WIND, 0)
+	DirInterrupt.si(T, DirInterrupt.APPR_REQ, tw)
+	T.rush = null
+	meet(S, R, T, weight, entry, S.tick)
+	SimFx.cue(S, R, "return_met", "", "")
 	return true
 
 

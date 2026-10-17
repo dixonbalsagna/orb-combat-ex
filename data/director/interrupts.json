@@ -77,7 +77,7 @@
     "enabled": true,
     "closeBh": 3,
     "midBh": 12.5,
-    "engageBh": 2.5,
+    "engageBh": 2.5, "return": {"enabled": true, "minTicks": 40, "windTicks": 10, "firstWindTicks": 10, "forTicks": 600, "meetMinTicks": 8, "_note": "The return from a send (Orb, 2026-10-15). A fighter free again after a launch, a knock-back or a fall is returning for forTicks at most, until his first blow back. His approach back lasts minTicks at least and crouches windTicks before it moves; his first blow back lands firstWindTicks later than it would, with a windup cue (text return). A press of his rival on that approach, past the crouch and meetMinTicks or more before he arrives, meets it in the middle."},
     "lunge": {
       "speed": 4000,
       "minTicks": 3,
@@ -400,7 +400,8 @@
       "windupTicks": 14,
       "worth": 3,
       "ki": 5,
-      "restS": 40,
+      "restS": 30,
+      "lateTicks": 24,
       "flightMul": 1
     },
     "energy": {

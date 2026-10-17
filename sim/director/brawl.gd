@@ -146,7 +146,10 @@ const BOLT_RUN: int = BASE + 94   # the run his mashed bolts follow, plus 1 (the
 const BOLT_I: int = BASE + 95     # ... and his place in it
 const SENT: int = BASE + 96       # 1 while he is sent (launched, knocked back, down) and not yet free (kept across brawls)
 const MOVE_AT: int = BASE + 97    # S.tick from which he may start an approach again: the first move is the rival's until then (kept across brawls)
-const END: int = BASE + 98
+const RET_N: int = BASE + 98      # 1 while he is returning from a send: free again, his first blow back still to come (bands.return)
+const RET_AT: int = BASE + 99     # the live tick he came free after the send
+const LC_LATE: int = BASE + 100    # 1 while the launcher on his line was thrown after the stagger: he can answer it
+const END: int = BASE + 101
 const RUN_U: int = 4   # the run is counted in quarters of a point
 const HEAVY2: int = ((3 + 1) << 3) | (3 + 1)   # LAST2 when both were heavies (BIG)
 const LIGHT: int = 0
@@ -727,7 +730,7 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		else:
 			f.ki -= ep
 			paid = true
-	var lau: bool = st == 2 and not paid and _g(f, LC_UNTIL) > 0 and o.stunTicks > 0 and f.ki >= float(c.launcher.ki)
+	var lau: bool = st == 2 and not paid and _g(f, LC_UNTIL) > 0 and (o.stunTicks > 0 or S.tick <= _g(f, LC_UNTIL)) and f.ki >= float(c.launcher.ki)
 	if st > 0 and not paid:
 		# A press he can't pay for throws the strongest blow he can pay for (brawl-second-pass.md section 8): a B becomes
 		# a medium, and with nothing a Y or a B becomes a light. It has no cue of its own: the blow's cue says what he threw.
@@ -805,12 +808,22 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		_s(f, HOLD_AT, 0)
 		_s(f, X_LIVE, now if (f.input.lightHeld and rip == 0 and not energy and not floor) else 0)   # still down: it may become the burst (a held bolt is its tap; a new burst needs a new press)
 	lead += d
+	if returning(S, f):
+		# His first blow back from a send has a tell: the defender has a window to strike first, to guard or to perfect-block.
+		var rw: int = int(_rcfg().get("firstWindTicks", 10))
+		lead += rw
+		_s(f, RET_N, 0)
+		var rwe = _ev(S, f, "windup", "return", _cellOf(st))
+		rwe.target = float(S.fighters.find(o))
+		rwe.n = S.tick + lead
+		rwe.dur = float(rw)
 	_s(f, CLOSE_N, d)
 	_s(f, PRE, 0)
 	_s(f, GAPV_ON, 0)
 	if wound:
 		_s(o, GAVE, 0)   # the rival has not given ground against this wind-up yet
 	_s(f, FLAV, 1 if energy else (2 if lau else 0))
+	_s(f, LC_LATE, 1 if (lau and o.stunTicks <= 0) else 0)   # thrown after the stagger: he can answer it
 	var dmg: float = worth * _unit()
 	# The press behind the blow, for the launch's earners: its weight, its stick and its intent. Its rhythm is the brawl's own.
 	var pp: int = DirAlchemy.last(S, f)
@@ -845,7 +858,7 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		if not args["ready"]:
 			args["hammer"] = true   # it always lands, it staggers him in place, and the brawl goes on
 		args["aim"] = _quarter(f, o)   # the stick's quarter, read once, at the press
-	if rip > 0 or lau:
+	if rip > 0 or (lau and o.stunTicks > 0):   # a launcher inside the stagger always lands; after it, he can answer it
 		args["sure"] = true
 		o2["noParry"] = true
 		o2["weighed"] = true
@@ -1442,7 +1455,7 @@ static func _lcOpen(S: SimState, ex, f, o, ticks: int, why: String) -> void:
 	if ticks < int(lc.minStagger) or quiet(ex) or f.stunTicks > 0:
 		return
 	var was: int = _g(f, LC_UNTIL)
-	_s(f, LC_UNTIL, maxi(was, S.tick + ticks))
+	_s(f, LC_UNTIL, maxi(was, S.tick + maxi(ticks, int(lc.get("lateTicks", 0)))))   # the stagger, or lateTicks after the close (the wider window)
 	if was > 0:
 		return   # his opening is on already: it lasts as long as the stagger does
 	if f.ai != null:
@@ -1453,7 +1466,8 @@ static func _lcOpen(S: SimState, ex, f, o, ticks: int, why: String) -> void:
 	_s(f, LC_PING, 1)
 	var e = _ev(S, f, "launcher_open", why)
 	e.target = float(S.fighters.find(o))
-	e.n = S.tick + ticks
+	e.n = _g(f, LC_UNTIL)   # the window's end
+	e.dur = float(ticks)   # the stagger: inside it his B always lands
 
 
 ## f's opening closes. The cue goes out only when launcher_open did. how: used (he threw the launch), lapsed (the
@@ -1476,7 +1490,7 @@ static func launcherOpen(S: SimState, f) -> int:
 	if not inBrawl(S, f) or _g(f, LC_UNTIL) == 0:
 		return -1
 	var o = S.dirS.ex.D if f == S.dirS.ex.A else S.dirS.ex.A
-	return S.tick + maxi(0, o.stunTicks)
+	return maxi(_g(f, LC_UNTIL), S.tick + maxi(0, o.stunTicks))   # the window's end (the stagger's, or lateTicks after the close)
 
 
 ## For Animation, UI and QA: giving ground. Empty unless f may give ground on this tick (the rival winds or charges,
@@ -2378,6 +2392,44 @@ static func sentTick(S: SimState) -> void:
 		elif _g(f, SENT) == 1 and f.state == "free" and f.stunTicks <= 0:
 			_s(f, SENT, 0)
 			_s(f, MOVE_AT, S.tick + lock)
+			if bool(_rcfg().get("enabled", false)):
+				_s(f, RET_N, 1)   # he is returning: his approach back and his first blow back are read (bands.return)
+				_s(f, RET_AT, _now(S))
+
+
+## The return's numbers (data/director/interrupts.json bands.return).
+static func _rcfg() -> Dictionary:
+	return DirBands.data().get("return", {})
+
+
+## True while f is returning from a send: free again after a launch, a knock-back or a fall, his first blow back still to
+## come, and for bands.return.forTicks at most.
+static func returning(S: SimState, f) -> bool:
+	if _g(f, RET_N) != 1:
+		return false
+	var rc: Dictionary = _rcfg()
+	if not bool(rc.get("enabled", false)) or _now(S) - _g(f, RET_AT) > int(rc.get("forTicks", 600)):
+		return false
+	return true
+
+
+## His first blow back from a send in a planned exchange (a far charge's arrival keeps its template): every beat of it
+## waits bands.return.firstWindTicks, and its window with it, and the windup cue (text "return") shows the tell.
+static func returnTell(S: SimState, ex, A, D) -> void:
+	var rw: int = int(_rcfg().get("firstWindTicks", 10))
+	var first: float = INF
+	for b in ex.beats:
+		if not b.done:
+			b.t += float(rw) / DirData.TICKS_PER_SEC
+			if b.op == "strike" or b.op == "chainStrike":
+				first = minf(first, b.t)
+	if ex.windowStart >= 0.0:
+		ex.windowStart += float(rw) / DirData.TICKS_PER_SEC
+	_s(A, RET_N, 0)
+	var e = _ev(S, A, "windup", "return", "")
+	e.target = float(S.fighters.find(D))
+	e.n = S.tick + (int(round((first - ex.t) * DirData.TICKS_PER_SEC)) if first < INF else rw)
+	e.dur = float(rw)
 
 
 ## True while the first move is the rival's: f was sent, and is free for fewer than firstMove.lockTicks.
@@ -2595,9 +2647,9 @@ static func tick(S: SimState, ex) -> void:
 		if not _windOn(o):
 			_s(f, GAVE, 0)   # the wind-up he gave ground against is over
 		# A launcher on its way holds the stagger until it lands. The launcher's window lasts as long as the stagger.
-		if _g(f, FLAV) == 2 and _g(f, LINE) == 1:
+		if _g(f, FLAV) == 2 and _g(f, LINE) == 1 and _g(f, LC_LATE) == 0:
 			o.stunTicks = maxi(o.stunTicks, _g(f, CONTACT) - now + 2)
-		elif _g(f, LC_UNTIL) > 0 and o.stunTicks <= 0:
+		elif _g(f, LC_UNTIL) > 0 and o.stunTicks <= 0 and S.tick > _g(f, LC_UNTIL):
 			_lcClose(S, f, "lapsed")
 		# A boost with the stick away leaves, at the dodge-cancel's price and by its rules (a dodge tap is DirInterrupt's).
 		if ex.t > SimConst.DT * 1.5 and f.input.sprint and f.stunTicks <= 0 and not sureAgainst(ex, f) and now >= _g(f, OPEN_UNTIL) and f.input.mx * SimMathx.jsign(SimWrap.sdx(f.x, o.x)) < -SimAct.awayDead and DirInterrupt.dodgeCancel(S, ex, f):
