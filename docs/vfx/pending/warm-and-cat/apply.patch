@@ -1,56 +1,3 @@
---- a/render/vfx/debris.gd
-+++ b/render/vfx/debris.gd
-@@ -70,6 +70,8 @@
- var spawned: int = 0          # counters for the tests
- var dropped: int = 0
- var max_live: int = 0
-+var dense_dropped: int = 0     # shards thinned out of a dense burst (VfxLook.DENSE_START)
-+var _shard_alive: int = 0      # glass, steel and chunks alive: recounted each step, counted up as they are made
- var _rs: SimRng               # vfx.shard
- var _rd: SimRng               # vfx.dust
- var quality: int = VfxLook.Q_HIGH
-@@ -99,6 +101,7 @@
- 	var spray_n: int = 0   # recounted below, after the jobs, so a job's throws see the real count
- 	var rubble_n: int = 0
- 	var flame_n: int = 0
-+	var shard_n: int = 0
- 	# Jobs are on unfrozen sim time (S.T): a hit-stopped ripple waits with the world.
- 	if not jobs.is_empty():
- 		var i: int = 0
-@@ -121,6 +124,8 @@
- 			rubble_n += 1
- 		if b.kind == FLAME:
- 			flame_n += 1
-+		if b.kind == GLASS or b.kind == TRI or b.kind == STEEL or b.kind == CHUNK:
-+			shard_n += 1
- 		if b.kind == EMBER:
- 			_ember_alive += 1
- 			_ember_area += b.sx * b.sy
-@@ -162,6 +167,7 @@
- 	_spray_alive = spray_n
- 	_rubble_alive = rubble_n
- 	_flame_alive = flame_n
-+	_shard_alive = shard_n
- 	max_live = maxi(max_live, bits.size())
- 
- 
-@@ -541,6 +547,16 @@
- 	if _spawned_tick > VfxLook.SPAWN_PER_TICK and b.kind == PUFF:
- 		dropped += 1
- 		return
-+	if b.kind == GLASS or b.kind == TRI or b.kind == STEEL or b.kind == CHUNK:
-+		if _shard_alive > VfxLook.DENSE_START:
-+			var over: float = clampf(float(_shard_alive - VfxLook.DENSE_START) / float(VfxLook.SHARD_CAP - VfxLook.DENSE_START), 0.0, 1.0)
-+			var keep: float = lerpf(1.0, VfxLook.DENSE_KEEP_MIN, over)
-+			var h: int = ((spawned + dropped) * 2654435761) & 0xFFFF       # a hash of the count so far: no draw from a stream
-+			if float(h) / 65536.0 >= keep:
-+				dense_dropped += 1
-+				dropped += 1
-+				return
-+		_shard_alive += 1
- 	if b.kind == PUFF:
- 		var fin2: float = b.sx + b.grow * b.life
- 		var a2: float = 0.785 * fin2 * fin2
 --- a/render/vfx/flash_registry.gd
 +++ b/render/vfx/flash_registry.gd
 @@ -50,13 +50,29 @@
@@ -184,19 +131,6 @@
  ## A flash that another system draws and this one cannot refuse (Rendering's, until it asks): counted, never refused.
  func note(source: String, tick: int = -1, area_px: float = -1.0) -> void:
  	var w: float = weight_of(source, area_px)
---- a/render/vfx/vfx_look.gd
-+++ b/render/vfx/vfx_look.gd
-@@ -137,6 +137,10 @@
- const DEBRIS_GRAV: float = 1000.0
- const DEBRIS_CAP: int = 460             # shards and dust together (docs/vfx/plan.md section 6: 220 shards, 240 dust)
- const SHARD_CAP: int = 220
-+## Thinning of a dense burst (the collapse scene's first blast, ticks 124 to 130 of the flash clip: docs/vfx/warm-up.md section 2): once more than DENSE_START shards (glass, steel, chunks) are alive, each new one is kept with a chance that falls
-+## from 1 at DENSE_START to DENSE_KEEP_MIN at SHARD_CAP, so a crowd of flying bits is a little thinner and never a wall (an ordinary fight never has that many alive). The chance is a hash of the spawn count: no random draw, the streams do not move.
-+const DENSE_START: int = 90
-+const DENSE_KEEP_MIN: float = 0.35
- const PUFF_CAP: int = 240
- const BLAST_CAP: int = 700              # particles one blast may ask for, however many buildings it levels
- const SPAWN_PER_TICK: int = 260         # dust puffs past this many spawns in one tick are dropped (shards keep priority) ...
 --- a/render/vfx/tools/effects_check.gd
 +++ b/render/vfx/tools/effects_check.gd
 @@ -211,6 +211,7 @@
@@ -470,7 +404,7 @@
 +uid://dvekb5m8fq2we
 --- a/docs/vfx/warm-up.md
 +++ b/docs/vfx/warm-up.md
-@@ -0,0 +1,72 @@
+@@ -0,0 +1,82 @@
 +# The first-use hitches, the headless probe and the dense-burst thinning
 +
 +Owner: VFX Director. 2026-10-17. For the EP's brief on Performance's audit (`docs/perf/audit-2026-10-16.md` section 3.6, first-use hitches of 150 to 510 ms) and on city variety's blocked switch (`docs/rendering/city-variety.md`, collapse normal's debris run at ticks 124 to 130). Parked as `docs/vfx/pending/warm-and-cat/` (apply notes there). **Timings here were taken while Tools' record run held the machine (65 to 85% load): every millisecond is indicative, not a measurement. The counts are the evidence.**
@@ -480,7 +414,7 @@
 +1. **The warm-up is Rendering's, and it is the right one.** Rendering's parked batch (`docs/rendering/pending/2026-10-17/`, d9cbba71) draws every effect's shader once at boot in a viewport nobody sees, and its first-draw probe names the cause at the audit's own ticks: VFX's `trail.gdshader` at the beam scene's 427 (drawn first at 428), VFX's `crack.gdshader` at the ring's 211, and VFX's `beam.gdshader`, `beam_glow.gdshader` and Camera's `panel_mask.gdshader` at 279. That is the audit's hypothesis (a driver compiling a shader on its first draw) with the shaders named. **I built a second warm-up first (each of my multimesh views drawing one invisible instance in its first frames, plus a block in `BeamView`), measured it, and withdrew it: it did the same job a second time and put a block in Rendering's file.** What was learned from it is in section 1.3.
 +2. **One gap in Rendering's list, and one to keep.** `RenderWarmup.SHADERS` has VFX's beam, beam glow, crack, trail, shard and transform shaders but **not `hole.gdshader`** (the holes in facades, `hole_view.gd`): add `["res://render/vfx/shaders/hole.gdshader", "multimesh"]`. And every shader VFX adds joins that list when it is built (the catastrophe plan's cloud, dust and orbit-impact shaders are named in `docs/vfx/catastrophe-plan.md` section 6; the entry is part of building each).
 +3. **The probe** (`render/vfx/tools/hitch_probe.gd`) plays an AI match natively and lists the longest frames with their split. It sees the CPU side only, so it cannot see a driver compile; what it does see is the CPU's own first-use cost, which is small for VFX (section 1.2) and which it attributes, in the places where the numbers are not VFX's, to Audio, Rendering and UI.
-+4. **The collapse run's margin** (section 2): when more than 90 shards are alive at once, each new one is kept with a chance that falls to 35% at 220. In the collapse scene's first blast the shards in flight at ticks 117 to 130 fall from 234 to 195 (-17%), their swept-area proxy by 19%. An ordinary match never has 50 alive (peaks 34 and 42 on seeds 4 and 1; nothing thinned). **The pixel reading is Tools' to take when captures are allowed**; the target is a fullest window of at most 19,600 pixels (10% under 21,824).
++4. **The collapse run's marginal window is not VFX's, and the thinning I built for it is withdrawn** (section 2). With the thinning and city variety on, `collapse` reads PASS 2.5 / 2.5 / 0.5 in both modes on today's main; **without** the thinning it reads the same, and with every debris bit off, or the whole VFX hub off, the marginal window at tick 130 is the same size (22,620 and 22,506 pixels at full scale; 5,656 and 5,705 at the analyser's default scale). It is the camera sweeping over lit facades.
 +5. **`transform_view.gd` and `vfx_layer.gd` are untouched** (not mine).
 +
 +## 1. The hitches
@@ -521,25 +455,35 @@
 +
 +Rendering's, after the record run: the web site built with and without `nowarmup`, Tools' `signaturecity` and `ring` scenes through `docs/perf/tools/frame-bench.mjs`, the frames over 50 ms. **Pass:** the 427, 211, 279 hitches are gone or move to the first 3 ticks. Ring tick 154 is not a shader (Rendering's probe found nothing drawn for the first time there); the table above is where its suspects live (a first sound outside `warm()`, the HUD's first glyphs, the inset's render target).
 +
-+## 2. The collapse run's margin (city variety)
++## 2. The collapse run's marginal window (city variety), measured 2026-10-17
 +
-+The blocked event is `docs/rendering/city-variety.md`: collapse normal, ticks 124 to 130, a run of darker pixels from VFX's debris with a fullest window of 22,479 against 21,824. The picture is not the cause; the city makes the frame calmer, and the run pools one tick more.
++The blocked event (`docs/rendering/city-variety.md`): collapse normal, ticks 124 to 130, a run of darker pixels with a fullest window of 22,479 against 21,824. The brief called it VFX's debris; this section is what the clips say.
 +
-+**What is in the pool at those ticks.** Run natively through Tools' `collapse` scene (`FlashCapture.begin("collapse")`, stepped tick by tick, main's `_process` off, so the sim tick equals the clip's tick), the debris pool at ticks 117 to 130 holds 234 shards: **135 concrete chunks** (area 72,000 square units), **61 glass slivers, 26 triangles, 12 steel bars**, 4 dust puffs, 16 flames, 1 shock ring and a few embers. Of the 169 chunks made by tick 125, 80 came from the sim's `debris` events (`earth.gd`, `deb.max_per_event` 10), 32 from the crater's ejecta, 14 from the crater, 34 from the facade shed and 9 from jobs. **A cap on `max_per_event` is the wrong lever** (10 to 8 removed 4 chunks of 135, 3%; tried and reverted). The run is a crowd, not one source.
++**The thinning I built** (and withdrew; it was parked in the first version of `apply.patch`): `VfxDebris._add` thinned new shards once more than 90 were alive, by a hash of the spawn count. Run natively through Tools' `collapse` scene (`FlashCapture.begin("collapse")`, stepped tick by tick, main's `_process` off), at ticks 117 to 130 it took the shards in flight from 234 (135 chunks, 61 glass, 26 triangles, 12 steel) to 195 (-17%), and a swept-area proxy by 19%. A cap on `deb.max_per_event` was tried first and moved 3%.
 +
-+**The change.** `VfxDebris._add` thins new shards (glass, triangles, steel, chunks) once more than `VfxLook.DENSE_START` (90) are alive: the chance a new one is kept falls linearly from 1 at 90 alive to `DENSE_KEEP_MIN` (0.35) at `SHARD_CAP` (220, a documented budget that nothing enforced). The chance is a hash of the spawn count, so no random stream moves; `dense_dropped` counts them.
++**What the clips say** (today's main 20b95092, `check-clip` at the official scale, city variety on, collapse-normal, first 200 ticks unless noted):
 +
-+| Run (collapse scene, sim ticks 117 to 130) | Shards alive | Their swept-area proxy (sum of area plus speed times width, units squared) |
-+| :--- | ---: | ---: |
-+| HEAD | 234 (135 + 61 + 26 + 12) | 170,900 at tick 127 |
-+| start 110, floor 0.45 | 205 (-12%) | 146,900 (-14%) |
-+| **start 90, floor 0.35 (built)** | **195 (-17%)** | **138,300 (-19%)** |
-+| `deb.max_per_event` 10 to 8 (reverted) | 230 (-2%) | 165,900 (-3%) |
++| Build | Reading (primary / area-15% / memory) | The tick-130 window, pixels |
++| :--- | :--- | ---: |
++| thinning on, both modes, full 1,500 ticks | **PASS** 2.5 / 2.5 / 0.5, both | 22,506 normal, 22,463 reduced |
++| thinning off | **PASS** 2.5 / 2.5 / 0.5 | 22,506 |
++| thinning off, **every debris bit off** | PASS (1.5 / 2.5 / 0.5) | 22,620 |
++| thinning off, **the whole VFX hub off** (`off=hub`, analyser's default scale) | PASS | 5,656, against 5,705 with the hub on at that scale |
 +
-+**What this does and does not say.** The proxy is a count of what moves, not a pixel count: the analyser pools one direction's changed pixels over seven frames in a 341 by 256 window, and a 19% smaller sweep should bring 22,479 to about 18,200 to 19,600 if the run is all shards. It is not all shards (the ring and the flames are in those ticks too, and the ring's band is thin and already width-faded), so **the pixel reading is Tools' to take, on collapse normal and reduced, with city variety off and on.** If it is short, the dial is two numbers in `vfx_look.gd` (`DENSE_START`, `DENSE_KEEP_MIN`); the look cost is a collapse with 195 flying bits where it had 234.
++So: **city variety on no longer fails collapse on today's main, with or without my change**, and the marginal window does not move when all of VFX's debris, or all of VFX, is taken out. A picture of the run (the darker pixels of ticks 108 to 130 over frame 130) shows the concentric arcs of the camera sweeping across every building edge, and whole columns of lit facade windows going dark in rectangles; with VFX off the picture is the same. **It is the camera and the facades, not VFX.** The thinning does nothing for it and is withdrawn (`debris.gd` and `vfx_look.gd` are back to HEAD in the patch); nothing else in VFX is the lever. If the 22.5k window must come down, it is Camera's sweep or Rendering's window columns.
 +
-+**What it does not touch.** An ordinary match (seeds 4 and 1, 3,600 ticks): the most shards alive are 34 and 42, `dense_dropped` 0. The pool's other limits (460 in all, 200 shards spawned a tick, 12 embers) are unchanged. `hash_check` reads the same flash register counts as HEAD (385 granted, 9,027 refused).
++## 2b. The clips Tools asked about (blastdummy, ring, ai-43), measured 2026-10-17
++
++All on main 20b95092, clean, official scale unless noted; "hub off" is the page's `off=hub`, a scratch switch that turns VFX's hub off (everything else stays).
++
++| Clip | Reading with VFX on | With the whole VFX hub off | What the pictures show |
++| :--- | :--- | :--- | :--- |
++| `blastdummy-RIVAL-REFERENCE-reduced` (420 ticks) | FAIL primary 3, area-15% 3.5, at tick 250 | OVER GATE 3 / 3 (the tick-250 event stays, 24,037 against 25,358) | **Tick 250 is Camera's inset panel opening** (13,974 pixels brighter at tick 250, 11,859 at 249, the pane's rectangle of sky and mountains): it is there with VFX off. **Tick 301 is a whole-frame camera change** (97,408 pixels darker in one tick, the desert ground sliding and the HUD's off-screen markers), also with VFX off. VFX's part is five windows at ticks 86 to 133 (the blast's ground, debris and embers); turning off only `earth` or only `embers` takes the reading from 3.5 to 3, not below. |
++| `ring` of five, normal | **red 0.5** at tick 223 (window 21,841 px, a transition out of red) | red 0.5 at tick 224 (22,286 px) | **Not VFX's.** With the whole hub off it is the same. The red-state changes are on the **three Anti-hero bodies' own dark-red clothing and the red diamond markers above their heads**, a few thousand pixels a frame pooled into one window. (The ring of three reads red 0.) |
++| `ai-43`, ticks 2,400 to 2,720 (blasts are in it) | FAIL primary 3.5 | primary 2.5, area-15% still 3.5 (FAIL) | VFX adds a full flash's worth of windows to the primary; **no single group of mine removes it** (shots, earth and embers, explosions and blasts, react and speed, or all the effects together each leave 3.5; only the whole hub off gives 2.5). The tick-260 event (55,212 pixels brighter in one tick) and tick 288 (75,000) are camera changes and stay with VFX off. |
++
++**My reading.** The three failures are mostly the camera's whole-frame changes and the inset's opening, which VFX does not make; the pieces that are VFX's are many small windows spread across groups, none of which a switch removes alone. The ring's red is the Anti-hero's palette and markers, not a red hue in VFX's staging (VFX's beam second tint for him is an orchid, hue 292; his aura is violet).
 +
 +## 3. Files
 +
-+New: `render/vfx/tools/hitch_probe.gd` (+ `.uid`), this page. Changed: `render/vfx/debris.gd` and `vfx_look.gd` (the thinning), `render/vfx/flash_registry.gd` and `render/vfx/tools/effects_check.gd` (the catastrophe class, `docs/vfx/catastrophe-plan.md` section 1, built early because it is behind nothing), `docs/vfx/flash-registry.md`, `docs/vfx/README.md` (the probe's row). No file of anyone else's.
++New: `render/vfx/tools/hitch_probe.gd` (+ `.uid`), this page. Changed: `render/vfx/flash_registry.gd` and `render/vfx/tools/effects_check.gd` (the catastrophe class, `docs/vfx/catastrophe-plan.md` section 1, built early because it is behind nothing), `docs/vfx/flash-registry.md`, `docs/vfx/README.md` (the probe's row). No file of anyone else's.
