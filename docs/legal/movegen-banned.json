@@ -706,8 +706,25 @@
     },
     {
       "id": "c10",
-      "rule": "the line lint's sensitive words, whole-word, in two tiers. Block: A-bomb, H-bomb, mushroom cloud, fallout, nuclear, atomic, radiation, and the names of real events and places of mass harm (for example Hiroshima, Nagasaki, Chernobyl, Fukushima, 9/11, ground zero), holocaust, genocide. Review by a human: siren, countdown, bomb, school, hospital, church, mosque, synagogue, chapel, cathedral, temple, kindergarten, nursery, orphanage, meltdown, and child, children or kid near a casualty word (died, dead, gone, lost, killed, victims). The same list guards place names and every generated line",
+      "rule": "the line lint's sensitive words, whole-word, in two tiers. Block: A-bomb, H-bomb, mushroom cloud, fallout, nuclear, atomic, radiation, and the names of real events and places of mass harm (for example Hiroshima, Nagasaki, Chernobyl, Fukushima, 9/11, ground zero), holocaust, genocide. Review by a human: siren, countdown, bomb, school, hospital, church, mosque, synagogue, chapel, cathedral, temple, kindergarten, nursery, orphanage, meltdown, glass (as a verb for a bombed ground), and child, children or kid near a casualty word (died, dead, gone, lost, killed, victims). The same list guards place names and every generated line",
       "why": "extends c07 and c08, RL-148"
+    }
+  ],
+  "lines": [
+    {
+      "id": "ai01",
+      "rule": "provenance record for lines and text from any AI tool other than Claude: tool, model as named, date, brief file, what came back, and the human part (marks, choices, edits); mixed sources in one list; the public AI statement names categories (text and dialogue, code, music, graphics), never claims a line as human-written unless the record shows it, never 'human-made'; no private notes, unreleased art descriptions or NDA material goes into a consumer AI app",
+      "why": "Orb's disclosure rule; Gemini rewrites of homework 11, RL-153"
+    },
+    {
+      "id": "ln01",
+      "rule": "a line that threatens the arena or a street (the Empress's block line, any area threat) fires only on its own trigger and never as a reaction to civilian casualties; no line makes a rising toll sound worth having (c08); insults go at an individual fighter, never a slur or an insult aimed at a real group, disability or body",
+      "why": "RL-154"
+    },
+    {
+      "id": "ln02",
+      "rule": "the Cyborg's consumption: his hunger is aimed at fighters and wreckage, never civilians or children; no on-screen biting, chewing or swallowing of a living fighter, no eaten limbs, no chewing or swallowing sound and no gore from feeding until the rating decision (a clamp, a throw and feeding on wreckage are allowed); a depicted eating finisher takes the stomp treatment (rare, optional, never in public trailers or pages, distant, injury not depicted, no reward, questionnaires first); he never absorbs a defeated fighter to gain their power or form, never turns anyone into food or sweets, and has no belly-as-mouth gag or pink plump silhouette; 'Demon Cyborg' stays off public text",
+      "why": "RL-155: the nearest echoes are the genre's glutton and absorbing villains"
     }
   ]
 }
