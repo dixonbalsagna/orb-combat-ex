@@ -182,7 +182,7 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
     const isBrunt = n => /BUILDING|BRUNT/.test(n);
     const brunt = r => sum(Object.entries(r.launches).filter(([n]) => isBrunt(n)).map(([, v]) => v));
     const bs = S.clusterShare(D, brunt, r => total(r.launches));
-    R.rate('5b.share', '§5b', 'Share of all planner launches that are building brunts (4 to 10%; re-based at M1b)', { v: bs.p, ci: bs.ci, lo: 0.04, hi: 0.10 });
+    R.rate('5b.share', '§5b', 'Share of all planner launches that are building brunts (4 to 15%; was 4 to 10% until 2026-10-17, buildings.md section 4)', { v: bs.p, ci: bs.ci, lo: 0.04, hi: 0.15 });
     const perMin = recs => sum(recs.map(brunt)) / (sum(recs.map(r => r.koAt)) / 60);   // brunts per minute of match, pooled
     R.point('5b.perMin', '§5b', 'Brunts per minute (0.3 to 1.0, game-scale band; re-based at M1b)', { v: perMin(D), lo: 0.3, hi: 1.0 });
     // M1b re-banding (balance-targets 18): both placeholders run at planner care 0, so the mirror brunt rows are retired on the testbed; they return with the roster's per-fighter care
@@ -225,11 +225,11 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
       } else {
         // balance-targets 20 (second landing ruling, 2026-10-02): a launch is classed by how its journey ends (World's journey_end); a bounce that ends in a skid, a tumble or a halt counts toward the halted class
         if (g6) {
-          mixOf('halted: the journey ends skidding or tumbling to a stop, with or without bounces first (40 to 60%, the largest class)', slideC, 0.40, 0.60, L);
+          mixOf('halted: of the journeys that end on the ground (halt, wall or slam), the journey ends skidding or tumbling to a stop, with or without bounces first (40 to 60%; re-based on ground endings 2026-10-17)', slideC, 0.40, 0.60, r => slideC(r) + (r.landings.wall || 0) + slamC(r));
           mixOf('against a wall (a slope steeper than 0.8; 5 to 15%)', r => r.landings.wall || 0, 0.05, 0.15, L);
           mixOf('slam: the journey ends in a crater (8 to 18%)', slamC, 0.08, 0.18, L);
           mixOf('caught in the air (the follow-up before the journey ends; 15 to 30%)', r => r.landings.caught, 0.15, 0.30, L);
-          { const gr = S.clusterShare(D, slideC, r => slideC(r) + (r.landings.wall || 0) + slamC(r)); R.rate('5c.haltOfGround', '§5c', 'Halted as a share of journeys that end on the ground (halt, wall or slam; at least 55%)', { v: gr.p, ci: gr.ci, lo: 0.55, hi: 1 }); }
+          { const gr = S.clusterShare(D, slideC, r => slideC(r) + (r.landings.wall || 0) + slamC(r)); R.info('5c.haltOfGround', '§5c', 'Halted as a share of journeys that end on the ground (halt, wall or slam; the old at-least-55% row is superseded by the re-based 40 to 60% row above, 2026-10-17)', fmt.pct(gr.p), 'reported'); }
           { const classes = ['halt', 'wall', 'slam', 'caught', 'water', 'brunt'], sh = k => sum(D.map(k === 'halt' ? slideC : k === 'slam' ? slamC : r => r.landings[k] || 0)) / Math.max(1, sum(D.map(L)));
             R.add({ id: '5c.largest', ref: '§5c', what: 'Halted is the largest class (balance-targets 20)', status: classes.every(k => k === 'halt' || sh(k) < sh('halt')) ? 'PASS' : 'FAIL', value: classes.map(k => `${k} ${fmt.pct(sh(k))}`).join(', '), band: 'halted largest', note: '' }); }
         } else {
@@ -241,7 +241,7 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
         { const fc = k => sum(D.map(r => (r.firstContact || {})[k] || 0)); R.add({ id: '5c.firstContacts', ref: '§5c', what: 'First contacts: skids at least as common as bounces', status: fc('slide') >= fc('bounce') ? 'PASS' : 'FAIL', value: `skid or tumble ${fc('slide')}, bounce ${fc('bounce')}, slam ${fc('slam')}, stop ${fc('stop')}`, band: 'skids at least bounces', note: '' }); }
       }
       mixOf('water (skim or splash first; 2 to 10%, re-based at §21)', r => r.landings.water, 0.02, 0.10, L);
-      mixOf('brunt (a building first; 4 to 10%)', r => r.landings.brunt, 0.04, 0.10, L);
+      mixOf('brunt (a building first, launches that end in a building; 4 to 15%, was 4 to 10% until 2026-10-17)', r => r.landings.brunt, 0.04, 0.15, L);
       R.info('5c.other', '§5c', 'Planner launches with no contact and not caught (KO, the cap, launched again first), share of launches', fmt.pct(sum(D.map(r => r.landings.other)) / Math.max(1, sum(D.map(L)))), 'a class of its own so the classes add up to 100%');
       R.info('5c.stop', '§5c', 'Planner launches that landed at a stop (a contact under 350, no skid or tumble), share of launches', fmt.pct(sum(D.map(r => r.landings.stop || 0)) / Math.max(1, sum(D.map(L)))), 'a class of its own; not banded');
       if (D.every(r => r.landingsAll)) { const LA = r => sum(Object.values(r.landingsAll)); const t = k => sum(D.map(r => r.landingsAll[k])) / Math.max(1, sum(D.map(LA))); R.info('5c.all', '§5c', 'Landing mix over every launch event, beam and finisher launches included (not banded)', `slide ${fmt.pct(t('slide'))}, slam ${fmt.pct(t('slam'))}, caught ${fmt.pct(t('caught'))}, bounce ${fmt.pct(t('bounce'))}, water ${fmt.pct(t('water'))}, brunt ${fmt.pct(t('brunt'))}, none ${fmt.pct(t('other'))}`, ''); }
@@ -249,7 +249,7 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
       const J = f => sum(D.map(r => r.journeys[f])), minutes = sum(D.map(r => r.koAt)) / 60;
       if (g6) {
         const seen = (r, causes) => causes.reduce((a, k) => a + ((r.liftsSeen || {})[k] || 0), 0), allC = ['lip', 'crest', 'heap', 'cliff', 'ridge'];
-        R.point('5c.lip', '§5c', 'Flights off a crater lip a minute, seen (in the air at least 10 ticks; 0.5 to 2.5)', { v: sum(D.map(r => seen(r, ['lip']))) / minutes, lo: 0.5, hi: 2.5, unit: 'num' });
+        R.point('5c.lip', '§5c', 'Flights off a crater lip a minute, seen (in the air at least 10 ticks; 0.4 to 2.5, the floor was 0.5 until 2026-10-17)', { v: sum(D.map(r => seen(r, ['lip']))) / minutes, lo: 0.4, hi: 2.5, unit: 'num' });
         R.point('5c.terrain', '§5c', 'Flights off any terrain a minute, seen (lips, crests, cliffs, heaps; 1.5 to 5)', { v: sum(D.map(r => seen(r, allC))) / minutes, lo: 1.5, hi: 5, unit: 'num' });
         if (J('jn') > 0) {
           R.point('5c.capped', '§5c', 'Journeys that reach the 4 s or 8-contact bound (at most 8%)', { v: J('capped') / J('jn'), hi: 0.08, unit: 'pct' });
@@ -538,7 +538,12 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
     { const ls = S.clusterShare(D, r => total(r.launches), r => melee(r) + r.beams.length); R.info('10.launchShare', '§10', 'Launches as a share of exchanges, planner launches over all exchanges (old row, band 40 to 65% retired by agency pass section 3)', fmt.pct(ls.p), 'the standing row is 10.end.launch'); }
     const fl = D.flatMap(r => r.flights);
     const haul = D[0].longHaul || 1500;                                 // 1,500 x TRAV_LAUNCH since the world scale (SC): 9,000 units = 120 fighter heights
-    R.point('10.longHaul', '§10', `Launches with at least ${haul.toLocaleString('en-US')} units of horizontal travel (1,500 x the launch traversal factor)`, { v: fl.filter(f => f.travel >= haul).length / fl.length, lo: 0.30, unit: 'pct' });
+    // 2026-10-17 (buildings.md section 4): read on the launches that do not end in a building, since a brunt stops a launch short by design; records without the flag read every launch
+    const flN = fl.some(f => f.brunt !== undefined) ? fl.filter(f => !f.brunt) : fl;
+    R.point('10.longHaul', '§10', `Launches with at least ${haul.toLocaleString('en-US')} units of horizontal travel (1,500 x the launch traversal factor), of the launches that do not end in a building`, { v: flN.filter(f => f.travel >= haul).length / flN.length, lo: 0.30, unit: 'pct' });
+    // launch anywhere (Game Design's thirteenth round, docs/design/qa-rows-2026-10-17.md L16): full launches a match, the AI against itself; every launch is watched, pops included
+    if (D.every(r => r.pow && r.pow.has)) R.point('design.L16.ai', '§launch anywhere L16', 'Full launches a match, the AI against itself (power 0.8 or more at the send, after freshness; 6 to 12)', { v: sum(D.map(r => r.pow.full[0] + r.pow.full[1])) / D.length, lo: 6, hi: 12, unit: 'num' });
+    else R.pending('design.L16.ai', '§launch anywhere L16', 'Full launches a match, the AI against itself (power 0.8 or more at the send, after freshness; 6 to 12)', 'no launchPower on this build (launch anywhere is not on it)');
     R.point('10.newBiome', '§10', 'Launches that land in a different biome', { v: fl.filter(f => f.newBiome).length / fl.length, lo: 0.25, unit: 'pct' });
     R.point('10.underwater', '§10', 'Fight time underwater (both fighters)', { v: sum(D.map(r => r.underSec)) / sum(D.map(r => total(r.fightSec))), hi: 0.10, unit: 'pct' });
     R.pending('10.rest', '§10', 'Strike spacing, wind-up width, hit-stop floors, gap-close flight', 'read from data and atoms, not from a batch: Combat and Controls own them (needs the event log of the composer)');

@@ -132,11 +132,11 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
   });
   await t('journey_end rows (second landing ruling): halted, wall, slam, caught, bounced launches, bounces per journey, seen flights, capped and long journeys judge good and bad mixes', async () => {
     const jm = (landings, jr, extra = {}) => rec({ koAt: 360, fxCounts: { slide: 4, journey_end: 8, bounce: 2, land: 8, left_ground: 3 }, slides: [], impactCraters: 0, skims: 0, launches: { 'DRIVE DOWN': 40, 'CRATER SLAM': 10, 'UPPERCUT': 30, 'BUILDING SMASH': 7, 'SMASH ACROSS': 13 }, landings, landingsAll: landings, slideShort: 0, slideShortPl: 0, firstContact: { slide: 50, bounce: 20 }, lips: 3, liftsSeen: { lip: 6, crest: 12 }, journeys: { n: 0, anyBounce: 20, bounced: 0, bounces: 0, tumbled: 0, lips: 0, jn: 40, jbounced: 10, jbounces: 15, capped: 2, long: 5, tumbledEnd: 16, durSeen: true, halted: 40, tumbleSeen: 16, ...jr }, ...extra });
-    const good = { slide: 45, wall: 10, slam: 12, caught: 20, water: 6, brunt: 7, bounce: 0, other: 0 };
+    const good = { slide: 34, wall: 14, slam: 14, caught: 20, water: 6, brunt: 12, bounce: 0, other: 0 };   // halted 34 of 62 ground endings: 55%, in 40 to 60
     const rows = evaluate({ default: Array.from({ length: 40 }, () => jm(good, {})) }), id = k => rows.find(r => r.id === k);
-    for (const k of ['5c.mix.halted:', '5c.mix.against', '5c.mix.slam:', '5c.mix.caught', '5c.haltOfGround', '5c.largest', '5c.bounced', '5c.bounces', '5c.lip', '5c.terrain', '5c.capped', '5c.long', '5c.tumble']) assert.strictEqual(id(k).status, 'PASS', k + ' ' + (id(k) && id(k).value));
-    const bad = evaluate({ default: Array.from({ length: 40 }, () => jm({ slide: 30, wall: 30, slam: 12, caught: 17, water: 6, brunt: 5, bounce: 0, other: 0 }, { capped: 10, long: 20 })) }), idb = k => bad.find(r => r.id === k);
-    assert.strictEqual(idb('5c.mix.halted:').status, 'FAIL'); assert.strictEqual(idb('5c.largest').status, 'FAIL'); assert.strictEqual(idb('5c.capped').status, 'FAIL'); assert.strictEqual(idb('5c.long').status, 'FAIL');
+    for (const k of ['5c.mix.halted:', '5c.mix.against', '5c.mix.slam:', '5c.mix.caught', '5c.largest', '5c.bounced', '5c.bounces', '5c.lip', '5c.terrain', '5c.capped', '5c.long', '5c.tumble']) assert.strictEqual(id(k).status, 'PASS', k + ' ' + (id(k) && id(k).value));
+    const bad = evaluate({ default: Array.from({ length: 40 }, () => jm({ slide: 22, wall: 38, slam: 12, caught: 17, water: 6, brunt: 5, bounce: 0, other: 0 }, { capped: 10, long: 20 })) }), idb = k => bad.find(r => r.id === k);
+    assert.strictEqual(id('5c.haltOfGround').status, 'INFO'); assert.strictEqual(idb('5c.mix.halted:').status, 'FAIL');   // halted 22 of 72 ground endings: 31% assert.strictEqual(idb('5c.largest').status, 'FAIL'); assert.strictEqual(idb('5c.capped').status, 'FAIL'); assert.strictEqual(idb('5c.long').status, 'FAIL');
   });
   await t('exchange endings: the launch share is judged against 25 to 35%; the knock-back share is retired (reported only), continue stays PENDING until exchange_end events give it, then judges 40 to 50; the separating share waits for C2b', async () => {
     const er = (e, extra = {}) => rec({ exEnds: e, ...extra });
@@ -300,6 +300,20 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     assert.strictEqual(id(stale, 'charge.stale').status, 'FAIL');   // 12 of 30 blocks followed a press more than 14 ticks before the blow
     const inv = rowsOf([ch('b', 'medium', 700, 50, { wallCapped: 2, invalid: true }), ch('y', 'medium', 500, 40)]);
     assert.strictEqual(id(inv, 'charge.pb.medium').status, 'PENDING');
+  });
+  await t('2026-10-17 rows: the building and landing bands (4 to 15, halted of ground endings, long launches off buildings, lip 0.4), the full launches (route 4 to 12, on him 4 to 10, AI v AI 6 to 12), the design list as data', async () => {
+    const { masherRows } = require('./masher');
+    const lc = (by, on, fby, fon, has = true) => ({ pair: 'route-medium', n: 3, aWins: 2, bWins: 1, brawl: { launcher: { routeBy: by, routeOn: on, routeFullBy: fby, routeFullOn: fon, powHas: has, firstLaunchSec: [10, 20, 30] } } });
+    const id = (rows, k) => rows.find(r => r.id === k);
+    const ok = masherRows([lc([8, 9, 7], [9, 9, 9], [5, 6, 4], [6, 5, 7])]), low = masherRows([lc([8, 9, 7], [9, 9, 9], [1, 2, 1], [11, 12, 13])]), none = masherRows([lc([8, 9, 7], [9, 9, 9], [], [], false)]);
+    assert.strictEqual(id(ok, 'design.L16.route').status, 'PASS'); assert.strictEqual(id(ok, 'design.L16.on').status, 'PASS');
+    assert.strictEqual(id(low, 'design.L16.route').status, 'FAIL'); assert.strictEqual(id(low, 'design.L16.on').status, 'FAIL');
+    assert.strictEqual(id(none, 'design.L16.route').status, 'PENDING');
+    assert.strictEqual(id(ok, 'design.B11').status, 'INFO'); assert.strictEqual(id(ok, 'design.G4').status, 'PENDING'); assert.strictEqual(id(ok, 'design.L1').status, 'PENDING');
+    assert.ok(ok.filter(r => r.id.startsWith('design.')).length >= 84);
+    // the AI v AI full launches, from the default arm's records
+    const ai = pw => evaluate({ default: Array.from({ length: 40 }, () => rec({ pow: pw })) }).find(r => r.id === 'design.L16.ai');
+    assert.strictEqual(ai({ has: true, n: [6, 6], full: [4, 4] }).status, 'PASS'); assert.strictEqual(ai({ has: true, n: [3, 3], full: [1, 1] }).status, 'FAIL'); assert.strictEqual(ai(undefined).status, 'PENDING');
   });
   console.log(`godot qa selftest: ${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);

@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 // The scripted masher (docs/design/control-rules.md section 6): a v2 human slot pressing light every 8 ticks against the AI at each level.
 // masher.gd plays the matches in one Godot process per level; this turns the wins into band rows. Point estimates only, with the sample size in the note:
 // at 40 matches the 95% interval is about 30 points wide (the medium row read 60% at 40 matches and 43% at 200), so the default is 100 and a row near a band edge needs more (--masher=N).
@@ -194,6 +195,48 @@ const BANDS = { easy: [0.60, 1, 'at least 60%'], medium: [0.35, 0.50, '35 to 50%
 // The lights-only mirror's rows (agency pass 13 and 23; melee-press-feel.md sections 3, 9 and 9d), for each variant: 'live' counts live ticks (every earlier baseline), 'tick' counts S.tick
 // (the real tap rate; the brawl's flurry counts it), 'fast-slow' is a 6-tick tapper against a 12-tick tapper (reported).
 const LATE_OK = 4;   // ticks a trade's break may come after its limit: a hit-stop holds the sim (Encounter measured at most 2)
+
+// Game Design's list for QA (docs/design/qa-rows-2026-10-17.md), read into qa/godot/design-rows.json by gen-design-rows.js (the rows are data: id, group, kind, what, bound). A row with a reader here or in bands.js says
+// which row reads it (INFO); a row that waits for a feature says what for (PENDING). Nothing is guessed: a hard test with no reader is PENDING, not PASS.
+const DESIGN_NEEDS = {
+  L: 'launch anywhere (Encounter\'s park, waiting on Game Design\'s ruling and two owners\' gates): not on this build',
+  F: 'the hero\'s forms (Simulation: built behind a switch that is off)',
+  R: 'run mode (not built)',
+  B: 'the building window\'s new sources and the air brake (parked behind a switch that is off)',
+  G: 'the grapple (Encounter\'s G1, parked, switch off)',
+  T: 'thrown objects (the grapple\'s throws; not built)'
+};
+// rows an existing reader covers: [reader row id(s), note]
+const DESIGN_READ = {
+  L11: ['route.win.medium', 'the route\'s win share, on 200 matches'], L12: ['route.over.masher', 'the route over its masher'], L18: ['§2 Match length, 10th percentile', 'bands.js, the default arm'],
+  L17: ['§5 No launch type above 45%', 'bands.js reads the planner\'s launch types, top 45% (the row says 50%)'], F15: ['§1 Protagonist win rate', 'bands.js, 45 to 55%'],
+  B10: ['5b.share and 5c.mix.brunt', 'bands.js, 4 to 15% both (2026-10-17)'], B11: ['5c.mix.halted:, 10.longHaul and 5c.lip', 'bands.js: halted of ground endings 40 to 60%, long launches of non-building launches at least 30%, lip 0.4 to 2.5'],
+  B12: ['x.bodies', 'the crossing run, 4 to 8 (the band stays; waits for the new sources)'], R20: ['§2 Match length, 10th percentile', 'bands.js (the 10th percentile 300 s; the median band there is 360 to 480 s, the run\'s is 5 to 7 minutes)']
+};
+// scripts the list defines, kept with the row that needs them
+const DESIGN_SCRIPT = { G4: 'the A-only script (redefined 2026-10-17): catches in reach and pummels within 3 ticks of the pulse, presses nothing else', L13: 'the spammer: one light, then B 6 ticks after each of his landed blows', L14: 'the varied route: the route with the stick turned through up, toward and down at each B', L15: 'the launchers of the spammer, counted by their fate (stopped, missed, perfect-blocked, launched)' };
+function designRows(results) {
+  let rows = [];
+  try { rows = JSON.parse(fs.readFileSync(path.join(__dirname, 'design-rows.json'), 'utf8')); } catch (e) { return []; }
+  const out = [], pct = x => (100 * x).toFixed(1) + '%', mean = a => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
+  // L16: full launches a match (power 0.8 or more at the send, after freshness): the route's player, on him, the AI against itself (the last is read from the arms, bands.js `L16.ai`)
+  const rm = results.find(x => x.pair === 'route-medium'), lc = rm ? ((rm.brawl || {}).launcher || {}) : {};
+  const fullRows = rm && !rm.invalid ? {
+    by: lc.powHas ? mean(lc.routeFullBy || []) : null, on: lc.powHas ? mean(lc.routeFullOn || []) : null } : null;
+  for (const r of rows) {
+    const id = 'design.' + r.id, ref = r.section.replace(/`/g, '').split(' (')[0];
+    if (r.id === 'L16') {
+      const f = fullRows;
+      out.push({ id: 'design.L16.route', ref, what: 'Full launches a match (power 0.8 or more at the send, after freshness) by the route\'s player, against the medium AI (4 to 12; all launches, pops included, are watched)', status: f && f.by !== null ? (f.by >= 4 && f.by <= 12 ? 'PASS' : 'FAIL') : 'PENDING', value: f && f.by !== null ? `${f.by.toFixed(2)} a match` : 'no launchPower on this build (launch anywhere is not on it)', band: '4 to 12', note: rm ? `${rm.n} matches` : 'no route job' });
+      out.push({ id: 'design.L16.on', ref, what: 'Full launches a match on the route\'s player (4 to 10)', status: f && f.on !== null ? (f.on >= 4 && f.on <= 10 ? 'PASS' : 'FAIL') : 'PENDING', value: f && f.on !== null ? `${f.on.toFixed(2)} a match` : 'no launchPower on this build', band: '4 to 10', note: rm ? `${rm.n} matches` : 'no route job' });
+      continue;
+    }
+    const rd = DESIGN_READ[r.id];
+    if (rd) { out.push({ id, ref, what: r.what, status: 'INFO', value: `read by ${rd[0]} (${rd[1]})`, band: r.bound || (r.kind === 'hard' ? 'hard' : ''), note: r.kind }); continue; }
+    out.push({ id, ref, what: r.what, status: 'PENDING', value: 'waits for ' + (DESIGN_NEEDS[r.group] || 'a feature that is not built') + (DESIGN_SCRIPT[r.id] ? '; script: ' + DESIGN_SCRIPT[r.id] : ''), band: r.bound || (r.kind === 'hard' ? 'hard test' : ''), note: r.kind });
+  }
+  return out;
+}
 
 // The eleventh round's rows (Orb's playtest, 2026-10-16): the newcomer's first launch, the return from a launch, the AI against charged blows, and the beam struggle (stubs until Encounter's window lands).
 function elevenRows(results) {
@@ -498,6 +541,7 @@ function masherRows(results) {
   }
   for (const m of results.filter(r => r.mirror)) rows.push(...mirrorRows(m));
   rows.push(...elevenRows(results));
+  rows.push(...designRows(results));
   for (const b of ['X', 'Y', 'B']) rows.push({ id: `cell.${b.toLowerCase()}.tapped`, ref: '§15 second pass', what: `${b} tapped on every beat, alone against the medium AI (40 to 75%)`, status: 'PENDING', value: 'the beat (the skill strike on all three) is C3, not built', band: '40 to 75%', note: 'needs the skill strike and a script that presses on the beat' });
   rows.push({ id: 'masher.expert', ref: '§6 masher', what: 'An expert script (guards, punishes with a heavy, perfect-blocks heavies and enders) wins against the medium AI (at most 15%)', status: 'PENDING', value: '', band: 'at most 15%', note: 'needs the expert script: it reads the rival tells (Encounter scratch build has one, not in the tree)' });
   return rows;

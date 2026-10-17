@@ -82,7 +82,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	var rec := {"seed": seed, "arm": arm, "names": [fs[0].name, fs[1].name], "attacks": {"light": 0, "heavy": 0, "sig": 0}, "ambush": 0,
 		"launches": {}, "melee": {}, "beams": [], "parries": [0, 0], "chains": [], "hides": [0, 0], "found": 0, "seam": 0, "maxMove": 0.0,
 		"bad": "", "koAt": -1.0, "winner": -1, "maxTier": [1, 1], "lowSec": 0.0, "lowCas": 0.0, "casByTier": [0.0, 0.0, 0.0, 0.0, 0.0],
-		"fightSec": {}, "dmgVictim": [0.0, 0.0], "batteredIn": 0.0, "breathWear": 0.0, "casTimeline": [], "slides": [], "landings": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "landingsAll": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "cues": {}, "bh": {}, "cueText": {}, "doubleHits": 0, "doubles": [], "brawl": {"ends": {}, "blows": {}, "staggers": {}, "tradeBreaks": 0, "lens": [], "nblows": []}, "strTimeline": [], "dmgByKind": {}, "maxPlayGap": 0.0, "exEnds": {}, "exEndEvents": {}, "flowMax": [0, 0], "flowTo3": [0, 0], "firstContact": {}, "liftsSeen": {}, "reachFlat": [], "reach": {"buried": 0, "n": 0, "far": 0, "maxD": 0.0, "tall": 0, "tallFlat": 0, "maxDy": 0.0}, "heavyLanded": [0, 0], "heavyClashWins": [0, 0], "slideShort": 0, "slideShortPl": 0, "lips": 0, "journeys": {"durSeen": false, "halted": 0, "tumbleSeen": 0, "jn": 0, "tumbledEnd": 0, "jbounced": 0, "jbounces": 0, "n": 0, "capped": 0, "long": 0, "anyBounce": 0, "bounced": 0, "bounces": 0, "tumbled": 0, "lips": 0}, "impactCraters": 0, "skims": 0, "longHaul": 1500.0 * SimConst.TRAV_LAUNCH, "dmgByRegion": {}, "underSec": 0.0, "tierT": [0.0, -1.0, -1.0, -1.0, -1.0], "flights": [], "hiddenSec": [0.0, 0.0], "exLens": [], "exGaps": [], "fxCounts": {}, "events": [], "fronts": 0, "care": [float(fs[0].care), float(fs[1].care)]}
+		"fightSec": {}, "dmgVictim": [0.0, 0.0], "batteredIn": 0.0, "breathWear": 0.0, "casTimeline": [], "slides": [], "landings": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "landingsAll": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "cues": {}, "bh": {}, "cueText": {}, "doubleHits": 0, "doubles": [], "brawl": {"ends": {}, "blows": {}, "staggers": {}, "tradeBreaks": 0, "lens": [], "nblows": []}, "strTimeline": [], "dmgByKind": {}, "maxPlayGap": 0.0, "exEnds": {}, "exEndEvents": {}, "flowMax": [0, 0], "flowTo3": [0, 0], "firstContact": {}, "liftsSeen": {}, "reachFlat": [], "reach": {"buried": 0, "n": 0, "far": 0, "maxD": 0.0, "tall": 0, "tallFlat": 0, "maxDy": 0.0}, "heavyLanded": [0, 0], "heavyClashWins": [0, 0], "slideShort": 0, "slideShortPl": 0, "lips": 0, "journeys": {"durSeen": false, "halted": 0, "tumbleSeen": 0, "jn": 0, "tumbledEnd": 0, "jbounced": 0, "jbounces": 0, "n": 0, "capped": 0, "long": 0, "anyBounce": 0, "bounced": 0, "bounces": 0, "tumbled": 0, "lips": 0}, "impactCraters": 0, "skims": 0, "longHaul": 1500.0 * SimConst.TRAV_LAUNCH, "dmgByRegion": {}, "underSec": 0.0, "tierT": [0.0, -1.0, -1.0, -1.0, -1.0], "flights": [], "hiddenSec": [0.0, 0.0], "exLens": [], "exGaps": [], "fxCounts": {}, "events": [], "pow": {"has": false, "n": [0, 0], "full": [0, 0]}, "fronts": 0, "care": [float(fs[0].care), float(fs[1].care)]}
 	var prev_x: Array = [fs[0].x, fs[1].x]
 	# the zip (docs/design/melee-press-feel.md section 2c; docs/director/brawl-plan.md section 7.4): one record a zip, from the zip_light or zip_heavy cue to its zip_end;
 	# the build may not have it yet, and then the list stays empty
@@ -104,6 +104,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	var ended: Array = [false, false]   # a flight ended this tick: its open launch takes the class of the contact if no event named one
 	var new_fl: Array = []   # launch events of this tick
 	var lift: Array = [null, null]   # the open flight off terrain of each fighter: {tick, cause}; counted as seen once it has been in the air 10 ticks (balance-targets 20, second landing ruling)
+	var flight_nf: Array = []   # [the flight's record, its launch record]: "brunt" is set on the flight at the end, when the launch's first contact is known
 	var last_fl: Array = [null, null]   # the latest launch of each fighter, for the bounce, lip and tumble counts of its journey
 	var open_fl: Array = []   # launches whose first contact has not been seen: {"v": victim index, "cls": ""}; balance-targets 18 (one landing class per launch)
 	var launch_x: Array = [0.0, 0.0]
@@ -163,7 +164,9 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 				launch_x[i] = f.x
 			elif was_launched[i] and not now_launched:
 				ended[i] = true
-				rec.flights.append({"travel": snappedf(absf(SimWrap.sdx(launch_x[i], f.x)), 0.1), "newBiome": WorldBiomes.biomeAt(launch_x[i]) != WorldBiomes.biomeAt(f.x)})
+				var fdict := {"travel": snappedf(absf(SimWrap.sdx(launch_x[i], f.x)), 0.1), "newBiome": WorldBiomes.biomeAt(launch_x[i]) != WorldBiomes.biomeAt(f.x)}
+				rec.flights.append(fdict)
+				flight_nf.append([fdict, last_fl[i]])   # its launch record, whose class is settled by the end of the match
 			# first contact by kind (docs/director/landing-mix.md): a launched fighter whose slide has begun took a slide at his first ground contact, however short it runs and even if it ends against a rise (the stop dent digs a crater before the `slide` event, which is why the event order cannot name the class)
 			if now_launched and f.slide > 0.0:
 				_land(open_fl, i, "slide")
@@ -219,6 +222,13 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			# one landing class per launch, by first contact (balance-targets 18): brunt (a building first), water (a skim or splash, or an impact in the sea), slide (a first ground contact carrying on for 2 bh = 150 units or more), else slam
 			if e.type == "launch":
 				var v0: int = int(e.actor)
+				var lpw = fs[v0].get("launchPower")   # the power at the send, after freshness (a build with launch anywhere); null on a build without it
+				var lby: int = int(e.target) if e.get("target") != null else -1
+				if lpw != null and lby >= 0 and lby < 2:
+					rec.pow.has = true
+					rec.pow.n[lby] += 1
+					if float(lpw) >= 0.8:
+						rec.pow.full[lby] += 1
 				for fl in open_fl:
 					if fl.v == v0 and fl.cls == "":
 						fl.cls = "other"   # launched again before any contact
@@ -561,6 +571,8 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	rec.stage = [fs[0].get("stage"), fs[1].get("stage")]
 	rec.menace = [fs[0].menace, fs[1].menace]
 	rec.anguish = [fs[0].anguish, fs[1].anguish]
+	for pr in flight_nf:
+		pr[0]["brunt"] = pr[1] != null and str(pr[1].cls) == "brunt"
 	for fl in open_fl:
 		var c: String = "other" if fl.cls == "" else String(fl.cls)   # a launch that never made contact (KO or the cap first) is "other"
 		if fl.kc != "" and (fl.cls == "" or fl.cls == "slide" or fl.cls == "slam" or fl.cls == "slideShort"):

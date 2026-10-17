@@ -1,0 +1,674 @@
+[
+ {
+  "id": "L1",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "hard",
+  "what": "A B within 24 ticks of the presser's landed blow is always the launcher",
+  "bound": ""
+ },
+ {
+  "id": "L2",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "hard",
+  "what": "A mash press (under 9 ticks after a plain press) is never a launcher",
+  "bound": ""
+ },
+ {
+  "id": "L3",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "hard",
+  "what": "A launcher thrown into an opening always lands",
+  "bound": ""
+ },
+ {
+  "id": "L4",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "hard",
+  "what": "No launcher is ever refused: nothing blocks one but the rival being out of reach. No rest, no hammer",
+  "bound": ""
+ },
+ {
+  "id": "L5",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "hard",
+  "what": "A kind of send not marked on the fighter in the last 60 s is at full strength",
+  "bound": ""
+ },
+ {
+  "id": "L6",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "hard",
+  "what": "A kind repeated is ×0.75 a mark, and every launch of him in the last 60 s ×0.9 more, never under ×0.4 in all",
+  "bound": ""
+ },
+ {
+  "id": "L7",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "hard",
+  "what": "A perfect-blocked launcher staggers its thrower for 20 ticks",
+  "bound": ""
+ },
+ {
+  "id": "L8",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "hard",
+  "what": "The AI never answers a launcher within its reaction time of the wind-up's start",
+  "bound": ""
+ },
+ {
+  "id": "L9",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "hard",
+  "what": "The stick's kind is never changed by the choreographer, and its bend is at most 30°",
+  "bound": ""
+ },
+ {
+  "id": "L10",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "hard",
+  "what": "A send's effective tier at the buildings is the fighter's tier × power, rounded, at least 1",
+  "bound": ""
+ },
+ {
+  "id": "L11",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "band",
+  "what": "The route's win share",
+  "bound": "At most 80%"
+ },
+ {
+  "id": "L12",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "band",
+  "what": "The route over the same script's masher",
+  "bound": "0 to 25 points"
+ },
+ {
+  "id": "L13",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "band",
+  "what": "The spammer (one light, then B, every string)",
+  "bound": "Below the route, and at most 70% (the launcher is armoured against lights since 2026-10-17)"
+ },
+ {
+  "id": "L14",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "band",
+  "what": "The varied route (the route, rotating the stick through the kinds)",
+  "bound": "Within 10 points of the route"
+ },
+ {
+  "id": "L15",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "band",
+  "what": "The spammer's launchers answered by medium",
+  "bound": "20 to 50% (re-banded 2026-10-17)"
+ },
+ {
+  "id": "L16",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "band",
+  "what": "**Full launches** a match (power 0.8 or more at the send, after freshness): by the route's player; on him; the AI against itself",
+  "bound": "4 to 12; 4 to 10; 6 to 12 (re-cut 2026-10-17). All launches, pops included, are watched"
+ },
+ {
+  "id": "L17",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "band",
+  "what": "One kind's share of a fighter's launches, default arm",
+  "bound": "At most 50%"
+ },
+ {
+  "id": "L18",
+  "group": "L",
+  "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
+  "kind": "band",
+  "what": "Match length, default arm (Orb's floor)",
+  "bound": "10th percentile 300 s or more"
+ },
+ {
+  "id": "F1",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "hard",
+  "what": "A person the Protagonist kills raises Witness or Trial: never",
+  "bound": ""
+ },
+ {
+  "id": "F2",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "hard",
+  "what": "A person the opponent kills beyond 3,000 units raises Witness: never",
+  "bound": ""
+ },
+ {
+  "id": "F3",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "hard",
+  "what": "A banked step is never lost, and a release takes every banked step",
+  "bound": ""
+ },
+ {
+  "id": "F4",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "hard",
+  "what": "His world tier steps at 35, 65 and 100 only, whatever his five steps do",
+  "bound": ""
+ },
+ {
+  "id": "F5",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "hard",
+  "what": "The coil never decays, never passes 100, and runs at double only while the opponent's tier is above his",
+  "bound": ""
+ },
+ {
+  "id": "F6",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "hard",
+  "what": "Patience is at most 12% less damage, and only while he holds banked steps below the opponent",
+  "bound": ""
+ },
+ {
+  "id": "F6b",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "hard",
+  "what": "The coil starts only at the first break after a step came ready: a coil that fills before it, never (added 2026-10-17)",
+  "bound": ""
+ },
+ {
+  "id": "F7",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "band",
+  "what": "Each branch taken at some step, Protagonist against the rival",
+  "bound": "In at least 25% of matches each"
+ },
+ {
+  "id": "F8",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "band",
+  "what": "His win share with a Witness form first, against a Trial form first",
+  "bound": "Within 10 points"
+ },
+ {
+  "id": "F9",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "band",
+  "what": "His win share with a release from a coil of 50 or more, against matches with none",
+  "bound": "Within 10 points: the slingshot is a style, not a must"
+ },
+ {
+  "id": "F10",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "band",
+  "what": "The AI at hard throws a slingshot",
+  "bound": "In 20 to 50% of its matches as the Protagonist"
+ },
+ {
+  "id": "F11",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "band",
+  "what": "His five steps' gains against the shared ladder's three tiers, by QA's balance read",
+  "bound": "Within 5% in worth"
+ },
+ {
+  "id": "F12",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "band",
+  "what": "The Protagonist against himself: both reach tier 3",
+  "bound": "In at least 80% of matches"
+ },
+ {
+  "id": "F13",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "band",
+  "what": "... the first form's time",
+  "bound": "Within 15 s of the default arm's"
+ },
+ {
+  "id": "F14",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "band",
+  "what": "The hero's fight time near people, after the rework",
+  "bound": "No higher than before it"
+ },
+ {
+  "id": "F15",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "band",
+  "what": "The Protagonist's win share against the rival, the default arm",
+  "bound": "45 to 55%"
+ },
+ {
+  "id": "F16",
+  "group": "F",
+  "section": "2. The hero's forms (`hero-forms.md`)",
+  "kind": "band",
+  "what": "The median time from the coil's start to 100, while the opponent is above him (added 2026-10-17: 0.5 a second, 0.005 a point of damage)",
+  "bound": "60 to 100 s"
+ },
+ {
+  "id": "R1",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "A building marked, breached or downed in a fight is in the same state when a later slice crosses it",
+  "bound": ""
+ },
+ {
+  "id": "R2",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "A fight replays bit-identical from its header alone",
+  "bound": ""
+ },
+ {
+  "id": "R3",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "The run state at a fight's start is the one the last fight ended with",
+  "bound": ""
+ },
+ {
+  "id": "R4",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "A retry starts from the same run state and seed as the fight it retries",
+  "bound": ""
+ },
+ {
+  "id": "R5",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "Every fight starts from base form, at power 0",
+  "bound": ""
+ },
+ {
+  "id": "R6",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "The player never climbs past the run's ceiling, and a form boon raises it one tier",
+  "bound": ""
+ },
+ {
+  "id": "R7",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "Every boon offer holds a form while one is still locked",
+  "bound": ""
+ },
+ {
+  "id": "R8",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "Lives never pass three. A clean win (no region broken at the end) gives one; a walk-on from the temptation's offer gives one",
+  "bound": ""
+ },
+ {
+  "id": "R9",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "A loss with no life left ends the run, and the haul is still paid",
+  "bound": ""
+ },
+ {
+  "id": "R10",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "The boss path is one a run, and the same for the same history",
+  "bound": ""
+ },
+ {
+  "id": "R11",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "No offer touches down in a fallen place, and no fight starts with a fighter in a crater or under water",
+  "bound": ""
+ },
+ {
+  "id": "R12",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "No offer, beat or card names a school, a hospital or a place of worship as a target",
+  "bound": ""
+ },
+ {
+  "id": "R13",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "The planet's ceiling: people lost before the boss at most 40%; by the end at most 70%",
+  "bound": ""
+ },
+ {
+  "id": "R14",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "A score, achievement, unlock, title or challenge that counts a death: none",
+  "bound": ""
+ },
+ {
+  "id": "R15",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "Each catastrophe effect's worst-case clips, both modes, in the darkened sky: pass the flash check, red flashes 0",
+  "bound": ""
+ },
+ {
+  "id": "R16",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "Catastrophe light events, across everything on the screen: at most one every 2 s, rising over 0.3 s or more and falling over 1 s or more",
+  "bound": ""
+ },
+ {
+  "id": "R17",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "Magma never finishes a fighter: on the brink in magma he is thrown clear",
+  "bound": ""
+ },
+ {
+  "id": "R18",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "At most 3 catastrophe events a fight (2 breaches, 2 blast clouds, 1 meteor)",
+  "bound": ""
+ },
+ {
+  "id": "R19",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "hard",
+  "what": "The meters' gains per person are by `pop0`, and the budgets and ceilings by `present`",
+  "bound": ""
+ },
+ {
+  "id": "R20",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "band",
+  "what": "Each fight's length",
+  "bound": "10th percentile 300 s or more, median 5 to 7 min"
+ },
+ {
+  "id": "R21",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "band",
+  "what": "The MVP run's length; the full run's",
+  "bound": "Median 25 to 35 min; 40 to 60 min"
+ },
+ {
+  "id": "R22",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "band",
+  "what": "A first-time player finishes the MVP on Story",
+  "bound": "Within three runs"
+ },
+ {
+  "id": "R23",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "band",
+  "what": "Cities fallen: an MVP run; a full run",
+  "bound": "2 to 4 of 12; 4 to 6 of 12"
+ },
+ {
+  "id": "R24",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "band",
+  "what": "The boss fight reaches the tremor",
+  "bound": "In at least 90% of boss fights"
+ },
+ {
+  "id": "R25",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "band",
+  "what": "A crust breach or a blast cloud in a boss fight",
+  "bound": "In at least 60% of boss fights that reach tier 5"
+ },
+ {
+  "id": "R26",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "band",
+  "what": "In the boss fight, hazard wear (magma, fire, falling stacks)",
+  "bound": "At most 25% of all wear"
+ },
+ {
+  "id": "R27",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "band",
+  "what": "Rewards a player can see: a first run; a full run",
+  "bound": "At least 5; 8 to 10"
+ },
+ {
+  "id": "R28",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "band",
+  "what": "Standard runs won by a scripted player who takes a form at every offer, against medium and hard",
+  "bound": "40 to 70%"
+ },
+ {
+  "id": "R29",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "band",
+  "what": "... by one who never takes a form",
+  "bound": "Under 25%: skipping forms is a real gamble"
+ },
+ {
+  "id": "R30",
+  "group": "R",
+  "section": "3. The run (`run-mode.md`)",
+  "kind": "band",
+  "what": "Lives spent in a won Standard run, median",
+  "bound": "0 to 1"
+ },
+ {
+  "id": "B1",
+  "group": "B",
+  "section": "4. Buildings, recovery and the chain inside a tower (`buildings.md` §7)",
+  "kind": "hard",
+  "what": "The brake can start within 20 ticks of a send, set pieces apart",
+  "bound": "Every time (hard)"
+ },
+ {
+  "id": "B2",
+  "group": "B",
+  "section": "4. Buildings, recovery and the chain inside a tower (`buildings.md` §7)",
+  "kind": "hard",
+  "what": "Braking at once, he has control within 1 s of the launch",
+  "bound": "Every time (hard)"
+ },
+ {
+  "id": "B3",
+  "group": "B",
+  "section": "4. Buildings, recovery and the chain inside a tower (`buildings.md` §7)",
+  "kind": "hard",
+  "what": "With no ki, the brake still works, at half rate",
+  "bound": "Every time (hard)"
+ },
+ {
+  "id": "B4",
+  "group": "B",
+  "section": "4. Buildings, recovery and the chain inside a tower (`buildings.md` §7)",
+  "kind": "hard",
+  "what": "The inside chain's slabs by effective tier (1 lodges; 2 one floor; 3 floor, ceiling, floor; 4 up to five, then the core cracks)",
+  "bound": "As ruled (hard)"
+ },
+ {
+  "id": "B5",
+  "group": "B",
+  "section": "4. Buildings, recovery and the chain inside a tower (`buildings.md` §7)",
+  "kind": "hard",
+  "what": "A chain's contacts at most 5, its bounces at most 3, its ragdolled time at most 2.5 s",
+  "bound": "Every time (hard)"
+ },
+ {
+  "id": "B6",
+  "group": "B",
+  "section": "4. Buildings, recovery and the chain inside a tower (`buildings.md` §7)",
+  "kind": "hard",
+  "what": "No brake inside a chain until he lodges or leaves by a face",
+  "bound": "Every time (hard)"
+ },
+ {
+  "id": "B7",
+  "group": "B",
+  "section": "4. Buildings, recovery and the chain inside a tower (`buildings.md` §7)",
+  "kind": "hard",
+  "what": "A sent body's path is the same on every replay",
+  "bound": "Every time (hard)"
+ },
+ {
+  "id": "B8",
+  "group": "B",
+  "section": "4. Buildings, recovery and the chain inside a tower (`buildings.md` §7)",
+  "kind": "band",
+  "what": "Inside chains a match, in matches with three or more fights in town at tier 3 and up",
+  "bound": "0.3 to 1.5"
+ },
+ {
+  "id": "B9",
+  "group": "B",
+  "section": "4. Buildings, recovery and the chain inside a tower (`buildings.md` §7)",
+  "kind": "hard",
+  "what": "The brake on LT held (`stanceMask` 8) while sent, and on Guard held on Simple and touch; its start by the send's power, 8 to 20 ticks (added 2026-10-17)",
+  "bound": "Every time (hard)"
+ },
+ {
+  "id": "B10",
+  "group": "B",
+  "section": "4. Buildings, recovery and the chain inside a tower (`buildings.md` §7)",
+  "kind": "band",
+  "what": "Brunts as a share of all launches; launches that end in a building",
+  "bound": "4 to 15%; 4 to 15% (re-banded 2026-10-17)"
+ },
+ {
+  "id": "B11",
+  "group": "B",
+  "section": "4. Buildings, recovery and the chain inside a tower (`buildings.md` §7)",
+  "kind": "band",
+  "what": "Halted, of journeys that end on the ground; long launches, of those that don't end in a building; flights off a lip a minute",
+  "bound": "40 to 60%; at least 30%; 0.4 to 2.5 (re-based 2026-10-17)"
+ },
+ {
+  "id": "B12",
+  "group": "B",
+  "section": "4. Buildings, recovery and the chain inside a tower (`buildings.md` §7)",
+  "kind": "band",
+  "what": "Bodies into buildings a match, from a start in town",
+  "bound": "4 to 8 (unchanged; waits for the new sources)"
+ },
+ {
+  "id": "G3",
+  "group": "G",
+  "section": "5. Also ruled on 2026-10-17",
+  "kind": "hard",
+  "what": "Two pummels on one pulse: the one nearer the pulse by the tick takes the step, and the same number of ticks moves nothing",
+  "bound": "Every time (hard)"
+ },
+ {
+  "id": "G4",
+  "group": "G",
+  "section": "5. Also ruled on 2026-10-17",
+  "kind": "band",
+  "what": "The clinch's median; a player who only uses A (catching, pummelling within 3 ticks), against medium; catch tells a minute AI v AI",
+  "bound": "40 to 70 ticks; wins 10 to 35%; 1 to 3"
+ },
+ {
+  "id": "T1",
+  "group": "T",
+  "section": "5. Also ruled on 2026-10-17",
+  "kind": "hard",
+  "what": "An object heavier than the tier allows (tier 1: 4; tier 2: 8; tier 3: ships) is never lifted",
+  "bound": "Every time (hard)"
+ },
+ {
+  "id": "T2",
+  "group": "T",
+  "section": "5. Also ruled on 2026-10-17",
+  "kind": "hard",
+  "what": "A perfect block of an object within the catcher's tier catches it, and above it swats it",
+  "bound": "Every time (hard)"
+ },
+ {
+  "id": "T3",
+  "group": "T",
+  "section": "5. Also ruled on 2026-10-17",
+  "kind": "band",
+  "what": "Thrown objects a match, AI against AI",
+  "bound": "0.5 to 3"
+ },
+ {
+  "id": "G1",
+  "group": "G",
+  "section": "5. Also ruled on 2026-10-17",
+  "kind": "hard",
+  "what": "Vicious blows never run more than two in a row to the same place (Legal s08)",
+  "bound": "Every time (hard)"
+ },
+ {
+  "id": "G2",
+  "group": "G",
+  "section": "5. Also ruled on 2026-10-17",
+  "kind": "hard",
+  "what": "Without a held A (charges off, the latch), a fighter two behind who presses nothing on a pulse braces through it, for at most two pulses in a row",
+  "bound": "Every time (hard)"
+ }
+]
