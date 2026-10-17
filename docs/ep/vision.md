@@ -1451,3 +1451,4 @@ Direction adopted from it (Orb-approved):
 - 4 of the 30 lines kept; 26 rewritten (the file has each).
 
 Audio: Gemini's guide (syllables every 2 to 3 characters, punctuation pitch, AudioStreamRandomizer sample pools, a per-fighter Audio Bus with compressor, EQ, chorus, reverb or bitcrush) is a suggestion to compare with ours. Orb: "ideally I'd like a lightweight hybrid, whatever approach works in our system should be chosen by 'rule-of-cool'".
+- **Orb rules (same night):** the Protagonist apologises for damage after the fight, never during it. On Gemini: "I'm paying for gemini so I'm assuming they allow me some degree of commercial rights." (Legal, RL-153: Google's Gemini API terms claim no ownership of output; the paid consumer app's terms were not confirmed; AI-only text is likely not protected by copyright either way.)
