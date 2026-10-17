@@ -1,0 +1,11 @@
+--- a/render/core/warmup.gd
++++ b/render/core/warmup.gd
+@@ -22,6 +22,8 @@
+ 	["res://render/vfx/shaders/trail.gdshader", "multimesh"],    # VFX: trails (beam scene tick 427)
+ 	["res://render/vfx/shaders/shard.gdshader", "multimesh"],    # VFX: shards
+ 	["res://render/vfx/shaders/transform.gdshader", "multimesh"],   # VFX: shots and the transformation
++	["res://render/vfx/shaders/hole.gdshader", "multimesh"],     # VFX: the holes in facades (missing from the first list)
++	["res://render/vfx/shaders/dust.gdshader", "multimesh"],     # VFX: the tremor's dust curtains (docs/vfx/catastrophe-plan.md section 5)
+ 	["res://render/shaders/particle.gdshader", "multimesh"],     # Rendering: particles
+ 	["res://render/shaders/flash.gdshader", "multimesh"],        # Rendering: hit flashes
+ 	["res://render/shaders/glow.gdshader", "mesh"],              # Rendering: glows

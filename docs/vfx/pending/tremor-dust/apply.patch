@@ -1,0 +1,687 @@
+--- a/render/vfx/vfx_hub.gd
++++ b/render/vfx/vfx_hub.gd
+@@ -80,6 +80,8 @@
+ var px_per_unit: float = 1.3                    # pixels per world unit at 1024 by 768 on the fighters' plane (the host sets it from the camera): the size of a flash for the register's weights
+ var reduced_flashing: bool = false              # UI's reduced-flashing setting: the register's cap drops to 1 a second and the low-priority flashes (energy, blocks, hit rings) are not drawn
+ var inreach := VfxReach.new()                   # energy arts in reach and the launcher's marks (reach.gd), behind the same flag
++var tremor := VfxTremor.new()                  # the catastrophe tier's tremor: dust curtains and rubble (tremor.gd, dust_view.gd), on its cue
++var catastrophe_enabled: bool = true            # the catastrophe tier's effects (nothing draws until the cues exist)
+ var zip := VfxZip.new()                       # the LT zip's looks (zip.gd), behind the same flag
+ var ghosts := VfxGhostTally.new()               # the combined ghost count: limb ghosts (f01) and body ghosts (m05) of every source, Rendering's after-images too (ghost_tally.gd)
+ var _vision_sig: String = ""                    # the colour-blind preset and the fighters' lane colours last applied (see _sync_vision)
+@@ -140,6 +142,7 @@
+ 	stages.reset()
+ 	zip.reset()
+ 	inreach.reset()
++	tremor.reset()
+ 	ghosts.reset()
+ 	_vision_sig = ""
+ 	flashes.reset()
+@@ -236,6 +239,10 @@
+ 	flashes.cam_dist = cam_dist
+ 	debris.clear_query = clear_query
+ 	flashes.begin_tick(reduced_motion or reduced_flashing)
++	if catastrophe_enabled:
++		tremor.step(reduced_motion or reduced_flashing)
++		tremor.on_events(S, events)
++		tremor.rubble(S, debris, reduced_motion or reduced_flashing)
+ 	debris.puff_area_cap = VfxLook.PUFF_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05)
+ 	debris.ember_area_cap = VfxLook.EMBER_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05) * (0.5 if (reduced_motion or reduced_flashing) else 1.0)
+ 	_sync_vision(S)
+--- a/render/vfx/trail_view.gd
++++ b/render/vfx/trail_view.gd
+@@ -13,6 +13,7 @@
+ var ribbons: int = 0      # for the tests: ribbon segments written last frame
+ var mark_count: int = 0   # ... and marks
+ var shots_view := VfxShotsView.new()   # the energy blasts (shots_view.gd): a child, updated with this view, so it needs nothing of the layer
++var dust_view := VfxDustView.new()   # the tremor's dust curtains (dust_view.gd), a child like the shots view
+ var cam_dist: float = 3000.0   # the pane camera's distance to the fighter plane (set by the layer), for the perspective scale at depth
+ 
+ 
+@@ -36,11 +37,16 @@
+ 	_buf.resize(CAP * STRIDE)
+ 	shots_view.name = "Shots"
+ 	add_child(shots_view)
++	dust_view.name = "Dust"
++	add_child(dust_view)
+ 
+ 
+ ## a: the frame's interpolation between the last two ticks. cam_x: this pane's wrapped camera x. zoom: this pane's
+ ## pixels per unit on the fighter plane. half_w: half the visible width in world units.
+ func update(hub: VfxHub, host: SimHost, a: float, cam_x: float, zoom: float, half_w: float) -> void:
++	dust_view.visible = hub.catastrophe_enabled
++	if hub.catastrophe_enabled:
++		dust_view.update(hub, host, cam_x, half_w)
+ 	shots_view.visible = hub.shots_enabled or hub.beamplay_enabled or hub.glare_enabled or hub.press_enabled
+ 	if hub.shots_enabled or hub.beamplay_enabled or hub.glare_enabled or hub.press_enabled:
+ 		shots_view.update(hub, host, a, cam_x, zoom, half_w)
+--- a/render/vfx/tools/effects_check.gd
++++ b/render/vfx/tools/effects_check.gd
+@@ -212,6 +212,7 @@
+ 	_wall_outcome()
+ 	_flash_reserve()
+ 	_cat_class()
++	_tremor()
+ 	_stage_stagger()
+ 	_depth()
+ 	_panes()
+@@ -4641,6 +4642,128 @@
+ 	_check(Rr.ask("beam", white, 1, VfxFlashRegistry.AREA_FULL, 0.6), "reduced mode keeps its whole 1.0: one weight-1 flash fits")
+ 
+ 
++## The tremor's dust (docs/vfx/catastrophe-plan.md section 5; Legal c01 to c06): its numbers, an envelope that never steps fast, a layout whose overlaps never sum past alpha_max, no red, no rhythm,
++## the cue, determinism, and that it asks nothing of the flash register.
++func _tremor() -> void:
++	print("the tremor's dust")
++	# The data file and the built-in defaults say the same.
++	var jd = JSON.parse_string(FileAccess.get_file_as_string("res://data/vfx/catastrophe.json"))
++	var same: bool = jd is Dictionary and jd.get("tremor") is Dictionary
++	if same:
++		for k in VfxTremor.DEFAULTS.keys():
++			if not _same_value(jd["tremor"].get(k), VfxTremor.DEFAULTS[k]):
++				same = false
++				print("    differs: ", k, " ", jd["tremor"].get(k), " vs ", VfxTremor.DEFAULTS[k])
++		for k in jd["tremor"].keys():
++			if not VfxTremor.DEFAULTS.has(k):
++				same = false
++	_check(same, "data/vfx/catastrophe.json and the built-in defaults agree")
++	# The plan's numbers.
++	_check(float(VfxTremor.p("alpha_max")) <= 0.5 and VfxDustView.CAP == 160 and VfxDustView.sprites_for(2) == 160 and VfxDustView.sprites_for(0) < VfxDustView.sprites_for(1) and VfxDustView.sprites_for(1) < 160, "at most 160 sprites (60, 110, 160 by quality) and an alpha of at most 0.5")
++	_check(VfxTremor.onset_ticks(false) >= 60.0 and VfxTremor.settle_ticks(false) >= 240.0 and VfxTremor.onset_ticks(true) >= 90.0 and VfxTremor.settle_ticks(true) >= VfxTremor.settle_ticks(false), "an onset of at least 1 s and a settling of at least 4 s; the calm form is slower (%.0f and %.0f ticks, calm %.0f and %.0f)" % [VfxTremor.onset_ticks(false), VfxTremor.settle_ticks(false), VfxTremor.onset_ticks(true), VfxTremor.settle_ticks(true)])
++	# The envelope: zero outside, 1 on the plateau, monotone, and no tick steps more than its slope; the brightness step it makes is a small fraction of the 0.1 that counts.
++	for calm in [false, true]:
++		var on: float = VfxTremor.onset_ticks(calm)
++		var se: float = VfxTremor.settle_ticks(calm)
++		var dur: float = 216.0
++		var prev: float = 0.0
++		var step_max: float = 0.0
++		var mono: bool = true
++		for t in range(0, int(dur + se) + 3):
++			var v: float = VfxTremor.level(float(t), dur, on, se)
++			step_max = maxf(step_max, absf(v - prev))
++			if float(t) <= dur and v < prev - 1e-12:
++				mono = false
++			if float(t) > dur and v > prev + 1e-12:
++				mono = false
++			prev = v
++		var lum_step: float = step_max * float(VfxTremor.p("alpha_max")) * 0.6      # the dust against the darkest or brightest sky it can sit on (a contrast of at most 0.6)
++		var tag: String = "calm" if calm else "normal"
++		_check(VfxTremor.level(0.0, dur, on, se) == 0.0 and absf(VfxTremor.level(dur - 1.0, dur, on, se) - 1.0) < 1e-9 and VfxTremor.level(dur + se, dur, on, se) == 0.0 and mono, "%s: the envelope is 0 outside, 1 on the plateau and only rises then falls" % tag)
++		_check(step_max <= 1.875 / minf(on, se) + 1e-9 and lum_step < 0.02, "%s: no tick steps the dust's brightness by more than %.4f (a flash needs 0.1)" % [tag, lum_step])
++	_check(VfxTremor.level(30.0, 400.0, 60.0, 240.0) < 0.6 and VfxTremor.level(30.0, 400.0, 60.0, 240.0) > 0.4, "the onset takes its second: halfway is half")
++	# The layout: no column's overlaps sum past alpha_max, at any zoom, quality or seed; each sprite's alpha is far under it.
++	var worst: float = 0.0
++	var worst_ua: float = 0.0
++	for hw in [400.0, 800.0, 3000.0]:
++		for q in range(3):
++			for sd in [1, 777, 4242, 31337, 99999, 123456, 2718, 8, 600, 1500]:
++				var n: int = VfxDustView.sprites_for(q)
++				worst = maxf(worst, VfxDustView.worst_column(n, hw, sd))
++				worst_ua = maxf(worst_ua, VfxDustView.unit_alpha(n, hw))
++	_check(worst <= float(VfxTremor.p("alpha_max")) + 1e-6, "the most opacity any column of the layout reaches is %.3f (at most %.2f) over three zooms, three qualities and ten seeds" % [worst, float(VfxTremor.p("alpha_max"))])
++	_check(worst_ua < 0.2, "one sprite's alpha is at most %.3f (the plan's 0.5 caps their sum, which the check above holds)" % worst_ua)
++	var s1: Dictionary = VfxDustView.sprite(7, 110, 500.0, 99)
++	var s2: Dictionary = VfxDustView.sprite(7, 110, 500.0, 99)
++	_check(s1 == s2 and absf(float(s1["vx"])) <= 500.0 * 1.15 * 1.01 and float(s1["z"]) < 0.0 and float(s1["z"]) >= -130.0, "a sprite is a pure function of its index, the seed and the view, and stands behind the fighters' plane")
++	# The colour: a warm grey, nowhere near red.
++	var c := Color(String(VfxTremor.p("colour")))
++	_check(c.r / (c.r + c.g + c.b) < 0.45 and not VfxFlashRegistry.is_red(c), "the dust is a warm grey (red share %.2f)" % (c.r / (c.r + c.g + c.b)))
++	# No rhythm: the shiver is a few percent, two slow incommensurate sines per sprite, and off in the calm form and Reduced motion (the view reads `still`); the wander is slow.
++	_check(float(VfxTremor.p("shiver")) <= 0.06 + 1e-9 and absf(0.83 / 1.37 - 0.5) > 0.05 and absf(0.31 / 0.17 - 2.0) > 0.05, "the shiver is at most 6% of the alpha and its two slow sines (0.83 and 1.37 rad/s, wander 0.31 and 0.17) are not harmonics of one another")
++	# The cue, the clock, the rubble, determinism, and nothing asked of the register. Each hub has a sim of its own, so its ticks and its rubble's hash seed are the same as another's.
++	var mk := func() -> Array:
++		var ss := SimCore.createSim()
++		SimCore.newMatch(ss, 4)
++		var hh := VfxHub.new()
++		hh.destruction_enabled = true
++		hh.reset(ss, 4)
++		return [hh, ss]
++	var mkcue := func(ss: SimState) -> Object:
++		return VfxMock.ev("cue", {"actor": 0, "kind": "tremor", "text": "", "target": 1, "k": 0.0, "n": float(ss.tick + 216), "x": 0.0, "y": 0.0, "source": "", "dur": 10.0})
++	var pa: Array = mk.call()
++	var h: VfxHub = pa[0]
++	var S: SimState = pa[1]
++	for k in range(5):
++		_tick(S, h, [])
++	_check(not h.tremor.active() and h.debris.bits.is_empty(), "with no tremor cue nothing runs and nothing is thrown")
++	_tick(S, h, [mkcue.call(S)])
++	_check(h.tremor.active() and h.tremor.runs.size() == 1, "a tremor cue starts one run")
++	var env_early: float = h.tremor.strength(false)
++	var seen_peak: float = 0.0
++	var thrown: int = 0
++	for k in range(215):
++		_tick(S, h, [])
++		seen_peak = maxf(seen_peak, h.tremor.strength(false))
++		if k == 28:
++			thrown = h.tremor.rubble_made
++	_check(env_early < 0.01 and seen_peak > 0.99 and thrown > 0 and h.tremor.rubble_made <= 40 * 4 + 1, "the dust rises from nothing over its onset to full (%.3f to %.3f), with %d bits of rubble in the first half second and %d in all (at most 40 a second)" % [env_early, seen_peak, thrown, h.tremor.rubble_made])
++	for k in range(int(VfxTremor.settle_ticks(false)) + 5):
++		_tick(S, h, [])
++	_check(not h.tremor.active(), "the run is dropped once it has settled")
++	_check(h.flashes.log.is_empty() and h.flashes.cat_events.is_empty(), "the tremor asks nothing of the flash register (dust is dark and slow: no flash, no catastrophe light event)")
++	var made: Array = []
++	var firsts: Array = []
++	for r in range(2):
++		var pr: Array = mk.call()
++		for k in range(120):
++			_tick(pr[1], pr[0], [mkcue.call(pr[1])] if k == 0 else [])
++		made.append(pr[0].tremor.rubble_made)
++		firsts.append(pr[0].debris.bits[0].x if not pr[0].debris.bits.is_empty() else 0.0)
++	_check(made[0] == made[1] and made[0] > 0 and firsts[0] == firsts[1], "the same cue gives the same rubble: %d bits, the first at x %.2f both times (determinism)" % [made[0], firsts[0]])
++	var pc: Array = mk.call()
++	pc[0].reduced_flashing = true
++	var pn: Array = mk.call()
++	for k in range(180):
++		_tick(pc[1], pc[0], [mkcue.call(pc[1])] if k == 0 else [])
++		_tick(pn[1], pn[0], [mkcue.call(pn[1])] if k == 0 else [])
++	_check(pc[0].tremor.rubble_made > 0 and pc[0].tremor.rubble_made < pn[0].tremor.rubble_made and pc[0].tremor.strength(true) <= pn[0].tremor.strength(false), "the calm form throws less rubble (%d against %d bits in 3 s) and its onset is slower (%.0f ticks against %.0f)" % [pc[0].tremor.rubble_made, pn[0].tremor.rubble_made, VfxTremor.onset_ticks(true), VfxTremor.onset_ticks(false)])
++
++
++## Two values from the data file and the defaults, equal as numbers (the file's whole numbers are floats), strings, or arrays of those.
++func _same_value(a, b) -> bool:
++	if a is Array and b is Array:
++		if a.size() != b.size():
++			return false
++		for i in range(a.size()):
++			if not _same_value(a[i], b[i]):
++				return false
++		return true
++	if (a is float or a is int) and (b is float or b is int):
++		return absf(float(a) - float(b)) < 1e-9
++	return str(a) == str(b)
++
++
+ ## The catastrophe light class (docs/vfx/catastrophe-plan.md section 1; Legal c01 to c05): the gap, the floors, the calm form, the ash, one answer per event, no red, and a hammer of random asks.
+ func _cat_class() -> void:
+ 	print("the catastrophe light class")
+--- a/tools/schemas/map.json
++++ b/tools/schemas/map.json
+@@ -472,6 +472,10 @@
+       "schema": "vfx-energy.schema.json"
+     },
+     {
++      "match": "data/vfx/catastrophe.json",
++      "schema": "vfx-catastrophe.schema.json"
++    },
++    {
+       "match": "data/narrative/combat_barks.json",
+       "schema": "narrative-barks.schema.json"
+     },
+--- a/docs/vfx/catastrophe-plan.md
++++ b/docs/vfx/catastrophe-plan.md
+@@ -109,6 +109,8 @@
+ 
+ ## 5. The tremor's dust (`tremor`; run-mode §3.1, c06)
+ 
++**Built (2026-10-17, parked: `docs/vfx/tremor-dust.md`).** Where the build differs from the paragraphs below: the layout is computed on the CPU each frame (160 sprites is small enough; the stateless vertex shader was for the 400-sprite cloud), the sprites stand at z -20 to -6 (a facade stands in front of z -30 or less in the city, so the first -100 to -30 was hidden), and the alpha rule is the **sum** of the overlaps at most 0.5 (measured 0.480), which makes one sprite's alpha at most 0.13 and the dust a faint haze; the brightness step per tick is at most 0.0094, not the 0.07 written below (that figure was the contrast of the dust against the sky, a total over the onset, not a step).
++
+ The tremor is a live set piece: heaving ground and swaying towers (World, Animation) for the cue's length (`n` is the end tick; Audio's is 3.6 s). **A quake, never glowing fissures and never a ring** (c06).
+ 
+ - **Dust curtains.** Low sheets of dust rising off the ground along the whole visible slice and from the towers' bases: one `MultiMesh`, **at most 160 sprites**, stateless on `age` and the tremor's start and end ticks. The onset rises over 1.0 s (no step), holds with an irregular hash-driven wander, and settles over 4 s after the end. Colour: warm grey, **alpha at most 0.5**, a luminance step against the sky under 0.07 even at its thickest (it is dark and slow, so it is not a catastrophe light event and never asks the `cat` class).
+--- a/docs/vfx/README.md
++++ b/docs/vfx/README.md
+@@ -9,6 +9,7 @@
+ | Effect | State | Where |
+ | :--- | :--- | :--- |
+ | Motion trails: a tapered ribbon behind a fast fighter, and world-fixed wind marks the camera flies past | **Live** (trails are on by default) | `trail_state.gd`, `trail_view.gd`, `shaders/trail.gdshader` |
++| The catastrophe tier's tremor: low dust curtains and a patter of rubble on the `tremor` cue (no cue exists yet) | Built, parked (`docs/vfx/tremor-dust.md`); `catastrophe_enabled` | `tremor.gd`, `dust_view.gd`, `shaders/dust.gdshader`, `data/vfx/catastrophe.json` |
+ | Ground cracks and fissures from `S.craters` and `S.slides` | Built, **off** (`VfxLook.CRACKS_DEFAULT`) | `crack_gen.gd`, `crack_mesh.gd`, `crack_view.gd`, `shaders/crack.gdshader` |
+ 
+ | Scorch embers by beam variant | Built, **off** (`VfxLook.EMBERS_DEFAULT`) until Rendering stops drawing ImpactFx's own scorch sparks | `debris.gd` (`embers`) |
+--- a/render/vfx/tremor.gd
++++ b/render/vfx/tremor.gd
+@@ -0,0 +1,141 @@
++class_name VfxTremor
++extends RefCounted
++## The tremor's dust (docs/vfx/catastrophe-plan.md section 5; run-mode section 3.1; Legal c01 to c06): a live quake with no pause, shown as low curtains of dust along the whole visible slice and a
++## patter of small rubble. A quake, never glowing fissures, never a ring, never a rhythm: the audio's 2.5 Hz wobble is NOT mirrored here.
++## It is not a catastrophe light event: dust is dark and slow, so it asks nothing of the `cat` class (flash_registry.gd). Its brightness never changes faster than its envelope does (a smootherstep
++## over the onset, one over the settling), and the envelope's steepest step is checked (effects_check) to be a small fraction of a luminance step.
++## The cue is `tremor` (Audio's list: `n` is the tick it ends). The state is a start tick and an end tick; the curtains are a function of age, so a pause, a seek and a replay are right by construction.
++## Presentation only: no sim write, no `S.rng`; every pseudo-random choice is a hash of the sprite's index and the tremor's start tick.
++
++const DEFAULTS: Dictionary = {
++	"sprites": [60, 110, 160], "alpha_max": 0.5, "onset_s": 1.0, "settle_s": 4.0, "calm_onset_s": 1.5, "calm_settle_s": 5.0, "shiver": 0.06, "wander": 0.35, "colour": "#8a8277",
++	"height_k": [0.16, 0.46], "width_k": [2.4, 4.4], "z": [-20.0, -6.0], "rubble_per_s": 40.0, "rubble_size": [4.0, 9.0], "rubble_life_s": [0.8, 1.6], "max_overlap": 2,
++}
++
++static var _data: Dictionary = {}
++static var _loaded: bool = false
++
++## The tremors in flight (at most `max_overlap`): {start, end, seed}, in the hub's clock (ticks).
++var runs: Array = []
++var now: int = 0
++var rubble_made: int = 0            # for the tests
++var _rubble_acc: float = 0.0
++
++
++static func warm() -> void:
++	if _loaded:
++		return
++	_loaded = true
++	var path := "res://data/vfx/catastrophe.json"
++	if FileAccess.file_exists(path):
++		var v = JSON.parse_string(FileAccess.get_file_as_string(path))
++		if v is Dictionary and v.get("tremor") is Dictionary:
++			_data = v["tremor"]
++
++
++static func p(key: String):
++	warm()
++	var v = _data.get(key)
++	return v if v != null else DEFAULTS[key]
++
++
++func reset() -> void:
++	runs.clear()
++	now = 0
++	rubble_made = 0
++	_rubble_acc = 0.0
++
++
++## A hash of two integers to 0..1: no random stream is drawn.
++static func hash01(a: int, b: int) -> float:
++	var h: int = ((a * 73856093) ^ (b * 19349663) ^ 0x5bd1e995) & 0x7fffffff
++	h = ((h >> 13) ^ h) & 0x7fffffff
++	h = (h * 1274126177) & 0x7fffffff
++	return float((h >> 8) & 0xffff) / 65536.0
++
++
++## The envelope at `age` ticks after the tremor's start, 0 to 1: a smootherstep up over the onset, held until the tremor's end (`dur` ticks), a smootherstep down over the settling.
++static func level(age: float, dur: float, onset: float, settle: float) -> float:
++	if age <= 0.0:
++		return 0.0
++	if age < dur:
++		return _sm(minf(age / maxf(onset, 1.0), 1.0))
++	var top: float = _sm(minf(dur / maxf(onset, 1.0), 1.0))
++	var d: float = (age - dur) / maxf(settle, 1.0)
++	if d >= 1.0:
++		return 0.0
++	return top * (1.0 - _sm(d))
++
++
++static func _sm(u: float) -> float:
++	return u * u * u * (u * (u * 6.0 - 15.0) + 10.0)
++
++
++## The onset and settling in ticks for this mode: the calm form (Reduce flashing, or Reduced motion) is slower.
++static func onset_ticks(calm: bool) -> float:
++	return (float(p("calm_onset_s")) if calm else float(p("onset_s"))) * 60.0
++
++
++static func settle_ticks(calm: bool) -> float:
++	return (float(p("calm_settle_s")) if calm else float(p("settle_s"))) * 60.0
++
++
++## Once a tick, from the hub: the clock, and the finished tremors dropped.
++func step(calm: bool) -> void:
++	now += 1
++	var i: int = 0
++	while i < runs.size():
++		var r: Dictionary = runs[i]
++		if float(now - int(r["start"])) >= float(int(r["end"]) - int(r["start"])) + settle_ticks(calm) + 1.0:
++			runs.remove_at(i)
++		else:
++			i += 1
++
++
++## The `tremor` cue: `n` is the tick it ends (the sim's tick). A second cue while one runs adds a run (at most max_overlap; the oldest goes).
++func on_events(S: SimState, events: Array) -> void:
++	for e in events:
++		if e.type != "cue" or String(e.kind) != "tremor":
++			continue
++		var dur: int = maxi(int(float(e.n)) - S.tick, 1)
++		runs.append({"start": now, "end": now + dur, "seed": S.tick})
++		while runs.size() > int(p("max_overlap")):
++			runs.pop_front()
++
++
++## The strongest envelope of the runs in flight at the clock's tick (plus `frac` of a tick), 0 to 1.
++func strength(calm: bool, frac: float = 0.0) -> float:
++	var best: float = 0.0
++	for r in runs:
++		best = maxf(best, level(float(now - int(r["start"])) + frac, float(int(r["end"]) - int(r["start"])), onset_ticks(calm), settle_ticks(calm)))
++	return best
++
++
++func active() -> bool:
++	return not runs.is_empty()
++
++
++## A patter of small rubble through the debris pool while a tremor runs (not while it settles): up to `rubble_per_s` a second (half in the calm form), from the ground round the fighters, at hashed
++## places and times. `debris` is the shared pool; the pool's own caps hold.
++func rubble(S: SimState, debris: VfxDebris, calm: bool) -> void:
++	if runs.is_empty() or S.fighters.size() < 2:
++		return
++	var r: Dictionary = runs[runs.size() - 1]
++	if now >= int(r["end"]):
++		return
++	_rubble_acc += float(p("rubble_per_s")) * (0.5 if calm else 1.0) * strength(calm) / 60.0
++	var cx: float = S.fighters[0].x + SimWrap.sdx(S.fighters[0].x, S.fighters[1].x) * 0.5
++	var sz: Array = p("rubble_size")
++	var lf: Array = p("rubble_life_s")
++	while _rubble_acc >= 1.0:
++		_rubble_acc -= 1.0
++		var k: int = rubble_made
++		rubble_made += 1
++		var sd: int = int(r["seed"])
++		var x: float = SimWrap.wrap(cx + (hash01(k, sd) - 0.5) * 2400.0)
++		var y: float = WorldTerrain.groundY(S, x) + 6.0
++		var vx: float = (hash01(k, sd + 1) - 0.5) * 120.0
++		var vy: float = 60.0 + hash01(k, sd + 2) * 140.0
++		var size: float = lerpf(float(sz[0]), float(sz[1]), hash01(k, sd + 3))
++		var life: float = lerpf(float(lf[0]), float(lf[1]), hash01(k, sd + 4))
++		debris.chunk(x, y, -60.0, vx, vy, size, life, VfxEarth.tones_for_surface("rubble", x), 0, 6.0)
+--- a/render/vfx/tremor.gd.uid
++++ b/render/vfx/tremor.gd.uid
+@@ -0,0 +1 @@
++uid://0to7w0l0lomb
+--- a/render/vfx/dust_view.gd
++++ b/render/vfx/dust_view.gd
+@@ -0,0 +1,154 @@
++class_name VfxDustView
++extends MultiMeshInstance3D
++## The tremor's dust curtains for one pane (docs/vfx/catastrophe-plan.md section 5): at most 160 soft sprites of warm grey (shaders/dust.gdshader) spread across the visible slice, standing on
++## the ground and rising with the tremor's envelope (tremor.gd), one MultiMesh and one draw call, behind the fighters' plane. A child of the trail view, like the shots view. Reads only.
++## The alpha of each sprite is small on purpose: the sprites overlap, and the layout is built so that the sum of every overlap in any column is at most `alpha_max` (0.5): `unit_alpha` and
++## `worst_column` are what effects_check holds it to. No rhythm: a slow wander and a small irregular shiver of incommensurate slow sines (both off in the calm form and in Reduced motion).
++
++const CAP: int = 160
++const STRIDE: int = 20
++const SOFT: float = 0.44           # the share of a sprite's box its soft profile covers on average, over x and over the heights the curtains stand at: measured by worst_column
++
++var _buf := PackedFloat32Array()
++var count: int = 0
++var tint: Color = Color.WHITE
++
++
++func _ready() -> void:
++	var q := QuadMesh.new()
++	q.size = Vector2.ONE
++	var mm := MultiMesh.new()
++	mm.transform_format = MultiMesh.TRANSFORM_3D
++	mm.use_colors = true
++	mm.use_custom_data = true
++	mm.mesh = q
++	mm.instance_count = CAP
++	mm.visible_instance_count = 0
++	mm.custom_aabb = AABB(Vector3(-40000.0, -12000.0, -300.0), Vector3(80000.0, 60000.0, 600.0))
++	multimesh = mm
++	var m := ShaderMaterial.new()
++	m.shader = preload("res://render/vfx/shaders/dust.gdshader")
++	m.render_priority = 0
++	material_override = m
++	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
++	_buf.resize(CAP * STRIDE)
++	tint = Color(String(VfxTremor.p("colour")))
++
++
++## How many sprites for a quality level (0 low, 1 medium, 2 high).
++static func sprites_for(quality: int) -> int:
++	var a: Array = VfxTremor.p("sprites")
++	return mini(int(a[clampi(quality, 0, 2)]), CAP)
++
++
++## The alpha one full-strength sprite takes so that the layout's overlaps sum to at most alpha_max: the expected number of sprites over a column is n times the mean width over the span, and the
++## alpha is set for 1.6 times that (a margin for the hash's clumps), so a column of `k` overlaps reaches 1 - (1 - a)^k <= alpha_max.
++static func unit_alpha(n: int, half_w: float) -> float:
++	var wk: Array = VfxTremor.p("width_k")
++	var mean_w: float = 0.5 * (float(wk[0]) + float(wk[1])) * 0.1 * half_w          # width_k is a tenth of half_w
++	var span: float = half_w * 1.15
++	var over: float = maxf(1.0, ceil(1.1 * SOFT * float(n) * mean_w / (2.0 * span)))
++	return 1.0 - pow(1.0 - float(VfxTremor.p("alpha_max")), 1.0 / over)
++
++
++## One sprite of the layout: {vx (view x), w, h, a (its alpha at full strength, before the envelope and the shiver), z, col (brightness), seed, ph1, ph2}. Pure: the same inputs, the same sprite.
++static func sprite(i: int, n: int, half_w: float, seed: int) -> Dictionary:
++	var hk: Array = VfxTremor.p("height_k")
++	var wk: Array = VfxTremor.p("width_k")
++	var zr: Array = VfxTremor.p("z")
++	var span: float = half_w * 1.15
++	var h1: float = VfxTremor.hash01(i, seed)
++	return {
++		"vx": ((float(i) + h1 * 0.9) / float(n) - 0.5) * 2.0 * span,
++		"w": lerpf(float(wk[0]), float(wk[1]), VfxTremor.hash01(i, seed + 11)) * 0.1 * half_w,
++		"h": lerpf(float(hk[0]), float(hk[1]), VfxTremor.hash01(i, seed + 12)) * half_w,
++		"m": 0.55 + 0.45 * VfxTremor.hash01(i, seed + 13),                          # this sprite's share of the unit alpha
++		"z": lerpf(float(zr[0]), float(zr[1]), VfxTremor.hash01(i, seed + 14)),
++		"col": 0.92 + 0.16 * VfxTremor.hash01(i, seed + 15),
++		"seed": VfxTremor.hash01(i, seed + 16),
++		"ph1": VfxTremor.hash01(i, seed + 17) * TAU,
++		"ph2": VfxTremor.hash01(i, seed + 18) * TAU,
++	}
++
++
++## The most opacity any point of the layout reaches at full strength: 1 minus the product of (1 - alpha times the shader's soft profile) over every sprite that covers the point, sampled over `cols`
++## columns and three heights above the ground (at 0.15, 0.4 and 0.7 of the mean sprite height, where the curtains are thickest), the profile being the shader's own (full out to a quarter of the
++## half size, a smoothstep to nothing at the edge, the quad's height stretched by 1.35). The check holds it to alpha_max.
++static func worst_column(n: int, half_w: float, seed: int, cols: int = 96) -> float:
++	var ua: float = unit_alpha(n, half_w)
++	var sp: Array = []
++	for i in range(n):
++		sp.append(sprite(i, n, half_w, seed))
++	var hk: Array = VfxTremor.p("height_k")
++	var mean_h: float = 0.5 * (float(hk[0]) + float(hk[1])) * half_w
++	var span: float = half_w * 1.15
++	var worst: float = 0.0
++	for c in range(cols):
++		var x: float = ((float(c) + 0.5) / float(cols) - 0.5) * 2.0 * span
++		for fy in [0.15, 0.4, 0.7]:
++			var y: float = fy * mean_h
++			var keep: float = 1.0
++			for s in sp:
++				var ux: float = (x - float(s["vx"])) / (float(s["w"]) * 0.5)
++				var uy: float = (y - float(s["h"]) * 0.5) / (float(s["h"]) * 0.5)
++				var r: float = sqrt(ux * ux + 1.35 * 1.35 * uy * uy)
++				if r < 1.0:
++					keep *= 1.0 - ua * float(s["m"]) * (1.0 - smoothstep(0.25, 1.0, r))
++			worst = maxf(worst, 1.0 - keep)
++	return worst
++
++
++## cam_x: this pane's wrapped camera x; half_w: half the visible width in world units. calm: the register's reduced mode (Reduce flashing or Reduced motion).
++func update(hub: VfxHub, host: SimHost, cam_x: float, half_w: float) -> void:
++	var tr: VfxTremor = hub.tremor
++	var calm: bool = hub.flashes.reduced
++	var env: float = tr.strength(calm) if tr.active() else 0.0
++	if env <= 0.002:
++		multimesh.visible_instance_count = 0
++		count = 0
++		return
++	var n: int = sprites_for(hub.quality)
++	var ua: float = unit_alpha(n, half_w)
++	var seed: int = int(tr.runs[tr.runs.size() - 1]["seed"])
++	var t: float = float(tr.now) / 60.0
++	var still: bool = calm or hub.reduced_motion
++	var wander: float = 0.0 if still else float(VfxTremor.p("wander"))
++	var shiver: float = 0.0 if still else float(VfxTremor.p("shiver"))
++	var env_h: float = pow(env, 0.7)
++	for i in range(n):
++		var s: Dictionary = sprite(i, n, half_w, seed)
++		var vx: float = float(s["vx"]) + wander * float(s["w"]) * 0.25 * sin(t * 0.31 + float(s["ph1"])) * sin(t * 0.17 + float(s["ph2"]))
++		var xw: float = SimWrap.wrap(cam_x + vx)
++		var g: float = WorldTerrain.groundY(host.S, xw)
++		var h: float = float(s["h"]) * env_h
++		var sh: float = 1.0 + shiver * sin(t * 0.83 + float(s["ph1"])) * sin(t * 1.37 + float(s["ph2"]))
++		var a: float = ua * float(s["m"]) * env * sh
++		var c: Color = Color(tint.r * float(s["col"]), tint.g * float(s["col"]), tint.b * float(s["col"]), a)
++		_put(i, Vector2(vx, g + h * 0.5), float(s["w"]), maxf(h, 4.0), float(s["z"]), c, float(s["seed"]))
++	count = n
++	multimesh.visible_instance_count = n
++	multimesh.buffer = _buf
++
++
++func _put(i: int, c: Vector2, sx: float, sy: float, z: float, col: Color, sd: float) -> void:
++	var o: int = i * STRIDE
++	_buf[o] = sx
++	_buf[o + 1] = 0.0
++	_buf[o + 2] = 0.0
++	_buf[o + 3] = c.x
++	_buf[o + 4] = 0.0
++	_buf[o + 5] = sy
++	_buf[o + 6] = 0.0
++	_buf[o + 7] = c.y
++	_buf[o + 8] = 0.0
++	_buf[o + 9] = 0.0
++	_buf[o + 10] = 1.0
++	_buf[o + 11] = z
++	_buf[o + 12] = col.r
++	_buf[o + 13] = col.g
++	_buf[o + 14] = col.b
++	_buf[o + 15] = col.a
++	_buf[o + 16] = sd
++	_buf[o + 17] = 0.0
++	_buf[o + 18] = 0.0
++	_buf[o + 19] = 0.0
+--- a/render/vfx/dust_view.gd.uid
++++ b/render/vfx/dust_view.gd.uid
+@@ -0,0 +1 @@
++uid://dy3meq81rv102
+--- a/render/vfx/shaders/dust.gdshader
++++ b/render/vfx/shaders/dust.gdshader
+@@ -0,0 +1,34 @@
++// The tremor's dust curtains (docs/vfx/catastrophe-plan.md section 5): one MultiMesh quad per soft sprite of warm grey, its edge broken by two octaves of value noise so no outline reads as a
++// disc, and no hard edge anywhere (a soft falloff, never a cel step). Alpha-blended, never additive, drawn behind the fighters' plane. COLOR is the dust's colour with its alpha (the view caps
++// it at 0.5); INSTANCE_CUSTOM.x is a seed for the noise. Nothing here changes with time but what the view writes, so the shader has no clock and no rhythm of its own.
++shader_type spatial;
++render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
++
++varying vec4 v_custom;
++
++void vertex() {
++	v_custom = INSTANCE_CUSTOM;
++}
++
++float h21(vec2 p) {
++	p = fract(p * vec2(123.34, 456.21));
++	p += dot(p, p + 45.32);
++	return fract(p.x * p.y);
++}
++
++float vnoise(vec2 p) {
++	vec2 i = floor(p);
++	vec2 f = fract(p);
++	f = f * f * (3.0 - 2.0 * f);
++	return mix(mix(h21(i), h21(i + vec2(1.0, 0.0)), f.x), mix(h21(i + vec2(0.0, 1.0)), h21(i + vec2(1.0, 1.0)), f.x), f.y);
++}
++
++void fragment() {
++	vec2 p = UV * 2.0 - 1.0;
++	float sd = v_custom.x;
++	float n = 0.6 * vnoise(p * 2.2 + vec2(sd * 7.1, sd * 3.7)) + 0.4 * vnoise(p * 5.0 + vec2(sd * 2.3, sd * 9.9));
++	float r = length(p * vec2(1.0, 1.35)) + (n - 0.5) * 0.55;
++	float a = 1.0 - smoothstep(0.25, 1.0, r);
++	ALBEDO = COLOR.rgb;
++	ALPHA = COLOR.a * a;
++}
+--- a/render/vfx/shaders/dust.gdshader.uid
++++ b/render/vfx/shaders/dust.gdshader.uid
+@@ -0,0 +1 @@
++uid://75kjwtksnpb3
+--- a/data/vfx/catastrophe.json
++++ b/data/vfx/catastrophe.json
+@@ -0,0 +1,22 @@
++{
++  "version": 1,
++  "_note": "The catastrophe tier's numbers (docs/vfx/catastrophe-plan.md). Only the tremor's dust so far (section 5): at most 160 sprites, alpha at most 0.5, an onset of 1 s, settling over 4 s, no rhythm. Presentation only.",
++  "tremor": {
++    "sprites": [60, 110, 160],
++    "alpha_max": 0.5,
++    "onset_s": 1.0,
++    "settle_s": 4.0,
++    "calm_onset_s": 1.5,
++    "calm_settle_s": 5.0,
++    "shiver": 0.06,
++    "wander": 0.35,
++    "colour": "#8a8277",
++    "height_k": [0.16, 0.46],
++    "width_k": [2.4, 4.4],
++    "z": [-20.0, -6.0],
++    "rubble_per_s": 40.0,
++    "rubble_size": [4.0, 9.0],
++    "rubble_life_s": [0.8, 1.6],
++    "max_overlap": 2
++  }
++}
+--- a/tools/schemas/vfx-catastrophe.schema.json
++++ b/tools/schemas/vfx-catastrophe.schema.json
+@@ -0,0 +1,35 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "meridian/vfx-catastrophe",
++  "title": "vfx catastrophe tier (version 1)",
++  "description": "data/vfx/catastrophe.json: the catastrophe tier's presentation numbers (docs/vfx/catastrophe-plan.md). Only the tremor's dust so far. Read by render/vfx/tremor.gd; every key has a built-in default there. Presentation only.",
++  "type": "object",
++  "required": ["version"],
++  "properties": {
++    "version": { "const": 1 },
++    "tremor": {
++      "type": "object",
++      "properties": {
++        "sprites": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "integer", "minimum": 1, "maximum": 160 } },
++        "alpha_max": { "type": "number", "exclusiveMinimum": 0, "maximum": 0.5 },
++        "onset_s": { "type": "number", "minimum": 1.0, "maximum": 6 },
++        "settle_s": { "type": "number", "minimum": 4.0, "maximum": 20 },
++        "calm_onset_s": { "type": "number", "minimum": 1.5, "maximum": 8 },
++        "calm_settle_s": { "type": "number", "minimum": 4.0, "maximum": 30 },
++        "shiver": { "type": "number", "minimum": 0, "maximum": 0.1 },
++        "wander": { "type": "number", "minimum": 0, "maximum": 1 },
++        "colour": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
++        "height_k": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 } },
++        "width_k": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "exclusiveMinimum": 0, "maximum": 8 } },
++        "z": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "minimum": -130, "maximum": -5 } },
++        "rubble_per_s": { "type": "number", "minimum": 0, "maximum": 40 },
++        "rubble_size": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "exclusiveMinimum": 0, "maximum": 20 } },
++        "rubble_life_s": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "exclusiveMinimum": 0, "maximum": 4 } },
++        "max_overlap": { "type": "integer", "minimum": 1, "maximum": 3 }
++      },
++      "additionalProperties": false
++    }
++  },
++  "additionalProperties": false,
++  "patternProperties": { "^_": true }
++}
+--- a/docs/vfx/tremor-dust.md
++++ b/docs/vfx/tremor-dust.md
+@@ -0,0 +1,41 @@
++# The tremor's dust (catastrophe tier, step 2)
++
++Owner: VFX Director. 2026-10-17. Step 2 of `docs/vfx/catastrophe-plan.md` (§5), built in scratch and parked (`docs/vfx/pending/tremor-dust/`), on top of the parked `warm-and-cat` patch (the `cat` class). Legal c01 to c06 and run-mode §3.1 bind it. **Nothing draws until the `tremor` cue exists** (Simulation's: Audio's list gives it as `tremor` with `n` the tick it ends); a scratch scene injects it for the measurements below. Not a clearance.
++
++## What it is
++
++A live quake with no pause, shown as **low curtains of dust** across the whole visible slice and **a patter of small rubble**. A quake, never glowing fissures, never a ring, never a rhythm: the audio's 2.5 Hz wobble is not mirrored.
++
++| Piece | File | What |
++| :--- | :--- | :--- |
++| State and rules | `render/vfx/tremor.gd` (`VfxTremor`) | the cue's runs (a start and an end tick, at most 2 at once), the envelope `level()`, the calm form's slower onset, the rubble spawner; hashes, never `S.rng` |
++| Drawing | `render/vfx/dust_view.gd` (`VfxDustView`) + `render/vfx/shaders/dust.gdshader` | one MultiMesh, one draw call, at most 160 soft sprites of warm grey, a child of the trail view (like the shots view); the shader is a soft noise-broken puff, alpha-blended, never additive |
++| Numbers | `data/vfx/catastrophe.json` (+ `tools/schemas/vfx-catastrophe.schema.json`, `map.json`) | every number below; the built-in defaults agree (checked) |
++| Wiring | `vfx_hub.gd` (`tremor`, `catastrophe_enabled`), `trail_view.gd` (`dust_view`) | one cue handler, one clock tick, one draw call |
++| Checks | `effects_check.gd` `_tremor` | see below |
++
++## The numbers (the plan's, and where they are held)
++
++- **At most 160 sprites** (60, 110, 160 by quality), **alpha at most 0.5**: no sprite is over 0.13, and *the sum* of the overlaps never passes 0.5. `VfxDustView.worst_column` measures it with the shader's own soft profile over three zooms, three qualities and ten seeds: **0.480**.
++- **Onset 1 s** (calm: 1.5 s), **settling 4 s** (calm: 5 s), each a smootherstep; the steepest tick is 1.875 over the onset of the peak: **0.0094 of a brightness step at most** (0.0062 calm), against the 0.1 that counts. Dust is dark and slow, so it asks nothing of the flash register and is not a catastrophe light event (checked: the register's log and `cat_events` stay empty).
++- **No rhythm.** A slow wander (two sines at 0.31 and 0.17 rad/s per sprite, phases from a hash) and a small shiver (at most 6% of a sprite's alpha, two sines at 0.83 and 1.37 rad/s, not harmonics of one another, phases per sprite); **both off in the calm form and Reduced motion**, where the curtains rise and settle only. Nothing repeats at a fixed period.
++- **Colour:** a warm grey (`#8a8277`, red share 0.36): nowhere near red. **Position:** behind the fighters' plane (z -20 to -6), standing on the ground (`groundY` under each sprite), 0.16 to 0.46 of the half view tall (about 65 to 185 units at fight framing, up to three fighters high), spread across 1.15 of the half view.
++- **Rubble:** up to 40 small chunks a second (20 in the calm form, which is the game's default Reduce flashing), through the existing debris pool and its caps, from the ground round the fighters, at hashed places and times, only while the tremor runs.
++- **Between runs:** a second cue adds a run (at most 2); a seek or a pause is right by construction (the curtains are a function of the clock and the run).
++
++## Measured (main fba75d21 + the parked patches, native checks and web clips, one capture at a time)
++
++- `effects_check` `_tremor` passes: the data file against the defaults, the plan's counts and caps, the envelope in both modes (0 outside, 1 on the plateau, monotone, steepest tick), the layout's overlap sums (0.480), a sprite as a pure function, the colour, the no-harmonics rule, no cue = nothing thrown, one run per cue, rising from nothing to full over the onset, dropped once settled, **nothing asked of the flash register**, the same cue giving the same rubble, and the calm form throwing less (44 bits against 99 in 3 s).
++- **Flash clips** (a scratch scene: the city mash beside the tallest tower with a tremor cue at ticks 90 and 700, 241 ticks each, 1,000 ticks, 1024 by 768, the official analyser): **both modes PASS: primary 1, area-15% 1, higher threshold 1, the stricter cross-check 0, red 0.** The same scene without the cue is Tools' `mashcity` (primary 1, area-15% 1 on HEAD, `docs/rendering/city-variety.md`), so the dust adds no reading to those two.
++- **Look:** a faint grey haze at the foot of the street and the crowd, rising over a second and settling over four, with chips on the ground; the base of a tower reads about 6 to 15 steps of 255 brighter at full strength. It is deliberately light: the sum of its overlaps is capped at 0.5 and its typical value is a third of that. **It is a first version for Art and Orb to judge**: a denser, taller curtain is possible up to the same cap by lengthening the sprites (`height_k`), and a stronger colour would raise the contrast, which the brightness check above would then re-read.
++- Cost: counts only. One draw call, at most 160 instances; the layout (160 hashes and 160 `groundY` reads) runs only while a tremor does, per pane. No timing was taken (the machine is shared); the first-use hitch is the shader's, which Rendering's boot warm-up covers when the line below is in.
++
++## For Rendering: the warm-up list
++
++`render/core/warmup.gd` is in Rendering's parked batch (`docs/rendering/pending/2026-10-17/`), not in HEAD, so its two lines are a patch to apply after that batch: `docs/vfx/pending/tremor-dust/warmup-entries.patch` adds `hole.gdshader` (missing from the first list) and `dust.gdshader` (`"multimesh"`).
++
++## What it does not do (and who does)
++
++- **The towers' sway, the ground's heave and the windows going dark** are World's, Animation's and Rendering's. **The camera's shake** is Camera's.
++- **No light event, no cue sound:** the tremor's sound is Audio's (`cat.tremor`), and a `tremor` cue must come from Simulation with `n` the end tick; until then only the scratch scene exercises this.
++- Not built yet in the catastrophe plan: the blast cloud, the magma's flare and bubbles, the orbital impact include (§8's order: cloud next).
