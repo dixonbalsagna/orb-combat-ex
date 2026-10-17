@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-collateral",
+  "title": "biomes.collateral/1",
+  "description": "data/biomes/collateral.json: the collateral tables (docs/world/collateral-run.md; WorldCollateral). budget and ceiling: four shares by tier; eventAllow: four shares by tier for each set-piece kind (slide, chain, landslide, quake, catastrophe); meterNorm: pop0 or present. Every key required. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "budget",
+    "ceiling",
+    "eventAllow",
+    "meterNorm"
+  ],
+  "properties": {
+    "schema": {
+      "const": "biomes.collateral/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "budget": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "description": "Casualties per rolling 60 s by tier 1 to 4, shares of the people present at the stage start"
+    },
+    "ceiling": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "description": "Cumulative casualties by tier 1 to 4, shares of the people present"
+    },
+    "eventAllow": {
+      "type": "object",
+      "required": [
+        "slide",
+        "chain",
+        "landslide",
+        "quake",
+        "catastrophe"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "slide": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "description": "What one slide may borrow beyond the window, by tier"
+        },
+        "chain": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "description": "What one chain may borrow beyond the window, by tier"
+        },
+        "landslide": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "description": "What one landslide may borrow beyond the window, by tier"
+        },
+        "quake": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "description": "What one quake may borrow beyond the window, by tier"
+        },
+        "catastrophe": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "description": "What one catastrophe may borrow beyond the window, by tier"
+        }
+      }
+    },
+    "meterNorm": {
+      "enum": [
+        "pop0",
+        "present"
+      ],
+      "description": "What the meter gains per casualty are divided by"
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

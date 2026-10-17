@@ -428,6 +428,10 @@
       "schema": "biomes-planet.schema.json"
     },
     {
+      "match": "data/biomes/collateral.json",
+      "schema": "biomes-collateral.schema.json"
+    },
+    {
       "match": "data/input/actions.json",
       "schema": "input-actions.schema.json"
     },

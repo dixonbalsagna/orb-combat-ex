@@ -288,7 +288,7 @@ static func bruntScore(S: SimState, A, plan: Dictionary) -> float:
 	if chain.size() > 1:
 		var allow: float = 0.0
 		if A.tier >= 3.0:
-			allow = WorldCollateral.EVENT_ALLOW["chain"][int(A.tier) - 1] * S.world.pop0
+			allow = WorldCollateral.eventAllow("chain", int(A.tier)) * S.world.present
 		if plan.brunt.deaths > WorldCollateral.room(S) + allow:
 			s -= BRUNT_OVER_BUDGET
 	return s

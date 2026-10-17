@@ -401,7 +401,7 @@ static func tick(S: SimState) -> void:
 		add += _imp(fs, "chainLink", fs.find(ex.A))
 	m.lastCombo = combo
 	if S.world != null and S.world.pop0 > 0.0:
-		var target: int = int(floor(float(mood.cas_perPerson) * float(mood.cas_popRef) * S.world.casualties / S.world.pop0))
+		var target: int = int(floor(float(mood.cas_perPerson) * float(mood.cas_popRef) * S.world.casualties / WorldCollateral.normPeople(S)))
 		if target > m.casGiven:
 			add += mini(mood.cas_capPerTick, target - m.casGiven)
 			m.casGiven = target

@@ -14,11 +14,11 @@ const POP_NEAR_REF: float = 70.0 * SimConst.WS / SimConst.PS   # the old absolut
 ## starting population is "populated" (1.0); a building's own cap for the planner's care is 2% of it. At 390 people that is 35 and 8, as before.
 ## data/biomes/settlements.json pop_refs {near_share, building_share}.
 static func popNearRef(S: SimState) -> float:
-	return float(WorldSettle.data().get("pop_refs", {}).get("near_share", 0.09)) * S.world.pop0
+	return float(WorldSettle.data().get("pop_refs", {}).get("near_share", 0.09)) * S.world.present
 
 
 static func buildingPopRef(S: SimState) -> float:
-	return float(WorldSettle.data().get("pop_refs", {}).get("building_share", 0.02)) * S.world.pop0
+	return float(WorldSettle.data().get("pop_refs", {}).get("building_share", 0.02)) * S.world.present
 ## The nearest-building search skips buildings closer than this (the original 60, times WS: a building is WS times wider).
 const NEAR_MIN: float = 60.0 * SimConst.WS
 ## Depth rows (a building's row field): 0 foreground, 1 the front street, 2 mid, 3 back. Until the director-chosen brunt

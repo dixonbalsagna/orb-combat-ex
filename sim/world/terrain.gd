@@ -96,8 +96,11 @@ static func genWorld(S: SimState) -> void:
 			for dd in g.districts:
 				dd["settlement"] = si
 				dlist.append(dd)
-			for e in g.buildings:
+			for ei in range(g.buildings.size()):
+				var e = g.buildings[ei]
 				var nb := SimState.Building.new()
+				nb.place = si
+				nb.plan = ei
 				nb.x = e.x; nb.w = e.w; nb.d = e.d; nb.h = e.h; nb.kind = e.kind; nb.row = float(e.row); nb.z = e.z; nb.seed = e.seed
 				nb.district = dOff + int(e.district); nb.shape = String(e.shape); nb.landmark = int(e.landmark)
 				nb.floors = e.floors

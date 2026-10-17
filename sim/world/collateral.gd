@@ -14,16 +14,52 @@ class_name WorldCollateral
 const WS: float = SimConst.WS
 const POP_REF: float = 425.0
 const WINDOW_S: int = 61   # 61 one-second buckets: the current second and the 60 before it, so a kill never leaves the window less than 60 s after it (60 freed a second's kills up to a second early: docs/world/collateral-caps.md section 12)
-## Budget per rolling 60 s and ceiling on the cumulative total, by tier 1 to 4, as shares of the starting population.
-const BUDGET: Array = [0.02, 0.04, 0.08, 0.15]
-const CEILING: Array = [0.10, 0.30, 0.60, 0.90]
-## What one set piece may borrow beyond the window's room, by tier 1 to 4 (0 at tier 1 and 2: no borrowing there).
-const EVENT_ALLOW: Dictionary = {
-	"slide": [0.0, 0.0, 0.05, 0.10],
-	"chain": [0.0, 0.0, 0.12, 0.20],
-	"landslide": [0.0, 0.0, 0.05, 0.10],
-	"quake": [0.0, 0.0, 0.0, 0.10],
-}
+## The tables are data (data/biomes/collateral.json): budget per rolling 60 s and the ceiling on the cumulative total, by tier, as shares of the people present at the
+## stage's start (pop0 in versus); what one set piece may borrow beyond the window's room, by tier, for each kind (slide, chain, landslide, quake, catastrophe).
+## Loaded once when the class is first used; a fifth entry (the boss's: data/fight/tier5.json) extends a table and the tier functions follow its length.
+const PATH := "res://data/biomes/collateral.json"
+static var BUDGET: Array = []
+static var CEILING: Array = []
+static var EVENT_ALLOW: Dictionary = {}
+static var METER_NORM: String = "pop0"
+static var loadErrors: Array = []
+static var dataHash: String = ""
+
+
+static func _static_init() -> void:
+	var f := FileAccess.open(PATH, FileAccess.READ)
+	if f == null:
+		loadErrors.append("collateral.json: cannot open " + PATH)
+		return
+	var text: String = f.get_as_text()
+	var j = JSON.parse_string(text)
+	if not (j is Dictionary) or j.get("schema", "") != "biomes.collateral/1":
+		loadErrors.append("collateral.json: schema is not biomes.collateral/1")
+		return
+	for v in j.budget:
+		BUDGET.append(float(v))
+	for v in j.ceiling:
+		CEILING.append(float(v))
+	for k in j.eventAllow:
+		var a: Array = []
+		for v in j.eventAllow[k]:
+			a.append(float(v))
+		EVENT_ALLOW[k] = a
+	METER_NORM = str(j.meterNorm)
+	dataHash = str(text.hash())
+
+
+## What an allowance reads at a tier: the table's entry, or its last when the table is shorter than the tier.
+static func eventAllow(kind: String, tier: int) -> float:
+	if not EVENT_ALLOW.has(kind):
+		return 0.0
+	var a: Array = EVENT_ALLOW[kind]
+	return a[clampi(tier - 1, 0, a.size() - 1)]
+
+
+## What the meter gains per casualty are divided by (data: pop0 or present).
+static func normPeople(S: SimState) -> float:
+	return S.world.present if METER_NORM == "present" and S.world.present > 0.0 else S.world.pop0
 # ---- the district flight: while the window is over budget (or the ceiling is reached) and a heavy event was recent ----
 const EVAC_R: float = 375.0 * WS       # buildings this close to the latest heavy event empty (3,000 units at WS 8)
 const EVAC_RATE: float = 0.30          # of a building's remaining people per second
@@ -58,6 +94,8 @@ static func init(S: SimState) -> void:
 	w.cbSec = 0.0
 	w.cbSum = 0.0
 	w.maxTier = 1.0
+	w.present = w.pop0
+	w.peopleLeft = -1.0
 	w.evtKind = ""
 	w.evtLeft = 0.0
 	w.evtToken = 0.0
@@ -83,7 +121,7 @@ static func tier(S: SimState) -> int:
 	var t: float = 1.0
 	for f in S.fighters:
 		t = maxf(t, f.tier)
-	return clampi(int(t), 1, 4)
+	return clampi(int(t), 1, BUDGET.size())
 
 
 static func _advance(S: SimState) -> void:
@@ -105,7 +143,7 @@ static func _advance(S: SimState) -> void:
 
 
 static func budget(S: SimState) -> float:
-	return BUDGET[tier(S) - 1] * S.world.pop0
+	return BUDGET[tier(S) - 1] * S.world.present
 
 
 ## Casualties the window still admits right now (before borrowing).
@@ -116,7 +154,10 @@ static func room(S: SimState) -> float:
 
 ## Casualties the cumulative ceiling still admits.
 static func ceilingLeft(S: SimState) -> float:
-	return maxf(0.0, CEILING[int(S.world.maxTier) - 1] * S.world.pop0 - S.world.casualties)
+	var left: float = CEILING[clampi(int(S.world.maxTier), 1, CEILING.size()) - 1] * S.world.present - S.world.casualties
+	if S.world.peopleLeft >= 0.0:
+		left = minf(left, S.world.peopleLeft - S.world.casualties)   # the run's own limit: past it people shelter, as at the tier's ceiling
+	return maxf(0.0, left)
 
 
 static func isOver(S: SimState) -> bool:
@@ -131,7 +172,7 @@ static func beginEvent(S: SimState, kind: String, cause) -> float:
 	w.evtToken = w.tokenSeq
 	w.evtKind = kind
 	var t: int = tier(S)
-	w.evtLeft = EVENT_ALLOW[kind][t - 1] * w.pop0 if EVENT_ALLOW.has(kind) else 0.0
+	w.evtLeft = eventAllow(kind, t) * w.present
 	w.evtDead = 0.0
 	w.evtEvac = 0.0
 	return w.evtToken
@@ -207,7 +248,7 @@ static func kill(S: SimState, bi: int, want: float, cause, evt: float, cx: float
 	if evac > 0.000001:
 		w.evacuated += evac
 		if cause != null and cause.hasMenace:
-			cause.menace = SimMathx.jmin(100.0, cause.menace + evac * cause.md.menaceEvac * POP_REF / w.pop0)   # D1b: meters.json
+			cause.menace = SimMathx.jmin(100.0, cause.menace + evac * cause.md.menaceEvac * POP_REF / normPeople(S))   # D1b: meters.json
 		var reason: String = "ceiling" if cl < rm + borrow else "budget"
 		var owner: float = WorldCrater._slot(S, cause)
 		var dest: int = shelter(S, cx, evac)
@@ -222,7 +263,7 @@ static func kill(S: SimState, bi: int, want: float, cause, evt: float, cx: float
 ## The meters: the villain feeds on casualties it caused; every fighter with an anguish meter is pressured by all of them.
 ## Everything is times 425 / pop0, so the meters read the share of the population lost and planets are equivalent.
 static func _feed(S: SimState, n: float, cause) -> void:
-	var norm: float = POP_REF / S.world.pop0
+	var norm: float = POP_REF / normPeople(S)
 	S.world.casualties += n
 	if cause != null and cause.hasMenace:
 		cause.menace = SimMathx.jmin(100.0, cause.menace + n * cause.md.menaceCas * norm)   # D1b: meters.json

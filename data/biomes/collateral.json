@@ -1,0 +1,49 @@
+{
+  "schema": "biomes.collateral/1",
+  "_about": "The collateral tables (docs/world/collateral-run.md; WorldCollateral). budget: the casualties a rolling 60 s admits, by tier 1 to 4, as shares of the people present at the stage's start; ceiling: the cumulative total, by tier; eventAllow: what one set piece of each kind may borrow beyond the window's room, by tier. The fifth entry of each (the boss) lives in data/fight/tier5.json. meterNorm: what the per-casualty meter gains (menace, power, anguish) are divided by: pop0 (the arena's people at full: a casualty is worth the same in ruins) or present (the people there now). catastrophe: the mass-collapse set piece (Research); its allowance below tier 5 is zero.",
+  "budget": [
+    0.02,
+    0.04,
+    0.08,
+    0.15
+  ],
+  "ceiling": [
+    0.1,
+    0.3,
+    0.6,
+    0.9
+  ],
+  "eventAllow": {
+    "slide": [
+      0.0,
+      0.0,
+      0.05,
+      0.1
+    ],
+    "chain": [
+      0.0,
+      0.0,
+      0.12,
+      0.2
+    ],
+    "landslide": [
+      0.0,
+      0.0,
+      0.05,
+      0.1
+    ],
+    "quake": [
+      0.0,
+      0.0,
+      0.0,
+      0.1
+    ],
+    "catastrophe": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "meterNorm": "pop0"
+}

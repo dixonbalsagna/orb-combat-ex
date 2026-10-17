@@ -170,6 +170,8 @@ class DirS:
 
 class World:
 	var pop0: float = 0.0
+	var present: float = 0.0          # the people present at the stage's start: the budget and the ceiling are shares of it (pop0 in versus)
+	var peopleLeft: float = -1.0      # the most people the run may still lose (-1: no limit, as in versus)
 	var casualties: float = 0.0
 	var structuresLost: float = 0.0
 	var craters: float = 0.0
@@ -234,6 +236,8 @@ class Building:
 	var fmask: int = 1        # one bit per standing floor, bit 0 the ground floor
 	var fdmg := PackedFloat32Array()   # damage per floor, allocated on the first local hit (empty before)
 	var idx: int = 0          # index in S.buildings (set at generation; not hashed)
+	var place: int = -1       # the place it stands in: its settlement index today, the planet's place id (set at generation; not hashed: the world hash covers it)
+	var plan: int = -1        # its index in that place's plan (the plan is seeded, so the same building has the same index every time; not hashed)
 	var fled: float = 0.0     # people who left in the district flight so far (capped at WorldCollateral.FLIGHT_MAX of pop)
 	var z: float = 0.0        # depth of the building's centre from the fighter plane (negative: behind), world units
 	var d: float = 0.0        # footprint depth

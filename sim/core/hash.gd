@@ -174,6 +174,11 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 					out.append(float(x))
 			_obj(out, st, ["bi", "filled", "label", "leaveT", "shiftAt", "runKind", "runLen", "runMax", "sigLanded"])
 	_obj(out, S.world, ["pop0", "casualties", "structuresLost", "craters", "slides", "evacuated", "cbSec", "cbSum", "maxTier", "evtKind", "evtLeft", "evtToken", "evtDead", "evtEvac", "tokenSeq", "heavyX", "heavyT", "stateT"])
+	# present and peopleLeft are set at the stage's start and never change mid-match
+	if S.world.present != S.world.pop0:
+		out.append(S.world.present)   # a stage's people present, only when it differs from the arena's (a versus hash is as it was)
+	if S.world.peopleLeft >= 0.0:
+		out.append(S.world.peopleLeft)
 	for v in S.world.cbBuckets:
 		out.append(v)
 	out.append(float(S.buildings.size()))
