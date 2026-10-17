@@ -143,6 +143,7 @@ def names(path):
     for kind, lst in table.items():
         for n in lst:
             b, r = c10(n)
+            r = [w for w in r if w not in C10.get("review_ok_in_place_names", [])]
             if n.lower().replace(" ", "") in block or b or r or (kind != "landmark" and len(n) > 12):
                 bad += 1
                 print(f"{path}: FAIL {kind} '{n}' {b + r}")

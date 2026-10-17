@@ -1538,8 +1538,8 @@
       "fighter": "EMPRESS",
       "tier": "whole",
       "family": "react",
-      "text": "Look at the skyline, rat. Our work.",
-      "words": 7,
+      "text": "Pretty ruins, rat. Mind your step!",
+      "words": 6,
       "when": {
         "collateral": "many"
       }
@@ -2140,8 +2140,8 @@
       "fighter": "CYBORG",
       "tier": "whole",
       "family": "react",
-      "text": "Whole street's rubble. Not a crumb of food!",
-      "words": 8,
+      "text": "Whole street's rubble. Good steel in there!",
+      "words": 7,
       "when": {
         "collateral": "many"
       }

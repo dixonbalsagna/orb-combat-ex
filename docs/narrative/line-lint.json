@@ -156,7 +156,8 @@
       "kindergarten",
       "nursery",
       "orphanage",
-      "meltdown"
+      "meltdown",
+      "glass"
     ],
     "review_near": {
       "words": [
@@ -175,7 +176,11 @@
         "victim"
       ],
       "window_words": 6
-    }
+    },
+    "review_ok_in_place_names": [
+      "glass"
+    ],
+    "_glass": "Legal RL-153 to RL-155 (docs/legal/gemini-lines-screen.md): 'glass' as a verb for a bombed ground is the military idiom for nuclear destruction (c07's association). A human reads any line with it; 'burn' or 'flatten' are preferred. Place names such as Glassmere are not affected (whole-word match; the --names check lets 'glass' pass)."
   },
   "gemini_review_2026_10_16": {
     "_about": "Orb's homework 11 marks, run through Gemini at Orb's direction (docs/ep/vision.md, 2026-10-16 night). The lint runs these per speaker block (a '## ' heading containing the speaker's name). A heading containing '3v1' lifts the guard ban; a heading containing 'after the fight' lifts the apology ban.",

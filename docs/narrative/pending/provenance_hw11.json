@@ -17,7 +17,8 @@
       "source": "claude_original_kept_by_orb",
       "ai_generated": true,
       "generator": "Claude (Anthropic)",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 2,
@@ -29,7 +30,8 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 3,
@@ -41,7 +43,8 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 4,
@@ -53,7 +56,8 @@
       "source": "claude_original_kept_by_orb",
       "ai_generated": true,
       "generator": "Claude (Anthropic)",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 5,
@@ -65,7 +69,8 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 6,
@@ -78,7 +83,8 @@
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
       "flag": "Orb's rule: no lines to objects; the rewrite also retires the apology.",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 7,
@@ -91,7 +97,8 @@
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
       "flag": "Contains an ellipsis (the lint cap for the Protagonist block is one line in ten).",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 8,
@@ -103,7 +110,8 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 9,
@@ -115,7 +123,8 @@
       "source": "claude_original_kept_by_orb",
       "ai_generated": true,
       "generator": "Claude (Anthropic)",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 10,
@@ -127,7 +136,8 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 11,
@@ -139,7 +149,8 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 12,
@@ -151,7 +162,8 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 13,
@@ -163,7 +175,8 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 14,
@@ -175,7 +188,8 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 15,
@@ -188,7 +202,8 @@
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
       "flag": "Legal c08: threat of death spoken by the rival. Legal reads it.",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 16,
@@ -200,7 +215,8 @@
       "source": "claude_original_kept_by_orb",
       "ai_generated": true,
       "generator": "Claude (Anthropic)",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 17,
@@ -213,7 +229,8 @@
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
       "flag": "Legal: 'Look at you bleed' (EP flag c).",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 18,
@@ -225,7 +242,8 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 19,
@@ -237,9 +255,14 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "flag": "R3: 'dance' is on Orb's own banned list, so this line fails the lint. 'Glass the whole street' is on Legal's list (EP flag c). Alternate if Orb wants the lint kept: 'Scatter, little rat! We'll glass the whole street!'",
+      "flag": "R3: 'dance' is on Orb's own banned list, so this line fails the lint. 'Glass the whole street' is review-tier (Legal: the military idiom for nuclear destruction). Offered to Orb: 'Scatter, little rat! We'll burn the whole street!' or 'Scatter, little rat! We'll flatten the whole street!'",
       "lint_hard": [
         "R3 banned word 'dance'"
+      ],
+      "provenance": "ai01",
+      "alternates": [
+        "Scatter, little rat! We'll burn the whole street!",
+        "Scatter, little rat! We'll flatten the whole street!"
       ]
     },
     {
@@ -252,7 +275,8 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 21,
@@ -264,7 +288,8 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 22,
@@ -276,7 +301,8 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01"
     },
     {
       "n": 23,
@@ -288,8 +314,15 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "flag": "Legal: 'Level this whole block' reads as a threat to a block of people; Legal reads it.",
-      "lint_hard": []
+      "flag": "Legal c08: fires only on its own trigger (the Empress wedged in a chimney), never as a reaction to civilian deaths or casualties.",
+      "lint_hard": [],
+      "provenance": "ai01",
+      "trigger": {
+        "only_on": "empress_wedged_in_chimney",
+        "never_after": [
+          "civilian_casualties"
+        ]
+      }
     },
     {
       "n": 24,
@@ -302,7 +335,9 @@
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
       "flag": "Legal: the Cyborg eating fighters ('protein'; EP flag c).",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01",
+      "cyborg_rule": "hunger aimed at fighters (comic) and wreckage, never civilians or children; no depicted biting or swallowing until the rating decision (Legal)"
     },
     {
       "n": 25,
@@ -314,7 +349,9 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01",
+      "cyborg_rule": "hunger aimed at fighters (comic) and wreckage, never civilians or children; no depicted biting or swallowing until the rating decision (Legal)"
     },
     {
       "n": 26,
@@ -327,7 +364,9 @@
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
       "flag": "Legal: 'I'll eat the arena'.",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01",
+      "cyborg_rule": "hunger aimed at fighters (comic) and wreckage, never civilians or children; no depicted biting or swallowing until the rating decision (Legal)"
     },
     {
       "n": 27,
@@ -339,7 +378,9 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01",
+      "cyborg_rule": "hunger aimed at fighters (comic) and wreckage, never civilians or children; no depicted biting or swallowing until the rating decision (Legal)"
     },
     {
       "n": 28,
@@ -352,7 +393,9 @@
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
       "flag": "Contains an ellipsis (the lint cap for the Cyborg block is one line in ten).",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01",
+      "cyborg_rule": "hunger aimed at fighters (comic) and wreckage, never civilians or children; no depicted biting or swallowing until the rating decision (Legal)"
     },
     {
       "n": 29,
@@ -365,7 +408,9 @@
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
       "flag": "Legal: the Cyborg eating fighters ('lunch', 'tenderize'; EP flag c).",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01",
+      "cyborg_rule": "hunger aimed at fighters (comic) and wreckage, never civilians or children; no depicted biting or swallowing until the rating decision (Legal)"
     },
     {
       "n": 30,
@@ -377,7 +422,27 @@
       "source": "gemini_rewrite_at_orb_direction",
       "ai_generated": true,
       "generator": "Google Gemini ('Argon'), prompted by Orb",
-      "lint_hard": []
+      "lint_hard": [],
+      "provenance": "ai01",
+      "cyborg_rule": "hunger aimed at fighters (comic) and wreckage, never civilians or children; no depicted biting or swallowing until the rating decision (Legal)"
     }
-  ]
+  ],
+  "ai01": {
+    "id": "ai01",
+    "tool": "Google Gemini",
+    "model": "\"Argon\", as named by Orb",
+    "date": "2026-10-16",
+    "brief": "homework 11, the brawl's lines (homework/done/11-lines-the-brawl.md)",
+    "what_came_back": "26 line rewrites, voice rules and archetypes, and a Godot audio guide",
+    "human_part": "Orb's marks, choices and direction, and Narrative's edits (the re-cuts, the lint, the bibles)",
+    "mixed_sources": "Claude (Anthropic) wrote the 4 kept lines, the re-cuts and the lint; Gemini wrote the 26 rewrites; Suno is recorded separately for music",
+    "public_statement": "Name categories (text and dialogue), not vendors. Never claim any line as human-written unless this record shows it, and never 'human-made'. (Legal, RL-153.)",
+    "applies_to": [
+      "pending/provenance_hw11.json (all 30 lines)",
+      "voice-lab/homework/12,13,14,15,16,21 (written to the Gemini-reviewed bibles; Claude's lines, Gemini's direction)",
+      "voice-bibles.md",
+      "taunts.draft.json and taunts-draft.csv (re-cut to the bibles)",
+      "pending/story_beats.json, run_lines.json, intro_lines.json (re-cut lines)"
+    ]
+  }
 }

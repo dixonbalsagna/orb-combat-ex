@@ -1,6 +1,6 @@
 # The four voice bibles, after the Gemini review
 
-Owner: Narrative and Fighter Identity. Version 1, 2026-10-16 (night). Orb ran homework 11 through Google's Gemini and called the result "very successful"; the marks are Orb's direction (`docs/ep/vision.md`, "Orb's homework 11 ... reviewed through Gemini"; the marked file is `homework/done/11-lines-the-brawl.md`). **Provenance:** the archetypes, the table below and the 26 rewritten lines are Gemini's, at Orb's direction, and are recorded as such (`pending/provenance_hw11.json`). Everything I wrote from them (the re-cuts, the lint, this page) is Claude's. All lines remain drafts until Orb marks them.
+Owner: Narrative and Fighter Identity. Version 2, 2026-10-16 (night; adds Orb's ruling on flag a and Legal's conditions, RL-153 to RL-155). Orb ran homework 11 through Google's Gemini and called the result "very successful"; the marks are Orb's direction (`docs/ep/vision.md`, "Orb's homework 11 ... reviewed through Gemini"; the marked file is `homework/done/11-lines-the-brawl.md`). **Provenance:** the archetypes, the table below and the 26 rewritten lines are Gemini's, at Orb's direction, and are recorded as such (`pending/provenance_hw11.json`). Everything I wrote from them (the re-cuts, the lint, this page) is Claude's. All lines remain drafts until Orb marks them.
 
 Where this page disagrees with `voices/*.md`, **this page wins**. The old bibles are kept for their lists of reactions and situations; their lines are not to be used.
 
@@ -49,7 +49,7 @@ The Empress's guard is a 3v1 character. In a 1v1 she is alone and talks only to 
 
 ## 8. Flags for Orb (through the EP)
 
-**(a) The Protagonist who "never apologises" and the Fixer.** The established Protagonist keeps promise tags on his belt, one for each promise to fix something, and is the Fixer. The new bible bans a polite superhero apologising for property damage *during* a brawl. These live together if **the promise comes after the bell, never during it**: in the fight he is a brawler with a grin and no apologies; when the match ends, and only then, he looks at the street and says it ("Sorry about the street, everyone. I'll help rebuild."), and the tag is tied. The collateral still weighs on him in the fight, but as *silence*, not words: the witnessed branch (a cold quiet) is how damage shows in the fight. I have put one such line in homework 15, in a block headed "after the fight", and the lint allows apologies only there. His grief for people (the run's casualty beats: "I'm sorry. I should've been faster.") is not an apology for property and stays.
+**(a) Ruled by Orb: the Protagonist apologises for damage AFTER the fight, never during it.** The promise tags stay; during a fight he is the adrenaline brawler. So the after-the-bell apology is the rule, not a proposal: in the fight he is a grinning brawler with no apologies, and damage shows as silence (the witnessed branch); when the match ends he says it ("Sorry about the street, everyone. I'll help rebuild.") and the tag is tied. The lint allows an apology only under an "after the fight" heading. His grief for people in the run's casualty beats ("I'm sorry. I should've been faster.") is not an apology for property and stays.
 
 **(b) "No lines to off-screen minions" is a 1v1 rule.** In a 3v1 the Empress commands her guards. Done as section 5 above; four 3v1 lines are in homework 13 and 16.
 
@@ -57,8 +57,16 @@ The Empress's guard is a 3v1 character. In a 1v1 she is alone and talks only to 
 
 **One more, which is not mine to settle:** line 19 of Gemini's set uses "Dance", which is on **Orb's own** banned list (the lint fails it). The alternate is "Scatter, little rat!".
 
-## 9. Questions for Orb
+## 9. Legal's conditions (RL-153 to RL-155, `docs/legal/gemini-lines-screen.md`)
 
-1. Is the **after-the-bell apology** (flag a) the right way to keep the Fixer?
+1. **Provenance, ai01.** Recorded in `pending/provenance_hw11.json` (tool Google Gemini, model "Argon" as Orb named it, date 2026-10-16, homework 11; what came back: 26 rewrites, voice rules and a Godot audio guide; the human part is Orb's marks, choices and direction plus Narrative's edits), and every line there carries `provenance: "ai01"`. The headers of the six re-cut homework files say the same. The public statement names categories (text and dialogue), never vendors, and never claims a line as human-written unless the record shows it.
+2. **"Glass" is in the lint's review tier** (c10): a human reads any line using it. For Gemini's line 19 I offer Orb two swaps: **"Scatter, little rat! We'll burn the whole street!"** or **"... flatten the whole street!"** (which also removes the banned word "dance").
+3. **"Level this whole block"** (Gemini 23) fires **only on its chimney trigger** (the Empress wedged in a chimney), never in reaction to civilian deaths or casualties. It is recorded as `trigger: {only_on: empress_wedged_in_chimney, never_after: [civilian_casualties]}`. I also changed the Empress's taunt for a heavily damaged city to "Pretty ruins, rat. Mind your step!" so no Empress line gloats over a toll.
+4. **The Cyborg's hunger stays on fighters (comic) and wreckage,** never on civilians or children, and nothing has him absorb a fighter's power or form (the genre's glutton signature). His taunt for a wrecked street is now about steel ("Good steel in there!"), not food. No depicted biting or swallowing until the rating decision.
+5. **No "Demon Cyborg" in public text.** The internal title in `identity.md` ("Demon Cyborg") is a working data field; it should not appear on a page, a store listing or in a trailer. Public copy says "the Cyborg".
+
+## 10. Questions for Orb
+
+1. (Ruled.) The after-the-bell apology stands.
 2. Should the Cyborg's **hunger for fighters** stay (Legal may soften it), or should he be hungry for *anything* and have the humour come from his chassis?
 3. Do you want the **Empress to laugh** in most lines, or in about one in three?
