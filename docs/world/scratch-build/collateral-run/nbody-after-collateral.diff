@@ -1,0 +1,354 @@
+diff --git a/data/biomes/brunt.json b/data/biomes/brunt.json
+index a9e5651..2e76706 100644
+--- a/data/biomes/brunt.json
++++ b/data/biomes/brunt.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": "biomes.brunt/1",
+-  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge or a wall hold the whole sim (world, a hit-stop) or only the body (body: he is stunned and the fight goes on): Orb's homework.",
++  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge hold the whole sim (world, a hit-stop) or only the body (body: he is pinned in the building and the fight goes on); auto: world with two bodies, body with more (Orb's homework: which, with two).",
+   "bruntMul": 1.8,
+   "tierFactor": [
+     0.12,
+@@ -44,5 +44,5 @@
+   "heavyKeep": 0.7,
+   "wallSlamMul": 2.0,
+   "wallStaggerTicks": 24,
+-  "lodgeHold": "world"
++  "lodgeHold": "auto"
+ }
+diff --git a/sim/core/hash.gd b/sim/core/hash.gd
+index e6243b0..a57e727 100644
+--- a/sim/core/hash.gd
++++ b/sim/core/hash.gd
+@@ -155,6 +155,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
+ 		out.append(float(f.limbBreaks))
+ 		out.append(float(f.brinkSetups)); out.append(f.brinkOpen); out.append(float(f.brinkEx))
+ 		out.append(float(f.flightHits))
++		if f.holdT != 0:   # World's per-body lodge hold: written only while held, so a match without one hashes as before
++			out.append(float(f.holdT))
+ 		var act = f.act
+ 		_obj(out, act, ["v2", "guardSince", "dodgeTick", "dodgeCool", "burstCool", "mode", "assist", "formReady", "burstFired", "breakIn", "flow"])
+ 		out.append(float(act.dirI.size())); for v in act.dirI: out.append(float(v))   # the director's per-fighter integers
+@@ -172,6 +174,10 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
+ 					out.append(float(x))
+ 			_obj(out, st, ["bi", "filled", "label", "leaveT", "shiftAt", "runKind", "runLen", "runMax", "sigLanded"])
+ 	_obj(out, S.world, ["pop0", "casualties", "structuresLost", "craters", "slides", "evacuated", "cbSec", "cbSum", "maxTier", "evtKind", "evtLeft", "evtToken", "evtDead", "evtEvac", "tokenSeq", "heavyX", "heavyT", "stateT"])
++	if S.world.evtMore.size() > 0:   # more than one set piece open: written only then, so a match with one hashes as before
++		out.append(float(S.world.evtMore.size()))
++		for v in S.world.evtMore:
++			out.append(v)
+ 	if S.world.present != S.world.pop0:
+ 		out.append(S.world.present)   # a stage's people present, only when it differs from the arena's (a versus hash is as it was)
+ 	if S.world.peopleLeft >= 0.0:
+diff --git a/sim/core/state.gd b/sim/core/state.gd
+index 34fb8a4..6138692 100644
+--- a/sim/core/state.gd
++++ b/sim/core/state.gd
+@@ -178,6 +178,7 @@ class World:
+ 	var evtToken: float = 0.0         # its token; 0 when none is open
+ 	var evtDead: float = 0.0          # casualties the open set piece has caused
+ 	var evtEvac: float = 0.0          # civilians it has made flee
++	var evtMore := PackedFloat32Array()   # more set pieces open at once, five numbers each (token, kind, left, dead, evac): two flights, two allowances; empty with one
+ 	var tokenSeq: float = 0.0         # token counter
+ 	var heavyX: float = -1.0          # x of the latest heavy event (the district flight flees from it)
+ 	var heavyT: float = -1.0e9        # its match time
+@@ -515,6 +516,7 @@ class Fighter:
+ 	var zWay: bool = false           # L0: a depth waypoint is armed for this flight whether or not it is aimed (aimX0, aimZ0, aimZ1, aimD)
+ 	var splashed := PackedInt32Array()   # buildings already splashed by this launch (at most WorldBrunt.SPLASH_CAP)
+ 	var launchSpecial: bool = false  # the current launch is a signature, finisher or break launch (its ground mark may be big)
++	var holdT: int = 0               # World's per-body lodge hold: ticks he is pinned in a building (the rest of the fight goes on); 0 when free
+ 	var jContacts: int = 0           # ground contact (World, G2; world/contact.gd): contacts of this journey so far
+ 	var jT: int = 0                  # ticks since the journey's first contact (cap 240)
+ 	var jV0: float = 0.0             # the journey's first-contact normalised speed (the wear budget)
+diff --git a/sim/world/brunt.gd b/sim/world/brunt.gd
+index a3903ae..ca5c291 100644
+--- a/sim/world/brunt.gd
++++ b/sim/world/brunt.gd
+@@ -36,7 +36,7 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
+ 	"wallSlamMul": 2.0, "wallStaggerTicks": 24,
+ }
+ const BRUNT_STRINGS: Dictionary = {   # the switches that are words: their values and the default (today's behaviour)
+-	"lodgeHold": [["world", "body"], "world"],   # does a lodge hold the whole fight (a hit-stop) or only the body (he is stunned, the fight goes on)
++	"lodgeHold": [["world", "body", "auto"], "auto"],   # does a lodge hold the whole fight (world: a hit-stop), or only the body (body: pinned in the building while the fight goes on), or auto: the first with two bodies, the second with more
+ }
+ const MARK_TOWER: int = -1                 # in Fighter.splashed (a list of building ids): a -1 for each tower this flight went through ...
+ const MARK_HOUSE: int = -2                 # ... and a -2 for each house
+@@ -641,7 +641,7 @@ static func _checkHitSwept(S: SimState, f, ox: float, oy: float) -> bool:
+ 
+ ## Resolve one hit on building b at height y on the near edge, and what happens to the fighter.
+ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+-	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
++	var by = WorldCollateral.launcherOf(S, f)
+ 	var trav: float = f.launchT
+ 	var spN: float = SimDetMath.hypot(f.vx / trav, f.vy)
+ 	var oc: Dictionary = outcomeOf(S, b, y, spN, by.tier, _count(f, MARK_TOWER), f.launchSpecial)
+@@ -699,7 +699,7 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+ 			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", cx, evt, true)
+ 		SimDamage.hurt(S, f, spLeft * FIGHTER_DMG, by)
+ 		var holdS: float = lodgeSeconds(by.tier, f.launchSpecial)
+-		_hold(S, f, holdS)
++		_hold(S, f, holdS, true)
+ 		var bodyW: float = WorldLanes.body()[0]
+ 		f.x = SimWrap.wrap(far - dir * (bodyW * 2.0))
+ 		f.y = y
+@@ -751,9 +751,16 @@ static func _flightTicks(S: SimState, f) -> int:
+ 
+ ## The hold in a wall or a lodge: the whole sim stops for it (a hit-stop, today's behaviour) or only the body is held (lodgeHold "body": he is stunned for
+ ## the seconds, the fight goes on around him). Orb's homework: which of the two.
+-static func _hold(S: SimState, f, seconds: float) -> void:
+-	if str(cfg().lodgeHold) == "body":
+-		f.stunTicks = maxi(f.stunTicks, int(ceil(seconds * 60.0)))
++static func _hold(S: SimState, f, seconds: float, lodged: bool = false) -> void:
++	var mode: String = str(cfg().lodgeHold)
++	if mode == "auto":
++		mode = "body" if S.fighters.size() > 2 else "world"
++	if mode == "body":
++		var ticks: int = int(ceil(seconds * 60.0))
++		if lodged:
++			f.holdT = maxi(f.holdT, ticks)   # pinned in the building (WorldContact.stepFighter), the rest of the fight goes on
++		else:
++			f.stunTicks = maxi(f.stunTicks, ticks)   # a wall: staggered for the seconds, he comes off the face as ever
+ 	else:
+ 		S.dirS.stop = SimMathx.jmax(S.dirS.stop, seconds)
+ 
+diff --git a/sim/world/collateral.gd b/sim/world/collateral.gd
+index 20d4e43..af4a6a6 100644
+--- a/sim/world/collateral.gd
++++ b/sim/world/collateral.gd
+@@ -101,6 +101,7 @@ static func init(S: SimState) -> void:
+ 	w.evtToken = 0.0
+ 	w.evtDead = 0.0
+ 	w.evtEvac = 0.0
++	w.evtMore = PackedFloat32Array()
+ 	w.tokenSeq = 0.0
+ 	w.heavyX = -1.0
+ 	w.heavyT = -1.0e9
+@@ -164,25 +165,113 @@ static func isOver(S: SimState) -> bool:
+ 	return room(S) <= 0.000001 or ceilingLeft(S) <= 0.000001
+ 
+ 
++static func eventKinds() -> Array:
++	return EVENT_ALLOW.keys()   # the set-piece kinds in the data's order (collateral.json): an open set piece keeps its kind by index
++
++
++## Where a token's set piece is kept: -1 the first open one (World.evtToken and its scalars), an offset into World.evtMore (five numbers: token, kind,
++## left, dead, evac) for each further one open at the same time, -2 for a token that is not open.
++static func _slotOf(w: SimState.World, token: float) -> int:
++	if token == 0.0:
++		return -2
++	if token == w.evtToken:
++		return -1
++	for i in range(0, w.evtMore.size(), 5):
++		if w.evtMore[i] == token:
++			return i
++	return -2
++
++
++## A token no body holds any more (a chain or a slide whose flight ended without closing it: the old single slot was simply overwritten by the next
++## one) is closed, so only set pieces that are really running stay open.
++static func _held(S: SimState, token: float) -> bool:
++	for f in S.fighters:
++		if f.chainEvt == token or f.slideEvt == token:
++			return true
++	return false
++
++
++static func _dropStale(S: SimState) -> void:
++	var w: SimState.World = S.world
++	if w.evtToken != 0.0 and not _held(S, w.evtToken):
++		w.evtKind = ""
++		w.evtLeft = 0.0
++		w.evtToken = 0.0
++		w.evtDead = 0.0
++		w.evtEvac = 0.0
++	if w.evtMore.size() > 0:
++		var keep := PackedFloat32Array()
++		for i in range(0, w.evtMore.size(), 5):
++			if _held(S, w.evtMore[i]):
++				keep.append_array(w.evtMore.slice(i, i + 5))
++		w.evtMore = keep
++	if w.evtToken == 0.0 and w.evtMore.size() >= 5:   # the first slot is free: the oldest of the rest moves into it
++		w.evtToken = w.evtMore[0]
++		w.evtKind = eventKinds()[int(w.evtMore[1])] if int(w.evtMore[1]) >= 0 else ""
++		w.evtLeft = w.evtMore[2]
++		w.evtDead = w.evtMore[3]
++		w.evtEvac = w.evtMore[4]
++		w.evtMore = w.evtMore.slice(5)
++
++
+ ## Open a set piece: returns its token, which the source passes to kill() (through damageArea and damageBuilding) so the
+-## allowance belongs to this event's own source. At tier 1 and 2 there is no allowance.
++## allowance belongs to this event's own source. At tier 1 and 2 there is no allowance. Two set pieces open at once (two bodies launched into
++## buildings in the same second, a slide and a chain) each keep their own: the first in the scalar slot, the rest in World.evtMore.
+ static func beginEvent(S: SimState, kind: String, cause) -> float:
+ 	var w: SimState.World = S.world
++	_dropStale(S)
+ 	w.tokenSeq += 1.0
+-	w.evtToken = w.tokenSeq
+-	w.evtKind = kind
+ 	var t: int = tier(S)
+-	w.evtLeft = eventAllow(kind, t) * w.present
+-	w.evtDead = 0.0
+-	w.evtEvac = 0.0
+-	return w.evtToken
++	var left: float = eventAllow(kind, t) * w.present
++	if w.evtToken == 0.0:
++		w.evtToken = w.tokenSeq
++		w.evtKind = kind
++		w.evtLeft = left
++		w.evtDead = 0.0
++		w.evtEvac = 0.0
++	else:
++		w.evtMore.append_array(PackedFloat32Array([w.tokenSeq, float(eventKinds().find(kind)), left, 0.0, 0.0]))
++	return w.tokenSeq
++
++
++## Whether b is an enemy of a: by team when both bodies have one, else by Simulation's stage 1 shape (SimRoster.opp: slot 0 is the opponent of every
++## other body, and the others are his), so a guard is no foe of the principal he stands for. With two bodies: the other one.
++static func foes(S: SimState, a, b) -> bool:
++	if a == b:
++		return false
++	var ta = a.get("team")
++	var tb = b.get("team")
++	if ta == null or tb == null:
++		var ia: int = S.fighters.find(a)
++		var ib: int = S.fighters.find(b)
++		if ia < 0 or ib < 0:
++			return true
++		return (ia == 0) != (ib == 0)
++	return ta != tb
++
++
++## Who launched f: launchBy, else the nearest body of an enemy team (the other one, with two bodies), else null. In place of SimRoster.opp's "the other of two".
++static func launcherOf(S: SimState, f):
++	if f.launchBy != null:
++		return f.launchBy
++	var best = null
++	var bd: float = 1.0e30
++	for o in S.fighters:
++		if o == f or not foes(S, f, o):
++			continue
++		var d: float = absf(SimWrap.sdx(f.x, o.x))
++		if d < bd:
++			bd = d
++			best = o
++	return best
+ 
+ 
+ ## Close a set piece and return {"dead", "evac", "borrowed"} for the token; an unknown token returns zeros.
+ static func endEvent(S: SimState, token: float) -> Dictionary:
+ 	var w: SimState.World = S.world
+ 	var r := {"dead": 0.0, "evac": 0.0}
+-	if token != 0.0 and token == w.evtToken:
++	var slot: int = _slotOf(w, token)
++	if slot == -1:
+ 		r.dead = w.evtDead
+ 		r.evac = w.evtEvac
+ 		w.evtKind = ""
+@@ -190,6 +279,14 @@ static func endEvent(S: SimState, token: float) -> Dictionary:
+ 		w.evtToken = 0.0
+ 		w.evtDead = 0.0
+ 		w.evtEvac = 0.0
++	elif slot >= 0:
++		r.dead = w.evtMore[slot + 3]
++		r.evac = w.evtMore[slot + 4]
++		var rest := PackedFloat32Array()
++		for i in range(0, w.evtMore.size(), 5):
++			if i != slot:
++				rest.append_array(w.evtMore.slice(i, i + 5))
++		w.evtMore = rest
+ 	return r
+ 
+ 
+@@ -232,19 +329,30 @@ static func kill(S: SimState, bi: int, want: float, cause, evt: float, cx: float
+ 		b.popAlive -= want
+ 		S.popHist[histBucket(b.x)] -= want
+ 	var rm: float = maxf(0.0, budget(S) - w.cbSum)
+-	var borrow: float = w.evtLeft if (evt != 0.0 and evt == w.evtToken) else 0.0
++	var slot: int = _slotOf(w, evt)   # the set piece this blow belongs to: its own allowance (-1 the first open, an index into evtMore, -2 none)
++	var borrow: float = 0.0
++	if slot == -1:
++		borrow = w.evtLeft
++	elif slot >= 0:
++		borrow = w.evtMore[slot + 2]
+ 	var cl: float = ceilingLeft(S)
+ 	var granted: float = minf(want, minf(rm + borrow, cl))
+ 	if granted > rm:
+-		w.evtLeft -= granted - rm
++		if slot == -1:
++			w.evtLeft -= granted - rm
++		elif slot >= 0:
++			w.evtMore[slot + 2] -= granted - rm
+ 	w.cbBuckets[int(w.cbSec) % WINDOW_S] += granted
+ 	w.cbSum += granted
+ 	var evac: float = want - granted
+ 	if granted > 0.0:
+ 		_feed(S, granted, cause)
+-	if evt != 0.0 and evt == w.evtToken:
++	if slot == -1:
+ 		w.evtDead += granted
+ 		w.evtEvac += evac
++	elif slot >= 0:
++		w.evtMore[slot + 3] += granted
++		w.evtMore[slot + 4] += evac
+ 	if evac > 0.000001:
+ 		w.evacuated += evac
+ 		if cause != null and cause.hasMenace:
+diff --git a/sim/world/contact.gd b/sim/world/contact.gd
+index afabe96..a74b669 100644
+--- a/sim/world/contact.gd
++++ b/sim/world/contact.gd
+@@ -633,7 +633,7 @@ static func toBody(S: SimState, f) -> Body:
+ 	b.special = f.launchSpecial
+ 	b.embedOK = S.T - f.embedCool >= K_EMB_COOL
+ 	b.feet = f.slideFeet
+-	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
++	var by = WorldCollateral.launcherOf(S, f)
+ 	b.tier = by.tier
+ 	b.slideD = f.slideD
+ 	b.lips = f.jLips
+@@ -665,7 +665,12 @@ static func fromBody(f, b: Body) -> void:
+ ## Called from SimFighter.stepLaunched when S.contactOn: one tick of a launched fighter's flight, skid or tumble, with every
+ ## side effect (craters, trenches, damage, dust, events). Replaces the old slide step and impact.
+ static func stepFighter(S: SimState, f, dt: float) -> void:
+-	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
++	if f.holdT > 0:   # a body lodged in a building (World's per-body lodge hold): pinned, and the fight goes on around him
++		f.holdT -= 1
++		f.vx = 0.0
++		f.vy = 0.0
++		return
++	var by = WorldCollateral.launcherOf(S, f)
+ 	var b: Body = toBody(S, f)
+ 	var ev: Array = _ev
+ 	ev.clear()
+diff --git a/sim/world/slide.gd b/sim/world/slide.gd
+index 5d2722a..9d6068a 100644
+--- a/sim/world/slide.gd
++++ b/sim/world/slide.gd
+@@ -104,7 +104,7 @@ static func _paved(x: float) -> bool:
+ 
+ ## One tick of a slide. Called from stepLaunched while f.slide > 0.
+ static func step(S: SimState, f, dt: float) -> void:
+-	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
++	var by = WorldCollateral.launcherOf(S, f)
+ 	var tv: float = f.launchT
+ 	var dir: float = 1.0 if f.vx >= 0.0 else -1.0
+ 	var vN: float = absf(f.vx) / tv
+diff --git a/tools/schemas/biomes-brunt.schema.json b/tools/schemas/biomes-brunt.schema.json
+index c5aabe6..39486b9 100644
+--- a/tools/schemas/biomes-brunt.schema.json
++++ b/tools/schemas/biomes-brunt.schema.json
+@@ -182,9 +182,10 @@
+     "lodgeHold": {
+       "enum": [
+         "world",
+-        "body"
++        "body",
++        "auto"
+       ],
+-      "description": "Does a lodge or a wall hold the whole sim (world: a hit-stop) or only the body (body: he is stunned for the seconds and the fight goes on)."
++      "description": "Does a lodge hold the whole sim (world: a hit-stop) or only the body (body: pinned in the building while the fight goes on; a wall only staggers him); auto: world with two bodies, body with more."
+     }
+   },
+   "additionalProperties": false,

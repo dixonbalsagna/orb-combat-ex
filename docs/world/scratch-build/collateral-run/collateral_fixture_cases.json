@@ -1,0 +1,87 @@
+{
+  "cases": [
+    {
+      "id": "collateral-schema-version",
+      "schema": "biomes-collateral.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/collateral.json",
+          "set": {
+            "/schema": "biomes.collateral/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "collateral-budget-short",
+      "schema": "biomes-collateral.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/collateral.json",
+          "set": {
+            "/budget": [
+              0.02,
+              0.04
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/budget"
+      }
+    },
+    {
+      "id": "collateral-ceiling-over-one",
+      "schema": "biomes-collateral.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/collateral.json",
+          "set": {
+            "/ceiling/0": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/ceiling/0"
+      }
+    },
+    {
+      "id": "collateral-kind-missing",
+      "schema": "biomes-collateral.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/collateral.json",
+          "del": [
+            "/eventAllow/quake"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/eventAllow"
+      }
+    },
+    {
+      "id": "collateral-norm-unknown",
+      "schema": "biomes-collateral.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/collateral.json",
+          "set": {
+            "/meterNorm": "both"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/meterNorm"
+      }
+    }
+  ]
+}

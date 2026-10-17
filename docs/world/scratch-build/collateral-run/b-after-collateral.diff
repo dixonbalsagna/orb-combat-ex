@@ -1,0 +1,352 @@
+diff --git a/data/biomes/brunt.json b/data/biomes/brunt.json
+index 2e76706..b5481a2 100644
+--- a/data/biomes/brunt.json
++++ b/data/biomes/brunt.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": "biomes.brunt/1",
+-  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge hold the whole sim (world, a hit-stop) or only the body (body: he is pinned in the building and the fight goes on); auto: world with two bodies, body with more (Orb's homework: which, with two).",
++  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge hold the whole sim (world, a hit-stop) or only the body (body: he is pinned in the building and the fight goes on); auto: world with two bodies, body with more (Orb's homework: which, with two). breaches: a punch breaks a run of the story, breachBase + breachPerRatio x ratio fighter heights of its width is the share of the story a punch takes (the slot it breaks is the span it swept), and the story is gone at clearAt (0: every punch clears the story, as before); breachDeath: the share of a holed story's people a punch kills before the width counts; breachWeakens: how much a breach weakens the floor; breachGrow: a floor already broken widens by this share of the new breach on top of the union.",
+   "bruntMul": 1.8,
+   "tierFactor": [
+     0.12,
+@@ -44,5 +44,12 @@
+   "heavyKeep": 0.7,
+   "wallSlamMul": 2.0,
+   "wallStaggerTicks": 24,
+-  "lodgeHold": "auto"
++  "lodgeHold": "auto",
++  "breaches": 1,
++  "breachBase": 0.8,
++  "breachPerRatio": 0.6,
++  "clearAt": 0.7,
++  "breachDeath": 0.25,
++  "breachWeakens": 0.5,
++  "breachGrow": 0.5
+ }
+diff --git a/sim/core/fx.gd b/sim/core/fx.gd
+index ed115d3..8de4481 100644
+--- a/sim/core/fx.gd
++++ b/sim/core/fx.gd
+@@ -461,10 +461,10 @@ static func chainLink(S: SimState, f, att, b, nb, y: float, r: Dictionary, link:
+ 
+ 
+ ## A shot hit floors of a skyscraper (WorldBlast.shotBuilding): the same event as a brunt's, victim -1, the shot's direction in ux, uy.
+-static func floorHitShot(S: SimState, b, floor_: int, n: int, outcome: String, ratio: float, y: float, slot: int, ux: float, uy: float) -> void:
++static func floorHitShot(S: SimState, b, floor_: int, n: int, outcome: String, ratio: float, y: float, slot: int, ux: float, uy: float, x0: float = 0.0, x1: float = 0.0) -> void:
+ 	var e := _ev(S, "floor_hit")
+ 	e.b = float(b.idx); e.floor = floor_; e.n = n; e.outcome = outcome; e.ratio = ratio
+-	e.x = b.x; e.y = y; e.z = WorldBrunt.faceZ(b)
++	e.x = b.x; e.y = y; e.z = WorldBrunt.faceZ(b); e.x0 = x0; e.x1 = x1
+ 	e.ux = ux; e.uy = uy
+ 	e.kind = b.kind; e.owner = float(slot); e.victim = -1.0
+ 
+@@ -478,10 +478,10 @@ static func buildingStage(S: SimState, b, from_: int, to_: int, cx: float, owner
+ 
+ 
+ ## B2: a brunt hit floors of a skyscraper: the lowest floor, how many were cleared (0 for a crack or a dent).
+-static func floorHit(S: SimState, f, b, floor_: int, n: int, outcome: String, ratio: float, y: float, by) -> void:
++static func floorHit(S: SimState, f, b, floor_: int, n: int, outcome: String, ratio: float, y: float, by, x0: float = 0.0, x1: float = 0.0) -> void:
+ 	var e := _ev(S, "floor_hit")
+ 	e.b = float(b.idx); e.floor = floor_; e.n = n; e.outcome = outcome; e.ratio = ratio
+-	e.x = b.x; e.y = y; e.z = WorldBrunt.faceZ(b)
++	e.x = b.x; e.y = y; e.z = WorldBrunt.faceZ(b); e.x0 = x0; e.x1 = x1
+ 	var l: float = SimDetMath.hypot(f.vx / f.launchT, f.vy)
+ 	e.ux = f.vx / f.launchT / maxf(l, 0.000001); e.uy = f.vy / maxf(l, 0.000001)
+ 	e.kind = b.kind; e.owner = float(S.fighters.find(by)); e.victim = float(S.fighters.find(f))
+diff --git a/sim/core/hash.gd b/sim/core/hash.gd
+index a57e727..cccb62d 100644
+--- a/sim/core/hash.gd
++++ b/sim/core/hash.gd
+@@ -190,6 +190,9 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
+ 		out.append(float(b.fdmg.size()))   # floor damage: empty for a building never hit locally
+ 		for v in b.fdmg:
+ 			out.append(v)
++		out.append(float(b.fhole.size()))   # B: the broken run of each floor
++		for v in b.fhole:
++			out.append(v)
+ 	out.append(1.0 if S.contactOn else 0.0)   # World's ground contact (G2)
+ 	out.append(float(S.trees.size()))
+ 	for t in S.trees:
+@@ -294,7 +297,7 @@ const FX_FIELDS: Dictionary = {
+ 	"dust": ["x", "y", "n", "col", "z"], "splash": ["x", "y", "n", "z"], "fire": ["x", "y", "n", "z"], "after": ["x", "y", "life", "col", "face", "z"],
+ 	"charge": ["x", "y", "col", "ground", "z"], "beamSplash": ["x", "z"], "damage": ["x", "y", "amount", "col", "attacker", "victim", "region", "kind", "number", "z", "mode", "weight"], "banner": ["text", "col", "dur"],
+ 	"crater": ["x", "y", "r", "depth", "energy", "cause", "rim", "skid", "owner", "special"], "scorch": ["x", "y", "w", "power", "variant", "owner", "z"],
+-	"slide": ["x", "x1", "w", "depth", "energy", "variant", "owner", "pop", "z", "z1"], "slide_dust": ["x", "y", "spd", "w", "variant", "n", "z"], "skim": ["x", "y", "spd", "n", "z"], "evacuate": ["b", "x", "n", "cx", "reason", "owner", "dest", "floor"], "launch_depth": ["x", "y", "x1", "y1", "z", "b", "dur", "n", "owner", "victim"], "chain_link": ["from", "to", "x", "y", "z", "x1", "y1", "z1", "dur", "link", "owner", "victim"], "floor_hit": ["b", "floor", "n", "outcome", "ratio", "x", "y", "z", "ux", "uy", "kind", "owner", "victim"], "building_stage": ["b", "from", "to", "x", "y", "z", "w", "h", "kind", "cx", "owner", "n"], "lodge": ["actor", "b", "x", "y", "z", "hold", "n", "owner", "victim"], "floors_fall": ["b", "from", "to", "n", "x", "z", "w"], "building_fall": ["b", "x", "y", "w", "depth", "mode", "delay", "cx", "rubble", "n", "landmark"], "collateral_state": ["room", "budget", "left", "over"],
++	"slide": ["x", "x1", "w", "depth", "energy", "variant", "owner", "pop", "z", "z1"], "slide_dust": ["x", "y", "spd", "w", "variant", "n", "z"], "skim": ["x", "y", "spd", "n", "z"], "evacuate": ["b", "x", "n", "cx", "reason", "owner", "dest", "floor"], "launch_depth": ["x", "y", "x1", "y1", "z", "b", "dur", "n", "owner", "victim"], "chain_link": ["from", "to", "x", "y", "z", "x1", "y1", "z1", "dur", "link", "owner", "victim"], "floor_hit": ["b", "floor", "n", "outcome", "ratio", "x", "y", "z", "ux", "uy", "kind", "owner", "victim", "x0", "x1"], "building_stage": ["b", "from", "to", "x", "y", "z", "w", "h", "kind", "cx", "owner", "n"], "lodge": ["actor", "b", "x", "y", "z", "hold", "n", "owner", "victim"], "floors_fall": ["b", "from", "to", "n", "x", "z", "w"], "building_fall": ["b", "x", "y", "w", "depth", "mode", "delay", "cx", "rubble", "n", "landmark"], "collateral_state": ["room", "budget", "left", "over"],
+ 	"shake": ["k", "x", "z"], "tick": ["dt", "frozen"],
+ 	"region_stage": ["actor", "region", "stage"], "rally": ["actor", "region", "kind"], "limb_break": ["actor", "victim", "region"], "region_broken": ["actor", "region"], "brink_enter": ["actor"], "brink_exit": ["actor"], "brink_open": ["actor", "target", "kind", "text"], "brink_close": ["actor", "kind"],
+ 	"mood_band": ["kind", "amount", "n"], "act_change": ["n", "kind"], "style_label": ["actor", "kind", "text"], "crowd_state": ["kind"], "building_hit": ["actor", "x", "n", "b", "y", "z", "amount", "ratio", "outcome", "link", "spd", "keep", "ux", "uy", "kind", "w", "h", "owner", "victim"],
+diff --git a/sim/core/state.gd b/sim/core/state.gd
+index 6138692..6150a12 100644
+--- a/sim/core/state.gd
++++ b/sim/core/state.gd
+@@ -228,6 +228,7 @@ class Building:
+ 	var floors: int = 1        # floor count (world/brunt.gd floorCount), set at generation
+ 	var fmask: int = 1        # one bit per standing floor, bit 0 the ground floor
+ 	var fdmg := PackedFloat32Array()   # damage per floor, allocated on the first local hit (empty before)
++	var fhole := PackedFloat32Array()  # B: the slot broken on each floor, three numbers a floor (its two ends as fractions of the half width, -1 to 1, and how much of the story is gone, 0 to 1), allocated with fdmg
+ 	var idx: int = 0          # index in S.buildings (set at generation; not hashed)
+ 	var place: int = -1       # the place it stands in: its settlement index today, the planet's place id (set at generation; not hashed: the world hash covers it)
+ 	var plan: int = -1        # its index in that place's plan (the plan is seeded, so the same building has the same index every time; not hashed)
+@@ -423,6 +424,7 @@ class FxEvent:
+ 	var p: float = 0.0           # intro_line: the chance the line is spoken (the line system's to use)
+ 	var source: String = ""      # hazard_telegraph, danger: what is coming (brunt, windup, ambush; World adds collapse, landslide, lava)
+ 	var eta: float = 0.0         # hazard_telegraph, danger: seconds until it lands, 0 when unknown
++	var x0: float = 0.0          # floor_hit: where the breach starts (x1 is where it ends)
+ 	var hold: float = 0.0        # lodge: the seconds the body is held in the building
+ 	var run: int = 0             # cue blow (Encounter): the striker's run on the target as the blow is thrown, 0 to 4. Not hashed
+ 	var run_to: int = 0          # cue blow (Encounter): the blows still to land for the close, this one included; 0 not set. Not hashed
+diff --git a/sim/world/blast.gd b/sim/world/blast.gd
+index 23d8fbc..4a85a9e 100644
+--- a/sim/world/blast.gd
++++ b/sim/world/blast.gd
+@@ -160,19 +160,18 @@ static func _floors(S: SimState, b, oc: Dictionary, by, cx: float, y: float, slo
+ 		b.fdmg.fill(0.0)
+ 	var popF: float = WorldBrunt.floorPop(b)
+ 	var lowest: int = oc.k
++	var side: float = -1.0 if ux >= 0.0 else 1.0   # the edge the shot came in by (a held hit's mark keeps it)
+ 	if oc.outcome == "punch":
+-		var cleared: int = 0
+-		for j in oc.hit:
+-			b.fmask = b.fmask & ~(1 << j)
+-			b.fdmg[j] = 0.0
+-			cleared += 1
+-			lowest = mini(lowest, j)
+-		if cleared > 0:
+-			WorldCollateral.kill(S, b.idx, popF * float(cleared), by, 0.0, cx, lowest)
+-		SimFx.floorHitShot(S, b, lowest, cleared, "punch", oc.ratio, y, slot, ux, uy)
++		var pr: Dictionary = WorldBrunt.punchFloors(b, oc, clampf(SimWrap.sdx(b.x, cx) / (b.w * 0.5), -1.0, 1.0), false)   # a shot breaks the story where it lands
++		lowest = mini(lowest, pr.lowest)
++		var dead: float = popF * pr.deaths
++		if dead > 0.0:
++			WorldCollateral.kill(S, b.idx, dead, by, 0.0, cx, lowest)
++		SimFx.floorHitShot(S, b, lowest, pr.cleared, "punch", oc.ratio, y, slot, ux, uy, pr.x0, pr.x1)
+ 	elif oc.outcome == "crack":
+ 		for j in oc.hit:
+ 			b.fdmg[j] += oc.dmg
++			WorldBrunt.markSide(b, j, side)
+ 		var d: float = popF * float(oc.hit.size()) * minf(1.0, oc.ratio * WorldBrunt.FLOOR_DEATH)
+ 		if d > 0.0:
+ 			WorldCollateral.kill(S, b.idx, d, by, 0.0, cx, oc.hit[0])
+@@ -180,6 +179,7 @@ static func _floors(S: SimState, b, oc: Dictionary, by, cx: float, y: float, slo
+ 	else:
+ 		for j in oc.hit:
+ 			b.fdmg[j] += oc.dmg
++			WorldBrunt.markSide(b, j, side)
+ 		SimFx.floorHitShot(S, b, oc.hit[0] if oc.hit.size() > 0 else oc.k, 0, "dent", oc.ratio, y, slot, ux, uy)
+ 	b.hp -= minf(WorldBrunt.CORE_SHARE * oc.dmg, WorldStructures.coreCap() * b.maxhp)
+ 	if b.hp <= 0.0:
+diff --git a/sim/world/brunt.gd b/sim/world/brunt.gd
+index ca5c291..0fb5d43 100644
+--- a/sim/world/brunt.gd
++++ b/sim/world/brunt.gd
+@@ -34,6 +34,9 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
+ 	"keepHi": 0.8, "keepK": 0.45, "keepRef": 3000.0, "keepMin": 0.35, "keepFree": 0.95, "heavyKeep": 0.7,
+ 	# the wall slam (buildings.md section 2): twice the building's hit, a stagger at the wall
+ 	"wallSlamMul": 2.0, "wallStaggerTicks": 24,
++	# B: breaches. A punch breaks a run of the story: breachBase + breachPerRatio * ratio fighter heights of the width, kept in fhole; the story is gone
++	# (its fmask bit clears) at clearAt of the width. breachDeath: the share of a holed story's people a punch kills before the width counts.
++	"breaches": 1, "breachBase": 0.8, "breachPerRatio": 0.6, "clearAt": 0.7, "breachDeath": 0.25, "breachWeakens": 0.5, "breachGrow": 0.5,
+ }
+ const BRUNT_STRINGS: Dictionary = {   # the switches that are words: their values and the default (today's behaviour)
+ 	"lodgeHold": [["world", "body", "auto"], "auto"],   # does a lodge hold the whole fight (world: a hit-stop), or only the body (body: pinned in the building while the fight goes on), or auto: the first with two bodies, the second with more
+@@ -379,6 +382,8 @@ static func outcomeDmg(S: SimState, b, y: float, dmg: float) -> Dictionary:
+ 		var haveD: bool = b.fdmg.size() == b.floors
+ 		for j in hit:
+ 			var st: float = floorStr(b, j)
++			if b.fhole.size() == 3 * b.floors and b.fhole[3 * j + 2] > 0.0:   # B: a floor with a breach carries less
++				st = maxf(st * float(cm.wallMin), st * (1.0 - float(cm.breachWeakens) * b.fhole[3 * j + 2]))
+ 			if haveD and b.fdmg[j] > 0.0:   # a building that remembers its walls: damage already taken weakens the floor (not below wallMin of it)
+ 				st = maxf(st * float(cm.wallMin), st - float(cm.wallMemory) * b.fdmg[j])
+ 			sumS += st
+@@ -815,19 +820,18 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
+ 	var popF: float = floorPop(b)
+ 	var slot: float = float(S.fighters.find(f))
+ 	var lowest: int = oc.k
++	var side: float = -1.0 if f.vx >= 0.0 else 1.0   # the edge he came in by (a held hit's mark keeps it)
+ 	if oc.outcome == "punch":
+-		var cleared: int = 0
+-		for j in oc.hit:
+-			b.fmask = b.fmask & ~(1 << j)
+-			b.fdmg[j] = 0.0
+-			cleared += 1
+-			lowest = mini(lowest, j)
+-		if cleared > 0:
+-			WorldCollateral.kill(S, b.idx, popF * float(cleared), by, evt, cx, lowest)
+-		SimFx.floorHit(S, f, b, lowest, cleared, "punch", oc.ratio, y, by)
++		var pr: Dictionary = punchFloors(b, oc, 0.0, true)   # a body crosses the building: the slot runs from side to side
++		lowest = mini(lowest, pr.lowest)
++		var dead: float = popF * pr.deaths
++		if dead > 0.0:
++			WorldCollateral.kill(S, b.idx, dead, by, evt, cx, lowest)
++		SimFx.floorHit(S, f, b, lowest, pr.cleared, "punch", oc.ratio, y, by, pr.x0, pr.x1)
+ 	elif oc.outcome == "crack":
+ 		for j in oc.hit:
+ 			b.fdmg[j] += oc.dmg
++			markSide(b, j, side)
+ 		var share: float = minf(1.0, oc.ratio * FLOOR_DEATH)
+ 		if oc.get("held", false):
+ 			share = minf(share, float(cfg().heldDeathShare))
+@@ -838,6 +842,7 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
+ 	else:
+ 		for j in oc.hit:
+ 			b.fdmg[j] += oc.dmg
++			markSide(b, j, side)
+ 		SimFx.floorHit(S, f, b, oc.hit[0] if oc.hit.size() > 0 else oc.k, 0, "dent", oc.ratio, y, by)
+ 	# local damage wears the core; the building goes when it is spent
+ 	b.hp -= minf(CORE_SHARE * oc.dmg, WorldStructures.coreCap() * b.maxhp)   # the cap: one floors hit takes at most this share of the core
+@@ -852,6 +857,75 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
+ 	return res
+ 
+ 
++## B: a held hit (a crack or a dent) writes its SIDE into the floor's slot: both ends at the edge the body came in by (-1 or 1), nothing gone, so a
++## mark's side survives a seek and a late join (Rendering's destruction-look.md section 8). A floor already broken keeps its slot.
++static func markSide(b, j: int, side: float) -> void:
++	if int(cfg().breaches) == 0:
++		return
++	var F: int = b.floors
++	if b.fhole.size() != 3 * F:
++		b.fhole = PackedFloat32Array()
++		b.fhole.resize(3 * F)
++		b.fhole.fill(0.0)
++	if b.fhole[3 * j + 2] > 0.0:
++		return
++	b.fhole[3 * j] = side
++	b.fhole[3 * j + 1] = side
++
++
++## B: a punch on the floors a body covers (oc.hit). The blow breaks a SLOT of each floor (the span of the plate it swept: from side to side for a body
++## that crosses the building, full is true; a run centred at centre for a shot) and takes a share of the story with it: breachBase + breachPerRatio * ratio
++## fighter heights of its width, so the slot says WHERE it is broken and g (kept in fhole) says HOW MUCH of the story is gone. A floor already broken adds
++## breachGrow of the new share. The floor is gone (its fmask bit clears, as a punch always cleared it) when g is clearAt. With breaches off every punch
++## clears, as before. Returns {"cleared", "lowest", "deaths" (the floors' share of their people to kill: a gone floor all of it, a holed one
++## breachDeath + the share), "x0", "x1" (the slot on the lowest floor hit, in world x)}.
++static func punchFloors(b, oc: Dictionary, centre: float, full: bool = false) -> Dictionary:
++	var c: Dictionary = cfg()
++	var res := {"cleared": 0, "lowest": oc.k, "deaths": 0.0, "x0": b.x, "x1": b.x}
++	var wbh: float = maxf(b.w / BH, 0.5)
++	var F: int = b.floors
++	var on: bool = int(c.breaches) != 0
++	var first: bool = true
++	for j in oc.hit:
++		var gone: bool = true
++		var share: float = 1.0
++		if on:
++			var gnew: float = minf((float(c.breachBase) + float(c.breachPerRatio) * minf(float(oc.ratio), 40.0)) / wbh, 1.0)
++			if b.fhole.size() != 3 * F:
++				b.fhole = PackedFloat32Array()
++				b.fhole.resize(3 * F)
++				b.fhole.fill(0.0)
++			var lo: float = -1.0 if full else maxf(centre - gnew, -1.0)
++			var hi: float = 1.0 if full else minf(centre + gnew, 1.0)
++			var g0: float = b.fhole[3 * j + 2]
++			if g0 > 0.0:
++				lo = minf(lo, b.fhole[3 * j])
++				hi = maxf(hi, b.fhole[3 * j + 1])
++				share = minf(g0 + float(c.breachGrow) * gnew, 1.0)   # a floor that was already broken: the story goes a further breachGrow of this blow's share
++			else:
++				share = gnew
++			b.fhole[3 * j] = lo
++			b.fhole[3 * j + 1] = hi
++			b.fhole[3 * j + 2] = share
++			gone = share >= float(c.clearAt)
++			if first:
++				res.x0 = b.x + lo * b.w * 0.5
++				res.x1 = b.x + hi * b.w * 0.5
++				first = false
++		if gone:
++			b.fmask = b.fmask & ~(1 << j)
++			if b.fdmg.size() == F:
++				b.fdmg[j] = 0.0
++			res.cleared += 1
++			res.deaths += 1.0
++		else:
++			if b.fdmg.size() == F:
++				b.fdmg[j] += oc.dmg * 0.25   # a holed story is damaged: it counts for the stage and for the memory of its walls
++			res.deaths += minf(1.0, float(c.breachDeath) + share)
++		res.lowest = mini(res.lowest, j)
++	return res
++
++
+ ## A cleared span longer than TUNNEL_MAX drops the floors above it: the stack of m floors breaks each floor below while
+ ## PANCAKE_K * m >= its strength, joining it. The floors it breaks, and the stack itself, are gone (their occupants die
+ ## through the collateral module); if it reaches the ground the whole building goes. Returns {"pancake", "collapse"}.
+diff --git a/sim/world/structures.gd b/sim/world/structures.gd
+index 27e3456..4495d10 100644
+--- a/sim/world/structures.gd
++++ b/sim/world/structures.gd
+@@ -113,6 +113,8 @@ static func stage(b) -> int:
+ 				s = 3
+ 	if b.floors >= WorldBrunt.FLOORS_MIN and b.fmask != (1 << b.floors) - 1:
+ 		s = maxi(s, _cutStage)
++	elif b.floors >= WorldBrunt.FLOORS_MIN and b.fhole.size() > 0 and _holed(b):
++		s = maxi(s, _cutStage)   # B: a floor with a breach counts like a cut one
+ 	elif b.floors >= WorldBrunt.FLOORS_MIN and b.fdmg.size() > 0:   # a damaged floor counts like a cut one (Game Design, section 24): the tower empties sooner, as intended
+ 		for v in b.fdmg:
+ 			if v > 0.0:
+@@ -121,6 +123,13 @@ static func stage(b) -> int:
+ 	return s
+ 
+ 
++static func _holed(b) -> bool:
++	for k in range(b.floors):
++		if 3 * k + 2 < b.fhole.size() and b.fhole[3 * k + 2] > 0.0:
++			return true
++	return false
++
++
+ ## The most of a building's hit points one floors hit may take from its core (stages.json coreCapShare; 1 is off): a tower of a few floors does not
+ ## fall whole to the first cut.
+ static func coreCap() -> float:
+diff --git a/tools/schemas/biomes-brunt.schema.json b/tools/schemas/biomes-brunt.schema.json
+index 39486b9..07a836b 100644
+--- a/tools/schemas/biomes-brunt.schema.json
++++ b/tools/schemas/biomes-brunt.schema.json
+@@ -186,6 +186,46 @@
+         "auto"
+       ],
+       "description": "Does a lodge hold the whole sim (world: a hit-stop) or only the body (body: pinned in the building while the fight goes on; a wall only staggers him); auto: world with two bodies, body with more."
++    },
++    "breaches": {
++      "type": "integer",
++      "minimum": 0,
++      "maximum": 1,
++      "description": "1: a punch breaks a run of the story and it is gone at clearAt of the width; 0: every punch clears the story, as before."
++    },
++    "breachBase": {
++      "type": "number",
++      "exclusiveMinimum": 0,
++      "description": "The breach a punch makes, in fighter heights of the width, before the ratio."
++    },
++    "breachPerRatio": {
++      "type": "number",
++      "minimum": 0,
++      "description": "... and for each unit of the hit's ratio over the floors' strength."
++    },
++    "clearAt": {
++      "type": "number",
++      "exclusiveMinimum": 0,
++      "maximum": 1,
++      "description": "The share of a story's width broken at which the story is gone."
++    },
++    "breachDeath": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 1,
++      "description": "The share of a holed story's people a punch kills before its breach's width counts."
++    },
++    "breachWeakens": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 1,
++      "description": "How much of its strength a floor loses at a breach of its whole width."
++    },
++    "breachGrow": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 1,
++      "description": "A floor already broken: a further breach widens it by this share of its own width on top of the union."
+     }
+   },
+   "additionalProperties": false,

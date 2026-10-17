@@ -1,0 +1,598 @@
+{
+ "schema": "world.canon_planet/1",
+ "planet": "Everhold",
+ "seed": 7,
+ "_about": "PROPOSAL (World, 2026-10-16): a canon planet for the story. Planet seed 7 (picture A2); names by Narrative's place-name grammar (docs/narrative/place-names.md) with Legal's blocklist (10 starting entries and the 11 real towns of RL-149); the old fixed planet's names kept where the geography matches. Names are proposals: Legal screens them, Orb picks.",
+ "places": [
+  {
+   "id": 0,
+   "kind": "city",
+   "name": "Mosshold",
+   "seed": 22754909,
+   "biome": "forest",
+   "lon": 30.22,
+   "lat": 47.55,
+   "radius": 6500.0
+  },
+  {
+   "id": 1,
+   "kind": "city",
+   "name": "Hazelgate",
+   "seed": 5977290,
+   "biome": "forest",
+   "lon": 125.72,
+   "lat": 2.17,
+   "radius": 6500.0
+  },
+  {
+   "id": 2,
+   "kind": "city",
+   "name": "Larkford",
+   "seed": 4284166967,
+   "biome": "plains",
+   "lon": -52.72,
+   "lat": -3.62,
+   "radius": 6500.0
+  },
+  {
+   "id": 3,
+   "kind": "city",
+   "name": "Spoolford",
+   "seed": 4267389348,
+   "biome": "desert",
+   "lon": 39.33,
+   "lat": -31.11,
+   "radius": 6500.0
+  },
+  {
+   "id": 4,
+   "kind": "city",
+   "name": "Loomhaven",
+   "seed": 4250611729,
+   "biome": "forest",
+   "lon": -140.0,
+   "lat": 27.85,
+   "radius": 6500.0
+  },
+  {
+   "id": 5,
+   "kind": "city",
+   "name": "Lamprise",
+   "seed": 4233834110,
+   "biome": "plains",
+   "lon": 100.36,
+   "lat": 45.02,
+   "radius": 6500.0
+  },
+  {
+   "id": 6,
+   "kind": "city",
+   "name": "Quayford",
+   "seed": 4217056491,
+   "biome": "forest",
+   "lon": -68.39,
+   "lat": 47.91,
+   "radius": 6500.0
+  },
+  {
+   "id": 7,
+   "kind": "city",
+   "name": "Fallowhold",
+   "seed": 4200278872,
+   "biome": "plains",
+   "lon": -109.17,
+   "lat": -27.05,
+   "radius": 6500.0
+  },
+  {
+   "id": 8,
+   "kind": "city",
+   "name": "Bellgate",
+   "seed": 4183501253,
+   "biome": "desert",
+   "lon": 44.05,
+   "lat": 11.4,
+   "radius": 6500.0
+  },
+  {
+   "id": 9,
+   "kind": "city",
+   "name": "Barleyhaven",
+   "seed": 4166723634,
+   "biome": "plains",
+   "lon": -27.89,
+   "lat": -47.03,
+   "radius": 6500.0
+  },
+  {
+   "id": 10,
+   "kind": "town",
+   "name": "Millmere",
+   "seed": 2308203918,
+   "biome": "plains",
+   "lon": -27.27,
+   "lat": 15.34,
+   "radius": 2437.5
+  },
+  {
+   "id": 11,
+   "kind": "town",
+   "name": "Amberwick",
+   "seed": 2324981537,
+   "biome": "desert",
+   "lon": 83.27,
+   "lat": -20.53,
+   "radius": 2437.5
+  },
+  {
+   "id": 12,
+   "kind": "town",
+   "name": "Alderfield",
+   "seed": 2274648680,
+   "biome": "forest",
+   "lon": -97.29,
+   "lat": 34.52,
+   "radius": 2437.5
+  },
+  {
+   "id": 13,
+   "kind": "town",
+   "name": "Windstead",
+   "seed": 2291426299,
+   "biome": "plains",
+   "lon": -66.56,
+   "lat": -46.62,
+   "radius": 2437.5
+  },
+  {
+   "id": 14,
+   "kind": "town",
+   "name": "Barleymere",
+   "seed": 2375314394,
+   "biome": "plains",
+   "lon": -16.5,
+   "lat": -6.39,
+   "radius": 2437.5
+  },
+  {
+   "id": 15,
+   "kind": "town",
+   "name": "Thornstead",
+   "seed": 2392092013,
+   "biome": "forest",
+   "lon": -13.34,
+   "lat": 39.52,
+   "radius": 2437.5
+  },
+  {
+   "id": 16,
+   "kind": "town",
+   "name": "Farwatch",
+   "seed": 2341759156,
+   "biome": "forest",
+   "lon": -133.84,
+   "lat": -9.64,
+   "radius": 2437.5
+  },
+  {
+   "id": 17,
+   "kind": "town",
+   "name": "Grainfield",
+   "seed": 2358536775,
+   "biome": "plains",
+   "lon": 68.98,
+   "lat": 32.71,
+   "radius": 2437.5
+  },
+  {
+   "id": 18,
+   "kind": "town",
+   "name": "Cindermere",
+   "seed": 2173982966,
+   "biome": "desert",
+   "lon": 77.22,
+   "lat": -43.03,
+   "radius": 2437.5
+  },
+  {
+   "id": 19,
+   "kind": "town",
+   "name": "Cloverwick",
+   "seed": 2190760585,
+   "biome": "plains",
+   "lon": -20.34,
+   "lat": -21.29,
+   "radius": 2437.5
+  },
+  {
+   "id": 20,
+   "kind": "town",
+   "name": "Alderby",
+   "seed": 59855877,
+   "biome": "forest",
+   "lon": -74.44,
+   "lat": -30.4,
+   "radius": 2437.5
+  },
+  {
+   "id": 21,
+   "kind": "town",
+   "name": "Wheelstead",
+   "seed": 43078258,
+   "biome": "plains",
+   "lon": -93.13,
+   "lat": -48.83,
+   "radius": 2437.5
+  },
+  {
+   "id": 22,
+   "kind": "town",
+   "name": "Barleyholt",
+   "seed": 26300639,
+   "biome": "plains",
+   "lon": -66.13,
+   "lat": 24.62,
+   "radius": 2437.5
+  },
+  {
+   "id": 23,
+   "kind": "town",
+   "name": "Hedgestead",
+   "seed": 9523020,
+   "biome": "plains",
+   "lon": -116.99,
+   "lat": 10.13,
+   "radius": 2437.5
+  },
+  {
+   "id": 24,
+   "kind": "town",
+   "name": "Fallowstead",
+   "seed": 4287712697,
+   "biome": "plains",
+   "lon": -28.79,
+   "lat": -1.64,
+   "radius": 2437.5
+  },
+  {
+   "id": 25,
+   "kind": "town",
+   "name": "Birchfield",
+   "seed": 4270935078,
+   "biome": "forest",
+   "lon": -114.11,
+   "lat": 38.69,
+   "radius": 2437.5
+  },
+  {
+   "id": 26,
+   "kind": "town",
+   "name": "Bramblewick",
+   "seed": 4254157459,
+   "biome": "forest",
+   "lon": -147.69,
+   "lat": -4.51,
+   "radius": 2437.5
+  },
+  {
+   "id": 27,
+   "kind": "town",
+   "name": "Threshby",
+   "seed": 4237379840,
+   "biome": "plains",
+   "lon": -112.62,
+   "lat": 24.76,
+   "radius": 2437.5
+  },
+  {
+   "id": 28,
+   "kind": "town",
+   "name": "Threshwick",
+   "seed": 194076829,
+   "biome": "plains",
+   "lon": -72.54,
+   "lat": 9.24,
+   "radius": 2437.5
+  },
+  {
+   "id": 29,
+   "kind": "town",
+   "name": "Netmend",
+   "seed": 177299210,
+   "biome": "ocean",
+   "lon": 53.69,
+   "lat": -53.11,
+   "radius": 2437.5
+  },
+  {
+   "id": 30,
+   "kind": "town",
+   "name": "Flintholt",
+   "seed": 4254010364,
+   "biome": "desert",
+   "lon": 105.58,
+   "lat": -32.44,
+   "radius": 2437.5
+  },
+  {
+   "id": 31,
+   "kind": "town",
+   "name": "Bramblestead",
+   "seed": 4270787983,
+   "biome": "forest",
+   "lon": 147.48,
+   "lat": 10.96,
+   "radius": 2437.5
+  },
+  {
+   "id": 32,
+   "kind": "town",
+   "name": "Brassby",
+   "seed": 4287565602,
+   "biome": "desert",
+   "lon": 17.54,
+   "lat": -14.39,
+   "radius": 2437.5
+  },
+  {
+   "id": 33,
+   "kind": "town",
+   "name": "Hayfield",
+   "seed": 9375925,
+   "biome": "plains",
+   "lon": 104.57,
+   "lat": 22.9,
+   "radius": 2437.5
+  },
+  {
+   "id": 34,
+   "kind": "town",
+   "name": "Kilnstead",
+   "seed": 4186899888,
+   "biome": "plains",
+   "lon": 54.2,
+   "lat": 33.97,
+   "radius": 2437.5
+  },
+  {
+   "id": 35,
+   "kind": "town",
+   "name": "Oakwick",
+   "seed": 4203677507,
+   "biome": "forest",
+   "lon": -12.05,
+   "lat": 25.16,
+   "radius": 2437.5
+  },
+  {
+   "id": 36,
+   "kind": "town",
+   "name": "Wrenfield",
+   "seed": 4220455126,
+   "biome": "forest",
+   "lon": -83.75,
+   "lat": 29.0,
+   "radius": 2437.5
+  },
+  {
+   "id": 37,
+   "kind": "town",
+   "name": "Amberfield",
+   "seed": 4237232745,
+   "biome": "desert",
+   "lon": 68.74,
+   "lat": -29.33,
+   "radius": 2437.5
+  },
+  {
+   "id": 38,
+   "kind": "city",
+   "name": "Spoolhaven",
+   "seed": 93264020,
+   "biome": "ocean",
+   "lon": 118.58,
+   "lat": -52.35,
+   "radius": 6500.0
+  },
+  {
+   "id": 39,
+   "kind": "town",
+   "name": "Threshfield",
+   "seed": 110041639,
+   "biome": "ocean",
+   "lon": -130.77,
+   "lat": 52.74,
+   "radius": 2437.5
+  },
+  {
+   "id": 40,
+   "kind": "town",
+   "name": "Wheelfield",
+   "seed": 4153197555,
+   "biome": "ocean",
+   "lon": -123.55,
+   "lat": -52.34,
+   "radius": 2437.5
+  },
+  {
+   "id": 41,
+   "kind": "town",
+   "name": "Thornwick",
+   "seed": 4136419936,
+   "biome": "forest",
+   "lon": -56.65,
+   "lat": -32.75,
+   "radius": 2437.5
+  }
+ ],
+ "landmarks": [
+  {
+   "place": 0,
+   "in": "Mosshold",
+   "name": "Wren Light"
+  },
+  {
+   "place": 1,
+   "in": "Hazelgate",
+   "name": "Elm Tower"
+  },
+  {
+   "place": 2,
+   "in": "Larkford",
+   "name": "Loom Falls"
+  },
+  {
+   "place": 3,
+   "in": "Spoolford",
+   "name": "Signal Light"
+  },
+  {
+   "place": 4,
+   "in": "Loomhaven",
+   "name": "Quay Falls"
+  },
+  {
+   "place": 5,
+   "in": "Lamprise",
+   "name": "Mill Rock"
+  },
+  {
+   "place": 6,
+   "in": "Quayford",
+   "name": "Brass Spire"
+  },
+  {
+   "place": 7,
+   "in": "Fallowhold",
+   "name": "Barley Bridge"
+  },
+  {
+   "place": 8,
+   "in": "Bellgate",
+   "name": "Bell Tower"
+  },
+  {
+   "place": 9,
+   "in": "Barleyhaven",
+   "name": "Spool Stair"
+  },
+  {
+   "place": 38,
+   "in": "Spoolhaven",
+   "name": "Fallow Bridge"
+  }
+ ],
+ "regions": [
+  {
+   "name": "Longwater",
+   "biome": "ocean",
+   "lon": 149.6,
+   "lat": 16.3,
+   "cells": 2587
+  },
+  {
+   "name": "Reefwater",
+   "biome": "ocean",
+   "lon": 16.1,
+   "lat": 85.9,
+   "cells": 77
+  },
+  {
+   "name": "Furrowlea",
+   "biome": "plains",
+   "lon": -58.2,
+   "lat": -23.9,
+   "cells": 746
+  },
+  {
+   "name": "Larklea",
+   "biome": "plains",
+   "lon": 77.0,
+   "lat": 31.2,
+   "cells": 290
+  },
+  {
+   "name": "Deepholt",
+   "biome": "forest",
+   "lon": -100.0,
+   "lat": 14.8,
+   "cells": 582
+  },
+  {
+   "name": "Thornholt",
+   "biome": "forest",
+   "lon": 8.3,
+   "lat": 37.0,
+   "cells": 187
+  },
+  {
+   "name": "Sunwaste",
+   "biome": "desert",
+   "lon": 33.5,
+   "lat": -13.3,
+   "cells": 213
+  },
+  {
+   "name": "Bleachwaste",
+   "biome": "desert",
+   "lon": 88.9,
+   "lat": -35.8,
+   "cells": 160
+  },
+  {
+   "name": "Anvilfell",
+   "biome": "mountains",
+   "lon": 3.2,
+   "lat": -4.2,
+   "cells": 205
+  },
+  {
+   "name": "Cragfell",
+   "biome": "mountains",
+   "lon": -87.9,
+   "lat": -0.9,
+   "cells": 120
+  },
+  {
+   "name": "Torfell",
+   "biome": "mountains",
+   "lon": -14.8,
+   "lat": -89.2,
+   "cells": 109
+  },
+  {
+   "name": "Sheetwaste",
+   "biome": "ice",
+   "lon": -107.4,
+   "lat": -88.9,
+   "cells": 1049
+  },
+  {
+   "name": "Glasswater",
+   "biome": "ice",
+   "lon": -60.1,
+   "lat": 89.0,
+   "cells": 568
+  }
+ ],
+ "outposts": [
+  {
+   "name": "Glasswatch",
+   "kind": "shelf",
+   "lat": -60.78,
+   "lon": 177.91
+  },
+  {
+   "name": "Rimewatch",
+   "kind": "inland",
+   "lat": -76.48,
+   "lon": 9.12
+  },
+  {
+   "name": "Thawwatch",
+   "kind": "floe",
+   "lat": 88.09,
+   "lon": 123.45
+  }
+ ]
+}

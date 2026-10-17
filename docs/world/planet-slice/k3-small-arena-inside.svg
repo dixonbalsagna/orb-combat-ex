@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 940" width="1000" height="940">
+<rect width="1000" height="940" fill="#fbfaf6"/>
+<text x="24.0" y="34.0" font-size="20" font-weight="700" fill="#1d2230" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >K3. What it is like inside a smaller arena</text>
+<text x="24.0" y="56.0" font-size="13" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >To scale: the loop of 38,400 units seen from above, then a screen with two fighters. Looking toward the middle, the far side of the loop is across the way.</text>
+<circle cx="250" cy="290" r="170" fill="#f3f1e8" stroke="#1d2230" stroke-width="1"/>
+<circle cx="250" cy="290" r="170.0" fill="none" stroke="#d6336c" stroke-width="3"/>
+<circle cx="250" cy="290" r="136.6" fill="none" stroke="#d6336c" stroke-opacity="0.35" stroke-width="66.8"/>
+<circle cx="250" cy="290" r="6" fill="#2a2f45"/>
+<text x="250.0" y="312.0" font-size="12" font-weight="700" fill="#2a2f45" text-anchor="middle" font-family="Segoe UI, system-ui, Arial, sans-serif" >the centre</text>
+<text x="250.0" y="328.0" font-size="11" font-weight="400" fill="#5a6070" text-anchor="middle" font-family="Segoe UI, system-ui, Arial, sans-serif" >6,177 units from the line</text>
+<polygon points="208.3,460.0 291.7,460.0 250.0,120.0" fill="#2f6fed" fill-opacity="0.18" stroke="#2f6fed" stroke-width="1"/>
+<circle cx="246.0" cy="460.0" r="4" fill="#d6336c"/><circle cx="254.0" cy="460.0" r="4" fill="#d6336c"/>
+<text x="264.0" y="464.0" font-size="12" font-weight="700" fill="#d6336c" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >the fight</text>
+<text x="250.0" y="110.0" font-size="12" font-weight="700" fill="#1d2230" text-anchor="middle" font-family="Segoe UI, system-ui, Arial, sans-serif" >the far side of the loop: 12,222 units across the way</text>
+<text x="60.0" y="82.0" font-size="13" font-weight="700" fill="#1d2230" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >From above, the loop of 38,400 units (radius 6,111)</text>
+<text x="60.0" y="500.0" font-size="11" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >Pink: the line the fighters move along. Pale pink: the band they fight in (2,400 units deep).</text>
+<text x="60.0" y="516.0" font-size="11" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >Blue: what the camera sees, looking in toward the middle.</text>
+<text x="520.0" y="96.0" font-size="13" font-weight="700" fill="#1d2230" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >What the camera sees (one screen, 3,000 units across, fighters 75 tall)</text>
+<rect x="520" y="110" width="440" height="250" fill="#eaf1f7" stroke="#c9ccd6"/>
+<rect x="520.0" y="266.2" width="7.3" height="9.8" fill="#b7c0cc"/>
+<rect x="528.3" y="264.1" width="7.6" height="11.9" fill="#b7c0cc"/>
+<rect x="536.9" y="260.0" width="4.4" height="16.0" fill="#b7c0cc"/>
+<rect x="542.3" y="269.8" width="9.0" height="6.2" fill="#b7c0cc"/>
+<rect x="552.3" y="265.9" width="5.4" height="10.1" fill="#b7c0cc"/>
+<rect x="558.7" y="254.1" width="6.8" height="21.9" fill="#b7c0cc"/>
+<rect x="566.5" y="256.6" width="6.9" height="19.4" fill="#b7c0cc"/>
+<rect x="574.4" y="259.8" width="4.9" height="16.2" fill="#b7c0cc"/>
+<rect x="580.3" y="259.8" width="9.2" height="16.2" fill="#b7c0cc"/>
+<rect x="590.5" y="261.6" width="8.4" height="14.4" fill="#b7c0cc"/>
+<rect x="600.0" y="259.3" width="4.4" height="16.7" fill="#b7c0cc"/>
+<rect x="605.3" y="257.9" width="7.5" height="18.1" fill="#b7c0cc"/>
+<rect x="613.9" y="265.2" width="4.2" height="10.8" fill="#b7c0cc"/>
+<rect x="619.1" y="256.2" width="6.8" height="19.8" fill="#b7c0cc"/>
+<rect x="626.9" y="258.5" width="9.3" height="17.5" fill="#b7c0cc"/>
+<rect x="637.2" y="258.6" width="9.5" height="17.4" fill="#b7c0cc"/>
+<rect x="647.7" y="263.7" width="8.8" height="12.3" fill="#b7c0cc"/>
+<rect x="657.5" y="262.9" width="9.6" height="13.1" fill="#b7c0cc"/>
+<rect x="668.1" y="255.9" width="4.6" height="20.1" fill="#b7c0cc"/>
+<rect x="673.7" y="267.8" width="5.3" height="8.2" fill="#b7c0cc"/>
+<rect x="680.0" y="254.6" width="6.6" height="21.4" fill="#b7c0cc"/>
+<rect x="687.6" y="260.0" width="5.8" height="16.0" fill="#b7c0cc"/>
+<rect x="694.4" y="261.9" width="6.3" height="14.1" fill="#b7c0cc"/>
+<rect x="701.7" y="264.4" width="7.5" height="11.6" fill="#b7c0cc"/>
+<rect x="710.3" y="260.7" width="9.4" height="15.3" fill="#b7c0cc"/>
+<rect x="720.7" y="259.1" width="9.6" height="16.9" fill="#b7c0cc"/>
+<rect x="731.3" y="256.3" width="9.9" height="19.7" fill="#b7c0cc"/>
+<rect x="742.2" y="259.3" width="5.0" height="16.7" fill="#b7c0cc"/>
+<rect x="748.2" y="256.2" width="9.8" height="19.8" fill="#b7c0cc"/>
+<rect x="759.0" y="255.5" width="7.4" height="20.5" fill="#b7c0cc"/>
+<rect x="767.4" y="258.6" width="5.3" height="17.4" fill="#b7c0cc"/>
+<rect x="773.7" y="256.7" width="7.4" height="19.3" fill="#b7c0cc"/>
+<rect x="782.1" y="265.4" width="4.4" height="10.6" fill="#b7c0cc"/>
+<rect x="787.5" y="256.3" width="9.9" height="19.7" fill="#b7c0cc"/>
+<rect x="798.4" y="268.6" width="8.8" height="7.4" fill="#b7c0cc"/>
+<rect x="808.2" y="263.4" width="4.9" height="12.6" fill="#b7c0cc"/>
+<rect x="814.1" y="265.3" width="8.6" height="10.7" fill="#b7c0cc"/>
+<rect x="823.7" y="256.0" width="4.3" height="20.0" fill="#b7c0cc"/>
+<rect x="829.0" y="260.2" width="4.3" height="15.8" fill="#b7c0cc"/>
+<rect x="834.3" y="258.5" width="6.0" height="17.5" fill="#b7c0cc"/>
+<rect x="841.3" y="255.9" width="9.9" height="20.1" fill="#b7c0cc"/>
+<rect x="852.1" y="261.9" width="10.0" height="14.1" fill="#b7c0cc"/>
+<rect x="863.1" y="265.0" width="4.5" height="11.0" fill="#b7c0cc"/>
+<rect x="868.6" y="260.4" width="4.2" height="15.6" fill="#b7c0cc"/>
+<rect x="873.8" y="266.8" width="6.4" height="9.2" fill="#b7c0cc"/>
+<rect x="881.2" y="260.2" width="4.9" height="15.8" fill="#b7c0cc"/>
+<rect x="887.2" y="269.3" width="9.2" height="6.7" fill="#b7c0cc"/>
+<rect x="897.4" y="265.0" width="9.8" height="11.0" fill="#b7c0cc"/>
+<rect x="908.1" y="255.7" width="6.3" height="20.3" fill="#b7c0cc"/>
+<rect x="915.4" y="262.6" width="7.1" height="13.4" fill="#b7c0cc"/>
+<rect x="923.5" y="259.7" width="7.6" height="16.3" fill="#b7c0cc"/>
+<rect x="932.1" y="261.1" width="7.7" height="14.9" fill="#b7c0cc"/>
+<rect x="940.8" y="255.0" width="7.0" height="21.0" fill="#b7c0cc"/>
+<rect x="948.8" y="263.1" width="8.3" height="12.9" fill="#b7c0cc"/>
+<rect x="958.2" y="266.2" width="5.8" height="9.8" fill="#b7c0cc"/>
+<rect x="610.0" y="282.2" width="14.3" height="9.8" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="625.8" y="277.0" width="8.1" height="15.0" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="635.4" y="270.9" width="15.0" height="21.1" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="651.9" y="261.0" width="15.4" height="31.0" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="668.7" y="239.4" width="8.7" height="52.6" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="679.0" y="229.7" width="13.6" height="62.3" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="694.1" y="214.1" width="12.2" height="77.9" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="707.8" y="199.7" width="16.9" height="92.3" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="726.1" y="187.0" width="8.7" height="105.0" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="736.4" y="169.2" width="19.6" height="122.8" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="757.4" y="188.5" width="13.5" height="103.5" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="772.4" y="201.0" width="11.8" height="91.0" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="785.7" y="217.0" width="11.8" height="75.0" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="799.0" y="230.2" width="15.1" height="61.8" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="815.6" y="246.9" width="12.5" height="45.1" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="829.7" y="254.8" width="8.3" height="37.2" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="839.5" y="265.2" width="16.8" height="26.8" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="857.8" y="281.9" width="10.7" height="10.1" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="870.0" y="284.0" width="10.9" height="8.0" fill="#8b94a3" stroke="#fff" stroke-width="0.5"/>
+<rect x="520" y="320" width="440" height="40" fill="#c3cf8a"/>
+<rect x="676.5" y="308.0" width="7" height="12" rx="3" fill="#d6336c"/>
+<rect x="796.5" y="308.0" width="7" height="12" rx="3" fill="#d6336c"/>
+<text x="528.0" y="128.0" font-size="11" font-weight="400" fill="#7b8696" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >the far side of the loop</text>
+<text x="528.0" y="144.0" font-size="11" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >the centre (here a city's towers) always straight behind</text>
+<text x="952.0" y="354.0" font-size="10" font-weight="400" fill="#5a6070" text-anchor="end" font-family="Segoe UI, system-ui, Arial, sans-serif" >not to scale in depth; fighters to scale across</text>
+<text x="520.0" y="410.0" font-size="15" font-weight="700" fill="#1d2230" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >What it does</text>
+<text x="520.0" y="434.0" font-size="12" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >The camera looks toward the middle, so the </text>
+<text x="520.0" y="450.0" font-size="12" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >centre of the loop is always behind the fight, </text>
+<text x="520.0" y="466.0" font-size="12" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >and the far side of the loop is a skyline across </text>
+<text x="520.0" y="482.0" font-size="12" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >the way. The arena "circles round a point" </text>
+<text x="520.0" y="498.0" font-size="12" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >because that point never leaves the background. </text>
+<text x="520.0" y="520.0" font-size="12" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >The wrap and the seam: a loop wraps exactly as </text>
+<text x="520.0" y="536.0" font-size="12" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >the great circle does (shortest arc round, no </text>
+<text x="520.0" y="552.0" font-size="12" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >seam to mark). The only change is its length: </text>
+<text x="520.0" y="568.0" font-size="12" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >the sim's 153,600-unit world becomes 76,800 or </text>
+<text x="520.0" y="584.0" font-size="12" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >38,400 (section 3 of the note). </text>
+<text x="520.0" y="606.0" font-size="12" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >The lap: flat out, 15 s round the great circle, </text>
+<text x="520.0" y="622.0" font-size="12" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >7.5 s round a loop of 76,800, 3.8 s round one of </text>
+<text x="520.0" y="638.0" font-size="12" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >38,400. A fight a screen wide covers 2% of the </text>
+<text x="520.0" y="654.0" font-size="12" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >great circle and 8% of the smallest loop. </text>
+<text x="60.0" y="720.0" font-size="13" font-weight="700" fill="#1d2230" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >The three arenas against a screen and two fighters 750 units apart</text>
+<rect x="60" y="746" width="880.0" height="16" fill="#e1e4ea" stroke="#1d2230"/>
+<rect x="491.4" y="746" width="17.2" height="16" fill="#2f6fed" fill-opacity="0.5"/>
+<circle cx="497.9" cy="754" r="2.2" fill="#d6336c"/><circle cx="502.1" cy="754" r="2.2" fill="#d6336c"/>
+<text x="60.0" y="778.0" font-size="11" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >great circle 153,600: the screen is 2% of the loop</text>
+<rect x="60" y="798" width="440.0" height="16" fill="#e1e4ea" stroke="#1d2230"/>
+<rect x="271.4" y="798" width="17.2" height="16" fill="#2f6fed" fill-opacity="0.5"/>
+<circle cx="277.9" cy="806" r="2.2" fill="#d6336c"/><circle cx="282.1" cy="806" r="2.2" fill="#d6336c"/>
+<text x="60.0" y="830.0" font-size="11" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >loop 76,800: the screen is 4% of the loop</text>
+<rect x="60" y="850" width="220.0" height="16" fill="#e1e4ea" stroke="#1d2230"/>
+<rect x="161.4" y="850" width="17.2" height="16" fill="#2f6fed" fill-opacity="0.5"/>
+<circle cx="167.9" cy="858" r="2.2" fill="#d6336c"/><circle cx="172.1" cy="858" r="2.2" fill="#d6336c"/>
+<text x="60.0" y="882.0" font-size="11" font-weight="400" fill="#5a6070" text-anchor="start" font-family="Segoe UI, system-ui, Arial, sans-serif" >loop 38,400: the screen is 8% of the loop</text>
+</svg>

@@ -1,0 +1,544 @@
+diff --git a/data/biomes/collateral.json b/data/biomes/collateral.json
+new file mode 100644
+index 0000000..a163634
+--- /dev/null
++++ b/data/biomes/collateral.json
+@@ -0,0 +1,49 @@
++{
++  "schema": "biomes.collateral/1",
++  "_about": "The collateral tables (docs/world/collateral-run.md; WorldCollateral). budget: the casualties a rolling 60 s admits, by tier 1 to 4, as shares of the people present at the stage's start; ceiling: the cumulative total, by tier; eventAllow: what one set piece of each kind may borrow beyond the window's room, by tier. The fifth entry of each (the boss) lives in data/fight/tier5.json. meterNorm: what the per-casualty meter gains (menace, power, anguish) are divided by: pop0 (the arena's people at full: a casualty is worth the same in ruins) or present (the people there now). catastrophe: the mass-collapse set piece (Research); its allowance below tier 5 is zero.",
++  "budget": [
++    0.02,
++    0.04,
++    0.08,
++    0.15
++  ],
++  "ceiling": [
++    0.1,
++    0.3,
++    0.6,
++    0.9
++  ],
++  "eventAllow": {
++    "slide": [
++      0.0,
++      0.0,
++      0.05,
++      0.1
++    ],
++    "chain": [
++      0.0,
++      0.0,
++      0.12,
++      0.2
++    ],
++    "landslide": [
++      0.0,
++      0.0,
++      0.05,
++      0.1
++    ],
++    "quake": [
++      0.0,
++      0.0,
++      0.0,
++      0.1
++    ],
++    "catastrophe": [
++      0.0,
++      0.0,
++      0.0,
++      0.0
++    ]
++  },
++  "meterNorm": "pop0"
++}
+diff --git a/sim/core/hash.gd b/sim/core/hash.gd
+index d0f24a7..e6243b0 100644
+--- a/sim/core/hash.gd
++++ b/sim/core/hash.gd
+@@ -172,6 +172,10 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
+ 					out.append(float(x))
+ 			_obj(out, st, ["bi", "filled", "label", "leaveT", "shiftAt", "runKind", "runLen", "runMax", "sigLanded"])
+ 	_obj(out, S.world, ["pop0", "casualties", "structuresLost", "craters", "slides", "evacuated", "cbSec", "cbSum", "maxTier", "evtKind", "evtLeft", "evtToken", "evtDead", "evtEvac", "tokenSeq", "heavyX", "heavyT", "stateT"])
++	if S.world.present != S.world.pop0:
++		out.append(S.world.present)   # a stage's people present, only when it differs from the arena's (a versus hash is as it was)
++	if S.world.peopleLeft >= 0.0:
++		out.append(S.world.peopleLeft)
+ 	for v in S.world.cbBuckets:
+ 		out.append(v)
+ 	out.append(float(S.buildings.size()))
+diff --git a/sim/core/mood.gd b/sim/core/mood.gd
+index f803bf3..95d7154 100644
+--- a/sim/core/mood.gd
++++ b/sim/core/mood.gd
+@@ -401,7 +401,7 @@ static func tick(S: SimState) -> void:
+ 		add += _imp(fs, "chainLink", fs.find(ex.A))
+ 	m.lastCombo = combo
+ 	if S.world != null and S.world.pop0 > 0.0:
+-		var target: int = int(floor(float(mood.cas_perPerson) * float(mood.cas_popRef) * S.world.casualties / S.world.pop0))
++		var target: int = int(floor(float(mood.cas_perPerson) * float(mood.cas_popRef) * S.world.casualties / WorldCollateral.normPeople(S)))
+ 		if target > m.casGiven:
+ 			add += mini(mood.cas_capPerTick, target - m.casGiven)
+ 			m.casGiven = target
+diff --git a/sim/core/state.gd b/sim/core/state.gd
+index 4ecbc90..34fb8a4 100644
+--- a/sim/core/state.gd
++++ b/sim/core/state.gd
+@@ -162,6 +162,8 @@ class DirS:
+ 
+ class World:
+ 	var pop0: float = 0.0
++	var present: float = 0.0          # the people present at the stage's start: the budget and the ceiling are shares of it (pop0 in versus)
++	var peopleLeft: float = -1.0      # the most people the run may still lose (-1: no limit, as in versus)
+ 	var casualties: float = 0.0
+ 	var structuresLost: float = 0.0
+ 	var craters: float = 0.0
+@@ -226,6 +228,8 @@ class Building:
+ 	var fmask: int = 1        # one bit per standing floor, bit 0 the ground floor
+ 	var fdmg := PackedFloat32Array()   # damage per floor, allocated on the first local hit (empty before)
+ 	var idx: int = 0          # index in S.buildings (set at generation; not hashed)
++	var place: int = -1       # the place it stands in: its settlement index today, the planet's place id (set at generation; not hashed: the world hash covers it)
++	var plan: int = -1        # its index in that place's plan (the plan is seeded, so the same building has the same index every time; not hashed)
+ 	var fled: float = 0.0     # people who left in the district flight so far (capped at WorldCollateral.FLIGHT_MAX of pop)
+ 	var z: float = 0.0        # depth of the building's centre from the fighter plane (negative: behind), world units
+ 	var d: float = 0.0        # footprint depth
+diff --git a/sim/director/launch.gd b/sim/director/launch.gd
+index 5cc8676..ac7b9a8 100644
+--- a/sim/director/launch.gd
++++ b/sim/director/launch.gd
+@@ -251,7 +251,7 @@ static func bruntScore(S: SimState, A, plan: Dictionary) -> float:
+ 	if chain.size() > 1:
+ 		var allow: float = 0.0
+ 		if A.tier >= 3.0:
+-			allow = WorldCollateral.EVENT_ALLOW["chain"][int(A.tier) - 1] * S.world.pop0
++			allow = WorldCollateral.eventAllow("chain", int(A.tier)) * S.world.present
+ 		if plan.brunt.deaths > WorldCollateral.room(S) + allow:
+ 			s -= BRUNT_OVER_BUDGET
+ 	return s
+diff --git a/sim/world/collateral.gd b/sim/world/collateral.gd
+index 3cd262e..20d4e43 100644
+--- a/sim/world/collateral.gd
++++ b/sim/world/collateral.gd
+@@ -14,16 +14,52 @@ class_name WorldCollateral
+ const WS: float = SimConst.WS
+ const POP_REF: float = 425.0
+ const WINDOW_S: int = 61   # 61 one-second buckets: the current second and the 60 before it, so a kill never leaves the window less than 60 s after it (60 freed a second's kills up to a second early: docs/world/collateral-caps.md section 12)
+-## Budget per rolling 60 s and ceiling on the cumulative total, by tier 1 to 4, as shares of the starting population.
+-const BUDGET: Array = [0.02, 0.04, 0.08, 0.15]
+-const CEILING: Array = [0.10, 0.30, 0.60, 0.90]
+-## What one set piece may borrow beyond the window's room, by tier 1 to 4 (0 at tier 1 and 2: no borrowing there).
+-const EVENT_ALLOW: Dictionary = {
+-	"slide": [0.0, 0.0, 0.05, 0.10],
+-	"chain": [0.0, 0.0, 0.12, 0.20],
+-	"landslide": [0.0, 0.0, 0.05, 0.10],
+-	"quake": [0.0, 0.0, 0.0, 0.10],
+-}
++## The tables are data (data/biomes/collateral.json): budget per rolling 60 s and the ceiling on the cumulative total, by tier, as shares of the people present at the
++## stage's start (pop0 in versus); what one set piece may borrow beyond the window's room, by tier, for each kind (slide, chain, landslide, quake, catastrophe).
++## Loaded once when the class is first used; a fifth entry (the boss's: data/fight/tier5.json) extends a table and the tier functions follow its length.
++const PATH := "res://data/biomes/collateral.json"
++static var BUDGET: Array = []
++static var CEILING: Array = []
++static var EVENT_ALLOW: Dictionary = {}
++static var METER_NORM: String = "pop0"
++static var loadErrors: Array = []
++static var dataHash: String = ""
++
++
++static func _static_init() -> void:
++	var f := FileAccess.open(PATH, FileAccess.READ)
++	if f == null:
++		loadErrors.append("collateral.json: cannot open " + PATH)
++		return
++	var text: String = f.get_as_text()
++	var j = JSON.parse_string(text)
++	if not (j is Dictionary) or j.get("schema", "") != "biomes.collateral/1":
++		loadErrors.append("collateral.json: schema is not biomes.collateral/1")
++		return
++	for v in j.budget:
++		BUDGET.append(float(v))
++	for v in j.ceiling:
++		CEILING.append(float(v))
++	for k in j.eventAllow:
++		var a: Array = []
++		for v in j.eventAllow[k]:
++			a.append(float(v))
++		EVENT_ALLOW[k] = a
++	METER_NORM = str(j.meterNorm)
++	dataHash = str(text.hash())
++
++
++## What an allowance reads at a tier: the table's entry, or its last when the table is shorter than the tier.
++static func eventAllow(kind: String, tier: int) -> float:
++	if not EVENT_ALLOW.has(kind):
++		return 0.0
++	var a: Array = EVENT_ALLOW[kind]
++	return a[clampi(tier - 1, 0, a.size() - 1)]
++
++
++## What the meter gains per casualty are divided by (data: pop0 or present).
++static func normPeople(S: SimState) -> float:
++	return S.world.present if METER_NORM == "present" and S.world.present > 0.0 else S.world.pop0
+ # ---- the district flight: while the window is over budget (or the ceiling is reached) and a heavy event was recent ----
+ const EVAC_R: float = 375.0 * WS       # buildings this close to the latest heavy event empty (3,000 units at WS 8)
+ const EVAC_RATE: float = 0.30          # of a building's remaining people per second
+@@ -58,6 +94,8 @@ static func init(S: SimState) -> void:
+ 	w.cbSec = 0.0
+ 	w.cbSum = 0.0
+ 	w.maxTier = 1.0
++	w.present = w.pop0
++	w.peopleLeft = -1.0
+ 	w.evtKind = ""
+ 	w.evtLeft = 0.0
+ 	w.evtToken = 0.0
+@@ -83,7 +121,7 @@ static func tier(S: SimState) -> int:
+ 	var t: float = 1.0
+ 	for f in S.fighters:
+ 		t = maxf(t, f.tier)
+-	return clampi(int(t), 1, 4)
++	return clampi(int(t), 1, BUDGET.size())
+ 
+ 
+ static func _advance(S: SimState) -> void:
+@@ -105,7 +143,7 @@ static func _advance(S: SimState) -> void:
+ 
+ 
+ static func budget(S: SimState) -> float:
+-	return BUDGET[tier(S) - 1] * S.world.pop0
++	return BUDGET[tier(S) - 1] * S.world.present
+ 
+ 
+ ## Casualties the window still admits right now (before borrowing).
+@@ -116,7 +154,10 @@ static func room(S: SimState) -> float:
+ 
+ ## Casualties the cumulative ceiling still admits.
+ static func ceilingLeft(S: SimState) -> float:
+-	return maxf(0.0, CEILING[int(S.world.maxTier) - 1] * S.world.pop0 - S.world.casualties)
++	var left: float = CEILING[clampi(int(S.world.maxTier), 1, CEILING.size()) - 1] * S.world.present - S.world.casualties
++	if S.world.peopleLeft >= 0.0:
++		left = minf(left, S.world.peopleLeft - S.world.casualties)   # the run's own limit: past it people shelter, as at the tier's ceiling
++	return maxf(0.0, left)
+ 
+ 
+ static func isOver(S: SimState) -> bool:
+@@ -131,7 +172,7 @@ static func beginEvent(S: SimState, kind: String, cause) -> float:
+ 	w.evtToken = w.tokenSeq
+ 	w.evtKind = kind
+ 	var t: int = tier(S)
+-	w.evtLeft = EVENT_ALLOW[kind][t - 1] * w.pop0 if EVENT_ALLOW.has(kind) else 0.0
++	w.evtLeft = eventAllow(kind, t) * w.present
+ 	w.evtDead = 0.0
+ 	w.evtEvac = 0.0
+ 	return w.evtToken
+@@ -207,7 +248,7 @@ static func kill(S: SimState, bi: int, want: float, cause, evt: float, cx: float
+ 	if evac > 0.000001:
+ 		w.evacuated += evac
+ 		if cause != null and cause.hasMenace:
+-			cause.menace = SimMathx.jmin(100.0, cause.menace + evac * cause.md.menaceEvac * POP_REF / w.pop0)   # D1b: meters.json
++			cause.menace = SimMathx.jmin(100.0, cause.menace + evac * cause.md.menaceEvac * POP_REF / normPeople(S))   # D1b: meters.json
+ 		var reason: String = "ceiling" if cl < rm + borrow else "budget"
+ 		var owner: float = WorldCrater._slot(S, cause)
+ 		var dest: int = shelter(S, cx, evac)
+@@ -222,7 +263,7 @@ static func kill(S: SimState, bi: int, want: float, cause, evt: float, cx: float
+ ## The meters: the villain feeds on casualties it caused; every fighter with an anguish meter is pressured by all of them.
+ ## Everything is times 425 / pop0, so the meters read the share of the population lost and planets are equivalent.
+ static func _feed(S: SimState, n: float, cause) -> void:
+-	var norm: float = POP_REF / S.world.pop0
++	var norm: float = POP_REF / normPeople(S)
+ 	S.world.casualties += n
+ 	if cause != null and cause.hasMenace:
+ 		cause.menace = SimMathx.jmin(100.0, cause.menace + n * cause.md.menaceCas * norm)   # D1b: meters.json
+diff --git a/sim/world/structures.gd b/sim/world/structures.gd
+index 7f2a58d..27e3456 100644
+--- a/sim/world/structures.gd
++++ b/sim/world/structures.gd
+@@ -14,11 +14,11 @@ const POP_NEAR_REF: float = 70.0 * SimConst.WS / SimConst.PS   # the old absolut
+ ## starting population is "populated" (1.0); a building's own cap for the planner's care is 2% of it. At 390 people that is 35 and 8, as before.
+ ## data/biomes/settlements.json pop_refs {near_share, building_share}.
+ static func popNearRef(S: SimState) -> float:
+-	return float(WorldSettle.data().get("pop_refs", {}).get("near_share", 0.09)) * S.world.pop0
++	return float(WorldSettle.data().get("pop_refs", {}).get("near_share", 0.09)) * S.world.present
+ 
+ 
+ static func buildingPopRef(S: SimState) -> float:
+-	return float(WorldSettle.data().get("pop_refs", {}).get("building_share", 0.02)) * S.world.pop0
++	return float(WorldSettle.data().get("pop_refs", {}).get("building_share", 0.02)) * S.world.present
+ ## The nearest-building search skips buildings closer than this (the original 60, times WS: a building is WS times wider).
+ const NEAR_MIN: float = 60.0 * SimConst.WS
+ ## Depth rows (a building's row field): 0 foreground, 1 the front street, 2 mid, 3 back. Until the director-chosen brunt
+diff --git a/sim/world/terrain.gd b/sim/world/terrain.gd
+index 975e604..38a2cf4 100644
+--- a/sim/world/terrain.gd
++++ b/sim/world/terrain.gd
+@@ -96,8 +96,11 @@ static func genWorld(S: SimState) -> void:
+ 			for dd in g.districts:
+ 				dd["settlement"] = si
+ 				dlist.append(dd)
+-			for e in g.buildings:
++			for ei in range(g.buildings.size()):
++				var e = g.buildings[ei]
+ 				var nb := SimState.Building.new()
++				nb.place = si
++				nb.plan = ei
+ 				nb.x = e.x; nb.w = e.w; nb.d = e.d; nb.h = e.h; nb.kind = e.kind; nb.row = float(e.row); nb.z = e.z; nb.seed = e.seed
+ 				nb.district = dOff + int(e.district); nb.shape = String(e.shape); nb.landmark = int(e.landmark)
+ 				nb.floors = e.floors
+diff --git a/sim/world/tools/collateral_check.gd b/sim/world/tools/collateral_check.gd
+new file mode 100644
+index 0000000..e108f87
+--- /dev/null
++++ b/sim/world/tools/collateral_check.gd
+@@ -0,0 +1,123 @@
++extends SceneTree
++# The collateral window's checks: the tables in data are today's numbers, present and peopleLeft, a building's place and plan, the owner lint.
++#   godot --headless --path . --script res://sim/world/tools/collateral_check.gd
++var fails: int = 0
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func fresh(seed: int = 1) -> SimState:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, seed, {}, {"intro": false})
++	S.out.fx.clear()
++	return S
++
++
++func scan(dir: String, calls: Array, hits: Array, counted: Array) -> void:
++	var d := DirAccess.open(dir)
++	if d == null:
++		return
++	for sub in d.get_directories():
++		if sub == "tools" or sub == "test":
++			continue   # the checks and probes pass nulls on purpose
++		scan(dir + "/" + sub, calls, hits, counted)
++	for f in d.get_files():
++		if not f.ends_with(".gd"):
++			continue
++		var path: String = dir + "/" + f
++		var n: int = 0
++		for line in FileAccess.get_file_as_string(path).split("\n"):
++			var code: String = line.split("#")[0]
++			if code.contains("static func"):
++				continue
++			for fn in calls:
++				var at: int = code.find(fn + "(")
++				if at < 0:
++					continue
++				n += 1
++				var args: String = code.substr(at + fn.length() + 1)
++				# a literal null among the arguments of the call
++				if args.contains("(null") or args.contains(", null") or args.begins_with("null"):
++					hits.append("%s: %s" % [path, line.strip_edges()])
++		counted.append(n)
++
++
++func _init() -> void:
++	# ---- 1. the tables are today's numbers
++	ok(WorldCollateral.loadErrors.is_empty(), "collateral.json loads clean (%s)" % str(WorldCollateral.loadErrors))
++	ok(WorldCollateral.BUDGET == [0.02, 0.04, 0.08, 0.15] and WorldCollateral.CEILING == [0.10, 0.30, 0.60, 0.90], "budget and ceiling are today's numbers (the constants they replace)")
++	var ea: Dictionary = WorldCollateral.EVENT_ALLOW
++	ok(ea["slide"] == [0.0, 0.0, 0.05, 0.10] and ea["chain"] == [0.0, 0.0, 0.12, 0.20] and ea["landslide"] == [0.0, 0.0, 0.05, 0.10] and ea["quake"] == [0.0, 0.0, 0.0, 0.10], "the four set-piece allowances are today's numbers")
++	ok(ea.has("catastrophe") and ea["catastrophe"] == [0.0, 0.0, 0.0, 0.0], "the catastrophe kind is there, zero below tier 5")
++	ok(WorldCollateral.eventAllow("chain", 4) == 0.20 and WorldCollateral.eventAllow("chain", 6) == 0.20 and WorldCollateral.eventAllow("nope", 3) == 0.0 and WorldCollateral.eventAllow("chain", 1) == 0.0, "eventAllow reads a tier, the last entry past the table, 0 for an unknown kind")
++	# ---- 2. present
++	var S := fresh(1)
++	var w: SimState.World = S.world
++	ok(w.present == w.pop0 and w.peopleLeft < 0.0, "a match starts with present equal to pop0 and no limit (%d people)" % int(w.pop0))
++	w.maxTier = 4.0
++	for f in S.fighters:
++		f.tier = 4.0
++	ok(absf(WorldCollateral.budget(S) - 0.15 * w.pop0) < 1.0e-9, "the budget is a share of the people present (%.1f)" % WorldCollateral.budget(S))
++	w.present = w.pop0 * 0.5
++	ok(absf(WorldCollateral.budget(S) - 0.15 * w.pop0 * 0.5) < 1.0e-9 and absf(WorldCollateral.ceilingLeft(S) - 0.90 * w.pop0 * 0.5) < 1.0e-6, "with half the people present, the budget and the ceiling are half")
++	ok(absf(WorldCollateral.normPeople(S) - w.pop0) < 1.0e-9, "the meters' norm is pop0 by data (a casualty is worth the same in ruins)")
++	WorldCollateral.METER_NORM = "present"
++	ok(absf(WorldCollateral.normPeople(S) - w.pop0 * 0.5) < 1.0e-9, "and present when the data says so")
++	WorldCollateral.METER_NORM = "pop0"
++	# ---- 3. peopleLeft
++	var S2 := fresh(2)
++	S2.world.maxTier = 4.0
++	for f in S2.fighters:
++		f.tier = 4.0
++	S2.world.peopleLeft = 100.0
++	ok(WorldCollateral.ceilingLeft(S2) <= 100.0 + 1.0e-9, "ceilingLeft takes the lower of the tier's ceiling and peopleLeft (%.0f)" % WorldCollateral.ceilingLeft(S2))
++	var thrown: float = 0.0
++	for b in S2.buildings:
++		S2.world.cbSum = 0.0   # keep the window open: only the ceiling limits
++		for i in range(WorldCollateral.WINDOW_S):
++			S2.world.cbBuckets[i] = 0.0
++		thrown += WorldCollateral.kill(S2, b.idx, b.popAlive, S2.fighters[0], 0.0, b.x)
++	ok(S2.world.casualties <= 100.0 + 0.001 and S2.world.casualties > 50.0, "a match with peopleLeft 100 never loses more than 100 people (%.1f died; the rest sheltered)" % S2.world.casualties)
++	# ---- 4. place and plan
++	var S3 := fresh(1)
++	var seen := {}
++	var allPlaced: bool = true
++	var maxPlace: int = -1
++	for b in S3.buildings:
++		if b.place < 0 or b.plan < 0:
++			allPlaced = false
++		maxPlace = maxi(maxPlace, b.place)
++		var key: String = "%d/%d" % [b.place, b.plan]
++		if seen.has(key):
++			allPlaced = false
++		seen[key] = true
++	ok(allPlaced and seen.size() == S3.buildings.size(), "every building has a place and a plan index, and the pair is unique (%d buildings in %d places)" % [S3.buildings.size(), maxPlace + 1])
++	var S4 := fresh(9)
++	var same: bool = S4.buildings.size() == S3.buildings.size()
++	for i in range(mini(S3.buildings.size(), S4.buildings.size())):
++		if S3.buildings[i].place != S4.buildings[i].place or S3.buildings[i].plan != S4.buildings[i].plan:
++			same = false
++	ok(same, "a building has the same place and plan index in every match (the plan is seeded)")
++	# ---- 5. the hash: conditional appends
++	var h0: Array = SimHash.collect(S3, "gameplay")
++	var S5 := fresh(1)
++	S5.world.present = S5.world.pop0 * 0.9
++	var h1: Array = SimHash.collect(S5, "gameplay")
++	var S6 := fresh(1)
++	S6.world.peopleLeft = 500.0
++	var h2: Array = SimHash.collect(S6, "gameplay")
++	ok(h1.size() == h0.size() + 1 and h2.size() == h0.size() + 1 and SimHash.collect(fresh(1), "gameplay").size() == h0.size(), "present and peopleLeft join the hash only when they differ from versus's (a versus hash is as it was)")
++	# ---- 6. the owner lint: no damage path is given a literal null
++	var hits: Array = []
++	var counted: Array = []
++	scan("res://sim", ["damageBuilding", "damageArea", "WorldStructures.explode", "collapse", "startFail"], hits, counted)
++	var total: int = 0
++	for n in counted:
++		total += n
++	ok(hits.is_empty() and total > 15, "no call of damageBuilding, damageArea, explode, collapse or startFail passes a literal null owner (%d calls scanned; %s)" % [total, str(hits)])
++	print("COLLATERAL: %d check(s) failed" % fails)
++	quit()
+diff --git a/tools/schemas/biomes-collateral.schema.json b/tools/schemas/biomes-collateral.schema.json
+new file mode 100644
+index 0000000..2bb2601
+--- /dev/null
++++ b/tools/schemas/biomes-collateral.schema.json
+@@ -0,0 +1,123 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "meridian/biomes-collateral",
++  "title": "biomes.collateral/1",
++  "description": "data/biomes/collateral.json: the collateral tables (docs/world/collateral-run.md; WorldCollateral). budget and ceiling: four shares by tier; eventAllow: four shares by tier for each set-piece kind (slide, chain, landslide, quake, catastrophe); meterNorm: pop0 or present. Every key required. Version field: schema. Policy: closed except keys starting with an underscore.",
++  "type": "object",
++  "required": [
++    "schema",
++    "budget",
++    "ceiling",
++    "eventAllow",
++    "meterNorm"
++  ],
++  "properties": {
++    "schema": {
++      "const": "biomes.collateral/1"
++    },
++    "_about": {
++      "type": "string"
++    },
++    "budget": {
++      "type": "array",
++      "minItems": 4,
++      "maxItems": 4,
++      "items": {
++        "type": "number",
++        "minimum": 0,
++        "maximum": 1
++      },
++      "description": "Casualties per rolling 60 s by tier 1 to 4, shares of the people present at the stage start"
++    },
++    "ceiling": {
++      "type": "array",
++      "minItems": 4,
++      "maxItems": 4,
++      "items": {
++        "type": "number",
++        "minimum": 0,
++        "maximum": 1
++      },
++      "description": "Cumulative casualties by tier 1 to 4, shares of the people present"
++    },
++    "eventAllow": {
++      "type": "object",
++      "required": [
++        "slide",
++        "chain",
++        "landslide",
++        "quake",
++        "catastrophe"
++      ],
++      "additionalProperties": false,
++      "properties": {
++        "slide": {
++          "type": "array",
++          "minItems": 4,
++          "maxItems": 4,
++          "items": {
++            "type": "number",
++            "minimum": 0,
++            "maximum": 1
++          },
++          "description": "What one slide may borrow beyond the window, by tier"
++        },
++        "chain": {
++          "type": "array",
++          "minItems": 4,
++          "maxItems": 4,
++          "items": {
++            "type": "number",
++            "minimum": 0,
++            "maximum": 1
++          },
++          "description": "What one chain may borrow beyond the window, by tier"
++        },
++        "landslide": {
++          "type": "array",
++          "minItems": 4,
++          "maxItems": 4,
++          "items": {
++            "type": "number",
++            "minimum": 0,
++            "maximum": 1
++          },
++          "description": "What one landslide may borrow beyond the window, by tier"
++        },
++        "quake": {
++          "type": "array",
++          "minItems": 4,
++          "maxItems": 4,
++          "items": {
++            "type": "number",
++            "minimum": 0,
++            "maximum": 1
++          },
++          "description": "What one quake may borrow beyond the window, by tier"
++        },
++        "catastrophe": {
++          "type": "array",
++          "minItems": 4,
++          "maxItems": 4,
++          "items": {
++            "type": "number",
++            "minimum": 0,
++            "maximum": 1
++          },
++          "description": "What one catastrophe may borrow beyond the window, by tier"
++        }
++      }
++    },
++    "meterNorm": {
++      "enum": [
++        "pop0",
++        "present"
++      ],
++      "description": "What the meter gains per casualty are divided by"
++    }
++  },
++  "additionalProperties": false,
++  "patternProperties": {
++    "^_": true
++  }
++}

@@ -49,3 +49,12 @@ QA keeps one **fixed planet** for baselines and gets a random-planet arm for cov
 
 - **Damage persists across a run.** Orb spitballed a roguelike brawler mode: a run of stages on different slices of one planet, short story beats between stages, **cities staying damaged between fights until the final boss fight**, where "world-catastrophe" variants of abilities can cause large-scale destruction: beams through the crust with magma bubbling up from the mantle, mushroom clouds that darken the whole planet's sky, fighters in the upper exosphere throwing energy blasts that glow and explode on the surface far below. Recorded in `docs/ep/vision.md`. Nothing is designed or built for the run mode. What this note's design already gives it: a planet is a seed plus a places list, so a run is a planet seed plus a short wear list per place (craters and levelled buildings, a few KB), read back when a later slice crosses the same city.
 - **Polar ice caps** (Orb: a big icy landmass in the south, broken icebergs, floes and sea ice in the north): built as planet prototype v2 in `docs/world/planet-ice.md`.
+
+## Orb's answers to homework 22 and 22b (2026-10-16 evening)
+
+- **Damage persists within a story campaign; a new story starts everything fresh** (`canon-planet.md` section 4: the wear list belongs to the campaign; `wearNew()` is the empty list). Versus and endless runs start whole unless the run says otherwise.
+- **A smaller arena that circles a centre point:** prototype pictures and the cost in `small-circles.md` (K1 to K3).
+- **Can the arena shift in a fight:** `arena-shift-research.md`: a shift at a pause, not a continuous one; a cosmetic drift is free.
+- **A canon planet:** `canon-planet.md` (Everhold, seed 7, with names and landmarks; canon for the story, random for the rest).
+- **Research outposts** at the poles: `outposts.md`. **Cars:** scenery first, then throwable: `cars-plan.md`.
+- **Where fighters land:** both (truly random, with a dial); versus optional, the co-operative story mode picks set pieces dynamically.

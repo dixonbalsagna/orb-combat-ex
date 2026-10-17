@@ -84,3 +84,7 @@ Three gaps to close, all in what the run adds:
 ## 7. For Legal (c08, c09)
 
 Nothing here scores or rewards a death: the ledger's tallies (Simulation's) and the wear list's people lost are state, and the owner on every path exists so that a death is attributed, not so that it is rewarded. The planet's ceiling (at most 40% of the people dead before the boss) is a limit on the number the world will allow, not a target.
+
+## 8. Status (2026-10-16 night)
+
+**Built in scratch and parked** (the EP's GO): `scratch-build/collateral-run/` (README there). All five asks are in one patch on main's HEAD; **no golden moves** (the 9 golden matches' per-tick digests are identical, `run-all.js` all 5 stages passed, the self-test 7518 of 7518 with Tools' two lines). The parked N-body, B and C patches are re-cut to apply after it and the whole chain composes (all three checks 0 failed).
