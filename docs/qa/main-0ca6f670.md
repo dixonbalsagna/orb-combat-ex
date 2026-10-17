@@ -2,6 +2,8 @@
 
 **This is a partial baseline, written from what had finished when the batch was stopped for the machine-wide quiet window (2026-10-16, 19:28).** No new run was made for this document. The EP's ruling is that main has moved (Encounter's window 1 at 9d0530dc changes play in 11 golden cases), so the batch was not resumed; the full baseline is to be run on 9d0530dc or newer, after Tools' record run. What exists for 0ca6f670 is below, and what does not is listed.
 
+> **CORRECTION (2026-10-17): the route's and the newcomer's launch counts were the wrong way round.** `SimFx.launch(S, f, by)` sends an event whose `actor` is the body that was *sent* and whose `target` is the one who launched him. `qa/godot/players.gd` read the actor as the launcher, so from the route's first version until 2026-10-17 every figure of **launches by the route's player (or the newcomer), launches on him, and his first launch** was in fact the other player's: launches **of** him, launches **by** him, and the first time **he was launched**. Win rates, the nine cells, the flurries, the energy rows, the giver rows and everything not named here are unaffected. Where the saved jobs allow, the counts below are corrected by swapping the two (they are exact); the **first-launch times are void** (the saved jobs hold the wrong event's time) and the newcomer's "before" has to be measured again.
+
 | | |
 | :--- | :--- |
 | Build | **0ca6f670** (tuning window 4d922632, the training dummy and one-versus-many stage 1 06b0200e, Camera's launch follow, the sky). A clean `git archive` of the commit with my harness overlaid, uncommitted at the time (disclosure): `qa/godot/players.gd` (the `newcomer` kind), `masher.js` (the eleventh-round jobs and rows), `selftest.js`, and the two new probes `ret.gd` and `charge.gd` (first version of `charge.gd`). The arms and the masher stage's older jobs use the harness as committed |
@@ -16,8 +18,8 @@
 
 | Row | Read | Band | |
 | :--- | :--- | :--- | :--- |
-| **A scripted newcomer launches within 60 s of the first brawl**, medium AI (X every 10 ticks; B within 0 to 20 ticks of his run reaching the close) | **88.0% of 100 matches** (all 100 launched at some point); inside 30 s **71.0%**; he launches 9.51 times a match, is launched 1.36 times, and wins 2.0% | at least 90% | **out by 2 points** |
-| ... against the easy AI | 88.0% inside 60 s; inside 30 s 61.0%; wins 56.0% | reported | |
+| **A scripted newcomer launches within 60 s of the first brawl**, medium AI (X every 10 ticks; B within 0 to 20 ticks of his run reaching the close) | **void: to be measured again.** The printed 88.0% (inside 30 s 71.0%) is the first time *he was launched*. The corrected counts: he launches **1.36** times a match and is launched **9.51** times; he wins 2.0%. A smoke run of 8 matches with the corrected reading: 4 of 8 ever launched, 1 of 8 inside 60 s | at least 90% | **out, far** (the size is for the next run) |
+| ... against the easy AI | first-launch figures void; he launches **3.37** times a match and is launched **8.39** times; wins 56.0% | reported | |
 | **The returning opponent's first blows after a launch land unanswered**, striker (X every 8 ticks from 15 ticks after the approach starts) | **333 of 347 (96.0%)**; 14 landed first by the player; 64 of the 347 first blows came from range | reported (Encounter on main 775968bc: 97%; its parked fix 41%) | the parked fix is not on this build |
 | ... guarder (guard held, a fresh press at the cue and after each wind-up) | 55 of 363 (15.2%); 225 guarded, 81 perfect | reported | |
 | ... a player pressing nothing | 328 of 332 (98.8%) | reported | |
@@ -26,7 +28,7 @@
 | The AI never reacts to a release: no fresh guard press on a release tick or in the 14 ticks after it, before the blow lands (hard test) | 0 and 0 over 5,801 releases | none | in. The test cannot see the stale mark (below) |
 | **No stale mark** (a perfect block whose press came more than 14 ticks before the blow landed) | pending: this run used the first version of `charge.gd`, which does not count it. 166 of the 191 medium blocks came from a press before the release | none | **pending**; read on the next baseline |
 | Charges answered by level; the rate by hold length | pending (the same reason) | rises easy to hard; reported | pending |
-| The route against medium: at most 80% on 200 matches; 0 to 25 points over its masher | 61% against the masher's 50% (+11 points) on 100 matches (seeds 1 to 100) | at most 80%; 0 to 25 | **pending**: the 200-match reading needs seeds 101 to 200, not run. On 100 matches both would pass |
+| The route against medium: at most 80% on 200 matches; 0 to 25 points over its masher | 61% against the masher's 50% (+11 points) on 100 matches (seeds 1 to 100). Win rates are unaffected by the correction | at most 80%; 0 to 25 | **pending**: the 200-match reading needs seeds 101 to 200, not run. On 100 matches both would pass |
 | Beam struggle: more surges win; the point crosses; won from behind (of struggles with a winner); a masher equals not pressing; 2 ticks off the pulse overwhelms medium (75%); 3 ticks late still wins (90%); the pulse hit rate | stubs | | PENDING until Encounter's window |
 
 **Reading of the charge rows.** Orb felt the AI perfect-blocked every charge; on main it perfect-blocks 7 to 9%, and the share does not rise with the level. Encounter's finding is that the AI's press is made at the wind-up's end and its mark stays however long the player holds, so a block does not depend on the release. Both are consistent with these numbers: no press comes after a release (so the first hard test passes), and the rate is flat across levels. The stale-mark row is the one that tells a guess from a mark.
@@ -47,7 +49,7 @@ The masher stage and the four arms were compared row by row with the 3198301f ba
 | The stale mark, the answers by level, the rate by hold length; the route on 200 matches | the same run, with the twelfth-round jobs (`charge.gd` second version; seeds 101 to 200) |
 | Beam struggle (seven rows) | Encounter's window |
 | Charged mediums | a build in which a medium charges |
-| The gauge, the wider window, the 30 s rest: the newcomer row is their "before" (88%) | Encounter's build of the eleventh round |
+| The gauge, the wider window, the 30 s rest: the newcomer row is their "before" (**the 88% was void; measure it again**) | Encounter's build of the eleventh round |
 | The route rows as they are now | **they will change shape**: Game Design is redesigning the launcher (a launch from anywhere in a string, no rest). The route and newcomer results are kept as data in the saved jobs, so the rows can be re-read against a new definition |
 
 ## Harness (qa/, mine, uncommitted)
