@@ -165,6 +165,13 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-143 | UI's launch marks: the recharging ring (1 Hz) and the tug ring (3 Hz) as moving marks | UI | Low | Pass; listed under fx04 and k06 | Closed |
 | RL-144 | Art's city tints, facade types and the crown stubs (catastrophe-and-city-screen.md) | Art, Rendering | Low | Pass; w05: neighbouring-element contrast at most 0.085 (glass against sun-side fin is 0.14 as drawn); RL-127 closed | Open until the data asserts w05 |
 | RL-145 | The run mode and world-catastrophe boss, ahead of the work (c01 to c09): flash class, red and magma, originality echoes, the mushroom cloud, civilian deaths across a run, store and rating notes | Research, Game Design | High | Conditions set; nothing banned; storyboards and flash clips before it ships | Open |
+| RL-146 | Narrative's run endings, run-lines.md §3 (homework8-review-screen.md) | Narrative | Low | Pass; c07 and c08 met | Closed |
+| RL-147 | The two rival lines after deaths (story-beats.md §6) | Narrative, Orb | Low | Not a legal block; recommend the alternates as a caution (writing-note.md); Orb's call | Open until Orb picks |
+| RL-148 | The line lint's sensitive words | Narrative | Low | Pass with additions: block and review tiers, whole-word (c10) | Open until the lint carries c10 |
+| RL-149 | The place-name table: 1,569 distinct names from the banks; 11 are real towns over 15,000 | Narrative, World | Low | Pass; the eleven go on the blocklist (w06); no vulgar, slur or worship hits | Open until blocklisted |
+| RL-150 | Combat's grapple held poses: tied, pinned, carried (grapple-hybrid.md) | Combat, Animation | Medium | Pass with conditions before they are drawn (g06 to g08; class hold lint on every tick) | Open until drawn and linted |
+| RL-151 | Art's hybrid picks: both fighters, the aura, the dummy; seen in part (Protagonist panel only) | Art | Low | Pass with conditions: plain ring, no orange-over-blue, h09 for the folded arms, aura without strobing, steady dummy squares; confirm on the turnarounds | Open until the turnarounds are seen |
+| RL-152 | Four guides for Orb: licence rundown, selling, company or individual (Oregon), the stomp and ratings | EP, Orb | Low | Written; general information; Oregon and tax figures unverified (sos.oregon.gov unreachable) | Open until a lawyer and an accountant confirm |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
