@@ -27,3 +27,8 @@ __pycache__/
 
 # Orb's homework folder: review sheets, questionnaires and Orb's answers. Local only (it can hold in-progress character art).
 homework/
+
+# HUD mock sheets stay private (Orb, homework 8): keep them in homework/mocks/ui/
+docs/ui/img/run/
+docs/ui/mock/
+docs/ui/img/*-mock.png
