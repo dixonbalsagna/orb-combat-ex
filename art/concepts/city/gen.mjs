@@ -20,7 +20,7 @@ function solve(lum, C, hDeg) {
 }
 // the wall's three tones as relative luminances (downtown's today: #b8c0cc, #7f8896, #4a5261 are 0.52, 0.25, 0.09; mid_rise a step lighter)
 const WALL_LUM = { downtown: { light: 0.50, mid: 0.24, shadow: 0.09 }, mid_rise: { light: 0.58, mid: 0.30, shadow: 0.12 } };
-const BUDGET = 0.085, GLASS_STEP = 0.07;
+const BUDGET = 0.085, GLASS_STEP = 0.04;   // w05 (Legal, RL-144): the budget holds BETWEEN NEIGHBOURING ELEMENTS too: every tone is within 0.04 of the wall's mid, so no two differ by more than 0.08
 // the tints: wall (hue, chroma), glass (hue, chroma), trim (hue, chroma). Hue and chroma only: the luminances come from the look.
 const TINTS = {
   downtown: [
@@ -42,13 +42,13 @@ const TINTS = {
 };
 // the facade types: parameters in shares of a floor cell, every tone given as an offset in relative luminance from the wall's mid tone (never more than the budget)
 const FACADES = {
-  ribbon: { name: 'Ribbon windows', what: 'continuous horizontal bands of glass between thin piers; today\'s downtown and mid_rise rhythm', pane_h: 0.55, pier_w: 0.05, spandrel: { h: 0.45, lum_offset: -0.03 }, fits: 'downtown shafts under 40 floors; mid_rise_east' },
-  punched: { name: 'Punched windows with spandrels', what: 'separate panes in a regular grid with a darker band under each row: reads as stone or brick, a heavier and older building', pane_w: 0.38, pane_h: 0.5, spandrel: { h: 0.3, lum_offset: -0.06 }, fits: 'mid_rise_west; the older downtown towers' },
-  fins: { name: 'Vertical fins', what: 'tall glass between projecting fins one pane apart: a strongly vertical read, the tallest shafts', pane_w: 0.78, fin: { w: 0.14, pitch: 0.25, lum_offset: -0.07, sun_side_offset: 0.07 }, fits: 'downtown shafts of 40 floors or more; a few mid_rise slabs' },
+  ribbon: { name: 'Ribbon windows', what: 'continuous horizontal bands of glass between thin piers; today\'s downtown and mid_rise rhythm', pane_h: 0.55, pier_w: 0.05, spandrel: { h: 0.45, lum_offset: -0.02 }, fits: 'downtown shafts under 40 floors; mid_rise_east' },
+  punched: { name: 'Punched windows with spandrels', what: 'separate panes in a regular grid with a darker band under each row: reads as stone or brick, a heavier and older building', pane_w: 0.38, pane_h: 0.5, spandrel: { h: 0.3, lum_offset: -0.03 }, fits: 'mid_rise_west; the older downtown towers' },
+  fins: { name: 'Vertical fins', what: 'tall glass between projecting fins one pane apart: a strongly vertical read, the tallest shafts', pane_w: 0.78, fin: { w: 0.14, pitch: 0.25, lum_offset: -0.03, sun_side_offset: 0.03 }, fits: 'downtown shafts of 40 floors or more; a few mid_rise slabs' },
 };
 const BASE_CROWN = {
-  base: { floors: 1.6, note: 'a tall lobby storey under the shaft, in the wall\'s mid tone less 0.06 (never darker: its join with the shaft is a long edge), with the trim as a lintel line and no ribbon: punched panes only', wall_lum_offset: -0.06 },
-  crown: { floors: 2, note: 'the top two floors set back 6 percent each side, a cornice band in the trim tone (wall mid plus 0.05), panes at the tint\'s bright glass; lit panes are Rendering\'s and are not raised (a flash change)', setback: 0.06, cornice_lum_offset: 0.05 },
+  base: { floors: 1.6, note: 'a tall lobby storey under the shaft, in the wall\'s mid tone less 0.03 (never darker: its join with the shaft is a long edge), with the trim as a lintel line and no ribbon: punched panes only', wall_lum_offset: -0.03 },
+  crown: { floors: 2, note: 'the top two floors set back 6 percent each side, a cornice band in the trim tone (wall mid plus 0.03), panes at the tint\'s bright glass; lit panes are Rendering\'s and are not raised (a flash change)', setback: 0.06, cornice_lum_offset: 0.03 },
 };
 const DISTRICTS = {
   downtown: { look: 'downtown', facade_weights: { ribbon: 0.40, punched: 0.25, fins: 0.35 }, tint_weights: { steel: 0.25, limestone: 0.2, graphite: 0.15, sage: 0.1, sandstone: 0.15, granite: 0.15 }, rule: 'fins on shafts of 40 floors or more, punched on stepped and crown towers, ribbon elsewhere' },
@@ -57,20 +57,23 @@ const DISTRICTS = {
 };
 
 // ---- build the data
-const out = { version: 1, note: 'The city looks\' palettes and facade types (docs/art/city-facades.md). Written by art/concepts/city/gen.mjs; do not edit by hand. Variety is hue and chroma at equal luminance: on downtown and mid_rise a pane may differ from its wall by at most 0.085 of relative luminance (render/core/look.gd PATTERN_BUDGET), and so may a fin, a base or a cornice from the wall it sits on. Proposals pending Legal and Orb; Tools adds the schema.', budget: BUDGET, glass_step: GLASS_STEP, looks: {}, facades: FACADES, base_and_crown: BASE_CROWN, districts: DISTRICTS };
+const out = { version: 1, note: 'The city looks\' palettes and facade types (docs/art/city-facades.md). Written by art/concepts/city/gen.mjs; do not edit by hand. Variety is hue and chroma at equal luminance: on downtown and mid_rise a pane may differ from its wall by at most 0.085 of relative luminance (render/core/look.gd PATTERN_BUDGET), and between any two neighbouring tones (glass against fin, spandrel against glass, cornice against shaft: Legal w05): every tone is within 0.04 of the mid tone of the wall, so no two differ by more than 0.08. Proposals pending Legal and Orb; Tools adds the schema.', budget: BUDGET, glass_step: GLASS_STEP, looks: {}, facades: FACADES, base_and_crown: BASE_CROWN, districts: DISTRICTS };
 const checks = [];
 for (const look of ['downtown', 'mid_rise']) {
   out.looks[look] = TINTS[look].map(t => {
     const L = WALL_LUM[look], wl = solve(L.light, t.wall[1], t.wall[0]), wm = solve(L.mid, t.wall[1], t.wall[0]), ws = solve(L.shadow, t.wall[1], t.wall[0]);
     const gd = solve(L.mid - GLASS_STEP, t.glass[1], t.glass[0]), gb = solve(L.mid + GLASS_STEP, t.glass[1], t.glass[0]);
-    const trim = solve(L.mid + 0.05, t.trim[1], t.trim[0]), spandrel = solve(L.mid - 0.06, t.wall[1], t.wall[0]), fin = solve(L.mid - 0.07, t.wall[1], t.wall[0]);
+    const trim = solve(L.mid + 0.03, t.trim[1], t.trim[0]), spandrelRibbon = solve(L.mid - 0.02, t.wall[1], t.wall[0]), spandrel = solve(L.mid - 0.03, t.wall[1], t.wall[0]), fin = solve(L.mid - 0.03, t.wall[1], t.wall[0]), finSun = solve(L.mid + 0.03, t.wall[1], t.wall[0]), base = solve(L.mid - 0.03, t.wall[1], t.wall[0]);
+    const tones = { wall: wm, glass_dark: gd, glass_bright: gb, spandrel_ribbon: spandrelRibbon, spandrel_punched: spandrel, fin, fin_sun: finSun, trim, cornice: trim, base }, names = Object.keys(tones);
+    let worst = 0, worstPair = '';
+    for (let i = 0; i < names.length; i++) for (let j = i + 1; j < names.length; j++) { const d = Math.abs(luminance(tones[names[i]]) - luminance(tones[names[j]])); if (d > worst) { worst = d; worstPair = `${names[i]} / ${names[j]}`; } }
     const d1 = Math.abs(luminance(gd) - luminance(wm)), d2 = Math.abs(luminance(gb) - luminance(wm)), hueGap = Math.abs(((t.glass[0] - t.wall[0] + 540) % 360) - 180);
-    checks.push({ look, id: t.id, glass_dark_vs_wall: d1, glass_bright_vs_wall: d2, hue_gap: hueGap });
-    return { id: t.id, name: t.name, wall: { light: wl, mid: wm, shadow: ws }, glass: { dark: gd, bright: gb }, trim, spandrel, fin, oklch: { wall: t.wall, glass: t.glass }, measured: { glass_dark_vs_wall_mid: +d1.toFixed(3), glass_bright_vs_wall_mid: +d2.toFixed(3), hue_gap_wall_to_glass_deg: Math.round(hueGap) } };
+    checks.push({ look, id: t.id, glass_dark_vs_wall: d1, glass_bright_vs_wall: d2, hue_gap: hueGap, max_pair: worst, worst_pair: worstPair });
+    return { id: t.id, name: t.name, wall: { light: wl, mid: wm, shadow: ws }, glass: { dark: gd, bright: gb }, trim, spandrel, fin, _spandrel_ribbon: spandrelRibbon, _fin_sun: finSun, _cornice: trim, _base: base, oklch: { wall: t.wall, glass: t.glass }, measured: { glass_dark_vs_wall_mid: +d1.toFixed(3), glass_bright_vs_wall_mid: +d2.toFixed(3),  hue_gap_wall_to_glass_deg: Math.round(hueGap) }, _neighbours: { max_difference_between_any_two_tones: +worst.toFixed(3), worst_pair: worstPair, cap: BUDGET } };
   });
 }
 writeFileSync(join(ROOT, 'data', 'art', 'city-looks.json'), JSON.stringify(out, null, 2) + '\n');
-const bad = checks.filter(c => c.glass_dark_vs_wall > BUDGET || c.glass_bright_vs_wall > BUDGET);
+const bad = checks.filter(c => c.glass_dark_vs_wall > BUDGET || c.glass_bright_vs_wall > BUDGET || c.max_pair > BUDGET);
 
 // ---- the sheet: a street of today's towers against a street of the proposed ones, for each look, and the tints with their numbers
 const text = (x, y, t, { size = 12, weight = 400, fill = '#1b1428', anchor = 'start', op = 1 } = {}) => `<text x="${F(x)}" y="${F(y)}" font-family="'Segoe UI', system-ui, Arial, sans-serif" font-size="${size}" font-weight="${weight}" fill="${fill}" text-anchor="${anchor}" opacity="${op}">${String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</text>`;
@@ -98,7 +101,7 @@ function tower({ x, y, w, h, t, facade, today, look, seed }) {
   return s;
 }
 function sheet() {
-  const W = 1800, H = 1560; let b = rect(0, 0, W, H, '#dcd8e6') + rect(0, 0, W, 100, '#1b1428') + text(30, 44, 'The city\'s towers up close: palettes and facade types', { size: 30, weight: 700, fill: '#f4f0fa' }) + text(30, 70, 'Variety by hue and chroma at equal luminance: a pane differs from its wall by at most 0.085 of relative luminance (Rendering\'s contrast budget), and so does every fin, base and cornice. Concept art, working labels, pending Legal.', { size: 13, fill: '#cfc6e6' });
+  const W = 1800, H = 1560; let b = rect(0, 0, W, H, '#dcd8e6') + rect(0, 0, W, 100, '#1b1428') + text(30, 44, 'The city\'s towers up close: palettes and facade types', { size: 30, weight: 700, fill: '#f4f0fa' }) + text(30, 70, 'Variety by hue and chroma at equal luminance: every pane, fin, spandrel, base and cornice is within 0.04 of its wall, so any two neighbouring elements differ by at most 0.08 of relative luminance (Rendering\'s contrast budget 0.085; Legal\'s w05). Concept art, working labels, pending Legal.', { size: 13, fill: '#cfc6e6' });
   let y0 = 118;
   for (const look of ['downtown', 'mid_rise']) {
     const tints = out.looks[look], TODAY = look === 'downtown' ? { wall: '#7f8896', shadow: '#4a5261', light: '#b8c0cc', gd: '#2c4a63', gb: '#6aa0c0' } : { wall: '#929aa7', shadow: '#5a6270', light: '#c6cdd7', gd: '#2c4a63', gb: '#6aa0c0' };
@@ -113,12 +116,12 @@ function sheet() {
       const tx = 1140 + (i % 3) * 218, ty = y0 + 50 + Math.floor(i / 3) * 140;
       b += text(tx, ty, t.name, { size: 12, weight: 700 });
       [['wall', t.wall.light], ['', t.wall.mid], ['', t.wall.shadow], ['glass', t.glass.dark], ['', t.glass.bright], ['trim', t.trim]].forEach(([lab, c], j) => { b += rect(tx + j * 33, ty + 8, 30, 30, c, 'stroke="#1b1428" stroke-opacity="0.3" stroke-width="0.8"'); });
-      b += text(tx, ty + 58, `glass vs wall ${t.measured.glass_dark_vs_wall_mid.toFixed(3)} / ${t.measured.glass_bright_vs_wall_mid.toFixed(3)} (cap 0.085)`, { size: 10.5, op: 0.75 }) + text(tx, ty + 72, `hue gap ${t.measured.hue_gap_wall_to_glass_deg} deg`, { size: 10.5, op: 0.6 });
+      b += text(tx, ty + 58, `neighbours at most ${t._neighbours.max_difference_between_any_two_tones.toFixed(3)} (cap 0.085)`, { size: 10.5, op: 0.75 }) + text(tx, ty + 72, `hue gap ${t.measured.hue_gap_wall_to_glass_deg} deg`, { size: 10.5, op: 0.6 });
     });
     y0 += 716;
   }
-  b += text(40, y0 + 6, 'Facade types: ribbon (bands and thin piers), punched (panes with spandrels: stone and brick), fins (tall glass between projecting fins). Which district takes which is in data/art/city-looks.json "districts". Each type\'s tones are within 0.085 of its wall.', { size: 12.5 });
+  b += text(40, y0 + 6, 'Facade types: ribbon (bands and thin piers), punched (panes with spandrels: stone and brick), fins (tall glass between projecting fins). Which district takes which is in data/art/city-looks.json "districts". Every tone is within 0.04 of its wall, so any two neighbours are at most 0.08 apart (Legal\'s w05).', { size: 12.5 });
   writeFileSync(join(ROOT, 'art', 'concepts', 'city', 'city-palettes.svg'), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${b}</svg>`);
 }
 sheet();
-console.log('wrote data/art/city-looks.json and city-palettes.svg;', checks.length, 'tints; over budget:', bad.length);
+console.log('wrote data/art/city-looks.json and city-palettes.svg;', checks.length, 'tints; over budget:', Math.max(...checks.map(c => c.max_pair)).toFixed(3), 'over budget:', bad.length);

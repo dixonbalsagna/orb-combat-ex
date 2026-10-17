@@ -22,6 +22,7 @@ Owner: Art Director. 2026-09-29. Art owns `art/` and `docs/art/`.
 | `homework-3-sheets.md` | The three sheets for Orb's homework 3: the Anti-hero's aura (five options), his glasses' damage states (clean, cracked, bent, both, and when each shows), and a look pass for the two in the build (three directions each, with costs). Sheets in `art/concepts/looks/`, kept on this PC only | v0 draft, pending Legal review, Orb picks |
 | `city-facades.md` | The city's towers up close: six tints per look (downtown, mid_rise) at equal luminance, three facade types, a base and crown, which district takes which, and the crown tower's stubs. Sheet `art/concepts/city/city-palettes.svg`, data `data/art/city-looks.json` | v0 draft, pending Legal review; Tools adds the schema |
 | `beam-colours.md` | Art's answer on VFX's beam colour families: the Protagonist +30 (tritan -30), the Rival +34 not -34, the dummy +12, with the second tints in every preset | v0 |
+| `polar-palette.md` | The polar cold palette for World's ice: two tones (a warm white and a cold slate) over dark water, measured against every lane and body at every key. Sheet `art/concepts/world/polar-palette.svg`, data `data/art/polar.json` | v0 draft, pending Legal review; Tools adds the schema |
 | `launch-pair-look.md` | The launch pair's look (the Protagonist and the rival): approved by Orb on 2026-10-04, and where the reference sheets are | Approved by Orb |
 | `../../art/concepts/refine/README.md` | Index of the refinement sheets (the Cyborg's six directions; the other three's unmasked faces and silhouette options) and the question each asks Orb | v0 draft, pending Legal review, Orb picks |
 | `closeup-directions.md` | Orb's request for memorable, recognisable face close-ups: three directions (the mask as a face, the mask partly broken, no mask), six rounds of criticism and revision, the damage stages on the face, and a recommendation | v0 draft, pending Legal review, Orb picks |
@@ -29,7 +30,7 @@ Owner: Art Director. 2026-09-29. Art owns `art/` and `docs/art/`.
 | `cosmetics-plan.md` | The plan for a vast unlockable cosmetic set by data: categories, what keeps each fighter readable, counts per fighter, and what the fighter mesh needs from day one | v0 draft |
 | `ai-prompt-policy.md` | How AI-assisted art is made, recorded and reviewed | v0 draft, for Legal and Orb to review |
 | `../../art/concepts/anti-hero/` | The SVG sheets and the deterministic generator that writes them | v0 |
-| `../../art/prompts/` | Prompt records (`TEMPLATE.md`, `ART-0001` to `ART-0020`) | v0 |
+| `../../art/prompts/` | Prompt records (`TEMPLATE.md`, `ART-0001` to `ART-0021`) | v0 |
 
 **Superseded.** The wave-1 art brief (three whole-game directions, `docs/art-bible/`) is replaced by Orb's answers: 2.5D side-on, cel-shaded plus low-poly. Nothing under `docs/art-bible/` was written. The parts that still fit are in the style guide: biome look notes and destruction states (section 8), the silhouette test (3.1) and the palette rules (3).
 

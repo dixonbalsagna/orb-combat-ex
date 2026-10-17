@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "note": "The city looks' palettes and facade types (docs/art/city-facades.md). Written by art/concepts/city/gen.mjs; do not edit by hand. Variety is hue and chroma at equal luminance: on downtown and mid_rise a pane may differ from its wall by at most 0.085 of relative luminance (render/core/look.gd PATTERN_BUDGET), and so may a fin, a base or a cornice from the wall it sits on. Proposals pending Legal and Orb; Tools adds the schema.",
+  "note": "The city looks' palettes and facade types (docs/art/city-facades.md). Written by art/concepts/city/gen.mjs; do not edit by hand. Variety is hue and chroma at equal luminance: on downtown and mid_rise a pane may differ from its wall by at most 0.085 of relative luminance (render/core/look.gd PATTERN_BUDGET), and between any two neighbouring tones (glass against fin, spandrel against glass, cornice against shaft: Legal w05): every tone is within 0.04 of the mid tone of the wall, so no two differ by more than 0.08. Proposals pending Legal and Orb; Tools adds the schema.",
   "budget": 0.085,
-  "glass_step": 0.07,
+  "glass_step": 0.04,
   "looks": {
     "downtown": [
       {
@@ -14,12 +14,16 @@
           "shadow": "#4e565f"
         },
         "glass": {
-          "dark": "#837056",
-          "bright": "#a99579"
+          "dark": "#8c795e",
+          "bright": "#a18e73"
         },
-        "trim": "#8e939a",
-        "spandrel": "#6f7680",
-        "fin": "#6c747d",
+        "trim": "#898e95",
+        "spandrel": "#787f8a",
+        "fin": "#787f8a",
+        "_spandrel_ribbon": "#7a828c",
+        "_fin_sun": "#878e99",
+        "_cornice": "#898e95",
+        "_base": "#787f8a",
         "oklch": {
           "wall": [
             255,
@@ -31,9 +35,14 @@
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.069,
-          "glass_bright_vs_wall_mid": 0.073,
+          "glass_dark_vs_wall_mid": 0.039,
+          "glass_bright_vs_wall_mid": 0.042,
           "hue_gap_wall_to_glass_deg": 180
+        },
+        "_neighbours": {
+          "max_difference_between_any_two_tones": 0.081,
+          "worst_pair": "glass_dark / glass_bright",
+          "cap": 0.085
         }
       },
       {
@@ -45,12 +54,16 @@
           "shadow": "#5a5448"
         },
         "glass": {
-          "dark": "#5c7787",
-          "bright": "#809bac"
+          "dark": "#657f90",
+          "bright": "#7994a5"
         },
-        "trim": "#98928a",
-        "spandrel": "#7c7469",
-        "fin": "#797166",
+        "trim": "#938d85",
+        "spandrel": "#857e71",
+        "fin": "#857e71",
+        "_spandrel_ribbon": "#888174",
+        "_fin_sun": "#958d81",
+        "_cornice": "#938d85",
+        "_base": "#857e71",
         "oklch": {
           "wall": [
             80,
@@ -62,9 +75,14 @@
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.066,
-          "glass_bright_vs_wall_mid": 0.072,
+          "glass_dark_vs_wall_mid": 0.039,
+          "glass_bright_vs_wall_mid": 0.041,
           "hue_gap_wall_to_glass_deg": 155
+        },
+        "_neighbours": {
+          "max_difference_between_any_two_tones": 0.08,
+          "worst_pair": "glass_dark / glass_bright",
+          "cap": 0.085
         }
       },
       {
@@ -76,12 +94,16 @@
           "shadow": "#535558"
         },
         "glass": {
-          "dark": "#826f61",
-          "bright": "#a79384"
+          "dark": "#8b796a",
+          "bright": "#a08d7d"
         },
-        "trim": "#929295",
-        "spandrel": "#747579",
-        "fin": "#717376",
+        "trim": "#8d8e90",
+        "spandrel": "#7d7e82",
+        "fin": "#7d7e82",
+        "_spandrel_ribbon": "#808185",
+        "_fin_sun": "#8c8e92",
+        "_cornice": "#8d8e90",
+        "_base": "#7d7e82",
         "oklch": {
           "wall": [
             270,
@@ -93,9 +115,14 @@
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.072,
-          "glass_bright_vs_wall_mid": 0.066,
+          "glass_dark_vs_wall_mid": 0.039,
+          "glass_bright_vs_wall_mid": 0.039,
           "hue_gap_wall_to_glass_deg": 150
+        },
+        "_neighbours": {
+          "max_difference_between_any_two_tones": 0.078,
+          "worst_pair": "glass_dark / glass_bright",
+          "cap": 0.085
         }
       },
       {
@@ -107,12 +134,16 @@
           "shadow": "#52564e"
         },
         "glass": {
-          "dark": "#846d6c",
-          "bright": "#aa9191"
+          "dark": "#8e7675",
+          "bright": "#a38b8a"
         },
-        "trim": "#90948d",
-        "spandrel": "#73776f",
-        "fin": "#70746c",
+        "trim": "#8b8f89",
+        "spandrel": "#7c8077",
+        "fin": "#7c8077",
+        "_spandrel_ribbon": "#7e827a",
+        "_fin_sun": "#8b9087",
+        "_cornice": "#8b8f89",
+        "_base": "#7c8077",
         "oklch": {
           "wall": [
             130,
@@ -124,9 +155,14 @@
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.071,
-          "glass_bright_vs_wall_mid": 0.068,
+          "glass_dark_vs_wall_mid": 0.041,
+          "glass_bright_vs_wall_mid": 0.04,
           "hue_gap_wall_to_glass_deg": 110
+        },
+        "_neighbours": {
+          "max_difference_between_any_two_tones": 0.081,
+          "worst_pair": "glass_dark / glass_bright",
+          "cap": 0.085
         }
       },
       {
@@ -138,12 +174,16 @@
           "shadow": "#605243"
         },
         "glass": {
-          "dark": "#5e767d",
-          "bright": "#829ca2"
+          "dark": "#678086",
+          "bright": "#7b959b"
         },
-        "trim": "#9b9288",
-        "spandrel": "#827463",
-        "fin": "#7f7161",
+        "trim": "#968d83",
+        "spandrel": "#8b7c6c",
+        "fin": "#8b7c6c",
+        "_spandrel_ribbon": "#8d7f6e",
+        "_fin_sun": "#9b8b7b",
+        "_cornice": "#968d83",
+        "_base": "#8b7c6c",
         "oklch": {
           "wall": [
             70,
@@ -155,9 +195,14 @@
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.074,
-          "glass_bright_vs_wall_mid": 0.069,
+          "glass_dark_vs_wall_mid": 0.042,
+          "glass_bright_vs_wall_mid": 0.038,
           "hue_gap_wall_to_glass_deg": 145
+        },
+        "_neighbours": {
+          "max_difference_between_any_two_tones": 0.08,
+          "worst_pair": "glass_dark / glass_bright",
+          "cap": 0.085
         }
       },
       {
@@ -169,12 +214,16 @@
           "shadow": "#5d5351"
         },
         "glass": {
-          "dark": "#667484",
-          "bright": "#8a99a9"
+          "dark": "#6f7e8d",
+          "bright": "#8392a3"
         },
-        "trim": "#999190",
-        "spandrel": "#7f7372",
-        "fin": "#7b706f",
+        "trim": "#948c8b",
+        "spandrel": "#887c7b",
+        "fin": "#887c7b",
+        "_spandrel_ribbon": "#8a7e7d",
+        "_fin_sun": "#978b8a",
+        "_cornice": "#948c8b",
+        "_base": "#887c7b",
         "oklch": {
           "wall": [
             25,
@@ -186,9 +235,14 @@
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.071,
-          "glass_bright_vs_wall_mid": 0.07,
+          "glass_dark_vs_wall_mid": 0.038,
+          "glass_bright_vs_wall_mid": 0.04,
           "hue_gap_wall_to_glass_deg": 135
+        },
+        "_neighbours": {
+          "max_difference_between_any_two_tones": 0.078,
+          "worst_pair": "glass_dark / glass_bright",
+          "cap": 0.085
         }
       }
     ],
@@ -202,12 +256,16 @@
           "shadow": "#715e4e"
         },
         "glass": {
-          "dark": "#758694",
-          "bright": "#95a6b5"
+          "dark": "#7c8e9d",
+          "bright": "#8fa0af"
         },
-        "trim": "#aa9d94",
-        "spandrel": "#978272",
-        "fin": "#958070",
+        "trim": "#a69990",
+        "spandrel": "#9f8a7a",
+        "fin": "#9f8a7a",
+        "_spandrel_ribbon": "#a28d7c",
+        "_fin_sun": "#ad9887",
+        "_cornice": "#a69990",
+        "_base": "#9f8a7a",
         "oklch": {
           "wall": [
             60,
@@ -219,9 +277,14 @@
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.071,
-          "glass_bright_vs_wall_mid": 0.069,
+          "glass_dark_vs_wall_mid": 0.04,
+          "glass_bright_vs_wall_mid": 0.04,
           "hue_gap_wall_to_glass_deg": 175
+        },
+        "_neighbours": {
+          "max_difference_between_any_two_tones": 0.08,
+          "worst_pair": "glass_dark / glass_bright",
+          "cap": 0.085
         }
       },
       {
@@ -233,12 +296,16 @@
           "shadow": "#656155"
         },
         "glass": {
-          "dark": "#748598",
-          "bright": "#93a6b9"
+          "dark": "#7c8da0",
+          "bright": "#8da0b3"
         },
-        "trim": "#a3a096",
-        "spandrel": "#8b8679",
-        "fin": "#888476",
+        "trim": "#9f9c92",
+        "spandrel": "#928e80",
+        "fin": "#928e80",
+        "_spandrel_ribbon": "#959183",
+        "_fin_sun": "#a09c8e",
+        "_cornice": "#9f9c92",
+        "_base": "#928e80",
         "oklch": {
           "wall": [
             90,
@@ -250,9 +317,14 @@
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.069,
-          "glass_bright_vs_wall_mid": 0.073,
+          "glass_dark_vs_wall_mid": 0.038,
+          "glass_bright_vs_wall_mid": 0.044,
           "hue_gap_wall_to_glass_deg": 160
+        },
+        "_neighbours": {
+          "max_difference_between_any_two_tones": 0.082,
+          "worst_pair": "glass_dark / glass_bright",
+          "cap": 0.085
         }
       },
       {
@@ -264,12 +336,16 @@
           "shadow": "#5e6266"
         },
         "glass": {
-          "dark": "#93816e",
-          "bright": "#b3a18e"
+          "dark": "#9a8875",
+          "bright": "#ad9b87"
         },
-        "trim": "#9da0a4",
-        "spandrel": "#83868b",
-        "fin": "#818589",
+        "trim": "#989c9f",
+        "spandrel": "#8a8e93",
+        "fin": "#8a8e93",
+        "_spandrel_ribbon": "#8d9195",
+        "_fin_sun": "#989ca1",
+        "_cornice": "#989c9f",
+        "_base": "#8a8e93",
         "oklch": {
           "wall": [
             250,
@@ -281,9 +357,14 @@
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.071,
-          "glass_bright_vs_wall_mid": 0.069,
+          "glass_dark_vs_wall_mid": 0.044,
+          "glass_bright_vs_wall_mid": 0.039,
           "hue_gap_wall_to_glass_deg": 180
+        },
+        "_neighbours": {
+          "max_difference_between_any_two_tones": 0.083,
+          "worst_pair": "glass_dark / glass_bright",
+          "cap": 0.085
         }
       },
       {
@@ -295,12 +376,16 @@
           "shadow": "#705d52"
         },
         "glass": {
-          "dark": "#728887",
-          "bright": "#91a8a6"
+          "dark": "#7a908e",
+          "bright": "#8ba3a0"
         },
-        "trim": "#aa9d96",
-        "spandrel": "#968376",
-        "fin": "#948074",
+        "trim": "#a59992",
+        "spandrel": "#9e8a7e",
+        "fin": "#9e8a7e",
+        "_spandrel_ribbon": "#a08d80",
+        "_fin_sun": "#ab988b",
+        "_cornice": "#a59992",
+        "_base": "#9e8a7e",
         "oklch": {
           "wall": [
             55,
@@ -312,9 +397,14 @@
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.073,
-          "glass_bright_vs_wall_mid": 0.065,
+          "glass_dark_vs_wall_mid": 0.042,
+          "glass_bright_vs_wall_mid": 0.04,
           "hue_gap_wall_to_glass_deg": 135
+        },
+        "_neighbours": {
+          "max_difference_between_any_two_tones": 0.082,
+          "worst_pair": "glass_dark / glass_bright",
+          "cap": 0.085
         }
       },
       {
@@ -326,12 +416,16 @@
           "shadow": "#5c645d"
         },
         "glass": {
-          "dark": "#967e7e",
-          "bright": "#b79e9d"
+          "dark": "#9e8585",
+          "bright": "#b19797"
         },
-        "trim": "#9ca29c",
-        "spandrel": "#808882",
-        "fin": "#7e867f",
+        "trim": "#979d98",
+        "spandrel": "#88908a",
+        "fin": "#88908a",
+        "_spandrel_ribbon": "#8a938b",
+        "_fin_sun": "#959d96",
+        "_cornice": "#979d98",
+        "_base": "#88908a",
         "oklch": {
           "wall": [
             150,
@@ -343,9 +437,14 @@
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.071,
-          "glass_bright_vs_wall_mid": 0.07,
+          "glass_dark_vs_wall_mid": 0.042,
+          "glass_bright_vs_wall_mid": 0.037,
           "hue_gap_wall_to_glass_deg": 130
+        },
+        "_neighbours": {
+          "max_difference_between_any_two_tones": 0.08,
+          "worst_pair": "glass_dark / glass_bright",
+          "cap": 0.085
         }
       },
       {
@@ -357,12 +456,16 @@
           "shadow": "#5a6269"
         },
         "glass": {
-          "dark": "#977f6d",
-          "bright": "#b89f8c"
+          "dark": "#9f8775",
+          "bright": "#b29986"
         },
-        "trim": "#9aa0a5",
-        "spandrel": "#7f888e",
-        "fin": "#7d858b",
+        "trim": "#969ca1",
+        "spandrel": "#878f96",
+        "fin": "#878f96",
+        "_spandrel_ribbon": "#899198",
+        "_fin_sun": "#949da3",
+        "_cornice": "#969ca1",
+        "_base": "#878f96",
         "oklch": {
           "wall": [
             240,
@@ -374,9 +477,14 @@
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.075,
-          "glass_bright_vs_wall_mid": 0.066,
+          "glass_dark_vs_wall_mid": 0.043,
+          "glass_bright_vs_wall_mid": 0.037,
           "hue_gap_wall_to_glass_deg": 180
+        },
+        "_neighbours": {
+          "max_difference_between_any_two_tones": 0.08,
+          "worst_pair": "glass_dark / glass_bright",
+          "cap": 0.085
         }
       }
     ]
@@ -389,7 +497,7 @@
       "pier_w": 0.05,
       "spandrel": {
         "h": 0.45,
-        "lum_offset": -0.03
+        "lum_offset": -0.02
       },
       "fits": "downtown shafts under 40 floors; mid_rise_east"
     },
@@ -400,7 +508,7 @@
       "pane_h": 0.5,
       "spandrel": {
         "h": 0.3,
-        "lum_offset": -0.06
+        "lum_offset": -0.03
       },
       "fits": "mid_rise_west; the older downtown towers"
     },
@@ -411,8 +519,8 @@
       "fin": {
         "w": 0.14,
         "pitch": 0.25,
-        "lum_offset": -0.07,
-        "sun_side_offset": 0.07
+        "lum_offset": -0.03,
+        "sun_side_offset": 0.03
       },
       "fits": "downtown shafts of 40 floors or more; a few mid_rise slabs"
     }
@@ -420,14 +528,14 @@
   "base_and_crown": {
     "base": {
       "floors": 1.6,
-      "note": "a tall lobby storey under the shaft, in the wall's mid tone less 0.06 (never darker: its join with the shaft is a long edge), with the trim as a lintel line and no ribbon: punched panes only",
-      "wall_lum_offset": -0.06
+      "note": "a tall lobby storey under the shaft, in the wall's mid tone less 0.03 (never darker: its join with the shaft is a long edge), with the trim as a lintel line and no ribbon: punched panes only",
+      "wall_lum_offset": -0.03
     },
     "crown": {
       "floors": 2,
-      "note": "the top two floors set back 6 percent each side, a cornice band in the trim tone (wall mid plus 0.05), panes at the tint's bright glass; lit panes are Rendering's and are not raised (a flash change)",
+      "note": "the top two floors set back 6 percent each side, a cornice band in the trim tone (wall mid plus 0.03), panes at the tint's bright glass; lit panes are Rendering's and are not raised (a flash change)",
       "setback": 0.06,
-      "cornice_lum_offset": 0.05
+      "cornice_lum_offset": 0.03
     }
   },
   "districts": {
