@@ -22,7 +22,7 @@ Owner: Camera and Cinematography. **Paper.** Nothing here is built. Asked by the
 
 ## 2. When it opens
 
-**The trigger is three facts together**, all inside 2 s of the `beam_outcome` of kind dodge for the beam (the beam crosses its victim's place in the tick the outcome is read, and carries on):
+**The trigger is three facts together**, all inside 2 s of the `beam_outcome` of kind dodge for the beam (`beam_outcome {actor, target, kind}`: the actor fired it, the target dodged it; the beam crosses the target's place in the tick the outcome is read, and carries on):
 1. the beam's owner is the other fighter (a dodged beam, the dodger the one it was aimed at);
 2. a structure on the beam's line (within its carve width) is damaged by it: `building_stage` with `to > from`, or `floors_fall`, or `building_fall`;
 3. the damage is **not already in the dodger's picture** (the building's centre is outside the pane, or inside it but under 60 px wide on the screen): a collapse that fills the view needs no inset.
@@ -85,7 +85,7 @@ Owner: Camera and Cinematography. **Paper.** Nothing here is built. Asked by the
 
 | Who | What |
 | :--- | :--- |
-| **Simulation / Encounter** | The **cause on the damage events**: `building_stage`, `floors_fall`, `building_fall` carry `by_beam` (an id that `S.beams` and `beam_outcome` share), or at least the beam's `owner` and tick; the `beam_outcome` carries the beam's id and the victim. Today `building_stage.kind` is the building's kind, not the cause. Without it the camera can only guess from "a dodge, then damage near the line" |
+| **Simulation / Encounter** | The **cause on the damage events**: `building_stage`, `floors_fall`, `building_fall` carry `by_beam` (an id that `S.beams` and `beam_outcome` share), or at least the beam's `owner` and tick; the `beam_outcome` (today `{actor, target, kind}`) also carries the beam's id. Today `building_stage.kind` is the building's kind, not the cause. Without it the camera can only guess from "a dodge, then damage near the line" |
 | **World** | The number of floors of a building in the event (`floors`), so the share of floors is computed without a lookup |
 | **Rendering** | The inset pane at an arbitrary world point (it is, for the strip, at a fighter) and a distant-structure level of detail for a building 5,000 units off; the calm flag `inset_calm` on the inset's VFX hub view |
 | **VFX** | What `inset_calm` turns off (section 6) |

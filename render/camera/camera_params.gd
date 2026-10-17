@@ -81,6 +81,7 @@ const STRUGGLE_TIME_PUSH: float = 0.04   # ... and by this much more over the la
 const STRUGGLE_SURGE_PUNCH: float = 0.02   # a surge is a 2% punch of the zoom (6 ticks), a sharp one 3.5%: the beat, seen
 const STRUGGLE_SHARP_PUNCH: float = 0.035
 const STRUGGLE_DETONATE_WIDE: float = 0.7   # a detonation pulls the shared view out for this long (the crater is the picture)
+const MERGE_LOOKAHEAD: float = 1.0     # the merge condition looks this many seconds ahead at a pair that is moving apart
 const GOV_ARM_TAIL: float = 0.1         # the arming outlasts the charge's move by this many seconds
 const GOV_ARM_SPEED: float = 6000.0     # a charge's cue arms the scroll governor as if the view were already moving this fast
 const SWEEP_FEATHER_FRAC: float = 0.30   # the feathered sweep (a switch): the blend's half-width at its widest, a fraction of the width

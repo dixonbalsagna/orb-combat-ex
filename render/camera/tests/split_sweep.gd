@@ -66,6 +66,7 @@ var dump_from: int = 0
 var dump_to: int = 0
 var shots_dir: String = ""
 var only: String = ""
+var merge_look_on: bool = false   # --merge-lookahead runs every row with the merge lookahead on (off is the shipped default)
 var launch_hold_on: bool = false   # --launch-hold runs every row with the launch rule on (off is the shipped default)
 var budget_on: bool = true   # --budget=off runs every row with the travel budget switched off (the shipped default)
 var _clear_prev: SplitFrame = null   # the last tick's frame, for the foreground's clear[i] rules
@@ -132,6 +133,8 @@ func _initialize() -> void:
 			budget_on = false
 		elif a == "--launch-hold":
 			launch_hold_on = true
+		elif a == "--merge-lookahead":
+			merge_look_on = true
 		elif a.begins_with("--only="):
 			only = a.substr(7)
 		elif a.begins_with("--shots="):
@@ -364,6 +367,7 @@ func _begin(label: String) -> void:
 	_rig.flash_bundle = false   # the rows set the pieces they test; the shipped default (the bundle under reduced flashing) has its own row
 	_rig.travel_budget = budget_on
 	_rig.launch_hold = launch_hold_on
+	_rig.merge_lookahead = merge_look_on
 	_tick = 0
 	_trav_prev = null
 	_clear_prev = null

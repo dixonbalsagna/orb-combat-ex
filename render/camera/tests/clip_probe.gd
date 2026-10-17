@@ -21,6 +21,8 @@ var slam: bool = false
 var reduced: bool = false
 var nobundle: bool = false
 var struggle: bool = false
+var mlook: bool = false
+var exo_y: float = 20000.0
 var surges: bool = false
 var sweepmid: bool = false
 var sweep_t0: int = -1
@@ -53,6 +55,10 @@ func _initialize() -> void:
 			nobundle = true
 		elif a == "--struggle":
 			struggle = true
+		elif a == "--mlook":
+			mlook = true
+		elif a.begins_with("--exoy="):
+			exo_y = float(a.substr(7))
 		elif a == "--surges":
 			surges = true
 		elif a == "--sweepmid":
@@ -88,11 +94,13 @@ func _run() -> void:
 		sv.set_slam_off(true)
 	main.host.vfx.auto_quality = false
 	main.host.vfx.destruction_enabled = true
-	var human: bool = scenario == "signaturecity"
+	var human: bool = scenario == "signaturecity" or scenario == "rushcity"
 	var both: bool = scenario == "clash"
 	main.start_match(seed_v, {"p1": not (human or both), "p2": not both}, null)
 	if struggle:
 		sv.set_struggle_framing(true)
+	if mlook:
+		sv.set_merge_lookahead(true)
 	if nobundle:
 		main.split_rig.flash_bundle = false
 	if human0:
@@ -173,6 +181,31 @@ func _drive(t: int, S: SimState) -> void:
 			S.fighters[0].tier = 3.0
 		if t == 1200:
 			S.fighters[1].stage[1] = 2
+	elif scenario == "exo":
+		# the pair flown to the exosphere (the flight ceiling is 24,000 units): a free flight at --exoy, one drifting toward the other, to read what the
+		# rig does at height (docs/camera/exosphere.md)
+		var ey: float = exo_y
+		for i in range(2):
+			var fe = S.fighters[i]
+			fe.y = ey + 300.0 * sin(float(t) / 90.0 + float(i))
+			fe.vy = 0.0
+			fe.x = SimWrap.wrap(fe.x + (3.0 if i == 0 else -3.0) * sin(float(t) / 150.0))
+	elif scenario == "rushcity":
+		# P1 sprints (stick held, dodge held: the sprint) along the front street, turning every 150 ticks; the AI fights him (tools/flash's rushcity)
+		if t == 0:
+			var tall2 = null
+			for b in S.buildings:
+				if b.alive and (tall2 == null or b.h > tall2.h):
+					tall2 = b
+			if tall2 != null:
+				for i in range(2):
+					var f2 = S.fighters[i]
+					f2.x = SimWrap.wrap(tall2.x - 900.0 + 60.0 * float(i))
+					f2.y = WorldTerrain.groundY(S, f2.x) + 10.0
+					f2.vx = 0.0
+					f2.vy = 0.0
+		_stick(0, 1.0 if (t / 150) % 2 == 0 else -1.0)
+		_btn(0, "lt", true)
 	elif scenario == "signaturecity":
 		if t == 0:
 			var tall = null

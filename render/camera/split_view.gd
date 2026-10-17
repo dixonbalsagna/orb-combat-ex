@@ -185,6 +185,13 @@ func set_struggle_framing(on: bool) -> void:
 		main.split_rig.struggle_framing = on
 
 
+## A pair moving apart fast is not merged on its present separation but on the one it will have a second on (docs/camera/rushcity.md): the merge
+## and the split that follows it within two seconds, with a pan between them, are what rushcity's standing area failure is. Off by default. A build-time switch.
+func set_merge_lookahead(on: bool) -> void:
+	if main != null:
+		main.split_rig.merge_lookahead = on
+
+
 func set_launch_hold_eager(on: bool) -> void:
 	if main != null:
 		main.split_rig.launch_hold_eager = on

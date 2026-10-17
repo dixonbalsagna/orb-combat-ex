@@ -536,7 +536,14 @@ func _update_trigger(S: SimState) -> void:
 		if (_below_t >= dwell or out_of_frame or knocked_apart) and age_ok and (guard_ok or out_of_frame or knocked_apart):
 			_set_split(true, "out of frame" if (_below_t < dwell or _layout_age < CamParams.MIN_MERGED_AGE) else "trigger")
 	else:
-		_above_t = _above_t + DT if (r_now > rm and chase_slot < 0) else 0.0   # not while one is being chased
+		# A pair that is moving apart fast is judged on the separation it will have (MERGE_LOOKAHEAD seconds on): the shared view that merges them zooms
+		# out as they part and the split opens again, a merge and a split within two seconds with a pan of 0.09 of the width in between (rushcity,
+		# ticks 73 to 140; docs/camera/rushcity.md).
+		var r_merge_now: float = r_now
+		if merge_lookahead and _sep_rate > 0.0:
+			var ad_p: float = minf(SimConst.HALF, ad + _sep_rate * CamParams.MERGE_LOOKAHEAD)
+			r_merge_now = minf(r_now, CamParams.BODY_H * zoom_u(vw, vh, ad_p, _pair_dy(A, B), maxf(A.tier, B.tier)) / vh)
+		_above_t = _above_t + DT if (r_merge_now > rm and chase_slot < 0) else 0.0   # not while one is being chased
 		if _above_t >= CamParams.MERGE_DWELL and _layout_age >= CamParams.MIN_SPLIT_AGE:
 			_set_split(false)
 	_apply_solo_follow(S)
@@ -2667,6 +2674,7 @@ var _many_pzf: Array = [1.0, 1.0]                       # pane i's zoom factor f
 var _many_pull: Array = [0.0, 0.0]                      # pane i's focus pull toward them, world units
 var _many_partner: int = 1                              # the one's partner for framing: the nearest of the others, with a hold
 var _many_marks: Array = []                             # the bodies outside the frame this tick, [slot, side]
+var merge_lookahead: bool = true                        # a pair moving apart fast is not merged on its present separation (docs/camera/rushcity.md); on since 2026-10-16 (rushcity: 2.5 / 3.5 / 1 -> 2 / 2 / 1)
 var struggle_framing: bool = false                      # the beam struggle: the shared view centred toward the meeting point, tightening as it nears a fighter, a punch at each surge (docs/camera/beam-struggle.md); off by default
 var _st_mid: float = 0.5                                # the meeting point, eased (0 at the attacker's hands to 1 at the defender's)
 var _st_on: bool = false
