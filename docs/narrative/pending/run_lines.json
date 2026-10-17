@@ -1,0 +1,482 @@
+{
+ "schema": "narrative.run_lines/1",
+ "_about": "PARKED DRAFT (docs/narrative/pending/). Paper for Game Design's run-mode.md (docs/design, section 2): offer-card lines (Rampage, Proving ground, Crossing), the boss's lines by boss, and the endings. Every line passes the lint (4 to 12 words, banned words, no sensitive word: Legal c07 and c08). {place} is the place's name from place_names.json. Legal reads the endings for c08 before Orb sees them. For Orb's marks.",
+ "offer_cards": [
+  {
+   "kind": "rampage",
+   "place_state": "fresh",
+   "text": "He's already in the streets of {place}."
+  },
+  {
+   "kind": "rampage",
+   "place_state": "fresh",
+   "text": "{place} is full of people. He's walking in."
+  },
+  {
+   "kind": "rampage",
+   "place_state": "fresh",
+   "text": "Get to {place} before he reaches the square."
+  },
+  {
+   "kind": "rampage",
+   "place_state": "fresh",
+   "text": "{place} is quiet. That won't last."
+  },
+  {
+   "kind": "rampage",
+   "place_state": "damaged",
+   "text": "{place} has been hit before. He's back."
+  },
+  {
+   "kind": "rampage",
+   "place_state": "damaged",
+   "text": "What's left of {place} is in his way."
+  },
+  {
+   "kind": "rampage",
+   "place_state": "damaged",
+   "text": "They rebuilt {place}. He doesn't care."
+  },
+  {
+   "kind": "proving_ground",
+   "place_state": "fresh",
+   "text": "Thin air, hard rock. He's waiting up there.",
+   "biome": "mountains"
+  },
+  {
+   "kind": "proving_ground",
+   "place_state": "fresh",
+   "text": "Nothing out here but sand and him.",
+   "biome": "desert"
+  },
+  {
+   "kind": "proving_ground",
+   "place_state": "fresh",
+   "text": "Cold, white and empty. He's stronger now.",
+   "biome": "ice"
+  },
+  {
+   "kind": "proving_ground",
+   "place_state": "fresh",
+   "text": "Open water, no cover. He's already risen.",
+   "biome": "ocean"
+  },
+  {
+   "kind": "proving_ground",
+   "place_state": "fresh",
+   "text": "He's gone up a step. Come and see."
+  },
+  {
+   "kind": "crossing",
+   "place_state": "fresh",
+   "text": "A quiet road and a plain fight."
+  },
+  {
+   "kind": "crossing",
+   "place_state": "fresh",
+   "text": "{place} is on the way. Catch your breath."
+  },
+  {
+   "kind": "crossing",
+   "place_state": "fresh",
+   "text": "Just a fight. Rest comes after."
+  },
+  {
+   "kind": "crossing",
+   "place_state": "damaged",
+   "text": "You've been through {place} before. It remembers."
+  },
+  {
+   "kind": "crossing",
+   "place_state": "damaged",
+   "text": "{place} again. The rubble hasn't moved."
+  },
+  {
+   "kind": "crossing",
+   "place_state": "damaged",
+   "text": "Cross {place}. Mind the broken streets."
+  },
+  {
+   "kind": "crossing",
+   "place_state": "fallen",
+   "text": "Cross the ruins of {place}. Quietly."
+  }
+ ],
+ "boss_moments": [
+  {
+   "id": "first_blow",
+   "when": "The boss lands the first blow of the fight."
+  },
+  {
+   "id": "hit_taken",
+   "when": "The boss takes a hit."
+  },
+  {
+   "id": "tremor",
+   "when": "The ground answers: the quake when the boss's first region breaks."
+  },
+  {
+   "id": "tier5",
+   "when": "The boss takes the tier-5 form."
+  },
+  {
+   "id": "crust_breach",
+   "when": "The boss starts a crust breach (a beam bored down into the ground)."
+  },
+  {
+   "id": "blast_cloud",
+   "when": "The boss starts a blast cloud."
+  },
+  {
+   "id": "exosphere",
+   "when": "The boss takes the fight up out of the sky."
+  },
+  {
+   "id": "brink",
+   "when": "The boss reaches the brink."
+  },
+  {
+   "id": "defeat",
+   "when": "The boss's finisher lands on him: he loses."
+  },
+  {
+   "id": "victory",
+   "when": "The boss beats the hero."
+  }
+ ],
+ "boss_lines": [
+  {
+   "boss": "rival",
+   "moment": "first_blow",
+   "text": "Too slow. Try keeping up."
+  },
+  {
+   "boss": "rival",
+   "moment": "hit_taken",
+   "text": "Good hit. Now do it again."
+  },
+  {
+   "boss": "rival",
+   "moment": "tremor",
+   "text": "Feel that? Even the ground's afraid."
+  },
+  {
+   "boss": "rival",
+   "moment": "tier5",
+   "text": "You wanted all of me. Here."
+  },
+  {
+   "boss": "rival",
+   "moment": "crust_breach",
+   "text": "Watch your footing. It's getting hot."
+  },
+  {
+   "boss": "rival",
+   "moment": "blast_cloud",
+   "text": "Look up. This is what I've got."
+  },
+  {
+   "boss": "rival",
+   "moment": "exosphere",
+   "text": "Follow me up, if you can."
+  },
+  {
+   "boss": "rival",
+   "moment": "brink",
+   "text": "Not yet. I still have more."
+  },
+  {
+   "boss": "rival",
+   "moment": "defeat",
+   "text": "Fine. You beat my best."
+  },
+  {
+   "boss": "rival",
+   "moment": "victory",
+   "text": "I told you not to hold back."
+  },
+  {
+   "boss": "empress",
+   "moment": "first_blow",
+   "text": "A fine opening, petitioner. We approve."
+  },
+  {
+   "boss": "empress",
+   "moment": "hit_taken",
+   "text": "You struck us! Remember this, guard!"
+  },
+  {
+   "boss": "empress",
+   "moment": "tremor",
+   "text": "The ground trembles. It knows who rules."
+  },
+  {
+   "boss": "empress",
+   "moment": "tier5",
+   "text": "Revision Twelve, petitioners! Do admire it."
+  },
+  {
+   "boss": "empress",
+   "moment": "crust_breach",
+   "text": "Mind the cracks, petitioners. They're our decree."
+  },
+  {
+   "boss": "empress",
+   "moment": "blast_cloud",
+   "text": "A blast cloud! How very grand."
+  },
+  {
+   "boss": "empress",
+   "moment": "exosphere",
+   "text": "Up we go. The view is better."
+  },
+  {
+   "boss": "empress",
+   "moment": "brink",
+   "text": "Guard! This is not on the schedule!"
+  },
+  {
+   "boss": "empress",
+   "moment": "defeat",
+   "text": "We appeal! No, I appeal!"
+  },
+  {
+   "boss": "empress",
+   "moment": "victory",
+   "text": "Case closed. Collect your belongings, petitioner."
+  },
+  {
+   "boss": "cyborg",
+   "moment": "first_blow",
+   "text": "Compliments of the chef, sir."
+  },
+  {
+   "boss": "cyborg",
+   "moment": "hit_taken",
+   "text": "That one cost you extra, sir."
+  },
+  {
+   "boss": "cyborg",
+   "moment": "tremor",
+   "text": "Please remain seated. The floor is moving."
+  },
+  {
+   "boss": "cyborg",
+   "moment": "tier5",
+   "text": "Our full menu is now open, sir."
+  },
+  {
+   "boss": "cyborg",
+   "moment": "crust_breach",
+   "text": "Mind the heat, sirs. The kitchen's open."
+  },
+  {
+   "boss": "cyborg",
+   "moment": "blast_cloud",
+   "text": "Smoke's rising, sirs. Please stay clear."
+  },
+  {
+   "boss": "cyborg",
+   "moment": "exosphere",
+   "text": "Dining upstairs tonight, gentlemen. Follow me."
+  },
+  {
+   "boss": "cyborg",
+   "moment": "brink",
+   "text": "Sir, I'm out of order. Please hold."
+  },
+  {
+   "boss": "cyborg",
+   "moment": "defeat",
+   "text": "Sir, I must go offline now."
+  },
+  {
+   "boss": "cyborg",
+   "moment": "victory",
+   "text": "Thank you for dining. Come again, sir."
+  },
+  {
+   "boss": "any",
+   "moment": "first_blow",
+   "text": "You're quicker than I expected."
+  },
+  {
+   "boss": "any",
+   "moment": "hit_taken",
+   "text": "That stung. Do it again."
+  },
+  {
+   "boss": "any",
+   "moment": "tremor",
+   "text": "Feel that? The ground knows me."
+  },
+  {
+   "boss": "any",
+   "moment": "tier5",
+   "text": "Here's what I really am."
+  },
+  {
+   "boss": "any",
+   "moment": "crust_breach",
+   "text": "Hold on. The floor's about to go."
+  },
+  {
+   "boss": "any",
+   "moment": "blast_cloud",
+   "text": "Look at the sky. All mine."
+  },
+  {
+   "boss": "any",
+   "moment": "exosphere",
+   "text": "Come up and meet me."
+  },
+  {
+   "boss": "any",
+   "moment": "brink",
+   "text": "Not yet. I'm still standing."
+  },
+  {
+   "boss": "any",
+   "moment": "defeat",
+   "text": "You win. This time."
+  },
+  {
+   "boss": "any",
+   "moment": "victory",
+   "text": "Is that all you had?"
+  }
+ ],
+ "endings": [
+  {
+   "id": "end_planet_most_alive",
+   "needs": {
+    "planet": "most_alive"
+   },
+   "lines": [
+    {
+     "who": "radio",
+     "text": "Most of the planet's people are safe."
+    },
+    {
+     "who": "crowd",
+     "text": "We're alive. The cities will take time."
+    },
+    {
+     "who": "hero",
+     "text": "Then we start rebuilding. Together."
+    }
+   ],
+   "note": "The planet's state: most of its people alive."
+  },
+  {
+   "id": "end_planet_half",
+   "needs": {
+    "planet": "half"
+   },
+   "lines": [
+    {
+     "who": "radio",
+     "text": "Half the planet's people are gone."
+    },
+    {
+     "who": "hero",
+     "text": "Half. I'll carry that."
+    },
+    {
+     "who": "crowd",
+     "text": "Remember them. Please do."
+    }
+   ],
+   "note": "The planet's state: about half lost. The toll is a count, never bodies (Legal c08)."
+  },
+  {
+   "id": "end_planet_most_lost",
+   "needs": {
+    "planet": "most_lost"
+   },
+   "lines": [
+    {
+     "who": "radio",
+     "text": "Most of the planet's people are gone."
+    },
+    {
+     "who": "hero",
+     "text": "I'm sorry. I couldn't stop it."
+    },
+    {
+     "who": "crowd",
+     "text": "The cities are quiet now."
+    }
+   ],
+   "note": "The planet's state: most of its people lost. No cheer, no score."
+  },
+  {
+   "id": "end_branch_witnessed",
+   "needs": {
+    "branch_history": "witnessed"
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "I stopped joking after the first city."
+    },
+    {
+     "who": "crowd",
+     "text": "We saw you go quiet. We understood."
+    }
+   ],
+   "note": "The hero's branch history: always witnessed."
+  },
+  {
+   "id": "end_branch_tested",
+   "needs": {
+    "branch_history": "tested"
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "I let them go first, every time."
+    },
+    {
+     "who": "rival",
+     "text": "And you loved every second of it."
+    }
+   ],
+   "note": "The hero's branch history: always tested."
+  },
+  {
+   "id": "end_branch_crossing",
+   "needs": {
+    "branch_history": "crossing"
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "Quiet or loud, I just kept fighting."
+    },
+    {
+     "who": "rival",
+     "text": "Make up your mind, will you?"
+    }
+   ],
+   "note": "The hero's branch history: crossed between the two."
+  },
+  {
+   "id": "end_sky_dark",
+   "needs": {
+    "sky": true
+   },
+   "lines": [
+    {
+     "who": "radio",
+     "text": "The sky is still dark. The ash is slow to fall."
+    },
+    {
+     "who": "hero",
+     "text": "It'll clear. It always does."
+    }
+   ],
+   "note": "When the blast cloud darkened the sky and it has not cleared."
+  }
+ ]
+}

@@ -1,0 +1,353 @@
+{
+ "schema": "narrative.place_names/1",
+ "_about": "PARKED DRAFT (docs/narrative/pending/). The place-name grammar for the stored planet (docs/narrative/place-names.md): a name is a stem plus a suffix, picked from a hash of the place's seed, so the same planet always gives the same names. Examples below were made with these banks and the FNV-1a hash in the doc. Legal screens the full table of combinations once.",
+ "banks": {
+  "biome_stems": {
+   "ocean": [
+    "long",
+    "salt",
+    "tide",
+    "gull",
+    "net",
+    "reef",
+    "drift",
+    "brine",
+    "kelp",
+    "wake",
+    "shoal",
+    "cove"
+   ],
+   "plains": [
+    "furrow",
+    "wind",
+    "grain",
+    "hay",
+    "clover",
+    "barley",
+    "lark",
+    "fallow",
+    "hedge",
+    "wheel",
+    "mill",
+    "thresh"
+   ],
+   "forest": [
+    "deep",
+    "oak",
+    "wren",
+    "fern",
+    "moss",
+    "bramble",
+    "holly",
+    "elm",
+    "alder",
+    "birch",
+    "hazel",
+    "thorn"
+   ],
+   "desert": [
+    "sun",
+    "dust",
+    "ember",
+    "dry",
+    "bleach",
+    "cinder",
+    "brass",
+    "scorch",
+    "flint",
+    "dune",
+    "rust",
+    "amber"
+   ],
+   "mountains": [
+    "anvil",
+    "crag",
+    "slate",
+    "flint",
+    "tor",
+    "pike",
+    "high",
+    "stone",
+    "tarn",
+    "raven",
+    "cloud",
+    "ridge"
+   ],
+   "ice": [
+    "rime",
+    "floe",
+    "glass",
+    "pale",
+    "thaw",
+    "berg",
+    "sleet",
+    "hoar",
+    "white",
+    "sheet",
+    "gleam",
+    "shard"
+   ]
+  },
+  "city_stems": [
+   "bell",
+   "lamp",
+   "kiln",
+   "forge",
+   "brass",
+   "signal",
+   "quay",
+   "mill",
+   "loom",
+   "anvil",
+   "chime",
+   "spool"
+  ],
+  "suffixes": {
+   "city": [
+    "gate",
+    "hold",
+    "reach",
+    "rise",
+    "haven",
+    "cross",
+    "ford"
+   ],
+   "town": [
+    "stead",
+    "lea",
+    "holt",
+    "wick",
+    "by",
+    "field",
+    "mere"
+   ],
+   "landmark": [
+    "Tower",
+    "Spire",
+    "Bridge",
+    "Falls",
+    "Stair",
+    "Light",
+    "Rock"
+   ]
+  }
+ },
+ "rules": [
+  "a name is one word of at most 12 letters (a landmark is two)",
+  "no doubled letter where the stem meets the suffix",
+  "unique within a planet; on a clash the salt moves on",
+  "never a word from the blocklist or a real place Legal finds",
+  "never a school, hospital or place of worship, and no such word in any bank (Legal c08)"
+ ],
+ "blocklist_start": [
+  "stonehaven",
+  "brassfield",
+  "longford",
+  "bellfield",
+  "kilnwick",
+  "mereby",
+  "oakfield",
+  "elmfield",
+  "hazelwick",
+  "ashford"
+ ],
+ "combinations": {
+  "city": 588,
+  "town": 504,
+  "landmark": 588
+ },
+ "examples": [
+  {
+   "kind": "city",
+   "biome": "ocean",
+   "seed": 20261016,
+   "name": "Brinehold"
+  },
+  {
+   "kind": "city",
+   "biome": "plains",
+   "seed": 20261017,
+   "name": "Lamphold"
+  },
+  {
+   "kind": "city",
+   "biome": "forest",
+   "seed": 20261018,
+   "name": "Bramblereach"
+  },
+  {
+   "kind": "city",
+   "biome": "desert",
+   "seed": 20261019,
+   "name": "Anvilgate"
+  },
+  {
+   "kind": "city",
+   "biome": "mountains",
+   "seed": 20261020,
+   "name": "Spoolrise"
+  },
+  {
+   "kind": "city",
+   "biome": "ice",
+   "seed": 20261021,
+   "name": "Shardhold"
+  },
+  {
+   "kind": "city",
+   "biome": "ocean",
+   "seed": 20261022,
+   "name": "Spoolgate"
+  },
+  {
+   "kind": "city",
+   "biome": "plains",
+   "seed": 20261023,
+   "name": "Hedgerise"
+  },
+  {
+   "kind": "city",
+   "biome": "forest",
+   "seed": 20261024,
+   "name": "Quaygate"
+  },
+  {
+   "kind": "city",
+   "biome": "desert",
+   "seed": 20261025,
+   "name": "Cindergate"
+  },
+  {
+   "kind": "city",
+   "biome": "mountains",
+   "seed": 20261026,
+   "name": "Quayrise"
+  },
+  {
+   "kind": "city",
+   "biome": "ice",
+   "seed": 20261027,
+   "name": "Rimehaven"
+  },
+  {
+   "kind": "town",
+   "biome": "forest",
+   "seed": 20261100,
+   "name": "Deepmere"
+  },
+  {
+   "kind": "town",
+   "biome": "desert",
+   "seed": 20261101,
+   "name": "Rustholt"
+  },
+  {
+   "kind": "town",
+   "biome": "mountains",
+   "seed": 20261102,
+   "name": "Tormere"
+  },
+  {
+   "kind": "town",
+   "biome": "ice",
+   "seed": 20261103,
+   "name": "Floemere"
+  },
+  {
+   "kind": "town",
+   "biome": "ocean",
+   "seed": 20261104,
+   "name": "Shoalby"
+  },
+  {
+   "kind": "town",
+   "biome": "plains",
+   "seed": 20261105,
+   "name": "Larkwick"
+  },
+  {
+   "kind": "town",
+   "biome": "forest",
+   "seed": 20261106,
+   "name": "Bramblelea"
+  },
+  {
+   "kind": "town",
+   "biome": "desert",
+   "seed": 20261107,
+   "name": "Rustlea"
+  },
+  {
+   "kind": "town",
+   "biome": "mountains",
+   "seed": 20261108,
+   "name": "Stonewick"
+  },
+  {
+   "kind": "town",
+   "biome": "ice",
+   "seed": 20261109,
+   "name": "Sheetmere"
+  },
+  {
+   "kind": "town",
+   "biome": "ocean",
+   "seed": 20261110,
+   "name": "Brineholt"
+  },
+  {
+   "kind": "town",
+   "biome": "plains",
+   "seed": 20261111,
+   "name": "Larkmere"
+  },
+  {
+   "kind": "town",
+   "biome": "forest",
+   "seed": 20261112,
+   "name": "Deepby"
+  },
+  {
+   "kind": "town",
+   "biome": "desert",
+   "seed": 20261113,
+   "name": "Brassmere"
+  },
+  {
+   "kind": "landmark",
+   "biome": "mountains",
+   "seed": 20261200,
+   "name": "Tarn Tower"
+  },
+  {
+   "kind": "landmark",
+   "biome": "ice",
+   "seed": 20261201,
+   "name": "Spool Tower"
+  },
+  {
+   "kind": "landmark",
+   "biome": "ocean",
+   "seed": 20261202,
+   "name": "Chime Tower"
+  },
+  {
+   "kind": "landmark",
+   "biome": "plains",
+   "seed": 20261203,
+   "name": "Hay Light"
+  },
+  {
+   "kind": "landmark",
+   "biome": "forest",
+   "seed": 20261204,
+   "name": "Bell Stair"
+  },
+  {
+   "kind": "landmark",
+   "biome": "desert",
+   "seed": 20261205,
+   "name": "Chime Bridge"
+  }
+ ]
+}

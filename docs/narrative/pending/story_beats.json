@@ -2,21 +2,27 @@
  "schema": "narrative.story_beats/1",
  "_about": "PARKED DRAFT (docs/narrative/pending/). Between-stage beats for a run across one planet (docs/narrative/story-beats.md). Each beat names the run state it needs; a beat is two to four short lines. The state fields are Narrative's proposal; Game Design's run-mode.md (docs/design) decides the real ones. Every line passes the lint (4 to 12 words, banned words, ellipsis cap). Speakers: hero (the player's fighter, voiced as the Protagonist for now), rival, boss, crowd, radio (an in-world broadcast, never a narrator). Unsearched by Legal; for Orb's marks.",
  "state": {
-  "stage": "early (stages 1 to 2) | mid | late (the stage before the boss approach)",
-  "cities": "none | some | many (cities fallen this run)",
-  "city_cause": "hero | rival | boss | both (who did the most damage to cities)",
-  "casualties": "none | some | many (this stage's gap, or the run so far: Game Design decides the window)",
-  "casualty_cause": "hero | rival | boss",
+  "stage": "early (stages 1 and 2) | mid | late (the stage before the boss)",
+  "cities": "none (0) | some (1 or 2) | many (3 or more): cities fallen this run",
+  "city_cause": "hero | rival | boss | both (whoever did 60% or more of the building damage to cities; otherwise both)",
+  "casualties": "none (under 1%) | some (1 to 10%) | many (over 10%): the share of the people present killed in the last stage",
+  "casualty_cause": "hero | rival | boss | both",
   "branch": "none | witnessed | tested (the hero's branch; anguish-branches.md)",
   "branch_event": "entered | carried | faded",
-  "menace": "low | mid | high (the rival's meter)",
+  "menace": "low (under 30) | mid (30 to 69) | high (70 or more): the villain's menace at the stage's end",
   "result": "won | won_close | lost_close | lost (the stage just finished)",
   "comeback": "brink | after_loss | streak",
   "boss_in": "3 | 2 | 1 | 0 (stages until the boss; 0 is the final approach)",
-  "boss": "empress | cyborg | any",
+  "boss": "rival | empress | cyborg | any (the MVP's boss is the rival)",
   "avoided_towns": "true when the hero kept the fight away from settlements",
   "rival_here": "true when the rival appears in this gap",
-  "step": "1 to 8, for a set piece"
+  "step": "1 to 8, for a set piece",
+  "revisit": "damaged | fallen (the next stage crosses a place the run has hurt; its name is {place})",
+  "fallen_name": "true when a place fell in the last stage; its name is {place}",
+  "wound_carried": "true when the hero goes in with a region broken",
+  "sky": "true when the sky has darkened (the boss fight only)",
+  "chances": "left | none (a chance to spend after a loss)",
+  "retry": "true when the stage will be replayed (the boss once, or the assist)"
  },
  "beats": [
   {
@@ -153,7 +159,7 @@
    "lines": [
     {
      "who": "hero",
-     "text": "Two cities down. Both because of me."
+     "text": "Three cities down. All because of me."
     },
     {
      "who": "crowd",
@@ -715,7 +721,8 @@
    "needs": {
     "result": [
      "lost_close"
-    ]
+    ],
+    "retry": true
    },
    "lines": [
     {
@@ -733,29 +740,7 @@
    ],
    "weight": 1,
    "once_per_run": false,
-   "note": "A narrow loss: the retry beat."
-  },
-  {
-   "id": "loss_clear",
-   "slot": "aftermath",
-   "needs": {
-    "result": [
-     "lost"
-    ]
-   },
-   "lines": [
-    {
-     "who": "hero",
-     "text": "He's faster than me. I need to see why."
-    },
-    {
-     "who": "rival",
-     "text": "You're not even trying to win."
-    }
-   ],
-   "weight": 1,
-   "once_per_run": false,
-   "note": "A clear loss; the hero is curious, not crushed."
+   "note": "A narrow loss that will be replayed (the assist, or the boss's one replay)."
   },
   {
    "id": "comeback_brink",
@@ -880,6 +865,11 @@
     "boss_in": [
      1
     ],
+    "boss": [
+     "empress",
+     "cyborg",
+     "any"
+    ],
     "rival_here": true
    },
    "lines": [
@@ -958,6 +948,11 @@
      0
     ],
     "step": 3,
+    "boss": [
+     "empress",
+     "cyborg",
+     "any"
+    ],
     "rival_here": true
    },
    "lines": [
@@ -1071,7 +1066,7 @@
     },
     {
      "who": "boss",
-     "text": "They were scenery. You're next."
+     "text": "Then try to stop me."
     }
    ],
    "weight": 1,
@@ -1138,6 +1133,11 @@
      0
     ],
     "step": 6,
+    "boss": [
+     "empress",
+     "cyborg",
+     "any"
+    ],
     "rival_here": true
    },
    "lines": [
@@ -1258,6 +1258,520 @@
    "weight": 1,
    "once_per_run": true,
    "note": "Set piece 8 of 8: the first blow."
+  },
+  {
+   "id": "casualties_both",
+   "slot": "aftermath",
+   "needs": {
+    "casualties": [
+     "some",
+     "many"
+    ],
+    "casualty_cause": [
+     "both"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "Both of us did this. I know it."
+    },
+    {
+     "who": "crowd",
+     "text": "Stop fighting over our streets!"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "Casualties both fighters share."
+  },
+  {
+   "id": "loss_fall_close",
+   "slot": "aftermath",
+   "needs": {
+    "result": [
+     "lost_close"
+    ],
+    "chances": [
+     "left"
+    ],
+    "fallen_name": true
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "One more hit. I was that close."
+    },
+    {
+     "who": "radio",
+     "text": "{place} has fallen. The people got out."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "A narrow loss: the place falls and the run goes on."
+  },
+  {
+   "id": "loss_fall_close_rival",
+   "slot": "aftermath",
+   "needs": {
+    "result": [
+     "lost_close"
+    ],
+    "chances": [
+     "left"
+    ],
+    "fallen_name": true,
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "One more hit. I was that close."
+    },
+    {
+     "who": "rival",
+     "text": "Close doesn't save a city."
+    },
+    {
+     "who": "radio",
+     "text": "{place} has fallen. The people got out."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The same, with the rival there."
+  },
+  {
+   "id": "loss_fall_clear",
+   "slot": "aftermath",
+   "needs": {
+    "result": [
+     "lost"
+    ],
+    "chances": [
+     "left"
+    ],
+    "fallen_name": true
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "He's faster than me. I need to see why."
+    },
+    {
+     "who": "radio",
+     "text": "{place} has fallen. Everyone's out."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "A clear loss: the place falls; the hero is curious, not crushed."
+  },
+  {
+   "id": "loss_fall_clear_rival",
+   "slot": "aftermath",
+   "needs": {
+    "result": [
+     "lost"
+    ],
+    "chances": [
+     "left"
+    ],
+    "fallen_name": true,
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "He's faster than me. I need to see why."
+    },
+    {
+     "who": "rival",
+     "text": "You're not even trying to win."
+    },
+    {
+     "who": "radio",
+     "text": "{place} has fallen. Everyone's out."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The same, with the rival there."
+  },
+  {
+   "id": "run_over",
+   "slot": "aftermath",
+   "needs": {
+    "result": [
+     "lost",
+     "lost_close"
+    ],
+    "chances": [
+     "none"
+    ]
+   },
+   "lines": [
+    {
+     "who": "crowd",
+     "text": "Where do we go now?"
+    },
+    {
+     "who": "hero",
+     "text": "I'm sorry. I did everything I could."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The end-of-run beat: no chance left."
+  },
+  {
+   "id": "run_over_rival",
+   "slot": "aftermath",
+   "needs": {
+    "result": [
+     "lost",
+     "lost_close"
+    ],
+    "chances": [
+     "none"
+    ],
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "crowd",
+     "text": "Where do we go now?"
+    },
+    {
+     "who": "hero",
+     "text": "I'm sorry. I did everything I could."
+    },
+    {
+     "who": "rival",
+     "text": "Then get up and do more."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The end-of-run beat, with the rival there."
+  },
+  {
+   "id": "boss_replay",
+   "slot": "aftermath",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "result": [
+     "lost",
+     "lost_close"
+    ],
+    "chances": [
+     "left"
+    ],
+    "retry": true
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "Again. This time I'm ready."
+    },
+    {
+     "who": "boss",
+     "text": "Back already? I wasn't finished."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The boss fight is replayed once."
+  },
+  {
+   "id": "revisit_damaged",
+   "slot": "ahead",
+   "needs": {
+    "revisit": [
+     "damaged"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "Back in {place}. It still hasn't recovered."
+    },
+    {
+     "who": "crowd",
+     "text": "Half the street is still rubble."
+    },
+    {
+     "who": "hero",
+     "text": "Let's not make it worse."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The next stage crosses a damaged place."
+  },
+  {
+   "id": "revisit_fallen",
+   "slot": "ahead",
+   "needs": {
+    "revisit": [
+     "fallen"
+    ]
+   },
+   "lines": [
+    {
+     "who": "radio",
+     "text": "{place} is empty now. Nobody came back."
+    },
+    {
+     "who": "hero",
+     "text": "Keep moving. There's nothing we can save here."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The next stage crosses a fallen place (ruins are crossed, not fought in)."
+  },
+  {
+   "id": "fallen_named",
+   "slot": "aftermath",
+   "needs": {
+    "fallen_name": true,
+    "result": [
+     "won",
+     "won_close"
+    ]
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "{place} is gone. We won, and still lost it."
+    },
+    {
+     "who": "crowd",
+     "text": "Where do we live now?"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "A place fell during a stage the hero won."
+  },
+  {
+   "id": "wound_carried",
+   "slot": "ahead",
+   "needs": {
+    "wound_carried": true
+   },
+   "lines": [
+    {
+     "who": "hero",
+     "text": "I'm still hurt. Doesn't matter."
+    },
+    {
+     "who": "crowd",
+     "text": "You're hurt. Please, sit down."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The hero goes in with a broken region."
+  },
+  {
+   "id": "wound_carried_rival",
+   "slot": "ahead",
+   "needs": {
+    "wound_carried": true,
+    "rival_here": true
+   },
+   "lines": [
+    {
+     "who": "rival",
+     "text": "Limping already? Then fight harder."
+    },
+    {
+     "who": "hero",
+     "text": "I can still hit. Come on."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The same, with the rival there."
+  },
+  {
+   "id": "sky_dark",
+   "slot": "ahead",
+   "needs": {
+    "sky": true
+   },
+   "lines": [
+    {
+     "who": "radio",
+     "text": "The blast cloud hasn't cleared. It's dark at noon."
+    },
+    {
+     "who": "hero",
+     "text": "We'll see the sun again."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "The sky has darkened (boss fight only)."
+  },
+  {
+   "id": "boss_far_rival",
+   "slot": "ahead",
+   "needs": {
+    "boss_in": [
+     3
+    ],
+    "boss": [
+     "rival"
+    ]
+   },
+   "lines": [
+    {
+     "who": "rival",
+     "text": "Come find me. I'm not hiding."
+    },
+    {
+     "who": "hero",
+     "text": "Good. I wasn't going to look long."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "Three stages out, the rival is the boss."
+  },
+  {
+   "id": "boss_near_rival",
+   "slot": "ahead",
+   "needs": {
+    "boss_in": [
+     1
+    ],
+    "boss": [
+     "rival"
+    ]
+   },
+   "lines": [
+    {
+     "who": "rival",
+     "text": "Next stage, I'm waiting. Don't be late."
+    },
+    {
+     "who": "hero",
+     "text": "I'll be there. Hold nothing back."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": false,
+   "note": "One stage out, the rival is the boss."
+  },
+  {
+   "id": "final_3_rival_waits",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 3,
+    "boss": [
+     "rival"
+    ]
+   },
+   "lines": [
+    {
+     "who": "boss",
+     "text": "Hurry up. I'm not waiting forever."
+    },
+    {
+     "who": "hero",
+     "text": "He's not running. He wants this."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 3 of 8, when the rival is the boss: he waits."
+  },
+  {
+   "id": "final_4_arrive_rival",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 4,
+    "boss": [
+     "rival"
+    ]
+   },
+   "lines": [
+    {
+     "who": "boss",
+     "text": "Took you long enough. Let's finish this."
+    },
+    {
+     "who": "hero",
+     "text": "Not here. Away from the town!"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 4 of 8: the rival is the boss."
+  },
+  {
+   "id": "final_6_rival_rule",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 6,
+    "boss": [
+     "rival"
+    ]
+   },
+   "lines": [
+    {
+     "who": "boss",
+     "text": "No tricks. Full power. Both of us."
+    },
+    {
+     "who": "hero",
+     "text": "That's what I've wanted all along."
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 6 of 8: the rival is the boss and asks for everything."
+  },
+  {
+   "id": "final_7_threat_rival",
+   "slot": "set_piece",
+   "needs": {
+    "boss_in": [
+     0
+    ],
+    "step": 7,
+    "boss": [
+     "rival"
+    ]
+   },
+   "lines": [
+    {
+     "who": "boss",
+     "text": "Hold nothing back. I won't."
+    },
+    {
+     "who": "hero",
+     "text": "Stop! There are people down there!"
+    }
+   ],
+   "weight": 1,
+   "once_per_run": true,
+   "note": "Set piece 7 of 8: the rival is the boss."
   }
  ]
 }

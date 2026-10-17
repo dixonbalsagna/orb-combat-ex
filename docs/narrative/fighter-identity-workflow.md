@@ -96,7 +96,7 @@ These are **our proposals**, drawn from the bibles and from Orb's own notes (sec
 
 1. **Fights:** *crowds, clamps, feeds.* A brawler at home in a town: clamps, slams, twitches. **At tier 1 he eats nobody.**
 2. **Wants:** to be served, and then to eat.
-3. **Voice device:** customer-service politeness over appetite; a stutter when the chip is hit. **Ten lines:** `voices/cyborg.md` and `voice-lab/cyborg.csv`. **At tier 1 the appetite has no crowd:** his hunger is in his lines, not in what he does.
+3. **Voice device:** customer-service politeness over appetite; a stutter when the chip is hit. **No minions** (Orb, 2026-10-16, homework 19: "I don't want the cyborg to have minions"): the companion he must eat is one small creature, not a retinue, and nothing in his page, his lines or his intros gives him followers. **Ten lines:** `voices/cyborg.md` and `voice-lab/cyborg.csv`. **At tier 1 the appetite has no crowd:** his hunger is in his lines, not in what he does.
 4. **Names:** meter *Hunger*; rally *Reboot*; signature *Portal Blitz* (placeholder).
 5. **Look:** a dark red body wrapped in wiring and chain-like plating; a servo glance; the chip in a translucent housing (Orb's note, rated for the Mature target).
 6. **Moves:** *close, wide, twitching.*
