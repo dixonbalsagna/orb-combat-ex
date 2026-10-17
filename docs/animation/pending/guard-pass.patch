@@ -1,0 +1,815 @@
+diff --git a/hp12/data/anim/guard_pass.json b/data/anim/guard_pass.json
+new file mode 100644
+index 0000000..2c44aca
+--- /dev/null
++++ b/data/anim/guard_pass.json
+@@ -0,0 +1,264 @@
++{
++ "schema": "anim.guard_pass/1",
++ "_about": "The contact-key pass (docs/animation/guard-pass.md): the hand that is not striking stays near the stance guard. Made by the guard fit (render/anim/tools/guard_scan.gd --fit), applied by wave_gen.mjs when a wave is generated, so the poses carry it and nothing is read at run time. Each row: the contact key, the free hand's model-space target, the free hand's distance from the guard in the chest's frame before and after (units).",
++ "goal": {
++  "hand": 20,
++  "foot": 30
++ },
++ "keep": 0.7,
++ "contacts": {
++  "pk.blast_chest.contact": {
++   "hand_l": [
++    18.4,
++    59.3,
++    -8.4
++   ],
++   "was": 20.1,
++   "now": 12.8
++  },
++  "pk.blast_gut.contact": {
++   "hand_l": [
++    21.9,
++    56.9,
++    -8.9
++   ],
++   "was": 20.7,
++   "now": 13.8
++  },
++  "pm.palm_rise.contact": {
++   "hand_l": [
++    20.6,
++    51.1,
++    -8.7
++   ],
++   "was": 23.5,
++   "now": 12.4
++  },
++  "pr.backfist.contact": {
++   "hand_l": [
++    23.2,
++    60.9,
++    -0.9
++   ],
++   "was": 21.2,
++   "now": 13.0
++  },
++  "pr.hammer.contact": {
++   "hand_l": [
++    28.3,
++    52.5,
++    -10.1
++   ],
++   "was": 28.1,
++   "now": 13.5
++  },
++  "pr.jab.contact": {
++   "hand_l": [
++    27.7,
++    58.2,
++    -9.1
++   ],
++   "was": 22.7,
++   "now": 11.1
++  },
++  "pr.side_kick.contact": {
++   "hand_l": [
++    -17.8,
++    56.6,
++    -2.0
++   ],
++   "was": 31.6,
++   "now": 14.2
++  },
++  "pu.su_blade_jaw.contact": {
++   "hand_l": [
++    38.2,
++    50.3,
++    -13.2
++   ],
++   "was": 43.4,
++   "now": 14.0
++  },
++  "pu.su_drive.contact": {
++   "hand_l": [
++    43.5,
++    35.0,
++    -10.0
++   ],
++   "was": 40.7,
++   "now": 14.0
++  },
++  "pu.su_hammer_arm.contact": {
++   "hand_l": [
++    26.6,
++    54.1,
++    -9.2
++   ],
++   "was": 21.7,
++   "now": 12.4
++  },
++  "pu.su_turn.contact": {
++   "hand_l": [
++    27.8,
++    54.3,
++    -12.8
++   ],
++   "was": 29.4,
++   "now": 14.0
++  },
++  "pv.palm_turn.contact": {
++   "hand_l": [
++    28.8,
++    59.2,
++    -5.5
++   ],
++   "was": 21.5,
++   "now": 11.9
++  },
++  "pv.su_blade_fall.contact": {
++   "hand_l": [
++    39.8,
++    38.2,
++    -13.2
++   ],
++   "was": 35.7,
++   "now": 14.0
++  },
++  "pv.su_palm_arm.contact": {
++   "hand_l": [
++    36.0,
++    49.7,
++    -13.7
++   ],
++   "was": 41.7,
++   "now": 14.0
++  },
++  "rk.blast_chest.contact": {
++   "hand_l": [
++    19.9,
++    59.0,
++    -9.1
++   ],
++   "was": 20.3,
++   "now": 11.2
++  },
++  "rk.blast_gut.contact": {
++   "hand_l": [
++    23.1,
++    56.1,
++    -9.4
++   ],
++   "was": 24.0,
++   "now": 13.1
++  },
++  "rk.bolt_flick.contact": {
++   "hand_l": [
++    11.2,
++    46.9,
++    -9.9
++   ],
++   "was": 24.5,
++   "now": 12.3
++  },
++  "rm.fist_rise.contact": {
++   "hand_l": [
++    24.8,
++    55.4,
++    -10.0
++   ],
++   "was": 20.1,
++   "now": 12.6
++  },
++  "rm.heel_backhand.contact": {
++   "hand_l": [
++    20.6,
++    60.1,
++    2.2
++   ],
++   "was": 26.2,
++   "now": 11.8
++  },
++  "ru.su_fist_heave.contact": {
++   "hand_l": [
++    28.8,
++    54.4,
++    -9.2
++   ],
++   "was": 21.5,
++   "now": 14.0
++  },
++  "ru.su_hammer.contact": {
++   "hand_l": [
++    22.0,
++    53.0,
++    -8.0
++   ],
++   "was": 23.6,
++   "now": 10.7
++  },
++  "ru.su_plate_arm.contact": {
++   "hand_l": [
++    31.3,
++    52.6,
++    -9.5
++   ],
++   "was": 24.9,
++   "now": 10.4
++  },
++  "ru.su_ram.contact": {
++   "hand_l": [
++    49.3,
++    34.6,
++    -11.8
++   ],
++   "was": 42.1,
++   "now": 14.0
++  },
++  "w1.hammer.contact": {
++   "hand_l": [
++    29.4,
++    53.5,
++    -9.8
++   ],
++   "was": 22.6,
++   "now": 11.3
++  },
++  "w1.overhand.contact": {
++   "hand_l": [
++    28.0,
++    54.0,
++    -10.0
++   ],
++   "was": 20.0,
++   "now": 12.9
++  },
++  "w1.side_kick.contact": {
++   "hand_l": [
++    -16.9,
++    55.0,
++    -1.3
++   ],
++   "was": 32.9,
++   "now": 14.5
++  },
++  "w1.spear_hand.contact": {
++   "hand_l": [
++    23.8,
++    48.7,
++    -8.7
++   ],
++   "was": 23.5,
++   "now": 11.8
++  },
++  "w1.sweep.contact": {
++   "hand_r": [
++    15.0,
++    36.3,
++    17.0
++   ],
++   "was": 34.3,
++   "now": 21.0
++  }
++ },
++ "_note": "ru.su_hammer.contact is hand-set: the fitted hand, forward of the guard, moved the striking hand's fall after the contact by a tick and h05's check at 6 ticks failed (hand 76.9, limit 76); the hand at the guard's own x clears it"
++}
+\ No newline at end of file
+diff --git a/data/anim/target_poles.json b/data/anim/target_poles.json
+index 7b60780..1c516e1 100644
+--- a/data/anim/target_poles.json
++++ b/data/anim/target_poles.json
+@@ -639,13 +639,6 @@
+     6.3
+    ]
+   },
+-  "w1.hammer.contact": {
+-   "pole_hand_l": [
+-    -4.0,
+-    15.5,
+-    -0.3
+-   ]
+-  },
+   "w1.hammer.follow": {
+    "pole_hand_l": [
+     7.0,
+@@ -721,13 +714,6 @@
+     -0.8
+    ]
+   },
+-  "w1.spear_hand.contact": {
+-   "pole_hand_l": [
+-    -6.7,
+-    14.4,
+-    2.2
+-   ]
+-  },
+   "w1.spinning_heel.contact": {
+    "pole_hand_l": [
+     11.3,
+@@ -742,13 +728,6 @@
+     5.1
+    ]
+   },
+-  "w1.sweep.contact": {
+-   "pole_hand_r": [
+-    -3.0,
+-    13.4,
+-    8.2
+-   ]
+-  },
+   "w1.twin_spear.contact": {
+    "pole_foot_r": [
+     -11.6,
+diff --git a/data/anim/targets.json b/data/anim/targets.json
+index c33b3e8..1ac7818 100644
+--- a/data/anim/targets.json
++++ b/data/anim/targets.json
+@@ -732,13 +732,6 @@
+     14.8
+    ]
+   },
+-  "w1.hammer.contact": {
+-   "hand_l": [
+-    16.3,
+-    58.2,
+-    -8.5
+-   ]
+-  },
+   "w1.hammer.follow": {
+    "hand_l": [
+     24.0,
+@@ -814,13 +807,6 @@
+     12.3
+    ]
+   },
+-  "w1.spear_hand.contact": {
+-   "hand_l": [
+-    8.0,
+-    52.3,
+-    -4.6
+-   ]
+-  },
+   "w1.spinning_heel.contact": {
+    "hand_l": [
+     16.0,
+@@ -835,13 +821,6 @@
+     18.0
+    ]
+   },
+-  "w1.sweep.contact": {
+-   "hand_r": [
+-    6.3,
+-    45.9,
+-    20.3
+-   ]
+-  },
+   "w1.twin_spear.contact": {
+    "foot_r": [
+     -4.5,
+diff --git a/data/anim/waves/protag1.poses.json b/data/anim/waves/protag1.poses.json
+index 6f43a85..3c782dc 100644
+--- a/data/anim/waves/protag1.poses.json
++++ b/data/anim/waves/protag1.poses.json
+@@ -61,20 +61,20 @@
+   "pr.spinning_back_kick.contact": {"family":"upright_lunge","lean":-12,"hip_twist":70,"hips":[8,-2,0],"spine":{"lean":-4,"twist":60},"head":{"yaw":-44},"hand_r":[-11,58,17],"hand_l":[13.5,62,-17.5],"foot_r":[42,40,8],"foot_l":[6,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"one turn with his back shown and a straight kick with the heel into the belly, the arms open for the turn","_legal":["single_turn"]},
+   "pr.spinning_back_kick.follow": {"family":"upright","lean":-2,"hip_twist":38.5,"hips":[5.5,-3,0],"spine":{"lean":0.5,"twist":27.5},"head":{"yaw":-20.5,"pitch":2.5},"hand_r":[0.5,57.5,15],"hand_l":[18,59,-12],"foot_r":[19,23,8],"foot_l":[8.5,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"one turn with his back shown and a straight kick with the heel into the belly, the arms open for the turn (the follow-through)","_legal":["single_turn"]},
+   "pr.jab.chamber": {"family":"upright","lean":12,"hips":[4,-3,0],"spine":{"lean":5,"twist":-7},"head":{"pitch":3,"yaw":6},"hand_r":[14,60,11],"hand_l":[20,59,-6],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a straight blade hand from the lead shoulder, the arm one line with the rear leg, the body barely turning (the rival's pose in his profile) (the wind-up)"},
+-  "pr.jab.contact": {"family":"upright_lunge","lean":24,"hips":[19,-3,0],"spine":{"lean":4,"twist":25.5},"head":{"pitch":3,"yaw":4},"hand_r":[59,66,7],"hand_l":[20,61,-6],"foot_r":[-8,2.5,9],"foot_l":[25,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a straight blade hand from the lead shoulder, the arm one line with the rear leg, the body barely turning (the rival's pose in his profile)"},
++  "pr.jab.contact": {"family":"upright_lunge","lean":24,"hips":[19,-3,0],"spine":{"lean":4,"twist":25.5},"head":{"pitch":3,"yaw":4},"hand_r":[59,66,7],"hand_l":[27.7,58.2,-9.1],"foot_r":[-8,2.5,9],"foot_l":[25,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a straight blade hand from the lead shoulder, the arm one line with the rear leg, the body barely turning (the rival's pose in his profile)"},
+   "pr.jab.follow": {"family":"upright","lean":20,"hips":[11,-3,0],"spine":{"lean":4,"twist":18.5},"head":{"pitch":3,"yaw":4},"hand_r":[42,64,8],"hand_l":[20,61,-6],"foot_r":[-8,2.5,9],"foot_l":[18,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a straight blade hand from the lead shoulder, the arm one line with the rear leg, the body barely turning (the rival's pose in his profile) (the follow-through)"},
+   "pr.cross.chamber": {"family":"upright","lean":10,"hips":[2,-4,0],"spine":{"lean":4,"twist":-32},"head":{"pitch":3,"yaw":8},"hand_r":[4,58,13],"hand_l":[22,59,-6],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"the rear blade hand driven through the chest with the hips turned full, the lead forearm folded across the ribs (the rival's pose in his profile) (the wind-up)"},
+   "pr.cross.contact": {"family":"upright_lunge","lean":26,"hips":[21,-4,0],"spine":{"lean":4,"twist":41.5},"head":{"pitch":3,"yaw":2},"hand_r":[61,62,5],"hand_l":[10,53,-4],"foot_r":[-6,2.5,9],"foot_l":[27,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"the rear blade hand driven through the chest with the hips turned full, the lead forearm folded across the ribs (the rival's pose in his profile)"},
+   "pr.cross.follow": {"family":"upright","lean":20,"hips":[12,-4,0],"spine":{"lean":4,"twist":27.5},"head":{"pitch":3,"yaw":4},"hand_r":[43,60,8],"hand_l":[10,53,-4],"foot_r":[-6,2.5,9],"foot_l":[20,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"the rear blade hand driven through the chest with the hips turned full, the lead forearm folded across the ribs (the rival's pose in his profile) (the follow-through)"},
+   "pr.backfist.chamber": {"family":"upright","lean":10,"hips":[3,-4,0],"spine":{"lean":4,"twist":-27.5,"bend":8},"head":{"pitch":3,"yaw":8},"hand_r":[8,62,27],"hand_l":[20,59,-6],"pole_hand_r":[-4,-2,12],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"l":"fist","r":"fist"},"_orig":"the arm unfolding backhanded to full length, the back of the hand leading, the chest opened away from the rival (the rival's pose in his profile) (the wind-up)"},
+-  "pr.backfist.contact": {"family":"upright_lunge","lean":14,"hips":[18,-3,0],"spine":{"lean":-2,"twist":-34.5,"bend":-6},"head":{"pitch":-1,"yaw":-12},"hand_r":[50,72,12],"hand_l":[12,61,-8],"pole_hand_r":[2,8,10],"foot_r":[-6,2.5,9],"foot_l":[26,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"the arm unfolding backhanded to full length, the back of the hand leading, the chest opened away from the rival (the rival's pose in his profile)"},
++  "pr.backfist.contact": {"family":"upright_lunge","lean":14,"hips":[18,-3,0],"spine":{"lean":-2,"twist":-34.5,"bend":-6},"head":{"pitch":-1,"yaw":-12},"hand_r":[50,72,12],"hand_l":[23.2,60.9,-0.9],"pole_hand_r":[2,8,10],"foot_r":[-6,2.5,9],"foot_l":[26,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"the arm unfolding backhanded to full length, the back of the hand leading, the chest opened away from the rival (the rival's pose in his profile)"},
+   "pr.backfist.follow": {"family":"upright","lean":22,"hips":[12,-4,0],"spine":{"lean":4,"twist":34.5},"head":{"pitch":3,"yaw":4},"hand_r":[34,70,10],"hand_l":[18,61,-6],"pole_hand_r":[0,-4,10],"foot_r":[-6,2.5,9],"foot_l":[19,2.5,-7],"hands":{"l":"fist","r":"fist"},"_orig":"the arm unfolding backhanded to full length, the back of the hand leading, the chest opened away from the rival (the rival's pose in his profile) (the follow-through)"},
+   "pr.uppercut.chamber": {"family":"crouched","lean":16,"hips":[2,-9,0],"spine":{"lean":8,"twist":-18.5},"head":{"pitch":7,"yaw":6},"hand_r":[18,46,12],"hand_l":[20,55,-6],"foot_r":[-10,2.5,10],"foot_l":[12,2.5,-8],"hands":{"l":"open","r":"fist"},"_orig":"a closed fist rising under the chin, the rise in the hip and shoulder, the feet planted, the other arm low across the body (the rival's pose in his profile) (the wind-up)","_legal":["no_leap","no_held_raise"]},
+   "pr.uppercut.contact": {"family":"upright_lunge","lean":14,"hips":[18,-2,0],"spine":{"lean":-4,"twist":27.5},"head":{"pitch":-13,"yaw":4},"hand_r":[55,78,8],"hand_l":[16,59,-8],"foot_r":[-6,2.5,9],"foot_l":[25,2.5,-7],"hands":{"l":"open","r":"fist"},"_orig":"a closed fist rising under the chin, the rise in the hip and shoulder, the feet planted, the other arm low across the body (the rival's pose in his profile)","_legal":["no_leap","no_held_raise"]},
+   "pr.uppercut.follow": {"family":"upright","lean":8,"hips":[9,-1,0],"spine":{"lean":-6,"twist":16},"head":{"pitch":-11,"yaw":4},"hand_r":[34,72,8],"hand_l":[16,59,-8],"foot_r":[-6,2.5,9],"foot_l":[16,2.5,-7],"hands":{"l":"open","r":"fist"},"_orig":"a closed fist rising under the chin, the rise in the hip and shoulder, the feet planted, the other arm low across the body (the rival's pose in his profile) (the follow-through)","_legal":["no_leap","no_held_raise"]},
+   "pr.hammer.chamber": {"family":"upright","lean":-6,"hips":[-3,-2,0],"spine":{"lean":-10,"twist":-9},"head":{"pitch":-11,"yaw":8},"hand_r":[4,78,9],"hand_l":[22,59,-6],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"r":"fist","l":"open"},"pole_hand_r":[-8,2,8],"_orig":"the fist brought straight down from above the head like a dropped blade, the body folding over it (the rival's pose in his profile) (the wind-up)"},
+-  "pr.hammer.contact": {"family":"upright_lunge","lean":26,"hips":[16,-5,0],"spine":{"lean":16,"twist":16},"head":{"pitch":17,"yaw":2},"hand_r":[42,74,6],"pole_hand_r":[-6,12,8],"hand_l":[16,59,-8],"foot_r":[-6,2.5,9],"foot_l":[26,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"the fist brought straight down from above the head like a dropped blade, the body folding over it (the rival's pose in his profile)"},
+-  "pr.hammer.follow": {"family":"upright","lean":19,"hips":[9.5,-4.5,0],"spine":{"lean":11.5,"twist":3},"head":{"pitch":10.5,"yaw":4.5},"hand_r":[29.5,66.5,9],"pole_hand_r":[-6,12,8],"hand_l":[19.5,58.5,-6.5],"foot_r":[-7.5,2.5,8.5],"foot_l":[19.5,2.5,-7],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"the fist brought straight down from above the head like a dropped blade, the body folding over it (the rival's pose in his profile) (the follow-through)"},
++  "pr.hammer.contact": {"family":"upright_lunge","lean":26,"hips":[16,-5,0],"spine":{"lean":16,"twist":16},"head":{"pitch":17,"yaw":2},"hand_r":[42,74,6],"pole_hand_r":[-6,12,8],"hand_l":[28.3,52.5,-10.1],"foot_r":[-6,2.5,9],"foot_l":[26,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"the fist brought straight down from above the head like a dropped blade, the body folding over it (the rival's pose in his profile)"},
++  "pr.hammer.follow": {"family":"upright","lean":19,"hips":[9.5,-4.5,0],"spine":{"lean":11.5,"twist":3},"head":{"pitch":10.5,"yaw":4.5},"hand_r":[29.5,66.5,9],"pole_hand_r":[-6,12,8],"hand_l":[27,57,-7.5],"foot_r":[-7.5,2.5,8.5],"foot_l":[19.5,2.5,-7],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"the fist brought straight down from above the head like a dropped blade, the body folding over it (the rival's pose in his profile) (the follow-through)"},
+   "pr.short_elbow.chamber": {"family":"upright","lean":8,"hips":[-2,-4,0],"spine":{"lean":4,"twist":-39},"head":{"pitch":3,"yaw":8},"hand_r":[8,62,11],"pole_hand_r":[-10,2,10],"hand_l":[20,59,-7],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"the forearm folded shut and the point of the elbow cut across at face height: a small sharp triangle (the rival's pose in his profile) (the wind-up)"},
+   "pr.short_elbow.contact": {"family":"upright_lunge","lean":8,"hips":[5,-2,0],"spine":{"lean":4,"twist":41.5},"head":{"pitch":3,"yaw":2},"hand_r":[14,68,6],"pole_hand_r":[12,2,4],"hand_l":[12,59,-8],"foot_r":[-8,2.5,9],"foot_l":[12,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"the forearm folded shut and the point of the elbow cut across at face height: a small sharp triangle (the rival's pose in his profile)"},
+   "pr.short_elbow.follow": {"family":"upright","lean":9,"hips":[3.5,-3,0],"spine":{"lean":5,"twist":16.5},"head":{"pitch":3,"yaw":4.5},"hand_r":[14,63,9],"pole_hand_r":[12,2,4],"hand_l":[17.5,58.5,-6.5],"foot_r":[-8.5,2.5,8.5],"foot_l":[11.5,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"the forearm folded shut and the point of the elbow cut across at face height: a small sharp triangle (the rival's pose in his profile) (the follow-through)"},
+@@ -94,8 +94,8 @@
+   "pr.front_kick.contact": {"family":"upright_lunge","lean":-10,"hips":[19,-2,0],"spine":{"lean":-6,"twist":9},"head":{"pitch":-1,"yaw":4},"hand_r":[6,53,14],"hand_l":[14,59,-10],"foot_r":[52,44,6],"foot_l":[13,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a straight push with the ball of the foot from a high knee, the body leaning back off the line (the rival's pose in his profile)"},
+   "pr.front_kick.follow": {"family":"upright","lean":-6,"hips":[10,-2,0],"spine":{"lean":-4,"twist":4.5},"head":{"pitch":-1,"yaw":4},"hand_r":[6,55,13],"hand_l":[14,59,-10],"foot_r":[34,36,7],"foot_l":[8,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a straight push with the ball of the foot from a high knee, the body leaning back off the line (the rival's pose in his profile) (the follow-through)"},
+   "pr.side_kick.chamber": {"family":"upright","lean":-6,"hips":[0,-2,0],"spine":{"lean":-4,"twist":-27.5},"head":{"pitch":1,"yaw":6},"hand_r":[8,59,12],"hand_l":[16,57,-8],"foot_r":[12,30,8],"foot_l":[2,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"turned fully side-on, the leg and the opposite arm one horizontal line, the heel leading (the rival's pose in his profile) (the wind-up)"},
+-  "pr.side_kick.contact": {"family":"upright_lunge","lean":-28,"hips":[14,-2,0],"spine":{"lean":-10,"twist":-50.5},"head":{"pitch":-3,"yaw":24},"hand_r":[16,61,12],"hand_l":[-26,57,-10],"foot_r":[50,46,8],"foot_l":[8,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"turned fully side-on, the leg and the opposite arm one horizontal line, the heel leading (the rival's pose in his profile)"},
+-  "pr.side_kick.follow": {"family":"upright","lean":-11,"hips":[8.5,-3,0],"spine":{"lean":-3,"twist":-34},"head":{"pitch":-0.5,"yaw":17},"hand_r":[15,60.5,12.5],"hand_l":[-3.5,57.5,-7.5],"foot_r":[23.5,26.5,8],"foot_l":[9.5,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"turned fully side-on, the leg and the opposite arm one horizontal line, the heel leading (the rival's pose in his profile) (the follow-through)"},
++  "pr.side_kick.contact": {"family":"upright_lunge","lean":-28,"hips":[14,-2,0],"spine":{"lean":-10,"twist":-50.5},"head":{"pitch":-3,"yaw":24},"hand_r":[16,61,12],"hand_l":[-17.8,56.6,-2],"foot_r":[50,46,8],"foot_l":[8,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"turned fully side-on, the leg and the opposite arm one horizontal line, the heel leading (the rival's pose in his profile)"},
++  "pr.side_kick.follow": {"family":"upright","lean":-11,"hips":[8.5,-3,0],"spine":{"lean":-3,"twist":-34},"head":{"pitch":-0.5,"yaw":17},"hand_r":[15,60.5,12.5],"hand_l":[1.5,58,-3],"foot_r":[23.5,26.5,8],"foot_l":[9.5,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"turned fully side-on, the leg and the opposite arm one horizontal line, the heel leading (the rival's pose in his profile) (the follow-through)"},
+   "pr.low_kick.chamber": {"family":"upright","lean":-6,"hips":[-2,-3,0],"spine":{"lean":-4,"twist":-25.5},"head":{"pitch":1,"yaw":8},"hand_r":[10,59,14],"hand_l":[16,59,-8],"foot_r":[4,22,16],"foot_l":[0,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a short chop of the shin into the thigh, his own body upright and still (the rival's pose in his profile) (the wind-up)"},
+   "pr.low_kick.contact": {"family":"upright_lunge","lean":4,"hips":[14,-2,0],"spine":{"lean":2,"twist":16},"head":{"pitch":-3,"yaw":4},"hand_r":[6,61,14],"hand_l":[20,63,-10],"foot_r":[44,20,8],"foot_l":[14,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a short chop of the shin into the thigh, his own body upright and still (the rival's pose in his profile)"},
+   "pr.low_kick.follow": {"family":"upright","lean":-14,"hips":[12,-3,0],"spine":{"lean":-6,"twist":23},"head":{"pitch":-1,"yaw":4},"hand_r":[4,59,15],"hand_l":[18,63,-10],"foot_r":[20,18,9],"foot_l":[8,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a short chop of the shin into the thigh, his own body upright and still (the rival's pose in his profile) (the follow-through)"},
+diff --git a/data/anim/waves/protag10.poses.json b/data/anim/waves/protag10.poses.json
+index d424908..56b19f9 100644
+--- a/data/anim/waves/protag10.poses.json
++++ b/data/anim/waves/protag10.poses.json
+@@ -1,16 +1,16 @@
+ {"schema":"anim.wave.poses/1","_about":"protag10: poses of the Anti-hero's key strikes, generated by render/anim/tools/wave_gen.mjs from render/anim/tools/waves/protag10.mjs and docs/combat/pending/strikes.antihero.protag10.json. Parked: baked only with --waves, no live match plays them. Render only, outside the sim's data hash.",
+  "poses": {
+   "pu.su_drive.chamber": {"family":"upright","lean":-8,"hips":[-2,3,0],"spine":{"lean":-8,"twist":-4},"head":{"pitch":-4,"yaw":8},"hand_r":[2,64,12],"hand_l":[16,58,-8],"foot_r":[-6,2.5,9],"foot_l":[8,2.5,-8],"hands":{"r":"open","l":"open"},"pole_hand_r":[-8,6,10],"_orig":"PROVISIONAL: he rises tall with one palm at his shoulder and the other hand up in guard, then comes down with his whole weight and the palm falls onto the chest (the wind-up)","_legal":["hands_open_or_claw","no_held_raise","not_at_hip"]},
+-  "pu.su_drive.contact": {"family":"upright_lunge","lean":38,"hips":[28,-12,0],"spine":{"lean":26,"twist":4},"head":{"pitch":24},"hand_r":[54,50,8],"pole_hand_r":[-4,14,10],"hand_l":[20,48,-11],"foot_r":[-2,8,9],"foot_l":[34,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: he rises tall with one palm at his shoulder and the other hand up in guard, then comes down with his whole weight and the palm falls onto the chest","_legal":["hands_open_or_claw","no_held_raise","not_at_hip"]},
++  "pu.su_drive.contact": {"family":"upright_lunge","lean":38,"hips":[28,-12,0],"spine":{"lean":26,"twist":4},"head":{"pitch":24},"hand_r":[54,50,8],"pole_hand_r":[-4,14,10],"hand_l":[43.5,35,-10],"foot_r":[-2,8,9],"foot_l":[34,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: he rises tall with one palm at his shoulder and the other hand up in guard, then comes down with his whole weight and the palm falls onto the chest","_legal":["hands_open_or_claw","no_held_raise","not_at_hip"]},
+   "pu.su_drive.follow": {"family":"upright","lean":32,"hips":[24,-13,0],"spine":{"lean":28,"twist":2},"head":{"pitch":26,"yaw":3.5},"hand_r":[34,42,9],"pole_hand_r":[-4,14,10],"hand_l":[30,61,-13],"foot_r":[-5,5,8],"foot_l":[23.5,2.5,-7.5],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: he rises tall with one palm at his shoulder and the other hand up in guard, then comes down with his whole weight and the palm falls onto the chest (the follow-through)","_legal":["hands_open_or_claw","no_held_raise","not_at_hip"]},
+   "pu.su_turn.chamber": {"family":"upright","lean":12,"hips":[-6,-6,0],"spine":{"lean":10,"twist":-70,"bend":8},"head":{"pitch":6,"yaw":26},"hand_r":[-14,58,26.5],"hand_l":[16,54,-6],"foot_r":[-14,2.5,10],"foot_l":[12,2.5,-8],"hands":{"r":"open","l":"open"},"pole_hand_r":[-10,-2,14],"_orig":"PROVISIONAL: a full turn of the body, one blade hand swung out at the end of it, the rear foot trailing off the ground (the wind-up)","_legal":["hands_open_or_claw"]},
+-  "pu.su_turn.contact": {"family":"upright_lunge","lean":30,"hips":[28,-6,0],"spine":{"lean":10,"twist":66,"bend":-8},"head":{"pitch":4,"yaw":-10},"hand_r":[62,62,20],"hand_l":[14,56,-6],"pole_hand_r":[4,-2,14],"foot_r":[-5,18,8],"foot_l":[34,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a full turn of the body, one blade hand swung out at the end of it, the rear foot trailing off the ground","_legal":["hands_open_or_claw"]},
++  "pu.su_turn.contact": {"family":"upright_lunge","lean":30,"hips":[28,-6,0],"spine":{"lean":10,"twist":66,"bend":-8},"head":{"pitch":4,"yaw":-10},"hand_r":[62,62,20],"hand_l":[27.8,54.3,-12.8],"pole_hand_r":[4,-2,14],"foot_r":[-5,18,8],"foot_l":[34,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a full turn of the body, one blade hand swung out at the end of it, the rear foot trailing off the ground","_legal":["hands_open_or_claw"]},
+   "pu.su_turn.follow": {"family":"upright","lean":26,"hips":[20,-5,0],"spine":{"lean":8,"twist":38,"bend":-4.5},"head":{"pitch":5,"yaw":-2},"hand_r":[40,66,10],"hand_l":[18,56,-6],"pole_hand_r":[4,-2,14],"foot_r":[-7,8,8],"foot_l":[26,2.5,-8],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a full turn of the body, one blade hand swung out at the end of it, the rear foot trailing off the ground (the follow-through)","_legal":["hands_open_or_claw"]},
+   "pu.su_edge_step.chamber": {"family":"upright","lean":-4,"hips":[-4,-2,0],"spine":{"lean":-2,"twist":-10},"head":{"pitch":-2,"yaw":6},"hand_r":[6,60,12],"hand_l":[16,60,-8],"foot_r":[-4,30,10],"foot_l":[10,2.5,-8],"hands":{"r":"open","l":"open"},"pole_foot_r":[8,8,2],"_orig":"PROVISIONAL: a stepping kick with the edge of the foot: the leg chambered close, hands up, the body carried a pace behind one straight leg into the gut (the wind-up)"},
+   "pu.su_edge_step.contact": {"family":"upright_lunge","lean":-16,"hips":[30,-2,0],"spine":{"lean":-12,"twist":20},"head":{"pitch":0},"hand_r":[10,62,14],"hand_l":[22,64,-10],"foot_r":[58,40,8],"foot_l":[30,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a stepping kick with the edge of the foot: the leg chambered close, hands up, the body carried a pace behind one straight leg into the gut"},
+   "pu.su_edge_step.follow": {"family":"upright","lean":-4.5,"hips":[26,-2,0],"spine":{"lean":-4,"twist":5.5},"head":{"pitch":2.5,"yaw":3.5},"hand_r":[12,60,13.5],"hand_l":[23,60,-7.5],"foot_r":[44,16,8],"foot_l":[28,2.5,-8],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a stepping kick with the edge of the foot: the leg chambered close, hands up, the body carried a pace behind one straight leg into the gut (the follow-through)"},
+   "pu.su_blade_jaw.chamber": {"family":"upright","lean":-6,"hips":[-6,-2,0],"spine":{"lean":-4,"twist":-18},"head":{"pitch":-2,"yaw":8},"hand_r":[0,62,14],"hand_l":[16,62,-8],"foot_r":[-14,2.5,10],"foot_l":[12,2.5,-8],"hands":{"r":"open","l":"open"},"pole_hand_r":[-10,6,10],"_orig":"PROVISIONAL: a stepping blade hand: the striking side drawn back close to him, then one straight line to the jaw as the body steps through; the lead hand open (the wind-up)","_legal":["hands_open_or_claw"]},
+-  "pu.su_blade_jaw.contact": {"family":"upright_lunge","lean":18,"hips":[32,-6,0],"spine":{"lean":12,"twist":24},"head":{"pitch":6},"hand_r":[66,82,6],"pole_hand_r":[2,8,8],"hand_l":[8,50,-12],"foot_r":[-4,6,9],"foot_l":[34,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a stepping blade hand: the striking side drawn back close to him, then one straight line to the jaw as the body steps through; the lead hand open","_legal":["hands_open_or_claw"]},
++  "pu.su_blade_jaw.contact": {"family":"upright_lunge","lean":18,"hips":[32,-6,0],"spine":{"lean":12,"twist":24},"head":{"pitch":6},"hand_r":[66,82,6],"pole_hand_r":[2,8,8],"hand_l":[38.2,50.3,-13.2],"foot_r":[-4,6,9],"foot_l":[34,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a stepping blade hand: the striking side drawn back close to him, then one straight line to the jaw as the body steps through; the lead hand open","_legal":["hands_open_or_claw"]},
+   "pu.su_blade_jaw.follow": {"family":"upright","lean":14.5,"hips":[26,-6,0],"spine":{"lean":9.5,"twist":8},"head":{"pitch":6,"yaw":3.5},"hand_r":[44,62,4],"pole_hand_r":[2,8,8],"hand_l":[8,50,-12],"foot_r":[-4,4,9],"foot_l":[23.5,2.5,-7.5],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a stepping blade hand: the striking side drawn back close to him, then one straight line to the jaw as the body steps through; the lead hand open (the follow-through)","_legal":["hands_open_or_claw"]},
+   "pu.su_edge_unwind.chamber": {"family":"upright","lean":2,"hips":[-4,-2,0],"spine":{"lean":2,"twist":-40},"head":{"pitch":0,"yaw":-10},"hand_r":[10,60,14],"hand_l":[14,58,-10],"foot_r":[6,14,-12],"foot_l":[10,2.5,-8],"hands":{"r":"open","l":"open"},"hip_twist":-24,"pole_foot_r":[4,6,-2],"_orig":"PROVISIONAL: an unwinding kick with the edge of the foot: the leg crossed over his own centre with the chin over his shoulder, the body opening out as the foot comes back through the gut (the wind-up)"},
+   "pu.su_edge_unwind.contact": {"family":"upright_lunge","lean":-8,"hip_twist":46,"hips":[16,-2,0],"spine":{"lean":-4,"twist":44},"head":{"yaw":-24},"hand_r":[10,62,16],"hand_l":[18,66,-12],"foot_r":[48,40,16],"foot_l":[14,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: an unwinding kick with the edge of the foot: the leg crossed over his own centre with the chin over his shoulder, the body opening out as the foot comes back through the gut"},
+@@ -22,8 +22,8 @@
+   "pu.su_ball_heave.contact": {"family":"upright_lunge","lean":-10,"hips":[10,2,0],"spine":{"lean":-6},"head":{"pitch":0},"hand_r":[12,64,14],"hand_l":[22,66,-10],"foot_r":[46,44,8],"foot_l":[14,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a heaving kick with the ball of the foot: sunk deep on the standing leg, both legs drive him up and the foot up into the gut; the standing foot keeps its place","_legal":["no_leap"]},
+   "pu.su_ball_heave.follow": {"family":"upright","lean":-1,"hips":[8,0,0],"spine":{"lean":-0.5,"twist":-5.5},"head":{"pitch":2.5,"yaw":3.5},"hand_r":[12,62,14],"hand_l":[23,61,-7.5],"foot_r":[30,18,8],"foot_l":[12.5,2.5,-7.5],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a heaving kick with the ball of the foot: sunk deep on the standing leg, both legs drive him up and the foot up into the gut; the standing foot keeps its place (the follow-through)","_legal":["no_leap"]},
+   "pu.su_hammer_arm.chamber": {"family":"upright","lean":-2,"hips":[-2,2,0],"spine":{"lean":-2,"twist":-6},"head":{"pitch":-4,"yaw":8},"hand_r":[6,66,10],"hand_l":[16,60,-8],"foot_r":[-6,2.5,9],"foot_l":[10,2.5,-8],"hands":{"r":"fist","l":"open"},"pole_hand_r":[-8,6,8],"_orig":"PROVISIONAL: a falling hammer fist to the arm: risen tall with one fist at his shoulder, the body comes down and the fist drops onto the rival arm; back in his guard at once (the wind-up)","_legal":["no_clasp","no_held_raise"]},
+-  "pu.su_hammer_arm.contact": {"family":"upright_lunge","lean":18,"hips":[16,-8,0],"spine":{"lean":12,"twist":12},"head":{"pitch":12},"hand_r":[42,64,10],"pole_hand_r":[-2,12,8],"hand_l":[20,58,-8],"foot_r":[-4,2.5,9],"foot_l":[22,2.5,-8],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: a falling hammer fist to the arm: risen tall with one fist at his shoulder, the body comes down and the fist drops onto the rival arm; back in his guard at once","_legal":["no_clasp","no_held_raise"]},
+-  "pu.su_hammer_arm.follow": {"family":"upright","lean":12.5,"hips":[6,-5,0],"spine":{"lean":8,"twist":-5},"head":{"pitch":8,"yaw":5.5},"hand_r":[22.5,59,12],"pole_hand_r":[-2,12,8],"hand_l":[23,56,-6],"foot_r":[-7.5,2.5,8.5],"foot_l":[14.5,2.5,-7.5],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a falling hammer fist to the arm: risen tall with one fist at his shoulder, the body comes down and the fist drops onto the rival arm; back in his guard at once (the follow-through)","_legal":["no_clasp","no_held_raise"]},
++  "pu.su_hammer_arm.contact": {"family":"upright_lunge","lean":18,"hips":[16,-8,0],"spine":{"lean":12,"twist":12},"head":{"pitch":12},"hand_r":[42,64,10],"pole_hand_r":[-2,12,8],"hand_l":[26.6,54.1,-9.2],"foot_r":[-4,2.5,9],"foot_l":[22,2.5,-8],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: a falling hammer fist to the arm: risen tall with one fist at his shoulder, the body comes down and the fist drops onto the rival arm; back in his guard at once","_legal":["no_clasp","no_held_raise"]},
++  "pu.su_hammer_arm.follow": {"family":"upright","lean":12.5,"hips":[6,-5,0],"spine":{"lean":8,"twist":-5},"head":{"pitch":8,"yaw":5.5},"hand_r":[22.5,59,12],"pole_hand_r":[-2,12,8],"hand_l":[25,54.5,-6.5],"foot_r":[-7.5,2.5,8.5],"foot_l":[14.5,2.5,-7.5],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a falling hammer fist to the arm: risen tall with one fist at his shoulder, the body comes down and the fist drops onto the rival arm; back in his guard at once (the follow-through)","_legal":["no_clasp","no_held_raise"]},
+   "pu.su_knee_legs.chamber": {"family":"upright","lean":4,"hips":[-4,-2,0],"spine":{"lean":2,"twist":-40},"head":{"pitch":-2,"yaw":24},"hand_r":[14,60,12],"hand_l":[20,62,-8],"foot_r":[-10,14,12],"pole_foot_r":[10,1,0],"foot_l":[10,2.5,-8],"hands":{"r":"open","l":"open"},"hip_twist":-22,"_orig":"PROVISIONAL: a turning knee: the back half turned, the knee carried round low on an arc into the rival legs, both open hands up for balance (the wind-up)","_legal":["no_clasp"]},
+   "pu.su_knee_legs.contact": {"family":"upright_lunge","lean":0,"hip_twist":26,"hips":[14,-6,0],"spine":{"lean":2,"twist":34},"head":{"pitch":6,"yaw":-14},"hand_r":[22,62,12],"hand_l":[28,66,-8],"foot_r":[26,18,16],"pole_foot_r":[8,1,8],"foot_l":[8,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a turning knee: the back half turned, the knee carried round low on an arc into the rival legs, both open hands up for balance","_legal":["no_clasp"]},
+   "pu.su_knee_legs.follow": {"family":"upright","lean":7,"hip_twist":8,"hips":[10,-4,0],"spine":{"lean":5,"twist":16},"head":{"pitch":6,"yaw":1.5},"hand_r":[16.5,58.5,12.5],"hand_l":[25,58.5,-6],"foot_r":[14,8,12],"pole_foot_r":[8,1,8],"foot_l":[10,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a turning knee: the back half turned, the knee carried round low on an arc into the rival legs, both open hands up for balance (the follow-through)","_legal":["no_clasp"]},
+diff --git a/data/anim/waves/protag11.poses.json b/data/anim/waves/protag11.poses.json
+index c4c8a90..51a0afc 100644
+--- a/data/anim/waves/protag11.poses.json
++++ b/data/anim/waves/protag11.poses.json
+@@ -13,9 +13,9 @@
+   "pk.bolt_sweep.contact": {"family":"upright","lean":-2,"hips":[8,3,0],"spine":{"lean":-4,"twist":12},"head":{"pitch":4},"hand_r":[42,44,6],"pole_hand_r":[14,14,6],"hand_l":[14,62,-8],"foot_r":[-4,2.5,9],"foot_l":[20,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a flat palm swept inward across the gut from the outside","_legal":["hands_open_or_claw","not_at_hip"]},
+   "pk.bolt_sweep.follow": {"family":"upright","lean":6.5,"hips":[4,-2,0],"spine":{"lean":3,"twist":-5},"head":{"pitch":5.5,"yaw":5.5},"hand_r":[22.5,53,11],"pole_hand_r":[14,14,6],"hand_l":[21,57,-6],"foot_r":[-7.5,2.5,8.5],"foot_l":[13.5,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a flat palm swept inward across the gut from the outside (the follow-through)","_legal":["hands_open_or_claw","not_at_hip"]},
+   "pk.blast_chest.chamber": {"family":"upright","lean":-2,"hips":[-4,-2,0],"spine":{"lean":-2,"twist":-12},"head":{"pitch":-2,"yaw":8},"hand_r":[6,62,12],"hand_l":[14,60,-8],"foot_r":[-8,2.5,9],"foot_l":[12,2.5,-7],"hands":{"r":"open","l":"open"},"pole_hand_r":[-8,6,10],"_orig":"PROVISIONAL: the blast: a 12-tick gather with the palm held at the shoulder and the other hand open in guard, then the palm set on the chest (the wind-up)","_legal":["hands_open_or_claw","not_at_hip"]},
+-  "pk.blast_chest.contact": {"family":"upright_lunge","lean":8,"hips":[14,-4,0],"spine":{"lean":6,"twist":12},"head":{"pitch":0},"hand_r":[52,56,8],"pole_hand_r":[4,-8,8],"hand_l":[14,60,-8],"foot_r":[-4,2.5,9],"foot_l":[24,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: the blast: a 12-tick gather with the palm held at the shoulder and the other hand open in guard, then the palm set on the chest","_legal":["hands_open_or_claw","not_at_hip"]},
+-  "pk.blast_chest.follow": {"family":"upright","lean":9,"hips":[7,-4,0],"spine":{"lean":6,"twist":-2.5},"head":{"pitch":3.5,"yaw":5},"hand_r":[29,56.5,11],"pole_hand_r":[4,-8,8],"hand_l":[20,57,-6],"foot_r":[-7,2.5,8.5],"foot_l":[16,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: the blast: a 12-tick gather with the palm held at the shoulder and the other hand open in guard, then the palm set on the chest (the follow-through)","_legal":["hands_open_or_claw","not_at_hip"]},
++  "pk.blast_chest.contact": {"family":"upright_lunge","lean":8,"hips":[14,-4,0],"spine":{"lean":6,"twist":12},"head":{"pitch":0},"hand_r":[52,56,8],"pole_hand_r":[4,-8,8],"hand_l":[18.4,59.3,-8.4],"foot_r":[-4,2.5,9],"foot_l":[24,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: the blast: a 12-tick gather with the palm held at the shoulder and the other hand open in guard, then the palm set on the chest","_legal":["hands_open_or_claw","not_at_hip"]},
++  "pk.blast_chest.follow": {"family":"upright","lean":9,"hips":[7,-4,0],"spine":{"lean":6,"twist":-2.5},"head":{"pitch":3.5,"yaw":5},"hand_r":[29,56.5,11],"pole_hand_r":[4,-8,8],"hand_l":[22,56.5,-6.5],"foot_r":[-7,2.5,8.5],"foot_l":[16,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: the blast: a 12-tick gather with the palm held at the shoulder and the other hand open in guard, then the palm set on the chest (the follow-through)","_legal":["hands_open_or_claw","not_at_hip"]},
+   "pk.blast_gut.chamber": {"family":"upright","lean":0,"hips":[-4,-4,0],"spine":{"lean":0,"twist":-12},"head":{"pitch":0,"yaw":8},"hand_r":[6,60,12],"hand_l":[14,60,-8],"foot_r":[-8,2.5,9],"foot_l":[12,2.5,-7],"hands":{"r":"open","l":"open"},"pole_hand_r":[-8,4,10],"_orig":"PROVISIONAL: the blast on the gut: the same gather, the palm set low as the body drops behind it (the wind-up)","_legal":["hands_open_or_claw","not_at_hip"]},
+-  "pk.blast_gut.contact": {"family":"upright_lunge","lean":12,"hips":[14,-8,0],"spine":{"lean":8,"twist":10},"head":{"pitch":2},"hand_r":[52,44,8],"pole_hand_r":[4,-10,8],"hand_l":[14,60,-8],"foot_r":[-4,2.5,9],"foot_l":[24,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: the blast on the gut: the same gather, the palm set low as the body drops behind it","_legal":["hands_open_or_claw","not_at_hip"]},
+-  "pk.blast_gut.follow": {"family":"upright","lean":11,"hips":[7,-5.5,0],"spine":{"lean":7,"twist":-3},"head":{"pitch":4.5,"yaw":5},"hand_r":[29,52,11],"pole_hand_r":[4,-10,8],"hand_l":[20,57,-6],"foot_r":[-7,2.5,8.5],"foot_l":[16,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: the blast on the gut: the same gather, the palm set low as the body drops behind it (the follow-through)","_legal":["hands_open_or_claw","not_at_hip"]}
++  "pk.blast_gut.contact": {"family":"upright_lunge","lean":12,"hips":[14,-8,0],"spine":{"lean":8,"twist":10},"head":{"pitch":2},"hand_r":[52,44,8],"pole_hand_r":[4,-10,8],"hand_l":[21.9,56.9,-8.9],"foot_r":[-4,2.5,9],"foot_l":[24,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: the blast on the gut: the same gather, the palm set low as the body drops behind it","_legal":["hands_open_or_claw","not_at_hip"]},
++  "pk.blast_gut.follow": {"family":"upright","lean":11,"hips":[7,-5.5,0],"spine":{"lean":7,"twist":-3},"head":{"pitch":4.5,"yaw":5},"hand_r":[29,52,11],"pole_hand_r":[4,-10,8],"hand_l":[23,56,-6.5],"foot_r":[-7,2.5,8.5],"foot_l":[16,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: the blast on the gut: the same gather, the palm set low as the body drops behind it (the follow-through)","_legal":["hands_open_or_claw","not_at_hip"]}
+  }}
+diff --git a/data/anim/waves/protag12.poses.json b/data/anim/waves/protag12.poses.json
+index 85b5177..9aec22f 100644
+--- a/data/anim/waves/protag12.poses.json
++++ b/data/anim/waves/protag12.poses.json
+@@ -1,12 +1,12 @@
+ {"schema":"anim.wave.poses/1","_about":"protag12: poses of the Anti-hero's key strikes, generated by render/anim/tools/wave_gen.mjs from render/anim/tools/waves/protag12.mjs and docs/combat/pending/strikes.antihero.protag12.json. Parked: baked only with --waves, no live match plays them. Render only, outside the sim's data hash.",
+  "poses": {
+   "pv.su_blade_fall.chamber": {"family":"upright","lean":-8,"hips":[-2,3,0],"spine":{"lean":-8,"twist":-10},"head":{"pitch":-4,"yaw":8},"hand_r":[-2,66,15],"hand_l":[16,58,-8],"foot_r":[-6,2.5,9],"foot_l":[8,2.5,-8],"hands":{"r":"open","l":"open"},"pole_hand_r":[-10,10,12],"_orig":"PROVISIONAL: he rises tall with one blade hand cocked at the shoulder and the other hand up in guard, then folds down behind it and the edge of the hand falls on a slant onto the chest (the wind-up)","_legal":["hands_open_or_claw","no_held_raise","not_at_hip"]},
+-  "pv.su_blade_fall.contact": {"family":"upright_lunge","lean":34,"hips":[26,-12,0],"spine":{"lean":24,"twist":14},"head":{"pitch":22},"hand_r":[56,44,7],"pole_hand_r":[-2,22,10],"hand_l":[20,50,-11],"foot_r":[-2,4,9],"foot_l":[34,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: he rises tall with one blade hand cocked at the shoulder and the other hand up in guard, then folds down behind it and the edge of the hand falls on a slant onto the chest","_legal":["hands_open_or_claw","no_held_raise","not_at_hip"]},
++  "pv.su_blade_fall.contact": {"family":"upright_lunge","lean":34,"hips":[26,-12,0],"spine":{"lean":24,"twist":14},"head":{"pitch":22},"hand_r":[56,44,7],"pole_hand_r":[-2,22,10],"hand_l":[39.8,38.2,-13.2],"foot_r":[-2,4,9],"foot_l":[34,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: he rises tall with one blade hand cocked at the shoulder and the other hand up in guard, then folds down behind it and the edge of the hand falls on a slant onto the chest","_legal":["hands_open_or_claw","no_held_raise","not_at_hip"]},
+   "pv.su_blade_fall.follow": {"family":"upright","lean":28,"hips":[22,-12,0],"spine":{"lean":24,"twist":8},"head":{"pitch":22,"yaw":3.5},"hand_r":[38,36,8],"pole_hand_r":[-2,22,10],"hand_l":[26,58,-12],"foot_r":[-5,3,8],"foot_l":[23.5,2.5,-7.5],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: he rises tall with one blade hand cocked at the shoulder and the other hand up in guard, then folds down behind it and the edge of the hand falls on a slant onto the chest (the follow-through)","_legal":["hands_open_or_claw","no_held_raise","not_at_hip"]},
+   "pv.su_palm_arm.chamber": {"family":"upright","lean":-6,"hips":[-6,-2,0],"spine":{"lean":-4,"twist":-18},"head":{"pitch":-2,"yaw":8},"hand_r":[0,58,14],"hand_l":[16,62,-8],"foot_r":[-14,2.5,10],"foot_l":[12,2.5,-8],"hands":{"r":"open","l":"open"},"pole_hand_r":[-10,4,10],"_orig":"PROVISIONAL: a stepping palm: the striking hand drawn back close to him, then one straight line to the arm as the body steps through, the heel of the palm set on it; the lead hand open in guard (the wind-up)","_legal":["hands_open_or_claw","not_at_hip"]},
+-  "pv.su_palm_arm.contact": {"family":"upright_lunge","lean":18,"hips":[30,-8,0],"spine":{"lean":10,"twist":24},"head":{"pitch":8},"hand_r":[62,56,8],"pole_hand_r":[2,6,8],"hand_l":[8,52,-12],"foot_r":[-4,6,9],"foot_l":[32,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a stepping palm: the striking hand drawn back close to him, then one straight line to the arm as the body steps through, the heel of the palm set on it; the lead hand open in guard","_legal":["hands_open_or_claw","not_at_hip"]},
++  "pv.su_palm_arm.contact": {"family":"upright_lunge","lean":18,"hips":[30,-8,0],"spine":{"lean":10,"twist":24},"head":{"pitch":8},"hand_r":[62,56,8],"pole_hand_r":[2,6,8],"hand_l":[36,49.7,-13.7],"foot_r":[-4,6,9],"foot_l":[32,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a stepping palm: the striking hand drawn back close to him, then one straight line to the arm as the body steps through, the heel of the palm set on it; the lead hand open in guard","_legal":["hands_open_or_claw","not_at_hip"]},
+   "pv.su_palm_arm.follow": {"family":"upright","lean":14.5,"hips":[24,-8,0],"spine":{"lean":8,"twist":8},"head":{"pitch":7,"yaw":3.5},"hand_r":[42,56,6],"pole_hand_r":[2,6,8],"hand_l":[8,52,-12],"foot_r":[-4,4,9],"foot_l":[22.5,2.5,-7.5],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a stepping palm: the striking hand drawn back close to him, then one straight line to the arm as the body steps through, the heel of the palm set on it; the lead hand open in guard (the follow-through)","_legal":["hands_open_or_claw","not_at_hip"]},
+   "pv.palm_turn.chamber": {"family":"upright","lean":10,"hips":[3,-4,0],"spine":{"lean":4,"twist":-27.5,"bend":8},"head":{"pitch":3,"yaw":8},"hand_r":[10,58,25],"hand_l":[20,59,-6],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"r":"open","l":"open"},"pole_hand_r":[-4,-2,12],"_orig":"PROVISIONAL: a turning palm-heel: the open hand carried out and round on the backfist arc, the arm bent through the turn, the heel of the palm set on the chest, the palm leading (the wind-up)","_legal":["hands_open_or_claw","not_at_hip"]},
+-  "pv.palm_turn.contact": {"family":"upright_lunge","lean":14,"hips":[18,-3,0],"spine":{"lean":0,"twist":-30,"bend":-4},"head":{"pitch":0,"yaw":-10},"hand_r":[44,58,11],"pole_hand_r":[4,4,9],"hand_l":[12,61,-8],"foot_r":[-6,2.5,9],"foot_l":[26,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a turning palm-heel: the open hand carried out and round on the backfist arc, the arm bent through the turn, the heel of the palm set on the chest, the palm leading","_legal":["hands_open_or_claw","not_at_hip"]},
++  "pv.palm_turn.contact": {"family":"upright_lunge","lean":14,"hips":[18,-3,0],"spine":{"lean":0,"twist":-30,"bend":-4},"head":{"pitch":0,"yaw":-10},"hand_r":[44,58,11],"pole_hand_r":[4,4,9],"hand_l":[28.8,59.2,-5.5],"foot_r":[-6,2.5,9],"foot_l":[26,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a turning palm-heel: the open hand carried out and round on the backfist arc, the arm bent through the turn, the heel of the palm set on the chest, the palm leading","_legal":["hands_open_or_claw","not_at_hip"]},
+   "pv.palm_turn.follow": {"family":"upright","lean":22,"hips":[12,-4,0],"spine":{"lean":4,"twist":34.5,"bend":-2},"head":{"pitch":3,"yaw":4},"hand_r":[32,60,10],"pole_hand_r":[4,4,9],"hand_l":[18,61,-6],"foot_r":[-7.5,2.5,8.5],"foot_l":[19.5,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a turning palm-heel: the open hand carried out and round on the backfist arc, the arm bent through the turn, the heel of the palm set on the chest, the palm leading (the follow-through)","_legal":["hands_open_or_claw","not_at_hip"]}
+  }}
+diff --git a/data/anim/waves/protag7.poses.json b/data/anim/waves/protag7.poses.json
+index 2eb2bee..9027942 100644
+--- a/data/anim/waves/protag7.poses.json
++++ b/data/anim/waves/protag7.poses.json
+@@ -7,8 +7,8 @@
+   "pm.back_chop.contact": {"family":"upright_lunge","lean":14,"hips":[18,-3,0],"spine":{"lean":-2,"twist":-34,"bend":-6},"head":{"pitch":2,"yaw":-14},"hand_r":[46,58,12],"hand_l":[12,58,-8],"pole_hand_r":[2,8,10],"foot_r":[-6,2.5,9],"foot_l":[26,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a blade hand swung back out across the rival arm, the back of the forearm leading, the chest opened away"},
+   "pm.back_chop.follow": {"family":"upright","lean":22,"hips":[12,-4,0],"spine":{"lean":4,"twist":30},"head":{"pitch":6,"yaw":4},"hand_r":[34,70,10],"hand_l":[18,58,-6],"pole_hand_r":[0,-4,10],"foot_r":[-6,2.5,9],"foot_l":[19,2.5,-7],"hands":{"l":"fist","r":"fist"},"_orig":"a blade hand swung back out across the rival arm, the back of the forearm leading, the chest opened away (the follow-through)"},
+   "pm.palm_rise.chamber": {"family":"crouched","lean":12,"hips":[2,-10,0],"spine":{"lean":8,"twist":-10},"head":{"pitch":6,"yaw":8},"hand_r":[22,22,10],"hand_l":[22,56,-8],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"r":"open","l":"open"},"pole_hand_r":[-8,-6,8],"_orig":"the heel of an open palm lifted into the gut from a low crouch, the other hand across the chest (the wind-up)","_legal":["hands_open_or_claw","not_at_hip","no_leap"]},
+-  "pm.palm_rise.contact": {"family":"crouched","lean":20,"hips":[12,-10,0],"spine":{"lean":6,"twist":18},"head":{"pitch":6},"hand_r":[46,52,8],"pole_hand_r":[-4,-2,8],"hand_l":[12,54,-6],"foot_r":[-8,2.5,9],"foot_l":[22,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"the heel of an open palm lifted into the gut from a low crouch, the other hand across the chest","_legal":["hands_open_or_claw","not_at_hip","no_leap"]},
+-  "pm.palm_rise.follow": {"family":"crouched","lean":15.5,"hips":[7.5,-7.5,0],"spine":{"lean":6,"twist":4.5},"head":{"pitch":6,"yaw":3.5},"hand_r":[31.5,54.5,10.5],"pole_hand_r":[-4,-2,8],"hand_l":[17.5,54.5,-5.5],"foot_r":[-8.5,2.5,8.5],"foot_l":[17,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"the heel of an open palm lifted into the gut from a low crouch, the other hand across the chest (the follow-through)","_legal":["hands_open_or_claw","not_at_hip","no_leap"]},
++  "pm.palm_rise.contact": {"family":"crouched","lean":20,"hips":[12,-10,0],"spine":{"lean":6,"twist":18},"head":{"pitch":6},"hand_r":[46,52,8],"pole_hand_r":[-4,-2,8],"hand_l":[20.6,51.1,-8.7],"foot_r":[-8,2.5,9],"foot_l":[22,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"the heel of an open palm lifted into the gut from a low crouch, the other hand across the chest","_legal":["hands_open_or_claw","not_at_hip","no_leap"]},
++  "pm.palm_rise.follow": {"family":"crouched","lean":15.5,"hips":[7.5,-7.5,0],"spine":{"lean":6,"twist":4.5},"head":{"pitch":6,"yaw":3.5},"hand_r":[31.5,54.5,10.5],"pole_hand_r":[-4,-2,8],"hand_l":[22,53,-7],"foot_r":[-8.5,2.5,8.5],"foot_l":[17,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"the heel of an open palm lifted into the gut from a low crouch, the other hand across the chest (the follow-through)","_legal":["hands_open_or_claw","not_at_hip","no_leap"]},
+   "pm.palm_lift.chamber": {"family":"crouched","lean":16,"hips":[2,-12,0],"spine":{"lean":8,"twist":-16},"head":{"pitch":10,"yaw":6},"hand_r":[22,26,12],"hand_l":[20,52,-6],"foot_r":[-10,2.5,10],"foot_l":[12,2.5,-8],"hands":{"l":"open","r":"open"},"_orig":"the heel of an open palm lifted under the chin, the body rising behind it, no turn, the arm lowering at once (the wind-up)","_legal":["hands_open_or_claw","not_at_hip","no_leap","no_held_raise"]},
+   "pm.palm_lift.contact": {"family":"upright_lunge","lean":8,"hips":[14,-2,0],"spine":{"lean":-4,"twist":14},"head":{"pitch":-10,"yaw":4},"hand_r":[50,80,8],"hand_l":[16,56,-8],"foot_r":[-6,2.5,9],"foot_l":[25,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"the heel of an open palm lifted under the chin, the body rising behind it, no turn, the arm lowering at once","_legal":["hands_open_or_claw","not_at_hip","no_leap","no_held_raise"]},
+   "pm.palm_lift.follow": {"family":"upright","lean":8,"hips":[9,-1,0],"spine":{"lean":-6,"twist":14},"head":{"pitch":-8,"yaw":4},"hand_r":[34,70,8],"hand_l":[16,56,-8],"foot_r":[-6,2.5,9],"foot_l":[16,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"the heel of an open palm lifted under the chin, the body rising behind it, no turn, the arm lowering at once (the follow-through)","_legal":["hands_open_or_claw","not_at_hip","no_leap","no_held_raise"]},
+diff --git a/data/anim/waves/rival4.poses.json b/data/anim/waves/rival4.poses.json
+index 11c269a..895c847 100644
+--- a/data/anim/waves/rival4.poses.json
++++ b/data/anim/waves/rival4.poses.json
+@@ -40,9 +40,9 @@
+   "rm.knee_hook.contact": {"family":"upright_lunge","lean":-2,"hips":[8,-4,0],"spine":{"lean":0,"twist":22},"head":{"pitch":8},"hand_r":[22,62,12],"hand_l":[28,66,-8],"foot_r":[20,16,16],"pole_foot_r":[8,1,8],"foot_l":[6,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"the knee swung in low on a short arc to the legs, the hands up for balance"},
+   "rm.knee_hook.follow": {"family":"upright","lean":3.5,"hips":[5.5,-4,0],"spine":{"lean":2.5,"twist":6.5},"head":{"pitch":7,"yaw":3.5},"hand_r":[18.5,60,12.5],"hand_l":[26,61,-6.5],"foot_r":[7,10,12.5],"pole_foot_r":[8,1,8],"foot_l":[8.5,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"the knee swung in low on a short arc to the legs, the hands up for balance (the follow-through)"},
+   "rm.fist_rise.chamber": {"family":"crouched","lean":14,"hips":[0,-12,0],"spine":{"lean":8,"twist":-16},"head":{"pitch":10,"yaw":6},"hand_r":[20,28,10],"hand_l":[20,52,-6],"foot_r":[-10,2.5,10],"foot_l":[12,2.5,-8],"hands":{"l":"open","r":"fist"},"_orig":"a fist driven up into the chest from a low crouch, the whole body rising behind it, the other arm low across the body (the wind-up)","_legal":["no_leap","no_held_raise"]},
+-  "rm.fist_rise.contact": {"family":"crouched","lean":22,"hips":[20,-8,0],"spine":{"lean":-2,"twist":34},"head":{"pitch":0,"yaw":4},"hand_r":[54,60,8],"hand_l":[16,56,-8],"foot_r":[-6,2.5,9],"foot_l":[25,2.5,-7],"hands":{"l":"open","r":"fist"},"_orig":"a fist driven up into the chest from a low crouch, the whole body rising behind it, the other arm low across the body","_legal":["no_leap","no_held_raise"]},
++  "rm.fist_rise.contact": {"family":"crouched","lean":22,"hips":[20,-8,0],"spine":{"lean":-2,"twist":34},"head":{"pitch":0,"yaw":4},"hand_r":[54,60,8],"hand_l":[24.8,55.4,-10],"foot_r":[-6,2.5,9],"foot_l":[25,2.5,-7],"hands":{"l":"open","r":"fist"},"_orig":"a fist driven up into the chest from a low crouch, the whole body rising behind it, the other arm low across the body","_legal":["no_leap","no_held_raise"]},
+   "rm.fist_rise.follow": {"family":"upright","lean":8,"hips":[9,-1,0],"spine":{"lean":-6,"twist":14},"head":{"pitch":-8,"yaw":4},"hand_r":[34,56,8],"hand_l":[16,56,-8],"foot_r":[-6,2.5,9],"foot_l":[16,2.5,-7],"hands":{"l":"open","r":"fist"},"_orig":"a fist driven up into the chest from a low crouch, the whole body rising behind it, the other arm low across the body (the follow-through)","_legal":["no_leap","no_held_raise"]},
+   "rm.heel_backhand.chamber": {"family":"upright","lean":10,"hips":[3,-4,0],"spine":{"lean":4,"twist":-24,"bend":8},"head":{"pitch":6,"yaw":8},"hand_r":[8,62,27],"hand_l":[20,56,-6],"pole_hand_r":[-4,-2,12],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"l":"fist","r":"fist"},"_orig":"the back of the fist swung out hard across the rival arm, the whole torso thrown round behind it (the wind-up)"},
+-  "rm.heel_backhand.contact": {"family":"upright_lunge","lean":18,"hips":[20,-4,0],"spine":{"lean":-2,"twist":-34,"bend":-6},"head":{"pitch":2,"yaw":-14},"hand_r":[52,60,12],"hand_l":[12,58,-8],"pole_hand_r":[2,8,10],"foot_r":[-6,2.5,9],"foot_l":[26,2.5,-7],"hands":{"l":"open","r":"fist"},"_orig":"the back of the fist swung out hard across the rival arm, the whole torso thrown round behind it"},
++  "rm.heel_backhand.contact": {"family":"upright_lunge","lean":18,"hips":[20,-4,0],"spine":{"lean":-2,"twist":-34,"bend":-6},"head":{"pitch":2,"yaw":-14},"hand_r":[52,60,12],"hand_l":[20.6,60.1,2.2],"pole_hand_r":[2,8,10],"foot_r":[-6,2.5,9],"foot_l":[26,2.5,-7],"hands":{"l":"open","r":"fist"},"_orig":"the back of the fist swung out hard across the rival arm, the whole torso thrown round behind it"},
+   "rm.heel_backhand.follow": {"family":"upright","lean":22,"hips":[12,-4,0],"spine":{"lean":4,"twist":30},"head":{"pitch":6,"yaw":4},"hand_r":[34,70,10],"hand_l":[18,58,-6],"pole_hand_r":[0,-4,10],"foot_r":[-6,2.5,9],"foot_l":[19,2.5,-7],"hands":{"l":"fist","r":"fist"},"_orig":"the back of the fist swung out hard across the rival arm, the whole torso thrown round behind it (the follow-through)"}
+  }}
+diff --git a/data/anim/waves/rival7.poses.json b/data/anim/waves/rival7.poses.json
+index c107121..1fe9288 100644
+--- a/data/anim/waves/rival7.poses.json
++++ b/data/anim/waves/rival7.poses.json
+@@ -1,7 +1,7 @@
+ {"schema":"anim.wave.poses/1","_about":"rival7: poses of the Anti-hero's key strikes, generated by render/anim/tools/wave_gen.mjs from render/anim/tools/waves/rival7.mjs and docs/combat/pending/strikes.antihero.rival7.json. Parked: baked only with --waves, no live match plays them. Render only, outside the sim's data hash.",
+  "poses": {
+   "ru.su_ram.chamber": {"family":"crouched","lean":12,"hips":[-8,-14,0],"spine":{"lean":10,"twist":-18},"head":{"pitch":2,"yaw":8},"hand_r":[-8,58,16],"hand_l":[16,48,-8],"foot_r":[-16,2.5,10],"foot_l":[10,2.5,-8],"hands":{"r":"fist","l":"open"},"pole_hand_r":[-12,8,12],"_orig":"PROVISIONAL: a long low lunge, the whole body behind one straight fist (the wind-up)"},
+-  "ru.su_ram.contact": {"family":"upright_lunge","lean":44,"hips":[34,-14,0],"spine":{"lean":24,"twist":20},"head":{"pitch":12},"hand_r":[66,50,6],"pole_hand_r":[4,4,8],"hand_l":[26,50,-9],"foot_r":[0,11,8],"foot_l":[40,2.5,-8],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: a long low lunge, the whole body behind one straight fist"},
++  "ru.su_ram.contact": {"family":"upright_lunge","lean":44,"hips":[34,-14,0],"spine":{"lean":24,"twist":20},"head":{"pitch":12},"hand_r":[66,50,6],"pole_hand_r":[4,4,8],"hand_l":[49.3,34.6,-11.8],"foot_r":[0,11,8],"foot_l":[40,2.5,-8],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: a long low lunge, the whole body behind one straight fist"},
+   "ru.su_ram.follow": {"family":"upright","lean":36,"hips":[26,-12,0],"spine":{"lean":20,"twist":12},"head":{"pitch":9.5,"yaw":3.5},"hand_r":[48,50,7],"pole_hand_r":[4,4,8],"hand_l":[14.5,48.5,-11],"foot_r":[-5,7,8],"foot_l":[32,2.5,-8],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a long low lunge, the whole body behind one straight fist (the follow-through)"},
+   "ru.su_heel.chamber": {"family":"upright","lean":-14,"hips":[-4,3,0],"spine":{"lean":-12,"twist":-6},"head":{"pitch":-6,"yaw":6},"hand_r":[6,58,14],"hand_l":[12,58,-12],"foot_r":[2.5,67,7],"foot_l":[6,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: the leg raised high, the heel dropped from above onto the chest, the body folding over it (the wind-up)"},
+   "ru.su_heel.contact": {"family":"upright_lunge","lean":20,"hips":[10,-8,0],"spine":{"lean":22,"twist":4},"head":{"pitch":20},"hand_r":[18.5,62,18],"hand_l":[22,56,-10],"foot_r":[40,38,8],"foot_l":[10,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: the leg raised high, the heel dropped from above onto the chest, the body folding over it"},
+@@ -19,15 +19,15 @@
+   "ru.su_elbow_heave.contact": {"family":"upright","lean":4,"hips":[8,2,0],"spine":{"lean":-6,"twist":14},"head":{"pitch":-8},"hand_r":[4,84,6],"pole_hand_r":[14,4,2],"hand_l":[22,62,-8],"foot_r":[-14,2.5,10],"foot_l":[14,2.5,-8],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: a heaving elbow: sunk deep with the elbow loaded low and the other hand up in guard, both legs drive him tall with the elbow up the centre line; his feet keep their place"},
+   "ru.su_elbow_heave.follow": {"family":"upright","lean":6.5,"hips":[6,0,0],"spine":{"lean":-0.5,"twist":2.5},"head":{"pitch":-1.5,"yaw":3.5},"hand_r":[10,70,6],"pole_hand_r":[14,4,2],"hand_l":[22,62,-8],"foot_r":[-11.5,2.5,9],"foot_l":[12.5,2.5,-7.5],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a heaving elbow: sunk deep with the elbow loaded low and the other hand up in guard, both legs drive him tall with the elbow up the centre line; his feet keep their place (the follow-through)"},
+   "ru.su_fist_heave.chamber": {"family":"crouched","lean":14,"hips":[-2,-18,0],"spine":{"lean":12,"twist":-8},"head":{"pitch":-2,"yaw":8},"hand_r":[24,30,10],"hand_l":[16,62,-8],"foot_r":[-14,2.5,10],"foot_l":[16,2.5,-8],"hands":{"r":"fist","l":"open"},"pole_hand_r":[-6,-6,10],"_orig":"PROVISIONAL: a heaving fist: sunk deep with the fist low in front of him, both legs drive the fist up into the gut; his feet keep their place (the wind-up)","_legal":["no_leap"]},
+-  "ru.su_fist_heave.contact": {"family":"upright_lunge","lean":16,"hips":[16,-12,0],"spine":{"lean":12,"twist":12},"head":{"pitch":4},"hand_r":[54,46,8],"pole_hand_r":[6,-4,8],"hand_l":[24,60,-8],"foot_r":[-14,2.5,10],"foot_l":[16,2.5,-8],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: a heaving fist: sunk deep with the fist low in front of him, both legs drive the fist up into the gut; his feet keep their place","_legal":["no_leap"]},
++  "ru.su_fist_heave.contact": {"family":"upright_lunge","lean":16,"hips":[16,-12,0],"spine":{"lean":12,"twist":12},"head":{"pitch":4},"hand_r":[54,46,8],"pole_hand_r":[6,-4,8],"hand_l":[28.8,54.4,-9.2],"foot_r":[-14,2.5,10],"foot_l":[16,2.5,-8],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: a heaving fist: sunk deep with the fist low in front of him, both legs drive the fist up into the gut; his feet keep their place","_legal":["no_leap"]},
+   "ru.su_fist_heave.follow": {"family":"upright","lean":13.5,"hips":[10,-2,0],"spine":{"lean":9.5,"twist":1},"head":{"pitch":5,"yaw":3.5},"hand_r":[34,64,8],"pole_hand_r":[6,-4,8],"hand_l":[24,60,-8],"foot_r":[-11.5,2.5,9],"foot_l":[14,2.5,-7.5],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a heaving fist: sunk deep with the fist low in front of him, both legs drive the fist up into the gut; his feet keep their place (the follow-through)","_legal":["no_leap"]},
+   "ru.su_hammer.chamber": {"family":"upright","lean":-4,"hips":[-2,3,0],"spine":{"lean":-4,"twist":-8},"head":{"pitch":-6,"yaw":8},"hand_r":[4,66,10],"hand_l":[16,62,-8],"foot_r":[-6,2.5,9],"foot_l":[10,2.5,-8],"hands":{"r":"fist","l":"open"},"pole_hand_r":[-8,6,8],"_orig":"PROVISIONAL: a falling hammer fist: risen tall with the fist at his shoulder and the other hand up, then the whole body comes down and the fist falls on the head (the wind-up)","_legal":["no_clasp","no_held_raise"]},
+-  "ru.su_hammer.contact": {"family":"upright_lunge","lean":22,"hips":[24,-6,0],"spine":{"lean":16,"twist":12},"head":{"pitch":14},"hand_r":[52,82,8],"pole_hand_r":[-4,14,8],"hand_l":[22,58,-8],"foot_r":[-4,2.5,9],"foot_l":[28,2.5,-8],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: a falling hammer fist: risen tall with the fist at his shoulder and the other hand up, then the whole body comes down and the fist falls on the head","_legal":["no_clasp","no_held_raise"]},
++  "ru.su_hammer.contact": {"family":"upright_lunge","lean":22,"hips":[24,-6,0],"spine":{"lean":16,"twist":12},"head":{"pitch":14},"hand_r":[52,82,8],"pole_hand_r":[-4,14,8],"hand_l":[22,53,-8],"foot_r":[-4,2.5,9],"foot_l":[28,2.5,-8],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: a falling hammer fist: risen tall with the fist at his shoulder and the other hand up, then the whole body comes down and the fist falls on the head","_legal":["no_clasp","no_held_raise"]},
+   "ru.su_hammer.follow": {"family":"upright","lean":16.5,"hips":[18,-14,0],"spine":{"lean":11.5,"twist":1},"head":{"pitch":10.5,"yaw":3.5},"hand_r":[40,52,10],"pole_hand_r":[-4,14,8],"hand_l":[22,58,-8],"foot_r":[-6,2.5,8.5],"foot_l":[20.5,2.5,-7.5],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a falling hammer fist: risen tall with the fist at his shoulder and the other hand up, then the whole body comes down and the fist falls on the head (the follow-through)","_legal":["no_clasp","no_held_raise"]},
+   "ru.su_edge_legs.chamber": {"family":"upright","lean":-6,"hips":[-4,-2,0],"spine":{"lean":-4,"twist":-12},"head":{"pitch":-4,"yaw":6},"hand_r":[6,60,12],"hand_l":[16,62,-8],"foot_r":[-4,28,10],"foot_l":[10,2.5,-8],"hands":{"r":"open","l":"open"},"pole_foot_r":[8,8,2],"_orig":"PROVISIONAL: a stepping low kick with the edge of the foot: the leg chambered close, the body carried a pace behind one straight leg, the edge into the rival legs (the wind-up)"},
+   "ru.su_edge_legs.contact": {"family":"upright_lunge","lean":-14,"hips":[30,-6,0],"spine":{"lean":-10,"twist":18},"head":{"pitch":0},"hand_r":[10,62,14],"hand_l":[22,64,-10],"foot_r":[58,20,8],"foot_l":[30,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a stepping low kick with the edge of the foot: the leg chambered close, the body carried a pace behind one straight leg, the edge into the rival legs"},
+   "ru.su_edge_legs.follow": {"family":"upright","lean":-3,"hips":[26,-4,0],"spine":{"lean":-3,"twist":4.5},"head":{"pitch":2.5,"yaw":3.5},"hand_r":[12,60,13.5],"hand_l":[23,60,-7.5],"foot_r":[44,12,8],"foot_l":[28,2.5,-8],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a stepping low kick with the edge of the foot: the leg chambered close, the body carried a pace behind one straight leg, the edge into the rival legs (the follow-through)"},
+   "ru.su_plate_arm.chamber": {"family":"upright","lean":-4,"hips":[-2,3,0],"spine":{"lean":-4,"twist":-8},"head":{"pitch":-6,"yaw":8},"hand_r":[4,66,10],"hand_l":[16,62,-8],"foot_r":[-6,2.5,9],"foot_l":[10,2.5,-8],"hands":{"r":"open","l":"open"},"pole_hand_r":[-8,6,8],"_orig":"PROVISIONAL: a falling forearm plate: risen tall with the plated forearm at his shoulder and the other hand up, the body comes down and the plate falls across the rival arm (the wind-up)","_legal":["hands_open_or_claw","no_clasp","no_held_raise"]},
+-  "ru.su_plate_arm.contact": {"family":"upright_lunge","lean":20,"hips":[20,-8,0],"spine":{"lean":14,"twist":12},"head":{"pitch":12},"hand_r":[46,60,10],"pole_hand_r":[-4,12,8],"hand_l":[22,58,-8],"foot_r":[-4,2.5,9],"foot_l":[26,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a falling forearm plate: risen tall with the plated forearm at his shoulder and the other hand up, the body comes down and the plate falls across the rival arm","_legal":["hands_open_or_claw","no_clasp","no_held_raise"]},
++  "ru.su_plate_arm.contact": {"family":"upright_lunge","lean":20,"hips":[20,-8,0],"spine":{"lean":14,"twist":12},"head":{"pitch":12},"hand_r":[46,60,10],"pole_hand_r":[-4,12,8],"hand_l":[31.3,52.6,-9.5],"foot_r":[-4,2.5,9],"foot_l":[26,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a falling forearm plate: risen tall with the plated forearm at his shoulder and the other hand up, the body comes down and the plate falls across the rival arm","_legal":["hands_open_or_claw","no_clasp","no_held_raise"]},
+   "ru.su_plate_arm.follow": {"family":"upright","lean":15.5,"hips":[16,-10,0],"spine":{"lean":10.5,"twist":1},"head":{"pitch":9.5,"yaw":3.5},"hand_r":[34,50,10],"pole_hand_r":[-4,12,8],"hand_l":[22,58,-8],"foot_r":[-6,2.5,8.5],"foot_l":[19.5,2.5,-7.5],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a falling forearm plate: risen tall with the plated forearm at his shoulder and the other hand up, the body comes down and the plate falls across the rival arm (the follow-through)","_legal":["hands_open_or_claw","no_clasp","no_held_raise"]}
+  }}
+diff --git a/data/anim/waves/rival8.poses.json b/data/anim/waves/rival8.poses.json
+index 5a2aed6..4c789e6 100644
+--- a/data/anim/waves/rival8.poses.json
++++ b/data/anim/waves/rival8.poses.json
+@@ -7,15 +7,15 @@
+   "rk.bolt_fist.contact": {"family":"upright_lunge","lean":2,"hips":[10,0,0],"spine":{"lean":2,"twist":14},"head":{"pitch":-2},"hand_r":[54,56,6],"pole_hand_r":[10,0,6],"hand_l":[14,60,-8],"foot_r":[-4,2.5,9],"foot_l":[22,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: the lit fist: a straight punch to the chest, the other hand open in guard"},
+   "rk.bolt_fist.follow": {"family":"upright","lean":7.5,"hips":[4.5,-3,0],"spine":{"lean":5,"twist":-4},"head":{"pitch":3.5,"yaw":5.5},"hand_r":[26,56.5,11],"pole_hand_r":[10,0,6],"hand_l":[21,56.5,-6],"foot_r":[-7.5,2.5,8.5],"foot_l":[14.5,2.5,-7],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: the lit fist: a straight punch to the chest, the other hand open in guard (the follow-through)"},
+   "rk.bolt_flick.chamber": {"family":"upright","lean":2,"hips":[-4,-4,0],"spine":{"lean":2,"twist":14},"head":{"pitch":-2,"yaw":8},"hand_r":[16,38,4],"hand_l":[20,60,-14],"foot_r":[-8,2.5,9],"foot_l":[12,2.5,-7],"hands":{"r":"open","l":"open"},"pole_hand_r":[-6,-10,4],"_orig":"PROVISIONAL: a blade flick: the flat hand carried in across him and let out in a short outward arc onto the gut (the wind-up)"},
+-  "rk.bolt_flick.contact": {"family":"crouched","lean":-2,"hips":[8,-22,0],"spine":{"lean":0,"twist":-14},"head":{"pitch":0},"hand_r":[46,46,14],"pole_hand_r":[0,-18,12],"hand_l":[2,50,-14],"foot_r":[-6,2.5,9],"foot_l":[22,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a blade flick: the flat hand carried in across him and let out in a short outward arc onto the gut"},
+-  "rk.bolt_flick.follow": {"family":"crouched","lean":6.5,"hips":[4,-9.5,0],"spine":{"lean":4,"twist":-12.5},"head":{"pitch":4,"yaw":5.5},"hand_r":[23.5,53.5,13.5],"pole_hand_r":[0,-18,12],"hand_l":[17.5,53.5,-7.5],"foot_r":[-8,2.5,8.5],"foot_l":[14.5,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a blade flick: the flat hand carried in across him and let out in a short outward arc onto the gut (the follow-through)"},
++  "rk.bolt_flick.contact": {"family":"crouched","lean":-2,"hips":[8,-22,0],"spine":{"lean":0,"twist":-14},"head":{"pitch":0},"hand_r":[46,46,14],"pole_hand_r":[0,-18,12],"hand_l":[11.2,46.9,-9.9],"foot_r":[-6,2.5,9],"foot_l":[22,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a blade flick: the flat hand carried in across him and let out in a short outward arc onto the gut"},
++  "rk.bolt_flick.follow": {"family":"crouched","lean":6.5,"hips":[4,-9.5,0],"spine":{"lean":4,"twist":-12.5},"head":{"pitch":4,"yaw":5.5},"hand_r":[23.5,53.5,13.5],"pole_hand_r":[0,-18,12],"hand_l":[20,52.5,-6.5],"foot_r":[-8,2.5,8.5],"foot_l":[14.5,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a blade flick: the flat hand carried in across him and let out in a short outward arc onto the gut (the follow-through)"},
+   "rk.bolt_sweep.chamber": {"family":"upright","lean":2,"hips":[-4,0,0],"spine":{"lean":0,"twist":-20},"head":{"pitch":-2,"yaw":8},"hand_r":[8,72,14],"hand_l":[14,58,-8],"foot_r":[-8,2.5,9],"foot_l":[12,2.5,-7],"hands":{"r":"open","l":"open"},"pole_hand_r":[-6,8,12],"_orig":"PROVISIONAL: a blade sweep: the flat hand swept inward across the chest from the outside (the wind-up)"},
+   "rk.bolt_sweep.contact": {"family":"upright","lean":-4,"hips":[10,5,0],"spine":{"lean":-6,"twist":12},"head":{"pitch":2},"hand_r":[44,54,6],"pole_hand_r":[14,14,6],"hand_l":[20,64,-8],"foot_r":[-4,2.5,9],"foot_l":[22,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a blade sweep: the flat hand swept inward across the chest from the outside"},
+   "rk.bolt_sweep.follow": {"family":"upright","lean":6,"hips":[4.5,-1.5,0],"spine":{"lean":2.5,"twist":-5},"head":{"pitch":5,"yaw":5.5},"hand_r":[23,56,11],"pole_hand_r":[14,14,6],"hand_l":[23,57.5,-6],"foot_r":[-7.5,2.5,8.5],"foot_l":[14.5,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a blade sweep: the flat hand swept inward across the chest from the outside (the follow-through)"},
+   "rk.blast_chest.chamber": {"family":"upright","lean":-2,"hips":[-6,-2,0],"spine":{"lean":-2,"twist":-16},"head":{"pitch":-6,"yaw":8},"hand_r":[2,62,14],"hand_l":[14,60,-8],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"r":"fist","l":"open"},"pole_hand_r":[-10,6,10],"_orig":"PROVISIONAL: the blast: a 12-tick gather with the lit fist held at the shoulder and the other hand open, then driven straight to the chest (the wind-up)"},
+-  "rk.blast_chest.contact": {"family":"upright_lunge","lean":8,"hips":[16,-4,0],"spine":{"lean":6,"twist":14},"head":{"pitch":0},"hand_r":[58,54,6],"pole_hand_r":[2,-8,6],"hand_l":[14,60,-8],"foot_r":[-4,2.5,9],"foot_l":[26,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: the blast: a 12-tick gather with the lit fist held at the shoulder and the other hand open, then driven straight to the chest"},
+-  "rk.blast_chest.follow": {"family":"upright","lean":9,"hips":[7.5,-4,0],"spine":{"lean":6,"twist":-1.5},"head":{"pitch":3.5,"yaw":5},"hand_r":[31.5,56,10],"pole_hand_r":[2,-8,6],"hand_l":[20,57,-6],"foot_r":[-7,2.5,8.5],"foot_l":[17,2.5,-7],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: the blast: a 12-tick gather with the lit fist held at the shoulder and the other hand open, then driven straight to the chest (the follow-through)"},
++  "rk.blast_chest.contact": {"family":"upright_lunge","lean":8,"hips":[16,-4,0],"spine":{"lean":6,"twist":14},"head":{"pitch":0},"hand_r":[58,54,6],"pole_hand_r":[2,-8,6],"hand_l":[19.9,59,-9.1],"foot_r":[-4,2.5,9],"foot_l":[26,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: the blast: a 12-tick gather with the lit fist held at the shoulder and the other hand open, then driven straight to the chest"},
++  "rk.blast_chest.follow": {"family":"upright","lean":9,"hips":[7.5,-4,0],"spine":{"lean":6,"twist":-1.5},"head":{"pitch":3.5,"yaw":5},"hand_r":[31.5,56,10],"pole_hand_r":[2,-8,6],"hand_l":[22.5,56.5,-6.5],"foot_r":[-7,2.5,8.5],"foot_l":[17,2.5,-7],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: the blast: a 12-tick gather with the lit fist held at the shoulder and the other hand open, then driven straight to the chest (the follow-through)"},
+   "rk.blast_gut.chamber": {"family":"upright","lean":0,"hips":[-6,-4,0],"spine":{"lean":0,"twist":-16},"head":{"pitch":-4,"yaw":8},"hand_r":[2,60,14],"hand_l":[14,60,-8],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"r":"fist","l":"open"},"pole_hand_r":[-10,4,10],"_orig":"PROVISIONAL: the blast on the gut: the same gather, the lit fist driven low as the body drops behind it (the wind-up)"},
+-  "rk.blast_gut.contact": {"family":"upright_lunge","lean":12,"hips":[16,-8,0],"spine":{"lean":8,"twist":12},"head":{"pitch":2},"hand_r":[58,44,6],"pole_hand_r":[2,-10,6],"hand_l":[14,60,-8],"foot_r":[-4,2.5,9],"foot_l":[26,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: the blast on the gut: the same gather, the lit fist driven low as the body drops behind it"},
+-  "rk.blast_gut.follow": {"family":"upright","lean":11,"hips":[7.5,-5.5,0],"spine":{"lean":7,"twist":-2.5},"head":{"pitch":4.5,"yaw":5},"hand_r":[31.5,52,10],"pole_hand_r":[2,-10,6],"hand_l":[20,57,-6],"foot_r":[-7,2.5,8.5],"foot_l":[17,2.5,-7],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: the blast on the gut: the same gather, the lit fist driven low as the body drops behind it (the follow-through)"}
++  "rk.blast_gut.contact": {"family":"upright_lunge","lean":12,"hips":[16,-8,0],"spine":{"lean":8,"twist":12},"head":{"pitch":2},"hand_r":[58,44,6],"pole_hand_r":[2,-10,6],"hand_l":[23.1,56.1,-9.4],"foot_r":[-4,2.5,9],"foot_l":[26,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: the blast on the gut: the same gather, the lit fist driven low as the body drops behind it"},
++  "rk.blast_gut.follow": {"family":"upright","lean":11,"hips":[7.5,-5.5,0],"spine":{"lean":7,"twist":-2.5},"head":{"pitch":4.5,"yaw":5},"hand_r":[31.5,52,10],"pole_hand_r":[2,-10,6],"hand_l":[23.5,55.5,-7],"foot_r":[-7,2.5,8.5],"foot_l":[17,2.5,-7],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: the blast on the gut: the same gather, the lit fist driven low as the body drops behind it (the follow-through)"}
+  }}
+diff --git a/data/anim/waves/wave1.poses.json b/data/anim/waves/wave1.poses.json
+index 8721c65..636e2e0 100644
+--- a/data/anim/waves/wave1.poses.json
++++ b/data/anim/waves/wave1.poses.json
+@@ -19,7 +19,7 @@
+   "w1.palm_heel.contact": {"family":"upright_lunge","lean":24,"hips":[19,-3,0],"spine":{"lean":4,"twist":22},"head":{"pitch":6,"yaw":4},"hand_r":[59,66,7],"hand_l":[20,58,-6],"foot_r":[-8,2.5,9],"foot_l":[25,2.5,-7],"hands":{"l":"claw","r":"claw"},"_orig":"a clawed open palm pushed straight in from the ribs, fingers spread like tines, the wrist bent back","_legal":["hands_open_or_claw","not_at_hip"]},
+   "w1.palm_heel.follow": {"family":"upright","lean":20,"hips":[11,-3,0],"spine":{"lean":4,"twist":16},"head":{"pitch":6,"yaw":4},"hand_r":[42,64,8],"hand_l":[20,58,-6],"foot_r":[-8,2.5,9],"foot_l":[18,2.5,-7],"hands":{"l":"claw","r":"claw"},"_orig":"a clawed open palm pushed straight in from the ribs, fingers spread like tines, the wrist bent back (the follow-through)","_legal":["hands_open_or_claw","not_at_hip"]},
+   "w1.spear_hand.chamber": {"family":"upright","lean":10,"hips":[2,-4,0],"spine":{"lean":4,"twist":-28},"head":{"pitch":6,"yaw":8},"hand_r":[4,58,13],"hand_l":[22,56,-6],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a low blade-hand thrust from the crouch into the gut, the spine and the arm one long diagonal (the wind-up)"},
+-  "w1.spear_hand.contact": {"family":"crouched","lean":26,"hips":[14,-12,0],"spine":{"lean":8,"twist":30},"head":{"pitch":6,"yaw":2},"hand_r":[50,46,6],"hand_l":[8,50,-4],"foot_r":[-6,2.5,9],"foot_l":[27,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a low blade-hand thrust from the crouch into the gut, the spine and the arm one long diagonal"},
++  "w1.spear_hand.contact": {"family":"crouched","lean":26,"hips":[14,-12,0],"spine":{"lean":8,"twist":30},"head":{"pitch":6,"yaw":2},"hand_r":[50,46,6],"hand_l":[23.8,48.7,-8.7],"foot_r":[-6,2.5,9],"foot_l":[27,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a low blade-hand thrust from the crouch into the gut, the spine and the arm one long diagonal"},
+   "w1.spear_hand.follow": {"family":"upright","lean":20,"hips":[12,-4,0],"spine":{"lean":4,"twist":24},"head":{"pitch":6,"yaw":4},"hand_r":[38,46,8],"hand_l":[16,58,-8],"foot_r":[-6,2.5,9],"foot_l":[20,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a low blade-hand thrust from the crouch into the gut, the spine and the arm one long diagonal (the follow-through)"},
+   "w1.uppercut.chamber": {"family":"crouched","lean":16,"hips":[2,-12,0],"spine":{"lean":8,"twist":-16},"head":{"pitch":10,"yaw":6},"hand_r":[18,46,12],"hand_l":[20,52,-6],"foot_r":[-10,2.5,10],"foot_l":[12,2.5,-8],"hands":{"l":"open","r":"fist"},"_orig":"a closed fist rising under the chin, the rise in the hip and shoulder, the feet planted, the other arm low across the body (the wind-up)","_legal":["no_leap","no_held_raise"]},
+   "w1.uppercut.contact": {"family":"upright_lunge","lean":14,"hips":[18,-2,0],"spine":{"lean":-4,"twist":24},"head":{"pitch":-10,"yaw":4},"hand_r":[55,78,8],"hand_l":[16,56,-8],"foot_r":[-6,2.5,9],"foot_l":[25,2.5,-7],"hands":{"l":"open","r":"fist"},"_orig":"a closed fist rising under the chin, the rise in the hip and shoulder, the feet planted, the other arm low across the body","_legal":["no_leap","no_held_raise"]},
+@@ -28,10 +28,10 @@
+   "w1.uppercut~b.contact": {"family":"upright_lunge","lean":4,"hips":[16,-2,0],"spine":{"lean":-10,"twist":20},"head":{"pitch":-14,"yaw":4},"hand_r":[50,84,8],"hand_l":[16,56,-8],"foot_r":[-6,2.5,9],"foot_l":[25,2.5,-7],"hands":{"l":"open","r":"fist"},"_orig":"a closed fist rising under the chin, the rise in the hip and shoulder, the feet planted, the other arm low across the body (version B: upright and open-chested)","_legal":["no_leap","no_held_raise"]},
+   "w1.uppercut~b.follow": {"family":"upright","lean":8,"hips":[9,-1,0],"spine":{"lean":-6,"twist":14},"head":{"pitch":-8,"yaw":4},"hand_r":[34,72,8],"hand_l":[16,56,-8],"foot_r":[-6,2.5,9],"foot_l":[16,2.5,-7],"hands":{"l":"open","r":"fist"},"_orig":"a closed fist rising under the chin, the rise in the hip and shoulder, the feet planted, the other arm low across the body (version B: upright and open-chested)","_legal":["no_leap","no_held_raise"]},
+   "w1.hammer.chamber": {"family":"upright","lean":-6,"hips":[-3,-2,0],"spine":{"lean":-10,"twist":-8},"head":{"pitch":-8,"yaw":8},"hand_r":[4,78,9],"hand_l":[22,56,-6],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"r":"fist","l":"open"},"pole_hand_r":[-8,2,8],"_orig":"the fist brought straight down from above the head like a dropped blade, the body folding over it (the wind-up)"},
+-  "w1.hammer.contact": {"family":"upright_lunge","lean":26,"hips":[16,-5,0],"spine":{"lean":16,"twist":14},"head":{"pitch":20,"yaw":2},"hand_r":[42,74,6],"pole_hand_r":[-6,12,8],"hand_l":[16,56,-8],"foot_r":[-6,2.5,9],"foot_l":[26,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"the fist brought straight down from above the head like a dropped blade, the body folding over it"},
+-  "w1.hammer.follow": {"family":"upright","lean":19,"hips":[9.5,-4.5,0],"spine":{"lean":11.5,"twist":2.5},"head":{"pitch":13.5,"yaw":4.5},"hand_r":[29.5,66.5,9],"pole_hand_r":[-6,12,8],"hand_l":[19.5,55.5,-6.5],"foot_r":[-7.5,2.5,8.5],"foot_l":[19.5,2.5,-7],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"the fist brought straight down from above the head like a dropped blade, the body folding over it (the follow-through)"},
++  "w1.hammer.contact": {"family":"upright_lunge","lean":26,"hips":[16,-5,0],"spine":{"lean":16,"twist":14},"head":{"pitch":20,"yaw":2},"hand_r":[42,74,6],"pole_hand_r":[-6,12,8],"hand_l":[29.4,53.5,-9.8],"foot_r":[-6,2.5,9],"foot_l":[26,2.5,-7],"hands":{"r":"fist","l":"open"},"_orig":"the fist brought straight down from above the head like a dropped blade, the body folding over it"},
++  "w1.hammer.follow": {"family":"upright","lean":19,"hips":[9.5,-4.5,0],"spine":{"lean":11.5,"twist":2.5},"head":{"pitch":13.5,"yaw":4.5},"hand_r":[29.5,66.5,9],"pole_hand_r":[-6,12,8],"hand_l":[27,54,-7.5],"foot_r":[-7.5,2.5,8.5],"foot_l":[19.5,2.5,-7],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"the fist brought straight down from above the head like a dropped blade, the body folding over it (the follow-through)"},
+   "w1.overhand.chamber": {"family":"upright","lean":10,"hips":[3,-4,0],"spine":{"lean":4,"twist":-24,"bend":8},"head":{"pitch":6,"yaw":8},"hand_r":[2,62,22],"hand_l":[20,56,-6],"pole_hand_r":[-8,0,12],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"l":"fist","r":"fist"},"_orig":"a looping blow over the rival guard, the shoulder rolled high, the head ducked off the line (the wind-up)"},
+-  "w1.overhand.contact": {"family":"upright_lunge","lean":28,"hips":[20,-6,0],"spine":{"lean":10,"twist":40,"bend":-6},"head":{"pitch":18,"yaw":-4},"hand_r":[52,76,10],"hand_l":[14,56,-8],"pole_hand_r":[-2,12,6],"foot_r":[-6,2.5,9],"foot_l":[26,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a looping blow over the rival guard, the shoulder rolled high, the head ducked off the line"},
++  "w1.overhand.contact": {"family":"upright_lunge","lean":28,"hips":[20,-6,0],"spine":{"lean":10,"twist":40,"bend":-6},"head":{"pitch":18,"yaw":-4},"hand_r":[52,76,10],"hand_l":[28,54,-10],"pole_hand_r":[-2,12,6],"foot_r":[-6,2.5,9],"foot_l":[26,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a looping blow over the rival guard, the shoulder rolled high, the head ducked off the line"},
+   "w1.overhand.follow": {"family":"upright","lean":22,"hips":[12,-4,0],"spine":{"lean":4,"twist":30},"head":{"pitch":6,"yaw":4},"hand_r":[34,70,10],"hand_l":[18,58,-6],"pole_hand_r":[0,-4,10],"foot_r":[-6,2.5,9],"foot_l":[19,2.5,-7],"hands":{"l":"fist","r":"fist"},"_orig":"a looping blow over the rival guard, the shoulder rolled high, the head ducked off the line (the follow-through)"},
+   "w1.haymaker.chamber": {"family":"upright","lean":10,"hips":[3,-4,0],"spine":{"lean":4,"twist":-38,"bend":8},"head":{"pitch":6,"yaw":8},"hand_r":[-8,60,26],"hand_l":[20,56,-6],"pole_hand_r":[-8,-2,14],"foot_r":[-10,2.5,9],"foot_l":[12,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"the widest swing he has: the arm nearly straight, the whole torso thrown round behind it (the wind-up)"},
+   "w1.haymaker.contact": {"family":"upright_lunge","lean":22,"hips":[20,-4,0],"spine":{"lean":6,"twist":52,"bend":-8},"head":{"pitch":4,"yaw":2},"hand_r":[50,66,26],"hand_l":[18,58,-6],"pole_hand_r":[2,-2,14],"foot_r":[-6,2.5,9],"foot_l":[26,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"the widest swing he has: the arm nearly straight, the whole torso thrown round behind it"},
+@@ -67,8 +67,8 @@
+   "w1.front_kick.contact": {"family":"upright_lunge","lean":-10,"hips":[19,-2,0],"spine":{"lean":-6,"twist":8},"head":{"pitch":2,"yaw":4},"hand_r":[6,50,14],"hand_l":[14,56,-10],"foot_r":[52,44,6],"foot_l":[13,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a straight push with the ball of the foot from a high knee, the body leaning back off the line"},
+   "w1.front_kick.follow": {"family":"upright","lean":-6,"hips":[10,-2,0],"spine":{"lean":-4,"twist":4},"head":{"pitch":2,"yaw":4},"hand_r":[6,52,13],"hand_l":[14,56,-10],"foot_r":[34,36,7],"foot_l":[8,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a straight push with the ball of the foot from a high knee, the body leaning back off the line (the follow-through)"},
+   "w1.side_kick.chamber": {"family":"upright","lean":-6,"hips":[0,-2,0],"spine":{"lean":-4,"twist":-24},"head":{"pitch":4,"yaw":6},"hand_r":[8,56,12],"hand_l":[16,54,-8],"foot_r":[12,30,8],"foot_l":[2,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"turned fully side-on, the leg and the opposite arm one horizontal line, the heel leading (the wind-up)"},
+-  "w1.side_kick.contact": {"family":"upright_lunge","lean":-28,"hips":[14,-2,0],"spine":{"lean":-10,"twist":-44},"head":{"pitch":0,"yaw":24},"hand_r":[16,58,12],"hand_l":[-26,54,-10],"foot_r":[50,46,8],"foot_l":[8,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"turned fully side-on, the leg and the opposite arm one horizontal line, the heel leading"},
+-  "w1.side_kick.follow": {"family":"upright","lean":-11,"hips":[8.5,-3,0],"spine":{"lean":-3,"twist":-29.5},"head":{"pitch":2.5,"yaw":17},"hand_r":[15,57.5,12.5],"hand_l":[-3.5,54.5,-7.5],"foot_r":[23.5,26.5,8],"foot_l":[9.5,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"turned fully side-on, the leg and the opposite arm one horizontal line, the heel leading (the follow-through)"},
++  "w1.side_kick.contact": {"family":"upright_lunge","lean":-28,"hips":[14,-2,0],"spine":{"lean":-10,"twist":-44},"head":{"pitch":0,"yaw":24},"hand_r":[16,58,12],"hand_l":[-16.9,55,-1.3],"foot_r":[50,46,8],"foot_l":[8,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"turned fully side-on, the leg and the opposite arm one horizontal line, the heel leading"},
++  "w1.side_kick.follow": {"family":"upright","lean":-11,"hips":[8.5,-3,0],"spine":{"lean":-3,"twist":-29.5},"head":{"pitch":2.5,"yaw":17},"hand_r":[15,57.5,12.5],"hand_l":[1.5,55,-3],"foot_r":[23.5,26.5,8],"foot_l":[9.5,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"turned fully side-on, the leg and the opposite arm one horizontal line, the heel leading (the follow-through)"},
+   "w1.low_kick.chamber": {"family":"upright","lean":-6,"hips":[-2,-3,0],"spine":{"lean":-4,"twist":-22},"head":{"pitch":4,"yaw":8},"hand_r":[10,56,14],"hand_l":[16,56,-8],"foot_r":[4,22,16],"foot_l":[0,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a short chop of the shin into the thigh, his own body upright and still (the wind-up)"},
+   "w1.low_kick.contact": {"family":"upright_lunge","lean":4,"hips":[14,-2,0],"spine":{"lean":2,"twist":14},"head":{"pitch":0,"yaw":4},"hand_r":[6,58,14],"hand_l":[20,60,-10],"foot_r":[44,20,8],"foot_l":[14,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a short chop of the shin into the thigh, his own body upright and still"},
+   "w1.low_kick.follow": {"family":"upright","lean":-14,"hips":[12,-3,0],"spine":{"lean":-6,"twist":20},"head":{"pitch":2,"yaw":4},"hand_r":[4,56,15],"hand_l":[18,60,-10],"foot_r":[20,18,9],"foot_l":[8,2.5,-7],"hands":{"l":"open","r":"open"},"_orig":"a short chop of the shin into the thigh, his own body upright and still (the follow-through)"},
+@@ -94,8 +94,8 @@
+   "w1.stomp.contact": {"family":"upright_lunge","lean":6,"hips":[12,0,0],"spine":{"lean":0},"head":{"pitch":10},"hand_r":[8,62,22],"hand_l":[8,62,-22],"foot_r":[32,38,8],"pole_foot_r":[10,6,0],"foot_l":[12,2.5,-7],"hands":{"r":"open","l":"open"},"_orig":"the knee drawn to his chest and the sole driven straight down, his arms spread for balance"},
+   "w1.stomp.follow": {"family":"upright","lean":8,"hips":[7.5,-2,0],"spine":{"lean":2.5,"twist":-5.5},"head":{"pitch":8,"yaw":3.5},"hand_r":[10.5,60,18],"hand_l":[15,59,-14.5],"foot_r":[13.5,22,8],"pole_foot_r":[10,6,0],"foot_l":[11.5,2.5,-7],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"the knee drawn to his chest and the sole driven straight down, his arms spread for balance (the follow-through)"},
+   "w1.sweep.chamber": {"family":"crouched","lean":20,"hips":[0,-20,0],"spine":{"lean":12,"twist":-6},"head":{"pitch":4,"yaw":6},"hand_r":[4,44,12],"hand_l":[20,8,-10],"foot_r":[-6,4,9],"foot_l":[4,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"dropped onto one hand, the other leg scything flat along the ground (the wind-up)"},
+-  "w1.sweep.contact": {"family":"crouched","lean":36,"hips":[4,-26,0],"spine":{"lean":22},"head":{"pitch":14},"hand_l":[26,4,-10],"hand_r":[2,44,12],"foot_r":[36,6,8],"foot_l":[-2,3,-8],"hands":{"r":"open","l":"open"},"_orig":"dropped onto one hand, the other leg scything flat along the ground"},
+-  "w1.sweep.follow": {"family":"crouched","lean":24.5,"hips":[3,-16,0],"spine":{"lean":15,"twist":-5.5},"head":{"pitch":10.5,"yaw":3.5},"hand_l":[25,27,-7.5],"hand_r":[7.5,50,12.5],"foot_r":[16,4.5,8],"foot_l":[4,3,-7.5],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"dropped onto one hand, the other leg scything flat along the ground (the follow-through)"},
++  "w1.sweep.contact": {"family":"crouched","lean":36,"hips":[4,-26,0],"spine":{"lean":22},"head":{"pitch":14},"hand_l":[26,4,-10],"hand_r":[15,36.3,17],"foot_r":[36,6,8],"foot_l":[-2,3,-8],"hands":{"r":"open","l":"open"},"_orig":"dropped onto one hand, the other leg scything flat along the ground"},
++  "w1.sweep.follow": {"family":"crouched","lean":24.5,"hips":[3,-16,0],"spine":{"lean":15,"twist":-5.5},"head":{"pitch":10.5,"yaw":3.5},"hand_l":[25,27,-7.5],"hand_r":[14.5,45.5,15],"foot_r":[16,4.5,8],"foot_l":[4,3,-7.5],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"dropped onto one hand, the other leg scything flat along the ground (the follow-through)"},
+   "w1.drop_kick.chamber": {"family":"upright","lean":-30,"hips":[-4,4,0],"spine":{"lean":-4,"twist":-6},"head":{"pitch":4,"yaw":6},"hand_r":[-10,40,12],"hand_l":[-10,40,-12],"foot_r":[20,40,4],"foot_l":[20,38,-4],"hands":{"r":"open","l":"open"},"_orig":"both feet together with the body laid flat behind them, the arms back along his sides (the wind-up)"},
+   "w1.drop_kick.contact": {"family":"airborne_neutral","lean":-70,"hips":[0,6,0],"spine":{"lean":-10},"head":{"pitch":-20},"hand_r":[-26,34,12],"hand_l":[-26,34,-12],"foot_r":[34,50,4],"foot_l":[34,48,-4],"hands":{"r":"open","l":"open"},"_orig":"both feet together with the body laid flat behind them, the arms back along his sides"},
+   "w1.drop_kick.follow": {"family":"airborne_neutral","lean":-34,"hips":[1,1.5,0],"spine":{"lean":-3,"twist":-5.5},"head":{"pitch":-8.5,"yaw":3.5},"hand_r":[-8,44.5,12.5],"hand_l":[-3.5,43.5,-9],"foot_r":[14.5,28.5,6],"foot_l":[23.5,27.5,-5.5],"hands":{"r":"open","l":"open"},"hip_twist":0,"_orig":"both feet together with the body laid flat behind them, the arms back along his sides (the follow-through)"},
+diff --git a/render/anim/tools/anim_check.gd b/render/anim/tools/anim_check.gd
+index fb256b2..b6092a7 100644
+--- a/render/anim/tools/anim_check.gd
++++ b/render/anim/tools/anim_check.gd
+@@ -1708,6 +1708,26 @@ func _test_bends() -> void:
+ 
+ ## The pulled frames (homework 4b): every key set of both fighters, at the study's 60 units and at its own striking range, none of them with a frame of the last pass pulling over 30 degrees,
+ ## at most two over 20.
++## The contact-key pass (docs/animation/guard-pass.md): the free hand of every strike's contact key is within its goal of the stance guard (20 units for a hand blow, 30 for a kick, in the chest's frame).
++func _test_guard() -> void:
++	var rs: Array = preload("res://render/anim/tools/guard_scan.gd").rows(20.0, 30.0, false)
++	var over: Array = []
++	var worst: float = 0.0
++	for r in rs:
++		worst = maxf(worst, float(r.err))
++		if float(r.err) > float(r.goal):
++			over.append("%s %.1f" % [r.id, float(r.err)])
++	_expect(over.is_empty(), "guard: %d of %d free hands on a contact key are past their goal from the stance guard (worst %.1f; 0 allowed; before the pass 28 of 149): %s" % [over.size(), rs.size(), worst, str(over.slice(0, 5))])
++	# the pass is data: every row of data/anim/guard_pass.json names a contact key that exists
++	var gp: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/anim/guard_pass.json")).get("contacts", {})
++	var missing: Array = []
++	for id in gp:
++		if not AnimData.poses.has(id):
++			missing.append(id)
++	_expect(missing.is_empty(), "guard: every row of the pass names a contact key that is baked (%s missing)" % str(missing.slice(0, 4)))
++	print("guard: %d free hands, worst %.1f from the guard, %d rows in the pass" % [rs.size(), worst, gp.size()])
++
++
+ func _test_pulled() -> void:
+ 	AnimData.load_every_wave()
+ 	main.start_match(4, {"p1": false, "p2": false})
+@@ -4370,6 +4390,7 @@ func _run() -> void:
+ 	_test_pieces()
+ 	_test_arms()
+ 	_test_pulls()
++	_test_guard()
+ 	_test_pulled()
+ 	_test_bends()
+ 	_test_styles()
+diff --git a/hp12/render/anim/tools/guard_scan.gd b/render/anim/tools/guard_scan.gd
+new file mode 100644
+index 0000000..31a5ca7
+--- /dev/null
++++ b/render/anim/tools/guard_scan.gd
+@@ -0,0 +1,121 @@
++extends SceneTree
++## The contact-key pass (docs/animation/guard-pass.md): on the contact key of every strike, the hand (or hands, in a kick) that is not striking stays near the
++## stance guard. Measured in the chest's own frame, so a torso turned into a blow carries its guard with it: the distance from the free hand to the nearer of
++## the guard's two hands (`stance.aggressive`).
++##   godot --headless --path . -s res://render/anim/tools/guard_scan.gd -- [--goal-hand=20] [--goal-foot=30] [--list=12] [--strict] [--fit=out.json]
++## --strict exits 1 when any piece is over its goal. --fit writes, for each piece over its goal, the free-hand target that lands at 0.7 of the goal (the rows of
++## data/anim/guard_pass.json, which wave_gen.mjs applies when a wave is generated).
++
++const KEEP := 0.7   # a fitted hand lands at this fraction of the goal, so a pose has room
++
++
++static func _frame(p: AnimPose) -> Dictionary:
++	var gq: Array[Quaternion] = []
++	var gp := PackedVector3Array()
++	gq.resize(AnimRig.N)
++	gp.resize(AnimRig.N)
++	AnimPose.fk(p.q, p.hips, gq, gp)
++	var ix: Dictionary = AnimRig.index
++	return {"b": Basis(gq[int(ix["spine_2"])]), "o": gp[int(ix["spine_2"])], "hand_r": gp[int(ix["hand_r"])], "hand_l": gp[int(ix["hand_l"])]}
++
++
++static func _local(fr: Dictionary, key: String) -> Vector3:
++	return (fr.b as Basis).inverse() * ((fr[key] as Vector3) - (fr.o as Vector3))
++
++
++## Every (contact key, free side) of the loaded strikes: {id, side, limb, err, goal, fit} (fit: the model-space target that brings the hand to KEEP of the goal, or empty).
++## A strike with a second limb (a two-handed blow) has no free hand and is left out.
++static func rows(goal_hand: float = 20.0, goal_foot: float = 30.0, fit: bool = false) -> Array:
++	AnimData.load_every_wave()
++	var gfr: Dictionary = _frame(AnimData.pose("stance.aggressive"))
++	var gl := {"r": _local(gfr, "hand_r"), "l": _local(gfr, "hand_l")}
++	var res: Array = []
++	var seen := {}
++	for id in AnimData.keysets:
++		var ks: Dictionary = AnimData.keysets[id]
++		var limb: String = String(ks.get("limb", ""))
++		if String(ks.get("limb2", "")) != "":
++			continue
++		var contact: String = ""
++		for k in ks.get("keys", []):
++			if String(k.get("role", "")) == "contact":
++				contact = String(k.pose)
++		if contact == "" or not AnimData.raw.has(contact) or seen.has(contact):
++			continue
++		seen[contact] = true
++		var sides: Array = []
++		var goal: float = goal_hand
++		if limb.begins_with("hand_"):
++			sides = ["l" if limb.ends_with("r") else "r"]
++		elif limb.begins_with("foot_"):
++			sides = ["r", "l"]
++			goal = goal_foot
++		var sk: Dictionary = (AnimData.raw[contact] as Dictionary).duplicate(true)
++		var fr: Dictionary = _frame(AnimPose.bake(contact, sk))
++		for sd in sides:
++			var cur: Vector3 = _local(fr, "hand_" + sd)
++			var od: String = "l" if sd == "r" else "r"
++			var d_same: float = (cur - gl[sd]).length()
++			var d_other: float = (cur - gl[od]).length()
++			var err: float = minf(d_same, d_other)
++			var row := {"id": contact, "side": sd, "limb": limb, "err": err, "goal": goal, "fit": {}}
++			if fit and err > goal:
++				var want: String = sd if d_same <= d_other else od
++				var t: float = clampf(1.0 - goal * KEEP / err, 0.0, 1.0)
++				var w: Vector3 = (fr.b as Basis) * cur.lerp(gl[want], t) + (fr.o as Vector3)
++				var sk2: Dictionary = sk.duplicate(true)
++				sk2["hand_" + sd] = [snappedf(w.x, 0.1), snappedf(w.y, 0.1), snappedf(w.z, 0.1)]
++				var fr2: Dictionary = _frame(AnimPose.bake(contact + "#fit", sk2))
++				var c2: Vector3 = _local(fr2, "hand_" + sd)
++				row["fit"] = {"target": sk2["hand_" + sd], "now": minf((c2 - gl[sd]).length(), (c2 - gl[od]).length())}
++			res.append(row)
++	return res
++
++
++func _initialize() -> void:
++	var goal_hand: float = 20.0
++	var goal_foot: float = 30.0
++	var strict: bool = false
++	var list_n: int = 12
++	var fit_out: String = ""
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--goal-hand="):
++			goal_hand = float(a.substr(12))
++		elif a.begins_with("--goal-foot="):
++			goal_foot = float(a.substr(12))
++		elif a.begins_with("--list="):
++			list_n = int(a.substr(7))
++		elif a.begins_with("--fit="):
++			fit_out = a.substr(6)
++		elif a == "--strict":
++			strict = true
++	var rs: Array = rows(goal_hand, goal_foot, fit_out != "")
++	rs.sort_custom(func(a, b): return float(a.err) > float(b.err))
++	var over: int = 0
++	var bins := {"<=10": 0, "10-20": 0, "20-30": 0, ">30": 0}
++	var plan := {}
++	for r in rs:
++		if float(r.err) > float(r.goal):
++			over += 1
++		var e: float = float(r.err)
++		bins["<=10" if e <= 10.0 else ("10-20" if e <= 20.0 else ("20-30" if e <= 30.0 else ">30"))] += 1
++		if not (r.fit as Dictionary).is_empty():
++			var row: Dictionary = plan.get(r.id, {})
++			row["hand_" + String(r.side)] = r.fit.target
++			row["was"] = snappedf(float(r.err), 0.1)
++			row["now"] = snappedf(float(r.fit.now), 0.1)
++			plan[r.id] = row
++	print("guard scan: %d (key, free hand) rows, %d over their goal (hand %.0f, foot %.0f); distance from the guard, units: %s" % [rs.size(), over, goal_hand, goal_foot, str(bins)])
++	for i in range(mini(list_n, rs.size())):
++		var r = rs[i]
++		print("  %5.1f (goal %2.0f)  %s  free hand %s, striking with %s" % [r.err, r.goal, r.id, r.side, r.limb])
++	if fit_out != "":
++		var f := FileAccess.open(fit_out, FileAccess.WRITE)
++		f.store_string(JSON.stringify(plan, " "))
++		f.close()
++		print("guard scan: %d pieces fitted into %s" % [plan.size(), fit_out])
++	if strict and over > 0:
++		print("guard scan FAILED (%d)" % over)
++		quit(1)
++		return
++	quit()
+diff --git a/render/anim/tools/wave_gen.mjs b/render/anim/tools/wave_gen.mjs
+index 052d389..3e1334f 100644
+--- a/render/anim/tools/wave_gen.mjs
++++ b/render/anim/tools/wave_gen.mjs
+@@ -25,6 +25,9 @@ const seqMode = !!mod.sequences;
+ const combatFile = resolve(opt('combat', join(project, 'docs/combat/pending/' + (entriesMode ? 'entries' : 'strikes') + '.antihero.' + wave + '.json')));
+ const combat = seqMode ? { strikes: [], entries: [] } : mod.rows ? (entriesMode ? { entries: mod.rows(JSON.parse(readFileSync(join(project, 'docs/combat/pending/entries.antihero.wave2.json'), 'utf8')).entries) } : { strikes: mod.rows(JSON.parse(readFileSync(join(project, 'docs/combat/pending/strikes.antihero.wave1.json'), 'utf8')).strikes, existsSync(join(project, 'docs/combat/pending/strikes.launchpair.json')) ? JSON.parse(readFileSync(join(project, 'docs/combat/pending/strikes.launchpair.json'), 'utf8')) : null) }) : JSON.parse(readFileSync(combatFile, 'utf8'));
+ const spec = mod.strikes;
++// the contact-key pass (docs/animation/guard-pass.md): the free hand of a listed contact key is set where data/anim/guard_pass.json puts it
++const guardPass = existsSync(join(project, 'data/anim/guard_pass.json')) ? JSON.parse(readFileSync(join(project, 'data/anim/guard_pass.json'), 'utf8')).contacts || {} : {};
++const passGuard = (pid, ct) => { const r = guardPass[pid]; if (r) for (const h of ['hand_l', 'hand_r']) if (r[h]) ct[h] = clone(r[h]); return ct; };
+ 
+ const clone = o => JSON.parse(JSON.stringify(o));
+ const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+@@ -247,10 +250,11 @@ for (const row of combat.strikes) {
+     ct = merge(merge(b('contact'), o.all || {}), o.contact || {});
+     fo = merge(merge(b('follow'), o.all || {}), o.follow || {});
+     if (sp.contact) ct = merge(ct, sp.contact);   // a new contact over a derived family (the backfist, the overhand)
++    passGuard(`${id}.contact`, ct);
+     if (sp.chamber) ch = merge(ch, sp.chamber);
+     if (sp.follow) fo = merge(fo, sp.follow);
+   } else {
+-    ct = clone(sp.contact);
++    ct = passGuard(`${id}.contact`, clone(sp.contact));
+     const tpl = FAMILY[sp.family] || TEMPLATE[sp.kind];
+     if (!tpl) throw new Error('no chamber template for ' + sp.kind);
+     ch = merge(tpl, sp.chamber || {});
+@@ -348,6 +352,7 @@ if (mod.reuse) {
+     for (const [role, part] of [['load', 'chamber'], ['contact', 'contact'], ['follow', 'follow']]) {
+       const src = srcPoses[`${m.id}.${part}`];
+       const q = apply(src, m.limb, two);
++      if (part === 'contact') passGuard(`${id}.contact`, q);
+       q._orig = String(src._orig || '').replace(/ \((the wind-up|the follow-through)\)$/, '') + ' (the rival\'s pose in his profile)' + (part === 'chamber' ? ' (the wind-up)' : part === 'follow' ? ' (the follow-through)' : '');
+       outPoses[`${id}.${part}`] = q;
+       ks.keys.push({ role, pose: `${id}.${part}` });
