@@ -420,6 +420,10 @@
       "schema": "biomes-brunt.schema.json"
     },
     {
+      "match": "data/biomes/planet.json",
+      "schema": "biomes-planet.schema.json"
+    },
+    {
       "match": "data/input/actions.json",
       "schema": "input-actions.schema.json"
     },

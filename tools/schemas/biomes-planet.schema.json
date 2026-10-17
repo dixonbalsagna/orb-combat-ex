@@ -1,0 +1,672 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-planet",
+  "title": "biomes.planet/1",
+  "description": "data/biomes/planet.json: the stored procedural planet (docs/world/planet-module.md; WorldPlanet). Terrain and biome thresholds, noise seeds, the polar ice, the places, the slice picker and its minimum, the wear list and the offers. Every key is required (a number cannot vanish unseen). \"story\": story planets by id (empty for now). Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "contScale",
+    "contOct",
+    "reliefScale",
+    "reliefOct",
+    "seaShift",
+    "hMul",
+    "rangeFrom",
+    "rangeMul",
+    "reliefBase",
+    "detailScale",
+    "detailOct",
+    "detailAmp",
+    "detailSheet",
+    "mountainAbove",
+    "wetScale",
+    "wetOct",
+    "tempScale",
+    "tempOct",
+    "tempLat",
+    "tempNoise",
+    "desertWet",
+    "desertTemp",
+    "forestWet",
+    "sRelief",
+    "sWet",
+    "sTemp",
+    "sDetail",
+    "sPackEdge",
+    "sSouthMask",
+    "sSouthRelief",
+    "sRock",
+    "sShelf",
+    "sSea",
+    "sFloe",
+    "sBerg",
+    "polarY",
+    "blend",
+    "seaNorth",
+    "seaSouth",
+    "seaNoiseScale",
+    "seaNoiseOct",
+    "seaNoiseAmp",
+    "packEdgeY",
+    "packWidth",
+    "packNoiseScale",
+    "packNoiseOct",
+    "packNoiseAmp",
+    "packMin",
+    "floeCell",
+    "floePow",
+    "floeCap",
+    "floeR0",
+    "floeR1",
+    "floeH0",
+    "floeH1",
+    "floeThin0",
+    "floeThin1",
+    "bergCell",
+    "bergRate",
+    "bergBandLo",
+    "bergBandHi",
+    "bergBandMid",
+    "bergBandSlope",
+    "bergRadius",
+    "bergH0",
+    "bergH1",
+    "southMaskY",
+    "southWidth",
+    "southMaskScale",
+    "southMaskOct",
+    "southMaskAmp",
+    "domeBase",
+    "domeMul",
+    "domeMax",
+    "domeReliefScale",
+    "domeReliefOct",
+    "domeReliefAmp",
+    "rockHeight",
+    "rockScale",
+    "rockOct",
+    "rockNoise",
+    "shelfFrom",
+    "shelfH",
+    "shelfNoiseScale",
+    "shelfNoiseOct",
+    "shelfNoiseAmp",
+    "southBergFrom",
+    "southBergRate",
+    "cities",
+    "cityRadius",
+    "cityTries",
+    "towns",
+    "townRadius",
+    "townTries",
+    "placeHMin",
+    "placeHMax",
+    "placeYMax",
+    "placeGap",
+    "scoreGap",
+    "scoreH0",
+    "scoreHW",
+    "placeSeedMul",
+    "replaceTries",
+    "minCities",
+    "minTowns",
+    "minBiomes",
+    "biomeShare",
+    "minLand",
+    "cityReach",
+    "townReach",
+    "samples",
+    "randomBearings",
+    "nMinCity",
+    "nMinRandom",
+    "relaxCities",
+    "relaxTowns",
+    "relaxBiomes",
+    "relaxLand",
+    "touchLand",
+    "touchTries",
+    "craterCap",
+    "foldDepthMax",
+    "damagedPermille",
+    "fallenPermille",
+    "slicePeople",
+    "bandUnits",
+    "offerCount",
+    "offerTries",
+    "offerMinSep",
+    "story"
+  ],
+  "properties": {
+    "schema": {
+      "const": "biomes.planet/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "contScale": {
+      "type": "number",
+      "description": "the continents: noise scale in units"
+    },
+    "contOct": {
+      "type": "integer",
+      "description": "the continents: octaves"
+    },
+    "reliefScale": {
+      "type": "number",
+      "description": "the ranges on high land: noise scale"
+    },
+    "reliefOct": {
+      "type": "integer",
+      "description": "the relief: octaves"
+    },
+    "seaShift": {
+      "type": "number",
+      "description": "height = (e + seaShift) x hMul: more shift, less ocean"
+    },
+    "hMul": {
+      "type": "number",
+      "description": "the height of the continents"
+    },
+    "rangeFrom": {
+      "type": "number",
+      "description": "above this e the ground rises into ranges"
+    },
+    "rangeMul": {
+      "type": "number",
+      "description": "range height per unit of e above rangeFrom"
+    },
+    "reliefBase": {
+      "type": "number",
+      "description": "ranges are (reliefBase + relief noise) tall"
+    },
+    "detailScale": {
+      "type": "number",
+      "description": "the fine relief: noise scale"
+    },
+    "detailOct": {
+      "type": "integer",
+      "description": "the fine relief: octaves"
+    },
+    "detailAmp": {
+      "type": "number",
+      "description": "the fine relief on ordinary land, units"
+    },
+    "detailSheet": {
+      "type": "number",
+      "description": "the share of the fine relief an ice sheet takes"
+    },
+    "mountainAbove": {
+      "type": "number",
+      "description": "ground above this is the mountains biome"
+    },
+    "wetScale": {
+      "type": "number",
+      "description": "wetness noise scale"
+    },
+    "wetOct": {
+      "type": "integer",
+      "description": "wetness octaves"
+    },
+    "tempScale": {
+      "type": "number",
+      "description": "warmth noise scale"
+    },
+    "tempOct": {
+      "type": "integer",
+      "description": "warmth octaves"
+    },
+    "tempLat": {
+      "type": "number",
+      "description": "warmth falls by this per unit of latitude y"
+    },
+    "tempNoise": {
+      "type": "number",
+      "description": "the warmth noise amplitude"
+    },
+    "desertWet": {
+      "type": "number",
+      "description": "desert where wetness is below this ..."
+    },
+    "desertTemp": {
+      "type": "number",
+      "description": "... and warmth is above this"
+    },
+    "forestWet": {
+      "type": "number",
+      "description": "forest where wetness is above this"
+    },
+    "sRelief": {
+      "type": "integer",
+      "description": "relief"
+    },
+    "sWet": {
+      "type": "integer",
+      "description": "wetness"
+    },
+    "sTemp": {
+      "type": "integer",
+      "description": "warmth"
+    },
+    "sDetail": {
+      "type": "integer",
+      "description": "fine relief"
+    },
+    "sPackEdge": {
+      "type": "integer",
+      "description": "the north pack edge"
+    },
+    "sSouthMask": {
+      "type": "integer",
+      "description": "the south land mask"
+    },
+    "sSouthRelief": {
+      "type": "integer",
+      "description": "the south dome relief"
+    },
+    "sRock": {
+      "type": "integer",
+      "description": "rock through the ice"
+    },
+    "sShelf": {
+      "type": "integer",
+      "description": "the shelf"
+    },
+    "sSea": {
+      "type": "integer",
+      "description": "the polar sea floor"
+    },
+    "sFloe": {
+      "type": "integer",
+      "description": "floes"
+    },
+    "sBerg": {
+      "type": "integer",
+      "description": "icebergs"
+    },
+    "polarY": {
+      "type": "number",
+      "description": "the caps begin at this latitude y (ordinary ground blends to sea there)"
+    },
+    "blend": {
+      "type": "number",
+      "description": "the blend width in y"
+    },
+    "seaNorth": {
+      "type": "number",
+      "description": "the north sea floor"
+    },
+    "seaSouth": {
+      "type": "number",
+      "description": "the south sea floor"
+    },
+    "seaNoiseScale": {
+      "type": "number",
+      "description": "sea floor noise scale"
+    },
+    "seaNoiseOct": {
+      "type": "integer",
+      "description": "sea floor noise octaves"
+    },
+    "seaNoiseAmp": {
+      "type": "number",
+      "description": "sea floor noise amplitude"
+    },
+    "packEdgeY": {
+      "type": "number",
+      "description": "the pack is 0 thick at this y"
+    },
+    "packWidth": {
+      "type": "number",
+      "description": "y over which the pack thickens to 1"
+    },
+    "packNoiseScale": {
+      "type": "number",
+      "description": "pack edge noise scale"
+    },
+    "packNoiseOct": {
+      "type": "integer",
+      "description": "pack edge noise octaves"
+    },
+    "packNoiseAmp": {
+      "type": "number",
+      "description": "pack edge noise amplitude"
+    },
+    "packMin": {
+      "type": "number",
+      "description": "floes only where the thickness is above this"
+    },
+    "floeCell": {
+      "type": "number",
+      "description": "floe cell size, units"
+    },
+    "floePow": {
+      "type": "number",
+      "description": "the chance a cell is ice is thickness^floePow x floeCap"
+    },
+    "floeCap": {
+      "type": "number",
+      "description": "floe chance scale"
+    },
+    "floeR0": {
+      "type": "number",
+      "description": "floe radius (in cells) at 0 thickness"
+    },
+    "floeR1": {
+      "type": "number",
+      "description": "floe radius gain at thickness 1"
+    },
+    "floeH0": {
+      "type": "number",
+      "description": "floe height base, units"
+    },
+    "floeH1": {
+      "type": "number",
+      "description": "floe height by the cell random"
+    },
+    "floeThin0": {
+      "type": "number",
+      "description": "floe height scale at the edge"
+    },
+    "floeThin1": {
+      "type": "number",
+      "description": "floe height scale gain with thickness"
+    },
+    "bergCell": {
+      "type": "number",
+      "description": "iceberg cell size"
+    },
+    "bergRate": {
+      "type": "number",
+      "description": "the chance a cell holds a berg at the band centre (north)"
+    },
+    "bergBandLo": {
+      "type": "number",
+      "description": "bergs only above this thickness"
+    },
+    "bergBandHi": {
+      "type": "number",
+      "description": "and below this"
+    },
+    "bergBandMid": {
+      "type": "number",
+      "description": "the band centre"
+    },
+    "bergBandSlope": {
+      "type": "number",
+      "description": "the chance falls this fast off the centre"
+    },
+    "bergRadius": {
+      "type": "number",
+      "description": "berg radius in cells"
+    },
+    "bergH0": {
+      "type": "number",
+      "description": "berg height base"
+    },
+    "bergH1": {
+      "type": "number",
+      "description": "berg height gain by the cell random"
+    },
+    "southMaskY": {
+      "type": "number",
+      "description": "the south land mask is 0 at this y"
+    },
+    "southWidth": {
+      "type": "number",
+      "description": "y per unit of the mask"
+    },
+    "southMaskScale": {
+      "type": "number",
+      "description": "mask noise scale"
+    },
+    "southMaskOct": {
+      "type": "integer",
+      "description": "mask noise octaves"
+    },
+    "southMaskAmp": {
+      "type": "number",
+      "description": "mask noise amplitude (in mask units)"
+    },
+    "domeBase": {
+      "type": "number",
+      "description": "the ice dome at the coast"
+    },
+    "domeMul": {
+      "type": "number",
+      "description": "dome height per unit of the mask"
+    },
+    "domeMax": {
+      "type": "number",
+      "description": "the dome stops rising at this mask value"
+    },
+    "domeReliefScale": {
+      "type": "number",
+      "description": "dome relief noise scale"
+    },
+    "domeReliefOct": {
+      "type": "integer",
+      "description": "dome relief octaves"
+    },
+    "domeReliefAmp": {
+      "type": "number",
+      "description": "dome relief amplitude"
+    },
+    "rockHeight": {
+      "type": "number",
+      "description": "rock shows through the ice above this"
+    },
+    "rockScale": {
+      "type": "number",
+      "description": "rock noise scale"
+    },
+    "rockOct": {
+      "type": "integer",
+      "description": "rock noise octaves"
+    },
+    "rockNoise": {
+      "type": "number",
+      "description": "rock where the noise is above this"
+    },
+    "shelfFrom": {
+      "type": "number",
+      "description": "the shelf runs from the mask 0 down to this"
+    },
+    "shelfH": {
+      "type": "number",
+      "description": "the shelf height"
+    },
+    "shelfNoiseScale": {
+      "type": "number",
+      "description": "shelf noise scale"
+    },
+    "shelfNoiseOct": {
+      "type": "integer",
+      "description": "shelf noise octaves"
+    },
+    "shelfNoiseAmp": {
+      "type": "number",
+      "description": "shelf noise amplitude"
+    },
+    "southBergFrom": {
+      "type": "number",
+      "description": "bergs round the south shelf down to this mask value"
+    },
+    "southBergRate": {
+      "type": "number",
+      "description": "the chance a cell holds a berg there"
+    },
+    "cities": {
+      "type": "integer",
+      "description": "cities requested"
+    },
+    "cityRadius": {
+      "type": "number",
+      "description": "a city's radius, units"
+    },
+    "cityTries": {
+      "type": "integer",
+      "description": "candidates a city"
+    },
+    "towns": {
+      "type": "integer",
+      "description": "towns requested (about 3 in 4 find room)"
+    },
+    "townRadius": {
+      "type": "number",
+      "description": "a town's radius"
+    },
+    "townTries": {
+      "type": "integer",
+      "description": "candidates a town"
+    },
+    "placeHMin": {
+      "type": "number",
+      "description": "a place stands on ground at least this high"
+    },
+    "placeHMax": {
+      "type": "number",
+      "description": "and at most this high"
+    },
+    "placeYMax": {
+      "type": "number",
+      "description": "and not beyond this latitude y"
+    },
+    "placeGap": {
+      "type": "number",
+      "description": "the least clear gap between two places, units"
+    },
+    "scoreGap": {
+      "type": "number",
+      "description": "score per unit of clear gap"
+    },
+    "scoreH0": {
+      "type": "number",
+      "description": "the preferred height"
+    },
+    "scoreHW": {
+      "type": "number",
+      "description": "score lost per unit away from it"
+    },
+    "placeSeedMul": {
+      "type": "integer",
+      "description": "the stream is SimRng(seed x this + 1); the second pass + 2"
+    },
+    "replaceTries": {
+      "type": "integer",
+      "description": "candidates when a place that fell in a cap is placed again"
+    },
+    "minCities": {
+      "type": "integer",
+      "description": "a slice holds at least this many standing cities"
+    },
+    "minTowns": {
+      "type": "integer",
+      "description": "and towns"
+    },
+    "minBiomes": {
+      "type": "integer",
+      "description": "and biomes of biomeShare each"
+    },
+    "biomeShare": {
+      "type": "number",
+      "description": "a biome counts when it covers this share of the length"
+    },
+    "minLand": {
+      "type": "number",
+      "description": "and at least this share is land (ocean and sea ice are not)"
+    },
+    "cityReach": {
+      "type": "number",
+      "description": "a city is on the slice when the line passes within this share of its radius"
+    },
+    "townReach": {
+      "type": "number",
+      "description": "a town, this share"
+    },
+    "samples": {
+      "type": "integer",
+      "description": "points along the circle the minimum reads"
+    },
+    "randomBearings": {
+      "type": "integer",
+      "description": "random-bearing circles tried beside those through a city"
+    },
+    "nMinCity": {
+      "type": "number",
+      "description": "a circle through the touch-down and a city needs the cross of the two at least this long"
+    },
+    "nMinRandom": {
+      "type": "number",
+      "description": "a random-bearing circle, this long"
+    },
+    "relaxCities": {
+      "type": "integer",
+      "description": "the relaxed minimum (late in a run): standing cities"
+    },
+    "relaxTowns": {
+      "type": "integer",
+      "description": "towns"
+    },
+    "relaxBiomes": {
+      "type": "integer",
+      "description": "biomes"
+    },
+    "relaxLand": {
+      "type": "number",
+      "description": "land share"
+    },
+    "touchLand": {
+      "type": "integer",
+      "description": "1: the touch-down is redrawn until it is on land"
+    },
+    "touchTries": {
+      "type": "integer",
+      "description": "redraws"
+    },
+    "craterCap": {
+      "type": "integer",
+      "description": "craters kept per place; past it the two oldest merge"
+    },
+    "foldDepthMax": {
+      "type": "integer",
+      "description": "a merged crater's depth cap, 1/16 units"
+    },
+    "damagedPermille": {
+      "type": "integer",
+      "description": "a place is damaged at this share (per thousand) of its buildings or people lost"
+    },
+    "fallenPermille": {
+      "type": "integer",
+      "description": "fallen when under this share (per thousand) of its buildings stand, or of its people are present"
+    },
+    "slicePeople": {
+      "type": "integer",
+      "description": "the people of a full slice (today's arena)"
+    },
+    "bandUnits": {
+      "type": "number",
+      "description": "a mark within this lateral distance of the line is on the slice"
+    },
+    "offerCount": {
+      "type": "integer",
+      "description": "offers a chapter"
+    },
+    "offerTries": {
+      "type": "integer",
+      "description": "touch-downs tried for them"
+    },
+    "offerMinSep": {
+      "type": "number",
+      "description": "least distance between two offers' touch-downs, units"
+    },
+    "story": {
+      "type": "object",
+      "description": "story planets by id: {seed, places}; empty for now"
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

@@ -281691,6 +281691,68 @@
         "rule": "oneOf",
         "pointer": "/limbs/foot"
       }
+    },
+    {
+      "id": "planet-schema-version",
+      "schema": "biomes-planet.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/planet.json",
+          "set": {
+            "/schema": "biomes.planet/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "planet-cities-fraction",
+      "schema": "biomes-planet.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/planet.json",
+          "set": {
+            "/cities": 12.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/cities"
+      }
+    },
+    {
+      "id": "planet-key-missing",
+      "schema": "biomes-planet.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/planet.json",
+          "del": [
+            "/hMul"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required"
+      }
+    },
+    {
+      "id": "planet-unknown-key",
+      "schema": "biomes-planet.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/planet.json",
+          "set": {
+            "/hmul": 1300
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties"
+      }
     }
   ],
   "text": [

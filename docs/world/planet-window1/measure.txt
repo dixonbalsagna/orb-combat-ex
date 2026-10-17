@@ -1,0 +1,23 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+COST: planet (places) 504 ms; slice read, no ice 560 ms, through both poles 775 ms (best of 3); a pick 13 ms (mean of 20)
+FALLEN: strict / relaxed / strict-or-relaxed share of touch-downs that find a slice, by cities fallen (2 planets x 6 fallen sets x 12 touch-downs)
+   0 fallen: strict  98%  relaxed  95%  either 100%  (144 touch-downs)
+   1 fallen: strict  97%  relaxed  94%  either 100%  (144 touch-downs)
+   2 fallen: strict  97%  relaxed  93%  either  99%  (144 touch-downs)
+   3 fallen: strict  93%  relaxed  94%  either 100%  (144 touch-downs)
+   4 fallen: strict  90%  relaxed  88%  either  97%  (144 touch-downs)
+   5 fallen: strict  78%  relaxed  87%  either  94%  (144 touch-downs)
+   6 fallen: strict  72%  relaxed  83%  either  92%  (144 touch-downs)
+   7 fallen: strict  59%  relaxed  76%  either  82%  (144 touch-downs)
+   8 fallen: strict  36%  relaxed  73%  either  76%  (144 touch-downs)
+   9 fallen: strict  18%  relaxed  62%  either  67%  (144 touch-downs)
+  10 fallen: strict   6%  relaxed  42%  either  42%  (144 touch-downs)
+FALLS: places that can fall in one stage, by the tier's ceiling of the slice's people (an upper bound, and damage spent nearest the touch-down first)
+  tier ceiling 10%: bound 3.18 places (0.00 cities, at most 0); nearest-first 1.07 places (0.00 cities), 0.95 more left damaged  (116 slices)
+  tier ceiling 30%: bound 4.41 places (0.65 cities, at most 1); nearest-first 2.86 places (1.10 cities), 0.75 more left damaged  (116 slices)
+  tier ceiling 60%: bound 6.48 places (2.72 cities, at most 4); nearest-first 6.41 places (2.78 cities), 0.22 more left damaged  (116 slices)
+  tier ceiling 90%: bound 6.63 places (2.86 cities, at most 4); nearest-first 6.63 places (2.86 cities), 0.00 more left damaged  (116 slices)
+OFFERS: three offers with 8 cities fallen: time and result
+  20 trials (8 of 12 cities fallen each): three offers found in 18; median 173 ms, 90th 563 ms, worst 572 ms; relaxed minimum used by 30 offers
+  with none fallen: 57 ms

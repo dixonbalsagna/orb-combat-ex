@@ -37,6 +37,8 @@ Owner: World and Environment. Early prototype and diagrams for Orb's homework 5 
 
 QA keeps one **fixed planet** for baselines and gets a random-planet arm for coverage (a measurement is per planet seed). The hand-made Bellgate would become a story-mode planet (a fixed seed with a hand-placed list), so the demo is not lost.
 
+**Status (2026-10-16):** window 1 is built as a pure module, `sim/world/planet.gd`, with its data, checks and measures (`planet-module.md`); nothing reads it yet and no golden moves. Windows 2 to 4 are not begun.
+
 ## Questions for Orb (in `homework/22-planet-slice.md`)
 
 1. Arena length: today's 153,600 (recommended), or longer (the planet and its places grow four times for twice the length)?

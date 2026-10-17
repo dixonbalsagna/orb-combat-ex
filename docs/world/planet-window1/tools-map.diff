@@ -1,0 +1,15 @@
+diff --git a/tools/schemas/map.json b/tools/schemas/map.json
+index a9b505f..0ad0ff1 100644
+--- a/tools/schemas/map.json
++++ b/tools/schemas/map.json
+@@ -419,6 +419,10 @@
+       "match": "data/biomes/brunt.json",
+       "schema": "biomes-brunt.schema.json"
+     },
++    {
++      "match": "data/biomes/planet.json",
++      "schema": "biomes-planet.schema.json"
++    },
+     {
+       "match": "data/input/actions.json",
+       "schema": "input-actions.schema.json"
