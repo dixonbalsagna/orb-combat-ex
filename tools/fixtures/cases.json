@@ -140676,7 +140676,7 @@
       }
     },
     {
-      "id": "anim-press-styles-hold-squash-above-one",
+      "id": "anim-press-styles-hold-squash-above-two",
       "schema": "anim-press-styles.schema.json",
       "mutate": [
         {
@@ -140685,7 +140685,7 @@
             "/styles/burst/hold": {
               "from": 28,
               "to": 70,
-              "squash": 1.1,
+              "squash": 2.5,
               "lean_back": 0.12
             }
           }
@@ -281381,6 +281381,230 @@
       "expect": {
         "rule": "maximum",
         "pointer": "/districts/downtown/tint_weights/steel"
+      }
+    },
+    {
+      "id": "anim-joints-slew-ok",
+      "schema": "anim-joints.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/joints.json",
+          "set": {
+            "/slew": {
+              "free_arm_deg": 30
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-joints-slew-zero",
+      "schema": "anim-joints.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/joints.json",
+          "set": {
+            "/slew": {
+              "free_arm_deg": 0
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/slew/free_arm_deg"
+      }
+    },
+    {
+      "id": "anim-joints-slew-needs-deg",
+      "schema": "anim-joints.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/joints.json",
+          "set": {
+            "/slew": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/slew"
+      }
+    },
+    {
+      "id": "anim-joints-slew-unknown-key",
+      "schema": "anim-joints.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/joints.json",
+          "set": {
+            "/slew": {
+              "free_arm_deg": 30,
+              "hop": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/slew/hop"
+      }
+    },
+    {
+      "id": "anim-joints-wing-runtime-ok",
+      "schema": "anim-joints.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/joints.json",
+          "set": {
+            "/wing": {
+              "fix": true,
+              "suffixes": [
+                ".contact",
+                ".follow"
+              ],
+              "skip": [],
+              "flex_deg": 50,
+              "up": 2,
+              "drop": 8,
+              "margin": 4,
+              "back": 4,
+              "runtime": 0.85
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-joints-wing-runtime-above-one",
+      "schema": "anim-joints.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/joints.json",
+          "set": {
+            "/wing": {
+              "fix": true,
+              "suffixes": [
+                ".contact",
+                ".follow"
+              ],
+              "skip": [],
+              "flex_deg": 50,
+              "up": 2,
+              "drop": 8,
+              "margin": 4,
+              "back": 4,
+              "runtime": 1.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/wing/runtime"
+      }
+    },
+    {
+      "id": "anim-pressstyles-hold-tremor-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/hold": {
+              "from": 28,
+              "to": 46,
+              "squash": 1.25,
+              "lean_back": 0.12,
+              "pose": {
+                "protagonist": "ch.b_p.load",
+                "antihero": "ch.b_r.load"
+              },
+              "tremor": 0.8,
+              "twist_back": 32
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-hold-tremor-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/hold": {
+              "from": 28,
+              "to": 46,
+              "squash": 0.6,
+              "lean_back": 0.12,
+              "pose": {
+                "protagonist": "ch.b_p.load",
+                "antihero": "ch.b_r.load"
+              },
+              "tremor": -1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/heavy/hold/tremor"
+      }
+    },
+    {
+      "id": "anim-pressstyles-hold-twist-back-too-far",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/hold": {
+              "from": 28,
+              "to": 46,
+              "squash": 0.6,
+              "lean_back": 0.12,
+              "pose": {
+                "protagonist": "ch.b_p.load",
+                "antihero": "ch.b_r.load"
+              },
+              "twist_back": 120
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/heavy/hold/twist_back"
+      }
+    },
+    {
+      "id": "anim-pressstyles-hold-squash-too-deep",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/heavy/hold": {
+              "from": 28,
+              "to": 46,
+              "squash": 2.5,
+              "lean_back": 0.12,
+              "pose": {
+                "protagonist": "ch.b_p.load",
+                "antihero": "ch.b_r.load"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/styles/heavy/hold/squash"
       }
     },
     {

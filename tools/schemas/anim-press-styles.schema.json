@@ -775,8 +775,8 @@
                 "squash": {
                   "type": "number",
                   "minimum": 0,
-                  "maximum": 1,
-                  "description": "How much of the squash pose the hold takes."
+                  "maximum": 2,
+                  "description": "How much of the squash pose the hold takes (above 1: a deeper coil than the pose)."
                 },
                 "lean_back": {
                   "type": "number",
@@ -798,6 +798,18 @@
                     "^_": true
                   },
                   "description": "A fighter of fighters.json to the pose the hold is held in (rule pressstyles-hold: a fighter of fighters.json and a real pose)."
+                },
+                "tremor": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 5,
+                  "description": "Optional. How hard the body shakes with what it holds, in units a tick at the full coil (halved under reduced motion; a body shake, not a flash)."
+                },
+                "twist_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 90,
+                  "description": "Optional. How far the shoulders wind back, in degrees, the way the blow will come from."
                 }
               },
               "additionalProperties": false,
@@ -1210,8 +1222,8 @@
                 "squash": {
                   "type": "number",
                   "minimum": 0,
-                  "maximum": 1,
-                  "description": "How much of the squash pose the hold takes."
+                  "maximum": 2,
+                  "description": "How much of the squash pose the hold takes (above 1: a deeper coil than the pose)."
                 },
                 "lean_back": {
                   "type": "number",
@@ -1233,6 +1245,18 @@
                     "^_": true
                   },
                   "description": "A fighter of fighters.json to the pose the hold is held in (rule pressstyles-hold: a fighter of fighters.json and a real pose)."
+                },
+                "tremor": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 5,
+                  "description": "Optional. How hard the body shakes with what it holds, in units a tick at the full coil (halved under reduced motion; a body shake, not a flash)."
+                },
+                "twist_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 90,
+                  "description": "Optional. How far the shoulders wind back, in degrees, the way the blow will come from."
                 }
               },
               "additionalProperties": false,
@@ -1645,8 +1669,8 @@
                 "squash": {
                   "type": "number",
                   "minimum": 0,
-                  "maximum": 1,
-                  "description": "How much of the squash pose the hold takes."
+                  "maximum": 2,
+                  "description": "How much of the squash pose the hold takes (above 1: a deeper coil than the pose)."
                 },
                 "lean_back": {
                   "type": "number",
@@ -1668,6 +1692,18 @@
                     "^_": true
                   },
                   "description": "A fighter of fighters.json to the pose the hold is held in (rule pressstyles-hold: a fighter of fighters.json and a real pose)."
+                },
+                "tremor": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 5,
+                  "description": "Optional. How hard the body shakes with what it holds, in units a tick at the full coil (halved under reduced motion; a body shake, not a flash)."
+                },
+                "twist_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 90,
+                  "description": "Optional. How far the shoulders wind back, in degrees, the way the blow will come from."
                 }
               },
               "additionalProperties": false,
@@ -2080,8 +2116,8 @@
                 "squash": {
                   "type": "number",
                   "minimum": 0,
-                  "maximum": 1,
-                  "description": "How much of the squash pose the hold takes."
+                  "maximum": 2,
+                  "description": "How much of the squash pose the hold takes (above 1: a deeper coil than the pose)."
                 },
                 "lean_back": {
                   "type": "number",
@@ -2103,6 +2139,18 @@
                     "^_": true
                   },
                   "description": "A fighter of fighters.json to the pose the hold is held in (rule pressstyles-hold: a fighter of fighters.json and a real pose)."
+                },
+                "tremor": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 5,
+                  "description": "Optional. How hard the body shakes with what it holds, in units a tick at the full coil (halved under reduced motion; a body shake, not a flash)."
+                },
+                "twist_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 90,
+                  "description": "Optional. How far the shoulders wind back, in degrees, the way the blow will come from."
                 }
               },
               "additionalProperties": false,
@@ -2515,8 +2563,8 @@
                 "squash": {
                   "type": "number",
                   "minimum": 0,
-                  "maximum": 1,
-                  "description": "How much of the squash pose the hold takes."
+                  "maximum": 2,
+                  "description": "How much of the squash pose the hold takes (above 1: a deeper coil than the pose)."
                 },
                 "lean_back": {
                   "type": "number",
@@ -2538,6 +2586,18 @@
                     "^_": true
                   },
                   "description": "A fighter of fighters.json to the pose the hold is held in (rule pressstyles-hold: a fighter of fighters.json and a real pose)."
+                },
+                "tremor": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 5,
+                  "description": "Optional. How hard the body shakes with what it holds, in units a tick at the full coil (halved under reduced motion; a body shake, not a flash)."
+                },
+                "twist_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 90,
+                  "description": "Optional. How far the shoulders wind back, in degrees, the way the blow will come from."
                 }
               },
               "additionalProperties": false,
@@ -2989,8 +3049,8 @@
                 "squash": {
                   "type": "number",
                   "minimum": 0,
-                  "maximum": 1,
-                  "description": "How much of the squash pose the hold takes."
+                  "maximum": 2,
+                  "description": "How much of the squash pose the hold takes (above 1: a deeper coil than the pose)."
                 },
                 "lean_back": {
                   "type": "number",
@@ -3012,6 +3072,18 @@
                     "^_": true
                   },
                   "description": "A fighter of fighters.json to the pose the hold is held in (rule pressstyles-hold: a fighter of fighters.json and a real pose)."
+                },
+                "tremor": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 5,
+                  "description": "Optional. How hard the body shakes with what it holds, in units a tick at the full coil (halved under reduced motion; a body shake, not a flash)."
+                },
+                "twist_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 90,
+                  "description": "Optional. How far the shoulders wind back, in degrees, the way the blow will come from."
                 }
               },
               "additionalProperties": false,
@@ -3425,8 +3497,8 @@
                 "squash": {
                   "type": "number",
                   "minimum": 0,
-                  "maximum": 1,
-                  "description": "How much of the squash pose the hold takes."
+                  "maximum": 2,
+                  "description": "How much of the squash pose the hold takes (above 1: a deeper coil than the pose)."
                 },
                 "lean_back": {
                   "type": "number",
@@ -3448,6 +3520,18 @@
                     "^_": true
                   },
                   "description": "A fighter of fighters.json to the pose the hold is held in (rule pressstyles-hold: a fighter of fighters.json and a real pose)."
+                },
+                "tremor": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 5,
+                  "description": "Optional. How hard the body shakes with what it holds, in units a tick at the full coil (halved under reduced motion; a body shake, not a flash)."
+                },
+                "twist_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 90,
+                  "description": "Optional. How far the shoulders wind back, in degrees, the way the blow will come from."
                 }
               },
               "additionalProperties": false,
@@ -3870,8 +3954,8 @@
                 "squash": {
                   "type": "number",
                   "minimum": 0,
-                  "maximum": 1,
-                  "description": "How much of the squash pose the hold takes."
+                  "maximum": 2,
+                  "description": "How much of the squash pose the hold takes (above 1: a deeper coil than the pose)."
                 },
                 "lean_back": {
                   "type": "number",
@@ -3893,6 +3977,18 @@
                     "^_": true
                   },
                   "description": "A fighter of fighters.json to the pose the hold is held in (rule pressstyles-hold: a fighter of fighters.json and a real pose)."
+                },
+                "tremor": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 5,
+                  "description": "Optional. How hard the body shakes with what it holds, in units a tick at the full coil (halved under reduced motion; a body shake, not a flash)."
+                },
+                "twist_back": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 90,
+                  "description": "Optional. How far the shoulders wind back, in degrees, the way the blow will come from."
                 }
               },
               "additionalProperties": false,

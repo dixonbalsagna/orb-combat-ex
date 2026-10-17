@@ -279,6 +279,12 @@
           "minimum": 0,
           "maximum": 60,
           "description": "A wing's way out is taken this much farther than the first legal place, in units."
+        },
+        "runtime": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How much of the wing fix the live pose takes (0 none, 1 all), so the wing is drawn to the guard on the contact tick."
         }
       },
       "additionalProperties": false,
@@ -286,6 +292,25 @@
         "^_": true
       },
       "description": "Optional. The chicken-wing fix in the pose bake (docs/animation: homework 4): a free arm whose solve would stick its elbow out is moved to a bent, carried and dropped place."
+    },
+    "slew": {
+      "type": "object",
+      "required": [
+        "free_arm_deg"
+      ],
+      "properties": {
+        "free_arm_deg": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 180,
+          "description": "The most the free arm turns in one tick on its way to a blow's plane, in degrees (a rate limit bound by the blow's deadline)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "Optional. Rate limits on the pose bake and the live bend (docs/animation/homework4b.md)."
     }
   },
   "additionalProperties": false,
