@@ -92,7 +92,10 @@ func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int
 		ai_set["p%d" % (i + 1)] = sc == "ring"   # the ring's bodies past the pair fight; any other scene's stand
 	main.start_match(seed if seed != 0 else SEED, ai_set, {} if slots.size() < 2 else {"slots": slots})   # its own setup: no intro, not filed
 	# Camera's travel budget (off by default): the page's `budget=1`, set by tools/flash/run-pixels.mjs --budget, so a run with and without it is the same sim
-	var applied: Dictionary = {"budget": false, "hold": false, "mergezoom": false}   # what the hook really switched on: capture-web.mjs refuses a clip whose switch was asked for and not applied
+	# the clip's mode is UI's Reduce flashing as well as VFX's force_reduced: main.frame copies the option into the register and the look (the calm ground), and the option defaults to ON, so without
+	# this a "normal" clip was the calm look too and read pixel-identical to a reduced one (2026-10-17). Reported in `switches`; capture-web.mjs refuses a clip whose mode did not take.
+	main.ui_hud.opts["reduce_flashing"] = reduced
+	var applied: Dictionary = {"budget": false, "hold": false, "mergezoom": false, "reduce_flashing": bool(main.ui_hud.opts["reduce_flashing"])}   # what the hook really switched on: capture-web.mjs refuses a clip whose switch was asked for and not applied
 	if main.split_view != null and _page_flag("budget"):
 		main.split_view.set_travel_budget(true)
 		applied["budget"] = true
@@ -143,6 +146,8 @@ func step() -> void:
 	host.acc = SimConst.DT * 0.9999    # one tick's time short of a tick: the frame below runs one tick and draws its end
 	main.frame(SimConst.DT)
 	steps += 1
+	if steps == 1:   # what main.frame copied from the option on the first tick: the register's flag and the look's, which capture-web.mjs checks against the clip's mode
+		JavaScriptBridge.eval("window.__flashcap.mode = %s;" % JSON.stringify({"reduce_flashing": host.vfx.reduced_flashing, "flash_calm": PaneWorld.flash_calm}), true)
 	if host.ticks != before + 1:
 		JavaScriptBridge.eval("window.__flashcap.error = %s;" % JSON.stringify("a step ran %d ticks, not one (an overlay or a pause holds the game)" % (host.ticks - before)), true)
 	_shown_due = true

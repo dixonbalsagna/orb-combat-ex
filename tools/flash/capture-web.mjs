@@ -95,7 +95,7 @@ try {
   const inWindow = [];
   for (let i = 1; i <= TICKS; i++) {
     if (Date.now() > deadline) throw new Error(`timed out after ${i - 1} ticks`);
-    const got = await page.eval('window.__flashcap.step().then((t) => ({ tick: t, win: window.__flashcap.in_window, err: window.__flashcap.error || null, sw: window.__flashcap.switches || null }))', true);
+    const got = await page.eval('window.__flashcap.step().then((t) => ({ tick: t, win: window.__flashcap.in_window, err: window.__flashcap.error || null, sw: window.__flashcap.switches || null, mode: window.__flashcap.mode || null }))', true);
     const tick = got && got.tick;
     if (got && got.err) throw new Error(`the page reported an error: ${got.err}`);
     if (i === 1) {
@@ -105,6 +105,11 @@ try {
       for (const [flag, key] of [['--budget', 'budget'], ['--hold', 'hold'], ['--merge-zoom', 'mergezoom']]) {
         if (has(flag) && !has('--mock') && !(applied && applied[key] === true)) throw new Error(`${flag} was asked for and the page did not apply it (the hook reports ${JSON.stringify(applied)}): the build's hook is older than flash-capture-page-flags.patch`);
       }
+    }
+    if (i === 1 && !has('--mock')) {
+      // the clip's mode is UI's Reduce flashing and the calm look, not only the register's cap (the option defaults to ON: until flash-capture-reduce-flashing.patch a normal clip was the calm look).
+      // A hook that does not report it, or reports the other mode, makes a clip of the wrong look: refuse it.
+      if (!(applied && applied.reduce_flashing === REDUCED) || !(got && got.mode && got.mode.reduce_flashing === REDUCED && got.mode.flash_calm === REDUCED)) throw new Error(`the page did not take the clip's mode (${REDUCED ? 'reduced' : 'normal'}): it reports ${JSON.stringify({ applied: applied && applied.reduce_flashing, mode: got && got.mode })}; the build's hook is older than flash-capture-reduce-flashing.patch`);
     }
     inWindow.push(got && typeof got.win === 'number' ? got.win : null);
     if (typeof tick !== 'number' || tick <= last) throw new Error(`step() returned ${tick} after ${last}: the page did not advance exactly one tick`);

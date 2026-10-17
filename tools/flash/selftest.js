@@ -207,6 +207,17 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
 }
 
 
+// ---- the clip's mode is UI's Reduce flashing and the calm look (2026-10-17: the option defaults to ON, so "normal" clips were the calm look)
+{
+  const m = (reduced, rf, calm) => ({ scenario: 'blastdummy', seed: 12345, reduced, reduce_flashing: rf, flash_calm: calm });
+  check('a normal run with the option off and the plain look is a normal clip', L.modeProblems([m(false, false, false)]).length === 0);
+  check('a reduced run with the option on and the calm look is a reduced clip', L.modeProblems([m(true, true, true)]).length === 0);
+  check('a normal run that played the calm look (the option left on) is refused', L.modeProblems([m(false, true, true)]).length === 1);
+  check('a normal run with the option off but the calm look on is refused', L.modeProblems([m(false, false, true)]).length === 1);
+  check('a reduced run that did not turn the option on is refused', L.modeProblems([m(true, false, false)]).length === 1);
+  check('a run that does not report its mode is refused (an older flash_worst.gd)', L.modeProblems([{ scenario: 'x', seed: 1, reduced: false }]).length === 1);
+}
+
 // ---- drift: the staging exists twice (tools/flash/flash_worst.gd here, render/tools/flash_capture.gd in Rendering's export), and tick and seed counts live in sources.json too
 {
   const fs = require('fs'), path = require('path');
@@ -258,6 +269,7 @@ const row = (now, source, granted, why, inw) => [now, now, source, granted, why,
       return m ? m[0].split('\n').map((l) => l.replace(/#.*$/, '').trimEnd()).filter((l) => l.trim() && !/events\[/.test(l)) : null;
     };
         // Camera's travel budget switch: the web hook reads the page's `budget=1`, the headless run reads --budget, and both turn on the same rule
+    check('both stagings set the Reduce flashing option of UI from the mode of the clip (the option defaults to ON; flash-capture-reduce-flashing.patch)', theirs.includes('main.ui_hud.opts["reduce_flashing"] = reduced') && mine.includes('main.ui_hud.opts["reduce_flashing"] = reduced') && theirs.includes('"reduce_flashing": bool(main.ui_hud.opts["reduce_flashing"])'));
     check('the travel budget switch (budget=1 on the web hook, --budget on flash_worst.gd) sets the same rule', /"budget"/.test(theirs) && /set_travel_budget\(true\)/.test(theirs) && /--budget/.test(mine) && /set_travel_budget\(true\)/.test(mine));
     check('the launch hold switch (hold=1 on the web hook, --hold on flash_worst.gd) sets the same rule', /"hold"/.test(theirs) && /set_launch_hold\(true\)/.test(theirs) && /--hold/.test(mine) && /set_launch_hold\(true\)/.test(mine));
     check('the merge-zoom switch (mergezoom=1 on the web hook, --merge-zoom on flash_worst.gd) sets the same rule', theirs.includes('"mergezoom"') && theirs.includes('set_merge_zoom_limit(true)') && /--merge-zoom/.test(mine) && mine.includes('set_merge_zoom_limit(true)'));

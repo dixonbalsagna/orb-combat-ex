@@ -167,6 +167,8 @@ func _play(sc: String, seed: int, reduced: bool, ticks: int, slots: Array = []) 
 	main.start_match(seed, ai_set, null if slots.is_empty() else {"slots": slots})
 	var host: SimHost = main.host
 	host.vfx.force_reduced = reduced
+	# the clip's mode is UI's Reduce flashing as well: main.frame copies the option into the register and the look (the calm ground), and the option defaults to ON, so without this a "normal" clip was the calm look too
+	main.ui_hud.opts["reduce_flashing"] = reduced
 	_release_all()
 	_claim_pads(ai)
 	events.clear()
@@ -184,6 +186,8 @@ func _play(sc: String, seed: int, reduced: bool, ticks: int, slots: Array = []) 
 	host.drained.connect(cb)
 	var total: int = tick_override if tick_override > 0 else ticks
 	var reduced_seen: bool = false
+	var calm_seen: bool = false         # PaneWorld.flash_calm on the last tick: the look of the mode (the calm ground), which the register alone does not show
+	var rf_seen: bool = false           # the register's reduced-flashing flag on the last tick: what main.frame copied from the option
 	var guard: int = 0
 	while host.ticks < total and guard < total * 4:
 		_drive(sc, host.ticks, host.S)
@@ -198,12 +202,14 @@ func _play(sc: String, seed: int, reduced: bool, ticks: int, slots: Array = []) 
 		if host.ticks != before:
 			_watch_body(host.S, host.ticks)
 			reduced_seen = reduced_seen or host.vfx.flashes.reduced
+			calm_seen = PaneWorld.flash_calm
+			rf_seen = host.vfx.reduced_flashing
 	host.drained.disconnect(cb)
 	_release_all()
 	var fl = host.vfx.flashes
 	var sm: Dictionary = fl.summary()
 	return {
-		"scenario": sc, "seed": seed, "slots": [str(host.S.fighters[0].id), str(host.S.fighters[1].id)], "reduced": reduced, "reduced_seen": reduced_seen, "ticks": host.ticks, "cap": sm["cap"],
+		"scenario": sc, "seed": seed, "slots": [str(host.S.fighters[0].id), str(host.S.fighters[1].id)], "reduced": reduced, "reduced_seen": reduced_seen, "reduce_flashing": rf_seen, "flash_calm": calm_seen, "ticks": host.ticks, "cap": sm["cap"],
 		"rows": fl.log_rows(), "asked": int(sm["granted"]) + int(sm["refused"]), "summary": sm, "events": events.duplicate(),
 		"proxy": {"body_hit": {"seconds": RenderLook.HIT_FLASH_S, "worst_per_fighter": [_worst_starts(body_starts[0]), _worst_starts(body_starts[1])], "worst_flashes_per_second": maxi(_worst_starts(body_starts[0]), _worst_starts(body_starts[1])), "starts": [body_starts[0].size(), body_starts[1].size()]}},
 	}

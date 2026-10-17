@@ -61,6 +61,17 @@ function checkRun(run, src) {
   return { scenario: run.scenario, reduced, weighted: w.weighted, worst: w.count, worstWeight: w.weight, worstBig: w.big, at: w.weighted ? w.atWeight : w.at, budget, bigCap, rateCap, cap: w.weighted ? rateCap : legacyCap, asks: rows.length, bySource, unknownSources, truncated, redGranted: red, ownWorst: ownCount, ownWeight, agree, pass: rules && red === 0 && !truncated && agree };
 }
 
+/** The runs whose mode did not take: a clip's mode is UI's Reduce flashing and the calm look, which the run reports from its last tick (flash_worst.gd `reduce_flashing`, `flash_calm`). */
+function modeProblems(runs) {
+  const out = [];
+  for (const run of runs) {
+    const at = `scenario ${run.scenario} seed ${run.seed} (${run.reduced ? 'reduced' : 'normal'})`;
+    if (typeof run.reduce_flashing !== 'boolean' || typeof run.flash_calm !== 'boolean') out.push(`${at}: the run does not report UI's Reduce flashing and the calm look (an older flash_worst.gd)`);
+    else if (run.reduce_flashing !== !!run.reduced || run.flash_calm !== !!run.reduced) out.push(`${at}: UI's Reduce flashing was ${run.reduce_flashing ? 'on' : 'off'} and the calm look ${run.flash_calm ? 'on' : 'off'}: the clip's mode must set both`);
+  }
+  return out;
+}
+
 function loadRuns(args) {
   const files = [];
   for (const a of args) {
@@ -114,6 +125,9 @@ function main(argv) {
       }
     }
   }
+  // a clip's mode is UI's Reduce flashing as well as the register's cap: the option defaults to ON, so a "normal" clip that does not turn it off plays the calm look (the bug of 2026-10-17, which made
+  // every record measure the calm look in both modes). The run reports what main.frame copied into the register and the look on its last tick.
+  problems.push(...modeProblems(results.map((x) => x.run)));
   for (const { run } of results) {
     if (run.reduced && run.reduced_seen === false) problems.push(`scenario ${run.scenario} seed ${run.seed}: asked for reduced flashing but the register never ran reduced (its cap stayed 3), so the 1-a-second check did not apply`);
   }
@@ -161,5 +175,5 @@ function main(argv) {
   return ok ? 0 : 1;
 }
 
-module.exports = { checkRun, windows, loadSources, WINDOW, CAP, CAP_REDUCED };
+module.exports = { checkRun, modeProblems, windows, loadSources, WINDOW, CAP, CAP_REDUCED };
 if (require.main === module) process.exit(main(process.argv.slice(2)));
