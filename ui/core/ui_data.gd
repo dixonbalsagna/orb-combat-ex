@@ -369,6 +369,12 @@ static func feature(key: String) -> bool:
 	return bool(_features.get(key, false))
 
 
+## Whether Reduce flashing is locked on (Legal's addendum 10, RL-156): the toggle is shown nowhere, a saved Off is ignored, and the game plays the reduced look. Only the capture
+## hook (render/tools/flash_capture.gd) sets the option by itself, to measure the other mode; no screen, key or saved file can.
+static func rf_locked() -> bool:
+	return feature("lock_reduce_flashing")
+
+
 ## Override a flag for this run (tests and demos); pass null to clear the override.
 static func set_feature(key: String, value) -> void:
 	if value == null:

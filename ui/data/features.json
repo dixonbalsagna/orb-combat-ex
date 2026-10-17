@@ -9,6 +9,7 @@
     "about_voice": false,
     "three_strengths": false,
     "reduce_flashing": true,
+    "lock_reduce_flashing": false,
     "start_menu": true,
     "launch_marks": true,
     "civilian_bar": true

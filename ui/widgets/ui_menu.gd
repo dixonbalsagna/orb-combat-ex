@@ -13,13 +13,26 @@ static func word(key: String) -> String:
 	return UiData.t("prompt.menu_" + key)
 
 
+## The boxes the menu shows: all five, or four while Reduce flashing is locked on (Legal's addendum 10: the box is not offered).
+static func checks() -> Array:
+	var out: Array = []
+	for c in CHECKS:
+		if c == "reduce_flashing" and UiData.rf_locked():
+			continue
+		out.append(c)
+	return out
+
+
 ## The notice: Legal's words (RL-136), exactly, from data (prompt.menu_notice). It does not change with the boxes; the small line under the button says what Reduce flashing does.
 static func notice(_cfg: Dictionary = {}) -> String:
 	return word("notice")
 
 
-## The small line under the button: Reduce flashing's state, in Legal's words when it is on.
+## The small line under the button: Reduce flashing's state, in Legal's words. Locked on, it is the RL-136 line alone (there is nothing to turn off); with the box shown, "on"
+## carries Legal's sentence from addendum 10 and "off" says plainly that full effects are on.
 static func rf_line(cfg: Dictionary) -> String:
+	if UiData.rf_locked():
+		return word("rf_locked")
 	return word("rf_on" if bool(cfg.get("reduce_flashing", true)) else "rf_off")
 
 
@@ -28,7 +41,7 @@ static func rows(cfg: Dictionary, mid_match: bool, not_now: bool = false) -> Arr
 	var out: Array = ["players", "p1"]
 	if int(cfg.get("players", 1)) == 2:
 		out.append("p2")
-	out.append_array(CHECKS)
+	out.append_array(checks())
 	out.append("start")
 	if not_now:
 		out.append("not_now")
@@ -42,6 +55,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 	var mid: bool = bool(st.get("mid_match", false))
 	var not_now: bool = bool(st.get("not_now", false))
 	var list: Array = rows(cfg, mid, not_now)
+	var cks: Array = checks()
 	var cs: float = maxf(s, 0.3)
 	var tm: float = maxf(48.0 * dp, 44.0)
 	var margin: float = maxf(vp.x * 0.025, 8.0)
@@ -119,10 +133,10 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 			left_h = left_h_note
 			# Right column: the checkboxes, in one or two sub-columns by what fits.
 			var cws: float = 0.0
-			for c in CHECKS:
+			for c in cks:
 				cws = maxf(cws, UiText.width(word(c), fs) + tm * 0.55 + gap)
 			var subcols: int = 1 if cws * 2.0 + gap > colw else 2
-			var check_rows: int = int(ceil(float(CHECKS.size()) / float(subcols)))
+			var check_rows: int = int(ceil(float(cks.size()) / float(subcols)))
 			var right_h: float = float(check_rows) * (tm + gap * 0.5)
 			var btn_h: float = tm
 			var sub_lines: PackedStringArray = UiText.wrap(rf_line(cfg), fs_s, inner_w)
@@ -135,8 +149,11 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 				note_text = ""
 				total_h = pad * 2.0 + notice_h + gap * 1.5 + ((left_h + gap + right_h) if stack else maxf(left_h, right_h)) + gap + btn_h + sub_h
 			# A short screen: Start takes the empty cell of the boxes (the five boxes in two columns leave one) and Back sits under the left column.
-			var corner: bool = subcols == 2 and CHECKS.size() < subcols * check_rows
-			var total_a: float = pad * 2.0 + notice_h + gap * 1.5 + ((left_h + gap + right_h) if stack else maxf(left_h, right_h)) + sub_h
+			# Start can take the empty cell of the boxes (five in two columns leave one); with the grid full (four boxes, Reduce flashing locked) it takes a row under them, which is free when the left column is the taller.
+			var grid_full: bool = subcols == 2 and cks.size() == subcols * check_rows and not stack
+			var corner: bool = subcols == 2 and (cks.size() < subcols * check_rows or (grid_full and left_h >= right_h + tm + gap * 0.5))
+			var right_a: float = right_h + (tm + gap * 0.5 if grid_full else 0.0)
+			var total_a: float = pad * 2.0 + notice_h + gap * 1.5 + ((left_h + gap + right_h) if stack else maxf(left_h, right_a)) + sub_h
 			var use_corner: bool = corner and total_h > area.size.y
 			if use_corner:
 				total_h = total_a
@@ -178,20 +195,23 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 	var xr: float = x0 if stacked else x0 + colw2 + gap * 2.0
 	var cy: float = (yl + note_extra + gap) if stacked else y   # stacked: the boxes sit under the radios and their line
 	var cwid: float = (colw2 - gap * float(int(best["subcols"]) - 1)) / float(best["subcols"])
-	for i in range(CHECKS.size()):
+	for i in range(cks.size()):
 		var col: int = i / int(best["check_rows"])
 		var rowi: int = i % int(best["check_rows"])
 		var r := Rect2(xr + float(col) * (cwid + gap), cy + float(rowi) * (tm + gap * 0.5), cwid, tm)
-		items.append({"row": CHECKS[i], "kind": "check", "value": "", "label": word(CHECKS[i]), "rect": r})
-		row_boxes[CHECKS[i]] = r
+		items.append({"row": cks[i], "kind": "check", "value": "", "label": word(cks[i]), "rect": r})
+		row_boxes[cks[i]] = r
 	var by: float = card.end.y - pad - float(best["sub_h"]) - tm
 	var nn_w: float = minf(UiText.width(word("not_now"), int(best["fs"])) + tm * 1.2, inner_w * 0.34) if not_now else 0.0
 	var start := Rect2(x0, by, inner_w, tm)
 	var not_now_r := Rect2(card.end.x - pad - nn_w, card.position.y + pad, nn_w, tm)
 	var back := Rect2(card.end.x - pad - float(best["back_w"]), card.position.y + pad, float(best["back_w"]), tm)
 	if bool(best["corner"]):
-		var crow: int = int(best["check_rows"]) - 1
-		start = Rect2(xr + (cwid + gap) * float(int(best["subcols"]) - 1), cy + float(crow) * (tm + gap * 0.5), cwid, tm)
+		if cks.size() == int(best["subcols"]) * int(best["check_rows"]):
+			start = Rect2(xr, cy + float(best["check_rows"]) * (tm + gap * 0.5), colw2, tm)   # the grid is full: Start takes a row under the boxes, the column's width
+		else:
+			var crow: int = int(best["check_rows"]) - 1
+			start = Rect2(xr + (cwid + gap) * float(int(best["subcols"]) - 1), cy + float(crow) * (tm + gap * 0.5), cwid, tm)
 	items.append({"row": "start", "kind": "button", "value": "", "label": word("start"), "rect": start})
 	row_boxes["start"] = start
 	if not_now:

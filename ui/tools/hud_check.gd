@@ -5170,6 +5170,7 @@ func _three_strength_rules() -> void:
 	hud.queue_free()
 	await process_frame
 	await _reduce_flashing_rules()
+	await _rf_lock_rules()
 	await _launcher_rules()
 
 
@@ -5460,6 +5461,90 @@ func _rate_rules() -> void:
 	_ok(UiLook.HZ_BATTERED <= 2.0 and UiLook.HZ_HEAT <= 2.0, "rate rule: and the two that run a whole match (the battered stroke, the heat swell) are 2 Hz or slower")
 
 
+## Reduce flashing locked on (Legal's addendum 10, RL-156): until full effects have a recorded pass the interim build shows no toggle and ignores a saved Off; when the toggle is shown it carries Legal's sentence.
+func _rf_lock_rules() -> void:
+	const SENT := "Turning it off restores full effects, which flash more."
+	UiData.set_feature("reduce_flashing", true)
+	UiPrefs.path = "user://ui_prefs_test_rflock.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	_ok(not UiData.rf_locked(), "rf lock: the flag is off in the tree (the toggle is shown until the interim build turns it on)")
+	var keys := PackedStringArray()
+	for r in UiSettings.rows():
+		keys.append(str(r["key"]))
+	var help_all: String = str(UiData.options()["reduce_flashing"]["help"])
+	_ok(keys.has("reduce_flashing") and help_all.contains(SENT), "rf lock: with the toggle shown, its Settings row carries Legal's sentence, word for word")
+	_ok(UiMenu.checks().has("reduce_flashing") and UiMenu.rf_line({"reduce_flashing": true}).ends_with(SENT) and not UiMenu.rf_line({"reduce_flashing": false}).contains("Turning it off"), "rf lock: the menu's box carries the sentence when it is on, and says full effects are on when it is off")
+	var lines_all := (UiMenu.rf_line({"reduce_flashing": true}) + " " + UiMenu.rf_line({"reduce_flashing": false}) + " " + help_all).to_lower()
+	_ok(not lines_all.contains("safe") and not lines_all.contains("tested") and not lines_all.contains("compliant"), "rf lock: never safe, tested or compliant")
+	# Locked.
+	UiData.set_feature("lock_reduce_flashing", true)
+	var keys2 := PackedStringArray()
+	for r2 in UiSettings.rows():
+		keys2.append(str(r2["key"]))
+	_ok(not keys2.has("reduce_flashing") and keys2.has("reduced_motion"), "rf lock: locked, Settings lists no Reduce flashing row (Reduced motion stays)")
+	var rows_l: Array = UiMenu.rows({"players": 1}, false)
+	_ok(not rows_l.has("reduce_flashing") and UiMenu.checks().size() == 4 and rows_l == ["players", "p1", "intros", "shake", "captions", "guide", "start"], "rf lock: locked, the start menu has four boxes and no Reduce flashing %s" % str(rows_l))
+	_ok(UiMenu.rf_line({"reduce_flashing": false}) == UiMenu.word("rf_locked") and not UiMenu.rf_line({}).contains("Turning it off") and UiMenu.rf_line({}).begins_with("Reduce flashing is on."), "rf lock: locked, the small line is the RL-136 line alone, whatever the box said")
+	var bad := PackedStringArray()
+	for cs in [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 768), 1.0], [Vector2(2532, 1170), 3.0], [Vector2(844, 390), 1.0], [Vector2(667, 375), 1.0], [Vector2(390, 844), 1.0], [Vector2(414, 896), 1.0]]:
+		var lay := UiLayout.new()
+		lay.dp = cs[1]
+		lay.compute(cs[0], false)
+		for players in [1, 2]:
+			var cfg := {"players": players, "p1": "kb", "p2": "kb", "intros": true, "reduce_flashing": true, "shake": true, "captions": true, "guide": true}
+			var p: Dictionary = UiMenu.plan(cs[0], lay.s, cs[1], true, {"focus": 0, "cfg": cfg, "mid_match": false, "safe": lay.safe, "not_now": true})
+			var has_rf := false
+			for it in p["items"]:
+				has_rf = has_rf or str(it["row"]) == "reduce_flashing"
+			if not bool(p["fits"]) or has_rf or int(p["fs"]) < int(UiLook.text_floor) - 1:
+				bad.append("%s players %d" % [str(cs[0]), players])
+	_ok(bad.is_empty(), "rf lock: locked, the menu card fits at eight sizes with four boxes and no control for Reduce flashing (%d bad %s)" % [bad.size(), str(bad.slice(0, 4))])
+	# The HUD: nothing saved, sent or pressed turns it off.
+	UiPrefs.set_value("menu", {"reduce_flashing": false, "players": 1})
+	UiPrefs.set_value("options", {"reduce_flashing": false})
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.load_saved_options()
+	_ok(bool(hud.opts["reduce_flashing"]), "rf lock: a saved Off from before the lock is ignored on load")
+	hud.settings_set("reduce_flashing", false)
+	_ok(bool(hud.opts["reduce_flashing"]) and bool(UiPrefs.get_value("options", {}).get("reduce_flashing", false)), "rf lock: the Settings route cannot turn it off, and the saved file says On")
+	hud.show_start_menu(false)
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(bool(hud.menu_config()["reduce_flashing"]) and not UiMenu.rows(hud.menu_config(), false).has("reduce_flashing"), "rf lock: the menu opens with Reduce flashing on though the saved menu said off, and offers no row for it")
+	var started := {"cfg": {}}
+	hud.menu_started.connect(func(c): started["cfg"] = c)
+	hud._menu_focus = UiMenu.rows(hud.menu_config(), false).find("start")
+	hud.menu_action("accept")
+	_ok(bool(started["cfg"].get("reduce_flashing", false)) and bool(hud.opts["reduce_flashing"]), "rf lock: Start hands the host Reduce flashing on")
+	hud.show_photo_notice(true)
+	hud.notice_action("right")
+	hud.notice_action("right")
+	hud.notice_action("accept")
+	var rws: Array = UiSettings.rows()
+	var fk := ""
+	if hud.settings_focus() >= 0 and hud.settings_focus() < rws.size():
+		fk = str(rws[hud.settings_focus()]["key"])
+	_ok(hud.is_settings_open() and fk == "reduced_motion", "rf lock: the notice's Open Settings lands on Reduced motion, not on a row that is not there (%s)" % fk)
+	hud.hide_settings()
+	hud.hide_photo_notice(false)
+	# The capture hook sets the option directly, to measure the other mode; the lock is for the player's routes only.
+	hud.set_option("reduce_flashing", false)
+	_ok(not bool(hud.opts["reduce_flashing"]), "rf lock: the capture hook's own route (set_option) still sets either mode, so full effects can be measured")
+	hud.set_option("reduce_flashing", true)
+	UiData.set_feature("lock_reduce_flashing", null)
+	UiData.set_feature("reduce_flashing", null)
+	hud.queue_free()
+	await process_frame
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+
+
 ## The start menu (docs/ui/start-menu.md): the first card of a session, with the notice, radio buttons and checkboxes and one Start, and the way back after a match.
 func _menu_rules() -> void:
 	UiPrefs.path = "user://ui_prefs_test_menu.json"
@@ -5468,8 +5553,8 @@ func _menu_rules() -> void:
 	# The words: the notice is the placeholder until Legal's text comes, with the state of Reduce flashing in it.
 	const LEGAL_MENU := "This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version."
 	_ok(UiMenu.notice({"reduce_flashing": true}) == LEGAL_MENU and UiMenu.notice({"reduce_flashing": false}) == LEGAL_MENU, "menu: the notice is Legal's words, exactly (RL-136), whatever the boxes say")
-	_ok(UiMenu.word("start") == "I understand, start" and UiMenu.word("not_now") == "Not now" and UiMenu.rf_line({"reduce_flashing": true}) == "Reduce flashing is on. It lowers some effects but does not remove the flagged scenes.", "menu: the button is I understand, start, with Not now beside it, and Legal's small line says what Reduce flashing does")
-	var low := (LEGAL_MENU + " " + UiMenu.rf_line({"reduce_flashing": true})).to_lower()
+	_ok(UiMenu.word("start") == "I understand, start" and UiMenu.word("not_now") == "Not now" and UiMenu.rf_line({"reduce_flashing": true}) == "Reduce flashing: on. Turning it off restores full effects, which flash more.", "menu: the button is I understand, start, with Not now beside it, and Legal's small line says what Reduce flashing does")
+	var low := (LEGAL_MENU + " " + UiMenu.rf_line({"reduce_flashing": true}) + " " + UiMenu.word("rf_locked")).to_lower()
 	_ok(not low.contains("safe") and not low.contains("tested") and not low.contains("compliant"), "menu: never safe, tested or compliant")
 	var labels: Array = ["players", "one", "two", "p1", "p2", "kb", "pad", "intros", "reduce_flashing", "shake", "captions", "guide", "start", "back"]
 	_ok(UiMenu.rows({"players": 1}, false, true).has("not_now") and not UiMenu.rows({"players": 1}, false, false).has("not_now"), "menu: Not now is a row only where the page can go back (the web, the first screen)")
@@ -5555,7 +5640,7 @@ func _menu_rules() -> void:
 	_ok(UiMenu.rows(hud.menu_config(), false)[hud._menu_focus] == "reduce_flashing" or hud._menu_focus >= 0, "menu: Down reaches the boxes")
 	hud._menu_focus = rf_i
 	hud.menu_action("accept")
-	_ok(not bool(hud.menu_config()["reduce_flashing"]) and UiMenu.rf_line(hud.menu_config()) == "Reduce flashing is off.", "menu: Space unticks Reduce flashing and the small line says it is off")
+	_ok(not bool(hud.menu_config()["reduce_flashing"]) and UiMenu.rf_line(hud.menu_config()) == "Reduce flashing: off. Full effects are on, and they flash more.", "menu: Space unticks Reduce flashing and the small line says it is off")
 	hud.menu_action("accept")
 	_ok(bool(hud.menu_config()["reduce_flashing"]), "menu: and ticks it again")
 	# Touch and mouse: a tap on a radio sets it, a tap on a box toggles it.

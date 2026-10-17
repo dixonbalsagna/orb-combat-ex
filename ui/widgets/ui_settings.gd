@@ -56,6 +56,8 @@ static func rows() -> Array:
 				continue
 			if HIDE_UNTIL.has(key) and not UiData.feature(str(HIDE_UNTIL[key])):
 				continue   # a row for something that is not live yet is not listed
+			if key == "reduce_flashing" and UiData.rf_locked():
+				continue   # locked on (Legal's addendum 10): the toggle is not offered
 			var kind: String = TOGGLE if o["default"] is bool else (SLIDER if o.has("min") else CHOICE)
 			var need2: String = str(needs.get(key, ""))
 			out.append({"kind": kind, "key": key, "label": str(o.get("label", key)), "help": str(o.get("help", "")), "enabled": need2 == "" or UiData.feature(need2), "o": o})

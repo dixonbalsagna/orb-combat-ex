@@ -1273,7 +1273,7 @@ func hide_photo_notice(open_settings: bool = false) -> void:
 	if not _notice_open:
 		return
 	if open_settings:
-		var fk: String = "reduce_flashing" if UiData.feature("reduce_flashing") else "reduced_motion"
+		var fk: String = "reduce_flashing" if UiData.feature("reduce_flashing") and not UiData.rf_locked() else "reduced_motion"
 		if _notice_gate:
 			_notice_allow_settings = true
 			show_settings(fk)
@@ -1312,7 +1312,7 @@ func _menu_load() -> void:
 		"p1": str(s.get("p1", "pad" if pads > 0 else "kb")),
 		"p2": str(s.get("p2", "pad" if pads > 1 else "kb")),
 		"intros": bool(s.get("intros", true)),
-		"reduce_flashing": bool(s["reduce_flashing"]) if s.has("reduce_flashing") else true,
+		"reduce_flashing": true if UiData.rf_locked() else (bool(s["reduce_flashing"]) if s.has("reduce_flashing") else true),
 		"shake": bool(s["shake"]) if s.has("shake") else float(opts["camera_shake"]) > 0.0,
 		"captions": bool(s["captions"]) if s.has("captions") else bool(opts["captions"]),
 		"guide": bool(s["guide"]) if s.has("guide") else str(opts["control_hints"]) != "off",
@@ -1445,6 +1445,8 @@ func _menu_press(h: Dictionary) -> void:
 ## Start: the checkboxes take effect and are remembered, the choices are filed in the prefs, the host is told, and the menu goes (the match is released by the hold's end).
 func _menu_start() -> void:
 	var cfg: Dictionary = _menu_cfg.duplicate()
+	if UiData.rf_locked():
+		cfg["reduce_flashing"] = true   # locked on (Legal's addendum 10): the box is not offered, and nothing saved or sent can say Off
 	settings_set("reduce_flashing", bool(cfg["reduce_flashing"]))
 	var shake_now: float = float(opts["camera_shake"])
 	settings_set("camera_shake", (shake_now if shake_now > 0.0 else 2.0) if bool(cfg["shake"]) else 0.0)
@@ -2040,6 +2042,8 @@ func _paint_settings(ci: CanvasItem) -> void:
 
 ## Change an option from the screen: through set_option (the clamp and option_changed), and remembered.
 func settings_set(key: String, value) -> void:
+	if key == "reduce_flashing" and UiData.rf_locked():
+		value = true   # locked on (Legal's addendum 10): the Settings screen and the saved file cannot turn it off
 	set_option(key, value)
 	_saved_opts[key] = opts[key]
 	UiPrefs.set_value("options", _saved_opts)
@@ -2055,8 +2059,11 @@ func load_saved_options() -> void:
 	var od: Dictionary = UiData.options()
 	for k in saved:
 		if od.has(k):
-			_saved_opts[k] = saved[k]
-			set_option(k, saved[k])
+			var sv = saved[k]
+			if k == "reduce_flashing" and UiData.rf_locked():
+				sv = true   # a saved Off from before the lock is ignored
+			_saved_opts[k] = sv
+			set_option(k, sv)
 
 
 func _settings_row(i: int) -> Dictionary:
