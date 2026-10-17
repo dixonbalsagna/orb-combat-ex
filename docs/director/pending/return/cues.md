@@ -35,10 +35,11 @@ The beam struggle's views also read `S.game.clash.mid` each tick (`beam-struggle
 
 | `kind` | New fields | Meaning | Read by |
 | :--- | :--- | :--- | :--- |
-| `blow` | `run`, `run_to` | **`run`:** the striker's run on the target as the blow is thrown, in whole points, 0 to `runToClose` (4). **`run_to`:** the blows he must still land for the close, this one included, counted as lights: 1 when this blow, if it lands, is the close (so also after a trade he won) | UI (`brawl-teaching.md` section 3: the run as pips and a caret on the target's plate) |
+| `blow` | `run`, `run_to` | **`run`:** the striker's run on the target as the blow is thrown, in whole points, 0 to `run_to`. It is `run_to` when his next light that lands is the close, after a trade he won too. **`run_to`:** the run at which his next light closes (`runToClose`, 4 today): UI's gauge is full when `run` reaches it | UI (`brawl-teaching.md` section 3: the run as pips and a caret on the target's plate) |
 
-- **The event class has neither field.** It is two new fields on `SimState.FxEvent` (Simulation's `sim/core/state.gd`), and a few lines in the brawl's `blow` cue.
-- **The hash is untouched:** a cue hashes only its actor, kind, text and source.
+- **The fields are on `SimState.FxEvent`** (Simulation, 8cac4e1b). The brawl's four `blow` cues set them: a press's blow, a blow by rule, the reversal's medium, and a wound blow's release, which also gains its `target`. The script is `run-cue/rc.cjs`.
+- **`run_to` corrected (2026-10-16).** This list first called it "the blows still to land, this one included". UI's code reads it as the run's length (full when `run` ≥ `run_to`), which is what the gauge needs, so that is the meaning. Simulation's comment on the field still carries the first wording.
+- **The hash is untouched:** neither field is hashed.
 
 ## To build (Game Design's tenth round): the names and fields are agreed
 
