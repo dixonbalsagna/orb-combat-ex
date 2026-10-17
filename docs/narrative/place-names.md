@@ -88,7 +88,9 @@ A few of these will not be liked (Spoolgate, Shardhold). A name is a coin Orb ca
 
 ## 5. What Legal screens, once
 
-The banks give **588 city names, 504 town names and 588 landmark names**: 1,680 in all. Tools can print the whole table. Legal searches it once for real places, franchise places and unwanted readings, and anything it finds goes on the blocklist (which already holds ten starting entries, a list Legal will extend). That is a one-off screen of a fixed table, not a screen of every planet.
+**Corrected 2026-10-16.** The first count (588 + 504 + 588 = 1,680) was a product of bank sizes, and it counted a name twice whenever two banks share a stem (flint, mill, anvil, brass). Legal counted 1,569 distinct on that table (532 city, 477 town, 560 landmark). I re-ran the check on the table's own list, with the join rule and the 12-letter limit: **532 city, 473 town and 560 landmark names before the blocklist (1,565 in all; the four short of Legal's count are in the join rule, which I will compare with Tools' printout)**.
+
+Legal's w06 then removes eleven real towns (bellhaven, larkfield, longfield, stonebridge, stonegate, sunrise, wakefield, whitefield, whiteford, whitehaven, whiterock), and the ten starting blocklist entries add six more that the banks could make. **After both, the table holds 525 city, 465 town and 558 landmark names: 1,548 distinct.** The eleven are on the blocklist (`blocklist_start` in the data; the table is `pending/place_names_table.json`). A scan of every name for slurs, vulgar roots, and school, hospital or worship words finds none. Legal reads the blocklist again if a bank changes; and a destroyed place is never named for a recognisable real city.
 
 ## 6. What it needs
 
@@ -102,3 +104,62 @@ The banks give **588 city names, 504 town names and 588 landmark names**: 1,680 
 1. Do **plain compound names** (Brinehold, Larkwick) suit the planet, or do you want them stranger?
 2. Should a **city** ever be named for its trade (Lamphold, Kilnhold), or only for its land?
 3. Do you want the **fixed planet's** old names kept (Longwater, Netmend, Bellgate), as the first planet's names?
+
+
+## 8. The canon planet (added 2026-10-16)
+
+Orb: "lets work towards crafting a representative fictional planet with consistent names and landmarks." World proposes the canon seed; **its map has not reached me yet**, so these names are made from the grammar and wait for World to say which place is which. Because every name is a stem plus a suffix, a name does not depend on the seed's shape: World can hand each canon place a number and I can name it. Nothing below is final; every name is an option for Orb, and Legal has not screened any of it.
+
+**The decision.** For the canon seed the names are an **authored table** (`pending/canon_planet_names.json`), not generated; every other seed still gets generated names. So the canon planet reads the same in every build and every screenshot, and Orb can change one name without moving the others. Each canon name comes from the screened table of section 5 (checked), and **no two canon places share a stem**, so no two names rhyme by accident.
+
+**The planet's own name.** Six options, each a coinage: none is a real place or a word from a franchise, and Legal has not screened them.
+
+| Name | Why |
+|---|---|
+| **Brindle** | a patchwork coat of many colours: the planet is made of very different lands |
+| **Marrowell** | marrow, the core, and a well: deep and old |
+| **Tessane** | soft and invented; no meaning to argue with |
+| **Kestrane** | a kestrel's height: the planet seen from the sky |
+| **Oarel** | short; an oar and a shore |
+| **Vesperin** | evening, for a world the fight keeps darkening |
+
+I would pick **Brindle**. It says "a patchwork" in one word, and it sounds like the other names without being built the same way.
+
+**Twelve cities** (suffixes gate, hold, reach, rise, haven, cross, ford):
+
+| Biome | Names |
+|---|---|
+| Ocean | Shoalgate, Saltreach |
+| Plains | Grainreach, Threshreach, Lamphaven |
+| Forest | Loomreach, Hazelhaven |
+| Mountains | Highgate, Signalhold |
+| Desert | Anvilhold, Brassford |
+| Ice | Paleford |
+
+**Thirty-one towns** (suffixes stead, lea, holt, wick, by, field, mere):
+
+| Biome | Names |
+|---|---|
+| Ocean | Wakeholt, Longby, Covemere, Netwick, Driftlea, Brinemere |
+| Plains | Millmere, Barleyfield, Wheelwick, Fallowlea, Hedgeholt, Windby, Haywick, Furrowlea |
+| Forest | Birchstead, Hollylea, Alderlea, Mossholt, Fernby |
+| Desert | Flintlea, Rustwick, Dustmere, Scorchmere |
+| Mountains | Craglea, Ridgelea, Slateby, Torfield, Tarnby |
+| Ice | Hoarmere, Glassmere, Bergholt |
+
+**Twelve landmarks** (never a school, hospital or place of worship; each one is something you can see from far away or fight beside):
+
+| Biome | Names |
+|---|---|
+| Ocean | Gull Light, Reef Rock |
+| Plains | Clover Bridge, Lark Tower |
+| Forest | Wren Bridge, Oak Falls |
+| Mountains | Pike Stair, Slate Falls, Raven Rock |
+| Desert | Dune Spire |
+| Ice | Shard Spire, Rime Falls |
+
+**How they are used.** A fallen place keeps its name. A line says it as `{place}`. A landmark can be a set piece (a fight at Gull Light, a bridge to cross, a stair to throw someone down) and a beat can name it ("Slate Falls is gone." is a better line than "a waterfall is gone"). Once World places the twelve cities, I will match a city to a landmark in sight of it and note which names sit where.
+
+**Checks run.** Every canon name is in the table that has no blocked town and passes c10 (`python docs/narrative/line-lint.py --names docs/narrative/pending/place_names_table.json` prints 1,548 names, 0 failing). Legal should still read the canon list once, because a name that is fine in a grammar can be a real town on its own: I have not searched the web for these.
+
+**Questions for Orb.** 1. Do you like **Brindle**, or another of the six? 2. Do you want a **twelve-city** planet named in full, or only the places the run visits?

@@ -1,6 +1,6 @@
 # Between-stage story beats: a grammar that reads the run
 
-Owner: Narrative and Fighter Identity. Version 2, 2026-10-16 (aligned with Game Design's `docs/design/run-mode.md` sections 2 and 10, and with Legal's c07 and c08). Orb, 2026-10-16: "the brawler game-mode could be like a roguelike, with multiple stages across different slices of the planet, small dynamic storyline exposition between each stage. the cities would remain damaged between fights, until the final fight against the boss". The data is `pending/story_beats.json` (**67 beats, 149 lines**); a sample for Orb's marks is `voice-lab/homework/27-story-beats.md`. Every line passes the lint (`writing-quality.md` section 0: 4 to 12 words, plain, contractions, banned words, the ellipsis cap). Everything is an option for Orb. Original; no franchise echoes.
+Owner: Narrative and Fighter Identity. Version 3, 2026-10-16 (version 2 aligned with Game Design's `docs/design/run-mode.md` sections 2 and 10 and with Legal's c07 and c08; version 3 adds Orb's reshaped run, section 12). Orb, 2026-10-16: "the brawler game-mode could be like a roguelike, with multiple stages across different slices of the planet, small dynamic storyline exposition between each stage. the cities would remain damaged between fights, until the final fight against the boss". The data is `pending/story_beats.json` (**98 beats, 212 lines**); a sample for Orb's marks is `voice-lab/homework/27-story-beats.md`. Every line passes the lint (`writing-quality.md` section 0: 4 to 12 words, plain, contractions, banned words, the ellipsis cap). Everything is an option for Orb. Original; no franchise echoes.
 
 **What changed in version 2.** The state fields now use run-mode's bands and add its four (`revisit`, `fallen_name`, `wound_carried`, `sky`). `boss` gains `rival` (the MVP's boss is the rival at his worst). A loss no longer means a retry: **with a chance left the place falls and the run goes on; with none left the run ends; only the boss is replayed, once.** The beats for those cases are new. The final approach has rival-as-boss variants. Legal's c07 and c08 are applied (section 6). Still to come, in `place-names.md` and `run-lines.md`: the place-name grammar, offer-card lines, boss lines and the endings.
 
@@ -135,7 +135,7 @@ The hero acts on what he sees (Orb's marks: fascinated, concerned for people, wa
 - The generic boss lines are plain and read thin; only the rival, the Empress and the Cyborg have voices.
 - Every hero line is the Protagonist's; a run played as the Anti-hero needs its own set.
 - **Two lines** wait for Legal's read (section 6).
-- None of the 149 lines has been marked by Orb.
+- None of the 212 lines has been marked by Orb.
 
 ## 11. Questions for Orb
 
@@ -143,3 +143,44 @@ The hero acts on what he sees (Orb's marks: fascinated, concerned for people, wa
 2. Do you want the **rival to appear in most gaps** (a running relationship), or only now and then?
 3. How **short** should a gap feel: one beat or two?
 4. Should the hero's **branch be named** in a line ("I'm not playing anymore" says it), or only felt?
+
+## 12. The reshaped run: lives, the buff, and the two boss paths (version 3)
+
+Orb, 2026-10-16 (homework 26): "every fight starts from the base form", and "maybe one time the fifth fight sees the rival steps in between you and the boss to let the boss get away. maybe another fight you opted for a more enticing buff between the second and third fight, then you go on to defeat the empress on the fifth fight and the demo-borg appears, having one transformation left before his final form in the final fight." Game Design's reshaped run is five fights and a boss, with extra lives, and the final boss changes with the story. Their document is not written yet, so the **new fields are my proposal**; the 31 new beats (63 lines) are in `pending/story_beats.json`, every line linted and passing the c10 tiers.
+
+**New state fields.** `fight` (1 to 5); `lives` (many, two, last) and `life_event` (spent, gained), which **supersede `chances`**; `buff` (offered, enticing_taken, modest_taken, refused) and `buff_age` (fresh, carried); `boss_path` (default, rival_escape, empress_down); `motive` (pride, appetite, silent: which reason the rival gives).
+
+| Group | Beats | What they read |
+|---|---:|---|
+| **Lives** | 5 | A loss with lives to spare (he shrugs it off); with two left (the rival needles); the last life (alone, and with the rival there); a life gained |
+| **The buff** | 8 | The offer between fights 2 and 3 (a crowd voice, the hero's doubt, the rival's push); what the hero says after taking the big buff (with and without the rival), the modest one, or neither; echoes in fights 4 and 5; the Empress noticing "borrowed strength" |
+| **The rival steps in** (`rival_escape`) | 13 | Fight 5 in four steps (the boss is cornered; the rival steps between; the boss leaves, one version each for the Empress, the Cyborg and any boss; the hero and the rival, in three motives); the aftermath; the boss returns in the final approach (three versions); the rival stands aside |
+| **The Empress falls** (`empress_down`) | 5 | Fight 5 ends; the Cyborg appears; the final approach has him say one configuration remains (with and without the rival); the extra form starts |
+
+As they will read:
+
+> **The rival steps in (step 2, fight 5).**
+> Rival: "That's far enough. Back off."
+> Protagonist: "What are you doing? Move!"
+> Rival: "I said back off. Not him. Not now."
+
+> **The rival's reason, one of three (Orb picks).**
+> Protagonist: "Why did you do that?"
+> Rival: "He's mine to beat. Not yours." *(pride)*
+> Rival: "You'll get a bigger fight later. Be grateful." *(appetite)*
+> Rival: "Don't ask me that." *(silent)*
+
+> **The Cyborg, with one form left.**
+> Cyborg: "One configuration remains. Please don't make me use it."
+> Rival: "Watch it. He's got one more form."
+
+> **The enticing buff.**
+> Crowd: "Two to choose from. The big one's tempting."
+> Protagonist: "Too good to be free. What's the catch?"
+> Rival: "Take it. Quit being so careful."
+
+**What I did not decide, and why.** (1) *What the buff is or costs.* The beats say it is tempting and that the hero notices it; they never say what it is, so Game Design can make it a cost, a gift, or a trap. (2) *Where the escaped boss goes.* After `rival_escape` the same boss returns in the final approach, but the rival could instead be the final boss; the three "returns" beats are written for the first. (3) *Who sent the buff.* The Empress's line, "Borrowed strength, petitioner. We can tell.", works whether or not she sent it. (4) *The Cyborg has no minions* (Orb, homework 19): he is alone in every beat here.
+
+**The rival's voice.** The new rival lines follow the voice rules (short, impatient, contractions); I did not touch the homework 27 lines (Orb decides those in homework 29).
+
+**For Game Design (NEEDS).** Confirm `fight`, `lives`, `life_event`, `buff`, `buff_age`, `boss_path` and `motive` as run-state values (or tell me their names), and which fight each boss sits in; confirm that `chances` can be replaced by `lives`; say whether `empress_down` and `rival_escape` can happen in the same run (I assumed they are alternatives for fight 5).

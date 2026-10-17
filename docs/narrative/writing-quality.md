@@ -33,6 +33,10 @@ Orb marked the first ten lines. **Every one was rewritten**, and Orb wrote the r
 
 The Empress and the Cyborg **keep their established voices** (her royal "we" and "petitioner", his service script and sandwiches) but meet the same rules: four to twelve words, contractions, plain words, a reaction to what just happened.
 
+### Legal's c10 tiers (added 2026-10-16)
+
+The lint also runs Legal's two tiers (`c10_tiers` in `line-lint.json`), whole-word, on every line and every place name. **Block** (always a fail): A-bomb, H-bomb, mushroom cloud, fallout, Hiroshima, Nagasaki, Chernobyl, Fukushima, 9/11, ground zero, holocaust, genocide. **Review** (printed as CHECK so a human reads the line): mosque, synagogue, chapel, cathedral, temple, kindergarten, nursery, orphanage, meltdown, and child, children or kid near a casualty word (died, dead, gone, lost, killed, victim). "Bombardment" is not caught by "bomb". `python docs/narrative/line-lint.py --names docs/narrative/pending/place_names_table.json` runs the same tiers and the blocklist on the 1,548 place names.
+
 ### The banned-words list
 
 In `docs/narrative/line-lint.json`, for the lint. **Orb's list** (from the directive): *commence, futile, demise, symphony, dance, crescendo, reckon, mere, behold, destiny, abyss, limit, surpass, eternal*. **Narrative's additions** (the same family of literary or archaic words, and words from lines Orb rewrote; for Orb to veto): *indeed, shall, hence, thus, whom, regalia, splendid, sovereign, endure, adequate, dignity, courtesy, permit, allowed*.

@@ -1,6 +1,6 @@
 # Anguish reworked: the Protagonist's two branches, in his voice
 
-Owner: Narrative and Fighter Identity. Version 1, 2026-10-16. Game Design writes the rules alongside this; this page is the **why** and the **voice** of each branch. Everything is an option for Orb, names included (the branch names below are plain labels, not titles). Lines follow Orb's writing rules (`writing-quality.md` section 0): four to twelve words, plain, a reaction to what just happened, not a description. No franchise echoes (section 6).
+Owner: Narrative and Fighter Identity. Version 2, 2026-10-16 (adds the name pitches, section 4b; the flavour lines for the waiting game and the slingshot are in `waiting-game-lines.md`). Game Design writes the rules alongside this; this page is the **why** and the **voice** of each branch. Everything is an option for Orb, names included (the branch names below are plain labels, not titles). Lines follow Orb's writing rules (`writing-quality.md` section 0): four to twelve words, plain, a reaction to what just happened, not a description. No franchise echoes (section 6).
 
 **Orb, 2026-10-16, verbatim:** "the anguish mechanic might need to be reworked somehow, lets keep working on this because building up anguish by intentionally killing civilians is a perverse incentive for the protagonist, and a fight against another 'good guy' once there are more fighters might be lame and boring if neither can power up because they're avoiding civilian deaths. we could solve this potentially with Protagonist having multiple branching forms, one branch achieved by witnessing civilian deaths at the hands of his opponent, perhaps one achieved by allowing his opponent to power up first and testing himself against a higher form"
 
@@ -81,6 +81,23 @@ Placeholder words for the card each branch shows. UI and Game Design decide; Orb
 |---|---|---|
 | A, witnessed | **HE'S GONE QUIET** | NO MORE GAMES |
 | B, tested | **RISING TO IT** | MATCHING HIM |
+
+### 4b. Name pitches (version 2, 2026-10-16)
+
+Orb: "please pitch these", and the witnessed branch stays a **cold quiet**. Six pairs, witnessed first. Each has a card (one or two words, in capitals, says what the player sees), a reason, and one sample line for each branch. The branch name is also the word a form carries (a form is "Hush, second step", and so on); that is for Game Design and Orb to settle once a pair is chosen. Every sample passes the lint. No colour, no hair, no scream.
+
+| # | Witnessed / tested | Cards | Why it works | A sample line each |
+|---|---|---|---|---|
+| 1 | **Vigil** / **Trial** | VIGIL / TRIAL | A vigil is a quiet watch kept over something lost. Trial is Game Design's own working word, so the rules and the names agree. | "I saw what you did." / "Go on, power up. I'll wait!" |
+| 2 | **Hush** / **Heat** | HUSH / HEAT | The nearest to "cold quiet": one word for the stillness and one for the grin. Short enough for a card, and the sounds contrast. | "That's enough. I'm done playing." / "Okay, now it's getting good!" |
+| 3 | **Warden** / **Challenger** | WARDEN / CHALLENGER | Named for what he does for people (guards them) and for the other fighter (meets them). Reads as two jobs of one man. | "Nobody else gets hurt. Not today." / "Is that your best? Show me more!" |
+| 4 | **Still** / **Stoked** | STILL / STOKED | The most plain and the most cheeky. "Still" is a cold quiet; "Stoked" is how he says he feels. Risk: slang that dates. | "Stay down. I mean it." / "You're stronger? Great! Come on!" |
+| 5 | **Steady** / **Game On** | STEADY / GAME ON | A steady hand versus a ready grin. Easy to say aloud in the English dub. Risk: "Game On" is a common phrase and may read as generic. | "Not another one. I'm stopping this." / "Take your time. I want the full thing." |
+| 6 | **Shield** / **Open Hand** | SHIELD / OPEN HAND | Shield is what he puts between people and harm; Open Hand is the head start he offers the other fighter. Risk: both are objects, not feelings. | "Behind me. All of you. Go." / "I'll wait. Give me your best." |
+
+**My pick: pair 1, Vigil / Trial,** because it keeps the rule word and the card word the same, and Vigil is the coldest of the six without being a flavour of rage. **Second: pair 2, Hush / Heat,** for a card that reads in one glance across the room. **Not recommended: pair 4,** whose slang will age badly in a game with no text yet.
+
+The cards above replace HE'S GONE QUIET / RISING TO IT only if Orb picks a pair. Those two stay as the plain-words fallback on the first screen that teaches the branch.
 
 ## 5. What this asks of the rules (for Game Design, not decided here)
 

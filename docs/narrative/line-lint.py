@@ -2,6 +2,8 @@
 """Lint forward-facing lines against Orb's rules (docs/narrative/line-lint.json).
 
 Usage: python docs/narrative/line-lint.py FILE.md [FILE.md ...]
+       python docs/narrative/line-lint.py --names docs/narrative/pending/place_names_table.json
+Legal c10 (2026-10-16): the block tier always fails (whole-word); the review tier prints CHECK for a human.
 
 A line is any markdown line of the form  > "the line"  (the homework format).
 A speaker block starts at a "## " heading. Standard library only.
@@ -22,8 +24,36 @@ LINE = re.compile(r'^>\s*"(.*)"\s*$')
 ELL = re.compile(r"\.\.\.|…")
 
 
+C10 = LINT["c10_tiers"]
+
+
+def _word(w, text):
+    # whole word, so "bombardment" never matches "bomb"; hyphens and slashes inside a term are literal
+    return re.search(r"(?<![\w])" + re.escape(w) + r"(?![\w])", text, re.I)
+
+
+def c10(text):
+    """Legal c10: returns (block, review) hits for a line or a place name."""
+    block = [w for w in C10["block"] if _word(w, text)]
+    review = [w for w in C10["review"] if _word(w, text)]
+    near = C10["review_near"]
+    words = re.findall(r"[\w']+", text.lower())
+    for i, w in enumerate(words):
+        if w in near["words"]:
+            span = words[max(0, i - near["window_words"]): i + near["window_words"] + 1]
+            if any(c in span for c in near["casualty_words"]):
+                review.append(f"{w} near a casualty word")
+                break
+    return block, review
+
+
 def check(line):
     hard, soft = [], []
+    blk, rev = c10(line)
+    for w in blk:
+        hard.append(f"c10 block '{w}'")
+    for w in rev:
+        soft.append(f"c10 REVIEW '{w}' (a human reads this line)")
     n = len(line.split())
     if not (LO <= n <= HI):
         hard.append(f"R1 length {n}")
@@ -60,6 +90,9 @@ def main(paths):
             if ELL.search(line):
                 b["ell"].append((i, line))
                 print(f"{p}:{i}: CHECK ellipsis (hesitation, regret or performative exhaustion?)  {line}")
+            for s in soft:
+                if s.startswith("c10 REVIEW"):
+                    print(f"{p}:{i}: CHECK {s}  {line}")
             if hard:
                 failed += 1
                 print(f"{p}:{i}: FAIL {hard}  {line}")
@@ -72,5 +105,22 @@ def main(paths):
     return 1 if failed else 0
 
 
+def names(path):
+    """Check a place-name table (JSON {kind: [names]}) against the blocklist and the c10 tiers."""
+    table = json.load(open(path, encoding="utf-8"))
+    block = set(json.load(open(os.path.join(HERE, "pending", "place_names.json"), encoding="utf-8"))["blocklist_start"])
+    bad = 0
+    for kind, lst in table.items():
+        for n in lst:
+            b, r = c10(n)
+            if n.lower().replace(" ", "") in block or b or r or (kind != "landmark" and len(n) > 12):
+                bad += 1
+                print(f"{path}: FAIL {kind} '{n}' {b + r}")
+    print(f"{path}: {sum(len(v) for v in table.values())} names, {bad} failing")
+    return 1 if bad else 0
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 2 and sys.argv[1] == "--names":
+        sys.exit(names(sys.argv[2]))
     sys.exit(main(sys.argv[1:]))

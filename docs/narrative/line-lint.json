@@ -130,5 +130,51 @@
         "kind pity"
       ]
     }
+  },
+  "c10_tiers": {
+    "_about": "Legal c10 (docs/legal/homework8-review-screen.md). Whole-word matches, so 'bombardment' is not caught by 'bomb'. The same lists guard place names and every generated line.",
+    "block": [
+      "A-bomb",
+      "H-bomb",
+      "mushroom cloud",
+      "fallout",
+      "Hiroshima",
+      "Nagasaki",
+      "Chernobyl",
+      "Fukushima",
+      "9/11",
+      "ground zero",
+      "holocaust",
+      "genocide"
+    ],
+    "review": [
+      "mosque",
+      "synagogue",
+      "chapel",
+      "cathedral",
+      "temple",
+      "kindergarten",
+      "nursery",
+      "orphanage",
+      "meltdown"
+    ],
+    "review_near": {
+      "words": [
+        "child",
+        "children",
+        "kid",
+        "kids"
+      ],
+      "casualty_words": [
+        "died",
+        "dead",
+        "gone",
+        "lost",
+        "killed",
+        "victims",
+        "victim"
+      ],
+      "window_words": 6
+    }
   }
 }

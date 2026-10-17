@@ -1,0 +1,311 @@
+{
+  "schema": "narrative.canon_planet_names/1",
+  "_about": "PARKED DRAFT. Names for the canon planet (Orb: 'a representative fictional planet with consistent names and landmarks'), made with the place-name grammar. Biomes are the six banks; World assigns the real positions from its canon seed, and this table is an authored override keyed by place index. Unscreened by Legal.",
+  "planet_candidates": [
+    {
+      "name": "Brindle",
+      "note": "a patchwork coat of many colours: the planet is made of very different lands"
+    },
+    {
+      "name": "Marrowell",
+      "note": "marrow, the core, and a well: deep and old"
+    },
+    {
+      "name": "Tessane",
+      "note": "soft and invented; no meaning to argue with"
+    },
+    {
+      "name": "Kestrane",
+      "note": "a kestrel's height: the planet seen from the sky"
+    },
+    {
+      "name": "Oarel",
+      "note": "short; an oar and a shore"
+    },
+    {
+      "name": "Vesperin",
+      "note": "evening, for a world the fight keeps darkening"
+    }
+  ],
+  "cities": [
+    {
+      "i": 0,
+      "biome": "ocean",
+      "name": "Shoalgate"
+    },
+    {
+      "i": 1,
+      "biome": "plains",
+      "name": "Grainreach"
+    },
+    {
+      "i": 2,
+      "biome": "plains",
+      "name": "Threshreach"
+    },
+    {
+      "i": 3,
+      "biome": "forest",
+      "name": "Loomreach"
+    },
+    {
+      "i": 4,
+      "biome": "mountains",
+      "name": "Highgate"
+    },
+    {
+      "i": 5,
+      "biome": "desert",
+      "name": "Anvilhold"
+    },
+    {
+      "i": 6,
+      "biome": "ocean",
+      "name": "Saltreach"
+    },
+    {
+      "i": 7,
+      "biome": "plains",
+      "name": "Lamphaven"
+    },
+    {
+      "i": 8,
+      "biome": "ice",
+      "name": "Paleford"
+    },
+    {
+      "i": 9,
+      "biome": "mountains",
+      "name": "Signalhold"
+    },
+    {
+      "i": 10,
+      "biome": "forest",
+      "name": "Hazelhaven"
+    },
+    {
+      "i": 11,
+      "biome": "desert",
+      "name": "Brassford"
+    }
+  ],
+  "towns": [
+    {
+      "i": 0,
+      "biome": "ocean",
+      "name": "Wakeholt"
+    },
+    {
+      "i": 1,
+      "biome": "ocean",
+      "name": "Longby"
+    },
+    {
+      "i": 2,
+      "biome": "ocean",
+      "name": "Covemere"
+    },
+    {
+      "i": 3,
+      "biome": "ocean",
+      "name": "Netwick"
+    },
+    {
+      "i": 4,
+      "biome": "ocean",
+      "name": "Driftlea"
+    },
+    {
+      "i": 5,
+      "biome": "ocean",
+      "name": "Brinemere"
+    },
+    {
+      "i": 6,
+      "biome": "plains",
+      "name": "Millmere"
+    },
+    {
+      "i": 7,
+      "biome": "plains",
+      "name": "Barleyfield"
+    },
+    {
+      "i": 8,
+      "biome": "plains",
+      "name": "Wheelwick"
+    },
+    {
+      "i": 9,
+      "biome": "plains",
+      "name": "Fallowlea"
+    },
+    {
+      "i": 10,
+      "biome": "plains",
+      "name": "Hedgeholt"
+    },
+    {
+      "i": 11,
+      "biome": "plains",
+      "name": "Windby"
+    },
+    {
+      "i": 12,
+      "biome": "plains",
+      "name": "Haywick"
+    },
+    {
+      "i": 13,
+      "biome": "plains",
+      "name": "Furrowlea"
+    },
+    {
+      "i": 14,
+      "biome": "forest",
+      "name": "Birchstead"
+    },
+    {
+      "i": 15,
+      "biome": "forest",
+      "name": "Hollylea"
+    },
+    {
+      "i": 16,
+      "biome": "forest",
+      "name": "Alderlea"
+    },
+    {
+      "i": 17,
+      "biome": "forest",
+      "name": "Mossholt"
+    },
+    {
+      "i": 18,
+      "biome": "forest",
+      "name": "Fernby"
+    },
+    {
+      "i": 19,
+      "biome": "desert",
+      "name": "Flintlea"
+    },
+    {
+      "i": 20,
+      "biome": "desert",
+      "name": "Rustwick"
+    },
+    {
+      "i": 21,
+      "biome": "desert",
+      "name": "Dustmere"
+    },
+    {
+      "i": 22,
+      "biome": "desert",
+      "name": "Scorchmere"
+    },
+    {
+      "i": 23,
+      "biome": "mountains",
+      "name": "Craglea"
+    },
+    {
+      "i": 24,
+      "biome": "mountains",
+      "name": "Ridgelea"
+    },
+    {
+      "i": 25,
+      "biome": "mountains",
+      "name": "Slateby"
+    },
+    {
+      "i": 26,
+      "biome": "mountains",
+      "name": "Torfield"
+    },
+    {
+      "i": 27,
+      "biome": "mountains",
+      "name": "Tarnby"
+    },
+    {
+      "i": 28,
+      "biome": "ice",
+      "name": "Hoarmere"
+    },
+    {
+      "i": 29,
+      "biome": "ice",
+      "name": "Glassmere"
+    },
+    {
+      "i": 30,
+      "biome": "ice",
+      "name": "Bergholt"
+    }
+  ],
+  "landmarks": [
+    {
+      "i": 0,
+      "biome": "ocean",
+      "name": "Gull Light"
+    },
+    {
+      "i": 1,
+      "biome": "ocean",
+      "name": "Reef Rock"
+    },
+    {
+      "i": 2,
+      "biome": "plains",
+      "name": "Clover Bridge"
+    },
+    {
+      "i": 3,
+      "biome": "plains",
+      "name": "Lark Tower"
+    },
+    {
+      "i": 4,
+      "biome": "forest",
+      "name": "Wren Bridge"
+    },
+    {
+      "i": 5,
+      "biome": "forest",
+      "name": "Oak Falls"
+    },
+    {
+      "i": 6,
+      "biome": "mountains",
+      "name": "Pike Stair"
+    },
+    {
+      "i": 7,
+      "biome": "mountains",
+      "name": "Slate Falls"
+    },
+    {
+      "i": 8,
+      "biome": "mountains",
+      "name": "Raven Rock"
+    },
+    {
+      "i": 9,
+      "biome": "desert",
+      "name": "Dune Spire"
+    },
+    {
+      "i": 10,
+      "biome": "ice",
+      "name": "Shard Spire"
+    },
+    {
+      "i": 11,
+      "biome": "ice",
+      "name": "Rime Falls"
+    }
+  ]
+}
