@@ -1,0 +1,188 @@
+# Image inventory: mocks and build stills in docs/ui (UI, 2026-10-17)
+
+Orb's homework 8: **HUD mock sheets stay private.** Every tracked file in `docs/ui/img` and `docs/ui/mock` is listed below as a **MOCK** (a design sheet drawn by a script of mine, not by the game) or a **BUILD STILL** (drawn by the game's own HUD code: the web build, or the HUD demo scene that runs the same widgets on a mock event feed). 156 files: 18 MOCK, 138 BUILD STILL.
+
+**A local folder for mocks from now on: `homework/mocks/ui/`.** `homework/` is already git-ignored (`.gitignore`: "Orb's homework folder: review sheets, questionnaires ... Local only"), so a mock there never reaches the repo and Orb finds it with the other review sheets. Mock pages are served from it by `tools/machine/capture.mjs --dir homework/mocks/ui`. The docs then describe a mock in words and name it by its local path, and carry no image link to it.
+
+## MOCK (18): take these out of the repo
+
+- `docs/ui/img/brawl-teaching-mock.png`
+- `docs/ui/img/run/approach-1280x720.png`
+- `docs/ui/img/run/approach-390x844.png`
+- `docs/ui/img/run/approach-844x390.png`
+- `docs/ui/img/run/beats-1280x720.png`
+- `docs/ui/img/run/beats-390x844.png`
+- `docs/ui/img/run/beats-844x390.png`
+- `docs/ui/img/run/offers-1280x720.png`
+- `docs/ui/img/run/offers-390x844.png`
+- `docs/ui/img/run/offers-844x390.png`
+- `docs/ui/img/run/results-1280x720.png`
+- `docs/ui/img/run/results-390x844.png`
+- `docs/ui/img/run/results-p1-844x390.png`
+- `docs/ui/img/run/results-p2-844x390.png`
+- `docs/ui/img/run/resultslost-1280x720.png`
+- `docs/ui/img/run/resultslost-390x844.png`
+- `docs/ui/mock/brawl-teaching.html`
+- `docs/ui/mock/run-screens.html`
+
+Files that link to or name them (the links go dead when the mocks leave, so reword or drop them): `docs/ui/brawl-teaching.md` (the first image), `docs/ui/run-mode-screens.md` (the table of pictures), `docs/ui/hud-spec.md` (sections 63 and 66) and `docs/ui/plain-words.md`; and Orb's own local `homework/done/4-watch-and-listen.md` (leave it). **Not mocks:** `ui/mock/ui_mock_feed.gd` and the `ui/mock/` folder are the demo's scripted event feed (code the game's tests use), not design sheets; they stay. I can make my edits in the same commit that removes the files, on your word.
+
+## BUILD STILL (138): keep
+
+Drawn by the build. Two cautions: (a) the `hud-*`, `before-*`, `hints-*`, `q4-*` and similar stills come from the HUD **demo scene** (`ui/demo/hud_demo.tscn`), which runs the real widgets on a mock feed, so they show placeholder names and numbers, not a real match; (b) the files below show placeholder fighter figures or faces and should be looked at against the "no work-in-progress character art on a public page" rule before they stay public:
+
+- `docs/ui/img/before-empress-cyborg.png`
+- `docs/ui/img/before-facade.png`
+- `docs/ui/img/before-wounds.png`
+- `docs/ui/img/face-desktop.png`
+- `docs/ui/img/face-phone.png`
+- `docs/ui/img/face-portrait.png`
+- `docs/ui/img/faces-eight.png`
+- `docs/ui/img/hud-empress-cyborg.png`
+- `docs/ui/img/hud-facade.png`
+- `docs/ui/img/hud-silhouette.png`
+- `docs/ui/img/hud-wounds.png`
+- `docs/ui/img/names-howto-web.png`
+- `docs/ui/img/names-match-end-web.png`
+- `docs/ui/img/names-plates-web.png`
+
+All the build stills:
+
+- `docs/ui/img/about-1280x720-web.png`
+- `docs/ui/img/about-360x640-web.png`
+- `docs/ui/img/about-more-1280x720-web.png`
+- `docs/ui/img/armed-badge-web.png`
+- `docs/ui/img/armed-touch-web.png`
+- `docs/ui/img/beat-ring-reduced-web.png`
+- `docs/ui/img/before-brink.png`
+- `docs/ui/img/before-cinematic.png`
+- `docs/ui/img/before-empress-cyborg.png`
+- `docs/ui/img/before-facade.png`
+- `docs/ui/img/before-wounds.png`
+- `docs/ui/img/brawl-marks-full-web.png`
+- `docs/ui/img/brawl-marks-kbd-web.png`
+- `docs/ui/img/civilian-bar-1280.png`
+- `docs/ui/img/civilian-bar-844.png`
+- `docs/ui/img/controls-prompts.png`
+- `docs/ui/img/energy-plate.png`
+- `docs/ui/img/face-desktop.png`
+- `docs/ui/img/face-phone.png`
+- `docs/ui/img/face-portrait.png`
+- `docs/ui/img/faces-eight.png`
+- `docs/ui/img/feedback-copied.png`
+- `docs/ui/img/feedback-iphone-review.png`
+- `docs/ui/img/feedback-iphone.png`
+- `docs/ui/img/feedback-phone.png`
+- `docs/ui/img/feedback-pill.png`
+- `docs/ui/img/feedback-review-mailto.png`
+- `docs/ui/img/feedback-review.png`
+- `docs/ui/img/feedback-web-dom.png`
+- `docs/ui/img/feedback-write.png`
+- `docs/ui/img/form-ready-pad.png`
+- `docs/ui/img/form-ready-touch.png`
+- `docs/ui/img/gate-1170x2532-web.png`
+- `docs/ui/img/gate-1280x720-web.png`
+- `docs/ui/img/gate-568x320-web.png`
+- `docs/ui/img/gate-664x270-web.png`
+- `docs/ui/img/gate-750x330-web.png`
+- `docs/ui/img/hints-720.png`
+- `docs/ui/img/hints-arena.png`
+- `docs/ui/img/hints-desktop.png`
+- `docs/ui/img/hints-simple.png`
+- `docs/ui/img/howto-1.png`
+- `docs/ui/img/howto-2.png`
+- `docs/ui/img/howto-3.png`
+- `docs/ui/img/howto-controls-kb.png`
+- `docs/ui/img/howto-controls-pad.png`
+- `docs/ui/img/howto-controls-simple.png`
+- `docs/ui/img/howto-first-run-last-web.png`
+- `docs/ui/img/howto-iphone-1.png`
+- `docs/ui/img/howto-iphone-3.png`
+- `docs/ui/img/howto-phone-1.png`
+- `docs/ui/img/howto-phone-2.png`
+- `docs/ui/img/howto-stances-narrow-web.png`
+- `docs/ui/img/howto-stances-web.png`
+- `docs/ui/img/hud-1366.png`
+- `docs/ui/img/hud-brink-rest.png`
+- `docs/ui/img/hud-brink.png`
+- `docs/ui/img/hud-cinematic.png`
+- `docs/ui/img/hud-empress-cyborg.png`
+- `docs/ui/img/hud-facade.png`
+- `docs/ui/img/hud-feed.png`
+- `docs/ui/img/hud-phone.png`
+- `docs/ui/img/hud-pop.png`
+- `docs/ui/img/hud-portrait.png`
+- `docs/ui/img/hud-rest.png`
+- `docs/ui/img/hud-silhouette.png`
+- `docs/ui/img/hud-split-1366.png`
+- `docs/ui/img/hud-split-flip.png`
+- `docs/ui/img/hud-split.png`
+- `docs/ui/img/hud-wounds.png`
+- `docs/ui/img/incoming-web-576.png`
+- `docs/ui/img/incoming-web-720.png`
+- `docs/ui/img/intro-skip-hint.png`
+- `docs/ui/img/join-note.png`
+- `docs/ui/img/join-pause.png`
+- `docs/ui/img/join-prompt.png`
+- `docs/ui/img/key-help-energy-web.png`
+- `docs/ui/img/key-help-manoeuvre-web.png`
+- `docs/ui/img/last-stand.png`
+- `docs/ui/img/launcher-legend-web.png`
+- `docs/ui/img/launcher-touch-web.png`
+- `docs/ui/img/licences-1280x720-web.png`
+- `docs/ui/img/licences-360x640-web.png`
+- `docs/ui/img/licences-more-1280x720-web.png`
+- `docs/ui/img/licences-more-360x640-web.png`
+- `docs/ui/img/names-howto-web.png`
+- `docs/ui/img/names-match-end-web.png`
+- `docs/ui/img/names-plates-web.png`
+- `docs/ui/img/pause-about-web.png`
+- `docs/ui/img/pause-menu-confirm.png`
+- `docs/ui/img/pause-menu-phone.png`
+- `docs/ui/img/pause-menu.png`
+- `docs/ui/img/phone-desktop-1280-web.png`
+- `docs/ui/img/phone-deutan-web.png`
+- `docs/ui/img/phone-edge-arrow-web.png`
+- `docs/ui/img/phone-full-844-web.png`
+- `docs/ui/img/phone-simple-667-web.png`
+- `docs/ui/img/phone-simple-844-web.png`
+- `docs/ui/img/phone-turn-card-web.png`
+- `docs/ui/img/photo-notice-1280x720-web.png`
+- `docs/ui/img/photo-notice-390x844-web.png`
+- `docs/ui/img/plate-long-name-1560x720-touch-web.png`
+- `docs/ui/img/plate-long-name-844x390-web.png`
+- `docs/ui/img/press-mark-charging-web.png`
+- `docs/ui/img/press-mark-martial-web.png`
+- `docs/ui/img/press-mark-refused-web.png`
+- `docs/ui/img/press-mark-touch-charging-web.png`
+- `docs/ui/img/press-mark-touch-martial-web.png`
+- `docs/ui/img/q4-hint.png`
+- `docs/ui/img/q4-sig-funded.png`
+- `docs/ui/img/q4-sig-need.png`
+- `docs/ui/img/q4-struggle.png`
+- `docs/ui/img/q4-telegraph.png`
+- `docs/ui/img/q4-thought.png`
+- `docs/ui/img/remap-fly.png`
+- `docs/ui/img/remap-keyboard.png`
+- `docs/ui/img/remap-pad.png`
+- `docs/ui/img/remap-phone.png`
+- `docs/ui/img/remap-players.png`
+- `docs/ui/img/remap-swap.png`
+- `docs/ui/img/settings-desktop.png`
+- `docs/ui/img/settings-pad.png`
+- `docs/ui/img/settings-phone.png`
+- `docs/ui/img/settings-portrait.png`
+- `docs/ui/img/stance-badge-ring-web.png`
+- `docs/ui/img/start-menu-after-start-web.png`
+- `docs/ui/img/start-menu-desktop-web.png`
+- `docs/ui/img/start-menu-phone-portrait-web.png`
+- `docs/ui/img/start-menu-phone-web.png`
+- `docs/ui/img/three-legend-martial-web.png`
+- `docs/ui/img/three-simple-web.png`
+- `docs/ui/img/three-touch-web.png`
+- `docs/ui/img/touch-full-1560x720-web.png`
+- `docs/ui/img/touch-full-2048x1536-web.png`
+- `docs/ui/img/touch-full.png`
+- `docs/ui/img/touch-simple-portrait.png`
+- `docs/ui/img/touch-simple-press.png`
+- `docs/ui/img/touch-simple-ready.png`
