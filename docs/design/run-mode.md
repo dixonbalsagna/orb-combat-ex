@@ -1,12 +1,12 @@
 # Run mode: a roguelike run across one planet
 
-Owner: Game Design. Date: 2026-10-16. **Paper only.** Nothing here is built or run by me, and **every number is a first value.** It builds on World's stored planet (`docs/world/planet-slice.md`), on `hero-forms.md` and `buildings.md` §6, and it answers Narrative's run state (`docs/narrative/story-beats.md` §2 and §8). Co-op is not designed here (it is held). The working mode id is `run`.
+Owner: Game Design. Date: 2026-10-16. **Paper only.** Nothing here is built or run by me, and **every number is a first value.** It builds on World's stored planet (`docs/world/planet-slice.md`), on `hero-forms.md` and `buildings.md` §6, and it answers Narrative's run state (`docs/narrative/story-beats.md` §2 and §8). It meets Legal's RL-145 (`docs/legal/catastrophe-and-city-screen.md`, c01 to c09). Co-op is not designed here (it is held). The working mode id is `run`.
 
 **Orb** (2026-10-16, `docs/ep/vision.md`, "Orb on the stored planet"): "the brawler game-mode could be like a roguelike, with multiple stages across different slices of the planet, small dynamic storyline exposition between each stage. the cities would remain damaged between fights, until the final fight against the boss, where world-catastrophe level variants of abilities can cause large scale destruction".
 
 ## 0. The run in one paragraph
 
-**A run is one planet seed, one fighter, and a chain of stages.** Each stage is a full match on its own slice of that planet, and the player picks it from three offers on the globe. Between stages, two short story beats read what happened. The planet keeps every wound: craters, fallen towers and the people lost. The player's fighter keeps his form and his broken bones. **Each stage takes him one tier higher, so the run climbs as a match does, but across the planet.** It ends in a boss fight that opens a fifth tier, the catastrophe tier, where beams reach the magma, a blast darkens the sky, and the fight can rise into the exosphere.
+**A run is one planet seed, one fighter, and a chain of stages.** Each stage is a full match on its own slice of that planet, and the player picks it from three offers on the globe. Between stages, two short story beats read what happened. The planet keeps every wound: craters, fallen towers and the people lost. The player's fighter keeps his form and his broken bones. **Each stage takes him one tier higher, so the run climbs as a match does, but across the planet.** It ends in a boss fight that opens a fifth tier, the catastrophe tier, where beams reach the magma, a blast cloud darkens the sky, and the fight can rise into the exosphere.
 
 **Where the run's growth lives.** Every opponent arrives at the player's tier and draws what he draws, so the player is never stronger *relative to his opponent* than in versus. What grows is the scale (tiers, destruction, the planet's state), the story, and what the player knows and chooses. This keeps one balance for versus, the AI's bands and the run.
 
@@ -40,6 +40,7 @@ Before each stage the globe turns, and **three touch-downs are offered**, each a
   - While any fresh city stands, at least one offer touches down at one.
   - From the second chapter, one offer (the Crossing) revisits damage, so the player sees the planet remember.
   - No offer touches down in a fallen place. Ruins are crossed, not fought in.
+  - **No school, hospital or place of worship is ever a staged target** (Legal c08). No offer, beat or card names one, World's landmarks leave them out as kinds, and the AI's planner never seeks one.
   - The minimum counts only standing places: at least 2 cities that haven't fallen, 3 towns and 3 biomes. In late runs it may relax to World's fallback, 1 standing city and 4 towns.
 - **The boss's place is fixed by the rule, not offered:** the most populous city still standing. The boss goes where there is most left to lose.
 
@@ -50,7 +51,7 @@ Before each stage the globe turns, and **three touch-downs are offered**, each a
 | **A place's buildings** | **Persist.** Each building keeps its state: intact, marked (and how many marks), breached, cracked at the core, or down. Craters keep their place and size, and lava has cooled to rock | World's wear list per place, read back when a later slice crosses it (`planet-slice.md`: a few KB). Craters in open country are kept as points on the sphere |
 | **A place's people** | **Persist.** The dead stay dead, by cause. The people who fled a standing place come home before the next stage. The people who fled a fallen place are gone for good | So a revisited city has its start, less its dead |
 | **A place's status** | **Persists.** Fresh, damaged (5% or more of its buildings or its people lost) or fallen (under 40% of its buildings standing, or of its people present) | Fallen is for the beats and the offers. A fallen place still stands in the slice as ruins |
-| **The sky** | Persists from the boss's first catastrophe blast to the end (§3) | |
+| **The sky** | Persists from the boss's first blast cloud to the end (§3) | |
 | **The player's tier** | **Persists**, one step a stage (§1.1) | Power resets to the tier's floor at each stage's start |
 | **The hero's two fills** (Witness, Trial) | **Persist.** Spent at each step as in `hero-forms.md` | |
 | **The player's wounds** | **Broken regions stay broken** until a rest. Every other region heals one stage: battered to bruised, bruised to fresh | A rest (a Crossing's reward) heals broken regions to battered |
@@ -104,6 +105,8 @@ Before each stage the globe turns, and **three touch-downs are offered**, each a
 - for the player: the forms taken and their branches, the wounds carried, the cards;
 - for the run: Dread, chances spent, and the planet's share of its people lost.
 
+**How the toll is shown** (Legal c08): as a count and as the planet's state, never as bodies or close-ups and never as points, with no celebratory sound or show when it rises. No child is shown as a victim of graphic violence.
+
 ## 3. Escalation, and the boss's catastrophe tier
 
 **Across the run:**
@@ -117,7 +120,7 @@ Before each stage the globe turns, and **three touch-downs are offered**, each a
 - **It exists only in the boss fight.** Everywhere else the ladder ends at 4.
 - **The boss fight has two phases.**
   - **Phase 1** is fought at tier 4.
-  - **The crack.** When the boss's first region breaks, or after 150 s of fight time if that comes first, the planet answers: a quake ring runs round the slice (a live set piece, no pause). Both fighters' tier-5 form becomes ready, taken by holding Transform. The boss takes his at once.
+  - **The tremor.** When the boss's first region breaks, or after 150 s of fight time if that comes first, the ground answers: a quake runs through the slice, with dust, heaving ground and swaying towers (a live set piece, no pause). It is never glowing fissures across the planet, and never a ring leaving it (Legal c06). Both fighters' tier-5 form becomes ready, taken by holding Transform. The boss takes his at once.
   - **Phase 2** is fought at tier 5.
 - **Tier 5 in numbers.**
   - The ladder's per-tier gains carry on: speed +0.1, damage +0.09 and launch force +0.16 a tier.
@@ -130,18 +133,19 @@ Before each stage the globe turns, and **three touch-downs are offered**, each a
 
 Each needs tier 5. Each is credited to the fighter who started it, so the people it kills cost the hero (his own kills, `hero-forms.md` §7) and feed the villain.
 
-| | **The crust breach** | **The darkening blast** | **The exosphere** |
+| | **The crust breach** | **The blast cloud** | **The exosphere** |
 | :--- | :--- | :--- | :--- |
 | **Earned by** | A tier-5 signature beam fired with the stick down, at the ground | A tier-5 detonation: a beam struggle that ends in a detonation, a tier-5 overwhelm's landing, or a tier-5 blast at full charge into the ground | A tier-5 power send (`buildings.md` §6.1) with the stick straight up. The sender follows, and the fight goes up |
-| **What it does: sim** | The beam bores a shaft past the crust's cap: the columns it sweeps sink and their floor is lava. Over 3 s magma wells up along its line into a lava field (`living-destruction-numbers.md` §6: in lava, legs 4, core 2 and arms 1 a second; landing in it, core 15 and thrown clear). Above the field, heat wears anyone flying lower than 3 fighter heights at half that rate. Towers in its sweep crack at the core and fall, with `buildings.md` §6.2's warning. The field stays for the rest of the fight and hardens to scar rock when the run ends | A blast of 3,000 units: both fighters inside take a quarter of the stronger of the two beams or blasts, the detonator too. A tier-5 crater forms, and every tower inside it cracks at the core and falls, with the warning. The world's `ash` goes up by 0.6 (at most 1) over 20 s, and stays to the run's end. **Ash has no other rule effect, by design:** it never hides a tell, a cue or the HUD | Above a set height, gravity is off and the brawl goes on in free flight. **The new rule: every energy shot that misses falls to the surface.** It lands about 90 ticks later on the column below its line, as a tier-5 impact: a crater, buildings and people, on the firer's account. The fight comes down when a power send is aimed down (the meteor: the sent fighter lands as the largest impact in the game, and the sender's stick aims where), or after 60 s |
-| **What it costs** | The signature's ki and its cooldown, and a 30-tick wind-up open to a charge interrupt. Lava hurts both. **A defender in the beam's line can interpose** (DEFENSIVE near people, `economy.md` §4.3): he takes it at guard strength, and the breach doesn't happen. At most 2 a fight | The detonator is hurt too, and the people inside are on his account. The first raises the sky to half dark, a second to full. At most 2 a fight, 30 s apart | A tier-5 launch (an opening and its 5 ki). Every miss is paid for by the planet, so the hero must aim, and the villain needn't. **In the exosphere there is no ground:** no breach, and a detonation there harms nobody below. Once a fight, at most 60 s |
+| **What it does: sim** | The beam is swept along a cut and bores down to the crust's floor, **and no further: it never pierces the planet or leaves its far side** (Legal c06). The columns it sweeps sink, and magma rises in them toward a head below the old surface, flows along the cut and cools into rock (Research's model, `docs/research/world-catastrophe.md` §1). Magma's effect on fighters and people is §10.1. Towers in its sweep crack at the core and fall, with `buildings.md` §6.2's warning. The rock persists for the run | A blast of 3,000 units: both fighters inside take a quarter of the stronger of the two beams or blasts, the detonator too. A tier-5 crater forms, and every tower inside it cracks at the core and falls, with the warning. The world's `ash` goes up by 0.6 (at most 1) **over at least 120 s, under the sky's slew limit** (Legal c05), and stays to the run's end. **Ash has no other rule effect, by design:** it never hides a tell, a cue or the HUD | Above a set height, gravity is off and the brawl goes on in free flight. **The new rule: every energy shot that misses falls to the surface.** It lands about 90 ticks later on the column below its line, as a tier-5 impact: a crater, buildings and people, on the firer's account. **Impacts are spaced** (Legal c04): within any 6,000 units of ground, at most one lands in 30 ticks, and a shot due sooner merges into the next impact there, which grows. The fight comes down when a power send is aimed down (the meteor: the sent fighter lands as the largest impact in the game, and the sender's stick aims where), or after 60 s |
+| **What it costs** | The signature's ki and its cooldown, and a 30-tick wind-up open to a charge interrupt. Magma hurts both. **A defender in the beam's line can interpose** (DEFENSIVE near people, `economy.md` §4.3): he takes it at guard strength, and the breach doesn't happen. At most 2 a fight | The detonator is hurt too, and the people inside are on his account. The first raises the sky to half dark, a second to full. At most 2 a fight, 30 s apart | A tier-5 launch (an opening and its 5 ki). Every miss is paid for by the planet, so the hero must aim, and the villain needn't. **In the exosphere there is no ground:** no breach, and a detonation there harms nobody below. Once a fight, at most 60 s |
 | **What it means in play** | **Area denial and a threat.** The villain bores toward a city to flood it. The hero stands in the line to take it, or bores open ground to wall the villain off from the town | **The fight's loudest moment,** and the sky stays dark to say so. The ending reads it | **The hero's gamble.** Taking the fight up saves the planet from the breach and the blast, but in the sky every one of the villain's shots is a bombardment. The hero brings it down with the meteor, aimed at empty ground |
-| **Spectacle (Rendering, VFX, Camera, Audio)** | The crust cracking in rings, the glow from below, steam, the sky lit red from underneath, lava's slow pulse (under 3 Hz) | The stem, the cap and the ring of the cloud, the shockwave, the planet's light dimming and the sun reddening, ash falling, through the flash register | The planet's curve and its night line, the glow of a shot falling, the flash far below a moment later, and Orb's live picture-in-picture of a city hit. The sound is muffled up there |
+| **Spectacle (Rendering, VFX, Camera, Audio)** | The cut's lit notch from the side, heat on its walls, steam, slow crust plates on the magma | The fireball rising into a stem and a cap, the ground's shockwave, the planet's light dimming over minutes, ash falling | The planet's curve and its night line, the glow of a shot falling, a small flash far below a moment later, and Orb's live picture-in-picture of a city hit. The sound is muffled up there |
+| **Light and flash (Legal c01 to c05)** | **Magma (c03):** amber-orange, slowly changing, never a saturated red (red share under 0.8, as Research built it). Its bubbling is a low-contrast change (under a 10% step), at 2 Hz or slower, irregular and unsynchronised, and never a regular pattern of spots or stripes over a large area. The beam's light and the breach's glow are catastrophe light events | **The blast's light is one catastrophe light event.** The darkening is minutes long, under the sky's slew limit, and the fighters keep their lane-colour contrast in the darkest sky (c05) | **The bombardment (c04):** each impact small on the screen, or at most two a second within any one screen window (the picture-in-picture is a window), never in step with each other. The fighters' glow up there is a steady edge |
+| **The echoes to avoid (Legal c06)** | No single beam through the planet, and nothing leaves its far side. No glowing fissures spreading across the planet | No perfect hemisphere of light swallowing a city. No ring-shaped shockwave leaving the planet. **It is our own blast cloud (c07):** no radiation sign, none of the words nuclear, atomic, A-bomb or H-bomb, no real city, date or event, and no siren or countdown that evokes a real alert. In copy it is "a blast cloud" | No planet cracking into a fireball, and no ring shockwave off the planet's edge seen from above. **The boss never charges a sphere above his head** with raised arms (our own rule too). Every catastrophe move is a fighter's own beam, blast or launch at world scale, never another fighter's named attack |
 
-- **What is sim and what is spectacle.** The table's "sim" row is all the rules there are: terrain, lava, hazard wear, the blast, collapses, people, ash as a number, the exosphere's height band and its falling shots. Everything in the spectacle row only reads the sim, and none of it may hide a tell.
-- **Legal's flags:**
-  - a mushroom-shaped cloud over a city may carry real-world weapon associations. It stays an energy blast in the fighter's colours, with nothing that says weapon;
-  - the planet-wide dimming and many small flashes far below go through the flash register.
+- **For each of the three** (Legal c01 and c02): its own worst-case clips in both modes, in the required flash set, on the commit that carries it (c01). **At most one catastrophe light event every 2 s, counted across everything on the screen** (the registry), **rising over at least 0.3 s and falling over at least 1 s,** with a calm form under Reduce flashing: a lower peak, a slower rise, no repeats (c02). **The boss fight is measured in the darkened sky,** where the same glow is a larger step. Red flashes 0
+- **What is sim and what is spectacle.** The "sim" row is all the rules there are: terrain, magma, hazard wear, the blast, collapses, people, ash as a number, the exosphere's height band, its falling shots and their spacing. Everything else only reads the sim, and none of it may hide a tell.
+- **Legal's screen is RL-145** (`docs/legal/catastrophe-and-city-screen.md`, c01 to c09). Legal sees storyboards of the effects at their worst frame, the calm forms, the boss's ability names and silhouettes against c06, and the casualty presentation, before any of it ships.
 
 ## 4. Failure, replay, scoring and variety
 
@@ -163,11 +167,13 @@ Each needs tier 5. Each is credited to the fighter who started it, so the people
 | Each stage won | 1,000 |
 | The boss | 3,000 |
 | A hero's run: each 1% of the planet's people alive at the end | 20 |
-| A villain's run: each 1% of the planet's people lost | 20 |
+| A villain's run: each place taken (a stage he won there) | 500 |
 | Each chance spent | −500 |
 | Style: each chain through two or more buildings, each duel of perfects won, the boss's finisher | 100 each, at most 1,000 |
 
 Fight time breaks ties: less is better, counted in ticks, never the wall clock.
+
+**No part of any score counts deaths** (Legal c08). The hero's term counts the people alive, and the villain's the places he took. No achievement, trophy, unlock or challenge counts deaths either.
 
 ### 4.3 Variety from the seed
 
@@ -177,7 +183,7 @@ Fight time breaks ties: less is better, counted in ticks, never the wall clock.
 
 ### 4.4 Meta-progression: none that makes a fighter stronger
 
-- **Cosmetics only,** as `unlocks.md` rules: a run's progress counts as every mode's does.
+- **Cosmetics only,** as `unlocks.md` rules: a run's progress counts as every mode's does, and nothing is earned by a death (Legal c08).
 - **Challenge levels** unlock as runs are won (working name: Pressure 1 to 5). Each adds a burden:
   - the AI one level harder;
   - one chance fewer;
@@ -208,6 +214,7 @@ Stages until a loss, with no boss and tier 4 from stage 3. It ends when the plan
 - **Dread** is the share of the planet's people the villains have killed in the run, divided by 0.4, plus 0.1 for each place taken by a lost stage (§4.1), at most 1.
   - It sets the villain's starting menace each stage (100 × Dread).
   - It sets the boss's tier-5 damage: up to +10% at a Dread of 1.
+  - **It is a power meter, never a score** (Legal c08). If the HUD shows it at all, it shows the boss's strength.
   - **So a hero who defends early meets a weaker boss,** and a run that let a city burn pays at the end. That is pillar 5 across a whole run.
 - **A Rampage is a choice with weight.** It shows the villain feeding, and fills Witness, but people die before the hero lands, and Dread rises with them.
 
@@ -269,8 +276,8 @@ My estimates for a run, for World and QA to measure:
 - the Protagonist against the rival;
 - three stages and the boss, with three offers a chapter, shown as cards with World's strip diagram rather than a globe;
 - the wear list, fail forward, the ledger and Narrative's beats;
-- tier 5 with the crack;
-- **the crust breach and the darkening blast;**
+- tier 5 with the tremor;
+- **the crust breach and the blast cloud;**
 - the score.
 
 **Not in the MVP:** the exosphere, plan cards, the globe map, villain runs, the rival as a partner, challenge levels, endless.
@@ -284,8 +291,8 @@ My estimates for a run, for World and QA to measure:
 | 3 | The run state, its hash, the carry (tier floor and ceiling, fills, wounds, ki), stage seeds, the run log and its replay | Simulation, Tools |
 | 4 | The offers and the run screens: cards, the stage, the beats, the results | UI, with Narrative |
 | 5 | The ledger's fields, wired to Narrative's beats, and the new ones | Simulation, Narrative |
-| 6 | Tier 5, the crack and the crust breach (lava is already ruled) | Simulation, World, Encounter, VFX |
-| 7 | The darkening blast's rules, and the sky (`ash`) | Simulation, Rendering, VFX |
+| 6 | Tier 5, the tremor and the crust breach, with the catastrophe allowance and its blast flag (§10.1). Research's smallest first build starts it: the breach and its magma model in one boss scene | Simulation, World, Encounter, VFX |
+| 7 | The blast cloud's rules, and the sky (`ash`) | Simulation, Rendering, VFX |
 | 8 | Fail forward, chances, the assist and the score | Simulation, UI |
 | After | The exosphere (a height band, falling shots, a camera that can hold the planet); plan cards; the globe map; the full run; villain runs | Many |
 
@@ -301,9 +308,12 @@ My estimates for a run, for World and QA to measure:
 | The MVP run's length | Median 25 to 35 min |
 | A first-time player finishes the MVP on Story | Within three runs |
 | Cities fallen in an MVP run | 2 to 4 of 12 |
-| The boss fight reaches the crack | In at least 90% of boss fights |
-| A crust breach or a darkening blast in a boss fight | In at least 60% of the boss fights that reach tier 5 |
+| The boss fight reaches the tremor | In at least 90% of boss fights |
+| A crust breach or a blast cloud in a boss fight | In at least 60% of the boss fights that reach tier 5 |
 | The planet's ceiling: people lost before the boss, and by the end | At most 40%; at most 70% (hard) |
+| Each catastrophe effect's worst-case clips, both modes, in the darkened sky | Pass the flash check, with red flashes 0 (hard, Legal c01 to c03) |
+| Catastrophe light events, across everything on the screen | At most one every 2 s, rising over 0.3 s or more and falling over 1 s or more (hard, c02) |
+| A score, achievement, unlock or challenge that counts a death | None (hard, c08) |
 
 ## 9. Questions for Orb
 
@@ -313,3 +323,58 @@ In `homework/26-run-mode.md`:
 3. The full run's length: three stages and the boss, five (recommended), or seven?
 4. The final boss: the rival for now, and later a bigger villain with the rival at your side (recommended), always the rival, or a bigger villain alone?
 5. Between runs: only looks and harder challenges (recommended), or something that makes you stronger?
+
+## 10. Answers to Research, Simulation and Narrative (2026-10-16)
+
+### 10.1 Research: what magma does, and where the catastrophe unlocks
+
+**Magma is in the sim,** as Research recommends: fighters meet it, and its rock persists across the run.
+
+| | To a fighter | To people and buildings |
+| :--- | :--- | :--- |
+| **In it** | Lava's wear, as ruled (`living-destruction-numbers.md` §6): legs 4, core 2 and arms 1 a second while he stands or wades in it | It flows slowly (Research's model), so people ahead of it flee: it evacuates first. Deaths come only inside the catastrophe allowance (below), on the account of whoever breached |
+| **Landing in it** | Core 15, once, and he is **thrown clear** to the nearer rim of the cut. It never holds him, since control comes first | Buildings it reaches catch fire under the fire rules. A tower it reaches that is cracked at the core falls, with the warning |
+| **Above it** | Heat: half those rates while he flies lower than 3 fighter heights over its surface | |
+| **Its limits** | **It never finishes anyone.** A fighter on the brink in magma is thrown clear, and only a finisher ends a fight. In the boss fight, hazard wear (magma, fire, falling stacks) is at most 25% of all wear, where a match's band is 15% | The toll is shown as a count and as the environment, never as bodies (Legal c08) |
+| **Afterwards** | | It cools into rock, which raises the ground and stays for the run |
+
+**Where the catastrophe set piece unlocks.** It is the allowance in `WorldCollateral.EVENT_ALLOW`, plus a blast flag that lets a catastrophe finish buildings past `leaveFrac`.
+- **In a run:** only in the boss fight, at tier 5, after the tremor (§3.1).
+- **In story mode:** only in an encounter whose data allows it (Orb's ruling of 2026-10-11): a chapter's boss encounter (`encounter.catastrophe: true`), and there too only at tier 5.
+- **In versus: off.** Versus has no tier 5, and its collateral bands stay as tuned. Whether versus gets a catastrophe switch is Orb's call, later.
+- **The allowance:**
+  - Each catastrophe event (a breach, a blast cloud, a meteor's landing) may borrow up to 20% of the people present at once. The window then refills before another can overdraw it.
+  - The tier-5 window is 25% a minute and its ceiling 95% (§3.1). The planet's ceiling caps everything (§6).
+  - At most 3 catastrophe events a fight: 2 breaches, 2 blast clouds and 1 meteor, at most 3 in all.
+- **The blast flag is tier 5 only.** `buildings.md` §6.1's tier-4 crater brings towers down by cracking their cores, which is the falling stack, not the blast flag. So versus at tier 4 is unchanged.
+- **The big digs** are spread over a few ticks, as Research asks. The camera never flies past a mass collapse (Research §4).
+
+### 10.2 Simulation: people, carry and the planet's marks
+
+- **Damaged places have fewer people.**
+  - A stage's `pop0` is its slice's people at the run's start, normalised as World does, so a fresh slice has 1,800.
+  - **The people present at a stage's start** are `pop0`, less the dead, less the people who fled a fallen place for good.
+  - The collateral budget and the ceilings (`balance-targets.md` §4b) are shares of the people present at the stage's start.
+  - The meters' gains per person stay normalised by 425 / `pop0`, the run-start figure. So a person counts the same everywhere in the run, and a villain feeds less in ruins because fewer people are there.
+- **What carries between stages** (§1.3):
+  - the tier, with power reset to the tier's floor;
+  - Witness and Trial, spent at a step;
+  - broken regions, with the rest of the wear healed one stage;
+  - the plan cards (full run);
+  - the villain's feeding meter, which starts each stage at 100 × Dread (menace now, and Pride by the same rule when it lands).
+
+  Reset: ki to 60, the hero's cost meter, the mood, the cooldowns and the timers.
+- **The planet's own marks:**
+  - each place's wear list (buildings, craters, magma rock);
+  - craters in open country as points on the sphere;
+  - the world's `ash` (one number, raised only by a blast cloud, so only in the boss fight);
+  - the run's Dread and ledger.
+
+  All of it is run state, hashed and carried in each stage's header (§7).
+
+### 10.3 Narrative: the beats' fields, and a loss
+
+- **The fields are aligned in §2:** Narrative's fourteen with their bands, and four more: `revisit`, `fallen_name`, `wound_carried` and `sky`.
+- **`boss` gains `rival`,** since the MVP's boss is the rival at his worst.
+- **A loss doesn't end the run while a chance is left** (§4.1): the place falls and the run goes on. So `lost` and `lost_close` lead into the fall, not into a retry. A loss with no chance left ends the run, and plays the end-of-run beat. The boss is the one stage that is replayed: once, if a chance is left.
+- **Legal's c07 and c08 apply to the beats:** no siren or countdown that evokes a real alert in the final approach, no real city, date or event, and no line that cheers a death.
