@@ -50,7 +50,7 @@ Poses are shared on the one skeleton (R1) in a new wave `cl1` (prefix `cl`), and
 
 | | The Protagonist | The Anti-hero |
 | :--- | :--- | :--- |
-| **Grip habit** | A boxer's tie-up: open hands at the collar and the elbow, the head tucked beside the other's, short and busy. The robe's ring on the back is the thing the rival sees over his shoulder. | Precise and cold. One hand takes the collar; **the other arm stays folded high**, so the free arm is a shoulder-height guard and the grip is lighter than the Protagonist's. The armoured shoulder leads into the pin. |
+| **Grip habit** | A boxer's tie-up: open hands at the collar and the elbow, the head tucked beside the other's, short and busy. The robe's ring on the back is the thing the rival sees over his shoulder. | Precise and cold. One hand takes the collar; **the other arm is a one-arm fold** (a single forearm across the body, the hand free or at the chin: Legal's h09 allows it, and forbids the crossed-arm fold as an idle, stand-off or intro pose or held for 12 ticks), so the free arm is a shoulder-height guard and the grip is lighter than the Protagonist's. The armoured shoulder leads into the pin. |
 | **Pummel** | Quick and low, the swim of a sparring partner. | Short and exact: a step, a turn of the shoulder plate. |
 | **Close blows** | Body hook, uppercut to the chin, a knee to the gut, a stamp, the finisher a knee. | A short elbow to the jaw (the glasses bend when the head is hit, Art's plan), a knee to the gut, a heel on the ankle. His blows end in the exact stop of his style. |
 | **Brace** | Wide, and his feet slide: he is thrown less than he is pushed. | Narrow and still. Nothing moves but the grip hand. |
@@ -85,6 +85,15 @@ New scan classes in all: `grip_gap`, `grip_twist`, `pair_clear`, `laced`, `grip_
    - the same pass with **two pairs held** at once, because co-op 4v1 is Orb's example (`vision.md`).
 4. **A matching option in `lead_scan` and `joint_scan`:** `--clinch`, to pose the scenario and report per class.
 5. **The live scan** (`_test_bends_live`) adds the new classes once the sim holds fighters.
+
+## 6a. Legal's rows of 2026-10-16 (`docs/legal/homework8-review-screen.md`: g06 to g08, h09), which bind this work
+
+- **g06 (tied):** heads and torsos apart by at least a forearm's length, hands free, never limp or bound. The collar envelope of section 5 reads as *at least 27 units* centre to centre (a forearm of 15 plus the two half-torsos), not 24: a `g06_apart` class in `pair_clear`.
+- **g07 (pinned):** vertical against a surface, at the shoulder, collar or upper arm, hips apart, the pinned fighter's feet bearing weight and shown bracing or struggling; no ground pin, mount or straddle. One more shared pose, `pin.brace`, and a scan on the grip point and the hips.
+- **g08 (carried):** over the shoulder or by collar and waist, never the head, neck, hair or tail; the body drawn whole in view; nothing glowing at the hands.
+- **h09:** see the Anti-hero column above. A scan: no fold pose in an idle, stand-off or intro sequence.
+
+The count becomes **25 new poses** (13 shared, with `pin.brace`, and 6 a fighter).
 
 ## 7. What Animation needs from the other directors
 
