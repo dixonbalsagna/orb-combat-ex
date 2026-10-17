@@ -119,8 +119,40 @@ Measured today: 301 µs for two bodies apart, 474 µs in a brawl (section 2). Ta
 
 ## 6. Open questions
 
+**All of these are answered now: section 7.**
+
 - **For Game Design:** the one's run on a tag, carried or fresh. Carried rewards a player who keeps hitting. Fresh is easier to read.
 - **For Game Design:** the slice a partner may hold the one before a tag (6 s is my first value), and whether a guard may tag himself in.
 - **For Game Design and Combat:** what an interjection may be (a light only, or up to a medium; never a launcher).
 - **For Simulation:** what the replay's input looks like for a guard, an AI body with no input stream, and whether the hash grows by slot or by a list.
 - **For Camera:** the ring needs room either side of the pair. In a street that is two bodies a side on the plane, more with depth (`docs/director/depth-d1.md`). The ring's shape is the director's, the frame is Camera's.
+
+## 7. Ruled since: Game Design's wording and Orb's homework 19 (2026-10-15 and 16)
+
+Game Design ruled this paper's questions in `docs/design/empress-guards.md` section 5, and Orb answered homework 19 (`docs/ep/vision.md`; Game Design's table, "Orb's rulings"). This is their wording as the director reads it, and where each rule stands in my parks (`pending/one-v-many-s2/` and `-s3/`, re-based on main and gated).
+
+**The governing rule, in Game Design's words:** one striker at a time, a partner and a ring. At most two bodies touch him at a time: one is his partner, in an ordinary brawl with him; the rest are the ring, and the director may grant one ring blow into the brawl, an interjection. **He is never hit by blows from two fighters within 8 ticks** (a hard test).
+
+| | The ruling | In my parks |
+| :--- | :--- | :--- |
+| **The plan** (Orb) | Three on one first (the Empress); four on one behind its switch once three on one plays well; no five on one; two on two unbuilt | 3v1 is built. **To build:** the switch, a cap of three bodies, four when it is on, that refuses five |
+| **How many hit him at once** (Orb, and the EP's call) | All three may land blows on him, through the rule above: one partner in the brawl, the ring's single blows as interjections. All three striking freely measured unplayable | Built. **Each of the three lands:** the guards rotate as partner on the slice and on his stick, and the ring interjects. The Empress as partner holds the brawl (no slice) |
+| **His partner** | The one his stick points at within striking distance, else the nearest. A near tie, within 0.5 bh, keeps the partner he has, so the target doesn't flicker | The stick's pick is built (1.5 bh past striking distance, 45 degrees). **To build:** the 0.5 bh near tie |
+| **The tag** | A ring body becomes the partner when the partner is sent, when his stick turns on a ring body in reach, after the slice (6 s) with nothing decisive, or on the Empress's order. No guard tags himself in any other way. At most one tag in 30 ticks | Built, but for the Empress's order (stage 5) |
+| **The Empress as partner** | No slice: she keeps the brawl until a decisive exchange, a parting or her own order | Built |
+| **A player as partner** | Her press is never held, and the row is kept: an interjection is granted only while her line is committed | Built (stage 3, d7831fad) |
+| **His run on a tag; the partner's** | His is carried. The new partner's is fresh, and a guard's blows build no run against him | Built |
+| **An interjection** | One blow from the ring: a light or a medium, never a heavy, a launcher or a grab. Its wind-up in sight for 8 ticks or more; guarded and perfect-blocked like any blow; at most one in 1.5 s, never within 8 ticks of the partner's contact. A guard's covering volley is an interjection too, by bolt | Built for the light (the data allows the medium). **To build:** the volley by bolt |
+| **In a clinch** (`grapple.md`) | A ring blow that lands on him in a clinch breaks it, and both part | With the grapple |
+| **His press across a tag** | Goes to the new partner, and is still one blow | Built |
+| **Moves that hit everyone in reach** (Orb) | Some do: the burst pushes every body in reach; a charged heavy at full meets every body in reach on its side; a launch's flight carries through the bodies on its line; his signature hits every enemy on its line. Combat marks each fighter's others, and every fighter has at least one. Plain blows and grabs hit one | **To build** (stage 4): the planner's chain of bodies, and the reach sweep, once Combat marks the moves |
+| **What he has against three** | Break the escort (two decisive exchanges send a guard off for 20 s and cost her 20 ki; each gives him 10 ki). Go for the head (when she is staggered, launched or knocked back, her guards drop their order and fall in to her). Outnumbered (facing two or more, his ki returns half again as fast) | **To build** with stage 5. The ki rate may be Simulation's line |
+| **A two on two** (Orb) | When one fight is won, its winner joins the other, which becomes two on one. Where they stand waits for co-op | Not built. Each fight's own hit-stop is written down for then |
+| **The core with more bodies** | Only a principal's KO ends the match; the mood reads the principals' stances; the acts count the principals; one hit-stop for the match; the collateral budget is unchanged by the number of bodies; the ring stands along the street and in the air, not across it | Stage 1 is on main (06b0200e); the ring's place along the street is the director's, in stage 2 |
+| **Who else fights one versus many** (Orb) | The Cyborg has no minions. A story boss with partners would be welcome. Co-op is held | |
+
+**Still for the EP's go, in order:** stages 2 and 3 as parked (window 3). Then:
+- the switch and the near tie, small;
+- the hit-all moves and the chain of bodies (stage 4), with Combat's marks;
+- the Empress's orders, breaking the escort and the resummon (stage 5);
+- four on one when three on one plays well.
