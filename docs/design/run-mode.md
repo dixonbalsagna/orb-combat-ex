@@ -79,7 +79,7 @@ After each won fight the player picks **one boon of three** (two in a row after 
 | **An ability** | A run-only power: a plan card from the plan's pool (`upgrade-plan.md` §2: Might, Tempo, Short Fuse and the rest), or a fighter's run boon (a signature variant, a world change, a stronger slingshot) | The plan's limits hold: at most +10% of a stat, and no stacking. At most five |
 | **A lifeline** | One more life (§4.1) | At most three lives held |
 | **A rest** | Every region healed to fresh | Also a Crossing's reward |
-| **A temptation** | A strong gain with a story price: a form at once **and** an ability, or an ability past the plan's limits. **It changes the run's final arc** (§5.1) | Offered once a run, between fights 2 and 3, on a seeded share of runs (a half). Its card says it will be remembered, never what it brings |
+| **A temptation** | A strong gain with a story price: a form at once **and** an ability, or an ability past the plan's limits. **It changes the run's final arc** (§5.1) | Offered once a run, between fights 2 and 3, on a seeded share of runs (a half). Its card says it will be remembered, never what it brings. **On its offer the player may also walk on:** he takes none of the three and gains a life for the restraint (at most three). The beats call that refusing |
 
 - **Choices with weight, never traps:** each card says what it gives in plain words. A temptation is always optional, and its price is a harder ending, never a lost run.
 - **The AI's opponents** don't take boons. They climb by the chapter.
@@ -112,9 +112,12 @@ After each won fight the player picks **one boon of three** (two in a row after 
 - `fallen_name`: the place that fell in the last stage;
 - `wound_carried`: the hero goes in with a region broken;
 - `sky`: the sky has darkened (boss only);
-- `arc`: the run's final arc (§5.1), once it is known;
-- `temptation`: a temptation was taken, and which;
-- `lives`: lives left, and whether the last fight was a retry.
+- **Narrative's fields for the reshaped run** (confirmed 2026-10-17, `docs/narrative/story-beats.md` §12; `lives` supersedes `chances`):
+  - `fight`: 1 to 5, and `boss_in` as before;
+  - `lives`: the retries left, as many (3), two (2), one (1) or last (0, when the next loss ends the run). `life_event`: spent or gained;
+  - `buff`: offered, enticing_taken (the temptation), modest_taken (another boon from that offer) or refused (he walked on, §1.4). `buff_age`: fresh in the fight just after it, carried in later ones;
+  - `boss_path`: default (the court), rival_escape (the rival's debt), empress_down (the hidden hand) or mvp (§5.1). **One a run:** the paths are alternatives, never both;
+  - `motive`, the reason the rival gives when he steps in. It is pride if the hero has beaten him in three or more fights; appetite if he ended most of his fights with his menace at 70 or more; otherwise silent.
 
 **What Narrative supplies:**
 - the beats for the added fields;
@@ -127,7 +130,7 @@ After each won fight the player picks **one boon of three** (two in a row after 
 - for each place: its dead, by cause (player, opponent, other), its people who fled, its buildings lost by cause, its status, and the stage that changed it;
 - for each stage: the offer kind, the opponent, the result, how it ended, the finisher;
 - for the player: the forms taken and their branches, the wounds carried, the boons;
-- for the run: Dread, lives spent, the arc, and the planet's share of its people lost.
+- for the run: Dread, lives spent, the boss path, and the planet's share of its people lost.
 
 **How the toll is shown** (Legal c08): as a count and as the planet's state, never as bodies or close-ups and never as points, with no celebratory sound or show when it rises. No child is shown as a victim of graphic violence.
 
@@ -256,15 +259,16 @@ Fights until a run would end, with no boss: the opponent reaching tier 4 from fi
 
 - **The player's fighter:** any fighter. The MVP is the Protagonist.
 - **The rival:** the recurring opponent, and the fights' usual face.
-- **The boss varies with the run's story** (Orb: "there should be different story beats allowing for different final bosses"). Which **final arc** plays is decided by the run's state, deterministically, and the ledger keeps it as `arc`:
+- **The boss varies with the run's story** (Orb: "there should be different story beats allowing for different final bosses"). which **final arc** plays is decided by the run's state, deterministically, and the ledger keeps it as `boss_path`:
 
 | Arc | When it plays | Fight 5 | The boss |
 | :--- | :--- | :--- | :--- |
-| **The hidden hand** | A temptation was taken between fights 2 and 3 | The Empress, with her guards. She falls | **The Demon Cyborg appears,** one transformation short of his final form. The tremor gives it to him |
-| **The rival's debt** | No temptation, and the player has beaten the rival in two or more fights | The boss. At its brink, **the rival steps between them and lets it get away,** a set piece. The fight goes on against the rival, from where it stood | The boss, recovered, in the city it fled to |
-| **The court** | Otherwise | The rival, or one of the boss's own | The Empress at the catastrophe tier |
-| **The MVP** | While only the two fighters exist | The rival | **The rival at his worst** |
+| **The hidden hand** (`empress_down`) | A temptation was taken between fights 2 and 3 | The Empress, with her guards. She falls | **The Demon Cyborg appears,** one transformation short of his final form. The tremor gives it to him |
+| **The rival's debt** (`rival_escape`) | No temptation, and the player has beaten the rival in two or more fights | The boss. At its brink, **the rival steps between them and lets it get away,** a set piece. The fight goes on against the rival, from where it stood | The boss, recovered, in the city it fled to |
+| **The court** (`default`) | Otherwise | The rival, or one of the boss's own | The Empress at the catastrophe tier |
+| **The MVP** (`mvp`) | While only the two fighters exist | The rival | **The rival at his worst** |
 
+- **The escaped boss returns** in the final fight, recovered, in the most populous standing city other than fight 5's. The rival stands aside, and Narrative's three "returns" beats play in the final approach.
 - **The arcs are content to come,** since the Empress and the Cyborg aren't built. Narrative writes each arc's beats and the final approach's variants. New arcs are data.
 - **The rival beside the hero at the boss** (Narrative's final approach) stays a later option, as an AI partner under the one-v-many rules. It is not co-op: co-op stays held.
 - **A villain's run:** the player plays the villain, and the boss is the planet's last defender. It is designed here and comes after hero runs.
@@ -413,6 +417,10 @@ The next questions are in `homework/30-run-and-launch.md`.
   - Each catastrophe event (a breach, a blast cloud, a meteor's landing) may borrow up to 20% of the people present at once. The window then refills before another can overdraw it.
   - The tier-5 window is 25% a minute and its ceiling 95% (§3.1). The planet's ceiling caps everything (§6).
   - At most 3 catastrophe events a fight: 2 breaches, 2 blast clouds and 1 meteor, at most 3 in all.
+  - **The fifth entries for `data/fight/tier5.json`** (World's `collateral-run.md` §5), as shares of the people present:
+    - the budget, 0.25 a rolling 60 s, and the ceiling, 0.95;
+    - the set pieces' allowances at tier 5: slide 0.15, chain 0.25, landslide 0.15, quake 0.15, and **catastrophe 0.20**.
+    - Tiers 1 to 4 keep the catastrophe at 0.
 - **The blast flag is tier 5 only.** `buildings.md` §6.1's tier-4 crater brings towers down by cracking their cores, which is the falling stack, not the blast flag. So versus at tier 4 is unchanged.
 - **The big digs** are spread over a few ticks, as Research asks. The camera never flies past a mass collapse (Research §4).
 
@@ -423,6 +431,7 @@ The next questions are in `homework/30-run-and-launch.md`.
   - **The people present at a stage's start** are `pop0`, less the dead, less the people who fled a fallen place for good.
   - The collateral budget and the ceilings (`balance-targets.md` §4b) are shares of the people present at the stage's start.
   - The meters' gains per person stay normalised by 425 / `pop0`, the run-start figure. So a person counts the same everywhere in the run, and a villain feeds less in ruins because fewer people are there.
+  - **For World's question** (`docs/world/collateral-run.md` §3), ruled 2026-10-17: the meters are by `pop0`. By `present`, a death in a half-ruined slice would count double, and a villain would feed as well on ruins as on a whole city, which is the opposite of the rule. The budgets and ceilings are by `present`; the meters' gains per person are by `pop0`.
 - **What carries between stages** (§1.3):
   - the ceiling (the forms unlocked), with every fight starting from base;
   - Witness and Trial, at half;

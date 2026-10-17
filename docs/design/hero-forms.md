@@ -69,6 +69,7 @@ Orb: "he stays in his base form and allows the opponent to grow, when he finally
   - for the rest of the match, his step gains × (1 + c/200), at most ×1.5.
 - **The coil is Trial's road.** Each coil point is also a Trial point, so a long wait leads to the Trial forms: "testing himself against a higher form".
 - **Rule of cool:** a release from base straight to his top form is the showpiece, with its own sting, camera and line.
+- **The release's three sizes,** for Narrative's lines (`docs/narrative/waiting-game-lines.md`), read the coil at the release: short under 34, long from 34 to 66, and the biggest from 67. A release from base to the top form is the showpiece whatever its size.
 - **Its limits:** banked steps can't pass the ladder's top or the run's unlocked ceiling (`run-mode.md` §1.1 and §1.4). In the run's boss fight the fifth form can be banked too.
 - **The AI** holds a ready step for up to 10 s at medium when its rival is above it. At hard it holds for up to 30 s while its coil is under 60, so players see the slingshot thrown at them.
 

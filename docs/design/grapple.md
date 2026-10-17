@@ -30,11 +30,22 @@ The clinch's rules are the clinch pitch's, with the pulse of every timed contest
 | **The grip** | One meter between them, from two behind to two ahead, starting even (or one ahead for the catcher, §1). The UI draws it as five steps between the two | |
 | **A pummel** | A on the pulse moves the grip one step his way. If both pummel the same pulse, the sharper one wins the step. If both are equally sharp, nothing moves | Inside 4 ticks of the pulse. Sharp: inside 2 |
 | **A stray** | A off the pulse, or a second A in its window, moves nothing and voids his next pummel. So a masher does exactly as well as a fighter who doesn't press, as in every timed contest | |
-| **Vicious blows** | X, Y or B: a vicious blow on the region his stick leans to, as §4 ruled. Both fighters may throw them. A vicious blow is not a pummel, so a fighter works either the grip or the body | Half a brawl light of damage and three times a light's wear, on that region. Four a fighter a clinch at most, and never more than two in a row to the same region (Legal s08). A fighter one or two ahead wears half again as hard |
+| **Vicious blows** | X, Y or B: a vicious blow on the region his stick leans to, as §4 ruled. Both fighters may throw them. A vicious blow is not a pummel, so a fighter works either the grip or the body | Half a brawl light of damage and three times a light's wear, on that region. Four a fighter a clinch at most, and never more than two in a row to the same place (Legal s08, by its own wording: re-ruled 2026-10-17 on Combat's reading). A region has two or three places, so a stick held on one wound keeps working it, the blows alternating places. A fighter one or two ahead wears half again as hard |
 | **The brace** | A held: he can't be thrown while he holds it, and he can't pummel or strike. It is how a fighter two behind waits out the leader's throw | At most 40 ticks, then his grip tires and he can't brace again for 20 |
 | **Moving** | The fighter ahead walks the pair along his stick. The other keeps half his nudge (`brawl-second-pass.md` §1) | At half walking speed |
 | **A wall** | Walked into a building that holds, it is **a pin.** The leader's vicious blows wear half again as hard (not on top of his lead's ×1.5: at most ×1.5), and a throw from the pin is the wall slam at once, with no flight between | |
 | **In the air** | The clinch needs no ground, so it is how a flying fighter takes control, as before | |
+
+**Without a held A** (ruled 2026-10-17, for Controls' `grapple-input.md` and Encounter's `grapple-director.md`):
+- **Charges off, or the latched A: the brace is automatic.** A fighter two behind who presses nothing on a pulse braces through it, for at most two pulses in a row, then rests a pulse. That matches the held brace's 40 ticks and 20 of rest.
+- So pressing nothing is a brace only at two behind, where the held brace is used. Anywhere else it is nothing, as for any player.
+- A latched A's presses are all pummels. There is no toggled brace, so one rule serves every layout without a hold.
+
+**Touch Simple** (Controls' option 1, ruled):
+- A tap of the Transform button is the catch. A hold of 30 ticks stays Transform. The catch's 10-tick tell absorbs a tap sent on the release.
+- **In a clinch, Guard is A:** a Guard press on the pulse is the pummel, and a held Guard is the brace, as Guard is the let-go in a beam struggle.
+- The carry isn't offered on touch Simple. The leader walks the pair along the stick anyway.
+- UI labels Guard "PUMMEL / BRACE" during a clinch.
 
 ## 3. The carry
 

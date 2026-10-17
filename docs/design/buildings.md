@@ -197,7 +197,7 @@ Orb's hold to brake stands (`agency-pass.md` §4, on LT). Here it is re-ruled so
 | **Its cost** | Ki, as before: 20 a second held. **With no ki it still works, at half the rate.** Never denied: Orb's "no strict caps" | |
 | **Air sense** | A fighter sent by a kind of launch already marked on him (`launch-anywhere.md` §5) can start braking 25% sooner for each mark | |
 | **Steering** | Free: the stick bends his path by up to 15°, as before | |
-| **Never** | On a finisher's send, a crippling blow's send, a hard impact (`agency-pass.md` §7), or inside the chain of §7.3 until it lodges. These are set pieces | |
+| **Never** | On a finisher's send, a crippling blow's send, a hard impact (`agency-pass.md` §7), or inside the chain of §7.3 until it lodges or leaves by a face. These are set pieces | |
 
 **The midair skid** is how the brake looks and sounds, and it shows his speed.
 - He turns to face along his flight with his arms and legs braced against it, as if digging his heels into the air.
@@ -222,6 +222,15 @@ Orb's hold to brake stands (`agency-pass.md` §4, on LT). Here it is re-ruled so
 | 4, or a finisher | Up to five slabs. Then the tower's core cracks, and it comes down as a falling stack, aimed at him (§6.3) |
 
 - **The journey's bounds hold:** at most 8 contacts and 4 s from the first contact. Past either, he lodges where he is.
+- **The chain's values** (ruled 2026-10-17, for Animation's `docs/animation/ragdoll-physics-paper.md` §4 and §5):
+  - **a ceiling contact** reverses him and keeps 0.4 of his speed, and the ceiling collapses locally (Orb's "bounce up and off the ceiling (also collapsing it)");
+  - **a floor he goes through** keeps 0.7;
+  - **a floor that holds** is a bounce, by the ground's bounce rules turned to the slab;
+  - **at most 5 contacts** in a chain, and **at most 3 of them bounces;**
+  - **the face's stop:** 15 ticks, as §1 has it;
+  - **a cap of 2.5 s** of ragdolled time from the face to the lodge, or to leaving by a face, inside the journey's 4 s;
+  - **the brake is off inside the chain.** It returns once he lodges (and he recovers inside after the lodge's hold) or once he leaves by a face;
+  - **the ceiling is reached from effective tier 3.** At tier 2 he goes through one floor and lodges, and at tier 1 he lodges on the first.
 - **Rule of cool:** with no stick, or within the 30° bend, the choreographer takes an inside chain when a tower stands in the send's kind and the angle fits. It is a high score in combat alchemy.
 - **The camera** cuts to the tower's cutaway, or holds it from the street. That is Camera's, with Rendering's open floors.
 

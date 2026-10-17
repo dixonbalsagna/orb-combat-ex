@@ -130,6 +130,15 @@ Orb set spectacle at **4 of 10** and the top-tier finisher at **7 of 10**.
 
 **The aura after a transformation** shows only while charging or attacking (Orb). So at a distance a form reads by its silhouette and colour mass, not by a standing aura (`moveset-rules.md` §10.2).
 
+**Throwables, ruled** (2026-10-17, for Combat's `docs/combat/throwable-cars.md`, with Art's mass classes in `docs/art/cars.md`: bike 1, sedan 3, van 4, bus 8).
+
+| | The ruling |
+| :--- | :--- |
+| **What a tier can lift** | Tier 1: mass 4 at most (a bike, a sedan, a van). Tier 2: 8 at most (**a bus is throwable from tier 2**, with lorries and boats, as item 17 has them). Tier 3 and up: ships |
+| **The throw and the slam** | As `control-rules.md` row 5 has it. X or Y throws the object along the stick: X a quick low toss, Y a full throw. B slams it down on a rival in reach, or onto the ground in front of him. Holding an object, B is the slam, never a launcher |
+| **The catch** | A perfect block of a thrown object **catches it** if its mass is within the catcher's tier, and he holds it: his next X or Y throws it back, worth a quarter more (rule of cool). Above his tier's mass, the perfect block **swats it aside** along his stick: no damage to him, and where it lands is on the thrower's account. A plain guard blocks it at the guard's rate, as the table in `control-rules.md` has it |
+| **How often the AI picks one up** | In 10, 20 or 30% of its chances by level: an object within 2 bh while it is free and its rival is beyond striking reach. The Anti-hero takes half again as many; the hero only when the throw's line is clear of people. A band for QA: 0.5 to 3 thrown objects a match, AI against AI. No cap and no cooldown |
+
 ## 3b. Legal's constraints, by feature
 
 From Legal's screen (`docs/legal/rule-of-cool-screen.md`). A feature not listed here is clear as written. The stacking rule in §1 applies to all of them.
