@@ -1,0 +1,397 @@
+diff --git a/data/anim/reach.json b/data/anim/reach.json
+index e1036d9..f8e171b 100644
+--- a/data/anim/reach.json
++++ b/data/anim/reach.json
+@@ -63,8 +63,8 @@
+   "pu.su_ball_heave": 43,
+   "pu.su_blade_jaw": 81,
+   "pu.su_drive": 82,
+-  "pu.su_edge_step": 63,
+-  "pu.su_edge_unwind": 46,
++  "pu.su_edge_step": 51,
++  "pu.su_edge_unwind": 38,
+   "pu.su_elbow_jaw": 37,
+   "pu.su_hammer_arm": 55,
+   "pu.su_knee_legs": 41,
+@@ -105,7 +105,7 @@
+   "ru.su_elbow_heave": 46,
+   "ru.su_fist_heave": 61,
+   "ru.su_hammer": 68,
+-  "ru.su_heel": 36,
++  "ru.su_heel": 12,
+   "ru.su_hook": 61,
+   "ru.su_knee": 38,
+   "ru.su_plate": 60,
+diff --git a/data/anim/sockets.json b/data/anim/sockets.json
+index 556365f..51892db 100644
+--- a/data/anim/sockets.json
++++ b/data/anim/sockets.json
+@@ -13,7 +13,7 @@
+   },
+   "limbs": {
+     "hand": {"mode": "ik", "chain": ["upper_arm", "forearm", "hand"], "end_len": 6.0, "lunge_max": 11.0, "step_max": 22.0, "reach_z": 5.0, "hunch_max": 2.5},
+-    "foot": {"mode": "ik", "chain": ["thigh", "shin", "foot"], "end_len": 8.0, "lunge_max": 7.0, "step_max": 22.0, "reach_z": 9.0, "hunch_max": 0.0},
++    "foot": {"mode": "ik", "chain": ["thigh", "shin", "foot"], "end_len": 8.0, "lunge_max": 7.0, "step_max": 22.0, "reach_z": 9.0, "hunch_max": 0.0, "min_fwd": 28.0, "retreat_max": 30.0},
+     "elbow": {"mode": "aim", "bone": "upper_arm", "tip": "forearm", "tip_offset": [0, 0, 0], "end_len": 3.0, "lunge_max": 9.0, "step_max": 22.0, "reach_z": 5.0, "hunch_max": 2.5},
+     "knee": {"mode": "aim", "bone": "thigh", "tip": "shin", "tip_offset": [0, 0, 0], "end_len": 4.0, "lunge_max": 7.0, "step_max": 22.0, "reach_z": 7.0, "hunch_max": 0.0},
+     "shoulder": {"mode": "aim", "bone": "spine_1", "tip": "upper_arm", "tip_offset": [0, 0, 0], "end_len": 4.0, "lunge_max": 12.0, "step_max": 14.0, "reach_z": 6.0, "hunch_max": 0.0},
+diff --git a/data/anim/waves/protag10.manifest.json b/data/anim/waves/protag10.manifest.json
+index f9b218e..fd6bd78 100644
+--- a/data/anim/waves/protag10.manifest.json
++++ b/data/anim/waves/protag10.manifest.json
+@@ -22,6 +22,7 @@
+     "arms": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [
+     "hands_open_or_claw",
+     "no_held_raise",
+@@ -62,6 +63,7 @@
+     "arms": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [
+     "hands_open_or_claw"
+    ],
+@@ -87,8 +89,8 @@
+    "target": "gut",
+    "limb": "foot_r",
+    "limb2": null,
+-   "offset": 54,
+-   "reach": 90,
++   "offset": 66,
++   "reach": 102,
+    "band": "mid",
+    "ticks": {
+     "load": 28,
+@@ -100,6 +102,7 @@
+     "legs": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [],
+    "look": "PROVISIONAL. A stepping kick with the edge of the foot: compact, hands up, the whole body carried a pace behind one straight leg to the gut.",
+    "orig": "PROVISIONAL: a stepping kick with the edge of the foot: the leg chambered close, hands up, the body carried a pace behind one straight leg into the gut",
+@@ -136,6 +139,7 @@
+     "arms": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [
+     "hands_open_or_claw"
+    ],
+@@ -161,8 +165,8 @@
+    "target": "gut",
+    "limb": "foot_r",
+    "limb2": null,
+-   "offset": 50,
+-   "reach": 86,
++   "offset": 58,
++   "reach": 94,
+    "band": "mid",
+    "ticks": {
+     "load": 28,
+@@ -174,6 +178,7 @@
+     "legs": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [],
+    "look": "PROVISIONAL. An unwinding kick with the edge of the foot: the leg crossed over his own centre, the chin over his shoulder, the body opening out as the foot comes back through the gut.",
+    "orig": "PROVISIONAL: an unwinding kick with the edge of the foot: the leg crossed over his own centre with the chin over his shoulder, the body opening out as the foot comes back through the gut",
+@@ -210,6 +215,7 @@
+     "arms": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [
+     "hands_open_or_claw",
+     "no_leap"
+@@ -249,6 +255,7 @@
+     "legs": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [
+     "no_leap"
+    ],
+@@ -287,6 +294,7 @@
+     "arms": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [
+     "no_clasp",
+     "no_held_raise"
+@@ -326,6 +334,7 @@
+     "legs": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [
+     "no_clasp"
+    ],
+@@ -364,6 +373,7 @@
+     "arms": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [
+     "single_turn",
+     "hands_open_or_claw"
+diff --git a/data/anim/waves/rival7.manifest.json b/data/anim/waves/rival7.manifest.json
+index 0129841..fe0e28d 100644
+--- a/data/anim/waves/rival7.manifest.json
++++ b/data/anim/waves/rival7.manifest.json
+@@ -22,6 +22,7 @@
+     "arms": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [],
+    "look": "PROVISIONAL. A long low lunge, the whole body behind one straight fist.",
+    "orig": "PROVISIONAL: a long low lunge, the whole body behind one straight fist",
+@@ -45,7 +46,7 @@
+    "target": "chest",
+    "limb": "foot_r",
+    "limb2": null,
+-   "offset": 48,
++   "offset": 72,
+    "reach": 75,
+    "band": "mid",
+    "ticks": {
+@@ -58,6 +59,7 @@
+     "legs": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [],
+    "look": "PROVISIONAL. The leg raised high, the heel dropped from above onto the chest, the body folding over it.",
+    "orig": "PROVISIONAL: the leg raised high, the heel dropped from above onto the chest, the body folding over it",
+@@ -94,6 +96,7 @@
+     "legs": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [],
+    "look": "PROVISIONAL. A stepping knee: the striking side drawn back, the whole body travels a pace and the knee arrives in the gut as the foot lands.",
+    "orig": "PROVISIONAL: a stepping knee, the striking side drawn back at shoulder height and the other hand open toward the rival, the body carried a full pace behind the knee",
+@@ -130,6 +133,7 @@
+     "arms": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [
+     "hands_open_or_claw"
+    ],
+@@ -168,6 +172,7 @@
+     "arms": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [],
+    "look": "PROVISIONAL. A turning fist: the shoulders wound away in a low stance, then unwound through the jaw.",
+    "orig": "PROVISIONAL: a turning fist from a low stance, the shoulders wound away with the fist behind him, unwound through the jaw and ending across his own centre",
+@@ -204,6 +209,7 @@
+     "arms": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [],
+    "look": "PROVISIONAL. A heaving elbow: sunk deep with the elbow loaded low, the other hand up; the legs drive him tall and the elbow up the centre line; his feet keep their place.",
+    "orig": "PROVISIONAL: a heaving elbow: sunk deep with the elbow loaded low and the other hand up in guard, both legs drive him tall with the elbow up the centre line; his feet keep their place",
+@@ -240,6 +246,7 @@
+     "arms": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [
+     "no_leap"
+    ],
+@@ -278,6 +285,7 @@
+     "arms": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [
+     "no_clasp",
+     "no_held_raise"
+@@ -317,6 +325,7 @@
+     "legs": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [],
+    "look": "PROVISIONAL. A stepping kick with the edge of the foot, low: the leg chambered close and the whole body carried a pace behind it, one straight line into the rival legs; chin up, a show of it.",
+    "orig": "PROVISIONAL: a stepping low kick with the edge of the foot: the leg chambered close, the body carried a pace behind one straight leg, the edge into the rival legs",
+@@ -353,6 +362,7 @@
+     "arms": 1
+    },
+    "from": null,
++   "named": false,
+    "legal": [
+     "hands_open_or_claw",
+     "no_clasp",
+diff --git a/render/anim/anim_fighter.gd b/render/anim/anim_fighter.gd
+index 9192af6..b72b379 100644
+--- a/render/anim/anim_fighter.gd
++++ b/render/anim/anim_fighter.gd
+@@ -3107,6 +3107,16 @@ func _contact_one(S: SimState, f, base_limb: String, second: bool) -> void:
+ 		excess = d3.length() - reach   # the target is behind the shoulder (the fighters overlap): no step forward helps
+ 	var lunge: float = minf(need, lunge_max) * _ci_w
+ 	var step: float = clampf(need - lunge_max, 0.0, step_max) * _ci_w
++	# a kick whose hips are already past its target (the pose's own lunge, or a defender closer than the blow's range) would have to swing the thigh back through its limit: the body gives ground
++	# instead, as far as data `min_fwd` asks (the foot's target at least that far ahead of the hip), at most `retreat_max` (homework 4's pulled frames: a front kick's thigh pulled 100 degrees)
++	var min_fwd: float = float(sk.get("min_fwd", 0.0))
++	if min_fwd > 0.0 and not aim and need <= 0.0 and RenderAnim.kick_retreat:
++		var back: float = clampf(min_fwd - d3.x, 0.0, float(sk.get("retreat_max", 12.0)))
++		if side2 < reach * reach:
++			back = minf(back, maxf(sqrt(reach * reach - side2) - d3.x - 1.0, 0.0))   # never so far that the foot no longer reaches
++		if back > 0.0:
++			step = -back * _ci_w
++			debug["retreats"] = int(debug.get("retreats", 0)) + 1
+ 	_step_x = (_step_x + step) if second else step
+ 	var ik_t: Vector3 = tgt - Vector3(lunge + step, 0.0, 0.0)
+ 	var qa0: Quaternion = q[a]
+@@ -3969,8 +3979,19 @@ func _aim_arms(alpha: float, w: float) -> void:
+ 		return
+ 	var a: float = alpha * w * _rd_amp()
+ 	var ix: Dictionary = AnimRig.index
+-	for nm in ["upper_arm_l", "upper_arm_r"]:
+-		q[ix[nm]] = q[ix[nm]] * Quaternion(Vector3(0, 0, 1), a)
++	# the turn is shortened until neither upper arm is past its limit (homework 4: a cast pose's arm turned to a steep aim was pulled 77 degrees by the last pass: an arm that snaps)
++	var base_l: Quaternion = q[ix["upper_arm_l"]]
++	var base_r: Quaternion = q[ix["upper_arm_r"]]
++	var sc: float = 1.0
++	for it in range(6):
++		var qa := Quaternion(Vector3(0, 0, 1), a * sc)
++		q[ix["upper_arm_l"]] = base_l * qa
++		q[ix["upper_arm_r"]] = base_r * qa
++		var el: Vector2 = AnimJoints.ball_excess(q, ix["upper_arm_l"], _rd.shape_key) if AnimJoints.ik_limits else Vector2.ZERO
++		var er: Vector2 = AnimJoints.ball_excess(q, ix["upper_arm_r"], _rd.shape_key) if AnimJoints.ik_limits else Vector2.ZERO
++		if el.x + el.y + er.x + er.y <= 0.02:
++			break
++		sc *= 0.7
+ 	q[ix["spine_2"]] = q[ix["spine_2"]] * Quaternion(Vector3(0, 0, 1), a * 0.25)
+ 	debug["aims"] += 1
+ 
+diff --git a/render/anim/render_anim.gd b/render/anim/render_anim.gd
+index 50fd1cd..68ecc72 100644
+--- a/render/anim/render_anim.gd
++++ b/render/anim/render_anim.gd
+@@ -30,6 +30,7 @@ static var hand_tips: bool = true             # a blow shows the hand state of i
+ static var intro_gestures: bool = true         # the sim's intro_gesture events play the fighter's own motion for the intent (docs/animation/intro-gestures.md); inert until the composer sends them; --no-intro-gestures switches it off
+ static var strength_styles: bool = false      # force a brawl beat's strength and burst number over the beat's own explicit `style` (`speed` for a light, `heavy` for a wound blow): the nine cells' looks (Y the medium row, B the super row, a held X's blows the burst row, the wind-ups whole, the held charge, the armour read) on a sim that still stamps the style. false (the shipped default) is today's picture.
+ static var fighter_ease: bool = true          # each fighter's own ease rows (data fighters.json `ease`): fluid arcs for one, snappy lines for the other, inside the one clock; false is the before
++static var kick_retreat: bool = true          # a kick whose hips are past its target gives ground instead of swinging the thigh back through its limit (data sockets.json limbs.foot.min_fwd); false is the before
+ static var mash_press: bool = true            # a run of mashed blows leans in (data styles.<style>.press_run); false is the before
+ static var march: bool = true                  # a mashed heavy takes a footfall (data styles.super.march); false is the before
+ static var dig_in: bool = true               # the held X digs in: the legs keep the set pose through a burst's stream (data styles.burst.dig); false is the before
+diff --git a/render/anim/tools/anim_check.gd b/render/anim/tools/anim_check.gd
+index ea35b53..3ea7903 100644
+--- a/render/anim/tools/anim_check.gd
++++ b/render/anim/tools/anim_check.gd
+@@ -1412,6 +1412,55 @@ func _test_arms() -> void:
+ 	print("arms: wings %d of %d keys, the air tech's feet low, the mash's beat" % [wings, total])
+ 
+ 
++func _test_pulls() -> void:
++	AnimData.load_every_wave()
++	main.start_match(4, {"p1": false, "p2": false})
++	for i in range(10):
++		main.frame(1.0 / 60.0)
++	var S: SimState = main.host.S
++	RenderAnim.ground_feet = false
++	RenderAnim.press_styles = true
++	# a beam's aim turns both upper arms; the turn is shortened until neither is past its limit (live seed 4 tick 1121 had the last pass pull one 77 degrees)
++	var bad: int = 0
++	for pid in ["bm.hold.fire_protagonist", "bm.hold.charge_protagonist", "bm.hold.fire_antihero", "bm.hold.charge_antihero", "beam.fire", "beam.charge"]:
++		for alpha in [-1.2, -0.6, 0.0, 0.6, 1.2]:
++			var af := AnimFighter.new(0)
++			af.q = AnimData.pose(pid).q.duplicate()
++			af._aim_arms(alpha, 1.0)
++			for nm in ["upper_arm_l", "upper_arm_r"]:
++				var e: Vector2 = AnimJoints.ball_excess(af.q, AnimRig.index[nm], af._rd.shape_key)
++				if e.x + e.y > 0.02:
++					bad += 1
++	_expect(bad == 0, "pulls: a beam's aim leaves an upper arm past its limit in %d of 60 cases" % bad)
++	# the heavies' kicks at their own striking distance: no frame of the last pass pulling over 30 degrees (the pose's own lunge used to leave the hip past the target)
++	var dad := DirAccess.open("res://data/anim/waves")
++	var offs := {}
++	for fn in dad.get_files():
++		if String(fn).ends_with(".manifest.json"):
++			var mm = JSON.parse_string(FileAccess.get_file_as_string("res://data/anim/waves/" + String(fn)))
++			for st in mm.get("strikes", []):
++				offs[String(st.id)] = float(st.get("offset", 58.0))
++	var dist_was: float = _tier_dist
++	for pc in [["protagonist", "su_edge_step", "pu.su_edge_step"], ["protagonist", "su_edge_unwind", "pu.su_edge_unwind"], ["antihero", "su_heel", "ru.su_heel"]]:
++		_tier_dist = float(offs.get(String(pc[2]), 58.0))
++		var r: Dictionary = _tier_scene(S, String(pc[0]), "super", [String(pc[1])], [44], {"windup": 28}, "heavy")
++		_expect(int(r.get("fix_n30", 0)) == 0, "pulls: %s at its own range (%.0f) has %d frames of the last pass pulling over 30 degrees" % [String(pc[2]), _tier_dist, int(r.get("fix_n30", 0))])
++	# a defender closer than a kick's range: the body gives ground instead of the thigh being pulled back through its limit (data sockets.json limbs.foot.min_fwd)
++	var retreat_was: bool = RenderAnim.kick_retreat
++	var closes := {}
++	for on in [false, true]:
++		RenderAnim.kick_retreat = on
++		_tier_dist = 38.0
++		var tot: int = 0
++		for nm in ["front_kick", "snap_round", "side_kick"]:
++			tot += int(_tier_scene(S, "protagonist", "medium", [nm], [44], {"windup": 12}, "heavy").get("fix_n30", 0))
++		closes[on] = tot
++	RenderAnim.kick_retreat = retreat_was
++	_expect(int(closes[true]) == 0 and int(closes[false]) > int(closes[true]), "pulls: three kicks at 38 units pull the last pass over 30 degrees on %d frames without the retreat and %d with it" % [int(closes[false]), int(closes[true])])
++	_tier_dist = dist_was
++	print("pulls: a beam's aim stays inside the limits; the three heavies' kicks need no big correction at their range")
++
++
+ func _test_march() -> void:
+ 	AnimData.load_every_wave()
+ 	main.start_match(4, {"p1": false, "p2": false})
+@@ -3893,6 +3942,7 @@ func _run() -> void:
+ 	_test_round10()
+ 	_test_pieces()
+ 	_test_arms()
++	_test_pulls()
+ 	_test_medium_wind()
+ 	_test_energy_reach()
+ 	_test_free_arm()
+diff --git a/render/anim/tools/waves/protag10.mjs b/render/anim/tools/waves/protag10.mjs
+index 88da6dc..786c546 100644
+--- a/render/anim/tools/waves/protag10.mjs
++++ b/render/anim/tools/waves/protag10.mjs
+@@ -7,9 +7,9 @@ const OPEN = { hands: { r: 'open', l: 'open' } };
+ const NEW = {
+   su_drive: { like: 'double_hammer', limb: 'hand', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. He rises tall with one palm at his shoulder, the other hand up in guard, then comes down with his whole weight and the palm falls onto the chest.' },
+   su_turn: { like: 'haymaker', limb: 'hand', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. A full turn of the body, one blade hand swung out at the end of it, the rear foot trailing.' },
+-  su_edge_step: { like: 'front_kick', limb: 'foot', target: 'gut', weight: 'heavy', look: 'PROVISIONAL. A stepping kick with the edge of the foot: compact, hands up, the whole body carried a pace behind one straight leg to the gut.' },
++  su_edge_step: { like: 'front_kick', off: 12, limb: 'foot', target: 'gut', weight: 'heavy', look: 'PROVISIONAL. A stepping kick with the edge of the foot: compact, hands up, the whole body carried a pace behind one straight leg to the gut.' },
+   su_blade_jaw: { like: 'spear_hand', limb: 'hand', target: 'jaw', weight: 'heavy', look: 'PROVISIONAL. A stepping blade hand: the striking side drawn back close to him, then one straight line to the jaw as the body steps through; a strike, never a grip.' },
+-  su_edge_unwind: { like: 'roundhouse', limb: 'foot', target: 'gut', weight: 'heavy', look: 'PROVISIONAL. An unwinding kick with the edge of the foot: the leg crossed over his own centre, the chin over his shoulder, the body opening out as the foot comes back through the gut.' },
++  su_edge_unwind: { like: 'roundhouse', off: 8, limb: 'foot', target: 'gut', weight: 'heavy', look: 'PROVISIONAL. An unwinding kick with the edge of the foot: the leg crossed over his own centre, the chin over his shoulder, the body opening out as the foot comes back through the gut.' },
+   su_palm_heave: { like: 'uppercut', limb: 'hand', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. A heaving palm: sunk deep with the palm loaded low and the other hand up, both legs drive it up into the chest; no leap, the arm lowers at once.' },
+   su_ball_heave: { like: 'front_kick', limb: 'foot', target: 'gut', weight: 'heavy', look: 'PROVISIONAL. A heaving kick with the ball of the foot: sunk deep on the standing leg, the legs drive him up and the foot up into the gut; the standing foot keeps its place.' },
+   su_hammer_arm: { like: 'hammer', limb: 'hand', target: 'arm_r', weight: 'heavy', look: 'PROVISIONAL. A falling hammer fist to the arm: risen tall with one fist at his shoulder, the body comes down and the fist drops onto the rival arm; back in his guard at once.' },
+@@ -23,7 +23,7 @@ export function rows(wave1) {
+     const b = by[o.like];
+     // one limb, one arm or one leg: the base row's second limb and `uses` are the double hammer's, which su_drive is not (Legal RL-133: drawn and worded as one arm)
+     return { ...b, id: 'strike.' + n, limb: o.limb, limb2: null, uses: (o.limb === 'foot' || o.limb === 'knee') ? { legs: 1 } : { arms: 1 }, target: o.target, weight: o.weight, look: o.look,
+-      range: { ...b.range, lunge: Math.round(b.range.lunge * 1.25), reach: Math.round(b.range.reach * 1.1) }, ticks: { load: 28, follow: 8, recover: 14 },
++      range: { ...b.range, offset: b.range.offset + (o.off || 0), lunge: Math.round(b.range.lunge * 1.25), reach: Math.round(b.range.reach * 1.1) + (o.off || 0) }, ticks: { load: 28, follow: 8, recover: 14 },
+       _estimate: 'PROVISIONAL: range and ticks borrowed from strike.' + o.like + ' (lunge 1.25 times, reach 1.1 times); the load is the 28-tick wind-up of B (docs/design/brawl-second-pass.md) for the look study' };
+   });
+ }
+diff --git a/render/anim/tools/waves/rival7.mjs b/render/anim/tools/waves/rival7.mjs
+index 94b84b7..8f1c877 100644
+--- a/render/anim/tools/waves/rival7.mjs
++++ b/render/anim/tools/waves/rival7.mjs
+@@ -7,7 +7,7 @@ const OPEN = { hands: { r: 'open', l: 'open' } };
+ const FIST = { hands: { r: 'fist', l: 'open' } };
+ const NEW = {
+   su_ram: { like: 'overhand', limb: 'hand', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. A long low lunge, the whole body behind one straight fist.' },
+-  su_heel: { like: 'axe_kick', limb: 'foot', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. The leg raised high, the heel dropped from above onto the chest, the body folding over it.' },
++  su_heel: { like: 'axe_kick', offset: 72, limb: 'foot', target: 'chest', weight: 'heavy', look: 'PROVISIONAL. The leg raised high, the heel dropped from above onto the chest, the body folding over it.' },
+   su_knee: { like: 'driving_knee', offset: 40, limb: 'knee', target: 'gut', weight: 'heavy', look: 'PROVISIONAL. A stepping knee: the striking side drawn back, the whole body travels a pace and the knee arrives in the gut as the foot lands.' },
+   su_plate: { like: 'hook', limb: 'hand', target: 'head', weight: 'heavy', look: 'PROVISIONAL. A turning forearm: his back half turned with the forearm carried behind, then the hips and shoulders unwind through the head.' },
+   su_hook: { like: 'overhand', limb: 'hand', target: 'jaw', weight: 'heavy', look: 'PROVISIONAL. A turning fist: the shoulders wound away in a low stance, then unwound through the jaw.' },
