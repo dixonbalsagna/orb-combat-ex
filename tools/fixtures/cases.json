@@ -292407,6 +292407,54 @@
         "rule": "enum",
         "pointer": "/meterNorm"
       }
+    },
+    {
+      "id": "vfx-catastrophe-alpha-over",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/tremor/alpha_max": 0.6
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/tremor/alpha_max"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-sprites-over",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/tremor/sprites/2": 161
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/tremor/sprites/2"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-z-near",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/tremor/z/1": -4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/tremor/z/1"
+      }
     }
   ],
   "text": [

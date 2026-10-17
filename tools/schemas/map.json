@@ -476,6 +476,10 @@
       "schema": "vfx-energy.schema.json"
     },
     {
+      "match": "data/vfx/catastrophe.json",
+      "schema": "vfx-catastrophe.schema.json"
+    },
+    {
       "match": "data/narrative/combat_barks.json",
       "schema": "narrative-barks.schema.json"
     },

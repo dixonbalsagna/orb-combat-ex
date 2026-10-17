@@ -12,7 +12,7 @@ Owner: VFX Director. 2026-10-16. **Paper only; nothing is built, no Godot or Chr
 
 ## 1. The `cat` light class (the rule the three bright effects share)
 
-Added to `VfxFlashRegistry` (mine) beside the existing sources:
+Added to `VfxFlashRegistry` (mine) beside the existing sources. **Built early, in scratch, behind nothing** (`ask_cat`, `cat_shape`, `cat_level`, `cat_peak_near`; the rows of `docs/vfx/flash-registry.md` and 25 checks in `effects_check`; parked in `docs/vfx/pending/warm-and-cat/`):
 
 | Rule | Value | From |
 | :--- | :--- | :--- |
@@ -109,6 +109,8 @@ Rendering draws the planet sphere above about 0.3 R and the arena's crater strip
 
 ## 5. The tremor's dust (`tremor`; run-mode §3.1, c06)
 
+**Built (2026-10-17, parked: `docs/vfx/tremor-dust.md`).** Where the build differs from the paragraphs below: the layout is computed on the CPU each frame (160 sprites is small enough; the stateless vertex shader was for the 400-sprite cloud), the sprites stand at z -20 to -6 (a facade stands in front of z -30 or less in the city, so the first -100 to -30 was hidden), and the alpha rule is the **sum** of the overlaps at most 0.5 (measured 0.480), which makes one sprite's alpha at most 0.13 and the dust a faint haze; the brightness step per tick is at most 0.0094, not the 0.07 written below (that figure was the contrast of the dust against the sky, a total over the onset, not a step).
+
 The tremor is a live set piece: heaving ground and swaying towers (World, Animation) for the cue's length (`n` is the end tick; Audio's is 3.6 s). **A quake, never glowing fissures and never a ring** (c06).
 
 - **Dust curtains.** Low sheets of dust rising off the ground along the whole visible slice and from the towers' bases: one `MultiMesh`, **at most 160 sprites**, stateless on `age` and the tremor's start and end ticks. The onset rises over 1.0 s (no step), holds with an irregular hash-driven wander, and settles over 4 s after the end. Colour: warm grey, **alpha at most 0.5**, a luminance step against the sky under 0.07 even at its thickest (it is dark and slow, so it is not a catastrophe light event and never asks the `cat` class).
@@ -134,6 +136,8 @@ The tremor is a live set piece: heaving ground and swaying towers (World, Animat
 | `docs/vfx/catastrophe-plan.md`, `docs/vfx/effect-budgets.md` | new, changed | this plan; the budget rows |
 
 **Checks (`effects_check`)**, deterministic and fast: the `cat` gap (a second event 119 ticks after the first is refused with `cat_gap`, one at 120 is granted); rise and fall never under 18 and 60 ticks in both modes; no colour in any ramp is red (R/(R+G+B) under 0.8); the calm form's peak is 0.6 of the normal and its rise at least 0.5 s; the same cue stream gives the same uniforms (determinism); the sprite counts per level; the bubble schedule's per-1,000-unit cap and its 2 Hz limit, and no lattice; `ash` scaling at 0, 0.5 and 1.
+
+**Warm-up.** Each new shader (`cloud.gdshader`, `dust.gdshader`, and the orbit include's host) joins `RenderWarmup.SHADERS` (`render/core/warmup.gd`, Rendering's boot-time draw of every effect's shader, `docs/vfx/warm-up.md`) as part of building it: one line each, so no catastrophe effect is the first draw of its shader in a fight.
 
 **Grants needed:** Rendering's, for the sphere shader to include `orbit_impact.gdshaderinc` and the 8-uniform array (§4), and for the cloud to sit in the backdrop layer order behind the fighters; I touch no file of theirs. I do not touch `transform_view.gd` or `vfx_layer.gd`; the cloud and the dust views are added to the hub's layer from the hub (mine).
 

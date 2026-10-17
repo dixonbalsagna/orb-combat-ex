@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "_note": "The catastrophe tier's numbers (docs/vfx/catastrophe-plan.md). Only the tremor's dust so far (section 5): at most 160 sprites, alpha at most 0.5, an onset of 1 s, settling over 4 s, no rhythm. Presentation only.",
+  "tremor": {
+    "sprites": [60, 110, 160],
+    "alpha_max": 0.5,
+    "onset_s": 1.0,
+    "settle_s": 4.0,
+    "calm_onset_s": 1.5,
+    "calm_settle_s": 5.0,
+    "shiver": 0.06,
+    "wander": 0.35,
+    "colour": "#8a8277",
+    "height_k": [0.16, 0.46],
+    "width_k": [2.4, 4.4],
+    "z": [-20.0, -6.0],
+    "rubble_per_s": 40.0,
+    "rubble_size": [4.0, 9.0],
+    "rubble_life_s": [0.8, 1.6],
+    "max_overlap": 2
+  }
+}

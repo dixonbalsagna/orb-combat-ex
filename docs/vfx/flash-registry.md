@@ -201,3 +201,19 @@ Pinned to 3198301f; Tools' path (`capture-web`, session vfx, one capture at a ti
 - `effects_check.gd` `_flashes()`: the rule (3 in 60, low priority 2, red refused, the window slides, reduced flashing 1), one case for each family with a flash (energy, block, shot hit, explosion, transformation twice, guard break), every family at once for 2 seconds (never more than 3 granted in a second, the rest refused), the log (a row per ask) and reduced flashing through the hub (at most 1 a second, no energy or hit-ring flash).
 - Real AI matches (`hash_check.gd`, seeds 12345, 4 and 7, six VFX runs each, 3,600 ticks, 64,800 ticks of play in all): 854 asks, **489 granted and 365 refused**, never more than 3 in any second. By source (granted, refused): block 300 and 282, transformation 70 and 2, explosion 109 and 35, shot hit 10 and 46. Blocks are the busiest source in the AI's play (a block's flash ring is refused about half the time; the shield line always draws), then explosions (a refused burst is sparks and smoke). No energy blow exists in the sim yet, so energy is not in these numbers; the 30-bolt mash test covers it.
 - Cost: `ask` is a loop over at most 3 integers and one log row; a dozen asks a second at most. Nothing is drawn by the register itself; refusing a flash removes quads, it adds none.
+
+## The catastrophe class (2026-10-17; docs/vfx/catastrophe-plan.md section 1; Legal c01 to c05)
+
+Built in `VfxFlashRegistry`, with nothing drawing from it yet. A world-scale light event (the blast cloud's fireball, the crust breach's flare, an impact seen from the exosphere, a meteor) asks `ask_cat(source, cat_id, colour, area_px, rise, fall, peak, ash, tick)`, and the ordinary rules above still apply to it (budget, caps, red). On top:
+
+| Rule | Value |
+| :-- | :-- |
+| Events granted | one per `CAT_GAP` (120 ticks, 2 s) across the screen, whatever the pane; a refused one is logged `cat_gap` (`cat_calm_repeat` under Reduce flashing) and draws its body without its light |
+| Rise, fall | clamped up to `CAT_RISE_MIN` (18 ticks, 0.3 s) and `CAT_FALL_MIN` (60 ticks, 1 s); the level between is `cat_level()`, a smootherstep each way (the steepest tick is 1.875 / min(rise, fall) of the peak) |
+| Calm form (`reduced`) | peak x0.6, rise x1.7 and never under 30 ticks (0.5 s), fall x1.5, and no second event within `CAT_REPEAT_QUIET` (240 ticks, 4 s) |
+| The dark sky | the peak is scaled by `1 - CAT_ASH_K * ash` (0.35, a starting value for the darkened-sky clip to set) |
+| One answer per event | a second ask with the same `cat_id` (another pane, Camera's window) takes the first answer and counts nothing more; answers are kept 600 ticks |
+| Small glows | an area under `CAT_SMALL_W` (0.05 of 21,824 px) is not a catastrophe event but an ordinary low-priority `far_impact` (weight 0.03 by default), under the usual caps; Legal to confirm the 0.05 |
+| Camera's rule | `cat_peak_near(margin)` is true within `margin` ticks (30) of a granted event's peak, so a cut can wait |
+
+Checked in `effects_check` (`_cat_class`): the floors, the calm shape, the ash scale, the level's monotone shape and steepest step, the 119 / 120 tick edge, one answer per id, the small split, red refused and costing no gap, the calm repeat, the peak window, the 600-tick memory and a reset, and a 4,000-tick hammer of hashed asks in both modes (no two granted events closer than the gap; the ordinary budget still 2.5 / 1.0; the same asks give the same log).

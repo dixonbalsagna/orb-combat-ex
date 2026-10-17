@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/vfx-catastrophe",
+  "title": "vfx catastrophe tier (version 1)",
+  "description": "data/vfx/catastrophe.json: the catastrophe tier's presentation numbers (docs/vfx/catastrophe-plan.md). Only the tremor's dust so far. Read by render/vfx/tremor.gd; every key has a built-in default there. Presentation only. Policy: closed except keys starting with an underscore at the top; the tremor block is closed.",
+  "type": "object",
+  "required": ["version"],
+  "properties": {
+    "version": { "const": 1 },
+    "tremor": {
+      "type": "object",
+      "properties": {
+        "sprites": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "integer", "minimum": 1, "maximum": 160 } },
+        "alpha_max": { "type": "number", "exclusiveMinimum": 0, "maximum": 0.5 },
+        "onset_s": { "type": "number", "minimum": 1.0, "maximum": 6 },
+        "settle_s": { "type": "number", "minimum": 4.0, "maximum": 20 },
+        "calm_onset_s": { "type": "number", "minimum": 1.5, "maximum": 8 },
+        "calm_settle_s": { "type": "number", "minimum": 4.0, "maximum": 30 },
+        "shiver": { "type": "number", "minimum": 0, "maximum": 0.1 },
+        "wander": { "type": "number", "minimum": 0, "maximum": 1 },
+        "colour": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "height_k": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 } },
+        "width_k": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "exclusiveMinimum": 0, "maximum": 8 } },
+        "z": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "minimum": -130, "maximum": -5 } },
+        "rubble_per_s": { "type": "number", "minimum": 0, "maximum": 40 },
+        "rubble_size": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "exclusiveMinimum": 0, "maximum": 20 } },
+        "rubble_life_s": { "type": "array", "minItems": 2, "maxItems": 2, "items": { "type": "number", "exclusiveMinimum": 0, "maximum": 4 } },
+        "max_overlap": { "type": "integer", "minimum": 1, "maximum": 3 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": { "^_": true }
+}

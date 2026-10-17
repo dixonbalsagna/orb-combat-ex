@@ -9,6 +9,7 @@ Presentation only. VFX reads the sim's state and fx events and draws; it never w
 | Effect | State | Where |
 | :--- | :--- | :--- |
 | Motion trails: a tapered ribbon behind a fast fighter, and world-fixed wind marks the camera flies past | **Live** (trails are on by default) | `trail_state.gd`, `trail_view.gd`, `shaders/trail.gdshader` |
+| The catastrophe tier's tremor: low dust curtains and a patter of rubble on the `tremor` cue (no cue exists yet) | Built, parked (`docs/vfx/tremor-dust.md`); `catastrophe_enabled` | `tremor.gd`, `dust_view.gd`, `shaders/dust.gdshader`, `data/vfx/catastrophe.json` |
 | Ground cracks and fissures from `S.craters` and `S.slides` | Built, **off** (`VfxLook.CRACKS_DEFAULT`) | `crack_gen.gd`, `crack_mesh.gd`, `crack_view.gd`, `shaders/crack.gdshader` |
 
 | Scorch embers by beam variant | Built, **off** (`VfxLook.EMBERS_DEFAULT`) until Rendering stops drawing ImpactFx's own scorch sparks | `debris.gd` (`embers`) |
@@ -45,6 +46,7 @@ All from the repo root, with Godot 4.7.2. Tools with pictures need a window; `--
 | `crack_shots.gd` | `-- --out=DIR [--only=impact_mid,slide_paved]` | Posed cracks on staged craters and slides |
 | `mock_shots.gd` | `-- --out=DIR --scenario=burst\|heavy\|chain\|implode\|all` | The mock burst-through, a heavy wreck with a hole, a three-tower chain, a block imploding, with Camera's 21-tick hold |
 | `worst_case.gd` | `-- --frames=360` | The worst scene (a chain through four towers, an imploding block, 14 crack sets, two fighters at full trail), on and off |
+| `hitch_probe.gd` | `-- --seed=4 --nointro --ticks=1500 [--warm=0]` | The longest frames of a real match with the host's split, headless, the audio warmed as the game warms it (`docs/vfx/warm-up.md`) |
 
 ## Checks run (2026-09-29, Godot 4.7.2, RTX 5070 Ti, Ryzen 7 9800X3D, 1280x720)
 

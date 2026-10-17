@@ -211,6 +211,8 @@ func _run() -> void:
 	_vision()
 	_wall_outcome()
 	_flash_reserve()
+	_cat_class()
+	_tremor()
 	_stage_stagger()
 	_depth()
 	_panes()
@@ -4640,7 +4642,260 @@ func _flash_reserve() -> void:
 	_check(Rr.ask("beam", white, 1, VfxFlashRegistry.AREA_FULL, 0.6), "reduced mode keeps its whole 1.0: one weight-1 flash fits")
 
 
-## The colour-blind presets (Art's data/art/colour-vision.json by way of UI's `colour_vision`): everything drawn in a lane colour reads the preset, and with the option off nothing changes.
+## The tremor's dust (docs/vfx/catastrophe-plan.md section 5; Legal c01 to c06): its numbers, an envelope that never steps fast, a layout whose overlaps never sum past alpha_max, no red, no rhythm,
+## the cue, determinism, and that it asks nothing of the flash register.
+func _tremor() -> void:
+	print("the tremor's dust")
+	# The data file and the built-in defaults say the same.
+	var jd = JSON.parse_string(FileAccess.get_file_as_string("res://data/vfx/catastrophe.json"))
+	var same: bool = jd is Dictionary and jd.get("tremor") is Dictionary
+	if same:
+		for k in VfxTremor.DEFAULTS.keys():
+			if not _same_value(jd["tremor"].get(k), VfxTremor.DEFAULTS[k]):
+				same = false
+				print("    differs: ", k, " ", jd["tremor"].get(k), " vs ", VfxTremor.DEFAULTS[k])
+		for k in jd["tremor"].keys():
+			if not VfxTremor.DEFAULTS.has(k):
+				same = false
+	_check(same, "data/vfx/catastrophe.json and the built-in defaults agree")
+	# The plan's numbers.
+	_check(float(VfxTremor.p("alpha_max")) <= 0.5 and VfxDustView.CAP == 160 and VfxDustView.sprites_for(2) == 160 and VfxDustView.sprites_for(0) < VfxDustView.sprites_for(1) and VfxDustView.sprites_for(1) < 160, "at most 160 sprites (60, 110, 160 by quality) and an alpha of at most 0.5")
+	_check(VfxTremor.onset_ticks(false) >= 60.0 and VfxTremor.settle_ticks(false) >= 240.0 and VfxTremor.onset_ticks(true) >= 90.0 and VfxTremor.settle_ticks(true) >= VfxTremor.settle_ticks(false), "an onset of at least 1 s and a settling of at least 4 s; the calm form is slower (%.0f and %.0f ticks, calm %.0f and %.0f)" % [VfxTremor.onset_ticks(false), VfxTremor.settle_ticks(false), VfxTremor.onset_ticks(true), VfxTremor.settle_ticks(true)])
+	# The envelope: zero outside, 1 on the plateau, monotone, and no tick steps more than its slope; the brightness step it makes is a small fraction of the 0.1 that counts.
+	for calm in [false, true]:
+		var on: float = VfxTremor.onset_ticks(calm)
+		var se: float = VfxTremor.settle_ticks(calm)
+		var dur: float = 216.0
+		var prev: float = 0.0
+		var step_max: float = 0.0
+		var mono: bool = true
+		for t in range(0, int(dur + se) + 3):
+			var v: float = VfxTremor.level(float(t), dur, on, se)
+			step_max = maxf(step_max, absf(v - prev))
+			if float(t) <= dur and v < prev - 1e-12:
+				mono = false
+			if float(t) > dur and v > prev + 1e-12:
+				mono = false
+			prev = v
+		var lum_step: float = step_max * float(VfxTremor.p("alpha_max")) * 0.6      # the dust against the darkest or brightest sky it can sit on (a contrast of at most 0.6)
+		var tag: String = "calm" if calm else "normal"
+		_check(VfxTremor.level(0.0, dur, on, se) == 0.0 and absf(VfxTremor.level(dur - 1.0, dur, on, se) - 1.0) < 1e-9 and VfxTremor.level(dur + se, dur, on, se) == 0.0 and mono, "%s: the envelope is 0 outside, 1 on the plateau and only rises then falls" % tag)
+		_check(step_max <= 1.875 / minf(on, se) + 1e-9 and lum_step < 0.02, "%s: no tick steps the dust's brightness by more than %.4f (a flash needs 0.1)" % [tag, lum_step])
+	_check(VfxTremor.level(30.0, 400.0, 60.0, 240.0) < 0.6 and VfxTremor.level(30.0, 400.0, 60.0, 240.0) > 0.4, "the onset takes its second: halfway is half")
+	# The layout: no column's overlaps sum past alpha_max, at any zoom, quality or seed; each sprite's alpha is far under it.
+	var worst: float = 0.0
+	var worst_ua: float = 0.0
+	for hw in [400.0, 800.0, 3000.0]:
+		for q in range(3):
+			for sd in [1, 777, 4242, 31337, 99999, 123456, 2718, 8, 600, 1500]:
+				var n: int = VfxDustView.sprites_for(q)
+				worst = maxf(worst, VfxDustView.worst_column(n, hw, sd))
+				worst_ua = maxf(worst_ua, VfxDustView.unit_alpha(n, hw))
+	_check(worst <= float(VfxTremor.p("alpha_max")) + 1e-6, "the most opacity any column of the layout reaches is %.3f (at most %.2f) over three zooms, three qualities and ten seeds" % [worst, float(VfxTremor.p("alpha_max"))])
+	_check(worst_ua < 0.2, "one sprite's alpha is at most %.3f (the plan's 0.5 caps their sum, which the check above holds)" % worst_ua)
+	var s1: Dictionary = VfxDustView.sprite(7, 110, 500.0, 99)
+	var s2: Dictionary = VfxDustView.sprite(7, 110, 500.0, 99)
+	_check(s1 == s2 and absf(float(s1["vx"])) <= 500.0 * 1.15 * 1.01 and float(s1["z"]) < 0.0 and float(s1["z"]) >= -130.0, "a sprite is a pure function of its index, the seed and the view, and stands behind the fighters' plane")
+	# The colour: a warm grey, nowhere near red.
+	var c := Color(String(VfxTremor.p("colour")))
+	_check(c.r / (c.r + c.g + c.b) < 0.45 and not VfxFlashRegistry.is_red(c), "the dust is a warm grey (red share %.2f)" % (c.r / (c.r + c.g + c.b)))
+	# No rhythm: the shiver is a few percent, two slow incommensurate sines per sprite, and off in the calm form and Reduced motion (the view reads `still`); the wander is slow.
+	_check(float(VfxTremor.p("shiver")) <= 0.06 + 1e-9 and absf(0.83 / 1.37 - 0.5) > 0.05 and absf(0.31 / 0.17 - 2.0) > 0.05, "the shiver is at most 6% of the alpha and its two slow sines (0.83 and 1.37 rad/s, wander 0.31 and 0.17) are not harmonics of one another")
+	# The cue, the clock, the rubble, determinism, and nothing asked of the register. Each hub has a sim of its own, so its ticks and its rubble's hash seed are the same as another's.
+	var mk := func() -> Array:
+		var ss := SimCore.createSim()
+		SimCore.newMatch(ss, 4)
+		var hh := VfxHub.new()
+		hh.destruction_enabled = true
+		hh.reset(ss, 4)
+		return [hh, ss]
+	var mkcue := func(ss: SimState) -> Object:
+		return VfxMock.ev("cue", {"actor": 0, "kind": "tremor", "text": "", "target": 1, "k": 0.0, "n": float(ss.tick + 216), "x": 0.0, "y": 0.0, "source": "", "dur": 10.0})
+	var pa: Array = mk.call()
+	var h: VfxHub = pa[0]
+	var S: SimState = pa[1]
+	for k in range(5):
+		_tick(S, h, [])
+	_check(not h.tremor.active() and h.debris.bits.is_empty(), "with no tremor cue nothing runs and nothing is thrown")
+	_tick(S, h, [mkcue.call(S)])
+	_check(h.tremor.active() and h.tremor.runs.size() == 1, "a tremor cue starts one run")
+	var env_early: float = h.tremor.strength(false)
+	var seen_peak: float = 0.0
+	var thrown: int = 0
+	for k in range(215):
+		_tick(S, h, [])
+		seen_peak = maxf(seen_peak, h.tremor.strength(false))
+		if k == 28:
+			thrown = h.tremor.rubble_made
+	_check(env_early < 0.01 and seen_peak > 0.99 and thrown > 0 and h.tremor.rubble_made <= 40 * 4 + 1, "the dust rises from nothing over its onset to full (%.3f to %.3f), with %d bits of rubble in the first half second and %d in all (at most 40 a second)" % [env_early, seen_peak, thrown, h.tremor.rubble_made])
+	for k in range(int(VfxTremor.settle_ticks(false)) + 5):
+		_tick(S, h, [])
+	_check(not h.tremor.active(), "the run is dropped once it has settled")
+	_check(h.flashes.log.is_empty() and h.flashes.cat_events.is_empty(), "the tremor asks nothing of the flash register (dust is dark and slow: no flash, no catastrophe light event)")
+	var made: Array = []
+	var firsts: Array = []
+	for r in range(2):
+		var pr: Array = mk.call()
+		for k in range(120):
+			_tick(pr[1], pr[0], [mkcue.call(pr[1])] if k == 0 else [])
+		made.append(pr[0].tremor.rubble_made)
+		firsts.append(pr[0].debris.bits[0].x if not pr[0].debris.bits.is_empty() else 0.0)
+	_check(made[0] == made[1] and made[0] > 0 and firsts[0] == firsts[1], "the same cue gives the same rubble: %d bits, the first at x %.2f both times (determinism)" % [made[0], firsts[0]])
+	var pc: Array = mk.call()
+	pc[0].reduced_flashing = true
+	var pn: Array = mk.call()
+	for k in range(180):
+		_tick(pc[1], pc[0], [mkcue.call(pc[1])] if k == 0 else [])
+		_tick(pn[1], pn[0], [mkcue.call(pn[1])] if k == 0 else [])
+	_check(pc[0].tremor.rubble_made > 0 and pc[0].tremor.rubble_made < pn[0].tremor.rubble_made and pc[0].tremor.strength(true) <= pn[0].tremor.strength(false), "the calm form throws less rubble (%d against %d bits in 3 s) and its onset is slower (%.0f ticks against %.0f)" % [pc[0].tremor.rubble_made, pn[0].tremor.rubble_made, VfxTremor.onset_ticks(true), VfxTremor.onset_ticks(false)])
+
+
+## Two values from the data file and the defaults, equal as numbers (the file's whole numbers are floats), strings, or arrays of those.
+func _same_value(a, b) -> bool:
+	if a is Array and b is Array:
+		if a.size() != b.size():
+			return false
+		for i in range(a.size()):
+			if not _same_value(a[i], b[i]):
+				return false
+		return true
+	if (a is float or a is int) and (b is float or b is int):
+		return absf(float(a) - float(b)) < 1e-9
+	return str(a) == str(b)
+
+
+## The catastrophe light class (docs/vfx/catastrophe-plan.md section 1; Legal c01 to c05): the gap, the floors, the calm form, the ash, one answer per event, no red, and a hammer of random asks.
+func _cat_class() -> void:
+	print("the catastrophe light class")
+	var white := Color(1.0, 1.0, 1.0)
+	var amber := Color(1.0, 0.72, 0.30)
+	var F: float = VfxFlashRegistry.AREA_FULL
+	# The shape: floors, calm, ash.
+	var s0: Dictionary = VfxFlashRegistry.cat_shape(5, 10, 1.0, 0.0, false)
+	_check(int(s0["rise"]) == 18 and int(s0["fall"]) == 60 and absf(float(s0["peak"]) - 1.0) < 1e-9, "a rise under 0.3 s and a fall under 1 s are raised to the floors (18 and 60 ticks): %s" % str(s0))
+	var s1: Dictionary = VfxFlashRegistry.cat_shape(36, 144, 1.0, 0.0, false)
+	_check(int(s1["rise"]) == 36 and int(s1["fall"]) == 144, "a longer rise and fall are kept")
+	var sc: Dictionary = VfxFlashRegistry.cat_shape(18, 60, 1.0, 0.0, true)
+	_check(absf(float(sc["peak"]) - 0.6) < 1e-9 and int(sc["rise"]) >= 30 and int(sc["rise"]) >= int(ceil(18.0 * 1.7)) and int(sc["fall"]) == 90, "the calm form: peak x0.6, rise x1.7 and never under 0.5 s, fall x1.5 (%s)" % str(sc))
+	var sa: Dictionary = VfxFlashRegistry.cat_shape(18, 60, 1.0, 1.0, false)
+	_check(absf(float(sa["peak"]) - 0.65) < 1e-9, "in the darkest sky the peak is 0.65 of the asked (%.3f)" % float(sa["peak"]))
+	_check(float(VfxFlashRegistry.cat_shape(18, 60, 1.0, 5.0, false)["peak"]) == float(sa["peak"]) and float(VfxFlashRegistry.cat_shape(18, 60, 1.0, -2.0, false)["peak"]) == 1.0, "ash outside 0 to 1 is clamped")
+	# The envelope: zero outside, 1 at the peak, monotone, and no tick steps more than its slope.
+	var worst_step: float = 0.0
+	var mono: bool = true
+	for sh in [[18, 60], [31, 90], [36, 144], [30, 120]]:
+		var rise: int = int(sh[0])
+		var fall: int = int(sh[1])
+		var prev: float = 0.0
+		var peak_seen: float = 0.0
+		for a in range(0, rise + fall + 3):
+			var v: float = VfxFlashRegistry.cat_level(float(a), rise, fall)
+			worst_step = maxf(worst_step, absf(v - prev) / (1.875 / float(mini(rise, fall))))
+			if a <= rise and v < prev - 1e-12:
+				mono = false
+			if a > rise and v > prev + 1e-12:
+				mono = false
+			prev = v
+			peak_seen = maxf(peak_seen, v)
+		_check(VfxFlashRegistry.cat_level(0.0, rise, fall) == 0.0 and VfxFlashRegistry.cat_level(float(rise + fall), rise, fall) == 0.0 and absf(VfxFlashRegistry.cat_level(float(rise), rise, fall) - 1.0) < 1e-12 and peak_seen <= 1.0 + 1e-12, "the level of a %d-tick rise and %d-tick fall is 0 outside, 1 at the peak" % [rise, fall])
+	_check(mono, "the level only rises to the peak and only falls after it")
+	_check(worst_step <= 1.0 + 1e-6, "no tick steps more than 1.875 / min(rise, fall) of the peak (the steepest is %.3f of that)" % worst_step)
+	_check(VfxFlashRegistry.cat_level(float(1), 18, 60) < 0.01 and VfxFlashRegistry.cat_level(float(9), 18, 60) > 0.4 and VfxFlashRegistry.cat_level(float(9), 18, 60) < 0.6, "a floor rise takes its 0.3 s: 1 tick in is nothing, halfway is half")
+	# The gap: one per 120 ticks across the screen.
+	var R := VfxFlashRegistry.new()
+	R.begin_tick(false)
+	var a1: Dictionary = R.ask_cat("cat_blast", 1, amber, F, 18, 60)
+	_check(bool(a1["ok"]) and bool(a1["cat"]) and float(a1["peak"]) == 1.0 and int(a1["rise"]) == 18, "the first catastrophe event is granted at its asked shape")
+	for k in range(119):
+		R.begin_tick(false)
+	var a2: Dictionary = R.ask_cat("cat_breach", 2, amber, F, 18, 60)
+	_check(not bool(a2["ok"]) and String(a2["why"]) == "cat_gap" and float(a2["peak"]) == 0.0, "a second event 119 ticks after the first is refused (cat_gap) and draws no light (%s, %d ticks on)" % [String(a2["why"]), R.now - 1])
+	R.begin_tick(false)
+	var a3: Dictionary = R.ask_cat("cat_breach", 3, amber, F, 18, 60)
+	_check(bool(a3["ok"]), "an event 120 ticks after the first is granted (%s)" % String(a3["why"]))
+	# One answer per event: another view asks the same id and counts nothing more.
+	var in_w: int = R.in_window()
+	var granted_before: int = int(R.granted_by.get("cat_breach", 0))
+	var again: Dictionary = R.ask_cat("cat_breach", 3, amber, F * 0.4, 18, 60)
+	var again_refused: Dictionary = R.ask_cat("cat_breach", 2, amber, F, 18, 60)
+	_check(again == a3 and R.in_window() == in_w and int(R.granted_by.get("cat_breach", 0)) == granted_before and again_refused == a2, "an event asked again by id (another pane, the window) takes its first answer and counts nothing more")
+	# A small glow is an ordinary far_impact and does not take the gap.
+	var R2 := VfxFlashRegistry.new()
+	R2.begin_tick(false)
+	var sm: Dictionary = R2.ask_cat("exo_impact", 10, amber, 0.04 * F, 18, 60)
+	var big: Dictionary = R2.ask_cat("exo_impact", 11, amber, 0.2 * F, 18, 60)
+	_check(bool(sm["ok"]) and not bool(sm["cat"]) and int(R2.granted_by.get("far_impact", 0)) == 1 and bool(big["ok"]) and bool(big["cat"]), "a glow under 0.05 of the threshold is a far_impact, not a catastrophe event, and does not take the gap")
+	_check(VfxFlashRegistry.LOW.has("far_impact") and VfxFlashRegistry.CAT_SMALL_W == 0.05, "far_impact is a low-priority source; the split is 0.05")
+	# Red is never granted, and a refused event keeps the gap free.
+	var R3 := VfxFlashRegistry.new()
+	R3.begin_tick(false)
+	var rd: Dictionary = R3.ask_cat("cat_blast", 20, Color(1.0, 0.1, 0.05), F, 18, 60)
+	var ok_after: Dictionary = R3.ask_cat("cat_blast", 21, amber, F, 18, 60)
+	_check(not bool(rd["ok"]) and String(rd["why"]) == "red" and bool(ok_after["ok"]), "a red glow is refused and takes no gap: an amber one the same tick is granted")
+	# The calm form: no second light within 4 s, a lower peak.
+	var Rc := VfxFlashRegistry.new()
+	Rc.begin_tick(true)
+	var c1: Dictionary = Rc.ask_cat("cat_blast", 30, amber, F, 18, 60)
+	_check(bool(c1["ok"]) and absf(float(c1["peak"]) - 0.6) < 1e-9 and int(c1["rise"]) >= 30, "under Reduce flashing the first event is granted calm: peak %.2f, rise %d" % [float(c1["peak"]), int(c1["rise"])])
+	for k in range(200):
+		Rc.begin_tick(true)
+	var c2: Dictionary = Rc.ask_cat("cat_breach", 31, amber, F, 18, 60)
+	_check(not bool(c2["ok"]) and String(c2["why"]) == "cat_calm_repeat", "under Reduce flashing a second event 200 ticks later keeps its body and loses its light (%s)" % String(c2["why"]))
+	for k in range(40):
+		Rc.begin_tick(true)
+	_check(bool(Rc.ask_cat("cat_breach", 32, amber, F, 18, 60)["ok"]), "... and one 240 ticks after the first is granted")
+	# Camera's rule: a peak within 0.5 s.
+	var Rp := VfxFlashRegistry.new()
+	Rp.begin_tick(false)
+	Rp.ask_cat("cat_blast", 40, amber, F, 18, 60)
+	var near_now: bool = Rp.cat_peak_near()
+	for k in range(60):
+		Rp.begin_tick(false)
+	var near_late: bool = Rp.cat_peak_near()
+	for k in range(100):
+		Rp.begin_tick(false)
+	_check(near_now and not near_late and not Rp.cat_peak_near(), "a peak is 'near' for 30 ticks either side of its peak tick and not before or after")
+	# The remembered answers are forgotten after CAT_KEEP ticks, and a reset clears everything.
+	var Rk := VfxFlashRegistry.new()
+	Rk.begin_tick(false)
+	Rk.ask_cat("cat_blast", 50, amber, F, 18, 60)
+	for k in range(VfxFlashRegistry.CAT_KEEP + 2):
+		Rk.begin_tick(false)
+	_check(Rk.cat_answers.is_empty() and Rk.cat_events.is_empty(), "answers and events are forgotten after %d ticks" % VfxFlashRegistry.CAT_KEEP)
+	Rk.ask_cat("cat_blast", 51, amber, F, 18, 60)
+	Rk.reset()
+	_check(Rk.cat_answers.is_empty() and Rk.cat_events.is_empty() and Rk.cat_last < 0, "a reset forgets them")
+	# A hammer: events of every kind at hashed times, both modes. Granted catastrophe events are never closer than the gap; the ordinary budget still holds; the same asks give the same log.
+	var logs: Array = []
+	for mode in [false, true]:
+		for pass_n in range(2):
+			var Rh := VfxFlashRegistry.new()
+			var seed_v: int = 12345
+			var id: int = 100
+			for t in range(1, 4001):
+				Rh.begin_tick(mode)
+				seed_v = (seed_v * 1103515245 + 12345) & 0x7fffffff
+				if seed_v % 41 == 0:
+					id += 1
+					var kind: int = (seed_v >> 8) % 4
+					var area: float = F * [1.0, 0.5, 0.2, 0.04][kind]
+					Rh.ask_cat(["cat_blast", "cat_breach", "exo_impact", "exo_impact"][kind], id, amber, area, 18 + (seed_v >> 12) % 30, 60 + (seed_v >> 16) % 90, 1.0, float((seed_v >> 20) % 100) / 100.0, t)
+				if seed_v % 13 == 0:
+					Rh.ask("explosion", white, t, F * 0.5, 0.6)
+			var gaps_ok: bool = true
+			var starts: Array = []
+			for e in Rh.log:
+				if String(e["source"]).begins_with("cat_") or String(e["source"]) == "exo_impact":
+					if bool(e["granted"]) and float(e["weight"]) >= VfxFlashRegistry.CAT_SMALL_W:
+						starts.append(int(e["now"]))
+			for i in range(1, starts.size()):
+				if starts[i] - starts[i - 1] < (VfxFlashRegistry.CAT_REPEAT_QUIET if mode else VfxFlashRegistry.CAT_GAP):
+					gaps_ok = false
+			if pass_n == 0:
+				_check(gaps_ok and starts.size() > 3, "%s: %d granted catastrophe events in 4,000 hashed ticks, none closer than the gap (%d ticks)" % ["calm" if mode else "normal", starts.size(), VfxFlashRegistry.CAT_REPEAT_QUIET if mode else VfxFlashRegistry.CAT_GAP])
+				_check(Rh.worst_weight_from_log() <= (1.0 if mode else 2.5) + 1e-6, "%s: the ordinary budget still holds over the hammer (worst weight %.3f)" % ["calm" if mode else "normal", Rh.worst_weight_from_log()])
+			logs.append(str(Rh.log_rows()))
+	_check(logs[0] == logs[1] and logs[2] == logs[3] and logs[0] != logs[2], "the same asks give the same log (determinism), and the two modes differ")
 func _vision() -> void:
 	print("colour-blind presets")
 	var S := SimCore.createSim()

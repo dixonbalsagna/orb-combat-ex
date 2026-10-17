@@ -80,6 +80,8 @@ var cam_dist: float = 0.0                       # the camera's distance to the f
 var px_per_unit: float = 1.3                    # pixels per world unit at 1024 by 768 on the fighters' plane (the host sets it from the camera): the size of a flash for the register's weights
 var reduced_flashing: bool = false              # UI's reduced-flashing setting: the register's cap drops to 1 a second and the low-priority flashes (energy, blocks, hit rings) are not drawn
 var inreach := VfxReach.new()                   # energy arts in reach and the launcher's marks (reach.gd), behind the same flag
+var tremor := VfxTremor.new()                  # the catastrophe tier's tremor: dust curtains and rubble (tremor.gd, dust_view.gd), on its cue
+var catastrophe_enabled: bool = true            # the catastrophe tier's effects (nothing draws until the cues exist)
 var zip := VfxZip.new()                       # the LT zip's looks (zip.gd), behind the same flag
 var ghosts := VfxGhostTally.new()               # the combined ghost count: limb ghosts (f01) and body ghosts (m05) of every source, Rendering's after-images too (ghost_tally.gd)
 var _vision_sig: String = ""                    # the colour-blind preset and the fighters' lane colours last applied (see _sync_vision)
@@ -140,6 +142,7 @@ func reset(S: SimState, p_seed: int) -> void:
 	stages.reset()
 	zip.reset()
 	inreach.reset()
+	tremor.reset()
 	ghosts.reset()
 	_vision_sig = ""
 	flashes.reset()
@@ -236,6 +239,10 @@ func _consume(S: SimState, events: Array) -> void:
 	flashes.cam_dist = cam_dist
 	debris.clear_query = clear_query
 	flashes.begin_tick(reduced_motion or reduced_flashing)
+	if catastrophe_enabled:
+		tremor.step(reduced_motion or reduced_flashing)
+		tremor.on_events(S, events)
+		tremor.rubble(S, debris, reduced_motion or reduced_flashing)
 	debris.puff_area_cap = VfxLook.PUFF_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05)
 	debris.ember_area_cap = VfxLook.EMBER_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05) * (0.5 if (reduced_motion or reduced_flashing) else 1.0)
 	_sync_vision(S)
