@@ -27,7 +27,7 @@ import hashlib, io, itertools, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", "..", "..", ".."))
-VERSION = 19
+VERSION = 20
 LEVELS = ["posed", "hand_state", "re_aim", "hand_state_re_aim", "re_aim_edge", "hand_state_re_aim_edge", "stand_in"]
 STANCES = ["martial", "manoeuvre", "energy", "defensive", "charging"]
 TIPS_OF = {}   # limb -> the tips it can have, from the grammar; set when the parts are read
@@ -430,6 +430,8 @@ def strike_cell(ctx, who, cid, cell):
             continue
         if any(match(r["shape"], m) for r in idn["never"]) or list(fp(m)) in ctx["rejected"]:
             continue
+        if any(match(r["shape"], m) for r in idn.get("cellNever", {}).get(cid, [])):
+            continue   # a shape his row bans in this cell only (the clinch's vicious blows keep to his look)
         w = weight_of(idn, m)
         if w <= 0:
             continue

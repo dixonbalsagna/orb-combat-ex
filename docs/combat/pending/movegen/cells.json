@@ -317,7 +317,100 @@
     "asks": [
      "G1",
      "H1"
-    ]
+    ],
+    "presses": {
+     "clinch": {
+      "kind": "strikes",
+      "what": "the vicious blows inside the clinch (docs/combat/grapple-hybrid.md): X, Y and B are close blows on the region the stick leans to; one arm may be on the grip, so a hand blow is one hand",
+      "filter": {
+       "weight": [
+        "light",
+        "medium"
+       ],
+       "limb": [
+        "knee",
+        "elbow",
+        "hand",
+        "head",
+        "shoulder"
+       ],
+       "path": [
+        "line",
+        "rise",
+        "arc_in",
+        "drop"
+       ]
+      },
+      "readings": [
+       "vicious"
+      ],
+      "notFlags": [
+       "leap"
+      ],
+      "count": 10,
+      "quotas": [
+       {
+        "name": "the head (up)",
+        "min": 2,
+        "filter": {
+         "target": [
+          "head",
+          "jaw"
+         ]
+        }
+       },
+       {
+        "name": "the core (toward, or no stick)",
+        "min": 3,
+        "filter": {
+         "target": [
+          "chest",
+          "gut"
+         ]
+        }
+       },
+       {
+        "name": "the legs (down)",
+        "min": 2,
+        "filter": {
+         "target": [
+          "legs",
+          "shins"
+         ]
+        }
+       },
+       {
+        "name": "the arms (away)",
+        "min": 2,
+        "filter": {
+         "target": [
+          "arm"
+         ]
+        }
+       },
+       {
+        "name": "one hand only",
+        "min": 0,
+        "filter": {
+         "limb": [
+          "hand"
+         ]
+        }
+       }
+      ],
+      "share": {
+       "own": {
+        "1": 0,
+        "2": 2
+       },
+       "maxWithOne": 1.0
+      },
+      "_quotas": "The four regions of the vicious map (parts.json vicious.regions: up the head, toward the core, down the legs, away the arms), so a held stick always has a blow; the core most, since it is the no-stick region. Two of his own at least, as for any cell with a share rule",
+      "anyWeight": true,
+      "_anyWeight": "A vicious blow has one worth whatever its look (half a brawl light, three times its wear: brawl-second-pass.md section 4), so a shape is one place: the better-covered of its light and medium key sets",
+      "_share": "Game Design's floors of a fighter's own are ruled for X, Y and B (fighter-pipeline.md section 1). The clinch is new: a tier-1 newcomer may start on the common vicious blows, as he may borrow heavies, and a fighter who ships at tier 2 has two of his own. The two in the build have five each"
+     }
+    }
    },
    "b": {
     "kind": "strikes",

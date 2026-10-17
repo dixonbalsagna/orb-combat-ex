@@ -540,6 +540,47 @@
        ]
       }
      }
+    ],
+    "martial.a.clinch": [
+     {
+      "name": "an elbow into the same bruise",
+      "min": 2,
+      "filter": {
+       "limb": [
+        "elbow"
+       ]
+      }
+     },
+     {
+      "name": "a knee to the hurt side",
+      "min": 2,
+      "filter": {
+       "limb": [
+        "knee"
+       ]
+      }
+     },
+     {
+      "name": "a headbutt",
+      "min": 1,
+      "filter": {
+       "limb": [
+        "head"
+       ]
+      }
+     },
+     {
+      "name": "the plate ground in",
+      "min": 1,
+      "filter": {
+       "limb": [
+        "hand"
+       ],
+       "tip": [
+        "plate"
+       ]
+      }
+     }
     ]
    },
    "_cellQuotas": "Quotas of his row, read before the cell's, so a place added in `adds` goes to the piece Game Design's section 8 and the tenth round name (docs/combat/split-and-pieces.md section 5): the Protagonist's second falling launcher (the spike) and his turning palm (a palm travels only straight or up, so it is the heel of the hand on an arc); the Anti-hero's straight fists behind the plate, the jab, the cross and the spear hand as fists (the plate never travels straight; Animation drew all three in rival9)",
@@ -548,7 +589,24 @@
     "mv.rival.martial.x.32",
     "mv.rival.martial.x.33"
    ],
-   "_skillAlso": "Moves pinned into the skill strike's pool whatever their form, once posed: his straight fists behind the plate (the jab, the cross and the spear hand as fists) are flurry lights by the grammar, and Game Design names it his perfect follow-up (fighter-pipeline.md section 8)"
+   "_skillAlso": "Moves pinned into the skill strike's pool whatever their form, once posed: his straight fists behind the plate (the jab, the cross and the spear hand as fists) are flurry lights by the grammar, and Game Design names it his perfect follow-up (fighter-pipeline.md section 8)",
+   "cellNever": {
+    "martial.a.clinch": [
+     {
+      "shape": {
+       "limb": [
+        "hand"
+       ],
+       "tip": [
+        "blade",
+        "palm"
+       ]
+      },
+      "why": "exact and punishing: his hands in the clinch are fists and the forearm plate"
+     }
+    ]
+   },
+   "_cellNever": "Shapes his row bans in one cell only. The clinch's vicious blows (docs/combat/grapple-hybrid.md), after Game Design's pitch-third-blow.md: the Protagonist pointed and not cruel, a palm under the chin and checks; the Anti-hero an elbow into the same bruise, a knee, a headbutt, the plate"
   },
   "protagonist": {
    "waves": [
@@ -1099,9 +1157,84 @@
        ]
       }
      }
+    ],
+    "martial.a.clinch": [
+     {
+      "name": "a palm under the chin",
+      "min": 1,
+      "filter": {
+       "limb": [
+        "hand"
+       ],
+       "tip": [
+        "palm"
+       ],
+       "path": [
+        "rise"
+       ],
+       "target": [
+        "jaw"
+       ]
+      }
+     },
+     {
+      "name": "a shoulder check",
+      "min": 1,
+      "filter": {
+       "limb": [
+        "shoulder"
+       ]
+      }
+     },
+     {
+      "name": "to the joints: the arm and the leg",
+      "min": 4,
+      "filter": {
+       "target": [
+        "arm",
+        "legs"
+       ]
+      }
+     }
     ]
    },
-   "_cellQuotas": "Quotas of his row, read before the cell's, so a place added in `adds` goes to the piece Game Design's section 8 and the tenth round name (docs/combat/split-and-pieces.md section 5): the Protagonist's second falling launcher (the spike) and his turning palm (a palm travels only straight or up, so it is the heel of the hand on an arc); the Anti-hero's straight fist behind the plate (the plate never travels straight)"
+   "_cellQuotas": "Quotas of his row, read before the cell's, so a place added in `adds` goes to the piece Game Design's section 8 and the tenth round name (docs/combat/split-and-pieces.md section 5): the Protagonist's second falling launcher (the spike) and his turning palm (a palm travels only straight or up, so it is the heel of the hand on an arc); the Anti-hero's straight fist behind the plate (the plate never travels straight)",
+   "cellNever": {
+    "martial.a.clinch": [
+     {
+      "shape": {
+       "path": [
+        "drop"
+       ],
+       "target": [
+        "head"
+       ]
+      },
+      "why": "pointed, not cruel (pitch-third-blow.md): nothing comes down on the head in a hold"
+     },
+     {
+      "shape": {
+       "limb": [
+        "head"
+       ]
+      },
+      "why": "no headbutt: his clinch is hand-fighting"
+     },
+     {
+      "shape": {
+       "path": [
+        "arc_in"
+       ],
+       "target": [
+        "head",
+        "jaw"
+       ]
+      },
+      "why": "pointed, not cruel: no swing to the head in a hold"
+     }
+    ]
+   },
+   "_cellNever": "Shapes his row bans in one cell only. The clinch's vicious blows (docs/combat/grapple-hybrid.md), after Game Design's pitch-third-blow.md: the Protagonist pointed and not cruel, a palm under the chin and checks; the Anti-hero an elbow into the same bruise, a knee, a headbutt, the plate"
   }
  },
  "_reuse": "how strongly a shape that is already posed, or one swap or re-aim from it, is preferred. A re-aim Animation measured as ok is free; one at the edge needs a look, so it is preferred less. These are the first slice's values: lower them toward 1 and identity decides more, at the cost of new key sets",

@@ -1,0 +1,456 @@
+{
+ "schema": "combat.grapple.hybrid/1",
+ "_about": "PARKED: the grapple on A as Orb picked it, a hybrid of the catch and the clinch with the clinch first (docs/combat/grapple-hybrid.md). The paired phases as data: each phase's ticks (first values; Game Design rules them), the holder's anchor on the held body (Legal g05: collar and elbow, or the waist), and the poses each side needs. This is the input a `pair` kind of part in Combat's generator would read (Animation's ask, docs/animation/brawl-second-pass-view.md section 3); it is not built. Nothing here is loaded or hashed",
+ "grip": {
+  "min": -2,
+  "max": 2,
+  "start": 0,
+  "pummel": 1,
+  "offBeat": -1,
+  "throwAt": 2,
+  "reversalAt": -2,
+  "_about": "one meter seen from both sides: his step ahead is the other's step behind. The beat is the brawl's own (the perfect follow-up's)"
+ },
+ "limits": {
+  "maxTicks": 90,
+  "viciousMax": 4,
+  "sameplaceMax": 2,
+  "lockoutTicks": 90,
+  "noRegrabTicks": 120,
+  "techTicks": 8,
+  "carryMaxTicks": 90,
+  "carryFifthPerPress": true,
+  "_about": "lockout and no-regrab are Game Design's shared grab rules; sameplaceMax is Legal's s08"
+ },
+ "regions": {
+  "up": "head",
+  "down": "legs",
+  "toward": "core",
+  "away": "arms",
+  "_about": "the stick's lean to the region a vicious blow goes to; no stick: core"
+ },
+ "phases": [
+  {
+   "id": "reach",
+   "ticks": 10,
+   "holder": [
+    "reach"
+   ],
+   "held": [],
+   "anchor": null,
+   "note": "the tie-up's tell; a blow that lands first, or a dodge, beats it"
+  },
+  {
+   "id": "tie",
+   "ticks": 4,
+   "holder": [
+    "tie"
+   ],
+   "held": [
+    "tied"
+   ],
+   "anchor": {
+    "holder": [
+     "hand_r",
+     "forearm_l"
+    ],
+    "held": [
+     "collar",
+     "elbow_r"
+    ],
+    "or": [
+     "waist"
+    ]
+   }
+  },
+  {
+   "id": "grip",
+   "ticks": null,
+   "holder": [
+    "grip_behind",
+    "grip_even",
+    "grip_ahead"
+   ],
+   "held": [],
+   "anchor": "as tie",
+   "note": "his three positions serve both sides: one fighter's ahead is the other's behind"
+  },
+  {
+   "id": "pummel",
+   "ticks": 6,
+   "holder": [
+    "pummel"
+   ],
+   "held": [],
+   "anchor": "as tie",
+   "note": "A on the beat: a step ahead"
+  },
+  {
+   "id": "brace",
+   "ticks": null,
+   "holder": [
+    "brace"
+   ],
+   "held": [],
+   "anchor": "as tie",
+   "note": "held A, even or behind: he can't be thrown, carried or pinned"
+  },
+  {
+   "id": "vicious",
+   "ticks": "the piece's own",
+   "holder": [],
+   "held": [],
+   "anchor": "the grip arm stays on; the blow is the free limb's",
+   "note": "X, Y and B: a generated piece of his clinch cell (below) on the stick's region; B with the grip even or ahead is the break-off (a 12-tick stagger)"
+  },
+  {
+   "id": "carry",
+   "ticks": "up to 90",
+   "holder": [
+    "carry"
+   ],
+   "held": [
+    "carried (the zip tackle's)"
+   ],
+   "anchor": "as tie",
+   "note": "held A while ahead: drawn travel along the stick, at most 3 bh a tick (Legal g03, g04); let go: the throw; a surface: the wall slam"
+  },
+  {
+   "id": "pin",
+   "ticks": null,
+   "holder": [
+    "pin"
+   ],
+   "held": [
+    "pinned"
+   ],
+   "anchor": "as tie",
+   "note": "the pair's back to a building's face: vicious wear x1.5; the throw is the wall slam at once"
+  },
+  {
+   "id": "throw",
+   "ticks": 8,
+   "holder": [
+    "throw_up",
+    "throw_down",
+    "throw_across",
+    "throw_turned"
+   ],
+   "held": [
+    "the ragdoll the sim launches"
+   ],
+   "anchor": "released on the last tick",
+   "note": "A at two ahead, or a carry let go: a launch by the stick's quarter through the planner (Legal g03); a resting launcher: a knock-back of 8 bh"
+  },
+  {
+   "id": "break",
+   "ticks": 6,
+   "holder": [],
+   "held": [],
+   "anchor": null,
+   "note": "the tech, the time-out, the escape: both pushed 1.5 bh apart (the shove's poses, if drawn)"
+  }
+ ],
+ "fighters": {
+  "protagonist": {
+   "look": "playful and technical: collar and elbow, open-handed; hand-fighting for the grip; a turning carry; throws up and away with a turn",
+   "favours": [
+    "the reversal",
+    "the throw"
+   ],
+   "vicious": {
+    "head": [
+     {
+      "move": "mv.protagonist.martial.a.clinch.01",
+      "strike": "strike.palm_lift",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "hand",
+       "palm",
+       "rise",
+       "jaw"
+      ],
+      "own": true
+     },
+     {
+      "move": "mv.protagonist.martial.a.clinch.07",
+      "strike": "strike.jab",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "hand",
+       "blade",
+       "line",
+       "head"
+      ],
+      "own": false
+     }
+    ],
+    "core": [
+     {
+      "move": "mv.protagonist.martial.a.clinch.03",
+      "strike": "strike.shoulder_check",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "shoulder",
+       "plate",
+       "line",
+       "chest"
+      ],
+      "own": false
+     },
+     {
+      "move": "mv.protagonist.martial.a.clinch.08",
+      "strike": "strike.body_hook",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "hand",
+       "blade",
+       "arc_in",
+       "gut"
+      ],
+      "own": false
+     },
+     {
+      "move": "mv.protagonist.martial.a.clinch.09",
+      "strike": "strike.palm_heave",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "hand",
+       "palm",
+       "rise",
+       "chest"
+      ],
+      "own": true
+     },
+     {
+      "move": "mv.protagonist.martial.a.clinch.10",
+      "strike": "strike.palm_rise",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "hand",
+       "palm",
+       "rise",
+       "gut"
+      ],
+      "own": true
+     }
+    ],
+    "legs": [
+     {
+      "move": "mv.protagonist.martial.a.clinch.04",
+      "strike": "strike.knee_hook",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "knee",
+       "cap",
+       "arc_in",
+       "legs"
+      ],
+      "own": false
+     },
+     {
+      "move": "mv.protagonist.martial.a.clinch.05",
+      "strike": "strike.short_knee",
+      "status": "derived",
+      "level": "re_aim",
+      "shape": [
+       "knee",
+       "cap",
+       "line",
+       "legs"
+      ],
+      "own": false
+     }
+    ],
+    "arms": [
+     {
+      "move": "mv.protagonist.martial.a.clinch.02",
+      "strike": "strike.knife_chop",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "hand",
+       "blade",
+       "drop",
+       "arm"
+      ],
+      "own": true
+     },
+     {
+      "move": "mv.protagonist.martial.a.clinch.06",
+      "strike": "strike.fist_chop",
+      "status": "derived",
+      "level": "hand_state",
+      "shape": [
+       "hand",
+       "heel",
+       "drop",
+       "arm"
+      ],
+      "own": true
+     }
+    ]
+   }
+  },
+  "rival": {
+   "look": "exact and punishing: a collar tie with the forearm plate across; pressure for the grip; a straight march into the nearest wall; throws down and back into buildings",
+   "favours": [
+    "the pin",
+    "the break-off"
+   ],
+   "vicious": {
+    "head": [
+     {
+      "move": "mv.rival.martial.a.clinch.03",
+      "strike": "strike.short_elbow",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "elbow",
+       "point",
+       "arc_in",
+       "jaw"
+      ],
+      "own": false
+     },
+     {
+      "move": "mv.rival.martial.a.clinch.05",
+      "strike": "strike.headbutt",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "head",
+       "brow",
+       "line",
+       "jaw"
+      ],
+      "own": false
+     }
+    ],
+    "core": [
+     {
+      "move": "mv.rival.martial.a.clinch.01",
+      "strike": "strike.elbow_drop",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "elbow",
+       "point",
+       "drop",
+       "chest"
+      ],
+      "own": true
+     },
+     {
+      "move": "mv.rival.martial.a.clinch.02",
+      "strike": "strike.knee_lift",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "knee",
+       "cap",
+       "rise",
+       "gut"
+      ],
+      "own": true
+     },
+     {
+      "move": "mv.rival.martial.a.clinch.04",
+      "strike": "strike.short_knee",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "knee",
+       "cap",
+       "line",
+       "gut"
+      ],
+      "own": false
+     },
+     {
+      "move": "mv.rival.martial.a.clinch.10",
+      "strike": "strike.fist_rise",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "hand",
+       "fist",
+       "rise",
+       "chest"
+      ],
+      "own": true
+     }
+    ],
+    "legs": [
+     {
+      "move": "mv.rival.martial.a.clinch.07",
+      "strike": "strike.knee_hook",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "knee",
+       "cap",
+       "arc_in",
+       "legs"
+      ],
+      "own": false
+     },
+     {
+      "move": "mv.rival.martial.a.clinch.08",
+      "strike": "strike.short_knee",
+      "status": "derived",
+      "level": "re_aim",
+      "shape": [
+       "knee",
+       "cap",
+       "line",
+       "legs"
+      ],
+      "own": false
+     }
+    ],
+    "arms": [
+     {
+      "move": "mv.rival.martial.a.clinch.06",
+      "strike": "strike.forearm_drop",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "hand",
+       "plate",
+       "drop",
+       "arm"
+      ],
+      "own": true
+     },
+     {
+      "move": "mv.rival.martial.a.clinch.09",
+      "strike": "strike.arm_chop",
+      "status": "derived",
+      "level": "hand_state",
+      "shape": [
+       "hand",
+       "fist",
+       "drop",
+       "arm"
+      ],
+      "own": true
+     }
+    ]
+   }
+  }
+ },
+ "cost": {
+  "holderPoses": 13,
+  "heldPoses": 2,
+  "perFighter": 15,
+  "_about": "an estimate for Animation to confirm (docs/combat/grapple-hybrid.md section 5); the vicious blows add none"
+ }
+}

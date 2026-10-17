@@ -2,6 +2,8 @@
 
 **Start here (2026-10-12): `nine-cells.md`.** It is the next thing to land: `recipes.brawl.json` with a pool for every cell of the brawl, the heavy tier and the energy pieces in them, how it was measured, the apply list, and the lists for Tools and Animation. The change that reads it is `../brawl-hook.md`, for Encounter.
 
+`grapple/` (2026-10-16) holds `hybrid.json`: the grapple on A as Orb picked it (the catch and the clinch, the clinch first), its paired phases as data, and each fighter's vicious blows. The note is `../grapple-hybrid.md`.
+
 `roster/` holds sketches for fighters who are not in the build: identity rows for the Demon Cyborg (three options) and the Empress, their generated movesets, and the builder that makes them (`../roster-rows.md`). Their cards are in `cards/` beside the first two. None of it is part of the recipes window.
 
 `split/` holds the next recipes file, `recipes.split.json` (2026-10-16): the split by path, the held X's leans and the new posed pieces, built on the live file with the training dummy's pools in. It lands with Animation's fourth patch, Encounter's mash key and Tools' two schema keys. The note is `../split-and-pieces.md`. `roster/` also holds the guards' kit, generated (`moveset.guard.json`).

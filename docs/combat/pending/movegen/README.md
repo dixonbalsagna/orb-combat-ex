@@ -92,6 +92,17 @@ The EP's brief of 2026-10-15. The note is `../../split-and-pieces.md`.
 - **A kit row** (`kit` in an identity row: the Empress's guards). It has only the cells its kit names, with its counts and any quotas of its own. It draws only on posed common pieces, or a new shape of a weight the kit allows. It is never another fighter's own blow. It has no share rule and no floors, is outside the gate, is never counted when the common pieces are found, and only its lights and mediums are read for the string rules.
 - **The two fighters' files** gained the three added moves and the new quotas' counts. No move changed, and `../recipes.brawl.json` is byte for byte the same.
 
+## 0h. The clinch's vicious blows, and a ban for one cell (2026-10-16, version 20)
+
+The note is `../../grapple-hybrid.md` (Orb's grapple: the catch and the clinch, the clinch first).
+
+- **A new strike cell, `martial.a.clinch`**, a press under A. It holds ten close blows: knee, elbow, hand, head or shoulder, on a line, a rise, an arc in or a drop. Every region of the vicious map has its quota (the head 2, the core 3, the legs 2, the arms 2). It uses `anyWeight`, so a shape is one place: a vicious blow has one worth. A share floor of 0 at tier 1 and 2 at tier 2 applies.
+- **`cellNever` in a fighter's row:** shapes banned in one cell only.
+- **His row's `cellQuotas`** steer his clinch:
+  - the Protagonist: a palm under the chin, a shoulder check, four to the joints; no blow down onto the head, no swing to the head, no headbutt;
+  - the Anti-hero: two elbows, two knees, a headbutt, the plate; no open or bladed hand.
+- **Every fighter's other cells are unchanged.** The guard and the dummy have an empty clinch cell, outside their kit.
+
 ## 0g. Animation's eighth pieces read as posed (2026-10-16, version 19)
 
 The note is `../../split-and-pieces.md` section 5c.
