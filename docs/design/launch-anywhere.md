@@ -36,17 +36,17 @@ Nothing counts down, and no launch is ever refused.
 
 ## 3. Safety: whether he can answer it
 
-The launcher keeps its 14-tick wind-up. **It is armoured only when it is sure.**
+The launcher keeps its 14-tick wind-up. **It is armoured against lights, as the heavy is, and fully only when it is sure** (re-ruled 2026-10-17, §11).
 
 | The rival when B is pressed | How safe | His answers |
 | :--- | :--- | :--- |
 | **Open** (an opening) | **Sure:** it always lands | None. He keeps half his nudge, so he has a say in where he goes |
 | **Reeling from a medium, a heavy, a vicious blow or a perfect follow-up** | **Hard to answer:** his reel covers most of the wind-up | A perfect block, giving ground started at once, or a burst |
-| **Reeling from a light or a bolt, or free** | **Answerable** | All of the above, plus a light into its wind-up (it has no armour), a catch (`grapple.md`), or a medium started early |
+| **Reeling from a light or a bolt, or free** | **Answerable** | All of the above, plus a catch (`grapple.md`) or a medium started early. A light doesn't stop it: it is armoured against lights |
 
 **What an answered launcher costs him:**
 - **Perfect-blocked:** the reversal, and the launcher's player staggers for 20 ticks. That is an opening, so the defender's own launcher is sure: **the counter-launch.**
-- **Stopped by a light or a medium:** he reels, as from any hit.
+- **Stopped by a medium:** he reels, as from any hit.
 - **Dodged, or given ground against:** it misses, and he is open for 20 ticks, as after a heavy that misses.
 
 So "X then B" thrown at a fighter who answers is punished. A string worked up to a medium, or to the close, makes the launcher safe. That is the honest route, and it needs no gate.
@@ -78,7 +78,8 @@ So "X then B" thrown at a fighter who answers is punished. A string worked up to
 
 **The stick picks the first four,** and neutral leaves it to the choreographer (§6).
 
-- **Each launch marks its kind on the fighter it sends.** A launch of a kind already marked on him in the last 60 s of fight time is ×0.75 for each such mark: ×0.75, then ×0.56, never under ×0.4. **A kind not marked is always full.** Marks fade 60 s after they were made.
+- **Each launch marks its kind on the fighter it sends.** A launch of a kind already marked on him in the last 60 s of fight time is ×0.75 for each such mark: ×0.75, then ×0.56. **A kind not marked has only the general term below.** Marks fade 60 s after they were made.
+- **The general term** (added 2026-10-17, §11): each launch of him in the last 60 s, of any kind, is ×0.9 more. So a fighter launched six times in a minute takes ×0.53 even from fresh kinds. With the kind's term, never under ×0.4 in all.
 - **Air sense.** A fighter sent by a kind marked on him recovers 25% sooner for each mark (`buildings.md` §7).
 - **So nothing locks and nothing waits.** A player can launch at any moment, and a new direction is always full strength. Repeating one send pays less, and the game's answer to spam is variety: Orb's "dynamically and emergently", in numbers.
 - **The hammer is retired.** B in an opening always launches.
@@ -97,9 +98,10 @@ So "X then B" thrown at a fighter who answers is punished. A string worked up to
 | **The route:** B at every opening | At most 80%, and 0 to 25 points over the same script's masher (the twelfth round's edges) |
 | **The spammer:** one light, then B, every string | Below the route, and at most 70% |
 | **The varied route:** the route, rotating the stick through the kinds | Within 10 points of the route |
-| Launches a match: by the route's player; on him; the AI against itself | 4 to 10; 4 to 8; 6 to 12 (as before) |
+| **Full launches** a match (power 0.8 or more at the send, after freshness): by the route's player; on him; the AI against itself | 4 to 12; 4 to 10; 6 to 12 (re-cut 2026-10-17, §11) |
+| All launches a match, pops included | Watched, not banded |
 | One kind's share of a fighter's launches, default arm | At most 50% |
-| The spammer's launchers answered by medium | 30 to 60% |
+| The spammer's launchers answered by medium | 20 to 50% (re-banded 2026-10-17, §11) |
 
 **The levers, in order, and none of them a timer:**
 1. freshness, from ×0.75 to ×0.65;
@@ -110,8 +112,8 @@ So "X then B" thrown at a fighter who answers is punished. A string worked up to
 
 ## 8. The AI
 
-- **When it launches:** after an opening, 0.15, 0.35 and 0.6 of the time by level, as now. In a string at a hard-to-answer moment, 0.05, 0.12 and 0.2 of the time. It prefers fresh kinds.
-- **How it answers a launcher that isn't sure:** as a player must, by reading the 14-tick wind-up. Its answer starts no sooner than its reaction time after the wind-up begins, so it is a perfect block it was already guessing (the twelfth round's rule for charges) or giving ground. It throws a light into the wind-up only if it was already mashing. Shares: 0.1, 0.25 and 0.4.
+- **When it launches:** after an opening, 0.15, 0.35 and 0.6 of the time by level (the data's 0.25 at medium is corrected to the paper's 0.35). In a string at a hard-to-answer moment, 0.08, 0.18 and 0.28 of the time (raised 2026-10-17 from 0.05, 0.12 and 0.2). It prefers fresh kinds.
+- **How it answers a launcher that isn't sure:** as a player must, by reading the 14-tick wind-up. Its answer starts no sooner than its reaction time after the wind-up begins, so it is a perfect block it was already guessing (the twelfth round's rule for charges), giving ground, or a medium it was already winding. Its lights don't stop it. Shares: 0.1, 0.25 and 0.4.
 - **Hard test:** it never answers within its reaction time.
 
 ## 9. Encounter's next window, after window 1
@@ -146,3 +148,16 @@ So "X then B" thrown at a fighter who answers is punished. A string worked up to
 - No launcher is ever refused: nothing blocks one but the rival being out of reach.
 - A fresh kind is always at full strength.
 - The AI never answers within its reaction time.
+
+## 11. The first read, and what changed (2026-10-17)
+
+Encounter built it and read it on main with window 2 (`docs/director/pending/launch-anywhere/`).
+
+| Read | Band | The ruling |
+| :--- | :--- | :--- |
+| **The spammer answered 96%,** and wins 0 of 50. Almost every answer was the AI's own string landing in the wind-up | 30 to 60% | **The launcher is armoured against lights,** as the heavy is. A light in a busy brawl was stopping every launcher that wasn't sure, which made "launch at any point in a string" a trap. It is still answered by a medium early, a catch, a perfect block or giving ground. **The band becomes 20 to 50%,** and the spammer's own row (below the route, at most 70%) keeps it honest |
+| **AI v AI: 3.8 launches a match,** no kind over 46% | 6 to 12 | **The AI's shares go up:** after an opening at medium to the paper's 0.35 (the data had 0.25), and in a string to 0.08, 0.18 and 0.28. Armour against lights also lets more of its launchers land |
+| **The route: 47.8 launches a match, 20.3 on him,** 12 points over its masher (read before Encounter's fix 1) | 4 to 10; 4 to 8 | With no rest, every opening launches, and the route makes one about every 9 s. **A ki cost can't bring that down:** ki comes back at 5 a second, so a cost big enough to bind a script would make launching unaffordable for a player. **The count was the wrong row.** Freshness already turns repeats into short pops, and what spoils the pace is a full send every 9 s. So: **the general freshness term** (§5: ×0.9 for each launch of him in the last 60 s, any kind), and **the bands count full launches,** power 0.8 or more at the send: 4 to 12 by the route, 4 to 10 on him, 6 to 12 AI v AI. All launches, pops included, are watched. The route's edges (at most 80%, 0 to 25 points over its masher) are the test that launching isn't a dominant strategy, and it reads 12 points |
+
+- **The ki stays 5.** It is the next soft lever only if the full-launch bands fail, from 5 to 10.
+- **Re-read** the route and the gates on the build with fix 1, as Encounter has them PENDING.

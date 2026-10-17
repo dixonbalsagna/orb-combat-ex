@@ -28,7 +28,7 @@ The clinch's rules are the clinch pitch's, with the pulse of every timed contest
 | **Its length** | At most 90 ticks from the tie-up | 1.5 s: Orb wants fights fast |
 | **The pulse** | Shown and heard: a flex of the grip, a creak, a pad pulse. Both fighters work the same pulse | Every 20 ticks from the tie-up, so four pulses at most |
 | **The grip** | One meter between them, from two behind to two ahead, starting even (or one ahead for the catcher, §1). The UI draws it as five steps between the two | |
-| **A pummel** | A on the pulse moves the grip one step his way. If both pummel the same pulse, the sharper one wins the step. If both are equally sharp, nothing moves | Inside 4 ticks of the pulse. Sharp: inside 2 |
+| **A pummel** | A on the pulse moves the grip one step his way. If both pummel the same pulse, **the one nearer the pulse, by the tick, wins the step.** If both are the same number of ticks off, nothing moves (re-ruled 2026-10-17, §9) | Inside 4 ticks of the pulse. Sharp: inside 2 |
 | **A stray** | A off the pulse, or a second A in its window, moves nothing and voids his next pummel. So a masher does exactly as well as a fighter who doesn't press, as in every timed contest | |
 | **Vicious blows** | X, Y or B: a vicious blow on the region his stick leans to, as §4 ruled. Both fighters may throw them. A vicious blow is not a pummel, so a fighter works either the grip or the body | Half a brawl light of damage and three times a light's wear, on that region. Four a fighter a clinch at most, and never more than two in a row to the same place (Legal s08, by its own wording: re-ruled 2026-10-17 on Combat's reading). A region has two or three places, so a stick held on one wound keeps working it, the blows alternating places. A fighter one or two ahead wears half again as hard |
 | **The brace** | A held: he can't be thrown while he holds it, and he can't pummel or strike. It is how a fighter two behind waits out the leader's throw | At most 40 ticks, then his grip tires and he can't brace again for 20 |
@@ -68,7 +68,7 @@ The clinch's rules are the clinch pitch's, with the pulse of every timed contest
 | **The reversal** | The one two behind | His sharp pummel on the same pulse as the leader's throw throws instead, by his own stick. It hands the brawl what that throw would |
 | **A broken region** | The striker | A vicious blow that breaks a region ends the clinch, and the broken fighter staggers for 24 ticks: an opening |
 | **The push-off** | Either, from even or ahead | A on the pulse with the stick away from him. Both are 3 bh apart, the brawl lets go, and the pusher has a 20-tick first move. No damage |
-| **The time** | Nobody | At 90 ticks both part 1.5 bh, even, and the brawl goes on |
+| **The time** | The grip's leader | At 90 ticks both part 1.5 bh, and **the leader has a 20-tick first move** (re-ruled 2026-10-17, §9). At even, nobody does, and the brawl goes on |
 | **The tech** | The one caught | His own tap of A within 8 ticks of the catch breaks it before the clinch: both 1.5 bh apart |
 | **A burst** | The one who bursts | As a burst does: it breaks any grab, at its price in ki |
 | **An interjection** (one versus many) | The ring | A ring blow that lands on him in a clinch breaks it, and both part. One partner and the ring's single blows still hold (`empress-guards.md` §5) |
@@ -93,7 +93,7 @@ The clinch's rules are the clinch pitch's, with the pulse of every timed contest
 - **Pulses:** it pummels on 40, 65 and 85% of pulses by level, as in every clash, and never sharply.
 - **The body:** ahead, it throws vicious blows at the region its stick would choose. Two behind, it braces half the time at medium.
 - **The tech:** it techs a catch by its level's share (0.15, 0.3, 0.45). It reads the catch's 10-tick tell as a player would, so its tap comes no sooner than its reaction time after the tell begins, never at the catch's landing.
-- **The catch:** it catches guards, turtles and charges, and takes the throw that its personality and care pick: the hero away from people, the Anti-hero into a building.
+- **The catch:** it catches guards, turtles and charges: a guard once in each 30 ticks of it, or a heavy it has had its reaction time to see, at 0.02, 0.04 or 0.06 by level (Encounter's first values, confirmed 2026-10-17). It takes the throw that its personality and care pick: the hero away from people, the Anti-hero into a building. **It varies its throws** (down, up, across) by what each hands it, not one throw every time.
 
 ## 7. QA's rows
 
@@ -106,7 +106,8 @@ The clinch's rules are the clinch pitch's, with the pulse of every timed contest
 | The AI's tech starts within its reaction time of the tell's start | Never (hard) |
 | Throws a match, default arm | 1 to 4 |
 | A throw's opening (a bury, an air throw or a wall slam) followed by a launch | 15 to 40% of them: the chain happens |
-| A player who only taps A, against medium | Wins 10 to 35% |
+| A player who only uses A, against medium: he catches when in reach, and in the clinch presses A on the pulse at a human's spread (within 3 ticks), throwing at two ahead | Wins 10 to 35% (the script re-defined 2026-10-17: a tapper of A every 8 ticks is a masher, and the masher's row covers him) |
+| Catch tells a minute, AI against AI | 1 to 3 |
 | The route player and launches a match, with grappling on | Read again: the route's edges and the band of 4 to 10 launches a match |
 
 ## 8. Data, and who builds it
@@ -126,3 +127,16 @@ The clinch's rules are the clinch pitch's, with the pulse of every timed contest
   - UI: the grip's five steps, the pulse and the refused cue.
   - Audio: the creak on the pulse.
   - Controls: the brace's hold.
+
+## 9. The first read, and what changed (2026-10-17)
+
+Encounter's G1, with the switch on (`docs/director/pending/grapple-g1/`).
+
+| Read | Band | The ruling |
+| :--- | :--- | :--- |
+| **The clinch's median is 85 ticks,** and half of AI v AI's clinches end at the time | 40 to 70 | **A finer tie-break:** when both pummel one pulse, the one nearer the pulse by the tick takes the step. The AI presses 3 or 4 ticks off, so half its tied pulses now move. **The leader at the time takes a 20-tick first move,** so a clinch that runs out still pays for the grip won. The length and the AI's shares (40, 65 and 85%, as in every clash) stay. The control script, which pummels on the pulse, already reads a median of 45: skill wins the grip |
+| **Throw, then launch: 9.4%** | 15 to 40% | Read with window 1's rest, which made most of those Bs the hammer. **The band stands. Read it again on launch anywhere,** which retires the rest |
+| **The A-tapper wins 0 of 10** | 10 to 35% | **The script was a masher:** a tap every 8 ticks always leaves a press outside the 9-tick window, so by the stray rule it never steps. That is the rule working, and the masher's row already covers it. **The alone row's script is re-defined** as a player who only uses A as it is meant: he catches in reach and pummels on the pulse at a human's spread. The band stands |
+
+- **The AI's catch shares** (0.02, 0.04, 0.06) are confirmed, with a band of 1 to 3 catch tells a minute AI v AI (it read 1.7).
+- **The AI threw only down in G1.** From G2 it varies its throws by what each hands it and by its care (§6).
