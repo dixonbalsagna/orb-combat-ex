@@ -4,6 +4,8 @@ Owner: Narrative and Fighter Identity. Version 1, 2026-09-29. He/him. Working dr
 
 > **Update 2026-10-15: Orb's marks (`writing-quality.md` section 0).** Orb rewrote all ten of this fighter's first lines and wrote the rules. Where this bible disagrees with them, **the rules win**. What changed: lines are **4 to 12 words**; he is **ego-driven and mocking**, **probes for hidden strength**, gives **tepid compliments** and **plays his hand close**, is **impatient and short**, and **hates being pitied or smiled at**. **He uses contractions** (Orb's own rewrites do: "You're not holding back, are you?", "I'll give you that"), so the no-contraction rule, the past-tense obituaries and the rank gag are **retired as defaults** until Orb asks for any back. The lines below are the older drafts and are **not** to be used unmarked.
 
+> **Update 2026-10-16 (night): the Gemini review (`voice-bibles.md`).** Orb's marks on homework 11: he keeps his **contractions** and gets his **ranking habit back as live trash talk** ("You're third-rate", "Barely top ten"). He is **The Proud Precision Elite**: surgical disdain plus a bruised ego, who denies the skill ("Lucky swing!") and never admits respect openly. Sharper insults (amateur, eyesore, dead weight, third-rate, insect, clown, warm-up, scrap); "Pathetic" is out. The 2026-10-15 note's retirement of the rank gag no longer applies.
+
 **In one sentence.** A brooding rival whose pride outranks his justice: cold, clipped and formal, who ranks people and speaks about his opponent as if he were already finished, until the facade cracks.
 
 ## Speech rhythm

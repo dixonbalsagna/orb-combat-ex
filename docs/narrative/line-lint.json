@@ -176,5 +176,101 @@
       ],
       "window_words": 6
     }
+  },
+  "gemini_review_2026_10_16": {
+    "_about": "Orb's homework 11 marks, run through Gemini at Orb's direction (docs/ep/vision.md, 2026-10-16 night). The lint runs these per speaker block (a '## ' heading containing the speaker's name). A heading containing '3v1' lifts the guard ban; a heading containing 'after the fight' lifts the apology ban.",
+    "speaker_bans": {
+      "cyborg": [
+        "sir",
+        "sirs",
+        "madam",
+        "menu",
+        "kitchen",
+        "table",
+        "chef",
+        "tip",
+        "waiter",
+        "order",
+        "reservation",
+        "booking",
+        "customer",
+        "customers",
+        "guests",
+        "dine",
+        "dining",
+        "appetiser",
+        "appetisers",
+        "appetizer",
+        "appetizers",
+        "complaint",
+        "complaints",
+        "refund",
+        "manager",
+        "window seat",
+        "polite",
+        "patience",
+        "configuration",
+        "technician"
+      ],
+      "empress": [
+        "guard",
+        "guards",
+        "brand new",
+        "paperwork",
+        "approve",
+        "approved"
+      ],
+      "rival": [
+        "pathetic",
+        "filth",
+        "i dare you",
+        "chasing you all day"
+      ],
+      "protagonist": [
+        "sorry",
+        "apologise",
+        "apologize",
+        "apology",
+        "i'll pay for",
+        "i'll rebuild"
+      ]
+    },
+    "title_caps_per_block": {
+      "empress": {
+        "petitioner": 2,
+        "petitioners": 2
+      }
+    },
+    "sharper_insults": [
+      "amateur",
+      "eyesore",
+      "dead weight",
+      "third-rate",
+      "insect",
+      "clown",
+      "warm-up",
+      "scrap",
+      "rat",
+      "fluke",
+      "sloppy"
+    ],
+    "direct_address": "A 1v1 line is aimed at the opponent: never at an object ('Sorry, shop!') or an off-screen minion ('Guard, write that down'). In 3v1 the Empress commands her guards.",
+    "tactile_nouns": [
+      "ribs",
+      "teeth",
+      "knuckles",
+      "frame",
+      "silk",
+      "rubble",
+      "dirt",
+      "marrow",
+      "steel",
+      "pulse",
+      "shoulder",
+      "elbows",
+      "jaw",
+      "bone",
+      "bricks"
+    ]
   }
 }

@@ -47,8 +47,31 @@ def c10(text):
     return block, review
 
 
-def check(line):
+GEM = LINT["gemini_review_2026_10_16"]
+
+
+def speaker_of(heading):
+    h = heading.lower()
+    for key in GEM["speaker_bans"]:
+        if key in h:
+            return key
+    if "anti-hero" in h or "rival" in h:
+        return "rival"
+    return None
+
+
+def check(line, heading=""):
     hard, soft = [], []
+    who = speaker_of(heading)
+    if who:
+        h = heading.lower()
+        for w in GEM["speaker_bans"][who]:
+            if who == "empress" and w.startswith("guard") and "3v1" in h:
+                continue
+            if who == "protagonist" and w in ("sorry", "apologise", "apologize", "apology") and "after the fight" in h:
+                continue
+            if re.search(r"(?<![\w])" + re.escape(w) + r"(?![\w])", line, re.I):
+                hard.append(f"Gemini bible: '{w}' is banned for {who}")
     blk, rev = c10(line)
     for w in blk:
         hard.append(f"c10 block '{w}'")
@@ -84,9 +107,10 @@ def main(paths):
                 continue
             total += 1
             line = m.group(1)
-            hard, soft = check(line)
-            b = blocks.setdefault(current, {"n": 0, "ell": []})
+            hard, soft = check(line, current)
+            b = blocks.setdefault(current, {"n": 0, "ell": [], "all": []})
             b["n"] += 1
+            b["all"].append((i, line))
             if ELL.search(line):
                 b["ell"].append((i, line))
                 print(f"{p}:{i}: CHECK ellipsis (hesitation, regret or performative exhaustion?)  {line}")
@@ -97,6 +121,12 @@ def main(paths):
                 failed += 1
                 print(f"{p}:{i}: FAIL {hard}  {line}")
         for name, b in blocks.items():
+            who = speaker_of(name)
+            for title, tcap in GEM["title_caps_per_block"].get(who or "", {}).items():
+                used = sum(len(re.findall(r"\b" + title + r"\b", ln, re.I)) for _, ln in b["all"])
+                if used > tcap:
+                    failed += 1
+                    print(f"{p}: FAIL title budget in '{name}': '{title}' x{used} (cap {tcap})")
             cap = max(1, b["n"] // 10)
             if len(b["ell"]) > cap:
                 failed += 1

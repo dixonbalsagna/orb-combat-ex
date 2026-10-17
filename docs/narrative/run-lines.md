@@ -50,18 +50,18 @@ Ten moments each, for the rival (the MVP's boss), the Empress, the Cyborg and a 
 
 | Moment | The rival | The Empress | The Cyborg | Any |
 |---|---|---|---|---|
-| The boss lands the first blow | "Too slow. Try keeping up." | "A fine opening, petitioner. We approve." | "Compliments of the chef, sir." | "You're quicker than I expected." |
-| The boss takes a hit | "Good hit. Now do it again." | "You struck us! Remember this, guard!" | "That one cost you extra, sir." | "That stung. Do it again." |
-| The ground answers: the quake | "Feel that? Even the ground's afraid." | "The ground trembles. It knows who rules." | "Please remain seated. The floor is moving." | "Feel that? The ground knows me." |
-| The boss takes the tier-5 form | "You wanted all of me. Here." | "Revision Twelve, petitioners! Do admire it." | "Our full menu is now open, sir." | "Here's what I really am." |
-| A crust breach starts | "Watch your footing. It's getting hot." | "Mind the cracks, petitioners. They're our decree." | "Mind the heat, sirs. The kitchen's open." | "Hold on. The floor's about to go." |
-| A blast cloud starts | "Look up. This is what I've got." | "A blast cloud! How very grand." | "Smoke's rising, sirs. Please stay clear." | "Look at the sky. All mine." |
-| The boss takes the fight up | "Follow me up, if you can." | "Up we go. The view is better." | "Dining upstairs tonight, gentlemen. Follow me." | "Come up and meet me." |
-| The boss reaches the brink | "Not yet. I still have more." | "Guard! This is not on the schedule!" | "Sir, I'm out of order. Please hold." | "Not yet. I'm still standing." |
-| The boss's finisher lands on him | "Fine. You beat my best." | "We appeal! No, I appeal!" | "Sir, I must go offline now." | "You win. This time." |
-| The boss beats the hero | "I told you not to hold back." | "Case closed. Collect your belongings, petitioner." | "Thank you for dining. Come again, sir." | "Is that all you had?" |
+| The boss lands the first blow | "Too slow. You're a warm-up, nothing more." | "Hahaha! First blood to us, rat!" | "Gotcha! Plenty of protein in you!" | "You're quicker than I expected." |
+| The boss takes a hit | "Fluke. Try that twice, clown." | "Gahaha! You struck us? Now we strike back!" | "Ow! That dented my chassis, you snack!" | "That stung. Do it again." |
+| The ground answers: the quake | "Feel that? Even the ground's afraid." | "The ground trembles. It knows who rules." | "Ground's shaking! My stomach's shaking louder!" | "Feel that? The ground knows me." |
+| The boss takes the tier-5 form | "You wanted all of me. Here." | "Revision Twelve, insect! Look at it!" | "Limiter's off! Everything on you looks tasty!" | "Here's what I really am." |
+| A crust breach starts | "Watch your footing. It's getting hot." | "Mind the cracks, rats. They're our decree." | "Magma! I'm gonna eat it by the spoon!" | "Hold on. The floor's about to go." |
+| A blast cloud starts | "Look up. This is what I've got." | "A blast cloud! How very grand." | "That smoke's real! Get clear of it!" | "Look at the sky. All mine." |
+| The boss takes the fight up | "Follow me up, if you can." | "Up we go. The view is better." | "Up we go! Thin air burns calories!" | "Come up and meet me." |
+| The boss reaches the brink | "Not yet. I've still got more." | "Hahaha! You made us bleed? Impossible!" | "Chip's cracking! I'm so hungry I'm shaking!" | "Not yet. I'm still standing." |
+| The boss's finisher lands on him | "Tch. Lucky. Don't get used to it." | "We lost. I lost. Tell nobody." | "Systems failing! Somebody, feed me!" | "You win. This time." |
+| The boss beats the hero | "You held back. Third-rate to the end." | "Crawl home, petitioner. We're not finished!" | "Full at last! Thanks for the protein!" | "Is that all you had?" |
 
-**Voices.** The rival is short and insulted; the Empress says "petitioner" and "we", slipping to "I" when hurt; the Cyborg keeps the service script. All meet the brevity rules. **Legal's c06 and c07:** no line names a charged sphere above the head; the blast cloud is a *blast cloud*, never a bomb word; the Cyborg's blast-cloud line is a polite warning ("Smoke's rising, sirs. Please stay clear."), not a joke about it.
+**Voices.** The rival is short and insulted; the Empress says "petitioner" and "we", slipping to "I" when hurt; the Cyborg keeps the service script. All meet the brevity rules. **Legal's c06 and c07:** no line names a charged sphere above the head; the blast cloud is a *blast cloud*, never a bomb word; the Cyborg's blast-cloud line is a polite warning ("That smoke's real! Get clear of it!"), not a joke about it.
 
 ## 3. The endings
 

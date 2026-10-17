@@ -33,6 +33,10 @@ Orb marked the first ten lines. **Every one was rewritten**, and Orb wrote the r
 
 The Empress and the Cyborg **keep their established voices** (her royal "we" and "petitioner", his service script and sandwiches) but meet the same rules: four to twelve words, contractions, plain words, a reaction to what just happened.
 
+### The Gemini review (added 2026-10-16, night)
+
+Orb ran homework 11 through Gemini and took its direction (`voice-bibles.md`, the full rules and the four archetypes). In short: the rival keeps contractions and his ranking habit as live trash talk; the Empress says "petitioner" only now and then and laughs; the Cyborg drops "sir" and the waiter gimmick and becomes a ravenous bio-mech; sharper, specific insults (amateur, eyesore, dead weight, third-rate, insect, clown, warm-up, scrap) and no "Pathetic"; a 1v1 line is always aimed at the opponent; tactile words (ribs, teeth, knuckles, frame, silk, rubble, marrow, steel). The lint enforces the bans per speaker block (`gemini_review_2026_10_16` in `line-lint.json`). The 26 rewritten lines are Gemini's, at Orb's direction, and are tagged so in `pending/provenance_hw11.json`.
+
 ### Legal's c10 tiers (added 2026-10-16)
 
 The lint also runs Legal's two tiers (`c10_tiers` in `line-lint.json`), whole-word, on every line and every place name. **Block** (always a fail): A-bomb, H-bomb, mushroom cloud, fallout, Hiroshima, Nagasaki, Chernobyl, Fukushima, 9/11, ground zero, holocaust, genocide. **Review** (printed as CHECK so a human reads the line): mosque, synagogue, chapel, cathedral, temple, kindergarten, nursery, orphanage, meltdown, and child, children or kid near a casualty word (died, dead, gone, lost, killed, victim). "Bombardment" is not caught by "bomb". `python docs/narrative/line-lint.py --names docs/narrative/pending/place_names_table.json` runs the same tiers and the blocklist on the 1,548 place names.

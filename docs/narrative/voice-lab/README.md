@@ -1,5 +1,7 @@
 # Voice lab: the packet for Orb
 
+> **Update 2026-10-16 (night): the Gemini review (`../voice-bibles.md`).** The draft sheets in this folder (`protagonist.csv`, `anti_hero.csv`, `empress.csv`, `cyborg.csv`, `kai.csv`, `vorr.csv`, `batch-01-protagonist.csv`, `staredown-last-stand.csv`) are older drafts. **Do not use their lines unmarked**: the Cyborg's waiter lines and the Empress's guard-calling lines are retired. `taunts-draft.csv` and homework 12 to 16 and 21 are re-cut. The lint is `../line-lint.py`.
+
 Owner: Narrative and Fighter Identity. Version 2, 2026-10-01. For Orb.
 
 **What this is.** One spreadsheet per fighter, each holding draft lines in that fighter's voice, written the raw way an AI writes by default. **They are not polished, and they are meant to be rewritten by a person.** You can spot AI-written dialogue on sight, so we want your edits. We turn what you change into style rules for each character, a banned-patterns list, and an automatic check, so the game's lines stop sounding machine-written.

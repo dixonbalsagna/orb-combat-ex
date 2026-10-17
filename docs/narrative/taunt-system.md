@@ -151,7 +151,7 @@ A composed line has up to three parts: **hook + jab + tag**.
 |---|---|---|
 | **hook** | Reacts to the moment. One short, complete sentence, often a facet (a crater, a guard). | "That was a nice crater." |
 | **jab** | The fighter's voiced barb or invitation. It works after any hook. | "Do you want a turn?" |
-| **tag** | An optional sign-off, one or two words, in the fighter's habit. Used about half the time. | "Friend." / "Filth." / "Petitioner." |
+| **tag** | An optional sign-off, one or two words, in the fighter's habit. Used about half the time. | "Friend." / "Amateur." / "Petitioner." |
 
 Joined with a space: *"That was a nice crater. Do you want a turn? Friend."*
 

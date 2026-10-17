@@ -1,6 +1,6 @@
 {
   "schema": "narrative.story_beats/1",
-  "_about": "PARKED DRAFT (docs/narrative/pending/). Between-stage beats for a run across one planet (docs/narrative/story-beats.md). Each beat names the run state it needs; a beat is two to four short lines. The state fields are Narrative's proposal; Game Design's run-mode.md (docs/design) decides the real ones. Every line passes the lint (4 to 12 words, banned words, ellipsis cap). Speakers: hero (the player's fighter, voiced as the Protagonist for now), rival, boss, crowd, radio (an in-world broadcast, never a narrator). Unsearched by Legal; for Orb's marks. Version 3 (2026-10-16) adds the lives, the buff and the two boss paths from Orb's homework 26 answers: 31 new beats and 63 lines.",
+  "_about": "PARKED DRAFT (docs/narrative/pending/). Between-stage beats for a run across one planet (docs/narrative/story-beats.md). Each beat names the run state it needs; a beat is two to four short lines. The state fields are Narrative's proposal; Game Design's run-mode.md (docs/design) decides the real ones. Every line passes the lint (4 to 12 words, banned words, ellipsis cap). Speakers: hero (the player's fighter, voiced as the Protagonist for now), rival, boss, crowd, radio (an in-world broadcast, never a narrator). Unsearched by Legal; for Orb's marks. Version 3 (2026-10-16) adds the lives, the buff and the two boss paths from Orb's homework 26 answers: 31 new beats and 63 lines. Version 4 (2026-10-16 night) re-cut to the Gemini-reviewed bibles: no waiter lines for the Cyborg, the Empress's 'petitioner' only now and then, the rival's ranking habit back.",
   "state": {
     "stage": "early (stages 1 and 2) | mid | late (the stage before the boss)",
     "cities": "none (0) | some (1 or 2) | many (3 or more): cities fallen this run",
@@ -592,7 +592,7 @@
       "lines": [
         {
           "who": "rival",
-          "text": "That's it? I'm barely warm."
+          "text": "That's it? Third-rate. I'm barely warm."
         },
         {
           "who": "hero",
@@ -615,7 +615,7 @@
       "lines": [
         {
           "who": "rival",
-          "text": "You're improving. Don't let it go to your head."
+          "text": "You're improving. Barely top ten, though."
         },
         {
           "who": "hero",
@@ -715,7 +715,7 @@
         },
         {
           "who": "rival",
-          "text": "Lucky. That's all that was."
+          "text": "Lucky swing. Don't act like you earned it."
         }
       ],
       "weight": 1,
@@ -1017,7 +1017,7 @@
       "lines": [
         {
           "who": "boss",
-          "text": "Petitioners! You're late. We've started without you."
+          "text": "Gahaha! You're late, petitioners! We started without you!"
         },
         {
           "who": "rival",
@@ -1043,11 +1043,11 @@
       "lines": [
         {
           "who": "boss",
-          "text": "Welcome, gentlemen! Your table's been waiting."
+          "text": "Two warm bodies! My stomach's been waiting!"
         },
         {
           "who": "rival",
-          "text": "I'm not eating here."
+          "text": "Keep dreaming, scrap. Nobody's feeding you."
         }
       ],
       "weight": 1,
@@ -1202,7 +1202,7 @@
       "lines": [
         {
           "who": "boss",
-          "text": "Watch the sky, petitioners. It's our province now."
+          "text": "Watch the sky, rats. It's our province now."
         },
         {
           "who": "hero",
@@ -1228,7 +1228,7 @@
       "lines": [
         {
           "who": "boss",
-          "text": "Dinner is served, gentlemen. The whole planet."
+          "text": "I could eat this whole planet, rock and all."
         },
         {
           "who": "hero",
@@ -2105,7 +2105,7 @@
       "lines": [
         {
           "who": "boss",
-          "text": "Borrowed strength, petitioner. We can tell."
+          "text": "Borrowed strength, insect. We can smell it."
         }
       ],
       "weight": 2,
@@ -2215,7 +2215,7 @@
       "lines": [
         {
           "who": "boss",
-          "text": "Withdrawing, sirs. Thank you for your patience."
+          "text": "Fine, I'm leaving! But I'm still hungry!"
         },
         {
           "who": "hero",
@@ -2397,7 +2397,7 @@
       "lines": [
         {
           "who": "boss",
-          "text": "You thought us gone, petitioner. We were resting."
+          "text": "Gahaha! Thought us gone, rat? We were resting!"
         }
       ],
       "weight": 3,
@@ -2422,7 +2422,7 @@
       "lines": [
         {
           "who": "boss",
-          "text": "Fully repaired, sirs. Thank you for waiting."
+          "text": "Patched up and starving! Did you miss me?"
         }
       ],
       "weight": 3,
@@ -2525,7 +2525,7 @@
       "lines": [
         {
           "who": "boss",
-          "text": "Excuse me, sirs. I'll take it from here."
+          "text": "I'm what's left. And I'm hungry."
         },
         {
           "who": "hero",
@@ -2533,7 +2533,7 @@
         },
         {
           "who": "boss",
-          "text": "Your final technician, sir."
+          "text": "Call me the last mouth. Hungry yet?"
         }
       ],
       "weight": 3,
@@ -2558,7 +2558,7 @@
       "lines": [
         {
           "who": "boss",
-          "text": "One configuration remains. Please don't make me use it."
+          "text": "One form left behind my limiter. Push me."
         },
         {
           "who": "rival",
@@ -2587,7 +2587,7 @@
       "lines": [
         {
           "who": "boss",
-          "text": "One configuration remains. Please don't make me use it."
+          "text": "One form left behind my limiter. Push me."
         },
         {
           "who": "hero",
@@ -2616,7 +2616,7 @@
       "lines": [
         {
           "who": "boss",
-          "text": "Penultimate configuration engaged. Apologies for the noise."
+          "text": "Limiter's cracking! Time to eat the arena!"
         }
       ],
       "weight": 3,

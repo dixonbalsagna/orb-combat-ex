@@ -171,7 +171,7 @@ As they will read:
 > Rival: "Don't ask me that." *(silent)*
 
 > **The Cyborg, with one form left.**
-> Cyborg: "One configuration remains. Please don't make me use it."
+> Cyborg: "One form left behind my limiter. Push me."
 > Rival: "Watch it. He's got one more form."
 
 > **The enticing buff.**
@@ -179,7 +179,7 @@ As they will read:
 > Protagonist: "Too good to be free. What's the catch?"
 > Rival: "Take it. Quit being so careful."
 
-**What I did not decide, and why.** (1) *What the buff is or costs.* The beats say it is tempting and that the hero notices it; they never say what it is, so Game Design can make it a cost, a gift, or a trap. (2) *Where the escaped boss goes.* After `rival_escape` the same boss returns in the final approach, but the rival could instead be the final boss; the three "returns" beats are written for the first. (3) *Who sent the buff.* The Empress's line, "Borrowed strength, petitioner. We can tell.", works whether or not she sent it. (4) *The Cyborg has no minions* (Orb, homework 19): he is alone in every beat here.
+**What I did not decide, and why.** (1) *What the buff is or costs.* The beats say it is tempting and that the hero notices it; they never say what it is, so Game Design can make it a cost, a gift, or a trap. (2) *Where the escaped boss goes.* After `rival_escape` the same boss returns in the final approach, but the rival could instead be the final boss; the three "returns" beats are written for the first. (3) *Who sent the buff.* The Empress's line, "Borrowed strength, insect. We can smell it.", works whether or not she sent it. (4) *The Cyborg has no minions* (Orb, homework 19): he is alone in every beat here.
 
 **The rival's voice.** The new rival lines follow the voice rules (short, impatient, contractions); I did not touch the homework 27 lines (Orb decides those in homework 29).
 

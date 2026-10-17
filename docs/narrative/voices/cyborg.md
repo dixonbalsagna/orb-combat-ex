@@ -4,6 +4,8 @@ Owner: Narrative and Fighter Identity. Version 1, 2026-09-29. He/him. Working dr
 
 > **Update 2026-10-15: Orb's marks (`writing-quality.md` section 0).** Orb rewrote all ten of this fighter's first lines and wrote the rules. Where this bible disagrees with them, **the rules win**. The same rules apply to this fighter's lines (4 to 12 words, plain, contractions, a reaction to what just happened), in this fighter's established voice. The lines below are the older drafts and are not to be used unmarked.
 
+> **Update 2026-10-16 (night): the Gemini review (`voice-bibles.md`). This replaces the whole bible.** Orb's marks on homework 11: **the waiter, chef and restaurant gimmick is gone entirely, and so is "sir".** He is **The Ravenous Bio-Mech**: a demon stomach bolted into a robot chassis, with humour from literal hunger (protein, calories, tenderising, sensors) and a limiter chip that holds the appetite back. He is loud and lurching, not polite. The speech rhythm, vocabulary, address and line sections below describe the retired corporate machine and are **not to be used**; only the reactions to a blow on the chip survive, as a gloat or a panic about the limiter.
+
 **In one sentence.** A cheerful, polite, corporate machine with a bottomless appetite, who treats mass violence as good service and glitches when someone touches his chip.
 
 ## Speech rhythm

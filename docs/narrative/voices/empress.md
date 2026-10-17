@@ -6,6 +6,8 @@ Owner: Narrative and Fighter Identity. Version 3, 2026-09-29. She/her. Working d
 
 > **Update 2026-10-15: Orb's marks (`writing-quality.md` section 0).** Orb rewrote all ten of this fighter's first lines and wrote the rules. Where this bible disagrees with them, **the rules win**. The same rules apply to this fighter's lines (4 to 12 words, plain, contractions, a reaction to what just happened), in this fighter's established voice. The lines below are the older drafts and are not to be used unmarked.
 
+> **Update 2026-10-16 (night): the Gemini review (`voice-bibles.md`).** Orb's marks on homework 11: she is **The Sadistic Sovereign**: a booming, theatrical tyrant with the royal "we", who laughs through pain ("Hahaha!", "Gahaha!") and strikes back harder. "Petitioner" only once or twice a match. She never calls a guard for help, whines about her silk, or makes a dry bureaucratic joke in a 1v1; **in a 3v1 she commands her guards**. Her lines below are retired.
+
 **In one sentence.** A galactic empress obsessed with her public image, who settled on one form to keep her records tidy and dreads every transformation because of the paperwork it will cost her later: confident, leering, boastful, quick to anger, and always watching from behind her guard of honour.
 
 ## What she is

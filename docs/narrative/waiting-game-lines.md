@@ -4,7 +4,7 @@ Owner: Narrative and Fighter Identity. Version 1, 2026-10-16. Orb, 2026-10-16: "
 
 These are drafts for Orb's marks. Every line passes the lint (`writing-quality.md` section 0, run with `python docs/narrative/line-lint.py docs/narrative/waiting-game-lines.md`). None is marked, and none reuses a reference line. No line explains the rule aloud: a fighter who waits never says "I am waiting to get stronger". He says what he sees, what he wants, or how his ribs feel.
 
-**What the situations are.** Part 1 is two good fighters who both want the other to go first. Part 2 is the rival, who hates a head start. Part 3 is the Protagonist waiting in his base form while the opponent grows, taking hits and enjoying it. Part 4 is the change itself, with three sizes (the wait was short, long, or long and bloody). Part 5 is what the opponent says when he changes.
+**What the situations are.** Part 1 is two good fighters who both want the other to go first. Part 2 is the rival, who hates a head start. Part 3 is the Protagonist waiting in his base form while the opponent grows, taking hits and enjoying it. Part 4 is the change itself, with three sizes (the wait was short, long, or long and bloody). Part 5 is what the opponent says when he changes (re-cut 2026-10-16 night to the Gemini-reviewed bibles: no waiter lines for the Cyborg).
 
 **Why these fit the system.** The AI holds a ready form for up to ten seconds so the Trial can fill. The lines for the hold are meant to play through that wait, so ten quiet seconds are a small scene and not a dead one. (They need a "holding" and a "released" signal from Simulation; I do not know whether one exists, so that is under NEEDS FROM EP.)
 
@@ -86,9 +86,9 @@ He takes hits. He is delighted, never smug.
 > "Everything you gave me? I'm using it."
 > "Okay. Now I'm really awake!"
 
-## Part 5. What the opponent says when he changes
+## Part 5a. What the rival says when the Protagonist changes
 
-**The rival** (probes for hidden strength).
+Probes for hidden strength. Contractions, live trash talk.
 
 > "You were holding out on me!"
 > "That's what you were hiding?"
@@ -96,17 +96,21 @@ He takes hits. He is delighted, never smug.
 > "Don't smile at me. Hit me."
 > "Fine. Now this is worth my time."
 
-**The Empress** (her royal "we"; "petitioner").
+## Part 5b. What the Empress says
 
-> "We did not expect that, petitioner."
-> "Interesting. We will take that seriously."
-> "You let us strike you. Why?"
+Her royal "we", a booming laugh, one "petitioner" at most.
 
-**The Cyborg** (service script).
+> "Gahaha! Now that's a surprise, rat!"
+> "Hm. That's got weight. We'll take it seriously."
+> "You let us hit you? Insect, why?"
 
-> "Power spike detected. Please remain calm, sir."
-> "Threat level revised upward, sir."
-> "Apologies for the underestimate, sir. Updating now."
+## Part 5c. What the Cyborg says
+
+A ravenous bio-mech: protein, calories, sensors. No "sir", no waiter.
+
+> "Sensors spiking! You smell stronger now!"
+> "Whoa! You just got meatier!"
+> "Snack just got bigger! Recalculating the bite!"
 
 ## Notes for Game Design and Simulation
 
