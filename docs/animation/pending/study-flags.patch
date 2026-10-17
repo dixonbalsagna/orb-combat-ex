@@ -1,0 +1,37 @@
+diff --git a/render/anim/tools/flurry_study.gd b/render/anim/tools/flurry_study.gd
+index 7fc8f76..9a00696 100644
+--- a/render/anim/tools/flurry_study.gd
++++ b/render/anim/tools/flurry_study.gd
+@@ -74,6 +74,8 @@ var near: bool = false          # RL-105: a close view, the dummy drawn `offset`
+ var offset: float = 0.0
+ var tier_style: String = "super"   # the style, the gap, the wind-up and the first contact of the tier scene (`window.__style`, `__gap`, `__windup`, `__first`): the energy-in-reach stills play the speed style at 6 ticks a blow
+ var tier_gap: int = 80
++var rd_launch_n: int = 0
++var rd_opp_tier: float = 1.0
+ var tier_windup: int = 28
+ var tier_first: int = 44
+ var tier_hands_pk: Array = []   # the arm of each blow of a tier run (`window.__hands_pk`, `__hands_rk`: "r,r,l,..."): the free arm (l) mirrors the key set (Legal e09: the arm is chosen per throw)
+@@ -133,6 +135,14 @@ func _ready() -> void:
+ 			RenderAnim.kick_retreat = false
+ 			RenderAnim.hand_retreat = false
+ 			RenderAnim.free_arm_slew = false
++		if float(_js("window.__noab || 0", 0.0)) > 0.0:   # RG2's before: no mid-air skid
++			RenderAnim.air_brake = false
++		if float(_js("window.__novary || 0", 0.0)) > 0.0:   # RG0's before: every launch flails the same, a hit always folds
++			RenderAnim.rd_variety = false
++		if float(_js("window.__noweight || 0", 0.0)) > 0.0:   # RG1's before: no tier, no mass, no lag down the body
++			RenderAnim.rd_weight = false
++		rd_launch_n = int(_js("window.__launchn || 0", 0.0))   # the launch number of the rd scenarios (RG0 hashes it)
++		rd_opp_tier = float(_js("window.__optier || 1", 1.0))   # the power tier of the opponent in them (RG1's gain)
+ 		if float(_js("window.__oop || 0", 0.0)) > 0.0:   # RG3's after: the out-of-plane degrees of freedom on (`window.__oop = 1`)
+ 			RenderAnim.rd_oop = true
+ 		sil = sil or float(_js("window.__sil || 0", 0.0)) > 0.0
+@@ -372,6 +382,8 @@ func _step_tick() -> void:
+ 		# a launched body flying free (no ground): the flail, the brace and, with the brake event, the skid. The study draws a body in place, so only its shape shows
+ 		if k == 0:
+ 			f0.state = "launched"
++			f0.launchN = rd_launch_n
++			f1.tier = rd_opp_tier
+ 			f0.vx = 1500.0
+ 			f0.vy = 40.0
+ 			f0.y = 90.0

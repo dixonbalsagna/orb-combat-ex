@@ -53,3 +53,24 @@ On the final tree: `anim_check` seed 4, 2,400 ticks (passed, with `_test_guard`,
 - **Simulation:** the `air_brake` event with the fields above, and `launch.tier`. **World:** `interior_contact` and `interior_end` (the paper's section 5); the ground events already accept `nx, ny`, so a ceiling bounce needs only the event's normal for the arch. **Game Design:** the masses, the chain's values.
 - **RG4 (the chain) and RG5 (the hit-stop release)** wait for those events; RG4's poses (`ce.slam`, `ce.rebound`, `lg.climb`) can be made before World has them.
 - **Orb:** the before and after of RG3 (and RG2's skid) before the out-of-plane switch goes on.
+
+---
+
+# Part two (2026-10-17): the frames, RG4's poses and the clinch's first two slices
+
+## 8. The frames for Orb (done; uncommitted; `art/animation/review/ragdoll/`)
+
+Twelve GIFs, two clips side by side (left first), one per fighter: `oop-before-after-*` (RG3), `air-skid-before-after-*` (RG2, on a scripted brake: the sim has none), `flail-launch-1-vs-2-*` and `flail-launch-1-vs-2-variety-off-*` (RG0: two launches, with and without the variety), `weight-tier-1-vs-tier-4-*` and `weight-before-after-tier-4-*` (RG1). They come from the study's two scenarios (`rd_launch`: a heavy blow at tick 6 and 84 ticks of flight; `rd_brake`: launched at 1,500 u/s, the brake from tick 30 to 60) with the study's new switches: `window.__oop` (RG3 on), `__noab` (no skid), `__novary` (RG0 off), `__noweight` (RG1 off), `__launchn` (the launch number), `__optier` (the opponent's tier). The study draws a body in place, so the clips show shape, not travel. `homework/33-ragdoll.md` asks Orb the five questions.
+
+## 9. RG4: the chain's poses and its handler (`chain-poses.patch`, `RenderAnim.chain_poses`, on, inert without events)
+
+- **Game Design's values** (`docs/design/buildings.md` section 7.3: the ceiling keeps 0.4, a floor he goes through 0.7, at most 5 contacts and 3 bounces, the face's stop 15 ticks, 2.5 s of ragdolled time, the brake off inside) are in `data/anim/chain.json`; the render uses the stop, the ceiling's weight curve and the lodge's climb time, and treats the rest as the sim's.
+- **Poses (two small waves):** `ce.slam.compress` and `ce.slam.give` (the squash against a ceiling, then the give as it goes), `ce.rebound.drop` (falling away limp), `lg.climb.slump`, `.push`, `.stand` (lodged, one hand on the breach's edge, standing out). All joint-clean (the audit passes them), no crossed arms, no hand at a hip.
+- **Handler:** `AnimFighter.on_interior_contact({surface, nx, ny, vn, vt, punch, stop}, T)`: a ceiling plays the slam and then the rebound (`_seq_next`, a new queue behind `_seq`) and folds or arches by the side that hit; a slab he goes through gives a small crumple and the streamer carries it; a slab that holds is a ground bounce turned to the slab's normal; the face holds him for the sim's `stop` ticks (15). `on_lodge(hold, T)` plays the slump for the hold, then the climb and the stand (20 ticks). Any contact turns the brake flag off. `RenderAnim` maps World's events to them: `interior_contact` (the surface in `kind`; `nx`, `ny`, `punch`, `stop` as World adds them to the event) and the existing `lodge`.
+- **The scripted chain** (`_test_chain`, before World has the events): a face, a slab, the ceiling, a slab and a lodge. Slam, rebound and climb play; no NaN, no joint past a limit; the climb hands him back at tick 136; the largest turn of any bone in a tick is 35.9 degrees through the whole chain (a hit's own flail on the thighs) and 20.1 from the climb on (the hand-off). The sudden stop at the lodge whips the arms by up to 33 degrees a tick, and that is meant.
+- **What World still owes:** the event itself, with `nx`, `ny`, `punch` and `stop` as fields of the event (the parked view fields of Simulation add `stop` and `tier`; the contact's normal and the punch flag are World's), and one event per contact in the order of the chain.
+
+## 10. Simulation's view fields
+
+`docs/architecture/pending/anim-events/` (parked, not in the tree) gives `launch.tier` and a hit's `stop` and `tier`. The ragdoll reads the **opponent's** tier today (`RenderAnim.rd_weight`); with the view fields landed, it can read the launch's own tier instead, a one-line change in `_rd_tick`. The air brake is still not in the sim (their note: it needs a decision on who builds it); the skid waits for it.
+
