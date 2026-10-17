@@ -141,7 +141,7 @@ func _run() -> void:
 			calm_same = calm_same and is_equal_approx(BeamView.tail_at(b), old)
 			var now: float = BeamView.tail_at(b, ppu)
 			grows = grows and now >= last and now <= old + 0.001
-			worst_px = maxf(worst_px, (now - last) * ppu * b.w * float(BeamView.LAYERS[1][0]) * ppu)
+			worst_px = maxf(worst_px, (now - last) * ppu * b.w * VfxBeamLook.body_k(b.A, VfxBeamLook.is_short(b)) * ppu)
 			last = now
 	_expect(worst_px <= RenderLook.BEAM_TAIL_PX * 1.001 and grows and calm_same, "a planet-crossing beam (32,058 units): its bright tail uncovers at most %.0f pixels a tick at any zoom (the cap is %.0f; it was %.0f in one tick at 0.85 pixels a unit), only ever moves away, and its calm tail is where it always was" % [worst_px, RenderLook.BEAM_TAIL_PX, 32058.0 / (b.life - 0.4) * DT * 0.85 * 60.0 * 1.3 * 0.85])
 	print("after check %s" % ("passed" if fails == 0 else "FAILED (%d)" % fails))

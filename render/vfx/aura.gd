@@ -124,6 +124,8 @@ static func lane_color(hex: String) -> Color:
 static var _sub: Color = Color(0.0, 0.0, 0.0, 0.0)
 ## A fighter's own aura hex (lower case) -> the colour-blind preset's lane colour, empty when the option is off (set by VfxHub._sync_vision).
 static var vision_map: Dictionary = {}
+## The colour-vision preset in force (UI's `colour_vision`: off, protan, deutan or tritan), set by VfxHub._sync_vision: the beams' second tint takes the Protagonist's tritan shift from it (docs/art/beam-colours.md).
+static var vision_mode: String = "off"
 
 
 static func _lane_sub() -> Color:

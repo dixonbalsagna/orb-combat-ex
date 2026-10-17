@@ -30,11 +30,11 @@ extends RefCounted
 ## The scenarios' rules are a copy of tools/flash/flash_worst.gd's (tools/ is not in an export). Tools' drift check
 ## fails when the two differ (docs/tools/flash-check.md): change them together.
 
-const SCENARIOS: Array = ["mash", "mashcity", "clash", "signature", "signaturecity", "rushcity", "transform", "collapse", "mashdummy", "ring", "launchai", "ai"]
+const SCENARIOS: Array = ["mash", "mashcity", "clash", "signature", "signaturecity", "rushcity", "transform", "collapse", "mashdummy", "ring", "launchai", "clashcity", "signaturedummy", "blastdummy", "ai"]
 const SEED: int = 12345
 const FORM_TICKS: Array = [300, 1500]
 ## Which slots are the AI's (true) in each scenario.
-const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true], "mashdummy": [false, true], "ring": [false, true], "launchai": [false, true]}
+const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true], "mashdummy": [false, true], "ring": [false, true], "launchai": [false, true], "clashcity": [false, false], "signaturedummy": [false, true], "blastdummy": [false, true]}
 
 var main: Node
 var scenario: String = ""
@@ -214,6 +214,22 @@ func drive(sc: String, t: int, S: SimState) -> void:
 			_ready_forms(S, t, [60, 500, 1000])
 		"collapse":     # AI against AI, a blast through a row of buildings every 150 ticks
 			_stage_collapse(S, t)
+		"clashcity":    # the clash, started beside the tallest tower
+			if t == 0:
+				_to_the_city(S)
+			_walk(S, 1500.0)
+			for f in S.fighters:
+				f.ki = 100.0
+			_btn(0, "rt", true)
+			_btn(1, "rt", true)
+			_btn(0, "east", t % 30 < 12)
+			_btn(1, "east", t % 30 < 12)
+		"signaturedummy":    # player one fires the signature on a cycle at the idle dummy, beside the tallest tower
+			if t == 0:
+				_to_the_city(S)
+			_signature(t, S)
+		"blastdummy":   # player one mashes the energy blast point-blank on the idle dummy
+			_blast_dummy(t, S)
 		"mashdummy":  # player one against the idle training dummy: mash, burst, energy mash, blast, launcher chain
 			_mash_dummy(t, S)
 		"ring":         # player one against the ring: the AI and his guards
@@ -293,6 +309,15 @@ func _walk_in(S: SimState, near: float) -> void:
 	var dx: float = SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)
 	_stick(0, signf(dx) if absf(dx) > near else 0.0)
 	_btn(0, "lt", absf(dx) > 900.0)
+
+
+## Player one mashes the energy blast (energy held, the heavy tapped every 10 ticks) point-blank on the idle training dummy, ki kept full: the flames and the burn of a blast at close range,
+## again and again (Legal RL-141: a mashed blast on the dummy).
+func _blast_dummy(t: int, S: SimState) -> void:
+	_walk_in(S, 120.0)
+	S.fighters[0].ki = 100.0
+	_btn(0, "rb", true)
+	_btn(0, "east", _tap(t, 10, 0))
 
 
 ## The pair set down again `variant` x 450 units along the world from where the scene put them.

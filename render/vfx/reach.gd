@@ -24,6 +24,12 @@ const DEFAULTS: Dictionary = {
 		"rim_life": 3.0, "rim_alpha": 0.6, "flash_life": 3.0, "land_life": 9.0,
 		"spill_bolt_bh": 2.5, "spill_blast_bh": 6.0, "spill_life": 8.0, "scorch_life": 150.0, "scorch_max": 6.0,
 		"carry_life": 10.0, "smoke_every": 3.0, "smoke_ticks": 24.0, "stagger_min": 12.0, "heavy_ticks": 28.0, "chev_period": 12.0, "send_life": 12.0, "alpha": 0.9},
+	# Multi-fight and choreography (docs/vfx/multi-fight-plan.md): the duel of perfects, the cash-in, the chase, the shine, the barrage's hand, the ring's tells.
+	"multi": {"duel_life": 10.0, "duel_len0": 22.0, "duel_len_per": 5.0, "duel_len_max": 70.0, "duel_r0": 8.0, "duel_r_per": 2.5, "wave_min_level": 3.0, "wave_life": 12.0, "wave_bh": 4.0, "wave_alpha": 0.55,
+		"amp_life": 16.0, "amp_ring0": 42.0, "amp_ring_per": 8.0, "cash_tell": 3.0, "cash_life": 10.0, "chase_max": 90.0, "arrive_life": 8.0, "shine_max": 40.0,
+		"edge_ticks": 4.0, "edge_life": 5.0, "sweep_len": 9.0, "thrust_len": 8.0, "flick_len": 18.0, "bring_life": 6.0, "bring_flash_r": 38.0,
+		"interject_tell": 8.0, "interject_line": 6.0, "alpha": 1.0,
+		"calm_mark_gap": 40.0, "struggle_open_life": 10.0, "pulse_period": 20.0, "pulse_life": 8.0, "surge_life": 12.0, "stray_life": 8.0, "end_life": 18.0, "detonate_bh": 2.0},
 }
 
 class Fx:
@@ -47,6 +53,8 @@ class Fx:
 	var fired: bool = false         # a double hit's dust has been thrown
 
 var fx: Array = []
+var struggle_on: bool = false              # a beam struggle is on (the cues `beam_struggle` to `beam_end`)
+var _last_mark: int = -1000                # the tick of the last surge or stray mark (calm mode keeps them 40 ticks apart)
 var made: Dictionary = {}
 var full_ticks: Array = []          # the ticks a full flash was given (the tests check the rate)
 var last_full: int = -1000
@@ -77,7 +85,18 @@ static func p(key: String) -> float:
 	return float(DEFAULTS["reach"][key])
 
 
+## One number of the multi-fight group.
+static func pm(key: String) -> float:
+	warm()
+	var g = _data.get("multi")
+	if g is Dictionary and g.has(key):
+		return float(g[key])
+	return float(DEFAULTS["multi"][key])
+
+
 func reset() -> void:
+	struggle_on = false
+	_last_mark = -1000
 	fx.clear()
 	made.clear()
 	full_ticks.clear()
@@ -152,6 +171,38 @@ func on_events(S: SimState, events: Array, reduced: bool, debris, press: VfxPres
 					_double(S, e, reduced)
 				"miss":
 					_miss(S, e, reduced, debris)
+				"duel":
+					_duel(S, e, reduced)
+				"duel_end":
+					_duel_end(S, e, reduced, debris)
+				"cash_in":
+					_cash_in(S, e, reduced, debris)
+				"chase":
+					_chase(S, e, reduced)
+				"perfect_window":
+					_perfect_window(S, e, reduced)
+				"barrage_hand":
+					_barrage_hand(S, e, reduced)
+				"barrage_land":
+					_barrage_land(S, e, reduced)
+				"guard_volley":
+					_guard_volley(S, e, reduced)
+				"beam_struggle":
+					_beam_struggle(S, e, reduced)
+				"beam_pulse":
+					_beam_pulse(S, e, reduced)
+				"beam_surge":
+					_beam_surge(S, e, reduced)
+				"beam_stray":
+					_beam_stray(S, e, reduced)
+				"beam_end":
+					_beam_end(S, e, reduced, debris)
+				"perfect_made", "perfect_broken":
+					_perfect_end(S, e)
+				"tech":
+					_tech(S, e, reduced)
+				"return":
+					_return(S, e, reduced)
 
 
 func _pair(S: SimState, e) -> Vector2i:
@@ -232,6 +283,11 @@ func _land(S: SimState, e, reduced: bool, debris) -> void:
 		made["land"] = int(made.get("land", 0)) + 1
 		if l.big:
 			made["full_flash"] = int(made.get("full_flash", 0)) + 1
+		# Orb, 2026-10-16: the small energy attacks' explosions "more explosive, flames and smoke". A point-blank bolt or blast goes off at the contact as the ranged ones do (VfxExplode on the
+		# body: a few flame tongues in waves, growing in, cinders in the shooter's colour, smoke; a guard's is sparks and smoke only). Never a flash: the register's ask above is the only one.
+		if debris != null and int(debris.quality) > 0:
+			var rad: float = VfxExplode.radius_for("lob" if blast else "bolt", 0.0, 1)
+			made["boom"] = int(made.get("boom", 0)) + VfxExplode.at(S, debris, l.x, l.y, fv.z, rad, "fighter", "spark" if guard else "calm", col)
 		# The rim: the near side of each fighter, 3 ticks.
 		for who in [slot, vic]:
 			var r := Fx.new()
@@ -325,13 +381,26 @@ func _launcher_open(S: SimState, e) -> void:
 	o.life = maxf(float(VfxHub._g(e, "n", float(S.tick) + 20.0)) - float(S.tick), 1.0)
 	fx.append(o)
 	made["stagger"] = int(made.get("stagger", 0)) + 1
+	# The opening's look (Game Design's eleventh round item 1: "the rival's head snaps back and his arms fly open, a ring shows on his chest"; the head and the arms are Animation's): a thin hollow
+	# ring on his chest in the launcher's colour, closing in over 4 ticks and then standing steady until the opening ends. Never a flash, never filled; the same in reduced motion.
+	for k2 in range(fx.size() - 1, -1, -1):
+		if fx[k2].style == "opening" and fx[k2].vic == vic:
+			fx.remove_at(k2)
+	var ring := Fx.new()
+	ring.style = "opening"
+	ring.slot = slot
+	ring.vic = vic
+	ring.col = o.col
+	ring.life = o.life
+	fx.append(ring)
+	made["opening"] = int(made.get("opening", 0)) + 1
 
 
 func _launcher_close(S: SimState, e) -> void:
 	var vic: int = int(VfxHub._g(e, "target", -1))
 	var slot: int = int(e.actor)
 	for k in range(fx.size() - 1, -1, -1):
-		if fx[k].style == "stagger" and (fx[k].vic == vic or (vic < 0 and fx[k].slot == slot)):
+		if (fx[k].style == "stagger" or fx[k].style == "opening") and (fx[k].vic == vic or (vic < 0 and fx[k].slot == slot)):
 			fx.remove_at(k)
 	made["launcher_close"] = int(made.get("launcher_close", 0)) + 1
 
@@ -343,6 +412,9 @@ func _launcher_close(S: SimState, e) -> void:
 func _windup(S: SimState, e, reduced: bool) -> void:
 	if String(e.text) == "end":
 		_windup_end(S, e)
+		return
+	if String(e.text) == "interject":
+		_interject(S, e, reduced)      # a ring guard's grant: the chevrons over his head, not the hand's ring (Encounter's agreed list: the tell is a `windup` with text `interject`)
 		return
 	var pr: Vector2i = _pair(S, e)
 	if pr.x < 0:
@@ -501,7 +573,7 @@ func _send(S: SimState, e, reduced: bool) -> void:
 	if vic < 0 or vic > 1 or vic >= S.fighters.size() or slot < 0 or slot > 1 or slot == vic:
 		return
 	for k in range(fx.size() - 1, -1, -1):
-		if fx[k].style == "stagger" and fx[k].vic == vic:
+		if (fx[k].style == "stagger" or fx[k].style == "opening") and fx[k].vic == vic:
 			fx.remove_at(k)
 	var f = S.fighters[vic]
 	var o := Fx.new()
@@ -519,3 +591,497 @@ func _send(S: SimState, e, reduced: bool) -> void:
 	o.life = p("send_life")
 	fx.append(o)
 	made["send"] = int(made.get("send", 0)) + 1
+
+
+# ---------------------------------------------------------------------------------------------------- multi-fight and choreography
+# Cue names proposed to Encounter (docs/vfx/multi-fight-plan.md). Every one is a hollow ring, a thin line or a short streak in a lane colour; none is a flash disc, and the only register ask
+# is the barrage's last landing (`energy`, a disc of at most 0.4 of the threshold, none in reduced motion). Slots may be any body (a guard is slot 2 or more): `_pair_any` takes every
+# slot the state holds.
+
+func _pair_any(S: SimState, e) -> Vector2i:
+	var slot: int = int(e.actor)
+	var n: int = S.fighters.size()
+	var vic: int = int(VfxHub._g(e, "target", (1 - slot) if (slot == 0 or slot == 1) else -1))
+	if slot < 0 or slot >= n or vic < 0 or vic >= n or vic == slot:
+		return Vector2i(-1, -1)
+	return Vector2i(slot, vic)
+
+
+func _dir_between(S: SimState, a: int, b: int) -> float:
+	return 1.0 if SimWrap.sdx(S.fighters[a].x, S.fighters[b].x) >= 0.0 else -1.0
+
+
+func _drop(style: String, slot: int = -1) -> void:
+	for i in range(fx.size() - 1, -1, -1):
+		if fx[i].style == style and (slot < 0 or fx[i].slot == slot):
+			fx.remove_at(i)
+
+
+## The duel of perfects (cue `duel`: actor the fighter who has just perfect-blocked and answers, target the rival, k the level 1 to 8): at the middle of the pair a crossed crack, a hollow
+## ring and sparks that grow with the level, one limb of the cross in each fighter's colour; from level 3 a thin shockwave ring runs out along the ground (the glass and the cracked ground
+## are the hub's, `VfxHub._duel_wave`). One mark at a time: a new level replaces the last. No disc, no flash, nothing on the body.
+func _duel(S: SimState, e, reduced: bool) -> void:
+	var pr: Vector2i = _pair_any(S, e)
+	if pr.x < 0:
+		return
+	var lvl: int = clampi(int(float(VfxHub._g(e, "k", 1.0))), 1, 8)
+	_drop("duel")
+	var fa = S.fighters[pr.x]
+	var fv = S.fighters[pr.y]
+	var d: float = SimWrap.sdx(fa.x, fv.x)
+	var o := Fx.new()
+	o.style = "duel"
+	o.slot = pr.x
+	o.vic = pr.y
+	o.dir = 1.0 if d >= 0.0 else -1.0
+	o.x = SimWrap.wrap(fa.x + d * 0.5)
+	o.y = (fa.y + fv.y) * 0.5 + 50.0
+	o.k = lvl
+	o.col = VfxPress.lane_of(S, pr.x)
+	o.small = reduced
+	o.life = pm("duel_life")
+	fx.append(o)
+	made["duel"] = int(made.get("duel", 0)) + 1
+	if lvl >= int(pm("wave_min_level")):
+		var w := Fx.new()
+		w.style = "wave"
+		w.slot = pr.x
+		w.vic = pr.y
+		w.x = o.x
+		w.y = WorldTerrain.groundY(S, o.x)
+		w.k = lvl
+		w.col = o.col
+		w.small = reduced
+		w.life = pm("wave_life")
+		fx.append(w)
+		made["wave"] = int(made.get("wave", 0)) + 1
+
+
+## The end of a duel, or the cash-in's send (cue `duel_end`: actor the one whose blow lands, target the one sent, k the level, text amplified, cash_in or apart; x and y the stick's lean):
+## the send-off drawn wider by the level, a ground ring, rims, dust along the ground under the one sent; `apart` (level 8) sends both. Never a flash: the amplified send is a moment of weight.
+func _duel_end(S: SimState, e, reduced: bool, debris) -> void:
+	var pr: Vector2i = _pair_any(S, e)
+	if pr.x < 0:
+		return
+	var lvl: int = clampi(int(float(VfxHub._g(e, "k", 1.0))), 1, 8)
+	var how: String = String(e.text)
+	_drop("duel")
+	var dir: float = _dir_between(S, pr.x, pr.y)
+	var whom: Array = [[pr.x, pr.y, dir]]
+	if how == "apart":
+		whom.append([pr.y, pr.x, -dir])
+	for w in whom:
+		var snd: int = int(w[0])
+		var rcv: int = int(w[1])
+		var wd: float = float(w[2])
+		var fr = S.fighters[rcv]
+		var o := Fx.new()
+		o.style = "amped"
+		o.slot = snd
+		o.vic = rcv
+		o.dir = wd
+		o.x = fr.x
+		o.y = fr.y
+		o.k = lvl
+		o.kind = how
+		o.lean = _lean_of(e, wd)
+		o.col = VfxPress.lane_of(S, snd)
+		o.small = reduced
+		o.life = pm("amp_life")
+		fx.append(o)
+		for who in [snd, rcv]:
+			var r := Fx.new()
+			r.style = "rim"
+			r.slot = snd
+			r.vic = int(who)
+			r.dir = wd if int(who) == snd else -wd
+			r.col = o.col
+			r.life = p("rim_life")
+			r.small = reduced
+			fx.append(r)
+		if debris != null and int(debris.quality) > 0:
+			var puffs: int = 1 if reduced else 2 + lvl / 2
+			for k in range(puffs):
+				debris.dust_puff(VfxPalette.biome_key(fr.x), fr.x - wd * (4.0 + 7.0 * float(k)), fr.y + 4.0, 0.0, wd * (50.0 + 24.0 * float(k)), 16.0, 20.0, 52.0, 0.55, 0)
+	made["amped"] = int(made.get("amped", 0)) + whom.size()
+	made["rim"] = int(made.get("rim", 0)) + 2 * whom.size()
+
+
+## The cash-in (cue `cash_in`: actor, target, n the contact tick, absolute; the heavy lands 2 ticks after the press): the sure blow's tell, drawn in 2 or 3 ticks (a thin committed line
+## from the hand to the chest and four corner brackets closing on it: nothing to block), then at the contact a double ring, a crossed crack and one thin vertical cut through the chest.
+## No disc and no register ask. The heavy's own looks (the press styles) come with the blow as always.
+func _cash_in(S: SimState, e, reduced: bool, debris) -> void:
+	var pr: Vector2i = _pair_any(S, e)
+	if pr.x < 0:
+		return
+	var land: float = float(VfxHub._g(e, "n", float(S.tick) + 2.0))
+	var remaining: float = maxf(land - float(S.tick), 1.0)
+	var dir: float = _dir_between(S, pr.x, pr.y)
+	var t := Fx.new()
+	t.style = "cash_tell"
+	t.slot = pr.x
+	t.vic = pr.y
+	t.dir = dir
+	t.col = VfxPress.lane_of(S, pr.x)
+	t.small = reduced
+	t.life = maxf(remaining, pm("cash_tell"))
+	fx.append(t)
+	var h := Fx.new()
+	h.style = "cash_hit"
+	h.slot = pr.x
+	h.vic = pr.y
+	h.dir = dir
+	h.col = t.col
+	h.small = reduced
+	h.life = pm("cash_life")
+	h.age = -remaining
+	fx.append(h)
+	made["cash_in"] = int(made.get("cash_in", 0)) + 1
+	if debris != null and int(debris.quality) > 0 and not reduced:
+		var fv = S.fighters[pr.y]
+		for k in range(2):
+			debris.dust_puff(VfxPalette.biome_key(fv.x), fv.x - dir * (4.0 + 8.0 * float(k)), fv.y + 4.0, 0.0, dir * (40.0 + 20.0 * float(k)), 14.0, 16.0, 40.0, 0.5, 0)
+		made["cash_dust"] = int(made.get("cash_dust", 0)) + 2
+
+
+## The chase (cue `chase`: actor the chaser, target the rival; text start, blow, arrive or end): while he follows the flying body a thin lane-colour trail runs behind the chaser along his real
+## path (the drawn travel, never a jump); each blow of it and the arrival put four corner brackets and a flat ring on the rival's chest. Ends on `end`, or after 90 ticks.
+func _chase(S: SimState, e, reduced: bool) -> void:
+	var pr: Vector2i = _pair_any(S, e)
+	if pr.x < 0:
+		return
+	var how: String = String(e.text)
+	if how == "end":
+		_drop("chase", pr.x)
+		made["chase_end"] = int(made.get("chase_end", 0)) + 1
+		return
+	if how == "start" or how == "":
+		_drop("chase", pr.x)
+		var c := Fx.new()
+		c.style = "chase"
+		c.slot = pr.x
+		c.vic = pr.y
+		c.dir = _dir_between(S, pr.x, pr.y)
+		c.col = VfxPress.lane_of(S, pr.x)
+		c.small = reduced
+		c.life = pm("chase_max")
+		fx.append(c)
+		made["chase"] = int(made.get("chase", 0)) + 1
+		return
+	var a := Fx.new()
+	a.style = "arrive"
+	a.slot = pr.x
+	a.vic = pr.y
+	a.dir = _dir_between(S, pr.x, pr.y)
+	a.col = VfxPress.lane_of(S, pr.x)
+	a.small = reduced
+	a.kind = how
+	a.life = pm("arrive_life")
+	fx.append(a)
+	made["arrive"] = int(made.get("arrive", 0)) + 1
+
+
+## The striking hand that shines while a perfect window is open on a light (Encounter's agreed cue `perfect_window`: actor the attacker whose hit landed, target the defender, text the landed hit's strength
+## light, medium or heavy, n the tick it closes, absolute): two thin edge lines along the fist and a small hollow ring on it, steady (no pulse: nothing flickers), in his lane colour lightened. Only a light's
+## window shines (Game Design's eleventh round item 1: "the striking hand takes a small shine while the window is open"; a medium's or a heavy's has no hold). It ends at `n`, or earlier on `perfect_made`
+## or `perfect_broken`. Reduced motion draws the same: it is still. Legal fx01.
+func _perfect_window(S: SimState, e, reduced: bool) -> void:
+	var pr: Vector2i = _pair_any(S, e)
+	if pr.x < 0:
+		return
+	_drop("shine", pr.x)
+	if String(e.text) != "light":
+		return
+	var o := Fx.new()
+	o.style = "shine"
+	o.slot = pr.x
+	o.vic = pr.y
+	o.dir = _dir_between(S, pr.x, pr.y)
+	o.col = VfxPress.lane_of(S, pr.x)
+	o.small = reduced
+	var close: float = float(VfxHub._g(e, "n", float(S.tick) + 6.0))
+	o.life = clampf(close - float(S.tick), 2.0, pm("shine_max"))
+	fx.append(o)
+	made["shine"] = int(made.get("shine", 0)) + 1
+
+
+## `perfect_made` (the follow-up is thrown) and `perfect_broken` (the window was lost) end the shine on the attacker (actor).
+func _perfect_end(S: SimState, e) -> void:
+	var slot: int = int(e.actor)
+	_drop("shine", slot)
+	made["shine_close"] = int(made.get("shine_close", 0)) + 1
+
+
+## The rival's tech (cue `tech`: actor the rival who techs, target the chaser): the chase breaks. The chaser's trail goes, and a thin ring and two short streaks show where they part, in the techer's colour.
+func _tech(S: SimState, e, reduced: bool) -> void:
+	var pr: Vector2i = _pair_any(S, e)
+	if pr.x < 0:
+		return
+	_drop("chase", pr.y)
+	var a := Fx.new()
+	a.style = "arrive"
+	a.slot = pr.x
+	a.vic = pr.x
+	a.dir = _dir_between(S, pr.x, pr.y)
+	a.col = VfxPress.lane_of(S, pr.x)
+	a.small = reduced
+	a.kind = "tech"
+	a.life = pm("arrive_life")
+	fx.append(a)
+	made["tech"] = int(made.get("tech", 0)) + 1
+
+
+## The return from a send (cue `return`: actor the fighter back from a send, target the defender, text charge, lunge or far, n the approach's length in ticks, amount its crouch): a thin trail behind him along
+## his real path for the length of the approach, as a chase has (the approach is drawn travel, never a jump). The wind-up of his first blow back is the existing `windup` ring (text `return`).
+func _return(S: SimState, e, reduced: bool) -> void:
+	var pr: Vector2i = _pair_any(S, e)
+	if pr.x < 0:
+		return
+	_drop("chase", pr.x)
+	var c := Fx.new()
+	c.style = "chase"
+	c.slot = pr.x
+	c.vic = pr.y
+	c.dir = _dir_between(S, pr.x, pr.y)
+	c.col = VfxPress.lane_of(S, pr.x)
+	c.small = reduced
+	c.life = clampf(float(VfxHub._g(e, "n", 20.0)), 4.0, pm("chase_max"))
+	fx.append(c)
+	made["return"] = int(made.get("return", 0)) + 1
+
+
+## The Anti-hero's barrage, the hand (cue `barrage_hand`: actor, target, k the volley 1 to 3, text sweep, thrust or flick, n the release tick, absolute): a thin lit edge along the hand for the
+## 4 ticks before the release (never a ball, Legal e06): half the usual length for the sweep, one knuckle for the thrust, the fullest for the flick, which also fans a short cone of three
+## streaks at the release. docs/vfx/barrage-flash-plan.md.
+func _barrage_hand(S: SimState, e, reduced: bool) -> void:
+	var pr: Vector2i = _pair_any(S, e)
+	if pr.x < 0:
+		return
+	var rel: float = float(VfxHub._g(e, "n", float(S.tick) + 4.0))
+	var wait: float = maxf(rel - float(S.tick) - pm("edge_ticks"), 0.0)
+	var o := Fx.new()
+	o.style = "edge"
+	o.slot = pr.x
+	o.vic = pr.y
+	o.dir = _dir_between(S, pr.x, pr.y)
+	o.kind = String(e.text)
+	o.k = clampi(int(float(VfxHub._g(e, "k", 1.0))), 1, 3)
+	o.col = VfxPress.lane_of(S, pr.x)
+	o.small = reduced
+	o.life = pm("edge_life")
+	o.age = -wait
+	fx.append(o)
+	made["edge"] = int(made.get("edge", 0)) + 1
+
+
+## The barrage's landing (cue `barrage_land`: actor, target, k the volley 1 to 3, text hit, guard or miss; x and y the lean): a rim on the rival (a thin edge, never a flash over the body), a
+## ring on the second and third volleys, and on the third, if it hit and the register grants it (`energy`, a disc of at most 0.4 of the threshold, none in reduced motion), the one full flash.
+func _barrage_land(S: SimState, e, reduced: bool) -> void:
+	var pr: Vector2i = _pair_any(S, e)
+	if pr.x < 0:
+		return
+	var vol: int = clampi(int(float(VfxHub._g(e, "k", 1.0))), 1, 3)
+	var why: String = String(e.text)
+	if why == "miss":
+		return
+	var dir: float = _dir_between(S, pr.x, pr.y)
+	var col: Color = VfxPress.lane_of(S, pr.x)
+	var r := Fx.new()
+	r.style = "rim"
+	r.slot = pr.x
+	r.vic = pr.y
+	r.dir = dir
+	r.col = col
+	r.life = p("rim_life")
+	r.small = reduced
+	fx.append(r)
+	made["rim"] = int(made.get("rim", 0)) + 1
+	if vol >= 2:
+		var b := Fx.new()
+		b.style = "bring"
+		b.slot = pr.x
+		b.vic = pr.y
+		b.dir = dir
+		b.col = col
+		b.small = reduced
+		b.life = pm("bring_life")
+		b.guard = why == "guard"
+		if vol == 3 and why == "hit" and not reduced:
+			b.big = allow_full(S, col.lightened(0.3), true, pm("bring_flash_r"), S.fighters[pr.y].z)
+		fx.append(b)
+		made["bring"] = int(made.get("bring", 0)) + 1
+		if b.big:
+			made["full_flash"] = int(made.get("full_flash", 0)) + 1
+
+
+## A guard's bolt (cue `guard_volley`: actor the guard, target the one, k the bolt 1 to 3, n the release tick, absolute): the bolt's palm comes up on the guard's hand as it does on any
+## fighter's (the `lit` look: a small hollow ring and two streaks, gone at the release), in the guard's own lane colour, so the ring blow reads as his and not as a new effect.
+func _guard_volley(S: SimState, e, reduced: bool) -> void:
+	var pr: Vector2i = _pair_any(S, e)
+	if pr.x < 0:
+		return
+	var rel: float = float(VfxHub._g(e, "n", float(S.tick) + 4.0))
+	var o := Fx.new()
+	o.style = "lit"
+	o.slot = pr.x
+	o.vic = pr.y
+	o.dir = _dir_between(S, pr.x, pr.y)
+	o.col = VfxPress.lane_of(S, pr.x)
+	o.small = reduced
+	o.life = maxf(rel - float(S.tick), 1.0) + 1.0
+	fx.append(o)
+	made["guard_volley"] = int(made.get("guard_volley", 0)) + 1
+
+
+## An interjection's tell (Encounter's agreed cue is `windup` with text `interject`, routed here: actor the ring guard, target the one, source x, y or bolt, n the contact tick, absolute; in sight for 8 ticks or more): two small hollow
+## chevrons over the guard's head that point at the one and close up over the tell, and in its last 6 ticks the blow's committed line from his hand to the one's chest: thin, lane colour,
+## nothing on the body, no flash. A bolt keeps the chevrons only (its palm is the `lit` look of `guard_volley`).
+func _interject(S: SimState, e, reduced: bool) -> void:
+	var pr: Vector2i = _pair_any(S, e)
+	if pr.x < 0:
+		return
+	_drop("interject", pr.x)
+	var land: float = float(VfxHub._g(e, "n", float(S.tick) + pm("interject_tell")))
+	var o := Fx.new()
+	o.style = "interject"
+	o.slot = pr.x
+	o.vic = pr.y
+	o.dir = _dir_between(S, pr.x, pr.y)
+	o.kind = String(VfxHub._g(e, "source", "x"))
+	o.col = VfxPress.lane_of(S, pr.x)
+	o.small = reduced
+	o.life = maxf(land - float(S.tick), 2.0)
+	fx.append(o)
+	made["interject"] = int(made.get("interject", 0)) + 1
+
+
+# --------------------------------------------------------------------------------------------------------------------------------- the beam struggle
+# Encounter's tug of war on the pulse (docs/director/pending/beam-struggle/README.md; Game Design's rule-of-cool §2): `S.game.clash.mid` is the meeting point, 0 at A's hands to 1 at D's, -1 (or absent) for a clash with
+# no struggle; the cues are `beam_struggle` (text start, n the tick it ends by at the latest), `beam_pulse` (k the pulse 1 to 15, n its tick), `beam_surge` (actor who pressed, text surge or sharp),
+# `beam_stray` (actor) and `beam_end` (text overwhelmed, detonate or time; x the point). What a player sees (the design: "each surge bulges the meeting point toward the rival and pushes his beam back; a stray
+# flickers his own; the pulse is a beat the player can follow"): every mark is a thin hollow ring or line in a lane colour, none is a flash, and none changes the beams' brightness.
+#   beat      a thin ring contracts onto the meeting point over the 10 ticks before each pulse and, on it, one thin ring leaves: so the beat can be followed before it comes (the next pulse is shown the moment this one is)
+#   surge     a thin ring rides his beam from his hand to the point, and a thin ring bulges at the point toward the rival (a sharp one is bigger)
+#   stray     a short broken line across his own beam near his hand, a hiccup: shape only, nothing flickers
+#   end       overwhelmed: three thin rings run down the winner's beam from the point to the loser; detonate: two rings and a fire at the point (the flames in waves, as any blast's); time: one ring
+
+func _beam_struggle(S: SimState, e, reduced: bool) -> void:
+	if String(e.text) != "start":
+		return
+	_drop("spulse")
+	_drop("sopen")
+	var o := Fx.new()
+	o.style = "sopen"
+	o.slot = int(e.actor)
+	o.small = reduced
+	o.life = pm("struggle_open_life")
+	fx.append(o)
+	made["struggle"] = int(made.get("struggle", 0)) + 1
+	struggle_on = true
+
+
+## Calm mode (Legal's fx04, RL-141 to RL-143): under Reduce flashing (the shipped default) or Reduced motion the struggle's marks are held to **1.5 Hz or slower**, strokes only, no brightness change. The register's
+## `reduced` is true for either setting (the hub sets it every tick), so it is the one test. Calm: the beat's rings are drawn for every second pulse only (a 40-tick beat, 1.5 Hz: the pulses are still every 20 ticks,
+## and the player keeps the half-beat's rhythm), and a surge's or a stray's mark is not made within 40 ticks of the last one (the meeting point's own movement still shows each press). The rates are in
+## `data/vfx/energy.json` "rates" (the list the flash set and `effects_check` read).
+func _calm(reduced: bool) -> bool:
+	return reduced or (registry != null and registry.reduced)
+
+
+## A pulse: the ring that contracts onto the point and the one that leaves it, and the next pulse's contraction, shown at once.
+func _beam_pulse(S: SimState, e, reduced: bool) -> void:
+	_drop("spulse")
+	var k: int = int(float(VfxHub._g(e, "k", 1.0)))
+	var n_at: float = float(VfxHub._g(e, "n", float(S.tick)))
+	var calm: bool = _calm(reduced)
+	for j in range(2):
+		if j == 1 and k >= 15:
+			break
+		if calm and (k + j) % 2 == 0:
+			continue       # fx04: every second pulse's rings only
+		var o := Fx.new()
+		o.style = "spulse"
+		o.small = reduced
+		o.k = k + j
+		o.age = -(maxf(n_at - float(S.tick), 0.0) + float(j) * pm("pulse_period"))
+		o.life = pm("pulse_life")
+		fx.append(o)
+	made["pulse"] = int(made.get("pulse", 0)) + 1
+
+
+## A surge (actor the one who pressed on the beat, text surge, or sharp for the 1-tick one).
+func _beam_surge(S: SimState, e, reduced: bool) -> void:
+	var slot: int = int(e.actor)
+	if slot < 0 or slot >= S.fighters.size():
+		return
+	if _calm(reduced):
+		if S.tick - _last_mark < int(pm("calm_mark_gap")):
+			return
+		_last_mark = S.tick
+	var o := Fx.new()
+	o.style = "ssurge"
+	o.slot = slot
+	o.col = VfxPress.lane_of(S, slot)
+	o.small = reduced
+	o.big = String(e.text) == "sharp"
+	o.life = pm("surge_life")
+	fx.append(o)
+	made["surge"] = int(made.get("surge", 0)) + 1
+	if o.big:
+		made["surge_sharp"] = int(made.get("surge_sharp", 0)) + 1
+
+
+## A stray (actor the one who pressed off the beat): a hiccup in his own beam.
+func _beam_stray(S: SimState, e, reduced: bool) -> void:
+	var slot: int = int(e.actor)
+	if slot < 0 or slot >= S.fighters.size():
+		return
+	if _calm(reduced):
+		if S.tick - _last_mark < int(pm("calm_mark_gap")):
+			return
+		_last_mark = S.tick
+	var o := Fx.new()
+	o.style = "sstray"
+	o.slot = slot
+	o.col = VfxPress.lane_of(S, slot)
+	o.small = reduced
+	o.life = pm("stray_life")
+	fx.append(o)
+	made["stray"] = int(made.get("stray", 0)) + 1
+
+
+## The end (text overwhelmed, detonate or time; x the point 0 to 1): where the point was is kept, because the clash is over a tick later.
+func _beam_end(S: SimState, e, reduced: bool, debris) -> void:
+	_drop("spulse")
+	struggle_on = false
+	var how: String = String(e.text)
+	var pt: float = float(VfxHub._g(e, "x", 0.5))
+	var c = S.game.clash
+	var o := Fx.new()
+	o.style = "send_" + how
+	o.k = 0
+	o.lean = Vector2(pt, 0.0)
+	o.small = reduced
+	o.life = pm("end_life")
+	if c != null:
+		var fa: int = S.fighters.find(c.A)
+		var fd: int = S.fighters.find(c.D)
+		o.slot = fa
+		o.vic = fd
+		var d: float = SimWrap.sdx(c.A.x, c.D.x)
+		o.x = SimWrap.wrap(c.A.x + d * pt)
+		o.y = c.A.y + 38.0 + (c.D.y - c.A.y) * pt
+		o.dir = 1.0 if d >= 0.0 else -1.0
+		o.col = VfxPress.lane_of(S, fa if pt >= 0.5 else fd)       # the winner's colour: the loser is the side the point reached
+	else:
+		o.x = float(VfxHub._g(e, "x", 0.0))
+		o.y = 0.0
+		o.slot = int(e.actor)
+		o.vic = int(VfxHub._g(e, "target", 1 - o.slot))
+		o.col = Color(0.7, 0.8, 1.0)
+	fx.append(o)
+	made["struggle_end_" + how] = int(made.get("struggle_end_" + how, 0)) + 1
+	if how == "detonate" and debris != null and int(debris.quality) > 0:
+		var lane: Color = Color(0.0, 0.0, 0.0, 0.0)
+		VfxExplode.at(S, debris, o.x, o.y, 0.0, pm("detonate_bh") * VfxLook.BH, "air", "calm", lane)
+		made["struggle_boom"] = int(made.get("struggle_boom", 0)) + 1

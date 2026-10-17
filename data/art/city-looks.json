@@ -1,0 +1,484 @@
+{
+  "version": 1,
+  "note": "The city looks' palettes and facade types (docs/art/city-facades.md). Written by art/concepts/city/gen.mjs; do not edit by hand. Variety is hue and chroma at equal luminance: on downtown and mid_rise a pane may differ from its wall by at most 0.085 of relative luminance (render/core/look.gd PATTERN_BUDGET), and so may a fin, a base or a cornice from the wall it sits on. Proposals pending Legal and Orb; Tools adds the schema.",
+  "budget": 0.085,
+  "glass_step": 0.07,
+  "looks": {
+    "downtown": [
+      {
+        "id": "steel",
+        "name": "Steel and bronze glass",
+        "wall": {
+          "light": "#b4bcc7",
+          "mid": "#808792",
+          "shadow": "#4e565f"
+        },
+        "glass": {
+          "dark": "#837056",
+          "bright": "#a99579"
+        },
+        "trim": "#8e939a",
+        "spandrel": "#6f7680",
+        "fin": "#6c747d",
+        "oklch": {
+          "wall": [
+            255,
+            0.018
+          ],
+          "glass": [
+            75,
+            0.045
+          ]
+        },
+        "measured": {
+          "glass_dark_vs_wall_mid": 0.069,
+          "glass_bright_vs_wall_mid": 0.073,
+          "hue_gap_wall_to_glass_deg": 180
+        }
+      },
+      {
+        "id": "limestone",
+        "name": "Limestone and slate glass",
+        "wall": {
+          "light": "#c2baae",
+          "mid": "#8d8579",
+          "shadow": "#5a5448"
+        },
+        "glass": {
+          "dark": "#5c7787",
+          "bright": "#809bac"
+        },
+        "trim": "#98928a",
+        "spandrel": "#7c7469",
+        "fin": "#797166",
+        "oklch": {
+          "wall": [
+            80,
+            0.02
+          ],
+          "glass": [
+            235,
+            0.04
+          ]
+        },
+        "measured": {
+          "glass_dark_vs_wall_mid": 0.066,
+          "glass_bright_vs_wall_mid": 0.072,
+          "hue_gap_wall_to_glass_deg": 155
+        }
+      },
+      {
+        "id": "graphite",
+        "name": "Graphite and amber glass",
+        "wall": {
+          "light": "#babcc0",
+          "mid": "#85878a",
+          "shadow": "#535558"
+        },
+        "glass": {
+          "dark": "#826f61",
+          "bright": "#a79384"
+        },
+        "trim": "#929295",
+        "spandrel": "#747579",
+        "fin": "#717376",
+        "oklch": {
+          "wall": [
+            270,
+            0.006
+          ],
+          "glass": [
+            60,
+            0.032
+          ]
+        },
+        "measured": {
+          "glass_dark_vs_wall_mid": 0.072,
+          "glass_bright_vs_wall_mid": 0.066,
+          "hue_gap_wall_to_glass_deg": 150
+        }
+      },
+      {
+        "id": "sage",
+        "name": "Sage and rose glass",
+        "wall": {
+          "light": "#b8bdb4",
+          "mid": "#84887f",
+          "shadow": "#52564e"
+        },
+        "glass": {
+          "dark": "#846d6c",
+          "bright": "#aa9191"
+        },
+        "trim": "#90948d",
+        "spandrel": "#73776f",
+        "fin": "#70746c",
+        "oklch": {
+          "wall": [
+            130,
+            0.014
+          ],
+          "glass": [
+            20,
+            0.03
+          ]
+        },
+        "measured": {
+          "glass_dark_vs_wall_mid": 0.071,
+          "glass_bright_vs_wall_mid": 0.068,
+          "hue_gap_wall_to_glass_deg": 110
+        }
+      },
+      {
+        "id": "sandstone",
+        "name": "Sandstone and slate glass",
+        "wall": {
+          "light": "#c9baa8",
+          "mid": "#938574",
+          "shadow": "#605243"
+        },
+        "glass": {
+          "dark": "#5e767d",
+          "bright": "#829ca2"
+        },
+        "trim": "#9b9288",
+        "spandrel": "#827463",
+        "fin": "#7f7161",
+        "oklch": {
+          "wall": [
+            70,
+            0.03
+          ],
+          "glass": [
+            215,
+            0.03
+          ]
+        },
+        "measured": {
+          "glass_dark_vs_wall_mid": 0.074,
+          "glass_bright_vs_wall_mid": 0.069,
+          "hue_gap_wall_to_glass_deg": 145
+        }
+      },
+      {
+        "id": "granite",
+        "name": "Rose granite",
+        "wall": {
+          "light": "#c5b9b8",
+          "mid": "#908483",
+          "shadow": "#5d5351"
+        },
+        "glass": {
+          "dark": "#667484",
+          "bright": "#8a99a9"
+        },
+        "trim": "#999190",
+        "spandrel": "#7f7372",
+        "fin": "#7b706f",
+        "oklch": {
+          "wall": [
+            25,
+            0.014
+          ],
+          "glass": [
+            250,
+            0.03
+          ]
+        },
+        "measured": {
+          "glass_dark_vs_wall_mid": 0.071,
+          "glass_bright_vs_wall_mid": 0.07,
+          "hue_gap_wall_to_glass_deg": 135
+        }
+      }
+    ],
+    "mid_rise": [
+      {
+        "id": "buff",
+        "name": "Buff brick",
+        "wall": {
+          "light": "#dbc5b3",
+          "mid": "#a79181",
+          "shadow": "#715e4e"
+        },
+        "glass": {
+          "dark": "#758694",
+          "bright": "#95a6b5"
+        },
+        "trim": "#aa9d94",
+        "spandrel": "#978272",
+        "fin": "#958070",
+        "oklch": {
+          "wall": [
+            60,
+            0.035
+          ],
+          "glass": [
+            245,
+            0.03
+          ]
+        },
+        "measured": {
+          "glass_dark_vs_wall_mid": 0.071,
+          "glass_bright_vs_wall_mid": 0.069,
+          "hue_gap_wall_to_glass_deg": 175
+        }
+      },
+      {
+        "id": "cream",
+        "name": "Cream render and slate glass",
+        "wall": {
+          "light": "#cec9ba",
+          "mid": "#999487",
+          "shadow": "#656155"
+        },
+        "glass": {
+          "dark": "#748598",
+          "bright": "#93a6b9"
+        },
+        "trim": "#a3a096",
+        "spandrel": "#8b8679",
+        "fin": "#888476",
+        "oklch": {
+          "wall": [
+            90,
+            0.02
+          ],
+          "glass": [
+            250,
+            0.035
+          ]
+        },
+        "measured": {
+          "glass_dark_vs_wall_mid": 0.069,
+          "glass_bright_vs_wall_mid": 0.073,
+          "hue_gap_wall_to_glass_deg": 160
+        }
+      },
+      {
+        "id": "concrete",
+        "name": "Pale concrete and warm glass",
+        "wall": {
+          "light": "#c4c9cd",
+          "mid": "#91969a",
+          "shadow": "#5e6266"
+        },
+        "glass": {
+          "dark": "#93816e",
+          "bright": "#b3a18e"
+        },
+        "trim": "#9da0a4",
+        "spandrel": "#83868b",
+        "fin": "#818589",
+        "oklch": {
+          "wall": [
+            250,
+            0.008
+          ],
+          "glass": [
+            70,
+            0.035
+          ]
+        },
+        "measured": {
+          "glass_dark_vs_wall_mid": 0.071,
+          "glass_bright_vs_wall_mid": 0.069,
+          "hue_gap_wall_to_glass_deg": 180
+        }
+      },
+      {
+        "id": "clay",
+        "name": "Dusty clay",
+        "wall": {
+          "light": "#d9c4b7",
+          "mid": "#a59285",
+          "shadow": "#705d52"
+        },
+        "glass": {
+          "dark": "#728887",
+          "bright": "#91a8a6"
+        },
+        "trim": "#aa9d96",
+        "spandrel": "#968376",
+        "fin": "#948074",
+        "oklch": {
+          "wall": [
+            55,
+            0.03
+          ],
+          "glass": [
+            190,
+            0.026
+          ]
+        },
+        "measured": {
+          "glass_dark_vs_wall_mid": 0.073,
+          "glass_bright_vs_wall_mid": 0.065,
+          "hue_gap_wall_to_glass_deg": 135
+        }
+      },
+      {
+        "id": "slate",
+        "name": "Slate green and rose glass",
+        "wall": {
+          "light": "#c2cac3",
+          "mid": "#8f9790",
+          "shadow": "#5c645d"
+        },
+        "glass": {
+          "dark": "#967e7e",
+          "bright": "#b79e9d"
+        },
+        "trim": "#9ca29c",
+        "spandrel": "#808882",
+        "fin": "#7e867f",
+        "oklch": {
+          "wall": [
+            150,
+            0.014
+          ],
+          "glass": [
+            20,
+            0.03
+          ]
+        },
+        "measured": {
+          "glass_dark_vs_wall_mid": 0.071,
+          "glass_bright_vs_wall_mid": 0.07,
+          "hue_gap_wall_to_glass_deg": 130
+        }
+      },
+      {
+        "id": "chalk",
+        "name": "Chalk blue-grey",
+        "wall": {
+          "light": "#c0c9d0",
+          "mid": "#8e979d",
+          "shadow": "#5a6269"
+        },
+        "glass": {
+          "dark": "#977f6d",
+          "bright": "#b89f8c"
+        },
+        "trim": "#9aa0a5",
+        "spandrel": "#7f888e",
+        "fin": "#7d858b",
+        "oklch": {
+          "wall": [
+            240,
+            0.014
+          ],
+          "glass": [
+            60,
+            0.04
+          ]
+        },
+        "measured": {
+          "glass_dark_vs_wall_mid": 0.075,
+          "glass_bright_vs_wall_mid": 0.066,
+          "hue_gap_wall_to_glass_deg": 180
+        }
+      }
+    ]
+  },
+  "facades": {
+    "ribbon": {
+      "name": "Ribbon windows",
+      "what": "continuous horizontal bands of glass between thin piers; today's downtown and mid_rise rhythm",
+      "pane_h": 0.55,
+      "pier_w": 0.05,
+      "spandrel": {
+        "h": 0.45,
+        "lum_offset": -0.03
+      },
+      "fits": "downtown shafts under 40 floors; mid_rise_east"
+    },
+    "punched": {
+      "name": "Punched windows with spandrels",
+      "what": "separate panes in a regular grid with a darker band under each row: reads as stone or brick, a heavier and older building",
+      "pane_w": 0.38,
+      "pane_h": 0.5,
+      "spandrel": {
+        "h": 0.3,
+        "lum_offset": -0.06
+      },
+      "fits": "mid_rise_west; the older downtown towers"
+    },
+    "fins": {
+      "name": "Vertical fins",
+      "what": "tall glass between projecting fins one pane apart: a strongly vertical read, the tallest shafts",
+      "pane_w": 0.78,
+      "fin": {
+        "w": 0.14,
+        "pitch": 0.25,
+        "lum_offset": -0.07,
+        "sun_side_offset": 0.07
+      },
+      "fits": "downtown shafts of 40 floors or more; a few mid_rise slabs"
+    }
+  },
+  "base_and_crown": {
+    "base": {
+      "floors": 1.6,
+      "note": "a tall lobby storey under the shaft, in the wall's mid tone less 0.06 (never darker: its join with the shaft is a long edge), with the trim as a lintel line and no ribbon: punched panes only",
+      "wall_lum_offset": -0.06
+    },
+    "crown": {
+      "floors": 2,
+      "note": "the top two floors set back 6 percent each side, a cornice band in the trim tone (wall mid plus 0.05), panes at the tint's bright glass; lit panes are Rendering's and are not raised (a flash change)",
+      "setback": 0.06,
+      "cornice_lum_offset": 0.05
+    }
+  },
+  "districts": {
+    "downtown": {
+      "look": "downtown",
+      "facade_weights": {
+        "ribbon": 0.4,
+        "punched": 0.25,
+        "fins": 0.35
+      },
+      "tint_weights": {
+        "steel": 0.25,
+        "limestone": 0.2,
+        "graphite": 0.15,
+        "sage": 0.1,
+        "sandstone": 0.15,
+        "granite": 0.15
+      },
+      "rule": "fins on shafts of 40 floors or more, punched on stepped and crown towers, ribbon elsewhere"
+    },
+    "mid_rise_west": {
+      "look": "mid_rise",
+      "facade_weights": {
+        "punched": 0.55,
+        "ribbon": 0.3,
+        "fins": 0.15
+      },
+      "tint_weights": {
+        "buff": 0.3,
+        "cream": 0.2,
+        "clay": 0.25,
+        "concrete": 0.15,
+        "slate": 0.1
+      },
+      "rule": "older: warm brick and render tints, punched windows"
+    },
+    "mid_rise_east": {
+      "look": "mid_rise",
+      "facade_weights": {
+        "ribbon": 0.55,
+        "fins": 0.25,
+        "punched": 0.2
+      },
+      "tint_weights": {
+        "concrete": 0.3,
+        "chalk": 0.25,
+        "slate": 0.2,
+        "cream": 0.15,
+        "buff": 0.1
+      },
+      "rule": "newer: pale concrete and cool tints, ribbon windows"
+    }
+  }
+}

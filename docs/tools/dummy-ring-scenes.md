@@ -40,3 +40,28 @@ Checked on a scratch export of main with every park applied (Animation's four-pa
 Eleven fixture cases cover the new keys (`tools/fixtures/cases.json`: `recipes-brawl-mash-*`, `anim-pressstyles-run-*`, `anim-pressstyles-march-*`, `anim-pressstyles-style-squash-*`, `anim-fighters-ease-*`).
 
 A warning that is not Tools': with Combat's split recipes in place, `data/director/alchemy.json` says roster id REFERENCE "has no entry here and no pool reference in data/combat/recipes.json".
+
+## Legal's RL-141 to RL-143 (2026-10-16): three more scenes, the rate lists, red flashes 0
+
+Legal asked for a beam clash, a signature in the city and a mashed blast on the dummy in the set, for the beam look, the explosions, the marks and the casts. `clash` and `signaturecity` already exist (and are in the record), so the three added are the ones that make those harder: they are all new ids in `tools/flash/sources.json`, `flash_worst.gd` and `docs/tools/pending/flash-capture-legal-scenes.patch` (the hook).
+
+| Scene | What | Clips |
+|---|---|---|
+| `clashcity` | the clash scene (both on RT + B together every 30 ticks) started beside the tallest tower: the beams meet over the towers and the struggle's marks are in the frame | 2 |
+| `signaturedummy` | PROTAGONIST v REFERENCE and RIVAL v REFERENCE, started beside the tallest tower; player one fires the signature on a cycle at a dummy that cannot dodge, so every beam lands (explosions, collapses, flames; the dummy answers with his own signature too) | 4 |
+| `blastdummy` | the same two pairings; energy held and B tapped every 10 ticks point-blank on the dummy (the mashed blast: the energy heavy fires the signature, flames and burn at close range, again and again) | 4 |
+
+The required set is 76 clips (was 66). Read headless on HEAD e88efd24: `clashcity` one CLASH, 7 damage events and a building down; `signaturedummy` 76 and 77 damage, a building down; `blastdummy` 72 and 88 damage; register worst 1 in 60 ticks in all.
+
+The rate lists: the flash set's list is `outside` in `tools/flash/sources.json`; it now names UI's recharging ring (1 Hz) and the tug ring (3 Hz, strokes only, steady under Reduce flashing and Reduced motion). They are in every frame of the pixel clips, so the analyser reads them. VFX's own list is `rates` in `data/vfx/energy.json`, and UI's is in `hud_check`; both are theirs.
+
+Red flashes 0: `release-pass.mjs` now refuses a record with a clip whose red count is anything but 0 (or missing), interim or not. The analyser stays the authority (`wcag.js`, linear values).
+
+Schema keys of Animation's fifth patch (homework4.patch, e117bd9a): joints.json `wing` {fix, suffixes, skip, flex_deg, up, drop, margin, back} and press_styles `press_run.bob`, with a new rule `xref:joints-wing-skip` (each skipped pose is real). Proved with the five-patch stack applied: validate 0 errors (203 files), --self-test 7456 of 7456. Two old cases (`anim-press-styles-flurry-burst-optional` and `-medium-optional`) now also empty the fighters' `ease`, since an `ease` row names a style and deleting that style would otherwise rightly fail `xref:fighters-ease`. Also: 12 cases for VFX's `vfx-energy.schema.json` (it had none, and the validator's coverage check wants three invalid cases per schema).
+
+
+## Art's city looks, and the red gate (batch 2 addendum)
+
+`docs/tools/pending/apply-art-city-looks.cjs` (run once in the commit that lands `data/art/city-looks.json`, after batch 2 and VFX's apply, since it adds a rule to `tools/schemas/map.json` and cases to `tools/fixtures/cases.json`): writes `tools/schemas/art-city-looks.schema.json` (closed except underscore keys, `note` declared; version field `version`), the map rule after `art/sky.json`, six cross-references in `tools/lib/xref-art.js` (`city-looks-id`, `-district-look`, `-facade-weight`, `-tint-weight`, `-weights-sum`, `-budget`) and 29 cases. Proved on a clean export of HEAD plus the tree's tools plus the file: validate 0 errors and 0 warnings, `--self-test` 7480 of 7480, a second run changes nothing.
+
+The red gate reads the analyser for every clip: `rowOf` takes each row's red count from the analyser's own result (`r.red.flashes` of `wcag.js`, which takes a saturated red on the stored or the linear values, whichever is red), and `redProblems` refuses a record, at `--record` and at `--verify`, whose clip (or its second capture or re-capture) reads anything but 0 red flashes, or no red count. It applies to all 76 required clips, interim or not.

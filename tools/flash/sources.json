@@ -179,6 +179,60 @@
       ]
     },
     {
+      "id": "clashcity",
+      "minTicks": 1200,
+      "minEvents": {
+        "beam_outcome:CLASH": 1
+      },
+      "ticks": 1500,
+      "seeds": [
+        12345
+      ]
+    },
+    {
+      "id": "signaturedummy",
+      "slotsList": [
+        [
+          "PROTAGONIST",
+          "REFERENCE"
+        ],
+        [
+          "RIVAL",
+          "REFERENCE"
+        ]
+      ],
+      "minTicks": 1500,
+      "minEvents": {
+        "damage": 30,
+        "building_fall": 1
+      },
+      "ticks": 1800,
+      "seeds": [
+        12345
+      ]
+    },
+    {
+      "id": "blastdummy",
+      "slotsList": [
+        [
+          "PROTAGONIST",
+          "REFERENCE"
+        ],
+        [
+          "RIVAL",
+          "REFERENCE"
+        ]
+      ],
+      "minTicks": 1500,
+      "minEvents": {
+        "damage": 40
+      },
+      "ticks": 1800,
+      "seeds": [
+        12345
+      ]
+    },
+    {
       "id": "ai",
       "minTicks": 1200,
       "minEvents": {
@@ -190,7 +244,9 @@
   ],
   "outside": {
     "divider_slam": "Camera's and UI's: the split divider's slam flash. Not Rendering's or VFX's; no register ask; pixels only.",
-    "glare": "VFX's glare on the rival's glasses: steady for its hold, not a flash; listed so a reader knows it was considered."
+    "glare": "VFX's glare on the rival's glasses: steady for its hold, not a flash; listed so a reader knows it was considered.",
+    "recharge_ring": "UI's launch marks (Legal RL-143, fx04): the plate's recharging ring, one step a second (1 Hz), a stroke with no brightness change. In every frame of the pixel set; the analyser reads it. Not a register ask.",
+    "tug_ring": "UI's beam struggle tug ring (Legal RL-143, fx04): closes on the 20-tick pulse (3 Hz), strokes only, steady under Reduce flashing and Reduced motion. In every frame of the pixel set; the analyser reads it. Not a register ask."
   },
   "pairings": [
     {

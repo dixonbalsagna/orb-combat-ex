@@ -120280,6 +120280,13 @@
           "del": [
             "/styles/burst"
           ]
+        },
+        {
+          "file": "data/anim/fighters.json",
+          "set": {
+            "/fighters/protagonist/ease": {},
+            "/fighters/antihero/ease": {}
+          }
         }
       ],
       "expect": null
@@ -121030,6 +121037,13 @@
           "set": {
             "/strength/medium": "burst",
             "/strength/blast": "burst"
+          }
+        },
+        {
+          "file": "data/anim/fighters.json",
+          "set": {
+            "/fighters/protagonist/ease": {},
+            "/fighters/antihero/ease": {}
           }
         }
       ],
@@ -280519,6 +280533,854 @@
       "expect": {
         "rule": "type",
         "pointer": "/strikes/0/named"
+      }
+    },
+    {
+      "id": "anim-joints-wing-ok",
+      "schema": "anim-joints.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/joints.json",
+          "set": {
+            "/wing": {
+              "fix": true,
+              "suffixes": [
+                ".contact",
+                ".follow"
+              ],
+              "skip": [],
+              "flex_deg": 50,
+              "up": 2,
+              "drop": 8,
+              "margin": 4,
+              "back": 4
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-joints-wing-needs-fix",
+      "schema": "anim-joints.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/joints.json",
+          "set": {
+            "/wing": {
+              "suffixes": [
+                ".contact"
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/wing"
+      }
+    },
+    {
+      "id": "anim-joints-wing-unknown-key",
+      "schema": "anim-joints.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/joints.json",
+          "set": {
+            "/wing": {
+              "fix": true,
+              "suffixes": [
+                ".contact",
+                ".follow"
+              ],
+              "skip": [],
+              "flex_deg": 50,
+              "up": 2,
+              "drop": 8,
+              "margin": 4,
+              "back": 4,
+              "hop": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/wing/hop"
+      }
+    },
+    {
+      "id": "anim-joints-wing-flex-too-big",
+      "schema": "anim-joints.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/joints.json",
+          "set": {
+            "/wing": {
+              "fix": true,
+              "suffixes": [
+                ".contact",
+                ".follow"
+              ],
+              "skip": [],
+              "flex_deg": 200,
+              "up": 2,
+              "drop": 8,
+              "margin": 4,
+              "back": 4
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/wing/flex_deg"
+      }
+    },
+    {
+      "id": "anim-joints-wing-suffix-shape",
+      "schema": "anim-joints.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/joints.json",
+          "set": {
+            "/wing": {
+              "fix": true,
+              "suffixes": [
+                "contact"
+              ],
+              "skip": [],
+              "flex_deg": 50,
+              "up": 2,
+              "drop": 8,
+              "margin": 4,
+              "back": 4
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/wing/suffixes/0"
+      }
+    },
+    {
+      "id": "anim-joints-wing-skip-not-a-pose",
+      "schema": "anim-joints.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/joints.json",
+          "set": {
+            "/wing": {
+              "fix": true,
+              "suffixes": [
+                ".contact",
+                ".follow"
+              ],
+              "skip": [
+                "no.such.pose"
+              ],
+              "flex_deg": 50,
+              "up": 2,
+              "drop": 8,
+              "margin": 4,
+              "back": 4
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:joints-wing-skip",
+        "pointer": "/wing/skip/0"
+      }
+    },
+    {
+      "id": "anim-pressstyles-run-bob-ok",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/speed/press_run": {
+              "gap": 10,
+              "deg_per_blow": 3.5,
+              "max_deg": 18,
+              "bob": 1.8
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pressstyles-run-bob-negative",
+      "schema": "anim-press-styles.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_styles.json",
+          "set": {
+            "/styles/speed/press_run": {
+              "gap": 10,
+              "deg_per_blow": 3.5,
+              "max_deg": 18,
+              "bob": -1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/styles/speed/press_run/bob"
+      }
+    },
+    {
+      "id": "vfx-energy-valid",
+      "schema": "vfx-energy.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/energy.json",
+          "set": {
+            "/version": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "vfx-energy-version-const",
+      "schema": "vfx-energy.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/energy.json",
+          "set": {
+            "/version": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/version"
+      }
+    },
+    {
+      "id": "vfx-energy-version-required",
+      "schema": "vfx-energy.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/energy.json",
+          "del": [
+            "/version"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "vfx-energy-unknown-key",
+      "schema": "vfx-energy.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/energy.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "vfx-energy-beam-width-zero",
+      "schema": "vfx-energy.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/energy.json",
+          "set": {
+            "/beam/default/width_k": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/beam/default/width_k"
+      }
+    },
+    {
+      "id": "vfx-energy-beam-hue-too-far",
+      "schema": "vfx-energy.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/energy.json",
+          "set": {
+            "/beam/default/hue_shift": 100
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/beam/default/hue_shift"
+      }
+    },
+    {
+      "id": "vfx-energy-beam-hz-type",
+      "schema": "vfx-energy.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/energy.json",
+          "set": {
+            "/beam/default/hz": "fast"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/beam/default/hz"
+      }
+    },
+    {
+      "id": "vfx-energy-layers-two",
+      "schema": "vfx-energy.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/energy.json",
+          "set": {
+            "/layers": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/layers"
+      }
+    },
+    {
+      "id": "vfx-energy-calm-strength-zero",
+      "schema": "vfx-energy.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/energy.json",
+          "set": {
+            "/calm/strength": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/calm/strength"
+      }
+    },
+    {
+      "id": "vfx-energy-rate-too-fast",
+      "schema": "vfx-energy.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/energy.json",
+          "set": {
+            "/rates/struggle_beat/hz": 4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/rates/struggle_beat/hz"
+      }
+    },
+    {
+      "id": "vfx-energy-rate-calm-too-fast",
+      "schema": "vfx-energy.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/energy.json",
+          "set": {
+            "/rates/struggle_beat/calm_hz": 3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/rates/struggle_beat/calm_hz"
+      }
+    },
+    {
+      "id": "vfx-energy-rate-strokes-only-required",
+      "schema": "vfx-energy.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/energy.json",
+          "del": [
+            "/rates/struggle_beat/strokes_only"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/rates/struggle_beat"
+      }
+    },
+    {
+      "id": "art-city-looks-valid",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/version": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-city-looks-key-required-version",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "del": [
+            "/version"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-city-looks-key-required-budget",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "del": [
+            "/budget"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-city-looks-key-required-glass-step",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "del": [
+            "/glass_step"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-city-looks-key-required-looks",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "del": [
+            "/looks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-city-looks-key-required-facades",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "del": [
+            "/facades"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-city-looks-key-required-base-and-crown",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "del": [
+            "/base_and_crown"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-city-looks-key-required-districts",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "del": [
+            "/districts"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-city-looks-schema-version",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/version": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/version"
+      }
+    },
+    {
+      "id": "art-city-looks-unknown-key",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "art-city-looks-underscore-key-ok",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-city-looks-note-type",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/note": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/note"
+      }
+    },
+    {
+      "id": "art-city-looks-budget-zero",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/budget": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/budget"
+      }
+    },
+    {
+      "id": "art-city-looks-budget-type",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/budget": "tight"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/budget"
+      }
+    },
+    {
+      "id": "art-city-looks-tint-wall-not-hex",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/looks/downtown/0/wall/mid": "grey"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/looks/downtown/0/wall/mid"
+      }
+    },
+    {
+      "id": "art-city-looks-tint-glass-required",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "del": [
+            "/looks/downtown/0/glass/dark"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/looks/downtown/0/glass"
+      }
+    },
+    {
+      "id": "art-city-looks-tint-unknown-key",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/looks/downtown/0/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/looks/downtown/0/extra"
+      }
+    },
+    {
+      "id": "art-city-looks-tint-hue-too-big",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/looks/downtown/0/oklch/wall": [
+              400,
+              0.02
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/looks/downtown/0/oklch/wall/0"
+      }
+    },
+    {
+      "id": "art-city-looks-tint-id-twice",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/looks/downtown/1/id": "steel"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:city-looks-id",
+        "pointer": "/looks/downtown/1/id"
+      }
+    },
+    {
+      "id": "art-city-looks-tint-over-budget",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/looks/downtown/0/measured/glass_dark_vs_wall_mid": 0.2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:city-looks-budget",
+        "pointer": "/looks/downtown/0/measured/glass_dark_vs_wall_mid"
+      }
+    },
+    {
+      "id": "art-city-looks-facade-required",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "del": [
+            "/facades/ribbon/what"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/facades/ribbon"
+      }
+    },
+    {
+      "id": "art-city-looks-facade-unknown-key",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/facades/ribbon/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/facades/ribbon/extra"
+      }
+    },
+    {
+      "id": "art-city-looks-crown-setback-too-big",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/base_and_crown/crown/setback": 0.9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/base_and_crown/crown/setback"
+      }
+    },
+    {
+      "id": "art-city-looks-district-look-unknown",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/districts/downtown/look": "suburb"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:city-looks-district-look",
+        "pointer": "/districts/downtown/look"
+      }
+    },
+    {
+      "id": "art-city-looks-district-facade-unknown",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/districts/downtown/facade_weights/spire": 0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:city-looks-facade-weight",
+        "pointer": "/districts/downtown/facade_weights/spire"
+      }
+    },
+    {
+      "id": "art-city-looks-district-tint-unknown",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/districts/downtown/tint_weights/neon": 0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:city-looks-tint-weight",
+        "pointer": "/districts/downtown/tint_weights/neon"
+      }
+    },
+    {
+      "id": "art-city-looks-district-weights-sum",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/districts/downtown/tint_weights/steel": 0.9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:city-looks-weights-sum",
+        "pointer": "/districts/downtown/tint_weights"
+      }
+    },
+    {
+      "id": "art-city-looks-district-facade-weights-sum",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/districts/downtown/facade_weights/ribbon": 0.9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:city-looks-weights-sum",
+        "pointer": "/districts/downtown/facade_weights"
+      }
+    },
+    {
+      "id": "art-city-looks-district-weight-above-one",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/districts/downtown/tint_weights/steel": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/districts/downtown/tint_weights/steel"
       }
     }
   ],

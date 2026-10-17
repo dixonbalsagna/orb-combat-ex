@@ -31,9 +31,9 @@ The colour is the fighter's lane colour (so the colour-vision presets follow), t
 
 | Roster id | Who | Family (Art's lane) | Second tint | Width | Motion character |
 | :-- | :-- | :-- | :-- | ---: | :-- |
-| PROTAGONIST | the hero | cool cyan to azure (#8fd6ff) | +30° | 1.15 | **flowing**: a long soft wavelength (150 units), a soft edge that swells and thins, a strong heel swell (0.7); a bolt's tail swims a little |
-| RIVAL | the Anti-hero | violet to magenta (#9a80d8) | -34° | 1.1 | **exact and cold**: a short wavelength (80), long hard-edged filaments (0.9) in place of swell, almost no edge turbulence (0.05) and a crisper edge (1.35), a small heel; a bolt's tail is a straight ribbon |
-| RIVAL, a short beam | the Anti-hero's particular thin beam | the same | -34° | **0.4** | a needle of light: no swell, no turbulence, no filaments, the crisp edge |
+| PROTAGONIST | the hero | cool cyan to azure (#8fd6ff) | +30° (-30° under the tritan preset) | 1.15 | **flowing**: a long soft wavelength (150 units), a soft edge that swells and thins, a strong heel swell (0.7); a bolt's tail swims a little |
+| RIVAL | the Anti-hero | violet to magenta (#9a80d8) | +34° (capped so it stays at 320° or less) | 1.1 | **exact and cold**: a short wavelength (80), long hard-edged filaments (0.9) in place of swell, almost no edge turbulence (0.05) and a crisper edge (1.35), a small heel; a bolt's tail is a straight ribbon |
+| RIVAL, a short beam | the Anti-hero's particular thin beam | the same | +34° | **0.4** | a needle of light: no swell, no turbulence, no filaments, the crisp edge |
 | REFERENCE | the training dummy | a quiet neutral (+12°) | +12° | 0.8 | **quiet**: 0.5 Hz, a long wavelength (160), almost no swell, turbulence or filaments |
 | anyone else | | their lane colour | +28° | 1.0 | the default |
 
@@ -44,6 +44,8 @@ The colour is the fighter's lane colour (so the colour-vision presets follow), t
 - **Not built yet in the sim:** today only the signature beam exists (0.95 s). The look is keyed `rival_short` and applies to a beam of 0.7 s or less, or one that carries a `short` field, the moment Simulation adds it; until then nothing is thin in the demo.
 
 The bolts and blasts (`shots_view.gd`) take the same two tints and character: a tail of five segments that swims a little (not in reduced motion), stepping between the tints.
+
+**Art's colour fix (docs/art/beam-colours.md, 2026-10-16):** the Rival's second tint turns **+34**, not -34: -34 made `#9a80d8` into a blue (`#768cc8`) inside the Protagonist's azure and outside Legal's 260 to 320, +34 gives an orchid-magenta (`#be77c9`, 292°). It is capped at `min(34, 320 - hue)` (`hue_max` in the data) for a magenta-forward aura. The Protagonist's +30 stands, but under the **tritan** preset it is **-30** (`hue_shift_tritan`): +30 would land his tritan lane `#9c90d5` on a violet, the Anti-hero's family; -30 gives `#8498c3`. The dummy's +12 is confirmed. The preset is read from `VfxAura.vision_mode`, which the hub sets with the lane table. Equal luminance holds to three decimals; under protan and deutan the Rival's shimmer is a texture and the lane colour carries the beam.
 
 ## The explosions of the small energy attacks
 
@@ -90,8 +92,14 @@ Gates in the scratch copy: effects_check, hash_check (plain and press styles; th
 
 **Web build cost** (previous round, `tools/bench-web.mjs` seed 4, 2400 frames): HEAD 6.60 and 6.08 ms a frame (CPU x4: 34.6 and 32.9), the beam look 6.63 and 6.64 (CPU x4: 33.9 and 32.8). Nothing here since adds a draw call or a shader; the struggle's marks are a handful of rings. Not measured: an old laptop, a software floor, a beam-heavy scene.
 
+## Legal's RL-141 to RL-143 (docs/legal/energy-and-pieces-screen.md): fx04 and fx05
+
+- **fx04, the struggle's marks:** steady or 1.5 Hz or slower under Reduce flashing and Reduced motion, strokes only: done in the apply (`docs/vfx/multi-fight-plan.md`, the end of "the beam struggle"), with the rates in `data/vfx/energy.json` "rates".
+- **fx05, the calm form** reads at or under the primary limit in both modes on the release set: every clip above is read in it (the demo's "normal" clips run with Reduce flashing on) and with it off, primary 2.5 at most; the release set is Tools' to run on the commit.
+- **fx05, red:** the analyser's red reading on the clips with the explosions in (the bolts scene, eight ai windows both modes, the struggle scene, collapse: 28 analyses of this work, and 314 of everything I measured this week): **red flashes 0, qualifying changes 0, 0 even with the threshold lower, and the largest window at 0.11 of the area threshold**. The fire's gamma-encoded red ratio is 0.56; on linear values a cel orange sits higher, which is why it is read by the analyser and not by the colour code.
+
 ## Open for Art, Legal and Orb
 
-- **Art:** the colour families (kept as the EP asked: the Protagonist cyan to azure +30 degrees, the Rival violet to magenta -34) are derived from the lane colours in `data/art/colour-vision.json`: confirm or send a pair per fighter.
+- **Art:** confirmed and corrected (docs/art/beam-colours.md): the Protagonist +30 (-30 under tritan), the Rival +34 capped at 320, the dummy +12.
 - **Legal:** fx03 asks for the set drawn; this is it, with the flash clips above. The two new things to read are the beam's width and its start and end events (1.6 times the threshold in one clip), and the flames at a point-blank hit.
 - **Orb:** the Protagonist's beam "from the heel of the palm" is a swell of the beam's firing end (0.7), not a drawn gather at the hand: the gather needs Animation's palm pose at the beam's origin.

@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/vfx-energy",
+  "title": "vfx energy look (version 1)",
+  "description": "data/vfx/energy.json: the signature beams' layers and each fighter's flavour (docs/vfx/beam-look.md). Presentation only: read by render/vfx/beam_look.gd, never by the sim. Version field: version. Policy: closed except keys starting with an underscore. A flavour is keyed by the roster id in lower case (protagonist, rival, reference), `rival_short` for the Anti-hero's short beam; `hz` is the ripple rate at any point of the beam and may not pass 2 (Legal fx03); a layer's `lum_amp` is the most its alpha moves with the shimmer and may not pass 0.2.",
+  "type": "object",
+  "required": [
+    "version"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "beam": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-z][a-z0-9_]*$": {
+          "type": "object",
+          "properties": {
+            "width_k": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 3
+            },
+            "hue_shift": {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            "hz": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 2
+            },
+            "wavelength": {
+              "type": "number",
+              "minimum": 20,
+              "maximum": 600
+            },
+            "flow": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 200
+            },
+            "turb": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "heel": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "seed": {
+              "type": "number"
+            },
+            "wob_k": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "fil": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "soft_k": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 3
+            },
+            "hue_shift_tritan": {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            "hue_max": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 360
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "properties": {}
+    },
+    "layers": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": [
+          "k",
+          "px",
+          "alpha",
+          "soft",
+          "turb_k",
+          "lum_amp",
+          "sat",
+          "val",
+          "lighten",
+          "flow_k",
+          "wob"
+        ],
+        "properties": {
+          "k": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "px": {
+            "type": "number",
+            "minimum": 0
+          },
+          "alpha": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "soft": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "turb_k": {
+            "type": "number",
+            "minimum": 0
+          },
+          "lum_amp": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.2
+          },
+          "sat": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "val": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1.2
+          },
+          "lighten": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.2
+          },
+          "flow_k": {
+            "type": "number",
+            "minimum": 0
+          },
+          "wob": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 0.5
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "calm": {
+      "type": "object",
+      "properties": {
+        "strength": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "rise_s": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        }
+      },
+      "additionalProperties": false
+    },
+    "cap": {
+      "type": "number",
+      "minimum": 0
+    },
+    "rates": {
+      "type": "object",
+      "patternProperties": {
+        "^_": true,
+        "^[a-z][a-z0-9_]*$": {
+          "type": "object",
+          "required": [
+            "hz",
+            "calm_hz",
+            "strokes_only"
+          ],
+          "properties": {
+            "hz": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "calm_hz": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "strokes_only": {
+              "type": "boolean"
+            },
+            "what": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

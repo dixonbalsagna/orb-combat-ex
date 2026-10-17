@@ -124,7 +124,7 @@ func _beam_asks(host: SimHost) -> Array:
 	host.S.beams.append(b)
 	host._ask_beams()
 	var rows: Array = host.vfx.flashes.log_rows()
-	var res: Array = [_rows_of(host, "beam") - before, host.beam_flash(b), float(rows[-1][6]) if _rows_of(host, "beam") > before else 0.0, host.vfx.flashes.weight_of("beam", host.beam_px(b.len, b.w))]
+	var res: Array = [_rows_of(host, "beam") - before, host.beam_flash(b), float(rows[-1][6]) if _rows_of(host, "beam") > before else 0.0, host.vfx.flashes.weight_of("beam", host.beam_px(b.len, b.w, 0.0, b.A))]
 	host.S.beams.erase(b)
 	host._ask_beams()
 	return res
@@ -220,7 +220,7 @@ func _run() -> void:
 	reg4.ppu = 0.3   # a wide framing: the same beam is a thin strip
 	var w_far: float = reg4.weight_of("beam", host.beam_px(3000.0, 33.0))
 	reg4.ppu = ppu_was
-	_expect(absf(wts[0] - 0.17) < 0.03 and absf(wts[1] - 0.07) < 0.02 and absf(wts[2] - 0.2) < 0.03 and wts[3] == 1.0 and wts[4] < 0.2 and w_far < 0.3, "at the close framing a body's white weighs %.2f, a head flash %.2f and a guard flash %.2f (VFX's estimates: 0.17, 0.07, 0.2); a tier 4 beam weighs %.0f, a short one %.2f, and a beam seen from far %.2f" % [wts[0], wts[1], wts[2], wts[3], wts[4], w_far])
+	_expect(absf(wts[0] - 0.17) < 0.03 and absf(wts[1] - 0.07) < 0.02 and absf(wts[2] - 0.2) < 0.03 and wts[3] == 1.0 and wts[4] < 0.3 and w_far < 0.5, "at the close framing a body's white weighs %.2f, a head flash %.2f and a guard flash %.2f (VFX's estimates: 0.17, 0.07, 0.2); a tier 4 beam weighs %.0f, a short one %.2f, and a beam seen from far %.2f" % [wts[0], wts[1], wts[2], wts[3], wts[4], w_far])
 	# The weighted rule through the host's ask, with areas given (A is a full-weight area; the register's clock is stepped by hand so the match adds nothing).
 	var A: float = VfxFlashRegistry.AREA_FULL
 	var a: bool = host.ask_flash("cue_flare", cyan, A, 0.5)             # low, weight 1

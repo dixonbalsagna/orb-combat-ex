@@ -48,6 +48,10 @@
       "schema": "art-sky.schema.json"
     },
     {
+      "match": "data/art/city-looks.json",
+      "schema": "art-city-looks.schema.json"
+    },
+    {
       "match": "data/fighters/roster.json",
       "schema": "fighter-roster.schema.json"
     },
@@ -454,6 +458,10 @@
     {
       "match": "data/vfx/power.json",
       "schema": "vfx-power.schema.json"
+    },
+    {
+      "match": "data/vfx/energy.json",
+      "schema": "vfx-energy.schema.json"
     },
     {
       "match": "data/narrative/combat_barks.json",

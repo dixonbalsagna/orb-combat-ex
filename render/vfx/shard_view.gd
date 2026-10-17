@@ -82,9 +82,11 @@ func update(hub: VfxHub, cam_x: float, zoom: float, half_w: float) -> void:
 						c.a *= 0.6
 					puffs += 1
 				VfxDebris.FLAME:
-					c.a = 1.0 - smoothstep(0.7, 1.0, f)
-					sx = maxf(b.sx * (1.0 - 0.45 * f), minpx)
-					sy = maxf(b.sy * (1.0 - 0.45 * f), minpx)
+					# A flame grows in over its first 0.1 s (a third of its size to full, its alpha with it) and then burns down: a burst is never one frame's pop (Legal fx03).
+					var grow: float = clampf(b.age / 0.1, 0.0, 1.0)
+					c.a = (1.0 - smoothstep(0.7, 1.0, f)) * grow
+					sx = maxf(b.sx * (1.0 - 0.45 * f) * (0.35 + 0.65 * grow), minpx)
+					sy = maxf(b.sy * (1.0 - 0.45 * f) * (0.35 + 0.65 * grow), minpx)
 					shards += 1
 				VfxDebris.RING:
 					c.a = 0.6 * (1.0 - f)

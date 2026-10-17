@@ -1040,6 +1040,14 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
       for (const k of Object.keys(jts.shapes)) if (!k.startsWith('_') && k !== 'default' && !known.includes(k)) err(JT, `/shapes/${esc(k)}`, 'joints-shape', `shape "${k}" is not in ragdoll_motion.json shapes (${known.join(', ')})`);
       for (const k of known) if (!(k in jts.shapes)) err(JT, '/shapes', 'joints-shape', `ragdoll_motion.json has shape "${k}" but joints.json has no scale for it (default applies)`, 'warning');
     }
+    // the chicken-wing fix's skip list: real poses (poses.json or a wave's poses file)
+    if (isObj(jts.wing) && Array.isArray(jts.wing.skip)) {
+      const posesW = new Set();
+      const mainW = get('data/anim/poses.json');
+      if (isObj(mainW) && isObj(mainW.poses)) for (const k of Object.keys(mainW.poses)) posesW.add(k);
+      for (const rel of docsFor(/^data\/anim\/waves\/[^/]+\.poses\.json$/)) { const d = get(rel); if (isObj(d) && isObj(d.poses)) for (const k of Object.keys(d.poses)) posesW.add(k); }
+      if (posesW.size) jts.wing.skip.forEach((p, i) => { if (typeof p === 'string' && !posesW.has(p)) err(JT, `/wing/skip/${i}`, 'joints-wing-skip', `"${p}" is not in poses.json nor a wave's poses file`); });
+    }
   }
 
   // ---- fight shots: a lobbed kind has both its numbers; a kind that trades with more power does not do less damage ----

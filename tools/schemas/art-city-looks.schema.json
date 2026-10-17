@@ -1,0 +1,504 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/art-city-looks",
+  "title": "art city looks (version 1)",
+  "description": "data/art/city-looks.json: the city's towers up close (docs/art/city-facades.md): the palettes of each look, the facade types, the base and crown and the districts' weights. Rendering reads it for the towers' faces; the sim never does. On downtown and mid_rise a pane may differ from its wall by at most `budget` of relative luminance. Version field: version. Policy: closed except keys starting with an underscore; `note` is Art's one string beside the numbers. Cross-references in tools/lib/xref-art.js (city-looks-id, city-looks-district-look, city-looks-facade-weight, city-looks-tint-weight, city-looks-weights-sum, city-looks-budget).",
+  "type": "object",
+  "required": [
+    "version",
+    "budget",
+    "glass_step",
+    "looks",
+    "facades",
+    "base_and_crown",
+    "districts"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "note": {
+      "type": "string",
+      "description": "Art's note on the file."
+    },
+    "budget": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 0.5,
+      "description": "The most a pane may differ from its wall, relative luminance (render/core/look.gd PATTERN_BUDGET)."
+    },
+    "glass_step": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 0.5,
+      "description": "The step between the dark and the bright glass, relative luminance."
+    },
+    "looks": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "required": [
+            "id",
+            "name",
+            "wall",
+            "glass",
+            "trim",
+            "spandrel",
+            "fin",
+            "oklch",
+            "measured"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "description": "The tint's id (unique within its look: city-looks-id)."
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The tint's name."
+            },
+            "wall": {
+              "type": "object",
+              "required": [
+                "light",
+                "mid",
+                "shadow"
+              ],
+              "properties": {
+                "light": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-f]{6}$",
+                  "description": "The wall in light."
+                },
+                "mid": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-f]{6}$",
+                  "description": "The wall's mid tone."
+                },
+                "shadow": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-f]{6}$",
+                  "description": "The wall in shadow."
+                }
+              },
+              "description": "The wall's three tones.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "glass": {
+              "type": "object",
+              "required": [
+                "dark",
+                "bright"
+              ],
+              "properties": {
+                "dark": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-f]{6}$",
+                  "description": "The dark glass."
+                },
+                "bright": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-f]{6}$",
+                  "description": "The bright glass."
+                }
+              },
+              "description": "The glass.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "trim": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$",
+              "description": "The trim."
+            },
+            "spandrel": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$",
+              "description": "The spandrel band."
+            },
+            "fin": {
+              "type": "string",
+              "pattern": "^#[0-9a-f]{6}$",
+              "description": "The fin colour."
+            },
+            "oklch": {
+              "type": "object",
+              "required": [
+                "wall",
+                "glass"
+              ],
+              "properties": {
+                "wall": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 360
+                  },
+                  "description": "Hue (degrees) and chroma of the wall, in OKLCH."
+                },
+                "glass": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 360
+                  },
+                  "description": "Hue (degrees) and chroma of the glass."
+                }
+              },
+              "description": "The tint in OKLCH: hue then chroma.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "measured": {
+              "type": "object",
+              "required": [
+                "glass_dark_vs_wall_mid",
+                "glass_bright_vs_wall_mid",
+                "hue_gap_wall_to_glass_deg"
+              ],
+              "properties": {
+                "glass_dark_vs_wall_mid": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Relative luminance gap of the dark glass to the wall's mid tone (at most the file's budget: city-looks-budget)."
+                },
+                "glass_bright_vs_wall_mid": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "The same for the bright glass."
+                },
+                "hue_gap_wall_to_glass_deg": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 180,
+                  "description": "The hue gap between wall and glass, degrees."
+                }
+              },
+              "description": "What Art measured.",
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            }
+          },
+          "description": "One tint of a look.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "Look id to its tints."
+    },
+    "facades": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "name",
+          "what",
+          "fits"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The facade type's name."
+          },
+          "what": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What it looks like."
+          },
+          "fits": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Where it is used."
+          },
+          "pane_h": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "A pane's height, a share of the floor."
+          },
+          "pane_w": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "A pane's width, a share of the bay."
+          },
+          "pier_w": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "A pier's width, a share of the bay."
+          },
+          "spandrel": {
+            "type": "object",
+            "required": [
+              "h",
+              "lum_offset"
+            ],
+            "properties": {
+              "h": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "The spandrel's height, a share of the floor."
+              },
+              "lum_offset": {
+                "type": "number",
+                "minimum": -0.5,
+                "maximum": 0.5,
+                "description": "Its luminance offset from the wall."
+              }
+            },
+            "description": "The band under each row.",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "fin": {
+            "type": "object",
+            "required": [
+              "w",
+              "pitch",
+              "lum_offset",
+              "sun_side_offset"
+            ],
+            "properties": {
+              "w": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "A fin's width, a share of the bay."
+              },
+              "pitch": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "The distance between fins, a share of the bay."
+              },
+              "lum_offset": {
+                "type": "number",
+                "minimum": -0.5,
+                "maximum": 0.5,
+                "description": "The fin's luminance offset from the wall."
+              },
+              "sun_side_offset": {
+                "type": "number",
+                "minimum": -0.5,
+                "maximum": 0.5,
+                "description": "The extra offset on the sun side."
+              }
+            },
+            "description": "The projecting fins.",
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          }
+        },
+        "description": "One facade type.",
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "Facade id to its type."
+    },
+    "base_and_crown": {
+      "type": "object",
+      "required": [
+        "base",
+        "crown"
+      ],
+      "properties": {
+        "base": {
+          "type": "object",
+          "required": [
+            "floors",
+            "note",
+            "wall_lum_offset"
+          ],
+          "properties": {
+            "floors": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10,
+              "description": "The lobby storey's height in floors."
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Its look in words."
+            },
+            "wall_lum_offset": {
+              "type": "number",
+              "minimum": -0.5,
+              "maximum": 0.5,
+              "description": "Its luminance offset from the wall."
+            }
+          },
+          "description": "The tall lobby storey.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "crown": {
+          "type": "object",
+          "required": [
+            "floors",
+            "note",
+            "setback",
+            "cornice_lum_offset"
+          ],
+          "properties": {
+            "floors": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10,
+              "description": "The crown's height in floors."
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Its look in words."
+            },
+            "setback": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 0.5,
+              "description": "The setback on each side, a share of the width."
+            },
+            "cornice_lum_offset": {
+              "type": "number",
+              "minimum": -0.5,
+              "maximum": 0.5,
+              "description": "The cornice's luminance offset from the wall."
+            }
+          },
+          "description": "The set-back top storeys.",
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "description": "The base and the crown of a tower.",
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "districts": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "look",
+          "facade_weights",
+          "tint_weights",
+          "rule"
+        ],
+        "properties": {
+          "look": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "The look this district draws its tints from (a key of looks: city-looks-district-look)."
+          },
+          "facade_weights": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+            },
+            "additionalProperties": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "patternProperties": {
+              "^_": true
+            },
+            "description": "Facade id to its share (each a facade of facades; the shares sum to 1: city-looks-facade-weight, city-looks-weights-sum)."
+          },
+          "tint_weights": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+            },
+            "additionalProperties": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "patternProperties": {
+              "^_": true
+            },
+            "description": "Tint id to its share (each a tint of the look; the shares sum to 1: city-looks-tint-weight, city-looks-weights-sum)."
+          },
+          "rule": {
+            "type": "string",
+            "minLength": 1,
+            "description": "In words: which facade goes on which tower."
+          }
+        },
+        "description": "One district of the city.",
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "District id to its look and weights."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

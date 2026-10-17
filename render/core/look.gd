@@ -575,9 +575,8 @@ const SLIDE_CROUCH: float = 6.0          # and crouches this much
 const HIDDEN_ALPHA: float = 0.22
 const HIT_FLASH_S: float = 0.12
 ## A hit the shared flash register refuses the white body for: the outline lights in this colour for HIT_FLASH_S (a
-## thin line, not a flash). A beam it refuses, and every beam under reduced flashing, is drawn calm: a thin line in the
-## beam's own colour in place of the white core (BEAM_LINE of the core's width), and the glow about it at BEAM_SOFT of
-## its strength, which adds less than a tenth of full luminance.
+## thin line, not a flash). (A beam it refuses, and every beam under reduced flashing, is drawn calm by VFX's beam look: the
+## same beam at a share of its strength, with a slower rise.)
 const HIT_EDGE := "#e8ecf2"
 ## A granted hit (Legal's RL-122): the body takes a strong light tint of its own colours, HIT_TINT of the way to white,
 ## with the outline lit, where it went pure white. One body is tinted at most HIT_TINT_BODY times in a second and
@@ -585,8 +584,6 @@ const HIT_EDGE := "#e8ecf2"
 const HIT_TINT: float = 0.6
 const HIT_TINT_BODY: int = 3
 const HIT_TINT_ALL: int = 4
-const BEAM_SOFT: float = 0.18
-const BEAM_LINE: float = 0.3
 ## What Rendering's flashes cover, for the flash register's weights (VfxFlashRegistry weighs a flash by its area against
 ## a quarter of the standard's 341 by 256 window, and counts none whose luminance step is under a tenth). Sizes are in
 ## world units on the fighters' plane (SimHost.flash_px turns them into pixels at the camera's scale). Each is an
@@ -600,8 +597,7 @@ const FLASH_CLASH_R: float = 70.0       # a clash flare's radius, before the 20 
 const FLASH_WINDOW_DIAG: float = 426.0  # px: the longest strip one 341 by 256 window holds, so a beam's length counts up to this
 const FLASH_STEP: Dictionary = {"body_hit": 0.7, "head_flash": 0.5, "guard_flash": 0.25, "cue_flare": 0.5, "beam": 0.6, "beam_clash": 0.7}
 ## A beam comes and goes once (docs/rendering/flash-sources.md): its strength rises over BEAM_RISE_S, holds, and falls
-## to nothing at its end. Its three layers' edges, outer glow to core, as the glow shader's falloff: the higher, the
-## softer the edge (a hard edge flips whole strips of pixels when the camera moves).
+## to nothing at its end.
 const BEAM_RISE_S: float = 0.1
 ## The most pixels of beam (at the flash register's scale, 1024 by 768) a bright beam's tail may uncover in a tick as
 ## it draws back from the firer (BeamView.tail_at). A beam that reaches a defender across the planet is tens of
@@ -610,7 +606,6 @@ const BEAM_RISE_S: float = 0.1
 ## tick 2153: 121% of the area threshold on that one tick). The analyser's own floor for a frame to count toward a
 ## change is 0.2% of the picture (1,573 pixels); this is under it.
 const BEAM_TAIL_PX: float = 1000.0
-const BEAM_EDGE: Array = [2.6, 1.8, 0.9]
 ## A clash's flare and its two beams rise over CLASH_RISE_S and fall over the clash's last CLASH_FALL_S.
 const CLASH_RISE_S: float = 0.15
 const CLASH_FALL_S: float = 0.25

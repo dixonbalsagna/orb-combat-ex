@@ -203,9 +203,9 @@ func flash_px(area_units: float, z: float = 0.0) -> float:
 ## What a beam of length len and width w (world units; the sim's b.w) covers in one of the standard's windows: its body
 ## layer's width, along as much of its length as a window holds.
 ## z: the depth it is drawn at (the plane's scale with depth off).
-func beam_px(len: float, w: float, z: float = 0.0) -> float:
+func beam_px(len: float, w: float, z: float = 0.0, who = null, short: bool = false) -> float:
 	var ppu: float = vfx.flashes.ppu_at(z - flash_focus_z)
-	return minf(len * ppu, RenderLook.FLASH_WINDOW_DIAG) * w * float(BeamView.LAYERS[1][0]) * ppu
+	return minf(len * ppu, RenderLook.FLASH_WINDOW_DIAG) * w * VfxBeamLook.body_k(who, short) * ppu
 
 
 ## A clash's flare and its two beams, each reaching half way between the fighters.
@@ -214,7 +214,7 @@ func clash_px(c) -> float:
 	var ppu: float = vfx.flashes.ppu_at(z - flash_focus_z)
 	var half: float = 0.5 * absf(SimWrap.sdx(c.A.x, c.D.x))
 	var r: float = (RenderLook.FLASH_CLASH_R + 20.0 / maxf(ppu, 0.01)) * RenderLook.FLASH_GLOW_R
-	return VfxFlashRegistry.disc_px(r, ppu) + beam_px(half, 26.0 + c.A.tier * 8.0, z) + beam_px(half, 26.0 + c.D.tier * 8.0, z)
+	return VfxFlashRegistry.disc_px(r, ppu) + beam_px(half, 26.0 + c.A.tier * 8.0, z, c.A) + beam_px(half, 26.0 + c.D.tier * 8.0, z, c.D)
 
 
 ## Whether a beam's bright form (its white core, at full strength) was granted. One the host has not seen in a tick
@@ -229,7 +229,7 @@ func _ask_beams() -> void:
 	var live: Dictionary = {}
 	for b in S.beams:
 		var id: int = b.get_instance_id()
-		live[id] = bool(_beam_ok[id]) if _beam_ok.has(id) else (not vfx.flashes.reduced and ask_flash("beam", RenderLook.col(b.col), beam_px(b.len, b.w, b.oz + 0.5 * b.zs * b.len), RenderLook.FLASH_STEP.beam))
+		live[id] = bool(_beam_ok[id]) if _beam_ok.has(id) else (not vfx.flashes.reduced and ask_flash("beam", RenderLook.col(b.col), beam_px(b.len, b.w, b.oz + 0.5 * b.zs * b.len, b.A, VfxBeamLook.is_short(b)), RenderLook.FLASH_STEP.beam))
 	_beam_ok = live
 	var on: bool = S.game.clash != null
 	if on and not _clash_on:

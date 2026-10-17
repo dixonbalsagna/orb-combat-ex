@@ -11,6 +11,7 @@ const NOT_FIGHTER = ['chosen_by', 'measured_dE00_under_this_vision'];
 
 function xrefArt({ get, err, esc, isObj }) {
   xrefUiColour({ get, err, esc, isObj });
+  xrefCityLooks({ get, err, esc, isObj });
   const sky = get(SKY);
   const cv = get(CVF);
   if (isObj(sky)) {
@@ -129,4 +130,41 @@ function xrefUiColour({ get, err, esc, isObj }) {
   if (isObj(ui.fighter_alias)) for (const [k, v] of Object.entries(ui.fighter_alias)) if (!k.startsWith('_') && typeof v === 'string' && !isObj(art.default[v])) err(UI, `/fighter_alias/${esc(k)}`, 'ui-colour-alias', `"${k}" is aliased to "${v}", who is not a fighter of data/art/colour-vision.json`);
 }
 
-module.exports = { xrefArt, xrefUiColour };
+// data/art/city-looks.json: a look's tint ids are unique; a district's look exists, its weights name facades and the look's tints and each set sums to 1; a tint's glass stays within the budget of its wall
+function xrefCityLooks({ get, err, esc, isObj }) {
+  const CL = 'data/art/city-looks.json';
+  const d = get(CL);
+  if (!isObj(d)) return;
+  const looks = isObj(d.looks) ? d.looks : {};
+  const tints = {};
+  for (const [lk, arr] of Object.entries(looks)) {
+    if (lk.startsWith('_') || !Array.isArray(arr)) continue;
+    const ids = new Set();
+    arr.forEach((tn, i) => {
+      if (!isObj(tn)) return;
+      if (typeof tn.id === 'string') { if (ids.has(tn.id)) err(CL, `/looks/${esc(lk)}/${i}/id`, 'city-looks-id', `tint id "${tn.id}" is used twice in "${lk}"`); ids.add(tn.id); }
+      if (isObj(tn.measured) && typeof d.budget === 'number') for (const k of ['glass_dark_vs_wall_mid', 'glass_bright_vs_wall_mid']) {
+        if (typeof tn.measured[k] === 'number' && tn.measured[k] > d.budget) err(CL, `/looks/${esc(lk)}/${i}/measured/${k}`, 'city-looks-budget', `${k} ${tn.measured[k]} is above the budget ${d.budget}: a pane may differ from its wall by at most the budget`);
+      }
+    });
+    tints[lk] = ids;
+  }
+  const facades = isObj(d.facades) ? new Set(Object.keys(d.facades).filter((k) => !k.startsWith('_'))) : new Set();
+  const sum = (o) => Object.entries(o).filter(([k, v]) => !k.startsWith('_') && typeof v === 'number').reduce((a, [, v]) => a + v, 0);
+  for (const [dn, dist] of Object.entries(isObj(d.districts) ? d.districts : {})) {
+    if (dn.startsWith('_') || !isObj(dist)) continue;
+    const P = `/districts/${esc(dn)}`;
+    const known = typeof dist.look === 'string' ? tints[dist.look] : undefined;
+    if (typeof dist.look === 'string' && !known) err(CL, `${P}/look`, 'city-looks-district-look', `look "${dist.look}" is not a key of looks (${Object.keys(looks).filter((k) => !k.startsWith('_')).join(', ')})`);
+    if (isObj(dist.facade_weights)) {
+      for (const k of Object.keys(dist.facade_weights)) if (!k.startsWith('_') && !facades.has(k)) err(CL, `${P}/facade_weights/${esc(k)}`, 'city-looks-facade-weight', `"${k}" is not a facade of facades (${[...facades].join(', ')})`);
+      if (Math.abs(sum(dist.facade_weights) - 1) > 0.01) err(CL, `${P}/facade_weights`, 'city-looks-weights-sum', `the facade weights sum to ${Math.round(sum(dist.facade_weights) * 1000) / 1000}, not 1`);
+    }
+    if (isObj(dist.tint_weights)) {
+      if (known) for (const k of Object.keys(dist.tint_weights)) if (!k.startsWith('_') && !known.has(k)) err(CL, `${P}/tint_weights/${esc(k)}`, 'city-looks-tint-weight', `"${k}" is not a tint of the look "${dist.look}" (${[...known].join(', ')})`);
+      if (Math.abs(sum(dist.tint_weights) - 1) > 0.01) err(CL, `${P}/tint_weights`, 'city-looks-weights-sum', `the tint weights sum to ${Math.round(sum(dist.tint_weights) * 1000) / 1000}, not 1`);
+    }
+  }
+}
+
+module.exports = { xrefArt, xrefUiColour, xrefCityLooks };

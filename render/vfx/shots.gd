@@ -194,13 +194,13 @@ func _flash(S: SimState, source: String, x: float, y: float, z: float, size: flo
 
 
 ## A flame burst is a full flash and asks the register; refused, it is sparks and smoke only (VfxExplode's "spark" mode).
-func _explode(S: SimState, d: VfxDebris, x: float, y: float, z: float, radius: float, surface: String, mode: String = "burst") -> int:
+func _explode(S: SimState, d: VfxDebris, x: float, y: float, z: float, radius: float, surface: String, mode: String = "burst", lane: Color = Color(0.0, 0.0, 0.0, 0.0)) -> int:
 	if mode == "burst" and flashes != null:
 		if flashes.ask("explosion", Color(1.0, 0.62, 0.2), S.tick, VfxFlashRegistry.disc_px(radius * 0.7, flashes.ppu_at(z)), 0.3):
 			_burst_tick = S.tick
 		else:
-			mode = "spark"
-	return VfxExplode.at(S, d, x, y, z, radius, surface, mode)
+			mode = "calm"        # refused (or Reduce flashing, the default): the flames still go off, in their waves and growing in, with fewer cinders (Orb, 2026-10-16: "flames and smoke")
+	return VfxExplode.at(S, d, x, y, z, radius, surface, mode, lane)
 
 
 func _add(kind: String, x: float, y: float, z: float, size: float, life: float, col: Color, col2: Color = Color.WHITE, dx: float = 1.0, dy: float = 0.0) -> Fx:
@@ -376,7 +376,7 @@ func _on_hit(S: SimState, e, oc: String, debris: VfxDebris) -> void:
 	if explode_enabled and debris != null and oc != "dodge":
 		explosions += 1
 		last_radius = VfxExplode.radius_for(kn, dmg, VfxReact.tier_of(S.fighters[owner]) if owner >= 0 and owner < S.fighters.size() else 1)
-		_explode(S, debris, x, y, z, last_radius, "fighter", "burst" if (oc == "hit" or oc == "stop") else "spark")
+		_explode(S, debris, x, y, z, last_radius, "fighter", "burst" if (oc == "hit" or oc == "stop") else "spark", col)
 	match oc:
 		"guard":
 			_add("splash", x, y, z, 80.0, life, col, col, back, 0.0)
@@ -414,7 +414,7 @@ func _on_end(S: SimState, e, debris: VfxDebris, water: VfxWater, quality: int, r
 			if explode_enabled and debris != null:
 				explosions += 1
 				last_radius = rad
-				_explode(S, debris, x, y, z, rad, "ground")
+				_explode(S, debris, x, y, z, rad, "ground", "burst", lane_of(S, own))
 			elif debris != null:
 				var q: float = VfxLook.QUALITY_SHARDS[clampi(quality, 0, 2)] * (0.5 if reduced else 1.0)
 				var biome: String = VfxPalette.biome_key(x)
@@ -442,7 +442,7 @@ func _on_end(S: SimState, e, debris: VfxDebris, water: VfxWater, quality: int, r
 			if explode_enabled and debris != null:
 				explosions += 1
 				last_radius = rad
-				_explode(S, debris, x, y, z, rad, "water")
+				_explode(S, debris, x, y, z, rad, "water", "burst", lane_of(S, own))
 		"mine":
 			# A mine's blast (a chain's too): a full-size burst where it lay, on the ground or in the air, and its blast radius shown as a ring.
 			var mine_ground: bool = bool(info[2]) if info != null else (y - WorldTerrain.groundY(S, x) < 1.2 * VfxLook.BH)
@@ -450,7 +450,7 @@ func _on_end(S: SimState, e, debris: VfxDebris, water: VfxWater, quality: int, r
 				explosions += 1
 				last_radius = rad
 				var low: bool = y - WorldTerrain.groundY(S, x) < 1.2 * VfxLook.BH
-				_explode(S, debris, x, y, z, rad, "ground" if (mine_ground or low) else "air")
+				_explode(S, debris, x, y, z, rad, "ground" if (mine_ground or low) else "air", "burst", lane_of(S, own))
 			_add("ring", x, y, z, rad * 0.85, p("shots", "hit_life") * 1.4, lane_of(S, own))
 			_fuse_total.erase(int(VfxHub._g(e, "id", -1)))
 		"building":
@@ -459,7 +459,7 @@ func _on_end(S: SimState, e, debris: VfxDebris, water: VfxWater, quality: int, r
 			if explode_enabled and debris != null:
 				explosions += 1
 				last_radius = rad
-				_explode(S, debris, x, y, z, rad, "wall")
+				_explode(S, debris, x, y, z, rad, "wall", "burst", lane_of(S, own))
 			_add("ring", x, y, z, 50.0 * big, p("shots", "end_life") * 0.8, lane_of(S, own))
 		"life":
 			if kind == "mine":

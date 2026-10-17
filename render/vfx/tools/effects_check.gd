@@ -204,6 +204,9 @@ func _run() -> void:
 	_reach()
 	_flashes()
 	_brawl()
+	_small_blasts()
+	_beam_look()
+	_multi()
 	_ghosts()
 	_vision()
 	_wall_outcome()
@@ -2116,7 +2119,9 @@ func _explosions() -> void:
 		if b.kind == VfxDebris.CHUNK and b.grav <= 0.0:
 			falling = false
 	_check(falling, "the chunks are thrown and fall")
-	_check(d3.jobs.size() > 0 and d3.jobs[0].kind == "smoulder", "the scorch smoulders: %d wisps queued over the next seconds" % d3.jobs.size())
+	var wisps: int = d3.jobs.filter(func(j): return j.kind == "smoulder").size()
+	var waves: int = d3.jobs.filter(func(j): return j.kind == "xwave").size()
+	_check(wisps > 0 and waves == 2, "the scorch smoulders: %d wisps queued over the next seconds, and the flames come in two later waves (%d)" % [wisps, waves])
 	var before: int = d3.spawned
 	for k in range(260):
 		S.T += SimConst.DT
@@ -2126,7 +2131,7 @@ func _explosions() -> void:
 	var dfi: VfxDebris = fresh.call()
 	VfxExplode.at(S, dfi, f1.x, g + 40.0, 0.0, R3, "fighter")
 	var kf: Dictionary = kinds_of.call(dfi)
-	_check(kf.has(VfxDebris.FLAME) and not kf.has(VfxDebris.CHUNK) and not kf.has(VfxDebris.RING) and dfi.jobs.is_empty(), "on a fighter: flame, sparks, smoke; no chunks, ring or scorch")
+	_check(kf.has(VfxDebris.FLAME) and not kf.has(VfxDebris.CHUNK) and not kf.has(VfxDebris.RING) and dfi.jobs.all(func(j): return j.kind != "smoulder"), "on a fighter: flame, sparks, smoke; no chunks, ring or scorch")
 	var dsp: VfxDebris = fresh.call()
 	VfxExplode.at(S, dsp, f1.x, g + 40.0, 0.0, R3, "fighter", "spark")
 	var ksp: Dictionary = kinds_of.call(dsp)
@@ -2205,7 +2210,7 @@ func _explosions() -> void:
 	var plain_quads: int = view.count
 	sh.deflected = 1
 	view.update(ht, host, 1.0, plains + 600.0, 0.7, 1200.0)
-	_check(view.count == plain_quads + 2, "and it is drawn tumbling: a turning cross of light on it (%d quads against %d)" % [view.count, plain_quads])
+	_check(view.count == plain_quads - 2, "and it is drawn tumbling: a turning cross of light on it and a straight tail in place of the flavoured ribbon (%d quads against %d)" % [view.count, plain_quads])
 	S.shots = []
 	# The mines of concept: arm, hold, the fuse, the blast; each fighter's own look; hovering and on the ground.
 	var hm := VfxHub.new()
@@ -2254,7 +2259,7 @@ func _explosions() -> void:
 	view.queue_free()
 	var saved: Dictionary = VfxExplode._data
 	VfxExplode._data = {}
-	var fallback: bool = VfxExplode.p("flames") == 5.0
+	var fallback: bool = VfxExplode.p("flames") == 7.5 and VfxExplode.p("scale_floor") == 0.62
 	VfxExplode._data = saved
 	_check(fallback, "missing data falls back to the defaults")
 	SimCore.dispose(S)
@@ -2536,7 +2541,7 @@ func _blast_round2() -> void:
 	var wild_q: int = view.count
 	ws.wild = false
 	view.update(hw, host, 1.0, plains + 600.0, 0.7, 1200.0)
-	_check(wild_q - view.count == 2, "a wild shot is drawn tumbling even if the sim has not counted a deflect (%d quads against %d)" % [wild_q, view.count])
+	_check(view.count - wild_q == 2, "a wild shot is drawn tumbling even if the sim has not counted a deflect (%d quads against the plain shot's %d)" % [wild_q, view.count])
 	ws.wild = true
 	for k in range(30):
 		_tick(S, hw, [])
@@ -3948,7 +3953,7 @@ func _reach() -> void:
 	for k in range(8):
 		_tick(S, hs, [])
 		q_st = maxi(q_st, quads.call(hs))
-	_check(q_st == 8, "B now is two chevrons, each of two lines with a light edge under it (%d quads)" % q_st)
+	_check(q_st == 10, "B now is two chevrons, each of two lines with a light edge under it, and the opening's ring on his chest (%d quads)" % q_st)
 	_tick(S, hs, [VfxMock.ev("launch", {"actor": 1, "target": 0, "amount": 1.0, "face": 1.0, "ux": 0.6, "uy": 0.8})])
 	_check(not hs.inreach.fx.any(func(f): return f.style == "stagger") and int(hs.inreach.made.get("send", 0)) == 1, "the launch ends the mark and sends him off")
 	var q_send: int = quads.call(hs)
@@ -4312,7 +4317,7 @@ func _brawl() -> void:
 	for k in range(6):
 		_tick(S, hl, [])
 		q_b = maxi(q_b, quads.call(hl))
-	_check(int(hl.inreach.made.get("stagger", 0)) == 1 and q_b == 8, "launcher_open: B now is two chevrons, each of two lines with a light edge under it (%d quads)" % q_b)
+	_check(int(hl.inreach.made.get("stagger", 0)) == 1 and q_b == 10, "launcher_open: B now is two chevrons, each of two lines with a light edge under it, and the opening's ring on his chest (%d quads)" % q_b)
 	_tick(S, hl, [VfxMock.ev("cue", {"actor": 0, "kind": "launcher_close", "text": "", "source": "", "target": 1})])
 	_check(quads.call(hl) == 0, "launcher_close takes them away")
 	# energy_land's k: the cue says which blow may take the full flash.
@@ -4717,3 +4722,409 @@ func _tick(S: SimState, h: VfxHub, events: Array) -> void:
 	var evs: Array = events.duplicate()
 	evs.append(tk)
 	h.consume(S, evs)
+
+
+## The beams' look (docs/vfx/beam-look.md; Legal fx03): a real width by default, a thin one as a fighter's own, a ripple that moves hue at steady luminance, 2 Hz or slower, no white core, the flavour by roster id.
+func _beam_look() -> void:
+	print("the beams' look")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var fp = S.fighters[0]
+	var fr = S.fighters[1]
+	_check(VfxBeamLook.key_of(fp) == "protagonist" and VfxBeamLook.key_of(fr) == "rival" and VfxBeamLook.key_of(null) == "default", "a fighter's flavour is his roster id's (%s, %s, %s)" % [VfxBeamLook.key_of(fp), VfxBeamLook.key_of(fr), VfxBeamLook.key_of(null)])
+	var fref := {"id": "REFERENCE"}
+	_check(VfxBeamLook.key_of(fref) == "reference" and VfxBeamLook.key_of({"id": "SOMEONE"}) == "default", "the training dummy has his own quiet flavour, an unknown id the default")
+	_check(VfxBeamLook.key_of(fr, true) == "rival_short" and VfxBeamLook.key_of(fp, true) == "protagonist", "the Anti-hero (the roster's RIVAL) has a short-beam flavour, the Protagonist has none (he keeps his own)")
+	var short_b := {"life": 0.5}
+	var sig_b := {"life": 0.95}
+	_check(VfxBeamLook.is_short(short_b) and not VfxBeamLook.is_short(sig_b) and VfxBeamLook.is_short({"life": 0.95, "short": true}), "a beam of 0.7 s or less is short, the signature's 0.95 s is not, and a `short` field decides when there is one")
+	# Width: a real beam by default (the body layer at 2.2 times the sim's width, the old look had 1.3), the Anti-hero's the thin one.
+	var w: float = 33.0
+	var body_default: float = VfxBeamLook.thickness(null, w, 1, 1.0)
+	_check(body_default >= 1.6 * 1.3 * w, "the default beam is a real width: its body is %.0f units against the old %.0f" % [body_default, 1.3 * w])
+	_check(VfxBeamLook.thickness(fr, w, 1, 1.0, true) < 0.4 * VfxBeamLook.thickness(fr, w, 1, 1.0), "one particular attack keeps a thin beam: the Anti-hero's short beam is %.0f against his signature's %.0f" % [VfxBeamLook.thickness(fr, w, 1, 1.0, true), VfxBeamLook.thickness(fr, w, 1, 1.0)])
+	# Colour: the second tint has the first's luminance (the ripple moves hue, not brightness), and no layer is white.
+	var lane := Color("#8fd6ff")
+	var worst_luma: float = 0.0
+	var white: bool = false
+	for who in [fp, fr, fref, null]:
+		for i in range(3):
+			var tt: Array = VfxBeamLook.tints(who, lane, i)
+			worst_luma = maxf(worst_luma, absf(VfxBeamLook.luma(tt[0]) - VfxBeamLook.luma(tt[1])))
+			for c in tt:
+				if c.r > 0.93 and c.g > 0.93 and c.b > 0.93:
+					white = true
+	# Art's colours (docs/art/beam-colours.md): the Rival's second tint turns +34 (an orchid-magenta, inside 260 to 320 and outside the Protagonist's azure), capped at 320; the Protagonist's turns -30 under tritan.
+	var rl := Color("#9a80d8")
+	var rt: Array = VfxBeamLook.tints(fr, rl.lerp(rl, 0.0), 2)
+	var rival_b: Color = VfxBeamLook.shifted(rl, 34.0)
+	var rh: float = rival_b.h * 360.0
+	_check(rh >= 280.0 and rh <= 320.0, "the Rival's second tint is an orchid-magenta at %.0f degrees: inside his 260 to 320, outside the Protagonist's 150 to 250" % rh)
+	var magenta := Color.from_hsv(300.0 / 360.0, 0.55, 0.8)
+	var capped: Color = VfxBeamLook.tints(fr, magenta, 2)[1]
+	_check(capped.h * 360.0 <= 320.5, "a magenta-forward aura (hue 300) keeps the Rival's second tint at 320 or less (%.0f)" % (capped.h * 360.0))
+	var tl := Color("#9c90d5")
+	VfxAura.vision_mode = "off"
+	var tb0: Color = VfxBeamLook.tints(fp, tl, 2)[1]
+	VfxAura.vision_mode = "tritan"
+	var tb1: Color = VfxBeamLook.tints(fp, tl, 2)[1]
+	VfxAura.vision_mode = "off"
+	_check(tb0.h * 360.0 > 270.0 and tb1.h * 360.0 < 235.0, "the Protagonist's tritan lane takes -30 (a steel blue %.0f), not +30 (a violet %.0f the Anti-hero's)" % [tb1.h * 360.0, tb0.h * 360.0])
+	_check(worst_luma < 0.02, "the two tints of a layer have the same luminance (worst difference %.4f)" % worst_luma)
+	_check(not white, "no layer of any flavour is white, the core included")
+	# The ripple: 2 Hz or slower, whatever the data says; the material sets its parameters.
+	var m: ShaderMaterial = VfxBeamLook.new_material(2)
+	VfxBeamLook.set_layer(m, fp, lane, 2, 1.0, false, 3.0, 600.0, true, 0.0)
+	_check(float(m.get_shader_parameter("hz")) <= 2.0 and float(m.get_shader_parameter("lum_amp")) <= 0.1, "the ripple is 2 Hz or slower and its brightness moves by at most a tenth (%.2f Hz, %.2f)" % [float(m.get_shader_parameter("hz")), float(m.get_shader_parameter("lum_amp"))])
+	var strong: float = float(m.get_shader_parameter("strength"))
+	VfxBeamLook.set_layer(m, fp, lane, 2, 1.0, true, 3.0, 600.0, true, 0.0)
+	var calm: float = float(m.get_shader_parameter("strength"))
+	_check(calm < strong and calm > 0.7 * strong, "a calm beam (refused, or Reduce flashing) is the same beam a little dimmer, not a thin line (%.2f against %.2f)" % [calm, strong])
+	var sh0: String = VfxBeamLook.new_material(0).shader.code
+	var sh1: String = VfxBeamLook.new_material(1).shader.code
+	_check(sh0.contains("blend_add") and sh1.contains("blend_mix"), "the sheath adds its glow and the body and core are alpha-blended: layers do not add up to white")
+	_check(VfxBeamLook.new_material(2).render_priority > VfxBeamLook.new_material(0).render_priority, "the core is drawn after the sheath")
+	_check(VfxBeamLook.body_k(fp) > VfxBeamLook.body_k(fr) and VfxBeamLook.body_k(fr) > VfxBeamLook.body_k(fr, true) and VfxBeamLook.body_k(fref) < VfxBeamLook.body_k(fr), "the flash register weighs each beam by its own width (protagonist %.2f, rival %.2f, his short beam %.2f, the dummy %.2f)" % [VfxBeamLook.body_k(fp), VfxBeamLook.body_k(fr), VfxBeamLook.body_k(fr, true), VfxBeamLook.body_k(fref)])
+
+
+## The small energy attacks' explosions (Orb, 2026-10-16): a bolt's blast has flames and smoke, in waves, with or without the register's flash, and the flames grow in.
+func _small_blasts() -> void:
+	print("small energy attacks' explosions")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var g: float = WorldTerrain.groundY(S, plains)
+	var bolt_r: float = VfxExplode.radius_for("bolt", 13.0, 1)
+	var fresh := func() -> VfxDebris:
+		var d := VfxDebris.new()
+		d.reset(6)
+		d.now = S.T
+		return d
+	var kinds_of := func(d: VfxDebris) -> Dictionary:
+		var k: Dictionary = {}
+		for b in d.bits:
+			k[b.kind] = int(k.get(b.kind, 0)) + 1
+		return k
+	var d0: VfxDebris = fresh.call()
+	VfxExplode.at(S, d0, plains, g + 20.0, 0.0, bolt_r, "ground", "burst")
+	var k0: Dictionary = kinds_of.call(d0)
+	var waves: int = d0.jobs.filter(func(j): return j.kind == "xwave").size()
+	_check(int(k0.get(VfxDebris.FLAME, 0)) >= 1 and waves == 2 and int(k0.get(VfxDebris.PUFF, 0)) >= 3, "a bolt's blast on the ground: flames now (%d), two later waves queued (%d), and smoke (%d puffs)" % [int(k0.get(VfxDebris.FLAME, 0)), waves, int(k0.get(VfxDebris.PUFF, 0))])
+	var dc: VfxDebris = fresh.call()
+	VfxExplode.at(S, dc, plains, g + 20.0, 0.0, bolt_r, "ground", "calm", Color("#8fd6ff"))
+	var kc: Dictionary = kinds_of.call(dc)
+	_check(int(kc.get(VfxDebris.FLAME, 0)) >= 1 and dc.jobs.filter(func(j): return j.kind == "xwave").size() == 2, "refused by the register (Reduce flashing, the default) the flames still go off: a 'calm' blast keeps them and loses some cinders")
+	var ds: VfxDebris = fresh.call()
+	VfxExplode.at(S, ds, plains, g + 20.0, 0.0, bolt_r, "ground", "spark")
+	_check(not kinds_of.call(ds).has(VfxDebris.FLAME), "a guard's or a deflect's blast (spark) is still sparks and smoke only")
+	# The waves arrive and run: after 0.2 s every flame of the blast has been made.
+	var total0: int = int(kinds_of.call(d0).get(VfxDebris.FLAME, 0))
+	for k in range(14):
+		S.T += SimConst.DT
+		d0.now = S.T
+		d0.step(S, SimConst.DT)
+	_check(int(kinds_of.call(d0).get(VfxDebris.FLAME, 0)) > total0 and d0.jobs.filter(func(j): return j.kind == "xwave").is_empty(), "the later waves come due and add their flames (%d, then %d alive)" % [total0, int(kinds_of.call(d0).get(VfxDebris.FLAME, 0))])
+	# A point-blank bolt or blast (the energy arts in reach) goes off at the contact the same way; a guard's is sparks and smoke.
+	S.fighters[0].x = plains
+	S.fighters[0].y = g
+	S.fighters[1].x = SimWrap.wrap(plains + 70.0)
+	S.fighters[1].y = g
+	var land := func(src: String, text: String) -> VfxHub:
+		var hp := VfxHub.new()
+		hp.press_enabled = true
+		hp.reset(S, 6)
+		_tick(S, hp, [])
+		_tick(S, hp, [VfxMock.ev("cue", {"actor": 0, "kind": "energy_land", "text": text, "source": src, "target": 1, "k": 0.0, "x": 1.0, "y": 0.0})])
+		return hp
+	var hbolt: VfxHub = land.call("hit", "bolt")
+	var kb: Dictionary = kinds_of.call(hbolt.debris)
+	_check(int(kb.get(VfxDebris.FLAME, 0)) >= 1 and hbolt.debris.jobs.filter(func(j): return j.kind == "xwave").size() == 2 and int(kb.get(VfxDebris.PUFF, 0)) >= 2, "a point-blank bolt that hits: flames now (%d), two later waves and smoke (%d puffs)" % [int(kb.get(VfxDebris.FLAME, 0)), int(kb.get(VfxDebris.PUFF, 0))])
+	var hguard: VfxHub = land.call("guard", "bolt")
+	_check(not kinds_of.call(hguard.debris).has(VfxDebris.FLAME), "a point-blank bolt that meets a guard is sparks and smoke only")
+	# A small blast is no longer a blink: its scale never falls under the floor.
+	_check(VfxExplode.scale_for(bolt_r) >= VfxExplode.p("scale_floor") - 1e-6, "the smallest blast keeps the floor of its scale (%.2f)" % VfxExplode.scale_for(bolt_r))
+
+
+## Multi-fight and choreography (docs/vfx/multi-fight-plan.md): the duel of perfects, the cash-in, the chase, the shine, the barrage's hand and landing, a guard's bolt and an interjection's tell.
+func _multi() -> void:
+	print("multi-fight and choreography")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var g: float = WorldTerrain.groundY(S, plains)
+	S.fighters[0].x = plains
+	S.fighters[0].y = g
+	S.fighters[1].x = SimWrap.wrap(plains + 70.0)
+	S.fighters[1].y = g
+	var host := FakeHost.new()
+	host.S = S
+	var view := VfxShotsView.new()
+	root.add_child(view)
+	var quads := func(h: VfxHub) -> int:
+		view.update(h, host, 1.0, plains + 35.0, 1.0, 1500.0)
+		return view.count
+	var cue := func(kind: String, slot: int, text: String, k: float, n: float):
+		return VfxMock.ev("cue", {"actor": slot, "kind": kind, "text": text, "target": 1 - slot, "k": k, "n": n, "x": 0.0, "y": 0.0})
+	var fresh := func(reduced: bool = false) -> VfxHub:
+		var h := VfxHub.new()
+		h.press_enabled = true
+		h.reduced_motion = reduced
+		h.reset(S, 6)
+		_tick(S, h, [])
+		return h
+	# The duel: a mark that grows with the level, one at a time, and a shockwave ring from level 3.
+	var counts: Array = []
+	for lvl in [1, 2, 3, 5, 8]:
+		var h: VfxHub = fresh.call()
+		_tick(S, h, [cue.call("duel", 0, "", float(lvl), 0.0)])
+		counts.append(quads.call(h))
+		_check(int(h.inreach.made.get("wave", 0)) == (1 if lvl >= 3 else 0), "duel level %d: the shockwave ring from level 3 only" % lvl)
+		_check(h.flashes.granted_by.is_empty() and h.flashes.log.is_empty(), "duel level %d asks the register for nothing (no disc)" % lvl)
+	_check(counts[0] < counts[2] and counts[2] < counts[3] and counts[3] <= counts[4], "the duel's mark grows with the level (quads at 1, 2, 3, 5, 8: %s)" % str(counts))
+	var hd: VfxHub = fresh.call()
+	_tick(S, hd, [cue.call("duel", 0, "", 1.0, 0.0)])
+	_tick(S, hd, [cue.call("duel", 1, "", 2.0, 0.0)])
+	_check(hd.inreach.fx.filter(func(f): return f.style == "duel").size() == 1, "a new level replaces the last mark: one at a time")
+	for k in range(14):
+		_tick(S, hd, [])
+	_check(quads.call(hd) == 0, "and the duel's marks are gone in their ticks")
+	var hdr: VfxHub = fresh.call(true)
+	_tick(S, hdr, [cue.call("duel", 0, "", 8.0, 0.0)])
+	var q8n: int = counts[4]
+	_check(quads.call(hdr) < q8n, "reduced motion draws fewer sparks and one ring (%d against %d)" % [quads.call(hdr), q8n])
+	# The glass and the cracked ground: a tower within 4 body heights has its windows blown out from level 3; none at level 2.
+	var tall = null
+	for b in S.buildings:
+		if b.alive and int(b.floors) >= 3 and (tall == null or b.h > tall.h):
+			tall = b
+	if tall != null:
+		var sx0: float = S.fighters[0].x
+		var sx1: float = S.fighters[1].x
+		S.fighters[0].x = SimWrap.wrap(tall.x - 40.0)
+		S.fighters[1].x = SimWrap.wrap(tall.x + 40.0)
+		var hw: VfxHub = fresh.call()
+		hw.react_enabled = true
+		_tick(S, hw, [cue.call("duel", 0, "", 2.0, 0.0)])
+		var w2: int = hw.react.blow_buildings
+		_tick(S, hw, [cue.call("duel", 0, "", 3.0, 0.0)])
+		_check(w2 == 0 and hw.react.blow_buildings >= 1, "the windows of a tower within 4 bh blow out from level 3 (%d at level 2, %d at 3)" % [w2, hw.react.blow_buildings])
+		S.fighters[0].x = sx0
+		S.fighters[1].x = sx1
+	# The end: the amplified send is drawn wider by the level; level 8's `apart` sends both; never a flash.
+	var he: VfxHub = fresh.call()
+	_tick(S, he, [cue.call("duel_end", 0, "amplified", 2.0, 0.0)])
+	var qe2: int = quads.call(he)
+	var he8: VfxHub = fresh.call()
+	_tick(S, he8, [cue.call("duel_end", 0, "apart", 8.0, 0.0)])
+	var qe8: int = quads.call(he8)
+	_check(qe8 > qe2 and int(he8.inreach.made.get("amped", 0)) == 2 and he8.flashes.log.is_empty(), "an amplified send at level 8 sends both and draws more than level 2 (%d against %d quads), no flash" % [qe8, qe2])
+	# The cash-in: the tell (a line and four brackets) for its ticks, then a double ring, a crossed crack and a cut; no register ask.
+	var hc: VfxHub = fresh.call()
+	_tick(S, hc, [cue.call("cash_in", 0, "", 0.0, float(S.tick + 2))])
+	var q_tell: int = quads.call(hc)
+	_check(q_tell == 9, "the cash-in's tell is a line and four corner brackets (%d quads)" % q_tell)
+	_tick(S, hc, [])
+	_tick(S, hc, [])
+	var q_hit: int = quads.call(hc)
+	_check(q_hit >= 6 and hc.flashes.log.is_empty(), "at the contact a double ring, a crossed crack and a cut (%d quads), no register ask" % q_hit)
+	for k in range(12):
+		_tick(S, hc, [])
+	_check(quads.call(hc) == 0, "and it is gone in 10 ticks")
+	# The chase: a trail while it lasts, brackets and a ring on each arrival, gone at the end.
+	var hs: VfxHub = fresh.call()
+	_tick(S, hs, [cue.call("chase", 0, "start", 0.0, 0.0)])
+	var chx0: float = S.fighters[0].x
+	for k in range(6):
+		S.fighters[0].x = SimWrap.wrap(S.fighters[0].x + 24.0)
+		_tick(S, hs, [])
+	var q_chase: int = quads.call(hs)
+	_tick(S, hs, [cue.call("chase", 0, "blow", 1.0, 0.0)])
+	var q_arr: int = quads.call(hs)
+	_check(q_chase >= 1 and q_arr > q_chase + 4, "a trail while he chases (%d quads), and each blow adds brackets and a ring (%d)" % [q_chase, q_arr])
+	_tick(S, hs, [cue.call("chase", 0, "end", 0.0, 0.0)])
+	for k in range(10):
+		_tick(S, hs, [])
+	_check(quads.call(hs) == 0, "the end of the chase takes the trail away")
+	S.fighters[0].x = chx0
+	# The shine: steady for as long as the window is open, off at the close.
+	var hsh: VfxHub = fresh.call()
+	_tick(S, hsh, [cue.call("perfect_window", 0, "light", 0.0, float(S.tick + 12))])
+	var qs0: int = quads.call(hsh)
+	for k in range(6):
+		_tick(S, hsh, [])
+	var qs1: int = quads.call(hsh)
+	_check(qs0 == 3 and qs1 == 3, "the striking hand shines steadily while the window is open (%d, then %d quads)" % [qs0, qs1])
+	_tick(S, hsh, [cue.call("perfect_made", 0, "light", 1.0, float(S.tick + 3))])
+	_check(quads.call(hsh) == 0, "and the shine is gone when the follow-up is made (perfect_made), or the window broken (perfect_broken)")
+	_tick(S, hsh, [cue.call("perfect_window", 0, "medium", 0.0, float(S.tick + 12))])
+	_check(quads.call(hsh) == 0, "a medium's or a heavy's window has no shine: only a light's holds")
+	_tick(S, hsh, [cue.call("perfect_window", 0, "light", 0.0, float(S.tick + 12))])
+	_tick(S, hsh, [cue.call("perfect_broken", 0, "missed", 1.0, 0.0)])
+	_check(quads.call(hsh) == 0, "perfect_broken ends it too")
+	# The barrage: the hand's edge only in the 4 ticks before the release; the landings: a rim, then a ring, then the one full flash for the last volley.
+	var hb: VfxHub = fresh.call()
+	_tick(S, hb, [cue.call("barrage_hand", 0, "sweep", 1.0, float(S.tick + 10))])
+	var qb0: int = quads.call(hb)
+	for k in range(7):
+		_tick(S, hb, [])
+	var qb1: int = quads.call(hb)
+	_check(qb0 == 0 and qb1 == 2, "the hand's edge waits and shows in the 4 ticks before the release (%d, then %d quads)" % [qb0, qb1])
+	var hl: VfxHub = fresh.call()
+	_tick(S, hl, [cue.call("barrage_land", 0, "hit", 1.0, 0.0)])
+	var ql1: int = quads.call(hl)
+	_tick(S, hl, [cue.call("barrage_land", 0, "hit", 2.0, 0.0)])
+	var ql2: int = quads.call(hl)
+	_check(hl.flashes.granted_by.is_empty() and ql2 > ql1, "volleys 1 and 2 land with a rim and a ring and ask for nothing (%d, then %d quads)" % [ql1, ql2])
+	for k in range(30):
+		_tick(S, hl, [])
+	_tick(S, hl, [cue.call("barrage_land", 0, "hit", 3.0, 0.0)])
+	_check(int(hl.flashes.granted_by.get("energy", 0)) == 1 and hl.flashes.worst_weight <= 0.5, "the last volley takes the barrage's one full flash, a disc of at most 0.5 of the register's weight (%.2f)" % hl.flashes.worst_weight)
+	var hlr: VfxHub = fresh.call(true)
+	_tick(S, hlr, [cue.call("barrage_land", 0, "hit", 3.0, 0.0)])
+	_check(hlr.flashes.granted_by.is_empty() and hlr.inreach.fx.any(func(f): return f.style == "bring" and not f.big), "reduced motion: the last volley keeps the ring and the rim and loses the flash")
+	# The ring's guards: a bolt's palm in the guard's colour, an interjection's tell of chevrons and, in its last 6 ticks, the committed line; nothing asks the register.
+	var hg: VfxHub = fresh.call()
+	_tick(S, hg, [cue.call("guard_volley", 1, "", 1.0, float(S.tick + 4))])
+	_check(int(hg.inreach.made.get("guard_volley", 0)) == 1 and quads.call(hg) >= 2 and hg.flashes.log.is_empty(), "a guard's bolt lights his palm as any fighter's does, with no register ask (%d quads)" % quads.call(hg))
+	var hi: VfxHub = fresh.call()
+	_tick(S, hi, [VfxMock.ev("cue", {"actor": 1, "kind": "windup", "text": "interject", "source": "x", "target": 0, "n": float(S.tick + 10), "dur": 10.0})])
+	var qi0: int = quads.call(hi)
+	for k in range(6):
+		_tick(S, hi, [])
+	var qi1: int = quads.call(hi)
+	_check(qi0 == 4 and qi1 == 5 and hi.flashes.log.is_empty(), "an interjection's tell is two chevrons, and the committed line joins them in its last 6 ticks (%d, then %d quads)" % [qi0, qi1])
+	var hib: VfxHub = fresh.call()
+	_tick(S, hib, [VfxMock.ev("cue", {"actor": 1, "kind": "windup", "text": "interject", "source": "bolt", "target": 0, "n": float(S.tick + 10), "dur": 10.0})])
+	for k in range(7):
+		_tick(S, hib, [])
+	_check(quads.call(hib) == 4, "a bolt interjection keeps the chevrons and no line (%d quads)" % quads.call(hib))
+	# The tech breaks a chase; the return from a send draws his approach as a chase does.
+	var hr: VfxHub = fresh.call()
+	var chx1: float = S.fighters[0].x
+	_tick(S, hr, [VfxMock.ev("cue", {"actor": 0, "kind": "return", "text": "lunge", "target": 1, "n": 20.0, "amount": 6.0})])
+	for k in range(6):
+		S.fighters[0].x = SimWrap.wrap(S.fighters[0].x + 24.0)
+		_tick(S, hr, [])
+	var q_ret: int = quads.call(hr)
+	_check(int(hr.inreach.made.get("return", 0)) == 1 and q_ret >= 1, "a return from a send draws his approach as a thin trail (%d quads)" % q_ret)
+	_tick(S, hr, [VfxMock.ev("cue", {"actor": 1, "kind": "tech", "text": "", "target": 0})])
+	_check(not hr.inreach.fx.any(func(f): return f.style == "chase") and int(hr.inreach.made.get("tech", 0)) == 1, "a tech breaks the chase: the trail goes and a mark shows where they part")
+	S.fighters[0].x = chx1
+	# The opening: a ring on his chest the moment B opens him, steady until it closes (Game Design's eleventh round).
+	var ho: VfxHub = fresh.call()
+	_tick(S, ho, [VfxMock.ev("cue", {"actor": 0, "kind": "launcher_open", "text": "flurry", "target": 1, "n": float(S.tick + 40)})])
+	var q_op0: int = quads.call(ho)
+	for k in range(12):
+		_tick(S, ho, [])
+	var q_op1: int = quads.call(ho)
+	_check(int(ho.inreach.made.get("opening", 0)) == 1 and q_op0 >= 2 + 8 and q_op1 == q_op0, "an opening shows a thin ring on his chest with the B-now chevrons, and it does not pulse (%d, then %d quads)" % [q_op0, q_op1])
+	_tick(S, ho, [VfxMock.ev("cue", {"actor": 0, "kind": "launcher_close", "text": "", "target": 1})])
+	_check(quads.call(ho) == 0, "and the opening's ring goes with the close")
+	# The beam struggle (Encounter's tug of war on the pulse): thin rings and lines at the meeting point and on the beams' line, no register ask, nothing without a clash.
+	var cl := FakeClash.new()
+	cl.A = S.fighters[0]
+	cl.D = S.fighters[1]
+	cl.t0 = S.T
+	cl.dur = 6.0
+	cl.aw = true
+	var hs2: VfxHub = fresh.call()
+	var sc := func(kind: String, slot: int, text: String, k: float, n: float, x: float = 0.0):
+		return VfxMock.ev("cue", {"actor": slot, "kind": kind, "text": text, "target": 1 - slot, "k": k, "n": n, "x": x, "y": 0.0})
+	_tick(S, hs2, [sc.call("beam_struggle", 0, "start", 0.0, float(S.tick + 300))])
+	_check(quads.call(hs2) == 0, "no clash, nothing drawn (the marks sit on the meeting point)")
+	S.game.clash = cl
+	_tick(S, hs2, [sc.call("beam_struggle", 0, "start", 0.0, float(S.tick + 300))])
+	_check(hs2.inreach.struggle_on and quads.call(hs2) == 1, "the struggle opens with one thin ring at the meeting point (%d quads)" % quads.call(hs2))
+	cl.mid = 0.2
+	var pt_a: Array = view._clash_pt(S, host, plains + 35.0, 1.0)
+	cl.mid = 0.8
+	var pt_b: Array = view._clash_pt(S, host, plains + 35.0, 1.0)
+	_check(bool(pt_a[0]) and absf(float(pt_a[1].x) - float(pt_b[1].x)) > 20.0, "the marks follow Clash.mid (the point at %.0f and at %.0f)" % [float(pt_a[1].x), float(pt_b[1].x)])
+	_tick(S, hs2, [sc.call("beam_pulse", 0, "", 1.0, float(S.tick))])
+	var q_pulse: int = quads.call(hs2)
+	for k in range(12):
+		_tick(S, hs2, [])
+	var q_ant: int = quads.call(hs2)
+	_check(q_pulse >= 2 and q_ant == 1 and hs2.inreach.fx.any(func(f): return f.style == "spulse" and f.k == 2), "a pulse leaves a ring and the next one's contraction is already coming (%d quads on it, %d a beat later)" % [q_pulse, q_ant])
+	_tick(S, hs2, [sc.call("beam_surge", 0, "surge", 0.0, 0.0)])
+	var q_su: int = quads.call(hs2)
+	_tick(S, hs2, [sc.call("beam_surge", 1, "sharp", 0.0, 0.0)])
+	_check(q_su >= 2 and int(hs2.inreach.made.get("surge_sharp", 0)) == 1 and int(hs2.inreach.made.get("surge", 0)) == 2, "a surge is a ring on his beam and a bulge at the point; a sharp one is the same, bigger (%d quads)" % q_su)
+	_tick(S, hs2, [sc.call("beam_stray", 1, "", 0.0, 0.0)])
+	_check(int(hs2.inreach.made.get("stray", 0)) == 1 and hs2.inreach.fx.any(func(f): return f.style == "sstray"), "a stray is a hiccup across his own beam: a short broken line, nothing flickers")
+	_check(hs2.flashes.log.is_empty() and hs2.flashes.granted_by.is_empty(), "none of it asks the flash register: thin rings and lines only")
+	for k in range(14):
+		_tick(S, hs2, [])
+	cl.mid = 0.97
+	_tick(S, hs2, [sc.call("beam_end", 0, "overwhelmed", 0.0, 0.0, 0.97)])
+	for k in range(5):
+		_tick(S, hs2, [])
+	_check(not hs2.inreach.struggle_on and quads.call(hs2) >= 2 and int(hs2.inreach.made.get("struggle_end_overwhelmed", 0)) == 1, "overwhelmed: thin rings run down the winner's beam to the loser (%d quads)" % quads.call(hs2))
+	var hs3: VfxHub = fresh.call()
+	_tick(S, hs3, [sc.call("beam_end", 0, "detonate", 0.0, 0.0, 0.5)])
+	var kd: Dictionary = {}
+	for b in hs3.debris.bits:
+		kd[b.kind] = int(kd.get(b.kind, 0)) + 1
+	_check(quads.call(hs3) == 2 and int(kd.get(VfxDebris.FLAME, 0)) >= 1 and hs3.debris.jobs.filter(func(j): return j.kind == "xwave").size() == 2, "detonate: two rings at the point and a fire there in waves, as any blast's (%d quads, %d flames)" % [quads.call(hs3), int(kd.get(VfxDebris.FLAME, 0))])
+	# Legal's fx04: under Reduce flashing or Reduced motion the struggle's marks are 1.5 Hz or slower (the rates are in data/vfx/energy.json "rates").
+	var rates = JSON.parse_string(FileAccess.get_file_as_string("res://data/vfx/energy.json")).get("rates", {})
+	var rates_ok: bool = rates is Dictionary and rates.has("struggle_beat") and rates.has("struggle_surge") and rates.has("opening_ring")
+	if rates_ok:
+		for key in rates:
+			if String(key).begins_with("_"):
+				continue
+			rates_ok = rates_ok and float(rates[key]["calm_hz"]) <= 2.0 and bool(rates[key]["strokes_only"]) == (key != "beam_ripple") and (float(rates[key]["calm_hz"]) <= 1.5 or key == "beam_ripple")
+	_check(rates_ok, "the rate list holds the struggle's beat, surge and stray, the opening ring, the shine and the chase's trail, each at 1.5 Hz or slower when calm (strokes only)")
+	for mode in ["flashing", "motion"]:
+		var hcalm: VfxHub = fresh.call(mode == "motion")
+		hcalm.reduced_flashing = mode == "flashing"
+		S.game.clash = cl
+		_tick(S, hcalm, [sc.call("beam_struggle", 0, "start", 0.0, float(S.tick + 300))])
+		var starts: Array = []
+		var seen: Dictionary = {}
+		var marks: Array = []
+		var last_marks: int = 0
+		for k in range(1, 10):
+			for tk in range(20):
+				var evs: Array = []
+				if tk == 0:
+					evs.append(sc.call("beam_pulse", 0, "", float(k), float(S.tick + 1)))
+				if tk == 2:
+					evs.append(sc.call("beam_surge", 0, "surge", 0.0, 0.0))
+					evs.append(sc.call("beam_surge", 1, "surge", 0.0, 0.0))
+				if tk == 8:
+					evs.append(sc.call("beam_stray", 1, "", 0.0, 0.0))
+				_tick(S, hcalm, evs)
+				for f in hcalm.inreach.fx:
+					if f.style == "spulse" and f.age >= 0.0 and not seen.has(f.get_instance_id()):
+						seen[f.get_instance_id()] = true
+						starts.append(S.tick)
+				var mm: int = int(hcalm.inreach.made.get("surge", 0)) + int(hcalm.inreach.made.get("stray", 0))
+				if mm > last_marks:
+					marks.append(S.tick)
+					last_marks = mm
+		var worst_rings: int = 0
+		for t0 in starts:
+			worst_rings = maxi(worst_rings, starts.filter(func(x): return x >= t0 and x < t0 + 60).size())
+		var worst_marks: int = 0
+		for t0 in marks:
+			worst_marks = maxi(worst_marks, marks.filter(func(x): return x >= t0 and x < t0 + 60).size())
+		_check(worst_rings <= 2 and worst_marks <= 2 and starts.size() >= 3 and marks.size() >= 3, "under Reduce %s the struggle's rings leave at most twice in any second (%d) and its surge and stray marks at most twice (%d): 1.5 Hz" % [mode, worst_rings, worst_marks])
+	var hs4: VfxHub = fresh.call()
+	_tick(S, hs4, [sc.call("beam_end", 0, "time", 0.0, 0.0, 0.7)])
+	_check(quads.call(hs4) == 1, "on time: one ring at the point")
+	S.game.clash = null
+	# A body the state does not hold draws nothing and breaks nothing.
+	var hx: VfxHub = fresh.call()
+	_tick(S, hx, [VfxMock.ev("cue", {"actor": 3, "kind": "windup", "text": "interject", "source": "x", "target": 0, "n": float(S.tick + 10), "dur": 10.0})])
+	_check(quads.call(hx) == 0, "a cue for a body the state does not hold draws nothing")
+
+
+## A clash as the struggle's state would have it (Clash.mid is Simulation's one new field: the meeting point, 0 at A's hands to 1 at D's, -1 for a clash with no struggle).
+class FakeClash:
+	var A = null
+	var D = null
+	var t0: float = 0.0
+	var dur: float = 0.0
+	var aw: bool = false
+	var mid: float = -1.0

@@ -13,3 +13,5 @@ Tools' `docs/tools/pending/apply-vfx-energy-ids.cjs` is **not needed**: it widen
 Gates in the scratch copy: effects_check, hash_check (plain and press styles), determinism (plain and `--intro`), the negative control failing as it must, `node tools/validate.js` (190 files, 0 errors, 0 warnings), `flash_reg_check`, `depth_check`, `after_check`. Collapse, both modes (Tools' path): HEAD and this apply read the same, 2/2/2/2 normal and 2/2.5/2/2 reduced.
 
 Superseded: `beam-look/` and `multi-fight/` (their READMEs say so). `chunk-area-cap.patch` is a separate parked idea and stays.
+
+**Applied to the tree 2026-10-16** (on the EP's go, HEAD 47ae43a4) with Legal's fx04 and fx05 conditions: the struggle's marks are 1.5 Hz or slower under Reduce flashing and Reduced motion (`reach.gd`), and `data/vfx/energy.json` gained a "rates" list (schema updated). `apply.patch` here is the park as committed (b2f5b290), without those additions; the tree is the truth.

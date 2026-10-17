@@ -269,6 +269,44 @@ func on_crater(S: SimState, e, hub) -> void:
 		blowouts.pop_front()
 
 
+## A duel of perfects' shockwave (cue `duel`, level 3 and up; VfxHub._duel_wave): the windows of the buildings within 4 body heights of the pair blow out, nearest first, a floor row
+## more for each level (at most `floors_max`), at the shock's own speed. The same jobs and blow-outs as a crater's wave; no register ask (glass is not a flash).
+func on_wave(S: SimState, x: float, level: int, hub) -> void:
+	var reach: float = 4.0 * VfxLook.BH
+	var cand: Array = []
+	for b in S.buildings:
+		if not b.alive or int(b.floors) < int(p("windows", "min_floors")):
+			continue
+		var d: float = absf(SimWrap.sdx(x, b.x))
+		if d <= reach + b.w * 0.5:
+			cand.append([d, b])
+	if cand.is_empty():
+		return
+	cand.sort_custom(func(a, c): return a[0] < c[0])
+	var q: float = VfxLook.QUALITY_SHARDS[clampi(hub.quality, 0, 2)] * (0.5 if hub.reduced_motion else 1.0)
+	var nb: int = clampi(int(round(float(int(p("windows", "max_buildings"))) * (0.5 + 0.5 * q))), 1, 24)
+	blow_waves += 1
+	for k in range(mini(cand.size(), nb)):
+		var d2: float = cand[k][0]
+		var b2 = cand[k][1]
+		var strength: float = clampf(1.0 - 0.6 * d2 / maxf(reach, 1.0), 0.2, 1.0)
+		var F: int = maxi(int(b2.floors), 1)
+		var rows: int = clampi(int(round(float(F) * strength * 0.6)) + (level - 3) / 2, 1, int(p("windows", "floors_max")))
+		var floors: Array = []
+		for r in range(rows):
+			floors.append(mini(int(floor((float(r) + 0.5) / float(rows) * float(F))), F - 1))
+		var at: float = hub.fx_now(S) + d2 / maxf(p("windows", "speed"), 1.0)
+		var j := VfxDebris.Job.new()
+		j.at = at
+		j.kind = "blow"
+		j.a = {"x": b2.x, "w": b2.w, "base": WorldStructures.baseY(S, b2), "fh": b2.h / float(F), "z": hub.front_z(b2), "floors": floors, "scale": p("windows", "scale"), "pane": VfxPanes.grid(S, b2)}
+		debris.jobs.append(j)
+		blowouts.append({"b": b2.idx, "at": at, "strength": strength, "lo": int(floors[0]), "hi": int(floors[floors.size() - 1])})
+		blow_buildings += 1
+	while blowouts.size() > 64:
+		blowouts.pop_front()
+
+
 ## Drop blow-outs whose time is long past (Rendering reads them while the windows are out).
 func prune(now: float) -> void:
 	var keep: float = p("windows", "keep_s")

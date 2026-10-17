@@ -105,6 +105,7 @@ var stat_consume_max: int = 0
 var _slow: float = 0.0              # seconds spent below AUTO_DOWN_FPS
 var _fast: float = 0.0              # seconds spent at or above AUTO_UP_FPS
 var _hold: float = 0.0              # no step up for this long after a step down
+var _duel_crack_tick: int = -1000000   # the unfrozen tick of the last duel crack web (one in 30)
 var _last_crater = null             # the newest crater record already turned into a set
 var _last_slide = null
 var _next_id: int = 1
@@ -223,6 +224,7 @@ func _sync_vision(S: SimState) -> void:
 			if not lane.is_equal_approx(own):
 				m[String(f.aura).to_lower()] = lane
 	VfxAura.vision_map = m
+	VfxAura.vision_mode = mode
 	for i in range(mini(accents.size(), S.fighters.size())):
 		accents[i] = VfxLook.trail_accent(String(S.fighters[i].aura))
 
@@ -303,6 +305,9 @@ func _consume(S: SimState, events: Array) -> void:
 				debris.reduced = reduced_motion
 				earth.entrance_now = true
 				earth.on_entrance_land(S, e)
+	for e in events:
+		if e.type == "cue" and String(e.kind) == "duel" and int(float(_g(e, "k", 0.0))) >= int(VfxReach.pm("wave_min_level")):
+			_duel_wave(S, e)
 	_sync_cracks(S)
 	if shots_enabled:
 		shots.explode_enabled = explosions_enabled
@@ -620,6 +625,43 @@ func _sync_cracks(S: SimState) -> void:
 	for j in range(start, ns):
 		_queue_slide(S, S.slides[j])
 	_last_slide = S.slides[ns - 1] if ns > 0 else null
+
+
+## A duel of perfects from level 3 (cue `duel`): the windows of the buildings within 4 body heights go (react.on_wave), and at levels 3, 5, 7 and 8 the ground under the pair takes a
+## crack web of the level's size (a crater-style set at the middle of the pair, on the cracks layer and its caps: at most one set in 30 ticks, dry ground that takes cracks only).
+func _duel_wave(S: SimState, e) -> void:
+	var slot: int = int(e.actor)
+	var vic: int = int(_g(e, "target", 1 - slot))
+	if slot < 0 or slot >= S.fighters.size() or vic < 0 or vic >= S.fighters.size() or vic == slot:
+		return
+	var lvl: int = int(float(_g(e, "k", 3.0)))
+	var fa = S.fighters[slot]
+	var mx: float = SimWrap.wrap(fa.x + SimWrap.sdx(fa.x, S.fighters[vic].x) * 0.5)
+	if react_enabled:
+		react.on_wave(S, mx, lvl, self)
+	if not cracks_enabled or not (lvl == 3 or lvl == 5 or lvl == 7 or lvl >= 8):
+		return
+	if ticks - _duel_crack_tick < 30 and _duel_crack_tick >= 0:
+		return
+	var r: float = (1.2 + 0.15 * float(lvl)) * VfxLook.BH
+	var key: int = VfxCrackGen.crater_key(mx, r, 0.0)
+	var energy: float = 6.0 + 2.5 * float(lvl)
+	var biome: String = VfxPalette.biome_key(mx)
+	if WorldWater.surfaceAt(S, mx) != WorldWater.DRY or not VfxPalette.takes_cracks(biome):
+		return
+	var lines: Array = VfxCrackGen.crater_lines(seed, key, r, energy, false, "duel", quality)
+	if lines.is_empty():
+		return
+	var cs := CrackSet.new()
+	cs.kind = 0
+	cs.key = key
+	cs.x = mx
+	cs.born = fx_now(S)
+	cs.biome = biome
+	cs.lines = lines
+	_add(cs)
+	_add_vents(S, cs)
+	_duel_crack_tick = ticks
 
 
 func _drop_kind(kind: int) -> void:

@@ -97,11 +97,11 @@ func _run() -> void:
 	var same: bool = true
 	var d: Vector2 = e - a
 	var u: Vector2 = d / d.length()
-	for j in range(BeamView.LAYERS.size()):
-		var th: float = 30.0 * BeamView.LAYERS[j][0] + BeamView.LAYERS[j][1] / 1.15
+	for j in range(BeamView.LAYER_COUNT):
+		var th: float = VfxBeamLook.thickness(null, 30.0, j, 1.15)
 		var old := Transform3D(Basis(Vector3(u.y, -u.x, 0.0) * th, Vector3(u.x, u.y, 0.0) * (d.length() + th * 0.5), Vector3(0.0, 0.0, th)), Vector3((a.x + e.x) * 0.5, (a.y + e.y) * 0.5, RenderLook.Z_BEAMS))
 		same = same and (bv._pool[0][j] as MeshInstance3D).transform == old
-	_expect(same, "a beam with no depth is placed by the old formula, to the bit (%d layers)" % BeamView.LAYERS.size())
+	_expect(same, "a beam with no depth is placed by the old formula, with VFX's widths, to the bit (%d layers)" % BeamView.LAYER_COUNT)
 	# --- a beam in depth
 	var za: float = -40.0
 	var ze: float = -640.0
@@ -109,7 +109,7 @@ func _run() -> void:
 	var ok: bool = true
 	var a3 := Vector3(a.x, a.y, RenderLook.Z_BEAMS + za)
 	var e3 := Vector3(e.x, e.y, RenderLook.Z_BEAMS + ze)
-	for j in range(BeamView.LAYERS.size()):
+	for j in range(BeamView.LAYER_COUNT):
 		var t: Transform3D = (bv._pool[0][j] as MeshInstance3D).transform
 		var ax: Vector3 = t.basis.y.normalized()
 		ok = ok and t.origin.distance_to((a3 + e3) * 0.5) < 0.01 and ax.distance_to((e3 - a3).normalized()) < 0.0001

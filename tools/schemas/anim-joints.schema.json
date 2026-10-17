@@ -222,6 +222,70 @@
       "patternProperties": {
         "^_": true
       }
+    },
+    "wing": {
+      "type": "object",
+      "required": [
+        "fix"
+      ],
+      "properties": {
+        "fix": {
+          "type": "boolean",
+          "description": "The pose bake slides a free hand forward when the solve would make a chicken wing (AnimPose._is_wing). false: no fix."
+        },
+        "suffixes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[.][a-z0-9_]+$"
+          },
+          "description": "The fix applies to poses whose id ends in one of these (the strikes' contact and follow keys: a dash's arms swept back are meant)."
+        },
+        "skip": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+          },
+          "description": "Poses the fix leaves alone (rule joints-wing-skip: each is a real pose)."
+        },
+        "flex_deg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 180,
+          "description": "A wing's elbow is bent at least this much, in degrees."
+        },
+        "up": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 60,
+          "description": "... carried this far above its shoulder, in units."
+        },
+        "drop": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 60,
+          "description": "... with the hand this far below the elbow, in units."
+        },
+        "back": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 60,
+          "description": "... and this far behind it, in units."
+        },
+        "margin": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 60,
+          "description": "A wing's way out is taken this much farther than the first legal place, in units."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "Optional. The chicken-wing fix in the pose bake (docs/animation: homework 4): a free arm whose solve would stick its elbow out is moved to a bent, carried and dropped place."
     }
   },
   "additionalProperties": false,
