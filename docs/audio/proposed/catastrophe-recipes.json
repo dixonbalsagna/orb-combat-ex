@@ -1,0 +1,448 @@
+{
+  "schema": 1,
+  "note": "Proposed recipes for docs/audio/catastrophe.md (paper, 2026-10-16): not in audio/data/impacts.json. Same family as the reworked hits: low, soft-edged, no crack, no ring, no siren or countdown (Legal c07). Merge `sounds` into audio/data/impacts.json when the cues exist.",
+  "sounds": {
+    "cat.tremor": {
+      "rate": 32000,
+      "variants": 1,
+      "drive": 0.8,
+      "peak_db": -4.0,
+      "jitter": {
+        "f": 0.0,
+        "t60": 0.0,
+        "gain": 0.0
+      },
+      "layers": [
+        {
+          "type": "rumble",
+          "lp": 60,
+          "attack": 0.7,
+          "t60": 3.6,
+          "gain": 1.0,
+          "wobble": 0.7,
+          "wobble_hz": 2.5
+        },
+        {
+          "type": "tone",
+          "f": 45,
+          "f_to": 30,
+          "tau": 1.6,
+          "attack": 0.6,
+          "t60": 3.2,
+          "gain": 1.0,
+          "drive": 1.6,
+          "h2": 0.55,
+          "h3": 0.3
+        },
+        {
+          "type": "noise",
+          "filter": "lp",
+          "f": 420,
+          "q": 0.7,
+          "attack": 0.5,
+          "t60": 3.0,
+          "gain": 0.35,
+          "f_to": 120,
+          "tau": 1.5
+        },
+        {
+          "type": "grains",
+          "rate0": 55,
+          "tau": 1.6,
+          "len": 3.6,
+          "f": [
+            150,
+            480
+          ],
+          "t60": 0.012,
+          "gain": 0.35,
+          "at": 0.5
+        },
+        {
+          "type": "noise",
+          "filter": "bp",
+          "f": 210,
+          "q": 5.0,
+          "attack": 0.25,
+          "t60": 1.1,
+          "gain": 0.3,
+          "f_to": 125,
+          "tau": 0.6,
+          "at": 0.9
+        },
+        {
+          "type": "noise",
+          "filter": "bp",
+          "f": 170,
+          "q": 5.0,
+          "attack": 0.3,
+          "t60": 1.3,
+          "gain": 0.28,
+          "f_to": 110,
+          "tau": 0.7,
+          "at": 2.0
+        }
+      ]
+    },
+    "cat.breach.bore": {
+      "rate": 32000,
+      "variants": 1,
+      "drive": 0.6,
+      "peak_db": -6.0,
+      "jitter": {
+        "f": 0.0,
+        "t60": 0.0,
+        "gain": 0.0
+      },
+      "layers": [
+        {
+          "type": "rumble",
+          "lp": 320,
+          "attack": 0.3,
+          "t60": 3.6,
+          "gain": 1.0,
+          "wobble": 0.55,
+          "wobble_hz": 23
+        },
+        {
+          "type": "noise",
+          "filter": "lp",
+          "f": 600,
+          "q": 0.7,
+          "attack": 0.3,
+          "t60": 3.0,
+          "gain": 0.4,
+          "f_to": 300,
+          "tau": 1.5
+        },
+        {
+          "type": "tone",
+          "f": 72,
+          "f_to": 56,
+          "tau": 1.2,
+          "attack": 0.3,
+          "t60": 3.2,
+          "gain": 0.9,
+          "drive": 1.2,
+          "h2": 0.4,
+          "h3": 0.0
+        }
+      ]
+    },
+    "cat.magma.plop": {
+      "rate": 32000,
+      "variants": 4,
+      "drive": 0.0,
+      "peak_db": -12.0,
+      "jitter": {
+        "f": 0.15,
+        "t60": 0.2,
+        "gain": 0.15
+      },
+      "layers": [
+        {
+          "type": "tone",
+          "f": 110,
+          "f_to": 55,
+          "tau": 0.03,
+          "attack": 0.001,
+          "t60": 0.1,
+          "gain": 1.0,
+          "drive": 0.6,
+          "h2": 0.2,
+          "h3": 0.0
+        },
+        {
+          "type": "noise",
+          "filter": "lp",
+          "f": 500,
+          "q": 0.7,
+          "attack": 0.001,
+          "t60": 0.03,
+          "gain": 0.4
+        }
+      ]
+    },
+    "cat.magma.steam": {
+      "rate": 32000,
+      "variants": 1,
+      "drive": 0.0,
+      "peak_db": -22.0,
+      "jitter": {
+        "f": 0.0,
+        "t60": 0.0,
+        "gain": 0.0
+      },
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bp",
+          "f": 420,
+          "q": 0.8,
+          "attack": 0.35,
+          "t60": 1.6,
+          "gain": 0.5
+        },
+        {
+          "type": "rumble",
+          "lp": 220,
+          "attack": 0.3,
+          "t60": 1.6,
+          "gain": 0.5,
+          "wobble": 0.0,
+          "wobble_hz": 7
+        }
+      ]
+    },
+    "cat.rock.tick": {
+      "rate": 32000,
+      "variants": 3,
+      "drive": 0.0,
+      "peak_db": -18.0,
+      "jitter": {
+        "f": 0.25,
+        "t60": 0.2,
+        "gain": 0.2
+      },
+      "layers": [
+        {
+          "type": "tone",
+          "f": 260,
+          "f_to": 260,
+          "tau": 0.05,
+          "attack": 0.0005,
+          "t60": 0.014,
+          "gain": 1.0,
+          "drive": 0.0,
+          "h2": 0.0,
+          "h3": 0.0
+        },
+        {
+          "type": "noise",
+          "filter": "bp",
+          "f": 500,
+          "q": 1.2,
+          "attack": 0.0005,
+          "t60": 0.01,
+          "gain": 0.5
+        }
+      ]
+    },
+    "cat.blast.core": {
+      "rate": 32000,
+      "variants": 1,
+      "drive": 1.1,
+      "peak_db": -2.0,
+      "jitter": {
+        "f": 0.0,
+        "t60": 0.0,
+        "gain": 0.0
+      },
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "bp",
+          "f": 650,
+          "q": 0.7,
+          "attack": 0.004,
+          "t60": 0.25,
+          "gain": 0.35,
+          "f_to": 250,
+          "tau": 0.08
+        },
+        {
+          "type": "tone",
+          "f": 70,
+          "f_to": 28,
+          "tau": 0.15,
+          "attack": 0.004,
+          "t60": 1.5,
+          "gain": 1.0,
+          "drive": 1.6,
+          "h2": 0.4,
+          "h3": 0.15
+        },
+        {
+          "type": "tone",
+          "f": 200,
+          "f_to": 70,
+          "tau": 0.06,
+          "attack": 0.004,
+          "t60": 0.5,
+          "gain": 0.6,
+          "drive": 1.0,
+          "h2": 0.1,
+          "h3": 0.0
+        },
+        {
+          "type": "rumble",
+          "lp": 120,
+          "attack": 0.02,
+          "t60": 2.6,
+          "gain": 0.6,
+          "wobble": 0.0,
+          "wobble_hz": 7
+        },
+        {
+          "type": "grains",
+          "rate0": 140,
+          "tau": 0.4,
+          "len": 1.2,
+          "f": [
+            150,
+            520
+          ],
+          "t60": 0.012,
+          "gain": 0.3,
+          "at": 0.05
+        }
+      ]
+    },
+    "cat.blast.roar": {
+      "rate": 32000,
+      "variants": 1,
+      "drive": 0.8,
+      "peak_db": -8.0,
+      "jitter": {
+        "f": 0.0,
+        "t60": 0.0,
+        "gain": 0.0
+      },
+      "layers": [
+        {
+          "type": "rumble",
+          "lp": 150,
+          "attack": 1.6,
+          "t60": 8.0,
+          "gain": 1.0,
+          "wobble": 0.3,
+          "wobble_hz": 1.2
+        },
+        {
+          "type": "noise",
+          "filter": "lp",
+          "f": 520,
+          "q": 0.7,
+          "attack": 1.2,
+          "t60": 7.0,
+          "gain": 0.5,
+          "f_to": 150,
+          "tau": 3.0
+        },
+        {
+          "type": "tone",
+          "f": 60,
+          "f_to": 42,
+          "tau": 4.0,
+          "attack": 1.0,
+          "t60": 7.0,
+          "gain": 0.8,
+          "drive": 1.3,
+          "h2": 0.4,
+          "h3": 0.0
+        }
+      ]
+    },
+    "cat.ash.hush": {
+      "rate": 32000,
+      "variants": 1,
+      "drive": 0.0,
+      "peak_db": -24.0,
+      "jitter": {
+        "f": 0.0,
+        "t60": 0.0,
+        "gain": 0.0
+      },
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lp",
+          "f": 600,
+          "q": 0.7,
+          "attack": 3.0,
+          "t60": 20.0,
+          "gain": 0.35,
+          "f_to": 300,
+          "tau": 4.0
+        },
+        {
+          "type": "rumble",
+          "lp": 130,
+          "attack": 3.0,
+          "t60": 20.0,
+          "gain": 0.4,
+          "wobble": 0.0,
+          "wobble_hz": 7
+        }
+      ]
+    },
+    "cat.exo.pop": {
+      "rate": 32000,
+      "variants": 4,
+      "drive": 0.0,
+      "peak_db": -14.0,
+      "jitter": {
+        "f": 0.25,
+        "t60": 0.2,
+        "gain": 0.15
+      },
+      "layers": [
+        {
+          "type": "tone",
+          "f": 140,
+          "f_to": 70,
+          "tau": 0.02,
+          "attack": 0.001,
+          "t60": 0.06,
+          "gain": 1.0,
+          "drive": 0.4,
+          "h2": 0.0,
+          "h3": 0.0
+        },
+        {
+          "type": "noise",
+          "filter": "lp",
+          "f": 600,
+          "q": 0.7,
+          "attack": 0.001,
+          "t60": 0.02,
+          "gain": 0.4
+        }
+      ]
+    },
+    "cat.exo.hum": {
+      "rate": 32000,
+      "variants": 1,
+      "drive": 0.0,
+      "peak_db": -24.0,
+      "jitter": {
+        "f": 0.0,
+        "t60": 0.0,
+        "gain": 0.0
+      },
+      "layers": [
+        {
+          "type": "tone",
+          "f": 85,
+          "f_to": 85,
+          "tau": 0.05,
+          "attack": 0.8,
+          "t60": 7.0,
+          "gain": 1.0,
+          "drive": 0.0,
+          "h2": 0.3,
+          "h3": 0.0
+        },
+        {
+          "type": "rumble",
+          "lp": 120,
+          "attack": 0.8,
+          "t60": 7.0,
+          "gain": 0.5,
+          "wobble": 0.0,
+          "wobble_hz": 7
+        }
+      ]
+    }
+  }
+}
