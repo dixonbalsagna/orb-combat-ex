@@ -3159,6 +3159,170 @@
         "^_": true
       },
       "description": "The beam struggle (rule-of-cool.md section 2)."
+    },
+    "grapple": {
+      "type": "object",
+      "description": "The grapple's director side (sim/director/grapple.gd): the catch, the clinch, the throws, the lockout.",
+      "properties": {
+        "_note": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "False: A in a brawl is as before."
+        },
+        "catch": {
+          "type": "object",
+          "description": "The catch.",
+          "properties": {
+            "tell": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Ticks from A's press to the catch's landing."
+            },
+            "tech": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The caught fighter's A within this many ticks of the landing breaks it."
+            },
+            "whiffOpen": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "A catch out of reach leaves him open this long."
+            }
+          },
+          "required": [
+            "tell",
+            "tech",
+            "whiffOpen"
+          ],
+          "additionalProperties": false
+        },
+        "clinch": {
+          "type": "object",
+          "description": "The clinch.",
+          "properties": {
+            "max": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Its length at most, from the tie-up."
+            },
+            "pulse": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "A pulse every this many ticks."
+            },
+            "window": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "An A inside this many ticks of a pulse claims it."
+            },
+            "sharp": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "... and is sharp inside this many."
+            },
+            "grip": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The grip runs from minus this to this."
+            },
+            "leadGuard": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The catcher's lead on a rival who guards, winds or charges."
+            },
+            "partBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Both part this far past striking distance, in body heights, at the time and the tech."
+            },
+            "pushBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The push-off's parting, in body heights."
+            },
+            "pushFirstMove": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The pusher's first move, in ticks."
+            },
+            "aiOffsets": {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              },
+              "minItems": 1,
+              "description": "The AI's pummels this far off the pulse (never sharp)."
+            }
+          },
+          "required": [
+            "max",
+            "pulse",
+            "window",
+            "sharp",
+            "grip",
+            "leadGuard",
+            "partBh",
+            "pushBh",
+            "pushFirstMove",
+            "aiOffsets"
+          ],
+          "additionalProperties": false
+        },
+        "throw": {
+          "type": "object",
+          "description": "The throws.",
+          "properties": {
+            "acrossBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "A throw across: a knock-back this long, in body heights."
+            },
+            "upBh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "A throw up lifts him this far, in body heights."
+            },
+            "upOpen": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "... and he is open this long."
+            },
+            "bury": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "A throw down to the ground buries him this long."
+            }
+          },
+          "required": [
+            "acrossBh",
+            "upBh",
+            "upOpen",
+            "bury"
+          ],
+          "additionalProperties": false
+        },
+        "lockout": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "A grab is refused this long after each attempt, and for both after a clinch ends with nobody thrown."
+        },
+        "noRegrab": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "A thrown fighter can't be grabbed for this long."
+        }
+      },
+      "required": [
+        "enabled",
+        "catch",
+        "clinch",
+        "throw",
+        "lockout",
+        "noRegrab"
+      ],
+      "additionalProperties": false
     }
   },
   "additionalProperties": false,

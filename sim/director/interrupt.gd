@@ -349,21 +349,22 @@ static func tick(S: SimState) -> void:
 		return
 	var ex = S.dirS.ex
 	var order: Array = [ex.D, ex.A] if ex != null else S.fighters
-	for f in order:
+	var fr: Array = DirGrapple.freeOf(S, order)   # in a catch or a clinch his presses are the grapple's, and only a burst breaks it
+	for f in fr:
 		if _human(f) and f.input.guardPress:
 			guardPress(S, f)
-	for f in order:
+	for f in fr:
 		if f.input.context and f.stunTicks <= 0 and (f.ai != null or _human(f)):
 			DirBlast.context(S, f)   # outside an exchange: a mine with the energy family held, the context deflect on a held guard
 	# No press is silent (the HUD marks the cell): a cell with no move yet says so. RT with X, Y or A reaches the intent
 	# as `special`, which nothing reads. A with no guard held, outside the energy family, has no reading either.
-	for f in order:
+	for f in fr:
 		if not _human(f):
 			continue
 		var cell: String = ""
 		if f.input.special >= 1 and f.input.special <= 3:
 			cell = EMPTY_CELLS[f.input.special - 1]
-		elif f.input.context and not f.input.guard and f.act.mode != 1:
+		elif f.input.context and not f.input.guard and f.act.mode != 1 and not DirGrapple.takesA(S, f):   # in a brawl, A is the grapple's
 			cell = "a"
 		if cell != "":
 			SimFx.cue(S, f, "press_ack", "empty", cell)
@@ -371,10 +372,10 @@ static func tick(S: SimState) -> void:
 	if ex != null:
 		_aiBlocks(S, ex)
 	var taken: bool = false
-	for f in order:
+	for f in fr:
 		if not taken and _human(f) and f.input.context and f.input.guard:
 			taken = reversal(S, ex, f)
-	for f in order:
+	for f in fr:
 		if not taken and _human(f) and f.input.dodge:
 			taken = dodgeCancel(S, ex, f)
 	for f in order:
@@ -398,7 +399,7 @@ static func _aiBlocks(S: SimState, ex) -> void:
 	if ex.kind == "sig":
 		return
 	for f in [ex.D, ex.A]:
-		if f.ai == null or f.stunTicks > 0:
+		if f.ai == null or f.stunTicks > 0 or DirGrapple.holds(f):
 			continue
 		var b = _windowBeat(S, ex, f)
 		if b == null or b.args.o.get("weighed", false):

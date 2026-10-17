@@ -494,6 +494,36 @@
                   "minimum": 0,
                   "maximum": 1,
                   "description": "The share of a rival's charged heavies the AI tries to perfect-block, by guessing the release (it never reacts to it)."
+                },
+                "grapple": {
+                  "type": "object",
+                  "description": "The AI's grapple (sim/director/grapple.gd).",
+                  "properties": {
+                    "catch": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of a rival's guards (each 30 ticks of one) and seen heavy wind-ups it catches."
+                    },
+                    "pummel": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of pulses it pummels on."
+                    },
+                    "tech": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of catches it techs."
+                    }
+                  },
+                  "required": [
+                    "catch",
+                    "pummel",
+                    "tech"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "description": "The AI's brawl play at this level.",
@@ -948,6 +978,36 @@
                   "minimum": 0,
                   "maximum": 1,
                   "description": "The share of a rival's charged heavies the AI tries to perfect-block, by guessing the release (it never reacts to it)."
+                },
+                "grapple": {
+                  "type": "object",
+                  "description": "The AI's grapple (sim/director/grapple.gd).",
+                  "properties": {
+                    "catch": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of a rival's guards (each 30 ticks of one) and seen heavy wind-ups it catches."
+                    },
+                    "pummel": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of pulses it pummels on."
+                    },
+                    "tech": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of catches it techs."
+                    }
+                  },
+                  "required": [
+                    "catch",
+                    "pummel",
+                    "tech"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "description": "The AI's brawl play at this level.",
@@ -1402,6 +1462,36 @@
                   "minimum": 0,
                   "maximum": 1,
                   "description": "The share of a rival's charged heavies the AI tries to perfect-block, by guessing the release (it never reacts to it)."
+                },
+                "grapple": {
+                  "type": "object",
+                  "description": "The AI's grapple (sim/director/grapple.gd).",
+                  "properties": {
+                    "catch": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of a rival's guards (each 30 ticks of one) and seen heavy wind-ups it catches."
+                    },
+                    "pummel": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of pulses it pummels on."
+                    },
+                    "tech": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of catches it techs."
+                    }
+                  },
+                  "required": [
+                    "catch",
+                    "pummel",
+                    "tech"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "description": "The AI's brawl play at this level.",

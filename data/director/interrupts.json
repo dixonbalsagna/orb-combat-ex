@@ -448,6 +448,15 @@
       "staggerTicks": 20
     }
   },
+  "grapple": {
+    "_note": "The grapple's director side, slice G1 (sim/director/grapple.gd; Game Design's docs/design/grapple.md; docs/director/grapple-director.md). enabled: false, A in a brawl is as before (an empty press). catch: tell, the ticks from A's press in a brawl to its landing (a blow that lands on him in them stops it); tech, the caught fighter's A within this many ticks of the landing breaks it; whiffOpen, a catch out of reach leaves him open this long. clinch: max ticks from the tie-up; a pulse every `pulse` ticks; an A inside `window` of one claims it, sharp inside `sharp`; the grip runs from -grip to grip; leadGuard, the catcher's lead on a rival who guards, winds or charges; partBh, both part this far past striking distance at the time and the tech; pushBh and pushFirstMove, the push-off's parting and the pusher's first move; aiOffsets, the AI's pummels off the pulse (never sharp). throw: acrossBh, a throw across is a knock-back this long; upBh and upOpen, a throw up lifts him this far and he is open this long; bury, a throw down to the ground buries him this long (both openings). lockout: the ticks a grab is refused after each attempt, and for both after a clinch ends with nobody thrown; noRegrab: a thrown fighter can't be grabbed for this long. G2 adds Game Design's vicious, damage, wear, lead and pin, brace, braceRest and carry.",
+    "enabled": false,
+    "catch": {"tell": 10, "tech": 8, "whiffOpen": 20},
+    "clinch": {"max": 90, "pulse": 20, "window": 4, "sharp": 2, "grip": 2, "leadGuard": 1, "partBh": 1.5, "pushBh": 3, "pushFirstMove": 20, "aiOffsets": [-4, -3, 3, 4]},
+    "throw": {"acrossBh": 8, "upBh": 4, "upOpen": 16, "bury": 20},
+    "lockout": 90,
+    "noRegrab": 120
+  },
   "zip": {
     "enabled": true,
     "band": {

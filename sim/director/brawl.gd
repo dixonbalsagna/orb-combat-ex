@@ -410,6 +410,7 @@ static func blowAt(S: SimState, ex, f, kind: int, lead: int, dmg: float, extra: 
 static func over(S: SimState, ex, why: String) -> void:
 	if not isBrawl(ex) or ex.branch != "":
 		return
+	DirGrapple.over(S, ex, why)   # a catch or a clinch ends with the brawl
 	var said: bool = ex.tag != "ZIP"   # a zip's ticks in reach were never announced as a brawl: nothing ends
 	ex.branch = why
 	if why != "walk":
@@ -636,6 +637,8 @@ static func takes(S: SimState, f, kind: String) -> bool:
 	var ex = S.dirS.ex
 	if ex.branch != "" or ex.cancel or _setPiece(ex):
 		return true   # a set piece is playing: the press is spent
+	if DirGrapple.takes(S, f, kind):
+		return true   # a catch's tell or a clinch: X, Y and B are spent (vicious blows are G2's)
 	if _g(ex.A, DBL_AT) > 0:
 		var da = _ev(S, f, "press_ack", "double", _cell(kind))   # the double hit is on its way: a press is spent
 		da.n = S.tick
@@ -1263,6 +1266,8 @@ static func contact(S: SimState, ex, b) -> void:
 			SimEvents.feed(S, f.name + " BREAKS THE GUARD", o.name + " staggers in place for " + str(int(c.heavy.staggerTicks)) + " ticks")
 		return
 	_s(f, STRING_N, _g(f, STRING_N) + 1)
+	if DirGrapple.telling(o):
+		DirGrapple.stopped(S, ex, o)   # a blow that lands in a catch's tell stops it: blows beat grabs
 	if armour:
 		if energy != "":
 			_eLand(S, ex, f, o, energy, "armour")
@@ -2793,6 +2798,9 @@ static func tick(S: SimState, ex) -> void:
 		return
 	var c: Dictionary = cfg()
 	var now: int = _now(S)
+	DirGrapple.tick(S, ex)   # the catch, the clinch and their exits (DirGrapple)
+	if S.dirS.ex != ex or ex.branch != "":
+		return
 	_inTick = true
 	for f in [ex.A, ex.D]:
 		# What he has moved on this tick already: the core's step (the pair's drift, and a slope's lift), read against
@@ -2822,7 +2830,7 @@ static func tick(S: SimState, ex) -> void:
 		elif _g(f, LC_UNTIL) > 0 and o.stunTicks <= 0 and S.tick > _g(f, LC_UNTIL):
 			_lcClose(S, f, "lapsed")
 		# A boost with the stick away leaves, at the dodge-cancel's price and by its rules (a dodge tap is DirInterrupt's).
-		if ex.t > SimConst.DT * 1.5 and f.input.sprint and f.stunTicks <= 0 and not sureAgainst(ex, f) and now >= _g(f, OPEN_UNTIL) and f.input.mx * SimMathx.jsign(SimWrap.sdx(f.x, o.x)) < -SimAct.awayDead and DirInterrupt.dodgeCancel(S, ex, f):
+		if ex.t > SimConst.DT * 1.5 and f.input.sprint and f.stunTicks <= 0 and not DirGrapple.holds(f) and not sureAgainst(ex, f) and now >= _g(f, OPEN_UNTIL) and f.input.mx * SimMathx.jsign(SimWrap.sdx(f.x, o.x)) < -SimAct.awayDead and DirInterrupt.dodgeCancel(S, ex, f):
 			_inTick = false
 			return
 		# A heavy still held as its wind-up ends waits for the release; it is let go, or lets go at heldMaxTicks.
@@ -2854,7 +2862,7 @@ static func tick(S: SimState, ex) -> void:
 		return
 	# The walk-out: both hold away for partTicks full ticks running, and the brawl lets go, free. It ends partTicks
 	# after the tick the later stick was first read, never sooner.
-	if not quiet(ex) and _g(ex.A, DBL_AT) == 0 and ex.t > SimConst.DT * 1.5 and _parting(S, ex):
+	if not quiet(ex) and not DirGrapple.holds(ex.A) and _g(ex.A, DBL_AT) == 0 and ex.t > SimConst.DT * 1.5 and _parting(S, ex):
 		_s(ex.A, PART_N, _g(ex.A, PART_N) + 1)
 		if _g(ex.A, PART_N) > int(c.partTicks):
 			end(S, ex, "walk")
@@ -2956,6 +2964,8 @@ static func aiInput(S: SimState, f) -> void:
 		return   # a zipper in reach: his one blow is on its way
 	if _g(ex.A, DBL_AT) > 0:
 		return   # the double hit is on its way: nothing it presses counts
+	if DirGrapple.aiInput(S, ex, f, o, i):
+		return   # a catch's tell or a clinch is the grapple's, or it catches now
 	# Giving ground, and following a rival who does (brawl-second-pass.md section 1). One draw for each wind-up: it
 	# backs off after its reaction time, hands down, until his blow has landed or missed.
 	var oh: int = _g(o, HOLD_AT)
