@@ -1,0 +1,75 @@
+diff --git a/data/anim/guard_pass.json b/data/anim/guard_pass.json
+index 2c44aca..7b21c9d 100644
+--- a/data/anim/guard_pass.json
++++ b/data/anim/guard_pass.json
+@@ -189,12 +189,12 @@
+   },
+   "ru.su_hammer.contact": {
+    "hand_l": [
+-    22.0,
+-    53.0,
+-    -8.0
++    36.2,
++    53.2,
++    -9.4
+    ],
+    "was": 23.6,
+-   "now": 10.7
++   "now": 14.0
+   },
+   "ru.su_plate_arm.contact": {
+    "hand_l": [
+@@ -259,6 +259,5 @@
+    "was": 34.3,
+    "now": 21.0
+   }
+- },
+- "_note": "ru.su_hammer.contact is hand-set: the fitted hand, forward of the guard, moved the striking hand's fall after the contact by a tick and h05's check at 6 ticks failed (hand 76.9, limit 76); the hand at the guard's own x clears it"
++ }
+ }
+\ No newline at end of file
+diff --git a/data/anim/waves/rival7.poses.json b/data/anim/waves/rival7.poses.json
+index 1fe9288..5c4a270 100644
+--- a/data/anim/waves/rival7.poses.json
++++ b/data/anim/waves/rival7.poses.json
+@@ -22,7 +22,7 @@
+   "ru.su_fist_heave.contact": {"family":"upright_lunge","lean":16,"hips":[16,-12,0],"spine":{"lean":12,"twist":12},"head":{"pitch":4},"hand_r":[54,46,8],"pole_hand_r":[6,-4,8],"hand_l":[28.8,54.4,-9.2],"foot_r":[-14,2.5,10],"foot_l":[16,2.5,-8],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: a heaving fist: sunk deep with the fist low in front of him, both legs drive the fist up into the gut; his feet keep their place","_legal":["no_leap"]},
+   "ru.su_fist_heave.follow": {"family":"upright","lean":13.5,"hips":[10,-2,0],"spine":{"lean":9.5,"twist":1},"head":{"pitch":5,"yaw":3.5},"hand_r":[34,64,8],"pole_hand_r":[6,-4,8],"hand_l":[24,60,-8],"foot_r":[-11.5,2.5,9],"foot_l":[14,2.5,-7.5],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a heaving fist: sunk deep with the fist low in front of him, both legs drive the fist up into the gut; his feet keep their place (the follow-through)","_legal":["no_leap"]},
+   "ru.su_hammer.chamber": {"family":"upright","lean":-4,"hips":[-2,3,0],"spine":{"lean":-4,"twist":-8},"head":{"pitch":-6,"yaw":8},"hand_r":[4,66,10],"hand_l":[16,62,-8],"foot_r":[-6,2.5,9],"foot_l":[10,2.5,-8],"hands":{"r":"fist","l":"open"},"pole_hand_r":[-8,6,8],"_orig":"PROVISIONAL: a falling hammer fist: risen tall with the fist at his shoulder and the other hand up, then the whole body comes down and the fist falls on the head (the wind-up)","_legal":["no_clasp","no_held_raise"]},
+-  "ru.su_hammer.contact": {"family":"upright_lunge","lean":22,"hips":[24,-6,0],"spine":{"lean":16,"twist":12},"head":{"pitch":14},"hand_r":[52,82,8],"pole_hand_r":[-4,14,8],"hand_l":[22,53,-8],"foot_r":[-4,2.5,9],"foot_l":[28,2.5,-8],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: a falling hammer fist: risen tall with the fist at his shoulder and the other hand up, then the whole body comes down and the fist falls on the head","_legal":["no_clasp","no_held_raise"]},
++  "ru.su_hammer.contact": {"family":"upright_lunge","lean":22,"hips":[24,-6,0],"spine":{"lean":16,"twist":12},"head":{"pitch":14},"hand_r":[52,82,8],"pole_hand_r":[-4,14,8],"hand_l":[36.2,53.2,-9.4],"foot_r":[-4,2.5,9],"foot_l":[28,2.5,-8],"hands":{"r":"fist","l":"open"},"_orig":"PROVISIONAL: a falling hammer fist: risen tall with the fist at his shoulder and the other hand up, then the whole body comes down and the fist falls on the head","_legal":["no_clasp","no_held_raise"]},
+   "ru.su_hammer.follow": {"family":"upright","lean":16.5,"hips":[18,-14,0],"spine":{"lean":11.5,"twist":1},"head":{"pitch":10.5,"yaw":3.5},"hand_r":[40,52,10],"pole_hand_r":[-4,14,8],"hand_l":[22,58,-8],"foot_r":[-6,2.5,8.5],"foot_l":[20.5,2.5,-7.5],"hands":{"r":"fist","l":"open"},"hip_twist":0,"_orig":"PROVISIONAL: a falling hammer fist: risen tall with the fist at his shoulder and the other hand up, then the whole body comes down and the fist falls on the head (the follow-through)","_legal":["no_clasp","no_held_raise"]},
+   "ru.su_edge_legs.chamber": {"family":"upright","lean":-6,"hips":[-4,-2,0],"spine":{"lean":-4,"twist":-12},"head":{"pitch":-4,"yaw":6},"hand_r":[6,60,12],"hand_l":[16,62,-8],"foot_r":[-4,28,10],"foot_l":[10,2.5,-8],"hands":{"r":"open","l":"open"},"pole_foot_r":[8,8,2],"_orig":"PROVISIONAL: a stepping low kick with the edge of the foot: the leg chambered close, the body carried a pace behind one straight leg, the edge into the rival legs (the wind-up)"},
+   "ru.su_edge_legs.contact": {"family":"upright_lunge","lean":-14,"hips":[30,-6,0],"spine":{"lean":-10,"twist":18},"head":{"pitch":0},"hand_r":[10,62,14],"hand_l":[22,64,-10],"foot_r":[58,20,8],"foot_l":[30,2.5,-8],"hands":{"r":"open","l":"open"},"_orig":"PROVISIONAL: a stepping low kick with the edge of the foot: the leg chambered close, the body carried a pace behind one straight leg, the edge into the rival legs"},
+diff --git a/render/anim/anim_fighter.gd b/render/anim/anim_fighter.gd
+index 1de09c3..ba18a9f 100644
+--- a/render/anim/anim_fighter.gd
++++ b/render/anim/anim_fighter.gd
+@@ -3259,6 +3259,16 @@ func _free_arm_slew(dt: float, state: String = "") -> void:
+ 
+ 
+ 
++## The side of the arm that is not striking while a one-limb hand blow is playing ("r" or "l"), or "" (no blow, a foot or a two-limb blow).
++func _blow_free_side() -> String:
++	if _ci_limb2 != "" or not (_part != "" or _ci_w > 0.001) or not String(_ci_limb).begins_with("hand_"):
++		return ""
++	var side: String = String(_ci_limb).substr(String(_ci_limb).length() - 1)
++	if _ci_side:
++		side = "l" if side == "r" else "r"
++	return "l" if side == "r" else "r"
++
++
+ func _inertialise(dt: float, prof: Dictionary) -> void:
+ 	var n: int = AnimRig.N
+ 	if (_skip_inertia or not _form.is_empty()) and _ip_have:
+@@ -3283,7 +3293,10 @@ func _inertialise(dt: float, prof: Dictionary) -> void:
+ 		_ip_hraw = hips
+ 		return
+ 	var jump: bool = false
++	var skip_side: String = _blow_free_side() if RenderAnim.free_arm_slew else ""   # the free arm's own pose is the slew's business: its jump must not start a join of the whole body (the su_hammer step)
+ 	for i in range(n):
++		if skip_side != "" and (i == int(AnimRig.index["upper_arm_" + skip_side]) or i == int(AnimRig.index["forearm_" + skip_side]) or i == int(AnimRig.index["clavicle_" + skip_side])):
++			continue
+ 		if absf(q[i].dot(_ip_raw[i])) < _ip_cos:
+ 			jump = true
+ 			break

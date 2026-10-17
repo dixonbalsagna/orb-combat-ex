@@ -1,0 +1,306 @@
+diff --git a/data/anim/ragdoll.json b/data/anim/ragdoll.json
+index 7adbc30..e3daf28 100644
+--- a/data/anim/ragdoll.json
++++ b/data/anim/ragdoll.json
+@@ -2,19 +2,20 @@
+   "schema": "anim.ragdoll/1",
+   "_about": "Animation overhaul, unit A: the active ragdoll (docs/animation/overhaul-plan.md). Twelve angular degrees of freedom on springs around the posed target, stepped once per sim tick from the body's own velocity and acceleration. Angles in radians about the bone's local z (the sagittal plane) unless axis is x (an arm lifting out sideways). beta is the limb's rest direction in the body plane (0 hangs down, 3.14159 points up). k_stiff and k_loose are the spring (1/s^2) when the pose is in charge and when the body is loose; c the damping (1/s); drag and inertia scale the streamer drag (per 1500 u/s) and the inertial whip (per 6000 u/s^2); lo and hi limit the angle; tsg is the angle an arm or leg opens to at full speed; tuck and brace are the target angles of those moves and crumple the impulse (rad/s) of a slam. Render only, outside the sim's data hash.",
+   "dofs": [
+-    {"id":"head","bone":"head","axis":"z","beta":3.14159,"k_stiff":140,"k_loose":30,"c":7,"drag":22,"inertia":18,"lo":-1.2,"hi":1,"tsg":0,"tuck":-0.6,"brace":-0.5,"crumple":-9},
+-    {"id":"spine","bone":"spine_2","bone2":"spine_1","share":0.6,"axis":"z","beta":3.14159,"k_stiff":120,"k_loose":18,"c":6,"drag":12,"inertia":12,"lo":-0.9,"hi":1.2,"tsg":0,"tuck":-0.8,"brace":-0.15,"crumple":-7},
+-    {"id":"ua_l","bone":"upper_arm_l","axis":"z","beta":0,"k_stiff":90,"k_loose":14,"c":4,"drag":30,"inertia":26,"lo":-1.6,"hi":2.4,"tsg":0,"tuck":0.6,"brace":1.6,"crumple":3},
+-    {"id":"ua_l_x","bone":"upper_arm_l","axis":"x","beta":0,"k_stiff":80,"k_loose":16,"c":4,"drag":0,"inertia":0,"lo":-0.9,"hi":0.9,"tsg":0.45,"tuck":0,"brace":0,"crumple":2},
+-    {"id":"fa_l","bone":"forearm_l","axis":"z","beta":0,"k_stiff":100,"k_loose":20,"c":4,"drag":26,"inertia":22,"lo":-0.2,"hi":1.8,"tsg":0,"tuck":1.7,"brace":0.3,"crumple":4},
+-    {"id":"ua_r","bone":"upper_arm_r","axis":"z","beta":0,"k_stiff":90,"k_loose":14,"c":4,"drag":30,"inertia":26,"lo":-1.6,"hi":2.4,"tsg":0,"tuck":0.6,"brace":1.6,"crumple":3},
+-    {"id":"ua_r_x","bone":"upper_arm_r","axis":"x","beta":0,"k_stiff":80,"k_loose":16,"c":4,"drag":0,"inertia":0,"lo":-0.9,"hi":0.9,"tsg":-0.45,"tuck":0,"brace":0,"crumple":-2},
+-    {"id":"fa_r","bone":"forearm_r","axis":"z","beta":0,"k_stiff":100,"k_loose":20,"c":4,"drag":26,"inertia":22,"lo":-0.2,"hi":1.8,"tsg":0,"tuck":1.7,"brace":0.3,"crumple":4},
+-    {"id":"th_l","bone":"thigh_l","axis":"z","beta":0,"k_stiff":110,"k_loose":18,"c":5,"drag":24,"inertia":20,"lo":-1.2,"hi":1.6,"tsg":0,"tuck":1.5,"brace":0.2,"crumple":2},
+-    {"id":"sh_l","bone":"shin_l","axis":"z","beta":0,"k_stiff":120,"k_loose":22,"c":5,"drag":24,"inertia":20,"lo":-2,"hi":0,"tsg":0,"tuck":-1.9,"brace":-0.3,"crumple":-3},
+-    {"id":"th_r","bone":"thigh_r","axis":"z","beta":0,"k_stiff":110,"k_loose":18,"c":5,"drag":24,"inertia":20,"lo":-1.2,"hi":1.6,"tsg":0,"tuck":1.5,"brace":0.2,"crumple":2},
+-    {"id":"sh_r","bone":"shin_r","axis":"z","beta":0,"k_stiff":120,"k_loose":22,"c":5,"drag":24,"inertia":20,"lo":-2,"hi":0,"tsg":0,"tuck":-1.9,"brace":-0.3,"crumple":-3}
++    {"id":"head","bone":"head","axis":"z","beta":3.14159,"k_stiff":140,"k_loose":30,"c":7,"drag":22,"inertia":18,"lo":-1.2,"hi":1,"tsg":0,"tuck":-0.6,"brace":-0.5,"crumple":-9,"arch":-0.8},
++    {"id":"spine","bone":"spine_2","bone2":"spine_1","share":0.6,"axis":"z","beta":3.14159,"k_stiff":120,"k_loose":18,"c":6,"drag":12,"inertia":12,"lo":-0.9,"hi":1.2,"tsg":0,"tuck":-0.8,"brace":-0.15,"crumple":-7,"arch":-0.8},
++    {"id":"ua_l","bone":"upper_arm_l","axis":"z","beta":0,"k_stiff":90,"k_loose":14,"c":4,"drag":30,"inertia":26,"lo":-1.6,"hi":2.4,"tsg":0,"tuck":0.6,"brace":1.6,"crumple":3,"arch":0.5},
++    {"id":"ua_l_x","bone":"upper_arm_l","axis":"x","beta":0,"k_stiff":80,"k_loose":16,"c":4,"drag":0,"inertia":0,"lo":-0.9,"hi":0.9,"tsg":0.45,"tuck":0,"brace":0,"crumple":2,"arch":0.5},
++    {"id":"fa_l","bone":"forearm_l","axis":"z","beta":0,"k_stiff":100,"k_loose":20,"c":4,"drag":26,"inertia":22,"lo":-0.2,"hi":1.8,"tsg":0,"tuck":1.7,"brace":0.3,"crumple":4,"arch":0.4},
++    {"id":"ua_r","bone":"upper_arm_r","axis":"z","beta":0,"k_stiff":90,"k_loose":14,"c":4,"drag":30,"inertia":26,"lo":-1.6,"hi":2.4,"tsg":0,"tuck":0.6,"brace":1.6,"crumple":3,"arch":0.5},
++    {"id":"ua_r_x","bone":"upper_arm_r","axis":"x","beta":0,"k_stiff":80,"k_loose":16,"c":4,"drag":0,"inertia":0,"lo":-0.9,"hi":0.9,"tsg":-0.45,"tuck":0,"brace":0,"crumple":-2,"arch":0.5},
++    {"id":"fa_r","bone":"forearm_r","axis":"z","beta":0,"k_stiff":100,"k_loose":20,"c":4,"drag":26,"inertia":22,"lo":-0.2,"hi":1.8,"tsg":0,"tuck":1.7,"brace":0.3,"crumple":4,"arch":0.4},
++    {"id":"th_l","bone":"thigh_l","axis":"z","beta":0,"k_stiff":110,"k_loose":18,"c":5,"drag":24,"inertia":20,"lo":-1.2,"hi":1.6,"tsg":0,"tuck":1.5,"brace":0.2,"crumple":2,"arch":-0.5},
++    {"id":"sh_l","bone":"shin_l","axis":"z","beta":0,"k_stiff":120,"k_loose":22,"c":5,"drag":24,"inertia":20,"lo":-2,"hi":0,"tsg":0,"tuck":-1.9,"brace":-0.3,"crumple":-3,"arch":-0.5},
++    {"id":"th_r","bone":"thigh_r","axis":"z","beta":0,"k_stiff":110,"k_loose":18,"c":5,"drag":24,"inertia":20,"lo":-1.2,"hi":1.6,"tsg":0,"tuck":1.5,"brace":0.2,"crumple":2,"arch":-0.5},
++    {"id":"sh_r","bone":"shin_r","axis":"z","beta":0,"k_stiff":120,"k_loose":22,"c":5,"drag":24,"inertia":20,"lo":-2,"hi":0,"tsg":0,"tuck":-1.9,"brace":-0.3,"crumple":-3,"arch":-0.5}
+   ],
++  "variety": {"hz":0.18,"phase":0.6,"amp":0.2,"side_dead":0.25},
+   "drive": {"v0":1500,"a0":6000,"a_max":40000,"gate":0.25,"free_rate":18},
+   "regimes": {"free":{"launched":0.85,"slide":0.55,"down":0.25},"tuck_spin":[10,15],"brace_time":[0.08,0.3]}
+ }
+diff --git a/render/anim/anim_fighter.gd b/render/anim/anim_fighter.gd
+index ba18a9f..32eae77 100644
+--- a/render/anim/anim_fighter.gd
++++ b/render/anim/anim_fighter.gd
+@@ -174,6 +174,9 @@ var _ip_have: bool = false
+ var _ip_cos: float = cos(INERTIA_JUMP * 0.5)
+ # The active ragdoll (overhaul unit A): stepped once per sim tick from the fighter's own state, shown at out_w.
+ var _rd := AnimRagdoll.new()
++var _rd_flights: int = 0               # RG0: how many flights this body has begun (with the slot and the launch number, the seed of the flail)
++var _rd_prev_flying: bool = false
++var _rd_rot: float = 0.0                # the body's last turn (the sim's rot): the side of a hit is judged against it
+ var _rd_have: bool = false
+ var _rd_vw := Vector2.ZERO              # last tick's world velocity (for the acceleration)
+ var _rd_prev_state: String = ""
+@@ -881,6 +884,15 @@ func on_intro(kind: String, t: float, dur: float, clock_kind: String) -> void:
+ 			_intro = {}
+ 
+ 
++## The side of the body that met the ground at a ground event: the normal is (-slope, 1) over its length, or the event's own nx, ny (World's interior contacts carry them).
++func _event_side(e: Dictionary) -> float:
++	if e.has("nx") and e.has("ny"):
++		return _hit_side(float(e.nx), float(e.ny))
++	var sl: float = float(e.get("slope", 0.0))
++	var l: float = sqrt(sl * sl + 1.0)
++	return _hit_side(-sl / l, 1.0 / l)
++
++
+ func on_ground_event(kind: String, e: Dictionary, T: float) -> void:
+ 	var amp: float = _rd_amp()
+ 	debug["ground_events"] += 1
+@@ -890,7 +902,7 @@ func on_ground_event(kind: String, e: Dictionary, T: float) -> void:
+ 	match kind:
+ 		"bounce":
+ 			var vn: float = absf(float(e.get("vn", 0.0)))
+-			_rd.crumple(clampf(vn / 2500.0, 0.2, 1.5) * 0.6 * surf, amp)
++			_rd.crumple(clampf(vn / 2500.0, 0.2, 1.5) * 0.6 * surf, amp, _event_side(e))
+ 			# the tangent speed whips the body the way it travels
+ 			_rd.kick(1, clampf(float(e.get("vt", 0.0)) * vface / 220.0, -9.0, 9.0) * amp)
+ 			if poses_on:
+@@ -907,13 +919,13 @@ func on_ground_event(kind: String, e: Dictionary, T: float) -> void:
+ 		"land":
+ 			var lk: String = String(e.get("kind", ""))
+ 			if lk == "slam":
+-				_rd.crumple(1.0, amp)
++				_rd.crumple(1.0, amp, _event_side(e))
+ 				if poses_on:
+ 					_seq = {"id": "gc.bounce", "t0": T, "dur": float(AnimData.entries["gc.bounce"].dur) / 60.0, "wt": 1.0}
+ 			elif lk == "skid":
+ 				_rd.crumple(0.5, amp)
+ 			elif lk == "tumble":
+-				_rd.crumple(0.5 * surf, amp)
++				_rd.crumple(0.5 * surf, amp, _event_side(e))
+ 				if poses_on and (_gc_hold_t0 < 0.0 or _gc_hold_t1 >= 0.0):
+ 					_gc_hold_t0 = T
+ 					_gc_hold_t1 = -1.0
+@@ -3401,6 +3413,21 @@ func _rd_scale() -> PackedFloat32Array:
+ 	return sc
+ 
+ 
++## RG0: which side of the body met a surface whose outward normal is (nx, ny) in the world: +1 the front (a fold), -1 the back (an arch), +1 again when it was nearer the head or the feet
++## (the plain fold of before). The body's frame is the one the controller uses: mirrored by the facing, turned by the sim's rot.
++func _hit_side(nx: float, ny: float) -> float:
++	if not RenderAnim.rd_variety:
++		return 1.0
++	var c: float = cos(_rd_rot)
++	var sn: float = sin(_rd_rot)
++	var ox: float = nx * vface
++	var bx: float = ox * c - ny * sn
++	var score: float = -bx   # the surface is on the side the body's x points to when the normal points the other way
++	if absf(score) < AnimRagdoll.side_dead:
++		return 1.0
++	return clampf(score / 0.6, -1.0, 1.0)
++
++
+ func _rd_tick(S: SimState, f, dt: float) -> void:
+ 	if f.state == "intro" and RenderAnim.intro_poses:
+ 		return   # the fall is scripted: nothing in the ragdoll should answer its speed
+@@ -3429,10 +3456,15 @@ func _rd_tick(S: SimState, f, dt: float) -> void:
+ 	var sliding: bool = f.slide > 0.0
+ 	var flying: bool = (st == "launched" or st == "dropped") and not sliding
+ 	var speed: float = vw.length()
++	_rd_rot = f.rot
++	if RenderAnim.rd_variety and flying and not _rd_prev_flying:
++		_rd_flights += 1
++		_rd.set_flail_seed(slot, int(f.launchN), _rd_flights)
++	_rd_prev_flying = flying
+ 	if _rd_have:
+ 		# a slam (flight to down) folds the body; a skid starting from a flight whips it
+ 		if st == "down" and _rd_prev_state == "launched":
+-			_rd.crumple(clampf(_rd_prev_speed / 3000.0, 0.3, 1.5), amp)
++			_rd.crumple(clampf(_rd_prev_speed / 3000.0, 0.3, 1.5), amp, _hit_side(0.0, 1.0))
+ 		elif st == "down" and _rd_prev_state != "down" and is_same(S.game.ko, f):
+ 			_rd.crumple(0.9, amp)
+ 			_rd.kick(0, 6.0 * amp)
+diff --git a/render/anim/anim_ragdoll.gd b/render/anim/anim_ragdoll.gd
+index 30db820..430e65e 100644
+--- a/render/anim/anim_ragdoll.gd
++++ b/render/anim/anim_ragdoll.gd
+@@ -28,6 +28,11 @@ static var tsg := PackedFloat32Array()
+ static var tuck_t := PackedFloat32Array()      # the generic shape, used when a fighter has none of its own
+ static var brace_t := PackedFloat32Array()
+ static var crumple_k := PackedFloat32Array()
++static var arch_k := PackedFloat32Array()        # per degree of freedom: the multiplier of its crumple when the BACK met the surface (an arch, not a fold)
++static var var_hz: float = 0.18                  # RG0: how far one launch's flail may differ from the data's (shares of the frequency, the amplitude; radians of phase)
++static var var_phase: float = 0.6
++static var var_amp: float = 0.2
++static var side_dead: float = 0.25               # the side-of-hit score under which a crumple is a plain fold
+ static var flail_amp := PackedFloat32Array()
+ static var flail_hz := PackedFloat32Array()
+ static var flail_fade := Vector2(0.35, 1.2)
+@@ -66,6 +71,9 @@ var w_crumple: float = 0.0
+ var w_flail: float = 0.0
+ var shape := {}                # this fighter's tuck, brace, skid and crumple targets
+ var phase: float = 0.0
++var fv_hz := PackedFloat32Array()              # this launch's own flail: a factor on each degree of freedom's frequency and amplitude, and a phase shift (set_flail_seed)
++var fv_amp := PackedFloat32Array()
++var fv_ph := PackedFloat32Array()
+ 
+ 
+ static func _varcode(s: String) -> int:
+@@ -89,7 +97,7 @@ static func setup() -> void:
+ 	var dofs: Array = d.get("dofs", [])
+ 	bone_a.resize(N)
+ 	bone_b.resize(N)
+-	for a in [share_a, beta_c, beta_s, k_stiff, k_loose, damp, drag, inertia, lo, hi, tsg, tuck_t, brace_t, crumple_k, flail_amp, flail_hz, hit_vx]:
++	for a in [share_a, beta_c, beta_s, k_stiff, k_loose, damp, drag, inertia, lo, hi, tsg, tuck_t, brace_t, crumple_k, arch_k, flail_amp, flail_hz, hit_vx]:
+ 		a.resize(N)
+ 	for a in [hit_kx, hit_ky, hit_kc]:
+ 		a.resize(N * 4)
+@@ -115,6 +123,12 @@ static func setup() -> void:
+ 		tuck_t[i] = float(e.tuck)
+ 		brace_t[i] = float(e.brace)
+ 		crumple_k[i] = float(e.crumple)
++		arch_k[i] = float(e.get("arch", 1.0))
++	var vr: Dictionary = d.get("variety", {})
++	var_hz = float(vr.get("hz", 0.18))
++	var_phase = float(vr.get("phase", 0.6))
++	var_amp = float(vr.get("amp", 0.2))
++	side_dead = float(vr.get("side_dead", 0.25))
+ 	var dr: Dictionary = d.get("drive", {})
+ 	v0 = float(dr.get("v0", 1500.0))
+ 	a0 = float(dr.get("a0", 6000.0))
+@@ -168,6 +182,13 @@ static func setup() -> void:
+ 
+ 
+ func _init() -> void:
++	fv_hz.resize(N)
++	fv_amp.resize(N)
++	fv_ph.resize(N)
++	for k in range(N):
++		fv_hz[k] = 1.0
++		fv_amp[k] = 1.0
++		fv_ph[k] = 0.0
+ 	setup()
+ 	th.resize(N)
+ 	om.resize(N)
+@@ -238,7 +259,7 @@ func step(dt: float, v: Vector2, a: Vector2, free_t: float, amp: float, tt: floa
+ 			var kk: float = lerpf(k_stiff[i], k_loose[i], free)
+ 			var target: float = tsg[i] * sp * free + wt * s_tuck[i] + wb * s_brace[i] + ws * s_skid[i] + wc * s_crum[i]
+ 			if wf > 0.001:
+-				target += wf * flail_amp[i] * sin(tt * TAU * flail_hz[i] + phase + float(i) * 1.7)
++				target += wf * flail_amp[i] * fv_amp[i] * sin(tt * TAU * flail_hz[i] * fv_hz[i] + phase + fv_ph[i] + float(i) * 1.7)
+ 			var nx: float = beta_c[i]
+ 			var ny: float = beta_s[i]
+ 			var drive: float = (-drag[i] * (v.x * nx + v.y * ny) / v0 - inertia[i] * (a.x * nx + a.y * ny) / a0) * g * amp
+@@ -254,9 +275,29 @@ func step(dt: float, v: Vector2, a: Vector2, free_t: float, amp: float, tt: floa
+ 
+ 
+ ## An impulse on every degree of freedom along its crumple direction: a slam folds the body.
+-func crumple(sev: float, amp: float) -> void:
++func crumple(sev: float, amp: float, side: float = 1.0) -> void:
++	# side: +1 the front met the surface (a fold, as always), -1 the back (an arch: the data's `arch` multiplier), between them a blend; 0 a head or a foot first
++	var m: float = clampf((side + 1.0) * 0.5, 0.0, 1.0)
+ 	for i in range(N):
+-		om[i] += crumple_k[i] * sev * amp
++		om[i] += crumple_k[i] * lerpf(arch_k[i], 1.0, m) * sev * amp
++
++
++## RG0: the flail of this launch, from a hash of the fighter's slot, the launch number and the render's count of his flights (an integer hash, no random draw: the same launch flails the
++## same way in every replay). Called once as a flight begins; the factors it sets stay until the next one.
++func set_flail_seed(slot: int, launch_n: int, flights: int) -> void:
++	phase = hash01(slot, launch_n, flights * 7 + 1) * TAU
++	for i in range(N):
++		fv_hz[i] = 1.0 + var_hz * (2.0 * hash01(slot * 31 + i, launch_n, flights * 7 + 2) - 1.0)
++		fv_amp[i] = 1.0 + var_amp * (2.0 * hash01(slot * 31 + i, launch_n, flights * 7 + 3) - 1.0)
++		fv_ph[i] = var_phase * (2.0 * hash01(slot * 31 + i, launch_n, flights * 7 + 4) - 1.0)
++
++
++## 0 to 1 from three integers, by a fixed integer mix (the same on every machine: no float in the mix, no random generator).
++static func hash01(a: int, b: int, c: int) -> float:
++	var h: int = (a * 73856093) ^ (b * 19349663) ^ (c * 83492791)
++	h = (h ^ (h >> 13)) * 1274126177
++	h = (h ^ (h >> 16)) & 0x7fffffff
++	return float(h) / 2147483647.0
+ 
+ 
+ ## An impulse on one degree of freedom (rad/s).
+diff --git a/render/anim/render_anim.gd b/render/anim/render_anim.gd
+index f3f4d98..34c6538 100644
+--- a/render/anim/render_anim.gd
++++ b/render/anim/render_anim.gd
+@@ -33,6 +33,7 @@ static var fighter_ease: bool = true          # each fighter's own ease rows (da
+ static var free_arm_slew: bool = true         # the free arm of a blow turns at a bounded rate (data joints.json slew); false is the before
+ static var source_limits: bool = true          # the contact solve and the join smoothing keep their limbs inside the joint limits themselves (no hard correction left for the last pass); false is the before
+ static var hand_retreat: bool = true          # a hand blow whose target is behind the shoulder gives ground the same way (its own switch: Combat rules on it, and the answer is data too, limbs.hand.min_fwd 0); false is the before
++static var rd_variety: bool = true           # RG0 (docs/animation/ragdoll-physics-paper.md): each launch flails its own way (a hash of the slot and the launch number) and a bounce folds or arches by the side that hit; false is the before
+ static var kick_retreat: bool = true          # a kick whose hips are past its target gives ground instead of swinging the thigh back through its limit (data sockets.json limbs.foot.min_fwd); false is the before
+ static var mash_press: bool = true            # a run of mashed blows leans in (data styles.<style>.press_run); false is the before
+ static var march: bool = true                  # a mashed heavy takes a footfall (data styles.super.march); false is the before
+diff --git a/render/anim/tools/anim_check.gd b/render/anim/tools/anim_check.gd
+index b6092a7..5c01f65 100644
+--- a/render/anim/tools/anim_check.gd
++++ b/render/anim/tools/anim_check.gd
+@@ -1728,6 +1728,47 @@ func _test_guard() -> void:
+ 	print("guard: %d free hands, worst %.1f from the guard, %d rows in the pass" % [rs.size(), worst, gp.size()])
+ 
+ 
++## RG0 (docs/animation/ragdoll-physics-paper.md): a launch flails its own way, the same way on every replay; a hit on the back arches and a hit on the front folds.
++func _test_ragdoll_vary() -> void:
++	AnimRagdoll.setup()
++	var run := func(slot: int, n: int, flights: int) -> PackedFloat32Array:
++		var rd := AnimRagdoll.new()
++		rd.set_flail_seed(slot, n, flights)
++		rd.w_flail = 1.0
++		for k in range(40):
++			rd.step(1.0 / 60.0, Vector2(900.0, 0.0), Vector2.ZERO, 0.85, 1.0, 5.0 + float(k) / 60.0)
++		return rd.th.duplicate()
++	var a: PackedFloat32Array = run.call(0, 1, 1)
++	var a2: PackedFloat32Array = run.call(0, 1, 1)
++	var b: PackedFloat32Array = run.call(0, 2, 2)
++	var c: PackedFloat32Array = run.call(1, 1, 1)
++	var d_ab: float = 0.0
++	var d_ac: float = 0.0
++	var d_aa: float = 0.0
++	for i in range(AnimRagdoll.N):
++		d_ab = maxf(d_ab, absf(a[i] - b[i]))
++		d_ac = maxf(d_ac, absf(a[i] - c[i]))
++		d_aa = maxf(d_aa, absf(a[i] - a2[i]))
++	_expect(d_aa == 0.0 and d_ab > 0.05 and d_ac > 0.05, "ragdoll variety: the same launch flails the same way (%.4f apart), another launch (%.3f rad) and another fighter (%.3f rad) differently" % [d_aa, d_ab, d_ac])
++	var h0: float = AnimRagdoll.hash01(3, 7, 11)
++	_expect(h0 >= 0.0 and h0 <= 1.0 and h0 == AnimRagdoll.hash01(3, 7, 11) and h0 != AnimRagdoll.hash01(3, 7, 12), "ragdoll variety: the hash is in 0 to 1 and the same for the same integers")
++	var fold := AnimRagdoll.new()
++	fold.crumple(1.0, 1.0, 1.0)
++	var arch := AnimRagdoll.new()
++	arch.crumple(1.0, 1.0, -1.0)
++	_expect(fold.om[1] * arch.om[1] < 0.0 and fold.om[0] * arch.om[0] < 0.0, "ragdoll side: the spine and the head go opposite ways for a hit on the front (%.2f, %.2f) and on the back (%.2f, %.2f)" % [fold.om[1], fold.om[0], arch.om[1], arch.om[0]])
++	var af := AnimFighter.new(0)
++	af.vface = 1.0
++	af._rd_rot = PI * 0.5
++	var s_front: float = af._hit_side(0.0, 1.0)
++	af._rd_rot = -PI * 0.5
++	var s_back: float = af._hit_side(0.0, 1.0)
++	af._rd_rot = 0.0
++	var s_feet: float = af._hit_side(0.0, 1.0)
++	_expect(s_front > 0.9 and s_back < -0.9 and s_feet == 1.0, "ragdoll side: a body turned chest-down on the floor reads %.2f (front), turned back-down %.2f (back), upright %.2f (feet first: a plain fold)" % [s_front, s_back, s_feet])
++	print("ragdoll variety: launches differ by %.3f rad, the same one repeats exactly, the side of the hit picks fold or arch" % d_ab)
++
++
+ func _test_pulled() -> void:
+ 	AnimData.load_every_wave()
+ 	main.start_match(4, {"p1": false, "p2": false})
+@@ -4391,6 +4432,7 @@ func _run() -> void:
+ 	_test_arms()
+ 	_test_pulls()
+ 	_test_guard()
++	_test_ragdoll_vary()
+ 	_test_pulled()
+ 	_test_bends()
+ 	_test_styles()

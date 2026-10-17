@@ -69,7 +69,7 @@ All 28, worst first (distance from the guard in the chest's frame, units; `l` an
 
 Of the 28, five were far (over 35): the Protagonist's and the Anti-hero's super-heavy tier (the blade to the jaw, the ram, the stepping palm, the drive, the falling blade). Their free hand was thrown back or left low for the look of the wind-up and was still there at the contact.
 
-**One piece needed a hand-set row.** `ru.su_hammer` moved its free hand forward to the guard, and the hammer's own striking hand then fell a tick later: Legal's h05 check (a hand at 76 or lower six ticks after a super-heavy's contact) read 76.9. The coupling is real and I did not find its cause in the time (the striking hand's trace at 6 ticks is 73.3 with the free hand at the guard's x of 22 and 76.9 with it at 23 or more, the same for any forward value, so it is a step and not a slope). The row keeps the hand at x 22 and lowers it to 53: 10.7 from the guard, h05 at 73.3. It is noted in the pass's file. A cause would be worth finding; it may be a second free-arm effect on the striking arm's timing.
+**One piece needed a hand-set row, until the cause was found.** `ru.su_hammer` moved its free hand forward to the guard, and the hammer's own striking hand then fell a tick or two later: Legal's h05 check read 76.9 against 76. The cause (found the next day, `docs/animation/ragdoll-slices.md` section 1): the join smoothing started a whole-body join when the free arm's change crossed its jump threshold, and the join delayed the hips' fall. `hammer-join.patch` leaves the free arm out of that test during a one-hand blow, and the hammer takes its fitted hand again (36.2, 53.2, -9.4; 14.0 from the guard).
 
 ## Gates
 

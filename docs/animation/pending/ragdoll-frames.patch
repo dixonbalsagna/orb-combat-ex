@@ -1,0 +1,52 @@
+diff --git a/render/anim/tools/flurry_study.gd b/render/anim/tools/flurry_study.gd
+index 8460901..7fc8f76 100644
+--- a/render/anim/tools/flurry_study.gd
++++ b/render/anim/tools/flurry_study.gd
+@@ -53,6 +53,8 @@ const CUE_SCENARIOS := {
+ 	"cue_chase": {"kind": "chase", "actor": 0, "target": -1, "text": "start", "span": 0, "end_k": 50, "end_text": "end", "label": "the chase: the chaser's dive from tick 10 to tick 50 (the left one)"},
+ 	"cue_cast_charge": {"kind": "beam", "actor": 0, "target": -1, "text": "charge", "span": 0, "label": "a beam charging (the left one): the fighter's own casting pose (data/anim/pair_live.json roles.<fighter>.beam)"},
+ 	"cue_cast_fire": {"kind": "beam", "actor": 0, "target": -1, "text": "fire", "span": 0, "label": "a beam fired (the left one): the fighter's own casting pose, the arm thrown out"},
++	"rd_launch": {"kind": "rd", "actor": 0, "target": -1, "text": "launch", "span": 0, "label": "a launch (the left one): a heavy blow at tick 6, then 84 ticks of flight with the ragdoll (RG0 to RG3: `window.__oop = 1` for the out-of-plane joints)"},
++	"rd_brake": {"kind": "rd", "actor": 0, "target": -1, "text": "brake", "span": 0, "label": "the mid-air skid (the left one): launched at 1,500 u/s, the sim's air brake from tick 30 to 60 (RG2)"},
+ 	"cue_interject": {"kind": "windup", "actor": 0, "target": -1, "text": "interject", "span": 24, "dur": 24.0, "label": "an interjection's tell: the guard (the left one) shows a 24-tick wind-up"},
+ }
+ const PAL_A := {"body": Color("#3d8fdc"), "legs": Color("#1b1f2a"), "arms": Color("#e6b995"), "skin": Color("#efc7a2"), "gear": Color("#cdd6e4"), "accent": Color("#4fb9a8"), "hair": Color("#22c7a0")}
+@@ -366,7 +368,37 @@ func _step_tick() -> void:
+ 			var fb := FakeBeam.new()
+ 			fb.A = f0
+ 			S.beams = [fb]
+-	if sc.has("cue") and k == 10 and String(sc.cue.kind) != "beam":
++	if sc.has("cue") and String(sc.cue.kind) == "rd":
++		# a launched body flying free (no ground): the flail, the brace and, with the brake event, the skid. The study draws a body in place, so only its shape shows
++		if k == 0:
++			f0.state = "launched"
++			f0.vx = 1500.0
++			f0.vy = 40.0
++			f0.y = 90.0
++			f0.slide = 0.0
++			f0.spin = 0.0
++		f0.stateT = float(k) * DT
++		if String(sc.cue.text) == "brake" and k >= 30 and k < 60:
++			f0.vx = maxf(f0.vx - 40.0, 0.0)
++		f0.x += f0.vx * DT
++		if String(sc.cue.text) == "brake" and (k == 30 or k == 60):
++			var be := SimState.FxEvent.new()
++			be.type = "air_brake"
++			be.actor = 0.0
++			be.text = "start" if k == 30 else "end"
++			be.kind = "released"
++			be.amount = 1500.0
++			RenderAnim.consume(S, [be])
++		if k == 6:
++			var he := SimState.FxEvent.new()
++			he.type = "damage"
++			he.victim = 0.0
++			he.attacker = 1.0
++			he.kind = "heavy"
++			he.amount = 90.0
++			he.region = "core"
++			RenderAnim.consume(S, [he])
++	if sc.has("cue") and k == 10 and String(sc.cue.kind) != "beam" and String(sc.cue.kind) != "rd":
+ 		var cd: Dictionary = sc.cue
+ 		var ce := SimState.FxEvent.new()
+ 		ce.type = "cue"

@@ -1,0 +1,248 @@
+diff --git a/data/anim/ragdoll.json b/data/anim/ragdoll.json
+index 28ff04e..194ffb6 100644
+--- a/data/anim/ragdoll.json
++++ b/data/anim/ragdoll.json
+@@ -13,7 +13,13 @@
+     {"id":"th_l","bone":"thigh_l","axis":"z","beta":0,"k_stiff":110,"k_loose":18,"c":5,"drag":24,"inertia":20,"lo":-1.2,"hi":1.6,"tsg":0,"tuck":1.5,"brace":0.2,"crumple":2,"arch":-0.5,"lag":5},
+     {"id":"sh_l","bone":"shin_l","axis":"z","beta":0,"k_stiff":120,"k_loose":22,"c":5,"drag":24,"inertia":20,"lo":-2,"hi":0,"tsg":0,"tuck":-1.9,"brace":-0.3,"crumple":-3,"arch":-0.5,"lag":6},
+     {"id":"th_r","bone":"thigh_r","axis":"z","beta":0,"k_stiff":110,"k_loose":18,"c":5,"drag":24,"inertia":20,"lo":-1.2,"hi":1.6,"tsg":0,"tuck":1.5,"brace":0.2,"crumple":2,"arch":-0.5,"lag":5},
+-    {"id":"sh_r","bone":"shin_r","axis":"z","beta":0,"k_stiff":120,"k_loose":22,"c":5,"drag":24,"inertia":20,"lo":-2,"hi":0,"tsg":0,"tuck":-1.9,"brace":-0.3,"crumple":-3,"arch":-0.5,"lag":6}
++    {"id":"sh_r","bone":"shin_r","axis":"z","beta":0,"k_stiff":120,"k_loose":22,"c":5,"drag":24,"inertia":20,"lo":-2,"hi":0,"tsg":0,"tuck":-1.9,"brace":-0.3,"crumple":-3,"arch":-0.5,"lag":6},
++    {"id":"spine_tw","bone":"spine_2","axis":"y","oop":1,"beta":0,"k_stiff":70,"k_loose":12,"c":6,"drag":0,"inertia":0,"lo":-0.6,"hi":0.6,"tsg":0,"tuck":0,"brace":0,"crumple":0,"arch":1,"lag":2},
++    {"id":"spine_bd","bone":"spine_2","axis":"x","oop":1,"beta":0,"k_stiff":70,"k_loose":12,"c":6,"drag":0,"inertia":0,"lo":-0.45,"hi":0.45,"tsg":0,"tuck":0,"brace":0,"crumple":0,"arch":1,"lag":2},
++    {"id":"head_roll","bone":"head","axis":"x","oop":1,"beta":0,"k_stiff":60,"k_loose":10,"c":6,"drag":0,"inertia":0,"lo":-0.5,"hi":0.5,"tsg":0,"tuck":0,"brace":0,"crumple":0,"arch":1,"lag":0},
++    {"id":"ua_l_tw","bone":"upper_arm_l","axis":"y","oop":1,"beta":0,"k_stiff":50,"k_loose":9,"c":5,"drag":0,"inertia":0,"lo":-1.1,"hi":1.1,"tsg":0,"tuck":0,"brace":0,"crumple":0,"arch":1,"lag":4},
++    {"id":"ua_r_tw","bone":"upper_arm_r","axis":"y","oop":1,"beta":0,"k_stiff":50,"k_loose":9,"c":5,"drag":0,"inertia":0,"lo":-1.1,"hi":1.1,"tsg":0,"tuck":0,"brace":0,"crumple":0,"arch":1,"lag":4},
++    {"id":"pel_tw","bone":"pelvis","axis":"y","oop":1,"beta":0,"k_stiff":70,"k_loose":12,"c":6,"drag":0,"inertia":0,"lo":-0.5,"hi":0.5,"tsg":0,"tuck":0,"brace":0,"crumple":0,"arch":1,"lag":3}
+   ],
+   "variety": {"hz":0.18,"phase":0.6,"amp":0.2,"side_dead":0.25},
+   "drive": {"v0":1500,"a0":6000,"a_max":40000,"gate":0.25,"free_rate":18},
+diff --git a/data/anim/ragdoll_motion.json b/data/anim/ragdoll_motion.json
+index 50f8f86..2534eba 100644
+--- a/data/anim/ragdoll_motion.json
++++ b/data/anim/ragdoll_motion.json
+@@ -8,7 +8,7 @@
+     "E": {"tuck":[0.095,-0.059,-0.386,0,-0.059,-0.267,0,-0.059,0.089,-0.03,-0.059,-0.03],"brace":[0.166,-0.208,-0.593,0,-0.2,-0.712,0,-0.178,-0.86,-0.119,0.949,-0.89],"skid":[0.071,0,-0.297,0,-0.148,-0.415,0,-0.089,0.267,0,0.356,0],"crumple":[-0.475,-0.49,-0.475,0,-0.178,-0.208,0,-0.119,-0.148,-1.365,1.306,-1.335]},
+     "C": {"tuck":[0,0,1.335,0,-0.2,1.335,0,-0.2,1.335,-1.335,1.335,-1.335],"brace":[0.237,-0.334,1.335,0,0,1.335,0,0,1.335,-1.335,1.335,-1.335],"skid":[0,0,-0.148,0,0,1.335,0,-0.2,0,0,1.335,-1.335],"crumple":[0,-0.668,0,0,0,0,0,0,0,-1.335,0,-1.335]}
+   },
+-  "flail": {"amp":[0.18,0.12,0.7,0.3,0.55,0.7,0.3,0.55,0.5,0.45,0.5,0.45],"hz":[2.6,1.9,2.3,3.1,3.4,2.7,3.3,3.1,2.1,2.8,2.4,3],"fade":[0.35,1.2]},
++  "flail": {"amp":[0.18,0.12,0.7,0.3,0.55,0.7,0.3,0.55,0.5,0.45,0.5,0.45,0.25,0.15,0.2,0.4,0.4,0.18],"hz":[2.6,1.9,2.3,3.1,3.4,2.7,3.3,3.1,2.1,2.8,2.4,3,1.7,2.2,2.9,1.9,2.2,1.5],"fade":[0.35,1.2]},
+   "regimes": {"tuck_max":0.7,"tuck_after":[0.25,0.6],"skid_w":0.6,"crumple_down_w":0.6},
+   "weight": {"mass": {"default": 1.0, "PROTAGONIST": 1.0, "RIVAL": 1.1, "REFERENCE": 1.3}, "tier_gain": [1.0, 1.25, 1.5, 1.8], "mass_exp": 1.0, "_note": "RG1 (docs/animation/ragdoll-physics-paper.md): mass divides every impulse and the flail (a heavier body moves less per blow); tier_gain multiplies them by the power tier of the opponent, 1 to 4 (a bigger blow sends the limbs further); the lag per degree of freedom is in ragdoll.json (head 0 ticks, trunk 2, arms 4 to 5, legs 5 to 6). First values, Animation own; the masses are placeholders until Game Design gives the fighters a mass."},
+   "hit": {"gain": 1.6, "dofs": [
+@@ -23,6 +23,12 @@
+     {"id":"th_l","kx":[-4.8,-4.8,-4.8,-4.8],"ky":[0,0,0,0],"kc":[0,0,0,0],"vx":0.667,"vx_var":"u2","kc_var":"u2"},
+     {"id":"sh_l","kx":[0,0,0,0],"ky":[0,0,0,0],"kc":[-1.5,-1.5,-1.5,-3],"vx":0,"vx_var":"u","kc_var":"one"},
+     {"id":"th_r","kx":[-4.8,-4.8,-4.8,-4.8],"ky":[0,0,0,0],"kc":[0,0,0,0],"vx":-0.667,"vx_var":"u2","kc_var":"u2"},
+-    {"id":"sh_r","kx":[0,0,0,0],"ky":[0,0,0,0],"kc":[-1.5,-1.5,-1.5,-3],"vx":0,"vx_var":"u","kc_var":"one"}
++    {"id":"sh_r","kx":[0,0,0,0],"ky":[0,0,0,0],"kc":[-1.5,-1.5,-1.5,-3],"vx":0,"vx_var":"u","kc_var":"one"},
++    {"id":"spine_tw","kx":[0,0,0,0],"ky":[0,0,0,0],"kc":[3.5,5,2,2],"vx":0,"vx_var":"u","kc_var":"u2"},
++    {"id":"spine_bd","kx":[0,0,0,0],"ky":[-1,-1.4,-0.7,-0.7],"kc":[1.2,1.5,0.8,0.8],"vx":0,"vx_var":"u","kc_var":"u"},
++    {"id":"head_roll","kx":[0,0,0,0],"ky":[0,0,0,0],"kc":[4,1.2,0,0],"vx":0,"vx_var":"u","kc_var":"u"},
++    {"id":"ua_l_tw","kx":[0,0,0,0],"ky":[0,0,0,0],"kc":[2.5,2.5,3.5,1.2],"vx":0,"vx_var":"u","kc_var":"u2"},
++    {"id":"ua_r_tw","kx":[0,0,0,0],"ky":[0,0,0,0],"kc":[-2.5,-2.5,-3.5,-1.2],"vx":0,"vx_var":"u","kc_var":"u2"},
++    {"id":"pel_tw","kx":[0,0,0,0],"ky":[0,0,0,0],"kc":[0.8,2,0.8,2.2],"vx":0,"vx_var":"u","kc_var":"u2"}
+   ]}
+ }
+diff --git a/render/anim/anim_fighter.gd b/render/anim/anim_fighter.gd
+index 501526d..86ec4b2 100644
+--- a/render/anim/anim_fighter.gd
++++ b/render/anim/anim_fighter.gd
+@@ -3410,6 +3410,7 @@ func _rd_scale() -> PackedFloat32Array:
+ 	var base: int = 5 if _hang_right else 2
+ 	for j in range(3):
+ 		sc[base + j] = 0.33
++	sc[16 if _hang_right else 15] = 0.33   # the broken arm's twist hangs with it
+ 	return sc
+ 
+ 
+@@ -3457,6 +3458,7 @@ func _rd_tick(S: SimState, f, dt: float) -> void:
+ 	var flying: bool = (st == "launched" or st == "dropped") and not sliding
+ 	var speed: float = vw.length()
+ 	_rd_rot = f.rot
++	_rd.n_on = AnimRagdoll.N if (RenderAnim.rd_oop and not RenderAnim.reduced_motion) else AnimRagdoll.N_BASE   # reduced motion keeps the body in its plane
+ 	_rd.weighted = RenderAnim.rd_weight
+ 	if RenderAnim.rd_weight:
+ 		_rd.mass = float(AnimRagdoll.mass_of.get(String(f.id), AnimRagdoll.mass_of.get("default", 1.0)))
+diff --git a/render/anim/anim_ragdoll.gd b/render/anim/anim_ragdoll.gd
+index 14b176f..4f556ea 100644
+--- a/render/anim/anim_ragdoll.gd
++++ b/render/anim/anim_ragdoll.gd
+@@ -7,14 +7,16 @@ extends RefCounted
+ ## an early-launch limb flail, and by impulses (a crumple, a hit). It is stepped once per sim tick, never per frame, so the
+ ## picture is the same in a replay at any frame rate, draws no random number and writes nothing to the sim.
+ 
+-const N := 12
++const N := 18          # the first 12 are the sagittal ones; the last 6 (flagged oop in the data) are out of the plane and run only with RenderAnim.rd_oop
++const N_BASE := 12
+ const REGIONS := {"head": 0, "core": 1, "arms": 2, "legs": 3}
+ 
+ static var loaded: bool = false
+ static var bone_a := PackedInt32Array()
+ static var bone_b := PackedInt32Array()
+ static var share_a := PackedFloat32Array()
+-static var is_x := PackedByteArray()
++static var is_x := PackedByteArray()           # the sideways partner of the degree before it (a shoulder's sweep): solved with it as one turn
++static var axis_c := PackedByteArray()         # the axis of each degree of freedom: 0 z, 1 x, 2 y
+ static var beta_c := PackedFloat32Array()
+ static var beta_s := PackedFloat32Array()
+ static var k_stiff := PackedFloat32Array()
+@@ -78,6 +80,7 @@ var phase: float = 0.0
+ var fv_hz := PackedFloat32Array()              # this launch's own flail: a factor on each degree of freedom's frequency and amplitude, and a phase shift (set_flail_seed)
+ var fv_amp := PackedFloat32Array()
+ var fv_ph := PackedFloat32Array()
++var n_on: int = N_BASE                         # how many degrees of freedom run: all with RenderAnim.rd_oop, else the sagittal twelve
+ var weighted: bool = false                     # RG1 on: impulses are scaled by tier and mass and arrive down the body by the lag (set each tick by the fighter)
+ var mass: float = 1.0
+ var tier: float = 1.0
+@@ -115,12 +118,14 @@ static func setup() -> void:
+ 	hit_vx_var.resize(N)
+ 	hit_kc_var.resize(N)
+ 	is_x.resize(N)
++	axis_c.resize(N)
+ 	for i in range(mini(N, dofs.size())):
+ 		var e: Dictionary = dofs[i]
+ 		bone_a[i] = AnimRig.index[String(e.bone)]
+ 		bone_b[i] = AnimRig.index[String(e.bone2)] if e.has("bone2") else -1
+ 		share_a[i] = float(e.get("share", 1.0))
+-		is_x[i] = 1 if String(e.axis) == "x" else 0
++		is_x[i] = 1 if (String(e.axis) == "x" and not bool(e.get("oop", false))) else 0
++		axis_c[i] = 1 if String(e.axis) == "x" else (2 if String(e.axis) == "y" else 0)
+ 		beta_c[i] = cos(float(e.beta))
+ 		beta_s[i] = sin(float(e.beta))
+ 		k_stiff[i] = float(e.k_stiff)
+@@ -261,6 +266,9 @@ func step(dt: float, v: Vector2, a: Vector2, free_t: float, amp: float, tt: floa
+ 	# reduced motion also narrows every joint's range (a hard tumble saturates the limits at any amplitude, so the drive alone does not calm it)
+ 	var lk: float = REDUCED_LIMIT if amp < 0.999 else 1.0
+ 	_tick += 1
++	for zi in range(n_on, N):
++		th[zi] = 0.0
++		om[zi] = 0.0
+ 	if not _pend.is_empty():
+ 		var keep: Array = []
+ 		for pi in _pend:
+@@ -283,7 +291,7 @@ func step(dt: float, v: Vector2, a: Vector2, free_t: float, amp: float, tt: floa
+ 	var wc: float = w_crumple * amp
+ 	var wf: float = w_flail * amp * gain()
+ 	for _s in range(2):
+-		for i in range(N):
++		for i in range(n_on):
+ 			var kk: float = lerpf(k_stiff[i], k_loose[i], free)
+ 			var target: float = tsg[i] * sp * free + wt * s_tuck[i] + wb * s_brace[i] + ws * s_skid[i] + wc * s_crum[i]
+ 			if wf > 0.001:
+@@ -315,6 +323,8 @@ func gain() -> float:
+ 
+ ## One impulse on one degree of freedom, scaled by gain() and, when weighted, held for the degree's lag so a blow travels down the body.
+ func _imp(i: int, w: float) -> void:
++	if i >= n_on:
++		return
+ 	var v: float = w * gain()
+ 	if weighted and lag[i] > 0:
+ 		_pend.append([_tick + lag[i], i, v])
+@@ -396,7 +406,7 @@ func apply(q: Array[Quaternion], w: float, scale: PackedFloat32Array = PackedFlo
+ 		if absf(t) < 0.0005 and absf(t2) < 0.0005:
+ 			i += adv
+ 			continue
+-		var axis: Vector3 = Vector3(1, 0, 0) if is_x[i] == 1 else Vector3(0, 0, 1)
++		var axis: Vector3 = Vector3(1, 0, 0) if axis_c[i] == 1 else (Vector3(0, 1, 0) if axis_c[i] == 2 else Vector3(0, 0, 1))
+ 		if not limited:
+ 			if b2 < 0:
+ 				q[ab] = q[ab] * Quaternion(axis, t)
+diff --git a/render/anim/render_anim.gd b/render/anim/render_anim.gd
+index 67a5365..a270ee7 100644
+--- a/render/anim/render_anim.gd
++++ b/render/anim/render_anim.gd
+@@ -35,6 +35,7 @@ static var source_limits: bool = true          # the contact solve and the join
+ static var hand_retreat: bool = true          # a hand blow whose target is behind the shoulder gives ground the same way (its own switch: Combat rules on it, and the answer is data too, limbs.hand.min_fwd 0); false is the before
+ static var rd_variety: bool = true           # RG0 (docs/animation/ragdoll-physics-paper.md): each launch flails its own way (a hash of the slot and the launch number) and a bounce folds or arches by the side that hit; false is the before
+ static var rd_weight: bool = true            # RG1: the ragdoll has weight: impulses by the opponent's tier over the body's mass, and a blow travels down the body (head first, legs last); false is the before
++static var rd_oop: bool = false             # RG3: six more degrees of freedom out of the plane (spine twist and side bend, head roll, each upper arm's twist, the pelvis's twist): a flailing body turns about its long axis as a rag does. Off by default until Orb has seen the before and after; --rd-oop switches it on
+ static var kick_retreat: bool = true          # a kick whose hips are past its target gives ground instead of swinging the thigh back through its limit (data sockets.json limbs.foot.min_fwd); false is the before
+ static var mash_press: bool = true            # a run of mashed blows leans in (data styles.<style>.press_run); false is the before
+ static var march: bool = true                  # a mashed heavy takes a footfall (data styles.super.march); false is the before
+@@ -111,6 +112,8 @@ static func _read_args() -> void:
+ 			intro_poses = false
+ 		elif a == "--no-ground-poses":
+ 			ground_poses = false
++		elif a == "--rd-oop":
++			rd_oop = true
+ 		elif a == "--step3-cues":
+ 			step3_cues = true
+ 		elif a == "--no-step3-cues":
+diff --git a/render/anim/tools/anim_check.gd b/render/anim/tools/anim_check.gd
+index f0af44c..05b0128 100644
+--- a/render/anim/tools/anim_check.gd
++++ b/render/anim/tools/anim_check.gd
+@@ -1807,6 +1807,51 @@ func _test_ragdoll_weight() -> void:
+ 	print("ragdoll weight: gain %.2f to %.2f by tier, %.2f for a heavier body; a blow reaches the head, then the spine, then the legs" % [g1, g_t4, g_heavy])
+ 
+ 
++## RG3 (docs/animation/ragdoll-physics-paper.md): six degrees of freedom out of the plane, behind RenderAnim.rd_oop. Off, the body never leaves its plane; on, a flail and a hit turn it about its long axis, no joint goes past a limit, and
++## none sits at its limit for as long as a tenth of a second (a twist saturated in a tumble reads as a stuck rag).
++func _test_ragdoll_oop() -> void:
++	AnimRagdoll.setup()
++	_expect(AnimRagdoll.N == 18 and AnimRagdoll.N_BASE == 12, "ragdoll oop: eighteen degrees of freedom, the first twelve the sagittal ones")
++	var run := func(n_on: int) -> Dictionary:
++		var rd := AnimRagdoll.new()
++		rd.n_on = n_on
++		rd.set_flail_seed(0, 3, 1)
++		rd.w_flail = 1.0
++		rd.hit(40.0, 10.0, 1.0, 1, 0.6, -0.4)
++		rd.crumple(1.0, 1.0, -1.0)
++		var stuck: int = 0
++		var stuck_max: int = 0
++		var oop_peak: float = 0.0
++		for k in range(180):
++			rd.step(1.0 / 60.0, Vector2(900.0, 100.0), Vector2(0.0, 0.0), 0.85, 1.0, 5.0 + float(k) / 60.0)
++			var at_limit: bool = false
++			for i in range(AnimRagdoll.N_BASE, AnimRagdoll.N):
++				oop_peak = maxf(oop_peak, absf(rd.th[i]))
++				var lim: float = AnimRagdoll.hi[i] if rd.th[i] >= 0.0 else -AnimRagdoll.lo[i]
++				if absf(rd.th[i]) >= 0.98 * lim:
++					at_limit = true
++			stuck = stuck + 1 if at_limit else 0
++			stuck_max = maxi(stuck_max, stuck)
++		return {"peak": oop_peak, "stuck": stuck_max}
++	var off: Dictionary = run.call(AnimRagdoll.N_BASE)
++	var on: Dictionary = run.call(AnimRagdoll.N)
++	_expect(float(off.peak) == 0.0 and float(on.peak) > 0.1 and int(on.stuck) < 6, "ragdoll oop: off the six stay at 0 (%.3f), on they turn the body up to %.2f rad and none sits at its limit for more than %d ticks (6 allowed)" % [float(off.peak), float(on.peak), int(on.stuck)])
++	# every extreme turn of the six, applied to a standing pose, is cut inside the joint limits
++	var viol: int = 0
++	var rd2 := AnimRagdoll.new()
++	rd2.n_on = AnimRagdoll.N
++	for sgn in [-1.0, 1.0]:
++		for i in range(AnimRagdoll.N_BASE, AnimRagdoll.N):
++			rd2.reset()
++			rd2.th[i] = (AnimRagdoll.hi[i] if sgn > 0.0 else AnimRagdoll.lo[i])
++			var q1: Array[Quaternion] = AnimData.pose("stance.aggressive").q.duplicate()
++			rd2.apply(q1, 1.0)
++			viol += AnimJoints.violations(q1, rd2.shape_key).size()
++	_expect(viol == 0, "ragdoll oop: the six at their extremes leave %d joints past a limit on the guard stance (0 allowed)" % viol)
++	_expect(RenderAnim.rd_oop == false, "ragdoll oop: the switch is off by default (Orb sees the before and after first)")
++	print("ragdoll oop: on, the body turns up to %.2f rad out of its plane; off, none; no joint past a limit at the extremes" % float(on.peak))
++
++
+ func _test_pulled() -> void:
+ 	AnimData.load_every_wave()
+ 	main.start_match(4, {"p1": false, "p2": false})
+@@ -4472,6 +4517,7 @@ func _run() -> void:
+ 	_test_guard()
+ 	_test_ragdoll_vary()
+ 	_test_ragdoll_weight()
++	_test_ragdoll_oop()
+ 	_test_pulled()
+ 	_test_bends()
+ 	_test_styles()
+diff --git a/render/anim/tools/flurry_study.gd b/render/anim/tools/flurry_study.gd
+index 74aff17..8460901 100644
+--- a/render/anim/tools/flurry_study.gd
++++ b/render/anim/tools/flurry_study.gd
+@@ -131,6 +131,8 @@ func _ready() -> void:
+ 			RenderAnim.kick_retreat = false
+ 			RenderAnim.hand_retreat = false
+ 			RenderAnim.free_arm_slew = false
++		if float(_js("window.__oop || 0", 0.0)) > 0.0:   # RG3's after: the out-of-plane degrees of freedom on (`window.__oop = 1`)
++			RenderAnim.rd_oop = true
+ 		sil = sil or float(_js("window.__sil || 0", 0.0)) > 0.0
+ 		far = far or float(_js("window.__far || 0", 0.0)) > 0.0
+ 		near = float(_js("window.__near || 0", 0.0)) > 0.0
