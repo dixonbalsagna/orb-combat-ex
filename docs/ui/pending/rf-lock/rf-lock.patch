@@ -1,0 +1,342 @@
+diff -ruN a/ui/core/ui_data.gd b/ui/core/ui_data.gd
+--- a/ui/core/ui_data.gd	2026-10-17 12:39:15.160992700 -0700
++++ b/ui/core/ui_data.gd	2026-10-17 12:39:15.314021500 -0700
+@@ -369,6 +369,12 @@
+ 	return bool(_features.get(key, false))
+ 
+ 
++## Whether Reduce flashing is locked on (Legal's addendum 10, RL-156): the toggle is shown nowhere, a saved Off is ignored, and the game plays the reduced look. Only the capture
++## hook (render/tools/flash_capture.gd) sets the option by itself, to measure the other mode; no screen, key or saved file can.
++static func rf_locked() -> bool:
++	return feature("lock_reduce_flashing")
++
++
+ ## Override a flag for this run (tests and demos); pass null to clear the override.
+ static func set_feature(key: String, value) -> void:
+ 	if value == null:
+diff -ruN a/ui/data/features.json b/ui/data/features.json
+--- a/ui/data/features.json	2026-10-17 12:39:15.184981100 -0700
++++ b/ui/data/features.json	2026-10-17 12:39:15.362730900 -0700
+@@ -9,6 +9,7 @@
+     "about_voice": false,
+     "three_strengths": false,
+     "reduce_flashing": true,
++    "lock_reduce_flashing": false,
+     "start_menu": true,
+     "launch_marks": true,
+     "civilian_bar": true
+diff -ruN a/ui/data/options.json b/ui/data/options.json
+--- a/ui/data/options.json	2026-10-17 12:39:15.190847000 -0700
++++ b/ui/data/options.json	2026-10-17 12:39:15.371240900 -0700
+@@ -11,7 +11,7 @@
+     "latch_charge_p2": { "default": false, "group": "controls", "label": "Latched charge, player 2", "help": "The same for player two when two people play. Player one's is the one above.", "accessibility": true },
+     "charges_off": { "default": false, "group": "controls", "label": "Charges off", "help": "Every press is a tap: Medium and Heavy throw as soon as their wind-up ends, and holding does not charge. Off: hold to charge.", "accessibility": true },
+     "charges_off_p2": { "default": false, "group": "controls", "label": "Charges off, player 2", "help": "The same for player two when two people play. Player one's is the one above.", "accessibility": true },
+-    "reduce_flashing": { "default": true, "group": "accessibility", "label": "Reduce flashing", "help": "Fewer and gentler flashes: at most one large flash a second, and the small ones off. Reduced motion is a separate setting.", "accessibility": true },
++    "reduce_flashing": { "default": true, "group": "accessibility", "label": "Reduce flashing", "help": "Fewer and gentler flashes: at most one large flash a second, and the small ones off. Turning it off restores full effects, which flash more. Reduced motion is a separate setting.", "accessibility": true },
+     "reduced_motion": { "default": false, "group": "accessibility", "label": "Reduced motion", "help": "Removes flicker, shimmer and shrinking rings. The split screen swaps sides with a quick fade instead of a swing, and screen shake is cut to a quarter. Everything keeps its shape.", "accessibility": true },
+     "split_solo": { "default": true, "group": "display", "label": "Split screen against the computer", "help": "Use the split screen when you play alone against the computer. Off keeps one camera on your fighter and shows the rival by an edge pointer and the ring map when it is far." },
+     "show_prompts": { "default": false, "group": "display", "label": "Show prompts", "help": "Button prompts on the parry ring, the finisher rings and under your nameplate. Always on in training and in the first three matches." },
+diff -ruN a/ui/data/terms.json b/ui/data/terms.json
+--- a/ui/data/terms.json	2026-10-17 12:39:15.195844900 -0700
++++ b/ui/data/terms.json	2026-10-17 12:39:15.376750800 -0700
+@@ -88,7 +88,7 @@
+   },
+   "prompt": { "special": "SPECIAL", "transform": "TRANSFORM", "attack": "ATTACK", "attack_hint": "TAP  HOLD  SWIPE UP", "guard": "GUARD", "guard_hint": "HOLD", "power": "POWER", "power_hint": "HOLD", "move": "MOVE", "move_hint": "FLICK TO DODGE",
+     "full_light": "LIGHT", "full_heavy": "HEAVY", "full_signature": "SIGNATURE", "full_context": "ACTION", "full_mode": "ENERGY", "full_transform": "TRANSFORM", "full_dodge": "DODGE",
+-    "pause_title": "PAUSED", "pause_resume": "Resume", "pause_howto": "How to play", "pause_settings": "Settings", "pause_feedback": "Send feedback", "not_yet": "not yet", "three_light": "Light", "three_medium": "Medium", "three_heavy": "Heavy", "three_context": "Action", "three_sig_chord": "Signature (hold)", "three_attack": "Attack (hold: stronger)", "three_full_heavy": "MEDIUM", "three_full_signature": "HEAVY", "three_howto_heavy": "Medium", "three_howto_signature": "Heavy (hold the power button with it for your signature, 45 Charge)", "three_remap_heavy": "Medium", "three_remap_signature": "Heavy", "photo_title": "This game contains flashing effects.", "photo_body_a": "Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them.", "photo_settings_line": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_settings_line_rf": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_body_b": "No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version.", "photo_start": "I understand, start", "photo_settings": "Open Settings", "photo_more": "Scroll for more", "menu_notice": "This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.", "menu_rf_on": "Reduce flashing is on. It lowers some effects but does not remove the flagged scenes.", "menu_rf_off": "Reduce flashing is off.", "menu_not_now": "Not now", "menu_holding_url": "../", "menu_players": "Players", "menu_one": "1 player", "menu_two": "2 players", "menu_one_note": "One player plays against the computer.", "menu_p1": "Player 1", "menu_p2": "Player 2", "menu_kb": "Keyboard", "menu_pad": "Controller", "menu_intros": "Intros", "menu_reduce_flashing": "Reduce flashing", "menu_shake": "Screen shake", "menu_captions": "Captions", "menu_guide": "Move guide", "menu_start": "I understand, start", "menu_back": "Back to the match", "menu_both_kb": "Both on the keyboard: you share it, and the guide shows each player's keys.", "menu_no_pad": "No controller found yet. Press a button on it.", "pause_menu": "Main menu", "pause_again": "Play again", "pause_over_title": "MATCH OVER", "turn_title": "Turn your phone", "turn_body": "This game plays sideways. Turn your phone to landscape and the match carries on; it waits for you.", "turn_anyway": "Play upright anyway", "photo_close": "Close", "pause_about": "About", "pause_new": "New match",
++    "pause_title": "PAUSED", "pause_resume": "Resume", "pause_howto": "How to play", "pause_settings": "Settings", "pause_feedback": "Send feedback", "not_yet": "not yet", "three_light": "Light", "three_medium": "Medium", "three_heavy": "Heavy", "three_context": "Action", "three_sig_chord": "Signature (hold)", "three_attack": "Attack (hold: stronger)", "three_full_heavy": "MEDIUM", "three_full_signature": "HEAVY", "three_howto_heavy": "Medium", "three_howto_signature": "Heavy (hold the power button with it for your signature, 45 Charge)", "three_remap_heavy": "Medium", "three_remap_signature": "Heavy", "photo_title": "This game contains flashing effects.", "photo_body_a": "Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them.", "photo_settings_line": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_settings_line_rf": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_body_b": "No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version.", "photo_start": "I understand, start", "photo_settings": "Open Settings", "photo_more": "Scroll for more", "menu_notice": "This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.", "menu_rf_on": "Reduce flashing: on. Turning it off restores full effects, which flash more.", "menu_rf_locked": "Reduce flashing is on. It lowers some effects but does not remove the flagged scenes.", "menu_rf_off": "Reduce flashing: off. Full effects are on, and they flash more.", "menu_not_now": "Not now", "menu_holding_url": "../", "menu_players": "Players", "menu_one": "1 player", "menu_two": "2 players", "menu_one_note": "One player plays against the computer.", "menu_p1": "Player 1", "menu_p2": "Player 2", "menu_kb": "Keyboard", "menu_pad": "Controller", "menu_intros": "Intros", "menu_reduce_flashing": "Reduce flashing", "menu_shake": "Screen shake", "menu_captions": "Captions", "menu_guide": "Move guide", "menu_start": "I understand, start", "menu_back": "Back to the match", "menu_both_kb": "Both on the keyboard: you share it, and the guide shows each player's keys.", "menu_no_pad": "No controller found yet. Press a button on it.", "pause_menu": "Main menu", "pause_again": "Play again", "pause_over_title": "MATCH OVER", "turn_title": "Turn your phone", "turn_body": "This game plays sideways. Turn your phone to landscape and the match carries on; it waits for you.", "turn_anyway": "Play upright anyway", "photo_close": "Close", "pause_about": "About", "pause_new": "New match",
+     "pause_new_ask": "Start a new match?", "pause_new_yes": "New match", "pause_new_no": "Keep playing", "pause_resume_key": "P", "pause_howto_key": "F1", "pause_new_key": "N",
+     "join": "P2: press any button to join", "join_short": "P2: press a button", "join_key": "P2: press T to join", "join_key_short": "P2: T to join", "form_hold": "Hold", "form_tap": "Tap", "form_boost": "hit harder until the match ends", "form_boost_short": "hit harder from now on", "intro_skip_kbd": "Press any key to skip", "intro_skip_pad": "Press any button to skip", "intro_skip_touch": "Tap to skip", "recipe_light": "light", "recipe_heavy": "heavy", "recipe_sig": "signature", "recipe_energy": "energy", "launch_hint": "Keep hitting, then press the lit button to launch him.", "over_civilians": "Civilians lost: {n} of {total}", "over_structures": "Buildings lost: {n}", "over_craters": "Craters: {n}", "inc_lost": "OFF SCREEN", "inc_rush": "RUSH", "inc_closing": "CLOSING", "mode_hold": "Energy (hold)", "mode_toggle": "Energy (toggle)", "remap_player": "Player", "remap_p1": "Player 1", "remap_p2": "Player 2", "join_tiny": "P2: any button", "join_key_tiny": "P2: press T", "left_short": "P2 left", "joined": "P2 joined", "left": "P2 handed back to the computer", "pause_p2_leave": "Player two: hand back to the computer", "pause_p2_join": "Player two: press any button to join" },
+   "planet": "EVERHOLD",
+diff -ruN a/ui/hud/ui_hud.gd b/ui/hud/ui_hud.gd
+--- a/ui/hud/ui_hud.gd	2026-10-17 12:39:15.200892200 -0700
++++ b/ui/hud/ui_hud.gd	2026-10-17 12:39:15.381265400 -0700
+@@ -1273,7 +1273,7 @@
+ 	if not _notice_open:
+ 		return
+ 	if open_settings:
+-		var fk: String = "reduce_flashing" if UiData.feature("reduce_flashing") else "reduced_motion"
++		var fk: String = "reduce_flashing" if UiData.feature("reduce_flashing") and not UiData.rf_locked() else "reduced_motion"
+ 		if _notice_gate:
+ 			_notice_allow_settings = true
+ 			show_settings(fk)
+@@ -1312,7 +1312,7 @@
+ 		"p1": str(s.get("p1", "pad" if pads > 0 else "kb")),
+ 		"p2": str(s.get("p2", "pad" if pads > 1 else "kb")),
+ 		"intros": bool(s.get("intros", true)),
+-		"reduce_flashing": bool(s["reduce_flashing"]) if s.has("reduce_flashing") else true,
++		"reduce_flashing": true if UiData.rf_locked() else (bool(s["reduce_flashing"]) if s.has("reduce_flashing") else true),
+ 		"shake": bool(s["shake"]) if s.has("shake") else float(opts["camera_shake"]) > 0.0,
+ 		"captions": bool(s["captions"]) if s.has("captions") else bool(opts["captions"]),
+ 		"guide": bool(s["guide"]) if s.has("guide") else str(opts["control_hints"]) != "off",
+@@ -1445,6 +1445,8 @@
+ ## Start: the checkboxes take effect and are remembered, the choices are filed in the prefs, the host is told, and the menu goes (the match is released by the hold's end).
+ func _menu_start() -> void:
+ 	var cfg: Dictionary = _menu_cfg.duplicate()
++	if UiData.rf_locked():
++		cfg["reduce_flashing"] = true   # locked on (Legal's addendum 10): the box is not offered, and nothing saved or sent can say Off
+ 	settings_set("reduce_flashing", bool(cfg["reduce_flashing"]))
+ 	var shake_now: float = float(opts["camera_shake"])
+ 	settings_set("camera_shake", (shake_now if shake_now > 0.0 else 2.0) if bool(cfg["shake"]) else 0.0)
+@@ -2040,6 +2042,8 @@
+ 
+ ## Change an option from the screen: through set_option (the clamp and option_changed), and remembered.
+ func settings_set(key: String, value) -> void:
++	if key == "reduce_flashing" and UiData.rf_locked():
++		value = true   # locked on (Legal's addendum 10): the Settings screen and the saved file cannot turn it off
+ 	set_option(key, value)
+ 	_saved_opts[key] = opts[key]
+ 	UiPrefs.set_value("options", _saved_opts)
+@@ -2055,8 +2059,11 @@
+ 	var od: Dictionary = UiData.options()
+ 	for k in saved:
+ 		if od.has(k):
+-			_saved_opts[k] = saved[k]
+-			set_option(k, saved[k])
++			var sv = saved[k]
++			if k == "reduce_flashing" and UiData.rf_locked():
++				sv = true   # a saved Off from before the lock is ignored
++			_saved_opts[k] = sv
++			set_option(k, sv)
+ 
+ 
+ func _settings_row(i: int) -> Dictionary:
+diff -ruN a/ui/tools/hud_check.gd b/ui/tools/hud_check.gd
+--- a/ui/tools/hud_check.gd	2026-10-17 12:39:15.211897800 -0700
++++ b/ui/tools/hud_check.gd	2026-10-17 12:39:15.393013200 -0700
+@@ -5170,6 +5170,7 @@
+ 	hud.queue_free()
+ 	await process_frame
+ 	await _reduce_flashing_rules()
++	await _rf_lock_rules()
+ 	await _launcher_rules()
+ 
+ 
+@@ -5460,6 +5461,90 @@
+ 	_ok(UiLook.HZ_BATTERED <= 2.0 and UiLook.HZ_HEAT <= 2.0, "rate rule: and the two that run a whole match (the battered stroke, the heat swell) are 2 Hz or slower")
+ 
+ 
++## Reduce flashing locked on (Legal's addendum 10, RL-156): until full effects have a recorded pass the interim build shows no toggle and ignores a saved Off; when the toggle is shown it carries Legal's sentence.
++func _rf_lock_rules() -> void:
++	const SENT := "Turning it off restores full effects, which flash more."
++	UiData.set_feature("reduce_flashing", true)
++	UiPrefs.path = "user://ui_prefs_test_rflock.json"
++	if FileAccess.file_exists(UiPrefs.path):
++		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
++	_ok(not UiData.rf_locked(), "rf lock: the flag is off in the tree (the toggle is shown until the interim build turns it on)")
++	var keys := PackedStringArray()
++	for r in UiSettings.rows():
++		keys.append(str(r["key"]))
++	var help_all: String = str(UiData.options()["reduce_flashing"]["help"])
++	_ok(keys.has("reduce_flashing") and help_all.contains(SENT), "rf lock: with the toggle shown, its Settings row carries Legal's sentence, word for word")
++	_ok(UiMenu.checks().has("reduce_flashing") and UiMenu.rf_line({"reduce_flashing": true}).ends_with(SENT) and not UiMenu.rf_line({"reduce_flashing": false}).contains("Turning it off"), "rf lock: the menu's box carries the sentence when it is on, and says full effects are on when it is off")
++	var lines_all := (UiMenu.rf_line({"reduce_flashing": true}) + " " + UiMenu.rf_line({"reduce_flashing": false}) + " " + help_all).to_lower()
++	_ok(not lines_all.contains("safe") and not lines_all.contains("tested") and not lines_all.contains("compliant"), "rf lock: never safe, tested or compliant")
++	# Locked.
++	UiData.set_feature("lock_reduce_flashing", true)
++	var keys2 := PackedStringArray()
++	for r2 in UiSettings.rows():
++		keys2.append(str(r2["key"]))
++	_ok(not keys2.has("reduce_flashing") and keys2.has("reduced_motion"), "rf lock: locked, Settings lists no Reduce flashing row (Reduced motion stays)")
++	var rows_l: Array = UiMenu.rows({"players": 1}, false)
++	_ok(not rows_l.has("reduce_flashing") and UiMenu.checks().size() == 4 and rows_l == ["players", "p1", "intros", "shake", "captions", "guide", "start"], "rf lock: locked, the start menu has four boxes and no Reduce flashing %s" % str(rows_l))
++	_ok(UiMenu.rf_line({"reduce_flashing": false}) == UiMenu.word("rf_locked") and not UiMenu.rf_line({}).contains("Turning it off") and UiMenu.rf_line({}).begins_with("Reduce flashing is on."), "rf lock: locked, the small line is the RL-136 line alone, whatever the box said")
++	var bad := PackedStringArray()
++	for cs in [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 768), 1.0], [Vector2(2532, 1170), 3.0], [Vector2(844, 390), 1.0], [Vector2(667, 375), 1.0], [Vector2(390, 844), 1.0], [Vector2(414, 896), 1.0]]:
++		var lay := UiLayout.new()
++		lay.dp = cs[1]
++		lay.compute(cs[0], false)
++		for players in [1, 2]:
++			var cfg := {"players": players, "p1": "kb", "p2": "kb", "intros": true, "reduce_flashing": true, "shake": true, "captions": true, "guide": true}
++			var p: Dictionary = UiMenu.plan(cs[0], lay.s, cs[1], true, {"focus": 0, "cfg": cfg, "mid_match": false, "safe": lay.safe, "not_now": true})
++			var has_rf := false
++			for it in p["items"]:
++				has_rf = has_rf or str(it["row"]) == "reduce_flashing"
++			if not bool(p["fits"]) or has_rf or int(p["fs"]) < int(UiLook.text_floor) - 1:
++				bad.append("%s players %d" % [str(cs[0]), players])
++	_ok(bad.is_empty(), "rf lock: locked, the menu card fits at eight sizes with four boxes and no control for Reduce flashing (%d bad %s)" % [bad.size(), str(bad.slice(0, 4))])
++	# The HUD: nothing saved, sent or pressed turns it off.
++	UiPrefs.set_value("menu", {"reduce_flashing": false, "players": 1})
++	UiPrefs.set_value("options", {"reduce_flashing": false})
++	root.size = Vector2i(1280, 720)
++	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
++	hud.size = Vector2(1280, 720)
++	root.add_child(hud)
++	await process_frame
++	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
++	hud.load_saved_options()
++	_ok(bool(hud.opts["reduce_flashing"]), "rf lock: a saved Off from before the lock is ignored on load")
++	hud.settings_set("reduce_flashing", false)
++	_ok(bool(hud.opts["reduce_flashing"]) and bool(UiPrefs.get_value("options", {}).get("reduce_flashing", false)), "rf lock: the Settings route cannot turn it off, and the saved file says On")
++	hud.show_start_menu(false)
++	hud.advance(1.0 / 60.0)
++	await process_frame
++	_ok(bool(hud.menu_config()["reduce_flashing"]) and not UiMenu.rows(hud.menu_config(), false).has("reduce_flashing"), "rf lock: the menu opens with Reduce flashing on though the saved menu said off, and offers no row for it")
++	var started := {"cfg": {}}
++	hud.menu_started.connect(func(c): started["cfg"] = c)
++	hud._menu_focus = UiMenu.rows(hud.menu_config(), false).find("start")
++	hud.menu_action("accept")
++	_ok(bool(started["cfg"].get("reduce_flashing", false)) and bool(hud.opts["reduce_flashing"]), "rf lock: Start hands the host Reduce flashing on")
++	hud.show_photo_notice(true)
++	hud.notice_action("right")
++	hud.notice_action("right")
++	hud.notice_action("accept")
++	var rws: Array = UiSettings.rows()
++	var fk := ""
++	if hud.settings_focus() >= 0 and hud.settings_focus() < rws.size():
++		fk = str(rws[hud.settings_focus()]["key"])
++	_ok(hud.is_settings_open() and fk == "reduced_motion", "rf lock: the notice's Open Settings lands on Reduced motion, not on a row that is not there (%s)" % fk)
++	hud.hide_settings()
++	hud.hide_photo_notice(false)
++	# The capture hook sets the option directly, to measure the other mode; the lock is for the player's routes only.
++	hud.set_option("reduce_flashing", false)
++	_ok(not bool(hud.opts["reduce_flashing"]), "rf lock: the capture hook's own route (set_option) still sets either mode, so full effects can be measured")
++	hud.set_option("reduce_flashing", true)
++	UiData.set_feature("lock_reduce_flashing", null)
++	UiData.set_feature("reduce_flashing", null)
++	hud.queue_free()
++	await process_frame
++	if FileAccess.file_exists(UiPrefs.path):
++		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
++
++
+ ## The start menu (docs/ui/start-menu.md): the first card of a session, with the notice, radio buttons and checkboxes and one Start, and the way back after a match.
+ func _menu_rules() -> void:
+ 	UiPrefs.path = "user://ui_prefs_test_menu.json"
+@@ -5468,8 +5553,8 @@
+ 	# The words: the notice is the placeholder until Legal's text comes, with the state of Reduce flashing in it.
+ 	const LEGAL_MENU := "This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version."
+ 	_ok(UiMenu.notice({"reduce_flashing": true}) == LEGAL_MENU and UiMenu.notice({"reduce_flashing": false}) == LEGAL_MENU, "menu: the notice is Legal's words, exactly (RL-136), whatever the boxes say")
+-	_ok(UiMenu.word("start") == "I understand, start" and UiMenu.word("not_now") == "Not now" and UiMenu.rf_line({"reduce_flashing": true}) == "Reduce flashing is on. It lowers some effects but does not remove the flagged scenes.", "menu: the button is I understand, start, with Not now beside it, and Legal's small line says what Reduce flashing does")
+-	var low := (LEGAL_MENU + " " + UiMenu.rf_line({"reduce_flashing": true})).to_lower()
++	_ok(UiMenu.word("start") == "I understand, start" and UiMenu.word("not_now") == "Not now" and UiMenu.rf_line({"reduce_flashing": true}) == "Reduce flashing: on. Turning it off restores full effects, which flash more.", "menu: the button is I understand, start, with Not now beside it, and Legal's small line says what Reduce flashing does")
++	var low := (LEGAL_MENU + " " + UiMenu.rf_line({"reduce_flashing": true}) + " " + UiMenu.word("rf_locked")).to_lower()
+ 	_ok(not low.contains("safe") and not low.contains("tested") and not low.contains("compliant"), "menu: never safe, tested or compliant")
+ 	var labels: Array = ["players", "one", "two", "p1", "p2", "kb", "pad", "intros", "reduce_flashing", "shake", "captions", "guide", "start", "back"]
+ 	_ok(UiMenu.rows({"players": 1}, false, true).has("not_now") and not UiMenu.rows({"players": 1}, false, false).has("not_now"), "menu: Not now is a row only where the page can go back (the web, the first screen)")
+@@ -5555,7 +5640,7 @@
+ 	_ok(UiMenu.rows(hud.menu_config(), false)[hud._menu_focus] == "reduce_flashing" or hud._menu_focus >= 0, "menu: Down reaches the boxes")
+ 	hud._menu_focus = rf_i
+ 	hud.menu_action("accept")
+-	_ok(not bool(hud.menu_config()["reduce_flashing"]) and UiMenu.rf_line(hud.menu_config()) == "Reduce flashing is off.", "menu: Space unticks Reduce flashing and the small line says it is off")
++	_ok(not bool(hud.menu_config()["reduce_flashing"]) and UiMenu.rf_line(hud.menu_config()) == "Reduce flashing: off. Full effects are on, and they flash more.", "menu: Space unticks Reduce flashing and the small line says it is off")
+ 	hud.menu_action("accept")
+ 	_ok(bool(hud.menu_config()["reduce_flashing"]), "menu: and ticks it again")
+ 	# Touch and mouse: a tap on a radio sets it, a tap on a box toggles it.
+diff -ruN a/ui/widgets/ui_menu.gd b/ui/widgets/ui_menu.gd
+--- a/ui/widgets/ui_menu.gd	2026-10-17 12:39:15.246924300 -0700
++++ b/ui/widgets/ui_menu.gd	2026-10-17 12:39:15.429531100 -0700
+@@ -13,13 +13,26 @@
+ 	return UiData.t("prompt.menu_" + key)
+ 
+ 
++## The boxes the menu shows: all five, or four while Reduce flashing is locked on (Legal's addendum 10: the box is not offered).
++static func checks() -> Array:
++	var out: Array = []
++	for c in CHECKS:
++		if c == "reduce_flashing" and UiData.rf_locked():
++			continue
++		out.append(c)
++	return out
++
++
+ ## The notice: Legal's words (RL-136), exactly, from data (prompt.menu_notice). It does not change with the boxes; the small line under the button says what Reduce flashing does.
+ static func notice(_cfg: Dictionary = {}) -> String:
+ 	return word("notice")
+ 
+ 
+-## The small line under the button: Reduce flashing's state, in Legal's words when it is on.
++## The small line under the button: Reduce flashing's state, in Legal's words. Locked on, it is the RL-136 line alone (there is nothing to turn off); with the box shown, "on"
++## carries Legal's sentence from addendum 10 and "off" says plainly that full effects are on.
+ static func rf_line(cfg: Dictionary) -> String:
++	if UiData.rf_locked():
++		return word("rf_locked")
+ 	return word("rf_on" if bool(cfg.get("reduce_flashing", true)) else "rf_off")
+ 
+ 
+@@ -28,7 +41,7 @@
+ 	var out: Array = ["players", "p1"]
+ 	if int(cfg.get("players", 1)) == 2:
+ 		out.append("p2")
+-	out.append_array(CHECKS)
++	out.append_array(checks())
+ 	out.append("start")
+ 	if not_now:
+ 		out.append("not_now")
+@@ -42,6 +55,7 @@
+ 	var mid: bool = bool(st.get("mid_match", false))
+ 	var not_now: bool = bool(st.get("not_now", false))
+ 	var list: Array = rows(cfg, mid, not_now)
++	var cks: Array = checks()
+ 	var cs: float = maxf(s, 0.3)
+ 	var tm: float = maxf(48.0 * dp, 44.0)
+ 	var margin: float = maxf(vp.x * 0.025, 8.0)
+@@ -119,10 +133,10 @@
+ 			left_h = left_h_note
+ 			# Right column: the checkboxes, in one or two sub-columns by what fits.
+ 			var cws: float = 0.0
+-			for c in CHECKS:
++			for c in cks:
+ 				cws = maxf(cws, UiText.width(word(c), fs) + tm * 0.55 + gap)
+ 			var subcols: int = 1 if cws * 2.0 + gap > colw else 2
+-			var check_rows: int = int(ceil(float(CHECKS.size()) / float(subcols)))
++			var check_rows: int = int(ceil(float(cks.size()) / float(subcols)))
+ 			var right_h: float = float(check_rows) * (tm + gap * 0.5)
+ 			var btn_h: float = tm
+ 			var sub_lines: PackedStringArray = UiText.wrap(rf_line(cfg), fs_s, inner_w)
+@@ -135,8 +149,11 @@
+ 				note_text = ""
+ 				total_h = pad * 2.0 + notice_h + gap * 1.5 + ((left_h + gap + right_h) if stack else maxf(left_h, right_h)) + gap + btn_h + sub_h
+ 			# A short screen: Start takes the empty cell of the boxes (the five boxes in two columns leave one) and Back sits under the left column.
+-			var corner: bool = subcols == 2 and CHECKS.size() < subcols * check_rows
+-			var total_a: float = pad * 2.0 + notice_h + gap * 1.5 + ((left_h + gap + right_h) if stack else maxf(left_h, right_h)) + sub_h
++			# Start can take the empty cell of the boxes (five in two columns leave one); with the grid full (four boxes, Reduce flashing locked) it takes a row under them, which is free when the left column is the taller.
++			var grid_full: bool = subcols == 2 and cks.size() == subcols * check_rows and not stack
++			var corner: bool = subcols == 2 and (cks.size() < subcols * check_rows or (grid_full and left_h >= right_h + tm + gap * 0.5))
++			var right_a: float = right_h + (tm + gap * 0.5 if grid_full else 0.0)
++			var total_a: float = pad * 2.0 + notice_h + gap * 1.5 + ((left_h + gap + right_h) if stack else maxf(left_h, right_a)) + sub_h
+ 			var use_corner: bool = corner and total_h > area.size.y
+ 			if use_corner:
+ 				total_h = total_a
+@@ -178,20 +195,23 @@
+ 	var xr: float = x0 if stacked else x0 + colw2 + gap * 2.0
+ 	var cy: float = (yl + note_extra + gap) if stacked else y   # stacked: the boxes sit under the radios and their line
+ 	var cwid: float = (colw2 - gap * float(int(best["subcols"]) - 1)) / float(best["subcols"])
+-	for i in range(CHECKS.size()):
++	for i in range(cks.size()):
+ 		var col: int = i / int(best["check_rows"])
+ 		var rowi: int = i % int(best["check_rows"])
+ 		var r := Rect2(xr + float(col) * (cwid + gap), cy + float(rowi) * (tm + gap * 0.5), cwid, tm)
+-		items.append({"row": CHECKS[i], "kind": "check", "value": "", "label": word(CHECKS[i]), "rect": r})
+-		row_boxes[CHECKS[i]] = r
++		items.append({"row": cks[i], "kind": "check", "value": "", "label": word(cks[i]), "rect": r})
++		row_boxes[cks[i]] = r
+ 	var by: float = card.end.y - pad - float(best["sub_h"]) - tm
+ 	var nn_w: float = minf(UiText.width(word("not_now"), int(best["fs"])) + tm * 1.2, inner_w * 0.34) if not_now else 0.0
+ 	var start := Rect2(x0, by, inner_w, tm)
+ 	var not_now_r := Rect2(card.end.x - pad - nn_w, card.position.y + pad, nn_w, tm)
+ 	var back := Rect2(card.end.x - pad - float(best["back_w"]), card.position.y + pad, float(best["back_w"]), tm)
+ 	if bool(best["corner"]):
+-		var crow: int = int(best["check_rows"]) - 1
+-		start = Rect2(xr + (cwid + gap) * float(int(best["subcols"]) - 1), cy + float(crow) * (tm + gap * 0.5), cwid, tm)
++		if cks.size() == int(best["subcols"]) * int(best["check_rows"]):
++			start = Rect2(xr, cy + float(best["check_rows"]) * (tm + gap * 0.5), colw2, tm)   # the grid is full: Start takes a row under the boxes, the column's width
++		else:
++			var crow: int = int(best["check_rows"]) - 1
++			start = Rect2(xr + (cwid + gap) * float(int(best["subcols"]) - 1), cy + float(crow) * (tm + gap * 0.5), cwid, tm)
+ 	items.append({"row": "start", "kind": "button", "value": "", "label": word("start"), "rect": start})
+ 	row_boxes["start"] = start
+ 	if not_now:
+diff -ruN a/ui/widgets/ui_settings.gd b/ui/widgets/ui_settings.gd
+--- a/ui/widgets/ui_settings.gd	2026-10-17 12:39:15.259726200 -0700
++++ b/ui/widgets/ui_settings.gd	2026-10-17 12:39:15.441040400 -0700
+@@ -56,6 +56,8 @@
+ 				continue
+ 			if HIDE_UNTIL.has(key) and not UiData.feature(str(HIDE_UNTIL[key])):
+ 				continue   # a row for something that is not live yet is not listed
++			if key == "reduce_flashing" and UiData.rf_locked():
++				continue   # locked on (Legal's addendum 10): the toggle is not offered
+ 			var kind: String = TOGGLE if o["default"] is bool else (SLIDER if o.has("min") else CHOICE)
+ 			var need2: String = str(needs.get(key, ""))
+ 			out.append({"kind": kind, "key": key, "label": str(o.get("label", key)), "help": str(o.get("help", "")), "enabled": need2 == "" or UiData.feature(need2), "o": o})
