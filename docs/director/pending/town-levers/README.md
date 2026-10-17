@@ -31,3 +31,37 @@ Owner: Encounter Systems Director. Game Design's `docs/design/buildings.md` sect
 - **The brunt share per launch reaches 10.4%,** a point over its band's top, with its interval to 12.6%. If that band holds, `bruntPrefer` comes down from 40, and the bodies with it.
 
 Neither file is touched by the nine cells' chain (`../nine-cells-chain/`). By the EP's word it goes in after the chain, as its own window with its own golden and QA's 100 matches from the crossing.
+
+## Window 2, re-based on main 46734840 (2026-10-17)
+
+The levers with World's two offers, on main with window 1 (9d0530dc) and Simulation's depth window (46734840, off: play the same to the bit).
+- **To apply, in this order:**
+  1. `bash apply.sh <root> --check`, then `bash apply.sh <root>`.
+  2. `node schema/schema9.cjs <root>`.
+  3. World's `offer-1-near-edge.diff`, then `offer-2-nearest-per-side.diff` (`docs/world/scratch-build/near-offers/`, by `git apply`).
+  4. Regenerate the golden.
+- The bases still match, and both offers apply.
+- **The full gate list passes, 35 of 35.** Play changes in 7 of the golden's cases.
+
+Read against window 1 on the same seeds (window 1's copy plays as main does, since the depth window is off):
+
+| Row | Window 1 | Window 2 | Band |
+| :--- | ---: | ---: | :--- |
+| QA's harness: rows passing, failing | 91, 19 | 93, 17 | |
+| A building in reach taken by a fighter whose care is 0 or less | 36.9% | **94.9%** | At least 80%: now passes |
+| Wall slams a match, from the crossing | 0.68 | **2.13** | 1 to 3: now passes |
+| Bodies into buildings a match from the crossing, QA's count | 1.15 | **3.30** | 4 to 8: still under |
+| ... my count (24 matches, the town probe) | 1.71 | **4.92** | |
+| Launches that end in a building first, default arm | 3.3% | **11.0%** | 4 to 10%: now just over |
+| Planner launches that are building brunts | 3.8% | **12.1%** | 4 to 10%: now over |
+| Brunts a minute | 0.07 | 0.22 | 0.3 to 1.0: still under |
+| People lost; front-row structures lost (default arm) | 23.3%; 42.6% | 23.2%; 44.4% | |
+| Median length, default arm; from the crossing | 454.8 s; 477.6 s | 452.6 s; 458.3 s | |
+
+- **Newly passing:** rallies a match (0.24 to 0.37), second breath (26.1% to 24.6%) and zips that end with the zipper caught.
+- **Newly failing, narrowly:**
+  - the halted share of launches, 43.9% to 38.4% (band 40 to 60%), as more of them end in a building;
+  - crater-lip flights, 0.51 to 0.47 a minute (band 0.5 to 2.5);
+  - long launches over 9,000 units, 30.7% to 28.8%.
+- **No hard test fails.**
+- **For Game Design and World:** the default arm's brunt share now overshoots its band while QA's crossing count is still under it. The two rows want different things: the crossing wants more bodies into buildings, the default arm fewer brunts. The levers' weights are the knob.
