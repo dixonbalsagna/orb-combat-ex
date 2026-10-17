@@ -393,6 +393,8 @@ Reliable had become constant. Two things in my rule caused it, and both change n
 
 ## 4. A: the shove, the clinch and the tackle
 
+> **The tap and the mash are replaced by `grapple.md`** (2026-10-16, Orb's hybrid of the catch and the clinch): a tapped A is the catch, which throws an open fighter at once and otherwise starts the clinch's contest for the grip; a held A in reach is the catch and carry. The shove becomes the clinch's push-off. The tackle (a held A beyond reach), the taunt and the shared lockout below stand.
+
 Orb's sketch, with one move to a press. A is how a fighter takes hold of the other's body. In reach it has three readings. Out of reach a tap is still context: a pick-up, a civilian, or the taunt.
 
 | | **A tapped: the shove** | **A mashed: the clinch** | **A held: the tackle** |

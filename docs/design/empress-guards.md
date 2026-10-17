@@ -69,7 +69,7 @@ Orb's compromise, made structural, so that it is plain on the pad.
 
 | | The rule | First value |
 | :--- | :--- | :--- |
-| **His partner** | The one his stick points at within striking distance; else the partner he has; else the nearest in front of him | |
+| **His partner** | The one his stick points at within striking distance; else the nearest (Orb's homework 19, below). A near tie, within 0.5 bh, keeps the partner he has, so the target doesn't flicker | |
 | **The tag** | A ring body becomes the partner when the partner is sent (a launch, a knock-back, a wall slam), when he turns his stick on a ring body in reach, when the partner has held him for a slice with nothing decisive, or on the Empress's order. **No guard tags himself in** in any other way | The slice: 6 s. At most one tag in 30 ticks |
 | **The Empress as partner** | No slice. She keeps the brawl until a decisive exchange, a parting or her own order | |
 | **A player as partner** (ruled 2026-10-15, on Encounter's stage 3) | **Her press is never held, and the row is kept.** With a human partner the director grants an interjection only while her line is committed: a medium or a heavy winding, a charge, or a reel or stagger on her, when no blow of hers can land in the next 8 ticks anyway. So her guard covers her while she winds up, and never steps on her rhythm. If that leaves her guards too quiet, the fallback is Encounter's as built: her line waits up to 8 ticks after an interjection lands. The row itself never relaxes: he is never hit by two fighters within 8 ticks. A player's press answers at once, which is the brawl's first rule, and the 8 ticks are the defender's, who is a player too | No wait on her press. The fallback's wait: 8 ticks at most |
@@ -83,12 +83,26 @@ Orb's compromise, made structural, so that it is plain on the pad.
 **What he has, and it is plenty:**
 1. **Break the escort.** Two decisive exchanges and a guard is gone for 20 s and 20 of her ki. Each one gives him 10 ki.
 2. **Go for the head.** When she is staggered, launched or knocked back, her guards drop their order and fall in to her until she is free.
-3. **His stick picks his target.** His attack goes to the one his stick points toward. With no stick, it goes to the one he hit last. Nothing new is pressed. Controls to confirm.
+3. **His stick picks his target.** His attack goes to the one his stick points toward. With no stick, it goes to the nearest, and a near tie keeps the one he is on (Orb's homework 19). Nothing new is pressed.
 4. **One hit, many bodies.** A launch can carry a guard into another or into her. His signature hits every enemy on its line. A knock-back can drive a guard into the next.
 5. **Outnumbered.** While he faces two or more, his ki comes back half again as fast.
 6. **She pays for her screen.** 20 ki a guard, and her energy stance and her grabs for the right to give orders.
 
 **The bands:** she wins 45 to 55% of each pairing, as every fighter does. Her guards fall 2 to 6 times a match. The fight is 3v1 for 20 to 60% of her base form's time. Encounter's director keeps it readable or the cap comes down (§7).
+
+### Orb's rulings (homework 19, 2026-10-16)
+
+Orb's words are in `docs/ep/vision.md`, "Orb picks the looks, the grapple and the one-versus-many rules".
+
+| | The ruling |
+| :--- | :--- |
+| **The plan** | Yes: three on one first (the Empress); four on one behind its switch once three on one plays well; no five on one; two on two unbuilt |
+| **How many hit at once** | **All three may land blows on him,** through the measured rule above: one partner in the brawl, and the ring's single blows as interjections. All three striking freely measured unplayable (the EP's call on Orb's "your call") |
+| **Who his attack goes to** | The one his stick points at, else the nearest (the partner row and item 3 above) |
+| **Moves that hit everyone in reach** | **Yes, some.** The burst pushes every body in reach. A charged heavy at full meets every body in reach on its side. A launch's flight carries through the bodies on its line. His signature hits every enemy on its line. Combat marks each fighter's others, and every fighter has at least one. Plain blows and grabs hit one |
+| **A two-on-two's fights** | When one fight is won, its winner joins the other, which becomes two on one. Where they stand waits for co-op |
+| **If four on one looks messy** | We wait to see it |
+| **Who else fights one versus many** | **The Cyborg has no minions** (Orb). A future fighter may have partners. A story boss would be great. Two players in their own four-on-ones at once is co-op, and co-op is held |
 
 ### What the core counts, with more than two bodies
 

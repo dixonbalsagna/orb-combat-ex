@@ -91,6 +91,8 @@ Six systems that Orb's four fighters and the new match length need (`docs/ep/vis
 
 ## 2. Minions: the Tyrant's goons
 
+> **Superseded by `empress-guards.md`.** The Tyrant here is the Empress's old name, and her guards are summoned in the fight rather than opening it. **No other fighter has minions: the Cyborg has none** (Orb, 2026-10-16).
+
 **Sketch.**
 - **The minion phase.** The Tyrant opens the match with two or three autonomous goons. They fight one at a time and tag in when one is knocked back; the others taunt from the side.
 - **The goons.** Each is a simplified fighter: base form only, a smaller moveset, the same stance grammar, and a distinct role (a bruiser, a marksman, a speedster).
