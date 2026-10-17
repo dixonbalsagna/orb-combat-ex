@@ -47,6 +47,9 @@ func _hold() -> void:
 		var f = S.fighters[i]
 		f.x = SimWrap.wrap(fx[i])
 		f.z = fz[i]
+		f.zT = fz[i]   # his home depth too: a free fighter eases to it at the depth cap (Simulation, 2026-10-17)
+		f.vz = 0.0
+		f.vzX = 0.0
 		f.y = WorldTerrain.groundY(S, f.x) + 2.0 + float(lift[i])
 		f.vx = 0.0
 		f.vy = 0.0
@@ -175,7 +178,7 @@ func _run() -> void:
 		return
 	var z_mid: float = streets[1]
 	fx = [tower.x - 60.0, tower.x + 60.0]
-	fz = [22.0, -22.0]
+	fz = [18.0, -18.0]   # 36 apart, under LANE_CUE_DZ 40
 	lift = [0.0, 0.0]
 	main.pane.snap_occlusion()
 	_ticks(30)
@@ -210,7 +213,7 @@ func _run() -> void:
 	_ticks(int(RenderLook.PAIR_MARK_OUT_S / DT) + 4)
 	_expect(is_equal_approx(held, steady) and falling > 0.0 and falling < steady and _mark() == 0.0, "level in depth it stays %.1f s (%.2f), then goes over %.1f s and not at once (%.2f, then %.2f)" % [RenderLook.PAIR_MARK_HOLD_S, held, RenderLook.PAIR_MARK_OUT_S, falling, _mark()])
 	# Angled again: it comes up over PAIR_MARK_IN_S.
-	fz = [22.0, -22.0]
+	fz = [18.0, -18.0]   # 36 apart, under LANE_CUE_DZ 40
 	_ticks(4)
 	var rising: float = _mark()
 	_ticks(int(RenderLook.PAIR_MARK_IN_S / DT) + 4)
@@ -219,14 +222,14 @@ func _run() -> void:
 	fz = [140.0, 100.0]
 	_ticks(int((RenderLook.PAIR_MARK_LOUD_S + RenderLook.PAIR_MARK_LEVEL_S.y + RenderLook.PAIR_MARK_LEVEL_S.x) / DT) + 6)
 	var w_front: float = (tm.get_shader_parameter("pair_mark_w") as Vector2).x
-	fz = [22.0, -22.0]
+	fz = [18.0, -18.0]   # 36 apart, under LANE_CUE_DZ 40
 	_ticks(int((RenderLook.PAIR_MARK_LOUD_S + RenderLook.PAIR_MARK_LEVEL_S.y + RenderLook.PAIR_MARK_LEVEL_S.x) / DT) + 6)
 	_expect(rising > 0.0 and rising < steady and is_equal_approx(back, steady) and w_front > w_near + 0.1 and w_near > 1.5 and w_front < 3.5, "it comes up over %.1f s (%.2f after four ticks, then %.2f); its half width is %.2f pixels for a pair near the plane and %.2f for one at the near kerb" % [RenderLook.PAIR_MARK_IN_S, rising, back, w_near, w_front])
 	# Beside the lane cues it is quieter.
 	fz = [48.0, -48.0]
 	_ticks(int((RenderLook.PAIR_MARK_LOUD_S + RenderLook.PAIR_MARK_LEVEL_S.y) / DT) + 8)
 	var beside: float = _mark()
-	fz = [22.0, -22.0]
+	fz = [18.0, -18.0]   # 36 apart, under LANE_CUE_DZ 40
 	_ticks(int((RenderLook.LANE_CUE_OUT_S + RenderLook.PAIR_MARK_LOUD_S + RenderLook.PAIR_MARK_LEVEL_S.y + RenderLook.PAIR_MARK_LEVEL_S.x) / DT) + 8)
 	_expect(is_equal_approx(beside, RenderLook.PAIR_MARK_CUES) and is_equal_approx(_mark(), steady), "with the lane cues' stripes up as well it is at %.2f, and back at %.2f when they are gone" % [beside, _mark()])
 	# Under reduced flashing: steady, and not faded.
