@@ -13,8 +13,12 @@ var y: float = 100.0
 var z: float = 0.45
 
 
-func reset() -> void:
+## S, when given, is the match just set up: the camera starts on the pair's middle less 100. For the default start that
+## is START_X + 350 to the bit; for a start elsewhere (the crossing) it is where the fighters are.
+func reset(S: SimState = null) -> void:
 	x = SimConst.START_X + 350.0
+	if S != null and S.fighters.size() >= 2:
+		x = SimWrap.wrap(S.fighters[0].x + SimWrap.sdx(S.fighters[0].x, S.fighters[1].x) * 0.5 - 100.0)
 	y = 100.0
 	z = 0.45
 

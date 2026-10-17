@@ -24,6 +24,10 @@
       "schema": "combat-recipes.schema.json"
     },
     {
+      "match": "data/combat/depth.json",
+      "schema": "combat-depth.schema.json"
+    },
+    {
       "match": "data/art/flashes.json",
       "schema": "art-flashes.schema.json"
     },

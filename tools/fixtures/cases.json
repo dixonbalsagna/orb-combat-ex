@@ -281753,6 +281753,550 @@
       "expect": {
         "rule": "additionalProperties"
       }
+    },
+    {
+      "id": "combat-depth-valid",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/enabled": false
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "combat-depth-key-required-enabled",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "del": [
+            "/enabled"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "combat-depth-key-required-maxbhpersec",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "del": [
+            "/maxBhPerSec"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "combat-depth-key-required-facemarginbh",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "del": [
+            "/faceMarginBh"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "combat-depth-key-required-capexempt",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "del": [
+            "/capExempt"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "combat-depth-unknown-key",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "combat-depth-underscore-key-ok",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "combat-depth-schema-version-ok",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/schema": "combat.depth/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "combat-depth-schema-version-wrong",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/schema": "combat.depth/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "combat-depth-enabled-type",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/enabled": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "combat-depth-enabled-true-ok",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/enabled": true
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "combat-depth-max-zero",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/maxBhPerSec": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/maxBhPerSec"
+      }
+    },
+    {
+      "id": "combat-depth-max-negative",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/maxBhPerSec": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/maxBhPerSec"
+      }
+    },
+    {
+      "id": "combat-depth-max-type",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/maxBhPerSec": "fast"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/maxBhPerSec"
+      }
+    },
+    {
+      "id": "combat-depth-max-small-ok",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/maxBhPerSec": 0.01
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "combat-depth-margin-negative",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/faceMarginBh": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/faceMarginBh"
+      }
+    },
+    {
+      "id": "combat-depth-margin-type",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/faceMarginBh": "wide"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/faceMarginBh"
+      }
+    },
+    {
+      "id": "combat-depth-margin-zero-ok",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/faceMarginBh": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "combat-depth-cap-exempt-type",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/capExempt": "shove"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/capExempt"
+      }
+    },
+    {
+      "id": "combat-depth-cap-exempt-empty-ok",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/capExempt": []
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "combat-depth-cap-exempt-unknown",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/capExempt": [
+              "shove",
+              "slide"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/capExempt/1"
+      }
+    },
+    {
+      "id": "combat-depth-cap-exempt-item-type",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/capExempt": [
+              1
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/capExempt/0"
+      }
+    },
+    {
+      "id": "combat-depth-cap-exempt-duplicate",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/capExempt": [
+              "push",
+              "push"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "uniqueItems",
+        "pointer": "/capExempt/1"
+      }
+    },
+    {
+      "id": "combat-depth-cap-exempt-all-ok",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/capExempt": [
+              "push",
+              "carry",
+              "home",
+              "magnet",
+              "shove",
+              "sidestep",
+              "giveGround"
+            ]
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "combat-depth-director-ok",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/director": {
+              "lineSinMin": 0.1736,
+              "lineSinMax": 0.5,
+              "arriveSin": 0.342,
+              "homeAfterTicks": 30,
+              "homeBhPerSec": 0.5
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "combat-depth-director-required",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/director": {
+              "lineSinMin": 0.1,
+              "lineSinMax": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/director"
+      }
+    },
+    {
+      "id": "combat-depth-director-unknown-key",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/director": {
+              "lineSinMin": 0.1736,
+              "lineSinMax": 0.5,
+              "arriveSin": 0.342,
+              "homeAfterTicks": 30,
+              "homeBhPerSec": 0.5,
+              "extra": 1
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/director/extra"
+      }
+    },
+    {
+      "id": "combat-depth-director-sine-above-one",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/director": {
+              "lineSinMin": 0.1736,
+              "lineSinMax": 1.5,
+              "arriveSin": 0.342,
+              "homeAfterTicks": 30,
+              "homeBhPerSec": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/director/lineSinMax"
+      }
+    },
+    {
+      "id": "combat-depth-director-ticks-integer",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/director": {
+              "lineSinMin": 0.1736,
+              "lineSinMax": 0.5,
+              "arriveSin": 0.342,
+              "homeAfterTicks": 2.5,
+              "homeBhPerSec": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/director/homeAfterTicks"
+      }
+    },
+    {
+      "id": "combat-depth-director-home-zero",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/director": {
+              "lineSinMin": 0.1736,
+              "lineSinMax": 0.5,
+              "arriveSin": 0.342,
+              "homeAfterTicks": 30,
+              "homeBhPerSec": 0
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/director/homeBhPerSec"
+      }
+    },
+    {
+      "id": "combat-depth-director-line-order",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/director": {
+              "lineSinMin": 0.6,
+              "lineSinMax": 0.5,
+              "arriveSin": 0.342,
+              "homeAfterTicks": 30,
+              "homeBhPerSec": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:depth-line-order",
+        "pointer": "/director/lineSinMin"
+      }
+    },
+    {
+      "id": "combat-depth-director-line-equal-ok",
+      "schema": "combat-depth.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/depth.json",
+          "set": {
+            "/director": {
+              "lineSinMin": 0.5,
+              "lineSinMax": 0.5,
+              "arriveSin": 0.342,
+              "homeAfterTicks": 30,
+              "homeBhPerSec": 0.5
+            }
+          }
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

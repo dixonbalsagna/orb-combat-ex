@@ -1050,6 +1050,10 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
     }
   }
 
+  // ---- combat depth: the directors least line angle is at most its most
+  const depthD = get('data/combat/depth.json');
+  if (isObj(depthD) && isObj(depthD.director) && typeof depthD.director.lineSinMin === 'number' && typeof depthD.director.lineSinMax === 'number' && depthD.director.lineSinMin > depthD.director.lineSinMax) err('data/combat/depth.json', '/director/lineSinMin', 'depth-line-order', `lineSinMin ${depthD.director.lineSinMin} is above lineSinMax ${depthD.director.lineSinMax}`);
+
   // ---- fight shots: a lobbed kind has both its numbers; a kind that trades with more power does not do less damage ----
   const shotsD = get('data/fight/shots.json');
   if (isObj(shotsD) && isObj(shotsD.kinds)) {

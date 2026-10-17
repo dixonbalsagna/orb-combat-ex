@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/combat-depth",
+  "title": "fighters in depth: the core's numbers (Simulation, sim/core/depth.gd)",
+  "description": "data/combat/depth.json: the switch and the numbers of a fighter's depth outside a flight (docs/architecture/depth-core.md): `enabled` (false until the director's depth window; with it off nothing here is read by a match), `maxBhPerSec` (the cap on a drift in depth, in body heights a second), `faceMarginBh` (how far a fighter keeps from a standing building's face) and `capExempt` (the causes of depth the cap does not hold: push, carry, home, magnet, shove, sidestep, giveGround). An optional `schema` string, \"combat.depth/1\", is accepted (the file carries none today, so the version-field rule is waived for this schema in tools/lib/selftest.js). Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "enabled",
+    "maxBhPerSec",
+    "faceMarginBh",
+    "capExempt"
+  ],
+  "properties": {
+    "schema": {
+      "const": "combat.depth/1"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "The one switch: fighters in depth on or off (a setup may set its own \"depth\")."
+    },
+    "maxBhPerSec": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "description": "The cap: the most a drift in depth moves a fighter, in body heights a second, outside a flight or a rush."
+    },
+    "faceMarginBh": {
+      "type": "number",
+      "minimum": 0,
+      "description": "A fighter outside a flight keeps his centre this far from a standing building's face, in body heights."
+    },
+    "director": {
+      "type": "object",
+      "required": [
+        "lineSinMin",
+        "lineSinMax",
+        "arriveSin",
+        "homeAfterTicks",
+        "homeBhPerSec"
+      ],
+      "properties": {
+        "lineSinMin": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The sine of the least angle a brawl line makes with the street."
+        },
+        "lineSinMax": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The sine of the most angle (at least lineSinMin: depth-line-order)."
+        },
+        "arriveSin": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "An approach ends this share of its street offset to one side in depth, as a sine."
+        },
+        "homeAfterTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ticks a fighter waits before easing back to his home depth."
+        },
+        "homeBhPerSec": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "How fast he eases back, in body heights a second."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "Optional. The directors own depth numbers (sim/director/brawl.gd; docs/director/depth-d1.md)."
+    },
+    "capExempt": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "push",
+          "carry",
+          "home",
+          "magnet",
+          "shove",
+          "sidestep",
+          "giveGround"
+        ]
+      },
+      "description": "The causes of depth the cap does not hold (distinct): push, carry, home, magnet, shove, sidestep, giveGround."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

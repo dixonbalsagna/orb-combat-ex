@@ -262,6 +262,8 @@ static func begin(S: SimState, ex, kind: String) -> void:
 	ex.tag = "BRAWL"
 	ex.loser = -1
 	_reset(ex)
+	if S.depthOn:
+		_lineStart(S, ex)
 	SimAct.clear(ex.D)   # no request waits in a brawl: a press is a blow, or it is spent
 	# The brawl keeps the speed it began with (brawl-second-pass.md section 1): carryShare of the two velocities added,
 	# which is half the closing speed when one of them stood, carries on as the centre's drift and fades over carryTicks.
@@ -324,6 +326,8 @@ static func beginQuiet(S: SimState, ex) -> void:
 	ex.tag = "ZIP"
 	ex.loser = -1
 	_reset(ex)
+	if S.depthOn:
+		_lineStart(S, ex)
 	for f in [ex.A, ex.D]:
 		SimAct.clear(f)
 		f.vx = 0.0
@@ -1372,6 +1376,161 @@ static func _mid(ex) -> PackedFloat64Array:
 	return PackedFloat64Array([SimWrap.wrap(ex.A.x + SimWrap.sdx(ex.A.x, ex.D.x) * 0.5), (ex.A.y + ex.D.y) * 0.5])
 
 
+# ---------------------------------------------------------------- depth: the line and its frame (D1a)
+
+## The frame, for the director's part of one tick (not state: it opens in lineEnter and closes in lineLeave).
+static var _frOn: bool = false
+static var _frX: float = 0.0      # the pair's middle as the frame opened: along the street, and in depth
+static var _frZ: float = 0.0
+static var _frCos: float = 1.0    # the line's direction: along the street, and in depth (the sine with its side)
+static var _frSin: float = 0.0
+static var _frVz: float = 0.0     # the pair's speed in depth for this tick, units a second
+static var _frA = null
+static var _frD = null
+static var _frP: PackedFloat64Array = PackedFloat64Array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])   # where each stood as it opened
+static var _dc: Dictionary = {}
+
+
+## The director's own depth numbers (data/combat/depth.json, "director"; the file is Simulation's).
+static func _dcfg() -> Dictionary:
+	if _dc.is_empty():
+		var j = JSON.parse_string(FileAccess.get_file_as_string("res://data/combat/depth.json"))
+		var d: Dictionary = j.get("director", {}) if j is Dictionary else {}
+		_dc = {"lineSinMin": float(d.get("lineSinMin", 0.1736)), "lineSinMax": float(d.get("lineSinMax", 0.5)),
+			"arriveSin": float(d.get("arriveSin", 0.342)), "homeAfterTicks": int(d.get("homeAfterTicks", 30)),
+			"homeBhPerSec": float(d.get("homeBhPerSec", 0.5))}
+	return _dc
+
+
+## The depth a ground or a face is read at from inside the brawl: the pair's middle while the frame is open, and
+## the plane otherwise (so with depth off every read is today's).
+static func _gz() -> float:
+	return _frZ if _frOn else 0.0
+
+
+## +1 when a body at f has more room toward the camera than away from it, else -1 (World's depthRoom).
+static func _roomSide(S: SimState, f) -> int:
+	var b: Array = WorldLanes.body()
+	var room: Array = WorldLanes.depthRoom(S, f.x, f.y, f.z, float(b[0]), float(b[2]))
+	return 1 if (float(room[1]) - f.z) >= (f.z - float(room[0])) else -1
+
+
+## An approach ends a little to one side of D in depth, on the side with more room, so the attacker arrives on a
+## line (DirBands._startRush; Rush.offZ). off: the rush's offset along the street.
+static func arriveOff(S: SimState, D, off: float) -> float:
+	return float(_roomSide(S, D)) * float(_dcfg().arriveSin) * absf(off)
+
+
+## The line as a brawl starts: from the way the attacker came in, held between lineSinMin and lineSinMax (10 and 30
+## degrees). lineSide is +1 when the fighter further along the street is the nearer to the camera. Two who stand
+## at one depth take the smallest angle, with the attacker on the side that has more room. The carry's depth part
+## is what the two were moving at in depth, by the brawl's carryShare.
+static func _lineStart(S: SimState, ex) -> void:
+	var dc: Dictionary = _dcfg()
+	var A = ex.A
+	var D = ex.D
+	var dx: float = SimWrap.sdx(D.x, A.x)
+	var dz: float = A.z - D.z
+	var hl: float = SimDetMath.hypot(dx, dz)
+	var side: int = _roomSide(S, D) * (1 if dx >= 0.0 else -1)
+	if absf(dz) > 0.5 and dx != 0.0:
+		side = 1 if (dz > 0.0) == (dx > 0.0) else -1
+	S.dirS.lineSin = clampf(absf(dz) / maxf(hl, 1.0), float(dc.lineSinMin), float(dc.lineSinMax))
+	S.dirS.lineSide = side
+	S.dirS.carryZ = (A.vz + A.vzX + D.vz + D.vzX) * float(cfg().carryShare)
+	S.dirS.homeWait = 0
+
+
+## The frame opens (DirExchange.tick, before the brawl's part of the tick): each fighter's x becomes his distance
+## along the line from the pair's middle, and both take the middle's depth. False when there is none to open:
+## depth is off, or ex is not a running brawl with both held.
+static func lineEnter(S: SimState, ex) -> bool:
+	if not S.depthOn or _frOn or not isBrawl(ex) or ex.branch != "" or ex.A.state != "locked" or ex.D.state != "locked":
+		return false
+	SimDepth.enabled()   # the core's depth numbers are loaded
+	var A = ex.A
+	var D = ex.D
+	var xc: float = SimWrap.wrap(A.x + SimWrap.sdx(A.x, D.x) * 0.5)
+	var zc: float = (A.z + D.z) * 0.5
+	var sn: float = S.dirS.lineSin
+	_frX = xc
+	_frZ = zc
+	_frCos = sqrt(maxf(0.0, 1.0 - sn * sn))
+	_frSin = sn * float(S.dirS.lineSide)
+	_frVz = 0.0
+	_frA = A
+	_frD = D
+	var k: int = 0
+	for f in [A, D]:
+		_frP[k] = f.x
+		_frP[k + 1] = f.y
+		_frP[k + 2] = f.z
+		k += 3
+		var hx: float = SimWrap.sdx(xc, f.x)
+		var h: float = SimDetMath.hypot(hx, f.z - zc)
+		if hx < 0.0 or (hx == 0.0 and (f.z - zc) * _frSin < 0.0):
+			h = -h
+		f.x = SimWrap.wrap(xc + h)
+		f.z = zc
+		f.zT = zc
+	ex.z = zc
+	_frOn = true
+	return true
+
+
+## The frame closes (DirExchange.tick, wherever the brawl's part of the tick ends): each fighter is put back on the
+## line in the world, from where he stood as it opened, through the core's step call. So a face stops him as it
+## stops any step, and he is back on the line by the next tick. A fighter sent off inside the frame is put back
+## the same way.
+static func lineLeave(S: SimState) -> void:
+	if not _frOn:
+		return
+	_frOn = false
+	var k: int = 0
+	for f in [_frA, _frD]:
+		var h: float = SimWrap.sdx(_frX, f.x)
+		var y: float = f.y
+		f.x = _frP[k]
+		f.y = _frP[k + 1]
+		f.z = _frP[k + 2]
+		k += 3
+		SimFighter.stepTo(S, f, _frX + h * _frCos, y, _frZ + h * _frSin)
+	_frA = null
+	_frD = null
+
+
+## The pair's speed in depth for this tick, once from _move with the frame open. One sum: the push and the pull's
+## share along the line (wx, the pair's speed along it, by the line's sine), the carry's depth part as it fades,
+## and the ease home (after homeAfterTicks live ticks with no stick, toward the middle of its street or crossing,
+## at homeBhPerSec). One cap: the core's (depth.json maxBhPerSec). Then World's room: the pair's middle never goes
+## where a body has none.
+static func _moveZ(S: SimState, ex, wx: float, held: bool) -> void:
+	var dc: Dictionary = _dcfg()
+	var d = S.dirS
+	var wz: float = wx * _frSin
+	var cn: int = _g(ex.A, CARRY_N)
+	if d.carryZ != 0.0:
+		wz += d.carryZ * float(cn) / maxf(1.0, float(int(cfg().carryTicks)))
+		if cn <= 0:
+			d.carryZ = 0.0
+	if held:
+		d.homeWait = 0
+	else:
+		d.homeWait += 1
+		if d.homeWait >= int(dc.homeAfterTicks):
+			var hm: Array = WorldLanes.home(S, _frX, _frZ, 0.0)
+			var sp: float = float(dc.homeBhPerSec) * DirInterrupt.BH
+			wz += clampf((float(hm[1]) - _frZ) / SimConst.DT, -sp, sp)
+	wz = clampf(wz, -SimDepth.cap, SimDepth.cap)
+	var b: Array = WorldLanes.body()
+	var m: PackedFloat64Array = _mid(ex)
+	var room: Array = WorldLanes.depthRoom(S, _frX, m[1], _frZ, float(b[0]), float(b[2]) + SimDepth.margin)
+	var lo: float = minf(float(room[0]), _frZ)
+	var hi: float = maxf(float(room[1]), _frZ)
+	_frVz = clampf(wz, (lo - _frZ) / SimConst.DT, (hi - _frZ) / SimConst.DT)
+
+
+
 ## For Camera, Animation and UI: the brawl's centre. x, y: the point midway between the two. vx, vy: the speed the pair
 ## moves at on the next tick, in units a second. part: the live ticks running for which both have held away (the
 ## walk-out comes at partTicks). double: the live ticks until a double hit's two blows land, or -1 when none is on its
@@ -1382,8 +1541,14 @@ static func centre(S: SimState, ex) -> Dictionary:
 	var m: PackedFloat64Array = _mid(ex)
 	var keep: float = SimFighter.lockedKeep(SimConst.DT)
 	var dbl: int = _g(ex.A, DBL_AT)
-	return {"x": m[0], "y": m[1], "vx": (ex.A.vx + ex.D.vx) * 0.5 * keep, "vy": (ex.A.vy + ex.D.vy) * 0.5 * keep,
+	var out := {"x": m[0], "y": m[1], "vx": (ex.A.vx + ex.D.vx) * 0.5 * keep, "vy": (ex.A.vy + ex.D.vy) * 0.5 * keep,
 		"part": _g(ex.A, PART_N), "double": (maxi(0, dbl - _now(S)) if dbl > 0 else -1)}
+	if S.depthOn:   # D1: the middle's depth and its speed, and the line (its sine, and which way it is turned)
+		out["z"] = (ex.A.z + ex.D.z) * 0.5
+		out["vz"] = (ex.A.vz + ex.D.vz) * 0.5 * keep
+		out["lineSin"] = S.dirS.lineSin
+		out["lineSide"] = S.dirS.lineSide
+	return out
 
 
 ## True while a double hit's two blows are on their way: nothing either fighter presses counts until they land.
@@ -1399,8 +1564,8 @@ static func _cell(kind: String) -> String:
 ## True when the pair's middle at (x, y) is inside a standing building's box. The ground is never the answer here: the
 ## core holds a fighter on it, so a brawl slides along the ground and up a ridge by itself.
 static func _walled(S: SimState, x: float, y: float) -> bool:
-	var yy: float = maxf(y + 0.5 * DirInterrupt.BH, WorldTerrain.groundY(S, x) + 0.01)
-	return WorldStructures.blockedAt(S, x, yy, 0.0, 0.0)
+	var yy: float = maxf(y + 0.5 * DirInterrupt.BH, WorldTerrain.groundY(S, x, _gz()) + 0.01)
+	return WorldStructures.blockedAt(S, x, yy, _gz(), 0.0)
 
 
 ## His launcher's button is still down as its wind-up ends: the guarantee is lost (brawl-second-pass.md section 3).
@@ -1590,7 +1755,7 @@ static func _giveStep(S: SimState, ex, g) -> void:
 		var k: float = 1.0
 		for _i in range(8):
 			nx = SimWrap.wrap(f.x + ux * step * k)
-			ny = maxf(WorldTerrain.groundY(S, nx), f.y + uy * step * k)
+			ny = maxf(WorldTerrain.groundY(S, nx, _gz()), f.y + uy * step * k)
 			d1 = SimDetMath.hypot(SimWrap.sdx(o.x, nx), ny - o.y)
 			if want == 0.0:
 				# Where his stick points: the ground turns the step along itself, and it is no longer than a step.
@@ -1615,7 +1780,7 @@ static func _giveStep(S: SimState, ex, g) -> void:
 			if d1 <= 0.001:
 				continue
 			nx = SimWrap.wrap(o.x + SimWrap.sdx(o.x, nx) / d1 * lim)
-			ny = maxf(WorldTerrain.groundY(S, nx), o.y + (ny - o.y) / d1 * lim)
+			ny = maxf(WorldTerrain.groundY(S, nx, _gz()), o.y + (ny - o.y) / d1 * lim)
 		if _walled(S, nx, ny) and not _walled(S, f.x, f.y):
 			# A building's face: he goes up it by the same step (flight goes over anything, and nobody is cornered).
 			nx = f.x
@@ -1657,7 +1822,7 @@ static func _stepIn(S: SimState, ex, f, o, ticks: int) -> void:
 	var ct: Dictionary = DirData.contact()
 	var s: float = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(o.x, f.x)), -f.face)   # his side of the rival
 	var gx: float = SimWrap.sdx(f.x, SimWrap.wrap(o.x + s * float(ct.offset)))
-	var gy: float = maxf(o.y, WorldTerrain.groundY(S, f.x)) - f.y
+	var gy: float = maxf(o.y, WorldTerrain.groundY(S, f.x, _gz())) - f.y
 	var gl: float = SimDetMath.hypot(gx, gy)
 	if gl <= 0.5:
 		return
@@ -1670,7 +1835,7 @@ static func _stepIn(S: SimState, ex, f, o, ticks: int) -> void:
 	var went: float = 0.0
 	for _k in range(6):
 		nx = SimWrap.wrap(f.x + gx / gl * step)
-		ny = maxf(WorldTerrain.groundY(S, nx), f.y + gy / gl * step)
+		ny = maxf(WorldTerrain.groundY(S, nx, _gz()), f.y + gy / gl * step)
 		went = SimDetMath.hypot(SimWrap.sdx(f.x, nx), ny - f.y)
 		if went <= room:
 			break
@@ -1942,7 +2107,7 @@ static func _move(S: SimState, ex) -> void:
 		for _k in range(5):
 			var lift: float = 0.0
 			for f in [A, D]:
-				lift = maxf(lift, WorldTerrain.groundY(S, SimWrap.wrap(f.x + wx * dt)) - (f.y + wy * dt))
+				lift = maxf(lift, WorldTerrain.groundY(S, SimWrap.wrap(f.x + wx * dt), _gz()) - (f.y + wy * dt))
 			if lift <= 0.0 or SimDetMath.hypot(wx * dt, wy * dt + lift) <= cap * dt:
 				fit = true
 				break
@@ -1950,6 +2115,8 @@ static func _move(S: SimState, ex) -> void:
 		if not fit:
 			wx = 0.0
 			wy = maxf(wy, across)   # too steep to take in one step: they go up it by the same step
+	if _frOn:
+		_moveZ(S, ex, wx, tx != 0.0 or ty != 0.0)
 	_s(A, CEN_VX, int(round(vx * 16.0)))
 	_s(A, CEN_VY, int(round(vy * 16.0)))
 	_s(A, PMOVE_X, _g(A, MOVE_X))
@@ -1979,6 +2146,9 @@ static func carryOn(ex) -> void:
 	for f in [ex.A, ex.D]:
 		f.vx = float(_g(ex.A, MOVE_X)) / 16.0 / keep
 		f.vy = float(_g(ex.A, MOVE_Y)) / 16.0 / keep
+		if _frOn:   # D1: the pair moves along its line, and drifts in depth
+			f.vx = float(_g(ex.A, MOVE_X)) / 16.0 * _frCos / keep
+			f.vz = _frVz / keep
 
 
 ## True on a tick both hold away (brawl-second-pass.md section 1): each stick within partDeg of straight away from
@@ -2082,8 +2252,8 @@ static func _thrownApart(S: SimState, ex) -> void:
 	for f in [ex.A, ex.D]:
 		var r := SimState.Rush.new()
 		r.px = SimWrap.wrap(m[0] + (sA if f == ex.A else -sA) * dist)
-		var g: float = WorldTerrain.groundY(S, r.px)
-		var ground: bool = f.y - WorldTerrain.groundY(S, f.x) <= within and not WorldTerrain.seaAt(S, r.px)
+		var g: float = WorldTerrain.groundY(S, r.px, _gz())
+		var ground: bool = f.y - WorldTerrain.groundY(S, f.x, _gz()) <= within and not WorldTerrain.seaAt(S, r.px)
 		r.py = g if ground else maxf(f.y, g)
 		r.end = S.T + float(ticks) * SimConst.DT
 		f.rush = r
@@ -2739,14 +2909,14 @@ static func tick(S: SimState, ex) -> void:
 			ex.D.x = SimWrap.wrap(ex.D.x - SimMathx.jsign(d) * px)
 		var dy: float = ex.D.y - ex.A.y
 		var hi = ex.D if dy > 0.0 else ex.A
-		if absf(dy) > 1.0 and hi.y <= WorldTerrain.groundY(S, hi.x) + 0.5:
+		if absf(dy) > 1.0 and hi.y <= WorldTerrain.groundY(S, hi.x, _gz()) + 0.5:
 			# The higher one stands on the ground and can't come down (a slope the pair is on): the other comes up to him.
 			var lo = ex.A if dy > 0.0 else ex.D
 			lo.y = minf(hi.y, lo.y + float(c.maxStepBh) * DirInterrupt.BH)
 		elif absf(dy) > 1.0:
 			var py: float = minf(absf(dy) * 0.5, pull)
-			ex.A.y = maxf(WorldTerrain.groundY(S, ex.A.x), ex.A.y + SimMathx.jsign(dy) * py)
-			ex.D.y = maxf(WorldTerrain.groundY(S, ex.D.x), ex.D.y - SimMathx.jsign(dy) * py)
+			ex.A.y = maxf(WorldTerrain.groundY(S, ex.A.x, _gz()), ex.A.y + SimMathx.jsign(dy) * py)
+			ex.D.y = maxf(WorldTerrain.groundY(S, ex.D.x, _gz()), ex.D.y - SimMathx.jsign(dy) * py)
 		_own(ex.A, SimDetMath.hypot(SimWrap.sdx(float(was[0]), ex.A.x), ex.A.y - float(was[1])))
 		_own(ex.D, SimDetMath.hypot(SimWrap.sdx(float(was[2]), ex.D.x), ex.D.y - float(was[3])))
 	if S.tick - maxi(_g(ex.A, LAST_AT), _g(ex.D, LAST_AT)) > int(c.idleTicks) and _g(ex.A, LINE) == 0 and _g(ex.D, LINE) == 0:
@@ -3097,7 +3267,7 @@ static func tellTick(S: SimState, ex) -> void:
 	if step <= 0.0:
 		return
 	var nx: float = SimWrap.wrap(f.x + ux / ul * step)
-	var ny: float = maxf(WorldTerrain.groundY(S, nx), f.y + uy / ul * step)
+	var ny: float = maxf(WorldTerrain.groundY(S, nx, _gz()), f.y + uy / ul * step)
 	if _walled(S, nx, ny) and not _walled(S, f.x, f.y):
 		return
 	_s(f, TELL_MV, _g(f, TELL_MV) + int(ceil(SimDetMath.hypot(SimWrap.sdx(f.x, nx), ny - f.y) * 16.0)))

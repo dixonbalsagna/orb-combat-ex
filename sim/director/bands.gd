@@ -47,6 +47,8 @@ static func farOn() -> bool:
 
 ## The distance the bands are measured on: centre to centre, the shortest arc and the height together.
 static func dist(a, b) -> float:
+	if a.z != b.z and (a.zT != 0.0 or b.zT != 0.0):   # D1: in three axes. A home depth is set only with depth on; a flight into a building moves a fighter's depth with it off too, and that must read as it does today
+		return SimDetMath.hypot(SimDetMath.hypot(SimWrap.sdx(a.x, b.x), b.y - a.y), b.z - a.z)
 	return SimDetMath.hypot(SimWrap.sdx(a.x, b.x), b.y - a.y)
 
 
@@ -164,6 +166,8 @@ static func _startRush(S: SimState, A, D, n: int) -> void:
 	r.tgt = D
 	r.off = _endOff(S, D, SimMathx.jsign(DirMelee.sideOff(A, D, float(data().engageBh) * BH, "own")))
 	r.end = S.T + float(n) * SimConst.DT
+	if S.depthOn:
+		r.offZ = DirBrawl.arriveOff(S, D, r.off)   # D1: he arrives a little to one side in depth, on the brawl's line
 	A.rush = r
 
 

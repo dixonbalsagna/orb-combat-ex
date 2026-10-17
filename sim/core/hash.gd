@@ -204,6 +204,11 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 				out.append(float(nzr.size()))
 				for i in nzr:
 					out.append(float(i)); out.append(row[i])
+		# D1: the depth step's own state, only when depth is on: each fighter's two velocities in depth and his rush's
+		# offset, then the director's line, carry, wait and sidestep
+		for f in fs:
+			out.append(f.vz); out.append(f.vzX); out.append(f.rush.offZ if f.rush != null else 0.0)
+		_obj(out, d, ["lineSin", "lineSide", "carryZ", "homeWait", "sideT", "sideWay"])
 	# Water and scorch: only the non-zero columns, as (index, value) pairs, so the vectors stay small.
 	var nz: Array = []
 	for i in range(S.water.size()):

@@ -13,7 +13,7 @@ static func tierUp(S: SimState, f) -> void:
 	S.world.maxTier = maxf(S.world.maxTier, f.tier)
 	SimMood.onForm(S, f)   # a form step may raise the act, and it adds the mood's form impulse
 	SimFx.banner(S, f.name + " POWERS UP  TIER " + SimMathx.jstr(f.tier), f.aura, 1.4)
-	var g: float = WorldTerrain.groundY(S, f.x)
+	var g: float = WorldTerrain.groundY(S, f.x, f.z)   # at his depth (the plane's when depth is off)
 	SimFx.ring(S, f.x, f.y + 34.0, 1300.0, f.aura, 0.8, 20.0, f.z)
 	SimFx.spark(S, f.x, f.y + 34.0, 20, f.aura, 700.0, f.z)
 	SimFx.shake(S, 14.0, f.x, f.z)
@@ -141,7 +141,7 @@ static func stepLaunched(S: SimState, f, dt: float) -> void:
 ## on the ground. The director may end it sooner (a tech): dropEnd. Returns false, and does nothing, for a fighter who is
 ## launched, down or already dropped, or after a KO. For the view he is airborne as a launched fighter is: stateT counts
 ## up from 0, vx and vy are his speed, and his spin is 0 (his rot eases out as a free fighter's does).
-static func drop(S: SimState, f, ticks: int, vx: float = 0.0, vy: float = 0.0) -> bool:
+static func drop(S: SimState, f, ticks: int, vx: float = 0.0, vy: float = 0.0, vz: float = 0.0) -> bool:
 	if ticks <= 0 or S.game.ko != null or f.state == "launched" or f.state == "down" or f.state == "dropped":
 		return false
 	f.rush = null
@@ -151,6 +151,9 @@ static func drop(S: SimState, f, ticks: int, vx: float = 0.0, vy: float = 0.0) -
 	f.spin = 0.0
 	f.vx = vx
 	f.vy = vy
+	if S.depthOn:   # a drop's depth part is one motion: the cap does not hold it
+		f.vz = 0.0
+		f.vzX = vz
 	SimFx.dropStart(S, f, ticks)
 	return true
 
@@ -163,6 +166,8 @@ static func dropEnd(S: SimState, f, how: String = "end") -> void:
 	f.dropT = 0
 	f.vx = 0.0
 	f.vy = 0.0
+	f.vz = 0.0
+	f.vzX = 0.0
 	SimFx.dropEnd(S, f, how)
 
 
@@ -195,7 +200,7 @@ static func rushAt(S: SimState, f, u: float) -> PackedFloat64Array:
 		else:
 			y += bow
 		x = SimWrap.wrap(x)
-		y = SimMathx.jclamp(y, WorldTerrain.groundY(S, x), SimConst.CEILING)
+		y = SimMathx.jclamp(y, WorldTerrain.groundY(S, x, f.z), SimConst.CEILING)
 	return PackedFloat64Array([SimWrap.wrap(x), y])
 
 
@@ -217,13 +222,16 @@ static func stepRush(S: SimState, f, dt: float) -> void:
 	var tx: float = r.tgt.x + r.off if r.tgt != null else r.px
 	var ty: float = r.tgt.y if r.tgt != null else r.py
 	var rem: float = r.end - S.T
-	var tz: float = r.tgt.z if r.tgt != null else r.pz   # L2: the rush's depth (used only when S.depthOn)
+	var tz: float = (r.tgt.z + r.offZ) if r.tgt != null else r.pz   # L2: the rush's depth (used only when S.depthOn); offZ puts him a little to one side of his target
 	if rem <= dt:
 		f.x = SimWrap.wrap(tx)
 		f.y = SimMathx.jmax(ty, WorldTerrain.groundY(S, tx))
 		if S.depthOn:
-			f.z = clampf(tz, SimConst.Z_BACK, SimConst.Z_FRONT)
+			f.z = clampf(tz, SimDepth.zBack, SimDepth.zFront)
 			f.zT = f.z   # he stays where the rush took him
+			f.vz = 0.0
+			f.vzX = 0.0
+			f.y = SimMathx.jmax(ty, WorldTerrain.groundY(S, tx, f.z))   # on the ground at his depth
 		f.rush = null
 		f.vx = 0.0
 		f.vy = 0.0
@@ -244,27 +252,152 @@ static func stepRush(S: SimState, f, dt: float) -> void:
 		f.x = SimWrap.wrap(f.x + SimWrap.sdx(f.x, tx) * k)
 		f.y += (ty - f.y) * k
 	if S.depthOn:
-		f.z = clampf(f.z + (tz - f.z) * k, SimConst.Z_BACK, SimConst.Z_FRONT)
+		f.z = clampf(f.z + (tz - f.z) * k, SimDepth.zBack, SimDepth.zFront)
 
 
-## Fight lanes (L2; docs/architecture/fight-lanes.md), only when S.depthOn: a fighter's depth outside a rush. The player
-## never steers it. In a flight World's waypoint moves z (WorldBrunt.stepZ) and the home depth follows, so he stays where
-## the flight leaves him. In an exchange his home is the exchange's depth. Otherwise he eases to his home depth zT, as he
-## eased to the plane before. The band (SimConst.Z_BACK to Z_FRONT) clamps both.
+## A fighter's depth, only when S.depthOn (docs/architecture/depth-core.md). No stick steers it.
+##   a flight      World's waypoint moves z (WorldBrunt.stepZ), and he stays where it leaves him
+##   a rush        homes in depth (stepRush), and he stays where it takes him
+##   otherwise     the director's velocity moves him: vz, held to the cap (depth.json maxBhPerSec), and vzX, which the cap
+##                 does not hold. The branches of stepFighter damp both as they damp vx.
+##   a free fighter also eases to his home depth zT, at the cap at most. The director moves the home; a velocity carries
+##                 it along, so a shove leaves him where it sent him. A locked fighter has no home of his own.
+## The band (World's lane table: SimDepth.zBack to zFront) holds him and his home. The buildings are contact()'s.
 static func stepDepth(S: SimState, f, dt: float) -> void:
 	if f.state == "launched":
-		f.z = clampf(f.z, SimConst.Z_BACK, SimConst.Z_FRONT)
+		f.z = clampf(f.z, SimDepth.zBack, SimDepth.zFront)
+		f.zT = f.z
+		f.vz = 0.0
+		f.vzX = 0.0
+		return
+	if f.rush != null:
 		f.zT = f.z
 		return
-	var ex = S.dirS.ex
-	if ex != null and (ex.A == f or ex.D == f):
-		f.zT = ex.z
-	f.zT = clampf(f.zT, SimConst.Z_BACK, SimConst.Z_FRONT)
-	if f.rush == null and f.z != f.zT:
-		f.z = f.zT + (f.z - f.zT) * SimDetMath.pow(0.001, dt)
-		if absf(f.z - f.zT) < 0.5:
-			f.z = f.zT
-	f.z = clampf(f.z, SimConst.Z_BACK, SimConst.Z_FRONT)
+	if f.state == "down":
+		f.vz = 0.0
+		f.vzX = 0.0
+	var step: float = (clampf(f.vz, -SimDepth.cap, SimDepth.cap) + f.vzX) * dt
+	f.z += step
+	if f.state == "locked":
+		f.zT = f.z
+	else:
+		f.zT = clampf(f.zT + step, SimDepth.zBack, SimDepth.zFront)
+		var d: float = f.zT - f.z
+		if d != 0.0:
+			var m: float = SimDepth.cap * dt
+			f.z += clampf(d, -m, m)
+	if f.z > SimDepth.zFront:
+		f.z = SimDepth.zFront
+		f.vz = minf(f.vz, 0.0)
+		f.vzX = minf(f.vzX, 0.0)
+	elif f.z < SimDepth.zBack:
+		f.z = SimDepth.zBack
+		f.vz = maxf(f.vz, 0.0)
+		f.vzX = maxf(f.vzX, 0.0)
+	if f.state == "locked":
+		f.zT = f.z
+
+
+## The contact rule for a fighter outside a flight, only when S.depthOn (Game Design, docs/design/depth.md section 2: a
+## face stops the part of the motion that runs into it, and the rest slides on). His step this tick, from (x0, y0, z0)
+## to where he now is, is swept against the standing buildings along it (World's sweep). At a face he is put there, the
+## part of his velocity into it ends, and the rest of the step is swept again: three times at most, once an axis, so a
+## corner stops him. In a street the depth part stops at a block's face and the part along the street goes on; at a
+## crossing nothing is met; in an avenue the part along the street stops at a block's end and he slides down the avenue;
+## on a roof he stands. A wreck is not a standing building. A body that starts inside one is put out by its nearest face.
+## His centre keeps SimDepth.rx and rz (the body's half extents, and the data's margin at least) from a face. In a street
+## lane, where World builds nothing, no sweep is made.
+static func contact(S: SimState, f, x0: float, y0: float, z0: float) -> void:
+	if SimDepth.clearStreet(z0, f.z):
+		return
+	var rx: float = SimDepth.rx
+	var ry: float = SimDepth.ry
+	var rz: float = SimDepth.rz
+	var list: Array = WorldStructures.along(S, x0, f.x, rx)
+	if list.is_empty():
+		return
+	var px: float = x0
+	var py: float = y0
+	var pz: float = z0
+	var tx: float = f.x
+	var ty: float = f.y
+	var tz: float = f.z
+	var clear: bool = false
+	var hitZ: bool = false
+	for pass_ in range(3):
+		var h: Dictionary = WorldStructures.sweep(S, list, px, py, pz, tx, ty, tz, rx, ry, rz)   # the sweep's point is his feet, as f.y is
+		if not h.hit:
+			clear = true
+			break
+		var b = S.buildings[h.b]
+		px = h.x
+		py = h.y
+		pz = h.z
+		if h.face == "end":
+			px = SimWrap.wrap(b.x + h.nx * (b.w * 0.5 + rx + SimDepth.SKIN))
+			tx = px
+			if f.vx * h.nx < 0.0:
+				f.vx = 0.0
+		elif h.face == "front" or h.face == "back":
+			pz = b.z + h.nz * (b.d * 0.5 + rz + SimDepth.SKIN)
+			tz = pz
+			hitZ = true
+			if f.vz * h.nz < 0.0:
+				f.vz = 0.0
+			if f.vzX * h.nz < 0.0:
+				f.vzX = 0.0
+		elif h.face == "top":
+			py = WorldStructures.baseY(S, b) + WorldStructures.curH(b) + SimDepth.SKIN
+			ty = py
+			if f.vy < 0.0:
+				f.vy = 0.0
+		else:   # the underside: a building stands on the ground, so nothing comes up into it; he stays where they met
+			tx = px
+			ty = py
+			tz = pz
+	if not clear:
+		tx = px
+		ty = py
+		tz = pz
+	f.x = tx
+	f.y = ty
+	f.z = tz
+	if hitZ or f.state == "locked":
+		f.zT = f.z   # a face stopped him in depth: his home is where he is until the director moves it
+
+
+## The director's own step for a fighter this tick: a blow's closing step, a placement. He is moved from where he is to
+## (x, y, z) through the contact rule, with no cap: it is an attack closing, as a rush is. He stays where it puts him.
+## Returns true when no face stopped him short. With depth off it is the plain assignment the director made before
+## (x wrapped, y as given), and z is left alone.
+static func stepTo(S: SimState, f, x: float, y: float, z: float) -> bool:
+	if not S.depthOn:
+		f.x = SimWrap.wrap(x)
+		f.y = y
+		return true
+	var x0: float = f.x
+	var y0: float = f.y
+	var z0: float = f.z
+	var wx: float = SimWrap.wrap(x)
+	var wz: float = clampf(z, SimDepth.zBack, SimDepth.zFront)
+	f.x = wx
+	f.z = wz
+	f.y = SimMathx.jmax(y, WorldTerrain.groundY(S, wx, wz))
+	contact(S, f, x0, y0, z0)
+	f.zT = f.z
+	return f.x == wx and f.z == wz
+
+
+## One cause's velocity in depth for f, units a second, added to the velocity the cap holds (vz) or, when the data lists
+## the cause under capExempt, to the one it does not (vzX). The causes are SimDepth.CAUSES. The director may also write
+## the two fields itself, where it writes vx and vy.
+static func addDepth(f, cause: String, v: float) -> void:
+	if not SimDepth.CAUSES.has(cause):
+		push_error("SimFighter.addDepth: unknown cause " + cause)
+	if SimDepth.isExempt(cause):
+		f.vzX += v
+	else:
+		f.vz += v
 
 
 ## Body rotation, in one place (rot and spin are for Animation; nothing in gameplay reads them). how: SPIN_AIR, a launched
@@ -392,6 +525,10 @@ static func lockedKeep(dt: float) -> float:
 
 static func stepFighter(S: SimState, f, dt: float) -> void:
 	var o = SimRoster.opp(S, f)
+	var x0: float = f.x   # where the tick found him: with depth on, the contact rule sweeps his step from here
+	var y0: float = f.y
+	var z0: float = f.z
+	var rushed: bool = f.rush != null
 	if f.state != "launched":
 		f.flightHits = 0
 	var i: SimIntent = f.input
@@ -461,9 +598,12 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 			var k: float = 1.0 - SimDetMath.pow(0.0008, dt)
 			f.vx += (i.mx * sp - f.vx) * k
 			f.vy += (i.my * sp * 0.85 - f.vy) * k
+			if S.depthOn:   # no stick steers depth: a velocity in depth dies away as his own does with the stick at rest
+				f.vz += (0.0 - f.vz) * k
+				f.vzX += (0.0 - f.vzX) * k
 			f.x = SimWrap.wrap(f.x + f.vx * dt)
 			f.y += f.vy * dt
-			var g: float = WorldTerrain.groundY(S, f.x)
+			var g: float = WorldTerrain.groundY(S, f.x, f.z)   # at his depth (the plane's when depth is off)
 			if f.y < g:
 				f.y = g
 				if f.vy < 0.0:
@@ -477,16 +617,22 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 		else:
 			f.vx *= 0.85
 			f.vy *= 0.85
+			if S.depthOn:
+				f.vz *= 0.85
+				f.vzX *= 0.85
 			f.ki = SimMathx.jmin(100.0, f.ki + 30.0 * dt)
 			f.power = SimMathx.jmin(100.0, f.power + f.ld.charge * dt)   # Q10: ladder.json chargePerSec
-			SimFx.chargeFx(S, f, WorldTerrain.groundY(S, f.x))   # the aura's sparks and dust are cosmetic: the consumer rolls them
+			SimFx.chargeFx(S, f, WorldTerrain.groundY(S, f.x, f.z))   # the aura's sparks and dust are cosmetic: the consumer rolls them
 	elif f.state == "down":
 		if f.embedT > 0:   # embedded (World, ground-contact.md section 19): held down for these ticks; the guard from tick 20 and the burst out belong to the director
 			f.embedT -= 1
 			f.stateT = 0.4 if f.embedT == 0 else 0.0   # then the usual short get-up
 		else:
 			f.stateT += dt
-		f.y = WorldTerrain.groundY(S, f.x)
+		if S.depthOn:   # the surface under him at his depth: the ground there, or the roof he lies on
+			f.y = WorldStructures.standingAt(S, f.x, f.y, f.z).y
+		else:
+			f.y = WorldTerrain.groundY(S, f.x)
 		if f.stateT > 0.75:
 			f.state = "free"
 			spin(S, f, dt, SPIN_STOP)
@@ -494,18 +640,24 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 		stepLaunched(S, f, dt)
 	elif f.state == "dropped":
 		# a drop (SimFighter.drop): he reads no stick and falls; the ground only stops him
-		var gd0: float = WorldTerrain.groundY(S, f.x)
+		var gd0: float = WorldTerrain.groundY(S, f.x, f.z)
 		var above: bool = f.y > gd0
 		f.stateT += dt
 		f.vy -= DROP_GRAV * dt
 		f.vx *= SimDetMath.pow(0.55, dt)
+		if S.depthOn:
+			var dk: float = SimDetMath.pow(0.55, dt)
+			f.vz *= dk
+			f.vzX *= dk
 		f.x = SimWrap.wrap(f.x + f.vx * dt)
 		f.y = SimMathx.jmin(f.y + f.vy * dt, SimConst.CEILING)
-		var gd: float = WorldTerrain.groundY(S, f.x)
+		var gd: float = WorldTerrain.groundY(S, f.x, f.z)
 		if f.y <= gd:
 			f.y = gd
 			f.vx = 0.0
 			f.vy = 0.0
+			f.vz = 0.0
+			f.vzX = 0.0
 			if above:
 				SimFx.dropLand(S, f)
 		f.dropT -= 1
@@ -515,9 +667,17 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 		var keep: float = lockedKeep(dt)
 		f.vx *= keep
 		f.vy *= keep
+		if S.depthOn:   # the director's velocity in depth, damped as the other two are: a push along the line keeps its angle
+			f.vz *= keep
+			f.vzX *= keep
 		f.x = SimWrap.wrap(f.x + f.vx * dt)
-		f.y = SimMathx.jmax(WorldTerrain.groundY(S, f.x), f.y + f.vy * dt)
+		f.y = SimMathx.jmax(WorldTerrain.groundY(S, f.x, f.z), f.y + f.vy * dt)
 	if S.depthOn:
-		stepDepth(S, f, dt)   # L2: off until the director's switch-on
+		stepDepth(S, f, dt)   # his depth: the director's velocity, his home, the band
+		if not rushed and f.state != "launched" and f.state != "down":
+			contact(S, f, x0, y0, z0)   # and the buildings: he stops at a face, and the rest of his step slides
+			var gz: float = WorldTerrain.groundY(S, f.x, f.z)   # the ground at the depth he has come to
+			if f.y < gz:
+				f.y = gz
 	if S.game.ko == null:
 		SimHiding.updateHidden(S, f, dt)

@@ -94,8 +94,14 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
 	S.dirS.exN = 0
 	S.dirS.biomeT = PackedFloat64Array()   # location variety (granted line): the director sizes it on the first tick
 	S.dirS.craterT = PackedFloat64Array()   # Encounter's slice (a) (granted line)
+	S.dirS.lineSin = 0.0   # D1: the director's line, carry, wait and sidestep belong to a match
+	S.dirS.lineSide = 0
+	S.dirS.carryZ = 0.0
+	S.dirS.homeWait = 0
+	S.dirS.sideT = 0
+	S.dirS.sideWay = 0
 	SimAct.setup(S, setup)   # I2a: each fighter's action state
-	S.depthOn = setup.get("depth", false) == true   # fight lanes: off until the director's switch-on (L4); a setup may force it for probes
+	S.depthOn = setup.get("depth", SimDepth.enabled()) == true   # fighters in depth: the data's switch (data/combat/depth.json), or the setup's own for this match
 	WorldTerrain.initRows(S)   # T: the depth rows exist only when depth is on
 	SimPause.reset(S)        # Q10: the pause bank
 	SimShots.reset(S)        # no shots in flight

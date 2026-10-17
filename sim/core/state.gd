@@ -158,6 +158,13 @@ class DirS:
 	var exN: int = 0          # D1a: exchanges started this match (the exchange index for keyed draws, SimRng.keyed)
 	var biomeT: PackedFloat64Array = PackedFloat64Array()   # location variety: seconds of fight per biome (DirLocation.BIOMES order), sized by the director
 	var craterT: PackedFloat64Array = PackedFloat64Array()   # Encounter's slice (a) (granted line): the director owns it
+	# D1, fighters in depth: the director's own, read and written only by it, hashed only with depth on (SimHash.collect)
+	var lineSin: float = 0.0   # the sine of the angle of the brawl's line to the street
+	var lineSide: int = 0      # which way the line is turned (+1 or -1; 0 none)
+	var carryZ: float = 0.0    # the carry's depth part, units a second
+	var homeWait: int = 0      # ticks with no stick held, before the ease home
+	var sideT: int = 0         # ticks left of a sidestep
+	var sideWay: int = 0       # the sidestep's way (+1 toward the camera, -1 away; 0 none)
 
 
 class World:
@@ -419,8 +426,8 @@ class FxEvent:
 	var source: String = ""      # hazard_telegraph, danger: what is coming (brunt, windup, ambush; World adds collapse, landslide, lava)
 	var eta: float = 0.0         # hazard_telegraph, danger: seconds until it lands, 0 when unknown
 	var hold: float = 0.0        # lodge: the seconds the body is held in the building
-	var run: int = 0             # cue blow (Encounter): the striker's run on the target as the blow is thrown, 0 to 4. Not hashed
-	var run_to: int = 0          # cue blow (Encounter): the blows still to land for the close, this one included; 0 not set. Not hashed
+	var run: int = 0             # cue blow (Encounter): the striker's run on the target as the blow is thrown, 0 to run_to. Not hashed
+	var run_to: int = 0          # cue blow (Encounter): the run at which his next light closes (runToClose, 4 today); UI's gauge is full when run reaches it; 0 not set. Not hashed
 
 
 class Fighter:
@@ -508,6 +515,8 @@ class Fighter:
 	var chainEvt: float = 0.0        # the collateral set-piece token of a planned chain (0 for none)
 	var z: float = 0.0               # the fighter's depth from the plane, positive toward the camera; a function of his aim
 	var zT: float = 0.0              # L0: the home depth a free fighter eases to (where a flight left him, or the director's choice)
+	var vz: float = 0.0              # D1: his velocity in depth that the cap holds (the director's drift: a push, the carry, the ease home), units a second. Hashed only with depth on
+	var vzX: float = 0.0             # D1: his velocity in depth that the cap does not hold (depth.json capExempt: a shove, a sidestep; a drop). Hashed only with depth on
 	var zWay: bool = false           # L0: a depth waypoint is armed for this flight whether or not it is aimed (aimX0, aimZ0, aimZ1, aimD)
 	var splashed := PackedInt32Array()   # buildings already splashed by this launch (at most WorldBrunt.SPLASH_CAP)
 	var launchSpecial: bool = false  # the current launch is a signature, finisher or break launch (its ground mark may be big)
@@ -543,6 +552,7 @@ class Rush:
 	var px: float = 0.0
 	var py: float = 0.0
 	var pz: float = 0.0      # L0: a point rush's depth (a fighter rush homes to its target's z)
+	var offZ: float = 0.0    # D1: a fighter rush ends this far in depth from its target, as off is along the street, so he arrives a little to one side. Hashed only with depth on
 	var end: float = 0.0
 	var arc: float = 0.0     # a bowed rush: how far it bows off the straight line at the middle (units; 0 is straight). Above 0 bows to the mover's left: up when he travels toward +x, down toward -x. The director sets it as it makes the rush
 	var x0: float = 0.0      # where the rush began; the core takes these three on every rush's first step (SimFighter.rushAt reads them)

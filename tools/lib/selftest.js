@@ -16,7 +16,7 @@ const { xref } = require('./xref');
 const fixtures = path.join(core.repoRoot, 'tools', 'fixtures');
 // Folders whose data does not exist yet: the self-test uses tools/fixtures/virtual in their place and ignores real files.
 // Schemas for generated files that carry no version field (the wave manifest is written by render/anim/tools/wave_gen.mjs).
-const NO_VERSION = new Set(['anim-wave-manifest.schema.json', 'anim-wave-entrymap.schema.json', 'anim-wave-seqmap.schema.json']);
+const NO_VERSION = new Set(['anim-wave-manifest.schema.json', 'anim-wave-entrymap.schema.json', 'anim-wave-seqmap.schema.json', 'combat-depth.schema.json']);
 const VIRTUAL_DIRS = ['data/fighters/', 'data/fight/', 'data/input/', 'data/director/'];
 const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
 

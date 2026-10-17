@@ -603,9 +603,11 @@ static func dirUpdate(S: SimState, dt: float) -> void:
 		return
 	ex.t += dt
 	DirInterrupt.tick(S)   # step 3: this tick's inputs inside the exchange (perfect block, reversal, dodge-cancel, burst)
+	DirBrawl.lineEnter(S, ex)   # D1, with depth on: the pair is put in its line's frame for the brawl's part of the tick
 	DirBrawl.tick(S, ex)   # a brawl's lines: held presses and heavies, the magnet, and what ends it
 	DirBrawl.tellTick(S, ex)   # a signature's tell: its defender may move
 	if S.dirS.ex != ex:
+		DirBrawl.lineLeave(S)
 		return
 	DirBeamPlay.lateTick(S, ex)   # a late answer to a beam on its way
 	DirMelee.contactTick(S, ex)   # contact: facing follows the opponent, and resting bodies never overlap
@@ -616,8 +618,10 @@ static func dirUpdate(S: SimState, dt: float) -> void:
 			b.done = true
 			runBeat(S, ex, b)
 			if S.dirS.ex != ex:
+				DirBrawl.lineLeave(S)
 				return
 		i += 1
+	DirBrawl.lineLeave(S)   # D1: the frame closes, and each is put back on the line in the world
 	_struggleTick(S, ex)
 	if ex.ext != null and S.T < ex.ext.until:
 		var A = ex.A
