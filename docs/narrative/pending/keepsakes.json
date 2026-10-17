@@ -1,0 +1,216 @@
+{
+  "schema": "narrative.keepsakes/1",
+  "_about": "PARKED DRAFT. 30 keepsakes: a small trophy of what happened in a won fight, shown in the haul and on the menu shelf. The trigger names an event the fight log already has or Game Design adds; none is a death (Legal c08). {place} is the fight's place name. Claude-written; not marked by Orb.",
+  "keepsakes": [
+    {
+      "id": "keepsake.tower_fell",
+      "trigger": "tower_fell",
+      "name": "Tower Brick",
+      "line": "Still warm. From the tower in the fight.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.bridge_fell",
+      "trigger": "bridge_fell",
+      "name": "Bridge Bolt",
+      "line": "One bolt from {place}'s bridge. Heavier than it looks.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.rival_lens_cracked",
+      "trigger": "rival_lens_cracked",
+      "name": "Cracked Lens",
+      "line": "The rival's lens. He'd like it back.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.rival_frame_bent",
+      "trigger": "rival_frame_bent",
+      "name": "Bent Frame",
+      "line": "Custom, he said. It still is.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.banner_scorched",
+      "trigger": "banner_scorched",
+      "name": "Scorched Banner",
+      "line": "A banner from {place}, singed at one corner.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.crater_big",
+      "trigger": "crater_big",
+      "name": "Fused Sand Chip",
+      "line": "Sand that melted in the blast, then cooled.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.clash_won",
+      "trigger": "clash_won",
+      "name": "Clash Ribbon",
+      "line": "Scorched ribbon from a beam struggle you won.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.clash_lost",
+      "trigger": "clash_lost",
+      "name": "Singed Sleeve",
+      "line": "A sleeve that lost the beam struggle.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.first_blow",
+      "trigger": "first_blow",
+      "name": "Torn Knuckle Wrap",
+      "line": "Torn on the first blow. Worth it.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.comeback",
+      "trigger": "comeback",
+      "name": "Chalked Hand",
+      "line": "Chalk, left on the ground where you got up.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.coil_release",
+      "trigger": "coil_release",
+      "name": "Coil Spring",
+      "line": "Wound tight, then let go. It still hums.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.biome_ocean",
+      "trigger": "biome_ocean",
+      "name": "Salt Stone",
+      "line": "A pebble that came out of the sea with you.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.biome_desert",
+      "trigger": "biome_desert",
+      "name": "Hot Sand Jar",
+      "line": "Sand from {place}. Warm even at night.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.biome_mountains",
+      "trigger": "biome_mountains",
+      "name": "Slate Chip",
+      "line": "A flat chip of slate from the ridge.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.biome_forest",
+      "trigger": "biome_forest",
+      "name": "Split Branch",
+      "line": "A branch that took a hit meant for you.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.biome_ice",
+      "trigger": "biome_ice",
+      "name": "Frost Shard",
+      "line": "A sliver of ice that never melts.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.clean_win",
+      "trigger": "clean_win",
+      "name": "Whole Window",
+      "line": "One window, still unbroken, in a battered street.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.people_saved",
+      "trigger": "people_saved",
+      "name": "Thank-You Note",
+      "line": "From someone you got out. No name, just thanks.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.won_wounded",
+      "trigger": "won_wounded",
+      "name": "Splint Tape",
+      "line": "Held your arm together for the finish.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.won_after_life",
+      "trigger": "won_after_life",
+      "name": "Patched Glove",
+      "line": "Stitched twice. It still fits.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.rival_defeated",
+      "trigger": "rival_defeated",
+      "name": "Ranking Slip",
+      "line": "His notes on you. You rank higher than he admits.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.rival_escape_arc",
+      "trigger": "rival_escape_arc",
+      "name": "Dropped Cuff Link",
+      "line": "A cuff link he left behind when he stepped in.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.temptation_taken",
+      "trigger": "temptation_taken",
+      "name": "Too-Bright Token",
+      "line": "Shinier than it should be. You kept it.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.walked_on",
+      "trigger": "walked_on",
+      "name": "Plain Coin",
+      "line": "You walked on. It's the only thing you kept.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.empress_defeated",
+      "trigger": "empress_defeated",
+      "name": "Silk Scrap",
+      "line": "A scrap of her silk. It cuts like paper.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.cyborg_defeated",
+      "trigger": "cyborg_defeated",
+      "name": "Cold Limiter",
+      "line": "His limiter chip, cracked and finally quiet.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.boss_beaten",
+      "trigger": "boss_beaten",
+      "name": "Jar of Ash",
+      "line": "Ash from the dark sky, sealed before it settled.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.night_fight",
+      "trigger": "night_fight",
+      "name": "Streetlamp Glass",
+      "line": "A lens from a lamp that kept burning.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.long_fight",
+      "trigger": "long_fight",
+      "name": "Worn Stopwatch",
+      "line": "Stopped at the end of the longest fight.",
+      "never_from_a_death": true
+    },
+    {
+      "id": "keepsake.short_fight",
+      "trigger": "short_fight",
+      "name": "Unused Bandage",
+      "line": "You didn't need it. Keep it anyway.",
+      "never_from_a_death": true
+    }
+  ]
+}

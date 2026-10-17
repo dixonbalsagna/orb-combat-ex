@@ -1,0 +1,247 @@
+{
+  "schema": "narrative.run_screens/1",
+  "_about": "PARKED DRAFT (docs/narrative/pending/). Wording for the run, boons and haul screens, written for UI (strings), Game Design (boon names and plain 'gives' lines) and the beats (the hero's and rival's reactions). The numbers in a 'gives' line are {n} placeholders read from the plan's data; {form} is the form's name on the player's branch. A temptation's card shows only a line from `temptation_lines`, never what it brings. Reactions follow the voice bibles (4 to 12 words). Claude-written; not marked by Orb.",
+  "strings": {
+    "run_boon_title": "Take a boon",
+    "run_boon_title_n": "Take a boon ({n} of {total})",
+    "run_boon_take": "Take this",
+    "run_boon_walk": "Walk on",
+    "run_boon_walk_hint": "Say no to all three and gain a life",
+    "run_boon_walk_life": "Walk on, gain a life",
+    "run_boon_sub": "Lives left: {lives}. Highest form you can reach: {tier}.",
+    "run_bk_form": "FORM",
+    "run_bk_ability": "ABILITY",
+    "run_bk_lifeline": "LIFELINE",
+    "run_bk_rest": "REST",
+    "run_bk_temptation": "TEMPTATION",
+    "run_lives_used": "Lives used: {n}",
+    "haul_title": "The haul",
+    "haul_points": "Mastery points: {n}",
+    "haul_keepsakes": "Keepsakes from this run",
+    "haul_none": "No keepsakes this time",
+    "haul_feats": "Moments you met: {n}",
+    "haul_styles": "Styles you showed: {n}",
+    "haul_title_new": "New title: {name}",
+    "haul_pick": "Pick one reward",
+    "haul_pick_n": "Pick one of three",
+    "keepsake_new": "New keepsake: {name}",
+    "shelf_title": "Your shelf",
+    "shelf_empty": "Nothing here yet. Win a fight."
+  },
+  "boons": [
+    {
+      "id": "form.reach_higher",
+      "kind": "form",
+      "name": "Reach Higher",
+      "gives": "From now on, you can reach {form} in every fight."
+    },
+    {
+      "id": "form.higher_still",
+      "kind": "form",
+      "name": "Higher Still",
+      "gives": "From now on, you can reach {form}, the top step."
+    },
+    {
+      "id": "plan.might",
+      "kind": "ability",
+      "name": "Heavier Hands",
+      "gives": "Your blows hit {n}% harder."
+    },
+    {
+      "id": "plan.reserve",
+      "kind": "ability",
+      "name": "Deeper Tank",
+      "gives": "Your energy tank holds {n} more."
+    },
+    {
+      "id": "plan.wellspring",
+      "kind": "ability",
+      "name": "Steady Flow",
+      "gives": "You gain {n} more energy each second."
+    },
+    {
+      "id": "plan.thick_skin",
+      "kind": "ability",
+      "name": "Thick Skin",
+      "gives": "A held guard takes {n}% less damage."
+    },
+    {
+      "id": "plan.iron_core",
+      "kind": "ability",
+      "name": "Iron Core",
+      "gives": "Your core wears {n}% slower."
+    },
+    {
+      "id": "plan.deep_breath",
+      "kind": "ability",
+      "name": "Second Wind",
+      "gives": "Your second breath starts {n} second sooner."
+    },
+    {
+      "id": "plan.tempo",
+      "kind": "ability",
+      "name": "Quick Feet",
+      "gives": "You move {n}% faster."
+    },
+    {
+      "id": "plan.slip",
+      "kind": "ability",
+      "name": "Slippery",
+      "gives": "Your dodge-cancel recovers in {n} seconds."
+    },
+    {
+      "id": "plan.quick_break",
+      "kind": "ability",
+      "name": "Quick Break",
+      "gives": "Your burst recovers in {n} seconds."
+    },
+    {
+      "id": "plan.afterburn",
+      "kind": "ability",
+      "name": "Afterburn",
+      "gives": "Your sprint is {n}% faster."
+    },
+    {
+      "id": "plan.closer",
+      "kind": "ability",
+      "name": "Closer",
+      "gives": "A rush closes the gap {n}% faster."
+    },
+    {
+      "id": "plan.anchor",
+      "kind": "ability",
+      "name": "Dig In",
+      "gives": "Knockback slides you {n}% less."
+    },
+    {
+      "id": "plan.fourth_slot",
+      "kind": "ability",
+      "name": "Fourth Slot",
+      "gives": "A fourth special joins your moves for this run."
+    },
+    {
+      "id": "plan.short_fuse",
+      "kind": "ability",
+      "name": "Short Fuse",
+      "gives": "Your signature recovers in {n} seconds."
+    },
+    {
+      "id": "plan.cheap_burst",
+      "kind": "ability",
+      "name": "Cheap Burst",
+      "gives": "A burst costs {n} energy."
+    },
+    {
+      "id": "plan.grudge",
+      "kind": "ability",
+      "name": "Grudge",
+      "gives": "After surviving a finisher, hit {n}% harder for 15 seconds."
+    },
+    {
+      "id": "plan.sharp_read",
+      "kind": "ability",
+      "name": "Sharp Read",
+      "gives": "Your counter window after a perfect block is longer."
+    },
+    {
+      "id": "fighter.new_finish",
+      "kind": "ability",
+      "name": "Another Finish",
+      "gives": "A new version of your signature joins your moves."
+    },
+    {
+      "id": "fighter.shape_ground",
+      "kind": "ability",
+      "name": "Shape the Ground",
+      "gives": "A move that changes the land joins your set for this run."
+    },
+    {
+      "id": "fighter.heavier_spring",
+      "kind": "ability",
+      "name": "Heavier Spring",
+      "gives": "Waiting before a transformation pays off more."
+    },
+    {
+      "id": "lifeline.one_more",
+      "kind": "lifeline",
+      "name": "One More Go",
+      "gives": "You get one more life."
+    },
+    {
+      "id": "rest.breather",
+      "kind": "rest",
+      "name": "A Breather",
+      "gives": "Every part of you is healed."
+    },
+    {
+      "id": "temptation.offer",
+      "kind": "temptation",
+      "name": "Something Is Offered",
+      "gives": "This will be remembered."
+    }
+  ],
+  "temptation_lines": [
+    "This will be remembered.",
+    "It looks too good. It will be remembered.",
+    "You can take it. It won't forget you.",
+    "Nothing is free. This will be remembered.",
+    "Everyone will remember who took this."
+  ],
+  "reactions": [
+    {
+      "who": "hero",
+      "on": "take_form",
+      "text": "Higher? Yes! I can feel the next step!"
+    },
+    {
+      "who": "hero",
+      "on": "take_ability",
+      "text": "Nice. That'll help my timing."
+    },
+    {
+      "who": "hero",
+      "on": "take_lifeline",
+      "text": "One more go? I'll take it!"
+    },
+    {
+      "who": "hero",
+      "on": "take_rest",
+      "text": "Ahh. My ribs say thanks."
+    },
+    {
+      "who": "hero",
+      "on": "take_temptation",
+      "text": "Too shiny. But I'll take it."
+    },
+    {
+      "who": "hero",
+      "on": "walk_on",
+      "text": "No, thanks. I'd rather earn it."
+    },
+    {
+      "who": "rival",
+      "on": "take_form",
+      "text": "About time. Climb faster, amateur."
+    },
+    {
+      "who": "rival",
+      "on": "take_ability",
+      "text": "A little help? Typical third-rate."
+    },
+    {
+      "who": "rival",
+      "on": "take_temptation",
+      "text": "Take it. Quit being so careful."
+    },
+    {
+      "who": "rival",
+      "on": "walk_on",
+      "text": "Free power, and you refuse? Fool."
+    },
+    {
+      "who": "rival",
+      "on": "take_rest",
+      "text": "Resting already? Fine. I'll wait."
+    }
+  ]
+}

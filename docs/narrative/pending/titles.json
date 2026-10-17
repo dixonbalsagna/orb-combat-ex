@@ -1,0 +1,296 @@
+{
+  "schema": "narrative.titles/1",
+  "_about": "PARKED DRAFT. 40 titles for the fighter-select card and the beats' cut-ins (Game Design's reward economy, docs/design/run-mode.md section 4.4 and unlocks.md). 24 style-label titles (4 fighters x 6 labels), 4 mastery-60 nameplates, 10 run-style titles (conditions proposed; Game Design confirms), and 2 account titles. Names only; no title is earned by a death. Claude-written; not marked by Orb.",
+  "titles": [
+    {
+      "id": "title.style.protagonist.turtle",
+      "fighter": "PROTAGONIST",
+      "kind": "style_label",
+      "name": "Human Wall",
+      "earned_by": "Finish 10 matches as a turtle (mostly defending)."
+    },
+    {
+      "id": "title.style.protagonist.rusher",
+      "fighter": "PROTAGONIST",
+      "kind": "style_label",
+      "name": "Front Foot",
+      "earned_by": "Finish 10 matches as a rusher (mostly attacking)."
+    },
+    {
+      "id": "title.style.protagonist.runner",
+      "fighter": "PROTAGONIST",
+      "kind": "style_label",
+      "name": "Quick Feet",
+      "earned_by": "Finish 10 matches as a runner (mostly dodging and escaping)."
+    },
+    {
+      "id": "title.style.protagonist.charger",
+      "fighter": "PROTAGONIST",
+      "kind": "style_label",
+      "name": "Slow Burn",
+      "earned_by": "Finish 10 matches as a charger (a lot of charging)."
+    },
+    {
+      "id": "title.style.protagonist.sniper",
+      "fighter": "PROTAGONIST",
+      "kind": "style_label",
+      "name": "Clean Shot",
+      "earned_by": "Finish 10 matches as a sniper (mostly signatures)."
+    },
+    {
+      "id": "title.style.protagonist.mixer",
+      "fighter": "PROTAGONIST",
+      "kind": "style_label",
+      "name": "Whole Toolbox",
+      "earned_by": "Finish 10 matches as a mixer (a bit of everything)."
+    },
+    {
+      "id": "title.style.rival.turtle",
+      "fighter": "RIVAL",
+      "kind": "style_label",
+      "name": "Cold Guard",
+      "earned_by": "Finish 10 matches as a turtle (mostly defending)."
+    },
+    {
+      "id": "title.style.rival.rusher",
+      "fighter": "RIVAL",
+      "kind": "style_label",
+      "name": "Hard Press",
+      "earned_by": "Finish 10 matches as a rusher (mostly attacking)."
+    },
+    {
+      "id": "title.style.rival.runner",
+      "fighter": "RIVAL",
+      "kind": "style_label",
+      "name": "Out of Reach",
+      "earned_by": "Finish 10 matches as a runner (mostly dodging and escaping)."
+    },
+    {
+      "id": "title.style.rival.charger",
+      "fighter": "RIVAL",
+      "kind": "style_label",
+      "name": "Tight Spring",
+      "earned_by": "Finish 10 matches as a charger (a lot of charging)."
+    },
+    {
+      "id": "title.style.rival.sniper",
+      "fighter": "RIVAL",
+      "kind": "style_label",
+      "name": "Surgical",
+      "earned_by": "Finish 10 matches as a sniper (mostly signatures)."
+    },
+    {
+      "id": "title.style.rival.mixer",
+      "fighter": "RIVAL",
+      "kind": "style_label",
+      "name": "Top of the List",
+      "earned_by": "Finish 10 matches as a mixer (a bit of everything)."
+    },
+    {
+      "id": "title.style.empress.turtle",
+      "fighter": "EMPRESS",
+      "kind": "style_label",
+      "name": "Walled Throne",
+      "earned_by": "Finish 10 matches as a turtle (mostly defending)."
+    },
+    {
+      "id": "title.style.empress.rusher",
+      "fighter": "EMPRESS",
+      "kind": "style_label",
+      "name": "Crown Rush",
+      "earned_by": "Finish 10 matches as a rusher (mostly attacking)."
+    },
+    {
+      "id": "title.style.empress.runner",
+      "fighter": "EMPRESS",
+      "kind": "style_label",
+      "name": "Slips the Court",
+      "earned_by": "Finish 10 matches as a runner (mostly dodging and escaping)."
+    },
+    {
+      "id": "title.style.empress.charger",
+      "fighter": "EMPRESS",
+      "kind": "style_label",
+      "name": "Building a Revision",
+      "earned_by": "Finish 10 matches as a charger (a lot of charging)."
+    },
+    {
+      "id": "title.style.empress.sniper",
+      "fighter": "EMPRESS",
+      "kind": "style_label",
+      "name": "By Decree",
+      "earned_by": "Finish 10 matches as a sniper (mostly signatures)."
+    },
+    {
+      "id": "title.style.empress.mixer",
+      "fighter": "EMPRESS",
+      "kind": "style_label",
+      "name": "Many Hands",
+      "earned_by": "Finish 10 matches as a mixer (a bit of everything)."
+    },
+    {
+      "id": "title.style.cyborg.turtle",
+      "fighter": "CYBORG",
+      "kind": "style_label",
+      "name": "Armoured Gut",
+      "earned_by": "Finish 10 matches as a turtle (mostly defending)."
+    },
+    {
+      "id": "title.style.cyborg.rusher",
+      "fighter": "CYBORG",
+      "kind": "style_label",
+      "name": "Starving Charge",
+      "earned_by": "Finish 10 matches as a rusher (mostly attacking)."
+    },
+    {
+      "id": "title.style.cyborg.runner",
+      "fighter": "CYBORG",
+      "kind": "style_label",
+      "name": "Light Chassis",
+      "earned_by": "Finish 10 matches as a runner (mostly dodging and escaping)."
+    },
+    {
+      "id": "title.style.cyborg.charger",
+      "fighter": "CYBORG",
+      "kind": "style_label",
+      "name": "Stoking Up",
+      "earned_by": "Finish 10 matches as a charger (a lot of charging)."
+    },
+    {
+      "id": "title.style.cyborg.sniper",
+      "fighter": "CYBORG",
+      "kind": "style_label",
+      "name": "Picky Eater",
+      "earned_by": "Finish 10 matches as a sniper (mostly signatures)."
+    },
+    {
+      "id": "title.style.cyborg.mixer",
+      "fighter": "CYBORG",
+      "kind": "style_label",
+      "name": "Omnivore",
+      "earned_by": "Finish 10 matches as a mixer (a bit of everything)."
+    },
+    {
+      "id": "title.mastery60.protagonist",
+      "fighter": "PROTAGONIST",
+      "kind": "mastery_60",
+      "name": "Still Grinning",
+      "earned_by": "Reach mastery level 60 with this fighter."
+    },
+    {
+      "id": "title.mastery60.rival",
+      "fighter": "RIVAL",
+      "kind": "mastery_60",
+      "name": "First Place",
+      "earned_by": "Reach mastery level 60 with this fighter."
+    },
+    {
+      "id": "title.mastery60.empress",
+      "fighter": "EMPRESS",
+      "kind": "mastery_60",
+      "name": "Her Own Empire",
+      "earned_by": "Reach mastery level 60 with this fighter."
+    },
+    {
+      "id": "title.mastery60.cyborg",
+      "fighter": "CYBORG",
+      "kind": "mastery_60",
+      "name": "Bottomless",
+      "earned_by": "Reach mastery level 60 with this fighter."
+    },
+    {
+      "id": "title.run.every_launch",
+      "fighter": "ANY",
+      "kind": "run_style",
+      "name": "Every Direction",
+      "earned_by": "In one run, use every kind of launch.",
+      "condition_proposed": true
+    },
+    {
+      "id": "title.run.three_towers",
+      "fighter": "ANY",
+      "kind": "run_style",
+      "name": "Tower Hopper",
+      "earned_by": "Chain a launch through three towers.",
+      "condition_proposed": true
+    },
+    {
+      "id": "title.run.inside_chain",
+      "fighter": "ANY",
+      "kind": "run_style",
+      "name": "Inside Job",
+      "earned_by": "Land an inside chain.",
+      "condition_proposed": true
+    },
+    {
+      "id": "title.run.full_coil",
+      "fighter": "ANY",
+      "kind": "run_style",
+      "name": "Worth the Wait",
+      "earned_by": "Release a slingshot from a full coil.",
+      "condition_proposed": true
+    },
+    {
+      "id": "title.run.perfect_duel",
+      "fighter": "ANY",
+      "kind": "run_style",
+      "name": "Spot On",
+      "earned_by": "Win a duel of perfect blocks.",
+      "condition_proposed": true
+    },
+    {
+      "id": "title.run.no_life_spent",
+      "fighter": "ANY",
+      "kind": "run_style",
+      "name": "First Try",
+      "earned_by": "Finish a run without spending a life.",
+      "condition_proposed": true
+    },
+    {
+      "id": "title.run.city_defended",
+      "fighter": "ANY",
+      "kind": "run_style",
+      "name": "The City Stood",
+      "earned_by": "Defend a city to the end of its fight.",
+      "condition_proposed": true
+    },
+    {
+      "id": "title.run.walked_on",
+      "fighter": "ANY",
+      "kind": "run_style",
+      "name": "Walked On",
+      "earned_by": "Finish a run having turned down the temptation.",
+      "condition_proposed": true
+    },
+    {
+      "id": "title.run.only_crossings",
+      "fighter": "ANY",
+      "kind": "run_style",
+      "name": "Quiet Road",
+      "earned_by": "Win a run taking only Crossings.",
+      "condition_proposed": true
+    },
+    {
+      "id": "title.run.every_boon",
+      "fighter": "ANY",
+      "kind": "run_style",
+      "name": "Well Equipped",
+      "earned_by": "Take one boon of every kind in a single run.",
+      "condition_proposed": true
+    },
+    {
+      "id": "title.pressure10",
+      "fighter": "ANY",
+      "kind": "challenge",
+      "name": "Ten Deep",
+      "earned_by": "Clear Pressure 10."
+    },
+    {
+      "id": "title.atlas",
+      "fighter": "ANY",
+      "kind": "atlas",
+      "name": "Well Travelled",
+      "earned_by": "Stamp every planet in the atlas."
+    }
+  ]
+}
