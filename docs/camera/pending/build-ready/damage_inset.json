@@ -1,0 +1,23 @@
+{
+  "schema": "camera.damage_inset/1",
+  "_about": "The live inset of a dodged beam's damage (docs/camera/damage-inset.md, docs/camera/damage-inset-build.md). It opens when a beam the other fighter fired is dodged and damages a structure that is not already in the dodger's picture, scored from the damage events it caused. Numbers are first values. Score: points per stage stepped, per share of a building's floors cleared, for a fall, a multiplier for a landmark, and a bonus for a tower (per body height over towerBh, at most towerMax). open and big are the score thresholds. windowS: the damage counts if it comes within this many seconds of the dodge. visibleMinPx: a structure already this wide (px) in the dodger's pane needs no inset. ration: at most one in gapS, perMinute a minute; waitForStripS: how long it waits for a fighter strip to end before it is dropped. blocked: shots and moments it never opens over. thumb: the size as shares of the screen (the phone's in landscape), margin its distance from the pane's edge. frame: where the inset's camera stands (centerY a share of the building's height), margin and landmarkMargin the room around it, minPx its smallest drawn height, pushIn a slow push over pushS. time: minS and maxS its life, maxFallS with a fall and its rubble, tailS after the last event, wipeIn and wipeOut. flash: stillWhenReduced (a frozen frame under Reduce flashing or reduced motion), stillAtS the time after the first fall event the still is taken at, calmFlag the name of the view flag VFX reads.",
+  "enabled": true,
+  "score": {
+    "perStage": 0.5,
+    "perFloorShare": 1.0,
+    "perFall": 2.0,
+    "landmarkMul": 1.5,
+    "towerBh": 10,
+    "perBhOver": 0.1,
+    "towerMax": 0.5
+  },
+  "thresholds": { "open": 1.0, "big": 2.0 },
+  "windowS": 2.0,
+  "visibleMinPx": 60,
+  "ration": { "gapS": 15, "perMinute": 3, "waitForStripS": 1.0 },
+  "blocked": ["intro", "transform", "finisher", "ko", "launch_solo", "lunge"],
+  "thumb": { "w": 0.22, "h": 0.16, "phoneW": 0.30, "phoneH": 0.22, "margin": 0.02 },
+  "frame": { "centerY": 0.55, "margin": 0.20, "landmarkMargin": 0.35, "minPx": 60, "pushIn": 0.04, "pushS": 1.0 },
+  "time": { "minS": 1.4, "maxS": 4.0, "maxFallS": 6.0, "tailS": 0.6, "wipeIn": 0.12, "wipeOut": 0.18 },
+  "flash": { "stillWhenReduced": true, "stillAtS": 0.5, "calmFlag": "inset_calm" }
+}

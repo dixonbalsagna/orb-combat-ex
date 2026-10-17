@@ -1,0 +1,1108 @@
+{
+  "schema": "camera.intro_shots/1",
+  "_about": "The camera's shot families for the opening (docs/camera/varied-intros.md, docs/camera/varied-intros-data.md). A family is a short list of keyframes for one phase of the intro; the picker chooses one per phase and fighter from a hash of the match seed and the event's fields, never from the sim's random stream. Numbers are first values. Keyframe: t is the position in the shot (0 to 1 of the phase's span, which the event gives); cut true means a hard cut to this key (the shot opens on it), otherwise the camera eases from the key before; anchor is what the key is placed against (faller, lander, spot = the landing spot, crater, pair = the two fighters' middle, other = the other fighter, sky = straight up from the spot); dx and dy are body heights from the anchor (dy positive up); r is the subject's height as a share of the screen height; ay is where the anchor sits on the screen (0 top, 1 bottom); pitch is degrees (positive looks up; the ground rule limits a negative one to -6); fov is a multiplier of the field of view (1 is the game's). cuts counts the hard cuts the family makes; scroll is the worst share of the screen width the picture changes in a tick (measured or estimated); the picker refuses a family whose scroll is over the bound unless it is marked legacy.",
+  "hash": {
+    "algo": "fnv1a32",
+    "fields": [
+      "seed",
+      "phase",
+      "actor",
+      "biome",
+      "tod",
+      "tone",
+      "arrival",
+      "template"
+    ],
+    "_note": "the fields are joined with a separator and hashed; u = hash / 2^32 picks by cumulative weight; the same context always gives the same family"
+  },
+  "constraints": {
+    "maxCutsPerSecond": 3,
+    "maxCutsInIntro": 8,
+    "noRepeatPerPhase": 2,
+    "scrollBound": 0.045,
+    "faceMinStareTicks": 120
+  },
+  "defaults": {
+    "fall": "F1",
+    "descend": "D1",
+    "land": "L1",
+    "wait": "W1",
+    "stare": "S1",
+    "closing": "C1"
+  },
+  "sets": {
+    "reducedMotion": {
+      "fall": "R1",
+      "descend": "R4",
+      "land": "R2",
+      "wait": "R5",
+      "stare": "R3",
+      "closing": "R6",
+      "faces": false,
+      "dissolveS": 0.3
+    },
+    "reduceFlashing": {
+      "replace": {
+        "F1": "F2"
+      },
+      "faces": false
+    }
+  },
+  "families": {
+    "C1": {
+      "phase": "closing",
+      "arrival": [
+        "drop",
+        "descend",
+        "retinue",
+        "host"
+      ],
+      "title": "the bell",
+      "legacy": true,
+      "cuts": 0,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "anchor": "pair",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.1,
+          "ay": 0.62,
+          "pitch": 0
+        },
+        {
+          "t": 0.5,
+          "anchor": "pair",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.105,
+          "ay": 0.62,
+          "pitch": 0
+        },
+        {
+          "t": 1.0,
+          "anchor": "pair",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.1,
+          "ay": 0.62,
+          "pitch": 0
+        }
+      ]
+    },
+    "C2": {
+      "phase": "closing",
+      "arrival": [
+        "drop",
+        "descend",
+        "retinue",
+        "host"
+      ],
+      "title": "push to the first move",
+      "cuts": 0,
+      "scroll": 0.0,
+      "requires": {
+        "closing": [
+          "dare",
+          "rush"
+        ]
+      },
+      "keys": [
+        {
+          "t": 0.0,
+          "anchor": "pair",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.1,
+          "ay": 0.62,
+          "pitch": 0
+        },
+        {
+          "t": 1.0,
+          "anchor": "pair",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.103,
+          "ay": 0.62,
+          "pitch": 0
+        }
+      ]
+    },
+    "D1": {
+      "phase": "descend",
+      "arrival": [
+        "descend",
+        "retinue"
+      ],
+      "title": "crane down",
+      "cuts": 1,
+      "scroll": 0.01,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "lander",
+          "dx": 4,
+          "dy": 10,
+          "r": 0.08,
+          "ay": 0.4,
+          "pitch": -6
+        },
+        {
+          "t": 1.0,
+          "anchor": "lander",
+          "dx": 4,
+          "dy": 1.5,
+          "r": 0.1,
+          "ay": 0.6,
+          "pitch": 0
+        }
+      ]
+    },
+    "D2": {
+      "phase": "descend",
+      "arrival": [
+        "descend",
+        "host"
+      ],
+      "title": "eye-level approach",
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "lander",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.09,
+          "ay": 0.62,
+          "pitch": 0
+        },
+        {
+          "t": 1.0,
+          "anchor": "lander",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.12,
+          "ay": 0.62,
+          "pitch": 0
+        }
+      ]
+    },
+    "F1": {
+      "phase": "fall",
+      "arrival": [
+        "drop"
+      ],
+      "title": "ride-along",
+      "legacy": true,
+      "cuts": 1,
+      "scroll": 0.29,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "faller",
+          "dx": 0,
+          "dy": 0,
+          "r": 0.1,
+          "ay": 0.38,
+          "pitch": 0
+        },
+        {
+          "t": 1.0,
+          "anchor": "faller",
+          "dx": 0,
+          "dy": -2.4,
+          "r": 0.1,
+          "ay": 0.38,
+          "pitch": 0
+        }
+      ]
+    },
+    "F2": {
+      "phase": "fall",
+      "arrival": [
+        "drop"
+      ],
+      "title": "from the ground",
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "spot",
+          "dx": 0,
+          "dy": 3.0,
+          "r": 0.09,
+          "ay": 0.78,
+          "pitch": 15
+        },
+        {
+          "t": 1.0,
+          "anchor": "spot",
+          "dx": 0,
+          "dy": 3.0,
+          "r": 0.09,
+          "ay": 0.78,
+          "pitch": 15
+        }
+      ]
+    },
+    "F3": {
+      "phase": "fall",
+      "arrival": [
+        "drop"
+      ],
+      "title": "high wide",
+      "cuts": 2,
+      "scroll": 0.01,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "faller",
+          "dx": 6,
+          "dy": -20,
+          "r": 0.06,
+          "ay": 0.5,
+          "pitch": 0,
+          "fov": 1.15
+        },
+        {
+          "t": 0.8,
+          "anchor": "faller",
+          "dx": 6,
+          "dy": -40,
+          "r": 0.06,
+          "ay": 0.5,
+          "pitch": 0,
+          "fov": 1.15
+        },
+        {
+          "t": 0.8,
+          "cut": true,
+          "anchor": "spot",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.08,
+          "ay": 0.74,
+          "pitch": -4
+        },
+        {
+          "t": 1.0,
+          "anchor": "spot",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.09,
+          "ay": 0.74,
+          "pitch": -4
+        }
+      ]
+    },
+    "F4": {
+      "phase": "fall",
+      "arrival": [
+        "drop"
+      ],
+      "title": "profile track",
+      "cuts": 1,
+      "scroll": 0.02,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "faller",
+          "dx": -8,
+          "dy": 6,
+          "r": 0.07,
+          "ay": 0.45,
+          "pitch": 0
+        },
+        {
+          "t": 1.0,
+          "anchor": "spot",
+          "dx": -8,
+          "dy": 1.5,
+          "r": 0.07,
+          "ay": 0.6,
+          "pitch": 0
+        }
+      ]
+    },
+    "L1": {
+      "phase": "land",
+      "arrival": [
+        "drop",
+        "descend",
+        "retinue"
+      ],
+      "title": "low wide",
+      "legacy": true,
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "crater",
+          "dx": 0,
+          "dy": 0.5,
+          "r": 0.09,
+          "ay": 0.74,
+          "pitch": -6
+        },
+        {
+          "t": 1.0,
+          "anchor": "crater",
+          "dx": 0,
+          "dy": 0.5,
+          "r": 0.09,
+          "ay": 0.74,
+          "pitch": -6
+        }
+      ]
+    },
+    "L2": {
+      "phase": "land",
+      "arrival": [
+        "drop"
+      ],
+      "title": "crater lip",
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "crater",
+          "dx": -9,
+          "dy": 0.8,
+          "r": 0.1,
+          "ay": 0.78,
+          "pitch": -3
+        },
+        {
+          "t": 1.0,
+          "anchor": "crater",
+          "dx": -9,
+          "dy": 0.8,
+          "r": 0.105,
+          "ay": 0.78,
+          "pitch": -3
+        }
+      ]
+    },
+    "L3": {
+      "phase": "land",
+      "arrival": [
+        "drop"
+      ],
+      "title": "overhead",
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "crater",
+          "dx": 0,
+          "dy": 14,
+          "r": 0.05,
+          "ay": 0.5,
+          "pitch": 50
+        },
+        {
+          "t": 1.0,
+          "anchor": "crater",
+          "dx": 0,
+          "dy": 16,
+          "r": 0.05,
+          "ay": 0.5,
+          "pitch": 50
+        }
+      ],
+      "needs": {
+        "pitch": 50
+      }
+    },
+    "L4": {
+      "phase": "land",
+      "arrival": [
+        "drop",
+        "descend"
+      ],
+      "title": "over the shoulder",
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "lander",
+          "dx": -4,
+          "dy": 2.2,
+          "r": 0.11,
+          "ay": 0.7,
+          "pitch": -2
+        },
+        {
+          "t": 1.0,
+          "anchor": "other",
+          "dx": -4,
+          "dy": 2.2,
+          "r": 0.11,
+          "ay": 0.7,
+          "pitch": -2
+        }
+      ]
+    },
+    "L5": {
+      "phase": "land",
+      "arrival": [
+        "drop",
+        "descend"
+      ],
+      "title": "in the town",
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "lander",
+          "dx": 7,
+          "dy": 3.0,
+          "r": 0.075,
+          "ay": 0.66,
+          "pitch": -2
+        },
+        {
+          "t": 1.0,
+          "anchor": "lander",
+          "dx": 7,
+          "dy": 3.0,
+          "r": 0.08,
+          "ay": 0.66,
+          "pitch": -2
+        }
+      ],
+      "requires": {
+        "settlement": true
+      }
+    },
+    "R1": {
+      "phase": "fall",
+      "arrival": [
+        "drop",
+        "descend",
+        "host"
+      ],
+      "title": "reduced motion: the spot, level and still",
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "spot",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.09,
+          "ay": 0.7,
+          "pitch": 0
+        },
+        {
+          "t": 1.0,
+          "anchor": "spot",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.09,
+          "ay": 0.7,
+          "pitch": 0
+        }
+      ]
+    },
+    "R2": {
+      "phase": "land",
+      "arrival": [
+        "drop",
+        "descend",
+        "retinue"
+      ],
+      "title": "reduced motion: the landing, level",
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "crater",
+          "dx": 0,
+          "dy": 0.5,
+          "r": 0.09,
+          "ay": 0.72,
+          "pitch": 0
+        },
+        {
+          "t": 1.0,
+          "anchor": "crater",
+          "dx": 0,
+          "dy": 0.5,
+          "r": 0.09,
+          "ay": 0.72,
+          "pitch": 0
+        }
+      ]
+    },
+    "R3": {
+      "phase": "stare",
+      "arrival": [
+        "drop",
+        "descend",
+        "retinue",
+        "host"
+      ],
+      "title": "reduced motion: the two-shot, still",
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "pair",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.1,
+          "ay": 0.62,
+          "pitch": 0
+        },
+        {
+          "t": 1.0,
+          "anchor": "pair",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.1,
+          "ay": 0.62,
+          "pitch": 0
+        }
+      ]
+    },
+    "R4": {
+      "phase": "descend",
+      "arrival": [
+        "descend",
+        "retinue",
+        "host"
+      ],
+      "title": "reduced motion: the spot, level and still (a descent)",
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "lander",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.09,
+          "ay": 0.7,
+          "pitch": 0
+        },
+        {
+          "t": 1.0,
+          "anchor": "lander",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.09,
+          "ay": 0.7,
+          "pitch": 0
+        }
+      ]
+    },
+    "R5": {
+      "phase": "wait",
+      "arrival": [
+        "drop",
+        "descend",
+        "host"
+      ],
+      "title": "reduced motion: the empty spot, level and still",
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "other",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.07,
+          "ay": 0.7,
+          "pitch": 0
+        },
+        {
+          "t": 1.0,
+          "anchor": "other",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.07,
+          "ay": 0.7,
+          "pitch": 0
+        }
+      ]
+    },
+    "R6": {
+      "phase": "closing",
+      "arrival": [
+        "drop",
+        "descend",
+        "retinue",
+        "host"
+      ],
+      "title": "reduced motion: no bell",
+      "cuts": 0,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "anchor": "pair",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.1,
+          "ay": 0.62,
+          "pitch": 0
+        },
+        {
+          "t": 1.0,
+          "anchor": "pair",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.1,
+          "ay": 0.62,
+          "pitch": 0
+        }
+      ]
+    },
+    "S1": {
+      "phase": "stare",
+      "arrival": [
+        "drop",
+        "descend",
+        "retinue",
+        "host"
+      ],
+      "title": "level two-shot",
+      "legacy": true,
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "pair",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.1,
+          "ay": 0.62,
+          "pitch": 0
+        },
+        {
+          "t": 1.0,
+          "anchor": "pair",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.11,
+          "ay": 0.62,
+          "pitch": 0
+        }
+      ]
+    },
+    "S2": {
+      "phase": "stare",
+      "arrival": [
+        "drop",
+        "descend",
+        "retinue",
+        "host"
+      ],
+      "title": "low hero",
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "lander",
+          "dx": 3,
+          "dy": 0.6,
+          "r": 0.16,
+          "ay": 0.8,
+          "pitch": 8
+        },
+        {
+          "t": 1.0,
+          "anchor": "lander",
+          "dx": 3,
+          "dy": 0.6,
+          "r": 0.17,
+          "ay": 0.8,
+          "pitch": 8
+        }
+      ]
+    },
+    "S3": {
+      "phase": "stare",
+      "arrival": [
+        "drop",
+        "descend",
+        "retinue",
+        "host"
+      ],
+      "title": "long lens profile",
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "pair",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.12,
+          "ay": 0.62,
+          "pitch": 0,
+          "fov": 0.55
+        },
+        {
+          "t": 1.0,
+          "anchor": "pair",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.13,
+          "ay": 0.62,
+          "pitch": 0,
+          "fov": 0.55
+        }
+      ],
+      "needs": {
+        "fov": true
+      }
+    },
+    "S4": {
+      "phase": "stare",
+      "arrival": [
+        "drop",
+        "descend",
+        "retinue",
+        "host"
+      ],
+      "title": "slow orbit",
+      "cuts": 1,
+      "scroll": 0.004,
+      "orbitDegrees": 12,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "pair",
+          "dx": -6,
+          "dy": 1.5,
+          "r": 0.1,
+          "ay": 0.62,
+          "pitch": 0
+        },
+        {
+          "t": 1.0,
+          "anchor": "pair",
+          "dx": 6,
+          "dy": 1.5,
+          "r": 0.1,
+          "ay": 0.62,
+          "pitch": 0
+        }
+      ]
+    },
+    "W1": {
+      "phase": "wait",
+      "arrival": [
+        "drop",
+        "descend",
+        "host"
+      ],
+      "title": "the empty spot and the sky",
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "other",
+          "dx": 0,
+          "dy": 6.0,
+          "r": 0.06,
+          "ay": 0.72,
+          "pitch": 6
+        },
+        {
+          "t": 1.0,
+          "anchor": "other",
+          "dx": 0,
+          "dy": 6.0,
+          "r": 0.06,
+          "ay": 0.72,
+          "pitch": 6
+        }
+      ]
+    },
+    "W2": {
+      "phase": "wait",
+      "arrival": [
+        "drop",
+        "descend",
+        "host"
+      ],
+      "title": "slow push on the one who waits",
+      "cuts": 1,
+      "scroll": 0.0,
+      "keys": [
+        {
+          "t": 0.0,
+          "cut": true,
+          "anchor": "lander",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.11,
+          "ay": 0.62,
+          "pitch": 0
+        },
+        {
+          "t": 1.0,
+          "anchor": "lander",
+          "dx": 0,
+          "dy": 1.5,
+          "r": 0.14,
+          "ay": 0.62,
+          "pitch": 0
+        }
+      ]
+    }
+  },
+  "weights": [
+    {
+      "family": "F1",
+      "w": 4
+    },
+    {
+      "family": "F2",
+      "w": 3
+    },
+    {
+      "family": "F3",
+      "w": 1
+    },
+    {
+      "family": "F4",
+      "w": 1
+    },
+    {
+      "family": "D1",
+      "w": 3
+    },
+    {
+      "family": "D2",
+      "w": 2
+    },
+    {
+      "family": "L1",
+      "w": 4
+    },
+    {
+      "family": "L2",
+      "w": 2
+    },
+    {
+      "family": "L3",
+      "w": 1
+    },
+    {
+      "family": "L4",
+      "w": 1
+    },
+    {
+      "family": "L5",
+      "w": 1
+    },
+    {
+      "family": "W1",
+      "w": 3
+    },
+    {
+      "family": "W2",
+      "w": 2
+    },
+    {
+      "family": "S1",
+      "w": 4
+    },
+    {
+      "family": "S2",
+      "w": 1
+    },
+    {
+      "family": "S3",
+      "w": 1
+    },
+    {
+      "family": "S4",
+      "w": 1
+    },
+    {
+      "family": "C1",
+      "w": 5
+    },
+    {
+      "family": "C2",
+      "w": 1
+    }
+  ],
+  "rules": [
+    {
+      "when": {
+        "biome": [
+          "desert"
+        ]
+      },
+      "mul": {
+        "L1": 2,
+        "F3": 2,
+        "L3": 0.5
+      }
+    },
+    {
+      "when": {
+        "biome": [
+          "mountains"
+        ]
+      },
+      "mul": {
+        "L2": 3,
+        "L3": 0
+      }
+    },
+    {
+      "when": {
+        "biome": [
+          "plains"
+        ]
+      },
+      "mul": {
+        "L3": 2
+      }
+    },
+    {
+      "when": {
+        "settlement": true
+      },
+      "mul": {
+        "L5": 6,
+        "L3": 0
+      }
+    },
+    {
+      "when": {
+        "tod": [
+          "dawn",
+          "dusk"
+        ]
+      },
+      "mul": {
+        "L2": 2
+      }
+    },
+    {
+      "when": {
+        "tod": [
+          "night"
+        ]
+      },
+      "mul": {
+        "F3": 0,
+        "L3": 0.5,
+        "F2": 1.5
+      }
+    },
+    {
+      "when": {
+        "tone": [
+          "grave"
+        ]
+      },
+      "mul": {
+        "S2": 3,
+        "S3": 2,
+        "S4": 2,
+        "F4": 0.5,
+        "L4": 0.5
+      }
+    },
+    {
+      "when": {
+        "tone": [
+          "light"
+        ]
+      },
+      "mul": {
+        "L4": 2,
+        "W1": 1.5,
+        "S1": 1.5
+      }
+    },
+    {
+      "when": {
+        "arrival": [
+          "retinue"
+        ]
+      },
+      "mul": {
+        "D1": 2,
+        "L4": 0.5
+      }
+    },
+    {
+      "when": {
+        "template": [
+          "latecomer"
+        ]
+      },
+      "mul": {
+        "W1": 4,
+        "W2": 0.5
+      }
+    },
+    {
+      "when": {
+        "closing": [
+          "dare",
+          "rush"
+        ]
+      },
+      "mul": {
+        "C2": 20,
+        "C1": 0.2
+      }
+    },
+    {
+      "when": {
+        "rematch": true
+      },
+      "mul": {
+        "S2": 2
+      }
+    }
+  ],
+  "_reducedWeights": "the sets block names the family a reduced-motion or reduce-flashing match plays; the weights above are the ordinary mode's"
+}

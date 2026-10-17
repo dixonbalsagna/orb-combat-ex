@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/camera-damage-inset",
+  "title": "camera.damage_inset/1 (docs/camera/damage-inset-build.md)",
+  "description": "data/camera/damage_inset.json: when the live inset of a dodged beam's damage opens (the score of the damage events and its thresholds), what it never opens over, how often, its size, its frame, its life, and its flash rules. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": ["schema", "enabled", "score", "thresholds", "windowS", "visibleMinPx", "ration", "blocked", "thumb", "frame", "time", "flash"],
+  "properties": {
+    "schema": { "const": "camera.damage_inset/1" },
+    "enabled": { "type": "boolean", "description": "false: the inset never opens (the switch's data form)." },
+    "score": {
+      "type": "object",
+      "required": ["perStage", "perFloorShare", "perFall", "landmarkMul", "towerBh", "perBhOver", "towerMax"],
+      "properties": {
+        "perStage": { "type": "number", "minimum": 0 },
+        "perFloorShare": { "type": "number", "minimum": 0 },
+        "perFall": { "type": "number", "minimum": 0 },
+        "landmarkMul": { "type": "number", "minimum": 1 },
+        "towerBh": { "type": "number", "minimum": 1, "description": "Body heights over which a building is a tower." },
+        "perBhOver": { "type": "number", "minimum": 0 },
+        "towerMax": { "type": "number", "minimum": 0 }
+      },
+      "patternProperties": { "^_": {} },
+      "additionalProperties": false
+    },
+    "thresholds": {
+      "type": "object",
+      "required": ["open", "big"],
+      "properties": {
+        "open": { "type": "number", "exclusiveMinimum": 0 },
+        "big": { "type": "number", "exclusiveMinimum": 0 }
+      },
+      "patternProperties": { "^_": {} },
+      "additionalProperties": false
+    },
+    "windowS": { "type": "number", "exclusiveMinimum": 0, "maximum": 10 },
+    "visibleMinPx": { "type": "number", "minimum": 0 },
+    "ration": {
+      "type": "object",
+      "required": ["gapS", "perMinute", "waitForStripS"],
+      "properties": {
+        "gapS": { "type": "number", "minimum": 0 },
+        "perMinute": { "type": "integer", "minimum": 1, "maximum": 20 },
+        "waitForStripS": { "type": "number", "minimum": 0, "maximum": 5 }
+      },
+      "patternProperties": { "^_": {} },
+      "additionalProperties": false
+    },
+    "blocked": {
+      "type": "array",
+      "items": { "enum": ["intro", "transform", "finisher", "ko", "launch_solo", "lunge", "hold", "wreck"] },
+      "uniqueItems": true
+    },
+    "thumb": {
+      "type": "object",
+      "required": ["w", "h", "phoneW", "phoneH", "margin"],
+      "properties": {
+        "w": { "type": "number", "exclusiveMinimum": 0, "maximum": 0.5 },
+        "h": { "type": "number", "exclusiveMinimum": 0, "maximum": 0.5 },
+        "phoneW": { "type": "number", "exclusiveMinimum": 0, "maximum": 0.6 },
+        "phoneH": { "type": "number", "exclusiveMinimum": 0, "maximum": 0.6 },
+        "margin": { "type": "number", "minimum": 0, "maximum": 0.1 }
+      },
+      "patternProperties": { "^_": {} },
+      "additionalProperties": false
+    },
+    "frame": {
+      "type": "object",
+      "required": ["centerY", "margin", "landmarkMargin", "minPx", "pushIn", "pushS"],
+      "properties": {
+        "centerY": { "type": "number", "minimum": 0, "maximum": 1 },
+        "margin": { "type": "number", "minimum": 0, "maximum": 1 },
+        "landmarkMargin": { "type": "number", "minimum": 0, "maximum": 1 },
+        "minPx": { "type": "number", "minimum": 0 },
+        "pushIn": { "type": "number", "minimum": 0, "maximum": 0.3 },
+        "pushS": { "type": "number", "minimum": 0 }
+      },
+      "patternProperties": { "^_": {} },
+      "additionalProperties": false
+    },
+    "time": {
+      "type": "object",
+      "required": ["minS", "maxS", "maxFallS", "tailS", "wipeIn", "wipeOut"],
+      "properties": {
+        "minS": { "type": "number", "exclusiveMinimum": 0 },
+        "maxS": { "type": "number", "exclusiveMinimum": 0 },
+        "maxFallS": { "type": "number", "exclusiveMinimum": 0 },
+        "tailS": { "type": "number", "minimum": 0 },
+        "wipeIn": { "type": "number", "exclusiveMinimum": 0 },
+        "wipeOut": { "type": "number", "exclusiveMinimum": 0 }
+      },
+      "patternProperties": { "^_": {} },
+      "additionalProperties": false
+    },
+    "flash": {
+      "type": "object",
+      "required": ["stillWhenReduced", "stillAtS", "calmFlag"],
+      "properties": {
+        "stillWhenReduced": { "type": "boolean" },
+        "stillAtS": { "type": "number", "minimum": 0 },
+        "calmFlag": { "type": "string", "minLength": 1 }
+      },
+      "patternProperties": { "^_": {} },
+      "additionalProperties": false
+    }
+  },
+  "patternProperties": { "^_": {} },
+  "additionalProperties": false
+}

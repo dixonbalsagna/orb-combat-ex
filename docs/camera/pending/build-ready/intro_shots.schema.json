@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/camera-intro-shots",
+  "title": "camera.intro_shots/1 (docs/camera/varied-intros-data.md)",
+  "description": "data/camera/intro_shots.json: the camera's shot families for the opening, as keyframe lists per phase, the weights and rules that pick a family from the match's context, the hash that makes the pick deterministic, the constraints on cuts and scroll, and the fixed sets for reduced motion and Reduce flashing. Version field: schema. Policy: closed except keys starting with an underscore; families are an open table of closed records.",
+  "type": "object",
+  "required": ["schema", "hash", "constraints", "defaults", "sets", "families", "weights", "rules"],
+  "properties": {
+    "schema": { "const": "camera.intro_shots/1" },
+    "hash": {
+      "type": "object",
+      "required": ["algo", "fields"],
+      "properties": {
+        "algo": { "enum": ["fnv1a32"] },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "enum": ["seed", "phase", "actor", "biome", "tod", "tone", "arrival", "template", "closing", "rematch", "settlement"] }
+        }
+      },
+      "patternProperties": { "^_": {} },
+      "additionalProperties": false
+    },
+    "constraints": {
+      "type": "object",
+      "required": ["maxCutsPerSecond", "maxCutsInIntro", "noRepeatPerPhase", "scrollBound", "faceMinStareTicks"],
+      "properties": {
+        "maxCutsPerSecond": { "type": "integer", "minimum": 1, "maximum": 3, "description": "Hard cuts in any second of the intro (the flash rule's three)." },
+        "maxCutsInIntro": { "type": "integer", "minimum": 1, "maximum": 12 },
+        "noRepeatPerPhase": { "type": "integer", "minimum": 0, "maximum": 5, "description": "How many of the last families used per phase the picker avoids (the host's intro record)." },
+        "scrollBound": { "type": "number", "exclusiveMinimum": 0, "maximum": 0.1, "description": "The share of the screen width the picture may change in a tick, for a family that is not legacy." },
+        "faceMinStareTicks": { "type": "integer", "minimum": 0, "description": "A staredown shorter than this has no face cuts." }
+      },
+      "patternProperties": { "^_": {} },
+      "additionalProperties": false
+    },
+    "defaults": {
+      "type": "object",
+      "required": ["fall", "descend", "land", "wait", "stare", "closing"],
+      "patternProperties": { "^_": {}, "^(fall|descend|land|wait|stare|closing)$": { "type": "string", "minLength": 1 } },
+      "additionalProperties": false
+    },
+    "sets": {
+      "type": "object",
+      "required": ["reducedMotion", "reduceFlashing"],
+      "properties": {
+        "reducedMotion": {
+          "type": "object",
+          "required": ["fall", "descend", "land", "wait", "stare", "closing", "faces", "dissolveS"],
+          "properties": {
+            "fall": { "type": "string" },
+            "descend": { "type": "string" },
+            "land": { "type": "string" },
+            "wait": { "type": "string" },
+            "stare": { "type": "string" },
+            "closing": { "type": "string" },
+            "faces": { "type": "boolean" },
+            "dissolveS": { "type": "number", "minimum": 0.1, "maximum": 1 }
+          },
+          "patternProperties": { "^_": {} },
+          "additionalProperties": false
+        },
+        "reduceFlashing": {
+          "type": "object",
+          "required": ["replace", "faces"],
+          "properties": {
+            "replace": { "type": "object", "additionalProperties": { "type": "string" }, "description": "family -> the family played instead." },
+            "faces": { "type": "boolean" }
+          },
+          "patternProperties": { "^_": {} },
+          "additionalProperties": false
+        }
+      },
+      "patternProperties": { "^_": {} },
+      "additionalProperties": false
+    },
+    "families": {
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^_": {},
+        "^[A-Z][0-9A-Z]*$": {
+          "type": "object",
+          "required": ["phase", "arrival", "title", "cuts", "scroll", "keys"],
+          "properties": {
+            "phase": { "enum": ["fall", "descend", "land", "wait", "stare", "closing"] },
+            "arrival": { "type": "array", "minItems": 1, "items": { "enum": ["drop", "descend", "retinue", "host"] } },
+            "title": { "type": "string", "minLength": 1 },
+            "legacy": { "type": "boolean", "description": "Today's shot: exempt from the scroll bound." },
+            "cuts": { "type": "integer", "minimum": 0, "maximum": 4 },
+            "scroll": { "type": "number", "minimum": 0, "maximum": 1 },
+            "orbitDegrees": { "type": "number", "minimum": 0, "maximum": 30 },
+            "needs": {
+              "type": "object",
+              "properties": {
+                "pitch": { "type": "number", "minimum": -90, "maximum": 90 },
+                "fov": { "type": "boolean" }
+              },
+              "additionalProperties": false
+            },
+            "requires": {
+              "type": "object",
+              "properties": {
+                "settlement": { "type": "boolean" },
+                "closing": { "type": "array", "items": { "enum": ["hold", "look-away", "dare", "rush"] } }
+              },
+              "additionalProperties": false
+            },
+            "keys": {
+              "type": "array",
+              "minItems": 2,
+              "items": {
+                "type": "object",
+                "required": ["t", "anchor", "dx", "dy", "r", "ay", "pitch"],
+                "properties": {
+                  "t": { "type": "number", "minimum": 0, "maximum": 1 },
+                  "cut": { "type": "boolean" },
+                  "anchor": { "enum": ["faller", "lander", "spot", "crater", "pair", "other", "sky"] },
+                  "dx": { "type": "number", "minimum": -40, "maximum": 40 },
+                  "dy": { "type": "number", "minimum": -60, "maximum": 60 },
+                  "r": { "type": "number", "exclusiveMinimum": 0, "maximum": 0.3 },
+                  "ay": { "type": "number", "minimum": 0, "maximum": 1 },
+                  "pitch": { "type": "number", "minimum": -90, "maximum": 90 },
+                  "fov": { "type": "number", "minimum": 0.3, "maximum": 2 }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "weights": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["family", "w"],
+        "properties": {
+          "family": { "type": "string", "minLength": 1 },
+          "w": { "type": "number", "minimum": 0 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["when", "mul"],
+        "properties": {
+          "when": {
+            "type": "object",
+            "minProperties": 1,
+            "properties": {
+              "biome": { "type": "array", "items": { "type": "string" } },
+              "tod": { "type": "array", "items": { "enum": ["dawn", "day", "dusk", "night"] } },
+              "tone": { "type": "array", "items": { "enum": ["light", "neutral", "grave"] } },
+              "arrival": { "type": "array", "items": { "enum": ["drop", "descend", "retinue", "host"] } },
+              "template": { "type": "array", "items": { "type": "string" } },
+              "closing": { "type": "array", "items": { "enum": ["hold", "look-away", "dare", "rush"] } },
+              "settlement": { "type": "boolean" },
+              "rematch": { "type": "boolean" }
+            },
+            "additionalProperties": false
+          },
+          "mul": { "type": "object", "minProperties": 1, "additionalProperties": { "type": "number", "minimum": 0 } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "patternProperties": { "^_": {} },
+  "additionalProperties": false
+}
