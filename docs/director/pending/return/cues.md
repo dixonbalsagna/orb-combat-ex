@@ -21,6 +21,8 @@ Owner: Encounter Systems Director. One list for VFX (`docs/vfx/multi-fight-plan.
 | `windup` | `return` | The fighter back from a send, then the defender | The landing tick of his first blow back | `source`: his cell (`""` in a planned exchange). `dur`: the tell, 10 | VFX (`reach.gd` already draws a wind-up ring on any `windup` but `end`). Animation |
 | `return` | `charge`, `lunge` or `far` | The same two | The approach's length | `amount`: its crouch in ticks | Camera (to catch him on his way back). VFX, Animation, Audio |
 | `return_met` | none | The defender who pressed into his approach | none | The meeting's own `meet` events follow | Camera, UI |
+| `launcher_open` (changed by the wider window, `launcher-window/`) | why it opened | The fighter whose B is the launcher, then the rival | The window's end: the stagger's, or 24 ticks after the close if later | `dur`: the stagger, in which his B always lands | UI (B lit until `launcher_close`), Audio |
+| `launcher_close` | `used` or `lapsed` | The same fighter | Its tick (the window's end, when it lapses) | none | UI, Audio |
 | `beam_struggle` | `start` | The fighter who fired, then the other | The tick it ends by at the latest | `x`: the meeting point (0 at the actor's hands, 1 at the target's) | VFX, Camera, Audio, UI |
 | `beam_pulse` | none | The same two | The pulse's tick | `k`: the pulse, 1 to 15. `x`: the point | Audio (the beat), VFX, UI, Controls (the pad) |
 | `beam_surge` | `surge` or `sharp` | The fighter who surged, then the other | none | `k`: the pulse. `x`: the point after it | VFX (the bulge), Audio |
