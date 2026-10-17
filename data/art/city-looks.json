@@ -7,37 +7,49 @@
     "downtown": [
       {
         "id": "steel",
-        "name": "Steel and bronze glass",
+        "name": "Steel and plum glass",
         "wall": {
-          "light": "#b4bcc7",
-          "mid": "#808792",
-          "shadow": "#4e565f"
+          "light": "#afbccf",
+          "mid": "#7a8799",
+          "shadow": "#495665"
         },
         "glass": {
-          "dark": "#8c795e",
-          "bright": "#a18e73"
+          "dark": "#867786",
+          "bright": "#9b8c9c"
         },
-        "trim": "#898e95",
-        "spandrel": "#787f8a",
-        "fin": "#787f8a",
-        "_spandrel_ribbon": "#7a828c",
-        "_fin_sun": "#878e99",
-        "_cornice": "#898e95",
-        "_base": "#787f8a",
+        "trim": "#868f9a",
+        "spandrel": "#737f90",
+        "fin": "#737f90",
+        "_spandrel_ribbon": "#758393",
+        "_fin_sun": "#828fa1",
+        "_cornice": "#868f9a",
+        "_base": "#737f90",
         "oklch": {
           "wall": [
             255,
-            0.018
+            0.03
           ],
           "glass": [
-            75,
-            0.045
+            325,
+            0.03
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.039,
-          "glass_bright_vs_wall_mid": 0.042,
-          "hue_gap_wall_to_glass_deg": 180
+          "glass_dark_vs_wall_mid": 0.038,
+          "glass_bright_vs_wall_mid": 0.044,
+          "hue_gap_wall_to_glass_deg": 70
+        },
+        "_as_massed": {
+          "scale": 0.375,
+          "wall": "#4c5561",
+          "glass_dark": "#544a54",
+          "glass_bright": "#625863",
+          "trim": "#545a62",
+          "read_as": {
+            "wall": "blue-grey",
+            "glass": "plum"
+          },
+          "wall_chroma": 0.023
         },
         "_neighbours": {
           "max_difference_between_any_two_tones": 0.081,
@@ -46,56 +58,68 @@
         }
       },
       {
-        "id": "limestone",
-        "name": "Limestone and slate glass",
+        "id": "brick",
+        "name": "Brick and teal glass",
         "wall": {
-          "light": "#c2baae",
-          "mid": "#8d8579",
-          "shadow": "#5a5448"
+          "light": "#dfb1a8",
+          "mid": "#a77d74",
+          "shadow": "#714b43"
         },
         "glass": {
-          "dark": "#657f90",
-          "bright": "#7994a5"
+          "dark": "#5e8286",
+          "bright": "#73969b"
         },
-        "trim": "#938d85",
-        "spandrel": "#857e71",
-        "fin": "#857e71",
-        "_spandrel_ribbon": "#888174",
-        "_fin_sun": "#958d81",
-        "_cornice": "#938d85",
-        "_base": "#857e71",
+        "trim": "#a38782",
+        "spandrel": "#9e746c",
+        "fin": "#9e746c",
+        "_spandrel_ribbon": "#a2776f",
+        "_fin_sun": "#ae847b",
+        "_cornice": "#a38782",
+        "_base": "#9e746c",
         "oklch": {
           "wall": [
-            80,
-            0.02
+            32,
+            0.055
           ],
           "glass": [
-            235,
+            205,
             0.04
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.039,
-          "glass_bright_vs_wall_mid": 0.041,
-          "hue_gap_wall_to_glass_deg": 155
+          "glass_dark_vs_wall_mid": 0.041,
+          "glass_bright_vs_wall_mid": 0.037,
+          "hue_gap_wall_to_glass_deg": 173
+        },
+        "_as_massed": {
+          "scale": 0.375,
+          "wall": "#6a4e48",
+          "glass_dark": "#3a5254",
+          "glass_bright": "#485f62",
+          "trim": "#685552",
+          "read_as": {
+            "wall": "brick",
+            "glass": "slate"
+          },
+          "wall_chroma": 0.039
         },
         "_neighbours": {
-          "max_difference_between_any_two_tones": 0.08,
+          "max_difference_between_any_two_tones": 0.078,
           "worst_pair": "glass_dark / glass_bright",
           "cap": 0.085
         }
       },
       {
         "id": "graphite",
-        "name": "Graphite and amber glass",
+        "name": "Graphite and teal glass",
         "wall": {
           "light": "#babcc0",
           "mid": "#85878a",
           "shadow": "#535558"
         },
         "glass": {
-          "dark": "#8b796a",
-          "bright": "#a08d7d"
+          "dark": "#668180",
+          "bright": "#7b9695"
         },
         "trim": "#8d8e90",
         "spandrel": "#7d7e82",
@@ -110,54 +134,26 @@
             0.006
           ],
           "glass": [
-            60,
-            0.032
-          ]
-        },
-        "measured": {
-          "glass_dark_vs_wall_mid": 0.039,
-          "glass_bright_vs_wall_mid": 0.039,
-          "hue_gap_wall_to_glass_deg": 150
-        },
-        "_neighbours": {
-          "max_difference_between_any_two_tones": 0.078,
-          "worst_pair": "glass_dark / glass_bright",
-          "cap": 0.085
-        }
-      },
-      {
-        "id": "sage",
-        "name": "Sage and rose glass",
-        "wall": {
-          "light": "#b8bdb4",
-          "mid": "#84887f",
-          "shadow": "#52564e"
-        },
-        "glass": {
-          "dark": "#8e7675",
-          "bright": "#a38b8a"
-        },
-        "trim": "#8b8f89",
-        "spandrel": "#7c8077",
-        "fin": "#7c8077",
-        "_spandrel_ribbon": "#7e827a",
-        "_fin_sun": "#8b9087",
-        "_cornice": "#8b8f89",
-        "_base": "#7c8077",
-        "oklch": {
-          "wall": [
-            130,
-            0.014
-          ],
-          "glass": [
-            20,
+            195,
             0.03
           ]
         },
         "measured": {
           "glass_dark_vs_wall_mid": 0.041,
           "glass_bright_vs_wall_mid": 0.04,
-          "hue_gap_wall_to_glass_deg": 110
+          "hue_gap_wall_to_glass_deg": 75
+        },
+        "_as_massed": {
+          "scale": 0.375,
+          "wall": "#545557",
+          "glass_dark": "#3f5150",
+          "glass_bright": "#4d5f5e",
+          "trim": "#595a5b",
+          "read_as": {
+            "wall": "grey",
+            "glass": "slate"
+          },
+          "wall_chroma": 0.003
         },
         "_neighbours": {
           "max_difference_between_any_two_tones": 0.081,
@@ -166,38 +162,102 @@
         }
       },
       {
-        "id": "sandstone",
-        "name": "Sandstone and slate glass",
+        "id": "pine",
+        "name": "Pine and plum glass",
         "wall": {
-          "light": "#c9baa8",
-          "mid": "#938574",
-          "shadow": "#605243"
+          "light": "#a5c2b7",
+          "mid": "#718c82",
+          "shadow": "#405a51"
         },
         "glass": {
-          "dark": "#678086",
-          "bright": "#7b959b"
+          "dark": "#8c7584",
+          "bright": "#a18a98"
         },
-        "trim": "#968d83",
-        "spandrel": "#8b7c6c",
-        "fin": "#8b7c6c",
-        "_spandrel_ribbon": "#8d7f6e",
-        "_fin_sun": "#9b8b7b",
-        "_cornice": "#968d83",
-        "_base": "#8b7c6c",
+        "trim": "#80918b",
+        "spandrel": "#69847a",
+        "fin": "#69847a",
+        "_spandrel_ribbon": "#6c887d",
+        "_fin_sun": "#789489",
+        "_cornice": "#80918b",
+        "_base": "#69847a",
         "oklch": {
           "wall": [
-            70,
-            0.03
+            170,
+            0.035
           ],
           "glass": [
-            215,
-            0.03
+            340,
+            0.035
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.042,
-          "glass_bright_vs_wall_mid": 0.038,
+          "glass_dark_vs_wall_mid": 0.039,
+          "glass_bright_vs_wall_mid": 0.041,
+          "hue_gap_wall_to_glass_deg": 170
+        },
+        "_as_massed": {
+          "scale": 0.375,
+          "wall": "#465852",
+          "glass_dark": "#584953",
+          "glass_bright": "#665760",
+          "trim": "#505c58",
+          "read_as": {
+            "wall": "pine",
+            "glass": "plum"
+          },
+          "wall_chroma": 0.024
+        },
+        "_neighbours": {
+          "max_difference_between_any_two_tones": 0.081,
+          "worst_pair": "glass_dark / glass_bright",
+          "cap": 0.085
+        }
+      },
+      {
+        "id": "plum",
+        "name": "Plum and teal glass",
+        "wall": {
+          "light": "#d0b3c9",
+          "mid": "#9a7e93",
+          "shadow": "#664d60"
+        },
+        "glass": {
+          "dark": "#63827f",
+          "bright": "#779794"
+        },
+        "trim": "#9a8996",
+        "spandrel": "#92768b",
+        "fin": "#92768b",
+        "_spandrel_ribbon": "#94798e",
+        "_fin_sun": "#a1869b",
+        "_cornice": "#9a8996",
+        "_base": "#92768b",
+        "oklch": {
+          "wall": [
+            335,
+            0.045
+          ],
+          "glass": [
+            190,
+            0.035
+          ]
+        },
+        "measured": {
+          "glass_dark_vs_wall_mid": 0.037,
+          "glass_bright_vs_wall_mid": 0.043,
           "hue_gap_wall_to_glass_deg": 145
+        },
+        "_as_massed": {
+          "scale": 0.375,
+          "wall": "#624f5d",
+          "glass_dark": "#3d5250",
+          "glass_bright": "#4a605e",
+          "trim": "#62565f",
+          "read_as": {
+            "wall": "plum",
+            "glass": "pine"
+          },
+          "wall_chroma": 0.033
         },
         "_neighbours": {
           "max_difference_between_any_two_tones": 0.08,
@@ -206,38 +266,50 @@
         }
       },
       {
-        "id": "granite",
-        "name": "Rose granite",
+        "id": "teal",
+        "name": "Teal slate and rose glass",
         "wall": {
-          "light": "#c5b9b8",
-          "mid": "#908483",
-          "shadow": "#5d5351"
+          "light": "#a2c2c7",
+          "mid": "#6d8c91",
+          "shadow": "#3d595f"
         },
         "glass": {
-          "dark": "#6f7e8d",
-          "bright": "#8392a3"
+          "dark": "#8e7677",
+          "bright": "#a38a8c"
         },
-        "trim": "#948c8b",
-        "spandrel": "#887c7b",
-        "fin": "#887c7b",
-        "_spandrel_ribbon": "#8a7e7d",
-        "_fin_sun": "#978b8a",
-        "_cornice": "#948c8b",
-        "_base": "#887c7b",
+        "trim": "#7f9195",
+        "spandrel": "#668489",
+        "fin": "#668489",
+        "_spandrel_ribbon": "#69878c",
+        "_fin_sun": "#759499",
+        "_cornice": "#7f9195",
+        "_base": "#668489",
         "oklch": {
           "wall": [
-            25,
-            0.014
+            210,
+            0.035
           ],
           "glass": [
-            250,
+            15,
             0.03
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.038,
-          "glass_bright_vs_wall_mid": 0.04,
-          "hue_gap_wall_to_glass_deg": 135
+          "glass_dark_vs_wall_mid": 0.04,
+          "glass_bright_vs_wall_mid": 0.038,
+          "hue_gap_wall_to_glass_deg": 165
+        },
+        "_as_massed": {
+          "scale": 0.375,
+          "wall": "#44585c",
+          "glass_dark": "#5a4a4a",
+          "glass_bright": "#685758",
+          "trim": "#505c5e",
+          "read_as": {
+            "wall": "slate",
+            "glass": "rose"
+          },
+          "wall_chroma": 0.025
         },
         "_neighbours": {
           "max_difference_between_any_two_tones": 0.078,
@@ -248,96 +320,120 @@
     ],
     "mid_rise": [
       {
-        "id": "buff",
-        "name": "Buff brick",
+        "id": "terracotta",
+        "name": "Terracotta and teal glass",
         "wall": {
-          "light": "#dbc5b3",
-          "mid": "#a79181",
-          "shadow": "#715e4e"
+          "light": "#f2bdaf",
+          "mid": "#bc897c",
+          "shadow": "#84554a"
         },
         "glass": {
-          "dark": "#7c8e9d",
-          "bright": "#8fa0af"
+          "dark": "#6f929a",
+          "bright": "#81a4ac"
         },
-        "trim": "#a69990",
-        "spandrel": "#9f8a7a",
-        "fin": "#9f8a7a",
-        "_spandrel_ribbon": "#a28d7c",
-        "_fin_sun": "#ad9887",
-        "_cornice": "#a69990",
-        "_base": "#9f8a7a",
+        "trim": "#b4948c",
+        "spandrel": "#b48376",
+        "fin": "#b48376",
+        "_spandrel_ribbon": "#b68578",
+        "_fin_sun": "#c28f82",
+        "_cornice": "#b4948c",
+        "_base": "#b48376",
         "oklch": {
           "wall": [
-            60,
-            0.035
+            35,
+            0.065
           ],
           "glass": [
-            245,
-            0.03
+            215,
+            0.04
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.04,
-          "glass_bright_vs_wall_mid": 0.04,
-          "hue_gap_wall_to_glass_deg": 175
+          "glass_dark_vs_wall_mid": 0.038,
+          "glass_bright_vs_wall_mid": 0.042,
+          "hue_gap_wall_to_glass_deg": 180
+        },
+        "_as_massed": {
+          "scale": 0.4,
+          "wall": "#7c5950",
+          "glass_dark": "#475f65",
+          "glass_bright": "#546c71",
+          "trim": "#76615b",
+          "read_as": {
+            "wall": "brick",
+            "glass": "slate"
+          },
+          "wall_chroma": 0.049
         },
         "_neighbours": {
-          "max_difference_between_any_two_tones": 0.08,
+          "max_difference_between_any_two_tones": 0.079,
           "worst_pair": "glass_dark / glass_bright",
           "cap": 0.085
         }
       },
       {
-        "id": "cream",
-        "name": "Cream render and slate glass",
+        "id": "rose",
+        "name": "Dusty rose and teal glass",
         "wall": {
-          "light": "#cec9ba",
-          "mid": "#999487",
-          "shadow": "#656155"
+          "light": "#e5bfc4",
+          "mid": "#b08b91",
+          "shadow": "#7a595e"
         },
         "glass": {
-          "dark": "#7c8da0",
-          "bright": "#8da0b3"
+          "dark": "#729293",
+          "bright": "#84a4a5"
         },
-        "trim": "#9f9c92",
-        "spandrel": "#928e80",
-        "fin": "#928e80",
-        "_spandrel_ribbon": "#959183",
-        "_fin_sun": "#a09c8e",
-        "_cornice": "#9f9c92",
-        "_base": "#928e80",
+        "trim": "#ae9599",
+        "spandrel": "#a9848a",
+        "fin": "#a9848a",
+        "_spandrel_ribbon": "#ab878d",
+        "_fin_sun": "#b79398",
+        "_cornice": "#ae9599",
+        "_base": "#a9848a",
         "oklch": {
           "wall": [
-            90,
-            0.02
+            8,
+            0.045
           ],
           "glass": [
-            250,
+            200,
             0.035
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.038,
+          "glass_dark_vs_wall_mid": 0.035,
           "glass_bright_vs_wall_mid": 0.044,
-          "hue_gap_wall_to_glass_deg": 160
+          "hue_gap_wall_to_glass_deg": 168
+        },
+        "_as_massed": {
+          "scale": 0.4,
+          "wall": "#745a5f",
+          "glass_dark": "#495f60",
+          "glass_bright": "#566c6c",
+          "trim": "#726164",
+          "read_as": {
+            "wall": "rose",
+            "glass": "slate"
+          },
+          "wall_chroma": 0.035
         },
         "_neighbours": {
-          "max_difference_between_any_two_tones": 0.082,
+          "max_difference_between_any_two_tones": 0.079,
           "worst_pair": "glass_dark / glass_bright",
           "cap": 0.085
         }
       },
       {
         "id": "concrete",
-        "name": "Pale concrete and warm glass",
+        "name": "Pale concrete and plum glass",
         "wall": {
           "light": "#c4c9cd",
           "mid": "#91969a",
           "shadow": "#5e6266"
         },
         "glass": {
-          "dark": "#9a8875",
-          "bright": "#ad9b87"
+          "dark": "#968697",
+          "bright": "#a998a9"
         },
         "trim": "#989c9f",
         "spandrel": "#8a8e93",
@@ -352,54 +448,130 @@
             0.008
           ],
           "glass": [
-            70,
-            0.035
+            325,
+            0.03
           ]
         },
         "measured": {
           "glass_dark_vs_wall_mid": 0.044,
-          "glass_bright_vs_wall_mid": 0.039,
-          "hue_gap_wall_to_glass_deg": 180
+          "glass_bright_vs_wall_mid": 0.036,
+          "hue_gap_wall_to_glass_deg": 75
+        },
+        "_as_massed": {
+          "scale": 0.4,
+          "wall": "#5f6265",
+          "glass_dark": "#625763",
+          "glass_bright": "#6f636f",
+          "trim": "#636668",
+          "read_as": {
+            "wall": "grey",
+            "glass": "plum"
+          },
+          "wall_chroma": 0.006
         },
         "_neighbours": {
-          "max_difference_between_any_two_tones": 0.083,
+          "max_difference_between_any_two_tones": 0.08,
           "worst_pair": "glass_dark / glass_bright",
           "cap": 0.085
         }
       },
       {
-        "id": "clay",
-        "name": "Dusty clay",
+        "id": "spruce",
+        "name": "Spruce and plum glass",
         "wall": {
-          "light": "#d9c4b7",
-          "mid": "#a59285",
-          "shadow": "#705d52"
+          "light": "#b0d0c0",
+          "mid": "#7d9b8d",
+          "shadow": "#4b675a"
         },
         "glass": {
-          "dark": "#7a908e",
-          "bright": "#8ba3a0"
+          "dark": "#9d8592",
+          "bright": "#b096a4"
         },
-        "trim": "#a59992",
-        "spandrel": "#9e8a7e",
-        "fin": "#9e8a7e",
-        "_spandrel_ribbon": "#a08d80",
-        "_fin_sun": "#ab988b",
-        "_cornice": "#a59992",
-        "_base": "#9e8a7e",
+        "trim": "#8d9f96",
+        "spandrel": "#769486",
+        "fin": "#769486",
+        "_spandrel_ribbon": "#799789",
+        "_fin_sun": "#84a294",
+        "_cornice": "#8d9f96",
+        "_base": "#769486",
         "oklch": {
           "wall": [
-            55,
-            0.03
+            165,
+            0.04
           ],
           "glass": [
-            190,
-            0.026
+            345,
+            0.035
+          ]
+        },
+        "measured": {
+          "glass_dark_vs_wall_mid": 0.037,
+          "glass_bright_vs_wall_mid": 0.04,
+          "hue_gap_wall_to_glass_deg": 180
+        },
+        "_as_massed": {
+          "scale": 0.4,
+          "wall": "#51655c",
+          "glass_dark": "#67565f",
+          "glass_bright": "#74626c",
+          "trim": "#5c6862",
+          "read_as": {
+            "wall": "pine",
+            "glass": "plum"
+          },
+          "wall_chroma": 0.028
+        },
+        "_neighbours": {
+          "max_difference_between_any_two_tones": 0.077,
+          "worst_pair": "glass_dark / glass_bright",
+          "cap": 0.085
+        }
+      },
+      {
+        "id": "mauve",
+        "name": "Mauve and teal glass",
+        "wall": {
+          "light": "#debfda",
+          "mid": "#aa8ca6",
+          "shadow": "#735971"
+        },
+        "glass": {
+          "dark": "#729191",
+          "bright": "#84a4a3"
+        },
+        "trim": "#a897a6",
+        "spandrel": "#a2869f",
+        "fin": "#a2869f",
+        "_spandrel_ribbon": "#a488a1",
+        "_fin_sun": "#b093ac",
+        "_cornice": "#a897a6",
+        "_base": "#a2869f",
+        "oklch": {
+          "wall": [
+            330,
+            0.05
+          ],
+          "glass": [
+            195,
+            0.035
           ]
         },
         "measured": {
           "glass_dark_vs_wall_mid": 0.042,
           "glass_bright_vs_wall_mid": 0.04,
           "hue_gap_wall_to_glass_deg": 135
+        },
+        "_as_massed": {
+          "scale": 0.4,
+          "wall": "#705b6d",
+          "glass_dark": "#495f5f",
+          "glass_bright": "#566c6b",
+          "trim": "#6e636d",
+          "read_as": {
+            "wall": "plum",
+            "glass": "slate"
+          },
+          "wall_chroma": 0.038
         },
         "_neighbours": {
           "max_difference_between_any_two_tones": 0.082,
@@ -408,81 +580,53 @@
         }
       },
       {
-        "id": "slate",
-        "name": "Slate green and rose glass",
+        "id": "slateblue",
+        "name": "Slate blue and rose glass",
         "wall": {
-          "light": "#c2cac3",
-          "mid": "#8f9790",
-          "shadow": "#5c645d"
+          "light": "#b5cae2",
+          "mid": "#8397ad",
+          "shadow": "#506378"
         },
         "glass": {
-          "dark": "#9e8585",
-          "bright": "#b19797"
+          "dark": "#9e8687",
+          "bright": "#b19799"
         },
-        "trim": "#979d98",
-        "spandrel": "#88908a",
-        "fin": "#88908a",
-        "_spandrel_ribbon": "#8a938b",
-        "_fin_sun": "#959d96",
-        "_cornice": "#979d98",
-        "_base": "#88908a",
+        "trim": "#909dab",
+        "spandrel": "#7c90a6",
+        "fin": "#7c90a6",
+        "_spandrel_ribbon": "#7e93a8",
+        "_fin_sun": "#899db3",
+        "_cornice": "#909dab",
+        "_base": "#7c90a6",
         "oklch": {
           "wall": [
-            150,
-            0.014
+            250,
+            0.04
           ],
           "glass": [
-            20,
+            15,
             0.03
           ]
         },
         "measured": {
-          "glass_dark_vs_wall_mid": 0.042,
-          "glass_bright_vs_wall_mid": 0.037,
-          "hue_gap_wall_to_glass_deg": 130
+          "glass_dark_vs_wall_mid": 0.039,
+          "glass_bright_vs_wall_mid": 0.038,
+          "hue_gap_wall_to_glass_deg": 125
+        },
+        "_as_massed": {
+          "scale": 0.4,
+          "wall": "#556372",
+          "glass_dark": "#675758",
+          "glass_bright": "#746364",
+          "trim": "#5e6770",
+          "read_as": {
+            "wall": "blue-grey",
+            "glass": "rose"
+          },
+          "wall_chroma": 0.03
         },
         "_neighbours": {
-          "max_difference_between_any_two_tones": 0.08,
-          "worst_pair": "glass_dark / glass_bright",
-          "cap": 0.085
-        }
-      },
-      {
-        "id": "chalk",
-        "name": "Chalk blue-grey",
-        "wall": {
-          "light": "#c0c9d0",
-          "mid": "#8e979d",
-          "shadow": "#5a6269"
-        },
-        "glass": {
-          "dark": "#9f8775",
-          "bright": "#b29986"
-        },
-        "trim": "#969ca1",
-        "spandrel": "#878f96",
-        "fin": "#878f96",
-        "_spandrel_ribbon": "#899198",
-        "_fin_sun": "#949da3",
-        "_cornice": "#969ca1",
-        "_base": "#878f96",
-        "oklch": {
-          "wall": [
-            240,
-            0.014
-          ],
-          "glass": [
-            60,
-            0.04
-          ]
-        },
-        "measured": {
-          "glass_dark_vs_wall_mid": 0.043,
-          "glass_bright_vs_wall_mid": 0.037,
-          "hue_gap_wall_to_glass_deg": 180
-        },
-        "_neighbours": {
-          "max_difference_between_any_two_tones": 0.08,
+          "max_difference_between_any_two_tones": 0.077,
           "worst_pair": "glass_dark / glass_bright",
           "cap": 0.085
         }
@@ -547,12 +691,12 @@
         "fins": 0.35
       },
       "tint_weights": {
-        "steel": 0.25,
-        "limestone": 0.2,
-        "graphite": 0.15,
-        "sage": 0.1,
-        "sandstone": 0.15,
-        "granite": 0.15
+        "steel": 0.2,
+        "brick": 0.15,
+        "graphite": 0.2,
+        "pine": 0.15,
+        "plum": 0.15,
+        "teal": 0.15
       },
       "rule": "fins on shafts of 40 floors or more, punched on stepped and crown towers, ribbon elsewhere"
     },
@@ -564,13 +708,14 @@
         "fins": 0.15
       },
       "tint_weights": {
-        "buff": 0.3,
-        "cream": 0.2,
-        "clay": 0.25,
+        "terracotta": 0.3,
+        "rose": 0.2,
         "concrete": 0.15,
-        "slate": 0.1
+        "spruce": 0.15,
+        "mauve": 0.1,
+        "slateblue": 0.1
       },
-      "rule": "older: warm brick and render tints, punched windows"
+      "rule": "older: brick, rose and terracotta tints, punched windows"
     },
     "mid_rise_east": {
       "look": "mid_rise",
@@ -581,12 +726,27 @@
       },
       "tint_weights": {
         "concrete": 0.3,
-        "chalk": 0.25,
-        "slate": 0.2,
-        "cream": 0.15,
-        "buff": 0.1
+        "slateblue": 0.25,
+        "spruce": 0.15,
+        "mauve": 0.1,
+        "rose": 0.1,
+        "terracotta": 0.1
       },
       "rule": "newer: pale concrete and cool tints, ribbon windows"
     }
+  },
+  "_mass_summary": {
+    "rule": "tones scaled by lum(shadow)/lum(mid) in linear light (building.gdshader 7b)",
+    "closest_walls_as_massed": {
+      "downtown": {
+        "pair": "pine / teal",
+        "dE00": 5.6
+      },
+      "mid_rise": {
+        "pair": "rose / mauve",
+        "dE00": 5.9
+      }
+    },
+    "none_read_olive_or_brown": true
   }
 }

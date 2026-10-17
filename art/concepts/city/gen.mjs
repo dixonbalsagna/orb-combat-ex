@@ -7,7 +7,7 @@
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { toOklab, fromOklab, luminance, lchOf } from '../sky/colour.mjs';
+import { toOklab, fromOklab, luminance, lchOf, toLin, fromLin, dE00 } from '../sky/colour.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const F = n => n.toFixed(2);
@@ -21,23 +21,30 @@ function solve(lum, C, hDeg) {
 // the wall's three tones as relative luminances (downtown's today: #b8c0cc, #7f8896, #4a5261 are 0.52, 0.25, 0.09; mid_rise a step lighter)
 const WALL_LUM = { downtown: { light: 0.50, mid: 0.24, shadow: 0.09 }, mid_rise: { light: 0.58, mid: 0.30, shadow: 0.12 } };
 const BUDGET = 0.085, GLASS_STEP = 0.04;   // w05 (Legal, RL-144): the budget holds BETWEEN NEIGHBOURING ELEMENTS too: every tone is within 0.04 of the wall's mid, so no two differ by more than 0.08
+// as the render masses it (Rendering, building.gdshader 7b): every tone times lum(shadow)/lum(mid) in linear light. In OKLab that scales L, a and b alike, so the hue holds and the chroma falls to about 0.72 of the wall's.
+const massOf = (hex, look) => { const k = WALL_LUM[look].shadow / WALL_LUM[look].mid; return fromLin(toLin(hex).map(c => c * k)); };
+// what a viewer calls it at that tone (OKLCH of the massed colour); 'olive' and 'brown' are the two the EP and Rendering flagged
+const readAs = hex => { const [, C, h] = lchOf(hex); if (C < 0.010) return 'grey'; if (h < 20 || h >= 350) return 'rose'; if (h < 45) return 'brick'; if (h < 75) return 'brown'; if (h < 130) return 'olive'; if (h < 190) return 'pine'; if (h < 250) return 'slate'; if (h < 300) return 'blue-grey'; return 'plum'; };
 // the tints: wall (hue, chroma), glass (hue, chroma), trim (hue, chroma). Hue and chroma only: the luminances come from the look.
+// Re-cut 2026-10-17 (EP brief; Rendering's docs/rendering/city-variety.md): the render masses a tower in the look's SHADOW tone, so every tone is scaled by lum(shadow)/lum(mid) in linear light
+// (a third of its brightness, about 0.72 of its chroma). The old warm tints (hue 55 to 95, chroma 0.014 to 0.035) came out at chroma 0.01 to 0.026 there and read as brown and olive.
+// Now: no wall or glass between hue 45 and 130 (where dark reads olive or mud), chroma lifted so the MASSED wall keeps 0.023 or more, and the warm family is brick and rose, not buff and cream.
 const TINTS = {
   downtown: [
-    { id: 'steel', name: 'Steel and bronze glass', wall: [255, 0.018], glass: [75, 0.045], trim: [255, 0.012] },
-    { id: 'limestone', name: 'Limestone and slate glass', wall: [80, 0.020], glass: [235, 0.040], trim: [80, 0.014] },
-    { id: 'graphite', name: 'Graphite and amber glass', wall: [270, 0.006], glass: [60, 0.032], trim: [270, 0.004] },
-    { id: 'sage', name: 'Sage and rose glass', wall: [130, 0.014], glass: [20, 0.030], trim: [130, 0.010] },
-    { id: 'sandstone', name: 'Sandstone and slate glass', wall: [70, 0.030], glass: [215, 0.030], trim: [70, 0.018] },
-    { id: 'granite', name: 'Rose granite', wall: [25, 0.014], glass: [250, 0.030], trim: [25, 0.010] },
+    { id: 'steel', name: 'Steel and plum glass', wall: [255, 0.030], glass: [325, 0.030], trim: [255, 0.020] },
+    { id: 'brick', name: 'Brick and teal glass', wall: [32, 0.055], glass: [205, 0.040], trim: [32, 0.035] },
+    { id: 'graphite', name: 'Graphite and teal glass', wall: [270, 0.006], glass: [195, 0.030], trim: [270, 0.004] },
+    { id: 'pine', name: 'Pine and plum glass', wall: [170, 0.035], glass: [340, 0.035], trim: [170, 0.022] },
+    { id: 'plum', name: 'Plum and teal glass', wall: [335, 0.045], glass: [190, 0.035], trim: [335, 0.028] },
+    { id: 'teal', name: 'Teal slate and rose glass', wall: [210, 0.035], glass: [15, 0.030], trim: [210, 0.022] },
   ],
   mid_rise: [
-    { id: 'buff', name: 'Buff brick', wall: [60, 0.035], glass: [245, 0.030], trim: [60, 0.020] },
-    { id: 'cream', name: 'Cream render and slate glass', wall: [90, 0.020], glass: [250, 0.035], trim: [90, 0.014] },
-    { id: 'concrete', name: 'Pale concrete and warm glass', wall: [250, 0.008], glass: [70, 0.035], trim: [250, 0.006] },
-    { id: 'clay', name: 'Dusty clay', wall: [55, 0.030], glass: [190, 0.026], trim: [55, 0.018] },
-    { id: 'slate', name: 'Slate green and rose glass', wall: [150, 0.014], glass: [20, 0.030], trim: [150, 0.010] },
-    { id: 'chalk', name: 'Chalk blue-grey', wall: [240, 0.014], glass: [60, 0.040], trim: [240, 0.010] },
+    { id: 'terracotta', name: 'Terracotta and teal glass', wall: [35, 0.065], glass: [215, 0.040], trim: [35, 0.040] },
+    { id: 'rose', name: 'Dusty rose and teal glass', wall: [8, 0.045], glass: [200, 0.035], trim: [8, 0.030] },
+    { id: 'concrete', name: 'Pale concrete and plum glass', wall: [250, 0.008], glass: [325, 0.030], trim: [250, 0.006] },
+    { id: 'spruce', name: 'Spruce and plum glass', wall: [165, 0.040], glass: [345, 0.035], trim: [165, 0.025] },
+    { id: 'mauve', name: 'Mauve and teal glass', wall: [330, 0.050], glass: [195, 0.035], trim: [330, 0.030] },
+    { id: 'slateblue', name: 'Slate blue and rose glass', wall: [250, 0.040], glass: [15, 0.030], trim: [250, 0.026] },
   ],
 };
 // the facade types: parameters in shares of a floor cell, every tone given as an offset in relative luminance from the wall's mid tone (never more than the budget)
@@ -51,14 +58,14 @@ const BASE_CROWN = {
   crown: { floors: 2, note: 'the top two floors set back 6 percent each side, a cornice band in the trim tone (wall mid plus 0.03), panes at the tint\'s bright glass; lit panes are Rendering\'s and are not raised (a flash change)', setback: 0.06, cornice_lum_offset: 0.03 },
 };
 const DISTRICTS = {
-  downtown: { look: 'downtown', facade_weights: { ribbon: 0.40, punched: 0.25, fins: 0.35 }, tint_weights: { steel: 0.25, limestone: 0.2, graphite: 0.15, sage: 0.1, sandstone: 0.15, granite: 0.15 }, rule: 'fins on shafts of 40 floors or more, punched on stepped and crown towers, ribbon elsewhere' },
-  mid_rise_west: { look: 'mid_rise', facade_weights: { punched: 0.55, ribbon: 0.30, fins: 0.15 }, tint_weights: { buff: 0.3, cream: 0.2, clay: 0.25, concrete: 0.15, slate: 0.1 }, rule: 'older: warm brick and render tints, punched windows' },
-  mid_rise_east: { look: 'mid_rise', facade_weights: { ribbon: 0.55, fins: 0.25, punched: 0.20 }, tint_weights: { concrete: 0.3, chalk: 0.25, slate: 0.2, cream: 0.15, buff: 0.1 }, rule: 'newer: pale concrete and cool tints, ribbon windows' },
+  downtown: { look: 'downtown', facade_weights: { ribbon: 0.40, punched: 0.25, fins: 0.35 }, tint_weights: { steel: 0.2, brick: 0.15, graphite: 0.2, pine: 0.15, plum: 0.15, teal: 0.15 }, rule: 'fins on shafts of 40 floors or more, punched on stepped and crown towers, ribbon elsewhere' },
+  mid_rise_west: { look: 'mid_rise', facade_weights: { punched: 0.55, ribbon: 0.30, fins: 0.15 }, tint_weights: { terracotta: 0.3, rose: 0.2, concrete: 0.15, spruce: 0.15, mauve: 0.1, slateblue: 0.1 }, rule: 'older: brick, rose and terracotta tints, punched windows' },
+  mid_rise_east: { look: 'mid_rise', facade_weights: { ribbon: 0.55, fins: 0.25, punched: 0.20 }, tint_weights: { concrete: 0.3, slateblue: 0.25, spruce: 0.15, mauve: 0.1, rose: 0.1, terracotta: 0.1 }, rule: 'newer: pale concrete and cool tints, ribbon windows' },
 };
 
 // ---- build the data
 const out = { version: 1, note: 'The city looks\' palettes and facade types (docs/art/city-facades.md). Written by art/concepts/city/gen.mjs; do not edit by hand. Variety is hue and chroma at equal luminance: on downtown and mid_rise a pane may differ from its wall by at most 0.085 of relative luminance (render/core/look.gd PATTERN_BUDGET), and between any two neighbouring tones (glass against fin, spandrel against glass, cornice against shaft: Legal w05): every tone is within 0.04 of the mid tone of the wall, so no two differ by more than 0.08. Proposals pending Legal and Orb; Tools adds the schema.', budget: BUDGET, glass_step: GLASS_STEP, looks: {}, facades: FACADES, base_and_crown: BASE_CROWN, districts: DISTRICTS };
-const checks = [];
+const checks = [], massChecks = [];
 for (const look of ['downtown', 'mid_rise']) {
   out.looks[look] = TINTS[look].map(t => {
     const L = WALL_LUM[look], wl = solve(L.light, t.wall[1], t.wall[0]), wm = solve(L.mid, t.wall[1], t.wall[0]), ws = solve(L.shadow, t.wall[1], t.wall[0]);
@@ -68,10 +75,17 @@ for (const look of ['downtown', 'mid_rise']) {
     let worst = 0, worstPair = '';
     for (let i = 0; i < names.length; i++) for (let j = i + 1; j < names.length; j++) { const d = Math.abs(luminance(tones[names[i]]) - luminance(tones[names[j]])); if (d > worst) { worst = d; worstPair = `${names[i]} / ${names[j]}`; } }
     const d1 = Math.abs(luminance(gd) - luminance(wm)), d2 = Math.abs(luminance(gb) - luminance(wm)), hueGap = Math.abs(((t.glass[0] - t.wall[0] + 540) % 360) - 180);
+    const mass = { scale: +(L.shadow / L.mid).toFixed(3), wall: massOf(wm, look), glass_dark: massOf(gd, look), glass_bright: massOf(gb, look), trim: massOf(trim, look) };
+    mass.read_as = { wall: readAs(mass.wall), glass: readAs(mass.glass_dark) }; mass.wall_chroma = +lchOf(mass.wall)[1].toFixed(3);
+    massChecks.push({ look, id: t.id, mass });
     checks.push({ look, id: t.id, glass_dark_vs_wall: d1, glass_bright_vs_wall: d2, hue_gap: hueGap, max_pair: worst, worst_pair: worstPair });
-    return { id: t.id, name: t.name, wall: { light: wl, mid: wm, shadow: ws }, glass: { dark: gd, bright: gb }, trim, spandrel, fin, _spandrel_ribbon: spandrelRibbon, _fin_sun: finSun, _cornice: trim, _base: base, oklch: { wall: t.wall, glass: t.glass }, measured: { glass_dark_vs_wall_mid: +d1.toFixed(3), glass_bright_vs_wall_mid: +d2.toFixed(3),  hue_gap_wall_to_glass_deg: Math.round(hueGap) }, _neighbours: { max_difference_between_any_two_tones: +worst.toFixed(3), worst_pair: worstPair, cap: BUDGET } };
+    return { id: t.id, name: t.name, wall: { light: wl, mid: wm, shadow: ws }, glass: { dark: gd, bright: gb }, trim, spandrel, fin, _spandrel_ribbon: spandrelRibbon, _fin_sun: finSun, _cornice: trim, _base: base, oklch: { wall: t.wall, glass: t.glass }, measured: { glass_dark_vs_wall_mid: +d1.toFixed(3), glass_bright_vs_wall_mid: +d2.toFixed(3),  hue_gap_wall_to_glass_deg: Math.round(hueGap) }, _as_massed: mass, _neighbours: { max_difference_between_any_two_tones: +worst.toFixed(3), worst_pair: worstPair, cap: BUDGET } };
   });
 }
+const flagged = massChecks.filter(m => ['olive', 'brown'].includes(m.mass.read_as.wall) || ['olive', 'brown'].includes(m.mass.read_as.glass));
+const closest = {};
+for (const look of ['downtown', 'mid_rise']) { const ms = massChecks.filter(m => m.look === look); let min = 99, pair = ''; for (let i = 0; i < ms.length; i++) for (let j = i + 1; j < ms.length; j++) { const d = dE00(ms[i].mass.wall, ms[j].mass.wall); if (d < min) { min = d; pair = ms[i].id + ' / ' + ms[j].id; } } closest[look] = { pair, dE00: +min.toFixed(1) }; }
+out._mass_summary = { rule: 'tones scaled by lum(shadow)/lum(mid) in linear light (building.gdshader 7b)', closest_walls_as_massed: closest, none_read_olive_or_brown: flagged.length === 0 };
 writeFileSync(join(ROOT, 'data', 'art', 'city-looks.json'), JSON.stringify(out, null, 2) + '\n');
 const bad = checks.filter(c => c.glass_dark_vs_wall > BUDGET || c.glass_bright_vs_wall > BUDGET || c.max_pair > BUDGET);
 
@@ -117,6 +131,9 @@ function sheet() {
       b += text(tx, ty, t.name, { size: 12, weight: 700 });
       [['wall', t.wall.light], ['', t.wall.mid], ['', t.wall.shadow], ['glass', t.glass.dark], ['', t.glass.bright], ['trim', t.trim]].forEach(([lab, c], j) => { b += rect(tx + j * 33, ty + 8, 30, 30, c, 'stroke="#1b1428" stroke-opacity="0.3" stroke-width="0.8"'); });
       b += text(tx, ty + 58, `neighbours at most ${t._neighbours.max_difference_between_any_two_tones.toFixed(3)} (cap 0.085)`, { size: 10.5, op: 0.75 }) + text(tx, ty + 72, `hue gap ${t.measured.hue_gap_wall_to_glass_deg} deg`, { size: 10.5, op: 0.6 });
+      const m = t._as_massed;
+      [m.wall, m.glass_dark, m.glass_bright, m.trim].forEach((c, j) => { b += rect(tx + j * 33, ty + 80, 30, 22, c, 'stroke="#1b1428" stroke-opacity="0.3" stroke-width="0.8"'); });
+      b += text(tx, ty + 116, `massed x${m.scale}: wall ${m.read_as.wall}, glass ${m.read_as.glass}`, { size: 9.5, weight: 700, op: 0.75 });
     });
     y0 += 716;
   }
@@ -124,4 +141,4 @@ function sheet() {
   writeFileSync(join(ROOT, 'art', 'concepts', 'city', 'city-palettes.svg'), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${b}</svg>`);
 }
 sheet();
-console.log('wrote data/art/city-looks.json and city-palettes.svg;', checks.length, 'tints; over budget:', Math.max(...checks.map(c => c.max_pair)).toFixed(3), 'over budget:', bad.length);
+console.log('as massed: olive/brown flagged', flagged.length, JSON.stringify(closest), '|', 'wrote data/art/city-looks.json and city-palettes.svg;', checks.length, 'tints; over budget:', Math.max(...checks.map(c => c.max_pair)).toFixed(3), 'over budget:', bad.length);
