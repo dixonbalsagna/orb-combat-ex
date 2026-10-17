@@ -2,13 +2,17 @@
 
 Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator, the sim or Godot (`docs/` is hidden from Godot). It holds slices that are built and proven in a scratch copy and wait for the sim slot.
 
+**A parked build:** `forms/`: the Protagonist's five steps and the slingshot (Game Design's `hero-forms.md` sections 4 and 4b), with the hold and release signals for the waiting game, behind `data/fight/forms.json` (off); with Encounter's four director lines as `grant_encounter.py`. No golden moves. Its page is `../forms-core.md`.
+
+**A parked build:** `anim-events/`: Animation's view fields outside the hash (a launch's tier; a hit's hit-stop ticks and the hitter's tier). No golden moves. The air brake waits for its rule.
+
 Windows 2 and 3 of `../fighters-as-data.md` (the reference fighter on a bench, the selection guards) were applied on f5c001e6 (2026-10-13) and their scripts are deleted.
 
 Stage 1 of one versus many and the training dummy in the roster (`n-bodies/`) were applied in 06b0200e (2026-10-16); the page is `../one-v-many-core.md` and the scripts are deleted.
 
 The weight on the damage event (`weight_event.py`) was applied with Encounter's chain (3198301f), and its script is deleted.
 
-**A parked build:** `depth-a/`: a fighter's depth outside a flight (two depth velocities, a capped ease, the contact rule against buildings, the director's step call, the camera's start at a crossing), with its new `SimDepth` loader and `data/combat/depth.json`. Proved on a clean export of 33c6f5bd: no golden moves with depth off. It is applied in the depth window, with Encounter's D1a. The plan, what the director calls and the proof are in `depth-core.md`, which also holds the snapshot design (paper).
+A fighter's depth outside a flight (`depth-a/`) was applied in 46734840 (2026-10-17), switched off, with Encounter's D1a; the page is `../depth-core.md` and the scripts are deleted.
 
 The tier cap (`tier_cap.py`) was applied on 8106e07a (2026-10-12) and its script is deleted.
 
