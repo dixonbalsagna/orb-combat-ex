@@ -18,7 +18,7 @@ index a9e5651..2e76706 100644
 +  "lodgeHold": "auto"
  }
 diff --git a/sim/core/hash.gd b/sim/core/hash.gd
-index e6243b0..a57e727 100644
+index d2edcfb..1ca566c 100644
 --- a/sim/core/hash.gd
 +++ b/sim/core/hash.gd
 @@ -155,6 +155,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
@@ -42,10 +42,10 @@ index e6243b0..a57e727 100644
  		out.append(S.world.present)   # a stage's people present, only when it differs from the arena's (a versus hash is as it was)
  	if S.world.peopleLeft >= 0.0:
 diff --git a/sim/core/state.gd b/sim/core/state.gd
-index 34fb8a4..6138692 100644
+index 1cd73f6..91b1d28 100644
 --- a/sim/core/state.gd
 +++ b/sim/core/state.gd
-@@ -178,6 +178,7 @@ class World:
+@@ -185,6 +185,7 @@ class World:
  	var evtToken: float = 0.0         # its token; 0 when none is open
  	var evtDead: float = 0.0          # casualties the open set piece has caused
  	var evtEvac: float = 0.0          # civilians it has made flee
@@ -53,7 +53,7 @@ index 34fb8a4..6138692 100644
  	var tokenSeq: float = 0.0         # token counter
  	var heavyX: float = -1.0          # x of the latest heavy event (the district flight flees from it)
  	var heavyT: float = -1.0e9        # its match time
-@@ -515,6 +516,7 @@ class Fighter:
+@@ -524,6 +525,7 @@ class Fighter:
  	var zWay: bool = false           # L0: a depth waypoint is armed for this flight whether or not it is aimed (aimX0, aimZ0, aimZ1, aimD)
  	var splashed := PackedInt32Array()   # buildings already splashed by this launch (at most WorldBrunt.SPLASH_CAP)
  	var launchSpecial: bool = false  # the current launch is a signature, finisher or break launch (its ground mark may be big)
@@ -62,7 +62,7 @@ index 34fb8a4..6138692 100644
  	var jT: int = 0                  # ticks since the journey's first contact (cap 240)
  	var jV0: float = 0.0             # the journey's first-contact normalised speed (the wear budget)
 diff --git a/sim/world/brunt.gd b/sim/world/brunt.gd
-index a3903ae..ca5c291 100644
+index 66b99c8..4a32a5f 100644
 --- a/sim/world/brunt.gd
 +++ b/sim/world/brunt.gd
 @@ -36,7 +36,7 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
@@ -74,7 +74,7 @@ index a3903ae..ca5c291 100644
  }
  const MARK_TOWER: int = -1                 # in Fighter.splashed (a list of building ids): a -1 for each tower this flight went through ...
  const MARK_HOUSE: int = -2                 # ... and a -2 for each house
-@@ -641,7 +641,7 @@ static func _checkHitSwept(S: SimState, f, ox: float, oy: float) -> bool:
+@@ -647,7 +647,7 @@ static func _checkHitSwept(S: SimState, f, ox: float, oy: float) -> bool:
  
  ## Resolve one hit on building b at height y on the near edge, and what happens to the fighter.
  static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
@@ -83,7 +83,7 @@ index a3903ae..ca5c291 100644
  	var trav: float = f.launchT
  	var spN: float = SimDetMath.hypot(f.vx / trav, f.vy)
  	var oc: Dictionary = outcomeOf(S, b, y, spN, by.tier, _count(f, MARK_TOWER), f.launchSpecial)
-@@ -699,7 +699,7 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+@@ -705,7 +705,7 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
  			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", cx, evt, true)
  		SimDamage.hurt(S, f, spLeft * FIGHTER_DMG, by)
  		var holdS: float = lodgeSeconds(by.tier, f.launchSpecial)
@@ -92,7 +92,7 @@ index a3903ae..ca5c291 100644
  		var bodyW: float = WorldLanes.body()[0]
  		f.x = SimWrap.wrap(far - dir * (bodyW * 2.0))
  		f.y = y
-@@ -751,9 +751,16 @@ static func _flightTicks(S: SimState, f) -> int:
+@@ -757,9 +757,16 @@ static func _flightTicks(S: SimState, f) -> int:
  
  ## The hold in a wall or a lodge: the whole sim stops for it (a hit-stop, today's behaviour) or only the body is held (lodgeHold "body": he is stunned for
  ## the seconds, the fight goes on around him). Orb's homework: which of the two.

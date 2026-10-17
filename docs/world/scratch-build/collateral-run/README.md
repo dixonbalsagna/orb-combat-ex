@@ -1,6 +1,6 @@
 # The collateral window for the run (World): a commit-ready patch, split by owner, parked, not applied
 
-Built on main af5151b5 (re-cut 2026-10-17 from the 2026-10-16 draft on 992adcbb; the same changes). The design and the audit of the owner paths are in `docs/world/collateral-run.md`. **Not applied.** The EP routes the grants when the depth window is committed.
+Built on main 20b95092 (re-cut 2026-10-17 on HEAD; the same changes as the 2026-10-16 draft on 992adcbb; the Tools diff is re-cut because `cases.json` moved). The design and the audit of the owner paths are in `docs/world/collateral-run.md`. **Not applied.** The EP routes the grants when the depth window is committed.
 
 ## What it does
 
@@ -17,8 +17,8 @@ Built on main af5151b5 (re-cut 2026-10-17 from the 2026-10-16 draft on 992adcbb;
 | File | Owner | Touches |
 | :--- | :--- | :--- |
 | `world-collateral.diff` | World | `sim/world/collateral.gd`, `structures.gd` (the two `pop_refs`), `terrain.gd` (place and plan), `data/biomes/collateral.json`, `tools/schemas/biomes-collateral.schema.json`, `sim/world/tools/collateral_check.gd` |
-| `simulation-collateral.diff` | **Simulation** (grant needed) | `sim/core/state.gd` (`World.present`, `World.peopleLeft`, `Building.place`, `Building.plan`: 4 lines) and `sim/core/hash.gd` (two conditional appends: written only when `present` differs from `pop0` or `peopleLeft` is set, so a versus hash is byte-identical: 4 lines) |
-| `encounter-collateral.diff` | **Encounter** (grant needed) | `sim/core/mood.gd` (one token: the casualty impulse reads `normPeople`) and `sim/director/launch.gd` (one token: the chain's allowance reads `eventAllow` and `present`) |
+| `simulation-collateral.diff` | **Simulation** (grant needed) | `sim/core/state.gd` (`World.present`, `World.peopleLeft`, `Building.place`, `Building.plan`: 4 lines), `sim/core/hash.gd` (two conditional appends: written only when `present` differs from `pop0` or `peopleLeft` is set, so a versus hash is byte-identical: 4 lines) and `sim/core/mood.gd` (one token: the casualty impulse reads `normPeople`; **`mood.gd` is in `sim/core/`, so Simulation's**, not Encounter's) |
+| `encounter-collateral.diff` | **Encounter** (grant needed) | `sim/director/launch.gd` only (one token: the chain's allowance reads `eventAllow` and `present`) |
 | `tools-collateral.diff` | **Tools** (grant needed) | `tools/schemas/map.json` (a rule for `data/biomes/collateral.json`) and `tools/fixtures/cases.json` (five invalid cases: **same commit as the schema**, the self-test needs three a schema) |
 
 Check before applying, in a **scratch export** (never the repo root):
@@ -29,7 +29,7 @@ git apply --check world-collateral.diff simulation-collateral.diff encounter-col
 
 ## Proof (a clean export of HEAD af5151b5 plus the four diffs, below-normal priority)
 
-- `git apply --check` of each diff on HEAD: ok; applied together they equal the scratch tree byte for byte.
+- `git apply --check` of each diff on HEAD 20b95092: ok (re-checked 2026-10-17 after Encounter's window 2); applied together they equal the scratch tree byte for byte. The gates below ran on af5151b5; **the full gate is run again in the one window when the owners say yes** (EP's order).
 - `collateral_check.gd`: **0 failed** (16 checks: the tables equal the constants they replace; `present` and the budget; `peopleLeft` (a match with 100 left never loses more than 100); place and plan (118 buildings in 4 places, unique, the same every match); the hash appends; the owner scan).
 - `node sim/core/tools/run-all.js --only=godot,golden`: **both stages passed** (`parity.gd` 309 s: the 9 golden matches' every per-tick digest and full-state checkpoint identical: **no golden moves**).
 - `node tools/validate.js --self-test` 7518 of 7518; `node tools/validate.js` 0 errors, 0 warnings.
@@ -37,4 +37,4 @@ git apply --check world-collateral.diff simulation-collateral.diff encounter-col
 
 ## The other parked patches, after this one
 
-`nbody-after-collateral.diff`, `b-after-collateral.diff`, `c-after-collateral.diff` apply **in that order after the four above** on HEAD af5151b5 (checked 2026-10-17: they apply as they were cut). `mk_collateral.py`, `mk_nbody2.py` and `collateral_fixture_cases.json` are the scripts and cases that made them.
+`nbody-after-collateral.diff`, `b-after-collateral.diff`, `c-after-collateral.diff` apply **in that order after the four above** on HEAD 20b95092 (**B and C were re-cut on 2026-10-17**: `state.gd` had moved under their hunks; N-body is as it was; the whole chain of seven verified with `git apply` on a clean export, byte for byte the scratch tree). `mk_collateral.py`, `mk_nbody2.py` and `collateral_fixture_cases.json` are the scripts and cases that made them.

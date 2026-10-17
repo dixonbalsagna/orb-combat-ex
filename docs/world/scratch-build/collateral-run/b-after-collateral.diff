@@ -55,7 +55,7 @@ index ed115d3..8de4481 100644
  	e.ux = f.vx / f.launchT / maxf(l, 0.000001); e.uy = f.vy / maxf(l, 0.000001)
  	e.kind = b.kind; e.owner = float(S.fighters.find(by)); e.victim = float(S.fighters.find(f))
 diff --git a/sim/core/hash.gd b/sim/core/hash.gd
-index a57e727..cccb62d 100644
+index 1ca566c..f8dba4b 100644
 --- a/sim/core/hash.gd
 +++ b/sim/core/hash.gd
 @@ -190,6 +190,9 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
@@ -68,7 +68,7 @@ index a57e727..cccb62d 100644
  	out.append(1.0 if S.contactOn else 0.0)   # World's ground contact (G2)
  	out.append(float(S.trees.size()))
  	for t in S.trees:
-@@ -294,7 +297,7 @@ const FX_FIELDS: Dictionary = {
+@@ -299,7 +302,7 @@ const FX_FIELDS: Dictionary = {
  	"dust": ["x", "y", "n", "col", "z"], "splash": ["x", "y", "n", "z"], "fire": ["x", "y", "n", "z"], "after": ["x", "y", "life", "col", "face", "z"],
  	"charge": ["x", "y", "col", "ground", "z"], "beamSplash": ["x", "z"], "damage": ["x", "y", "amount", "col", "attacker", "victim", "region", "kind", "number", "z", "mode", "weight"], "banner": ["text", "col", "dur"],
  	"crater": ["x", "y", "r", "depth", "energy", "cause", "rim", "skid", "owner", "special"], "scorch": ["x", "y", "w", "power", "variant", "owner", "z"],
@@ -78,10 +78,10 @@ index a57e727..cccb62d 100644
  	"region_stage": ["actor", "region", "stage"], "rally": ["actor", "region", "kind"], "limb_break": ["actor", "victim", "region"], "region_broken": ["actor", "region"], "brink_enter": ["actor"], "brink_exit": ["actor"], "brink_open": ["actor", "target", "kind", "text"], "brink_close": ["actor", "kind"],
  	"mood_band": ["kind", "amount", "n"], "act_change": ["n", "kind"], "style_label": ["actor", "kind", "text"], "crowd_state": ["kind"], "building_hit": ["actor", "x", "n", "b", "y", "z", "amount", "ratio", "outcome", "link", "spd", "keep", "ux", "uy", "kind", "w", "h", "owner", "victim"],
 diff --git a/sim/core/state.gd b/sim/core/state.gd
-index 6138692..6150a12 100644
+index 91b1d28..fd39683 100644
 --- a/sim/core/state.gd
 +++ b/sim/core/state.gd
-@@ -228,6 +228,7 @@ class Building:
+@@ -235,6 +235,7 @@ class Building:
  	var floors: int = 1        # floor count (world/brunt.gd floorCount), set at generation
  	var fmask: int = 1        # one bit per standing floor, bit 0 the ground floor
  	var fdmg := PackedFloat32Array()   # damage per floor, allocated on the first local hit (empty before)
@@ -89,14 +89,14 @@ index 6138692..6150a12 100644
  	var idx: int = 0          # index in S.buildings (set at generation; not hashed)
  	var place: int = -1       # the place it stands in: its settlement index today, the planet's place id (set at generation; not hashed: the world hash covers it)
  	var plan: int = -1        # its index in that place's plan (the plan is seeded, so the same building has the same index every time; not hashed)
-@@ -423,6 +424,7 @@ class FxEvent:
+@@ -430,6 +431,7 @@ class FxEvent:
  	var p: float = 0.0           # intro_line: the chance the line is spoken (the line system's to use)
  	var source: String = ""      # hazard_telegraph, danger: what is coming (brunt, windup, ambush; World adds collapse, landslide, lava)
  	var eta: float = 0.0         # hazard_telegraph, danger: seconds until it lands, 0 when unknown
 +	var x0: float = 0.0          # floor_hit: where the breach starts (x1 is where it ends)
  	var hold: float = 0.0        # lodge: the seconds the body is held in the building
- 	var run: int = 0             # cue blow (Encounter): the striker's run on the target as the blow is thrown, 0 to 4. Not hashed
- 	var run_to: int = 0          # cue blow (Encounter): the blows still to land for the close, this one included; 0 not set. Not hashed
+ 	var run: int = 0             # cue blow (Encounter): the striker's run on the target as the blow is thrown, 0 to run_to. Not hashed
+ 	var run_to: int = 0          # cue blow (Encounter): the run at which his next light closes (runToClose, 4 today); UI's gauge is full when run reaches it; 0 not set. Not hashed
 diff --git a/sim/world/blast.gd b/sim/world/blast.gd
 index 23d8fbc..4a85a9e 100644
 --- a/sim/world/blast.gd
@@ -138,7 +138,7 @@ index 23d8fbc..4a85a9e 100644
  	b.hp -= minf(WorldBrunt.CORE_SHARE * oc.dmg, WorldStructures.coreCap() * b.maxhp)
  	if b.hp <= 0.0:
 diff --git a/sim/world/brunt.gd b/sim/world/brunt.gd
-index ca5c291..0fb5d43 100644
+index 4a32a5f..9b7fe08 100644
 --- a/sim/world/brunt.gd
 +++ b/sim/world/brunt.gd
 @@ -34,6 +34,9 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
@@ -160,7 +160,7 @@ index ca5c291..0fb5d43 100644
  			if haveD and b.fdmg[j] > 0.0:   # a building that remembers its walls: damage already taken weakens the floor (not below wallMin of it)
  				st = maxf(st * float(cm.wallMin), st - float(cm.wallMemory) * b.fdmg[j])
  			sumS += st
-@@ -815,19 +820,18 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
+@@ -821,19 +826,18 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
  	var popF: float = floorPop(b)
  	var slot: float = float(S.fighters.find(f))
  	var lowest: int = oc.k
@@ -188,7 +188,7 @@ index ca5c291..0fb5d43 100644
  		var share: float = minf(1.0, oc.ratio * FLOOR_DEATH)
  		if oc.get("held", false):
  			share = minf(share, float(cfg().heldDeathShare))
-@@ -838,6 +842,7 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
+@@ -844,6 +848,7 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
  	else:
  		for j in oc.hit:
  			b.fdmg[j] += oc.dmg
@@ -196,7 +196,7 @@ index ca5c291..0fb5d43 100644
  		SimFx.floorHit(S, f, b, oc.hit[0] if oc.hit.size() > 0 else oc.k, 0, "dent", oc.ratio, y, by)
  	# local damage wears the core; the building goes when it is spent
  	b.hp -= minf(CORE_SHARE * oc.dmg, WorldStructures.coreCap() * b.maxhp)   # the cap: one floors hit takes at most this share of the core
-@@ -852,6 +857,75 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
+@@ -858,6 +863,75 @@ static func _applyFloors(S: SimState, b, oc: Dictionary, by, evt: float, cx: flo
  	return res
  
  

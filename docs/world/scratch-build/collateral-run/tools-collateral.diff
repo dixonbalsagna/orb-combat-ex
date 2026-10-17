@@ -1,11 +1,11 @@
 diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
-index bafee56..eb7706a 100644
+index a10563d..5eaa61d 100644
 --- a/tools/fixtures/cases.json
 +++ b/tools/fixtures/cases.json
-@@ -281753,6 +281753,89 @@
-       "expect": {
-         "rule": "additionalProperties"
-       }
+@@ -282297,6 +282297,89 @@
+         }
+       ],
+       "expect": null
 +    },
 +    {
 +      "id": "collateral-schema-version",
@@ -93,10 +93,10 @@ index bafee56..eb7706a 100644
    ],
    "text": [
 diff --git a/tools/schemas/map.json b/tools/schemas/map.json
-index 0ad0ff1..2852a2d 100644
+index 6993a6a..5ebdc2e 100644
 --- a/tools/schemas/map.json
 +++ b/tools/schemas/map.json
-@@ -423,6 +423,10 @@
+@@ -427,6 +427,10 @@
        "match": "data/biomes/planet.json",
        "schema": "biomes-planet.schema.json"
      },

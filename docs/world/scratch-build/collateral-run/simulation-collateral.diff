@@ -1,5 +1,5 @@
 diff --git a/sim/core/hash.gd b/sim/core/hash.gd
-index d0f24a7..e6243b0 100644
+index a2b1102..d2edcfb 100644
 --- a/sim/core/hash.gd
 +++ b/sim/core/hash.gd
 @@ -172,6 +172,10 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
@@ -13,11 +13,24 @@ index d0f24a7..e6243b0 100644
  	for v in S.world.cbBuckets:
  		out.append(v)
  	out.append(float(S.buildings.size()))
+diff --git a/sim/core/mood.gd b/sim/core/mood.gd
+index f803bf3..95d7154 100644
+--- a/sim/core/mood.gd
++++ b/sim/core/mood.gd
+@@ -401,7 +401,7 @@ static func tick(S: SimState) -> void:
+ 		add += _imp(fs, "chainLink", fs.find(ex.A))
+ 	m.lastCombo = combo
+ 	if S.world != null and S.world.pop0 > 0.0:
+-		var target: int = int(floor(float(mood.cas_perPerson) * float(mood.cas_popRef) * S.world.casualties / S.world.pop0))
++		var target: int = int(floor(float(mood.cas_perPerson) * float(mood.cas_popRef) * S.world.casualties / WorldCollateral.normPeople(S)))
+ 		if target > m.casGiven:
+ 			add += mini(mood.cas_capPerTick, target - m.casGiven)
+ 			m.casGiven = target
 diff --git a/sim/core/state.gd b/sim/core/state.gd
-index 4ecbc90..34fb8a4 100644
+index 24e9ba9..1cd73f6 100644
 --- a/sim/core/state.gd
 +++ b/sim/core/state.gd
-@@ -162,6 +162,8 @@ class DirS:
+@@ -169,6 +169,8 @@ class DirS:
  
  class World:
  	var pop0: float = 0.0
@@ -26,7 +39,7 @@ index 4ecbc90..34fb8a4 100644
  	var casualties: float = 0.0
  	var structuresLost: float = 0.0
  	var craters: float = 0.0
-@@ -226,6 +228,8 @@ class Building:
+@@ -233,6 +235,8 @@ class Building:
  	var fmask: int = 1        # one bit per standing floor, bit 0 the ground floor
  	var fdmg := PackedFloat32Array()   # damage per floor, allocated on the first local hit (empty before)
  	var idx: int = 0          # index in S.buildings (set at generation; not hashed)

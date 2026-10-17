@@ -1,21 +1,8 @@
-diff --git a/sim/core/mood.gd b/sim/core/mood.gd
-index f803bf3..95d7154 100644
---- a/sim/core/mood.gd
-+++ b/sim/core/mood.gd
-@@ -401,7 +401,7 @@ static func tick(S: SimState) -> void:
- 		add += _imp(fs, "chainLink", fs.find(ex.A))
- 	m.lastCombo = combo
- 	if S.world != null and S.world.pop0 > 0.0:
--		var target: int = int(floor(float(mood.cas_perPerson) * float(mood.cas_popRef) * S.world.casualties / S.world.pop0))
-+		var target: int = int(floor(float(mood.cas_perPerson) * float(mood.cas_popRef) * S.world.casualties / WorldCollateral.normPeople(S)))
- 		if target > m.casGiven:
- 			add += mini(mood.cas_capPerTick, target - m.casGiven)
- 			m.casGiven = target
 diff --git a/sim/director/launch.gd b/sim/director/launch.gd
-index 5cc8676..ac7b9a8 100644
+index 3690c4e..d85a5c2 100644
 --- a/sim/director/launch.gd
 +++ b/sim/director/launch.gd
-@@ -251,7 +251,7 @@ static func bruntScore(S: SimState, A, plan: Dictionary) -> float:
+@@ -288,7 +288,7 @@ static func bruntScore(S: SimState, A, plan: Dictionary) -> float:
  	if chain.size() > 1:
  		var allow: float = 0.0
  		if A.tier >= 3.0:
