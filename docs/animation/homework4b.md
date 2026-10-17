@@ -80,3 +80,25 @@ See the report: `anim_check` (the new `_test_pulled`, `_test_bends` and `_test_s
 - **Encounter, Simulation:** section 3's ask. Nothing else.
 - **Legal:** the held blow's tremor is under a unit and halved under reduced motion; it is a body shake and not a flash.
 - **VFX:** a body that gives ground on a close kick or punch shifts its root back by up to 30 or 20 units for the contact (a smear anchored to the foot follows the foot).
+
+## 7. Later the same night: the live scan, the arm's retreat on its own switch, and the study's kick
+
+**The wide net in live play** (`_test_bends_live`: four seeded AI matches, 19,200 solved fighter-frames, 38,400 arm-frames, the same kinds; a chicken wing is judged on an upright body only, since a body laid over in flight or a fall has no "up" for it). Before and after the fixes of section 2:
+
+| Kind | Before | After |
+| :--- | ---: | ---: |
+| hyperextension; a wrist past 70 degrees or turned 35 in a tick | 0 and 0 | 0 and 0 |
+| folded past its end | 13 | **2** |
+| left past a limit by the layers (stage D) | 1,009 | **374** |
+| the last pass correcting by over 20 degrees | 143 | **13** |
+| chicken wing (free arm) | 553 (445) | **239** (174) |
+| upper arm snapped / elbow plane flipped | 1,776 / 623 | 1,635 / 484 |
+| a planted knee in | 7 | 7 (a taunt's back turned, where the model's lateral axis is the body's own turn, and one frame of a heel kick: no real knee-in) |
+
+The live scan found one more source that the cells do not show: **an idle arm in a wing** (a free body or one locked in the stance, standing upright with no blow and no sequence: 6 to 11% of those frames). The wing correction now runs for them as well (the same draw toward the guard arm, in and out over a few ticks): wings 344 to 239 in live. 174 free-arm wing frames remain (0.45% of the arm-frames).
+
+**The arm's retreat, on its own switch** (`RenderAnim.hand_retreat`; the answer Combat gives is data: `sockets.json` `limbs.hand.min_fwd` and `retreat_max`, 0 turns it off). What it does, measured at a defender 24 units away (a jab's range is longer): the Anti-hero's jab, cross, palm heel, spear hand and hook end **6.6 units short of him without it and 1.6 with it** (the Protagonist's 2.6 and 1.9). After the source fixes of section 1 the last pass pulls the same either way, so the retreat is now about reach, not about pulls. Asserted in `_test_pulls`.
+
+**The study's `__tier` shows any piece now** (it resolved only the parked prefixes, so a kick showed hand blows): any strike the fighter plays by name works (`window.__tier='front_kick,snap_round'`, with `__style='medium'`, `__windup=12`, `__slack=-22` to stand the defender closer), and `window.__nolimits=1` plays the before (no source limits, no giving ground, no free-arm rate limit). The clips are `kick-front-and-snap-round-close-range-` and `jab-and-spear-hand-close-range-<fighter>-before-after.gif` in `art/animation/review/homework4b/`: before, the kicker's hips overshoot and the leg trails behind; after, the body gives ground and the foot lands on the defender.
+
+**Patches:** the sixth, `pulled-frames.patch` (re-made, 13 files: `anim_fighter.gd`, `anim_joints.gd`, `anim_pose.gd`, `render_anim.gd`, `anim_check.gd`, `joints.json`, `press_styles.json`, `sockets.json`, `reach.json`, `protag10.mjs`, `rival7.mjs`, and their two manifests), and a seventh, `live-scan-and-tier.patch`, this section's: `anim_fighter.gd` (the idle wing, the hand's own switch), `render_anim.gd`, `anim_check.gd` (`_test_bends_live`, the hand's assert) and `flurry_study.gd` (`__tier`, `__nolimits`).
