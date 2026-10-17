@@ -1402,3 +1402,37 @@ What follows from it:
 - The licence: Orb wants Legal's one-page rundown.
 - Individual or company: not yet; "give recommendations for starting a company for the purposes of selling the game more effectively, state of oregon, USA".
 - A stomp on a downed opponent's head: our call, but "I kind of understand that there are contexts, like a brutal curb stomp versus over-the-top crashing down from the sky should be judged differently, definitely give me more context on this before it affects any rulings."
+
+## Orb answers homework 22, 22b, 23 and 26 (2026-10-16 evening)
+
+**Launching and caps (homework 23).** The hint: C, "He's open! Press B and send him flying!" (our call too). Verbatim:
+
+> I don't know how I feel about limiting this to 4 hits in a row, there should be mechanics to chain together attacks dynamically and emergently; launchers should have an intuitive way to activate and aim at any point in a combo string.
+
+> I'm not a fan of "cooldowns" and "recharging" exccept in limited circumstances, so try to balance it in a way that avoids strict caps on what a player can do in a fight.
+
+**The hero's branches.** The witnessed branch as a cold quiet (our call too). Names: "please pitch these". Two good fighters: "I don't understand, but i'm happy if there is more flavor text for more situations." The forms tree: "Yes, build toward this", with notes:
+
+> rule of cool always applies, the more dynamic situations a player can achieve through unexpected means the better. As long as each fighter's transformations are exciting and feel like an achievement rather than a burden or an obstacle we should keep building on these ideas. Protagonist should be unique in that he has a variety of transformations that give him modest all-arounder buffs; theory-craft protagonist's 'sling-shot'-type of transformation, where he stays in his base form and allows the opponent to grow, when he finally transforms he can get a bigger boost based on how long he waited and the damage traded before transforming.
+
+**Buildings: "Sounds right"**, with notes:
+
+> entertaining ragdoll physics-based combat should be a goal, rule-of-cool always takes precedence, player agency should always be respected but when rule-of-cool demands it, the fight choreographer should determine the direction the fight takes. players should always feel like they were able to mid-air recover in a reasonable amount of time, they should expect bigger blows to send them flying backwards, 'skidding in midair' to regain fighter control should be a thing to demonstrate velocity. If a fighter is launched at such a vector that they impact into the side of a building, hit the floor inside the building (collapsing it), they might bouce up and off the ceiling (also collapsing it), then downward once more to crash into the next floor below. the fight choreographer should always be aware of cool scenarios as the fight progresses and use the combat alchemy system to choose emergent combat situations.
+
+**The planet (homework 22).** Arena length, our call:
+
+> if the slice bisects the center of the sphere it will be the largest arena. could the slice be along a smaller area, making the arena smaller and appear to circle around a center point? please provide prototype illustrations for this idea so we are on the same page. also research if this slice can dynamically shift through the course of a combat, rather than being determined and built at the start of the fight. Is there a procedural system we can use to achieve an arena like this? please push against this if it will create too much impact or break our current systems.
+
+- Where fighters land: both (truly random, with a dial). "versus mode should have this optional, the co-operative story mode should dynamically pick set pieces for emergent storylines that can happen nearly anywhere."
+- Damage: kept across a story campaign; "starting a new story should begin everything anew."
+- Cars: scenery cars, and throwable cars too.
+- "lets work towards crafting a representative fictional planet with consistent names and landmarks. I'm not sure if the story mode should have randomly generated planets for each run, or to keep the world consistent and recognizable for the protagonists."
+
+**Ice (22b).** A few small outposts: "I like the idea of a remote research station". Cap size: "Hard to say, lets balance it further and see what it feels like in the game."
+
+**The run (homework 26).**
+- Losing: retry the same fight, or the run ends (our call): "I think there should be a mechanic that gives you extra lives".
+- Power between fights: every fight starts from the base form: "depends on the story beats, each fight should start from base and depending on upgrades and unlocked abilities the higher level transformations should become achievable."
+- Length: five fights and a boss.
+- The boss: "combination of all of the above, there should be different story beats allowing for different final bosses. maybe one time the fifth fight sees the rival steps in between you and the boss to let the boss get away. maybe another fight you opted for a more enticing buff between the second and third fight, then you go on to defeat the empress on the fifth fight and the demo-borg appears, having one transformation left before his final form in the final fight."
+- Between runs: new looks and harder challenges (our call too): "let's really dig into this and find an approachable, fun, exhilarating game loop for this type of episodic brawler. Ideally I'd like to be able to give players tons of customization options, so lets find out what kinds of rewards we can shower them with for playing."
