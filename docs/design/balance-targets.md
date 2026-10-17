@@ -167,7 +167,7 @@ Orb wants the director to "often" choose one building to take the brunt of a lau
 | Measure | Band | Notes |
 | :--- | :--- | :--- |
 | Launches that pick a building, out of those with a candidate in reach | 35 to 60% pooled | By personality: fighters who feed on collateral 40 to 60%; the protector 20 to 35%. Today that is the villain and the hero |
-| Share of all planner launches that are brunts | **4 to 10%** (§18; it was 8 to 20%) | This moves with fight time spent in settlements (Encounter's location work) |
+| Share of all planner launches that are brunts | **4 to 15%** (2026-10-17, `buildings.md` §4's ruling on Encounter's window 2; it was 4 to 10%, and 8 to 20% before §18) | This moves with fight time spent in settlements (Encounter's location work) |
 | Brunts per minute (all arms) | **Retired for the testbed** (§18): use the game-scale row below, and the mirror rows wait for the roster. It was: default arm 0.1 to 0.35 per minute. Villain mirror above the default; **hero mirror at most 0.15 per minute** (S3b: 0.81 in 7:06, about 0.11 per minute, which passes). 0 in matches that never come near a settlement |
 | Brunts per minute, game scale | 0.3 to 1.0 | About 2 to 7 in a 7-minute match. A region-break launch may end in a brunt, at the same personality rates |
 | **S3b ruling** | The default share of 7.9% sits at the 8% floor and is within noise. **Do not raise `CARE_W`**: it would add collateral at a time when civilians lost are already 56%. Re-check the share after World's ramp and cap and Encounter's location work |
@@ -366,7 +366,7 @@ Orb played the Godot greybox and found it too fast (`docs/ep/vision.md`, questio
 | Hit-stop floor by impact class | Light at least 0.07 s; heavy at least 0.12 s; region break or finisher at least 0.30 s | 0.05 s default; 0.08 to 0.16 s on big hits |
 | Release to the next request | **At most 1.0 s** (the prototype had 0.75 s). Visible strikes: **at least 80 a minute**. Standoff p90 at most 0.6 s. No gap over 10 s | 2.7 s |
 | Launches | **Re-based at G0:** 40 to 65% of exchanges started end in a launch. The old 4 to 6 a minute came from the 8 to 12 exchange tempo, and Orb asked for more launches across the map | 10.65 a minute, 60% of 17.6 exchanges (G0) |
-| Long launches: at least 1,500 units of horizontal travel before landing | At least 30% of launches; every region-break launch is long | About 5% (SMASH ACROSS) |
+| Long launches: at least 1,500 units of horizontal travel before landing | At least 30% of the launches that don't end in a building (re-based 2026-10-17, `buildings.md` §4); every region-break launch is long | About 5% (SMASH ACROSS) |
 | Launches that land in a different biome from their start | At least 25% | Not measured |
 | Gap close over 2,500 units | A visible pursuit flight of 0.8 to 2.0 s. Blink-strikes were a Protagonist trait; all teleporting is on hold (Orb, 2026-10-01; `control-rules.md` §11) | 0.65 s at most |
 | Fight time underwater | At most 10% (the ocean-share cap in §6 also applies) | Not measured; 64.6% of time over the ocean |
@@ -800,7 +800,7 @@ World re-measured on Encounter's landing slice at the 40 degree boundary (`docs/
 | :--- | ---: | :--- |
 | Launches with at least one bounce | 27.9% | 15 to 30% (20 to 40% since §23) |
 | Bounces per bounced journey | 1.28 | 1.2 to 2.0 |
-| Flights off a crater's lip, seen | 1.75 a minute | 0.5 to 2.5 a minute |
+| Flights off a crater's lip, seen | 1.75 a minute | 0.4 to 2.5 a minute (the floor was 0.5 until 2026-10-17, `buildings.md` §4) |
 | Flights off any terrain (lips, crests, cliffs and heaps), seen | 4.7 a minute | 1.5 to 5 a minute |
 | Journeys that reach the 4 s or 8-contact bound | 5.1% | At most 8% |
 | Ground journeys longer than 4,000 units, **measured from the first ground contact to the stop** (World's measure) | About 17% | At most 20%. Camera's chase rule covers them. This is not the whole launch: from the launch tick, flight included, Camera measures 38 to 57% over 4,000 units, and long launches are wanted (§10: at least 30% travel 9,000 units) |
@@ -815,7 +815,7 @@ World's numbers with the model on in the tree are in `docs/world/ground-contact.
 
 | Class | Measured | Band |
 | :--- | ---: | :--- |
-| Halted (a skid or tumble to a stop) | 30.2% | 40 to 60% |
+| Halted (a skid or tumble to a stop) | 30.2% | 40 to 60%, of journeys that end on the ground (re-based 2026-10-17, `buildings.md` §4) |
 | Halted as a share of ground endings (halt, wall and slam) | 42.2% | At least 55% |
 | Wall | 13.7% | 5 to 15%: passes |
 

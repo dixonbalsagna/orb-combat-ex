@@ -86,6 +86,21 @@ World's second experiment, taken, with one addition for houses.
 | With no stick, a building in reach is taken by a fighter who cares, while people are inside | Not read: both cares are 0 today | Under 35% |
 | The collateral budgets, the people lost in a match, the match's length | In band | Their bands. More fighting in town will press all three, and they are read first |
 
+### Ruling on Encounter's window 2 (2026-10-17, main 20b95092)
+
+**No lever's weight moves. Two bands move, three rows are re-based, and the one row still under waits for the new sources of bodies into buildings.**
+
+| Row | Read | The ruling |
+| :--- | ---: | :--- |
+| Launches that end in a building | 11.0% | **Its band is already 4 to 15%** (ruled 2026-10-15, the table above). QA's runner still reads 4 to 10, and moves to 4 to 15. It passes |
+| Building brunts as a share of all launches (`balance-targets.md` §5b) | 12.1% | **4 to 15%,** for the same reason. The 10% top was set while collateral ran high (§18). Orb has since made destruction a priority, and the collateral bands still hold |
+| Halted journeys | 38.4% | **Re-based on journeys that end on the ground,** not all journeys. A launch that ends in a building can't halt on the ground, so more brunts take from the denominator. 38.4% of all is about 43% of ground journeys. The band stays 40 to 60% |
+| Long launches (1,500 units or more) | 28.8% | **Re-based on launches that don't end in a building:** a brunt stops a launch short by design. 28.8% of all is about 32% of those. The floor stays 30% |
+| Flights off a crater's lip a minute | 0.47 | **Its floor goes from 0.5 to 0.4,** since the launches buildings now take are launches the craters would have had. It failed narrowly before this window too (0.36 and 0.44 on older baselines). The top stays 2.5 |
+| Bodies into buildings a match | 3.30 | **The band stays 4 to 8, and no lever moves.** Encounter found the vote spent: the ceiling is how often a plan into a building is offered. The sources that add bodies are ruled and coming: power sends through towers and the lodge (§6.1), the inside chain (§7.3), plain sends lodging from tier 3, throws into walls (`grapple.md`), the choreographer's bend toward a building (`launch-anywhere.md` §6), and World's more offers. If it is still under once those land, the next lever is World's offer count, never `bruntPrefer` |
+
+- **The collateral bands are read first,** as always. If people lost or front-row structures go over, the brunt share's top comes back to 10% before anything else moves.
+
 ## 5. The order, and what it asks
 
 1. **The ladder and the lodge** as data (World's first window), with the wall slam, which is a rule on the same hit.
@@ -197,6 +212,9 @@ Orb's hold to brake stands (`agency-pass.md` §4, on LT). Here it is re-ruled so
 | **Its cost** | Ki, as before: 20 a second held. **With no ki it still works, at half the rate.** Never denied: Orb's "no strict caps" | |
 | **Air sense** | A fighter sent by a kind of launch already marked on him (`launch-anywhere.md` §5) can start braking 25% sooner for each mark | |
 | **Steering** | Free: the stick bends his path by up to 15°, as before | |
+| **The control** (ruled 2026-10-17) | **LT held while sent: `stanceMask` bit 8, the manoeuvre stance's hold** (`docs/controls/lunge-control.md` B4). A tap of LT at a contact stays the tech. On Simple and on touch, which have no LT, **Guard held while sent** is the brake (Controls' first mapping, `agency-input.md` 4a). No new intent bit | |
+| **Its start, for any send** | By the send's power (`launch-anywhere.md` §4). A send with no launcher's power (a knock-back, a throw, a blast's push) counts its speed over a full launch's speed as its power, at most 1. The window is measured from the send. It replaces the 20-tick lock after the last hit | Straight-line between 8 and 20 ticks |
+| **Who builds it** | **Simulation:** the brake in a sent fighter's flight (the rate, the ki, the half rate with none, control back under a third of the send's speed, the start window, air sense) and an `air_brake` event (start and end, the reason, the speed, the direction) for Animation's skid. **Controls:** the read, as above. **Encounter:** the AI's use, 20, 50 and 80% of its chances by level, as before. **Animation and VFX:** the skid and its trail, from the event | |
 | **Never** | On a finisher's send, a crippling blow's send, a hard impact (`agency-pass.md` §7), or inside the chain of §7.3 until it lodges or leaves by a face. These are set pieces | |
 
 **The midair skid** is how the brake looks and sounds, and it shows his speed.
