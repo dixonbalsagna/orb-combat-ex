@@ -1,0 +1,450 @@
+diff -ruN a/ui/data/terms.json b/ui/data/terms.json
+--- a/ui/data/terms.json	2026-10-17 08:54:02.172459200 -0700
++++ b/ui/data/terms.json	2026-10-17 08:54:02.271338800 -0700
+@@ -90,7 +90,7 @@
+     "full_light": "LIGHT", "full_heavy": "HEAVY", "full_signature": "SIGNATURE", "full_context": "ACTION", "full_mode": "ENERGY", "full_transform": "TRANSFORM", "full_dodge": "DODGE",
+     "pause_title": "PAUSED", "pause_resume": "Resume", "pause_howto": "How to play", "pause_settings": "Settings", "pause_feedback": "Send feedback", "not_yet": "not yet", "three_light": "Light", "three_medium": "Medium", "three_heavy": "Heavy", "three_context": "Action", "three_sig_chord": "Signature (hold)", "three_attack": "Attack (hold: stronger)", "three_full_heavy": "MEDIUM", "three_full_signature": "HEAVY", "three_howto_heavy": "Medium", "three_howto_signature": "Heavy (hold the power button with it for your signature, 45 Charge)", "three_remap_heavy": "Medium", "three_remap_signature": "Heavy", "photo_title": "This game contains flashing effects.", "photo_body_a": "Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them.", "photo_settings_line": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_settings_line_rf": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_body_b": "No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version.", "photo_start": "I understand, start", "photo_settings": "Open Settings", "photo_more": "Scroll for more", "menu_notice": "This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.", "menu_rf_on": "Reduce flashing is on. It lowers some effects but does not remove the flagged scenes.", "menu_rf_off": "Reduce flashing is off.", "menu_not_now": "Not now", "menu_holding_url": "../", "menu_players": "Players", "menu_one": "1 player", "menu_two": "2 players", "menu_one_note": "One player plays against the computer.", "menu_p1": "Player 1", "menu_p2": "Player 2", "menu_kb": "Keyboard", "menu_pad": "Controller", "menu_intros": "Intros", "menu_reduce_flashing": "Reduce flashing", "menu_shake": "Screen shake", "menu_captions": "Captions", "menu_guide": "Move guide", "menu_start": "I understand, start", "menu_back": "Back to the match", "menu_both_kb": "Both on the keyboard: you share it, and the guide shows each player's keys.", "menu_no_pad": "No controller found yet. Press a button on it.", "pause_menu": "Main menu", "pause_again": "Play again", "pause_over_title": "MATCH OVER", "turn_title": "Turn your phone", "turn_body": "This game plays sideways. Turn your phone to landscape and the match carries on; it waits for you.", "turn_anyway": "Play upright anyway", "photo_close": "Close", "pause_about": "About", "pause_new": "New match",
+     "pause_new_ask": "Start a new match?", "pause_new_yes": "New match", "pause_new_no": "Keep playing", "pause_resume_key": "P", "pause_howto_key": "F1", "pause_new_key": "N",
+-    "join": "P2: press any button to join", "join_short": "P2: press a button", "join_key": "P2: press T to join", "join_key_short": "P2: T to join", "form_hold": "Hold", "form_tap": "Tap", "form_boost": "hit harder until the match ends", "form_boost_short": "hit harder from now on", "intro_skip_kbd": "Press any key to skip", "intro_skip_pad": "Press any button to skip", "intro_skip_touch": "Tap to skip", "recipe_light": "light", "recipe_heavy": "heavy", "recipe_sig": "signature", "recipe_energy": "energy", "launch_hint": "He's open! Press B and send him flying!", "over_civilians": "Civilians lost: {n} of {total}", "over_structures": "Buildings lost: {n}", "over_craters": "Craters: {n}", "run_where": "Where to next?", "run_last": "The last fight", "run_fight": "Fight {n} of {total}", "run_planet": "The planet: {a} of {b} cities standing, {c} damaged, {d} fallen.", "run_rampage": "RAMPAGE", "run_proving": "PROVING GROUND", "run_crossing": "CROSSING", "run_boss_kind": "THE BOSS", "run_holds": "The fight holds {cities} cities, {towns} towns", "run_holds_short": "{cities} cities, {towns} towns", "run_opp": "Opponent: {who}", "run_harder": "stronger than you: a level harder", "run_harder_short": "a level harder", "run_starts": "Starts at {a}, rises to {b}", "run_reward": "Reward", "run_go": "Fight here", "run_rw_rampage": "People you save count double", "run_rw_proving_cards": "Pick two cards", "run_rw_proving_score": "Score 1,500", "run_rw_crossing": "A rest: broken body parts heal a little", "run_fresh": "untouched", "run_damaged": "damaged", "run_fallen": "fallen", "run_strip_note": "The triangle is where the fight starts. The strip wraps: it is the whole way round.", "run_strip_note_short": "Triangle: start. The strip wraps.", "run_after": "After the fight", "run_last_night": "The last night", "run_step": "Step {n} of {total}", "run_changed": "Changed this fight: {text}", "run_lost_fight": "People lost this fight: {n} of {total}", "run_beat_of": "Beat {n} of {total}", "run_skip": "Press any button to skip", "run_skip_touch": "Tap to skip", "run_next": "Next", "run_who_hero": "PROTAGONIST", "run_who_rival": "THE RIVAL", "run_who_boss": "THE BOSS", "run_who_crowd": "A CIVILIAN", "run_who_radio": "THE RADIO", "run_over_won": "The boss is beaten", "run_over_won_long": "The run is over: the boss is beaten", "run_over_lost": "The run is over", "run_route": "Your route", "run_won": "Won", "run_lost": "Lost", "run_chances": "Chances used: {n} of {total}", "run_time": "Fight time: {m}:{s}", "run_path": "The hero's path: Witness {w}, Trial {t}", "run_planet_h": "The planet", "run_cities": "Cities: {a} standing, {b} damaged, {c} fallen", "run_towns": "Towns: {a} standing, {b} damaged, {c} fallen", "run_people": "People lost: {n} of {total} ({p}%)", "run_sky": "Sky: {s}", "run_sky_dark": "dark", "run_sky_clear": "clear", "run_score": "Score", "run_score_tap": "Tap Score for the parts", "run_total": "Total", "run_new": "New run", "run_again": "Same planet again", "run_menu": "Main menu", "run_page": "Page {n} of {total}", "inc_lost": "OFF SCREEN", "inc_rush": "RUSH", "inc_closing": "CLOSING", "mode_hold": "Energy (hold)", "mode_toggle": "Energy (toggle)", "remap_player": "Player", "remap_p1": "Player 1", "remap_p2": "Player 2", "join_tiny": "P2: any button", "join_key_tiny": "P2: press T", "left_short": "P2 left", "joined": "P2 joined", "left": "P2 handed back to the computer", "pause_p2_leave": "Player two: hand back to the computer", "pause_p2_join": "Player two: press any button to join" },
++    "join": "P2: press any button to join", "join_short": "P2: press a button", "join_key": "P2: press T to join", "join_key_short": "P2: T to join", "form_hold": "Hold", "form_tap": "Tap", "form_boost": "hit harder until the match ends", "form_boost_short": "hit harder from now on", "intro_skip_kbd": "Press any key to skip", "intro_skip_pad": "Press any button to skip", "intro_skip_touch": "Tap to skip", "recipe_light": "light", "recipe_heavy": "heavy", "recipe_sig": "signature", "recipe_energy": "energy", "launch_hint": "He's open! Press B and send him flying!", "over_civilians": "Civilians lost: {n} of {total}", "over_structures": "Buildings lost: {n}", "over_craters": "Craters: {n}", "run_where": "Where to next?", "run_last": "The last fight", "run_fight": "Fight {n} of {total}", "run_planet": "The planet: {a} of {b} cities standing, {c} damaged, {d} fallen.", "run_rampage": "RAMPAGE", "run_proving": "PROVING GROUND", "run_crossing": "CROSSING", "run_boss_kind": "THE BOSS", "run_holds": "The fight holds {cities} cities, {towns} towns", "run_holds_short": "{cities} cities, {towns} towns", "run_opp": "Opponent: {who}", "run_harder": "stronger than you: a level harder", "run_harder_short": "a level harder", "run_starts": "Starts at {a}, rises to {b}", "run_reward": "Reward", "run_go": "Fight here", "run_rw_rampage": "People you save count double", "run_rw_proving_cards": "Two boons, one after the other", "run_rw_proving_score": "Score 1,500", "run_rw_crossing": "A rest: every part of you is healed", "run_fresh": "untouched", "run_damaged": "damaged", "run_fallen": "fallen", "run_strip_note": "The triangle is where the fight starts. The strip wraps: it is the whole way round.", "run_strip_note_short": "Triangle: start. The strip wraps.", "run_after": "After the fight", "run_last_night": "The last night", "run_step": "Step {n} of {total}", "run_changed": "Changed this fight: {text}", "run_lost_fight": "People lost this fight: {n} of {total}", "run_beat_of": "Beat {n} of {total}", "run_skip": "Press any button to skip", "run_skip_touch": "Tap to skip", "run_next": "Next", "run_who_hero": "PROTAGONIST", "run_who_rival": "THE RIVAL", "run_who_boss": "THE BOSS", "run_who_crowd": "A CIVILIAN", "run_who_radio": "THE RADIO", "run_over_won": "The boss is beaten", "run_over_won_long": "The run is over: the boss is beaten", "run_over_lost": "The run is over", "run_route": "Your route", "run_won": "Won", "run_lost": "Lost", "run_chances": "Chances used: {n} of {total}", "run_time": "Fight time: {m}:{s}", "run_path": "The hero's path: Witness {w}, Trial {t}", "run_planet_h": "The planet", "run_cities": "Cities: {a} standing, {b} damaged, {c} fallen", "run_towns": "Towns: {a} standing, {b} damaged, {c} fallen", "run_people": "People lost: {n} of {total} ({p}%)", "run_sky": "Sky: {s}", "run_sky_dark": "dark", "run_sky_clear": "clear", "run_score": "Score", "run_score_tap": "Tap Score for the parts", "run_total": "Total", "run_new": "New run", "run_again": "Same planet again", "run_menu": "Main menu", "run_page": "Page {n} of {total}", "run_boon_title": "Take a boon", "run_boon_title_n": "Take a boon ({n} of {total})", "run_boon_sub": "Lives left: {lives}. Highest form you can reach: {tier}.", "run_boon_take": "Take this", "run_boon_walk": "Walk on", "run_boon_walk_life": "Walk on, gain a life", "run_boon_walk_hint": "Take none of these and gain a life", "run_bk_form": "FORM", "run_bk_ability": "ABILITY", "run_bk_lifeline": "LIFELINE", "run_bk_rest": "REST", "run_bk_temptation": "TEMPTATION", "run_lives_used": "Lives used: {n}", "inc_lost": "OFF SCREEN", "inc_rush": "RUSH", "inc_closing": "CLOSING", "mode_hold": "Energy (hold)", "mode_toggle": "Energy (toggle)", "remap_player": "Player", "remap_p1": "Player 1", "remap_p2": "Player 2", "join_tiny": "P2: any button", "join_key_tiny": "P2: press T", "left_short": "P2 left", "joined": "P2 joined", "left": "P2 handed back to the computer", "pause_p2_leave": "Player two: hand back to the computer", "pause_p2_join": "Player two: press any button to join" },
+   "planet": "EVERHOLD",
+   "places": [
+     { "x0": 0,    "x1": 1200, "name": "LONGWATER" },
+diff -ruN a/ui/hud/ui_hud.gd b/ui/hud/ui_hud.gd
+--- a/ui/hud/ui_hud.gd	2026-10-17 08:54:02.175972200 -0700
++++ b/ui/hud/ui_hud.gd	2026-10-17 08:54:02.274344100 -0700
+@@ -20,6 +20,8 @@
+ signal layout_changed
+ signal haptic_requested(slot: int, kind: String)   # a pulse for a human's pad (the host plays it; never the only cue): "launch_open" when a launch opens for him (launch marks on)
+ signal run_offer_chosen(index: int)               # the run mode's offers: the player chose a card and pressed Fight here
++signal run_boon_chosen(index: int)                # the boons: the player took the card at this index
++signal run_boon_walked_on()                       # the temptation's offer: the player took none of the three and gains a life (the host adds it)
+ signal run_beat_next()                            # a beat's Next: the host shows the next beat (show_run_beat again) or the next screen (hide_run)
+ signal run_beat_skipped()                         # a beat skipped: the host goes to the next screen (the HUD has hidden itself)
+ signal run_results_action(action: String)         # the results: "new", "again" or "menu" (the HUD has hidden itself)
+@@ -719,6 +721,8 @@
+ 				_l_run.update_sig(UiRun.beat_sig(rp) + [int(layout.vp.x), int(layout.vp.y)])
+ 			"results":
+ 				_l_run.update_sig(UiRun.results_sig(rp) + [int(layout.vp.x), int(layout.vp.y)])
++			"boons":
++				_l_run.update_sig(UiRun.boons_sig(rp) + [int(layout.vp.x), int(layout.vp.y)])
+ 	_chips = chips
+ 	var psz: Vector2 = UiSplit.pointer_size(layout.s, _chip_big)
+ 	for i in range(2):
+@@ -3657,6 +3661,10 @@
+ 	_run_open_screen("results", rec)
+ 
+ 
++func show_run_boons(rec: Dictionary) -> void:
++	_run_open_screen("boons", rec, {"btn": 0})
++
++
+ func hide_run() -> void:
+ 	if _run.is_empty():
+ 		return
+@@ -3680,6 +3688,8 @@
+ 			return UiRun.beat_plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), st)
+ 		"results":
+ 			return UiRun.results_plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), st)
++		"boons":
++			return UiRun.boons_plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), st)
+ 	return {}
+ 
+ 
+@@ -3711,6 +3721,42 @@
+ 				else:
+ 					_run["btn"] = true
+ 		return true
++	if kind == "boons":
++		var nb: int = ((_run["rec"] as Dictionary).get("boons", []) as Array).size()
++		var can_walk: bool = bool((_run["rec"] as Dictionary).get("walk_on", false))
++		match act:
++			"left":
++				if int(_run["btn"]) == 1 and can_walk:
++					_run["btn"] = 2
++				elif int(_run["btn"]) == 0:
++					_run["sel"] = maxi(int(_run["sel"]) - 1, 0)
++			"right":
++				if int(_run["btn"]) == 2:
++					_run["btn"] = 1
++				elif int(_run["btn"]) == 0:
++					_run["sel"] = mini(int(_run["sel"]) + 1, maxi(nb - 1, 0))
++			"up":
++				if int(_run["btn"]) > 0:
++					_run["btn"] = 0
++				elif UiRun.upright(layout.vp):
++					_run["sel"] = maxi(int(_run["sel"]) - 1, 0)
++			"down":
++				if int(_run["btn"]) == 0:
++					if UiRun.upright(layout.vp) and int(_run["sel"]) < nb - 1:
++						_run["sel"] = int(_run["sel"]) + 1
++					else:
++						_run["btn"] = 1
++			"accept":
++				if int(_run["btn"]) == 0:
++					_run["btn"] = 1
++				elif int(_run["btn"]) == 1:
++					var taken: int = int(_run["sel"])
++					hide_run()
++					run_boon_chosen.emit(taken)
++				else:
++					hide_run()
++					run_boon_walked_on.emit()
++		return true
+ 	if kind == "beat":
+ 		if act == "accept":
+ 			run_beat_next.emit()
+@@ -3797,6 +3843,22 @@
+ 		"beat":
+ 			var hb: Dictionary = UiRun.beat_hit(plan, pos)
+ 			run_action("accept" if str(hb.get("kind", "")) == "next" else "skip")
++		"boons":
++			var hb2: Dictionary = UiRun.boons_hit(plan, pos)
++			match str(hb2.get("kind", "")):
++				"card":
++					if int(_run["sel"]) == int(hb2["idx"]) and int(_run["btn"]) == 0:
++						_run["btn"] = 1
++					else:
++						_run["sel"] = int(hb2["idx"])
++						_run["btn"] = 0
++				"take":
++					var taken2: int = int(_run["sel"])
++					hide_run()
++					run_boon_chosen.emit(taken2)
++				"walk":
++					hide_run()
++					run_boon_walked_on.emit()
+ 		"results":
+ 			var hr: Dictionary = UiRun.results_hit(plan, pos)
+ 			if str(hr.get("kind", "")) == "button":
+@@ -3822,6 +3884,8 @@
+ 			UiRun.beat_draw(ci, plan, layout.s)
+ 		"results":
+ 			UiRun.results_draw(ci, plan, layout.s)
++		"boons":
++			UiRun.boons_draw(ci, plan, layout.s)
+ 
+ 
+ func _paint_tug(ci: CanvasItem) -> void:
+diff -ruN a/ui/tools/hud_check.gd b/ui/tools/hud_check.gd
+--- a/ui/tools/hud_check.gd	2026-10-17 08:54:02.194238700 -0700
++++ b/ui/tools/hud_check.gd	2026-10-17 08:54:02.286345300 -0700
+@@ -62,6 +62,7 @@
+ 	await _lost_rival_rules()
+ 	await _hud_cache_rules()
+ 	await _run_mode_rules()
++	await _run_boon_rules()
+ 	await _launch_anywhere_rules()
+ 	await _civilian_bar_rules()
+ 	await _plain_words_rules()
+@@ -6586,6 +6587,91 @@
+ 	hud.queue_free()
+ 	await process_frame
+ 
++
++## The boons screen (docs/design/run-mode.md section 1.4): one of three, and on a temptation's offer the choice to walk on; and the results' lives line.
++func _run_boons_rec(walk_on: bool, of: int = 1) -> Dictionary:
++	return {"pick": 1, "of": of, "lives": 2, "tier": "UPHEAVAL", "walk_on": walk_on, "boons": [
++		{"kind": "form", "name": "The next form", "gives": "You can reach the next form in every fight from now on."},
++		{"kind": "ability", "name": "Might", "gives": "You hit a little harder for the rest of the run."},
++		{"kind": "temptation", "name": "Something is offered", "gives": "SECRET PRICE AND GAIN", "line": "This will be remembered."}]}
++
++
++func _run_boon_rules() -> void:
++	var sizes: Array = [[Vector2(1920, 1080), 1.0], [Vector2(1280, 720), 1.0], [Vector2(1024, 576), 1.0], [Vector2(2400, 1080), 2.6], [Vector2(2532, 1170), 3.0], [Vector2(844, 390), 1.0], [Vector2(667, 375), 1.0],
++		[Vector2(390, 844), 1.0], [Vector2(360, 640), 1.0], [Vector2(1170, 2532), 3.0]]
++	var bad := PackedStringArray()
++	for cs in sizes:
++		var vp: Vector2 = cs[0]
++		var lay := UiLayout.new()
++		lay.dp = cs[1]
++		lay.compute(vp, false)
++		for walk in [false, true]:
++			var p: Dictionary = UiRun.boons_plan(vp, lay.s, cs[1], false, {"rec": _run_boons_rec(walk), "sel": 0})
++			if not bool(p["fits"]) or (p["cards"] as Array).size() != 3 or (walk != (p["walk"] as Rect2).has_area()):
++				bad.append("%s walk %s %s" % [str(vp), str(walk), str(p["mode"])])
++	_ok(bad.is_empty(), "boons: three cards, the buttons and the Walk on choice fit at ten sizes, every button a 48 dp target; Walk on exists only when it is offered (%d bad %s)" % [bad.size(), str(bad.slice(0, 4))])
++	var p1: Dictionary = UiRun.boons_plan(Vector2(1280, 720), 0.667, 1.0, false, {"rec": _run_boons_rec(true, 2), "sel": 0})
++	_ok(p1["title"] == "Take a boon (1 of 2)" and UiRun.boons_plan(Vector2(1280, 720), 0.667, 1.0, false, {"rec": _run_boons_rec(false), "sel": 0})["title"] == "Take a boon", "boons: two in a row say which one it is")
++	_ok(UiRun._boon_text({"kind": "temptation", "gives": "SECRET", "line": "This will be remembered."}) == "This will be remembered." and UiRun._boon_text({"kind": "form", "gives": "A form."}) == "A form.", "boons: a temptation's card says only that it will be remembered, never what it brings")
++	root.size = Vector2i(1280, 720)
++	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
++	hud.size = Vector2(1280, 720)
++	root.add_child(hud)
++	await process_frame
++	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
++	UiData.set_feature("run_mode", true)
++	var seen := {"taken": [], "walked": 0}
++	hud.run_boon_chosen.connect(func(i): seen["taken"].append(i))
++	hud.run_boon_walked_on.connect(func(): seen["walked"] += 1)
++	hud.show_run_boons(_run_boons_rec(true))
++	hud.advance(1.0 / 60.0)
++	UiText.tracing = true
++	UiText.trace = []
++	hud._l_run.invalidate()
++	for i in range(3):
++		await process_frame
++	UiText.tracing = false
++	var wds := " ".join(PackedStringArray(UiText.trace))
++	UiText.trace = []
++	_ok(wds.contains("Take a boon") and wds.contains("TEMPTATION") and wds.contains("This will be remembered.") and wds.contains("Walk on") and not wds.contains("SECRET"), "boons: the screen draws its title, the temptation's line and Walk on, and not what the temptation brings")
++	hud.run_action("right")
++	hud.run_action("down")
++	hud.run_action("accept")   # Take this on the second card
++	_ok(seen["taken"] == [1] and not hud.is_run_open(), "boons: right, down, accept takes the second card (%s)" % str(seen["taken"]))
++	hud.show_run_boons(_run_boons_rec(true))
++	hud.run_action("down")
++	hud.run_action("left")
++	hud.run_action("accept")
++	_ok(seen["walked"] == 1 and not hud.is_run_open(), "boons: from Take this, left reaches Walk on and accept walks on")
++	hud.show_run_boons(_run_boons_rec(false))
++	hud.run_action("down")
++	hud.run_action("left")
++	hud.run_action("accept")
++	_ok(seen["taken"] == [1, 0] and seen["walked"] == 1, "boons: with no walk on offered, left does nothing and accept takes the card")
++	hud.show_run_boons(_run_boons_rec(true))
++	var plan: Dictionary = hud.run_plan()
++	var ev := InputEventMouseButton.new()
++	ev.button_index = MOUSE_BUTTON_LEFT
++	ev.pressed = true
++	ev.position = (plan["walk"] as Rect2).get_center()
++	hud._unhandled_input(ev)
++	_ok(seen["walked"] == 2 and not hud.is_run_open(), "boons: a tap on Walk on walks on")
++	hud.show_run_boons(_run_boons_rec(false))
++	var np: Dictionary = hud.run_plan()
++	_ok(UiRun.boons_hit(np, Vector2(1, 1)).is_empty() and not (np["walk"] as Rect2).has_area(), "boons: with no walk on there is no Walk on to tap")
++	hud.hide_run()
++	var res: Dictionary = _run_results_rec(true)
++	res.erase("chances")
++	res["lives_used"] = 1
++	var pr: Dictionary = UiRun.results_plan(Vector2(1280, 720), 0.667, 1.0, false, {"rec": res})
++	var has_lives := false
++	for r in pr["rows"]:
++		has_lives = has_lives or str(r.get("text", "")).begins_with("Lives used: 1")
++	_ok(has_lives and UiData.t("prompt.run_rw_proving_cards") == "Two boons, one after the other", "boons: the results say lives used, and the Proving ground's reward is two boons")
++	UiData.set_feature("run_mode", null)
++	hud.queue_free()
++	await process_frame
++
+ 
+ ## The photosensitivity rule for the HUD (docs/ui/hud-spec.md section 57): no block of the HUD may come and go twice inside 60 ticks, whatever the presses do. A mash is played at the HUD
+ ## (a refused or empty press every 4 ticks, a wind-up on and off every 6, a stance change every 10, the launch window, banners, the touch flag flipping), at a keyboard-and-pad size and on a
+diff -ruN a/ui/widgets/ui_run.gd b/ui/widgets/ui_run.gd
+--- a/ui/widgets/ui_run.gd	2026-10-17 08:54:02.121022400 -0700
++++ b/ui/widgets/ui_run.gd	2026-10-17 08:54:02.313081000 -0700
+@@ -11,7 +11,8 @@
+ ##   offers  {fight, of, planet: {cities: {standing, damaged, fallen}}, boss: bool, offers: [{kind: rampage|proving|crossing|boss, name, line, opp, harder, tiers: [from, to], holds: {cities, towns}, reward,
+ ##            strip: {biomes: [[biome, share]], places: [{at, kind: city|town, state: fresh|damaged|fallen}], start}}]}
+ ##   beat    {approach: bool, place, step, of_steps, states: [state x12], changed: [index], changed_text, lost, present, beat_n, beat_of, lines: [{who, text}]}
+-##   results {won: bool, ending, route: [{place, kind, won}], chances: [used, total], ticks, path: {witness, trial}, planet: {states, cities: {standing, damaged, fallen}, towns: {...}, lost, present, sky_dark},
++##   boons   {pick, of, lives, tier, walk_on: bool, boons: [{kind: form|ability|lifeline|rest|temptation, name, gives, line}]}   (a temptation's card says it will be remembered in `line` and never what it brings; walk_on is only true on its offer)
++##   results {won: bool, ending, route: [{place, kind, won}], chances: [used, total] or lives_used, ticks, path: {witness, trial}, planet: {states, cities: {standing, damaged, fallen}, towns: {...}, lost, present, sky_dark},
+ ##            score: [{label, points}], total}
+ 
+ const BIOMES := {"sea": "#3b6a94", "plain": "#7f9a58", "forest": "#4a7a52", "desert": "#b79b62", "mountain": "#7c7a78", "ice": "#aab7c4"}
+@@ -539,10 +540,13 @@
+ 			i += 1
+ 		ly += 10.0 * k
+ 		var ch: Array = rec.get("chances", [])
++		var lives_used: int = int(rec.get("lives_used", -1))
+ 		var ticks: int = int(rec.get("ticks", 0))
+ 		var secs: int = ticks / 60
+ 		var line1: String = ""
+-		if ch.size() == 2:
++		if lives_used >= 0:
++			line1 = UiData.fmt("prompt.run_lives_used", {"n": lives_used})   # a retry costs a life (Game Design's reshaped run)
++		elif ch.size() == 2:
+ 			line1 = UiData.fmt("prompt.run_chances", {"n": int(ch[0]), "total": int(ch[1])})
+ 		if ticks > 0:
+ 			line1 += ("   " if line1 != "" else "") + UiData.fmt("prompt.run_time", {"m": secs / 60, "s": "%02d" % (secs % 60)})
+@@ -713,3 +717,190 @@
+ 		button_draw(ci, b["rect"], str(b["label"]), i == 0, i == int(p["focus"]), fs(20.0, s))
+ 		i += 1
+ 	UiText.no_outline = false
++
++
++# --- the boons (docs/design/run-mode.md section 1.4): one of three after a won fight, and on a temptation's offer the choice to walk on --------------------------------------------------
++
++static func boon_mark(ci: CanvasItem, c: Vector2, r: float, kind: String) -> void:
++	var ink: Color = _col(UiLook.INK)
++	var lw: float = maxf(2.0, r * 0.3)
++	match kind:
++		"form":   # a chevron pointing up, twice: the next form
++			ci.draw_polyline(PackedVector2Array([c + Vector2(-r, r * 0.1), c + Vector2(0, -r * 0.6), c + Vector2(r, r * 0.1)]), ink, lw)
++			ci.draw_polyline(PackedVector2Array([c + Vector2(-r, r * 0.9), c + Vector2(0, r * 0.2), c + Vector2(r, r * 0.9)]), ink, lw)
++		"ability":   # a plus
++			ci.draw_line(c + Vector2(-r, 0), c + Vector2(r, 0), ink, lw)
++			ci.draw_line(c + Vector2(0, -r), c + Vector2(0, r), ink, lw)
++		"lifeline":   # a ring with a dot
++			ci.draw_arc(c, r, 0.0, TAU, 20, ink, lw)
++			ci.draw_circle(c, r * 0.35, ink)
++		"rest":   # three bars
++			for i in range(3):
++				ci.draw_line(c + Vector2(-r, (float(i) - 1.0) * r * 0.7), c + Vector2(r, (float(i) - 1.0) * r * 0.7), ink, lw)
++		_:   # a temptation: a diamond with its corners left open
++			var pts: Array = [Vector2(0, -r), Vector2(r, 0), Vector2(0, r), Vector2(-r, 0)]
++			for i in range(4):
++				var a: Vector2 = pts[i]
++				var b: Vector2 = pts[(i + 1) % 4]
++				ci.draw_line(c + a.lerp(b, 0.12), c + a.lerp(b, 0.88), ink, lw)
++
++
++static func boon_kind_word(kind: String) -> String:
++	return w("run_bk_" + kind) if ["form", "ability", "lifeline", "rest", "temptation"].has(kind) else ""
++
++
++static func _boon_text(b: Dictionary) -> String:
++	if str(b.get("kind", "")) == "temptation":
++		return str(b.get("line", ""))   # it says it will be remembered, never what it brings
++	return str(b.get("gives", ""))
++
++
++## `st`: {rec, sel, btn (0 the cards, 1 Take this, 2 Walk on)}. Returns {mode, cards, take, walk (empty when walking on is not offered), title, sub, fits, ...}.
++static func boons_plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) -> Dictionary:
++	var rec: Dictionary = st.get("rec", {})
++	var boons: Array = rec.get("boons", [])
++	var k: float = u(s)
++	var tm: float = maxf(48.0 * dp, 44.0)
++	var mode: String = "rows" if upright(vp) else ("compact" if compact(vp, dp, 620.0) else "full")
++	var m: float = (14.0 if mode == "compact" else 20.0) * k
++	var fb: int = fs(14.0, s)
++	var plan := {"mode": mode, "cards": [], "tm": tm, "fits": true, "fb": fb}
++	var f_title: int = fs(26.0 if mode == "compact" else (30.0 if mode != "rows" else 28.0), s)
++	var pick: int = int(rec.get("pick", 1))
++	var of: int = int(rec.get("of", 1))
++	plan["title"] = UiData.fmt("prompt.run_boon_title_n", {"n": pick, "total": of}) if of > 1 else w("run_boon_title")
++	plan["f_title"] = f_title
++	plan["title_pos"] = Vector2(m, m + UiText.ascent(f_title))
++	var y: float = m + UiText.height(f_title) * 1.1
++	plan["sub"] = UiData.fmt("prompt.run_boon_sub", {"lives": int(rec.get("lives", 0)), "tier": str(rec.get("tier", ""))}) if rec.has("lives") else ""
++	plan["sub_pos"] = Vector2(m, y + UiText.ascent(fb))
++	if plan["sub"] != "":
++		y += UiText.height(fb) * 1.3
++	var btn_h: float = maxf(tm, 48.0 * k)
++	var area_top: float = y + 10.0 * k
++	var area_bot: float = vp.y - btn_h - m - (30.0 if (bool(rec.get("walk_on", false)) and mode != "compact") else 8.0) * k   # room for the words over Walk on (a compact screen puts them in the button)
++	var n: int = boons.size()
++	var f_name: int = fs(20.0 if mode != "full" else 24.0, s)
++	var f_text: int = fs(15.0, s)
++	var need_max: float = 0.0
++	if mode == "rows":
++		var gap: float = 8.0 * k
++		var rh: float = minf((area_bot - area_top - gap * float(maxi(n - 1, 0))) / float(maxi(n, 1)), 150.0 * k)
++		for i in range(n):
++			var rr := Rect2(m, area_top + float(i) * (rh + gap), vp.x - 2.0 * m, rh)
++			plan["cards"].append({"rect": rr, "idx": i})
++			need_max = maxf(need_max, _boon_need(boons[i], mode, rr.size.x, s))
++		var rh_need: float = need_max
++		if rh < rh_need - 0.5:
++			plan["fits"] = false
++	else:
++		var gap2: float = 16.0 * k
++		var cw: float = (vp.x - 2.0 * m - gap2 * float(maxi(n - 1, 0))) / float(maxi(n, 1))
++		var ch: float = minf(area_bot - area_top - 6.0 * k, (230.0 if mode == "compact" else 330.0) * k)
++		var x0: float = (vp.x - (cw * float(n) + gap2 * float(maxi(n - 1, 0)))) * 0.5
++		for i in range(n):
++			var rr2 := Rect2(x0 + float(i) * (cw + gap2), area_top, cw, ch)
++			plan["cards"].append({"rect": rr2, "idx": i})
++			if ch < _boon_need(boons[i], mode, cw, s) - 0.5:
++				plan["fits"] = false
++	var bw: float = (vp.x - 2.0 * m) if mode == "rows" else minf(240.0 * k, vp.x * 0.36)
++	var take := Rect2(vp.x - m - bw, vp.y - m - btn_h, bw, btn_h)
++	var walk := Rect2()
++	if bool(rec.get("walk_on", false)):
++		if mode == "rows":
++			take = Rect2(m, vp.y - m - btn_h, (vp.x - 2.0 * m - 10.0 * k) * 0.5, btn_h)
++			walk = Rect2(take.end.x + 10.0 * k, take.position.y, take.size.x, btn_h)
++		else:
++			walk = Rect2(take.position.x - 12.0 * k - bw, take.position.y, bw, btn_h)
++	plan["take"] = take
++	plan["walk"] = walk
++	plan["walk_label"] = w("run_boon_walk_life") if mode == "compact" else w("run_boon_walk")
++	plan["walk_hint"] = w("run_boon_walk_hint") if (walk.has_area() and mode != "compact") else ""
++	plan["walk_hint_pos"] = Vector2(m, take.position.y - UiText.height(maxi(fb - 1, 14)) * 0.4) if mode != "rows" else Vector2(m, take.position.y - 6.0 * k)
++	var vpr := Rect2(Vector2.ZERO, vp)
++	for c in plan["cards"]:
++		var rr3: Rect2 = c["rect"]
++		if not vpr.encloses(rr3) or rr3.size.y < 60.0 or rr3.intersects(take) or (walk.has_area() and rr3.intersects(walk)):
++			plan["fits"] = false
++	if not vpr.encloses(take) or take.size.y < tm - 0.01:
++		plan["fits"] = false
++	if walk.has_area() and (not vpr.encloses(walk) or walk.size.y < tm - 0.01 or walk.intersects(take)):
++		plan["fits"] = false
++	for bt in [[take, w("run_boon_take")], [walk, str(plan["walk_label"])]]:
++		if (bt[0] as Rect2).has_area() and UiText.width(str(bt[1]), fs(20.0, s)) + 16.0 > (bt[0] as Rect2).size.x:
++			plan["fits"] = false
++	plan["focus"] = clampi(int(st.get("sel", 0)), 0, maxi(n - 1, 0))
++	plan["btn"] = int(st.get("btn", 0))
++	plan["rec"] = rec
++	return plan
++
++
++static func _boon_need(b: Dictionary, mode: String, cw: float, s: float) -> float:
++	var k: float = u(s)
++	var pad: float = (11.0 if mode == "compact" else 14.0) * k
++	var inner: float = cw - 2.0 * pad
++	var f_name: int = fs(20.0 if mode != "full" else 24.0, s)
++	var f_text: int = fs(15.0, s)
++	if mode == "rows":
++		return pad + UiText.height(fs(14.0, s)) * 1.3 + UiText.height(f_name) * 1.2 + _text_h(_boon_text(b), f_text, inner - 36.0 * k) + pad
++	return pad + 26.0 * k + UiText.height(f_name) * 1.3 + _text_h(str(b.get("name", "")), f_name, inner) + _text_h(_boon_text(b), f_text, inner) + pad
++
++
++static func boons_hit(p: Dictionary, pos: Vector2) -> Dictionary:
++	if (p["take"] as Rect2).has_point(pos):
++		return {"kind": "take"}
++	if (p["walk"] as Rect2).has_area() and (p["walk"] as Rect2).has_point(pos):
++		return {"kind": "walk"}
++	for c in p["cards"]:
++		if (c["rect"] as Rect2).has_point(pos):
++			return {"kind": "card", "idx": int(c["idx"])}
++	return {}
++
++
++static func boons_sig(p: Dictionary) -> Array:
++	var c: Rect2 = p["take"]
++	return ["boons", int(p["focus"]), int(p["btn"]), int(c.position.x), int(c.position.y), (p["cards"] as Array).size(), (p["walk"] as Rect2).has_area(), hash(str(p["rec"]))]
++
++
++static func boons_draw(ci: CanvasItem, p: Dictionary, s: float) -> void:
++	var vp: Vector2 = ci.size if ci is Control else Vector2(1280, 720)
++	var k: float = u(s)
++	var ink: Color = _col(UiLook.INK)
++	var dim: Color = _col(UiLook.INK_DIM)
++	var mode: String = str(p["mode"])
++	var fb: int = int(p["fb"])
++	UiText.no_outline = true
++	ci.draw_rect(Rect2(Vector2.ZERO, vp), Color(0.04, 0.05, 0.08, 1.0))
++	UiText.draw(ci, str(p["title"]), p["title_pos"], int(p["f_title"]), ink, -1)
++	if str(p["sub"]) != "":
++		UiText.draw(ci, str(p["sub"]), p["sub_pos"], fb, dim, -1)
++	var boons: Array = (p["rec"] as Dictionary).get("boons", [])
++	var f_name: int = fs(20.0 if mode != "full" else 24.0, s)
++	var f_text: int = fs(15.0, s)
++	for c in p["cards"]:
++		var r: Rect2 = c["rect"]
++		var b: Dictionary = boons[int(c["idx"])]
++		var sel: bool = int(c["idx"]) == int(p["focus"]) and int(p["btn"]) == 0
++		var pad: float = (11.0 if mode == "compact" else 14.0) * k
++		var inner: float = r.size.x - 2.0 * pad
++		UiIcons.rrect(ci, r, 12.0 * k, Color(0.09, 0.10, 0.15, 1.0), ink if (sel or (int(c["idx"]) == int(p["focus"]))) else Color(0.17, 0.19, 0.24, 1.0), 3.0 if int(c["idx"]) == int(p["focus"]) else 1.4)
++		var kind: String = str(b.get("kind", ""))
++		if mode == "rows":
++			boon_mark(ci, Vector2(r.position.x + pad + 12.0 * k, r.get_center().y), 11.0 * k, kind)
++			var tx: float = r.position.x + pad + 36.0 * k
++			UiText.draw(ci, boon_kind_word(kind), Vector2(tx, r.position.y + pad + UiText.ascent(fb) - 2.0 * k), fb, dim, -1)
++			var ny: float = r.position.y + pad + UiText.height(fb) * 1.3
++			UiText.draw(ci, str(b.get("name", "")), Vector2(tx, ny + UiText.ascent(f_name)), f_name, ink, -1)
++			_draw_lines(ci, tx, ny + UiText.height(f_name) * 1.2, _boon_text(b), f_text, inner - 36.0 * k, dim)
++		else:
++			boon_mark(ci, Vector2(r.position.x + pad + 9.0 * k, r.position.y + pad + 9.0 * k), 9.0 * k, kind)
++			UiText.draw(ci, boon_kind_word(kind), Vector2(r.position.x + pad + 28.0 * k, r.position.y + pad + UiText.ascent(fb) + 1.0 * k), fb, dim, -1)
++			var cy: float = r.position.y + pad + 26.0 * k
++			cy += _draw_lines(ci, r.position.x + pad, cy, str(b.get("name", "")), f_name, inner, ink) + UiText.height(f_name) * 0.3
++			_draw_lines(ci, r.position.x + pad, cy, _boon_text(b), f_text, inner, dim)
++	if (p["walk"] as Rect2).has_area():
++		button_draw(ci, p["walk"], str(p["walk_label"]), false, int(p["btn"]) == 2, fs(20.0, s))
++		if str(p["walk_hint"]) != "":
++			UiText.draw(ci, str(p["walk_hint"]), Vector2((p["walk"] as Rect2).position.x, (p["walk"] as Rect2).position.y - 6.0 * k), maxi(fb - 1, int(UiLook.text_floor)), dim, -1)
++	button_draw(ci, p["take"], w("run_boon_take"), true, int(p["btn"]) == 1, fs(20.0, s))
++	UiText.no_outline = false

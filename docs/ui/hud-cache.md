@@ -2,7 +2,7 @@
 
 Owner: UI & UX. **Built in scratch and parked, behind `features.json` `hud_cache` (off).** Against Performance's audit (`docs/perf/audit-2026-10-16.md`, af5151b5, hot spot 1): in the web build the HUD is **344 of 364 draw calls and 1.3 of 2.4 ms of drawing** (330 of 382 and 1.1 of 2.5 ms in the beam scene); the budget is **60 HUD draw calls and 0.5 ms**.
 
-**Status, in one paragraph.** The mechanism, its switch, its tests and the tools for the proof are done and gated (`hud_check` green with the switch off and a new `_hud_cache_rules` with it on). **Two things could not be done today and are stated plainly:** (1) **the draw-call count was not measured**, because the engine reports draw calls only with a renderer and a window (the machine is in its quiet window and headless Godot has no renderer); (2) **the pixel match was not proved**, because the stills need headless Chrome. Both are ready as one command each for the end of the quiet window (sections 5 and 6). Until they are done the switch stays off.
+**Status, in one paragraph (2026-10-17, after the quiet window).** The mechanism, its switch, its tests and the proof tools are done and gated. **The pixel match is proved:** the same frame of the HUD demo, drawn directly and through the cache, differs by **0 pixels over a tolerance of 2 (of 255), and by 2 at most**, in all seven cases (desktop with and without the legend, a phone on its side, a phone upright, the toll chip with a count, the Empress against the Cyborg, the stress scenario), with a positive control (below). **The draw-call count is still not measured:** that is Performance's layer cut with `hud_cache` on (section 6); the switch stays off until it reads under the target.
 
 ## 1. Why the layers cost what they cost
 
@@ -43,20 +43,26 @@ On average **6.9 layers are showing on a frame**, and **most of what they hold i
 
 ## 4. What is not proved, and the risks
 
-- **Pixel identity.** The premultiplied blend and the viewport's own rasterisation of text may differ by a level on a translucent edge, and a painter that draws further than its margin would be clipped. The stills below decide it.
+- **Pixel identity: proved** on the seven cases above (section 5). A painter that draws further than its 16 px margin in a case the stills do not show would be clipped; the cases cover the plates, the legend, the prompts, the toll chip, the silhouettes and the strip.
 - **The cost of the extra passes.** Each repaint is a render pass into a texture. At one plate repaint in six frames that is cheap, but a layer that changes every frame (not the cached ones today) would cost more than it saves; the cache list is chosen from the redraw counts above for that reason.
 - **The web build's Compatibility renderer** supports render targets, but a render-target switch is not free on a phone's GPU. Performance's layer cut on the integrated Radeon and a phone decides whether the saving holds there.
 - **If it fails,** the switch is off and the HUD is as it is.
 
-## 5. The pixel proof, for the end of the quiet window
+## 5. The pixel proof (done, 2026-10-17)
 
-`ui/tools/png_diff.mjs` (a no-dependency PNG comparer, tested today on real stills: identical files give 0 pixels, different sizes are refused) and `ui/tools/hud_cache_stills.mjs`, which takes the same frame of the HUD demo twice (`?cache` off and on, with `at=` to fast-forward the mock feed and `hold` to stop its clock) at seven cases: desktop with and without the legend, a phone on its side, upright, the toll chip with a count, the Empress against the Cyborg, and the stress scenario. Run after a scratch export of the demo scene:
+`ui/tools/hud_cache_stills.mjs` took the same frame of the HUD demo twice per case (`?cache` off and on; `at=` fast-forwards the mock feed and `hold` stops its clock) from a web export of the demo scene, with `tools/machine/capture.mjs` (software rendering, one capture at a time), and `ui/tools/png_diff.mjs` compared them pixel by pixel:
 
-```bash
-node ui/tools/hud_cache_stills.mjs <built demo site dir> --tol 2 --out scratch-stills
-```
+| Case | Size | Pixels over 2 of 255 | Largest difference |
+| :--- | :--- | ---: | ---: |
+| desktop, no legend | 1280x720 | 0 of 921,600 | 2 |
+| desktop, with the legend | 1280x720 | 0 | 2 |
+| phone on its side | 844x390 | 0 of 329,160 | 2 |
+| phone upright | 390x844 | 0 of 329,160 | 2 |
+| the toll chip with a count | 1280x720 | 0 | 2 |
+| the Empress against the Cyborg | 1280x720 | 0 | 2 |
+| the stress scenario | 1280x720 | 0 | 2 |
 
-It prints, per case, the pixels whose largest channel difference is over 2 of 255, and exits 1 if any pair exceeds `--max-bad`. The demo's `cache` and `hold` arguments are in this park.
+**The positive control:** the same frame with the cached layers tinted red on purpose (a scratch-only switch) differs from the direct frame in **66,957 pixels (7%), by up to 179**, so the cache path really is what draws those layers in the web build, and the zero above is a true match and not a flag that never applied. The largest difference of 2 is one level of 8-bit rounding in the premultiplied blend on a translucent edge.
 
 ## 6. The draw-call proof, for Performance
 

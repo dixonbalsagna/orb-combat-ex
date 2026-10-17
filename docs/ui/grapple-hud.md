@@ -79,3 +79,7 @@ Gates: `hud_check` with a case for each layout's notes, the track at the fifteen
 1. **The four pips** that show how many pulses the clinch has left: keep, given Orb's note on caps, or let the clinch simply end?
 2. **The brace's tired state** (hollow for 20 ticks): fine as a two-state shape, or too close to a cooldown?
 3. **Touch Simple's Guard doing PUMMEL / BRACE** (Controls' recommendation): Orb's call, with the alternatives in Controls' paper.
+
+## 10. Game Design's ruling (1e06319b, 2026-10-17): touch Simple's option 1
+
+On touch Simple, a tap of the Transform button is the catch (a hold of 30 ticks stays Transform), **Guard is A in a clinch** (a press on the pulse is the pummel, a held Guard the brace), no carry is offered, and **UI labels Guard "PUMMEL / BRACE" during a clinch**: section 5's last table row stands as written. Also ruled: without a held A (charges off, or the latched A) the brace is automatic at two behind (two pulses at most, then a rest), and a latched A's presses are all pummels with no toggled brace, so the HUD's "toggled brace" bracket (section 5's last bullet) is **dropped**: a latched or charges-off player simply gets the bracket when the director braces him. Still paper: it waits for Encounter's clinch cues.
