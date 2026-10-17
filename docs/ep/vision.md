@@ -1372,3 +1372,23 @@ What follows from it:
 1. Damage persists across a run (homework 22's third question, answered for a run).
 2. A spitball, recorded, not yet briefed: a roguelike brawler mode, stages on different slices of one planet, short story beats between stages, cities staying damaged until a boss fight with world-catastrophe variants (beams through the crust to magma, a mushroom cloud that darkens the planet's sky, an exosphere fight bombarding the surface).
 3. Asked now: a new planet prototype iterating on picture A with polar ice. South: a big icy landmass. North: sea ice broken into icebergs and floes.
+
+## Orb picks the looks, the grapple and the one-versus-many rules (2026-10-16)
+
+**The fighters' looks** (homework fighters/PICK-looks-aura-glasses):
+- The Protagonist: a hybrid of the Sparring Partner (ivory top, wooden promise tags on the belt) and the Showman (an open boxer's robe with a big ring on the back).
+- The Anti-hero: a hybrid of the Rank Sash (one armoured shoulder, a sash with five rank studs, arms folded high) and the Pressed One (a closed coat with pressed edges, small polished shoulder plates, buttoned cuffs).
+- His aura: "hybrid, let me see something that is 70% (1) and 30% (5)": violet that warms then cools, with some of the blades' broken outline.
+- His glasses: Art's plan (a cracked lens when battered, crack and bend when broken, a bend when a hit throws his head, the finger nudge straightens it).
+- The training dummy: "hybrid all three, pads is strongest, I like the rig a lot, the frame seems practical".
+
+**Grappling on A** (homework 20): "hybrid between catch and clinch, rule in favor of clinch". Orb's note: "fantastic ideas, I see it as a way to set up combo chains and create varied combat scenarios".
+
+**One versus many** (homework 19):
+- Yes to the plan: three on one first (the Empress), four on one behind a switch once three on one plays well, no five on one, two-on-two unbuilt.
+- How many hit at once: Orb ticked "all three, if they are in reach" and "your call". EP's call: all three may land blows on the lone fighter, but through the measured rule (one partner in the exchange, the ring's single blows on openings), because all three striking freely measured unplayable.
+- Who the lone fighter's attack goes to: our call. EP: whoever his stick points at, else the nearest.
+- Moves that hit everyone in reach: yes, some.
+- Where a 2v2's second fight goes, and whether finished fights merge: our call. EP: the winner of one joins the other (a 2v1); placement waits for co-op.
+- If four on one looks messy: wait to see it.
+- Who else fights one versus many: "I don't want the cyborg to have minions. A future fighter may indeed have some partners. A story boss would be great. A brawler co-op with two partners engaging in their own 4v1s simultaneously could be extremely entertaining, or confusing and too overwhelming."
