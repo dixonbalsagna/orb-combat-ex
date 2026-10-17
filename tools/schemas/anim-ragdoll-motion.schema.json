@@ -254,6 +254,52 @@
       "patternProperties": {
         "^_": true
       }
+    },
+    "weight": {
+      "type": "object",
+      "required": [
+        "mass",
+        "tier_gain",
+        "mass_exp"
+      ],
+      "properties": {
+        "mass": {
+          "type": "object",
+          "required": [
+            "default"
+          ],
+          "propertyNames": {
+            "pattern": "^(_.*|default|[A-Za-z][A-Za-z0-9_]*)$"
+          },
+          "additionalProperties": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "Mass by fighter (a roster id), and `default`: mass divides every impulse and the flail (a heavier body moves less per blow)."
+        },
+        "tier_gain": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "description": "By power tier: the gain on an impulse."
+        },
+        "mass_exp": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The exponent of the mass in the division."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "Optional. Weight in the ragdoll (docs/animation/ragdoll-physics-paper.md, RG1)."
     }
   },
   "additionalProperties": false,

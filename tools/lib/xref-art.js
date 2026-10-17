@@ -146,6 +146,19 @@ function xrefCityLooks({ get, err, esc, isObj }) {
       if (isObj(tn.measured) && typeof d.budget === 'number') for (const k of ['glass_dark_vs_wall_mid', 'glass_bright_vs_wall_mid']) {
         if (typeof tn.measured[k] === 'number' && tn.measured[k] > d.budget) err(CL, `/looks/${esc(lk)}/${i}/measured/${k}`, 'city-looks-budget', `${k} ${tn.measured[k]} is above the budget ${d.budget}: a pane may differ from its wall by at most the budget`);
       }
+      // the neighbour rule (Legal w05): no two of a tint's neighbouring tones (the wall's mid tone, the dark and bright glass, the trim, the spandrel, the fin) differ by more than the budget in relative
+      // luminance, and the figure the tint states (_neighbours.max_difference_between_any_two_tones) is the one its colours give
+      if (typeof d.budget === 'number' && isObj(tn.wall) && isObj(tn.glass)) {
+        const hexes = [tn.wall.mid, tn.glass.dark, tn.glass.bright, tn.trim, tn.spandrel, tn.fin];
+        if (hexes.every((h) => typeof h === 'string' && /^#[0-9a-fA-F]{6}$/.test(h))) {
+          const lin = (c) => { const x = c / 255; return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); };
+          const Y = hexes.map((h) => { const n = parseInt(h.slice(1), 16); return 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255); });
+          const gap = Math.max(...Y) - Math.min(...Y);
+          if (gap > d.budget + 1e-9) err(CL, `/looks/${esc(lk)}/${i}`, 'city-looks-neighbours', `tint "${tn.id}": its neighbouring tones differ by ${Math.round(gap * 1000) / 1000} of relative luminance, above the budget ${d.budget}`);
+          const said = isObj(tn._neighbours) ? tn._neighbours.max_difference_between_any_two_tones : undefined;
+          if (typeof said === 'number' && Math.abs(said - gap) > 0.003) err(CL, `/looks/${esc(lk)}/${i}/_neighbours/max_difference_between_any_two_tones`, 'city-looks-neighbours', `the tint states ${said} but its colours give ${Math.round(gap * 1000) / 1000}`);
+        }
+      }
     });
     tints[lk] = ids;
   }

@@ -2407,7 +2407,6 @@
             "windupTicks",
             "worth",
             "ki",
-            "restS",
             "flightMul"
           ],
           "properties": {
@@ -2434,7 +2433,7 @@
             "restS": {
               "type": "number",
               "minimum": 0,
-              "description": "Seconds the launcher rests between uses (Game Design re-ruling, tuned between 25 and 60)."
+              "description": "Seconds the launcher rests between uses (Game Design re-ruling, tuned between 25 and 60). RETIRED (docs/design/launch-anywhere.md: freshness by kind replaces the rest): unread, no longer required; allowed so old data still validates."
             },
             "flightMul": {
               "type": "number",

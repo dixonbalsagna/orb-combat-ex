@@ -1,0 +1,263 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/art-outposts",
+  "title": "art-outposts (version 1)",
+  "description": "data/art/outposts.json: the polar outposts' palette and parts (docs/art/polar-outposts.md). A shape check inferred from the file (docs/tools/pending/infer-schema.cjs): every key present is required, a key outside is refused unless it starts with an underscore, a number is bounded only below by zero where all its values are, a colour is a hex string; the owner tightens the values. Version field: version. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "version",
+    "note",
+    "tones",
+    "lit_window",
+    "outposts",
+    "measured_against_the_ice_dE00",
+    "measured_note"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "note": {
+      "type": "string"
+    },
+    "tones": {
+      "type": "object",
+      "required": [
+        "timber",
+        "steel",
+        "roof",
+        "soot",
+        "rock",
+        "container",
+        "glass"
+      ],
+      "properties": {
+        "timber": {
+          "type": "object",
+          "required": [
+            "lit",
+            "mid",
+            "dark"
+          ],
+          "properties": {
+            "lit": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "mid": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "dark": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "steel": {
+          "type": "object",
+          "required": [
+            "lit",
+            "mid",
+            "dark"
+          ],
+          "properties": {
+            "lit": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "mid": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "dark": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "roof": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "soot": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "rock": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "container": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "glass": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "lit_window": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$"
+    },
+    "outposts": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[A-Za-z0-9].*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "name",
+          "size_units",
+          "shapes",
+          "what",
+          "parts",
+          "estimate_triangles"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "size_units": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "shapes": {
+            "type": "object",
+            "required": [],
+            "properties": {
+              "main_module": {
+                "type": "string"
+              },
+              "sleeping_modules": {
+                "type": "string"
+              },
+              "link": {
+                "type": "string"
+              },
+              "generator": {
+                "type": "string"
+              },
+              "mast": {
+                "type": "string"
+              },
+              "drums": {
+                "type": "string"
+              },
+              "ramp": {
+                "type": "string"
+              },
+              "headframe": {
+                "type": "string"
+              },
+              "bunker": {
+                "type": "string"
+              },
+              "conveyor": {
+                "type": "string"
+              },
+              "stockpile": {
+                "type": "string"
+              },
+              "containers": {
+                "type": "string"
+              },
+              "tanks": {
+                "type": "string"
+              },
+              "heater": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "what": {
+            "type": "string"
+          },
+          "parts": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "estimate_triangles": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "measured_against_the_ice_dE00": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[A-Za-z0-9].*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "vs_white_every_key",
+          "vs_slate_by_day",
+          "vs_slate_at_night"
+        ],
+        "properties": {
+          "vs_white_every_key": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vs_slate_by_day": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vs_slate_at_night": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "measured_note": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

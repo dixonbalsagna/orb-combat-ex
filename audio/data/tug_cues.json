@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "note": "The beam struggle's sound (docs/audio/launch-and-tug.md; audio/audio_tug.gd). PARKED behind `enabled`: false until Encounter's beam-struggle window is on main. The bed is two looped drones (drone.bed.lo, drone.bed.hi) whose gain, pitch and place follow the meeting point; the pulse, surge, stray, lock and end are one-shots in the lower family (Orb, 2026-10-16). Needs a schema from Tools (a warning until then).",
+  "enabled": false,
+  "drones": {
+    "bed.lo": {
+      "rate": 32000,
+      "seconds": 2.0,
+      "f": 98.0,
+      "partials": [[1, 1.0], [2, 0.10], [3, 0.04]],
+      "peak_db": -12.0
+    },
+    "bed.hi": {
+      "rate": 32000,
+      "seconds": 2.0,
+      "f": 98.0,
+      "partials": [[1, 1.0], [2, 0.60], [3, 0.40]],
+      "peak_db": -12.0
+    }
+  },
+  "bed": {
+    "bus": "Sfx",
+    "priority": 85,
+    "cls": "tug.bed",
+    "cap": 2,
+    "ramp_ms": 120,
+    "min_ticks_between_updates": 3,
+    "min_mid_step": 0.005,
+    "pitch_st_at_end": 5.0,
+    "lo": {"gain_db": [-20.0, -12.0]},
+    "hi": {"gain_db": [-28.0, -10.0], "detune": [0.003, 0.023]},
+    "max_ticks": 900
+  },
+  "lock": {
+    "sound": "tug.lock",
+    "gain_db": -4.0,
+    "pitch": 0.9,
+    "with": {"sound": "impact.heavy", "gain_db": -8.0, "pitch": 0.8},
+    "priority": 80,
+    "cls": "tug.lock",
+    "cap": 1,
+    "caption": "[beams clash]"
+  },
+  "duck": {"bus": "Music", "db": -5.0, "ms": 380},
+  "pulse": {
+    "sound": "tug.pulse",
+    "gain_db": -2.0,
+    "steps_st": 4.0,
+    "priority": 75,
+    "cls": "tug.pulse",
+    "cap": 2
+  },
+  "surge": {
+    "sound": "tug.surge",
+    "gain_db": -3.0,
+    "sharp_db": 1.5,
+    "sharp_tok": {"sound": "perfect.tok", "pitch": 1.12246, "gain_db": -2.0},
+    "priority": 76,
+    "cls": "tug.surge",
+    "cap": 2
+  },
+  "stray": {
+    "sound": "perfect.break",
+    "gain_db": -2.0,
+    "gap_ticks": 20,
+    "priority": 60,
+    "cls": "tug.stray",
+    "cap": 1
+  },
+  "end": {
+    "overwhelmed": {"fade_ms": 350, "sound": "tug.fall", "gain_db": -3.0, "with": {"sound": "energy.blast", "gain_db": -4.0, "pitch": 0.9}},
+    "detonate": {"fade_ms": 60, "sound": "impact.double", "gain_db": -3.0, "with": {"sound": "energy.blast", "gain_db": -5.0, "pitch": 1.0}},
+    "time": {"fade_ms": 300, "sound": "impact.medium", "gain_db": -2.0},
+    "priority": 82,
+    "cls": "tug.end",
+    "cap": 2
+  }
+}

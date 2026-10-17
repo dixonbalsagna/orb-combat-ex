@@ -61,13 +61,15 @@ var cues_cfg: Dictionary = {}
 var bank: AudioBank
 var _match_seed: int = 1
 var _laugh_re: RegEx
+var _boom_re: RegEx
 
 
 func _init(p_bank: AudioBank = null) -> void:
 	bank = p_bank if p_bank != null else AudioBank.new()
 	cfg = bank.babble
 	cues_cfg = AudioBank.load_json(CUES_PATH)
-	_laugh_re = RegEx.create_from_string("^(?:ha+h?|hah+|(?:he){2,}h?|heh+|(?:ho){2,}h?|oh(?:oh)+o?|oho(?:ho)*h?|aha(?:ha)*)$")
+	_laugh_re = RegEx.create_from_string("^(?:ha+h?|hah+|(?:ha){2,}h?|(?:he){2,}h?|heh+|(?:ho){2,}h?|oh(?:oh)+o?|oho(?:ho)*h?|aha(?:ha)*)$")
+	_boom_re = RegEx.create_from_string("^ga(?:ha)+h?$")
 
 
 ## A new match: babble seeds derive from the match seed (and the line), so replays speak the same babble.
@@ -173,7 +175,9 @@ func plan(voice: String, text: String, mood: String, intensity: int, cues: Array
 			if cands.size() > 0 and end_kind != "":
 				cands[cands.size() - 1]["phrase_end"] = end_kind
 			continue
-		if not P.inner and _laugh_re.search(core.to_lower()) != null:
+		if not P.inner and V.has("laugh_boom") and _boom_re.search(core.to_lower()) != null:
+			cands.append({"kind": "laugh", "boom": true, "t": T[start + core_lo], "phrase": phrase, "phrase_end": end_kind, "comma": has_comma})
+		elif not P.inner and _laugh_re.search(core.to_lower()) != null:
 			cands.append({"kind": "laugh", "t": T[start + core_lo], "phrase": phrase, "phrase_end": end_kind, "comma": has_comma})
 		else:
 			var frags: PackedStringArray = core.split("-", false)
@@ -197,6 +201,7 @@ func plan(voice: String, text: String, mood: String, intensity: int, cues: Array
 
 	# 2. thin to the voice's own pace, in time order; laughs suppress the syllables under them
 	var gap: float = float(V.min_gap) * float(M.gap_mul)
+	var gp: Array = V.get("gap_pattern", [])      # a lurching rhythm: the minimum gap cycles through these
 	var seq: Array = []
 	var last_t: float = -9.0
 	var kept_syl: int = 0
@@ -207,7 +212,8 @@ func plan(voice: String, text: String, mood: String, intensity: int, cues: Array
 			last_t = c.t + laugh_len
 			continue
 		var is_final: bool = c.phrase_end != ""
-		if c.t - last_t < gap * (0.6 if is_final else 1.0):
+		var gap_now: float = float(gp[kept_syl % gp.size()]) * float(M.gap_mul) if gp.size() > 0 else gap
+		if c.t - last_t < gap_now * (0.6 if is_final else 1.0):
 			continue
 		if not is_final and not c.caps and rnd.next() < float(M.skip_p):
 			continue
@@ -235,8 +241,8 @@ func plan(voice: String, text: String, mood: String, intensity: int, cues: Array
 		var s: float = float(M.pitch_st) + float(M.slope_st) * float(a) / float(maxi(total_syl - 1, 1))
 		if float(M.lilt_period) > 0.0:
 			s += float(M.lilt_st) * sin(TAU * float(a) / float(M.lilt_period))
-		s += float(M.jitter_st) * (rnd.next() * 2.0 - 1.0)
-		var g: float = float(cfg.plan.syllable_gain_db) + float(M.gain_db) + (rnd.next() * 2.0 - 1.0)
+		s += (float(M.jitter_st) + float(V.get("jitter_add_st", 0.0))) * (rnd.next() * 2.0 - 1.0)
+		var g: float = float(cfg.plan.syllable_gain_db) + float(M.gain_db) + (rnd.next() * 2.0 - 1.0) * float(V.get("gain_jit_db", 1.0))
 		if c.first:
 			s += 1.0
 		if c.caps:
@@ -269,7 +275,7 @@ func plan(voice: String, text: String, mood: String, intensity: int, cues: Array
 				"ellipsis":
 					st[k] -= 5.0 * u
 					gain[k] -= 6.0 * u
-				"period": st[k] -= 2.0 * u
+				"period": st[k] -= float(V.get("period_fall", 2.0)) * u
 		if kind == "exclaim":
 			# punch the last word: its first syllable up and louder, and the very last a little higher
 			for j in range(L.size() - 1, -1, -1):
@@ -288,7 +294,7 @@ func plan(voice: String, text: String, mood: String, intensity: int, cues: Array
 			var e := Ev.new()
 			e.t = c.t
 			e.kind = "laugh"
-			e.sound = "babble.%s.laugh" % voice
+			e.sound = "babble.%s.laugh%s" % [voice, "_boom" if c.get("boom", false) else ""]
 			e.variant = int(rnd.next() * float(bank.variants(e.sound))) % bank.variants(e.sound)
 			e.st = float(M.pitch_st) * 0.5 + (rnd.next() * 2.0 - 1.0) * 0.5
 			e.gain_db = float(cfg.plan.laugh_gain_db) + float(M.gain_db)
@@ -305,6 +311,16 @@ func plan(voice: String, text: String, mood: String, intensity: int, cues: Array
 		ev.gain_db = float(gain[k])
 		P.events.append(ev)
 		voice_last_t = maxf(voice_last_t, ev.t + syl_s)
+		if V.has("blip") and not P.inner and rnd.next() < float(V.blip.p):
+			var bl := Ev.new()
+			bl.t = ev.t + syl_s * float(V.blip.at)
+			bl.kind = "blip"
+			bl.sound = "babble.%s.blip" % voice
+			var notes: Array = V.blip.notes_st
+			bl.st = float(notes[int(rnd.next() * float(notes.size())) % notes.size()])
+			bl.gain_db = float(cfg.plan.syllable_gain_db) + float(V.blip.gain_db) + float(M.gain_db)
+			P.events.append(bl)
+			voice_last_t = maxf(voice_last_t, bl.t + float(V.blip.ms) * 0.001)
 		# grunt or sigh after the end of a phrase
 		var ends: String = String(phrase_kind.get(last_k[k], "")) if last_k.has(k) else ""
 		if ends == "exclaim" and not P.inner and rnd.next() < float(M.grunt_p):

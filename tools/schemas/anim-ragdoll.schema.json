@@ -61,9 +61,10 @@
           "axis": {
             "enum": [
               "z",
-              "x"
+              "x",
+              "y"
             ],
-            "description": "z is the sagittal plane; x is an arm lifting out sideways."
+            "description": "z is the sagittal plane; x is an arm lifting out sideways or a side bend; y is a twist about the bone."
           },
           "beta": {
             "description": "The limb's rest direction in the body plane (0 hangs down, 3.14159 points up).",
@@ -117,6 +118,21 @@
           "crumple": {
             "description": "The impulse (rad/s) of a slam.",
             "type": "number"
+          },
+          "arch": {
+            "type": "number",
+            "description": "Optional. The angle this degree of freedom takes in an arched fall (the ragdoll variety: docs/animation/ragdoll-slices.md)."
+          },
+          "lag": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Optional. Ticks this degree of freedom trails the one before it down the chain."
+          },
+          "oop": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Optional. 1: an out-of-plane degree of freedom (a twist or a side bend). The shapes of ragdoll_motion.json hold numbers for the in-plane ones only (rule ragdoll-motion-dofs)."
           }
         },
         "additionalProperties": false,
@@ -231,6 +247,42 @@
       "patternProperties": {
         "^_": true
       }
+    },
+    "variety": {
+      "type": "object",
+      "required": [
+        "hz",
+        "phase",
+        "amp",
+        "side_dead"
+      ],
+      "properties": {
+        "hz": {
+          "type": "number",
+          "minimum": 0,
+          "description": "How fast the variety wanders, in Hz."
+        },
+        "phase": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Its phase offset."
+        },
+        "amp": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Its amplitude."
+        },
+        "side_dead": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The dead zone of the side it leans to."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "Optional. A slow per-body variety so two bodies thrown the same way do not fall the same (ragdoll variety)."
     }
   },
   "additionalProperties": false,

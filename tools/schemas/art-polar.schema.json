@@ -1,0 +1,213 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/art-polar",
+  "title": "art-polar (version 1)",
+  "description": "data/art/polar.json: the polar cold palette for World's ice biomes (docs/art/polar-palette.md). A shape check inferred from the file (docs/tools/pending/infer-schema.cjs): every key present is required, a key outside is refused unless it starts with an underscore, a number is bounded only below by zero where all its values are, a colour is a hex string; the owner tightens the values. Version field: version. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "version",
+    "note",
+    "biomes",
+    "haze",
+    "measured_over_every_key",
+    "rule"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "note": {
+      "type": "string"
+    },
+    "biomes": {
+      "type": "object",
+      "required": [
+        "ice_sheet",
+        "sea_ice",
+        "iceberg",
+        "polar_water"
+      ],
+      "properties": {
+        "ice_sheet": {
+          "type": "object",
+          "required": [
+            "lit",
+            "dark",
+            "rock",
+            "note"
+          ],
+          "properties": {
+            "lit": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "dark": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "rock": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "note": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "sea_ice": {
+          "type": "object",
+          "required": [
+            "floe_top",
+            "floe_edge",
+            "melt_rim",
+            "note"
+          ],
+          "properties": {
+            "floe_top": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "floe_edge": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "melt_rim": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "note": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "iceberg": {
+          "type": "object",
+          "required": [
+            "face_lit",
+            "face_dark",
+            "under_water",
+            "note"
+          ],
+          "properties": {
+            "face_lit": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "face_dark": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "under_water": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "note": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "polar_water": {
+          "type": "object",
+          "required": [
+            "deep",
+            "shallow",
+            "note"
+          ],
+          "properties": {
+            "deep": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "shallow": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "note": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "haze": {
+      "type": "string"
+    },
+    "measured_over_every_key": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[A-Za-z0-9].*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "hex",
+          "aura_vs_ground_worst",
+          "aura",
+          "aura_at",
+          "body_vs_ground_worst",
+          "body",
+          "body_at"
+        ],
+        "properties": {
+          "hex": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$"
+          },
+          "aura_vs_ground_worst": {
+            "type": "number"
+          },
+          "aura": {
+            "type": "string"
+          },
+          "aura_at": {
+            "type": "string"
+          },
+          "body_vs_ground_worst": {
+            "type": "number"
+          },
+          "body": {
+            "type": "string"
+          },
+          "body_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "rule": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

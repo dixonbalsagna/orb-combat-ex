@@ -9,6 +9,8 @@ extends SceneTree
 ##   5. laughs and cue gestures become laugh and grunt events
 ##   6. the bank renders for every voice, and what it costs (time, memory)
 ##   7. babbling never changes the sim: the gameplay hash of a seeded match is the same with and without it
+##   8. the A/B voices (data/babble_ab.json): the Cyborg's growl and blip, the Empress's booming laugh and baked shimmer, the lurching
+##      rhythm; each renders, is reproducible, and the current voices are unaffected
 
 var bank: AudioBank
 var bab: AudioBabble
@@ -28,6 +30,7 @@ func _init() -> void:
 	_new_ids()
 	_bank_cost()
 	_sim_untouched()
+	_ab_voices()
 	print("\nbabble check %s" % ("FAILED (%d)" % fails if fails > 0 else "passed"))
 	quit(1 if fails > 0 else 0)
 
@@ -253,3 +256,91 @@ func _sim_untouched() -> void:
 		hashes.append(SimHash.stateHash(S).gameplay)
 		SimCore.dispose(S)
 	ok(str(hashes[0]) == str(hashes[1]), "gameplay hash after 1200 ticks is the same with and without babbling (%s)" % str(hashes[0]))
+
+
+func _ab_voices() -> void:
+	print("8. the A/B voices: growl and blip, booming laugh, lurching rhythm, baked shimmer")
+	var ab: Dictionary = AudioBank.load_json("res://audio/data/babble_ab.json")
+	var b2 := AudioBank.new()
+	for k in ab.syllables:
+		b2.babble.syllables[k] = ab.syllables[k]
+	for k in ab.voices:
+		b2.babble.voices[k] = ab.voices[k]
+		var base: String = String(k).substr(0, String(k).rfind("_"))
+		b2.babble.voice_moods[k] = b2.babble.voice_moods.get(base, {})
+	var bb := AudioBabble.new(b2)
+	bb.reset(4)
+	# every letter's bank renders: no clip is empty or clipped
+	var worst_peak: float = 0.0
+	var empty: int = 0
+	var clips: int = 0
+	for v in ab.voices:
+		for id in b2.babble_ids([v]):
+			for var_i in range(b2.variants(id)):
+				var buf: PackedFloat32Array = b2.buffer(id, var_i)
+				clips += 1
+				if buf.is_empty():
+					empty += 1
+				else:
+					worst_peak = maxf(worst_peak, AudioDsp.peak(buf))
+	ok(empty == 0 and worst_peak < 0.99, "every clip of the 8 letter voices renders (%d clips, none empty, loudest peak %.2f)" % [clips, worst_peak])
+	ok(b2.has_sound("babble.cyborg_c.blip") and b2.has_sound("babble.empress_c.laugh_boom") and not b2.has_sound("babble.cyborg.blip") and not b2.has_sound("babble.empress.laugh_boom"), "the blip and the booming laugh exist for the letters that have them, and not for the current voices")
+	# reproducible
+	var line: String = "Protein. More protein! I can smell the marrow in your chassis."
+	var d1: String = bb.plan("cyborg_c", line, "smug", 1, [], 11).digest()
+	var d2: String = bb.plan("cyborg_c", line, "smug", 1, [], 11).digest()
+	var d3: String = bb.plan("cyborg_c", line, "smug", 1, [], 12).digest()
+	ok(d1 == d2 and d1 != d3, "a letter's plan is reproducible and varies with the seed")
+	# the blip
+	var blips: int = 0
+	var blips_a: int = 0
+	var in_notes: bool = true
+	var min_gap_seen: float = 9.0
+	for sd in range(12):
+		var P := bb.plan("cyborg_c", line, "smug", 1, [], 100 + sd)
+		blips += P.count("blip")
+		blips_a += bb.plan("cyborg", line, "smug", 1, [], 100 + sd).count("blip")
+		for e in P.events:
+			if e.kind == "blip" and not (int(roundf(e.st)) in [0, 3, 7, 10]):
+				in_notes = false
+		var syl_t: Array = P.events.filter(func(e): return e.kind == "syl").map(func(e): return e.t)
+		for i in range(1, syl_t.size()):
+			min_gap_seen = minf(min_gap_seen, float(syl_t[i]) - float(syl_t[i - 1]))
+	ok(blips > 0 and blips_a == 0, "the Cyborg C speaks growls with blips (%d in 12 lines); the current Cyborg has none" % blips)
+	ok(in_notes, "each blip is one of the voice's four notes")
+	var floor_gap: float = 0.6 * 0.055 * 0.85
+	ok(min_gap_seen >= floor_gap - 0.001, "the lurching rhythm never packs two syllables closer than its shortest gap allows (%.3f s against %.3f)" % [min_gap_seen, floor_gap])
+	# the booming laugh
+	var boom_c: int = 0
+	var boom_a: int = 0
+	for e in bb.plan("empress_c", "Gahaha! Bring me their roof.", "smug", 1, [], 5).events:
+		if e.kind == "laugh" and String(e.sound).ends_with("laugh_boom"):
+			boom_c += 1
+	for e in bb.plan("empress", "Gahaha! Bring me their roof.", "smug", 1, [], 5).events:
+		if e.kind == "laugh":
+			boom_a += 1
+	var bright: int = 0
+	for e in bb.plan("empress_c", "Hahaha! Bring me their roof.", "smug", 1, [], 5).events:
+		if e.kind == "laugh" and not String(e.sound).ends_with("laugh_boom"):
+			bright += 1
+	ok(boom_c == 1 and boom_a == 0 and bright == 1, "'Gahaha' is the booming laugh for the Empress C only, 'Hahaha' stays her bright one (%d, %d, %d)" % [boom_c, boom_a, bright])
+	var lb: PackedFloat32Array = b2.buffer("babble.empress_c.laugh_boom", 0)
+	var lr: PackedFloat32Array = b2.buffer("babble.empress_c.laugh", 0)
+	ok(_zcr(lb, b2.rate_of("babble.empress_c.laugh_boom")) < _zcr(lr, b2.rate_of("babble.empress_c.laugh")) * 0.8, "the booming laugh is lower than her bright one (%.0f against %.0f crossings a second)" % [_zcr(lb, 12000), _zcr(lr, 12000)])
+	# the baked shimmer and comb lengthen a clip a little
+	var raw_n: int = int(float(b2.babble.voices["empress"].syl_ms) * 0.001 * 12000.0)
+	var sh: PackedFloat32Array = b2.buffer("babble.empress_c.base.be", 0)
+	var cm: PackedFloat32Array = b2.buffer("babble.cyborg_b.base.gru", 0)
+	ok(sh.size() > int(float(b2.babble.voices["empress_c"].syl_ms) * 0.001 * 12000.0) and cm.size() > int(float(b2.babble.voices["cyborg_b"].syl_ms) * 0.001 * 12000.0), "the Empress's early reflection and the Cyborg's comb tail are in the clip")
+	# the current voices are unaffected by the new keys
+	var cur: String = bb.plan("protagonist", "Good. You came. Now show me everything.", "playful", 1, [], 21).digest()
+	var cur2: String = bab.plan("protagonist", "Good. You came. Now show me everything.", "playful", 1, [], 21).digest()
+	ok(cur == cur2, "a current voice plans the same in a bank that also holds the letters")
+
+
+func _zcr(buf: PackedFloat32Array, rate: int) -> float:
+	var n: int = 0
+	for i in range(1, buf.size()):
+		if (buf[i - 1] < 0.0) != (buf[i] < 0.0):
+			n += 1
+	return float(n) / (float(buf.size()) / float(rate))

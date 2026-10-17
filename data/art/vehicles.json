@@ -1,0 +1,143 @@
+{
+  "version": 1,
+  "note": "The city's cars (docs/art/cars.md): four silhouettes and a wreck state, side-on, in world units (a fighter is 75), painted in the city tints. Written by art/concepts/city/cars.mjs; do not edit by hand. mass_class and throw_tier are Art's suggestions for Combat and Game Design, not rules. Proposals pending Legal; Tools adds the schema.",
+  "vehicles": {
+    "sedan": {
+      "name": "Sedan",
+      "length": 193,
+      "height": 62,
+      "wheel_radius": 14,
+      "hit_box": [
+        193,
+        62
+      ],
+      "mass_class": 3,
+      "throw_tier": 2
+    },
+    "van": {
+      "name": "Van",
+      "length": 223,
+      "height": 86,
+      "wheel_radius": 17,
+      "hit_box": [
+        223,
+        86
+      ],
+      "mass_class": 4,
+      "throw_tier": 3
+    },
+    "bus": {
+      "name": "Bus",
+      "length": 516,
+      "height": 137,
+      "wheel_radius": 22,
+      "hit_box": [
+        516,
+        137
+      ],
+      "mass_class": 8,
+      "throw_tier": 4
+    },
+    "bike": {
+      "name": "Bike",
+      "length": 90,
+      "height": 56,
+      "wheel_radius": 15,
+      "hit_box": [
+        90,
+        56
+      ],
+      "mass_class": 1,
+      "throw_tier": 1
+    }
+  },
+  "paints": [
+    {
+      "id": "sage",
+      "name": "Sage and rose glass",
+      "body": "#b8bdb4",
+      "dark": "#52564e",
+      "glass": "#8e7675"
+    },
+    {
+      "id": "steel",
+      "name": "Steel and bronze glass",
+      "body": "#b4bcc7",
+      "dark": "#4e565f",
+      "glass": "#8c795e"
+    },
+    {
+      "id": "buff",
+      "name": "Buff brick",
+      "body": "#dbc5b3",
+      "dark": "#715e4e",
+      "glass": "#7c8e9d"
+    },
+    {
+      "id": "slate",
+      "name": "Slate green and rose glass",
+      "body": "#c2cac3",
+      "dark": "#5c645d",
+      "glass": "#9e8585"
+    },
+    {
+      "id": "sandstone",
+      "name": "Sandstone and slate glass",
+      "body": "#c9baa8",
+      "dark": "#605243",
+      "glass": "#678086"
+    },
+    {
+      "id": "graphite",
+      "name": "Graphite and amber glass",
+      "body": "#babcc0",
+      "dark": "#535558",
+      "glass": "#8b796a"
+    }
+  ],
+  "lit": "#f3cf86",
+  "tyre": "#26262a",
+  "soot": "#2f2a2a",
+  "wreck": {
+    "rules": "the same silhouette lower and askew: the roof crushed by about a quarter, the body tilted 6 to 9 degrees about the front axle, one wheel off or sprung (the bike: the front wheel off), the glass out (soot-dark, never see-through), the lights dark, a soot band along the roof and the sill; no flame, no smoke in the art (VFX's if wanted), no people",
+    "throw": "seen thrown it tumbles as a flat box: the long side is the read at 46 px, so no part sticks out further than a quarter of its length"
+  },
+  "paint_vs_lane_colours": [
+    {
+      "id": "sage",
+      "body": "#b8bdb4",
+      "nearest_lane": "dummy",
+      "dE00": 20.6
+    },
+    {
+      "id": "steel",
+      "body": "#b4bcc7",
+      "nearest_lane": "dummy",
+      "dE00": 13.3
+    },
+    {
+      "id": "buff",
+      "body": "#dbc5b3",
+      "nearest_lane": "dummy",
+      "dE00": 22
+    },
+    {
+      "id": "slate",
+      "body": "#c2cac3",
+      "nearest_lane": "protagonist",
+      "dE00": 20
+    },
+    {
+      "id": "sandstone",
+      "body": "#c9baa8",
+      "nearest_lane": "dummy",
+      "dE00": 22.9
+    },
+    {
+      "id": "graphite",
+      "body": "#babcc0",
+      "nearest_lane": "dummy",
+      "dE00": 14
+    }
+  ]
+}

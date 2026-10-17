@@ -1,0 +1,494 @@
+{
+  "schema": 1,
+  "note": "The A/B voices for the babble comparison (docs/audio/babble-vs-gemini.md, homework/34-voices-ab.md). A is the voice in babble.json as it is. B is Gemini's suggested numbers for each fighter played by our seeded plan, with its bus chain baked (a chorus and reflection for the Empress, a bit-crush and comb for the Cyborg). C is the hybrid. Merged into the bank at run time by tools/render_babble_ab.gd only; nothing here is in the game. The new voice keys (gap_pattern, jitter_add_st, gain_jit_db, period_fall, chorus, comb, blip, laugh_boom) are read by audio_babble.gd and babble_synth.gd with defaults that leave every existing voice unchanged. Needs a schema from Tools if a letter is adopted.",
+  "syllables": {
+    "gru": {
+      "onset": "plosive",
+      "vowel": "u",
+      "fry": 0.6,
+      "f0_mul": 0.8,
+      "open_mul": 0.85
+    },
+    "gro": {
+      "onset": "plosive",
+      "vowel": "o",
+      "fry": 0.6,
+      "f0_mul": 0.75,
+      "open_mul": 0.85
+    },
+    "mro": {
+      "onset": "nasal",
+      "vowel": "o",
+      "fry": 0.5,
+      "f0_mul": 0.75
+    }
+  },
+  "voices": {
+    "protagonist_b": {
+      "label": "B: Gemini's numbers (bouncy, short)",
+      "ref_f0": 185,
+      "formant_k": 1.0,
+      "syl_ms": 65,
+      "min_gap": 0.065,
+      "open": 0.62,
+      "breath": 0.12,
+      "jitter": 0.012,
+      "shimmer": 0.05,
+      "drive": 1.2,
+      "crush_bits": 0,
+      "hold": 1,
+      "stutter": false,
+      "lexicon": {
+        "ah": 3,
+        "ho": 3,
+        "ha": 2,
+        "no": 1,
+        "ba": 1,
+        "do": 1
+      },
+      "laugh": {
+        "pulses": 5,
+        "f0": [
+          240,
+          190
+        ],
+        "spacing": [
+          0.13,
+          0.13
+        ],
+        "pulse_ms": 90,
+        "decay": 0.82,
+        "breath": 0.35,
+        "step_st": 0.0,
+        "variants": 2
+      },
+      "chars_per_syl": 2.0,
+      "jitter_add_st": 1.6,
+      "gain_jit_db": 1.5
+    },
+    "anti_hero_b": {
+      "label": "B: Gemini's numbers (clipped, staccato)",
+      "ref_f0": 140,
+      "formant_k": 1.08,
+      "syl_ms": 48,
+      "min_gap": 0.055,
+      "open": 0.5,
+      "breath": 0.14,
+      "jitter": 0.02,
+      "shimmer": 0.1,
+      "drive": 1.8,
+      "crush_bits": 0,
+      "hold": 1,
+      "stutter": false,
+      "lexicon": {
+        "do": 3,
+        "gu": 3,
+        "no": 2,
+        "oh": 1
+      },
+      "laugh": {
+        "pulses": 1,
+        "f0": [
+          130,
+          100
+        ],
+        "spacing": [
+          0.1,
+          0.1
+        ],
+        "pulse_ms": 110,
+        "decay": 1.0,
+        "breath": 0.6,
+        "step_st": 0.0,
+        "variants": 2
+      },
+      "chars_per_syl": 2.0,
+      "jitter_add_st": 0.1,
+      "gain_jit_db": 0.5,
+      "period_fall": 4.0
+    },
+    "empress_b": {
+      "label": "B: Gemini's numbers (drawl, chorus, booming laugh)",
+      "ref_f0": 275,
+      "formant_k": 1.17,
+      "syl_ms": 90,
+      "min_gap": 0.085,
+      "open": 0.6,
+      "breath": 0.25,
+      "jitter": 0.015,
+      "shimmer": 0.06,
+      "drive": 1.4,
+      "crush_bits": 0,
+      "hold": 1,
+      "stutter": false,
+      "lexicon": {
+        "be": 3,
+        "hi": 3,
+        "me": 2,
+        "ha": 2,
+        "eh": 2,
+        "ba": 1,
+        "ma": 2
+      },
+      "laugh": {
+        "pulses": 7,
+        "f0": [
+          270,
+          380
+        ],
+        "spacing": [
+          0.15,
+          0.08
+        ],
+        "pulse_ms": 80,
+        "decay": 0.92,
+        "breath": 0.4,
+        "step_st": 0.0,
+        "variants": 2
+      },
+      "chars_per_syl": 2.4,
+      "jitter_add_st": 2.0,
+      "gain_jit_db": 2.0,
+      "chorus": {
+        "detune_st": 0.12,
+        "wet": 0.5,
+        "delay_ms": 6,
+        "reflect_ms": 35,
+        "reflect_gain": 0.12
+      },
+      "laugh_boom": {
+        "pulses": 6,
+        "f0": [
+          150,
+          120
+        ],
+        "spacing": [
+          0.17,
+          0.15
+        ],
+        "pulse_ms": 120,
+        "decay": 0.9,
+        "breath": 0.35,
+        "step_st": 0.0,
+        "variants": 2,
+        "formant_k": 0.85
+      }
+    },
+    "cyborg_b": {
+      "label": "B: Gemini's numbers (growl and blip, lurching, crush and comb)",
+      "ref_f0": 100,
+      "formant_k": 0.95,
+      "syl_ms": 80,
+      "min_gap": 0.05,
+      "open": 0.5,
+      "breath": 0.1,
+      "jitter": 0.008,
+      "shimmer": 0.03,
+      "drive": 2.2,
+      "crush_bits": 8,
+      "hold": 1,
+      "stutter": true,
+      "lexicon": {
+        "gru": 3,
+        "gro": 3,
+        "mro": 2,
+        "do": 1
+      },
+      "laugh": {
+        "pulses": 5,
+        "f0": [
+          110,
+          90
+        ],
+        "spacing": [
+          0.1,
+          0.1
+        ],
+        "pulse_ms": 90,
+        "decay": 0.88,
+        "breath": 0.45,
+        "step_st": 0.0,
+        "variants": 2
+      },
+      "chars_per_syl": 2.6,
+      "gap_pattern": [
+        0.05,
+        0.1
+      ],
+      "jitter_add_st": 3.0,
+      "gain_jit_db": 3.0,
+      "comb": {
+        "delay_ms": 15,
+        "feedback": 0.35
+      },
+      "blip": {
+        "f": 600,
+        "ms": 60,
+        "bits": 6,
+        "hold": 1,
+        "p": 0.35,
+        "at": 0.7,
+        "notes_st": [
+          0,
+          5,
+          7
+        ],
+        "gain_db": -6.0
+      }
+    },
+    "protagonist_c": {
+      "label": "C: hybrid (a little shorter, same chat)",
+      "ref_f0": 165,
+      "formant_k": 1.0,
+      "syl_ms": 80,
+      "min_gap": 0.07,
+      "open": 0.62,
+      "breath": 0.12,
+      "jitter": 0.012,
+      "shimmer": 0.05,
+      "drive": 1.2,
+      "crush_bits": 0,
+      "hold": 1,
+      "stutter": false,
+      "lexicon": {
+        "ba": 3,
+        "do": 2,
+        "ho": 3,
+        "ha": 3,
+        "ah": 2,
+        "ma": 1,
+        "no": 2
+      },
+      "laugh": {
+        "pulses": 5,
+        "f0": [
+          240,
+          190
+        ],
+        "spacing": [
+          0.13,
+          0.13
+        ],
+        "pulse_ms": 90,
+        "decay": 0.82,
+        "breath": 0.35,
+        "step_st": 0.0,
+        "variants": 2
+      },
+      "chars_per_syl": 2.3,
+      "jitter_add_st": 0.8
+    },
+    "anti_hero_c": {
+      "label": "C: hybrid (faster, a little higher, still low)",
+      "ref_f0": 115,
+      "formant_k": 1.0,
+      "syl_ms": 62,
+      "min_gap": 0.075,
+      "open": 0.5,
+      "breath": 0.14,
+      "jitter": 0.02,
+      "shimmer": 0.1,
+      "drive": 1.8,
+      "crush_bits": 0,
+      "hold": 1,
+      "stutter": false,
+      "lexicon": {
+        "do": 3,
+        "no": 3,
+        "gu": 3,
+        "oh": 2,
+        "ho": 1
+      },
+      "laugh": {
+        "pulses": 1,
+        "f0": [
+          130,
+          100
+        ],
+        "spacing": [
+          0.1,
+          0.1
+        ],
+        "pulse_ms": 110,
+        "decay": 1.0,
+        "breath": 0.6,
+        "step_st": 0.0,
+        "variants": 2
+      },
+      "chars_per_syl": 2.8,
+      "jitter_add_st": 0.2,
+      "period_fall": 3.0
+    },
+    "empress_c": {
+      "label": "C: hybrid (overlap, shimmer, two laughs)",
+      "ref_f0": 270,
+      "formant_k": 1.15,
+      "syl_ms": 105,
+      "min_gap": 0.07,
+      "open": 0.6,
+      "breath": 0.25,
+      "jitter": 0.015,
+      "shimmer": 0.06,
+      "drive": 1.4,
+      "crush_bits": 0,
+      "hold": 1,
+      "stutter": false,
+      "lexicon": {
+        "be": 3,
+        "hi": 3,
+        "me": 2,
+        "ha": 2,
+        "eh": 2,
+        "ba": 1,
+        "ma": 2
+      },
+      "laugh": {
+        "pulses": 7,
+        "f0": [
+          270,
+          380
+        ],
+        "spacing": [
+          0.15,
+          0.08
+        ],
+        "pulse_ms": 80,
+        "decay": 0.92,
+        "breath": 0.4,
+        "step_st": 0.0,
+        "variants": 2
+      },
+      "chars_per_syl": 2.4,
+      "jitter_add_st": 1.2,
+      "chorus": {
+        "detune_st": 0.1,
+        "wet": 0.4,
+        "delay_ms": 6,
+        "reflect_ms": 30,
+        "reflect_gain": 0.14
+      },
+      "laugh_boom": {
+        "pulses": 6,
+        "f0": [
+          165,
+          135
+        ],
+        "spacing": [
+          0.16,
+          0.14
+        ],
+        "pulse_ms": 110,
+        "decay": 0.9,
+        "breath": 0.3,
+        "step_st": 0.0,
+        "variants": 2,
+        "formant_k": 0.9
+      }
+    },
+    "cyborg_c": {
+      "label": "C: hybrid (growl and blip, lurching)",
+      "ref_f0": 105,
+      "formant_k": 0.95,
+      "syl_ms": 90,
+      "min_gap": 0.055,
+      "open": 0.5,
+      "breath": 0.1,
+      "jitter": 0.008,
+      "shimmer": 0.03,
+      "drive": 2.4,
+      "crush_bits": 7,
+      "hold": 2,
+      "stutter": true,
+      "lexicon": {
+        "gru": 3,
+        "gro": 2,
+        "mro": 2,
+        "do": 1,
+        "ba": 1
+      },
+      "laugh": {
+        "pulses": 6,
+        "f0": [
+          115,
+          95
+        ],
+        "spacing": [
+          0.1,
+          0.09
+        ],
+        "pulse_ms": 90,
+        "decay": 0.9,
+        "breath": 0.4,
+        "step_st": 0.0,
+        "variants": 2
+      },
+      "chars_per_syl": 2.6,
+      "gap_pattern": [
+        0.055,
+        0.11
+      ],
+      "jitter_add_st": 2.5,
+      "gain_jit_db": 2.5,
+      "comb": {
+        "delay_ms": 12,
+        "feedback": 0.3
+      },
+      "blip": {
+        "f": 520,
+        "ms": 70,
+        "bits": 6,
+        "hold": 1,
+        "p": 0.45,
+        "at": 0.65,
+        "notes_st": [
+          0,
+          3,
+          7,
+          10
+        ],
+        "gain_db": -7.0
+      }
+    }
+  },
+  "reels": {
+    "protagonist": [
+      {
+        "caption": 0
+      },
+      {
+        "caption": 1
+      }
+    ],
+    "anti_hero": [
+      {
+        "caption": 0
+      },
+      {
+        "caption": 1
+      }
+    ],
+    "empress": [
+      {
+        "caption": 0
+      },
+      {
+        "text": "Gahaha! Bring me their roof, my petitioners. We are not amused.",
+        "mood": "cruel",
+        "intensity": 1
+      }
+    ],
+    "cyborg": [
+      {
+        "text": "Sensors say crunchy. Tenderising now.",
+        "mood": "leering",
+        "intensity": 1
+      },
+      {
+        "text": "Protein. More protein! I can smell the marrow in your chassis.",
+        "mood": "delight",
+        "intensity": 1
+      }
+    ]
+  },
+  "seed": 20261017
+}

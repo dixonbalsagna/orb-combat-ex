@@ -478,6 +478,26 @@
     {
       "match": "data/narrative/hints_fix.json",
       "schema": "narrative-hints-fix.schema.json"
+    },
+    {
+      "match": "data/art/polar.json",
+      "schema": "art-polar.schema.json"
+    },
+    {
+      "match": "data/art/outposts.json",
+      "schema": "art-outposts.schema.json"
+    },
+    {
+      "match": "data/art/vehicles.json",
+      "schema": "art-vehicles.schema.json"
+    },
+    {
+      "match": "audio/data/tug_cues.json",
+      "schema": "audio-tug-cues.schema.json"
+    },
+    {
+      "match": "audio/data/babble_ab.json",
+      "schema": "audio-babble-ab.schema.json"
     }
   ]
 }

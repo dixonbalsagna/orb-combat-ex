@@ -1445,6 +1445,151 @@
           "gain": 0.3
         }
       ]
+    },
+    "tug.pulse": {
+      "rate": 32000,
+      "variants": 1,
+      "drive": 0.0,
+      "peak_db": -10.0,
+      "jitter": {
+        "f": 0.0,
+        "t60": 0.0,
+        "gain": 0.0
+      },
+      "layers": [
+        {
+          "type": "tone",
+          "f": 95,
+          "f_to": 60,
+          "tau": 0.04,
+          "attack": 0.0008,
+          "t60": 0.09,
+          "gain": 1.0,
+          "drive": 0.6,
+          "h2": 0.0,
+          "h3": 0.0
+        },
+        {
+          "type": "noise",
+          "filter": "bp",
+          "f": 700,
+          "q": 1.0,
+          "attack": 0.0003,
+          "t60": 0.015,
+          "gain": 0.3
+        }
+      ]
+    },
+    "tug.surge": {
+      "rate": 32000,
+      "variants": 1,
+      "drive": 0.0,
+      "peak_db": -8.0,
+      "jitter": {
+        "f": 0.0,
+        "t60": 0.0,
+        "gain": 0.0
+      },
+      "layers": [
+        {
+          "type": "tone",
+          "f": 140,
+          "f_to": 230,
+          "tau": 0.06,
+          "attack": 0.0008,
+          "t60": 0.14,
+          "gain": 1.0,
+          "drive": 0.6,
+          "h2": 0.2,
+          "h3": 0.0
+        },
+        {
+          "type": "noise",
+          "filter": "lp",
+          "f": 800,
+          "q": 0.7,
+          "attack": 0.0003,
+          "t60": 0.06,
+          "gain": 0.4
+        }
+      ]
+    },
+    "tug.lock": {
+      "rate": 32000,
+      "variants": 1,
+      "drive": 0.8,
+      "peak_db": -6.0,
+      "jitter": {
+        "f": 0.0,
+        "t60": 0.0,
+        "gain": 0.0
+      },
+      "layers": [
+        {
+          "type": "tone",
+          "f": 80,
+          "f_to": 45,
+          "tau": 0.08,
+          "attack": 0.0008,
+          "t60": 0.35,
+          "gain": 1.0,
+          "drive": 1.0,
+          "h2": 0.3,
+          "h3": 0.0
+        },
+        {
+          "type": "noise",
+          "filter": "lp",
+          "f": 700,
+          "q": 0.7,
+          "attack": 0.0003,
+          "t60": 0.12,
+          "gain": 0.5
+        },
+        {
+          "type": "rumble",
+          "lp": 120,
+          "attack": 0.02,
+          "t60": 0.4,
+          "gain": 0.4,
+          "wobble": 0.0,
+          "wobble_hz": 7
+        }
+      ]
+    },
+    "tug.fall": {
+      "rate": 32000,
+      "variants": 1,
+      "drive": 0.6,
+      "peak_db": -5.0,
+      "jitter": {
+        "f": 0.0,
+        "t60": 0.0,
+        "gain": 0.0
+      },
+      "layers": [
+        {
+          "type": "tone",
+          "f": 220,
+          "f_to": 55,
+          "tau": 0.25,
+          "attack": 0.0008,
+          "t60": 0.5,
+          "gain": 1.0,
+          "drive": 0.8,
+          "h2": 0.25,
+          "h3": 0.0
+        },
+        {
+          "type": "rumble",
+          "lp": 200,
+          "attack": 0.02,
+          "t60": 0.6,
+          "gain": 0.5,
+          "wobble": 0.0,
+          "wobble_hz": 7
+        }
+      ]
     }
   }
 }

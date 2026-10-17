@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/art-vehicles",
+  "title": "art-vehicles (version 1)",
+  "description": "data/art/vehicles.json: the city's cars: silhouettes, paints and the wreck (docs/art/cars.md). A shape check inferred from the file (docs/tools/pending/infer-schema.cjs): every key present is required, a key outside is refused unless it starts with an underscore, a number is bounded only below by zero where all its values are, a colour is a hex string; the owner tightens the values. Version field: version. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "version",
+    "note",
+    "vehicles",
+    "paints",
+    "lit",
+    "tyre",
+    "soot",
+    "wreck",
+    "paint_vs_lane_colours"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "note": {
+      "type": "string"
+    },
+    "vehicles": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[A-Za-z0-9].*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "name",
+          "length",
+          "height",
+          "wheel_radius",
+          "hit_box",
+          "mass_class",
+          "throw_tier"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "length": {
+            "type": "number",
+            "minimum": 0
+          },
+          "height": {
+            "type": "number",
+            "minimum": 0
+          },
+          "wheel_radius": {
+            "type": "number",
+            "minimum": 0
+          },
+          "hit_box": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "mass_class": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "throw_tier": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "paints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "body",
+          "dark",
+          "glass"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$"
+          },
+          "dark": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$"
+          },
+          "glass": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$"
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      }
+    },
+    "lit": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$"
+    },
+    "tyre": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$"
+    },
+    "soot": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$"
+    },
+    "wreck": {
+      "type": "object",
+      "required": [
+        "rules",
+        "throw"
+      ],
+      "properties": {
+        "rules": {
+          "type": "string"
+        },
+        "throw": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "paint_vs_lane_colours": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "body",
+          "nearest_lane",
+          "dE00"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$"
+          },
+          "nearest_lane": {
+            "type": "string"
+          },
+          "dE00": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

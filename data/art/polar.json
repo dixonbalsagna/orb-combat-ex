@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "note": "The polar cold palette for World's ice biomes (docs/art/polar-palette.md). Written by art/concepts/world/polar.mjs; do not edit by hand. Ice is two tones, lit and dark, with no mid blue-grey: a mid tone was 12 to 16 from the fighters' auras, under the rule's 20. Proposals pending Legal; Tools adds the schema.",
+  "biomes": {
+    "ice_sheet": {
+      "lit": "#ebe8e2",
+      "dark": "#485765",
+      "rock": "#7e766a",
+      "note": "the south: land under a warm white; slopes that face the light are lit, slopes that face away and crevasses are the slate; rock peaks through in the mountains' tone"
+    },
+    "sea_ice": {
+      "floe_top": "#e3e4e0",
+      "floe_edge": "#485765",
+      "melt_rim": "#5f8aa2",
+      "note": "the north: floes with a warm-white top and a slate edge, a thin rim of meltwater blue where the floe meets the sea"
+    },
+    "iceberg": {
+      "face_lit": "#e6e6e0",
+      "face_dark": "#485765",
+      "under_water": "#3a7893",
+      "note": "a berg is a lit face and a slate face; the part under the waterline, seen through the water, is the only blue"
+    },
+    "polar_water": {
+      "deep": "#1b3f57",
+      "shallow": "#2f6a84",
+      "note": "dark and cold, darker than the temperate sea (the sea owns mid blue): the gaps between floes are the darkest thing in the picture"
+    }
+  },
+  "haze": "distant ice fades to the sky's own horizon colour, as everywhere; no polar sky key is needed, the cold comes from the ground",
+  "measured_over_every_key": {
+    "sheet lit": {
+      "hex": "#ebe8e2",
+      "aura_vs_ground_worst": 22.6,
+      "aura": "protagonist",
+      "aura_at": "noon",
+      "body_vs_ground_worst": 15.9,
+      "body": "protagonist",
+      "body_at": "night"
+    },
+    "slate (dark side)": {
+      "hex": "#485765",
+      "aura_vs_ground_worst": 25.5,
+      "aura": "rival",
+      "aura_at": "noon",
+      "body_vs_ground_worst": 25.2,
+      "body": "protagonist",
+      "body_at": "noon"
+    },
+    "floe top": {
+      "hex": "#e3e4e0",
+      "aura_vs_ground_worst": 20.7,
+      "aura": "protagonist",
+      "aura_at": "noon",
+      "body_vs_ground_worst": 16,
+      "body": "protagonist",
+      "body_at": "night"
+    },
+    "berg lit face": {
+      "hex": "#e6e6e0",
+      "aura_vs_ground_worst": 21.9,
+      "aura": "protagonist",
+      "aura_at": "noon",
+      "body_vs_ground_worst": 16.1,
+      "body": "protagonist",
+      "body_at": "night"
+    }
+  },
+  "rule": "aura against ground 20 or more, body against ground 15 or more (docs/art/dynamic-sky.md section 6), with the world-light ground tint of each key applied"
+}

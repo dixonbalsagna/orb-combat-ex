@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "note": "The polar outposts (docs/art/polar-outposts.md): a research station and a mining camp, buildings only, built from World's existing shapes in the polar palette. Written by art/concepts/world/outposts.mjs; do not edit by hand. Proposals pending Legal; Tools adds the schema.",
+  "tones": {
+    "timber": {
+      "lit": "#8d7d6a",
+      "mid": "#7a6a58",
+      "dark": "#554a40"
+    },
+    "steel": {
+      "lit": "#8a949f",
+      "mid": "#737d88",
+      "dark": "#4f5862"
+    },
+    "roof": "#33302e",
+    "soot": "#2f2a2a",
+    "rock": "#7e766a",
+    "container": "#6e5646",
+    "glass": "#2c3550"
+  },
+  "lit_window": "#f3cf86",
+  "outposts": {
+    "research_station": {
+      "name": "The research station",
+      "size_units": [
+        760,
+        220
+      ],
+      "shapes": {
+        "main_module": "slab on posts",
+        "sleeping_modules": "shed x2",
+        "link": "block",
+        "generator": "block with a chimney",
+        "mast": "mast",
+        "drums": "chimney x5 (octagonal)",
+        "ramp": "a wedge (lean)"
+      },
+      "what": "a small cluster raised on posts above the snow: one long main module, two sleeping modules, a generator house with a stack, an instrument mast and a row of fuel drums, joined by a corridor and a snow ramp. Dark roofs, weathered timber walls, a few steady lit windows.",
+      "parts": 14,
+      "estimate_triangles": 360
+    },
+    "mining_camp": {
+      "name": "The mining camp",
+      "size_units": [
+        900,
+        260
+      ],
+      "shapes": {
+        "headframe": "crane (an A-frame with a wheel)",
+        "bunker": "warehouse",
+        "conveyor": "a lean prism on posts",
+        "stockpile": "stepped block",
+        "containers": "block x3 (two stacked)",
+        "tanks": "chimney x3 (octagonal, short)",
+        "heater": "shed with a chimney"
+      },
+      "what": "a headframe over a shaft, an ore bunker with a conveyor to a stockpile of dark rock, a stack of containers, three fuel tanks and a heater shed with a flue. Steel and rusted-brown containers, soot and rock; the heaps are the darkest, biggest shapes on the white.",
+      "parts": 16,
+      "estimate_triangles": 420
+    }
+  },
+  "measured_against_the_ice_dE00": {
+    "timber_mid": {
+      "vs_white_every_key": 14.6,
+      "vs_slate_by_day": 17.1,
+      "vs_slate_at_night": 6.3
+    },
+    "steel_mid": {
+      "vs_white_every_key": 11.4,
+      "vs_slate_by_day": 11.5,
+      "vs_slate_at_night": 5.1
+    },
+    "roof": {
+      "vs_white_every_key": 19,
+      "vs_slate_by_day": 10.7,
+      "vs_slate_at_night": 3.6
+    },
+    "container": {
+      "vs_white_every_key": 16.5,
+      "vs_slate_by_day": 17.3,
+      "vs_slate_at_night": 5.4
+    },
+    "rock": {
+      "vs_white_every_key": 13,
+      "vs_slate_by_day": 16.1,
+      "vs_slate_at_night": 5.8
+    }
+  },
+  "measured_note": "against the warm white at every key; against the slate at every key but night. At night everything is dark and a dark building on slate ground is dark on dark: it stands against the sky, not the ground."
+}

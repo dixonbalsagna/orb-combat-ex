@@ -18,6 +18,7 @@ var played: int = 0
 var dropped: int = 0
 var _pool: Array = []          # AudioStreamPlayer2D
 var _meta: Array = []          # per player: {priority, group, t}
+var _tweens: Array = []        # per player: the tween moving a looped voice, or null
 var _listener: AudioListener2D
 var _clock: float = 0.0
 var _duck: Dictionary = {}     # bus name -> {db, until}: a bus held down for a moment by a cue
@@ -42,6 +43,7 @@ func _ready() -> void:
 		add_child(p)
 		_pool.append(p)
 		_meta.append({"priority": -1, "group": "", "t": -1.0, "cls": ""})
+		_tweens.append(null)
 
 
 func _process(delta: float) -> void:
@@ -114,6 +116,8 @@ func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:
 	if cue.sound == "" and cue.stop_group != "":
 		return stop_group(cue.stop_group, cue.fade_ms)
 	var dx: float = SimWrap.sdx(cam_x, cue.x)
+	if cue.update:
+		return update_group(cue.group, cue.gain_db + distance_db(absf(dx)), cue.pitch, cue.ramp_ms, dx * zoom)
 	var dist: float = absf(dx)
 	if dist >= float(mix.space.max_distance):
 		dropped += 1
@@ -124,7 +128,8 @@ func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:
 		return false
 	var p: AudioStreamPlayer2D = _pool[slot]
 	p.stop()
-	p.stream = bank.stream(cue.sound, cue.variant)
+	_kill_tween(slot)
+	p.stream = _looped(bank.stream(cue.sound, cue.variant)) if cue.loop else bank.stream(cue.sound, cue.variant)
 	p.volume_db = cue.gain_db + distance_db(dist)
 	p.pitch_scale = cue.pitch
 	p.bus = cue.bus
@@ -137,6 +142,45 @@ func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:
 		_hold_down(String(d.bus), float(d.db), int(d.ms))
 	played += 1
 	return true
+
+
+## A copy of a stream that loops from its first sample to its last (the bank keeps the one-shot).
+func _looped(src: AudioStreamWAV) -> AudioStreamWAV:
+	var w: AudioStreamWAV = src.duplicate()
+	w.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	w.loop_begin = 0
+	w.loop_end = w.data.size() / 2          # 16-bit mono
+	return w
+
+
+func _kill_tween(slot: int) -> void:
+	if _tweens[slot] != null:
+		_tweens[slot].kill()
+		_tweens[slot] = null
+
+
+## Move the voices playing in a group to a new level, pitch and place over ramp_ms (the beam struggle's bed follows the
+## meeting point). gain is the final level (distance included); x_offset the camera-relative place. True if one was playing.
+func update_group(group: String, volume_db: float, pitch: float, ramp_ms: int, x_offset: float) -> bool:
+	var found: bool = false
+	for i in range(_pool.size()):
+		if _pool[i].playing and _meta[i].group == group:
+			found = true
+			var p: AudioStreamPlayer2D = _pool[i]
+			_kill_tween(i)
+			if ramp_ms <= 0:
+				p.volume_db = volume_db
+				p.pitch_scale = pitch
+				p.position = Vector2(x_offset, 0.0)
+			else:
+				var tw: Tween = create_tween()
+				tw.set_parallel(true)
+				var t: float = float(ramp_ms) * 0.001
+				tw.tween_property(p, "volume_db", volume_db, t)
+				tw.tween_property(p, "pitch_scale", pitch, t)
+				tw.tween_property(p, "position", Vector2(x_offset, 0.0), t)
+				_tweens[i] = tw
+	return found
 
 
 ## Which pool slot a cue may use: its own group's voice, then a free one, then the weakest voice it outranks.

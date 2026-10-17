@@ -4,6 +4,8 @@ Owner: Audio and Music. Answers the EP's brief on the eleventh round (`docs/desi
 
 **Applied 2026-10-16 (the EP's go): the ping change alone.** `ui.launcher` is now the §1.1 recipe (the proposal's `ui.launcher.v2`, in place under the same id so every reference keeps working), at gain +1 dB; `tone_check` limits it (900 Hz heard, 3% over 2 kHz) and `beat_check` gates its audibility (at least 9 dB over the stand-in music with the duck). The rest of this page is still paper.
 
+**Built 2026-10-16 (the EP's go), parked:** the live looped voice (`AudioVoices`: `Cue.loop`, `Cue.update`, `update_group`), `DroneSynth`, the five-cue mapper `audio/audio_tug.gd` and its data `audio/data/tug_cues.json` (`"enabled": false`), the four `tug.*` recipes, and `audio/tools/tug_check.gd`. Switch it on by setting `enabled` to true when Encounter's window is on main. The point is read from `S.game.clash.mid` (Simulation's field, read-only) and, if that is -1, from the `amount` a cue carries; with `enabled` false audio is byte-for-byte what it was (`host_check`: cue logs and sim hashes identical).
+
 **To hear a sketch:** `docs/audio/proposed/launch-and-tug-sketch.wav` (13.7 s, over the 180 BPM stand-in loop): the launcher's ping as it is now, then the proposed one; a beam struggle that ends overwhelmed; a struggle that ends on time and detonates. It is mixed offline in a scratch script, because the struggle's bed needs a runtime capability that does not exist yet (§2.5). Recipes: `docs/audio/proposed/launch-and-tug-recipes.json`.
 
 ## 1. The launch opens: the ping and the pad's pulse

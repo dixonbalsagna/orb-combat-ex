@@ -11,10 +11,14 @@ const IMPACTS_PATH := "res://audio/data/impacts.json"
 const GRUNTS_PATH := "res://audio/data/grunts.json"
 const FLASH_PATH := "res://audio/data/flash_cues.json"
 const BABBLE_PATH := "res://audio/data/babble.json"
+const TUG_PATH := "res://audio/data/tug_cues.json"
+const CUES_PATH := "res://audio/data/cues.json"
 
 var impacts: Dictionary = {}
 var grunts: Dictionary = {}
 var babble: Dictionary = {}       # babble.json: the babble voice (syllable bank, moods, timeline)
+var drones: Dictionary = {}       # tug_cues.json `drones`: seamless loops (ids drone.<name>); not part of ids()
+var _tug_on: bool = false       # tug_cues.json `enabled`: the drones are warmed only when the struggle is switched on
 var flashes: Dictionary = {}      # flash_cues.json: the 12 head-flash cues and the four sound families
 var _cache: Dictionary = {}       # "id#variant" -> AudioStreamWAV
 var render_ms: Dictionary = {}    # "id#variant" -> milliseconds it took to render
@@ -26,6 +30,9 @@ func _init() -> void:
 	grunts = load_json(GRUNTS_PATH)
 	flashes = load_json(FLASH_PATH)
 	babble = load_json(BABBLE_PATH)
+	var tug: Dictionary = load_json(TUG_PATH)
+	drones = tug.get("drones", {})
+	_tug_on = bool(tug.get("enabled", false))
 
 
 static func load_json(path: String) -> Dictionary:
@@ -56,6 +63,10 @@ func babble_ids(voices: Array = []) -> Array:
 			for syl in babble.voices[v].lexicon:
 				out.append("babble.%s.%s.%s" % [v, tm, syl])
 		out.append("babble.%s.laugh" % v)
+		if babble.voices[v].has("laugh_boom"):
+			out.append("babble.%s.laugh_boom" % v)
+		if babble.voices[v].has("blip"):
+			out.append("babble.%s.blip" % v)
 	return out
 
 
@@ -97,10 +108,14 @@ func buffer(id: String, variant: int) -> PackedFloat32Array:
 	if r.is_empty():
 		return PackedFloat32Array()
 	var v: int = posmod(variant, variants(id))
+	if id.begins_with("drone."):
+		return DroneSynth.render(r)
 	if id.begins_with("babble."):
 		var bp: PackedStringArray = id.split(".")
 		if bp.size() == 3:
-			return BabbleSynth.laugh(babble, bp[1], v)
+			if bp[2] == "blip":
+				return BabbleSynth.blip(babble, bp[1])
+			return BabbleSynth.laugh(babble, bp[1], v, bp[2] == "laugh_boom")
 		return BabbleSynth.render(id, babble)
 	if id.begins_with("flash."):
 		var p: PackedStringArray = id.split(".")
@@ -111,6 +126,8 @@ func buffer(id: String, variant: int) -> PackedFloat32Array:
 
 
 func rate_of(id: String) -> int:
+	if id.begins_with("drone."):
+		return int(_recipe(id).get("rate", 32000))
 	if id.begins_with("babble."):
 		return int(babble.get("rate", 12000))
 	if id.begins_with("flash."):
@@ -135,12 +152,39 @@ func stream(id: String, variant: int) -> AudioStreamWAV:
 	return w
 
 
+## The voices of the roster (cues.json `fighters`): the head-flash families and the babble are warmed for these.
+func roster_voices() -> Array:
+	var out: Array = []
+	var f: Dictionary = load_json(CUES_PATH).get("fighters", {})
+	for k in f:
+		if not (String(f[k]) in out):
+			out.append(String(f[k]))
+	return out
+
+
+## The sounds a match can play that are not in ids(): the head flashes of the roster's voices (one family each), every
+## voice's babble, and the beam struggle's drones when it is switched on. First play of any of these used to render it
+## in the middle of a fight (7 to 23 ms).
+func extra_ids() -> Array:
+	var out: Array = []
+	out.append_array(flash_ids(roster_voices()))
+	out.append_array(babble_ids())
+	if _tug_on:
+		for k in drones:
+			out.append("drone." + String(k))
+	return out
+
+
 ## Render every variant now, so nothing is rendered in the middle of a fight. Returns the milliseconds taken.
-func warm() -> float:
+func warm(with_extras: bool = true) -> float:
 	var t0: int = Time.get_ticks_usec()
 	for id in ids():
 		for v in range(variants(id)):
 			stream(id, v)
+	if with_extras:
+		for id in extra_ids():
+			for v in range(variants(id)):
+				stream(id, v)
 	return (Time.get_ticks_usec() - t0) / 1000.0
 
 
@@ -173,12 +217,21 @@ func warm_step() -> bool:
 
 ## The recipe for an id, or an empty dictionary.
 func _recipe(id: String) -> Dictionary:
+	if id.begins_with("drone."):
+		return drones.get(id.substr(6), {})
 	if id.begins_with("babble."):
 		var b: PackedStringArray = id.split(".")
 		if b.size() < 3 or not babble.get("voices", {}).has(b[1]):
 			return {}
 		if b.size() == 3:
-			return {"variants": int(babble.voices[b[1]].laugh.variants)} if b[2] == "laugh" else {}
+			var bv: Dictionary = babble.voices[b[1]]
+			if b[2] == "laugh":
+				return {"variants": int(bv.laugh.variants)}
+			if b[2] == "laugh_boom" and bv.has("laugh_boom"):
+				return {"variants": int(bv.laugh_boom.variants)}
+			if b[2] == "blip" and bv.has("blip"):
+				return {"variants": 1}
+			return {}
 		if b.size() == 4 and babble.timbres.has(b[2]) and babble.syllables.has(b[3]):
 			return {"variants": 1}
 		return {}

@@ -32,6 +32,9 @@ class Cue:
 	var duck: Array = []         # [{bus, db, ms}]: drop these buses for a moment while this cue sounds (the launcher's ping)
 	var stop_group: String = ""  # a stop request, not a sound: fade out the voice in this group
 	var fade_ms: int = 40
+	var loop: bool = false       # a looped voice (the beam struggle's bed): it keeps sounding until a stop request
+	var update: bool = false     # not a new sound: move the looped voice in `group` to this gain, pitch and place over ramp_ms
+	var ramp_ms: int = 100
 
 
 var cfg: Dictionary = {}
@@ -40,12 +43,14 @@ var _rng: SimRng
 var _last_variant: Dictionary = {}    # sound id -> the variant played last
 var _last_grunt: Dictionary = {}      # "fighter.gesture" -> sim time it last fired
 var brawl: AudioBrawl                 # the brawl's cues (audio_brawl.gd)
+var tug: AudioTug                     # the beam struggle's (audio_tug.gd), parked behind data/tug_cues.json `enabled`
 
 
 func _init(p_bank: AudioBank = null) -> void:
 	cfg = AudioBank.load_json(CUES_PATH)
 	bank = p_bank if p_bank != null else AudioBank.new()
 	brawl = AudioBrawl.new(self)
+	tug = AudioTug.new(self)
 	reset(1)
 
 
@@ -55,6 +60,7 @@ func reset(p_seed: int) -> void:
 	_last_variant.clear()
 	_last_grunt.clear()
 	brawl.reset()
+	tug.reset()
 
 
 ## One tick's events, in order. Returns the cues to play.
@@ -67,6 +73,7 @@ func consume(S: SimState, events: Array) -> Array:
 				_damage(S, e, out)
 			"cue":
 				brawl.on_cue(S, e, out)
+				tug.on_cue(S, e, out)
 			"crater":
 				_crater(S, e, out)
 			"flash":
@@ -75,6 +82,7 @@ func consume(S: SimState, events: Array) -> Array:
 					var c: Cue = flash(S, int(e.get("actor")), String(e.get("id")))
 					if c != null:
 						out.append(c)
+	tug.after(S, out)
 	return out
 
 

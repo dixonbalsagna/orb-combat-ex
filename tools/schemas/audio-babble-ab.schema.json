@@ -1,0 +1,545 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/audio-babble-ab",
+  "title": "audio-babble-ab (schema 1)",
+  "description": "audio/data/babble_ab.json: the A/B voices for the babble comparison (docs/audio). A shape check inferred from the file (docs/tools/pending/infer-schema.cjs): every key present is required, a key outside is refused unless it starts with an underscore, a number is bounded only below by zero where all its values are, a colour is a hex string; the owner tightens the values. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "note",
+    "syllables",
+    "voices",
+    "reels",
+    "seed"
+  ],
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "note": {
+      "type": "string"
+    },
+    "syllables": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[A-Za-z0-9].*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "onset",
+          "vowel",
+          "fry",
+          "f0_mul"
+        ],
+        "properties": {
+          "onset": {
+            "type": "string"
+          },
+          "vowel": {
+            "type": "string"
+          },
+          "fry": {
+            "type": "number",
+            "minimum": 0
+          },
+          "f0_mul": {
+            "type": "number",
+            "minimum": 0
+          },
+          "open_mul": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "voices": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[A-Za-z0-9].*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "label",
+          "ref_f0",
+          "formant_k",
+          "syl_ms",
+          "min_gap",
+          "open",
+          "breath",
+          "jitter",
+          "shimmer",
+          "drive",
+          "crush_bits",
+          "hold",
+          "stutter",
+          "lexicon",
+          "laugh",
+          "chars_per_syl",
+          "jitter_add_st"
+        ],
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "ref_f0": {
+            "type": "number",
+            "minimum": 0
+          },
+          "formant_k": {
+            "type": "number",
+            "minimum": 0
+          },
+          "syl_ms": {
+            "type": "number",
+            "minimum": 0
+          },
+          "min_gap": {
+            "type": "number",
+            "minimum": 0
+          },
+          "open": {
+            "type": "number",
+            "minimum": 0
+          },
+          "breath": {
+            "type": "number",
+            "minimum": 0
+          },
+          "jitter": {
+            "type": "number",
+            "minimum": 0
+          },
+          "shimmer": {
+            "type": "number",
+            "minimum": 0
+          },
+          "drive": {
+            "type": "number",
+            "minimum": 0
+          },
+          "crush_bits": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "hold": {
+            "type": "number",
+            "minimum": 0
+          },
+          "stutter": {
+            "type": "boolean"
+          },
+          "lexicon": {
+            "type": "object",
+            "minProperties": 1,
+            "propertyNames": {
+              "pattern": "^(_.*|[A-Za-z0-9].*)$"
+            },
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "laugh": {
+            "type": "object",
+            "required": [
+              "pulses",
+              "f0",
+              "spacing",
+              "pulse_ms",
+              "decay",
+              "breath",
+              "step_st",
+              "variants"
+            ],
+            "properties": {
+              "pulses": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "f0": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "spacing": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "pulse_ms": {
+                "type": "number",
+                "minimum": 0
+              },
+              "decay": {
+                "type": "number",
+                "minimum": 0
+              },
+              "breath": {
+                "type": "number",
+                "minimum": 0
+              },
+              "step_st": {
+                "type": "number"
+              },
+              "variants": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "chars_per_syl": {
+            "type": "number",
+            "minimum": 0
+          },
+          "jitter_add_st": {
+            "type": "number"
+          },
+          "gain_jit_db": {
+            "type": "number"
+          },
+          "period_fall": {
+            "type": "number",
+            "minimum": 0
+          },
+          "chorus": {
+            "type": "object",
+            "required": [
+              "detune_st",
+              "wet",
+              "delay_ms",
+              "reflect_ms",
+              "reflect_gain"
+            ],
+            "properties": {
+              "detune_st": {
+                "type": "number"
+              },
+              "wet": {
+                "type": "number",
+                "minimum": 0
+              },
+              "delay_ms": {
+                "type": "number",
+                "minimum": 0
+              },
+              "reflect_ms": {
+                "type": "number",
+                "minimum": 0
+              },
+              "reflect_gain": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "laugh_boom": {
+            "type": "object",
+            "required": [
+              "pulses",
+              "f0",
+              "spacing",
+              "pulse_ms",
+              "decay",
+              "breath",
+              "step_st",
+              "variants",
+              "formant_k"
+            ],
+            "properties": {
+              "pulses": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "f0": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "spacing": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "pulse_ms": {
+                "type": "number",
+                "minimum": 0
+              },
+              "decay": {
+                "type": "number",
+                "minimum": 0
+              },
+              "breath": {
+                "type": "number",
+                "minimum": 0
+              },
+              "step_st": {
+                "type": "number"
+              },
+              "variants": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "formant_k": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "gap_pattern": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "comb": {
+            "type": "object",
+            "required": [
+              "delay_ms",
+              "feedback"
+            ],
+            "properties": {
+              "delay_ms": {
+                "type": "number",
+                "minimum": 0
+              },
+              "feedback": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "blip": {
+            "type": "object",
+            "required": [
+              "f",
+              "ms",
+              "bits",
+              "hold",
+              "p",
+              "at",
+              "notes_st",
+              "gain_db"
+            ],
+            "properties": {
+              "f": {
+                "type": "number",
+                "minimum": 0
+              },
+              "ms": {
+                "type": "number",
+                "minimum": 0
+              },
+              "bits": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "hold": {
+                "type": "number",
+                "minimum": 0
+              },
+              "p": {
+                "type": "number",
+                "minimum": 0
+              },
+              "at": {
+                "type": "number",
+                "minimum": 0
+              },
+              "notes_st": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              },
+              "gain_db": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "reels": {
+      "type": "object",
+      "required": [
+        "protagonist",
+        "anti_hero",
+        "empress",
+        "cyborg"
+      ],
+      "properties": {
+        "protagonist": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "caption"
+            ],
+            "properties": {
+              "caption": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "anti_hero": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "caption"
+            ],
+            "properties": {
+              "caption": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "empress": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [],
+            "properties": {
+              "caption": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "text": {
+                "type": "string"
+              },
+              "mood": {
+                "type": "string"
+              },
+              "intensity": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "cyborg": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "text",
+              "mood",
+              "intensity"
+            ],
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "mood": {
+                "type": "string"
+              },
+              "intensity": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "seed": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

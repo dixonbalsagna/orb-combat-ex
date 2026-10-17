@@ -499,12 +499,13 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
     const MO = 'data/anim/ragdoll_motion.json';
     const dofs = isObj(rgd) && Array.isArray(rgd.dofs) ? rgd.dofs.filter(isObj) : [];
     const n = dofs.length;
-    const len = (arr, pointer, what) => { if (n && Array.isArray(arr) && arr.length !== n) err(MO, pointer, 'ragdoll-motion-dofs', `${what} has ${arr.length} numbers but ragdoll.json has ${n} dofs`); };
+    const nShape = dofs.filter((d) => !d.oop).length;   // the shapes' numbers are for the in-plane degrees of freedom only: an out-of-plane one (oop) has none
+    const len = (arr, pointer, what, want = n) => { if (want && Array.isArray(arr) && arr.length !== want) err(MO, pointer, 'ragdoll-motion-dofs', `${what} has ${arr.length} numbers but ragdoll.json has ${want} ${want === n ? 'dofs' : 'in-plane dofs'}`); };
     if (isObj(motion.shapes)) for (const [sk, sh] of Object.entries(motion.shapes)) {
       if (sk.startsWith('_') || !isObj(sh)) continue;
       for (const set of ['tuck', 'brace', 'skid', 'crumple']) {
-        len(sh[set], `/shapes/${esc(sk)}/${set}`, `shape ${sk} ${set}`);
-        if (n && Array.isArray(sh[set]) && sh[set].length === n) sh[set].forEach((a, i) => { const d = dofs[i]; if (typeof a === 'number' && typeof d.lo === 'number' && typeof d.hi === 'number' && (a < d.lo - 1e-9 || a > d.hi + 1e-9)) err(MO, `/shapes/${esc(sk)}/${set}/${i}`, 'ragdoll-motion-limits', `shape ${sk} ${set} for ${d.id} is ${a}, outside its limits ${d.lo} to ${d.hi}`, 'warning'); });
+        len(sh[set], `/shapes/${esc(sk)}/${set}`, `shape ${sk} ${set}`, nShape);
+        if (n && Array.isArray(sh[set]) && sh[set].length === nShape) sh[set].forEach((a, i) => { const d = dofs[i]; if (typeof a === 'number' && typeof d.lo === 'number' && typeof d.hi === 'number' && (a < d.lo - 1e-9 || a > d.hi + 1e-9)) err(MO, `/shapes/${esc(sk)}/${set}/${i}`, 'ragdoll-motion-limits', `shape ${sk} ${set} for ${d.id} is ${a}, outside its limits ${d.lo} to ${d.hi}`, 'warning'); });
       }
     }
     if (isObj(motion.flail)) { len(motion.flail.amp, '/flail/amp', 'flail amp'); len(motion.flail.hz, '/flail/hz', 'flail hz'); }

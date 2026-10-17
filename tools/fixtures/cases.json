@@ -12869,7 +12869,7 @@
             "/dofs/0": {
               "id": "head",
               "bone": "head",
-              "axis": "y",
+              "axis": "w",
               "beta": 0,
               "k_stiff": 100,
               "k_loose": 20,
@@ -183823,7 +183823,7 @@
       "expect": null
     },
     {
-      "id": "director-interrupts-brawlc2-launcher-rests-required",
+      "id": "director-interrupts-brawlc2-launcher-rests-retired-optional",
       "schema": "director-interrupts.schema.json",
       "mutate": [
         {
@@ -184032,10 +184032,7 @@
           }
         }
       ],
-      "expect": {
-        "rule": "required",
-        "pointer": "/brawl/launcher"
-      }
+      "expect": null
     },
     {
       "id": "director-interrupts-brawlc2-launcher-rests-negative",
@@ -281384,6 +281381,38 @@
       }
     },
     {
+      "id": "art-city-looks-neighbours-stated-figure-wrong",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/looks/downtown/0/_neighbours/max_difference_between_any_two_tones": 0.01
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:city-looks-neighbours",
+        "pointer": "/looks/downtown/0/_neighbours/max_difference_between_any_two_tones"
+      }
+    },
+    {
+      "id": "art-city-looks-neighbours-fin-too-bright",
+      "schema": "art-city-looks.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/city-looks.json",
+          "set": {
+            "/looks/downtown/0/fin": "#ffffff"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:city-looks-neighbours",
+        "pointer": "/looks/downtown/0"
+      }
+    },
+    {
       "id": "anim-joints-slew-ok",
       "schema": "anim-joints.schema.json",
       "mutate": [
@@ -282277,6 +282306,4808 @@
       "expect": {
         "rule": "xref:depth-line-order",
         "pointer": "/director/lineSinMin"
+      }
+    },
+    {
+      "id": "art-polar-valid",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/version": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-polar-key-required-version",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "del": [
+            "/version"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-polar-key-required-note",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "del": [
+            "/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-polar-key-required-biomes",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "del": [
+            "/biomes"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-polar-key-required-haze",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "del": [
+            "/haze"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-polar-key-required-measured-over-every-key",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "del": [
+            "/measured_over_every_key"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-polar-key-required-rule",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "del": [
+            "/rule"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-polar-unknown-key",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "art-polar-underscore-key-ok",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-polar-version-wrong",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/version": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/version"
+      }
+    },
+    {
+      "id": "art-polar-type-note",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/note": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/note"
+      }
+    },
+    {
+      "id": "art-polar-unknown-key-biomes",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/biomes/extra"
+      }
+    },
+    {
+      "id": "art-polar-unknown-key-biomes-ice-sheet",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/ice_sheet/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/biomes/ice_sheet/extra"
+      }
+    },
+    {
+      "id": "art-polar-type-biomes-ice-sheet-lit",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/ice_sheet/lit": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/biomes/ice_sheet/lit"
+      }
+    },
+    {
+      "id": "art-polar-type-biomes-ice-sheet-dark",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/ice_sheet/dark": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/biomes/ice_sheet/dark"
+      }
+    },
+    {
+      "id": "art-polar-type-biomes-ice-sheet-rock",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/ice_sheet/rock": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/biomes/ice_sheet/rock"
+      }
+    },
+    {
+      "id": "art-polar-type-biomes-ice-sheet-note",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/ice_sheet/note": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/biomes/ice_sheet/note"
+      }
+    },
+    {
+      "id": "art-polar-unknown-key-biomes-sea-ice",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/sea_ice/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/biomes/sea_ice/extra"
+      }
+    },
+    {
+      "id": "art-polar-type-biomes-sea-ice-floe-top",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/sea_ice/floe_top": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/biomes/sea_ice/floe_top"
+      }
+    },
+    {
+      "id": "art-polar-type-biomes-sea-ice-floe-edge",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/sea_ice/floe_edge": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/biomes/sea_ice/floe_edge"
+      }
+    },
+    {
+      "id": "art-polar-type-biomes-sea-ice-melt-rim",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/sea_ice/melt_rim": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/biomes/sea_ice/melt_rim"
+      }
+    },
+    {
+      "id": "art-polar-type-biomes-sea-ice-note",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/sea_ice/note": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/biomes/sea_ice/note"
+      }
+    },
+    {
+      "id": "art-polar-unknown-key-biomes-iceberg",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/iceberg/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/biomes/iceberg/extra"
+      }
+    },
+    {
+      "id": "art-polar-type-biomes-iceberg-face-lit",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/iceberg/face_lit": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/biomes/iceberg/face_lit"
+      }
+    },
+    {
+      "id": "art-polar-type-biomes-iceberg-face-dark",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/iceberg/face_dark": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/biomes/iceberg/face_dark"
+      }
+    },
+    {
+      "id": "art-polar-type-biomes-iceberg-under-water",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/iceberg/under_water": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/biomes/iceberg/under_water"
+      }
+    },
+    {
+      "id": "art-polar-type-biomes-iceberg-note",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/iceberg/note": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/biomes/iceberg/note"
+      }
+    },
+    {
+      "id": "art-polar-unknown-key-biomes-polar-water",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/polar_water/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/biomes/polar_water/extra"
+      }
+    },
+    {
+      "id": "art-polar-type-biomes-polar-water-deep",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/polar_water/deep": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/biomes/polar_water/deep"
+      }
+    },
+    {
+      "id": "art-polar-type-biomes-polar-water-shallow",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/polar_water/shallow": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/biomes/polar_water/shallow"
+      }
+    },
+    {
+      "id": "art-polar-type-biomes-polar-water-note",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/biomes/polar_water/note": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/biomes/polar_water/note"
+      }
+    },
+    {
+      "id": "art-polar-type-haze",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/haze": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/haze"
+      }
+    },
+    {
+      "id": "art-polar-unknown-key-measured-over-every-key-sheet-lit",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/measured_over_every_key/sheet lit/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/measured_over_every_key/sheet lit/extra"
+      }
+    },
+    {
+      "id": "art-polar-type-measured-over-every-key-sheet-lit-hex",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/measured_over_every_key/sheet lit/hex": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/measured_over_every_key/sheet lit/hex"
+      }
+    },
+    {
+      "id": "art-polar-type-measured-over-every-key-sheet-lit-aura-vs-ground-worst",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/measured_over_every_key/sheet lit/aura_vs_ground_worst": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/measured_over_every_key/sheet lit/aura_vs_ground_worst"
+      }
+    },
+    {
+      "id": "art-polar-type-measured-over-every-key-sheet-lit-aura",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/measured_over_every_key/sheet lit/aura": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/measured_over_every_key/sheet lit/aura"
+      }
+    },
+    {
+      "id": "art-polar-type-measured-over-every-key-sheet-lit-aura-at",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/measured_over_every_key/sheet lit/aura_at": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/measured_over_every_key/sheet lit/aura_at"
+      }
+    },
+    {
+      "id": "art-polar-type-measured-over-every-key-sheet-lit-body-vs-ground-worst",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/measured_over_every_key/sheet lit/body_vs_ground_worst": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/measured_over_every_key/sheet lit/body_vs_ground_worst"
+      }
+    },
+    {
+      "id": "art-polar-type-measured-over-every-key-sheet-lit-body",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/measured_over_every_key/sheet lit/body": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/measured_over_every_key/sheet lit/body"
+      }
+    },
+    {
+      "id": "art-polar-type-measured-over-every-key-sheet-lit-body-at",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/measured_over_every_key/sheet lit/body_at": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/measured_over_every_key/sheet lit/body_at"
+      }
+    },
+    {
+      "id": "art-polar-type-rule",
+      "schema": "art-polar.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/polar.json",
+          "set": {
+            "/rule": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rule"
+      }
+    },
+    {
+      "id": "art-outposts-valid",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/version": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-outposts-key-required-version",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "del": [
+            "/version"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-outposts-key-required-note",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "del": [
+            "/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-outposts-key-required-tones",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "del": [
+            "/tones"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-outposts-key-required-lit-window",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "del": [
+            "/lit_window"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-outposts-key-required-outposts",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "del": [
+            "/outposts"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-outposts-key-required-measured-against-the-ice-de00",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "del": [
+            "/measured_against_the_ice_dE00"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-outposts-key-required-measured-note",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "del": [
+            "/measured_note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-outposts-unknown-key",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "art-outposts-underscore-key-ok",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-outposts-version-wrong",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/version": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/version"
+      }
+    },
+    {
+      "id": "art-outposts-type-note",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/note": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/note"
+      }
+    },
+    {
+      "id": "art-outposts-unknown-key-tones",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/tones/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/tones/extra"
+      }
+    },
+    {
+      "id": "art-outposts-unknown-key-tones-timber",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/tones/timber/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/tones/timber/extra"
+      }
+    },
+    {
+      "id": "art-outposts-type-tones-timber-lit",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/tones/timber/lit": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/tones/timber/lit"
+      }
+    },
+    {
+      "id": "art-outposts-type-tones-timber-mid",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/tones/timber/mid": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/tones/timber/mid"
+      }
+    },
+    {
+      "id": "art-outposts-type-tones-timber-dark",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/tones/timber/dark": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/tones/timber/dark"
+      }
+    },
+    {
+      "id": "art-outposts-unknown-key-tones-steel",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/tones/steel/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/tones/steel/extra"
+      }
+    },
+    {
+      "id": "art-outposts-type-tones-steel-lit",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/tones/steel/lit": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/tones/steel/lit"
+      }
+    },
+    {
+      "id": "art-outposts-type-tones-steel-mid",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/tones/steel/mid": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/tones/steel/mid"
+      }
+    },
+    {
+      "id": "art-outposts-type-tones-steel-dark",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/tones/steel/dark": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/tones/steel/dark"
+      }
+    },
+    {
+      "id": "art-outposts-type-tones-roof",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/tones/roof": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/tones/roof"
+      }
+    },
+    {
+      "id": "art-outposts-type-tones-soot",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/tones/soot": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/tones/soot"
+      }
+    },
+    {
+      "id": "art-outposts-type-tones-rock",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/tones/rock": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/tones/rock"
+      }
+    },
+    {
+      "id": "art-outposts-type-tones-container",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/tones/container": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/tones/container"
+      }
+    },
+    {
+      "id": "art-outposts-type-tones-glass",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/tones/glass": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/tones/glass"
+      }
+    },
+    {
+      "id": "art-outposts-type-lit-window",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/lit_window": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lit_window"
+      }
+    },
+    {
+      "id": "art-outposts-unknown-key-outposts-research-station",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/outposts/research_station/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/outposts/research_station/extra"
+      }
+    },
+    {
+      "id": "art-outposts-type-outposts-research-station-name",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/outposts/research_station/name": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/outposts/research_station/name"
+      }
+    },
+    {
+      "id": "art-outposts-unknown-key-outposts-research-station-shapes",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/outposts/research_station/shapes/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/outposts/research_station/shapes/extra"
+      }
+    },
+    {
+      "id": "art-outposts-type-outposts-research-station-shapes-main-module",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/outposts/research_station/shapes/main_module": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/outposts/research_station/shapes/main_module"
+      }
+    },
+    {
+      "id": "art-outposts-type-outposts-research-station-shapes-sleeping-modules",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/outposts/research_station/shapes/sleeping_modules": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/outposts/research_station/shapes/sleeping_modules"
+      }
+    },
+    {
+      "id": "art-outposts-type-outposts-research-station-shapes-link",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/outposts/research_station/shapes/link": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/outposts/research_station/shapes/link"
+      }
+    },
+    {
+      "id": "art-outposts-type-outposts-research-station-shapes-generator",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/outposts/research_station/shapes/generator": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/outposts/research_station/shapes/generator"
+      }
+    },
+    {
+      "id": "art-outposts-type-outposts-research-station-shapes-mast",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/outposts/research_station/shapes/mast": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/outposts/research_station/shapes/mast"
+      }
+    },
+    {
+      "id": "art-outposts-type-outposts-research-station-shapes-drums",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/outposts/research_station/shapes/drums": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/outposts/research_station/shapes/drums"
+      }
+    },
+    {
+      "id": "art-outposts-type-outposts-research-station-shapes-ramp",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/outposts/research_station/shapes/ramp": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/outposts/research_station/shapes/ramp"
+      }
+    },
+    {
+      "id": "art-outposts-type-outposts-research-station-what",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/outposts/research_station/what": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/outposts/research_station/what"
+      }
+    },
+    {
+      "id": "art-outposts-type-outposts-research-station-parts",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/outposts/research_station/parts": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/outposts/research_station/parts"
+      }
+    },
+    {
+      "id": "art-outposts-negative-outposts-research-station-parts",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/outposts/research_station/parts": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/outposts/research_station/parts"
+      }
+    },
+    {
+      "id": "art-outposts-type-outposts-research-station-estimate-triangles",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/outposts/research_station/estimate_triangles": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/outposts/research_station/estimate_triangles"
+      }
+    },
+    {
+      "id": "art-outposts-negative-outposts-research-station-estimate-triangles",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/outposts/research_station/estimate_triangles": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/outposts/research_station/estimate_triangles"
+      }
+    },
+    {
+      "id": "art-outposts-unknown-key-measured-against-the-ice-de00-timber-mid",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/measured_against_the_ice_dE00/timber_mid/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/measured_against_the_ice_dE00/timber_mid/extra"
+      }
+    },
+    {
+      "id": "art-outposts-type-measured-against-the-ice-de00-timber-mid-vs-white-every-key",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/measured_against_the_ice_dE00/timber_mid/vs_white_every_key": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/measured_against_the_ice_dE00/timber_mid/vs_white_every_key"
+      }
+    },
+    {
+      "id": "art-outposts-negative-measured-against-the-ice-de00-timber-mid-vs-white-every-key",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/measured_against_the_ice_dE00/timber_mid/vs_white_every_key": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/measured_against_the_ice_dE00/timber_mid/vs_white_every_key"
+      }
+    },
+    {
+      "id": "art-outposts-type-measured-against-the-ice-de00-timber-mid-vs-slate-by-day",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/measured_against_the_ice_dE00/timber_mid/vs_slate_by_day": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/measured_against_the_ice_dE00/timber_mid/vs_slate_by_day"
+      }
+    },
+    {
+      "id": "art-outposts-negative-measured-against-the-ice-de00-timber-mid-vs-slate-by-day",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/measured_against_the_ice_dE00/timber_mid/vs_slate_by_day": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/measured_against_the_ice_dE00/timber_mid/vs_slate_by_day"
+      }
+    },
+    {
+      "id": "art-outposts-type-measured-against-the-ice-de00-timber-mid-vs-slate-at-night",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/measured_against_the_ice_dE00/timber_mid/vs_slate_at_night": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/measured_against_the_ice_dE00/timber_mid/vs_slate_at_night"
+      }
+    },
+    {
+      "id": "art-outposts-negative-measured-against-the-ice-de00-timber-mid-vs-slate-at-night",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/measured_against_the_ice_dE00/timber_mid/vs_slate_at_night": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/measured_against_the_ice_dE00/timber_mid/vs_slate_at_night"
+      }
+    },
+    {
+      "id": "art-outposts-type-measured-note",
+      "schema": "art-outposts.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/outposts.json",
+          "set": {
+            "/measured_note": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/measured_note"
+      }
+    },
+    {
+      "id": "art-vehicles-valid",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/version": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-vehicles-key-required-version",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "del": [
+            "/version"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-vehicles-key-required-note",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "del": [
+            "/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-vehicles-key-required-vehicles",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "del": [
+            "/vehicles"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-vehicles-key-required-paints",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "del": [
+            "/paints"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-vehicles-key-required-lit",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "del": [
+            "/lit"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-vehicles-key-required-tyre",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "del": [
+            "/tyre"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-vehicles-key-required-soot",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "del": [
+            "/soot"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-vehicles-key-required-wreck",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "del": [
+            "/wreck"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-vehicles-key-required-paint-vs-lane-colours",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "del": [
+            "/paint_vs_lane_colours"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-vehicles-unknown-key",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "art-vehicles-underscore-key-ok",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-vehicles-version-wrong",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/version": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/version"
+      }
+    },
+    {
+      "id": "art-vehicles-type-note",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/note": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/note"
+      }
+    },
+    {
+      "id": "art-vehicles-unknown-key-vehicles-sedan",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/vehicles/sedan/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/vehicles/sedan/extra"
+      }
+    },
+    {
+      "id": "art-vehicles-type-vehicles-sedan-name",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/vehicles/sedan/name": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/vehicles/sedan/name"
+      }
+    },
+    {
+      "id": "art-vehicles-type-vehicles-sedan-length",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/vehicles/sedan/length": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/vehicles/sedan/length"
+      }
+    },
+    {
+      "id": "art-vehicles-negative-vehicles-sedan-length",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/vehicles/sedan/length": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/vehicles/sedan/length"
+      }
+    },
+    {
+      "id": "art-vehicles-type-vehicles-sedan-height",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/vehicles/sedan/height": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/vehicles/sedan/height"
+      }
+    },
+    {
+      "id": "art-vehicles-negative-vehicles-sedan-height",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/vehicles/sedan/height": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/vehicles/sedan/height"
+      }
+    },
+    {
+      "id": "art-vehicles-type-vehicles-sedan-wheel-radius",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/vehicles/sedan/wheel_radius": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/vehicles/sedan/wheel_radius"
+      }
+    },
+    {
+      "id": "art-vehicles-negative-vehicles-sedan-wheel-radius",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/vehicles/sedan/wheel_radius": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/vehicles/sedan/wheel_radius"
+      }
+    },
+    {
+      "id": "art-vehicles-type-vehicles-sedan-mass-class",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/vehicles/sedan/mass_class": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/vehicles/sedan/mass_class"
+      }
+    },
+    {
+      "id": "art-vehicles-negative-vehicles-sedan-mass-class",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/vehicles/sedan/mass_class": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/vehicles/sedan/mass_class"
+      }
+    },
+    {
+      "id": "art-vehicles-type-vehicles-sedan-throw-tier",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/vehicles/sedan/throw_tier": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/vehicles/sedan/throw_tier"
+      }
+    },
+    {
+      "id": "art-vehicles-negative-vehicles-sedan-throw-tier",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/vehicles/sedan/throw_tier": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/vehicles/sedan/throw_tier"
+      }
+    },
+    {
+      "id": "art-vehicles-type-lit",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/lit": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lit"
+      }
+    },
+    {
+      "id": "art-vehicles-type-tyre",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/tyre": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/tyre"
+      }
+    },
+    {
+      "id": "art-vehicles-type-soot",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/soot": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/soot"
+      }
+    },
+    {
+      "id": "art-vehicles-unknown-key-wreck",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/wreck/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/wreck/extra"
+      }
+    },
+    {
+      "id": "art-vehicles-type-wreck-rules",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/wreck/rules": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/wreck/rules"
+      }
+    },
+    {
+      "id": "art-vehicles-type-wreck-throw",
+      "schema": "art-vehicles.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/vehicles.json",
+          "set": {
+            "/wreck/throw": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/wreck/throw"
+      }
+    },
+    {
+      "id": "audio-tug-cues-valid",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/schema": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-tug-cues-key-required-schema",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-tug-cues-key-required-note",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "del": [
+            "/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-tug-cues-key-required-enabled",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "del": [
+            "/enabled"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-tug-cues-key-required-drones",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "del": [
+            "/drones"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-tug-cues-key-required-bed",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "del": [
+            "/bed"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-tug-cues-key-required-lock",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "del": [
+            "/lock"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-tug-cues-key-required-duck",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "del": [
+            "/duck"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-tug-cues-key-required-pulse",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "del": [
+            "/pulse"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-tug-cues-key-required-surge",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "del": [
+            "/surge"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-tug-cues-key-required-stray",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "del": [
+            "/stray"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-tug-cues-key-required-end",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "del": [
+            "/end"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-underscore-key-ok",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-tug-cues-version-wrong",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/schema": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-note",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/note": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/note"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-enabled",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/enabled": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key-drones-bed-lo",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/drones/bed.lo/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/drones/bed.lo/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-drones-bed-lo-rate",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/drones/bed.lo/rate": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/drones/bed.lo/rate"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-drones-bed-lo-rate",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/drones/bed.lo/rate": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/drones/bed.lo/rate"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-drones-bed-lo-seconds",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/drones/bed.lo/seconds": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/drones/bed.lo/seconds"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-drones-bed-lo-seconds",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/drones/bed.lo/seconds": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/drones/bed.lo/seconds"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-drones-bed-lo-f",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/drones/bed.lo/f": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/drones/bed.lo/f"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-drones-bed-lo-f",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/drones/bed.lo/f": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/drones/bed.lo/f"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-drones-bed-lo-peak-db",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/drones/bed.lo/peak_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/drones/bed.lo/peak_db"
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key-bed",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/bed/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-bed-bus",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/bus": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bed/bus"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-bed-priority",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/priority": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bed/priority"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-bed-priority",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/priority": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/bed/priority"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-bed-cls",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/cls": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bed/cls"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-bed-cap",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/cap": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bed/cap"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-bed-cap",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/cap": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/bed/cap"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-bed-ramp-ms",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/ramp_ms": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bed/ramp_ms"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-bed-ramp-ms",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/ramp_ms": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/bed/ramp_ms"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-bed-min-ticks-between-updates",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/min_ticks_between_updates": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bed/min_ticks_between_updates"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-bed-min-ticks-between-updates",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/min_ticks_between_updates": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/bed/min_ticks_between_updates"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-bed-min-mid-step",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/min_mid_step": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bed/min_mid_step"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-bed-min-mid-step",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/min_mid_step": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/bed/min_mid_step"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-bed-pitch-st-at-end",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/pitch_st_at_end": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bed/pitch_st_at_end"
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key-bed-lo",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/lo/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/bed/lo/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key-bed-hi",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/hi/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/bed/hi/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-bed-max-ticks",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/max_ticks": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bed/max_ticks"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-bed-max-ticks",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/bed/max_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/bed/max_ticks"
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key-lock",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/lock/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/lock/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-lock-sound",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/lock/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lock/sound"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-lock-gain-db",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/lock/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lock/gain_db"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-lock-pitch",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/lock/pitch": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lock/pitch"
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key-lock-with",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/lock/with/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/lock/with/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-lock-with-sound",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/lock/with/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lock/with/sound"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-lock-with-gain-db",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/lock/with/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lock/with/gain_db"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-lock-with-pitch",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/lock/with/pitch": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lock/with/pitch"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-lock-priority",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/lock/priority": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lock/priority"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-lock-priority",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/lock/priority": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/lock/priority"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-lock-cls",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/lock/cls": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lock/cls"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-lock-cap",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/lock/cap": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lock/cap"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-lock-cap",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/lock/cap": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/lock/cap"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-lock-caption",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/lock/caption": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lock/caption"
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key-duck",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/duck/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/duck/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-duck-bus",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/duck/bus": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/duck/bus"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-duck-db",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/duck/db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/duck/db"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-duck-ms",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/duck/ms": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/duck/ms"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-duck-ms",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/duck/ms": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/duck/ms"
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key-pulse",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/pulse/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/pulse/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-pulse-sound",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/pulse/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/pulse/sound"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-pulse-gain-db",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/pulse/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/pulse/gain_db"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-pulse-steps-st",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/pulse/steps_st": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/pulse/steps_st"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-pulse-priority",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/pulse/priority": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/pulse/priority"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-pulse-priority",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/pulse/priority": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/pulse/priority"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-pulse-cls",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/pulse/cls": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/pulse/cls"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-pulse-cap",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/pulse/cap": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/pulse/cap"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-pulse-cap",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/pulse/cap": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/pulse/cap"
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key-surge",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/surge/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/surge/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-surge-sound",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/surge/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/surge/sound"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-surge-gain-db",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/surge/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/surge/gain_db"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-surge-sharp-db",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/surge/sharp_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/surge/sharp_db"
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key-surge-sharp-tok",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/surge/sharp_tok/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/surge/sharp_tok/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-surge-sharp-tok-sound",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/surge/sharp_tok/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/surge/sharp_tok/sound"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-surge-sharp-tok-pitch",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/surge/sharp_tok/pitch": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/surge/sharp_tok/pitch"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-surge-sharp-tok-gain-db",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/surge/sharp_tok/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/surge/sharp_tok/gain_db"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-surge-priority",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/surge/priority": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/surge/priority"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-surge-priority",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/surge/priority": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/surge/priority"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-surge-cls",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/surge/cls": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/surge/cls"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-surge-cap",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/surge/cap": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/surge/cap"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-surge-cap",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/surge/cap": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/surge/cap"
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key-stray",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/stray/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/stray/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-stray-sound",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/stray/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/stray/sound"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-stray-gain-db",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/stray/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/stray/gain_db"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-stray-gap-ticks",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/stray/gap_ticks": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/stray/gap_ticks"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-stray-gap-ticks",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/stray/gap_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/stray/gap_ticks"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-stray-priority",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/stray/priority": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/stray/priority"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-stray-priority",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/stray/priority": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/stray/priority"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-stray-cls",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/stray/cls": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/stray/cls"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-stray-cap",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/stray/cap": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/stray/cap"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-stray-cap",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/stray/cap": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/stray/cap"
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key-end",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/end/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key-end-overwhelmed",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/overwhelmed/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/end/overwhelmed/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-end-overwhelmed-fade-ms",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/overwhelmed/fade_ms": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/end/overwhelmed/fade_ms"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-end-overwhelmed-fade-ms",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/overwhelmed/fade_ms": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/end/overwhelmed/fade_ms"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-end-overwhelmed-sound",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/overwhelmed/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/end/overwhelmed/sound"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-end-overwhelmed-gain-db",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/overwhelmed/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/end/overwhelmed/gain_db"
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key-end-overwhelmed-with",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/overwhelmed/with/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/end/overwhelmed/with/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-end-overwhelmed-with-sound",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/overwhelmed/with/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/end/overwhelmed/with/sound"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-end-overwhelmed-with-gain-db",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/overwhelmed/with/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/end/overwhelmed/with/gain_db"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-end-overwhelmed-with-pitch",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/overwhelmed/with/pitch": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/end/overwhelmed/with/pitch"
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key-end-detonate",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/detonate/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/end/detonate/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-end-detonate-fade-ms",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/detonate/fade_ms": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/end/detonate/fade_ms"
+      }
+    },
+    {
+      "id": "audio-tug-cues-negative-end-detonate-fade-ms",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/detonate/fade_ms": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/end/detonate/fade_ms"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-end-detonate-sound",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/detonate/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/end/detonate/sound"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-end-detonate-gain-db",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/detonate/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/end/detonate/gain_db"
+      }
+    },
+    {
+      "id": "audio-tug-cues-unknown-key-end-detonate-with",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/detonate/with/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/end/detonate/with/extra"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-end-detonate-with-sound",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/detonate/with/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/end/detonate/with/sound"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-end-detonate-with-gain-db",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/detonate/with/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/end/detonate/with/gain_db"
+      }
+    },
+    {
+      "id": "audio-tug-cues-type-end-detonate-with-pitch",
+      "schema": "audio-tug-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/tug_cues.json",
+          "set": {
+            "/end/detonate/with/pitch": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/end/detonate/with/pitch"
+      }
+    },
+    {
+      "id": "audio-babble-ab-valid",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/schema": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-babble-ab-key-required-schema",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-babble-ab-key-required-note",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "del": [
+            "/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-babble-ab-key-required-syllables",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "del": [
+            "/syllables"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-babble-ab-key-required-voices",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "del": [
+            "/voices"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-babble-ab-key-required-reels",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "del": [
+            "/reels"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-babble-ab-key-required-seed",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "del": [
+            "/seed"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-babble-ab-unknown-key",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "audio-babble-ab-underscore-key-ok",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-babble-ab-version-wrong",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/schema": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-note",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/note": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/note"
+      }
+    },
+    {
+      "id": "audio-babble-ab-unknown-key-syllables-gru",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/syllables/gru/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/syllables/gru/extra"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-syllables-gru-onset",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/syllables/gru/onset": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/syllables/gru/onset"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-syllables-gru-vowel",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/syllables/gru/vowel": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/syllables/gru/vowel"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-syllables-gru-fry",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/syllables/gru/fry": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/syllables/gru/fry"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-syllables-gru-fry",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/syllables/gru/fry": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/syllables/gru/fry"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-syllables-gru-f0-mul",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/syllables/gru/f0_mul": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/syllables/gru/f0_mul"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-syllables-gru-f0-mul",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/syllables/gru/f0_mul": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/syllables/gru/f0_mul"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-syllables-gru-open-mul",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/syllables/gru/open_mul": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/syllables/gru/open_mul"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-syllables-gru-open-mul",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/syllables/gru/open_mul": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/syllables/gru/open_mul"
+      }
+    },
+    {
+      "id": "audio-babble-ab-unknown-key-voices-protagonist-b",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/voices/protagonist_b/extra"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-label",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/label": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/label"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-ref-f0",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/ref_f0": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/ref_f0"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-ref-f0",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/ref_f0": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/ref_f0"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-formant-k",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/formant_k": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/formant_k"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-formant-k",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/formant_k": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/formant_k"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-syl-ms",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/syl_ms": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/syl_ms"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-syl-ms",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/syl_ms": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/syl_ms"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-min-gap",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/min_gap": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/min_gap"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-min-gap",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/min_gap": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/min_gap"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-open",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/open": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/open"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-open",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/open": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/open"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-breath",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/breath": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/breath"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-breath",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/breath": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/breath"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-jitter",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/jitter": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/jitter"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-jitter",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/jitter": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/jitter"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-shimmer",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/shimmer": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/shimmer"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-shimmer",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/shimmer": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/shimmer"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-drive",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/drive": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/drive"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-drive",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/drive": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/drive"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-crush-bits",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/crush_bits": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/crush_bits"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-crush-bits",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/crush_bits": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/crush_bits"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-hold",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/hold": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/hold"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-hold",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/hold": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/hold"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-stutter",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/stutter": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/stutter"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-lexicon-ah",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/lexicon/ah": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/lexicon/ah"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-lexicon-ah",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/lexicon/ah": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/lexicon/ah"
+      }
+    },
+    {
+      "id": "audio-babble-ab-unknown-key-voices-protagonist-b-laugh",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/laugh/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/voices/protagonist_b/laugh/extra"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-laugh-pulses",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/laugh/pulses": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/laugh/pulses"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-laugh-pulses",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/laugh/pulses": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/laugh/pulses"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-laugh-pulse-ms",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/laugh/pulse_ms": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/laugh/pulse_ms"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-laugh-pulse-ms",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/laugh/pulse_ms": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/laugh/pulse_ms"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-laugh-decay",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/laugh/decay": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/laugh/decay"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-laugh-decay",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/laugh/decay": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/laugh/decay"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-laugh-breath",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/laugh/breath": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/laugh/breath"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-laugh-breath",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/laugh/breath": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/laugh/breath"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-laugh-step-st",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/laugh/step_st": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/laugh/step_st"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-laugh-variants",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/laugh/variants": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/laugh/variants"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-laugh-variants",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/laugh/variants": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/laugh/variants"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-chars-per-syl",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/chars_per_syl": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/chars_per_syl"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-voices-protagonist-b-chars-per-syl",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/chars_per_syl": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/voices/protagonist_b/chars_per_syl"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-jitter-add-st",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/jitter_add_st": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/jitter_add_st"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-voices-protagonist-b-gain-jit-db",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/voices/protagonist_b/gain_jit_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/voices/protagonist_b/gain_jit_db"
+      }
+    },
+    {
+      "id": "audio-babble-ab-unknown-key-reels",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/reels/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/reels/extra"
+      }
+    },
+    {
+      "id": "audio-babble-ab-type-seed",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/seed": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/seed"
+      }
+    },
+    {
+      "id": "audio-babble-ab-negative-seed",
+      "schema": "audio-babble-ab.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/babble_ab.json",
+          "set": {
+            "/seed": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/seed"
       }
     },
     {
