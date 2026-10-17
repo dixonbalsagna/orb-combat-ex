@@ -19,6 +19,11 @@ extends RefCounted
 ## Reads the sim and the settlements data only; writes neither.
 
 const SETTLEMENTS: String = "res://data/biomes/settlements.json"
+## Art's city palettes and facade types (docs/art/city-facades.md): with it the downtown and mid-rise towers take a tint
+## and a facade each (city_look); without it they are drawn in their look as before.
+const CITY_LOOKS: String = "res://data/art/city-looks.json"
+const FACADES: Array = ["ribbon", "punched", "fins"]   # building.gdshader's facade index
+const CITY_TINTS: int = 12                              # building.gdshader's city arrays
 ## A part's flags.
 const ROOF: int = 1     # a roof facet: its own colour, no windows, gone from a shell
 const PLAIN: int = 2    # no windows
@@ -26,6 +31,12 @@ const CAP: int = 4      # a top piece (a roof, a spire, a plant box): gone from 
 const ORN: int = 8      # an ornament: it stands above the sim's height (wholly or with its upper part) and does not collide
 const ORN_MAX: float = 0.15   # ... by at most this share of the height
 const FILL: float = 0.85      # the least share of the sim's width the walls have at its height
+## The crown tower's four corner stubs (Art, docs/art/city-facades.md; Legal RL-127): their side as a share of the
+## tower's width, their height in floors (never more than their side), and how much lighter than the tower's mid tone
+## they are, in relative luminance (the cornice's step).
+const CROWN_STUB_W: float = 0.12
+const CROWN_STUB_H: float = 0.9
+const CROWN_STUB_LIFT: float = 0.05
 ## A part as an array: [x offset, z offset, width, depth, bottom, top (above the footing, of the whole building),
 ## top's width share, top's depth share, lean, colour, flags].
 const X := 0
@@ -77,6 +88,10 @@ const TIMBER: String = "#7a5a3c"
 
 static var _names: Array = []
 static var _marks: Array = []
+static var _city: Dictionary = {}
+static var _city_read: bool = false
+static var _tints: Array = []
+static var _dnames: Array = []
 
 
 ## The looks' names in the data's order (a district's look is an index into this).
@@ -108,6 +123,193 @@ static func look(k: int) -> Dictionary:
 	return LOOK.get(n, LOOK[FALLBACK])
 
 
+## Art's city data (data/art/city-looks.json), or {} without the file or with RenderLook.CITY_VARIETY off.
+static func city() -> Dictionary:
+	if not _city_read:
+		_city_read = true
+		if RenderLook.CITY_VARIETY and FileAccess.file_exists(CITY_LOOKS):
+			var j = JSON.parse_string(FileAccess.get_file_as_string(CITY_LOOKS))
+			_city = j if j is Dictionary else {}
+	return _city
+
+
+## Every tint in Art's data, the looks' in the data's order: [look name, tint]. A tint's index here is building.gdshader's.
+static func city_tints() -> Array:
+	if _tints.is_empty():
+		var looks: Dictionary = city().get("looks", {})
+		for ln in looks:
+			for t in looks[ln]:
+				_tints.append([str(ln), t])
+	return _tints
+
+
+## Every district's name in the sim's order: b.district counts the settlements' districts in the data's order.
+static func district_names() -> Array:
+	if _dnames.is_empty():
+		var j = JSON.parse_string(FileAccess.get_file_as_string(SETTLEMENTS))
+		for s in ((j as Dictionary).get("settlements", []) if j is Dictionary else []):
+			for dd in (s as Dictionary).get("districts", []):
+				_dnames.append(str((dd as Dictionary).get("name", "")))
+	return _dnames
+
+
+## A number from 0 to 1 from a building's seed (itself one draw from 0 to 1) and a salt, well mixed, so two picks from one
+## seed are independent and each covers the whole range.
+static func _mix(seed: float, salt: int) -> float:
+	var x: int = (int(seed * 4294967296.0) ^ (salt * 0x9E3779B1)) & 0xFFFFFFFF
+	x = ((x ^ (x >> 16)) * 0x45D9F3B) & 0xFFFFFFFF
+	x = ((x ^ (x >> 16)) * 0x45D9F3B) & 0xFFFFFFFF
+	x = x ^ (x >> 16)
+	return float(x) / 4294967296.0
+
+
+## The key of `weights` that u (0 to 1) falls in, the weights taken as shares in their order; "" for none.
+static func _pick(weights: Dictionary, u: float) -> String:
+	var total: float = 0.0
+	for k in weights:
+		total += maxf(float(weights[k]), 0.0)
+	var acc: float = 0.0
+	for k in weights:
+		acc += maxf(float(weights[k]), 0.0) / maxf(total, 0.0001)
+		if u < acc:
+			return str(k)
+	return str(weights.keys().back()) if not weights.is_empty() else ""
+
+
+## Look k as building b wears it: a downtown or mid-rise tower (not a landmark) in a district of Art's data takes a tint
+## and a facade type by the district's weights, from its own seed (render only; nothing in the sim reads it): the tint's
+## wall tones for the look's, the facade's windows for its "win" and "pane" (VFX's pane grid reads them; the lobby
+## storey's two rows are not in them), and "tint" and "facade" (indexes into city_tints and FACADES), "base" (Art's
+## lobby storey) and "crown" ([floors, setback each side], Art's set-back crown) for parts() and building.gdshader. Any other building,
+## or any building without the data, wears the look as it is.
+static func city_look(b, k: int) -> Dictionary:
+	var lk: Dictionary = look(k)
+	var c: Dictionary = city()
+	var names: Array = district_names()
+	var di: int = int(b.district)
+	if c.is_empty() or int(b.landmark) > 0 or di < 0 or di >= names.size():
+		return lk
+	var dd: Dictionary = (c.get("districts", {}) as Dictionary).get(str(names[di]), {})
+	var lnames: Array = look_names()
+	if dd.is_empty() or k < 0 or k >= lnames.size() or str(dd.get("look", "")) != str(lnames[k]):
+		return lk
+	var tid: String = _pick(dd.get("tint_weights", {}), _mix(float(b.seed), 1))
+	var fi: int = FACADES.find(_pick(dd.get("facade_weights", {}), _mix(float(b.seed), 2)))
+	var tints: Array = city_tints()
+	var ti: int = -1
+	for i in range(mini(tints.size(), CITY_TINTS)):
+		if str(tints[i][0]) == str(lnames[k]) and str((tints[i][1] as Dictionary).get("id", "")) == tid:
+			ti = i
+	if ti < 0 or fi < 0:
+		return lk
+	var wl: Dictionary = (tints[ti][1] as Dictionary)["wall"]
+	var out: Dictionary = lk.duplicate()
+	out["wall"] = [str(wl["light"]), str(wl["mid"]), str(wl["shadow"])]
+	out["roof"] = str(wl["shadow"])
+	out["trim"] = str(wl["shadow"])
+	out["tint"] = ti
+	out["facade"] = fi
+	# The facade's windows as a look's (what building.gdshader draws from fac_a and fac_b), for VFX's pane grid.
+	var fu: Dictionary = city_uniforms()
+	var fa: Vector4 = fu["fac_a"][fi]
+	var fb: Vector4 = fu["fac_b"][fi]
+	out["win"] = [float(lk["win"][0]) * fa.x, fa.y, fa.z, fa.w]
+	out["pane"] = [fb.x, fb.y, 1.0]
+	var bc: Dictionary = c.get("base_and_crown", {})
+	out["base"] = bc.has("base") and int(b.floors) >= RenderLook.CITY_BASE_FLOORS
+	if bc.has("crown") and int(b.floors) >= RenderLook.CITY_CROWN_FLOORS and ["shaft", "slab", "block"].has(str(b.shape)):
+		out["crown"] = [float((bc["crown"] as Dictionary).get("floors", 2)), float((bc["crown"] as Dictionary).get("setback", 0.06))]
+	return out
+
+
+## What building.gdshader reads of a building's city look (win_tex's fifth texel, a): 0 for none; else 1 plus its tint,
+## plus 16 times its facade, plus 64 with a lobby storey, plus 128 times the floor its crown starts at.
+static func city_code(lk: Dictionary, floors: int) -> float:
+	if not lk.has("tint"):
+		return 0.0
+	var code: int = 1 + int(lk["tint"]) + 16 * int(lk["facade"]) + (64 if bool(lk.get("base", false)) else 0)
+	if lk.has("crown"):
+		code += 128 * maxi(floors - int(lk["crown"][0]), 0)
+	return float(code)
+
+
+## c's relative luminance (c in sRGB; worked out in linear light).
+static func _lum(c: Color) -> float:
+	var l: Color = c.srgb_to_linear()
+	return 0.2126 * l.r + 0.7152 * l.g + 0.0722 * l.b
+
+
+## c scaled by k in linear light, at its own hue (sRGB in and out).
+static func _scaled(c: Color, k: float) -> Color:
+	var l: Color = c.srgb_to_linear()
+	return Color(minf(l.r * k, 1.0), minf(l.g * k, 1.0), minf(l.b * k, 1.0), c.a).linear_to_srgb()
+
+
+## Art's tints and facade types for building.gdshader (7c). A tower is massed in its look's shadow tone (7b), and Art drew
+## its facade on the mid tone, so each tint's glass and trim are scaled by the shadow's luminance over the mid's, and its
+## spandrels, fins and lobby storey are given as multiples of the wall (the luminance Art set them at over the mid's):
+## Art's hues and ratios, at the values the towers have today. city_glass, city_hi: dark and bright glass (a: the lobby
+## storey's wall); city_trim: the cornice and lintel; city_k: a ribbon's spandrel, a punched one's, a fin, a fin's sun
+## side. fac_a, fac_b, fac_c: each facade type's column (a multiple of the look's), its pane across the cell and up the
+## floor, its spandrel's band up the floor and a fin's half width. city_base: the lobby storey in floors, its lintel.
+static func city_uniforms() -> Dictionary:
+	var glass: Array = []
+	var hi: Array = []
+	var trim: Array = []
+	var kk: Array = []
+	var c: Dictionary = city()
+	var tints: Array = city_tints()
+	var fac: Dictionary = c.get("facades", {})
+	var bc: Dictionary = c.get("base_and_crown", {})
+	var rib: Dictionary = fac.get("ribbon", {})
+	var pun: Dictionary = fac.get("punched", {})
+	var fin: Dictionary = fac.get("fins", {})
+	var off_rib: float = float((rib.get("spandrel", {}) as Dictionary).get("lum_offset", 0.0))
+	var off_pun: float = float((pun.get("spandrel", {}) as Dictionary).get("lum_offset", 0.0))
+	var off_fin: float = float((fin.get("fin", {}) as Dictionary).get("lum_offset", 0.0))
+	var off_sun: float = float((fin.get("fin", {}) as Dictionary).get("sun_side_offset", 0.0))
+	var off_base: float = float((bc.get("base", {}) as Dictionary).get("wall_lum_offset", 0.0))
+	for i in range(CITY_TINTS):
+		if i >= tints.size():
+			glass.append(Color(0, 0, 0, 1))
+			hi.append(Color(0, 0, 0, 1))
+			trim.append(Color(0, 0, 0, 1))
+			kk.append(Vector4(1, 1, 1, 1))
+			continue
+		var t: Dictionary = tints[i][1]
+		var lm: float = maxf(_lum(_c(t["wall"]["mid"])), 0.0001)
+		var s: float = _lum(_c(t["wall"]["shadow"])) / lm
+		var gd: Color = _scaled(_c(t["glass"]["dark"]), s)
+		glass.append(Color(gd.r, gd.g, gd.b, (lm + off_base) / lm))
+		hi.append(_scaled(_c(t["glass"]["bright"]), s))
+		trim.append(_scaled(_c(t["trim"]), s))
+		kk.append(Vector4((lm + off_rib) / lm, (lm + off_pun) / lm, (lm + off_fin) / lm, (lm + off_sun) / lm))
+	var pw: Vector3 = RenderLook.FACADE_PITCH
+	var rib_w: float = 1.0 - float(rib.get("pier_w", 0.05))
+	var rib_s: float = float((rib.get("spandrel", {}) as Dictionary).get("h", 0.45))
+	var pun_w: float = float(pun.get("pane_w", 0.38))
+	var pun_s: float = float((pun.get("spandrel", {}) as Dictionary).get("h", 0.3))
+	var fin_w: float = float(fin.get("pane_w", 0.78))
+	var fa: Array = [
+		Vector4(pw.x, 0.5 - 0.5 * rib_w, 0.5 + 0.5 * rib_w, 1.0),
+		Vector4(pw.y, 0.5 - 0.5 * pun_w, 0.5 + 0.5 * pun_w, 1.0),
+		Vector4(pw.z, 0.5 - 0.5 * fin_w, 0.5 + 0.5 * fin_w, 1.0),
+	]
+	var fb: Array = [
+		Vector4(rib_s, minf(rib_s + float(rib.get("pane_h", 0.55)), 1.0), 1.0, 16.0),
+		Vector4(pun_s, minf(pun_s + float(pun.get("pane_h", 0.5)), 1.0), 1.0, 16.0),
+		Vector4(0.0, 1.0, 1.0, 16.0),
+	]
+	var fc: Array = [
+		Vector4(0.0, rib_s, 0.0, 0.0),
+		Vector4(0.0, pun_s, 0.0, 0.0),
+		Vector4(0.0, 0.0, 0.5 * float((fin.get("fin", {}) as Dictionary).get("w", 0.14)), 0.0),
+	]
+	return {"city_glass": glass, "city_hi": hi, "city_trim": trim, "city_k": kk, "fac_a": fa, "fac_b": fb, "fac_c": fc,
+		"city_base": Vector4(float((bc.get("base", {}) as Dictionary).get("floors", 1.6)), RenderLook.CITY_LINTEL, RenderLook.CITY_CORNICE, float(RenderLook.CITY_BASE_ROWS)),
+		"city_base_pane": RenderLook.CITY_BASE_PANE}
+
+
 ## The look index of the district building b stands in (the lane table's), 0 with no table.
 static func look_of(t: PackedFloat32Array, b) -> int:
 	if t.size() < RenderLanes.HEADER:
@@ -124,6 +326,14 @@ static func _c(hex: String) -> Color:
 
 static func _p(x: float, z: float, w: float, d: float, y0: float, y1: float, col: Color, flags: int = 0, tx: float = 1.0, tz: float = 1.0, lean: float = 0.0, lookx: int = -1) -> Array:
 	return [x, z, w, d, y0, y1, tx, tz, lean, col, flags, lookx]
+
+
+## col with its relative luminance raised by dl, at the same hue (Art's steps are in luminance).
+static func _lift(col: Color, dl: float) -> Color:
+	var lin: Color = col.srgb_to_linear()
+	var l: float = 0.2126 * lin.r + 0.7152 * lin.g + 0.0722 * lin.b
+	var k: float = (l + dl) / maxf(l, 0.0001)
+	return Color(minf(lin.r * k, 1.0), minf(lin.g * k, 1.0), minf(lin.b * k, 1.0), col.a).linear_to_srgb()
 
 
 ## How many rows of windows a floor of height fh carries.
@@ -186,12 +396,17 @@ static func parts(b, lk: Dictionary, depth: float = -1.0) -> Array:
 			out.append(_p(0.0, 0.0, w, d, 0.0, h - c, wall))
 			out.append(_p(0.0, 0.0, w, d, h - c, h, _c(tones[1]), PLAIN | CAP, 0.86, 0.86))
 			if mark == "crown_tower":
-				# The crown tower: a pale band under the chamfer and a crown above it, a low gem between four points.
+				# The crown tower: a pale band under the chamfer and a crown above it, a low gem between four short
+				# square stubs on the corners of the chamfer's top (Legal RL-127: four thin pale points read from the
+				# front as two horns; Art's shape, docs/art/city-facades.md): no taper, no taller than wide, in the
+				# tower's mid tone lifted by CROWN_STUB_LIFT of luminance, so from the front they read as a battlement.
 				out.append(_p(0.0, 3.0, w * 0.999, d + 6.0, h - c - 0.2 * fh, h - c, _c("#d5d9df"), PLAIN | CAP))
 				out.append(_p(0.0, 0.0, w * 0.6, d * 0.6, h, h + orn * 0.55, _c(tones[1]), PLAIN | CAP | ORN, 0.5, 0.5))
+				var st: float = CROWN_STUB_W * minf(w, d)
+				var stub: Color = _lift(_c(tones[1]), CROWN_STUB_LIFT)
 				for sx in [-1.0, 1.0]:
 					for sz in [-1.0, 1.0]:
-						out.append(_p(sx * w * 0.36, sz * d * 0.36, w * 0.13, d * 0.13, h, h + orn, _c("#d5d9df"), ROOF | CAP | ORN, 0.04, 0.04))
+						out.append(_p(sx * (0.43 * w - 0.5 * st), sz * (0.43 * d - 0.5 * st), st, st, h, h + minf(CROWN_STUB_H * fh, st), stub, PLAIN | CAP | ORN))
 			else:
 				out.append(_p(0.0, 0.0, w * 0.86, d * 0.86, h, h + orn * 0.6, _c(tones[1]), PLAIN | CAP | ORN, 0.55, 0.55))
 		"spire":
@@ -209,7 +424,15 @@ static func parts(b, lk: Dictionary, depth: float = -1.0) -> Array:
 				out.append(_p(0.0, 0.0, w, d, 0.0, h, wall))
 				out.append(_p(0.0, 0.0, w * 0.94, d * 0.94, h, h + minf(orn, 0.75 * w), roof, ROOF | CAP | ORN, 0.02, 0.02))
 		"slab", "block", "shaft":
-			out.append(_p(0.0, 0.0, w, d, 0.0, h, wall))
+			var cr: Array = lk.get("crown", [])
+			if cr.is_empty():
+				out.append(_p(0.0, 0.0, w, d, 0.0, h, wall))
+			else:
+				# Art's crown (docs/art/city-facades.md): the top floors set back each side. The core is the body and
+				# stands the whole height; the shaft round it stops under the crown, as a stepped tower's skirts do.
+				var sb: float = 1.0 - 2.0 * float(cr[1])
+				out.append(_p(0.0, 0.0, w * sb, d * sb, 0.0, h, wall))
+				out.append(_p(0.0, 0.0, w, d, 0.0, h - float(cr[0]) * fh, wall))
 			out.append(_p(side * w * (0.22 if shape == "block" else 0.12), 0.0, w * (0.34 if shape == "block" else 0.42), d * 0.36, h, h + plant, dark, PLAIN | CAP | ORN))
 		"warehouse":
 			var rise: float = 0.13 * d

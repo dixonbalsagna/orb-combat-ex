@@ -118,6 +118,30 @@ const DMG_HOLES: float = 0.18
 ## wall may differ in relative luminance. The frame analyser counts a pixel that changes by a tenth; under that, a
 ## facade's own pattern cannot flip a pixel however the camera shakes, pans or cuts across it.
 const PATTERN_BUDGET: float = 0.085
+## City variety (Orb, homework 4: up close the towers were "a bunch of dark grid lines"; Art's palettes and facade types,
+## docs/art/city-facades.md and data/art/city-looks.json; building.gdshader 7c), on the downtown and mid-rise towers.
+## CITY_VARIETY switches all of it (A, B, C, the lobby storey, the crown). Off since 2026-10-16: on, the collapse clip in
+## normal mode reads 2.5 / 3.5 (FAIL on the area reading) though the picture turns fewer pixels; see
+## docs/rendering/city-variety.md, "Measured". Off, every tower draws as it did without it.
+const CITY_VARIETY: bool = false
+## GLASS_SKY: how far a tower's glass takes the sky's colour in its direction, at the glass's own luminance (no pane
+## changes value), and the least height over the horizon it takes it from, in half screens (at noon the sky's blue, not
+## the pale band at the horizon; a pane under the eye never takes the ground).
+const GLASS_SKY: Vector2 = Vector2(0.4, 0.5)
+## Each facade type's column of windows as a multiple of its look's (ribbon, punched, fins): a punched pane is 0.38 of
+## its cell, a slit at downtown's 46 units.
+const FACADE_PITCH: Vector3 = Vector3(1.0, 1.5, 1.0)
+## A tower of at least CITY_BASE_FLOORS floors has Art's lobby storey, and a shaft, slab or block of at least
+## CITY_CROWN_FLOORS Art's set-back crown: a mid-rise of four to six floors would be all base and crown.
+const CITY_BASE_FLOORS: int = 5
+const CITY_CROWN_FLOORS: int = 9
+## The lobby storey's rows of panes and each pane up its row (from, to): two rows, so a pane, lit or not, is the size of
+## a shaft's and the lit windows keep their area; the lintel over it in floors; the cornice line at the top of each of
+## the crown's floors, as a share of the floor.
+const CITY_BASE_ROWS: int = 2
+const CITY_BASE_PANE: Vector2 = Vector2(0.12, 0.88)
+const CITY_LINTEL: float = 0.1
+const CITY_CORNICE: float = 0.08
 const LANE_CUE_W: float = 14.0           # the stripe's half width in depth,
 const LANE_CUE_LEN: float = 450.0        # ... its half length along the street,
 const LANE_CUE_ALPHA: float = 0.5        # ... and its strength at full
@@ -251,7 +275,13 @@ const DMG_PANELS: float = 0.2            # stage 3: the share of a shell's cells
 const DMG_FRAME := "#4b4a4f"             # stage 3: the bare frame, mixed into the wall's colour
 const ROOF_OVER: float = 1.2             # a house's roof is this much wider than its walls
 const CROWD_GAP: float = 20.0
-const CROWD_DEEP: float = 90.0
+const CROWD_DEEP: float = 120.0
+## A building's figures (World's proposal, docs/world/crowd-cars-buildings.md section 1; Orb: "a little too clustered"):
+## at most one per CROWD_FACE units of its face and at most CROWD_MAX, evenly spaced along it with a seeded jitter. The
+## rest of its people are inside: the sim's counts (casualties, budgets, menace) are untouched, and a building shows as
+## many of its figures as it has people alive.
+const CROWD_FACE: float = 40.0
+const CROWD_MAX: int = 12
 const Z_TREE_MIN: float = -120.0 * WS
 const Z_TREE_MAX: float = -30.0 * WS
 const TREE_W: float = 26.0 * WS

@@ -50,6 +50,7 @@ var _bld0: MultiMesh                 # row 0, in front of the fighter plane: its
 var _parts: Array = []               # per building: its parts as it stands whole (RenderShapes.parts), the body first; shared by panes
 var _inst: Array = []                # per building: each part's instance in its MultiMesh (PackedInt32Array, the body's first)
 var _look := PackedInt32Array()      # per building: its district's look
+var _city := PackedFloat32Array()    # per building: its city look for building.gdshader (RenderShapes.city_code; 0: none)
 var _n_inst: int = 1                 # instances in _bld
 var _n_inst0: int = 1                # ... and in _bld0
 var _row0 := PackedInt32Array()      # per building: its index in _bld0, or -1
@@ -149,6 +150,7 @@ func build(S: SimState) -> void:
 		_parts = source._parts
 		_inst = source._inst
 		_look = source._look
+		_city = source._city
 		_n_inst = source._n_inst
 		_n_inst0 = source._n_inst0
 		_tree = source._tree
@@ -771,7 +773,7 @@ func _write_windows(S: SimState, bi: int, b, sink: float = 0.0, spans = null) ->
 		var c := Color(base, ceilf(up / maxf(fh, 1.0)), float(dr[1]), float(RenderShapes.rows(fh)))
 		var s := Color(float(p[RenderShapes.TX]), float(p[RenderShapes.TZ]), float(p[RenderShapes.LEAN]), float(int(p[RenderShapes.LOOKX]) if int(p[RenderShapes.LOOKX]) >= 0 else _look[bi]))
 		var f := Color(float(sh[RenderShapes.X]) - float(p[RenderShapes.X]), float(sh[RenderShapes.Z]) - float(p[RenderShapes.Z]), 0.5 * float(sh[RenderShapes.W]), 0.5 * float(sh[RenderShapes.D]))
-		var fr := Color(RenderShapes.outer_from(ps, j), core, flags, 0.0)
+		var fr := Color(RenderShapes.outer_from(ps, j), core, flags, _city[bi])
 		if img.get_pixel(k, 0) != a or img.get_pixel(k, 1) != c or img.get_pixel(k, 2) != s or img.get_pixel(k, 3) != f or img.get_pixel(k, 4) != fr:
 			img.set_pixel(k, 0, a)
 			img.set_pixel(k, 1, c)
@@ -1706,6 +1708,10 @@ func _building_mat() -> ShaderMaterial:
 	var lu: Dictionary = RenderShapes.look_uniforms()
 	for key in lu:
 		m.set_shader_parameter(key, lu[key])
+	var cu: Dictionary = RenderShapes.city_uniforms()
+	for key in cu:
+		m.set_shader_parameter(key, cu[key])
+	m.set_shader_parameter("glass_sky", RenderLook.GLASS_SKY if RenderLook.CITY_VARIETY else Vector2(0.0, RenderLook.GLASS_SKY.y))
 	m.set_shader_parameter("row_haze", RenderLook.ROW_HAZE if row_haze else Vector3(0.0, RenderLook.ROW_HAZE.y, RenderLook.ROW_HAZE.z))
 	mats.track(m)
 	return m
@@ -1776,12 +1782,15 @@ func _make_props(S: SimState) -> void:
 	_parts.clear()
 	_inst.clear()
 	_look.resize(nb)
+	_city.resize(nb)
 	_n_inst = maxi(1, nb)
 	_n_inst0 = maxi(1, _row0_b.size())
 	for bi in range(nb):
 		var b = S.buildings[bi]
 		_look[bi] = RenderShapes.look_of(lanes, b)
-		var ps: Array = RenderShapes.parts(b, RenderShapes.look(_look[bi]), _depth(b).y)
+		var lk: Dictionary = RenderShapes.city_look(b, _look[bi])   # a tower takes Art's tint and facade (city variety)
+		_city[bi] = RenderShapes.city_code(lk, int(b.floors))
+		var ps: Array = RenderShapes.parts(b, lk, _depth(b).y)
 		var ix := PackedInt32Array()
 		var front: bool = _row0[bi] >= 0
 		ix.append(_row0[bi] if front else bi)
@@ -1848,8 +1857,10 @@ func _make_props(S: SimState) -> void:
 		var zd: Vector2 = _depth(b)
 		var front: bool = b.d > 0.0 and int(b.row) == 0
 		var face: float = zd.x - zd.y * 0.5 if front else zd.x + zd.y * 0.5
-		for j in range(int(b.pop)):
-			_crowd_x.append(SimWrap.wrap(b.x + (cr.next() - 0.5) * (b.w + RenderLook.CROWD_SPREAD)))
+		var nf: int = mini(mini(int(b.pop), RenderLook.CROWD_MAX), int(b.w / RenderLook.CROWD_FACE))
+		for j in range(nf):
+			# Each in its own even slot along the face, jittered within it; the rest of the people are inside.
+			_crowd_x.append(SimWrap.wrap(b.x + ((float(j) + cr.next()) / float(nf) - 0.5) * b.w))
 			var out: float = RenderLook.CROWD_GAP + cr.next() * RenderLook.CROWD_DEEP
 			_crowd_z.append(face - out if front else face + out)
 			var shirt: Color = RenderLook.col(RenderLook.CROWD[int(cr.next() * RenderLook.CROWD.size())]).lerp(RenderLook.col(RenderShapes.look(_look[bi])["wall"][1]), RenderLook.CROWD_DISTRICT).srgb_to_linear()

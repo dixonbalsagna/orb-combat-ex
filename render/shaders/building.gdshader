@@ -49,6 +49,18 @@
 //    flipped 1%). So on such a look a pane takes its glass's colour only as far as pattern_budget of relative
 //    luminance from its wall, and a row whose panes are out has its wall as dark as they are: a burnt-out floor is a
 //    dark band, a burnt-out tower is dark, and neither is stripes. Lit panes are few and keep their light.
+// 7c. City variety (Orb, homework 4, 2026-10-16: up close the towers were "a bunch of dark grid lines"; Art's palettes
+//    and facade types, docs/art/city-facades.md). A downtown or mid-rise tower carries its city look in v_look.w
+//    (RenderShapes.city_code): one of Art's tints (its wall tones are the instance's colours; its glass, bright glass
+//    and trim are city_glass, city_hi and city_trim), one of Art's facade types (ribbon: wide panes over a spandrel band;
+//    punched: separate panes over a darker band; fins: tall glass between fins, one side lit), Art's lobby storey
+//    (city_base.x floors with city_base.w rows of punched panes in a darker wall, a lintel over it, plain wall to the
+//    second floor's top)
+//    and the floor its crown starts at (its panes all bright glass, a cornice line at the top of each floor; the setback
+//    is the geometry's). Every tone is held to the wall it sits on by the budget (7b). And on every tower (A) the glass
+//    takes the sky's colour in its direction, glass_sky.x of the way, at the glass's own luminance, so a tower goes warm
+//    under a sunset and blue at noon and no pane changes value; a pane under the eye takes the sky glass_sky.y half
+//    screens over the horizon. Lit panes keep the look's share and light.
 // 8. Row haze. A part takes the air's colour by how far behind the fighter plane its front face stands (row_haze), so
 //    the back block and the scenery row read as depth. The front block takes none.
 // 9. The lobby (RenderLook.OPEN_*; Orb, 2026-10-12: real-looking supports). The camera's, not damage: in a match with depth
@@ -115,6 +127,16 @@ uniform vec4 look_glass[10] : source_color;   // dark glass; a: the share of pan
 uniform vec4 look_hi[10] : source_color;     // bright glass
 uniform vec4 look_trim[10] : source_color;   // doors, shutters, panels
 uniform float pattern_budget = 0.085;   // RenderLook.PATTERN_BUDGET: on a look with flag 16, the most a pane and its wall differ in relative luminance
+uniform vec2 glass_sky = vec2(0.4, 0.5);   // RenderLook.GLASS_SKY: how far a tower's glass takes the sky's hue, and the least height over the horizon it takes it from (7c)
+uniform vec4 city_glass[12] : source_color;   // RenderShapes.city_uniforms (7c): each of Art's tints' dark glass; a: its lobby storey's wall against the wall
+uniform vec4 city_hi[12] : source_color;      // ... its bright glass
+uniform vec4 city_trim[12] : source_color;    // ... its cornice and lintel
+uniform vec4 city_k[12];                      // ... the wall in a ribbon's spandrel, a punched one's, a fin and a fin's sun side, as multiples of it
+uniform vec4 fac_a[3];                        // each facade type (ribbon, punched, fins): its column as a multiple of the look's, the pane across its cell (from, to), the share of cells with one
+uniform vec4 fac_b[3];                        // ... the pane up the floor (from, to), strips a floor, flags
+uniform vec4 fac_c[3];                        // ... its spandrel's band up the floor (from, to), a fin's half width
+uniform vec4 city_base = vec4(1.6, 0.1, 0.08, 2.0);   // Art's lobby storey in floors, the lintel over it (RenderLook.CITY_LINTEL), the crown's cornice line (RenderLook.CITY_CORNICE), the storey's rows of panes (RenderLook.CITY_BASE_ROWS)
+uniform vec2 city_base_pane = vec2(0.12, 0.88);  // RenderLook.CITY_BASE_PANE: the lobby storey's panes up the storey
 uniform float dmg_holes = 0.18;      // RenderLook.DMG_HOLES: at stage 2, the share of a facade's bays broken open
 uniform vec3 row_haze = vec3(0.5, 600.0, 2800.0);   // RenderLook.ROW_HAZE: the most of the air a far row takes, and the depths behind the fighter plane it starts and is full at
 uniform float haze_focus = 0.0;      // the depth of the camera's focus plane (Camera's dolly): the rows' haze is measured from it. 0: the fighter plane
@@ -153,7 +175,7 @@ varying flat vec4 v_hole0;    // each hole's two ends on this pane's screen, in 
 varying flat vec4 v_hole1;
 varying float v_wy;
 varying vec3 v_view;          // from the camera, in world axes, for the sky's colour behind (the pan haze)
-varying flat vec3 v_look;     // x: the look; y: rows of windows a floor; z: the row's haze, 0 to 1
+varying flat vec4 v_look;     // x: the look; y: rows of windows a floor; z: the row's haze, 0 to 1; w: the city look (7c)
 varying flat vec3 v_open;     // this pane's lobby: x the share of it open (0: shut; negative on a part inside the shell or stuck onto it), y its top (world y; under -1.5e9: a building with no lobby), z the tower's share of the patch
 varying flat vec4 v_shell;    // the footprint of the tower's shell at the street: xy its middle (x across from the camera, z in depth), zw half its width and depth (0: none)
 varying flat vec2 v_frame;    // x: the height over the building's base from which this part is its outermost wall (it carries the frame's columns there; huge: never); y: four times what rows 5 to 9 of win_tex hold (1 marks, 2 a stage spreading) plus the core's state (0 whole, 1 cracked, 2 broken)
@@ -211,8 +233,8 @@ void vertex() {
 	v_winb = vec3(wb.x, wb.y, float(INSTANCE_ID) + (zface ? 0.0 : 0.5));
 	v_face = vec4(zface ? v0.x * sx : v0.z * sz, zface ? sx : sz, COLOR.a < 0.5 ? -1.0 : (abs(n0.y) < 0.5 ? 1.0 : 0.0), v0.x * sx);
 	v_dmg = vec3(wb.z, min(top, stubbed), sx);
-	v_look = vec3(sh.w, max(1.0, wb.w), row_haze.x * clamp((-(MODEL_MATRIX[3].z + 0.5 * sz - haze_focus) - row_haze.y) / max(row_haze.z - row_haze.y, 1.0), 0.0, 1.0));
 	vec4 fr4 = texelFetch(win_tex, ivec2(id, 4), 0);
+	v_look = vec4(sh.w, max(1.0, wb.w), row_haze.x * clamp((-(MODEL_MATRIX[3].z + 0.5 * sz - haze_focus) - row_haze.y) / max(row_haze.z - row_haze.y, 1.0), 0.0, 1.0), fr4.w);
 	v_frame = vec2(fr4.x, fr4.y + 4.0 * fr4.z);   // the core's state, and four times what rows 5 to 12 hold (1 marks, 2 a stage spreading, 4 a second wave inside it, 8 a blow-out's wave)
 	vec4 shl = texelFetch(win_tex, ivec2(id, 3), 0);
 	v_shell = vec4(MODEL_MATRIX[3].x + shl.x, MODEL_MATRIX[3].z + shl.y, shl.z, shl.w);
@@ -267,6 +289,11 @@ float lum(vec3 c) {
 // The colour `to`, but no farther from `from` in relative luminance than `budget`.
 vec3 toward(vec3 from, vec3 to, float budget) {
 	return mix(from, to, min(1.0, budget / max(abs(lum(to) - lum(from)), 0.0001)));
+}
+
+// c at relative luminance l, its hue and saturation kept (7c).
+vec3 at_lum(vec3 c, float l) {
+	return min(c * (l / max(lum(c), 0.0001)), vec3(1.0));
 }
 
 float win_hash(vec3 p) {
@@ -460,6 +487,26 @@ void fragment() {
 		vec4 lb = look_b[lk];
 		float fy = (v_wy - v_winb.x) / v_win.w;
 		float fr = fy * v_look.y;                 // rows of windows: a tall floor carries several
+		// 7c: a tower in one of Art's tints wears one of Art's facade types; its lobby storey has city_base.w rows of
+		// punched panes (under the lintel, none), its crown starts at crown_f.
+		int city = int(v_look.w + 0.5);
+		int tint = (city & 15) - 1;
+		int fac = (city >> 4) & 3;
+		float crown_f = tint >= 0 ? float(city >> 7) : 0.0;
+		bool in_base = tint >= 0 && (city & 64) != 0 && fy < 2.0;
+		vec4 fc = vec4(0.0);
+		if (tint >= 0) {
+			fac = min(fac, 2);
+			la = vec4(la.x * fac_a[fac].x, fac_a[fac].yzw);
+			lb = fac_b[fac];
+			fc = fac_c[fac];
+			if (in_base) {
+				la = vec4(look_a[lk].x * fac_a[1].x, fac_a[1].yzw);
+				lb = fy < city_base.x ? vec4(city_base_pane, 1.0, lb.w) : vec4(2.0, 2.0, 1.0, lb.w);
+				fc = vec4(0.0);
+				fr = city_base.w * fy / city_base.x;
+			}
+		}
 		float ncol = max(1.0, floor(v_face.y / la.x));
 		float cx = (v_face.x / v_face.y + 0.5) * ncol;
 		vec2 r = vec2(fract(cx), fract(fr));
@@ -562,9 +609,55 @@ void fragment() {
 			bool has = win_hash(vec3(v_winb.z, floor(cx), row + 57.0)) < la.w && (!top_only || row >= v_winb.y * v_look.y - 1.5);
 			bool across = r.x > la.y && r.x < la.z;
 			bool tall = ry > lb.x && ry < lb.y;
-			vec3 glass = look_glass[lk].rgb;
-			vec3 bright = look_hi[lk].rgb;
+			vec3 glass = tint >= 0 ? city_glass[tint].rgb : look_glass[lk].rgb;
+			vec3 bright = tint >= 0 ? city_hi[tint].rgb : look_hi[lk].rgb;
+			bool in_crown = crown_f > 0.5 && kf >= crown_f;
+			if (in_crown) {
+				glass = bright;   // Art's crown: its panes are the bright glass
+			}
+			vec3 wall_far = col;   // the wall between the panes as a whole, for a wall too far to draw them
+			if (tint >= 0) {
+				// 7c (C): this pixel's wall, a spandrel, a fin, the lobby storey, its lintel or the crown's cornice line,
+				// each held to the wall by the budget.
+				vec4 kk = city_k[tint];
+				vec3 trimc = toward(wallc, city_trim[tint].rgb, pattern_budget);
+				vec3 spand = toward(wallc, wallc * (fac == 0 ? kk.x : kk.y), pattern_budget);
+				vec3 fin_d = toward(wallc, wallc * kk.z, pattern_budget);
+				vec3 fin_l = toward(wallc, wallc * kk.w, pattern_budget);
+				float band = fc.y - fc.x;
+				float finw = 2.0 * fc.z;
+				vec3 fw = wallc;
+				vec3 favg = wallc * (1.0 - band - finw) + spand * band + fc.z * (fin_l + fin_d);
+				if (in_base) {
+					vec3 bw = toward(wallc, wallc * city_glass[tint].a, pattern_budget);
+					bool lintel = fy >= city_base.x && fy < city_base.x + city_base.y;
+					fw = fy < city_base.x ? bw : (lintel ? trimc : wallc);
+					favg = fw;
+				} else {
+					if (r.x < fc.z) {
+						fw = fin_l;
+					} else if (r.x > 1.0 - fc.z) {
+						fw = fin_d;
+					} else if (ry >= fc.x && ry < fc.y) {
+						fw = spand;
+					}
+					if (in_crown) {
+						if (ry >= 1.0 - city_base.z) {
+							fw = trimc;
+						}
+						favg = mix(favg, trimc, city_base.z);
+					}
+				}
+				col = flat_shade(fw, NORMAL, 0.35);
+				wall_far = flat_shade(favg, NORMAL, 0.35);
+			}
 			if (soft) {
+				if (glass_sky.x > 0.0) {
+					// 7c (A): the sky's colour in this direction, at the glass's own luminance; then held to the wall.
+					vec3 sky = sky_color(max(elevation(v_view), horizon + glass_sky.y * sky_tan));
+					glass = mix(glass, at_lum(sky, lum(glass)), glass_sky.x);
+					bright = mix(bright, at_lum(sky, lum(bright)), glass_sky.x);
+				}
 				glass = toward(wallc, glass, pattern_budget);
 				bright = toward(wallc, bright, pattern_budget);
 			}
@@ -572,7 +665,7 @@ void fragment() {
 			float cover = top_only ? 0.0 : (la.z - la.y) * (lb.y - lb.x) * la.w;
 			float lit_sh = min(look_glass[lk].a * wl_lit, 1.0);   // the panes lit warm: more with the dark
 			vec3 avg = flat_shade(mix(mix(glass, bright, 0.1), win_lit.rgb, lit_sh), NORMAL, 0.35);
-			vec3 far = mix(col, gone ? inside.rgb : avg, cover);
+			vec3 far = mix(wall_far, gone ? inside.rgb : avg, max(cover, 0.0));
 			// A pane's own colour (lit, bright or dark) shows from near only: from the middle distance every pane is the
 			// glass's average, so a far tower is bands, not a sparkle that shimmers as the camera moves.
 			float vary = 1.0 - smoothstep(0.06, 0.2, max(fwidth(cx), fwidth(fr)));
