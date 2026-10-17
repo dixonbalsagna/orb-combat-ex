@@ -27,6 +27,19 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
+## Everything _draw reads, so main.gd asks for a redraw only when it changes: the full greybox HUD (legacy) and the perf
+## readout change every frame; UI's view draws only _prompt's lines.
+func redraw_key() -> Array:
+	if main == null or main.host == null:
+		return []
+	if legacy or show_perf:
+		return [Engine.get_process_frames()]
+	var host: SimHost = main.host
+	var card: bool = main.ui_hud != null and main.ui_hud.is_overlay_open()
+	var touch: bool = main.ui_hud != null and bool(main.ui_hud.opts.get("touch_ui", false))
+	return [size, _dp(), main.started, host.intro_running(), card, touch, main.touch_layout() if touch else null, host.seed, host.ticks, host.paused]
+
+
 func _draw() -> void:
 	if main == null or main.host == null:
 		return

@@ -487,16 +487,15 @@ void fragment() {
 		vec4 lb = look_b[lk];
 		float fy = (v_wy - v_winb.x) / v_win.w;
 		float fr = fy * v_look.y;                 // rows of windows: a tall floor carries several
-		// 7c: a tower in one of Art's tints wears one of Art's facade types; its lobby storey has city_base.w rows of
-		// punched panes (under the lintel, none), its crown starts at crown_f.
+		// 7c: a tower in one of Art's tints wears one of Art's facade types (3: the look's own windows); its lobby storey
+		// has city_base.w rows of punched panes (under the lintel, none), its crown starts at crown_f.
 		int city = int(v_look.w + 0.5);
 		int tint = (city & 15) - 1;
 		int fac = (city >> 4) & 3;
 		float crown_f = tint >= 0 ? float(city >> 7) : 0.0;
 		bool in_base = tint >= 0 && (city & 64) != 0 && fy < 2.0;
 		vec4 fc = vec4(0.0);
-		if (tint >= 0) {
-			fac = min(fac, 2);
+		if (tint >= 0 && fac < 3) {
 			la = vec4(la.x * fac_a[fac].x, fac_a[fac].yzw);
 			lb = fac_b[fac];
 			fc = fac_c[fac];
@@ -616,7 +615,7 @@ void fragment() {
 				glass = bright;   // Art's crown: its panes are the bright glass
 			}
 			vec3 wall_far = col;   // the wall between the panes as a whole, for a wall too far to draw them
-			if (tint >= 0) {
+			if (tint >= 0 && fac < 3) {
 				// 7c (C): this pixel's wall, a spandrel, a fin, the lobby storey, its lintel or the crown's cornice line,
 				// each held to the wall by the budget.
 				vec4 kk = city_k[tint];

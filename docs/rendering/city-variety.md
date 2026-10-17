@@ -2,7 +2,10 @@
 
 Orb, homework 4: from far off the skyline "looks great", but up close the towers are "a bunch of dark grid lines". The pitch was `homework4-pitch.md` (steps A to D). Art's palettes and facade types are `docs/art/city-facades.md`, with the data in `data/art/city-looks.json`. This page covers what is built: A, B and C, Art's lobby storey and set-back crown, and the crown tower's stubs. D (lit detail) is not built: "show me first" applies to lit windows.
 
-**The crown tower's stubs are on. City variety is built, gated and switched off** (`RenderLook.CITY_VARIETY`), because the collapse clip in normal mode fails with it on. The reason is the analyser's pooling at a marginal event, not a busier picture (see "Measured"). The stills below show it switched on.
+**The crown tower's stubs are on. City variety has two switches** (2026-10-17, the EP after Legal's w05):
+- **`RenderLook.CITY_TINTS`, off: A and B.** The glass takes the sky, and each tower takes one of Art's tints. Their own flash clips made two city clips worse in full effects, so they stay off (see "The tints' own clips").
+- **`RenderLook.CITY_FACADES`, off: C.** That covers Art's facade types, the lobby storey and the set-back crown. It builds on the tints and does nothing with them off. It waits for the EP's go now that Art's re-cut meets the neighbour rule (below).
+With all of it on, the collapse clip in normal mode failed. The cause is the analyser's pooling at a marginal event, not a busier picture (see "Measured"). The stills below show all of it on.
 
 **Where it applies.** Downtown and mid-rise towers only: the looks with the contrast budget. Landmarks keep their own treatment, and houses, villages and industry are unchanged. Without Art's data file the towers draw exactly as before. The sim reads none of it. A tower's picks come from its own seed, so they are the same in every match and on every machine.
 
@@ -33,13 +36,21 @@ Orb, homework 4: from far off the skyline "looks great", but up close the towers
 4. **The base and crown need floors.** The base needs at least 5 floors, and the crown needs at least 9 and a straight shaft. A four-floor mid-rise would otherwise be all base and crown. Stepped, spire and crown towers keep their own tops.
 5. **The crown tower's gem stays.** Art wrote "nothing taller than the stubs". Lowering the gem would cut the tower's top from Orb's skyline. The horns are gone either way.
 
+## Legal's neighbour rule (w05, RL-144)
+
+The budget (0.085 of relative luminance) holds between neighbouring elements as well as against the wall: glass beside a fin, a spandrel beside the glass, the cornice beside the shaft, a fin's sun side beside its shade.
+
+**`render/tools/city_check.gd` asserts it** for every one of Art's tints and every facade type, the lobby storey and the crown. It takes each tone as the shader draws it: scaled to the tower's mass tone, and held to the wall by the budget. Lit panes are light, not facade, and are left out.
+
+On Art's re-cut (2e41d4f8) the widest neighbouring step is 0.030: the bright glass beside a punched spandrel or a fin, on mid-rise cream. A fin's two sides step 0.060 on Art's mid tone, as the data gives them, and 0.024 as drawn on the mass tone. Art's first cut reached 0.140 there, and 0.057 as drawn.
+
 ## For Art
 
 At the towers' dark mass tone, the warm tints (buff, clay, cream, sandstone) read as browns and olives (`img/city/street-midrise.png`). Lifting their chroma, or choosing cooler tints, is Art's call. Every number is in the data.
 
 ## Measured, and why it is switched off
 
-**`RenderLook.CITY_VARIETY` is false.** Off, every tower draws exactly as it did without this code: no data is read, no tint or facade is picked, and the glass does not take the sky. All 16 render gates pass on the city build, both on and off.
+**The switches.** With `CITY_TINTS` and `CITY_FACADES` both off, every tower draws exactly as it did without this code: no data is read, no tint or facade is picked, and the glass does not take the sky. With the facades off, the shader skips their tones as well. All the render gates pass, with everything on and with everything off, and with the tints alone on (2026-10-17, 17 gates with the city check).
 
 **The city flash clips** on HEAD 8895f688 (Tools' `check-clip`, primary / area threshold 15% lower / two-second memory):
 
@@ -74,6 +85,20 @@ The crowd's spacing turns about 5% fewer pixels over rushcity's worst second (2.
   1. VFX gives the first blast's debris run some margin under the window threshold.
   2. Tools decides whether a run that grows because the rest of the frame got quieter should count.
   3. Ship tints alone or facades alone. Each reads 2.5 on collapse normal: a pass, at the gate.
+
+**The tints' own clips** (2026-10-17, on 0654a2e2, where Tools' hook fix makes "normal" clips full effects for the first time). Tools' city clips at full length through `check-clip`, primary / area threshold 15% lower / stricter. "Off" is this batch with `CITY_TINTS` false; it reads as main does on every clip below:
+
+| Clip | Main | Tints on | Tints off |
+| :--- | :--- | :--- | :--- |
+| signaturecity, normal | 3 / 3 / 3, over the gate | 4 / 4 / 3, fail | 3 / 3 / 3, over the gate |
+| signaturecity, reduced | 2 / 2 / 1, pass | 2.5 / 2.5 / 2, pass | 2 / 2 / 1, pass |
+| rushcity, normal | 3.5 / 3.5 / 2.5, fail | 3.5 / 4 / 2.5, fail | 3.5 / 3.5 / 2.5, fail |
+| rushcity, reduced | 2.5 / 2 / 1, pass | 3 / 2.5 / 1, over the gate | 2.5 / 2.5 / 1, pass |
+| collapse, normal | 2 / 2 / 1, pass | 1.5 / 2 / 1, pass | |
+| collapse, reduced | 2 / 2.5 / 0.5, pass | 2 / 2.5 / 0.5, pass | |
+| mashcity, both modes | 1 / 1 / 0, pass | 1 / 1 / 0, pass | |
+
+In signaturecity's worst second (ticks 421 to 479, full effects) whole facades turn lighter and then darker as the camera whips along the street: 172,367 pixels lighter over ticks 418 to 423 and 228,568 darker over 424 to 429, mostly window grids. The tints change those windows' tones, and the count rises.
 
 **rushcity** fails on HEAD too: the area reading counts 3.5 (4 with the crowd's spacing). Its counted changes are the lit panes on the tall towers, sweeping across the sprinting pane (`img/city/` has no picture of this; the per-tick maps are in Rendering's scratch). With the city on it reads 3 / 3 / 2: the area reading is better, the primary worse, over the gate either way.
 

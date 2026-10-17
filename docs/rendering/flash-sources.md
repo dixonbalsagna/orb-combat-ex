@@ -73,7 +73,7 @@ A hit granted (left) and a hit refused (right), on the web build: ![hits](img/fl
 - **A perfect block's guard flash (not low):** it may take the second's one slot, with VFX's big events. Refused, the arc's lines flash without the fill.
 - **A beam and a beam clash:** always calm, and they do not ask, so the one slot is left to others. A beam is a thin line with a faint glow; a clash has no flare.
 - **The divider's slam flash:** UI draws none and does not ask.
-- **A groove's glow and char:** the glow at 30% of its strength with no brightening past its colour, the char at 35%.
+- **A groove's glow and char:** no glow (30% of its strength until 2026-10-17), the char at 35%.
 - **The pan haze** does not follow the setting: it is off unless switched on. The whip haze is on in both modes.
 - **Nothing of Rendering's reads the option itself.** Each source asks the register, so there is one rule and one log.
 
@@ -148,7 +148,7 @@ It was the crater's shock ring, drawn as a band a third of its radius thick; VFX
 A beam's burn used to do two things the analyser counts: turn a broad strip of ground dark in one tick, and leave a bright glow beside a dark char for a moving camera to sweep over.
 
 - **The char comes in as the groove cools.** While a groove is hot the ground under its glow keeps its own colour; the char eases in over two to three seconds as the heat falls (`RenderLook.CHAR_FRESH`, on the heat `ImpactFx` already keeps, so nothing new is uploaded). A weak beam's groove starts as a faint red tint, where it was a dark red band at once.
-- **Under reduced flashing the groove is calm:** the glow at 30% and the char at 35% (`HEAT_CALM`, `CHAR_CALM`). Scorch marks are fainter for a player with the setting on.
+- **Under reduced flashing the groove is calm:** the char at 35% (`CHAR_CALM`) and, since 2026-10-17, no glow (`HEAT_CALM` 0; it was 30%: see "No glow under reduced flashing" below). Scorch marks are fainter for a player with the setting on.
 
 Before and after, on exports of 1172a4e8 (today's tree, with VFX's register and Camera's governor), read with that commit's analyser. The second figure is the reading with the area threshold 15% lower.
 
@@ -212,7 +212,7 @@ On the shorter city with three streets the collapse clip passed in normal mode a
 | The tower's top: never cut down, never gone | 3.5 / 3.5 / 2.5, fail | 2.5 / 3.5 / 2.5, fail |
 
 - **Only the ground gives a pass in both modes.** Holding the tower's face or its top makes normal mode worse: a whole face that stays lit against the dusk flips the other way.
-- **Why reduced mode was the worse one.** In normal mode a fresh crater is under its own bright glow and darkens as it cools, over seconds. Reduced mode draws that glow at three tenths (`HEAT_CALM`), and a blast's crater has no glow at all (only a beam's has), so the street went from pale pavement to dark earth in one tick, twice in a tenth of a second. The second darkening was the change that took the count over.
+- **Why reduced mode was the worse one.** In normal mode a fresh crater is under its own bright glow and darkens as it cools, over seconds. Reduced mode drew that glow at three tenths (`HEAT_CALM`, 0 since 2026-10-17), and a blast's crater has no glow at all (only a beam's has), so the street went from pale pavement to dark earth in one tick, twice in a tenth of a second. The second darkening was the change that took the count over.
 
 **The ease, reduced mode only** (`RenderLook.CRATER_CALM_S`, `ground.gdshaderinc` `crater_new`). Under reduced flashing or reduced motion a new crater keeps the ground's own colour at first. Its earth, its ejecta and its char spread from its centre to the edge of its apron over 1.5 s of match time. The bowl's shape is there at once: the street bends down, and its colour follows. Ground that an older crater already coloured is not given back. Normal mode is not changed: the shader takes the old path, and its counted changes are the same, tick for tick.
 
@@ -404,6 +404,27 @@ Tools' analyser measures pixels against the standard (`docs/tools/flash-check.md
 - **The scenes are Tools' staging, not play.** They write the sim (full ki, forms made ready, a tier raised, staged blasts), so a capture match is not one the determinism tools know. The code that does it is in the build and unreachable without the argument.
 - **`collapse` moves the fight.** At the start the nearest building is 18,000 units away, so on tick 0 both fighters are set down beside the tallest tower (Tools' `_to_the_city`, the same lines in both stagings) and the blasts that follow are in view.
 - **The scenarios' rules are a copy** of Tools' file, because `tools/` is not in an export. Tools' drift check fails when the two differ (`docs/tools/flash-check.md`), so they are changed together.
+
+## No glow under reduced flashing (2026-10-17)
+
+**The ruling.** Under Reduce flashing (or reduced motion) a beam's groove has no glow. Its char stays at 35% (`HEAT_CALM` 0, `CHAR_CALM` 0.35). This is the EP's ruling: Reduce flashing is a safety mode. Full effects are not changed.
+
+**Why.** Until Tools' 0654a2e2, the capture hook ran every "normal" clip with UI's Reduce flashing on, so each record measured the calm look in both modes. On that look the record's ai-43 read 3.5 on the primary reading in both modes. With the glow off it passed. Any glow from 5% up read 3, around Camera's cut at tick 2660.
+
+**Readings** on 0654a2e2 (the hook fixed). These are Tools' clips at full length through `check-clip`; each reading is primary / area threshold 15% lower / stricter:
+
+| Clip | Main | With no calm glow |
+| :--- | :--- | :--- |
+| ai-43, normal | 2 / 2.5 / 2, pass | 2 / 2.5 / 2, pass |
+| ai-43, reduced | 3.5 / 3.5 / 2, fail | 2.5 / 3.5 / 1.5, fail |
+| blastdummy, Protagonist and dummy, normal | 1.5 / 3 / 1.5, pass | the same |
+| blastdummy, Protagonist and dummy, reduced | 3 / 3 / 3, over the gate | the same |
+| blastdummy, Anti-hero and dummy, normal | 2 / 2 / 2, pass | the same |
+| blastdummy, Anti-hero and dummy, reduced | 3 / 3.5 / 3, fail | 3 / 3 / 3, over the gate |
+
+**What is left is in reduced mode.** Full effects pass all three clips. The worst second of ai-43 reduced (ticks 2875 to 2992) holds two kinds of change:
+- **A new crater.** Its colours spread from its centre over 1.5 s (`CRATER_CALM_S`). The front turned 41,754 px darker in one window at tick 2903, and 30,824 px lighter at 2882.
+- **Camera's reframes and its moving split line.** At 2933 the far ground rises into the dusk sky in the right pane (30,353 px in one window).
 
 ## Cost
 

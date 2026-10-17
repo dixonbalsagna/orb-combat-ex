@@ -23,7 +23,8 @@ const SETTLEMENTS: String = "res://data/biomes/settlements.json"
 ## and a facade each (city_look); without it they are drawn in their look as before.
 const CITY_LOOKS: String = "res://data/art/city-looks.json"
 const FACADES: Array = ["ribbon", "punched", "fins"]   # building.gdshader's facade index
-const CITY_TINTS: int = 12                              # building.gdshader's city arrays
+const NO_FACADE: int = 3                                # ... the look's own windows (RenderLook.CITY_FACADES off)
+const CITY_SLOTS: int = 12                              # building.gdshader's city arrays: Art's tints, at most
 ## A part's flags.
 const ROOF: int = 1     # a roof facet: its own colour, no windows, gone from a shell
 const PLAIN: int = 2    # no windows
@@ -123,20 +124,26 @@ static func look(k: int) -> Dictionary:
 	return LOOK.get(n, LOOK[FALLBACK])
 
 
-## Art's city data (data/art/city-looks.json), or {} without the file or with RenderLook.CITY_VARIETY off.
-static func city() -> Dictionary:
+## Art's city data (data/art/city-looks.json) whatever the switches say, or {} without the file: the checks and the
+## shader's arrays read it.
+static func city_data() -> Dictionary:
 	if not _city_read:
 		_city_read = true
-		if RenderLook.CITY_VARIETY and FileAccess.file_exists(CITY_LOOKS):
+		if FileAccess.file_exists(CITY_LOOKS):
 			var j = JSON.parse_string(FileAccess.get_file_as_string(CITY_LOOKS))
 			_city = j if j is Dictionary else {}
 	return _city
 
 
+## Art's city data as the towers wear it: {} with RenderLook.CITY_TINTS off (the facades build on the tints).
+static func city() -> Dictionary:
+	return city_data() if RenderLook.CITY_TINTS else {}
+
+
 ## Every tint in Art's data, the looks' in the data's order: [look name, tint]. A tint's index here is building.gdshader's.
 static func city_tints() -> Array:
 	if _tints.is_empty():
-		var looks: Dictionary = city().get("looks", {})
+		var looks: Dictionary = city_data().get("looks", {})
 		for ln in looks:
 			for t in looks[ln]:
 				_tints.append([str(ln), t])
@@ -197,7 +204,7 @@ static func city_look(b, k: int) -> Dictionary:
 	var fi: int = FACADES.find(_pick(dd.get("facade_weights", {}), _mix(float(b.seed), 2)))
 	var tints: Array = city_tints()
 	var ti: int = -1
-	for i in range(mini(tints.size(), CITY_TINTS)):
+	for i in range(mini(tints.size(), CITY_SLOTS)):
 		if str(tints[i][0]) == str(lnames[k]) and str((tints[i][1] as Dictionary).get("id", "")) == tid:
 			ti = i
 	if ti < 0 or fi < 0:
@@ -208,7 +215,9 @@ static func city_look(b, k: int) -> Dictionary:
 	out["roof"] = str(wl["shadow"])
 	out["trim"] = str(wl["shadow"])
 	out["tint"] = ti
-	out["facade"] = fi
+	out["facade"] = fi if RenderLook.CITY_FACADES else NO_FACADE
+	if not RenderLook.CITY_FACADES:
+		return out
 	# The facade's windows as a look's (what building.gdshader draws from fac_a and fac_b), for VFX's pane grid.
 	var fu: Dictionary = city_uniforms()
 	var fa: Vector4 = fu["fac_a"][fi]
@@ -223,7 +232,8 @@ static func city_look(b, k: int) -> Dictionary:
 
 
 ## What building.gdshader reads of a building's city look (win_tex's fifth texel, a): 0 for none; else 1 plus its tint,
-## plus 16 times its facade, plus 64 with a lobby storey, plus 128 times the floor its crown starts at.
+## plus 16 times its facade (NO_FACADE: the look's own windows), plus 64 with a lobby storey, plus 128 times the floor its
+## crown starts at.
 static func city_code(lk: Dictionary, floors: int) -> float:
 	if not lk.has("tint"):
 		return 0.0
@@ -257,7 +267,7 @@ static func city_uniforms() -> Dictionary:
 	var hi: Array = []
 	var trim: Array = []
 	var kk: Array = []
-	var c: Dictionary = city()
+	var c: Dictionary = city_data()
 	var tints: Array = city_tints()
 	var fac: Dictionary = c.get("facades", {})
 	var bc: Dictionary = c.get("base_and_crown", {})
@@ -269,7 +279,7 @@ static func city_uniforms() -> Dictionary:
 	var off_fin: float = float((fin.get("fin", {}) as Dictionary).get("lum_offset", 0.0))
 	var off_sun: float = float((fin.get("fin", {}) as Dictionary).get("sun_side_offset", 0.0))
 	var off_base: float = float((bc.get("base", {}) as Dictionary).get("wall_lum_offset", 0.0))
-	for i in range(CITY_TINTS):
+	for i in range(CITY_SLOTS):
 		if i >= tints.size():
 			glass.append(Color(0, 0, 0, 1))
 			hi.append(Color(0, 0, 0, 1))

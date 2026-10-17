@@ -83,6 +83,7 @@ var view_cam_x: float = 0.0       # the interpolated camera's wrapped world x th
 var args: Dictionary = {}
 var frames: int = 0
 var _ring: Array = [PackedFloat64Array(), PackedFloat64Array(), PackedFloat64Array(), PackedFloat64Array()]   # frame, tick, fx, view ms
+var _hud_key: Array = []          # what the greybox HUD last drew from (hud.gd redraw_key)
 var _bench: Array = [PackedFloat64Array(), PackedFloat64Array(), PackedFloat64Array(), PackedFloat64Array()]
 var _render_cpu := PackedFloat64Array()
 var _render_gpu := PackedFloat64Array()
@@ -121,6 +122,12 @@ func _ready() -> void:
 	add_child(pane)
 	move_child(pane, 0)
 	panes = [pane]
+	# Every effect's shader drawn once, off-screen and behind the notice, so the driver's compile is not a fight's
+	# first beam or crack (render/core/warmup.gd; Performance's audit 3.6). Not in a tool's main; `nowarmup` skips it.
+	if not manual and not args.has("nowarmup"):
+		var warm := RenderWarmup.new()
+		add_child(warm)
+		warm.start(pane.get_world_3d())
 	cam_rig = pane.cam_rig
 	planet = pane.planet
 	fighters_root = pane.fighters_root
@@ -165,6 +172,7 @@ func _ready() -> void:
 	# The pause menu's "hand player two back to the AI" entry.
 	ui_hud.player_two_leave_requested.connect(_on_player_two_leave)
 	ui_hud.form_prompt_shown.connect(_on_form_prompt)
+	ui_hud.haptic_requested.connect(_on_haptic)
 	ui_hud.pause_menu_opened.connect(_on_pause_menu_opened)
 	ui_hud.pause_menu_closed.connect(_on_pause_menu_closed)
 	ui_hud.new_match_requested.connect(func(): start_match(fresh_seed()))
@@ -555,8 +563,14 @@ func render_view(a: float) -> void:
 	view_cam_x = pane.view_cam_x
 	host.impact.heat_changed = false
 	UiSimBridge.patch(ui_hud, S, host.hub)   # the hub is read for the armed stance's badge (UI's bridge writes nothing to it)
-	ui_hud.queue_redraw()
-	hud.queue_redraw()
+	# UiHud draws nothing itself: its layers redraw when their own content changes (UI, docs/ui/pending/hud-cache/
+	# main-redraw.patch), so it is not asked to every frame. The greybox HUD redraws when what it draws changes
+	# (Performance's audit, hot spot 1): every tick in a match, as its corner line shows the tick, and not while a
+	# pause, a frozen tick or the demo's prompt holds it still.
+	var hk: Array = hud.redraw_key()
+	if hk != _hud_key:
+		_hud_key = hk
+		hud.queue_redraw()
 
 
 ## Each tick's events and feed lines, as SimHost drains them: the planet's flight, and UI's HUD.
@@ -594,6 +608,36 @@ func _on_form_prompt(slot: int, device: String) -> void:
 		Input.vibrate_handheld(15)
 	elif slot >= 0 and slot < 2 and host.hub.device_of(slot) == "pad" and bool(host.hub.claimed[slot]):
 		Input.start_joy_vibration(int(host.hub.slot_pad[slot]), 0.3, 0.3, 0.015)
+
+
+## A pulse UI asks for on a human's own device (`haptic_requested`: "launch_open", the lit B). What to play, and whether, is Controls' pure
+## SimHaptics.plan (docs/controls/haptics.md): a pad's rumble on its own joypad id, a phone's vibration, nothing on a keyboard or an
+## empty slot, nothing with the haptics option off, and not twice inside 80 ms. A plan is a few steps (a thump, then a ring 90 ms later):
+## the first now, the rest on host timers. Host time only; nothing here reads or writes the sim.
+var _haptic_last_ms: Array = [-100000, -100000]
+
+
+func _on_haptic(slot: int, kind: String) -> void:
+	if slot < 0 or slot > 1:
+		return
+	var now: int = Time.get_ticks_msec()
+	var plan: Dictionary = SimHaptics.plan(kind, host.hub.rumble_target(slot), bool(ui_hud.opts.get("haptics", true)), int(_haptic_last_ms[slot]), now)
+	if plan.is_empty():
+		return
+	_haptic_last_ms[slot] = now
+	for s in plan["steps"]:
+		var at: int = int(s["at"])
+		if at <= 0:
+			_play_haptic_step(plan, s)
+		else:
+			get_tree().create_timer(float(at) / 1000.0).timeout.connect(_play_haptic_step.bind(plan, s))
+
+
+func _play_haptic_step(plan: Dictionary, s: Dictionary) -> void:
+	if str(plan["via"]) == "handheld":
+		Input.vibrate_handheld(int(s["ms"]))
+	else:
+		Input.start_joy_vibration(int(plan["id"]), float(s["weak"]), float(s["strong"]), float(s["seconds"]))
 
 
 ## The pause menu handed player two back to the AI: the hub frees their device (it can join again), and the slot

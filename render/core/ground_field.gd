@@ -77,6 +77,7 @@ var _crack_seen := PackedFloat32Array()
 var _deform_seen := PackedFloat32Array()
 var _scorch_seen := PackedFloat32Array()
 var _water_seen := PackedFloat32Array()
+var water_version: int = 0           # counts the changes to the water (rebuilt, or S.water moved): the planet view's water chunks follow it
 var _ncr: int = 0
 var _first = null
 var _last = null
@@ -134,6 +135,7 @@ func rebuild(S: SimState) -> void:
 	_scorch_seen = S.scorch.duplicate()
 	_water_seen = S.water.duplicate()
 	_crack_seen = S.crack.duplicate()
+	water_version += 1
 	_upload(S, true)
 
 
@@ -197,6 +199,7 @@ func update(S: SimState, heat: PackedFloat32Array, heat_changed: bool) -> bool:
 		any_dirty = true
 	var other: bool = S.scorch != _scorch_seen or S.water != _water_seen or S.crack != _crack_seen
 	if S.water != _water_seen:
+		water_version += 1
 		var nc2: int = SimConst.NC
 		for c0 in range(0, nc2, SHORE_CHUNK):
 			var c1: int = mini(c0 + SHORE_CHUNK, nc2)

@@ -120,10 +120,15 @@ const DMG_HOLES: float = 0.18
 const PATTERN_BUDGET: float = 0.085
 ## City variety (Orb, homework 4: up close the towers were "a bunch of dark grid lines"; Art's palettes and facade types,
 ## docs/art/city-facades.md and data/art/city-looks.json; building.gdshader 7c), on the downtown and mid-rise towers.
-## CITY_VARIETY switches all of it (A, B, C, the lobby storey, the crown). Off since 2026-10-16: on, the collapse clip in
-## normal mode reads 2.5 / 3.5 (FAIL on the area reading) though the picture turns fewer pixels; see
-## docs/rendering/city-variety.md, "Measured". Off, every tower draws as it did without it.
-const CITY_VARIETY: bool = false
+## Two switches (2026-10-16). CITY_TINTS: A, the glass takes the sky, and B, Art's tints. CITY_FACADES: C, Art's facade
+## types, the lobby storey and the set-back crown; it builds on the tints (it does nothing with them off). C waits for
+## Art's re-cut of the fins under Legal's neighbour rule (RL-144: the budget holds between neighbouring elements as well
+## as against the wall; render/tools/city_check.gd asserts it). A and B stay off after their own flash clips: in full
+## effects they took signaturecity from 3 to 4 and rushcity's area reading from 3.5 to 4 (2026-10-17). With all of it on,
+## the collapse clip in normal mode read 2.5 / 3.5 (docs/rendering/city-variety.md, "Measured"). Off, every tower draws
+## as it did without them.
+const CITY_TINTS: bool = false
+const CITY_FACADES: bool = false
 ## GLASS_SKY: how far a tower's glass takes the sky's colour in its direction, at the glass's own luminance (no pane
 ## changes value), and the least height over the horizon it takes it from, in half screens (at noon the sky's blue, not
 ## the pale band at the horizon; a pane under the eye never takes the ground).
@@ -282,6 +287,11 @@ const CROWD_DEEP: float = 120.0
 ## many of its figures as it has people alive.
 const CROWD_FACE: float = 40.0
 const CROWD_MAX: int = 12
+## The crowd is drawn in chunks (render/core/crowd_chunks.gd; Performance's audit, 2026-10-16): runs of figures whose
+## spots lie within CROWD_CHUNK of each other along the planet, each culled by the camera. CROWD_CHUNK_PAD: how far a
+## drawn figure reaches from its spot, boosted, cowering or turned (59 units tall, at most twice that boosted).
+const CROWD_CHUNK: float = 4000.0
+const CROWD_CHUNK_PAD: float = 400.0
 const Z_TREE_MIN: float = -120.0 * WS
 const Z_TREE_MAX: float = -30.0 * WS
 const TREE_W: float = 26.0 * WS
@@ -332,10 +342,10 @@ const HEAT_LO := "#c2381c"               # a cooling groove
 ## A groove chars as it cools (terrain.gdshader): while its heat (ImpactFx.heat, 1/e in 1.6 s) is above CHAR_FRESH.y
 ## the ground under the glow keeps its own colour, and the char comes in as the heat falls to CHAR_FRESH.x: from
 ## about 1.4 to 4 s after a weak beam, 3.3 to 6 s after the strongest. The burn used to turn a broad strip of ground
-## dark in one tick. Under reduced flashing (or reduced motion) the glow is drawn at HEAT_CALM of its strength and the
-## char at CHAR_CALM, so a camera moving over a groove changes little.
+## dark in one tick. Under reduced flashing (or reduced motion) the groove has no glow (HEAT_CALM 0, the EP's ruling of
+## 2026-10-17: it is a safety mode) and its char is drawn at CHAR_CALM, so a camera moving over a groove changes little.
 const CHAR_FRESH := Vector2(0.04, 0.2)
-const HEAT_CALM: float = 0.3
+const HEAT_CALM: float = 0.0
 ## Under reduced flashing (or reduced motion) a new crater also keeps the ground's own colour at first. Its earth, its
 ## ejecta and its char spread from its centre to the edge of its apron over CRATER_CALM_S of match time, so a blast
 ## does not turn a third of the screen dark in one tick. (Measured on the collapse clip: with the ground's darkening
@@ -357,6 +367,10 @@ const RUBBLE_EDGE: float = 30.0 * WS     # a rubble heap eases off over this dep
 const RUBBLE_TINT_H: float = 20.0        # heap height at which the rubble tint is full
 const RUBBLE := "#6f675d"                # rubble: broken concrete and brick dust
 const SHORE_COLS: int = 16               # a land vertex this many columns from water (twice the band mesh's widest stride) keeps its level
+## A water chunk is drawn only while a column holding water lies within this many columns of its own (PlanetView
+## _water_show; Performance's audit, 2026-10-16): the shore's reach or the far meander's, whichever is wider, and a
+## few columns of slack, as water spreads a column a step at most and a second pane may see a change a frame late.
+const WATER_REACH_SLACK: int = 4
 const OUTLINE_MIN_PX: float = 0.75       # ... and the thinnest it gets on a fighter deep in the rows
 const SHADOW_W: float = 56.0             # a fighter's ground shadow: across, and
 const SHADOW_D: float = 26.0             # ... in depth, in world units at his feet

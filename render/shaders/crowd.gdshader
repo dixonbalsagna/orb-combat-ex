@@ -16,6 +16,7 @@ render_mode unshaded, cull_back;
 uniform vec3 wl_mul = vec3(1.0);   // the world's light (SkyDrive.world_at), this layer's multiply in linear light
 uniform vec3 wl_add = vec3(0.0);   // ... and its night lift
 uniform float boost = 1.0;
+uniform int id_base = 0;   // the first crowd index of this chunk (render/core/crowd_chunks.gd): INSTANCE_ID + id_base is the figure's own
 uniform vec2 crowd_near = vec2(0.0, 0.0);   // RenderLook.NEAR_CLIP in a match with depth on: a figure nearer the lens than y shrinks, and is nothing nearer than x. (0, 0): off
 uniform float outline = 0.7;
 uniform vec4 outline_col : source_color = vec4(0.05, 0.05, 0.08, 1.0);
@@ -48,7 +49,7 @@ void vertex() {
 	float run = 1.0 - COLOR.g;
 	vec3 v = VERTEX;
 	vec3 nrm = NORMAL;
-	float ph = fract(float(INSTANCE_ID) * 0.618034);
+	float ph = fract(float(INSTANCE_ID + id_base) * 0.618034);
 	if (run > 0.0) {
 		// Parts by place (crowd_mesh.gd): the legs below the hip (7.2), the arms beyond the torso's sides (2.4).
 		float s = sin(TIME * run_hz * 6.2831853 + ph * 40.0);

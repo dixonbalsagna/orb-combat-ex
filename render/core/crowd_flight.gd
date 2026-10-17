@@ -163,7 +163,7 @@ static func street(b, out: float) -> float:
 
 ## Per frame, before the planet view places its figures: hide the runners whose run is over. One that reached its
 ## shelter is counted there (`arrived`), so the building shows a figure for it in the same frame.
-func arrive(S: SimState, mm: MultiMesh) -> void:
+func arrive(S: SimState, mm: RenderCrowdChunks) -> void:
 	if _runs.is_empty():
 		return
 	var done: Array = []
@@ -182,7 +182,7 @@ func arrive(S: SimState, mm: MultiMesh) -> void:
 
 
 ## Per frame, after the planet view placed its figures (which starts this frame's runners): move every runner.
-func step(S: SimState, mm: MultiMesh) -> void:
+func step(S: SimState, mm: RenderCrowdChunks) -> void:
 	_hit_x.clear()
 	if _runs.is_empty():
 		return

@@ -37,6 +37,9 @@ var mats: RenderMats = RenderMats.new()   # this pane's material state (PaneWorl
 var source: PlanetView = null         # a second pane's planet: the planet it draws (built first each match)
 var _terrain_meshes: Array = []   # [ArrayMesh]: every chunk of the near and middle tiers, then the far tier
 var _water_meshes: Array = []
+var _water_cols := PackedInt32Array()   # per water mesh: its first and last column (-1, -1: the far mesh, the whole planet)
+var _water_nodes: Array = []            # this pane's water nodes per mesh, one a copy
+var _water_drawn: int = -1              # the ground's water_version this pane last decided its water chunks for
 var _crowd_mat: ShaderMaterial
 var _terrain_mat: ShaderMaterial
 var _water_mat: ShaderMaterial
@@ -45,7 +48,8 @@ var _tree: MultiMesh
 var _tree_mat: ShaderMaterial        # this pane's trees (their own, so the world's light tints them alone)
 var _wl: Array = []                  # the world's light (SkyDrive.world_at), kept for materials made later
 var _wl_win: float = RenderLook.WINDOW_LIT_SHARE
-var _crowd: MultiMesh
+var _crowd: RenderCrowdChunks        # the crowd, in chunks the camera culls (crowd_chunks.gd); shared by panes
+var _crowd_mats: Array = []          # this pane's crowd material for each chunk (its first index: the hop's phase)
 var _bld0: MultiMesh                 # row 0, in front of the fighter plane: its own MultiMesh (bodies by row-0 index, then the other parts)
 var _parts: Array = []               # per building: its parts as it stands whole (RenderShapes.parts), the body first; shared by panes
 var _inst: Array = []                # per building: each part's instance in its MultiMesh (PackedInt32Array, the body's first)
@@ -123,6 +127,7 @@ func build(S: SimState) -> void:
 		ground = source.ground
 		_terrain_meshes = source._terrain_meshes
 		_water_meshes = source._water_meshes
+		_water_cols = source._water_cols
 	if _terrain_mat == null:
 		_make_materials()
 		if source == null:
@@ -189,7 +194,15 @@ func build(S: SimState) -> void:
 		m.set_shader_parameter("windows", 1.0 if windows else 0.0)
 		m.set_shader_parameter("spread_now", 0.0)
 	_spread_sent = -1.0
+	_water_nodes.clear()
+	_water_drawn = -1
 	_set_lanes(S)
+	# This pane's crowd material for each chunk, with the chunk's first index for the hop's phase (crowd_chunks.gd).
+	_crowd_mats.clear()
+	for c in range(_crowd.chunks.size()):
+		var cm: ShaderMaterial = _crowd_mat.duplicate() as ShaderMaterial
+		cm.set_shader_parameter("id_base", _crowd.firsts[c])
+		_crowd_mats.append(cm)
 	for k in range(-RenderLook.PLANET_COPIES, RenderLook.PLANET_COPIES + 1):
 		var n := Node3D.new()
 		n.name = "Copy%d" % (k + RenderLook.PLANET_COPIES)
@@ -198,14 +211,46 @@ func build(S: SimState) -> void:
 		for m in range(_terrain_meshes.size()):
 			_mesh_child(n, "Terrain%d" % m, _terrain_meshes[m], _terrain_mat)
 			_mesh_child(n, "Water%d" % m, _water_meshes[m], _water_mat)
+			if _water_nodes.size() <= m:
+				_water_nodes.append([])
+			_water_nodes[m].append(n.get_node("Water%d" % m))
 		if absi(k) <= 1:
 			_mm_child(n, "Buildings", _bld, _bld_mat)
 			_mm_child(n, "Buildings0", _bld0, _front_mat)
 			_mm_child(n, "Trees", _tree, _tree_mat)
-			_mm_child(n, "Crowd", _crowd, _crowd_mat)
+			for c in range(_crowd.chunks.size()):
+				_mm_child(n, "Crowd%d" % c, _crowd.chunks[c], _crowd_mats[c])
 		_copies.append(n)
 	if source == null:
 		refresh(S, true)
+
+
+## Which water chunks can draw anything, decided again whenever the water changes (Performance's audit, 2026-10-16:
+## the water's grid is the terrain's, drawn whole under a city with no sea in view). A chunk's surface shows only on a
+## column holding water, a land column within SHORE_COLS of one, or a far-row column whose far terrain the meander takes
+## from up to MEANDER away; so a chunk with no column holding water within the wider of those reaches (and
+## WATER_REACH_SLACK) of its own draws no pixel, and is hidden. The far mesh, the whole planet, is always drawn.
+func _water_show(S: SimState) -> void:
+	var nc: int = SimConst.NC
+	if _water_nodes.is_empty() or S.water.size() < nc:
+		return
+	var reach: int = maxi(RenderLook.SHORE_COLS, int(ceil(RenderLook.MEANDER / SimConst.COL))) + RenderLook.WATER_REACH_SLACK
+	var wet := PackedInt32Array()
+	wet.resize(nc + 1)
+	for i in range(nc):
+		wet[i + 1] = wet[i] + (1 if S.water[i] > 0.0 else 0)
+	for m in range(mini(_water_nodes.size(), _water_cols.size() / 2)):
+		var c0: int = _water_cols[2 * m]
+		var c1: int = _water_cols[2 * m + 1]
+		var show: bool = c0 < 0
+		if not show:
+			for off in [-nc, 0, nc]:
+				var a: int = clampi(c0 - reach + off, 0, nc)
+				var b: int = clampi(c1 + reach + 1 + off, 0, nc)
+				if b > a and wet[b] - wet[a] > 0:
+					show = true
+		for node in _water_nodes[m]:
+			(node as Node3D).visible = show
 
 
 ## Per frame: place the copies around the camera's wrapped x and apply whatever changed in the world (the first
@@ -219,6 +264,9 @@ func update(S: SimState, cam_x: float, heat: PackedFloat32Array = PackedFloat32A
 		_water_mat.set_shader_parameter("crater_now", S.T)
 	for c in _copies:
 		c.position.x = float(c.get_meta("k")) * SimConst.W - cam_x
+	if ground != null and ground.water_version != _water_drawn:
+		_water_drawn = ground.water_version
+		_water_show(S)
 	if source != null:
 		_send_spread(S, source)
 		return
@@ -443,12 +491,14 @@ func set_crowd_near(on: bool) -> void:
 	if on == _crowd_near or _crowd_mat == null:
 		return
 	_crowd_near = on
-	_crowd_mat.set_shader_parameter("crowd_near", RenderLook.NEAR_CLIP if on else Vector2.ZERO)
+	for m in [_crowd_mat] + _crowd_mats:
+		m.set_shader_parameter("crowd_near", RenderLook.NEAR_CLIP if on else Vector2.ZERO)
 
 
 func set_crowd_view(boost: float, outline: float) -> void:
-	_crowd_mat.set_shader_parameter("boost", boost)
-	_crowd_mat.set_shader_parameter("outline", outline)
+	for m in [_crowd_mat] + _crowd_mats:
+		m.set_shader_parameter("boost", boost)
+		m.set_shader_parameter("outline", outline)
 
 
 ## The copy nodes, left to right (for tools and tests).
@@ -1062,7 +1112,7 @@ func set_world_light(world: Array, win: float) -> void:
 func _apply_wl() -> void:
 	if _wl.is_empty() or _terrain_mat == null:
 		return
-	var by: Dictionary = {"ground": [_terrain_mat], "water": [_water_mat], "buildings": [_bld_mat, _front_mat], "trees": [_tree_mat], "civilians": [_crowd_mat]}
+	var by: Dictionary = {"ground": [_terrain_mat], "water": [_water_mat], "buildings": [_bld_mat, _front_mat], "trees": [_tree_mat], "civilians": [_crowd_mat] + _crowd_mats}
 	for li in range(RenderLook.WORLD_LAYERS.size()):
 		for m in by.get(RenderLook.WORLD_LAYERS[li], []):
 			if m != null:
@@ -1160,6 +1210,7 @@ func _make_ground_meshes() -> void:
 				continue
 			_terrain_meshes.append(_finish(tv[0], c0 * SimConst.COL, (c0 + cc) * SimConst.COL, false))
 			_water_meshes.append(_finish(tv[1], c0 * SimConst.COL, (c0 + cc) * SimConst.COL, true))
+			_water_cols.append_array([c0, c0 + cc])
 	var far: Array = [[], []]
 	for k in range(runs.size()):
 		if runs[k][1] == largest:
@@ -1167,6 +1218,7 @@ func _make_ground_meshes() -> void:
 			_grid(far[1], 0, SimConst.NC, runs[k][0], largest, 0, 0, true)
 	_terrain_meshes.append(_finish(far[0], 0.0, SimConst.W, false))
 	_water_meshes.append(_finish(far[1], 0.0, SimConst.W, true))
+	_water_cols.append_array([-1, -1])
 
 
 ## A top grid (ground) or surface grid (water) over columns c0..c1 at the given stride and rows, appended to the
@@ -1711,7 +1763,7 @@ func _building_mat() -> ShaderMaterial:
 	var cu: Dictionary = RenderShapes.city_uniforms()
 	for key in cu:
 		m.set_shader_parameter(key, cu[key])
-	m.set_shader_parameter("glass_sky", RenderLook.GLASS_SKY if RenderLook.CITY_VARIETY else Vector2(0.0, RenderLook.GLASS_SKY.y))
+	m.set_shader_parameter("glass_sky", RenderLook.GLASS_SKY if RenderLook.CITY_TINTS else Vector2(0.0, RenderLook.GLASS_SKY.y))
 	m.set_shader_parameter("row_haze", RenderLook.ROW_HAZE if row_haze else Vector3(0.0, RenderLook.ROW_HAZE.y, RenderLook.ROW_HAZE.z))
 	mats.track(m)
 	return m
@@ -1866,7 +1918,8 @@ func _make_props(S: SimState) -> void:
 			var shirt: Color = RenderLook.col(RenderLook.CROWD[int(cr.next() * RenderLook.CROWD.size())]).lerp(RenderLook.col(RenderShapes.look(_look[bi])["wall"][1]), RenderLook.CROWD_DISTRICT).srgb_to_linear()
 			looks.append(Color(shirt.r, shirt.g, shirt.b, cr.next()))
 	_crowd_first[nb] = _crowd_x.size()
-	_crowd = _multimesh(CrowdMesh.build(), _crowd_x.size(), 80.0, true, true, z0, z1)
+	# In chunks the camera culls (Performance's audit; crowd_chunks.gd): only the stretches in view are drawn.
+	_crowd = RenderCrowdChunks.build(CrowdMesh.build(), _crowd_x, RenderLook.CROWD_CHUNK, RenderLook.CROWD_CHUNK_PAD, _planet_aabb(-1000.0 * RenderLook.WS, 80.0 * RenderLook.WS, z0, z1))
 	for ci in range(looks.size()):
 		_crowd.set_instance_custom_data(ci, looks[ci])
 		_crowd.set_instance_color(ci, Color.WHITE)
