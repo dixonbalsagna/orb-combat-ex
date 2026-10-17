@@ -238,6 +238,43 @@ static func burst_read(entry: Dictionary, live_now: int, p: Dictionary = {}) -> 
 	return {"held": held, "ready": ready, "since": maxi(0, held - int(q["burstStart"])) if ready else 0, "stance": int(entry.get("stance", 0))}
 
 
+## The beam struggle's press (docs/controls/struggle-input.md; rule-of-cool.md section 2): what THIS tick's intent is, against the last one
+## the sim consumed, as "surge", "letgo" or "none". X, Y and B surge alike, A lets go; a stray (a second press in a window, or one off the
+## pulse) is the director's to judge, so this only says WHAT was pressed, on the tick it was pressed. `prev` is the intent before this one
+## (null reads as an idle one); `opts.latched` is the slot's latched charge setting (`hub.latch_charge_of(slot)`). When both a let-go and a
+## surge are pressed on one tick the let-go is returned.
+##   Arena, the keyboards, Full touch: the edges `light`, `heavy` and `sig` are surges, `context` is the let-go. Under RT (stance mask 4) the
+##     face buttons are the layer: `special` 1 and 2 are X and Y (surges), 3 is A (the let-go); B stays `sig`.
+##   Simple (pad and touch; they send mode -1): a surge is a LEVEL rising from nothing held, not an edge, because the Attack's blow edge
+##     is sent on its release (the hold was the wind-up) and would be late by the tap's length: `lightHeld` rising with no level held the
+##     tick before is the Attack's press (its tier changes at 12 and 28 live ticks move the level from one to the next and are never a
+##     press), and Y is a `sig` edge with `sigHeld` on (an edge with its level off is an already-wound blow, never a press). `special`
+##     (RT + X, the director's pick) is a surge. The let-go is Guard's `guardPress` (B on the pad), or LB's `context` (A's cell).
+##   Latched charge (Y, B, A only, never on Simple): a latched button's second press is a release with NO edge, so a change of its level, rise
+##     or fall, counts as its press (the first press's edge and rise are one event).
+## A flick-to-dodge, a guard on an Arena pad, a stance button, the boost: none.
+static func struggle_press(prev, i: SimIntent, opts: Dictionary = {}) -> String:
+	var pv: SimIntent = prev if prev != null else SimIntent.new()
+	var letgo: bool = false
+	var surge: bool = false
+	if i.mode == -1:
+		letgo = i.guardPress or i.context
+		var none_before: bool = not (pv.lightHeld or pv.heavyHeld or pv.sigHeld)
+		surge = (i.lightHeld and none_before) or (i.sig and i.sigHeld) or i.special != 0
+	else:
+		var rt: bool = (i.stanceMask & 4) != 0
+		letgo = i.context or (rt and i.special == 3)
+		surge = i.light or i.heavy or i.sig or (rt and (i.special == 1 or i.special == 2))
+		if bool(opts.get("latched", false)):
+			if i.contextHeld != pv.contextHeld:
+				letgo = true
+			if i.heavyHeld != pv.heavyHeld or i.sigHeld != pv.sigHeld:
+				surge = true
+	if letgo:
+		return "letgo"
+	return "surge" if surge else "none"
+
+
 ## The reading of a zip (docs/controls/lunge-control.md B6.4): "plain", "speed", "tech" or "heavy". The starter is the press made at
 ## `zip_start` (the press that began the zip); `arrival` is the tick of the zip's first contact (NO_BEAT if not known yet). Precedence
 ## is the classifier's: hold, then timed, then mashed.
