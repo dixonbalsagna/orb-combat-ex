@@ -57,15 +57,8 @@ fi
 
 # NIGHTLY-STYLE seeds on the same commit (Legal RL-156, addendum 10): seeds 1008 and 1009 and 20 fresh ones, both modes, none over 3 on the primary reading
 say "nightly-style seeds"
-EXTRA_SEEDS=$(node --input-type=module -e "
-import { nextSeeds } from "./tools/flash/nightly-seeds.mjs";
-import { readFileSync, existsSync } from "node:fs";
-const src = JSON.parse(readFileSync("tools/flash/sources.json", "utf8"));
-const recorded = new Set((src.pairings || []).flatMap((p) => p.seeds || []));
-const hist = existsSync("tools/flash/nightly-seeds.json") ? JSON.parse(readFileSync("tools/flash/nightly-seeds.json", "utf8")) : { runs: [] };
-const used = hist.runs.flatMap((r) => r.seeds).filter((s) => s !== 1008 && s !== 1009);
-console.log([1008, 1009, ...nextSeeds(20, 1010, recorded, used).filter((s) => s !== 1008 && s !== 1009)].join(","));
-")
+EXTRA_SEEDS=$(node tools/flash/extra-seeds.mjs)
+[ -n "$EXTRA_SEEDS" ] || { echo "no nightly-style seeds: tools/flash/extra-seeds.mjs printed nothing"; exit 6; }
 echo "nightly-style seeds: $EXTRA_SEEDS" | tee -a "$LOG"
 mkdir -p "$W/clips_extra"
 node tools/flash/run-pixels.mjs "${CLIP_ARGS[@]}" --out "$W/clips_extra" --seeds "$EXTRA_SEEDS" > "$W/pixels_extra.txt" 2>&1

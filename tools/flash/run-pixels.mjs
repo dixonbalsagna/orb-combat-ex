@@ -36,6 +36,7 @@ const CLIP = opt('--clip') ? opt('--clip').split(',') : null;
 // the required set (sources.json, tools/flash/clips.mjs): the five fixed cases, and for `ai` every pairing at every seed, each in both modes
 let jobs = requiredClips(src).filter((j) => (!ONLY || ONLY.includes(j.scenario)) && (!CLIP || CLIP.includes(j.id)));
 // --seeds 1001,1002: AI matches of those seeds (the default pair), each in both modes, in place of the required set (the interim's nightly seeds, tools/flash/nightly-seeds.mjs); ids ai-<seed>-normal and -reduced
+if (argv.includes('--seeds') && !opt('--seeds')) { console.error('--seeds needs a list of seeds (an empty list would run the whole required set)'); process.exit(2); }
 if (opt('--seeds')) {
   const ai = src.scenarios.find((s) => s.id === 'ai');
   jobs = opt('--seeds').split(',').map(Number).filter((n) => Number.isInteger(n) && n > 0).flatMap((seed) => [false, true].map((reduced) => ({ id: `ai-${seed}-${reduced ? 'reduced' : 'normal'}`, scenario: 'ai', seed, reduced, ticks: ai ? ai.ticks : 3600, multi: true, slots: null, label: '' })));
