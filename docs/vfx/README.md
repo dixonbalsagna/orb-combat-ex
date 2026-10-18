@@ -9,6 +9,7 @@ Presentation only. VFX reads the sim's state and fx events and draws; it never w
 | Effect | State | Where |
 | :--- | :--- | :--- |
 | Motion trails: a tapered ribbon behind a fast fighter, and world-fixed wind marks the camera flies past | **Live** (trails are on by default) | `trail_state.gd`, `trail_view.gd`, `shaders/trail.gdshader` |
+| The catastrophe tier's blast cloud: a stateless stem-and-cap cloud of up to 400 sprites with one fireball light event on the `blast_cloud` cue (no cue exists yet) | Built, parked (`docs/vfx/blast-cloud.md`); `catastrophe_enabled` | `blast_cloud.gd`, `cloud_view.gd`, `shaders/cloud*.gdshader`, `data/vfx/catastrophe.json` |
 | The catastrophe tier's tremor: low dust curtains and a patter of rubble on the `tremor` cue (no cue exists yet) | Built, parked (`docs/vfx/tremor-dust.md`); `catastrophe_enabled` | `tremor.gd`, `dust_view.gd`, `shaders/dust.gdshader`, `data/vfx/catastrophe.json` |
 | Ground cracks and fissures from `S.craters` and `S.slides` | Built, **off** (`VfxLook.CRACKS_DEFAULT`) | `crack_gen.gd`, `crack_mesh.gd`, `crack_view.gd`, `shaders/crack.gdshader` |
 

@@ -34,6 +34,8 @@ Added to `VfxFlashRegistry` (mine) beside the existing sources. **Built early, i
 
 ## 2. The blast cloud (`blast_cloud`; run-mode §3.2, c06, c07)
 
+**Built (2026-10-18, parked: `docs/vfx/blast-cloud.md`).** Where the build differs from what follows: the fireball is a second additive MultiMesh (two draw calls, not one; the body is the one stateless draw), the half-resolution pass at low quality is not built (140 sprites is the lever), the hush and the ash-fall flecks wait for the sim's cue and `ash`, the sprites stand at z -12 and -8 (behind the fighters, and in front of a facade at -30 or less, as the tremor's dust found), and only the latest landed cloud draws.
+
 **Cue** (Audio's list): `blast_cloud` with `x`, `y`, `amount` (3,000), `n` the landing tick; it may be preceded by a hush at `n − 8`. The cloud starts at `n`. The world's `ash` is read-only.
 
 ### 2.1 Stateless vertex-shader effect

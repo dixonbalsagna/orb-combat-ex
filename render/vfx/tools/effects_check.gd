@@ -213,6 +213,7 @@ func _run() -> void:
 	_flash_reserve()
 	_cat_class()
 	_tremor()
+	_blast_cloud()
 	_stage_stagger()
 	_depth()
 	_panes()
@@ -4762,6 +4763,155 @@ func _same_value(a, b) -> bool:
 	if (a is float or a is int) and (b is float or b is int):
 		return absf(float(a) - float(b)) < 1e-9
 	return str(a) == str(b)
+
+
+## The blast cloud (docs/vfx/catastrophe-plan.md section 2; Legal c01 to c07): its numbers, the sprite ladder, the fire-to-smoke ramp (never red, on the stored values or the linear ones), the curves,
+## the cue, the one fireball light event asked once through the `cat` class, the refused second cloud, the calm form, the ash, determinism, and inert without a cue.
+func _blast_cloud() -> void:
+	print("the blast cloud")
+	var jd = JSON.parse_string(FileAccess.get_file_as_string("res://data/vfx/catastrophe.json"))
+	var same: bool = jd is Dictionary and jd.get("blast_cloud") is Dictionary
+	if same:
+		for k in VfxBlastCloud.DEFAULTS.keys():
+			if not _same_value(jd["blast_cloud"].get(k), VfxBlastCloud.DEFAULTS[k]):
+				same = false
+				print("    differs: ", k, " ", jd["blast_cloud"].get(k), " vs ", VfxBlastCloud.DEFAULTS[k])
+		for k in jd["blast_cloud"].keys():
+			if not VfxBlastCloud.DEFAULTS.has(k):
+				same = false
+	_check(same, "data/vfx/catastrophe.json (blast_cloud) and the built-in defaults agree")
+	# The sprite ladder: at most 400, falling by quality, and the impostor's few larger sprites far away; the groups add up and every sprite is in range.
+	var hi: int = VfxCloudView.sprites_for(2, false)
+	var md: int = VfxCloudView.sprites_for(1, false)
+	var lo: int = VfxCloudView.sprites_for(0, false)
+	var fr: int = VfxCloudView.sprites_for(2, true)
+	_check(hi == 400 and hi <= VfxCloudView.CAP and lo < md and md < hi and fr < lo and fr == VfxCloudView.sprites_for(0, true), "the ladder is %d, %d, %d sprites by quality and %d for the far impostor (at most 400)" % [hi, md, lo, fr])
+	var lay_ok: bool = true
+	for n in [hi, md, lo, fr]:
+		var sp: Array = VfxCloudView.split(n)
+		var lay: Array = VfxCloudView.layout(n)
+		if int(sp[0]) + int(sp[1]) + int(sp[2]) != n or lay.size() != n or lay != VfxCloudView.layout(n):
+			lay_ok = false
+		for s in lay:
+			if float(s[1]) < 0.0 or float(s[1]) >= 1.0 or float(s[0]) < 0.0 or float(s[0]) > 2.0:
+				lay_ok = false
+	_check(lay_ok, "each layout has its groups adding to the budget, every u inside 0 to 1, and is a pure function")
+	# The ramp: fire into smoke, never red.
+	var red_ok: bool = true
+	var worst_share: float = 0.0
+	for k in range(0, 101):
+		for lit in [true, false]:
+			var c: Color = VfxBlastCloud.ramp(float(k) / 100.0, lit)
+			var lc: Color = c.srgb_to_linear()
+			var sh: float = c.r / maxf(c.r + c.g + c.b, 1e-6)
+			var lsh: float = lc.r / maxf(lc.r + lc.g + lc.b, 1e-6)
+			worst_share = maxf(worst_share, maxf(sh, lsh))
+			if VfxFlashRegistry.is_red(c) or sh >= 0.8 or lsh >= 0.8:
+				red_ok = false
+	_check(red_ok and worst_share < 0.7, "no colour of the fire-to-smoke ramp is red: the largest R/(R+G+B) is %.2f on the stored values or the linear ones (the analyser's line is 0.8)" % worst_share)
+	_check(VfxBlastCloud.ramp(1.0, false).is_equal_approx(VfxBlastCloud.ramp(0.7, true)) and VfxBlastCloud.ramp(0.0).is_equal_approx(Color(String(VfxBlastCloud.p("colour_smoke")))), "an unlit cloud stops at amber and the cold end is the smoke colour")
+	# The curves.
+	_check(VfxBlastCloud.height(0.0) == 0.0 and VfxBlastCloud.height(20.0) / float(VfxBlastCloud.p("height_max")) > 0.95 and VfxBlastCloud.height(5.0) < VfxBlastCloud.height(6.0), "the stem rises from nothing to 14,000 units in about 20 s (%.0f at 20 s)" % VfxBlastCloud.height(20.0))
+	var mono: bool = true
+	var prev_h: float = 0.0
+	var prev_r: float = 0.0
+	var prev_s: float = 0.0
+	for t in range(0, 2400):
+		var ts: float = float(t) / 60.0
+		var hh: float = VfxBlastCloud.height(ts)
+		var rr: float = VfxBlastCloud.cap_major(ts)
+		var ss: float = VfxBlastCloud.skirt(ts)
+		if hh < prev_h or rr < prev_r or ss < prev_s:
+			mono = false
+		prev_h = hh
+		prev_r = rr
+		prev_s = ss
+	_check(mono and VfxBlastCloud.cap_major(30.0) > 2400.0 and VfxBlastCloud.skirt(20.0) > 4400.0 and VfxBlastCloud.cap_minor(10.0) == float(VfxBlastCloud.p("cap_minor")), "the cap, its ring and the ground wall only grow, and arrive at their sizes")
+	var a_ok: bool = VfxBlastCloud.body_alpha(0.0) == 0.0 and absf(VfxBlastCloud.body_alpha(10.0) - float(VfxBlastCloud.p("alpha_max"))) < 1e-9 and VfxBlastCloud.body_alpha(float(VfxBlastCloud.p("life_s"))) == 0.0
+	var a_step: float = 0.0
+	var a_prev: float = 0.0
+	for t in range(0, 2500):
+		var v: float = VfxBlastCloud.body_alpha(float(t) / 60.0)
+		a_step = maxf(a_step, absf(v - a_prev))
+		a_prev = v
+	_check(a_ok and a_step < 0.03, "the smoke fades in over a second and out over its last eight; the steepest tick is %.4f of opacity" % a_step)
+	# The cue, the landing, the one ask of the register.
+	var mk := func() -> Array:
+		var ss := SimCore.createSim()
+		SimCore.newMatch(ss, 4)
+		var hh := VfxHub.new()
+		hh.destruction_enabled = true
+		hh.reset(ss, 4)
+		return [hh, ss]
+	var mkcue := func(ss: SimState, wait: int) -> Object:
+		return VfxMock.ev("cue", {"actor": 0, "kind": "blast_cloud", "text": "", "target": 1, "k": 0.0, "n": float(ss.tick + wait), "x": 4000.0, "y": 100.0, "source": "", "dur": 10.0})
+	var pa: Array = mk.call()
+	var h: VfxHub = pa[0]
+	var S: SimState = pa[1]
+	for k in range(5):
+		_tick(S, h, [])
+	_check(h.blastcloud.runs.is_empty() and not h.blastcloud.active() and h.flashes.log.is_empty(), "without a cue nothing runs and the register is never asked")
+	_tick(S, h, [mkcue.call(S, 30)])
+	_check(h.blastcloud.runs.size() == 1 and not h.blastcloud.active() and h.blastcloud.asks_made == 0, "a cue starts a run that has not landed: no light is asked before the landing")
+	for k in range(29):
+		_tick(S, h, [])
+	var r: Dictionary = h.blastcloud.runs[0]
+	_check(h.blastcloud.active() and bool(r["asked"]) and h.blastcloud.asks_made == 1 and h.flashes.cat_events.size() == 1 and int(r["rise"]) >= 18 and int(r["fall"]) >= 60, "it lands on its tick and asks the register once, for one catastrophe light event (rise %d, fall %d ticks, granted %s)" % [int(r["rise"]), int(r["fall"]), str(r["ok"])])
+	# The light: the granted envelope, a rise over at least 0.3 s, never a steeper tick than its slope.
+	var step_max: float = 0.0
+	var peak_seen: float = 0.0
+	var lprev: float = 0.0
+	var l_ok: bool = true
+	for k in range(int(r["rise"]) + int(r["fall"]) + 4):
+		var lv: float = h.blastcloud.light(r)
+		step_max = maxf(step_max, absf(lv - lprev))
+		peak_seen = maxf(peak_seen, lv)
+		lprev = lv
+		_tick(S, h, [])
+	_check(bool(r["ok"]) and peak_seen > 0.99 and peak_seen <= 1.0 + 1e-9 and step_max <= 1.875 / float(mini(int(r["rise"]), int(r["fall"]))) + 1e-9, "the fireball's light rises to its peak and falls, the steepest tick %.4f of it (a flash needs 0.1)" % step_max)
+	# A second cloud inside the 2 s gap keeps its smoke and loses its light; the register logs why.
+	var pb: Array = mk.call()
+	var h2: VfxHub = pb[0]
+	var S2: SimState = pb[1]
+	_tick(S2, h2, [mkcue.call(S2, 10)])
+	for k in range(30):
+		_tick(S2, h2, [])
+	_tick(S2, h2, [mkcue.call(S2, 10)])
+	for k in range(12):
+		_tick(S2, h2, [])
+	var r1: Dictionary = h2.blastcloud.runs[0]
+	var r2: Dictionary = h2.blastcloud.runs[1]
+	var why: String = ""
+	for row in h2.flashes.log:
+		if String(row["source"]) == "cat_blast" and not bool(row["granted"]):
+			why = String(row["why"])
+	_check(bool(r1["ok"]) and not bool(r2["ok"]) and h2.blastcloud.light(r2) == 0.0 and why == "cat_gap" and h2.blastcloud.active(), "a second cloud within 2 s is drawn without its light (refused: %s)" % why)
+	# A third cue trims the oldest (at most max_alive).
+	_tick(S2, h2, [mkcue.call(S2, 10)])
+	_check(h2.blastcloud.runs.size() == int(VfxBlastCloud.p("max_alive")), "at most %d clouds at once" % int(VfxBlastCloud.p("max_alive")))
+	# The calm form and the dark sky.
+	var pc: Array = mk.call()
+	pc[0].reduced_flashing = true
+	_tick(pc[1], pc[0], [mkcue.call(pc[1], 5)])
+	for k in range(6):
+		_tick(pc[1], pc[0], [])
+	var rc: Dictionary = pc[0].blastcloud.runs[0]
+	_check(bool(rc["ok"]) and absf(float(rc["peak"]) - 0.6) < 1e-9 and int(rc["rise"]) >= 30 and int(rc["fall"]) >= 90, "under Reduce flashing the light is the calm form: peak %.2f, rise %d and fall %d ticks" % [float(rc["peak"]), int(rc["rise"]), int(rc["fall"])])
+	var pd: Array = mk.call()
+	pd[0].ash = 1.0
+	_tick(pd[1], pd[0], [mkcue.call(pd[1], 5)])
+	for k in range(6):
+		_tick(pd[1], pd[0], [])
+	_check(absf(float(pd[0].blastcloud.runs[0]["peak"]) - 0.65) < 1e-9, "in the darkest sky the light's peak is 0.65 of the asked")
+	# Determinism: the same cue, the same state.
+	var states: Array = []
+	for i in range(2):
+		var pe: Array = mk.call()
+		for k in range(90):
+			_tick(pe[1], pe[0], [mkcue.call(pe[1], 20)] if k == 0 else [])
+		var rr: Dictionary = pe[0].blastcloud.runs[0]
+		states.append(str([rr["id"], rr["land"], rr["ok"], rr["peak"], rr["rise"], rr["fall"], pe[0].blastcloud.light(rr), pe[0].blastcloud.age_s(rr)]))
+	_check(states[0] == states[1], "the same cue gives the same cloud (determinism)")
 
 
 ## The catastrophe light class (docs/vfx/catastrophe-plan.md section 1; Legal c01 to c05): the gap, the floors, the calm form, the ash, one answer per event, no red, and a hammer of random asks.

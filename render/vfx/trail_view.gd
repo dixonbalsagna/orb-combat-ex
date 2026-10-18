@@ -14,6 +14,7 @@ var ribbons: int = 0      # for the tests: ribbon segments written last frame
 var mark_count: int = 0   # ... and marks
 var shots_view := VfxShotsView.new()   # the energy blasts (shots_view.gd): a child, updated with this view, so it needs nothing of the layer
 var dust_view := VfxDustView.new()   # the tremor's dust curtains (dust_view.gd), a child like the shots view
+var cloud_view := VfxCloudView.new()   # the blast cloud (cloud_view.gd), a child like the dust view
 var cam_dist: float = 3000.0   # the pane camera's distance to the fighter plane (set by the layer), for the perspective scale at depth
 
 
@@ -39,6 +40,8 @@ func _ready() -> void:
 	add_child(shots_view)
 	dust_view.name = "Dust"
 	add_child(dust_view)
+	cloud_view.name = "Cloud"
+	add_child(cloud_view)
 
 
 ## a: the frame's interpolation between the last two ticks. cam_x: this pane's wrapped camera x. zoom: this pane's
@@ -47,6 +50,9 @@ func update(hub: VfxHub, host: SimHost, a: float, cam_x: float, zoom: float, hal
 	dust_view.visible = hub.catastrophe_enabled
 	if hub.catastrophe_enabled:
 		dust_view.update(hub, host, cam_x, half_w)
+	cloud_view.visible = hub.catastrophe_enabled
+	if hub.catastrophe_enabled:
+		cloud_view.update(hub, host, cam_x)
 	shots_view.visible = hub.shots_enabled or hub.beamplay_enabled or hub.glare_enabled or hub.press_enabled
 	if hub.shots_enabled or hub.beamplay_enabled or hub.glare_enabled or hub.press_enabled:
 		shots_view.update(hub, host, a, cam_x, zoom, half_w)

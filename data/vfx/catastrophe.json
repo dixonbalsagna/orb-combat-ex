@@ -1,8 +1,12 @@
 {
   "version": 1,
-  "_note": "The catastrophe tier's numbers (docs/vfx/catastrophe-plan.md). Only the tremor's dust so far (section 5): at most 160 sprites, alpha at most 0.5, an onset of 1 s, settling over 4 s, no rhythm. Presentation only.",
+  "_note": "The catastrophe tier's numbers (docs/vfx/catastrophe-plan.md): the tremor's dust (section 5) and the blast cloud (section 2). Presentation only.",
   "tremor": {
-    "sprites": [60, 110, 160],
+    "sprites": [
+      60,
+      110,
+      160
+    ],
     "alpha_max": 0.5,
     "onset_s": 1.0,
     "settle_s": 4.0,
@@ -11,12 +15,72 @@
     "shiver": 0.06,
     "wander": 0.35,
     "colour": "#8a8277",
-    "height_k": [0.16, 0.46],
-    "width_k": [2.4, 4.4],
-    "z": [-20.0, -6.0],
+    "height_k": [
+      0.16,
+      0.46
+    ],
+    "width_k": [
+      2.4,
+      4.4
+    ],
+    "z": [
+      -20.0,
+      -6.0
+    ],
     "rubble_per_s": 40.0,
-    "rubble_size": [4.0, 9.0],
-    "rubble_life_s": [0.8, 1.6],
+    "rubble_size": [
+      4.0,
+      9.0
+    ],
+    "rubble_life_s": [
+      0.8,
+      1.6
+    ],
     "max_overlap": 2
+  },
+  "blast_cloud": {
+    "sprites": [
+      140,
+      260,
+      400
+    ],
+    "far_sprites": 24,
+    "far_distance": 9000.0,
+    "far_size_k": 2.4,
+    "height_max": 14000.0,
+    "height_tau_s": 6.5,
+    "cap_major": 2600.0,
+    "cap_major_tau_s": 8.0,
+    "cap_minor": 1500.0,
+    "cap_minor_rise_s": 5.0,
+    "cap_omega": -0.35,
+    "stem_width": [
+      260.0,
+      760.0
+    ],
+    "skirt_reach": 4500.0,
+    "skirt_tau_s": 3.2,
+    "skirt_height": [
+      300.0,
+      600.0
+    ],
+    "heat_tau_core_s": 4.0,
+    "heat_tau_stem_s": 2.2,
+    "alpha_max": 0.85,
+    "fade_in_s": 1.0,
+    "life_s": 40.0,
+    "fade_out_s": 8.0,
+    "fire_rise_s": 0.6,
+    "fire_fall_s": 2.4,
+    "calm_fire_rise_s": 1.0,
+    "calm_fire_fall_s": 3.6,
+    "core_radius_k": 0.35,
+    "core_sprites": 12,
+    "core_alpha": 0.55,
+    "max_alive": 2,
+    "colour_hot": "#fff0c8",
+    "colour_amber": "#f0a850",
+    "colour_ember": "#9a6a3c",
+    "colour_smoke": "#5f5953"
   }
 }
