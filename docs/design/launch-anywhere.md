@@ -36,13 +36,13 @@ Nothing counts down, and no launch is ever refused.
 
 ## 3. Safety: whether he can answer it
 
-The launcher keeps its 14-tick wind-up. **It is armoured against lights, as the heavy is, and fully only when it is sure** (re-ruled 2026-10-17, §11).
+The launcher keeps its 14-tick wind-up. **It is armoured against lights, and fully only when it is sure** (re-ruled 2026-10-17, §11). An answerable launcher's armour takes one light, and a second light landing in its wind-up stops it (2026-10-18, `rulings-2026-10-18.md`).
 
 | The rival when B is pressed | How safe | His answers |
 | :--- | :--- | :--- |
 | **Open** (an opening) | **Sure:** it always lands | None. He keeps half his nudge, so he has a say in where he goes |
 | **Reeling from a medium, a heavy, a vicious blow or a perfect follow-up** | **Hard to answer:** his reel covers most of the wind-up | A perfect block, giving ground started at once, or a burst |
-| **Reeling from a light or a bolt, or free** | **Answerable** | All of the above, plus a catch (`grapple.md`) or a medium started early. A light doesn't stop it: it is armoured against lights |
+| **Reeling from a light or a bolt, or free** | **Answerable** | All of the above, plus a catch (`grapple.md`) or a medium started early. Its armour takes one light, and a second light in its wind-up stops it, so a flurry is an answer |
 
 **What an answered launcher costs him:**
 - **Perfect-blocked:** the reversal, and the launcher's player staggers for 20 ticks. That is an opening, so the defender's own launcher is sure: **the counter-launch.**
@@ -98,7 +98,7 @@ So "X then B" thrown at a fighter who answers is punished. A string worked up to
 | **The route:** B at every opening | At most 80%, and 0 to 25 points over the same script's masher (the twelfth round's edges) |
 | **The spammer:** one light, then B, every string | Below the route, and at most 70% |
 | **The varied route:** the route, rotating the stick through the kinds | Within 10 points of the route |
-| **Full launches** a match (power 0.8 or more at the send, after freshness): by the route's player; on him; the AI against itself | 4 to 12; 4 to 10; 6 to 12 (re-cut 2026-10-17, §11) |
+| **Full launches** a match (power 0.7 or more at the send, after freshness; 0.8 until 2026-10-18): by the route's player; on him; the AI against itself, both together, per 7 minutes of fight | 4 to 12; 4 to 10; 6 to 12 (re-cut 2026-10-17, §11) |
 | All launches a match, pops included | Watched, not banded |
 | One kind's share of a fighter's launches, default arm | At most 50% |
 | The spammer's launchers answered by medium | 20 to 50% (re-banded 2026-10-17, §11) |

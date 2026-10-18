@@ -58,7 +58,7 @@ The clinch's rules are the clinch pitch's, with the pulse of every timed contest
 
 ## 4. How it ends, and what each exit hands the brawl
 
-**The throw** is the leader's next pummel at two ahead, or the catch's quick throw on an open fighter. The stick at the press picks it. A throw is a plain send (`buildings.md` §6.1): the planner stages it, and it is never a launch. So it never starts the launcher's rest.
+**The throw** is the leader's next pummel at two ahead, or the catch's quick throw on an open fighter. The stick at the press picks it. A throw is a plain send (`buildings.md` §6.1): the planner stages it, and it is never a launch. **It lands worth a heavy, 6 brawl lights, with its landing's own damage on top** (2026-10-18, `rulings-2026-10-18.md`).
 
 | Exit | Who | What it hands the brawl |
 | :--- | :--- | :--- |

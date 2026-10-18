@@ -23,7 +23,7 @@ Two fills, both shown by his power bar. Neither decays in a match. Taking a form
 | | **Witness** (working name) | **Trial** (working name: Respect in `economy.md` §4.2) |
 | :--- | :--- | :--- |
 | **The story** | He has watched his opponent kill people | He let his opponent rise first, and tested himself against the higher form |
-| **Fills from** | Each person the opponent kills within 3,000 units of him (shortest arc): +1, times 425 / pop0, like every gain per person. A guard's kills are the Empress's | The opponent takes a form while his own tier is no higher: +15, or +25 if his own form was ready and he held it. While the opponent's tier is above his: +1 a second of fight time, and +2 for each blow of a medium or more that he lands. The opponent commits fully (a finisher fired, a clash at full ki, fighting on at the brink): +5 each |
+| **Fills from** | Each person the opponent kills within 3,000 units of him (shortest arc): +4, times 425 / pop0 (0.94 a person at 1,800; it was +1 until 2026-10-18, `rulings-2026-10-18.md`), like every gain per person. A guard's kills are the Empress's | The opponent takes a form while his own tier is no higher: +15, or +25 if his own form was ready and he held it. While the opponent's tier is above his: +1 a second of fight time, and +2 for each blow of a medium or more that he lands. The opponent commits fully (a finisher fired, a clash at full ki, fighting on at the brink): +5 each |
 | **Never from** | A person he kills. **Each one takes 2 off it:** he can't claim the anger of deaths he caused | Anything he does to the world |
 | **His forms play as** | A cold quiet aimed at the one who did it. On top of his step gains, at II and at IV: damage +4% and launch force +8%. His launches lean away from people more strongly (his care +0.5 in these forms) | The student meeting a higher form. On top of his step gains, at II and at IV: speed +4%. His perfect-block window is 1 tick wider at II and 2 at IV, and his perfect follow-ups are worth 1 more |
 
@@ -80,7 +80,7 @@ Orb: "he stays in his base form and allows the opponent to grow, when he finally
 - **Rule of cool:** a release from base straight to his top form is the showpiece, with its own sting, camera and line.
 - **The release's three sizes,** for Narrative's lines (`docs/narrative/waiting-game-lines.md`), read the coil at the release: short under 34, long from 34 to 66, and the biggest from 67. A release from base to the top form is the showpiece whatever its size.
 - **Its limits:** banked steps can't pass the ladder's top or the run's unlocked ceiling (`run-mode.md` §1.1 and §1.4). In the run's boss fight the fifth form can be banked too.
-- **The AI** takes a ready step at its first break unless it is holding on purpose. At medium it holds for up to 10 s when its rival is above it, and at hard for up to 30 s while its coil is under 60, so players see the slingshot thrown at them. Then it releases at the next break.
+- **The AI** takes a ready step at its first break unless it is holding on purpose. At medium it holds for up to 10 s when its rival is above it, and at hard until its coil reaches 60, 75 s pass, or a region of its own is battered, whichever comes first (2026-10-18; it was 30 s), so players see the slingshot thrown at them. Then it releases at the next break.
 
 ## 5. How a fight between two good guys escalates
 

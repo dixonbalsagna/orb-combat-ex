@@ -229,7 +229,7 @@ Orb's hold to brake stands (`agency-pass.md` §4, on LT). Here it is re-ruled so
 ### 7.3 The chain inside a tower: floor, ceiling, floor
 
 - **When a power send enters a tower's face** at 15° to 60° up or down, the body goes on inside along the floors.
-- **Each slab he meets is a contact,** by the knocked-about rules (a bounce between 40° and 70° keeps its share of speed). A slab breaks when the send's effective tier is high enough for it, and a slab that holds is a bounce.
+- **Each slab he meets is a contact,** by the knocked-about rules (a bounce between 40° and 70° keeps its share of speed). A slab breaks when the send's effective tier is high enough for it. **A slab that holds is a bounce when he meets it at 900 or more and between 40° and 70°; slower or shallower, he lodges on it** (2026-10-18, `rulings-2026-10-18.md`).
 - **A broken slab collapses locally:** the floor gives way over two or three bays and its debris falls to the floor below, never a whole floor vanishing. Each one counts as half a link of the chain (§1).
 
 | Effective tier of the send | Inside the tower |
@@ -244,7 +244,8 @@ Orb's hold to brake stands (`agency-pass.md` §4, on LT). Here it is re-ruled so
   - **a ceiling contact** reverses him and keeps 0.4 of his speed, and the ceiling collapses locally (Orb's "bounce up and off the ceiling (also collapsing it)");
   - **a floor he goes through** keeps 0.7;
   - **a floor that holds** is a bounce, by the ground's bounce rules turned to the slab;
-  - **at most 5 contacts** in a chain, and **at most 3 of them bounces;**
+  - **at most 5 contacts** in a chain, the slabs inside only (the face counts toward the journey's 8), and **at most 3 of them bounces;**
+  - **the next tower's link** plays only if he leaves by the far face with 900 or more of speed left. If he lodges, the first tower is the chain's last link, and the planner predicts the inside chain before it plans any later link;
   - **the face's stop:** 15 ticks, as §1 has it;
   - **a cap of 2.5 s** of ragdolled time from the face to the lodge, or to leaving by a face, inside the journey's 4 s;
   - **the brake is off inside the chain.** It returns once he lodges (and he recovers inside after the lodge's hold) or once he leaves by a face;
