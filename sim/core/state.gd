@@ -433,7 +433,12 @@ class FxEvent:
 	var hold: float = 0.0        # lodge: the seconds the body is held in the building
 	var run: int = 0             # cue blow (Encounter): the striker's run on the target as the blow is thrown, 0 to run_to. Not hashed
 	var run_to: int = 0          # cue blow (Encounter): the run at which his next light closes (runToClose, 4 today); UI's gauge is full when run reaches it; 0 not set. Not hashed
-	var stop: int = 0             # damage (a hit): the hit-stop ticks in force after it, as SimCore.step spends them (Animation). Not hashed
+	var nx: float = 0.0           # interior_contact: the surface's normal on the body's side
+	var ny: float = 0.0
+	var punch: bool = false       # interior_contact: the slab or face broke
+	var end: String = ""          # interior_end: lodge, exit, fall_out or capped
+	var t: float = 0.0            # interior_end: seconds from the face
+	var stop: int = 0             # damage (a hit): the hit-stop ticks in force after it, as SimCore.step spends them (Animation). Not hashed; interior_contact: the ticks held at the face (hashed there)
 
 
 ## A fighter's forms while S.formsOn (sim/core/forms.gd): his steps, the coil and the release, and the hold's signal.
@@ -506,6 +511,7 @@ class Fighter:
 	var brinkOpen: bool = false      # ... it is open: the rival's next decisive win, in a later exchange, is the finisher
 	var brinkEx: int = -1            # ... the exchange index (ex.n) of the last set-up win: a set-up and a finisher never share one
 	var flightHits: int = 0          # M1: buildings hit in the current launched flight (building_hit's n)
+	var interior = null              # World: the chain inside a tower (world/interior.gd): a Dictionary while he is in it, else null. Hashed only while set
 	var act := ActState.new()        # I2a: what the fighter's presses mean now (sim/core/act.gd)
 	var style = null                 # M1: StyleState (sim/core/mood.gd)
 	var form = null                  # forms: FormState while S.formsOn (sim/core/forms.gd), null otherwise

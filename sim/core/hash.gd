@@ -157,6 +157,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 		out.append(float(f.limbBreaks))
 		out.append(float(f.brinkSetups)); out.append(f.brinkOpen); out.append(float(f.brinkEx))
 		out.append(float(f.flightHits))
+		if f.interior != null:   # World's chain inside a tower (world/interior.gd): only while it runs, so a match without it hashes as before
+			_obj(out, f.interior, ["b", "dir", "E", "k", "bn", "t", "i"])
 		var act = f.act
 		_obj(out, act, ["v2", "guardSince", "dodgeTick", "dodgeCool", "burstCool", "mode", "assist", "formReady", "burstFired", "breakIn", "flow"])
 		if S.formsOn:   # forms: only when on, so a match without them hashes as before
@@ -315,6 +317,7 @@ const FX_FIELDS: Dictionary = {
 	"left_ground": ["actor", "x", "y", "z", "spd", "n", "cause", "vx", "vy", "slope", "contacts", "dur"], "bounce": ["actor", "x", "y", "z", "spd", "n", "k", "keep", "vn", "vt", "surface", "sina", "slope", "contacts", "dur"],
 	"land": ["actor", "x", "y", "z", "spd", "n", "kind", "sina", "slope", "surface", "vn", "vt", "contacts", "dur"], "tumble_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "dur"],
 	"journey_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "lips", "nb", "dur"],
+	"interior_contact": ["actor", "x", "y", "z", "spd", "n", "b", "floor", "kind", "nx", "ny", "vn", "vt", "keep", "punch", "k", "stop"], "interior_end": ["actor", "x", "y", "z", "spd", "n", "b", "end", "contacts", "t"],
 	"cue": ["actor", "kind", "text", "source"], "struggle_press": ["actor", "kind", "n"],
 }
 

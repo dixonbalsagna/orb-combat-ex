@@ -34,6 +34,12 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
 	"keepHi": 0.8, "keepK": 0.45, "keepRef": 3000.0, "keepMin": 0.35, "keepFree": 0.95, "heavyKeep": 0.7,
 	# the wall slam (buildings.md section 2): twice the building's hit, a stagger at the wall
 	"wallSlamMul": 2.0, "wallStaggerTicks": 24,
+	# the chain inside a tower (buildings.md section 7.3, world/interior.gd): 0 off (today's behaviour) or 1 on; the send's angle (tangents of 15 and 60 degrees),
+	# the speed kept through a ceiling and through a slab or face that breaks, the contact and bounce caps, the face's stop in ticks, the cap in seconds,
+	# the effective tier that reaches the ceiling and the tier whose far face breaks, the share of a hit's damage a slab does him
+	"interiorChain": 0, "interiorTanMin": 0.26795, "interiorTanMax": 1.73205, "interiorCeilKeep": 0.4, "interiorFloorKeep": 0.7,
+	"interiorMaxContacts": 5, "interiorMaxBounces": 3, "interiorFaceStop": 15, "interiorCapSeconds": 2.5, "interiorCeilTier": 3,
+	"interiorExitTier": 3, "interiorHurt": 0.5,
 }
 const BRUNT_STRINGS: Dictionary = {   # the switches that are words: their values and the default (today's behaviour)
 	"lodgeHold": [["world", "body"], "world"],   # does a lodge hold the whole fight (a hit-stop) or only the body (he is stunned, the fight goes on)
@@ -591,6 +597,7 @@ static func stepZ(S: SimState, f, dt: float) -> void:
 
 ## The flight is over (a landing, a slide, water, a rebound): drop the aim, close the chain's token, release the depth.
 static func endFlight(S: SimState, f) -> void:
+	f.interior = null
 	f.aimB = -1
 	if f.chainEvt != 0.0:
 		WorldCollateral.endEvent(S, f.chainEvt)
@@ -679,6 +686,10 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 		if not b.alive:
 			hitText = "collapse"
 	var passes: bool = oc.pass or hitText == "collapse" or hitText == "pancake"
+	var broke: bool = passes
+	var inside: bool = WorldInterior.eligible(S, f, b)   # the chain inside a tower (world/interior.gd), behind brunt.json interiorChain: he goes on inside, the face is passed either way
+	if inside:
+		passes = true
 	var far: float = SimWrap.wrap(b.x + dir * b.w * 0.5)
 	# --- what comes next: decided before the splash, so the splash can never take the next link of a chain away ---
 	var cm: Dictionary = cfg()
@@ -687,10 +698,10 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 		f.splashed.append(MARK_HOUSE if isHouse(b) else MARK_TOWER)   # this flight went through it
 	var nx: Dictionary = {"b": -1}
 	var spLeft: float = SimDetMath.hypot(f.vx * keep / trav, f.vy * keep)
-	if passes and chainUsed(f) < chainCap(tierOf(by, f), f.launchSpecial) - 0.0001 and spLeft >= CHAIN_MIN_SP:
+	if passes and not inside and chainUsed(f) < chainCap(tierOf(by, f), f.launchSpecial) - 0.0001 and spLeft >= CHAIN_MIN_SP:
 		nx = next(S, b, y, f.vx * keep, f.vy * keep, trav)
 	# the lodge: the last building of a chain takes what is left; he ends inside it
-	var lodge: bool = passes and nx.b < 0
+	var lodge: bool = passes and nx.b < 0 and not inside
 	var oce: Dictionary = oc
 	if lodge:
 		oce = oc.duplicate()
@@ -703,8 +714,12 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 	# --- the fighter ---
 	SimDamage.hurt(S, f, spN * FIGHTER_DMG, by)
 	SimFx.debris(S, f.x, y + 20.0, 6, "#77808f", 500.0)
-	var stop: float = STOP_FIRST if link == 1 else STOP_LINK
-	S.dirS.stop = SimMathx.jmax(S.dirS.stop, minf(stop, STOP_TOTAL))
+	if not inside:
+		var stop: float = STOP_FIRST if link == 1 else STOP_LINK
+		S.dirS.stop = SimMathx.jmax(S.dirS.stop, minf(stop, STOP_TOTAL))
+	else:
+		WorldInterior.begin(S, f, b, y, edge, dir, by, keep, broke)   # the face's stop is the data's ticks; the rest is the chain's (interior.gd step)
+		return
 	if lodge:
 		# what is left of the launch is one more hit on the building (the core wears most), and he is held in the breach
 		var tfac: float = float(cm.tierFactor[tierIx(tierOf(by, f), f.launchSpecial)])

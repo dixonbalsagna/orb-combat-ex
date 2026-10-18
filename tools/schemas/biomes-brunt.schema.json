@@ -185,6 +185,79 @@
         "body"
       ],
       "description": "Does a lodge or a wall hold the whole sim (world: a hit-stop) or only the body (body: he is stunned for the seconds and the fight goes on)."
+    },
+    "interiorChain": {
+      "enum": [
+        0,
+        1
+      ],
+      "description": "The chain inside a tower: 0 off (today's behaviour), 1 on."
+    },
+    "interiorTanMin": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 10,
+      "description": "The shallowest send that goes on inside: the tangent of 15 degrees."
+    },
+    "interiorTanMax": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 10,
+      "description": "The steepest send that goes on inside: the tangent of 60 degrees."
+    },
+    "interiorCeilKeep": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "The speed kept off a ceiling (Game Design: 0.4)."
+    },
+    "interiorFloorKeep": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "The speed kept through a floor, or a face, that breaks (Game Design: 0.7)."
+    },
+    "interiorMaxContacts": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8,
+      "description": "The most slab and wall contacts of a chain (Game Design: 5)."
+    },
+    "interiorMaxBounces": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 8,
+      "description": "The most bounces of a chain (Game Design: 3); no bounce is produced yet."
+    },
+    "interiorFaceStop": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 120,
+      "description": "The entry face's hit-stop in ticks (Game Design: 15)."
+    },
+    "interiorCapSeconds": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 4,
+      "description": "The ragdolled time from the face to the end (Game Design: 2.5 s, inside the journey's 4 s)."
+    },
+    "interiorCeilTier": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4,
+      "description": "The effective tier from which a send reaches the ceiling (Game Design: 3)."
+    },
+    "interiorExitTier": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4,
+      "description": "The effective tier from which the far face breaks and he leaves; below it he lodges against it."
+    },
+    "interiorHurt": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2,
+      "description": "The share of the face's per-speed damage a slab does him."
     }
   },
   "additionalProperties": false,

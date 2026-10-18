@@ -665,6 +665,9 @@ static func fromBody(f, b: Body) -> void:
 ## Called from SimFighter.stepLaunched when S.contactOn: one tick of a launched fighter's flight, skid or tumble, with every
 ## side effect (craters, trenches, damage, dust, events). Replaces the old slide step and impact.
 static func stepFighter(S: SimState, f, dt: float) -> void:
+	if f.interior != null:
+		WorldInterior.step(S, f, dt)   # the chain inside a tower (world/interior.gd): the ground's contact waits for it
+		return
 	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
 	var b: Body = toBody(S, f)
 	var ev: Array = _ev
