@@ -474,6 +474,11 @@
       "id": "h09",
       "rule": "folded arms are a held crossed-forearms pose and fail h02 at 12 ticks or more: allowed on a sheet and as a moment under 12 ticks, never as an idle, stand-off or intro pose; a one-arm fold (a single forearm across the body, the other hand free or at the chin) is allowed",
       "why": "the Anti-hero's hybrid A 'arms folded high', RL-151"
+    },
+    {
+      "id": "h10",
+      "rule": "a finisher's closing pose is a held gesture after a blow and must not mock a beaten rival: an offered hand is one hand, fingers together and still (no curling, no wiggle), palm sideways or toward the fallen rival and not at the camera, held low (forearm out, never drawn to a hip), never both arms, no smirk or taunt line; a raised hand (a pledge) stays at shoulder height or lower, palm out, fingers together, one hand, no light, glow, ring or ball in or above it, never overhead (the raised charging pose; any hand above 82 fails the signature and tell emitter test)",
+      "why": "Art's Open Palm and Both Roads finisher styles, RL-159"
     }
   ],
   "stacking": [
@@ -725,6 +730,11 @@
       "id": "ln02",
       "rule": "the Cyborg's consumption: his hunger is aimed at fighters and wreckage, never civilians or children; no on-screen biting, chewing or swallowing of a living fighter, no eaten limbs, no chewing or swallowing sound and no gore from feeding until the rating decision (a clamp, a throw and feeding on wreckage are allowed); a depicted eating finisher takes the stomp treatment (rare, optional, never in public trailers or pages, distant, injury not depicted, no reward, questionnaires first); he never absorbs a defeated fighter to gain their power or form, never turns anyone into food or sweets, and has no belly-as-mouth gag or pink plump silhouette; 'Demon Cyborg' stays off public text",
       "why": "RL-155: the nearest echoes are the genre's glutton and absorbing villains"
+    },
+    {
+      "id": "ln03",
+      "rule": "boons, keepsakes, temptations and any hidden-outcome reward are never sold or unlocked with real money, and nothing paid gives a random or hidden reward, without asking Legal first (paid random rewards are treated as gambling-like by several stores and countries); a keepsake is an object and never a body part, ash or remains; no keepsake or title is earned by a death or a toll; the saved may speak, the lost are only a count",
+      "why": "RL-158; c08"
     }
   ]
 }
