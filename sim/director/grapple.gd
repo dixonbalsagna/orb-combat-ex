@@ -25,6 +25,8 @@ class_name DirGrapple
 ##    (never sharp). Its tech is drawn as the tell begins, at its share, and pressed no sooner than its reaction time
 ##    after it and after the landing. It catches a rival who guards, or winds a heavy it has had its reaction time to
 ##    see, at its catch share, once for each wind-up and each 30 ticks of a guard. At two ahead it throws down.
+## G2 (Game Design, 2026-10-17): a tie on a pulse goes to the one nearer it by the tick; at the time the grip's leader
+## takes a first move and the brawl lets go; the AI varies its throws by what each hands it and by its care.
 ## Not in G1: vicious blows (X, Y and B in a clinch are spent, with a cue), the brace, the leader walking the pair, the
 ## pin, the carry, throws through the planner, the AI's brace and its choice of throw, the perfect catch, and an
 ## interjection. A latched A's release is no press here: the sim can't see the latch.
@@ -327,7 +329,11 @@ static func _clinch(S: SimState, ex) -> void:
 		if _g(ex.A, MODE) != 2 or S.dirS.ex != ex or ex.branch != "":
 			return
 	if S.tick - t0 >= int(c.max):
-		_part(S, ex, ex.A, ex.D, "time", float(c.partBh))
+		var g: int = _g(ex.A, GRIP)
+		if g == 0:
+			_part(S, ex, ex.A, ex.D, "time", float(c.partBh))   # even: nobody has the first move, and the brawl goes on
+		else:
+			_timeLead(S, ex, ex.A if g > 0 else ex.D, ex.D if g > 0 else ex.A)
 
 
 ## f presses A in the clinch at tick p: his tech, a claim of the pulse, a voided one, or a stray.
@@ -357,7 +363,7 @@ static func _pummel(S: SimState, ex, f, o, p: int) -> void:
 		ev.k = float(_g(f, GRIP))
 		return
 	_s(f, CLAIM_OFF, DirPulse.off(t0, every, k, p))
-	_s(f, CLAIM_Q, DirBrawl._quarter(f, o) if f.ai == null else 3)   # the AI throws down (G1)
+	_s(f, CLAIM_Q, DirBrawl._quarter(f, o) if f.ai == null else _aiThrowQ(S, f, o, k))   # G2: the AI's throw by what it hands it and its care
 
 
 ## Pulse k's window has closed: the throw, the reversal, the push-off, or the step.
@@ -398,7 +404,9 @@ static func _judge(S: SimState, ex, k: int) -> void:
 			return
 	var step: int = 0
 	if va and vd:
-		step = 0 if sa == sd else (1 if sa else -1)
+		var oa: int = _g(A, CLAIM_OFF)
+		var od: int = _g(D, CLAIM_OFF)
+		step = 0 if oa == od else (1 if oa < od else -1)   # G2: the one nearer the pulse by the tick takes the step
 	elif va:
 		step = 1
 	elif vd:
@@ -443,6 +451,42 @@ static func _throw(S: SimState, ex, f, o, q: int, how: String) -> void:
 	_cue(S, f, o, "grapple_end", "reversal" if how == "reversal" else "throw_across")
 	SimEvents.feed(S, f.name + (" REVERSES AND THROWS " if how == "reversal" else " THROWS ") + o.name, "across")
 	DirBrawl._knock(S, ex, f, o, float(tc.acrossBh), q)   # a plain send along the line (away: past him); the brawl ends
+
+
+## G2: the time with a leader: both part clinch.partBh, the leader takes the first move (clinch.timeFirstMove ticks
+## before the other may start an approach), and the brawl lets go. The lockout starts for both: nobody was thrown.
+static func _timeLead(S: SimState, ex, lead, back) -> void:
+	var c: Dictionary = cfg()
+	_end(S, lead, back)
+	_lockBoth(S, lead, back)
+	_apart(lead, back, float(c.clinch.partBh))
+	DirBrawl._s(back, DirBrawl.MOVE_AT, S.tick + int(c.clinch.get("timeFirstMove", 20)))
+	_cue(S, lead, back, "grapple_end", "time_lead")
+	SimEvents.feed(S, "CLINCH ENDS", "time: " + lead.name + " won the grip, and the first move is his")
+	DirBrawl.end(S, ex, "clinch_time")
+
+
+## G2: the AI's throw, should this pummel be its throw: down (the bury: an opening on the ground), up (open in the air)
+## or across (sent along the line: the brawl ends). Down and up hand it a launch, so they weigh half while it lacks the
+## launcher's ki. Across is weighed by its care against the people where he would land: the hero (care above 0) away
+## from them, the Anti-hero (below 0) towards them. A keyed draw by the tie-up, the pulse and the slot.
+static func _aiThrowQ(S: SimState, f, o, k: int) -> int:
+	var tw: Dictionary = cfg().throw.get("ai", {})
+	if tw.is_empty():
+		return 3
+	var cash: float = 1.0 if f.ki >= float(DirBrawl.cfg().launcher.ki) else 0.5
+	var wd: float = float(tw.down) * cash
+	var wu: float = float(tw.up) * cash
+	var side: float = 1.0 if SimWrap.sdx(f.x, o.x) >= 0.0 else -1.0
+	var land: float = SimWrap.wrap(o.x + side * float(cfg().throw.acrossBh) * DirInterrupt.BH)
+	var pop: float = clampf(float(WorldStructures.popNear(S, land, float(tw.get("popR", 3.0)) * DirInterrupt.BH)) / maxf(0.001, WorldStructures.popNearRef(S)), 0.0, 1.0)
+	var wa: float = maxf(0.05, float(tw.across) * (1.0 + (-float(f.care)) * float(tw.get("careW", 1.0)) * pop))
+	var x: float = SimRng.keyed(int(S.game.seed), "grapple.throw", _g(f, T0) * 8 + k * 2 + S.fighters.find(f)) * (wd + wu + wa)
+	if x < wd:
+		return 3
+	if x < wd + wu:
+		return 1
+	return 2
 
 
 ## f pushes off: both apart, the brawl lets go, and he has the first move.

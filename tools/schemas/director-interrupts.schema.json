@@ -3428,6 +3428,11 @@
               },
               "minItems": 1,
               "description": "The AI's pummels this far off the pulse (never sharp)."
+            },
+            "timeFirstMove": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "The grip's leader's first move at the time, in ticks."
             }
           },
           "required": [
@@ -3467,6 +3472,43 @@
               "type": "integer",
               "minimum": 0,
               "description": "A throw down to the ground buries him this long."
+            },
+            "ai": {
+              "type": "object",
+              "description": "The AI's throw weights (G2).",
+              "properties": {
+                "down": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Down: the bury."
+                },
+                "up": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Up: open in the air."
+                },
+                "across": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Across: sent along the line."
+                },
+                "careW": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "Across is scaled by 1 + (-care) x this x the people where he would land."
+                },
+                "popR": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "... within this many body heights of where he would land."
+                }
+              },
+              "required": [
+                "down",
+                "up",
+                "across"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
