@@ -2109,6 +2109,50 @@ func _test_grapple_c0_c1() -> void:
 	print("grapple: the partner pick and ten hold regions (C0), %d throw poses clean (C1)" % posed)
 
 
+## The charge's held flight pose does not ride a flight: a fighter charging in place keeps it, one carried off at speed (a rush, a lunge, a drift, a bounce) loses it at once (lead_scan found him laid out feet first at 718 u/s on the
+## launcher build's heavy, holding `ag.hold.charge_heavy`).
+func _test_charge_cut() -> void:
+	AnimData.load_every_wave()
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = "PROTAGONIST"
+	f1.id = "RIVAL"
+	f0.x = 500.0
+	f1.x = 2600.0
+	f0.y = 0.0
+	f1.y = 0.0
+	f0.vx = 0.0
+	f0.vy = 0.0
+	f0.state = "free"
+	var held_still: int = 0
+	var cut_at: int = -1
+	var af0: AnimFighter = null
+	for k in range(80):
+		S.tick = 4000 + k
+		S.T = 500.0 + float(k) / 60.0
+		if k == 4:
+			RenderAnim.fighter(S, f0).on_agency("charge_heavy", S.T, {})
+		if k >= 40:
+			f0.x += 718.0 / 60.0
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		af0 = RenderAnim.solve(S, f0)
+		if k >= 8 and k < 40 and af0._ag_t0 >= 0.0:
+			held_still += 1
+		if k >= 40 and cut_at < 0 and af0._ag_t0 < 0.0:
+			cut_at = k
+	_expect(held_still == 32 and cut_at >= 40 and cut_at <= 41, "charge cut: the charge pose is held for %d of 32 ticks standing and let go at tick %d of the carry (40 is its first tick; at most 41)" % [held_still, cut_at])
+	print("charge cut: held while he stands, let go %d ticks after he is carried at 718 u/s" % (cut_at - 40))
+
+
 func _test_pulled() -> void:
 	AnimData.load_every_wave()
 	main.start_match(4, {"p1": false, "p2": false})
@@ -4778,6 +4822,7 @@ func _run() -> void:
 	_test_air_brake()
 	_test_chain()
 	_test_grapple_c0_c1()
+	_test_charge_cut()
 	_test_pulled()
 	_test_bends()
 	_test_styles()

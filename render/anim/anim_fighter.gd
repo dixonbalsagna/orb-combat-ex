@@ -470,11 +470,6 @@ func on_agency(kind: String, T: float, e: Dictionary) -> void:
 			debug["agency"] = int(debug.get("agency", 0)) + 1
 
 
-## The flight lead (GB-006, docs/animation/pose-pipeline.md 9.23): the sim's body spin halves every 0.5 s and leaves a launched fighter at whatever angle the tumble
-## stopped at, still flying at speed: feet first, laid out along the flight line. Once the spin is low and the speed high the whole body turns about its middle (the
-## view's pivot) until the head leads along the velocity, never the feet: blown back he flies on his back, head first. Landing into a skid it turns upright. The turn
-## `_lead_d` is a world-space angle added to the sim's own (the view's pivot turns by -rot): it chases its aim by the short way, holds when the flight slows and
-## is let go when the launch ends. It is the root's rotation and a shift that keeps the middle in place. Read from the sim's state only.
 ## The mid-air skid (docs/animation/ragdoll-physics-paper.md section 3a). The sim's brake state arrives as an `air_brake` event (text start or end, kind the reason, amount the speed): while it is on and the body is flying
 ## free, he is braced against his own velocity. On the sim's start the weight ramps in over `enter_ticks`; on its end, out over `exit_ticks`.
 func on_air_brake(phase: String, _reason: String, _speed: float, _T: float) -> void:
@@ -534,6 +529,11 @@ func _air_brake_layer(S: SimState, f, dt: float) -> void:
 	_ab_aim = deg_to_rad(lerpf(float(lean[0]), float(lean[1]), _ab_str)) * (signf(v.x) if absf(v.x) > 1.0 else 1.0)
 
 
+## The flight lead (GB-006, docs/animation/pose-pipeline.md 9.23): the sim's body spin halves every 0.5 s and leaves a launched fighter at whatever angle the tumble
+## stopped at, still flying at speed: feet first, laid out along the flight line. Once the spin is low and the speed high the whole body turns about its middle (the
+## view's pivot) until the head leads along the velocity, never the feet: blown back he flies on his back, head first. Landing into a skid it turns upright. The turn
+## `_lead_d` is a world-space angle added to the sim's own (the view's pivot turns by -rot): it chases its aim by the short way, holds when the flight slows and
+## is let go when the launch ends. It is the root's rotation and a shift that keeps the middle in place. Read from the sim's state only.
 func _lead_layer(S: SimState, f, dt: float) -> void:
 	var L: Dictionary = AnimData.flight
 	if L.is_empty() or not RenderAnim.flight_lead:
@@ -839,6 +839,13 @@ func _agency_layer(S: SimState, f, T: float) -> void:
 	if _ag_t0 < 0.0 or not AnimData.pose_exists(_ag_hold):
 		return
 	var cfg: Dictionary = AnimData.agency
+	if _ag_kind.begins_with("charge_") and (f.rush != null or _lead_measure(S, f).length() > float(cfg.get("charge", {}).get("cut_speed", 300.0))):
+		# he is carried off at speed (a rush, a lunge, a knock-back drift or a bounce) with the charge's leaned-back flight pose still held: the pose does not ride a flight at any state, so it is let go at once
+		# (the lead scan found him laid out feet first at 718 u/s on the launcher build's heavy)
+		_ag_t0 = -1.0
+		_ag_t1 = -1.0
+		_ag_kind = ""
+		return
 	if _ag_kind.begins_with("charge_") and _ag_t1 < 0.0:
 		var cap: float = float(cfg.get("charge", {}).get(_ag_kind.substr(7), {}).get("max_ticks", 90)) / 60.0
 		var ex = S.dirS.ex
@@ -3113,9 +3120,10 @@ func _beat_layers(ex, role: String, t0: float, T: float) -> void:
 					_window_pose("def.slip", T - bt, 0.05, 0.15, 0.35)
 			"dodge":
 				if role == "D":
-					if String(b.args.get("side", "")) == "cross":
+					var dargs: Dictionary = b.args if b.args is Dictionary else {}   # a dodge beat can carry no args (the spaced profile): the plain dodge
+					if String(dargs.get("side", "")) == "cross":
 						# the step-around: up and over the attacker, then down behind him (two moves, a few ticks each)
-						var leg: float = float(b.args.get("dur", 0.15)) * 0.5
+						var leg: float = float(dargs.get("dur", 0.15)) * 0.5
 						var tau: float = T - bt
 						if tau >= -0.02 and tau < 2.0 * leg + 0.2:
 							_skip_inertia = true   # the two moves are a few ticks each: the pose pulses must show, not be smoothed away

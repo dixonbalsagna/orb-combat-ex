@@ -374,6 +374,11 @@
             "pattern": "^[a-z][a-z0-9_]*$"
           },
           "description": "The cue kinds that end a charge pose (a dodge cancel, a challenge answered ...): the same shape as taunt.cut_kinds."
+        },
+        "cut_speed": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Speed (u/s) above which a carried fighter lets go of the held charge pose (Animation, 2026-10-18)."
         }
       },
       "additionalProperties": false,
