@@ -178,9 +178,11 @@ float ground_offset(int i, float xw, float z) {
 }
 
 // Under reduced flashing: how much of its own colour the ground at column i, world x xw, depth z still keeps under a
-// crater dug moments ago (1: all of it; 0: none, the crater's colours as ever). A crater's colours spread from its
-// centre to the edge of its apron over crater_calm_s of match time (the record's time is the sim's). Ground that any
-// crater has already coloured is not given back: the least of the craters over a point decides.
+// crater dug moments ago (1: all of it; 0: none, the crater's colours as ever). Under reduced flashing (calm_ease) a
+// crater's colours fade in over all of it at once, evenly over crater_calm_s of match time (the record's time is the
+// sim's), so each pixel changes slowly and all together; otherwise (normal mode's opening, dur crater_open_s) they come
+// with a front from its centre to the edge of its apron. Ground that any crater has already coloured is not given back:
+// the least of the craters over a point decides.
 float crater_new(int i, float xw, float z, float dur) {
 	float keep = 1.0;
 	bool any = false;
@@ -201,7 +203,7 @@ float crater_new(int i, float xw, float z, float dur) {
 		float u = (crater_now - b.w) / dur;
 		float kk = 0.0;   // an older crater: its colours are all there
 		if (u >= 0.0 && u < 1.0) {
-			kk = smoothstep(u - 0.08, u + 0.08, rho);
+			kk = calm_ease > 0.0 ? 1.0 - u : smoothstep(u - 0.08, u + 0.08, rho);
 			any = true;
 		}
 		keep = min(keep, mix(kk, 1.0, smoothstep(1.0, 1.15, rho)));

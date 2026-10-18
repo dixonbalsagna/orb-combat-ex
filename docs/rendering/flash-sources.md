@@ -423,8 +423,22 @@ Tools' analyser measures pixels against the standard (`docs/tools/flash-check.md
 | blastdummy, Anti-hero and dummy, reduced | 3 / 3.5 / 3, fail | 3 / 3 / 3, over the gate |
 
 **What is left is in reduced mode.** Full effects pass all three clips. The worst second of ai-43 reduced (ticks 2875 to 2992) holds two kinds of change:
-- **A new crater.** Its colours spread from its centre over 1.5 s (`CRATER_CALM_S`). The front turned 41,754 px darker in one window at tick 2903, and 30,824 px lighter at 2882.
+- **A new crater.** Its colours spread from its centre over 1.5 s (`CRATER_CALM_S`). The front turned 41,754 px darker in one window at tick 2903, and 30,824 px lighter at 2882. They now fade in instead (below).
 - **Camera's reframes and its moving split line.** At 2933 the far ground rises into the dusk sky in the right pane (30,353 px in one window).
+
+## The calm crater fades (2026-10-17)
+
+**The change.** Under reduced flashing a new crater's earth, ejecta and char fade in over the whole crater at once, evenly over 3 s of match time (`CRATER_CALM_S`, `ground.gdshaderinc` `crater_new`). They used to spread from its centre over 1.5 s. A front changes each pixel within a tick or two as it passes, and the analyser pools those pixels into runs as the front moves. A fade changes every pixel slowly and together: at most about an eighth of relative luminance a second, from the palest pavement to dark earth. The bowl's shape still comes at once, and normal mode's opening (`CRATER_OPEN_S`) is not changed.
+
+**Measured** on 0654a2e2 with this batch's predecessor (HEAT_CALM 0), reduced mode, with a scratch switch for the fade. Each stretch was captured through Tools' hook and read with Tools' analyser; readings are primary / area threshold 15% lower / 15% higher:
+
+| Stretch | Spread, 1.5 s | Fade, 3 s | Fade, 5 s |
+| :--- | :--- | :--- | :--- |
+| ai-43, ticks 2700 to 3030 | 2.5 / 3.5 / 2.5, fail | **2 / 2.5 / 2, pass** | 2.5 / 2.5 / 2.5, pass |
+| blastdummy, Anti-hero and dummy, ticks 0 to 420 | 3 / 3 / 3 | 3 / 3 / 3 | 3 / 4 / 2.5, fail |
+| blastdummy, Protagonist and dummy, ticks 0 to 420 | 3 / 3 / 3 | 3 / 3 / 3 | 3 / 2.5 / 3 |
+
+3 s is the length that helps and does not hurt. The blastdummy windows are not the crater's: Camera's inset and cut are in them (ticks 86 to 133 and 250 to 307).
 
 ## Cost
 

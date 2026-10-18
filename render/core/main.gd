@@ -208,8 +208,7 @@ func _ready() -> void:
 	Input.joy_connection_changed.connect(_on_joy_connection)
 	audio = AudioVoices.new(host.audio_cues.bank)
 	add_child(audio)
-	if DisplayServer.get_name() != "headless":
-		host.audio_cues.bank.warm()   # render every sound now, so none renders in the middle of a fight
+	host.audio_cues.bank.warm()   # render every sound now, so none renders in the middle of a fight (headless too: a tool times first plays as the game has them)
 	start_match(int(args["seed"]) if args.has("seed") else fresh_seed())
 	if args.has("human"):
 		take_over()
