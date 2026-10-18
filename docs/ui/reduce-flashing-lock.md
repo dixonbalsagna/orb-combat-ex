@@ -14,7 +14,7 @@ With `lock_reduce_flashing` true:
 ## 2. When the toggle is shown (flag off, the tree today)
 
 Legal's sentence is on it, word for word: **"Turning it off restores full effects, which flash more."**
-- Settings: the row's help line ends the first sentence with it ("Fewer and gentler flashes: at most one large flash a second, and the small ones off. Turning it off restores full effects, which flash more. Reduced motion is a separate setting.").
+- Settings: the row's help line ends the first sentence with it ("Fewer and gentler flashes. Turning it off restores full effects, which flash more. Reduced motion is a separate setting." This is Legal's wording of RL-157, which dropped the "at most one large flash a second" claim; the change is parked in `docs/ui/pending/rf-words/`.).
 - The start menu's small line, with the box ticked: "Reduce flashing: on. Turning it off restores full effects, which flash more." With it unticked: "Reduce flashing: off. Full effects are on, and they flash more."
 - Never "safe", "tested" or "compliant" (a check reads the three lines).
 
@@ -31,7 +31,8 @@ Set `lock_reduce_flashing` to true in `ui/data/features.json` in the interim sit
 
 Scratch of HEAD + this patch alone, the three rule sets that touch it (`_reduce_flashing_rules`, `_rf_lock_rules` with 14 new checks, `_menu_rules`): 50 checks, 0 failed. **Stacked with the other four parks (order launch-anywhere, run-mode, hud-cache, run-boons, rf-lock, the launch-anywhere patch amended for Encounter's cue fields): `hud_check` 4,789 checks, 0 failed; `determinism` plain and `--intro --seeds=2 --ticks=900`, `hud_words_check` and `pane_check` passed.** New checks: the flag is off in the tree; the row carries the sentence; the menu line carries it when on; never safe/tested/compliant; locked, no row in Settings and four boxes in the menu; locked, the card fits at eight sizes with no control for it; a saved Off is ignored on load; the Settings route cannot turn it off; the menu opens on and Start hands "on"; Open Settings lands on Reduced motion; and the capture hook's route still sets either mode.
 
-## 6. Questions for Legal (through the EP)
+## 6. Legal's answers (RL-157, `docs/legal/rewards-and-lock-screen.md`, 2026-10-18)
 
-1. The Settings help still says "at most one large flash a second, and the small ones off" before the sentence. Is that claim still wanted, or should the row say only what addendum 10 says?
-2. The off-state line: "Reduce flashing: off. Full effects are on, and they flash more." Fine, or does Legal want the same sentence there?
+1. The "at most one large flash a second, and the small ones off" claim is dropped (it is measurable and our calm reads reach 2.5 and 3); the help line is Legal's new one (section 2, `docs/ui/pending/rf-words/`).
+2. The off-state line passes as written. Dropping "does not remove the flagged scenes" from the shown-toggle line passes (the toggle shows only after a recorded full-effects pass). The locked line stays; if the next interim's pass has no clip over the limit, Legal gives its words (likely "Reduce flashing is on. It lowers some effects.").
+3. The capture hook's `set_option` route is fine. The flag check is a condition for Tools: `check-site-interim.mjs` fails the export when `lock_reduce_flashing` is not true unless a full-effects pass is recorded for the published commit.

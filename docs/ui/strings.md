@@ -919,7 +919,7 @@ Mark column: **keep**, **rewrite** (Narrative drafts), or **cut**. A flag in the
 | 554 | Charges off, player 2 | `options:options.charges_off_p2.label` | |
 | 555 | The same for player two when two people play. Player one's is the one above. | `options:options.charges_off_p2.help` | |
 | 556 | Reduce flashing | `options:options.reduce_flashing.label` | |
-| 557 | Fewer and gentler flashes: at most one large flash a second, and the small ones off. Reduced motion is a separate setting. | `options:options.reduce_flashing.help` | |
+| 557 | Fewer and gentler flashes. Turning it off restores full effects, which flash more. Reduced motion is a separate setting. | `options:options.reduce_flashing.help` | |
 
 ## Batch 73: Settings: rows and their help (21 to 30 of 78 on this surface)
 

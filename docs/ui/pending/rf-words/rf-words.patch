@@ -1,0 +1,23 @@
+diff -ruN a/ui/data/options.json b/ui/data/options.json
+--- a/ui/data/options.json	2026-10-18 06:20:51.164544600 -0700
++++ b/ui/data/options.json	2026-10-18 06:20:51.859723600 -0700
+@@ -11,7 +11,7 @@
+     "latch_charge_p2": { "default": false, "group": "controls", "label": "Latched charge, player 2", "help": "The same for player two when two people play. Player one's is the one above.", "accessibility": true },
+     "charges_off": { "default": false, "group": "controls", "label": "Charges off", "help": "Every press is a tap: Medium and Heavy throw as soon as their wind-up ends, and holding does not charge. Off: hold to charge.", "accessibility": true },
+     "charges_off_p2": { "default": false, "group": "controls", "label": "Charges off, player 2", "help": "The same for player two when two people play. Player one's is the one above.", "accessibility": true },
+-    "reduce_flashing": { "default": true, "group": "accessibility", "label": "Reduce flashing", "help": "Fewer and gentler flashes: at most one large flash a second, and the small ones off. Turning it off restores full effects, which flash more. Reduced motion is a separate setting.", "accessibility": true },
++    "reduce_flashing": { "default": true, "group": "accessibility", "label": "Reduce flashing", "help": "Fewer and gentler flashes. Turning it off restores full effects, which flash more. Reduced motion is a separate setting.", "accessibility": true },
+     "reduced_motion": { "default": false, "group": "accessibility", "label": "Reduced motion", "help": "Removes flicker, shimmer and shrinking rings. The split screen swaps sides with a quick fade instead of a swing, and screen shake is cut to a quarter. Everything keeps its shape.", "accessibility": true },
+     "split_solo": { "default": true, "group": "display", "label": "Split screen against the computer", "help": "Use the split screen when you play alone against the computer. Off keeps one camera on your fighter and shows the rival by an edge pointer and the ring map when it is far." },
+     "show_prompts": { "default": false, "group": "display", "label": "Show prompts", "help": "Button prompts on the parry ring, the finisher rings and under your nameplate. Always on in training and in the first three matches." },
+diff -ruN a/ui/tools/hud_check.gd b/ui/tools/hud_check.gd
+--- a/ui/tools/hud_check.gd	2026-10-18 06:20:51.325190300 -0700
++++ b/ui/tools/hud_check.gd	2026-10-18 06:20:51.990160200 -0700
+@@ -5474,6 +5474,7 @@
+ 		keys.append(str(r["key"]))
+ 	var help_all: String = str(UiData.options()["reduce_flashing"]["help"])
+ 	_ok(keys.has("reduce_flashing") and help_all.contains(SENT), "rf lock: with the toggle shown, its Settings row carries Legal's sentence, word for word")
++	_ok(help_all == "Fewer and gentler flashes. " + SENT + " Reduced motion is a separate setting." and not help_all.contains("large flash") and not help_all.contains("per second") and not help_all.contains("a second"), "rf lock: the Settings help makes no measurable claim (RL-157): no flashes-per-second figure, only Legal's words")
+ 	_ok(UiMenu.checks().has("reduce_flashing") and UiMenu.rf_line({"reduce_flashing": true}).ends_with(SENT) and not UiMenu.rf_line({"reduce_flashing": false}).contains("Turning it off"), "rf lock: the menu's box carries the sentence when it is on, and says full effects are on when it is off")
+ 	var lines_all := (UiMenu.rf_line({"reduce_flashing": true}) + " " + UiMenu.rf_line({"reduce_flashing": false}) + " " + help_all).to_lower()
+ 	_ok(not lines_all.contains("safe") and not lines_all.contains("tested") and not lines_all.contains("compliant"), "rf lock: never safe, tested or compliant")
