@@ -1,0 +1,138 @@
+diff --git a/data/anim/agency.json b/data/anim/agency.json
+index 8f8e012..3422555 100644
+--- a/data/anim/agency.json
++++ b/data/anim/agency.json
+@@ -1,6 +1,6 @@
+ {
+  "schema": "anim.agency/1",
+- "_about": "The agency slice's events as poses (render/anim/anim_fighter.gd, on_agency; waves/agency1). knockback: a rival sent back on his feet (kind slideShort, slideLong, drift, bump from the sim's `knockback` event): the held pose mixed in for as long as the event says (its dur), eased in and out. embed: World's `embed` event: the sequence plays over the held-down ticks. taunt: the cue taunt_start plays the shrug over the flight (cut by taunt_end_cut). charge: the cues charge_light and charge_heavy hold the flight pose until the exchange starts, the charge is feinted (charge_feint: the peel for `ticks`), a fall or `max_ticks` ends it. cut_kinds: the cues that end the taunt at once (cut by his dodge, answered, or taken off into a charge); end_kinds: the cues that end a charge at once (the dodge-cancel, a meeting in the middle). The exchange starting ends a charge by itself (read from the sim). weight is the share of the pose mixed in over whatever he is doing; in and out are the ease times (s). Render only, outside the sim's data hash.",
++ "_about": "The agency slice's events as poses (render/anim/anim_fighter.gd, on_agency; waves/agency1). knockback: a rival sent back on his feet (kind slideShort, slideLong, drift, bump from the sim's `knockback` event): the held pose mixed in for as long as the event says (its dur), eased in and out. embed: World's `embed` event: the sequence plays over the held-down ticks. taunt: the cue taunt_start plays the shrug over the flight (cut by taunt_end_cut). charge: the cues charge_light and charge_heavy hold the flight pose until the exchange starts, the charge is feinted (charge_feint: the peel for `ticks`), a fall or `max_ticks` ends it, and so does being carried off faster than `cut_speed` (u/s: a rush, a lunge, a drift, a bounce). cut_kinds: the cues that end the taunt at once (cut by his dodge, answered, or taken off into a charge); end_kinds: the cues that end a charge at once (the dodge-cancel, a meeting in the middle). The exchange starting ends a charge by itself (read from the sim). weight is the share of the pose mixed in over whatever he is doing; in and out are the ease times (s). Render only, outside the sim's data hash.",
+  "knockback": {
+   "slideShort": {
+    "hold": "ag.hold.kb_short",
+@@ -63,6 +63,7 @@
+    "out": 0.2,
+    "ticks": 24
+   },
++  "cut_speed": 300,
+   "end_kinds": [
+    "dodge_cancel",
+    "challenge_answered"
+diff --git a/render/anim/anim_fighter.gd b/render/anim/anim_fighter.gd
+index 3d54c36..253d27d 100644
+--- a/render/anim/anim_fighter.gd
++++ b/render/anim/anim_fighter.gd
+@@ -470,11 +470,6 @@ func on_agency(kind: String, T: float, e: Dictionary) -> void:
+ 			debug["agency"] = int(debug.get("agency", 0)) + 1
+ 
+ 
+-## The flight lead (GB-006, docs/animation/pose-pipeline.md 9.23): the sim's body spin halves every 0.5 s and leaves a launched fighter at whatever angle the tumble
+-## stopped at, still flying at speed: feet first, laid out along the flight line. Once the spin is low and the speed high the whole body turns about its middle (the
+-## view's pivot) until the head leads along the velocity, never the feet: blown back he flies on his back, head first. Landing into a skid it turns upright. The turn
+-## `_lead_d` is a world-space angle added to the sim's own (the view's pivot turns by -rot): it chases its aim by the short way, holds when the flight slows and
+-## is let go when the launch ends. It is the root's rotation and a shift that keeps the middle in place. Read from the sim's state only.
+ ## The mid-air skid (docs/animation/ragdoll-physics-paper.md section 3a). The sim's brake state arrives as an `air_brake` event (text start or end, kind the reason, amount the speed): while it is on and the body is flying
+ ## free, he is braced against his own velocity. On the sim's start the weight ramps in over `enter_ticks`; on its end, out over `exit_ticks`.
+ func on_air_brake(phase: String, _reason: String, _speed: float, _T: float) -> void:
+@@ -534,6 +529,11 @@ func _air_brake_layer(S: SimState, f, dt: float) -> void:
+ 	_ab_aim = deg_to_rad(lerpf(float(lean[0]), float(lean[1]), _ab_str)) * (signf(v.x) if absf(v.x) > 1.0 else 1.0)
+ 
+ 
++## The flight lead (GB-006, docs/animation/pose-pipeline.md 9.23): the sim's body spin halves every 0.5 s and leaves a launched fighter at whatever angle the tumble
++## stopped at, still flying at speed: feet first, laid out along the flight line. Once the spin is low and the speed high the whole body turns about its middle (the
++## view's pivot) until the head leads along the velocity, never the feet: blown back he flies on his back, head first. Landing into a skid it turns upright. The turn
++## `_lead_d` is a world-space angle added to the sim's own (the view's pivot turns by -rot): it chases its aim by the short way, holds when the flight slows and
++## is let go when the launch ends. It is the root's rotation and a shift that keeps the middle in place. Read from the sim's state only.
+ func _lead_layer(S: SimState, f, dt: float) -> void:
+ 	var L: Dictionary = AnimData.flight
+ 	if L.is_empty() or not RenderAnim.flight_lead:
+@@ -839,6 +839,13 @@ func _agency_layer(S: SimState, f, T: float) -> void:
+ 	if _ag_t0 < 0.0 or not AnimData.pose_exists(_ag_hold):
+ 		return
+ 	var cfg: Dictionary = AnimData.agency
++	if _ag_kind.begins_with("charge_") and (f.rush != null or _lead_measure(S, f).length() > float(cfg.get("charge", {}).get("cut_speed", 300.0))):
++		# he is carried off at speed (a rush, a lunge, a knock-back drift or a bounce) with the charge's leaned-back flight pose still held: the pose does not ride a flight at any state, so it is let go at once
++		# (the lead scan found him laid out feet first at 718 u/s on the launcher build's heavy)
++		_ag_t0 = -1.0
++		_ag_t1 = -1.0
++		_ag_kind = ""
++		return
+ 	if _ag_kind.begins_with("charge_") and _ag_t1 < 0.0:
+ 		var cap: float = float(cfg.get("charge", {}).get(_ag_kind.substr(7), {}).get("max_ticks", 90)) / 60.0
+ 		var ex = S.dirS.ex
+@@ -3113,9 +3120,10 @@ func _beat_layers(ex, role: String, t0: float, T: float) -> void:
+ 					_window_pose("def.slip", T - bt, 0.05, 0.15, 0.35)
+ 			"dodge":
+ 				if role == "D":
+-					if String(b.args.get("side", "")) == "cross":
++					var dargs: Dictionary = b.args if b.args is Dictionary else {}   # a dodge beat can carry no args (the spaced profile): the plain dodge
++					if String(dargs.get("side", "")) == "cross":
+ 						# the step-around: up and over the attacker, then down behind him (two moves, a few ticks each)
+-						var leg: float = float(b.args.get("dur", 0.15)) * 0.5
++						var leg: float = float(dargs.get("dur", 0.15)) * 0.5
+ 						var tau: float = T - bt
+ 						if tau >= -0.02 and tau < 2.0 * leg + 0.2:
+ 							_skip_inertia = true   # the two moves are a few ticks each: the pose pulses must show, not be smoothed away
+diff --git a/render/anim/tools/anim_check.gd b/render/anim/tools/anim_check.gd
+index 8974eb8..b8509f3 100644
+--- a/render/anim/tools/anim_check.gd
++++ b/render/anim/tools/anim_check.gd
+@@ -2109,6 +2109,50 @@ func _test_grapple_c0_c1() -> void:
+ 	print("grapple: the partner pick and ten hold regions (C0), %d throw poses clean (C1)" % posed)
+ 
+ 
++## The charge's held flight pose does not ride a flight: a fighter charging in place keeps it, one carried off at speed (a rush, a lunge, a drift, a bounce) loses it at once (lead_scan found him laid out feet first at 718 u/s on the
++## launcher build's heavy, holding `ag.hold.charge_heavy`).
++func _test_charge_cut() -> void:
++	AnimData.load_every_wave()
++	main.start_match(4, {"p1": false, "p2": false})
++	for i in range(10):
++		main.frame(1.0 / 60.0)
++	var S: SimState = main.host.S
++	var f0 = S.fighters[0]
++	var f1 = S.fighters[1]
++	RenderAnim._fighters.clear()
++	f0.id = "PROTAGONIST"
++	f1.id = "RIVAL"
++	f0.x = 500.0
++	f1.x = 2600.0
++	f0.y = 0.0
++	f1.y = 0.0
++	f0.vx = 0.0
++	f0.vy = 0.0
++	f0.state = "free"
++	var held_still: int = 0
++	var cut_at: int = -1
++	var af0: AnimFighter = null
++	for k in range(80):
++		S.tick = 4000 + k
++		S.T = 500.0 + float(k) / 60.0
++		if k == 4:
++			RenderAnim.fighter(S, f0).on_agency("charge_heavy", S.T, {})
++		if k >= 40:
++			f0.x += 718.0 / 60.0
++		var te := SimState.FxEvent.new()
++		te.type = "tick"
++		te.dt = 1.0 / 60.0
++		te.frozen = false
++		RenderAnim.consume(S, [te])
++		af0 = RenderAnim.solve(S, f0)
++		if k >= 8 and k < 40 and af0._ag_t0 >= 0.0:
++			held_still += 1
++		if k >= 40 and cut_at < 0 and af0._ag_t0 < 0.0:
++			cut_at = k
++	_expect(held_still == 32 and cut_at >= 40 and cut_at <= 41, "charge cut: the charge pose is held for %d of 32 ticks standing and let go at tick %d of the carry (40 is its first tick; at most 41)" % [held_still, cut_at])
++	print("charge cut: held while he stands, let go %d ticks after he is carried at 718 u/s" % (cut_at - 40))
++
++
+ func _test_pulled() -> void:
+ 	AnimData.load_every_wave()
+ 	main.start_match(4, {"p1": false, "p2": false})
+@@ -4778,6 +4822,7 @@ func _run() -> void:
+ 	_test_air_brake()
+ 	_test_chain()
+ 	_test_grapple_c0_c1()
++	_test_charge_cut()
+ 	_test_pulled()
+ 	_test_bends()
+ 	_test_styles()
