@@ -24,6 +24,22 @@ static func pickW(S: SimState, w: Array) -> int:
 	return 0
 
 
+## The AI's holds of a ready step (hero-forms.md section 4b): with forms on and steps of its own, it takes a ready step
+## at its first break unless it holds on purpose, for its level's forms.holdS seconds at most of the step held: while
+## its rival's tier is above its own (forms.whenAbove), or while its coil is under forms.coilUnder. Then it releases at
+## the next break. Off with forms off, and for a fighter without steps.
+static func _formHold(S: SimState, f, o) -> bool:
+	if not S.formsOn or f.form == null or not SimForms.has(S, f):
+		return false
+	var fh: Dictionary = lv().get("forms", {})
+	var most: float = float(fh.get("holdS", 0.0)) * DirData.TICKS_PER_SEC
+	if most <= 0.0 or float(f.form.holdT) >= most:
+		return false
+	if bool(fh.get("whenAbove", false)) and o.tier > f.tier:
+		return true
+	return fh.has("coilUnder") and f.form.coil < float(fh.coilUnder)
+
+
 static func aiInput(S: SimState, f) -> void:
 	var o = SimRoster.opp(S, f)
 	var i: SimIntent = f.input
@@ -37,10 +53,11 @@ static func aiInput(S: SimState, f) -> void:
 	var circleRate: float = float(cir.get("rate", CIRCLE_RATE))
 	var swayRate: float = float(stn.get("swayRate", SWAY_RATE))
 	# I2b: the AI writes the v2 record. Its stance choice lives in a.st, and the held states below stand for it, so the
-	# director reads the AI's stance through the same path as a player's (SimAct.stance). A ready form is taken at once.
+	# director reads the AI's stance through the same path as a player's (SimAct.stance). A ready form is taken at once,
+	# unless it holds one on purpose (forms: _formHold).
 	f.act.v2 = true
 	i.mode = 0   # the physical family, unless this tick's press is a blast (below)
-	if f.act.formReady:
+	if f.act.formReady and not _formHold(S, f, o):
 		i.transform = true
 	if DirBrawl.inBrawl(S, f):
 		DirBrawl.aiInput(S, f)   # in a brawl it chooses at its beats, not on the stance timer

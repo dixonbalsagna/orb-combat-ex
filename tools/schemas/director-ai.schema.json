@@ -630,6 +630,30 @@
               "minimum": 0,
               "maximum": 1,
               "description": "The share at which it presses a light on a zipper in reach once his blow has resolved."
+            },
+            "forms": {
+              "type": "object",
+              "description": "The AI's holds of a ready step (hero-forms.md section 4b), with forms on.",
+              "properties": {
+                "holdS": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "It holds a ready step this many seconds at most (0: never)."
+                },
+                "whenAbove": {
+                  "type": "boolean",
+                  "description": "... while its rival's tier is above its own."
+                },
+                "coilUnder": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "... while its coil is under this."
+                }
+              },
+              "required": [
+                "holdS"
+              ],
+              "additionalProperties": false
             }
           },
           "additionalProperties": false,
@@ -1144,6 +1168,30 @@
               "minimum": 0,
               "maximum": 1,
               "description": "The share at which it presses a light on a zipper in reach once his blow has resolved."
+            },
+            "forms": {
+              "type": "object",
+              "description": "The AI's holds of a ready step (hero-forms.md section 4b), with forms on.",
+              "properties": {
+                "holdS": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "It holds a ready step this many seconds at most (0: never)."
+                },
+                "whenAbove": {
+                  "type": "boolean",
+                  "description": "... while its rival's tier is above its own."
+                },
+                "coilUnder": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "... while its coil is under this."
+                }
+              },
+              "required": [
+                "holdS"
+              ],
+              "additionalProperties": false
             }
           },
           "additionalProperties": false,
@@ -1658,6 +1706,30 @@
               "minimum": 0,
               "maximum": 1,
               "description": "The share at which it presses a light on a zipper in reach once his blow has resolved."
+            },
+            "forms": {
+              "type": "object",
+              "description": "The AI's holds of a ready step (hero-forms.md section 4b), with forms on.",
+              "properties": {
+                "holdS": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "It holds a ready step this many seconds at most (0: never)."
+                },
+                "whenAbove": {
+                  "type": "boolean",
+                  "description": "... while its rival's tier is above its own."
+                },
+                "coilUnder": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "... while its coil is under this."
+                }
+              },
+              "required": [
+                "holdS"
+              ],
+              "additionalProperties": false
             }
           },
           "additionalProperties": false,
