@@ -67,12 +67,12 @@ writeRecord();
 const build = (out, c, extra = ['--local']) => { writeCfg(c); return node('build-site.mjs', ['--web', web, '--out', out, '--config', cfgFile, ...extra]); };
 
 // a repo root of the shipped prefs and feedback target the checker reads
-function prefsRoot(name, { options = true, feature = true, hud = true, target = 'none' } = {}) {
+function prefsRoot(name, { options = true, feature = true, hud = true, target = 'none', lock = true } = {}) {
   const r = join(tmp, name);
   mkdirSync(join(r, 'ui/data'), { recursive: true });
   mkdirSync(join(r, 'ui/hud'), { recursive: true });
   writeFileSync(join(r, 'ui/data/options.json'), JSON.stringify({ schema: 1, options: { reduce_flashing: { default: options } } }));
-  writeFileSync(join(r, 'ui/data/features.json'), JSON.stringify({ schema: 1, features: { reduce_flashing: feature } }));
+  writeFileSync(join(r, 'ui/data/features.json'), JSON.stringify({ schema: 1, features: { reduce_flashing: feature, lock_reduce_flashing: lock } }));
   writeFileSync(join(r, 'ui/data/send.json'), JSON.stringify({ schema: 1, _target: target }));
   writeFileSync(join(r, 'ui/hud/ui_hud.gd'), `var opts: Dictionary = {\n\t"reduce_flashing": ${hud},\n}\n`);
   return r;
@@ -132,6 +132,7 @@ try {
   fail('the check fails when the interim has expired', () => {}, cfg({ expires: '2026-10-15' }));
   fail('the check fails when Reduce flashing is not on by default in the options data', () => {}, cfg(), prefsRoot('root-opt', { options: false }));
   fail('the check fails when the Reduce flashing row is not enabled', () => {}, cfg(), prefsRoot('root-feat', { feature: false }));
+  fail('the check fails when the export does not lock Reduce flashing on (lock_reduce_flashing is not true: full effects would be offered, Legal RL-156)', () => {}, cfg(), prefsRoot('root-nolock', { lock: false }));
   fail('the check fails when the HUD default is off', () => {}, cfg(), prefsRoot('root-hud', { hud: false }));
   fail('the check fails when the feedback target is not the one the privacy line was written for', () => {}, cfg(), prefsRoot('root-target', { target: 'github' }));
   fail('the check fails when About lacks the privacy line', (d) => edit(d, 'about/index.html', (t) => t.replace('nothing is sent by the game', 'something is sent')));

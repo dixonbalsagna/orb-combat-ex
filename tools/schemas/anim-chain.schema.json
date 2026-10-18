@@ -25,11 +25,14 @@
       "properties": {
         "ref": {
           "type": "number",
-          "minimum": 0
+          "exclusiveMinimum": 0,
+          "description": "The contact's normal speed (units a second) that gives the slam its full weight."
         },
         "min": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The least weight of the slam, 0 to 1."
         }
       },
       "additionalProperties": false,
@@ -39,11 +42,15 @@
     },
     "face_stop_ticks": {
       "type": "integer",
-      "minimum": 0
+      "minimum": 1,
+      "maximum": 120,
+      "description": "The stop at the face when the event carries none (Game Design: 15)."
     },
     "lodge_climb_ticks": {
       "type": "integer",
-      "minimum": 0
+      "minimum": 1,
+      "maximum": 240,
+      "description": "The climb out of a lodge, in ticks."
     },
     "poses": {
       "type": "object",
@@ -54,13 +61,19 @@
       ],
       "properties": {
         "slam": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The slam pose (a real pose: rule anim-chain-pose)."
         },
         "rebound": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The rebound pose (a real pose: rule anim-chain-pose)."
         },
         "climb": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The climb pose (a real pose: rule anim-chain-pose)."
         }
       },
       "additionalProperties": false,
@@ -80,23 +93,33 @@
       "properties": {
         "ceiling_keep": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The share of its speed a body keeps off a ceiling, 0 to 1."
         },
         "floor_through_keep": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The share it keeps going through a floor, 0 to 1."
         },
         "max_contacts": {
-          "type": "number",
-          "minimum": 0
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "description": "The most contacts a chain plays."
         },
         "max_bounces": {
-          "type": "number",
-          "minimum": 0
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "description": "The most bounces a chain plays."
         },
         "cap_seconds": {
           "type": "number",
-          "minimum": 0
+          "exclusiveMinimum": 0,
+          "maximum": 20,
+          "description": "The longest a chain plays, in seconds."
         }
       },
       "additionalProperties": false,

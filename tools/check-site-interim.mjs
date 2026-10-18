@@ -194,6 +194,9 @@ if (!optDefault || optDefault.default !== true) bad(`"Reduce flashing" is not on
 try {
   const feat = JSON.parse(readFileSync(join(root, 'ui/data/features.json'), 'utf8'));
   if (!(feat.features && feat.features.reduce_flashing === true)) bad('"Reduce flashing" has no row: ui/data/features.json features.reduce_flashing is not true');
+  // Legal's addendum 10 (RL-156): until full effects have a recorded pass, the interim build must not offer them: UI's lock (docs/ui/reduce-flashing-lock.md) hides the row and ignores an Off. One word in the
+  // export's features.json; if it is forgotten the toggle shows, so the build fails here.
+  if (!(feat.features && feat.features.lock_reduce_flashing === true)) bad('the interim build offers full effects: ui/data/features.json features.lock_reduce_flashing is not true (Legal RL-156, docs/ui/reduce-flashing-lock.md)');
 } catch (e) { bad(`ui/data/features.json could not be read: ${e.message}`); }
 try {
   const hud = readFileSync(join(root, 'ui/hud/ui_hud.gd'), 'utf8');

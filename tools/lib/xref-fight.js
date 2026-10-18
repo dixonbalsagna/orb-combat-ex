@@ -1055,6 +1055,51 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
   const depthD = get('data/combat/depth.json');
   if (isObj(depthD) && isObj(depthD.director) && typeof depthD.director.lineSinMin === 'number' && typeof depthD.director.lineSinMax === 'number' && depthD.director.lineSinMin > depthD.director.lineSinMax) err('data/combat/depth.json', '/director/lineSinMin', 'depth-line-order', `lineSinMin ${depthD.director.lineSinMin} is above lineSinMax ${depthD.director.lineSinMax}`);
 
+  // ---- anim data of the parked air brake, chain, guard pass and throws: the poses and sequences they name exist, the numbers keep their order
+  {
+    const posesP = new Set(), seqsP = new Set();
+    const mainP = get('data/anim/poses.json');
+    if (isObj(mainP) && isObj(mainP.poses)) for (const k of Object.keys(mainP.poses)) posesP.add(k);
+    for (const rel of docsFor(/^data\/anim\/waves\/[^/]+\.poses\.json$/)) { const d = get(rel); if (isObj(d) && isObj(d.poses)) for (const k of Object.keys(d.poses)) posesP.add(k); }
+    for (const rel of docsFor(/^data\/anim\/waves\/[^/]+\.sequences\.json$/)) { const d = get(rel); if (isObj(d) && isObj(d.sequences)) for (const k of Object.keys(d.sequences)) seqsP.add(k); }
+    const needP = (file, id, at, rule, what) => { if (posesP.size && typeof id === 'string' && !posesP.has(id)) err(file, at, rule, `${what} "${id}" is not in poses.json nor a wave's poses file`); };
+    const brk = get('data/anim/brake.json');
+    if (isObj(brk)) {
+      if (isObj(brk.poses)) for (const k of ['enter', 'hold', 'exit']) needP('data/anim/brake.json', brk.poses[k], `/poses/${k}`, 'anim-brake-pose', 'skid pose');
+      if (Array.isArray(brk.lean_deg) && brk.lean_deg.length === 2 && brk.lean_deg[0] > brk.lean_deg[1]) err('data/anim/brake.json', '/lean_deg/0', 'anim-brake-order', `the least lean ${brk.lean_deg[0]} is above the most ${brk.lean_deg[1]}`);
+    }
+    const chn = get('data/anim/chain.json');
+    // (a chain "pose" is a pose or a sequence of a wave: ce.slam, ce.rebound and lg.climb are sequences)
+    if (isObj(chn) && isObj(chn.poses)) for (const k of ['slam', 'rebound', 'climb']) { const id = chn.poses[k]; if (typeof id === 'string' && posesP.size && !posesP.has(id) && !seqsP.has(id)) err('data/anim/chain.json', `/poses/${k}`, 'anim-chain-pose', `chain pose "${id}" is neither a pose nor a sequence of any wave`); }
+    const gp = get('data/anim/guard_pass.json');
+    if (isObj(gp) && isObj(gp.contacts)) for (const [ck, cv] of Object.entries(gp.contacts)) {
+      if (ck.startsWith('_') || !isObj(cv)) continue;
+      needP('data/anim/guard_pass.json', ck, `/contacts/${esc(ck)}`, 'anim-guard-pass-pose', 'contact key');
+      if (typeof cv.now === 'number' && typeof cv.was === 'number' && cv.now > cv.was) err('data/anim/guard_pass.json', `/contacts/${esc(ck)}/now`, 'anim-guard-pass-order', `"${ck}" is ${cv.now} from the guard now and was ${cv.was}: the pass must not move a hand away`);
+      if (typeof cv.now === 'number' && isObj(gp.goal) && typeof gp.goal.hand === 'number' && cv.hand_l && cv.now > gp.goal.hand + 1e-9) err('data/anim/guard_pass.json', `/contacts/${esc(ck)}/now`, 'anim-guard-pass-goal', `"${ck}" is ${cv.now} from the guard, above the hand goal ${gp.goal.hand}`);
+    }
+    const thr = get('data/anim/throws.json');
+    if (isObj(thr) && isObj(thr.sends)) {
+      const used = new Set();
+      for (const [sk, sv] of Object.entries(thr.sends)) { if (sk.startsWith('_') || !isObj(sv)) continue; for (const [who, sid] of Object.entries(sv)) { if (who.startsWith('_') || typeof sid !== 'string') continue; used.add(sid); if (seqsP.size && !seqsP.has(sid)) err('data/anim/throws.json', `/sends/${esc(sk)}/${esc(who)}`, 'anim-throws-sequence', `throw "${sid}" is not a sequence of any wave`); if (isObj(thr.grip) && !(sid in thr.grip)) err('data/anim/throws.json', `/sends/${esc(sk)}/${esc(who)}`, 'anim-throws-grip', `throw "${sid}" has no entry in grip`); } }
+      if (isObj(thr.grip)) for (const gk of Object.keys(thr.grip)) if (!gk.startsWith('_') && !used.has(gk)) err('data/anim/throws.json', `/grip/${esc(gk)}`, 'anim-throws-grip', `grip "${gk}" is a throw that no send uses`);
+    }
+  }
+
+  // ---- VFX catastrophe: the tremor's calm form is never quicker than the normal one; the quality tiers ascend; each pair runs low to high
+  {
+    const cat = get('data/vfx/catastrophe.json');
+    const tm = isObj(cat) && isObj(cat.tremor) ? cat.tremor : null;
+    if (tm) {
+      const CV = 'data/vfx/catastrophe.json';
+      const low = (k, i) => { const a = tm[k]; if (Array.isArray(a) && typeof a[i] === 'number' && typeof a[i + 1] === 'number' && a[i] > a[i + 1]) err(CV, `/tremor/${k}/${i}`, 'vfx-catastrophe-order', `${k}: ${a[i]} is above ${a[i + 1]} (low to high)`); };
+      for (const k of ['sprites']) { const a = tm[k]; if (Array.isArray(a)) for (let i = 0; i + 1 < a.length; i++) low(k, i); }
+      for (const k of ['height_k', 'width_k', 'z', 'rubble_size', 'rubble_life_s']) low(k, 0);
+      if (typeof tm.onset_s === 'number' && typeof tm.calm_onset_s === 'number' && tm.calm_onset_s < tm.onset_s) err(CV, '/tremor/calm_onset_s', 'vfx-catastrophe-order', `the calm onset ${tm.calm_onset_s} s is quicker than the normal onset ${tm.onset_s} s: the calm form must never be quicker`);
+      if (typeof tm.settle_s === 'number' && typeof tm.calm_settle_s === 'number' && tm.calm_settle_s < tm.settle_s) err(CV, '/tremor/calm_settle_s', 'vfx-catastrophe-order', `the calm settling ${tm.calm_settle_s} s is quicker than the normal settling ${tm.settle_s} s: the calm form must never be quicker`);
+    }
+  }
+
   // ---- fight shots: a lobbed kind has both its numbers; a kind that trades with more power does not do less damage ----
   const shotsD = get('data/fight/shots.json');
   if (isObj(shotsD) && isObj(shotsD.kinds)) {

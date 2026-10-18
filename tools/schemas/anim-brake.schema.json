@@ -28,13 +28,19 @@
       ],
       "properties": {
         "enter": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The enter pose of the skid (a real pose: rule anim-brake-pose)."
         },
         "hold": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The hold pose of the skid (a real pose: rule anim-brake-pose)."
         },
         "exit": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The exit pose of the skid (a real pose: rule anim-brake-pose)."
         }
       },
       "additionalProperties": false,
@@ -44,35 +50,49 @@
     },
     "lean_deg": {
       "type": "array",
-      "items": {
-        "type": "number"
-      },
       "minItems": 2,
-      "maxItems": 2
+      "maxItems": 2,
+      "items": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 90
+      },
+      "description": "The least and the most the body leans back, in degrees (the least at most the most: rule anim-brake-order)."
     },
     "decel_ref": {
       "type": "number",
-      "minimum": 0
+      "exclusiveMinimum": 0,
+      "description": "The deceleration (units a second squared) that gives the skid its full weight."
     },
     "min_w": {
       "type": "number",
-      "minimum": 0
+      "minimum": 0,
+      "maximum": 1,
+      "description": "The least weight the skid is mixed in at, 0 to 1."
     },
     "enter_ticks": {
       "type": "integer",
-      "minimum": 0
+      "minimum": 1,
+      "maximum": 60,
+      "description": "Ticks to mix the skid in."
     },
     "exit_ticks": {
       "type": "integer",
-      "minimum": 0
+      "minimum": 1,
+      "maximum": 60,
+      "description": "Ticks to mix it out."
     },
     "lead_rate": {
       "type": "integer",
-      "minimum": 0
+      "minimum": 0,
+      "maximum": 360,
+      "description": "The flight lead's turn rate while braking."
     },
     "whip": {
       "type": "number",
-      "minimum": 0
+      "minimum": 0,
+      "maximum": 10,
+      "description": "How hard the body whips as the brake ends."
     }
   },
   "additionalProperties": false,

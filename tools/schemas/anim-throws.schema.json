@@ -32,10 +32,14 @@
           ],
           "properties": {
             "protagonist": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[a-z]+[0-9]*[.][a-z0-9_.]+$",
+              "description": "The Protagonist's throw (a sequence of a wave: rule anim-throws-sequence)."
             },
             "antihero": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[a-z]+[0-9]*[.][a-z0-9_.]+$",
+              "description": "The Anti-hero's throw."
             }
           },
           "additionalProperties": false,
@@ -51,10 +55,14 @@
           ],
           "properties": {
             "protagonist": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[a-z]+[0-9]*[.][a-z0-9_.]+$",
+              "description": "The Protagonist's throw (a sequence of a wave: rule anim-throws-sequence)."
             },
             "antihero": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[a-z]+[0-9]*[.][a-z0-9_.]+$",
+              "description": "The Anti-hero's throw."
             }
           },
           "additionalProperties": false,
@@ -70,10 +78,14 @@
           ],
           "properties": {
             "protagonist": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[a-z]+[0-9]*[.][a-z0-9_.]+$",
+              "description": "The Protagonist's throw (a sequence of a wave: rule anim-throws-sequence)."
             },
             "antihero": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[a-z]+[0-9]*[.][a-z0-9_.]+$",
+              "description": "The Anti-hero's throw."
             }
           },
           "additionalProperties": false,
@@ -89,10 +101,14 @@
           ],
           "properties": {
             "protagonist": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[a-z]+[0-9]*[.][a-z0-9_.]+$",
+              "description": "The Protagonist's throw (a sequence of a wave: rule anim-throws-sequence)."
             },
             "antihero": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[a-z]+[0-9]*[.][a-z0-9_.]+$",
+              "description": "The Anti-hero's throw."
             }
           },
           "additionalProperties": false,
@@ -108,10 +124,14 @@
           ],
           "properties": {
             "protagonist": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[a-z]+[0-9]*[.][a-z0-9_.]+$",
+              "description": "The Protagonist's throw (a sequence of a wave: rule anim-throws-sequence)."
             },
             "antihero": {
-              "type": "string"
+              "type": "string",
+              "pattern": "^[a-z]+[0-9]*[.][a-z0-9_.]+$",
+              "description": "The Anti-hero's throw."
             }
           },
           "additionalProperties": false,
@@ -123,166 +143,45 @@
       "additionalProperties": false,
       "patternProperties": {
         "^_": true
-      }
+      },
+      "description": "The throws by the send's direction (all five)."
     },
     "grip": {
       "type": "object",
-      "required": [
-        "zq.hurl",
-        "zq.sling",
-        "zq.turn_throw",
-        "zq.back_throw",
-        "zq.drive_down",
-        "zq.spike",
-        "zq.lift",
-        "zq.jolt"
-      ],
-      "properties": {
-        "zq.hurl": {
-          "type": "object",
-          "required": [
-            "hand_r",
-            "hand_l"
-          ],
-          "properties": {
-            "hand_r": {
-              "type": "string"
-            },
-            "hand_l": {
-              "type": "string"
-            }
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z]+[0-9]*[.][a-z0-9_.]+)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "hand_r": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "The body part of the rival the hand takes hold of."
           },
-          "additionalProperties": false,
-          "patternProperties": {
-            "^_": true
+          "hand_l": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "The body part of the rival the hand takes hold of."
           }
         },
-        "zq.sling": {
-          "type": "object",
-          "required": [
-            "hand_r"
-          ],
-          "properties": {
-            "hand_r": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "patternProperties": {
-            "^_": true
-          }
-        },
-        "zq.turn_throw": {
-          "type": "object",
-          "required": [
-            "hand_r"
-          ],
-          "properties": {
-            "hand_r": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "patternProperties": {
-            "^_": true
-          }
-        },
-        "zq.back_throw": {
-          "type": "object",
-          "required": [
-            "hand_r",
-            "hand_l"
-          ],
-          "properties": {
-            "hand_r": {
-              "type": "string"
-            },
-            "hand_l": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "patternProperties": {
-            "^_": true
-          }
-        },
-        "zq.drive_down": {
-          "type": "object",
-          "required": [
-            "hand_r",
-            "hand_l"
-          ],
-          "properties": {
-            "hand_r": {
-              "type": "string"
-            },
-            "hand_l": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "patternProperties": {
-            "^_": true
-          }
-        },
-        "zq.spike": {
-          "type": "object",
-          "required": [
-            "hand_r"
-          ],
-          "properties": {
-            "hand_r": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "patternProperties": {
-            "^_": true
-          }
-        },
-        "zq.lift": {
-          "type": "object",
-          "required": [
-            "hand_r",
-            "hand_l"
-          ],
-          "properties": {
-            "hand_r": {
-              "type": "string"
-            },
-            "hand_l": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "patternProperties": {
-            "^_": true
-          }
-        },
-        "zq.jolt": {
-          "type": "object",
-          "required": [
-            "hand_r"
-          ],
-          "properties": {
-            "hand_r": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "patternProperties": {
-            "^_": true
-          }
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
         }
       },
-      "additionalProperties": false,
       "patternProperties": {
         "^_": true
-      }
+      },
+      "description": "Throw sequence to where its hands take hold (every throw of sends, and no other: rule anim-throws-grip)."
     },
     "wrists_apart_min": {
       "type": "integer",
-      "minimum": 0
+      "minimum": 1,
+      "maximum": 200,
+      "description": "The least the wrists are apart for a hold, in units."
     }
   },
   "additionalProperties": false,

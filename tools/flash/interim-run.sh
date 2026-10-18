@@ -89,6 +89,16 @@ const ex = rd(process.argv[3]);
 for (const e of ex) { if (e.error || !e.result) { out.push(e.id + ' (no result, nightly-style seed)'); continue; } if (e.result.general.flashes > 3) out.push(e.id + ' primary ' + e.result.general.flashes + ' (nightly-style seed)'); }
 console.log(out.join('; '));
 " "$W/clips/summary.json" "$W/clips_second/summary.json" "$W/clips_extra/summary.json")
+node tools/flash/margins.mjs "$W/clips_extra" --json "$W/margins_extra.json" > "$W/margins_extra.txt" 2>&1
+# A REHEARSAL (NO_RECORD=1): the whole set and the nightly-style seeds, the table against addendum 10, and nothing recorded, built or published (the red of the Anti-hero's coat may still be open, say)
+if [ -n "${NO_RECORD:-}" ]; then
+  say "rehearsal: no record"
+  SECOND_FILE="$W/clips_second/summary.json"
+  node tools/flash/run-table.mjs --set "$W/clips/summary.json" --second "$SECOND_FILE" --extra "$W/clips_extra/summary.json" --margins "$W/margins.json,$W/margins_extra.json" --md "$W/table.md" > "$W/table.txt" 2>&1
+  tail -n 3 "$W/table.txt" | tee -a "$LOG"
+  say "done (rehearsal): $W/table.md"
+  exit 0
+fi
 if [ -n "$OVER" ]; then
   echo "NOT RECORDED: clips over 3 on the primary reading: $OVER" | tee -a "$LOG"
   echo "$OVER" > "$W/NOT-RECORDED.txt"

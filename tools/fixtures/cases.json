@@ -288454,7 +288454,7 @@
         }
       ],
       "expect": {
-        "rule": "minimum",
+        "rule": "exclusiveMinimum",
         "pointer": "/decel_ref"
       }
     },
@@ -288816,7 +288816,7 @@
         }
       ],
       "expect": {
-        "rule": "minimum",
+        "rule": "exclusiveMinimum",
         "pointer": "/ceiling/ref"
       }
     },
@@ -289152,7 +289152,7 @@
         }
       ],
       "expect": {
-        "rule": "minimum",
+        "rule": "exclusiveMinimum",
         "pointer": "/rules/cap_seconds"
       }
     },
@@ -289322,7 +289322,7 @@
         }
       ],
       "expect": {
-        "rule": "minimum",
+        "rule": "exclusiveMinimum",
         "pointer": "/goal/hand"
       }
     },
@@ -289354,7 +289354,7 @@
         }
       ],
       "expect": {
-        "rule": "minimum",
+        "rule": "exclusiveMinimum",
         "pointer": "/goal/foot"
       }
     },
@@ -289402,7 +289402,7 @@
         }
       ],
       "expect": {
-        "rule": "additionalProperties",
+        "rule": "type",
         "pointer": "/contacts/extra"
       }
     },
@@ -292036,7 +292036,7 @@
         }
       ],
       "expect": {
-        "rule": "additionalProperties",
+        "rule": "type",
         "pointer": "/grip/extra"
       }
     },
@@ -292438,6 +292438,494 @@
       "expect": {
         "rule": "maximum",
         "pointer": "/tremor/sprites/2"
+      }
+    },
+    {
+      "id": "anim-brake-lean-order",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/lean_deg": [
+              50,
+              20
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-brake-order",
+        "pointer": "/lean_deg/0"
+      }
+    },
+    {
+      "id": "anim-brake-lean-over-90",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/lean_deg": [
+              18,
+              120
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/lean_deg/1"
+      }
+    },
+    {
+      "id": "anim-brake-pose-missing",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/poses/hold": "ab.no.such"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-brake-pose",
+        "pointer": "/poses/hold"
+      }
+    },
+    {
+      "id": "anim-brake-pose-shape",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/poses/hold": "Hold It"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/poses/hold"
+      }
+    },
+    {
+      "id": "anim-brake-weight-above-one",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/min_w": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/min_w"
+      }
+    },
+    {
+      "id": "anim-brake-ticks-zero",
+      "schema": "anim-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/brake.json",
+          "set": {
+            "/enter_ticks": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/enter_ticks"
+      }
+    },
+    {
+      "id": "anim-chain-keep-above-one",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/rules/ceiling_keep": 1.4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/rules/ceiling_keep"
+      }
+    },
+    {
+      "id": "anim-chain-contacts-zero",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/rules/max_contacts": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/rules/max_contacts"
+      }
+    },
+    {
+      "id": "anim-chain-pose-missing",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/poses/slam": "ce.no.such"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-chain-pose",
+        "pointer": "/poses/slam"
+      }
+    },
+    {
+      "id": "anim-chain-min-above-one",
+      "schema": "anim-chain.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/chain.json",
+          "set": {
+            "/ceiling/min": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/ceiling/min"
+      }
+    },
+    {
+      "id": "anim-guard-pass-new-contact-ok",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.jab.contact": {
+              "hand_l": [
+                18.4,
+                59.3,
+                -8.4
+              ],
+              "was": 20.1,
+              "now": 12.8
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-guard-pass-contact-pose-missing",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pr.no_such.contact": {
+              "hand_l": [
+                18.4,
+                59.3,
+                -8.4
+              ],
+              "was": 20.1,
+              "now": 12.8
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-guard-pass-pose",
+        "pointer": "/contacts/pr.no_such.contact"
+      }
+    },
+    {
+      "id": "anim-guard-pass-moved-away",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/contacts/pk.blast_chest.contact/now": 25.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-guard-pass-order",
+        "pointer": "/contacts/pk.blast_chest.contact/now"
+      }
+    },
+    {
+      "id": "anim-guard-pass-needs-was",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "del": [
+            "/contacts/pk.blast_chest.contact/was"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/contacts/pk.blast_chest.contact"
+      }
+    },
+    {
+      "id": "anim-guard-pass-keep-above-one",
+      "schema": "anim-guard-pass.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/guard_pass.json",
+          "set": {
+            "/keep": 1.2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/keep"
+      }
+    },
+    {
+      "id": "anim-throws-send-missing",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "del": [
+            "/sends/down"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/sends"
+      }
+    },
+    {
+      "id": "anim-throws-sequence-missing",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/sends/down/protagonist": "zq.no_such"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-throws-grip",
+        "pointer": "/sends/down/protagonist"
+      }
+    },
+    {
+      "id": "anim-throws-grip-unused",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/grip/zq.unused": {
+              "hand_r": "waist"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-throws-grip",
+        "pointer": "/grip/zq.unused"
+      }
+    },
+    {
+      "id": "anim-throws-wrists-zero",
+      "schema": "anim-throws.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/throws.json",
+          "set": {
+            "/wrists_apart_min": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/wrists_apart_min"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-valid",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/version": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "vfx-catastrophe-underscore-note-in-tremor-ok",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/tremor/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "vfx-catastrophe-unknown-tremor-key",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/tremor/glow": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/tremor/glow"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-calm-onset-quicker",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/tremor/onset_s": 3,
+            "/tremor/calm_onset_s": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:vfx-catastrophe-order",
+        "pointer": "/tremor/calm_onset_s"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-calm-settle-quicker",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/tremor/settle_s": 8,
+            "/tremor/calm_settle_s": 6
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:vfx-catastrophe-order",
+        "pointer": "/tremor/calm_settle_s"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-sprites-descend",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/tremor/sprites": [
+              160,
+              110,
+              60
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:vfx-catastrophe-order",
+        "pointer": "/tremor/sprites/0"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-z-reversed",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/tremor/z": [
+              -6,
+              -20
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:vfx-catastrophe-order",
+        "pointer": "/tremor/z/0"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-colour-not-hex",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/tremor/colour": "grey"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/tremor/colour"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-overlap-zero",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/tremor/max_overlap": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/tremor/max_overlap"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-version-wrong",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/version": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/version"
       }
     },
     {
