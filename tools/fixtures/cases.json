@@ -292929,6 +292929,608 @@
       }
     },
     {
+      "id": "fight-brake-valid",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/schema": "fight.brake/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-brake-key-required-schema",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-brake-key-required-enabled",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "del": [
+            "/enabled"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-brake-key-required-window",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "del": [
+            "/window"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-brake-key-required-fullspeed",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "del": [
+            "/fullSpeed"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-brake-key-required-hardspeed",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "del": [
+            "/hardSpeed"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-brake-key-required-maxbrakes",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "del": [
+            "/maxBrakeS"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-brake-key-required-controldiv",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "del": [
+            "/controlDiv"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-brake-key-required-kipersec",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "del": [
+            "/kiPerSec"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-brake-key-required-nokimul",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "del": [
+            "/noKiMul"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-brake-key-required-airsense",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "del": [
+            "/airSense"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-brake-unknown-key",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "fight-brake-underscore-key-ok",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-brake-version-wrong",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/schema": "x/99"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "fight-brake-type-enabled",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/enabled": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "fight-brake-unknown-key-window",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/window/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/window/extra"
+      }
+    },
+    {
+      "id": "fight-brake-type-window-minticks",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/window/minTicks": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/window/minTicks"
+      }
+    },
+    {
+      "id": "fight-brake-negative-window-minticks",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/window/minTicks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/window/minTicks"
+      }
+    },
+    {
+      "id": "fight-brake-type-window-maxticks",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/window/maxTicks": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/window/maxTicks"
+      }
+    },
+    {
+      "id": "fight-brake-negative-window-maxticks",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/window/maxTicks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/window/maxTicks"
+      }
+    },
+    {
+      "id": "fight-brake-type-window-lowpower",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/window/lowPower": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/window/lowPower"
+      }
+    },
+    {
+      "id": "fight-brake-negative-window-lowpower",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/window/lowPower": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/window/lowPower"
+      }
+    },
+    {
+      "id": "fight-brake-type-window-fullpower",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/window/fullPower": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/window/fullPower"
+      }
+    },
+    {
+      "id": "fight-brake-negative-window-fullpower",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/window/fullPower": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/window/fullPower"
+      }
+    },
+    {
+      "id": "fight-brake-type-fullspeed",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/fullSpeed": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/fullSpeed"
+      }
+    },
+    {
+      "id": "fight-brake-negative-fullspeed",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/fullSpeed": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/fullSpeed"
+      }
+    },
+    {
+      "id": "fight-brake-type-hardspeed",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/hardSpeed": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/hardSpeed"
+      }
+    },
+    {
+      "id": "fight-brake-negative-hardspeed",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/hardSpeed": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/hardSpeed"
+      }
+    },
+    {
+      "id": "fight-brake-type-maxbrakes",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/maxBrakeS": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/maxBrakeS"
+      }
+    },
+    {
+      "id": "fight-brake-negative-maxbrakes",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/maxBrakeS": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/maxBrakeS"
+      }
+    },
+    {
+      "id": "fight-brake-type-controldiv",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/controlDiv": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/controlDiv"
+      }
+    },
+    {
+      "id": "fight-brake-negative-controldiv",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/controlDiv": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/controlDiv"
+      }
+    },
+    {
+      "id": "fight-brake-type-kipersec",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/kiPerSec": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/kiPerSec"
+      }
+    },
+    {
+      "id": "fight-brake-negative-kipersec",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/kiPerSec": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/kiPerSec"
+      }
+    },
+    {
+      "id": "fight-brake-type-nokimul",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/noKiMul": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/noKiMul"
+      }
+    },
+    {
+      "id": "fight-brake-negative-nokimul",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/noKiMul": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/noKiMul"
+      }
+    },
+    {
+      "id": "fight-brake-type-airsense",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/airSense": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/airSense"
+      }
+    },
+    {
+      "id": "fight-brake-negative-airsense",
+      "schema": "fight-brake.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/brake.json",
+          "set": {
+            "/airSense": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/airSense"
+      }
+    },
+    {
       "id": "vfx-catastrophe-z-near",
       "schema": "vfx-catastrophe.schema.json",
       "mutate": [

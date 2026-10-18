@@ -1,0 +1,26 @@
+{
+  "_note": "The air brake (Game Design, docs/design/buildings.md section 7.2; sim/core/brake.gd; docs/architecture/brake-core.md). Speeds are a send's own speed, the launch's traversal factor divided out, in units a second.",
+  "schema": "fight.brake/1",
+  "enabled": false,
+  "_enabled": "the one switch. SimCore.newMatch copies it into S.brakeOn unless the match's setup has its own \"brake\". Off: no brake, no brake state hashed, no air_brake event, and this file is not in a replay's data hash",
+  "window": {
+    "minTicks": 8,
+    "maxTicks": 20,
+    "lowPower": 0.55,
+    "fullPower": 1.0,
+    "_note": "when the brake can start, in ticks after the send: minTicks at a send's power of lowPower or less, maxTicks at fullPower or more, straight-line between. Air sense takes airSense off it for each mark of the send's kind on him"
+  },
+  "fullSpeed": 5000.0,
+  "_fullSpeed": "a full launch's own speed: a send's power is its speed over this, at most 1, until the launcher's power (launch-anywhere.md section 4) is the director's to hand over. Simulation's first value, from AI matches on ff68e994: sends' own speeds have a median of 2,570 and a tier-1 90th percentile of 5,380",
+  "hardSpeed": 7000.0,
+  "_hardSpeed": "the hardest send's own speed: the brake's rate is set so that it falls to a third of it in maxBrakeS. Simulation's first value: the largest measured was 6,240 (tier 3 and below), with tier 4's launch gain on top",
+  "maxBrakeS": 0.6,
+  "_maxBrakeS": "Game Design's: at most this long of braking, even from the hardest send",
+  "controlDiv": 3.0,
+  "_controlDiv": "he has control back when his speed falls under the send's over this (a third)",
+  "kiPerSec": 20.0,
+  "noKiMul": 0.5,
+  "_ki": "ki held while braking, a second; with no ki the brake still works, at noKiMul of its rate (Orb: no strict caps)",
+  "airSense": 0.25,
+  "_airSense": "a send of a kind already marked on him (launch-anywhere.md section 5) can be braked this share sooner for each mark"
+}

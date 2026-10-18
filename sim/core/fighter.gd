@@ -540,6 +540,8 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 	if f.state != "launched":
 		f.flightHits = 0
 	var i: SimIntent = f.input
+	if S.brakeOn:
+		SimBrake.tick(S, f, dt)   # the air brake: a sent fighter who holds it slows, and has control back under a third of the send's speed
 	f.power = SimMathx.jmin(100.0, f.power + f.ld.fill * dt)
 	var nt: float = tierByPower(f)
 	var steps: bool = SimForms.has(S, f)   # forms: his own steps (sim/core/forms.gd) in place of the ladder's thresholds

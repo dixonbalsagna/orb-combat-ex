@@ -530,6 +530,10 @@
     {
       "match": "data/anim/throws.json",
       "schema": "anim-throws.schema.json"
+    },
+    {
+      "match": "data/fight/brake.json",
+      "schema": "fight-brake.schema.json"
     }
   ]
 }

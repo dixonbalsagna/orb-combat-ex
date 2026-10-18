@@ -208,6 +208,14 @@ static func formStep(S: SimState, f, k: int, kind: String, tier: float, coil: fl
 	e.text = branch; e.source = "cross" if cross else ""
 
 
+## The air brake (sim/core/brake.gd; only while S.brakeOn): text start or end; kind the reason (held at the start; at the
+## end speed, his control back under a third of the send's speed, released, ground, or hit, a new send); amount his
+## own speed, and ux, uy his flight's direction (both with the traversal factor divided out).
+static func airBrake(S: SimState, f, phase: String, why: String, speed: float, ux: float, uy: float) -> void:
+	var e := _ev(S, "air_brake")
+	e.actor = float(S.fighters.find(f)); e.text = phase; e.kind = why; e.amount = speed; e.ux = ux; e.uy = uy
+
+
 static func transformReady(S: SimState, f, tier: float, source: String) -> void:
 	var e := _ev(S, "transform_ready")
 	e.actor = float(S.fighters.find(f)); e.tier = tier; e.source = source

@@ -905,6 +905,30 @@ static func _finish(S: SimState, f, by, b: Body) -> void:
 	WorldBrunt.endFlight(S, f)
 
 
+## The air brake gave him control back in the air (SimBrake; docs/architecture/brake-core.md): his journey ends where he
+## is, as a recovery. journey_end says so (kind "brake"), the flight's aim and chain are released, and he is free, with
+## the speed he has (SimBrake has divided the traversal factor out of it).
+static func brakeEnd(S: SimState, f) -> void:
+	var je := SimFx.contactEvent(S, "journey_end", f, f.x, f.y, SimDetMath.hypot(f.vx, f.vy))
+	je.contacts = f.jContacts
+	je.lips = f.jLips
+	je.nb = int(f.bounces)
+	je.dur = float(f.jT) * SimConst.DT
+	je.kind = "brake"
+	je.n = _launchN(f)
+	f.slide = 0.0
+	f.tumbleT = -1
+	f.state = "free"
+	f.stateT = 0.0
+	f.bounces = 0.0
+	f.launchBy = null
+	f.launchT = 1.0
+	f.launchSpecial = false
+	f.slideFeet = false
+	f.hopped = false
+	WorldBrunt.endFlight(S, f)
+
+
 static func _record(S: SimState, f, by) -> void:
 	var E: float = f.slideE
 	var rec := SimState.Slide.new()

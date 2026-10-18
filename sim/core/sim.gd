@@ -40,6 +40,7 @@ static func dispose(S: SimState) -> void:
 ## second (docs/director/one-v-many.md, stage 1),
 ## "names": [name, name] renames them (the mirror arms), "flip": true swaps the spawn sides. {} is the default match.
 ## Fight lanes: "depth": true makes depth physical for this match (S.depthOn).
+## The air brake: "brake": true turns it on for this match (S.brakeOn).
 ## Forms: "forms": true turns on the Protagonist's five steps and the slingshot for this match (S.formsOn).
 ## The intro phase: "intro": true plays the entrance before the clock; "intro": "skip" (the default) applies its effects at
 ## once; "intro": false starts flat, as matches did before.
@@ -103,6 +104,8 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
 	S.dirS.sideWay = 0
 	SimAct.setup(S, setup)   # I2a: each fighter's action state
 	S.depthOn = setup.get("depth", SimDepth.enabled()) == true   # fighters in depth: the data's switch (data/combat/depth.json), or the setup's own for this match
+	S.brakeOn = setup.get("brake", SimBrake.enabled()) == true   # the air brake: the data's switch (data/fight/brake.json), or the setup's own for this match
+	SimBrake.setup(S)   # each fighter's brake state while the brake is on
 	S.formsOn = setup.get("forms", SimForms.enabled()) == true   # forms: the data's switch (data/fight/forms.json), or the setup's own for this match
 	SimForms.setup(S)   # each fighter's form state while forms are on, and his own steps when his data has them
 	WorldTerrain.initRows(S)   # T: the depth rows exist only when depth is on

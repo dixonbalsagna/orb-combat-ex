@@ -40,6 +40,7 @@ var mood := MoodState.new()           # M1 (sim/core/mood.gd): the fight's mood,
 var pause := PauseState.new()         # Q10 (sim/core/pause.gd): the pausing set pieces' bank and the running pause
 var intro := IntroState.new()         # the intro phase (sim/core/intro.gd): the pre-clock ticks of a match that asks for it
 var depthOn: bool = false             # fight lanes: depth is physical (the director's depth.json switch, or the setup's "depth"); off until L4
+var brakeOn: bool = false             # the air brake (sim/core/brake.gd): data/fight/brake.json's switch, or the setup's "brake"; off
 var formsOn: bool = false             # forms (sim/core/forms.gd): the Protagonist's five steps and the slingshot (data/fight/forms.json, or the setup's "forms"); off
 var out := Out.new()
 
@@ -461,6 +462,17 @@ class FormState:
 	var crossed: bool = false  # his last branch step changed branch (a cross: Narrative voices the turn)
 
 
+## A fighter's air brake while S.brakeOn (sim/core/brake.gd).
+class BrakeState:
+	var n: int = 0             # the launch number of his last send (Fighter.launchN): a new one is a new send
+	var t: int = 0             # live ticks since that send
+	var v0: float = 0.0        # the send's own speed (the traversal factor divided out)
+	var at: int = 0            # the tick after the send from which he may brake (the start window)
+	var no: bool = false       # a set piece's send: no brake
+	var on: bool = false       # braking now
+	var marks: int = 0         # the send kind's marks on him (air sense): the sender's to set; 0 until launch-anywhere
+
+
 class Fighter:
 	var name: String = ""
 	var role: String = ""
@@ -514,6 +526,7 @@ class Fighter:
 	var interior = null              # World: the chain inside a tower (world/interior.gd): a Dictionary while he is in it, else null. Hashed only while set
 	var act := ActState.new()        # I2a: what the fighter's presses mean now (sim/core/act.gd)
 	var style = null                 # M1: StyleState (sim/core/mood.gd)
+	var brk = null                   # the air brake: BrakeState while S.brakeOn (sim/core/brake.gd), null otherwise
 	var form = null                  # forms: FormState while S.formsOn (sim/core/forms.gd), null otherwise
 	var fd = null                    # forms: his FormsDef while S.formsOn, when his data has steps; not hashed (data)
 	var wd = null                    # D1a: the fighter's FighterData.WoundsDef (data; covered by the data hash, not hashed here)

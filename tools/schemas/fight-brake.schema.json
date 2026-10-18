@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/fight-brake",
+  "title": "fight-brake (schema \"fight.brake/1\")",
+  "description": "data/fight/brake.json: the switch and numbers of the air brake (docs/architecture/brake-core.md). A shape check inferred from the file (docs/tools/pending/infer-schema.cjs): every key present is required, a key outside is refused unless it starts with an underscore, a number is bounded only below by zero where all its values are, a colour is a hex string; the owner tightens the values. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "enabled",
+    "window",
+    "fullSpeed",
+    "hardSpeed",
+    "maxBrakeS",
+    "controlDiv",
+    "kiPerSec",
+    "noKiMul",
+    "airSense"
+  ],
+  "properties": {
+    "schema": {
+      "const": "fight.brake/1"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "window": {
+      "type": "object",
+      "required": [
+        "minTicks",
+        "maxTicks",
+        "lowPower",
+        "fullPower"
+      ],
+      "properties": {
+        "minTicks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxTicks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lowPower": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fullPower": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "fullSpeed": {
+      "type": "number",
+      "minimum": 0
+    },
+    "hardSpeed": {
+      "type": "number",
+      "minimum": 0
+    },
+    "maxBrakeS": {
+      "type": "number",
+      "minimum": 0
+    },
+    "controlDiv": {
+      "type": "number",
+      "minimum": 0
+    },
+    "kiPerSec": {
+      "type": "number",
+      "minimum": 0
+    },
+    "noKiMul": {
+      "type": "number",
+      "minimum": 0
+    },
+    "airSense": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}
