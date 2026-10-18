@@ -194,6 +194,7 @@ const ZOOM_RATE: float = 1.2           # e-folds a second, ordinary
 const ZOOM_RATE_TRANS: float = 2.4     # in a transition
 const ANCHOR_STEP: float = 0.02        # screen motion of a fighter relative to its anchor per tick, times vw
 const ANCHOR_STEP_TRANS: float = 0.05
+const ANCHOR_REPORT_STEP: float = 0.15   # the frame's reported anchor moves at most this share of the width in a tick (a launch that begins in the last tick of a closing hands the nominal anchor from its rest value to the fighter's place at once; the picture is continuous, the report was not)
 const DIVIDER_STEP: float = 0.06       # divider centre motion per tick, times vw, outside the slam
 const SHAKE_CAP: float = 0.03          # times vh
 const SHAKE_HIT_STEP: float = 1.0

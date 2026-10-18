@@ -264,6 +264,8 @@ func _run() -> void:
 	for fl in [[0.156, 0], [0.19, 0], [0.209, 1], [0.269, 1]]:
 		await _scenario("panel floor %.3f" % float(fl[0]), func(): return _panel_floor(float(fl[0]), int(fl[1])), {})
 	await _scenario("panel modes", func(): return _panel_modes(), {})
+	await _scenario("panel reduced flashing", func(): return _panel_reduced_flashing(), {})
+	await _scenario("anchor report slew", func(): return _anchor_report(), {})
 	for pose in [[400.0, 0.0], [400.0, 700.0], [1500.0, 1200.0], [400.0, 2000.0], [6000.0, 0.0], [1500.0, 3500.0]]:
 		await _scenario("panel band dx %d dy %d" % [int(pose[0]), int(pose[1])], func(): return _panel_band_pose(float(pose[0]), float(pose[1])), {})
 	for wk in [["right", 1, false], ["left", -1, false], ["none", 0, false], ["reduced motion", 1, true]]:
@@ -2778,6 +2780,56 @@ func _panel_modes() -> Dictionary:
 	_fire(0)
 	_check(_rig.panels == before + 1 and bool(_panel_now()["still"]), "%s: the still setting did not give a still strip" % _label)
 	_rig.panel_mode = "full"
+	return {}
+
+
+## While Reduce flashing is on a signature strip does not open (its opening and closing are two whole-strip steps that bracket the beam's
+## own in one second: docs/camera/panel-flash.md); a clash strip does; with the list emptied the setting alone decides; with the
+## flag off nothing changes.
+func _panel_reduced_flashing() -> Dictionary:
+	var clash := {"winner": 0.0, "loser": 1.0, "kind": "clash"}
+	_panel_ground()
+	_rig.flash_reduced = true
+	var before: int = _rig.panels
+	_fire(0)
+	_check(_rig.panels == before and _panel_now().is_empty(), "%s: a signature strip opened under Reduce flashing" % _label)
+	_tick_rig([_shot_events("decisive", clash)])
+	_check(_rig.panels == before + 1 and _panel_now()["kind"] == "clash", "%s: a clash strip did not open under Reduce flashing (%s)" % [_label, str(_panel_now())])
+	_rig.panel_flash_off = []
+	_panel_ground()
+	_rig.flash_reduced = true
+	before = _rig.panels
+	_fire(0)
+	_check(_rig.panels == before + 1 and _panel_now()["kind"] == "signature", "%s: with the list emptied a signature strip did not open" % _label)
+	_rig.panel_flash_off = ["signature"]
+	_panel_ground()
+	_rig.flash_reduced = false
+	before = _rig.panels
+	_fire(0)
+	_check(_rig.panels == before + 1 and _panel_now()["kind"] == "signature", "%s: a signature strip did not open with Reduce flashing off" % _label)
+	return {}
+
+
+## The frame's reported anchor moves at most ANCHOR_REPORT_STEP of the width in a tick and reaches the true one (a launch that begins in
+## the last tick of a closing hands the nominal anchor over at once: real match 3 at 49 degrees, t=287.90 after Encounter's window 1).
+func _anchor_report() -> Dictionary:
+	_panel_ground()
+	var far := Vector2(100.0, 400.0)
+	_rig._anchors_rep[1] = far
+	_rig._anchors_rep_ok = true
+	var lim: float = CamParams.ANCHOR_REPORT_STEP * vw + 0.5   # float32 vectors
+	var prev: Vector2 = far
+	var worst: float = 0.0
+	var t_reach: int = -1
+	for k in range(40):
+		_tick_rig()
+		var a: Vector2 = _rig.current().anchor[1]
+		worst = maxf(worst, (a - prev).length())
+		prev = a
+		if t_reach < 0 and (a - Vector2(_rig._anchors[1])).length() < 0.5:
+			t_reach = k
+	_check(worst <= lim, "%s: the reported anchor moved %.1f px in a tick (limit %.1f)" % [_label, worst, lim])
+	_check(t_reach >= 1 and t_reach < 12, "%s: the reported anchor reached the true one after %d ticks" % [_label, t_reach])
 	return {}
 
 

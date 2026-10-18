@@ -2,7 +2,7 @@ extends SceneTree
 ## A flash clip's camera, per tick, through the real game scene (the way tools/flash/flash_worst.gd plays it: render/main.tscn,
 ## the host's own step, the compositor attached), headless. One line a tick in the window: mode, layout, the displayed camera
 ## and its travel, the launch rule's phase. For reproducing what Tools' per-tick probe sees.
-##   godot --headless --path . --script res://render/camera/tests/clip_probe.gd -- --scenario=ai --seed=38 --from=3440 --to=3560 [--hold] [--mz] [--slam] [--budget] [--reduced]
+##   godot --headless --path . --script res://render/camera/tests/clip_probe.gd -- --scenario=ai --seed=38 --from=3440 --to=3560 [--slots=PROTAGONIST,REFERENCE] [--hold] [--mz] [--slam] [--budget] [--reduced]
 ## Scenarios: ai (the real match with its writes), collapse (a blast through the front row every 150 ticks) and signaturecity
 ## (P1 human on a pad holding the signature on a 90-tick cycle beside the tallest tower, P2 the AI: tools/flash/flash_worst.gd's).
 
@@ -30,6 +30,8 @@ var pulse_ticks: Array = []
 var pulse_n: int = 0
 var cue_seen: Dictionary = {}
 var human0: bool = false
+var slots_v: Array = []
+var panels_v: String = ""
 var held: Dictionary = {}
 
 
@@ -63,6 +65,10 @@ func _initialize() -> void:
 			surges = true
 		elif a == "--sweepmid":
 			sweepmid = true
+		elif a.begins_with("--slots="):
+			slots_v = a.substr(8).split(",")
+		elif a.begins_with("--panels="):
+			panels_v = a.substr(9)
 		elif a == "--human0":
 			human0 = true
 		elif a == "--budget":
@@ -96,7 +102,7 @@ func _run() -> void:
 	main.host.vfx.destruction_enabled = true
 	var human: bool = scenario == "signaturecity" or scenario == "rushcity"
 	var both: bool = scenario == "clash"
-	main.start_match(seed_v, {"p1": not (human or both), "p2": not both}, null)
+	main.start_match(seed_v, {"p1": not (human or both), "p2": not both}, null if slots_v.size() < 2 else {"slots": slots_v})
 	if struggle:
 		sv.set_struggle_framing(true)
 	if mlook:
@@ -108,6 +114,9 @@ func _run() -> void:
 	main.started = true   # the demo prompt is not part of the clip (the capture hook does the same)
 	var host: SimHost = main.host
 	host.vfx.force_reduced = reduced
+	main.ui_hud.opts["reduce_flashing"] = reduced   # the clip's mode, as the capture hook sets it (the option defaults to on)
+	if panels_v != "":
+		main.ui_hud.opts["camera_panels"] = panels_v
 	host.release_all()
 	if human or both:
 		host.hub.pad_button(0, "back", true)
@@ -166,7 +175,7 @@ func _run() -> void:
 			var B = host.S.fighters[1]
 			print("P t ", host.ticks, " mode ", fr.mode, " sep ", snappedf(fr.sep, 0.01), " e ", snappedf(fr.e, 0.01), " solo ", rig.solo_kind, "/", snappedf(rig.solo_w, 0.01),
 				" st ", A.state, "/", B.state, " gap ", snappedf(absf(SimWrap.sdx(A.x, B.x)), 1.0), " mx ", snappedf(rig._mx, 1.0), " mz ", snappedf(rig._mz, 0.001),
-				" cam ", snappedf(cam.x, 1.0), " y ", snappedf(cam.y, 1.0), " ", snappedf(cam.z, 0.001), " travel ", snappedf(tr, 0.0001), " | p1 cam ", snappedf(cam1.x, 1.0), " ", snappedf(cam1.z, 0.001), " travel1 ", snappedf(tr1, 0.0001), " lh ", rig._lh, " cut ", fr.cut, " st ", rig._st_on, "/", snappedf(rig._st_mid, 0.01), "/m", (snappedf(float(host.S.game.clash.get("mid")), 0.01) if host.S.game.clash != null and host.S.game.clash.get("mid") != null else -9), " clash ", host.S.game.clash != null, " mt_z ", snappedf(rig._merged_target(host.S).z, 0.001), " vsm_m ", snappedf(rig._vsm_m, 1.0), " gov_m ", rig._gov_bind_m)
+				" cam ", snappedf(cam.x, 1.0), " y ", snappedf(cam.y, 1.0), " ", snappedf(cam.z, 0.001), " travel ", snappedf(tr, 0.0001), " | p1 cam ", snappedf(cam1.x, 1.0), " ", snappedf(cam1.z, 0.001), " travel1 ", snappedf(tr1, 0.0001), " lh ", rig._lh, " cut ", fr.cut, " st ", rig._st_on, "/", snappedf(rig._st_mid, 0.01), "/m", (snappedf(float(host.S.game.clash.get("mid")), 0.01) if host.S.game.clash != null and host.S.game.clash.get("mid") != null else -9), " clash ", host.S.game.clash != null, " mt_z ", snappedf(rig._merged_target(host.S).z, 0.001), " vsm_m ", snappedf(rig._vsm_m, 1.0), " gov_m ", rig._gov_bind_m, " pn ", String(rig._pn.get("kind", "-")) + "/" + str(snappedf(float(rig._pn.get("t", 0.0)), 0.01)))
 	print("PULSE cues seen: ", pulse_ticks.size(), " cue kinds: ", cue_seen)
 	print("SUMMARY worst travel ", snappedf(worst, 0.0001), " ticks over 0.03: ", over)
 	quit(0)

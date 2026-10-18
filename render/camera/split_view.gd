@@ -271,6 +271,13 @@ func set_panel_mode(v: String) -> void:
 		main.split_rig.panel_mode = v if v in ["full", "still", "off"] else "full"
 
 
+## The strips (CamParams.PANEL_KINDS names) that do not open while Reduce flashing is on: ["signature"] by default, [] for the player's
+## setting alone, all the names for none at all. A build-time switch, not a player option (docs/camera/panel-flash.md).
+func set_panel_flash_off(kinds: Array) -> void:
+	if main != null:
+		main.split_rig.panel_flash_off = kinds.duplicate()
+
+
 ## UI's lowest HUD edge at the top, in pixels (UiHud.panel_floor_y()): the strip's top band starts below it, and falls to
 ## the bottom band where it no longer fits. Call it when the layout changes.
 func set_panel_floor(y: float) -> void:

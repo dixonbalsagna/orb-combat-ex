@@ -163,6 +163,7 @@ var _in_clock_t: float = -1.0            # seconds since the clock started (the 
 var _punch_amp: float = CamParams.LIVE_PUNCH
 var _punch_len: float = CamParams.LIVE_PUNCH_LEN
 var panel_mode: String = "full"          # the player's setting: "full", "still" (a frozen strip) or "off"; reduced motion means still
+var panel_flash_off: Array = ["signature"]   # the strips that do not open while Reduce flashing is on (CamParams.PANEL_KINDS names): a signature strip opens on the fire beat, so its opening and its closing are two whole-strip steps that bracket the beam's own in one second (docs/camera/panel-flash.md); [] is the player's setting alone
 var panels: int = 0                      # panel cut-ins started (counted for the tests and QA)
 var panels_dropped: int = 0              # panel requests refused: the ration, a stronger panel running, no free band
 var panel_log: Array = []                # [match time, kind, slot] of each panel started
@@ -326,6 +327,7 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_intro_adopt(S)
 	_snap_cameras(S)
 	_started = true
+	_anchors_rep_ok = false
 	_cur = _make_frame(S)
 	_cur.cut = true
 	_prev = _cur
@@ -1485,6 +1487,8 @@ func _update_solo(S: SimState) -> void:
 ## fighter for a crippling blow, the winner for the KO (the main view is on the loser then).
 func _panel_request(S: SimState, kind: String, slot: int) -> void:
 	if panel_mode == "off" or slot < 0 or slot > 1 or fold_active or solo_kind == "transform" or intro_active:
+		return
+	if flash_reduced and panel_flash_off.has(kind):
 		return
 	var k: Dictionary = CamParams.PANEL_KINDS[kind]
 	if kind == "signature":
@@ -2711,6 +2715,8 @@ var _tb_cut_t: Array = [-1.0e9, -1.0e9]                # when each pane last cut
 var travel_limited: int = 0                            # ticks a pane's displayed camera was held to the budget (counted for the tests)
 var travel_cuts: int = 0                               # cuts the budget made (counted for the tests)
 var _anchors: Array = [Vector2.ZERO, Vector2.ZERO]
+var _anchors_rep: Array = [Vector2.ZERO, Vector2.ZERO]   # what the frame reports: the anchor, moved at most ANCHOR_REPORT_STEP of the width a tick (the cameras are built from the true one)
+var _anchors_rep_ok: bool = false
 var _owns: Array = [Vector3.ZERO, Vector3.ZERO]
 
 
@@ -3752,12 +3758,20 @@ func _make_frame(S: SimState) -> SplitFrame:
 		f.cam_x[i] = _outs[i].x
 		f.cam_y[i] = _outs[i].y
 		f.cam_z[i] = _outs[i].z * _punch_mult()   # after the filters: a 6-tick punch would be smoothed away
-		f.anchor[i] = _anchors[i]
+		var a_rep: Vector2 = _anchors[i]
+		if _anchors_rep_ok and not _cut_now:
+			var d_rep: Vector2 = a_rep - Vector2(_anchors_rep[i])
+			var lim_rep: float = CamParams.ANCHOR_REPORT_STEP * vw
+			if d_rep.length() > lim_rep:
+				a_rep = Vector2(_anchors_rep[i]) + d_rep.normalized() * lim_rep
+		_anchors_rep[i] = a_rep
+		f.anchor[i] = a_rep
 		f.ring[i] = SimWrap.wrap(S.fighters[i].x) / SimConst.W * TAU
 		if pane_request_fn.is_valid():
 			var req = pane_request_fn.call(i)
 			if req is Dictionary and req.has("kind"):
 				f.kind[i] = String(req["kind"])
+	_anchors_rep_ok = true
 	f.swing = swing_t
 	f.sigma = sigma_shown
 	f.held_u = u
