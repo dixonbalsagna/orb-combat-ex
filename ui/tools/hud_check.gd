@@ -5474,6 +5474,7 @@ func _rf_lock_rules() -> void:
 		keys.append(str(r["key"]))
 	var help_all: String = str(UiData.options()["reduce_flashing"]["help"])
 	_ok(keys.has("reduce_flashing") and help_all.contains(SENT), "rf lock: with the toggle shown, its Settings row carries Legal's sentence, word for word")
+	_ok(help_all == "Fewer and gentler flashes. " + SENT + " Reduced motion is a separate setting." and not help_all.contains("large flash") and not help_all.contains("per second") and not help_all.contains("a second"), "rf lock: the Settings help makes no measurable claim (RL-157): no flashes-per-second figure, only Legal's words")
 	_ok(UiMenu.checks().has("reduce_flashing") and UiMenu.rf_line({"reduce_flashing": true}).ends_with(SENT) and not UiMenu.rf_line({"reduce_flashing": false}).contains("Turning it off"), "rf lock: the menu's box carries the sentence when it is on, and says full effects are on when it is off")
 	var lines_all := (UiMenu.rf_line({"reduce_flashing": true}) + " " + UiMenu.rf_line({"reduce_flashing": false}) + " " + help_all).to_lower()
 	_ok(not lines_all.contains("safe") and not lines_all.contains("tested") and not lines_all.contains("compliant"), "rf lock: never safe, tested or compliant")
