@@ -267,14 +267,12 @@ def contact(s):
     s = s.replace('	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)\n', '	var by = WorldCollateral.launcherOf(S, f)\n')
     assert 'SimRoster.opp' not in s
     s = rep(s, '''static func stepFighter(S: SimState, f, dt: float) -> void:
-	var by = WorldCollateral.launcherOf(S, f)
 ''', '''static func stepFighter(S: SimState, f, dt: float) -> void:
 	if f.holdT > 0:   # a body lodged in a building (World's per-body lodge hold): pinned, and the fight goes on around him
 		f.holdT -= 1
 		f.vx = 0.0
 		f.vy = 0.0
 		return
-	var by = WorldCollateral.launcherOf(S, f)
 ''')
     return s
 
@@ -290,6 +288,26 @@ rw('sim/world/collateral.gd', coll)
 rw('sim/world/brunt.gd', brunt)
 rw('sim/world/contact.gd', contact)
 rw('sim/world/slide.gd', slide)
+
+
+def wall(s):
+    # lodgeHold's data default is now "auto" (a hit-stop with two bodies, the same as "world"), and a body's lodge in "body" pins him (holdT) instead of stunning him
+    s = rep(s, 'ok(c.lodgeHold == "world" and', 'ok(c.lodgeHold == "auto" and')
+    s = rep(s, 'var fails: int = 0\n', 'var fails: int = 0\nvar maxHold: int = 0   # the most ticks a body was pinned in a building (Fighter.holdT)\n')
+    s = rep(s, '		SimFighter.stepLaunched(S, D, SimConst.DT)\n', '		SimFighter.stepLaunched(S, D, SimConst.DT)\n		maxHold = maxi(maxHold, D.holdT)\n')
+    s = rep(s, 'stunned = Dy.stunTicks >= 20\n', 'stunned = Dy.stunTicks >= 20 or maxHold >= 20\n')
+    return s
+
+
+rw('sim/world/tools/wall_check.gd', wall)
+import os
+if os.path.exists(R + 'sim/world/interior.gd'):
+    # the chain inside a tower (docs/world/scratch-build/interior-chain/): the launcher is launcherOf, and a lodge or a capped end is a body's pin
+    def interior(s):
+        s = rep(s, '	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)\n', '	var by = WorldCollateral.launcherOf(S, f)\n')
+        s = rep(s, '		WorldBrunt._hold(S, f, holdS)\n', '		WorldBrunt._hold(S, f, holdS, true)\n')
+        return s
+    rw('sim/world/interior.gd', interior)
 
 # the data default and the schema's enum
 p = R + 'data/biomes/brunt.json'

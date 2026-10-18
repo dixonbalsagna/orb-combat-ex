@@ -77,31 +77,33 @@ index afabe96..1591604 100644
  	var b: Body = toBody(S, f)
  	var ev: Array = _ev
 diff --git a/sim/core/state.gd b/sim/core/state.gd
-index 8c363bf..49ed121 100644
+index 50952d0..d2b5239 100644
 --- a/sim/core/state.gd
 +++ b/sim/core/state.gd
-@@ -428,6 +428,11 @@ class FxEvent:
+@@ -433,7 +433,12 @@ class FxEvent:
  	var hold: float = 0.0        # lodge: the seconds the body is held in the building
  	var run: int = 0             # cue blow (Encounter): the striker's run on the target as the blow is thrown, 0 to run_to. Not hashed
  	var run_to: int = 0          # cue blow (Encounter): the run at which his next light closes (runToClose, 4 today); UI's gauge is full when run reaches it; 0 not set. Not hashed
+-	var stop: int = 0             # damage (a hit): the hit-stop ticks in force after it, as SimCore.step spends them (Animation). Not hashed
 +	var nx: float = 0.0           # interior_contact: the surface's normal on the body's side
 +	var ny: float = 0.0
 +	var punch: bool = false       # interior_contact: the slab or face broke
 +	var end: String = ""          # interior_end: lodge, exit, fall_out or capped
 +	var t: float = 0.0            # interior_end: seconds from the face
- 	var stop: int = 0             # damage (a hit): the hit-stop ticks in force after it, as SimCore.step spends them (Animation). Not hashed
++	var stop: int = 0             # damage (a hit): the hit-stop ticks in force after it, as SimCore.step spends them (Animation). Not hashed; interior_contact: the ticks held at the face (hashed there)
  
  
-@@ -481,6 +486,7 @@ class Fighter:
+ ## A fighter's forms while S.formsOn (sim/core/forms.gd): his steps, the coil and the release, and the hold's signal.
+@@ -506,6 +511,7 @@ class Fighter:
  	var brinkOpen: bool = false      # ... it is open: the rival's next decisive win, in a later exchange, is the finisher
  	var brinkEx: int = -1            # ... the exchange index (ex.n) of the last set-up win: a set-up and a finisher never share one
  	var flightHits: int = 0          # M1: buildings hit in the current launched flight (building_hit's n)
 +	var interior = null              # World: the chain inside a tower (world/interior.gd): a Dictionary while he is in it, else null. Hashed only while set
  	var act := ActState.new()        # I2a: what the fighter's presses mean now (sim/core/act.gd)
  	var style = null                 # M1: StyleState (sim/core/mood.gd)
- 	var wd = null                    # D1a: the fighter's FighterData.WoundsDef (data; covered by the data hash, not hashed here)
+ 	var form = null                  # forms: FormState while S.formsOn (sim/core/forms.gd), null otherwise
 diff --git a/sim/core/hash.gd b/sim/core/hash.gd
-index a2b1102..cef9abe 100644
+index dc910fa..afcb04a 100644
 --- a/sim/core/hash.gd
 +++ b/sim/core/hash.gd
 @@ -155,6 +155,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
@@ -112,8 +114,8 @@ index a2b1102..cef9abe 100644
 +			_obj(out, f.interior, ["b", "dir", "E", "k", "bn", "t", "i"])
  		var act = f.act
  		_obj(out, act, ["v2", "guardSince", "dodgeTick", "dodgeCool", "burstCool", "mode", "assist", "formReady", "burstFired", "breakIn", "flow"])
- 		out.append(float(act.dirI.size())); for v in act.dirI: out.append(float(v))   # the director's per-fighter integers
-@@ -306,6 +308,7 @@ const FX_FIELDS: Dictionary = {
+ 		if S.formsOn:   # forms: only when on, so a match without them hashes as before
+@@ -313,6 +315,7 @@ const FX_FIELDS: Dictionary = {
  	"left_ground": ["actor", "x", "y", "z", "spd", "n", "cause", "vx", "vy", "slope", "contacts", "dur"], "bounce": ["actor", "x", "y", "z", "spd", "n", "k", "keep", "vn", "vt", "surface", "sina", "slope", "contacts", "dur"],
  	"land": ["actor", "x", "y", "z", "spd", "n", "kind", "sina", "slope", "surface", "vn", "vt", "contacts", "dur"], "tumble_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "dur"],
  	"journey_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "lips", "nb", "dur"],
@@ -121,6 +123,19 @@ index a2b1102..cef9abe 100644
  	"cue": ["actor", "kind", "text", "source"], "struggle_press": ["actor", "kind", "n"],
  }
  
+diff --git a/sim/core/view/fx.gd b/sim/core/view/fx.gd
+index 53a650b..dcb2492 100644
+--- a/sim/core/view/fx.gd
++++ b/sim/core/view/fx.gd
+@@ -238,7 +238,7 @@ func consume(S: SimState, events: Array) -> void:
+ 				_stepParts(S, dt * 0.1 if frozen else dt)
+ 			"region_stage", "region_broken", "brink_enter", "brink_exit", "brink_open", "brink_close", "tier_up", "transform_ready", "transform", "beam_outcome", "pause_start", "pause_end", "knockback", "exchange_end", "flow", "embed", "shot_fire", "shot_hit", "shot_clash", "shot_end", "shot_deflect", "mine_trip", "last_stand_ready", "last_stand_end", "intro_start", "intro_beat", "intro_line", "intro_gesture", "entrance_fall", "entrance_land", "staredown_start", "clock_start", "hide_start", "found", "ko":
+ 				pass   # wound readouts are the renderer's and UI's (crown, cards); nothing to spawn here
+-			"form_hold", "form_release", "form_step", "drop_start", "drop_land", "drop_end", "decisive", "finisher_start", "finisher_contest", "attack", "parry", "chain_end", "ambush", "lock_lost", "launch_plan", "window_open", "clash_draw", "hazard_telegraph", "searching", "danger", "launch", "rush", "cue", "struggle_press", "rally", "limb_break", "mood_band", "act_change", "style_label", "crowd_state", "building_hit":
++			"form_hold", "form_release", "form_step", "drop_start", "drop_land", "drop_end", "decisive", "interior_contact", "interior_end", "finisher_start", "finisher_contest", "attack", "parry", "chain_end", "ambush", "lock_lost", "launch_plan", "window_open", "clash_draw", "hazard_telegraph", "searching", "danger", "launch", "rush", "cue", "struggle_press", "rally", "limb_break", "mood_band", "act_change", "style_label", "crowd_state", "building_hit":
+ 				pass   # director and Rally readouts are the HUD's, Camera's and Audio's; nothing to spawn here
+ 			_:
+ 				push_error("consume: unknown event " + e.type)
 diff --git a/data/biomes/brunt.json b/data/biomes/brunt.json
 index a9e5651..ec53d23 100644
 --- a/data/biomes/brunt.json
@@ -236,12 +251,12 @@ index c5aabe6..ee507ca 100644
      }
    },
    "additionalProperties": false,
-diff --git a/j1/sim/world/interior.gd b/sim/world/interior.gd
+diff --git a/j2/sim/world/interior.gd b/sim/world/interior.gd
 new file mode 100644
-index 0000000..10915dc
+index 0000000..ca4e326
 --- /dev/null
 +++ b/sim/world/interior.gd
-@@ -0,0 +1,339 @@
+@@ -0,0 +1,341 @@
 +class_name WorldInterior
 +## The chain inside a tower (docs/design/buildings.md section 7.3, ruled 2026-10-17; the events are Animation's ABI, docs/animation/ragdoll-physics-paper.md section 5).
 +##
@@ -389,6 +404,8 @@ index 0000000..10915dc
 +	var pl: Array = plan(b, y, gy, down, E, c)
 +	var vxn: float = f.vx / trav
 +	var sp: float = SimDetMath.hypot(vxn, f.vy)
++	if f.chainEvt == 0.0:
++		f.chainEvt = WorldCollateral.beginEvent(S, "chain", by)   # the chain holds a collateral token: the slabs' people are charged to it, and the air brake (which stays off in a chain) reads it
 +	f.interior = {"b": b.idx, "dir": dir, "E": E, "k": 0, "bn": 0, "t": 0, "i": 0, "gy": gy, "R": WorldBrunt.topFloor(b) + 1, "plan": pl}
 +	f.aimB = -1
 +	var ev := SimFx.contactEvent(S, "interior_contact", f, f.x, y, sp)
@@ -581,19 +598,19 @@ index 0000000..10915dc
 +	ev.t = float(s.t) * SimConst.DT
 +	f.interior = null
 +	WorldBrunt.endFlight(S, f)
-diff --git a/j1/sim/world/interior.gd.uid b/sim/world/interior.gd.uid
+diff --git a/j2/sim/world/interior.gd.uid b/sim/world/interior.gd.uid
 new file mode 100644
-index 0000000..af30f0b
+index 0000000..932f69f
 --- /dev/null
 +++ b/sim/world/interior.gd.uid
 @@ -0,0 +1 @@
-+uid://dkjnn1q4juh47
-diff --git a/j1/sim/world/tools/interior_check.gd b/sim/world/tools/interior_check.gd
++uid://bs0p7pfqjxpcv
+diff --git a/j2/sim/world/tools/interior_check.gd b/sim/world/tools/interior_check.gd
 new file mode 100644
-index 0000000..1b33d8d
+index 0000000..958dce5
 --- /dev/null
 +++ b/sim/world/tools/interior_check.gd
-@@ -0,0 +1,247 @@
+@@ -0,0 +1,269 @@
 +extends SceneTree
 +# The chain inside a tower (docs/design/buildings.md section 7.3; world/interior.gd; data/biomes/brunt.json interior*):
 +#   godot --headless --path . --script res://sim/world/tools/interior_check.gd [-- --show]
@@ -626,7 +643,7 @@ index 0000000..1b33d8d
 +
 +## One launch at tower tw: effective tier `tier`, the tangent `tn` of the send above or below the horizontal, `down` its sense, `sp` the speed, entering at `frac` of the tower's height.
 +## Steps the flight until it lands (or the chain and the flight are over). Returns the events.
-+func chain(S: SimState, tw, tier: float, tn: float, down: bool, sp: float, frac: float = 0.5, special: bool = false) -> Array:
++func chain(S: SimState, tw, tier: float, tn: float, down: bool, sp: float, frac: float = 0.5, special: bool = false, token: bool = true) -> Array:
 +	var A = S.fighters[1]
 +	var D = S.fighters[0]
 +	A.tier = tier
@@ -647,7 +664,7 @@ index 0000000..1b33d8d
 +	D.jContacts = 0
 +	D.jT = 0
 +	D.slide = 0.0
-+	D.chainEvt = WorldCollateral.beginEvent(S, "chain", A)
++	D.chainEvt = WorldCollateral.beginEvent(S, "chain", A) if token else 0.0
 +	var vx: float = sp / sqrt(1.0 + tn * tn)
 +	D.vx = vx * dir
 +	D.vy = vx * tn * (-1.0 if down else 1.0)
@@ -782,6 +799,28 @@ index 0000000..1b33d8d
 +		var evd: Array = chain(Sd, tower(Sd), 4.0, 1.7, true, 3500.0)
 +		fp.append(fingerprint(evd) + "|" + names(evd) + "|" + str(SimHash.stateHash(Sd).gameplay))
 +	ok(fp[0] == fp[1], "the same launch twice: the same events, the same state hash (%s)" % fp[0].substr(0, 8))
++	# --- a launch with no token (an unaimed or single-building flight) gets one for the chain, so the air brake stays off and the slabs' people are charged to it
++	var St := fresh(1)
++	var Dt = St.fighters[0]
++	chain(St, tower(St), 3.0, 1.7, true, 3500.0, 0.5, false, false)
++	ok(Dt.chainEvt == 0.0 and Dt.interior == null, "the token is closed when the chain ends (chainEvt %s)" % str(Dt.chainEvt))
++	var St2 := fresh(1)
++	var Dt2 = St2.fighters[0]
++	var evt_in: float = -1.0
++	Dt2.state = "launched"
++	var twt = tower(St2)
++	Dt2.launchBy = St2.fighters[1]
++	St2.fighters[1].tier = 3.0
++	Dt2.launchT = 1.0
++	Dt2.chainEvt = 0.0
++	Dt2.flightHits = 0
++	var edge_t: float = SimWrap.wrap(twt.x - twt.w * 0.5)
++	Dt2.vx = 2400.0
++	Dt2.vy = -2000.0
++	Dt2.x = edge_t - 6.0
++	Dt2.y = WorldStructures.baseY(St2, twt) + twt.h * 0.5
++	WorldBrunt.hit(St2, Dt2, twt, Dt2.y, edge_t, 1.0)
++	ok(Dt2.interior != null and Dt2.chainEvt != 0.0, "a chain that starts with no token takes one (chainEvt %s)" % str(Dt2.chainEvt))
 +	# --- mid-chain the state hashes (the fighter's chain fields are folded in only while it runs)
 +	var Sm := fresh(1)
 +	var twm = tower(Sm)
@@ -841,10 +880,10 @@ index 0000000..1b33d8d
 +	c.interiorChain = 0
 +	print("INTERIOR: %d check(s) failed" % fails)
 +	quit()
-diff --git a/j1/sim/world/tools/interior_check.gd.uid b/sim/world/tools/interior_check.gd.uid
+diff --git a/j2/sim/world/tools/interior_check.gd.uid b/sim/world/tools/interior_check.gd.uid
 new file mode 100644
-index 0000000..3041ceb
+index 0000000..cc56526
 --- /dev/null
 +++ b/sim/world/tools/interior_check.gd.uid
 @@ -0,0 +1 @@
-+uid://ysscu7ci7boc
++uid://vkuhwb2kgpnx

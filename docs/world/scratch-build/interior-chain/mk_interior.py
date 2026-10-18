@@ -71,6 +71,7 @@ def state(s):
 	var end: String = ""          # interior_end: lodge, exit, fall_out or capped
 	var t: float = 0.0            # interior_end: seconds from the face
 	var stop: int = 0             # damage (a hit)''')
+    s = rep(s, "Animation). Not hashed", "Animation). Not hashed; interior_contact: the ticks held at the face (hashed there)")
     return s
 
 
@@ -86,11 +87,16 @@ def hashf(s):
     return s
 
 
+def viewfx(s):
+    return rep(s, '"drop_end", "decisive", ', '"drop_end", "decisive", "interior_contact", "interior_end", ')
+
+
 shutil.copyfile(src, R + 'sim/world/interior.gd')
 rw(R, 'sim/world/brunt.gd', brunt)
 rw(R, 'sim/world/contact.gd', contact)
 rw(R, 'sim/core/state.gd', state)
 rw(R, 'sim/core/hash.gd', hashf)
+rw(R, 'sim/core/view/fx.gd', viewfx)
 data_keys(R, KEYS,
           "The chain inside a tower (buildings.md section 7.3, ruled 2026-10-17; WorldInterior): interiorChain 0 off or 1 on; interiorTanMin and interiorTanMax the send's angle (tangents of 15 and 60 degrees); interiorCeilKeep and interiorFloorKeep the speed kept through a ceiling and through a slab or face that breaks; interiorMaxContacts and interiorMaxBounces the caps (no bounce is produced yet); interiorFaceStop the entry face's stop in ticks; interiorCapSeconds the ragdolled time from the face; interiorCeilTier the effective tier that reaches the ceiling; interiorExitTier the tier whose far face breaks; interiorHurt the share of a hit's damage a slab does him.",
           {

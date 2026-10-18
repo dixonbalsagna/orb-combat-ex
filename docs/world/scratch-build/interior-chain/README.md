@@ -1,6 +1,6 @@
 # The chain inside a tower (World, 2026-10-17): in scratch on main's HEAD, parked, not applied
 
-The EP's brief: the building chain's events for Animation (`interior_contact`, `interior_end`), with Game Design's chain values (buildings §7.3, ruled 2026-10-17), behind a switch, golden unchanged with it off. Built on main ff68e994. **Not applied.** The World files are `sim/world/brunt.gd`, `contact.gd`, `interior.gd` (new), `data/biomes/brunt.json` and its schema; the lines in **Simulation's** files are listed at the end.
+The EP's brief: the building chain's events for Animation (`interior_contact`, `interior_end`), with Game Design's chain values (buildings §7.3, ruled 2026-10-17), behind a switch, golden unchanged with it off. Built on main ff68e994; **re-cut 2026-10-18 on f15d7de3** (after the forms moved `state.gd` and `hash.gd`; Simulation's three conditions are in, see "Re-cut" below). **Not applied.** The World files are `sim/world/brunt.gd`, `contact.gd`, `interior.gd` (new), `data/biomes/brunt.json` and its schema; the lines in **Simulation's** files are listed at the end.
 
 ## What it does
 
@@ -23,6 +23,15 @@ A power send that enters a **tower's** face at **15 to 60 degrees** up or down (
 ## Game Design's values (all in `brunt.json`, none in code)
 
 Ceiling keep **0.4**, floor-through keep **0.7**, at most **5 contacts** (the entry face is contact 0 and not counted: "up to five slabs"), at most **3 bounces**, the face's stop **15 ticks** (replaces the old 0.35 s on this path), cap **2.5 s**, the ceiling reached from effective tier **3**. Mine, first values: the angle's tangents (0.26795, 1.73205), `interiorExitTier` 3 (the far face breaks from tier 3, below it it is a wall and he lodges), `interiorHurt` 0.5 (a slab does him half the face's per-speed damage).
+
+## Re-cut on f15d7de3 (2026-10-18), Simulation's conditions
+
+- **(a)** The `state.gd` and `hash.gd` hunks are re-made under the forms' lines (`mk_interior.py` anchors on text, so it re-ran as it was).
+- **(b)** `interior_contact` and `interior_end` are in `sim/core/view/fx.gd`'s pass list, in the second match row with `drop_start` and `decisive` (the EP's grant for that line).
+- **(c)** `FxEvent.stop`'s comment now ends "; interior_contact: the ticks held at the face (hashed there)".
+- **One change of mine:** a chain that starts with no collateral token (a single-building or unaimed flight) now takes one (`WorldCollateral.beginEvent`, closed by `endFlight`). The slabs' people are charged to it, and the air brake, which reads `chainEvt != 0` as "inside a chain" and stays off, stays off in the chain with no change to `brake.gd`. Switch off, nothing changes.
+- **Proof on a clean export of f15d7de3 plus the patch, switch off (below-normal priority):** `node sim/core/tools/run-all.js` **all 5 stages passed** (unit 27.6 s, parity 161.7 s, soak 34.3 s, golden 1.8 s, godot 406.3 s: the golden is unchanged); **all 15 of Rendering's gates passed** (after, cue `--profile=spaced`, depth, flash, flash_reg, flight, ground, hud_words, lane, open, pane, patch, shape, sky, stage); `interior_check` 0 failed (now with the token cases), `brunt_check`, `wall_check` and `collateral_check` 0 failed; `node tools/validate.js` 227 files, 0 errors, 0 warnings; `--self-test` 8309 of 8309.
+- **Order:** apply this first. `../collateral-run/` N-body, B and C are re-cut to apply after it (HEAD, then this, then N-body, B, C: verified with `git apply` on a clean export, byte for byte the scratch tree).
 
 ## The events (one per contact, in order, then one end; made with `SimFx.contactEvent`: actor, x, y, z, spd, n)
 
@@ -48,12 +57,13 @@ Ceiling keep **0.4**, floor-through keep **0.7**, at most **5 contacts** (the en
 7. **The legacy flight path** (`S.contactOn` off) is not hooked: the switch does nothing there.
 8. `interior_check.gd`'s random run uses finishers (`launchSpecial`) and entry heights from 15 to 85 percent of the height.
 
-## Lines in files that are not World's (a grant from Simulation)
+## Lines in files that are not World's (a grant from Simulation; Simulation said yes on 2026-10-17 to the re-cut with these)
 
 | File | Lines |
 | :--- | :--- |
-| `sim/core/state.gd` | **Fighter:** `var interior = null`. **FxEvent:** `var nx`, `var ny`, `var punch: bool`, `var end: String`, `var t: float` (5 lines; `k`, `b`, `floor`, `kind`, `keep`, `vn`, `vt`, `contacts`, `stop` exist) |
+| `sim/core/state.gd` | **Fighter:** `var interior = null`. **FxEvent:** `var nx`, `var ny`, `var punch: bool`, `var end: String`, `var t: float`, and `stop`'s comment extended (condition c) |
 | `sim/core/hash.gd` | **FX_FIELDS:** `interior_contact` and `interior_end` (one line). **The fighter:** `if f.interior != null: _obj(out, f.interior, ["b", "dir", "E", "k", "bn", "t", "i"])` after `flightHits` (hashed only while set, so a match without the chain hashes as before) |
+| `sim/core/view/fx.gd` | the two types in the second match row's pass list (condition b; granted by the EP) |
 | `docs/architecture/fx-events.md` | the two events (the fields above) |
 
 No emitter is added to `sim/core/fx.gd`: `interior.gd` uses `SimFx.contactEvent`, `SimFx.lodge` and the events it makes itself. The JS oracle's `hash.js` has no entry (the events never exist with the switch off).
@@ -62,5 +72,5 @@ No emitter is added to `sim/core/fx.gd`: `interior.gd` uses `SimFx.contactEvent`
 
 | File | What |
 | :--- | :--- |
-| `interior-chain.diff` | The patch on HEAD: `brunt.gd`, `contact.gd`, `state.gd`, `hash.gd`, `brunt.json`, the schema, and the new `interior.gd`, `interior_check.gd` (+ `.uid`) |
+| `interior-chain.diff` | The patch on HEAD: `brunt.gd`, `contact.gd`, `state.gd`, `hash.gd`, `view/fx.gd`, `brunt.json`, the schema, and the new `interior.gd`, `interior_check.gd` (+ `.uid`) |
 | `mk_interior.py`, `mk_wbc_lib.py`, `interior.gd.txt` | The script that makes it (`python mk_interior.py <root> interior.gd.txt`) and the new module |

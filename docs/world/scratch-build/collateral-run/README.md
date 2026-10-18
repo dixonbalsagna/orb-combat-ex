@@ -35,6 +35,10 @@ git apply --check world-collateral.diff simulation-collateral.diff encounter-col
 - `node tools/validate.js --self-test` 7518 of 7518; `node tools/validate.js` 0 errors, 0 warnings.
 - The earlier full `run-all.js` (all 5 stages, including the 1000-match soak) passed on 992adcbb.
 
-## The other parked patches, after this one
+## The other parked patches (re-cut 2026-10-18 on HEAD f15d7de3)
 
-`nbody-after-collateral.diff`, `b-after-collateral.diff`, `c-after-collateral.diff` apply **in that order after the four above** on HEAD 20b95092 (**B and C were re-cut on 2026-10-17**: `state.gd` had moved under their hunks; N-body is as it was; the whole chain of seven verified with `git apply` on a clean export, byte for byte the scratch tree). `mk_collateral.py`, `mk_nbody2.py` and `collateral_fixture_cases.json` are the scripts and cases that made them.
+The four diffs above were applied by the EP (971018e1). `nbody-after-collateral.diff`, `b-after-collateral.diff` and `c-after-collateral.diff` apply **in that order after `../interior-chain/interior-chain.diff`** (HEAD, then the interior chain, then these three: verified with `git apply` on a clean export, byte for byte the scratch tree). They stay parked until after the demo record, because they move the golden. What the re-cut changed:
+
+- **N-body** (`mk_nbody2.py`): the stepFighter hook anchors on the function's header, so the pinned-body block comes before the interior chain's hook; on a tree with `sim/world/interior.gd` it also takes the launcher from `launcherOf` and passes `lodged = true` for a lodge or a capped end (so more than two bodies pin per body). `wall_check.gd` is updated for the lodgeHold default `auto` and the per-body pin (`holdT`); it failed on the N-body patch before (its default and its "body" case), now 0 failed.
+- **B and C** (`mk_b_repo.py`, `mk_c.py`, with `../windows-bc/mk_wbc_lib.py`'s helpers): their `BRUNT_KEYS` anchors no longer end at the dictionary's closing brace (the interior chain's keys come after the wall slam's), so each inserts its keys where it always did.
+- **Checks on the whole chain** (scratch import of HEAD plus all four): `interior_check`, `brunt_check`, `wall_check`, `collateral_check`, `bc_check`, `nbody_check`: 0 failed each. The full gate of the chain is for the window in which they are applied (they move the golden).

@@ -1,24 +1,26 @@
 diff --git a/data/biomes/brunt.json b/data/biomes/brunt.json
-index a9e5651..2e76706 100644
+index ec53d23..5b63293 100644
 --- a/data/biomes/brunt.json
 +++ b/data/biomes/brunt.json
 @@ -1,6 +1,6 @@
  {
    "schema": "biomes.brunt/1",
--  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge or a wall hold the whole sim (world, a hit-stop) or only the body (body: he is stunned and the fight goes on): Orb's homework.",
-+  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge hold the whole sim (world, a hit-stop) or only the body (body: he is pinned in the building and the fight goes on); auto: world with two bodies, body with more (Orb's homework: which, with two).",
+-  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge or a wall hold the whole sim (world, a hit-stop) or only the body (body: he is stunned and the fight goes on): Orb's homework. The chain inside a tower (buildings.md section 7.3, ruled 2026-10-17; WorldInterior): interiorChain 0 off or 1 on; interiorTanMin and interiorTanMax the send's angle (tangents of 15 and 60 degrees); interiorCeilKeep and interiorFloorKeep the speed kept through a ceiling and through a slab or face that breaks; interiorMaxContacts and interiorMaxBounces the caps (no bounce is produced yet); interiorFaceStop the entry face's stop in ticks; interiorCapSeconds the ragdolled time from the face; interiorCeilTier the effective tier that reaches the ceiling; interiorExitTier the tier whose far face breaks; interiorHurt the share of a hit's damage a slab does him.",
++  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge hold the whole sim (world, a hit-stop) or only the body (body: he is pinned in the building and the fight goes on); auto: world with two bodies, body with more (Orb's homework: which, with two). The chain inside a tower (buildings.md section 7.3, ruled 2026-10-17; WorldInterior): interiorChain 0 off or 1 on; interiorTanMin and interiorTanMax the send's angle (tangents of 15 and 60 degrees); interiorCeilKeep and interiorFloorKeep the speed kept through a ceiling and through a slab or face that breaks; interiorMaxContacts and interiorMaxBounces the caps (no bounce is produced yet); interiorFaceStop the entry face's stop in ticks; interiorCapSeconds the ragdolled time from the face; interiorCeilTier the effective tier that reaches the ceiling; interiorExitTier the tier whose far face breaks; interiorHurt the share of a hit's damage a slab does him.",
    "bruntMul": 1.8,
    "tierFactor": [
      0.12,
-@@ -44,5 +44,5 @@
+@@ -44,7 +44,7 @@
    "heavyKeep": 0.7,
    "wallSlamMul": 2.0,
    "wallStaggerTicks": 24,
--  "lodgeHold": "world"
-+  "lodgeHold": "auto"
- }
+-  "lodgeHold": "world",
++  "lodgeHold": "auto",
+   "interiorChain": 0,
+   "interiorTanMin": 0.26795,
+   "interiorTanMax": 1.73205,
 diff --git a/sim/core/hash.gd b/sim/core/hash.gd
-index d2edcfb..1ca566c 100644
+index afcb04a..7a2434d 100644
 --- a/sim/core/hash.gd
 +++ b/sim/core/hash.gd
 @@ -155,6 +155,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
@@ -27,10 +29,10 @@ index d2edcfb..1ca566c 100644
  		out.append(float(f.flightHits))
 +		if f.holdT != 0:   # World's per-body lodge hold: written only while held, so a match without one hashes as before
 +			out.append(float(f.holdT))
+ 		if f.interior != null:   # World's chain inside a tower (world/interior.gd): only while it runs, so a match without it hashes as before
+ 			_obj(out, f.interior, ["b", "dir", "E", "k", "bn", "t", "i"])
  		var act = f.act
- 		_obj(out, act, ["v2", "guardSince", "dodgeTick", "dodgeCool", "burstCool", "mode", "assist", "formReady", "burstFired", "breakIn", "flow"])
- 		out.append(float(act.dirI.size())); for v in act.dirI: out.append(float(v))   # the director's per-fighter integers
-@@ -172,6 +174,10 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
+@@ -176,6 +178,10 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
  					out.append(float(x))
  			_obj(out, st, ["bi", "filled", "label", "leaveT", "shiftAt", "runKind", "runLen", "runMax", "sigLanded"])
  	_obj(out, S.world, ["pop0", "casualties", "structuresLost", "craters", "slides", "evacuated", "cbSec", "cbSum", "maxTier", "evtKind", "evtLeft", "evtToken", "evtDead", "evtEvac", "tokenSeq", "heavyX", "heavyT", "stateT"])
@@ -38,14 +40,14 @@ index d2edcfb..1ca566c 100644
 +		out.append(float(S.world.evtMore.size()))
 +		for v in S.world.evtMore:
 +			out.append(v)
+ 	# present and peopleLeft are set at the stage's start and never change mid-match
  	if S.world.present != S.world.pop0:
  		out.append(S.world.present)   # a stage's people present, only when it differs from the arena's (a versus hash is as it was)
- 	if S.world.peopleLeft >= 0.0:
 diff --git a/sim/core/state.gd b/sim/core/state.gd
-index 1cd73f6..91b1d28 100644
+index d2b5239..09e13b1 100644
 --- a/sim/core/state.gd
 +++ b/sim/core/state.gd
-@@ -185,6 +185,7 @@ class World:
+@@ -186,6 +186,7 @@ class World:
  	var evtToken: float = 0.0         # its token; 0 when none is open
  	var evtDead: float = 0.0          # casualties the open set piece has caused
  	var evtEvac: float = 0.0          # civilians it has made flee
@@ -53,7 +55,7 @@ index 1cd73f6..91b1d28 100644
  	var tokenSeq: float = 0.0         # token counter
  	var heavyX: float = -1.0          # x of the latest heavy event (the district flight flees from it)
  	var heavyT: float = -1.0e9        # its match time
-@@ -524,6 +525,7 @@ class Fighter:
+@@ -554,6 +555,7 @@ class Fighter:
  	var zWay: bool = false           # L0: a depth waypoint is armed for this flight whether or not it is aimed (aimX0, aimZ0, aimZ1, aimD)
  	var splashed := PackedInt32Array()   # buildings already splashed by this launch (at most WorldBrunt.SPLASH_CAP)
  	var launchSpecial: bool = false  # the current launch is a signature, finisher or break launch (its ground mark may be big)
@@ -62,11 +64,11 @@ index 1cd73f6..91b1d28 100644
  	var jT: int = 0                  # ticks since the journey's first contact (cap 240)
  	var jV0: float = 0.0             # the journey's first-contact normalised speed (the wear budget)
 diff --git a/sim/world/brunt.gd b/sim/world/brunt.gd
-index 66b99c8..4a32a5f 100644
+index ae517d9..aa91d16 100644
 --- a/sim/world/brunt.gd
 +++ b/sim/world/brunt.gd
-@@ -36,7 +36,7 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
- 	"wallSlamMul": 2.0, "wallStaggerTicks": 24,
+@@ -42,7 +42,7 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
+ 	"interiorExitTier": 3, "interiorHurt": 0.5,
  }
  const BRUNT_STRINGS: Dictionary = {   # the switches that are words: their values and the default (today's behaviour)
 -	"lodgeHold": [["world", "body"], "world"],   # does a lodge hold the whole fight (a hit-stop) or only the body (he is stunned, the fight goes on)
@@ -74,7 +76,7 @@ index 66b99c8..4a32a5f 100644
  }
  const MARK_TOWER: int = -1                 # in Fighter.splashed (a list of building ids): a -1 for each tower this flight went through ...
  const MARK_HOUSE: int = -2                 # ... and a -2 for each house
-@@ -647,7 +647,7 @@ static func _checkHitSwept(S: SimState, f, ox: float, oy: float) -> bool:
+@@ -654,7 +654,7 @@ static func _checkHitSwept(S: SimState, f, ox: float, oy: float) -> bool:
  
  ## Resolve one hit on building b at height y on the near edge, and what happens to the fighter.
  static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
@@ -83,7 +85,7 @@ index 66b99c8..4a32a5f 100644
  	var trav: float = f.launchT
  	var spN: float = SimDetMath.hypot(f.vx / trav, f.vy)
  	var oc: Dictionary = outcomeOf(S, b, y, spN, by.tier, _count(f, MARK_TOWER), f.launchSpecial)
-@@ -705,7 +705,7 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+@@ -720,7 +720,7 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
  			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", cx, evt, true)
  		SimDamage.hurt(S, f, spLeft * FIGHTER_DMG, by)
  		var holdS: float = lodgeSeconds(by.tier, f.launchSpecial)
@@ -92,7 +94,7 @@ index 66b99c8..4a32a5f 100644
  		var bodyW: float = WorldLanes.body()[0]
  		f.x = SimWrap.wrap(far - dir * (bodyW * 2.0))
  		f.y = y
-@@ -757,9 +757,16 @@ static func _flightTicks(S: SimState, f) -> int:
+@@ -772,9 +772,16 @@ static func _flightTicks(S: SimState, f) -> int:
  
  ## The hold in a wall or a lodge: the whole sim stops for it (a hit-stop, today's behaviour) or only the body is held (lodgeHold "body": he is stunned for
  ## the seconds, the fight goes on around him). Orb's homework: which of the two.
@@ -113,7 +115,7 @@ index 66b99c8..4a32a5f 100644
  		S.dirS.stop = SimMathx.jmax(S.dirS.stop, seconds)
  
 diff --git a/sim/world/collateral.gd b/sim/world/collateral.gd
-index 20d4e43..af4a6a6 100644
+index 4fdbf6d..2919088 100644
 --- a/sim/world/collateral.gd
 +++ b/sim/world/collateral.gd
 @@ -101,6 +101,7 @@ static func init(S: SimState) -> void:
@@ -261,7 +263,7 @@ index 20d4e43..af4a6a6 100644
  	return r
  
  
-@@ -232,19 +329,30 @@ static func kill(S: SimState, bi: int, want: float, cause, evt: float, cx: float
+@@ -232,11 +329,19 @@ static func kill(S: SimState, bi: int, want: float, cause, evt: float, cx: float
  		b.popAlive -= want
  		S.popHist[histBucket(b.x)] -= want
  	var rm: float = maxf(0.0, budget(S) - w.cbSum)
@@ -283,8 +285,10 @@ index 20d4e43..af4a6a6 100644
  	w.cbBuckets[int(w.cbSec) % WINDOW_S] += granted
  	w.cbSum += granted
  	var evac: float = want - granted
- 	if granted > 0.0:
+@@ -244,9 +349,12 @@ static func kill(S: SimState, bi: int, want: float, cause, evt: float, cx: float
  		_feed(S, granted, cause)
+ 		if S.formsOn:   # forms: where they died and who caused it, for the hero's Witness fill (sim/core/forms.gd)
+ 			SimForms.casualty(S, granted, cause, b.x if b != null else cx)
 -	if evt != 0.0 and evt == w.evtToken:
 +	if slot == -1:
  		w.evtDead += granted
@@ -296,7 +300,7 @@ index 20d4e43..af4a6a6 100644
  		w.evacuated += evac
  		if cause != null and cause.hasMenace:
 diff --git a/sim/world/contact.gd b/sim/world/contact.gd
-index afabe96..a74b669 100644
+index 1591604..9b07df3 100644
 --- a/sim/world/contact.gd
 +++ b/sim/world/contact.gd
 @@ -633,7 +633,7 @@ static func toBody(S: SimState, f) -> Body:
@@ -308,20 +312,45 @@ index afabe96..a74b669 100644
  	b.tier = by.tier
  	b.slideD = f.slideD
  	b.lips = f.jLips
-@@ -665,7 +665,12 @@ static func fromBody(f, b: Body) -> void:
+@@ -665,10 +665,15 @@ static func fromBody(f, b: Body) -> void:
  ## Called from SimFighter.stepLaunched when S.contactOn: one tick of a launched fighter's flight, skid or tumble, with every
  ## side effect (craters, trenches, damage, dust, events). Replaces the old slide step and impact.
  static func stepFighter(S: SimState, f, dt: float) -> void:
--	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
 +	if f.holdT > 0:   # a body lodged in a building (World's per-body lodge hold): pinned, and the fight goes on around him
 +		f.holdT -= 1
 +		f.vx = 0.0
 +		f.vy = 0.0
 +		return
+ 	if f.interior != null:
+ 		WorldInterior.step(S, f, dt)   # the chain inside a tower (world/interior.gd): the ground's contact waits for it
+ 		return
+-	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
 +	var by = WorldCollateral.launcherOf(S, f)
  	var b: Body = toBody(S, f)
  	var ev: Array = _ev
  	ev.clear()
+diff --git a/sim/world/interior.gd b/sim/world/interior.gd
+index ca4e326..b85e7dc 100644
+--- a/sim/world/interior.gd
++++ b/sim/world/interior.gd
+@@ -175,7 +175,7 @@ static func begin(S: SimState, f, b, y: float, edge: float, dir: float, by, keep
+ static func step(S: SimState, f, dt: float) -> void:
+ 	var s: Dictionary = f.interior
+ 	var b = S.buildings[int(s.b)]
+-	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
++	var by = WorldCollateral.launcherOf(S, f)
+ 	var c: Dictionary = WorldBrunt.cfg()
+ 	s.t += 1
+ 	if not b.alive:
+@@ -328,7 +328,7 @@ static func _end(S: SimState, f, b, by, end: String) -> void:
+ 			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", f.x, f.chainEvt, true)
+ 		SimDamage.hurt(S, f, spLeft * WorldBrunt.FIGHTER_DMG, by)
+ 		var holdS: float = WorldBrunt.lodgeSeconds(by.tier, f.launchSpecial)
+-		WorldBrunt._hold(S, f, holdS)
++		WorldBrunt._hold(S, f, holdS, true)
+ 		f.vx = 0.0
+ 		f.vy = 0.0
+ 		SimFx.lodge(S, f, b, f.x, f.y, holdS, f.flightHits, by)
 diff --git a/sim/world/slide.gd b/sim/world/slide.gd
 index 5d2722a..9d6068a 100644
 --- a/sim/world/slide.gd
@@ -335,8 +364,46 @@ index 5d2722a..9d6068a 100644
  	var tv: float = f.launchT
  	var dir: float = 1.0 if f.vx >= 0.0 else -1.0
  	var vN: float = absf(f.vx) / tv
+diff --git a/sim/world/tools/wall_check.gd b/sim/world/tools/wall_check.gd
+index 33c03bb..d67b4fb 100644
+--- a/sim/world/tools/wall_check.gd
++++ b/sim/world/tools/wall_check.gd
+@@ -2,6 +2,7 @@ extends SceneTree
+ # The wall slam and the lodge event (docs/design/buildings.md section 2; data/biomes/brunt.json wallSlamMul, wallStaggerTicks, lodgeHold):
+ #   godot --headless --path . --script res://sim/world/tools/wall_check.gd
+ var fails: int = 0
++var maxHold: int = 0   # the most ticks a body was pinned in a building (Fighter.holdT)
+ 
+ 
+ func ok(c: bool, w: String) -> void:
+@@ -40,6 +41,7 @@ func fly(S: SimState, A, D, b, tier: float, force: float = 2000.0) -> Array:
+ 	while D.state == "launched" and g < 900:
+ 		S.dirS.stop = 0.0
+ 		SimFighter.stepLaunched(S, D, SimConst.DT)
++		maxHold = maxi(maxHold, D.holdT)
+ 		for e in S.out.fx:
+ 			ev.append(e)
+ 		S.out.fx.clear()
+@@ -50,7 +52,7 @@ func fly(S: SimState, A, D, b, tier: float, force: float = 2000.0) -> Array:
+ func _init() -> void:
+ 	var c: Dictionary = WorldBrunt.cfg()
+ 	ok(WorldBrunt.dataErrors().is_empty(), "brunt.json loads clean (%s)" % str(WorldBrunt.dataErrors()))
+-	ok(c.lodgeHold == "world" and int(c.towerPunches[0]) == 0, "the homework switches stand at today's behaviour (lodgeHold %s, towerPunches[0] %d)" % [c.lodgeHold, int(c.towerPunches[0])])
++	ok(c.lodgeHold == "auto" and int(c.towerPunches[0]) == 0, "the homework switches stand at today's behaviour (lodgeHold %s, towerPunches[0] %d)" % [c.lodgeHold, int(c.towerPunches[0])])
+ 	var S := fresh(1)
+ 	var tw = tower(S)
+ 	var D = S.fighters[0]
+@@ -105,7 +107,7 @@ func _init() -> void:
+ 		var Dy = Sy.fighters[0]
+ 		var evy: Array = fly(Sy, Sy.fighters[1], Dy, Sy.buildings[(n * 7) % Sy.buildings.size()], 4.0)
+ 		if evy.any(func(e): return e.type == "lodge"):
+-			stunned = Dy.stunTicks >= 20
++			stunned = Dy.stunTicks >= 20 or maxHold >= 20
+ 			break
+ 	ok(stunned, "lodgeHold body: the body is stunned for the hold")
+ 	c.lodgeHold = "world"
 diff --git a/tools/schemas/biomes-brunt.schema.json b/tools/schemas/biomes-brunt.schema.json
-index c5aabe6..39486b9 100644
+index ee507ca..a53e52d 100644
 --- a/tools/schemas/biomes-brunt.schema.json
 +++ b/tools/schemas/biomes-brunt.schema.json
 @@ -182,9 +182,10 @@
@@ -349,6 +416,6 @@ index c5aabe6..39486b9 100644
        ],
 -      "description": "Does a lodge or a wall hold the whole sim (world: a hit-stop) or only the body (body: he is stunned for the seconds and the fight goes on)."
 +      "description": "Does a lodge hold the whole sim (world: a hit-stop) or only the body (body: pinned in the building while the fight goes on; a wall only staggers him); auto: world with two bodies, body with more."
-     }
-   },
-   "additionalProperties": false,
+     },
+     "interiorChain": {
+       "enum": [

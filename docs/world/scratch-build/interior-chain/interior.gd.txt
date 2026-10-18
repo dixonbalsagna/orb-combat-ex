@@ -145,6 +145,8 @@ static func begin(S: SimState, f, b, y: float, edge: float, dir: float, by, keep
 	var pl: Array = plan(b, y, gy, down, E, c)
 	var vxn: float = f.vx / trav
 	var sp: float = SimDetMath.hypot(vxn, f.vy)
+	if f.chainEvt == 0.0:
+		f.chainEvt = WorldCollateral.beginEvent(S, "chain", by)   # the chain holds a collateral token: the slabs' people are charged to it, and the air brake (which stays off in a chain) reads it
 	f.interior = {"b": b.idx, "dir": dir, "E": E, "k": 0, "bn": 0, "t": 0, "i": 0, "gy": gy, "R": WorldBrunt.topFloor(b) + 1, "plan": pl}
 	f.aimB = -1
 	var ev := SimFx.contactEvent(S, "interior_contact", f, f.x, y, sp)
