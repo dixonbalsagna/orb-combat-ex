@@ -1,0 +1,1188 @@
+--- a/render/vfx/vfx_hub.gd
++++ b/render/vfx/vfx_hub.gd
+@@ -81,6 +81,8 @@
+ var reduced_flashing: bool = false              # UI's reduced-flashing setting: the register's cap drops to 1 a second and the low-priority flashes (energy, blocks, hit rings) are not drawn
+ var inreach := VfxReach.new()                   # energy arts in reach and the launcher's marks (reach.gd), behind the same flag
+ var tremor := VfxTremor.new()                  # the catastrophe tier's tremor: dust curtains and rubble (tremor.gd, dust_view.gd), on its cue
++var blastcloud := VfxBlastCloud.new()          # the catastrophe tier's blast cloud: stem, cap, dust wall and the one fireball light (blast_cloud.gd, cloud_view.gd), on its cue
++var ash: float = 0.0                              # the world's darkening, 0 to 1 (read-only from the sim when it exists): scales a catastrophe light's peak
+ var catastrophe_enabled: bool = true            # the catastrophe tier's effects (nothing draws until the cues exist)
+ var zip := VfxZip.new()                       # the LT zip's looks (zip.gd), behind the same flag
+ var ghosts := VfxGhostTally.new()               # the combined ghost count: limb ghosts (f01) and body ghosts (m05) of every source, Rendering's after-images too (ghost_tally.gd)
+@@ -143,6 +145,7 @@
+ 	zip.reset()
+ 	inreach.reset()
+ 	tremor.reset()
++	blastcloud.reset()
+ 	ghosts.reset()
+ 	_vision_sig = ""
+ 	flashes.reset()
+@@ -243,6 +246,8 @@
+ 		tremor.step(reduced_motion or reduced_flashing)
+ 		tremor.on_events(S, events)
+ 		tremor.rubble(S, debris, reduced_motion or reduced_flashing)
++		blastcloud.step(S, flashes, ash)
++		blastcloud.on_events(S, events)
+ 	debris.puff_area_cap = VfxLook.PUFF_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05)
+ 	debris.ember_area_cap = VfxLook.EMBER_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05) * (0.5 if (reduced_motion or reduced_flashing) else 1.0)
+ 	_sync_vision(S)
+--- a/render/vfx/trail_view.gd
++++ b/render/vfx/trail_view.gd
+@@ -14,6 +14,7 @@
+ var mark_count: int = 0   # ... and marks
+ var shots_view := VfxShotsView.new()   # the energy blasts (shots_view.gd): a child, updated with this view, so it needs nothing of the layer
+ var dust_view := VfxDustView.new()   # the tremor's dust curtains (dust_view.gd), a child like the shots view
++var cloud_view := VfxCloudView.new()   # the blast cloud (cloud_view.gd), a child like the dust view
+ var cam_dist: float = 3000.0   # the pane camera's distance to the fighter plane (set by the layer), for the perspective scale at depth
+ 
+ 
+@@ -39,6 +40,8 @@
+ 	add_child(shots_view)
+ 	dust_view.name = "Dust"
+ 	add_child(dust_view)
++	cloud_view.name = "Cloud"
++	add_child(cloud_view)
+ 
+ 
+ ## a: the frame's interpolation between the last two ticks. cam_x: this pane's wrapped camera x. zoom: this pane's
+@@ -47,6 +50,9 @@
+ 	dust_view.visible = hub.catastrophe_enabled
+ 	if hub.catastrophe_enabled:
+ 		dust_view.update(hub, host, cam_x, half_w)
++	cloud_view.visible = hub.catastrophe_enabled
++	if hub.catastrophe_enabled:
++		cloud_view.update(hub, host, cam_x)
+ 	shots_view.visible = hub.shots_enabled or hub.beamplay_enabled or hub.glare_enabled or hub.press_enabled
+ 	if hub.shots_enabled or hub.beamplay_enabled or hub.glare_enabled or hub.press_enabled:
+ 		shots_view.update(hub, host, a, cam_x, zoom, half_w)
+--- a/render/core/warmup.gd
++++ b/render/core/warmup.gd
+@@ -24,6 +24,8 @@
+ 	["res://render/vfx/shaders/transform.gdshader", "multimesh"],   # VFX: shots and the transformation
+ 	["res://render/vfx/shaders/hole.gdshader", "multimesh"],     # VFX: holes in facades (VFX's warm-up.md)
+ 	["res://render/vfx/shaders/dust.gdshader", "multimesh"],     # VFX: the tremor's dust curtains (dust_view.gd)
++	["res://render/vfx/shaders/cloud.gdshader", "multimesh"],    # VFX: the blast cloud's body (docs/vfx/blast-cloud.md)
++	["res://render/vfx/shaders/cloud_core.gdshader", "multimesh"], # VFX: the blast cloud's fireball (additive)
+ 	["res://render/shaders/particle.gdshader", "multimesh"],     # Rendering: particles
+ 	["res://render/shaders/flash.gdshader", "multimesh"],        # Rendering: hit flashes
+ 	["res://render/shaders/glow.gdshader", "mesh"],              # Rendering: glows
+--- a/render/vfx/tools/effects_check.gd
++++ b/render/vfx/tools/effects_check.gd
+@@ -213,6 +213,7 @@
+ 	_flash_reserve()
+ 	_cat_class()
+ 	_tremor()
++	_blast_cloud()
+ 	_stage_stagger()
+ 	_depth()
+ 	_panes()
+@@ -4764,6 +4765,155 @@
+ 	return str(a) == str(b)
+ 
+ 
++## The blast cloud (docs/vfx/catastrophe-plan.md section 2; Legal c01 to c07): its numbers, the sprite ladder, the fire-to-smoke ramp (never red, on the stored values or the linear ones), the curves,
++## the cue, the one fireball light event asked once through the `cat` class, the refused second cloud, the calm form, the ash, determinism, and inert without a cue.
++func _blast_cloud() -> void:
++	print("the blast cloud")
++	var jd = JSON.parse_string(FileAccess.get_file_as_string("res://data/vfx/catastrophe.json"))
++	var same: bool = jd is Dictionary and jd.get("blast_cloud") is Dictionary
++	if same:
++		for k in VfxBlastCloud.DEFAULTS.keys():
++			if not _same_value(jd["blast_cloud"].get(k), VfxBlastCloud.DEFAULTS[k]):
++				same = false
++				print("    differs: ", k, " ", jd["blast_cloud"].get(k), " vs ", VfxBlastCloud.DEFAULTS[k])
++		for k in jd["blast_cloud"].keys():
++			if not VfxBlastCloud.DEFAULTS.has(k):
++				same = false
++	_check(same, "data/vfx/catastrophe.json (blast_cloud) and the built-in defaults agree")
++	# The sprite ladder: at most 400, falling by quality, and the impostor's few larger sprites far away; the groups add up and every sprite is in range.
++	var hi: int = VfxCloudView.sprites_for(2, false)
++	var md: int = VfxCloudView.sprites_for(1, false)
++	var lo: int = VfxCloudView.sprites_for(0, false)
++	var fr: int = VfxCloudView.sprites_for(2, true)
++	_check(hi == 400 and hi <= VfxCloudView.CAP and lo < md and md < hi and fr < lo and fr == VfxCloudView.sprites_for(0, true), "the ladder is %d, %d, %d sprites by quality and %d for the far impostor (at most 400)" % [hi, md, lo, fr])
++	var lay_ok: bool = true
++	for n in [hi, md, lo, fr]:
++		var sp: Array = VfxCloudView.split(n)
++		var lay: Array = VfxCloudView.layout(n)
++		if int(sp[0]) + int(sp[1]) + int(sp[2]) != n or lay.size() != n or lay != VfxCloudView.layout(n):
++			lay_ok = false
++		for s in lay:
++			if float(s[1]) < 0.0 or float(s[1]) >= 1.0 or float(s[0]) < 0.0 or float(s[0]) > 2.0:
++				lay_ok = false
++	_check(lay_ok, "each layout has its groups adding to the budget, every u inside 0 to 1, and is a pure function")
++	# The ramp: fire into smoke, never red.
++	var red_ok: bool = true
++	var worst_share: float = 0.0
++	for k in range(0, 101):
++		for lit in [true, false]:
++			var c: Color = VfxBlastCloud.ramp(float(k) / 100.0, lit)
++			var lc: Color = c.srgb_to_linear()
++			var sh: float = c.r / maxf(c.r + c.g + c.b, 1e-6)
++			var lsh: float = lc.r / maxf(lc.r + lc.g + lc.b, 1e-6)
++			worst_share = maxf(worst_share, maxf(sh, lsh))
++			if VfxFlashRegistry.is_red(c) or sh >= 0.8 or lsh >= 0.8:
++				red_ok = false
++	_check(red_ok and worst_share < 0.7, "no colour of the fire-to-smoke ramp is red: the largest R/(R+G+B) is %.2f on the stored values or the linear ones (the analyser's line is 0.8)" % worst_share)
++	_check(VfxBlastCloud.ramp(1.0, false).is_equal_approx(VfxBlastCloud.ramp(0.7, true)) and VfxBlastCloud.ramp(0.0).is_equal_approx(Color(String(VfxBlastCloud.p("colour_smoke")))), "an unlit cloud stops at amber and the cold end is the smoke colour")
++	# The curves.
++	_check(VfxBlastCloud.height(0.0) == 0.0 and VfxBlastCloud.height(20.0) / float(VfxBlastCloud.p("height_max")) > 0.95 and VfxBlastCloud.height(5.0) < VfxBlastCloud.height(6.0), "the stem rises from nothing to 14,000 units in about 20 s (%.0f at 20 s)" % VfxBlastCloud.height(20.0))
++	var mono: bool = true
++	var prev_h: float = 0.0
++	var prev_r: float = 0.0
++	var prev_s: float = 0.0
++	for t in range(0, 2400):
++		var ts: float = float(t) / 60.0
++		var hh: float = VfxBlastCloud.height(ts)
++		var rr: float = VfxBlastCloud.cap_major(ts)
++		var ss: float = VfxBlastCloud.skirt(ts)
++		if hh < prev_h or rr < prev_r or ss < prev_s:
++			mono = false
++		prev_h = hh
++		prev_r = rr
++		prev_s = ss
++	_check(mono and VfxBlastCloud.cap_major(30.0) > 2400.0 and VfxBlastCloud.skirt(20.0) > 4400.0 and VfxBlastCloud.cap_minor(10.0) == float(VfxBlastCloud.p("cap_minor")), "the cap, its ring and the ground wall only grow, and arrive at their sizes")
++	var a_ok: bool = VfxBlastCloud.body_alpha(0.0) == 0.0 and absf(VfxBlastCloud.body_alpha(10.0) - float(VfxBlastCloud.p("alpha_max"))) < 1e-9 and VfxBlastCloud.body_alpha(float(VfxBlastCloud.p("life_s"))) == 0.0
++	var a_step: float = 0.0
++	var a_prev: float = 0.0
++	for t in range(0, 2500):
++		var v: float = VfxBlastCloud.body_alpha(float(t) / 60.0)
++		a_step = maxf(a_step, absf(v - a_prev))
++		a_prev = v
++	_check(a_ok and a_step < 0.03, "the smoke fades in over a second and out over its last eight; the steepest tick is %.4f of opacity" % a_step)
++	# The cue, the landing, the one ask of the register.
++	var mk := func() -> Array:
++		var ss := SimCore.createSim()
++		SimCore.newMatch(ss, 4)
++		var hh := VfxHub.new()
++		hh.destruction_enabled = true
++		hh.reset(ss, 4)
++		return [hh, ss]
++	var mkcue := func(ss: SimState, wait: int) -> Object:
++		return VfxMock.ev("cue", {"actor": 0, "kind": "blast_cloud", "text": "", "target": 1, "k": 0.0, "n": float(ss.tick + wait), "x": 4000.0, "y": 100.0, "source": "", "dur": 10.0})
++	var pa: Array = mk.call()
++	var h: VfxHub = pa[0]
++	var S: SimState = pa[1]
++	for k in range(5):
++		_tick(S, h, [])
++	_check(h.blastcloud.runs.is_empty() and not h.blastcloud.active() and h.flashes.log.is_empty(), "without a cue nothing runs and the register is never asked")
++	_tick(S, h, [mkcue.call(S, 30)])
++	_check(h.blastcloud.runs.size() == 1 and not h.blastcloud.active() and h.blastcloud.asks_made == 0, "a cue starts a run that has not landed: no light is asked before the landing")
++	for k in range(29):
++		_tick(S, h, [])
++	var r: Dictionary = h.blastcloud.runs[0]
++	_check(h.blastcloud.active() and bool(r["asked"]) and h.blastcloud.asks_made == 1 and h.flashes.cat_events.size() == 1 and int(r["rise"]) >= 18 and int(r["fall"]) >= 60, "it lands on its tick and asks the register once, for one catastrophe light event (rise %d, fall %d ticks, granted %s)" % [int(r["rise"]), int(r["fall"]), str(r["ok"])])
++	# The light: the granted envelope, a rise over at least 0.3 s, never a steeper tick than its slope.
++	var step_max: float = 0.0
++	var peak_seen: float = 0.0
++	var lprev: float = 0.0
++	var l_ok: bool = true
++	for k in range(int(r["rise"]) + int(r["fall"]) + 4):
++		var lv: float = h.blastcloud.light(r)
++		step_max = maxf(step_max, absf(lv - lprev))
++		peak_seen = maxf(peak_seen, lv)
++		lprev = lv
++		_tick(S, h, [])
++	_check(bool(r["ok"]) and peak_seen > 0.99 and peak_seen <= 1.0 + 1e-9 and step_max <= 1.875 / float(mini(int(r["rise"]), int(r["fall"]))) + 1e-9, "the fireball's light rises to its peak and falls, the steepest tick %.4f of it (a flash needs 0.1)" % step_max)
++	# A second cloud inside the 2 s gap keeps its smoke and loses its light; the register logs why.
++	var pb: Array = mk.call()
++	var h2: VfxHub = pb[0]
++	var S2: SimState = pb[1]
++	_tick(S2, h2, [mkcue.call(S2, 10)])
++	for k in range(30):
++		_tick(S2, h2, [])
++	_tick(S2, h2, [mkcue.call(S2, 10)])
++	for k in range(12):
++		_tick(S2, h2, [])
++	var r1: Dictionary = h2.blastcloud.runs[0]
++	var r2: Dictionary = h2.blastcloud.runs[1]
++	var why: String = ""
++	for row in h2.flashes.log:
++		if String(row["source"]) == "cat_blast" and not bool(row["granted"]):
++			why = String(row["why"])
++	_check(bool(r1["ok"]) and not bool(r2["ok"]) and h2.blastcloud.light(r2) == 0.0 and why == "cat_gap" and h2.blastcloud.active(), "a second cloud within 2 s is drawn without its light (refused: %s)" % why)
++	# A third cue trims the oldest (at most max_alive).
++	_tick(S2, h2, [mkcue.call(S2, 10)])
++	_check(h2.blastcloud.runs.size() == int(VfxBlastCloud.p("max_alive")), "at most %d clouds at once" % int(VfxBlastCloud.p("max_alive")))
++	# The calm form and the dark sky.
++	var pc: Array = mk.call()
++	pc[0].reduced_flashing = true
++	_tick(pc[1], pc[0], [mkcue.call(pc[1], 5)])
++	for k in range(6):
++		_tick(pc[1], pc[0], [])
++	var rc: Dictionary = pc[0].blastcloud.runs[0]
++	_check(bool(rc["ok"]) and absf(float(rc["peak"]) - 0.6) < 1e-9 and int(rc["rise"]) >= 30 and int(rc["fall"]) >= 90, "under Reduce flashing the light is the calm form: peak %.2f, rise %d and fall %d ticks" % [float(rc["peak"]), int(rc["rise"]), int(rc["fall"])])
++	var pd: Array = mk.call()
++	pd[0].ash = 1.0
++	_tick(pd[1], pd[0], [mkcue.call(pd[1], 5)])
++	for k in range(6):
++		_tick(pd[1], pd[0], [])
++	_check(absf(float(pd[0].blastcloud.runs[0]["peak"]) - 0.65) < 1e-9, "in the darkest sky the light's peak is 0.65 of the asked")
++	# Determinism: the same cue, the same state.
++	var states: Array = []
++	for i in range(2):
++		var pe: Array = mk.call()
++		for k in range(90):
++			_tick(pe[1], pe[0], [mkcue.call(pe[1], 20)] if k == 0 else [])
++		var rr: Dictionary = pe[0].blastcloud.runs[0]
++		states.append(str([rr["id"], rr["land"], rr["ok"], rr["peak"], rr["rise"], rr["fall"], pe[0].blastcloud.light(rr), pe[0].blastcloud.age_s(rr)]))
++	_check(states[0] == states[1], "the same cue gives the same cloud (determinism)")
++
++
+ ## The catastrophe light class (docs/vfx/catastrophe-plan.md section 1; Legal c01 to c05): the gap, the floors, the calm form, the ash, one answer per event, no red, and a hammer of random asks.
+ func _cat_class() -> void:
+ 	print("the catastrophe light class")
+--- a/data/vfx/catastrophe.json
++++ b/data/vfx/catastrophe.json
+@@ -1,8 +1,12 @@
+ {
+   "version": 1,
+-  "_note": "The catastrophe tier's numbers (docs/vfx/catastrophe-plan.md). Only the tremor's dust so far (section 5): at most 160 sprites, alpha at most 0.5, an onset of 1 s, settling over 4 s, no rhythm. Presentation only.",
++  "_note": "The catastrophe tier's numbers (docs/vfx/catastrophe-plan.md): the tremor's dust (section 5) and the blast cloud (section 2). Presentation only.",
+   "tremor": {
+-    "sprites": [60, 110, 160],
++    "sprites": [
++      60,
++      110,
++      160
++    ],
+     "alpha_max": 0.5,
+     "onset_s": 1.0,
+     "settle_s": 4.0,
+@@ -11,12 +15,72 @@
+     "shiver": 0.06,
+     "wander": 0.35,
+     "colour": "#8a8277",
+-    "height_k": [0.16, 0.46],
+-    "width_k": [2.4, 4.4],
+-    "z": [-20.0, -6.0],
++    "height_k": [
++      0.16,
++      0.46
++    ],
++    "width_k": [
++      2.4,
++      4.4
++    ],
++    "z": [
++      -20.0,
++      -6.0
++    ],
+     "rubble_per_s": 40.0,
+-    "rubble_size": [4.0, 9.0],
+-    "rubble_life_s": [0.8, 1.6],
++    "rubble_size": [
++      4.0,
++      9.0
++    ],
++    "rubble_life_s": [
++      0.8,
++      1.6
++    ],
+     "max_overlap": 2
++  },
++  "blast_cloud": {
++    "sprites": [
++      140,
++      260,
++      400
++    ],
++    "far_sprites": 24,
++    "far_distance": 9000.0,
++    "far_size_k": 2.4,
++    "height_max": 14000.0,
++    "height_tau_s": 6.5,
++    "cap_major": 2600.0,
++    "cap_major_tau_s": 8.0,
++    "cap_minor": 1500.0,
++    "cap_minor_rise_s": 5.0,
++    "cap_omega": -0.35,
++    "stem_width": [
++      260.0,
++      760.0
++    ],
++    "skirt_reach": 4500.0,
++    "skirt_tau_s": 3.2,
++    "skirt_height": [
++      300.0,
++      600.0
++    ],
++    "heat_tau_core_s": 4.0,
++    "heat_tau_stem_s": 2.2,
++    "alpha_max": 0.85,
++    "fade_in_s": 1.0,
++    "life_s": 40.0,
++    "fade_out_s": 8.0,
++    "fire_rise_s": 0.6,
++    "fire_fall_s": 2.4,
++    "calm_fire_rise_s": 1.0,
++    "calm_fire_fall_s": 3.6,
++    "core_radius_k": 0.35,
++    "core_sprites": 12,
++    "core_alpha": 0.55,
++    "max_alive": 2,
++    "colour_hot": "#fff0c8",
++    "colour_amber": "#f0a850",
++    "colour_ember": "#9a6a3c",
++    "colour_smoke": "#5f5953"
+   }
+ }
+--- a/tools/schemas/vfx-catastrophe.schema.json
++++ b/tools/schemas/vfx-catastrophe.schema.json
+@@ -2,7 +2,7 @@
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+   "$id": "meridian/vfx-catastrophe",
+   "title": "vfx catastrophe tier (version 1)",
+-  "description": "data/vfx/catastrophe.json: the catastrophe tier's presentation numbers (docs/vfx/catastrophe-plan.md). Only the tremor's dust so far. Read by render/vfx/tremor.gd; every key has a built-in default there. Presentation only. Policy: closed except keys starting with an underscore at the top and in the tremor block (the rules in tools/lib/xref-fight.js: vfx-catastrophe-order).",
++  "description": "data/vfx/catastrophe.json: the catastrophe tier's presentation numbers (docs/vfx/catastrophe-plan.md). The tremor's dust and the blast cloud. Read by render/vfx/tremor.gd and render/vfx/blast_cloud.gd; every key has a built-in default there. Presentation only. Policy: closed except keys starting with an underscore at the top and in the tremor block (the rules in tools/lib/xref-fight.js: vfx-catastrophe-order).",
+   "type": "object",
+   "required": [
+     "version"
+@@ -128,6 +128,188 @@
+       "patternProperties": {
+         "^_": true
+       }
++    },
++    "blast_cloud": {
++      "type": "object",
++      "properties": {
++        "sprites": {
++          "type": "array",
++          "minItems": 3,
++          "maxItems": 3,
++          "items": {
++            "type": "integer",
++            "minimum": 1,
++            "maximum": 400
++          }
++        },
++        "far_sprites": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 400
++        },
++        "far_distance": {
++          "type": "number",
++          "minimum": 1000,
++          "maximum": 60000
++        },
++        "far_size_k": {
++          "type": "number",
++          "minimum": 1,
++          "maximum": 6
++        },
++        "height_max": {
++          "type": "number",
++          "minimum": 1000,
++          "maximum": 40000
++        },
++        "height_tau_s": {
++          "type": "number",
++          "minimum": 1,
++          "maximum": 30
++        },
++        "cap_major": {
++          "type": "number",
++          "minimum": 500,
++          "maximum": 9000
++        },
++        "cap_major_tau_s": {
++          "type": "number",
++          "minimum": 1,
++          "maximum": 30
++        },
++        "cap_minor": {
++          "type": "number",
++          "minimum": 300,
++          "maximum": 6000
++        },
++        "cap_minor_rise_s": {
++          "type": "number",
++          "minimum": 1,
++          "maximum": 20
++        },
++        "cap_omega": {
++          "type": "number",
++          "minimum": -1.0,
++          "maximum": 1.0
++        },
++        "stem_width": {
++          "type": "array",
++          "minItems": 2,
++          "maxItems": 2,
++          "items": {
++            "type": "number",
++            "minimum": 50,
++            "maximum": 2000
++          }
++        },
++        "skirt_reach": {
++          "type": "number",
++          "minimum": 500,
++          "maximum": 12000
++        },
++        "skirt_tau_s": {
++          "type": "number",
++          "minimum": 0.5,
++          "maximum": 20
++        },
++        "skirt_height": {
++          "type": "array",
++          "minItems": 2,
++          "maxItems": 2,
++          "items": {
++            "type": "number",
++            "minimum": 50,
++            "maximum": 2000
++          }
++        },
++        "heat_tau_core_s": {
++          "type": "number",
++          "minimum": 0.5,
++          "maximum": 20
++        },
++        "heat_tau_stem_s": {
++          "type": "number",
++          "minimum": 0.5,
++          "maximum": 20
++        },
++        "alpha_max": {
++          "type": "number",
++          "exclusiveMinimum": 0,
++          "maximum": 0.9
++        },
++        "fade_in_s": {
++          "type": "number",
++          "exclusiveMinimum": 0.3,
++          "maximum": 10
++        },
++        "life_s": {
++          "type": "number",
++          "minimum": 5,
++          "maximum": 120
++        },
++        "fade_out_s": {
++          "type": "number",
++          "exclusiveMinimum": 1,
++          "maximum": 30
++        },
++        "fire_rise_s": {
++          "type": "number",
++          "minimum": 0.3,
++          "maximum": 5
++        },
++        "fire_fall_s": {
++          "type": "number",
++          "minimum": 1.0,
++          "maximum": 12
++        },
++        "calm_fire_rise_s": {
++          "type": "number",
++          "minimum": 0.5,
++          "maximum": 8
++        },
++        "calm_fire_fall_s": {
++          "type": "number",
++          "minimum": 1.0,
++          "maximum": 20
++        },
++        "core_radius_k": {
++          "type": "number",
++          "exclusiveMinimum": 0,
++          "maximum": 0.35
++        },
++        "core_sprites": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 12
++        },
++        "core_alpha": {
++          "type": "number",
++          "exclusiveMinimum": 0,
++          "maximum": 0.7
++        },
++        "max_alive": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 3
++        },
++        "colour_hot": {
++          "type": "string",
++          "pattern": "^#[0-9a-fA-F]{6}$"
++        },
++        "colour_amber": {
++          "type": "string",
++          "pattern": "^#[0-9a-fA-F]{6}$"
++        },
++        "colour_ember": {
++          "type": "string",
++          "pattern": "^#[0-9a-fA-F]{6}$"
++        },
++        "colour_smoke": {
++          "type": "string",
++          "pattern": "^#[0-9a-fA-F]{6}$"
++        }
++      },
++      "additionalProperties": false
+     }
+   },
+   "additionalProperties": false,
+--- a/docs/vfx/catastrophe-plan.md
++++ b/docs/vfx/catastrophe-plan.md
+@@ -34,6 +34,8 @@
+ 
+ ## 2. The blast cloud (`blast_cloud`; run-mode §3.2, c06, c07)
+ 
++**Built (2026-10-18, parked: `docs/vfx/blast-cloud.md`).** Where the build differs from what follows: the fireball is a second additive MultiMesh (two draw calls, not one; the body is the one stateless draw), the half-resolution pass at low quality is not built (140 sprites is the lever), the hush and the ash-fall flecks wait for the sim's cue and `ash`, the sprites stand at z -12 and -8 (behind the fighters, and in front of a facade at -30 or less, as the tremor's dust found), and only the latest landed cloud draws.
++
+ **Cue** (Audio's list): `blast_cloud` with `x`, `y`, `amount` (3,000), `n` the landing tick; it may be preceded by a hush at `n − 8`. The cloud starts at `n`. The world's `ash` is read-only.
+ 
+ ### 2.1 Stateless vertex-shader effect
+--- a/docs/vfx/README.md
++++ b/docs/vfx/README.md
+@@ -9,6 +9,7 @@
+ | Effect | State | Where |
+ | :--- | :--- | :--- |
+ | Motion trails: a tapered ribbon behind a fast fighter, and world-fixed wind marks the camera flies past | **Live** (trails are on by default) | `trail_state.gd`, `trail_view.gd`, `shaders/trail.gdshader` |
++| The catastrophe tier's blast cloud: a stateless stem-and-cap cloud of up to 400 sprites with one fireball light event on the `blast_cloud` cue (no cue exists yet) | Built, parked (`docs/vfx/blast-cloud.md`); `catastrophe_enabled` | `blast_cloud.gd`, `cloud_view.gd`, `shaders/cloud*.gdshader`, `data/vfx/catastrophe.json` |
+ | The catastrophe tier's tremor: low dust curtains and a patter of rubble on the `tremor` cue (no cue exists yet) | Built, parked (`docs/vfx/tremor-dust.md`); `catastrophe_enabled` | `tremor.gd`, `dust_view.gd`, `shaders/dust.gdshader`, `data/vfx/catastrophe.json` |
+ | Ground cracks and fissures from `S.craters` and `S.slides` | Built, **off** (`VfxLook.CRACKS_DEFAULT`) | `crack_gen.gd`, `crack_mesh.gd`, `crack_view.gd`, `shaders/crack.gdshader` |
+ 
+--- a/render/vfx/blast_cloud.gd
++++ b/render/vfx/blast_cloud.gd
+@@ -0,0 +1,178 @@
++class_name VfxBlastCloud
++extends RefCounted
++## The blast cloud (docs/vfx/catastrophe-plan.md section 2; run-mode section 3.2; Legal c01 to c07): a tier-5 detonation's stem-and-cap cloud, our own, with a fireball inside it that is the one
++## catastrophe light event (flash_registry.gd's `cat` class). The cue is `blast_cloud` (Audio's list: `x`, `y`, `amount` the blast's size (3,000), `n` the tick it lands). Nothing here runs without it.
++## The cloud itself is STATELESS on the GPU (cloud_view.gd, shaders/cloud.gdshader): positions are closed-form curves of its age, so a pause, a seek and a replay are right by construction and the CPU
++## writes only a handful of uniforms a frame. The functions below are the CPU mirrors of those curves (the checks and the sprite budget use them); the shader's are the same formulas.
++## Our own blast cloud (c07): no word, sign, siren or countdown, no ring leaving the blast (the ground wave is a dark dust wall), no dome of light (the glow is a lumpy core inside the stem and cap), and
++## it never rests on a boss charging a sphere (its wind-up is the fighter's own detonation cue). Presentation only: no sim write, no `S.rng`, hashes only.
++
++const DEFAULTS: Dictionary = {
++	"sprites": [140, 260, 400], "far_sprites": 24, "far_distance": 9000.0, "far_size_k": 2.4,
++	"height_max": 14000.0, "height_tau_s": 6.5,
++	"cap_major": 2600.0, "cap_major_tau_s": 8.0, "cap_minor": 1500.0, "cap_minor_rise_s": 5.0, "cap_omega": -0.35,
++	"stem_width": [260.0, 760.0],
++	"skirt_reach": 4500.0, "skirt_tau_s": 3.2, "skirt_height": [300.0, 600.0],
++	"heat_tau_core_s": 4.0, "heat_tau_stem_s": 2.2,
++	"alpha_max": 0.85, "fade_in_s": 1.0, "life_s": 40.0, "fade_out_s": 8.0,
++	"fire_rise_s": 0.6, "fire_fall_s": 2.4, "calm_fire_rise_s": 1.0, "calm_fire_fall_s": 3.6,
++	"core_radius_k": 0.35, "core_sprites": 12, "core_alpha": 0.55,
++	"max_alive": 2,
++	"colour_hot": "#fff0c8", "colour_amber": "#f0a850", "colour_ember": "#9a6a3c", "colour_smoke": "#5f5953",
++}
++
++static var _data: Dictionary = {}
++static var _loaded: bool = false
++
++## The clouds in flight (at most `max_alive`): {id, land (the hub's clock tick it lands), x, gy (the ground there at landing), amount, seed, asked, ok, peak, rise, fall}.
++var runs: Array = []
++var now: int = 0
++var asks_made: int = 0              # for the tests
++
++
++static func warm() -> void:
++	if _loaded:
++		return
++	_loaded = true
++	var path := "res://data/vfx/catastrophe.json"
++	if FileAccess.file_exists(path):
++		var v = JSON.parse_string(FileAccess.get_file_as_string(path))
++		if v is Dictionary and v.get("blast_cloud") is Dictionary:
++			_data = v["blast_cloud"]
++
++
++static func p(key: String):
++	warm()
++	var v = _data.get(key)
++	return v if v != null else DEFAULTS[key]
++
++
++func reset() -> void:
++	runs.clear()
++	now = 0
++	asks_made = 0
++
++
++# ------------------------------------------------------------------------------------------------ the curves (the shader's, mirrored)
++
++## The cloud's scale from the blast's size: 3,000 units is 1.
++static func scale_of(amount: float) -> float:
++	return clampf(amount / 3000.0, 0.25, 2.0)
++
++
++## The height of the stem's top, `t` seconds after landing, in units.
++static func height(t: float, scale: float = 1.0) -> float:
++	return float(p("height_max")) * scale * (1.0 - exp(-maxf(t, 0.0) / float(p("height_tau_s"))))
++
++
++## The cap's major radius (its ring) and its minor radius (its thickness), `t` seconds after landing.
++static func cap_major(t: float, scale: float = 1.0) -> float:
++	return float(p("cap_major")) * scale * (1.0 - exp(-maxf(t, 0.0) / float(p("cap_major_tau_s"))))
++
++
++static func cap_minor(t: float, scale: float = 1.0) -> float:
++	return float(p("cap_minor")) * scale * minf(1.0, maxf(t, 0.0) / float(p("cap_minor_rise_s")))
++
++
++## How far the ground's dust wall has reached each way from the blast.
++static func skirt(t: float, scale: float = 1.0) -> float:
++	return float(p("skirt_reach")) * scale * (1.0 - exp(-maxf(t, 0.0) / float(p("skirt_tau_s"))))
++
++
++## The cloud body's opacity at age `t`: a smootherstep in over fade_in_s, held, a smootherstep out over the last fade_out_s of its life.
++static func body_alpha(t: float) -> float:
++	var fin: float = clampf(t / float(p("fade_in_s")), 0.0, 1.0)
++	fin = fin * fin * (3.0 - 2.0 * fin)
++	var life: float = float(p("life_s"))
++	var fo: float = float(p("fade_out_s"))
++	var out: float = clampf((t - (life - fo)) / fo, 0.0, 1.0)
++	out = out * out * (3.0 - 2.0 * out)
++	return float(p("alpha_max")) * fin * (1.0 - out)
++
++
++## The heat of a place in the cloud, 0 to 1: the fire's colour fades to smoke as it falls. `tau` is the cap's core (heat_tau_core_s) or the stem's (heat_tau_stem_s).
++static func heat(t: float, tau: float) -> float:
++	return exp(-maxf(t, 0.0) / tau)
++
++
++## Fire into smoke: white-amber, amber, ember brown, warm grey-brown. Red is never reached; the amber end keeps R/(R+G+B) well under 0.8 on the stored values and on the linear ones
++## (the analyser's saturated-red test takes whichever is redder). Mirrored in the shader; `lit` false (a refused light, or a calm cloud) holds it below the white-amber end.
++static func ramp(h: float, lit: bool = true) -> Color:
++	var hot := Color(String(p("colour_hot")))
++	var amber := Color(String(p("colour_amber")))
++	var ember := Color(String(p("colour_ember")))
++	var smoke := Color(String(p("colour_smoke")))
++	var hh: float = clampf(h, 0.0, 1.0)
++	if not lit:
++		hh = minf(hh, 0.7)
++	if hh >= 0.7:
++		return amber.lerp(hot, (hh - 0.7) / 0.3)
++	if hh >= 0.4:
++		return ember.lerp(amber, (hh - 0.4) / 0.3)
++	return smoke.lerp(ember, hh / 0.4)
++
++
++# ------------------------------------------------------------------------------------------------ state
++
++## Once a tick, from the hub (after the registry's begin_tick): the clock, the landing of each cloud (its ground read and its one ask of the register), and the finished clouds dropped.
++func step(S: SimState, flashes: VfxFlashRegistry, ash: float) -> void:
++	now += 1
++	var i: int = 0
++	while i < runs.size():
++		var r: Dictionary = runs[i]
++		if not bool(r["asked"]) and now >= int(r["land"]):
++			r["asked"] = true
++			r["gy"] = WorldTerrain.groundY(S, float(r["x"]))
++			_ask(S, flashes, ash, r)
++		if float(now - int(r["land"])) / 60.0 > float(p("life_s")) + 1.0:
++			runs.remove_at(i)
++		else:
++			i += 1
++
++
++## The fireball's light is one catastrophe light event: asked once, at landing, with its whole weight (the glow's area at its peak, against the standard's threshold). Refused (the 2 s gap, the
++## budget, red): the cloud still rises and darkens, without its light.
++func _ask(S: SimState, flashes: VfxFlashRegistry, ash: float, r: Dictionary) -> void:
++	var sc: float = scale_of(float(r["amount"]))
++	var core_r: float = float(p("core_radius_k")) * cap_major(1.0e9, sc)
++	var area: float = VfxFlashRegistry.disc_px(core_r, flashes.ppu_at(-12.0))
++	var amber := Color(String(p("colour_amber")))
++	var rise: int = int(round(float(p("fire_rise_s")) * 60.0))
++	var fall: int = int(round(float(p("fire_fall_s")) * 60.0))
++	var ans: Dictionary = flashes.ask_cat("cat_blast", int(r["id"]), amber, area, rise, fall, 1.0, ash, S.tick)
++	asks_made += 1
++	r["ok"] = bool(ans["ok"])
++	r["peak"] = float(ans["peak"])
++	r["rise"] = int(ans["rise"])
++	r["fall"] = int(ans["fall"])
++
++
++## The `blast_cloud` cue: `x` (the blast's x), `amount` (its size), `n` the tick it lands (the sim's tick; a cue at or after it lands at once).
++func on_events(S: SimState, events: Array) -> void:
++	for e in events:
++		if e.type != "cue" or String(e.kind) != "blast_cloud":
++			continue
++		var amount: float = float(e.get("amount") if e.get("amount") != null else 3000.0)
++		var land: int = now + maxi(int(float(e.n)) - S.tick, 0)
++		runs.append({"id": S.tick * 31 + int(float(e.x)) % 997, "land": land, "x": float(e.x), "gy": 0.0, "amount": amount, "seed": S.tick, "asked": false, "ok": false, "peak": 0.0, "rise": 18, "fall": 60})
++		while runs.size() > int(p("max_alive")):
++			runs.pop_front()
++
++
++func active() -> bool:
++	for r in runs:
++		if now >= int(r["land"]):
++			return true
++	return false
++
++
++## A cloud's age in seconds at the clock's tick plus `frac` of a tick (negative before it lands).
++func age_s(r: Dictionary, frac: float = 0.0) -> float:
++	return (float(now - int(r["land"])) + frac) / 60.0
++
++
++## The fireball's light, 0 to 1, at the clock's tick: the granted envelope (rise, fall and peak as the register shaped them) or 0 when the register refused it.
++func light(r: Dictionary, frac: float = 0.0) -> float:
++	if not bool(r["asked"]) or not bool(r["ok"]):
++		return 0.0
++	return VfxFlashRegistry.cat_level(float(now - int(r["land"])) + frac, int(r["rise"]), int(r["fall"])) * float(r["peak"])
+--- a/render/vfx/blast_cloud.gd.uid
++++ b/render/vfx/blast_cloud.gd.uid
+@@ -0,0 +1 @@
++uid://bgn63fkndrijg
+--- a/render/vfx/cloud_view.gd
++++ b/render/vfx/cloud_view.gd
+@@ -0,0 +1,184 @@
++class_name VfxCloudView
++extends MultiMeshInstance3D
++## The blast cloud for one pane (docs/vfx/catastrophe-plan.md section 2; blast_cloud.gd has the rules): the body is this MultiMesh, at most 400 sprites in one draw call, and the fireball and the crater
++## floor's glow are a second, additive MultiMesh of 16 (`core`), also one draw call. The sprites' instance data never changes after a layout is written: every position is a closed-form curve of
++## the cloud's age in the vertex shader (shaders/cloud_curves.gdshaderinc), so the CPU writes a handful of uniforms a frame and rebuilds the buffer only when the sprite budget steps.
++## The ladder (the fill rate is the cost): 400 sprites at high quality, 260 at medium, 140 at low, and 24 larger sprites when the cloud is far from the camera (an impostor of its silhouette).
++## A child of the trail view, like the dust and shots views. Reads only. Draws nothing until a `blast_cloud` cue has landed.
++
++const CAP: int = 400
++const STRIDE: int = 20
++const CORE_CAP: int = 16
++
++var core := MultiMeshInstance3D.new()
++var count: int = 0                  # the body's sprites drawn
++var far: bool = false
++var _sig: int = -1                  # the layout the buffer holds: n * 2 + far
++var _buf := PackedFloat32Array()
++var _cbuf := PackedFloat32Array()
++
++
++func _ready() -> void:
++	multimesh = _mm(CAP)
++	var m := ShaderMaterial.new()
++	m.shader = preload("res://render/vfx/shaders/cloud.gdshader")
++	m.render_priority = 0
++	_constants(m)
++	material_override = m
++	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
++	core.name = "Core"
++	core.multimesh = _mm(CORE_CAP)
++	var cm := ShaderMaterial.new()
++	cm.shader = preload("res://render/vfx/shaders/cloud_core.gdshader")
++	cm.render_priority = 1
++	_constants(cm)
++	cm.set_shader_parameter("core_alpha", float(VfxBlastCloud.p("core_alpha")))
++	core.material_override = cm
++	core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
++	add_child(core)
++	_buf.resize(CAP * STRIDE)
++	_cbuf.resize(CORE_CAP * STRIDE)
++	_write_core()
++
++
++func _mm(n: int) -> MultiMesh:
++	var q := QuadMesh.new()
++	q.size = Vector2.ONE
++	var mm := MultiMesh.new()
++	mm.transform_format = MultiMesh.TRANSFORM_3D
++	mm.use_colors = true
++	mm.use_custom_data = true
++	mm.mesh = q
++	mm.instance_count = n
++	mm.visible_instance_count = 0
++	mm.custom_aabb = AABB(Vector3(-60000.0, -12000.0, -300.0), Vector3(120000.0, 80000.0, 600.0))
++	return mm
++
++
++## The curve constants and the colours, from the data file (the same numbers the CPU mirror reads).
++func _constants(m: ShaderMaterial) -> void:
++	var sw: Array = VfxBlastCloud.p("stem_width")
++	var sh: Array = VfxBlastCloud.p("skirt_height")
++	m.set_shader_parameter("height_max", float(VfxBlastCloud.p("height_max")))
++	m.set_shader_parameter("height_tau", float(VfxBlastCloud.p("height_tau_s")))
++	m.set_shader_parameter("cap_major", float(VfxBlastCloud.p("cap_major")))
++	m.set_shader_parameter("cap_major_tau", float(VfxBlastCloud.p("cap_major_tau_s")))
++	m.set_shader_parameter("cap_minor", float(VfxBlastCloud.p("cap_minor")))
++	m.set_shader_parameter("cap_minor_rise", float(VfxBlastCloud.p("cap_minor_rise_s")))
++	m.set_shader_parameter("cap_omega", float(VfxBlastCloud.p("cap_omega")))
++	m.set_shader_parameter("stem_w_top", float(sw[0]))
++	m.set_shader_parameter("stem_w_base", float(sw[1]))
++	m.set_shader_parameter("skirt_reach", float(VfxBlastCloud.p("skirt_reach")))
++	m.set_shader_parameter("skirt_tau", float(VfxBlastCloud.p("skirt_tau_s")))
++	m.set_shader_parameter("skirt_h_lo", float(sh[0]))
++	m.set_shader_parameter("skirt_h_hi", float(sh[1]))
++	m.set_shader_parameter("heat_tau_core", float(VfxBlastCloud.p("heat_tau_core_s")))
++	m.set_shader_parameter("heat_tau_stem", float(VfxBlastCloud.p("heat_tau_stem_s")))
++	m.set_shader_parameter("colour_hot", Color(String(VfxBlastCloud.p("colour_hot"))))
++	m.set_shader_parameter("colour_amber", Color(String(VfxBlastCloud.p("colour_amber"))))
++	m.set_shader_parameter("colour_ember", Color(String(VfxBlastCloud.p("colour_ember"))))
++	m.set_shader_parameter("colour_smoke", Color(String(VfxBlastCloud.p("colour_smoke"))))
++
++
++## How many sprites for a quality level (0 low, 1 medium, 2 high), or the impostor's when `is_far`.
++static func sprites_for(quality: int, is_far: bool) -> int:
++	if is_far:
++		return int(VfxBlastCloud.p("far_sprites"))
++	var a: Array = VfxBlastCloud.p("sprites")
++	return mini(int(a[clampi(quality, 0, 2)]), CAP)
++
++
++## The groups' sprite counts for a budget n: the stem a quarter to a third, the cap half, the ground wall the rest.
++static func split(n: int) -> Array:
++	var ns: int = int(round(float(n) * 0.3))
++	var nc: int = int(round(float(n) * 0.5))
++	return [ns, nc, n - ns - nc]
++
++
++## The sprites of a layout, as [group, u, seed, jitter]: u runs 0 to 1 along each group (a hashed jitter inside each step), the seed and the jitter are hashes of the group and the index. Pure.
++static func layout(n: int) -> Array:
++	var out: Array = []
++	var sp: Array = split(n)
++	for g in range(3):
++		var cnt: int = int(sp[g])
++		for i in range(cnt):
++			var u: float = (float(i) + VfxTremor.hash01(i, g * 101 + 7)) / float(maxi(cnt, 1))
++			out.append([float(g), u, VfxTremor.hash01(i, g * 101 + 8), VfxTremor.hash01(i, g * 101 + 9)])
++	return out
++
++
++func _write(buf: PackedFloat32Array, i: int, g: float, u: float, sd: float, jt: float) -> void:
++	var o: int = i * STRIDE
++	for k in range(STRIDE):
++		buf[o + k] = 0.0
++	buf[o] = 1.0
++	buf[o + 5] = 1.0
++	buf[o + 10] = 1.0
++	buf[o + 12] = 1.0
++	buf[o + 13] = 1.0
++	buf[o + 14] = 1.0
++	buf[o + 15] = 1.0
++	buf[o + 16] = g
++	buf[o + 17] = u
++	buf[o + 18] = sd
++	buf[o + 19] = jt
++
++
++func _write_core() -> void:
++	var n: int = mini(int(VfxBlastCloud.p("core_sprites")), CORE_CAP - 4)
++	for i in range(n):
++		_write(_cbuf, i, 3.0, (float(i) + VfxTremor.hash01(i, 301)) / float(n), VfxTremor.hash01(i, 302), VfxTremor.hash01(i, 303))
++	for i in range(4):
++		_write(_cbuf, n + i, 4.0, (float(i) + 0.5) / 4.0, VfxTremor.hash01(i, 304), VfxTremor.hash01(i, 305))
++	core.multimesh.buffer = _cbuf
++	_core_n = n + 4
++
++
++var _core_n: int = 0
++
++
++## cam_x: this pane's wrapped camera x. The latest landed cloud is drawn.
++func update(hub: VfxHub, _host: SimHost, cam_x: float) -> void:
++	var bc: VfxBlastCloud = hub.blastcloud
++	var r = null
++	for run in bc.runs:
++		if bc.now >= int(run["land"]) and bool(run["asked"]):
++			r = run
++	if r == null:
++		multimesh.visible_instance_count = 0
++		core.multimesh.visible_instance_count = 0
++		count = 0
++		return
++	var t: float = bc.age_s(r)
++	if t > float(VfxBlastCloud.p("life_s")) + 0.5:
++		multimesh.visible_instance_count = 0
++		core.multimesh.visible_instance_count = 0
++		count = 0
++		return
++	var ox: float = SimWrap.sdx(cam_x, float(r["x"]))
++	far = absf(ox) > float(VfxBlastCloud.p("far_distance"))
++	var n: int = sprites_for(hub.quality, far)
++	var sig: int = n * 2 + (1 if far else 0)
++	if sig != _sig:
++		_sig = sig
++		var lay: Array = layout(n)
++		for i in range(lay.size()):
++			_write(_buf, i, float(lay[i][0]), float(lay[i][1]), float(lay[i][2]), float(lay[i][3]))
++		multimesh.buffer = _buf
++	count = n
++	multimesh.visible_instance_count = n
++	var sc: float = VfxBlastCloud.scale_of(float(r["amount"]))
++	var m: ShaderMaterial = material_override
++	var cm: ShaderMaterial = core.material_override
++	var org := Vector2(ox, float(r["gy"]))
++	var sk: float = float(VfxBlastCloud.p("far_size_k")) if far else 1.0
++	for mm in [m, cm]:
++		mm.set_shader_parameter("age", t)
++		mm.set_shader_parameter("origin", org)
++		mm.set_shader_parameter("scale", sc)
++		mm.set_shader_parameter("size_k", sk)
++		mm.set_shader_parameter("lit", 1.0 if bool(r["ok"]) else 0.0)
++	m.set_shader_parameter("body_a", VfxBlastCloud.body_alpha(t))
++	cm.set_shader_parameter("light", bc.light(r))
++	cm.set_shader_parameter("core_radius", float(VfxBlastCloud.p("core_radius_k")) * VfxBlastCloud.cap_major(1.0e9, sc))
++	core.multimesh.visible_instance_count = _core_n if bc.light(r) > 0.001 else 0
+--- a/render/vfx/cloud_view.gd.uid
++++ b/render/vfx/cloud_view.gd.uid
+@@ -0,0 +1 @@
++uid://bjxva06a5rn5s
+--- a/render/vfx/shaders/cloud.gdshader
++++ b/render/vfx/shaders/cloud.gdshader
+@@ -0,0 +1,36 @@
++// The blast cloud's body (docs/vfx/catastrophe-plan.md section 2): stem, rolling cap and ground dust wall as one MultiMesh of billboards whose positions are closed-form curves of the cloud's age
++// (cloud_curves.gdshaderinc), so it has no state and one draw call. Alpha-blended smoke with a billowy noise-broken edge, never a hard outline and never a clean arc (c06: no dome of light, no ring).
++// The instance transforms are all identity and never change; INSTANCE_CUSTOM is (group, u, seed, jitter). Fire colours fade to smoke by heat; the fireball's light is cloud_core.gdshader's.
++shader_type spatial;
++render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
++
++#include "res://render/vfx/shaders/cloud_curves.gdshaderinc"
++
++uniform float body_a = 0.0;            // the body's opacity now (blast_cloud.gd's body_alpha): in, held, out
++
++varying vec4 v_col;
++varying float v_sd;
++
++void vertex() {
++	vec2 c;
++	vec2 sz;
++	float heat;
++	float shade;
++	float z;
++	place(INSTANCE_CUSTOM.x, INSTANCE_CUSTOM.y, INSTANCE_CUSTOM.z, INSTANCE_CUSTOM.w, c, sz, heat, shade, z);
++	VERTEX = vec3(c + VERTEX.xy * max(sz, vec2(1.0)), z);
++	float g = INSTANCE_CUSTOM.x;
++	float per = g < 0.5 ? 0.9 : (g < 1.5 ? 1.0 : 0.6);
++	float a = body_a * per * (0.55 + 0.45 * INSTANCE_CUSTOM.w);
++	v_col = vec4(ramp(heat) * shade, a);
++	v_sd = INSTANCE_CUSTOM.z;
++}
++
++void fragment() {
++	vec2 p = UV * 2.0 - 1.0;
++	float n = 0.55 * vnoise(p * 2.0 + vec2(v_sd * 7.1, v_sd * 3.7)) + 0.45 * vnoise(p * 5.5 + vec2(v_sd * 2.3, v_sd * 9.9));
++	float r = length(p) + (n - 0.5) * 0.75;
++	float a = 1.0 - smoothstep(0.15, 1.0, r);
++	ALBEDO = v_col.rgb;
++	ALPHA = v_col.a * a;
++}
+--- a/render/vfx/shaders/cloud.gdshader.uid
++++ b/render/vfx/shaders/cloud.gdshader.uid
+@@ -0,0 +1 @@
++uid://p7bslgdncf50
+--- a/render/vfx/shaders/cloud_core.gdshader
++++ b/render/vfx/shaders/cloud_core.gdshader
+@@ -0,0 +1,56 @@
++// The blast cloud's fireball (docs/vfx/catastrophe-plan.md section 2.1): a lumpy additive core inside the stem's base and the cap's lower third, and a low glow on the crater floor. It is the
++// ONE catastrophe light event: its brightness is `light`, the envelope the flash register granted (rise over at least 0.3 s, fall over at least 1 s, one a 2 s, a calm form), and 0 when it
++// refused it. The core is a cluster of noise-broken blobs, never a hemisphere and never a ring (c06); its radius caps at 0.35 of the cap's major radius. Additive, behind the fighters' plane.
++shader_type spatial;
++render_mode unshaded, cull_disabled, blend_add, depth_draw_never;
++
++#include "res://render/vfx/shaders/cloud_curves.gdshaderinc"
++
++uniform float light = 0.0;             // the granted envelope times its peak, 0 to 1
++uniform float core_radius = 910.0;     // the core's radius at full growth, in units
++uniform float core_alpha = 0.55;
++
++varying vec4 v_col;
++varying float v_sd;
++
++void vertex() {
++	float g = INSTANCE_CUSTOM.x;
++	float u = INSTANCE_CUSTOM.y;
++	float sd = INSTANCE_CUSTOM.z;
++	float jt = INSTANCE_CUSTOM.w;
++	float t = max(age, 0.0);
++	float H = height_max * scale * (1.0 - exp(-t / height_tau));
++	float grow = 1.0 - exp(-t / 1.0);
++	float Rc = core_radius * grow;
++	vec2 c;
++	vec2 sz;
++	float heat;
++	float z = -10.0;
++	if (g < 3.5) {
++		// a piece of the fireball: scattered inside a lumpy cluster that lifts with the stem's base
++		float ang = 6.2831853 * fract(sd * 3.7 + u);
++		float rr = Rc * 0.6 * fract(jt * 5.3 + u * 2.1);
++		c = vec2(origin.x + cos(ang) * rr * 1.2, origin.y + min(H * 0.12, 900.0 * scale) + sin(ang) * rr * 0.7 + Rc * 0.25);
++		sz = vec2(Rc * (0.55 + 0.5 * jt)) * 2.0;
++		heat = exp(-t / heat_tau_core) * (0.75 + 0.25 * jt);
++	} else {
++		// the crater-floor glow: wide and flat along the ground
++		c = vec2(origin.x + (u - 0.5) * Rc * 3.0, origin.y + 30.0 * scale);
++		sz = vec2(Rc * (1.2 + 0.8 * jt), Rc * 0.28);
++		heat = exp(-t / heat_tau_core) * 0.7;
++		z = -9.0;
++	}
++	VERTEX = vec3(c + VERTEX.xy * max(sz, vec2(1.0)), z);
++	float a = light * core_alpha * (g < 3.5 ? 1.0 : 0.6);
++	v_col = vec4(ramp(0.7 + 0.3 * heat) * 1.0, a);
++	v_sd = sd;
++}
++
++void fragment() {
++	vec2 p = UV * 2.0 - 1.0;
++	float n = 0.55 * vnoise(p * 2.0 + vec2(v_sd * 5.1, v_sd * 8.7)) + 0.45 * vnoise(p * 4.5 + vec2(v_sd * 1.9, v_sd * 6.3));
++	float r = length(p) + (n - 0.5) * 0.8;
++	float a = 1.0 - smoothstep(0.1, 1.0, r);
++	ALBEDO = v_col.rgb;
++	ALPHA = v_col.a * a * a;
++}
+--- a/render/vfx/shaders/cloud_core.gdshader.uid
++++ b/render/vfx/shaders/cloud_core.gdshader.uid
+@@ -0,0 +1 @@
++uid://doqclmy074qj
+--- a/render/vfx/shaders/cloud_curves.gdshaderinc
++++ b/render/vfx/shaders/cloud_curves.gdshaderinc
+@@ -0,0 +1,91 @@
++// The blast cloud's curves (docs/vfx/catastrophe-plan.md section 2; render/vfx/blast_cloud.gd mirrors them on the CPU): a sprite's place, size, heat and shade as a closed-form function of the
++// cloud's age and the sprite's four constants, so the cloud has no state on either side and the CPU writes only the uniforms below. INSTANCE_CUSTOM = (group, u, seed, jitter): group 0 stem, 1 cap
++// (a rolling torus seen from the side), 2 ground dust wall, 3 fireball core piece, 4 crater-floor glow; u runs 0 to 1 along the group.
++
++uniform float age = 0.0;               // seconds since landing, from the sim's tick (never wall time); negative before it lands
++uniform vec2 origin = vec2(0.0);       // the blast's x (view-relative) and the ground's y there at landing
++uniform float scale = 1.0;             // the blast's size over 3,000
++uniform float size_k = 1.0;            // the impostor's sprite scale (the far ladder step draws fewer, larger sprites)
++uniform float height_max = 14000.0;
++uniform float height_tau = 6.5;
++uniform float cap_major = 2600.0;
++uniform float cap_major_tau = 8.0;
++uniform float cap_minor = 1500.0;
++uniform float cap_minor_rise = 5.0;
++uniform float cap_omega = -0.35;
++uniform float stem_w_top = 260.0;
++uniform float stem_w_base = 760.0;
++uniform float skirt_reach = 4500.0;
++uniform float skirt_tau = 3.2;
++uniform float skirt_h_lo = 300.0;
++uniform float skirt_h_hi = 600.0;
++uniform float heat_tau_core = 4.0;
++uniform float heat_tau_stem = 2.2;
++
++// c: the sprite's centre, sz: its size in units, heat: 0 to 1, shade: a brightness factor for the roll's near and far sides, z: its depth (all behind the fighters' plane).
++void place(float g, float u, float sd, float jt, out vec2 c, out vec2 sz, out float heat, out float shade, out float z) {
++	float t = max(age, 0.0);
++	float H = height_max * scale * (1.0 - exp(-t / height_tau));
++	heat = 0.0;
++	shade = 1.0;
++	z = -12.0;
++	if (g < 0.5) {
++		float h = u * 0.8 * H;
++		float wv = mix(stem_w_top, stem_w_base, pow(1.0 - u, 2.0)) * scale * clamp(0.35 + t / 2.0, 0.0, 1.0);
++		float sway = 0.06 * wv * sin(h * 0.0007 + sd * 6.2831853 + t * 0.4);
++		c = vec2(origin.x + sway, origin.y + h);
++		sz = vec2(wv * 2.4, wv * 2.0) * (0.85 + 0.3 * jt) * size_k;
++		heat = exp(-t / heat_tau_stem) * (1.0 - 0.7 * u);
++	} else if (g < 1.5) {
++		float R = cap_major * scale * (1.0 - exp(-t / cap_major_tau));
++		float r = cap_minor * scale * min(1.0, t / cap_minor_rise);
++		float phi = 6.2831853 * u + cap_omega * t;
++		float mu = 6.2831853 * fract(7.0 * u + sd) - 0.5 * cap_omega * t;
++		float ring = R + r * cos(mu);
++		c = vec2(origin.x + ring * cos(phi), origin.y + H * 0.9 + r * sin(mu) * 0.8);
++		float rad = r * (0.85 + 0.3 * jt);
++		sz = vec2(rad * 2.0, rad * 1.7) * size_k;
++		shade = 0.85 + 0.15 * sin(phi);
++		heat = exp(-t / heat_tau_core) * (0.3 + 0.7 * (0.5 - 0.5 * sin(mu)));
++	} else {
++		float s = skirt_reach * scale * (1.0 - exp(-t / skirt_tau));
++		float hh = mix(skirt_h_lo, skirt_h_hi, jt) * scale * min(1.0, t / 1.5);
++		c = vec2(origin.x + (2.0 * u - 1.0) * s, origin.y + hh * 0.5);
++		sz = vec2((s * 0.14 + 220.0 * scale) * (0.8 + 0.4 * sd), hh * 1.2 + 40.0) * size_k;
++		z = -8.0;
++	}
++}
++
++float h21(vec2 p) {
++	p = fract(p * vec2(123.34, 456.21));
++	p += dot(p, p + 45.32);
++	return fract(p.x * p.y);
++}
++
++float vnoise(vec2 p) {
++	vec2 i = floor(p);
++	vec2 f = fract(p);
++	f = f * f * (3.0 - 2.0 * f);
++	return mix(mix(h21(i), h21(i + vec2(1.0, 0.0)), f.x), mix(h21(i + vec2(0.0, 1.0)), h21(i + vec2(1.0, 1.0)), f.x), f.y);
++}
++
++// Fire into smoke by heat (blast_cloud.gd's ramp): hot, amber, ember brown, smoke. `lit` 0 holds it under the white-amber end.
++uniform vec4 colour_hot : source_color = vec4(1.0, 0.94, 0.78, 1.0);
++uniform vec4 colour_amber : source_color = vec4(0.94, 0.66, 0.31, 1.0);
++uniform vec4 colour_ember : source_color = vec4(0.60, 0.42, 0.24, 1.0);
++uniform vec4 colour_smoke : source_color = vec4(0.37, 0.35, 0.33, 1.0);
++uniform float lit = 1.0;
++
++vec3 ramp(float h) {
++	float hh = clamp(h, 0.0, 1.0);
++	if (lit < 0.5) {
++		hh = min(hh, 0.7);
++	}
++	if (hh >= 0.7) {
++		return mix(colour_amber.rgb, colour_hot.rgb, (hh - 0.7) / 0.3);
++	}
++	if (hh >= 0.4) {
++		return mix(colour_ember.rgb, colour_amber.rgb, (hh - 0.4) / 0.3);
++	}
++	return mix(colour_smoke.rgb, colour_ember.rgb, hh / 0.4);
++}
+--- a/render/vfx/shaders/cloud_curves.gdshaderinc.uid
++++ b/render/vfx/shaders/cloud_curves.gdshaderinc.uid
+@@ -0,0 +1 @@
++uid://b2431j6t33org
+--- a/docs/vfx/blast-cloud.md
++++ b/docs/vfx/blast-cloud.md
+@@ -0,0 +1,55 @@
++# The blast cloud (catastrophe tier, step 3)
++
++Owner: VFX Director. 2026-10-18. Step 3 of `docs/vfx/catastrophe-plan.md` (§2), built in scratch and parked (`docs/vfx/pending/blast-cloud/`), on top of `fbfdf182` (the `cat` class, the tremor's dust). Legal c01 to c07 and run-mode §3.2 bind it. **Inert until a `blast_cloud` cue exists** (Audio's list: `x`, `y`, `amount` the blast's size, 3,000, and `n` the tick it lands); a scratch scene injects it for the measurements below. Not a clearance.
++
++## What it is
++
++A tier-5 detonation's stem-and-cap cloud, with a fireball inside it that is **the one catastrophe light event** (the `cat` class). Our own blast cloud (c07): no word, sign, siren or countdown; **no ring** leaving the blast (the ground wave is a dark dust wall); **no dome of light** (the glow is a lumpy cluster of noise-broken blobs inside the stem and cap); the boss never charges a sphere, and nothing here has a pose to: the wind-up is the fighter's own detonation cue.
++
++| Piece | File | What |
++| :--- | :--- | :--- |
++| Rules and state | `render/vfx/blast_cloud.gd` (`VfxBlastCloud`) | the cue's runs (at most 2), the landing, the one ask of the register, the light envelope, the CPU mirrors of the curves and the ramp |
++| The body | `render/vfx/cloud_view.gd` (`VfxCloudView`) + `shaders/cloud.gdshader` | **stateless**: one MultiMesh of up to 400 billboards, all identity transforms, every position a closed-form curve of the cloud's age in the vertex shader (`cloud_curves.gdshaderinc`); the CPU writes a handful of uniforms a frame and rewrites the buffer only when the sprite budget steps |
++| The fireball | the view's `core` MultiMesh + `shaders/cloud_core.gdshader` | 12 pieces and 4 crater-floor glows, additive, one draw call; brightness is the granted envelope |
++| Numbers | `data/vfx/catastrophe.json` (`blast_cloud`) + `tools/schemas/vfx-catastrophe.schema.json` | every number below; the built-in defaults are held equal by a check |
++| Wiring | `vfx_hub.gd` (`blastcloud`, `ash`), `trail_view.gd` (`cloud_view`), `render/core/warmup.gd` (two lines) | the hub steps it inside `catastrophe_enabled`; two draw calls per pane |
++
++## The curves (the plan's)
++
++`t` seconds after landing; `scale` is the blast's size over 3,000.
++
++- **Stem:** its top rises to `14,000 x scale` units, `1 - e^(-t/6.5)` of it (95% at 20 s). Its sprites stand along 80% of that height, a flared base (260 to 760 units wide), a sway of at most 6% of the width.
++- **Cap:** a rolling torus seen from the side: ring `2,600 x scale (1 - e^(-t/8))`, thickness `1,500 x scale x min(1, t/5)`, turning at -0.35 rad/s, its far side 15% darker.
++- **Ground wall, not a ring:** `4,500 x scale (1 - e^(-t/3.2))` each way, 300 to 600 units high, a dust wall with a ragged top.
++- **Colour:** fire into smoke by heat (white-amber, amber, ember brown, smoke) with `heat = e^(-t/tau)`, tau 4 s in the cap's core and 2.2 s in the stem; **no colour of the ramp is red: the largest R/(R+G+B) is 0.65, on the stored values or the linear ones** (the analyser's line is 0.8).
++- **Body opacity:** in over 1 s, held at 0.85, out over the last 8 s of its 40 s life; the steepest tick is 0.021.
++
++## The light (c01, c02, c04, c05)
++
++The fireball is **asked once, at landing**, as `cat_blast` through `ask_cat`, with its glow's area at peak (the core radius, at most 0.35 of the cap's ring, 910 units at 3,000, against the 21,824 px threshold: weight 1 at fight framing). The registry gives it a rise of **0.6 s (calm 1.0 s)**, a fall of **2.4 s (calm 3.6 s)**, one per 2 s across the screen, a peak scaled by `1 - 0.35 ash` (`hub.ash`, the sim's darkening when it exists), and in the calm form (Reduce flashing, the game's default) a peak x0.6. A second cloud inside the gap **keeps its smoke and loses its light** (logged `cat_gap`), and the ramp is held at amber, never white. The light's steepest tick is 0.052 of its peak, a flash needing 0.1.
++
++## The ladder (the fill rate is the cost)
++
++| Level | Sprites | When |
++| :--- | ---: | :--- |
++| High | 400 (120 stem, 200 cap, 80 wall) | quality high |
++| Medium | 260 | quality medium |
++| Low | 140 | quality low (VFX's governor) |
++| Far | 24 larger sprites (x2.4) | the cloud more than 9,000 units from the camera: an impostor of its silhouette |
++
++Not built, from the plan: **the half-resolution pass** at low quality (the sprite count is the lever instead), the 8-tick hush before the blast, the ash-fall flecks (they read the sim's `ash`, which does not exist yet; `hub.ash` is the hook), and Camera's rule against a cut within 0.5 s of the peak (`cat_peak_near` is the query, Camera's to call). Only the latest landed cloud draws; an older one is retired at the second.
++
++## Measured (main e4e259cb + the parked patches, native checks and web clips, one capture at a time)
++
++- `effects_check` `_blast_cloud` passes: the data file against the defaults, the ladder, the layouts, the ramp (no red), the curves (monotone, arriving at their sizes), the body's fade, **no cue = nothing runs and the register is never asked**, no ask before landing, one ask at landing, the light's envelope and steepest tick, the refused second cloud (`cat_gap`), the cap on clouds, the calm form (peak 0.60, rise 62, fall 216 ticks), the ash scaling (0.65) and determinism.
++- **Flash clips** (a scratch scene: the city mash with a blast cloud cue at ticks 90, 140 (inside the gap) and 900, 1,200 ticks, 1024 by 768, the official analyser): **both modes PASS, primary 1, area-15% 1, higher threshold 1, stricter cross-check 1.5, red 0.**
++- **Collapse, both modes, with the code in and inert:** see the report (the numbers are in the EP's message).
++- **Look:** the cloud is huge. At fight framing, 700 units from the blast, the smoke wall crosses the screen from the right in about a second after landing, an ember-orange haze that cools to grey-brown over ten seconds and darkens the street and towers to a flat dusk; the fighters stay clear (the cloud stands behind their plane). It is a first version for Art and Camera to judge: from a wide framing it should read as a stem and cap, and nothing here sets a camera.
++- Cost: counts and estimates only (no timing was taken, the machine is shared): two draw calls per pane; at most 400 plus 16 instances; the fill rate of a close view is the known risk (the plan's estimate was 1.5 million blended fragments at 720p at high; unmeasured).
++
++## For the others
++
++- **Simulation:** the `blast_cloud` cue with `x`, `y`, `amount` and `n` (the tick it lands), and the world's `ash` (read-only); `hub.ash` is where I read it.
++- **Camera:** the cloud never needs a cut; a cut within 0.5 s of the light's peak is the registry's `cat_peak_near`.
++- **Rendering:** the two new shaders are in `RenderWarmup.SHADERS` in this patch (two lines in `render/core/warmup.gd`).
++- **Tools:** `vfx-catastrophe.schema.json` has a `blast_cloud` block now; its fixtures (one valid, three invalid: an `alpha_max` of 0.95, a `sprites` entry of 500, a `core_radius_k` of 0.5) are Tools'.
