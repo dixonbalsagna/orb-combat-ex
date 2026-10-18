@@ -1578,7 +1578,9 @@ func _panel_frame(S: SimState) -> Dictionary:
 	var dur: float = float(_pn["dur"])
 	var open: float = 1.0
 	if not still:
-		open = smoothstep(0.0, CamParams.PANEL_OPEN, t) * (1.0 - smoothstep(dur - CamParams.PANEL_CLOSE, dur, t))
+		var t_open: float = CamParams.PANEL_OPEN_REDUCED if flash_reduced else CamParams.PANEL_OPEN   # under Reduce flashing the wipe takes 0.3 s: an area step eased
+		var t_close: float = CamParams.PANEL_CLOSE_REDUCED if flash_reduced else CamParams.PANEL_CLOSE
+		open = smoothstep(0.0, t_open, t) * (1.0 - smoothstep(dur - t_close, dur, t))
 	var slot: int = int(_pn["slot"])
 	var rect: Rect2 = _panel_rect(int(_pn["band"]))
 	var ph: float = rect.size.y

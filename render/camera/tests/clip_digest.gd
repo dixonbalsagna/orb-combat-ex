@@ -14,6 +14,9 @@ var modes: Array = ["normal", "reduced"]
 var digest_path: String = "digest.txt"
 var panel_flash_off: String = "-"   # "-" the rig's default; "" none; or kind names joined by +
 var ticks_cap: int = 0
+var trace_from: int = -1
+var trace_to: int = -1
+var _prev_cam: Array = []
 
 
 func _initialize() -> void:
@@ -28,6 +31,10 @@ func _initialize() -> void:
 			digest_path = a.substr(6)
 		elif a.begins_with("--panel-flash-off="):
 			panel_flash_off = a.substr(18)
+		elif a.begins_with("--trace="):
+			var tp: PackedStringArray = a.substr(8).split("-")
+			trace_from = int(tp[0])
+			trace_to = int(tp[1])
 		elif a.begins_with("--ticks="):
 			ticks_cap = int(a.substr(8))
 	super._initialize()
@@ -84,4 +91,11 @@ func _digest_play(out: FileAccess, label: String, mode: String, sc: String, seed
 			var fr: SplitFrame = main.split_rig.current()
 			var h: int = hash([snappedf(fr.cam_x[0], 0.01), snappedf(fr.cam_y[0], 0.01), snappedf(fr.cam_z[0], 0.00001), snappedf(fr.cam_x[1], 0.01), snappedf(fr.cam_y[1], 0.01), snappedf(fr.cam_z[1], 0.00001), snappedf(fr.sep, 0.0001), snappedf(fr.e, 0.0001), fr.mode, fr.cut, fr.active, fr.panel.get("kind", ""), snappedf(float(fr.panel.get("open", 0.0)), 0.001)])
 			out.store_line("%s\t%s\t%d\t%d" % [label, mode, host.ticks, h])
+			if host.ticks >= trace_from and host.ticks <= trace_to:
+				var rg: SplitRig = main.split_rig
+				var tr: float = 0.0
+				if not _prev_cam.is_empty():
+					tr = sqrt(pow(SimWrap.sdx(float(_prev_cam[0]), fr.cam_x[0]), 2.0) + pow(fr.cam_y[0] - float(_prev_cam[1]), 2.0)) * fr.cam_z[0] / rg.vw + 0.5 * absf(log(fr.cam_z[0] / float(_prev_cam[2])))
+				_prev_cam = [fr.cam_x[0], fr.cam_y[0], fr.cam_z[0]]
+				print("TR %s %s t %d mode %s sep %.2f e %.2f solo %s/%d cut %s fade %.2f pn %s/%.2f cam %.0f,%.0f z %.3f travel %.4f st %s/%s" % [label, mode, host.ticks, fr.mode, fr.sep, fr.e, rg.solo_kind, rg.solo_slot, fr.cut, fr.fade, fr.panel.get("kind", "-"), float(fr.panel.get("open", 0.0)), fr.cam_x[0], fr.cam_y[0], fr.cam_z[0], tr, host.S.fighters[0].state, host.S.fighters[1].state])
 	_release_all()

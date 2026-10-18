@@ -43,6 +43,9 @@ var _panel_asked: bool = false
 var _panel_blocked: bool = false      # the flash register refused the strip now running: it is not drawn
 var _dip_prev: float = 0.0            # the last frame's fade (a safety cut's brightness dip)
 var _dip_ok: bool = true              # whether the dip now running was granted by the flash register
+var cut_dissolve: bool = true         # a cut under Reduce flashing or reduced motion is a cross-dissolve of CamParams.CUT_DISSOLVE_S (a build-time switch; false: the old dip)
+var _xf: TextureRect                  # the last picture before a cut, faded out over the new one
+var _xf_start: float = -1.0           # the rig's time (seconds) the dissolve began; -1 none
 
 
 func _init() -> void:
@@ -66,6 +69,13 @@ func _ready() -> void:
 	_solo.stretch_mode = TextureRect.STRETCH_SCALE
 	_solo.visible = false
 	add_child(_solo)
+	_xf = TextureRect.new()
+	_xf.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_xf.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_xf.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_xf.stretch_mode = TextureRect.STRETCH_SCALE
+	_xf.visible = false
+	add_child(_xf)
 	_panel_rect = TextureRect.new()
 	_panel_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_panel_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -271,6 +281,11 @@ func set_panel_mode(v: String) -> void:
 		main.split_rig.panel_mode = v if v in ["full", "still", "off"] else "full"
 
 
+## A cut under Reduce flashing or reduced motion cross-dissolves (default on); false keeps the old dip. Build-time switch.
+func set_cut_dissolve(on: bool) -> void:
+	cut_dissolve = on
+
+
 ## The strips (CamParams.PANEL_KINDS names) that do not open while Reduce flashing is on: ["signature"] by default, [] for the player's
 ## setting alone, all the names for none at all. A build-time switch, not a player option (docs/camera/panel-flash.md).
 func set_panel_flash_off(kinds: Array) -> void:
@@ -408,12 +423,40 @@ func _on_resized() -> void:
 		_mat.set_shader_parameter("res", size)
 
 
+## A cut under Reduce flashing or reduced motion is a cross-dissolve, not a step (Legal: a whole-frame cut counts as a whole-screen
+## change): the picture on the screen when the cut frame arrives (the root viewport's last drawn frame, which is the frame before)
+## is copied once and faded out over the new one in CamParams.CUT_DISSOLVE_S of the rig's sim time. A host that draws nothing (a headless
+## test) has no image: the old dip stays. Returns whether a dissolve is showing, so the dip stays out of it.
+func _dissolve(fr: SplitFrame, had_prev: bool) -> bool:
+	if _xf == null or main == null or main.host == null:
+		return false
+	var now_t: float = float(main.split_rig.time)   # the rig's sim seconds (a tick-stepped capture draws one frame a tick)
+	if cut_dissolve and had_prev and fr.cut and (reduced_motion or flash_reduced):
+		var img: Image = get_viewport().get_texture().get_image()
+		if img != null and not img.is_empty():
+			img.convert(Image.FORMAT_RGB8)   # the root's image may carry no alpha worth keeping
+			_xf.texture = ImageTexture.create_from_image(img)
+			_xf_start = now_t
+	if _xf_start < 0.0:
+		return false
+	var a: float = 1.0 - (now_t - _xf_start) / CamParams.CUT_DISSOLVE_S
+	if a <= 0.0 or a > 1.0:
+		_xf.visible = false
+		_xf_start = -1.0
+		return false
+	_xf.visible = true
+	_xf.modulate = Color(1.0, 1.0, 1.0, a)
+	return true
+
+
 ## Called by main once per displayed frame, after the panes are drawn: pane 1 only renders while it shows, and the
 ## mask follows the divider. Pane 0 is always drawn (it applies the world's changes).
 func present(fr: SplitFrame) -> void:
+	var had_prev: bool = last_frame != null
 	last_frame = fr
 	if _mat == null:
 		return
+	var xf_on: bool = _dissolve(fr, had_prev)
 	var v0 = viewports[0]
 	var v1 = viewports[1]
 	# One pane on the screen: draw its texture as it is, with no mask pass. Two: the mask blends them.
@@ -438,7 +481,7 @@ func present(fr: SplitFrame) -> void:
 	_mat.set_shader_parameter("gap", fr.gap)
 	_mat.set_shader_parameter("gap_alpha", fr.line_alpha)
 	var depth: float = CamParams.REDUCED_CUT_DIM if (reduced_motion or flash_reduced) else CamParams.CUT_DIM
-	var dim: float = depth * _dip_gate(fr.fade, depth)
+	var dim: float = 0.0 if xf_on else depth * _dip_gate(fr.fade, depth)
 	_mat.set_shader_parameter("dim0", dim)
 	_mat.set_shader_parameter("dim1", dim)
 	_solo.modulate = Color(1.0 - dim, 1.0 - dim, 1.0 - dim)

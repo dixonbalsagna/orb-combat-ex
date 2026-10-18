@@ -107,6 +107,24 @@ func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int
 	if main.split_view != null and _page_flag("mergezoom"):
 		main.split_view.set_merge_zoom_limit(true)
 		applied["mergezoom"] = true
+	# Camera's analysis switches (docs/camera/panel-flash.md section 7): the page's `nocam=1` (one view from the reference camera: the compositor detached, no dip, no strip, no cut, no dissolve),
+	# `nopanel=1` (no strip), `nodissolve=1` (a cut as it was), `pfo=none` or a kind list joined by + (the strips that stay shut under Reduce flashing), `mlookoff=1` (no merge lookahead). Reported in `switches`.
+	if main.split_view != null:
+		if _page_flag("nopanel"):
+			main.ui_hud.opts["camera_panels"] = "off"
+			applied["nopanel"] = true
+		if _page_flag("nodissolve"):
+			main.split_view.set_cut_dissolve(false)
+			applied["nodissolve"] = true
+		if _page_kv("pfo") != "":
+			main.split_view.set_panel_flash_off([] if _page_kv("pfo") == "none" else Array(_page_kv("pfo").split("+")))
+			applied["pfo"] = _page_kv("pfo")
+		if _page_flag("mlookoff"):
+			main.split_view.set_merge_lookahead(false)
+			applied["mlookoff"] = true
+		if _page_flag("nocam") and main.split_view.is_attached():
+			main.split_view.detach()
+			applied["nocam"] = true
 	JavaScriptBridge.eval("window.__flashcap.switches = %s;" % JSON.stringify(applied), true)
 	main.started = true              # the demo's prompt is not part of a worst case
 	host.vfx.auto_quality = false
@@ -129,6 +147,14 @@ func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int
 
 
 ## A switch of the page's own URL (`budget=1`, `hold=1`). main.parse_args() keeps only the keys of main.URL_ARGS, so the hook reads location.search itself.
+func _page_kv(key: String) -> String:
+	for pair in str(JavaScriptBridge.eval("location.search", true)).trim_prefix("?").split("&", false):
+		var kv: PackedStringArray = pair.split("=", true, 1)
+		if kv[0] == key and kv.size() > 1:
+			return kv[1]
+	return ""
+
+
 func _page_flag(key: String) -> bool:
 	for pair in str(JavaScriptBridge.eval("location.search", true)).trim_prefix("?").split("&", false):
 		var kv: PackedStringArray = pair.split("=", true, 1)

@@ -41,3 +41,22 @@ The lookahead (febcc890, on by default) changes the camera of exactly one requir
 By camera digest (reduced mode, rule on against off) the rule changes the strips, and only the strips (the main view is the same), of 15 of the 19 clips tried: ai 4, 8 PR, 9, 39, 43, 104, 106, 107 RIVAL, clash, clashcity, collapse, launchai, rushcity, signature, signaturecity. Unchanged: ai 7, mash, mashcity, transform. Normal mode is unchanged for all (the rule acts only while Reduce flashing is on), so the normal readings of Tools' re-read stand. Tools' full set in reduced mode needs a re-read: only PR-8, ai 43, ai 39 and collapse have been captured here (collapse reduced 2 / 2.5 / 0.5 PASS with the rule and as before; ai 39 and PR-8 in section 1). Gates on main 2ef3ab5a with the change: split sweep (two new rows, real match 3 included), seam sweep, pane check, determinism plain and --intro: all pass.
 
 The ai 39 baseline asked for (merge lookahead off, normal, 3,600 ticks) reads 2 / 2.5 / 2 PASS, the same as Tools' re-read with it on: the camera is the same tick for tick in both settings and both modes.
+
+## 7. Round two (Legal's note, 2026-10-17): dissolves, a slower strip wipe, and switches for analysis
+
+Parked as `docs/camera/pending/cut-dissolve.patch` (applies to e8d91dea) and `docs/camera/pending/flash-capture-camera-switches.patch` (the capture hook; Tools'/Rendering's file).
+
+- **A cut under Reduce flashing or reduced motion is a cross-dissolve of 0.4 s** (`CamParams.CUT_DISSOLVE_S`; `SplitView.cut_dissolve`, `set_cut_dissolve(false)` keeps the old dip). The compositor copies the picture on the screen when the cut frame arrives (the root viewport's last drawn frame) once, and fades it out over the new one in the rig's sim time; the dip stays out of a dissolve. The old "dissolve" of reduced motion was only a longer dip (the picture still stepped from A to B in one tick). Normal mode is unchanged. A host that draws nothing (the headless tests) has no image and keeps the dip. Traps found: the copy must be converted to RGB8 (the root's alpha is not worth keeping) and the dissolve clock is the rig's `time`, not `host.ticks` plus the frame fraction (the latter read the same in a debug print and did not drive the fade).
+- **The strips wipe open and shut over 0.3 s while Reduce flashing is on** (`PANEL_OPEN_REDUCED`, `PANEL_CLOSE_REDUCED`; 0.08 and 0.12 s otherwise). It applies to the strips that remain (clash, riposte, finisher, crippling, KO, double); the signature strip stays shut under Reduce flashing (section 2).
+- **Switches** (page, in the hook patch): `nocam=1` (the compositor detached: one view from the reference camera, no dip, strip, cut or dissolve), `nopanel=1`, `nodissolve=1`, `pfo=none` or kinds joined by `+` (the strips shut under Reduce flashing), `mlookoff=1`; each is reported in `switches`.
+- **The sweep of collapse, ticks 108 to 130, is left as it is.** The camera there is the pair's closing zoom, 0.5 e-folds a second with a travel of at most 0.015 a tick (half the reduced bound of 0.03); collapse reads 2 / 2.5 / 0.5 in both modes. The merge zoom limit would slow it (0.21 e-folds a second) but it was measured to cost ai 12345's re-merge (a pass to 3 / 4 / 2.5) and is the crawl Orb's playtest found; I did not turn it on.
+
+Measured (main with e8d91dea, the dissolve and the 0.3 s wipe, reduced, tick-stepped captures on the fixed hook):
+
+| clip | before (Tools, ff68e994, or main) | now |
+| :--- | :--- | :--- |
+| blastdummy RIVAL,REFERENCE (420 ticks) | 3 / 3.5 / 3 FAIL | 1.5 / 3 / 1.5 PASS (the 121,000-px cut at 301 is 13,000 a tick) |
+| ai 43 (2,750 ticks) | 3.5 / 3.5 / 2 FAIL | 2.5 / 2.5 / 1.5 PASS |
+| ai 39 (1,750 ticks) | 3 / 3 / 3 (4 / 4 / 4 on main) | 1.5 / 1.5 / 1.5 PASS |
+| ai PROTAGONIST,REFERENCE 8 (1,000 ticks) | 4 / 4.5 / 3.5 FAIL | 3 / 3 / 2 over the gate, not over 3 |
+| collapse (1,500 ticks) | 2 / 2.5 / 0.5 | 2 / 2.5 / 0.5 |
