@@ -524,6 +524,36 @@
                     "tech"
                   ],
                   "additionalProperties": false
+                },
+                "anywhere": {
+                  "type": "object",
+                  "description": "The AI's launcher with launch anywhere on.",
+                  "properties": {
+                    "launcher": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of openings at which it launches."
+                    },
+                    "inString": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of hard-to-answer moments in its string at which it launches."
+                    },
+                    "answer": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of launchers that are not sure it answers, by a guess made at a landed blow of his before it (it never reacts to one)."
+                    }
+                  },
+                  "required": [
+                    "launcher",
+                    "inString",
+                    "answer"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "description": "The AI's brawl play at this level.",
@@ -1008,6 +1038,36 @@
                     "tech"
                   ],
                   "additionalProperties": false
+                },
+                "anywhere": {
+                  "type": "object",
+                  "description": "The AI's launcher with launch anywhere on.",
+                  "properties": {
+                    "launcher": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of openings at which it launches."
+                    },
+                    "inString": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of hard-to-answer moments in its string at which it launches."
+                    },
+                    "answer": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of launchers that are not sure it answers, by a guess made at a landed blow of his before it (it never reacts to one)."
+                    }
+                  },
+                  "required": [
+                    "launcher",
+                    "inString",
+                    "answer"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "description": "The AI's brawl play at this level.",
@@ -1490,6 +1550,36 @@
                     "catch",
                     "pummel",
                     "tech"
+                  ],
+                  "additionalProperties": false
+                },
+                "anywhere": {
+                  "type": "object",
+                  "description": "The AI's launcher with launch anywhere on.",
+                  "properties": {
+                    "launcher": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of openings at which it launches."
+                    },
+                    "inString": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of hard-to-answer moments in its string at which it launches."
+                    },
+                    "answer": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of launchers that are not sure it answers, by a guess made at a landed blow of his before it (it never reacts to one)."
+                    }
+                  },
+                  "required": [
+                    "launcher",
+                    "inString",
+                    "answer"
                   ],
                   "additionalProperties": false
                 }

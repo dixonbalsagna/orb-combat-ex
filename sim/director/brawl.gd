@@ -692,7 +692,7 @@ static func press(S: SimState, f, st: int, energy: bool = false) -> void:
 	# A B kept for the launcher goes before a light pressed after it: mashing on after the B doesn't lose the launch
 	# (brawl-second-pass.md section 3, the route to teach). His line free, the B is thrown now and the light is kept
 	# behind it; not free yet, the light is dropped, and says so.
-	if st == 0 and (_g(f, HELD_P) & 7) == 3 and _g(f, LC_UNTIL) > 0:
+	if st == 0 and (_g(f, HELD_P) & 7) == 3 and (_g(f, LC_UNTIL) > 0 or (anywhere() and _linked(S, f, _g(f, HELD_AT)))):
 		if _free(S, f):
 			_throw(S, f, 2, _g(f, HELD_AT), false, false, (_g(f, HELD_P) & 8) != 0)
 		else:
@@ -737,7 +737,10 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		else:
 			f.ki -= ep
 			paid = true
-	var lau: bool = st == 2 and not paid and _g(f, LC_UNTIL) > 0 and (o.stunTicks > 0 or S.tick <= _g(f, LC_UNTIL)) and f.ki >= float(c.launcher.ki)
+	var lcOpen: bool = _g(f, LC_UNTIL) > 0 and (o.stunTicks > 0 or S.tick <= _g(f, LC_UNTIL))   # an opening: the window around the close
+	var any: bool = anywhere()   # launch anywhere (the thirteenth round), behind its switch
+	var lau: bool = st == 2 and not paid and (lcOpen or (any and _linked(S, f, p))) and not (any and _bMash(f, p)) and f.ki >= float(c.launcher.ki)
+	var safety: int = _safety(S, f, o) if (lau and any) else 0   # 1 sure, 2 hard to answer, 3 answerable
 	if st > 0 and not paid:
 		# A press he can't pay for throws the strongest blow he can pay for (brawl-second-pass.md section 8): a B becomes
 		# a medium, and with nothing a Y or a B becomes a light. It has no cue of its own: the blow's cue says what he threw.
@@ -798,7 +801,10 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		if energy:
 			worth = float(er.blast.worth)
 		elif lau:
-			worth = float(c.launcher.worth) if launcherRest(S, o) == 0 else float(c.heavy.worth)   # a resting launcher is the hammer: a full heavy on the launcher's wind-up
+			if any:
+				worth = float(c.launcher.worth) * _power(S, f, o, safety)   # launch anywhere: the launching blow's worth is worth x power
+			else:
+				worth = float(c.launcher.worth) if launcherRest(S, o) == 0 else float(c.heavy.worth)   # a resting launcher is the hammer: a full heavy on the launcher's wind-up
 		elif st == 1 and inFl:
 			worth = clampf(float(w.rate) * float(gapW), float(w.rate) * float(w.gap[0]), float(w.worth))   # a medium flurry's blow, by its gap
 		stop = int(c.hitstop.heavy if st == 2 else c.hitstop.medium)
@@ -861,9 +867,14 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 	args["gap"] = snappedf(gapBh, 0.01)
 	if lau:
 		args["launcher"] = true
-		args["ready"] = launcherRest(S, o) == 0   # a launch when one is ready on him; while the launcher rests, the hammer
+		args["ready"] = any or launcherRest(S, o) == 0   # a launch when one is ready on him; while the launcher rests, the hammer (launch anywhere: always ready)
 		if not args["ready"]:
 			args["hammer"] = true   # it always lands, it staggers him in place, and the brawl goes on
+		if any:
+			args["safety"] = safety
+			args["power"] = _power(S, f, o, safety)   # string x state x timing; wounds at its landing, freshness at its send
+			if safety != 1:
+				o2["weighed"] = true   # the AI cannot react to a launcher in time: it answers only by a guess made at the landing before it (_laAnswerPlan)
 		args["aim"] = _quarter(f, o)   # the stick's quarter, read once, at the press
 	if rip > 0 or (lau and o.stunTicks > 0):   # a launcher inside the stagger always lands; after it, he can answer it
 		args["sure"] = true
@@ -886,8 +897,14 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 	if piece == "":
 		piece = _piece(S, f, st, toward, cell, _sendOf(int(args.get("aim", 0))) if lau else "")
 	_s(f, BOLT_N, (_g(f, BOLT_N) + 1) if bolt else 0)
+	if lau and any:
+		var ep: String = _ender(S, f, int(args.get("aim", 0)))
+		if ep != "":
+			piece = ep   # Combat's enders: the launch that follows his last blow's family and path
 	if piece != "":
 		args["piece"] = piece
+		if any:
+			_ls(f, LA_FP, _famPath(piece))
 	# Two light blows that land within tradeTicks of each other are a trade: both land (melee-press-feel.md section 7).
 	# Each beat says so, and names the other's piece, so the pair can be staged as one move.
 	if not wound and _g(o, LINE) == 1 and not _wound(_g(o, KIND)) and absi(_g(o, CONTACT) - (now + lead)) <= int(c.tradeTicks):
@@ -914,8 +931,9 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 	e.amount = float(p)
 	e.dur = float(lead)
 	e.k = 1.0 if inFl else 0.0
+	if lau and (safety == 1 or not any):
+		o.stunTicks = maxi(o.stunTicks, lead + 2)   # the stagger holds until it lands (launch anywhere: only a sure launcher's, so one that isn't sure can be answered)
 	if lau:
-		o.stunTicks = maxi(o.stunTicks, lead + 2)   # the stagger holds until it lands
 		_lcClose(S, f, "used")
 	if energy:
 		var en = _ev(S, f, "energy_reach", called)
@@ -1200,7 +1218,7 @@ static func contact(S: SimState, ex, b) -> void:
 	var oWinding: bool = _windOn(o)
 	var armour: bool = false
 	var dmg: float = float(a.dmg)
-	if oWinding and oKind == BIG and _g(o, FLAV) == 0 and not special:
+	if oWinding and oKind == BIG and (_g(o, FLAV) == 0 or (_g(o, FLAV) == 2 and anywhere())) and not special:   # launch anywhere: the launcher is armoured against lights too
 		if not wound:
 			armour = true
 			dmg *= float(c.heavy.armour.lightMul)
@@ -1266,6 +1284,11 @@ static func contact(S: SimState, ex, b) -> void:
 			SimEvents.feed(S, f.name + " BREAKS THE GUARD", o.name + " staggers in place for " + str(int(c.heavy.staggerTicks)) + " ticks")
 		return
 	_s(f, STRING_N, _g(f, STRING_N) + 1)
+	if anywhere():
+		_ls(f, LA_LINK, S.tick)   # his string's link: B within anywhere.link of this is the launcher
+		_ls(o, LA_HITK, kind + 1)
+		_laAnswerPlan(S, f, o)   # an AI he hits may guess now that a launcher follows (never by reacting to one)
+		_linkCue(S, f, o)   # UI's lit B: his B is the launcher for the link
 	if DirGrapple.telling(o):
 		DirGrapple.stopped(S, ex, o)   # a blow that lands in a catch's tell stops it: blows beat grabs
 	if armour:
@@ -1615,6 +1638,333 @@ static func _stagger(S: SimState, ex, f, o, ticks: int, text: String, opening: b
 		_lcOpen(S, ex, f, o, ticks, text if text != "" else "guard_break")
 
 
+# ---------------------------------------------------------------- launch anywhere (the thirteenth round, behind its switch)
+
+## Its integers sit after the grapple's (DirGrapple.END), found at run time and sized only when written: with
+## brawl.launcher.anywhere.enabled off nothing is written, so play and the hash are window 1's.
+const LA_LINK: int = 0    # S.tick his last blow landed clean: B within anywhere.link of it is the launcher
+const LA_HITK: int = 1    # the kind of the last blow that landed clean on him, plus 1 (a reel from a medium or a heavy is hard to answer)
+const LA_POW: int = 2     # the landing launcher's power x 1000, for its send; 0 none
+const LA_ANS: int = 3     # S.tick until which the AI's guess that a launcher follows holds; 0 none
+const LA_AILW: int = 4    # the landing the AI last weighed a launch in its string for
+const LA_FP: int = 5      # his last blow's family and path for Combat's enders: family x 8 + path, plus 1
+const LA_FRESH: int = 6   # the kinds of send marked on him (up, across, down, behind, building), four live ticks each; kept across brawls
+const LA_N: int = 26
+
+
+static func la() -> Dictionary:
+	return cfg().get("launcher", {}).get("anywhere", {})
+
+
+## True when launch anywhere is on (data/director/interrupts.json brawl.launcher.anywhere.enabled).
+static func anywhere() -> bool:
+	return on() and bool(la().get("enabled", false))
+
+
+static func _lg(f, k: int) -> int:
+	var i: int = DirGrapple.END + k
+	return f.act.dirI[i] if i < f.act.dirI.size() else 0
+
+
+static func _ls(f, k: int, v: int) -> void:
+	DirGrapple._size(f)
+	if f.act.dirI.size() < DirGrapple.END + LA_N:
+		f.act.dirI.resize(DirGrapple.END + LA_N)
+	f.act.dirI[DirGrapple.END + k] = v
+
+
+## True when a B of f's pressed at p is in his string (docs/design/launch-anywhere.md section 2): within anywhere.link
+## ticks after one of his landed blows, or anywhere.kept ticks or fewer before one lands (held on his line, it is
+## thrown as the launcher at the landing).
+static func _linked(S: SimState, f, p: int) -> bool:
+	var at: int = _lg(f, LA_LINK)
+	if at <= 0 or p <= 0:
+		return false
+	if p >= at:
+		return p - at <= int(la().get("link", 24))
+	return at - p <= int(la().get("kept", 10))
+
+
+## A B within anywhere.mashTicks of his last B press is the heavy flurry, never the launcher (the mash rule).
+static func _bMash(f, p: int) -> bool:
+	var last: int = _g(f, B_TAP)
+	return last > 0 and p - last < int(la().get("mashTicks", 9))
+
+
+## How safe f's launcher is (section 3): 1 sure (he is staggered: an opening), 2 hard to answer (he reels from a medium
+## or a heavy), 3 answerable (he reels from a light or a bolt, or is free).
+static func _safety(S: SimState, f, o) -> int:
+	if o.stunTicks > 0:
+		return 1
+	var k: int = _lg(o, LA_HITK) - 1
+	if _now(S) < _g(o, REEL_AT) and (k == MEDIUM or k == BIG):
+		return 2
+	return 3
+
+
+## The launcher's power before its wounds and its freshness (section 4): the string (his run's whole points, one at
+## least) x the rival's state x the timing (x1: the perfect launcher waits on the perfect window, not on this build).
+static func _power(S: SimState, f, o, safety: int) -> float:
+	var pw: Dictionary = la().get("power", {})
+	if pw.is_empty():
+		return 1.0
+	var run: int = clampi(_g(f, RUN) / RUN_U, 1, 4)
+	var st: Dictionary = pw.state
+	var sm: float = float(st.sure) if safety == 1 else (float(st.hard) if safety == 2 else float(st.answerable))
+	return float(pw.string[run - 1]) * sm
+
+
+## The wounds' factor at the launcher's landing: the region its piece strikes, battered or broken on him.
+static func _woundMul(o, piece: String) -> float:
+	var pw: Dictionary = la().get("power", {})
+	if pw.is_empty() or piece == "":
+		return 1.0
+	var pc = DirRecipe.rec().get("pieces", {}).get(piece) if DirRecipe.on() else null
+	var tg: String = String(pc.get("target", "")) if pc is Dictionary else ""
+	var r: int = -1
+	if tg == "head" or tg == "jaw":
+		r = SimWounds.HEAD
+	elif tg == "chest" or tg == "gut":
+		r = SimWounds.CORE
+	elif tg.begins_with("arm"):
+		r = SimWounds.ARMS
+	elif tg == "legs" or tg == "shins":
+		r = SimWounds.LEGS
+	if r < 0:
+		return 1.0
+	if SimWounds.broken(o, r):
+		return float(pw.wounds.broken)
+	if SimWounds.battered(o, r):
+		return float(pw.wounds.battered)
+	return 1.0
+
+
+## The five kinds of send (section 5), by the planner's candidate: 0 up, 1 across, 2 down, 3 behind, 4 into a building.
+## Behind has no candidate yet (the planner has no turned send): a stick held away is the planner's own pick until it does.
+static func kindOfSend(k: Dictionary) -> int:
+	var nm: String = String(k.get("name", ""))
+	if k.has("brunt") or nm == "BUILDING SMASH" or (k.has("p") and k.p is Dictionary and bool(k.p.get("building", false))):
+		return 4
+	if nm == "UPPERCUT":
+		return 0
+	if nm == "DRIVE DOWN" or nm == "CRATER SLAM":
+		return 2
+	if nm == "SMASH BEHIND":
+		return 3
+	return 1
+
+
+## The marks of a kind on o still inside anywhere.fresh.windowS of fight time (none with the switch off).
+static func freshMarks(S: SimState, o, kind: int) -> int:
+	var fr: Dictionary = la().get("fresh", {})
+	if not anywhere() or fr.is_empty() or kind < 0 or kind > 4:
+		return 0
+	var win: int = int(round(float(fr.windowS) * DirData.TICKS_PER_SEC))
+	var now: int = _now(S)
+	var n: int = 0
+	for q in range(4):
+		var t: int = _lg(o, LA_FRESH + kind * 4 + q)
+		if t > 0 and now - t <= win:
+			n += 1
+	return n
+
+
+## Freshness: x factor for each mark of that kind on o in the window, x general for each mark of any kind, never under
+## floor (Game Design, ff68e994). A fighter not launched in the window is full.
+static func freshMul(S: SimState, o, kind: int) -> float:
+	var fr: Dictionary = la().get("fresh", {})
+	if not anywhere() or fr.is_empty():
+		return 1.0
+	var m: float = 1.0
+	for q in range(freshMarks(S, o, kind)):
+		m *= float(fr.factor)
+	var all: int = 0
+	for kd in range(5):
+		all += freshMarks(S, o, kd)
+	for q in range(all):
+		m *= float(fr.get("general", 1.0))
+	return maxf(float(fr.floor), m)
+
+
+## Each launch marks its kind on the fighter it sends (DirMelee.launchBeat): the oldest of that kind's four marks goes.
+static func markKind(S: SimState, o, kind: int) -> void:
+	if not anywhere() or kind < 0 or kind > 4 or la().get("fresh", {}).is_empty():
+		return
+	var at: int = 0
+	var oldest: int = 1 << 30
+	for q in range(4):
+		var t: int = _lg(o, LA_FRESH + kind * 4 + q)
+		if t < oldest:
+			oldest = t
+			at = q
+	_ls(o, LA_FRESH + kind * 4 + at, maxi(1, _now(S)))
+
+
+## The cue launch_power at each launch (DirMelee.launchBeat), for QA's full-launch counter and the views: amount the
+## power at the send after freshness (1 for a launch that isn't the launcher's), k 1 for a full one (anywhere.full and
+## over), text the kind (up, across, down, behind, building).
+static func powerCue(S: SimState, a, o, kind: int, power: float) -> void:
+	if not anywhere():
+		return
+	var e = _ev(S, a, "launch_power", ["up", "across", "down", "behind", "building"][clampi(kind, 0, 4)])
+	e.target = float(S.fighters.find(o))
+	e.amount = power
+	e.k = 1.0 if power >= float(la().get("full", 0.8)) - 0.0005 else 0.0
+	e.n = S.tick
+
+
+## The AI against a launcher that isn't sure (section 8): its reaction time is the wind-up's length, so it can't
+## answer one it sees. Its only answer is one it was already guessing: when f's blow lands clean on an AI o, it decides
+## once, at its level's brawl.anywhere.answer, that a launcher will follow while a B of his would still be one (the
+## link). Keyed draws.
+static func _laAnswerPlan(S: SimState, f, o) -> void:
+	_ls(o, LA_ANS, 0)
+	if o.ai == null:
+		return   # a player answers for himself
+	var share: float = float(DirAI.lv().get("brawl", {}).get("anywhere", {}).get("answer", 0.0))
+	if share <= 0.0 or SimRng.keyed(int(S.game.seed), "brawl.answerLauncher", S.tick * 8 + S.fighters.find(o)) >= share:
+		return
+	_ls(o, LA_ANS, S.tick + int(la().get("link", 24)) + 1)
+
+
+## The AI's guess, once a tick: a launcher that isn't sure winds on it, thrown while the guess held, and its reaction time
+## has passed since it was thrown: it presses guard (never sooner, so it never answers within its reaction time; the
+## contact is still inside the perfect window). The guess is spent with the press, or lapses.
+static func _laAnswerTick(S: SimState, f) -> void:
+	var until: int = _lg(f, LA_ANS)
+	if until <= 0:
+		return
+	var ex = S.dirS.ex
+	if f.ai == null or ex == null or (f != ex.A and f != ex.D):
+		_ls(f, LA_ANS, 0)
+		return
+	var o = ex.D if f == ex.A else ex.A
+	var began: int = _g(o, LAND_AT)   # S.tick his launcher was thrown (his line is busy until it lands)
+	if _g(o, FLAV) == 2 and _g(o, LINE) == 1 and _g(o, LC_LATE) == 1 and began <= until:
+		if f.stunTicks <= 0 and S.tick - began >= int(DirAI.skill().get("reactTicks", 14)):
+			_ls(f, LA_ANS, 0)
+			DirInterrupt.guardPress(S, f)
+		return
+	if S.tick > until:
+		_ls(f, LA_ANS, 0)   # no launcher came while the guess held
+
+
+## The AI launches in its string at a hard-to-answer moment (section 8): once a landed blow, at its level's
+## brawl.anywhere.inString. True when it presses B now.
+static func _aiLaunchInString(S: SimState, f, c: Dictionary) -> bool:
+	var at: int = _lg(f, LA_LINK)
+	if at <= 0 or _lg(f, LA_AILW) == at:
+		return false
+	_ls(f, LA_AILW, at)
+	var ex = S.dirS.ex
+	if ex == null or (f != ex.A and f != ex.D):
+		return false
+	var o = ex.D if f == ex.A else ex.A
+	if not _linked(S, f, S.tick) or _safety(S, f, o) != 2 or f.ki < float(c.launcher.ki):
+		return false
+	var share: float = float(DirAI.lv().get("brawl", {}).get("anywhere", {}).get("inString", 0.0))
+	return share > 0.0 and SimRng.keyed(int(S.game.seed), "brawl.launchInString", at * 2 + (0 if f == ex.A else 1)) < share
+
+
+## Combat's enders (docs/combat/launch-enders.md), loaded once from res://data/combat/enders.json when it exists.
+static var _endersData = null
+static func _enders() -> Dictionary:
+	if _endersData == null:
+		_endersData = {}
+		if FileAccess.file_exists("res://data/combat/enders.json"):
+			var j = JSON.parse_string(FileAccess.get_file_as_string("res://data/combat/enders.json"))
+			if j is Dictionary:
+				_endersData = j
+	return _endersData
+
+
+const FAMS: Array = ["hands", "legs", "close"]
+const PATHS: Array = ["line", "rise", "drop", "arc_in", "arc_out", "spin"]
+
+
+## A piece's family and path, packed for LA_FP (family x 8 + path, plus 1; 0 unknown).
+static func _famPath(piece: String) -> int:
+	var pc = DirRecipe.rec().get("pieces", {}).get(piece) if DirRecipe.on() else null
+	if not (pc is Dictionary):
+		return 0
+	var limb: String = String(pc.get("limb", ""))
+	var fam: int = 0 if limb == "hand" else (1 if (limb == "foot" or limb == "knee") else (2 if limb != "" else -1))
+	var pth: int = PATHS.find(String(pc.get("path", "")))
+	if fam < 0 or pth < 0:
+		return 0
+	return fam * 8 + pth + 1
+
+
+## The launcher's piece by Combat's enders: his last blow's family and path, and the send his stick asks (none: the
+## planner picks the send, and the piece is picked as before). The lowest step first; a keyed draw within it.
+static func _ender(S: SimState, f, aim: int) -> String:
+	var en: Dictionary = _enders()
+	var fp: int = _lg(f, LA_FP) - 1
+	if en.is_empty() or fp < 0 or aim <= 0 or aim > 4:
+		return ""
+	var send: String = ["up", "across", "down", "turned"][aim - 1]
+	var key: String = String(FAMS[fp / 8]) + "." + String(PATHS[fp % 8])
+	var rows = en.get("fighters", {}).get(DirRecipe.poolKey(f), {}).get("enders", {}).get(key, {}).get(send)
+	if not (rows is Array) or rows.is_empty():
+		return ""
+	var best: int = 99
+	for row in rows:
+		best = mini(best, int(row.get("step", 99)))
+	var pick: Array = []
+	for row in rows:
+		if int(row.get("step", 99)) == best:
+			pick.append(String(row.strike))
+	return pick[mini(pick.size() - 1, int(SimRng.keyed(int(S.game.seed), "brawl.ender", S.dirS.exN * 64 + _g(f, BLOWS)) * float(pick.size())))]
+
+
+## For UI (section 9's marks): whether f's B would launch now, sure or not, its power in pips (1 to 5), and the four
+## kinds fresh on his rival (up, across, down, behind). Empty outside a brawl, or with launch anywhere off.
+static func launcherNow(S: SimState, f) -> Dictionary:
+	if not anywhere() or not inBrawl(S, f):
+		return {}
+	var ex = S.dirS.ex
+	var o = ex.D if f == ex.A else ex.A
+	var lcOpen: bool = _g(f, LC_UNTIL) > 0 and (o.stunTicks > 0 or S.tick <= _g(f, LC_UNTIL))
+	var lit: bool = (lcOpen or _linked(S, f, S.tick)) and not _bMash(f, S.tick) and f.ki >= float(cfg().launcher.ki)
+	if not lit:
+		return {"on": false}
+	var sf: int = _safety(S, f, o)
+	var fresh: Array = []
+	for kd in range(4):
+		fresh.append(freshMarks(S, o, kd) == 0)
+	return {"on": true, "sure": sf == 1, "safety": sf, "pips": clampi(int(round(_power(S, f, o, sf) * 5.0)), 1, 5), "fresh": fresh}
+
+
+## UI's launcher marks as a cue's fields (the cue list's rules: k a count, amount a value). source: sure, hard or
+## answerable; k: its power in pips (1 to 5); amount: the kinds fresh on his rival as a mask (1 up, 2 across, 4 down,
+## 8 behind; a set bit is fresh).
+static func _marks(S: SimState, e, f, o, sf: int) -> void:
+	e.source = ["", "sure", "hard", "answerable"][clampi(sf, 1, 3)]
+	e.k = float(clampi(int(round(_power(S, f, o, sf) * 5.0)), 1, 5))
+	var m: int = 0
+	for kd in range(4):
+		if freshMarks(S, o, kd) == 0:
+			m |= 1 << kd
+	e.amount = float(m)
+
+
+## A blow of f's landed clean: his B is the launcher for anywhere.link ticks. The cue launcher_link says so, for UI's lit
+## B (an opening keeps its own cue, launcher_open, which Audio and Animation read as an opening). n: the S.tick the link
+## ends; dur: its length. Its safety is read as the landing leaves him: sure in an opening, hard after a medium or a
+## heavy, answerable after a light or a bolt (the hit's own stun is no opening). Only when he has the ki.
+static func _linkCue(S: SimState, f, o) -> void:
+	if f.ki < float(cfg().launcher.ki) or quiet(S.dirS.ex):
+		return
+	var k: int = _lg(o, LA_HITK) - 1
+	var sf: int = 1 if _g(f, LC_UNTIL) > 0 else (2 if (k == MEDIUM or k == BIG) else 3)
+	var link: int = int(la().get("link", 24))
+	var e = _ev(S, f, "launcher_link", "link")
+	e.target = float(S.fighters.find(o))
+	e.n = S.tick + link
+	e.dur = float(link)
+	_marks(S, e, f, o, sf)
+
+
 ## An opening (brawl-second-pass.md section 3, as re-ruled): the rival o is staggered for launcher.minStagger ticks or
 ## more by a flurry's close, a broken guard, a perfect block or a zip's tech counter. Until the stagger ends f's B
 ## always lands. It launches when a launch is ready on o, and the cue launcher_open goes out only then (n: the tick the
@@ -1629,7 +1979,7 @@ static func _lcOpen(S: SimState, ex, f, o, ticks: int, why: String) -> void:
 	if was > 0:
 		return   # his opening is on already: it lasts as long as the stagger does
 	if f.ai != null:
-		var share: float = float(DirAI.lv().get("brawl", {}).get("launcher", 0.0))
+		var share: float = float(DirAI.lv().get("brawl", {}).get("anywhere", {}).get("launcher", 0.0)) if anywhere() else float(DirAI.lv().get("brawl", {}).get("launcher", 0.0))
 		_s(f, AI_LSAW, 1 if SimRng.keyed(int(S.game.seed), "brawl.launcher", S.tick * 2 + (0 if f == ex.A else 1)) < share else 0)
 	if launcherRest(S, o) > 0:
 		return   # resting: his B is the knock-back, and nothing announces it
@@ -1638,6 +1988,8 @@ static func _lcOpen(S: SimState, ex, f, o, ticks: int, why: String) -> void:
 	e.target = float(S.fighters.find(o))
 	e.n = _g(f, LC_UNTIL)   # the window's end
 	e.dur = float(ticks)   # the stagger: inside it his B always lands
+	if anywhere():
+		_marks(S, e, f, o, 1)   # an opening's launcher is sure: its marks for UI
 
 
 ## f's opening closes. The cue goes out only when launcher_open did. how: used (he threw the launch), lapsed (the
@@ -1927,7 +2279,13 @@ static func _send(S: SimState, ex, f, o, aim: int, why: String, mul: float) -> v
 		tilt = 5
 	elif aim == 2:
 		tilt = 3 if SimWrap.sdx(f.x, o.x) >= 0.0 else 7
-	DirMelee.launchBeat(S, ex, f, o, float(cfg().heavy.force) * mul, false, {"forced": true, "tilt": tilt, "why": why})
+	var la: Dictionary = {"forced": true, "tilt": tilt, "why": why}
+	if _lg(f, LA_POW) > 0:
+		la["power"] = float(_lg(f, LA_POW)) / 1000.0   # the launcher's power: freshness is applied once the send is picked
+		var want: String = _sendOf(aim)
+		if want != "" and DirLaunch.SENDS.has(want):
+			la["sends"] = want   # the stick's kind is kept: the choreographer bends only inside it
+	DirMelee.launchBeat(S, ex, f, o, float(cfg().heavy.force) * mul, false, la)
 	if S.dirS.ex != ex:
 		return
 	if _setPiece(ex):
@@ -1988,6 +2346,9 @@ static func _reset(ex) -> void:
 		f.act.dirI[MATCH_DBL_AT] = doubleAt
 	for f in [ex.A, ex.D]:
 		f.act.dirI[FLASH_AT] = flash
+		for k in range(LA_LINK, LA_FRESH):
+			if DirGrapple.END + k < f.act.dirI.size():
+				f.act.dirI[DirGrapple.END + k] = 0   # (written only with launch anywhere on)
 
 
 ## The brawl's movement, once a live tick (brawl-second-pass.md section 1). Each stick goes through Controls' ramp
@@ -2483,7 +2844,11 @@ static func _bigLanded(S: SimState, ex, f, o, a) -> void:
 	_tradeReset(ex)
 	if bool(a.get("launcher", false)):
 		if bool(a.get("ready", false)):
+			if a.has("power"):
+				_ls(f, LA_POW, int(round(float(a.power) * _woundMul(o, String(a.get("piece", ""))) * 1000.0)))
 			_send(S, ex, f, o, int(a.get("aim", 0)), "the launcher", float(c.launcher.flightMul))
+			if a.has("power"):
+				_ls(f, LA_POW, 0)
 		else:
 			# The hammer (the fourth round): a resting launcher parts nobody. He staggers in place, as from a landed
 			# heavy, and the brawl goes on: so using the launcher never breaks off a player's own pressure.
@@ -2824,6 +3189,7 @@ static func tick(S: SimState, ex) -> void:
 			_s(f, SAFE_UNTIL, S.tick + int(c.flurry.closeGuardTicks))   # he has recovered from a close: he cannot be closed on again for this long
 		if not _windOn(o):
 			_s(f, GAVE, 0)   # the wind-up he gave ground against is over
+		_laAnswerTick(S, f)
 		# A launcher on its way holds the stagger until it lands. The launcher's window lasts as long as the stagger.
 		if _g(f, FLAV) == 2 and _g(f, LINE) == 1 and _g(f, LC_LATE) == 0:
 			o.stunTicks = maxi(o.stunTicks, _g(f, CONTACT) - now + 2)
@@ -3003,6 +3369,12 @@ static func aiInput(S: SimState, f) -> void:
 		return   # it holds away with the rival, to walk out
 	var gap: int = int(bl.get("tapGap", 10))
 	# The launcher: a tap of B while the stagger it caused holds the window open, at its level's share.
+	if anywhere() and _aiLaunchInString(S, f, c):
+		_s(f, AI_RIP, 0)
+		_s(f, AI_GUARD, 0)
+		_s(f, AI_LEFT, 0)
+		_aiPress(S, f, i, 2, bl, true)
+		return
 	if _g(f, AI_LSAW) == 1 and _g(f, LC_UNTIL) > 0:
 		_s(f, AI_LSAW, 0)
 		if f.ki >= float(c.launcher.ki):
@@ -3182,6 +3554,8 @@ static func launcherReady(S: SimState, f) -> bool:
 ## The live ticks for which the launcher still rests on o: launcher.restS of fight time after any launch of him. 0: a
 ## launch is ready on him. Cheap: one slot and the clock.
 static func launcherRest(S: SimState, o) -> int:
+	if anywhere():
+		return 0   # launch anywhere: freshness replaces the rest
 	var at: int = _g(o, LAUNCH_AT)
 	if at <= 0:
 		return 0

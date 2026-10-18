@@ -74,6 +74,7 @@ static func impact(S: SimState, f, g: float, sp: float) -> void:
 	f.launchBy = null
 	f.launchT = 1.0
 	f.launchSpecial = false
+	f.launchPower = 1.0
 	f.hopped = false
 	WorldBrunt.endFlight(S, f)
 

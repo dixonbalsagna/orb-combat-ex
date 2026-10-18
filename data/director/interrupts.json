@@ -402,7 +402,18 @@
       "ki": 5,
       "restS": 30,
       "lateTicks": 24,
-      "flightMul": 1
+      "flightMul": 1,
+      "anywhere": {
+        "_note": "Launch anywhere, Game Design's thirteenth round (docs/design/launch-anywhere.md) as re-ruled in ff68e994, behind enabled (false: window 1's launcher, its rest and its hammer, read from the keys above). link: B within this many ticks of one of his clean landed blows is the launcher; kept: a B pressed this many ticks or fewer before one lands is held and thrown as the launcher; mashTicks: a B within this of his last B is the heavy flurry. power: string by his run (1 to 4 points) x state (sure, hard, answerable) x timing (perfect, chain, max: waiting on the perfect window) x wounds (the region the piece strikes); it scales the launching blow's worth and the send. fresh: each launch marks its kind on the fighter it sends; x factor for each mark of the kind and x general for each mark of any kind within windowS, never under floor; the planner takes preferW off a candidate for each mark of its kind; airSense is for the flight's recovery (Simulation's, when granted). aim.bendCos: the most the choreographer bends a send inside the stick's kind (the cosine of 30 degrees). full: a launch whose power at the send is this or more is full (QA's counter; the cue launch_power). The launcher is armoured against lights, and only a sure one holds his stagger.",
+        "enabled": false,
+        "link": 24,
+        "kept": 10,
+        "mashTicks": 9,
+        "power": {"string": [0.55, 0.7, 0.85, 1.0], "state": {"sure": 1.0, "hard": 0.9, "answerable": 0.8}, "perfect": 1.25, "chain": 0.05, "max": 1.5, "wounds": {"battered": 1.1, "broken": 1.2}},
+        "fresh": {"windowS": 60, "factor": 0.75, "general": 0.9, "floor": 0.4, "airSense": 0.25, "preferW": 12},
+        "aim": {"bendCos": 0.866},
+        "full": 0.8
+      }
     },
     "energy": {
       "reach": {

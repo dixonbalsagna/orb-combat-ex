@@ -2445,6 +2445,180 @@
               "type": "integer",
               "minimum": 0,
               "description": "A B counts as the launcher until this many ticks after the close (the stagger, if longer). After the stagger he can answer it."
+            },
+            "anywhere": {
+              "type": "object",
+              "description": "Launch anywhere (the thirteenth round), behind enabled.",
+              "properties": {
+                "_note": {
+                  "type": "string"
+                },
+                "enabled": {
+                  "type": "boolean",
+                  "description": "False: window 1's launcher."
+                },
+                "link": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A B within this many ticks of one of his landed blows is the launcher."
+                },
+                "kept": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "... and a B pressed this many ticks or fewer before one lands, held and thrown as the launcher."
+                },
+                "mashTicks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A B within this many ticks of his last B is the heavy flurry, never the launcher."
+                },
+                "power": {
+                  "type": "object",
+                  "description": "The launcher's power: string x state x timing x wounds (x freshness at the send).",
+                  "properties": {
+                    "string": {
+                      "type": "array",
+                      "items": {
+                        "type": "number",
+                        "minimum": 0,
+                        "description": "By his run, one to four points."
+                      },
+                      "minItems": 4,
+                      "maxItems": 4
+                    },
+                    "state": {
+                      "type": "object",
+                      "properties": {
+                        "sure": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "An opening."
+                        },
+                        "hard": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "He reels from a medium or a heavy."
+                        },
+                        "answerable": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "Otherwise."
+                        }
+                      },
+                      "required": [
+                        "sure",
+                        "hard",
+                        "answerable"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "perfect": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "A perfect launcher."
+                    },
+                    "chain": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "... and this for each earlier perfect in the chain."
+                    },
+                    "max": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "... at most this."
+                    },
+                    "wounds": {
+                      "type": "object",
+                      "properties": {
+                        "battered": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "The region it strikes battered."
+                        },
+                        "broken": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "... broken."
+                        }
+                      },
+                      "required": [
+                        "battered",
+                        "broken"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "string",
+                    "state",
+                    "wounds"
+                  ],
+                  "additionalProperties": false
+                },
+                "fresh": {
+                  "type": "object",
+                  "description": "Freshness at the send, in place of the rest.",
+                  "properties": {
+                    "windowS": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "A mark lasts this many seconds of fight time."
+                    },
+                    "factor": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "Each mark of the kind multiplies by this ..."
+                    },
+                    "general": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "... and each mark of any kind by this ..."
+                    },
+                    "floor": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "... never under this."
+                    },
+                    "airSense": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "A fighter sent by a kind marked on him recovers this much sooner for each mark."
+                    },
+                    "preferW": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "The planner takes this off a candidate's score for each mark of its kind."
+                    }
+                  },
+                  "required": [
+                    "windowS",
+                    "factor",
+                    "floor"
+                  ],
+                  "additionalProperties": false
+                },
+                "aim": {
+                  "type": "object",
+                  "description": "The choreographer's bend inside the stick's kind.",
+                  "properties": {
+                    "bendCos": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "The cosine of the most it bends a send from the stick."
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "full": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "A launch whose power at the send is this or more is a full one."
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "additionalProperties": false
             }
           },
           "additionalProperties": false,

@@ -527,7 +527,7 @@ static func aim(S: SimState, A, D, b, force: float, tierF: float, special: bool 
 		var trav: float = WorldSlide.launchTravel(sign_, uy)
 		var fr: Dictionary = flightTo(S, D.x, D.y, WorldSlide.launchVX(sign_, uy, force * tierF), uy * force * tierF, trav, b, D.z)
 		if fr.ok and fr.spN >= AIM_MIN_SP:
-			var chain: Array = chainPlan(S, A.tier, special, b, fr, trav)
+			var chain: Array = chainPlan(S, tierOf(A, D), special, b, fr, trav)
 			var edge: float = SimWrap.wrap(b.x - sign_ * b.w * 0.5)
 			return {"ux": sign_, "uy": uy, "fm": 1.0, "name": "BUILDING SMASH",
 				"brunt": {"b": b.idx, "hit": fr, "chain": chain, "deaths": chainDeaths(chain), "z1": faceZ(b), "aimD": absf(SimWrap.sdx(D.x, edge))}}
@@ -645,12 +645,20 @@ static func _checkHitSwept(S: SimState, f, ox: float, oy: float) -> bool:
 	return true
 
 
+## The tier a launch meets buildings at: the launcher's tier x the launch's power, rounded, at least 1 (Encounter's
+## launch anywhere, launch-anywhere.md section 4; buildings.md section 6.1). A launch with no power is the tier itself.
+static func tierOf(by, f) -> float:
+	if f == null or float(f.launchPower) == 1.0:
+		return float(by.tier)
+	return maxf(1.0, roundf(float(by.tier) * float(f.launchPower)))
+
+
 ## Resolve one hit on building b at height y on the near edge, and what happens to the fighter.
 static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
 	var trav: float = f.launchT
 	var spN: float = SimDetMath.hypot(f.vx / trav, f.vy)
-	var oc: Dictionary = outcomeOf(S, b, y, spN, by.tier, _count(f, MARK_TOWER), f.launchSpecial)
+	var oc: Dictionary = outcomeOf(S, b, y, spN, tierOf(by, f), _count(f, MARK_TOWER), f.launchSpecial)
 	f.flightHits += 1
 	var link: int = f.flightHits
 	var slot: float = float(S.fighters.find(f))
@@ -679,7 +687,7 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 		f.splashed.append(MARK_HOUSE if isHouse(b) else MARK_TOWER)   # this flight went through it
 	var nx: Dictionary = {"b": -1}
 	var spLeft: float = SimDetMath.hypot(f.vx * keep / trav, f.vy * keep)
-	if passes and chainUsed(f) < chainCap(by.tier, f.launchSpecial) - 0.0001 and spLeft >= CHAIN_MIN_SP:
+	if passes and chainUsed(f) < chainCap(tierOf(by, f), f.launchSpecial) - 0.0001 and spLeft >= CHAIN_MIN_SP:
 		nx = next(S, b, y, f.vx * keep, f.vy * keep, trav)
 	# the lodge: the last building of a chain takes what is left; he ends inside it
 	var lodge: bool = passes and nx.b < 0
@@ -699,12 +707,12 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 	S.dirS.stop = SimMathx.jmax(S.dirS.stop, minf(stop, STOP_TOTAL))
 	if lodge:
 		# what is left of the launch is one more hit on the building (the core wears most), and he is held in the breach
-		var tfac: float = float(cm.tierFactor[tierIx(by.tier, f.launchSpecial)])
+		var tfac: float = float(cm.tierFactor[tierIx(tierOf(by, f), f.launchSpecial)])
 		var rest: float = spLeft * tfac * float(cm.bruntMul) * float(cm.lodgeDump)
 		if b.alive and rest > 0.0:
 			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", cx, evt, true)
 		SimDamage.hurt(S, f, spLeft * FIGHTER_DMG, by)
-		var holdS: float = lodgeSeconds(by.tier, f.launchSpecial)
+		var holdS: float = lodgeSeconds(tierOf(by, f), f.launchSpecial)
 		_hold(S, f, holdS)
 		var bodyW: float = WorldLanes.body()[0]
 		f.x = SimWrap.wrap(far - dir * (bodyW * 2.0))
@@ -715,7 +723,7 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 		endFlight(S, f)
 		return
 	if not passes:
-		_hold(S, f, lodgeSeconds(by.tier, f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
+		_hold(S, f, lodgeSeconds(tierOf(by, f), f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
 		# the wall slam (buildings.md section 2): he takes the building's hit again over (wallSlamMul, Game Design's twice); the stagger is set below
 		var slam: float = float(cm.wallSlamMul) - 1.0
 		if slam > 0.0:

@@ -401,7 +401,12 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 	# The stick picks the direction and the planner snaps to the most dramatic target near it (a human's press only).
 	var pt: int = DirLaunch.phrase(S, ex, att) if (att.ai == null and not longOnly and not DirData.contact().is_empty()) else -1
 	var tilt: int = int(args.get("tilt", 0)) if forced else ((pt >> 4) & 15 if pt >= 0 else 0)
-	var r: Dictionary = DirLaunch.chooseLaunch(S, att, tgt, force, longOnly, String(args.get("sends", "")) if args != null else "", tilt, forced or (gate.get("enabled", false) and not DirData.contact().is_empty()))
+	var lpow: float = float(args.get("power", -1.0)) if args != null else -1.0   # the brawl's launcher (launch anywhere); -1 for any other launch
+	if lpow >= 0.0:
+		force *= lpow
+		if "launchPower" in tgt:
+			tgt.launchPower = lpow * DirBrawl.freshMul(S, tgt, 4)   # for World's building aim (when granted)
+	var r: Dictionary = DirLaunch.chooseLaunch(S, att, tgt, force, longOnly, String(args.get("sends", "")) if args != null else "", tilt, forced or (gate.get("enabled", false) and not DirData.contact().is_empty()), lpow >= 0.0)
 	var parts: PackedStringArray = []
 	for k in r.top:
 		parts.append(k.name + " " + SimMathx.jstr(SimMathx.jround(k.s)))
@@ -411,6 +416,8 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 	SimFx.launchPlan(S, att, tgt, "|".join(all), r.best.name)
 	if r.best.name == "KNOCK BACK":
 		# Nothing scored above holding back: the strike knocks the target back instead of launching it.
+		if "launchPower" in tgt:
+			tgt.launchPower = 1.0   # no launch: no power carried
 		DirInterrupt.si(ex.A, DirInterrupt.LAST_END, DirInterrupt.END_KNOCK)
 		if DirData.contact().is_empty():
 			DirLaunch.knockBack(S, att, tgt)   # the old profiles keep the shove
@@ -424,7 +431,17 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 		elif ex.tag.begins_with("HEAVY CLASH") or ex.tag == "GUARD BREAK" or ex.tag == "CHARGE INTERRUPT":
 			DirExchange.decisive(S, ex, att, tgt, "clash" if ex.tag.begins_with("HEAVY CLASH") else ("guard_break" if ex.tag == "GUARD BREAK" else "interrupt"))
 		return
+	# With launch anywhere every launch marks its kind on the fighter it sends; the launcher's send is x its freshness, as planned.
+	var lkind: int = DirBrawl.kindOfSend(r.best)
+	var kf: float = 1.0
+	if lpow >= 0.0:
+		kf = DirBrawl.freshMul(S, tgt, lkind)
+		force *= kf
+		if "launchPower" in tgt:
+			tgt.launchPower = lpow * kf   # for the building ladder and the flight's recovery (Simulation's and World's, when granted)
 	DirLaunch.doLaunch(S, att, tgt, r.best, force, longOnly)
+	DirBrawl.powerCue(S, att, tgt, lkind, (lpow * kf) if lpow >= 0.0 else 1.0)
+	DirBrawl.markKind(S, tgt, lkind)
 	# The showcase (section 2): a string's ender launched at flow showcaseAt is the showcase ender. The cue is the panel's;
 	# Combat's showcase rows and the extra impact wear wait for their data and for a wear hook on a launch.
 	if not longOnly and (why.begins_with("the ender of a string") or why == "a heavy with the stick, landing clean") and att.act.flow >= int(DirRecipe.cfg().get("flow", {}).get("showcaseAt", 99)):

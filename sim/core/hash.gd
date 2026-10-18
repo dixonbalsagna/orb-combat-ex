@@ -130,6 +130,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 		out.append(null)
 	for f in fs:
 		_obj(out, f, FIGHTER)
+		if float(f.launchPower) != 1.0:
+			out.append(f.launchPower)   # a launcher's power, hashed only while a launch carries one
 		var r = f.rush
 		if r == null:
 			out.append(null)

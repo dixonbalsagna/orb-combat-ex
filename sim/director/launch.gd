@@ -116,7 +116,7 @@ static func craterOffered(S: SimState, A, D) -> bool:
 ## force is the template's launch force; the prediction uses it with the tier scaling doLaunch applies.
 ## longOnly (break and finisher launches, spec-wounds.md §1): only the long-haul candidates (SMASH ACROSS, BUILDING SMASH,
 ## MOUNTAINSIDE), SMASH ACROSS always offered, and no "no launch".
-static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false, sends: String = "", tilt: int = 0, noKnock: bool = false) -> Dictionary:
+static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false, sends: String = "", tilt: int = 0, noKnock: bool = false, fresh: bool = false) -> Dictionary:
 	var g: float = WorldTerrain.groundY(S, D.x)
 	var alt: float = D.y - g
 	var bio: String = WorldBiomes.biomeAt(D.x)
@@ -142,7 +142,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 	# targets on the far side of the rival are offered.
 	var fwdOnly: bool = not DirData.contact().is_empty()
 	for bi in WorldBrunt.candidates(S, D):
-		var plan = WorldBrunt.aim(S, A, D, S.buildings[bi], force, tierF, longOnly)
+		var plan = WorldBrunt.aim(S, A, D, S.buildings[bi], force * (DirBrawl.freshMul(S, D, 4) if fresh else 1.0), tierF, longOnly)   # fresh: the launcher's send into a building, x its freshness
 		if plan != null and fwdOnly and float(plan.ux) * f < 0.0:
 			plan = null
 		if plan != null:
@@ -176,14 +176,18 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 			tx = 0.0
 		if tx != 0.0 or ty != 0.0:
 			var tl: float = SimDetMath.hypot(tx, ty)
-			var near: Array = c.filter(func(k): return k.name == "KNOCK BACK" or (k.ux * tx + k.uy * ty) / (tl * SimMathx.jmax(SimDetMath.hypot(k.ux, k.uy), 0.000001)) >= TILT_CONE)
+			var cone: float = float(DirBrawl.la().get("aim", {}).get("bendCos", TILT_CONE)) if DirBrawl.anywhere() else TILT_CONE   # launch anywhere: the choreographer bends at most this inside the stick's kind
+			var near: Array = c.filter(func(k): return k.name == "KNOCK BACK" or (k.ux * tx + k.uy * ty) / (tl * SimMathx.jmax(SimDetMath.hypot(k.ux, k.uy), 0.000001)) >= cone)
 			if near.any(func(k): return k.name != "KNOCK BACK"):
 				c = near
 				for k in c:
 					if k.has("brunt"):
 						k.s += float(town.get("stickWins", 0.0))   # the player's stick is a vote that wins: a building on the side he leans to is taken when a plan to it exists
+	var preferW: float = float(DirBrawl.la().get("fresh", {}).get("preferW", 0.0)) if DirBrawl.anywhere() else 0.0   # launch anywhere: a fresh kind is preferred
 	for k in c:
 		k.s += S.rng.range_(0.0, NOISE)
+		if preferW > 0.0 and k.name != "KNOCK BACK":
+			k.s -= preferW * float(DirBrawl.freshMarks(S, D, DirBrawl.kindOfSend(k)))
 		if k.name == "KNOCK BACK":
 			# Holding back leaves the fight where it is: the same personality term, at the target's position.
 			k.s += (-A.care) * CARE_W * WorldStructures.popNear(S, D.x, CARE_R)
@@ -200,7 +204,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 			if k.name == S.dirS.lastLaunch2:
 				k.s -= REPEAT_2
 			continue
-		var fm: float = k.fm if k.has("fm") else 1.0
+		var fm: float = (k.fm if k.has("fm") else 1.0) * (DirBrawl.freshMul(S, D, DirBrawl.kindOfSend(k)) if fresh else 1.0)   # fresh: each candidate x its own kind's freshness
 		var p: Dictionary = predictFlight(S, D.x, D.y, WorldSlide.launchVX(k.ux, k.uy, force * fm * tierF), k.uy * force * fm * tierF, WorldSlide.launchTravel(k.ux, k.uy))
 		var street: bool = false
 		if k.name == "SMASH ACROSS" and inTown and not longOnly and float(town.get("haulTarget", 0.0)) > 0.0:
@@ -215,7 +219,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 				k.fm = fm
 				k.street = true
 				p = pT
-		if k.name == "SMASH ACROSS" and not street and p.travel < HAUL_TARGET:
+		if k.name == "SMASH ACROSS" and not street and p.travel < HAUL_TARGET and not fresh:   # a launcher's length is its power's: no long-haul boost
 			# The long haul: raise the force (once, square-root rule, capped) so the predicted flight reaches HAUL_TARGET.
 			fm = SimMathx.jmin(HAUL_FM_MAX, fm * sqrt(HAUL_TARGET / SimMathx.jmax(p.travel, 1.0)))
 			k.fm = fm
