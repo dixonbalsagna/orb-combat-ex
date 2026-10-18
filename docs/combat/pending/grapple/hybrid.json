@@ -1,7 +1,7 @@
 {
  "schema": "combat.grapple.hybrid/1",
  "_about": "PARKED: the grapple on A as Orb picked it, a hybrid of the catch and the clinch with the clinch first (docs/combat/grapple-hybrid.md). The paired phases as data: each phase's ticks (first values; Game Design rules them), the holder's anchor on the held body (Legal g05: collar and elbow, or the waist), and the poses each side needs. This is the input a `pair` kind of part in Combat's generator would read (Animation's ask, docs/animation/brawl-second-pass-view.md section 3); it is not built. Nothing here is loaded or hashed",
- "_rules": "docs/design/grapple.md (Game Design, 56d4b581): every number below is its first value",
+ "_rules": "docs/design/grapple.md (Game Design, 56d4b581, and its re-rulings of 2026-10-17): the catch, clinch, carry, throw and limits blocks are its first values. The phases' tick lengths for the tie (4), the pummel (6), the throw (8) and the part (6) are Combat's piece lengths, not ruled",
  "catch": {
   "tellTicks": 10,
   "techTicks": 8,
@@ -47,7 +47,28 @@
   "lockoutTicks": 90,
   "noRegrabTicks": 120,
   "sameplaceMax": 2,
-  "_about": "the lockout and the no-regrab are shared by every grab; sameplaceMax is Legal's s08, counted by place (docs/combat/grapple-hybrid.md section 5)"
+  "_about": "the lockout and the no-regrab are shared by every grab; sameplaceMax is Legal's s08, counted by place, as Game Design re-ruled on 2026-10-17 (grapple.md section 2): a region has two or three places, so a stick held on one wound keeps working it, the blows alternating places",
+  "places": {
+   "head": [
+    "head",
+    "jaw"
+   ],
+   "core": [
+    "chest",
+    "gut"
+   ],
+   "legs": [
+    "legs",
+    "shins"
+   ],
+   "arms": [
+    "shoulder",
+    "elbow",
+    "wrist"
+   ],
+   "_arms": "the grammar has one arm target; its three places (shoulder, elbow, wrist) are assigned by Animation at run time (Legal's launcher-and-reach-screen), so arm blows alternate there"
+  },
+  "everyPlaceHasAPiece": true
  },
  "regions": {
   "up": "head",
@@ -233,11 +254,11 @@
   "protagonist": {
    "look": "playful and technical: a boxer's tie-up, open hands at the collar and the elbow; hand-fighting for the grip; a wide brace; a turning carry",
    "throws": {
-    "toward": "hurl",
-    "away": "turn_throw",
-    "none": "hurl",
-    "down": "drive_down",
-    "up": "lift (new)"
+    "toward": "zq.hurl",
+    "away": "zq.turn_throw",
+    "none": "zq.hurl",
+    "down": "zq.drive_down",
+    "up": "zq.lift"
    },
    "vicious": {
     "head": [
@@ -348,6 +369,19 @@
        "legs"
       ],
       "own": false
+     },
+     {
+      "move": "mv.protagonist.martial.a.clinch.11",
+      "strike": "strike.sweep",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "foot",
+       "instep",
+       "arc_in",
+       "shins"
+      ],
+      "own": false
      }
     ],
     "arms": [
@@ -383,11 +417,11 @@
   "rival": {
    "look": "exact and punishing: one hand on the collar, the other arm a one-arm fold (h09); pressure for the grip; a narrow, still brace; a straight march into the nearest wall",
    "throws": {
-    "toward": "sling",
-    "away": "back_throw",
-    "none": "sling",
-    "down": "spike",
-    "up": "jolt (new)"
+    "toward": "zq.sling",
+    "away": "zq.back_throw",
+    "none": "zq.sling",
+    "down": "zq.spike",
+    "up": "zq.jolt"
    },
    "vicious": {
     "head": [
@@ -416,6 +450,19 @@
        "jaw"
       ],
       "own": false
+     },
+     {
+      "move": "mv.rival.martial.a.clinch.11",
+      "strike": "strike.plate_hammer",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "hand",
+       "plate",
+       "drop",
+       "head"
+      ],
+      "own": true
      }
     ],
     "core": [
@@ -498,6 +545,19 @@
        "legs"
       ],
       "own": false
+     },
+     {
+      "move": "mv.rival.martial.a.clinch.12",
+      "strike": "strike.sweep",
+      "status": "posed",
+      "level": "posed",
+      "shape": [
+       "foot",
+       "instep",
+       "arc_in",
+       "shins"
+      ],
+      "own": false
      }
     ],
     "arms": [
@@ -532,18 +592,16 @@
   }
  },
  "cost": {
-  "animation": "docs/animation/clinch-sizing.md: 24 new poses for the two fighters (12 shared, 6 flavour each) and pair3's throws",
+  "animation": "docs/animation/clinch-sizing.md section 6a: 25 new poses for the two fighters (13 shared with the pin's brace for g07, and 6 a fighter); the eight throws are drawn (pair3, zq.*: on main in b328017b, with data/anim/throws.json by send)",
   "throws": [
-   "hurl",
-   "sling",
-   "drive_down",
-   "spike",
-   "back_throw",
-   "turn_throw"
-  ],
-  "newThrows": [
-   "lift (the Protagonist)",
-   "jolt (the Anti-hero)"
+   "zq.hurl",
+   "zq.sling",
+   "zq.turn_throw",
+   "zq.back_throw",
+   "zq.drive_down",
+   "zq.spike",
+   "zq.lift",
+   "zq.jolt"
   ],
   "_about": "the vicious blows name existing key sets with the grip hand kept: if that holds, Animation's five close blows a fighter are not needed"
  }

@@ -542,7 +542,7 @@
     "newOf": [
      "heavy"
     ],
-    "_about": "cells: the cells he has and how many places each; from: common, only what more than one fighter of the build has posed; newOf: a weight he may take a new shape of when nothing common is posed (no heavy of the tier is common: each fighter's ten are his own); quotas: a cell's quotas of his own (his one bolt is the measured bolt, one hand, thrust, planted); ownPacks: packs drawn for the guards alone (Animation's rival10, the falling sole), read though nobody else has them",
+    "_about": "cells: the cells he has and how many places each; from: common, only what more than one fighter of the build has posed; newOf: a weight he may take a new shape of when nothing common is posed (no heavy of the tier is common: each fighter's ten are his own); quotas: a cell's quotas of his own (his one bolt is the measured bolt, one hand, thrust, planted); ownPacks: packs drawn for the guards alone (Animation's guard1 (rival10 in its parked patch), the falling sole), read though nobody else has them",
     "quotas": {
      "energy.x": [
       {
@@ -553,7 +553,7 @@
      ]
     },
     "ownPacks": [
-     "rival10"
+     "guard1"
     ]
    },
    "weights": {
@@ -652,12 +652,12 @@
     "rival4",
     "rival7",
     "protag10",
-    "rival10"
+    "guard1"
    ],
    "tierWaves": [
     "protag10",
     "rival7",
-    "rival10"
+    "guard1"
    ]
   },
   "reference": {

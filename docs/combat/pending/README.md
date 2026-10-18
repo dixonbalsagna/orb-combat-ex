@@ -4,7 +4,7 @@
 
 `grapple/` (2026-10-16) holds `hybrid.json`: the grapple on A as Orb picked it (the catch and the clinch, the clinch first), its paired phases as data with Game Design's numbers (`docs/design/grapple.md`), each fighter's throws by send and vicious blows, and Legal's asks on each phase. The note is `../grapple-hybrid.md`.
 
-`launch/` (2026-10-17) holds `enders.json`: a launch ender for any blow of a string, by the last blow's family and the stick's send (the note is `../launch-enders.md`).
+`launch/` holds the launch enders as the file Encounter's launch anywhere reads (`data/combat/enders.json`): `enders.json` on the live recipes, to land now, and `enders.next.json` on the split, to land with it; and a draft schema for Tools, `combat-enders.schema.json` (the note is `../launch-enders.md`). `throwables/` (2026-10-18) holds `throwables.json`: the pick-up and throw by size and by fighter, on Game Design's ruling (`../throwable-cars.md`).
 
 `roster/` holds sketches for fighters who are not in the build: identity rows for the Demon Cyborg (three options) and the Empress, their generated movesets, and the builder that makes them (`../roster-rows.md`). Their cards are in `cards/` beside the first two. None of it is part of the recipes window.
 

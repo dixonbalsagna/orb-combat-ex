@@ -528,13 +528,13 @@
     [
      "mv.cyborg_press.martial.a.clinch.02",
      [
-      "hand",
-      "plate",
+      "elbow",
+      "point",
       "arc_in",
-      "head",
+      "jaw",
       "light"
      ],
-     "w1.hook"
+     "w1.short_elbow"
     ],
     [
      "mv.cyborg_press.martial.a.clinch.03",
@@ -550,17 +550,6 @@
     [
      "mv.cyborg_press.martial.a.clinch.04",
      [
-      "elbow",
-      "point",
-      "drop",
-      "chest",
-      "medium"
-     ],
-     "w1.dropping_elbow"
-    ],
-    [
-     "mv.cyborg_press.martial.a.clinch.05",
-     [
       "hand",
       "fist",
       "arc_in",
@@ -568,6 +557,17 @@
       "medium"
      ],
      null
+    ],
+    [
+     "mv.cyborg_press.martial.a.clinch.05",
+     [
+      "elbow",
+      "plate",
+      "line",
+      "chest",
+      "medium"
+     ],
+     "w1.cross_arm_ram"
     ],
     [
      "mv.cyborg_press.martial.a.clinch.06",
@@ -583,13 +583,13 @@
     [
      "mv.cyborg_press.martial.a.clinch.07",
      [
-      "knee",
-      "cap",
-      "line",
-      "legs",
+      "foot",
+      "instep",
+      "arc_in",
+      "shins",
       "light"
      ],
-     null
+     "w1.sweep"
     ],
     [
      "mv.cyborg_press.martial.a.clinch.08",
@@ -1389,17 +1389,6 @@
     [
      "mv.cyborg_courier.martial.a.clinch.01",
      [
-      "elbow",
-      "point",
-      "rise",
-      "jaw",
-      "light"
-     ],
-     "w1.rising_elbow"
-    ],
-    [
-     "mv.cyborg_courier.martial.a.clinch.02",
-     [
       "hand",
       "fist",
       "line",
@@ -1409,29 +1398,29 @@
      null
     ],
     [
-     "mv.cyborg_courier.martial.a.clinch.03",
-     [
-      "knee",
-      "cap",
-      "line",
-      "gut",
-      "light"
-     ],
-     "w1.short_knee"
-    ],
-    [
-     "mv.cyborg_courier.martial.a.clinch.04",
+     "mv.cyborg_courier.martial.a.clinch.02",
      [
       "elbow",
       "point",
-      "drop",
+      "rise",
+      "jaw",
+      "light"
+     ],
+     "w1.rising_elbow"
+    ],
+    [
+     "mv.cyborg_courier.martial.a.clinch.03",
+     [
+      "elbow",
+      "plate",
+      "line",
       "chest",
       "medium"
      ],
-     "w1.dropping_elbow"
+     "w1.cross_arm_ram"
     ],
     [
-     "mv.cyborg_courier.martial.a.clinch.05",
+     "mv.cyborg_courier.martial.a.clinch.04",
      [
       "knee",
       "cap",
@@ -1440,6 +1429,17 @@
       "medium"
      ],
      "w1.rising_knee"
+    ],
+    [
+     "mv.cyborg_courier.martial.a.clinch.05",
+     [
+      "elbow",
+      "point",
+      "drop",
+      "chest",
+      "medium"
+     ],
+     "w1.dropping_elbow"
     ],
     [
      "mv.cyborg_courier.martial.a.clinch.06",
@@ -1455,22 +1455,22 @@
     [
      "mv.cyborg_courier.martial.a.clinch.07",
      [
-      "knee",
-      "cap",
-      "line",
-      "legs",
+      "foot",
+      "instep",
+      "arc_in",
+      "shins",
       "light"
      ],
-     null
+     "w1.sweep"
     ],
     [
      "mv.cyborg_courier.martial.a.clinch.08",
      [
       "hand",
       "fist",
-      "drop",
+      "line",
       "arm",
-      "medium"
+      "light"
      ],
      null
     ],
@@ -1479,9 +1479,9 @@
      [
       "hand",
       "fist",
-      "line",
+      "drop",
       "arm",
-      "light"
+      "medium"
      ],
      null
     ],
@@ -2283,6 +2283,17 @@
     [
      "mv.cyborg_hopper.martial.a.clinch.03",
      [
+      "shoulder",
+      "plate",
+      "line",
+      "chest",
+      "light"
+     ],
+     "pr.shoulder_check"
+    ],
+    [
+     "mv.cyborg_hopper.martial.a.clinch.04",
+     [
       "knee",
       "cap",
       "rise",
@@ -2292,7 +2303,7 @@
      "pr.rising_knee"
     ],
     [
-     "mv.cyborg_hopper.martial.a.clinch.04",
+     "mv.cyborg_hopper.martial.a.clinch.05",
      [
       "knee",
       "cap",
@@ -2303,37 +2314,26 @@
      "pr.short_knee"
     ],
     [
-     "mv.cyborg_hopper.martial.a.clinch.05",
-     [
-      "shoulder",
-      "plate",
-      "line",
-      "chest",
-      "light"
-     ],
-     "pr.shoulder_check"
-    ],
-    [
      "mv.cyborg_hopper.martial.a.clinch.06",
      [
-      "knee",
-      "cap",
-      "arc_in",
+      "foot",
+      "heel",
+      "drop",
       "legs",
-      "light"
+      "medium"
      ],
-     "pm.knee_hook"
+     null
     ],
     [
      "mv.cyborg_hopper.martial.a.clinch.07",
      [
-      "knee",
-      "cap",
-      "line",
-      "legs",
+      "foot",
+      "instep",
+      "arc_in",
+      "shins",
       "light"
      ],
-     null
+     "pr.sweep"
     ],
     [
      "mv.cyborg_hopper.martial.a.clinch.08",
@@ -2349,24 +2349,24 @@
     [
      "mv.cyborg_hopper.martial.a.clinch.09",
      [
-      "hand",
-      "fist",
-      "rise",
-      "chest",
-      "medium"
+      "knee",
+      "cap",
+      "arc_in",
+      "legs",
+      "light"
      ],
-     null
+     "pm.knee_hook"
     ],
     [
      "mv.cyborg_hopper.martial.a.clinch.10",
      [
-      "hand",
-      "plate",
-      "arc_in",
-      "head",
-      "light"
+      "foot",
+      "sole",
+      "drop",
+      "legs",
+      "medium"
      ],
-     "pr.hook"
+     null
     ]
    ],
    "martial.b": [
@@ -3188,8 +3188,8 @@
     [
      "mv.empress.martial.a.clinch.06",
      [
-      "knee",
-      "cap",
+      "foot",
+      "edge",
       "line",
       "legs",
       "light"
@@ -3199,13 +3199,13 @@
     [
      "mv.empress.martial.a.clinch.07",
      [
-      "knee",
-      "cap",
+      "foot",
+      "instep",
       "arc_in",
-      "legs",
+      "shins",
       "light"
      ],
-     "rm.knee_hook"
+     "w1.sweep"
     ],
     [
      "mv.empress.martial.a.clinch.08",
@@ -3221,6 +3221,17 @@
     [
      "mv.empress.martial.a.clinch.09",
      [
+      "foot",
+      "heel",
+      "drop",
+      "legs",
+      "medium"
+     ],
+     null
+    ],
+    [
+     "mv.empress.martial.a.clinch.10",
+     [
       "elbow",
       "point",
       "rise",
@@ -3228,17 +3239,6 @@
       "light"
      ],
      "w1.rising_elbow"
-    ],
-    [
-     "mv.empress.martial.a.clinch.10",
-     [
-      "hand",
-      "plate",
-      "drop",
-      "chest",
-      "medium"
-     ],
-     null
     ]
    ],
    "martial.b": [

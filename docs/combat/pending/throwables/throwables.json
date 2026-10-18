@@ -1,0 +1,111 @@
+{
+ "schema": "combat.throwables/1",
+ "_about": "PARKED: the moveset side of picking up and throwing an object (docs/combat/throwable-cars.md), on Game Design's ruling (rule-of-cool.md, 'Throwables, ruled', 2026-10-17) and Art's mass classes (docs/art/cars.md). The rules are Game Design's and are copied here only so the pieces can be read against them; the pieces, their looks by fighter and the poses each needs are Combat's. Nothing is loaded or hashed",
+ "rules": {
+  "_from": "docs/design/rule-of-cool.md, Throwables, ruled",
+  "liftMaxByTier": {
+   "1": 4,
+   "2": 8,
+   "3": "ships"
+  },
+  "mass": {
+   "bike": 1,
+   "sedan": 3,
+   "van": 4,
+   "bus": 8,
+   "_from": "docs/art/cars.md (vehicles.json): Art's suggestion, adopted by Game Design"
+  },
+  "pickUp": "A's context, an object within 2 bh while he is free and the rival is beyond striking reach (control-rules.md row 5)",
+  "x": "a quick low toss along the stick",
+  "y": "a full throw along the stick",
+  "b": "the slam: down on a rival in reach, or onto the ground in front of him; holding an object, B is never a launcher",
+  "catch": "a perfect block of a thrown object within the catcher's tier catches it; he holds it, and his next X or Y throws it back worth a quarter more",
+  "swat": "above his tier's mass the perfect block swats it aside along his stick: no damage to him; where it lands is on the thrower's account",
+  "guard": "a plain guard blocks it at the guard's rate",
+  "ai": {
+   "share": [
+    0.1,
+    0.2,
+    0.3
+   ],
+   "rivalMul": 1.5,
+   "heroOnlyClearOfPeople": true,
+   "band": [
+    0.5,
+    3
+   ],
+   "_about": "by level; no cap and no cooldown"
+  }
+ },
+ "classes": {
+  "_about": "the lift by the object's size, in three classes: light (one hand), heavy (two hands, or the Anti-hero's one arm on the plate) and huge (both arms, overhead or to the shoulder)",
+  "light": {
+   "masses": [
+    1
+   ],
+   "e.g.": "a bike"
+  },
+  "heavy": {
+   "masses": [
+    3,
+    4
+   ],
+   "e.g.": "a sedan, a van"
+  },
+  "huge": {
+   "masses": [
+    8,
+    "ships"
+   ],
+   "e.g.": "a bus (tier 2), a ship (tier 3)"
+  }
+ },
+ "fighters": {
+  "protagonist": {
+   "look": "the guardian, playful and technical: careful athletic lifts, a turning release; his AI aims away from people and picks up only when that line is clear",
+   "pieces": {
+    "lift.light": "one hand under the frame, swung up to the shoulder",
+    "lift.heavy": "two open hands under the chassis, the knees bent, stood up with it",
+    "lift.huge": "under the middle with both arms, the back straight, raised overhead in two steps",
+    "hold": "at the shoulder (light) or overhead (heavy, huge); he flies with it",
+    "toss.x": "a side-arm skim, low and flat, released on a quarter turn",
+    "throw.y": "a turning heave along the stick: one full turn and the release",
+    "slam.b": "on a rival in reach, else the ground in front (the rule, for both): brought down with both hands and a turn of the hips; on the ground it is left standing as a wall between them",
+    "catch": "open hands meet it and give with it, a turn absorbing the speed, and it is held at the shoulder",
+    "swat": "a palm on its side and a turn, deflecting it along his stick"
+   }
+  },
+  "rival": {
+   "look": "exact and punishing: one arm where one arm will do, the forearm plate as a fork, the straight line; his AI aims through whatever stands behind the rival",
+   "pieces": {
+    "lift.light": "picked up by the frame in one hand",
+    "lift.heavy": "the forearm plate slid under the frame like a fork, and up on one arm",
+    "lift.huge": "the plate under and the free hand on top, both arms, raised to the shoulder",
+    "hold": "out on the plate at shoulder height; he flies with it",
+    "toss.x": "a short straight push off the plate, low",
+    "throw.y": "a straight hurl along the stick",
+    "slam.b": "on a rival in reach, else the ground in front (the rule, for both): brought straight down off the plate; on the ground, slammed flat",
+    "catch": "stopped dead on the plate, no give, and held there",
+    "swat": "a backhand of the plate, aside along his stick"
+   }
+  }
+ },
+ "poses": {
+  "_about": "an estimate a fighter, Animation's figure to come through the EP; the object is a prop body (Simulation, World's option B), its wreck Art's",
+  "lift": 3,
+  "hold": 1,
+  "toss": 1,
+  "throw": 1,
+  "slam": 1,
+  "catch": 1,
+  "swat": 1,
+  "perFighter": 9
+ },
+ "legal": {
+  "_about": "no row covers a lift of a vehicle (g03 and g04 are written for people); cars hold no one (World's plan; Art's wreck has no people in or around a car)",
+  "asks": [
+   "a row for a lifted or thrown object: drawn whole and in view, no person in it"
+  ]
+ },
+ "_rulesSameForBoth": "the outcome of every piece is the rule's, the same for both fighters (a slam lands on a rival in reach, a throw goes along the stick); the pieces differ in look, and each AI in where it aims"
+}

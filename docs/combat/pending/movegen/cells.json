@@ -332,7 +332,8 @@
         "elbow",
         "hand",
         "head",
-        "shoulder"
+        "shoulder",
+        "foot"
        ],
        "path": [
         "line",
@@ -396,6 +397,60 @@
           "hand"
          ]
         }
+       },
+       {
+        "name": "the place: head",
+        "min": 1,
+        "filter": {
+         "target": [
+          "head"
+         ]
+        }
+       },
+       {
+        "name": "the place: jaw",
+        "min": 1,
+        "filter": {
+         "target": [
+          "jaw"
+         ]
+        }
+       },
+       {
+        "name": "the place: chest",
+        "min": 1,
+        "filter": {
+         "target": [
+          "chest"
+         ]
+        }
+       },
+       {
+        "name": "the place: gut",
+        "min": 1,
+        "filter": {
+         "target": [
+          "gut"
+         ]
+        }
+       },
+       {
+        "name": "the place: legs",
+        "min": 1,
+        "filter": {
+         "target": [
+          "legs"
+         ]
+        }
+       },
+       {
+        "name": "the place: shins",
+        "min": 1,
+        "filter": {
+         "target": [
+          "shins"
+         ]
+        }
        }
       ],
       "share": {
@@ -408,7 +463,25 @@
       "_quotas": "The four regions of the vicious map (parts.json vicious.regions: up the head, toward the core, down the legs, away the arms), so a held stick always has a blow; the core most, since it is the no-stick region. Two of his own at least, as for any cell with a share rule",
       "anyWeight": true,
       "_anyWeight": "A vicious blow has one worth whatever its look (half a brawl light, three times its wear: brawl-second-pass.md section 4), so a shape is one place: the better-covered of its light and medium key sets",
-      "_share": "Game Design's floors of a fighter's own are ruled for X, Y and B (fighter-pipeline.md section 1). The clinch is new: a tier-1 newcomer may start on the common vicious blows, as he may borrow heavies, and a fighter who ships at tier 2 has two of his own. The two in the build have five each"
+      "_share": "Game Design's floors of a fighter's own are ruled for X, Y and B (fighter-pipeline.md section 1). The clinch is new: a tier-1 newcomer may start on the common vicious blows, as he may borrow heavies, and a fighter who ships at tier 2 has two of his own. The two in the build have five each",
+      "never": [
+       {
+        "shape": {
+         "limb": [
+          "foot"
+         ],
+         "target": [
+          "head",
+          "jaw",
+          "chest",
+          "gut",
+          "arm"
+         ]
+        },
+        "why": "in a hold a foot goes low only: a sweep or a low kick to the legs or the shins"
+       }
+      ],
+      "_places": "Legal's s08 counts by place, and Game Design re-ruled the clinch that way (grapple.md section 2): no more than two in a row to one place, so a region held on the stick alternates places. So each place of the head, the core and the legs has a piece (the shins only a foot on an arc in reaches, so the clinch takes a foot, low only). The arm is one target in the grammar; its places (shoulder, elbow, wrist) are assigned by Animation at run time (Legal's launcher-and-reach-screen)"
      }
     }
    },

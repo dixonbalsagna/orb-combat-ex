@@ -39,7 +39,7 @@ Their launch pieces with Animation's fourth patch:
 | **Across** | The blade to the jaw (hand, line); the stepping edge kick (leg, line) | The ram (hand, line); the knee (leg, line) |
 | **Turned** | The unwinding edge kick (leg, arc out); the elbow to the jaw (close, arc in) | The plate swing and the hook (hand, arc in); the unwinding fist (hand, arc out) |
 
-**Every send has at least two pieces.** With no cap on launches, that keeps the next launch from repeating the last, which is the one variety rule a launch must keep.
+**Every send has at least two pieces with Animation's new pieces** (the parked split recipes). With no cap on launches, that keeps the next launch from repeating the last, which is the one variety rule a launch must keep. **On today's live recipes the Protagonist has one launch that sends down,** the falling palm: his falling blade hand comes with the split.
 
 **Coverage, from the table** (18 family-and-path rows by 4 sends, so 72 cells for each fighter):
 - **Steps 1 and 2** (the string flows straight into the launch) fill **63 of 72 for both fighters.**
@@ -70,7 +70,7 @@ The director already picks the launcher's piece by the send the stick wants (`pi
 4. **The emergent branch.** When the last blow already has a step-1 ender for the send the stick holds, the launch reads as the string's natural end. The alchemist can show that moment (a cue on the blow), which is how a player learns where launches live without a gate. The cue is Encounter's and UI's, if the rules want one.
 
 **What this asks of others.**
-- **Encounter:** the hook reads the last piece (it already keeps his last two for the repeat rule), and the table's row. It could be a `launcher.enders` block in the recipes, built by my pool builder from `enders.json`.
+- **Encounter:** the hook reads the last piece and the table's row. Its rebuilt launch anywhere reads the table from its own file, `data/combat/enders.json` (section 5), not from a recipes block.
 - **Animation:** the re-chamber is the join smoothing with a longer tell. Animation should say how many ticks reads as a reset and not a stall; I assume about 6.
 - **Game Design:** the trigger, and its price in place of the cooldown.
 
@@ -82,4 +82,44 @@ The director already picks the launcher's piece by the send the stick wants (`pi
 - the launch links;
 - the cells that need a re-chamber.
 
-It is built from the generated movesets (the launch pieces) and `pending/split/recipes.split.json` (the step lower), so it follows when either changes.
+Section 5 has the two files and what each is built on. Each is built from one recipes file, each fighter's launcher pool and its step lower, so it follows when that file changes.
+
+## 5. As Encounter's data file, proven on its launch anywhere (2026-10-18)
+
+**Encounter's rebuilt launch anywhere** (`docs/director/pending/launch-anywhere/`, behind `brawl.launcher.anywhere.enabled`) reads Combat's enders from `res://data/combat/enders.json`.
+- **The lookup:** `fighters.<pool key>.enders["<family>.<path>"][send]`.
+- **The pick:** the lowest step listed, a keyed draw within it.
+- **The aim:** an aimed launcher only; with no stick the planner picks as before.
+
+**Two files, parked in `pending/launch/`:**
+- **`enders.json`** is built on the live recipes, so every piece it names is in today's pieces table and that fighter's launcher pool. **It can land now,** with launch anywhere.
+- **`enders.next.json`** is built on `pending/split/recipes.split.json`, with Animation's new pieces. It lands with the split, in place of the first.
+- **The training dummy is in both,** on his stand-ins and the common uppercut and rising knee.
+- **Each piece counts under every send its row lists:** two of the dummy's spinning stand-ins send across or turned.
+
+| Re-chamber cells, of 72 | The Protagonist | The Anti-hero | The dummy |
+| :--- | ---: | ---: | ---: |
+| `enders.json` (live) | 9 | 12 | 21 |
+| `enders.next.json` | 9 | 9 | 21 |
+
+Live, the Anti-hero has three more because his unwinding fist is in the split. The dummy's stand-ins cover few paths.
+
+**Proven,** on a clean export of main fda9b426 with Encounter's `la.cjs` applied, the switch on and `enders.json` in place:
+- **Tools' validator:** 0 errors. One warning: `data/combat/enders.json` has no schema yet. With my draft schema (`pending/launch/combat-enders.schema.json`) and a map row added in the scratch copy, it reads 0 errors and 0 warnings, and a step of 9 is refused.
+- **A scripted player** throws lights, then every fourth press a B with the stick held one of the four ways in turn, against the medium AI, 240 s a match.
+
+| | Aimed launchers | From the table's lowest step | Steps 1 / 2 / 3 / 4 | Flowed straight (1 or 2) |
+| :--- | ---: | ---: | :--- | ---: |
+| The Protagonist, 4 matches | 169 | **169** | 96 / 60 / 9 / 4 | 92% |
+| The Anti-hero, 4 matches | 142 | **142** | 79 / 37 / 15 / 11 | 82% |
+| The dummy, 3 matches | 119 | **119** | 67 / 25 / 12 / 15 | 77% |
+
+- **No script error.**
+- **The AI's launchers are all unaimed** (aim 0): 112 in six AI matches, at hard. So the AI never reaches the enders: its launches take the planner's send and the old pick. Whether the AI should aim, by its personality's send, so that its strings branch the same way, is Encounter's.
+- **The re-chamber's longer tell isn't in Encounter's build:** a step-3 or step-4 piece is thrown on the launcher's usual wind-up. The file carries `rechamber` (from step 3, about 6 ticks) for Encounter to read if wanted.
+- **The replay hash doesn't cover the file.** The director's data hash (`DirData.dataHash`, `sim/director/data.gd`) folds in the alchemy and recipes files, not `data/combat/enders.json`. With the switch on, the file picks the launcher's piece, and the piece feeds the next pick (Encounter's `LA_FP`). So a change to the file alone would leave a replay's data check passing while it desyncs. Before the file is relied on, Encounter or Simulation should add it to the data hash; the golden then moves once.
+- **Variety is the director's draw within a step,** not "never one of his last two". The freshness by kind of send carries most of it.
+
+**To land `enders.json`, from others, in the same commit:**
+- **Tools:** the schema (my draft, `pending/launch/combat-enders.schema.json`), its row in `tools/schemas/map.json`, and at least three invalid cases in the fixtures, which the self-test's coverage asks of every schema. Its proposed cross-checks are in the schema's description: every strike a row of the recipes' pieces, every fighter a pool key, a step 1 to 4 strike in his launcher pool, a step 5 strike in his step lower.
+- **Encounter or Simulation:** the file in the director's data hash, as above.

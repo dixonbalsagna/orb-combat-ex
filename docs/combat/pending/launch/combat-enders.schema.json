@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/combat-enders",
+  "title": "combat.enders/1",
+  "description": "DRAFT by Combat for Tools (docs/combat/launch-enders.md section 5): data/combat/enders.json, the launch enders read by Encounter's launch anywhere (la.cjs `_ender`). Per fighter (his recipes pool key): his last blow's family and path, and the send his stick asks, give his launch pieces with a step (1 to 5); the director takes the lowest step listed. Policy: closed except keys starting with an underscore. Cross-references for Tools' xref (proposed): every strike is a row of data/combat/recipes.json pieces; every fighter key is a key of recipes.json pools; a step 1 to 4 strike is in that fighter's brawl.launcher pool, a step 5 strike in his launcher.bySendLower",
+  "type": "object",
+  "required": [
+    "schema",
+    "fighters"
+  ],
+  "patternProperties": {
+    "^_": {}
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "combat.enders/1"
+    },
+    "built": {
+      "type": "object"
+    },
+    "steps": {
+      "type": "object",
+      "patternProperties": {
+        "^[1-5]$": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "rechamber": {
+      "type": "object",
+      "properties": {
+        "fromStep": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "ticks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30
+        }
+      },
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false
+    },
+    "launchLinks": {
+      "type": "object",
+      "patternProperties": {
+        "^(line|rise|drop|arc_in|arc_out|spin)$": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "line",
+              "rise",
+              "drop",
+              "arc_in",
+              "arc_out",
+              "spin"
+            ]
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "fighters": {
+      "type": "object",
+      "minProperties": 1,
+      "patternProperties": {
+        "^[a-z][a-z0-9_]*$": {
+          "type": "object",
+          "required": [
+            "enders"
+          ],
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false,
+          "properties": {
+            "enders": {
+              "type": "object",
+              "patternProperties": {
+                "^(hands|legs|close)\\.(line|rise|drop|arc_in|arc_out|spin)$": {
+                  "type": "object",
+                  "required": [
+                    "up",
+                    "across",
+                    "down",
+                    "turned"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "up": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "strike",
+                          "step"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "strike": {
+                            "type": "string",
+                            "pattern": "^strike\\.[a-z0-9_]+$"
+                          },
+                          "step": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 5
+                          }
+                        }
+                      }
+                    },
+                    "across": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "strike",
+                          "step"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "strike": {
+                            "type": "string",
+                            "pattern": "^strike\\.[a-z0-9_]+$"
+                          },
+                          "step": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 5
+                          }
+                        }
+                      }
+                    },
+                    "down": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "strike",
+                          "step"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "strike": {
+                            "type": "string",
+                            "pattern": "^strike\\.[a-z0-9_]+$"
+                          },
+                          "step": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 5
+                          }
+                        }
+                      }
+                    },
+                    "turned": {
+                      "type": "array",
+                      "minItems": 1,
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "strike",
+                          "step"
+                        ],
+                        "additionalProperties": false,
+                        "properties": {
+                          "strike": {
+                            "type": "string",
+                            "pattern": "^strike\\.[a-z0-9_]+$"
+                          },
+                          "step": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 5
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "rechamberCells": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "launchPieces": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

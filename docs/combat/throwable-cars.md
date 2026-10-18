@@ -1,64 +1,63 @@
-# Throwable cars: the moveset side
+# Throwables: the moveset side
 
-Owner: Combat and Choreography. Date: 2026-10-17. Paper only: nothing is built.
+Owner: Combat and Choreography. First version 2026-10-17 (a73ed41d). **This version (2026-10-18) follows Game Design's ruling,** "Throwables, ruled" in `docs/design/rule-of-cool.md` (1e06319b), with Art's mass classes from `docs/art/cars.md`. Paper and a parked data file (`pending/throwables/throwables.json`); nothing is built.
 
-**Orb** (homework 22, `docs/ep/vision.md`, d65c3439): "Cars: scenery cars, and throwable cars too."
+**Orb** (homework 22, `docs/ep/vision.md`): "Cars: scenery cars, and throwable cars too."
 
-**The rules already written:**
-- **The pick-up** is A's context out of reach: a liftable object within 2 bh (`control-rules.md`, row 5). The next attack press throws it, a heavy press slams it down, and the power tier caps the object's size.
-- **A thrown object's outcomes** against every state are in `control-rules.md`'s table: damage by size, blocked at the guard's rate, a stagger from tier 3, dodged.
-- **Rule of cool 17** (`rule-of-cool.md`): cars at any tier, lorries and boats from tier 2, ships from tier 3. At tone 6 of 10, people bail out first, played for comedy.
-- **World's plan** (`docs/world/crowd-cars-buildings.md`): moving cars are dressing, and parked cars can become props in the sim. A car holds no one, so the collateral numbers don't move.
+## 1. The rules (Game Design's), and what changed here
 
-This page is what picking one up and throwing it looks like, and what each fighter does with it.
+| | The ruling |
+| :--- | :--- |
+| **What a tier can lift** | Tier 1: mass 4 at most (a bike 1, a sedan 3, a van 4). Tier 2: 8 at most (a bus, lorries and boats). Tier 3 and up: ships |
+| **The pick-up** | A's context: an object within 2 bh, while he is free and the rival is beyond striking reach |
+| **X, Y and B** | **X** tosses it along the stick, quick and low. **Y** throws it in full. **B** slams it down on a rival in reach, or onto the ground in front of him. Holding an object, B is never a launcher |
+| **The catch** | A perfect block of a thrown object within the catcher's tier catches it. He holds it, and his next X or Y throws it back, worth a quarter more. Above his tier's mass the perfect block swats it aside along his stick: no damage to him, and where it lands is on the thrower's account. A plain guard blocks it at the guard's rate |
+| **The AI** | In 10, 20 or 30% of its chances by level. The Anti-hero takes half again as many. The hero only when the throw's line is clear of people. QA's band: 0.5 to 3 thrown objects a match, AI against AI. No cap and no cooldown |
 
-## 1. The pick-up and the throw, as pieces
+**What changed from my first version:**
+- **The catch is everyone's,** not the Protagonist's alone. What is his is how it looks.
+- **X and Y are a toss and a throw,** and B is the slam.
+- **The lift has three sizes** (below), because a bike, a van and a bus can't be lifted the same way.
 
-| Beat | What the body does | One press is one attack |
+## 2. The pieces by size, and by fighter
+
+| Piece | The Protagonist (the guardian, playful and technical) | The Anti-hero (exact and punishing) |
 | :--- | :--- | :--- |
-| **The lift** (A, a car within 2 bh) | He sets under it and lifts. It is a held moment of about 12 ticks, the tell everyone can read | The press is the lift |
-| **The hold** | He carries it at the shoulder or overhead and can fly with it. The stick moves him as it always does. A blow that lands on him makes him drop it | No press |
-| **The throw** (X or Y) | By the stick, as a launch is aimed: toward across, up a lob, away a throw behind him | The press is the throw |
-| **The slam** (B) | He brings it down on the rival in reach, or on the ground in front of him | The press is the slam |
+| **The lift, light** (a bike) | One hand under the frame, swung up to the shoulder | Picked up by the frame in one hand |
+| **The lift, heavy** (a sedan, a van) | Two open hands under the chassis, the knees bent, stood up with it | The forearm plate slid under the frame like a fork, and up on one arm |
+| **The lift, huge** (a bus at tier 2, a ship at tier 3) | Under the middle with both arms, the back straight, raised overhead in two steps | The plate under and the free hand on top, both arms, to the shoulder |
+| **The hold** (he can fly with it) | At the shoulder, or overhead | Out on the plate at shoulder height |
+| **X, the toss** | A side-arm skim, low and flat, on a quarter turn | A short straight push off the plate, low |
+| **Y, the throw** (along the stick, for both) | A turning heave, one full turn and the release | A straight hurl on a line |
+| **B, the slam** (on a rival in reach, else the ground in front, for both) | Brought down with both hands and a turn of the hips; on the ground, it is left standing as a wall between them | Brought straight down off the plate; on the ground, slammed flat |
+| **The catch** (a perfect block) | Open hands meet it and give with it, a turn taking the speed, and it is held at the shoulder | Stopped dead on the plate, no give, held there |
+| **The swat** (above his tier) | A palm on its side and a turn, deflecting it along his stick | A backhand of the plate, aside |
+| **The throw back** (X or Y while holding a catch) | As his toss or throw | As his toss or throw |
 
-- **The throw is a plain send of an object.** The planner stages its flight, and it is never a launch of the rival. A car that hits him is a thrown object's hit, which damages by size.
-- **A car that hits a building** carves as a thrown body of its size does, by the thrower's tier, and counts against the same collateral budget. A car holds no one, so no civilian is counted from the car itself.
+- **The rules are the same for both.** A slam lands on a rival in reach and otherwise on the ground; a throw goes along the stick; a catch is a catch. What differs is the look, and what each fighter's AI prefers when it aims: the hero's line is away from people (and it picks an object up only when that line is clear), the Anti-hero's through what stands behind the rival.
+- **A thrown object is a plain send of an object.** The planner stages its flight, and it is never a launch of the rival. It damages by size (the table in `control-rules.md`). Against a building it carves by the thrower's tier, on the same collateral budget. A car holds no one, so nothing is counted from the car itself.
 
-## 2. By identity
+## 3. Poses a fighter (estimate; Animation's figure to come through the EP)
 
-| | The Protagonist (the guardian, playful and technical) | The Anti-hero (exact and punishing; he feeds on collateral) |
-| :--- | :--- | :--- |
-| **The lift** | Two open hands under the chassis, the knees bent: a careful, athletic lift | One arm: the forearm plate slid under the frame like a fork, and up |
-| **The throw** | A turning heave, sent up or turned, away from people (his care term picks the line) | A straight hurl on a line, across, through whatever stands behind the rival |
-| **The slam** | He sets it down hard in front of the rival as a wall between them, rather than on him | He brings it down on the rival |
-| **His own use** | **The catch:** a perfect block of a thrown car takes it, and he sets it down or sends it back (his tier-2 art is the redirecting kind, `fighter-pipeline.md` §8). It is the one move only he has | **The street as ammunition:** when the brawl is beside parked cars, the AI picks one up more often than he picks up anything else |
-| **The AI** | Picks a car up when a street is empty of people, and rarely | Picks a car up whenever one is in reach and a building is behind the rival |
+| Piece | Poses |
+| :--- | ---: |
+| The lift, three sizes | 3 |
+| The hold | 1 |
+| The toss | 1 |
+| The throw | 1 |
+| The slam | 1 |
+| The catch | 1 |
+| The swat | 1 |
+| **A fighter** | **9** |
 
-## 3. Pieces, a fighter (estimate; Animation's figure to come through the EP)
-
-| Piece | The Protagonist | The Anti-hero |
-| :--- | ---: | ---: |
-| The lift | 1 | 1 |
-| The hold, at the shoulder and overhead | 1 | 1 |
-| The throw: across, up, behind | 2 | 2 |
-| The slam | 1 | 1 |
-| The catch and the set-down | 2 | 0 |
-| **A fighter** | **7** | **5** |
-
-- **The car itself is not a fighter's piece.**
-  - It is a prop body for Simulation, a hashed parked car, World's option B.
-  - Its wreck states are Art's.
-  - Its no-flash wreck is VFX's, checked against Legal's flash rows, since a car's explosion is a bright event.
-- **The moveset generator needs no new kind for this.** These are context pieces under A, like the pick-up today, and each fighter's are named in his row.
+- **The object is not a fighter's piece.**
+  - It is a prop body for Simulation, a hashed parked car (World's option B in `docs/world/crowd-cars-buildings.md`).
+  - Its wreck is Art's: a thrown car that lands becomes the wreck, with no people in or around it.
+  - Its no-flash smash is VFX's.
+- **The moveset generator needs no new kind.** These are context pieces under A, named for each fighter in `throwables.json`.
 
 ## 4. For others
 
-- **Legal:**
-  - A lift of a vehicle has no row today. The g03 rows (a lift drawn whole, the body in view) are written for people.
-  - Rule of cool's "people bail out first, played for comedy" at tone 6 needs Legal's word against the rating target. World's plan has cars hold no one, which avoids the question.
-- **Game Design:**
-  - The size caps by tier (rule of cool 17).
-  - Whether the throw is X and Y and the slam B, as `control-rules.md` row 5 has it ("the next attack press throws it, a heavy press slams it").
-  - The catch's rule: a perfect block of a thrown object.
-  - How often the AI may pick one up.
-- **World and Simulation:** parked cars as props (World's option B), with the kerb slots by lane.
+- **Legal:** no row covers a lift or throw of a vehicle; g03 and g04 are written for people. A row for a lifted or thrown object is asked: drawn whole and in view, no person in it. World's and Art's cars already hold no one.
+- **Animation:** its figure for the nine poses a fighter, and whether the huge lift's two steps read at fight speed.
+- **World and Simulation:** parked cars as props, with the kerb slots by lane.

@@ -513,7 +513,8 @@
    ],
    "adds": {
     "martial.b": 1,
-    "martial.x": 3
+    "martial.x": 3,
+    "martial.a.clinch": 2
    },
    "_adds": "Places added to a cell for the split by path (cells.json `_quotasSplit`): his locked moves leave a group under 5, and the added place is filled by that group's quota",
    "chargedHeavy": "strike.su_ram",
@@ -1111,7 +1112,8 @@
    "adds": {
     "martial.y": 1,
     "martial.b": 2,
-    "martial.x": 1
+    "martial.x": 1,
+    "martial.a.clinch": 1
    },
    "_adds": "Places added to a cell for the split by path (cells.json `_quotasSplit`): his locked moves leave a group under 5, and the added place is filled by that group's quota",
    "chargedHeavy": "strike.su_palm_heave",

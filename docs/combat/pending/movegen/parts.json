@@ -2588,6 +2588,12 @@
     "rule": "folded arms are a held crossed-forearms pose and fail h02 at 12 ticks or more: allowed on a sheet and as a moment under 12 ticks, never as an idle, stand-off or intro pose; a one-arm fold (a single forearm across the body, the other hand free or at the chin) is allowed",
     "why": "the Anti-hero's hybrid A 'arms folded high', RL-151",
     "_form": "none: a pose rule: no crossed-forearms held 12 ticks or more; binds the brace (up to 40 ticks) and any stand-off: a one-arm fold only"
+   },
+   {
+    "id": "h10",
+    "rule": "a finisher's closing pose is a held gesture after a blow and must not mock a beaten rival: an offered hand is one hand, fingers together and still (no curling, no wiggle), palm sideways or toward the fallen rival and not at the camera, held low (forearm out, never drawn to a hip), never both arms, no smirk or taunt line; a raised hand (a pledge) stays at shoulder height or lower, palm out, fingers together, one hand, no light, glow, ring or ball in or above it, never overhead (the raised charging pose; any hand above 82 fails the signature and tell emitter test)",
+    "why": "Art's Open Palm and Both Roads finisher styles, RL-159",
+    "_form": "none: a pose rule for a finisher's closing gesture (Art's finisher styles); no generated move is a finisher's close"
    }
   ],
   "stacking": [

@@ -645,6 +645,17 @@
       "light"
      ],
      "pm.palm_rise"
+    ],
+    [
+     "mv.protagonist.martial.a.clinch.11",
+     [
+      "foot",
+      "instep",
+      "arc_in",
+      "shins",
+      "light"
+     ],
+     "pr.sweep"
     ]
    ],
    "martial.b": [
@@ -1572,6 +1583,28 @@
       "medium"
      ],
      "rm.fist_rise"
+    ],
+    [
+     "mv.rival.martial.a.clinch.11",
+     [
+      "hand",
+      "plate",
+      "drop",
+      "head",
+      "light"
+     ],
+     "rm.plate_hammer"
+    ],
+    [
+     "mv.rival.martial.a.clinch.12",
+     [
+      "foot",
+      "instep",
+      "arc_in",
+      "shins",
+      "light"
+     ],
+     "w1.sweep"
     ]
    ],
    "martial.b": [

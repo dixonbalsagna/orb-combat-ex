@@ -92,6 +92,13 @@ The EP's brief of 2026-10-15. The note is `../../split-and-pieces.md`.
 - **A kit row** (`kit` in an identity row: the Empress's guards). It has only the cells its kit names, with its counts and any quotas of its own. It draws only on posed common pieces, or a new shape of a weight the kit allows. It is never another fighter's own blow. It has no share rule and no floors, is outside the gate, is never counted when the common pieces are found, and only its lights and mediums are read for the string rules.
 - **The two fighters' files** gained the three added moves and the new quotas' counts. No move changed, and `../recipes.brawl.json` is byte for byte the same.
 
+## 0i. Every place has a piece, and a cell's own bans (2026-10-18, version 21)
+
+- **A cell may ban shapes for every fighter** (`never` on the cell in `cells.json`). The clinch takes a foot, low only.
+- **The clinch has a quota for each place:** the head and the jaw, the chest and the gut, the legs and the shins. So under Legal's s08 by place a region held on the stick can always alternate (`../../grapple-hybrid.md` section 5). The arm's places are Animation's at run time.
+- **Two added places:** the Protagonist +1 (his sweep, the shins) and the Anti-hero +2 (his plate hammer for the head, his sweep). The sketches' clinch cells were unlocked and regenerated under the new quotas. No other cell of any row moved.
+- **Legal's h10** (a finisher's closing gesture) is mirrored. The guard's own pack is `guard1`, the name it landed under (it was `rival10` in Animation's parked patch).
+
 ## 0h. The clinch's vicious blows, and a ban for one cell (2026-10-16, version 20)
 
 The note is `../../grapple-hybrid.md` (Orb's grapple: the catch and the clinch, the clinch first).
