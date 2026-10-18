@@ -487,7 +487,7 @@ func update(S: SimState, f, pose: Vector3, vx: float, z: float) -> void:
 	badge.visible = markers and not f.hidden and not (flashes_on and flash_view.glyph_up())
 	badge.position = Vector3(0.0, 84.0 + tier * 3.0 + 8.0, 0.0)
 	badge.scale = Vector3.ONE * (1.0 + (float(_cue.get("badge", 1.0)) - 1.0) * _cue_weight(T))
-	badge.rotation.y = T * 2.0
+	badge.rotation.y = RenderLook.BADGE_TURN   # steady (it spun at 2 rad/s until 2026-10-18)
 	if stance != _stance:
 		_stance = stance
 		_badge_mat.set_shader_parameter("albedo", RenderLook.col(RenderLook.STANCE_COL[stance]))

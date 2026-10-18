@@ -599,8 +599,13 @@ const GUARD_ALPHA: float = 0.9
 const GUARD_UP_S: float = 0.08
 const GUARD_DOWN_S: float = 0.15
 const GUARD_FLASH_S: float = 0.3
-## Stance colours for the badge above each fighter: aggressive, defensive, evasive, escape.
-const STANCE_COL: Array = ["#ff5a4a", "#4aa8ff", "#5ed17a", "#b58cff"]
+## Stance colours for the badge above each fighter: aggressive, defensive, evasive, escape. None is a saturated red to
+## the frame analyser (R/(R+G+B) at 0.8 or more on stored or linear values; the badge's flat shading only scales its
+## colour, so the share holds): the aggressive one is 0.74 on linear values (#ff5a4a was 0.86; 2026-10-18).
+const STANCE_COL: Array = ["#ff8066", "#4aa8ff", "#5ed17a", "#b58cff"]
+## The badge's fixed turn about the vertical, radians: two of its four faces show, unevenly shaded. It used to spin at
+## 2 rad/s; it is steady since 2026-10-18.
+const BADGE_TURN: float = 0.6
 const STANCE_SHORT: Array = ["ATK", "DEF", "EVA", "ESC"]
 const STANCE_LONG: Array = ["AGGRESSIVE", "DEFENSIVE", "EVASIVE", "ESCAPE"]
 
