@@ -15,7 +15,7 @@ It carries Game Design's rules (`docs/design/grapple.md`, Orb's pick in homework
   - its start tick;
   - the grip (−2 to +2, the catcher's way);
   - the pulses claimed, and a voided flag;
-  - the vicious blows, and the last region;
+  - the vicious blows, and the last place struck (s08 counts places, not regions);
   - the brace's start and its rest;
   - the shared grab lockout, and the no-regrab time.
 
@@ -46,7 +46,7 @@ Each tick, for each player in a catch, a clinch or a carry, the director asks `S
   - A pummel at two ahead is the throw.
 - **Vicious blows:**
   - half a light's damage and three times its wear, on the region his stick leans to;
-  - four a fighter a clinch, never more than two in a row to one region (Legal s08);
+  - four a fighter a clinch, never more than two in a row to the same place (Legal s08, by its own wording, as Game Design re-ruled on 2026-10-17 and Combat's hybrid counts it, generator v21). A region has two or three places (head and jaw, chest and gut, legs and shins), so a stick held on one wound keeps working it, the blows alternating places;
   - half again as hard for a fighter one or two ahead, or at a pin (at most ×1.5 together);
   - each landed one counts one toward his run, as a light does.
 - **Moving:** the fighter ahead walks the pair along his stick at half walking speed; the other keeps half his nudge. Walked into a building that holds, it is a pin.
@@ -94,7 +94,7 @@ All `cue` events, by the cue list's rules (`pending/return/cues.md`): `n` an abs
 | `grapple_pulse` | none | `k` the pulse, `n` its tick, `amount` the grip |
 | `grapple_pummel` | `step`, `sharp` or `void` | `k` the grip after it |
 | `grapple_stray` | none | |
-| `grapple_vicious` | the region | `k` his count |
+| `grapple_vicious` | the place struck | `k` his count |
 | `grapple_brace` | `on` or `off` | |
 | `grapple_carry` | `start`, `break` or `end` | |
 | `grapple_end` | `throw_down`, `throw_up`, `throw_across`, `reversal`, `broken`, `push_off`, `time`, `tech`, `burst` or `interject` | |
