@@ -63,6 +63,17 @@ try {
   writeFileSync(recFile, JSON.stringify(record));
   const online = { offline: false, approved: '2026-10-15', interim: { legal: 'RL-136', expires: '2026-10-22' } };
 
+  // OWNER-APPROVED (Orb's decision, 2026-10-18): the pin is site.json's own, no record read
+  {
+    const B_FULL = 'a'.repeat(40);
+    const own = { offline: false, approved: '2026-10-18', interim: { owner: 'Orb 2026-10-18', approved: '2026-10-18' }, pin: B_FULL };
+    const missing = join(dir, 'no-record.json');
+    const op = pinOf(own, missing);
+    check('an owner-approved site is pinned to site.json\'s own "pin" without any record', op.pin === B_FULL && op.problems.length === 0 && op.owner === true, JSON.stringify(op));
+    check('an owner-approved site with no "pin" is refused', pinOf({ ...own, pin: undefined }, missing).problems.length === 1);
+    check('an owner-approved site with a short or wrong "pin" is refused', pinOf({ ...own, pin: 'abc1234' }, missing).problems.length === 1);
+    check('a blank owner is not owner-approved (the record is read and missing)', pinOf({ ...own, interim: { owner: ' ' } }, missing).problems.length >= 1);
+  }
   // the pin follows the record
   const p0 = pinOf(online, recFile);
   check('an online site is pinned to the recorded commit', p0.pin === A && p0.problems.length === 0, JSON.stringify(p0));
@@ -95,6 +106,18 @@ try {
   const rec2 = join(dir, '..', `record2-${process.pid}.json`);
   writeFileSync(rec2, JSON.stringify(record2));
   check('recording a new run and pointing at it moves the pin to the new commit', pinOf(online, rec2).pin === B);
+  // the interim's export locks Reduce flashing on (Legal RL-156): set in the pinned tree, whatever the commit carried
+  put('ui/data/features.json', JSON.stringify({ schema: 1, features: { reduce_flashing: true, lock_reduce_flashing: false } }));
+  const Cc = commit('a commit with the lock off');
+  const web3 = join(dir, '..', `web3-${process.pid}`), tree3 = join(dir, '..', `tree3-${process.pid}`);
+  exportPinned(Cc, web3, { repo: dir, tree: tree3, godotNode: stub, lock: true });
+  check('the interim export sets lock_reduce_flashing true in the pinned tree', JSON.parse(readFileSync(join(tree3, 'ui/data/features.json'), 'utf8')).features.lock_reduce_flashing === true);
+  exportPinned(Cc, web3, { repo: dir, tree: tree3, godotNode: stub });
+  check('without the lock option the export is as committed', JSON.parse(readFileSync(join(tree3, 'ui/data/features.json'), 'utf8')).features.lock_reduce_flashing === false);
+  put('ui/data/features.json', JSON.stringify({ schema: 1, features: { reduce_flashing: true } }));
+  const Cd = commit('a commit older than the lock');
+  check('the lock option refuses a commit whose features.json has no lock key (older than the rf-lock of UI)', (() => { try { exportPinned(Cd, web3, { repo: dir, tree: tree3, godotNode: stub, lock: true }); return false; } catch (e) { return /rf-lock/.test(e.message); } })());
+  for (const d of [web3, tree3]) rmSync(d, { recursive: true, force: true });
   for (const d of [web1, tree1, web2, tree2, webHead, treeHead, recFile, rec2, stub]) rmSync(d, { recursive: true, force: true });
 } finally {
   rmSync(dir, { recursive: true, force: true });

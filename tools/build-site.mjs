@@ -76,9 +76,12 @@ if (config.interim) {
   const dateOk = (d) => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
   if (config.offline !== false) problems.push('"interim" needs "offline": false');
   if (!dateOk(config.approved)) problems.push("tools/site.json has no \"approved\" date: the site goes online only on Orb's word, recorded there");
-  if (!(typeof I.legal === 'string' && /^RL-\d+/.test(I.legal))) problems.push("\"interim.legal\" is not a Legal ruling id (RL-<n>): the interim terms are Legal's");
+  // OWNER-APPROVED (Orb's order, 2026-10-18): interim.owner names who decided. The build then needs no Legal ruling id, no expiry and no recorded run: the record's verdicts are printed, report only.
+  const owner = typeof I.owner === 'string' && I.owner.trim() ? I.owner.trim() : null;
+  if (!owner && !(typeof I.legal === 'string' && /^RL-\d+/.test(I.legal))) problems.push("\"interim.legal\" is not a Legal ruling id (RL-<n>): the interim terms are Legal's (or \"interim.owner\" names the owner who decided)");
   if (!dateOk(I.approved)) problems.push('"interim.approved" is not a date');
-  if (!dateOk(I.expires)) problems.push('"interim.expires" is not a date: an interim build has a time limit');
+  if (!owner && !dateOk(I.expires)) problems.push('"interim.expires" is not a date: an interim build has a time limit');
+  if (owner && I.expires !== undefined && I.expires !== null && !dateOk(I.expires)) problems.push('"interim.expires" is not a date');
   const noticeFile = resolve(import.meta.dirname, I.notice || 'site-interim.json');
   let text = null;
   try { text = JSON.parse(readFileSync(noticeFile, 'utf8')); } catch (e) { problems.push(`the interim words ${noticeFile} could not be read: ${e.message}`); }
@@ -97,7 +100,13 @@ if (config.interim) {
     }
     return out;
   };
-  if (!args.includes('--local') || process.env.GITHUB_ACTIONS) problems.push(...verifyInterimRecord());
+  if (owner) {
+    // report only: what the recorded run says about this commit is printed, and never stops the build
+    let rep = [];
+    try { rep = verifyReleasePass(undefined, opt('--commit') || 'HEAD'); } catch (e) { rep = [`the recorded pass could not be checked: ${e.message}`]; }
+    console.log(`OWNER-APPROVED (${owner}): no recorded run is required; report only, the record says ${rep.length ? rep.length + ' thing(s):' : 'nothing against this commit'}`);
+    for (const r of rep.slice(0, 12)) console.log(`  report-only: ${r}`);
+  } else if (!args.includes('--local') || process.env.GITHUB_ACTIONS) problems.push(...verifyInterimRecord());
   if (problems.length) {
     console.error('error: the interim playable site is not allowed online:');
     for (const p of problems) console.error(`  ${p}`);
@@ -123,7 +132,7 @@ if (config.interim) {
   const holding = siteNotice(JSON.parse(readFileSync(join(import.meta.dirname, 'site-notice.json'), 'utf8')));
   for (const where of ['index.html', 'bench/index.html', 'band/index.html', '404.html']) put(where, holding);
   put('about/index.html', aboutPage(text, lic, { play: '../play/' }));
-  console.log(`site built in ${outDir}: INTERIM (${I.legal}, until ${I.expires}): /play/ behind the click-through; /, /bench/, /band/ and /404.html are the holding page; /about/ has the notices`);
+  console.log(`site built in ${outDir}: INTERIM (${owner ? 'owner-approved: ' + owner + (I.expires ? ', until ' + I.expires : ', no expiry') : I.legal + ', until ' + I.expires}): /play/ behind the click-through; /, /bench/, /band/ and /404.html are the holding page; /about/ has the notices`);
   process.exit(0);
 }
 

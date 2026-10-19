@@ -45,9 +45,12 @@ const decode = (s) => s.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&
 const textOf = (html) => decode(html.replace(/<pre>[\s\S]*?<\/pre>/g, ' ').replace(/<style>[\s\S]*?<\/style>/g, ' ').replace(/<script>[\s\S]*?<\/script>/g, ' ').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ');
 
 // ---- the interim itself
-if (!/^\d{4}-\d{2}-\d{2}$/.test(String(I.expires))) bad('interim.expires is not a date');
+// OWNER-APPROVED (Orb's order, 2026-10-18): interim.owner names who decided; then there is no Legal ruling id, the expiry is optional and the pass file is read for the report only.
+const OWNER = typeof I.owner === 'string' && I.owner.trim() ? I.owner.trim() : null;
+if (OWNER && (I.expires === undefined || I.expires === null)) { /* no expiry set: the owner decides when it comes down */ }
+else if (!/^\d{4}-\d{2}-\d{2}$/.test(String(I.expires))) bad('interim.expires is not a date');
 else if (today > I.expires) bad(`the interim expired on ${I.expires} (today is ${today}): take the playable site down (node tools/site-offline.mjs) or have Legal renew it`);
-if (!/^RL-\d+/.test(String(I.legal))) bad('interim.legal is not a Legal ruling id');
+if (!OWNER && !/^RL-\d+/.test(String(I.legal))) bad('interim.legal is not a Legal ruling id (or interim.owner naming the owner who decided)');
 if (!/^\d{4}-\d{2}-\d{2}$/.test(String(config.approved))) bad('tools/site.json has no "approved" date');
 const noticePath = resolve(here, I.notice || 'site-interim.json');
 let words = null;
@@ -55,7 +58,7 @@ try { words = JSON.parse(readFileSync(noticePath, 'utf8')); } catch (e) { bad(`t
 if (words && words.draft !== false) bad('the interim words are still a draft (tools/site-interim.json "draft" is not false)');
 
 // the pass file records the interim, its waivers and its expiry
-{
+if (!OWNER) {
   const rf = resolve(opt('--record') || join(here, 'flash', 'release-pass.json'));
   let rec = null;
   try { rec = JSON.parse(readFileSync(rf, 'utf8')).interim || null; } catch { /* reported below */ }
@@ -117,14 +120,16 @@ if (play) {
   const need = [
     [/This game contains flashing effects/, 'the gate does not say the game contains flashing effects'],
     [/three flashes a second/, 'the gate does not state the finding against the recommended three flashes a second'],
-    [/no independent analyser has been run/, 'the gate does not say no independent analyser has been run'],
+    [/[Nn]o independent analyser has been run/, 'the gate does not say no independent analyser has been run'],
     [/photosensitive epilepsy, please do not play this version/, 'the gate does not carry the advice for people with photosensitive epilepsy'],
     [/I understand, start/, 'the gate has no "I understand, start" button'],
-    [/Reduce flashing is on\. It lowers some effects but does not remove the flagged scenes\./, "the gate's small line about Reduce flashing is missing"],
+    OWNER ? [/Reduce flashing is on and cannot be turned off in this version\. It lowers some effects but does not remove the flagged scenes\./, "the gate's line that Reduce flashing is on and cannot be turned off (Legal's addendum 11 wording) is missing"] : [/Reduce flashing is on\. It lowers some effects but does not remove the flagged scenes\./, "the gate's small line about Reduce flashing is missing"],
   ];
   for (const [re, msg] of need) if (!re.test(gateText)) bad(`/play/: ${msg}`);
   if (!gateText.includes(LEGAL_AI)) bad("/play/: the gate does not carry Legal's AI line");
-  if (!gateText.includes(LEGAL_FIRST)) bad("/play/: the gate's first sentence is not Legal's (RL-137)");
+  if (!OWNER && !gateText.includes(LEGAL_FIRST)) bad("/play/: the gate's first sentence is not Legal's (RL-137)");
+  if (OWNER && words && words.gate && words.gate.blocks && words.gate.blocks[0] && !gateText.includes(words.gate.blocks[0].p)) bad("/play/: the gate does not carry the owner-approved paragraph of the interim words");
+  if (OWNER && !/some scenes that go over the recommended limit/.test(gateText)) bad('/play/: the owner-approved gate does not say that some scenes go over the recommended limit');
   for (const re of FORBIDDEN) if (re.test(gateText)) bad(`/play/'s gate uses a word Legal forbids: ${re}`);
 }
 
@@ -161,7 +166,8 @@ for (const p of ALLOWED.filter((x) => x !== 'play/index.html')) {
   if (about) {
     const t = textOf(about);
     if (!t.includes(LEGAL_AI)) bad("/about/ does not carry Legal's AI line");
-    if (!t.includes(LEGAL_FIRST)) bad("/about/'s flashing-effects paragraph does not start with Legal's first sentence (RL-137)");
+    if (!OWNER && !t.includes(LEGAL_FIRST)) bad("/about/'s flashing-effects paragraph does not start with Legal's first sentence (RL-137)");
+    if (OWNER && words && words.gate && words.gate.blocks && words.gate.blocks[0] && !t.includes(words.gate.blocks[0].p)) bad("/about/'s flashing-effects paragraph does not carry the owner-approved paragraph");
     if (!t.includes(GODOT_LINE)) bad('/about/ does not carry the Godot (MIT) notice line');
     if (!t.includes(SANS_LINE)) bad('/about/ does not carry the Open Sans (OFL) notice line');
     if (!/MIT License|Permission is hereby granted/.test(about)) bad("/about/ does not carry Godot's licence text");
@@ -212,4 +218,4 @@ if (words) {
 }
 
 if (problems.length) { for (const p of problems) console.error(`interim site check FAILED: ${p}`); process.exit(1); }
-console.log(`interim site check ok: ${files.length} files; /play/ starts the engine only from the gate's button and "Not now" goes to the holding page; every other page leads only to the gate, About or the holding page; noindex everywhere; Reduce flashing is on by default; the name scan is clean; interim ${I.legal} runs until ${I.expires} (today ${today})`);
+console.log(`interim site check ok: ${files.length} files; /play/ starts the engine only from the gate's button and "Not now" goes to the holding page; every other page leads only to the gate, About or the holding page; noindex everywhere; Reduce flashing is on by default; the name scan is clean; interim ${OWNER ? 'owner-approved (' + OWNER + ')' : I.legal} runs until ${I.expires} (today ${today})`);

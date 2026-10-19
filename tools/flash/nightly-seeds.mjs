@@ -21,6 +21,10 @@ import { fileURLToPath } from 'node:url';
 const HERE = import.meta.dirname;
 const DEFAULT_HISTORY = join(HERE, 'nightly-seeds.json');
 export const TAKE_DOWN_ABOVE = 3;   // primary reading, flashes in the worst second (RL-136 item 3)
+export const TAKE_DOWN_ABOVE_OWNER = 3.5;   // under Orb's owner-approved interim (Legal's addendum 11, RL-161): a new scene over 3.5 on the primary reading is the trigger
+
+/** The limit the nightly applies for a site config: 3.5 while the interim is the owner's decision, else 3. */
+export function limitFor(config) { return config && config.interim && typeof config.interim.owner === 'string' && config.interim.owner.trim() ? TAKE_DOWN_ABOVE_OWNER : TAKE_DOWN_ABOVE; }
 
 /** The next `count` seeds from `base` that are in neither the recorded set nor the history. Pure. */
 export function nextSeeds(count, base, recorded, used) {
@@ -31,22 +35,22 @@ export function nextSeeds(count, base, recorded, used) {
 }
 
 /** What a run says, from the summary rows (run-pixels summary.json: { id, error?, result: { general: { flashes } } }). Pure. */
-export function readRun(rows, seeds) {
+export function readRun(rows, seeds, limit = TAKE_DOWN_ABOVE) {
   const want = seeds.flatMap((s) => [`ai-${s}-normal`, `ai-${s}-reduced`]);
   const have = new Map(rows.filter((r) => !r.error && r.result && r.result.general).map((r) => [r.id, r.result.general.flashes]));
   const missing = want.filter((id) => !have.has(id));
   let maxId = null, max = -1;
   for (const [id, v] of have) if (want.includes(id) && v > max) { max = v; maxId = id; }
-  const over = [...have].filter(([id, v]) => want.includes(id) && v > TAKE_DOWN_ABOVE).map(([id, v]) => ({ id, primary: v }));
+  const over = [...have].filter(([id, v]) => want.includes(id) && v > limit).map(([id, v]) => ({ id, primary: v }));
   return { clips: want.length, read: want.length - missing.length, missing, max, maxId, over };
 }
 
 /** The one report line. */
-export function reportLine(date, commit, seeds, r) {
+export function reportLine(date, commit, seeds, r, limit = TAKE_DOWN_ABOVE) {
   const head = `nightly seeds ${date} on the pinned ${commit.slice(0, 8)}: seeds ${seeds.join(',')} x 2 modes, ${r.read} of ${r.clips} clips read`;
   if (r.missing.length) return `${head}; NOT COMPLETE: ${r.missing.join(', ')} not read (a missing clip is not a pass)`;
-  if (r.over.length) return `${head}; TAKE DOWN: ${r.over.map((o) => `${o.id} reads ${o.primary}`).join(', ')} on the primary reading (over ${TAKE_DOWN_ABOVE})`;
-  return `${head}; largest primary ${r.max} (${r.maxId}); none over ${TAKE_DOWN_ABOVE}`;
+  if (r.over.length) return `${head}; TAKE DOWN: ${r.over.map((o) => `${o.id} reads ${o.primary}`).join(', ')} on the primary reading (over ${limit})`;
+  return `${head}; largest primary ${r.max} (${r.maxId}); none over ${limit}`;
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -58,6 +62,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const cap = opt('--cpu-cap', '25');
   const date = new Date().toISOString().slice(0, 10);
   // the pinned commit: tools/site-pin.mjs (the recorded one), or --pin <sha> (a test or a recorded run not yet flipped online)
+  let config = {};
+  try { config = JSON.parse(readFileSync(join(HERE, '..', 'site.json'), 'utf8')); } catch { /* no config: the default limit */ }
   const pinRun = opt('--pin') ? { status: 0, stdout: opt('--pin'), stderr: '' } : spawnSync(process.execPath, [join(HERE, '..', 'site-pin.mjs')], { encoding: 'utf8' });
   const pin = (pinRun.stdout || '').trim();
   if (pinRun.status !== 0 || !/^[0-9a-f]{40}$/.test(pin)) { console.error(`nightly seeds: no pinned commit (the site is offline, or the pass file has no usable record): ${(pinRun.stderr || '').trim()}`); process.exit(2); }
@@ -80,8 +86,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const rp = spawnSync(process.execPath, [join(HERE, 'run-pixels.mjs'), '--dir', web, '--path', '/index.html?flashcap=1', '--out', join(out, 'clips'), '--jobs', jobs, '--cpu-cap', cap, '--seeds', seeds.join(',')], { stdio: 'inherit', env: { ...process.env, MERIDIAN_SESSION: process.env.MERIDIAN_SESSION || 'tools' } });
   let rows = [];
   try { rows = JSON.parse(readFileSync(join(out, 'clips', 'summary.json'), 'utf8')); } catch { /* reported as missing */ }
-  const r = readRun(rows, seeds);
-  const line = reportLine(date, pin, seeds, r);
+  const limit = limitFor(config);   // 3 normally; 3.5 under the owner-approved interim (Legal's addendum 11)
+  const r = readRun(rows, seeds, limit);
+  const line = reportLine(date, pin, seeds, r, limit);
   console.log(line);
   hist.runs.push({ date, commit: pin, seeds, read: r.read, clips: r.clips, max: r.max, maxClip: r.maxId, over: r.over, missing: r.missing });
   writeFileSync(HISTORY, JSON.stringify(hist, null, 2) + '\n');

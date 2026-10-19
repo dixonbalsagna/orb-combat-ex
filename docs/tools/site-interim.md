@@ -79,3 +79,25 @@ The check passes at once without an `interim` block. With one it fails on:
 - **The game has its own first-start notice** (UI's, the addendum 3 wording naming "Reduced motion"). With the gate there are two screens and two texts. Legal's words are in the gate; UI's menu notice should carry the same words (one string), and the gate can be dropped later by deleting the interim's wrapper, not before the game's own gate is shown to fail nothing.
 - **The holding page's text** (`tools/site-notice.json`, RL-121) still says the playable build is offline and that scenes flash more often than the limit. With an interim live at `/play/` that sentence is true for visitors who do not know the address, and "Not now" returns a visitor to it. Legal may want it amended; it is one JSON file.
 - **Feedback target**: `ui/data/send.json` `"_target": "none"`: COPY REPORT puts a plain-text report on the clipboard, SEND is hidden, nothing leaves the computer. The privacy line is for that target.
+
+## The owner-approved mode (Orb's decision, 2026-10-18; Legal's addendum 11, RL-161)
+
+Orb ordered the public page back up with a disclaimer before addendum 10 is met (homework 36). Legal recorded it as the owner's decision, not a Legal pass: seven days (to 2026-10-25) unless Orb renews it in writing. The tools carry it as a second kind of interim; Legal's ruling-based interim (RL-136) stays as it was.
+
+**tools/site.json** (the EP flips it; Tools never does):
+```
+"offline": false, "approved": "2026-10-18",
+"interim": { "owner": "Orb 2026-10-18", "approved": "2026-10-18", "expires": "2026-10-25", "notice": "site-interim-owner.json" },
+"pin": "<the full 40-hex SHA to publish>"
+```
+`interim.owner` (a name and a date) is what makes it owner-approved: there is no Legal ruling id and no recorded run to match. `expires` is optional, but while it is set CI fails the day after it.
+
+What the owner mode changes, and what it does not:
+- **build-site.mjs** builds `/play/` behind the click-through without a recorded pass. It prints the recorded pass's problems for the commit as `report-only:` lines and never stops on them (the addendum 10 verdicts, the frame probes and `extraSeeds` are reported, not required).
+- **site-pin.mjs** pins the site to `site.json`'s own `pin` (a full SHA, required), reads no record, and its `--export` sets `lock_reduce_flashing` true in the exported tree's `ui/data/features.json` (Reduce flashing locked on, the toggle hidden) whatever the commit carried; it refuses a commit older than UI's rf-lock.
+- **check-site-interim.mjs** keeps every safeguard: the click-through, no autoplay, no skip link, noindex everywhere, "Not now" to the holding page, About with the notices, the AI line, the privacy line, no forbidden words, the placeholder-name scan of the pack, Reduce flashing on by default, and `lock_reduce_flashing` true in the export. The gate must carry the owner's paragraph, "No independent analyser has been run" and the line that Reduce flashing is on and cannot be turned off. Only the ruling id, the pass-file match and Legal's RL-137 sentence are not required.
+- **The words** are `tools/site-interim-owner.json` (Legal's addendum 11 text): "This game contains flashing effects. Our own automated check found some scenes that go over the recommended limit of three flashes a second, and we are working to fix them. No independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version." The line under the button: "Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes." Never "safe", "tested" or "compliant". Legal asks that the same warning goes in the message when the link is sent.
+- **The nightly seeds** (tools/flash/nightly-seeds.mjs) read tools/site.json: under the owner mode the take-down trigger is over 3.5 on the primary reading (Legal's addendum 11), else over 3.
+- **The kill switch** (`node tools/site-offline.mjs`) is unchanged and takes the page down in one command; nothing takes the site down without the owner's say.
+
+Proved: site-interim selftest 76 checks (the owner site builds without any record and with an empty pass file; the checker passes it; it still fails on autoplay, a missing noindex, a missing "Not now", a missing AI line, a missing epilepsy advice, a missing "No independent analyser", a missing lock line, the export not locking Reduce flashing, Reduce flashing not on by default, a forbidden word, a skip link, an expired date), site-pin selftest 21 (the owner pin, the lock patch, the older-commit refusal), nightly 14. And a real build of the rehearsal's web export (f15d7de3) under an owner config: built, and `check-site-interim` ok with the pack's name scan clean.

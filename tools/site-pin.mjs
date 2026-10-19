@@ -23,6 +23,11 @@ const REPO = resolve(HERE, '..');
 export function pinOf(config, recordFile) {
   const problems = [];
   if (config.offline === true) return { pin: '', problems };
+  // OWNER-APPROVED (Orb's order, 2026-10-18): the pin is site.json's own "pin" (a full SHA); no recorded pass is read or required
+  if (config.interim && typeof config.interim.owner === 'string' && config.interim.owner.trim()) {
+    if (!/^[0-9a-f]{40}$/.test(String(config.pin))) problems.push('the owner-approved site needs "pin": the full SHA of the commit to publish, in tools/site.json');
+    return { pin: problems.length ? '' : config.pin, problems, owner: true };
+  }
   let rec = null;
   try { rec = JSON.parse(readFileSync(recordFile, 'utf8')); } catch (e) { problems.push(`the recorded pass ${recordFile} could not be read: ${e.message}`); }
   const commit = rec && rec.commit;
@@ -57,6 +62,15 @@ export function exportPinned(pin, webDir, o = {}) {
     const s = spawnSync(cmd, a, { cwd: tree, stdio: 'inherit' });
     if (s.status !== 0) throw new Error(`${cmd} ${args.join(' ')} exited ${s.status}`);
   };
+  // the interim's export locks Reduce flashing on (docs/ui/reduce-flashing-lock.md, Legal RL-156): one word in the export's features.json, set here so the pinned commit need not carry it
+  if (o.lock) {
+    const ff = join(tree, 'ui', 'data', 'features.json');
+    const nl = String.fromCharCode(10), cr = String.fromCharCode(13);
+    const txt = readFileSync(ff, 'utf8');
+    if (!/"lock_reduce_flashing"\s*:/.test(txt)) throw new Error('ui/data/features.json has no lock_reduce_flashing: the pinned commit is older than UI\'s rf-lock');
+    writeFileSync(ff, txt.replace(/"lock_reduce_flashing"\s*:\s*false/, '"lock_reduce_flashing": true'));
+    void nl; void cr;
+  }
   run(['--headless', '--path', tree, '--import']);
   run(['--headless', '--path', tree, '--export-release', 'Web', join(webDir, 'index.html')]);
   if (!existsSync(join(webDir, 'index.html'))) throw new Error('the pinned export produced no index.html');
@@ -75,7 +89,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     if (!pin) { console.error('site pin: the site is offline: there is no pinned commit to export'); process.exit(2); }
     try {
       const godot = opt('--godot') || process.env.GODOT;
-      const tree = exportPinned(pin, resolve(web), { tree: opt('--tree'), godot, godotNode: opt('--godot-node') });
+      const tree = exportPinned(pin, resolve(web), { tree: opt('--tree'), godot, godotNode: opt('--godot-node'), lock: !!config.interim });
       console.log(`pinned ${pin.slice(0, 8)} exported to ${web} (tree ${tree})`);
     } catch (e) { console.error(`site pin: ${e.message}`); process.exit(1); }
   } else {

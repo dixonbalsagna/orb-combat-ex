@@ -1,6 +1,6 @@
 // Self-test of tools/flash/nightly-seeds.mjs: the night's seeds (new, never repeated, none from the recorded set), what a run says and the take-down trigger. No browser. CI runs it.
 //   node tools/flash/nightly-selftest.mjs
-import { nextSeeds, readRun, reportLine, TAKE_DOWN_ABOVE } from './nightly-seeds.mjs';
+import { nextSeeds, readRun, reportLine, TAKE_DOWN_ABOVE, TAKE_DOWN_ABOVE_OWNER, limitFor } from './nightly-seeds.mjs';
 
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -16,6 +16,8 @@ const seeds = [1000, 1001];
 const clean = [row(1000, 'normal', 2), row(1000, 'reduced', 2.5), row(1001, 'normal', 1.5), row(1001, 'reduced', 3)];
 const a = readRun(clean, seeds);
 check('a run with nothing over 3 reads all four clips and names the largest', a.read === 4 && a.clips === 4 && a.max === 3 && a.maxId === 'ai-1001-reduced' && a.over.length === 0);
+check('the owner-approved interim raises the trigger to over 3.5 (Legal addendum 11); otherwise over 3', limitFor({ interim: { owner: 'Orb 2026-10-18' } }) === TAKE_DOWN_ABOVE_OWNER && TAKE_DOWN_ABOVE_OWNER === 3.5 && limitFor({ interim: { legal: 'RL-136' } }) === 3 && limitFor({ interim: null }) === 3 && limitFor({ interim: { owner: ' ' } }) === 3);
+check('a 3.5 reading is not the trigger under the owner limit, and a 4 is', readRun([{ id: 'ai-1-normal', result: { general: { flashes: 3.5 } } }, { id: 'ai-1-reduced', result: { general: { flashes: 4 } } }], [1], 3.5).over.length === 1);
 check('exactly 3 is not the trigger (over 3 is)', TAKE_DOWN_ABOVE === 3 && a.over.length === 0);
 const hot = readRun([row(1000, 'normal', 3.5), ...clean.slice(1)], seeds);
 check('a clip over 3 on the primary reading is the trigger and is named', hot.over.length === 1 && hot.over[0].id === 'ai-1000-normal' && hot.over[0].primary === 3.5);
