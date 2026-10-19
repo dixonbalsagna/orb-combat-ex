@@ -17,6 +17,10 @@ var ticks_cap: int = 0
 var trace_from: int = -1
 var trace_to: int = -1
 var _prev_cam: Array = []
+var budget_on: bool = false
+var tmax: float = -1.0
+var _off_ticks: int = 0
+var _cut_ticks: int = 0
 
 
 func _initialize() -> void:
@@ -31,6 +35,10 @@ func _initialize() -> void:
 			digest_path = a.substr(6)
 		elif a.begins_with("--panel-flash-off="):
 			panel_flash_off = a.substr(18)
+		elif a == "--budget":
+			budget_on = true
+		elif a.begins_with("--tmax="):
+			tmax = float(a.substr(7))
 		elif a.begins_with("--trace="):
 			var tp: PackedStringArray = a.substr(8).split("-")
 			trace_from = int(tp[0])
@@ -47,6 +55,10 @@ func _run() -> void:
 	main.add_child(sv)
 	main._sync_split_options()
 	sv.attach(main)
+	if budget_on:
+		sv.set_travel_budget(true)
+	if tmax > 0.0:
+		main.split_rig.set("travel_max", tmax)
 	if mlook >= 0:
 		sv.set_merge_lookahead(mlook == 1)
 	if panel_flash_off != "-":
@@ -90,12 +102,27 @@ func _digest_play(out: FileAccess, label: String, mode: String, sc: String, seed
 		if host.ticks != before:
 			var fr: SplitFrame = main.split_rig.current()
 			var h: int = hash([snappedf(fr.cam_x[0], 0.01), snappedf(fr.cam_y[0], 0.01), snappedf(fr.cam_z[0], 0.00001), snappedf(fr.cam_x[1], 0.01), snappedf(fr.cam_y[1], 0.01), snappedf(fr.cam_z[1], 0.00001), snappedf(fr.sep, 0.0001), snappedf(fr.e, 0.0001), fr.mode, fr.cut, fr.active, fr.panel.get("kind", ""), snappedf(float(fr.panel.get("open", 0.0)), 0.001)])
+			# the stats a budget run is judged by: ticks a fighter is outside the picture that shows him, and cut frames
+			if fr.cut:
+				_cut_ticks += 1
+			for fi in range(2):
+				var pi: int = fi if fr.shows(fi) else 0
+				var fs = host.S.fighters[fi]
+				var sp: Vector2 = fr.screen_pos(pi, fs.x, fs.y + CamParams.CHEST, float(fs.z))
+				if sp.x < 0.0 or sp.x > main.split_rig.vw or sp.y < 0.0 or sp.y > main.split_rig.vh:
+					_off_ticks += 1
 			out.store_line("%s\t%s\t%d\t%d" % [label, mode, host.ticks, h])
 			if host.ticks >= trace_from and host.ticks <= trace_to:
 				var rg: SplitRig = main.split_rig
 				var tr: float = 0.0
 				if not _prev_cam.is_empty():
 					tr = sqrt(pow(SimWrap.sdx(float(_prev_cam[0]), fr.cam_x[0]), 2.0) + pow(fr.cam_y[0] - float(_prev_cam[1]), 2.0)) * fr.cam_z[0] / rg.vw + 0.5 * absf(log(fr.cam_z[0] / float(_prev_cam[2])))
-				_prev_cam = [fr.cam_x[0], fr.cam_y[0], fr.cam_z[0]]
-				print("TR %s %s t %d mode %s sep %.2f e %.2f solo %s/%d cut %s fade %.2f pn %s/%.2f cam %.0f,%.0f z %.3f travel %.4f st %s/%s" % [label, mode, host.ticks, fr.mode, fr.sep, fr.e, rg.solo_kind, rg.solo_slot, fr.cut, fr.fade, fr.panel.get("kind", "-"), float(fr.panel.get("open", 0.0)), fr.cam_x[0], fr.cam_y[0], fr.cam_z[0], tr, host.S.fighters[0].state, host.S.fighters[1].state])
+				var tr1: float = 0.0
+				if _prev_cam.size() > 3:
+					tr1 = sqrt(pow(SimWrap.sdx(float(_prev_cam[3]), fr.cam_x[1]), 2.0) + pow(fr.cam_y[1] - float(_prev_cam[4]), 2.0)) * fr.cam_z[1] / rg.vw + 0.5 * absf(log(fr.cam_z[1] / float(_prev_cam[5])))
+				_prev_cam = [fr.cam_x[0], fr.cam_y[0], fr.cam_z[0], fr.cam_x[1], fr.cam_y[1], fr.cam_z[1]]
+				print("TR %s %s t %d mode %s sep %.2f e %.2f solo %s/%d cut %s fade %.2f pn %s/%.2f cam %.0f,%.0f z %.3f travel %.4f/%.4f act %s st %s/%s" % [label, mode, host.ticks, fr.mode, fr.sep, fr.e, rg.solo_kind, rg.solo_slot, fr.cut, fr.fade, fr.panel.get("kind", "-"), float(fr.panel.get("open", 0.0)), fr.cam_x[0], fr.cam_y[0], fr.cam_z[0], tr, tr1, str(fr.active), host.S.fighters[0].state, host.S.fighters[1].state])
+	print("STATS %s %s cuts %d fighter-ticks outside the picture %d of %d" % [label, mode, _cut_ticks, _off_ticks, total * 2])
+	_off_ticks = 0
+	_cut_ticks = 0
 	_release_all()
