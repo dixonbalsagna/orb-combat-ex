@@ -10,6 +10,27 @@ The words around the description are **fixed and identical** in all three: the A
 
 **Order on the page** (a suggestion for the EP and Legal): the title with "(working title)"; the AI line; the flash notice in its own box; the description; a play button whose label says what happens next ("Play in your browser: a notice comes first"); then the small lines. The click-through gate on the play page stays as it is.
 
+## Final: version A, as Orb chose (2026-10-18)
+
+Orb's answers to homework 28 (through the EP): version A; American spelling; cut "Slam your rival into a building and the building pays for it" (it was in version B only, so version A never had it); keep "fight director" if it is accurate; add Orb's own pitch as the honest selling point: "the goal was to have a fighting game where the combos are spectacular and look choreographed, but are in the hands of the player and real-time."
+
+**Final description (135 words):**
+
+> This is a fighting game set on a planet you can fly all the way around. Go one way for long enough, through ocean, city, desert and mountains, and you come back from the other direction, so nobody gets cornered. The goal is combos that look choreographed but stay in your hands, in real time. You fly, dodge, guard and hit light or heavy. There are no combo lists to learn: you pick the moment and the blow, and the fight director strings them together. Beams dig trenches. Buildings crack and come apart in stages, and the damage stays until the match ends. Play against the computer, or share one screen with a friend, on keyboard or controller. It is free and runs in your browser. It is an early test version, with two fighters.
+
+What changed from version A above:
+- **New sentence 3:** "The goal is combos that look choreographed but stay in your hands, in real time." It is Orb's pitch, kept as a goal ("the goal is"), not a promise. I dropped "spectacular" because that is a judgement the visitor should make, and the goal sentence is true without it. Orb may put it back; Legal's writing note allows puffery.
+- **"the game strings them together"** became **"the fight director strings them together."** It is accurate: the fight director is the system that composes each exchange from the moves you press (pillars.md pillar 2; docs/combat/exchange-templates.md), and Legal's AI line directly above the description already says it is ordinary game code. The word is explained by the page itself.
+- **No signature, close-up or finishing move** is mentioned anywhere in the text (Legal's rule).
+- **American spelling:** the description had no British spellings to change.
+- Checks: 135 words; the script's only flags are "choreographed" and "director", the two team words Orb has now chosen to keep.
+
+**American spelling touches Legal's fixed lines.** The lines contain "analyser" (the flash notice) and "Licence" (the licence line). In American spelling these are "analyzer" and "License". The gate's notice is compared word for word by Tools' checks (`docs/ui/start-menu.md`), so the change needs Legal's word and the checks updated in the same commit. Until Legal says so, the fixed lines stay exactly as they are, and I have changed nothing in them.
+
+**New claim for Legal, P14:** "The goal is combos that look choreographed but stay in your hands, in real time." Evidence: Orb's pitch (docs/ep/vision.md, 2026-10-18); howto.json ("No combo inputs to learn"); pillars.md pillar 2. Check on the day: play a fight and see that combos form from your button presses in real time. It is a goal statement. P4 (the fight director strings them together) is unchanged.
+
+**Routing:** my charter bars me from messaging Legal directly, so the EP routes this to Legal.
+
 ## What is true today (what the page may describe)
 
 Everything in the three versions is something a visitor can do or see in the playable demo. Sources: `ui/data/howto.json` (the in-game How to play), `docs/ui/start-menu.md` (the menu), the cleared claims C1, C5, C6 and C7 in `store-copy-draft.md`, and the EP's overnight note of 12 to 13 October for the wall slam. **I have not played the live demo for this; every row needs checking on the day.**
