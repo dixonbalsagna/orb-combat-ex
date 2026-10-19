@@ -10,3 +10,8 @@ Accounts: `docs/animation/many-bodies-and-runs.md`, `tenth-round.md`, `combat-pi
 - `data/anim/agency.json`: `charge.cut_speed` 300 (new key: the agency schema, if closed, needs it).
 - `render/anim/tools/anim_check.gd`: `_test_charge_cut`.
 - The lead frame could not be reproduced from the park's README (no seed or tick in it): 8 and 12 seeds and 4 bodies read 0 on a scratch export with launch anywhere, G2, forms-holds and the grants applied and the switch on.
+
+## Parked: `finisher-styles.patch` and `grip-layer.patch` (2026-10-18), in this order, render side only
+
+- `finisher-styles.patch` (6 files): the three finisher closing poses (wave `fin1`, prefix `fn`), the study's scenarios `fs_open_palm`, `fs_held_breath` and `fs_both_roads` with a scripted camera and one colour pulse, the held lint's class for `fn.`. Account: `docs/animation/finisher-styles-motion.md`. Clips: `homework/finisher-styles-in-motion/`.
+- `grip-layer.patch` (10 files): the clinch's C2 (`AnimFighter.on_hold`, `_grip_layer`, `_grip_one`, `RenderAnim.grip_layer`), the wave `cl1` (13 shared poses, prefix `cl`), `data/anim/clinch.json` (a new key set: Tools' closed schema needs it), `anim_data.gd` loading, the held lint's class for `cl.`, `_test_grip` (the spacing table: the sim holds a pair 30 to 36 units apart at every grade). Account: `docs/animation/clinch-sizing.md` section 10.

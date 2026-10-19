@@ -127,3 +127,22 @@ The count becomes **25 new poses** (13 shared, with `pin.brace`, and 6 a fighter
 - **C1, the throws.** A new wave `pair3` (prefix `zq`): the thrower's own side of Combat's eight throws, three poses each (load, release, follow), **24 poses**: `hurl` and `sling` (across, toward), `turn_throw` and `back_throw` (across, away), `drive_down` and `spike` (down), `lift` and `jolt` (up, the two new ones). `data/anim/throws.json` maps each send to each fighter's throw as Combat's table has it and names the region each hand takes. The held body is the sim's and the ragdoll's: these are only the thrower. **Checks (`_test_grapple_c0_c1`):** all 24 poses exist and are inside the joint limits; no arm is crossed (h09: the Anti-hero's throws use a one-arm fold, a single forearm across with the hand at the chin); the hands of the two-hand throws are 16 or more apart (Legal's g02 distance); every named region exists; with four bodies the partner is the nearest by the arc, and the exchange's other fighter when there is one. A sheet of all the new poses (the throws, the skid and the chain's) is `art/animation/review/ragdoll/poses-throws-skid-chain-sheet.png` (this PC only).
 - **Not yet:** the grip layer (C2) that puts each hand on its region of the real body, the wave `cl1` (the tie-up, the grades, the pummel, the brace, the pin), and the held read from the sim.
 
+---
+
+## 10. C2 built: the grip layer and the wave `cl1` (2026-10-18; `docs/animation/pending/grip-layer.patch`)
+
+- **The read.** The sim will send a hold as `AnimFighter.on_hold(read, T)` (`on_hold_end` ends it): `partner` (a fighter's slot), `kind` (tie, pummel, brace, pin, carry, strain, whiff, apart), `role` (`holder`, or `held` for the pinned body), `grade` (-2 to 2), `side` (the pummel's hand) and `grips` (each gripping hand to a region of the partner's body in `sockets.json`). Nothing sends it yet; the scan hands it to both bodies, as the chain's and the throws' scans do.
+- **The layer** (`_grip_layer`, before the flight lead; `RenderAnim.grip_layer`, on, inert without a read; data `data/anim/clinch.json`): mixes the pose of the kind in over 6 ticks (a tie-up is the even seat mixed toward the ahead or the behind pose by the grade; the pinned body takes `cl.hold.pin_brace`), then puts each gripping hand on its region by IK, never bending past a limit (a shortfall is counted in `debug.grip_gap_max`). It moves no position: the one thing it shifts is a **render-only depth offset** of 7 units, the two bodies stepping out of the plane in opposite directions, so two arms reaching across pass without passing through one another (the orthographic camera cannot see it).
+- **The wave `cl1`:** the thirteen shared poses (`cl.hold.tie_reach`, `seat`, `ahead`, `behind`, `pummel_l`, `pummel_r`, `brace`, `pin`, `pin_brace`, `carry`, `strain`, `whiff`, `apart`). The tie-up poses are upright (a lean of 2 to 6 degrees), because heads leaning in broke Legal's g06.
+- **The spacing table the sim holds the pair to** (the scan, `_test_grip`, runs the tie-up at every grade and every spacing from 26 to 46 and keeps the ones where the hands land within the 3-unit budget, the bodies clear to within 1.5 units, no hands lace (g02: 8 or more apart; measured 10 to 18) and heads and torsos have a forearm of air (g06: 15; measured 17 to 28)):
+
+  | Grade of the grip | Least spacing | Most spacing |
+  | :--- | ---: | ---: |
+  | behind (-1) | 28 | 36 |
+  | even (0) | 28 | 38 |
+  | ahead (+1) | 30 | 38 |
+
+  **So Simulation can hold a pair 30 to 36 units apart, centre to centre, at every grade** (my paper's 24 to 34 was wrong on both ends: under 28 the thighs pass through one another, over 38 the arm no longer reaches). Past 38 the hand ends short and the shortfall is counted, not drawn through a limit.
+- **Every kind of hold** (the pummel, the brace, the pin with the pinned body's brace, the carry, the strain, the refused grip, the push apart) is clean at 34 units: no NaN, no joint past a limit, the hands on their regions (the refused grip over-reaches by design).
+- **Not built yet:** the six flavour poses a fighter (the Anti-hero's one-arm fold, the Protagonist's open hands), the pin against a real wall (it needs World's wall plane), the carry while the pair travels, and the sim's read.
+
