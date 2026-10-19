@@ -64,6 +64,7 @@ func _run() -> void:
 	await _plain_words_rules()
 	await _launch_marks_rules()
 	await _tug_rules()
+	await _cut_rules()
 	await _brawl_marks_rules()
 	_rate_rules()
 	await _block_toggle_rules()
@@ -750,6 +751,7 @@ func _anchor_for(lay: UiLayout, c: Vector2, n: Vector2, slot: int) -> Vector2:
 
 
 func _split_rules() -> void:
+	UiData.set_feature("ring_map", true)   # the ring map's own rules run with it on (it is cut as shipped; _cut_rules runs the default)
 	# Geometry: the divider stops under the toll chip and above the ring map; the ring map sits between the bark lanes.
 	for sz in [Vector2(1920, 1080), Vector2(1366, 768), Vector2(1280, 720), Vector2(2560, 1080)]:
 		var lay := UiLayout.new()
@@ -5869,6 +5871,47 @@ func _many_marker_rules() -> void:
 	for i in range(int(UiMany.HOLD * 60.0) + 20):
 		hud.advance(1.0 / 60.0)
 	_ok(idle_none and shown_two and seen.has("1") and seen.has("2") and hud._l_many.sig == null, "many markers: the HUD draws none in a two-body fight, one for each body left out (numbered 1 and 2 for slots 2 and 3), and clears them after the hold")
+	hud.queue_free()
+	await process_frame
+
+
+## The two grey circles cut on 2026-10-18 (Orb: "the weird gray circle between the two fighters"): the planet ring map and the beam struggle's steady rings, each behind a switch that is off.
+func _cut_rules() -> void:
+	UiData.set_feature("ring_map", null)
+	_ok(not UiData.feature("ring_map") and not UiData.feature("tug_rings"), "cut: the ring map and the tug's steady rings are off as shipped")
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	var vp2: Vector2 = hud.layout.vp
+	hud.anchor_fn = func(slot: int) -> Dictionary:
+		return {"pos": Vector2(vp2.x * (0.3 if slot == 0 else 0.7), vp2.y * 0.55), "h": vp2.y * 0.12, "visible": true}
+	hud.split_fn = func():
+		return {"sep": 1.0, "c": Vector2(640.0, 360.0), "n": Vector2(0.95, -0.3), "gap": 3.0, "fade": 1.0, "sigma": 1.0, "pointer": "split",
+			"ring": {"angle_A": 1.0, "angle_B": 2.0, "sigma": 1.0, "arc_A": 0.3, "arc_B": 0.3, "swing": 0.0, "sep": 1.0}}
+	for i in range(5):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	var off_none: bool = hud._l_ring.sig == null and hud._l_ring_base.sig == null
+	UiData.set_feature("ring_map", true)
+	for i in range(3):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	var on_has: bool = hud._l_ring.sig != null and hud._l_ring_base.sig != null
+	UiData.set_feature("ring_map", null)
+	_ok(on_has, "cut: the ring map layers draw again when the switch is on (the shipped default is none)")
+	_ok(off_none, "cut: with the switch off the ring map draws nothing")
+	# The tug, steady: the picture differs by the rings, and the bar sits closer without them.
+	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_struggle", "text": "start", "target": 1, "n": 600})
+	hud.hub.set_clash_mid(0.5)
+	hud.set_option("reduce_flashing", true)
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(hud._l_tug.sig != null and bool((hud._l_tug.sig as Array)[7]), "cut: the tug still shows under Reduce flashing (the track, the diamond and the beat bar stay)")
+	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_end", "text": "time", "x": 0.5})
+	hud.set_option("reduce_flashing", false)
 	hud.queue_free()
 	await process_frame
 

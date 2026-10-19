@@ -4,7 +4,7 @@ class_name UiTug
 ##   - the track: a thin line from one fighter's hands to the other's, with the quarter nearest each fighter's hands thicker in his ring colour (the comeback's zone, where a surge is worth half again);
 ##   - the meeting point: a diamond on the track at `Clash.mid` (0 at the first fighter's hands, 1 at the second's), moved by the sim each tick;
 ##   - the beat: a thin ring round the point that closes over the 20 ticks between pulses (`beam_pulse`) and meets the point on the next one: press as it closes. Under Reduced motion or Reduce
-##     flashing the ring does not move: it is a steady double ring, and a short bar beside the point is filled for the instant after each pulse;
+##     flashing the ring does not move: the point has a short bar above it that is filled for the instant after each pulse (the steady double ring it once had is behind the switch tug_rings, off);
 ##   - a surge (`beam_surge`): short rays at the point in the presser's colour, three for a surge and five for a sharp one; a stray (`beam_stray`): a small cross, grey, on the presser's side;
 ##   - the end (`beam_end`): the point and its ring stay a second where it ended.
 ## All strokes, no filled area that changes: under any block threshold, and nothing changes state more than three times a second (the pulse is every 20 ticks). Nothing here is read by the sim.
@@ -89,11 +89,15 @@ static func draw(ci: CanvasItem, hub: UiEventHub, p: Dictionary, o: Dictionary) 
 	# The beat: a ring closing on the point (or, steady, two rings and a bar that fills for an instant after each pulse).
 	var r1: float = float(p["r1"])
 	if bool(p["steady"]):
-		for rr in [r1, r1 * 1.7]:
-			ci.draw_arc(pm, float(rr), 0.0, TAU, 32, key, w + 2.0, true)
-			ci.draw_arc(pm, float(rr), 0.0, TAU, 32, Color(ink, 0.8 * a), w, true)
+		# Steady (Reduce flashing or Reduced motion): the two rings that sat round the point for the whole struggle read as a grey circle in the middle of the fight (Orb, 2026-10-18), so they are
+		# off (tug_rings) and the beat is the bar alone, which fills for the instant after each pulse, just above the diamond.
+		var rings: bool = UiData.feature("tug_rings")
+		if rings:
+			for rr in [r1, r1 * 1.7]:
+				ci.draw_arc(pm, float(rr), 0.0, TAU, 32, key, w + 2.0, true)
+				ci.draw_arc(pm, float(rr), 0.0, TAU, 32, Color(ink, 0.8 * a), w, true)
 		var bw: float = r1 * 1.4
-		var br := Rect2(pm + Vector2(-bw * 0.5, -r1 * 2.5), Vector2(bw, maxf(4.0 * s, 4.0)))
+		var br := Rect2(pm + Vector2(-bw * 0.5, -r1 * (2.5 if rings else 1.45)), Vector2(bw, maxf(4.0 * s, 4.0)))
 		ci.draw_rect(br, Color(ink, 0.8 * a), false, 1.6)
 		if bool(p["beat"]):
 			ci.draw_rect(br, Color(ink, 0.9 * a))

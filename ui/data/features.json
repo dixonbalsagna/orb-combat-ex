@@ -10,6 +10,8 @@
     "three_strengths": false,
     "reduce_flashing": true,
     "lock_reduce_flashing": false,
+    "ring_map": false,
+    "tug_rings": false,
     "start_menu": true,
     "launch_marks": true,
     "civilian_bar": true

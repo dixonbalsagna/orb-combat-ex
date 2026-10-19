@@ -676,7 +676,7 @@ func _update_layers() -> void:
 	# Cheap by construction: the divider is two bars moved by transform, each chip is a small node moved by position (its
 	# picture redraws only when its arrow or number changes), and the ring's disc and track are drawn once.
 	_update_divider()
-	var ring_on: bool = UiSplit.ring_active(_split) and layout.ring.size.y > 0.0 and _lb < 0.5
+	var ring_on: bool = UiData.feature("ring_map") and UiSplit.ring_active(_split) and layout.ring.size.y > 0.0 and _lb < 0.5   # ring_map is off: the planet strip says the same, and the grey circle sat between the fighters (Orb, 2026-10-18)
 	_l_ring_base.update_sig(1 if ring_on else null)
 	_l_ring.update_sig(UiSplit.ring_sig(_split) if ring_on else null)
 	var chips: Array = []
