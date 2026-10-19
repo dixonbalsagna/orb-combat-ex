@@ -79,6 +79,7 @@ After each won fight the player picks **one boon of three** (two in a row after 
 | **An ability** | A run-only power: a plan card from the plan's pool (`upgrade-plan.md` §2: Might, Tempo, Short Fuse and the rest), or a fighter's run boon (a signature variant, a world change, a stronger slingshot) | The plan's limits hold: at most +10% of a stat, and no stacking. At most five |
 | **A lifeline** | One more life (§4.1) | At most three lives held |
 | **A rest** | Every region healed to fresh | Also a Crossing's reward |
+| **A rare boon: a base form that is a transformation** (draft, Orb's homework 30) | Every fight starts one form above base (Born ready), or two (Second skin) | Seeded, shown, never rolled: Born ready from fight 3 in at most one offer a run; Second skin from fight 4 after Born ready. The started step can't be coiled, and it counts against the ceiling. The borrowed form, which starts at the highest form unlocked, is a temptation (`rulings-2026-10-18b.md` §4) |
 | **A temptation** | A strong gain with a story price: a form at once **and** an ability, or an ability past the plan's limits. **It changes the run's final arc** (§5.1) | Offered once a run, between fights 2 and 3, on a seeded share of runs (a half). Its card says it will be remembered, never what it brings. **On its offer the player may also walk on:** he takes none of the three and gains a life for the restraint (at most three). The beats call that refusing |
 
 - **Choices with weight, never traps:** each card says what it gives in plain words. A temptation is always optional, and its price is a harder ending, never a lost run.
@@ -218,7 +219,7 @@ Orb: "find an approachable, fun, exhilarating game loop for this type of episodi
 
 | When | What the player gets |
 | :--- | :--- |
-| **After every fight won** | Mastery points for his fighter (`unlocks.md` §3), half again a match's, and **a keepsake:** a small trophy of what just happened (a brick from the tower he went through, the rival's cracked lens, a scorched banner). Keepsakes are shown in the haul and on a shelf in the menu |
+| **After every fight, win or lose** | A loss gives its mastery points, and every second loss in a row an item. A win gives mastery points for his fighter (`unlocks.md` §3), half again a match's, **one item he doesn't own yet,** and **a keepsake:** a small trophy of what just happened (a brick from the tower he went through, the rival's cracked lens, a scorched banner). Keepsakes are shown in the haul and on a shelf in the menu |
 | **At the run's end, win or lose** | **The haul:** mastery points by fights won and styles shown, every feat met, the run's keepsakes. A won run adds a pick of three items from his fighter's pool |
 | **The first clear of each final arc** (§5.1) | A showpiece: an outfit set, a victory scene or a finisher style |
 | **Styles in a run** | Every kind of launch used, a chain through three towers, an inside chain, a slingshot from a full coil, a duel of perfects won, a run with no life spent, a city defended to the end. Each one gives an item, and ten of them give a title |
@@ -246,6 +247,8 @@ Orb: "find an approachable, fun, exhilarating game loop for this type of episodi
 8. clean wins earn no life;
 9. the boss arriving at tier 5;
 10. all nine together.
+
+**Generous, and always something new** (Orb, homework 30): the kinds of reward and the pool's size are in `unlocks.md` §6.
 
 **What never counts:** deaths, purchases, random rolls, and anything missable.
 

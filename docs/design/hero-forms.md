@@ -53,34 +53,23 @@ Orb (homework 23): "Yes, build toward this", and "Protagonist should be unique i
 - **An achievement, never an obstacle:** a step is never forced (he holds Transform when it is ready), never lost, and each has its own look and sting.
 - **What it costs to make:** four branch bodies (II and IV, by branch), two sets of marks (I and III) and one top form. A first version can tell the branches apart by markings and aura over the shared body.
 
-## 4b. The slingshot
+## 4b. The slingshot (the working rule, pending the lore)
 
-Orb: "he stays in his base form and allows the opponent to grow, when he finally transforms he can get a bigger boost based on how long he waited and the damage traded before transforming."
+Orb: "he stays in his base form and allows the opponent to grow, when he finally transforms he can get a bigger boost based on how long he waited and the damage traded before transforming." In homework 30, Orb picked **"Waiting only makes your next single form stronger"**, and asked to "delve into the universe lore before we finalize anything on transformations, right track though". So this is the working rule until Narrative's lore paper lands. The jump of several forms at once, the burst and the surge are withdrawn (2026-10-18).
 
-- **Holding back.** When a step is ready he may leave it. Power keeps filling, and **every step that comes ready while he waits is banked.**
+- **Holding back.** When a step is ready he may leave it. Power keeps filling. Every step that comes ready while he waits stays ready, and none is lost.
+- **One step at a time.** When he holds Transform, he takes **the next step only.** The steps still ready after it can be taken later, each one as an ordinary transformation.
 - **The coil** (working name; Narrative names it).
-  - **It starts at the first moment his ready step could have been taken and wasn't:** the first break in the fight after the step came ready. A step that comes ready mid-brawl coils nothing until then, so nobody, the AI included, coils by accident. Re-ruled 2026-10-17 on Simulation's read (`docs/architecture/forms-core.md`).
-  - It fills at +0.5 a second of fight time, and +0.005 for each point of damage traded, dealt or taken, after patience. **Until 2026-10-17 it was +1 a second and +1 for every 20 damage, which filled it to 100 long before power 65.**
-  - It fills twice as fast while the opponent's tier is above his.
+  - **It starts at the first break** after his step came ready, when he could have taken it and didn't. A step that comes ready mid-brawl coils nothing until then, so nobody, the AI included, coils by accident.
+  - It fills at +0.5 a second of fight time, and +0.005 for each point of damage traded, dealt or taken, after patience. It fills twice as fast while the opponent's tier is above his.
   - It goes up to 100, never decays, and nothing takes it away.
-- **Patience.** While he holds banked steps and the opponent's tier is above his, he takes 4% less damage for each tier between them, at most 12%. Waiting is a stance, not a burden.
-- **How long a full coil takes:** QA's row is a median of 60 to 100 s from the coil's start to 100 while the opponent is above him. Data, if it reads outside: `perSecond` first, then `perDamage`.
-- **The release.** When he holds Transform, **he takes every banked step at once:** from base to III in one go, say. At a coil of c, the release adds, scaled by c/100:
-  - a burst like a ground power-up, which knocks the rival back;
-  - for 10 s, +15% speed and damage, and armour on his next three blows;
-  - for the rest of the match, his step gains × (1 + c/200), at most ×1.5.
-- **Simulation's readings, confirmed** (`forms-core.md` §2):
-  - a step taken at once has no extras (`minCoil` 1);
-  - after several releases, the lasting gain is the largest so far, and never stacks;
-  - the armour scales with the coil: three blows at a full coil, rounded to the nearest;
-  - "chip through a guard −5%" is his own guard, so 5% less of a guarded hit reaches him;
-  - damage traded is counted after patience;
-  - the burst is a ground power-up's at c / 100 of its strength, on top of any tier rise's.
-- **The coil is Trial's road.** Each coil point is also a Trial point, so a long wait leads to the Trial forms: "testing himself against a higher form".
-- **Rule of cool:** a release from base straight to his top form is the showpiece, with its own sting, camera and line.
-- **The release's three sizes,** for Narrative's lines (`docs/narrative/waiting-game-lines.md`), read the coil at the release: short under 34, long from 34 to 66, and the biggest from 67. A release from base to the top form is the showpiece whatever its size.
-- **Its limits:** banked steps can't pass the ladder's top or the run's unlocked ceiling (`run-mode.md` §1.1 and §1.4). In the run's boss fight the fifth form can be banked too.
-- **The AI** takes a ready step at its first break unless it is holding on purpose. At medium it holds for up to 10 s when its rival is above it, and at hard until its coil reaches 60, 75 s pass, or a region of its own is battered, whichever comes first (2026-10-18; it was 30 s), so players see the slingshot thrown at them. Then it releases at the next break.
+- **Patience.** While he holds a ready step and the opponent's tier is above his, he takes 4% less damage for each tier between them, at most 12%. Waiting is a stance, not a burden.
+- **The release: his next form is stronger.** At a coil of c, the form he steps into has its step gains × (1 + c/100), so at most twice an ordinary step. It lasts as long as he is in that form, and his next step is an ordinary one again. The coil is spent.
+- **The coil is Trial's road.** Each coil point is also a Trial point, so a long wait leads to a Trial form.
+- **Its three sizes,** for Narrative's lines (`docs/narrative/waiting-game-lines.md`): short under a coil of 34, long from 34 to 66, the biggest from 67.
+- **Simulation's readings that still hold** (`forms-core.md` §2): `minCoil` 1, so a step taken at once has nothing extra; "chip through a guard −5%" is his own guard; damage traded is counted after patience. The burst, the surge's armour and the lasting gain are gone with the jump.
+- **Its limits:** a step can't pass the ladder's top or the run's unlocked ceiling (`run-mode.md` §1.1 and §1.4).
+- **The AI** takes a ready step at its first break unless it is holding on purpose. At medium it holds for up to 10 s when its rival is above it. At hard it holds until its coil reaches 60, 75 s pass, or a region of its own is battered, whichever comes first. Then it releases at the next break.
 
 ## 5. How a fight between two good guys escalates
 
@@ -113,14 +102,14 @@ Orb: "he stays in his base form and allows the opponent to grow, when he finally
 | Where | Change | Owner |
 | :--- | :--- | :--- |
 | `data/fighters/PROTAGONIST/meters.json` | Anguish loses its `opponent` source. Two new meters, `witness` and `trial`: visible, no decay, emptied by a form of their branch, with the sources in §3 | Simulation |
-| `data/fighters/PROTAGONIST/forms.json` (new) | The five steps (§4): for each, its power, its tier for the world, live or pausing, its form id by branch, and the gains; the branch extras; the pick rule (higher fill; a tie to the branch he is on; the first tie to Trial); the slingshot (§4b: the coil's rates, patience 4% a tier up to 12%, the release's burst, surge and lasting ×(1 + c/200) at most 1.5) | Simulation, with Narrative's ids |
+| `data/fighters/PROTAGONIST/forms.json` (new) | The five steps (§4): for each, its power, its tier for the world, live or pausing, its form id by branch, and the gains; the branch extras; the pick rule (higher fill; a tie to the branch he is on; the first tie to Trial); the slingshot (§4b, the working rule: the coil's rates, patience 4% a tier up to 12%, and the next form's gains × (1 + c/100) at most ×2) | Simulation, with Narrative's ids |
 | `data/fighters/PROTAGONIST/ladder.json` (new, his differences only) | Thresholds 20, 35, 50, 65 and 100, with his tier stepping at 35, 65 and 100 as everyone's; his step gains in place of the shared tier gains | Simulation |
 | The meters' sources (Tools' schema) | `whose: opponent` with a `within` distance. New events: `opponent_form` (with the held-ready bonus), `deficit_second`, `blow_up` (a landed blow of medium or more while the opponent's tier is above) and `opponent_commit` | Simulation, Tools |
 | The transform | The form is picked at the step, and the fighter carries his branch (hashed) | Simulation |
 | `data/fighters/RIVAL/meters.json` | The +0.09 power a casualty moves here from `sim/world/collateral.gd`, where it is a constant, since numbers live in data. Its value doesn't change | Simulation |
 | The AI | The holds of §4b and §5 | Encounter |
 | The HUD | The two fills by his power bar, so it reads which way he leans; the form's name at a step | UI, with Narrative's words |
-| The looks | Four branch forms, two sets of marks and one top form; the release's burst and its showpiece | Art, Animation, VFX |
+| The looks | Four branch forms, two sets of marks and one top form; a boosted form's look by the coil's three sizes | Art, Animation, VFX |
 
 - **The heat track and Open Hand** (`moveset-rules.md` §10.4, `spec-wounds.md` §3) stay parked for their later update. Whether heat becomes Trial's road is for Orb, with Narrative.
 - **Every other fighter's meter is unchanged.** The rule of §2 holds for the roster: no fighter's power-up depends on killing, beyond the villains' own meters.
@@ -136,7 +125,7 @@ Orb: "he stays in his base form and allows the opponent to grow, when he finally
 | The Protagonist against himself: both reach tier 3 | In at least 80% of matches |
 | ... the first form's time | Within 15 s of the default arm's |
 | The hero's fight time near people, after the rework | No higher than before it |
-| A banked step lost, or a release that takes fewer steps than were banked | Never (hard) |
+| A ready step lost, or a release that takes more than the next step | Never (hard; the jump of several steps is withdrawn, homework 30) |
 | A coil that fills before the first break after the step came ready | Never (hard) |
 | The median time from the coil's start to 100, while the opponent is above him | 60 to 100 s |
 | His win rate in matches with a release from a coil of 50 or more, and in matches with none | Within 10 points: the slingshot is a style, not a must |

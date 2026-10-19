@@ -78,9 +78,10 @@ So "X then B" thrown at a fighter who answers is punished. A string worked up to
 
 **The stick picks the first four,** and neutral leaves it to the choreographer (§6).
 
-- **Each launch marks its kind on the fighter it sends.** A launch of a kind already marked on him in the last 60 s of fight time is ×0.75 for each such mark: ×0.75, then ×0.56. **A kind not marked has only the general term below.** Marks fade 60 s after they were made.
-- **The general term** (added 2026-10-17, §11): each launch of him in the last 60 s, of any kind, is ×0.9 more. So a fighter launched six times in a minute takes ×0.53 even from fresh kinds. With the kind's term, never under ×0.4 in all.
-- **Air sense.** A fighter sent by a kind marked on him recovers 25% sooner for each mark (`buildings.md` §7).
+- **Each launch marks its kind on the fighter it sends.** A launch of a kind already marked on him in the last 60 s of fight time is ×0.9 for each such mark (×0.75 until Orb's homework 30, `rulings-2026-10-18b.md`). **A kind not marked has only the general term below.** Marks fade 60 s after they were made.
+- **The general term** (added 2026-10-17, §11): each launch of him in the last 60 s, of any kind, is ×0.97 more (×0.9 until homework 30). With the kind's term, never under ×0.7 in all (it was ×0.4). **Freshness is gentle:** a nudge toward variety, never a handicap for repeating, as Orb asked.
+- **Air sense.** A fighter sent by a kind marked on him recovers 10% sooner for each mark (`buildings.md` §7; 25% until homework 30).
+- **Repeats escalate the destruction instead** (Orb: "each time you launch an opponent against something, the more destroyed it will be"). A send into a building already marked meets it one tier higher for each mark, up to two, and a send into ground already cratered deepens and widens that crater (`buildings.md` §6.1).
 - **So nothing locks and nothing waits.** A player can launch at any moment, and a new direction is always full strength. Repeating one send pays less, and the game's answer to spam is variety: Orb's "dynamically and emergently", in numbers.
 - **The hammer is retired.** B in an opening always launches.
 - **The first move after a launch stands:** the sent fighter can't start an approach for 45 ticks. It is not a cap on the launcher's player, and Encounter's return fix keeps the way back answerable.
@@ -98,7 +99,7 @@ So "X then B" thrown at a fighter who answers is punished. A string worked up to
 | **The route:** B at every opening | At most 80%, and 0 to 25 points over the same script's masher (the twelfth round's edges) |
 | **The spammer:** one light, then B, every string | Below the route, and at most 70% |
 | **The varied route:** the route, rotating the stick through the kinds | Within 10 points of the route |
-| **Full launches** a match (power 0.7 or more at the send, after freshness; 0.8 until 2026-10-18): by the route's player; on him; the AI against itself, both together, per 7 minutes of fight | 4 to 12; 4 to 10; 6 to 12 (re-cut 2026-10-17, §11) |
+| **Full launches** a match (power 0.7 or more at the send, after freshness): the AI against itself, both together, per 7 minutes of fight | 6 to 12. By the route's player and on him: watched, not banded (homework 30, `rulings-2026-10-18b.md`). The route's edges are the dominance test |
 | All launches a match, pops included | Watched, not banded |
 | One kind's share of a fighter's launches, default arm | At most 50% |
 | The spammer's launchers answered by medium | 20 to 50% (re-banded 2026-10-17, §11) |

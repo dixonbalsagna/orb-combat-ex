@@ -129,6 +129,7 @@ Orb: early, "a well-earned power hit could send an opponent through the side of 
 
 - **A power send is one the attacker earned:** a launch (B in an opening, or a charged heavy at full), a finisher, a perfect B's ender, the duel of perfects' send, or a beam struggle's overwhelm.
 - **Every other send is a plain send:** a knock-back, a throw, a blast's push, or a rebound off a wall.
+- **Repeats escalate** (Orb, homework 30, `rulings-2026-10-18b.md`): a send into a building already marked meets it one tier higher for each mark on it, up to two. A send into ground already cratered deepens and widens that crater rather than digging a new one beside it.
 
 | Tier | A power send into towers | A plain send into a tower |
 | ---: | :--- | :--- |

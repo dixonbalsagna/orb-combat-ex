@@ -149,3 +149,28 @@ At Art's current sizes:
 - **Colour rules.** Each fighter stays distinct from every biome and from the rival. If both sides pick near-identical colours or auras, the second side shifts automatically, so beam struggles stay readable. Team colours stay locked in Team Battle.
 - **Sound.** Cosmetic sounds, such as a victory sting, never replace or mask a gameplay cue.
 - **A setting** shows opponents in their default cosmetics, for readability or taste.
+
+## 6. Generous, and always something new (Orb, homework 30, 2026-10-18)
+
+Orb: "rewards should feel generous, there should be tons of different rewards so players feel like there's always something new." The rules of §1 hold: earned through play, no purchases, no random rolls, nothing missable, nothing for a death (Legal c08), and nothing that touches balance.
+
+**Something new after every fight.** In a run, a won fight gives one item the player doesn't own yet, and every second loss in a row gives one (`run-mode.md` §4.4). In every other mode, mastery's levels (§3) and the feats keep the drip.
+
+**More kinds of reward.** Beside Art's pool (outfits, patterns, trails, beam tints, victory scenes) and the run's (titles, keepsakes, finisher styles):
+
+| Kind | What it is | Whose |
+| :--- | :--- | :--- |
+| Taunts and emotes | Variants of each fighter's taunt, and short emotes for the results screen | Animation, Narrative |
+| Victory poses and KO cameras | The pose after a win, and the camera's style for the last blow | Animation, Camera |
+| Intro variants | For Orb's dynamic introductions | Narrative, Animation, Camera |
+| Voice-line variants | Alternate lines for the same moments, by Orb's voice rules | Narrative, Audio |
+| HUD themes and menu backdrops | A backdrop for every planet played | UI, Rendering |
+| Music tracks | Each arena theme as it is made, played in the menu | Audio |
+| Postcards | A still of every place defended, kept in the atlas | Rendering, UI |
+| Aura tints | Inside Legal's palette | VFX, Legal |
+| Card badges and banners | For the fighter-select card and the results | UI, Art |
+| **Lore entries** | A codex filled by events in runs and matches, written with Orb's universe | Narrative |
+
+**The size: about 1,000 items** across the first four fighters. Art's pool (122 items a fighter of its own and 38 shared) is about 530. The run's kinds and the new ones above add the rest.
+
+**How "always something new" works without chance:** every source draws from long seeded sequences with choices in them (every fifth mastery level a pick of three, the haul's pick of three, the seed of the day). So a player always has something next, and never a roll.
