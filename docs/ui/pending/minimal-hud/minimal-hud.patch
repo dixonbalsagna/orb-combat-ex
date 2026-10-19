@@ -1,0 +1,858 @@
+diff -ruN a/ui/core/ui_event_hub.gd b/ui/core/ui_event_hub.gd
+--- a/ui/core/ui_event_hub.gd	2026-10-18 23:00:20.782060900 -0700
++++ b/ui/core/ui_event_hub.gd	2026-10-18 23:00:20.842357100 -0700
+@@ -75,6 +75,14 @@
+ var telegraph: Dictionary = {}   # the finisher's kind while it winds up: {actor, target, kind, age, end}; the read that answers it is a stance
+ var tug: Dictionary = {}         # the beam struggle (Encounter's beam_struggle, beam_pulse, beam_surge, beam_stray and beam_end cues, and Clash.mid): {a, d, end_n, k, pulse_t, age, mid (0 at a's hands to 1 at d's, -1 unknown), marks: [{slot, kind, age}], end, end_t}
+ const TUG_MARK_LIFE := 0.45      # seconds a surge or a stray mark stays at the meeting point
++## The cue caption (the accessibility option edge_captions): {text, left} where `left` is seconds, or -1 until the cue ends. The HUD draws it only when the option is on.
++var caption: Dictionary = {}
++
++
++func _cap(text: String, secs: float) -> void:
++	caption = {"text": text, "left": secs} if text != "" else {}
++
++
+ const TUG_END_HOLD := 1.0        # seconds the end of a struggle stays drawn
+ var hint: Dictionary = {}        # the tutorial's hint line: {id, key, text, kind (hint, nudge, done), age}
+ var beats: Dictionary = {}       # tutorial beat id to state (start, done, skipped)
+@@ -458,7 +466,7 @@
+ 		"chain_ender":
+ 			# The heavier last impact of a chain: a CHAIN xN banner (Narrative's label); the impact itself is Rendering's.
+ 			var cn: int = int(d.get("n", 0))
+-			if cn >= 2:
++			if cn >= 2 and not UiData.feature("minimal_hud"):   # a chain counter is withdrawn (docs/design/minimal-hud.md)
+ 				banner = {"text": UiData.fmt("state.chain", {"n": cn}), "col": UiLook.WARN, "dur": 1.2, "age": 0.0}
+ 		"banner":
+ 			if move_names.has(UiData.display_text(str(d.get("text", ""))).strip_edges().to_upper()):   # the sim's banner is the move's key from the rename on: compare the words a player reads
+@@ -764,6 +772,7 @@
+ ## comes each tick from the bridge (`set_clash_mid`). Read-only: nothing here writes the sim.
+ func _on_tug_cue(kind: String, d: Dictionary) -> void:
+ 	if kind == "beam_struggle":
++		_cap(UiData.t("prompt.cap_struggle"), -1.0)
+ 		tug = {"a": int(d.get("actor", 0)), "d": int(d.get("target", 1)), "end_n": int(d.get("n", 0)), "k": 0, "pulse_t": 99.0, "age": 0.0, "mid": 0.5, "marks": [], "end": "", "end_t": 0.0}
+ 		return
+ 	if tug.is_empty():
+@@ -778,6 +787,7 @@
+ 			if marks.size() > 8:
+ 				marks.pop_front()
+ 		"beam_end":
++			_cap("", 0.0)
+ 			tug["end"] = str(d.get("text", "time"))
+ 			tug["end_t"] = 0.0
+ 			if d.has("x"):
+@@ -1203,6 +1213,11 @@
+ 				tug = {}
+ 		elif float(tug["age"]) > 12.0:
+ 			tug = {}   # an end cue that never came: the struggle does not stay drawn
++			_cap("", 0.0)
++	if not caption.is_empty() and float(caption["left"]) >= 0.0:
++		caption["left"] = float(caption["left"]) - sdt
++		if float(caption["left"]) <= 0.0:
++			caption = {}
+ 	for m in models:
+ 		m.advance(dt, sdt)
+ 		if _lost_trail_left.has(m.slot):
+diff -ruN a/ui/data/features.json b/ui/data/features.json
+--- a/ui/data/features.json	2026-10-18 23:00:20.706836900 -0700
++++ b/ui/data/features.json	2026-10-18 23:00:20.875519800 -0700
+@@ -11,6 +11,7 @@
+     "reduce_flashing": true,
+     "lock_reduce_flashing": false,
+     "ring_map": false,
++    "minimal_hud": false,
+     "tug_rings": false,
+     "start_menu": true,
+     "launch_marks": true,
+diff -ruN a/ui/data/options.json b/ui/data/options.json
+--- a/ui/data/options.json	2026-10-18 23:00:20.701836200 -0700
++++ b/ui/data/options.json	2026-10-18 23:00:20.873751900 -0700
+@@ -6,6 +6,7 @@
+     "silhouette": { "default": false, "group": "display", "label": "Body figure", "help": "A small body figure beside each nameplate that shows wear, always on. On in training and by the accessibility default.", "accessibility": true },
+     "crown_always": { "default": false, "group": "accessibility", "label": "Always show damage rings", "help": "The rings that show each fighter's damage stay up all the time instead of fading. Flashes over the head still show; the rings dim under one.", "accessibility": true },
+     "brink_cue": { "default": true, "group": "display", "label": "Brink ring", "help": "A thin faint ring around a fighter on the brink." },
++    "edge_captions": { "default": false, "group": "accessibility", "label": "Cue captions", "help": "A short line at the bottom edge names a cue as it happens, such as a beam struggle or an opening. Nothing is drawn on the fighters.", "accessibility": true },
+     "captions": { "default": true, "group": "accessibility", "label": "Captions", "help": "Bracketed sound tags such as [wince] on spoken lines.", "accessibility": true },
+     "latch_charge": { "default": false, "group": "controls", "label": "Latched charge", "help": "A tap on Medium or Heavy starts its wind-up and the next press lets it go, for when holding a button is hard. Off: hold to charge.", "accessibility": true },
+     "latch_charge_p2": { "default": false, "group": "controls", "label": "Latched charge, player 2", "help": "The same for player two when two people play. Player one's is the one above.", "accessibility": true },
+diff -ruN a/ui/data/settings.json b/ui/data/settings.json
+--- a/ui/data/settings.json	2026-10-18 23:00:20.704836500 -0700
++++ b/ui/data/settings.json	2026-10-18 23:00:20.865149400 -0700
+@@ -31,7 +31,7 @@
+     ] },
+     { "id": "camera", "title": "Camera", "items": ["camera_zoom", "camera_shake", "camera_launch_follow", "camera_panels", "split_solo"] },
+     { "id": "display", "title": "Display", "items": ["vfx_quality", "hud_sides", "you_marker", "info_flashes", "brink_cue", "silhouette", "region_label"] },
+-    { "id": "access", "title": "Accessibility", "items": ["colour_vision", "reduced_motion", "reduce_flashing", { "action": "photo_notice", "label": "Flashing effects notice", "value": "Read", "help": "The notice shown when the game starts: it contains flashing effects, what Reduced motion does and does not change, and that the game has not yet been tested with a photosensitivity analyser." }, "captions", "crown_always", "thickness", "hitstop_scale", "keep_hints", "haptics"] },
++    { "id": "access", "title": "Accessibility", "items": ["colour_vision", "reduced_motion", "reduce_flashing", { "action": "photo_notice", "label": "Flashing effects notice", "value": "Read", "help": "The notice shown when the game starts: it contains flashing effects, what Reduced motion does and does not change, and that the game has not yet been tested with a photosensitivity analyser." }, "captions", "edge_captions", "crown_always", "thickness", "hitstop_scale", "keep_hints", "haptics"] },
+     { "id": "cosmetics", "title": "Cosmetics", "items": ["unlock_all"] }
+   ],
+   "needs": { "touch_preset": "touch_full" },
+diff -ruN a/ui/data/terms.json b/ui/data/terms.json
+--- a/ui/data/terms.json	2026-10-18 23:00:20.705837400 -0700
++++ b/ui/data/terms.json	2026-10-18 23:00:20.868742800 -0700
+@@ -88,7 +88,7 @@
+   },
+   "prompt": { "special": "SPECIAL", "transform": "TRANSFORM", "attack": "ATTACK", "attack_hint": "TAP  HOLD  SWIPE UP", "guard": "GUARD", "guard_hint": "HOLD", "power": "POWER", "power_hint": "HOLD", "move": "MOVE", "move_hint": "FLICK TO DODGE",
+     "full_light": "LIGHT", "full_heavy": "HEAVY", "full_signature": "SIGNATURE", "full_context": "ACTION", "full_mode": "ENERGY", "full_transform": "TRANSFORM", "full_dodge": "DODGE",
+-    "pause_title": "PAUSED", "pause_resume": "Resume", "pause_howto": "How to play", "pause_settings": "Settings", "pause_feedback": "Send feedback", "not_yet": "not yet", "three_light": "Light", "three_medium": "Medium", "three_heavy": "Heavy", "three_context": "Action", "three_sig_chord": "Signature (hold)", "three_attack": "Attack (hold: stronger)", "three_full_heavy": "MEDIUM", "three_full_signature": "HEAVY", "three_howto_heavy": "Medium", "three_howto_signature": "Heavy (hold the power button with it for your signature, 45 Charge)", "three_remap_heavy": "Medium", "three_remap_signature": "Heavy", "photo_title": "This game contains flashing effects.", "photo_body_a": "Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them.", "photo_settings_line": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_settings_line_rf": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_body_b": "No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version.", "photo_start": "I understand, start", "photo_settings": "Open Settings", "photo_more": "Scroll for more", "menu_notice": "This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.", "menu_rf_on": "Reduce flashing: on. Turning it off restores full effects, which flash more.", "menu_rf_locked": "Reduce flashing is on. It lowers some effects but does not remove the flagged scenes.", "menu_rf_off": "Reduce flashing: off. Full effects are on, and they flash more.", "menu_not_now": "Not now", "menu_holding_url": "../", "menu_players": "Players", "menu_one": "1 player", "menu_two": "2 players", "menu_one_note": "One player plays against the computer.", "menu_p1": "Player 1", "menu_p2": "Player 2", "menu_kb": "Keyboard", "menu_pad": "Controller", "menu_intros": "Intros", "menu_reduce_flashing": "Reduce flashing", "menu_shake": "Screen shake", "menu_captions": "Captions", "menu_guide": "Move guide", "menu_start": "I understand, start", "menu_back": "Back to the match", "menu_both_kb": "Both on the keyboard: you share it, and the guide shows each player's keys.", "menu_no_pad": "No controller found yet. Press a button on it.", "pause_menu": "Main menu", "pause_again": "Play again", "pause_over_title": "MATCH OVER", "turn_title": "Turn your phone", "turn_body": "This game plays sideways. Turn your phone to landscape and the match carries on; it waits for you.", "turn_anyway": "Play upright anyway", "photo_close": "Close", "pause_about": "About", "pause_new": "New match",
++    "pause_title": "PAUSED", "pause_resume": "Resume", "pause_howto": "How to play", "pause_settings": "Settings", "pause_feedback": "Send feedback", "not_yet": "not yet", "three_light": "Light", "three_medium": "Medium", "three_heavy": "Heavy", "three_context": "Action", "three_sig_chord": "Signature (hold)", "three_attack": "Attack (hold: stronger)", "three_full_heavy": "MEDIUM", "three_full_signature": "HEAVY", "three_howto_heavy": "Medium", "three_howto_signature": "Heavy (hold the power button with it for your signature, 45 Charge)", "three_remap_heavy": "Medium", "three_remap_signature": "Heavy", "photo_title": "This game contains flashing effects.", "photo_body_a": "Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them.", "photo_settings_line": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_settings_line_rf": "The \"Reduced motion\" setting (pause menu, Settings) changes a few effects but does not fix these scenes.", "photo_body_b": "No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version.", "photo_start": "I understand, start", "photo_settings": "Open Settings", "photo_more": "Scroll for more", "menu_notice": "This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.", "menu_rf_on": "Reduce flashing: on. Turning it off restores full effects, which flash more.", "menu_rf_locked": "Reduce flashing is on. It lowers some effects but does not remove the flagged scenes.", "menu_rf_off": "Reduce flashing: off. Full effects are on, and they flash more.", "menu_not_now": "Not now", "menu_holding_url": "../", "menu_players": "Players", "menu_one": "1 player", "menu_two": "2 players", "menu_one_note": "One player plays against the computer.", "menu_p1": "Player 1", "menu_p2": "Player 2", "menu_kb": "Keyboard", "menu_pad": "Controller", "menu_intros": "Intros", "menu_reduce_flashing": "Reduce flashing", "cap_struggle": "Beam struggle: press on the beat", "cap_open": "He is open: press B", "menu_shake": "Screen shake", "menu_captions": "Captions", "menu_guide": "Move guide", "menu_start": "I understand, start", "menu_back": "Back to the match", "menu_both_kb": "Both on the keyboard: you share it, and the guide shows each player's keys.", "menu_no_pad": "No controller found yet. Press a button on it.", "pause_menu": "Main menu", "pause_again": "Play again", "pause_over_title": "MATCH OVER", "turn_title": "Turn your phone", "turn_body": "This game plays sideways. Turn your phone to landscape and the match carries on; it waits for you.", "turn_anyway": "Play upright anyway", "photo_close": "Close", "pause_about": "About", "pause_new": "New match",
+     "pause_new_ask": "Start a new match?", "pause_new_yes": "New match", "pause_new_no": "Keep playing", "pause_resume_key": "P", "pause_howto_key": "F1", "pause_new_key": "N",
+     "join": "P2: press any button to join", "join_short": "P2: press a button", "join_key": "P2: press T to join", "join_key_short": "P2: T to join", "form_hold": "Hold", "form_tap": "Tap", "form_boost": "hit harder until the match ends", "form_boost_short": "hit harder from now on", "intro_skip_kbd": "Press any key to skip", "intro_skip_pad": "Press any button to skip", "intro_skip_touch": "Tap to skip", "recipe_light": "light", "recipe_heavy": "heavy", "recipe_sig": "signature", "recipe_energy": "energy", "launch_hint": "Keep hitting, then press the lit button to launch him.", "over_civilians": "Civilians lost: {n} of {total}", "over_structures": "Buildings lost: {n}", "over_craters": "Craters: {n}", "inc_lost": "OFF SCREEN", "inc_rush": "RUSH", "inc_closing": "CLOSING", "mode_hold": "Energy (hold)", "mode_toggle": "Energy (toggle)", "remap_player": "Player", "remap_p1": "Player 1", "remap_p2": "Player 2", "join_tiny": "P2: any button", "join_key_tiny": "P2: press T", "left_short": "P2 left", "joined": "P2 joined", "left": "P2 handed back to the computer", "pause_p2_leave": "Player two: hand back to the computer", "pause_p2_join": "Player two: press any button to join" },
+   "planet": "EVERHOLD",
+diff -ruN a/ui/hud/ui_hud.gd b/ui/hud/ui_hud.gd
+--- a/ui/hud/ui_hud.gd	2026-10-18 23:00:20.713745100 -0700
++++ b/ui/hud/ui_hud.gd	2026-10-18 23:00:20.834101700 -0700
+@@ -54,6 +54,7 @@
+ 	"charges_off_p2": false,
+ 	"reduced_motion": false,   # no flicker, shimmer, shrinking rings or slide-ins; every cue still has a shape
+ 	"captions": true,          # bracketed gesture tags on barks
++	"edge_captions": false,    # a short line at the bottom edge names a cue as it happens (accessibility, off by default)
+ 	"thickness": 1.0,          # crown arc thickness multiplier (an accessibility option)
+ 	"region_label": false,     # the place name under the planet strip's camera box
+ 	"show_feed": false,        # the director feed (debug toggle)
+@@ -183,6 +184,7 @@
+ var _l_touchctl: UiLayer
+ var feedback_fn: Callable = Callable()   # the host's report context: {commit, date, seed, setup, time, ended}; any key may be missing
+ var _l_tele: UiLayer
++var _l_caption: UiLayer              # the cue caption line at the bottom edge (accessibility, off by default)
+ var _l_hint: UiLayer
+ var _howto_open := false
+ var _howto_first := false
+@@ -308,6 +310,7 @@
+ 	_l_pause = _layer(_paint_pause)
+ 	_l_tele = _layer(_paint_tele)     # the finisher telegraph and the tutorial hint share the banner slot (telegraph first)
+ 	_l_hint = _layer(_paint_hint)
++	_l_caption = _layer(_paint_caption)
+ 	_l_fbpill = _layer(_paint_fbpill)
+ 	_l_join = _layer(_paint_join)     # under the menus: the pause menu and How to play cover the join prompt, not the other way round
+ 	_l_pmenu = _layer(_paint_pmenu)
+@@ -378,7 +381,7 @@
+ 
+ 
+ func _all_layers() -> Array:
+-	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_many, _l_tug, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_notice, _l_gate_back]
++	return [_l_caption, _l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_many, _l_tug, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_notice, _l_gate_back]
+ 
+ 
+ ## Total redraws of every layer so far, for the perf counters.
+@@ -633,14 +636,14 @@
+ 
+ 	# The crown layer draws only while something is up: a pop, the brink ring, a window, or the accessibility option.
+ 	var crown_on: bool = false
+-	if bool(opts["show_crown"]) and anchor_fn.is_valid():
++	if not UiData.feature("minimal_hud") and bool(opts["show_crown"]) and anchor_fn.is_valid():   # minimal_hud: nothing on the fighters (ADR 0010, docs/design/minimal-hud.md)
+ 		for m in hub.models:
+ 			var pop_on: bool = (m.crown_a > 0.01 or bool(opts["crown_always"])) and not hub.crown_locked()
+ 			if pop_on or m.parry_t >= 0.0 or m.chain_t >= 0.0 or (m.brink and bool(opts["brink_cue"])):
+ 				crown_on = true
+ 	_l_crown.update_sig(_frame if crown_on else null)
+ 	# The beat ring: only with the option on, with anchors, outside a sim pause and the intro; redrawn in twentieths of its closing.
+-	var beat_sig: Array = UiBeatRing.sig(hub.models) if (bool(opts["beat_ring"]) and anchor_fn.is_valid() and not hub.sim_paused and not hub.intro_active) else []
++	var beat_sig: Array = UiBeatRing.sig(hub.models) if (not UiData.feature("minimal_hud") and bool(opts["beat_ring"]) and anchor_fn.is_valid() and not hub.sim_paused and not hub.intro_active) else []
+ 	_l_beat.update_sig([reduced, beat_sig] if not beat_sig.is_empty() else null)
+ 
+ 	for m in hub.models:
+@@ -656,13 +659,15 @@
+ 		_l_sil[m.slot].update_sig(_sil_sig(m, reduced) if layout.silhouette_on else null)
+ 
+ 	var a_toll: float = lerpf(UiLook.TOLL_REST_ALPHA, 1.0, clampf(1.0 - hub.toll_age / UiLook.TOLL_SHOW, 0.0, 1.0)) * (0.45 if cin else 1.0)
+-	if UiData.feature("civilian_bar"):
++	if UiData.feature("minimal_hud"):
++		_l_toll.update_sig(null)   # minimal_hud: the toll is on the pause screen and the results, not in play
++	elif UiData.feature("civilian_bar"):
+ 		# The bar: whole percents, and one opacity (no brightening when it grows): the layer redraws only when the share's percent, the structures or the craters change.
+ 		_l_toll.update_sig([int(UiCenter.civilian_share(hub) * 100.0), hub.toll["structures"], hub.toll["craters"], int(UiCenter.BAR_ALPHA * (0.45 if cin else 1.0) * 20.0), true])
+ 	else:
+ 		_l_toll.update_sig([hub.toll["civilians"], hub.toll["pop0"], hub.toll["structures"], hub.toll["craters"], int(a_toll * 20.0)])
+ 
+-	if strip_fn.is_valid() and _lb < 0.5:
++	if strip_fn.is_valid() and _lb < 0.5 and not UiData.feature("minimal_hud"):   # minimal_hud: no planet strip in play
+ 		_strip_data = strip_fn.call()
+ 		var segs: Array = _strip_data.get("segs", [])
+ 		var dead: Array = _strip_data.get("dead", [])
+@@ -695,7 +700,7 @@
+ 		_many_marks = UiMany.held([], _many_keep, _t) if not _many_keep.is_empty() else []
+ 	_l_many.update_sig(UiMany.sig(_many_marks, hub) if (not _many_marks.is_empty() and _lb < 0.5) else null)
+ 	# The beam struggle's tug of war: between the two fighters' hands while one is on (UiTug); nothing otherwise.
+-	if not hub.tug.is_empty() and anchor_fn.is_valid() and _lb < 0.5:
++	if not UiData.feature("minimal_hud") and not hub.tug.is_empty() and anchor_fn.is_valid() and _lb < 0.5:
+ 		_tug_plan = UiTug.plan(layout, hub.tug, [anchor_fn.call(int(hub.tug["a"])), anchor_fn.call(int(hub.tug["d"]))], layout.s, bool(opts["reduced_motion"]) or bool(opts["reduce_flashing"]))
+ 	else:
+ 		_tug_plan = {}
+@@ -734,7 +739,7 @@
+ 		chip.update_sig(UiSplit.chip_sig(i, found["dir"], _chip_text[i], 1.0, _chip_big, [_aura_of(1 - i)]))
+ 
+ 	# The finisher struggle (beat rings on the brink fighter) and each column's prompt row.
+-	_l_struggle.update_sig(UiStruggle.sig(hub, _frame) if (anchor_fn.is_valid() and not layout.portrait) else null)
++	_l_struggle.update_sig(UiStruggle.sig(hub, _frame) if (not UiData.feature("minimal_hud") and anchor_fn.is_valid() and not layout.portrait) else null)
+ 	var prompts_on: bool = bool(opts["show_prompts"])
+ 	var touch_on: bool = bool(opts["touch_ui"])
+ 	# Who is the player (YOU), and the control legend: it shows for 12 s from the match start, or from the moment a fighter became human.
+@@ -768,7 +773,8 @@
+ 				var an: Dictionary = anchor_fn.call(m.slot)
+ 				var ap: Vector2 = an.get("pos", Vector2.ZERO)
+ 				var ea: Dictionary = UiHints.edge_arrow(an, layout.safe, layout.s)
+-				you_sig.append([m.slot, m.you_label, int(ap.x * 0.5), int(ap.y * 0.5), int(float(an.get("h", 0.0)) * 0.5), int(float(yk["a"]) * 10.0), bool(an.get("visible", true)), bool(yk["compact"]), m.aura.to_html(false), int((ea.get("pos", Vector2.ZERO) as Vector2).x * 0.5), int((ea.get("pos", Vector2.ZERO) as Vector2).y * 0.5)])
++				if not (ea.is_empty() and UiData.feature("minimal_hud")):   # the label over the head is cut under minimal_hud; the arrow at the screen's edge (the fighter is off screen) is not
++					you_sig.append([m.slot, m.you_label, int(ap.x * 0.5), int(ap.y * 0.5), int(float(an.get("h", 0.0)) * 0.5), int(float(yk["a"]) * 10.0), bool(an.get("visible", true)), bool(yk["compact"]), m.aura.to_html(false), int((ea.get("pos", Vector2.ZERO) as Vector2).x * 0.5), int((ea.get("pos", Vector2.ZERO) as Vector2).y * 0.5)])
+ 			_l_hints[m.slot].update_sig(UiHints.sig(m, ha, UiHints.preset_id(m, _o()), UiHints.energy_style(m, _o()), bool(opts["reduced_motion"])) if (ha > 0.01 and layout.hints[m.slot].size.y > 0.0) else null)
+ 	_l_you.update_sig(you_sig if not you_sig.is_empty() else null)
+ 	_join_step(hub.t_now - _join_prev_t, _dt)
+@@ -791,6 +797,7 @@
+ 	_l_fb.update_sig(UiFeedback.sig(layout.vp, _fb_state, _fb_tags, _fb_status_ok, dp, layout.s, bool(opts["touch_ui"]), "%s|%s" % [_fb_opened, bool(_fb_issue.get("fallback", false))]) if _fb_open else null)
+ 	_l_tele.update_sig(UiReads.telegraph_sig(hub, bool(opts["show_prompts"]), reduced))
+ 	_l_hint.update_sig(UiReads.hint_sig(hub))
++	_l_caption.update_sig([caption_text(), caption_rect().position.y] if (bool(opts["edge_captions"]) and caption_text() != "" and not hub.sim_paused and not hub.intro_active and _lb < 0.5) else null)
+ 	_l_howto.update_sig(UiHowto.sig(layout.vp, _howto_page, _howto_device(), _howto_slot(), bool(opts["touch_ui"]), dp, layout.s, _howto_preset() + str(opts["glyph_style"]) + "|%d|%d|%d|%d|%s" % [_howto_tab, _howto_held(), UiStance.live_bits(), _howto_scroll, _howto_first]) if _howto_open else null)
+ 
+ 	_l_pmenu.update_sig(UiPause.sig(pause_menu_plan()) if _pm_open else null)
+@@ -1745,7 +1752,7 @@
+ 
+ 
+ func pause_menu_plan() -> Dictionary:
+-	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts": over_facts() if _pm_over else []})
++	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts_always": UiData.feature("minimal_hud"), "facts": over_facts() if (_pm_over or UiData.feature("minimal_hud")) else []})
+ 
+ 
+ func _paint_pmenu(ci: CanvasItem) -> void:
+@@ -3533,7 +3540,8 @@
+ 			var an: Dictionary = anchor_fn.call(m.slot)
+ 			var ea: Dictionary = UiHints.edge_arrow(an, layout.safe, layout.s)
+ 			if ea.is_empty():
+-				UiHints.draw_you(ci, m.you_label, an, layout.s, float(yk["a"]), layout.safe, m.aura, bool(yk["compact"]))
++				if not UiData.feature("minimal_hud"):
++					UiHints.draw_you(ci, m.you_label, an, layout.s, float(yk["a"]), layout.safe, m.aura, bool(yk["compact"]))
+ 			else:
+ 				UiHints.draw_you_edge(ci, m.you_label, ea, layout.s, float(yk["a"]), m.aura)   # the fighter is off screen: an arrow on the edge points to it
+ 
+@@ -3542,6 +3550,37 @@
+ 	UiReads.draw_telegraph(ci, hub, layout, layout.s, bool(opts["show_prompts"]), bool(opts["reduced_motion"]))
+ 
+ 
++## The line the cue caption says now: a beam struggle while one is on, else that a launch is open for a human; "" for nothing.
++func caption_text() -> String:
++	if not hub.caption.is_empty():
++		return str(hub.caption["text"])
++	for m in hub.models:
++		if m.launcher_open and not m.ai:
++			return UiData.t("prompt.cap_open")
++	return ""
++
++
++## The cue caption's place: the bottom edge, centred, above the planet strip where there is one.
++func caption_rect() -> Rect2:
++	var fs: int = UiText.px(16.0, layout.s)
++	var txt: String = caption_text()
++	var w: float = UiText.width(txt, fs) + 28.0 * layout.s
++	var h: float = UiText.height(fs) + 12.0 * layout.s
++	var foot: float = layout.strip.position.y if (layout.strip.size.y > 0.0 and not UiData.feature("minimal_hud")) else layout.safe.end.y
++	return Rect2(layout.vp.x * 0.5 - w * 0.5, foot - h - 8.0 * layout.s, w, h)
++
++
++func _paint_caption(ci: CanvasItem) -> void:
++	if caption_text() == "":
++		return
++	var r: Rect2 = caption_rect()
++	var fs: int = UiText.px(16.0, layout.s)
++	UiText.no_outline = true
++	UiIcons.rrect(ci, r, r.size.y * 0.4, Color(UiLook.col(UiLook.SCRIM), 0.78), Color(UiLook.col(UiLook.EDGE), 0.4), 1.2)
++	UiText.draw(ci, caption_text(), Vector2(r.get_center().x, r.position.y + (r.size.y - UiText.height(fs)) * 0.5 + UiText.ascent(fs)), fs, Color(UiLook.col(UiLook.INK), 0.95), 0)
++	UiText.no_outline = false
++
++
+ func _paint_hint(ci: CanvasItem) -> void:
+ 	UiReads.draw_hint(ci, hub, layout, layout.s)
+ 
+diff -ruN a/ui/tools/hud_check.gd b/ui/tools/hud_check.gd
+--- a/ui/tools/hud_check.gd	2026-10-18 23:00:20.726488400 -0700
++++ b/ui/tools/hud_check.gd	2026-10-18 23:00:20.826045300 -0700
+@@ -65,6 +65,7 @@
+ 	await _launch_marks_rules()
+ 	await _tug_rules()
+ 	await _cut_rules()
++	await _minimal_hud_rules()
+ 	await _brawl_marks_rules()
+ 	_rate_rules()
+ 	await _block_toggle_rules()
+@@ -5874,6 +5875,140 @@
+ 	hud.queue_free()
+ 	await process_frame
+ 
++
++## The minimal HUD (ADR 0010, docs/design/minimal-hud.md), behind `minimal_hud` (off): nothing on, over or between the fighters; the edge HUD keeps the two plates (name, ki, the power pips with
++## SIGNATURE), the legend and the hint; the toll is on the pause screen; the optional cue captions are at the bottom edge.
++func _plate_words(hud: UiHud) -> String:
++	UiText.tracing = true
++	UiText.trace = []
++	for l in hud._l_plate:
++		l.invalidate()
++	for i in range(3):
++		hud.advance(1.0 / 60.0)
++		await process_frame
++	UiText.tracing = false
++	var w := " ".join(PackedStringArray(UiText.trace))
++	UiText.trace = []
++	return w
++
++
++func _minimal_hud_rules() -> void:
++	UiData.set_feature("minimal_hud", null)
++	_ok(not UiData.feature("minimal_hud") and not bool(UiData.options()["edge_captions"]["default"]), "minimal hud: the switch is off and the cue captions are off as shipped")
++	root.size = Vector2i(1280, 720)
++	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
++	hud.size = Vector2(1280, 720)
++	root.add_child(hud)
++	await process_frame
++	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
++	hud.hub.patch(0, {"ai": false})
++	var vp2: Vector2 = hud.layout.vp
++	hud.anchor_fn = func(slot: int) -> Dictionary:
++		return {"pos": Vector2(vp2.x * (0.4 if slot == 0 else 0.6), vp2.y * 0.55), "h": vp2.y * 0.12, "visible": true}
++	hud.strip_fn = func(): return {"W": 9600.0, "segs": [[0.0, 9600.0, "ocean"]], "cam_x": 0.0, "cam_w": 2000.0, "dead": [], "fighters": []}
++	hud.set_option("show_crown", true)
++	hud.set_option("crown_always", true)
++	hud.set_option("beat_ring", true)
++	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_struggle", "text": "start", "target": 1, "n": 600})
++	hud.hub.set_clash_mid(0.5)
++	hud.hub.models[1].beats = [0.3]
++	hud.hub.consume({"type": "world", "civilians": 30, "pop0": 100, "structures": 2, "craters": 3})
++	for i in range(8):
++		hud.advance(1.0 / 60.0)
++		await process_frame
++	var words_full: String = await _plate_words(hud)
++	var full_ok: bool = hud._l_tug.sig != null and hud._l_crown.sig != null and hud._l_toll.sig != null and hud._l_strip_base.sig != null
++	_ok(full_ok and words_full.contains("MARTIAL") and words_full.contains("CHARGE"), "minimal hud: with the switch off the HUD is as it was (tug, crown, toll chip, strip, the stance chip on the plate)")
++	UiData.set_feature("minimal_hud", true)
++	for i in range(8):
++		hud.advance(1.0 / 60.0)
++		await process_frame
++	_ok(hud._l_crown.sig == null and hud._l_beat.sig == null and hud._l_tug.sig == null and hud._l_struggle.sig == null and hud._l_you.sig == null, "minimal hud: the crown, the beat ring, the tug, the finisher's rings and the YOU label draw nothing")
++	_ok(hud._l_toll.sig == null and hud._l_strip_base.sig == null and hud._l_strip_marks.sig == null and hud._l_ring.sig == null, "minimal hud: the toll chip, the planet strip and the ring map are not in play")
++	var words_min: String = await _plate_words(hud)
++	var wl := words_min.to_lower()
++	_ok(words_min.contains("ONE") and words_min.contains("CHARGE") and not words_min.contains("MARTIAL") and not words_min.contains("ANGUISH") and not words_min.contains("MENACE") and not wl.contains("hit") and not wl.contains("open"), "minimal hud: the plate keeps the name and ki; the stance chip, the ego meter and the state chips are gone (%s)" % words_min.substr(0, 80))
++	# The toll is on the pause screen, as a count and the planet's state (Legal c08), and never celebrated.
++	hud.show_pause_menu(false)
++	var pm: Dictionary = hud.pause_menu_plan()
++	var facts := " ".join(PackedStringArray(pm["facts_lines"]))
++	_ok(not (pm["facts_lines"] as PackedStringArray).is_empty() and facts.to_lower().contains("civilians"), "minimal hud: the pause screen carries the toll (%s)" % facts.substr(0, 60))
++	hud._pm_close("test")
++	UiData.set_feature("minimal_hud", null)
++	hud.show_pause_menu(false)
++	_ok((hud.pause_menu_plan()["facts_lines"] as PackedStringArray).is_empty(), "minimal hud: with the switch off the plain pause screen has no toll, as before")
++	hud._pm_close("test")
++	# A chain counter is withdrawn.
++	hud.hub.banner = {}
++	hud.hub.consume({"type": "chain_ender", "actor": 0, "n": 3})
++	var banner_off: bool = not hud.hub.banner.is_empty()
++	hud.hub.banner = {}
++	UiData.set_feature("minimal_hud", true)
++	hud.hub.consume({"type": "chain_ender", "actor": 0, "n": 3})
++	_ok(banner_off and hud.hub.banner.is_empty(), "minimal hud: the CHAIN banner shows with the switch off and not with it on")
++	# The split screen's distance chips ride the bottom edge.
++	var lay := UiLayout.new()
++	lay.dp = 1.0
++	lay.compute(Vector2(1280, 720), false)
++	var an0 := {"pos": Vector2(300.0, 380.0), "h": 90.0, "visible": true}
++	var an1 := {"pos": Vector2(980.0, 380.0), "h": 90.0, "visible": true}
++	var sp := {"sep": 1.0, "c": Vector2(640.0, 360.0), "n": Vector2(1.0, 0.0), "gap": 3.0, "fade": 1.0, "sigma": 1.0, "pointer": "split", "dist_bh": 12.0,
++		"ring": {"angle_A": 1.0, "angle_B": 2.0, "sigma": 1.0, "arc_A": 0.3, "arc_B": 0.3, "swing": 0.0, "sep": 1.0}}
++	var ps: Array = UiSplit.pointers(lay, sp, [an0, an1], lay.s)
++	var low := true
++	for e in ps:
++		var py: float = (e["pos"] as Vector2).y
++		low = low and py > 380.0 + 90.0 and Rect2(lay.safe).has_point(e["pos"])
++	_ok(ps.size() == 2 and low, "minimal hud: both split-screen distance chips ride the bottom edge, well below the fighters (%s)" % str(ps.map(func(e): return e["pos"])))
++	# The rival pointer, in one view, only while he is off the screen.
++	UiData.set_feature("minimal_hud", null)
++	var one := {"pointer": "always", "dist_bh": 3.0, "sigma": 1.0}
++	var near_anchor := {"pos": Vector2(700.0, 380.0), "h": 90.0, "visible": false}   # the flag reads false beside him
++	var far_anchor := {"pos": Vector2(3000.0, 380.0), "h": 90.0, "visible": false}
++	var p_off: int = UiSplit.pointers(lay, one, [an0, near_anchor], lay.s).size()
++	UiData.set_feature("minimal_hud", true)
++	var p_on_near: int = UiSplit.pointers(lay, one, [an0, near_anchor], lay.s).size()
++	var p_on_far: int = UiSplit.pointers(lay, one, [an0, far_anchor], lay.s).size()
++	_ok(p_off >= 1 and p_on_near == 0 and p_on_far >= 1, "minimal hud: the rival pointer shows only while he is off the screen (a flag that reads false beside him no longer shows it: %d, %d, %d)" % [p_off, p_on_near, p_on_far])
++	# The incoming chip is the small one: the arrow and the countdown, no words.
++	UiData.set_feature("minimal_hud", null)
++	var inc := {"active": true, "shown": false, "eta": 2.0, "side": 1, "aimed": true, "screen_dir": Vector2(1.0, 0.0), "dist_bh": 10.0}
++	var e_full: Dictionary = UiIncoming.entry(lay, sp, inc, an0, 0, lay.s, "10", true)
++	UiData.set_feature("minimal_hud", true)
++	var e_min: Dictionary = UiIncoming.entry(lay, sp, inc, an0, 0, lay.s, "10", true)
++	_ok(not e_full.is_empty() and not e_min.is_empty() and not bool(e_full["compact"]) and bool(e_min["compact"]), "minimal hud: the incoming chip is the small one (the arrow and the countdown only)")
++	# The cue captions: off by default; on, one line at the bottom edge for a beam struggle and for an open launch, and nothing else.
++	UiData.set_feature("minimal_hud", true)
++	hud.set_option("edge_captions", false)
++	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_struggle", "text": "start", "target": 1, "n": 600})
++	hud.advance(1.0 / 60.0)
++	await process_frame
++	_ok(hud._l_caption.sig == null, "minimal hud: with the option off no caption is drawn")
++	hud.set_option("edge_captions", true)
++	hud.advance(1.0 / 60.0)
++	await process_frame
++	var cr: Rect2 = hud.caption_rect()
++	_ok(hud.caption_text() == "Beam struggle: press on the beat" and hud._l_caption.sig != null and cr.position.y > 600.0 and Rect2(Vector2.ZERO, vp2).encloses(cr), "minimal hud: with the option on, a beam struggle is named by one line at the bottom edge")
++	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_end", "text": "time", "x": 0.5})
++	hud.advance(1.0 / 60.0)
++	await process_frame
++	_ok(hud.caption_text() == "" and hud._l_caption.sig == null, "minimal hud: the caption ends with the struggle")
++	hud.hub.consume({"type": "cue", "actor": 0, "kind": "launcher_open", "target": 1})
++	hud.advance(1.0 / 60.0)
++	await process_frame
++	_ok(hud.caption_text() == "He is open: press B" and hud._l_caption.sig != null, "minimal hud: an open launch for a human is named at the bottom edge")
++	hud.hub.consume({"type": "cue", "actor": 0, "kind": "launcher_close"})
++	hud.advance(1.0 / 60.0)
++	await process_frame
++	var keys := PackedStringArray()
++	for r in UiSettings.rows():
++		keys.append(str(r["key"]))
++	_ok(hud.caption_text() == "" and keys.has("edge_captions"), "minimal hud: the caption goes when the launch closes, and Settings lists Cue captions")
++	UiData.set_feature("minimal_hud", null)
++	hud.set_option("edge_captions", false)
++	hud.queue_free()
++	await process_frame
++
+ 
+ ## The two grey circles cut on 2026-10-18 (Orb: "the weird gray circle between the two fighters"): the planet ring map and the beam struggle's steady rings, each behind a switch that is off.
+ func _cut_rules() -> void:
+diff -ruN a/ui/widgets/ui_incoming.gd b/ui/widgets/ui_incoming.gd
+--- a/ui/widgets/ui_incoming.gd	2026-10-18 23:00:20.744437600 -0700
++++ b/ui/widgets/ui_incoming.gd	2026-10-18 23:00:20.898233300 -0700
+@@ -73,7 +73,7 @@
+ 	var eta: float = float(inc.get("eta", 0.0))
+ 	var aimed: bool = bool(inc.get("aimed", false))
+ 	var lost: bool = bool(inc.get("lost", false)) and eta < 0.0   # off both panes and not rushing or closing: the arrow, the distance and the words OFF SCREEN, no countdown
+-	for compact in [false, true]:
++	for compact in ([true] if UiData.feature("minimal_hud") else [false, true]):   # minimal_hud: the small chip only (the arrow and the countdown), quieter at the edge
+ 		var sz: Vector2 = size(s, compact)
+ 		var pos: Vector2 = _on_edge(zone, p, dir, sz, s)
+ 		if pos.x < -1e8:
+diff -ruN a/ui/widgets/ui_pause.gd b/ui/widgets/ui_pause.gd
+--- a/ui/widgets/ui_pause.gd	2026-10-18 23:00:20.754199100 -0700
++++ b/ui/widgets/ui_pause.gd	2026-10-18 23:00:20.880580600 -0700
+@@ -46,7 +46,7 @@
+ 	var avail_w: float = vp.x - 2.0 * margin - 2.0 * pad
+ 	var avail_h: float = vp.y - 2.0 * my - 2.0 * pad
+ 	var widest: float = UiText.width(title, fs_title) - tm * 0.9
+-	var facts: Array = st.get("facts", []) if over else []
++	var facts: Array = st.get("facts", []) if (over or bool(st.get("facts_always", false))) else []   # facts_always: minimal_hud puts the toll on the pause screen too
+ 	for ft in facts:
+ 		widest = maxf(widest, UiText.width(str(ft), fs_small) + tm * 0.9)   # a line of facts may widen the card (up to the screen)
+ 	for id in list:
+diff -ruN a/ui/widgets/ui_plate.gd b/ui/widgets/ui_plate.gd
+--- a/ui/widgets/ui_plate.gd	2026-10-18 23:00:20.756200500 -0700
++++ b/ui/widgets/ui_plate.gd	2026-10-18 23:00:20.900234100 -0700
+@@ -102,9 +102,11 @@
+ 	UiText.defer = true
+ 	var left: bool = m.left_side
+ 	var pad: float = float(pm["pad"])
++	var minimal: bool = UiData.feature("minimal_hud")   # docs/design/minimal-hud.md: the plate keeps the name, ki and the power pips (with SIGNATURE, the ready step); the stance chip, the state chips and the ego meter go
+ 	var reduced: bool = bool(o.get("reduced_motion", false))
+ 	# A light scrim: the plate is a quiet strip on the screen's edge, not a panel (Orb: nothing in the way of the fight).
+-	UiIcons.rrect(ci, rect, 10.0 * s, _c(UiLook.alpha(UiLook.SCRIM, 0.5)), _c(UiLook.alpha(UiLook.EDGE, 0.22)), maxf(1.0, 1.2 * s))
++	var shown: Rect2 = Rect2(rect.position, Vector2(rect.size.x, float(pm["ego_y"]) + float(pm["ego_h"]) + pad * 0.6)) if minimal else rect   # the rows that go leave no empty band
++	UiIcons.rrect(ci, shown, 10.0 * s, _c(UiLook.alpha(UiLook.SCRIM, 0.5)), _c(UiLook.alpha(UiLook.EDGE, 0.22)), maxf(1.0, 1.2 * s))
+ 	# Landscape plates are compact: the stance chip shares the name's row, and the state chips share the pips' row.
+ 	# Portrait plates (a narrow phone) keep separate rows.
+ 	var combined: bool = not bool(pm["compact"])
+@@ -124,7 +126,7 @@
+ 	var word: String = UiStance.word(m.stance_kind)   # the five stances (UiStance): the held buttons, for both fighters
+ 	if m.stance_armed > 0.0:
+ 		word = UiStance.armed_word()   # an armed stance is neither held nor latched: it is for the next blow only
+-	var r1: Dictionary = row1_plan(inner_w, s, pm, m.name, tag_text, m.brink and combined, word, combined)
++	var r1: Dictionary = row1_plan(inner_w, s, pm, m.name, tag_text, m.brink and combined, word, combined and not minimal)
+ 	var nw: float = UiText.draw(ci, str(r1["name"]), Vector2(x0 if left else x1, nb), fs, ink, -1 if left else 1, 2.0)
+ 	if str(r1["tag"]) != "":
+ 		var afs: int = int(pm["fs_state"])
+@@ -197,162 +199,163 @@
+ 	var tier_rh: float = float(pm["tier_h"])
+ 	var sig_w: float = UiText.width(sig_label, tfs) + tier_rh * 0.9 + 16.0 * s if sig_show else 0.0
+ 
+-	# Row 2: the stance chip (far side of the name's row in landscape), then state chips in the inward direction.
+-	ry = rect.position.y + float(pm["chip_y"])
+-	rh = float(pm["chip_h"])
+-	var cfs: int = int(pm["fs_chip"])
+-	var scol: Color = UiStance.col(m.stance_kind)
+-	var isize: float = rh * 0.68
+-	var cw: float = float(r1["chip_w"])   # beside the name on landscape: the whole word if it fits, else the icon alone (never left off)
+-	word = str(r1["word"]) if combined else word
+-	var cur: float = (inner_w - cw) if combined else 0.0
+-	# A stance change pulses the chip's edge for 0.8 s, so the rival's stance (a read) is seen when it changes.
+-	var flash: float = 0.0 if reduced else clampf(1.0 - m.stance_flash_t / 0.8, 0.0, 1.0)
+-	_chip(ci, rect, left, pad, cur, cw, ry, rh, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(scol), 2.0 + 3.0 * flash)
+-	var cx: float = (x0 + cur + (cw * 0.5 if word == "" else 8.0 * s + isize * 0.5)) if left else (x1 - cur - (cw * 0.5 if word == "" else 8.0 * s + isize * 0.5))
+-	UiIcons.stance5(ci, m.stance_kind, Vector2(cx, ry + rh * 0.5), isize, _c(scol))
+-	if m.stance_armed > 0.0:
+-		# The ring round the icon runs down over the arming's 90 ticks (a shape: a held stance has none).
+-		ci.draw_arc(Vector2(cx, ry + rh * 0.5), isize * 0.82, -PI * 0.5, -PI * 0.5 + TAU * (1.0 if reduced else clampf(m.stance_armed, 0.0, 1.0)), 24, _c(scol), maxf(2.0, isize * 0.11), true)
+-	var tx0: float = (x0 + cur + 8.0 * s + isize + 6.0 * s) if left else (x1 - cur - 8.0 * s - isize - 6.0 * s)
+-	if word != "":
+-		UiText.draw(ci, word, Vector2(tx0, _base(ry, rh, cfs)), cfs, ink, -1 if left else 1, 1.5)
+-	# State chips: after the stance chip (portrait), or on the pips' row after the pips (landscape), never over SIGNATURE.
+-	var chip_limit: float = inner_w
+-	if combined:
+-		ry = rect.position.y + float(pm["tier_y"])
+-		rh = tier_rh
+-		cur = pips_w + 10.0 * s
+-		chip_limit = inner_w - (sig_w + 8.0 * s if sig_show else 0.0)
+-	else:
+-		cur += cw + 8.0 * s
+-	var chips: Array = []
+-	# The weight (the sticky light or heavy) comes first: the rival's weight is a read the player must always have. A heavy that fell
+-	# back to light for lack of Charge shows LOW CHARGE and the mark struck through for a moment.
+-	var fallback: bool = m.weight == "heavy" and m.weight_fallback_t < 1.5
+-	var blow_on: bool = UiStance.three() and m.blow_kind != "" and m.blow_t < BLOW_HOLD   # the three strengths: the chip names the blow just thrown (the blow cue), then falls back
+-	var weight_word: String = UiData.t("state.weight_fallback") if fallback else UiData.t("state.weight_" + m.weight + ("_energy" if m.energy else ""))
+-	if blow_on:
+-		weight_word = UiData.t("state.blow_" + m.blow_kind)
+-	chips.append(["weight", weight_word, UiLook.col(UiLook.WARN) if fallback else UiLook.col(UiLook.INK if m.weight == "heavy" else UiLook.INK_DIM)])
+-	if UiStance.launch_marks() and m.launcher_known:
+-		# The launcher: LAUNCH (a filled mark, bright) while a launch is ready, RESTING (a hollow mark, dim) after one landed. Steady, two states, no countdown.
+-		chips.append(["launcher", UiData.t("state.launcher_ready" if m.launcher_ready else "state.launcher_rest"), UiLook.col(UiLook.INK if m.launcher_ready else UiLook.INK_DIM)])
+-	if UiStance.launch_marks():
+-		# OPEN, a bolt's land and the run are short, urgent reads: the most urgent takes the weight chip's place (a plate has room for one chip beside the pips), the rest follow if there is room.
+-		var specials: Array = []
+-		if m.open_left > 0.0:
+-			specials.append(["open", UiData.t("state.open"), UiLook.col(UiLook.INK)])   # open after a miss: his guard is down for the ticks it says
+-		if m.run_n > 0 and m.run_t < RUN_HOLD:
+-			specials.append(["run", "", UiLook.col(UiLook.INK)])   # the run of unanswered blows on him: pips and a caret
+-		if m.land_kind != "" and m.land_t < LAND_HOLD:
+-			specials.append(["land", UiData.t("state.land_" + m.land_kind), UiLook.col(UiLook.INK_DIM)])
+-		if not specials.is_empty():
+-			var first: Array = specials.pop_front()
+-			chips.insert(0, first)
+-			chips.append_array(specials)
+-	if m.hidden:
+-		chips.append(["hidden", UiData.t("state.hidden"), UiLook.col(UiLook.HIDDEN)])
+-	if m.lost_trail:
+-		chips.append(["lost", UiData.t("state.lost_trail"), UiLook.col(UiLook.WARN)])
+-	if m.charging:
+-		chips.append(["charging", UiData.t("state.charging"), UiLook.col(UiLook.CHARGE)])
+-	if m.chain_n > 1 and m.chain_t >= 0.0:
+-		chips.append(["chain", UiData.fmt("state.chain", {"n": m.chain_n}), UiLook.col(UiLook.WARN)])
+-	var sfs: int = int(pm["fs_state"])
+-	var chip_h: float = rh * 0.82
+-	var chip_y: float = ry + (rh - chip_h) * 0.5
+-	for ch in chips:
+-		var label: String = ch[1]
+-		var lw: float = UiText.width(label, sfs)
+-		var w: float = chip_h * 0.9 + lw + 16.0 * s
+-		if ch[0] == "run":
+-			w = float(m.run_to + 1) * chip_h * 0.42 + 16.0 * s   # the pips and the caret, no word
+-		if cur + w > chip_limit and ch[0] == "launcher":
+-			label = ""   # no room for the word on a tight plate: the mark alone (a filled or a hollow triangle) still says ready or resting
+-			lw = 0.0
+-			w = chip_h * 0.9 + 12.0 * s
+-		if cur + w > chip_limit:
+-			break
+-		var gauge_full: bool = ch[0] == "run" and m.run_n >= m.run_to   # four of four: the next blow opens him; a steady heavier edge (never a blink)
+-		_chip(ci, rect, left, pad, cur, w, chip_y, chip_h, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(ch[2]), 3.6 if gauge_full else 1.6)
+-		var icx: float = (x0 + cur + 8.0 * s + chip_h * 0.35) if left else (x1 - cur - 8.0 * s - chip_h * 0.35)
+-		var icp := Vector2(icx, chip_y + chip_h * 0.5)
+-		match ch[0]:
+-			"weight":
+-				var bolt_blow: bool = blow_on and (m.blow_kind == "bolt" or m.blow_kind == "blast")
+-				var heavy_blow: bool = blow_on and (m.blow_kind == "heavy" or m.blow_kind == "release")
+-				if (m.energy or bolt_blow) and not fallback and not (blow_on and not bolt_blow):
+-					# The energy mark: a blast leaving a point (a dot and a short line). Plain shapes, no flame or crackle.
+-					var er: float = chip_h * 0.16
+-					var d: float = 1.0 if left else -1.0
+-					ci.draw_circle(icp + Vector2(-d * er * 1.3, 0.0), er * (1.4 if m.weight == "heavy" else 1.0), _c(ch[2]))
+-					ci.draw_line(icp + Vector2(-d * er * 0.2, 0.0), icp + Vector2(d * er * 1.9, 0.0), _c(ch[2]), maxf(2.0, er * 0.9), true)
+-				else:
+-					UiReads.weight_mark(ci, icp, chip_h * 0.62, (m.weight == "heavy" and not blow_on) or heavy_blow, _c(ch[2]), fallback)
+-			"launcher":
+-				var lr: float = chip_h * 0.3
+-				var tri := PackedVector2Array([icp + Vector2(0.0, -lr), icp + Vector2(lr * 0.95, lr * 0.75), icp + Vector2(-lr * 0.95, lr * 0.75)])
+-				if m.launcher_ready:
+-					UiIcons.fill_poly(ci, tri, _c(ch[2]))
+-				else:
+-					var closed: PackedVector2Array = tri.duplicate()
+-					closed.append(tri[0])
+-					ci.draw_polyline(closed, _c(ch[2]), maxf(2.0, lr * 0.4), true)
+-					if m.launcher_rest_left > 0.0:
+-						# The rest: a ring round the hollow mark that fills as it passes. No number, one step a second (Game Design's eleventh round; docs/ui/launch-teaching.md).
+-						# The rest's length is the director's (UiFighterModel.launcher_rest_total); full is the last second, and nothing flashes there.
+-						var tot: float = maxf(m.launcher_rest_total, 1.0)
+-						var rf: float = clampf(1.0 - m.launcher_rest_left / tot, 0.0, 1.0)
+-						ci.draw_arc(icp, lr * 1.6, -PI * 0.5, -PI * 0.5 + TAU * float(int(rf * tot)) / tot, 28, _c(ch[2]), maxf(2.0, lr * 0.35), true)
+-			"open":
+-				# Two brackets facing in: a gap, "he is open".
+-				var bw: float = chip_h * 0.3
+-				var bh: float = chip_h * 0.34
+-				for sgn in [-1.0, 1.0]:
+-					var bxp: float = icp.x + sgn * bw
+-					ci.draw_polyline(PackedVector2Array([Vector2(bxp - sgn * bw * 0.6, icp.y - bh), Vector2(bxp, icp.y - bh), Vector2(bxp, icp.y + bh), Vector2(bxp - sgn * bw * 0.6, icp.y + bh)]), _c(ch[2]), maxf(2.0, chip_h * 0.09), true)
+-			"land":
+-				# How a bolt landed, a shape: a solid dot (hit), a bar (guard), an arc (armour), a hollow dot (miss).
+-				var lr2: float = chip_h * 0.2
+-				match m.land_kind:
+-					"hit":
+-						ci.draw_circle(icp, lr2, _c(ch[2]))
+-					"guard":
+-						ci.draw_rect(Rect2(icp.x - lr2 * 1.3, icp.y - lr2 * 0.4, lr2 * 2.6, lr2 * 0.8), _c(ch[2]))
+-					"armour":
+-						ci.draw_arc(icp + Vector2(0.0, lr2 * 0.5), lr2 * 1.3, PI * 1.05, PI * 1.95, 12, _c(ch[2]), maxf(2.0, lr2 * 0.7), true)
+-					_:
+-						ci.draw_arc(icp, lr2, 0.0, TAU, 14, _c(ch[2]), maxf(1.6, lr2 * 0.45), true)
+-			"run":
+-				# The run: one pip for each unanswered blow, a caret after the last (the next blow closes).
+-				var pw: float = chip_h * 0.26
+-				var ph: float = chip_h * 0.5
+-				var px0: float = (x0 + cur + 8.0 * s) if left else (x1 - cur - 8.0 * s - pw)
+-				for pi in range(m.run_to):
+-					var pxx: float = px0 + (float(pi) * pw * 1.6 if left else -float(pi) * pw * 1.6)
+-					var pr := Rect2(pxx, icp.y - ph * 0.5, pw, ph)
+-					if pi < m.run_n:
+-						ci.draw_rect(pr, _c(ch[2]))
++	if not minimal:
++		# Row 2: the stance chip (far side of the name's row in landscape), then state chips in the inward direction.
++		ry = rect.position.y + float(pm["chip_y"])
++		rh = float(pm["chip_h"])
++		var cfs: int = int(pm["fs_chip"])
++		var scol: Color = UiStance.col(m.stance_kind)
++		var isize: float = rh * 0.68
++		var cw: float = float(r1["chip_w"])   # beside the name on landscape: the whole word if it fits, else the icon alone (never left off)
++		word = str(r1["word"]) if combined else word
++		var cur: float = (inner_w - cw) if combined else 0.0
++		# A stance change pulses the chip's edge for 0.8 s, so the rival's stance (a read) is seen when it changes.
++		var flash: float = 0.0 if reduced else clampf(1.0 - m.stance_flash_t / 0.8, 0.0, 1.0)
++		_chip(ci, rect, left, pad, cur, cw, ry, rh, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(scol), 2.0 + 3.0 * flash)
++		var cx: float = (x0 + cur + (cw * 0.5 if word == "" else 8.0 * s + isize * 0.5)) if left else (x1 - cur - (cw * 0.5 if word == "" else 8.0 * s + isize * 0.5))
++		UiIcons.stance5(ci, m.stance_kind, Vector2(cx, ry + rh * 0.5), isize, _c(scol))
++		if m.stance_armed > 0.0:
++			# The ring round the icon runs down over the arming's 90 ticks (a shape: a held stance has none).
++			ci.draw_arc(Vector2(cx, ry + rh * 0.5), isize * 0.82, -PI * 0.5, -PI * 0.5 + TAU * (1.0 if reduced else clampf(m.stance_armed, 0.0, 1.0)), 24, _c(scol), maxf(2.0, isize * 0.11), true)
++		var tx0: float = (x0 + cur + 8.0 * s + isize + 6.0 * s) if left else (x1 - cur - 8.0 * s - isize - 6.0 * s)
++		if word != "":
++			UiText.draw(ci, word, Vector2(tx0, _base(ry, rh, cfs)), cfs, ink, -1 if left else 1, 1.5)
++		# State chips: after the stance chip (portrait), or on the pips' row after the pips (landscape), never over SIGNATURE.
++		var chip_limit: float = inner_w
++		if combined:
++			ry = rect.position.y + float(pm["tier_y"])
++			rh = tier_rh
++			cur = pips_w + 10.0 * s
++			chip_limit = inner_w - (sig_w + 8.0 * s if sig_show else 0.0)
++		else:
++			cur += cw + 8.0 * s
++		var chips: Array = []
++		# The weight (the sticky light or heavy) comes first: the rival's weight is a read the player must always have. A heavy that fell
++		# back to light for lack of Charge shows LOW CHARGE and the mark struck through for a moment.
++		var fallback: bool = m.weight == "heavy" and m.weight_fallback_t < 1.5
++		var blow_on: bool = UiStance.three() and m.blow_kind != "" and m.blow_t < BLOW_HOLD   # the three strengths: the chip names the blow just thrown (the blow cue), then falls back
++		var weight_word: String = UiData.t("state.weight_fallback") if fallback else UiData.t("state.weight_" + m.weight + ("_energy" if m.energy else ""))
++		if blow_on:
++			weight_word = UiData.t("state.blow_" + m.blow_kind)
++		chips.append(["weight", weight_word, UiLook.col(UiLook.WARN) if fallback else UiLook.col(UiLook.INK if m.weight == "heavy" else UiLook.INK_DIM)])
++		if UiStance.launch_marks() and m.launcher_known:
++			# The launcher: LAUNCH (a filled mark, bright) while a launch is ready, RESTING (a hollow mark, dim) after one landed. Steady, two states, no countdown.
++			chips.append(["launcher", UiData.t("state.launcher_ready" if m.launcher_ready else "state.launcher_rest"), UiLook.col(UiLook.INK if m.launcher_ready else UiLook.INK_DIM)])
++		if UiStance.launch_marks():
++			# OPEN, a bolt's land and the run are short, urgent reads: the most urgent takes the weight chip's place (a plate has room for one chip beside the pips), the rest follow if there is room.
++			var specials: Array = []
++			if m.open_left > 0.0:
++				specials.append(["open", UiData.t("state.open"), UiLook.col(UiLook.INK)])   # open after a miss: his guard is down for the ticks it says
++			if m.run_n > 0 and m.run_t < RUN_HOLD:
++				specials.append(["run", "", UiLook.col(UiLook.INK)])   # the run of unanswered blows on him: pips and a caret
++			if m.land_kind != "" and m.land_t < LAND_HOLD:
++				specials.append(["land", UiData.t("state.land_" + m.land_kind), UiLook.col(UiLook.INK_DIM)])
++			if not specials.is_empty():
++				var first: Array = specials.pop_front()
++				chips.insert(0, first)
++				chips.append_array(specials)
++		if m.hidden:
++			chips.append(["hidden", UiData.t("state.hidden"), UiLook.col(UiLook.HIDDEN)])
++		if m.lost_trail:
++			chips.append(["lost", UiData.t("state.lost_trail"), UiLook.col(UiLook.WARN)])
++		if m.charging:
++			chips.append(["charging", UiData.t("state.charging"), UiLook.col(UiLook.CHARGE)])
++		if m.chain_n > 1 and m.chain_t >= 0.0:
++			chips.append(["chain", UiData.fmt("state.chain", {"n": m.chain_n}), UiLook.col(UiLook.WARN)])
++		var sfs: int = int(pm["fs_state"])
++		var chip_h: float = rh * 0.82
++		var chip_y: float = ry + (rh - chip_h) * 0.5
++		for ch in chips:
++			var label: String = ch[1]
++			var lw: float = UiText.width(label, sfs)
++			var w: float = chip_h * 0.9 + lw + 16.0 * s
++			if ch[0] == "run":
++				w = float(m.run_to + 1) * chip_h * 0.42 + 16.0 * s   # the pips and the caret, no word
++			if cur + w > chip_limit and ch[0] == "launcher":
++				label = ""   # no room for the word on a tight plate: the mark alone (a filled or a hollow triangle) still says ready or resting
++				lw = 0.0
++				w = chip_h * 0.9 + 12.0 * s
++			if cur + w > chip_limit:
++				break
++			var gauge_full: bool = ch[0] == "run" and m.run_n >= m.run_to   # four of four: the next blow opens him; a steady heavier edge (never a blink)
++			_chip(ci, rect, left, pad, cur, w, chip_y, chip_h, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(ch[2]), 3.6 if gauge_full else 1.6)
++			var icx: float = (x0 + cur + 8.0 * s + chip_h * 0.35) if left else (x1 - cur - 8.0 * s - chip_h * 0.35)
++			var icp := Vector2(icx, chip_y + chip_h * 0.5)
++			match ch[0]:
++				"weight":
++					var bolt_blow: bool = blow_on and (m.blow_kind == "bolt" or m.blow_kind == "blast")
++					var heavy_blow: bool = blow_on and (m.blow_kind == "heavy" or m.blow_kind == "release")
++					if (m.energy or bolt_blow) and not fallback and not (blow_on and not bolt_blow):
++						# The energy mark: a blast leaving a point (a dot and a short line). Plain shapes, no flame or crackle.
++						var er: float = chip_h * 0.16
++						var d: float = 1.0 if left else -1.0
++						ci.draw_circle(icp + Vector2(-d * er * 1.3, 0.0), er * (1.4 if m.weight == "heavy" else 1.0), _c(ch[2]))
++						ci.draw_line(icp + Vector2(-d * er * 0.2, 0.0), icp + Vector2(d * er * 1.9, 0.0), _c(ch[2]), maxf(2.0, er * 0.9), true)
++					else:
++						UiReads.weight_mark(ci, icp, chip_h * 0.62, (m.weight == "heavy" and not blow_on) or heavy_blow, _c(ch[2]), fallback)
++				"launcher":
++					var lr: float = chip_h * 0.3
++					var tri := PackedVector2Array([icp + Vector2(0.0, -lr), icp + Vector2(lr * 0.95, lr * 0.75), icp + Vector2(-lr * 0.95, lr * 0.75)])
++					if m.launcher_ready:
++						UiIcons.fill_poly(ci, tri, _c(ch[2]))
++					else:
++						var closed: PackedVector2Array = tri.duplicate()
++						closed.append(tri[0])
++						ci.draw_polyline(closed, _c(ch[2]), maxf(2.0, lr * 0.4), true)
++						if m.launcher_rest_left > 0.0:
++							# The rest: a ring round the hollow mark that fills as it passes. No number, one step a second (Game Design's eleventh round; docs/ui/launch-teaching.md).
++							# The rest's length is the director's (UiFighterModel.launcher_rest_total); full is the last second, and nothing flashes there.
++							var tot: float = maxf(m.launcher_rest_total, 1.0)
++							var rf: float = clampf(1.0 - m.launcher_rest_left / tot, 0.0, 1.0)
++							ci.draw_arc(icp, lr * 1.6, -PI * 0.5, -PI * 0.5 + TAU * float(int(rf * tot)) / tot, 28, _c(ch[2]), maxf(2.0, lr * 0.35), true)
++				"open":
++					# Two brackets facing in: a gap, "he is open".
++					var bw: float = chip_h * 0.3
++					var bh: float = chip_h * 0.34
++					for sgn in [-1.0, 1.0]:
++						var bxp: float = icp.x + sgn * bw
++						ci.draw_polyline(PackedVector2Array([Vector2(bxp - sgn * bw * 0.6, icp.y - bh), Vector2(bxp, icp.y - bh), Vector2(bxp, icp.y + bh), Vector2(bxp - sgn * bw * 0.6, icp.y + bh)]), _c(ch[2]), maxf(2.0, chip_h * 0.09), true)
++				"land":
++					# How a bolt landed, a shape: a solid dot (hit), a bar (guard), an arc (armour), a hollow dot (miss).
++					var lr2: float = chip_h * 0.2
++					match m.land_kind:
++						"hit":
++							ci.draw_circle(icp, lr2, _c(ch[2]))
++						"guard":
++							ci.draw_rect(Rect2(icp.x - lr2 * 1.3, icp.y - lr2 * 0.4, lr2 * 2.6, lr2 * 0.8), _c(ch[2]))
++						"armour":
++							ci.draw_arc(icp + Vector2(0.0, lr2 * 0.5), lr2 * 1.3, PI * 1.05, PI * 1.95, 12, _c(ch[2]), maxf(2.0, lr2 * 0.7), true)
++						_:
++							ci.draw_arc(icp, lr2, 0.0, TAU, 14, _c(ch[2]), maxf(1.6, lr2 * 0.45), true)
++				"run":
++					# The run: one pip for each unanswered blow, a caret after the last (the next blow closes).
++					var pw: float = chip_h * 0.26
++					var ph: float = chip_h * 0.5
++					var px0: float = (x0 + cur + 8.0 * s) if left else (x1 - cur - 8.0 * s - pw)
++					for pi in range(m.run_to):
++						var pxx: float = px0 + (float(pi) * pw * 1.6 if left else -float(pi) * pw * 1.6)
++						var pr := Rect2(pxx, icp.y - ph * 0.5, pw, ph)
++						if pi < m.run_n:
++							ci.draw_rect(pr, _c(ch[2]))
++						else:
++							ci.draw_rect(pr, _c(ch[2]), false, maxf(1.5, pw * 0.2))
++					var cxx: float = px0 + (float(m.run_to) * pw * 1.6 if left else -float(m.run_to) * pw * 1.6) + pw * 0.5
++					var caret := PackedVector2Array([Vector2(cxx - pw * 0.7, icp.y + ph * 0.5), Vector2(cxx, icp.y - ph * 0.5), Vector2(cxx + pw * 0.7, icp.y + ph * 0.5)])
++					if gauge_full:
++						UiIcons.fill_poly(ci, caret, _c(ch[2]))
+ 					else:
+-						ci.draw_rect(pr, _c(ch[2]), false, maxf(1.5, pw * 0.2))
+-				var cxx: float = px0 + (float(m.run_to) * pw * 1.6 if left else -float(m.run_to) * pw * 1.6) + pw * 0.5
+-				var caret := PackedVector2Array([Vector2(cxx - pw * 0.7, icp.y + ph * 0.5), Vector2(cxx, icp.y - ph * 0.5), Vector2(cxx + pw * 0.7, icp.y + ph * 0.5)])
+-				if gauge_full:
+-					UiIcons.fill_poly(ci, caret, _c(ch[2]))
+-				else:
+-					ci.draw_polyline(caret, _c(ch[2]), maxf(1.8, pw * 0.25), true)
+-			"hidden":
+-				UiIcons.eye_slash(ci, icp, chip_h * 0.75, _c(ch[2]))
+-			"lost":
+-				UiIcons.trail_lost(ci, icp, chip_h * 0.8, _c(ch[2]))
+-			"charging":
+-				UiIcons.caret_up(ci, icp + Vector2(0, chip_h * 0.12), chip_h * 0.5, _c(ch[2]))
+-			"chain":
+-				UiIcons.chevron(ci, icp, chip_h * 0.45, 1.0, maxf(2.0, chip_h * 0.11), _c(ch[2]))
+-		var ltx: float = (x0 + cur + 8.0 * s + chip_h * 0.75 + 4.0 * s) if left else (x1 - cur - 8.0 * s - chip_h * 0.75 - 4.0 * s)
+-		UiText.draw(ci, label, Vector2(ltx, _base(chip_y, chip_h, sfs)), sfs, ink, -1 if left else 1)
+-		cur += w + 6.0 * s
++						ci.draw_polyline(caret, _c(ch[2]), maxf(1.8, pw * 0.25), true)
++				"hidden":
++					UiIcons.eye_slash(ci, icp, chip_h * 0.75, _c(ch[2]))
++				"lost":
++					UiIcons.trail_lost(ci, icp, chip_h * 0.8, _c(ch[2]))
++				"charging":
++					UiIcons.caret_up(ci, icp + Vector2(0, chip_h * 0.12), chip_h * 0.5, _c(ch[2]))
++				"chain":
++					UiIcons.chevron(ci, icp, chip_h * 0.45, 1.0, maxf(2.0, chip_h * 0.11), _c(ch[2]))
++			var ltx: float = (x0 + cur + 8.0 * s + chip_h * 0.75 + 4.0 * s) if left else (x1 - cur - 8.0 * s - chip_h * 0.75 - 4.0 * s)
++			UiText.draw(ci, label, Vector2(ltx, _base(chip_y, chip_h, sfs)), sfs, ink, -1 if left else 1)
++			cur += w + 6.0 * s
+ 
+ 	# Row 3: tier pips (the next pip fills with momentum), the tier name, and SIGNATURE on the far side when ready.
+ 	ry = rect.position.y + float(pm["tier_y"])
+@@ -416,17 +419,19 @@
+ 	var bar_h: float = float(pm["bar_h"])
+ 	var shame_w: float = 0.0
+ 	var shame_max: int = int(m.profile.get("shame_max", 0))
+-	if shame_max > 0:
++	if shame_max > 0 and not minimal:
+ 		shame_w = float(shame_max) * (bar_h + 4.0 * s) + 6.0 * s
+ 	var bw2: float = maxf(inner_w - label_w - shame_w, 20.0)
+ 	ry = rect.position.y + float(pm["ego_y"])
+ 	rh = float(pm["ego_h"])
+-	UiText.draw(ci, ego_label, Vector2(x0 if left else x1, _base(ry, rh, efs)), efs, ink, -1 if left else 1, 1.5)
++	if not minimal:
++		UiText.draw(ci, ego_label, Vector2(x0 if left else x1, _base(ry, rh, efs)), efs, ink, -1 if left else 1, 1.5)
+ 	var bx: float = (x0 + label_w) if left else (x1 - label_w - bw2)
+ 	var by: float = ry + (rh - bar_h) * 0.5
+ 	var notch: float = float(m.profile.get("ego_notch", 0)) / 100.0
+-	_bar(ci, Rect2(bx, by, bw2, bar_h), m.ego / 100.0, _c(UiLook.ego_col(m.ego_name)), left, notch if notch > 0.0 else -1.0, s)
+-	if shame_max > 0:
++	if not minimal:
++		_bar(ci, Rect2(bx, by, bw2, bar_h), m.ego / 100.0, _c(UiLook.ego_col(m.ego_name)), left, notch if notch > 0.0 else -1.0, s)
++	if shame_max > 0 and not minimal:
+ 		var sq: float = bar_h
+ 		for i in range(shame_max):
+ 			var sxp: float = (bx + bw2 + 6.0 * s + float(i) * (sq + 4.0 * s)) if left else (bx - 6.0 * s - sq - float(i) * (sq + 4.0 * s))
+@@ -435,8 +440,8 @@
+ 			if i < m.shame:
+ 				ci.draw_rect(r.grow(-2.0), ink)
+ 			ci.draw_rect(r, _c(UiLook.alpha(UiLook.INK, 0.8)), false, 1.2)
+-	ry = rect.position.y + float(pm["charge_y"])
+-	rh = float(pm["charge_h"])
++	ry = rect.position.y + float(pm["ego_y" if minimal else "charge_y"])   # minimal: ki takes the ego meter's row
++	rh = float(pm["ego_h" if minimal else "charge_h"])
+ 	UiText.draw(ci, charge_label, Vector2(x0 if left else x1, _base(ry, rh, efs)), efs, ink, -1 if left else 1, 1.5)
+ 	by = ry + (rh - bar_h) * 0.5
+ 	var ccol: Color = UiLook.col(UiLook.CHARGE_READY) if sig_ready else UiLook.col(UiLook.CHARGE)
+diff -ruN a/ui/widgets/ui_split.gd b/ui/widgets/ui_split.gd
+--- a/ui/widgets/ui_split.gd	2026-10-18 23:00:20.765199300 -0700
++++ b/ui/widgets/ui_split.gd	2026-10-18 23:00:20.918920200 -0700
+@@ -210,7 +210,10 @@
+ 					out.append({"slot": i, "pos": flipped, "dir": Vector2(float(true_side), 0.0), "text": txt})
+ 				continue
+ 			var to_div: float = (c - p).dot(dirn)
+-			var pos: Vector2 = _dodge(_clamp_to(p + dirn * maxf(0.0, to_div - half - margin), lay, big), Vector2(-dirn.y, dirn.x), lay, anchors, big)
++			var at: Vector2 = p + dirn * maxf(0.0, to_div - half - margin)
++			if UiData.feature("minimal_hud"):
++				at.y = _edge_y(lay, big)   # minimal_hud: nothing between the fighters; the chip rides the bottom edge, above the strip's place, on its side of the divider
++			var pos: Vector2 = _dodge(_clamp_to(at, lay, big), Vector2(1.0, 0.0) if UiData.feature("minimal_hud") else Vector2(-dirn.y, dirn.x), lay, anchors, big)
+ 			if pos.x < -1e8:
+ 				continue   # no clear place along the edge: the chip hides rather than cover a fighter
+ 			out.append({"slot": i, "pos": pos, "dir": dirn, "text": txt})
+@@ -226,6 +229,8 @@
+ 			var rival: Dictionary = anchors[1 - i]
+ 			var rp: Vector2 = rival.get("pos", p)
+ 			var off: bool = rival.is_empty() or not bool(rival.get("visible", true)) or not Rect2(Vector2.ZERO, lay.vp).grow(-margin).has_point(rp)
++			if off and UiData.feature("minimal_hud") and not rival.is_empty() and rp != Vector2.ZERO and lay.safe.has_point(rp):
++				off = false   # minimal_hud: the rival pointer shows only while he is off the screen; he is on it (the anchor's flag can read false beside him)
+ 			if off:
+ 				var dx: float = float(rival_side(sp, i))
+ 				var pos1: Vector2 = _edge_chip(lay, p, dx, half, anchors, big)
+@@ -234,6 +239,13 @@
+ 	return out
+ 
+ 
++## The y of a chip that rides the bottom edge: just above the planet strip (or the safe area's foot where there is none).
++static func _edge_y(lay: UiLayout, big: bool = false) -> float:
++	var psz: Vector2 = pointer_size(lay.s, big)
++	var foot: float = lay.strip.position.y if lay.strip.size.y > 0.0 else lay.safe.end.y
++	return minf(lay.safe.end.y, foot) - psz.y * 0.5 - 6.0 * lay.s
++
++
+ ## A chip at the screen edge on side `dx` (+1 right, -1 left), level with the fighter at `p`; off-screen sentinel if no clear place.
+ static func _edge_chip(lay: UiLayout, p: Vector2, dx: float, half: float, anchors: Array, big: bool) -> Vector2:
+ 	var ex: float = lay.safe.end.x - half if dx > 0.0 else lay.safe.position.x + half
