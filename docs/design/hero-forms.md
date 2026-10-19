@@ -108,7 +108,7 @@ Orb: "he stays in his base form and allows the opponent to grow, when he finally
 | The transform | The form is picked at the step, and the fighter carries his branch (hashed) | Simulation |
 | `data/fighters/RIVAL/meters.json` | The +0.09 power a casualty moves here from `sim/world/collateral.gd`, where it is a constant, since numbers live in data. Its value doesn't change | Simulation |
 | The AI | The holds of §4b and §5 | Encounter |
-| The HUD | The two fills by his power bar, so it reads which way he leans; the form's name at a step | UI, with Narrative's words |
+| The HUD | Only the power bar on his plate, with the ready step at its end. **No branch fills** (Orb's minimal UI, `minimal-hud.md`): the branch shows when he takes it, in the form and in his line. The coil shows in the aura and a rising hum | UI, VFX, Audio, Narrative |
 | The looks | Four branch forms, two sets of marks and one top form; a boosted form's look by the coil's three sizes | Art, Animation, VFX |
 
 - **The heat track and Open Hand** (`moveset-rules.md` §10.4, `spec-wounds.md` §3) stay parked for their later update. Whether heat becomes Trial's road is for Orb, with Narrative.

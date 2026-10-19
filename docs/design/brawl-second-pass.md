@@ -1382,7 +1382,7 @@ Orb played the live demo (`docs/ep/vision.md`, last section): "in a lot of ways 
   1. **A gauge on the rival fills as his blows land:** four pips, one for each point of the run. It empties as the rival answers.
   2. **At four the gauge flashes, and the B on his HUD lights with the word "launch".** The next blow opens him.
   3. **He lands one more blow, then presses B,** or presses B as the gauge flashes: the early press is kept.
-  4. **The opening is unmistakable:** the rival's head snaps back and his arms fly open, a ring shows on his chest, the ping sounds, and the pad pulses.
+  4. **The opening is unmistakable:** the rival's head snaps back and his arms fly open, the ping sounds, and the pad pulses. (The ring on his chest and the gauge's pips are withdrawn by Orb's minimal UI, 2026-10-18, `minimal-hud.md`.)
   5. **The launch is followed by the camera** (Camera's fix from the same playtest).
 - **The window is wider.** A B counts as the launcher from 10 ticks before the close until 24 ticks after it. Inside the stagger it always lands, as now. After the stagger it is still the launcher, with its 14-tick wind-up, but he can answer it. A player who reacts late still launches if it connects.
 - **The launcher's readiness shows.** Beside the B, a lit mark means a launch is ready. A dim mark with a ring filling is the rest, and B in an opening is the hammer then.

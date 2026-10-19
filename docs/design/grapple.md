@@ -27,7 +27,7 @@ The clinch's rules are the clinch pitch's, with the pulse of every timed contest
 | :--- | :--- | :--- |
 | **Its length** | At most 90 ticks from the tie-up | 1.5 s: Orb wants fights fast |
 | **The pulse** | Shown and heard: a flex of the grip, a creak, a pad pulse. Both fighters work the same pulse | Every 20 ticks from the tie-up, so four pulses at most |
-| **The grip** | One meter between them, from two behind to two ahead, starting even (or one ahead for the catcher, §1). The UI draws it as five steps between the two | |
+| **The grip** | One meter between them, from two behind to two ahead, starting even (or one ahead for the catcher, §1). It is shown in the bodies, five stages of the grip, and never drawn between them (Orb's minimal UI, `minimal-hud.md`) | |
 | **A pummel** | A on the pulse moves the grip one step his way. If both pummel the same pulse, **the one nearer the pulse, by the tick, wins the step.** If both are the same number of ticks off, nothing moves (re-ruled 2026-10-17, §9) | Inside 4 ticks of the pulse. Sharp: inside 2 |
 | **A stray** | A off the pulse, or a second A in its window, moves nothing and voids his next pummel. So a masher does exactly as well as a fighter who doesn't press, as in every timed contest | |
 | **Vicious blows** | X, Y or B: a vicious blow on the region his stick leans to, as §4 ruled. Both fighters may throw them. A vicious blow is not a pummel, so a fighter works either the grip or the body | Half a brawl light of damage and three times a light's wear, on that region. Four a fighter a clinch at most, and never more than two in a row to the same place (Legal s08, by its own wording: re-ruled 2026-10-17 on Combat's reading). A region has two or three places, so a stick held on one wound keeps working it, the blows alternating places. A fighter one or two ahead wears half again as hard |
@@ -124,7 +124,7 @@ The clinch's rules are the clinch pitch's, with the pulse of every timed contest
   - Encounter: the catch, the clinch and the carry, the AI.
   - Combat: the throws by stick for each fighter, the vicious blows and the pieces.
   - Animation: the key sets in Combat's estimate (about 12 a fighter for the clinch, and the catch's throws).
-  - UI: the grip's five steps, the pulse and the refused cue.
+  - UI: nothing on or between the fighters (`minimal-hud.md`). Animation draws the grip's five stages; Audio and Controls carry the pulse and the refusal.
   - Audio: the creak on the pulse.
   - Controls: the brace's hold.
 

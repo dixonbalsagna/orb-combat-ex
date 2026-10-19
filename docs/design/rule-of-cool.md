@@ -66,7 +66,7 @@ Orb set spectacle at **4 of 10** and the top-tier finisher at **7 of 10**.
 - **The time runs out with the point within 10% of the middle:** the beams detonate where they meet. Both are thrown back, both take a quarter of the other's beam, and the ground there craters by the higher tier.
 - **The time runs out with the point further over:** the side it is on loses, with half the damage and no launch.
 
-**What a player sees and hears.** Each surge bulges the meeting point toward the rival and pushes his beam back. A stray flickers his own. The camera holds both fighters side-on and tightens as the point nears a side. The pulse is a beat the music and the pad follow. The sound rises as the point nears either fighter. This is VFX's, Camera's and Audio's to make look and sound like a fight.
+**What a player sees and hears** (re-ruled 2026-10-18 by Orb's minimal UI, `minimal-hud.md`): **no bar and no marker on the screen.** The meeting point is the gauge. Each surge bulges the meeting point toward the rival and pushes his beam back. A stray flickers his own. The camera holds both fighters side-on and tightens as the point nears a side. The pulse is a beat the music and the pad follow. The sound rises as the point nears either fighter. This is VFX's, Camera's and Audio's to make look and sound like a fight.
 
 **The AI** hits 40%, 65% and 85% of pulses by level, as in every clash, and never makes a sharp surge: it presses 3 or 4 ticks off the pulse. A player who keeps the beat usually overwhelms the medium AI before the time runs out from an even start, and still wins on time from a 15% deficit, with the comeback's help. Two players who keep the beat equally swing it back and forth, and the comeback keeps either from running away with it.
 

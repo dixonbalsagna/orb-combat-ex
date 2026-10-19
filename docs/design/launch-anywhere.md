@@ -130,8 +130,7 @@ So "X then B" thrown at a fighter who answers is punished. A string worked up to
 
 **UI's marks, re-purposed from the eleventh round:**
 - **The lit B** says LAUNCH whenever a B would launch. Its ring is solid when the launcher is sure, and broken when it can be answered.
-- **The pips** show the power, one to five.
-- **A rose of four arrows** sits by the B: a bright arrow is a fresh kind, and a dim one is familiar.
+- **No pips and no rose** (Orb's minimal UI, 2026-10-18, `minimal-hud.md`). A launch's power shows in the send itself, and the opening in his stagger, the ping and the pad.
 - **The rest's ring is retired.**
 - **The hint** is Orb's C, once, at the first sure launcher.
 
