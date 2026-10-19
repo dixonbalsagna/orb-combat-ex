@@ -1,0 +1,311 @@
+--- a/render/vfx/shaders/beam_core.gdshaderinc
++++ b/render/vfx/shaders/beam_core.gdshaderinc
+@@ -21,6 +21,10 @@
+ uniform float wob = 0.0;            // how much the width swells and thins along the beam (a share of the radius): the silhouette flows, the axis stays a straight line
+ uniform float fil = 0.5;            // the filaments: long thin streaks along the beam, in hue and saturation, within `lum_amp` in brightness
+ uniform float head_at_zero = 1.0;   // 1: UV.y is 0 at the head, as the cylinder is built
++uniform float pat = 0.0;            // the fighter's own beam pattern: 0 plain, 1 boil (rounded scallops along the edge, bubble rings inside), 2 facets (zigzag edge, crystal seams inside)
++uniform float pat_k = 0.0;          // the pattern's brightness inside the beam, a share of the alpha (kept at 3% or under: Legal fx03's step under a tenth)
++uniform float pat_a = 0.0;          // how deep the edge scallops or zigzags cut in, a share of the radius (shape, never a flicker)
++uniform float pat_scale = 90.0;     // units between two scallops or cells
+ 
+ float h21(vec2 p) {
+ 	p = fract(p * vec2(123.34, 456.21));
+@@ -35,6 +39,31 @@
+ 	return mix(mix(h21(i), h21(i + vec2(1.0, 0.0)), f.x), mix(h21(i + vec2(0.0, 1.0)), h21(i + vec2(1.0, 1.0)), f.x), f.y);
+ }
+ 
++// A 2D cellular distance: x the nearest feature point, y the second nearest, z a hash of the nearest cell.
++vec3 worley2(vec2 p) {
++	vec2 i = floor(p);
++	vec2 f = fract(p);
++	float d1 = 8.0;
++	float d2 = 8.0;
++	float id = 0.0;
++	for (int y = -1; y <= 1; y++) {
++		for (int x = -1; x <= 1; x++) {
++			vec2 g = vec2(float(x), float(y));
++			vec2 o = vec2(h21(i + g + seed), h21(i + g + seed + 17.0));
++			vec2 r = g + o - f;
++			float d = dot(r, r);
++			if (d < d1) {
++				d2 = d1;
++				d1 = d;
++				id = h21(i + g + seed * 1.3);
++			} else if (d < d2) {
++				d2 = d;
++			}
++		}
++	}
++	return vec3(sqrt(d1), sqrt(d2), id);
++}
++
+ void vertex() {
+ 	vec3 v = VERTEX;
+ 	if (wob > 0.0) {
+@@ -63,8 +92,31 @@
+ 	float nn = vn(vec2(travel * 0.02 + 7.0, lat * 2.3 + seed * 1.7));
+ 	float edge = pow(facing, soft) * mix(1.0, 0.35 + 1.3 * nn, turb * (1.0 - facing));
+ 	float shim = 1.0 + lum_amp * (0.6 * rip + (n1 - 0.5) + 0.8 * (f1 - 0.5));
++	// the fighter's own pattern: a silhouette cut into the edge (the boil's rounded scallops, the facets' straight zigzag) and a quiet texture inside (bubble rings, crystal seams); both travel slowly
++	// toward the head at a quarter of the flow, a point seeing about one a second or slower. The axis stays a straight line; nothing goes round it.
++	float pat_edge = 1.0;
++	float pat_tex = 1.0;
++	float pat_ring = 0.0;
++	float pat_cell = -1.0;
++	if (pat > 0.5) {
++		float rad = sqrt(max(1.0 - facing * facing, 0.0));
++		float ph = fract((from_tail - time * flow * 0.25) / max(pat_scale, 1.0) + seed * 0.17);
++		float shape = pat < 1.5 ? sqrt(max(1.0 - pow(2.0 * ph - 1.0, 2.0), 0.0)) : 1.0 - abs(2.0 * ph - 1.0);
++		float wmax = 1.0 - pat_a * (1.0 - shape);
++		pat_edge = 1.0 - smoothstep(wmax - (pat < 1.5 ? 0.10 : 0.03), wmax, rad);
++		vec3 wc = worley2(vec2((from_tail - time * flow * 0.25) / max(pat_scale, 1.0) * 1.3, rad * 1.6 + seed));
++		float feat = pat < 1.5 ? (1.0 - smoothstep(0.0, 0.1, abs(wc.x - 0.3))) - 0.25 : -(1.0 - smoothstep(0.015, 0.075, wc.y - wc.x)) * 1.3 + 0.15;
++		pat_tex = 1.0 + pat_k * feat;
++		pat_ring = pat < 1.5 ? (1.0 - smoothstep(0.0, 0.1, abs(wc.x - 0.3))) : 0.0;
++		pat_cell = pat < 1.5 ? -1.0 : wc.z;
++	}
+ 	float ends = smoothstep(0.0, cap, from_tail) * smoothstep(0.0, cap, len - from_tail);
+ 	float swell = 1.0 + heel * exp(-from_tail / 70.0);
++	// the pattern is told apart by HUE, not brightness: the two tints have the same luminance, so a ring of the boil takes the second tint and a facet of the crystal takes its own flat mix of the two,
++	// a mosaic of two close hues with no step in luminance at all (Legal fx03); the only brightness the pattern moves is `pat_k`, 6% at most
++	if (pat > 0.5) {
++		col = pat < 1.5 ? mix(col, tint_b.rgb, clamp(pat_ring * 0.9, 0.0, 1.0)) : mix(tint_a.rgb, tint_b.rgb, clamp(pat_cell * 0.9 + 0.05, 0.0, 1.0));
++	}
+ 	ALBEDO = col;
+-	ALPHA = clamp(tint_a.a * strength * edge * shim * ends * swell, 0.0, 1.0);
++	ALPHA = clamp(tint_a.a * strength * edge * shim * ends * swell * pat_edge * pat_tex, 0.0, 1.0);
+ }
+--- a/render/vfx/beam_look.gd
++++ b/render/vfx/beam_look.gd
+@@ -12,16 +12,16 @@
+ 
+ const DEFAULTS: Dictionary = {
+ 	"beam": {
+-		"default": {"width_k": 1.0, "hue_shift": 28.0, "hz": 1.0, "wavelength": 130.0, "flow": 70.0, "turb": 0.15, "heel": 0.5, "seed": 0.0, "wob_k": 1.0, "fil": 0.6, "soft_k": 1.0},
+-		"protagonist": {"width_k": 1.15, "hue_shift": 30.0, "hue_shift_tritan": -30.0, "hz": 1.1, "wavelength": 150.0, "flow": 80.0, "turb": 0.12, "heel": 0.7, "seed": 0.0, "wob_k": 0.9, "fil": 0.7, "soft_k": 0.9},
+-		"rival": {"width_k": 1.1, "hue_shift": 34.0, "hue_max": 320.0, "hz": 0.8, "wavelength": 80.0, "flow": 60.0, "turb": 0.05, "heel": 0.25, "seed": 2.1, "wob_k": 0.25, "fil": 0.9, "soft_k": 1.35},
++		"default": {"width_k": 1.0, "hue_shift": 28.0, "hz": 1.0, "wavelength": 130.0, "flow": 70.0, "turb": 0.15, "heel": 0.5, "seed": 0.0, "wob_k": 1.0, "fil": 0.6, "soft_k": 1.0, "pat": 0.0, "pat_k": 0.0, "pat_a": 0.0, "pat_scale": 90.0},
++		"protagonist": {"width_k": 1.15, "hue_shift": 30.0, "hue_shift_tritan": -30.0, "hz": 1.1, "wavelength": 150.0, "flow": 80.0, "turb": 0.12, "heel": 0.7, "seed": 0.0, "wob_k": 0.9, "fil": 0.7, "soft_k": 0.9, "pat": 1.0, "pat_k": 0.03, "pat_a": 0.18, "pat_scale": 95.0},
++		"rival": {"width_k": 1.1, "hue_shift": 34.0, "hue_max": 320.0, "hz": 0.8, "wavelength": 80.0, "flow": 60.0, "turb": 0.05, "heel": 0.25, "seed": 2.1, "wob_k": 0.25, "fil": 0.9, "soft_k": 1.35, "pat": 2.0, "pat_k": 0.03, "pat_a": 0.2, "pat_scale": 64.0},
+ 		"rival_short": {"width_k": 0.4, "hue_shift": 34.0, "hue_max": 320.0, "hz": 0.8, "wavelength": 80.0, "flow": 60.0, "turb": 0.0, "heel": 0.1, "seed": 2.1, "wob_k": 0.0, "fil": 0.0, "soft_k": 1.35},
+ 		"reference": {"width_k": 0.8, "hue_shift": 12.0, "hz": 0.5, "wavelength": 160.0, "flow": 40.0, "turb": 0.04, "heel": 0.1, "seed": 5.3, "wob_k": 0.2, "fil": 0.2, "soft_k": 1.0},
+ 	},
+ 	"layers": [
+-		{"k": 4.0, "px": 6.0, "alpha": 0.36, "soft": 2.0, "turb_k": 1.6, "lum_amp": 0.16, "sat": 2.2, "val": 0.7, "lighten": 0.0, "flow_k": 0.8, "wob": 0.22},
+-		{"k": 2.2, "px": 4.0, "alpha": 0.90, "soft": 1.4, "turb_k": 1.0, "lum_amp": 0.07, "sat": 2.0, "val": 0.88, "lighten": 0.0, "flow_k": 1.0, "wob": 0.12},
+-		{"k": 0.9, "px": 2.0, "alpha": 1.0, "soft": 0.9, "turb_k": 0.0, "lum_amp": 0.04, "sat": 0.85, "val": 1.0, "lighten": 0.1, "flow_k": 1.4, "wob": 0.05},
++		{"k": 4.0, "px": 6.0, "alpha": 0.36, "soft": 2.0, "turb_k": 1.6, "lum_amp": 0.16, "sat": 2.2, "val": 0.7, "lighten": 0.0, "flow_k": 0.8, "wob": 0.22, "pat_w": 0.0},
++		{"k": 2.2, "px": 4.0, "alpha": 0.90, "soft": 1.4, "turb_k": 1.0, "lum_amp": 0.07, "sat": 2.0, "val": 0.88, "lighten": 0.0, "flow_k": 1.0, "wob": 0.12, "pat_w": 1.0},
++		{"k": 0.9, "px": 2.0, "alpha": 1.0, "soft": 0.9, "turb_k": 0.0, "lum_amp": 0.04, "sat": 0.85, "val": 1.0, "lighten": 0.1, "flow_k": 1.4, "wob": 0.05, "pat_w": 0.6},
+ 	],
+ 	"calm": {"strength": 0.86, "rise_s": 0.3},
+ 	"cap": 40.0,
+@@ -186,3 +186,9 @@
+ 	m.set_shader_parameter("seed", float(fl["seed"]) + beam_id * 1.37)
+ 	m.set_shader_parameter("wob", float(ly["wob"]) * float(fl["wob_k"]))
+ 	m.set_shader_parameter("fil", float(fl["fil"]))
++	# the fighter's own pattern (the Protagonist's boil, the Anti-hero's facets): the sheath's soft glow has none; the calm form halves the texture and keeps the silhouette
++	var pw: float = float(ly.get("pat_w", 0.0))
++	m.set_shader_parameter("pat", float(fl["pat"]) if pw > 0.0 else 0.0)
++	m.set_shader_parameter("pat_k", float(fl["pat_k"]) * pw * (0.5 if calm else 1.0))
++	m.set_shader_parameter("pat_a", float(fl["pat_a"]) * pw)
++	m.set_shader_parameter("pat_scale", float(fl["pat_scale"]))
+--- a/data/vfx/energy.json
++++ b/data/vfx/energy.json
+@@ -27,7 +27,11 @@
+    "wob_k": 0.9,
+    "fil": 0.7,
+    "soft_k": 0.9,
+-   "hue_shift_tritan": -30
++   "hue_shift_tritan": -30,
++   "pat": 1,
++   "pat_k": 0.03,
++   "pat_a": 0.18,
++   "pat_scale": 95.0
+   },
+   "rival": {
+    "width_k": 1.1,
+@@ -41,7 +45,11 @@
+    "wob_k": 0.25,
+    "fil": 0.9,
+    "soft_k": 1.35,
+-   "hue_max": 320
++   "hue_max": 320,
++   "pat": 2,
++   "pat_k": 0.03,
++   "pat_a": 0.2,
++   "pat_scale": 64.0
+   },
+   "rival_short": {
+    "width_k": 0.4,
+@@ -83,7 +91,8 @@
+    "val": 0.7,
+    "lighten": 0.0,
+    "flow_k": 0.8,
+-   "wob": 0.22
++   "wob": 0.22,
++   "pat_w": 0.0
+   },
+   {
+    "k": 2.2,
+@@ -96,7 +105,8 @@
+    "val": 0.88,
+    "lighten": 0.0,
+    "flow_k": 1.0,
+-   "wob": 0.12
++   "wob": 0.12,
++   "pat_w": 1.0
+   },
+   {
+    "k": 0.9,
+@@ -109,7 +119,8 @@
+    "val": 1.0,
+    "lighten": 0.1,
+    "flow_k": 1.4,
+-   "wob": 0.05
++   "wob": 0.05,
++   "pat_w": 0.6
+   }
+  ],
+  "calm": {
+@@ -162,4 +173,4 @@
+    "what": "the beam's hue ripple, 2 Hz or slower at any point, under a tenth of luminance (fx03)"
+   }
+  }
+-}
+\ No newline at end of file
++}
+--- a/tools/schemas/vfx-energy.schema.json
++++ b/tools/schemas/vfx-energy.schema.json
+@@ -79,6 +79,28 @@
+               "type": "number",
+               "minimum": 0,
+               "maximum": 360
++            },
++            "pat": {
++              "enum": [
++                0,
++                1,
++                2
++              ]
++            },
++            "pat_k": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 0.03
++            },
++            "pat_a": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 0.5
++            },
++            "pat_scale": {
++              "type": "number",
++              "minimum": 30,
++              "maximum": 300
+             }
+           },
+           "additionalProperties": false,
+@@ -158,6 +180,11 @@
+             "type": "number",
+             "minimum": 0,
+             "maximum": 0.5
++          },
++          "pat_w": {
++            "type": "number",
++            "minimum": 0,
++            "maximum": 1
+           }
+         },
+         "additionalProperties": false
+@@ -222,4 +249,4 @@
+   "patternProperties": {
+     "^_": true
+   }
+-}
+\ No newline at end of file
++}
+--- a/render/vfx/tools/effects_check.gd
++++ b/render/vfx/tools/effects_check.gd
+@@ -206,6 +206,7 @@
+ 	_brawl()
+ 	_small_blasts()
+ 	_beam_look()
++	_beam_pattern()
+ 	_multi()
+ 	_ghosts()
+ 	_vision()
+@@ -4914,6 +4915,50 @@
+ 	_check(states[0] == states[1], "the same cue gives the same cloud (determinism)")
+ 
+ 
++## Each fighter's beam made unmistakable (docs/vfx/beam-look.md, "Distinct patterns"): the Protagonist's BOIL (rounded scallops along the edge, bubble rings of the second tint inside) and the Anti-hero's FACETS (a straight zigzag edge, a mosaic of two close hues), told apart by shape and by hue, never by a step in brightness (Legal fx03).
++func _beam_pattern() -> void:
++	print("the beams' own patterns")
++	var P := {"id": "PROTAGONIST"}
++	var R := {"id": "RIVAL"}
++	var X := {"id": "SOMEONE"}
++	var fp: Dictionary = VfxBeamLook.flavour(P)
++	var fr: Dictionary = VfxBeamLook.flavour(R)
++	var fs: Dictionary = VfxBeamLook.flavour(R, true)
++	var fx: Dictionary = VfxBeamLook.flavour(X)
++	_check(float(fp["pat"]) == 1.0 and float(fr["pat"]) == 2.0 and float(fs["pat"]) == 0.0 and float(fx["pat"]) == 0.0, "the Protagonist's beam is the boil (1), the Anti-hero's the facets (2); his thin needle and everyone else's stay plain (0)")
++	var small: bool = true
++	for k in ["protagonist", "rival", "rival_short", "reference", "default"]:
++		var fl: Dictionary = VfxBeamLook.flavour({"id": k.to_upper()}) if k != "default" else VfxBeamLook.flavour(X)
++		if float(fl["pat_k"]) > 0.03 + 1e-9 or float(fl["pat_a"]) > 0.5 or float(fl["pat_scale"]) < 30.0:
++			small = false
++	_check(small, "no pattern moves the brightness by more than 3% (the rest is shape and hue) or cuts the edge deeper than half the radius")
++	var lum_ok: bool = true
++	for j in range(3):
++		var ly: Dictionary = VfxBeamLook.layer(j)
++		var pw: float = float(ly.get("pat_w", 0.0))
++		if j > 0 and float(ly["lum_amp"]) + float(fp["pat_k"]) * pw > 0.10 + 1e-9:
++			lum_ok = false         # the body's and the core's shimmer and pattern together stay under a tenth (the sheath's glow has no pattern and is as it was)
++	_check(lum_ok and float(VfxBeamLook.layer(0).get("pat_w", 0.0)) == 0.0, "the shimmer and the pattern together move the body and the core by at most a tenth, and the sheath's glow has no pattern")
++	# What reaches the shader, by layer and by form.
++	var mats: Array = []
++	for j in range(3):
++		mats.append(VfxBeamLook.new_material(j))
++	var lane := Color("#9a80d8")
++	for j in range(3):
++		VfxBeamLook.set_layer(mats[j], R, lane, j, 1.0, false, 3.0, 2000.0, true, 0.0, false)
++	var calm_mat := VfxBeamLook.new_material(1)
++	VfxBeamLook.set_layer(calm_mat, R, lane, 1, 1.0, true, 3.0, 2000.0, true, 0.0, false)
++	var pm: ShaderMaterial = mats[1]
++	_check(float(mats[0].get_shader_parameter("pat")) == 0.0 and float(pm.get_shader_parameter("pat")) == 2.0 and float(mats[2].get_shader_parameter("pat")) == 2.0, "the sheath has no pattern; the body and the core carry the Anti-hero's")
++	_check(absf(float(calm_mat.get_shader_parameter("pat_k")) - 0.5 * float(pm.get_shader_parameter("pat_k"))) < 1e-9 and float(calm_mat.get_shader_parameter("pat_a")) == float(pm.get_shader_parameter("pat_a")), "the calm form halves the pattern's brightness and keeps its silhouette")
++	var mp := VfxBeamLook.new_material(1)
++	VfxBeamLook.set_layer(mp, P, Color("#8fd6ff"), 1, 1.0, false, 3.0, 2000.0, true, 0.0, false)
++	_check(float(mp.get_shader_parameter("pat")) == 1.0 and float(mp.get_shader_parameter("pat_scale")) != float(pm.get_shader_parameter("pat_scale")) and float(mp.get_shader_parameter("pat_a")) != float(pm.get_shader_parameter("pat_a")), "the two fighters' patterns differ in kind, scale and depth")
++	# The shader's text holds the rules: the pattern is hue-told, its brightness is `pat_k`, the ring and the cell are tinted from the two same-luminance tints.
++	var src: String = FileAccess.get_file_as_string("res://render/vfx/shaders/beam_core.gdshaderinc")
++	_check(src.contains("pat_ring") and src.contains("pat_cell") and src.contains("mix(tint_a.rgb, tint_b.rgb") and src.contains("pat_tex = 1.0 + pat_k * feat"), "the shader tells the pattern apart by the second tint and moves the brightness only by pat_k")
++
++
+ ## The catastrophe light class (docs/vfx/catastrophe-plan.md section 1; Legal c01 to c05): the gap, the floors, the calm form, the ash, one answer per event, no red, and a hammer of random asks.
+ func _cat_class() -> void:
+ 	print("the catastrophe light class")
+--- a/docs/vfx/beam-look.md
++++ b/docs/vfx/beam-look.md
+@@ -103,3 +103,19 @@
+ - **Art:** confirmed and corrected (docs/art/beam-colours.md): the Protagonist +30 (-30 under tritan), the Rival +34 capped at 320, the dummy +12.
+ - **Legal:** fx03 asks for the set drawn; this is it, with the flash clips above. The two new things to read are the beam's width and its start and end events (1.6 times the threshold in one clip), and the flames at a point-blank hit.
+ - **Orb:** the Protagonist's beam "from the heel of the palm" is a swell of the beam's firing end (0.7), not a drawn gather at the hand: the gather needs Animation's palm pose at the beam's origin.
++
++## Distinct patterns: each fighter's beam unmistakable (Orb, 2026-10-18)
++
++Orb: "I just want beams and energy attacks to have distinct, visually appealing, robust shader effects." The flavours above differed by knobs (wavelength, filaments, swell); they read as two beams of different colour. This adds a **pattern** to the Protagonist's and the Anti-hero's, the same inversion their auras have (`docs/vfx/aura3d.md`), told apart by **shape and hue, never by a step in brightness**:
++
++| | **Protagonist: the boil** (`pat` 1) | **Anti-hero: the facets** (`pat` 2) |
++| :--- | :--- | :--- |
++| Edge | rounded **scallops** along the whole beam (semicircular bulges with sharp troughs, 95 units apart, cutting in 18% of the radius): a billowing, bubbling outline | a straight **zigzag** (a crisp chevron every 64 units, cutting in 20%): a cut-crystal outline |
++| Inside | **bubble rings** in the second tint on the lane colour, in the same cells that travel slowly toward the head | a **mosaic** of flat cells, each a fixed mix of the two close hues (a stained-glass of azure-violet to orchid), seams a hair darker |
++| Everything else | unchanged: his colours, wavelength, heel swell, the hue ripple | unchanged |
++
++How it stays inside Legal's fx03: the pattern is on the body and the core only (the sheath's glow has none); its brightness moves the alpha by **3% at most** (`pat_k`; the shimmer is 7% on the body, so together under a tenth, checked), and the calm form (every beam under Reduce flashing, the default) halves even that and keeps the silhouette; the hue patterns are between **two tints of the same luminance**, so they add no brightness step at all; everything travels slowly toward the head at a quarter of the flow (a point sees about one scallop a second or slower); the axis stays a straight line and nothing goes round it, so it is still a plain straight beam. His thin needle (`rival_short`) and every other fighter stay plain. Numbers: `data/vfx/energy.json` (`pat`, `pat_k`, `pat_a`, `pat_scale` per flavour; `pat_w` per layer); checks: `effects_check.gd` `_beam_pattern`.
++
++**For Legal:** the scalloped and zigzag silhouettes are new shapes for a beam (a bubbling and a crystalline edge). Neither is a helix, a drill, a twin colour or a ball; both are the beam's own edge. They have not been screened.
++
++**Measured** (Tools' path, 1024 by 768, one capture at a time, both modes; primary / area-15% / memory): on the build with the deeper cut (30% and 34%): collapse normal 2 / 2.5 / 1 and reduced 2 / 2 / 0.5, clash reduced 2 / 2.5 / 2, signature reduced 1.5 / 1.5 / 1, signaturecity 2 / 2 / 2 and 2 / 2.5 / 1.5, signature normal 2 / 3 / 2 (as without it), **and clash normal 2 / 3.5 / 2: FAIL, against 2 / 3 / 1.5 without the pattern** (same-commit baseline). The windows are the same events within 1 to 2 thousand pixels (ticks 1147 to 1173), but the baseline already sat on the line at 3, so the extra pixels of the edge cut tipped it. **Built at 18% and 20%** (the final numbers), clash normal reads 2 / 3 / 2 and signature normal 2 / 3 / 2, **equal to the baseline**; the other clips were measured at the deeper cut and a shallower cut only moves fewer pixels, but they were not re-run. clash at 3 and signature at 3 are over the 2.5 gate on this commit **with or without** the pattern: they are not this work's.
