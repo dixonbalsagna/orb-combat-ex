@@ -178,6 +178,8 @@ var _parry_t: Array = [-1.0e9, -1.0e9]   # when each fighter last parried, for t
 var _stiff_w: float = 0.0               # 0..1: how far the slam's stiff filters have come in
 var wreck_dir: int = 0                   # the winner's shot: +1 wreckage on the right of him, -1 on the left, 0 none to speak of
 var wreck_score: float = 0.0             # the wreckage in view, summed (craters, ruined buildings, slide trenches)
+var merged_lead: bool = true             # the one view leads a pair moving together (docs/camera/feel.md step 4); false: the midpoint as before
+var _mlead: float = 0.0                    # the lead now, world units, signed (eased once a tick)
 var blow_push: bool = true               # a small push-in on each landed blow by its weight (docs/camera/feel.md); false: none
 var blows: int = 0                         # blow pushes started (for the sweep)
 var _bp_amp: float = 0.0
@@ -309,6 +311,7 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_shk = PackedFloat64Array([0.0, 0.0])
 	_aim = [null, null]
 	_hit_t = [-1.0, -1.0]
+	_mlead = 0.0
 	_bp_t = -1.0
 	_stg_on = [false, false]
 	_stg_rel = [0, 0]
@@ -390,6 +393,7 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 	_update_trigger(S)
 	_update_layout()
 	_update_pushes()
+	_update_merged_lead(S)
 	_update_cameras(S)
 	if cut:
 		_snap_cameras(S)
@@ -2254,6 +2258,15 @@ func _merged_target(S: SimState) -> Vector3:
 		gov_m = _scroll_gov(maxf(_vsm_m, _gov_armed()), z * pz)   # the picture's scale is the zoom times the pitch's: that is what the scenery crosses at
 	_gov_bind_m = gov_m < 0.999
 	z = clampf(z * mult * pz * _wide_mult() * gov_m, maxf(CamParams.ZOOM_MIN, maxf(CamParams.R_FLOOR * vh / CamParams.BODY_H, many_z) * pz), _zcap() * pz * (1.0 + CamParams.TIER_PUSH))
+	if _mlead != 0.0 and not fold_active and _lg_slot < 0 and not _lg_rel and _st_w <= 0.0:
+		# the lead, kept so that both fighters stay inside the middle MERGED_LEAD_KEEP of the width at this zoom
+		var half_k: float = 0.5 * CamParams.MERGED_LEAD_KEEP * vw / maxf(z, 0.001)
+		var da_l: float = SimWrap.sdx(mx, A.x)
+		var db_l: float = SimWrap.sdx(mx, B.x)
+		var lo_l: float = maxf(da_l, db_l) - half_k
+		var hi_l: float = minf(da_l, db_l) + half_k
+		if lo_l <= hi_l:
+			mx = SimWrap.wrap(mx + clampf(_mlead, lo_l, hi_l))
 	if _pitch_now != 0.0:
 		# Put the pair's chest midpoint at 0.7 of the height, as the straight-on camera does: a few Newton steps on cam_y.
 		var cwx: float = SimWrap.wrap(mx)
@@ -3879,3 +3892,22 @@ func _make_frame(S: SimState) -> SplitFrame:
 		f.swing = -1.0
 	f.cut = false
 	return f
+
+
+## The one view's lead (docs/camera/feel.md step 4): eased once a tick toward the pair's shared speed times MERGED_LEAD_T, capped at
+## MERGED_LEAD_X of the width at the merged zoom, faded in with the speed; none when they move apart, in a launch, a zip, the fold or
+## the struggle, or in reduced motion. _merged_target applies it, kept inside the frame.
+func _update_merged_lead(S: SimState) -> void:
+	var tgt: float = 0.0
+	if merged_lead and not reduced_motion and S.fighters.size() >= 2:
+		var A = S.fighters[0]
+		var B = S.fighters[1]
+		var same: bool = signf(A.vx) == signf(B.vx) and A.state != "launched" and B.state != "launched"
+		if same:
+			var vm: float = (A.vx + B.vx) * 0.5
+			var w: float = smoothstep(CamParams.MERGED_LEAD_V0, CamParams.MERGED_LEAD_V1, absf(vm))
+			var cap: float = CamParams.MERGED_LEAD_X * vw / maxf(_mz, 0.001)
+			tgt = clampf(vm * CamParams.MERGED_LEAD_T, -cap, cap) * w
+	_mlead += (tgt - _mlead) * (1.0 - exp(-DT / CamParams.MERGED_LEAD_TAU))
+	if absf(_mlead) < 0.5 and tgt == 0.0:
+		_mlead = 0.0

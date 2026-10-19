@@ -227,6 +227,15 @@ const LEAD_MAX_Y: float = 0.12         # ... and of the height
 # up over BLOW_UP, held for the hit-stop, back over BLOW_DOWN. After the filters, so it is crisp; a bigger one replaces a smaller one.
 const BLOW_PUSH: Dictionary = {"medium": 0.008, "heavy": 0.016, "guard_break": 0.016, "perfect_block": 0.010, "launch": 0.020}
 const BLOW_UP: float = 0.05
+# The one view leads a pair moving together (docs/camera/feel.md step 4): the focus sits ahead of them by their speed times
+# MERGED_LEAD_T, at most MERGED_LEAD_X of the width, faded in between MERGED_LEAD_V0 and MERGED_LEAD_V1 (units a second), eased
+# with MERGED_LEAD_TAU, and never so far that a fighter leaves the middle MERGED_LEAD_KEEP of the width.
+const MERGED_LEAD_T: float = 0.3
+const MERGED_LEAD_X: float = 0.12
+const MERGED_LEAD_V0: float = 300.0
+const MERGED_LEAD_V1: float = 1200.0
+const MERGED_LEAD_TAU: float = 0.35
+const MERGED_LEAD_KEEP: float = 0.80
 const BLOW_DOWN: float = 0.25
 const HIT_PUSH: float = 0.06           # zoom push on the first building hit; later links push less
 const HIT_PUSH_LATER: float = 0.03
