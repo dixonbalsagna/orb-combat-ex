@@ -1,0 +1,318 @@
+diff --git a/render/core/look.gd b/render/core/look.gd
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -133,9 +133,11 @@
+ ## changes value), and the least height over the horizon it takes it from, in half screens (at noon the sky's blue, not
+ ## the pale band at the horizon; a pane under the eye never takes the ground).
+ const GLASS_SKY: Vector2 = Vector2(0.4, 0.5)
+-## Each facade type's column of windows as a multiple of its look's (ribbon, punched, fins): a punched pane is 0.38 of
+-## its cell, a slit at downtown's 46 units.
+-const FACADE_PITCH: Vector3 = Vector3(1.0, 1.5, 1.0)
++## Each facade type's column of windows as a multiple of its look's (ribbon, punched, fins, balconied): a punched pane is
++## 0.38 of its cell, a slit at downtown's 46 units; a balconied cell holds a pair of panes.
++const FACADE_PITCH: Vector4 = Vector4(1.0, 1.5, 1.0, 2.0)
++## The balconied facade's pair: the gap between a pair's two panes, as a share of half the cell.
++const BALCONY_PAIR_GAP: float = 0.06
+ ## A tower of at least CITY_BASE_FLOORS floors has Art's lobby storey, and a shaft, slab or block of at least
+ ## CITY_CROWN_FLOORS Art's set-back crown: a mid-rise of four to six floors would be all base and crown.
+ const CITY_BASE_FLOORS: int = 5
+diff --git a/render/core/shapes.gd b/render/core/shapes.gd
+--- a/render/core/shapes.gd
++++ b/render/core/shapes.gd
+@@ -22,9 +22,9 @@
+ ## Art's city palettes and facade types (docs/art/city-facades.md): with it the downtown and mid-rise towers take a tint
+ ## and a facade each (city_look); without it they are drawn in their look as before.
+ const CITY_LOOKS: String = "res://data/art/city-looks.json"
+-const FACADES: Array = ["ribbon", "punched", "fins"]   # building.gdshader's facade index
+-const NO_FACADE: int = 3                                # ... the look's own windows (RenderLook.CITY_FACADES off)
+-const CITY_SLOTS: int = 12                              # building.gdshader's city arrays: Art's tints, at most
++const FACADES: Array = ["ribbon", "punched", "fins", "balconied"]   # building.gdshader's facade index
++const NO_FACADE: int = 4                                # ... the look's own windows (RenderLook.CITY_FACADES off)
++const CITY_SLOTS: int = 20                              # building.gdshader's city arrays: Art's tints, at most (city_code holds 31)
+ ## A part's flags.
+ const ROOF: int = 1     # a roof facet: its own colour, no windows, gone from a shell
+ const PLAIN: int = 2    # no windows
+@@ -223,6 +223,8 @@
+ 	var fa: Vector4 = fu["fac_a"][fi]
+ 	var fb: Vector4 = fu["fac_b"][fi]
+ 	out["win"] = [float(lk["win"][0]) * fa.x, fa.y, fa.z, fa.w]
++	if FACADES[fi] == "balconied":
++		out["win"] = [float(lk["win"][0]) * fa.x * 0.5, 0.5 - 0.5 * fa.z, 0.5 + 0.5 * fa.z, fa.w]   # the pair as two even panes: near enough for the pane grid
+ 	out["pane"] = [fb.x, fb.y, 1.0]
+ 	var bc: Dictionary = c.get("base_and_crown", {})
+ 	out["base"] = bc.has("base") and int(b.floors) >= RenderLook.CITY_BASE_FLOORS
+@@ -231,15 +233,15 @@
+ 	return out
+ 
+ 
+-## What building.gdshader reads of a building's city look (win_tex's fifth texel, a): 0 for none; else 1 plus its tint,
+-## plus 16 times its facade (NO_FACADE: the look's own windows), plus 64 with a lobby storey, plus 128 times the floor its
+-## crown starts at.
++## What building.gdshader reads of a building's city look (win_tex's fifth texel, a, a 32-bit float): 0 for none; else 1
++## plus its tint (up to 30), plus 32 times its facade (NO_FACADE: the look's own windows), plus 256 with a lobby storey,
++## plus 512 times the floor its crown starts at.
+ static func city_code(lk: Dictionary, floors: int) -> float:
+ 	if not lk.has("tint"):
+ 		return 0.0
+-	var code: int = 1 + int(lk["tint"]) + 16 * int(lk["facade"]) + (64 if bool(lk.get("base", false)) else 0)
++	var code: int = 1 + int(lk["tint"]) + 32 * int(lk["facade"]) + (256 if bool(lk.get("base", false)) else 0)
+ 	if lk.has("crown"):
+-		code += 128 * maxi(floors - int(lk["crown"][0]), 0)
++		code += 512 * maxi(floors - int(lk["crown"][0]), 0)
+ 	return float(code)
+ 
+ 
+@@ -260,13 +262,16 @@
+ ## spandrels, fins and lobby storey are given as multiples of the wall (the luminance Art set them at over the mid's):
+ ## Art's hues and ratios, at the values the towers have today. city_glass, city_hi: dark and bright glass (a: the lobby
+ ## storey's wall); city_trim: the cornice and lintel; city_k: a ribbon's spandrel, a punched one's, a fin, a fin's sun
+-## side. fac_a, fac_b, fac_c: each facade type's column (a multiple of the look's), its pane across the cell and up the
+-## floor, its spandrel's band up the floor and a fin's half width. city_base: the lobby storey in floors, its lintel.
++## side; city_k2: the balconied facade's spandrel and its slab line. fac_a, fac_b, fac_c: each facade type's column (a
++## multiple of the look's), its pane across the cell and up the floor, its spandrel's band up the floor and a fin's half
++## width (balconied: fac_a's y and z are the pair's gap and a pane's width as shares of half the cell, and fac_c.w is
++## the slab line's height up the floor, under every second floor). city_base: the lobby storey in floors, its lintel.
+ static func city_uniforms() -> Dictionary:
+ 	var glass: Array = []
+ 	var hi: Array = []
+ 	var trim: Array = []
+ 	var kk: Array = []
++	var kk2: Array = []
+ 	var c: Dictionary = city_data()
+ 	var tints: Array = city_tints()
+ 	var fac: Dictionary = c.get("facades", {})
+@@ -274,6 +279,9 @@
+ 	var rib: Dictionary = fac.get("ribbon", {})
+ 	var pun: Dictionary = fac.get("punched", {})
+ 	var fin: Dictionary = fac.get("fins", {})
++	var bal: Dictionary = fac.get("balconied", {})
++	var off_bal: float = float((bal.get("spandrel", {}) as Dictionary).get("lum_offset", 0.0))
++	var off_slab: float = float((bal.get("_slab", {}) as Dictionary).get("lum_offset", 0.0))
+ 	var off_rib: float = float((rib.get("spandrel", {}) as Dictionary).get("lum_offset", 0.0))
+ 	var off_pun: float = float((pun.get("spandrel", {}) as Dictionary).get("lum_offset", 0.0))
+ 	var off_fin: float = float((fin.get("fin", {}) as Dictionary).get("lum_offset", 0.0))
+@@ -285,6 +293,7 @@
+ 			hi.append(Color(0, 0, 0, 1))
+ 			trim.append(Color(0, 0, 0, 1))
+ 			kk.append(Vector4(1, 1, 1, 1))
++			kk2.append(Vector4(1, 1, 1, 1))
+ 			continue
+ 		var t: Dictionary = tints[i][1]
+ 		var lm: float = maxf(_lum(_c(t["wall"]["mid"])), 0.0001)
+@@ -294,28 +303,35 @@
+ 		hi.append(_scaled(_c(t["glass"]["bright"]), s))
+ 		trim.append(_scaled(_c(t["trim"]), s))
+ 		kk.append(Vector4((lm + off_rib) / lm, (lm + off_pun) / lm, (lm + off_fin) / lm, (lm + off_sun) / lm))
+-	var pw: Vector3 = RenderLook.FACADE_PITCH
++		kk2.append(Vector4((lm + off_bal) / lm, (lm + off_slab) / lm, 1.0, 1.0))
++	var pw: Vector4 = RenderLook.FACADE_PITCH
+ 	var rib_w: float = 1.0 - float(rib.get("pier_w", 0.05))
+ 	var rib_s: float = float((rib.get("spandrel", {}) as Dictionary).get("h", 0.45))
+ 	var pun_w: float = float(pun.get("pane_w", 0.38))
+ 	var pun_s: float = float((pun.get("spandrel", {}) as Dictionary).get("h", 0.3))
+ 	var fin_w: float = float(fin.get("pane_w", 0.78))
++	var bal_w: float = float(bal.get("pane_w", 0.34))
++	var bal_s: float = float((bal.get("spandrel", {}) as Dictionary).get("h", 0.25))
++	var bal_slab: float = float((bal.get("_slab", {}) as Dictionary).get("h", 0.12))
+ 	var fa: Array = [
+ 		Vector4(pw.x, 0.5 - 0.5 * rib_w, 0.5 + 0.5 * rib_w, 1.0),
+ 		Vector4(pw.y, 0.5 - 0.5 * pun_w, 0.5 + 0.5 * pun_w, 1.0),
+ 		Vector4(pw.z, 0.5 - 0.5 * fin_w, 0.5 + 0.5 * fin_w, 1.0),
++		Vector4(pw.w, RenderLook.BALCONY_PAIR_GAP, 2.0 * bal_w, 1.0),
+ 	]
+ 	var fb: Array = [
+ 		Vector4(rib_s, minf(rib_s + float(rib.get("pane_h", 0.55)), 1.0), 1.0, 16.0),
+ 		Vector4(pun_s, minf(pun_s + float(pun.get("pane_h", 0.5)), 1.0), 1.0, 16.0),
+ 		Vector4(0.0, 1.0, 1.0, 16.0),
++		Vector4(bal_s, minf(bal_s + float(bal.get("pane_h", 0.5)), 1.0), 1.0, 16.0),
+ 	]
+ 	var fc: Array = [
+ 		Vector4(0.0, rib_s, 0.0, 0.0),
+ 		Vector4(0.0, pun_s, 0.0, 0.0),
+ 		Vector4(0.0, 0.0, 0.5 * float((fin.get("fin", {}) as Dictionary).get("w", 0.14)), 0.0),
++		Vector4(0.0, bal_s, 0.0, bal_slab),
+ 	]
+-	return {"city_glass": glass, "city_hi": hi, "city_trim": trim, "city_k": kk, "fac_a": fa, "fac_b": fb, "fac_c": fc,
++	return {"city_glass": glass, "city_hi": hi, "city_trim": trim, "city_k": kk, "city_k2": kk2, "fac_a": fa, "fac_b": fb, "fac_c": fc,
+ 		"city_base": Vector4(float((bc.get("base", {}) as Dictionary).get("floors", 1.6)), RenderLook.CITY_LINTEL, RenderLook.CITY_CORNICE, float(RenderLook.CITY_BASE_ROWS)),
+ 		"city_base_pane": RenderLook.CITY_BASE_PANE}
+ 
+diff --git a/render/shaders/building.gdshader b/render/shaders/building.gdshader
+--- a/render/shaders/building.gdshader
++++ b/render/shaders/building.gdshader
+@@ -53,7 +53,8 @@
+ //    and facade types, docs/art/city-facades.md). A downtown or mid-rise tower carries its city look in v_look.w
+ //    (RenderShapes.city_code): one of Art's tints (its wall tones are the instance's colours; its glass, bright glass
+ //    and trim are city_glass, city_hi and city_trim), one of Art's facade types (ribbon: wide panes over a spandrel band;
+-//    punched: separate panes over a darker band; fins: tall glass between fins, one side lit), Art's lobby storey
++//    punched: separate panes over a darker band; fins: tall glass between fins, one side lit; balconied: panes in pairs, a
++//    slab line under every second floor and a spandrel band under the panes on the floors between), Art's lobby storey
+ //    (city_base.x floors with city_base.w rows of punched panes in a darker wall, a lintel over it, plain wall to the
+ //    second floor's top)
+ //    and the floor its crown starts at (its panes all bright glass, a cornice line at the top of each floor; the setback
+@@ -128,13 +129,14 @@
+ uniform vec4 look_trim[10] : source_color;   // doors, shutters, panels
+ uniform float pattern_budget = 0.085;   // RenderLook.PATTERN_BUDGET: on a look with flag 16, the most a pane and its wall differ in relative luminance
+ uniform vec2 glass_sky = vec2(0.4, 0.5);   // RenderLook.GLASS_SKY: how far a tower's glass takes the sky's hue, and the least height over the horizon it takes it from (7c)
+-uniform vec4 city_glass[12] : source_color;   // RenderShapes.city_uniforms (7c): each of Art's tints' dark glass; a: its lobby storey's wall against the wall
+-uniform vec4 city_hi[12] : source_color;      // ... its bright glass
+-uniform vec4 city_trim[12] : source_color;    // ... its cornice and lintel
+-uniform vec4 city_k[12];                      // ... the wall in a ribbon's spandrel, a punched one's, a fin and a fin's sun side, as multiples of it
+-uniform vec4 fac_a[3];                        // each facade type (ribbon, punched, fins): its column as a multiple of the look's, the pane across its cell (from, to), the share of cells with one
+-uniform vec4 fac_b[3];                        // ... the pane up the floor (from, to), strips a floor, flags
+-uniform vec4 fac_c[3];                        // ... its spandrel's band up the floor (from, to), a fin's half width
++uniform vec4 city_glass[20] : source_color;   // RenderShapes.city_uniforms (7c): each of Art's tints' dark glass; a: its lobby storey's wall against the wall
++uniform vec4 city_hi[20] : source_color;      // ... its bright glass
++uniform vec4 city_trim[20] : source_color;    // ... its cornice and lintel
++uniform vec4 city_k2[20];                     // ... the balconied facade's spandrel and slab line, as multiples of the wall
++uniform vec4 city_k[20];                      // ... the wall in a ribbon's spandrel, a punched one's, a fin and a fin's sun side, as multiples of it
++uniform vec4 fac_a[4];                        // each facade type (ribbon, punched, fins, balconied): its column as a multiple of the look's, the pane across its cell (from, to), the share of cells with one
++uniform vec4 fac_b[4];                        // ... the pane up the floor (from, to), strips a floor, flags
++uniform vec4 fac_c[4];                        // ... its spandrel's band up the floor (from, to), a fin's half width
+ uniform vec4 city_base = vec4(1.6, 0.1, 0.08, 2.0);   // Art's lobby storey in floors, the lintel over it (RenderLook.CITY_LINTEL), the crown's cornice line (RenderLook.CITY_CORNICE), the storey's rows of panes (RenderLook.CITY_BASE_ROWS)
+ uniform vec2 city_base_pane = vec2(0.12, 0.88);  // RenderLook.CITY_BASE_PANE: the lobby storey's panes up the storey
+ uniform float dmg_holes = 0.18;      // RenderLook.DMG_HOLES: at stage 2, the share of a facade's bays broken open
+@@ -487,15 +489,16 @@
+ 		vec4 lb = look_b[lk];
+ 		float fy = (v_wy - v_winb.x) / v_win.w;
+ 		float fr = fy * v_look.y;                 // rows of windows: a tall floor carries several
+-		// 7c: a tower in one of Art's tints wears one of Art's facade types (3: the look's own windows); its lobby storey
++		// 7c: a tower in one of Art's tints wears one of Art's facade types (4: the look's own windows); its lobby storey
+ 		// has city_base.w rows of punched panes (under the lintel, none), its crown starts at crown_f.
+ 		int city = int(v_look.w + 0.5);
+-		int tint = (city & 15) - 1;
+-		int fac = (city >> 4) & 3;
+-		float crown_f = tint >= 0 ? float(city >> 7) : 0.0;
+-		bool in_base = tint >= 0 && (city & 64) != 0 && fy < 2.0;
++		int tint = (city & 31) - 1;
++		int fac = (city >> 5) & 7;
++		float crown_f = tint >= 0 ? float(city >> 9) : 0.0;
++		bool in_base = tint >= 0 && (city & 256) != 0 && fy < 2.0;
++		bool balc = tint >= 0 && fac == 3 && !in_base;   // balconied: panes in pairs, a slab line, a spandrel band
+ 		vec4 fc = vec4(0.0);
+-		if (tint >= 0 && fac < 3) {
++		if (tint >= 0 && fac < 4) {
+ 			la = vec4(la.x * fac_a[fac].x, fac_a[fac].yzw);
+ 			lb = fac_b[fac];
+ 			fc = fac_c[fac];
+@@ -607,6 +610,11 @@
+ 			float ry = lb.z > 1.5 ? fract(r.y * 2.0) : r.y;   // two strips a row
+ 			bool has = win_hash(vec3(v_winb.z, floor(cx), row + 57.0)) < la.w && (!top_only || row >= v_winb.y * v_look.y - 1.5);
+ 			bool across = r.x > la.y && r.x < la.z;
++			if (balc) {
++				// Each pane in its half of the cell, toward the middle: la.y the pair's gap, la.z a pane's width (halves).
++				float hx = fract(r.x * 2.0);
++				across = r.x < 0.5 ? (hx > 1.0 - la.y - la.z && hx < 1.0 - la.y) : (hx > la.y && hx < la.y + la.z);
++			}
+ 			bool tall = ry > lb.x && ry < lb.y;
+ 			vec3 glass = tint >= 0 ? city_glass[tint].rgb : look_glass[lk].rgb;
+ 			vec3 bright = tint >= 0 ? city_hi[tint].rgb : look_hi[lk].rgb;
+@@ -615,18 +623,24 @@
+ 				glass = bright;   // Art's crown: its panes are the bright glass
+ 			}
+ 			vec3 wall_far = col;   // the wall between the panes as a whole, for a wall too far to draw them
+-			if (tint >= 0 && fac < 3) {
+-				// 7c (C): this pixel's wall, a spandrel, a fin, the lobby storey, its lintel or the crown's cornice line,
+-				// each held to the wall by the budget.
++			if (tint >= 0 && fac < 4) {
++				// 7c (C): this pixel's wall, a spandrel, a fin, a balcony's slab line, the lobby storey, its lintel or the
++				// crown's cornice line, each held to the wall by the budget.
+ 				vec4 kk = city_k[tint];
++				vec4 kk2 = city_k2[tint];
+ 				vec3 trimc = toward(wallc, city_trim[tint].rgb, pattern_budget);
+-				vec3 spand = toward(wallc, wallc * (fac == 0 ? kk.x : kk.y), pattern_budget);
++				vec3 spand = toward(wallc, wallc * (fac == 0 ? kk.x : (fac == 3 ? kk2.x : kk.y)), pattern_budget);
++				vec3 slab = toward(wallc, wallc * kk2.y, pattern_budget);
++				bool slab_floor = mod(kf, 2.0) < 0.5;   // a balcony's slab under every second floor; its spandrel band on the others
+ 				vec3 fin_d = toward(wallc, wallc * kk.z, pattern_budget);
+ 				vec3 fin_l = toward(wallc, wallc * kk.w, pattern_budget);
+ 				float band = fc.y - fc.x;
+ 				float finw = 2.0 * fc.z;
+ 				vec3 fw = wallc;
+ 				vec3 favg = wallc * (1.0 - band - finw) + spand * band + fc.z * (fin_l + fin_d);
++				if (balc) {
++					favg = wallc * (1.0 - 0.5 * band - 0.5 * fc.w) + spand * 0.5 * band + slab * 0.5 * fc.w;
++				}
+ 				if (in_base) {
+ 					vec3 bw = toward(wallc, wallc * city_glass[tint].a, pattern_budget);
+ 					bool lintel = fy >= city_base.x && fy < city_base.x + city_base.y;
+@@ -637,6 +651,12 @@
+ 						fw = fin_l;
+ 					} else if (r.x > 1.0 - fc.z) {
+ 						fw = fin_d;
++					} else if (balc) {
++						if (slab_floor && ry >= 1.0 - fc.w) {
++							fw = slab;
++						} else if (!slab_floor && ry >= fc.x && ry < fc.y) {
++							fw = spand;
++						}
+ 					} else if (ry >= fc.x && ry < fc.y) {
+ 						fw = spand;
+ 					}
+@@ -661,7 +681,7 @@
+ 				bright = toward(wallc, bright, pattern_budget);
+ 			}
+ 			// Too far to draw panes, the wall is the average of wall and glass (the dark inside where they are out).
+-			float cover = top_only ? 0.0 : (la.z - la.y) * (lb.y - lb.x) * la.w;
++			float cover = top_only ? 0.0 : (balc ? la.z : la.z - la.y) * (lb.y - lb.x) * la.w;
+ 			float lit_sh = min(look_glass[lk].a * wl_lit, 1.0);   // the panes lit warm: more with the dark
+ 			vec3 avg = flat_shade(mix(mix(glass, bright, 0.1), win_lit.rgb, lit_sh), NORMAL, 0.35);
+ 			vec3 far = mix(wall_far, gone ? inside.rgb : avg, max(cover, 0.0));
+diff --git a/render/tools/city_check.gd b/render/tools/city_check.gd
+--- a/render/tools/city_check.gd
++++ b/render/tools/city_check.gd
+@@ -50,6 +50,7 @@
+ 		var name: String = "%s %s" % [tints[i][0], t.get("id", "")]
+ 		var w: float = _lum(RenderLook.col(str(t["wall"]["shadow"])))
+ 		var k: Vector4 = u["city_k"][i]
++		var k2: Vector4 = u["city_k2"][i]
+ 		var g: float = _held(w, _lum(u["city_glass"][i]))
+ 		var gb: float = _held(w, _lum(u["city_hi"][i]))
+ 		var tr: float = _held(w, _lum(u["city_trim"][i]))
+@@ -58,6 +59,7 @@
+ 			"ribbon spandrel": _held(w, w * k.x), "punched spandrel": _held(w, w * k.y),
+ 			"fin": _held(w, w * k.z), "fin's sun side": _held(w, w * k.w),
+ 			"lobby wall": _held(w, w * float((u["city_glass"][i] as Color).a)),
++			"balcony spandrel": _held(w, w * k2.x), "balcony slab": _held(w, w * k2.y),
+ 		}
+ 		# What stands beside what on each (building.gdshader 7c): a pane beside the wall and the band under it, a fin
+ 		# beside its other side, the wall and the glass; the lobby storey's wall beside its panes and the lintel, the
+@@ -65,6 +67,7 @@
+ 		var pairs: Dictionary = {
+ 			"ribbon": [["glass", "wall"], ["bright glass", "wall"], ["glass", "ribbon spandrel"], ["bright glass", "ribbon spandrel"], ["ribbon spandrel", "wall"]],
+ 			"punched": [["glass", "wall"], ["bright glass", "wall"], ["glass", "punched spandrel"], ["bright glass", "punched spandrel"], ["punched spandrel", "wall"]],
++			"balconied": [["glass", "wall"], ["bright glass", "wall"], ["glass", "balcony spandrel"], ["bright glass", "balcony spandrel"], ["balcony spandrel", "wall"], ["balcony slab", "wall"]],
+ 			"fins": [["glass", "wall"], ["bright glass", "wall"], ["glass", "fin"], ["glass", "fin's sun side"], ["bright glass", "fin"], ["bright glass", "fin's sun side"], ["fin", "fin's sun side"], ["fin", "wall"], ["fin's sun side", "wall"]],
+ 			"base": [["lobby wall", "glass"], ["lobby wall", "bright glass"], ["lobby wall", "cornice"], ["cornice", "wall"]],
+ 			"crown": [["bright glass", "wall"], ["cornice", "wall"], ["cornice", "bright glass"]],
+diff --git a/docs/rendering/city-variety.md b/docs/rendering/city-variety.md
+--- a/docs/rendering/city-variety.md
++++ b/docs/rendering/city-variety.md
+@@ -11,11 +11,13 @@
+ 
+ ## What a tower wears
+ 
++**The arrays (2026-10-19).** building.gdshader holds 20 tints (`RenderShapes.CITY_SLOTS`) and four facade types. A building's city code packs its tint (1 plus the tint, up to 31), 32 times its facade (4: the look's own windows), 256 for a lobby storey and 512 times the floor its crown starts at, in a 32-bit float texel. `city_check` covers the balconied facade's neighbours (its widest step 0.026 of relative luminance on Art's data of 2026-10-18; the budget 0.085). Before and after, both switches on in a scratch build: `img/city/tints20-before-after.png` (uncommitted).
++
+ | Step | What | Where |
+ | --- | --- | --- |
+ | A | **Glass that takes the sky.** A tower's glass moves 40% toward the sky's colour in its direction, at the glass's own luminance, so no pane changes value. It goes blue at noon and warm under a sunset. A pane below the eye takes the sky half a screen over the horizon (the blue, not the pale band, and never the ground). | `building.gdshader` 7c; `RenderLook.GLASS_SKY` |
+-| B | **One of Art's six tints of its look**, picked by the district's weights: the wall's three tones, its glass, bright glass and trim. | `RenderShapes.city_look`, `city_uniforms` |
+-| C | **One of Art's facade types**, picked by the district's weights. Ribbon: wide panes in the upper 55% of a floor over a spandrel band. Punched: separate panes, 0.38 of a cell wide, over a darker band. Fins: tall glass between fins, one side of each fin lit. | `building.gdshader` 7c; `fac_a`, `fac_b`, `fac_c` |
++| B | **One of Art's ten tints of its look** (six until 2026-10-19), picked by the district's weights: the wall's three tones, its glass, bright glass and trim. | `RenderShapes.city_look`, `city_uniforms` |
++| C | **One of Art's facade types**, picked by the district's weights. Ribbon: wide panes in the upper 55% of a floor over a spandrel band. Punched: separate panes, 0.38 of a cell wide, over a darker band. Fins: tall glass between fins, one side of each fin lit. Balconied (2026-10-19): panes in pairs, each 0.34 of the cell, a pair's two panes 0.06 of half a cell apart; a slab line, 0.12 of a floor, under every second floor, and a spandrel band, 0.25 of a floor, under the panes on the floors between. | `building.gdshader` 7c; `fac_a`, `fac_b`, `fac_c`, `city_k2` |
+ | Base | **Art's lobby storey** on a tower of 5 floors or more: 1.6 floors of punched panes in a darker wall, a lintel in the trim tone, then plain wall up to the second floor's top. | `RenderLook.CITY_BASE_*`, `CITY_LINTEL` |
+ | Crown | **Art's set-back crown** on a shaft, slab or block of 9 floors or more. The top two floors are set back 6% each side: the core is the body and stands the full height, and the shaft around it stops under the crown, as a stepped tower's skirts do. The crown's panes are all bright glass, with a cornice line in the trim tone at the top of each floor. | `RenderShapes.parts`; `RenderLook.CITY_CORNICE` |
+ | Stubs | **The crown tower's four corner points become stubs** (Legal RL-127, Art's shape): square prisms with no taper, 0.12 of the tower's width and 0.9 of a floor tall (never taller than wide), in the tower's mid tone lifted by 0.05 of luminance. Seen from the front they read as a battlement. The gem between them stays, as the tower's crown. | `RenderShapes.CROWN_STUB_*` |
+diff --git a/docs/rendering/README.md b/docs/rendering/README.md
+--- a/docs/rendering/README.md
++++ b/docs/rendering/README.md
+@@ -268,7 +268,7 @@
+ The depth aids of the fight-lanes plan (`fight-lanes-render.md` section 4), besides the ground shadow. Both are drawn by the ground shader (`ground.gdshaderinc`), so neither costs a draw call, and both follow craters and slopes.
+ 
+ - **The lane table** is the sim's: `S.lanes`, a flat packed array (`docs/world/fight-lanes-world.md` section 10), read through `render/core/lanes.gd`. The stand-in built from the plan's numbers is gone since World's lanes window (2026-10-11); a world with no table paints no streets. The re-laid city's look (shapes, district looks, row haze, avenues and paved lots) is in `lanes-look.md`.
+-- **City variety** (2026-10-16, Orb's homework 4; `city-variety.md`). Art's tints, facade types, lobby storey and set-back crown on the downtown and mid-rise towers, and glass that takes the sky. Two switches, both off: `RenderLook.CITY_TINTS` (the sky glass and the tints; in full effects they made signaturecity and rushcity worse, 2026-10-17) and `CITY_FACADES` (the facade types, the lobby storey and the crown). `city_check.gd` holds every pair of neighbouring tones to the budget (Legal's w05, RL-144).
++- **City variety** (2026-10-16, Orb's homework 4; `city-variety.md`; 20 tints and a fourth facade, balconied, since 2026-10-19). Art's tints, facade types, lobby storey and set-back crown on the downtown and mid-rise towers, and glass that takes the sky. Two switches, both off: `RenderLook.CITY_TINTS` (the sky glass and the tints; in full effects they made signaturecity and rushcity worse, 2026-10-17) and `CITY_FACADES` (the facade types, the lobby storey and the crown). `city_check.gd` holds every pair of neighbouring tones to the budget (Legal's w05, RL-144).
+ - **What the picture does not need** (2026-10-17, Performance's audit; `geometry-and-warmup.md`). The crowd is drawn in chunks the camera culls. A water chunk no water can reach is hidden. Every effect's shader is drawn once at boot, off-screen, so no first draw lands in a fight.
+ - **Painted streets.** In a district the ground under the street lanes is painted by strip: sidewalks with slab joints, kerb parking with bay marks, and carriageways with a dashed centre line (`STREET_*`). The paint fades in over 120 units at a district's ends, lies under craters, rubble, cracks and scorch, and its thin lines fade out before they alias at far zoom. The district weight is found in the vertex stage (up to 16 districts); a pixel walks at most 16 strips (three streets of five), and on a sidewalk or a kerb the avenues, to open a crossing. `--nostreets` leaves the ground unpainted, for A/B. Avenues (the cross streets), crossings and the districts' own looks are in `lanes-look.md`.
+ - **The lane cue.** A soft stripe on the ground, or on the water, at a fighter's depth, in his colour, 450 units each way along the street (`LANE_CUE_*`). It shows only while it says something: the two fighters are more than 40 units apart in depth, or his own depth is changing faster than 60 units a second. It comes up in 0.15 s and goes in 0.6 s, on tick time. It is never thinner than about a pixel. In today's sim that means during brunt launches only.
