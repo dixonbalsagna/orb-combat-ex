@@ -30,7 +30,8 @@ extends Node3D
 ## (_match_setup). --nointro starts from the intro's end state, and on the web /play/?nointro=1 does. SimHost passes
 ## intents on pre-clock ticks; any press skips it.
 ##
-## Command-line options (after "--"): --seed=N, --human (take P1 at start), --legacy-hud, --frames=N (quit after N frames),
+## Command-line options (after "--"): --seed=N, --human (take P1 at start), --legacy-hud, --keyhelp (the greybox
+## prompt, key help and seed line; on the web ?keyhelp=1), --frames=N (quit after N frames),
 ## --shot=path.png (save the last frame), --bench (vsync off; print frame-time stats at quit, also split by whether two
 ## full panes were drawn; VFX at a fixed quality), --novsync, --nosplit, --novfx (VFX off, for A/B runs),
 ## UI's How to play card opens at the first run and with F1 (the HUD handles the key) or from the pause menu (P, then
@@ -214,6 +215,7 @@ func _ready() -> void:
 		take_over()
 	if args.has("legacy-hud"):
 		set_legacy_hud(true)
+	hud.key_help = args.has("keyhelp")   # the greybox prompt and key help: off by Orb's minimal rule (2026-10-19)
 	if not manual:
 		split_view = SplitView.new()
 		add_child(split_view)
@@ -1198,9 +1200,9 @@ func _notification(what: int) -> void:
 const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off", "charges_off_p2"]
 ## The options a web page's URL may set (parse_args): off unless the URL names them. Those in LOCAL_ONLY_ARGS start
 ## without UI's notice, change how a match starts or hold a debug value, and are dropped unless the page is on a local
-## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze.
+## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze, keyhelp.
 const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]
-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood"]
+const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp"]
 
 
 ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of

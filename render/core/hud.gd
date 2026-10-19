@@ -3,7 +3,8 @@ extends Control
 ## The greybox 2D overlay (prototype drawHUD and the text parts of drawFighter and drawParts): fighter panels (HP,
 ## ki, power, tier, stance, menace or anguish), world counters, the chain counter, the banner, fighter labels, damage
 ## numbers, the director's feed and the planet strip, shown only when `legacy` is on (F2) now that UI's HUD is hosted;
-## and always the take-over prompt, the seed and tick and the F3 performance readout. (The pause menu is UI's now.)
+## the take-over prompt, its key help and the seed and tick only with `key_help` (--keyhelp; off by Orb's minimal rule,
+## 2026-10-19); and the F3 performance readout. (The pause menu is UI's now.)
 ## Reads the sim and the fx consumer only; world positions go to the screen through the 3D camera.
 
 const FEED_LINES := 8
@@ -18,6 +19,7 @@ const SYSTEM_KEYS: Array = [
 var main: Node       # the Main node (render/core/main.gd)
 var show_perf: bool = false
 var legacy: bool = false   # the full greybox HUD (F2), instead of UI's
+var key_help: bool = false   # the demo's prompt, its key help and the seed and tick line (main's --keyhelp)
 var font: Font
 
 
@@ -34,6 +36,8 @@ func redraw_key() -> Array:
 		return []
 	if legacy or show_perf:
 		return [Engine.get_process_frames()]
+	if not key_help:
+		return [false]   # nothing to draw
 	var host: SimHost = main.host
 	var card: bool = main.ui_hud != null and main.ui_hud.is_overlay_open()
 	var touch: bool = main.ui_hud != null and bool(main.ui_hud.opts.get("touch_ui", false))
@@ -48,7 +52,10 @@ func _draw() -> void:
 	var vw: float = size.x
 	var vh: float = size.y
 	if not legacy:
-		_prompt(host, vw, vh)
+		if key_help:
+			_prompt(host, vw, vh)
+		elif show_perf:
+			_perf(vw)
 		return
 	_labels(S, host)
 	_floats(host)

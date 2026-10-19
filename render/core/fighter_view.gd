@@ -484,7 +484,7 @@ func update(S: SimState, f, pose: Vector3, vx: float, z: float) -> void:
 		orb_outer.scale = Vector3.ONE * 2.0 * r
 		orb_core.position = at
 		orb_core.scale = Vector3.ONE * r * 0.8
-	badge.visible = markers and not f.hidden and not (flashes_on and flash_view.glyph_up())
+	badge.visible = RenderLook.STANCE_BADGE_ON and markers and not f.hidden and not (flashes_on and flash_view.glyph_up())
 	badge.position = Vector3(0.0, 84.0 + tier * 3.0 + 8.0, 0.0)
 	badge.scale = Vector3.ONE * (1.0 + (float(_cue.get("badge", 1.0)) - 1.0) * _cue_weight(T))
 	badge.rotation.y = RenderLook.BADGE_TURN   # steady (it spun at 2 rad/s until 2026-10-18)
@@ -500,7 +500,7 @@ func update(S: SimState, f, pose: Vector3, vx: float, z: float) -> void:
 	if _guard_flash_t0 >= 0.0 and T >= _guard_flash_t0 and not f.hidden:
 		gf = clampf(1.0 - (T - _guard_flash_t0) / RenderLook.GUARD_FLASH_S, 0.0, 1.0)
 	var ga: float = maxf(_guard_a, gf)
-	guard.visible = ga > 0.01
+	guard.visible = RenderLook.GUARD_ARC_ON and ga > 0.01
 	if guard.visible:
 		guard.position = Vector3(m * (RenderLook.GUARD_NEAR + RenderLook.GUARD_SIZE.x * 0.5), 4.0, 12.0)
 		guard.scale = Vector3(m, 1.0, 1.0)

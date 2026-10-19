@@ -599,10 +599,16 @@ const GUARD_ALPHA: float = 0.9
 const GUARD_UP_S: float = 0.08
 const GUARD_DOWN_S: float = 0.15
 const GUARD_FLASH_S: float = 0.3
+## The guard arc is off (Orb's minimal rule, 2026-10-19: nothing on, over or between the fighters). A held guard shows
+## in Animation's guard pose; this brings the arc and its perfect-block flash back.
+const GUARD_ARC_ON: bool = false
 ## Stance colours for the badge above each fighter: aggressive, defensive, evasive, escape. None is a saturated red to
 ## the frame analyser (R/(R+G+B) at 0.8 or more on stored or linear values; the badge's flat shading only scales its
 ## colour, so the share holds): the aggressive one is 0.74 on linear values (#ff5a4a was 0.86; 2026-10-18).
 const STANCE_COL: Array = ["#ff8066", "#4aa8ff", "#5ed17a", "#b58cff"]
+## The badge is off (Orb's minimal rule, docs/ep/taste.md, 2026-10-19: nothing on, over or between the fighters). The
+## stance still shows in the lean and on UI's plate; this brings the badge back.
+const STANCE_BADGE_ON: bool = false
 ## The badge's fixed turn about the vertical, radians: two of its four faces show, unevenly shaded. It used to spin at
 ## 2 rad/s; it is steady since 2026-10-18.
 const BADGE_TURN: float = 0.6
