@@ -223,6 +223,11 @@ const DEPTH_S_MIN: float = 0.2         # perspective scale floor, so the anchor 
 const LEAD_FRAC: float = 0.35          # how far toward the aimed building the focus leads
 const LEAD_MAX_X: float = 0.18         # ... at most this fraction of the width, on screen
 const LEAD_MAX_Y: float = 0.12         # ... and of the height
+# The blow push (docs/camera/feel.md): every landed blow above a light pushes the picture in a little, by its weight, and lets go:
+# up over BLOW_UP, held for the hit-stop, back over BLOW_DOWN. After the filters, so it is crisp; a bigger one replaces a smaller one.
+const BLOW_PUSH: Dictionary = {"medium": 0.008, "heavy": 0.016, "guard_break": 0.016, "perfect_block": 0.010, "launch": 0.020}
+const BLOW_UP: float = 0.05
+const BLOW_DOWN: float = 0.25
 const HIT_PUSH: float = 0.06           # zoom push on the first building hit; later links push less
 const HIT_PUSH_LATER: float = 0.03
 const LOW_AIR_DEAD: float = 112.0       # a launched body this near the ground (1.5 body heights) is not followed up; 0 turns it off

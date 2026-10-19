@@ -178,6 +178,11 @@ var _parry_t: Array = [-1.0e9, -1.0e9]   # when each fighter last parried, for t
 var _stiff_w: float = 0.0               # 0..1: how far the slam's stiff filters have come in
 var wreck_dir: int = 0                   # the winner's shot: +1 wreckage on the right of him, -1 on the left, 0 none to speak of
 var wreck_score: float = 0.0             # the wreckage in view, summed (craters, ruined buildings, slide trenches)
+var blow_push: bool = true               # a small push-in on each landed blow by its weight (docs/camera/feel.md); false: none
+var blows: int = 0                         # blow pushes started (for the sweep)
+var _bp_amp: float = 0.0
+var _bp_t: float = -1.0
+var _bp_hold: float = 0.0
 var _live_punch_at: float = -1.0         # the live version: when the 6-tick punch-in starts (rig time)
 var _punch_t: float = -1.0
 var _ov_kind: String = ""               # a camera-only cut-in (building smash, crippling moment); "" when none
@@ -304,6 +309,7 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_shk = PackedFloat64Array([0.0, 0.0])
 	_aim = [null, null]
 	_hit_t = [-1.0, -1.0]
+	_bp_t = -1.0
 	_stg_on = [false, false]
 	_stg_rel = [0, 0]
 	_lens_ok = [false, false]
@@ -1034,8 +1040,15 @@ func _rush_commit(S: SimState) -> void:
 
 func _read_events(S: SimState, events: Array) -> void:
 	for ev in events:
+		var bt: String = String(_ef(ev, "type", ""))
+		if bt == "damage" and int(_ef(ev, "attacker", -1)) >= 0:
+			_blow(String(_ef(ev, "kind", "")), int(_ef(ev, "stop", 0)))
+		elif bt == "launch":
+			_blow("launch", 0)
 		if String(_ef(ev, "type", "")) == "cue":
 			var mk: String = String(_ef(ev, "kind", ""))
+			if mk == "perfect_block":
+				_blow("perfect_block", 4)
 			if mk == "lunge_light" or mk == "lunge_heavy" or mk == "charge_light" or mk == "charge_heavy" or mk == "zip_light" or mk == "zip_heavy":
 				_read_move_cue(S, ev, mk)
 			elif mk == "double_hit":
@@ -2010,9 +2023,33 @@ func _update_intro(S: SimState) -> void:
 
 
 func _punch_mult() -> float:
+	return _punch_only() * _blow_mult()
+
+
+func _punch_only() -> float:
 	if _punch_t < 0.0:
 		return 1.0
 	return 1.0 + _punch_amp * (1.0 - absf(2.0 * _punch_t / _punch_len - 1.0))
+
+
+## The blow push now: up over BLOW_UP, held for the blow's hit-stop, back over BLOW_DOWN.
+func _blow_mult() -> float:
+	if _bp_t < 0.0:
+		return 1.0
+	return 1.0 + _bp_amp * (smoothstep(0.0, CamParams.BLOW_UP, _bp_t) - smoothstep(CamParams.BLOW_UP + _bp_hold, CamParams.BLOW_UP + _bp_hold + CamParams.BLOW_DOWN, _bp_t))
+
+
+## A landed blow of this kind (a key of CamParams.BLOW_PUSH) and its hit-stop in ticks: starts a push when it is bigger than what is left of the one running.
+func _blow(kind: String, stop_ticks: int) -> void:
+	if not blow_push or reduced_motion or intro_active or not CamParams.BLOW_PUSH.has(kind):
+		return
+	var amp: float = float(CamParams.BLOW_PUSH[kind])
+	if amp <= _blow_mult() - 1.0:
+		return
+	_bp_amp = amp
+	_bp_t = 0.0
+	_bp_hold = float(clampi(stop_ticks, 0, 12)) * DT
+	blows += 1
 
 
 func _wide_mult() -> float:
@@ -2024,6 +2061,10 @@ func _wide_mult() -> float:
 
 
 func _update_pushes() -> void:
+	if _bp_t >= 0.0:
+		_bp_t += DT
+		if _bp_t > CamParams.BLOW_UP + _bp_hold + CamParams.BLOW_DOWN:
+			_bp_t = -1.0
 	if _live_punch_at >= 0.0 and time >= _live_punch_at:
 		_live_punch_at = -1.0
 		_punch_t = 0.0

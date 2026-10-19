@@ -43,6 +43,7 @@ var _panel_asked: bool = false
 var _panel_blocked: bool = false      # the flash register refused the strip now running: it is not drawn
 var _dip_prev: float = 0.0            # the last frame's fade (a safety cut's brightness dip)
 var _dip_ok: bool = true              # whether the dip now running was granted by the flash register
+var cut_dip: bool = false             # the brightness dip on a cut (a fade down and back over 0.08 s); off: a cut is a plain hard cut (Orb, 2026-10-18: no fading in and out). Build-time switch
 var cut_dissolve: bool = false        # a cut under Reduce flashing or reduced motion is a cross-dissolve of CamParams.CUT_DISSOLVE_S (a build-time switch; false: the old dip; OFF on Orb's word 2026-10-18: "the dissolve is terrible... don't dissolve the screen")
 var _xf: TextureRect                  # the last picture before a cut, faded out over the new one
 var _xf_start: float = -1.0           # the rig's time (seconds) the dissolve began; -1 none
@@ -481,7 +482,7 @@ func present(fr: SplitFrame) -> void:
 	_mat.set_shader_parameter("gap", fr.gap)
 	_mat.set_shader_parameter("gap_alpha", fr.line_alpha)
 	var depth: float = CamParams.REDUCED_CUT_DIM if (reduced_motion or flash_reduced) else CamParams.CUT_DIM
-	var dim: float = 0.0 if xf_on else depth * _dip_gate(fr.fade, depth)
+	var dim: float = 0.0 if (xf_on or not cut_dip) else depth * _dip_gate(fr.fade, depth)
 	_mat.set_shader_parameter("dim0", dim)
 	_mat.set_shader_parameter("dim1", dim)
 	_solo.modulate = Color(1.0 - dim, 1.0 - dim, 1.0 - dim)

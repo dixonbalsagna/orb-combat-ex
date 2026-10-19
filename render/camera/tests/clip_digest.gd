@@ -21,6 +21,11 @@ var budget_on: bool = false
 var tmax: float = -1.0
 var _off_ticks: int = 0
 var _cut_ticks: int = 0
+var _mode_changes: int = 0
+var _fade_ticks: int = 0
+var _panels: int = 0
+var _prev_mode: String = ""
+var _prev_panel: String = ""
 
 
 func _initialize() -> void:
@@ -105,6 +110,15 @@ func _digest_play(out: FileAccess, label: String, mode: String, sc: String, seed
 			# the stats a budget run is judged by: ticks a fighter is outside the picture that shows him, and cut frames
 			if fr.cut:
 				_cut_ticks += 1
+			if _prev_mode != "" and fr.mode != _prev_mode:
+				_mode_changes += 1
+			_prev_mode = fr.mode
+			if fr.fade > 0.0:
+				_fade_ticks += 1
+			var pk: String = str(fr.panel.get("kind", ""))
+			if pk != "" and _prev_panel == "":
+				_panels += 1
+			_prev_panel = pk
 			for fi in range(2):
 				var pi: int = fi if fr.shows(fi) else 0
 				var fs = host.S.fighters[fi]
@@ -122,7 +136,12 @@ func _digest_play(out: FileAccess, label: String, mode: String, sc: String, seed
 					tr1 = sqrt(pow(SimWrap.sdx(float(_prev_cam[3]), fr.cam_x[1]), 2.0) + pow(fr.cam_y[1] - float(_prev_cam[4]), 2.0)) * fr.cam_z[1] / rg.vw + 0.5 * absf(log(fr.cam_z[1] / float(_prev_cam[5])))
 				_prev_cam = [fr.cam_x[0], fr.cam_y[0], fr.cam_z[0], fr.cam_x[1], fr.cam_y[1], fr.cam_z[1]]
 				print("TR %s %s t %d mode %s sep %.2f e %.2f solo %s/%d cut %s fade %.2f pn %s/%.2f cam %.0f,%.0f z %.3f travel %.4f/%.4f act %s st %s/%s" % [label, mode, host.ticks, fr.mode, fr.sep, fr.e, rg.solo_kind, rg.solo_slot, fr.cut, fr.fade, fr.panel.get("kind", "-"), float(fr.panel.get("open", 0.0)), fr.cam_x[0], fr.cam_y[0], fr.cam_z[0], tr, tr1, str(fr.active), host.S.fighters[0].state, host.S.fighters[1].state])
-	print("STATS %s %s cuts %d fighter-ticks outside the picture %d of %d" % [label, mode, _cut_ticks, _off_ticks, total * 2])
+	print("STATS %s %s cuts %d fighter-ticks outside the picture %d of %d layout changes %d dip ticks %d strips %d blow pushes %s" % [label, mode, _cut_ticks, _off_ticks, total * 2, _mode_changes, _fade_ticks, _panels, str(main.split_rig.get("blows"))])
 	_off_ticks = 0
 	_cut_ticks = 0
+	_mode_changes = 0
+	_fade_ticks = 0
+	_panels = 0
+	_prev_mode = ""
+	_prev_panel = ""
 	_release_all()
