@@ -1,0 +1,1331 @@
+diff --git a/data/biomes/brunt.json b/data/biomes/brunt.json
+index ec53d23..81ed24b 100644
+--- a/data/biomes/brunt.json
++++ b/data/biomes/brunt.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": "biomes.brunt/1",
+-  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge or a wall hold the whole sim (world, a hit-stop) or only the body (body: he is stunned and the fight goes on): Orb's homework. The chain inside a tower (buildings.md section 7.3, ruled 2026-10-17; WorldInterior): interiorChain 0 off or 1 on; interiorTanMin and interiorTanMax the send's angle (tangents of 15 and 60 degrees); interiorCeilKeep and interiorFloorKeep the speed kept through a ceiling and through a slab or face that breaks; interiorMaxContacts and interiorMaxBounces the caps (no bounce is produced yet); interiorFaceStop the entry face's stop in ticks; interiorCapSeconds the ragdolled time from the face; interiorCeilTier the effective tier that reaches the ceiling; interiorExitTier the tier whose far face breaks; interiorHurt the share of a hit's damage a slab does him.",
++  "_about": "What a launched body does to buildings (docs/world/destruction-hook.md, docs/design/buildings.md; WorldBrunt). tierFactor: the damage a body does a building is its normalised speed x tierFactor[tier] x bruntMul. chainMax: links a flight may use by tier 1 to 4 (a tower is one, a house houseLink); chainSpecial: a finisher's. towerPunches: the towers a flight may go through by tier; a tower beyond it holds the body (a wall), unless the floors it covers have already taken giveWay times their own strength in damage (the building remembers its walls: wallMemory of the damage taken is taken off a floor's strength, to at least wallMin of it). Tier 1 holds at 0: raise towerPunches[0] to 1 and a tier-1 hit goes through one tower (Orb's question: does a tower hold early on). heldDeathShare: the most of a held floor's people a hit kills. houseKeep: the speed kept through a house; keepHi, keepK, keepRef, keepMin: the speed kept through a punched floor (keepHi - keepK x strength / keepRef, between keepMin and keepHi); keepFree: through floors already gone; heavyKeep: a heavy wreck. lodgeSeconds: the last building of a chain takes what is left (lodgeDump of it as one more hit on its core) and holds the body this many seconds, by tier; lodgeSpecialSeconds a finisher's; specialTier: a finisher reads as at least this tier. The wall slam: a body held at a wall takes wallSlamMul times the hit (Game Design: twice) and is staggered wallStaggerTicks. lodgeHold: does a lodge or a wall hold the whole sim (world, a hit-stop) or only the body (body: he is stunned and the fight goes on): Orb's homework. The chain inside a tower (buildings.md section 7.3, ruled 2026-10-17; WorldInterior): interiorChain 0 off or 1 on; interiorTanMin and interiorTanMax the send's angle (tangents of 15 and 60 degrees); interiorCeilKeep and interiorFloorKeep the speed kept through a ceiling and through a slab or face that breaks; interiorMaxContacts and interiorMaxBounces the caps (no bounce is produced yet); interiorFaceStop the entry face's stop in ticks; interiorCapSeconds the ragdolled time from the face; interiorCeilTier the effective tier that reaches the ceiling; interiorExitTier the tier whose far face breaks; interiorHurt the share of a hit's damage a slab does him. A held slab bounces at interiorBounceSpeed or more between interiorBounceTanMin and interiorBounceTanMax (40 and 70 degrees), keeping interiorBounceKeep of the normal speed and interiorBounceTangent of the along-slab speed; he leaves a tower by the far face into the next link with interiorLinkSpeed or more (buildings.md section 7.3). Repeats escalate (Orb, homework 30): repeatMarks 0 off, else the most marks a building counts (each one tier higher for the next send) and the most repeats a crater grows; repeatCraterGrow the radius factor a repeat asks.",
+   "bruntMul": 1.8,
+   "tierFactor": [
+     0.12,
+@@ -56,5 +56,13 @@
+   "interiorCapSeconds": 2.5,
+   "interiorCeilTier": 3,
+   "interiorExitTier": 3,
+-  "interiorHurt": 0.5
++  "interiorHurt": 0.5,
++  "interiorBounceSpeed": 900.0,
++  "interiorBounceTanMin": 0.8391,
++  "interiorBounceTanMax": 2.7475,
++  "interiorBounceKeep": 0.45,
++  "interiorBounceTangent": 0.8,
++  "interiorLinkSpeed": 900.0,
++  "repeatMarks": 0,
++  "repeatCraterGrow": 1.25
+ }
+diff --git a/data/biomes/props.json b/data/biomes/props.json
+new file mode 100644
+index 0000000..fca6792
+--- /dev/null
++++ b/data/biomes/props.json
+@@ -0,0 +1,170 @@
++{
++  "schema": "biomes.props/1",
++  "_about": "The throwable objects' hold points (docs/world/prop-hold-points.md; WorldProps): where a hand grips an object, for Animation's grip on a prop (docs/animation/throwables-sizing.md T1). Each class has its box (length along x, height, depth across z, in world units; a fighter is 75), its mass class and the first tier that can lift it (Art's docs/art/cars.md, data/art/vehicles.json), and six hold points: frame (the middle of the body), underside_l and underside_r (under the chassis, each side of the middle, a hand's reach apart for a two-handed lift), top (the roof), end_a (the rear) and end_b (the front). A point is [x, y, z] in the prop's own frame: the origin on the ground under its centre, x along its length with the front at +x, y up, z across (positive toward the camera). WorldProps.holdPoint turns one into a world point from the prop's place, turn and facing. First values from the box; Animation measures them against the poses.",
++  "slots": [
++    "frame",
++    "underside_l",
++    "underside_r",
++    "top",
++    "end_a",
++    "end_b"
++  ],
++  "classes": {
++    "bike": {
++      "length": 90,
++      "height": 56,
++      "depth": 20,
++      "mass": 1,
++      "throwTier": 1,
++      "holds": {
++        "frame": [
++          0,
++          28.0,
++          0
++        ],
++        "underside_l": [
++          -25.2,
++          13.5,
++          0
++        ],
++        "underside_r": [
++          25.2,
++          13.5,
++          0
++        ],
++        "top": [
++          0,
++          56,
++          0
++        ],
++        "end_a": [
++          -45.0,
++          25.2,
++          0
++        ],
++        "end_b": [
++          45.0,
++          25.2,
++          0
++        ]
++      }
++    },
++    "sedan": {
++      "length": 193,
++      "height": 62,
++      "depth": 72,
++      "mass": 3,
++      "throwTier": 2,
++      "holds": {
++        "frame": [
++          0,
++          31.0,
++          0
++        ],
++        "underside_l": [
++          -54.0,
++          12.6,
++          0
++        ],
++        "underside_r": [
++          54.0,
++          12.6,
++          0
++        ],
++        "top": [
++          0,
++          62,
++          0
++        ],
++        "end_a": [
++          -96.5,
++          27.9,
++          0
++        ],
++        "end_b": [
++          96.5,
++          27.9,
++          0
++        ]
++      }
++    },
++    "van": {
++      "length": 223,
++      "height": 86,
++      "depth": 76,
++      "mass": 4,
++      "throwTier": 3,
++      "holds": {
++        "frame": [
++          0,
++          43.0,
++          0
++        ],
++        "underside_l": [
++          -62.4,
++          15.3,
++          0
++        ],
++        "underside_r": [
++          62.4,
++          15.3,
++          0
++        ],
++        "top": [
++          0,
++          86,
++          0
++        ],
++        "end_a": [
++          -111.5,
++          38.7,
++          0
++        ],
++        "end_b": [
++          111.5,
++          38.7,
++          0
++        ]
++      }
++    },
++    "bus": {
++      "length": 516,
++      "height": 137,
++      "depth": 90,
++      "mass": 8,
++      "throwTier": 4,
++      "holds": {
++        "frame": [
++          0,
++          68.5,
++          0
++        ],
++        "underside_l": [
++          -144.5,
++          19.8,
++          0
++        ],
++        "underside_r": [
++          144.5,
++          19.8,
++          0
++        ],
++        "top": [
++          0,
++          137,
++          0
++        ],
++        "end_a": [
++          -258.0,
++          61.6,
++          0
++        ],
++        "end_b": [
++          258.0,
++          61.6,
++          0
++        ]
++      }
++    }
++  }
++}
+diff --git a/sim/core/hash.gd b/sim/core/hash.gd
+index 8aa1f85..4ac2706 100644
+--- a/sim/core/hash.gd
++++ b/sim/core/hash.gd
+@@ -193,6 +193,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
+ 		out.append(float(b.fdmg.size()))   # floor damage: empty for a building never hit locally
+ 		for v in b.fdmg:
+ 			out.append(v)
++		if b.marks != 0:
++			out.append(float(b.marks))   # World: repeats escalate (only with brunt.json repeatMarks above 0)
+ 	out.append(1.0 if S.contactOn else 0.0)   # World's ground contact (G2)
+ 	out.append(float(S.trees.size()))
+ 	for t in S.trees:
+diff --git a/sim/core/state.gd b/sim/core/state.gd
+index 78bc5cb..67a399b 100644
+--- a/sim/core/state.gd
++++ b/sim/core/state.gd
+@@ -238,6 +238,7 @@ class Building:
+ 	var fdmg := PackedFloat32Array()   # damage per floor, allocated on the first local hit (empty before)
+ 	var idx: int = 0          # index in S.buildings (set at generation; not hashed)
+ 	var place: int = -1       # the place it stands in: its settlement index today, the planet's place id (set at generation; not hashed: the world hash covers it)
++	var marks: int = 0        # World: sends that have struck it (repeats escalate: each mark is one tier higher for the next send, at most two); counted only with brunt.json repeatMarks above 0; hashed when not 0
+ 	var plan: int = -1        # its index in that place's plan (the plan is seeded, so the same building has the same index every time; not hashed)
+ 	var fled: float = 0.0     # people who left in the district flight so far (capped at WorldCollateral.FLIGHT_MAX of pop)
+ 	var z: float = 0.0        # depth of the building's centre from the fighter plane (negative: behind), world units
+diff --git a/sim/world/brunt.gd b/sim/world/brunt.gd
+index 97c5e35..06183cf 100644
+--- a/sim/world/brunt.gd
++++ b/sim/world/brunt.gd
+@@ -40,6 +40,11 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
+ 	"interiorChain": 0, "interiorTanMin": 0.26795, "interiorTanMax": 1.73205, "interiorCeilKeep": 0.4, "interiorFloorKeep": 0.7,
+ 	"interiorMaxContacts": 5, "interiorMaxBounces": 3, "interiorFaceStop": 15, "interiorCapSeconds": 2.5, "interiorCeilTier": 3,
+ 	"interiorExitTier": 3, "interiorHurt": 0.5,
++	# a held slab bounces at interiorBounceSpeed or more between the two tangents (40 and 70 degrees), keeping interiorBounceKeep of the normal speed and interiorBounceTangent
++	# of the along-slab speed; he leaves a tower by the far face into the next link with interiorLinkSpeed or more (buildings.md section 7.3, ruled 2026-10-18)
++	"interiorBounceSpeed": 900.0, "interiorBounceTanMin": 0.8391, "interiorBounceTanMax": 2.7475, "interiorBounceKeep": 0.45, "interiorBounceTangent": 0.8, "interiorLinkSpeed": 900.0,
++	# repeats escalate (Orb, homework 30): repeatMarks 0 off, else the most marks a building counts and the most repeats a crater grows; repeatCraterGrow the radius factor a repeat asks
++	"repeatMarks": 0, "repeatCraterGrow": 1.25,
+ }
+ const BRUNT_STRINGS: Dictionary = {   # the switches that are words: their values and the default (today's behaviour)
+ 	"lodgeHold": [["world", "body"], "world"],   # does a lodge hold the whole fight (a hit-stop) or only the body (he is stunned, the fight goes on)
+@@ -453,9 +458,12 @@ static func chainPlan(S: SimState, tier: float, special: bool, b, fr: Dictionary
+ 	var used: float = 0.0
+ 	var hl: float = float(cfg().houseLink)
+ 	while true:
+-		var oc: Dictionary = outcomeOf(S, cur, r.y, r.spN, tier, punched, special)
++		var oc: Dictionary = outcomeOf(S, cur, r.y, r.spN, tierAt(S, cur, tier), punched, special)
+ 		var entry: Dictionary = {"b": cur.idx, "spN": r.spN, "y": r.y, "dmg": oc.dmg, "ratio": oc.ratio, "outcome": oc.outcome, "keep": oc.keep, "deaths": oc.deaths, "t": t0, "lodge": false}
+ 		out.append(entry)
++		if out.size() == 1 and WorldInterior.fits(S, cur, r.vx / trav, r.vy):
++			entry.lodge = true   # the chain inside a tower (interior.gd) takes him: the plan ends here (it plans its own exit)
++			break
+ 		if not oc.pass:
+ 			break
+ 		if isHouse(cur):
+@@ -660,12 +668,24 @@ static func tierOf(by, f) -> float:
+ 	return maxf(1.0, roundf(float(by.tier) * float(f.launchPower)))
+ 
+ 
++## The tier a send meets building b at: tier (the launch's), one higher for each mark on b (a building an earlier send struck), at most repeatMarks (Orb's repeats escalate,
++## buildings.md section 6.1). repeatMarks 0 is today's behaviour.
++static func tierAt(S: SimState, b, tier: float) -> float:
++	var m: int = int(cfg().repeatMarks)
++	if m <= 0 or b.marks <= 0:
++		return tier
++	return tier + float(mini(b.marks, m))
++
++
+ ## Resolve one hit on building b at height y on the near edge, and what happens to the fighter.
+ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+ 	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
+ 	var trav: float = f.launchT
+ 	var spN: float = SimDetMath.hypot(f.vx / trav, f.vy)
+-	var oc: Dictionary = outcomeOf(S, b, y, spN, tierOf(by, f), _count(f, MARK_TOWER), f.launchSpecial)
++	var tierB: float = tierAt(S, b, tierOf(by, f))   # one higher for each mark on this building (repeats escalate)
++	var oc: Dictionary = outcomeOf(S, b, y, spN, tierB, _count(f, MARK_TOWER), f.launchSpecial)
++	if int(cfg().repeatMarks) > 0:
++		b.marks += 1   # a send has struck it: the next meets it one tier higher
+ 	f.flightHits += 1
+ 	var link: int = f.flightHits
+ 	var slot: float = float(S.fighters.find(f))
+@@ -718,16 +738,16 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+ 		var stop: float = STOP_FIRST if link == 1 else STOP_LINK
+ 		S.dirS.stop = SimMathx.jmax(S.dirS.stop, minf(stop, STOP_TOTAL))
+ 	else:
+-		WorldInterior.begin(S, f, b, y, edge, dir, by, keep, broke)   # the face's stop is the data's ticks; the rest is the chain's (interior.gd step)
++		WorldInterior.begin(S, f, b, y, edge, dir, by, tierB, keep, broke)   # the face's stop is the data's ticks; the rest is the chain's (interior.gd step)
+ 		return
+ 	if lodge:
+ 		# what is left of the launch is one more hit on the building (the core wears most), and he is held in the breach
+-		var tfac: float = float(cm.tierFactor[tierIx(tierOf(by, f), f.launchSpecial)])
++		var tfac: float = float(cm.tierFactor[tierIx(tierB, f.launchSpecial)])
+ 		var rest: float = spLeft * tfac * float(cm.bruntMul) * float(cm.lodgeDump)
+ 		if b.alive and rest > 0.0:
+ 			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", cx, evt, true)
+ 		SimDamage.hurt(S, f, spLeft * FIGHTER_DMG, by)
+-		var holdS: float = lodgeSeconds(tierOf(by, f), f.launchSpecial)
++		var holdS: float = lodgeSeconds(tierB, f.launchSpecial)
+ 		_hold(S, f, holdS)
+ 		var bodyW: float = WorldLanes.body()[0]
+ 		f.x = SimWrap.wrap(far - dir * (bodyW * 2.0))
+@@ -738,7 +758,7 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
+ 		endFlight(S, f)
+ 		return
+ 	if not passes:
+-		_hold(S, f, lodgeSeconds(tierOf(by, f), f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
++		_hold(S, f, lodgeSeconds(tierB, f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
+ 		# the wall slam (buildings.md section 2): he takes the building's hit again over (wallSlamMul, Game Design's twice); the stagger is set below
+ 		var slam: float = float(cm.wallSlamMul) - 1.0
+ 		if slam > 0.0:
+diff --git a/sim/world/crater.gd b/sim/world/crater.gd
+index d60e2f7..ad34d59 100644
+--- a/sim/world/crater.gd
++++ b/sim/world/crater.gd
+@@ -132,6 +132,29 @@ static func profile(u: float, d: float, hr: float) -> float:
+ 	return h
+ 
+ 
++## Repeats escalate (Orb, homework 30; buildings.md section 6.1): an impact on ground already cratered by an impact deepens and widens that crater instead of digging a
++## new one beside it. The dig moves to the old crater's centre and its energy rises so the bowl is repeatCraterGrow times the last one's radius (the depth cap, a share of the
++## radius less the relief already there, then lets it go deeper). After repeatMarks repeats it grows no more. Returns [x, energy]. Behind brunt.json repeatMarks.
++static func _repeat(S: SimState, x: float, energy: float, special: bool) -> Array:
++	var last = null
++	for i in range(S.craters.size() - 1, -1, -1):
++		var c = S.craters[i]
++		if c.cause == "impact" and absf(SimWrap.sdx(c.x, x)) <= 0.5 * c.r:
++			last = c
++			break
++	if last == null:
++		return [x, energy]
++	var m: int = 0
++	for c in S.craters:
++		if c.cause == "impact" and absf(SimWrap.sdx(c.x, last.x)) < 1.0:
++			m += 1
++	var cf: Dictionary = WorldBrunt.cfg()
++	var grow: float = float(cf.repeatCraterGrow) if m <= int(cf.repeatMarks) else 1.0
++	var need: float = last.r * grow / R_BASE
++	need = need * need / (SPECIAL_E_MULT if special else 1.0)
++	return [last.x, maxf(energy, need)]
++
++
+ static func _slot(S: SimState, cause) -> float:
+ 	for i in range(S.fighters.size()):
+ 		if S.fighters[i] == cause:
+@@ -150,6 +173,10 @@ static func _col(x: float) -> int:
+ ## vertical share (|vy| / speed); both only matter for impacts. Returns the record, or null when the spot was already too
+ ## dented to take a crater of this size.
+ static func dig(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, z: float = NAN):
++	if kind == "impact" and int(WorldBrunt.cfg().repeatMarks) > 0:
++		var rp: Array = _repeat(S, x, energy, special)
++		x = rp[0]
++		energy = rp[1]
+ 	if not S.depthOn:
+ 		return _dig(S, x, energy, cause, kind, dirx, vert, special)
+ 	var zz: float = z
+diff --git a/sim/world/interior.gd b/sim/world/interior.gd
+index ca4e326..326941f 100644
+--- a/sim/world/interior.gd
++++ b/sim/world/interior.gd
+@@ -28,22 +28,30 @@ static func on(S: SimState) -> bool:
+ 
+ 
+ ## The send's effective tier 1 to 4 (a finisher reads at least as the data's specialTier).
+-static func effTier(by, special: bool) -> int:
+-	return WorldBrunt.tierIx(by.tier, special) + 1
++static func effTier(tier: float, special: bool) -> int:
++	return WorldBrunt.tierIx(tier, special) + 1
+ 
+ 
+-## Does this hit start the chain? The first building of the flight, a tower, and the send at 15 to 60 degrees to the horizontal (the data's tangents).
+-static func eligible(S: SimState, f, b) -> bool:
+-	if not on(S) or f.interior != null or f.flightHits != 1 or WorldBrunt.isHouse(b) or WorldBrunt.topFloor(b) < 0:
++## Does a send with these normalised velocity components go on inside a tower b? A tower, and the send at 15 to 60 degrees to the horizontal (the data's tangents).
++## A pure function: the planner (WorldBrunt.chainPlan) asks it too.
++static func fits(S: SimState, b, vxn: float, vy: float) -> bool:
++	if not on(S) or WorldBrunt.isHouse(b) or WorldBrunt.topFloor(b) < 0:
+ 		return false
+-	var c: Dictionary = WorldBrunt.cfg()
+-	var ax: float = absf(f.vx) / f.launchT
++	var ax: float = absf(vxn)
+ 	if ax <= 0.0:
+ 		return false
+-	var r: float = absf(f.vy) / ax
++	var c: Dictionary = WorldBrunt.cfg()
++	var r: float = absf(vy) / ax
+ 	return r >= float(c.interiorTanMin) and r <= float(c.interiorTanMax)
+ 
+ 
++## Does this hit start the chain? The first building of the flight, and the send fits.
++static func eligible(S: SimState, f, b) -> bool:
++	if f.interior != null or f.flightHits != 1:
++		return false
++	return fits(S, b, f.vx / f.launchT, f.vy)
++
++
+ # ===================================================================== the plan
+ 
+ ## The standing slab below j (0, the ground, at the lowest), or -1 for j = 0.
+@@ -135,19 +143,19 @@ static func plan(b, y: float, gy: float, down: bool, E: int, c: Dictionary) -> A
+ # ===================================================================== start
+ 
+ ## The face is hit and the chain starts (WorldBrunt.hit, after the building took the hit and the fighter his): keep the speed share kept through the face,
+-## punch whether the face broke, dir the way he travels. Sets the hit-stop (the face's ticks), emits the entry contact and puts him just inside.
+-static func begin(S: SimState, f, b, y: float, edge: float, dir: float, by, keep: float, punch: bool) -> void:
++## punch whether the face broke, tier the tier the building was met at (the launch's, one higher for each mark on the building), dir the way he travels. Sets the hit-stop (the face's ticks), emits the entry contact and puts him just inside.
++static func begin(S: SimState, f, b, y: float, edge: float, dir: float, by, tier: float, keep: float, punch: bool) -> void:
+ 	var c: Dictionary = WorldBrunt.cfg()
+ 	var trav: float = f.launchT
+ 	var gy: float = WorldStructures.baseY(S, b)
+-	var E: int = effTier(by, f.launchSpecial)
++	var E: int = effTier(tier, f.launchSpecial)
+ 	var down: bool = f.vy < 0.0
+ 	var pl: Array = plan(b, y, gy, down, E, c)
+ 	var vxn: float = f.vx / trav
+ 	var sp: float = SimDetMath.hypot(vxn, f.vy)
+ 	if f.chainEvt == 0.0:
+ 		f.chainEvt = WorldCollateral.beginEvent(S, "chain", by)   # the chain holds a collateral token: the slabs' people are charged to it, and the air brake (which stays off in a chain) reads it
+-	f.interior = {"b": b.idx, "dir": dir, "E": E, "k": 0, "bn": 0, "t": 0, "i": 0, "gy": gy, "R": WorldBrunt.topFloor(b) + 1, "plan": pl}
++	f.interior = {"b": b.idx, "dir": dir, "E": E, "tier": tier, "k": 0, "bn": 0, "t": 0, "i": 0, "gy": gy, "R": WorldBrunt.topFloor(b) + 1, "plan": pl}
+ 	f.aimB = -1
+ 	var ev := SimFx.contactEvent(S, "interior_contact", f, f.x, y, sp)
+ 	ev.b = float(b.idx)
+@@ -257,6 +265,8 @@ static func _slab(S: SimState, f, b, by, s: Dictionary, e: Dictionary) -> void:
+ 	ev.stop = 0
+ 	SimDamage.hurt(S, f, sp * WorldBrunt.FIGHTER_DMG * float(c.interiorHurt), by)
+ 	if not breaks:
++		if _bounce(S, f, b, s, e, vxn, sp, ev):
++			return
+ 		_end(S, f, b, by, "lodge")
+ 		return
+ 	f.vx *= keep
+@@ -270,12 +280,40 @@ static func _slab(S: SimState, f, b, by, s: Dictionary, e: Dictionary) -> void:
+ 		_end(S, f, b, by, "capped")
+ 
+ 
++## A slab that holds is a bounce when he meets it at the data's speed (900) or more and between 40 and 70 degrees to it, at any tier; slower or shallower he lodges on it
++## (buildings.md section 7.3, ruled 2026-10-18). At most interiorMaxBounces bounces and interiorMaxContacts slab contacts a chain. The bounce keeps the ground's shares
++## turned to the slab (interiorBounceKeep of the normal speed, interiorBounceTangent of the along-slab speed); the event is the same contact with a keep above 0 and punch
++## false. He then heads for the next slab on the other side, which holds the same way. Returns true when he bounced.
++static func _bounce(S: SimState, f, b, s: Dictionary, e: Dictionary, vxn: float, sp: float, ev) -> bool:
++	var c: Dictionary = WorldBrunt.cfg()
++	if sp < float(c.interiorBounceSpeed) or int(s.bn) >= int(c.interiorMaxBounces) or int(s.k) >= int(c.interiorMaxContacts):
++		return false
++	var ax: float = absf(vxn)
++	if ax <= 0.0:
++		return false
++	var tn: float = absf(f.vy) / ax
++	if tn < float(c.interiorBounceTanMin) or tn > float(c.interiorBounceTanMax):
++		return false
++	var isFloor: bool = e.kind == "floor"
++	var R: int = int(s.R)
++	var nxt: int = WorldInterior._above(b, int(e.slab), R) if isFloor else WorldInterior._below(b, int(e.slab))
++	if nxt < 0 or (isFloor and nxt == int(e.slab)):
++		return false
++	s.bn += 1
++	ev.keep = float(c.interiorBounceKeep)
++	f.vx *= float(c.interiorBounceTangent)
++	f.vy = -f.vy * float(c.interiorBounceKeep)
++	s.plan.append({"slab": nxt, "kind": "ceiling" if isFloor else "floor", "act": "hold", "turn": false})
++	s.i += 1
++	return true
++
++
+ ## The slab's floor goes through the brunt's own floors machinery (people, budget, token, the pancake rule), as a punch.
+ static func _breakSlab(S: SimState, f, b, by, j: int, sp: float) -> void:
+ 	if j >= b.floors or not WorldBrunt.isStanding(b, j):
+ 		return
+ 	var c: Dictionary = WorldBrunt.cfg()
+-	var dmg: float = sp * float(c.tierFactor[WorldBrunt.tierIx(by.tier, f.launchSpecial)]) * float(c.bruntMul)
++	var dmg: float = sp * float(c.tierFactor[WorldBrunt.tierIx(float(f.interior.tier), f.launchSpecial)]) * float(c.bruntMul)
+ 	var oc: Dictionary = {"floors": true, "dmg": dmg, "ratio": maxf(dmg / WorldBrunt.floorStr(b, j), 1.0), "outcome": "punch", "k": j, "hit": [j], "pass": true, "keep": float(c.interiorFloorKeep), "deaths": 0.0}
+ 	WorldBrunt.applyFloors(S, b, oc, by, f.chainEvt, f.x, f, f.y)
+ 
+@@ -308,26 +346,26 @@ static func _face(S: SimState, f, b, by, s: Dictionary, farX: float, dir: float)
+ 	f.vx *= keep
+ 	f.vy *= keep
+ 	f.x = SimWrap.wrap(farX + dir * 2.0)
+-	_end(S, f, b, by, "exit")
++	_end(S, f, b, by, "exit", true)
+ 
+ 
+ # ===================================================================== the end
+ 
+ ## The chain is over: lodge and capped hold him where he is (the lodge's own hold, the last of his speed one more hit on the building), exit and fall_out
+ ## hand the flight back (the brake is back; the ground's events play). Always the end event last.
+-static func _end(S: SimState, f, b, by, end: String) -> void:
++static func _end(S: SimState, f, b, by, end: String, viaFace: bool = false) -> void:
+ 	var s: Dictionary = f.interior
+ 	var trav: float = f.launchT
+ 	var spLeft: float = SimDetMath.hypot(f.vx / trav, f.vy)
+ 	var cm: Dictionary = WorldBrunt.cfg()
+ 	var held: bool = end == "lodge" or end == "capped"
+ 	if held:
+-		var tfac: float = float(cm.tierFactor[WorldBrunt.tierIx(by.tier, f.launchSpecial)])
++		var tfac: float = float(cm.tierFactor[WorldBrunt.tierIx(float(s.tier), f.launchSpecial)])
+ 		var rest: float = spLeft * tfac * float(cm.bruntMul) * float(cm.lodgeDump)
+ 		if b.alive and rest > 0.0:
+ 			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", f.x, f.chainEvt, true)
+ 		SimDamage.hurt(S, f, spLeft * WorldBrunt.FIGHTER_DMG, by)
+-		var holdS: float = WorldBrunt.lodgeSeconds(by.tier, f.launchSpecial)
++		var holdS: float = WorldBrunt.lodgeSeconds(float(s.tier), f.launchSpecial)
+ 		WorldBrunt._hold(S, f, holdS)
+ 		f.vx = 0.0
+ 		f.vy = 0.0
+@@ -338,4 +376,25 @@ static func _end(S: SimState, f, b, by, end: String) -> void:
+ 	ev.contacts = int(s.k)
+ 	ev.t = float(s.t) * SimConst.DT
+ 	f.interior = null
++	if viaFace and end == "exit" and _link(S, f, b, by, spLeft):
++		return   # the flight goes on to the next tower: its chain is not over, so the token stays
+ 	WorldBrunt.endFlight(S, f)
++
++
++## He left by the far face with the data's speed (900) or more: the next tower's link plays (buildings.md section 7.3). The same rule as WorldBrunt.hit's: within the
++## launch's chain length, the next building in reach. Returns true when a link was made (the aim fields and the chain_link event are as hit() sets them).
++static func _link(S: SimState, f, b, by, spLeft: float) -> bool:
++	var c: Dictionary = WorldBrunt.cfg()
++	if spLeft < float(c.interiorLinkSpeed) or WorldBrunt.chainUsed(f) >= WorldBrunt.chainCap(WorldBrunt.tierOf(by, f), f.launchSpecial) - 0.0001:
++		return false
++	var nx: Dictionary = WorldBrunt.next(S, b, f.y, f.vx, f.vy, f.launchT)
++	if nx.b < 0:
++		return false
++	var nb = S.buildings[nx.b]
++	f.aimX0 = f.x
++	f.aimZ0 = WorldBrunt.faceZ(b)
++	f.aimB = nx.b
++	f.aimZ1 = WorldBrunt.faceZ(nb)
++	f.aimD = maxf(float(nx.r.get("aimD", absf(SimWrap.sdx(f.x, nx.r.x)))), 1.0)
++	SimFx.chainLink(S, f, by, b, nb, f.y, nx.r, f.flightHits + 1)
++	return true
+diff --git a/sim/world/props.gd b/sim/world/props.gd
+new file mode 100644
+index 0000000..c5f5fa9
+--- /dev/null
++++ b/sim/world/props.gd
+@@ -0,0 +1,107 @@
++class_name WorldProps
++## The throwable objects' hold points (docs/world/prop-hold-points.md; data/biomes/props.json). Animation's grip on a prop (throwables-sizing.md T1) reads a hand's place as
++## a world point, the way it reads a body region: the class's hold point in the prop's own frame, turned and placed. A pure function of the prop's state; the prop itself
++## (S.props, World's option B in docs/world/cars-plan.md) is not built yet, so nothing in the sim calls this and no golden can move.
++##
++## The prop's frame: the origin on the ground under its centre, x along its length with the front at +x, y up, z across (positive toward the camera). `facing` -1 mirrors
++## it (the object turned about); `turn` is its rotation about the depth axis through the middle of its box, in radians, counter-clockwise seen side-on (a tumbling object).
++
++const PATH: String = "res://data/biomes/props.json"
++const SCHEMA: String = "biomes.props/1"
++const SLOTS: Array = ["frame", "underside_l", "underside_r", "top", "end_a", "end_b"]
++static var _d: Dictionary = {}
++static var _loaded: bool = false
++static var _errors: Array = []
++static var _hash: String = ""
++
++
++static func _load() -> void:
++	_loaded = true
++	_errors = []
++	_d = {}
++	var f := FileAccess.open(PATH, FileAccess.READ)
++	if f == null:
++		_errors.append("props.json: cannot open " + PATH)
++		return
++	var j = JSON.parse_string(f.get_as_text())
++	if not (j is Dictionary) or j.get("schema", "") != SCHEMA:
++		_errors.append("props.json: not a %s object" % SCHEMA)
++		return
++	if j.get("slots", []) != SLOTS:
++		_errors.append("props.json: slots are %s" % str(SLOTS))
++	var cl = j.get("classes", {})
++	if not (cl is Dictionary) or cl.is_empty():
++		_errors.append("props.json: classes is a non-empty object")
++		return
++	for k in cl:
++		var c = cl[k]
++		if not (c is Dictionary):
++			_errors.append("props.json: class %s is an object" % k)
++			continue
++		for key in ["length", "height", "depth"]:
++			if not (c.get(key) is float or c.get(key) is int) or float(c.get(key)) <= 0.0:
++				_errors.append("props.json: %s.%s is a number above 0" % [k, key])
++		var h = c.get("holds", {})
++		for sl in SLOTS:
++			var p = h.get(sl) if h is Dictionary else null
++			if not (p is Array) or p.size() != 3:
++				_errors.append("props.json: %s.holds.%s is [x, y, z]" % [k, sl])
++	_d = cl
++	var hs := SimHash.Hasher.new()
++	hs.text("biomes.props")
++	FighterData._canon(hs, j)
++	_hash = hs.hex()
++
++
++static func classes() -> Dictionary:
++	if not _loaded:
++		_load()
++	return _d
++
++
++static func dataErrors() -> Array:
++	if not _loaded:
++		_load()
++	return _errors
++
++
++## The data's hash. Not folded into a replay's data hash yet: nothing in the sim reads it.
++static func dataHash() -> String:
++	if not _loaded:
++		_load()
++	return _hash
++
++
++static func has(cls: String) -> bool:
++	return classes().has(cls)
++
++
++## A hold point in the prop's own frame ([x, y, z]), or [] for an unknown class or slot.
++static func local(cls: String, slot: String) -> Array:
++	var c = classes().get(cls)
++	if c == null or not c.holds.has(slot):
++		return []
++	var p: Array = c.holds[slot]
++	return [float(p[0]), float(p[1]), float(p[2])]
++
++
++## The world point of a hold point, for a prop of class cls with its ground centre at (x, y, z), turned by `turn` radians about the middle of its box, facing +1 or -1.
++## x is wrapped (the planet's seam). [] for an unknown class or slot.
++static func holdPoint(cls: String, slot: String, x: float, y: float, z: float, turn: float = 0.0, facing: float = 1.0) -> Array:
++	var p: Array = local(cls, slot)
++	if p.is_empty():
++		return []
++	var hmid: float = float(classes()[cls].height) * 0.5
++	var lx: float = p[0] * (-1.0 if facing < 0.0 else 1.0)
++	var ly: float = p[1] - hmid
++	var cs: float = SimDetMath.cos(turn)
++	var sn: float = SimDetMath.sin(turn)
++	return [SimWrap.wrap(x + lx * cs - ly * sn), y + hmid + lx * sn + ly * cs, z + p[2]]
++
++
++## All six hold points of one prop, by slot name (the view's read each tick).
++static func holdPoints(cls: String, x: float, y: float, z: float, turn: float = 0.0, facing: float = 1.0) -> Dictionary:
++	var out: Dictionary = {}
++	for sl in SLOTS:
++		out[sl] = holdPoint(cls, sl, x, y, z, turn, facing)
++	return out
+diff --git a/sim/world/props.gd.uid b/sim/world/props.gd.uid
+new file mode 100644
+index 0000000..339f5da
+--- /dev/null
++++ b/sim/world/props.gd.uid
+@@ -0,0 +1 @@
++uid://cntg62ooa7n56
+diff --git a/sim/world/tools/interior_check.gd b/sim/world/tools/interior_check.gd
+index 958dce5..b9df67f 100644
+--- a/sim/world/tools/interior_check.gd
++++ b/sim/world/tools/interior_check.gd
+@@ -160,10 +160,22 @@ func _init() -> void:
+ 			else:
+ 				ok(not cs.any(func(e): return e.kind == "ceiling" and e.punch and e.keep == 0.4), "%s: below tier 3 no ceiling reverses him" % tag)
+ 			if tier == 1.0:
+-				ok(cs.size() <= 2 and not cs.any(func(e): return e.k > 0.0 and e.punch), "%s: tier 1 breaks no slab" % tag)
++				ok(not cs.any(func(e): return e.k > 0.0 and e.punch and e.kind in ["floor", "ceiling"]), "%s: tier 1 breaks no slab" % tag)
+ 			var fhits: int = ev.filter(func(e): return e.type == "floor_hit" and e.outcome == "punch").size()
+ 			var brk: int = cs.filter(func(e): return e.k > 0.0 and e.punch and e.kind in ["floor", "ceiling"]).size()
+ 			ok(fhits >= brk - 0, "%s: each broken slab went through the floors machinery (%d floor_hit punches for %d broken slabs)" % [tag, fhits, brk])
++	# --- a held slab bounces at 900 or more between 40 and 70 degrees to it (any tier), else lodges; at most 3 bounces and 5 slab contacts
++	var Sb := fresh(1)
++	var evb: Array = chain(Sb, tower(Sb), 1.0, 1.7, true, 3500.0, 0.5)
++	var csb: Array = shape(evb).cs
++	var bounces: Array = csb.filter(func(e): return e.k > 0.0 and not e.punch and e.keep > 0.0)
++	ok(bounces.size() >= 1 and bounces.size() <= 3 and bounces[0].keep == 0.45 and csb.size() - 1 <= 5 and shape(evb).en[0].end == "lodge", "a fast steep send at tier 1 bounces off the held floor (%s)" % names(evb))
++	var Ss := fresh(1)
++	var evs: Array = chain(Ss, tower(Ss), 1.0, 1.7, true, 800.0, 0.5)
++	ok(shape(evs).cs.filter(func(e): return e.keep > 0.0 and not e.punch and e.k > 0.0).is_empty() and shape(evs).en[0].end == "lodge", "under 900 he lodges on the held floor (%s)" % names(evs))
++	var Sh2 := fresh(1)
++	var evh2: Array = chain(Sh2, tower(Sh2), 1.0, 0.5, true, 3500.0, 0.5)
++	ok(shape(evh2).cs.filter(func(e): return e.keep > 0.0 and not e.punch and e.k > 0.0).is_empty(), "shallower than 40 degrees to the slab he lodges (%s)" % names(evh2))
+ 	# --- the angle gate
+ 	for tn in [0.15, 2.5]:
+ 		var Sg := fresh(1)
+@@ -243,6 +255,8 @@ func _init() -> void:
+ 	var worstT: float = 0.0
+ 	var ends: Dictionary = {}
+ 	var bad: int = 0
++	var links: int = 0
++	var bounced: int = 0
+ 	for n in range(160):
+ 		var Sr := fresh(1 + n % 6)
+ 		var cand: Array = Sr.buildings.filter(func(b): return b.floors >= 5 and b.alive)
+@@ -254,6 +268,8 @@ func _init() -> void:
+ 		var shr: Dictionary = shape(evr)
+ 		if shr.cs.is_empty():
+ 			continue
++		links += evr.filter(func(e): return e.type == "chain_link").size()
++		bounced += shr.cs.filter(func(e): return e.k > 0.0 and not e.punch and e.keep > 0.0).size()
+ 		runs += 1
+ 		if shr.en.size() != 1:
+ 			bad += 1
+@@ -263,7 +279,8 @@ func _init() -> void:
+ 		ends[shr.en[0].end] = int(ends.get(shr.en[0].end, 0)) + 1
+ 		if Sr.fighters[0].interior != null:
+ 			bad += 1
+-	ok(runs > 60 and bad == 0 and worstC <= 5 and worstT <= 2.5001, "%d random chains: one end each, at most %d contacts, longest %.2f s, none left running (ends %s)" % [runs, worstC, worstT, str(ends)])
++	ok(runs > 60 and bad == 0 and worstC <= 5 and worstT <= 2.5001, "%d random chains: one end each, at most %d contacts, longest %.2f s, none left running (ends %s; %d bounces, %d links to a next tower)" % [runs, worstC, worstT, str(ends), bounced, links])
++	ok(bounced > 0, "bounces happen in the random chains")
+ 	c.interiorChain = 0
+ 	print("INTERIOR: %d check(s) failed" % fails)
+ 	quit()
+diff --git a/sim/world/tools/props_check.gd b/sim/world/tools/props_check.gd
+new file mode 100644
+index 0000000..4741fcf
+--- /dev/null
++++ b/sim/world/tools/props_check.gd
+@@ -0,0 +1,71 @@
++extends SceneTree
++# The throwable objects' hold points (docs/world/prop-hold-points.md; data/biomes/props.json; WorldProps):
++#   godot --headless --path . --script res://sim/world/tools/props_check.gd
++var fails: int = 0
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func near(a: Array, b: Array, e: float = 0.0001) -> bool:
++	return a.size() == 3 and b.size() == 3 and absf(a[0] - b[0]) < e and absf(a[1] - b[1]) < e and absf(a[2] - b[2]) < e
++
++
++func _init() -> void:
++	ok(WorldProps.dataErrors().is_empty(), "props.json loads clean (%s)" % str(WorldProps.dataErrors()))
++	var cl: Dictionary = WorldProps.classes()
++	ok(cl.keys() == ["bike", "sedan", "van", "bus"], "the four classes of Art's cars (%s)" % str(cl.keys()))
++	var art = JSON.parse_string(FileAccess.open("res://data/art/vehicles.json", FileAccess.READ).get_as_text())
++	var same: bool = true
++	for k in cl:
++		var v = art.vehicles[k]
++		if int(cl[k].length) != int(v.length) or int(cl[k].height) != int(v.height) or int(cl[k].mass) != int(v.mass_class) or int(cl[k].throwTier) != int(v.throw_tier):
++			same = false
++	ok(same, "each box, mass class and first tier is Art's (data/art/vehicles.json)")
++	# every class has all six slots and every point lies in its box
++	var inbox: bool = true
++	for k in cl:
++		var c = cl[k]
++		for sl in WorldProps.SLOTS:
++			var p: Array = WorldProps.local(k, sl)
++			if p.size() != 3 or absf(p[0]) > float(c.length) * 0.5 + 0.001 or p[1] < 0.0 or p[1] > float(c.height) + 0.001 or absf(p[2]) > float(c.depth) * 0.5 + 0.001:
++				inbox = false
++	ok(inbox, "all six hold points of every class lie inside its box")
++	ok(WorldProps.local("tank", "frame").is_empty() and WorldProps.local("bike", "wing").is_empty() and WorldProps.holdPoint("tank", "top", 0.0, 0.0, 0.0).is_empty(), "an unknown class or slot gives []")
++	# placement: no turn, facing +1 is the local point moved to the prop's place
++	var p0: Array = WorldProps.holdPoint("sedan", "underside_r", 1000.0, 5.0, -20.0)
++	ok(near(p0, [1000.0 + 54.0, 5.0 + 12.6, -20.0]), "unturned it is the local point moved to the prop's place (%s)" % str(p0))
++	# facing -1 mirrors x: l and r swap places
++	var pl: Array = WorldProps.holdPoint("sedan", "underside_l", 1000.0, 5.0, 0.0, 0.0, -1.0)
++	ok(near(pl, [1000.0 + 54.0, 5.0 + 12.6, 0.0]), "turned about (facing -1) the left hold is where the right one was (%s)" % str(pl))
++	# a turn keeps every point's distance from the middle of the box
++	var keeps: bool = true
++	for k in cl:
++		var hm: float = float(cl[k].height) * 0.5
++		for sl in WorldProps.SLOTS:
++			var l: Array = WorldProps.local(k, sl)
++			var d0: float = sqrt(l[0] * l[0] + (l[1] - hm) * (l[1] - hm))
++			for t in [0.3, 1.2, 2.5, -1.7, 3.14159]:
++				var w: Array = WorldProps.holdPoint(k, sl, 500.0, 40.0, 0.0, t)
++				var dx: float = SimWrap.sdx(500.0, w[0])
++				var d1: float = sqrt(dx * dx + (w[1] - 40.0 - hm) * (w[1] - 40.0 - hm))
++				if absf(d1 - d0) > 0.001:
++					keeps = false
++	ok(keeps, "a turn about the middle of the box keeps each point's distance from it")
++	# a quarter turn moves the front end to the top
++	var q: Array = WorldProps.holdPoint("bus", "end_b", 0.0, 0.0, 0.0, PI * 0.5)
++	var hmb: float = float(cl.bus.height) * 0.5
++	ok(absf(q[1] - (hmb + 0.5 * float(cl.bus.length))) < 0.01 and absf(SimWrap.sdx(0.0, q[0]) + (WorldProps.local("bus", "end_b")[1] - hmb)) < 0.01, "a quarter turn (counter-clockwise) puts the bus's front end at the top (%s)" % str(q))
++	# the seam: a prop astride x = 0 wraps its points
++	var sw: Array = WorldProps.holdPoint("bus", "end_a", 4.0, 0.0, 0.0)
++	ok(sw[0] > 0.0 and sw[0] < SimConst.NC * SimConst.COL and sw[0] > SimConst.NC * SimConst.COL - 300.0, "a prop at x = 4 has its rear end across the planet's seam (x %.1f)" % sw[0])
++	# all six at once, and the same every call
++	var all1: Dictionary = WorldProps.holdPoints("van", 300.0, 2.0, 5.0, 0.7, -1.0)
++	var all2: Dictionary = WorldProps.holdPoints("van", 300.0, 2.0, 5.0, 0.7, -1.0)
++	ok(all1.size() == 6 and str(all1) == str(all2), "holdPoints gives the six by name, the same every call")
++	ok(WorldProps.dataHash().length() == 16, "the data has a hash (%s)" % WorldProps.dataHash())
++	print("PROPS: %d check(s) failed" % fails)
++	quit()
+diff --git a/sim/world/tools/props_check.gd.uid b/sim/world/tools/props_check.gd.uid
+new file mode 100644
+index 0000000..b37ca6d
+--- /dev/null
++++ b/sim/world/tools/props_check.gd.uid
+@@ -0,0 +1 @@
++uid://dai42y2gbb58w
+diff --git a/sim/world/tools/repeat_check.gd b/sim/world/tools/repeat_check.gd
+new file mode 100644
+index 0000000..d8a41ce
+--- /dev/null
++++ b/sim/world/tools/repeat_check.gd
+@@ -0,0 +1,138 @@
++extends SceneTree
++# Repeats escalate (Orb, homework 30; docs/design/buildings.md section 6.1; brunt.json repeatMarks, repeatCraterGrow):
++#   godot --headless --path . --script res://sim/world/tools/repeat_check.gd
++# A send into a building already marked meets it one tier higher for each mark, at most two; a send into ground already cratered deepens and widens that crater.
++var fails: int = 0
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func fresh(seed: int = 1) -> SimState:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, seed, {}, {"intro": false})
++	S.out.fx.clear()
++	return S
++
++
++func house(S: SimState):
++	for b in S.buildings:
++		if b.floors < WorldBrunt.FLOORS_MIN and int(b.row) == 1 and b.alive:
++			return b
++	return null
++
++
++## One launch into building b at a fixed speed (a straight, shallow send), by a tier-2 launcher; returns the building_hit event.
++func send(S: SimState, b, tier: float = 2.0):
++	var A = S.fighters[1]
++	var D = S.fighters[0]
++	A.tier = tier
++	A.hp = 1.0e9
++	D.hp = 1.0e9
++	var dir: float = 1.0
++	var edge: float = SimWrap.wrap(b.x - dir * b.w * 0.5)
++	D.state = "launched"
++	D.launchBy = A
++	D.launchT = 1.0
++	D.launchSpecial = false
++	D.flightHits = 0
++	D.splashed = PackedInt32Array()
++	D.chainEvt = WorldCollateral.beginEvent(S, "chain", A)
++	D.vx = 3000.0
++	D.vy = 100.0
++	D.x = SimWrap.wrap(edge - 6.0)
++	D.y = WorldStructures.baseY(S, b) + b.h * 0.3
++	S.out.fx.clear()
++	WorldBrunt.hit(S, D, b, D.y, edge, dir)
++	var hit = null
++	for e in S.out.fx:
++		if e.type == "building_hit":
++			hit = e
++	S.out.fx.clear()
++	WorldBrunt.endFlight(S, D)
++	D.state = "free"
++	return hit
++
++
++func _init() -> void:
++	var c: Dictionary = WorldBrunt.cfg()
++	ok(WorldBrunt.dataErrors().is_empty(), "brunt.json loads clean (%s)" % str(WorldBrunt.dataErrors()))
++	ok(int(c.repeatMarks) == 0 and float(c.repeatCraterGrow) == 1.25, "the switch is off in the data (repeatMarks %d), the crater factor 1.25" % int(c.repeatMarks))
++	# --- off: no mark is kept, the tier is the launch's
++	var S0 := fresh(1)
++	var h0 = house(S0)
++	send(S0, h0)
++	ok(h0.marks == 0 and WorldBrunt.tierAt(S0, h0, 2.0) == 2.0, "switch off: a hit leaves no mark and the tier is the launch's")
++	# --- on: one tier higher for each mark, at most two
++	c.repeatMarks = 2
++	var S := fresh(1)
++	var tw = null
++	for b in S.buildings:
++		if b.floors >= 9 and int(b.row) == 1 and b.alive:
++			tw = b
++			break
++	ok(WorldBrunt.tierAt(S, tw, 2.0) == 2.0, "an unmarked building meets the launch's tier (2)")
++	var amounts: Array = []
++	var hs = house(S)
++	var hb: Array = []
++	for i in range(4):
++		hs.hp = hs.maxhp
++		hs.alive = true
++		var e = send(S, hs)
++		hb.append(e)
++	ok(hs.marks == 4, "each hit marks the building (%d marks after four)" % hs.marks)
++	var tf: Array = c.tierFactor
++	ok(WorldBrunt.tierAt(S, hs, 2.0) == 4.0, "and the tier is one higher per mark, at most two (tier 2 meets 4)")
++	var ok2: bool = hb.size() == 4 and hb[0] != null
++	if ok2:
++		var r1: float = hb[1].amount / hb[0].amount
++		var r2: float = hb[2].amount / hb[0].amount
++		var r3: float = hb[3].amount / hb[0].amount
++		var w1: float = tf[2] / tf[1]
++		var w2: float = tf[3] / tf[1]
++		ok(absf(r1 - w1) < 0.02 * w1 and absf(r2 - w2) < 0.02 * w2 and absf(r3 - w2) < 0.02 * w2, "the same send does %.2fx, %.2fx, then %.2fx the first one's damage (the ladder's %.2f and %.2f, capped)" % [r1, r2, r3, w1, w2])
++	else:
++		ok(false, "four sends gave four events")
++	# --- the planner reads the same
++	var pl: Array = WorldBrunt.chainPlan(S, 2.0, false, hs, {"y": hs.h * 0.3, "spN": 3000.0, "vx": 3000.0, "vy": 100.0, "t": 0.5}, 1.0)
++	var dmg_plan: float = pl[0].dmg
++	var oc: Dictionary = WorldBrunt.outcomeOf(S, hs, hs.h * 0.3, 3000.0, 4.0, 0, false)
++	ok(absf(dmg_plan - oc.dmg) < 0.001, "the planner meets the marked building at the same tier (plan %.1f, outcome %.1f)" % [dmg_plan, oc.dmg])
++	# --- the hash: marks fold in only when set
++	var Sh := fresh(1)
++	var hA: String = str(SimHash.stateHash(Sh).gameplay)
++	Sh.buildings[3].marks = 1
++	var hB: String = str(SimHash.stateHash(Sh).gameplay)
++	Sh.buildings[3].marks = 0
++	var hC: String = str(SimHash.stateHash(Sh).gameplay)
++	ok(hA != hB and hA == hC, "a mark changes the state hash and none leaves it as it was")
++	# --- ground: an impact on cratered ground deepens and widens that crater
++	var G := fresh(1)
++	var X: float = 4800.0
++	var A = G.fighters[1]
++	var r0 = WorldCrater.dig(G, X, 1.0, A, "impact", 0.0, 1.0)
++	var col0: int = int(floor(SimWrap.wrap(X) / SimConst.COL))
++	var floor0: float = G.deform[col0]
++	var depthed: Array = [r0.depth] if r0 != null else []
++	var radii: Array = [r0.r] if r0 != null else []
++	for i in range(3):
++		var rn = WorldCrater.dig(G, X + 30.0, 1.0, A, "impact", 0.0, 1.0)
++		if rn != null:
++			radii.append(rn.r)
++			depthed.append(rn.depth)
++			ok(absf(SimWrap.sdx(rn.x, r0.x)) < 1.0, "repeat %d digs at the old crater's centre (not %.0f beside it)" % [i + 1, 30.0])
++	ok(radii.size() >= 3 and radii[1] > radii[0] * 1.2 and radii[2] > radii[1] * 1.2, "off: see the next line; on, the first two repeats widen it by 1.25 (%s)" % str(radii))
++	ok(G.deform[col0] < floor0 - 1.0, "and the ground at its centre is lower than after the first impact (%.1f against %.1f)" % [G.deform[col0], floor0])
++	ok(radii.size() < 4 or radii[3] <= radii[2] * 1.001, "the third repeat grows it no more (%s)" % str(radii))
++	# the same off
++	c.repeatMarks = 0
++	var Go := fresh(1)
++	var q0 = WorldCrater.dig(Go, X, 1.0, Go.fighters[1], "impact", 0.0, 1.0)
++	var q1 = WorldCrater.dig(Go, X + 30.0, 1.0, Go.fighters[1], "impact", 0.0, 1.0)
++	ok(q0 != null and (q1 == null or q1.r <= q0.r * 1.001), "off: a second impact beside it is today's (the same size or too dented to dig)")
++	c.repeatMarks = 0
++	print("REPEAT: %d check(s) failed" % fails)
++	quit()
+diff --git a/sim/world/tools/repeat_check.gd.uid b/sim/world/tools/repeat_check.gd.uid
+new file mode 100644
+index 0000000..300a464
+--- /dev/null
++++ b/sim/world/tools/repeat_check.gd.uid
+@@ -0,0 +1 @@
++uid://d30km18nilnh1
+diff --git a/sim/world/tools/switchon_check.gd b/sim/world/tools/switchon_check.gd
+new file mode 100644
+index 0000000..c935dfb
+--- /dev/null
++++ b/sim/world/tools/switchon_check.gd
+@@ -0,0 +1,69 @@
++extends SceneTree
++# Every World switch on (interiorChain 1, repeatMarks 2): AI matches play, the events are well formed, and the same seed plays the same twice.
++#   godot --headless --path . --script res://sim/world/tools/switchon_check.gd -- [--seeds=6] [--ticks=7200]
++var fails: int = 0
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func play(seed: int, ticks: int) -> Dictionary:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, seed, {}, {"intro": false})
++	var ic: int = 0
++	var ie: int = 0
++	var bad: int = 0
++	var bounces: int = 0
++	var links: int = 0
++	for t in range(ticks):
++		SimCore.step(S)
++		for e in S.out.fx:
++			if e.type == "interior_contact":
++				ic += 1
++				if absf(e.nx * e.nx + e.ny * e.ny - 1.0) > 0.0001 or e.vn >= 0.0:
++					bad += 1
++				if e.k > 0.0 and not e.punch and e.keep > 0.0:
++					bounces += 1
++			elif e.type == "interior_end":
++				ie += 1
++			elif e.type == "chain_link":
++				links += 1
++		S.out.fx.clear()
++		if S.game.ko != null:
++			break
++	var marks: int = 0
++	for b in S.buildings:
++		marks += b.marks
++	return {"hash": str(SimHash.stateHash(S).gameplay), "ic": ic, "ie": ie, "bad": bad, "bounces": bounces, "links": links, "marks": marks, "ticks": S.tick}
++
++
++func _init() -> void:
++	var seeds: int = 6
++	var ticks: int = 7200
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--seeds="):
++			seeds = int(a.substr(8))
++		elif a.begins_with("--ticks="):
++			ticks = int(a.substr(8))
++	var c: Dictionary = WorldBrunt.cfg()
++	c.interiorChain = 1
++	c.repeatMarks = 2
++	var tot := {"ic": 0, "ie": 0, "bad": 0, "bounces": 0, "links": 0, "marks": 0}
++	var same: int = 0
++	for s in range(1, seeds + 1):
++		var r1: Dictionary = play(s, ticks)
++		var r2: Dictionary = play(s, ticks)
++		if r1.hash == r2.hash and r1.ic == r2.ic:
++			same += 1
++		for k in tot:
++			tot[k] += r1[k]
++	ok(same == seeds, "%d of %d seeds play the same twice (hash and events)" % [same, seeds])
++	ok(tot.bad == 0 and tot.ic == 0 or tot.bad == 0, "every interior_contact is well formed (%d contacts, %d ends, %d bounces, %d links, %d marks on buildings)" % [tot.ic, tot.ie, tot.bounces, tot.links, tot.marks])
++	ok(tot.ie <= tot.ic, "no end without a contact before it")
++	c.interiorChain = 0
++	c.repeatMarks = 0
++	print("SWITCHON: %d check(s) failed" % fails)
++	quit()
+diff --git a/sim/world/tools/switchon_check.gd.uid b/sim/world/tools/switchon_check.gd.uid
+new file mode 100644
+index 0000000..8c64c2c
+--- /dev/null
++++ b/sim/world/tools/switchon_check.gd.uid
+@@ -0,0 +1 @@
++uid://djkw8ibmyr4ea
+diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
+index f5545f7..0b97da6 100644
+--- a/tools/fixtures/cases.json
++++ b/tools/fixtures/cases.json
+@@ -292408,6 +292408,57 @@
+         "pointer": "/meterNorm"
+       }
+     },
++    {
++      "id": "props-schema-version",
++      "schema": "biomes-props.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/props.json",
++          "set": {
++            "/schema": "biomes.props/2"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "const",
++        "pointer": "/schema"
++      }
++    },
++    {
++      "id": "props-hold-short",
++      "schema": "biomes-props.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/props.json",
++          "set": {
++            "/classes/bike/holds/top": [
++              0,
++              56
++            ]
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minItems",
++        "pointer": "/classes/bike/holds/top"
++      }
++    },
++    {
++      "id": "props-length-zero",
++      "schema": "biomes-props.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/props.json",
++          "set": {
++            "/classes/sedan/length": 0
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/classes/sedan/length"
++      }
++    },
+     {
+       "id": "vfx-catastrophe-alpha-over",
+       "schema": "vfx-catastrophe.schema.json",
+diff --git a/tools/schemas/biomes-brunt.schema.json b/tools/schemas/biomes-brunt.schema.json
+index ee507ca..be07724 100644
+--- a/tools/schemas/biomes-brunt.schema.json
++++ b/tools/schemas/biomes-brunt.schema.json
+@@ -258,6 +258,54 @@
+       "minimum": 0,
+       "maximum": 2,
+       "description": "The share of the face's per-speed damage a slab does him."
++    },
++    "interiorBounceSpeed": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 100000,
++      "description": "The speed at which a held slab bounces him instead of lodging (Game Design: 900)."
++    },
++    "interiorBounceTanMin": {
++      "type": "number",
++      "exclusiveMinimum": 0,
++      "maximum": 10,
++      "description": "The shallowest angle to the slab that bounces: the tangent of 40 degrees."
++    },
++    "interiorBounceTanMax": {
++      "type": "number",
++      "exclusiveMinimum": 0,
++      "maximum": 10,
++      "description": "The steepest angle to the slab that bounces: the tangent of 70 degrees."
++    },
++    "interiorBounceKeep": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 1,
++      "description": "The share of the normal speed a bounce keeps (the ground's first vertKeep)."
++    },
++    "interiorBounceTangent": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 1,
++      "description": "The share of the along-slab speed a bounce keeps (the ground's tangentKeep)."
++    },
++    "interiorLinkSpeed": {
++      "type": "number",
++      "minimum": 0,
++      "maximum": 100000,
++      "description": "The speed he must leave a tower's far face with for the next tower's link to play (Game Design: 900)."
++    },
++    "repeatMarks": {
++      "type": "integer",
++      "minimum": 0,
++      "maximum": 4,
++      "description": "Repeats escalate (Orb, homework 30): 0 off, else the most marks a building counts, each one tier higher for the next send, and the most repeats a crater grows (Game Design: 2)."
++    },
++    "repeatCraterGrow": {
++      "type": "number",
++      "minimum": 1,
++      "maximum": 3,
++      "description": "The radius factor an impact on already cratered ground asks of the old crater."
+     }
+   },
+   "additionalProperties": false,
+diff --git a/tools/schemas/biomes-props.schema.json b/tools/schemas/biomes-props.schema.json
+new file mode 100644
+index 0000000..01145f4
+--- /dev/null
++++ b/tools/schemas/biomes-props.schema.json
+@@ -0,0 +1,163 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "meridian/biomes-props",
++  "title": "biomes.props/1",
++  "description": "data/biomes/props.json: the throwable objects' hold points (docs/world/prop-hold-points.md; WorldProps). Per class: its box, mass class, first tier that lifts it, and the six hold points (frame, underside_l, underside_r, top, end_a, end_b) as [x, y, z] in the prop's own frame. Every key required. Version field: schema. Policy: closed except keys starting with an underscore.",
++  "type": "object",
++  "required": [
++    "schema",
++    "slots",
++    "classes"
++  ],
++  "properties": {
++    "schema": {
++      "const": "biomes.props/1"
++    },
++    "_about": {
++      "type": "string"
++    },
++    "slots": {
++      "const": [
++        "frame",
++        "underside_l",
++        "underside_r",
++        "top",
++        "end_a",
++        "end_b"
++      ],
++      "description": "The hold-point names, in order."
++    },
++    "classes": {
++      "type": "object",
++      "minProperties": 1,
++      "propertyNames": {
++        "pattern": "^[a-z][a-z_]*$"
++      },
++      "additionalProperties": {
++        "type": "object",
++        "required": [
++          "length",
++          "height",
++          "depth",
++          "mass",
++          "throwTier",
++          "holds"
++        ],
++        "additionalProperties": false,
++        "properties": {
++          "length": {
++            "type": "number",
++            "minimum": 1,
++            "maximum": 2000,
++            "description": "Along x, front at +x (world units)."
++          },
++          "height": {
++            "type": "number",
++            "minimum": 1,
++            "maximum": 2000,
++            "description": "Up from the ground under the centre."
++          },
++          "depth": {
++            "type": "number",
++            "minimum": 1,
++            "maximum": 2000,
++            "description": "Across z."
++          },
++          "mass": {
++            "type": "integer",
++            "minimum": 1,
++            "maximum": 64,
++            "description": "Art's mass class (bike 1, sedan 3, van 4, bus 8)."
++          },
++          "throwTier": {
++            "type": "integer",
++            "minimum": 1,
++            "maximum": 4,
++            "description": "The first power tier that can lift it."
++          },
++          "holds": {
++            "type": "object",
++            "required": [
++              "frame",
++              "underside_l",
++              "underside_r",
++              "top",
++              "end_a",
++              "end_b"
++            ],
++            "additionalProperties": false,
++            "properties": {
++              "frame": {
++                "type": "array",
++                "minItems": 3,
++                "maxItems": 3,
++                "items": {
++                  "type": "number",
++                  "minimum": -2000,
++                  "maximum": 2000
++                },
++                "description": "[x, y, z] in the prop's own frame (world units)"
++              },
++              "underside_l": {
++                "type": "array",
++                "minItems": 3,
++                "maxItems": 3,
++                "items": {
++                  "type": "number",
++                  "minimum": -2000,
++                  "maximum": 2000
++                },
++                "description": "[x, y, z] in the prop's own frame (world units)"
++              },
++              "underside_r": {
++                "type": "array",
++                "minItems": 3,
++                "maxItems": 3,
++                "items": {
++                  "type": "number",
++                  "minimum": -2000,
++                  "maximum": 2000
++                },
++                "description": "[x, y, z] in the prop's own frame (world units)"
++              },
++              "top": {
++                "type": "array",
++                "minItems": 3,
++                "maxItems": 3,
++                "items": {
++                  "type": "number",
++                  "minimum": -2000,
++                  "maximum": 2000
++                },
++                "description": "[x, y, z] in the prop's own frame (world units)"
++              },
++              "end_a": {
++                "type": "array",
++                "minItems": 3,
++                "maxItems": 3,
++                "items": {
++                  "type": "number",
++                  "minimum": -2000,
++                  "maximum": 2000
++                },
++                "description": "[x, y, z] in the prop's own frame (world units)"
++              },
++              "end_b": {
++                "type": "array",
++                "minItems": 3,
++                "maxItems": 3,
++                "items": {
++                  "type": "number",
++                  "minimum": -2000,
++                  "maximum": 2000
++                },
++                "description": "[x, y, z] in the prop's own frame (world units)"
++              }
++            }
++          }
++        }
++      }
++    }
++  },
++  "additionalProperties": false
++}
+diff --git a/tools/schemas/map.json b/tools/schemas/map.json
+index 467744b..befea24 100644
+--- a/tools/schemas/map.json
++++ b/tools/schemas/map.json
+@@ -431,6 +431,10 @@
+       "match": "data/biomes/collateral.json",
+       "schema": "biomes-collateral.schema.json"
+     },
++    {
++      "match": "data/biomes/props.json",
++      "schema": "biomes-props.schema.json"
++    },
+     {
+       "match": "data/input/actions.json",
+       "schema": "input-actions.schema.json"

@@ -74,3 +74,7 @@ No emitter is added to `sim/core/fx.gd`: `interior.gd` uses `SimFx.contactEvent`
 | :--- | :--- |
 | `interior-chain.diff` | The patch on HEAD: `brunt.gd`, `contact.gd`, `state.gd`, `hash.gd`, `view/fx.gd`, `brunt.json`, the schema, and the new `interior.gd`, `interior_check.gd` (+ `.uid`) |
 | `mk_interior.py`, `mk_wbc_lib.py`, `interior.gd.txt` | The script that makes it (`python mk_interior.py <root> interior.gd.txt`) and the new module |
+
+## Since (2026-10-18)
+
+The chain is applied (7f213f0c). Game Design's rulings after it (a held slab bounces at 900 or more between 40 and 70 degrees; the next tower's link from the far face at 900 or more; repeats escalate; the planner ends a plan at a tower the chain takes) are in `../repeats-props/`, parked.
