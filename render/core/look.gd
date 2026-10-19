@@ -573,7 +573,7 @@ const FLASH_FAMILY: Array = ["P", "A"]
 const SKIN := "#efc7a2"
 const ARM := "#e6b995"
 const LEGS := "#1b1f2a"
-const CAPE := "#7a1414"
+const CAPE := "#6f342c"   # brick: Orb's pick 2026-10-18 (the old #7a1414 read as a saturated-red flash in the ring of five)
 const EYE := "#111111"
 ## Afterimages (the sim's `after` events: a dodge, an escape, each tick of a rush; ParticleView): the thin outline of
 ## a figure where the fighter was, in his lane colour. How long one shows at most (the event's own life may be
