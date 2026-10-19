@@ -125,3 +125,19 @@ Button: **"I understand, start"**. A second, quieter control: **"Not now"** (bac
 - **The toggle's own label** must be true: "Reduce flashing: on. Turning it off restores full effects, which flash more." Never "safe", "tested" or "compliant".
 
 **On Camera's causes (for the fix, not a ruling):** a whole-frame cut after a bright event is a second whole-screen luminance change in the same second as the blast; treat it as a counted event, prefer a dissolve of at least 0.3 s, and a camera inset that opens by revealing a brighter or darker field is a whole-area step. Both go in the registry.
+
+## Addendum 11 (2026-10-18): Orb's decision to put the demo back up before addendum 10 is met
+**This is Orb's decision as owner, relayed by the EP (homework 36: "I want the public page back up with a disclaimer... absolutely try to fix it and leave safeguards in place"). It is not a Legal pass and does not meet addendum 10.** What the facts are: today's HEAD with the brick coat; with Reduce flashing on, 58 of 60 rehearsal clips and seeds read under 3 on the primary reading and **2 read 3.5, which is over the standard itself**; full effects are not offered (locked on, toggle hidden); the link goes to a limited number of people; noindex, no promotion.
+
+**My view, for the record.** Showing a scene that goes over the recommended limit to a person with photosensitive epilepsy can cause a seizure; a warning and a decision to continue lower the risk but do not remove it, and I cannot call this state safe. The owner may take that risk on a free page with an honest warning, a limited audience and the safeguards below, and I have no legal objection to a free, unpromoted page that tells the truth. I would not accept it as a standing state or for any wider release.
+
+**The gate's words (first screen):**
+> This game contains flashing effects. Our own automated check found some scenes that go over the recommended limit of three flashes a second, and we are working to fix them. No independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.
+
+Button **"I understand, start"**; second control **"Not now"** (back to the holding page). Small line under the button: **"Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes."** Changes from Tools' placeholder: "we are still fixing them" becomes "we are working to fix them" (a promise of completion is avoided), and "No independent analyser has been run" is restored (addendum 5). Never "safe", "tested" or "compliant".
+
+**One plain sentence on flat panels (for Orb; general knowledge, not checked today):** "Flat panels remove the refresh flicker that old monitors had, but they do not change flashes in the picture itself, and bright, high-contrast screens (OLED and HDR) can make those flashes stronger, so the limit still applies."
+
+**Safeguards that stay (not waived):** click-through with no autoplay and nothing playing behind it, fitting small screens; Reduce flashing locked on, toggle hidden, and the export check that fails if the lock is off; noindex, no social card, no promotion and no public posting of the link by us; the pinned, measured commit recorded with its hashes; the kill switch tested and one command; the AI line and About, the Godot and Open Sans notices, the privacy line; the placeholder-name scan on the published build; the extra nightly seeds continuing, **with any new scene over 3.5 on the primary reading, any report from anyone, or any change of the published commit without a re-run as the take-down trigger.** When the link is sent to people, send the same warning in the message itself, so it is read before the page opens.
+
+**What ends it:** addendum 10's pass on the published commit, or seven days (to 2026-10-25) without Orb renewing the decision in writing. The measuring continues overnight and the full fix stays the goal.

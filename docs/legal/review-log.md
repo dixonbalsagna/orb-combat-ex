@@ -180,6 +180,7 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-158 | Narrative's keepsakes, titles and temptation lines (rewards-words.md) | Narrative | Low | Pass; rename Jar of Ash; Fused Sand Chip keeps 'blast' only; no paid hidden rewards (ln03) | Open until renamed |
 | RL-159 | Art's finisher styles: Open Palm, Held Breath, Both Roads (hero-forms-look.md §3) | Art | Medium | Pass with conditions (h10): offered hand is not a beckon; raised hand at shoulder height or lower; sheets not seen | Open until drawn and linted |
 | RL-160 | Interim without a signature close-up (Camera) | Camera, Tools | Low | No objection; page copy must not describe it; measured under full effects when the toggle returns | Open until the page text is checked |
+| RL-161 | Orb's decision (2026-10-18, homework 36): the demo goes back up behind the click-through with a disclaimer before addendum 10 is met; HEAD with the brick coat, 58 of 60 clips under 3, 2 at 3.5 on the primary reading, Reduce flashing locked on, limited link | Orb (owner), EP, Tools | High | ORB'S DECISION, NOT A LEGAL PASS. No legal objection to a free, unpromoted, truthful page; gate words and safeguards in addendum 11; take-down on any new scene over 3.5, any report, or an unmeasured commit change; ends on addendum 10's pass or 2026-10-25 without Orb renewing in writing | Open |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
