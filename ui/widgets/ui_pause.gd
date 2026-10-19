@@ -46,7 +46,7 @@ static func plan(vp: Vector2, s: float, dp: float, touch: bool, st: Dictionary) 
 	var avail_w: float = vp.x - 2.0 * margin - 2.0 * pad
 	var avail_h: float = vp.y - 2.0 * my - 2.0 * pad
 	var widest: float = UiText.width(title, fs_title) - tm * 0.9
-	var facts: Array = st.get("facts", []) if over else []
+	var facts: Array = st.get("facts", []) if (over or bool(st.get("facts_always", false))) else []   # facts_always: minimal_hud puts the toll on the pause screen too
 	for ft in facts:
 		widest = maxf(widest, UiText.width(str(ft), fs_small) + tm * 0.9)   # a line of facts may widen the card (up to the screen)
 	for id in list:

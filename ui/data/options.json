@@ -6,6 +6,7 @@
     "silhouette": { "default": false, "group": "display", "label": "Body figure", "help": "A small body figure beside each nameplate that shows wear, always on. On in training and by the accessibility default.", "accessibility": true },
     "crown_always": { "default": false, "group": "accessibility", "label": "Always show damage rings", "help": "The rings that show each fighter's damage stay up all the time instead of fading. Flashes over the head still show; the rings dim under one.", "accessibility": true },
     "brink_cue": { "default": true, "group": "display", "label": "Brink ring", "help": "A thin faint ring around a fighter on the brink." },
+    "edge_captions": { "default": false, "group": "accessibility", "label": "Cue captions", "help": "A short line at the bottom edge names a cue as it happens, such as a beam struggle or an opening. Nothing is drawn on the fighters.", "accessibility": true },
     "captions": { "default": true, "group": "accessibility", "label": "Captions", "help": "Bracketed sound tags such as [wince] on spoken lines.", "accessibility": true },
     "latch_charge": { "default": false, "group": "controls", "label": "Latched charge", "help": "A tap on Medium or Heavy starts its wind-up and the next press lets it go, for when holding a button is hard. Off: hold to charge.", "accessibility": true },
     "latch_charge_p2": { "default": false, "group": "controls", "label": "Latched charge, player 2", "help": "The same for player two when two people play. Player one's is the one above.", "accessibility": true },

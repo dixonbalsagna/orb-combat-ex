@@ -54,6 +54,7 @@ var opts: Dictionary = {
 	"charges_off_p2": false,
 	"reduced_motion": false,   # no flicker, shimmer, shrinking rings or slide-ins; every cue still has a shape
 	"captions": true,          # bracketed gesture tags on barks
+	"edge_captions": false,    # a short line at the bottom edge names a cue as it happens (accessibility, off by default)
 	"thickness": 1.0,          # crown arc thickness multiplier (an accessibility option)
 	"region_label": false,     # the place name under the planet strip's camera box
 	"show_feed": false,        # the director feed (debug toggle)
@@ -183,6 +184,7 @@ var touch_state_fn: Callable = Callable()   # the host's touch state for drawing
 var _l_touchctl: UiLayer
 var feedback_fn: Callable = Callable()   # the host's report context: {commit, date, seed, setup, time, ended}; any key may be missing
 var _l_tele: UiLayer
+var _l_caption: UiLayer              # the cue caption line at the bottom edge (accessibility, off by default)
 var _l_hint: UiLayer
 var _howto_open := false
 var _howto_first := false
@@ -308,6 +310,7 @@ func _ready() -> void:
 	_l_pause = _layer(_paint_pause)
 	_l_tele = _layer(_paint_tele)     # the finisher telegraph and the tutorial hint share the banner slot (telegraph first)
 	_l_hint = _layer(_paint_hint)
+	_l_caption = _layer(_paint_caption)
 	_l_fbpill = _layer(_paint_fbpill)
 	_l_join = _layer(_paint_join)     # under the menus: the pause menu and How to play cover the join prompt, not the other way round
 	_l_pmenu = _layer(_paint_pmenu)
@@ -378,7 +381,7 @@ func _chip_layer(slot: int) -> UiLayer:
 
 
 func _all_layers() -> Array:
-	return [_l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_many, _l_tug, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_notice, _l_gate_back]
+	return [_l_caption, _l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_many, _l_tug, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_notice, _l_gate_back]
 
 
 ## Total redraws of every layer so far, for the perf counters.
@@ -633,14 +636,14 @@ func _update_layers() -> void:
 
 	# The crown layer draws only while something is up: a pop, the brink ring, a window, or the accessibility option.
 	var crown_on: bool = false
-	if bool(opts["show_crown"]) and anchor_fn.is_valid():
+	if not UiData.feature("minimal_hud") and bool(opts["show_crown"]) and anchor_fn.is_valid():   # minimal_hud: nothing on the fighters (ADR 0010, docs/design/minimal-hud.md)
 		for m in hub.models:
 			var pop_on: bool = (m.crown_a > 0.01 or bool(opts["crown_always"])) and not hub.crown_locked()
 			if pop_on or m.parry_t >= 0.0 or m.chain_t >= 0.0 or (m.brink and bool(opts["brink_cue"])):
 				crown_on = true
 	_l_crown.update_sig(_frame if crown_on else null)
 	# The beat ring: only with the option on, with anchors, outside a sim pause and the intro; redrawn in twentieths of its closing.
-	var beat_sig: Array = UiBeatRing.sig(hub.models) if (bool(opts["beat_ring"]) and anchor_fn.is_valid() and not hub.sim_paused and not hub.intro_active) else []
+	var beat_sig: Array = UiBeatRing.sig(hub.models) if (not UiData.feature("minimal_hud") and bool(opts["beat_ring"]) and anchor_fn.is_valid() and not hub.sim_paused and not hub.intro_active) else []
 	_l_beat.update_sig([reduced, beat_sig] if not beat_sig.is_empty() else null)
 
 	for m in hub.models:
@@ -656,13 +659,15 @@ func _update_layers() -> void:
 		_l_sil[m.slot].update_sig(_sil_sig(m, reduced) if layout.silhouette_on else null)
 
 	var a_toll: float = lerpf(UiLook.TOLL_REST_ALPHA, 1.0, clampf(1.0 - hub.toll_age / UiLook.TOLL_SHOW, 0.0, 1.0)) * (0.45 if cin else 1.0)
-	if UiData.feature("civilian_bar"):
+	if UiData.feature("minimal_hud"):
+		_l_toll.update_sig(null)   # minimal_hud: the toll is on the pause screen and the results, not in play
+	elif UiData.feature("civilian_bar"):
 		# The bar: whole percents, and one opacity (no brightening when it grows): the layer redraws only when the share's percent, the structures or the craters change.
 		_l_toll.update_sig([int(UiCenter.civilian_share(hub) * 100.0), hub.toll["structures"], hub.toll["craters"], int(UiCenter.BAR_ALPHA * (0.45 if cin else 1.0) * 20.0), true])
 	else:
 		_l_toll.update_sig([hub.toll["civilians"], hub.toll["pop0"], hub.toll["structures"], hub.toll["craters"], int(a_toll * 20.0)])
 
-	if strip_fn.is_valid() and _lb < 0.5:
+	if strip_fn.is_valid() and _lb < 0.5 and not UiData.feature("minimal_hud"):   # minimal_hud: no planet strip in play
 		_strip_data = strip_fn.call()
 		var segs: Array = _strip_data.get("segs", [])
 		var dead: Array = _strip_data.get("dead", [])
@@ -695,7 +700,7 @@ func _update_layers() -> void:
 		_many_marks = UiMany.held([], _many_keep, _t) if not _many_keep.is_empty() else []
 	_l_many.update_sig(UiMany.sig(_many_marks, hub) if (not _many_marks.is_empty() and _lb < 0.5) else null)
 	# The beam struggle's tug of war: between the two fighters' hands while one is on (UiTug); nothing otherwise.
-	if not hub.tug.is_empty() and anchor_fn.is_valid() and _lb < 0.5:
+	if not UiData.feature("minimal_hud") and not hub.tug.is_empty() and anchor_fn.is_valid() and _lb < 0.5:
 		_tug_plan = UiTug.plan(layout, hub.tug, [anchor_fn.call(int(hub.tug["a"])), anchor_fn.call(int(hub.tug["d"]))], layout.s, bool(opts["reduced_motion"]) or bool(opts["reduce_flashing"]))
 	else:
 		_tug_plan = {}
@@ -734,7 +739,7 @@ func _update_layers() -> void:
 		chip.update_sig(UiSplit.chip_sig(i, found["dir"], _chip_text[i], 1.0, _chip_big, [_aura_of(1 - i)]))
 
 	# The finisher struggle (beat rings on the brink fighter) and each column's prompt row.
-	_l_struggle.update_sig(UiStruggle.sig(hub, _frame) if (anchor_fn.is_valid() and not layout.portrait) else null)
+	_l_struggle.update_sig(UiStruggle.sig(hub, _frame) if (not UiData.feature("minimal_hud") and anchor_fn.is_valid() and not layout.portrait) else null)
 	var prompts_on: bool = bool(opts["show_prompts"])
 	var touch_on: bool = bool(opts["touch_ui"])
 	# Who is the player (YOU), and the control legend: it shows for 12 s from the match start, or from the moment a fighter became human.
@@ -768,7 +773,8 @@ func _update_layers() -> void:
 				var an: Dictionary = anchor_fn.call(m.slot)
 				var ap: Vector2 = an.get("pos", Vector2.ZERO)
 				var ea: Dictionary = UiHints.edge_arrow(an, layout.safe, layout.s)
-				you_sig.append([m.slot, m.you_label, int(ap.x * 0.5), int(ap.y * 0.5), int(float(an.get("h", 0.0)) * 0.5), int(float(yk["a"]) * 10.0), bool(an.get("visible", true)), bool(yk["compact"]), m.aura.to_html(false), int((ea.get("pos", Vector2.ZERO) as Vector2).x * 0.5), int((ea.get("pos", Vector2.ZERO) as Vector2).y * 0.5)])
+				if not (ea.is_empty() and UiData.feature("minimal_hud")):   # the label over the head is cut under minimal_hud; the arrow at the screen's edge (the fighter is off screen) is not
+					you_sig.append([m.slot, m.you_label, int(ap.x * 0.5), int(ap.y * 0.5), int(float(an.get("h", 0.0)) * 0.5), int(float(yk["a"]) * 10.0), bool(an.get("visible", true)), bool(yk["compact"]), m.aura.to_html(false), int((ea.get("pos", Vector2.ZERO) as Vector2).x * 0.5), int((ea.get("pos", Vector2.ZERO) as Vector2).y * 0.5)])
 			_l_hints[m.slot].update_sig(UiHints.sig(m, ha, UiHints.preset_id(m, _o()), UiHints.energy_style(m, _o()), bool(opts["reduced_motion"])) if (ha > 0.01 and layout.hints[m.slot].size.y > 0.0) else null)
 	_l_you.update_sig(you_sig if not you_sig.is_empty() else null)
 	_join_step(hub.t_now - _join_prev_t, _dt)
@@ -791,6 +797,7 @@ func _update_layers() -> void:
 	_l_fb.update_sig(UiFeedback.sig(layout.vp, _fb_state, _fb_tags, _fb_status_ok, dp, layout.s, bool(opts["touch_ui"]), "%s|%s" % [_fb_opened, bool(_fb_issue.get("fallback", false))]) if _fb_open else null)
 	_l_tele.update_sig(UiReads.telegraph_sig(hub, bool(opts["show_prompts"]), reduced))
 	_l_hint.update_sig(UiReads.hint_sig(hub))
+	_l_caption.update_sig([caption_text(), caption_rect().position.y] if (bool(opts["edge_captions"]) and caption_text() != "" and not hub.sim_paused and not hub.intro_active and _lb < 0.5) else null)
 	_l_howto.update_sig(UiHowto.sig(layout.vp, _howto_page, _howto_device(), _howto_slot(), bool(opts["touch_ui"]), dp, layout.s, _howto_preset() + str(opts["glyph_style"]) + "|%d|%d|%d|%d|%s" % [_howto_tab, _howto_held(), UiStance.live_bits(), _howto_scroll, _howto_first]) if _howto_open else null)
 
 	_l_pmenu.update_sig(UiPause.sig(pause_menu_plan()) if _pm_open else null)
@@ -1745,7 +1752,7 @@ func pause_menu_focus() -> int:
 
 
 func pause_menu_plan() -> Dictionary:
-	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts": over_facts() if _pm_over else []})
+	return UiPause.plan(layout.vp, layout.s, dp, bool(opts["touch_ui"]), {"focus": _pm_focus, "confirm": _pm_confirm, "two": _humans() >= 2, "join": join_due(), "over": _pm_over, "facts_always": UiData.feature("minimal_hud"), "facts": over_facts() if (_pm_over or UiData.feature("minimal_hud")) else []})
 
 
 func _paint_pmenu(ci: CanvasItem) -> void:
@@ -3533,13 +3540,45 @@ func _paint_you(ci: CanvasItem) -> void:
 			var an: Dictionary = anchor_fn.call(m.slot)
 			var ea: Dictionary = UiHints.edge_arrow(an, layout.safe, layout.s)
 			if ea.is_empty():
-				UiHints.draw_you(ci, m.you_label, an, layout.s, float(yk["a"]), layout.safe, m.aura, bool(yk["compact"]))
+				if not UiData.feature("minimal_hud"):
+					UiHints.draw_you(ci, m.you_label, an, layout.s, float(yk["a"]), layout.safe, m.aura, bool(yk["compact"]))
 			else:
 				UiHints.draw_you_edge(ci, m.you_label, ea, layout.s, float(yk["a"]), m.aura)   # the fighter is off screen: an arrow on the edge points to it
 
 
 func _paint_tele(ci: CanvasItem) -> void:
 	UiReads.draw_telegraph(ci, hub, layout, layout.s, bool(opts["show_prompts"]), bool(opts["reduced_motion"]))
+
+
+## The line the cue caption says now: a beam struggle while one is on, else that a launch is open for a human; "" for nothing.
+func caption_text() -> String:
+	if not hub.caption.is_empty():
+		return str(hub.caption["text"])
+	for m in hub.models:
+		if m.launcher_open and not m.ai:
+			return UiData.t("prompt.cap_open")
+	return ""
+
+
+## The cue caption's place: the bottom edge, centred, above the planet strip where there is one.
+func caption_rect() -> Rect2:
+	var fs: int = UiText.px(16.0, layout.s)
+	var txt: String = caption_text()
+	var w: float = UiText.width(txt, fs) + 28.0 * layout.s
+	var h: float = UiText.height(fs) + 12.0 * layout.s
+	var foot: float = layout.strip.position.y if (layout.strip.size.y > 0.0 and not UiData.feature("minimal_hud")) else layout.safe.end.y
+	return Rect2(layout.vp.x * 0.5 - w * 0.5, foot - h - 8.0 * layout.s, w, h)
+
+
+func _paint_caption(ci: CanvasItem) -> void:
+	if caption_text() == "":
+		return
+	var r: Rect2 = caption_rect()
+	var fs: int = UiText.px(16.0, layout.s)
+	UiText.no_outline = true
+	UiIcons.rrect(ci, r, r.size.y * 0.4, Color(UiLook.col(UiLook.SCRIM), 0.78), Color(UiLook.col(UiLook.EDGE), 0.4), 1.2)
+	UiText.draw(ci, caption_text(), Vector2(r.get_center().x, r.position.y + (r.size.y - UiText.height(fs)) * 0.5 + UiText.ascent(fs)), fs, Color(UiLook.col(UiLook.INK), 0.95), 0)
+	UiText.no_outline = false
 
 
 func _paint_hint(ci: CanvasItem) -> void:

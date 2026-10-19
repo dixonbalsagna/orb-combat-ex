@@ -75,6 +75,14 @@ var struggle: Dictionary = {}    # the finisher struggle on the brink fighter: {
 var telegraph: Dictionary = {}   # the finisher's kind while it winds up: {actor, target, kind, age, end}; the read that answers it is a stance
 var tug: Dictionary = {}         # the beam struggle (Encounter's beam_struggle, beam_pulse, beam_surge, beam_stray and beam_end cues, and Clash.mid): {a, d, end_n, k, pulse_t, age, mid (0 at a's hands to 1 at d's, -1 unknown), marks: [{slot, kind, age}], end, end_t}
 const TUG_MARK_LIFE := 0.45      # seconds a surge or a stray mark stays at the meeting point
+## The cue caption (the accessibility option edge_captions): {text, left} where `left` is seconds, or -1 until the cue ends. The HUD draws it only when the option is on.
+var caption: Dictionary = {}
+
+
+func _cap(text: String, secs: float) -> void:
+	caption = {"text": text, "left": secs} if text != "" else {}
+
+
 const TUG_END_HOLD := 1.0        # seconds the end of a struggle stays drawn
 var hint: Dictionary = {}        # the tutorial's hint line: {id, key, text, kind (hint, nudge, done), age}
 var beats: Dictionary = {}       # tutorial beat id to state (start, done, skipped)
@@ -458,7 +466,7 @@ func consume(e) -> void:
 		"chain_ender":
 			# The heavier last impact of a chain: a CHAIN xN banner (Narrative's label); the impact itself is Rendering's.
 			var cn: int = int(d.get("n", 0))
-			if cn >= 2:
+			if cn >= 2 and not UiData.feature("minimal_hud"):   # a chain counter is withdrawn (docs/design/minimal-hud.md)
 				banner = {"text": UiData.fmt("state.chain", {"n": cn}), "col": UiLook.WARN, "dur": 1.2, "age": 0.0}
 		"banner":
 			if move_names.has(UiData.display_text(str(d.get("text", ""))).strip_edges().to_upper()):   # the sim's banner is the move's key from the rename on: compare the words a player reads
@@ -764,6 +772,7 @@ func _on_blow(m: UiFighterModel, d: Dictionary) -> void:
 ## comes each tick from the bridge (`set_clash_mid`). Read-only: nothing here writes the sim.
 func _on_tug_cue(kind: String, d: Dictionary) -> void:
 	if kind == "beam_struggle":
+		_cap(UiData.t("prompt.cap_struggle"), -1.0)
 		tug = {"a": int(d.get("actor", 0)), "d": int(d.get("target", 1)), "end_n": int(d.get("n", 0)), "k": 0, "pulse_t": 99.0, "age": 0.0, "mid": 0.5, "marks": [], "end": "", "end_t": 0.0}
 		return
 	if tug.is_empty():
@@ -778,6 +787,7 @@ func _on_tug_cue(kind: String, d: Dictionary) -> void:
 			if marks.size() > 8:
 				marks.pop_front()
 		"beam_end":
+			_cap("", 0.0)
 			tug["end"] = str(d.get("text", "time"))
 			tug["end_t"] = 0.0
 			if d.has("x"):
@@ -1203,6 +1213,11 @@ func advance(dt: float) -> void:
 				tug = {}
 		elif float(tug["age"]) > 12.0:
 			tug = {}   # an end cue that never came: the struggle does not stay drawn
+			_cap("", 0.0)
+	if not caption.is_empty() and float(caption["left"]) >= 0.0:
+		caption["left"] = float(caption["left"]) - sdt
+		if float(caption["left"]) <= 0.0:
+			caption = {}
 	for m in models:
 		m.advance(dt, sdt)
 		if _lost_trail_left.has(m.slot):

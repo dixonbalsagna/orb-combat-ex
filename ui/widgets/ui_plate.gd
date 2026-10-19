@@ -102,9 +102,11 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 	UiText.defer = true
 	var left: bool = m.left_side
 	var pad: float = float(pm["pad"])
+	var minimal: bool = UiData.feature("minimal_hud")   # docs/design/minimal-hud.md: the plate keeps the name, ki and the power pips (with SIGNATURE, the ready step); the stance chip, the state chips and the ego meter go
 	var reduced: bool = bool(o.get("reduced_motion", false))
 	# A light scrim: the plate is a quiet strip on the screen's edge, not a panel (Orb: nothing in the way of the fight).
-	UiIcons.rrect(ci, rect, 10.0 * s, _c(UiLook.alpha(UiLook.SCRIM, 0.5)), _c(UiLook.alpha(UiLook.EDGE, 0.22)), maxf(1.0, 1.2 * s))
+	var shown: Rect2 = Rect2(rect.position, Vector2(rect.size.x, float(pm["ego_y"]) + float(pm["ego_h"]) + pad * 0.6)) if minimal else rect   # the rows that go leave no empty band
+	UiIcons.rrect(ci, shown, 10.0 * s, _c(UiLook.alpha(UiLook.SCRIM, 0.5)), _c(UiLook.alpha(UiLook.EDGE, 0.22)), maxf(1.0, 1.2 * s))
 	# Landscape plates are compact: the stance chip shares the name's row, and the state chips share the pips' row.
 	# Portrait plates (a narrow phone) keep separate rows.
 	var combined: bool = not bool(pm["compact"])
@@ -124,7 +126,7 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 	var word: String = UiStance.word(m.stance_kind)   # the five stances (UiStance): the held buttons, for both fighters
 	if m.stance_armed > 0.0:
 		word = UiStance.armed_word()   # an armed stance is neither held nor latched: it is for the next blow only
-	var r1: Dictionary = row1_plan(inner_w, s, pm, m.name, tag_text, m.brink and combined, word, combined)
+	var r1: Dictionary = row1_plan(inner_w, s, pm, m.name, tag_text, m.brink and combined, word, combined and not minimal)
 	var nw: float = UiText.draw(ci, str(r1["name"]), Vector2(x0 if left else x1, nb), fs, ink, -1 if left else 1, 2.0)
 	if str(r1["tag"]) != "":
 		var afs: int = int(pm["fs_state"])
@@ -197,162 +199,163 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 	var tier_rh: float = float(pm["tier_h"])
 	var sig_w: float = UiText.width(sig_label, tfs) + tier_rh * 0.9 + 16.0 * s if sig_show else 0.0
 
-	# Row 2: the stance chip (far side of the name's row in landscape), then state chips in the inward direction.
-	ry = rect.position.y + float(pm["chip_y"])
-	rh = float(pm["chip_h"])
-	var cfs: int = int(pm["fs_chip"])
-	var scol: Color = UiStance.col(m.stance_kind)
-	var isize: float = rh * 0.68
-	var cw: float = float(r1["chip_w"])   # beside the name on landscape: the whole word if it fits, else the icon alone (never left off)
-	word = str(r1["word"]) if combined else word
-	var cur: float = (inner_w - cw) if combined else 0.0
-	# A stance change pulses the chip's edge for 0.8 s, so the rival's stance (a read) is seen when it changes.
-	var flash: float = 0.0 if reduced else clampf(1.0 - m.stance_flash_t / 0.8, 0.0, 1.0)
-	_chip(ci, rect, left, pad, cur, cw, ry, rh, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(scol), 2.0 + 3.0 * flash)
-	var cx: float = (x0 + cur + (cw * 0.5 if word == "" else 8.0 * s + isize * 0.5)) if left else (x1 - cur - (cw * 0.5 if word == "" else 8.0 * s + isize * 0.5))
-	UiIcons.stance5(ci, m.stance_kind, Vector2(cx, ry + rh * 0.5), isize, _c(scol))
-	if m.stance_armed > 0.0:
-		# The ring round the icon runs down over the arming's 90 ticks (a shape: a held stance has none).
-		ci.draw_arc(Vector2(cx, ry + rh * 0.5), isize * 0.82, -PI * 0.5, -PI * 0.5 + TAU * (1.0 if reduced else clampf(m.stance_armed, 0.0, 1.0)), 24, _c(scol), maxf(2.0, isize * 0.11), true)
-	var tx0: float = (x0 + cur + 8.0 * s + isize + 6.0 * s) if left else (x1 - cur - 8.0 * s - isize - 6.0 * s)
-	if word != "":
-		UiText.draw(ci, word, Vector2(tx0, _base(ry, rh, cfs)), cfs, ink, -1 if left else 1, 1.5)
-	# State chips: after the stance chip (portrait), or on the pips' row after the pips (landscape), never over SIGNATURE.
-	var chip_limit: float = inner_w
-	if combined:
-		ry = rect.position.y + float(pm["tier_y"])
-		rh = tier_rh
-		cur = pips_w + 10.0 * s
-		chip_limit = inner_w - (sig_w + 8.0 * s if sig_show else 0.0)
-	else:
-		cur += cw + 8.0 * s
-	var chips: Array = []
-	# The weight (the sticky light or heavy) comes first: the rival's weight is a read the player must always have. A heavy that fell
-	# back to light for lack of Charge shows LOW CHARGE and the mark struck through for a moment.
-	var fallback: bool = m.weight == "heavy" and m.weight_fallback_t < 1.5
-	var blow_on: bool = UiStance.three() and m.blow_kind != "" and m.blow_t < BLOW_HOLD   # the three strengths: the chip names the blow just thrown (the blow cue), then falls back
-	var weight_word: String = UiData.t("state.weight_fallback") if fallback else UiData.t("state.weight_" + m.weight + ("_energy" if m.energy else ""))
-	if blow_on:
-		weight_word = UiData.t("state.blow_" + m.blow_kind)
-	chips.append(["weight", weight_word, UiLook.col(UiLook.WARN) if fallback else UiLook.col(UiLook.INK if m.weight == "heavy" else UiLook.INK_DIM)])
-	if UiStance.launch_marks() and m.launcher_known:
-		# The launcher: LAUNCH (a filled mark, bright) while a launch is ready, RESTING (a hollow mark, dim) after one landed. Steady, two states, no countdown.
-		chips.append(["launcher", UiData.t("state.launcher_ready" if m.launcher_ready else "state.launcher_rest"), UiLook.col(UiLook.INK if m.launcher_ready else UiLook.INK_DIM)])
-	if UiStance.launch_marks():
-		# OPEN, a bolt's land and the run are short, urgent reads: the most urgent takes the weight chip's place (a plate has room for one chip beside the pips), the rest follow if there is room.
-		var specials: Array = []
-		if m.open_left > 0.0:
-			specials.append(["open", UiData.t("state.open"), UiLook.col(UiLook.INK)])   # open after a miss: his guard is down for the ticks it says
-		if m.run_n > 0 and m.run_t < RUN_HOLD:
-			specials.append(["run", "", UiLook.col(UiLook.INK)])   # the run of unanswered blows on him: pips and a caret
-		if m.land_kind != "" and m.land_t < LAND_HOLD:
-			specials.append(["land", UiData.t("state.land_" + m.land_kind), UiLook.col(UiLook.INK_DIM)])
-		if not specials.is_empty():
-			var first: Array = specials.pop_front()
-			chips.insert(0, first)
-			chips.append_array(specials)
-	if m.hidden:
-		chips.append(["hidden", UiData.t("state.hidden"), UiLook.col(UiLook.HIDDEN)])
-	if m.lost_trail:
-		chips.append(["lost", UiData.t("state.lost_trail"), UiLook.col(UiLook.WARN)])
-	if m.charging:
-		chips.append(["charging", UiData.t("state.charging"), UiLook.col(UiLook.CHARGE)])
-	if m.chain_n > 1 and m.chain_t >= 0.0:
-		chips.append(["chain", UiData.fmt("state.chain", {"n": m.chain_n}), UiLook.col(UiLook.WARN)])
-	var sfs: int = int(pm["fs_state"])
-	var chip_h: float = rh * 0.82
-	var chip_y: float = ry + (rh - chip_h) * 0.5
-	for ch in chips:
-		var label: String = ch[1]
-		var lw: float = UiText.width(label, sfs)
-		var w: float = chip_h * 0.9 + lw + 16.0 * s
-		if ch[0] == "run":
-			w = float(m.run_to + 1) * chip_h * 0.42 + 16.0 * s   # the pips and the caret, no word
-		if cur + w > chip_limit and ch[0] == "launcher":
-			label = ""   # no room for the word on a tight plate: the mark alone (a filled or a hollow triangle) still says ready or resting
-			lw = 0.0
-			w = chip_h * 0.9 + 12.0 * s
-		if cur + w > chip_limit:
-			break
-		var gauge_full: bool = ch[0] == "run" and m.run_n >= m.run_to   # four of four: the next blow opens him; a steady heavier edge (never a blink)
-		_chip(ci, rect, left, pad, cur, w, chip_y, chip_h, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(ch[2]), 3.6 if gauge_full else 1.6)
-		var icx: float = (x0 + cur + 8.0 * s + chip_h * 0.35) if left else (x1 - cur - 8.0 * s - chip_h * 0.35)
-		var icp := Vector2(icx, chip_y + chip_h * 0.5)
-		match ch[0]:
-			"weight":
-				var bolt_blow: bool = blow_on and (m.blow_kind == "bolt" or m.blow_kind == "blast")
-				var heavy_blow: bool = blow_on and (m.blow_kind == "heavy" or m.blow_kind == "release")
-				if (m.energy or bolt_blow) and not fallback and not (blow_on and not bolt_blow):
-					# The energy mark: a blast leaving a point (a dot and a short line). Plain shapes, no flame or crackle.
-					var er: float = chip_h * 0.16
-					var d: float = 1.0 if left else -1.0
-					ci.draw_circle(icp + Vector2(-d * er * 1.3, 0.0), er * (1.4 if m.weight == "heavy" else 1.0), _c(ch[2]))
-					ci.draw_line(icp + Vector2(-d * er * 0.2, 0.0), icp + Vector2(d * er * 1.9, 0.0), _c(ch[2]), maxf(2.0, er * 0.9), true)
-				else:
-					UiReads.weight_mark(ci, icp, chip_h * 0.62, (m.weight == "heavy" and not blow_on) or heavy_blow, _c(ch[2]), fallback)
-			"launcher":
-				var lr: float = chip_h * 0.3
-				var tri := PackedVector2Array([icp + Vector2(0.0, -lr), icp + Vector2(lr * 0.95, lr * 0.75), icp + Vector2(-lr * 0.95, lr * 0.75)])
-				if m.launcher_ready:
-					UiIcons.fill_poly(ci, tri, _c(ch[2]))
-				else:
-					var closed: PackedVector2Array = tri.duplicate()
-					closed.append(tri[0])
-					ci.draw_polyline(closed, _c(ch[2]), maxf(2.0, lr * 0.4), true)
-					if m.launcher_rest_left > 0.0:
-						# The rest: a ring round the hollow mark that fills as it passes. No number, one step a second (Game Design's eleventh round; docs/ui/launch-teaching.md).
-						# The rest's length is the director's (UiFighterModel.launcher_rest_total); full is the last second, and nothing flashes there.
-						var tot: float = maxf(m.launcher_rest_total, 1.0)
-						var rf: float = clampf(1.0 - m.launcher_rest_left / tot, 0.0, 1.0)
-						ci.draw_arc(icp, lr * 1.6, -PI * 0.5, -PI * 0.5 + TAU * float(int(rf * tot)) / tot, 28, _c(ch[2]), maxf(2.0, lr * 0.35), true)
-			"open":
-				# Two brackets facing in: a gap, "he is open".
-				var bw: float = chip_h * 0.3
-				var bh: float = chip_h * 0.34
-				for sgn in [-1.0, 1.0]:
-					var bxp: float = icp.x + sgn * bw
-					ci.draw_polyline(PackedVector2Array([Vector2(bxp - sgn * bw * 0.6, icp.y - bh), Vector2(bxp, icp.y - bh), Vector2(bxp, icp.y + bh), Vector2(bxp - sgn * bw * 0.6, icp.y + bh)]), _c(ch[2]), maxf(2.0, chip_h * 0.09), true)
-			"land":
-				# How a bolt landed, a shape: a solid dot (hit), a bar (guard), an arc (armour), a hollow dot (miss).
-				var lr2: float = chip_h * 0.2
-				match m.land_kind:
-					"hit":
-						ci.draw_circle(icp, lr2, _c(ch[2]))
-					"guard":
-						ci.draw_rect(Rect2(icp.x - lr2 * 1.3, icp.y - lr2 * 0.4, lr2 * 2.6, lr2 * 0.8), _c(ch[2]))
-					"armour":
-						ci.draw_arc(icp + Vector2(0.0, lr2 * 0.5), lr2 * 1.3, PI * 1.05, PI * 1.95, 12, _c(ch[2]), maxf(2.0, lr2 * 0.7), true)
-					_:
-						ci.draw_arc(icp, lr2, 0.0, TAU, 14, _c(ch[2]), maxf(1.6, lr2 * 0.45), true)
-			"run":
-				# The run: one pip for each unanswered blow, a caret after the last (the next blow closes).
-				var pw: float = chip_h * 0.26
-				var ph: float = chip_h * 0.5
-				var px0: float = (x0 + cur + 8.0 * s) if left else (x1 - cur - 8.0 * s - pw)
-				for pi in range(m.run_to):
-					var pxx: float = px0 + (float(pi) * pw * 1.6 if left else -float(pi) * pw * 1.6)
-					var pr := Rect2(pxx, icp.y - ph * 0.5, pw, ph)
-					if pi < m.run_n:
-						ci.draw_rect(pr, _c(ch[2]))
+	if not minimal:
+		# Row 2: the stance chip (far side of the name's row in landscape), then state chips in the inward direction.
+		ry = rect.position.y + float(pm["chip_y"])
+		rh = float(pm["chip_h"])
+		var cfs: int = int(pm["fs_chip"])
+		var scol: Color = UiStance.col(m.stance_kind)
+		var isize: float = rh * 0.68
+		var cw: float = float(r1["chip_w"])   # beside the name on landscape: the whole word if it fits, else the icon alone (never left off)
+		word = str(r1["word"]) if combined else word
+		var cur: float = (inner_w - cw) if combined else 0.0
+		# A stance change pulses the chip's edge for 0.8 s, so the rival's stance (a read) is seen when it changes.
+		var flash: float = 0.0 if reduced else clampf(1.0 - m.stance_flash_t / 0.8, 0.0, 1.0)
+		_chip(ci, rect, left, pad, cur, cw, ry, rh, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(scol), 2.0 + 3.0 * flash)
+		var cx: float = (x0 + cur + (cw * 0.5 if word == "" else 8.0 * s + isize * 0.5)) if left else (x1 - cur - (cw * 0.5 if word == "" else 8.0 * s + isize * 0.5))
+		UiIcons.stance5(ci, m.stance_kind, Vector2(cx, ry + rh * 0.5), isize, _c(scol))
+		if m.stance_armed > 0.0:
+			# The ring round the icon runs down over the arming's 90 ticks (a shape: a held stance has none).
+			ci.draw_arc(Vector2(cx, ry + rh * 0.5), isize * 0.82, -PI * 0.5, -PI * 0.5 + TAU * (1.0 if reduced else clampf(m.stance_armed, 0.0, 1.0)), 24, _c(scol), maxf(2.0, isize * 0.11), true)
+		var tx0: float = (x0 + cur + 8.0 * s + isize + 6.0 * s) if left else (x1 - cur - 8.0 * s - isize - 6.0 * s)
+		if word != "":
+			UiText.draw(ci, word, Vector2(tx0, _base(ry, rh, cfs)), cfs, ink, -1 if left else 1, 1.5)
+		# State chips: after the stance chip (portrait), or on the pips' row after the pips (landscape), never over SIGNATURE.
+		var chip_limit: float = inner_w
+		if combined:
+			ry = rect.position.y + float(pm["tier_y"])
+			rh = tier_rh
+			cur = pips_w + 10.0 * s
+			chip_limit = inner_w - (sig_w + 8.0 * s if sig_show else 0.0)
+		else:
+			cur += cw + 8.0 * s
+		var chips: Array = []
+		# The weight (the sticky light or heavy) comes first: the rival's weight is a read the player must always have. A heavy that fell
+		# back to light for lack of Charge shows LOW CHARGE and the mark struck through for a moment.
+		var fallback: bool = m.weight == "heavy" and m.weight_fallback_t < 1.5
+		var blow_on: bool = UiStance.three() and m.blow_kind != "" and m.blow_t < BLOW_HOLD   # the three strengths: the chip names the blow just thrown (the blow cue), then falls back
+		var weight_word: String = UiData.t("state.weight_fallback") if fallback else UiData.t("state.weight_" + m.weight + ("_energy" if m.energy else ""))
+		if blow_on:
+			weight_word = UiData.t("state.blow_" + m.blow_kind)
+		chips.append(["weight", weight_word, UiLook.col(UiLook.WARN) if fallback else UiLook.col(UiLook.INK if m.weight == "heavy" else UiLook.INK_DIM)])
+		if UiStance.launch_marks() and m.launcher_known:
+			# The launcher: LAUNCH (a filled mark, bright) while a launch is ready, RESTING (a hollow mark, dim) after one landed. Steady, two states, no countdown.
+			chips.append(["launcher", UiData.t("state.launcher_ready" if m.launcher_ready else "state.launcher_rest"), UiLook.col(UiLook.INK if m.launcher_ready else UiLook.INK_DIM)])
+		if UiStance.launch_marks():
+			# OPEN, a bolt's land and the run are short, urgent reads: the most urgent takes the weight chip's place (a plate has room for one chip beside the pips), the rest follow if there is room.
+			var specials: Array = []
+			if m.open_left > 0.0:
+				specials.append(["open", UiData.t("state.open"), UiLook.col(UiLook.INK)])   # open after a miss: his guard is down for the ticks it says
+			if m.run_n > 0 and m.run_t < RUN_HOLD:
+				specials.append(["run", "", UiLook.col(UiLook.INK)])   # the run of unanswered blows on him: pips and a caret
+			if m.land_kind != "" and m.land_t < LAND_HOLD:
+				specials.append(["land", UiData.t("state.land_" + m.land_kind), UiLook.col(UiLook.INK_DIM)])
+			if not specials.is_empty():
+				var first: Array = specials.pop_front()
+				chips.insert(0, first)
+				chips.append_array(specials)
+		if m.hidden:
+			chips.append(["hidden", UiData.t("state.hidden"), UiLook.col(UiLook.HIDDEN)])
+		if m.lost_trail:
+			chips.append(["lost", UiData.t("state.lost_trail"), UiLook.col(UiLook.WARN)])
+		if m.charging:
+			chips.append(["charging", UiData.t("state.charging"), UiLook.col(UiLook.CHARGE)])
+		if m.chain_n > 1 and m.chain_t >= 0.0:
+			chips.append(["chain", UiData.fmt("state.chain", {"n": m.chain_n}), UiLook.col(UiLook.WARN)])
+		var sfs: int = int(pm["fs_state"])
+		var chip_h: float = rh * 0.82
+		var chip_y: float = ry + (rh - chip_h) * 0.5
+		for ch in chips:
+			var label: String = ch[1]
+			var lw: float = UiText.width(label, sfs)
+			var w: float = chip_h * 0.9 + lw + 16.0 * s
+			if ch[0] == "run":
+				w = float(m.run_to + 1) * chip_h * 0.42 + 16.0 * s   # the pips and the caret, no word
+			if cur + w > chip_limit and ch[0] == "launcher":
+				label = ""   # no room for the word on a tight plate: the mark alone (a filled or a hollow triangle) still says ready or resting
+				lw = 0.0
+				w = chip_h * 0.9 + 12.0 * s
+			if cur + w > chip_limit:
+				break
+			var gauge_full: bool = ch[0] == "run" and m.run_n >= m.run_to   # four of four: the next blow opens him; a steady heavier edge (never a blink)
+			_chip(ci, rect, left, pad, cur, w, chip_y, chip_h, _c(UiLook.alpha(UiLook.SCRIM, 0.85)), _c(ch[2]), 3.6 if gauge_full else 1.6)
+			var icx: float = (x0 + cur + 8.0 * s + chip_h * 0.35) if left else (x1 - cur - 8.0 * s - chip_h * 0.35)
+			var icp := Vector2(icx, chip_y + chip_h * 0.5)
+			match ch[0]:
+				"weight":
+					var bolt_blow: bool = blow_on and (m.blow_kind == "bolt" or m.blow_kind == "blast")
+					var heavy_blow: bool = blow_on and (m.blow_kind == "heavy" or m.blow_kind == "release")
+					if (m.energy or bolt_blow) and not fallback and not (blow_on and not bolt_blow):
+						# The energy mark: a blast leaving a point (a dot and a short line). Plain shapes, no flame or crackle.
+						var er: float = chip_h * 0.16
+						var d: float = 1.0 if left else -1.0
+						ci.draw_circle(icp + Vector2(-d * er * 1.3, 0.0), er * (1.4 if m.weight == "heavy" else 1.0), _c(ch[2]))
+						ci.draw_line(icp + Vector2(-d * er * 0.2, 0.0), icp + Vector2(d * er * 1.9, 0.0), _c(ch[2]), maxf(2.0, er * 0.9), true)
 					else:
-						ci.draw_rect(pr, _c(ch[2]), false, maxf(1.5, pw * 0.2))
-				var cxx: float = px0 + (float(m.run_to) * pw * 1.6 if left else -float(m.run_to) * pw * 1.6) + pw * 0.5
-				var caret := PackedVector2Array([Vector2(cxx - pw * 0.7, icp.y + ph * 0.5), Vector2(cxx, icp.y - ph * 0.5), Vector2(cxx + pw * 0.7, icp.y + ph * 0.5)])
-				if gauge_full:
-					UiIcons.fill_poly(ci, caret, _c(ch[2]))
-				else:
-					ci.draw_polyline(caret, _c(ch[2]), maxf(1.8, pw * 0.25), true)
-			"hidden":
-				UiIcons.eye_slash(ci, icp, chip_h * 0.75, _c(ch[2]))
-			"lost":
-				UiIcons.trail_lost(ci, icp, chip_h * 0.8, _c(ch[2]))
-			"charging":
-				UiIcons.caret_up(ci, icp + Vector2(0, chip_h * 0.12), chip_h * 0.5, _c(ch[2]))
-			"chain":
-				UiIcons.chevron(ci, icp, chip_h * 0.45, 1.0, maxf(2.0, chip_h * 0.11), _c(ch[2]))
-		var ltx: float = (x0 + cur + 8.0 * s + chip_h * 0.75 + 4.0 * s) if left else (x1 - cur - 8.0 * s - chip_h * 0.75 - 4.0 * s)
-		UiText.draw(ci, label, Vector2(ltx, _base(chip_y, chip_h, sfs)), sfs, ink, -1 if left else 1)
-		cur += w + 6.0 * s
+						UiReads.weight_mark(ci, icp, chip_h * 0.62, (m.weight == "heavy" and not blow_on) or heavy_blow, _c(ch[2]), fallback)
+				"launcher":
+					var lr: float = chip_h * 0.3
+					var tri := PackedVector2Array([icp + Vector2(0.0, -lr), icp + Vector2(lr * 0.95, lr * 0.75), icp + Vector2(-lr * 0.95, lr * 0.75)])
+					if m.launcher_ready:
+						UiIcons.fill_poly(ci, tri, _c(ch[2]))
+					else:
+						var closed: PackedVector2Array = tri.duplicate()
+						closed.append(tri[0])
+						ci.draw_polyline(closed, _c(ch[2]), maxf(2.0, lr * 0.4), true)
+						if m.launcher_rest_left > 0.0:
+							# The rest: a ring round the hollow mark that fills as it passes. No number, one step a second (Game Design's eleventh round; docs/ui/launch-teaching.md).
+							# The rest's length is the director's (UiFighterModel.launcher_rest_total); full is the last second, and nothing flashes there.
+							var tot: float = maxf(m.launcher_rest_total, 1.0)
+							var rf: float = clampf(1.0 - m.launcher_rest_left / tot, 0.0, 1.0)
+							ci.draw_arc(icp, lr * 1.6, -PI * 0.5, -PI * 0.5 + TAU * float(int(rf * tot)) / tot, 28, _c(ch[2]), maxf(2.0, lr * 0.35), true)
+				"open":
+					# Two brackets facing in: a gap, "he is open".
+					var bw: float = chip_h * 0.3
+					var bh: float = chip_h * 0.34
+					for sgn in [-1.0, 1.0]:
+						var bxp: float = icp.x + sgn * bw
+						ci.draw_polyline(PackedVector2Array([Vector2(bxp - sgn * bw * 0.6, icp.y - bh), Vector2(bxp, icp.y - bh), Vector2(bxp, icp.y + bh), Vector2(bxp - sgn * bw * 0.6, icp.y + bh)]), _c(ch[2]), maxf(2.0, chip_h * 0.09), true)
+				"land":
+					# How a bolt landed, a shape: a solid dot (hit), a bar (guard), an arc (armour), a hollow dot (miss).
+					var lr2: float = chip_h * 0.2
+					match m.land_kind:
+						"hit":
+							ci.draw_circle(icp, lr2, _c(ch[2]))
+						"guard":
+							ci.draw_rect(Rect2(icp.x - lr2 * 1.3, icp.y - lr2 * 0.4, lr2 * 2.6, lr2 * 0.8), _c(ch[2]))
+						"armour":
+							ci.draw_arc(icp + Vector2(0.0, lr2 * 0.5), lr2 * 1.3, PI * 1.05, PI * 1.95, 12, _c(ch[2]), maxf(2.0, lr2 * 0.7), true)
+						_:
+							ci.draw_arc(icp, lr2, 0.0, TAU, 14, _c(ch[2]), maxf(1.6, lr2 * 0.45), true)
+				"run":
+					# The run: one pip for each unanswered blow, a caret after the last (the next blow closes).
+					var pw: float = chip_h * 0.26
+					var ph: float = chip_h * 0.5
+					var px0: float = (x0 + cur + 8.0 * s) if left else (x1 - cur - 8.0 * s - pw)
+					for pi in range(m.run_to):
+						var pxx: float = px0 + (float(pi) * pw * 1.6 if left else -float(pi) * pw * 1.6)
+						var pr := Rect2(pxx, icp.y - ph * 0.5, pw, ph)
+						if pi < m.run_n:
+							ci.draw_rect(pr, _c(ch[2]))
+						else:
+							ci.draw_rect(pr, _c(ch[2]), false, maxf(1.5, pw * 0.2))
+					var cxx: float = px0 + (float(m.run_to) * pw * 1.6 if left else -float(m.run_to) * pw * 1.6) + pw * 0.5
+					var caret := PackedVector2Array([Vector2(cxx - pw * 0.7, icp.y + ph * 0.5), Vector2(cxx, icp.y - ph * 0.5), Vector2(cxx + pw * 0.7, icp.y + ph * 0.5)])
+					if gauge_full:
+						UiIcons.fill_poly(ci, caret, _c(ch[2]))
+					else:
+						ci.draw_polyline(caret, _c(ch[2]), maxf(1.8, pw * 0.25), true)
+				"hidden":
+					UiIcons.eye_slash(ci, icp, chip_h * 0.75, _c(ch[2]))
+				"lost":
+					UiIcons.trail_lost(ci, icp, chip_h * 0.8, _c(ch[2]))
+				"charging":
+					UiIcons.caret_up(ci, icp + Vector2(0, chip_h * 0.12), chip_h * 0.5, _c(ch[2]))
+				"chain":
+					UiIcons.chevron(ci, icp, chip_h * 0.45, 1.0, maxf(2.0, chip_h * 0.11), _c(ch[2]))
+			var ltx: float = (x0 + cur + 8.0 * s + chip_h * 0.75 + 4.0 * s) if left else (x1 - cur - 8.0 * s - chip_h * 0.75 - 4.0 * s)
+			UiText.draw(ci, label, Vector2(ltx, _base(chip_y, chip_h, sfs)), sfs, ink, -1 if left else 1)
+			cur += w + 6.0 * s
 
 	# Row 3: tier pips (the next pip fills with momentum), the tier name, and SIGNATURE on the far side when ready.
 	ry = rect.position.y + float(pm["tier_y"])
@@ -416,17 +419,19 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 	var bar_h: float = float(pm["bar_h"])
 	var shame_w: float = 0.0
 	var shame_max: int = int(m.profile.get("shame_max", 0))
-	if shame_max > 0:
+	if shame_max > 0 and not minimal:
 		shame_w = float(shame_max) * (bar_h + 4.0 * s) + 6.0 * s
 	var bw2: float = maxf(inner_w - label_w - shame_w, 20.0)
 	ry = rect.position.y + float(pm["ego_y"])
 	rh = float(pm["ego_h"])
-	UiText.draw(ci, ego_label, Vector2(x0 if left else x1, _base(ry, rh, efs)), efs, ink, -1 if left else 1, 1.5)
+	if not minimal:
+		UiText.draw(ci, ego_label, Vector2(x0 if left else x1, _base(ry, rh, efs)), efs, ink, -1 if left else 1, 1.5)
 	var bx: float = (x0 + label_w) if left else (x1 - label_w - bw2)
 	var by: float = ry + (rh - bar_h) * 0.5
 	var notch: float = float(m.profile.get("ego_notch", 0)) / 100.0
-	_bar(ci, Rect2(bx, by, bw2, bar_h), m.ego / 100.0, _c(UiLook.ego_col(m.ego_name)), left, notch if notch > 0.0 else -1.0, s)
-	if shame_max > 0:
+	if not minimal:
+		_bar(ci, Rect2(bx, by, bw2, bar_h), m.ego / 100.0, _c(UiLook.ego_col(m.ego_name)), left, notch if notch > 0.0 else -1.0, s)
+	if shame_max > 0 and not minimal:
 		var sq: float = bar_h
 		for i in range(shame_max):
 			var sxp: float = (bx + bw2 + 6.0 * s + float(i) * (sq + 4.0 * s)) if left else (bx - 6.0 * s - sq - float(i) * (sq + 4.0 * s))
@@ -435,8 +440,8 @@ static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, pm: Dictionary,
 			if i < m.shame:
 				ci.draw_rect(r.grow(-2.0), ink)
 			ci.draw_rect(r, _c(UiLook.alpha(UiLook.INK, 0.8)), false, 1.2)
-	ry = rect.position.y + float(pm["charge_y"])
-	rh = float(pm["charge_h"])
+	ry = rect.position.y + float(pm["ego_y" if minimal else "charge_y"])   # minimal: ki takes the ego meter's row
+	rh = float(pm["ego_h" if minimal else "charge_h"])
 	UiText.draw(ci, charge_label, Vector2(x0 if left else x1, _base(ry, rh, efs)), efs, ink, -1 if left else 1, 1.5)
 	by = ry + (rh - bar_h) * 0.5
 	var ccol: Color = UiLook.col(UiLook.CHARGE_READY) if sig_ready else UiLook.col(UiLook.CHARGE)

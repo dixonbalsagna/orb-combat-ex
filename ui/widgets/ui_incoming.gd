@@ -73,7 +73,7 @@ static func entry(lay: UiLayout, sp: Dictionary, inc: Dictionary, anchor: Dictio
 	var eta: float = float(inc.get("eta", 0.0))
 	var aimed: bool = bool(inc.get("aimed", false))
 	var lost: bool = bool(inc.get("lost", false)) and eta < 0.0   # off both panes and not rushing or closing: the arrow, the distance and the words OFF SCREEN, no countdown
-	for compact in [false, true]:
+	for compact in ([true] if UiData.feature("minimal_hud") else [false, true]):   # minimal_hud: the small chip only (the arrow and the countdown), quieter at the edge
 		var sz: Vector2 = size(s, compact)
 		var pos: Vector2 = _on_edge(zone, p, dir, sz, s)
 		if pos.x < -1e8:

@@ -65,6 +65,7 @@ func _run() -> void:
 	await _launch_marks_rules()
 	await _tug_rules()
 	await _cut_rules()
+	await _minimal_hud_rules()
 	await _brawl_marks_rules()
 	_rate_rules()
 	await _block_toggle_rules()
@@ -5871,6 +5872,140 @@ func _many_marker_rules() -> void:
 	for i in range(int(UiMany.HOLD * 60.0) + 20):
 		hud.advance(1.0 / 60.0)
 	_ok(idle_none and shown_two and seen.has("1") and seen.has("2") and hud._l_many.sig == null, "many markers: the HUD draws none in a two-body fight, one for each body left out (numbered 1 and 2 for slots 2 and 3), and clears them after the hold")
+	hud.queue_free()
+	await process_frame
+
+
+## The minimal HUD (ADR 0010, docs/design/minimal-hud.md), behind `minimal_hud` (off): nothing on, over or between the fighters; the edge HUD keeps the two plates (name, ki, the power pips with
+## SIGNATURE), the legend and the hint; the toll is on the pause screen; the optional cue captions are at the bottom edge.
+func _plate_words(hud: UiHud) -> String:
+	UiText.tracing = true
+	UiText.trace = []
+	for l in hud._l_plate:
+		l.invalidate()
+	for i in range(3):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	UiText.tracing = false
+	var w := " ".join(PackedStringArray(UiText.trace))
+	UiText.trace = []
+	return w
+
+
+func _minimal_hud_rules() -> void:
+	UiData.set_feature("minimal_hud", null)
+	_ok(not UiData.feature("minimal_hud") and not bool(UiData.options()["edge_captions"]["default"]), "minimal hud: the switch is off and the cue captions are off as shipped")
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.patch(0, {"ai": false})
+	var vp2: Vector2 = hud.layout.vp
+	hud.anchor_fn = func(slot: int) -> Dictionary:
+		return {"pos": Vector2(vp2.x * (0.4 if slot == 0 else 0.6), vp2.y * 0.55), "h": vp2.y * 0.12, "visible": true}
+	hud.strip_fn = func(): return {"W": 9600.0, "segs": [[0.0, 9600.0, "ocean"]], "cam_x": 0.0, "cam_w": 2000.0, "dead": [], "fighters": []}
+	hud.set_option("show_crown", true)
+	hud.set_option("crown_always", true)
+	hud.set_option("beat_ring", true)
+	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_struggle", "text": "start", "target": 1, "n": 600})
+	hud.hub.set_clash_mid(0.5)
+	hud.hub.models[1].beats = [0.3]
+	hud.hub.consume({"type": "world", "civilians": 30, "pop0": 100, "structures": 2, "craters": 3})
+	for i in range(8):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	var words_full: String = await _plate_words(hud)
+	var full_ok: bool = hud._l_tug.sig != null and hud._l_crown.sig != null and hud._l_toll.sig != null and hud._l_strip_base.sig != null
+	_ok(full_ok and words_full.contains("MARTIAL") and words_full.contains("CHARGE"), "minimal hud: with the switch off the HUD is as it was (tug, crown, toll chip, strip, the stance chip on the plate)")
+	UiData.set_feature("minimal_hud", true)
+	for i in range(8):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(hud._l_crown.sig == null and hud._l_beat.sig == null and hud._l_tug.sig == null and hud._l_struggle.sig == null and hud._l_you.sig == null, "minimal hud: the crown, the beat ring, the tug, the finisher's rings and the YOU label draw nothing")
+	_ok(hud._l_toll.sig == null and hud._l_strip_base.sig == null and hud._l_strip_marks.sig == null and hud._l_ring.sig == null, "minimal hud: the toll chip, the planet strip and the ring map are not in play")
+	var words_min: String = await _plate_words(hud)
+	var wl := words_min.to_lower()
+	_ok(words_min.contains("ONE") and words_min.contains("CHARGE") and not words_min.contains("MARTIAL") and not words_min.contains("ANGUISH") and not words_min.contains("MENACE") and not wl.contains("hit") and not wl.contains("open"), "minimal hud: the plate keeps the name and ki; the stance chip, the ego meter and the state chips are gone (%s)" % words_min.substr(0, 80))
+	# The toll is on the pause screen, as a count and the planet's state (Legal c08), and never celebrated.
+	hud.show_pause_menu(false)
+	var pm: Dictionary = hud.pause_menu_plan()
+	var facts := " ".join(PackedStringArray(pm["facts_lines"]))
+	_ok(not (pm["facts_lines"] as PackedStringArray).is_empty() and facts.to_lower().contains("civilians"), "minimal hud: the pause screen carries the toll (%s)" % facts.substr(0, 60))
+	hud._pm_close("test")
+	UiData.set_feature("minimal_hud", null)
+	hud.show_pause_menu(false)
+	_ok((hud.pause_menu_plan()["facts_lines"] as PackedStringArray).is_empty(), "minimal hud: with the switch off the plain pause screen has no toll, as before")
+	hud._pm_close("test")
+	# A chain counter is withdrawn.
+	hud.hub.banner = {}
+	hud.hub.consume({"type": "chain_ender", "actor": 0, "n": 3})
+	var banner_off: bool = not hud.hub.banner.is_empty()
+	hud.hub.banner = {}
+	UiData.set_feature("minimal_hud", true)
+	hud.hub.consume({"type": "chain_ender", "actor": 0, "n": 3})
+	_ok(banner_off and hud.hub.banner.is_empty(), "minimal hud: the CHAIN banner shows with the switch off and not with it on")
+	# The split screen's distance chips ride the bottom edge.
+	var lay := UiLayout.new()
+	lay.dp = 1.0
+	lay.compute(Vector2(1280, 720), false)
+	var an0 := {"pos": Vector2(300.0, 380.0), "h": 90.0, "visible": true}
+	var an1 := {"pos": Vector2(980.0, 380.0), "h": 90.0, "visible": true}
+	var sp := {"sep": 1.0, "c": Vector2(640.0, 360.0), "n": Vector2(1.0, 0.0), "gap": 3.0, "fade": 1.0, "sigma": 1.0, "pointer": "split", "dist_bh": 12.0,
+		"ring": {"angle_A": 1.0, "angle_B": 2.0, "sigma": 1.0, "arc_A": 0.3, "arc_B": 0.3, "swing": 0.0, "sep": 1.0}}
+	var ps: Array = UiSplit.pointers(lay, sp, [an0, an1], lay.s)
+	var low := true
+	for e in ps:
+		var py: float = (e["pos"] as Vector2).y
+		low = low and py > 380.0 + 90.0 and Rect2(lay.safe).has_point(e["pos"])
+	_ok(ps.size() == 2 and low, "minimal hud: both split-screen distance chips ride the bottom edge, well below the fighters (%s)" % str(ps.map(func(e): return e["pos"])))
+	# The rival pointer, in one view, only while he is off the screen.
+	UiData.set_feature("minimal_hud", null)
+	var one := {"pointer": "always", "dist_bh": 3.0, "sigma": 1.0}
+	var near_anchor := {"pos": Vector2(700.0, 380.0), "h": 90.0, "visible": false}   # the flag reads false beside him
+	var far_anchor := {"pos": Vector2(3000.0, 380.0), "h": 90.0, "visible": false}
+	var p_off: int = UiSplit.pointers(lay, one, [an0, near_anchor], lay.s).size()
+	UiData.set_feature("minimal_hud", true)
+	var p_on_near: int = UiSplit.pointers(lay, one, [an0, near_anchor], lay.s).size()
+	var p_on_far: int = UiSplit.pointers(lay, one, [an0, far_anchor], lay.s).size()
+	_ok(p_off >= 1 and p_on_near == 0 and p_on_far >= 1, "minimal hud: the rival pointer shows only while he is off the screen (a flag that reads false beside him no longer shows it: %d, %d, %d)" % [p_off, p_on_near, p_on_far])
+	# The incoming chip is the small one: the arrow and the countdown, no words.
+	UiData.set_feature("minimal_hud", null)
+	var inc := {"active": true, "shown": false, "eta": 2.0, "side": 1, "aimed": true, "screen_dir": Vector2(1.0, 0.0), "dist_bh": 10.0}
+	var e_full: Dictionary = UiIncoming.entry(lay, sp, inc, an0, 0, lay.s, "10", true)
+	UiData.set_feature("minimal_hud", true)
+	var e_min: Dictionary = UiIncoming.entry(lay, sp, inc, an0, 0, lay.s, "10", true)
+	_ok(not e_full.is_empty() and not e_min.is_empty() and not bool(e_full["compact"]) and bool(e_min["compact"]), "minimal hud: the incoming chip is the small one (the arrow and the countdown only)")
+	# The cue captions: off by default; on, one line at the bottom edge for a beam struggle and for an open launch, and nothing else.
+	UiData.set_feature("minimal_hud", true)
+	hud.set_option("edge_captions", false)
+	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_struggle", "text": "start", "target": 1, "n": 600})
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(hud._l_caption.sig == null, "minimal hud: with the option off no caption is drawn")
+	hud.set_option("edge_captions", true)
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	var cr: Rect2 = hud.caption_rect()
+	_ok(hud.caption_text() == "Beam struggle: press on the beat" and hud._l_caption.sig != null and cr.position.y > 600.0 and Rect2(Vector2.ZERO, vp2).encloses(cr), "minimal hud: with the option on, a beam struggle is named by one line at the bottom edge")
+	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_end", "text": "time", "x": 0.5})
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(hud.caption_text() == "" and hud._l_caption.sig == null, "minimal hud: the caption ends with the struggle")
+	hud.hub.consume({"type": "cue", "actor": 0, "kind": "launcher_open", "target": 1})
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(hud.caption_text() == "He is open: press B" and hud._l_caption.sig != null, "minimal hud: an open launch for a human is named at the bottom edge")
+	hud.hub.consume({"type": "cue", "actor": 0, "kind": "launcher_close"})
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	var keys := PackedStringArray()
+	for r in UiSettings.rows():
+		keys.append(str(r["key"]))
+	_ok(hud.caption_text() == "" and keys.has("edge_captions"), "minimal hud: the caption goes when the launch closes, and Settings lists Cue captions")
+	UiData.set_feature("minimal_hud", null)
+	hud.set_option("edge_captions", false)
 	hud.queue_free()
 	await process_frame
 

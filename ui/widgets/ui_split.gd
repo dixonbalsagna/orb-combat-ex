@@ -210,7 +210,10 @@ static func pointers(lay: UiLayout, sp: Dictionary, anchors: Array, s: float, bi
 					out.append({"slot": i, "pos": flipped, "dir": Vector2(float(true_side), 0.0), "text": txt})
 				continue
 			var to_div: float = (c - p).dot(dirn)
-			var pos: Vector2 = _dodge(_clamp_to(p + dirn * maxf(0.0, to_div - half - margin), lay, big), Vector2(-dirn.y, dirn.x), lay, anchors, big)
+			var at: Vector2 = p + dirn * maxf(0.0, to_div - half - margin)
+			if UiData.feature("minimal_hud"):
+				at.y = _edge_y(lay, big)   # minimal_hud: nothing between the fighters; the chip rides the bottom edge, above the strip's place, on its side of the divider
+			var pos: Vector2 = _dodge(_clamp_to(at, lay, big), Vector2(1.0, 0.0) if UiData.feature("minimal_hud") else Vector2(-dirn.y, dirn.x), lay, anchors, big)
 			if pos.x < -1e8:
 				continue   # no clear place along the edge: the chip hides rather than cover a fighter
 			out.append({"slot": i, "pos": pos, "dir": dirn, "text": txt})
@@ -226,12 +229,21 @@ static func pointers(lay: UiLayout, sp: Dictionary, anchors: Array, s: float, bi
 			var rival: Dictionary = anchors[1 - i]
 			var rp: Vector2 = rival.get("pos", p)
 			var off: bool = rival.is_empty() or not bool(rival.get("visible", true)) or not Rect2(Vector2.ZERO, lay.vp).grow(-margin).has_point(rp)
+			if off and UiData.feature("minimal_hud") and not rival.is_empty() and rp != Vector2.ZERO and lay.safe.has_point(rp):
+				off = false   # minimal_hud: the rival pointer shows only while he is off the screen; he is on it (the anchor's flag can read false beside him)
 			if off:
 				var dx: float = float(rival_side(sp, i))
 				var pos1: Vector2 = _edge_chip(lay, p, dx, half, anchors, big)
 				if pos1.x > -1e8:
 					out.append({"slot": i, "pos": pos1, "dir": Vector2(dx, 0.0), "text": txt})
 	return out
+
+
+## The y of a chip that rides the bottom edge: just above the planet strip (or the safe area's foot where there is none).
+static func _edge_y(lay: UiLayout, big: bool = false) -> float:
+	var psz: Vector2 = pointer_size(lay.s, big)
+	var foot: float = lay.strip.position.y if lay.strip.size.y > 0.0 else lay.safe.end.y
+	return minf(lay.safe.end.y, foot) - psz.y * 0.5 - 6.0 * lay.s
 
 
 ## A chip at the screen edge on side `dx` (+1 right, -1 left), level with the fighter at `p`; off-screen sentinel if no clear place.
