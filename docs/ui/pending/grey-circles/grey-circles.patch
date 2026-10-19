@@ -1,0 +1,123 @@
+diff -ruN a/ui/data/features.json b/ui/data/features.json
+--- a/ui/data/features.json	2026-10-18 22:24:46.595667400 -0700
++++ b/ui/data/features.json	2026-10-18 22:24:47.627671600 -0700
+@@ -10,6 +10,8 @@
+     "three_strengths": false,
+     "reduce_flashing": true,
+     "lock_reduce_flashing": false,
++    "ring_map": false,
++    "tug_rings": false,
+     "start_menu": true,
+     "launch_marks": true,
+     "civilian_bar": true
+diff -ruN a/ui/hud/ui_hud.gd b/ui/hud/ui_hud.gd
+--- a/ui/hud/ui_hud.gd	2026-10-18 22:24:46.644105400 -0700
++++ b/ui/hud/ui_hud.gd	2026-10-18 22:24:47.683098300 -0700
+@@ -676,7 +676,7 @@
+ 	# Cheap by construction: the divider is two bars moved by transform, each chip is a small node moved by position (its
+ 	# picture redraws only when its arrow or number changes), and the ring's disc and track are drawn once.
+ 	_update_divider()
+-	var ring_on: bool = UiSplit.ring_active(_split) and layout.ring.size.y > 0.0 and _lb < 0.5
++	var ring_on: bool = UiData.feature("ring_map") and UiSplit.ring_active(_split) and layout.ring.size.y > 0.0 and _lb < 0.5   # ring_map is off: the planet strip says the same, and the grey circle sat between the fighters (Orb, 2026-10-18)
+ 	_l_ring_base.update_sig(1 if ring_on else null)
+ 	_l_ring.update_sig(UiSplit.ring_sig(_split) if ring_on else null)
+ 	var chips: Array = []
+diff -ruN a/ui/tools/hud_check.gd b/ui/tools/hud_check.gd
+--- a/ui/tools/hud_check.gd	2026-10-18 22:24:46.733051600 -0700
++++ b/ui/tools/hud_check.gd	2026-10-18 22:24:47.695135300 -0700
+@@ -64,6 +64,7 @@
+ 	await _plain_words_rules()
+ 	await _launch_marks_rules()
+ 	await _tug_rules()
++	await _cut_rules()
+ 	await _brawl_marks_rules()
+ 	_rate_rules()
+ 	await _block_toggle_rules()
+@@ -750,6 +751,7 @@
+ 
+ 
+ func _split_rules() -> void:
++	UiData.set_feature("ring_map", true)   # the ring map's own rules run with it on (it is cut as shipped; _cut_rules runs the default)
+ 	# Geometry: the divider stops under the toll chip and above the ring map; the ring map sits between the bark lanes.
+ 	for sz in [Vector2(1920, 1080), Vector2(1366, 768), Vector2(1280, 720), Vector2(2560, 1080)]:
+ 		var lay := UiLayout.new()
+@@ -5872,6 +5874,47 @@
+ 	hud.queue_free()
+ 	await process_frame
+ 
++
++## The two grey circles cut on 2026-10-18 (Orb: "the weird gray circle between the two fighters"): the planet ring map and the beam struggle's steady rings, each behind a switch that is off.
++func _cut_rules() -> void:
++	UiData.set_feature("ring_map", null)
++	_ok(not UiData.feature("ring_map") and not UiData.feature("tug_rings"), "cut: the ring map and the tug's steady rings are off as shipped")
++	root.size = Vector2i(1280, 720)
++	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
++	hud.size = Vector2(1280, 720)
++	root.add_child(hud)
++	await process_frame
++	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
++	var vp2: Vector2 = hud.layout.vp
++	hud.anchor_fn = func(slot: int) -> Dictionary:
++		return {"pos": Vector2(vp2.x * (0.3 if slot == 0 else 0.7), vp2.y * 0.55), "h": vp2.y * 0.12, "visible": true}
++	hud.split_fn = func():
++		return {"sep": 1.0, "c": Vector2(640.0, 360.0), "n": Vector2(0.95, -0.3), "gap": 3.0, "fade": 1.0, "sigma": 1.0, "pointer": "split",
++			"ring": {"angle_A": 1.0, "angle_B": 2.0, "sigma": 1.0, "arc_A": 0.3, "arc_B": 0.3, "swing": 0.0, "sep": 1.0}}
++	for i in range(5):
++		hud.advance(1.0 / 60.0)
++		await process_frame
++	var off_none: bool = hud._l_ring.sig == null and hud._l_ring_base.sig == null
++	UiData.set_feature("ring_map", true)
++	for i in range(3):
++		hud.advance(1.0 / 60.0)
++		await process_frame
++	var on_has: bool = hud._l_ring.sig != null and hud._l_ring_base.sig != null
++	UiData.set_feature("ring_map", null)
++	_ok(on_has, "cut: the ring map layers draw again when the switch is on (the shipped default is none)")
++	_ok(off_none, "cut: with the switch off the ring map draws nothing")
++	# The tug, steady: the picture differs by the rings, and the bar sits closer without them.
++	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_struggle", "text": "start", "target": 1, "n": 600})
++	hud.hub.set_clash_mid(0.5)
++	hud.set_option("reduce_flashing", true)
++	hud.advance(1.0 / 60.0)
++	await process_frame
++	_ok(hud._l_tug.sig != null and bool((hud._l_tug.sig as Array)[7]), "cut: the tug still shows under Reduce flashing (the track, the diamond and the beat bar stay)")
++	hud.hub.consume({"type": "cue", "actor": 0, "kind": "beam_end", "text": "time", "x": 0.5})
++	hud.set_option("reduce_flashing", false)
++	hud.queue_free()
++	await process_frame
++
+ 
+ ## The launch marks behind their own flag (docs/ui/launch-teaching.md) and the beam struggle's tug of war (docs/ui/hud-spec.md section 62).
+ func _launch_marks_rules() -> void:
+diff -ruN a/ui/widgets/ui_tug.gd b/ui/widgets/ui_tug.gd
+--- a/ui/widgets/ui_tug.gd	2026-10-18 22:24:47.110958500 -0700
++++ b/ui/widgets/ui_tug.gd	2026-10-18 22:24:47.589077200 -0700
+@@ -4,7 +4,7 @@
+ ##   - the track: a thin line from one fighter's hands to the other's, with the quarter nearest each fighter's hands thicker in his ring colour (the comeback's zone, where a surge is worth half again);
+ ##   - the meeting point: a diamond on the track at `Clash.mid` (0 at the first fighter's hands, 1 at the second's), moved by the sim each tick;
+ ##   - the beat: a thin ring round the point that closes over the 20 ticks between pulses (`beam_pulse`) and meets the point on the next one: press as it closes. Under Reduced motion or Reduce
+-##     flashing the ring does not move: it is a steady double ring, and a short bar beside the point is filled for the instant after each pulse;
++##     flashing the ring does not move: the point has a short bar above it that is filled for the instant after each pulse (the steady double ring it once had is behind the switch tug_rings, off);
+ ##   - a surge (`beam_surge`): short rays at the point in the presser's colour, three for a surge and five for a sharp one; a stray (`beam_stray`): a small cross, grey, on the presser's side;
+ ##   - the end (`beam_end`): the point and its ring stay a second where it ended.
+ ## All strokes, no filled area that changes: under any block threshold, and nothing changes state more than three times a second (the pulse is every 20 ticks). Nothing here is read by the sim.
+@@ -89,11 +89,15 @@
+ 	# The beat: a ring closing on the point (or, steady, two rings and a bar that fills for an instant after each pulse).
+ 	var r1: float = float(p["r1"])
+ 	if bool(p["steady"]):
+-		for rr in [r1, r1 * 1.7]:
+-			ci.draw_arc(pm, float(rr), 0.0, TAU, 32, key, w + 2.0, true)
+-			ci.draw_arc(pm, float(rr), 0.0, TAU, 32, Color(ink, 0.8 * a), w, true)
++		# Steady (Reduce flashing or Reduced motion): the two rings that sat round the point for the whole struggle read as a grey circle in the middle of the fight (Orb, 2026-10-18), so they are
++		# off (tug_rings) and the beat is the bar alone, which fills for the instant after each pulse, just above the diamond.
++		var rings: bool = UiData.feature("tug_rings")
++		if rings:
++			for rr in [r1, r1 * 1.7]:
++				ci.draw_arc(pm, float(rr), 0.0, TAU, 32, key, w + 2.0, true)
++				ci.draw_arc(pm, float(rr), 0.0, TAU, 32, Color(ink, 0.8 * a), w, true)
+ 		var bw: float = r1 * 1.4
+-		var br := Rect2(pm + Vector2(-bw * 0.5, -r1 * 2.5), Vector2(bw, maxf(4.0 * s, 4.0)))
++		var br := Rect2(pm + Vector2(-bw * 0.5, -r1 * (2.5 if rings else 1.45)), Vector2(bw, maxf(4.0 * s, 4.0)))
+ 		ci.draw_rect(br, Color(ink, 0.8 * a), false, 1.6)
+ 		if bool(p["beat"]):
+ 			ci.draw_rect(br, Color(ink, 0.9 * a))
