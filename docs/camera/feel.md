@@ -14,8 +14,15 @@ With the dissolve and the slow wipes off (728596d0), main's camera behaves like 
 - Gates (scratch export of the patch on 161b1eef): split sweep, seam sweep, pane check, determinism plain and --intro: pass.
 - Clips: homework/camera/2-blow-push-no-dip/ (left main, right the patch, Reduce flashing on: a mash and an AI match).
 
+## Step 3: chase, not hold (parked: docs/camera/pending/feel-2-chase-not-hold.patch)
+
+The flash bundle (bf966c57, after d3f1ca0e) was on under Reduce flashing, the shipped default: a launched body was held off (the frame stopped while he flew) and then cut to, the launch hold and its eager engage, and the rush's divider slam was off. It was there for the flash count. Off now (`SplitRig.flash_bundle` false): under Reduce flashing a launched body is chased, as in d3f1ca0e, and the slam plays. The signature strip opens under Reduce flashing again (`panel_flash_off` []), as in d3f1ca0e.
+
+Counted by source (`clip_digest.gd`, the cut flag per frame by the line that set it, reduced mode): main's cuts were the hold's end cut and the follow's lag cut; with the bundle off the hold's cuts are gone, and per scene the cuts, layout changes, strips and the time a fighter is outside the picture come back to d3f1ca0e's (ai 4: cuts 1 against d3f1ca0e's 0 and main's 3; fighter-ticks outside the picture 298 against 297 and 349; clash: 0 cuts against 0 and 2). The cuts left are the layout's side swap while the pair is one view (unseen) and the follow's lag cut for a body far off.
+
+The sweep's `panel reduced flashing` row now sets the switch it tests. Gates on the patch over 4dc42eb4: split sweep, seam sweep, pane check, determinism plain and --intro: pass. Clips: homework/camera/3-chase-not-hold/ (a launch in ai 39: held then cut on main, chased with the patch; the signature strip back in the city).
+
 ## Next
 
-3. Fewer, better-placed cuts (count them a minute; cut only on an impact, 2 s apart at least; anything else eases).
 4. Speed: the lead already exists in several places (a chased launch's lead room, the rush lead, the lunge lean, the building lead). The work is to make the merged view lead the brawl's motion, and to widen smoothly with speed and come back without a pump.
 5. The beam struggle's framing (built, behind its switch): a clip for Orb, then on.
