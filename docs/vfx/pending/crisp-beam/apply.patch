@@ -1,0 +1,183 @@
+--- a/render/vfx/beam_look.gd
++++ b/render/vfx/beam_look.gd
+@@ -19,9 +19,9 @@
+ 		"reference": {"width_k": 0.8, "hue_shift": 12.0, "hz": 0.5, "wavelength": 160.0, "flow": 40.0, "turb": 0.04, "heel": 0.1, "seed": 5.3, "wob_k": 0.2, "fil": 0.2, "soft_k": 1.0},
+ 	},
+ 	"layers": [
+-		{"k": 4.0, "px": 6.0, "alpha": 0.36, "soft": 2.0, "turb_k": 1.6, "lum_amp": 0.16, "sat": 2.2, "val": 0.7, "lighten": 0.0, "flow_k": 0.8, "wob": 0.22},
+-		{"k": 2.2, "px": 4.0, "alpha": 0.90, "soft": 1.4, "turb_k": 1.0, "lum_amp": 0.07, "sat": 2.0, "val": 0.88, "lighten": 0.0, "flow_k": 1.0, "wob": 0.12},
+-		{"k": 0.9, "px": 2.0, "alpha": 1.0, "soft": 0.9, "turb_k": 0.0, "lum_amp": 0.04, "sat": 0.85, "val": 1.0, "lighten": 0.1, "flow_k": 1.4, "wob": 0.05},
++		{"k": 1.8, "px": 2.0, "alpha": 0.12, "soft": 1.0, "len_k": 0.3, "turb_k": 1.6, "lum_amp": 0.16, "sat": 2.2, "val": 0.7, "lighten": 0.0, "flow_k": 0.8, "wob": 0.22},
++		{"k": 1.4, "px": 2.0, "alpha": 0.95, "soft": 0.4, "len_k": 0.26, "turb_k": 1.0, "lum_amp": 0.07, "sat": 2.0, "val": 0.88, "lighten": 0.0, "flow_k": 1.0, "wob": 0.12},
++		{"k": 0.6, "px": 2.0, "alpha": 1.0, "soft": 0.3, "len_k": 0.14, "turb_k": 0.0, "lum_amp": 0.04, "sat": 0.85, "val": 1.0, "lighten": 0.1, "flow_k": 1.4, "wob": 0.05},
+ 	],
+ 	"calm": {"strength": 0.86, "rise_s": 0.3},
+ 	"cap": 40.0,
+@@ -145,10 +145,13 @@
+ 
+ 
+ ## The thickness of layer i of a beam of the sim's width w, in world units, at the view's zoom z (the glow's own pixel allowance added).
+-static func thickness(f, w: float, i: int, z: float, short: bool = false) -> float:
++static func thickness(f, w: float, i: int, z: float, short: bool = false, length: float = -1.0) -> float:
+ 	var fl: Dictionary = flavour(f, short)
+ 	var ly: Dictionary = layer(i)
+-	return w * float(ly["k"]) * float(fl["width_k"]) + float(ly["px"]) / z
++	var th: float = w * float(ly["k"]) * float(fl["width_k"])
++	if length > 0.0:
++		th = minf(th, length * float(ly.get("len_k", 9.0)))      # a beam is never wider than a share of its own length: a short, point-blank beam is a bright thin shaft, not a block
++	return th + float(ly["px"]) / z
+ 
+ 
+ ## The slower rise a calm beam takes (seconds): a beam the register refused, or under reduced flashing, comes up over this instead of the tenth of a second.
+--- a/render/vfx/shaders/beam_core.gdshaderinc
++++ b/render/vfx/shaders/beam_core.gdshaderinc
+@@ -63,7 +63,8 @@
+ 	float nn = vn(vec2(travel * 0.02 + 7.0, lat * 2.3 + seed * 1.7));
+ 	float edge = pow(facing, soft) * mix(1.0, 0.35 + 1.3 * nn, turb * (1.0 - facing));
+ 	float shim = 1.0 + lum_amp * (0.6 * rip + (n1 - 0.5) + 0.8 * (f1 - 0.5));
+-	float ends = smoothstep(0.0, cap, from_tail) * smoothstep(0.0, cap, len - from_tail);
++	float cap_e = min(cap, len * 0.14);     // the rounded ends never take more than a seventh of the beam each: a short beam (a point-blank one) stays solid in the middle, not a soft smear
++	float ends = smoothstep(0.0, cap_e, from_tail) * smoothstep(0.0, cap_e, len - from_tail);
+ 	float swell = 1.0 + heel * exp(-from_tail / 70.0);
+ 	ALBEDO = col;
+ 	ALPHA = clamp(tint_a.a * strength * edge * shim * ends * swell, 0.0, 1.0);
+--- a/data/vfx/energy.json
++++ b/data/vfx/energy.json
+@@ -73,43 +73,46 @@
+  },
+  "layers": [
+   {
+-   "k": 4.0,
+-   "px": 6,
+-   "alpha": 0.36,
+-   "soft": 2.0,
++   "k": 1.8,
++   "px": 2,
++   "alpha": 0.12,
++   "soft": 1.0,
+    "turb_k": 1.6,
+    "lum_amp": 0.16,
+    "sat": 2.2,
+    "val": 0.7,
+    "lighten": 0.0,
+    "flow_k": 0.8,
+-   "wob": 0.22
++   "wob": 0.22,
++   "len_k": 0.3
+   },
+   {
+-   "k": 2.2,
+-   "px": 4,
+-   "alpha": 0.9,
+-   "soft": 1.4,
++   "k": 1.4,
++   "px": 2,
++   "alpha": 0.95,
++   "soft": 0.4,
+    "turb_k": 1.0,
+    "lum_amp": 0.07,
+    "sat": 2.0,
+    "val": 0.88,
+    "lighten": 0.0,
+    "flow_k": 1.0,
+-   "wob": 0.12
++   "wob": 0.12,
++   "len_k": 0.26
+   },
+   {
+-   "k": 0.9,
++   "k": 0.6,
+    "px": 2,
+    "alpha": 1.0,
+-   "soft": 0.9,
++   "soft": 0.3,
+    "turb_k": 0.0,
+    "lum_amp": 0.04,
+    "sat": 0.85,
+    "val": 1.0,
+    "lighten": 0.1,
+    "flow_k": 1.4,
+-   "wob": 0.05
++   "wob": 0.05,
++   "len_k": 0.14
+   }
+  ],
+  "calm": {
+@@ -162,4 +165,4 @@
+    "what": "the beam's hue ripple, 2 Hz or slower at any point, under a tenth of luminance (fx03)"
+   }
+  }
+-}
+\ No newline at end of file
++}
+--- a/tools/schemas/vfx-energy.schema.json
++++ b/tools/schemas/vfx-energy.schema.json
+@@ -158,6 +158,11 @@
+             "type": "number",
+             "minimum": 0,
+             "maximum": 0.5
++          },
++          "len_k": {
++            "type": "number",
++            "exclusiveMinimum": 0,
++            "maximum": 2
+           }
+         },
+         "additionalProperties": false
+@@ -222,4 +227,4 @@
+   "patternProperties": {
+     "^_": true
+   }
+-}
+\ No newline at end of file
++}
+--- a/render/core/beam_view.gd
++++ b/render/core/beam_view.gd
+@@ -125,7 +125,7 @@
+ 		if not mi.visible:
+ 			continue
+ 		var u: Vector2 = d / l
+-		var th: float = VfxBeamLook.thickness(who, w, j, z, short)
++		var th: float = VfxBeamLook.thickness(who, w, j, z, short, l)
+ 		if za == 0.0 and ze == 0.0:
+ 			mi.transform = Transform3D(Basis(Vector3(u.y, -u.x, 0.0) * th, Vector3(u.x, u.y, 0.0) * (l + th * 0.5), Vector3(0.0, 0.0, th)), Vector3((a.x + e.x) * 0.5, (a.y + e.y) * 0.5, RenderLook.Z_BEAMS))
+ 		else:
+--- a/render/vfx/tools/effects_check.gd
++++ b/render/vfx/tools/effects_check.gd
+@@ -5146,8 +5146,16 @@
+ 	# Width: a real beam by default (the body layer at 2.2 times the sim's width, the old look had 1.3), the Anti-hero's the thin one.
+ 	var w: float = 33.0
+ 	var body_default: float = VfxBeamLook.thickness(null, w, 1, 1.0)
+-	_check(body_default >= 1.6 * 1.3 * w, "the default beam is a real width: its body is %.0f units against the old %.0f" % [body_default, 1.3 * w])
++	_check(body_default >= 1.05 * 1.3 * w, "the default beam is a real width: its body is %.0f units against the old %.0f" % [body_default, 1.3 * w])
+ 	_check(VfxBeamLook.thickness(fr, w, 1, 1.0, true) < 0.4 * VfxBeamLook.thickness(fr, w, 1, 1.0), "one particular attack keeps a thin beam: the Anti-hero's short beam is %.0f against his signature's %.0f" % [VfxBeamLook.thickness(fr, w, 1, 1.0, true), VfxBeamLook.thickness(fr, w, 1, 1.0)])
++	# Crisp when short: a point-blank beam (a hundred units or so long) is never wider than a share of its own length, so it stays a bright shaft and not a soft block (Orb, 2026-10-18, the blue block at tick 1739).
++	var short_len: float = 110.0
++	var cap_ok: bool = true
++	for j in 3:
++		var tj: float = VfxBeamLook.thickness(null, w, j, 1.0, false, short_len)
++		cap_ok = cap_ok and tj <= short_len * 0.31 + 3.5
++	_check(cap_ok, "a beam of %.0f units never has a layer wider than a third of its length (body %.0f, sheath %.0f)" % [short_len, VfxBeamLook.thickness(null, w, 1, 1.0, false, short_len), VfxBeamLook.thickness(null, w, 0, 1.0, false, short_len)])
++	_check(VfxBeamLook.thickness(null, w, 1, 1.0, false, 4000.0) == body_default, "a long beam keeps its full width (the cap only bites on a short one)")
+ 	# Colour: the second tint has the first's luminance (the ripple moves hue, not brightness), and no layer is white.
+ 	var lane := Color("#8fd6ff")
+ 	var worst_luma: float = 0.0
+--- a/docs/vfx/beam-look.md
++++ b/docs/vfx/beam-look.md
+@@ -98,6 +98,16 @@
+ - **fx05, the calm form** reads at or under the primary limit in both modes on the release set: every clip above is read in it (the demo's "normal" clips run with Reduce flashing on) and with it off, primary 2.5 at most; the release set is Tools' to run on the commit.
+ - **fx05, red:** the analyser's red reading on the clips with the explosions in (the bolts scene, eight ai windows both modes, the struggle scene, collapse: 28 analyses of this work, and 314 of everything I measured this week): **red flashes 0, qualifying changes 0, 0 even with the threshold lower, and the largest window at 0.11 of the area threshold**. The fire's gamma-encoded red ratio is 0.56; on linear values a cel orange sits higher, which is why it is read by the analyser and not by the colour code.
+ 
++## Crisp, not a block (2026-10-18; Orb on the build of pin 5c46feca: "wide, soft-edged, blurry blue block")
++
++At tick 1739 of the seed-4 AI match a point-blank beam (about 110 units long) was drawn at its sim width times 4.0 (sheath), 2.2 (body) and 0.9 (core): wider than it was long, with soft edges and an additive halo round it. That reads as a block of haze, not as a beam. Three causes, three fixes:
++
++1. **A beam is never wider than a share of its own length.** `VfxBeamLook.thickness(..., length)` caps each layer (sheath 0.30, body 0.26, core 0.14 of the length, `len_k` in data/vfx/energy.json). BeamView passes its own length `l` (one token in render/core/beam_view.gd, Rendering's file). A long beam is untouched.
++2. **The halo is thin and faint, the edges are crisp.** Sheath 4.0 to 1.8 times the width at alpha 0.12 (was 0.36), body 2.2 to 1.4 at edge falloff 0.4 (was 1.4), core 0.9 to 0.6 at 0.3 (was 0.9). The body is about the old look's 1.3 times the width; the lane colour, the hue ripple and the flavours stay.
++3. **The rounded ends never take more than 14% of the beam each** (a short beam keeps a solid middle).
++
++Side by side against d3f1ca0e under Reduce flashing (Tools' path, seed 4): the block is gone at tick 1739, the first beam at 1100 to 1240 is a clean lane-coloured shaft. effects_check (two new checks: the cap on a short beam, a long beam keeps its width; the "real width" check loosens from 1.6 to 1.05 times the old look's) and depth_check pass. Not a Legal clearance: the beam is plainer than before, so fx03's conditions are met with more margin, but the flash readings are reported, not chased.
++
+ ## Open for Art, Legal and Orb
+ 
+ - **Art:** confirmed and corrected (docs/art/beam-colours.md): the Protagonist +30 (-30 under tritan), the Rival +34 capped at 320, the dummy +12.
