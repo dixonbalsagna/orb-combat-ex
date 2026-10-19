@@ -10,6 +10,7 @@ For the session titled "Meridian - Executive Producer". Directors do not need th
 4. Review each deliverable against its acceptance criteria. Commit only that director's owned paths, then push, or return the work with specifics.
 5. Record every significant decision as a short ADR in `docs/decisions/`.
 6. A phase does not close until its exit criteria are met and QA, Production and Legal have signed off (`/gate`).
+8. **The look gate (ADR 0010).** Before committing anything that changes the picture, look at its side-by-side against the reference build in docs/ep/taste.md (open the stills; don't trust the gates alone). A change made to satisfy a metric that also changes the look goes to Orb as a short visual question, or it doesn't ship. Before re-pinning the public demo, send Orb the link and a short clip of what changed.
 7. Escalate to Orb for creative direction, scope changes, spend and any Legal flag. Ask one clear question at a time.
 
 ## Session housekeeping
