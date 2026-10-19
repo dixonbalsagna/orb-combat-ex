@@ -1,405 +1,385 @@
 diff -ruN a/tools/schemas/input-timing.schema.json b/tools/schemas/input-timing.schema.json
---- a/tools/schemas/input-timing.schema.json	2026-10-16 16:09:02.739786600 -0700
-+++ b/tools/schemas/input-timing.schema.json	2026-10-16 16:09:02.751302800 -0700
-@@ -268,31 +268,389 @@
+--- a/tools/schemas/input-timing.schema.json	2026-10-18 23:02:24.959097200 -0700
++++ b/tools/schemas/input-timing.schema.json	2026-10-18 23:02:24.969088700 -0700
+@@ -263,7 +263,7 @@
+     },
+     "haptics": {
+       "type": "object",
+-      "description": "The pulses the host plays on a pad or a phone when UI asks (docs/controls/haptics.md, sim/input/haptics.gd). Optional: the code defaults are these values. Never the only cue.",
++      "description": "The pulses the host plays on a pad or a phone (docs/controls/haptics.md, sim/input/haptics.gd). Optional: the code defaults are these values. Never the only cue.",
+       "properties": {
          "minGapMs": {
            "type": "integer",
-           "minimum": 0,
--          "description": "A second pulse for the same slot inside this many milliseconds is dropped (80)."
-+          "description": "A second request for the same slot inside this many milliseconds is dropped (80)."
-+        },
-+        "padMinMs": {
-+          "type": "integer",
-+          "minimum": 1,
-+          "maximum": 100,
-+          "description": "The shortest pad pulse: a motor needs about 20 to 40 ms to spin up, so a shorter step is lengthened to this (20)."
-+        },
-+        "handheldMinMs": {
-+          "type": "integer",
-+          "minimum": 1,
-+          "maximum": 100,
-+          "description": "The shortest phone vibration (10)."
+@@ -282,9 +282,33 @@
+           "maximum": 100,
+           "description": "The shortest phone vibration (10)."
          },
++        "scaleMin": {
++          "type": "number",
++          "minimum": 0,
++          "maximum": 1,
++          "description": "The factor a scale of 0 gives (a scale of 1 gives 1): motors are multiplied by it, a phone's pulse shortened by it (0.35)."
++        },
++        "padMinStrength": {
++          "type": "number",
++          "minimum": 0,
++          "maximum": 1,
++          "description": "A motor is never scaled below this, since a pad does not feel less (0.15)."
++        },
++        "gripSteps": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 20,
++          "description": "The clinch's grip steps: the grip over this is the clinch pulse's scale (5)."
++        },
++        "sharpBoost": {
++          "type": "number",
++          "minimum": 0,
++          "maximum": 1,
++          "description": "A sharp surge adds this to the struggle push's scale (0.25)."
++        },
          "launch_open": {
            "type": "object",
--          "description": "A launch has opened for him (the lit B): a sharp tick.",
-+          "description": "A launch has opened for him (the lit B): a thump, then a ring 90 ms later (Audio's shape).",
+-          "description": "A launch has opened for him (the lit B): a thump, then a ring 90 ms later (Audio's shape).",
++          "description": "A launch has opened for the fighter who may launch (the lit B): a thump, then a ring 90 ms later (Audio's shape).",
            "properties": {
--            "weak": { "type": "number", "minimum": 0, "maximum": 1, "description": "The high-frequency motor, 0 to 1 (0.7)." },
--            "strong": { "type": "number", "minimum": 0, "maximum": 1, "description": "The low-frequency motor, 0 to 1 (0)." },
--            "ms": { "type": "integer", "minimum": 0, "maximum": 500, "description": "A pad's pulse, in milliseconds (25)." },
--            "handheldMs": { "type": "integer", "minimum": 0, "maximum": 500, "description": "A phone's vibration, in milliseconds (25)." }
-+            "pad": {
-+              "type": "array",
-+              "maxItems": 4,
-+              "items": {
-+                "type": "object",
-+                "properties": {
-+                  "at": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 1000,
-+                    "description": "Milliseconds after the request (0)."
-+                  },
-+                  "weak": {
-+                    "type": "number",
-+                    "minimum": 0,
-+                    "maximum": 1,
-+                    "description": "The high-frequency motor, 0 to 1."
-+                  },
-+                  "strong": {
-+                    "type": "number",
-+                    "minimum": 0,
-+                    "maximum": 1,
-+                    "description": "The low-frequency motor, 0 to 1."
-+                  },
-+                  "ms": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 500,
-+                    "description": "The pulse's length, raised to padMinMs; 0 leaves the step out."
-+                  }
-+                },
-+                "additionalProperties": false,
-+                "patternProperties": {
-+                  "^_": true
-+                }
-+              },
-+              "description": "A pad's steps: up to four, each played at its own time."
+             "pad": {
+               "type": "array",
+@@ -349,6 +373,12 @@
+                 }
+               },
+               "description": "A phone's steps."
 +            },
-+            "handheld": {
-+              "type": "array",
-+              "maxItems": 4,
-+              "items": {
-+                "type": "object",
-+                "properties": {
-+                  "at": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 1000,
-+                    "description": "Milliseconds after the request (0)."
-+                  },
-+                  "ms": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 500,
-+                    "description": "The vibration's length, raised to handheldMinMs; 0 leaves the step out."
-+                  }
-+                },
-+                "additionalProperties": false,
-+                "patternProperties": {
-+                  "^_": true
-+                }
-+              },
-+              "description": "A phone's steps."
-+            }
++            "gapMs": {
++              "type": "integer",
++              "minimum": 0,
++              "maximum": 5000,
++              "description": "The least time between two of this kind for one slot, so a pressed button or a steady beat never makes the pad buzz without a break (never under minGapMs)."
+             }
            },
            "additionalProperties": false,
--          "patternProperties": { "^_": true }
-+          "patternProperties": {
-+            "^_": true
-+          }
+@@ -358,7 +388,7 @@
          },
          "form_prompt": {
            "type": "object",
-           "description": "His form is ready: a soft thump.",
+-          "description": "His form is ready: a soft thump.",
++          "description": "His form is ready: two light taps, the second firmer.",
            "properties": {
--            "weak": { "type": "number", "minimum": 0, "maximum": 1, "description": "The high-frequency motor, 0 to 1 (0.3)." },
--            "strong": { "type": "number", "minimum": 0, "maximum": 1, "description": "The low-frequency motor, 0 to 1 (0.3)." },
--            "ms": { "type": "integer", "minimum": 0, "maximum": 500, "description": "A pad's pulse, in milliseconds (15)." },
--            "handheldMs": { "type": "integer", "minimum": 0, "maximum": 500, "description": "A phone's vibration, in milliseconds (15)." }
-+            "pad": {
-+              "type": "array",
-+              "maxItems": 4,
-+              "items": {
-+                "type": "object",
-+                "properties": {
-+                  "at": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 1000,
-+                    "description": "Milliseconds after the request (0)."
-+                  },
-+                  "weak": {
-+                    "type": "number",
-+                    "minimum": 0,
-+                    "maximum": 1,
-+                    "description": "The high-frequency motor, 0 to 1."
-+                  },
-+                  "strong": {
-+                    "type": "number",
-+                    "minimum": 0,
-+                    "maximum": 1,
-+                    "description": "The low-frequency motor, 0 to 1."
-+                  },
-+                  "ms": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 500,
-+                    "description": "The pulse's length, raised to padMinMs; 0 leaves the step out."
-+                  }
-+                },
-+                "additionalProperties": false,
-+                "patternProperties": {
-+                  "^_": true
-+                }
-+              },
-+              "description": "A pad's steps: up to four, each played at its own time."
+             "pad": {
+               "type": "array",
+@@ -423,6 +453,12 @@
+                 }
+               },
+               "description": "A phone's steps."
 +            },
-+            "handheld": {
-+              "type": "array",
-+              "maxItems": 4,
-+              "items": {
-+                "type": "object",
-+                "properties": {
-+                  "at": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 1000,
-+                    "description": "Milliseconds after the request (0)."
-+                  },
-+                  "ms": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 500,
-+                    "description": "The vibration's length, raised to handheldMinMs; 0 leaves the step out."
-+                  }
-+                },
-+                "additionalProperties": false,
-+                "patternProperties": {
-+                  "^_": true
-+                }
-+              },
-+              "description": "A phone's steps."
-+            }
-+          },
-+          "additionalProperties": false,
-+          "patternProperties": {
-+            "^_": true
-+          }
-+        },
-+        "struggle_pulse": {
-+          "type": "object",
-+          "description": "The beam struggle's beat, for both players: a low thud.",
-+          "properties": {
-+            "pad": {
-+              "type": "array",
-+              "maxItems": 4,
-+              "items": {
-+                "type": "object",
-+                "properties": {
-+                  "at": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 1000,
-+                    "description": "Milliseconds after the request (0)."
-+                  },
-+                  "weak": {
-+                    "type": "number",
-+                    "minimum": 0,
-+                    "maximum": 1,
-+                    "description": "The high-frequency motor, 0 to 1."
-+                  },
-+                  "strong": {
-+                    "type": "number",
-+                    "minimum": 0,
-+                    "maximum": 1,
-+                    "description": "The low-frequency motor, 0 to 1."
-+                  },
-+                  "ms": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 500,
-+                    "description": "The pulse's length, raised to padMinMs; 0 leaves the step out."
-+                  }
-+                },
-+                "additionalProperties": false,
-+                "patternProperties": {
-+                  "^_": true
-+                }
-+              },
-+              "description": "A pad's steps: up to four, each played at its own time."
-+            },
-+            "handheld": {
-+              "type": "array",
-+              "maxItems": 4,
-+              "items": {
-+                "type": "object",
-+                "properties": {
-+                  "at": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 1000,
-+                    "description": "Milliseconds after the request (0)."
-+                  },
-+                  "ms": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 500,
-+                    "description": "The vibration's length, raised to handheldMinMs; 0 leaves the step out."
-+                  }
-+                },
-+                "additionalProperties": false,
-+                "patternProperties": {
-+                  "^_": true
-+                }
-+              },
-+              "description": "A phone's steps."
-+            }
-+          },
-+          "additionalProperties": false,
-+          "patternProperties": {
-+            "^_": true
-+          }
-+        },
-+        "struggle_surge": {
-+          "type": "object",
-+          "description": "A player's own surge in the struggle.",
-+          "properties": {
-+            "pad": {
-+              "type": "array",
-+              "maxItems": 4,
-+              "items": {
-+                "type": "object",
-+                "properties": {
-+                  "at": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 1000,
-+                    "description": "Milliseconds after the request (0)."
-+                  },
-+                  "weak": {
-+                    "type": "number",
-+                    "minimum": 0,
-+                    "maximum": 1,
-+                    "description": "The high-frequency motor, 0 to 1."
-+                  },
-+                  "strong": {
-+                    "type": "number",
-+                    "minimum": 0,
-+                    "maximum": 1,
-+                    "description": "The low-frequency motor, 0 to 1."
-+                  },
-+                  "ms": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 500,
-+                    "description": "The pulse's length, raised to padMinMs; 0 leaves the step out."
-+                  }
-+                },
-+                "additionalProperties": false,
-+                "patternProperties": {
-+                  "^_": true
-+                }
-+              },
-+              "description": "A pad's steps: up to four, each played at its own time."
-+            },
-+            "handheld": {
-+              "type": "array",
-+              "maxItems": 4,
-+              "items": {
-+                "type": "object",
-+                "properties": {
-+                  "at": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 1000,
-+                    "description": "Milliseconds after the request (0)."
-+                  },
-+                  "ms": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 500,
-+                    "description": "The vibration's length, raised to handheldMinMs; 0 leaves the step out."
-+                  }
-+                },
-+                "additionalProperties": false,
-+                "patternProperties": {
-+                  "^_": true
-+                }
-+              },
-+              "description": "A phone's steps."
-+            }
-+          },
-+          "additionalProperties": false,
-+          "patternProperties": {
-+            "^_": true
-+          }
-+        },
-+        "struggle_lose": {
-+          "type": "object",
-+          "description": "The loser's end of a struggle.",
-+          "properties": {
-+            "pad": {
-+              "type": "array",
-+              "maxItems": 4,
-+              "items": {
-+                "type": "object",
-+                "properties": {
-+                  "at": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 1000,
-+                    "description": "Milliseconds after the request (0)."
-+                  },
-+                  "weak": {
-+                    "type": "number",
-+                    "minimum": 0,
-+                    "maximum": 1,
-+                    "description": "The high-frequency motor, 0 to 1."
-+                  },
-+                  "strong": {
-+                    "type": "number",
-+                    "minimum": 0,
-+                    "maximum": 1,
-+                    "description": "The low-frequency motor, 0 to 1."
-+                  },
-+                  "ms": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 500,
-+                    "description": "The pulse's length, raised to padMinMs; 0 leaves the step out."
-+                  }
-+                },
-+                "additionalProperties": false,
-+                "patternProperties": {
-+                  "^_": true
-+                }
-+              },
-+              "description": "A pad's steps: up to four, each played at its own time."
-+            },
-+            "handheld": {
-+              "type": "array",
-+              "maxItems": 4,
-+              "items": {
-+                "type": "object",
-+                "properties": {
-+                  "at": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 1000,
-+                    "description": "Milliseconds after the request (0)."
-+                  },
-+                  "ms": {
-+                    "type": "integer",
-+                    "minimum": 0,
-+                    "maximum": 500,
-+                    "description": "The vibration's length, raised to handheldMinMs; 0 leaves the step out."
-+                  }
-+                },
-+                "additionalProperties": false,
-+                "patternProperties": {
-+                  "^_": true
-+                }
-+              },
-+              "description": "A phone's steps."
-+            }
++            "gapMs": {
++              "type": "integer",
++              "minimum": 0,
++              "maximum": 5000,
++              "description": "The least time between two of this kind for one slot, so a pressed button or a steady beat never makes the pad buzz without a break (never under minGapMs)."
+             }
            },
            "additionalProperties": false,
--          "patternProperties": { "^_": true }
+@@ -430,9 +466,9 @@
+             "^_": true
+           }
+         },
+-        "struggle_pulse": {
++        "brake_ready": {
+           "type": "object",
+-          "description": "The beam struggle's beat, for both players: a low thud.",
++          "description": "The air brake can be set: one sharp tick on the high motor alone.",
+           "properties": {
+             "pad": {
+               "type": "array",
+@@ -497,6 +533,12 @@
+                 }
+               },
+               "description": "A phone's steps."
++            },
++            "gapMs": {
++              "type": "integer",
++              "minimum": 0,
++              "maximum": 5000,
++              "description": "The least time between two of this kind for one slot, so a pressed button or a steady beat never makes the pad buzz without a break (never under minGapMs)."
+             }
+           },
+           "additionalProperties": false,
+@@ -504,9 +546,9 @@
+             "^_": true
+           }
+         },
+-        "struggle_surge": {
++        "charge_full": {
+           "type": "object",
+-          "description": "A player's own surge in the struggle.",
++          "description": "The heavy's charge is full: one firm snap on both motors.",
+           "properties": {
+             "pad": {
+               "type": "array",
+@@ -571,6 +613,252 @@
+                 }
+               },
+               "description": "A phone's steps."
++            },
++            "gapMs": {
++              "type": "integer",
++              "minimum": 0,
++              "maximum": 5000,
++              "description": "The least time between two of this kind for one slot, so a pressed button or a steady beat never makes the pad buzz without a break (never under minGapMs)."
++            }
++          },
++          "additionalProperties": false,
 +          "patternProperties": {
 +            "^_": true
 +          }
-         }
-       },
-       "additionalProperties": false,
++        },
++        "clinch_pulse": {
++          "type": "object",
++          "description": "The clinch's pulse: a low creak, then a faint scrape; scaled by the grip.",
++          "properties": {
++            "pad": {
++              "type": "array",
++              "maxItems": 4,
++              "items": {
++                "type": "object",
++                "properties": {
++                  "at": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 1000,
++                    "description": "Milliseconds after the request (0)."
++                  },
++                  "weak": {
++                    "type": "number",
++                    "minimum": 0,
++                    "maximum": 1,
++                    "description": "The high-frequency motor, 0 to 1."
++                  },
++                  "strong": {
++                    "type": "number",
++                    "minimum": 0,
++                    "maximum": 1,
++                    "description": "The low-frequency motor, 0 to 1."
++                  },
++                  "ms": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 500,
++                    "description": "The pulse's length, raised to padMinMs; 0 leaves the step out."
++                  }
++                },
++                "additionalProperties": false,
++                "patternProperties": {
++                  "^_": true
++                }
++              },
++              "description": "A pad's steps: up to four, each played at its own time."
++            },
++            "handheld": {
++              "type": "array",
++              "maxItems": 4,
++              "items": {
++                "type": "object",
++                "properties": {
++                  "at": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 1000,
++                    "description": "Milliseconds after the request (0)."
++                  },
++                  "ms": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 500,
++                    "description": "The vibration's length, raised to handheldMinMs; 0 leaves the step out."
++                  }
++                },
++                "additionalProperties": false,
++                "patternProperties": {
++                  "^_": true
++                }
++              },
++              "description": "A phone's steps."
++            },
++            "gapMs": {
++              "type": "integer",
++              "minimum": 0,
++              "maximum": 5000,
++              "description": "The least time between two of this kind for one slot, so a pressed button or a steady beat never makes the pad buzz without a break (never under minGapMs)."
++            }
++          },
++          "additionalProperties": false,
++          "patternProperties": {
++            "^_": true
++          }
++        },
++        "struggle_push": {
++          "type": "object",
++          "description": "A player's own surge in the beam struggle (off the beat): a bright tick; scaled by his share of the point.",
++          "properties": {
++            "pad": {
++              "type": "array",
++              "maxItems": 4,
++              "items": {
++                "type": "object",
++                "properties": {
++                  "at": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 1000,
++                    "description": "Milliseconds after the request (0)."
++                  },
++                  "weak": {
++                    "type": "number",
++                    "minimum": 0,
++                    "maximum": 1,
++                    "description": "The high-frequency motor, 0 to 1."
++                  },
++                  "strong": {
++                    "type": "number",
++                    "minimum": 0,
++                    "maximum": 1,
++                    "description": "The low-frequency motor, 0 to 1."
++                  },
++                  "ms": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 500,
++                    "description": "The pulse's length, raised to padMinMs; 0 leaves the step out."
++                  }
++                },
++                "additionalProperties": false,
++                "patternProperties": {
++                  "^_": true
++                }
++              },
++              "description": "A pad's steps: up to four, each played at its own time."
++            },
++            "handheld": {
++              "type": "array",
++              "maxItems": 4,
++              "items": {
++                "type": "object",
++                "properties": {
++                  "at": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 1000,
++                    "description": "Milliseconds after the request (0)."
++                  },
++                  "ms": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 500,
++                    "description": "The vibration's length, raised to handheldMinMs; 0 leaves the step out."
++                  }
++                },
++                "additionalProperties": false,
++                "patternProperties": {
++                  "^_": true
++                }
++              },
++              "description": "A phone's steps."
++            },
++            "gapMs": {
++              "type": "integer",
++              "minimum": 0,
++              "maximum": 5000,
++              "description": "The least time between two of this kind for one slot, so a pressed button or a steady beat never makes the pad buzz without a break (never under minGapMs)."
++            }
++          },
++          "additionalProperties": false,
++          "patternProperties": {
++            "^_": true
++          }
++        },
++        "struggle_pushed": {
++          "type": "object",
++          "description": "A surge made against a player in the beam struggle: a heavy low push; scaled by the pusher's share.",
++          "properties": {
++            "pad": {
++              "type": "array",
++              "maxItems": 4,
++              "items": {
++                "type": "object",
++                "properties": {
++                  "at": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 1000,
++                    "description": "Milliseconds after the request (0)."
++                  },
++                  "weak": {
++                    "type": "number",
++                    "minimum": 0,
++                    "maximum": 1,
++                    "description": "The high-frequency motor, 0 to 1."
++                  },
++                  "strong": {
++                    "type": "number",
++                    "minimum": 0,
++                    "maximum": 1,
++                    "description": "The low-frequency motor, 0 to 1."
++                  },
++                  "ms": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 500,
++                    "description": "The pulse's length, raised to padMinMs; 0 leaves the step out."
++                  }
++                },
++                "additionalProperties": false,
++                "patternProperties": {
++                  "^_": true
++                }
++              },
++              "description": "A pad's steps: up to four, each played at its own time."
++            },
++            "handheld": {
++              "type": "array",
++              "maxItems": 4,
++              "items": {
++                "type": "object",
++                "properties": {
++                  "at": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 1000,
++                    "description": "Milliseconds after the request (0)."
++                  },
++                  "ms": {
++                    "type": "integer",
++                    "minimum": 0,
++                    "maximum": 500,
++                    "description": "The vibration's length, raised to handheldMinMs; 0 leaves the step out."
++                  }
++                },
++                "additionalProperties": false,
++                "patternProperties": {
++                  "^_": true
++                }
++              },
++              "description": "A phone's steps."
++            },
++            "gapMs": {
++              "type": "integer",
++              "minimum": 0,
++              "maximum": 5000,
++              "description": "The least time between two of this kind for one slot, so a pressed button or a steady beat never makes the pad buzz without a break (never under minGapMs)."
+             }
+           },
+           "additionalProperties": false,
+@@ -645,6 +933,12 @@
+                 }
+               },
+               "description": "A phone's steps."
++            },
++            "gapMs": {
++              "type": "integer",
++              "minimum": 0,
++              "maximum": 5000,
++              "description": "The least time between two of this kind for one slot, so a pressed button or a steady beat never makes the pad buzz without a break (never under minGapMs)."
+             }
+           },
+           "additionalProperties": false,

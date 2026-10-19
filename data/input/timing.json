@@ -43,6 +43,10 @@
     "minGapMs": 80,
     "padMinMs": 20,
     "handheldMinMs": 10,
+    "scaleMin": 0.35,
+    "padMinStrength": 0.15,
+    "gripSteps": 5,
+    "sharpBoost": 0.25,
     "launch_open": {
       "pad": [
         {
@@ -67,30 +71,42 @@
           "at": 85,
           "ms": 10
         }
-      ]
+      ],
+      "gapMs": 300
     },
     "form_prompt": {
       "pad": [
         {
           "at": 0,
-          "weak": 0.3,
-          "strong": 0.3,
+          "weak": 0.25,
+          "strong": 0.25,
           "ms": 20
+        },
+        {
+          "at": 70,
+          "weak": 0.4,
+          "strong": 0.4,
+          "ms": 30
         }
       ],
       "handheld": [
         {
           "at": 0,
-          "ms": 15
+          "ms": 10
+        },
+        {
+          "at": 70,
+          "ms": 20
         }
-      ]
+      ],
+      "gapMs": 200
     },
-    "struggle_pulse": {
+    "brake_ready": {
       "pad": [
         {
           "at": 0,
-          "weak": 0.0,
-          "strong": 0.4,
+          "weak": 0.6,
+          "strong": 0.0,
           "ms": 20
         }
       ],
@@ -99,23 +115,86 @@
           "at": 0,
           "ms": 10
         }
-      ]
+      ],
+      "gapMs": 200
     },
-    "struggle_surge": {
+    "charge_full": {
       "pad": [
         {
           "at": 0,
           "weak": 0.5,
+          "strong": 0.6,
+          "ms": 40
+        }
+      ],
+      "handheld": [
+        {
+          "at": 0,
+          "ms": 35
+        }
+      ],
+      "gapMs": 200
+    },
+    "clinch_pulse": {
+      "pad": [
+        {
+          "at": 0,
+          "weak": 0.0,
           "strong": 0.3,
           "ms": 30
+        },
+        {
+          "at": 50,
+          "weak": 0.15,
+          "strong": 0.0,
+          "ms": 20
         }
       ],
       "handheld": [
         {
           "at": 0,
           "ms": 15
+        },
+        {
+          "at": 50,
+          "ms": 10
         }
-      ]
+      ],
+      "gapMs": 250
+    },
+    "struggle_push": {
+      "pad": [
+        {
+          "at": 0,
+          "weak": 0.5,
+          "strong": 0.1,
+          "ms": 25
+        }
+      ],
+      "handheld": [
+        {
+          "at": 0,
+          "ms": 20
+        }
+      ],
+      "gapMs": 100
+    },
+    "struggle_pushed": {
+      "pad": [
+        {
+          "at": 0,
+          "weak": 0.0,
+          "strong": 0.6,
+          "ms": 40
+        }
+      ],
+      "handheld": [
+        {
+          "at": 0,
+          "ms": 30
+        }
+      ],
+      "gapMs": 160
     },
     "struggle_lose": {
       "pad": [
@@ -131,7 +210,8 @@
           "at": 0,
           "ms": 40
         }
-      ]
+      ],
+      "gapMs": 300
     }
   },
   "aim": {

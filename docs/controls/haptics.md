@@ -1,40 +1,49 @@
-# Haptics: the pulses, one set of numbers, and what the host does
+# Haptics: the rumble that carries the cues, one set of numbers, and what the host does
 
-Controls, 2026-10-16 (revised the same day after Audio's numbers, `docs/audio/launch-and-tug.md` sections 1.3 and 2.4), for `docs/design/brawl-second-pass.md` section 14 (the launch marks) and `docs/design/rule-of-cool.md` section 2 (the beam struggle). Rumble is output: it never touches the sim, the intent, the replay or the hash, and it is never the only cue (UI's lit B and chip, Audio's ping and tug say the same).
+Controls, 2026-10-16, revised 2026-10-18 for the EP's brief (Orb's minimalist rule: nothing on, over or between the fighters, so rumble carries the cues; `docs/design/minimal-hud.md` section 4, `docs/research/readable-speed.md`). Rumble is output: it never touches the sim, the intent, the replay or the hash, and it is never the only cue (UI's edge hints, Audio's sound and the fighters' own bodies say the same).
 
-## One set, and who chose what
+## The eight kinds
 
-**Audio's ear for the feel, Controls' numbers for the hardware.** The shape of each pulse is Audio's. The hardware limits are mine: a pad motor needs about 20 to 40 ms to spin up, so a pulse shorter than that is barely felt; Godot reads a duration of 0 as "for as long as it can"; two calls in a row replace each other; a phone's Vibration API has one duration per call and none at all on iOS Safari. So the data holds **steps** (a pulse and when it starts), with a floor under every length.
+Each is a few **steps** (a pulse and when it starts) with a floor under every length. **Distinct** (no two have the same steps; only the brake is the high motor alone; no two buzz a phone alike), **short** (all over within 160 ms) and **never constant** (each kind has its own least gap, `gapMs`, and the motor is on at most half the time even if one is asked for as fast as the gap allows). Tested.
 
-| Kind (who asks) | Pad: Audio's number | Pad: in `timing.json` | Phone | Why it changed |
+| Kind | Cue (who feels it) | Pad (weak = high motor, strong = low) | Phone | Own gap |
 | :--- | :--- | :--- | :--- | :--- |
-| `launch_open` (UI, the launcher only) | thump (0.3 weak, 0.7 strong, 80 ms), then (0.2, 0, 60 ms) 90 ms later | **the same two steps** | 25 ms, a 60 ms gap, 10 ms (steps at 0 and 85) | nothing: it is Audio's, and replaces my first sharp tick (0.7, 0, 25 ms) |
-| `struggle_pulse` (the beat, both players, 3 a second) | 8 ms | **20 ms**, strong 0.4, weak 0: a low thud | 10 ms | 8 ms is under what a motor can start; raised to the floor, kept low so it reads as the "tok-thud" |
-| `struggle_surge` (a player's own surge) | 15 ms | **30 ms**, weak 0.5, strong 0.3 | 15 ms | the same floor reason, and it must be clearly stronger than the beat so a player feels their own press land |
-| `struggle_lose` (the loser, once, at the end) | 40 ms | **60 ms**, weak 0.4, strong 0.8 | 40 ms | a heavy end; 40 ms at full is barely a bump on an ERM motor |
-| `form_prompt` (the form is ready) | not Audio's | 0.3, 0.3, **20 ms** (was 15) | 15 ms | the floor; the host's existing `_on_form_prompt` still plays its own 15 ms until it is switched to `SimHaptics` |
+| `launch_open` | `launcher_open`: the fighter who may launch (the actor) | Audio's thump (0.3 / 0.7, 80 ms) and a ring 90 ms later (0.2 / 0, 60 ms) | 25 ms, then 10 ms at 85 | 300 ms |
+| `form_prompt` | `transform_ready`: the actor | two light taps, the second firmer: (0.25 / 0.25, 20 ms), then (0.4 / 0.4, 30 ms) at 70 | 10 ms, then 20 ms at 70 | 200 ms |
+| `brake_ready` | the brake becomes available: the actor | one sharp tick, **high motor alone** (0.6 / 0, 20 ms) | 10 ms | 200 ms |
+| `charge_full` | `charge_full`: the charger | one firm snap, both motors (0.5 / 0.6, 40 ms) | 35 ms | 200 ms |
+| `clinch_pulse` | `grapple_pulse` (every 20 ticks): **both** in the clinch | a low creak (0 / 0.3, 30 ms) then a faint scrape (0.15 / 0, 20 ms) at 50; **scaled by the grip** | 15 ms, then 10 ms at 50 | 250 ms |
+| `struggle_push` | `beam_surge`: the one who surged | a bright tick on the high motor (0.5 / 0.1, 25 ms); **scaled by his share of the point** | 20 ms | 100 ms |
+| `struggle_pushed` | `beam_surge`: the other | a heavy low push (0 / 0.6, 40 ms); **scaled by the pusher's share** | 30 ms | 160 ms |
+| `struggle_lose` | `beam_end` overwhelmed: the target | (0.4 / 0.8, 60 ms), once | 40 ms | 300 ms |
 
-**What is not mine to judge:** how these feel. The floors are from how the hardware behaves, not a measurement on Orb's pad; I have no pad here. The numbers are data (one block in `timing.json`), so Audio and Orb can change them on a real pad without code. A first test is: play `launch_open` and the three struggle kinds in turn on the pad Orb uses; if the beat is too soft raise `strong`, not the length.
+**The struggle is not on the beat** (Orb's pick). `struggle_pulse` and `struggle_surge` are retired; nothing rumbles at the 20-tick beat, a stray, the start or a detonation. It rumbles on a **surge**, and the strength follows who is pushing: the point runs 0 at the firer's hands to 1 at the other's, so a surge's scale is the pusher's **share** of it (`push_share`): a fighter with the point at his end, surging, hits hard and the other is pushed hard; a fighter fighting back from behind gives a light tick and a light push; a sharp surge (the window's first tick) adds `sharpBoost` (0.25). The pusher feels his own press as the bright tick, the other feels the same push as the heavy low one: two motors, so the two are never confused.
+
+**Scale** (0 to 1): a pad's motors are multiplied by `scaleMin` + (1 - `scaleMin`) x scale (0.35 at 0, 1 at 1) and raised to `padMinStrength` (0.15: below that a pad motor is not felt), a motor that was off stays off, and the **length is kept**; a phone has no strength, so a smaller scale is a **shorter** buzz (never under `handheldMinMs`). The clinch's scale is the catcher's grip over `gripSteps` (5).
+
+## Hardware limits, and who chose what
+
+**Audio's ear for the feel, Controls' numbers for the hardware.** A pad motor needs about 20 to 40 ms to spin up, so no step is under `padMinMs` (20) and a phone's under `handheldMinMs` (10), lengthened, never dropped; Godot reads a duration of 0 as "for as long as it can", so 0 is never passed; two calls in a row replace each other; a phone's Vibration API has one duration per call and none at all on iOS Safari. The numbers are data (`haptics` in `data/input/timing.json`), so Audio and Orb can change them on a real pad without code. **What is not mine to judge is how they feel**: I have no pad here. A first test is to play each kind in turn on the pad Orb uses; if one is too soft raise `strong` or `weak`, not the length.
 
 ## What was built
 
 - **`sim/input/haptics.gd` (`SimHaptics`), pure.**
-  - `steps(kind, device)`: the cleaned steps for `"pad"` or `"handheld"`: each `at` 0 to 1000 ms, motors clamped to 0 to 1, each length raised to `padMinMs` (20) or `handheldMinMs` (10), a step with no length (or, on a pad, no strength) left out, sorted by time, at most four.
-  - `plan(kind, target, enabled, last_ms, now_ms)`: what to play, or `{}`:
-    - a pad: `{via: "pad", id, steps: [{at, weak, strong, seconds}]}` for `Input.start_joy_vibration(id, weak, strong, seconds)` on the pad's own joypad id (`hub.rumble_target(slot)["id"]`);
-    - a phone: `{via: "handheld", steps: [{at, ms}]}` for `Input.vibrate_handheld(ms)`;
-    - nothing on a keyboard, an empty slot, an unknown kind, the player's `haptics` option off, or a second request for the same slot inside `minGapMs` (80).
+  - `steps(kind, device, scale = 1.0)`: the cleaned, scaled steps (each `at` 0 to 1000 ms, motors 0 to 1, lengths at the floor, at most four).
+  - `plan(kind, target, enabled, last_ms, now_ms, scale = 1.0, last_kind_ms)`: what to play, or `{}`: a pad `{via: "pad", id, steps: [{at, weak, strong, seconds}]}` for `Input.start_joy_vibration`; a phone `{via: "handheld", steps: [{at, ms}]}` for `Input.vibrate_handheld`; **nothing on a keyboard, an empty slot, an unknown kind, the haptics option off, a request inside the slot-wide `minGapMs` (80), or inside the kind's own `gapMs` since the slot last felt that kind.**
+  - `requests(name, actor, target, text, amount, firer)`: who feels what for one sim cue, `[{slot, kind, scale}]`; the table above. `push_share`, `scale_factor`, `kind_gap_ms` are the pieces.
   - No clock, no state, no RNG: the host owns the millisecond clock and the timers.
-- **The numbers are data:** `haptics` in `data/input/timing.json` (`minGapMs`, `padMinMs`, `handheldMinMs`, and for each of the five kinds a `pad` list and a `handheld` list of steps). The schema is `docs/controls/haptics-schema.patch` (a closed block: the five kinds, at most four steps, motors 0 to 1, lengths 0 to 500 ms).
-- **The host's one connect** is `docs/controls/haptics-host.patch` (render/core/main.gd, Rendering's file, so a patch): `ui_hud.haptic_requested.connect(_on_haptic)` beside `form_prompt_shown`, a handler that asks `SimHaptics.plan` and plays the first step now and the rest on `get_tree().create_timer`, and a four-line `_play_haptic_step`. Host time only; the timers touch nothing in the sim. UI raises only `launch_open` today; the three struggle kinds are in the data for UI to raise (from the cues `beam_pulse`, `beam_surge` and `beam_end`) with no further change here.
+- **Data:** `haptics` in `timing.json`: `minGapMs`, `padMinMs`, `handheldMinMs`, `scaleMin`, `padMinStrength`, `gripSteps`, `sharpBoost`, and for each kind `pad`, `handheld` and `gapMs`. Schema: `docs/controls/haptics-schema.patch` (a closed block: the eight kinds, at most four steps, motors 0 to 1, lengths 0 to 500 ms, gap 0 to 5000).
+- **Touch devices and the option:** a touch slot gets the phone shapes through `hub.rumble_target`; iOS Safari has no vibration API and gets nothing (the cues are also seen and heard); the player's `haptics` option off silences everything.
 
-## Device rules
+## What the host needs (`docs/controls/haptics-host.patch`, render/core/main.gd, Rendering's)
 
-- **A pad:** its own motors, on the device id the hub gave that slot, so in two-player play only the player whose event it is feels it. **Only the fighter who may launch feels `launch_open`** (UI raises it for him alone).
-- **A phone:** `Input.vibrate_handheld` where the browser or the OS has it; **iOS Safari has no vibration API**, so a Safari phone gets nothing and relies on the lit B and the chip.
-- **A keyboard** gets nothing. **A slot nobody holds** (an AI fighter) gets nothing.
-- **The web build:** the browser's gamepad vibration is patchy (Chromium has it); the host treats "cannot rumble" as off and never errors.
+1. **`_haptics_from_events(events)`** called from `_on_drained`: for each sim event it asks `SimHaptics.requests` and plays each result through `_on_haptic`. It keeps the firer (`beam_struggle` cue's actor) for the push shares. **`launcher_open` and `transform_ready` are skipped there** because UI raises them (`haptic_requested`, `form_prompt_shown`) with its marks setting.
+2. **`_on_haptic(slot, kind, scale = 1.0)`** now carries the scale and the per-kind last time (`_haptic_last_kind`) for the kind gap.
+3. **`_on_form_prompt`** now just calls `_on_haptic(slot, "form_prompt")`, so the ready form uses the two-tap shape and the same gating as every pulse, not its own 15 ms.
+4. **UI still has to raise `launch_open`** (it does today, at ui_hud.gd, `haptic_requested`); that hookup is the one thing outside Controls.
+5. **Simulation:** the "brake becomes available" has **no event today** (`air_brake` is start and end only). `brake_ready` needs one: an `air_brake` event with text `"ready"` at the rising edge of the brake being settable (actor the fighter). Until then it is in the data and the mapper and nothing plays it.
+6. **The beam struggle's cues** (`beam_struggle`, `beam_surge` with `amount` the point after the surge, `beam_end` with actor the winner and target the loser) are Encounter's parked work (`docs/director/pending/beam-struggle`); the mapper reads those fields as the park writes them. The clinch pulse reads `grapple_pulse` (`amount` the catcher's grip, signed; its size is used).
 
 ## Proof
 
-`haptics_test.gd` (34 checks): the five kinds, Audio's launch shape step for step, the struggle's three and the floor (8 ms raised to 20, 4 ms to 10), the floors as data, a step of no length or strength left out and never passed as 0, ordering and the four-step cap and clamping, a malformed list falling back, every kind on both devices, the gap, the option, a pad on its own id with a second player on a keyboard, and that asking changes no intent. On a clean export of HEAD with both patches: all 14 input tests, `npm test --prefix sim` (5 of 5), `tools/validate.js` (0 errors) and its self-test (7415 of 7415), and render determinism plain and `-- --intro --seeds=2 --ticks=900` (each same as the sim alone). The schema was also checked to reject a motor over 1, an unknown key and a fifth step.
+`haptics_test.gd` (80 checks): the eight kinds step for step; the floors (8 ms to 20, 4 ms to 10) and as data; steps left out, ordering, the four-step cap and clamping; a malformed list falling back; the scale (0, middle, 1; only strength on a pad; `padMinStrength` and `scaleMin` as data; shorter on a phone, never under its floor; a scaled plan is still a real pulse); distinct, short and duty-limited kinds; **a surge mashed every 40 ms for two seconds plays 15 to 20 times with the motor on under half the time**; the kind gap against its own last, not the slot's; the mapper for every cue (the launcher alone, both in the clinch scaled by grip, the pusher's share both ways, sharp, no firer known, strays and the beat silent, only an overwhelmed end); a mapped request playing on its own device scaled; a keyboard and an empty slot nothing; asking changes no intent. On a clean export of HEAD with these files and both patches: all 16 input tests, `npm test --prefix sim` (5 of 5), `tools/validate.js` (0 errors) and its self-test (8396 of 8396; the schema was also checked to reject a retired kind, a motor over 1, a gap over 5000, `scaleMin` over 1 and a fifth step), the patched `main.gd` loads, and render determinism plain and `-- --intro --seeds=2 --ticks=900` (each same as the sim alone).
