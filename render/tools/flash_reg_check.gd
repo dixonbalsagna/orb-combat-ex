@@ -391,7 +391,8 @@ func _run() -> void:
 		pw._pan_haze(host, t, x, vp)
 	_expect(pw.pan_haze == 0.0, "... and with its switch off there is none")
 	PaneWorld.pan_haze_on = RenderLook.PAN_HAZE_DEFAULT
-	# 10b. The whip haze (RenderLook.PAN_WHIP): on in every match, with the whole town's switch off.
+	# 10b. The whip haze (RenderLook.PAN_WHIP): off since 2026-10-18; when PAN_WHIP_ON brings it back, in every match, with
+	# the whole town's switch off.
 	for k in range(60):   # the camera stands: what the tests above left of it clears
 		t += 1.0
 		pw._pan_haze(host, t, x, vp)
@@ -417,8 +418,11 @@ func _run() -> void:
 		t += 1.0
 		pw._pan_haze(host, t, x, vp)
 		w_still.append(pw.pan_whip)
-	_expect(RenderLook.PAN_WHIP_ON and w_rush == 0.0 and w_fast[5] >= 0.99 and _turns(w_fast) == 0 and w_sent, "the whip haze ships on, with the whole town's off: none in a rush of a screen width a second, whole within 6 ticks of four, and the materials have it (%.2f, %.2f)" % [w_rush, w_fast[5]])
-	_expect(w_cut == w_fast[11] and w_still[20] > 0.0 and w_still[59] == 0.0 and _turns(w_still) == 0, "... a cut leaves it as it was (%.2f), and it clears in one fall once the camera stands (%.2f after 20 ticks, %.2f after 60)" % [w_cut, w_still[20], w_still[59]])
+	if RenderLook.PAN_WHIP_ON:
+		_expect(w_rush == 0.0 and w_fast[5] >= 0.99 and _turns(w_fast) == 0 and w_sent, "the whip haze is on, with the whole town's off: none in a rush of a screen width a second, whole within 6 ticks of four, and the materials have it (%.2f, %.2f)" % [w_rush, w_fast[5]])
+		_expect(w_cut == w_fast[11] and w_still[20] > 0.0 and w_still[59] == 0.0 and _turns(w_still) == 0, "... a cut leaves it as it was (%.2f), and it clears in one fall once the camera stands (%.2f after 20 ticks, %.2f after 60)" % [w_cut, w_still[20], w_still[59]])
+	else:
+		_expect(w_rush == 0.0 and float(w_fast.max()) == 0.0 and w_cut == 0.0 and float(w_still.max()) == 0.0 and w_sent, "the whip haze is off (2026-10-18): none in a rush, in a whip of four screen widths a second or after a cut (%.2f), and the materials have none" % float(w_fast.max()))
 	var wm_ok: bool = true
 	for m in [main.planet._front_mat, main.planet._bld_mat]:
 		if m == null or not is_equal_approx(float(m.get_shader_parameter("pan_whip_mix")), RenderLook.PAN_WHIP_MIX):

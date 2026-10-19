@@ -59,7 +59,7 @@ Not Rendering's, though they are drawn near these: the glare on the rival's glas
 - **Controls' two charge settings:** with Controls' uncommitted hub copied in, each goes to the hub for the player who set it and off again. On HEAD the hub has no such functions and the check says so.
 - **A beam and a clash:** each strength curve has one rise and one fall. A new beam asks with its own weight and is granted; under UI's Reduce flashing it does not ask and is calm.
 - **The pan haze:** off unless switched on; then none at a fifth of a screen width a second, full within 6 ticks of two a second, unmoved by a cut, cleared in one fall.
-- **The whip haze:** on in every match, with the whole town's off; none in a rush of a screen width a second, whole within 6 ticks of four, unmoved by a cut, cleared in one fall; both building materials hold its strength.
+- **The whip haze:** off since 2026-10-18 ("The whip melt is off"). When `PAN_WHIP_ON` brings it back: on in every match, with the whole town's off; none in a rush of a screen width a second, whole within 6 ticks of four, unmoved by a cut, cleared in one fall; both building materials hold its strength.
 
 In the table a hit past Legal's ceilings does not ask, so it is in neither column. A granted hit before (left, pure white) and now (right, a light tint with the outline lit), on the web build: ![tint](img/flash-hit-tint.png)
 
@@ -74,7 +74,7 @@ A hit granted (left) and a hit refused (right), on the web build: ![hits](img/fl
 - **A beam and a beam clash:** always calm, and they do not ask, so the one slot is left to others. A beam is a thin line with a faint glow; a clash has no flare.
 - **The divider's slam flash:** UI draws none and does not ask.
 - **A groove's glow and char:** no glow (30% of its strength until 2026-10-17), the char at 35%.
-- **The pan haze** does not follow the setting: it is off unless switched on. The whip haze is on in both modes.
+- **The pan haze** does not follow the setting: it is off unless switched on. The whip haze is off (2026-10-18).
 - **Nothing of Rendering's reads the option itself.** Each source asks the register, so there is one rule and one log.
 
 The setting is behind UI's `reduce_flashing` flag, which is off, so today the option is always false.
@@ -337,7 +337,7 @@ What draws it is the **foreground rule** (`fore_fall` in `ground.gdshaderinc`). 
 
 **What fails it.** Tools' 56-clip run on the demo commit (10c2d177) read the signature clip in the city (seed 12345) at 4 / 5 / 4 in both modes. Its worst second counts 8 turns between ticks 738 and 779. Six of them, at 738 to 748, are a row of village houses sliding about 40 pixels a tick across the left pane: about 40,000 pixels darken and 40,000 brighten each tick (brick and roofs against grass), and which wins turns every tick. A headless probe of the clip with the split attached shows that pane's camera going from standing to 3.5 screen widths a second in four ticks (736 to 740), 4.5 by 746. The houses are World's row 1, about 400 units behind the fighter plane, low in the pane because the fighters fly high. Nothing changes stage and nothing is carved. Of the other two turns, one is the ground turning from the village's colour to the forest's as the pan crosses the biome edge (769), and the other is a stand of trees leaving the pane (779).
 
-**Orb's ruling: Camera's cap first.** Camera's whip-pan speed cap was measured first; it cleared the clip only by letting the fighter leave his pane for 1.5 s (`docs/camera/whip-pan.md`). So the fallback ships.
+**Orb's ruling: Camera's cap first.** Camera's whip-pan speed cap was measured first; it cleared the clip only by letting the fighter leave his pane for 1.5 s (`docs/camera/whip-pan.md`). So the fallback ships. (It shipped until 2026-10-18: "The whip melt is off", below.)
 
 **The whip haze, in every match** (`RenderLook.PAN_WHIP_ON`, `PAN_WHIP`, `PAN_WHIP_MIX`). While a pane's camera travels along the ground faster than 1.5 screen widths a second, every building melts into the sky and ground behind it, whole at 2.5 widths a second: the plain wall in place of its windows and marks, then fully the colour behind. It comes in over 0.1 s and clears over 0.6 s. A rush under 1.5 widths a second is untouched. In a launch or a whip through a city the town is gone into its sky and ground for the length of the whip, and comes back over about half a second. The whole town's pan haze (`--panhaze`, 70%, from 0.35 widths a second) stays behind its switch.
 
@@ -439,6 +439,30 @@ Tools' analyser measures pixels against the standard (`docs/tools/flash-check.md
 | blastdummy, Protagonist and dummy, ticks 0 to 420 | 3 / 3 / 3 | 3 / 3 / 3 | 3 / 2.5 / 3 |
 
 3 s is the length that helps and does not hurt. The blastdummy windows are not the crater's: Camera's inset and cut are in them (ticks 86 to 133 and 250 to 307).
+
+## The whip melt is off (2026-10-18)
+
+**The change.** The whip haze (`RenderLook.PAN_WHIP_ON`) is off. While a pane's camera whipped along the ground, every building melted fully into the sky and ground behind it. It shipped on 2026-10-15 as the fallback after Camera's speed cap ("A whip pan through a town" above). That fallback was measured on the calm look: until Tools' 0654a2e2 the capture hook ran every clip with Reduce flashing on. With full effects, the melt is itself the change the analyser counts: a whole tower face turns to the sky's colour in a few ticks, and back. The code stays, and `PAN_WHIP_ON` brings it back.
+
+**What else was tried** (stretches of the clips, seed 12345, on fda9b426):
+- The faster whip haze (in within a tick, whips above 20 widths a second, the street's paint calmed). It took signaturecity from 3.5 to 3 but collapse from 2 to 3. Each of its parts alone traded one clip for the other.
+- Camera's travel budget, and the pan haze. Each helped one mode of rushcity and hurt the other.
+- Drawing a tower's panes as its average while the camera travels. It passes only with the melt off as well, and the melt off passes without it.
+
+**Measured** with Tools' clips at full length through `check-clip`, on fda9b426 (primary / area threshold 15% lower / stricter):
+
+| Clip | Main | Whip melt off |
+| :--- | :--- | :--- |
+| rushcity, normal | 3.5 / 3.5 / 2.5, fail | 2 / 2 / 1, pass |
+| rushcity, reduced | 2.5 / 3.5 / 2, fail | 2.5 / 2.5 / 2, pass |
+| signaturecity, normal | 3 / 3 / 3, over the gate | 2 / 2 / 2, pass |
+| signaturecity, reduced | 2 / 2 / 1, pass | 2.5 / 2.5 / 1.5, pass |
+| collapse, normal | 2 / 2 / 1, pass | 2 / 2.5 / 1, pass |
+| collapse, reduced | 2 / 2.5 / 0.5, pass | the same |
+| mashcity, both modes | 1 / 1 / 0, pass | the same |
+| ai-43, both modes; blastdummy, both pairings, both modes | | the same as main |
+
+(ai-43 reduced fails on fda9b426 in both columns. The calm crater's fade, now on main, makes it pass.)
 
 ## Cost
 

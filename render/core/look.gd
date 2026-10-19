@@ -678,7 +678,10 @@ const PAN_HAZE_CUT: float = 20.0
 ## standing to 3.5 widths a second in four ticks past a row of houses (736 to 740), and a launch threw another at 10 to
 ## 20 widths a second through the towers (428 on): a facade swept that fast flipped 40,000 pixels each way a tick, and
 ## which way won turned every tick. Hazed at PAN_HAZE_MIX the pale towers still did; melted fully they do not.
-const PAN_WHIP_ON: bool = true
+## Off since 2026-10-18. That reading was of the calm look (until Tools' 0654a2e2 every capture ran with Reduce flashing
+## on). With full effects the melt is itself the change the analyser counts: a whole wall turns to the sky's colour and
+## back. With it off, signaturecity and rushcity pass in both modes (docs/rendering/flash-sources.md, "The whip melt is off").
+const PAN_WHIP_ON: bool = false
 const PAN_WHIP := Vector2(1.5, 2.5)
 const PAN_WHIP_MIX: float = 1.0
 
