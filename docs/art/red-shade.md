@@ -18,7 +18,7 @@ Nearest colours (within 4 L* of today's lightness) whose worst share stays at 0.
 | Clothing | #6f342c: 0.76 / 0.57, 7.7 CIEDE2000 from today | #752c38: 0.77 / 0.58, 10.7 from today |
 | Body | #974440: 0.77 / 0.57, 6.3 from today | #a04050: 0.77 / 0.56, 10.2 from today |
 
-Art's recommendation: **brick for the body and wine for the clothing**: the body stays his red-brown, and the coat takes the plum edge, so the two pieces read as two materials and the coat is the one furthest from saturated red. Orb picks (`homework/fighters/PICK-forms-and-rewards.md`, question 1).
+Art's recommendation: **brick for the body and wine for the clothing**: the body stays his red-brown, and the coat takes the plum edge, so the two pieces read as two materials and the coat is the one furthest from saturated red. **Orb picked brick for the coat (#6f342c; "both look great, lean towards brick") on 2026-10-18 and the body stays as it is** (the EP made the `CAPE` change). The body's #a52a2a is still saturated red on linear values in the analysis above; if the flash analyser flags it, brick #974440 is the ready answer.
 
 ## Who changes what after the pick
 - **Rendering:** `RenderLook.CAPE` in `render/core/look.gd` (the clothing).

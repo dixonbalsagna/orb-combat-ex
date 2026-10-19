@@ -37,6 +37,11 @@ const TINTS = {
     { id: 'pine', name: 'Pine and plum glass', wall: [170, 0.035], glass: [340, 0.035], trim: [170, 0.022] },
     { id: 'plum', name: 'Plum and teal glass', wall: [335, 0.045], glass: [190, 0.035], trim: [335, 0.028] },
     { id: 'teal', name: 'Teal slate and rose glass', wall: [210, 0.035], glass: [15, 0.030], trim: [210, 0.022] },
+    // round 2 (Orb, 18 October: "These look fantastic, keep iterating on this for more variety"): four more per look, chosen by a greedy search for the walls furthest apart AS MASSED (never olive, never brown)
+    { id: 'dusk', name: 'Dusk slate and teal glass', wall: [290, 0.040], glass: [195, 0.035], trim: [290, 0.026] },
+    { id: 'jade', name: 'Jade grey and rose glass', wall: [155, 0.050], glass: [345, 0.035], trim: [155, 0.030] },
+    { id: 'cobalt', name: 'Cobalt grey and rose glass', wall: [235, 0.050], glass: [15, 0.035], trim: [235, 0.030] },
+    { id: 'lagoon', name: 'Lagoon and plum glass', wall: [195, 0.050], glass: [320, 0.030], trim: [195, 0.030] },
   ],
   mid_rise: [
     { id: 'terracotta', name: 'Terracotta and teal glass', wall: [35, 0.065], glass: [215, 0.040], trim: [35, 0.040] },
@@ -45,6 +50,10 @@ const TINTS = {
     { id: 'spruce', name: 'Spruce and plum glass', wall: [165, 0.040], glass: [345, 0.035], trim: [165, 0.025] },
     { id: 'mauve', name: 'Mauve and teal glass', wall: [330, 0.050], glass: [195, 0.035], trim: [330, 0.030] },
     { id: 'slateblue', name: 'Slate blue and rose glass', wall: [250, 0.040], glass: [15, 0.030], trim: [250, 0.026] },
+    { id: 'petrol', name: 'Petrol blue and rose glass', wall: [215, 0.050], glass: [15, 0.035], trim: [215, 0.030] },
+    { id: 'heather', name: 'Heather grey and teal glass', wall: [285, 0.040], glass: [190, 0.035], trim: [285, 0.026] },
+    { id: 'blush', name: 'Blush stone and teal glass', wall: [22, 0.030], glass: [190, 0.035], trim: [22, 0.020] },
+    { id: 'mist', name: 'Mist teal and rose glass', wall: [195, 0.025], glass: [345, 0.035], trim: [195, 0.018] },
   ],
 };
 // the facade types: parameters in shares of a floor cell, every tone given as an offset in relative luminance from the wall's mid tone (never more than the budget)
@@ -53,14 +62,15 @@ const FACADES = {
   punched: { name: 'Punched windows with spandrels', what: 'separate panes in a regular grid with a darker band under each row: reads as stone or brick, a heavier and older building', pane_w: 0.38, pane_h: 0.5, spandrel: { h: 0.3, lum_offset: -0.03 }, fits: 'mid_rise_west; the older downtown towers' },
   fins: { name: 'Vertical fins', what: 'tall glass between projecting fins one pane apart: a strongly vertical read, the tallest shafts', pane_w: 0.78, fin: { w: 0.14, pitch: 0.25, lum_offset: -0.03, sun_side_offset: 0.03 }, fits: 'downtown shafts of 40 floors or more; a few mid_rise slabs' },
 };
+FACADES.balconied = { name: 'Balcony bands', what: 'windows in pairs with a projecting balcony slab under every second floor, a thin dark line that breaks the grid: reads as flats, a lived-in building', pane_w: 0.34, pane_h: 0.5, _slab: { every: 2, h: 0.12, lum_offset: -0.03 }, spandrel: { h: 0.25, lum_offset: -0.02 }, fits: 'mid_rise_east and mid_rise_west; a few downtown mid-height towers' };
 const BASE_CROWN = {
   base: { floors: 1.6, note: 'a tall lobby storey under the shaft, in the wall\'s mid tone less 0.03 (never darker: its join with the shaft is a long edge), with the trim as a lintel line and no ribbon: punched panes only', wall_lum_offset: -0.03 },
   crown: { floors: 2, note: 'the top two floors set back 6 percent each side, a cornice band in the trim tone (wall mid plus 0.03), panes at the tint\'s bright glass; lit panes are Rendering\'s and are not raised (a flash change)', setback: 0.06, cornice_lum_offset: 0.03 },
 };
 const DISTRICTS = {
-  downtown: { look: 'downtown', facade_weights: { ribbon: 0.40, punched: 0.25, fins: 0.35 }, tint_weights: { steel: 0.2, brick: 0.15, graphite: 0.2, pine: 0.15, plum: 0.15, teal: 0.15 }, rule: 'fins on shafts of 40 floors or more, punched on stepped and crown towers, ribbon elsewhere' },
-  mid_rise_west: { look: 'mid_rise', facade_weights: { punched: 0.55, ribbon: 0.30, fins: 0.15 }, tint_weights: { terracotta: 0.3, rose: 0.2, concrete: 0.15, spruce: 0.15, mauve: 0.1, slateblue: 0.1 }, rule: 'older: brick, rose and terracotta tints, punched windows' },
-  mid_rise_east: { look: 'mid_rise', facade_weights: { ribbon: 0.55, fins: 0.25, punched: 0.20 }, tint_weights: { concrete: 0.3, slateblue: 0.25, spruce: 0.15, mauve: 0.1, rose: 0.1, terracotta: 0.1 }, rule: 'newer: pale concrete and cool tints, ribbon windows' },
+  downtown: { look: 'downtown', facade_weights: { ribbon: 0.36, punched: 0.22, fins: 0.32, balconied: 0.10 }, tint_weights: { steel: 0.12, brick: 0.10, graphite: 0.12, pine: 0.10, plum: 0.10, teal: 0.10, dusk: 0.09, jade: 0.09, cobalt: 0.09, lagoon: 0.09 }, rule: 'fins on shafts of 40 floors or more, punched on stepped and crown towers, balcony bands on the mid-height towers, ribbon elsewhere' },
+  mid_rise_west: { look: 'mid_rise', facade_weights: { punched: 0.42, ribbon: 0.22, balconied: 0.24, fins: 0.12 }, tint_weights: { terracotta: 0.22, rose: 0.14, concrete: 0.10, spruce: 0.10, mauve: 0.08, slateblue: 0.06, petrol: 0.08, heather: 0.06, blush: 0.10, mist: 0.06 }, rule: 'older: brick, rose and terracotta tints, punched windows and balconies' },
+  mid_rise_east: { look: 'mid_rise', facade_weights: { ribbon: 0.40, balconied: 0.25, fins: 0.20, punched: 0.15 }, tint_weights: { concrete: 0.20, slateblue: 0.16, spruce: 0.10, mauve: 0.08, rose: 0.06, terracotta: 0.06, petrol: 0.12, heather: 0.10, blush: 0.04, mist: 0.08 }, rule: 'newer: pale concrete and cool tints, ribbon windows and balconies' },
 };
 
 // ---- build the data
@@ -109,6 +119,7 @@ function tower({ x, y, w, h, t, facade, today, look, seed }) {
     if (inBase) { s += rect(x, fy, w, FL, mixc(wall, '#000000', 0.12)); for (let k = 0; k < 3; k++) s += pane(x + 4 + k * (cell / 3), fy + 3, cell / 3 - 8, FL - 6, false); continue; }
     if (inCrown) { s += rect(x + w * 0.06, fy, w * 0.88, FL, wall) + rect(x + w * 0.06, fy, w * 0.88, 2, t.trim); for (let k = 0; k < 3; k++) s += pane(x + w * 0.06 + 3 + k * (cell / 3), fy + 4, cell / 3 - 4, FL - 6, false); continue; }
     if (facade === 'ribbon') { s += rect(x + 2, fy + 2, cell - 2, FL * 0.55, clampPane(wall, f % 5 === 0 ? gb : gd)); s += rect(x + 2, fy + 2 + FL * 0.55, cell - 2, FL * 0.45 - 2, t.spandrel); }
+    else if (facade === 'balconied') { for (let k = 0; k < 2; k++) s += pane(x + 3 + k * (cell / 2), fy + 3, cell / 2 - 7, FL * 0.58, hash(seed + f * 2 + k) > 0.94); if (f % 2 === 0) s += rect(x, fy, cell + 2, 2.4, t.spandrel); else s += rect(x + 1, fy + FL * 0.7, cell, FL * 0.22, t.spandrel); }
     else if (facade === 'punched') { for (let k = 0; k < 4; k++) s += pane(x + 3 + k * (cell / 4), fy + 2, cell / 4 * 0.5, FL * 0.5, hash(seed + f * 4 + k) > 0.95); s += rect(x + 1, fy + FL * 0.62, cell, FL * 0.3, t.spandrel); }
     else { s += rect(x + 2, fy + 1, cell - 2, FL - 2, clampPane(wall, f % 4 === 0 ? gb : gd)); for (let k = 0; k <= 4; k++) s += rect(x + 2 + k * ((cell - 6) / 4), fy, 3, FL, t.fin); }
   }
@@ -122,9 +133,9 @@ function sheet() {
     b += rect(24, y0, W - 48, 700, '#e8e5ee', 'stroke="#1b1428" stroke-opacity="0.2"') + text(40, y0 + 30, look === 'downtown' ? 'downtown' : 'mid_rise', { size: 20, weight: 700 });
     b += text(40, y0 + 54, 'today: one grey and one glass, every tower the same grid', { size: 12, weight: 700, op: 0.7 });
     let x = 40; for (let i = 0; i < 10; i++) { const w = 70 + (i * 37 % 40), h = (look === 'downtown' ? 150 : 100) + (i * 53 % 80); b += tower({ x, y: y0 + 300, w, h, today: TODAY, look, seed: i * 31 }); x += w + 14; }
-    b += text(40, y0 + 330, 'proposed: six tints and three facade types, with a lobby storey and a set-back crown', { size: 12, weight: 700, op: 0.7 });
-    x = 40; const types = ['ribbon', 'punched', 'fins'];
-    for (let i = 0; i < 10; i++) { const w = 70 + (i * 37 % 40), h = (look === 'downtown' ? 150 : 100) + (i * 53 % 80); b += tower({ x, y: y0 + 600, w, h, t: tints[(i * 5 + 1) % 6], facade: types[(i * 7 + (look === 'mid_rise' ? 1 : 0)) % 3], look, seed: i * 31 + 7 }); x += w + 14; }
+    b += text(40, y0 + 330, 'proposed: ten tints and four facade types, with a lobby storey and a set-back crown', { size: 12, weight: 700, op: 0.7 });
+    x = 40; const types = ['ribbon', 'punched', 'fins', 'balconied'];
+    for (let i = 0; i < 10; i++) { const w = 70 + (i * 37 % 40), h = (look === 'downtown' ? 150 : 100) + (i * 53 % 80); b += tower({ x, y: y0 + 600, w, h, t: tints[(i * 3 + 1) % tints.length], facade: types[(i * 7 + (look === 'mid_rise' ? 1 : 0)) % 4], look, seed: i * 31 + 7 }); x += w + 14; }
     // the tints
     tints.forEach((t, i) => {
       const tx = 1140 + (i % 3) * 218, ty = y0 + 50 + Math.floor(i / 3) * 140;
@@ -137,7 +148,7 @@ function sheet() {
     });
     y0 += 716;
   }
-  b += text(40, y0 + 6, 'Facade types: ribbon (bands and thin piers), punched (panes with spandrels: stone and brick), fins (tall glass between projecting fins). Which district takes which is in data/art/city-looks.json "districts". Every tone is within 0.04 of its wall, so any two neighbours are at most 0.08 apart (Legal\'s w05).', { size: 12.5 });
+  b += text(40, y0 + 6, 'Facade types: ribbon (bands and thin piers), punched (panes with spandrels: stone and brick), fins (tall glass between projecting fins), balconied (pairs of windows and a balcony slab under every second floor). Which district takes which is in data/art/city-looks.json "districts". Every tone is within 0.04 of its wall, so any two neighbours are at most 0.08 apart (Legal\'s w05).', { size: 12.5 });
   writeFileSync(join(ROOT, 'art', 'concepts', 'city', 'city-palettes.svg'), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${b}</svg>`);
 }
 sheet();

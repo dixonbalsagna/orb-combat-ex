@@ -2,22 +2,24 @@
 
 Owner: Art Director. 2026-10-17. For Game Design's `docs/design/hero-forms.md` (the five steps, two roads), `docs/design/run-mode.md` 4.4 (the reward economy) and Narrative's `docs/narrative/rewards-words.md`. **Concept art, working labels, pending Orb and Legal. WIP character art: the sheets stay in `art/concepts/forms/` (uncommitted); Orb's copies are in `homework/fighters/` (git-ignored).** Regenerate: `node art/concepts/forms/gen-hero.mjs` and `gen-rewards.mjs` (deterministic). Questions for Orb: `homework/fighters/PICK-forms-and-rewards.md`.
 
-## 1. The five forms (sheet `hero-forms.svg`)
-Each step is a modest all-rounder (+5 percent speed, damage, launch), so **the body changes modestly: pieces on the approved body**, never a new body, never his face or tuft, never a hair or eye colour (Legal). The look underneath is whichever hybrid Orb picks (a form adds only plates, marks and rings).
+## 1. The five forms (sheet `hero-forms.svg`), round 2 of 2026-10-18
+Orb's answer to round 1: "all around not distinctive enough, lets bulk up muscles, add distinctive upgrade, lets get lore of the universe settled so we can explain reasoning behind transformations"; Witness and Trial both "not quite", make the body change more, change the top form. **So each step now has a heavier frame and one hallmark** (never his face or tuft, never a hair or eye colour: Legal). The look underneath is whichever hybrid Orb picks.
 
-| Step | Witness road (a cold quiet: stillness, weight) | Trial road (delighted, open) |
-|---|---|---|
-| I (marks on his base) | three round marks on the near forearm wrap, in his lane colour | the same |
-| II | a chest plate and a heavier near guard, deep blue | a ring on the chest, a pale near guard |
-| III | three bars across the chest plate, marks on the guard (a tally) | a second ring round the chest ring, marks on the guard |
-| IV | tall chest plate, a big shoulder plate, a plate down the back, a belt plate, long near and far guards (a wall) | the chest ring, a small shoulder plate, both guards and a free ring turning round each fist |
-| V (both roads meet) | the Witness plates carrying the Trial rings round both fists; the road he came by is the plate and outline colour, the other the inner mark | the same top form in Trial colours with Witness blue as the core and on the chest bars |
+| Step | Frame | Witness road (plates: shelter; stillness, weight) | Trial road (rings: the sparring circle; delighted, open) |
+|---|---|---|---|
+| I | +3% | three round marks on the near forearm wrap, in his lane colour | the same |
+| II | +8% | **the Vigil Mantle**: a wide collar and a plate over each shoulder, a chest plate, a heavy near guard; the shoulders widen | **the ring gauntlets**: two ring bands round each forearm, a ring on the chest, a pale near guard |
+| III | +11% | **the tally**: the mantle, three bars across the chest plate, marks on the guard, a plate on the near thigh | **the lit rings**: a second ring round the chest ring, rings round the ankles, bands on both forearms |
+| IV | +16% / +13% | **the Bulwark**: tall chest plate, a plate down the back, a belt plate, plates on both thighs, long guards, a plated fist | **the Orbit**: free rings round both fists and both ankles, bands on both forearms, the chest ring, a small shoulder plate (a sprinter's build) |
+| V | +20% | **the Ring at his back**: a plain ring standing behind the shoulders (his Showman mark), the Bulwark's plates carrying the Trial rings round both fists; the road he came by is the plate and outline colour, the other the rings | the same top form in Trial colours with the Witness blue as the core and on the chest bars |
 
-**Colours (his lane is hue 150 to 250; the Anti-hero's violet is 260 to 320):** Witness rim #598ecf (hue 213), core #aec4ea, keyline #253756: 22 to 30 CIEDE2000 from the Anti-hero's three auras, 21 from his lane colour today. Trial rim #2dbeab (hue 172), core #9de7dd, keyline #1a4d46: 45 to 48 from the Anti-hero's, 25 from today's, 31 from Witness. **The aura** is a thin outline and at most two arcs, only while charging or attacking: Witness has no arcs (stillness is the read), Trial one at II and III and two at IV and V. Poses: Witness planted, hands low; Trial leaning in, hands open.
+The frame is a scale of the existing body (tw and lw per step: data later); the head stays the same size, so it reads as a bigger body. **Proposed lore hooks (Narrative settles them):** PLATES are shelter (Witness takes on the weight of what he could not stop); RINGS are the sparring circle (Trial draws one more circle round him for each higher form he has met); the top form carries both. Growth is the body answering the weight: Witness grows by carrying, Trial by training. Witness never rages; Trial never mocks.
 
-**Honest limits.** (1) The silhouette moves little: measured on the base pose, steps II to IV differ from his base by 0.005 to 0.039 and V by 0.044 (the launch pair are 0.620 apart; the Anti-hero stays 0.617 to 0.623 from every form), so at 46 px **the colour and the rings tell the forms apart more than the shape does**; Orb's second tick asks whether to make the body change more. (2) The pieces are drawn on the concept kit's side-on figure, not the game's body. (3) The rings are free elements that must follow the wrists: a small circular emitter, not a bone.
+**Colours (his lane is hue 150 to 250; the Anti-hero's violet is 260 to 320):** Witness rim #598ecf (hue 213), core #aec4ea, keyline #253756: 22 to 30 CIEDE2000 from the Anti-hero's three auras, 21 from his lane colour today. Trial rim #2dbeab (hue 172), core #9de7dd, keyline #1a4d46: 45 to 48 from the Anti-hero's, 25 from today's, 31 from Witness. **The aura** is a thin outline and at most two arcs, only while charging or attacking: Witness none, Trial one at II and III and two at IV and V.
 
-**Costs (estimates, Rendering to confirm):** I and III are decals; II 2 rigid parts; IV 4 to 6; V 6 to 7. No new bone. Animation: two poses (planted, leaning-in) and the release's showpiece, which is Game Design's.
+**Measured** (flat silhouette at 46 px, base pose): the distance from his base is 0.037 (I), 0.107 and 0.101 (II), 0.136 and 0.131 (III), 0.233 (IV Witness), 0.155 (IV Trial) and 0.267 (V); the Anti-hero stays 0.612 to 0.628 from every form (the launch pair are 0.620). **Not done:** muscle definition (the kit's body is a generic build; real muscle shows at the rig and the turnaround), and the pieces are on the concept kit's side-on figure, not the game's body.
+
+**Costs (estimates, Rendering to confirm):** the growth is data; I and III are decals; II 2 to 3 rigid parts; IV 6 to 8 (Trial: free rings that follow the wrists and ankles); V 8 to 9 with the back ring (a plain annulus: Legal wants no letter, star or sphere). No new bone; the rings need a small circular emitter. Animation: a planted pose and a leaning-in pose.
 
 **Stacking audit (Legal's seven marks, at most two in a moment):** a step shows none of the seven (no crouch, no scream, no flame, no lightning, hair fixed, flash in lane blue or teal, never gold, white or red); a step taken on the ground carries the ground cracking (mark 4) and nothing else.
 
