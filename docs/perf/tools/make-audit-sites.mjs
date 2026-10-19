@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Builds the scratch web exports the audit measures, from HEAD, without touching the working tree. Node 24 built-ins plus git, tar and the Godot 4.7.2 console exe. Owner: Performance and Platform.
 //
-//   node docs/perf/tools/make-audit-sites.mjs --out <folder> [--only base,vfx,anim,both,anim8,baseprof,bothprof,depthprof,layerprof,lowprof] [--godot <exe>] [--no-export]
+//   node docs/perf/tools/make-audit-sites.mjs --out <folder> [--only base,vfx,anim,both,anim8,baseprof,bothprof,depthprof,layerprof,lowprof] [--rev <commit>] [--godot <exe>] [--no-export]
 //
 // For each variant: git archive HEAD into <out>/<name>, apply the scratch hooks (docs/perf/tools/scratch-hooks/: they only add measuring code to render/tools/flash_capture.gd, and in
 // the "prof" variants a few timers to render/core/main.gd and pane_world.gd), apply the parked patches that variant stands for, then `--headless --import` and `--export-release Web`
@@ -31,6 +31,7 @@ if (!OUT) { console.error('usage: node docs/perf/tools/make-audit-sites.mjs --ou
 const only = opt('--only') ? opt('--only').split(',') : ['base', 'vfx', 'anim', 'both', 'baseprof', 'bothprof', 'depthprof', 'layerprof', 'lowprof', 'anim8'];
 const GODOT = opt('--godot', 'C:\\Users\\itsha\\AppData\\Local\\Programs\\Godot\\4.7.2\\Godot_v4.7.2-stable_win64_console.exe');
 const NOEXP = argv.includes('--no-export');
+const REV = opt('--rev', 'HEAD');   // any commit: the audit of two builds (for example a build Orb played and the one after it) builds each into its own --out folder
 const out = resolve(OUT);
 mkdirSync(out, { recursive: true });
 const hook = (name, dir, ...extra) => { const r = spawnSync(process.execPath, [join(here, 'scratch-hooks', name), dir, ...extra], { encoding: 'utf8' }); if (r.status) throw new Error(`${name}: ${r.stderr || r.stdout}`); };
@@ -70,10 +71,10 @@ const pristine = join(out, '_head');
 if (!existsSync(join(pristine, 'project.godot'))) {
   mkdirSync(pristine, { recursive: true });
   // tar runs inside the target folder with no path of its own: GNU tar reads "C:\..." as a remote host
-  const r = spawnSync(`git -C "${repo}" archive HEAD | tar -x`, { cwd: pristine, shell: true, encoding: 'utf8' });
+  const r = spawnSync(`git -C "${repo}" archive ${REV} | tar -x`, { cwd: pristine, shell: true, encoding: 'utf8' });
   if (r.status) throw new Error('git archive failed: ' + r.stderr);
 }
-writeFileSync(join(out, 'HEAD.txt'), spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).stdout);
+writeFileSync(join(out, 'HEAD.txt'), spawnSync('git', ['rev-parse', REV], { cwd: repo, encoding: 'utf8' }).stdout);
 let imported = null;
 for (const name of only) {
   const spec = SPEC[name];

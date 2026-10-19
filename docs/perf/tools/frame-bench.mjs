@@ -39,6 +39,7 @@ const SLICE_MODES = (opt('--slice-modes', 'equator,poles')).split(',');   // add
 const FREEZE = Number(opt('--freeze', 104));   // the tick a --layers run pauses the scene at (104: the signature scene's beam is up)
 const LAYERS = argv.includes('--layers');   // also measure with each layer cut (scratch hook window.__cut; needs an export that carries it)
 const PAGE_ARGS = opt('--page-args', '');   // extra page query, for example depth=1 (scratch hook: fight-lane depth on, which is what the lobby needs)
+const REDUCED = argv.includes('--reduced');   // the hook's reduced mode: reduced motion and the flash register's reduced mode (Orb's Reduce flashing, locked on in the live demo)
 const IGPU = argv.includes('--igpu');   // force the integrated GPU (Chrome's --force_low_power_gpu, as Research's engine spike did); the run refuses to report if the GPU string is not AMD or Radeon
 if (!SITE) { console.error('usage: node docs/perf/tools/frame-bench.mjs --site <built site> --scene <id> --label <name> [--throttle N] [--slots A,B,C] [--out file.json]'); process.exit(2); }
 const exe = opt('--browser-path') || browserExe('chrome');
@@ -80,7 +81,7 @@ function browserCpuMs(hint) {
 const server = await serve(SITE);
 const url = `http://127.0.0.1:${server.address().port}/play/index.html?flashcap=1${PAGE_ARGS ? '&' + PAGE_ARGS : ''}`;
 let b, page;
-const result = { igpu: IGPU, label: LABEL, scene: SCENE, slots: SLOTS, pageArgs: PAGE_ARGS, throttle: THROTTLE, viewport: `${W}x${H}`, ticks: TICKS, warm: WARM, seed: SEED, node: process.version, session: SESSION };
+const result = { igpu: IGPU, label: LABEL, scene: SCENE, slots: SLOTS, pageArgs: PAGE_ARGS, reduced: REDUCED, throttle: THROTTLE, viewport: `${W}x${H}`, ticks: TICKS, warm: WARM, seed: SEED, node: process.version, session: SESSION };
 try {
   const before = await sample(3000);
   result.loadBefore = { all: +mean(before).toFixed(0), cap: +mean(capCores(before)).toFixed(0) };
@@ -115,7 +116,7 @@ try {
     result.browserMemMB = browserMemoryMB(`cap-${slug(SESSION, 'nosession')}-framebench`);
     throw new Error('__slice_done__');
   }
-  const startArgs = JSON.stringify({ reduced: false, ...(SEED === null ? {} : { seed: SEED }), ...(SLOTS ? { slots: SLOTS } : {}) });
+  const startArgs = JSON.stringify({ reduced: REDUCED, ...(SEED === null ? {} : { seed: SEED }), ...(SLOTS ? { slots: SLOTS } : {}) });
   await page.eval(`window.__flashcap.start(${JSON.stringify(SCENE)}, ${startArgs})`);
   // the scene is up when its first step answers
   const during = [];
