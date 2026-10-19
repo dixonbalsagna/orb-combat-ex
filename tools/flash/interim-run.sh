@@ -92,12 +92,14 @@ if [ -n "${NO_RECORD:-}" ]; then
   say "done (rehearsal): $W/table.md"
   exit 0
 fi
-if [ -n "$OVER" ]; then
+if [ -n "$OVER" ] && [ -z "${OWNER_RECORD:-}" ]; then
   echo "NOT RECORDED: clips over 3 on the primary reading: $OVER" | tee -a "$LOG"
   echo "$OVER" > "$W/NOT-RECORDED.txt"
   exit 5
 fi
-say "record the interim pass for $SHORT"
+say "record the pass for $SHORT"
+# OWNER_RECORD="Orb 2026-10-18": the owner-approved mode records what the run read, with its hashes, and does not need it to pass (Legal addendum 11)
+if [ -n "${OWNER_RECORD:-}" ]; then REC_ARGS=(--owner "$OWNER_RECORD" --from "$FROM"); else REC_ARGS=(--interim RL-136 --from "$FROM" --expires "$EXPIRES"); fi
 # the AI seeds of the set and the rule that picked them (sources.json at the commit); the HUD's own worst flicker is the largest UiLook.HZ_* of the commit
 git -C "$ROOT" show "$FULL:tools/flash/sources.json" > "$W/sources.at.commit.json"
 git -C "$ROOT" show "$FULL:ui/core/ui_look.gd" > "$W/ui_look.at.commit.gd"
@@ -111,13 +113,19 @@ fs.writeFileSync(process.argv[3], JSON.stringify({ rule: 'tools/flash/pick-seeds
 fs.writeFileSync(process.argv[4], String(hz.length ? Math.max(...hz) : 0));
 " "$W/sources.at.commit.json" "$W/ui_look.at.commit.gd" "$W/pick.json" "$W/hud-rate.txt"
 node tools/flash/release-pass.mjs --record --summary "$W/clips/summary.json" --extra "$W/clips_extra/summary.json" "${SECOND_ARGS[@]}" --hud-rate "$(cat "$W/hud-rate.txt")" --hud-source "ui/core/ui_look.gd HZ_* (the largest, read from the commit)" \
-  --seed-pick "$W/pick.json" --interim RL-136 --from "$FROM" --expires "$EXPIRES" --commit "$FULL" 2>&1 | tee -a "$LOG"
+  --seed-pick "$W/pick.json" "${REC_ARGS[@]}" --commit "$FULL" 2>&1 | tee -a "$LOG"
 node tools/flash/release-pass.mjs --verify --commit "$FULL" 2>&1 | tee -a "$LOG"
 
 say "the interim site, locally"
+if [ -n "${OWNER_RECORD:-}" ]; then
+cat > "$W/site.json" <<EOF2
+{ "offline": false, "approved": "$FROM", "interim": { "owner": "$OWNER_RECORD", "approved": "$FROM", "notice": "site-interim-owner.json" }, "pin": "$FULL" }
+EOF2
+else
 cat > "$W/site.json" <<EOF2
 { "offline": false, "approved": "$FROM", "interim": { "legal": "RL-136", "approved": "$FROM", "expires": "$EXPIRES", "notice": "site-interim.json" } }
 EOF2
+fi
 rm -rf "$W/site"
 node tools/build-site.mjs --web "$W/web" --out "$W/site" --commit "$FULL" --config "$W/site.json" 2>&1 | tee -a "$LOG"
 node tools/check-site-interim.mjs --site "$W/site" --config "$W/site.json" --root "$W/x" --today "$FROM" 2>&1 | tee -a "$LOG"

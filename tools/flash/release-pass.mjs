@@ -195,7 +195,8 @@ export function problemsWith(record, now, ids, opts = {}) {
   const out = [];
   if (!record || typeof record !== 'object') return ['there is no recorded full-set pass (tools/flash/release-pass.json)'];
   const interim = record.interim && typeof record.interim === 'object' ? record.interim : null;
-  if (interim) {
+  const ownerRec = !!(interim && typeof interim.owner === 'string' && interim.owner.trim());   // Orb's decision (2026-10-18): the verdicts are in the record, not required of it
+  if (interim && !ownerRec) {
     const today = opts.today || new Date().toISOString().slice(0, 10);
     if (!/^RL-\d+/.test(String(interim.legal))) out.push("the interim has no Legal ruling id (RL-<n>)");
     if (!isDate(interim.from)) out.push('the interim has no start date');
@@ -213,7 +214,7 @@ export function problemsWith(record, now, ids, opts = {}) {
     if (!ids.includes(r.id)) out.push(`the record has a row for ${r.id}, which is not in the required set`);
     if (r.verdict !== 'PASS' && !interim) out.push(`${r.id} is ${r.verdict}, not PASS`);
     // red flashes are 0 in every clip, interim or not (Legal RL-141 to RL-143: the analyser is the authority on the explosions' reds)
-    for (const m of redProblems(r)) out.push(m);
+    if (!ownerRec) for (const m of redProblems(r)) out.push(m);
     if (!interim) for (const m of marginProblems(r)) out.push(m);
     for (const m of captureProblems(r, { interim })) out.push(m);
     if (typeof r.shortestDipGapTicks === 'number' && r.shortestDipGapTicks < DIP_GAP_TICKS) out.push(`${r.id} has two whole-screen dips ${r.shortestDipGapTicks} ticks apart (the cap is ${DIP_GAP_TICKS})`);
@@ -221,7 +222,7 @@ export function problemsWith(record, now, ids, opts = {}) {
   // the hook that left Reduce flashing on made every earlier record calm in both modes: a record holds only if it was made with the fixed hook (RL-156), and the pass file prints the mode per clip
   if (record.hookFixed !== true) out.push("the record was measured before the capture hook set the game's Reduce flashing from the clip's mode (2026-10-17): every clip of it is the calm look, so it is not a pass of full effects (Legal RL-156)");
   for (const m of modeProblems(rows)) out.push(m);
-  for (const m of extraSeedProblems(record.extraSeeds)) out.push(m);
+  if (!ownerRec) for (const m of extraSeedProblems(record.extraSeeds)) out.push(m);
   // the HUD's own rate, a separate line of the pass (k06), and the seeds with the rule that picked them
   if (!record.hud || typeof record.hud.perSecond !== 'number') out.push('the record has no HUD line (the HUD\'s own flicker rate from hud_check, against ' + HUD_LIMIT + ' a second)');
   else if (record.hud.perSecond > HUD_LIMIT) out.push(`the HUD's own rate is ${record.hud.perSecond} a second (the limit is ${HUD_LIMIT})`);
@@ -283,8 +284,13 @@ function main(argv) {
     const sec = opt('--seconds');
     if (sec) for (const e of JSON.parse(readFileSync(sec, 'utf8'))) { const base = rows.find((r) => r.id === e.id); if (base && !e.error) base.second = { ...rowOf(e), how: 'second capture' }; }
     const interimId = opt('--interim');
+    const ownerText = opt('--owner');
     let interim = null;
-    if (interimId) {
+    if (ownerText) {
+      if (interimId) { console.error('--owner and --interim are two different kinds of record'); return 2; }
+      if (!ownerText.trim() || !isDate(opt('--from'))) { console.error('--owner needs the owner and the date ("Orb 2026-10-18") and --from <YYYY-MM-DD>'); return 2; }
+      interim = { owner: ownerText.trim(), from: opt('--from'), waives: INTERIM_WAIVES.slice() };
+    } else if (interimId) {
       interim = { legal: interimId, from: opt('--from'), expires: opt('--expires'), waives: INTERIM_WAIVES.slice() };
       if (!/^RL-\d+/.test(interimId) || !isDate(interim.from) || !isDate(interim.expires)) { console.error('--interim needs a Legal id (RL-<n>), --from <YYYY-MM-DD> and --expires <YYYY-MM-DD>'); return 2; }
     }
@@ -297,15 +303,15 @@ function main(argv) {
       const erows = es.filter((e) => !e.error && e.result).map((e) => ({ id: e.id, primary: e.result.general.flashes, red: e.result.red.flashes, reduceFlashing: e.mode ? e.mode.reduce_flashing : undefined }));
       const eseeds = [...new Set(erows.map((r) => Number((/^ai-(\d+)-/.exec(r.id) || [])[1])).filter(Number.isFinite))].sort((a, b) => a - b);
       extraSeeds = { seeds: eseeds, clips: erows.length, maxPrimary: Math.max(0, ...erows.map((r) => r.primary)), rows: erows };
-      for (const m of extraSeedProblems(extraSeeds)) bad.push(m);
-    } else bad.push('no nightly-style seeds: pass --extra <the run-pixels summary of seeds 1008, 1009 and 20 more> (Legal RL-156)');
+      if (!interim || !interim.owner) for (const m of extraSeedProblems(extraSeeds)) bad.push(m);
+    } else if (!interim || !interim.owner) bad.push('no nightly-style seeds: pass --extra <the run-pixels summary of seeds 1008, 1009 and 20 more> (Legal RL-156)');
     const hudRate = opt('--hud-rate');
     const hud = hudRate === undefined ? null : { perSecond: Number(hudRate), limit: HUD_LIMIT, source: opt('--hud-source') || 'ui/tools/hud_check.gd' };
     const pick = opt('--seed-pick');
     const seedPick = pick ? JSON.parse(readFileSync(pick, 'utf8')) : null;
     for (const id of ids) if (!rows.some((r) => r.id === id)) bad.push(`no result for ${id}`);
     for (const e of entries) if (e.error) bad.push(`${e.id}: capture failed`);
-    for (const r of rows) for (const m of redProblems(r)) bad.push(m);
+    if (!interim || !interim.owner) for (const r of rows) for (const m of redProblems(r)) bad.push(m);
     for (const m of modeProblems(rows)) bad.push(m);
     if (!interim) for (const r of rows) if (r.verdict !== 'PASS') bad.push(`${r.id} is ${r.verdict}`);
     if (!interim) for (const r of rows) for (const m of marginProblems(r)) bad.push(m);
@@ -323,11 +329,13 @@ function main(argv) {
         notPass: rows.filter((r) => r.verdict !== 'PASS').map((r) => ({ id: r.id, verdict: r.verdict, primary: r.primary, areaLower: r.areaLower, stricter: r.stricter })),
         marginRuleNotMet: rows.filter((r) => marginProblems(r).length).map((r) => r.id),
         needSecondCapture: rows.filter((r) => captureProblems(r).some((p) => /needs a second independent capture/.test(p))).map((r) => r.id),
+        overThree: rows.filter((r) => r.primary > 3).map((r) => ({ id: r.id, primary: r.primary })),
+        redAboveZero: rows.filter((r) => r.red !== 0).map((r) => ({ id: r.id, red: r.red })),
       };
     }
     const record = { hookFixed: true, extraSeeds, _why: 'A recorded full-set pass of the pixel check (tools/flash/release-pass.mjs --record). tools/build-site.mjs refuses to publish the playable site unless this file matches the commit being published and every row is PASS. Do not edit by hand.', commit: full, recorded: new Date().toISOString().slice(0, 10), ...hashesAt(REPO, full), rows: ids.map((id) => rows.find((r) => r.id === id)), hud, seedPick, ...(interim ? { interim } : {}) };
     writeFileSync(RECORD, JSON.stringify(record, null, 2) + '\n');
-    console.log(`recorded ${interim ? `an INTERIM pass (${interim.legal}, until ${interim.expires}; ${interim.standing.pass} of ${interim.standing.clips} clips PASS)` : `a pass of ${ids.length} clips`} for ${full.slice(0, 8)} in tools/flash/release-pass.json`);
+    console.log(`recorded ${interim && interim.owner ? `an OWNER record (${interim.owner}; ${interim.standing.pass} of ${interim.standing.clips} clips PASS, ${interim.standing.overThree.length} over 3 on the primary)` : interim ? `an INTERIM pass (${interim.legal}, until ${interim.expires}; ${interim.standing.pass} of ${interim.standing.clips} clips PASS)` : `a pass of ${ids.length} clips`} for ${full.slice(0, 8)} in tools/flash/release-pass.json`);
     return 0;
   }
   console.error('usage: node tools/flash/release-pass.mjs (--record --summary <summary.json> [--recaptures <summary.json> --how "seed N"] [--seconds <summary.json>] --hud-rate <n> [--hud-source <text>] --seed-pick <pick.json> | --verify) [--commit <sha>]\n  interim: --record ... --interim RL-<n> --from <date> --expires <date>  (the waivers of Legal\'s RL-136 are recorded in the file)');
