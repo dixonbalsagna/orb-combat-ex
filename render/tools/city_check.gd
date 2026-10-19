@@ -50,6 +50,7 @@ func _run() -> void:
 		var name: String = "%s %s" % [tints[i][0], t.get("id", "")]
 		var w: float = _lum(RenderLook.col(str(t["wall"]["shadow"])))
 		var k: Vector4 = u["city_k"][i]
+		var k2: Vector4 = u["city_k2"][i]
 		var g: float = _held(w, _lum(u["city_glass"][i]))
 		var gb: float = _held(w, _lum(u["city_hi"][i]))
 		var tr: float = _held(w, _lum(u["city_trim"][i]))
@@ -58,6 +59,7 @@ func _run() -> void:
 			"ribbon spandrel": _held(w, w * k.x), "punched spandrel": _held(w, w * k.y),
 			"fin": _held(w, w * k.z), "fin's sun side": _held(w, w * k.w),
 			"lobby wall": _held(w, w * float((u["city_glass"][i] as Color).a)),
+			"balcony spandrel": _held(w, w * k2.x), "balcony slab": _held(w, w * k2.y),
 		}
 		# What stands beside what on each (building.gdshader 7c): a pane beside the wall and the band under it, a fin
 		# beside its other side, the wall and the glass; the lobby storey's wall beside its panes and the lintel, the
@@ -65,6 +67,7 @@ func _run() -> void:
 		var pairs: Dictionary = {
 			"ribbon": [["glass", "wall"], ["bright glass", "wall"], ["glass", "ribbon spandrel"], ["bright glass", "ribbon spandrel"], ["ribbon spandrel", "wall"]],
 			"punched": [["glass", "wall"], ["bright glass", "wall"], ["glass", "punched spandrel"], ["bright glass", "punched spandrel"], ["punched spandrel", "wall"]],
+			"balconied": [["glass", "wall"], ["bright glass", "wall"], ["glass", "balcony spandrel"], ["bright glass", "balcony spandrel"], ["balcony spandrel", "wall"], ["balcony slab", "wall"]],
 			"fins": [["glass", "wall"], ["bright glass", "wall"], ["glass", "fin"], ["glass", "fin's sun side"], ["bright glass", "fin"], ["bright glass", "fin's sun side"], ["fin", "fin's sun side"], ["fin", "wall"], ["fin's sun side", "wall"]],
 			"base": [["lobby wall", "glass"], ["lobby wall", "bright glass"], ["lobby wall", "cornice"], ["cornice", "wall"]],
 			"crown": [["bright glass", "wall"], ["cornice", "wall"], ["cornice", "bright glass"]],

@@ -133,9 +133,11 @@ const CITY_FACADES: bool = false
 ## changes value), and the least height over the horizon it takes it from, in half screens (at noon the sky's blue, not
 ## the pale band at the horizon; a pane under the eye never takes the ground).
 const GLASS_SKY: Vector2 = Vector2(0.4, 0.5)
-## Each facade type's column of windows as a multiple of its look's (ribbon, punched, fins): a punched pane is 0.38 of
-## its cell, a slit at downtown's 46 units.
-const FACADE_PITCH: Vector3 = Vector3(1.0, 1.5, 1.0)
+## Each facade type's column of windows as a multiple of its look's (ribbon, punched, fins, balconied): a punched pane is
+## 0.38 of its cell, a slit at downtown's 46 units; a balconied cell holds a pair of panes.
+const FACADE_PITCH: Vector4 = Vector4(1.0, 1.5, 1.0, 2.0)
+## The balconied facade's pair: the gap between a pair's two panes, as a share of half the cell.
+const BALCONY_PAIR_GAP: float = 0.06
 ## A tower of at least CITY_BASE_FLOORS floors has Art's lobby storey, and a shaft, slab or block of at least
 ## CITY_CROWN_FLOORS Art's set-back crown: a mid-rise of four to six floors would be all base and crown.
 const CITY_BASE_FLOORS: int = 5

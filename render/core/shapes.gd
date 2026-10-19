@@ -22,9 +22,9 @@ const SETTLEMENTS: String = "res://data/biomes/settlements.json"
 ## Art's city palettes and facade types (docs/art/city-facades.md): with it the downtown and mid-rise towers take a tint
 ## and a facade each (city_look); without it they are drawn in their look as before.
 const CITY_LOOKS: String = "res://data/art/city-looks.json"
-const FACADES: Array = ["ribbon", "punched", "fins"]   # building.gdshader's facade index
-const NO_FACADE: int = 3                                # ... the look's own windows (RenderLook.CITY_FACADES off)
-const CITY_SLOTS: int = 12                              # building.gdshader's city arrays: Art's tints, at most
+const FACADES: Array = ["ribbon", "punched", "fins", "balconied"]   # building.gdshader's facade index
+const NO_FACADE: int = 4                                # ... the look's own windows (RenderLook.CITY_FACADES off)
+const CITY_SLOTS: int = 20                              # building.gdshader's city arrays: Art's tints, at most (city_code holds 31)
 ## A part's flags.
 const ROOF: int = 1     # a roof facet: its own colour, no windows, gone from a shell
 const PLAIN: int = 2    # no windows
@@ -223,6 +223,8 @@ static func city_look(b, k: int) -> Dictionary:
 	var fa: Vector4 = fu["fac_a"][fi]
 	var fb: Vector4 = fu["fac_b"][fi]
 	out["win"] = [float(lk["win"][0]) * fa.x, fa.y, fa.z, fa.w]
+	if FACADES[fi] == "balconied":
+		out["win"] = [float(lk["win"][0]) * fa.x * 0.5, 0.5 - 0.5 * fa.z, 0.5 + 0.5 * fa.z, fa.w]   # the pair as two even panes: near enough for the pane grid
 	out["pane"] = [fb.x, fb.y, 1.0]
 	var bc: Dictionary = c.get("base_and_crown", {})
 	out["base"] = bc.has("base") and int(b.floors) >= RenderLook.CITY_BASE_FLOORS
@@ -231,15 +233,15 @@ static func city_look(b, k: int) -> Dictionary:
 	return out
 
 
-## What building.gdshader reads of a building's city look (win_tex's fifth texel, a): 0 for none; else 1 plus its tint,
-## plus 16 times its facade (NO_FACADE: the look's own windows), plus 64 with a lobby storey, plus 128 times the floor its
-## crown starts at.
+## What building.gdshader reads of a building's city look (win_tex's fifth texel, a, a 32-bit float): 0 for none; else 1
+## plus its tint (up to 30), plus 32 times its facade (NO_FACADE: the look's own windows), plus 256 with a lobby storey,
+## plus 512 times the floor its crown starts at.
 static func city_code(lk: Dictionary, floors: int) -> float:
 	if not lk.has("tint"):
 		return 0.0
-	var code: int = 1 + int(lk["tint"]) + 16 * int(lk["facade"]) + (64 if bool(lk.get("base", false)) else 0)
+	var code: int = 1 + int(lk["tint"]) + 32 * int(lk["facade"]) + (256 if bool(lk.get("base", false)) else 0)
 	if lk.has("crown"):
-		code += 128 * maxi(floors - int(lk["crown"][0]), 0)
+		code += 512 * maxi(floors - int(lk["crown"][0]), 0)
 	return float(code)
 
 
@@ -260,13 +262,16 @@ static func _scaled(c: Color, k: float) -> Color:
 ## spandrels, fins and lobby storey are given as multiples of the wall (the luminance Art set them at over the mid's):
 ## Art's hues and ratios, at the values the towers have today. city_glass, city_hi: dark and bright glass (a: the lobby
 ## storey's wall); city_trim: the cornice and lintel; city_k: a ribbon's spandrel, a punched one's, a fin, a fin's sun
-## side. fac_a, fac_b, fac_c: each facade type's column (a multiple of the look's), its pane across the cell and up the
-## floor, its spandrel's band up the floor and a fin's half width. city_base: the lobby storey in floors, its lintel.
+## side; city_k2: the balconied facade's spandrel and its slab line. fac_a, fac_b, fac_c: each facade type's column (a
+## multiple of the look's), its pane across the cell and up the floor, its spandrel's band up the floor and a fin's half
+## width (balconied: fac_a's y and z are the pair's gap and a pane's width as shares of half the cell, and fac_c.w is
+## the slab line's height up the floor, under every second floor). city_base: the lobby storey in floors, its lintel.
 static func city_uniforms() -> Dictionary:
 	var glass: Array = []
 	var hi: Array = []
 	var trim: Array = []
 	var kk: Array = []
+	var kk2: Array = []
 	var c: Dictionary = city_data()
 	var tints: Array = city_tints()
 	var fac: Dictionary = c.get("facades", {})
@@ -274,6 +279,9 @@ static func city_uniforms() -> Dictionary:
 	var rib: Dictionary = fac.get("ribbon", {})
 	var pun: Dictionary = fac.get("punched", {})
 	var fin: Dictionary = fac.get("fins", {})
+	var bal: Dictionary = fac.get("balconied", {})
+	var off_bal: float = float((bal.get("spandrel", {}) as Dictionary).get("lum_offset", 0.0))
+	var off_slab: float = float((bal.get("_slab", {}) as Dictionary).get("lum_offset", 0.0))
 	var off_rib: float = float((rib.get("spandrel", {}) as Dictionary).get("lum_offset", 0.0))
 	var off_pun: float = float((pun.get("spandrel", {}) as Dictionary).get("lum_offset", 0.0))
 	var off_fin: float = float((fin.get("fin", {}) as Dictionary).get("lum_offset", 0.0))
@@ -285,6 +293,7 @@ static func city_uniforms() -> Dictionary:
 			hi.append(Color(0, 0, 0, 1))
 			trim.append(Color(0, 0, 0, 1))
 			kk.append(Vector4(1, 1, 1, 1))
+			kk2.append(Vector4(1, 1, 1, 1))
 			continue
 		var t: Dictionary = tints[i][1]
 		var lm: float = maxf(_lum(_c(t["wall"]["mid"])), 0.0001)
@@ -294,28 +303,35 @@ static func city_uniforms() -> Dictionary:
 		hi.append(_scaled(_c(t["glass"]["bright"]), s))
 		trim.append(_scaled(_c(t["trim"]), s))
 		kk.append(Vector4((lm + off_rib) / lm, (lm + off_pun) / lm, (lm + off_fin) / lm, (lm + off_sun) / lm))
-	var pw: Vector3 = RenderLook.FACADE_PITCH
+		kk2.append(Vector4((lm + off_bal) / lm, (lm + off_slab) / lm, 1.0, 1.0))
+	var pw: Vector4 = RenderLook.FACADE_PITCH
 	var rib_w: float = 1.0 - float(rib.get("pier_w", 0.05))
 	var rib_s: float = float((rib.get("spandrel", {}) as Dictionary).get("h", 0.45))
 	var pun_w: float = float(pun.get("pane_w", 0.38))
 	var pun_s: float = float((pun.get("spandrel", {}) as Dictionary).get("h", 0.3))
 	var fin_w: float = float(fin.get("pane_w", 0.78))
+	var bal_w: float = float(bal.get("pane_w", 0.34))
+	var bal_s: float = float((bal.get("spandrel", {}) as Dictionary).get("h", 0.25))
+	var bal_slab: float = float((bal.get("_slab", {}) as Dictionary).get("h", 0.12))
 	var fa: Array = [
 		Vector4(pw.x, 0.5 - 0.5 * rib_w, 0.5 + 0.5 * rib_w, 1.0),
 		Vector4(pw.y, 0.5 - 0.5 * pun_w, 0.5 + 0.5 * pun_w, 1.0),
 		Vector4(pw.z, 0.5 - 0.5 * fin_w, 0.5 + 0.5 * fin_w, 1.0),
+		Vector4(pw.w, RenderLook.BALCONY_PAIR_GAP, 2.0 * bal_w, 1.0),
 	]
 	var fb: Array = [
 		Vector4(rib_s, minf(rib_s + float(rib.get("pane_h", 0.55)), 1.0), 1.0, 16.0),
 		Vector4(pun_s, minf(pun_s + float(pun.get("pane_h", 0.5)), 1.0), 1.0, 16.0),
 		Vector4(0.0, 1.0, 1.0, 16.0),
+		Vector4(bal_s, minf(bal_s + float(bal.get("pane_h", 0.5)), 1.0), 1.0, 16.0),
 	]
 	var fc: Array = [
 		Vector4(0.0, rib_s, 0.0, 0.0),
 		Vector4(0.0, pun_s, 0.0, 0.0),
 		Vector4(0.0, 0.0, 0.5 * float((fin.get("fin", {}) as Dictionary).get("w", 0.14)), 0.0),
+		Vector4(0.0, bal_s, 0.0, bal_slab),
 	]
-	return {"city_glass": glass, "city_hi": hi, "city_trim": trim, "city_k": kk, "fac_a": fa, "fac_b": fb, "fac_c": fc,
+	return {"city_glass": glass, "city_hi": hi, "city_trim": trim, "city_k": kk, "city_k2": kk2, "fac_a": fa, "fac_b": fb, "fac_c": fc,
 		"city_base": Vector4(float((bc.get("base", {}) as Dictionary).get("floors", 1.6)), RenderLook.CITY_LINTEL, RenderLook.CITY_CORNICE, float(RenderLook.CITY_BASE_ROWS)),
 		"city_base_pane": RenderLook.CITY_BASE_PANE}
 

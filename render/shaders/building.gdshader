@@ -53,7 +53,8 @@
 //    and facade types, docs/art/city-facades.md). A downtown or mid-rise tower carries its city look in v_look.w
 //    (RenderShapes.city_code): one of Art's tints (its wall tones are the instance's colours; its glass, bright glass
 //    and trim are city_glass, city_hi and city_trim), one of Art's facade types (ribbon: wide panes over a spandrel band;
-//    punched: separate panes over a darker band; fins: tall glass between fins, one side lit), Art's lobby storey
+//    punched: separate panes over a darker band; fins: tall glass between fins, one side lit; balconied: panes in pairs, a
+//    slab line under every second floor and a spandrel band under the panes on the floors between), Art's lobby storey
 //    (city_base.x floors with city_base.w rows of punched panes in a darker wall, a lintel over it, plain wall to the
 //    second floor's top)
 //    and the floor its crown starts at (its panes all bright glass, a cornice line at the top of each floor; the setback
@@ -128,13 +129,14 @@ uniform vec4 look_hi[10] : source_color;     // bright glass
 uniform vec4 look_trim[10] : source_color;   // doors, shutters, panels
 uniform float pattern_budget = 0.085;   // RenderLook.PATTERN_BUDGET: on a look with flag 16, the most a pane and its wall differ in relative luminance
 uniform vec2 glass_sky = vec2(0.4, 0.5);   // RenderLook.GLASS_SKY: how far a tower's glass takes the sky's hue, and the least height over the horizon it takes it from (7c)
-uniform vec4 city_glass[12] : source_color;   // RenderShapes.city_uniforms (7c): each of Art's tints' dark glass; a: its lobby storey's wall against the wall
-uniform vec4 city_hi[12] : source_color;      // ... its bright glass
-uniform vec4 city_trim[12] : source_color;    // ... its cornice and lintel
-uniform vec4 city_k[12];                      // ... the wall in a ribbon's spandrel, a punched one's, a fin and a fin's sun side, as multiples of it
-uniform vec4 fac_a[3];                        // each facade type (ribbon, punched, fins): its column as a multiple of the look's, the pane across its cell (from, to), the share of cells with one
-uniform vec4 fac_b[3];                        // ... the pane up the floor (from, to), strips a floor, flags
-uniform vec4 fac_c[3];                        // ... its spandrel's band up the floor (from, to), a fin's half width
+uniform vec4 city_glass[20] : source_color;   // RenderShapes.city_uniforms (7c): each of Art's tints' dark glass; a: its lobby storey's wall against the wall
+uniform vec4 city_hi[20] : source_color;      // ... its bright glass
+uniform vec4 city_trim[20] : source_color;    // ... its cornice and lintel
+uniform vec4 city_k2[20];                     // ... the balconied facade's spandrel and slab line, as multiples of the wall
+uniform vec4 city_k[20];                      // ... the wall in a ribbon's spandrel, a punched one's, a fin and a fin's sun side, as multiples of it
+uniform vec4 fac_a[4];                        // each facade type (ribbon, punched, fins, balconied): its column as a multiple of the look's, the pane across its cell (from, to), the share of cells with one
+uniform vec4 fac_b[4];                        // ... the pane up the floor (from, to), strips a floor, flags
+uniform vec4 fac_c[4];                        // ... its spandrel's band up the floor (from, to), a fin's half width
 uniform vec4 city_base = vec4(1.6, 0.1, 0.08, 2.0);   // Art's lobby storey in floors, the lintel over it (RenderLook.CITY_LINTEL), the crown's cornice line (RenderLook.CITY_CORNICE), the storey's rows of panes (RenderLook.CITY_BASE_ROWS)
 uniform vec2 city_base_pane = vec2(0.12, 0.88);  // RenderLook.CITY_BASE_PANE: the lobby storey's panes up the storey
 uniform float dmg_holes = 0.18;      // RenderLook.DMG_HOLES: at stage 2, the share of a facade's bays broken open
@@ -487,15 +489,16 @@ void fragment() {
 		vec4 lb = look_b[lk];
 		float fy = (v_wy - v_winb.x) / v_win.w;
 		float fr = fy * v_look.y;                 // rows of windows: a tall floor carries several
-		// 7c: a tower in one of Art's tints wears one of Art's facade types (3: the look's own windows); its lobby storey
+		// 7c: a tower in one of Art's tints wears one of Art's facade types (4: the look's own windows); its lobby storey
 		// has city_base.w rows of punched panes (under the lintel, none), its crown starts at crown_f.
 		int city = int(v_look.w + 0.5);
-		int tint = (city & 15) - 1;
-		int fac = (city >> 4) & 3;
-		float crown_f = tint >= 0 ? float(city >> 7) : 0.0;
-		bool in_base = tint >= 0 && (city & 64) != 0 && fy < 2.0;
+		int tint = (city & 31) - 1;
+		int fac = (city >> 5) & 7;
+		float crown_f = tint >= 0 ? float(city >> 9) : 0.0;
+		bool in_base = tint >= 0 && (city & 256) != 0 && fy < 2.0;
+		bool balc = tint >= 0 && fac == 3 && !in_base;   // balconied: panes in pairs, a slab line, a spandrel band
 		vec4 fc = vec4(0.0);
-		if (tint >= 0 && fac < 3) {
+		if (tint >= 0 && fac < 4) {
 			la = vec4(la.x * fac_a[fac].x, fac_a[fac].yzw);
 			lb = fac_b[fac];
 			fc = fac_c[fac];
@@ -607,6 +610,11 @@ void fragment() {
 			float ry = lb.z > 1.5 ? fract(r.y * 2.0) : r.y;   // two strips a row
 			bool has = win_hash(vec3(v_winb.z, floor(cx), row + 57.0)) < la.w && (!top_only || row >= v_winb.y * v_look.y - 1.5);
 			bool across = r.x > la.y && r.x < la.z;
+			if (balc) {
+				// Each pane in its half of the cell, toward the middle: la.y the pair's gap, la.z a pane's width (halves).
+				float hx = fract(r.x * 2.0);
+				across = r.x < 0.5 ? (hx > 1.0 - la.y - la.z && hx < 1.0 - la.y) : (hx > la.y && hx < la.y + la.z);
+			}
 			bool tall = ry > lb.x && ry < lb.y;
 			vec3 glass = tint >= 0 ? city_glass[tint].rgb : look_glass[lk].rgb;
 			vec3 bright = tint >= 0 ? city_hi[tint].rgb : look_hi[lk].rgb;
@@ -615,18 +623,24 @@ void fragment() {
 				glass = bright;   // Art's crown: its panes are the bright glass
 			}
 			vec3 wall_far = col;   // the wall between the panes as a whole, for a wall too far to draw them
-			if (tint >= 0 && fac < 3) {
-				// 7c (C): this pixel's wall, a spandrel, a fin, the lobby storey, its lintel or the crown's cornice line,
-				// each held to the wall by the budget.
+			if (tint >= 0 && fac < 4) {
+				// 7c (C): this pixel's wall, a spandrel, a fin, a balcony's slab line, the lobby storey, its lintel or the
+				// crown's cornice line, each held to the wall by the budget.
 				vec4 kk = city_k[tint];
+				vec4 kk2 = city_k2[tint];
 				vec3 trimc = toward(wallc, city_trim[tint].rgb, pattern_budget);
-				vec3 spand = toward(wallc, wallc * (fac == 0 ? kk.x : kk.y), pattern_budget);
+				vec3 spand = toward(wallc, wallc * (fac == 0 ? kk.x : (fac == 3 ? kk2.x : kk.y)), pattern_budget);
+				vec3 slab = toward(wallc, wallc * kk2.y, pattern_budget);
+				bool slab_floor = mod(kf, 2.0) < 0.5;   // a balcony's slab under every second floor; its spandrel band on the others
 				vec3 fin_d = toward(wallc, wallc * kk.z, pattern_budget);
 				vec3 fin_l = toward(wallc, wallc * kk.w, pattern_budget);
 				float band = fc.y - fc.x;
 				float finw = 2.0 * fc.z;
 				vec3 fw = wallc;
 				vec3 favg = wallc * (1.0 - band - finw) + spand * band + fc.z * (fin_l + fin_d);
+				if (balc) {
+					favg = wallc * (1.0 - 0.5 * band - 0.5 * fc.w) + spand * 0.5 * band + slab * 0.5 * fc.w;
+				}
 				if (in_base) {
 					vec3 bw = toward(wallc, wallc * city_glass[tint].a, pattern_budget);
 					bool lintel = fy >= city_base.x && fy < city_base.x + city_base.y;
@@ -637,6 +651,12 @@ void fragment() {
 						fw = fin_l;
 					} else if (r.x > 1.0 - fc.z) {
 						fw = fin_d;
+					} else if (balc) {
+						if (slab_floor && ry >= 1.0 - fc.w) {
+							fw = slab;
+						} else if (!slab_floor && ry >= fc.x && ry < fc.y) {
+							fw = spand;
+						}
 					} else if (ry >= fc.x && ry < fc.y) {
 						fw = spand;
 					}
@@ -661,7 +681,7 @@ void fragment() {
 				bright = toward(wallc, bright, pattern_budget);
 			}
 			// Too far to draw panes, the wall is the average of wall and glass (the dark inside where they are out).
-			float cover = top_only ? 0.0 : (la.z - la.y) * (lb.y - lb.x) * la.w;
+			float cover = top_only ? 0.0 : (balc ? la.z : la.z - la.y) * (lb.y - lb.x) * la.w;
 			float lit_sh = min(look_glass[lk].a * wl_lit, 1.0);   // the panes lit warm: more with the dark
 			vec3 avg = flat_shade(mix(mix(glass, bright, 0.1), win_lit.rgb, lit_sh), NORMAL, 0.35);
 			vec3 far = mix(wall_far, gone ? inside.rgb : avg, max(cover, 0.0));
