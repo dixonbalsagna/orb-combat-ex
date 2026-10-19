@@ -30,6 +30,18 @@ const LIMITS: Dictionary = {
 	"tug.fall": [400.0, 0.02],
 	"drone.bed.lo": [260.0, 0.01],
 	"drone.bed.hi": [400.0, 0.01],
+	"tug.tock": [450.0, 0.03],
+	"tug.tick": [550.0, 0.08],
+	"tug.crack": [700.0, 0.07],
+	"grip.clasp": [600.0, 0.04],
+	"grip.creak": [750.0, 0.10],
+	"grip.thud": [650.0, 0.04],
+	"grip.refuse": [500.0, 0.03],
+	"form.ready": [350.0, 0.02],
+	"brake.skid": [700.0, 0.04],
+	"rush.whoosh": [800.0, 0.05],
+	"block.perfect": [450.0, 0.02],
+	"drone.coil": [300.0, 0.01],
 }
 var fails: int = 0
 
@@ -126,7 +138,7 @@ func spectrum(bank: AudioBank, id: String) -> Array:
 func _run() -> void:
 	var bank := AudioBank.new()
 	print("%-22s %9s   %s" % ["sound", "heard", "centroid and share of the heard energy: under 250 | 250-1k | 1-2k | 2-4k | over 4k  (first 64 ms)"])
-	var ids: Array = ["impact.light", "impact.light.lite", "impact.medium", "impact.medium.grind", "impact.heavy", "impact.guard", "impact.double", "impact.absorbed", "impact.whiff", "energy.bolt", "energy.blast", "charge.tick.heavy", "charge.tick.light", "charge.hum", "perfect.tok", "ui.launcher", "tug.pulse", "tug.surge", "tug.lock", "tug.fall", "drone.bed.lo", "drone.bed.hi"]
+	var ids: Array = ["impact.light", "impact.light.lite", "impact.medium", "impact.medium.grind", "impact.heavy", "impact.guard", "impact.double", "impact.absorbed", "impact.whiff", "energy.bolt", "energy.blast", "charge.tick.heavy", "charge.tick.light", "charge.hum", "perfect.tok", "ui.launcher", "tug.pulse", "tug.surge", "tug.lock", "tug.fall", "drone.bed.lo", "drone.bed.hi", "tug.tock", "tug.tick", "tug.crack", "grip.clasp", "grip.creak", "grip.thud", "grip.refuse", "form.ready", "brake.skid", "rush.whoosh", "block.perfect", "drone.coil"]
 	for id in ids:
 		if not bank.has_sound(id):
 			continue

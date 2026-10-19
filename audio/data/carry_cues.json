@@ -1,0 +1,168 @@
+{
+  "schema": 1,
+  "note": "Sound that carries what the HUD no longer draws (Orb's minimalist rule, 2026-10-18; docs/design/minimal-hud.md, docs/research/readable-speed.md; docs/audio/carry.md). PARKED behind `enabled`: false. The beam struggle's groove and cracks (with the base struggle in tug_cues.json), the grip's clasp, creak, thud and refusal, the ready form's sting and the coil's hum, the air brake's skid, the rush, and the perfect block. Same lower, chunkier family as the hits. Needs a schema from Tools (a warning until then).",
+  "enabled": false,
+  "drones": {
+    "coil": {
+      "rate": 32000,
+      "seconds": 2.0,
+      "f": 82.0,
+      "partials": [
+        [
+          1,
+          1.0
+        ],
+        [
+          2,
+          0.6
+        ],
+        [
+          3,
+          0.3
+        ]
+      ],
+      "peak_db": -12.0
+    }
+  },
+  "struggle": {
+    "groove": {
+      "tock_ticks": 10,
+      "tock": {
+        "sound": "tug.tock",
+        "gain_db": -3.0
+      },
+      "tick": {
+        "sound": "tug.tick",
+        "gain_db": -3.0,
+        "ticks": [
+          5,
+          15
+        ],
+        "dense_from": 0.5
+      },
+      "steps_st": 4.0,
+      "priority": 70,
+      "cls": "tug.groove",
+      "cap": 2
+    },
+    "crack": {
+      "sound": "tug.crack",
+      "surge_db": -5.0,
+      "sharp_db": -1.0,
+      "sharp_pitch": 1.2,
+      "near": {
+        "thresholds": [
+          0.6,
+          0.8,
+          0.9
+        ],
+        "pitches": [
+          0.9,
+          1.0,
+          1.1
+        ],
+        "gain_db": -6.0,
+        "rearm_below": 0.1
+      },
+      "priority": 74,
+      "cls": "tug.crack",
+      "cap": 2
+    }
+  },
+  "grapple": {
+    "clasp": {
+      "sound": "grip.clasp",
+      "gain_db": -2.0,
+      "priority": 70,
+      "cls": "grip",
+      "cap": 2
+    },
+    "creak": {
+      "sound": "grip.creak",
+      "gain_db": -2.0,
+      "grip_st": 1.0,
+      "grip_max": 5,
+      "priority": 66,
+      "cls": "grip.creak",
+      "cap": 1
+    },
+    "pummel": {
+      "sound": "grip.thud",
+      "gain_db": -1.0,
+      "sharp_db": 2.0,
+      "sharp_tok": {
+        "sound": "perfect.tok",
+        "pitch": 1.12246,
+        "gain_db": -2.0
+      },
+      "silent_texts": [
+        "void"
+      ],
+      "priority": 72,
+      "cls": "grip.thud",
+      "cap": 2
+    },
+    "refuse": {
+      "sound": "grip.refuse",
+      "gain_db": 0.0,
+      "texts": [
+        "lockout"
+      ],
+      "priority": 60,
+      "cls": "grip.refuse",
+      "cap": 1
+    }
+  },
+  "forms": {
+    "ready": {
+      "sound": "form.ready",
+      "gain_db": -4.0,
+      "bus": "Alert",
+      "priority": 85,
+      "cls": "form.ready",
+      "cap": 1
+    },
+    "coil": {
+      "drone": "coil",
+      "coil_max": 100.0,
+      "gain_db": [
+        -28.0,
+        -14.0
+      ],
+      "pitch_st_at_max": 4.0,
+      "ramp_ms": 800,
+      "priority": 40,
+      "cls": "coil",
+      "cap": 2,
+      "stop_ms": 250
+    }
+  },
+  "brake": {
+    "sound": "brake.skid",
+    "full_speed": 5000.0,
+    "gain_db": -2.0,
+    "gain_db_per_full": 4.0,
+    "pitch_at_full": 1.15,
+    "priority": 60,
+    "cls": "brake",
+    "cap": 1,
+    "stop_ms": 150
+  },
+  "rush": {
+    "sound": "rush.whoosh",
+    "gain_db": -3.0,
+    "nominal_ticks": 18,
+    "pitch_min": 0.75,
+    "pitch_max": 1.35,
+    "priority": 55,
+    "cls": "rush",
+    "cap": 3
+  },
+  "perfect_block": {
+    "sound": "block.perfect",
+    "gain_db": -2.0,
+    "priority": 80,
+    "cls": "block.perfect",
+    "cap": 1
+  }
+}

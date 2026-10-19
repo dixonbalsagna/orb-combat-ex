@@ -13,6 +13,7 @@ const FLASH_PATH := "res://audio/data/flash_cues.json"
 const BABBLE_PATH := "res://audio/data/babble.json"
 const TUG_PATH := "res://audio/data/tug_cues.json"
 const CUES_PATH := "res://audio/data/cues.json"
+const CARRY_PATH := "res://audio/data/carry_cues.json"
 
 var impacts: Dictionary = {}
 var grunts: Dictionary = {}
@@ -33,6 +34,7 @@ func _init() -> void:
 	var tug: Dictionary = load_json(TUG_PATH)
 	drones = tug.get("drones", {})
 	_tug_on = bool(tug.get("enabled", false))
+	drones.merge(load_json(CARRY_PATH).get("drones", {}))
 
 
 static func load_json(path: String) -> Dictionary:

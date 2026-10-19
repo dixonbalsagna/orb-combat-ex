@@ -1,0 +1,713 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/audio-carry-cues",
+  "title": "audio-carry-cues (schema 1)",
+  "description": "audio/data/carry_cues.json: Inferred by the EP with Tools' helper from Audio's file; Audio and Tools tighten values.. A shape check inferred from the file (docs/tools/pending/infer-schema.cjs): every key present is required, a key outside is refused unless it starts with an underscore, a number is bounded only below by zero where all its values are, a colour is a hex string; the owner tightens the values. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "note",
+    "enabled",
+    "drones",
+    "struggle",
+    "grapple",
+    "forms",
+    "brake",
+    "rush",
+    "perfect_block"
+  ],
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "note": {
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "drones": {
+      "type": "object",
+      "required": [
+        "coil"
+      ],
+      "properties": {
+        "coil": {
+          "type": "object",
+          "required": [
+            "rate",
+            "seconds",
+            "f",
+            "partials",
+            "peak_db"
+          ],
+          "properties": {
+            "rate": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "seconds": {
+              "type": "number",
+              "minimum": 0
+            },
+            "f": {
+              "type": "number",
+              "minimum": 0
+            },
+            "partials": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "minItems": 3,
+              "maxItems": 3
+            },
+            "peak_db": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "struggle": {
+      "type": "object",
+      "required": [
+        "groove",
+        "crack"
+      ],
+      "properties": {
+        "groove": {
+          "type": "object",
+          "required": [
+            "tock_ticks",
+            "tock",
+            "tick",
+            "steps_st",
+            "priority",
+            "cls",
+            "cap"
+          ],
+          "properties": {
+            "tock_ticks": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tock": {
+              "type": "object",
+              "required": [
+                "sound",
+                "gain_db"
+              ],
+              "properties": {
+                "sound": {
+                  "type": "string"
+                },
+                "gain_db": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "tick": {
+              "type": "object",
+              "required": [
+                "sound",
+                "gain_db",
+                "ticks",
+                "dense_from"
+              ],
+              "properties": {
+                "sound": {
+                  "type": "string"
+                },
+                "gain_db": {
+                  "type": "number"
+                },
+                "ticks": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                },
+                "dense_from": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "steps_st": {
+              "type": "integer"
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "cls": {
+              "type": "string"
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "crack": {
+          "type": "object",
+          "required": [
+            "sound",
+            "surge_db",
+            "sharp_db",
+            "sharp_pitch",
+            "near",
+            "priority",
+            "cls",
+            "cap"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string"
+            },
+            "surge_db": {
+              "type": "number"
+            },
+            "sharp_db": {
+              "type": "number"
+            },
+            "sharp_pitch": {
+              "type": "number"
+            },
+            "near": {
+              "type": "object",
+              "required": [
+                "thresholds",
+                "pitches",
+                "gain_db",
+                "rearm_below"
+              ],
+              "properties": {
+                "thresholds": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "pitches": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "gain_db": {
+                  "type": "number"
+                },
+                "rearm_below": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "cls": {
+              "type": "string"
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "grapple": {
+      "type": "object",
+      "required": [
+        "clasp",
+        "creak",
+        "pummel",
+        "refuse"
+      ],
+      "properties": {
+        "clasp": {
+          "type": "object",
+          "required": [
+            "sound",
+            "gain_db",
+            "priority",
+            "cls",
+            "cap"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string"
+            },
+            "gain_db": {
+              "type": "number"
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "cls": {
+              "type": "string"
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "creak": {
+          "type": "object",
+          "required": [
+            "sound",
+            "gain_db",
+            "grip_st",
+            "grip_max",
+            "priority",
+            "cls",
+            "cap"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string"
+            },
+            "gain_db": {
+              "type": "number"
+            },
+            "grip_st": {
+              "type": "number"
+            },
+            "grip_max": {
+              "type": "number",
+              "minimum": 0
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "cls": {
+              "type": "string"
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "pummel": {
+          "type": "object",
+          "required": [
+            "sound",
+            "gain_db",
+            "sharp_db",
+            "sharp_tok",
+            "silent_texts",
+            "priority",
+            "cls",
+            "cap"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string"
+            },
+            "gain_db": {
+              "type": "number"
+            },
+            "sharp_db": {
+              "type": "number"
+            },
+            "sharp_tok": {
+              "type": "object",
+              "required": [
+                "sound",
+                "pitch",
+                "gain_db"
+              ],
+              "properties": {
+                "sound": {
+                  "type": "string"
+                },
+                "pitch": {
+                  "type": "number"
+                },
+                "gain_db": {
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "silent_texts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "maxItems": 1
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "cls": {
+              "type": "string"
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "refuse": {
+          "type": "object",
+          "required": [
+            "sound",
+            "gain_db",
+            "texts",
+            "priority",
+            "cls",
+            "cap"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string"
+            },
+            "gain_db": {
+              "type": "number"
+            },
+            "texts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "maxItems": 1
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "cls": {
+              "type": "string"
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "forms": {
+      "type": "object",
+      "required": [
+        "ready",
+        "coil"
+      ],
+      "properties": {
+        "ready": {
+          "type": "object",
+          "required": [
+            "sound",
+            "gain_db",
+            "bus",
+            "priority",
+            "cls",
+            "cap"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string"
+            },
+            "gain_db": {
+              "type": "number"
+            },
+            "bus": {
+              "type": "string"
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "cls": {
+              "type": "string"
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "coil": {
+          "type": "object",
+          "required": [
+            "drone",
+            "coil_max",
+            "gain_db",
+            "pitch_st_at_max",
+            "ramp_ms",
+            "priority",
+            "cls",
+            "cap",
+            "stop_ms"
+          ],
+          "properties": {
+            "drone": {
+              "type": "string"
+            },
+            "coil_max": {
+              "type": "number",
+              "minimum": 0
+            },
+            "gain_db": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "pitch_st_at_max": {
+              "type": "number"
+            },
+            "ramp_ms": {
+              "type": "number",
+              "minimum": 0
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "cls": {
+              "type": "string"
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "stop_ms": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "brake": {
+      "type": "object",
+      "required": [
+        "sound",
+        "full_speed",
+        "gain_db",
+        "gain_db_per_full",
+        "pitch_at_full",
+        "priority",
+        "cls",
+        "cap",
+        "stop_ms"
+      ],
+      "properties": {
+        "sound": {
+          "type": "string"
+        },
+        "full_speed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gain_db": {
+          "type": "number"
+        },
+        "gain_db_per_full": {
+          "type": "number"
+        },
+        "pitch_at_full": {
+          "type": "number"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cls": {
+          "type": "string"
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "stop_ms": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "rush": {
+      "type": "object",
+      "required": [
+        "sound",
+        "gain_db",
+        "nominal_ticks",
+        "pitch_min",
+        "pitch_max",
+        "priority",
+        "cls",
+        "cap"
+      ],
+      "properties": {
+        "sound": {
+          "type": "string"
+        },
+        "gain_db": {
+          "type": "number"
+        },
+        "nominal_ticks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pitch_min": {
+          "type": "number"
+        },
+        "pitch_max": {
+          "type": "number"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cls": {
+          "type": "string"
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "perfect_block": {
+      "type": "object",
+      "required": [
+        "sound",
+        "gain_db",
+        "priority",
+        "cls",
+        "cap"
+      ],
+      "properties": {
+        "sound": {
+          "type": "string"
+        },
+        "gain_db": {
+          "type": "number"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cls": {
+          "type": "string"
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

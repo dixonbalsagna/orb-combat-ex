@@ -534,6 +534,10 @@
     {
       "match": "data/fight/brake.json",
       "schema": "fight-brake.schema.json"
+    },
+    {
+      "match": "audio/data/carry_cues.json",
+      "schema": "audio-carry-cues.schema.json"
     }
   ]
 }

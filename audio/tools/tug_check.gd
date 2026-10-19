@@ -194,7 +194,7 @@ func _ends() -> void:
 		if kind == "overwhelmed":
 			ok(absf(with_sound(r, "tug.fall")[0].x - 4100.0) < 0.01 and with_sound(r, "energy.blast").size() == 1 and absf(with_sound(r, "energy.blast")[0].pitch - 0.9) < 0.001, "the loser stands at the end the point reached, and the beam lands on him")
 		if kind == "detonate":
-			ok(with_sound(r, "energy.blast").size() == 1 and absf(with_sound(r, snd)[0].x - 4050.0) < 0.01, "the boom is where the beams meet")
+			ok(with_sound(r, "energy.blast").size() == 1 and absf(with_sound(r, snd)[0].x - 4052.0) < 0.01, "the boom is where the beams meet (the point, 0.52 of the way)")
 		if kind == "time":
 			ok(absf(with_sound(r, snd)[0].x - 4100.0) < 0.01, "on time, at the side the point is on")
 		ok(tick(t + 120, [cue("beam_pulse", "", 0, {"k": 9.0})]).is_empty(), "%s: after the end nothing more sounds" % kind)

@@ -40,6 +40,19 @@ func reset() -> void:
 	_stray.clear()
 
 
+## For AudioCarry (the groove and the cracks follow the struggle):
+func is_on() -> bool:
+	return _on and enabled()
+
+
+func dist() -> float:
+	return _dist()
+
+
+func point(S: SimState) -> Vector2:
+	return _point(S)
+
+
 func enabled() -> bool:
 	return bool(cfg.get("enabled", false))
 
@@ -89,6 +102,8 @@ func _read_mid(S: SimState, e) -> void:
 	var m = c.get("mid") if c != null else null      # get(): a sim that has no Clash.mid yet is not an error
 	if m != null and float(m) >= 0.0:
 		_mid = clampf(float(m), 0.0, 1.0)
+	elif e != null and float(e.x) > 0.0 and float(e.x) <= 1.0:
+		_mid = clampf(float(e.x), 0.0, 1.0)      # Encounter's agreed cue list: `x` is the point, 0 at the actor's hands to 1 at the target's
 	elif e != null and float(e.amount) > 0.0:
 		_mid = clampf(float(e.amount), 0.0, 1.0)
 
@@ -238,10 +253,10 @@ func _end(S: SimState, e, out: Array) -> void:
 	var p: Vector2 = _point(S) if _on else Vector2(float(e.x), float(e.y))
 	# the loser stands at the end the point reached; on time, the side the point is on
 	var side: int = _d if _mid >= 0.5 else _a
+	if kind == "overwhelmed" and int(e.target) >= 0 and int(e.target) < S.fighters.size():
+		side = int(e.target)      # the cue names the loser
 	if (kind == "overwhelmed" or kind == "time") and side >= 0 and side < S.fighters.size():
 		p = Vector2(S.fighters[side].x, S.fighters[side].y)
-	if kind == "detonate" and float(e.x) != 0.0:
-		p = Vector2(float(e.x), p.y)      # the cue's own x is where the beams met
 	_stop_bed(out, int(R.fade_ms))
 	out.append(_fixed(String(R.sound), p, float(R.gain_db), 1.0, int(E.priority), String(E.cls), int(E.cap)))
 	if R.has("with"):

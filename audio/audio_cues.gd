@@ -43,6 +43,7 @@ var _rng: SimRng
 var _last_variant: Dictionary = {}    # sound id -> the variant played last
 var _last_grunt: Dictionary = {}      # "fighter.gesture" -> sim time it last fired
 var brawl: AudioBrawl                 # the brawl's cues (audio_brawl.gd)
+var carry: AudioCarry                   # what the HUD no longer draws (audio_carry.gd), parked behind data/carry_cues.json `enabled`
 var tug: AudioTug                     # the beam struggle's (audio_tug.gd), parked behind data/tug_cues.json `enabled`
 
 
@@ -51,6 +52,7 @@ func _init(p_bank: AudioBank = null) -> void:
 	bank = p_bank if p_bank != null else AudioBank.new()
 	brawl = AudioBrawl.new(self)
 	tug = AudioTug.new(self)
+	carry = AudioCarry.new(self)
 	reset(1)
 
 
@@ -61,6 +63,7 @@ func reset(p_seed: int) -> void:
 	_last_grunt.clear()
 	brawl.reset()
 	tug.reset()
+	carry.reset()
 
 
 ## One tick's events, in order. Returns the cues to play.
@@ -74,6 +77,7 @@ func consume(S: SimState, events: Array) -> Array:
 			"cue":
 				brawl.on_cue(S, e, out)
 				tug.on_cue(S, e, out)
+				carry.on_cue(S, e, out)
 			"crater":
 				_crater(S, e, out)
 			"flash":
@@ -82,7 +86,11 @@ func consume(S: SimState, events: Array) -> Array:
 					var c: Cue = flash(S, int(e.get("actor")), String(e.get("id")))
 					if c != null:
 						out.append(c)
+	for e in events:
+		if e.type in ["rush", "transform_ready", "form_hold", "form_release", "air_brake"]:
+			carry.on_event(S, e, out)
 	tug.after(S, out)
+	carry.after(S, out)
 	return out
 
 

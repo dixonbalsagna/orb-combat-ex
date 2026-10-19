@@ -293725,6 +293725,1840 @@
       }
     },
     {
+      "id": "audio-carry-cues-valid",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/schema": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-carry-cues-key-required-schema",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-carry-cues-key-required-note",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "del": [
+            "/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-carry-cues-key-required-enabled",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "del": [
+            "/enabled"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-carry-cues-key-required-drones",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "del": [
+            "/drones"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-carry-cues-key-required-struggle",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "del": [
+            "/struggle"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-carry-cues-key-required-grapple",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "del": [
+            "/grapple"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-carry-cues-key-required-forms",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "del": [
+            "/forms"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-carry-cues-key-required-brake",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "del": [
+            "/brake"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-carry-cues-key-required-rush",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "del": [
+            "/rush"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-carry-cues-key-required-perfect-block",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "del": [
+            "/perfect_block"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-underscore-key-ok",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-carry-cues-version-wrong",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/schema": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-note",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/note": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/note"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-enabled",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/enabled": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-drones",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/drones/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/drones/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-drones-coil",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/drones/coil/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/drones/coil/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-drones-coil-rate",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/drones/coil/rate": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/drones/coil/rate"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-drones-coil-rate",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/drones/coil/rate": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/drones/coil/rate"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-drones-coil-seconds",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/drones/coil/seconds": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/drones/coil/seconds"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-drones-coil-seconds",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/drones/coil/seconds": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/drones/coil/seconds"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-drones-coil-f",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/drones/coil/f": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/drones/coil/f"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-drones-coil-f",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/drones/coil/f": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/drones/coil/f"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-drones-coil-peak-db",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/drones/coil/peak_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/drones/coil/peak_db"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-struggle",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/struggle/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-struggle-groove",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/struggle/groove/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-groove-tock-ticks",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/tock_ticks": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/groove/tock_ticks"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-struggle-groove-tock-ticks",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/tock_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/struggle/groove/tock_ticks"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-struggle-groove-tock",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/tock/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/struggle/groove/tock/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-groove-tock-sound",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/tock/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/groove/tock/sound"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-groove-tock-gain-db",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/tock/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/groove/tock/gain_db"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-struggle-groove-tick",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/tick/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/struggle/groove/tick/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-groove-tick-sound",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/tick/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/groove/tick/sound"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-groove-tick-gain-db",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/tick/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/groove/tick/gain_db"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-groove-tick-dense-from",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/tick/dense_from": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/groove/tick/dense_from"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-struggle-groove-tick-dense-from",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/tick/dense_from": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/struggle/groove/tick/dense_from"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-groove-steps-st",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/steps_st": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/groove/steps_st"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-groove-priority",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/priority": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/groove/priority"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-struggle-groove-priority",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/priority": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/struggle/groove/priority"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-groove-cls",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/cls": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/groove/cls"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-groove-cap",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/cap": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/groove/cap"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-struggle-groove-cap",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/groove/cap": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/struggle/groove/cap"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-struggle-crack",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/crack/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/struggle/crack/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-crack-sound",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/crack/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/crack/sound"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-crack-surge-db",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/crack/surge_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/crack/surge_db"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-crack-sharp-db",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/crack/sharp_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/crack/sharp_db"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-crack-sharp-pitch",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/crack/sharp_pitch": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/crack/sharp_pitch"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-struggle-crack-near",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/crack/near/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/struggle/crack/near/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-crack-near-gain-db",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/crack/near/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/crack/near/gain_db"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-crack-near-rearm-below",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/crack/near/rearm_below": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/crack/near/rearm_below"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-struggle-crack-near-rearm-below",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/crack/near/rearm_below": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/struggle/crack/near/rearm_below"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-crack-priority",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/crack/priority": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/crack/priority"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-struggle-crack-priority",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/crack/priority": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/struggle/crack/priority"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-crack-cls",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/crack/cls": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/crack/cls"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-struggle-crack-cap",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/crack/cap": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/struggle/crack/cap"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-struggle-crack-cap",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/struggle/crack/cap": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/struggle/crack/cap"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-grapple",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grapple/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-grapple-clasp",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/clasp/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grapple/clasp/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-clasp-sound",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/clasp/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/clasp/sound"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-clasp-gain-db",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/clasp/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/clasp/gain_db"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-clasp-priority",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/clasp/priority": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/clasp/priority"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-grapple-clasp-priority",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/clasp/priority": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grapple/clasp/priority"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-clasp-cls",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/clasp/cls": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/clasp/cls"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-clasp-cap",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/clasp/cap": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/clasp/cap"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-grapple-clasp-cap",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/clasp/cap": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grapple/clasp/cap"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-grapple-creak",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/creak/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grapple/creak/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-creak-sound",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/creak/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/creak/sound"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-creak-gain-db",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/creak/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/creak/gain_db"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-creak-grip-st",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/creak/grip_st": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/creak/grip_st"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-creak-grip-max",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/creak/grip_max": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/creak/grip_max"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-grapple-creak-grip-max",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/creak/grip_max": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grapple/creak/grip_max"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-creak-priority",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/creak/priority": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/creak/priority"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-grapple-creak-priority",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/creak/priority": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grapple/creak/priority"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-creak-cls",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/creak/cls": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/creak/cls"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-creak-cap",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/creak/cap": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/creak/cap"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-grapple-creak-cap",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/creak/cap": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grapple/creak/cap"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-grapple-pummel",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/pummel/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grapple/pummel/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-pummel-sound",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/pummel/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/pummel/sound"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-pummel-gain-db",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/pummel/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/pummel/gain_db"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-pummel-sharp-db",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/pummel/sharp_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/pummel/sharp_db"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-grapple-pummel-sharp-tok",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/pummel/sharp_tok/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grapple/pummel/sharp_tok/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-pummel-sharp-tok-sound",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/pummel/sharp_tok/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/pummel/sharp_tok/sound"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-pummel-sharp-tok-pitch",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/pummel/sharp_tok/pitch": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/pummel/sharp_tok/pitch"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-pummel-sharp-tok-gain-db",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/pummel/sharp_tok/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/pummel/sharp_tok/gain_db"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-pummel-priority",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/pummel/priority": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/pummel/priority"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-grapple-pummel-priority",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/pummel/priority": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grapple/pummel/priority"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-pummel-cls",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/pummel/cls": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/pummel/cls"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-pummel-cap",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/pummel/cap": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/pummel/cap"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-grapple-pummel-cap",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/pummel/cap": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grapple/pummel/cap"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-grapple-refuse",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/refuse/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grapple/refuse/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-refuse-sound",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/refuse/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/refuse/sound"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-refuse-gain-db",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/refuse/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/refuse/gain_db"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-refuse-priority",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/refuse/priority": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/refuse/priority"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-grapple-refuse-priority",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/refuse/priority": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grapple/refuse/priority"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-refuse-cls",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/refuse/cls": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/refuse/cls"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-grapple-refuse-cap",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/refuse/cap": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grapple/refuse/cap"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-grapple-refuse-cap",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/grapple/refuse/cap": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grapple/refuse/cap"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-forms",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/forms/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-forms-ready",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/ready/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/forms/ready/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-forms-ready-sound",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/ready/sound": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/forms/ready/sound"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-forms-ready-gain-db",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/ready/gain_db": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/forms/ready/gain_db"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-forms-ready-bus",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/ready/bus": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/forms/ready/bus"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-forms-ready-priority",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/ready/priority": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/forms/ready/priority"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-forms-ready-priority",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/ready/priority": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/forms/ready/priority"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-forms-ready-cls",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/ready/cls": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/forms/ready/cls"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-forms-ready-cap",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/ready/cap": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/forms/ready/cap"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-forms-ready-cap",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/ready/cap": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/forms/ready/cap"
+      }
+    },
+    {
+      "id": "audio-carry-cues-unknown-key-forms-coil",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/coil/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/forms/coil/extra"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-forms-coil-drone",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/coil/drone": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/forms/coil/drone"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-forms-coil-coil-max",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/coil/coil_max": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/forms/coil/coil_max"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-forms-coil-coil-max",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/coil/coil_max": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/forms/coil/coil_max"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-forms-coil-pitch-st-at-max",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/coil/pitch_st_at_max": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/forms/coil/pitch_st_at_max"
+      }
+    },
+    {
+      "id": "audio-carry-cues-type-forms-coil-ramp-ms",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/coil/ramp_ms": "x"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/forms/coil/ramp_ms"
+      }
+    },
+    {
+      "id": "audio-carry-cues-negative-forms-coil-ramp-ms",
+      "schema": "audio-carry-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/carry_cues.json",
+          "set": {
+            "/forms/coil/ramp_ms": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/forms/coil/ramp_ms"
+      }
+    },
+    {
       "id": "vfx-catastrophe-z-near",
       "schema": "vfx-catastrophe.schema.json",
       "mutate": [
