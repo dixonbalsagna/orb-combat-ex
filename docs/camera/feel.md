@@ -22,7 +22,16 @@ Counted by source (`clip_digest.gd`, the cut flag per frame by the line that set
 
 The sweep's `panel reduced flashing` row now sets the switch it tests. Gates on the patch over 4dc42eb4: split sweep, seam sweep, pane check, determinism plain and --intro: pass. Clips: homework/camera/3-chase-not-hold/ (a launch in ai 39: held then cut on main, chased with the patch; the signature strip back in the city).
 
+## Step 4: the one view leads the motion (parked: docs/camera/pending/feel-3-lead.patch)
+
+The camera already leads in several places (a chased launch's lead room, the rush follow, the lunge lean, the building lead, and the follow filters' velocity feed-forward, which cancels lag but does not lead). The one view did not: it framed the pair's midpoint. Now, when the pair moves the same way, the focus sits ahead of them by their shared speed times 0.3 s, at most 0.12 of the width, faded in between 300 and 1,200 units a second and eased over 0.35 s; it is kept so both fighters stay inside the middle 80% of the width, and it is off in a launch, a zip, the fold, the struggle and reduced motion (`SplitRig.merged_lead`, `CamParams.MERGED_LEAD_*`).
+
+Measured (`clip_digest.gd` SMOOTH, reduced mode): the room ahead of a pair moving together, as a share of the width, rushcity 0.221 to 0.275, ai 7 0.183 to 0.203; cuts, layout changes and the time a fighter is outside the picture unchanged.
+
+Tried and dropped: tightening 2.5 times slower than widening (fewer zoom reversals: ai 39 18 to 14, signaturecity 16 to 12), because it left the zipper off the screen for 12 ticks in the 49-degree zip row (Legal's floor).
+
+Gates on the patch over 10267f51: split sweep, seam sweep, pane check, determinism plain and --intro: pass. Clips: homework/camera/4-lead-the-motion/ (left step 3, right step 4: a rush in the city, an AI match).
+
 ## Next
 
-4. Speed: the lead already exists in several places (a chased launch's lead room, the rush lead, the lunge lean, the building lead). The work is to make the merged view lead the brawl's motion, and to widen smoothly with speed and come back without a pump.
 5. The beam struggle's framing (built, behind its switch): a clip for Orb, then on.
