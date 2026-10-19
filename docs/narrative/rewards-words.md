@@ -1,6 +1,6 @@
 # Titles, keepsakes and the run, boons and haul wording
 
-Owner: Narrative and Fighter Identity. Version 1, 2026-10-17. Asked by Game Design's reward economy (`docs/design/run-mode.md` section 4.4; `docs/design/unlocks.md`): "about 40 titles ... (Narrative words them)", the keepsake names, and wording for UI's run and boons screens. The data is `pending/titles.json`, `pending/keepsakes.json` and `pending/run_screens.json`; **nothing is marked by Orb, so none is final and none has moved to `data/`**. Lines follow the voice bibles (`voice-bibles.md`) and the lint. Claude-written. Original; no franchise echoes.
+Owner: Narrative and Fighter Identity. Version 2, 2026-10-18 (Legal's renames RL-158; Game Design's 6a to 6c: titles confirmed, four keepsake triggers swapped, two boon names changed). Asked by Game Design's reward economy (`docs/design/run-mode.md` section 4.4; `docs/design/unlocks.md`): "about 40 titles ... (Narrative words them)", the keepsake names, and wording for UI's run and boons screens. The data is `pending/titles.json`, `pending/keepsakes.json` and `pending/run_screens.json`; **nothing is marked by Orb, so none is final and none has moved to `data/`**. Lines follow the voice bibles (`voice-bibles.md`) and the lint. Claude-written. Original; no franchise echoes.
 
 ## 1. The forty titles
 
@@ -46,10 +46,10 @@ A keepsake is a small trophy of what happened in a fight just won, shown in the 
 |---|---|---|
 | Tower Brick | Still warm. From the tower in the fight. | `tower_fell` |
 | Bridge Bolt | One bolt from {place}'s bridge. Heavier than it looks. | `bridge_fell` |
-| Cracked Lens | The rival's lens. He'd like it back. | `rival_lens_cracked` |
-| Bent Frame | Custom, he said. It still is. | `rival_frame_bent` |
-| Scorched Banner | A banner from {place}, singed at one corner. | `banner_scorched` |
-| Fused Sand Chip | Sand that melted in the blast, then cooled. | `crater_big` |
+| Cracked Lens | The rival's lens. He'd like it back. | `rival_head_battered` |
+| Bent Frame | Custom, he said. It still is. | `rival_head_broken` |
+| Scorched Banner | A banner from {place}, singed at one corner. | `fire_started` |
+| Blast Sand Chip | A chip of sand the blast turned hard. | `crater_big` |
 | Clash Ribbon | Scorched ribbon from a beam struggle you won. | `clash_won` |
 | Singed Sleeve | A sleeve that lost the beam struggle. | `clash_lost` |
 | Torn Knuckle Wrap | Torn on the first blow. Worth it. | `first_blow` |
@@ -61,7 +61,7 @@ A keepsake is a small trophy of what happened in a fight just won, shown in the 
 | Split Branch | A branch that took a hit meant for you. | `biome_forest` |
 | Frost Shard | A sliver of ice that never melts. | `biome_ice` |
 | Whole Window | One window, still unbroken, in a battered street. | `clean_win` |
-| Thank-You Note | From someone you got out. No name, just thanks. | `people_saved` |
+| Thank-You Note | From someone you got out. No name, just thanks. | `city_stood` |
 | Splint Tape | Held your arm together for the finish. | `won_wounded` |
 | Patched Glove | Stitched twice. It still fits. | `won_after_life` |
 | Ranking Slip | His notes on you. You rank higher than he admits. | `rival_defeated` |
@@ -70,7 +70,7 @@ A keepsake is a small trophy of what happened in a fight just won, shown in the 
 | Plain Coin | You walked on. It's the only thing you kept. | `walked_on` |
 | Silk Scrap | A scrap of her silk. It cuts like paper. | `empress_defeated` |
 | Cold Limiter | His limiter chip, cracked and finally quiet. | `cyborg_defeated` |
-| Jar of Ash | Ash from the dark sky, sealed before it settled. | `boss_beaten` |
+| Sky Jar | A jar of the dark sky, sealed before it settled. | `boss_beaten` |
 | Streetlamp Glass | A lens from a lamp that kept burning. | `night_fight` |
 | Worn Stopwatch | Stopped at the end of the longest fight. | `long_fight` |
 | Unused Bandage | You didn't need it. Keep it anyway. | `short_fight` |
@@ -90,13 +90,13 @@ Plain words, never a rule or a number the player has to do sums on. UI's `terms.
 | ability | **Steady Flow** | You gain {n} more energy each second. |
 | ability | **Thick Skin** | A held guard takes {n}% less damage. |
 | ability | **Iron Core** | Your core wears {n}% slower. |
-| ability | **Second Wind** | Your second breath starts {n} second sooner. |
+| ability | **Early Breath** | Your second breath starts {n} second sooner. |
 | ability | **Quick Feet** | You move {n}% faster. |
 | ability | **Slippery** | Your dodge-cancel recovers in {n} seconds. |
 | ability | **Quick Break** | Your burst recovers in {n} seconds. |
 | ability | **Afterburn** | Your sprint is {n}% faster. |
 | ability | **Closer** | A rush closes the gap {n}% faster. |
-| ability | **Dig In** | Knockback slides you {n}% less. |
+| ability | **Planted Feet** | Knockback slides you {n}% less. |
 | ability | **Fourth Slot** | A fourth special joins your moves for this run. |
 | ability | **Short Fuse** | Your signature recovers in {n} seconds. |
 | ability | **Cheap Burst** | A burst costs {n} energy. |

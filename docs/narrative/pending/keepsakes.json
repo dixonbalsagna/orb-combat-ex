@@ -1,6 +1,6 @@
 {
   "schema": "narrative.keepsakes/1",
-  "_about": "PARKED DRAFT. 30 keepsakes: a small trophy of what happened in a won fight, shown in the haul and on the menu shelf. The trigger names an event the fight log already has or Game Design adds; none is a death (Legal c08). {place} is the fight's place name. Claude-written; not marked by Orb.",
+  "_about": "PARKED DRAFT. 30 keepsakes: a small trophy of what happened in a won fight, shown in the haul and on the menu shelf. The trigger names an event the fight log already has or Game Design adds; none is a death (Legal c08). {place} is the fight's place name. Claude-written; not marked by Orb. Re-cut 2026-10-18: Jar of Ash is Sky Jar, Fused Sand Chip is Blast Sand Chip (Legal RL-158); four triggers swapped to events the sim has (Game Design 6b).",
   "keepsakes": [
     {
       "id": "keepsake.tower_fell",
@@ -18,21 +18,21 @@
     },
     {
       "id": "keepsake.rival_lens_cracked",
-      "trigger": "rival_lens_cracked",
+      "trigger": "rival_head_battered",
       "name": "Cracked Lens",
       "line": "The rival's lens. He'd like it back.",
       "never_from_a_death": true
     },
     {
       "id": "keepsake.rival_frame_bent",
-      "trigger": "rival_frame_bent",
+      "trigger": "rival_head_broken",
       "name": "Bent Frame",
       "line": "Custom, he said. It still is.",
       "never_from_a_death": true
     },
     {
       "id": "keepsake.banner_scorched",
-      "trigger": "banner_scorched",
+      "trigger": "fire_started",
       "name": "Scorched Banner",
       "line": "A banner from {place}, singed at one corner.",
       "never_from_a_death": true
@@ -40,8 +40,8 @@
     {
       "id": "keepsake.crater_big",
       "trigger": "crater_big",
-      "name": "Fused Sand Chip",
-      "line": "Sand that melted in the blast, then cooled.",
+      "name": "Blast Sand Chip",
+      "line": "A chip of sand the blast turned hard.",
       "never_from_a_death": true
     },
     {
@@ -123,7 +123,7 @@
     },
     {
       "id": "keepsake.people_saved",
-      "trigger": "people_saved",
+      "trigger": "city_stood",
       "name": "Thank-You Note",
       "line": "From someone you got out. No name, just thanks.",
       "never_from_a_death": true
@@ -187,8 +187,8 @@
     {
       "id": "keepsake.boss_beaten",
       "trigger": "boss_beaten",
-      "name": "Jar of Ash",
-      "line": "Ash from the dark sky, sealed before it settled.",
+      "name": "Sky Jar",
+      "line": "A jar of the dark sky, sealed before it settled.",
       "never_from_a_death": true
     },
     {

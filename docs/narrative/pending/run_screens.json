@@ -1,6 +1,6 @@
 {
   "schema": "narrative.run_screens/1",
-  "_about": "PARKED DRAFT (docs/narrative/pending/). Wording for the run, boons and haul screens, written for UI (strings), Game Design (boon names and plain 'gives' lines) and the beats (the hero's and rival's reactions). The numbers in a 'gives' line are {n} placeholders read from the plan's data; {form} is the form's name on the player's branch. A temptation's card shows only a line from `temptation_lines`, never what it brings. Reactions follow the voice bibles (4 to 12 words). Claude-written; not marked by Orb.",
+  "_about": "PARKED DRAFT (docs/narrative/pending/). Wording for the run, boons and haul screens, written for UI (strings), Game Design (boon names and plain 'gives' lines) and the beats (the hero's and rival's reactions). The numbers in a 'gives' line are {n} placeholders read from the plan's data; {form} is the form's name on the player's branch. A temptation's card shows only a line from `temptation_lines`, never what it brings. Reactions follow the voice bibles (4 to 12 words). Claude-written; not marked by Orb. 2026-10-18: Second Wind is Early Breath and Dig In is Planted Feet (both names clashed with rules; Game Design 6c).",
   "strings": {
     "run_boon_title": "Take a boon",
     "run_boon_title_n": "Take a boon ({n} of {total})",
@@ -74,7 +74,7 @@
     {
       "id": "plan.deep_breath",
       "kind": "ability",
-      "name": "Second Wind",
+      "name": "Early Breath",
       "gives": "Your second breath starts {n} second sooner."
     },
     {
@@ -110,7 +110,7 @@
     {
       "id": "plan.anchor",
       "kind": "ability",
-      "name": "Dig In",
+      "name": "Planted Feet",
       "gives": "Knockback slides you {n}% less."
     },
     {
