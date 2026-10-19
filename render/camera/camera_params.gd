@@ -213,8 +213,8 @@ const CUT_DIM: float = 0.09
 const REDUCED_CUT_DIM: float = 0.06    # reduced motion: shallower still, and a slow one-way ease back
 const REDUCED_CUT_FADE: float = 0.60
 const CUT_DISSOLVE_S: float = 0.40     # a cut under Reduce flashing or reduced motion cross-dissolves over this (the compositor; Legal asks at least 0.3)
-const PANEL_OPEN_REDUCED: float = 0.30  # under Reduce flashing a strip wipes open over this, and shut over PANEL_CLOSE_REDUCED
-const PANEL_CLOSE_REDUCED: float = 0.30
+const PANEL_OPEN_REDUCED: float = 0.08  # under Reduce flashing a strip wipes open over this, and shut over PANEL_CLOSE_REDUCED
+const PANEL_CLOSE_REDUCED: float = 0.12   # back to the normal wipe on Orb's word 2026-10-18 (the 0.3 s wipes read as fading)
 
 # --- fighters in depth (docs/camera/depth-and-chains.md) ---
 const K_FACTOR: float = 1.8660254      # 1 / (2 tan 15 degrees): the camera's distance to the fighter plane is K_FACTOR * vh / zoom
