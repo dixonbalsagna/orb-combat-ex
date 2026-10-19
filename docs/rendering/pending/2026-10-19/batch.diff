@@ -1,0 +1,136 @@
+diff --git a/render/core/look.gd b/render/core/look.gd
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -599,10 +599,16 @@
+ const GUARD_UP_S: float = 0.08
+ const GUARD_DOWN_S: float = 0.15
+ const GUARD_FLASH_S: float = 0.3
++## The guard arc is off (Orb's minimal rule, 2026-10-19: nothing on, over or between the fighters). A held guard shows
++## in Animation's guard pose; this brings the arc and its perfect-block flash back.
++const GUARD_ARC_ON: bool = false
+ ## Stance colours for the badge above each fighter: aggressive, defensive, evasive, escape. None is a saturated red to
+ ## the frame analyser (R/(R+G+B) at 0.8 or more on stored or linear values; the badge's flat shading only scales its
+ ## colour, so the share holds): the aggressive one is 0.74 on linear values (#ff5a4a was 0.86; 2026-10-18).
+ const STANCE_COL: Array = ["#ff8066", "#4aa8ff", "#5ed17a", "#b58cff"]
++## The badge is off (Orb's minimal rule, docs/ep/taste.md, 2026-10-19: nothing on, over or between the fighters). The
++## stance still shows in the lean and on UI's plate; this brings the badge back.
++const STANCE_BADGE_ON: bool = false
+ ## The badge's fixed turn about the vertical, radians: two of its four faces show, unevenly shaded. It used to spin at
+ ## 2 rad/s; it is steady since 2026-10-18.
+ const BADGE_TURN: float = 0.6
+diff --git a/render/core/fighter_view.gd b/render/core/fighter_view.gd
+--- a/render/core/fighter_view.gd
++++ b/render/core/fighter_view.gd
+@@ -484,7 +484,7 @@
+ 		orb_outer.scale = Vector3.ONE * 2.0 * r
+ 		orb_core.position = at
+ 		orb_core.scale = Vector3.ONE * r * 0.8
+-	badge.visible = markers and not f.hidden and not (flashes_on and flash_view.glyph_up())
++	badge.visible = RenderLook.STANCE_BADGE_ON and markers and not f.hidden and not (flashes_on and flash_view.glyph_up())
+ 	badge.position = Vector3(0.0, 84.0 + tier * 3.0 + 8.0, 0.0)
+ 	badge.scale = Vector3.ONE * (1.0 + (float(_cue.get("badge", 1.0)) - 1.0) * _cue_weight(T))
+ 	badge.rotation.y = RenderLook.BADGE_TURN   # steady (it spun at 2 rad/s until 2026-10-18)
+@@ -500,7 +500,7 @@
+ 	if _guard_flash_t0 >= 0.0 and T >= _guard_flash_t0 and not f.hidden:
+ 		gf = clampf(1.0 - (T - _guard_flash_t0) / RenderLook.GUARD_FLASH_S, 0.0, 1.0)
+ 	var ga: float = maxf(_guard_a, gf)
+-	guard.visible = ga > 0.01
++	guard.visible = RenderLook.GUARD_ARC_ON and ga > 0.01
+ 	if guard.visible:
+ 		guard.position = Vector3(m * (RenderLook.GUARD_NEAR + RenderLook.GUARD_SIZE.x * 0.5), 4.0, 12.0)
+ 		guard.scale = Vector3(m, 1.0, 1.0)
+diff --git a/render/core/hud.gd b/render/core/hud.gd
+--- a/render/core/hud.gd
++++ b/render/core/hud.gd
+@@ -3,7 +3,8 @@
+ ## The greybox 2D overlay (prototype drawHUD and the text parts of drawFighter and drawParts): fighter panels (HP,
+ ## ki, power, tier, stance, menace or anguish), world counters, the chain counter, the banner, fighter labels, damage
+ ## numbers, the director's feed and the planet strip, shown only when `legacy` is on (F2) now that UI's HUD is hosted;
+-## and always the take-over prompt, the seed and tick and the F3 performance readout. (The pause menu is UI's now.)
++## the take-over prompt, its key help and the seed and tick only with `key_help` (--keyhelp; off by Orb's minimal rule,
++## 2026-10-19); and the F3 performance readout. (The pause menu is UI's now.)
+ ## Reads the sim and the fx consumer only; world positions go to the screen through the 3D camera.
+ 
+ const FEED_LINES := 8
+@@ -18,6 +19,7 @@
+ var main: Node       # the Main node (render/core/main.gd)
+ var show_perf: bool = false
+ var legacy: bool = false   # the full greybox HUD (F2), instead of UI's
++var key_help: bool = false   # the demo's prompt, its key help and the seed and tick line (main's --keyhelp)
+ var font: Font
+ 
+ 
+@@ -34,6 +36,8 @@
+ 		return []
+ 	if legacy or show_perf:
+ 		return [Engine.get_process_frames()]
++	if not key_help:
++		return [false]   # nothing to draw
+ 	var host: SimHost = main.host
+ 	var card: bool = main.ui_hud != null and main.ui_hud.is_overlay_open()
+ 	var touch: bool = main.ui_hud != null and bool(main.ui_hud.opts.get("touch_ui", false))
+@@ -48,7 +52,10 @@
+ 	var vw: float = size.x
+ 	var vh: float = size.y
+ 	if not legacy:
+-		_prompt(host, vw, vh)
++		if key_help:
++			_prompt(host, vw, vh)
++		elif show_perf:
++			_perf(vw)
+ 		return
+ 	_labels(S, host)
+ 	_floats(host)
+diff --git a/render/core/main.gd b/render/core/main.gd
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -30,7 +30,8 @@
+ ## (_match_setup). --nointro starts from the intro's end state, and on the web /play/?nointro=1 does. SimHost passes
+ ## intents on pre-clock ticks; any press skips it.
+ ##
+-## Command-line options (after "--"): --seed=N, --human (take P1 at start), --legacy-hud, --frames=N (quit after N frames),
++## Command-line options (after "--"): --seed=N, --human (take P1 at start), --legacy-hud, --keyhelp (the greybox
++## prompt, key help and seed line; on the web ?keyhelp=1), --frames=N (quit after N frames),
+ ## --shot=path.png (save the last frame), --bench (vsync off; print frame-time stats at quit, also split by whether two
+ ## full panes were drawn; VFX at a fixed quality), --novsync, --nosplit, --novfx (VFX off, for A/B runs),
+ ## UI's How to play card opens at the first run and with F1 (the HUD handles the key) or from the pause menu (P, then
+@@ -214,6 +215,7 @@
+ 		take_over()
+ 	if args.has("legacy-hud"):
+ 		set_legacy_hud(true)
++	hud.key_help = args.has("keyhelp")   # the greybox prompt and key help: off by Orb's minimal rule (2026-10-19)
+ 	if not manual:
+ 		split_view = SplitView.new()
+ 		add_child(split_view)
+@@ -1198,9 +1200,9 @@
+ const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off", "charges_off_p2"]
+ ## The options a web page's URL may set (parse_args): off unless the URL names them. Those in LOCAL_ONLY_ARGS start
+ ## without UI's notice, change how a match starts or hold a debug value, and are dropped unless the page is on a local
+-## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze.
++## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze, keyhelp.
+ const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]
+-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood"]
++const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp"]
+ 
+ 
+ ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of
+diff --git a/docs/rendering/README.md b/docs/rendering/README.md
+--- a/docs/rendering/README.md
++++ b/docs/rendering/README.md
+@@ -283,6 +283,8 @@
+ 
+ ## The guard arc
+ 
++**Off since 2026-10-19** (`RenderLook.GUARD_ARC_ON`; Orb's minimal rule in `docs/ep/taste.md`: nothing on, over or between the fighters). A held guard shows in Animation's guard pose. What follows is the arc as built, for when the constant brings it back.
++
+ A held guard (ADR 0008) shows as an arc in front of the fighter, on the side he faces, in his lane colour: a thin line with a faint fill behind it, fading out toward its two ends. It replaces the guard glow, a sphere squashed to a slab that drew as a pale flat rectangle beside the body.
+ - **When.** While the guard is held (`Fighter.act.guardSince`) or the defensive stance stands, in the free and locked states, or while a cue shows it. It comes up in 0.08 s and goes in 0.15 s.
+ - **A perfect block** (the sim's `parry` event, for the one who blocked) flashes it for 0.3 s: the line thickens and goes solid, the fill deepens, and a second line runs outward and fades. The flash shows even if the guard is already down.
+@@ -661,6 +663,7 @@
+ 
+ Both are other directors' work, hosted here as their docs ask (`docs/ui/hud-spec.md` section 14, `audio/README.md` "Hooking it up"). Both only read.
+ - **By roster id (2026-10-06; `docs/architecture/pending/fighter-split.md` section 10).** The old HUD looks a fighter up by his roster id: his name and his title are UI's (`UiData.display_name`, `display_title`), and with no title the line is his stance alone. The sim keeps no title and its name is the id. The damage marks' seed belongs to the outfit (`RenderLook.DAMAGE_SEED_97`, the numbers the marks have always had), so the roster's rename moved no mark. The old spellings of the two ids are gone from `DAMAGE_OUTFIT` since the rename (part C). `tools/hud_words_check.gd` asks for the old HUD's words, since no other headless gate draws that HUD.
++- **Orb's minimal rule (2026-10-19, `docs/ep/taste.md`): nothing on, over or between the fighters.** The stance badge (`RenderLook.STANCE_BADGE_ON`) and the guard arc (`GUARD_ARC_ON`) are off. The greybox overlay draws its demo prompt, key help and seed and tick line only with `--keyhelp` (on the web `?keyhelp=1`); F3's readout is unchanged. Before and after: `img/minimal-before-after.png` (uncommitted).
+ - **The demo's key help on a short screen (2026-10-06).** The key help under the demo's prompt keeps to the screen's lowest fifth: lines go from the end, the debug keys first, and the prompt always shows. At 720 high nothing changes; at 450 it is one line, which used to be four lines over the fighters. Before and now at 800 by 450: ![before](img/keyhelp-800-before.png) ![now](img/keyhelp-800-now.png)
+ - **A debug route to Animation's study scenes (2026-10-06).** `--study` opens the flurry study in place of the game, `--study=zip` another by name (`res://render/anim/tools/<name>_study.tscn`); on the web `/play/?study=1` or `?study=zip`. Only the game's own main scene takes it, never a tool's (a study drives a main of its own). Without the argument nothing changes. ![the flurry study on the web](img/study-route-web.png)
+ - **Flashes (2026-10-06).** Every full flash Rendering draws asks VFX's shared flash register first (`SimHost.ask_flash`): a hit's white body, a perfect block's guard flash, head flashes, a cue's flare, a beam and a clash's flare. Refused, each has a calmer form (a hit lights the outline). UI's divider asks through the host for its slam flash, and UI's Reduce flashing option drives the register's reduced mode. A beam and a clash rise and fall once, and are drawn calm (a thin line) when refused or under reduced flashing. Each source gives the register its area and luminance step, and main gives it the camera's scale every frame (`host.vfx.px_per_unit`), so a flash is weighed by what it covers. The pan haze (`--panhaze`, off by default) melts the buildings toward the sky and ground behind them while a pane's camera travels fast, so a town sweeping past does not flicker; its whip form (2026-10-15, `RenderLook.PAN_WHIP_*`) melted them fully while the camera whipped at more than 1.5 screen widths a second, and is off since 2026-10-18 (with full effects the melt itself was the counted change: `flash-sources.md`, "The whip melt is off"); the same page has the frame analyser's before and after for each clip. A beam's groove chars as it cools, over two to three seconds, and under reduced flashing its glow and char are drawn faintly. `docs/rendering/flash-sources.md` has the table of every source, the numbers, and the capture hook for Tools' frame analyser (`?flashcap=1`).
