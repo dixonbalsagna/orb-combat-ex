@@ -219,16 +219,16 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 				rec.found += 1
 			elif e.type == "tier_up":
 				rec.maxTier[int(e.actor)] = maxi(rec.maxTier[int(e.actor)], int(e.tier))
+			# launch anywhere's cue launch_power (DirBrawl.powerCue, one at each launch while the switch is on): actor the launcher, amount the power at the send after freshness, k 1 at the full line (0.8)
+			if e.type == "cue" and str(e.get("kind")) == "launch_power" and int(e.actor) >= 0 and int(e.actor) < 2:
+				var pa: int = int(e.actor)
+				rec.pow.has = true
+				rec.pow.n[pa] += 1
+				if float(e.get("k")) >= 1.0:
+					rec.pow.full[pa] += 1
 			# one landing class per launch, by first contact (balance-targets 18): brunt (a building first), water (a skim or splash, or an impact in the sea), slide (a first ground contact carrying on for 2 bh = 150 units or more), else slam
 			if e.type == "launch":
 				var v0: int = int(e.actor)
-				var lpw = fs[v0].get("launchPower")   # the power at the send, after freshness (a build with launch anywhere); null on a build without it
-				var lby: int = int(e.target) if e.get("target") != null else -1
-				if lpw != null and lby >= 0 and lby < 2:
-					rec.pow.has = true
-					rec.pow.n[lby] += 1
-					if float(lpw) >= 0.8:
-						rec.pow.full[lby] += 1
 				for fl in open_fl:
 					if fl.v == v0 and fl.cls == "":
 						fl.cls = "other"   # launched again before any contact

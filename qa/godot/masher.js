@@ -227,8 +227,8 @@ function designRows(results) {
     const id = 'design.' + r.id, ref = r.section.replace(/`/g, '').split(' (')[0];
     if (r.id === 'L16') {
       const f = fullRows;
-      out.push({ id: 'design.L16.route', ref, what: 'Full launches a match (power 0.8 or more at the send, after freshness) by the route\'s player, against the medium AI (4 to 12; all launches, pops included, are watched)', status: f && f.by !== null ? (f.by >= 4 && f.by <= 12 ? 'PASS' : 'FAIL') : 'PENDING', value: f && f.by !== null ? `${f.by.toFixed(2)} a match` : 'no launchPower on this build (launch anywhere is not on it)', band: '4 to 12', note: rm ? `${rm.n} matches` : 'no route job' });
-      out.push({ id: 'design.L16.on', ref, what: 'Full launches a match on the route\'s player (4 to 10)', status: f && f.on !== null ? (f.on >= 4 && f.on <= 10 ? 'PASS' : 'FAIL') : 'PENDING', value: f && f.on !== null ? `${f.on.toFixed(2)} a match` : 'no launchPower on this build', band: '4 to 10', note: rm ? `${rm.n} matches` : 'no route job' });
+      out.push({ id: 'design.L16.route', ref, what: 'Full launches a match (the launch_power cue with k 1: power 0.8 or more at the send, after freshness) by the route\'s player, against the medium AI. WATCHED, NOT BANDED (Game Design, 2026-10-18: the route\'s edges, at most 80% and 0 to 25 points over its masher, are the dominance test)', status: f && f.by !== null ? 'INFO' : 'PENDING', value: f && f.by !== null ? `${f.by.toFixed(2)} a match` : 'no launch_power cue on this build (launch anywhere is off or not in it)', band: 'watched', note: rm ? `${rm.n} matches` : 'no route job' });
+      out.push({ id: 'design.L16.on', ref, what: 'Full launches a match on the route\'s player (watched, not banded)', status: f && f.on !== null ? 'INFO' : 'PENDING', value: f && f.on !== null ? `${f.on.toFixed(2)} a match` : 'no launch_power cue on this build', band: 'watched', note: rm ? `${rm.n} matches` : 'no route job' });
       continue;
     }
     const rd = DESIGN_READ[r.id];

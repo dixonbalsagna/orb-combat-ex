@@ -1062,14 +1062,6 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 							m_fl = S.tick
 					if lsent >= 0 and lsent < 2 and Pl.counts_as_route(by_slot[lsent].kind):
 						m_ron += 1
-					var lpw = S.fighters[lsent].get("launchPower") if (lsent >= 0 and lsent < 2) else null
-					if lpw != null:
-						g.powHas = true
-						if float(lpw) >= 0.8:
-							if lby >= 0 and lby < 2 and Pl.counts_as_route(by_slot[lby].kind):
-								m_fullby += 1
-							if lsent >= 0 and lsent < 2 and Pl.counts_as_route(by_slot[lsent].kind):
-								m_fullon += 1
 				elif e.type == "knockback":
 					# the blast's own: from its actor to its target within 3 ticks (a string's ender; a cold blast has none)
 					if S.tick - int(g.energy.pendBlast) <= 3 and int(e.victim) == int(g.energy.get("pendTarget", -9)):
@@ -1089,7 +1081,17 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 							g.dropEndBad += 1
 				elif e.type == "cue":
 					var ck: String = str(e.get("kind"))
-					if ck == "brawl_start":
+					if ck == "launch_power":
+						# launch anywhere's cue (DirBrawl.powerCue): actor the launcher, target the sent body, k 1 at 0.8 or more after freshness
+						g.powHas = true
+						if float(e.get("k")) >= 1.0:
+							var pby: int = int(e.actor)
+							var pto: int = int(e.target)
+							if pby >= 0 and pby < 2 and Pl.counts_as_route(by_slot[pby].kind):
+								m_fullby += 1
+							if pto >= 0 and pto < 2 and Pl.counts_as_route(by_slot[pto].kind):
+								m_fullon += 1
+					elif ck == "brawl_start":
 						g.brawls += 1
 						last_closer = -1
 						if m_fb < 0:

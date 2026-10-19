@@ -306,8 +306,8 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     const lc = (by, on, fby, fon, has = true) => ({ pair: 'route-medium', n: 3, aWins: 2, bWins: 1, brawl: { launcher: { routeBy: by, routeOn: on, routeFullBy: fby, routeFullOn: fon, powHas: has, firstLaunchSec: [10, 20, 30] } } });
     const id = (rows, k) => rows.find(r => r.id === k);
     const ok = masherRows([lc([8, 9, 7], [9, 9, 9], [5, 6, 4], [6, 5, 7])]), low = masherRows([lc([8, 9, 7], [9, 9, 9], [1, 2, 1], [11, 12, 13])]), none = masherRows([lc([8, 9, 7], [9, 9, 9], [], [], false)]);
-    assert.strictEqual(id(ok, 'design.L16.route').status, 'PASS'); assert.strictEqual(id(ok, 'design.L16.on').status, 'PASS');
-    assert.strictEqual(id(low, 'design.L16.route').status, 'FAIL'); assert.strictEqual(id(low, 'design.L16.on').status, 'FAIL');
+    assert.strictEqual(id(ok, 'design.L16.route').status, 'INFO'); assert.strictEqual(id(ok, 'design.L16.on').status, 'INFO');   // watched, not banded (2026-10-18)
+    assert.strictEqual(id(low, 'design.L16.route').status, 'INFO'); assert.ok(/1\.33/.test(id(low, 'design.L16.route').value));
     assert.strictEqual(id(none, 'design.L16.route').status, 'PENDING');
     assert.strictEqual(id(ok, 'design.B11').status, 'INFO'); assert.strictEqual(id(ok, 'design.G4').status, 'PENDING'); assert.strictEqual(id(ok, 'design.L1').status, 'PENDING');
     assert.ok(ok.filter(r => r.id.startsWith('design.')).length >= 84);
