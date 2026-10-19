@@ -1098,6 +1098,14 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
       if (typeof tm.onset_s === 'number' && typeof tm.calm_onset_s === 'number' && tm.calm_onset_s < tm.onset_s) err(CV, '/tremor/calm_onset_s', 'vfx-catastrophe-order', `the calm onset ${tm.calm_onset_s} s is quicker than the normal onset ${tm.onset_s} s: the calm form must never be quicker`);
       if (typeof tm.settle_s === 'number' && typeof tm.calm_settle_s === 'number' && tm.calm_settle_s < tm.settle_s) err(CV, '/tremor/calm_settle_s', 'vfx-catastrophe-order', `the calm settling ${tm.calm_settle_s} s is quicker than the normal settling ${tm.settle_s} s: the calm form must never be quicker`);
     }
+    const bc = isObj(cat) && isObj(cat.blast_cloud) ? cat.blast_cloud : null;
+    if (bc) {
+      const CV = 'data/vfx/catastrophe.json';
+      const low = (k, i) => { const a = bc[k]; if (Array.isArray(a) && typeof a[i] === 'number' && typeof a[i + 1] === 'number' && a[i] > a[i + 1]) err(CV, `/blast_cloud/${k}/${i}`, 'vfx-catastrophe-order', `blast_cloud ${k}: ${a[i]} is above ${a[i + 1]} (low to high)`); };
+      if (Array.isArray(bc.sprites)) for (let i = 0; i + 1 < bc.sprites.length; i++) low('sprites', i);
+      for (const k of ['stem_width', 'skirt_height']) low(k, 0);
+      for (const [n, c] of [['fire_rise_s', 'calm_fire_rise_s'], ['fire_fall_s', 'calm_fire_fall_s']]) if (typeof bc[n] === 'number' && typeof bc[c] === 'number' && bc[c] < bc[n]) err(CV, `/blast_cloud/${c}`, 'vfx-catastrophe-order', `the calm ${c} ${bc[c]} s is quicker than ${n} ${bc[n]} s: the calm fireball must never be quicker`);
+    }
   }
 
   // ---- fight shots: a lobbed kind has both its numbers; a kind that trades with more power does not do less damage ----

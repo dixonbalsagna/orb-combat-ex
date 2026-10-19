@@ -293531,6 +293531,200 @@
       }
     },
     {
+      "id": "vfx-catastrophe-blast-valid",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/blast_cloud/alpha_max": 0.85
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "vfx-catastrophe-blast-alpha-max-too-high",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/blast_cloud/alpha_max": 0.95
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/blast_cloud/alpha_max"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-blast-sprites-over-cap",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/blast_cloud/sprites/2": 500
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/blast_cloud/sprites/2"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-blast-core-radius-too-big",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/blast_cloud/core_radius_k": 0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/blast_cloud/core_radius_k"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-blast-underscore-note-ok",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/blast_cloud/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "vfx-catastrophe-blast-unknown-key",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/blast_cloud/shockring": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/blast_cloud/shockring"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-blast-calm-fire-rise-quicker",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/blast_cloud/fire_rise_s": 1,
+            "/blast_cloud/calm_fire_rise_s": 0.8
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:vfx-catastrophe-order",
+        "pointer": "/blast_cloud/calm_fire_rise_s"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-blast-calm-fire-fall-quicker",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/blast_cloud/calm_fire_fall_s": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:vfx-catastrophe-order",
+        "pointer": "/blast_cloud/calm_fire_fall_s"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-blast-sprites-descend",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/blast_cloud/sprites": [
+              400,
+              260,
+              140
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:vfx-catastrophe-order",
+        "pointer": "/blast_cloud/sprites/0"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-blast-stem-width-reversed",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/blast_cloud/stem_width": [
+              760,
+              260
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:vfx-catastrophe-order",
+        "pointer": "/blast_cloud/stem_width/0"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-blast-colour-not-hex",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/blast_cloud/colour_hot": "white"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/blast_cloud/colour_hot"
+      }
+    },
+    {
+      "id": "vfx-catastrophe-blast-max-alive-zero",
+      "schema": "vfx-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/catastrophe.json",
+          "set": {
+            "/blast_cloud/max_alive": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/blast_cloud/max_alive"
+      }
+    },
+    {
       "id": "vfx-catastrophe-z-near",
       "schema": "vfx-catastrophe.schema.json",
       "mutate": [

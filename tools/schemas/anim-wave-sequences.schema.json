@@ -14,7 +14,6 @@
     },
     "sequences": {
       "type": "object",
-      "minProperties": 1,
       "propertyNames": {
         "pattern": "^(_.*|[a-z][a-z0-9_]*([.][a-z0-9_~]+)*)$"
       },
@@ -101,7 +100,8 @@
       },
       "patternProperties": {
         "^_": true
-      }
+      },
+      "description": " May be empty: a wave of poses only (cl1, the clinch's grip layer, has none)."
     }
   },
   "additionalProperties": false,
