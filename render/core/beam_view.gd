@@ -125,7 +125,7 @@ func _beam(i: int, a: Vector2, e: Vector2, w: float, c: Color, k: float, z: floa
 		if not mi.visible:
 			continue
 		var u: Vector2 = d / l
-		var th: float = VfxBeamLook.thickness(who, w, j, z, short)
+		var th: float = VfxBeamLook.thickness(who, w, j, z, short, l)
 		if za == 0.0 and ze == 0.0:
 			mi.transform = Transform3D(Basis(Vector3(u.y, -u.x, 0.0) * th, Vector3(u.x, u.y, 0.0) * (l + th * 0.5), Vector3(0.0, 0.0, th)), Vector3((a.x + e.x) * 0.5, (a.y + e.y) * 0.5, RenderLook.Z_BEAMS))
 		else:

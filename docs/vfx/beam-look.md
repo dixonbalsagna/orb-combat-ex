@@ -98,6 +98,16 @@ Gates in the scratch copy: effects_check, hash_check (plain and press styles; th
 - **fx05, the calm form** reads at or under the primary limit in both modes on the release set: every clip above is read in it (the demo's "normal" clips run with Reduce flashing on) and with it off, primary 2.5 at most; the release set is Tools' to run on the commit.
 - **fx05, red:** the analyser's red reading on the clips with the explosions in (the bolts scene, eight ai windows both modes, the struggle scene, collapse: 28 analyses of this work, and 314 of everything I measured this week): **red flashes 0, qualifying changes 0, 0 even with the threshold lower, and the largest window at 0.11 of the area threshold**. The fire's gamma-encoded red ratio is 0.56; on linear values a cel orange sits higher, which is why it is read by the analyser and not by the colour code.
 
+## Crisp, not a block (2026-10-18; Orb on the build of pin 5c46feca: "wide, soft-edged, blurry blue block")
+
+At tick 1739 of the seed-4 AI match a point-blank beam (about 110 units long) was drawn at its sim width times 4.0 (sheath), 2.2 (body) and 0.9 (core): wider than it was long, with soft edges and an additive halo round it. That reads as a block of haze, not as a beam. Three causes, three fixes:
+
+1. **A beam is never wider than a share of its own length.** `VfxBeamLook.thickness(..., length)` caps each layer (sheath 0.30, body 0.26, core 0.14 of the length, `len_k` in data/vfx/energy.json). BeamView passes its own length `l` (one token in render/core/beam_view.gd, Rendering's file). A long beam is untouched.
+2. **The halo is thin and faint, the edges are crisp.** Sheath 4.0 to 1.8 times the width at alpha 0.12 (was 0.36), body 2.2 to 1.4 at edge falloff 0.4 (was 1.4), core 0.9 to 0.6 at 0.3 (was 0.9). The body is about the old look's 1.3 times the width; the lane colour, the hue ripple and the flavours stay.
+3. **The rounded ends never take more than 14% of the beam each** (a short beam keeps a solid middle).
+
+Side by side against d3f1ca0e under Reduce flashing (Tools' path, seed 4): the block is gone at tick 1739, the first beam at 1100 to 1240 is a clean lane-coloured shaft. effects_check (two new checks: the cap on a short beam, a long beam keeps its width; the "real width" check loosens from 1.6 to 1.05 times the old look's) and depth_check pass. Not a Legal clearance: the beam is plainer than before, so fx03's conditions are met with more margin, but the flash readings are reported, not chased.
+
 ## Open for Art, Legal and Orb
 
 - **Art:** confirmed and corrected (docs/art/beam-colours.md): the Protagonist +30 (-30 under tritan), the Rival +34 capped at 320, the dummy +12.

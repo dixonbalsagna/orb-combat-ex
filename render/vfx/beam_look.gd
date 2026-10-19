@@ -19,9 +19,9 @@ const DEFAULTS: Dictionary = {
 		"reference": {"width_k": 0.8, "hue_shift": 12.0, "hz": 0.5, "wavelength": 160.0, "flow": 40.0, "turb": 0.04, "heel": 0.1, "seed": 5.3, "wob_k": 0.2, "fil": 0.2, "soft_k": 1.0},
 	},
 	"layers": [
-		{"k": 4.0, "px": 6.0, "alpha": 0.36, "soft": 2.0, "turb_k": 1.6, "lum_amp": 0.16, "sat": 2.2, "val": 0.7, "lighten": 0.0, "flow_k": 0.8, "wob": 0.22},
-		{"k": 2.2, "px": 4.0, "alpha": 0.90, "soft": 1.4, "turb_k": 1.0, "lum_amp": 0.07, "sat": 2.0, "val": 0.88, "lighten": 0.0, "flow_k": 1.0, "wob": 0.12},
-		{"k": 0.9, "px": 2.0, "alpha": 1.0, "soft": 0.9, "turb_k": 0.0, "lum_amp": 0.04, "sat": 0.85, "val": 1.0, "lighten": 0.1, "flow_k": 1.4, "wob": 0.05},
+		{"k": 1.8, "px": 2.0, "alpha": 0.12, "soft": 1.0, "len_k": 0.3, "turb_k": 1.6, "lum_amp": 0.16, "sat": 2.2, "val": 0.7, "lighten": 0.0, "flow_k": 0.8, "wob": 0.22},
+		{"k": 1.4, "px": 2.0, "alpha": 0.95, "soft": 0.4, "len_k": 0.26, "turb_k": 1.0, "lum_amp": 0.07, "sat": 2.0, "val": 0.88, "lighten": 0.0, "flow_k": 1.0, "wob": 0.12},
+		{"k": 0.6, "px": 2.0, "alpha": 1.0, "soft": 0.3, "len_k": 0.14, "turb_k": 0.0, "lum_amp": 0.04, "sat": 0.85, "val": 1.0, "lighten": 0.1, "flow_k": 1.4, "wob": 0.05},
 	],
 	"calm": {"strength": 0.86, "rise_s": 0.3},
 	"cap": 40.0,
@@ -145,10 +145,13 @@ static func tints(f, lane: Color, i: int, short: bool = false) -> Array:
 
 
 ## The thickness of layer i of a beam of the sim's width w, in world units, at the view's zoom z (the glow's own pixel allowance added).
-static func thickness(f, w: float, i: int, z: float, short: bool = false) -> float:
+static func thickness(f, w: float, i: int, z: float, short: bool = false, length: float = -1.0) -> float:
 	var fl: Dictionary = flavour(f, short)
 	var ly: Dictionary = layer(i)
-	return w * float(ly["k"]) * float(fl["width_k"]) + float(ly["px"]) / z
+	var th: float = w * float(ly["k"]) * float(fl["width_k"])
+	if length > 0.0:
+		th = minf(th, length * float(ly.get("len_k", 9.0)))      # a beam is never wider than a share of its own length: a short, point-blank beam is a bright thin shaft, not a block
+	return th + float(ly["px"]) / z
 
 
 ## The slower rise a calm beam takes (seconds): a beam the register refused, or under reduced flashing, comes up over this instead of the tenth of a second.

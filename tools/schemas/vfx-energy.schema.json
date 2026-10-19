@@ -158,6 +158,11 @@
             "type": "number",
             "minimum": 0,
             "maximum": 0.5
+          },
+          "len_k": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 2
           }
         },
         "additionalProperties": false

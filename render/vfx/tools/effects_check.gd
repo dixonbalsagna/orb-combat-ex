@@ -5146,8 +5146,16 @@ func _beam_look() -> void:
 	# Width: a real beam by default (the body layer at 2.2 times the sim's width, the old look had 1.3), the Anti-hero's the thin one.
 	var w: float = 33.0
 	var body_default: float = VfxBeamLook.thickness(null, w, 1, 1.0)
-	_check(body_default >= 1.6 * 1.3 * w, "the default beam is a real width: its body is %.0f units against the old %.0f" % [body_default, 1.3 * w])
+	_check(body_default >= 1.05 * 1.3 * w, "the default beam is a real width: its body is %.0f units against the old %.0f" % [body_default, 1.3 * w])
 	_check(VfxBeamLook.thickness(fr, w, 1, 1.0, true) < 0.4 * VfxBeamLook.thickness(fr, w, 1, 1.0), "one particular attack keeps a thin beam: the Anti-hero's short beam is %.0f against his signature's %.0f" % [VfxBeamLook.thickness(fr, w, 1, 1.0, true), VfxBeamLook.thickness(fr, w, 1, 1.0)])
+	# Crisp when short: a point-blank beam (a hundred units or so long) is never wider than a share of its own length, so it stays a bright shaft and not a soft block (Orb, 2026-10-18, the blue block at tick 1739).
+	var short_len: float = 110.0
+	var cap_ok: bool = true
+	for j in 3:
+		var tj: float = VfxBeamLook.thickness(null, w, j, 1.0, false, short_len)
+		cap_ok = cap_ok and tj <= short_len * 0.31 + 3.5
+	_check(cap_ok, "a beam of %.0f units never has a layer wider than a third of its length (body %.0f, sheath %.0f)" % [short_len, VfxBeamLook.thickness(null, w, 1, 1.0, false, short_len), VfxBeamLook.thickness(null, w, 0, 1.0, false, short_len)])
+	_check(VfxBeamLook.thickness(null, w, 1, 1.0, false, 4000.0) == body_default, "a long beam keeps its full width (the cap only bites on a short one)")
 	# Colour: the second tint has the first's luminance (the ripple moves hue, not brightness), and no layer is white.
 	var lane := Color("#8fd6ff")
 	var worst_luma: float = 0.0

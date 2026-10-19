@@ -63,7 +63,8 @@ void fragment() {
 	float nn = vn(vec2(travel * 0.02 + 7.0, lat * 2.3 + seed * 1.7));
 	float edge = pow(facing, soft) * mix(1.0, 0.35 + 1.3 * nn, turb * (1.0 - facing));
 	float shim = 1.0 + lum_amp * (0.6 * rip + (n1 - 0.5) + 0.8 * (f1 - 0.5));
-	float ends = smoothstep(0.0, cap, from_tail) * smoothstep(0.0, cap, len - from_tail);
+	float cap_e = min(cap, len * 0.14);     // the rounded ends never take more than a seventh of the beam each: a short beam (a point-blank one) stays solid in the middle, not a soft smear
+	float ends = smoothstep(0.0, cap_e, from_tail) * smoothstep(0.0, cap_e, len - from_tail);
 	float swell = 1.0 + heel * exp(-from_tail / 70.0);
 	ALBEDO = col;
 	ALPHA = clamp(tint_a.a * strength * edge * shim * ends * swell, 0.0, 1.0);

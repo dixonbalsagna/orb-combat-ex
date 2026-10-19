@@ -73,43 +73,46 @@
  },
  "layers": [
   {
-   "k": 4.0,
-   "px": 6,
-   "alpha": 0.36,
-   "soft": 2.0,
+   "k": 1.8,
+   "px": 2,
+   "alpha": 0.12,
+   "soft": 1.0,
    "turb_k": 1.6,
    "lum_amp": 0.16,
    "sat": 2.2,
    "val": 0.7,
    "lighten": 0.0,
    "flow_k": 0.8,
-   "wob": 0.22
+   "wob": 0.22,
+   "len_k": 0.3
   },
   {
-   "k": 2.2,
-   "px": 4,
-   "alpha": 0.9,
-   "soft": 1.4,
+   "k": 1.4,
+   "px": 2,
+   "alpha": 0.95,
+   "soft": 0.4,
    "turb_k": 1.0,
    "lum_amp": 0.07,
    "sat": 2.0,
    "val": 0.88,
    "lighten": 0.0,
    "flow_k": 1.0,
-   "wob": 0.12
+   "wob": 0.12,
+   "len_k": 0.26
   },
   {
-   "k": 0.9,
+   "k": 0.6,
    "px": 2,
    "alpha": 1.0,
-   "soft": 0.9,
+   "soft": 0.3,
    "turb_k": 0.0,
    "lum_amp": 0.04,
    "sat": 0.85,
    "val": 1.0,
    "lighten": 0.1,
    "flow_k": 1.4,
-   "wob": 0.05
+   "wob": 0.05,
+   "len_k": 0.14
   }
  ],
  "calm": {
