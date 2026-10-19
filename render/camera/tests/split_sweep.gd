@@ -2788,6 +2788,8 @@ func _panel_modes() -> Dictionary:
 ## flag off nothing changes.
 func _panel_reduced_flashing() -> Dictionary:
 	var clash := {"winner": 0.0, "loser": 1.0, "kind": "clash"}
+	var kept: Array = _rig.panel_flash_off.duplicate()
+	_rig.panel_flash_off = ["signature"]   # the switch (off by default since 2026-10-19: the strips play as in d3f1ca0e)
 	_panel_ground()
 	_rig.flash_reduced = true
 	var before: int = _rig.panels
@@ -2807,6 +2809,7 @@ func _panel_reduced_flashing() -> Dictionary:
 	before = _rig.panels
 	_fire(0)
 	_check(_rig.panels == before + 1 and _panel_now()["kind"] == "signature", "%s: a signature strip did not open with Reduce flashing off" % _label)
+	_rig.panel_flash_off = kept
 	return {}
 
 
