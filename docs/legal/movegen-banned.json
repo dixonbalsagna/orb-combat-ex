@@ -627,6 +627,11 @@
       "id": "p02",
       "rule": "a store listing's content descriptors, age gate and the questionnaire answers match the real build (graphic violence, the Cyborg's consumption, civilian casualties); public trailers and screenshots on each platform use that platform's mature-content marking and age restriction",
       "why": "ratings and platform rules; the Mature target frees the content, not the labelling"
+    },
+    {
+      "id": "p03",
+      "rule": "American spelling in every public string (Orb, 2026-10-18): analyzer, License (the licence line, 'Licenses, notices and privacy', 'MIT License', 'SIL Open Font License 1.1' which is the licence's official spelling), color, behavior, gray, center, artifact, program, catalog, neighbor, organization, recognize; the change is spelling only and no other word in a fixed line (the gate notice, the lock line, the AI line, the privacy line) moves; Tools' word-for-word checks are updated in the same commit; the public page's flash notice carries the gate's words exactly (addendum 11), not an older version; licence names keep their official spelling; internal Legal files may stay British",
+      "why": "RL-162"
     }
   ],
   "signature": [
