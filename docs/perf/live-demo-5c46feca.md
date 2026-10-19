@@ -1,6 +1,6 @@
-# The live demo's framerate in combat: 5c46feca against d3f1ca0e (2026-10-19, interim)
+# The live demo's framerate in combat: 5c46feca and 728596d0 against d3f1ca0e (2026-10-19)
 
-Owner: Performance and Platform, for the EP. Orb played the live demo (pin 5c46feca, web build, Reduce flashing locked on): "the framerate seems to tank during combat". The build Orb played before is d3f1ca0e (203 commits earlier, 320 files). **No time in this note is valid**: the PC never gave a window (see "Validity"). What follows is what does not depend on load, and what is still to time.
+Owner: Performance and Platform, for the EP. Orb played the live demo (pin 5c46feca, web build, Reduce flashing locked on): "the framerate seems to tank during combat". The build Orb played before is d3f1ca0e (203 commits earlier, 320 files). **Part 1 (5c46feca) has no valid time** (the PC gave no window); **part 2 (the new pin 728596d0, dissolve off) is measured and valid** (see "Validity"). What follows is what does not depend on load, and what is still to time.
 
 ## Validity
 
@@ -33,3 +33,23 @@ Whether the new build is slower per frame than the old one in combat: my 16 pair
 ## Files
 
 `docs/perf/tools/frame-bench.mjs` (`--reduced`, `--igpu`, `--layers`, `over_25`), `make-audit-sites.mjs` (`--rev`), `scratch-hooks/hook-dissolve.mjs` (times the cut dissolve) and `hook-layers.mjs` (crowd chunks and the inset pane are cut by name). The native bench Orb can run by hand: `docs/perf/tools/orb-native-bench.cmd`.
+
+
+## Part 2: the new pin 728596d0 against d3f1ca0e (valid runs)
+
+728596d0 turns the cut dissolve off. Both builds in reduced mode, interleaved, one browser at a time, the capture cores free of other sessions' captures (every run below passed the load rule: total load 11 to 35%, capture cores 26 to 43% before; the runner now refuses to start while another capture is open). x1 is this PC's RTX unthrottled, x4 is Chrome's 4 times slower CPU (an old laptop's CPU, not its GPU).
+
+| Scene | x1 p50 / p95 ms, old then pin | x4 p50 / p95 ms, old then pin | Main-thread CPU per frame at x4, old then pin | Draw calls, old then pin |
+|---|---|---|---|---|
+| City brawl | 6.3 / 9.6 then 6.7 / 9.9 | 33.6 / 58.0 then (invalid, repeating) | 40.7 then 45.1 (invalid run, indicative) | 303 then 309 |
+| Signature beam in the city | 6.4 / 9.5 then 7.3 / 10.7 | 29.5 / 55.9 then 30.3 / 56.5 | 42.6 then 46.1 | 307 then 348 |
+| AI match | 5.9 / 9.1 then 6.4 / 9.8 | 27.8 / 45.4 then 29.1 / 52.2 | 36.8 then 40.9 | 173 then 206 |
+
+- **With the dissolve off the pin costs 0.4 to 0.9 ms more a frame at x1 (5 to 14%) and about 10% more main-thread CPU at x4.** Not a collapse; a slower CPU sees a few ms more.
+- **Where the extra goes** (the game's own timers, x1, means, the three scenes): the GDScript pieces add only **+0.12 to +0.23 ms**, of which **`fighters_update` +0.12 to +0.18 ms** (Animation's new layers; the sim tick and FX are unchanged); the rest, **about +0.3 to +0.6 ms, is the engine's draw submission**: the draw list grew by 6 (city), 33 (AI match) and 41 (beam) calls, mostly the HUD (152 to 159 and 298 to 334 in a frozen frame).
+- **The integrated Radeon is much better in the pin** (crowd chunks, no second world): frames over 25 ms, old then pin, AI match 173 of 1,200 then 30, beam 166 of 600 then 10, city 183 of 600 then 17; p95 32.8 then 22.2, 35.3 then 15.4, 35.7 then 16.0.
+- **Hitches at fixed ticks remain** (AI match ticks 131 and 238, 110 to 170 ms).
+
+**Top remaining costs and owners:** (1) **UI**: the HUD is still 159 of 176 draw calls (AI) and 334 of 360 (beam), 36 more than d3f1ca0e, with no cache; (2) **Animation**: `fighters_update` +0.12 to +0.18 ms for the new layers; (3) **Rendering and VFX**: the warm-up leaves two first-use hitches (ticks 131, 238). **Camera**: nothing left with the dissolve off.
+
+**What Orb saw** most likely came from the dissolve (5c46feca) and/or the GPU the browser used; with the dissolve off this PC's RTX differs from d3f1ca0e by under 1 ms at x1. Orb's `chrome://gpu` answer would settle the GPU part.
