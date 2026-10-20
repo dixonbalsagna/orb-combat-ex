@@ -6,6 +6,8 @@
 
 `launch/` holds the launch enders as the file Encounter's launch anywhere reads (`data/combat/enders.json`): `enders.json` on the live recipes, to land now, and `enders.next.json` on the split, to land with it; and a draft schema for Tools, `combat-enders.schema.json` (the note is `../launch-enders.md`). `throwables/` (2026-10-18) holds `throwables.json`: the pick-up and throw by size and by fighter, on Game Design's ruling (`../throwable-cars.md`).
 
+`choreo/` (2026-10-19) holds `feel.json`: recoil exits, ricochets, clash meets and turns, each with its three beats for Camera and what Encounter, Animation and World need (`../choreography-feel.md`).
+
 `roster/` holds sketches for fighters who are not in the build: identity rows for the Demon Cyborg (three options) and the Empress, their generated movesets, and the builder that makes them (`../roster-rows.md`). Their cards are in `cards/` beside the first two. None of it is part of the recipes window.
 
 `split/` holds the next recipes file, `recipes.split.json` (2026-10-16): the split by path, the held X's leans and the new posed pieces, built on the live file with the training dummy's pools in. It lands with Animation's fourth patch, Encounter's mash key and Tools' two schema keys. The note is `../split-and-pieces.md`. `roster/` also holds the guards' kit, generated (`moveset.guard.json`).

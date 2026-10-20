@@ -1,0 +1,296 @@
+{
+ "schema": "combat.choreo.feel/1",
+ "_about": "PARKED: the choreography pieces for Orb's homework 6 answer (2026-10-19): more back and forth, impacts, dynamic clashing; both fighters backflipping out of strikes and ricocheting off environmental elements (docs/combat/choreography-feel.md). For each piece: when it plays, its variants, its three beats with first-value ticks for Game Design to rule, each fighter's look, what it draws on, and the event Camera reads. Nothing is loaded or hashed",
+ "rules": {
+  "onePressOneAttack": true,
+  "bothActive": "after every exit somebody is moving toward somebody",
+  "noEndlessLoops": "each piece has a count after which the exchange resolves"
+ },
+ "pieces": {
+  "recoil": {
+   "when": "a blow separates the pair: the struck fighter's reel or knock-back, drawn by the blow's weight; control returns at the landing (the reel's own end)",
+   "byWeight": {
+    "light": {
+     "ground": "skip",
+     "air": "drift_tuck",
+     "ticks": 10,
+     "bh": 1
+    },
+    "medium": {
+     "ground": "back_handspring",
+     "air": "back_tuck",
+     "ticks": 18,
+     "bh": 2
+    },
+    "heavy": {
+     "ground": "backflip",
+     "air": "backflip_high",
+     "ticks": 24,
+     "bh": [
+      3,
+      4
+     ]
+    },
+    "launch": {
+     "ground": "ab.skid (as built)",
+     "air": "ab.skid (as built)"
+    }
+   },
+   "stick": "up a high backflip, down a low handspring; presentation inside the knock-back's own distance",
+   "surfaceBehind": "a surface within the exit's distance makes it a ricochet",
+   "beats": {
+    "anticipation": "the blow's hit-stop, 4 ticks, the contact held",
+    "impact": "the contact",
+    "followThrough": "the rotation and the landing; the landing tick is when control returns"
+   },
+   "fighters": {
+    "protagonist": {
+     "handspring": "two hands, a twist, lands facing the rival",
+     "backflip": "a layout, arms wide, a long open arc",
+     "skip": "a light bounce on the toes"
+    },
+    "rival": {
+     "handspring": "one hand down, the other in guard, lands square",
+     "backflip": "a compact tuck, lands in an exact crouch",
+     "skip": "a short slide back on both feet"
+    }
+   },
+   "drawsOn": [
+    "gc.tech_flip",
+    "gc.bounce.rebound",
+    "ab.skid"
+   ],
+   "event": {
+    "name": "recoil",
+    "fields": [
+     "who",
+     "kind",
+     "weight",
+     "from",
+     "to",
+     "land_tick",
+     "ground_or_air"
+    ],
+    "sentAt": "the contact"
+   },
+   "poses": {
+    "shared": 8,
+    "perFighter": 4
+   },
+   "needs": {
+    "encounter": "the exit by weight and state; the knock-back distance and the reel's length matched to it; the recoil event",
+    "animation": "skip, handspring, backflip as shared poses derived from gc.tech_flip and gc.bounce.rebound, flavour per fighter",
+    "world": "the ground point at the landing; a surface within the exit's distance"
+   }
+  },
+  "ricochet": {
+   "when": "a fighter sent along a line meets a surface below the wall slam's speed; above it, the wall slam or the building chain as ruled",
+   "surfaces": {
+    "face": {
+     "plant": "both feet flat on the wall, knees folding, a crack under the soles",
+     "rebound": "mirrored off the normal, bent toward the rival"
+    },
+    "slope": {
+     "plant": "hands or feet set on the slant, ridge or cliff",
+     "rebound": "up and off it, toward the rival"
+    },
+    "ground": {
+     "plant": "a rebound off the hands",
+     "rebound": "a low spring back"
+    },
+    "prop": {
+     "plant": "on a parked car's roof, which crumples",
+     "rebound": "off the roof, upward"
+    },
+    "post": {
+     "plant": "one hand catches a post or a tree and swings him round",
+     "rebound": "a turned rebound round the post"
+    }
+   },
+   "counter": {
+    "windowTicks": 6,
+    "x": "a flying knee or a jump kick",
+    "y": "a driving medium",
+    "b": "a rebound heavy from his launch enders, legs.line (pending/launch/enders.json)",
+    "none": "he springs back unarmed, landing in range",
+    "answer": "the plant is a tell of at least 6 ticks; the rebound blow can be guarded and perfect-blocked"
+   },
+   "limit": {
+    "inARow": 2
+   },
+   "beats": {
+    "anticipation": "the flight toward the surface, then the plant (a 4-tick hit-stop and the crack); body, surface and rival framed together",
+    "impact": "the rebound blow's contact, or the plant with no press",
+    "followThrough": "the landing in range, or the rival's recoil exit"
+   },
+   "fighters": {
+    "protagonist": {
+     "wall": "a running step up the face and a turning push-off",
+     "rebound": "a turning palm or an edge kick"
+    },
+    "rival": {
+     "wall": "a flat two-foot plant and a straight piston push",
+     "rebound": "a knee or the plate ram"
+    }
+   },
+   "drawsOn": [
+    "pe.plant_coil",
+    "w2.coil_spring",
+    "the contact IK"
+   ],
+   "event": {
+    "name": "ricochet",
+    "fields": [
+     "who",
+     "surface",
+     "point",
+     "normal",
+     "plant_tick",
+     "strike",
+     "contact_tick"
+    ],
+    "sentAt": "when the send meets the surface on its path"
+   },
+   "poses": {
+    "shared": 4,
+    "perFighter": 2
+   },
+   "needs": {
+    "encounter": "the first surface on the send's path; ricochet or wall slam by speed; the window; the rebound piece by button and family; the count; the event",
+    "world": "a surface query along a path (point, normal, kind, holds); cracks and dents below collapse; parked cars as hashed props",
+    "animation": "plant poses for the wall, the ground and the post with the feet or hands solved onto the surface point; the post swing"
+   }
+  },
+  "clash_meet": {
+   "when": "both fighters' blows would land inside the same few ticks: they meet between the bodies instead of both landing",
+   "byStrength": {
+    "x_x": {
+     "meets": "wrists and forearms",
+     "then": "both bounce back half a step; pressing again meets again, up to 3 in a row"
+    },
+    "y_y": {
+     "meets": "elbows or knees",
+     "then": "both slide back 1 bh"
+    },
+    "b_b": {
+     "meets": "the heavy clash, a ring of force",
+     "then": "both thrown into backflips (the double hit as today)"
+    },
+    "unequal": {
+     "meets": "the heavier goes through",
+     "then": "the lighter takes his handspring or skip"
+    }
+   },
+   "ends": [
+    "split: both mirrored recoil exits",
+    "break: one wins a meet by timing and his blow goes through",
+    "escalation: after the third meet, the fist clash's pulse contest (wave5)"
+   ],
+   "beats": {
+    "anticipation": "both wind-ups seen together, framed in profile at equal weight",
+    "impact": "the meet at the midpoint, a 4 to 6-tick hit-stop and the spark or the ring",
+    "followThrough": "the split's two exits, or the winner's blow"
+   },
+   "fighters": {
+    "protagonist": {
+     "meets": "an open palm that turns the other strike aside"
+    },
+    "rival": {
+     "meets": "the forearm plate square on, a dead stop"
+    }
+   },
+   "drawsOn": [
+    "pp.clash",
+    "pp.clash.recoil",
+    "the clinch's grip layer as a paired contact"
+   ],
+   "event": {
+    "name": "clash_meet",
+    "fields": [
+     "a",
+     "b",
+     "n",
+     "kind",
+     "point",
+     "winner"
+    ],
+    "sentAt": "when the two blows are found to meet",
+    "then": "clash_split"
+   },
+   "poses": {
+    "shared": 3,
+    "perFighter": 3
+   },
+   "needs": {
+    "encounter": "two strike beats inside the meet window; the meet at the midpoint; resolution by strength and timing; the count; the events",
+    "animation": "both strikers' ends solved onto one point; a meet pose per strength for each fighter",
+    "world": "none, unless the B meet breaks glass (Game Design)"
+   }
+  },
+  "turn": {
+   "when": "a blow is deflected and the deflector's return comes at once; it can be deflected in turn: a ping-pong in place",
+   "turnTicks": [
+    12,
+    16
+   ],
+   "turns": [
+    2,
+    6
+   ],
+   "deflect": "a guard press in the turn's window, wider than a perfect block's",
+   "return": "a quick blow from his stop pool (lines and rises) and his reversal pool",
+   "ends": [
+    "a missed deflect: the blow lands and his recoil exit",
+    "a heavy: a clash meet",
+    "a launch: a link (launch anywhere)"
+   ],
+   "beats": {
+    "anticipation": "the incoming wind-up, read on the defender's side",
+    "impact": "the deflect's spark, then at once the return's contact",
+    "followThrough": "the returner's step in: the swap of initiative"
+   },
+   "camera": "a 1% lean toward the new attacker at each swap",
+   "fighters": {
+    "protagonist": {
+     "deflect": "a catch-and-turn: the palm leads the forearm past",
+     "return": "a rising palm or a palm push"
+    },
+    "rival": {
+     "deflect": "a forearm check: the plate stops it dead",
+     "return": "a straight fist or a knee"
+    }
+   },
+   "drawsOn": [
+    "brawl.medium.stop",
+    "brawl.reversal"
+   ],
+   "event": {
+    "name": "turn",
+    "fields": [
+     "from",
+     "to",
+     "n",
+     "window",
+     "deflect"
+    ],
+    "sentAt": "each deflect"
+   },
+   "poses": {
+    "shared": 0,
+    "perFighter": 3
+   },
+   "needs": {
+    "encounter": "the turn windows; the swap inside one exchange; the count; the event",
+    "animation": "three deflects each (high, mid, low)",
+    "world": "none"
+   }
+  }
+ },
+ "big": "every event carries big (Camera's one set piece in 20 s): true only on a B meet and on a ricochet whose counter launches",
+ "poses": {
+  "shared": 15,
+  "perFighter": 12,
+  "twoFighters": 39,
+  "_about": "estimates; no new strike piece"
+ }
+}
