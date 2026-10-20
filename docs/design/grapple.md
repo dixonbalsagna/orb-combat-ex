@@ -25,7 +25,7 @@ The clinch's rules are the clinch pitch's, with the pulse of every timed contest
 
 | | The rule | First value |
 | :--- | :--- | :--- |
-| **Its length** | At most 90 ticks from the tie-up | 1.5 s: Orb wants fights fast |
+| **Its length** | At most 60 ticks from the tie-up: three pulses (it was 90 until 2026-10-19, `rulings-2026-10-19.md`) | 1 s: Orb wants fights fast |
 | **The pulse** | Shown and heard: a flex of the grip, a creak, a pad pulse. Both fighters work the same pulse | Every 20 ticks from the tie-up, so four pulses at most |
 | **The grip** | One meter between them, from two behind to two ahead, starting even (or one ahead for the catcher, §1). It is shown in the bodies, five stages of the grip, and never drawn between them (Orb's minimal UI, `minimal-hud.md`) | |
 | **A pummel** | A on the pulse moves the grip one step his way. If both pummel the same pulse, **the one nearer the pulse, by the tick, wins the step.** If both are the same number of ticks off, nothing moves (re-ruled 2026-10-17, §9) | Inside 4 ticks of the pulse. Sharp: inside 2 |
@@ -101,12 +101,12 @@ The clinch's rules are the clinch pitch's, with the pulse of every timed contest
 | :--- | :--- |
 | A stray moves the grip | Never (hard) |
 | A masher of A in the clinch against a fighter who doesn't press | Wins no more grip |
-| The clinch's length | Median 40 to 70 ticks, at most 90 (hard) |
+| The clinch's length | Median 30 to 55 ticks, at most 60 (hard); time-outs under 30% |
 | A thrown fighter grabbed again inside 120 ticks | Never (hard) |
 | The AI's tech starts within its reaction time of the tell's start | Never (hard) |
 | Throws a match, default arm | 1 to 4 |
 | A throw's opening (a bury, an air throw or a wall slam) followed by a launch | 15 to 40% of them: the chain happens |
-| A player who only uses A, against medium: he catches when in reach, and in the clinch presses A on the pulse at a human's spread (within 3 ticks), throwing at two ahead | Wins 10 to 35% (the script re-defined 2026-10-17: a tapper of A every 8 ticks is a masher, and the masher's row covers him) |
+| **Grab and follow,** against medium: he catches when in reach, pummels within 3 ticks of the pulse, throws down at two ahead, and presses B on the bury | Wins 25 to 50%. It replaces the A-only row (2026-10-19): a grab-only player has no damage of his own by design, since the grapple is "a way to set up combo chains" |
 | Catch tells a minute, AI against AI | 1 to 3 |
 | The route player and launches a match, with grappling on | Read again: the route's edges and the band of 4 to 10 launches a match |
 
