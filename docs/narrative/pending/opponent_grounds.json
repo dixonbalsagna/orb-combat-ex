@@ -1,0 +1,168 @@
+{
+  "schema": "narrative.opponent_grounds/1",
+  "_about": "PARKED DRAFT (docs/narrative/pending/). The ground each story opponent claims, for World's shifting-arena stage assignment (docs/narrative/opponent-grounds.md). Weights are 1 to 3 (proposed; World and Game Design tune). 'suits' and 'avoids' name biomes, place kinds and place states the ring passes through. A home is colour and set piece, never numbers. Options for Orb; written to survive any lore pick. Claude-written.",
+  "rules": [
+    "A home is colour and set piece, never numbers.",
+    "The picker lists candidate rings first; each goes to the opponent whose claim scores highest; ties go to the rival.",
+    "Wear (damaged or fallen places from earlier in the run) is ground too.",
+    "No claim lists a school, hospital, place of worship or a polar outpost."
+  ],
+  "claims": {
+    "RIVAL": {
+      "home": "Rankhold",
+      "suits": [
+        {
+          "feature": "biome:mountains",
+          "w": 3
+        },
+        {
+          "feature": "place:city_with_terrace",
+          "w": 2
+        },
+        {
+          "feature": "coast:breakwater",
+          "w": 1
+        },
+        {
+          "feature": "biome:ice",
+          "w": 1
+        }
+      ],
+      "must_cross": [
+        "biome:mountains",
+        "place:settled"
+      ],
+      "avoids": [
+        "biome:ocean_open",
+        "biome:desert_empty"
+      ],
+      "size": {
+        "early": "close",
+        "mid": "half",
+        "boss": "whole"
+      },
+      "why": "He drags it up the stair so everyone can see him win.",
+      "line": "Up here, everyone can see you lose."
+    },
+    "EMPRESS": {
+      "home": "Crownreach",
+      "suits": [
+        {
+          "feature": "biome:plains",
+          "w": 3
+        },
+        {
+          "feature": "place:city_end_of_avenue",
+          "w": 2
+        },
+        {
+          "feature": "coast:straight",
+          "w": 1
+        }
+      ],
+      "must_cross": [
+        "biome:plains>=0.33"
+      ],
+      "avoids": [
+        "biome:mountains",
+        "biome:forest_dense"
+      ],
+      "size": {
+        "early": "half",
+        "mid": "half",
+        "boss": "whole"
+      },
+      "why": "She claims the open plain so there is nowhere to hide from her.",
+      "line": "Wide open ground, insect. Nowhere to hide!"
+    },
+    "CYBORG": {
+      "home": "Slagholt",
+      "suits": [
+        {
+          "feature": "biome:desert",
+          "w": 3
+        },
+        {
+          "feature": "state:damaged_or_fallen",
+          "w": 3
+        },
+        {
+          "feature": "coast:dry_with_hulks",
+          "w": 2
+        },
+        {
+          "feature": "place:city_in_ruins",
+          "w": 1
+        }
+      ],
+      "must_cross": [
+        "biome:desert|state:damaged_or_fallen"
+      ],
+      "avoids": [
+        "state:untouched_place_with_people"
+      ],
+      "size": {
+        "early": "half",
+        "mid": "half",
+        "boss": "whole"
+      },
+      "why": "The wreckage is already there, so it is free fuel.",
+      "line": "Lots of wreckage out here. Free fuel!",
+      "legal": "Hunger on wreckage only; nothing puts a living person on his menu."
+    },
+    "PROTAGONIST": {
+      "home": "Mendquay",
+      "suits": [
+        {
+          "feature": "place:coastal_town",
+          "w": 3
+        },
+        {
+          "feature": "biome:ocean_open",
+          "w": 3
+        },
+        {
+          "feature": "place:quay_or_pier",
+          "w": 2
+        },
+        {
+          "feature": "coast:river_mouth",
+          "w": 1
+        }
+      ],
+      "must_cross": [
+        "coast",
+        "biome:ocean_open"
+      ],
+      "avoids": [
+        "place:dense_city_no_exit"
+      ],
+      "size": {
+        "early": "close",
+        "mid": "half",
+        "boss": "whole"
+      },
+      "why": "He drags it to the water so nobody's roof breaks.",
+      "line": "Keep it over the water. Nobody's roof breaks!"
+    }
+  },
+  "fallbacks": {
+    "any_boss": "the stage with the most standing cities, whole size, no claim line",
+    "first_stage": "close, round the player's own home",
+    "rival_steps_in": "the ground of the boss who escaped",
+    "tie": "the rival wins; the other waits for a later stage",
+    "no_ring_fits": "best-scoring candidate; the picture carries the fantasy",
+    "training_dummy": "no planet ground"
+  },
+  "heavy_hints": {
+    "keep": "Full! Let go to knock him back.",
+    "keep_when": "a charge past its knock-back point and not yet full",
+    "full_options": [
+      "Full! Let go to blast him away!",
+      "Full! Let go and he'll fly!",
+      "Full! Let go to send him flying!",
+      "Full! Let go to launch him!"
+    ],
+    "pick": "Full! Let go to blast him away!"
+  }
+}
