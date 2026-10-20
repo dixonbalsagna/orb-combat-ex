@@ -193,6 +193,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 		out.append(float(b.fdmg.size()))   # floor damage: empty for a building never hit locally
 		for v in b.fdmg:
 			out.append(v)
+		if b.marks != 0:
+			out.append(float(b.marks))   # World: repeats escalate (only with brunt.json repeatMarks above 0)
 	out.append(1.0 if S.contactOn else 0.0)   # World's ground contact (G2)
 	out.append(float(S.trees.size()))
 	for t in S.trees:

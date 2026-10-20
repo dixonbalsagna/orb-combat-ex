@@ -258,6 +258,54 @@
       "minimum": 0,
       "maximum": 2,
       "description": "The share of the face's per-speed damage a slab does him."
+    },
+    "interiorBounceSpeed": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100000,
+      "description": "The speed at which a held slab bounces him instead of lodging (Game Design: 900)."
+    },
+    "interiorBounceTanMin": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 10,
+      "description": "The shallowest angle to the slab that bounces: the tangent of 40 degrees."
+    },
+    "interiorBounceTanMax": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 10,
+      "description": "The steepest angle to the slab that bounces: the tangent of 70 degrees."
+    },
+    "interiorBounceKeep": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "The share of the normal speed a bounce keeps (the ground's first vertKeep)."
+    },
+    "interiorBounceTangent": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "The share of the along-slab speed a bounce keeps (the ground's tangentKeep)."
+    },
+    "interiorLinkSpeed": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100000,
+      "description": "The speed he must leave a tower's far face with for the next tower's link to play (Game Design: 900)."
+    },
+    "repeatMarks": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 4,
+      "description": "Repeats escalate (Orb, homework 30): 0 off, else the most marks a building counts, each one tier higher for the next send, and the most repeats a crater grows (Game Design: 2)."
+    },
+    "repeatCraterGrow": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 3,
+      "description": "The radius factor an impact on already cratered ground asks of the old crater."
     }
   },
   "additionalProperties": false,

@@ -1,0 +1,170 @@
+{
+  "schema": "biomes.props/1",
+  "_about": "The throwable objects' hold points (docs/world/prop-hold-points.md; WorldProps): where a hand grips an object, for Animation's grip on a prop (docs/animation/throwables-sizing.md T1). Each class has its box (length along x, height, depth across z, in world units; a fighter is 75), its mass class and the first tier that can lift it (Art's docs/art/cars.md, data/art/vehicles.json), and six hold points: frame (the middle of the body), underside_l and underside_r (under the chassis, each side of the middle, a hand's reach apart for a two-handed lift), top (the roof), end_a (the rear) and end_b (the front). A point is [x, y, z] in the prop's own frame: the origin on the ground under its centre, x along its length with the front at +x, y up, z across (positive toward the camera). WorldProps.holdPoint turns one into a world point from the prop's place, turn and facing. First values from the box; Animation measures them against the poses.",
+  "slots": [
+    "frame",
+    "underside_l",
+    "underside_r",
+    "top",
+    "end_a",
+    "end_b"
+  ],
+  "classes": {
+    "bike": {
+      "length": 90,
+      "height": 56,
+      "depth": 20,
+      "mass": 1,
+      "throwTier": 1,
+      "holds": {
+        "frame": [
+          0,
+          28.0,
+          0
+        ],
+        "underside_l": [
+          -25.2,
+          13.5,
+          0
+        ],
+        "underside_r": [
+          25.2,
+          13.5,
+          0
+        ],
+        "top": [
+          0,
+          56,
+          0
+        ],
+        "end_a": [
+          -45.0,
+          25.2,
+          0
+        ],
+        "end_b": [
+          45.0,
+          25.2,
+          0
+        ]
+      }
+    },
+    "sedan": {
+      "length": 193,
+      "height": 62,
+      "depth": 72,
+      "mass": 3,
+      "throwTier": 2,
+      "holds": {
+        "frame": [
+          0,
+          31.0,
+          0
+        ],
+        "underside_l": [
+          -54.0,
+          12.6,
+          0
+        ],
+        "underside_r": [
+          54.0,
+          12.6,
+          0
+        ],
+        "top": [
+          0,
+          62,
+          0
+        ],
+        "end_a": [
+          -96.5,
+          27.9,
+          0
+        ],
+        "end_b": [
+          96.5,
+          27.9,
+          0
+        ]
+      }
+    },
+    "van": {
+      "length": 223,
+      "height": 86,
+      "depth": 76,
+      "mass": 4,
+      "throwTier": 3,
+      "holds": {
+        "frame": [
+          0,
+          43.0,
+          0
+        ],
+        "underside_l": [
+          -62.4,
+          15.3,
+          0
+        ],
+        "underside_r": [
+          62.4,
+          15.3,
+          0
+        ],
+        "top": [
+          0,
+          86,
+          0
+        ],
+        "end_a": [
+          -111.5,
+          38.7,
+          0
+        ],
+        "end_b": [
+          111.5,
+          38.7,
+          0
+        ]
+      }
+    },
+    "bus": {
+      "length": 516,
+      "height": 137,
+      "depth": 90,
+      "mass": 8,
+      "throwTier": 4,
+      "holds": {
+        "frame": [
+          0,
+          68.5,
+          0
+        ],
+        "underside_l": [
+          -144.5,
+          19.8,
+          0
+        ],
+        "underside_r": [
+          144.5,
+          19.8,
+          0
+        ],
+        "top": [
+          0,
+          137,
+          0
+        ],
+        "end_a": [
+          -258.0,
+          61.6,
+          0
+        ],
+        "end_b": [
+          258.0,
+          61.6,
+          0
+        ]
+      }
+    }
+  }
+}

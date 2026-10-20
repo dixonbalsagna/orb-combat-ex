@@ -160,10 +160,22 @@ func _init() -> void:
 			else:
 				ok(not cs.any(func(e): return e.kind == "ceiling" and e.punch and e.keep == 0.4), "%s: below tier 3 no ceiling reverses him" % tag)
 			if tier == 1.0:
-				ok(cs.size() <= 2 and not cs.any(func(e): return e.k > 0.0 and e.punch), "%s: tier 1 breaks no slab" % tag)
+				ok(not cs.any(func(e): return e.k > 0.0 and e.punch and e.kind in ["floor", "ceiling"]), "%s: tier 1 breaks no slab" % tag)
 			var fhits: int = ev.filter(func(e): return e.type == "floor_hit" and e.outcome == "punch").size()
 			var brk: int = cs.filter(func(e): return e.k > 0.0 and e.punch and e.kind in ["floor", "ceiling"]).size()
 			ok(fhits >= brk - 0, "%s: each broken slab went through the floors machinery (%d floor_hit punches for %d broken slabs)" % [tag, fhits, brk])
+	# --- a held slab bounces at 900 or more between 40 and 70 degrees to it (any tier), else lodges; at most 3 bounces and 5 slab contacts
+	var Sb := fresh(1)
+	var evb: Array = chain(Sb, tower(Sb), 1.0, 1.7, true, 3500.0, 0.5)
+	var csb: Array = shape(evb).cs
+	var bounces: Array = csb.filter(func(e): return e.k > 0.0 and not e.punch and e.keep > 0.0)
+	ok(bounces.size() >= 1 and bounces.size() <= 3 and bounces[0].keep == 0.45 and csb.size() - 1 <= 5 and shape(evb).en[0].end == "lodge", "a fast steep send at tier 1 bounces off the held floor (%s)" % names(evb))
+	var Ss := fresh(1)
+	var evs: Array = chain(Ss, tower(Ss), 1.0, 1.7, true, 800.0, 0.5)
+	ok(shape(evs).cs.filter(func(e): return e.keep > 0.0 and not e.punch and e.k > 0.0).is_empty() and shape(evs).en[0].end == "lodge", "under 900 he lodges on the held floor (%s)" % names(evs))
+	var Sh2 := fresh(1)
+	var evh2: Array = chain(Sh2, tower(Sh2), 1.0, 0.5, true, 3500.0, 0.5)
+	ok(shape(evh2).cs.filter(func(e): return e.keep > 0.0 and not e.punch and e.k > 0.0).is_empty(), "shallower than 40 degrees to the slab he lodges (%s)" % names(evh2))
 	# --- the angle gate
 	for tn in [0.15, 2.5]:
 		var Sg := fresh(1)
@@ -243,6 +255,8 @@ func _init() -> void:
 	var worstT: float = 0.0
 	var ends: Dictionary = {}
 	var bad: int = 0
+	var links: int = 0
+	var bounced: int = 0
 	for n in range(160):
 		var Sr := fresh(1 + n % 6)
 		var cand: Array = Sr.buildings.filter(func(b): return b.floors >= 5 and b.alive)
@@ -254,6 +268,8 @@ func _init() -> void:
 		var shr: Dictionary = shape(evr)
 		if shr.cs.is_empty():
 			continue
+		links += evr.filter(func(e): return e.type == "chain_link").size()
+		bounced += shr.cs.filter(func(e): return e.k > 0.0 and not e.punch and e.keep > 0.0).size()
 		runs += 1
 		if shr.en.size() != 1:
 			bad += 1
@@ -263,7 +279,8 @@ func _init() -> void:
 		ends[shr.en[0].end] = int(ends.get(shr.en[0].end, 0)) + 1
 		if Sr.fighters[0].interior != null:
 			bad += 1
-	ok(runs > 60 and bad == 0 and worstC <= 5 and worstT <= 2.5001, "%d random chains: one end each, at most %d contacts, longest %.2f s, none left running (ends %s)" % [runs, worstC, worstT, str(ends)])
+	ok(runs > 60 and bad == 0 and worstC <= 5 and worstT <= 2.5001, "%d random chains: one end each, at most %d contacts, longest %.2f s, none left running (ends %s; %d bounces, %d links to a next tower)" % [runs, worstC, worstT, str(ends), bounced, links])
+	ok(bounced > 0, "bounces happen in the random chains")
 	c.interiorChain = 0
 	print("INTERIOR: %d check(s) failed" % fails)
 	quit()

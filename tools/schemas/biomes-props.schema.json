@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-props",
+  "title": "biomes.props/1",
+  "description": "data/biomes/props.json: the throwable objects' hold points (docs/world/prop-hold-points.md; WorldProps). Per class: its box, mass class, first tier that lifts it, and the six hold points (frame, underside_l, underside_r, top, end_a, end_b) as [x, y, z] in the prop's own frame. Every key required. Version field: schema. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "slots",
+    "classes"
+  ],
+  "properties": {
+    "schema": {
+      "const": "biomes.props/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "slots": {
+      "const": [
+        "frame",
+        "underside_l",
+        "underside_r",
+        "top",
+        "end_a",
+        "end_b"
+      ],
+      "description": "The hold-point names, in order."
+    },
+    "classes": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[a-z][a-z_]*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "length",
+          "height",
+          "depth",
+          "mass",
+          "throwTier",
+          "holds"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "length": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 2000,
+            "description": "Along x, front at +x (world units)."
+          },
+          "height": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 2000,
+            "description": "Up from the ground under the centre."
+          },
+          "depth": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 2000,
+            "description": "Across z."
+          },
+          "mass": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64,
+            "description": "Art's mass class (bike 1, sedan 3, van 4, bus 8)."
+          },
+          "throwTier": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "description": "The first power tier that can lift it."
+          },
+          "holds": {
+            "type": "object",
+            "required": [
+              "frame",
+              "underside_l",
+              "underside_r",
+              "top",
+              "end_a",
+              "end_b"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "frame": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "number",
+                  "minimum": -2000,
+                  "maximum": 2000
+                },
+                "description": "[x, y, z] in the prop's own frame (world units)"
+              },
+              "underside_l": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "number",
+                  "minimum": -2000,
+                  "maximum": 2000
+                },
+                "description": "[x, y, z] in the prop's own frame (world units)"
+              },
+              "underside_r": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "number",
+                  "minimum": -2000,
+                  "maximum": 2000
+                },
+                "description": "[x, y, z] in the prop's own frame (world units)"
+              },
+              "top": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "number",
+                  "minimum": -2000,
+                  "maximum": 2000
+                },
+                "description": "[x, y, z] in the prop's own frame (world units)"
+              },
+              "end_a": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "number",
+                  "minimum": -2000,
+                  "maximum": 2000
+                },
+                "description": "[x, y, z] in the prop's own frame (world units)"
+              },
+              "end_b": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "number",
+                  "minimum": -2000,
+                  "maximum": 2000
+                },
+                "description": "[x, y, z] in the prop's own frame (world units)"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

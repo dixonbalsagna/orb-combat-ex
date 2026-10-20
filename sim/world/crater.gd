@@ -132,6 +132,29 @@ static func profile(u: float, d: float, hr: float) -> float:
 	return h
 
 
+## Repeats escalate (Orb, homework 30; buildings.md section 6.1): an impact on ground already cratered by an impact deepens and widens that crater instead of digging a
+## new one beside it. The dig moves to the old crater's centre and its energy rises so the bowl is repeatCraterGrow times the last one's radius (the depth cap, a share of the
+## radius less the relief already there, then lets it go deeper). After repeatMarks repeats it grows no more. Returns [x, energy]. Behind brunt.json repeatMarks.
+static func _repeat(S: SimState, x: float, energy: float, special: bool) -> Array:
+	var last = null
+	for i in range(S.craters.size() - 1, -1, -1):
+		var c = S.craters[i]
+		if c.cause == "impact" and absf(SimWrap.sdx(c.x, x)) <= 0.5 * c.r:
+			last = c
+			break
+	if last == null:
+		return [x, energy]
+	var m: int = 0
+	for c in S.craters:
+		if c.cause == "impact" and absf(SimWrap.sdx(c.x, last.x)) < 1.0:
+			m += 1
+	var cf: Dictionary = WorldBrunt.cfg()
+	var grow: float = float(cf.repeatCraterGrow) if m <= int(cf.repeatMarks) else 1.0
+	var need: float = last.r * grow / R_BASE
+	need = need * need / (SPECIAL_E_MULT if special else 1.0)
+	return [last.x, maxf(energy, need)]
+
+
 static func _slot(S: SimState, cause) -> float:
 	for i in range(S.fighters.size()):
 		if S.fighters[i] == cause:
@@ -150,6 +173,10 @@ static func _col(x: float) -> int:
 ## vertical share (|vy| / speed); both only matter for impacts. Returns the record, or null when the spot was already too
 ## dented to take a crater of this size.
 static func dig(S: SimState, x: float, energy: float, cause, kind: String, dirx: float = 0.0, vert: float = 1.0, special: bool = false, z: float = NAN):
+	if kind == "impact" and int(WorldBrunt.cfg().repeatMarks) > 0:
+		var rp: Array = _repeat(S, x, energy, special)
+		x = rp[0]
+		energy = rp[1]
 	if not S.depthOn:
 		return _dig(S, x, energy, cause, kind, dirx, vert, special)
 	var zz: float = z

@@ -292409,6 +292409,57 @@
       }
     },
     {
+      "id": "props-schema-version",
+      "schema": "biomes-props.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/props.json",
+          "set": {
+            "/schema": "biomes.props/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "props-hold-short",
+      "schema": "biomes-props.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/props.json",
+          "set": {
+            "/classes/bike/holds/top": [
+              0,
+              56
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/classes/bike/holds/top"
+      }
+    },
+    {
+      "id": "props-length-zero",
+      "schema": "biomes-props.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/props.json",
+          "set": {
+            "/classes/sedan/length": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/classes/sedan/length"
+      }
+    },
+    {
       "id": "vfx-catastrophe-alpha-over",
       "schema": "vfx-catastrophe.schema.json",
       "mutate": [

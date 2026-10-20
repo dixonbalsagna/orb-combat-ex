@@ -40,6 +40,11 @@ const BRUNT_KEYS: Dictionary = {   # the defaults: what the file may leave out (
 	"interiorChain": 0, "interiorTanMin": 0.26795, "interiorTanMax": 1.73205, "interiorCeilKeep": 0.4, "interiorFloorKeep": 0.7,
 	"interiorMaxContacts": 5, "interiorMaxBounces": 3, "interiorFaceStop": 15, "interiorCapSeconds": 2.5, "interiorCeilTier": 3,
 	"interiorExitTier": 3, "interiorHurt": 0.5,
+	# a held slab bounces at interiorBounceSpeed or more between the two tangents (40 and 70 degrees), keeping interiorBounceKeep of the normal speed and interiorBounceTangent
+	# of the along-slab speed; he leaves a tower by the far face into the next link with interiorLinkSpeed or more (buildings.md section 7.3, ruled 2026-10-18)
+	"interiorBounceSpeed": 900.0, "interiorBounceTanMin": 0.8391, "interiorBounceTanMax": 2.7475, "interiorBounceKeep": 0.45, "interiorBounceTangent": 0.8, "interiorLinkSpeed": 900.0,
+	# repeats escalate (Orb, homework 30): repeatMarks 0 off, else the most marks a building counts and the most repeats a crater grows; repeatCraterGrow the radius factor a repeat asks
+	"repeatMarks": 0, "repeatCraterGrow": 1.25,
 }
 const BRUNT_STRINGS: Dictionary = {   # the switches that are words: their values and the default (today's behaviour)
 	"lodgeHold": [["world", "body"], "world"],   # does a lodge hold the whole fight (a hit-stop) or only the body (he is stunned, the fight goes on)
@@ -453,9 +458,12 @@ static func chainPlan(S: SimState, tier: float, special: bool, b, fr: Dictionary
 	var used: float = 0.0
 	var hl: float = float(cfg().houseLink)
 	while true:
-		var oc: Dictionary = outcomeOf(S, cur, r.y, r.spN, tier, punched, special)
+		var oc: Dictionary = outcomeOf(S, cur, r.y, r.spN, tierAt(S, cur, tier), punched, special)
 		var entry: Dictionary = {"b": cur.idx, "spN": r.spN, "y": r.y, "dmg": oc.dmg, "ratio": oc.ratio, "outcome": oc.outcome, "keep": oc.keep, "deaths": oc.deaths, "t": t0, "lodge": false}
 		out.append(entry)
+		if out.size() == 1 and WorldInterior.fits(S, cur, r.vx / trav, r.vy):
+			entry.lodge = true   # the chain inside a tower (interior.gd) takes him: the plan ends here (it plans its own exit)
+			break
 		if not oc.pass:
 			break
 		if isHouse(cur):
@@ -660,12 +668,24 @@ static func tierOf(by, f) -> float:
 	return maxf(1.0, roundf(float(by.tier) * float(f.launchPower)))
 
 
+## The tier a send meets building b at: tier (the launch's), one higher for each mark on b (a building an earlier send struck), at most repeatMarks (Orb's repeats escalate,
+## buildings.md section 6.1). repeatMarks 0 is today's behaviour.
+static func tierAt(S: SimState, b, tier: float) -> float:
+	var m: int = int(cfg().repeatMarks)
+	if m <= 0 or b.marks <= 0:
+		return tier
+	return tier + float(mini(b.marks, m))
+
+
 ## Resolve one hit on building b at height y on the near edge, and what happens to the fighter.
 static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 	var by = f.launchBy if f.launchBy != null else SimRoster.opp(S, f)
 	var trav: float = f.launchT
 	var spN: float = SimDetMath.hypot(f.vx / trav, f.vy)
-	var oc: Dictionary = outcomeOf(S, b, y, spN, tierOf(by, f), _count(f, MARK_TOWER), f.launchSpecial)
+	var tierB: float = tierAt(S, b, tierOf(by, f))   # one higher for each mark on this building (repeats escalate)
+	var oc: Dictionary = outcomeOf(S, b, y, spN, tierB, _count(f, MARK_TOWER), f.launchSpecial)
+	if int(cfg().repeatMarks) > 0:
+		b.marks += 1   # a send has struck it: the next meets it one tier higher
 	f.flightHits += 1
 	var link: int = f.flightHits
 	var slot: float = float(S.fighters.find(f))
@@ -718,16 +738,16 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 		var stop: float = STOP_FIRST if link == 1 else STOP_LINK
 		S.dirS.stop = SimMathx.jmax(S.dirS.stop, minf(stop, STOP_TOTAL))
 	else:
-		WorldInterior.begin(S, f, b, y, edge, dir, by, keep, broke)   # the face's stop is the data's ticks; the rest is the chain's (interior.gd step)
+		WorldInterior.begin(S, f, b, y, edge, dir, by, tierB, keep, broke)   # the face's stop is the data's ticks; the rest is the chain's (interior.gd step)
 		return
 	if lodge:
 		# what is left of the launch is one more hit on the building (the core wears most), and he is held in the breach
-		var tfac: float = float(cm.tierFactor[tierIx(tierOf(by, f), f.launchSpecial)])
+		var tfac: float = float(cm.tierFactor[tierIx(tierB, f.launchSpecial)])
 		var rest: float = spLeft * tfac * float(cm.bruntMul) * float(cm.lodgeDump)
 		if b.alive and rest > 0.0:
 			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", cx, evt, true)
 		SimDamage.hurt(S, f, spLeft * FIGHTER_DMG, by)
-		var holdS: float = lodgeSeconds(tierOf(by, f), f.launchSpecial)
+		var holdS: float = lodgeSeconds(tierB, f.launchSpecial)
 		_hold(S, f, holdS)
 		var bodyW: float = WorldLanes.body()[0]
 		f.x = SimWrap.wrap(far - dir * (bodyW * 2.0))
@@ -738,7 +758,7 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 		endFlight(S, f)
 		return
 	if not passes:
-		_hold(S, f, lodgeSeconds(tierOf(by, f), f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
+		_hold(S, f, lodgeSeconds(tierB, f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
 		# the wall slam (buildings.md section 2): he takes the building's hit again over (wallSlamMul, Game Design's twice); the stagger is set below
 		var slam: float = float(cm.wallSlamMul) - 1.0
 		if slam > 0.0:

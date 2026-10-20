@@ -238,6 +238,7 @@ class Building:
 	var fdmg := PackedFloat32Array()   # damage per floor, allocated on the first local hit (empty before)
 	var idx: int = 0          # index in S.buildings (set at generation; not hashed)
 	var place: int = -1       # the place it stands in: its settlement index today, the planet's place id (set at generation; not hashed: the world hash covers it)
+	var marks: int = 0        # World: sends that have struck it (repeats escalate: each mark is one tier higher for the next send, at most two); counted only with brunt.json repeatMarks above 0; hashed when not 0
 	var plan: int = -1        # its index in that place's plan (the plan is seeded, so the same building has the same index every time; not hashed)
 	var fled: float = 0.0     # people who left in the district flight so far (capped at WorldCollateral.FLIGHT_MAX of pop)
 	var z: float = 0.0        # depth of the building's centre from the fighter plane (negative: behind), world units

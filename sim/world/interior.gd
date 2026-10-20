@@ -28,20 +28,28 @@ static func on(S: SimState) -> bool:
 
 
 ## The send's effective tier 1 to 4 (a finisher reads at least as the data's specialTier).
-static func effTier(by, special: bool) -> int:
-	return WorldBrunt.tierIx(by.tier, special) + 1
+static func effTier(tier: float, special: bool) -> int:
+	return WorldBrunt.tierIx(tier, special) + 1
 
 
-## Does this hit start the chain? The first building of the flight, a tower, and the send at 15 to 60 degrees to the horizontal (the data's tangents).
-static func eligible(S: SimState, f, b) -> bool:
-	if not on(S) or f.interior != null or f.flightHits != 1 or WorldBrunt.isHouse(b) or WorldBrunt.topFloor(b) < 0:
+## Does a send with these normalised velocity components go on inside a tower b? A tower, and the send at 15 to 60 degrees to the horizontal (the data's tangents).
+## A pure function: the planner (WorldBrunt.chainPlan) asks it too.
+static func fits(S: SimState, b, vxn: float, vy: float) -> bool:
+	if not on(S) or WorldBrunt.isHouse(b) or WorldBrunt.topFloor(b) < 0:
 		return false
-	var c: Dictionary = WorldBrunt.cfg()
-	var ax: float = absf(f.vx) / f.launchT
+	var ax: float = absf(vxn)
 	if ax <= 0.0:
 		return false
-	var r: float = absf(f.vy) / ax
+	var c: Dictionary = WorldBrunt.cfg()
+	var r: float = absf(vy) / ax
 	return r >= float(c.interiorTanMin) and r <= float(c.interiorTanMax)
+
+
+## Does this hit start the chain? The first building of the flight, and the send fits.
+static func eligible(S: SimState, f, b) -> bool:
+	if f.interior != null or f.flightHits != 1:
+		return false
+	return fits(S, b, f.vx / f.launchT, f.vy)
 
 
 # ===================================================================== the plan
@@ -135,19 +143,19 @@ static func plan(b, y: float, gy: float, down: bool, E: int, c: Dictionary) -> A
 # ===================================================================== start
 
 ## The face is hit and the chain starts (WorldBrunt.hit, after the building took the hit and the fighter his): keep the speed share kept through the face,
-## punch whether the face broke, dir the way he travels. Sets the hit-stop (the face's ticks), emits the entry contact and puts him just inside.
-static func begin(S: SimState, f, b, y: float, edge: float, dir: float, by, keep: float, punch: bool) -> void:
+## punch whether the face broke, tier the tier the building was met at (the launch's, one higher for each mark on the building), dir the way he travels. Sets the hit-stop (the face's ticks), emits the entry contact and puts him just inside.
+static func begin(S: SimState, f, b, y: float, edge: float, dir: float, by, tier: float, keep: float, punch: bool) -> void:
 	var c: Dictionary = WorldBrunt.cfg()
 	var trav: float = f.launchT
 	var gy: float = WorldStructures.baseY(S, b)
-	var E: int = effTier(by, f.launchSpecial)
+	var E: int = effTier(tier, f.launchSpecial)
 	var down: bool = f.vy < 0.0
 	var pl: Array = plan(b, y, gy, down, E, c)
 	var vxn: float = f.vx / trav
 	var sp: float = SimDetMath.hypot(vxn, f.vy)
 	if f.chainEvt == 0.0:
 		f.chainEvt = WorldCollateral.beginEvent(S, "chain", by)   # the chain holds a collateral token: the slabs' people are charged to it, and the air brake (which stays off in a chain) reads it
-	f.interior = {"b": b.idx, "dir": dir, "E": E, "k": 0, "bn": 0, "t": 0, "i": 0, "gy": gy, "R": WorldBrunt.topFloor(b) + 1, "plan": pl}
+	f.interior = {"b": b.idx, "dir": dir, "E": E, "tier": tier, "k": 0, "bn": 0, "t": 0, "i": 0, "gy": gy, "R": WorldBrunt.topFloor(b) + 1, "plan": pl}
 	f.aimB = -1
 	var ev := SimFx.contactEvent(S, "interior_contact", f, f.x, y, sp)
 	ev.b = float(b.idx)
@@ -257,6 +265,8 @@ static func _slab(S: SimState, f, b, by, s: Dictionary, e: Dictionary) -> void:
 	ev.stop = 0
 	SimDamage.hurt(S, f, sp * WorldBrunt.FIGHTER_DMG * float(c.interiorHurt), by)
 	if not breaks:
+		if _bounce(S, f, b, s, e, vxn, sp, ev):
+			return
 		_end(S, f, b, by, "lodge")
 		return
 	f.vx *= keep
@@ -270,12 +280,40 @@ static func _slab(S: SimState, f, b, by, s: Dictionary, e: Dictionary) -> void:
 		_end(S, f, b, by, "capped")
 
 
+## A slab that holds is a bounce when he meets it at the data's speed (900) or more and between 40 and 70 degrees to it, at any tier; slower or shallower he lodges on it
+## (buildings.md section 7.3, ruled 2026-10-18). At most interiorMaxBounces bounces and interiorMaxContacts slab contacts a chain. The bounce keeps the ground's shares
+## turned to the slab (interiorBounceKeep of the normal speed, interiorBounceTangent of the along-slab speed); the event is the same contact with a keep above 0 and punch
+## false. He then heads for the next slab on the other side, which holds the same way. Returns true when he bounced.
+static func _bounce(S: SimState, f, b, s: Dictionary, e: Dictionary, vxn: float, sp: float, ev) -> bool:
+	var c: Dictionary = WorldBrunt.cfg()
+	if sp < float(c.interiorBounceSpeed) or int(s.bn) >= int(c.interiorMaxBounces) or int(s.k) >= int(c.interiorMaxContacts):
+		return false
+	var ax: float = absf(vxn)
+	if ax <= 0.0:
+		return false
+	var tn: float = absf(f.vy) / ax
+	if tn < float(c.interiorBounceTanMin) or tn > float(c.interiorBounceTanMax):
+		return false
+	var isFloor: bool = e.kind == "floor"
+	var R: int = int(s.R)
+	var nxt: int = WorldInterior._above(b, int(e.slab), R) if isFloor else WorldInterior._below(b, int(e.slab))
+	if nxt < 0 or (isFloor and nxt == int(e.slab)):
+		return false
+	s.bn += 1
+	ev.keep = float(c.interiorBounceKeep)
+	f.vx *= float(c.interiorBounceTangent)
+	f.vy = -f.vy * float(c.interiorBounceKeep)
+	s.plan.append({"slab": nxt, "kind": "ceiling" if isFloor else "floor", "act": "hold", "turn": false})
+	s.i += 1
+	return true
+
+
 ## The slab's floor goes through the brunt's own floors machinery (people, budget, token, the pancake rule), as a punch.
 static func _breakSlab(S: SimState, f, b, by, j: int, sp: float) -> void:
 	if j >= b.floors or not WorldBrunt.isStanding(b, j):
 		return
 	var c: Dictionary = WorldBrunt.cfg()
-	var dmg: float = sp * float(c.tierFactor[WorldBrunt.tierIx(by.tier, f.launchSpecial)]) * float(c.bruntMul)
+	var dmg: float = sp * float(c.tierFactor[WorldBrunt.tierIx(float(f.interior.tier), f.launchSpecial)]) * float(c.bruntMul)
 	var oc: Dictionary = {"floors": true, "dmg": dmg, "ratio": maxf(dmg / WorldBrunt.floorStr(b, j), 1.0), "outcome": "punch", "k": j, "hit": [j], "pass": true, "keep": float(c.interiorFloorKeep), "deaths": 0.0}
 	WorldBrunt.applyFloors(S, b, oc, by, f.chainEvt, f.x, f, f.y)
 
@@ -308,26 +346,26 @@ static func _face(S: SimState, f, b, by, s: Dictionary, farX: float, dir: float)
 	f.vx *= keep
 	f.vy *= keep
 	f.x = SimWrap.wrap(farX + dir * 2.0)
-	_end(S, f, b, by, "exit")
+	_end(S, f, b, by, "exit", true)
 
 
 # ===================================================================== the end
 
 ## The chain is over: lodge and capped hold him where he is (the lodge's own hold, the last of his speed one more hit on the building), exit and fall_out
 ## hand the flight back (the brake is back; the ground's events play). Always the end event last.
-static func _end(S: SimState, f, b, by, end: String) -> void:
+static func _end(S: SimState, f, b, by, end: String, viaFace: bool = false) -> void:
 	var s: Dictionary = f.interior
 	var trav: float = f.launchT
 	var spLeft: float = SimDetMath.hypot(f.vx / trav, f.vy)
 	var cm: Dictionary = WorldBrunt.cfg()
 	var held: bool = end == "lodge" or end == "capped"
 	if held:
-		var tfac: float = float(cm.tierFactor[WorldBrunt.tierIx(by.tier, f.launchSpecial)])
+		var tfac: float = float(cm.tierFactor[WorldBrunt.tierIx(float(s.tier), f.launchSpecial)])
 		var rest: float = spLeft * tfac * float(cm.bruntMul) * float(cm.lodgeDump)
 		if b.alive and rest > 0.0:
 			WorldStructures.damageBuilding(S, b, minf(rest, WorldStructures.coreCap() * b.maxhp), by, "burst", f.x, f.chainEvt, true)
 		SimDamage.hurt(S, f, spLeft * WorldBrunt.FIGHTER_DMG, by)
-		var holdS: float = WorldBrunt.lodgeSeconds(by.tier, f.launchSpecial)
+		var holdS: float = WorldBrunt.lodgeSeconds(float(s.tier), f.launchSpecial)
 		WorldBrunt._hold(S, f, holdS)
 		f.vx = 0.0
 		f.vy = 0.0
@@ -338,4 +376,25 @@ static func _end(S: SimState, f, b, by, end: String) -> void:
 	ev.contacts = int(s.k)
 	ev.t = float(s.t) * SimConst.DT
 	f.interior = null
+	if viaFace and end == "exit" and _link(S, f, b, by, spLeft):
+		return   # the flight goes on to the next tower: its chain is not over, so the token stays
 	WorldBrunt.endFlight(S, f)
+
+
+## He left by the far face with the data's speed (900) or more: the next tower's link plays (buildings.md section 7.3). The same rule as WorldBrunt.hit's: within the
+## launch's chain length, the next building in reach. Returns true when a link was made (the aim fields and the chain_link event are as hit() sets them).
+static func _link(S: SimState, f, b, by, spLeft: float) -> bool:
+	var c: Dictionary = WorldBrunt.cfg()
+	if spLeft < float(c.interiorLinkSpeed) or WorldBrunt.chainUsed(f) >= WorldBrunt.chainCap(WorldBrunt.tierOf(by, f), f.launchSpecial) - 0.0001:
+		return false
+	var nx: Dictionary = WorldBrunt.next(S, b, f.y, f.vx, f.vy, f.launchT)
+	if nx.b < 0:
+		return false
+	var nb = S.buildings[nx.b]
+	f.aimX0 = f.x
+	f.aimZ0 = WorldBrunt.faceZ(b)
+	f.aimB = nx.b
+	f.aimZ1 = WorldBrunt.faceZ(nb)
+	f.aimD = maxf(float(nx.r.get("aimD", absf(SimWrap.sdx(f.x, nx.r.x)))), 1.0)
+	SimFx.chainLink(S, f, by, b, nb, f.y, nx.r, f.flightHits + 1)
+	return true
