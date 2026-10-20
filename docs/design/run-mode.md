@@ -46,9 +46,10 @@ Before each stage the globe turns, and **three touch-downs are offered**, each a
   - No offer touches down in a fallen place. Ruins are crossed, not fought in.
   - **No school, hospital or place of worship is ever a staged target** (Legal c08). No offer, beat or card names one, World's landmarks leave them out as kinds, and the AI's planner never seeks one.
   - The minimum counts only standing places: at least 2 cities that haven't fallen, 3 towns and 3 biomes. In late runs it may relax to World's fallback, 1 standing city and 4 towns.
-- **Arena sizes by kind** (`rulings-2026-10-19.md` §3): a Proving ground is Local (about 19,200 units), a Rampage and a Crossing are Region (about 51,200), and the boss is Planet (153,600).
+- **Arena sizes** (`rulings-2026-10-19b.md` §3): the first fight is Close (38,400 units) round the player's home, a Proving ground is Close, the middle fights are Half (76,800), and the boss is Whole (153,600).
 - **A fighter's run opens at his own home area** (`rulings-2026-10-19.md` §4): its first fight touches down there.
-- **The boss's place is fixed by the rule, not offered:** the most populous city still standing. The boss goes where there is most left to lose.
+- **The boss's place is fixed by the rule, not offered:** a Whole ring through the boss's home and the most populous city still standing (`rulings-2026-10-19b.md` §2c). The boss fights at home, with the most left to lose.
+- **Each opponent's fights are drawn through his ground,** his home and thematic places, seeded per run (`rulings-2026-10-19b.md` §2).
 - **The landing dial** (Orb, homework 22: "truly random, with a dial"). World's touch-down is drawn anywhere on the planet at one end of the dial, and always within sight of a place at the other. The run's offers sit at the place end, since a fight needs cities. In versus the dial is a match setup option. **Story mode** (later; it is the co-operative mode, which is held) picks its set pieces dynamically, nearly anywhere.
 
 ### 1.3 What persists, and what resets
