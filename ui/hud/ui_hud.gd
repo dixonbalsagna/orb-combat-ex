@@ -167,6 +167,7 @@ const LEGEND_REST := 2.0
 const LEGEND_FADE := 1.0
 var _legend_g: Array = [{"a": 0.0, "on": false, "t": -1.0e9}, {"a": 0.0, "on": false, "t": -1.0e9}]   # the legend's own gate (asked for only on a keyboard or a pad, upright)
 var _you_g: Array = [{"a": 0.0, "on": false, "t": -1.0e9}, {"a": 0.0, "on": false, "t": -1.0e9}]      # and the YOU pill's and the touch captions' (asked for on every screen)
+var _match_no: int = 1                 # which match of the session this is (the full legend shows only at the start of the first, under minimal_hud)
 var _hint_t0: Array = [0.0, 0.0]       # when each fighter became a human (the legend shows for 12 s from then)
 var _prev_ai: Array = [true, true]
 var _prev_clock := 0.0
@@ -744,7 +745,8 @@ func _update_layers() -> void:
 	var touch_on: bool = bool(opts["touch_ui"])
 	# Who is the player (YOU), and the control legend: it shows for 12 s from the match start, or from the moment a fighter became human.
 	if hub.t_now < _prev_clock:
-		_hint_t0 = [0.0, 0.0]
+		_match_no += 1
+		_hint_t0 = [-1.0e6, -1.0e6] if (UiData.feature("minimal_hud") and _match_no > 1) else [0.0, 0.0]
 		for g in _legend_g + _you_g:
 			g["on"] = false
 			g["t"] = -1.0e9
@@ -757,7 +759,7 @@ func _update_layers() -> void:
 		if m.slot < 2:
 			m.you_label = UiHints.you_label(hub.models, m)
 			if _prev_ai[m.slot] and not m.ai:
-				_hint_t0[m.slot] = hub.t_now
+				_hint_t0[m.slot] = -1.0e6 if (UiData.feature("minimal_hud") and _match_no > 1) else hub.t_now
 			if _join_ready and m.slot == 1 and _prev_ai[1] != m.ai and hub.models.size() >= 2:
 				# Player two joined, or was handed back to the AI: a brief note, and (on a join) both players' legends and badges show again.
 				_join_note = {"kind": "left" if m.ai else "joined", "age": 0.0}
@@ -775,7 +777,7 @@ func _update_layers() -> void:
 				var ea: Dictionary = UiHints.edge_arrow(an, layout.safe, layout.s)
 				if not (ea.is_empty() and UiData.feature("minimal_hud")):   # the label over the head is cut under minimal_hud; the arrow at the screen's edge (the fighter is off screen) is not
 					you_sig.append([m.slot, m.you_label, int(ap.x * 0.5), int(ap.y * 0.5), int(float(an.get("h", 0.0)) * 0.5), int(float(yk["a"]) * 10.0), bool(an.get("visible", true)), bool(yk["compact"]), m.aura.to_html(false), int((ea.get("pos", Vector2.ZERO) as Vector2).x * 0.5), int((ea.get("pos", Vector2.ZERO) as Vector2).y * 0.5)])
-			_l_hints[m.slot].update_sig(UiHints.sig(m, ha, UiHints.preset_id(m, _o()), UiHints.energy_style(m, _o()), bool(opts["reduced_motion"])) if (ha > 0.01 and layout.hints[m.slot].size.y > 0.0) else null)
+			_l_hints[m.slot].update_sig(UiHints.sig(m, ha, UiHints.preset_id(m, _o()), UiHints.energy_style(m, _o()), bool(opts["reduced_motion"]), _legend_compact(m)) if (ha > 0.01 and layout.hints[m.slot].size.y > 0.0) else null)
 	_l_you.update_sig(you_sig if not you_sig.is_empty() else null)
 	_join_step(hub.t_now - _join_prev_t, _dt)
 	_join_prev_t = hub.t_now
@@ -793,6 +795,7 @@ func _update_layers() -> void:
 		_l_pause.update_sig([layout.pause_btn, layout.touch_ui] if layout.pause_btn.size.y > 0.0 else null)
 	_update_form(reduced)
 	_update_launch()
+	_update_teach()
 	_l_fbpill.update_sig([layout.feedback_btn, layout.touch_ui] if _pill_visible() else null)
 	_l_fb.update_sig(UiFeedback.sig(layout.vp, _fb_state, _fb_tags, _fb_status_ok, dp, layout.s, bool(opts["touch_ui"]), "%s|%s" % [_fb_opened, bool(_fb_issue.get("fallback", false))]) if _fb_open else null)
 	_l_tele.update_sig(UiReads.telegraph_sig(hub, bool(opts["show_prompts"]), reduced))
@@ -3446,11 +3449,20 @@ func _paint_hints(ci: CanvasItem, slot: int) -> void:
 		return
 	var m: UiFighterModel = hub.models[slot]
 	var hr: Rect2 = layout.hints[slot]
+	var lo: Dictionary = _o()
+	lo["legend_compact"] = _legend_compact(m)
 	if m.form_shown and layout.form[slot].size.y > 0.0:
 		# The legend starts under the form-ready chip (and has already dropped its own Transform row).
 		var top: float = layout.form[slot].end.y + 12.0 * layout.s
 		hr = Rect2(hr.position.x, top, hr.size.x, maxf(hr.end.y - top, 0.0))
-	UiHints.draw(ci, m, hr, layout.s, _o(), _hint_alpha(m))
+	UiHints.draw(ci, m, hr, layout.s, lo, _hint_alpha(m))
+
+
+## Whether this fighter's legend is the compact one (only the rows that matter now): minimal_hud, after the first intro, not paused, Control hints not "always".
+func _legend_compact(m: UiFighterModel) -> bool:
+	if not UiData.feature("minimal_hud") or str(opts["control_hints"]) == "always" or hub.sim_paused:
+		return false
+	return hub.t_now - float(_hint_t0[clampi(m.slot, 0, 1)]) >= float(UiHints.data().get("intro_seconds", 12))
 
 
 ## The form-ready chips (UiFormPrompt): shown while a form is ready and the fighter is free, pulsed by the layer's scale and alpha (no redraw), with a
@@ -3468,6 +3480,30 @@ func _update_launch() -> void:
 			hub.show_launch_hint(UiData.t("prompt.launch_hint"))
 			UiPrefs.set_bool("taught_launch", true)
 		_gauge_prev[i] = full_now
+
+
+## The one-line hints that are not the sim's: "Press any key to play" while nobody is playing (minimal_hud), and the two that teach (once each, with Control hints on; Orb's picks, homework 6):
+## the first charge held to the click, and the first miss by the rival (the lit button is the medium's, so only where the three strengths light it).
+func _update_teach() -> void:
+	var overlay: bool = _notice_open or _howto_open or _set_open or _pm_open or _fb_open or _turn_open
+	if UiData.feature("minimal_hud"):
+		var demo: bool = _humans() == 0 and hub.models.size() >= 2 and not overlay and not hub.sim_paused and not hub.intro_active
+		var mine: bool = not hub.hint.is_empty() and str(hub.hint.get("id", "")) == "demo"
+		if demo and hub.hint.is_empty():
+			hub.hint = {"id": "demo", "key": "demo", "text": UiData.t("prompt.demo_hint"), "kind": "hint", "age": 0.0, "plain": true}
+		elif mine and not demo:
+			hub.hint = {}
+	if str(opts["control_hints"]) == "off" or not hub.hint.is_empty() or hub.sim_paused or overlay:
+		return
+	for m in hub.models:
+		if not m.ai and m.charge_on and UiHints.charge_frac(m, false) >= 0.999 and not UiPrefs.get_bool("taught_charge"):
+			hub.hint = {"id": "full_charge", "key": "full_charge", "text": UiData.t("prompt.hint_full"), "kind": "hint", "age": 0.0, "plain": true}
+			UiPrefs.set_bool("taught_charge", true)
+			return
+		if m.ai and m.open_left > 0.0 and _humans() >= 1 and UiStance.three() and not UiPrefs.get_bool("taught_miss"):
+			hub.hint = {"id": "first_miss", "key": "first_miss", "text": UiData.t("prompt.hint_miss"), "kind": "hint", "age": 0.0, "plain": true}
+			UiPrefs.set_bool("taught_miss", true)
+			return
 
 
 func _update_form(reduced: bool) -> void:

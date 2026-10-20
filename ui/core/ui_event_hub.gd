@@ -802,7 +802,7 @@ func set_clash_mid(v: float) -> void:
 
 
 func show_launch_hint(text: String) -> void:
-	hint = {"id": "launch", "key": "launch", "text": text, "kind": "hint", "age": 0.0}
+	hint = {"id": "launch", "key": "launch", "text": text, "kind": "hint", "age": 0.0, "plain": true}
 
 
 ## The brawl's miss cue: the swinger is the actor, the rival the target; `n` the ticks he is open. OPEN on the swinger's plate, and the target's medium glyph lit for as long.

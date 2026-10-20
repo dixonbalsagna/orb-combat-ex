@@ -78,6 +78,12 @@ static func entry(lay: UiLayout, sp: Dictionary, inc: Dictionary, anchor: Dictio
 		var pos: Vector2 = _on_edge(zone, p, dir, sz, s)
 		if pos.x < -1e8:
 			continue
+		if UiData.feature("minimal_hud"):
+			# minimal_hud: nothing over the fighters, so the chip rides the bottom edge of the pane (its side still says where he comes from)
+			var zb: float = zone[0].y
+			for q in zone:
+				zb = maxf(zb, q.y)
+			pos.y = minf(UiSplit._edge_y(lay), zb - sz.y * 0.5)
 		pos = _clear_of(pos, dir, sz, p, h, zone)
 		if pos.x < -1e8:
 			continue

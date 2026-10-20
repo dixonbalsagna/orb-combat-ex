@@ -23,6 +23,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	_terms()
+	UiData.set_feature("minimal_hud", false)   # minimal_hud is on as shipped (features.json); the older rules look at the full HUD, and _minimal_hud_rules runs the shipped default and the rest explicitly
 	_layouts()
 	_bark_timing()
 	_hub_rules()
@@ -66,6 +67,7 @@ func _run() -> void:
 	await _tug_rules()
 	await _cut_rules()
 	await _minimal_hud_rules()
+	await _minimal_teach_rules()
 	await _brawl_marks_rules()
 	_rate_rules()
 	await _block_toggle_rules()
@@ -5894,7 +5896,8 @@ func _plate_words(hud: UiHud) -> String:
 
 func _minimal_hud_rules() -> void:
 	UiData.set_feature("minimal_hud", null)
-	_ok(not UiData.feature("minimal_hud") and not bool(UiData.options()["edge_captions"]["default"]), "minimal hud: the switch is off and the cue captions are off as shipped")
+	_ok(UiData.feature("minimal_hud") and not bool(UiData.options()["edge_captions"]["default"]), "minimal hud: the switch is on as shipped and the cue captions are off")
+	UiData.set_feature("minimal_hud", false)
 	root.size = Vector2i(1280, 720)
 	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
 	hud.size = Vector2(1280, 720)
@@ -5934,7 +5937,7 @@ func _minimal_hud_rules() -> void:
 	var facts := " ".join(PackedStringArray(pm["facts_lines"]))
 	_ok(not (pm["facts_lines"] as PackedStringArray).is_empty() and facts.to_lower().contains("civilians"), "minimal hud: the pause screen carries the toll (%s)" % facts.substr(0, 60))
 	hud._pm_close("test")
-	UiData.set_feature("minimal_hud", null)
+	UiData.set_feature("minimal_hud", false)
 	hud.show_pause_menu(false)
 	_ok((hud.pause_menu_plan()["facts_lines"] as PackedStringArray).is_empty(), "minimal hud: with the switch off the plain pause screen has no toll, as before")
 	hud._pm_close("test")
@@ -5961,7 +5964,7 @@ func _minimal_hud_rules() -> void:
 		low = low and py > 380.0 + 90.0 and Rect2(lay.safe).has_point(e["pos"])
 	_ok(ps.size() == 2 and low, "minimal hud: both split-screen distance chips ride the bottom edge, well below the fighters (%s)" % str(ps.map(func(e): return e["pos"])))
 	# The rival pointer, in one view, only while he is off the screen.
-	UiData.set_feature("minimal_hud", null)
+	UiData.set_feature("minimal_hud", false)
 	var one := {"pointer": "always", "dist_bh": 3.0, "sigma": 1.0}
 	var near_anchor := {"pos": Vector2(700.0, 380.0), "h": 90.0, "visible": false}   # the flag reads false beside him
 	var far_anchor := {"pos": Vector2(3000.0, 380.0), "h": 90.0, "visible": false}
@@ -5971,7 +5974,7 @@ func _minimal_hud_rules() -> void:
 	var p_on_far: int = UiSplit.pointers(lay, one, [an0, far_anchor], lay.s).size()
 	_ok(p_off >= 1 and p_on_near == 0 and p_on_far >= 1, "minimal hud: the rival pointer shows only while he is off the screen (a flag that reads false beside him no longer shows it: %d, %d, %d)" % [p_off, p_on_near, p_on_far])
 	# The incoming chip is the small one: the arrow and the countdown, no words.
-	UiData.set_feature("minimal_hud", null)
+	UiData.set_feature("minimal_hud", false)
 	var inc := {"active": true, "shown": false, "eta": 2.0, "side": 1, "aimed": true, "screen_dir": Vector2(1.0, 0.0), "dist_bh": 10.0}
 	var e_full: Dictionary = UiIncoming.entry(lay, sp, inc, an0, 0, lay.s, "10", true)
 	UiData.set_feature("minimal_hud", true)
@@ -6004,10 +6007,117 @@ func _minimal_hud_rules() -> void:
 	for r in UiSettings.rows():
 		keys.append(str(r["key"]))
 	_ok(hud.caption_text() == "" and keys.has("edge_captions"), "minimal hud: the caption goes when the launch closes, and Settings lists Cue captions")
-	UiData.set_feature("minimal_hud", null)
+	UiData.set_feature("minimal_hud", false)
 	hud.set_option("edge_captions", false)
 	hud.queue_free()
 	await process_frame
+
+
+## The legend, the demo's hint and Orb's two hint picks under minimal_hud (docs/ui/minimal-hud.md section 6).
+func _minimal_teach_rules() -> void:
+	UiPrefs.path = "user://ui_prefs_test_teach.json"
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	UiData.set_feature("minimal_hud", true)
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.hub.patch(0, {"ai": true})
+	hud.hub.patch(1, {"ai": true})
+	for i in range(3):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(not hud.hub.hint.is_empty() and str(hud.hub.hint["text"]) == "Press any key to play" and bool(hud.hub.hint.get("plain", false)) and str(hud.hub.hint["kind"]) == "hint", "minimal hud: while nobody plays the one-line hint says Press any key to play (plain: the words alone, no warning icon, no tutorial dots)")
+	hud.hub.patch(0, {"ai": false})
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(hud.hub.hint.is_empty(), "minimal hud: and it goes the moment a human takes a fighter")
+	UiData.set_feature("minimal_hud", false)
+	hud.hub.patch(0, {"ai": true})
+	for i in range(3):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	_ok(hud.hub.hint.is_empty(), "minimal hud: with the switch off there is no demo hint, as before")
+	UiData.set_feature("minimal_hud", true)
+	hud.hub.patch(0, {"ai": false})
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	# Orb's picks: the first charge held to the click, and the first miss by the rival.
+	var m0: UiFighterModel = hud.hub.model(0)
+	var m1: UiFighterModel = hud.hub.model(1)
+	m0.charge_on = true
+	m0.charge_cell = "y"
+	m0.charge_dur = 0.5
+	m0.charge_t = 0.6
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(not hud.hub.hint.is_empty() and str(hud.hub.hint["text"]) == "Full! Let go to knock him back." and UiPrefs.get_bool("taught_charge"), "minimal hud: a charge held to the click says Full! Let go to knock him back.")
+	hud.hub.hint = {}
+	m0.charge_t = 0.7
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(hud.hub.hint.is_empty(), "minimal hud: and only once")
+	m0.charge_on = false
+	UiData.set_feature("three_strengths", true)
+	m1.open_left = 0.5
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(not hud.hub.hint.is_empty() and str(hud.hub.hint["text"]) == "He's open. Hit the lit button." and UiPrefs.get_bool("taught_miss"), "minimal hud: the first miss by the rival says He's open. Hit the lit button.")
+	hud.hub.hint = {}
+	m1.open_left = 0.0
+	hud.advance(1.0 / 60.0)
+	m1.open_left = 0.5
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(hud.hub.hint.is_empty(), "minimal hud: and only once")
+	var low := (UiData.t("prompt.demo_hint") + " " + UiData.t("prompt.hint_full") + " " + UiData.t("prompt.hint_miss")).to_lower()
+	_ok(not low.contains("safe") and not low.contains("tested") and not low.contains("compliant"), "minimal hud: the three lines never say safe, tested or compliant")
+	UiData.set_feature("three_strengths", null)
+	# The legend: the compact rows after the intro, the whole list at the start, on pause, and with Control hints always; the full list only in the first match.
+	var o: Dictionary = hud._o()
+	o["legend_compact"] = false
+	var full_rows: int = UiHints.plan(m0, Rect2(0, 0, 300, 900), 1.0, o)["rows"].size()
+	o["legend_compact"] = true
+	m0.launcher_open = false
+	var none_rows: int = UiHints.plan(m0, Rect2(0, 0, 300, 900), 1.0, o)["rows"].size()
+	m0.launcher_open = true
+	var lit_rows: Array = UiHints.plan(m0, Rect2(0, 0, 300, 900), 1.0, o)["rows"]
+	_ok(full_rows >= 6 and none_rows <= 1 and lit_rows.size() >= 1 and lit_rows.size() <= 2, "minimal hud: the compact legend is the lit B alone (%d rows, %d with nothing lit, %d lit)" % [full_rows, none_rows, lit_rows.size()])
+	m0.launcher_open = false
+	hud.hub.t_now = 30.0
+	hud.advance(1.0 / 60.0)
+	_ok(hud._legend_compact(m0), "minimal hud: after the first 12 s the legend is the compact one")
+	hud.hub.sim_paused = true
+	_ok(not hud._legend_compact(m0), "minimal hud: on pause it is the whole list")
+	hud.hub.sim_paused = false
+	hud.set_option("control_hints", "always")
+	_ok(not hud._legend_compact(m0), "minimal hud: with Control hints always it is the whole list")
+	hud.set_option("control_hints", "auto")
+	hud.hub.t_now = 0.5   # a new match
+	hud.advance(1.0 / 60.0)
+	_ok(hud._legend_compact(m0), "minimal hud: in the second match the legend does not start whole again")
+	UiData.set_feature("minimal_hud", false)
+	_ok(not hud._legend_compact(m0), "minimal hud: with the switch off the legend is as it was")
+	# The incoming chip rides the pane's bottom edge.
+	var lay := UiLayout.new()
+	lay.dp = 1.0
+	lay.compute(Vector2(1280, 720), false)
+	var an0 := {"pos": Vector2(300.0, 380.0), "h": 90.0, "visible": true}
+	var sp := {"sep": 1.0, "c": Vector2(640.0, 360.0), "n": Vector2(1.0, 0.0)}
+	var inc := {"active": true, "shown": false, "eta": 2.0, "side": 1, "aimed": true, "screen_dir": Vector2(1.0, 0.0), "dist_bh": 10.0}
+	var e_mid: Dictionary = UiIncoming.entry(lay, sp, inc, an0, 0, lay.s, "10")
+	UiData.set_feature("minimal_hud", true)
+	var e_low: Dictionary = UiIncoming.entry(lay, sp, inc, an0, 0, lay.s, "10")
+	_ok(not e_mid.is_empty() and not e_low.is_empty() and (e_low["pos"] as Vector2).y > (e_mid["pos"] as Vector2).y and (e_low["pos"] as Vector2).y > 380.0 + 90.0, "minimal hud: in a split the incoming chip rides the bottom edge, not level with the fighter (%s then %s)" % [str(e_mid.get("pos")), str(e_low.get("pos"))])
+	UiData.set_feature("minimal_hud", false)
+	hud.queue_free()
+	await process_frame
+	if FileAccess.file_exists(UiPrefs.path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
+	UiPrefs.path = "user://ui_prefs.json"
 
 
 ## The two grey circles cut on 2026-10-18 (Orb: "the weird gray circle between the two fighters"): the planet ring map and the beam struggle's steady rings, each behind a switch that is off.

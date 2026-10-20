@@ -130,18 +130,19 @@ static func draw_hint(ci: CanvasItem, hub: UiEventHub, lay: UiLayout, s: float) 
 		return
 	var kind: String = str(hub.hint["kind"])
 	var text: String = str(hub.hint["text"])
-	var ids: Array = UiData.reads().get("beat_ids", [])
+	var plain: bool = bool(hub.hint.get("plain", false))   # a one-line hint that is not a tutorial beat: the words alone, no icon and no row of beat dots
+	var ids: Array = [] if plain else UiData.reads().get("beat_ids", [])
 	var pad: float = maxf(10.0 * s, 6.0)
 	var dot_r: float = maxf(3.0, 3.6 * s)
 	var dots_h: float = dot_r * 2.0 + pad * 0.5 if not ids.is_empty() else 0.0
 	var fs: int = UiText.px(24.0, s)
-	var isz: float = maxf(float(fs) * 1.25, 22.0)
+	var isz: float = 0.0 if plain else maxf(float(fs) * 1.25, 22.0)
 	var lines: PackedStringArray = UiText.wrap(text, fs, slot.size.x - isz - pad * 3.0)
 	# Two lines at most; shrink the type toward its floor until the line and the dots fit the slot.
 	while (lines.size() > 2 or float(lines.size()) * UiText.height(fs) * 1.1 + dots_h + pad > slot.size.y - 2.0) and fs > int(UiLook.text_floor):
 		fs -= 1
 		lines = UiText.wrap(text, fs, slot.size.x - isz - pad * 3.0)
-		isz = maxf(float(fs) * 1.25, 22.0)
+		isz = 0.0 if plain else maxf(float(fs) * 1.25, 22.0)
 	var lh: float = UiText.height(fs) * 1.1
 	var tw: float = 0.0
 	for ln in lines:
@@ -155,7 +156,8 @@ static func draw_hint(ci: CanvasItem, hub: UiEventHub, lay: UiLayout, s: float) 
 	UiText.no_outline = true
 	UiIcons.rrect(ci, r, minf(h * 0.3, 14.0 * s), Color(UiLook.col(UiLook.SCRIM), 0.86 * a), border, maxf(1.5, 2.0 * s))
 	var ic := Vector2(r.position.x + pad + isz * 0.5, r.position.y + pad * 0.6 + float(lh) * 0.5)
-	_hint_icon(ci, kind, ic, isz, a)
+	if not plain:
+		_hint_icon(ci, kind, ic, isz, a)
 	var ty: float = r.position.y + pad * 0.6 + UiText.ascent(fs) + (lh - UiText.height(fs)) * 0.5
 	for ln in lines:
 		UiText.draw(ci, ln, Vector2(r.position.x + pad + isz + pad * 0.8, ty), fs, ink, -1)

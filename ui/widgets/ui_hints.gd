@@ -182,6 +182,21 @@ static func stance_layout(scheme: String, slot: int) -> bool:
 	return UiGlyphs.bound(scheme, "mode", slot) and UiGlyphs.bound(scheme, "power", slot)
 
 
+## Under minimal_hud the legend is the full list only at the start of the first match, on pause and with Control hints always; otherwise only the rows that matter now: the held stance,
+## the lit B, a charge running, a press that did nothing, the medium that stops him, the dots of a flurry.
+static func compact_rows(m: UiFighterModel, all_rows: Array) -> Array:
+	var out: Array = []
+	for r in all_rows:
+		var cell: String = str(r.get("cell", ""))
+		var keep: bool = bool(r.get("held", false))
+		if cell != "":
+			keep = keep or (lit_b(m) and cell == "b") or (m.charge_on and cell == m.charge_cell) or (m.press_ack_kind != "" and m.press_ack_t < ACK_POP and cell == m.press_ack_cell) \
+				or (UiStance.three() and m.punish_left > 0.0 and cell == "y") or (UiStance.three() and m.flurry_dots > 0 and cell == "x")
+		if keep:
+			out.append(r)
+	return out
+
+
 static func rows(m: UiFighterModel, scheme: String, energy: String = "hold") -> Array:
 	var schemes: Dictionary = data().get("schemes", {})
 	var sc: Dictionary = schemes.get(scheme, schemes.get("today", {}))
@@ -290,6 +305,8 @@ static func plan(m: UiFighterModel, rect: Rect2, s: float, o: Dictionary) -> Dic
 	var pad: float = maxf(8.0 * s, 5.0)
 	var cap: int = int(floor((rect.size.y - pad * 2.0) / row_h))
 	var all: Array = rows(m, preset, energy_style(m, o))
+	if bool(o.get("legend_compact", false)):
+		all = compact_rows(m, all)
 	var shown: Array = all.slice(0, maxi(cap, 0))
 	if shown.is_empty():
 		return out
@@ -332,11 +349,11 @@ static func lit_b(m: UiFighterModel) -> bool:
 	return m.launcher_open or (UiStance.launch_marks() and m.gauge_full)
 
 
-static func sig(m: UiFighterModel, alpha: float, preset: String, energy: String = "hold", reduced: bool = false) -> Array:
+static func sig(m: UiFighterModel, alpha: float, preset: String, energy: String = "hold", reduced: bool = false, compact: bool = false) -> Array:
 	var ack_step: int = 0 if m.press_ack_kind == "" or m.press_ack_t >= ACK_SECONDS else (1 if reduced else 1 + int(m.press_ack_t / ACK_SECONDS * 6.0))
 	var cf: float = charge_frac(m, reduced)
 	return [m.device, m.slot, int(alpha * 10.0), preset, m.avail["transform"], m.left_side, m.form_shown, energy, m.stance_kind, m.press_ack_kind, m.press_ack_cell, ack_step,
-		int(cf * 8.0) if cf >= 0.0 else -1, m.charge_cell if m.charge_on else "", lit_b(m), UiStance.three(), m.punish_left > 0.0, m.flurry_dots, UiStance.launch_marks() and m.gauge_full]
+		int(cf * 8.0) if cf >= 0.0 else -1, m.charge_cell if m.charge_on else "", lit_b(m), UiStance.three(), m.punish_left > 0.0, m.flurry_dots, UiStance.launch_marks() and m.gauge_full, compact]
 
 
 static func draw(ci: CanvasItem, m: UiFighterModel, rect: Rect2, s: float, o: Dictionary, alpha: float) -> void:
