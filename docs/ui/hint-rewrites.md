@@ -26,3 +26,7 @@ Orb ticked **on by default**. The option is mine: **"Rumble on a perfect"**, acc
 Both lines are shown once per profile (`UiPrefs taught`), only with Control hints on, data in `terms.json` prompt; `hud_words_check` and `hud_check` get a case for each (fits the hint line at the small sizes, never says safe, tested or compliant).
 
 **Question for Encounter (through the EP):** is a Medium press the only answer to a miss, or may a light also stop him? Hint 10-B is true either way; 10-A and 10-C are true either way too. Only a line that names "Medium" needs the answer.
+
+## Orb's picks, 2026-10-19 (homework 6)
+
+Hint 9 (the full charge): **A, "Full! Let go to knock him back."** Hint 10 (the rival's miss): **B, "He's open. Hit the lit button."** Built in `docs/ui/pending/minimal-hud-on/` (`prompt.hint_full`, `prompt.hint_miss`).
