@@ -244,11 +244,11 @@ func on_events(S: SimState, events: Array, debris: VfxDebris) -> void:
 				w2.fade = 6.0
 				var gy: float = WorldTerrain.groundY(S, f.x)
 				_add("land", f.x, gy + 12.0, f.z, 1.0, 0.0, 130.0 if was == "wade" else 100.0, p("beamplay", "arrive_life"), lane, other, slot)
-				if debris != null:
+				if debris != null and f.y - gy < 1.2 * VfxLook.BH and S.game.clash == null:       # landing dust is for a landing on the ground: none from the air or in a struggle (Orb: the grey blobs read as blur)
 					var rd: SimRng = debris._rd
-					for k in range(7 if was == "wade" else 4):
+					for k in range(3 if was == "wade" else 2):
 						var side: float = 1.0 if k % 2 == 0 else -1.0
-						debris.dust_puff(VfxPalette.biome_key(f.x), f.x + side * rd.range_(10.0, 60.0), gy + 8.0, f.z + rd.range_(0.0, 16.0), side * rd.range_(100.0, 320.0), rd.range_(10.0, 60.0), 30.0, 66.0, rd.range_(0.7, 1.2), k % 3)
+						debris.dust_puff(VfxPalette.biome_key(f.x), f.x + side * rd.range_(10.0, 60.0), gy + 8.0, f.z + rd.range_(0.0, 16.0), side * rd.range_(100.0, 320.0), rd.range_(10.0, 60.0), 18.0, 40.0, rd.range_(0.5, 0.8), k % 3)
 			"beam_late":
 				# The beam is cut where it had got to, and his answer is seen to run out to it.
 				var h = heads[o]

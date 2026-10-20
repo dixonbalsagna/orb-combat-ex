@@ -5329,7 +5329,18 @@ func _small_blasts() -> void:
 		return hp
 	var hbolt: VfxHub = land.call("hit", "bolt")
 	var kb: Dictionary = kinds_of.call(hbolt.debris)
-	_check(int(kb.get(VfxDebris.FLAME, 0)) >= 1 and hbolt.debris.jobs.filter(func(j): return j.kind == "xwave").size() == 2 and int(kb.get(VfxDebris.PUFF, 0)) >= 2, "a point-blank bolt that hits: flames now (%d), two later waves and smoke (%d puffs)" % [int(kb.get(VfxDebris.FLAME, 0)), int(kb.get(VfxDebris.PUFF, 0))])
+	_check(int(kb.get(VfxDebris.FLAME, 0)) >= 1 and hbolt.debris.jobs.filter(func(j): return j.kind == "xwave").size() == 2 and int(kb.get(VfxDebris.PUFF, 0)) == 1, "a point-blank bolt that hits on the ground: flames now (%d), two later waves and one small puff of smoke (%d puffs)" % [int(kb.get(VfxDebris.FLAME, 0)), int(kb.get(VfxDebris.PUFF, 0))])
+	# Smoke at a landing is for the ground it lands on (Orb, 2026-10-18: the grey blobs read as blur): none in the air, none in a beam struggle.
+	_check(VfxExplode.fighter_smoke(S, plains, g + 20.0) and not VfxExplode.fighter_smoke(S, plains, g + 4.0 * VfxLook.BH), "a burst on a body smokes near the ground and not in the air")
+	S.game.clash = {}
+	_check(not VfxExplode.fighter_smoke(S, plains, g + 20.0), "and not in a beam struggle")
+	S.game.clash = null
+	S.fighters[0].y = g + 4.0 * VfxLook.BH
+	S.fighters[1].y = g + 4.0 * VfxLook.BH
+	var hair: VfxHub = land.call("hit", "bolt")
+	_check(not kinds_of.call(hair.debris).has(VfxDebris.PUFF), "a point-blank bolt that hits in the air puts up no smoke (flames and sparks only)")
+	S.fighters[0].y = g
+	S.fighters[1].y = g
 	var hguard: VfxHub = land.call("guard", "bolt")
 	_check(not kinds_of.call(hguard.debris).has(VfxDebris.FLAME), "a point-blank bolt that meets a guard is sparks and smoke only")
 	# A small blast is no longer a blink: its scale never falls under the floor.

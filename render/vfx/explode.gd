@@ -92,6 +92,16 @@ static func _q(d: VfxDebris) -> float:
 	return VfxLook.QUALITY_SHARDS[clampi(d.quality, 0, 2)] * (0.5 if d.reduced else 1.0)
 
 
+## Whether a burst on a body may put up smoke (Orb, 2026-10-18: the grey blobs beside the fighters read as blur): not while he is in the air, not in a beam struggle, and then one small puff.
+## Smoke at a landing is for the ground it lands on; a clean contact in the air is flame, sparks and light.
+static func fighter_smoke(S, x: float, y: float) -> bool:
+	if S == null:
+		return true
+	if S.game.clash != null:
+		return false
+	return y - WorldTerrain.groundY(S, x) < 1.5 * VfxLook.BH
+
+
 ## radius: the blast radius (radius_for). surface: "ground", "fighter" (a body), "air" (a burst in the air: no ground), "wall" (against a
 ## building's face: concrete chips and dust, no ring) or "water". mode: "burst" (a flame burst, the default), "spark" (sparks and smoke only: a guard or a deflect).
 ## Returns how many bits it asked the pool for (the tests and the budget).
@@ -102,6 +112,8 @@ static func at(S: SimState, d: VfxDebris, x: float, y: float, z: float, radius: 
 	var smoke_life: float = smoke_s(radius)
 	var biome: String = VfxPalette.biome_key(x)
 	var asked: int = 0
+	var on_body: bool = surface == "fighter"
+	var smoke_ok: bool = (not on_body) or fighter_smoke(S, x, y)
 	var flame_cap: int = int(round(p("flame_cap") * (0.5 + 0.5 * q)))
 	# Flames: a burst going up and out, the larger ones taller. In three waves (the first now, the others a few ticks on, as jobs) and each flame grows in over a few ticks (shard_view): so the
 	# burst is never one frame's flash (Legal fx03: an explosion's fire grows over several ticks).
@@ -117,7 +129,7 @@ static func at(S: SimState, d: VfxDebris, x: float, y: float, z: float, radius: 
 			var j := VfxDebris.Job.new()
 			j.at = d.now + delay
 			j.kind = "xwave"
-			j.a = {"x": x, "y": y, "z": z, "s": s, "n": n, "q": q, "cap": flame_cap, "spread": spread, "smoke": int(round(p("smoke_late"))) if delay > p("wave1_s") else 0, "sm": smoke_life}
+			j.a = {"x": x, "y": y, "z": z, "s": s, "n": n, "q": q, "cap": flame_cap, "spread": spread, "smoke": int(round(p("smoke_late"))) if (delay > p("wave1_s") and not on_body) else 0, "sm": smoke_life}
 			d.jobs.append(j)
 		wave_job.call(p("wave1_s"), n1, 1.25)
 		wave_job.call(p("wave2_s"), n2, 1.5)
@@ -145,11 +157,11 @@ static func at(S: SimState, d: VfxDebris, x: float, y: float, z: float, radius: 
 			d._add(b)
 			asked += 1
 	# Smoke: dark puffs rising off the burst.
-	var nsm: int = clampi(int(round(p("smoke") * s * p("smoke_k"))), 2, 9)
+	var nsm: int = (1 if smoke_ok else 0) if on_body else clampi(int(round(p("smoke") * s * p("smoke_k"))), 2, 9)
 	for i in range(nsm):
-		var sz2: float = rd.range_(44.0, 78.0) * (0.55 + 0.6 * s) * 1.15
+		var sz2: float = rd.range_(44.0, 78.0) * (0.55 + 0.6 * s) * 1.15 * (0.5 if on_body else 1.0)
 		var life3: float = rd.range_(0.6, 1.0) * smoke_life
-		var dx: float = rd.range_(-26.0, 26.0)
+		var dx: float = (signf(rd.range_(-1.0, 1.0)) * rd.range_(44.0, 70.0)) if on_body else rd.range_(-26.0, 26.0)       # on a body the puff stands clear of him, never over his sprite
 		var keep3: bool = rd.next() < q
 		if keep3 and not (d.reduced and i > 1):
 			d.smoke(x + dx, y + 30.0 + rd.range_(0.0, 30.0), z - 2.0, sz2, life3)
