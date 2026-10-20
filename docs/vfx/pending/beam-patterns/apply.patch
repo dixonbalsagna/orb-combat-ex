@@ -1,9 +1,174 @@
+--- a/data/vfx/energy.json
++++ b/data/vfx/energy.json
+@@ -13,7 +13,11 @@
+    "seed": 0,
+    "wob_k": 1.0,
+    "fil": 0.6,
+-   "soft_k": 1.0
++   "soft_k": 1.0,
++   "pat": 0.0,
++   "pat_k": 0.0,
++   "pat_a": 0.0,
++   "pat_scale": 90.0
+   },
+   "protagonist": {
+    "width_k": 1.15,
+@@ -27,7 +31,11 @@
+    "wob_k": 0.9,
+    "fil": 0.7,
+    "soft_k": 0.9,
+-   "hue_shift_tritan": -30
++   "hue_shift_tritan": -30,
++   "pat": 1.0,
++   "pat_k": 0.03,
++   "pat_a": 0.18,
++   "pat_scale": 95.0
+   },
+   "rival": {
+    "width_k": 1.1,
+@@ -41,7 +49,11 @@
+    "wob_k": 0.25,
+    "fil": 0.9,
+    "soft_k": 1.35,
+-   "hue_max": 320
++   "hue_max": 320,
++   "pat": 2.0,
++   "pat_k": 0.03,
++   "pat_a": 0.2,
++   "pat_scale": 64.0
+   },
+   "rival_short": {
+    "width_k": 0.4,
+@@ -84,7 +96,8 @@
+    "lighten": 0.0,
+    "flow_k": 0.8,
+    "wob": 0.22,
+-   "len_k": 0.3
++   "len_k": 0.3,
++   "pat_w": 0.0
+   },
+   {
+    "k": 1.4,
+@@ -98,7 +111,8 @@
+    "lighten": 0.0,
+    "flow_k": 1.0,
+    "wob": 0.12,
+-   "len_k": 0.26
++   "len_k": 0.26,
++   "pat_w": 1.0
+   },
+   {
+    "k": 0.6,
+@@ -112,7 +126,8 @@
+    "lighten": 0.1,
+    "flow_k": 1.4,
+    "wob": 0.05,
+-   "len_k": 0.14
++   "len_k": 0.14,
++   "pat_w": 0.6
+   }
+  ],
+  "calm": {
+@@ -177,25 +192,5 @@
+   "cool_s": 1.2,
+   "grow_s": 0.14,
+   "cap": 10
+- },
+- "struggle": {
+-  "push_k": 0.5,
+-  "ease_s": 0.35,
+-  "wave_ticks": 14,
+-  "surge_amp": 0.8,
+-  "sharp_k": 1.4,
+-  "beat_amp": 0.34,
+-  "stray_amp": -0.4,
+-  "wave_half": 0.15,
+-  "wave_half_max": 120,
+-  "lum": 0.08,
+-  "knot_amp": 0.6,
+-  "knot_s": 1.8,
+-  "knot_surge": 0.14,
+-  "knot_decay_s": 2.5,
+-  "calm_gap": 40,
+-  "amp_calm": 0.8,
+-  "flare_k": 0.3,
+-  "flare_ease_s": 0.4
+  }
+ }
+--- a/docs/vfx/beam-look.md
++++ b/docs/vfx/beam-look.md
+@@ -113,3 +113,19 @@
+ - **Art:** confirmed and corrected (docs/art/beam-colours.md): the Protagonist +30 (-30 under tritan), the Rival +34 capped at 320, the dummy +12.
+ - **Legal:** fx03 asks for the set drawn; this is it, with the flash clips above. The two new things to read are the beam's width and its start and end events (1.6 times the threshold in one clip), and the flames at a point-blank hit.
+ - **Orb:** the Protagonist's beam "from the heel of the palm" is a swell of the beam's firing end (0.7), not a drawn gather at the hand: the gather needs Animation's palm pose at the beam's origin.
++
++## Distinct patterns: each fighter's beam unmistakable (Orb, 2026-10-18)
++
++Orb: "I just want beams and energy attacks to have distinct, visually appealing, robust shader effects." The flavours above differed by knobs (wavelength, filaments, swell); they read as two beams of different colour. This adds a **pattern** to the Protagonist's and the Anti-hero's, the same inversion their auras have (`docs/vfx/aura3d.md`), told apart by **shape and hue, never by a step in brightness**:
++
++| | **Protagonist: the boil** (`pat` 1) | **Anti-hero: the facets** (`pat` 2) |
++| :--- | :--- | :--- |
++| Edge | rounded **scallops** along the whole beam (semicircular bulges with sharp troughs, 95 units apart, cutting in 18% of the radius): a billowing, bubbling outline | a straight **zigzag** (a crisp chevron every 64 units, cutting in 20%): a cut-crystal outline |
++| Inside | **bubble rings** in the second tint on the lane colour, in the same cells that travel slowly toward the head | a **mosaic** of flat cells, each a fixed mix of the two close hues (a stained-glass of azure-violet to orchid), seams a hair darker |
++| Everything else | unchanged: his colours, wavelength, heel swell, the hue ripple | unchanged |
++
++How it stays inside Legal's fx03: the pattern is on the body and the core only (the sheath's glow has none); its brightness moves the alpha by **3% at most** (`pat_k`; the shimmer is 7% on the body, so together under a tenth, checked), and the calm form (every beam under Reduce flashing, the default) halves even that and keeps the silhouette; the hue patterns are between **two tints of the same luminance**, so they add no brightness step at all; everything travels slowly toward the head at a quarter of the flow (a point sees about one scallop a second or slower); the axis stays a straight line and nothing goes round it, so it is still a plain straight beam. His thin needle (`rival_short`) and every other fighter stay plain. Numbers: `data/vfx/energy.json` (`pat`, `pat_k`, `pat_a`, `pat_scale` per flavour; `pat_w` per layer); checks: `effects_check.gd` `_beam_pattern`.
++
++**For Legal:** the scalloped and zigzag silhouettes are new shapes for a beam (a bubbling and a crystalline edge). Neither is a helix, a drill, a twin colour or a ball; both are the beam's own edge. They have not been screened.
++
++**Measured** (Tools' path, 1024 by 768, one capture at a time, both modes; primary / area-15% / memory): on the build with the deeper cut (30% and 34%): collapse normal 2 / 2.5 / 1 and reduced 2 / 2 / 0.5, clash reduced 2 / 2.5 / 2, signature reduced 1.5 / 1.5 / 1, signaturecity 2 / 2 / 2 and 2 / 2.5 / 1.5, signature normal 2 / 3 / 2 (as without it), **and clash normal 2 / 3.5 / 2: FAIL, against 2 / 3 / 1.5 without the pattern** (same-commit baseline). The windows are the same events within 1 to 2 thousand pixels (ticks 1147 to 1173), but the baseline already sat on the line at 3, so the extra pixels of the edge cut tipped it. **Built at 18% and 20%** (the final numbers), clash normal reads 2 / 3 / 2 and signature normal 2 / 3 / 2, **equal to the baseline**; the other clips were measured at the deeper cut and a shallower cut only moves fewer pixels, but they were not re-run. clash at 3 and signature at 3 are over the 2.5 gate on this commit **with or without** the pattern: they are not this work's.
+--- a/render/vfx/beam_look.gd
++++ b/render/vfx/beam_look.gd
+@@ -12,16 +12,16 @@
+ 
+ const DEFAULTS: Dictionary = {
+ 	"beam": {
+-		"default": {"width_k": 1.0, "hue_shift": 28.0, "hz": 1.0, "wavelength": 130.0, "flow": 70.0, "turb": 0.15, "heel": 0.5, "seed": 0.0, "wob_k": 1.0, "fil": 0.6, "soft_k": 1.0},
+-		"protagonist": {"width_k": 1.15, "hue_shift": 30.0, "hue_shift_tritan": -30.0, "hz": 1.1, "wavelength": 150.0, "flow": 80.0, "turb": 0.12, "heel": 0.7, "seed": 0.0, "wob_k": 0.9, "fil": 0.7, "soft_k": 0.9},
+-		"rival": {"width_k": 1.1, "hue_shift": 34.0, "hue_max": 320.0, "hz": 0.8, "wavelength": 80.0, "flow": 60.0, "turb": 0.05, "heel": 0.25, "seed": 2.1, "wob_k": 0.25, "fil": 0.9, "soft_k": 1.35},
++		"default": {"width_k": 1.0, "hue_shift": 28.0, "hz": 1.0, "wavelength": 130.0, "flow": 70.0, "turb": 0.15, "heel": 0.5, "seed": 0.0, "wob_k": 1.0, "fil": 0.6, "soft_k": 1.0, "pat": 0.0, "pat_k": 0.0, "pat_a": 0.0, "pat_scale": 90.0},
++		"protagonist": {"width_k": 1.15, "hue_shift": 30.0, "hue_shift_tritan": -30.0, "hz": 1.1, "wavelength": 150.0, "flow": 80.0, "turb": 0.12, "heel": 0.7, "seed": 0.0, "wob_k": 0.9, "fil": 0.7, "soft_k": 0.9, "pat": 1.0, "pat_k": 0.03, "pat_a": 0.18, "pat_scale": 95.0},
++		"rival": {"width_k": 1.1, "hue_shift": 34.0, "hue_max": 320.0, "hz": 0.8, "wavelength": 80.0, "flow": 60.0, "turb": 0.05, "heel": 0.25, "seed": 2.1, "wob_k": 0.25, "fil": 0.9, "soft_k": 1.35, "pat": 2.0, "pat_k": 0.03, "pat_a": 0.2, "pat_scale": 64.0},
+ 		"rival_short": {"width_k": 0.4, "hue_shift": 34.0, "hue_max": 320.0, "hz": 0.8, "wavelength": 80.0, "flow": 60.0, "turb": 0.0, "heel": 0.1, "seed": 2.1, "wob_k": 0.0, "fil": 0.0, "soft_k": 1.35},
+ 		"reference": {"width_k": 0.8, "hue_shift": 12.0, "hz": 0.5, "wavelength": 160.0, "flow": 40.0, "turb": 0.04, "heel": 0.1, "seed": 5.3, "wob_k": 0.2, "fil": 0.2, "soft_k": 1.0},
+ 	},
+ 	"layers": [
+-		{"k": 1.8, "px": 2.0, "alpha": 0.12, "soft": 1.0, "len_k": 0.3, "turb_k": 1.6, "lum_amp": 0.16, "sat": 2.2, "val": 0.7, "lighten": 0.0, "flow_k": 0.8, "wob": 0.22},
+-		{"k": 1.4, "px": 2.0, "alpha": 0.95, "soft": 0.4, "len_k": 0.26, "turb_k": 1.0, "lum_amp": 0.07, "sat": 2.0, "val": 0.88, "lighten": 0.0, "flow_k": 1.0, "wob": 0.12},
+-		{"k": 0.6, "px": 2.0, "alpha": 1.0, "soft": 0.3, "len_k": 0.14, "turb_k": 0.0, "lum_amp": 0.04, "sat": 0.85, "val": 1.0, "lighten": 0.1, "flow_k": 1.4, "wob": 0.05},
++		{"k": 1.8, "px": 2.0, "alpha": 0.12, "soft": 1.0, "len_k": 0.3, "turb_k": 1.6, "lum_amp": 0.16, "sat": 2.2, "val": 0.7, "lighten": 0.0, "flow_k": 0.8, "wob": 0.22, "pat_w": 0.0},
++		{"k": 1.4, "px": 2.0, "alpha": 0.95, "soft": 0.4, "len_k": 0.26, "turb_k": 1.0, "lum_amp": 0.07, "sat": 2.0, "val": 0.88, "lighten": 0.0, "flow_k": 1.0, "wob": 0.12, "pat_w": 1.0},
++		{"k": 0.6, "px": 2.0, "alpha": 1.0, "soft": 0.3, "len_k": 0.14, "turb_k": 0.0, "lum_amp": 0.04, "sat": 0.85, "val": 1.0, "lighten": 0.1, "flow_k": 1.4, "wob": 0.05, "pat_w": 0.6},
+ 	],
+ 	"calm": {"strength": 0.86, "rise_s": 0.3},
+ 	"cap": 40.0,
+@@ -189,3 +189,9 @@
+ 	m.set_shader_parameter("seed", float(fl["seed"]) + beam_id * 1.37)
+ 	m.set_shader_parameter("wob", float(ly["wob"]) * float(fl["wob_k"]))
+ 	m.set_shader_parameter("fil", float(fl["fil"]))
++	# the fighter's own pattern (the Protagonist's boil, the Anti-hero's facets): the sheath's soft glow has none; the calm form halves the texture and keeps the silhouette
++	var pw: float = float(ly.get("pat_w", 0.0))
++	m.set_shader_parameter("pat", float(fl["pat"]) if pw > 0.0 else 0.0)
++	m.set_shader_parameter("pat_k", float(fl["pat_k"]) * pw * (0.5 if calm else 1.0))
++	m.set_shader_parameter("pat_a", float(fl["pat_a"]) * pw)
++	m.set_shader_parameter("pat_scale", float(fl["pat_scale"]))
 --- a/render/vfx/shaders/beam_core.gdshaderinc
 +++ b/render/vfx/shaders/beam_core.gdshaderinc
-@@ -21,6 +21,10 @@
+@@ -21,17 +21,10 @@
  uniform float wob = 0.0;            // how much the width swells and thins along the beam (a share of the radius): the silhouette flows, the axis stays a straight line
  uniform float fil = 0.5;            // the filaments: long thin streaks along the beam, in hue and saturation, within `lum_amp` in brightness
  uniform float head_at_zero = 1.0;   // 1: UV.y is 0 at the head, as the cylinder is built
+-// The beam struggle's waves (render/vfx/beam_struggle.gd): up to two swells and the meeting point's knot, each (x its centre from the tail in world units, y its half length, z the width it adds as a
+-// share of the radius (negative pinches), w the alpha it adds as a share). All zero outside a struggle: a plain beam is as it was.
+-uniform vec4 wv0 = vec4(0.0, 1.0, 0.0, 0.0);
+-uniform vec4 wv1 = vec4(0.0, 1.0, 0.0, 0.0);
+-uniform vec4 wv2 = vec4(0.0, 1.0, 0.0, 0.0);
+-
+-float wbump(float s, vec4 w) {
+-	float u = (s - w.x) / max(w.y, 1.0);
+-	return exp(-2.0 * u * u);
+-}
+-
 +uniform float pat = 0.0;            // the fighter's own beam pattern: 0 plain, 1 boil (rounded scallops along the edge, bubble rings inside), 2 facets (zigzag edge, crystal seams inside)
 +uniform float pat_k = 0.0;          // the pattern's brightness inside the beam, a share of the alpha (kept at 3% or under: Legal fx03's step under a tenth)
 +uniform float pat_a = 0.0;          // how deep the edge scallops or zigzags cut in, a share of the radius (shape, never a flicker)
@@ -11,7 +176,7 @@
  
  float h21(vec2 p) {
  	p = fract(p * vec2(123.34, 456.21));
-@@ -35,6 +39,31 @@
+@@ -46,12 +39,35 @@
  	return mix(mix(h21(i), h21(i + vec2(1.0, 0.0)), f.x), mix(h21(i + vec2(0.0, 1.0)), h21(i + vec2(1.0, 1.0)), f.x), f.y);
  }
  
@@ -42,11 +207,18 @@
 +
  void vertex() {
  	vec3 v = VERTEX;
+-	float s0 = (head_at_zero > 0.5 ? 1.0 - UV.y : UV.y) * len;
+-	float wsum = wv0.z * wbump(s0, wv0) + wv1.z * wbump(s0, wv1) + wv2.z * wbump(s0, wv2);
+-	v.xz *= max(0.2, 1.0 + wsum);
  	if (wob > 0.0) {
-@@ -63,8 +92,31 @@
- 	float nn = vn(vec2(travel * 0.02 + 7.0, lat * 2.3 + seed * 1.7));
++		float s0 = (head_at_zero > 0.5 ? 1.0 - UV.y : UV.y) * len;
+ 		float sw = (vn(vec2(s0 * 0.011 - time * flow * 0.012, seed + 3.0)) - 0.5) * 2.0;
+ 		v.xz *= 1.0 + wob * sw;
+ 	}
+@@ -77,9 +93,31 @@
  	float edge = pow(facing, soft) * mix(1.0, 0.35 + 1.3 * nn, turb * (1.0 - facing));
  	float shim = 1.0 + lum_amp * (0.6 * rip + (n1 - 0.5) + 0.8 * (f1 - 0.5));
+ 	float cap_e = min(cap, len * 0.14);     // the rounded ends never take more than a seventh of the beam each: a short beam (a point-blank one) stays solid in the middle, not a soft smear
 +	// the fighter's own pattern: a silhouette cut into the edge (the boil's rounded scallops, the facets' straight zigzag) and a quiet texture inside (bubble rings, crystal seams); both travel slowly
 +	// toward the head at a quarter of the flow, a point seeing about one a second or slower. The axis stays a straight line; nothing goes round it.
 +	float pat_edge = 1.0;
@@ -65,178 +237,30 @@
 +		pat_ring = pat < 1.5 ? (1.0 - smoothstep(0.0, 0.1, abs(wc.x - 0.3))) : 0.0;
 +		pat_cell = pat < 1.5 ? -1.0 : wc.z;
 +	}
- 	float ends = smoothstep(0.0, cap, from_tail) * smoothstep(0.0, cap, len - from_tail);
+ 	float ends = smoothstep(0.0, cap_e, from_tail) * smoothstep(0.0, cap_e, len - from_tail);
  	float swell = 1.0 + heel * exp(-from_tail / 70.0);
+-	float wl = 1.0 + wv0.w * wbump(from_tail, wv0) + wv1.w * wbump(from_tail, wv1);
 +	// the pattern is told apart by HUE, not brightness: the two tints have the same luminance, so a ring of the boil takes the second tint and a facet of the crystal takes its own flat mix of the two,
 +	// a mosaic of two close hues with no step in luminance at all (Legal fx03); the only brightness the pattern moves is `pat_k`, 6% at most
 +	if (pat > 0.5) {
 +		col = pat < 1.5 ? mix(col, tint_b.rgb, clamp(pat_ring * 0.9, 0.0, 1.0)) : mix(tint_a.rgb, tint_b.rgb, clamp(pat_cell * 0.9 + 0.05, 0.0, 1.0));
 +	}
  	ALBEDO = col;
--	ALPHA = clamp(tint_a.a * strength * edge * shim * ends * swell, 0.0, 1.0);
+-	ALPHA = clamp(tint_a.a * strength * edge * shim * ends * swell * wl, 0.0, 1.0);
 +	ALPHA = clamp(tint_a.a * strength * edge * shim * ends * swell * pat_edge * pat_tex, 0.0, 1.0);
  }
---- a/render/vfx/beam_look.gd
-+++ b/render/vfx/beam_look.gd
-@@ -12,16 +12,16 @@
- 
- const DEFAULTS: Dictionary = {
- 	"beam": {
--		"default": {"width_k": 1.0, "hue_shift": 28.0, "hz": 1.0, "wavelength": 130.0, "flow": 70.0, "turb": 0.15, "heel": 0.5, "seed": 0.0, "wob_k": 1.0, "fil": 0.6, "soft_k": 1.0},
--		"protagonist": {"width_k": 1.15, "hue_shift": 30.0, "hue_shift_tritan": -30.0, "hz": 1.1, "wavelength": 150.0, "flow": 80.0, "turb": 0.12, "heel": 0.7, "seed": 0.0, "wob_k": 0.9, "fil": 0.7, "soft_k": 0.9},
--		"rival": {"width_k": 1.1, "hue_shift": 34.0, "hue_max": 320.0, "hz": 0.8, "wavelength": 80.0, "flow": 60.0, "turb": 0.05, "heel": 0.25, "seed": 2.1, "wob_k": 0.25, "fil": 0.9, "soft_k": 1.35},
-+		"default": {"width_k": 1.0, "hue_shift": 28.0, "hz": 1.0, "wavelength": 130.0, "flow": 70.0, "turb": 0.15, "heel": 0.5, "seed": 0.0, "wob_k": 1.0, "fil": 0.6, "soft_k": 1.0, "pat": 0.0, "pat_k": 0.0, "pat_a": 0.0, "pat_scale": 90.0},
-+		"protagonist": {"width_k": 1.15, "hue_shift": 30.0, "hue_shift_tritan": -30.0, "hz": 1.1, "wavelength": 150.0, "flow": 80.0, "turb": 0.12, "heel": 0.7, "seed": 0.0, "wob_k": 0.9, "fil": 0.7, "soft_k": 0.9, "pat": 1.0, "pat_k": 0.03, "pat_a": 0.18, "pat_scale": 95.0},
-+		"rival": {"width_k": 1.1, "hue_shift": 34.0, "hue_max": 320.0, "hz": 0.8, "wavelength": 80.0, "flow": 60.0, "turb": 0.05, "heel": 0.25, "seed": 2.1, "wob_k": 0.25, "fil": 0.9, "soft_k": 1.35, "pat": 2.0, "pat_k": 0.03, "pat_a": 0.2, "pat_scale": 64.0},
- 		"rival_short": {"width_k": 0.4, "hue_shift": 34.0, "hue_max": 320.0, "hz": 0.8, "wavelength": 80.0, "flow": 60.0, "turb": 0.0, "heel": 0.1, "seed": 2.1, "wob_k": 0.0, "fil": 0.0, "soft_k": 1.35},
- 		"reference": {"width_k": 0.8, "hue_shift": 12.0, "hz": 0.5, "wavelength": 160.0, "flow": 40.0, "turb": 0.04, "heel": 0.1, "seed": 5.3, "wob_k": 0.2, "fil": 0.2, "soft_k": 1.0},
- 	},
- 	"layers": [
--		{"k": 4.0, "px": 6.0, "alpha": 0.36, "soft": 2.0, "turb_k": 1.6, "lum_amp": 0.16, "sat": 2.2, "val": 0.7, "lighten": 0.0, "flow_k": 0.8, "wob": 0.22},
--		{"k": 2.2, "px": 4.0, "alpha": 0.90, "soft": 1.4, "turb_k": 1.0, "lum_amp": 0.07, "sat": 2.0, "val": 0.88, "lighten": 0.0, "flow_k": 1.0, "wob": 0.12},
--		{"k": 0.9, "px": 2.0, "alpha": 1.0, "soft": 0.9, "turb_k": 0.0, "lum_amp": 0.04, "sat": 0.85, "val": 1.0, "lighten": 0.1, "flow_k": 1.4, "wob": 0.05},
-+		{"k": 4.0, "px": 6.0, "alpha": 0.36, "soft": 2.0, "turb_k": 1.6, "lum_amp": 0.16, "sat": 2.2, "val": 0.7, "lighten": 0.0, "flow_k": 0.8, "wob": 0.22, "pat_w": 0.0},
-+		{"k": 2.2, "px": 4.0, "alpha": 0.90, "soft": 1.4, "turb_k": 1.0, "lum_amp": 0.07, "sat": 2.0, "val": 0.88, "lighten": 0.0, "flow_k": 1.0, "wob": 0.12, "pat_w": 1.0},
-+		{"k": 0.9, "px": 2.0, "alpha": 1.0, "soft": 0.9, "turb_k": 0.0, "lum_amp": 0.04, "sat": 0.85, "val": 1.0, "lighten": 0.1, "flow_k": 1.4, "wob": 0.05, "pat_w": 0.6},
- 	],
- 	"calm": {"strength": 0.86, "rise_s": 0.3},
- 	"cap": 40.0,
-@@ -186,3 +186,9 @@
- 	m.set_shader_parameter("seed", float(fl["seed"]) + beam_id * 1.37)
- 	m.set_shader_parameter("wob", float(ly["wob"]) * float(fl["wob_k"]))
- 	m.set_shader_parameter("fil", float(fl["fil"]))
-+	# the fighter's own pattern (the Protagonist's boil, the Anti-hero's facets): the sheath's soft glow has none; the calm form halves the texture and keeps the silhouette
-+	var pw: float = float(ly.get("pat_w", 0.0))
-+	m.set_shader_parameter("pat", float(fl["pat"]) if pw > 0.0 else 0.0)
-+	m.set_shader_parameter("pat_k", float(fl["pat_k"]) * pw * (0.5 if calm else 1.0))
-+	m.set_shader_parameter("pat_a", float(fl["pat_a"]) * pw)
-+	m.set_shader_parameter("pat_scale", float(fl["pat_scale"]))
---- a/data/vfx/energy.json
-+++ b/data/vfx/energy.json
-@@ -27,7 +27,11 @@
-    "wob_k": 0.9,
-    "fil": 0.7,
-    "soft_k": 0.9,
--   "hue_shift_tritan": -30
-+   "hue_shift_tritan": -30,
-+   "pat": 1,
-+   "pat_k": 0.03,
-+   "pat_a": 0.18,
-+   "pat_scale": 95.0
-   },
-   "rival": {
-    "width_k": 1.1,
-@@ -41,7 +45,11 @@
-    "wob_k": 0.25,
-    "fil": 0.9,
-    "soft_k": 1.35,
--   "hue_max": 320
-+   "hue_max": 320,
-+   "pat": 2,
-+   "pat_k": 0.03,
-+   "pat_a": 0.2,
-+   "pat_scale": 64.0
-   },
-   "rival_short": {
-    "width_k": 0.4,
-@@ -83,7 +91,8 @@
-    "val": 0.7,
-    "lighten": 0.0,
-    "flow_k": 0.8,
--   "wob": 0.22
-+   "wob": 0.22,
-+   "pat_w": 0.0
-   },
-   {
-    "k": 2.2,
-@@ -96,7 +105,8 @@
-    "val": 0.88,
-    "lighten": 0.0,
-    "flow_k": 1.0,
--   "wob": 0.12
-+   "wob": 0.12,
-+   "pat_w": 1.0
-   },
-   {
-    "k": 0.9,
-@@ -109,7 +119,8 @@
-    "val": 1.0,
-    "lighten": 0.1,
-    "flow_k": 1.4,
--   "wob": 0.05
-+   "wob": 0.05,
-+   "pat_w": 0.6
-   }
-  ],
-  "calm": {
-@@ -162,4 +173,4 @@
-    "what": "the beam's hue ripple, 2 Hz or slower at any point, under a tenth of luminance (fx03)"
-   }
-  }
--}
-\ No newline at end of file
-+}
---- a/tools/schemas/vfx-energy.schema.json
-+++ b/tools/schemas/vfx-energy.schema.json
-@@ -79,6 +79,28 @@
-               "type": "number",
-               "minimum": 0,
-               "maximum": 360
-+            },
-+            "pat": {
-+              "enum": [
-+                0,
-+                1,
-+                2
-+              ]
-+            },
-+            "pat_k": {
-+              "type": "number",
-+              "minimum": 0,
-+              "maximum": 0.03
-+            },
-+            "pat_a": {
-+              "type": "number",
-+              "minimum": 0,
-+              "maximum": 0.5
-+            },
-+            "pat_scale": {
-+              "type": "number",
-+              "minimum": 30,
-+              "maximum": 300
-             }
-           },
-           "additionalProperties": false,
-@@ -158,6 +180,11 @@
-             "type": "number",
-             "minimum": 0,
-             "maximum": 0.5
-+          },
-+          "pat_w": {
-+            "type": "number",
-+            "minimum": 0,
-+            "maximum": 1
-           }
-         },
-         "additionalProperties": false
-@@ -222,4 +249,4 @@
-   "patternProperties": {
-     "^_": true
-   }
--}
-\ No newline at end of file
-+}
 --- a/render/vfx/tools/effects_check.gd
 +++ b/render/vfx/tools/effects_check.gd
-@@ -206,6 +206,7 @@
+@@ -206,7 +206,7 @@
  	_brawl()
  	_small_blasts()
  	_beam_look()
+-	_beam_struggle_beams()
 +	_beam_pattern()
+ 	_beam_scar()
  	_multi()
  	_ghosts()
- 	_vision()
-@@ -4914,6 +4915,50 @@
+@@ -4916,6 +4916,50 @@
  	_check(states[0] == states[1], "the same cue gives the same cloud (determinism)")
  
  
@@ -287,25 +311,306 @@
  ## The catastrophe light class (docs/vfx/catastrophe-plan.md section 1; Legal c01 to c05): the gap, the floors, the calm form, the ash, one answer per event, no red, and a hammer of random asks.
  func _cat_class() -> void:
  	print("the catastrophe light class")
---- a/docs/vfx/beam-look.md
-+++ b/docs/vfx/beam-look.md
-@@ -103,3 +103,19 @@
- - **Art:** confirmed and corrected (docs/art/beam-colours.md): the Protagonist +30 (-30 under tritan), the Rival +34 capped at 320, the dummy +12.
- - **Legal:** fx03 asks for the set drawn; this is it, with the flash clips above. The two new things to read are the beam's width and its start and end events (1.6 times the threshold in one clip), and the flames at a point-blank hit.
- - **Orb:** the Protagonist's beam "from the heel of the palm" is a swell of the beam's firing end (0.7), not a drawn gather at the hand: the gather needs Animation's palm pose at the beam's origin.
-+
-+## Distinct patterns: each fighter's beam unmistakable (Orb, 2026-10-18)
-+
-+Orb: "I just want beams and energy attacks to have distinct, visually appealing, robust shader effects." The flavours above differed by knobs (wavelength, filaments, swell); they read as two beams of different colour. This adds a **pattern** to the Protagonist's and the Anti-hero's, the same inversion their auras have (`docs/vfx/aura3d.md`), told apart by **shape and hue, never by a step in brightness**:
-+
-+| | **Protagonist: the boil** (`pat` 1) | **Anti-hero: the facets** (`pat` 2) |
-+| :--- | :--- | :--- |
-+| Edge | rounded **scallops** along the whole beam (semicircular bulges with sharp troughs, 95 units apart, cutting in 18% of the radius): a billowing, bubbling outline | a straight **zigzag** (a crisp chevron every 64 units, cutting in 20%): a cut-crystal outline |
-+| Inside | **bubble rings** in the second tint on the lane colour, in the same cells that travel slowly toward the head | a **mosaic** of flat cells, each a fixed mix of the two close hues (a stained-glass of azure-violet to orchid), seams a hair darker |
-+| Everything else | unchanged: his colours, wavelength, heel swell, the hue ripple | unchanged |
-+
-+How it stays inside Legal's fx03: the pattern is on the body and the core only (the sheath's glow has none); its brightness moves the alpha by **3% at most** (`pat_k`; the shimmer is 7% on the body, so together under a tenth, checked), and the calm form (every beam under Reduce flashing, the default) halves even that and keeps the silhouette; the hue patterns are between **two tints of the same luminance**, so they add no brightness step at all; everything travels slowly toward the head at a quarter of the flow (a point sees about one scallop a second or slower); the axis stays a straight line and nothing goes round it, so it is still a plain straight beam. His thin needle (`rival_short`) and every other fighter stay plain. Numbers: `data/vfx/energy.json` (`pat`, `pat_k`, `pat_a`, `pat_scale` per flavour; `pat_w` per layer); checks: `effects_check.gd` `_beam_pattern`.
-+
-+**For Legal:** the scalloped and zigzag silhouettes are new shapes for a beam (a bubbling and a crystalline edge). Neither is a helix, a drill, a twin colour or a ball; both are the beam's own edge. They have not been screened.
-+
-+**Measured** (Tools' path, 1024 by 768, one capture at a time, both modes; primary / area-15% / memory): on the build with the deeper cut (30% and 34%): collapse normal 2 / 2.5 / 1 and reduced 2 / 2 / 0.5, clash reduced 2 / 2.5 / 2, signature reduced 1.5 / 1.5 / 1, signaturecity 2 / 2 / 2 and 2 / 2.5 / 1.5, signature normal 2 / 3 / 2 (as without it), **and clash normal 2 / 3.5 / 2: FAIL, against 2 / 3 / 1.5 without the pattern** (same-commit baseline). The windows are the same events within 1 to 2 thousand pixels (ticks 1147 to 1173), but the baseline already sat on the line at 3, so the extra pixels of the edge cut tipped it. **Built at 18% and 20%** (the final numbers), clash normal reads 2 / 3 / 2 and signature normal 2 / 3 / 2, **equal to the baseline**; the other clips were measured at the deeper cut and a shallower cut only moves fewer pixels, but they were not re-run. clash at 3 and signature at 3 are over the 2.5 gate on this commit **with or without** the pattern: they are not this work's.
+@@ -5209,139 +5253,6 @@
+ 	_check(sc2.made == 0 or sc2.list.size() <= int(VfxBeamScar.p("cap")), "a restart (the clock going back) starts the scars afresh")
+ 
+ 
+-func _beam_struggle_beams() -> void:
+-	print("the beam struggle carried by the beams")
+-	var S := SimCore.createSim()
+-	SimCore.newMatch(S, 6)
+-	var c := SimState.Clash.new()
+-	c.A = S.fighters[0]
+-	c.D = S.fighters[1]
+-	c.mid = 0.5
+-	c.dur = 5.0
+-	var mk := func(kind: String, f: Dictionary) -> Variant:
+-		var d: Dictionary = {"kind": kind}
+-		d.merge(f)
+-		return VfxMock.ev("cue", d)
+-	# no struggle (mid -1, the old glide): nothing carries, widths are as they were
+-	var sk := VfxBeamStruggle.new()
+-	S.game.clash = c
+-	c.mid = -1.0
+-	sk.step(S, [], false)
+-	_check(not sk.active and sk.width_k(0) == 1.0 and sk.width_k(1) == 1.0, "a clash with no struggle (Clash.mid -1) is drawn as it was: widths 1")
+-	# the point moves to D's side: A is winning, his beam is thicker and his rival's thinner, eased (no jump)
+-	c.mid = 0.5
+-	S.tick = 100
+-	sk.step(S, [], false)
+-	_check(sk.active and absf(sk.width_k(0) - 1.0) < 0.01 and absf(sk.width_k(1) - 1.0) < 0.01, "an even struggle: both beams as wide")
+-	c.mid = 0.8
+-	var first: float = 0.0
+-	for i in range(3):
+-		S.tick += 1
+-		sk.step(S, [], false)
+-		if i == 0:
+-			first = sk.width_k(0)
+-	_check(sk.width_k(0) > 1.0 and sk.width_k(1) < 1.0 and first < sk.width_k(0), "the winner's beam is thicker, the loser's thinner, and the shift is eased (%.3f then %.3f)" % [first, sk.width_k(0)])
+-	for i in range(240):
+-		S.tick += 1
+-		sk.step(S, [], false)
+-	var kmax: float = 1.0 + VfxBeamStruggle.p("push_k")
+-	_check(sk.width_k(0) <= kmax + 0.001 and sk.width_k(1) >= 1.0 - VfxBeamStruggle.p("push_k") * 0.6 - 0.001 and sk.width_k(0) > 1.1, "it settles inside the limits (%.2f and %.2f)" % [sk.width_k(0), sk.width_k(1)])
+-	# the loser's aura flares, the winner's does not
+-	var fa: float = sk.flare(0)
+-	var fd: float = sk.flare(1)
+-	_check(fa == 0.0 and fd > 0.02 and fd <= VfxBeamStruggle.p("flare_k") + 0.001, "the loser's aura flares (%.3f) and the winner's does not (%.3f)" % [fd, fa])
+-	_check(sk.flare(5) == 0.0, "a slot outside the clash is not touched")
+-	# the knot (the meeting point's swell) grows slowly: not a flash
+-	var sk2 := VfxBeamStruggle.new()
+-	c.mid = 0.5
+-	S.tick = 500
+-	sk2.step(S, [], false)
+-	var k0: float = sk2.knot_level
+-	var kstep: float = 0.0
+-	var prev: float = k0
+-	for i in range(60):
+-		S.tick += 1
+-		sk2.step(S, [], false)
+-		kstep = maxf(kstep, sk2.knot_level - prev)
+-		prev = sk2.knot_level
+-	_check(k0 < 0.05 and sk2.knot_level > 0.2 and kstep < 0.03, "the meeting point swells slowly (%.2f at once, %.2f after a second, the most in a tick %.3f)" % [k0, sk2.knot_level, kstep])
+-	# a pulse: the swell leaves each hand 14 ticks before it and is at the point ON it
+-	var wt: int = int(VfxBeamStruggle.p("wave_ticks"))
+-	var sk3 := VfxBeamStruggle.new()
+-	c.mid = 0.5
+-	S.tick = 1000
+-	sk3.step(S, [], false)
+-	var at_point: float = -1.0
+-	var started_at: int = -1
+-	var pulse_tick: int = S.tick + 40
+-	S.tick += 1
+-	sk3.step(S, [mk.call("beam_pulse", {"actor": 0, "k": 1, "n": pulse_tick})], false)
+-	for i in range(60):
+-		S.tick += 1
+-		sk3.step(S, [], false)
+-		var ws: Array = sk3.waves.filter(func(w): return w.side == 0)
+-		if started_at < 0 and not ws.is_empty():
+-			started_at = S.tick
+-		if S.tick == pulse_tick and not ws.is_empty():
+-			at_point = sk3.wave_pos(ws[0], 1000.0)
+-	_check(started_at >= 0 and absf(float(started_at) - float(pulse_tick - wt)) <= 2.0, "the beat's swell leaves %d ticks before the pulse (left at %d, pulse at %d)" % [wt, started_at, pulse_tick])
+-	_check(at_point > 940.0, "and it is at the meeting point on the pulse (%.0f of 1000)" % at_point)
+-	_check(sk3.waves.filter(func(w): return w.side == 1).size() <= 2, "both beams carry it (the rival's side too)")
+-	# a surge: a swell on the presser's own beam only, and the knot swells a little more; a stray pinches
+-	var sk4 := VfxBeamStruggle.new()
+-	c.mid = 0.5
+-	S.tick = 2000
+-	sk4.step(S, [], false)
+-	var kb: float = sk4.knot_level
+-	S.tick += 1
+-	sk4.step(S, [mk.call("beam_surge", {"actor": 0, "text": "surge"})], false)
+-	var w0: Array = sk4.waves.filter(func(w): return w.side == 0)
+-	var w1: Array = sk4.waves.filter(func(w): return w.side == 1)
+-	_check(w0.size() == 1 and w1.is_empty() and w0[0].amp > 0.0 and sk4.knot_level > kb, "a surge: one swell down the presser's own beam (not his rival's), and the point swells a little more")
+-	S.tick += 1
+-	sk4.step(S, [mk.call("beam_stray", {"actor": 1})], false)
+-	var ws1: Array = sk4.waves.filter(func(w): return w.side == 1)
+-	_check(ws1.size() == 1 and ws1[0].amp < 0.0, "a stray: a pinch down his own beam (a negative swell), shape only")
+-	# the sharp surge is bigger
+-	var sk5 := VfxBeamStruggle.new()
+-	S.tick = 3000
+-	sk5.step(S, [], false)
+-	S.tick += 1
+-	sk5.step(S, [mk.call("beam_surge", {"actor": 0, "text": "sharp"})], false)
+-	_check(sk5.waves.size() == 1 and sk5.waves[0].amp > sk4.waves[0].amp, "a sharp surge's swell is bigger")
+-	# calm (Reduce flashing): a beat's swell for every second pulse only, and surge and stray swells not within calm_gap ticks of the last
+-	var sk6 := VfxBeamStruggle.new()
+-	S.tick = 4000
+-	sk6.step(S, [], true)
+-	S.tick += 1
+-	sk6.step(S, [mk.call("beam_pulse", {"actor": 0, "k": 1, "n": S.tick + 20})], true)
+-	_check(sk6.sched.size() == 1, "calm: of two pulses shown at once only one has a swell (%d)" % sk6.sched.size())
+-	var sk7 := VfxBeamStruggle.new()
+-	S.tick = 5000
+-	sk7.step(S, [], true)
+-	S.tick += 1
+-	sk7.step(S, [mk.call("beam_surge", {"actor": 0, "text": "surge"})], true)
+-	S.tick += 5
+-	sk7.step(S, [mk.call("beam_surge", {"actor": 0, "text": "surge"}), mk.call("beam_stray", {"actor": 1})], true)
+-	_check(sk7.made.get("surge", 0) == 1 and sk7.made.get("stray", 0) == 0, "calm: a second mark within %d ticks is not made (the point's movement still shows each press)" % int(VfxBeamStruggle.p("calm_gap")))
+-	# the amplitudes keep the beam's brightness steady
+-	_check(VfxBeamStruggle.p("lum") <= 0.1, "the alpha a swell adds stays under a tenth (%.2f)" % VfxBeamStruggle.p("lum"))
+-	# the clash ends: everything resets
+-	S.game.clash = null
+-	sk.step(S, [], false)
+-	_check(not sk.active and sk.width_k(0) == 1.0 and sk.flare(1) == 0.0 and sk.waves.is_empty(), "when the clash ends the beams and auras are as they were")
+-	# the old rings are off while the beams carry it, and on when they do not
+-	var hub := VfxHub.new()
+-	hub.reset(S, 4)
+-	hub.inreach.struggle_marks = false
+-	hub.inreach.on_events(S, [mk.call("beam_struggle", {"actor": 0, "text": "start"}), mk.call("beam_pulse", {"actor": 0, "k": 1, "n": 20}), mk.call("beam_surge", {"actor": 0, "text": "surge"})], false, null, hub.press)
+-	_check(hub.inreach.made.get("surge", 0) == 0 and hub.inreach.made.get("pulse", 0) == 0 and hub.inreach.made.get("struggle", 0) == 0, "the old struggle rings are not made while the beams carry it")
+-	var hub2 := VfxHub.new()
+-	hub2.reset(S, 4)
+-	hub2.inreach.on_events(S, [mk.call("beam_struggle", {"actor": 0, "text": "start"}), mk.call("beam_surge", {"actor": 0, "text": "surge"})], false, null, hub2.press)
+-	_check(hub2.inreach.made.get("surge", 0) == 1, "and they are made when the switch is off")
+-
+-
+ func _beam_look() -> void:
+ 	print("the beams' look")
+ 	var S := SimCore.createSim()
+@@ -5664,7 +5575,6 @@
+ 	cl.dur = 6.0
+ 	cl.aw = true
+ 	var hs2: VfxHub = fresh.call()
+-	hs2.struggle_enabled = false      # the old rings are tested with the beams' own struggle off (beam_struggle.gd)
+ 	var sc := func(kind: String, slot: int, text: String, k: float, n: float, x: float = 0.0):
+ 		return VfxMock.ev("cue", {"actor": slot, "kind": kind, "text": text, "target": 1 - slot, "k": k, "n": n, "x": x, "y": 0.0})
+ 	_tick(S, hs2, [sc.call("beam_struggle", 0, "start", 0.0, float(S.tick + 300))])
+@@ -5714,7 +5624,6 @@
+ 	_check(rates_ok, "the rate list holds the struggle's beat, surge and stray, the opening ring, the shine and the chase's trail, each at 1.5 Hz or slower when calm (strokes only)")
+ 	for mode in ["flashing", "motion"]:
+ 		var hcalm: VfxHub = fresh.call(mode == "motion")
+-		hcalm.struggle_enabled = false
+ 		hcalm.reduced_flashing = mode == "flashing"
+ 		S.game.clash = cl
+ 		_tick(S, hcalm, [sc.call("beam_struggle", 0, "start", 0.0, float(S.tick + 300))])
+--- a/tools/schemas/vfx-energy.schema.json
++++ b/tools/schemas/vfx-energy.schema.json
+@@ -79,6 +79,28 @@
+               "type": "number",
+               "minimum": 0,
+               "maximum": 360
++            },
++            "pat": {
++              "enum": [
++                0,
++                1,
++                2
++              ]
++            },
++            "pat_k": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 0.03
++            },
++            "pat_a": {
++              "type": "number",
++              "minimum": 0,
++              "maximum": 0.5
++            },
++            "pat_scale": {
++              "type": "number",
++              "minimum": 30,
++              "maximum": 300
+             }
+           },
+           "additionalProperties": false,
+@@ -163,6 +185,11 @@
+             "type": "number",
+             "exclusiveMinimum": 0,
+             "maximum": 2
++          },
++          "pat_w": {
++            "type": "number",
++            "minimum": 0,
++            "maximum": 1
+           }
+         },
+         "additionalProperties": false
+@@ -283,103 +310,6 @@
+         }
+       },
+       "additionalProperties": false
+-    },
+-    "struggle": {
+-      "type": "object",
+-      "description": "The beam struggle carried by the beams themselves (render/vfx/beam_struggle.gd, docs/vfx/beam-struggle.md): the winner's beam thicker, a swell down each beam to the meeting point on every pulse, a bigger one down the presser's beam on a surge, a pinch on a stray, and the meeting point swelling slowly. All keys optional: beam_struggle.gd falls back to the same defaults.",
+-      "properties": {
+-        "push_k": {
+-          "type": "number",
+-          "maximum": 0.8,
+-          "minimum": 0
+-        },
+-        "ease_s": {
+-          "type": "number",
+-          "maximum": 3,
+-          "exclusiveMinimum": 0.02
+-        },
+-        "wave_ticks": {
+-          "type": "number",
+-          "maximum": 60,
+-          "exclusiveMinimum": 2
+-        },
+-        "surge_amp": {
+-          "type": "number",
+-          "maximum": 2,
+-          "minimum": 0
+-        },
+-        "sharp_k": {
+-          "type": "number",
+-          "maximum": 3,
+-          "minimum": 1
+-        },
+-        "beat_amp": {
+-          "type": "number",
+-          "maximum": 1,
+-          "minimum": 0
+-        },
+-        "stray_amp": {
+-          "type": "number",
+-          "minimum": -0.8,
+-          "maximum": 0
+-        },
+-        "wave_half": {
+-          "type": "number",
+-          "maximum": 0.5,
+-          "exclusiveMinimum": 0.01
+-        },
+-        "wave_half_max": {
+-          "type": "number",
+-          "maximum": 600,
+-          "exclusiveMinimum": 10
+-        },
+-        "lum": {
+-          "type": "number",
+-          "maximum": 0.1,
+-          "minimum": 0
+-        },
+-        "knot_amp": {
+-          "type": "number",
+-          "maximum": 1.5,
+-          "minimum": 0
+-        },
+-        "knot_s": {
+-          "type": "number",
+-          "maximum": 10,
+-          "exclusiveMinimum": 0.1
+-        },
+-        "knot_surge": {
+-          "type": "number",
+-          "maximum": 0.5,
+-          "minimum": 0
+-        },
+-        "knot_decay_s": {
+-          "type": "number",
+-          "maximum": 20,
+-          "exclusiveMinimum": 0.1
+-        },
+-        "calm_gap": {
+-          "type": "number",
+-          "maximum": 120,
+-          "minimum": 0
+-        },
+-        "amp_calm": {
+-          "type": "number",
+-          "maximum": 1,
+-          "minimum": 0
+-        },
+-        "flare_k": {
+-          "type": "number",
+-          "maximum": 1,
+-          "minimum": 0
+-        },
+-        "flare_ease_s": {
+-          "type": "number",
+-          "maximum": 5,
+-          "exclusiveMinimum": 0.02
+-        }
+-      },
+-      "additionalProperties": false
+     }
+   },
+   "additionalProperties": false,

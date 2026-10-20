@@ -1,5 +1,7 @@
 # Parked: Orb's 3D auras (VFX, 2026-10-18)
 
+**Reworked 2026-10-19 after the EP's look gate:** the egg shell covered the fighter, so it is now a rim band along its own outline only (the body stays clear; see the last section of docs/vfx/aura3d.md in the patch), rebased on HEAD a2b6b5dd (`git apply --check` clean), with a before-and-after GIF for Orb in `homework/auras-rim/`. effects_check and validate pass. Still off by default; Legal has not seen it.
+
 Status: **parked, not applied; off by default** (`hub.aura3d_enabled` is false, `hub.set_aura3d(true)` turns it on and the old flat standing aura off). One patch, `apply.patch`, on HEAD 77ca29a4 (checked with `git apply --check` in a scratch export, not in the tree). `docs/vfx/aura3d.md` (in the patch) has the idea, the numbers and the limits. **Legal has not seen it** (the standing aura's earlier rule asked for a thin outline): it needs their re-screen before it is turned on.
 
 Orb's private animated pictures are in `homework/auras-in-motion/` (git-ignored): two GIFs of the pair at tiers 1 to 4 and a close-up, with a short note.
