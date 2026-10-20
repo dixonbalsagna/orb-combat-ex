@@ -1,0 +1,91 @@
+{
+  "schema": "narrative.planet_names/1",
+  "_about": "PARKED DRAFT (docs/narrative/pending/). Planet-name candidates, the role names that recur on every planet, and the four fighters' fixed home areas (docs/narrative/planet-and-homes.md). Unscreened by Legal; options for Orb, not canon. Claude-written.",
+  "candidates": {
+    "plain_compound": [
+      "Brindle",
+      "Everhold",
+      "Wayhold",
+      "Tallowmere"
+    ],
+    "short_invented": [
+      "Tessane",
+      "Oarel",
+      "Kestrane",
+      "Ostrel",
+      "Marrowell"
+    ],
+    "old_weathered": [
+      "Carrowdeep",
+      "Harrowfell",
+      "Thornmarch",
+      "Sallowgate"
+    ],
+    "title_or_lore": [
+      "The Round",
+      "The Long Way Round",
+      "Kindlewick",
+      "Ebbhold",
+      "Gazemere"
+    ]
+  },
+  "shortlist": [
+    "Brindle",
+    "The Long Way Round",
+    "Tessane"
+  ],
+  "same_name_reasons": [
+    "It means home: the word for the fighters' world is the same in every language.",
+    "The stage rebuilds itself between seasons."
+  ],
+  "rule": [
+    "One planet name every run, with the seed shown as a small number.",
+    "Role names recur on every planet and go to whichever place fills the role.",
+    "Everything else is named from the place-name grammar by the place's own seed.",
+    "Each fighter's home area has a fixed name.",
+    "Length, uniqueness, blocklist and no school, hospital or place of worship hold.",
+    "Same planet again replays the seed with the same names."
+  ],
+  "role_names": {
+    "hub_city": "Bellgate",
+    "town_nearest_hub": "Kilnstead",
+    "town_farthest_from_hub": "Farwatch",
+    "coastal_town": "Netmend",
+    "great_sea": "Longwater",
+    "first_plains": "Furrowlea",
+    "great_forest": "Deepholt",
+    "desert": "Sunwaste",
+    "high_range": "Anvilfell"
+  },
+  "homes": [
+    {
+      "fighter": "PROTAGONIST",
+      "name": "Mendquay",
+      "land": "coast",
+      "set_piece": "The Mending Pier",
+      "line": "Same crooked plank. Same pier. Good to be home!"
+    },
+    {
+      "fighter": "RIVAL",
+      "name": "Rankhold",
+      "land": "cold mountainside",
+      "set_piece": "The Rank Stair",
+      "line": "Everyone here knows exactly where they rank."
+    },
+    {
+      "fighter": "EMPRESS",
+      "name": "Crownreach",
+      "land": "plains",
+      "set_piece": "The Annex",
+      "line": "Our province, rat. Do mind the banners!"
+    },
+    {
+      "fighter": "CYBORG",
+      "name": "Slagholt",
+      "land": "desert or dry coast",
+      "set_piece": "The Breaking Yard",
+      "line": "Smells like old steel. My favourite kind of lunch!"
+    }
+  ],
+  "reserved": "The polar outposts stay free as a set piece for a later fighter."
+}
