@@ -1,0 +1,14 @@
+{
+  "_note": "The catastrophe tier's sky (run-mode.md section 3.2; sim/core/cata.gd; docs/architecture/run-core.md section 6): the blast cloud's cue and the world's ash. Nothing reads this file until the catastrophe tier calls a blast cloud.",
+  "schema": "fight.catastrophe/1",
+  "ash": {
+    "perCloud": 600,
+    "riseTicks": 7200,
+    "max": 1000,
+    "_note": "in thousandths: each blast cloud raises the ash over the planet by perCloud, at most max, over riseTicks (at least 7,200: 120 s, Legal c05). No rule reads it: the views do"
+  },
+  "cloud": {
+    "radius": 3000.0,
+    "_note": "the cloud's size, the cue's amount (run-mode.md section 3.2: a blast of 3,000 units)"
+  }
+}

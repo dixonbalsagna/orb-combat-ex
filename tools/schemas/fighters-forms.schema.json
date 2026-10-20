@@ -149,40 +149,26 @@
       "type": "object",
       "required": [
         "minCoil",
-        "burst",
-        "surgeTicks",
-        "surge",
-        "armour",
-        "lastingPer",
-        "lastingMax"
+        "perPoint",
+        "maxMul"
       ],
       "properties": {
         "minCoil": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "the coil a release needs to make its form stronger"
         },
-        "burst": {
-          "type": "number"
-        },
-        "surgeTicks": {
-          "type": "integer",
-          "minimum": 0
-        },
-        "surge": {
+        "perPoint": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 0.1,
+          "description": "the form's step gains x (1 + coil x perPoint)"
         },
-        "armour": {
+        "maxMul": {
           "type": "number",
-          "minimum": 0
-        },
-        "lastingPer": {
-          "type": "number",
-          "minimum": 0
-        },
-        "lastingMax": {
-          "type": "number",
-          "minimum": 0
+          "minimum": 1,
+          "maximum": 4,
+          "description": "... at most this, for as long as he is in that form"
         }
       },
       "additionalProperties": false,

@@ -287899,179 +287899,67 @@
       }
     },
     {
-      "id": "fighters-forms-type-release-burst",
+      "id": "fighters-forms-type-release-perpoint",
       "schema": "fighters-forms.schema.json",
       "mutate": [
         {
           "file": "data/fighters/FIXTURE_HERO/forms.json",
           "set": {
-            "/release/burst": "x"
+            "/release/perPoint": "x"
           }
         }
       ],
       "expect": {
         "rule": "type",
-        "pointer": "/release/burst"
+        "pointer": "/release/perPoint"
       }
     },
     {
-      "id": "fighters-forms-type-release-surgeticks",
+      "id": "fighters-forms-negative-release-perpoint",
       "schema": "fighters-forms.schema.json",
       "mutate": [
         {
           "file": "data/fighters/FIXTURE_HERO/forms.json",
           "set": {
-            "/release/surgeTicks": "x"
-          }
-        }
-      ],
-      "expect": {
-        "rule": "type",
-        "pointer": "/release/surgeTicks"
-      }
-    },
-    {
-      "id": "fighters-forms-negative-release-surgeticks",
-      "schema": "fighters-forms.schema.json",
-      "mutate": [
-        {
-          "file": "data/fighters/FIXTURE_HERO/forms.json",
-          "set": {
-            "/release/surgeTicks": -1
+            "/release/perPoint": -1
           }
         }
       ],
       "expect": {
         "rule": "minimum",
-        "pointer": "/release/surgeTicks"
+        "pointer": "/release/perPoint"
       }
     },
     {
-      "id": "fighters-forms-type-release-surge",
+      "id": "fighters-forms-type-release-maxmul",
       "schema": "fighters-forms.schema.json",
       "mutate": [
         {
           "file": "data/fighters/FIXTURE_HERO/forms.json",
           "set": {
-            "/release/surge": "x"
+            "/release/maxMul": "x"
           }
         }
       ],
       "expect": {
         "rule": "type",
-        "pointer": "/release/surge"
+        "pointer": "/release/maxMul"
       }
     },
     {
-      "id": "fighters-forms-negative-release-surge",
+      "id": "fighters-forms-negative-release-maxmul",
       "schema": "fighters-forms.schema.json",
       "mutate": [
         {
           "file": "data/fighters/FIXTURE_HERO/forms.json",
           "set": {
-            "/release/surge": -1
+            "/release/maxMul": -1
           }
         }
       ],
       "expect": {
         "rule": "minimum",
-        "pointer": "/release/surge"
-      }
-    },
-    {
-      "id": "fighters-forms-type-release-armour",
-      "schema": "fighters-forms.schema.json",
-      "mutate": [
-        {
-          "file": "data/fighters/FIXTURE_HERO/forms.json",
-          "set": {
-            "/release/armour": "x"
-          }
-        }
-      ],
-      "expect": {
-        "rule": "type",
-        "pointer": "/release/armour"
-      }
-    },
-    {
-      "id": "fighters-forms-negative-release-armour",
-      "schema": "fighters-forms.schema.json",
-      "mutate": [
-        {
-          "file": "data/fighters/FIXTURE_HERO/forms.json",
-          "set": {
-            "/release/armour": -1
-          }
-        }
-      ],
-      "expect": {
-        "rule": "minimum",
-        "pointer": "/release/armour"
-      }
-    },
-    {
-      "id": "fighters-forms-type-release-lastingper",
-      "schema": "fighters-forms.schema.json",
-      "mutate": [
-        {
-          "file": "data/fighters/FIXTURE_HERO/forms.json",
-          "set": {
-            "/release/lastingPer": "x"
-          }
-        }
-      ],
-      "expect": {
-        "rule": "type",
-        "pointer": "/release/lastingPer"
-      }
-    },
-    {
-      "id": "fighters-forms-negative-release-lastingper",
-      "schema": "fighters-forms.schema.json",
-      "mutate": [
-        {
-          "file": "data/fighters/FIXTURE_HERO/forms.json",
-          "set": {
-            "/release/lastingPer": -1
-          }
-        }
-      ],
-      "expect": {
-        "rule": "minimum",
-        "pointer": "/release/lastingPer"
-      }
-    },
-    {
-      "id": "fighters-forms-type-release-lastingmax",
-      "schema": "fighters-forms.schema.json",
-      "mutate": [
-        {
-          "file": "data/fighters/FIXTURE_HERO/forms.json",
-          "set": {
-            "/release/lastingMax": "x"
-          }
-        }
-      ],
-      "expect": {
-        "rule": "type",
-        "pointer": "/release/lastingMax"
-      }
-    },
-    {
-      "id": "fighters-forms-negative-release-lastingmax",
-      "schema": "fighters-forms.schema.json",
-      "mutate": [
-        {
-          "file": "data/fighters/FIXTURE_HERO/forms.json",
-          "set": {
-            "/release/lastingMax": -1
-          }
-        }
-      ],
-      "expect": {
-        "rule": "minimum",
-        "pointer": "/release/lastingMax"
+        "pointer": "/release/maxMul"
       }
     },
     {
@@ -295623,6 +295511,269 @@
       "expect": {
         "rule": "maximum",
         "pointer": "/tremor/z/1"
+      }
+    },
+    {
+      "id": "fight-catastrophe-valid",
+      "schema": "fight-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/catastrophe.json",
+          "set": {
+            "/schema": "fight.catastrophe/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-catastrophe-required-schema",
+      "schema": "fight-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/catastrophe.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-catastrophe-extra-key",
+      "schema": "fight-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/catastrophe.json",
+          "set": {
+            "/flash": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/flash"
+      }
+    },
+    {
+      "id": "fight-catastrophe-rise-under-120s",
+      "schema": "fight-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/catastrophe.json",
+          "set": {
+            "/ash/riseTicks": 1200
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/ash/riseTicks"
+      }
+    },
+    {
+      "id": "fight-catastrophe-ash-over-max",
+      "schema": "fight-catastrophe.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/catastrophe.json",
+          "set": {
+            "/ash/max": 1500
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/ash/max"
+      }
+    },
+    {
+      "id": "fight-flight-valid",
+      "schema": "fight-flight.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/flight.json",
+          "set": {
+            "/schema": "fight.flight/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-flight-required-schema",
+      "schema": "fight-flight.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/flight.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-flight-extra-key",
+      "schema": "fight-flight.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/flight.json",
+          "set": {
+            "/speed": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/speed"
+      }
+    },
+    {
+      "id": "fight-flight-enabled-not-bool",
+      "schema": "fight-flight.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/flight.json",
+          "set": {
+            "/enabled": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "fight-flight-ramp-zero",
+      "schema": "fight-flight.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/flight.json",
+          "set": {
+            "/curve/ramp": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/curve/ramp"
+      }
+    },
+    {
+      "id": "fight-flight-glide-over-one",
+      "schema": "fight-flight.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/flight.json",
+          "set": {
+            "/curve/glide": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/curve/glide"
+      }
+    },
+    {
+      "id": "fight-hitstop-valid",
+      "schema": "fight-hitstop.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/hitstop.json",
+          "set": {
+            "/schema": "fight.hitstop/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-hitstop-required-schema",
+      "schema": "fight-hitstop.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/hitstop.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-hitstop-extra-key",
+      "schema": "fight-hitstop.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/hitstop.json",
+          "set": {
+            "/slowmo": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/slowmo"
+      }
+    },
+    {
+      "id": "fight-hitstop-heavy-negative",
+      "schema": "fight-hitstop.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/hitstop.json",
+          "set": {
+            "/ticks/heavy": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/ticks/heavy"
+      }
+    },
+    {
+      "id": "fight-hitstop-share-over-one",
+      "schema": "fight-hitstop.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/hitstop.json",
+          "set": {
+            "/budget/share": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/budget/share"
+      }
+    },
+    {
+      "id": "fight-hitstop-ticks-missing-ko",
+      "schema": "fight-hitstop.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/hitstop.json",
+          "del": [
+            "/ticks/ko"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/ticks"
       }
     }
   ],

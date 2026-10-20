@@ -32,12 +32,8 @@
   "_patience": "while he holds banked steps and the opponent's tier is above his, he takes perTier less damage a tier between them, at most max",
   "release": {
     "minCoil": 1.0,
-    "burst": 1.0,
-    "surgeTicks": 600,
-    "surge": 0.15,
-    "armour": 3,
-    "lastingPer": 0.005,
-    "lastingMax": 1.5
+    "perPoint": 0.01,
+    "maxMul": 2.0
   },
   "_release": "holding Transform takes every banked step at once. At a coil of c (minCoil or more: a step taken at once carries a sliver of coil, and adds nothing), by c / 100: a burst like a ground power-up at burst times its damage and its crater, with a push burst times wider and harder; for surgeTicks, speed and damage x (1 + surge); armour on his next armour blows (rounded); and for the rest of the match his step gains x (1 + c x lastingPer), at most lastingMax (the largest release so far)"
 }

@@ -3,8 +3,9 @@ extends RefCounted
 ## The Protagonist's five steps and the slingshot (Game Design, docs/design/hero-forms.md sections 4 and 4b; the core's
 ## side: docs/architecture/forms-core.md). A fighter whose data/fighters/<id>/forms.json names steps takes them at its
 ## powers: five modest all-round steps, his tier for the world stepping at three of them as everyone's does. A step that
-## comes ready while he waits is banked, and the coil fills while he holds; the release takes every banked step at once,
-## with a burst, a surge and a lasting gain. The hold and the release are told for every fighter (form_hold,
+## comes ready while he waits is banked, and the coil fills while he holds. A release takes the next step only, and the
+## coil makes that one form stronger (Game Design's working rule, 2026-10-18). The hold and the release are told for
+## every fighter (form_hold,
 ## form_release), for the waiting game's lines (docs/narrative/waiting-game-lines.md).
 ##
 ## The switch is data/fight/forms.json "enabled" (off), which SimCore.newMatch copies into S.formsOn unless the setup has
@@ -14,7 +15,7 @@ extends RefCounted
 const FILE: String = "forms.json"
 const KINDS: Array = ["live", "pausing"]
 ## The form state the gameplay hash reads, only while S.formsOn (hash.gd).
-const HASHED: Array = ["step", "ready", "coil", "coiling", "holdT", "held", "pend", "pendCoil", "surgeT", "surgeMul", "armour", "lasting", "witness", "trial", "branch", "crossed"]
+const HASHED: Array = ["step", "ready", "coil", "coiling", "holdT", "held", "pend", "pendCoil", "formMul", "witness", "trial", "branch", "crossed"]
 
 
 ## One fighter's steps and slingshot (his forms.json). Read-only after load.
@@ -32,13 +33,9 @@ class FormsDef:
 	var coilMax: float = 100.0
 	var patiencePerTier: float = 0.0   # less damage taken a tier below, while he holds banked steps
 	var patienceMax: float = 0.0
-	var minCoil: float = 0.0       # the release's extras need at least this much coil
-	var burst: float = 0.0         # the release's burst, at a full coil, as a share of a ground power-up's
-	var surgeTicks: int = 0        # the surge: its length, and its speed and damage at a full coil
-	var surge: float = 0.0
-	var armour: int = 0            # blows with armour at a full coil (rounded by the coil's share)
-	var lastingPer: float = 0.0    # the lasting gain: the step gains x (1 + coil x lastingPer), at most lastingMax
-	var lastingMax: float = 1.0
+	var minCoil: float = 0.0       # the coil a release needs to make its form stronger (a step taken at once has a sliver)
+	var perPoint: float = 0.0      # the form's step gains x (1 + coil x perPoint) ...
+	var maxMul: float = 1.0        # ... at most this, for as long as he is in it
 	# The branches (hero-forms.md section 3): the steps that pick one, the fills' sources and each branch's extras
 	var branchAt: Array = []      # the steps (1-based) at which a release picks a branch: II and IV
 	var wRange: float = 0.0       # Witness: an opponent's kill this near him (shortest arc) fills it ...
@@ -159,7 +156,7 @@ static func byPower(f) -> int:
 static func nextTier(S: SimState, f) -> float:
 	if not has(S, f):
 		return f.tier + 1.0
-	var k: int = mini(f.fd.steps.size(), f.form.step + maxi(1, f.form.ready))
+	var k: int = mini(f.fd.steps.size(), f.form.step + 1)   # one step a transformation
 	return float(f.fd.steps[k - 1].tier)
 
 
@@ -169,14 +166,9 @@ static func nextTier(S: SimState, f) -> float:
 ## power has reached and he has not taken are ready, and banked while he waits. The coil starts at the first break in
 ## the fight after a step came ready (canTake: the first moment it could have been taken and wasn't), so a step that
 ## comes ready mid-brawl coils nothing until then; from there it fills at coilPerSec a second, coilBehind times that
-## while the opponent's tier is above his. The surge runs down. Nothing comes ready while a taken release waits for its
-## break, as today.
+## while the opponent's tier is above his. Nothing comes ready while a taken release waits for its break, as today.
 static func readyTick(S: SimState, f, dt: float) -> void:
 	var fs = f.form
-	if fs.surgeT > 0:
-		fs.surgeT -= 1
-		if fs.surgeT == 0:
-			fs.surgeMul = 1.0
 	if SimRoster.opp(S, f).tier > f.tier:   # Trial: a second of fight time fought a tier down
 		fs.trial += f.fd.tPerSec * dt
 	if f.act.breakIn >= 0:
@@ -227,14 +219,15 @@ static func taken(S: SimState, f, amt: float, fam: String) -> float:
 	if f.form.ready > 0 and o.tier > f.tier:
 		m -= SimMathx.jmin(f.fd.patienceMax, f.fd.patiencePerTier * (o.tier - f.tier))
 	if fam == "guard":
-		m *= 1.0 - f.fd.gChip * float(f.form.step) * f.form.lasting
+		m *= 1.0 - f.fd.gChip * float(f.form.step) * f.form.formMul
 	return amt * m
 
 
 # ------------------------------------------------------------------------------------------------------------- the release
 
-## The release (SimFighter.transform, for a fighter with steps): he takes every ready step at once. They rise at the
-## break (rise), on this tick or at the end of the version's gather, with the coil he held. False if nothing was ready.
+## The release (SimFighter.transform, for a fighter with steps): one step a transformation. He takes the next step only,
+## and the steps still ready stay ready. It rises at the break (rise), on this tick or at the end of the version's
+## gather, with the coil he held. False if nothing was ready.
 static func take(S: SimState, f) -> bool:
 	if not f.act.formReady:
 		return false
@@ -244,11 +237,11 @@ static func take(S: SimState, f) -> bool:
 		f.act.breakIn = -1
 		fs.ready = 0
 		return false
-	fs.pend = fs.ready
+	fs.pend = 1
 	fs.pendCoil = fs.coil
-	var k: int = mini(f.fd.steps.size(), fs.step + fs.pend)
-	released(S, f, fs.pend, fs.coil, k, float(f.fd.steps[k - 1].tier))
-	fs.ready = 0
+	var k: int = fs.step + 1
+	released(S, f, 1, fs.coil, k, float(f.fd.steps[k - 1].tier))
+	fs.ready -= 1
 	if f.act.breakIn <= 0:
 		SimFighter.formBreak(S, f)
 	return true
@@ -262,10 +255,10 @@ static func released(S: SimState, f, n: int, coil: float, k: int, tier: float) -
 	f.form.held = 0
 
 
-## The break of a release (SimFighter.formBreak, for a fighter with steps): the taken steps rise. His tier for the world
-## follows the last one's (with today's power-up when it rises). A coil of minCoil or more adds, by its share of 100: a
-## burst like a ground power-up and a wider push, the surge, armour on his next blows, and a lasting gain on his steps
-## (the largest so far, at most lastingMax). The coil is spent. A further step already earned is ready at once.
+## The break of a release (SimFighter.formBreak, for a fighter with steps): the taken step rises. His tier for the
+## world follows it (with today's power-up when it rises). The coil makes this one form stronger: its step gains x
+## (1 + c x perPoint), at most maxMul, for as long as he is in it; under minCoil (a step taken at once) the form is plain.
+## The coil is spent. The steps still ready stay ready.
 static func rise(S: SimState, f) -> void:
 	var fs = f.form
 	var n: int = fs.pend
@@ -282,54 +275,24 @@ static func rise(S: SimState, f) -> void:
 	if t > f.tier:
 		f.tier = t
 		SimFighter.tierUp(S, f)
+	fs.formMul = SimMathx.jmin(f.fd.maxMul, 1.0 + c * f.fd.perPoint) if (c >= f.fd.minCoil and c > 0.0) else 1.0
 	SimFx.formStep(S, f, fs.step, String(s.kind), f.tier, c, fs.branch, cross)
 	fs.coil = 0.0
 	fs.coiling = false
-	var big: bool = c >= f.fd.minCoil and c > 0.0
-	if big:
-		var share: float = c / 100.0
-		_burst(S, f, share)
-		fs.surgeT = f.fd.surgeTicks
-		fs.surgeMul = 1.0 + f.fd.surge * share
-		fs.armour = int(SimMathx.jround(float(f.fd.armour) * share))
-		fs.lasting = SimMathx.jmin(f.fd.lastingMax, SimMathx.jmax(fs.lasting, 1.0 + c * f.fd.lastingPer))
 	var more: int = byPower(f) - fs.step
 	if more > 0:
 		fs.ready = more
 		f.act.formReady = true
 		SimFx.transformReady(S, f, nextTier(S, f), DirExchange.transformSource(f))
 	DirExchange.formBreak(S, f)   # the rival in reach is pushed back at the break, as at every step
-	if big:
-		_push(S, f, c / 100.0)
 
 
-## The release's burst: a ground power-up's (SimFighter.tierUp), at burst x share of its damage and its crater's energy,
-## near the ground; its ring and shake grow with it.
-static func _burst(S: SimState, f, share: float) -> void:
-	var k: float = f.fd.burst * share
-	var g: float = WorldTerrain.groundY(S, f.x, f.z)
-	SimFx.ring(S, f.x, f.y + 34.0, 1300.0 * (1.0 + k), f.aura, 0.8, 20.0, f.z)
-	SimFx.shake(S, 14.0 * (1.0 + k), f.x, f.z)
-	if f.y < g + 140.0 and k > 0.0:
-		WorldCrater.dig(S, f.x, WorldCrater.powerupEnergy(f.tier) * k, f, "powerup")
-		WorldStructures.damageArea(S, f.x, f.y, (f.ld.areaR + f.tier * f.ld.areaRPerTier) * SimConst.WS, (f.ld.areaDmg + f.tier * f.ld.areaDmgPerTier) * k, f)
-
-
-## The release's push: the transform's (DirExchange.formBreak) reaching and pushing (1 + burst x share) times as far.
-static func _push(S: SimState, f, share: float) -> void:
-	var k: float = 1.0 + f.fd.burst * share
-	var o = SimRoster.opp(S, f)
-	var d: float = SimWrap.sdx(f.x, o.x)
-	if absf(d) < DirExchange.TRANSFORM_PUSH_R * k and (o.state == "free" or o.state == "charging"):
-		o.vx = (1.0 if d >= 0.0 else -1.0) * DirExchange.TRANSFORM_PUSH * k
-
-
-## True when every ready step is a live one (SimPause.request: a live release never pauses the fight).
+## True when the next step is a live one (SimPause.request: a live release never pauses the fight).
 static func releaseLive(f) -> bool:
 	var fs = f.form
 	if fs.ready <= 0:
 		return false
-	for k in range(fs.step, mini(f.fd.steps.size(), fs.step + fs.ready)):
+	for k in range(fs.step, mini(f.fd.steps.size(), fs.step + 1)):   # one step a transformation: the next one
 		if String(f.fd.steps[k].kind) != "live":
 			return false
 	return true
@@ -355,27 +318,23 @@ static func holdTick(S: SimState, f) -> void:
 
 # ---------------------------------------------------------------------------------------------------------------- the gains
 
-## The step gains, with the lasting gain: 1 + g x steps x lasting.
+## The step gains, with the coil's factor on the form he is in: 1 + g x steps x formMul.
 static func _g(f, g: float) -> float:
-	return 1.0 + g * float(f.form.step) * f.form.lasting
-
-
-static func _surge(f) -> float:
-	return f.form.surgeMul if f.form.surgeT > 0 else 1.0
+	return 1.0 + g * float(f.form.step) * f.form.formMul
 
 
 ## Free-flight speed's tier factor (SimFighter.flightSpeed; the director's estimate of it). Without steps, today's.
 static func speedMul(S: SimState, f) -> float:
 	if not has(S, f):
 		return 1.0 + f.ld.speed * (f.tier - 1.0)
-	return _g(f, f.fd.gSpeed) * _surge(f) * (1.0 + (f.fd.tSpeed if f.form.branch == "trial" else 0.0))
+	return _g(f, f.fd.gSpeed) * (1.0 + (f.fd.tSpeed if f.form.branch == "trial" else 0.0))
 
 
 ## Damage's tier factor (SimDamage.hit). Without steps, today's.
 static func damageMul(S: SimState, f) -> float:
 	if not has(S, f):
 		return 1.0 + f.ld.damage * (f.tier - 1.0)
-	return _g(f, f.fd.gDamage) * _surge(f) * (1.0 + (f.fd.wDamage if f.form.branch == "witness" else 0.0))
+	return _g(f, f.fd.gDamage) * (1.0 + (f.fd.wDamage if f.form.branch == "witness" else 0.0))
 
 
 ## Launch force's tier factor (the director's launch planner and doLaunch). Without steps, today's.
@@ -394,18 +353,7 @@ static func regenMul(f) -> float:
 static func recoverAfter(S: SimState, f, t: float) -> float:
 	if not has(S, f):
 		return t
-	return t * SimMathx.jmax(0.0, 1.0 - f.fd.gRecover * float(f.form.step) * f.form.lasting)
-
-
-## Armour on his next blows after a release (the director spends it: a blow of his that lands with armour is not
-## interrupted). False without steps.
-static func armoured(S: SimState, f) -> bool:
-	return has(S, f) and f.form.armour > 0
-
-
-static func useArmour(S: SimState, f) -> void:
-	if armoured(S, f):
-		f.form.armour -= 1
+	return t * SimMathx.jmax(0.0, 1.0 - f.fd.gRecover * float(f.form.step) * f.form.formMul)
 
 
 # ----------------------------------------------------------------------------------------------------------- the branches
@@ -579,12 +527,8 @@ static func _def(id: String, j: Dictionary):
 	d.patiencePerTier = _num(w + ": patience.perTier", pa.get("perTier"), 0.0, 1.0)
 	d.patienceMax = _num(w + ": patience.max", pa.get("max"), 0.0, 0.9)
 	d.minCoil = _num(w + ": release.minCoil", r.get("minCoil"), 0.0, 100.0)
-	d.burst = _num(w + ": release.burst", r.get("burst"), 0.0, 4.0)
-	d.surgeTicks = _int(w + ": release.surgeTicks", r.get("surgeTicks"), 0)
-	d.surge = _num(w + ": release.surge", r.get("surge"), 0.0, 1.0)
-	d.armour = _int(w + ": release.armour", r.get("armour"), 0)
-	d.lastingPer = _num(w + ": release.lastingPer", r.get("lastingPer"), 0.0, 0.1)
-	d.lastingMax = _num(w + ": release.lastingMax", r.get("lastingMax"), 1.0, 3.0)
+	d.perPoint = _num(w + ": release.perPoint", r.get("perPoint"), 0.0, 0.1)
+	d.maxMul = _num(w + ": release.maxMul", r.get("maxMul"), 1.0, 4.0)
 	if not _branches(w, d, j.get("branches")):
 		return null
 	return d

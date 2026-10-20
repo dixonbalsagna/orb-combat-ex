@@ -42,6 +42,10 @@ var intro := IntroState.new()         # the intro phase (sim/core/intro.gd): the
 var depthOn: bool = false             # fight lanes: depth is physical (the director's depth.json switch, or the setup's "depth"); off until L4
 var brakeOn: bool = false             # the air brake (sim/core/brake.gd): data/fight/brake.json's switch, or the setup's "brake"; off
 var formsOn: bool = false             # forms (sim/core/forms.gd): the Protagonist's five steps and the slingshot (data/fight/forms.json, or the setup's "forms"); off
+var flightOn: bool = false            # the launch's curve (sim/core/flight.gd): data/fight/flight.json's switch, or the setup's "flight"; off
+var hitstopOn: bool = false           # hit-stop by weight (sim/core/hitstop.gd): data/fight/hitstop.json's switch, or the setup's "hitstop"; off
+var hs = null                         # ... its freeze budget: StopState while hitstopOn, null otherwise
+var cata = null                       # the catastrophe's state (sim/core/cata.gd): CataState from the first blast cloud, null before
 var out := Out.new()
 
 
@@ -443,6 +447,34 @@ class FxEvent:
 	var stop: int = 0             # damage (a hit): the hit-stop ticks in force after it, as SimCore.step spends them (Animation). Not hashed; interior_contact: the ticks held at the face (hashed there)
 
 
+## A launched fighter's curve while S.flightOn (sim/core/flight.gd): the send it paces, and where it is on the curve.
+class FlightState:
+	var n: int = 0             # the launch number of the send it paces (Fighter.launchN): a new one starts the curve
+	var t: int = 0             # live ticks of the send's first leg so far
+	var peak: float = 0.0      # the send's speed at the send (world units a second)
+	var on: bool = false       # the first leg is being paced (until a contact, a building, water or the brake)
+	var arr: int = -1          # the live tick the arrival's ramp started, or -1
+	var from: float = 0.0      # ... the curve's share it started from
+	var k: float = 1.0         # this tick's pace: his physics steps by dt x k
+
+
+## The hit-stop's freeze budget while S.hitstopOn (sim/core/hitstop.gd): frozen ticks by live second, for the last minute.
+class StopState:
+	var sec: Array = []        # frozen ticks in each of the last windowS live seconds (a ring)
+	var i: int = 0             # this second's bucket
+	var n: int = 0             # live ticks into this second
+	var sum: int = 0           # frozen ticks in the window
+
+
+## The catastrophe's state (sim/core/cata.gd; docs/architecture/run-core.md section 6): the ash so far. The tier-5
+## window adds the rest of the block (the phase, the tremor, the events' counts, the hazard wear, the magma).
+class CataState:
+	var ash: int = 0           # the ash over the planet, in thousandths: no rule reads it, the views do (SimCata.ash)
+	var ashFrom: int = 0       # ... the level the last cloud found
+	var ashTo: int = 0         # ... the level it rises to
+	var ashLeft: int = 0       # ... and the live ticks of its rise left
+
+
 ## A fighter's forms while S.formsOn (sim/core/forms.gd): his steps, the coil and the release, and the hold's signal.
 class FormState:
 	var step: int = 0          # steps taken (0 his base; his forms.json's count at the top)
@@ -453,10 +485,7 @@ class FormState:
 	var held: int = 0          # the ready steps the last form_hold told
 	var pend: int = 0          # the steps a taken release raises at its break
 	var pendCoil: float = 0.0  # ... and the coil it spends there
-	var surgeT: int = 0        # live ticks of a release's surge left
-	var surgeMul: float = 1.0  # ... its speed and damage factor
-	var armour: int = 0        # his next blows that land with armour (the director spends them)
-	var lasting: float = 1.0   # his step gains' lasting factor (the largest release so far)
+	var formMul: float = 1.0   # the coil's factor on his step gains in the form he is in (until his next step)
 	var witness: float = 0.0   # the Witness fill: his opponent's kills near him; his own take from it (hero-forms.md section 3)
 	var trial: float = 0.0     # the Trial fill: the opponent risen first, a deficit fought out, his commitments met, the coil
 	var branch: String = ""    # the branch of the form he is in: "", witness or trial
@@ -529,6 +558,7 @@ class Fighter:
 	var style = null                 # M1: StyleState (sim/core/mood.gd)
 	var brk = null                   # the air brake: BrakeState while S.brakeOn (sim/core/brake.gd), null otherwise
 	var form = null                  # forms: FormState while S.formsOn (sim/core/forms.gd), null otherwise
+	var flt = null                   # the launch's curve: FlightState while S.flightOn (sim/core/flight.gd), null otherwise
 	var fd = null                    # forms: his FormsDef while S.formsOn, when his data has steps; not hashed (data)
 	var wd = null                    # D1a: the fighter's FighterData.WoundsDef (data; covered by the data hash, not hashed here)
 	var md = null                    # D1b: its FighterData.MetersDef (the same)

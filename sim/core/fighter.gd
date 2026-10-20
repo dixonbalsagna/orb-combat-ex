@@ -82,6 +82,8 @@ static func impact(S: SimState, f, g: float, sp: float) -> void:
 ## Launched flight: gravity, air drag, water (with the skip), the aimed building (B2), the ground (slam or slide) and the
 ## ceiling. A fighter that is sliding is handled by WorldSlide.step.
 static func stepLaunched(S: SimState, f, dt: float) -> void:
+	if S.flightOn:
+		dt = SimFlight.pace(S, f, dt)   # the launch's curve: his first leg is paced along its path (sim/core/flight.gd)
 	f.stateT += dt
 	WorldBrunt.stepZ(S, f, dt)
 	if S.contactOn:   # ground contact (world/contact.gd): leave, land, bounce, skid, tumble
@@ -500,7 +502,7 @@ static func formBreak(S: SimState, f) -> void:
 ## (dash: he holds it; far from the rival it is the traversal dash) and the sea. The free branch of stepFighter steers his
 ## velocity toward the stick times this (the vertical toward 0.85 of it). One read for the director and the view.
 static func flightSpeed(S: SimState, f, dash: bool) -> float:
-	var sp: float = 430.0 * f.spd * SimForms.speedMul(S, f)   # the tier's step (with forms: his own steps and the surge)
+	var sp: float = 430.0 * f.spd * SimForms.speedMul(S, f)   # the tier's step (with forms: his own steps, by the coil's factor on his form)
 	if SimWounds.battered(f, SimWounds.LEGS):
 		sp *= f.wd.legsSpeed
 	if f.stance == 2.0:
@@ -552,7 +554,7 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 		if f.act.breakIn == 0:
 			formBreak(S, f)
 	if steps:
-		SimForms.readyTick(S, f, dt)   # his ready steps, banked while he waits; the coil; the surge
+		SimForms.readyTick(S, f, dt)   # his ready steps, banked while he waits; the coil
 	elif nt > f.tier and f.act.breakIn < 0:   # (not while a taken step waits for its break)
 		if f.ld.manualTierUp:
 			if not f.act.formReady: SimFx.transformReady(S, f, f.tier + 1.0, DirExchange.transformSource(f))   # I2b: the rising edge
@@ -655,6 +657,8 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 			spin(S, f, dt, SPIN_STOP)
 	elif f.state == "launched":
 		stepLaunched(S, f, dt)
+		if S.flightOn:
+			SimFlight.settle(S, f)   # a contact this tick ends the curve's leg, told now
 	elif f.state == "dropped":
 		# a drop (SimFighter.drop): he reads no stick and falls; the ground only stops him
 		var gd0: float = WorldTerrain.groundY(S, f.x, f.z)

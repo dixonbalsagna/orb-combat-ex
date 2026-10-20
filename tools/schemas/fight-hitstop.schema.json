@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/fight-hitstop",
+  "title": "fight-hitstop (schema \"fight.hitstop/1\")",
+  "description": "data/fight/hitstop.json: hit-stop by weight with a freeze budget (docs/architecture/feel-core.md; Game Design's rulings-2026-10-19b.md section 4). Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "enabled",
+    "ticks",
+    "mashFloor",
+    "budget"
+  ],
+  "properties": {
+    "schema": {
+      "const": "fight.hitstop/1"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "the one switch (off: nothing reads the rest)"
+    },
+    "ticks": {
+      "type": "object",
+      "required": [
+        "light_mash",
+        "light",
+        "medium",
+        "heavy",
+        "launch",
+        "launch_full",
+        "decisive",
+        "ko"
+      ],
+      "properties": {
+        "light_mash": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120,
+          "description": "a hit's stop in ticks"
+        },
+        "light": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120,
+          "description": "a hit's stop in ticks"
+        },
+        "medium": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120,
+          "description": "a hit's stop in ticks"
+        },
+        "heavy": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120,
+          "description": "a hit's stop in ticks"
+        },
+        "launch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120,
+          "description": "a hit's stop in ticks"
+        },
+        "launch_full": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120,
+          "description": "a hit's stop in ticks"
+        },
+        "decisive": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120,
+          "description": "a hit's stop in ticks"
+        },
+        "ko": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120,
+          "description": "a hit's stop in ticks"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "mashFloor": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 120,
+      "description": "a mashed light's stop over the budget"
+    },
+    "budget": {
+      "type": "object",
+      "required": [
+        "share",
+        "windowS"
+      ],
+      "properties": {
+        "share": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "the most of the window that may be frozen"
+        },
+        "windowS": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600,
+          "description": "the window, in live seconds"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

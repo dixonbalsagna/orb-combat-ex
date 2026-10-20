@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/fight-flight",
+  "title": "fight-flight (schema \"fight.flight/1\")",
+  "description": "data/fight/flight.json: a launch's flight on a curve (docs/architecture/feel-core.md; Game Design's fight-feel.md section 1). Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "enabled",
+    "curve",
+    "pace"
+  ],
+  "properties": {
+    "schema": {
+      "const": "fight.flight/1"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "the one switch (off: nothing reads the rest)"
+    },
+    "curve": {
+      "type": "object",
+      "required": [
+        "ramp",
+        "hold",
+        "easeTo",
+        "glide",
+        "arrive",
+        "arriveTicks"
+      ],
+      "properties": {
+        "ramp": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60,
+          "description": "ticks of the kick's ramp to the peak"
+        },
+        "hold": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60,
+          "description": "ticks at the peak"
+        },
+        "easeTo": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 600,
+          "description": "the tick the glide is reached"
+        },
+        "glide": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 1,
+          "description": "the glide's share of the peak"
+        },
+        "arrive": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 1.5,
+          "description": "the arrival's share of the peak"
+        },
+        "arriveTicks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 120,
+          "description": "ticks of the arrival's ramp, before his contact"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "pace": {
+      "type": "object",
+      "required": [
+        "kMin",
+        "kMax"
+      ],
+      "properties": {
+        "kMin": {
+          "type": "number",
+          "minimum": 0.01,
+          "maximum": 1,
+          "description": "the least his physics is slowed in a tick"
+        },
+        "kMax": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "the most his physics is sped up in a tick"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

@@ -170,6 +170,10 @@ static func dataHash(setup: Dictionary = {}) -> String:
 		h.text(SimDepth.dataHash())
 	if setup.get("brake", SimBrake.enabled()) == true:   # the air brake: data/fight/brake.json, only for a match with it on
 		h.text(SimBrake.dataHash())
+	if setup.get("flight", SimFlight.enabled()) == true:   # the launch's curve: data/fight/flight.json, only for a match with it on
+		h.text(SimFlight.dataHash())
+	if setup.get("hitstop", SimHitstop.enabled()) == true:   # hit-stop by weight: data/fight/hitstop.json, only for a match with it on
+		h.text(SimHitstop.dataHash())
 	if setup.get("forms", SimForms.enabled()) == true:   # forms: data/fight/forms.json and each fighter's forms.json, only for a match with them on
 		h.text(SimForms.dataHash())
 	h.text(WorldBrunt.dataHash())          # World's brunt ladder and lodge: data/biomes/brunt.json

@@ -216,6 +216,21 @@ static func airBrake(S: SimState, f, phase: String, why: String, speed: float, u
 	e.actor = float(S.fighters.find(f)); e.text = phase; e.kind = why; e.amount = speed; e.ux = ux; e.uy = uy
 
 
+## The launch's curve (sim/core/flight.gd), for the camera: text kick (the send's ramp begins; amount the peak), glide
+## (the cruise is reached), arrive (his contact is the arrival's ticks ahead) or end (the paced leg is over: kind
+## contact, brake or send); amount the speed he shows, n the launch number, t the live ticks since the send.
+static func flight(S: SimState, f, text: String, amount: float, t: int, why: String = "") -> void:
+	var e := _ev(S, "flight")
+	e.actor = float(S.fighters.find(f)); e.text = text; e.kind = why; e.amount = amount; e.n = int(f.launchN); e.t = float(t)
+
+
+## The catastrophe tier's blast cloud (sim/core/cata.gd): by f (or none), landing at x, y on tick n, amount its size.
+## VFX's cloud, Audio's hush before it and Camera read it; the ash it raises is SimCata.ash(S).
+static func blastCloud(S: SimState, f, x: float, y: float, amount: float, n: int) -> void:
+	var e := _ev(S, "blast_cloud")
+	e.actor = float(S.fighters.find(f)) if f != null else -1.0; e.x = x; e.y = y; e.amount = amount; e.n = n
+
+
 static func transformReady(S: SimState, f, tier: float, source: String) -> void:
 	var e := _ev(S, "transform_ready")
 	e.actor = float(S.fighters.find(f)); e.tier = tier; e.source = source

@@ -542,6 +542,18 @@
     {
       "match": "audio/data/carry_cues.json",
       "schema": "audio-carry-cues.schema.json"
+    },
+    {
+      "match": "data/fight/catastrophe.json",
+      "schema": "fight-catastrophe.schema.json"
+    },
+    {
+      "match": "data/fight/flight.json",
+      "schema": "fight-flight.schema.json"
+    },
+    {
+      "match": "data/fight/hitstop.json",
+      "schema": "fight-hitstop.schema.json"
     }
   ]
 }

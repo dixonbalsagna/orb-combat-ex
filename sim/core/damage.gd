@@ -46,7 +46,7 @@ static func hurt(S: SimState, f, amt: float, by, fam: String = "spread", kind: S
 static func hit(S: SimState, ex, A, D, dmg: float, o = null) -> float:
 	if o == null:
 		o = {}
-	var m: float = A.dmgMul * SimForms.damageMul(S, A)   # the tier's step (with forms: his own steps and the surge)
+	var m: float = A.dmgMul * SimForms.damageMul(S, A)   # the tier's step (with forms: his own steps, by the coil's factor on his form)
 	if A.hasMenace:
 		m *= 1.0 + A.md.menaceDmgCap * (A.menace / 100.0)
 	elif A.hasAnguish:
@@ -91,7 +91,7 @@ static func hit(S: SimState, ex, A, D, dmg: float, o = null) -> float:
 	D.power = SimMathx.jmin(100.0, D.power + dd * D.ld.taken)   # ladder.json takenPerDamage, dealtPerDamage: a hit feeds both ladders
 	A.power = SimMathx.jmin(100.0, A.power + dd * A.ld.dealt)
 	SimFx.spark(S, D.x, D.y + 34.0, 18 if o.get("big", false) else 9, "#fff3c0", 600.0, D.z)
-	S.dirS.stop = SimMathx.jmax(S.dirS.stop, jor(o.get("stop", 0.0), 0.05))
+	S.dirS.stop = SimMathx.jmax(S.dirS.stop, SimHitstop.forHit(S, o, jor(o.get("stop", 0.0), 0.05)) if S.hitstopOn else jor(o.get("stop", 0.0), 0.05))   # hit-stop by weight: the table's for o.weight
 	SimFx.shake(S, jor(o.get("shake", 0.0), 6.0), D.x, D.z)
 	var fam: String = SimWounds.family(ex, D, o, dStance)
 	var kind: String = o.get("kind", "") if o.get("kind", "") != "" else ("guard" if fam == "guard" else ("beam" if ex != null and ex.kind == "sig" else ("heavy" if ex != null and ex.kind == "heavy" else ("medium" if ex != null and ex.kind == "medium" else "light"))))
@@ -114,8 +114,11 @@ static func hit(S: SimState, ex, A, D, dmg: float, o = null) -> float:
 	var named: int = SimWounds.REGIONS.find(String(o.get("region", ""))) if fam != "guard" else -1
 	# The blow's weight, for the event: the exchange's kind, kept when the blow is guarded (the event's kind is then guard).
 	var weight: String = ex.kind if (ex != null and (ex.kind == "light" or ex.kind == "medium" or ex.kind == "heavy")) else ""
+	var st0: Array = D.stage.duplicate() if S.hitstopOn else []
 	var n0: int = S.out.fx.size()
 	var region: int = hurt(S, D, dd, A, fam, kind, "#ffd45a" if o.get("ignoreStance", false) else "#ffffff", true, form, block, named, weight)
+	if S.hitstopOn:
+		SimHitstop.afterHit(S, D, st0)   # a blow that breaks a region holds decisive
 	if n0 < S.out.fx.size() and S.out.fx[n0].type == "damage":   # view fields outside the hash (Animation): the hit-stop in force after this hit, and the hitter's tier
 		S.out.fx[n0].stop = SimFx.stopTicks(S.dirS.stop)
 		S.out.fx[n0].tier = A.tier
@@ -138,6 +141,8 @@ static func ko(S: SimState, D, A) -> void:
 	S.game.ko = D
 	S.game.koT = 0.0
 	S.game.ts = 0.35
+	if S.hitstopOn:
+		SimHitstop.hold(S, "ko")   # hit-stop by weight: the KO holds the cap
 	D.hp = 0.0
 	SimFx.banner(S, "K.O.  " + A.name + " WINS", "#ffd45a", 4.0)
 	SimFx.ko(S, A, D)

@@ -103,11 +103,16 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
 	S.dirS.sideT = 0
 	S.dirS.sideWay = 0
 	SimAct.setup(S, setup)   # I2a: each fighter's action state
+	S.cata = null   # no catastrophe yet (the tier-5 window sets it up from the stage's ceiling)
 	S.depthOn = setup.get("depth", SimDepth.enabled()) == true   # fighters in depth: the data's switch (data/combat/depth.json), or the setup's own for this match
 	S.brakeOn = setup.get("brake", SimBrake.enabled()) == true   # the air brake: the data's switch (data/fight/brake.json), or the setup's own for this match
 	SimBrake.setup(S)   # each fighter's brake state while the brake is on
 	S.formsOn = setup.get("forms", SimForms.enabled()) == true   # forms: the data's switch (data/fight/forms.json), or the setup's own for this match
 	SimForms.setup(S)   # each fighter's form state while forms are on, and his own steps when his data has them
+	S.flightOn = setup.get("flight", SimFlight.enabled()) == true   # the launch's curve: the data's switch (data/fight/flight.json), or the setup's own
+	SimFlight.setup(S)   # each fighter's flight state while the curve is on
+	S.hitstopOn = setup.get("hitstop", SimHitstop.enabled()) == true   # hit-stop by weight: the data's switch (data/fight/hitstop.json), or the setup's own
+	SimHitstop.setup(S)   # the freeze budget while it is on
 	WorldTerrain.initRows(S)   # T: the depth rows exist only when depth is on
 	SimPause.reset(S)        # Q10: the pause bank
 	SimShots.reset(S)        # no shots in flight
@@ -135,9 +140,13 @@ static func step(S: SimState, inputs = null) -> bool:
 		return false
 	if S.dirS.stop > 0.0:
 		S.dirS.stop -= dtReal
+		if S.hitstopOn:
+			SimHitstop.frozen(S)   # the freeze budget counts every frozen tick of a hit-stop
 		SimFx.tickMark(S, dt, true)
 		return false
 	S.T += dt
+	if S.hitstopOn:
+		SimHitstop.live(S)   # ... over the last minute of fight
 	SimPause.liveTick(S)   # Q10: the pause bank accrues on match time
 	if S.game.ko != null:
 		S.game.koT += dt
@@ -155,6 +164,8 @@ static func step(S: SimState, inputs = null) -> bool:
 	SimShots.step(S, dt)   # energy blasts in flight: they move, trade, and meet fighters and the ground
 	WorldWater.step(S)
 	SimMood.tick(S)   # M1: reads this tick's events; writes only its own state and events
+	if S.cata != null and S.cata.ashLeft > 0:
+		SimCata.tick(S)   # the catastrophe's ash rises (a blast cloud started it)
 	if S.formsOn:
 		SimForms.events(S)   # forms: the Trial fill reads this tick's events (the opponent's forms, his blows, the opponent's commitments)
 	WorldCollateral.tick(S)

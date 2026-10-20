@@ -96,6 +96,12 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 	_obj(out, S.mood, ["t", "sec", "v", "band", "cand", "candT", "act", "beats", "onceMask", "cause", "aggression", "crowd", "casGiven", "lastCombo", "breaks"])
 	_obj(out, S.pause, ["left", "kind", "version", "actor", "bank", "acc", "sinceEnd", "seen", "total", "count"])   # Q10
 	out.append(S.depthOn)   # fight lanes (L0)
+	if S.cata != null:   # the catastrophe's state: only once a blast cloud set it, so a match without one hashes as before
+		_obj(out, S.cata, ["ash", "ashFrom", "ashTo", "ashLeft"])
+	if S.hitstopOn:   # hit-stop by weight's freeze budget: only when on, so a match without it hashes as before
+		_obj(out, S.hs, ["i", "n", "sum"])
+		for v in S.hs.sec:
+			out.append(float(v))
 	_obj(out, S.intro, ["left", "t", "landed", "scenario", "first", "gap", "picks", "clock", "dug"])   # the intro phase
 	if g.clash != null:
 		out.append(_idx(fs, g.clash.A))
@@ -165,6 +171,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 			_obj(out, f.brk, SimBrake.HASHED)
 		if S.formsOn:   # forms: only when on, so a match without them hashes as before
 			_obj(out, f.form, SimForms.HASHED)
+		if S.flightOn:   # the launch's curve: only when on
+			_obj(out, f.flt, SimFlight.HASHED)
 		out.append(float(act.dirI.size())); for v in act.dirI: out.append(float(v))   # the director's per-fighter integers
 		out.append(float(act.queue.size()))
 		for rq in act.queue:
@@ -308,7 +316,7 @@ const FX_FIELDS: Dictionary = {
 	"shake": ["k", "x", "z"], "tick": ["dt", "frozen"],
 	"region_stage": ["actor", "region", "stage"], "rally": ["actor", "region", "kind"], "limb_break": ["actor", "victim", "region"], "region_broken": ["actor", "region"], "brink_enter": ["actor"], "brink_exit": ["actor"], "brink_open": ["actor", "target", "kind", "text"], "brink_close": ["actor", "kind"],
 	"mood_band": ["kind", "amount", "n"], "act_change": ["n", "kind"], "style_label": ["actor", "kind", "text"], "crowd_state": ["kind"], "building_hit": ["actor", "x", "n", "b", "y", "z", "amount", "ratio", "outcome", "link", "spd", "keep", "ux", "uy", "kind", "w", "h", "owner", "victim"],
-	"tier_up": ["actor", "tier", "onGround"], "transform_ready": ["actor", "tier", "source"], "air_brake": ["actor", "text", "kind", "amount", "ux", "uy"], "form_hold": ["actor", "n", "dur", "amount"], "form_release": ["actor", "n", "amount", "dur", "k", "tier"], "form_step": ["actor", "k", "kind", "tier", "amount", "text", "source"], "transform": ["actor", "tier", "source", "dur", "version", "gather"], "beam_outcome": ["actor", "target", "kind"], "pause_start": ["kind", "actor", "version", "dur"], "pause_end": ["kind"], "knockback": ["victim", "attacker", "kind", "amount", "dur", "n", "x", "y", "z"], "exchange_end": ["actor", "kind"], "flow": ["actor", "n"],
+	"tier_up": ["actor", "tier", "onGround"], "transform_ready": ["actor", "tier", "source"], "blast_cloud": ["actor", "x", "y", "amount", "n"], "flight": ["actor", "text", "kind", "amount", "n", "t"], "air_brake": ["actor", "text", "kind", "amount", "ux", "uy"], "form_hold": ["actor", "n", "dur", "amount"], "form_release": ["actor", "n", "amount", "dur", "k", "tier"], "form_step": ["actor", "k", "kind", "tier", "amount", "text", "source"], "transform": ["actor", "tier", "source", "dur", "version", "gather"], "beam_outcome": ["actor", "target", "kind"], "pause_start": ["kind", "actor", "version", "dur"], "pause_end": ["kind"], "knockback": ["victim", "attacker", "kind", "amount", "dur", "n", "x", "y", "z"], "exchange_end": ["actor", "kind"], "flow": ["actor", "n"],
 	"embed": ["actor", "x", "y", "z", "depth", "r", "energy", "dur", "n"], "shot_fire": ["actor", "kind", "id", "x", "y", "z", "target", "spd", "amount", "link", "ux", "uy"], "shot_hit": ["actor", "victim", "kind", "id", "x", "y", "z", "amount", "outcome", "link"],
 	"shot_clash": ["id", "b", "x", "y", "z", "amount"], "shot_deflect": ["id", "actor", "kind", "x", "y", "z", "x1", "y1", "dur"], "mine_trip": ["id", "actor", "kind", "x", "y", "z", "dur"], "shot_end": ["id", "kind", "x", "y", "z", "cause"], "last_stand_ready": ["actor", "dur"], "last_stand_end": ["actor", "kind"], "intro_start": ["dur", "delay", "kind", "actor", "n", "text"], "intro_beat": ["actor", "kind", "dur"], "intro_line": ["actor", "kind", "variant", "stance", "angle", "event", "p"], "intro_gesture": ["actor", "kind", "text"], "entrance_fall": ["actor", "x", "y", "z", "y1", "dur", "mode"], "entrance_land": ["actor", "x", "y", "z", "y1", "r"], "staredown_start": ["dur"], "clock_start": ["kind"], "hide_start": ["actor", "cover"], "found": ["actor"], "ko": ["winner", "loser"],
 	"decisive": ["winner", "loser", "kind"], "finisher_start": ["actor", "target", "dur"], "finisher_contest": ["target", "chance", "survived"],

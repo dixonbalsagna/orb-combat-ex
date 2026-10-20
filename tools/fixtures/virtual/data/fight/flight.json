@@ -1,0 +1,20 @@
+{
+  "_note": "A launch's flight on a curve (Game Design's fight-feel.md section 1; rulings-2026-10-19.md 1, 19b 4d; sim/core/flight.gd; docs/architecture/feel-core.md). The curve paces the body along the path its launch gave it: where it goes and lands are unchanged, only how fast he travels along it.",
+  "schema": "fight.flight/1",
+  "enabled": false,
+  "_enabled": "the one switch. SimCore.newMatch copies it into S.flightOn unless the match's setup has its own \"flight\". Off: no flight state, no flight cue, and this file is not read into a replay",
+  "curve": {
+    "ramp": 5,
+    "hold": 3,
+    "easeTo": 30,
+    "glide": 0.4,
+    "arrive": 0.6,
+    "arriveTicks": 10,
+    "_note": "live ticks after the send, and shares of the send's peak speed: the kick ramps from 0 to the peak over ramp ticks and holds it for hold; the glide eases to glide of the peak by easeTo, then holds; arrivals ramp to arrive of the peak over the last arriveTicks before his contact"
+  },
+  "pace": {
+    "kMin": 0.05,
+    "kMax": 3.0,
+    "_note": "the most and the least his physics may be sped up or slowed in a tick to show the curve: near the top of a steep send he slows into the apex rather than leaping through it"
+  }
+}

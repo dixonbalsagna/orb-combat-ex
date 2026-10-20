@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/fight-catastrophe",
+  "title": "fight-catastrophe (schema \"fight.catastrophe/1\")",
+  "description": "data/fight/catastrophe.json: the catastrophe tier's sky, the blast cloud's cue and the world's ash (docs/architecture/run-core.md section 6; sim/core/cata.gd). Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "ash",
+    "cloud"
+  ],
+  "properties": {
+    "schema": {
+      "const": "fight.catastrophe/1"
+    },
+    "ash": {
+      "type": "object",
+      "required": [
+        "perCloud",
+        "riseTicks",
+        "max"
+      ],
+      "properties": {
+        "perCloud": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000,
+          "description": "thousandths of ash each blast cloud adds"
+        },
+        "riseTicks": {
+          "type": "integer",
+          "minimum": 7200,
+          "description": "the ticks of its rise: 120 s or more (Legal c05)"
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000,
+          "description": "the ash's cap, in thousandths"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "cloud": {
+      "type": "object",
+      "required": [
+        "radius"
+      ],
+      "properties": {
+        "radius": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100000,
+          "description": "the cloud's size, the cue's amount"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}
