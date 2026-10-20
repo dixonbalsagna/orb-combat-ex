@@ -254,6 +254,12 @@ const MERGED_LEAD_V1: float = 1200.0
 const MERGED_LEAD_TAU: float = 0.35
 const MERGED_LEAD_KEEP: float = 0.80
 const BLOW_DOWN: float = 0.25
+# The launch curve's arrival (docs/camera/director.md step 4b, Simulation's `flight` cue): from `arrive` (the contact about 10 ticks
+# ahead) the chased body's pane widens by ARR_WIDE to take in where he lands, holds it ARR_HOLD past the contact, and lets go over ARR_OUT.
+const ARR_WIDE: float = 0.15
+const ARR_IN: float = 0.15
+const ARR_HOLD: float = 0.45
+const ARR_OUT: float = 0.35
 const HIT_PUSH: float = 0.06           # zoom push on the first building hit; later links push less
 const HIT_PUSH_LATER: float = 0.03
 const LOW_AIR_DEAD: float = 112.0       # a launched body this near the ground (1.5 body heights) is not followed up; 0 turns it off
