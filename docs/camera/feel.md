@@ -32,6 +32,16 @@ Tried and dropped: tightening 2.5 times slower than widening (fewer zoom reversa
 
 Gates on the patch over 10267f51: split sweep, seam sweep, pane check, determinism plain and --intro: pass. Clips: homework/camera/4-lead-the-motion/ (left step 3, right step 4: a rush in the city, an AI match).
 
+## Step 5: the struggle framed on the losing side (parked: docs/camera/pending/feel-4-brink.patch)
+
+The struggle framing (built earlier, off) barely moved the picture: it kept both fighters inside 0.42 of the width, and in a beam clash they stand a screen apart. It also never ran on main: it read Encounter's tug of war (`Clash.mid`), which is not on, so a clash had no meeting point for it.
+
+- **The meeting point.** With no tug of war the camera reads the clash's own glide (the point `sim.gd` draws the spark at: from the middle toward the side that loses, decided at the clash's start), so the framing runs on every clash.
+- **The brink.** As the meeting point is pushed toward one fighter (lean 0.2 to 0.6, about the clash's second third), the one view frames the meeting point and the fighter about to lose, filling 0.6 of the width; the winner goes off his edge, and his beam comes in from it. The one view holds through it (no split for the winner, held 0.3 s past the brink while the view widens back), every move eased.
+- Switches: `struggle_framing` now on, `struggle_brink` on; `CamParams.STRUGGLE_BRINK_*`.
+- The sweep's `beam struggle framing on` row now checks the brink: the losing fighter never off the screen, the brink seen, the lean at most half the pair's distance; the per-frame out-of-pane watch skips the brink's winner.
+- Gates on the patch over 257a766c: split sweep, seam sweep, pane check, determinism plain and --intro: pass. Clips: homework/camera/5-beam-struggle/ (left step 4, right step 5, two clashes).
+
 ## Next
 
-5. The beam struggle's framing (built, behind its switch): a clip for Orb, then on.
+The director paper: docs/camera/director.md.
