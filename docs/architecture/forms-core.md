@@ -1,6 +1,8 @@
 # Forms in the core: the Protagonist's five steps and the slingshot
 
-Owner: Simulation and Engine. 2026-10-17 (the coil re-ruled the same day, edd7dcd8). The core's build of Game Design's `docs/design/hero-forms.md` sections 4 and 4b, with the hold and release signals Narrative asked for (`docs/narrative/waiting-game-lines.md`). **Built and proved in scratch, parked at `pending/forms/`; nothing is in the tree.** Behind one data switch that is off: with it off, every match, replay and checkpoint is the same to the bit.
+Owner: Simulation and Engine. 2026-10-17 (the coil re-ruled the same day, edd7dcd8). The core's build of Game Design's `docs/design/hero-forms.md` sections 4 and 4b, with the hold and release signals Narrative asked for (`docs/narrative/waiting-game-lines.md`). **Applied in 8f157894 (2026-10-17), and the branches (section 7) in 421134e0.** Behind one data switch that is off: with it off, every match, replay and checkpoint is the same to the bit.
+
+**The working rule of 2026-10-18 (section 8) is built and parked at `pending/forms3/`.** It replaces the banking release and the release's extras in section 2: one step a transformation, and the coil makes that one form stronger.
 
 ## 1. What it is
 
@@ -69,21 +71,21 @@ Owner: Simulation and Engine. 2026-10-17 (the coil re-ruled the same day, edd7dc
 - The rival's hold and one-step take are told.
 - A forms match of 3,000 ticks replays, and carries the forms data.
 
-**Results:** in `pending/forms/README.md`.
+**Results:** every check passed on the applied commit (8f157894).
 
 ## 6. Not in this window
 
 | What | Whose |
 | :--- | :--- |
-| Witness and Trial (section 7) | Built and parked at `pending/forms-branches/`, with World's two lines |
-| The director's four lines: the transform event's tier, the speed estimate and the launch planner's two tier factors | Encounter granted them (`pending/forms/grant_encounter.py`, applied after `forms.py`) |
+| Witness and Trial (section 7) | Applied in 421134e0, with World's two lines |
+| The director's four lines: the transform event's tier, the speed estimate and the launch planner's two tier factors | Encounter granted them, applied with 8f157894 |
 | The AI's holds (up to 10 s at medium while its rival is above it; up to 30 s at hard while its coil is under 60) | Encounter |
 | Spending the armour on a blow that lands (`SimForms.armoured`, `useArmour`) | Encounter |
 | A launch's recovery: the core's water path reads his gain. The ground-contact journey's and the planner's prediction (`predictFlight` reads no fighter) do not | World, Encounter |
 | The schemas for the two files | Tools |
 | The HUD's fills and the form names; the looks; the release's showpiece | UI, Narrative, Art, Animation, VFX |
 
-## 7. The branches: Witness and Trial (parked at `pending/forms-branches/`)
+## 7. The branches: Witness and Trial (applied in 421134e0)
 
 The second window: Game Design's section 3 and section 4's pick. Behind the same switch, so with forms off nothing moves.
 
@@ -98,7 +100,7 @@ The second window: Game Design's section 3 and section 4's pick. Behind the same
 | **A Trial form:** speed +4%; the perfect-block window 1 tick wider at II and 2 at IV; perfect follow-ups worth 1 more | Speed on `speedMul`. The window and the follow-up are the director's: `SimForms.blockWiden` and `followBonus` return them, and Encounter reads them |
 | **A cross** at IV is a story | `form_step` carries the branch (`text`) and `source` cross |
 
-**My readings, for Game Design to confirm:**
+**My readings, confirmed by Game Design (fda9b426).** Under the working rule (section 8) a release is one step, so the first is moot:
 - **A release picks once.** It is one transformation, so a slingshot from base to IV takes one branch for both II and IV, and empties one fill.
 - **The extras belong to the form he is in, and don't stack** between II and IV: a Witness form gives +4% damage at II, at III and at IV. The block window is the one that grows: 1 tick at II's level, 2 at IV's.
 - **V picks nothing and empties nothing.** It wears the branch he came by, and keeps that branch's extras.
@@ -106,8 +108,32 @@ The second window: Game Design's section 3 and section 4's pick. Behind the same
 - **"His tier is no higher"** compares his tier with the opponent's before the opponent's rise.
 - **The fills have no cap.**
 
-**In play** (`pending/forms-branches/probe/branches_probe.gd`, 12 AI matches of 14,400 ticks, the Protagonist against the rival):
+**In play** (a scratch probe, 12 AI matches of 14,400 ticks, the Protagonist against the rival, at `perPerson` 1):
 - **Trial is taken in all 12. Witness is taken in none, and nothing crosses.**
 - When the picks came, Witness's fill was 0 to 6, and Trial's 4 to 16.
 - Each person the rival kills near the hero is worth 0.24 at an arena of 1,800 people, and the hero's AI leads the fight away from people. Trial meanwhile takes 5 for every commitment and 15 or 25 for every form the rival takes.
 - **Game Design's row** (each branch taken in at least 25% of matches) **fails by its numbers, not by the build.** It needs Witness's `perPerson` about four times higher, or Trial's `commit` and `opponentForm` lower: theirs to rule. Each match played the same twice.
+- **Game Design ruled `perPerson` 4** (fda9b426). It is in the working rule's park (section 8).
+
+## 8. The working rule: the next single form is stronger (parked at `pending/forms3/`)
+
+Game Design's rulings of 2026-10-18 (`rulings-2026-10-18b.md` item 2), the working rule until Narrative's lore paper. Behind the same switch, so with forms off nothing moves.
+
+| Rule (Game Design's) | As built |
+| :--- | :--- |
+| **One step a transformation:** a release takes only the next step, and the steps still ready stay ready | `SimForms.take` takes one step (`form_release` has `n` 1), and `form.ready` keeps the rest. He stays `formReady` while any is ready. A release is live when the next step is live |
+| **The coil makes that one form stronger:** its step gains × (1 + c/100), at most × 2, for as long as he is in it | `FormState.formMul`, set at the break from the coil spent: 1 + c × `perPoint` (0.01), at most `maxMul` (2), from a coil of `minCoil` (1) up; 1 below it. Every step gain reads it (speed, damage, launch force, ki regen, the guarded hit, the recovery). His next step sets it again, from that step's coil |
+| **The coil, patience and Trial's road stay as ruled** | Unchanged |
+| **Withdrawn:** the jump of several steps, the burst, the 10 s surge and its armour, the lasting gain | Removed from the module, the state and the data. `FormState` loses `surgeT`, `surgeMul`, `armour` and `lasting`. `SimForms.armoured` and `useArmour` are gone; no director code called them |
+| **Witness `perPerson` 4** | In the Protagonist's file |
+
+**My readings, for Game Design to confirm:**
+- **"For as long as he is in it"** ends at his next step, which sets its own factor from its own coil. A step taken at once carries a sliver of coil (under `minCoil`), so it is plain.
+- **The factor multiplies the step gains** (`gain × steps × formMul`), as the lasting gain did. It does not touch a branch's extras.
+- **A release spends the whole coil,** even with more steps ready behind it. Those steps start a new coil at the next break, as any ready step does.
+
+**In the core:** `forms.gd`, `state.gd`, the Protagonist's `forms.json`, the two forms checks in `tools/parity.gd`, and `form_release`'s row in `fx-events.md`. Tools' schema for the release block, the self-test's fixture hero and its release cases are `pending/forms3/grant_tools.py`, in the same commit. Three comments in `damage.gd` and `fighter.gd` that named the surge are corrected.
+
+**The checks:** the release takes step I alone with four still ready, sends a `form_release` of 1 with the coil and no `tier_up`, and sets the form's factor from the coil; the next step taken at once is plain; a full coil's form is × 2 and no more. With I and II ready the release is live (I alone), and after it II is not. The branches' picks happen one step at a time: a release from base at 65 takes I and picks nothing, and the next, at II, picks.
+
+**Results:** in `pending/forms3/README.md`.

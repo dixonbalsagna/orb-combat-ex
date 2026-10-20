@@ -2,11 +2,21 @@
 
 Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator, the sim or Godot (`docs/` is hidden from Godot). It holds slices that are built and proven in a scratch copy and wait for the sim slot.
 
-**A parked build:** `forms-branches/`: the forms' second window, Witness and Trial (Game Design's `hero-forms.md` section 3 and the pick), behind the forms switch; with World's two lines (`grant_world.py`) and Tools' schema lines (`grant_tools.py`, same commit). No golden moves. Its page is `../forms-core.md` section 7.
+**A parked build:** `feel/`: the launch's curve (the kick's ramp, the peak, the glide at 0.4, the arrival's rise; the `flight` cue for the camera) and hit-stop by weight with its freeze budget, behind two switches (`data/fight/flight.json`, `hitstop.json`). No golden moves. Its page is `../feel-core.md`.
 
-**A parked build:** `brake/`: the air brake (Game Design's `buildings.md` section 7.2) and Animation's `air_brake` event, behind `data/fight/brake.json` (off); with World's one function as `grant_world.py`. No golden moves. Its page is `../brake-core.md`.
+**A parked build:** `forms3/`: the forms' working rule of 2026-10-18 (one step a transformation, the coil on that one form; the burst, the surge, its armour and the lasting gain withdrawn) and Witness's `perPerson` 4, behind the forms switch; with Tools' schema, fixture hero and cases (`grant_tools.py`, same commit). No golden moves. Its page is `../forms-core.md` section 8.
 
-**A parked build:** `forms/`: the Protagonist's five steps and the slingshot (Game Design's `hero-forms.md` sections 4 and 4b), with the hold and release signals for the waiting game, behind `data/fight/forms.json` (off); with Encounter's four director lines as `grant_encounter.py`. No golden moves. Its page is `../forms-core.md`.
+**A parked build:** `brake2/`: the air brake's second window (air sense 10% a mark, the window from the launcher's power, a flight's end clears it, and Controls' `brake_ready` as an `air_brake` ready), behind the brake switch; with World's two reset lines (`grant_world.py`), Encounter's marks line (`grant_encounter.py`) and Audio's one line (`grant_audio.py`), same commit. No golden moves. Its page is `../brake-core.md` section 5.
+
+**A parked build:** `boons/`: the run's three rare boons (Born ready, Second skin, the borrowed form), run-only: a setup names them, and versus never does. No golden moves. Its page is `../boons-core.md`.
+
+**A parked build:** `cata/`: VFX's blast cloud cue (`blast_cloud`: x, y, amount, n) and the world's ash (`S.cata`, read-only for the views through `SimCata.ash`), which nothing calls until the catastrophe tier is built. No golden moves. Its page is `../run-core.md` section 6.
+
+**Tools' schemas for the new files of `data/fight/`** (boons, catastrophe, flight, hitstop) are one grant, `grant_tools_fight.py`: run it after any of those parks; it writes only what is missing.
+
+Each applies alone on f91ad3c9, and the five together in the order forms3, brake2, boons, cata, feel.
+
+The forms (`forms/`) were applied in 8f157894 (2026-10-17) with Encounter's four lines, their branches (`forms-branches/`) in 421134e0, and the air brake (`brake/`) in 167a10a2 (2026-10-18) with World's `brakeEnd`; their scripts are deleted. The pages are `../forms-core.md` and `../brake-core.md`.
 
 Animation's view fields (`anim-events/`: a launch's tier; a hit's hit-stop ticks and the hitter's tier, outside the hash) were applied in 97a7cf73 (2026-10-17), and the scripts are deleted; the fields are in `../fx-events.md`.
 

@@ -1,0 +1,29 @@
+	var c: float = p.form.coil
+	B.out.fx.clear()
+	# one step a transformation: the release takes step I only, and the four others stay ready
+	if not SimFighter.transform(B, p) or p.form.step != 1 or p.tier != 1.0 or not p.act.formReady or p.form.ready != 4:
+		return "a release took step %d at tier %s with %d still ready (want step 1, 4 ready)" % [p.form.step, str(p.tier), p.form.ready]
+	var rel = null
+	var stepE = null
+	var ups: int = 0
+	for e in B.out.fx:
+		if e.type == "form_release":
+			rel = e
+		elif e.type == "form_step":
+			stepE = e
+		elif e.type == "tier_up":
+			ups += 1
+	if rel == null or int(rel.n) != 1 or rel.amount != c or int(rel.k) != 1 or rel.tier != 1.0 or ups != 0 or stepE == null or stepE.amount != c or int(stepE.k) != 1:
+		return "the release's events: a form_release of 1 with the coil, a form_step at 1, and no tier_up"
+	var fm: float = SimMathx.jmin(p.fd.maxMul, 1.0 + c * p.fd.perPoint)
+	if p.form.coil != 0.0 or p.form.coiling or p.form.formMul != fm or fm <= 1.0:
+		return "the coil not spent, or the form's factor %s (want %s at a coil of %s)" % [str(p.form.formMul), str(fm), str(c)]
+	if SimForms.speedMul(B, p) != (1.0 + p.fd.gSpeed * 1.0 * fm) * (1.0 + (p.fd.tSpeed if p.form.branch == "trial" else 0.0)):
+		return "the coiled form's speed"
+	# the next step at once: no coil, so that form is plain
+	if not SimFighter.transform(B, p) or p.form.step != 2 or p.form.formMul != 1.0:
+		return "the next release at once: step %d, factor %s (want 2 and 1)" % [p.form.step, str(p.form.formMul)]
+	# a full coil makes the next form twice as strong, and no more
+	p.form.coil = p.fd.coilMax
+	if not SimFighter.transform(B, p) or p.form.step != 3 or p.form.formMul != p.fd.maxMul:
+		return "a full coil's form: factor %s (want %s)" % [str(p.form.formMul), str(p.fd.maxMul)]

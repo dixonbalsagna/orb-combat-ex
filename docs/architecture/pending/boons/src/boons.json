@@ -1,0 +1,16 @@
+{
+  "_note": "The run's rare boons (Game Design, docs/design/rulings-2026-10-18b.md section 4; sim/core/boons.gd; docs/architecture/boons-core.md). Run-only: a match's setup names them, and versus never does. A draft for Orb to react to in play; Narrative names them.",
+  "schema": "fight.boons/1",
+  "born_ready": {
+    "steps": 1,
+    "_steps": "every fight starts this many forms above base (step I for a fighter with steps of his own, the tier-2 form for anyone else), with power at that form's floor. It can't be coiled, since he is never in base"
+  },
+  "second_skin": {
+    "steps": 2,
+    "_steps": "one form higher still (II; tier 3). An opponent with a Trial fill fills it at once, since he starts below. Offered only when born_ready was taken (the run's rule)"
+  },
+  "borrowed": {
+    "firstBreakSooner": 0.25,
+    "_firstBreakSooner": "the temptation: every fight starts at his highest form, and his first broken region comes this share sooner (his wear runs 1 / (1 - share) as fast until a region breaks)"
+  }
+}

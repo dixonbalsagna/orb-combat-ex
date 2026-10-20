@@ -1,0 +1,23 @@
+{
+  "_note": "Hit-stop by weight, with a freeze budget (Game Design's rulings-2026-10-19b.md 4a and 4b, fight-feel.md section 6; sim/core/hitstop.gd; docs/architecture/feel-core.md).",
+  "schema": "fight.hitstop/1",
+  "enabled": false,
+  "_enabled": "the one switch. SimCore.newMatch copies it into S.hitstopOn unless the match's setup has its own \"hitstop\". Off: every hit holds the clock as today, no budget state, and this file is not read into a replay",
+  "ticks": {
+    "light_mash": 3,
+    "light": 4,
+    "medium": 7,
+    "heavy": 10,
+    "launch": 14,
+    "launch_full": 16,
+    "decisive": 24,
+    "ko": 30,
+    "_note": "a hit's stop in ticks by the weight it names (o.weight). A mashed or burst light 2 to 3 (3, and mashFloor over the budget); a launch or a close 14, a full launch 16; decisive: a finisher's last, a duel of perfects' send, a blow that breaks a region (the core's); ko: the hit that ends the match, the cap"
+  },
+  "mashFloor": 2,
+  "budget": {
+    "share": 0.12,
+    "windowS": 60,
+    "_note": "the frozen time of the last windowS live seconds is at most share of it (12% of a minute: 432 ticks). Over it, a mashed light holds mashFloor"
+  }
+}
