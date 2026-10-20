@@ -1013,7 +1013,7 @@ func _setup_environment() -> void:
 		"sky_tan": tan(deg_to_rad(RenderLook.FOV_DEG) * 0.5), "sky_lower_at": RenderLook.SKY_LOWER_AT,
 		"sky_upper_at": RenderLook.SKY_UPPER_AT, "sky_top_at": RenderLook.SKY_TOP_AT, "sky_thin": RenderLook.SKY_THIN,
 		"haze_at": RenderLook.HAZE_AT, "haze_mix": RenderLook.HAZE_MIX, "haze_line": RenderLook.HAZE_LINE, "haze_sea": RenderLook.HAZE_SEA,
-		"haze_value": RenderLook.HAZE_VALUE, "haze_sat": RenderLook.HAZE_SAT,
+		"haze_value": RenderLook.HAZE_VALUE, "haze_sat": RenderLook.HAZE_SAT, "haze_sky": RenderLook.HAZE_SKY,
 	}
 	SkyDrive.ensure()
 	_sky_mat.set_shader_parameter("glow_col", SkyDrive.ember)

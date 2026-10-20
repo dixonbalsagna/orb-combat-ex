@@ -19,6 +19,7 @@ uniform vec3 haze_mix = vec3(0.2, 0.45, 0.8);                    // RenderLook.H
 uniform vec2 haze_line = vec2(0.04, 0.5);                        // RenderLook.HAZE_LINE: the glow at the horizon line
 uniform float haze_sea = 0.9;                                    // RenderLook.HAZE_SEA: the sea's haze, of the horizon band's value
 uniform float haze_value = 0.6;                                  // RenderLook.HAZE_VALUE: the ground's haze, of the horizon band's value
+uniform float haze_sky = 0.0;                                    // RenderLook.HAZE_SKY: the far field's haze, toward the sky in its direction
 uniform float haze_sat = 0.7;                                    // RenderLook.HAZE_SAT: ... and of its saturation
 
 // Height above the horizon in half-screen heights, thinned with altitude, for the tan of an elevation q.
@@ -68,5 +69,7 @@ vec3 haze_ground(vec3 c, vec3 view, float depth, float far) {
 	vec2 h = haze_parts(view, depth, far);
 	vec3 band = sky_horizon.rgb;
 	vec3 toward = mix(vec3(dot(band, vec3(0.2126, 0.7152, 0.0722))), band, haze_sat) * haze_value;
+	float dfar = max(depth, 0.0) / (1.0 + sky_thin * space);
+	toward = mix(toward, sky_color(elevation(view)), haze_sky * smoothstep(haze_at.z, haze_at.w, dfar));   // the far field: into the sky
 	return mix(mix(c, toward, h.x), sky_color(elevation(view)), h.y);
 }

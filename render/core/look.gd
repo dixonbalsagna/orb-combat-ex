@@ -437,6 +437,10 @@ const HAZE_SEA: float = 0.9
 ## greyer and a ridge never reaches the colour of the sky behind it. The water hazes toward the band itself.
 const HAZE_VALUE: float = 0.6
 const HAZE_SAT: float = 0.7
+## ... but in the far field (HAZE_AT[2] to HAZE_AT[3]) the haze's target moves toward the sky's own colour in that
+## direction, HAZE_SKY of the way: far peaks melt into the sky behind them, as d3f1ca0e's far land did (Orb's playtest,
+## 2026-10-19: the far ridge read as a huge brown wall). Art's ladder holds nearer.
+const HAZE_SKY: float = 1.0
 ## The world takes the sky's key (Art: docs/art/dynamic-sky.md section 6; data/art/sky.json _world_light): each
 ## layer's colour times a multiply in linear light, plus a small lift at night so the dark ground is cool, blended with
 ## the sky's own phase, hold and smoothstep (SkyDrive.world_at), the mood's multiplies on top. Lit windows, the lane

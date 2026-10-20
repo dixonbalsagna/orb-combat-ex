@@ -582,6 +582,7 @@ func _on_drained(events: Array, lines: Array) -> void:
 	planet.consume(events, host.S.T)
 	RenderAnim.consume(host.S, events)
 	ui_hud.consume_all(events)
+	_haptics_from_events(events)
 	UiSimBridge.feed(ui_hud, lines)
 
 
@@ -602,13 +603,8 @@ func _on_input_note(note: Dictionary) -> void:
 ## UI's form-ready prompt came up for a human fighter (once, at the rising edge; docs/ui/hud-spec.md section 31): a
 ## 15 ms haptic on that player's own device, a pad's rumble or a phone's vibration, and nothing on a keyboard. Never
 ## the only cue: the chip says the same. A "haptics" option set to false switches it off (UI has no such option yet).
-func _on_form_prompt(slot: int, device: String) -> void:
-	if device == "" or device == "kbd" or not bool(ui_hud.opts.get("haptics", true)):
-		return
-	if device == "touch":
-		Input.vibrate_handheld(15)
-	elif slot >= 0 and slot < 2 and host.hub.device_of(slot) == "pad" and bool(host.hub.claimed[slot]):
-		Input.start_joy_vibration(int(host.hub.slot_pad[slot]), 0.3, 0.3, 0.015)
+func _on_form_prompt(slot: int, _device: String) -> void:
+	_on_haptic(slot, "form_prompt")   # the ready form's two taps: SimHaptics knows the device, the option and the gap
 
 
 ## A pulse UI asks for on a human's own device (`haptic_requested`: "launch_open", the lit B). What to play, and whether, is Controls' pure
@@ -616,22 +612,41 @@ func _on_form_prompt(slot: int, device: String) -> void:
 ## empty slot, nothing with the haptics option off, and not twice inside 80 ms. A plan is a few steps (a thump, then a ring 90 ms later):
 ## the first now, the rest on host timers. Host time only; nothing here reads or writes the sim.
 var _haptic_last_ms: Array = [-100000, -100000]
+var _haptic_last_kind: Array = [{}, {}]   # per slot, the host time each kind last played: a kind's own gap (a mashed button never buzzes the pad)
+var _haptic_firer: int = -1               # the slot that fired the beam struggle's first beam (the beam_struggle cue's actor)
 
 
-func _on_haptic(slot: int, kind: String) -> void:
+func _on_haptic(slot: int, kind: String, scale: float = 1.0) -> void:
 	if slot < 0 or slot > 1:
 		return
 	var now: int = Time.get_ticks_msec()
-	var plan: Dictionary = SimHaptics.plan(kind, host.hub.rumble_target(slot), bool(ui_hud.opts.get("haptics", true)), int(_haptic_last_ms[slot]), now)
+	var plan: Dictionary = SimHaptics.plan(kind, host.hub.rumble_target(slot), bool(ui_hud.opts.get("haptics", true)), int(_haptic_last_ms[slot]), now, scale, int(_haptic_last_kind[slot].get(kind, -1000000)))
 	if plan.is_empty():
 		return
 	_haptic_last_ms[slot] = now
+	_haptic_last_kind[slot][kind] = now
 	for s in plan["steps"]:
 		var at: int = int(s["at"])
 		if at <= 0:
 			_play_haptic_step(plan, s)
 		else:
 			get_tree().create_timer(float(at) / 1000.0).timeout.connect(_play_haptic_step.bind(plan, s))
+
+
+## The rumble for what the sim says happened (Controls' SimHaptics.requests; docs/controls/haptics.md): the charge is full, the clinch's pulse, the
+## beam struggle's pushes and the loser's end, and the brake becoming available (Simulation's `air_brake` event, text "ready"). With nothing on or
+## between the fighters, these are how a player feels the moment. launcher_open and transform_ready stay UI's (`haptic_requested`, `form_prompt_shown`,
+## which know the player's marks setting), so they are skipped here. Reads events only; host time only; nothing here touches the sim.
+func _haptics_from_events(events: Array) -> void:
+	for e in events:
+		var name: String = String(e.kind) if String(e.type) == "cue" else String(e.type)
+		if name == "launcher_open" or name == "transform_ready":
+			continue
+		if name == "beam_struggle":
+			_haptic_firer = int(e.actor)
+			continue
+		for r in SimHaptics.requests(name, int(e.actor), int(e.target), String(e.text), float(e.amount), _haptic_firer):
+			_on_haptic(int(r["slot"]), String(r["kind"]), float(r["scale"]))
 
 
 func _play_haptic_step(plan: Dictionary, s: Dictionary) -> void:
