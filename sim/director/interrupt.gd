@@ -237,6 +237,7 @@ static func _windowBeat(S: SimState, ex, f):
 		if w < 0.0 or b.args.o.get("perfect", false):
 			continue
 		w += float(_staleWindow(ex.A if b.args.a == "A" else ex.D))
+		w += float(SimForms.blockWiden(S, f))   # forms: a Trial form's wider perfect-block window (0 otherwise)
 		var left2: float = (b.t - ex.t) * DirData.TICKS_PER_SEC
 		if left2 <= w + 0.5:
 			return b

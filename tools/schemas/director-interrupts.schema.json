@@ -2588,6 +2588,10 @@
                       "type": "number",
                       "minimum": 0,
                       "description": "The planner takes this off a candidate's score for each mark of its kind."
+                    },
+                    "destruction": {
+                      "type": "boolean",
+                      "description": "False: freshness never lowers the power World's building ladder reads."
                     }
                   },
                   "required": [
@@ -2613,6 +2617,67 @@
                   "type": "number",
                   "minimum": 0,
                   "description": "A launch whose power at the send is this or more is a full one."
+                },
+                "aiAim": {
+                  "type": "object",
+                  "description": "The AI's launcher aim by its personality.",
+                  "properties": {
+                    "hero": {
+                      "type": "object",
+                      "description": "Care above 0.",
+                      "properties": {
+                        "up": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "Up."
+                        },
+                        "across": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "Across."
+                        },
+                        "down": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "Down."
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "villain": {
+                      "type": "object",
+                      "description": "Care below 0.",
+                      "properties": {
+                        "up": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "Up."
+                        },
+                        "across": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "Across."
+                        },
+                        "down": {
+                          "type": "number",
+                          "minimum": 0,
+                          "description": "Down."
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "popAtBh": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "Where the hero looks for people along the line, in body heights."
+                    },
+                    "popR": {
+                      "type": "number",
+                      "minimum": 0,
+                      "description": "... within this many."
+                    }
+                  },
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -3509,6 +3574,11 @@
                 "across"
               ],
               "additionalProperties": false
+            },
+            "worth": {
+              "type": "number",
+              "minimum": 0,
+              "description": "A throw lands worth this many brawl lights (a heavy), before what it hands the brawl."
             }
           },
           "required": [

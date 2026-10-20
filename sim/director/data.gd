@@ -35,6 +35,8 @@ static func _ensure() -> void:
 	h.text(DirLaunch.dataText())   # data/director/launch.json (the landing mix)
 	h.text(DirInterrupt.dataText())   # data/director/interrupts.json, and Controls' perfect-block timing
 	h.text(DirRecipe.dataText())   # data/director/alchemy.json and Combat's data/combat/recipes.json
+	if FileAccess.file_exists("res://data/combat/enders.json"):
+		h.text(FileAccess.get_file_as_string("res://data/combat/enders.json"))   # Combat's launch enders (launch anywhere's pick), once they land
 	_hash = h.hex()
 
 

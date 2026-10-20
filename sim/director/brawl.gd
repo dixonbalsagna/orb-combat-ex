@@ -846,6 +846,8 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 	_s(f, STR_K, k)
 	if rip > 0 and not wound:
 		dmg = _unit() * float(c.skillMul)
+	if rip > 0:
+		dmg += _unit() * float(SimForms.followBonus(S, f))   # forms: a Trial form's perfect follow-up is worth more (0 otherwise)
 	var o2 := {"class": "heavy" if wound else "blow", "stop": float(stop) / DirData.TICKS_PER_SEC, "big": wound, "kb": float(c.recoil)}
 	# The AI weighs a perfect block against a light or a medium at most once in aiPerfectEveryTicks (a fresh guard
 	# press cannot be mashed), and against every heavy.
@@ -872,6 +874,8 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 			args["hammer"] = true   # it always lands, it staggers him in place, and the brawl goes on
 		if any:
 			args["safety"] = safety
+			_ls(f, LA_SAFE, safety)
+			_ls(f, LA_LHIT, 0)
 			args["power"] = _power(S, f, o, safety)   # string x state x timing; wounds at its landing, freshness at its send
 			if safety != 1:
 				o2["weighed"] = true   # the AI cannot react to a launcher in time: it answers only by a guess made at the landing before it (_laAnswerPlan)
@@ -901,6 +905,11 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		var ep: String = _ender(S, f, int(args.get("aim", 0)))
 		if ep != "":
 			piece = ep   # Combat's enders: the launch that follows his last blow's family and path
+			var rc: Dictionary = _enders().get("rechamber", {})
+			if not rc.is_empty() and _enderStep >= int(rc.get("fromStep", 3)):
+				lead += int(rc.get("ticks", 0))   # the re-chamber's tell: a launch that doesn't follow his last blow's path winds longer, so the reset reads
+				if _g(f, HOLD_AT) > 0:
+					_s(f, HOLD_AT, _g(f, HOLD_AT) + int(rc.get("ticks", 0)))   # ... and its wind-up counts from the reset
 	if piece != "":
 		args["piece"] = piece
 		if any:
@@ -1218,10 +1227,15 @@ static func contact(S: SimState, ex, b) -> void:
 	var oWinding: bool = _windOn(o)
 	var armour: bool = false
 	var dmg: float = float(a.dmg)
+	var laStop: bool = false   # launch anywhere: a second light into an answerable launcher's wind-up stops it (2026-10-18, 1a)
 	if oWinding and oKind == BIG and (_g(o, FLAV) == 0 or (_g(o, FLAV) == 2 and anywhere())) and not special:   # launch anywhere: the launcher is armoured against lights too
-		if not wound:
+		if not wound and _g(o, FLAV) == 2 and _lg(o, LA_SAFE) == 3 and _lg(o, LA_LHIT) >= 1:
+			laStop = true   # its armour has taken its one light
+		elif not wound:
 			armour = true
 			dmg *= float(c.heavy.armour.lightMul)
+			if _g(o, FLAV) == 2:
+				_ls(o, LA_LHIT, _lg(o, LA_LHIT) + 1)
 		elif kind == MEDIUM and now - _g(o, HOLD_AT) >= int(c.heavy.armour.mediumUntilTicks):
 			armour = true
 	if kind == MEDIUM and energy == "" and not special and (ex.sD if o == ex.D else ex.sA) == 1.0:
@@ -1298,7 +1312,7 @@ static func contact(S: SimState, ex, b) -> void:
 	if energy != "":
 		_eLand(S, ex, f, o, energy, "hit", energy == "blast" and _g(f, RUN) >= RUN_U * int(c.energy.reach.blast.enderRun))
 	# A wound blow ends the wind-up it lands on: a medium's always, a heavy's before its armour holds a medium.
-	if wound and oWinding and _g(o, LINE) != 0:
+	if (wound or laStop) and oWinding and _g(o, LINE) != 0:
 		_wEnd(S, o, oKind, 2)
 		_s(o, HOLD_AT, 0)
 		_drop(S, ex, o)
@@ -1649,7 +1663,9 @@ const LA_ANS: int = 3     # S.tick until which the AI's guess that a launcher fo
 const LA_AILW: int = 4    # the landing the AI last weighed a launch in its string for
 const LA_FP: int = 5      # his last blow's family and path for Combat's enders: family x 8 + path, plus 1
 const LA_FRESH: int = 6   # the kinds of send marked on him (up, across, down, behind, building), four live ticks each; kept across brawls
-const LA_N: int = 26
+const LA_SAFE: int = 26   # the launcher on his line: its safety (1 sure, 2 hard, 3 answerable)
+const LA_LHIT: int = 27   # ... and the lights its armour has taken (an answerable one takes one)
+const LA_N: int = 28
 
 
 static func la() -> Dictionary:
@@ -1786,6 +1802,13 @@ static func freshMul(S: SimState, o, kind: int) -> float:
 	return maxf(float(fr.floor), m)
 
 
+## Orb (homework 30): "each time you launch an opponent against something, the more destroyed it will be". So with
+## anywhere.fresh.destruction false, freshness shortens the flight and the power counted at the send, and the power
+## World's building ladder reads is the launcher's own.
+static func freshHurts() -> bool:
+	return bool(la().get("fresh", {}).get("destruction", false))
+
+
 ## Each launch marks its kind on the fighter it sends (DirMelee.launchBeat): the oldest of that kind's four marks goes.
 static func markKind(S: SimState, o, kind: int) -> void:
 	if not anywhere() or kind < 0 or kind > 4 or la().get("fresh", {}).is_empty():
@@ -1866,6 +1889,45 @@ static func _aiLaunchInString(S: SimState, f, c: Dictionary) -> bool:
 	return share > 0.0 and SimRng.keyed(int(S.game.seed), "brawl.launchInString", at * 2 + (0 if f == ex.A else 1)) < share
 
 
+## launch anywhere: the AI aims its launcher by its personality (Combat's launch-enders.md section 3, the
+## fighter-pipeline's identity): the hero up or across, and across weighs less where people are along the line; the
+## Anti-hero across or down, into buildings and the ground. A keyed draw by anywhere.aiAim's weights, its care's sign
+## choosing the set, or its role while its care is 0 (hero; villain or rival). A reference fighter doesn't aim (the
+## planner's pick).
+static func _aiAim(S: SimState, f, o, i: SimIntent) -> void:
+	var aw: Dictionary = la().get("aiAim", {})
+	if aw.is_empty():
+		return
+	var pers: String = "hero" if f.care > 0.0 else ("villain" if f.care < 0.0 else "")
+	if pers == "":
+		var dd = FighterData.def(f.id)
+		var role: String = String(dd.get("role", "")) if dd is Dictionary else ""
+		pers = "hero" if role == "hero" else ("villain" if (role == "villain" or role == "rival") else "")
+	if pers == "":
+		return
+	var w: Dictionary = aw.get(pers, {})
+	var side: float = 1.0 if SimWrap.sdx(f.x, o.x) >= 0.0 else -1.0
+	var wu: float = float(w.get("up", 0.0))
+	var wa: float = float(w.get("across", 0.0))
+	var wd: float = float(w.get("down", 0.0))
+	if pers == "hero":
+		var land: float = SimWrap.wrap(o.x + side * float(aw.get("popAtBh", 8.0)) * DirInterrupt.BH)
+		wa *= 1.0 - clampf(float(WorldStructures.popNear(S, land, float(aw.get("popR", 3.0)) * DirInterrupt.BH)) / maxf(0.001, WorldStructures.popNearRef(S)), 0.0, 1.0)
+	var tot: float = wu + wa + wd
+	if tot <= 0.0:
+		return
+	var x: float = SimRng.keyed(int(S.game.seed), "brawl.aiAim", S.tick * 2 + S.fighters.find(f)) * tot
+	if x < wu:
+		i.mx = 0.0
+		i.my = 1.0
+	elif x < wu + wa:
+		i.mx = side
+		i.my = 0.0
+	else:
+		i.mx = 0.0
+		i.my = -1.0
+
+
 ## Combat's enders (docs/combat/launch-enders.md), loaded once from res://data/combat/enders.json when it exists.
 static var _endersData = null
 static func _enders() -> Dictionary:
@@ -1897,7 +1959,11 @@ static func _famPath(piece: String) -> int:
 
 ## The launcher's piece by Combat's enders: his last blow's family and path, and the send his stick asks (none: the
 ## planner picks the send, and the piece is picked as before). The lowest step first; a keyed draw within it.
+## The step of the last ender picked (Combat's 1 to 5), for the re-chamber's tell. Not state: read at once.
+static var _enderStep: int = 0
+
 static func _ender(S: SimState, f, aim: int) -> String:
+	_enderStep = 0
 	var en: Dictionary = _enders()
 	var fp: int = _lg(f, LA_FP) - 1
 	if en.is_empty() or fp < 0 or aim <= 0 or aim > 4:
@@ -1914,6 +1980,7 @@ static func _ender(S: SimState, f, aim: int) -> String:
 	for row in rows:
 		if int(row.get("step", 99)) == best:
 			pick.append(String(row.strike))
+	_enderStep = best
 	return pick[mini(pick.size() - 1, int(SimRng.keyed(int(S.game.seed), "brawl.ender", S.dirS.exN * 64 + _g(f, BLOWS)) * float(pick.size())))]
 
 
@@ -3373,6 +3440,7 @@ static func aiInput(S: SimState, f) -> void:
 		_s(f, AI_RIP, 0)
 		_s(f, AI_GUARD, 0)
 		_s(f, AI_LEFT, 0)
+		_aiAim(S, f, o, i)
 		_aiPress(S, f, i, 2, bl, true)
 		return
 	if _g(f, AI_LSAW) == 1 and _g(f, LC_UNTIL) > 0:
@@ -3381,6 +3449,8 @@ static func aiInput(S: SimState, f) -> void:
 			_s(f, AI_RIP, 0)
 			_s(f, AI_GUARD, 0)
 			_s(f, AI_LEFT, 0)
+			if anywhere():
+				_aiAim(S, f, o, i)
 			_aiPress(S, f, i, 2, bl, true)
 			return
 	# He missed, and is open: a medium while it still lands in time, else a light.

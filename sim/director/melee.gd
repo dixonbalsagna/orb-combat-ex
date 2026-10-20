@@ -405,7 +405,7 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 	if lpow >= 0.0:
 		force *= lpow
 		if "launchPower" in tgt:
-			tgt.launchPower = lpow * DirBrawl.freshMul(S, tgt, 4)   # for World's building aim (when granted)
+			tgt.launchPower = lpow * (DirBrawl.freshMul(S, tgt, 4) if DirBrawl.freshHurts() else 1.0)   # for World's building aim (when granted)
 	var r: Dictionary = DirLaunch.chooseLaunch(S, att, tgt, force, longOnly, String(args.get("sends", "")) if args != null else "", tilt, forced or (gate.get("enabled", false) and not DirData.contact().is_empty()), lpow >= 0.0)
 	var parts: PackedStringArray = []
 	for k in r.top:
@@ -438,7 +438,7 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 		kf = DirBrawl.freshMul(S, tgt, lkind)
 		force *= kf
 		if "launchPower" in tgt:
-			tgt.launchPower = lpow * kf   # for the building ladder and the flight's recovery (Simulation's and World's, when granted)
+			tgt.launchPower = lpow * (kf if DirBrawl.freshHurts() else 1.0)   # for the building ladder and the flight's recovery (Simulation's and World's, when granted)
 	DirLaunch.doLaunch(S, att, tgt, r.best, force, longOnly)
 	DirBrawl.powerCue(S, att, tgt, lkind, (lpow * kf) if lpow >= 0.0 else 1.0)
 	DirBrawl.markKind(S, tgt, lkind)

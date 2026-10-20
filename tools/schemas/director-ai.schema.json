@@ -648,6 +648,10 @@
                   "type": "number",
                   "minimum": 0,
                   "description": "... while its coil is under this."
+                },
+                "untilBattered": {
+                  "type": "boolean",
+                  "description": "... and none of its own regions battered."
                 }
               },
               "required": [
@@ -1186,6 +1190,10 @@
                   "type": "number",
                   "minimum": 0,
                   "description": "... while its coil is under this."
+                },
+                "untilBattered": {
+                  "type": "boolean",
+                  "description": "... and none of its own regions battered."
                 }
               },
               "required": [
@@ -1724,6 +1732,10 @@
                   "type": "number",
                   "minimum": 0,
                   "description": "... while its coil is under this."
+                },
+                "untilBattered": {
+                  "type": "boolean",
+                  "description": "... and none of its own regions battered."
                 }
               },
               "required": [

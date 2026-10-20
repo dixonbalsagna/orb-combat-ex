@@ -430,6 +430,8 @@ static func _throw(S: SimState, ex, f, o, q: int, how: String) -> void:
 	var tc: Dictionary = c.throw
 	_end(S, f, o)
 	_s(o, NOGRAB, S.tick + int(c.noRegrab))
+	if not _throwHit(S, ex, f, o):
+		return   # the throw's blow ended the exchange (a KO, a broken region's set piece)
 	var bh: float = DirInterrupt.BH
 	if q == 3 or q == 1:
 		var gy: float = WorldTerrain.groundY(S, o.x, DirBrawl._gz())
@@ -487,6 +489,24 @@ static func _aiThrowQ(S: SimState, f, o, k: int) -> int:
 	if x < wd + wu:
 		return 1
 	return 2
+
+
+## The throw's blow (Game Design, 2026-10-18 1c): worth throw.worth brawl lights, as a heavy, before what the throw
+## hands the brawl (the bury, the opening in the air, the send across with its landing). False when it ended the exchange.
+static func _throwHit(S: SimState, ex, f, o) -> bool:
+	var w: float = float(cfg().throw.get("worth", 0.0))
+	if w <= 0.0:
+		return true
+	var c: Dictionary = DirBrawl.cfg()
+	var o2 := {"class": "heavy", "stop": float(int(c.hitstop.heavy)) / DirData.TICKS_PER_SEC, "big": true, "kb": float(c.recoil),
+		"ignoreStance": true, "noParry": true, "weighed": true, "throw": true}
+	DirMelee.strike(S, ex, f, o, w * DirBrawl._unit(), o2)
+	if S.dirS.ex != ex or ex.cancel or ex.branch != "" or S.game.ko != null:
+		return false
+	if DirBrawl._setPiece(ex):
+		DirBrawl.over(S, ex, "break")   # the throw broke a region: the break plays in this exchange
+		return false
+	return true
 
 
 ## f pushes off: both apart, the brawl lets go, and he has the first move.
