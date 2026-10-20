@@ -174,7 +174,7 @@ const INSTANT_SWAP_E: float = 0.9      # a pane expanded this far hides the swap
 
 # --- launch follow (section 8) ---
 const LAUNCH_MIN_SPEED: float = 4000.0
-const R_LAUNCH: float = 0.08
+const R_LAUNCH: float = 0.11
 const LAUNCH_TAU: float = 0.02
 const LAUNCH_LEAD: float = 0.05        # s of velocity added to the follow point
 const LAUNCH_TRAIL: float = 0.35       # the fighter sits this far from the trailing edge, times vw

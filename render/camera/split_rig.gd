@@ -178,6 +178,7 @@ var _parry_t: Array = [-1.0e9, -1.0e9]   # when each fighter last parried, for t
 var _stiff_w: float = 0.0               # 0..1: how far the slam's stiff filters have come in
 var wreck_dir: int = 0                   # the winner's shot: +1 wreckage on the right of him, -1 on the left, 0 none to speak of
 var wreck_score: float = 0.0             # the wreckage in view, summed (craters, ruined buildings, slide trenches)
+var launch_governor: bool = false        # the scroll governor on a launched body (the flash count's, 2026-10-12): off since 2026-10-19, so the body is chased at his size and the background carries the speed (docs/camera/director.md step 4)
 var anticipation: bool = true            # read the choreographer's next contact and lean into it (docs/camera/director.md, phase A)
 var intent_now: String = ""                # the director's read this tick, for the debug feed and the probes
 var ant_starts: int = 0
@@ -2578,7 +2579,7 @@ func _own_zoom_target(S: SimState, i: int) -> float:
 		var gv: float = _scroll_gov(maxf(maxf(float(_vsm[i]), _gov_armed()), _body_speed(f)), z * pz)
 		_gov_bind[i] = gv < 0.999
 		z = maxf(z * gv, minf(z, zfl))
-	elif f.state == "launched" and not reduced_motion:
+	elif f.state == "launched" and not reduced_motion and launch_governor:
 		# A launched body is followed at his size, but the scenery behind a launch at 6,000 units a second crosses a pane at
 		# 0.06 of the width a tick, and a cliff face against sunlit sand swept 23,000 pixels twice in 14 ticks at ai seed
 		# 4 (Tools: 3 flashes, the pair 6 and 5% over the area threshold). The same governor as any pursuit (the scenery no
