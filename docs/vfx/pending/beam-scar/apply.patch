@@ -1,0 +1,595 @@
+--- a/render/vfx/vfx_hub.gd
++++ b/render/vfx/vfx_hub.gd
+@@ -82,6 +82,8 @@
+ var inreach := VfxReach.new()                   # energy arts in reach and the launcher's marks (reach.gd), behind the same flag
+ var tremor := VfxTremor.new()                  # the catastrophe tier's tremor: dust curtains and rubble (tremor.gd, dust_view.gd), on its cue
+ var blastcloud := VfxBlastCloud.new()          # the catastrophe tier's blast cloud: stem, cap, dust wall and the one fireball light (blast_cloud.gd, cloud_view.gd), on its cue
++var scars := VfxBeamScar.new()                    # the scar each beam leaves in the air as its tail draws back (beam_scar.gd, scar_view.gd; Orb 2026-10-19), behind the same flags as the beams
++var scar_enabled: bool = true
+ var ash: float = 0.0                              # the world's darkening, 0 to 1 (read-only from the sim when it exists): scales a catastrophe light's peak
+ var catastrophe_enabled: bool = true            # the catastrophe tier's effects (nothing draws until the cues exist)
+ var zip := VfxZip.new()                       # the LT zip's looks (zip.gd), behind the same flag
+@@ -146,6 +148,7 @@
+ 	inreach.reset()
+ 	tremor.reset()
+ 	blastcloud.reset()
++	scars.reset()
+ 	ghosts.reset()
+ 	_vision_sig = ""
+ 	flashes.reset()
+@@ -248,6 +251,10 @@
+ 		tremor.rubble(S, debris, reduced_motion or reduced_flashing)
+ 		blastcloud.step(S, flashes, ash)
+ 		blastcloud.on_events(S, events)
++	if scar_enabled:
++		scars.step(S)
++	else:
++		scars.reset()
+ 	debris.puff_area_cap = VfxLook.PUFF_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05)
+ 	debris.ember_area_cap = VfxLook.EMBER_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05) * (0.5 if (reduced_motion or reduced_flashing) else 1.0)
+ 	_sync_vision(S)
+--- a/render/vfx/trail_view.gd
++++ b/render/vfx/trail_view.gd
+@@ -15,6 +15,7 @@
+ var shots_view := VfxShotsView.new()   # the energy blasts (shots_view.gd): a child, updated with this view, so it needs nothing of the layer
+ var dust_view := VfxDustView.new()   # the tremor's dust curtains (dust_view.gd), a child like the shots view
+ var cloud_view := VfxCloudView.new()   # the blast cloud (cloud_view.gd), a child like the dust view
++var scar_view := VfxScarView.new()   # the scar a beam leaves in the air (scar_view.gd), a child like the dust view
+ var cam_dist: float = 3000.0   # the pane camera's distance to the fighter plane (set by the layer), for the perspective scale at depth
+ 
+ 
+@@ -42,6 +43,8 @@
+ 	add_child(dust_view)
+ 	cloud_view.name = "Cloud"
+ 	add_child(cloud_view)
++	scar_view.name = "Scar"
++	add_child(scar_view)
+ 
+ 
+ ## a: the frame's interpolation between the last two ticks. cam_x: this pane's wrapped camera x. zoom: this pane's
+@@ -50,6 +53,9 @@
+ 	dust_view.visible = hub.catastrophe_enabled
+ 	if hub.catastrophe_enabled:
+ 		dust_view.update(hub, host, cam_x, half_w)
++	scar_view.visible = hub.scar_enabled
++	if hub.scar_enabled:
++		scar_view.update(hub, cam_x, zoom)
+ 	cloud_view.visible = hub.catastrophe_enabled
+ 	if hub.catastrophe_enabled:
+ 		cloud_view.update(hub, host, cam_x)
+--- a/render/core/warmup.gd
++++ b/render/core/warmup.gd
+@@ -24,6 +24,7 @@
+ 	["res://render/vfx/shaders/transform.gdshader", "multimesh"],   # VFX: shots and the transformation
+ 	["res://render/vfx/shaders/hole.gdshader", "multimesh"],     # VFX: holes in facades (VFX's warm-up.md)
+ 	["res://render/vfx/shaders/dust.gdshader", "multimesh"],     # VFX: the tremor's dust curtains (dust_view.gd)
++	["res://render/vfx/shaders/beam_scar.gdshader", "multimesh"],  # VFX: the scar a beam leaves in the air (scar_view.gd)
+ 	["res://render/vfx/shaders/cloud.gdshader", "multimesh"],    # VFX: the blast cloud's body (docs/vfx/blast-cloud.md)
+ 	["res://render/vfx/shaders/cloud_core.gdshader", "multimesh"], # VFX: the blast cloud's fireball (additive)
+ 	["res://render/shaders/particle.gdshader", "multimesh"],     # Rendering: particles
+--- a/data/vfx/energy.json
++++ b/data/vfx/energy.json
+@@ -164,5 +164,18 @@
+    "strokes_only": false,
+    "what": "the beam's hue ripple, 2 Hz or slower at any point, under a tenth of luminance (fx03)"
+   }
++ },
++ "scar": {
++  "heal_s": 3.6,
++  "hw_k": 0.3,
++  "hw_px": 3.0,
++  "rim_px": 2,
++  "alpha_core": 0.62,
++  "alpha_rim": 0.92,
++  "dark": 0.1,
++  "cell": 110,
++  "cool_s": 1.2,
++  "grow_s": 0.14,
++  "cap": 10
+  }
+ }
+--- a/tools/schemas/vfx-energy.schema.json
++++ b/tools/schemas/vfx-energy.schema.json
+@@ -221,6 +221,68 @@
+         }
+       },
+       "additionalProperties": false
++    },
++    "scar": {
++      "type": "object",
++      "description": "The scar a beam leaves in the air as its tail draws back (render/vfx/beam_scar.gd, shaders/beam_scar.gdshader, docs/vfx/beam-scar.md): a thin dark cut with a bright lane-coloured rim that cools, healing slowly by thinning and by pieces dropping out with hard edges (never a fade). All keys optional: beam_scar.gd falls back to the same defaults.",
++      "properties": {
++        "heal_s": {
++          "type": "number",
++          "maximum": 20,
++          "exclusiveMinimum": 0.5
++        },
++        "hw_k": {
++          "type": "number",
++          "maximum": 1,
++          "exclusiveMinimum": 0.02
++        },
++        "hw_px": {
++          "type": "number",
++          "maximum": 12,
++          "exclusiveMinimum": 0.5
++        },
++        "rim_px": {
++          "type": "number",
++          "maximum": 8,
++          "exclusiveMinimum": 0.5
++        },
++        "alpha_core": {
++          "type": "number",
++          "maximum": 1,
++          "exclusiveMinimum": 0.05
++        },
++        "alpha_rim": {
++          "type": "number",
++          "maximum": 1,
++          "exclusiveMinimum": 0.05
++        },
++        "dark": {
++          "type": "number",
++          "maximum": 1,
++          "minimum": 0
++        },
++        "cell": {
++          "type": "number",
++          "maximum": 600,
++          "exclusiveMinimum": 20
++        },
++        "cool_s": {
++          "type": "number",
++          "maximum": 6,
++          "exclusiveMinimum": 0.1
++        },
++        "grow_s": {
++          "type": "number",
++          "maximum": 2,
++          "exclusiveMinimum": 0.02
++        },
++        "cap": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 12
++        }
++      },
++      "additionalProperties": false
+     }
+   },
+   "additionalProperties": false,
+--- a/render/vfx/tools/effects_check.gd
++++ b/render/vfx/tools/effects_check.gd
+@@ -206,6 +206,7 @@
+ 	_brawl()
+ 	_small_blasts()
+ 	_beam_look()
++	_beam_scar()
+ 	_multi()
+ 	_ghosts()
+ 	_vision()
+@@ -5130,6 +5131,83 @@
+ 
+ 
+ ## The beams' look (docs/vfx/beam-look.md; Legal fx03): a real width by default, a thin one as a fighter's own, a ripple that moves hue at steady luminance, 2 Hz or slower, no white core, the flavour by roster id.
++func _beam_scar() -> void:
++	print("the scar a beam leaves in the air")
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 6)
++	var sc := VfxBeamScar.new()
++	var b := SimState.Beam.new()
++	b.A = S.fighters[0]
++	b.ox = 4000.0
++	b.oy = 300.0
++	b.ux = 1.0
++	b.uy = 0.0
++	b.len = 1000.0
++	b.life = 0.95
++	b.w = 30.0
++	b.col = String(S.fighters[0].aura)
++	b.p = 0.0
++	S.beams.append(b)
++	var first_seen: float = -1.0
++	var worst_alpha_step: float = 0.0
++	# the beam's life: the head runs out in 20 ticks, the tail follows from 0.4 s
++	for k in range(60):
++		S.T = float(k) * SimConst.DT
++		b.t = S.T
++		b.p = minf(1.0, float(k) / 20.0)
++		sc.step(S)
++		if k == 0:
++			_check(sc.list.size() == 1 and sc.made == 1, "a beam makes one scar, once (%d)" % sc.list.size())
++	var s0: VfxBeamScar.Scar = sc.list[0]
++	_check(is_equal_approx(s0.reach, 1000.0), "the scar reaches as far as the head did (%.0f)" % s0.reach)
++	_check(VfxBeamScar.age_at(s0, 0.0, 0.2) < 0.0 and VfxBeamScar.age_at(s0, 0.0, 0.5) > 0.0, "a point is burned when the tail passes it, not before (the firer's end at 0.4 s)")
++	_check(VfxBeamScar.age_at(s0, 1000.0, 0.9) < 0.0 and VfxBeamScar.age_at(s0, 1000.0, 0.95 + 0.001) > 0.0, "the far end is burned as the beam's life ends")
++	_check(s0.ox == 4000.0 and s0.oy == 300.0, "the scar stays where the beam was fired (anchored in the world)")
++	# the beam goes: the scar stays and heals
++	S.beams.clear()
++	var tt: float = 1.0
++	var heal: float = VfxBeamScar.p("heal_s")
++	S.T = tt
++	sc.step(S)
++	_check(sc.list.size() == 1 and sc.list[0].ended, "when the beam has gone its scar stays (and is marked ended)")
++	S.T = tt + heal * 0.5
++	sc.step(S)
++	_check(sc.list.size() == 1, "half way through the healing it is still there")
++	S.T = 0.4 + 0.55 + heal + 0.2 + 0.4
++	sc.step(S)
++	_check(sc.list.size() == 0, "healed all along, it is dropped (%d left)" % sc.list.size())
++	# no fade: the thinning is a width, widths fall one way, and the rim's heat is gone by the cooling time
++	var prev: float = 2.0
++	var mono: bool = true
++	for i in range(0, 41):
++		var w: float = VfxBeamScar.width_left(heal * float(i) / 40.0)
++		mono = mono and w <= prev + 1e-6
++		prev = w
++	_check(mono and VfxBeamScar.width_left(0.0) == 1.0 and VfxBeamScar.width_left(heal) > 0.3, "the scar only ever thins (never grows back), from the full width to %.2f of it" % VfxBeamScar.width_left(heal))
++	# a floor of a few pixels, whatever the zoom
++	var sw := VfxBeamScar.Scar.new()
++	sw.w = 30.0
++	_check(VfxBeamScar.half_width(sw, 0.2) * 0.2 >= VfxBeamScar.p("hw_px") - 0.01, "far away the scar is never thinner than %.0f pixels" % VfxBeamScar.p("hw_px"))
++	# a restart wipes them; the cap holds
++	var sc2 := VfxBeamScar.new()
++	var bs: Array = []
++	S.beams.clear()
++	for i in range(30):
++		var bb := SimState.Beam.new()
++		bb.A = S.fighters[0]
++		bb.len = 500.0
++		bb.life = 0.95
++		bb.ux = 1.0
++		bs.append(bb)
++		S.beams.append(bb)
++	S.T = 5.0
++	sc2.step(S)
++	_check(sc2.list.size() <= int(VfxBeamScar.p("cap")), "at most %d scars at once (%d)" % [int(VfxBeamScar.p("cap")), sc2.list.size()])
++	S.T = 0.0
++	sc2.step(S)
++	_check(sc2.made == 0 or sc2.list.size() <= int(VfxBeamScar.p("cap")), "a restart (the clock going back) starts the scars afresh")
++
++
+ func _beam_look() -> void:
+ 	print("the beams' look")
+ 	var S := SimCore.createSim()
+--- /dev/null
++++ b/render/vfx/beam_scar.gd
+@@ -0,0 +1,124 @@
++class_name VfxBeamScar
++extends RefCounted
++## The scar a beam leaves in the air (Orb, 2026-10-19: "it should look like it's burned a trail into the very space it passed through, some kind of lingering effect").
++## As a beam's tail draws back along its line (BeamView.tail_at: from 0.4 s, reaching the far end as the beam's life ends), the line the tail has left is branded into the air: a thin dark
++## cut with a bright lane-coloured rim, born at the tail as a pointed wedge, the rim hot at first and cooling in about a second. It stays where the beam was (anchored in the world, so a
++## moving camera slides past it) and heals slowly: over `heal_s` seconds it thins, and its pieces drop out one by one with hard edges (never a fade: Orb's rule of 2026-10-18).
++## Presentation only: it reads S.beams and S.T, keeps its own records, draws no random number, writes nothing. The look is shaders/beam_scar.gdshader, drawn by scar_view.gd.
++
++class Scar:
++	var ox: float = 0.0        # the beam's origin (wrapped x), direction and depth, as the sim has them
++	var oy: float = 0.0
++	var oz: float = 0.0
++	var ux: float = 1.0
++	var uy: float = 0.0
++	var zs: float = 0.0
++	var w: float = 30.0        # the beam's width
++	var hex: String = ""       # its colour (the fighter's aura hex)
++	var t_fire: float = 0.0    # the sim clock the beam was fired at
++	var life: float = 0.95
++	var len: float = 0.0       # the beam's full length (the tail's pace is len over life)
++	var reach: float = 0.0     # how far the head has got
++	var ended: bool = false
++	var seed: float = 0.0
++	var who = null             # the fighter whose beam it is
++
++var list: Array = []         # Scar, oldest first
++var made: int = 0            # counters, for the tests
++var clock: float = 0.0
++var _by_id: Dictionary = {}
++
++const DEFAULTS: Dictionary = {
++	"heal_s": 3.6, "hw_k": 0.3, "hw_px": 3.0, "rim_px": 2.0, "alpha_core": 0.62, "alpha_rim": 0.92, "dark": 0.1, "cell": 110.0, "cool_s": 1.2, "grow_s": 0.14, "cap": 10.0,
++}
++
++
++static func p(key: String) -> float:
++	VfxBeamLook.warm()
++	var g = VfxBeamLook._data.get("scar")
++	if g is Dictionary and g.has(key):
++		return float(g[key])
++	return float(DEFAULTS[key])
++
++
++func reset() -> void:
++	list.clear()
++	_by_id.clear()
++	made = 0
++	clock = 0.0
++
++
++## Every tick: note each beam in S.beams (the scar is made as the beam is first seen and extends as its head does), mark the beams that have gone, and drop a scar once it has healed all along.
++func step(S: SimState) -> void:
++	if S.T < clock - 0.5:
++		reset()       # the match was restarted or rewound
++	clock = S.T
++	var seen: Dictionary = {}
++	for b in S.beams:
++		if float(b.len) < 1.0:
++			continue
++		var id: int = b.get_instance_id()
++		seen[id] = true
++		var sc: Scar = _by_id.get(id)
++		if sc == null:
++			sc = Scar.new()
++			sc.ox = float(b.ox)
++			sc.oy = float(b.oy)
++			sc.oz = float(b.oz)
++			sc.ux = float(b.ux)
++			sc.uy = float(b.uy)
++			sc.zs = float(b.zs)
++			sc.w = float(b.w)
++			sc.hex = String(b.col)
++			sc.t_fire = S.T - float(b.t)
++			sc.life = float(b.life)
++			sc.len = float(b.len)
++			sc.seed = fposmod(float(made) * 0.6180339 + 0.17, 1.0)
++			sc.who = b.A
++			_by_id[id] = sc
++			list.append(sc)
++			made += 1
++		sc.reach = maxf(sc.reach, float(b.p) * float(b.len))
++	for id in _by_id.keys():
++		if not seen.has(id):
++			_by_id[id].ended = true
++	# healed all along: the oldest point of a scar is its firer's end, the newest its far end
++	var keep: Array = []
++	for sc in list:
++		if sc.ended and age_at(sc, sc.reach, clock) >= p("heal_s"):
++			for id in _by_id.keys():
++				if _by_id[id] == sc:
++					_by_id.erase(id)
++					break
++			continue
++		keep.append(sc)
++	list = keep
++	var cap: int = int(p("cap"))
++	while list.size() > cap:
++		var old: Scar = list[0]
++		for id in _by_id.keys():
++			if _by_id[id] == old:
++				_by_id.erase(id)
++				break
++		list.remove_at(0)
++
++
++## The sim clock at which the tail passes distance s along the scar's beam.
++static func burn_time(sc: Scar, s: float) -> float:
++	return sc.t_fire + 0.4 + clampf(s / maxf(sc.len, 1.0), 0.0, 1.0) * maxf(sc.life - 0.4, 0.05)
++
++
++## How long (seconds) the point s along the scar has been burned at clock t; negative while the tail has not got there.
++static func age_at(sc: Scar, s: float, t: float) -> float:
++	return t - burn_time(sc, s)
++
++
++## The half width of the scar at world scale: a share of the beam's width, with a floor of a few pixels at this pane's zoom (ppu: pixels per world unit).
++static func half_width(sc: Scar, ppu: float) -> float:
++	return maxf(sc.w * p("hw_k"), p("hw_px") / maxf(ppu, 0.05))
++
++
++## How much of the scar is still there at age `age`, 0 to 1 (the shader's thinning). Hard to read as a fade: this is the width share, the alpha never moves with it.
++static func width_left(age: float) -> float:
++	var h: float = clampf(age / p("heal_s"), 0.0, 1.0)
++	return 1.0 - 0.55 * smoothstep(0.15, 1.0, h)
+--- /dev/null
++++ b/render/vfx/beam_scar.gd.uid
+@@ -0,0 +1 @@
++uid://d2fxu2chalwy6
+--- /dev/null
++++ b/render/vfx/scar_view.gd
+@@ -0,0 +1,95 @@
++class_name VfxScarView
++extends MultiMeshInstance3D
++## The scars the beams leave in the air for one pane (render/vfx/beam_scar.gd, shaders/beam_scar.gdshader, docs/vfx/beam-scar.md): one quad along each beam's line, one MultiMesh and one draw call,
++## in the world behind the fighters' plane (a scar never covers a fighter: Orb, nothing obscures the fighters). A child of the trail view, like the shots view. Reads only.
++
++const CAP: int = 12
++const STRIDE: int = 20
++const Z_BACK: float = -3.0          # behind the fighters' plane (0), in front of the dust and the terrain
++
++var _buf := PackedFloat32Array()
++var count: int = 0                  # for the tests: scars written last frame
++
++
++func _ready() -> void:
++	var q := QuadMesh.new()
++	q.size = Vector2.ONE
++	var mm := MultiMesh.new()
++	mm.transform_format = MultiMesh.TRANSFORM_3D
++	mm.use_colors = true
++	mm.use_custom_data = true
++	mm.mesh = q
++	mm.instance_count = CAP
++	mm.visible_instance_count = 0
++	mm.custom_aabb = AABB(Vector3(-40000.0, -12000.0, -300.0), Vector3(80000.0, 60000.0, 600.0))
++	multimesh = mm
++	var m := ShaderMaterial.new()
++	m.shader = preload("res://render/vfx/shaders/beam_scar.gdshader")
++	m.render_priority = 0
++	m.set_shader_parameter("heal_s", VfxBeamScar.p("heal_s"))
++	m.set_shader_parameter("cell", VfxBeamScar.p("cell"))
++	m.set_shader_parameter("cool_s", VfxBeamScar.p("cool_s"))
++	m.set_shader_parameter("grow_s", VfxBeamScar.p("grow_s"))
++	m.set_shader_parameter("alpha_core", VfxBeamScar.p("alpha_core"))
++	m.set_shader_parameter("alpha_rim", VfxBeamScar.p("alpha_rim"))
++	m.set_shader_parameter("dark", VfxBeamScar.p("dark"))
++	material_override = m
++	cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
++	_buf.resize(CAP * STRIDE)
++
++
++## cam_x: this pane's wrapped camera x; zoom: its pixels per unit on the fighters' plane.
++func update(hub: VfxHub, cam_x: float, zoom: float) -> void:
++	var sc: VfxBeamScar = hub.scars
++	var n: int = 0
++	for s in sc.list:
++		if n >= CAP:
++			break
++		if s.reach < 2.0:
++			continue
++		var hw: float = VfxBeamScar.half_width(s, zoom)
++		var hwmax: float = hw / 0.8
++		var a := Vector2(SimWrap.sdx(cam_x, s.ox), s.oy)
++		var u := Vector2(s.ux, s.uy)
++		var side := Vector3(u.y, -u.x, 0.0)
++		var dir := Vector3(u.x * s.reach, u.y * s.reach, s.zs * s.reach)
++		var l3: float = dir.length()
++		var dn: Vector3 = dir / l3
++		var bz: Vector3 = side.cross(dn)
++		var c := Vector3(a.x + dir.x * 0.5, a.y + dir.y * 0.5, Z_BACK + s.oz + dir.z * 0.5)
++		var bx: Vector3 = dn * l3
++		var by: Vector3 = side * (2.0 * hwmax)
++		var col: Color = VfxAura.lane_color(s.hex)
++		var rim: float = clampf(VfxBeamScar.p("rim_px") / maxf(zoom * hwmax, 0.05), 0.04, 0.6)
++		var age0: float = sc.clock - VfxBeamScar.burn_time(s, 0.0)
++		var slope: float = maxf(s.life - 0.4, 0.05) / maxf(s.len, 1.0)
++		_put(n, bx, by, bz, c, Color(col.r, col.g, col.b, rim), Color(age0, slope, s.seed, s.reach))
++		n += 1
++	count = n
++	multimesh.visible_instance_count = n
++	if n > 0:
++		multimesh.buffer = _buf
++
++
++func _put(i: int, bx: Vector3, by: Vector3, bz: Vector3, c: Vector3, col: Color, cu: Color) -> void:
++	var o: int = i * STRIDE
++	_buf[o] = bx.x
++	_buf[o + 1] = by.x
++	_buf[o + 2] = bz.x
++	_buf[o + 3] = c.x
++	_buf[o + 4] = bx.y
++	_buf[o + 5] = by.y
++	_buf[o + 6] = bz.y
++	_buf[o + 7] = c.y
++	_buf[o + 8] = bx.z
++	_buf[o + 9] = by.z
++	_buf[o + 10] = bz.z
++	_buf[o + 11] = c.z
++	_buf[o + 12] = col.r
++	_buf[o + 13] = col.g
++	_buf[o + 14] = col.b
++	_buf[o + 15] = col.a
++	_buf[o + 16] = cu.r
++	_buf[o + 17] = cu.g
++	_buf[o + 18] = cu.b
++	_buf[o + 19] = cu.a
+--- /dev/null
++++ b/render/vfx/scar_view.gd.uid
+@@ -0,0 +1 @@
++uid://q3eck07weub6
+--- /dev/null
++++ b/render/vfx/shaders/beam_scar.gdshader
+@@ -0,0 +1,73 @@
++// The scar a beam leaves in the air (render/vfx/beam_scar.gd, scar_view.gd; docs/vfx/beam-scar.md): one MultiMesh quad along the beam's line. Crisp by construction: the shape is an analytic
++// strip (a hard edge antialiased over one pixel), never a soft falloff. Where the beam's tail has passed the air is cut: a dark core with a bright lane-coloured rim, the rim hot at first and
++// cooling to the lane colour's own dark shade. It heals by geometry, not by fading: its strip thins, and its cells drop out one by one with hard edges. Nothing here flickers or pulses:
++// every change is a slow one-way change with the scar's age. INSTANCE_CUSTOM: x = the age (s) of the strip's firer end, y = how much younger a point is per world unit along the strip,
++// z = a seed, w = the strip's length. COLOR: rgb the lane colour, a = the rim's share of the strip's half width (a pixel-wide rim at this pane's zoom).
++shader_type spatial;
++render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
++
++uniform float heal_s = 3.6;       // seconds a point takes to heal
++uniform float cell = 110.0;       // the pieces it drops out in, in world units
++uniform float cool_s = 1.2;       // seconds the rim takes to cool
++uniform float grow_s = 0.14;      // seconds a fresh point takes to reach its full width: the scar's newest end is a pointed wedge
++uniform float alpha_core = 0.62;
++uniform float alpha_rim = 0.92;
++uniform float dark = 0.1;         // the core's brightness against the lane colour
++
++varying vec4 v_c;
++
++float h21(vec2 p) {
++	p = fract(p * vec2(123.34, 456.21));
++	p += dot(p, p + 45.32);
++	return fract(p.x * p.y);
++}
++
++float vn(vec2 p) {
++	vec2 i = floor(p);
++	vec2 f = fract(p);
++	f = f * f * (3.0 - 2.0 * f);
++	return mix(mix(h21(i), h21(i + vec2(1.0, 0.0)), f.x), mix(h21(i + vec2(0.0, 1.0)), h21(i + vec2(1.0, 1.0)), f.x), f.y);
++}
++
++void vertex() {
++	v_c = INSTANCE_CUSTOM;
++}
++
++void fragment() {
++	float L = v_c.w;
++	float s = UV.x * L;
++	float age = v_c.x - s * v_c.y;
++	if (age < 0.0) {
++		discard;
++	}
++	float h = age / heal_s;
++	if (h >= 1.0) {
++		discard;
++	}
++	float y = UV.y * 2.0 - 1.0;
++	float d = abs(y);
++	// the pieces drop out one by one, on a slant so the cuts are not square: hard edges, never a fade
++	float cid = floor((s + y * 28.0) / cell);
++	float thr = 0.35 + 0.6 * h21(vec2(cid, v_c.z * 17.0));
++	if (h > thr) {
++		discard;
++	}
++	float jag = (vn(vec2(s * 0.04, v_c.z * 13.0)) - 0.5) * 0.3 + (vn(vec2(s * 0.15, v_c.z * 5.0)) - 0.5) * 0.1;
++	float grow = smoothstep(0.0, grow_s, age);
++	float thin = 1.0 - 0.55 * smoothstep(0.15, 1.0, h);
++	float hw = 0.86 * grow * thin * (1.0 + jag);
++	float aa = max(fwidth(y) * 1.2, 0.002);
++	float inside = 1.0 - smoothstep(hw - aa, hw + aa, d);
++	if (inside < 0.02) {
++		discard;
++	}
++	float rim_w = max(COLOR.a, aa * 2.5);
++	float rim = smoothstep(hw - rim_w - aa, hw - rim_w + aa, d);
++	float heat = 1.0 - smoothstep(0.0, cool_s, age);
++	vec3 lane = COLOR.rgb;
++	vec3 hot = lane + (vec3(1.0) - lane) * 0.3;
++	vec3 core_col = lane * dark;
++	vec3 rim_col = mix(lane * 0.5, hot, heat);
++	ALBEDO = mix(core_col, rim_col, rim);
++	ALPHA = inside * mix(alpha_core, alpha_rim, rim);
++}
+--- /dev/null
++++ b/render/vfx/shaders/beam_scar.gdshader.uid
+@@ -0,0 +1 @@
++uid://dg4ef6447tif6
+--- /dev/null
++++ b/docs/vfx/beam-scar.md
+@@ -0,0 +1,24 @@
++# The scar a beam leaves in the air (2026-10-19)
++
++Orb, on the slow tail (homework 6): "it should look like it's burned a trail into the very space it passed through, some kind of lingering effect."
++
++## What it is
++
++As a beam's tail draws back along its line (from 0.4 s, reaching the far end as the beam's life ends: BeamView.tail_at), the line the tail has left is **branded into the air**: a thin dark cut with a bright rim in the firer's lane colour.
++- **Born as a wedge** at the tail (a fresh point takes 0.14 s to reach its full width), so the scar seems to be cut by the beam's passing.
++- **The rim is hot, then cools:** the lane colour lightened by a third, cooling to its own half shade in 1.2 s. Slow, one-way, never a pulse.
++- **Anchored in the world** (a moving camera slides past it), straight (one quad along the beam's line, across the seam too), and **behind the fighters' plane**: it never covers a fighter (Orb, nothing obscures the fighters).
++- **It heals slowly, by geometry, not by fading** (Orb's rule of 2026-10-18: no dissolves). Over 3.6 s a point thins to 45% of its width, and the scar's pieces (110 units long, cut on a slant) drop out one by one, each with hard edges; the oldest point (the firer's end) goes first and the far end last. The alpha of a piece never moves.
++- Crisp by construction: the shader draws an analytic strip with a one-pixel antialiased edge, a slightly ragged edge (two octaves of value noise along the length), no blur or soft falloff anywhere. The strip is never thinner than 3 pixels at the pane's zoom.
++
++## Where it lives
++
++render/vfx/beam_scar.gd (the model: one record per beam, pure and deterministic, no random number), scar_view.gd (one MultiMesh, 12 quads at most, a child of the trail view), shaders/beam_scar.gdshader, the numbers in `scar` of data/vfx/energy.json (schema: tools/schemas/vfx-energy.schema.json). The hub has `scars` and `scar_enabled` (on). One line in render/core/warmup.gd (Rendering's) warms the shader at boot. Presentation only: it reads S.beams and S.T, writes nothing.
++
++## Not a Legal clearance
++
++The scar is dark with a lane-coloured rim (azure or orchid, never gold, white or red); nothing in it moves faster than the 1.2 s cooling and the 3.6 s healing; nothing pulses; it is not a flame shape or an aura. fx03's beam rules are untouched (the beam itself is as it was). Under Reduce flashing it is identical (it has no flashing part). Legal has not seen it. Flash readings not re-run (reported, not chased).
++
++## Open
++
++A clash's two beams (S.game.clash) are not scarred yet: they have no tail; the struggle work (next) will decide what the meeting point leaves. A beam that is cut short (beam_late) leaves a scar as far as its head got.
