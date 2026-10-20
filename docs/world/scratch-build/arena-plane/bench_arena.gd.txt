@@ -1,0 +1,12 @@
+extends SceneTree
+# Sim speed: 4 default AI matches of 3600 ticks (static var reads of the arena's length against consts).
+func _init() -> void:
+	var t0: int = Time.get_ticks_msec()
+	for seed in range(1, 5):
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, seed, {}, {"intro": false})
+		for t in range(3600):
+			SimCore.step(S)
+			S.out.fx.clear()
+	print("BENCH %d ms" % (Time.get_ticks_msec() - t0))
+	quit()

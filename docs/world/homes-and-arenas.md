@@ -6,35 +6,25 @@ Owner: World and Environment. Orb (homework 31, `docs/ep/vision.md`): **smaller 
 
 **The arena's size is a property of the stage, and a fighter's home is a close ring round their home.** A run opens small and close at the player's own home, widens as it goes, and ends on the whole planet; a versus match lets the players pick the size. That makes "a smaller arena" a different kind of fight, not a smaller version of the same one, and it makes each fighter's start a place with a face.
 
-## 2. Three sizes, and what each is for
+## 2. Three sizes (adopted by Game Design, `rulings-2026-10-19b.md` §3)
 
-All three are loops on the one planet (a plane through the planet, `small-circles.md` §1), so names, cities, landmarks and wear are the same at every size.
+Game Design took the sizes below (their first sizes, Region 51,200 and Local 19,200, are withdrawn: a lap of 1.9 s is too small to fight in). All three are loops on the one planet (a plane through the planet, `small-circles.md` §1), so names, cities, landmarks and wear are the same at every size. The engineering is `shifting-arena-design.md`.
 
-| Size | Loop | A lap, flat out | A screen is | What it is |
-| :--- | ---: | ---: | ---: | :--- |
-| **Whole** | 153,600 units (the planet's great circle: today's arena) | 15 s | 2% | The epic: the whole planet to cross, a long chase, a skyline that changes biome. The boss, a showpiece, and today's default |
-| **Half** | 76,800 | 7.5 s | 4% | A region: one or two cities, a coast, a range. About 35% settled, 1.4 cities and 2.4 towns held |
-| **Close** | 38,400 | 3.8 s | 8% | A neighbourhood and a brawl: it loops round a centre you can see from everywhere (a city, a mountain, a bay, a pole). 48% settled, 1.0 cities and 1.5 towns, the same 1,800 people on fewer places |
+| Size | Columns | Units | A lap, flat out | A screen is | Holds (measured) |
+| :--- | ---: | ---: | ---: | ---: | :--- |
+| **Whole** | 4,800 | 153,600 | 15 s | 2% | Today's arena. The boss; versus's default |
+| **Half** | 2,400 | 76,800 | 7.5 s | 4% | 1.4 cities and 2.4 towns |
+| **Close** | 1,200 | 38,400 | 3.8 s | 8% | 1.0 cities and 1.5 towns: a run's first fight at the player's home, a Proving ground, a polar stage |
 
-**What a smaller arena changes in play** (these are the reasons to want one, and the questions for Game Design):
-- **Nowhere to run.** The loop is the whole world: a chase is a lap in four seconds, and the escape stance has less to gamble on. Pursuit and blitz read more, a long separation reads less.
-- **Collateral is the story.** The same people on fewer, bigger places means a tier ceiling's share falls on one town: a hero is pressured faster, a villain is fed faster. It is the arena where "who is hurting the city" is loudest.
-- **The centre is always behind the fight.** A close ring round a harbour, a stair of mountain or a city shows its own middle from every point; that is the picture Orb asked for in homework 22 ("appear to circle around a center point").
+**What a smaller arena changes in play:** nowhere to run (a chase is a lap in seconds), collateral concentrated on fewer places, and the centre always behind the fight (the picture Orb asked for in homework 22).
 
-## 3. Where each size is used (proposal)
+## 3. Where each size is used
 
-| Where | Size |
-| :--- | :--- |
-| **A run, the player's first stage** | **Close, round their own home** (section 5). The run begins small and personal |
-| **A run, the middle stages** | Half, centred on the next place on the way (the stage picker's candidates, scaled minimum) |
-| **A run, the last stage and a boss** | Whole: the planet opens up |
-| **A run, a polar stage** | Close, round a pole or an outpost (K2 of the small-circles pictures) |
-| **A versus match** | A setup choice, **Whole by default**, and the size is part of a replay's setup |
-| **The demo and today's matches** | Whole, unchanged (no setup key means today's) |
+A run opens Close round the player's home, the middle fights are Half (each on an opponent's ground), the boss is a Whole ring through his home and the most populous city standing; versus is Whole by default, chosen at setup and kept in the replay's setup.
 
 ## 4. What it costs, and what is open
 
-- **Simulation** (the one real change): the wrap and the column count are constants today (`SimConst.W`, `HALF`, `NC`, read in about 210 places). Make them static variables set once in `newMatch` from a setup key `arena` (the length in units; absent means today's); four compile-time `const`s built from them become functions. **The golden does not move** (the default is today's). A 1v1 golden byte-identical with `arena` absent is the proof. One window.
+- **Simulation** (the one real change): the wrap and the column count are constants today (`SimConst.W`, `HALF`, `NC`, read in about 210 places). Make them static variables set once in `newMatch` from a setup key `arena` (see `shifting-arena-design.md` §3 for the lines) (the length in units; absent means today's); four compile-time `const`s built from them become functions. **The golden does not move** (the default is today's). A 1v1 golden byte-identical with `arena` absent is the proof. One window.
 - **World** (no golden): the picker takes a **centre** (a home, a city, a landmark, a pole, a random point), a loop length and a bearing, with a minimum scaled to the length (data), and the centre place counts as held when the loop lies inside its disc. Planet window 1's module extended. Measured on planet 7: a loop meets the scaled minimum in 10 to 22% of cases, so the picker tries a seeded list, as now. One window after Simulation's.
 - **Rendering and Camera**: the far land's fog and fade (`FOG_FAR` is 0.78 of the planet), the sky and the camera's zoom ceiling (a view up to 21,333 units wide is over half the smallest loop) read the wrap and need a look at 38,400. The far side of a loop can show the real opposite arc and the real centre (cosmetic, after). Theirs.
 - **Game Design** (open): the collateral budget and tier ceilings per size (a close ring's share falls on fewer places); whether the escape stance, the AI's roaming and the match-length targets scale with the loop; whether a versus player picks the size or the stage does; and the run's size ladder in section 3.

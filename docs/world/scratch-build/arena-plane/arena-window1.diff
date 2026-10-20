@@ -1,0 +1,493 @@
+diff --git a/sim/core/constants.gd b/sim/core/constants.gd
+index ed360bf..9ab6865 100644
+--- a/sim/core/constants.gd
++++ b/sim/core/constants.gd
+@@ -17,10 +17,19 @@ const TRAV_FREE: float = 10.0  # dash speed multiplier at long range: a lap take
+ const TRAV_LAUNCH: float = 6.0 # horizontal launch speed multiplier (impact damage and energy use the unboosted speed)
+ const BOOST_NEAR: float = 1500.0   # free-flight boost starts when the opponent is farther than this ...
+ const BOOST_FAR: float = 12000.0   # ... and is full at this separation
+-const W: float = 9600.0 * PS   # planet circumference; x wraps into [0, W)
+ const COL: float = 32.0        # terrain column width (0.43 fighter heights)
+-const NC: int = 4800           # number of terrain columns (W / COL)
+-const HALF: float = W / 2.0    # the largest shortest-arc separation
++const PLANET_NC: int = 4800    # the planet's circumference in columns: fixed (the planet is 4,800 columns round whatever the arena is)
++## The arena's length (docs/world/shifting-arena-design.md): the planet's great circle by default, or a smaller ring of a planet's plane through the pair. Set once at the top
++## of newMatch from setup.arena (its columns), so a match always sets it and none is stale; absent means the planet's own 4,800.
++static var W: float = 9600.0 * PS   # the arena's length: x wraps into [0, W)
++static var NC: int = 4800           # number of terrain columns (W / COL)
++static var HALF: float = 9600.0 * PS / 2.0    # the largest shortest-arc separation
++
++
++static func setArena(cols: int) -> void:
++	NC = cols
++	W = float(cols) * COL
++	HALF = W / 2.0
+ const CEILING: float = 24000.0 # flight ceiling (was 2,600): above the tallest building
+ const START_X: float = 5600.0 * PS   # where the first fighter starts: open ground at the desert's west edge, clear of every town (balance-targets.md §4b ruling 3; was 2150 x PS, the plains by the city); the second is START_GAP units on
+ const START_GAP: float = 900.0   # was 750: Camera's entrance needs the two landing spots this far apart (EP, 2026-10-02)
+diff --git a/sim/core/sim.gd b/sim/core/sim.gd
+index 2bbf73f..9ac9532 100644
+--- a/sim/core/sim.gd
++++ b/sim/core/sim.gd
+@@ -49,9 +49,12 @@ static func dispose(S: SimState) -> void:
+ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Dictionary = {}) -> void:
+ 	S.game.seed = float(seed & 0xFFFFFFFF)
+ 	S.rng = SimRng.new(seed & 0xFFFFFFFF)
++	var arena = setup.get("arena", null)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's 4,800
++	SimConst.setArena(int(arena.cols) if (arena is Dictionary and setup.has("planet")) else SimConst.PLANET_NC)
+ 	WorldBiomes.planetCols = PackedByteArray()
+ 	if not (setup.has("planet") and WorldPlanetWorld.gen(S, setup)):   # a setup with a planet reads its world from the slice; without one, today's world
+ 		WorldTerrain.genWorld(S)
++	DirLocation.reset()   # the director's lure tables follow the world and the arena's length
+ 	S.contactOn = WorldContact.enabled()   # World's ground contact (world/contact.gd): a copy of the data's switch
+ 	var p1ai: bool = bool(ai["p1"]) if ai.has("p1") and ai["p1"] != null else (S.fighters[0].ai != null if S.fighters.size() > 0 else true)
+ 	var p2ai: bool = bool(ai["p2"]) if ai.has("p2") and ai["p2"] != null else (S.fighters[1].ai != null if S.fighters.size() > 1 else true)
+@@ -66,7 +69,7 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
+ 	if setup.get("start", "") == "crossing":   # a demo start astride a crossing of the city (World: lanes.json demo_start); default off
+ 		start_x = WorldLanes.demoStartX(S, SimConst.START_GAP, SimConst.START_X)
+ 	if setup.has("planet"):
+-		start_x = float(WorldPlanet.TOUCH_COL) * SimConst.COL - SimConst.START_GAP * 0.5   # astride the touch-down
++		start_x = float(WorldPlanet.touchCol()) * SimConst.COL - SimConst.START_GAP * 0.5   # astride the touch-down
+ 	var x0: float = start_x
+ 	var x1: float = start_x + SimConst.START_GAP
+ 	var flip: bool = setup.get("flip", false)
+diff --git a/sim/director/location.gd b/sim/director/location.gd
+index 8294135..34f22a8 100644
+--- a/sim/director/location.gd
++++ b/sim/director/location.gd
+@@ -11,7 +11,13 @@ class_name DirLocation
+ const PATH: String = "res://data/director/location.json"
+ ## The biome index order of S.dirS.biomeT (the schema's enum order).
+ const BIOMES: Array = ["ocean", "village", "plains", "city", "forest", "desert", "mountains"]
+-const STEP: float = 200.0 * SimConst.PS   # one histogram bucket: SimConst.W / BUCKETS
++static var STEP: float = 200.0 * SimConst.PS   # one histogram bucket: SimConst.W / BUCKETS (set in _ensure: the arena's length can change)
++static var _key: String = ""
++
++
++## A new match's world: the tables are rebuilt on the next use (SimCore.newMatch).
++static func reset() -> void:
++	_key = ""
+ const BUCKETS: int = 48                    # WorldCollateral.HIST_BUCKETS
+ const WINDOW: int = 2                      # +-2 buckets approximate popNear(x, 900 * WS)
+ const EMPTY: float = 0.1                   # a bucket (or its window) at or below this population is empty ground
+@@ -25,17 +31,22 @@ static var _bucketBiome := PackedInt32Array()  # the biome index at each bucket'
+ 
+ 
+ static func _ensure() -> void:
+-	if _d != null:
+-		return
+-	_text = FileAccess.get_file_as_string(PATH)
+-	_d = JSON.parse_string(_text)
+ 	if _d == null:
+-		push_error("DirLocation: could not parse " + PATH)
+-		_d = {}
++		_text = FileAccess.get_file_as_string(PATH)
++		_d = JSON.parse_string(_text)
++		if _d == null:
++			push_error("DirLocation: could not parse " + PATH)
++			_d = {}
++	# the tables follow the arena's length and a planet's world: rebuilt when either changes (a match on the hand-made world keeps today's)
++	var key: String = "%s/%d" % [str(SimConst.W), WorldBiomes.planetCols.size()]
++	if key == _key:
++		return
++	_key = key
++	STEP = SimConst.W / float(BUCKETS)
+ 	_planet.resize(BIOMES.size())
+ 	_planet.fill(0.0)
+ 	for sg in WorldBiomes.SEG:
+-		_planet[BIOMES.find(sg[2])] += (sg[1] - sg[0]) / SimConst.W
++		_planet[BIOMES.find(sg[2])] += (sg[1] - sg[0]) / (9600.0 * SimConst.PS)
+ 	_bucketBiome.resize(BUCKETS)
+ 	for k in range(BUCKETS):
+ 		_bucketBiome[k] = BIOMES.find(WorldBiomes.biomeAt(k * STEP + STEP / 2.0))
+diff --git a/sim/world/collateral.gd b/sim/world/collateral.gd
+index 4fdbf6d..78b0932 100644
+--- a/sim/world/collateral.gd
++++ b/sim/world/collateral.gd
+@@ -78,11 +78,10 @@ const SHELTER_CAP: float = 2.0
+ ## evacuee, times 425 / pop0. Anguish gets nothing from evacuees.
+ const EVAC_MENACE: float = 0.45
+ const HIST_BUCKETS: int = 48           # the lure's population histogram (director/ai.gd LURE_STEP = W / 48)
+-const HIST_STEP: float = SimConst.W / 48.0
+ 
+ 
+ static func histBucket(x: float) -> int:
+-	return mini(int(SimWrap.wrap(x) / HIST_STEP), HIST_BUCKETS - 1)
++	return mini(int(SimWrap.wrap(x) / (SimConst.W / 48.0)), HIST_BUCKETS - 1)   # one bucket is a 48th of the arena (director/location.gd STEP)
+ 
+ 
+ ## Start of a match, after the buildings exist: the window, the state and the lure histogram.
+diff --git a/sim/world/planet.gd b/sim/world/planet.gd
+index a909f9a..2bb5480 100644
+--- a/sim/world/planet.gd
++++ b/sim/world/planet.gd
+@@ -20,7 +20,9 @@ const BIO_ICE_SHEET := 5
+ const BIO_SEA_ICE := 6
+ const KIND_CITY := 0
+ const KIND_TOWN := 1
+-const TOUCH_COL := SimConst.NC / 2       # the touch-down is the middle column of its slice (the seam is the antipode)
++## The touch-down is the middle column of its slice (the seam is the antipode); the slice is the arena's columns (SimConst.NC).
++static func touchCol() -> int:
++	return SimConst.NC / 2
+ const MASK := 0xFFFFFFFF
+ 
+ static var _TAN_PI_8: float = SimMathx.f64("3fda827999fcef32")   # tan(pi/8) = sqrt(2) - 1, from its bits (the parity lint allows no float literal over 15 digits)
+@@ -225,7 +227,7 @@ static func make(seed: int) -> Planet:
+ 	var P := Planet.new()
+ 	P.seed = seed
+ 	P.c = cfg()
+-	P.L = float(SimConst.NC) * SimConst.COL
++	P.L = float(SimConst.PLANET_NC) * SimConst.COL
+ 	P.R = P.L / (2.0 * PI)
+ 	_placeAll(P)
+ 	if _planets.size() > 6:
+@@ -400,13 +402,44 @@ static func circleOf(T: Array, n: Array) -> Dictionary:
+ 	return {"u": u, "v": v, "n": n}
+ 
+ 
++## A ring of the arena's length (docs/world/shifting-arena-design.md section 1): the small circle through the great circle's touch-down T (= circ.u), tangent to it there, of
++## `cols` columns, on the left (side 1, towards the great circle's normal) or the right of it. Its radius is sin(theta) = cols / 4,800 of the planet's, so a column is exactly
++## SimConst.COL of arc and the ring closes. Returns the same dictionary shape as circleOf (u: the direction from the centre to T, v: the travel direction, n: the axis) plus
++## c (the axis), st and ct (sin and cos of the angular radius), th (the radius) and s (the side), which read as "a ring". cols of 4,800 or more is the great circle itself.
++static func ringThrough(circ: Dictionary, cols: int, side: int) -> Dictionary:
++	var st: float = float(cols) / float(SimConst.PLANET_NC)
++	if st >= 1.0:
++		return circ
++	var ct: float = sqrt(1.0 - st * st)
++	var s: float = 1.0 if side >= 0 else -1.0
++	var n: Array = circ.n
++	var t: Array = circ.u
++	var c: Array = _unit([t[0] * ct + n[0] * (s * st), t[1] * ct + n[1] * (s * st), t[2] * ct + n[2] * (s * st)])
++	var e1: Array = _unit([t[0] * st - n[0] * (s * ct), t[1] * st - n[1] * (s * ct), t[2] * st - n[2] * (s * ct)])
++	return {"u": e1, "v": circ.v, "n": c, "c": c, "st": st, "ct": ct, "th": asinf(st), "s": s}
++
++
++## A place's signed lateral offset from the line (units, left of the line positive): from a great circle by its normal, from a ring by its angular radius.
++static func lateral(P: Planet, circ: Dictionary, x: float, y: float, z: float) -> float:
++	if circ.has("st"):
++		var c: Array = circ.c
++		return circ.s * P.R * (circ.th - acosf(SimMathx.jclamp(c[0] * x + c[1] * y + c[2] * z, -1.0, 1.0)))
++	var n: Array = circ.n
++	return P.R * asinf(n[0] * x + n[1] * y + n[2] * z)
++
++
+ ## The point at column i of the circle: the middle column is T, a column is SimConst.COL units of arc.
+ static func columnPoint(P: Planet, circ: Dictionary, i: int) -> Array:
+-	var ang: float = float(i - TOUCH_COL) * SimConst.COL / P.R
++	var stf: float = circ.get("st", 1.0)
++	var ang: float = float(i - touchCol()) * SimConst.COL / (P.R * stf)
+ 	var co: float = SimDetMath.cos(ang)
+ 	var si: float = SimDetMath.sin(ang)
+ 	var u: Array = circ.u
+ 	var v: Array = circ.v
++	if circ.has("st"):
++		var c: Array = circ.c
++		var ct: float = circ.ct
++		return [c[0] * ct + stf * (u[0] * co + v[0] * si), c[1] * ct + stf * (u[1] * co + v[1] * si), c[2] * ct + stf * (u[2] * co + v[2] * si)]
+ 	return [u[0] * co + v[0] * si, u[1] * co + v[1] * si, u[2] * co + v[2] * si]
+ 
+ 
+@@ -657,13 +690,22 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
+ 	S.biomes.resize(nc)
+ 	var u: Array = circ.u
+ 	var v: Array = circ.v
++	var small: bool = circ.has("st")
++	var stf: float = circ.get("st", 1.0)
++	var ct: float = circ.get("ct", 0.0)
++	var ca: Array = circ.get("c", u)
++	var tc: int = touchCol()
+ 	for i in range(nc):
+-		var ang: float = float(i - TOUCH_COL) * SimConst.COL / P.R
++		var ang: float = float(i - tc) * SimConst.COL / (P.R * stf)
+ 		var co: float = SimDetMath.cos(ang)
+ 		var si: float = SimDetMath.sin(ang)
+ 		var qx: float = u[0] * co + v[0] * si
+ 		var qy: float = u[1] * co + v[1] * si
+ 		var qz: float = u[2] * co + v[2] * si
++		if small:
++			qx = ca[0] * ct + stf * qx
++			qy = ca[1] * ct + stf * qy
++			qz = ca[2] * ct + stf * qz
+ 		surfAt(P, qx, qy, qz)
+ 		var h: float = P.outH
+ 		var b: int = P.outB
+@@ -673,14 +715,13 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
+ 			h += (_fbm(P.R, qx, qy, qz, c.detailScale, int(c.detailOct), P.seed + int(c.sDetail)) - 0.5) * c.detailAmp * c.detailSheet
+ 		S.heights[i] = h
+ 		S.biomes[i] = b
+-	var n: Array = circ.n
+ 	for i in range(P.n):
+-		var lat: float = P.R * asinf(n[0] * P.px[i] + n[1] * P.py[i] + n[2] * P.pz[i])
++		var lat: float = lateral(P, circ, P.px[i], P.py[i], P.pz[i])
+ 		var reach: float = (c.cityReach if P.kind[i] == KIND_CITY else c.townReach) * P.rad[i]
+ 		if absf(lat) >= reach:
+ 			continue
+ 		var along: float = atan2f(P.px[i] * v[0] + P.py[i] * v[1] + P.pz[i] * v[2], P.px[i] * u[0] + P.py[i] * u[1] + P.pz[i] * u[2])
+-		var col: int = TOUCH_COL + int(floor(along * P.R / SimConst.COL + 0.5))
++		var col: int = tc + int(floor(along * (P.R * stf) / SimConst.COL + 0.5))
+ 		col = ((col % nc) + nc) % nc
+ 		var half: float = sqrt(maxf(0.0, P.rad[i] * P.rad[i] - lat * lat))
+ 		S.held.append({"id": i, "kind": int(P.kind[i]), "col": col, "d": lat, "half": half, "r": P.rad[i],
+@@ -689,15 +730,15 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
+ 
+ 
+ ## The slice memoised outside the sim state: keyed by the planet, the touch, the pick index and the data hash. The read is pure, so the cache cannot change a match.
+-static func sliceFor(seed: int, touch: int, standing: PackedByteArray = PackedByteArray(), relaxed: bool = false) -> Slice:
+-	var key: String = "%d/%d/%s/%d/%s" % [seed, touch, str(standing.hex_encode()), 1 if relaxed else 0, dataHash()]
++static func sliceFor(seed: int, touch: int, standing: PackedByteArray = PackedByteArray(), relaxed: bool = false, side: int = 1) -> Slice:
++	var key: String = "%d/%d/%s/%d/%s/%d/%d" % [seed, touch, str(standing.hex_encode()), 1 if relaxed else 0, dataHash(), SimConst.NC, side]
+ 	if _slices.has(key):
+ 		return _slices[key]
+ 	var P: Planet = make(seed)
+ 	var r: Dictionary = pick(P, touch, standing, relaxed)
+ 	if not r.ok:
+ 		return null
+-	var S: Slice = readSlice(P, r.circle, r.T, standing)
++	var S: Slice = readSlice(P, ringThrough(r.circle, SimConst.NC, side), r.T, standing)   # the arena's columns: the great circle itself at 4,800, else a ring through the touch-down
+ 	if _slices.size() > 4:
+ 		_slices.clear()
+ 	_slices[key] = S
+@@ -948,7 +989,7 @@ static func wearMarks(P: Planet, wear: Dictionary, S: Slice) -> Array:
+ 	var out: Array = []
+ 	var u: Array = S.circ.u
+ 	var v: Array = S.circ.v
+-	var n: Array = S.circ.n
++	var stf: float = S.circ.get("st", 1.0)
+ 	var nc: int = SimConst.NC
+ 	var band: float = c.bandUnits
+ 	var pts: Array = []   # [x, y, z, radius16, depth16, cause, place]
+@@ -962,11 +1003,11 @@ static func wearMarks(P: Planet, wear: Dictionary, S: Slice) -> Array:
+ 	for o in wear.open:
+ 		pts.append([float(o[0]) / 1000000.0, float(o[1]) / 1000000.0, float(o[2]) / 1000000.0, o[3], o[4], o[5], -1])
+ 	for q in pts:
+-		var lat: float = P.R * asinf(n[0] * q[0] + n[1] * q[1] + n[2] * q[2])
++		var lat: float = lateral(P, S.circ, q[0], q[1], q[2])
+ 		if absf(lat) > band + float(q[3]) / 16.0:
+ 			continue
+ 		var along: float = atan2f(q[0] * v[0] + q[1] * v[1] + q[2] * v[2], q[0] * u[0] + q[1] * u[1] + q[2] * u[2])
+-		var col: int = TOUCH_COL + int(floor(along * P.R / SimConst.COL + 0.5))
++		var col: int = touchCol() + int(floor(along * (P.R * stf) / SimConst.COL + 0.5))
+ 		col = ((col % nc) + nc) % nc
+ 		out.append({"col": col, "lateral": int(floor(lat + 0.5)), "radius16": q[3], "depth16": q[4], "cause": q[5], "place": q[6]})
+ 	return out
+diff --git a/sim/world/planet_world.gd b/sim/world/planet_world.gd
+index 17ac030..b44119c 100644
+--- a/sim/world/planet_world.gd
++++ b/sim/world/planet_world.gd
+@@ -18,7 +18,8 @@ const ARCH_TOWN: String = "outskirts"
+ static func gen(S: SimState, setup: Dictionary) -> bool:
+ 	var seed: int = int(setup.planet)
+ 	var touch: int = int(setup.get("touch", 0))
+-	var sl: WorldPlanet.Slice = WorldPlanet.sliceFor(seed, touch)
++	var arena = setup.get("arena", {})
++	var sl: WorldPlanet.Slice = WorldPlanet.sliceFor(seed, touch, PackedByteArray(), false, int(arena.get("side", 1)) if arena is Dictionary else 1)   # the arena's columns are SimConst.NC (newMatch set them)
+ 	if sl == null:
+ 		return false
+ 	var P: WorldPlanet.Planet = WorldPlanet.make(seed)
+diff --git a/sim/world/structures.gd b/sim/world/structures.gd
+index 27e3456..fd46345 100644
+--- a/sim/world/structures.gd
++++ b/sim/world/structures.gd
+@@ -29,7 +29,6 @@ const PLANE_ROW: float = 1.0
+ const Z_REACH: float = 260.0 * WS
+ ## Spatial index: buildings by the bucket of their centre. A query reaches every bucket within r plus the widest half width.
+ const BUCKETS: int = 128
+-const BUCKET_W: float = SimConst.W / 128.0
+ const MAX_HALF_W: float = 64.0 * WS / 2.0 + 8.0
+ # ---- implode and rubble (blast-levelled buildings, buildings-in-depth.md 4c) ----
+ const IMPLODE_SPEED: float = 1000.0 * WS   # the ripple's speed, units per second (cosmetic delay)
+@@ -254,7 +253,7 @@ static func buildIndex(S: SimState) -> void:
+ 	for i in range(S.buildings.size()):
+ 		var b = S.buildings[i]
+ 		b.idx = i
+-		var k: int = mini(int(SimWrap.wrap(b.x) / BUCKET_W), BUCKETS - 1)
++		var k: int = mini(int(SimWrap.wrap(b.x) / (SimConst.W / 128.0)), BUCKETS - 1)
+ 		S.bIdx[k].append(i)
+ 
+ 
+@@ -266,8 +265,9 @@ static func near(S: SimState, x: float, r: float) -> Array:
+ 		for i in range(S.buildings.size()):
+ 			out.append(i)
+ 		return out
+-	var k0: int = int(floor((SimWrap.wrap(x) - reach) / BUCKET_W))
+-	var k1: int = int(floor((SimWrap.wrap(x) + reach) / BUCKET_W))
++	var bw: float = SimConst.W / 128.0   # a bucket is a 128th of the arena
++	var k0: int = int(floor((SimWrap.wrap(x) - reach) / bw))
++	var k1: int = int(floor((SimWrap.wrap(x) + reach) / bw))
+ 	for k in range(k0, k1 + 1):
+ 		for i in S.bIdx[posmod(k, BUCKETS)]:
+ 			out.append(i)
+diff --git a/sim/world/tools/arena_check.gd b/sim/world/tools/arena_check.gd
+new file mode 100644
+index 0000000..5a64a2c
+--- /dev/null
++++ b/sim/world/tools/arena_check.gd
+@@ -0,0 +1,135 @@
++extends SceneTree
++# The arena as a plane (docs/world/shifting-arena-design.md section 3): the arena's length is a static set by each match; a ring of the planet's is read like the great circle.
++#   godot --headless --path . --script res://sim/world/tools/arena_check.gd [-- --ticks=3600]
++var fails: int = 0
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func play(setup: Dictionary, seed: int, ticks: int) -> Dictionary:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, seed, {}, setup)
++	var cols: int = SimConst.NC
++	var inside: bool = true
++	for b in S.buildings:
++		if b.x < 0.0 or b.x >= SimConst.W:
++			inside = false
++	for t in range(ticks):
++		SimCore.step(S)
++		if S.game.ko != null:
++			break
++	for f in S.fighters:
++		if f.x < 0.0 or f.x >= SimConst.W:
++			inside = false
++	return {"hash": str(SimHash.stateHash(S).gameplay), "cols": cols, "base": S.base.size(), "deform": S.deform.size(), "bld": S.buildings.size(), "inside": inside, "tick": S.tick, "pop": S.world.pop0}
++
++
++func _init() -> void:
++	var ticks: int = 3600
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--ticks="):
++			ticks = int(a.substr(8))
++	# --- the statics
++	ok(SimConst.NC == 4800 and SimConst.W == 153600.0 and SimConst.HALF == 76800.0 and SimConst.PLANET_NC == 4800, "the defaults are today's (4,800 columns, 153,600 units)")
++	SimConst.setArena(1600)
++	ok(SimConst.NC == 1600 and SimConst.W == 51200.0 and SimConst.HALF == 25600.0 and SimWrap.wrap(51200.0 + 5.0) == 5.0 and absf(SimWrap.sdx(50000.0, 1000.0) - 2200.0) < 0.001, "setArena(1600): 51,200 round, the wrap and the shortest arc follow")
++	SimConst.setArena(SimConst.PLANET_NC)
++	# --- the ring
++	var P := WorldPlanet.make(7)
++	var pr: Dictionary = WorldPlanet.pick(P, 3)
++	ok(pr.ok, "planet 7, touch 3 has a slice to read")
++	var circ: Dictionary = pr.circle
++	var T: Array = pr.T
++	var geom: bool = true
++	var tang: bool = true
++	for cols in [2400, 1600, 1200, 600]:
++		SimConst.setArena(cols)
++		var ring: Dictionary = WorldPlanet.ringThrough(circ, cols, 1)
++		var mid: int = WorldPlanet.touchCol()
++		var p0: Array = WorldPlanet.columnPoint(P, ring, mid)
++		var u: Array = circ.u
++		if absf(p0[0] - u[0]) > 1e-9 or absf(p0[1] - u[1]) > 1e-9 or absf(p0[2] - u[2]) > 1e-9:
++			geom = false
++		# unit points, an arc of one column between neighbours, a closed ring
++		var worst: float = 0.0
++		var arcErr: float = 0.0
++		for i in range(0, cols, maxi(1, cols / 97)):
++			var q: Array = WorldPlanet.columnPoint(P, ring, i)
++			worst = maxf(worst, absf(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] - 1.0))
++			var q2: Array = WorldPlanet.columnPoint(P, ring, i + 1)
++			var dd: float = acos(clampf(q[0] * q2[0] + q[1] * q2[1] + q[2] * q2[2], -1.0, 1.0)) * P.R
++			arcErr = maxf(arcErr, absf(dd - SimConst.COL) / SimConst.COL)
++		var a: Array = WorldPlanet.columnPoint(P, ring, 0)
++		var b: Array = WorldPlanet.columnPoint(P, ring, cols)
++		var gap: float = sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1]) + (a[2] - b[2]) * (a[2] - b[2])) * P.R
++		if worst > 1e-9 or arcErr > 0.002 or gap > 0.01:
++			geom = false
++		# tangent to the great circle at the touch-down: the next column lies along the great circle's travel direction
++		var pn: Array = WorldPlanet.columnPoint(P, ring, mid + 1)
++		var pm: Array = WorldPlanet.columnPoint(P, ring, mid - 1)
++		var v: Array = circ.v
++		var d: Array = [pn[0] - pm[0], pn[1] - pm[1], pn[2] - pm[2]]
++		var dl: float = sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2])
++		var cosv: float = (d[0] * v[0] + d[1] * v[1] + d[2] * v[2]) / dl
++		if cosv < 0.99999:
++			tang = false
++		# the ring's own lateral offset is zero
++		var lat: float = WorldPlanet.lateral(P, ring, a[0], a[1], a[2])
++		if absf(lat) > 0.01:
++			geom = false
++	SimConst.setArena(SimConst.PLANET_NC)
++	ok(geom, "a ring of 2,400, 1,600, 1,200 and 600 columns: unit points, a column of arc between neighbours (within 0.2%), closed (a gap under 0.01 unit), the touch-down at the middle column, zero lateral on itself")
++	ok(tang, "and tangent to the great circle at the touch-down (the next column lies along its travel direction)")
++	# --- the great circle through the new path is today's, to the bit
++	var s0 = WorldPlanet.sliceFor(7, 3)
++	ok(s0 != null and "%08x" % WorldPlanet.sliceHash(s0) == "d0f86ade" and s0.heights.size() == 4800, "the Planet slice (planet 7, touch 3) is today's: hash d0f86ade, 4,800 columns")
++	# --- the slices of the rings
++	var hs: Dictionary = {}
++	for cols in [2400, 1600, 1200, 600]:
++		SimConst.setArena(cols)
++		var sl = WorldPlanet.sliceFor(7, 3)
++		var sl2 = WorldPlanet.sliceFor(7, 3)
++		var fine: bool = sl != null and sl.heights.size() == cols and sl.biomes.size() == cols
++		var heldOk: bool = true
++		for h in sl.held:
++			if h.col < 0 or h.col >= cols:
++				heldOk = false
++		var centre: bool = absf(sl.heights[WorldPlanet.touchCol()] - s0.heights[2400]) < 0.0001   # the same touch-down point, the same ground
++		hs[cols] = WorldPlanet.sliceHash(sl)
++		ok(fine and heldOk and centre and sl == sl2, "a %d-column slice: %d heights, %d places held, every held column inside, the middle column is the Planet slice's middle column" % [cols, sl.heights.size(), sl.held.size()])
++	SimConst.setArena(SimConst.PLANET_NC)
++	# a place's lateral offset from a ring is its geodesic distance to the ring (checked against the nearest of the ring's columns)
++	SimConst.setArena(1600)
++	var ring1: Dictionary = WorldPlanet.ringThrough(circ, 1600, 1)
++	var latOk: int = 0
++	var latN: int = 0
++	for i in range(P.n):
++		var lat: float = WorldPlanet.lateral(P, ring1, P.px[i], P.py[i], P.pz[i])
++		var best: float = 1.0e18
++		for k in range(0, 1600, 4):
++			var q: Array = WorldPlanet.columnPoint(P, ring1, k)
++			var dd: float = acos(clampf(q[0] * P.px[i] + q[1] * P.py[i] + q[2] * P.pz[i], -1.0, 1.0)) * P.R
++			best = minf(best, dd)
++		if absf(lat) < 6000.0:
++			latN += 1
++			if absf(absf(lat) - best) <= 0.02 * best + 130.0:
++				latOk += 1
++	ok(latN >= 3 and latOk == latN, "a place's lateral offset from the ring is its distance to the ring (%d of %d places within 6,000 units)" % [latOk, latN])
++	SimConst.setArena(SimConst.PLANET_NC)
++	# --- a match on each size
++	var base: Dictionary = play({"planet": 7, "touch": 3}, 1, 600)
++	var whole: Dictionary = play({"planet": 7, "touch": 3, "arena": {"cols": 4800}}, 1, 600)
++	ok(base.hash == whole.hash and whole.cols == 4800, "an arena of 4,800 columns plays the same as none (hash %s)" % base.hash.substr(0, 8))
++	for cols in [2400, 1600, 1200, 600]:
++		var r1: Dictionary = play({"planet": 7, "touch": 3, "arena": {"cols": cols}}, 1, ticks)
++		var r2: Dictionary = play({"planet": 7, "touch": 3, "arena": {"cols": cols}}, 1, ticks)
++		ok(r1.cols == cols and r1.base == cols and r1.deform == cols and r1.inside and r1.bld > 0 and r1.hash == r2.hash, "a %d-column match: %d buildings, %.0f people, every building and fighter inside the world, %d ticks played, the same hash twice (%s)" % [cols, r1.bld, r1.pop, r1.tick, r1.hash.substr(0, 8)])
++	# a default match after a small one is the default world again (no stale static)
++	var after: Dictionary = play({}, 1, 600)
++	ok(after.cols == 4800 and SimConst.W == 153600.0 and after.bld == 118, "a default match after a small one is today's world (4,800 columns, 118 buildings)")
++	print("ARENA: %d check(s) failed" % fails)
++	quit()
+diff --git a/sim/world/tools/arena_check.gd.uid b/sim/world/tools/arena_check.gd.uid
+new file mode 100644
+index 0000000..aae4087
+--- /dev/null
++++ b/sim/world/tools/arena_check.gd.uid
+@@ -0,0 +1 @@
++uid://col3hvh2xpkyv
+diff --git a/sim/world/tools/planet_check.gd b/sim/world/tools/planet_check.gd
+index cc07510..c976b90 100644
+--- a/sim/world/tools/planet_check.gd
++++ b/sim/world/tools/planet_check.gd
+@@ -192,7 +192,7 @@ func _init() -> void:
+ 	var pr: Dictionary = WorldPlanet.pick(P, 3)
+ 	var S: WorldPlanet.Slice = WorldPlanet.readSlice(P, pr.circle, pr.T)
+ 	ok(S.heights.size() == SimConst.NC and S.biomes.size() == SimConst.NC, "a slice is %d columns of height and biome" % S.heights.size())
+-	var mid: Array = WorldPlanet.columnPoint(P, pr.circle, WorldPlanet.TOUCH_COL)
++	var mid: Array = WorldPlanet.columnPoint(P, pr.circle, WorldPlanet.touchCol())
+ 	ok(absf(mid[0] - pr.T[0]) < 1.0e-9 and absf(mid[1] - pr.T[1]) < 1.0e-9 and absf(mid[2] - pr.T[2]) < 1.0e-9, "the middle column is the touch-down")
+ 	var nHeldCities: int = 0
+ 	for h in S.held:
+diff --git a/sim/world/tools/planet_world_check.gd b/sim/world/tools/planet_world_check.gd
+index cd78e44..f7a20fe 100644
+--- a/sim/world/tools/planet_world_check.gd
++++ b/sim/world/tools/planet_world_check.gd
+@@ -41,7 +41,7 @@ func _init() -> void:
+ 	ok(S.buildings.size() > 20 and S.world.pop0 > 100.0, "a match on planet 7, touch 3: %d buildings, %d people, %d places held" % [S.buildings.size(), int(S.world.pop0), sl.held.size()])
+ 	var near: bool = true
+ 	for f in S.fighters:
+-		if absf(SimWrap.sdx(float(WorldPlanet.TOUCH_COL) * SimConst.COL, f.x)) > 1000.0:
++		if absf(SimWrap.sdx(float(WorldPlanet.touchCol()) * SimConst.COL, f.x)) > 1000.0:
+ 			near = false
+ 	ok(near, "the fighters start astride the touch-down (x %.0f and %.0f)" % [S.fighters[0].x, S.fighters[1].x])
+ 	var same: int = 0
