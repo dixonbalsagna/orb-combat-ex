@@ -1,0 +1,91 @@
+--- a/render/vfx/explode.gd
++++ b/render/vfx/explode.gd
+@@ -92,6 +92,16 @@
+ 	return VfxLook.QUALITY_SHARDS[clampi(d.quality, 0, 2)] * (0.5 if d.reduced else 1.0)
+ 
+ 
++## Whether a burst on a body may put up smoke (Orb, 2026-10-18: the grey blobs beside the fighters read as blur): not while he is in the air, not in a beam struggle, and then one small puff.
++## Smoke at a landing is for the ground it lands on; a clean contact in the air is flame, sparks and light.
++static func fighter_smoke(S, x: float, y: float) -> bool:
++	if S == null:
++		return true
++	if S.game.clash != null:
++		return false
++	return y - WorldTerrain.groundY(S, x) < 1.5 * VfxLook.BH
++
++
+ ## radius: the blast radius (radius_for). surface: "ground", "fighter" (a body), "air" (a burst in the air: no ground), "wall" (against a
+ ## building's face: concrete chips and dust, no ring) or "water". mode: "burst" (a flame burst, the default), "spark" (sparks and smoke only: a guard or a deflect).
+ ## Returns how many bits it asked the pool for (the tests and the budget).
+@@ -102,6 +112,8 @@
+ 	var smoke_life: float = smoke_s(radius)
+ 	var biome: String = VfxPalette.biome_key(x)
+ 	var asked: int = 0
++	var on_body: bool = surface == "fighter"
++	var smoke_ok: bool = (not on_body) or fighter_smoke(S, x, y)
+ 	var flame_cap: int = int(round(p("flame_cap") * (0.5 + 0.5 * q)))
+ 	# Flames: a burst going up and out, the larger ones taller. In three waves (the first now, the others a few ticks on, as jobs) and each flame grows in over a few ticks (shard_view): so the
+ 	# burst is never one frame's flash (Legal fx03: an explosion's fire grows over several ticks).
+@@ -117,7 +129,7 @@
+ 			var j := VfxDebris.Job.new()
+ 			j.at = d.now + delay
+ 			j.kind = "xwave"
+-			j.a = {"x": x, "y": y, "z": z, "s": s, "n": n, "q": q, "cap": flame_cap, "spread": spread, "smoke": int(round(p("smoke_late"))) if delay > p("wave1_s") else 0, "sm": smoke_life}
++			j.a = {"x": x, "y": y, "z": z, "s": s, "n": n, "q": q, "cap": flame_cap, "spread": spread, "smoke": int(round(p("smoke_late"))) if (delay > p("wave1_s") and not on_body) else 0, "sm": smoke_life}
+ 			d.jobs.append(j)
+ 		wave_job.call(p("wave1_s"), n1, 1.25)
+ 		wave_job.call(p("wave2_s"), n2, 1.5)
+@@ -145,11 +157,11 @@
+ 			d._add(b)
+ 			asked += 1
+ 	# Smoke: dark puffs rising off the burst.
+-	var nsm: int = clampi(int(round(p("smoke") * s * p("smoke_k"))), 2, 9)
++	var nsm: int = (1 if smoke_ok else 0) if on_body else clampi(int(round(p("smoke") * s * p("smoke_k"))), 2, 9)
+ 	for i in range(nsm):
+-		var sz2: float = rd.range_(44.0, 78.0) * (0.55 + 0.6 * s) * 1.15
++		var sz2: float = rd.range_(44.0, 78.0) * (0.55 + 0.6 * s) * 1.15 * (0.5 if on_body else 1.0)
+ 		var life3: float = rd.range_(0.6, 1.0) * smoke_life
+-		var dx: float = rd.range_(-26.0, 26.0)
++		var dx: float = (signf(rd.range_(-1.0, 1.0)) * rd.range_(44.0, 70.0)) if on_body else rd.range_(-26.0, 26.0)       # on a body the puff stands clear of him, never over his sprite
+ 		var keep3: bool = rd.next() < q
+ 		if keep3 and not (d.reduced and i > 1):
+ 			d.smoke(x + dx, y + 30.0 + rd.range_(0.0, 30.0), z - 2.0, sz2, life3)
+--- a/render/vfx/beamplay.gd
++++ b/render/vfx/beamplay.gd
+@@ -244,11 +244,11 @@
+ 				w2.fade = 6.0
+ 				var gy: float = WorldTerrain.groundY(S, f.x)
+ 				_add("land", f.x, gy + 12.0, f.z, 1.0, 0.0, 130.0 if was == "wade" else 100.0, p("beamplay", "arrive_life"), lane, other, slot)
+-				if debris != null:
++				if debris != null and f.y - gy < 1.2 * VfxLook.BH and S.game.clash == null:       # landing dust is for a landing on the ground: none from the air or in a struggle (Orb: the grey blobs read as blur)
+ 					var rd: SimRng = debris._rd
+-					for k in range(7 if was == "wade" else 4):
++					for k in range(3 if was == "wade" else 2):
+ 						var side: float = 1.0 if k % 2 == 0 else -1.0
+-						debris.dust_puff(VfxPalette.biome_key(f.x), f.x + side * rd.range_(10.0, 60.0), gy + 8.0, f.z + rd.range_(0.0, 16.0), side * rd.range_(100.0, 320.0), rd.range_(10.0, 60.0), 30.0, 66.0, rd.range_(0.7, 1.2), k % 3)
++						debris.dust_puff(VfxPalette.biome_key(f.x), f.x + side * rd.range_(10.0, 60.0), gy + 8.0, f.z + rd.range_(0.0, 16.0), side * rd.range_(100.0, 320.0), rd.range_(10.0, 60.0), 18.0, 40.0, rd.range_(0.5, 0.8), k % 3)
+ 			"beam_late":
+ 				# The beam is cut where it had got to, and his answer is seen to run out to it.
+ 				var h = heads[o]
+--- a/render/vfx/tools/effects_check.gd
++++ b/render/vfx/tools/effects_check.gd
+@@ -5251,7 +5251,18 @@
+ 		return hp
+ 	var hbolt: VfxHub = land.call("hit", "bolt")
+ 	var kb: Dictionary = kinds_of.call(hbolt.debris)
+-	_check(int(kb.get(VfxDebris.FLAME, 0)) >= 1 and hbolt.debris.jobs.filter(func(j): return j.kind == "xwave").size() == 2 and int(kb.get(VfxDebris.PUFF, 0)) >= 2, "a point-blank bolt that hits: flames now (%d), two later waves and smoke (%d puffs)" % [int(kb.get(VfxDebris.FLAME, 0)), int(kb.get(VfxDebris.PUFF, 0))])
++	_check(int(kb.get(VfxDebris.FLAME, 0)) >= 1 and hbolt.debris.jobs.filter(func(j): return j.kind == "xwave").size() == 2 and int(kb.get(VfxDebris.PUFF, 0)) == 1, "a point-blank bolt that hits on the ground: flames now (%d), two later waves and one small puff of smoke (%d puffs)" % [int(kb.get(VfxDebris.FLAME, 0)), int(kb.get(VfxDebris.PUFF, 0))])
++	# Smoke at a landing is for the ground it lands on (Orb, 2026-10-18: the grey blobs read as blur): none in the air, none in a beam struggle.
++	_check(VfxExplode.fighter_smoke(S, plains, g + 20.0) and not VfxExplode.fighter_smoke(S, plains, g + 4.0 * VfxLook.BH), "a burst on a body smokes near the ground and not in the air")
++	S.game.clash = {}
++	_check(not VfxExplode.fighter_smoke(S, plains, g + 20.0), "and not in a beam struggle")
++	S.game.clash = null
++	S.fighters[0].y = g + 4.0 * VfxLook.BH
++	S.fighters[1].y = g + 4.0 * VfxLook.BH
++	var hair: VfxHub = land.call("hit", "bolt")
++	_check(not kinds_of.call(hair.debris).has(VfxDebris.PUFF), "a point-blank bolt that hits in the air puts up no smoke (flames and sparks only)")
++	S.fighters[0].y = g
++	S.fighters[1].y = g
+ 	var hguard: VfxHub = land.call("guard", "bolt")
+ 	_check(not kinds_of.call(hguard.debris).has(VfxDebris.FLAME), "a point-blank bolt that meets a guard is sparks and smoke only")
+ 	# A small blast is no longer a blink: its scale never falls under the floor.
