@@ -1,6 +1,6 @@
 --- a/data/vfx/transform.json
 +++ b/data/vfx/transform.json
-@@ -8,12 +8,12 @@
+@@ -8,12 +8,13 @@
    },
    "gather": {
      "motes": 40, "dust_motes": 14, "loops_full": 2.0, "loops_short": 1.0, "loops_live": 1.0,
@@ -12,8 +12,105 @@
    "break": {
 -    "ring_r0_bh": 0.7, "ring_r1_bh": 4.2, "ring_ticks": 14, "ring_thick": 0.045, "ring_alpha": 0.95,
 -    "flash_radius_bh": 1.7, "flash_alpha": 0.5, "flash_ticks": 5, "aura_alpha": 0.9
-+    "ring_r0_bh": 0.55, "ring_r1_bh": 1.2, "ring_ticks": 14, "ring_thick": 0.04, "ring_alpha": 0.8,
++    "ring_r0_bh": 0.55, "ring_r1_bh": 1.2, "ring_ticks": 14, "ring_thick": 0.04, "ring_alpha": 0.0,
++    "gring_r0_bh": 0.5, "gring_r1_bh": 2.6, "gring_ticks": 28, "gring_flat": 0.2, "gring_thick": 0.05, "gring_alpha": 0.9,
 +    "flash_radius_bh": 1.7, "flash_alpha": 0.0, "flash_ticks": 5, "aura_alpha": 0.9
    },
    "settle": { "aura_alpha": 0.6, "ease_ticks": 10, "fade_ticks": 24 },
    "aura": {
+--- a/render/vfx/transform.gd
++++ b/render/vfx/transform.gd
+@@ -14,8 +14,8 @@
+ ## "vfx.xform" derived from the match seed.
+ 
+ const DEFAULTS: Dictionary = {
+-	"gather": {"motes": 40, "dust_motes": 14, "loops_full": 2.0, "loops_short": 1.0, "loops_live": 1.0, "radius_bh": 2.6, "len_bh": 0.55, "width_bh": 0.05, "alpha": 0.85, "dim_radius_bh": 6.0, "dim_alpha": 0.16, "aura_shrink": 0.12},
+-	"break": {"ring_r0_bh": 0.7, "ring_r1_bh": 4.2, "ring_ticks": 14, "ring_thick": 0.045, "ring_alpha": 0.95, "flash_radius_bh": 1.7, "flash_alpha": 0.5, "flash_ticks": 5, "aura_alpha": 0.9},
++	"gather": {"motes": 40, "dust_motes": 14, "loops_full": 2.0, "loops_short": 1.0, "loops_live": 1.0, "radius_bh": 1.4, "len_bh": 0.4, "width_bh": 0.05, "alpha": 0.85, "dim_radius_bh": 3.0, "dim_alpha": 0.0, "aura_shrink": 0.12},
++	"break": {"ring_r0_bh": 0.55, "ring_r1_bh": 1.2, "ring_ticks": 14, "ring_thick": 0.04, "ring_alpha": 0.0, "gring_r0_bh": 0.5, "gring_r1_bh": 2.6, "gring_ticks": 28, "gring_flat": 0.2, "gring_thick": 0.05, "gring_alpha": 0.9, "flash_radius_bh": 1.7, "flash_alpha": 0.0, "flash_ticks": 5, "aura_alpha": 0.9},
+ 	"settle": {"aura_alpha": 0.6, "ease_ticks": 10, "fade_ticks": 24},
+ }
+ const DEFAULT_BEATS: Dictionary = {
+--- a/tools/schemas/vfx-transform.schema.json
++++ b/tools/schemas/vfx-transform.schema.json
+@@ -190,6 +190,32 @@
+           "type": "number",
+           "minimum": 0,
+           "maximum": 1
++        },
++        "gring_r0_bh": {
++          "type": "number",
++          "exclusiveMinimum": 0
++        },
++        "gring_r1_bh": {
++          "type": "number",
++          "exclusiveMinimum": 0
++        },
++        "gring_ticks": {
++          "type": "integer",
++          "minimum": 1
++        },
++        "gring_flat": {
++          "type": "number",
++          "exclusiveMinimum": 0,
++          "maximum": 1
++        },
++        "gring_thick": {
++          "type": "number",
++          "exclusiveMinimum": 0
++        },
++        "gring_alpha": {
++          "type": "number",
++          "minimum": 0,
++          "maximum": 1
+         }
+       },
+       "additionalProperties": false,
+--- a/render/vfx/shots_view.gd
++++ b/render/vfx/shots_view.gd
+@@ -215,12 +215,45 @@
+ 					var l2: float = e.size * 0.4 * (1.0 - u * 0.5)
+ 					var lc: Color = c1 if k % 2 == 0 else c2
+ 					n = _put(n, Vector2(rx, e.y) + dv2 * (d1 - l2 * 0.5), dv2, l2, maxf(6.0, minpx * 1.5), ez + 0.4, lc, 0.5, 0.05, SHAPE_STREAK)
++	n = _ground_rings(n, hub, host, a, cam_x, bh, minpx)
+ 	count = n
+ 	multimesh.visible_instance_count = n
+ 	if n > 0:
+ 		multimesh.buffer = _buf
+ 
+ 
++## The power-up's ground ring (Research's cinematic paper, rec 14: the environment tells it; Orb: nothing over the fighters): on the break one thin flat ring leaves the fighter's feet along the ground, in his
++## own colour, behind him, a wide flat ellipse a few body heights across and a fifth as tall. It replaces the ring that used to leave his chest. Reads the transformation's forms only.
++func _ground_rings(n: int, hub: VfxHub, host, a: float, cam_x: float, bh: float, minpx: float) -> int:
++	if not hub.transform_enabled:
++		return n
++	var rt: float = VfxTransform.p("break", "gring_ticks")
++	var amax: float = VfxTransform.p("break", "gring_alpha")
++	if amax <= 0.0:
++		return n
++	for f in hub.xform.forms:
++		if n >= CAP - 4:
++			break
++		var t: float = f.at(a)
++		if t < float(f.g):
++			continue
++		var tb: float = t - float(f.g)
++		if tb >= rt:
++			continue
++		var rel: float = SimWrap.sdx(cam_x, host.fighter_x(f.slot, a))
++		if absf(rel) > 12.0 * bh:
++			continue
++		var pose: Vector3 = host.fighter_pose(f.slot, a)
++		var fz: float = host.fighter_z(f.slot, a)
++		var u: float = tb / rt
++		var rr: float = lerpf(VfxTransform.p("break", "gring_r0_bh"), VfxTransform.p("break", "gring_r1_bh"), 1.0 - pow(1.0 - u, 2.0)) * bh
++		var col: Color = VfxAura.lane_color(String(host.S.fighters[f.slot].aura))
++		col.a = amax * pow(1.0 - u, 1.4)
++		var flat: float = VfxTransform.p("break", "gring_flat")
++		n = _put(n, Vector2(rel, pose.y + 3.0), Vector2(1.0, 0.0), rr * 2.0, rr * 2.0 * flat, fz - 3.0, col, maxf(VfxTransform.p("break", "gring_thick"), 1.6 * minpx / maxf(rr, 1.0)), 0.0, SHAPE_RING)
++	return n
++
++
+ ## The charge at the forearm of the arm toward the rival: plates stacking along it (the Anti-hero) or thin rings stacking along it
+ ## (the others), more of them as the charge builds; a pulse ring along the forearm when it is full. Never a sphere in a palm.
+ func _hand(n: int, S: SimState, host, slot: int, c: VfxShots.Charge, lvl: float, rel: float, a: float, bh: float, minpx: float, alpha: float) -> int:
