@@ -1,0 +1,27 @@
+extends SceneTree
+# Dumps a planet's biome on a longitude and latitude grid and its places (unit vectors), for the shifting-arena picture.
+#   godot --headless --path . --script res://sim/world/tools/planet_grid_dump.gd -- <seed> <out.json> [step_deg]
+func _init() -> void:
+	var args := OS.get_cmdline_user_args()
+	var P := WorldPlanet.make(int(args[0]))
+	var step: float = float(args[2]) if args.size() > 2 else 2.5
+	var nlon: int = int(round(360.0 / step))
+	var nlat: int = int(round(180.0 / step))
+	var rows: Array = []
+	for j in range(nlat):
+		var lat: float = (-90.0 + (float(j) + 0.5) * step) * PI / 180.0
+		var row: Array = []
+		for i in range(nlon):
+			var lon: float = (-180.0 + (float(i) + 0.5) * step) * PI / 180.0
+			var cl: float = cos(lat)
+			var r: Array = WorldPlanet.surf(P, cl * cos(lon), sin(lat), cl * sin(lon))
+			row.append(int(r[1]))
+		rows.append(row)
+	var places: Array = []
+	for i in range(P.n):
+		places.append([int(P.kind[i]), P.px[i], P.py[i], P.pz[i], P.rad[i]])
+	var f := FileAccess.open(args[1], FileAccess.WRITE)
+	f.store_string(JSON.stringify({"seed": P.seed, "step": step, "R": P.R, "grid": rows, "places": places}))
+	f.close()
+	print("wrote %d x %d, %d places" % [nlon, nlat, P.n])
+	quit()

@@ -417,17 +417,21 @@ func _init() -> void:
 		if absf(fx.anguish - want_an) > 0.001:
 			an_ok = false
 	check(an_ok, "every fighter with the meter gains anguish at its data rates (meters.json: casualty/self, casualty/opponent)")
-	# the choke point: nothing but collateral.gd feeds casualties
+	# the choke point: nothing but collateral.gd feeds casualties. Simulation's forms.gd (SimForms.casualty, the Witness fill, a granted World line) defines a function of that
+	# name: it may be defined there, but it counts nothing (no world.casualties, no _feed), and only collateral.gd may call it
 	var stray: int = 0
 	for sub in ["core", "world", "director", "input"]:
 		var d2 := DirAccess.open("res://sim/" + sub)
 		for fname in d2.get_files():
 			if fname.ends_with(".gd") and fname != "collateral.gd":
 				var txt: String = FileAccess.get_file_as_string("res://sim/" + sub + "/" + fname)
-				if txt.contains("casualty(") or txt.contains("world.casualties +=") or txt.contains("_feed("):
+				if sub == "core" and fname == "forms.gd":
+					txt = txt.replace("static func casualty(", "")
+				var calls: bool = txt.contains("casualty(")
+				if calls or txt.contains("world.casualties +=") or txt.contains("_feed("):
 					stray += 1
 					print("  stray casualty code in " + sub + "/" + fname)
-	check(stray == 0, "no casualty is counted outside collateral.gd")
+	check(stray == 0, "no casualty is counted outside collateral.gd (SimForms.casualty is only defined in forms.gd, and called from collateral.gd)")
 	# every source, budget spent: nothing dies, the people flee
 	var Sd := fresh()
 	Sd.fighters[0].tier = 1.0

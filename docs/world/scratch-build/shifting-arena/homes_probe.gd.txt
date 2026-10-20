@@ -1,0 +1,93 @@
+extends SceneTree
+# A probe for the four home areas (docs/world/homes-and-arenas.md): on each of N planets, how often a suitable site exists for each home, by a seeded candidate pass.
+#   godot --headless --path . --script res://sim/world/tools/homes_probe.gd -- <seeds> [<candidates>]
+const HOME_R: float = 2440.0   # a town's disc
+func ring(P, p: Array, t: Array, d: float) -> Array:
+	var a: float = d / P.R
+	var c: float = cos(a)
+	var s: float = sin(a)
+	return [p[0] * c + t[0] * s, p[1] * c + t[1] * s, p[2] * c + t[2] * s]
+func norm(v: Array) -> Array:
+	var l: float = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
+	return [v[0] / l, v[1] / l, v[2] / l]
+func cross(a: Array, b: Array) -> Array:
+	return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]]
+func bio(P, q: Array) -> int:
+	return int(WorldPlanet.surf(P, q[0], q[1], q[2])[1])
+func land(b: int) -> bool:
+	return b == WorldPlanet.BIO_PLAINS or b == WorldPlanet.BIO_FOREST or b == WorldPlanet.BIO_DESERT or b == WorldPlanet.BIO_MOUNTAINS
+## eight bearings round p at distance d: the biomes
+func around(P, p: Array, d: float) -> Array:
+	var up: Array = [0.0, 1.0, 0.0]
+	var e: Array = norm(cross(up, p))
+	var n: Array = cross(p, e)
+	var out: Array = []
+	for k in range(8):
+		var th: float = float(k) * PI / 4.0
+		var t: Array = [e[0] * cos(th) + n[0] * sin(th), e[1] * cos(th) + n[1] * sin(th), e[2] * cos(th) + n[2] * sin(th)]
+		out.append(bio(P, ring(P, p, t, d)))
+	return out
+func count(a: Array, f: Callable) -> int:
+	var n: int = 0
+	for b in a:
+		if f.call(b):
+			n += 1
+	return n
+func free_of_places(P, p: Array) -> bool:
+	for i in range(P.n):
+		var d: float = acos(clampf(p[0] * P.px[i] + p[1] * P.py[i] + p[2] * P.pz[i], -1.0, 1.0)) * P.R
+		if d < P.rad[i] + HOME_R:
+			return false
+	return true
+func ok_home(P, h: int, p: Array) -> bool:
+	if absf(p[1]) > 0.62:
+		return false   # never in the polar caps
+	var b: int = bio(P, p)
+	var a1: Array = around(P, p, 900.0)
+	var a2: Array = around(P, p, 2600.0)
+	match h:
+		0:   # Mendquay: a harbour: land here, the sea within 900 on 2 to 5 of 8 bearings, land on most of the rest within 2600
+			return land(b) and b != WorldPlanet.BIO_MOUNTAINS and count(a1, func(x): return x == WorldPlanet.BIO_OCEAN) >= 2 and count(a1, func(x): return x == WorldPlanet.BIO_OCEAN) <= 5 and count(a2, func(x): return land(x)) >= 3
+		1:   # Rankhold: a mountainside: mountains here or on 4 or more of 8 bearings within 900, and land on 3 or more of 8 within 2600
+			return land(b) and (b == WorldPlanet.BIO_MOUNTAINS or count(a1, func(x): return x == WorldPlanet.BIO_MOUNTAINS) >= 3) and count(a1, func(x): return land(x)) >= 6
+		2:   # Crownreach: open plains: plains here and 7 of 8 bearings plains or forest at 900 and at 2600, no mountains
+			return b == WorldPlanet.BIO_PLAINS and count(a1, func(x): return x == WorldPlanet.BIO_PLAINS or x == WorldPlanet.BIO_FOREST) >= 7 and count(a2, func(x): return x == WorldPlanet.BIO_PLAINS or x == WorldPlanet.BIO_FOREST) >= 6
+		_:   # Slagholt: desert here, and desert on 6 of 8 at 900
+			return b == WorldPlanet.BIO_DESERT and count(a1, func(x): return x == WorldPlanet.BIO_DESERT) >= 6
+	return false
+func _init() -> void:
+	var args := OS.get_cmdline_user_args()
+	var seeds: int = int(args[0])
+	var cands: int = int(args[1]) if args.size() > 1 else 600
+	var names := ["Mendquay (harbour)", "Rankhold (mountainside)", "Crownreach (plains)", "Slagholt (desert)"]
+	var found: Array = [0, 0, 0, 0]
+	var tries: Array = [[], [], [], []]
+	var all4: int = 0
+	for sd in range(1, seeds + 1):
+		var P := WorldPlanet.make(sd)
+		var r := SimRng.new(sd * 7919 + 13)
+		var n4: int = 0
+		for h in range(4):
+			var got: int = -1
+			for k in range(cands):
+				var z: float = r.next() * 2.0 - 1.0
+				var lo: float = r.next() * 2.0 * PI
+				var rr: float = sqrt(maxf(0.0, 1.0 - z * z))
+				var p: Array = [rr * cos(lo), z, rr * sin(lo)]
+				if not free_of_places(P, p):
+					continue
+				if ok_home(P, h, p):
+					got = k
+					break
+			if got >= 0:
+				found[h] += 1
+				tries[h].append(got)
+				n4 += 1
+		if n4 == 4:
+			all4 += 1
+	for h in range(4):
+		var t: Array = tries[h]
+		t.sort()
+		print("%s: found on %d of %d planets; candidate index median %s, worst %s" % [names[h], found[h], seeds, str(t[t.size() / 2]) if t.size() > 0 else "-", str(t[t.size() - 1]) if t.size() > 0 else "-"])
+	print("all four on %d of %d planets (%d candidates each)" % [all4, seeds, cands])
+	quit()
