@@ -283,6 +283,103 @@
         }
       },
       "additionalProperties": false
+    },
+    "struggle": {
+      "type": "object",
+      "description": "The beam struggle carried by the beams themselves (render/vfx/beam_struggle.gd, docs/vfx/beam-struggle.md): the winner's beam thicker, a swell down each beam to the meeting point on every pulse, a bigger one down the presser's beam on a surge, a pinch on a stray, and the meeting point swelling slowly. All keys optional: beam_struggle.gd falls back to the same defaults.",
+      "properties": {
+        "push_k": {
+          "type": "number",
+          "maximum": 0.8,
+          "minimum": 0
+        },
+        "ease_s": {
+          "type": "number",
+          "maximum": 3,
+          "exclusiveMinimum": 0.02
+        },
+        "wave_ticks": {
+          "type": "number",
+          "maximum": 60,
+          "exclusiveMinimum": 2
+        },
+        "surge_amp": {
+          "type": "number",
+          "maximum": 2,
+          "minimum": 0
+        },
+        "sharp_k": {
+          "type": "number",
+          "maximum": 3,
+          "minimum": 1
+        },
+        "beat_amp": {
+          "type": "number",
+          "maximum": 1,
+          "minimum": 0
+        },
+        "stray_amp": {
+          "type": "number",
+          "minimum": -0.8,
+          "maximum": 0
+        },
+        "wave_half": {
+          "type": "number",
+          "maximum": 0.5,
+          "exclusiveMinimum": 0.01
+        },
+        "wave_half_max": {
+          "type": "number",
+          "maximum": 600,
+          "exclusiveMinimum": 10
+        },
+        "lum": {
+          "type": "number",
+          "maximum": 0.1,
+          "minimum": 0
+        },
+        "knot_amp": {
+          "type": "number",
+          "maximum": 1.5,
+          "minimum": 0
+        },
+        "knot_s": {
+          "type": "number",
+          "maximum": 10,
+          "exclusiveMinimum": 0.1
+        },
+        "knot_surge": {
+          "type": "number",
+          "maximum": 0.5,
+          "minimum": 0
+        },
+        "knot_decay_s": {
+          "type": "number",
+          "maximum": 20,
+          "exclusiveMinimum": 0.1
+        },
+        "calm_gap": {
+          "type": "number",
+          "maximum": 120,
+          "minimum": 0
+        },
+        "amp_calm": {
+          "type": "number",
+          "maximum": 1,
+          "minimum": 0
+        },
+        "flare_k": {
+          "type": "number",
+          "maximum": 1,
+          "minimum": 0
+        },
+        "flare_ease_s": {
+          "type": "number",
+          "maximum": 5,
+          "exclusiveMinimum": 0.02
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false,

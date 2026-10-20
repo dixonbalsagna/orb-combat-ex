@@ -54,6 +54,7 @@ class Fx:
 
 var fx: Array = []
 var struggle_on: bool = false              # a beam struggle is on (the cues `beam_struggle` to `beam_end`)
+var struggle_marks: bool = true                  # the struggle's thin rings (beat, surge, stray): off while the beams carry the struggle (beam_struggle.gd)
 var _last_mark: int = -1000                # the tick of the last surge or stray mark (calm mode keeps them 40 ticks apart)
 var made: Dictionary = {}
 var full_ticks: Array = []          # the ticks a full flash was given (the tests check the rate)
@@ -970,6 +971,9 @@ func _beam_struggle(S: SimState, e, reduced: bool) -> void:
 		return
 	_drop("spulse")
 	_drop("sopen")
+	if not struggle_marks:
+		struggle_on = true
+		return
 	var o := Fx.new()
 	o.style = "sopen"
 	o.slot = int(e.actor)
@@ -991,6 +995,8 @@ func _calm(reduced: bool) -> bool:
 ## A pulse: the ring that contracts onto the point and the one that leaves it, and the next pulse's contraction, shown at once.
 func _beam_pulse(S: SimState, e, reduced: bool) -> void:
 	_drop("spulse")
+	if not struggle_marks:
+		return
 	var k: int = int(float(VfxHub._g(e, "k", 1.0)))
 	var n_at: float = float(VfxHub._g(e, "n", float(S.tick)))
 	var calm: bool = _calm(reduced)
@@ -1011,6 +1017,8 @@ func _beam_pulse(S: SimState, e, reduced: bool) -> void:
 
 ## A surge (actor the one who pressed on the beat, text surge, or sharp for the 1-tick one).
 func _beam_surge(S: SimState, e, reduced: bool) -> void:
+	if not struggle_marks:
+		return
 	var slot: int = int(e.actor)
 	if slot < 0 or slot >= S.fighters.size():
 		return
@@ -1033,6 +1041,8 @@ func _beam_surge(S: SimState, e, reduced: bool) -> void:
 
 ## A stray (actor the one who pressed off the beat): a hiccup in his own beam.
 func _beam_stray(S: SimState, e, reduced: bool) -> void:
+	if not struggle_marks:
+		return
 	var slot: int = int(e.actor)
 	if slot < 0 or slot >= S.fighters.size():
 		return

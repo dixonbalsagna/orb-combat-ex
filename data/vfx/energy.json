@@ -177,5 +177,25 @@
   "cool_s": 1.2,
   "grow_s": 0.14,
   "cap": 10
+ },
+ "struggle": {
+  "push_k": 0.5,
+  "ease_s": 0.35,
+  "wave_ticks": 14,
+  "surge_amp": 0.8,
+  "sharp_k": 1.4,
+  "beat_amp": 0.34,
+  "stray_amp": -0.4,
+  "wave_half": 0.15,
+  "wave_half_max": 120,
+  "lum": 0.08,
+  "knot_amp": 0.6,
+  "knot_s": 1.8,
+  "knot_surge": 0.14,
+  "knot_decay_s": 2.5,
+  "calm_gap": 40,
+  "amp_calm": 0.8,
+  "flare_k": 0.3,
+  "flare_ease_s": 0.4
  }
 }

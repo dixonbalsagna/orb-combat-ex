@@ -63,6 +63,9 @@ static func is_active(S: SimState, f) -> bool:
 		return false
 	if f.state == "charging" or f.beamCharge != null or f.rush != null:
 		return true
+	var cl = S.game.clash
+	if cl != null and (cl.A == f or cl.D == f):
+		return true       # in a beam clash both hold their aura up (the loser flares: beam_struggle.gd)
 	var ex = S.dirS.ex
 	if ex != null and ex.A == f:
 		return true

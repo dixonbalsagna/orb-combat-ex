@@ -82,6 +82,8 @@ var reduced_flashing: bool = false              # UI's reduced-flashing setting:
 var inreach := VfxReach.new()                   # energy arts in reach and the launcher's marks (reach.gd), behind the same flag
 var tremor := VfxTremor.new()                  # the catastrophe tier's tremor: dust curtains and rubble (tremor.gd, dust_view.gd), on its cue
 var blastcloud := VfxBlastCloud.new()          # the catastrophe tier's blast cloud: stem, cap, dust wall and the one fireball light (blast_cloud.gd, cloud_view.gd), on its cue
+var struggle := VfxBeamStruggle.new()           # the beam struggle carried by the beams themselves: who pushes, the beat, the surges (beam_struggle.gd; BeamView draws it)
+var struggle_enabled: bool = true
 var scars := VfxBeamScar.new()                    # the scar each beam leaves in the air as its tail draws back (beam_scar.gd, scar_view.gd; Orb 2026-10-19), behind the same flags as the beams
 var scar_enabled: bool = true
 var ash: float = 0.0                              # the world's darkening, 0 to 1 (read-only from the sim when it exists): scales a catastrophe light's peak
@@ -149,6 +151,7 @@ func reset(S: SimState, p_seed: int) -> void:
 	tremor.reset()
 	blastcloud.reset()
 	scars.reset()
+	struggle.reset()
 	ghosts.reset()
 	_vision_sig = ""
 	flashes.reset()
@@ -357,6 +360,11 @@ func _consume(S: SimState, events: Array) -> void:
 		debris.reduced = reduced_motion
 		inreach.step(S, frozen, debris, press)
 		inreach.on_events(S, events, reduced_motion, debris, press)
+		inreach.struggle_marks = not struggle_enabled          # the beams carry the struggle: the old rings are off while they do
+		if struggle_enabled:
+			struggle.step(S, events, reduced_motion or reduced_flashing, dt)
+		else:
+			struggle.reset()
 		press.regrant()
 		ghosts.step(S, events, press, zip, frozen, reduced_motion)
 	if destruction_enabled or cracks_enabled or embers_enabled or water_enabled or react_enabled or earth_enabled or rocks_enabled or blast_enabled or shots_enabled or beamplay_enabled or stages_enabled:

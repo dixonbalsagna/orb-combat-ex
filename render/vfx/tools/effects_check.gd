@@ -206,6 +206,7 @@ func _run() -> void:
 	_brawl()
 	_small_blasts()
 	_beam_look()
+	_beam_struggle_beams()
 	_beam_scar()
 	_multi()
 	_ghosts()
@@ -5208,6 +5209,139 @@ func _beam_scar() -> void:
 	_check(sc2.made == 0 or sc2.list.size() <= int(VfxBeamScar.p("cap")), "a restart (the clock going back) starts the scars afresh")
 
 
+func _beam_struggle_beams() -> void:
+	print("the beam struggle carried by the beams")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var c := SimState.Clash.new()
+	c.A = S.fighters[0]
+	c.D = S.fighters[1]
+	c.mid = 0.5
+	c.dur = 5.0
+	var mk := func(kind: String, f: Dictionary) -> Variant:
+		var d: Dictionary = {"kind": kind}
+		d.merge(f)
+		return VfxMock.ev("cue", d)
+	# no struggle (mid -1, the old glide): nothing carries, widths are as they were
+	var sk := VfxBeamStruggle.new()
+	S.game.clash = c
+	c.mid = -1.0
+	sk.step(S, [], false)
+	_check(not sk.active and sk.width_k(0) == 1.0 and sk.width_k(1) == 1.0, "a clash with no struggle (Clash.mid -1) is drawn as it was: widths 1")
+	# the point moves to D's side: A is winning, his beam is thicker and his rival's thinner, eased (no jump)
+	c.mid = 0.5
+	S.tick = 100
+	sk.step(S, [], false)
+	_check(sk.active and absf(sk.width_k(0) - 1.0) < 0.01 and absf(sk.width_k(1) - 1.0) < 0.01, "an even struggle: both beams as wide")
+	c.mid = 0.8
+	var first: float = 0.0
+	for i in range(3):
+		S.tick += 1
+		sk.step(S, [], false)
+		if i == 0:
+			first = sk.width_k(0)
+	_check(sk.width_k(0) > 1.0 and sk.width_k(1) < 1.0 and first < sk.width_k(0), "the winner's beam is thicker, the loser's thinner, and the shift is eased (%.3f then %.3f)" % [first, sk.width_k(0)])
+	for i in range(240):
+		S.tick += 1
+		sk.step(S, [], false)
+	var kmax: float = 1.0 + VfxBeamStruggle.p("push_k")
+	_check(sk.width_k(0) <= kmax + 0.001 and sk.width_k(1) >= 1.0 - VfxBeamStruggle.p("push_k") * 0.6 - 0.001 and sk.width_k(0) > 1.1, "it settles inside the limits (%.2f and %.2f)" % [sk.width_k(0), sk.width_k(1)])
+	# the loser's aura flares, the winner's does not
+	var fa: float = sk.flare(0)
+	var fd: float = sk.flare(1)
+	_check(fa == 0.0 and fd > 0.02 and fd <= VfxBeamStruggle.p("flare_k") + 0.001, "the loser's aura flares (%.3f) and the winner's does not (%.3f)" % [fd, fa])
+	_check(sk.flare(5) == 0.0, "a slot outside the clash is not touched")
+	# the knot (the meeting point's swell) grows slowly: not a flash
+	var sk2 := VfxBeamStruggle.new()
+	c.mid = 0.5
+	S.tick = 500
+	sk2.step(S, [], false)
+	var k0: float = sk2.knot_level
+	var kstep: float = 0.0
+	var prev: float = k0
+	for i in range(60):
+		S.tick += 1
+		sk2.step(S, [], false)
+		kstep = maxf(kstep, sk2.knot_level - prev)
+		prev = sk2.knot_level
+	_check(k0 < 0.05 and sk2.knot_level > 0.2 and kstep < 0.03, "the meeting point swells slowly (%.2f at once, %.2f after a second, the most in a tick %.3f)" % [k0, sk2.knot_level, kstep])
+	# a pulse: the swell leaves each hand 14 ticks before it and is at the point ON it
+	var wt: int = int(VfxBeamStruggle.p("wave_ticks"))
+	var sk3 := VfxBeamStruggle.new()
+	c.mid = 0.5
+	S.tick = 1000
+	sk3.step(S, [], false)
+	var at_point: float = -1.0
+	var started_at: int = -1
+	var pulse_tick: int = S.tick + 40
+	S.tick += 1
+	sk3.step(S, [mk.call("beam_pulse", {"actor": 0, "k": 1, "n": pulse_tick})], false)
+	for i in range(60):
+		S.tick += 1
+		sk3.step(S, [], false)
+		var ws: Array = sk3.waves.filter(func(w): return w.side == 0)
+		if started_at < 0 and not ws.is_empty():
+			started_at = S.tick
+		if S.tick == pulse_tick and not ws.is_empty():
+			at_point = sk3.wave_pos(ws[0], 1000.0)
+	_check(started_at >= 0 and absf(float(started_at) - float(pulse_tick - wt)) <= 2.0, "the beat's swell leaves %d ticks before the pulse (left at %d, pulse at %d)" % [wt, started_at, pulse_tick])
+	_check(at_point > 940.0, "and it is at the meeting point on the pulse (%.0f of 1000)" % at_point)
+	_check(sk3.waves.filter(func(w): return w.side == 1).size() <= 2, "both beams carry it (the rival's side too)")
+	# a surge: a swell on the presser's own beam only, and the knot swells a little more; a stray pinches
+	var sk4 := VfxBeamStruggle.new()
+	c.mid = 0.5
+	S.tick = 2000
+	sk4.step(S, [], false)
+	var kb: float = sk4.knot_level
+	S.tick += 1
+	sk4.step(S, [mk.call("beam_surge", {"actor": 0, "text": "surge"})], false)
+	var w0: Array = sk4.waves.filter(func(w): return w.side == 0)
+	var w1: Array = sk4.waves.filter(func(w): return w.side == 1)
+	_check(w0.size() == 1 and w1.is_empty() and w0[0].amp > 0.0 and sk4.knot_level > kb, "a surge: one swell down the presser's own beam (not his rival's), and the point swells a little more")
+	S.tick += 1
+	sk4.step(S, [mk.call("beam_stray", {"actor": 1})], false)
+	var ws1: Array = sk4.waves.filter(func(w): return w.side == 1)
+	_check(ws1.size() == 1 and ws1[0].amp < 0.0, "a stray: a pinch down his own beam (a negative swell), shape only")
+	# the sharp surge is bigger
+	var sk5 := VfxBeamStruggle.new()
+	S.tick = 3000
+	sk5.step(S, [], false)
+	S.tick += 1
+	sk5.step(S, [mk.call("beam_surge", {"actor": 0, "text": "sharp"})], false)
+	_check(sk5.waves.size() == 1 and sk5.waves[0].amp > sk4.waves[0].amp, "a sharp surge's swell is bigger")
+	# calm (Reduce flashing): a beat's swell for every second pulse only, and surge and stray swells not within calm_gap ticks of the last
+	var sk6 := VfxBeamStruggle.new()
+	S.tick = 4000
+	sk6.step(S, [], true)
+	S.tick += 1
+	sk6.step(S, [mk.call("beam_pulse", {"actor": 0, "k": 1, "n": S.tick + 20})], true)
+	_check(sk6.sched.size() == 1, "calm: of two pulses shown at once only one has a swell (%d)" % sk6.sched.size())
+	var sk7 := VfxBeamStruggle.new()
+	S.tick = 5000
+	sk7.step(S, [], true)
+	S.tick += 1
+	sk7.step(S, [mk.call("beam_surge", {"actor": 0, "text": "surge"})], true)
+	S.tick += 5
+	sk7.step(S, [mk.call("beam_surge", {"actor": 0, "text": "surge"}), mk.call("beam_stray", {"actor": 1})], true)
+	_check(sk7.made.get("surge", 0) == 1 and sk7.made.get("stray", 0) == 0, "calm: a second mark within %d ticks is not made (the point's movement still shows each press)" % int(VfxBeamStruggle.p("calm_gap")))
+	# the amplitudes keep the beam's brightness steady
+	_check(VfxBeamStruggle.p("lum") <= 0.1, "the alpha a swell adds stays under a tenth (%.2f)" % VfxBeamStruggle.p("lum"))
+	# the clash ends: everything resets
+	S.game.clash = null
+	sk.step(S, [], false)
+	_check(not sk.active and sk.width_k(0) == 1.0 and sk.flare(1) == 0.0 and sk.waves.is_empty(), "when the clash ends the beams and auras are as they were")
+	# the old rings are off while the beams carry it, and on when they do not
+	var hub := VfxHub.new()
+	hub.reset(S, 4)
+	hub.inreach.struggle_marks = false
+	hub.inreach.on_events(S, [mk.call("beam_struggle", {"actor": 0, "text": "start"}), mk.call("beam_pulse", {"actor": 0, "k": 1, "n": 20}), mk.call("beam_surge", {"actor": 0, "text": "surge"})], false, null, hub.press)
+	_check(hub.inreach.made.get("surge", 0) == 0 and hub.inreach.made.get("pulse", 0) == 0 and hub.inreach.made.get("struggle", 0) == 0, "the old struggle rings are not made while the beams carry it")
+	var hub2 := VfxHub.new()
+	hub2.reset(S, 4)
+	hub2.inreach.on_events(S, [mk.call("beam_struggle", {"actor": 0, "text": "start"}), mk.call("beam_surge", {"actor": 0, "text": "surge"})], false, null, hub2.press)
+	_check(hub2.inreach.made.get("surge", 0) == 1, "and they are made when the switch is off")
+
+
 func _beam_look() -> void:
 	print("the beams' look")
 	var S := SimCore.createSim()
@@ -5530,6 +5664,7 @@ func _multi() -> void:
 	cl.dur = 6.0
 	cl.aw = true
 	var hs2: VfxHub = fresh.call()
+	hs2.struggle_enabled = false      # the old rings are tested with the beams' own struggle off (beam_struggle.gd)
 	var sc := func(kind: String, slot: int, text: String, k: float, n: float, x: float = 0.0):
 		return VfxMock.ev("cue", {"actor": slot, "kind": kind, "text": text, "target": 1 - slot, "k": k, "n": n, "x": x, "y": 0.0})
 	_tick(S, hs2, [sc.call("beam_struggle", 0, "start", 0.0, float(S.tick + 300))])
@@ -5579,6 +5714,7 @@ func _multi() -> void:
 	_check(rates_ok, "the rate list holds the struggle's beat, surge and stray, the opening ring, the shine and the chase's trail, each at 1.5 Hz or slower when calm (strokes only)")
 	for mode in ["flashing", "motion"]:
 		var hcalm: VfxHub = fresh.call(mode == "motion")
+		hcalm.struggle_enabled = false
 		hcalm.reduced_flashing = mode == "flashing"
 		S.game.clash = cl
 		_tick(S, hcalm, [sc.call("beam_struggle", 0, "start", 0.0, float(S.tick + 300))])

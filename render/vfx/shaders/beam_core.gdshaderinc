@@ -21,6 +21,17 @@ uniform float seed = 0.0;
 uniform float wob = 0.0;            // how much the width swells and thins along the beam (a share of the radius): the silhouette flows, the axis stays a straight line
 uniform float fil = 0.5;            // the filaments: long thin streaks along the beam, in hue and saturation, within `lum_amp` in brightness
 uniform float head_at_zero = 1.0;   // 1: UV.y is 0 at the head, as the cylinder is built
+// The beam struggle's waves (render/vfx/beam_struggle.gd): up to two swells and the meeting point's knot, each (x its centre from the tail in world units, y its half length, z the width it adds as a
+// share of the radius (negative pinches), w the alpha it adds as a share). All zero outside a struggle: a plain beam is as it was.
+uniform vec4 wv0 = vec4(0.0, 1.0, 0.0, 0.0);
+uniform vec4 wv1 = vec4(0.0, 1.0, 0.0, 0.0);
+uniform vec4 wv2 = vec4(0.0, 1.0, 0.0, 0.0);
+
+float wbump(float s, vec4 w) {
+	float u = (s - w.x) / max(w.y, 1.0);
+	return exp(-2.0 * u * u);
+}
+
 
 float h21(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
@@ -37,8 +48,10 @@ float vn(vec2 p) {
 
 void vertex() {
 	vec3 v = VERTEX;
+	float s0 = (head_at_zero > 0.5 ? 1.0 - UV.y : UV.y) * len;
+	float wsum = wv0.z * wbump(s0, wv0) + wv1.z * wbump(s0, wv1) + wv2.z * wbump(s0, wv2);
+	v.xz *= max(0.2, 1.0 + wsum);
 	if (wob > 0.0) {
-		float s0 = (head_at_zero > 0.5 ? 1.0 - UV.y : UV.y) * len;
 		float sw = (vn(vec2(s0 * 0.011 - time * flow * 0.012, seed + 3.0)) - 0.5) * 2.0;
 		v.xz *= 1.0 + wob * sw;
 	}
@@ -66,6 +79,7 @@ void fragment() {
 	float cap_e = min(cap, len * 0.14);     // the rounded ends never take more than a seventh of the beam each: a short beam (a point-blank one) stays solid in the middle, not a soft smear
 	float ends = smoothstep(0.0, cap_e, from_tail) * smoothstep(0.0, cap_e, len - from_tail);
 	float swell = 1.0 + heel * exp(-from_tail / 70.0);
+	float wl = 1.0 + wv0.w * wbump(from_tail, wv0) + wv1.w * wbump(from_tail, wv1);
 	ALBEDO = col;
-	ALPHA = clamp(tint_a.a * strength * edge * shim * ends * swell, 0.0, 1.0);
+	ALPHA = clamp(tint_a.a * strength * edge * shim * ends * swell * wl, 0.0, 1.0);
 }
