@@ -1,0 +1,103 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index 77c70cf..54509ab 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -254,6 +254,12 @@ const MERGED_LEAD_V1: float = 1200.0
+ const MERGED_LEAD_TAU: float = 0.35
+ const MERGED_LEAD_KEEP: float = 0.80
+ const BLOW_DOWN: float = 0.25
++# The launch curve's arrival (docs/camera/director.md step 4b, Simulation's `flight` cue): from `arrive` (the contact about 10 ticks
++# ahead) the chased body's pane widens by ARR_WIDE to take in where he lands, holds it ARR_HOLD past the contact, and lets go over ARR_OUT.
++const ARR_WIDE: float = 0.15
++const ARR_IN: float = 0.15
++const ARR_HOLD: float = 0.45
++const ARR_OUT: float = 0.35
+ const HIT_PUSH: float = 0.06           # zoom push on the first building hit; later links push less
+ const HIT_PUSH_LATER: float = 0.03
+ const LOW_AIR_DEAD: float = 112.0       # a launched body this near the ground (1.5 body heights) is not followed up; 0 turns it off
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 5546444..84809fd 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -179,6 +179,10 @@ var _stiff_w: float = 0.0               # 0..1: how far the slam's stiff filters
+ var wreck_dir: int = 0                   # the winner's shot: +1 wreckage on the right of him, -1 on the left, 0 none to speak of
+ var wreck_score: float = 0.0             # the wreckage in view, summed (craters, ruined buildings, slide trenches)
+ var launch_governor: bool = false        # the scroll governor on a launched body (the flash count's, 2026-10-12): off since 2026-10-19, so the body is chased at his size and the background carries the speed (docs/camera/director.md step 4)
++var arrival_hold: bool = true             # the launch curve's arrival: widen to the landing, hold, let go (docs/camera/director.md step 4b)
++var arrivals: int = 0
++var _arr_t: Array = [-1.0, -1.0]           # seconds since this fighter's arrival was told, or -1
++var _arr_end: Array = [-1.0, -1.0]         # the time the paced leg ended (the contact), or -1
+ var anticipation: bool = true            # read the choreographer's next contact and lean into it (docs/camera/director.md, phase A)
+ var intent_now: String = ""                # the director's read this tick, for the debug feed and the probes
+ var ant_starts: int = 0
+@@ -319,6 +323,8 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
+ 	_shk = PackedFloat64Array([0.0, 0.0])
+ 	_aim = [null, null]
+ 	_hit_t = [-1.0, -1.0]
++	_arr_t = [-1.0, -1.0]
++	_arr_end = [-1.0, -1.0]
+ 	_brink_w = 0.0
+ 	_brink_win = -1
+ 	_brink_until = -1.0
+@@ -1064,6 +1070,18 @@ func _read_events(S: SimState, events: Array) -> void:
+ 			_blow(String(_ef(ev, "kind", "")), int(_ef(ev, "stop", 0)))
+ 		elif bt == "launch":
+ 			_blow("launch", 0)
++		elif bt == "flight" and arrival_hold and not reduced_motion:
++			var fa: int = int(_ef(ev, "actor", -1))
++			if fa >= 0 and fa < 2:
++				var ft: String = String(_ef(ev, "text", ""))
++				if ft == "arrive" and float(_arr_t[fa]) < 0.0:
++					_arr_t[fa] = 0.0
++					_arr_end[fa] = -1.0
++					arrivals += 1
++				elif ft == "end" and float(_arr_t[fa]) >= 0.0:
++					_arr_end[fa] = time
++				elif ft == "kick":
++					_arr_t[fa] = -1.0
+ 		if String(_ef(ev, "type", "")) == "cue":
+ 			var mk: String = String(_ef(ev, "kind", ""))
+ 			if mk == "perfect_block":
+@@ -2080,7 +2098,16 @@ func _wide_mult() -> float:
+ 
+ 
+ func _update_pushes() -> void:
+-	if _bp_t >= 0.0:
++	for ai in range(2):
++		if float(_arr_t[ai]) >= 0.0:
++			_arr_t[ai] = float(_arr_t[ai]) + DT
++			var done_t: float = (float(_arr_end[ai]) + CamParams.ARR_HOLD + CamParams.ARR_OUT) if float(_arr_end[ai]) >= 0.0 else -1.0
++			if (done_t >= 0.0 and time > done_t) or float(_arr_t[ai]) > 3.0:
++				_arr_t[ai] = -1.0
++				_arr_end[ai] = -1.0
++	# The push lets go only while the layout is still: its release on a pane that is opening or closing adds to the
++	# layout's zoom at its comfort rate (a launch's push easing out as his pane opened: 2.52 e-folds a second, limit 2.47).
++	if _bp_t >= 0.0 and not (sep > 0.001 and sep < 0.999 and _bp_t > CamParams.BLOW_UP + _bp_hold):
+ 		_bp_t += DT
+ 		if _bp_t > CamParams.BLOW_UP + _bp_hold + CamParams.BLOW_DOWN:
+ 			_bp_t = -1.0
+@@ -2571,7 +2598,7 @@ func _own_zoom_target(S: SimState, i: int) -> float:
+ 				r = lerpf(CamParams.R_WRECK_0, CamParams.R_WRECK, smoothstep(0.0, 1.0, wp)) * m
+ 				alt_f = 1.0
+ 	var z: float = r * vh / CamParams.BODY_H * tier_f * alt_f
+-	z *= _push_mult(i) * _hit_mult(i)
++	z *= _push_mult(i) * _hit_mult(i) * _arr_mult(i)
+ 	if f.state != "launched" and chase_slot != i and not (solo_kind != "" and solo_slot == i):
+ 		var zfl: float = CamParams.R_FLOOR * vh / CamParams.BODY_H
+ 		if many_framing and S.fighters.size() > 2:
+@@ -4008,3 +4035,15 @@ func _intent_tick(S: SimState) -> void:
+ 	_ant_w += (tgt - _ant_w) * (1.0 - exp(-DT / tau))
+ 	if _ant_w < 0.001 and tgt == 0.0:
+ 		_ant_w = 0.0
++
++
++## The arrival's widening for fighter i's pane: in over ARR_IN from the `arrive` cue, held until ARR_HOLD past the contact, out over ARR_OUT.
++func _arr_mult(i: int) -> float:
++	var t: float = float(_arr_t[i])
++	if t < 0.0:
++		return 1.0
++	var w: float = smoothstep(0.0, CamParams.ARR_IN, t)
++	var te: float = float(_arr_end[i])
++	if te >= 0.0:
++		w *= 1.0 - smoothstep(te + CamParams.ARR_HOLD, te + CamParams.ARR_HOLD + CamParams.ARR_OUT, time)
++	return 1.0 - CamParams.ARR_WIDE * w
