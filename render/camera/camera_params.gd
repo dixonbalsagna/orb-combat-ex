@@ -74,6 +74,13 @@ const CHASE_LEAD_TAU: float = 0.3       # the lead is smoothed with this time co
 const RUSH_LEAD_MAX: float = 0.12        # the follow point's velocity lead in a rush is at most this share of the pane width
 const ZIP_FRAME_TAU: float = 0.20        # the zip frame (the box the camera holds) is followed with this time constant
 const STRUGGLE_FOCUS: float = 0.5     # the beam struggle (docs/camera/beam-struggle.md): the shared view's focus moves this share of the way from the pair's middle to the meeting point ...
+# The brink (docs/camera/feel.md step 5): when the meeting point has been pushed most of the way to one fighter, the shared view
+# frames the meeting point and the fighter about to lose, filling STRUGGLE_BRINK_FILL of the width; the winner may leave the edge
+# (his beam still comes in from it). Weighted in between lean STRUGGLE_BRINK_0 and STRUGGLE_BRINK_1 (lean: 0 at the middle, 1 at a fighter).
+const STRUGGLE_BRINK_0: float = 0.2
+const STRUGGLE_BRINK_1: float = 0.6
+const STRUGGLE_BRINK_FILL: float = 0.6
+const STRUGGLE_BRINK_HOLD: float = 0.3   # the winner may stay off the edge this long after the brink, while the view widens back (no split for it)
 const STRUGGLE_FADE: float = 0.4     # the framing comes in and goes out over this many seconds
 const STRUGGLE_MID_TAU: float = 0.3   # ... which is eased (the point jumps 10 to 15% of the line at a surge)
 const STRUGGLE_PUSH: float = 0.10     # the view tightens by up to this much as the point nears a fighter (the decision is near) ...
@@ -231,6 +238,16 @@ const BLOW_UP: float = 0.05
 # MERGED_LEAD_T, at most MERGED_LEAD_X of the width, faded in between MERGED_LEAD_V0 and MERGED_LEAD_V1 (units a second), eased
 # with MERGED_LEAD_TAU, and never so far that a fighter leaves the middle MERGED_LEAD_KEEP of the width.
 const MERGED_LEAD_T: float = 0.3
+# Anticipation (docs/camera/director.md section 4): the choreographer schedules each blow a few ticks ahead (the exchange's beats); before a
+# heavy blow or a launch the one view leans toward the contact and tightens a little, so the hit lands where the eye already is.
+const ANT_LEAD_TICKS: float = 18.0     # how far ahead a scheduled contact is read
+const ANT_SHIFT: float = 0.25          # the focus moves this share of the way to the contact point
+const ANT_PUSH: float = 0.20           # ... and the view tightens by this much
+const ANT_TAU_IN: float = 0.10
+const ANT_TAU_OUT: float = 0.25
+const ANT_W: Dictionary = {"launch": 1.0, "ender": 1.0, "heavy": 0.7, "medium": 0.0, "light": 0.0}
+# the push's share by kind: a launch is followed by a chase or a split, so it tightens less (the opening starts from a camera near the pane's)
+const ANT_PUSH_W: Dictionary = {"launch": 0.3, "ender": 0.3, "heavy": 1.0}
 const MERGED_LEAD_X: float = 0.12
 const MERGED_LEAD_V0: float = 300.0
 const MERGED_LEAD_V1: float = 1200.0

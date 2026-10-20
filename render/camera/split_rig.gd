@@ -178,6 +178,13 @@ var _parry_t: Array = [-1.0e9, -1.0e9]   # when each fighter last parried, for t
 var _stiff_w: float = 0.0               # 0..1: how far the slam's stiff filters have come in
 var wreck_dir: int = 0                   # the winner's shot: +1 wreckage on the right of him, -1 on the left, 0 none to speak of
 var wreck_score: float = 0.0             # the wreckage in view, summed (craters, ruined buildings, slide trenches)
+var anticipation: bool = true            # read the choreographer's next contact and lean into it (docs/camera/director.md, phase A)
+var intent_now: String = ""                # the director's read this tick, for the debug feed and the probes
+var ant_starts: int = 0
+var _ant_w: float = 0.0
+var _ant_x: float = 0.0
+var _ant_y: float = 0.0
+var _ant_pw: float = 1.0                   # the push share of the contact read (CamParams.ANT_PUSH_W)
 var merged_lead: bool = true             # the one view leads a pair moving together (docs/camera/feel.md step 4); false: the midpoint as before
 var _mlead: float = 0.0                    # the lead now, world units, signed (eased once a tick)
 var blow_push: bool = true               # a small push-in on each landed blow by its weight (docs/camera/feel.md); false: none
@@ -311,6 +318,10 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_shk = PackedFloat64Array([0.0, 0.0])
 	_aim = [null, null]
 	_hit_t = [-1.0, -1.0]
+	_brink_w = 0.0
+	_brink_win = -1
+	_brink_until = -1.0
+	_ant_w = 0.0
 	_mlead = 0.0
 	_bp_t = -1.0
 	_stg_on = [false, false]
@@ -394,6 +405,7 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 	_update_layout()
 	_update_pushes()
 	_update_merged_lead(S)
+	_intent_tick(S)
 	_update_cameras(S)
 	if cut:
 		_snap_cameras(S)
@@ -579,6 +591,8 @@ func _apply_solo_follow(S: SimState) -> void:
 ## Whether the one-view camera, as it is now, has lost a fighter off its edge: the split opens without waiting.
 func _outside_one_view(S: SimState) -> bool:
 	for i in range(2):
+		if i == _brink_win:
+			continue   # the struggle's winner at the brink: off the edge by design, his beam comes in from it
 		var f = S.fighters[i]
 		var px: float = absf(SimWrap.sdx(_mx, f.x)) * _mz
 		var py: float = vh * CamParams.PLANE_Y - (f.y + CamParams.CHEST - _my) * _mz
@@ -2174,6 +2188,10 @@ func _struggle_tick(S: SimState) -> void:
 	var mv = null
 	if struggle_framing and not reduced_motion and cl != null:
 		mv = cl.get("mid")   # (Clash.mid is Simulation's slice: absent on a tree without it)
+		if mv == null or float(mv) < 0.0:
+			# no tug of war: the clash's own glide (sim.gd draws its spark there), toward the side that loses, decided at its start
+			var p_c: float = clampf((S.T - float(cl.t0)) / maxf(float(cl.dur), 0.001), 0.0, 1.0)
+			mv = 0.5 + (1.0 if bool(cl.aw) else -1.0) * 0.35 * p_c
 	var on: bool = mv != null and float(mv) >= 0.0
 	if on:
 		var m: float = float(mv)
@@ -2189,6 +2207,13 @@ func _struggle_tick(S: SimState) -> void:
 		_st_a = maxi(0, S.fighters.find(cl.A))
 		_st_d = maxi(0, S.fighters.find(cl.D))
 	_st_w = move_toward(_st_w, 1.0 if on else 0.0, DT / CamParams.STRUGGLE_FADE)
+	# the brink's weight and its winner (who may leave the one view's edge without opening the split)
+	_brink_w = smoothstep(0.0, 1.0, _st_w) * smoothstep(CamParams.STRUGGLE_BRINK_0, CamParams.STRUGGLE_BRINK_1, absf(_st_mid - 0.5) * 2.0) if struggle_brink else 0.0
+	if _brink_w > 0.0:
+		_brink_win = _st_a if _st_mid > 0.5 else _st_d
+		_brink_until = time + CamParams.STRUGGLE_BRINK_HOLD
+	elif time >= _brink_until:
+		_brink_win = -1   # held a little past the brink, while the view widens back to the pair
 
 
 func _merged_target(S: SimState) -> Vector3:
@@ -2250,6 +2275,20 @@ func _merged_target(S: SimState) -> Vector3:
 		var d_far: float = maxf(absf(SimWrap.sdx(mx, ca.x)), absf(SimWrap.sdx(mx, cd.x)))
 		var tight_cap: float = maxf(0.0, 0.44 * vw / maxf(d_far * z * mult, 1.0) - 1.0)   # the tightening leaves both fighters inside 0.44 of the width
 		mult *= 1.0 + minf(tight * sw_st * (0.5 if flash_reduced else 1.0), tight_cap)
+		# The brink: the meeting point and the fighter about to lose, closer; the winner may go off the edge, his beam comes in from it.
+		var w_b: float = _brink_w
+		if w_b > 0.0:
+			var loser = cd if _st_mid > 0.5 else ca
+			var d_lm: float = SimWrap.sdx(meet, loser.x)
+			var cx_b: float = SimWrap.wrap(meet + d_lm * 0.5)
+			var span_b: float = absf(d_lm) + 2.0 * CamParams.BODY_H
+			var z_b: float = CamParams.STRUGGLE_BRINK_FILL * vw / maxf(span_b, 1.0)
+			mx = SimWrap.wrap(mx + SimWrap.sdx(mx, cx_b) * w_b)
+			my = lerpf(my, clampf(loser.y + 40.0, CamParams.CAM_Y_MIN, SimConst.CEILING - CamParams.CAM_Y_TOP), w_b)
+			var z_now: float = z * mult
+			if z_b > z_now:
+				mult *= exp(log(z_b / z_now) * w_b)
+			brink_ticks += 1
 	if solo_kind == "ko":
 		pass
 	var pz: float = 1.0 / cos(deg_to_rad(_pitch_now))
@@ -2258,6 +2297,16 @@ func _merged_target(S: SimState) -> Vector3:
 		gov_m = _scroll_gov(maxf(_vsm_m, _gov_armed()), z * pz)   # the picture's scale is the zoom times the pitch's: that is what the scenery crosses at
 	_gov_bind_m = gov_m < 0.999
 	z = clampf(z * mult * pz * _wide_mult() * gov_m, maxf(CamParams.ZOOM_MIN, maxf(CamParams.R_FLOOR * vh / CamParams.BODY_H, many_z) * pz), _zcap() * pz * (1.0 + CamParams.TIER_PUSH))
+	if _ant_w > 0.001 and _st_w <= 0.0 and not fold_active and _lg_slot < 0 and not _lg_rel:
+		# anticipation: toward the coming contact, both fighters kept inside 0.42 of the width
+		var sh_a: float = CamParams.ANT_SHIFT * _ant_w * SimWrap.sdx(mx, _ant_x)
+		var hf_a: float = 0.42 * vw / maxf(z, 0.001)
+		var da_a: float = SimWrap.sdx(mx, A.x)
+		var db_a: float = SimWrap.sdx(mx, B.x)
+		var lo_a: float = maxf(da_a, db_a) - hf_a
+		var hi_a: float = minf(da_a, db_a) + hf_a
+		mx = SimWrap.wrap(mx + (clampf(sh_a, lo_a, hi_a) if lo_a <= hi_a else 0.0))
+		z *= 1.0 + CamParams.ANT_PUSH * _ant_w * _ant_pw
 	if _mlead != 0.0 and not fold_active and _lg_slot < 0 and not _lg_rel and _st_w <= 0.0:
 		# the lead, kept so that both fighters stay inside the middle MERGED_LEAD_KEEP of the width at this zoom
 		var half_k: float = 0.5 * CamParams.MERGED_LEAD_KEEP * vw / maxf(z, 0.001)
@@ -2735,7 +2784,12 @@ var _many_pull: Array = [0.0, 0.0]                      # pane i's focus pull to
 var _many_partner: int = 1                              # the one's partner for framing: the nearest of the others, with a hold
 var _many_marks: Array = []                             # the bodies outside the frame this tick, [slot, side]
 var merge_lookahead: bool = true                        # a pair moving apart fast is not merged on its present separation (docs/camera/rushcity.md); on since 2026-10-16 (rushcity: 2.5 / 3.5 / 1 -> 2 / 2 / 1)
-var struggle_framing: bool = false                      # the beam struggle: the shared view centred toward the meeting point, tightening as it nears a fighter, a punch at each surge (docs/camera/beam-struggle.md); off by default
+var struggle_brink: bool = true          # within the struggle framing: at the brink, frame the meeting point and the losing fighter (docs/camera/feel.md step 5)
+var brink_ticks: int = 0
+var _brink_w: float = 0.0
+var _brink_win: int = -1
+var _brink_until: float = -1.0
+var struggle_framing: bool = true                      # the beam struggle: the shared view centred toward the meeting point, tightening as it nears a fighter, a punch at each surge (docs/camera/beam-struggle.md); off by default
 var _st_mid: float = 0.5                                # the meeting point, eased (0 at the attacker's hands to 1 at the defender's)
 var _st_on: bool = false
 var _st_w: float = 0.0                                  # the framing's weight: 0 to 1 over STRUGGLE_FADE seconds in, and back out when the struggle ends (no step)
@@ -3911,3 +3965,45 @@ func _update_merged_lead(S: SimState) -> void:
 	_mlead += (tgt - _mlead) * (1.0 - exp(-DT / CamParams.MERGED_LEAD_TAU))
 	if absf(_mlead) < 0.5 and tgt == 0.0:
 		_mlead = 0.0
+
+
+## The director's read of the choreography (docs/camera/director.md section 3, phase A): the running exchange's scheduled beats (`S.dirS.ex`,
+## render reads the sim and never writes it). The next contact within ANT_LEAD_TICKS that weighs (a launch, a launch ender, a heavy) sets
+## the anticipation's target; its weight eases in fast and out slower. intent_now says what was read.
+func _intent_tick(S: SimState) -> void:
+	var tgt: float = 0.0
+	intent_now = ""
+	var ex = S.dirS.ex
+	if anticipation and not reduced_motion and not intro_active and ex != null and S.game.clash == null and sep <= 0.001 and not split_wanted and solo_kind == "":
+		for b in ex.beats:
+			if b.done or (b.op != "strike" and b.op != "launch"):
+				continue
+			var ahead: float = (float(b.t) - float(ex.t)) * 60.0
+			if ahead < -1.0:
+				continue
+			if ahead > CamParams.ANT_LEAD_TICKS:
+				break
+			var a = b.args if b.args is Dictionary else {}
+			var kind: String = "launch"
+			var victim = null
+			if b.op == "launch":
+				victim = ex.A if bool(a.get("rev", false)) else ex.D
+			else:
+				kind = "ender" if bool(a.get("ender", false)) else String(a.get("strength", ""))
+				if kind == "" or kind == "light":
+					var o = a.get("o", {})
+					kind = "heavy" if (o is Dictionary and String(o.get("class", "")) == "heavy") else "light"
+				victim = ex.D if String(a.get("d", "D")) == "D" else ex.A
+			var w: float = float(CamParams.ANT_W.get(kind, 0.0))
+			if w > tgt and victim != null:
+				tgt = w
+				_ant_x = float(victim.x)
+				_ant_y = float(victim.y) + CamParams.CHEST
+				_ant_pw = float(CamParams.ANT_PUSH_W.get(kind, 1.0))
+				intent_now = "%s in %d ticks on slot %d" % [kind, int(round(ahead)), S.fighters.find(victim)]
+	if tgt > 0.0 and _ant_w < 0.05:
+		ant_starts += 1
+	var tau: float = CamParams.ANT_TAU_IN if tgt > _ant_w else CamParams.ANT_TAU_OUT
+	_ant_w += (tgt - _ant_w) * (1.0 - exp(-DT / tau))
+	if _ant_w < 0.001 and tgt == 0.0:
+		_ant_w = 0.0

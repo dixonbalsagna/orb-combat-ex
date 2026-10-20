@@ -546,7 +546,7 @@ func _frame_checks(fr: SplitFrame, cur: SplitFrame, alpha: float = 1.0) -> void:
 		var pp: Vector2 = fr.screen_pos(i, fpp.x, fpp.y + CamParams.CHEST, _fz(i, alpha))
 		var w1i: float = fr.weight1(pp)
 		var inside: bool = pp.x >= 0.0 and pp.x <= vw and pp.y >= 0.0 and pp.y <= vh and (w1i >= 0.5 if i == 1 else w1i < 0.5)
-		if inside:
+		if inside or i == _rig._brink_win:   # the struggle's winner at the brink is off the edge by design (feel.md step 5)
 			_offscreen_t[i] = 0.0
 		else:
 			_offscreen_t[i] += 1.0 / DISPLAY_HZ
@@ -1436,6 +1436,8 @@ func _struggle_row(on: bool) -> Dictionary:
 	var max_tight: float = 0.0
 	var worst_k: int = -1
 	var off_screen: int = 0
+	var winner_off: int = 0
+	var brink_seen: int = 0
 	for k in range(420):
 		if k < 240:
 			fc.mid = 0.5 + 0.4 * (1.0 - absf(2.0 * float(k) / 240.0 - 1.0))
@@ -1455,20 +1457,27 @@ func _struggle_row(on: bool) -> Dictionary:
 		prev_ok = true
 		max_lean = maxf(max_lean, absf(SimWrap.sdx(x0, cam.x)))
 		max_tight = maxf(max_tight, cam.z / z0 - 1.0)
+		if _rig._brink_win >= 0:
+			brink_seen += 1
 		for si in range(2):
 			var f = _S.fighters[si]
 			var sp: Vector2 = cur.screen_pos(0, f.x, f.y + CamParams.CHEST, float(f.z))
 			if sp.x < 0.0 or sp.x > vw or sp.y < 0.0 or sp.y > vh:
-				off_screen += 1
+				if si == _rig._brink_win:
+					winner_off += 1   # the winner at the brink: off the edge by design
+				else:
+					off_screen += 1
 	_S.game.clash = null
 	if on:
-		_check(max_lean <= CamParams.STRUGGLE_FOCUS * 0.45 * 800.0 + 40.0, "%s: the focus leaned %.0f units (limit %.0f)" % [_label, max_lean, CamParams.STRUGGLE_FOCUS * 0.45 * 800.0 + 40.0])
+		# at the brink the focus goes to the middle of the meeting point and the loser: at most half the pair's distance
+		_check(max_lean <= 0.5 * 800.0 + 40.0, "%s: the focus leaned %.0f units (limit %.0f)" % [_label, max_lean, 0.5 * 800.0 + 40.0])
+		_check(brink_seen > 0, "%s: the brink never framed the losing side" % _label)
 		_check(max_lean > 20.0, "%s: the focus did not lean toward the meeting point (%.0f units)" % [_label, max_lean])
 		_check(worst_travel <= CamParams.SCROLL_MAX, "%s: the camera travelled %.4f of the width in a tick (bound %.3f)" % [_label, worst_travel, CamParams.SCROLL_MAX])
-		_check(off_screen == 0, "%s: a fighter was off the screen for %d ticks" % [_label, off_screen])
+		_check(off_screen == 0, "%s: the losing fighter was off the screen for %d ticks" % [_label, off_screen])
 	else:
 		_check(max_lean < 1.0, "%s: the focus moved %.1f units with the framing off" % [_label, max_lean])
-	stats["detail " + _label] = "focus lean %.0f units, view tightened %.3f, worst travel %.4f at tick %d, off screen %d" % [max_lean, max_tight, worst_travel, worst_k, off_screen]
+	stats["detail " + _label] = "focus lean %.0f units, view tightened %.3f, worst travel %.4f at tick %d, off screen %d, the winner off the edge %d (brink %d ticks)" % [max_lean, max_tight, worst_travel, worst_k, off_screen, winner_off, brink_seen]
 	return {}
 
 
