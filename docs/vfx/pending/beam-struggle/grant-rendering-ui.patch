@@ -1,0 +1,45 @@
+--- a/render/core/beam_view.gd
++++ b/render/core/beam_view.gd
+@@ -64,8 +64,11 @@
+ 		var dx: float = SimWrap.sdx(c.A.x, c.D.x)
+ 		var m := Vector2(ax + dx * mid, c.A.y + 38.0 + (c.D.y - c.A.y) * mid)
+ 		var mz: float = c.A.z + (c.D.z - c.A.z) * mid   # the fighters' depths (0 on the plane): the beams meet between them
+-		_beam(n, Vector2(ax, c.A.y + 38.0), m, 26.0 + c.A.tier * 8.0, RenderLook.col(c.A.aura), ck, z, clash_ok, c.A.z, mz, c.A, String(c.A.aura), S.T, true)
+-		_beam(n + 1, Vector2(ax + dx, c.D.y + 38.0), m, 26.0 + c.D.tier * 8.0, RenderLook.col(c.D.aura), ck, z, clash_ok, c.D.z, mz, c.D, String(c.D.aura), S.T, true)
++		var sk: VfxBeamStruggle = host.vfx.struggle if (host != null and host.vfx.struggle_enabled) else null       # the beams carry the struggle (VFX): who pushes, the beat, the surges
++		var wa: float = sk.width_k(0) if sk != null else 1.0
++		var wd: float = sk.width_k(1) if sk != null else 1.0
++		_beam(n, Vector2(ax, c.A.y + 38.0), m, (26.0 + c.A.tier * 8.0) * wa, RenderLook.col(c.A.aura), ck, z, clash_ok, c.A.z, mz, c.A, String(c.A.aura), S.T, true, false, 0, sk)
++		_beam(n + 1, Vector2(ax + dx, c.D.y + 38.0), m, (26.0 + c.D.tier * 8.0) * wd, RenderLook.col(c.D.aura), ck, z, clash_ok, c.D.z, mz, c.D, String(c.D.aura), S.T, true, false, 1, sk)
+ 		RenderMats.set_glow(_flare.material_override, Color.WHITE, ck)
+ 		n += 2
+ 		_flare.position = Vector3(m.x, m.y, RenderLook.Z_BEAMS + 2.0 + mz)
+@@ -106,7 +109,7 @@
+ 
+ ## One beam from a to e (this view's x and the world's y). za, ze: the depth at each end (the sim's Beam.oz and zs; 0 on
+ ## the fighter plane). A beam with no depth is placed exactly as it always was.
+-func _beam(i: int, a: Vector2, e: Vector2, w: float, c: Color, k: float, z: float, bright: bool = true, za: float = 0.0, ze: float = 0.0, who = null, hex: String = "", t: float = 0.0, at_heel: bool = true, short: bool = false) -> void:
++func _beam(i: int, a: Vector2, e: Vector2, w: float, c: Color, k: float, z: float, bright: bool = true, za: float = 0.0, ze: float = 0.0, who = null, hex: String = "", t: float = 0.0, at_heel: bool = true, short: bool = false, sw_side: int = -1, sk = null) -> void:
+ 	while _pool.size() <= i:
+ 		var layers: Array = []
+ 		for j in range(LAYER_COUNT):
+@@ -136,3 +139,4 @@
+ 			var side := Vector3(u.y, -u.x, 0.0)
+ 			mi.transform = Transform3D(Basis(side * th, dir * (l3 + th * 0.5), side.cross(dir) * th), Vector3((a.x + e.x) * 0.5, (a.y + e.y) * 0.5, RenderLook.Z_BEAMS + (za + ze) * 0.5))
+ 		VfxBeamLook.set_layer(mi.material_override, who, VfxAura.lane_color(hex) if hex != "" else c, j, k, not bright, t, l, at_heel, float(i), short)
++		VfxBeamStruggle.set_on(mi.material_override, sk, sw_side, l, j)
+--- a/render/vfx/transform_view.gd
++++ b/render/vfx/transform_view.gd
+@@ -75,9 +75,12 @@
+ 			var pulse: float = 1.0
+ 			if not hub.reduced_motion:
+ 				pulse = 1.0 + VfxAura.p("standing", "pulse") * sin(TAU * (float(hub.aura.clock) + a) / maxf(VfxAura.p("standing", "pulse_ticks"), 1.0) + float(i) * 2.0)
++			var flare: float = hub.struggle.flare(i) if hub.struggle_enabled else 0.0       # the loser's aura flares as he digs in (beam_struggle.gd)
++			pulse *= 1.0 + flare
+ 			var colr: Color = VfxAura.lane_color(String(fs.aura))
+ 			var fill: float = 0.0 if q == VfxLook.Q_LOW else float(ads["fill"]) * VfxAura.p("standing", "fill_scale")
+ 			colr.a = VfxAura.p("standing", "alpha") * smoothstep(0.0, 1.0, lvl)
++			colr.a = minf(colr.a * (1.0 + 2.0 * flare), 1.0)
+ 			if hub.flicker_enabled:
+ 				colr.a *= VfxReact.flicker(fs, hub.aura.clock, i, hub.reduced_motion)
+ 				pulse *= VfxReact.jitter(fs, hub.aura.clock, i, hub.reduced_motion)

@@ -1,0 +1,730 @@
+--- a/render/vfx/vfx_hub.gd
++++ b/render/vfx/vfx_hub.gd
+@@ -82,6 +82,8 @@
+ var inreach := VfxReach.new()                   # energy arts in reach and the launcher's marks (reach.gd), behind the same flag
+ var tremor := VfxTremor.new()                  # the catastrophe tier's tremor: dust curtains and rubble (tremor.gd, dust_view.gd), on its cue
+ var blastcloud := VfxBlastCloud.new()          # the catastrophe tier's blast cloud: stem, cap, dust wall and the one fireball light (blast_cloud.gd, cloud_view.gd), on its cue
++var struggle := VfxBeamStruggle.new()           # the beam struggle carried by the beams themselves: who pushes, the beat, the surges (beam_struggle.gd; BeamView draws it)
++var struggle_enabled: bool = true
+ var scars := VfxBeamScar.new()                    # the scar each beam leaves in the air as its tail draws back (beam_scar.gd, scar_view.gd; Orb 2026-10-19), behind the same flags as the beams
+ var scar_enabled: bool = true
+ var ash: float = 0.0                              # the world's darkening, 0 to 1 (read-only from the sim when it exists): scales a catastrophe light's peak
+@@ -149,6 +151,7 @@
+ 	tremor.reset()
+ 	blastcloud.reset()
+ 	scars.reset()
++	struggle.reset()
+ 	ghosts.reset()
+ 	_vision_sig = ""
+ 	flashes.reset()
+@@ -357,6 +360,11 @@
+ 		debris.reduced = reduced_motion
+ 		inreach.step(S, frozen, debris, press)
+ 		inreach.on_events(S, events, reduced_motion, debris, press)
++		inreach.struggle_marks = not struggle_enabled          # the beams carry the struggle: the old rings are off while they do
++		if struggle_enabled:
++			struggle.step(S, events, reduced_motion or reduced_flashing, dt)
++		else:
++			struggle.reset()
+ 		press.regrant()
+ 		ghosts.step(S, events, press, zip, frozen, reduced_motion)
+ 	if destruction_enabled or cracks_enabled or embers_enabled or water_enabled or react_enabled or earth_enabled or rocks_enabled or blast_enabled or shots_enabled or beamplay_enabled or stages_enabled:
+--- a/render/vfx/reach.gd
++++ b/render/vfx/reach.gd
+@@ -54,6 +54,7 @@
+ 
+ var fx: Array = []
+ var struggle_on: bool = false              # a beam struggle is on (the cues `beam_struggle` to `beam_end`)
++var struggle_marks: bool = true                  # the struggle's thin rings (beat, surge, stray): off while the beams carry the struggle (beam_struggle.gd)
+ var _last_mark: int = -1000                # the tick of the last surge or stray mark (calm mode keeps them 40 ticks apart)
+ var made: Dictionary = {}
+ var full_ticks: Array = []          # the ticks a full flash was given (the tests check the rate)
+@@ -970,6 +971,9 @@
+ 		return
+ 	_drop("spulse")
+ 	_drop("sopen")
++	if not struggle_marks:
++		struggle_on = true
++		return
+ 	var o := Fx.new()
+ 	o.style = "sopen"
+ 	o.slot = int(e.actor)
+@@ -991,6 +995,8 @@
+ ## A pulse: the ring that contracts onto the point and the one that leaves it, and the next pulse's contraction, shown at once.
+ func _beam_pulse(S: SimState, e, reduced: bool) -> void:
+ 	_drop("spulse")
++	if not struggle_marks:
++		return
+ 	var k: int = int(float(VfxHub._g(e, "k", 1.0)))
+ 	var n_at: float = float(VfxHub._g(e, "n", float(S.tick)))
+ 	var calm: bool = _calm(reduced)
+@@ -1011,6 +1017,8 @@
+ 
+ ## A surge (actor the one who pressed on the beat, text surge, or sharp for the 1-tick one).
+ func _beam_surge(S: SimState, e, reduced: bool) -> void:
++	if not struggle_marks:
++		return
+ 	var slot: int = int(e.actor)
+ 	if slot < 0 or slot >= S.fighters.size():
+ 		return
+@@ -1033,6 +1041,8 @@
+ 
+ ## A stray (actor the one who pressed off the beat): a hiccup in his own beam.
+ func _beam_stray(S: SimState, e, reduced: bool) -> void:
++	if not struggle_marks:
++		return
+ 	var slot: int = int(e.actor)
+ 	if slot < 0 or slot >= S.fighters.size():
+ 		return
+--- a/render/vfx/aura.gd
++++ b/render/vfx/aura.gd
+@@ -63,6 +63,9 @@
+ 		return false
+ 	if f.state == "charging" or f.beamCharge != null or f.rush != null:
+ 		return true
++	var cl = S.game.clash
++	if cl != null and (cl.A == f or cl.D == f):
++		return true       # in a beam clash both hold their aura up (the loser flares: beam_struggle.gd)
+ 	var ex = S.dirS.ex
+ 	if ex != null and ex.A == f:
+ 		return true
+--- a/render/vfx/shaders/beam_core.gdshaderinc
++++ b/render/vfx/shaders/beam_core.gdshaderinc
+@@ -21,6 +21,17 @@
+ uniform float wob = 0.0;            // how much the width swells and thins along the beam (a share of the radius): the silhouette flows, the axis stays a straight line
+ uniform float fil = 0.5;            // the filaments: long thin streaks along the beam, in hue and saturation, within `lum_amp` in brightness
+ uniform float head_at_zero = 1.0;   // 1: UV.y is 0 at the head, as the cylinder is built
++// The beam struggle's waves (render/vfx/beam_struggle.gd): up to two swells and the meeting point's knot, each (x its centre from the tail in world units, y its half length, z the width it adds as a
++// share of the radius (negative pinches), w the alpha it adds as a share). All zero outside a struggle: a plain beam is as it was.
++uniform vec4 wv0 = vec4(0.0, 1.0, 0.0, 0.0);
++uniform vec4 wv1 = vec4(0.0, 1.0, 0.0, 0.0);
++uniform vec4 wv2 = vec4(0.0, 1.0, 0.0, 0.0);
++
++float wbump(float s, vec4 w) {
++	float u = (s - w.x) / max(w.y, 1.0);
++	return exp(-2.0 * u * u);
++}
++
+ 
+ float h21(vec2 p) {
+ 	p = fract(p * vec2(123.34, 456.21));
+@@ -37,8 +48,10 @@
+ 
+ void vertex() {
+ 	vec3 v = VERTEX;
++	float s0 = (head_at_zero > 0.5 ? 1.0 - UV.y : UV.y) * len;
++	float wsum = wv0.z * wbump(s0, wv0) + wv1.z * wbump(s0, wv1) + wv2.z * wbump(s0, wv2);
++	v.xz *= max(0.2, 1.0 + wsum);
+ 	if (wob > 0.0) {
+-		float s0 = (head_at_zero > 0.5 ? 1.0 - UV.y : UV.y) * len;
+ 		float sw = (vn(vec2(s0 * 0.011 - time * flow * 0.012, seed + 3.0)) - 0.5) * 2.0;
+ 		v.xz *= 1.0 + wob * sw;
+ 	}
+@@ -66,6 +79,7 @@
+ 	float cap_e = min(cap, len * 0.14);     // the rounded ends never take more than a seventh of the beam each: a short beam (a point-blank one) stays solid in the middle, not a soft smear
+ 	float ends = smoothstep(0.0, cap_e, from_tail) * smoothstep(0.0, cap_e, len - from_tail);
+ 	float swell = 1.0 + heel * exp(-from_tail / 70.0);
++	float wl = 1.0 + wv0.w * wbump(from_tail, wv0) + wv1.w * wbump(from_tail, wv1);
+ 	ALBEDO = col;
+-	ALPHA = clamp(tint_a.a * strength * edge * shim * ends * swell, 0.0, 1.0);
++	ALPHA = clamp(tint_a.a * strength * edge * shim * ends * swell * wl, 0.0, 1.0);
+ }
+--- a/data/vfx/energy.json
++++ b/data/vfx/energy.json
+@@ -177,5 +177,25 @@
+   "cool_s": 1.2,
+   "grow_s": 0.14,
+   "cap": 10
++ },
++ "struggle": {
++  "push_k": 0.5,
++  "ease_s": 0.35,
++  "wave_ticks": 14,
++  "surge_amp": 0.8,
++  "sharp_k": 1.4,
++  "beat_amp": 0.34,
++  "stray_amp": -0.4,
++  "wave_half": 0.15,
++  "wave_half_max": 120,
++  "lum": 0.08,
++  "knot_amp": 0.6,
++  "knot_s": 1.8,
++  "knot_surge": 0.14,
++  "knot_decay_s": 2.5,
++  "calm_gap": 40,
++  "amp_calm": 0.8,
++  "flare_k": 0.3,
++  "flare_ease_s": 0.4
+  }
+ }
+--- a/tools/schemas/vfx-energy.schema.json
++++ b/tools/schemas/vfx-energy.schema.json
+@@ -283,6 +283,103 @@
+         }
+       },
+       "additionalProperties": false
++    },
++    "struggle": {
++      "type": "object",
++      "description": "The beam struggle carried by the beams themselves (render/vfx/beam_struggle.gd, docs/vfx/beam-struggle.md): the winner's beam thicker, a swell down each beam to the meeting point on every pulse, a bigger one down the presser's beam on a surge, a pinch on a stray, and the meeting point swelling slowly. All keys optional: beam_struggle.gd falls back to the same defaults.",
++      "properties": {
++        "push_k": {
++          "type": "number",
++          "maximum": 0.8,
++          "minimum": 0
++        },
++        "ease_s": {
++          "type": "number",
++          "maximum": 3,
++          "exclusiveMinimum": 0.02
++        },
++        "wave_ticks": {
++          "type": "number",
++          "maximum": 60,
++          "exclusiveMinimum": 2
++        },
++        "surge_amp": {
++          "type": "number",
++          "maximum": 2,
++          "minimum": 0
++        },
++        "sharp_k": {
++          "type": "number",
++          "maximum": 3,
++          "minimum": 1
++        },
++        "beat_amp": {
++          "type": "number",
++          "maximum": 1,
++          "minimum": 0
++        },
++        "stray_amp": {
++          "type": "number",
++          "minimum": -0.8,
++          "maximum": 0
++        },
++        "wave_half": {
++          "type": "number",
++          "maximum": 0.5,
++          "exclusiveMinimum": 0.01
++        },
++        "wave_half_max": {
++          "type": "number",
++          "maximum": 600,
++          "exclusiveMinimum": 10
++        },
++        "lum": {
++          "type": "number",
++          "maximum": 0.1,
++          "minimum": 0
++        },
++        "knot_amp": {
++          "type": "number",
++          "maximum": 1.5,
++          "minimum": 0
++        },
++        "knot_s": {
++          "type": "number",
++          "maximum": 10,
++          "exclusiveMinimum": 0.1
++        },
++        "knot_surge": {
++          "type": "number",
++          "maximum": 0.5,
++          "minimum": 0
++        },
++        "knot_decay_s": {
++          "type": "number",
++          "maximum": 20,
++          "exclusiveMinimum": 0.1
++        },
++        "calm_gap": {
++          "type": "number",
++          "maximum": 120,
++          "minimum": 0
++        },
++        "amp_calm": {
++          "type": "number",
++          "maximum": 1,
++          "minimum": 0
++        },
++        "flare_k": {
++          "type": "number",
++          "maximum": 1,
++          "minimum": 0
++        },
++        "flare_ease_s": {
++          "type": "number",
++          "maximum": 5,
++          "exclusiveMinimum": 0.02
++        }
++      },
++      "additionalProperties": false
+     }
+   },
+   "additionalProperties": false,
+--- a/render/vfx/tools/effects_check.gd
++++ b/render/vfx/tools/effects_check.gd
+@@ -206,6 +206,7 @@
+ 	_brawl()
+ 	_small_blasts()
+ 	_beam_look()
++	_beam_struggle_beams()
+ 	_beam_scar()
+ 	_multi()
+ 	_ghosts()
+@@ -5208,6 +5209,139 @@
+ 	_check(sc2.made == 0 or sc2.list.size() <= int(VfxBeamScar.p("cap")), "a restart (the clock going back) starts the scars afresh")
+ 
+ 
++func _beam_struggle_beams() -> void:
++	print("the beam struggle carried by the beams")
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 6)
++	var c := SimState.Clash.new()
++	c.A = S.fighters[0]
++	c.D = S.fighters[1]
++	c.mid = 0.5
++	c.dur = 5.0
++	var mk := func(kind: String, f: Dictionary) -> Variant:
++		var d: Dictionary = {"kind": kind}
++		d.merge(f)
++		return VfxMock.ev("cue", d)
++	# no struggle (mid -1, the old glide): nothing carries, widths are as they were
++	var sk := VfxBeamStruggle.new()
++	S.game.clash = c
++	c.mid = -1.0
++	sk.step(S, [], false)
++	_check(not sk.active and sk.width_k(0) == 1.0 and sk.width_k(1) == 1.0, "a clash with no struggle (Clash.mid -1) is drawn as it was: widths 1")
++	# the point moves to D's side: A is winning, his beam is thicker and his rival's thinner, eased (no jump)
++	c.mid = 0.5
++	S.tick = 100
++	sk.step(S, [], false)
++	_check(sk.active and absf(sk.width_k(0) - 1.0) < 0.01 and absf(sk.width_k(1) - 1.0) < 0.01, "an even struggle: both beams as wide")
++	c.mid = 0.8
++	var first: float = 0.0
++	for i in range(3):
++		S.tick += 1
++		sk.step(S, [], false)
++		if i == 0:
++			first = sk.width_k(0)
++	_check(sk.width_k(0) > 1.0 and sk.width_k(1) < 1.0 and first < sk.width_k(0), "the winner's beam is thicker, the loser's thinner, and the shift is eased (%.3f then %.3f)" % [first, sk.width_k(0)])
++	for i in range(240):
++		S.tick += 1
++		sk.step(S, [], false)
++	var kmax: float = 1.0 + VfxBeamStruggle.p("push_k")
++	_check(sk.width_k(0) <= kmax + 0.001 and sk.width_k(1) >= 1.0 - VfxBeamStruggle.p("push_k") * 0.6 - 0.001 and sk.width_k(0) > 1.1, "it settles inside the limits (%.2f and %.2f)" % [sk.width_k(0), sk.width_k(1)])
++	# the loser's aura flares, the winner's does not
++	var fa: float = sk.flare(0)
++	var fd: float = sk.flare(1)
++	_check(fa == 0.0 and fd > 0.02 and fd <= VfxBeamStruggle.p("flare_k") + 0.001, "the loser's aura flares (%.3f) and the winner's does not (%.3f)" % [fd, fa])
++	_check(sk.flare(5) == 0.0, "a slot outside the clash is not touched")
++	# the knot (the meeting point's swell) grows slowly: not a flash
++	var sk2 := VfxBeamStruggle.new()
++	c.mid = 0.5
++	S.tick = 500
++	sk2.step(S, [], false)
++	var k0: float = sk2.knot_level
++	var kstep: float = 0.0
++	var prev: float = k0
++	for i in range(60):
++		S.tick += 1
++		sk2.step(S, [], false)
++		kstep = maxf(kstep, sk2.knot_level - prev)
++		prev = sk2.knot_level
++	_check(k0 < 0.05 and sk2.knot_level > 0.2 and kstep < 0.03, "the meeting point swells slowly (%.2f at once, %.2f after a second, the most in a tick %.3f)" % [k0, sk2.knot_level, kstep])
++	# a pulse: the swell leaves each hand 14 ticks before it and is at the point ON it
++	var wt: int = int(VfxBeamStruggle.p("wave_ticks"))
++	var sk3 := VfxBeamStruggle.new()
++	c.mid = 0.5
++	S.tick = 1000
++	sk3.step(S, [], false)
++	var at_point: float = -1.0
++	var started_at: int = -1
++	var pulse_tick: int = S.tick + 40
++	S.tick += 1
++	sk3.step(S, [mk.call("beam_pulse", {"actor": 0, "k": 1, "n": pulse_tick})], false)
++	for i in range(60):
++		S.tick += 1
++		sk3.step(S, [], false)
++		var ws: Array = sk3.waves.filter(func(w): return w.side == 0)
++		if started_at < 0 and not ws.is_empty():
++			started_at = S.tick
++		if S.tick == pulse_tick and not ws.is_empty():
++			at_point = sk3.wave_pos(ws[0], 1000.0)
++	_check(started_at >= 0 and absf(float(started_at) - float(pulse_tick - wt)) <= 2.0, "the beat's swell leaves %d ticks before the pulse (left at %d, pulse at %d)" % [wt, started_at, pulse_tick])
++	_check(at_point > 940.0, "and it is at the meeting point on the pulse (%.0f of 1000)" % at_point)
++	_check(sk3.waves.filter(func(w): return w.side == 1).size() <= 2, "both beams carry it (the rival's side too)")
++	# a surge: a swell on the presser's own beam only, and the knot swells a little more; a stray pinches
++	var sk4 := VfxBeamStruggle.new()
++	c.mid = 0.5
++	S.tick = 2000
++	sk4.step(S, [], false)
++	var kb: float = sk4.knot_level
++	S.tick += 1
++	sk4.step(S, [mk.call("beam_surge", {"actor": 0, "text": "surge"})], false)
++	var w0: Array = sk4.waves.filter(func(w): return w.side == 0)
++	var w1: Array = sk4.waves.filter(func(w): return w.side == 1)
++	_check(w0.size() == 1 and w1.is_empty() and w0[0].amp > 0.0 and sk4.knot_level > kb, "a surge: one swell down the presser's own beam (not his rival's), and the point swells a little more")
++	S.tick += 1
++	sk4.step(S, [mk.call("beam_stray", {"actor": 1})], false)
++	var ws1: Array = sk4.waves.filter(func(w): return w.side == 1)
++	_check(ws1.size() == 1 and ws1[0].amp < 0.0, "a stray: a pinch down his own beam (a negative swell), shape only")
++	# the sharp surge is bigger
++	var sk5 := VfxBeamStruggle.new()
++	S.tick = 3000
++	sk5.step(S, [], false)
++	S.tick += 1
++	sk5.step(S, [mk.call("beam_surge", {"actor": 0, "text": "sharp"})], false)
++	_check(sk5.waves.size() == 1 and sk5.waves[0].amp > sk4.waves[0].amp, "a sharp surge's swell is bigger")
++	# calm (Reduce flashing): a beat's swell for every second pulse only, and surge and stray swells not within calm_gap ticks of the last
++	var sk6 := VfxBeamStruggle.new()
++	S.tick = 4000
++	sk6.step(S, [], true)
++	S.tick += 1
++	sk6.step(S, [mk.call("beam_pulse", {"actor": 0, "k": 1, "n": S.tick + 20})], true)
++	_check(sk6.sched.size() == 1, "calm: of two pulses shown at once only one has a swell (%d)" % sk6.sched.size())
++	var sk7 := VfxBeamStruggle.new()
++	S.tick = 5000
++	sk7.step(S, [], true)
++	S.tick += 1
++	sk7.step(S, [mk.call("beam_surge", {"actor": 0, "text": "surge"})], true)
++	S.tick += 5
++	sk7.step(S, [mk.call("beam_surge", {"actor": 0, "text": "surge"}), mk.call("beam_stray", {"actor": 1})], true)
++	_check(sk7.made.get("surge", 0) == 1 and sk7.made.get("stray", 0) == 0, "calm: a second mark within %d ticks is not made (the point's movement still shows each press)" % int(VfxBeamStruggle.p("calm_gap")))
++	# the amplitudes keep the beam's brightness steady
++	_check(VfxBeamStruggle.p("lum") <= 0.1, "the alpha a swell adds stays under a tenth (%.2f)" % VfxBeamStruggle.p("lum"))
++	# the clash ends: everything resets
++	S.game.clash = null
++	sk.step(S, [], false)
++	_check(not sk.active and sk.width_k(0) == 1.0 and sk.flare(1) == 0.0 and sk.waves.is_empty(), "when the clash ends the beams and auras are as they were")
++	# the old rings are off while the beams carry it, and on when they do not
++	var hub := VfxHub.new()
++	hub.reset(S, 4)
++	hub.inreach.struggle_marks = false
++	hub.inreach.on_events(S, [mk.call("beam_struggle", {"actor": 0, "text": "start"}), mk.call("beam_pulse", {"actor": 0, "k": 1, "n": 20}), mk.call("beam_surge", {"actor": 0, "text": "surge"})], false, null, hub.press)
++	_check(hub.inreach.made.get("surge", 0) == 0 and hub.inreach.made.get("pulse", 0) == 0 and hub.inreach.made.get("struggle", 0) == 0, "the old struggle rings are not made while the beams carry it")
++	var hub2 := VfxHub.new()
++	hub2.reset(S, 4)
++	hub2.inreach.on_events(S, [mk.call("beam_struggle", {"actor": 0, "text": "start"}), mk.call("beam_surge", {"actor": 0, "text": "surge"})], false, null, hub2.press)
++	_check(hub2.inreach.made.get("surge", 0) == 1, "and they are made when the switch is off")
++
++
+ func _beam_look() -> void:
+ 	print("the beams' look")
+ 	var S := SimCore.createSim()
+@@ -5530,6 +5664,7 @@
+ 	cl.dur = 6.0
+ 	cl.aw = true
+ 	var hs2: VfxHub = fresh.call()
++	hs2.struggle_enabled = false      # the old rings are tested with the beams' own struggle off (beam_struggle.gd)
+ 	var sc := func(kind: String, slot: int, text: String, k: float, n: float, x: float = 0.0):
+ 		return VfxMock.ev("cue", {"actor": slot, "kind": kind, "text": text, "target": 1 - slot, "k": k, "n": n, "x": x, "y": 0.0})
+ 	_tick(S, hs2, [sc.call("beam_struggle", 0, "start", 0.0, float(S.tick + 300))])
+@@ -5579,6 +5714,7 @@
+ 	_check(rates_ok, "the rate list holds the struggle's beat, surge and stray, the opening ring, the shine and the chase's trail, each at 1.5 Hz or slower when calm (strokes only)")
+ 	for mode in ["flashing", "motion"]:
+ 		var hcalm: VfxHub = fresh.call(mode == "motion")
++		hcalm.struggle_enabled = false
+ 		hcalm.reduced_flashing = mode == "flashing"
+ 		S.game.clash = cl
+ 		_tick(S, hcalm, [sc.call("beam_struggle", 0, "start", 0.0, float(S.tick + 300))])
+--- /dev/null
++++ b/render/vfx/beam_struggle.gd
+@@ -0,0 +1,256 @@
++class_name VfxBeamStruggle
++extends RefCounted
++## The beam struggle, carried by the beams themselves (Orb's minimal UI, docs/ep/taste.md; Game Design's docs/design/minimal-hud.md row "The beam struggle"; Research's readable-speed paper): no bar and no marker
++## on the screen, the meeting point is the gauge. What the player sees, all in the two beams and nothing else:
++##   who pushes     the beam of the one who is winning ground is thicker, his rival's thinner: the beam's width follows the meeting point (eased over `ease_s`, so a surge's 10 to 15% jump is a quick
++##                  shift of the point, never a pop)
++##   the beat       a swell leaves each fighter's hand 14 ticks before every pulse and runs down his beam to reach the meeting point ON the pulse: the player follows the beat as the swells close on the point
++##   a surge        a bigger swell runs down the presser's own beam from his hand to the point, and the meeting point swells a little more (a sharp one bigger)
++##   a stray        a pinch runs down his own beam: shape only (the beam narrows for an instant), nothing flickers
++##   the point      swells slowly while the struggle lasts (`knot_s`) and each surge adds to it, which decays slowly: never a flash
++## All are changes of width (a smooth bulge on the beam's radius) with at most `lum` of alpha on top, so the beam's brightness stays steady (Legal fx03 and fx04 for the struggle's marks). Under Reduce flashing or
++## Reduced motion (the register's `reduced`) it keeps the old marks' rate: the beat is shown for every second pulse only and a surge or stray wave is not made within `calm_gap` ticks of the last.
++## Presentation only: it reads S.game.clash and the cues, keeps its own clock, draws no random number, writes nothing of the sim. The beams' drawing is BeamView's; the shader (beam_core.gdshaderinc) takes the waves.
++
++class Wave:
++	var side: int = 0          # 0 the beam from A's hand, 1 from D's
++	var born: float = 0.0      # tick (this model's clock)
++	var amp: float = 0.2       # the width it adds at its centre, a share of the radius (negative pinches)
++	var big: bool = false
++
++const DEFAULTS: Dictionary = {
++	"push_k": 0.5, "ease_s": 0.35, "wave_ticks": 14.0, "surge_amp": 0.8, "sharp_k": 1.4, "beat_amp": 0.34, "stray_amp": -0.4, "wave_half": 0.15, "wave_half_max": 120.0, "lum": 0.08,
++	"knot_amp": 0.6, "knot_s": 1.8, "knot_surge": 0.14, "knot_decay_s": 2.5, "calm_gap": 40.0, "amp_calm": 0.8, "flare_k": 0.3, "flare_ease_s": 0.4,
++}
++
++var active: bool = false
++var push: float = 0.0              # eased, -1 (D has the point at A's hands) to +1 (A has it at D's)
++var knot: float = 0.0              # 0 to 1
++var waves: Array = []              # Wave
++var clock: float = 0.0             # ticks since the model started (counts its own steps)
++var started: float = 0.0
++var made: Dictionary = {}          # counters, for the tests
++var sched: Array = []              # [pulse tick, k]: the pulses that have a swell to leave
++var _scheduled: Dictionary = {}
++var _last_mark: float = -1000.0
++var _calm: bool = false
++var _A = null
++var _D = null
++var _slots: Array = [-1, -1]      # the fighters' slots (A, D)
++var _flare: Array = [0.0, 0.0]    # eased: the aura's flare of the side that is losing ground
++
++static var _data: Dictionary = {}
++static var _loaded: bool = false
++
++
++static func p(key: String) -> float:
++	VfxBeamLook.warm()
++	var g = VfxBeamLook._data.get("struggle")
++	if g is Dictionary and g.has(key):
++		return float(g[key])
++	return float(DEFAULTS[key])
++
++
++func reset() -> void:
++	active = false
++	push = 0.0
++	knot = 0.0
++	waves.clear()
++	sched.clear()
++	_scheduled.clear()
++	clock = 0.0
++	_last_mark = -1000.0
++	made = {}
++	_A = null
++	_D = null
++	_slots = [-1, -1]
++	_flare = [0.0, 0.0]
++
++
++## Every tick (dt: the tick's seconds; calm: the register's reduced mode). `S.tick` is the cue clock the beam cues count in.
++func step(S: SimState, events: Array, calm: bool, dt: float = 1.0 / 60.0) -> void:
++	var c = S.game.clash
++	var on: bool = c != null and float(c.mid) >= 0.0
++	_calm = calm
++	if not on:
++		if active:
++			reset()
++		return
++	if not active or c.A != _A or c.D != _D:
++		reset()
++		active = true
++		_A = c.A
++		_D = c.D
++		_slots = [S.fighters.find(c.A), S.fighters.find(c.D)]
++		started = clock
++	clock += 1.0
++	var target: float = clampf((float(c.mid) - 0.5) * 2.0, -1.0, 1.0)
++	push += (target - push) * (1.0 - exp(-dt / maxf(p("ease_s"), 0.02)))
++	# the loser digs in: his aura flares in proportion to the ground he has lost (his side of the push), eased
++	var ef: float = 1.0 - exp(-dt / maxf(p("flare_ease_s"), 0.02))
++	_flare[0] += (maxf(-push, 0.0) - float(_flare[0])) * ef
++	_flare[1] += (maxf(push, 0.0) - float(_flare[1])) * ef
++	# the knot: a slow swell up over the struggle's first seconds, and a little more for each surge, which fades slowly
++	var base: float = smoothstep(0.0, 1.0, (clock - started) * dt / maxf(p("knot_s"), 0.1))
++	knot = maxf(knot - dt / maxf(p("knot_decay_s"), 0.1), 0.0)
++	for e in events:
++		if String(e.type) != "cue":
++			continue
++		match String(e.kind):
++			"beam_pulse":
++				_pulse(S, e)
++			"beam_surge":
++				_surge(S, e)
++			"beam_stray":
++				_stray(S, e)
++			"beam_end":
++				waves.clear()
++				sched.clear()
++	# the swells that are due to leave: a beat's swell is born `wave_ticks` before its pulse and reaches the point on it
++	var wt: float = p("wave_ticks")
++	var keep: Array = []
++	for s in sched:
++		if float(S.tick) >= float(s[0]) - wt:
++			if float(S.tick) - (float(s[0]) - wt) < wt:
++				for side in range(2):
++					var w := Wave.new()
++					w.side = side
++					w.born = clock - (float(S.tick) - (float(s[0]) - wt))
++					w.amp = p("beat_amp") * (p("amp_calm") if calm else 1.0)
++					waves.append(w)
++				made["beat"] = int(made.get("beat", 0)) + 1
++		else:
++			keep.append(s)
++	sched = keep
++	var live: Array = []
++	for w in waves:
++		if clock - w.born <= wt + 4.0:
++			live.append(w)
++	waves = live
++	knot_level = clampf(base + knot, 0.0, 1.0)
++
++
++var knot_level: float = 0.0
++
++
++func _pulse(S: SimState, e) -> void:
++	var k: int = int(float(VfxHub._g(e, "k", 1.0)))
++	var n_at: float = float(VfxHub._g(e, "n", float(S.tick)))
++	for j in range(2):
++		if j == 1 and k >= 15:
++			break
++		if _calm and (k + j) % 2 == 0:
++			continue       # fx04: every second pulse's swell only
++		var tick: float = n_at + float(j) * 20.0
++		if _scheduled.has(int(tick)):
++			continue
++		_scheduled[int(tick)] = true
++		sched.append([tick, k + j])
++
++
++func _slot_side(S: SimState, slot: int) -> int:
++	if slot < 0 or slot >= S.fighters.size():
++		return -1
++	var f = S.fighters[slot]
++	if f == _A:
++		return 0
++	if f == _D:
++		return 1
++	return -1
++
++
++func _surge(S: SimState, e) -> void:
++	var side: int = _slot_side(S, int(e.actor))
++	if side < 0:
++		return
++	if _calm and clock - _last_mark < p("calm_gap"):
++		return
++	_last_mark = clock
++	var w := Wave.new()
++	w.side = side
++	w.born = clock
++	w.big = String(e.text) == "sharp"
++	w.amp = p("surge_amp") * (p("sharp_k") if w.big else 1.0) * (p("amp_calm") if _calm else 1.0)
++	waves.append(w)
++	knot = minf(knot + p("knot_surge") * (p("sharp_k") if w.big else 1.0), 1.0)
++	made["surge"] = int(made.get("surge", 0)) + 1
++
++
++func _stray(S: SimState, e) -> void:
++	var side: int = _slot_side(S, int(e.actor))
++	if side < 0:
++		return
++	if _calm and clock - _last_mark < p("calm_gap"):
++		return
++	_last_mark = clock
++	var w := Wave.new()
++	w.side = side
++	w.born = clock
++	w.amp = p("stray_amp")
++	waves.append(w)
++	made["stray"] = int(made.get("stray", 0)) + 1
++
++
++## The width factor of a side's beam: the winner's thicker (1 + push_k at the most), the loser's thinner.
++func width_k(side: int) -> float:
++	if not active:
++		return 1.0
++	var s: float = push if side == 0 else -push
++	return clampf(1.0 + p("push_k") * s, 0.5, 1.5)
++
++
++## The flare of a fighter's aura (0 to flare_k): the loser's grows with the ground he has lost, the winner's is nil. The standing aura's size and alpha read it (transform_view.gd).
++func flare(slot: int) -> float:
++	if not active:
++		return 0.0
++	for side in range(2):
++		if _slots[side] == slot:
++			return float(_flare[side]) * p("flare_k")
++	return 0.0
++
++
++## A wave's centre along its beam, world units from the hand, for a beam of length `len`.
++func wave_pos(w: Wave, len: float) -> float:
++	return len * clampf((clock - w.born) / maxf(p("wave_ticks"), 1.0), 0.0, 1.0)
++
++
++## Sets one layer's wave uniforms on a clash beam's material: up to two swells in `wv0` and `wv1` (x its centre from the hand, y its half length, z the width it adds, w the alpha it adds) and the knot
++## at the meeting point in `wv2`. `scale` is the layer's share (the sheath's swell is the largest, the core's the least). A beam with no struggle gets its waves zeroed.
++func apply(mat: ShaderMaterial, side: int, len: float, scale: float) -> void:
++	var mine: Array = []
++	if active:
++		for w in waves:
++			if w.side == side:
++				mine.append(w)
++	mine.sort_custom(func(a, b): return a.born > b.born)
++	var half: float = minf(len * p("wave_half"), p("wave_half_max"))
++	var lum: float = p("lum")
++	for i in range(2):
++		var v := Vector4(0.0, 1.0, 0.0, 0.0)
++		if i < mine.size():
++			var w: Wave = mine[i]
++			var amp: float = w.amp * scale
++			v = Vector4(wave_pos(w, len), half * (1.3 if w.big else 1.0), amp, lum * maxf(amp, 0.0) / maxf(p("surge_amp"), 0.01))
++		mat.set_shader_parameter("wv%d" % i, v)
++	var kv := Vector4(0.0, 1.0, 0.0, 0.0)
++	if active and knot_level > 0.002:
++		kv = Vector4(len, minf(len * 0.2, p("wave_half_max") * 1.2), p("knot_amp") * knot_level * scale, 0.0)
++	mat.set_shader_parameter("wv2", kv)
++
++
++const LAYER_SCALE: Array = [1.15, 1.0, 0.75]
++
++
++## The one call BeamView makes per layer of every beam: a clash beam (side 0 or 1) with a struggle on gets its waves, any other beam has them cleared if its material was a clash beam's before.
++static func set_on(mat: ShaderMaterial, sk, side: int, len: float, layer: int) -> void:
++	if sk != null and side >= 0 and sk.active:
++		sk.apply(mat, side, len, float(LAYER_SCALE[layer]))
++		mat.set_meta("sw", true)
++	elif mat.has_meta("sw"):
++		sk_clear(mat)
++		mat.remove_meta("sw")
++
++
++static func sk_clear(mat: ShaderMaterial) -> void:
++	for n in ["wv0", "wv1", "wv2"]:
++		mat.set_shader_parameter(n, Vector4(0.0, 1.0, 0.0, 0.0))
+--- /dev/null
++++ b/render/vfx/beam_struggle.gd.uid
+@@ -0,0 +1 @@
++uid://suaprwltdu2
+--- /dev/null
++++ b/docs/vfx/beam-struggle.md
+@@ -0,0 +1,33 @@
++# The beam struggle, carried by the beams (2026-10-19)
++
++Orb's minimal-UI rule (docs/ep/taste.md: nothing on, over or between the fighters), Game Design's docs/design/minimal-hud.md row "The beam struggle" and Research's readable-speed paper: no tug bar, no pulse marker. **The meeting point is the gauge, and the beams show everything else.** This replaces UI's bar (UI is removing it) and VFX's own thin rings.
++
++## What the player sees (all in the two beams; render/vfx/beam_struggle.gd, the shader's waves in shaders/beam_core.gdshaderinc)
++
++| Moment | What the beams do |
++|---|---|
++| **Who is pushing** | The beam of the one gaining ground is **thicker**, his rival's **thinner** (up to 1.5 and down to 0.5 times the width, eased over 0.35 s, so the sim's 10 to 15% jump of the point reads as a quick shift, never a pop). |
++| **The beat** | A **swell** leaves each fighter's hand 14 ticks before every pulse and runs down his beam to reach the meeting point **on the pulse**: the player follows the beat as the two swells close on the point. No marker; the music and the pad carry the rest. |
++| **A surge** (a press on the pulse) | A bigger swell runs down the **presser's own beam**, hand to point; the point swells a little more. A sharp surge's swell is 1.4 times bigger and wider. |
++| **A stray** (a press off the pulse) | A **pinch** runs down his own beam (the beam narrows for an instant): shape only, nothing flickers. |
++| **The meeting point** | Swells **slowly** over the first 1.8 s of the struggle, and each surge adds a little, which decays over 2.5 s. A swell, never a flash. |
++| **The loser** | His standing aura **flares** in proportion to the ground he has lost (up to +30% size and +60% alpha as he digs in), and both fighters hold their aura up for the whole clash (aura.gd `is_active`). |
++
++Everything is a **change of width** (a smooth bulge on the beam's radius), with at most 8% of alpha on a swell; the beams' brightness stays steady (Legal fx03, and fx04 for the struggle's marks). The edges stay as crisp as the crisp beam's.
++
++## Reduce flashing (the default) and Reduced motion
++
++Same rates as the rings it replaces (RL-141 to RL-143): the beat's swell is shown for **every second pulse only** (a 40-tick beat, 1.5 Hz), swell amplitudes at 0.8, and a surge or stray swell is not made within 40 ticks of the last one (the point's own movement still shows each press).
++
++## Where it lives
++
++- render/vfx/beam_struggle.gd: the model (reads S.game.clash and the cues `beam_pulse`, `beam_surge`, `beam_stray`, `beam_end`; keeps its own clock; no random number; writes nothing of the sim). The numbers are the `struggle` block of data/vfx/energy.json.
++- The hub owns it (`struggle`, `struggle_enabled`, on) and hands it the tick's events after reach.gd. While it is on, reach.gd's old rings (beat, surge, stray, opening) are not made (`struggle_marks`); the end marks are as they were.
++- BeamView draws it (Rendering's file, a grant): the two clash beams' widths times `width_k`, and `VfxBeamStruggle.set_on` after each layer's look sets the waves on its material. A beam that is not a clash beam has them cleared.
++- The standing aura's flare is one more grant, in transform_view.gd (VFX's, but the one file the charter keeps out of reach): see `grant-rendering-ui.patch`.
++
++## Honest limits
++
++- **Encounter's beam struggle is parked, so `Clash.mid` is -1 in the game today** and nothing here shows until it lands: with mid -1 the beams are as they were. The pictures were made with a scratch scenario that fakes the cues and the meeting point (scripted pulses, the first fighter surging on the beat, the second now and then, a stray), in the shipped clash scenario at tick 70 to 190.
++- The rules it follows are Game Design's first values (pulse every 20 ticks, a surge 10 to 15%); if Encounter changes the cues, only `_pulse`, `_surge` and `_stray` change.
++- Not a Legal clearance. Flash readings not re-run (reported, not chased).
