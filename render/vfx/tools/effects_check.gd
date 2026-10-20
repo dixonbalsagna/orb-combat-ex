@@ -206,6 +206,7 @@ func _run() -> void:
 	_brawl()
 	_small_blasts()
 	_beam_look()
+	_beam_scar()
 	_multi()
 	_ghosts()
 	_vision()
@@ -5130,6 +5131,83 @@ func _tick(S: SimState, h: VfxHub, events: Array) -> void:
 
 
 ## The beams' look (docs/vfx/beam-look.md; Legal fx03): a real width by default, a thin one as a fighter's own, a ripple that moves hue at steady luminance, 2 Hz or slower, no white core, the flavour by roster id.
+func _beam_scar() -> void:
+	print("the scar a beam leaves in the air")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var sc := VfxBeamScar.new()
+	var b := SimState.Beam.new()
+	b.A = S.fighters[0]
+	b.ox = 4000.0
+	b.oy = 300.0
+	b.ux = 1.0
+	b.uy = 0.0
+	b.len = 1000.0
+	b.life = 0.95
+	b.w = 30.0
+	b.col = String(S.fighters[0].aura)
+	b.p = 0.0
+	S.beams.append(b)
+	var first_seen: float = -1.0
+	var worst_alpha_step: float = 0.0
+	# the beam's life: the head runs out in 20 ticks, the tail follows from 0.4 s
+	for k in range(60):
+		S.T = float(k) * SimConst.DT
+		b.t = S.T
+		b.p = minf(1.0, float(k) / 20.0)
+		sc.step(S)
+		if k == 0:
+			_check(sc.list.size() == 1 and sc.made == 1, "a beam makes one scar, once (%d)" % sc.list.size())
+	var s0: VfxBeamScar.Scar = sc.list[0]
+	_check(is_equal_approx(s0.reach, 1000.0), "the scar reaches as far as the head did (%.0f)" % s0.reach)
+	_check(VfxBeamScar.age_at(s0, 0.0, 0.2) < 0.0 and VfxBeamScar.age_at(s0, 0.0, 0.5) > 0.0, "a point is burned when the tail passes it, not before (the firer's end at 0.4 s)")
+	_check(VfxBeamScar.age_at(s0, 1000.0, 0.9) < 0.0 and VfxBeamScar.age_at(s0, 1000.0, 0.95 + 0.001) > 0.0, "the far end is burned as the beam's life ends")
+	_check(s0.ox == 4000.0 and s0.oy == 300.0, "the scar stays where the beam was fired (anchored in the world)")
+	# the beam goes: the scar stays and heals
+	S.beams.clear()
+	var tt: float = 1.0
+	var heal: float = VfxBeamScar.p("heal_s")
+	S.T = tt
+	sc.step(S)
+	_check(sc.list.size() == 1 and sc.list[0].ended, "when the beam has gone its scar stays (and is marked ended)")
+	S.T = tt + heal * 0.5
+	sc.step(S)
+	_check(sc.list.size() == 1, "half way through the healing it is still there")
+	S.T = 0.4 + 0.55 + heal + 0.2 + 0.4
+	sc.step(S)
+	_check(sc.list.size() == 0, "healed all along, it is dropped (%d left)" % sc.list.size())
+	# no fade: the thinning is a width, widths fall one way, and the rim's heat is gone by the cooling time
+	var prev: float = 2.0
+	var mono: bool = true
+	for i in range(0, 41):
+		var w: float = VfxBeamScar.width_left(heal * float(i) / 40.0)
+		mono = mono and w <= prev + 1e-6
+		prev = w
+	_check(mono and VfxBeamScar.width_left(0.0) == 1.0 and VfxBeamScar.width_left(heal) > 0.3, "the scar only ever thins (never grows back), from the full width to %.2f of it" % VfxBeamScar.width_left(heal))
+	# a floor of a few pixels, whatever the zoom
+	var sw := VfxBeamScar.Scar.new()
+	sw.w = 30.0
+	_check(VfxBeamScar.half_width(sw, 0.2) * 0.2 >= VfxBeamScar.p("hw_px") - 0.01, "far away the scar is never thinner than %.0f pixels" % VfxBeamScar.p("hw_px"))
+	# a restart wipes them; the cap holds
+	var sc2 := VfxBeamScar.new()
+	var bs: Array = []
+	S.beams.clear()
+	for i in range(30):
+		var bb := SimState.Beam.new()
+		bb.A = S.fighters[0]
+		bb.len = 500.0
+		bb.life = 0.95
+		bb.ux = 1.0
+		bs.append(bb)
+		S.beams.append(bb)
+	S.T = 5.0
+	sc2.step(S)
+	_check(sc2.list.size() <= int(VfxBeamScar.p("cap")), "at most %d scars at once (%d)" % [int(VfxBeamScar.p("cap")), sc2.list.size()])
+	S.T = 0.0
+	sc2.step(S)
+	_check(sc2.made == 0 or sc2.list.size() <= int(VfxBeamScar.p("cap")), "a restart (the clock going back) starts the scars afresh")
+
+
 func _beam_look() -> void:
 	print("the beams' look")
 	var S := SimCore.createSim()

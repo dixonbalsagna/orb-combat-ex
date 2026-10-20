@@ -221,6 +221,68 @@
         }
       },
       "additionalProperties": false
+    },
+    "scar": {
+      "type": "object",
+      "description": "The scar a beam leaves in the air as its tail draws back (render/vfx/beam_scar.gd, shaders/beam_scar.gdshader, docs/vfx/beam-scar.md): a thin dark cut with a bright lane-coloured rim that cools, healing slowly by thinning and by pieces dropping out with hard edges (never a fade). All keys optional: beam_scar.gd falls back to the same defaults.",
+      "properties": {
+        "heal_s": {
+          "type": "number",
+          "maximum": 20,
+          "exclusiveMinimum": 0.5
+        },
+        "hw_k": {
+          "type": "number",
+          "maximum": 1,
+          "exclusiveMinimum": 0.02
+        },
+        "hw_px": {
+          "type": "number",
+          "maximum": 12,
+          "exclusiveMinimum": 0.5
+        },
+        "rim_px": {
+          "type": "number",
+          "maximum": 8,
+          "exclusiveMinimum": 0.5
+        },
+        "alpha_core": {
+          "type": "number",
+          "maximum": 1,
+          "exclusiveMinimum": 0.05
+        },
+        "alpha_rim": {
+          "type": "number",
+          "maximum": 1,
+          "exclusiveMinimum": 0.05
+        },
+        "dark": {
+          "type": "number",
+          "maximum": 1,
+          "minimum": 0
+        },
+        "cell": {
+          "type": "number",
+          "maximum": 600,
+          "exclusiveMinimum": 20
+        },
+        "cool_s": {
+          "type": "number",
+          "maximum": 6,
+          "exclusiveMinimum": 0.1
+        },
+        "grow_s": {
+          "type": "number",
+          "maximum": 2,
+          "exclusiveMinimum": 0.02
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false,

@@ -164,5 +164,18 @@
    "strokes_only": false,
    "what": "the beam's hue ripple, 2 Hz or slower at any point, under a tenth of luminance (fx03)"
   }
+ },
+ "scar": {
+  "heal_s": 3.6,
+  "hw_k": 0.3,
+  "hw_px": 3.0,
+  "rim_px": 2,
+  "alpha_core": 0.62,
+  "alpha_rim": 0.92,
+  "dark": 0.1,
+  "cell": 110,
+  "cool_s": 1.2,
+  "grow_s": 0.14,
+  "cap": 10
  }
 }

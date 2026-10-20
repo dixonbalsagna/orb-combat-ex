@@ -24,6 +24,7 @@ const SHADERS: Array = [
 	["res://render/vfx/shaders/transform.gdshader", "multimesh"],   # VFX: shots and the transformation
 	["res://render/vfx/shaders/hole.gdshader", "multimesh"],     # VFX: holes in facades (VFX's warm-up.md)
 	["res://render/vfx/shaders/dust.gdshader", "multimesh"],     # VFX: the tremor's dust curtains (dust_view.gd)
+	["res://render/vfx/shaders/beam_scar.gdshader", "multimesh"],  # VFX: the scar a beam leaves in the air (scar_view.gd)
 	["res://render/vfx/shaders/cloud.gdshader", "multimesh"],    # VFX: the blast cloud's body (docs/vfx/blast-cloud.md)
 	["res://render/vfx/shaders/cloud_core.gdshader", "multimesh"], # VFX: the blast cloud's fireball (additive)
 	["res://render/shaders/particle.gdshader", "multimesh"],     # Rendering: particles

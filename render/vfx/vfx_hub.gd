@@ -82,6 +82,8 @@ var reduced_flashing: bool = false              # UI's reduced-flashing setting:
 var inreach := VfxReach.new()                   # energy arts in reach and the launcher's marks (reach.gd), behind the same flag
 var tremor := VfxTremor.new()                  # the catastrophe tier's tremor: dust curtains and rubble (tremor.gd, dust_view.gd), on its cue
 var blastcloud := VfxBlastCloud.new()          # the catastrophe tier's blast cloud: stem, cap, dust wall and the one fireball light (blast_cloud.gd, cloud_view.gd), on its cue
+var scars := VfxBeamScar.new()                    # the scar each beam leaves in the air as its tail draws back (beam_scar.gd, scar_view.gd; Orb 2026-10-19), behind the same flags as the beams
+var scar_enabled: bool = true
 var ash: float = 0.0                              # the world's darkening, 0 to 1 (read-only from the sim when it exists): scales a catastrophe light's peak
 var catastrophe_enabled: bool = true            # the catastrophe tier's effects (nothing draws until the cues exist)
 var zip := VfxZip.new()                       # the LT zip's looks (zip.gd), behind the same flag
@@ -146,6 +148,7 @@ func reset(S: SimState, p_seed: int) -> void:
 	inreach.reset()
 	tremor.reset()
 	blastcloud.reset()
+	scars.reset()
 	ghosts.reset()
 	_vision_sig = ""
 	flashes.reset()
@@ -248,6 +251,10 @@ func _consume(S: SimState, events: Array) -> void:
 		tremor.rubble(S, debris, reduced_motion or reduced_flashing)
 		blastcloud.step(S, flashes, ash)
 		blastcloud.on_events(S, events)
+	if scar_enabled:
+		scars.step(S)
+	else:
+		scars.reset()
 	debris.puff_area_cap = VfxLook.PUFF_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05)
 	debris.ember_area_cap = VfxLook.EMBER_AREA_SHARE * VfxFlashRegistry.AREA_FULL / maxf(px_per_unit * px_per_unit, 0.05) * (0.5 if (reduced_motion or reduced_flashing) else 1.0)
 	_sync_vision(S)
