@@ -225,3 +225,23 @@ The sweep's `_watch_first` now starts the display-frame chain afresh on a re-see
 
 Cuts, layout changes and the time outside the picture are unchanged. The effect is subtle on purpose: a few percent of framing. Gates: split sweep, seam sweep, pane check, determinism plain and --intro all pass. Clips: homework/camera/10-pacing/ (two AI-match segments around a peak and its fade against main, and ai 7's opening against d3f1ca0e).
 
+**The ring's turn: a motivated cut (parked: docs/camera/pending/director-8-arena-turn.patch, on babc83d8).** At a calm moment World turns the ring about the pair (window 3), and Rendering rebuilds every pane's ground on the `arena_turn` tick (22d).
+
+On that tick every camera hard-cuts (snapped, as a relocation is) to a low wide:
+- every shown pane at 0.6 of its size;
+- pitched up 6 degrees, limited as the transformation's low angle is so the camera stays above the ground at the pair's feet;
+- the far land against the sky. That is the only land the turn changes: past 12,000 units.
+
+The wide holds 1.2 s and cuts back to the fight's framing. The pitch returns on the same tick, so there is no second cut. No dissolve, fade or wipe. Under a still camera the ridges behind change on that tick (148,000 pixels at fight framing, Rendering), so the cut is what hides the pop. `SplitRig.turn_cut`, `turn_cuts`, `CamParams.TURN_*`.
+
+Tried and dropped:
+- **A plain dolly out** only shrank the fighters: the far land barely changes with the camera's distance.
+- **A high angle (+18 degrees)** looked into the slope behind the pair, with no sky and none of the new land.
+
+Measured:
+- The sweep's new rows (`arena turn, one view` and `arena turn, split`, a synthetic event) check that the cut is on the tick, each shown pane is at least 20% wider, both fighters are on the screen, the wide holds still, the cut back comes at tick 72 ±1 and the framing returns within 5%.
+- A real turn is forced in the digest: `--arena=2400 --turn-at=4800` asks World on planet 7 and takes the widest bearing, as Rendering's stills did. In ai 4 the turn came at tick 4939 and in ai 39 at 4917. Each time the cut flag was on that frame and no fighter was outside the picture in the wide. ai 7 found no calm before tick 5400.
+- In the web capture the build with the cut and the one without differ first at tick 4939.
+
+Gates on main plus World's window 3, Rendering's 22d and VFX's arena-turn park: split sweep, seam sweep, pane check, determinism plain and --intro all pass. Clips: homework/camera/11-arena-turn/. One is the same turn with the still camera against the cut. The other is d3f1ca0e's ai 4 for the look against the cut (d3f1ca0e has no planet world, so it is a different moment).
+
