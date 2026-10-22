@@ -146,26 +146,40 @@
  	order.sort_custom(func(a, b): return S.buildings[a].x < S.buildings[b].x)
 --- a/render/core/sim_host.gd
 +++ b/render/core/sim_host.gd
-@@ -106,6 +106,9 @@
- 		# (Controls' SimInputHub.resume).
- 		_was_paused = false
- 		hub.resume()
-+	# World's turn decided (window 3): the next ring is read a few columns a frame, so the swap's tick has it. Memoised
-+	# outside S; the swap reads whatever is missing on its own tick, so play never waits on it.
-+	WorldEpoch.prewarm(S, RenderLook.TURN_WARM_COLS)
- 	acc += minf(0.1, maxf(0.0, frame_dt))
- 	var n: int = 0
- 	while acc >= SimConst.DT:
---- a/render/core/look.gd
-+++ b/render/core/look.gd
-@@ -313,6 +313,7 @@
- 	"forest": [1.0, 70.0], "desert": [1.0, 55.0], "mountains": [1.25, 300.0],
- }
- const FAR_SMOOTH_COLS: int = 24 * 4      # half width of the smoothing, in columns
-+const TURN_WARM_COLS: int = 16           # World's turn: the next ring's columns the host reads ahead each frame (sim_host.gd), about 1.5 ms
- const SNOW_FROM: float = 560.0 * MS      # far peaks whiten above this height ...
- const SNOW_FULL: float = 900.0 * MS      # ... fully by this
- const SNOW := "#dfe3ec"
+@@ -38,6 +38,7 @@
+ var feed: Array = []            # recent SimState.FeedLine, oldest first
+ var jitter := Vector2.ZERO      # screen shake offset in pixels for the current tick
+ var tick_usec: int = 0          # cost of the last SimCore.step
++var warm_k: int = 0             # World's turn: the picked ring's columns read ahead each tick, as Encounter's calm_turn cue asks (its k)
+ var fx_usec: int = 0            # cost of the last fx consume and camera step
+ var _prev := PackedFloat64Array()
+ var _cur := PackedFloat64Array()
+@@ -67,6 +68,7 @@
+ 	var su: Dictionary = hub.setup()   # both slots are v2; a Simple layout sets its assists
+ 	su.merge(setup, true)
+ 	_skip_intro = 0
++	warm_k = 0
+ 	setup_used = su.duplicate(true)
+ 	SimCore.newMatch(S, seed, ai, su)
+ 	sky.reset(S)
+@@ -311,6 +313,17 @@
+ 		else:
+ 			hub.resume()
+ 	var t1: int = Time.get_ticks_usec()
++	# World's turn (window 3): once Encounter picks a turn its calm_turn cue asks the host to read the ring k columns a
++	# tick, so it is warm by the swap, which waits the ring's columns over k ticks. Memoised outside S; the swap reads
++	# whatever is still missing on its own tick, so play never waits on it. The turn landing ends it.
++	for e in S.out.fx:
++		var ty: String = String(e.type)
++		if ty == "cue" and String(e.kind) == "calm_turn":
++			warm_k = int(e.k)
++		elif ty == "arena_turn":
++			warm_k = 0
++	if warm_k > 0:
++		WorldEpoch.prewarm(S, warm_k)
+ 	cam.camStep(S, S.dt, vw, vh)
+ 	var lines: Array = S.out.feed.duplicate()
+ 	for l in lines:
 --- a/render/core/main.gd
 +++ b/render/core/main.gd
 @@ -588,6 +588,9 @@
@@ -226,7 +240,7 @@
  	}
 --- a/docs/rendering/arena.md
 +++ b/docs/rendering/arena.md
-@@ -24,3 +24,36 @@
+@@ -24,3 +24,58 @@
    - `img/arena-1200-d3f1ca0e.png` and `img/arena-2400-d3f1ca0e.png`: against d3f1ca0e.
  
    All uncommitted.
@@ -242,7 +256,10 @@
 +  - **ImpactFx's heat**, which fades across the zone as World fades the marks and is gone beyond it.
 +- **The ground's meshes carry no biome colour any more.** The terrain shader reads each column's biome from the ground texture's biome row, as the far land already did. So a new world on the same length is a texture upload, never new meshes. Making the meshes again cost 160 to 330 ms; the whole rebuild now costs 17 to 26 ms.
 +- **The far rows' smoothing is a running sum:** 2 to 3 ms, where it was 30 to 55.
-+- **The host reads the chosen ring ahead.** Once a turn is decided, `SimHost.advance` calls `WorldEpoch.prewarm` with `RenderLook.TURN_WARM_COLS` (16) columns a frame, about 1.5 ms. That warms a ring of 2,400 in 2.5 s and one of 4,800 in 5 s. World's swap reads whatever is still missing on its own tick, so play never waits on it. A cold swap costs about 300 ms on a ring of 2,400; a warm one is under 10 ms.
++- **The host reads the picked ring ahead, at the rate Encounter asks.** When Encounter's director picks a turn, its `calm_turn` cue carries in `k` how many columns a tick (16 to 64, enough to have the ring by the landing). Each sim tick `SimHost.tick` calls `WorldEpoch.prewarm` with that `k`, until the turn lands. The swap waits the ring's columns over `k`, in ticks, so the ring is warm by then.
++  - It counts in ticks, not frames, so a slow frame that runs two ticks keeps up.
++  - World's swap reads whatever is still missing on its own tick (a pick without the cue, a sooner swap), so play never waits on it.
++  - A cold swap costs about 300 ms on a ring of 2,400; a warm one is under 10 ms.
 +- **A fix on the way: the ground follows the world, not only its length.** `_built_cols` keys the far rows on `S.planetCols`. Before this, a planet match after another on the same length drew the first world's ground colours and far relief: in the probe, 2,298 of 2,400 columns were wrong.
 +
 +### The turn, checked
@@ -253,6 +270,25 @@
 +  - with World's window 3 alone, after a turn 837 of 2,400 columns showed the old biome, the far rows and base heights were the old world's, and 71 buildings were drawn where the sim had 64;
 +  - the sky's towns had raised a script error (a building index past the end), which is gone;
 +  - the heat is kept at the pivot, is 0.26 at 9,000 units and is gone half the ring away.
++- **The warm-up, against Encounter's calm turn** (main f04372ec, window 3 and Encounter's park; two AI matches of 5.5 minutes on planet 7's ring of 4,800 with `calmTurn` on):
++  - 13 picks. The host warmed at each one's `k` (64 for most, 20 or 22 for picks with a longer lead), and the ring was read one tick before the hold asked: 74 ticks of 75, 239 of 240, 218 of 219.
++  - Two picks were cancelled by a new send before they were warm, and the next pick took over.
++  - No turn landed: Encounter's own read finds turns rare in AI play.
++  - Native frames ran a median 5.5 ms while warming at 64, against 2.4 ms otherwise.
++- **The warm-up's frame cost on the web build** (the transformation scene, AI against AI with three form steps, 600 frames; Performance's `frame-bench` through Tools' guarded launcher with its perf hook; a scratch switch has the host read planet 7's ring of 4,800 at `k` columns every tick throughout; two rounds in turned order, every run valid by the bench's load rule except one of the baselines):
++
++  | | k 0 | k 32 | k 64 |
++  | :--- | :--- | :--- | :--- |
++  | RTX 5070 Ti, p50 / p95 ms | 4.9 / 9.4 | 8.1-8.2 / 10.8-11.2 | 12.0-12.3 / 16.3-16.6 |
++  | RTX, frames over 16.7 ms | 2-7 | 2 | 24-28 |
++  | Radeon iGPU (`--igpu`), p50 / p95 ms | 8.7-8.8 / 19.1-32.5 | 9.0-9.3 / 19.2-20.3 | 12.4-12.9 / 19.6-30.9 |
++  | iGPU, frames over 16.7 ms | 62-88 | 65-73 | 72-88 |
++
++  - The read is CPU work in the page: about 0.11 to 0.12 ms a column here (k 32 about 3.7 ms a tick, k 64 about 7.6).
++  - On the RTX the frame is CPU-bound, so it all shows.
++  - On the iGPU the frame is GPU-bound, so k 32's read overlaps the GPU's work: plus 0.3 to 0.5 ms at the median, its long frames within the baseline's spread.
++  - **So k 32 holds the iGPU's frame time, and warms a ring of 4,800 in 150 ticks, inside a full form pause (180).**
++  - The CPU here is fast (a 9800X3D). An older laptop's CPU would pay more than 3.7 ms a tick.
 +- **Time** (machine load 12 to 19%):
 +  - the render's rebuild is 12 to 20 ms for pane 0, 4 to 6 ms for the two followers and under 1 ms for the sky;
 +  - with the ring warmed, the whole turn frame was 29 ms on a ring of 2,400;
@@ -269,7 +305,7 @@
  - **A new crater under reduced flashing (2026-10-12).** With UI's Reduce flashing or reduced motion on, a new crater keeps the ground's own colour at first; its earth, ejecta and char fade in over the whole crater at once, evenly over 3 s of match time (`CRATER_CALM_S`; until 2026-10-17 they spread from its centre over 1.5 s). The spread took the collapse clip from a fail to a pass in reduced mode (`flash-sources.md`, "The collapse in reduced mode"); the fade took ai-43 from a fail to a pass ("The calm crater fades"). Normal mode is not changed.
  - **No groove glow under reduced flashing (2026-10-17).** With UI's Reduce flashing or reduced motion on, a beam's groove has no glow, only its char at 35% (`HEAT_CALM` 0, the EP's ruling: it is a safety mode). Full effects are not changed (`flash-sources.md`, "No glow under reduced flashing").
  - **The arena's length (2026-10-22, `arena.md`).** On World's shifting arena the ground, its meshes and materials are made again whenever a match's ring has another length, the copies keep their reach in world units (more copies on a shorter ring), and the ground chunks take a partial last chunk.
-+- **The ring's turn (2026-10-22, `arena.md`).** At World's `arena_turn` every pane makes its ground, far rows, buildings and crowd again from the new world in that frame, a hard cut for Camera's cut; the sky's towns follow and the heat fades across the carried zone. The terrain shader reads each column's biome from the ground texture, so a new world is an upload (17 to 26 ms), and the ground follows the world, not only its length. The host reads a decided ring ahead (`TURN_WARM_COLS`).
++- **The ring's turn (2026-10-22, `arena.md`).** At World's `arena_turn` every pane makes its ground, far rows, buildings and crowd again from the new world in that frame, a hard cut for Camera's cut; the sky's towns follow and the heat fades across the carried zone. The terrain shader reads each column's biome from the ground texture, so a new world is an upload (17 to 26 ms), and the ground follows the world, not only its length. The host reads a picked ring ahead each sim tick, at the rate Encounter's `calm_turn` cue asks.
  - **The words a player reads (2026-10-06).** Nothing the greybox overlay draws says the roster's placeholder names or "AI". Names go through UI's display names (`UiData.display_name`, `ui/data/fighter_names.json`), and text the sim wrote (the banner, the feed, the floating words) through `UiData.display_text`. The computer opponent is "computer" in a sentence and "(CPU)" beside a name: the demo's line is "Computer vs computer demo. Press any key to take control of P1." (touch: "Tap to take control of P1."), and the key help says "T/Y toggle computer" and "F10 split vs computer". The sim, the data, the ids and the option keys keep their names. The touch line is longer than it was, so it now sits in the gap between the touch buttons, on two lines when the gap is short. The demo, the old HUD (F2) and the touch line, on the web build: ![demo](img/names-demo-web.png) ![old HUD](img/names-old-hud-web.png) ![touch](img/names-touch-web.png)
  - **UI's HUD.** `main.gd` adds `ui/hud/ui_hud.tscn` under the `HUD` layer and calls `setup(ids, names)` at match start (`UiSimBridge.fighters`). `anchor_fn(slot)` returns the fighter's torso on screen, through the 3D camera, and its height in pixels (`FighterView.HEIGHT` times the zoom). `strip_fn()` returns `UiSimBridge.strip_data(S, cam_x, view width)`. Each tick, `SimHost.drained(events, lines)` fires just before `S.out.fx` is cleared, and the HUD takes the events (`consume_all`) and feed lines. Each frame it gets `UiSimBridge.patch`, and `advance(delta)` (0 while paused). The greybox HUD stays behind F2.
  - **The armed stance (2026-10-06).** Each frame the host hands UI's bridge the input hub as well as the state (`UiSimBridge.patch(ui_hud, S, host.hub)`). The bridge only reads it (Controls' `armed_stance`, `armed_share`, `energy_latched`), so the plate's badge says NEXT BLOW while a tapped stance is armed. On Full touch in the web build a tap on the guard button armed it (share 0.8 when the still was taken) and it was gone after the lapse: ![armed, Full touch](img/armed-touch-host.png)
