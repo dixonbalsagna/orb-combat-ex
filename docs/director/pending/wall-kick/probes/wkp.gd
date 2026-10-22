@@ -30,7 +30,13 @@ func _init() -> void:
 					continue
 				r.found = {"building": bi, "force": force}
 				r["noTap"] = a
-				r["tap"] = _send(seed0, bi, force, true)
+				r["noTapPress"] = _send(seed0, bi, force, false, 0.0, 0.0, 12)
+				r["tapNeutral"] = _send(seed0, bi, force, true)
+				r["tapNeutralPress"] = _send(seed0, bi, force, true, 0.0, 0.0, 12)
+				r["tapTowardPress"] = _send(seed0, bi, force, true, -1.0, 0.0, 4)
+				r["tapUp"] = _send(seed0, bi, force, true, 0.0, 1.0)
+				r["tapUpPress"] = _send(seed0, bi, force, true, 0.0, 1.0, 12)
+				r["tapLatePress"] = _send(seed0, bi, force, true, 0.0, 0.0, 26)
 				break
 			if r.found != null:
 				break
@@ -38,6 +44,7 @@ func _init() -> void:
 		r["matches"] = n
 		r["walls"] = [0, 0]
 		r["kicks"] = {"rush": [0, 0], "push": [0, 0]}
+		r["rushBlows"] = [0, 0]
 		r["minutes"] = 0.0
 		for m in range(n):
 			var S := SimCore.createSim()
@@ -60,6 +67,8 @@ func _init() -> void:
 						r.walls[int(e.actor)] += 1
 					elif ty == "cue" and String(e.kind) == "wall_kick":
 						r.kicks[String(e.text)][int(e.actor)] += 1
+					elif ty == "cue" and String(e.kind) == "counter_rush" and String(e.text) == "wall_kick":
+						r.rushBlows[int(e.actor)] += 1
 				S.out.fx.clear()
 				S.out.feed.clear()
 				if S.game.ko != null:
@@ -70,8 +79,11 @@ func _init() -> void:
 	quit()
 
 
-## One send of slot 0 into building bi's near face at force, from a fixed start; tap: a dodge tap 3 ticks out.
-func _send(seed: int, bi: int, force: float, tap: bool) -> Dictionary:
+## One send of slot 0 into building bi's near face at force, from a fixed start; tap: a dodge tap 3 ticks out; (mx, my)
+## his stick from the tap on (the rival is behind him, -x); pressAt: a light pressed that many ticks after the contact
+## (-1 none). Reads (5c): the ticks from the contact to his control again (free, no rush), his speed then, the first
+## move locked then, the rush blow's cue, and the tick his first blow lands on the rival.
+func _send(seed: int, bi: int, force: float, tap: bool, mx: float = 0.0, my: float = 0.0, pressAt: int = -1) -> Dictionary:
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, seed, {"p1": false, "p2": true}, {"v2": [true, true]})
 	for k in range(30):
@@ -103,9 +115,12 @@ func _send(seed: int, bi: int, force: float, tap: bool) -> Dictionary:
 		return {}
 	DirLaunch.doLaunch(S, it, me, plan, force)
 	var hp0: float = me.hp
-	var out := {"tap": tap, "outcome": "", "into": 0.0, "kick": "", "journey": "", "dmg": 0.0, "stunAfter": 0, "gap30": 0}
+	var out := {"tap": tap, "stick": [mx, my], "pressAt": pressAt, "outcome": "", "into": 0.0, "kick": "", "journey": "", "dmg": 0.0, "stunAfter": 0, "gap30": 0,
+		"ctlBack": -1, "speedBack": 0, "lockedBack": false, "rushBlow": false, "blowAt": -1}
 	var tapped := false
 	var hitAt := -1
+	var live := -1   # live ticks since the contact (presses and control back are read in live ticks: a press on a frozen tick is lost)
+	var pressed := false
 	for k in range(200):
 		var i := SimIntent.new()
 		if tap and not tapped and me.state == "launched" and me.aimB == b.idx:
@@ -113,27 +128,50 @@ func _send(seed: int, bi: int, force: float, tap: bool) -> Dictionary:
 			if t2c <= 3.0:
 				i.dodge = true
 				tapped = true
+		if tapped or hitAt >= 0:
+			i.mx = mx
+			i.my = my
+		if pressAt >= 0 and hitAt >= 0 and not pressed and live >= pressAt:
+			pressed = true
+			i.light = true
 		var vx: float = me.vx / me.launchT
+		var t0: float = S.T
 		SimCore.step(S, [i, null])
+		if hitAt >= 0 and S.T != t0:
+			live += 1
 		for e in S.out.fx:
 			var ty: String = String(e.type)
 			if ty == "building_hit" and int(e.actor) == 0 and out.outcome == "":
 				out.outcome = String(e.outcome)
 				out.into = absf(vx)
 				hitAt = k
+				live = 0
 			elif ty == "cue" and String(e.kind) == "wall_kick":
 				out.kick = String(e.text) + " n=" + str(int(e.n)) + " sp=" + str(int(e.amount))
 			elif ty == "journey_end" and int(e.actor) == 0 and out.journey == "":
 				out.journey = String(e.kind)
 			elif ty == "damage" and int(e.victim) == 0:
 				out.dmg += float(e.amount)
+			elif ty == "damage" and int(e.victim) == 1 and int(e.attacker) == 0 and out.blowAt < 0 and hitAt >= 0:
+				out.blowAt = k - hitAt
+				out["blowAtLive"] = live
+			elif ty == "cue" and String(e.kind) == "counter_rush" and int(e.actor) == 0:
+				out.rushBlow = true
 		S.out.fx.clear()
 		S.out.feed.clear()
 		if hitAt >= 0 and k == hitAt + 1:
 			out.stunAfter = me.stunTicks
+		if hitAt >= 0 and out.ctlBack < 0 and k > hitAt and me.state == "free" and me.rush == null and me.stunTicks <= 0:
+			out.ctlBack = k - hitAt
+			out["ctlBackLive"] = live
+			out.speedBack = int(SimDetMath.hypot(me.vx, me.vy))
+			out.lockedBack = DirBrawl.moveLocked(S, me)
+			out["brawlOn"] = DirBrawl.on()
+			out["lockTicks"] = int(DirBrawl.cfg().get("firstMove", {}).get("lockTicks", 0))
 		if hitAt >= 0 and k == hitAt + 30:
 			out.gap30 = int(absf(SimWrap.sdx(me.x, it.x)))
 			out["state30"] = me.state
+		if hitAt >= 0 and k == hitAt + 120:
 			break
 	out.dmg = snappedf(out.dmg, 0.1)
 	return out
