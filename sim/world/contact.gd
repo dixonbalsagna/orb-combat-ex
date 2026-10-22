@@ -912,6 +912,7 @@ static func _finish(S: SimState, f, by, b: Body) -> void:
 	f.launchBy = null
 	f.launchT = 1.0
 	f.launchSpecial = false
+	f.launchPower = 1.0   # the flight is over: no launcher's power carried
 	f.slideFeet = false
 	f.hopped = false
 	WorldBrunt.endFlight(S, f)
@@ -936,6 +937,7 @@ static func brakeEnd(S: SimState, f, kind: String = "brake") -> void:
 	f.launchBy = null
 	f.launchT = 1.0
 	f.launchSpecial = false
+	f.launchPower = 1.0   # the flight is over: no launcher's power carried
 	f.slideFeet = false
 	f.hopped = false
 	WorldBrunt.endFlight(S, f)

@@ -21,6 +21,6 @@
   "kiPerSec": 20.0,
   "noKiMul": 0.5,
   "_ki": "ki held while braking, a second; with no ki the brake still works, at noKiMul of its rate (Orb: no strict caps)",
-  "airSense": 0.25,
-  "_airSense": "a send of a kind already marked on him (launch-anywhere.md section 5) can be braked this share sooner for each mark"
+  "airSense": 0.1,
+  "_airSense": "a send of a kind already marked on him (launch-anywhere.md section 5) can be braked this share sooner for each mark (Game Design, 2026-10-18: 10%, it was 25%). The marks are the sender's to set before the send"
 }

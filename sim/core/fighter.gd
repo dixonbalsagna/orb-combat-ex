@@ -126,6 +126,7 @@ static func stepLaunched(S: SimState, f, dt: float) -> void:
 			f.state = "free"
 			spin(S, f, dt, SPIN_STOP)
 			f.launchT = 1.0
+			f.launchPower = 1.0   # the flight is over: no launcher's power carried
 			WorldBrunt.endFlight(S, f)
 			return
 	var hitNow: bool = WorldBrunt.checkHit(S, f, ox, oy)   # B2: only the building the launch is aimed at can be hit

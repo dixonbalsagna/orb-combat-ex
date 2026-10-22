@@ -504,6 +504,7 @@ class BrakeState:
 	var no: bool = false       # a set piece's send: no brake
 	var on: bool = false       # braking now
 	var marks: int = 0         # the send kind's marks on him (air sense): the sender's to set; 0 until launch-anywhere
+	var told: bool = false     # this send's "ready" was told (the first tick he could brake: Controls' brake_ready)
 
 
 class Fighter:

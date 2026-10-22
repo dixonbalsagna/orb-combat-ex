@@ -13,7 +13,7 @@ extends RefCounted
 const FILE: String = "res://data/fight/brake.json"
 const BIT: int = 8   # SimIntent.stanceMask: the manoeuvre stance's hold
 ## The brake state the gameplay hash reads, only while S.brakeOn (hash.gd).
-const HASHED: Array = ["n", "t", "v0", "at", "no", "on", "marks"]   # marks: the send kind's marks on him (air sense), the director's to set before his send; 0 until launch-anywhere
+const HASHED: Array = ["n", "t", "v0", "at", "no", "on", "marks", "told"]   # marks: the send kind's marks on him (air sense), the director's to set before his send; 0 until launch-anywhere
 
 static var _d = null
 static var _hash: String = ""
@@ -106,11 +106,19 @@ static func speed(f) -> float:
 	return SimDetMath.hypot(f.vx / f.launchT, f.vy)
 
 
-## The start window for a send of speed v (ticks after the send): straight-line from minTicks at lowPower or less to
-## maxTicks at fullPower or more. The send's power is its speed over a full launch's (at most 1) until the launcher's power
-## is the director's to hand over; air sense takes airSense off it for each mark of the send's kind on him.
-static func window(v: float, marks: int) -> int:
-	var p: float = SimMathx.jmin(1.0, v / fullSpeed)
+## The send's power (launch-anywhere.md section 4): the launcher's, Fighter.launchPower, when the launch carries one;
+## else (a knock-back, a throw, a blast's push, or any launch with no launcher's power) its own speed over a full launch's,
+## at most 1.
+static func power(f, v0: float) -> float:
+	if float(f.launchPower) != 1.0:
+		return float(f.launchPower)
+	return SimMathx.jmin(1.0, v0 / fullSpeed)
+
+
+## The start window for a send of power p (ticks after the send): straight-line from minTicks at lowPower or less to
+## maxTicks at fullPower or more; air sense takes airSense off it for each mark of the send's kind on him (the sender's
+## to set before the send).
+static func window(p: float, marks: int) -> int:
 	var k: float = SimMathx.jclamp((p - lowPower) / (fullPower - lowPower), 0.0, 1.0)
 	var w: float = float(minTicks) + float(maxTicks - minTicks) * k
 	w *= SimMathx.jmax(0.0, 1.0 - airSense * float(marks))
@@ -129,7 +137,9 @@ static func tick(S: SimState, f, dt: float) -> void:
 		b.n = f.launchN
 		b.t = 0
 		b.v0 = speed(f)
-		b.at = window(b.v0, b.marks)
+		b.at = window(power(f, b.v0), b.marks)
+		b.marks = 0   # air sense: the sender sets the send kind's marks before each send, and they are spent here
+		b.told = false
 		b.no = f.launchSpecial   # a signature's, a finisher's or a break's send is a set piece: no brake (until the director marks finishers and crippling blows alone)
 	if f.state != "launched":
 		if b.on:
@@ -138,6 +148,10 @@ static func tick(S: SimState, f, dt: float) -> void:
 	b.t += 1
 	var held: bool = (f.input.stanceMask & BIT) != 0
 	var air: bool = f.slide == 0.0 and f.chainEvt == 0.0
+	var can: bool = air and not b.no and b.t >= b.at and b.v0 > 0.0   # he could start it now
+	if can and not b.told:   # the rising edge, once a send: Controls' brake_ready (one sharp tick), Audio, the HUD
+		b.told = true
+		_event(S, f, "ready", "window")
 	if b.on:
 		if not held:
 			_end(S, f, "released")
@@ -155,7 +169,7 @@ static func tick(S: SimState, f, dt: float) -> void:
 		if nv < b.v0 / controlDiv:
 			_end(S, f, "speed")
 			_control(S, f)
-	elif held and air and not b.no and b.t >= b.at and b.v0 > 0.0:
+	elif held and can:
 		b.on = true
 		_event(S, f, "start", "held")
 
@@ -187,6 +201,7 @@ static func controlBack(S: SimState, f) -> void:
 static func _control(S: SimState, f) -> void:
 	f.vx = f.vx / f.launchT
 	f.launchT = 1.0
+	f.launchPower = 1.0   # the flight is over: no launcher's power carried
 	if S.contactOn:
 		WorldContact.brakeEnd(S, f)
 	else:

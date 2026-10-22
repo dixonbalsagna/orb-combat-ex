@@ -460,6 +460,8 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 		if "launchPower" in tgt:
 			tgt.launchPower = lpow * (kf if DirBrawl.freshHurts() else 1.0)   # for the building ladder and the flight's recovery (Simulation's and World's, when granted)
 	DirCamIntent.launch(S, att, tgt, r.best)   # the camera-intent feed: the send's plan (render-only)
+	if S.brakeOn and tgt.brk != null:   # the air brake's air sense: the marks of this kind already on him (SimBrake spends them)
+		tgt.brk.marks = DirBrawl.freshMarks(S, tgt, lkind)
 	DirLaunch.doLaunch(S, att, tgt, r.best, force, longOnly)
 	DirBrawl.powerCue(S, att, tgt, lkind, (lpow * kf) if lpow >= 0.0 else 1.0)
 	holdSend(S, longOnly, (lpow * kf) if lpow >= 0.0 else 1.0)   # hit-stop by weight: the send holds a launch's stop

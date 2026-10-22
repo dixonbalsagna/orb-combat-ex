@@ -235,6 +235,8 @@ func _brake(S: SimState, e, out: Array) -> void:
 	if a < 0 or a >= S.fighters.size():
 		return
 	var B: Dictionary = cfg.brake
+	if String(e.text) == "ready":
+		return   # the brake's ready (Simulation's brake2): Controls' haptic tick, no sound
 	if String(e.text) == "end":
 		var s = cues.Cue.new()
 		s.stop_group = "brake.%d" % a

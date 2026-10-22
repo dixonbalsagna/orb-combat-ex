@@ -4961,9 +4961,15 @@ func _brake() -> String:
 		return "a match without the brake has brake state"
 	SimCore.dispose(S0)
 	var fs: float = SimBrake.fullSpeed
-	var w: Array = [SimBrake.window(0.3 * fs, 0), SimBrake.window(0.55 * fs, 0), SimBrake.window(0.775 * fs, 0), SimBrake.window(fs, 0), SimBrake.window(2.0 * fs, 0), SimBrake.window(fs, 1)]
-	if w != [8, 8, 14, 20, 20, 15]:
-		return "the start window by power: %s (want [8, 8, 14, 20, 20, 15])" % str(w)
+	var w: Array = [SimBrake.window(0.3, 0), SimBrake.window(0.55, 0), SimBrake.window(0.775, 0), SimBrake.window(1.0, 0), SimBrake.window(2.0, 0), SimBrake.window(1.0, 1)]
+	if w != [8, 8, 14, 20, 20, 18]:
+		return "the start window by power: %s (want [8, 8, 14, 20, 20, 18])" % str(w)
+	var pf := SimState.Fighter.new()
+	if SimBrake.power(pf, 0.5 * fs) != 0.5 or SimBrake.power(pf, 3.0 * fs) != 1.0:
+		return "a send with no launcher's power: its speed over a full launch's, at most 1"
+	pf.launchPower = 0.62
+	if SimBrake.power(pf, 3.0 * fs) != 0.62:
+		return "a launch's own power is not the window's"
 	var runs: Dictionary = {}
 	for mode in ["full", "noKi", "release", "special"]:
 		var M := SimCore.createSim()
@@ -4978,7 +4984,7 @@ func _brake() -> String:
 		var v0: float = SimBrake.speed(D)
 		var held := SimIntent.new()
 		held.stanceMask = SimBrake.BIT
-		var r := {"v0": v0, "start": -1, "end": -1, "why": "", "free": -1, "je": "", "ki0": D.ki, "kiEnd": -1.0, "vEnd": -1.0, "slowing": true, "at": -1}
+		var r := {"v0": v0, "start": -1, "end": -1, "why": "", "free": -1, "je": "", "ki0": D.ki, "kiEnd": -1.0, "vEnd": -1.0, "slowing": true, "at": -1, "ready": -1, "readies": 0}
 		var last: float = v0
 		for t in range(1, 120):
 			var it = held
@@ -4988,7 +4994,10 @@ func _brake() -> String:
 			if t == 1:
 				r.at = D.brk.at
 			for e in M.out.fx:
-				if e.type == "air_brake" and e.text == "start":
+				if e.type == "air_brake" and e.text == "ready":
+					r.ready = t
+					r.readies += 1
+				elif e.type == "air_brake" and e.text == "start":
 					r.start = t
 				elif e.type == "air_brake" and e.text == "end" and r.end < 0:
 					r.end = t
@@ -5011,7 +5020,7 @@ func _brake() -> String:
 		runs[mode] = r
 		SimCore.dispose(M)
 	var f: Dictionary = runs.full
-	if f.start != f.at or f.at != SimBrake.window(f.v0, 0) or f.at < 8 or f.at > 20:
+	if f.start != f.at or f.at != SimBrake.window(SimMathx.jmin(1.0, f.v0 / SimBrake.fullSpeed), 0) or f.at < 8 or f.at > 20:
 		return "the brake started at tick %d after the send, its window %d (by the send's speed %.0f)" % [f.start, f.at, f.v0]
 	if f.why != "speed" or f.free != f.end or f.je != "brake" or not f.slowing or f.vEnd >= f.v0 / 3.0:
 		return "the full brake: it ended '%s' at tick %d (free at %d, journey_end '%s', slowing %s, speed %.0f of %.0f)" % [f.why, f.end, f.free, f.je, str(f.slowing), f.vEnd, f.v0]
@@ -5029,6 +5038,19 @@ func _brake() -> String:
 		return "letting go: it ended '%s' (free at %d, end at %d)" % [rl.why, rl.free, rl.end]
 	if runs.special.start >= 0:
 		return "a set piece's send was braked"
+	if f.ready != f.at or f.readies != 1 or runs.special.readies != 0:
+		return "the brake's ready: told at tick %d (want %d), %d times; %d for a set piece's send (want 0)" % [f.ready, f.at, f.readies, runs.special.readies]
+	var K := SimCore.createSim()
+	SimCore.newMatch(K, 5, {"p1": false, "p2": false}, {"brake": true})
+	var KD = K.fighters[1]
+	KD.y = WorldTerrain.groundY(K, KD.x) + 400.0
+	KD.brk.marks = 2
+	KD.launchPower = 0.9
+	DirLaunch.doLaunch(K, K.fighters[0], KD, {"ux": 0.6, "uy": 0.8}, 2400.0, false)
+	SimCore.step(K, [null, null])
+	if KD.brk.at != SimBrake.window(0.9, 2) or KD.brk.marks != 0:
+		return "a send with power 0.9 and two marks: window %d (want %d), marks %d left" % [KD.brk.at, SimBrake.window(0.9, 2), KD.brk.marks]
+	SimCore.dispose(K)
 	# a brake match replays
 	var R := SimCore.createSim()
 	var rec := SimReplay.recorder(R, 13, {}, {"brake": true})
