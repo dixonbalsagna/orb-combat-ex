@@ -1,0 +1,33 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index 54509ab..85c9f4a 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -4,8 +4,8 @@ class_name CamParams
+ ## Defaults marked "Orb decides" in the design doc are the ones a playtest will change.
+ 
+ # --- the trigger (section 2) ---
+-const R_SPLIT: float = 0.035           # split when a fighter's height falls under this fraction of vh (Orb decides)
+-const R_MERGE: float = 0.047           # merge when it stays above this (Orb decides)
++const R_SPLIT: float = 0.055           # split when a fighter's height falls under this fraction of vh (Orb decides; 0.035 until director step 1, 2026-10-22: no one view under 40 px at 720p)
++const R_MERGE: float = 0.07            # merge when it stays above this (Orb decides; 0.047 until director step 1)
+ const R_BEAM_MIN: float = 0.032        # a beam struggle keeps the merged wide shot down to this
+ const MIN_PX: float = 18.0             # under 600 px of screen height the split line is at least this many pixels
+ const R_FLOOR: float = 0.032          # camera v2: no fighter is shown smaller than this anywhere (23 px at 720p)
+@@ -17,7 +17,7 @@ const ZOOM_PREF_K: float = 0.08        # every size target is multiplied by exp(
+ const SHAKE_PREF_DEFAULT: float = 2.0  # the shake setting, 0 to 10; effective scale = pref / 10 * SHAKE_PREF_TOP
+ const SHAKE_PREF_TOP: float = 1.4      # 10 of 10 is the old prototype's strength (cap 4.2% of the height)
+ const SPLIT_DWELL: float = 0.25
+-const WIDE_HOLD: float = 1.0          # extra dwell while the fighters are still moving apart: the shared zoom-out ("flying around the world") lasts this much longer
++const WIDE_HOLD: float = 0.4          # (1.0 until director step 1) extra dwell while the fighters are still moving apart: the shared zoom-out ("flying around the world") lasts this much longer
+ const MERGE_DWELL: float = 0.40
+ const MIN_SPLIT_AGE: float = 1.2       # before a dissolve merge
+ const MIN_MERGED_AGE: float = 0.8      # before splitting again
+@@ -143,7 +143,7 @@ const SCROLL_CAP: float = 0.045          # the limiter: a pane's focus moves at
+ const CAP_MAX: int = 20                  # ... for at most this many ticks in one onset ...
+ const CAP_LAG: float = 0.14              # ... and gives way when the fighter is this far (of the width) from the focus: from there he is followed at his speed
+ const SCROLL_MAX: float = 0.045          # the scroll governor: the scenery crosses the screen no faster than this much of its width a tick ...
+-const SCROLL_MAX_REDUCED: float = 0.03   # ... and this much under reduced motion or reduced flashing (Tools' flash analyser: collapse, 4.5 flashes a second)
++const SCROLL_MAX_REDUCED: float = 0.045   # ... and this much under reduced motion or reduced flashing (0.03 for Tools' flash analyser until director step 1, 2026-10-22: the flash work is paused and the shipped mode zoomed fighters out to 25 px)
+ const BRAWL_FOCUS_TAU: float = 0.05       # the one view follows a brawl's centre eased with this time constant (its drift as the lead)
+ const BRAWL_RELEASE: float = 0.5         # and eases back to the pair's middle over this long when the brawl ends
+ const ZIP_RELEASE: float = 0.6          # after a hold the frame eases back to the live pair for this long

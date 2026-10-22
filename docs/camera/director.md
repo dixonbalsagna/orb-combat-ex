@@ -111,13 +111,50 @@ The fighters are about 30 px tall in wide city shots because the one view zooms 
 
 ## 10. Built so far
 
-**Step 1, fighter size: measured, not changed.** The drawn height of each fighter in the pane that shows him (`clip_digest.gd` SIZE): median 61 to 86 px at 720p per scene, p10 32 to 56 px. Splitting sooner (R_SPLIT 0.035 to 0.055 or 0.07), a relaxed scroll governor (0.045 to 0.07), no divider slam and a shorter wide hold while the pair parts each moved the small share (under 40 px) by at most a point. The small moments are the rush's door (the slam), the launch shot (the opponent far in the background) and the wide hold while a pair flies apart. They are the shots of steps 4 and 6 (the speed and lead whips), not a constant.
+**Step 1, fighter size (parked: docs/camera/pending/director-step1-fighter-size.patch, on b3a3aa74).**
+- The one view now splits before a fighter gets small: `R_SPLIT` 0.035 to 0.055 (40 px at 720p) and `R_MERGE` 0.047 to 0.07.
+- The wide "flying around the world" hold while a pair parts is shorter: `WIDE_HOLD` 1.0 to 0.4 s.
+- The scroll governor under Reduce flashing (the shipped default) is relaxed: `SCROLL_MAX_REDUCED` 0.03 to 0.045, the ordinary mode's figure. It was the flash count's rule, and the flash work is paused.
+- The ordinary mode's 0.045 stays. At 0.07 the sweep's `scroll governor fast` row kept a fighter off the screen for 93 ticks against a bound of 77.
+
+Measured (`clip_digest.gd` SIZE, reduced, 3,600 ticks), as the share of time a fighter is drawn under 40 px, before and after:
+
+| Scene | Before | After |
+| :--- | ---: | ---: |
+| rushcity | 14.3% | 9.7% |
+| ai 7 | 8.4% | 5.4% |
+| signaturecity | 5.3% | 3.0% |
+| ai 4 | 3.0% | 1.7% |
+
+- The p10 in rushcity rises from 35 to 40 px. The medians don't change: the fight size is already 61 to 86 px.
+- The time a fighter is outside the picture falls in ai 7 from 205 to 90 fighter-ticks.
+- The cost is 2 to 3 more layout changes in 3,600 ticks.
+- What is left under 40 px is the split line itself (the one view at about 39.6 px just before it splits), the rush's divider slam, a layout change's own frames and the launch shot's far opponent.
+
+Gates: split sweep, seam sweep, pane check, determinism plain and --intro all pass. Clips: homework/camera/9-fighter-size/. Each scene has two clips: main against this, and d3f1ca0e against this (a rush in the city, an AI match).
+
+**The inset's first render (parked: docs/camera/pending/inset-warm.patch).** Rendering found a first-use hitch at tick 238 of the AI match: the inset viewport's first render, when the first strip opens. The compositor now draws the inset once (`UPDATE_ONCE`) on the first frame after it is made, where pane 0 looks. Nothing on screen shows that frame. So that cost comes at the match's start, and the first strip draws a viewport that has already rendered. The pane check passes (a scratch probe saw `UPDATE_ONCE` on the first frame and `UPDATE_DISABLED` on the next), as do determinism plain and --intro. Performance should time it.
+
+**Phase A on Encounter's feed (parked: docs/camera/pending/director-5-intent-feed.patch).** The rig reads `cam_intent` cues (docs/director/camera-intent.md), which are on main behind `cameraIntent.enabled`:
+- From a `plan`: its told contacts (launch, heavy, a set piece's strike), its do-not-cut spans and its story weight and tags.
+- From a `launch`: the predicted touchdown {x, n} per sent slot, kept for the lead whip.
+- Once a cue has come in a match, anticipation takes its next contact from the feed. Without the feed it reads `S.dirS.ex`'s beats as before.
+- A discretionary split or merge waits while a do-not-cut span runs. A fighter out of the frame or knocked apart still opens at once.
+- Fields for the debug feed and the climax shots: `intent_src` (feed or ex), `intent_now`, `story_w`, `story_tags`, `nocut_holds`.
+
+Measured with the feed on, across ai 4, 7 and 39, mashcity, rushcity and clashcity (3,600 ticks each):
+- Anticipations are within 1 or 2 per scene of the old reader.
+- Cuts, layout changes and the time outside the picture are unchanged.
+- 0 to 3 layout changes per scene fall inside a do-not-cut span. All of them were forced (holds 0), so the rule is a guard these scenes didn't need.
+- `clip_digest.gd` prints INTENTFEED: the plans, the spans and the changes inside them.
+
+There is no visible change, so there are no clips (build order step 2: a probe). Gates with the feed on and off: split sweep, seam sweep, pane check, determinism plain and --intro all pass. With all three patches together: split sweep, pane check and determinism pass.
 
 **Step 2 and 3, the intent reader and anticipation (on main, 02a37e53).** Each tick the rig reads the running exchange's scheduled beats (`S.dirS.ex.beats`, read only) for the next contact within 18 ticks that weighs: a launch or a launch ender (weight 1), a heavy (0.7); lights and mediums do not. Before it, in the plain one view, the focus leans a quarter of the way to the contact point (both fighters kept inside 0.42 of the width) and the view tightens: 20% before a heavy, 6% before a launch (a launch is followed by a chase or a split, and the split's opening must start near the pane's size). In fast (0.1 s), out slower (0.25 s); the blow push lands on top at the contact. Not in a clash, a layout change, a solo shot, the intro or reduced motion. `SplitRig.anticipation`, `intent_now` (the read, for the debug feed), `CamParams.ANT_*`. About 11 a minute in an AI match. Encounter's `cam_intent` (docs/director/camera-intent.md) will replace the reading of the beats when it lands. Gates on both patches over a2b6b5dd's tree: split sweep, seam sweep, pane check, determinism plain and --intro: pass. Clips: homework/camera/6-anticipation/ (left step 5, right this: a mash, launches in an AI match).
 
 **Step 4a, the launched body at fight size (on main, 6bb89cef).** The chase zoomed a launched body out with the scroll governor (the flash count's rule of 2026-10-12: the scenery no faster than 0.045 of the width a tick), so the subject of the most exciting shot was the smallest thing on screen. The governor is off for a launched body now (`SplitRig.launch_governor` false; on restores it) and the chase size is the fight size (`R_LAUNCH` 0.08 to 0.11): the body stays near his anchor at fight size and the background carries the speed (VFX's streaks will sell it, docs/camera/director.md section 9). The launched body's drawn height at 720p, median before and after: ai 4 47 to 71 px, ai 7 51 to 71, ai 39 50 to 77, rushcity 39 to 78, signaturecity 46 to 82; the time a fighter is outside the picture up 2 to 5%. Gates: split sweep, seam sweep, pane check, determinism plain and --intro: pass. Clips: homework/camera/7-launch-at-size/ (left step 6, right this).
 
-**Step 4b, the launch curve's camera (parked: docs/camera/pending/director-3-arrival-hold.patch, on 5385a86d).** Game Design's ruling (docs/design/rulings-2026-10-19.md): "Push at the stop, whip on the kick, frame the glide, hold the arrival." With Simulation's curve on (`data/fight/flight.json`, `hitstop.json`), the beats map as follows:
+**Step 4b, the launch curve's camera (on main, 77f6c71f).** Game Design's ruling (docs/design/rulings-2026-10-19.md): "Push at the stop, whip on the kick, frame the glide, hold the arrival." With Simulation's curve on (`data/fight/flight.json`, `hitstop.json`), the beats map as follows:
 - **The stop:** the launch's blow push (step 2), held for the launch's hit-stop.
 - **The kick and the glide:** the chase at fight size (step 4a). With the curve on, the chase's travel is smooth: about 0.105 of the width a tick on the kick, 0.037 on the glide and 0.041 on the arrival. With the curve off, the same launch travels unevenly from tick to tick.
 
