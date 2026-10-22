@@ -286,3 +286,7 @@ My first report said the opposite. The probe was a split_sweep row, and split_sw
 
 The guard is parked as docs/camera/pending/escape-row.patch: the split_sweep rows `escape 2500 to 5000`, normal and reduced, with the row setting the shipped budget off itself. Each fighter may be outside the picture at most 6 ticks in 3 s.
 
+**The inset warm-up, withdrawn (2026-10-22; parked: docs/camera/pending/inset-warm-removal.patch).** The warm-up above never drew the match's inset. The compositor attaches and warms before `main.start_match`, which builds every pane again. A frame-bench from tick 0 shows no frame over 187k primitives before the first strip, while a strip frame is about 650k.
+
+Re-armed at each match, it drew the inset at tick 0 (52.6 ms there), and tick 238 did not drop. On a quiet machine Performance found that the strip adds nothing measurable at tick 238: the hitch is the first crater's first use, which Rendering's boot warm-up (22e) clears. So the warm-up is removed: the patch restores the code as it was before it. Pane check and determinism plain and --intro pass.
+
