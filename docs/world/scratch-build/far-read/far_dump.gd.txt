@@ -1,0 +1,18 @@
+extends SceneTree
+func _init() -> void:
+	var P := WorldPlanet.make(7)
+	SimConst.setArena(2400)
+	var T: Array = WorldPlanet.unitFromDraws(0.37, 0.62)
+	var spec: Dictionary = WorldRingPick.roundSpec(T, 2400, 0.9)
+	var ring: Dictionary = WorldRingPick.ringFrom(spec.c, 2400, spec.t)
+	var depths := PackedFloat64Array([-2500.0, 4000.0, 9000.0])
+	var ex: Dictionary = WorldPlanet.farField(P, ring, 600, 300, 4, depths)
+	var co: Dictionary = WorldPlanet.farField(P, ring, 600, 300, 4, depths, 1500.0)
+	var fm := WorldFarMap.new(P)
+	fm.step(1000000)
+	var mf: Dictionary = fm.field(ring, 600, 300, 4, depths)
+	var out := {"depths": Array(depths), "n": 300, "exact": {"h": Array(ex.h), "b": Array(ex.b)}, "coarse": {"h": Array(co.h), "b": Array(co.b)}, "map": {"h": Array(mf.h), "b": Array(mf.b)}}
+	var f := FileAccess.open("res://far_dump.json", FileAccess.WRITE)
+	f.store_string(JSON.stringify(out))
+	f.close()
+	quit()
