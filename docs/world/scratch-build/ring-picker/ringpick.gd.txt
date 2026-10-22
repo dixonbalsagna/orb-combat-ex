@@ -1,0 +1,463 @@
+class_name WorldRingPick
+## The ring picker (docs/world/shifting-arena-design.md window 4; Narrative's opponent claims, docs/narrative/opponent-grounds.md): given a planet, an opponent's claim and a size,
+## which ring of the planet should the stage be fought on? A ring is a plane's circle: an axis `c` (the circle's centre, a unit vector), its length in columns, and a touch-down `t` on it
+## (the arena's middle column). A pure function of the planet, the data, the claim and a seeded stream: no clock, no state, the same answer on any machine.
+##
+## The steps: candidates (rings round a place or through one, round a random point, in a seeded order; the claim's home first), each read coarsely (every 8th column: the biome shares,
+## the coast, the places the ring holds), those under the size's minimum dropped (a cruder minimum if none is left), the rest scored by the claim (suits weighted, avoids taken off,
+## must-cross checked, a bonus for passing the home), the best taken. With no ring that fits, the best-scoring candidate (Narrative: "the picture carries the fantasy").
+##
+## The claim is a Dictionary shaped as Narrative's pending/opponent_grounds.json: {"home", "suits": [{"feature", "w"}], "must_cross": [feature], "avoids": [feature], "size": {...}}.
+## Its feature names are read here (FEATURES below); the ones the planet function cannot see (a pier, a terrace) are proxies, listed in the data's _about and in the doc.
+
+const PATH: String = "res://data/biomes/rings.json"
+const SCHEMA: String = "biomes.rings/1"
+const BIO_OCEAN := 0
+const BIO_PLAINS := 1
+const BIO_FOREST := 2
+const BIO_DESERT := 3
+const BIO_MOUNTAINS := 4
+const BIO_ICE_SHEET := 5
+const BIO_SEA_ICE := 6
+static var _c: Dictionary = {}
+static var _cLoaded: bool = false
+static var _cErrors: Array = []
+static var _cHash: String = ""
+
+
+# ===================================================================== the data
+
+static func cfg() -> Dictionary:
+	if not _cLoaded:
+		_cLoad()
+	return _c
+
+
+static func dataErrors() -> Array:
+	if not _cLoaded:
+		_cLoad()
+	return _cErrors
+
+
+static func dataHash() -> String:
+	if not _cLoaded:
+		_cLoad()
+	return _cHash
+
+
+static func _cLoad() -> void:
+	_cLoaded = true
+	_cErrors = []
+	_c = {}
+	var f := FileAccess.open(PATH, FileAccess.READ)
+	if f == null:
+		_cErrors.append("rings.json: cannot open " + PATH)
+		return
+	var text: String = f.get_as_text()
+	var j = JSON.parse_string(text)
+	if not (j is Dictionary) or j.get("schema", "") != SCHEMA:
+		_cErrors.append("rings.json: not a %s object" % SCHEMA)
+		return
+	for sz in ["close", "half", "whole"]:
+		for sec in ["sizes", "minimum", "candidates"]:
+			if not (j.get(sec) is Dictionary) or not j[sec].has(sz):
+				_cErrors.append("rings.json: %s.%s is missing" % [sec, sz])
+	for k in ["stride", "biomeShare", "ref", "mustAt", "avoidWeight", "homeBonus", "coastRef"]:
+		if not (j.get(k) is float or j.get(k) is int):
+			_cErrors.append("rings.json: %s is a number" % k)
+	_c = j
+	_cHash = str(text.hash())
+
+
+static func sizeCols(size: String) -> int:
+	return int(cfg().sizes[size])
+
+
+# ===================================================================== rings
+
+static func _dot(a: Array, b: Array) -> float:
+	return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+
+
+static func _perp(a: Array, helper: Array) -> Array:
+	return WorldPlanet._unit(WorldPlanet._cross(a, helper))
+
+
+## The ring of `cols` columns round the axis c, with the touch-down t on it (its middle column). The dictionary shape WorldPlanet reads (u: from the axis to t, v: the travel
+## direction, n and c: the axis, st and ct: sine and cosine of the angular radius, th, s) so readSlice, columnPoint and lateral take it as they take any ring.
+static func ringFrom(c: Array, cols: int, t: Array) -> Dictionary:
+	var st: float = float(cols) / float(SimConst.PLANET_NC)
+	if st > 1.0:
+		st = 1.0
+	var ct: float = sqrt(1.0 - st * st) if st < 1.0 else 0.0
+	var d: float = _dot(c, t)
+	var e1: Array = WorldPlanet._unit([t[0] - c[0] * d, t[1] - c[1] * d, t[2] - c[2] * d])
+	var e2: Array = WorldPlanet._unit(WorldPlanet._cross(c, e1))
+	return {"u": e1, "v": e2, "n": c, "c": c, "st": st, "ct": ct, "th": WorldPlanet.asinf(st), "s": 1.0}
+
+
+## The point of the ring at angle a from its touch-down.
+static func ringPoint(ring: Dictionary, a: float) -> Array:
+	var co: float = SimDetMath.cos(a)
+	var si: float = SimDetMath.sin(a)
+	var u: Array = ring.u
+	var v: Array = ring.v
+	var c: Array = ring.c
+	var st: float = ring.st
+	var ct: float = ring.ct
+	return [c[0] * ct + st * (u[0] * co + v[0] * si), c[1] * ct + st * (u[1] * co + v[1] * si), c[2] * ct + st * (u[2] * co + v[2] * si)]
+
+
+## A ring as a setup's `arena` (World's window 1 reads it): the columns, and the axis and touch-down as exact bit patterns (a JSON number does not round-trip a float64).
+static func arenaOf(spec: Dictionary) -> Dictionary:
+	var c: Array = spec.c
+	var t: Array = spec.t
+	return {"cols": int(spec.cols), "c": [SimMathx.bits(c[0]), SimMathx.bits(c[1]), SimMathx.bits(c[2])], "t": [SimMathx.bits(t[0]), SimMathx.bits(t[1]), SimMathx.bits(t[2])]}
+
+
+## The ring of a setup's arena that names an axis, or {} when it does not (a window 1 arena through the picker's touch-down).
+static func ringOfArena(arena: Dictionary) -> Dictionary:
+	if not (arena.has("c") and arena.has("t")):
+		return {}
+	var c: Array = [SimMathx.f64(str(arena.c[0])), SimMathx.f64(str(arena.c[1])), SimMathx.f64(str(arena.c[2]))]
+	var t: Array = [SimMathx.f64(str(arena.t[0])), SimMathx.f64(str(arena.t[1])), SimMathx.f64(str(arena.t[2]))]
+	return ringFrom(c, int(arena.cols), t)
+
+
+## The point of place i.
+static func placePoint(P: WorldPlanet.Planet, i: int) -> Array:
+	return [P.px[i], P.py[i], P.pz[i]]
+
+
+# ===================================================================== candidates
+
+## A ring of `cols` columns round the point c (c is its centre), the touch-down at bearing phi from it.
+static func roundSpec(c: Array, cols: int, phi: float) -> Dictionary:
+	var st: float = float(cols) / float(SimConst.PLANET_NC)
+	var ct: float = sqrt(1.0 - st * st) if st < 1.0 else 0.0
+	var f: Array = _perp(c, [0.0, 1.0, 0.0] if absf(c[1]) < 0.9 else [1.0, 0.0, 0.0])
+	var g: Array = WorldPlanet._cross(c, f)
+	var cp: float = SimDetMath.cos(phi)
+	var sp: float = SimDetMath.sin(phi)
+	var t: Array = [c[0] * ct + st * (f[0] * cp + g[0] * sp), c[1] * ct + st * (f[1] * cp + g[1] * sp), c[2] * ct + st * (f[2] * cp + g[2] * sp)]
+	return {"c": c, "t": t, "cols": cols}
+
+
+## A ring of `cols` columns through the point T, heading along the bearing phi from it (on the left: the centre is to the left of the way the columns run).
+static func throughSpec(T: Array, cols: int, phi: float) -> Dictionary:
+	var st: float = float(cols) / float(SimConst.PLANET_NC)
+	var ct: float = sqrt(1.0 - st * st) if st < 1.0 else 0.0
+	var f: Array = _perp(T, [0.0, 1.0, 0.0] if absf(T[1]) < 0.9 else [1.0, 0.0, 0.0])
+	var g: Array = WorldPlanet._cross(T, f)
+	var cp: float = SimDetMath.cos(phi)
+	var sp: float = SimDetMath.sin(phi)
+	var d: Array = [f[0] * cp + g[0] * sp, f[1] * cp + g[1] * sp, f[2] * cp + g[2] * sp]
+	var ng: Array = WorldPlanet._unit(WorldPlanet._cross(T, d))
+	var c: Array = WorldPlanet._unit([T[0] * ct + ng[0] * st, T[1] * ct + ng[1] * st, T[2] * ct + ng[2] * st])
+	return {"c": c, "t": T, "cols": cols}
+
+
+## The candidate rings for a size, in a seeded order: the pinned places first (a home: a ring round it, or through it for a Whole), then rings round and through the planet's places
+## and round random points, alternately. Each is {c, t, cols, kind, place}.
+static func candidates(P: WorldPlanet.Planet, size: String, stream: int, pinned: Array = []) -> Array:
+	var cols: int = sizeCols(size)
+	var count: int = int(cfg().candidates[size])
+	var rg := SimRng.new((stream * 7919 + 104729) & 0xFFFFFFFF)
+	var out: Array = []
+	var whole: bool = cols >= SimConst.PLANET_NC
+	for id in pinned:
+		var phi: float = rg.next() * 2.0 * PI
+		var sp: Dictionary = throughSpec(placePoint(P, int(id)), cols, phi) if whole else roundSpec(placePoint(P, int(id)), cols, phi)
+		sp["kind"] = "through" if whole else "round"
+		sp["place"] = int(id)
+		out.append(sp)
+	var k: int = 0
+	while out.size() < count:
+		var phi2: float = rg.next() * 2.0 * PI
+		var which: int = k % 3
+		k += 1
+		var sp2: Dictionary
+		if which == 2 or P.n == 0:
+			var u: Array = WorldPlanet.unitFromDraws(rg.next(), rg.next())
+			sp2 = throughSpec(u, cols, phi2) if whole else roundSpec(u, cols, phi2)
+			sp2["kind"] = "random"
+			sp2["place"] = -1
+		else:
+			var i: int = int(rg.next() * float(P.n)) % P.n
+			if which == 1 or whole:
+				sp2 = throughSpec(placePoint(P, i), cols, phi2)
+				sp2["kind"] = "through"
+			else:
+				sp2 = roundSpec(placePoint(P, i), cols, phi2)
+				sp2["kind"] = "round"
+			sp2["place"] = i
+		out.append(sp2)
+	return out
+
+
+# ===================================================================== reading a ring
+
+## A coarse read of a ring: the biome at every stride-th column, the coast, and the places it holds (the same reach rule as the slice's). `standing`: a byte a place, 0 for a fallen
+## one (empty: all stand); `damaged`: place ids hurt earlier in the run.
+static func evalRing(P: WorldPlanet.Planet, spec: Dictionary, standing: PackedByteArray = PackedByteArray(), damaged: Array = []) -> Dictionary:
+	var c: Dictionary = P.c
+	var ring: Dictionary = ringFrom(spec.c, int(spec.cols), spec.t)
+	var cols: int = int(spec.cols)
+	var cnt: int = maxi(8, cols / int(cfg().stride))
+	var bs := PackedByteArray()
+	bs.resize(cnt)
+	var seen := [0, 0, 0, 0, 0, 0, 0]
+	for k in range(cnt):
+		var p: Array = ringPoint(ring, float(k) / float(cnt) * 2.0 * PI)
+		WorldPlanet.surfAt(P, p[0], p[1], p[2])
+		bs[k] = P.outB
+		seen[P.outB] += 1
+	var held: Array = []
+	var u: Array = ring.u
+	var v: Array = ring.v
+	var arcR: float = P.R * float(ring.st)
+	for i in range(P.n):
+		var lat: float = WorldPlanet.lateral(P, ring, P.px[i], P.py[i], P.pz[i])
+		var reach: float = (c.cityReach if P.kind[i] == WorldPlanet.KIND_CITY else c.townReach) * P.rad[i]
+		if absf(lat) >= reach:
+			continue
+		var along: float = WorldPlanet.atan2f(P.px[i] * v[0] + P.py[i] * v[1] + P.pz[i] * v[2], P.px[i] * u[0] + P.py[i] * u[1] + P.pz[i] * u[2])
+		var half: float = sqrt(maxf(0.0, P.rad[i] * P.rad[i] - lat * lat)) / arcR
+		held.append({"id": i, "kind": int(P.kind[i]), "along": along, "half": half, "lat": lat, "fallen": standing.size() > 0 and standing[i] == 0, "damaged": damaged.has(i)})
+	# a ring round a place lies inside its disc: the place is the centre behind the fight and counts as held (small-circles.md section 3)
+	if spec.get("kind", "") == "round" and int(spec.get("place", -1)) >= 0:
+		var pi: int = int(spec.place)
+		var already: bool = false
+		for h in held:
+			if h.id == pi:
+				already = true
+		if not already:
+			held.append({"id": pi, "kind": int(P.kind[pi]), "along": 0.0, "half": PI, "lat": 0.0, "fallen": standing.size() > 0 and standing[pi] == 0, "damaged": damaged.has(pi)})
+	var cities: int = 0
+	var towns: int = 0
+	for h in held:
+		if h.fallen:
+			continue
+		if h.kind == WorldPlanet.KIND_CITY:
+			cities += 1
+		else:
+			towns += 1
+	var kinds: int = 0
+	for s in seen:
+		if float(s) / float(cnt) >= float(cfg().biomeShare):
+			kinds += 1
+	var water: int = seen[BIO_OCEAN] + seen[BIO_SEA_ICE]
+	var trans: int = 0
+	for k in range(cnt):
+		var a: bool = bs[k] == BIO_OCEAN or bs[k] == BIO_SEA_ICE
+		var b: bool = bs[(k + 1) % cnt] == BIO_OCEAN or bs[(k + 1) % cnt] == BIO_SEA_ICE
+		if a != b:
+			trans += 1
+	# desert samples that no held place covers: an empty desert
+	var empty: int = 0
+	for k in range(cnt):
+		if bs[k] != BIO_DESERT:
+			continue
+		var ang: float = float(k) / float(cnt) * 2.0 * PI
+		var inside: bool = false
+		for h in held:
+			var dd: float = absf(fposmod(ang - h.along + PI, 2.0 * PI) - PI)
+			if dd < h.half:
+				inside = true
+		if not inside:
+			empty += 1
+	return {"samples": cnt, "share": [float(seen[0]) / float(cnt), float(seen[1]) / float(cnt), float(seen[2]) / float(cnt), float(seen[3]) / float(cnt), float(seen[4]) / float(cnt), float(seen[5]) / float(cnt), float(seen[6]) / float(cnt)],
+		"cities": cities, "towns": towns, "biomes": kinds, "land": 1.0 - float(water) / float(cnt), "coast": trans / 2, "emptyDesert": float(empty) / float(cnt), "held": held}
+
+
+static func meets(ev: Dictionary, size: String, relaxed: bool = false) -> bool:
+	var m: Dictionary = cfg().minimum[size]
+	if relaxed:
+		return ev.cities + ev.towns >= 1 and ev.land >= float(m.land) * 0.5
+	return ev.cities >= int(m.cities) and ev.towns >= int(m.towns) and ev.biomes >= int(m.biomes) and ev.land >= float(m.land)
+
+
+# ===================================================================== the claims
+
+## The value, 0 to 1, of one feature on a read ring (the vocabulary of Narrative's claims). "a|b" is the larger; "feature>=x" is full at share x. The planet function sees biomes, the
+## coast and the places a ring holds; the rest are proxies for it: a pier or a quay is a coast with a settled place on it, a terrace a city with mountains on the ring, an avenue's end any
+## city, hulks a coast with desert, a dense city with no exit a city on a ring with almost no water.
+static func featureValue(ev: Dictionary, feature: String) -> float:
+	if feature.contains("|"):
+		var best: float = 0.0
+		for part in feature.split("|"):
+			best = maxf(best, featureValue(ev, part))
+		return best
+	var ref: float = float(cfg().ref)
+	var sh: Array = ev.share
+	match feature:
+		"biome:mountains": return minf(1.0, sh[BIO_MOUNTAINS] / ref)
+		"biome:plains": return minf(1.0, sh[BIO_PLAINS] / ref)
+		"biome:plains>=0.33": return minf(1.0, sh[BIO_PLAINS] / 0.33)
+		"biome:forest_dense": return minf(1.0, sh[BIO_FOREST] / ref)
+		"biome:desert": return minf(1.0, sh[BIO_DESERT] / ref)
+		"biome:desert_empty": return minf(1.0, ev.emptyDesert / ref)
+		"biome:ice": return minf(1.0, (sh[BIO_ICE_SHEET] + sh[BIO_SEA_ICE]) / ref)
+		"biome:ocean_open": return minf(1.0, sh[BIO_OCEAN] / ref)
+		"coast", "coast:straight": return minf(1.0, float(ev.coast) / float(cfg().coastRef))
+		"coast:breakwater", "coast:river_mouth", "coast:quay_or_pier": return minf(1.0, float(ev.coast) / float(cfg().coastRef)) * (1.0 if ev.held.size() > 0 else 0.5)
+		"coast:dry_with_hulks": return minf(1.0, float(ev.coast) / float(cfg().coastRef)) * minf(1.0, sh[BIO_DESERT] / ref)
+		"place:settled": return minf(1.0, float(ev.cities + ev.towns))
+		"place:coastal_town": return (1.0 if ev.coast > 0 and ev.towns + ev.cities > 0 else 0.0)
+		"place:city_with_terrace": return (1.0 if ev.cities > 0 and sh[BIO_MOUNTAINS] >= 0.1 else (0.3 if ev.cities > 0 else 0.0))
+		"place:city_end_of_avenue": return (1.0 if ev.cities > 0 else 0.0)
+		"place:city_in_ruins":
+			for h in ev.held:
+				if h.kind == WorldPlanet.KIND_CITY and (h.fallen or h.damaged):
+					return 1.0
+			return 0.0
+		"place:dense_city_no_exit": return (1.0 if ev.cities > 0 and sh[BIO_OCEAN] < 0.05 else 0.0)
+		"state:damaged_or_fallen":
+			for h in ev.held:
+				if h.fallen or h.damaged:
+					return 1.0
+			return 0.0
+		"state:untouched_place_with_people":
+			for h in ev.held:
+				if not h.fallen and not h.damaged:
+					return 1.0
+			return 0.0
+	return 0.0
+
+
+## A claim's score on a read ring: the weighted mean of its suits (0 to 1), less avoidWeight of each avoid's value, plus homeBonus when the ring holds the home place (homeId), and
+## whether every must-cross feature is there (at least mustAt of its value).
+static func score(ev: Dictionary, claim: Dictionary, homeId: int = -1) -> Dictionary:
+	var c: Dictionary = cfg()
+	var num: float = 0.0
+	var den: float = 0.0
+	for s in claim.suits:
+		num += float(s.w) * featureValue(ev, str(s.feature))
+		den += float(s.w)
+	var sc: float = num / den if den > 0.0 else 0.0
+	for a in claim.get("avoids", []):
+		sc -= float(c.avoidWeight) * featureValue(ev, str(a))
+	var homeHeld: bool = false
+	if homeId >= 0:
+		for h in ev.held:
+			if h.id == homeId:
+				homeHeld = true
+		if homeHeld:
+			sc += float(c.homeBonus)
+	var mustOk: bool = true
+	for m in claim.get("must_cross", []):
+		if featureValue(ev, str(m)) < float(c.mustAt):
+			mustOk = false
+	return {"score": sc, "must": mustOk, "home": homeHeld}
+
+
+# ===================================================================== the pick
+
+## The ring for an opponent's claim at a size on planet P, from the run's stream. opts: standing, damaged (wear), home (the claim's home place id, or -1), pinned (place ids to try first:
+## the home). Returns {ok (a ring met the size's minimum), spec {c, t, cols}, score, must, home, relaxed, tried, kind, place, ev, idx}; never fails to return a ring (the best-scoring when none
+## meets the minimum), with ok false. One call reads every candidate; `beginPick` gives the same answer in steps (a read of a candidate is about 30 ms on a busy PC).
+static func pick(P: WorldPlanet.Planet, claim: Dictionary, size: String, stream: int, opts: Dictionary = {}) -> Dictionary:
+	var job: PickJob = beginPick(P, claim, size, stream, opts)
+	job.finishNow()
+	return job.result
+
+
+static func beginPick(P: WorldPlanet.Planet, claim: Dictionary, size: String, stream: int, opts: Dictionary = {}) -> PickJob:
+	var j := PickJob.new()
+	j.P = P
+	j.claim = claim
+	j.size = size
+	j.standing = opts.get("standing", PackedByteArray())
+	j.damaged = opts.get("damaged", [])
+	j.home = int(opts.get("home", -1))
+	var pinned: Array = opts.get("pinned", [j.home] if j.home >= 0 else [])
+	j.cands = candidates(P, size, stream, pinned)
+	return j
+
+
+## A pick in steps (the host spends a few candidates a frame: the module owns no clock). The same answer however it is stepped: the reads are pure and the choice is made over them all at the end.
+class PickJob extends RefCounted:
+	var P: WorldPlanet.Planet
+	var claim: Dictionary = {}
+	var size: String = ""
+	var standing := PackedByteArray()
+	var damaged: Array = []
+	var home: int = -1
+	var cands: Array = []
+	var evs: Array = []
+	var done: bool = false
+	var result: Dictionary = {}
+
+	## Reads up to n more candidates; true when the pick is made.
+	func step(n: int) -> bool:
+		while n > 0 and evs.size() < cands.size():
+			evs.append(WorldRingPick.evalRing(P, cands[evs.size()], standing, damaged))
+			n -= 1
+		if evs.size() >= cands.size() and not done:
+			_choose()
+		return done
+
+	func finishNow() -> void:
+		step(cands.size())
+
+	func _choose() -> void:
+		var best = null
+		var bestKey: Array = []
+		for relaxed in [false, true]:
+			for i in range(cands.size()):
+				if not WorldRingPick.meets(evs[i], size, relaxed):
+					continue
+				var sc: Dictionary = WorldRingPick.score(evs[i], claim, home)
+				var key: Array = [1 if sc.must else 0, sc.score, -i]
+				if best == null or WorldRingPick._better(key, bestKey):
+					best = _entry(i, sc, not relaxed, relaxed)
+					bestKey = key
+			if best != null:
+				break
+		if best == null:   # nothing meets even the crude minimum: the best-scoring candidate, whatever it holds (Narrative: no ring fits)
+			for i in range(cands.size()):
+				var sc2: Dictionary = WorldRingPick.score(evs[i], claim, home)
+				var key2: Array = [1 if sc2.must else 0, sc2.score, -i]
+				if best == null or WorldRingPick._better(key2, bestKey):
+					best = _entry(i, sc2, false, true)
+					bestKey = key2
+		best["tried"] = cands.size()
+		result = best
+		done = true
+
+	func _entry(i: int, sc: Dictionary, okFlag: bool, relaxed: bool) -> Dictionary:
+		var sp: Dictionary = cands[i]
+		return {"ok": okFlag, "spec": {"c": sp.c, "t": sp.t, "cols": sp.cols}, "score": sc.score, "must": sc.must, "home": sc.home, "relaxed": relaxed, "kind": sp.kind, "place": sp.place, "ev": evs[i], "idx": i}
+
+
+static func _better(a: Array, b: Array) -> bool:
+	for i in range(a.size()):
+		if a[i] > b[i]:
+			return true
+		if a[i] < b[i]:
+			return false
+	return false
+
+
+## The first fight of a run: a Close ring round the player's own home (Game Design 2c), the touch-down on a seeded bearing.
+static func firstRing(P: WorldPlanet.Planet, homeId: int, stream: int) -> Dictionary:
+	var rg := SimRng.new((stream * 7919 + 15485863) & 0xFFFFFFFF)
+	return roundSpec(placePoint(P, homeId), sizeCols("close"), rg.next() * 2.0 * PI)
+
+
+## The boss's ring: the Whole circle through the boss's home and the most populous place still standing (Game Design 2c), the touch-down at the home. Null when no other place stands.
+static func bossRing(P: WorldPlanet.Planet, homeId: int, standing: PackedByteArray = PackedByteArray()):
+	var best: int = -1
+	for i in range(P.n):
+		if i == homeId or (standing.size() > 0 and standing[i] == 0):
+			continue
+		if best < 0 or P.people[i] > P.people[best]:
+			best = i
+	if best < 0:
+		return null
+	var a: Array = placePoint(P, homeId)
+	var b: Array = placePoint(P, best)
+	var cr: Array = WorldPlanet._cross(a, b)
+	if _dot(cr, cr) < 1.0e-12:
+		return null
+	return {"c": WorldPlanet._unit(cr), "t": a, "cols": SimConst.PLANET_NC, "other": best}

@@ -131,5 +131,40 @@ func _init() -> void:
 	# a default match after a small one is the default world again (no stale static)
 	var after: Dictionary = play({}, 1, 600)
 	ok(after.cols == 4800 and SimConst.W == 153600.0 and after.bld == 118, "a default match after a small one is today's world (4,800 columns, 118 buildings)")
+	# --- Simulation's conditions: a guarded setup, and two matches alive in one process each keep their own arena
+	var quiet0: bool = FighterData.quiet
+	FighterData.quiet = true
+	var guard_ok: bool = true
+	for bad in [{"cols": 599}, {"cols": 4802}, {"cols": 1201}, {"cols": "2400"}, {"cols": 2400.5}, {}, 7]:
+		var Sg := SimCore.createSim()
+		SimCore.newMatch(Sg, 1, {}, {"planet": 7, "touch": 3, "arena": bad})
+		if Sg.arenaCols != 4800 or SimConst.NC != 4800:
+			guard_ok = false
+	var Sn := SimCore.createSim()
+	SimCore.newMatch(Sn, 1, {}, {"arena": {"cols": 1200}})   # no planet: the hand-made world is 4,800
+	if Sn.arenaCols != 4800 or SimConst.NC != 4800:
+		guard_ok = false
+	FighterData.quiet = quiet0
+	ok(guard_ok, "a bad arena (under 600, over 4,800, odd, a string, a fraction, no columns, not a dictionary, or no planet) is the planet's own 4,800")
+	var SA := SimCore.createSim()
+	SimCore.newMatch(SA, 1, {}, {"planet": 7, "touch": 3, "arena": {"cols": 2400}, "intro": false})
+	var SB := SimCore.createSim()
+	SimCore.newMatch(SB, 2, {}, {"intro": false})
+	for r in range(6):
+		for t in range(100):
+			SimCore.step(SA)
+		for t in range(100):
+			SimCore.step(SB)
+	var ha: String = str(SimHash.stateHash(SA).gameplay)
+	var hb: String = str(SimHash.stateHash(SB).gameplay)
+	var SA2 := SimCore.createSim()
+	SimCore.newMatch(SA2, 1, {}, {"planet": 7, "touch": 3, "arena": {"cols": 2400}, "intro": false})
+	for t in range(600):
+		SimCore.step(SA2)
+	var SB2 := SimCore.createSim()
+	SimCore.newMatch(SB2, 2, {}, {"intro": false})
+	for t in range(600):
+		SimCore.step(SB2)
+	ok(ha == str(SimHash.stateHash(SA2).gameplay) and hb == str(SimHash.stateHash(SB2).gameplay) and SA.arenaCols == 2400 and SB.arenaCols == 4800, "a 2,400-column match and a default one stepped alternately 100 ticks at a time play as each plays alone (%s, %s)" % [ha.substr(0, 8), hb.substr(0, 8)])
 	print("ARENA: %d check(s) failed" % fails)
 	quit()

@@ -26,23 +26,24 @@ index ed360bf..9ab6865 100644
  const START_X: float = 5600.0 * PS   # where the first fighter starts: open ground at the desert's west edge, clear of every town (balance-targets.md §4b ruling 3; was 2150 x PS, the plains by the city); the second is START_GAP units on
  const START_GAP: float = 900.0   # was 750: Camera's entrance needs the two landing spots this far apart (EP, 2026-10-02)
 diff --git a/sim/core/sim.gd b/sim/core/sim.gd
-index 2bbf73f..9ac9532 100644
+index a2f77fe..cf157ad 100644
 --- a/sim/core/sim.gd
 +++ b/sim/core/sim.gd
-@@ -49,9 +49,12 @@ static func dispose(S: SimState) -> void:
+@@ -49,9 +49,13 @@ static func dispose(S: SimState) -> void:
  static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Dictionary = {}) -> void:
  	S.game.seed = float(seed & 0xFFFFFFFF)
  	S.rng = SimRng.new(seed & 0xFFFFFFFF)
-+	var arena = setup.get("arena", null)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's 4,800
-+	SimConst.setArena(int(arena.cols) if (arena is Dictionary and setup.has("planet")) else SimConst.PLANET_NC)
++	S.arenaCols = _arenaCols(setup)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's 4,800
++	SimConst.setArena(S.arenaCols)
  	WorldBiomes.planetCols = PackedByteArray()
  	if not (setup.has("planet") and WorldPlanetWorld.gen(S, setup)):   # a setup with a planet reads its world from the slice; without one, today's world
  		WorldTerrain.genWorld(S)
-+	DirLocation.reset()   # the director's lure tables follow the world and the arena's length
++	S.planetCols = WorldBiomes.planetCols   # the statics a world sets belong to this match: step takes them again when another match has built since
++	S.worldId = WorldBiomes.claim()
  	S.contactOn = WorldContact.enabled()   # World's ground contact (world/contact.gd): a copy of the data's switch
  	var p1ai: bool = bool(ai["p1"]) if ai.has("p1") and ai["p1"] != null else (S.fighters[0].ai != null if S.fighters.size() > 0 else true)
  	var p2ai: bool = bool(ai["p2"]) if ai.has("p2") and ai["p2"] != null else (S.fighters[1].ai != null if S.fighters.size() > 1 else true)
-@@ -66,7 +69,7 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
+@@ -66,7 +70,7 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
  	if setup.get("start", "") == "crossing":   # a demo start astride a crossing of the city (World: lanes.json demo_start); default off
  		start_x = WorldLanes.demoStartX(S, SimConst.START_GAP, SimConst.START_X)
  	if setup.has("planet"):
@@ -51,26 +52,65 @@ index 2bbf73f..9ac9532 100644
  	var x0: float = start_x
  	var x1: float = start_x + SimConst.START_GAP
  	var flip: bool = setup.get("flip", false)
+@@ -128,10 +132,29 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
+ 	S.dt = 0.0
+ 
+ 
++## The arena's columns from the setup, guarded: setup.arena {"cols": n, "side": 1 or -1} with a setup.planet, n an even whole number from 600 to 4,800 (a ring a fight fits
++## in, with a middle column); anything else is the planet's own 4,800, with an error (World: docs/world/shifting-arena-design.md section 3).
++static func _arenaCols(setup: Dictionary) -> int:
++	var arena = setup.get("arena", null)
++	if arena == null:
++		return SimConst.PLANET_NC
++	var n = arena.get("cols", null) if arena is Dictionary else null
++	var ok: bool = setup.has("planet") and (n is int or n is float) and float(n) == floorf(float(n)) and float(n) >= 600.0 and float(n) <= float(SimConst.PLANET_NC) and int(n) % 2 == 0
++	if not ok:
++		if not FighterData.quiet:
++			push_error("SimCore.newMatch: setup.arena %s needs a planet and cols an even whole number from 600 to %d; the planet's own arena plays" % [str(arena), SimConst.PLANET_NC])
++		return SimConst.PLANET_NC
++	return int(n)
++
++
+ ## One fixed step (sim.js step). inputs is [intent or null, ...] a slot, or null (AI fighters ignore it; a slot past the
+ ## list's end has none). Returns
+ ## false during hit-stop (no input consumed; the host keeps its key presses for the next tick), true otherwise.
+ static func step(S: SimState, inputs = null) -> bool:
++	if SimConst.NC != S.arenaCols or WorldBiomes.worldId != S.worldId:   # the arena's length and a planet's biomes are statics: a match takes its own again, whatever another match has built since (two sims alive in one process)
++		SimConst.setArena(S.arenaCols)
++		WorldBiomes.planetCols = S.planetCols
++		WorldBiomes.worldId = S.worldId
+ 	var dtReal: float = SimConst.DT
+ 	var dt: float = dtReal * S.game.ts
+ 	S.dt = dt
+diff --git a/sim/core/state.gd b/sim/core/state.gd
+index 64c3f2c..c4a2f2d 100644
+--- a/sim/core/state.gd
++++ b/sim/core/state.gd
+@@ -11,6 +11,9 @@ var tick: int = 0               # steps since newMatch, hit-stop ticks included
+ var dt: float = 0.0
+ var rng: SimRng = SimRng.new(7)
+ var game := Game.new()
++var arenaCols: int = 4800            # World: this match's arena length in columns (SimConst.setArena; newMatch sets it, step sets the static again when another match has changed it). Not hashed
++var planetCols := PackedByteArray()  # World: this match's planet world's biome by column (WorldBiomes.planetCols), kept for the same reason; empty for the hand-made world. Not hashed
++var worldId: int = 0                 # World: which world this match built (WorldBiomes.claim); step compares it with the last built. Not hashed
+ var contactOn: bool = false           # ground contact on (World, G2: a copy of data/biomes/contact.json enabled, taken by newMatch)
+ var dirS := DirS.new()
+ var fighters: Array = []
 diff --git a/sim/director/location.gd b/sim/director/location.gd
-index 8294135..34f22a8 100644
+index 8294135..33aae94 100644
 --- a/sim/director/location.gd
 +++ b/sim/director/location.gd
-@@ -11,7 +11,13 @@ class_name DirLocation
+@@ -11,7 +11,8 @@ class_name DirLocation
  const PATH: String = "res://data/director/location.json"
  ## The biome index order of S.dirS.biomeT (the schema's enum order).
  const BIOMES: Array = ["ocean", "village", "plains", "city", "forest", "desert", "mountains"]
 -const STEP: float = 200.0 * SimConst.PS   # one histogram bucket: SimConst.W / BUCKETS
 +static var STEP: float = 200.0 * SimConst.PS   # one histogram bucket: SimConst.W / BUCKETS (set in _ensure: the arena's length can change)
 +static var _key: String = ""
-+
-+
-+## A new match's world: the tables are rebuilt on the next use (SimCore.newMatch).
-+static func reset() -> void:
-+	_key = ""
  const BUCKETS: int = 48                    # WorldCollateral.HIST_BUCKETS
  const WINDOW: int = 2                      # +-2 buckets approximate popNear(x, 900 * WS)
  const EMPTY: float = 0.1                   # a bucket (or its window) at or below this population is empty ground
-@@ -25,17 +31,22 @@ static var _bucketBiome := PackedInt32Array()  # the biome index at each bucket'
+@@ -25,17 +26,22 @@ static var _bucketBiome := PackedInt32Array()  # the biome index at each bucket'
  
  
  static func _ensure() -> void:
@@ -87,7 +127,7 @@ index 8294135..34f22a8 100644
 +			push_error("DirLocation: could not parse " + PATH)
 +			_d = {}
 +	# the tables follow the arena's length and a planet's world: rebuilt when either changes (a match on the hand-made world keeps today's)
-+	var key: String = "%s/%d" % [str(SimConst.W), WorldBiomes.planetCols.size()]
++	var key: String = "%s/%d" % [str(SimConst.W), WorldBiomes.worldId]
 +	if key == _key:
 +		return
 +	_key = key
@@ -100,6 +140,26 @@ index 8294135..34f22a8 100644
  	_bucketBiome.resize(BUCKETS)
  	for k in range(BUCKETS):
  		_bucketBiome[k] = BIOMES.find(WorldBiomes.biomeAt(k * STEP + STEP / 2.0))
+diff --git a/sim/world/biomes.gd b/sim/world/biomes.gd
+index ebc14b8..af139e9 100644
+--- a/sim/world/biomes.gd
++++ b/sim/world/biomes.gd
+@@ -8,6 +8,15 @@ const SEG: Array = [[0.0 * P, 1200.0 * P, "ocean"], [1200.0 * P, 1800.0 * P, "vi
+ 
+ ## A match on a planet's slice (WorldPlanetWorld.gen): the biome of each column, as an index into WorldPlanetWorld.BIOME_NAME; empty for the hand-made world.
+ static var planetCols := PackedByteArray()
++static var worldId: int = 0   # the last world a match built (SimCore.newMatch: claim); a match's step takes its own tables again when this is not its id
++static var _ids: int = 0
++
++
++## A new id for the world a match is building, which is now the current one.
++static func claim() -> int:
++	_ids += 1
++	worldId = _ids
++	return worldId
+ 
+ 
+ static func biomeAt(x: float) -> String:
 diff --git a/sim/world/collateral.gd b/sim/world/collateral.gd
 index 4fdbf6d..78b0932 100644
 --- a/sim/world/collateral.gd
@@ -319,10 +379,10 @@ index 27e3456..fd46345 100644
  			out.append(i)
 diff --git a/sim/world/tools/arena_check.gd b/sim/world/tools/arena_check.gd
 new file mode 100644
-index 0000000..5a64a2c
+index 0000000..8f5145c
 --- /dev/null
 +++ b/sim/world/tools/arena_check.gd
-@@ -0,0 +1,135 @@
+@@ -0,0 +1,170 @@
 +extends SceneTree
 +# The arena as a plane (docs/world/shifting-arena-design.md section 3): the arena's length is a static set by each match; a ring of the planet's is read like the great circle.
 +#   godot --headless --path . --script res://sim/world/tools/arena_check.gd [-- --ticks=3600]
@@ -456,6 +516,41 @@ index 0000000..5a64a2c
 +	# a default match after a small one is the default world again (no stale static)
 +	var after: Dictionary = play({}, 1, 600)
 +	ok(after.cols == 4800 and SimConst.W == 153600.0 and after.bld == 118, "a default match after a small one is today's world (4,800 columns, 118 buildings)")
++	# --- Simulation's conditions: a guarded setup, and two matches alive in one process each keep their own arena
++	var quiet0: bool = FighterData.quiet
++	FighterData.quiet = true
++	var guard_ok: bool = true
++	for bad in [{"cols": 599}, {"cols": 4802}, {"cols": 1201}, {"cols": "2400"}, {"cols": 2400.5}, {}, 7]:
++		var Sg := SimCore.createSim()
++		SimCore.newMatch(Sg, 1, {}, {"planet": 7, "touch": 3, "arena": bad})
++		if Sg.arenaCols != 4800 or SimConst.NC != 4800:
++			guard_ok = false
++	var Sn := SimCore.createSim()
++	SimCore.newMatch(Sn, 1, {}, {"arena": {"cols": 1200}})   # no planet: the hand-made world is 4,800
++	if Sn.arenaCols != 4800 or SimConst.NC != 4800:
++		guard_ok = false
++	FighterData.quiet = quiet0
++	ok(guard_ok, "a bad arena (under 600, over 4,800, odd, a string, a fraction, no columns, not a dictionary, or no planet) is the planet's own 4,800")
++	var SA := SimCore.createSim()
++	SimCore.newMatch(SA, 1, {}, {"planet": 7, "touch": 3, "arena": {"cols": 2400}, "intro": false})
++	var SB := SimCore.createSim()
++	SimCore.newMatch(SB, 2, {}, {"intro": false})
++	for r in range(6):
++		for t in range(100):
++			SimCore.step(SA)
++		for t in range(100):
++			SimCore.step(SB)
++	var ha: String = str(SimHash.stateHash(SA).gameplay)
++	var hb: String = str(SimHash.stateHash(SB).gameplay)
++	var SA2 := SimCore.createSim()
++	SimCore.newMatch(SA2, 1, {}, {"planet": 7, "touch": 3, "arena": {"cols": 2400}, "intro": false})
++	for t in range(600):
++		SimCore.step(SA2)
++	var SB2 := SimCore.createSim()
++	SimCore.newMatch(SB2, 2, {}, {"intro": false})
++	for t in range(600):
++		SimCore.step(SB2)
++	ok(ha == str(SimHash.stateHash(SA2).gameplay) and hb == str(SimHash.stateHash(SB2).gameplay) and SA.arenaCols == 2400 and SB.arenaCols == 4800, "a 2,400-column match and a default one stepped alternately 100 ticks at a time play as each plays alone (%s, %s)" % [ha.substr(0, 8), hb.substr(0, 8)])
 +	print("ARENA: %d check(s) failed" % fails)
 +	quit()
 diff --git a/sim/world/tools/arena_check.gd.uid b/sim/world/tools/arena_check.gd.uid

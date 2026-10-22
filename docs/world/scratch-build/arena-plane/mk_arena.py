@@ -32,15 +32,61 @@ static func setArena(cols: int) -> void:
 def sim(s):
     s = rep(s, '''	S.rng = SimRng.new(seed & 0xFFFFFFFF)
 	WorldBiomes.planetCols = PackedByteArray()''', '''	S.rng = SimRng.new(seed & 0xFFFFFFFF)
-	var arena = setup.get("arena", null)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's 4,800
-	SimConst.setArena(int(arena.cols) if (arena is Dictionary and setup.has("planet")) else SimConst.PLANET_NC)
+	S.arenaCols = _arenaCols(setup)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's 4,800
+	SimConst.setArena(S.arenaCols)
 	WorldBiomes.planetCols = PackedByteArray()''')
+    s = rep(s, '''## One fixed step (sim.js step).''', '''## The arena's columns from the setup, guarded: setup.arena {"cols": n, "side": 1 or -1} with a setup.planet, n an even whole number from 600 to 4,800 (a ring a fight fits
+## in, with a middle column); anything else is the planet's own 4,800, with an error (World: docs/world/shifting-arena-design.md section 3).
+static func _arenaCols(setup: Dictionary) -> int:
+	var arena = setup.get("arena", null)
+	if arena == null:
+		return SimConst.PLANET_NC
+	var n = arena.get("cols", null) if arena is Dictionary else null
+	var ok: bool = setup.has("planet") and (n is int or n is float) and float(n) == floorf(float(n)) and float(n) >= 600.0 and float(n) <= float(SimConst.PLANET_NC) and int(n) % 2 == 0
+	if not ok:
+		if not FighterData.quiet:
+			push_error("SimCore.newMatch: setup.arena %s needs a planet and cols an even whole number from 600 to %d; the planet's own arena plays" % [str(arena), SimConst.PLANET_NC])
+		return SimConst.PLANET_NC
+	return int(n)
+
+
+## One fixed step (sim.js step).''')
+    s = rep(s, '''static func step(S: SimState, inputs = null) -> bool:
+	var dtReal: float = SimConst.DT''', '''static func step(S: SimState, inputs = null) -> bool:
+	if SimConst.NC != S.arenaCols or WorldBiomes.worldId != S.worldId:   # the arena's length and a planet's biomes are statics: a match takes its own again, whatever another match has built since (two sims alive in one process)
+		SimConst.setArena(S.arenaCols)
+		WorldBiomes.planetCols = S.planetCols
+		WorldBiomes.worldId = S.worldId
+	var dtReal: float = SimConst.DT''')
     s = rep(s, '''		WorldTerrain.genWorld(S)
 	S.contactOn''', '''		WorldTerrain.genWorld(S)
-	DirLocation.reset()   # the director's lure tables follow the world and the arena's length
+	S.planetCols = WorldBiomes.planetCols   # the statics a world sets belong to this match: step takes them again when another match has built since
+	S.worldId = WorldBiomes.claim()
 	S.contactOn''')
     s = rep(s, '''float(WorldPlanet.TOUCH_COL) * SimConst.COL''', '''float(WorldPlanet.touchCol()) * SimConst.COL''')
     return s
+
+
+def state(s):
+    return rep(s, '''var contactOn: bool = false           # ground contact on''', '''var arenaCols: int = 4800            # World: this match's arena length in columns (SimConst.setArena; newMatch sets it, step sets the static again when another match has changed it). Not hashed
+var planetCols := PackedByteArray()  # World: this match's planet world's biome by column (WorldBiomes.planetCols), kept for the same reason; empty for the hand-made world. Not hashed
+var worldId: int = 0                 # World: which world this match built (WorldBiomes.claim); step compares it with the last built. Not hashed
+var contactOn: bool = false           # ground contact on''')
+
+
+def biomes(s):
+    return rep(s, '''static var planetCols := PackedByteArray()
+''', '''static var planetCols := PackedByteArray()
+static var worldId: int = 0   # the last world a match built (SimCore.newMatch: claim); a match's step takes its own tables again when this is not its id
+static var _ids: int = 0
+
+
+## A new id for the world a match is building, which is now the current one.
+static func claim() -> int:
+	_ids += 1
+	worldId = _ids
+	return worldId
+''')
 
 
 def planet(s):
@@ -201,12 +247,7 @@ def structures(s):
 
 def location(s):
     s = rep(s, '''const STEP: float = 200.0 * SimConst.PS   # one histogram bucket: SimConst.W / BUCKETS''', '''static var STEP: float = 200.0 * SimConst.PS   # one histogram bucket: SimConst.W / BUCKETS (set in _ensure: the arena's length can change)
-static var _key: String = ""
-
-
-## A new match's world: the tables are rebuilt on the next use (SimCore.newMatch).
-static func reset() -> void:
-	_key = ""''')
+static var _key: String = ""''')
     s = rep(s, '''static func _ensure() -> void:
 	if _d != null:
 		return
@@ -227,7 +268,7 @@ static func reset() -> void:
 			push_error("DirLocation: could not parse " + PATH)
 			_d = {}
 	# the tables follow the arena's length and a planet's world: rebuilt when either changes (a match on the hand-made world keeps today's)
-	var key: String = "%s/%d" % [str(SimConst.W), WorldBiomes.planetCols.size()]
+	var key: String = "%s/%d" % [str(SimConst.W), WorldBiomes.worldId]
 	if key == _key:
 		return
 	_key = key
@@ -242,6 +283,8 @@ static func reset() -> void:
 
 rw(R, 'sim/core/constants.gd', constants)
 rw(R, 'sim/core/sim.gd', sim)
+rw(R, 'sim/core/state.gd', state)
+rw(R, 'sim/world/biomes.gd', biomes)
 rw(R, 'sim/world/planet.gd', planet)
 rw(R, 'sim/world/tools/planet_check.gd', planet_check)
 rw(R, 'sim/world/tools/planet_world_check.gd', planet_check)   # (the same one-token change: TOUCH_COL is a function now)

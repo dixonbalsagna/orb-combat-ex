@@ -21,14 +21,25 @@ A setup with a `planet` and `arena: {cols, side}` plays on a ring of the planet:
 - **The golden:** `node sim/core/tools/run-all.js`, all 5 stages passed (unit 13.8 s, parity 89.6 s, soak 18.3 s, golden 0.7 s, godot 290.2 s: the 9 golden matches' every digest identical); Rendering's 15 gates all passed; `node tools/validate.js` 229 files, 0 errors, 0 warnings; `--self-test` 8519 of 8519. (The first full run was before one function's engine `clampf` became `SimMathx.jclamp`, for planet.gd's lint; **`run-all.js --only=godot,golden` was run again on the final tree: both stages passed (golden 0.7 s, godot 284.5 s).**)
 - **Speed:** four default AI matches of 3,600 ticks: HEAD 5,391 and 4,823 ms, with the patch 5,051 and 5,136 ms (a shared PC; no difference outside noise): a static read costs nothing measurable.
 
+## Re-cut 2026-10-22 on b3a3aa74: Simulation's three conditions
+
+1. **Guard `arena.cols`:** `SimCore._arenaCols(setup)`: needs a `planet` and `cols` an even whole number from 600 to 4,800; anything else is the planet's own 4,800, with an error (quiet under `FighterData.quiet`).
+2. **Re-assert in `SimCore.step`:** the match keeps `S.arenaCols`, `S.planetCols` and `S.worldId` (state.gd, not hashed); at the top of `step`, if the static arena length or `WorldBiomes.worldId` is not this match's, it sets its own again. Two matches alive in one process, stepped alternately, play as each plays alone (`arena_check`: a 2,400-column match and a default one, 100 ticks at a time, equal their solo hashes).
+3. **The four load-time constants:** re-scanned on b3a3aa74: still the same four (`location.gd` `STEP`, `collateral.gd` `HIST_STEP`, `structures.gd` `BUCKET_W`, `planet.gd` `TOUCH_COL`), all four are functions or statics in the patch.
+
+**Encounter's location.gd lines changed from what they were told:** the tables are keyed on the arena's length and `WorldBiomes.worldId` (a counter `newMatch` claims for each world it builds), so there is **no `reset()`** and a planet world rebuilds them too. At the default arena `STEP` is `W / 48` = 3,200 exactly, as before.
+
+**The gates on the re-cut tree (clean export of b3a3aa74 plus both patches, below-normal):** `run-all.js` all 5 stages passed (unit 12.2 s, parity 78.3 s, soak 19.8 s, golden 0.6 s, godot 304.8 s); Rendering's 15 gates all passed; `arena_check` 0 failed. The diffs are 6 files (window 0) and 13 files (window 1), apply on the newest main and equal the scratch tree.
+
 ## Lines in files that are not World's
 
 | File | Owner | What |
 | :--- | :--- | :--- |
+| `sim/core/state.gd` | Simulation | `arenaCols`, `planetCols`, `worldId` (three fields, not hashed) |
 | `sim/core/constants.gd` | Simulation | `W`, `NC`, `HALF` from `const` to `static var`; `PLANET_NC` (const 4,800); `static func setArena(cols)` |
-| `sim/core/sim.gd` | Simulation | `newMatch`: `SimConst.setArena(...)` first, `DirLocation.reset()` after the world, the planet start reads `WorldPlanet.touchCol()` (window 0 adds the planet branch) |
-| `sim/director/location.gd` | Encounter | `STEP` a static, the tables rebuilt when the arena's length or the world changes (`_ensure` keyed on them), `reset()` |
-| `replay.gd`, `state.gd`, `hash.gd` | none | The replay's `setup` already carries `arena`; nothing is hashed |
+| `sim/core/sim.gd` | Simulation | `newMatch`: the guarded `_arenaCols`, `SimConst.setArena(...)` first, `S.planetCols`/`S.worldId = WorldBiomes.claim()` after the world, the planet start reads `WorldPlanet.touchCol()` (window 0 adds the planet branch); `step`: the re-assert |
+| `sim/director/location.gd` | Encounter | `STEP` a static, the tables rebuilt when the arena's length or the world changes (`_ensure` keyed on the length and `WorldBiomes.worldId`) |
+| `replay.gd`, `hash.gd` | none | The replay's `setup` already carries `arena`; nothing is hashed |
 
 ## What it does not do (the later windows)
 

@@ -7,6 +7,9 @@ from mk_wbc_lib import rw, rep
 R = sys.argv[1].rstrip('/') + '/'
 here = os.path.dirname(os.path.abspath(__file__))
 shutil.copy(os.path.join(here, 'planet_world.gd'), R + 'sim/world/planet_world.gd')
+for f, d in (('planet_world.gd.uid', 'sim/world/'), ('planet_world_check.gd', 'sim/world/tools/'), ('planet_world_check.gd.uid', 'sim/world/tools/')):
+    if os.path.exists(os.path.join(here, f)):
+        shutil.copy(os.path.join(here, f), R + d + f)
 
 
 def biomes(s):

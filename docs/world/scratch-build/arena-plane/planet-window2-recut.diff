@@ -1,5 +1,5 @@
 diff --git a/sim/core/sim.gd b/sim/core/sim.gd
-index 1a1415c..2bbf73f 100644
+index 03692c2..a2f77fe 100644
 --- a/sim/core/sim.gd
 +++ b/sim/core/sim.gd
 @@ -49,7 +49,9 @@ static func dispose(S: SimState) -> void:
@@ -173,11 +173,11 @@ index 0000000..17ac030
 +	return true
 diff --git a/sim/world/planet_world.gd.uid b/sim/world/planet_world.gd.uid
 new file mode 100644
-index 0000000..9557ec4
+index 0000000..3e4a615
 --- /dev/null
 +++ b/sim/world/planet_world.gd.uid
 @@ -0,0 +1 @@
-+uid://cyqoxqdh3e0aw
++uid://bycs8tkgujkvd
 diff --git a/sim/world/tools/planet_world_check.gd b/sim/world/tools/planet_world_check.gd
 new file mode 100644
 index 0000000..cd78e44
