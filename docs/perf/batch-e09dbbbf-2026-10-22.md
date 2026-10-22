@@ -25,6 +25,22 @@ The warm-up fix clears both hitches on the RTX and the Radeon. On the old-laptop
 - **k32 columns a tick at x4 now costs 32 x 74 to 88 us = 2.4 to 2.8 ms a tick** (it was 16 to 19 ms), and 0.5 ms at x1. At k64 it is 5 ms at x4. A whole ring (4,800) at x4 is 0.41 s, and at x1 83 ms. That is under a frame at x4 (17 to 20 ms in the AI match).
 - (The old planet-slice bench in my audit, `--slice` on the `base` variant, reads a scratch copy of the planet library and does not move with World's park; the `ring` variant reads main's code.) The arena turn's own sim step (RingJob inside `WorldEpoch.tick`) is not on main yet, so the swap tick is not measured (item 4).
 
-## Not re-run yet
+## The three scenes against the build before it (item 3)
 
-AI, city beam and transformation against the last pass (item 3) wait for the next batch on main. The frame cost of e09dbbbf itself in those scenes was not measured here beyond the repro above.
+AI match (1,200 ticks), signature beam in the city (600), transformation (1,200); reduced mode; the build before the batch (HEAD d4795fa5) and e09dbbbf interleaved, one browser at a time, valid by the load rule. Frame p50 / p95 / p99 ms, then hitches over 50 ms.
+
+| Scene | Config | Before | e09dbbbf |
+|---|---|---|---|
+| AI match | RTX | 4.7 / 7.2 / 10.1; hitches 131 (93), 238 (163) | 4.8 / 7.5 / 10.9; **none** |
+| | Radeon | 8.3 / 21.4 / 24.0; 131 (79), 238 (168) | 8.2 / 21.0 / 23.3; **none** |
+| | RTX CPU x4 | 20.9 / 34.0 / 48.2; 131 (112), 238 (247), 817 (80) | 20.9 / 34.0 / 47.6; 238 (71) |
+| Beam in the city | RTX | 5.6 / 8.3 / 11.6; 427 (57) | 5.5 / 8.5 / 11.6; **none** |
+| | Radeon | 11.6 / 14.1 / 21.6; 121 (76) | 11.6 / 14.4 / 22.5; 121 (73), 432 (70) |
+| | RTX CPU x4 | 22.8 / 39.2 / 51.5 | 22.6 / 40.2 / 49.7 |
+| Transformation | RTX | 4.5 / 6.5 / 8.3; 120 (178) | 4.5 / 6.4 / 7.7; **none** |
+| | Radeon | 9.1 / 17.2 / 33.2; 120 (181) | 9.1 / 16.8 / 33.2; **none** |
+| | RTX CPU x4 | 21.3 / 33.9 / 44.9; 120 (264), 453 (71) | 19.5 / 33.7 / 36.6; 120 (73) |
+
+- **The steady frame cost did not change** (p50 and p95 within a few tenths of a millisecond; draw calls 97, 222 to 228 and 101; primitives the same to the thousand; the engine's CPU time per frame within 3% in every pair). The batch costs nothing per frame.
+- **The warm-up cleared the first-use hitches in all three scenes at x1**: ticks 131, 238 (AI), 427 (beam on the RTX) and 120 (transformation, 178 to 181 ms before). At the old-laptop CPU (x4) they shrink, not vanish: the AI's 238 is 71 ms (was 247), the transformation's 120 is 73 ms (was 264).
+- **Left:** the city beam on the Radeon still hitches at tick 121 (73 ms) and now at 432 (70 ms) (the first beam's first draw on that GPU); and every x4 run has scattered 50 to 60 ms frames (about 200 to 300 frames over 25 ms in 600 to 1,200: the CPU bound's own tail, not a repeat tick). Owner of the beam hitch: Rendering and VFX (the beam's warm-up on the integrated GPU).
