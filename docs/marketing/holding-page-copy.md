@@ -1,3 +1,5 @@
+**SUPERSEDED (2026-10-22): do not use this file. The live words are in `docs/legal/page-fixed-lines.md` (RL-166, RL-171), and the chosen description is in `docs/marketing/public-page-drafts.md`.**
+
 # Holding page copy, version 3 (Orb's rewrite request, inside Legal's RL-123 edits)
 
 Status: draft, private. Version 3, 2026-10-06, written by Marketing on Orb's direct instruction after reading version 2 ("towers shed their glass" is the wrong word for a skyscraper, and the page reads flat). Still inside Legal's screen (`docs/legal/holding-page-screen.md`, RL-123, edits a to f). Not reviewed by Legal in this form. Nothing goes live until Legal and Orb have seen it.
