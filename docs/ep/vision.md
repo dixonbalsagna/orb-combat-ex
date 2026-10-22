@@ -1478,3 +1478,13 @@ Audio: Gemini's guide (syllables every 2 to 3 characters, punctuation pitch, Aud
 **Looks and defaults (6):** Reduce flashing default: our call. The beam's tail: "it should look like its burned a trail into the very space it passed through, some kind of lingering effect." Transformation look: wait until Orb plays. The launcher's rest: "more back and forth, impacts, dynamic clashing. both fighters should be backflipping out of strikes, ricocheting off of enviornmental elements." Phones: "I want the base PC experience put first and foremost." Touch options and the world's light: later. Hints: full charge "Full! Let go to knock him back."; first miss "He's open. Hit the lit button."
 
 **The shifting arena approved (2026-10-19):** "I can see this being used to programmatically assign stages to opponents in the story mode. '31b-shifting-arena.svg' illustrated exactly what I was envisioning. I want this approach to work, if we are looking at something that can feasibly be done, please begin work on engineering this system." World leads, building its feasible version: the ring turns about the fighters at calm moments, with a slow drift of the far land and sky between.
+
+## Camera smoothness and the beam struggle's push (Orb, 2026-10-22)
+
+After the progress clips (homework/progress-2026-10-22/), in Orb's words:
+
+> "the camera looks like it snaps too fast, all dynamic camera movement should be smooth, no instant movement unless well justified by real cinematography theory"
+
+> "i like how the beam struggles are looking; instead of thinning out, when the losing beam is being pushed closer the beam should bulge and quiver like its buckling under energetic pressure"
+
+Standing from this: every dynamic camera move eases; an instant change (a cut, a snap) must be justified by named cinematography practice (a cut on action, a scene change such as the arena turn) and written down per cut. In the beam struggle the losing beam bulges and quivers as if buckling under pressure as it is pushed back, instead of thinning.
