@@ -347,7 +347,8 @@ static func announce(S: SimState, ex, starter, why: String) -> void:
 
 ## The weight a brawl blow names for hit-stop by weight (rulings-2026-10-19b 4a): a bolt a light's and a blast a
 ## medium's; the double hit a heavy's (it held a heavy's stop); a heavy, a medium; the close a launch's (the table's
-## "a launch or a close"); a mashed, flurry or held-pace light a mashed light's; a tapped light a light's.
+## "a launch or a close"); a mashed, flurry, burst or held-pace light a mashed light's (5b: "mash or burst light"); a
+## tapped light a light's.
 static func weightOf(a: Dictionary) -> String:
 	if a.has("energy"):
 		return "medium" if String(a.energy) == "blast" else "light"
@@ -360,7 +361,7 @@ static func weightOf(a: Dictionary) -> String:
 		return "medium"
 	if bool(a.get("closing", false)):
 		return "launch"
-	if bk == FLURRY or bool(a.get("floor", false)):
+	if bk == FLURRY or bool(a.get("floor", false)) or bool(a.get("burst", false)):
 		return "light_mash"
 	return "light"
 

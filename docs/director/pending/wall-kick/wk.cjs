@@ -27,6 +27,7 @@ function edit(rel, fn) {
   console.log(rel + (check ? ': anchors ok' : ': ok'));
 }
 if (!fs.existsSync(path.join(root, 'sim/director/recoil.gd'))) throw new Error('the recoil flips (rc.cjs) first');
+if (!check && !fs.readFileSync(path.join(root, 'sim/director/calm.gd'), 'utf8').includes('const CM_N: int')) throw new Error('the calm turn\'s 7b (../calm-7b/c7.cjs) first: the kick\'s slots follow its record');
 for (const f of ['wallkick.gd', 'wallkick.gd.uid']) {
   const from = path.join(__dirname, 'files/sim/director', f);
   if (!fs.existsSync(from)) continue;

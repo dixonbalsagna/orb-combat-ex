@@ -349,7 +349,7 @@ static func launched(S: SimState, tgt) -> void:
 				break
 	if n < 0:
 		return
-	var held: int = SimFx.stopTicks(S.dirS.stop)   # the stop still to run: the flight starts after it
+	var held: int = SimFx.stopTicks(S.dirS.stop, S.hitstopOn)   # the stop still to run: the flight starts after it (whole with hit-stop by weight on)
 	e.n = S.tick + held + n
 	e.dur = float(n)
 	e.x = lx

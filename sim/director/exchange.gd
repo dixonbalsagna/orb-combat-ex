@@ -72,6 +72,28 @@ static func requestAttack(S: SimState, A, kind: String) -> void:
 		return   # the far band: the press fires on its tick as a taunt, an answer or (held) a charge; it never waits
 	SimAct.push(A, KIND.find(kind), A.act.mode, entry, S.tick)
 	_drain(S)
+	_ackQueued(S, A, kind)   # a player's press that waits is acknowledged on its own tick (Controls' T1)
+
+
+## The press block (data/director/interrupts.json press): a player's attack press reacts on its own tick.
+static func pressCfg() -> Dictionary:
+	return DirInterrupt.data().get("press", {})
+
+
+## A player's request still waiting after the drain, on its press tick: the cue press_ack "queued" (source its cell),
+## n the tick it is due to start when the wait is the cooldown (else -1) and amount the ticks to it. Animation shows the
+## anticipation from it, and the HUD marks the cell. The AI's presses are not acknowledged.
+static func _ackQueued(S: SimState, A, kind: String) -> void:
+	if A.ai != null or not bool(pressCfg().get("ackQueued", false)):
+		return
+	var q: Array = A.act.queue
+	if q.is_empty() or int(q[q.size() - 1][3]) != S.tick:
+		return   # it started, or it was not queued
+	var e = DirBrawl._ev(S, A, "press_ack", "queued", DirBrawl._cell(kind))
+	var wait: int = int(ceil(S.dirS.cool * DirData.TICKS_PER_SEC - 0.0001)) if (S.dirS.ex == null and S.dirS.cool > 0.0) else -1
+	e.n = S.tick + wait if wait >= 0 else -1
+	e.amount = float(wait)
+	e.target = float(S.fighters.find(SimRoster.opp(S, A)))
 
 
 ## The entry of the request being started (+1 toward, 0, -1 away); 0 outside _drain. Not state: it lives for one call.
@@ -188,8 +210,8 @@ static func _start(S: SimState, A, kind: String) -> int:
 	var fu: bool = kind != "sig" and not engaging and DirBury.followUp(S, A, D)
 	if DirBury.safe(S, D):
 		return WAIT
-	if S.dirS.cool > 0.0 and opn == 0 and not fu:
-		return WAIT
+	if S.dirS.cool > 0.0 and opn == 0 and not fu and not (A.ai == null and S.dirS.exN == 0 and bool(pressCfg().get("skipOpenCool", false))):
+		return WAIT   # (a player's press is not held by the match's opening cooldown: no exchange yet, the opening beat is the intro's)
 	if A.stunTicks > 0 and DirInterrupt.on():
 		return WAIT   # step 3: a staggered fighter's requests wait
 	if A.state != "free" and A.state != "charging":
@@ -382,7 +404,7 @@ static func runBeat(S: SimState, ex, b) -> void:
 				DirBrawl.carryOn(ex)   # the strike placed its attacker and stopped him: the pair's drift carries on
 				DirBrawl.afterBlow(S, ex, b)   # a press kept behind this blow is thrown as it lands
 			else:
-				DirMelee.weigh(S, a.o, "heavy" if (a.o is Dictionary and (String(a.o.get("class", "")) == "heavy" or String(a.o.get("class", "")) == "ender")) else "light")   # hit-stop by weight
+				DirMelee.weigh(S, a.o, DirMelee.weightOfClass(a.o))   # hit-stop by weight: by the atom's class (5b)
 				DirMelee.strike(S, ex, A if a.a == "A" else D, A if a.d == "A" else D, DirBrawl.worth(S, ex, b, a.dmg), a.o)   # outside a brawl a blow is worth its form
 		"launch":
 			DirMelee.launchBeat(S, ex, D if a.rev else A, A if a.rev else D, a.force, false, a)

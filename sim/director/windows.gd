@@ -20,7 +20,7 @@ static func cfg() -> Dictionary:
 static func afterTick(S: SimState) -> void:
 	if not S.hitstopOn or S.dirS.stop <= 0.0 or S.game.ko != null:
 		return
-	var frozen: int = SimFx.stopTicks(S.dirS.stop)   # the freeze that starts with the next tick, counted as the step will
+	var frozen: int = SimFx.stopTicks(S.dirS.stop, true)   # the freeze that starts with the next tick, counted as the step will (whole: hitstop2)
 	if frozen <= 0:
 		return
 	var least: int = int(cfg().get("minLiveTicks", 5))
@@ -71,7 +71,7 @@ static func _strikes(S: SimState, ex, f, least: int) -> void:
 		SimFx.cue(S, striker, "window_hold", cls, "")
 		var e = S.out.fx[S.out.fx.size() - 1]
 		e.target = float(S.fighters.find(f))
-		e.n = S.tick + SimFx.stopTicks(S.dirS.stop) + int(round((b.t - ex.t) * DirData.TICKS_PER_SEC))
+		e.n = S.tick + SimFx.stopTicks(S.dirS.stop, true) + int(round((b.t - ex.t) * DirData.TICKS_PER_SEC))
 		e.dur = float(d)
 		if not DirBrawl.isBrawl(ex):
 			return   # the beats after it moved with it

@@ -56,6 +56,15 @@ static func weigh(S: SimState, o, w: String) -> void:
 		o["weight"] = w
 
 
+## A planned strike's weight by its atom's class (Game Design's 5b table): a heavy or an ender a heavy's, a mid a
+## medium's, an opener (or none) a light's. The launch after an ender holds its own stop at the send (holdSend).
+static func weightOfClass(o) -> String:
+	var cls: String = String(o.get("class", "")) if o is Dictionary else ""
+	if cls == "heavy" or cls == "ender":
+		return "heavy"
+	return "medium" if cls == "mid" else "light"
+
+
 ## The send holds a launch's stop (14), a full launch's (16: launch anywhere's full power), or a set piece's
 ## decisive one (a break or finisher launch). Only while hit-stop by weight is on.
 static func holdSend(S: SimState, special: bool, power: float) -> void:

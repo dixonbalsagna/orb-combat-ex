@@ -18,7 +18,8 @@ class_name DirWallKick
 ##    flight.
 ## The cue: SimFx.cue kind "wall_kick", text "rush" (toward the rival) or "push", target the rival's slot, x and y where
 ## he leaves the face, n the tick the push ends, dur its ticks, amount his kick's speed.
-## State: f.act.dirI slots after the recoil flips' (sized only when the switch is on).
+## State: f.act.dirI slots after the calm turn's (DirCalm, 7b), after the press wait's, the mash run's and the recoil
+## flips' (sized only when the switch is on).
 
 const WK_ARM: int = 0     # the launch number it is armed for, plus 1; 0 none
 const WK_SEEN: int = 1    # the launch number the AI has drawn for, plus 1
@@ -41,7 +42,7 @@ static func on() -> bool:
 
 
 static func _base() -> int:
-	return DirRecoil._base() + DirRecoil.RC_N
+	return DirCalm._base() + DirCalm.CM_N   # after the calm turn's rest record (7b), which follows the press wait's and the mash run's
 
 
 static func _g(f, k: int) -> int:

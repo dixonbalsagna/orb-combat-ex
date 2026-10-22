@@ -3835,6 +3835,28 @@
         "score"
       ],
       "additionalProperties": false
+    },
+    "press": {
+      "type": "object",
+      "description": "A player's attack press reacts on its own tick (Controls' T1).",
+      "properties": {
+        "_note": {
+          "type": "string"
+        },
+        "skipOpenCool": {
+          "type": "boolean",
+          "description": "A player's request is not held by the match's opening cooldown while no exchange has started."
+        },
+        "ackQueued": {
+          "type": "boolean",
+          "description": "A player's request still waiting after the drain is acknowledged on its press tick (press_ack, queued)."
+        }
+      },
+      "required": [
+        "skipOpenCool",
+        "ackQueued"
+      ],
+      "additionalProperties": false
     }
   },
   "additionalProperties": false,
