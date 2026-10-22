@@ -23,12 +23,12 @@ class_name DirCamIntent
 ##   read    a perfect block marked at the guard press: n the contact it turns, actor the blocker
 
 const WEIGHT: Dictionary = {"strike": 1, "chainStrike": 1, "window": 0, "dodge": 1, "slip": 1, "stagger": 3, "rush": 1,
-	"launch": 4, "knockBack": 4, "guardBreak": 4, "clashResolve": 4, "clashWave": 4, "beamFire": 4, "beamImpact": 4}
+	"launch": 4, "knockBack": 4, "guardBreak": 4, "clashResolve": 4, "clashWave": 4, "beamFire": 4, "beamImpact": 4, "beamReach": 4}
 const KIND: Dictionary = {"strike": "light", "chainStrike": "light", "window": "window", "dodge": "move", "slip": "move",
 	"rush": "move", "stagger": "heavy", "launch": "launch", "knockBack": "launch", "guardBreak": "set",
-	"clashResolve": "set", "clashWave": "set", "beamFire": "set", "beamImpact": "set"}
-const DECISIVE: Array = ["launch", "knockBack", "guardBreak", "clashResolve", "beamFire", "beamImpact"]
-const STRIKES: Array = ["strike", "chainStrike", "launch", "knockBack", "guardBreak", "beamImpact"]
+	"clashResolve": "set", "clashWave": "set", "beamFire": "set", "beamImpact": "set", "beamReach": "set"}
+const DECISIVE: Array = ["launch", "knockBack", "guardBreak", "clashResolve", "beamFire", "beamImpact", "beamReach"]
+const STRIKES: Array = ["strike", "chainStrike", "launch", "knockBack", "guardBreak", "beamImpact", "beamReach"]
 const RUN_GAP: int = 12   # ticks: beats closer than this are one burst (no cut), farther ones leave a breath
 
 
@@ -53,8 +53,11 @@ static func _slot(S: SimState, f) -> int:
 
 
 ## The story the beat tells (Research's rec 16: spend by story weight). a attacks, d defends; fav the side the plan
-## favours (a, d or null); big: the plan has a launch, a heavy or a set piece.
-static func _story(S: SimState, ex, a, d, fav, big: bool, finisher: bool) -> Dictionary:
+## favours (a, d or null); big: the plan has a launch, a heavy or a set piece. base: what the plan holds (a finisher 5;
+## a beam or a clash 4; a launch, a guard break or a clash's resolve 3; a heavy or a knock-back 2; else 1), and each
+## of reversal, comeback, crippling and first blood adds one, to 5. known: its outcome is decided, so it is tagged
+## decisive; a big plan whose outcome isn't is tagged big.
+static func _story(S: SimState, ex, a, d, fav, big: bool, finisher: bool, base: int = 1, known: bool = false) -> Dictionary:
 	var tags: Array = []
 	var fresh: bool = true
 	for f in S.fighters:
@@ -65,8 +68,10 @@ static func _story(S: SimState, ex, a, d, fav, big: bool, finisher: bool) -> Dic
 	var tpl: String = String(ex.tpl) if ex != null else ""
 	if tpl.contains("riposte") or tpl.contains("counter") or fav == d:
 		tags.append("reversal")
-	if big or a.brink or d.brink:
+	if known:
 		tags.append("decisive")
+	elif big or a.brink or d.brink:
+		tags.append("big")
 	if finisher:
 		tags.append("finisher")
 	if fav != null:
@@ -79,7 +84,11 @@ static func _story(S: SimState, ex, a, d, fav, big: bool, finisher: bool) -> Dic
 			if SimWounds.battered(loser, r):
 				tags.append("crippling")
 				break
-	return {"w": 5 if finisher else mini(5, tags.size()), "tags": tags}
+	var bonus: int = 0
+	for tg in tags:
+		if tg == "reversal" or tg == "comeback" or tg == "crippling" or tg == "first_blood":
+			bonus += 1
+	return {"w": 5 if finisher else mini(5, maxi(1, base) + bonus), "tags": tags}
 
 
 ## Pauses and do-not-cut spans from a list of beats (sorted by n): a strike's hit-stop is a pause, a gap of RUN_GAP or
@@ -121,8 +130,9 @@ static func _send(S: SimState, a, d, src: String, plan: Dictionary) -> void:
 	e.set_meta("plan", plan)
 
 
-## A planned exchange has its beats (DirExchange._start, after the alchemist dressed them).
-static func exchange(S: SimState, ex) -> void:
+## A planned exchange has its beats (DirExchange._start, after the alchemist dressed them). why: what told it again
+## ("finisher" at its plan, "clash" at a beam clash's start, "beam" and "beam:<outcome>" at a beam's fire), or "".
+static func exchange(S: SimState, ex, why: String = "") -> void:
 	if not on() or ex == null:
 		return
 	var beats: Array = []
@@ -172,12 +182,18 @@ static func exchange(S: SimState, ex) -> void:
 	var fav = null
 	if int(ex.loser) >= 0:
 		fav = ex.D if S.fighters[int(ex.loser)] == ex.A else ex.A
-	var fin: bool = String(ex.tag) == "FINISHER" or String(ex.tpl).begins_with("finisher")
+	var fin: bool = why == "finisher" or String(ex.tag) == "FINISHER" or String(ex.tpl).begins_with("finisher")
+	var resolves: bool = false
+	for x in beats:
+		if String(x.op) == "guardBreak" or String(x.op) == "clashResolve":
+			resolves = true
+	var base: int = 5 if fin else (4 if (why == "clash" or why.begins_with("beam") or beam[0] >= 0) else (3 if (launchAt >= 0 or resolves) else (2 if big else 1)))
+	var known: bool = fin or why == "clash" or why == "beam:HIT" or (big and int(ex.loser) >= 0)
 	var plan := {"ex": int(S.dirS.exN), "tpl": String(ex.tpl), "a": _slot(S, ex.A), "d": _slot(S, ex.D), "at": S.tick,
 		"beats": beats, "contacts": contacts, "pauses": sp[0], "noCut": sp[1],
 		"launch": ({"n": launchAt} if launchAt >= 0 else {}), "set": big or fin, "beam": beam[0] >= 0,
-		"story": _story(S, ex, ex.A, ex.D, fav, big, fin)}
-	_send(S, ex.A, ex.D, String(ex.tpl), plan)
+		"story": _story(S, ex, ex.A, ex.D, fav, big, fin, base, known)}
+	_send(S, ex.A, ex.D, String(ex.tpl) if why == "" else why, plan)
 
 
 ## A brawl's blow is thrown (DirBrawl._throw): its contact, its weight and what it means are known now.
@@ -195,7 +211,7 @@ static func blow(S: SimState, f, o, args: Dictionary, contact: int) -> void:
 		"beats": beats, "contacts": [contact], "pauses": ([[contact, contact + stop]] if stop > 0 else []), "noCut": [],
 		"launch": ({"n": contact, "safety": int(args.get("safety", 1)), "aim": int(args.get("aim", 0))} if lau else {}),
 		"set": lau, "beam": false,
-		"story": _story(S, S.dirS.ex, f, o, f if (lau or closing) else null, lau or closing or kind == "heavy", false)}
+		"story": _story(S, S.dirS.ex, f, o, f if (lau or closing) else null, lau or closing or kind == "heavy", false, 3 if lau else (2 if (closing or kind == "heavy") else 1), lau and int(args.get("safety", 1)) == 1)}
 	_send(S, f, o, "brawl", plan)
 
 
@@ -224,8 +240,32 @@ static func doubleHit(S: SimState, ex, contact: int) -> void:
 		{"n": contact, "op": "strike", "kind": "heavy", "w": 3, "a": _slot(S, ex.D), "d": _slot(S, ex.A)}]
 	var plan := {"ex": int(S.dirS.exN), "tpl": "double", "a": _slot(S, ex.A), "d": _slot(S, ex.D), "at": S.tick,
 		"beats": beats, "contacts": [contact], "pauses": [], "noCut": [[S.tick, contact + 4]], "launch": {}, "set": true,
-		"beam": false, "story": {"w": 2, "tags": ["decisive", "clash"]}}
+		"beam": false, "story": {"w": 3, "tags": ["decisive", "clash"]}}
 	_send(S, ex.A, ex.D, "double", plan)
+
+
+## A decisive exchange is won (DirExchange.decisive and decisiveShot): the moment itself, told as it happens, so the
+## camera holds its story whatever came before it. Its kind (why), the exchange's beats still to come, and its weight:
+## a clash or a beam 4, a launch, a guard break or an interrupt 3, a knock-back or a shot 2, and one more when the
+## loser is on the brink (a set-up or a finisher follows).
+static func decisive(S: SimState, W, L, why: String) -> void:
+	if not on() or W == null or L == null:
+		return
+	var base: int = int({"clash": 4, "beam": 4, "beam_clash": 4, "launch": 3, "guard_break": 3, "interrupt": 3, "knockback": 2, "blast": 2}.get(why, 3)) + (1 if L.brink else 0)
+	var beats: Array = [{"n": S.tick, "op": why, "kind": "set", "w": 4, "a": _slot(S, W), "d": _slot(S, L)}]
+	var contacts: Array = [S.tick]
+	var ex = S.dirS.ex
+	if ex != null:
+		for b in ex.beats:
+			if not b.done and WEIGHT.has(b.op):
+				var n: int = tickOf(S, ex, b.t)
+				beats.append({"n": n, "op": String(b.op), "kind": String(KIND[b.op]), "w": int(WEIGHT[b.op]), "a": _slot(S, W), "d": _slot(S, L)})
+				if STRIKES.has(b.op):
+					contacts.append(n)
+	var plan := {"ex": int(S.dirS.exN), "tpl": "decisive:" + why, "a": _slot(S, W), "d": _slot(S, L), "at": S.tick,
+		"beats": beats, "contacts": contacts, "pauses": [], "noCut": [[S.tick - 4, S.tick + 24]], "launch": {}, "set": true,
+		"beam": why.begins_with("beam"), "story": _story(S, ex, W, L, W, true, false, base, true)}
+	_send(S, W, L, "decisive", plan)
 
 
 ## The send, from the plan (DirMelee.launchBeat, before doLaunch).
@@ -272,3 +312,49 @@ static func clinch(S: SimState, f, o, t0: int, most: int, pulse: int) -> void:
 		"beats": beats, "contacts": [], "pauses": [], "noCut": [[t0, t0 + most]], "launch": {}, "set": false, "beam": false,
 		"story": {"w": 1, "tags": ["grapple"]}}
 	_send(S, f, o, "clinch", plan)
+
+
+## After the send (DirMelee.launchBeat, once the body flies): with Simulation's launch curve on, the touchdown is the
+## curve's. SimFlight's track is stepped from the body as sent, to the ground or the water (SimFlight.predict) or to
+## the aimed building's near face, the way the flight meets it; the stop still to run is added. The launch cue's n,
+## dur and x, and its land, take it. A set piece's send and a knock-back's slide aren't paced, so they keep the
+## planner's. Off (the curve or the feed), nothing changes.
+static func launched(S: SimState, tgt) -> void:
+	if not on() or not S.flightOn or tgt.state != "launched" or tgt.launchSpecial or tgt.slideFeet:
+		return
+	var slot: int = _slot(S, tgt)
+	var e = null
+	for i in range(S.out.fx.size() - 1, -1, -1):
+		var x = S.out.fx[i]
+		if String(x.type) == "cue" and String(x.kind) == "cam_intent" and String(x.text) == "launch" and int(x.target) == slot:
+			e = x
+			break
+	if e == null:
+		return
+	var p: PackedFloat64Array = SimFlight.predict(S, tgt.x, tgt.y, tgt.vx, tgt.vy, tgt.aimB)
+	var n: int = int(p[0])
+	var lx: float = p[1]
+	if tgt.aimB >= 0 and tgt.aimB < S.buildings.size() and S.buildings[tgt.aimB].alive:
+		var b = S.buildings[tgt.aimB]
+		var dir: float = SimMathx.jsign(tgt.vx)
+		var edge: float = SimWrap.wrap(b.x - dir * b.w * 0.5)
+		var tr = SimFlight.track(tgt.x, tgt.y, tgt.vx, tgt.vy, tgt.aimB)
+		var most: int = n if n > 0 else 900
+		while tr.t < most:
+			var ox: float = tr.x
+			SimFlight.tick(S, tr)
+			if SimWrap.sdx(ox, edge) * dir > 0.0 and SimWrap.sdx(tr.x, edge) * dir <= 0.0:
+				n = tr.t   # he meets the aimed face
+				lx = edge
+				break
+	if n < 0:
+		return
+	var held: int = SimFx.stopTicks(S.dirS.stop)   # the stop still to run: the flight starts after it
+	e.n = S.tick + held + n
+	e.dur = float(n)
+	e.x = lx
+	if e.has_meta("launch"):
+		var m: Dictionary = e.get_meta("launch")
+		m["land"] = {"x": lx, "n": int(e.n)}
+		m["curve"] = true
+		e.set_meta("launch", m)

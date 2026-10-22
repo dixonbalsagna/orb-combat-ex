@@ -2085,6 +2085,34 @@
       "type": "number",
       "minimum": 0,
       "description": "Seconds of fight time after a double hit in which the AI does not dig in."
+    },
+    "approachCap": {
+      "type": "object",
+      "description": "The AI's free-flight approach at a human, held near Camera's whip limit (rulings-2026-10-19b 4d).",
+      "properties": {
+        "_note": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "False: nothing changes."
+        },
+        "speed": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "The most it flies at him, units a second."
+        },
+        "vsHumanOnly": {
+          "type": "boolean",
+          "description": "True: only at a human rival."
+        }
+      },
+      "required": [
+        "enabled",
+        "speed",
+        "vsHumanOnly"
+      ],
+      "additionalProperties": false
     }
   },
   "additionalProperties": false,

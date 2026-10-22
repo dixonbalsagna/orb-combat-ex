@@ -345,6 +345,26 @@ static func announce(S: SimState, ex, starter, why: String) -> void:
 	SimEvents.feed(S, "BRAWL", ex.A.name + " and " + ex.D.name + " in reach: every press is a blow")
 
 
+## The weight a brawl blow names for hit-stop by weight (rulings-2026-10-19b 4a): a bolt a light's and a blast a
+## medium's; the double hit a heavy's (it held a heavy's stop); a heavy, a medium; the close a launch's (the table's
+## "a launch or a close"); a mashed, flurry or held-pace light a mashed light's; a tapped light a light's.
+static func weightOf(a: Dictionary) -> String:
+	if a.has("energy"):
+		return "medium" if String(a.energy) == "blast" else "light"
+	if bool(a.get("double", false)):
+		return "heavy"
+	var bk: int = int(a.get("bk", LIGHT))
+	if bk == BIG:
+		return "heavy"
+	if bk == MEDIUM:
+		return "medium"
+	if bool(a.get("closing", false)):
+		return "launch"
+	if bk == FLURRY or bool(a.get("floor", false)):
+		return "light_mash"
+	return "light"
+
+
 ## A blow put on f's line by rule and not by a press (a zip's blow; the heavy a rival pressed before the zipper
 ## arrived): it lands `lead` live ticks from now, worth dmg. extra's keys go on the beat (zip, style, counter, sure,
 ## ender). A sure blow can't be blocked.
@@ -1247,6 +1267,7 @@ static func contact(S: SimState, ex, b) -> void:
 	if energy != "":
 		_shotHit(S, ex, f, o, dmg, a, ex.sD if o == ex.D else ex.sA)   # a point-blank shot is the blast's own hit, with no exchange
 	else:
+		DirMelee.weigh(S, a.o, weightOf(a))   # hit-stop by weight: the blow names its weight
 		DirMelee.strike(S, ex, f, o, dmg, a.o)
 	_inTick = was
 	f.ambush = false   # an ambush is its first blow
@@ -3006,6 +3027,24 @@ static func sentTick(S: SimState) -> void:
 				_s(f, RET_AT, _now(S))
 
 
+## No window shorter for a freeze (DirWindows; rulings-2026-10-19b 4c): his windows that count every tick, the riposte
+## and the launcher's late window, are put back by the freeze's ticks, and to at least `least` live ticks after it.
+static func freezeWindows(S: SimState, f, frozen: int, least: int) -> void:
+	for k in [RIP_UNTIL, LC_UNTIL]:
+		var u: int = _g(f, k)
+		if u > 0 and u >= S.tick:
+			_s(f, k, maxi(u + frozen, S.tick + frozen + least))
+
+
+## A freeze put his blow back d live ticks (DirWindows): its line's contact and its wind-up move with it.
+static func holdBlow(S: SimState, f, d: int) -> void:
+	if _g(f, LINE) == 0:
+		return
+	_s(f, CONTACT, _g(f, CONTACT) + d)
+	if _g(f, HOLD_AT) > 0:
+		_s(f, HOLD_AT, _g(f, HOLD_AT) + d)
+
+
 ## The return's numbers (data/director/interrupts.json bands.return).
 static func _rcfg() -> Dictionary:
 	return DirBands.data().get("return", {})
@@ -3669,7 +3708,9 @@ static func _shotHit(S: SimState, ex, f, o, dmg: float, a, eff: float) -> int:
 	var held: float = o.stance
 	o.stance = eff
 	DirInterrupt.si(o, DirInterrupt.HIT_AT, S.tick)
-	SimDamage.hit(S, null, f, o, dmg, {"kind": "blast", "shot": power, "form": "brawl_medium" if blast else "brawl_light", "stop": float(a.o.get("stop", 0.0)), "shake": 7.0 if blast else 3.0})
+	var so := {"kind": "blast", "shot": power, "form": "brawl_medium" if blast else "brawl_light", "stop": float(a.o.get("stop", 0.0)), "shake": 7.0 if blast else 3.0}
+	DirMelee.weigh(S, so, "medium" if blast else "light")   # hit-stop by weight: a blast a medium's, a bolt a light's
+	SimDamage.hit(S, null, f, o, dmg, so)
 	o.stance = held
 	if eff == 1.0:
 		return 0

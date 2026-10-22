@@ -40,8 +40,16 @@ static func _ensure() -> void:
 	STEP = SimConst.W / float(BUCKETS)
 	_planet.resize(BIOMES.size())
 	_planet.fill(0.0)
-	for sg in WorldBiomes.SEG:
-		_planet[BIOMES.find(sg[2])] += (sg[1] - sg[0]) / (9600.0 * SimConst.PS)
+	var cols: PackedByteArray = WorldBiomes.planetCols
+	if cols.size() > 0:
+		# a planet's world: each biome's share of its own columns (the hand-made world's segments don't describe it)
+		for c in cols:
+			var bi: int = BIOMES.find(String(WorldPlanetWorld.BIOME_NAME[c]))
+			if bi >= 0:
+				_planet[bi] += 1.0 / float(cols.size())
+	else:
+		for sg in WorldBiomes.SEG:
+			_planet[BIOMES.find(sg[2])] += (sg[1] - sg[0]) / (9600.0 * SimConst.PS)
 	_bucketBiome.resize(BUCKETS)
 	for k in range(BUCKETS):
 		_bucketBiome[k] = BIOMES.find(WorldBiomes.biomeAt(k * STEP + STEP / 2.0))

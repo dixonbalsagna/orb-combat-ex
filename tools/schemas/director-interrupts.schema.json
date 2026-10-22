@@ -2579,11 +2579,6 @@
                       "minimum": 0,
                       "description": "... never under this."
                     },
-                    "airSense": {
-                      "type": "number",
-                      "minimum": 0,
-                      "description": "A fighter sent by a kind marked on him recovers this much sooner for each mark."
-                    },
                     "preferW": {
                       "type": "number",
                       "minimum": 0,
@@ -3727,6 +3722,24 @@
         "flourishOverBh",
         "aiTapTicks",
         "aiCounterTicks"
+      ],
+      "additionalProperties": false
+    },
+    "freezeWindows": {
+      "type": "object",
+      "description": "No window gets shorter for a freeze (rulings-2026-10-19b 4c), with hit-stop by weight on.",
+      "properties": {
+        "_note": {
+          "type": "string"
+        },
+        "minLiveTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Live ticks a window at least this long keeps after a freeze."
+        }
+      },
+      "required": [
+        "minLiveTicks"
       ],
       "additionalProperties": false
     }

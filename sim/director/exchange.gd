@@ -382,6 +382,7 @@ static func runBeat(S: SimState, ex, b) -> void:
 				DirBrawl.carryOn(ex)   # the strike placed its attacker and stopped him: the pair's drift carries on
 				DirBrawl.afterBlow(S, ex, b)   # a press kept behind this blow is thrown as it lands
 			else:
+				DirMelee.weigh(S, a.o, "heavy" if (a.o is Dictionary and (String(a.o.get("class", "")) == "heavy" or String(a.o.get("class", "")) == "ender")) else "light")   # hit-stop by weight
 				DirMelee.strike(S, ex, A if a.a == "A" else D, A if a.d == "A" else D, DirBrawl.worth(S, ex, b, a.dmg), a.o)   # outside a brawl a blow is worth its form
 		"launch":
 			DirMelee.launchBeat(S, ex, D if a.rev else A, A if a.rev else D, a.force, false, a)
@@ -409,7 +410,9 @@ static func runBeat(S: SimState, ex, b) -> void:
 		"clashWave":
 			DirMelee.clashWave(S, ex)
 		"chainStrike":
-			DirMelee.strike(S, ex, A, D, DirBrawl.worth(S, ex, b, 52.0 + ex.combo * 7.0), {"noParry": true, "ignoreStance": true, "big": true, "stop": 0.08})   # with the brawl on, a link's blow is one brawl light
+			var lo := {"noParry": true, "ignoreStance": true, "big": true, "stop": 0.08}
+			DirMelee.weigh(S, lo, "light")   # hit-stop by weight: a link's blow is a light's
+			DirMelee.strike(S, ex, A, D, DirBrawl.worth(S, ex, b, 52.0 + ex.combo * 7.0), lo)   # with the brawl on, a link's blow is one brawl light
 		"beamCharge":
 			DirBeam.opBeamCharge(S, ex, a)
 		"beamFire":
@@ -579,6 +582,11 @@ static func cooldownAfter(ex) -> float:
 
 
 static func dirUpdate(S: SimState, dt: float) -> void:
+	_update(S, dt)
+	DirWindows.afterTick(S)   # 4c: a freeze that starts now leaves every open window its live ticks (hit-stop by weight only)
+
+
+static func _update(S: SimState, dt: float) -> void:
 	DirLocation.record(S, dt)   # location variety: the fight's time per biome
 	# The time-cap stand-in (granted write): past contest.timeCapAt every decisive win against a fighter on the brink is a
 	# finisher (decisive()). The full 11:00 event is Game Design's and Simulation's.
@@ -673,6 +681,7 @@ const CONTEST_TILT: float = 0.10
 static func decisive(S: SimState, ex, W, L, why: String, setup: String = "") -> void:
 	if S.game.ko != null or ex == null:
 		return
+	DirCamIntent.decisive(S, W, L, why)   # the camera-intent feed: the decisive moment, told as it happens
 	SimFx.decisive(S, W, L, why)
 	SimWounds.onDecisive(S, ex, W, L, why)   # S4: Spite; pitch A: the crippling roll
 	ex.loser = S.fighters.find(L)
@@ -721,6 +730,7 @@ static func _setup(S: SimState, W, L, kind: String, n: int) -> void:
 static func decisiveShot(S: SimState, W, L, n: int, brink0: bool, why: String = "blast", setup: String = "") -> void:
 	if S.game.ko != null:
 		return
+	DirCamIntent.decisive(S, W, L, why)   # the camera-intent feed: the decisive moment, told as it happens
 	SimFx.decisive(S, W, L, why)
 	SimWounds.onDecisive(S, null, W, L, why)
 	_winCloses(S, W)
@@ -856,6 +866,7 @@ static func startFinisher(S: SimState, ex, W, L) -> void:
 	DirData.planFinisher(ex, W)
 	if chk != null:
 		planCheck.call(chk, ex, S.rng.a, "finisher")
+	DirCamIntent.exchange(S, ex, "finisher")   # the camera-intent feed: the finisher's plan
 
 
 # ---------------------------------------------------------------- loader check (tools only)
@@ -1071,7 +1082,11 @@ static func _opFinalBlow(S: SimState, ex, a) -> void:
 	var L = ex.D if a.w == "A" else ex.A
 	if S.game.ko != null:
 		return
-	DirMelee.strike(S, ex, W, L, float(a.dmg), a.o)
+	var fo = a.o
+	if S.hitstopOn:
+		fo = (a.o as Dictionary).duplicate() if a.o is Dictionary else {}
+		DirMelee.weigh(S, fo, "decisive")   # hit-stop by weight: the finisher's last blow is decisive
+	DirMelee.strike(S, ex, W, L, float(a.dmg), fo)
 	var ln: Dictionary = a.launch
 	if ln.get("mode", "") == "fixed":
 		DirLaunch.doLaunch(S, W, L, {"ux": float(ln.ux) * (W.face if ln.get("faceRelative", false) else 1.0), "uy": float(ln.uy)}, float(ln.force), true)

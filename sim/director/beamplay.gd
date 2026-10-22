@@ -71,6 +71,7 @@ static func fire(S: SimState, ex, args) -> void:
 	SimEvents.feed(S, A.sigName + " FIRES", "it reaches " + D.name + " in " + str(tv) + " ticks")
 	SimFx.cue(S, A, "beam_fire", "", "")
 	DirExchange.schedule(ex, ex.t + float(tv) / DirData.TICKS_PER_SEC, "beamReach", {"perfect": perfect, "ux": dxs / L, "uy": dyy / L, "dist": dist, "variant": String(args.variant)})
+	DirCamIntent.exchange(S, ex, "beam")   # the camera-intent feed: the beam on its way
 
 
 ## The ticks beam b takes to reach the defender, when it is a fighter's main beam under the plays; otherwise 0.

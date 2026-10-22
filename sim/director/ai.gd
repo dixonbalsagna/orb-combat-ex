@@ -240,6 +240,7 @@ static func aiInput(S: SimState, f) -> void:
 	# Underwater and not hiding there: dash for the surface (underwater is a hiding state, not a place to fight).
 	if sea and f.y < 0.0 and i.my > 0.0:
 		i.dash = true
+	_capApproach(S, f, o, i)   # 4d: at a human, its free-flight approach is held near Camera's whip limit
 	# A hunter sometimes swings blind at the last-seen spot (it pays the lock-lost cost: 2 ki and a 0.5 s cooldown).
 	# A beat is not spent on a press the director would refuse (the cooldown, or a target in the air): it waits.
 	var ready: bool = S.dirS.cool <= 0.0 and o.state != "launched" and o.state != "locked" and DirBands.who(S) < 0 and not DirBands.taunting(o)
@@ -328,6 +329,25 @@ static func _healing(f) -> bool:
 const SKILL_PATH: String = "res://data/director/ai.json"
 static var _skill = null
 static var _skillText: String = ""
+
+
+## Rulings-2026-10-19b 4d, with Camera's limit (docs/camera/whip-pan.md): flying at a human rival, the AI's free-flight
+## speed is held at approachCap.speed by its stick's reach, so his view never whips after it. The traversal dash
+## still carries it most of the way. At another AI the demo's camera rides the flight, so nothing is held
+## (approachCap.vsHumanOnly). Off: nothing changes.
+static func _capApproach(S: SimState, f, o, i: SimIntent) -> void:
+	var c: Dictionary = skill().get("approachCap", {})
+	if not bool(c.get("enabled", false)) or f.state != "free" or o == null:
+		return
+	if bool(c.get("vsHumanOnly", true)) and o.ai != null:
+		return
+	if i.mx * SimWrap.sdx(f.x, o.x) <= 0.0:
+		return   # not flying at him
+	var sp: float = SimFighter.flightSpeed(S, f, i.dash) * SimDetMath.hypot(i.mx, i.my * 0.85)
+	var cap: float = float(c.get("speed", 4000.0))
+	if sp > cap:
+		i.mx *= cap / sp
+		i.my *= cap / sp
 
 
 static func skill() -> Dictionary:

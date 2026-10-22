@@ -49,6 +49,26 @@ static func opWind(S: SimState, ex, _args) -> void:
 		DirExchange.schedule(ex, ex.t + S.rng.range_(float(pd[0]), float(pd[1])), "press", {"who": "D"})
 
 
+## Hit-stop by weight (Simulation's SimHitstop; rulings-2026-10-19b 4a): the weight a hit names for the table. Only
+## while it is on: a hit's options are often a beat's, and a beat is hashed.
+static func weigh(S: SimState, o, w: String) -> void:
+	if S.hitstopOn and o is Dictionary and not o.has("weight"):
+		o["weight"] = w
+
+
+## The send holds a launch's stop (14), a full launch's (16: launch anywhere's full power), or a set piece's
+## decisive one (a break or finisher launch). Only while hit-stop by weight is on.
+static func holdSend(S: SimState, special: bool, power: float) -> void:
+	if not S.hitstopOn:
+		return
+	if special:
+		SimHitstop.hold(S, "decisive")
+	elif DirBrawl.anywhere() and power >= float(DirBrawl.la().get("full", 0.8)) - 0.0005:
+		SimHitstop.hold(S, "launch_full")
+	else:
+		SimHitstop.hold(S, "launch")
+
+
 ## Beat "slip": the escaping defender breaks away from the pursuit.
 static func opSlip(S: SimState, ex, _args) -> void:
 	var A = ex.A
@@ -442,6 +462,8 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 	DirCamIntent.launch(S, att, tgt, r.best)   # the camera-intent feed: the send's plan (render-only)
 	DirLaunch.doLaunch(S, att, tgt, r.best, force, longOnly)
 	DirBrawl.powerCue(S, att, tgt, lkind, (lpow * kf) if lpow >= 0.0 else 1.0)
+	holdSend(S, longOnly, (lpow * kf) if lpow >= 0.0 else 1.0)   # hit-stop by weight: the send holds a launch's stop
+	DirCamIntent.launched(S, tgt)   # the camera-intent feed: with the launch curve, the touchdown is the curve's
 	DirBrawl.markKind(S, tgt, lkind)
 	# The showcase (section 2): a string's ender launched at flow showcaseAt is the showcase ender. The cue is the panel's;
 	# Combat's showcase rows and the extra impact wear wait for their data and for a wear hook on a launch.

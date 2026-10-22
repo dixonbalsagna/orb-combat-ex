@@ -501,6 +501,7 @@ static func _throwHit(S: SimState, ex, f, o) -> bool:
 	var c: Dictionary = DirBrawl.cfg()
 	var o2 := {"class": "heavy", "stop": float(int(c.hitstop.heavy)) / DirData.TICKS_PER_SEC, "big": true, "kb": float(c.recoil),
 		"ignoreStance": true, "noParry": true, "weighed": true, "throw": true}
+	DirMelee.weigh(S, o2, "heavy")   # hit-stop by weight: a throw is a heavy's
 	DirMelee.strike(S, ex, f, o, w * DirBrawl._unit(), o2)
 	if S.dirS.ex != ex or ex.cancel or ex.branch != "" or S.game.ko != null:
 		return false

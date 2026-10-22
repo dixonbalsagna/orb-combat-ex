@@ -111,6 +111,7 @@ static func opBeamFire(S: SimState, ex, args) -> void:
 	else:
 		DirExchange.schedule(ex, ex.t + 0.02, "beamEscape")
 	DirExchange.schedule(ex, ex.t + 0.9, "nop")
+	DirCamIntent.exchange(S, ex, "beam:" + out)   # the camera-intent feed: the beam's plan, its outcome known
 
 
 ## The defender's answer to a beam, taken from its queue at the fire beat (stance-matrix.md §7.2): its own signature
@@ -199,6 +200,7 @@ static func startClash(S: SimState, ex, variant: String, dAdd: float = 0.0) -> v
 	SimFx.banner(S, "BEAM CLASH", "#ffffff", 1.2)
 	DirExchange.schedule(ex, ex.t + 1.6, "clashResolve", {"aw": aw, "variant": variant})
 	DirExchange.schedule(ex, ex.t + 2.6, "nop")
+	DirCamIntent.exchange(S, ex, "clash")   # the camera-intent feed: the beam clash's plan
 
 
 ## Beat "clashResolve": the clash winner's beam overpowers the loser.
