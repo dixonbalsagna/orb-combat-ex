@@ -7,10 +7,10 @@ class_name WorldEpoch
 ##
 ## The calls (nothing runs unless S.epoch is set: the data's turn switch, or setup.arena.turn):
 ##   ask(S, why, pivotX, side, due) -> candidates       when a moment is coming (Encounter's DirCalm.ask); [] when the caps refuse
-##   choose(S, i)                                       Encounter's pick (DirCalm.pick): the turn is decided; prewarm may start
-##   prewarm(S, n)                                      Encounter's few columns a sim tick (the module owns no clock): the chosen bearing's ring and the smallest candidate's. The swap needs one of them warm
+##   choose(S, i, k, fallbackDeg)                       Encounter's pick (DirCalm.pick): the turn is decided. k: columns of each ring the sim reads a tick (0 = the data's warmCols); fallbackDeg: the second ring's bearing (2.5 for a landing pick, 0 for none)
 ##   warmAngles(S)                                      the bearings (signed, degrees) whose ring is read: the angles a swap may use
-##   tick(S, hold)                                      each live tick (SimCore.step): when decided, held (Encounter's hold) and calm (below): swap on the largest warm angle that keeps the pair's ground within moveMax, wait if none does, refuse if even minDeg would not
+##   tick(S, hold)                                      each sim tick (SimCore.step): reads k more columns of each of the decided turn's rings (the chosen bearing's and the fallback's if it has one; the warm is the SIM's, a host never
+##                                                      calls it: a replay, a determinism run or a tool with no host warms and swaps on the same ticks as play); then, when held (Encounter's hold) and calm (below): swap on the largest warm angle that keeps the pair's ground within moveMax, wait if none does, refuse if even minDeg would not
 ##   cancel(S)                                          Encounter's: drop a pending pick (the director asks again)
 ##   calm(S)                                            World's check: no beam, shot, flight, rush, slide, open set piece, water flowing or catastrophe
 
@@ -132,22 +132,27 @@ static func ask(S: SimState, why: String, pivotX: float, side: int, due: int) ->
 	return cands
 
 
-## Encounter's pick: candidate i. The turn is decided (from here the swap waits for the hold, a calm tick and a warm ring). Two rings are to be warmed: the chosen bearing's and the smallest
-## candidate's (the second is what a landing off the pivot falls back to).
-static func choose(S: SimState, i: int) -> void:
+## Encounter's pick: candidate i, with how it is warmed. k: the columns of each ring the sim reads a tick (Encounter's data; 0 = the data's warmCols). fallbackDeg: the second ring, the bearing a landing
+## off the pivot falls back to (2.5 for a landing pick), on the chosen candidate's side; 0 for none (a form pick: its pivot is exact, so one ring, at up to 32 columns a tick). A fallback that is
+## not under the chosen bearing, or would pass the drift cap, is left out. Both are kept in E.next and in the hash. From here tick() warms the rings and swaps when held, calm and warm.
+static func choose(S: SimState, i: int, k: int = 0, fallbackDeg: float = -1.0) -> void:
 	var E = S.epoch
 	if E == null or E.ask == null:
 		return
+	var d: Dictionary = data()
 	var cands: Array = E.ask.cands
 	var c: Dictionary = cands[clampi(i, 0, cands.size() - 1)]
-	E.next = {"spec": c.spec, "pc": E.ask.pc, "bearing": c.bearing, "drift": c.drift, "why": E.ask.why, "tick": S.tick, "due": E.ask.due}   # tick: the pick's; due: the moment it is for (the director paces the warm read by them). Not hashed
-	var low: Dictionary = c
-	for k in cands:
-		if absf(float(k.bearing)) < absf(float(low.bearing)):
-			low = k
-	E.warm = [{"deg": c.bearing, "spec": c.spec, "cols": 0}]
-	if low != c:
-		E.warm.append({"deg": low.bearing, "spec": low.spec, "cols": 0})
+	var fb: float = float(d.fallbackDeg) if fallbackDeg < 0.0 else fallbackDeg
+	if fb > 0.0:
+		fb = maxf(fb, float(d.minDeg))
+	var warm: Array = [{"deg": c.bearing, "spec": c.spec, "cols": 0}]
+	if fb > 0.0 and fb < absf(float(c.bearing)) - 1e-9:
+		var sgn: float = 1.0 if float(c.bearing) >= 0.0 else -1.0
+		var ns: Dictionary = turned(WorldPlanet.make(int(E.seed)), E.ring, int(E.ask.pc), sgn * fb)
+		if driftOf(E.c0, ns.c) <= float(d.driftDeg):
+			warm.append({"deg": sgn * fb, "spec": ns, "cols": 0})
+	E.next = {"spec": c.spec, "pc": E.ask.pc, "bearing": c.bearing, "drift": c.drift, "why": E.ask.why, "tick": S.tick, "due": E.ask.due, "k": k if k > 0 else int(d.warmCols), "fb": absf(float(warm[1].deg)) if warm.size() > 1 else 0.0}   # tick: the pick's; due: the moment it is for. k and fb are hashed
+	E.warm = warm
 	E.ask = null
 	_dropJobs(S)
 
@@ -174,12 +179,12 @@ static func _dropJobs(S: SimState) -> void:
 			_jobs.erase(k)
 
 
-## Encounter warms the decided turn's rings, n columns a sim tick for each (a Whole ring is 4,800 columns, so a full pause of k ticks at n = 4,800 / k reads both). The module owns no clock: how far a
-## ring is read is counted in the state (`cols`, columns asked for), so when a ring counts as warm is a function of the calls and not of the host's speed. True when every ring is read.
-static func prewarm(S: SimState, n: int) -> bool:
+## The sim reads the decided turn's rings, k columns of each a sim tick, from tick() (a Whole ring is 4,800 columns, so k = 64 reads both in 75 ticks, 1.25 s). How far a ring is read is counted in the
+## state (`cols`, columns read), so when a ring counts as warm is a function of the ticks since the pick and not of any host. The slices are derived data kept outside the state (`_jobs`): a state
+## carried into a process that has not got a job makes it again and reads up to `cols` at once (the same columns, a hitch). True when every ring is read.
+static func _warm(S: SimState) -> bool:
 	var E = S.epoch
-	if E == null or E.next == null:
-		return false
+	var n: int = int(E.next.k)
 	var all: bool = true
 	for w in E.warm:
 		if int(w.cols) >= SimConst.NC:
@@ -189,6 +194,8 @@ static func prewarm(S: SimState, n: int) -> bool:
 		if job == null:
 			var P := WorldPlanet.make(int(E.seed))
 			job = WorldPlanet.RingJob.new(P, WorldRingPick.ringFrom(w.spec.c, int(w.spec.cols), w.spec.t))
+			if int(w.cols) > 0:
+				job.step(int(w.cols))   # the catch-up of a carried state
 			_jobs[key] = job
 		job.step(n)
 		w.cols = int(w.cols) + n
@@ -243,7 +250,10 @@ static func _reach(S: SimState, pc: int) -> float:
 ## asks again at its next send. The 300 rule wins over "never under 2 degrees".
 static func tick(S: SimState, hold: bool = true) -> void:
 	var E = S.epoch
-	if E == null or E.next == null or not hold or not calm(S):
+	if E == null or E.next == null:
+		return
+	_warm(S)
+	if not hold or not calm(S):
 		return
 	var d: Dictionary = data()
 	var smax: float = _reach(S, int(E.next.pc))

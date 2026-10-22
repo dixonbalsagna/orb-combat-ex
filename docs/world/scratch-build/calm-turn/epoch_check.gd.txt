@@ -32,9 +32,29 @@ func ready(cols: int, seed: int = 1) -> SimState:
 	return S
 
 
-## The host's part: warm every ring of the decided turn (Encounter does it a few columns a sim tick; here all at once).
-func warmAll(S: SimState, n: int = 100000) -> void:
-	WorldEpoch.prewarm(S, n)
+## The sim warms a decided turn's rings itself, k columns of each a tick (WorldEpoch.tick); no host calls anything. Here k is made large so one tick, with no hold, reads them all.
+func warmAll(S: SimState) -> void:
+	S.epoch.next.k = 100000
+	WorldEpoch.tick(S, false)
+
+
+## A match that plays by SimCore.step alone (no host, no director) with a turn decided at tick 30: the tick it swaps on and its hash. mode 1: the slices kept outside the state are lost at tick 20 (a state
+## carried into another process); mode 2: the state is hashed every tick (what a host or a replay tool reads).
+func playRun(sd: int, mode: int, fb: float = 2.5) -> Dictionary:
+	var S := ready(2400, sd)
+	WorldEpoch.ask(S, "replay", mid(S), 1, 0)
+	WorldEpoch.choose(S, 2, 64, fb)
+	var swapTick: int = -1
+	var hs: String = ""
+	for t in range(1800):
+		SimCore.step(S)
+		if mode == 1 and t == 20:
+			WorldEpoch._jobs.clear()
+		if mode == 2:
+			hs = str(SimHash.stateHash(S).gameplay)
+		if swapTick < 0 and S.epoch.n == 1:
+			swapTick = t
+	return {"tick": swapTick, "hash": str(SimHash.stateHash(S).gameplay), "cold": S.epoch.cold, "waited": S.epoch.waited, "refused": S.epoch.refused}
 
 
 func nearest(S: SimState, x: float):
@@ -300,7 +320,9 @@ func _init() -> void:
 	WorldEpoch.ask(Sw, "test", mid(Sw), 1, 0)
 	WorldEpoch.choose(Sw, 0)
 	var spw: int = 0
-	while not WorldEpoch.prewarm(Sw, 64):
+	Sw.epoch.next.k = 64
+	while WorldEpoch.warmAngles(Sw).is_empty():
+		WorldEpoch.tick(Sw, false)
 		spw += 1
 		if spw == 3:
 			WorldEpoch.tick(Sw, true)   # a ring that is part read is not warm: no swap
@@ -318,10 +340,10 @@ func _init() -> void:
 	for warm in [0, 1, 2]:   # warmed 100 columns a call, warmed 640 a call, and a state carried into a process that never warmed it (the jobs are gone: the swap reads, and says so)
 		var Sx := ready(2400)
 		WorldEpoch.ask(Sx, "test", mid(Sx), 1, 0)
-		WorldEpoch.choose(Sx, 2)
 		var step: int = 100 if warm == 0 else 640
-		while not WorldEpoch.prewarm(Sx, step):
-			pass
+		WorldEpoch.choose(Sx, 2, step)
+		while WorldEpoch.warmAngles(Sx).size() < 2:
+			WorldEpoch.tick(Sx, false)
 		if warm == 2:
 			WorldEpoch._jobs.clear()
 		WorldEpoch.tick(Sx, true)
@@ -350,5 +372,48 @@ func _init() -> void:
 	for t in range(300):
 		SimCore.step(Sz)
 	ok(Sz.epoch.n == 1 and Sz.buildings.size() > 0 and zb != 118, "a Whole match turns too and plays on (%d buildings before, %d after)" % [zb, Sz.buildings.size()])
+	# --- the pick's interface: k, and the fallback ring (2.5 for a landing, 0 for a form pick's exact pivot)
+	var Sf := ready(2400)
+	WorldEpoch.ask(Sf, "t", mid(Sf), 1, 0)
+	WorldEpoch.choose(Sf, 3, 16, 0.0)
+	var hf0: String = str(SimHash.stateHash(Sf).gameplay)
+	ok(Sf.epoch.warm.size() == 1 and Sf.epoch.next.k == 16 and Sf.epoch.next.fb == 0.0, "fallbackDeg 0 (a form pick) warms one ring, at the k the pick brings")
+	var Sg2 := ready(2400)
+	WorldEpoch.ask(Sg2, "t", mid(Sg2), 1, 0)
+	WorldEpoch.choose(Sg2, 3, 16, 2.5)
+	ok(Sg2.epoch.warm.size() == 2 and Sg2.epoch.next.fb == 2.5 and str(SimHash.stateHash(Sg2).gameplay) != hf0, "a landing pick (fallback 2.5) warms two, and k and the fallback are in the hash")
+	var Sh2 := ready(2400)
+	WorldEpoch.ask(Sh2, "t", mid(Sh2), 1, 0)
+	WorldEpoch.choose(Sh2, 0, 0, 2.5)
+	ok(Sh2.epoch.warm.size() == 1 and Sh2.epoch.next.k == int(d.warmCols), "a fallback not under the chosen bearing is left out, and k 0 is the data's")
+	var cols16: int = 0
+	var Si := ready(2400)
+	WorldEpoch.ask(Si, "t", mid(Si), 1, 0)
+	WorldEpoch.choose(Si, 3, 16, 2.5)
+	for t in range(10):
+		SimCore.step(Si)
+	for w in Si.epoch.warm:
+		cols16 = maxi(cols16, int(w.cols))
+	ok(cols16 == 160 and Si.epoch.n == 0, "SimCore.step alone warms: 10 sim ticks at k 16 read 160 columns of each ring")
+	# --- a replay of a match that turns, headless, no host: the same swap tick as play
+	var turning: Array = []
+	var A: Dictionary = {}
+	for sd in range(1, 13):
+		A = playRun(sd, 0)
+		if A.tick >= 0:
+			turning.append([sd, A])
+			if turning.size() >= 2:
+				break
+	var replayOk: bool = turning.size() >= 1
+	var rlog: Array = []
+	for tr in turning:
+		var B: Dictionary = playRun(tr[0], 0)   # the replay
+		var Cc: Dictionary = playRun(tr[0], 1)   # slices lost mid-warm
+		var Dd: Dictionary = playRun(tr[0], 2)   # hashed every tick
+		var identical: bool = B.tick == tr[1].tick and B.hash == tr[1].hash and Cc.tick == tr[1].tick and Cc.hash == tr[1].hash and Dd.tick == tr[1].tick and Dd.hash == tr[1].hash and Cc.cold == 0 and tr[1].cold == 0
+		if not identical:
+			replayOk = false
+		rlog.append("seed %d swaps on tick %d (waited %d)" % [tr[0], tr[1].tick, tr[1].waited])
+	ok(replayOk, "a match played by SimCore.step alone (no host) turns on the same tick and to the same hash when replayed, when its slices are lost mid-warm, and when it is hashed every tick (%s)" % " | ".join(rlog))
 	print("EPOCH: %d check(s) failed" % fails)
 	quit()

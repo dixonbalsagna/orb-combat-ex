@@ -1,16 +1,16 @@
 diff --git a/data/biomes/rings.json b/data/biomes/rings.json
-index 48abec3..bb594c8 100644
+index 48abec3..9d5bff9 100644
 --- a/data/biomes/rings.json
 +++ b/data/biomes/rings.json
 @@ -1,6 +1,6 @@
  {
    "schema": "biomes.rings/1",
 -  "_about": "The ring picker's numbers (docs/world/shifting-arena-design.md window 4; WorldRingPick). sizes: the columns of Game Design's three sizes (Close 38,400 units, Half 76,800, Whole 153,600). minimum: what a ring must hold by size (standing cities and towns, kinds of ground of at least biomeShare of the ring, and the share that is land). candidates: how many rings are tried for a claim at a size. stride: columns between the coarse read's samples. ref: the share of the ring (or the count) at which a claim's suit counts in full. mustAt: the least value of a must-cross feature. avoidWeight: how much of an avoided feature's value comes off the score. homeBonus: added when the ring holds the claim's home place. coastRef: coast crossings (water to land and back) that count as a full coast. The claims themselves are Narrative's (docs/narrative/opponent_grounds.json) and are passed in; features the planet function cannot see are proxies (WorldRingPick.featureValue).",
-+  "_about": "The ring picker's numbers (docs/world/shifting-arena-design.md window 4; WorldRingPick). sizes: the columns of Game Design's three sizes (Close 38,400 units, Half 76,800, Whole 153,600). minimum: what a ring must hold by size (standing cities and towns, kinds of ground of at least biomeShare of the ring, and the share that is land). candidates: how many rings are tried for a claim at a size. stride: columns between the coarse read's samples. ref: the share of the ring (or the count) at which a claim's suit counts in full. mustAt: the least value of a must-cross feature. avoidWeight: how much of an avoided feature's value comes off the score. homeBonus: added when the ring holds the claim's home place. coastRef: coast crossings (water to land and back) that count as a full coast. The claims themselves are Narrative's (docs/narrative/opponent_grounds.json) and are passed in; features the planet function cannot see are proxies (WorldRingPick.featureValue). turn: the calm-moment turn (docs/world/calm-turn-world.md; WorldEpoch; Game Design rulings-2026-10-19b.md 1a to 1d): on 0 or 1 (off), maxTurns a fight, gapSeconds of fight time between turns, driftDeg the most the ring's axis may move in all, bearings the candidate turns in degrees (none over 10), carryUnits how far each way from the pair the ground, craters and buildings stay, viewUnits how far each way a turn counts the places it brings into view, moveMax the most the ground under a fighter may move at a turn (a turn about a mispredicted pivot is scaled down to it: Game Design 2026-10-22 5a) and minDeg the least angle it is scaled to.",
++  "_about": "The ring picker's numbers (docs/world/shifting-arena-design.md window 4; WorldRingPick). sizes: the columns of Game Design's three sizes (Close 38,400 units, Half 76,800, Whole 153,600). minimum: what a ring must hold by size (standing cities and towns, kinds of ground of at least biomeShare of the ring, and the share that is land). candidates: how many rings are tried for a claim at a size. stride: columns between the coarse read's samples. ref: the share of the ring (or the count) at which a claim's suit counts in full. mustAt: the least value of a must-cross feature. avoidWeight: how much of an avoided feature's value comes off the score. homeBonus: added when the ring holds the claim's home place. coastRef: coast crossings (water to land and back) that count as a full coast. The claims themselves are Narrative's (docs/narrative/opponent_grounds.json) and are passed in; features the planet function cannot see are proxies (WorldRingPick.featureValue). turn: the calm-moment turn (docs/world/calm-turn-world.md; WorldEpoch; Game Design rulings-2026-10-19b.md 1a to 1d): on 0 or 1 (off), maxTurns a fight, gapSeconds of fight time between turns, driftDeg the most the ring's axis may move in all, bearings the candidate turns in degrees (none over 10), carryUnits how far each way from the pair the ground, craters and buildings stay, viewUnits how far each way a turn counts the places it brings into view, moveMax the most the ground under a fighter may move at a turn (a turn about a mispredicted pivot is scaled down to it: Game Design 2026-10-22 5a) minDeg the least angle it is scaled to warmCols the columns of each of a decided turn's rings the sim reads a tick and fallbackDeg the bearing of the second ring it warms (Encounter's pick may set its own).",
    "sizes": {
      "close": 1200,
      "half": 2400,
-@@ -37,5 +37,21 @@
+@@ -37,5 +37,23 @@
    "mustAt": 0.2,
    "avoidWeight": 0.5,
    "homeBonus": 0.25,
@@ -30,14 +30,16 @@ index 48abec3..bb594c8 100644
 +    "carryUnits": 12000.0,
 +    "viewUnits": 16000.0,
 +    "moveMax": 300.0,
-+    "minDeg": 2.0
++    "minDeg": 2.0,
++    "warmCols": 32,
++    "fallbackDeg": 2.5
 +  }
  }
 diff --git a/sim/core/hash.gd b/sim/core/hash.gd
-index badaccb..26fa4be 100644
+index badaccb..1895739 100644
 --- a/sim/core/hash.gd
 +++ b/sim/core/hash.gd
-@@ -204,6 +204,12 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
+@@ -204,6 +204,13 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
  		if b.marks != 0:
  			out.append(float(b.marks))   # World: repeats escalate (only with brunt.json repeatMarks above 0)
  	out.append(1.0 if S.contactOn else 0.0)   # World's ground contact (G2)
@@ -46,11 +48,12 @@ index badaccb..26fa4be 100644
 +		out.append(1.0 if S.epoch.next != null else 0.0)
 +		if S.epoch.next != null:
 +			out.append(S.epoch.next.bearing); out.append(float(S.epoch.next.pc)); out.append(float(WorldEpoch.warmAngles(S).size()))   # and how many of its rings are read: when a swap may happen
++			out.append(float(S.epoch.next.k)); out.append(S.epoch.next.fb)   # and how it is warmed (the columns a tick, the second ring's bearing)
 +		out.append(float(S.epoch.sh))
  	out.append(float(S.trees.size()))
  	for t in S.trees:
  		_obj(out, t, TREE)
-@@ -329,7 +335,7 @@ const FX_FIELDS: Dictionary = {
+@@ -329,7 +336,7 @@ const FX_FIELDS: Dictionary = {
  	"left_ground": ["actor", "x", "y", "z", "spd", "n", "cause", "vx", "vy", "slope", "contacts", "dur"], "bounce": ["actor", "x", "y", "z", "spd", "n", "k", "keep", "vn", "vt", "surface", "sina", "slope", "contacts", "dur"],
  	"land": ["actor", "x", "y", "z", "spd", "n", "kind", "sina", "slope", "surface", "vn", "vt", "contacts", "dur"], "tumble_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "dur"],
  	"journey_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "lips", "nb", "dur"],
@@ -107,10 +110,10 @@ index 34bf421..f6686b7 100644
  				push_error("consume: unknown event " + e.type)
 diff --git a/sim/world/epoch.gd b/sim/world/epoch.gd
 new file mode 100644
-index 0000000..cc484c9
+index 0000000..ddf065a
 --- /dev/null
 +++ b/sim/world/epoch.gd
-@@ -0,0 +1,418 @@
+@@ -0,0 +1,428 @@
 +class_name WorldEpoch
 +## The calm-moment turn (docs/world/shifting-arena-design.md section 4, docs/world/calm-turn-world.md; Game Design rulings-2026-10-19b.md section 1; Encounter's docs/director/calm-turn.md).
 +## At a calm moment the arena's ring turns about the pair: a new plane through the pair's point, at most 10 degrees of bearing from the old, at most 4 turns a fight, at least 60 s of fight
@@ -120,10 +123,10 @@ index 0000000..cc484c9
 +##
 +## The calls (nothing runs unless S.epoch is set: the data's turn switch, or setup.arena.turn):
 +##   ask(S, why, pivotX, side, due) -> candidates       when a moment is coming (Encounter's DirCalm.ask); [] when the caps refuse
-+##   choose(S, i)                                       Encounter's pick (DirCalm.pick): the turn is decided; prewarm may start
-+##   prewarm(S, n)                                      Encounter's few columns a sim tick (the module owns no clock): the chosen bearing's ring and the smallest candidate's. The swap needs one of them warm
++##   choose(S, i, k, fallbackDeg)                       Encounter's pick (DirCalm.pick): the turn is decided. k: columns of each ring the sim reads a tick (0 = the data's warmCols); fallbackDeg: the second ring's bearing (2.5 for a landing pick, 0 for none)
 +##   warmAngles(S)                                      the bearings (signed, degrees) whose ring is read: the angles a swap may use
-+##   tick(S, hold)                                      each live tick (SimCore.step): when decided, held (Encounter's hold) and calm (below): swap on the largest warm angle that keeps the pair's ground within moveMax, wait if none does, refuse if even minDeg would not
++##   tick(S, hold)                                      each sim tick (SimCore.step): reads k more columns of each of the decided turn's rings (the chosen bearing's and the fallback's if it has one; the warm is the SIM's, a host never
++##                                                      calls it: a replay, a determinism run or a tool with no host warms and swaps on the same ticks as play); then, when held (Encounter's hold) and calm (below): swap on the largest warm angle that keeps the pair's ground within moveMax, wait if none does, refuse if even minDeg would not
 +##   cancel(S)                                          Encounter's: drop a pending pick (the director asks again)
 +##   calm(S)                                            World's check: no beam, shot, flight, rush, slide, open set piece, water flowing or catastrophe
 +
@@ -245,22 +248,27 @@ index 0000000..cc484c9
 +	return cands
 +
 +
-+## Encounter's pick: candidate i. The turn is decided (from here the swap waits for the hold, a calm tick and a warm ring). Two rings are to be warmed: the chosen bearing's and the smallest
-+## candidate's (the second is what a landing off the pivot falls back to).
-+static func choose(S: SimState, i: int) -> void:
++## Encounter's pick: candidate i, with how it is warmed. k: the columns of each ring the sim reads a tick (Encounter's data; 0 = the data's warmCols). fallbackDeg: the second ring, the bearing a landing
++## off the pivot falls back to (2.5 for a landing pick), on the chosen candidate's side; 0 for none (a form pick: its pivot is exact, so one ring, at up to 32 columns a tick). A fallback that is
++## not under the chosen bearing, or would pass the drift cap, is left out. Both are kept in E.next and in the hash. From here tick() warms the rings and swaps when held, calm and warm.
++static func choose(S: SimState, i: int, k: int = 0, fallbackDeg: float = -1.0) -> void:
 +	var E = S.epoch
 +	if E == null or E.ask == null:
 +		return
++	var d: Dictionary = data()
 +	var cands: Array = E.ask.cands
 +	var c: Dictionary = cands[clampi(i, 0, cands.size() - 1)]
-+	E.next = {"spec": c.spec, "pc": E.ask.pc, "bearing": c.bearing, "drift": c.drift, "why": E.ask.why, "tick": S.tick, "due": E.ask.due}   # tick: the pick's; due: the moment it is for (the director paces the warm read by them). Not hashed
-+	var low: Dictionary = c
-+	for k in cands:
-+		if absf(float(k.bearing)) < absf(float(low.bearing)):
-+			low = k
-+	E.warm = [{"deg": c.bearing, "spec": c.spec, "cols": 0}]
-+	if low != c:
-+		E.warm.append({"deg": low.bearing, "spec": low.spec, "cols": 0})
++	var fb: float = float(d.fallbackDeg) if fallbackDeg < 0.0 else fallbackDeg
++	if fb > 0.0:
++		fb = maxf(fb, float(d.minDeg))
++	var warm: Array = [{"deg": c.bearing, "spec": c.spec, "cols": 0}]
++	if fb > 0.0 and fb < absf(float(c.bearing)) - 1e-9:
++		var sgn: float = 1.0 if float(c.bearing) >= 0.0 else -1.0
++		var ns: Dictionary = turned(WorldPlanet.make(int(E.seed)), E.ring, int(E.ask.pc), sgn * fb)
++		if driftOf(E.c0, ns.c) <= float(d.driftDeg):
++			warm.append({"deg": sgn * fb, "spec": ns, "cols": 0})
++	E.next = {"spec": c.spec, "pc": E.ask.pc, "bearing": c.bearing, "drift": c.drift, "why": E.ask.why, "tick": S.tick, "due": E.ask.due, "k": k if k > 0 else int(d.warmCols), "fb": absf(float(warm[1].deg)) if warm.size() > 1 else 0.0}   # tick: the pick's; due: the moment it is for. k and fb are hashed
++	E.warm = warm
 +	E.ask = null
 +	_dropJobs(S)
 +
@@ -287,12 +295,12 @@ index 0000000..cc484c9
 +			_jobs.erase(k)
 +
 +
-+## Encounter warms the decided turn's rings, n columns a sim tick for each (a Whole ring is 4,800 columns, so a full pause of k ticks at n = 4,800 / k reads both). The module owns no clock: how far a
-+## ring is read is counted in the state (`cols`, columns asked for), so when a ring counts as warm is a function of the calls and not of the host's speed. True when every ring is read.
-+static func prewarm(S: SimState, n: int) -> bool:
++## The sim reads the decided turn's rings, k columns of each a sim tick, from tick() (a Whole ring is 4,800 columns, so k = 64 reads both in 75 ticks, 1.25 s). How far a ring is read is counted in the
++## state (`cols`, columns read), so when a ring counts as warm is a function of the ticks since the pick and not of any host. The slices are derived data kept outside the state (`_jobs`): a state
++## carried into a process that has not got a job makes it again and reads up to `cols` at once (the same columns, a hitch). True when every ring is read.
++static func _warm(S: SimState) -> bool:
 +	var E = S.epoch
-+	if E == null or E.next == null:
-+		return false
++	var n: int = int(E.next.k)
 +	var all: bool = true
 +	for w in E.warm:
 +		if int(w.cols) >= SimConst.NC:
@@ -302,6 +310,8 @@ index 0000000..cc484c9
 +		if job == null:
 +			var P := WorldPlanet.make(int(E.seed))
 +			job = WorldPlanet.RingJob.new(P, WorldRingPick.ringFrom(w.spec.c, int(w.spec.cols), w.spec.t))
++			if int(w.cols) > 0:
++				job.step(int(w.cols))   # the catch-up of a carried state
 +			_jobs[key] = job
 +		job.step(n)
 +		w.cols = int(w.cols) + n
@@ -356,7 +366,10 @@ index 0000000..cc484c9
 +## asks again at its next send. The 300 rule wins over "never under 2 degrees".
 +static func tick(S: SimState, hold: bool = true) -> void:
 +	var E = S.epoch
-+	if E == null or E.next == null or not hold or not calm(S):
++	if E == null or E.next == null:
++		return
++	_warm(S)
++	if not hold or not calm(S):
 +		return
 +	var d: Dictionary = data()
 +	var smax: float = _reach(S, int(E.next.pc))
@@ -851,10 +864,10 @@ index 649fb71..b1f4915 100644
  			_cErrors.append("rings.json: %s is a number" % k)
 diff --git a/sim/world/tools/epoch_check.gd b/sim/world/tools/epoch_check.gd
 new file mode 100644
-index 0000000..056e41c
+index 0000000..7f49975
 --- /dev/null
 +++ b/sim/world/tools/epoch_check.gd
-@@ -0,0 +1,354 @@
+@@ -0,0 +1,419 @@
 +extends SceneTree
 +# The calm-moment turn (docs/world/calm-turn-world.md; world/epoch.gd; data/biomes/rings.json turn):
 +#   godot --headless --path . --script res://sim/world/tools/epoch_check.gd [-- --ticks=600]
@@ -889,9 +902,29 @@ index 0000000..056e41c
 +	return S
 +
 +
-+## The host's part: warm every ring of the decided turn (Encounter does it a few columns a sim tick; here all at once).
-+func warmAll(S: SimState, n: int = 100000) -> void:
-+	WorldEpoch.prewarm(S, n)
++## The sim warms a decided turn's rings itself, k columns of each a tick (WorldEpoch.tick); no host calls anything. Here k is made large so one tick, with no hold, reads them all.
++func warmAll(S: SimState) -> void:
++	S.epoch.next.k = 100000
++	WorldEpoch.tick(S, false)
++
++
++## A match that plays by SimCore.step alone (no host, no director) with a turn decided at tick 30: the tick it swaps on and its hash. mode 1: the slices kept outside the state are lost at tick 20 (a state
++## carried into another process); mode 2: the state is hashed every tick (what a host or a replay tool reads).
++func playRun(sd: int, mode: int, fb: float = 2.5) -> Dictionary:
++	var S := ready(2400, sd)
++	WorldEpoch.ask(S, "replay", mid(S), 1, 0)
++	WorldEpoch.choose(S, 2, 64, fb)
++	var swapTick: int = -1
++	var hs: String = ""
++	for t in range(1800):
++		SimCore.step(S)
++		if mode == 1 and t == 20:
++			WorldEpoch._jobs.clear()
++		if mode == 2:
++			hs = str(SimHash.stateHash(S).gameplay)
++		if swapTick < 0 and S.epoch.n == 1:
++			swapTick = t
++	return {"tick": swapTick, "hash": str(SimHash.stateHash(S).gameplay), "cold": S.epoch.cold, "waited": S.epoch.waited, "refused": S.epoch.refused}
 +
 +
 +func nearest(S: SimState, x: float):
@@ -1157,7 +1190,9 @@ index 0000000..056e41c
 +	WorldEpoch.ask(Sw, "test", mid(Sw), 1, 0)
 +	WorldEpoch.choose(Sw, 0)
 +	var spw: int = 0
-+	while not WorldEpoch.prewarm(Sw, 64):
++	Sw.epoch.next.k = 64
++	while WorldEpoch.warmAngles(Sw).is_empty():
++		WorldEpoch.tick(Sw, false)
 +		spw += 1
 +		if spw == 3:
 +			WorldEpoch.tick(Sw, true)   # a ring that is part read is not warm: no swap
@@ -1175,10 +1210,10 @@ index 0000000..056e41c
 +	for warm in [0, 1, 2]:   # warmed 100 columns a call, warmed 640 a call, and a state carried into a process that never warmed it (the jobs are gone: the swap reads, and says so)
 +		var Sx := ready(2400)
 +		WorldEpoch.ask(Sx, "test", mid(Sx), 1, 0)
-+		WorldEpoch.choose(Sx, 2)
 +		var step: int = 100 if warm == 0 else 640
-+		while not WorldEpoch.prewarm(Sx, step):
-+			pass
++		WorldEpoch.choose(Sx, 2, step)
++		while WorldEpoch.warmAngles(Sx).size() < 2:
++			WorldEpoch.tick(Sx, false)
 +		if warm == 2:
 +			WorldEpoch._jobs.clear()
 +		WorldEpoch.tick(Sx, true)
@@ -1207,6 +1242,49 @@ index 0000000..056e41c
 +	for t in range(300):
 +		SimCore.step(Sz)
 +	ok(Sz.epoch.n == 1 and Sz.buildings.size() > 0 and zb != 118, "a Whole match turns too and plays on (%d buildings before, %d after)" % [zb, Sz.buildings.size()])
++	# --- the pick's interface: k, and the fallback ring (2.5 for a landing, 0 for a form pick's exact pivot)
++	var Sf := ready(2400)
++	WorldEpoch.ask(Sf, "t", mid(Sf), 1, 0)
++	WorldEpoch.choose(Sf, 3, 16, 0.0)
++	var hf0: String = str(SimHash.stateHash(Sf).gameplay)
++	ok(Sf.epoch.warm.size() == 1 and Sf.epoch.next.k == 16 and Sf.epoch.next.fb == 0.0, "fallbackDeg 0 (a form pick) warms one ring, at the k the pick brings")
++	var Sg2 := ready(2400)
++	WorldEpoch.ask(Sg2, "t", mid(Sg2), 1, 0)
++	WorldEpoch.choose(Sg2, 3, 16, 2.5)
++	ok(Sg2.epoch.warm.size() == 2 and Sg2.epoch.next.fb == 2.5 and str(SimHash.stateHash(Sg2).gameplay) != hf0, "a landing pick (fallback 2.5) warms two, and k and the fallback are in the hash")
++	var Sh2 := ready(2400)
++	WorldEpoch.ask(Sh2, "t", mid(Sh2), 1, 0)
++	WorldEpoch.choose(Sh2, 0, 0, 2.5)
++	ok(Sh2.epoch.warm.size() == 1 and Sh2.epoch.next.k == int(d.warmCols), "a fallback not under the chosen bearing is left out, and k 0 is the data's")
++	var cols16: int = 0
++	var Si := ready(2400)
++	WorldEpoch.ask(Si, "t", mid(Si), 1, 0)
++	WorldEpoch.choose(Si, 3, 16, 2.5)
++	for t in range(10):
++		SimCore.step(Si)
++	for w in Si.epoch.warm:
++		cols16 = maxi(cols16, int(w.cols))
++	ok(cols16 == 160 and Si.epoch.n == 0, "SimCore.step alone warms: 10 sim ticks at k 16 read 160 columns of each ring")
++	# --- a replay of a match that turns, headless, no host: the same swap tick as play
++	var turning: Array = []
++	var A: Dictionary = {}
++	for sd in range(1, 13):
++		A = playRun(sd, 0)
++		if A.tick >= 0:
++			turning.append([sd, A])
++			if turning.size() >= 2:
++				break
++	var replayOk: bool = turning.size() >= 1
++	var rlog: Array = []
++	for tr in turning:
++		var B: Dictionary = playRun(tr[0], 0)   # the replay
++		var Cc: Dictionary = playRun(tr[0], 1)   # slices lost mid-warm
++		var Dd: Dictionary = playRun(tr[0], 2)   # hashed every tick
++		var identical: bool = B.tick == tr[1].tick and B.hash == tr[1].hash and Cc.tick == tr[1].tick and Cc.hash == tr[1].hash and Dd.tick == tr[1].tick and Dd.hash == tr[1].hash and Cc.cold == 0 and tr[1].cold == 0
++		if not identical:
++			replayOk = false
++		rlog.append("seed %d swaps on tick %d (waited %d)" % [tr[0], tr[1].tick, tr[1].waited])
++	ok(replayOk, "a match played by SimCore.step alone (no host) turns on the same tick and to the same hash when replayed, when its slices are lost mid-warm, and when it is hashed every tick (%s)" % " | ".join(rlog))
 +	print("EPOCH: %d check(s) failed" % fails)
 +	quit()
 diff --git a/sim/world/tools/epoch_check.gd.uid b/sim/world/tools/epoch_check.gd.uid
@@ -1244,7 +1322,7 @@ index 997f30c..e4429f3 100644
        "id": "rings-minimum-land-over-one",
        "schema": "biomes-rings.schema.json",
 diff --git a/tools/schemas/biomes-rings.schema.json b/tools/schemas/biomes-rings.schema.json
-index fbb3820..388b4e0 100644
+index fbb3820..a1b40cd 100644
 --- a/tools/schemas/biomes-rings.schema.json
 +++ b/tools/schemas/biomes-rings.schema.json
 @@ -15,7 +15,8 @@
@@ -1257,7 +1335,7 @@ index fbb3820..388b4e0 100644
    ],
    "properties": {
      "schema": {
-@@ -248,6 +249,84 @@
+@@ -248,6 +249,98 @@
        "minimum": 0.5,
        "maximum": 20,
        "description": "Coast crossings that count as a full coast."
@@ -1273,7 +1351,9 @@ index fbb3820..388b4e0 100644
 +        "carryUnits",
 +        "viewUnits",
 +        "moveMax",
-+        "minDeg"
++        "minDeg",
++        "warmCols",
++        "fallbackDeg"
 +      ],
 +      "additionalProperties": false,
 +      "properties": {
@@ -1337,6 +1417,18 @@ index fbb3820..388b4e0 100644
 +          "minimum": 0.1,
 +          "maximum": 10,
 +          "description": "The least angle a turn is scaled to (Game Design: 2 degrees)."
++        },
++        "warmCols": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 4800,
++          "description": "The columns of each of a decided turn's rings the sim reads a tick, unless Encounter's pick brings its own (16 to 32). 32 reads a Whole ring in 150 ticks."
++        },
++        "fallbackDeg": {
++          "type": "number",
++          "minimum": 0,
++          "maximum": 10,
++          "description": "The bearing in degrees of the second ring a decided turn warms (a landing off the pivot falls back to it), unless Encounter's pick brings its own; 0 for none."
 +        }
 +      }
      }
