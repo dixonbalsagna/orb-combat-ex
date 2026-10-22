@@ -65,6 +65,31 @@
       "maxClip": "ai-1017-reduced",
       "over": [],
       "missing": []
+    },
+    {
+      "date": "2026-10-22",
+      "commit": "257a766c26f8766fb09b063864c41c5d8ba64dc0",
+      "seeds": [
+        1024,
+        1025,
+        1026,
+        1027,
+        1028,
+        1029,
+        1030,
+        1031
+      ],
+      "read": 16,
+      "clips": 16,
+      "max": 3.5,
+      "maxClip": "ai-1029-normal",
+      "over": [
+        {
+          "id": "ai-1029-normal",
+          "primary": 3.5
+        }
+      ],
+      "missing": []
     }
   ]
 }
