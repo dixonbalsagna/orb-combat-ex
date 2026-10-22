@@ -37,7 +37,7 @@ func _apply_cut() -> void:
 					c.visible = not parts.has("bld0")
 				elif n == "Trees":
 					c.visible = not parts.has("trees")
-				elif n == "Crowd":
+				elif n.begins_with("Crowd"):
 					c.visible = not parts.has("crowd")
 		for v in pane.fighter_views:
 			v.visible = v.visible and not parts.has("fighters")

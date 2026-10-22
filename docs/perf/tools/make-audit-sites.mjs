@@ -14,6 +14,10 @@
 //   bothprof   both + the profiling timers
 //   depthprof  baseprof + a page flag that turns fight-lane depth on (the lobby only runs with depth on)
 //   layerprof  baseprof + layer cuts (window.__cut, including Camera's inset pane and the HUD) for the draw call and primitive breakdown
+//   nowarm     base with the inset warm-up (Camera, 5fe08207) reversed: the A/B for the match-start hitch
+//   evlog      base + the event-type log of each tick (what the sim did at a hitching tick)
+//   evprof     evlog + the profiling timers (the CPU time of each section at a hitching tick)
+//   aura       base + VFX's parked 3D aura (apply.patch, grant-fighter-view.patch) and a page flag aura=1 (auradem=1: both shells at full level)
 //   lowprof    depthprof + a page flag lowq=1 (VFX quality low, automatic step off): the reduced-effects mode
 // The parked patches are applied with `git apply --ignore-whitespace`; when HEAD has moved so far that one no longer applies, the variant is reported and skipped (say so in the audit).
 import { spawn, spawnSync } from 'node:child_process';
@@ -35,7 +39,7 @@ const REV = opt('--rev', 'HEAD');   // any commit: the audit of two builds (for 
 const out = resolve(OUT);
 mkdirSync(out, { recursive: true });
 const hook = (name, dir, ...extra) => { const r = spawnSync(process.execPath, [join(here, 'scratch-hooks', name), dir, ...extra], { encoding: 'utf8' }); if (r.status) throw new Error(`${name}: ${r.stderr || r.stdout}`); };
-const apply = (dir, patch) => { const r = spawnSync('git', ['apply', '--ignore-whitespace', resolve(repo, patch)], { cwd: dir, encoding: 'utf8' }); if (r.status) throw new Error(`git apply ${patch}: ${r.stderr}`); };
+const apply = (dir, patch) => { const rev = patch.startsWith('R:'); if (rev) patch = patch.slice(2); const r = spawnSync('git', ['apply', '--ignore-whitespace', ...(rev ? ['-R'] : []), resolve(repo, patch)], { cwd: dir, encoding: 'utf8' }); if (r.status) throw new Error(`git apply ${patch}: ${r.stderr}`); };
 const VFX = 'docs/vfx/pending/energy-and-choreo/apply.patch';
 const ANIM = ['many-bodies', 'runs-look', 'tenth-round', 'combat-pieces', 'homework4'].map((p) => `docs/animation/pending/${p}.patch`);
 // Animation parked three more after the audit's brief (README order); on a HEAD where VFX's beam look has landed (47f402cb) the VFX patch no longer applies, so `anim8` is the whole parked stack for that HEAD
@@ -47,13 +51,17 @@ const SPEC = {
   anim: { patches: ANIM, hooks: ['perf', 'slice'] },
   both: { patches: [VFX, ...ANIM], hooks: ['perf', 'slice'] },
   anim8: { patches: ANIM8, hooks: ['perf', 'slice'] },
+  nowarm: { patches: ['R:docs/perf/tools/scratch-hooks/inset-warm.patch'], hooks: ['perf', 'slice'] },
+  evlog: { patches: [], hooks: ['perf', 'slice', 'evlog'] },
+  evprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'evlog'] },
+  aura: { patches: ['docs/vfx/pending/aura3d/apply.patch', 'docs/vfx/pending/aura3d/grant-fighter-view.patch'], hooks: ['perf', 'slice', 'aura'] },
   baseprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8'] },
   bothprof: { patches: [VFX, ...ANIM], hooks: ['perf', 'slice', 'prof'] },
   depthprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'depth'] },
   layerprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'layers'] },
   lowprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'depth', 'lowq'] },
 };
-const HOOK = { perf: ['hook-perf.mjs'], slice: ['hook-slice.mjs', SLICE_LIB], prof: ['hook-prof.mjs'], slicec8: ['hook-slice-c8.mjs'], depth: ['hook-depth.mjs'], layers: ['hook-layers.mjs'], lowq: ['hook-lowq.mjs'] };
+const HOOK = { perf: ['hook-perf.mjs'], slice: ['hook-slice.mjs', SLICE_LIB], prof: ['hook-prof.mjs'], slicec8: ['hook-slice-c8.mjs'], depth: ['hook-depth.mjs'], layers: ['hook-layers.mjs'], lowq: ['hook-lowq.mjs'], aura: ['hook-aura.mjs'], evlog: ['hook-evlog.mjs'] };
 
 function godot(dir, args, log, limitS) {
   return new Promise((ok) => {

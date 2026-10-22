@@ -130,7 +130,7 @@ try {
     fc.auto = true;
     for (let i = ${from}; i < ${to}; i++) {
       const t = await new Promise((r) => requestAnimationFrame(r));
-      if (last !== null && ${keep}) { rtt.push(t - last); const p = fc.perf; rows.push(p ? [p.tick_ms, p.fx_ms, p.view_ms, p.draws, p.objects, p.prims, p.parts, p.vmem, p.tmem, p.smem, p.rcpu, p.rgpu, p.pt || null] : []); }
+      if (last !== null && ${keep}) { rtt.push(t - last); const p = fc.perf; rows.push(p ? [p.tick_ms, p.fx_ms, p.view_ms, p.draws, p.objects, p.prims, p.parts, p.vmem, p.tmem, p.smem, p.rcpu, p.rgpu, p.pt || null, p.ev || ""] : []); }
       last = t;
     }
     fc.auto = false;
@@ -169,12 +169,16 @@ try {
   const col = (k) => raw.rows.map((r) => r[k]).filter((v) => Number.isFinite(v));
   result.frame_ms = dist(raw.rtt);
   // frames over 50 ms, as [tick of the scene, ms]: a hitch that comes at the same tick in every run is the engine or the page (a first-use shader compile, a pool built), not the machine
+  // with the evlog hook: the sim event types of each hitching tick and the tick before it (row 13)
+  result.hitchEvents = raw.rtt.map((x, i) => [raw.tick - raw.rtt.length + i, x, (raw.rows[i] || [])[13] || "", (raw.rows[i - 1] || [])[13] || ""]).filter((h) => h[1] > 50).slice(0, 12);
+  // the whole row of each hitching frame (tick ms, fx ms, view ms, draws, objects, prims, particles, vmem, tmem, smem, renderer cpu, renderer gpu, profiling timers, events) and the one before
+  result.hitchRows = raw.rtt.map((x, i) => [raw.tick - raw.rtt.length + i, x, raw.rows[i - 1] || [], raw.rows[i] || [], raw.rows[i + 1] || [], raw.rows[i + 3] || []]).filter((h) => h[1] > 50).slice(0, 4);
   result.hitches = raw.rtt.map((x, i) => [raw.tick - raw.rtt.length + i - 0, +x.toFixed(1)]).filter((h) => h[1] > 50).slice(0, 12);
   result.tick_ms = dist(col(0)); result.fx_ms = dist(col(1)); result.view_ms = dist(col(2));
   result.draws = dist(col(3)); result.objects = dist(col(4)); result.prims = dist(col(5)); result.particles = dist(col(6));
   result.video_mem_bytes = dist(col(7)); result.texture_mem_bytes = dist(col(8)); result.static_mem_bytes = dist(col(9));
   result.render_cpu_ms = dist(col(10)); result.render_gpu_ms = dist(col(11));
-  result.over_16_7 = raw.rtt.filter((x) => x > 16.7).length; result.over_33_3 = raw.rtt.filter((x) => x > 33.3).length;
+  result.over_16_7 = raw.rtt.filter((x) => x > 16.7).length; result.over_25 = raw.rtt.filter((x) => x > 25).length;   // on a display-locked GPU run a frame is 16.7 or 33.3 ms: frames over 25 ms are the missed refreshes result.over_33_3 = raw.rtt.filter((x) => x > 33.3).length;
   result.tickReached = raw.tick;
   result.ticks_per_frame = +(raw.ticks / raw.frames).toFixed(3);   // 1 is one tick per animation frame, as in play
   const pts = raw.rows.map((r) => r[12]).filter(Boolean);   // the scratch profiling hook's per-frame component times (microseconds), when the export carries it
