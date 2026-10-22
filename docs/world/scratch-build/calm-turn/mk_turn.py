@@ -182,7 +182,7 @@ def hashf(s):
 
 
 def viewfx(s):
-    return rep(s, '"drop_end", "decisive", ', '"drop_end", "decisive", "arena_turn", ')
+    return rep(s, '"crowd_state", "building_hit":', '"crowd_state", "building_hit", "arena_turn":')   # the end of the pass list: other events are added in its middle
 
 
 def rings_json(p):

@@ -36,10 +36,10 @@ index 48abec3..9d5bff9 100644
 +  }
  }
 diff --git a/sim/core/hash.gd b/sim/core/hash.gd
-index badaccb..1895739 100644
+index 6a3687d..1ab0107 100644
 --- a/sim/core/hash.gd
 +++ b/sim/core/hash.gd
-@@ -204,6 +204,13 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
+@@ -208,6 +208,13 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
  		if b.marks != 0:
  			out.append(float(b.marks))   # World: repeats escalate (only with brunt.json repeatMarks above 0)
  	out.append(1.0 if S.contactOn else 0.0)   # World's ground contact (G2)
@@ -53,7 +53,7 @@ index badaccb..1895739 100644
  	out.append(float(S.trees.size()))
  	for t in S.trees:
  		_obj(out, t, TREE)
-@@ -329,7 +336,7 @@ const FX_FIELDS: Dictionary = {
+@@ -333,7 +340,7 @@ const FX_FIELDS: Dictionary = {
  	"left_ground": ["actor", "x", "y", "z", "spd", "n", "cause", "vx", "vy", "slope", "contacts", "dur"], "bounce": ["actor", "x", "y", "z", "spd", "n", "k", "keep", "vn", "vt", "surface", "sina", "slope", "contacts", "dur"],
  	"land": ["actor", "x", "y", "z", "spd", "n", "kind", "sina", "slope", "surface", "vn", "vt", "contacts", "dur"], "tumble_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "dur"],
  	"journey_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "lips", "nb", "dur"],
@@ -63,7 +63,7 @@ index badaccb..1895739 100644
  }
  
 diff --git a/sim/core/sim.gd b/sim/core/sim.gd
-index a87f294..e853125 100644
+index afa72ba..5270586 100644
 --- a/sim/core/sim.gd
 +++ b/sim/core/sim.gd
 @@ -52,6 +52,7 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
@@ -74,7 +74,7 @@ index a87f294..e853125 100644
  	if not (setup.has("planet") and WorldPlanetWorld.gen(S, setup)):   # a setup with a planet reads its world from the slice; without one, today's world
  		WorldTerrain.genWorld(S)
  	S.planetCols = WorldBiomes.planetCols   # the statics a world sets belong to this match: step takes them again when another match has built since
-@@ -171,6 +172,8 @@ static func step(S: SimState, inputs = null) -> bool:
+@@ -173,6 +174,8 @@ static func step(S: SimState, inputs = null) -> bool:
  		SimFx.tickMark(S, dt, true)
  		return false
  	S.T += dt
@@ -84,7 +84,7 @@ index a87f294..e853125 100644
  		SimHitstop.live(S)   # ... over the last minute of fight
  	SimPause.liveTick(S)   # Q10: the pause bank accrues on match time
 diff --git a/sim/core/state.gd b/sim/core/state.gd
-index c4a2f2d..8616098 100644
+index 85f13b3..9c2d804 100644
 --- a/sim/core/state.gd
 +++ b/sim/core/state.gd
 @@ -14,6 +14,7 @@ var game := Game.new()
@@ -96,15 +96,15 @@ index c4a2f2d..8616098 100644
  var dirS := DirS.new()
  var fighters: Array = []
 diff --git a/sim/core/view/fx.gd b/sim/core/view/fx.gd
-index 34bf421..f6686b7 100644
+index bd59388..037d3f8 100644
 --- a/sim/core/view/fx.gd
 +++ b/sim/core/view/fx.gd
 @@ -238,7 +238,7 @@ func consume(S: SimState, events: Array) -> void:
  				_stepParts(S, dt * 0.1 if frozen else dt)
  			"region_stage", "region_broken", "brink_enter", "brink_exit", "brink_open", "brink_close", "tier_up", "transform_ready", "transform", "beam_outcome", "pause_start", "pause_end", "knockback", "exchange_end", "flow", "embed", "shot_fire", "shot_hit", "shot_clash", "shot_end", "shot_deflect", "mine_trip", "last_stand_ready", "last_stand_end", "intro_start", "intro_beat", "intro_line", "intro_gesture", "entrance_fall", "entrance_land", "staredown_start", "clock_start", "hide_start", "found", "ko":
  				pass   # wound readouts are the renderer's and UI's (crown, cards); nothing to spawn here
--			"form_hold", "form_release", "form_step", "drop_start", "drop_land", "drop_end", "decisive", "blast_cloud", "flight", "interior_contact", "interior_end", "air_brake", "finisher_start", "finisher_contest", "attack", "parry", "chain_end", "ambush", "lock_lost", "launch_plan", "window_open", "clash_draw", "hazard_telegraph", "searching", "danger", "launch", "rush", "cue", "struggle_press", "rally", "limb_break", "mood_band", "act_change", "style_label", "crowd_state", "building_hit":
-+			"form_hold", "form_release", "form_step", "drop_start", "drop_land", "drop_end", "decisive", "arena_turn", "blast_cloud", "flight", "interior_contact", "interior_end", "air_brake", "finisher_start", "finisher_contest", "attack", "parry", "chain_end", "ambush", "lock_lost", "launch_plan", "window_open", "clash_draw", "hazard_telegraph", "searching", "danger", "launch", "rush", "cue", "struggle_press", "rally", "limb_break", "mood_band", "act_change", "style_label", "crowd_state", "building_hit":
+-			"form_hold", "form_release", "form_step", "drop_start", "drop_land", "drop_end", "decisive", "ricochet", "blast_cloud", "flight", "interior_contact", "interior_end", "air_brake", "finisher_start", "finisher_contest", "attack", "parry", "chain_end", "ambush", "lock_lost", "launch_plan", "window_open", "clash_draw", "hazard_telegraph", "searching", "danger", "launch", "rush", "cue", "struggle_press", "rally", "limb_break", "mood_band", "act_change", "style_label", "crowd_state", "building_hit":
++			"form_hold", "form_release", "form_step", "drop_start", "drop_land", "drop_end", "decisive", "ricochet", "blast_cloud", "flight", "interior_contact", "interior_end", "air_brake", "finisher_start", "finisher_contest", "attack", "parry", "chain_end", "ambush", "lock_lost", "launch_plan", "window_open", "clash_draw", "hazard_telegraph", "searching", "danger", "launch", "rush", "cue", "struggle_press", "rally", "limb_break", "mood_band", "act_change", "style_label", "crowd_state", "building_hit", "arena_turn":
  				pass   # director and Rally readouts are the HUD's, Camera's and Audio's; nothing to spawn here
  			_:
  				push_error("consume: unknown event " + e.type)
@@ -551,10 +551,10 @@ index 0000000..0e36b24
 @@ -0,0 +1 @@
 +uid://cpco57snnrkq1
 diff --git a/sim/world/planet.gd b/sim/world/planet.gd
-index 728de69..ded999a 100644
+index 60ac71e..92235bf 100644
 --- a/sim/world/planet.gd
 +++ b/sim/world/planet.gd
-@@ -680,7 +680,14 @@ class Slice extends RefCounted:
+@@ -736,7 +736,14 @@ class Slice extends RefCounted:
  ## Reads the circle as columns. One surfAt a column; the fine relief only on ordinary land (and a quarter of it on an ice sheet). The held places, with their
  ## nearest column (our own atan2 of the place's point in the circle's frame) and their lateral offset (our own asin).
  static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByteArray = PackedByteArray()) -> Slice:
@@ -570,7 +570,7 @@ index 728de69..ded999a 100644
  	var S := Slice.new()
  	S.seed = P.seed
  	S.circ = circ
-@@ -688,6 +695,13 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
+@@ -744,6 +751,13 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
  	var nc: int = SimConst.NC
  	S.heights.resize(nc)
  	S.biomes.resize(nc)
@@ -584,7 +584,7 @@ index 728de69..ded999a 100644
  	var u: Array = circ.u
  	var v: Array = circ.v
  	var small: bool = circ.has("st")
-@@ -695,7 +709,7 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
+@@ -751,7 +765,7 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
  	var ct: float = circ.get("ct", 0.0)
  	var ca: Array = circ.get("c", u)
  	var tc: int = touchCol()
@@ -593,7 +593,7 @@ index 728de69..ded999a 100644
  		var ang: float = float(i - tc) * SimConst.COL / (P.R * stf)
  		var co: float = SimDetMath.cos(ang)
  		var si: float = SimDetMath.sin(ang)
-@@ -715,6 +729,17 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
+@@ -771,6 +785,17 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
  			h += (_fbm(P.R, qx, qy, qz, c.detailScale, int(c.detailOct), P.seed + int(c.sDetail)) - 0.5) * c.detailAmp * c.detailSheet
  		S.heights[i] = h
  		S.biomes[i] = b
@@ -611,7 +611,7 @@ index 728de69..ded999a 100644
  	for i in range(P.n):
  		var lat: float = lateral(P, circ, P.px[i], P.py[i], P.pz[i])
  		var reach: float = (c.cityReach if P.kind[i] == KIND_CITY else c.townReach) * P.rad[i]
-@@ -726,7 +751,31 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
+@@ -782,7 +807,31 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
  		var half: float = sqrt(maxf(0.0, P.rad[i] * P.rad[i] - lat * lat))
  		S.held.append({"id": i, "kind": int(P.kind[i]), "col": col, "d": lat, "half": half, "r": P.rad[i],
  			"standing": standing.size() == 0 or standing[i] != 0})
@@ -644,7 +644,7 @@ index 728de69..ded999a 100644
  
  
  ## The slice memoised outside the sim state: keyed by the planet, the touch, the pick index and the data hash. The read is pure, so the cache cannot change a match.
-@@ -775,8 +824,19 @@ static func farColumn(P: Planet, ring: Dictionary, i: int, z: float) -> Array:
+@@ -831,8 +880,19 @@ static func farColumn(P: Planet, ring: Dictionary, i: int, z: float) -> Array:
  
  
  ## The slice of an explicit ring (WorldRingPick: an axis, the columns, a touch-down), memoised outside the state like sliceFor's. The ring is the arena's, so its columns are SimConst.NC.
@@ -1296,7 +1296,7 @@ index 0000000..eac894e
 @@ -0,0 +1 @@
 +uid://bkymarlhyltf
 diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
-index 997f30c..e4429f3 100644
+index 132346e..aaf33f3 100644
 --- a/tools/fixtures/cases.json
 +++ b/tools/fixtures/cases.json
 @@ -292344,6 +292344,22 @@
