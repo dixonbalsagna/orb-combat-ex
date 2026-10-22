@@ -1,0 +1,243 @@
+diff --git a/render/core/look.gd b/render/core/look.gd
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -437,6 +437,13 @@
+ ## greyer and a ridge never reaches the colour of the sky behind it. The water hazes toward the band itself.
+ const HAZE_VALUE: float = 0.6
+ const HAZE_SAT: float = 0.7
++## The camera roll on climaxes (render/core/camera_roll.gd; docs/rendering/camera-roll.md): a dutch tilt of ROLL_DEG.x
++## (a decisive launch, guard break or interrupt) to ROLL_DEG.y degrees (a finisher, a KO; a clash or a beam between),
++## in over ROLL_TIMES.x seconds of match time, held ROLL_TIMES.y, out over ROLL_TIMES.z, eased. Off by default: main's
++## --roll (or ?roll=1 on a page) turns it on.
++const CAMERA_ROLL_ON: bool = false
++const ROLL_DEG := Vector2(4.0, 8.0)
++const ROLL_TIMES := Vector3(0.25, 0.8, 0.9)
+ ## ... but in the far field (HAZE_AT[2] to HAZE_AT[3]) the haze's target moves toward the sky's own colour in that
+ ## direction, HAZE_SKY of the way: far peaks melt into the sky behind them, as d3f1ca0e's far land did (Orb's playtest,
+ ## 2026-10-19: the far ridge read as a huge brown wall). Art's ladder holds nearer.
+diff --git a/render/core/pane_world.gd b/render/core/pane_world.gd
+--- a/render/core/pane_world.gd
++++ b/render/core/pane_world.gd
+@@ -143,11 +143,13 @@
+ ## Draw one frame from a camera: its wrapped world x (float64), cam.y and cam.z (the reference camera's height and
+ ## zoom, as SimHost.camera gives them), its screen shake in pixels and its pitch in degrees (CameraRig). The first pane
+ ## also applies the world's changes.
+-func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2, pitch: float = 0.0) -> void:
++func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2, pitch: float = 0.0, roll: float = 0.0) -> void:
+ 	var S: SimState = host.S
+ 	var vp: Vector2 = get_viewport().get_visible_rect().size
+ 	view_cam_x = cam_x
+ 	cam_rig.frame(cam.y, cam.z, jitter, vp.y, pitch, focus_z)
++	if roll != 0.0:
++		cam_rig.basis = cam_rig.basis * Basis(Vector3.BACK, deg_to_rad(roll))   # the climaxes' dutch tilt (RenderCameraRoll), about the view axis
+ 	planet.set_focus(focus_z)
+ 	planet.set_crowd_near(S.depthOn)
+ 	_pan_haze(host, a, cam_x, vp)
+diff --git a/render/core/main.gd b/render/core/main.gd
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -62,6 +62,8 @@
+ var cam_pitch: float = 0.0          # the cameras' pitch in degrees (Alt+F9), unless the rig's frame carries its own
+ var occlusion: int = PaneWorld.OCCL_HOLE   # every pane's occlusion method (Ctrl+F9)
+ var inset: PaneWorld = null         # Camera's inset pane (make_inset), or null
++var camera_roll := RenderCameraRoll.new()   # the climaxes' dutch tilt for the main panes (off unless roll_on)
++var roll_on: bool = false
+ var compositor: Object = null:
+ 	set(v):
+ 		compositor = v
+@@ -215,6 +217,7 @@
+ 		take_over()
+ 	if args.has("legacy-hud"):
+ 		set_legacy_hud(true)
++	roll_on = RenderLook.CAMERA_ROLL_ON or args.has("roll")   # the camera roll on climaxes: off by default (2026-10-22)
+ 	hud.key_help = args.has("keyhelp")   # the greybox prompt and key help: off by Orb's minimal rule (2026-10-19)
+ 	if not manual:
+ 		split_view = SplitView.new()
+@@ -252,6 +255,7 @@
+ func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:
+ 	var own: bool = not (setup is Dictionary)
+ 	host.new_match(seed, ai, _match_setup(seed) if own else setup, own)
++	camera_roll.reset()
+ 	var fl: Array = UiSimBridge.fighters(host.S)
+ 	ui_hud.setup(fl[0], fl[1])
+ 	for p in all_panes():
+@@ -303,6 +307,11 @@
+ 	return sv
+ 
+ 
++## The climaxes' dutch tilt this frame, in degrees (RenderCameraRoll), for the main panes; 0 with it off.
++func _roll(a: float) -> float:
++	return camera_roll.update(host.S.T + a * SimConst.DT) if roll_on else 0.0
++
++
+ ## A new pane that draws the first pane's world, in sv, built into the current match. markers false leaves out the
+ ## fighters' head markers (the stance badge), which would poke into the inset's close-up strip.
+ func _follower(sv: SubViewport, markers: bool = true) -> PaneWorld:
+@@ -540,7 +549,7 @@
+ 				panes[i].cutaway = PaneWorld.request(cw[i] if cw is Array and i < cw.size() else ({"only": i} if two else {}), cl[i] if cl is Array and i < cl.size() else null)
+ 				panes[i].focus_z = float(fzs[i]) if fzs != null and i < fzs.size() else 0.0
+ 				panes[i].near_lobbies = bool(split_rig.get("depth_dolly")) if split_rig != null else false   # Camera's depth follow: its rule for a near tower goes with it
+-				panes[i].render(host, a, split_frame.cam_x[i], Vector3(0.0, split_frame.cam_y[i], split_frame.cam_z[i]), j, pitch)
++				panes[i].render(host, a, split_frame.cam_x[i], Vector3(0.0, split_frame.cam_y[i], split_frame.cam_z[i]), j, pitch, _roll(a))
+ 				if float(split_frame.cam_z[i]) > zmax:
+ 					zmax = float(split_frame.cam_z[i])
+ 					zfocus = panes[i].focus_z
+@@ -559,7 +568,7 @@
+ 		pane.cutaway = {}
+ 		pane.focus_z = 0.0
+ 		pane.near_lobbies = false
+-		pane.render(host, a, host.camera_x(a), host.camera(a), PaneShake.capped(host.jitter, vh, _shake()), cam_pitch)
++		pane.render(host, a, host.camera_x(a), host.camera(a), PaneShake.capped(host.jitter, vh, _shake()), cam_pitch, _roll(a))
+ 		_flash_scale(host.camera(a).z)
+ 	view_cam_x = pane.view_cam_x
+ 	host.impact.heat_changed = false
+@@ -580,6 +589,8 @@
+ 		var vp: Vector2 = get_viewport().get_visible_rect().size
+ 		split_rig.step(host.S, vp.x, vp.y, events)
+ 	planet.consume(events, host.S.T)
++	if roll_on:
++		camera_roll.consume(host.S, events)
+ 	RenderAnim.consume(host.S, events)
+ 	ui_hud.consume_all(events)
+ 	_haptics_from_events(events)
+@@ -1215,9 +1226,9 @@
+ const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off", "charges_off_p2"]
+ ## The options a web page's URL may set (parse_args): off unless the URL names them. Those in LOCAL_ONLY_ARGS start
+ ## without UI's notice, change how a match starts or hold a debug value, and are dropped unless the page is on a local
+-## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze, keyhelp.
++## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze, keyhelp, roll.
+ const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]
+-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp"]
++const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll"]
+ 
+ 
+ ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of
+diff --git a/docs/rendering/README.md b/docs/rendering/README.md
+--- a/docs/rendering/README.md
++++ b/docs/rendering/README.md
+@@ -663,6 +663,7 @@
+ 
+ Both are other directors' work, hosted here as their docs ask (`docs/ui/hud-spec.md` section 14, `audio/README.md` "Hooking it up"). Both only read.
+ - **By roster id (2026-10-06; `docs/architecture/pending/fighter-split.md` section 10).** The old HUD looks a fighter up by his roster id: his name and his title are UI's (`UiData.display_name`, `display_title`), and with no title the line is his stance alone. The sim keeps no title and its name is the id. The damage marks' seed belongs to the outfit (`RenderLook.DAMAGE_SEED_97`, the numbers the marks have always had), so the roster's rename moved no mark. The old spellings of the two ids are gone from `DAMAGE_OUTFIT` since the rename (part C). `tools/hud_words_check.gd` asks for the old HUD's words, since no other headless gate draws that HUD.
++- **The camera roll on climaxes (2026-10-22, `camera-roll.md`).** A dutch tilt of 4 to 8 degrees on a decisive exchange, a finisher or a KO, eased in and out, leaning toward the loser; the HUD and Camera's inset stay level. Off by default (`RenderLook.CAMERA_ROLL_ON`; `--roll`, `?roll=1`).
+ - **Orb's minimal rule (2026-10-19, `docs/ep/taste.md`): nothing on, over or between the fighters.** The stance badge (`RenderLook.STANCE_BADGE_ON`) and the guard arc (`GUARD_ARC_ON`) are off. The greybox overlay draws its demo prompt, key help and seed and tick line only with `--keyhelp` (on the web `?keyhelp=1`); F3's readout is unchanged. Before and after: `img/minimal-before-after.png` (uncommitted).
+ - **The demo's key help on a short screen (2026-10-06).** The key help under the demo's prompt keeps to the screen's lowest fifth: lines go from the end, the debug keys first, and the prompt always shows. At 720 high nothing changes; at 450 it is one line, which used to be four lines over the fighters. Before and now at 800 by 450: ![before](img/keyhelp-800-before.png) ![now](img/keyhelp-800-now.png)
+ - **A debug route to Animation's study scenes (2026-10-06).** `--study` opens the flurry study in place of the game, `--study=zip` another by name (`res://render/anim/tools/<name>_study.tscn`); on the web `/play/?study=1` or `?study=zip`. Only the game's own main scene takes it, never a tool's (a study drives a main of its own). Without the argument nothing changes. ![the flurry study on the web](img/study-route-web.png)
+diff --git a/render/core/camera_roll.gd b/render/core/camera_roll.gd
+new file mode 100644
+--- /dev/null
++++ b/render/core/camera_roll.gd
+@@ -0,0 +1,67 @@
++class_name RenderCameraRoll
++extends RefCounted
++## A dutch tilt on the fight's climaxes (the EP's brief of 2026-10-22; docs/rendering/camera-roll.md). The main panes'
++## cameras roll about their view axis by RenderLook.ROLL_DEG.x to .y degrees on a decisive exchange won (a launch, a
++## guard break or an interrupt light; a clash or a beam more), a finisher's start or a KO (the most), leaning toward the
++## loser's side of the winner: in over ROLL_TIMES.x of match time, held ROLL_TIMES.y, back over ROLL_TIMES.z, eased.
++## Off unless RenderLook.CAMERA_ROLL_ON or main's --roll. The HUD (UI's canvas) is never rotated, and Camera's inset
++## strip stays level.
++## Reads the sim's events and its fighters' places only; writes nothing; draws no random number.
++
++var angle_deg: float = 0.0     # this frame's roll, signed
++var _from: float = 0.0
++var _to: float = 0.0
++var _t0: float = -1.0          # the match time the current roll began; -1: none
++
++
++func reset() -> void:
++	angle_deg = 0.0
++	_from = 0.0
++	_to = 0.0
++	_t0 = -1.0
++
++
++## A tick's events: a decisive exchange, a finisher's start or a KO starts a roll toward the loser's side, from where the
++## camera stands now (a new climax mid-roll turns it, never snaps it).
++func consume(S: SimState, events: Array) -> void:
++	for e in events:
++		var ty: String = String(e.type)
++		var w: float = -1.0
++		var win: int = -1
++		var lose: int = -1
++		if ty == "decisive":
++			w = 0.5 if ["clash", "beam", "beam_clash"].has(String(e.kind)) else 0.25
++			win = int(e.winner)
++			lose = int(e.loser)
++		elif ty == "finisher_start":
++			w = 1.0
++			win = int(e.actor)
++			lose = int(e.target)
++		elif ty == "ko":
++			w = 1.0
++			win = int(e.winner)
++			lose = int(e.loser)
++		if w < 0.0 or win < 0 or lose < 0 or win >= S.fighters.size() or lose >= S.fighters.size() or win == lose:
++			continue
++		var dx: float = SimWrap.sdx(S.fighters[win].x, S.fighters[lose].x)
++		_from = angle_deg
++		_to = (1.0 if dx >= 0.0 else -1.0) * lerpf(RenderLook.ROLL_DEG.x, RenderLook.ROLL_DEG.y, w)
++		_t0 = S.T
++
++
++## The roll at match time t (the tick's time plus the frame's share of the next): eased in, held, eased out.
++func update(t: float) -> float:
++	if _t0 < 0.0 or t < _t0:
++		reset()   # none, or the match went back (a new match or a seek)
++		return 0.0
++	var ti: Vector3 = RenderLook.ROLL_TIMES
++	var e: float = t - _t0
++	if e < ti.x:
++		angle_deg = lerpf(_from, _to, smoothstep(0.0, 1.0, e / ti.x))
++	elif e < ti.x + ti.y:
++		angle_deg = _to
++	elif e < ti.x + ti.y + ti.z:
++		angle_deg = lerpf(_to, 0.0, smoothstep(0.0, 1.0, (e - ti.x - ti.y) / ti.z))
++	else:
++		reset()
++	return angle_deg
+diff --git a/render/core/camera_roll.gd.uid b/render/core/camera_roll.gd.uid
+new file mode 100644
+--- /dev/null
++++ b/render/core/camera_roll.gd.uid
+@@ -0,0 +1 @@
++uid://c1rlcd1i4djbg
+diff --git a/docs/rendering/camera-roll.md b/docs/rendering/camera-roll.md
+new file mode 100644
+--- /dev/null
++++ b/docs/rendering/camera-roll.md
+@@ -0,0 +1,35 @@
++# The camera roll on climaxes (Rendering, 2026-10-22)
++
++The EP's brief: a dutch tilt of 4 to 8 degrees on a fight's climaxes, eased, switchable, with the HUD never rotated, and off by default.
++
++## What it does
++
++The main panes' cameras roll about their view axis when the sim says a climax happened:
++
++| Event | Roll |
++| :--- | :--- |
++| `decisive` (a decisive exchange won) by a launch, a guard break or an interrupt | 5 degrees |
++| `decisive` by a clash, a beam or a beam clash | 6 degrees |
++| `finisher_start`, `ko` | 8 degrees |
++
++- **Direction:** the roll leans toward the loser's side of the winner.
++- **Timing:** it comes in over 0.25 s of match time, holds 0.8 s and goes back over 0.9 s, each eased. A hit-stop holds it.
++- **A second climax mid-roll:** it turns the roll from where it stands and never snaps.
++
++The numbers are `RenderLook.ROLL_DEG` and `ROLL_TIMES`.
++
++- **Off by default** (`RenderLook.CAMERA_ROLL_ON` false). Main's `--roll`, or `?roll=1` on a page, turns it on.
++- **The HUD is UI's canvas** and is never rotated. Its anchors on the fighters go through the camera, so they follow the roll.
++- **Camera's inset strip stays level.**
++- **The sky, the haze and the horizon glow** work from world-space view directions, so a rolled camera keeps them right.
++
++`render/core/camera_roll.gd` (`RenderCameraRoll`) reads the sim's events and the fighters' places only. It writes nothing and draws no random number. `pane_world.gd` turns its camera after `CameraRig.frame`, so CameraRig (Camera's) is unchanged. If Camera wants the angle from its director later, a pane takes it as an argument.
++
++## Against d3f1ca0e
++
++Seed 4, Reduce flashing on as the demo has it, motion normal. The roll is switched on in a scratch build; d3f1ca0e is on the left:
++
++- `img/roll-d3f1ca0e-1760.png`, tick 1760, after the launch and beam at 1739;
++- `img/roll-d3f1ca0e-1850.png`, tick 1850, the roll back to level.
++
++Both uncommitted.
