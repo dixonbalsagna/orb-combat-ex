@@ -44,7 +44,7 @@ static func atPause(S: SimState, f, pz: Dictionary) -> void:
 		return   # a new ring can't be warm by the pause's end: the next moment
 	var o = SimRoster.opp(S, f)
 	var spread: float = 0.5 * absf(SimWrap.sdx(f.x, o.x))
-	if spread * sin(deg_to_rad(_leastDeg())) > _moveMax():
+	if spread * _sinDeg(_leastDeg()) > _moveMax():
 		return   # not even World's smallest turn keeps the ground under them here
 	if not _clear(S):
 		return
@@ -115,7 +115,7 @@ static func pick(S: SimState, cands: Array, by, spread: float, orLeast: bool = t
 	for k in range(cands.size()):
 		if absf(float(cands[k].bearing)) < absf(float(cands[least].bearing)):
 			least = k
-		if spread * sin(deg_to_rad(absf(float(cands[k].bearing)))) > gm:
+		if spread * _sinDeg(absf(float(cands[k].bearing))) > gm:
 			continue
 		var s: float = 0.0
 		for pl in cands[k].places:
@@ -133,6 +133,14 @@ static func pick(S: SimState, cands: Array, by, spread: float, orLeast: bool = t
 	if best >= 0 or not orLeast:
 		return best
 	return least
+
+
+static var _PI: float = SimMathx.f64("400921fb54442d18")   # pi from its bits: no engine trig in the sim
+
+
+## The sine of an angle in degrees: the sim's own (SimDetMath), as World's turn uses.
+static func _sinDeg(deg: float) -> float:
+	return SimDetMath.sin(deg * _PI / 180.0)
 
 
 ## World's ground rule (rings.json turn): the most the ground under a fighter may move at a turn.
@@ -160,10 +168,10 @@ static func _keeps(S: SimState, xs: Array, margin: float = 0.0) -> bool:
 	for x in xs:
 		smax = maxf(smax, absf(SimWrap.sdx(float(x), pv)) + margin)
 	var gm: float = _moveMax()
-	if smax * sin(deg_to_rad(absf(float(S.epoch.next.get("bearing", 0.0))))) <= gm:
+	if smax * _sinDeg(absf(float(S.epoch.next.get("bearing", 0.0)))) <= gm:
 		return true
 	var fb: float = fallbackDeg(S)
-	return fb > 0.0 and smax * sin(deg_to_rad(fb)) <= gm
+	return fb > 0.0 and smax * _sinDeg(fb) <= gm
 
 
 ## ... where the fighters stand, at an angle World has read (World's tick swaps to the largest warm one that keeps it).
@@ -173,7 +181,7 @@ static func _groundFits(S: SimState) -> bool:
 	for f in S.fighters:
 		smax = maxf(smax, absf(SimWrap.sdx(f.x, pv)))
 	for a in WorldEpoch.warmAngles(S):
-		if absf(float(a)) >= float(WorldEpoch.data().get("minDeg", 2.0)) - 0.0001 and smax * sin(deg_to_rad(absf(float(a)))) <= _moveMax():
+		if absf(float(a)) >= float(WorldEpoch.data().get("minDeg", 2.0)) - 0.0001 and smax * _sinDeg(absf(float(a))) <= _moveMax():
 			return true
 	return false
 
