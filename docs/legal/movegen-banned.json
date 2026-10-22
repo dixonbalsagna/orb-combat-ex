@@ -603,6 +603,11 @@
       "id": "w06",
       "rule": "place names: the eleven generated names that are real towns over 15,000 people (bellhaven, larkfield, longfield, stonebridge, stonegate, sunrise, wakefield, whitefield, whiteford, whitehaven, whiterock) go on blocklist_start; any name added later is run against a real-town list before it ships; no destroyed place is named after a recognisable real city (c07)",
       "why": "no real city in the catastrophe, RL-149"
+    },
+    {
+      "id": "w07",
+      "rule": "planet and home names are in-game names and pass the GeoNames and web screen (RL-164); a name used as a public product name (a store page, a mode title, merchandise) gets the formal trademark search first; 'The Long Way Round' is not used as a public name (a known documentary series and book); no school, hospital or place of worship at any home; a destroyed place is never named after a real city (c07)",
+      "why": "RL-164"
     }
   ],
   "withdrawn": [
@@ -740,6 +745,11 @@
       "id": "ln03",
       "rule": "boons, keepsakes, temptations and any hidden-outcome reward are never sold or unlocked with real money, and nothing paid gives a random or hidden reward, without asking Legal first (paid random rewards are treated as gambling-like by several stores and countries); a keepsake is an object and never a body part, ash or remains; no keepsake or title is earned by a death or a toll; the saved may speak, the lost are only a count",
       "why": "RL-158; c08"
+    },
+    {
+      "id": "ln04",
+      "rule": "the Cyborg's ground: the picker scores a place's wear state (damaged, fallen), never its casualty count; no line, caption or card mentions people there and his line stays about wreckage and does not change with the toll; no bodies or remains are drawn in a fallen place; fighting on fallen ground gives him no gameplay advantage that grows with deaths (a home is colour only); the toll stays a count (c08)",
+      "why": "RL-165; opponent-grounds.md"
     }
   ]
 }
