@@ -23,3 +23,17 @@ Buttons: **"I understand, start"** and **"Not now"**. Never "safe", "tested" or 
 
 ## Checks for Tools
 Compare word for word against these strings; scan the public strings for British spellings (colour, behaviour, grey, centre, artefact, programme, catalogue, neighbour, organisation, recognise, licence, analyser) and fail on a hit; fail the interim export unless the lock flag is true. The settings ids that contain "colour" are internal and may stay; their visible labels are American.
+
+## Holding-page words, replaced 2026-10-22 (RL-171)
+With flash work paused, "We are fixing them" and "while we fix them" are untrue. Tools applies these in `tools/site-notice-offline.json`, `tools/site-notice.json` and `tools/site-interim.json`; spelling is American.
+
+**While the demo is offline** (`site-notice-offline.json`):
+> The playable build is offline for now. Our own automated check found some scenes that flash more often than the recommended limit of three times a second, and they are not fixed yet. No independent photosensitivity analyzer has been run. There is no date for its return.
+
+**On the page while the demo is up** (`site-notice.json`):
+> It sits behind a notice because our own automated check found some scenes that go over the recommended limit of three flashes a second, and they are not fixed yet. No independent photosensitivity analyzer has been run. It is a limited test build and may be taken down without notice. There is no date for a full release.
+
+**The unused RL-136 words in `site-interim.json`** (both copies): delete them, or replace them with the flash notice and the lock line above. The old text ("reach the recommended limit ... a few that go over it on stricter readings ... We are fixing them ... Reduce flashing is on by default") is stale in three ways and must not be used by accident.
+
+If flash work restarts, "we are working to fix them" may come back on all of these. The addenda in `photosensitivity-note.md` are the history; the live words are in this file.
+
