@@ -590,7 +590,7 @@ func _on_drained(events: Array, lines: Array) -> void:
 		split_rig.step(host.S, vp.x, vp.y, events)
 	planet.consume(events, host.S.T)
 	if roll_on:
-		camera_roll.consume(host.S, events)
+		camera_roll.consume(host.S, events, split_rig if compositor != null else null)   # the rig's story, once it has read the tick
 	RenderAnim.consume(host.S, events)
 	ui_hud.consume_all(events)
 	_haptics_from_events(events)

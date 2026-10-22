@@ -444,6 +444,13 @@ const HAZE_SAT: float = 0.7
 const CAMERA_ROLL_ON: bool = false
 const ROLL_DEG := Vector2(4.0, 8.0)
 const ROLL_TIMES := Vector3(0.25, 0.8, 0.9)
+## The climaxes that roll, each with its weight (0: ROLL_DEG.x, 1: ROLL_DEG.y): the sim's events by type, and a decisive
+## exchange won by its kind. Motivated and rare (the EP, 2026-10-22): a plain knock-back, a heavy clash, a beam won, an
+## interrupt, a shot and a barrage do not roll.
+const ROLL_EVENTS: Dictionary = {"finisher_start": 1.0, "ko": 1.0}
+const ROLL_DECISIVE: Dictionary = {"beam_clash": 0.5, "guard_break": 0.25, "launch": 0.25}
+## The least match time between two rolls' starts, in seconds; ROLL_EVENTS (a finisher's start, a KO) roll whatever it.
+const ROLL_GAP_S: float = 8.0
 ## ... but in the far field (HAZE_AT[2] to HAZE_AT[3]) the haze's target moves toward the sky's own colour in that
 ## direction, HAZE_SKY of the way: far peaks melt into the sky behind them, as d3f1ca0e's far land did (Orb's playtest,
 ## 2026-10-19: the far ridge read as a huge brown wall). Art's ladder holds nearer.
