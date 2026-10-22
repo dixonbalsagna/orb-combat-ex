@@ -108,6 +108,8 @@ jobs:
         run: node tools/site-pin-selftest.mjs
       - name: Nightly seed run self-test (new seeds, never repeated; the take-down trigger)
         run: node tools/flash/nightly-selftest.mjs
+      - name: Gate wrapper self-test (a Godot gate whose log has SCRIPT ERROR lines fails, whatever its exit code)
+        run: node tools/gate-selftest.mjs
       # Headless Chrome (preinstalled on the runner) plays a page that flashes on purpose through the capture driver and the frame analyser.
       - name: Pixel pipeline self-test (headless Chrome, mock page)
         run: node tools/flash/pixel-selftest.mjs --require-browser
@@ -115,7 +117,7 @@ jobs:
       - name: Import project
         run: '"$GODOT" --headless --path . --import'
       - name: Play the worst cases
-        run: '"$GODOT" --headless --path . --script res://tools/flash/flash_worst.gd -- --out="${RUNNER_TEMP}/flash"'
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://tools/flash/flash_worst.gd -- --out="${RUNNER_TEMP}/flash"'
       - name: Recount the register's log
         run: node tools/flash/check-log.js "${RUNNER_TEMP}/flash"
       - name: Negative control (the recount must fail on four unrefusable flashes)
@@ -141,11 +143,11 @@ jobs:
       - name: Import project
         run: '"$GODOT" --headless --path . --import'
       - name: GDScript parity
-        run: '"$GODOT" --headless --path . --script res://sim/core/tools/parity.gd'
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://sim/core/tools/parity.gd'
       - name: Render determinism (gameplay hashes match with the scene running)
-        run: '"$GODOT" --headless --path . --script res://render/tools/determinism.gd'
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/determinism.gd'
       - name: Render seam sweep
-        run: '"$GODOT" --headless --path . --script res://render/tools/seam_sweep.gd -- --size=1280x720'
+        run: 'node tools/gate.mjs -- "$GODOT" --headless --path . --script res://render/tools/seam_sweep.gd -- --size=1280x720'
 
   # Builds the Pages site on every run, so a broken export shows up on pull requests
   # and branches too. Only pushes to main (and manual runs on main) upload it.
