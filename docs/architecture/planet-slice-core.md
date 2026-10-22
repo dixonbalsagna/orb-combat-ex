@@ -71,6 +71,13 @@ The rule: **no window regenerates for two reasons, and the default match does no
 | 4: the touch-down in the setup, `world` in the header, the demo as a story touch-down | A human-input replay on a planet, with `world` in its header | Nothing else, if the demo stays a setup without a planet | A replay with a wrong `world` is refused; one from today plays |
 | **Later, its own commit: a planet becomes the default match** | | **Every match, replay and tick-0 vector.** The one re-baseline, alone, with QA's before-and-after on the fixed planet | |
 
+**Built, 2026-10-22, after World's windows 0 and 1 landed (c6980e25), and generated on 79693404:** the golden gained one key, `planet` (`SimGolden.planetGolden`; parity's check "planet worlds (golden)"):
+- **`slices`:** World's slice hashes 7/3, 7/9 and 11/2 on the Whole ring (d0f86ade, 2fa739f2, 81af5442, as World listed).
+- **`tick0`:** the tick-0 gameplay hash of a match on 7/3 and on 11/2, and on 7/3 on the Half ring (2,400 columns), which pins the arena.
+- **`match`:** one AI match on 7/3, seed 1, of 3,600 ticks, with every per-tick digest and full-state checkpoint. Generated on 79693404 (World's surface classes rebuilt for each world). Before that fix, the planet world read the hand-made world's soil: the checkpoints were the same, and the per-tick digest differed by the events' surface names.
+
+Every other key stayed byte-identical: the new file, with the `planet` key cut out, is the old file to the byte. **Window 1's row** (the 64 fixed points, the picker's 8 choices, the places list's hash) is not in the golden yet. World's `planet_check` holds it, and the key can come with window 4.
+
 If instead `genWorld` is removed in window 2 (World's table reads that way), every key moves in window 2 and again in window 3, and each regeneration mixes the new world with whatever else that window changes. Keeping Bellgate as a setup without a planet costs nothing (it is today's code) and makes each window's proof clean.
 
 QA's measurements are per planet seed (World: one fixed planet for baselines, a random-planet arm for coverage). `batch.gd` would take `--planet=` and `--touch=` like its `--a` and `--b`.

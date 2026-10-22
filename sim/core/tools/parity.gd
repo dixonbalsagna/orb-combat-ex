@@ -96,6 +96,7 @@ func _init() -> void:
 	var tm: int = Time.get_ticks_usec()
 	check("matches", _matches(g))
 	check("human-input replays", _replays(g))
+	check("planet worlds (golden)", _planetGolden(g))
 	print("      (matches and replays: %.1f s)" % ((Time.get_ticks_usec() - tm) / 1e6))
 	if bench:
 		_bench()
@@ -5366,4 +5367,30 @@ func _shared() -> String:
 	ci["enabled"] = was
 	if int(runs[0][0]) == 0 or runs[0] != runs[1]:
 		return "the camera feed on: %d and %d cues, the same stream %s, the same play %s" % [int(runs[0][0]), int(runs[1][0]), str(runs[0][1] == runs[1][1]), str(runs[0][2] == runs[1][2])]
+	return ""
+
+
+## The planet's golden keys (SimGolden.planetGolden): World's slice hashes, the tick-0 state of planet matches on the
+## Whole ring and the Half, and one AI match on a planet with every per-tick digest and full-state checkpoint.
+func _planetGolden(g: Dictionary) -> String:
+	var want = g.get("planet", null)
+	if not (want is Dictionary):
+		return "the golden has no planet keys"
+	var sl: Dictionary = SimGolden.planetSlices()
+	for k in want.slices:
+		if sl.get(k, "") != want.slices[k]:
+			return "slice %s: %s, golden %s" % [k, sl.get(k, ""), want.slices[k]]
+	var t0: Dictionary = SimGolden.planetTick0()
+	for k in want.tick0:
+		if t0.get(k, "") != want.tick0[k]:
+			return "tick-0 state of the planet match %s: %s, golden %s" % [k, t0.get(k, ""), want.tick0[k]]
+	var m: Dictionary = want.match
+	var pm: Dictionary = SimGolden.PLANET_MATCH
+	if int(m.seed) != int(pm.seed) or int(m.cap) != int(pm.cap) or JSON.stringify(m.get("setup", {})) != JSON.stringify(JSON.parse_string(JSON.stringify(pm.setup))):
+		return "the planet match's recipe (%s) is not the golden's (%s): regenerate" % [JSON.stringify(pm), JSON.stringify(m.get("setup", {}))]
+	var got: Dictionary = SimGolden.goldenRun("default", int(pm.seed), null, int(pm.cap), pm.setup.duplicate(true))
+	var e: String = SimGolden.compareRun(got, m, "the planet match %s seed %d" % [JSON.stringify(pm.setup), int(pm.seed)])
+	if e != "":
+		return e
+	print("      %d slices, %d tick-0 states, a planet match of %d ticks: identical" % [want.slices.size(), want.tick0.size(), got.ticks])
 	return ""

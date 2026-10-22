@@ -89913,5 +89913,62 @@
     "final": "973058813fb165e7:de0ad2c349167556:8d21c2b2d3aa5619"
    }
   }
- ]
+ ],
+ "planet": {
+  "slices": {
+   "7/3": "d0f86ade",
+   "7/9": "2fa739f2",
+   "11/2": "81af5442"
+  },
+  "tick0": {
+   "7/3": "9608342b59982d86",
+   "11/2": "c83e313a93414127",
+   "7/3/half": "ded0fb10379ae0b9"
+  },
+  "match": {
+   "arm": "default",
+   "seed": 1,
+   "cap": 3600,
+   "ticks": 3600,
+   "light": "125f892e10e3cd99",
+   "checkpoints": [
+    "9608342b59982d86:8d548a45c9362954:2d8f73acd2d0aedd",
+    "1ec3cdcb20a0d0a6:00eea479a6ac875f:bd4e09636c4475ad",
+    "734c422126bf233c:ff16aebce0f5d846:3196ee65250523d2",
+    "d3ba58c1f3b6eede:80117e9a22342a93:51946f1aed570dbf",
+    "8c48449acd7733dd:07fb8b29b152e5a2:e74d11260d95e9dd",
+    "5286f77e9ad51e81:34ce8f6bf6965c74:30e3669877e39f91",
+    "f31195e949f55625:26a4cf9127037874:3e086e4e62ec72dc",
+    "573c6664c4178369:ea05b172c8cc59cc:5b54784db377cd5a",
+    "de1ededa70b569c6:2fc2df9c855f56ff:16490d2b3a670d2c",
+    "1cffbc09ba620e3f:f08adb19fec62167:6f590e0b557b28c0",
+    "0f1153d1cd5fe4ca:d0cce412ca5129a0:5163e0ce4aefa544",
+    "9ef93fb41b07f794:b4315aeaded5819e:403c7ca7e85edddb",
+    "f028d5691fa0533d:842cdaa227edd4e8:a751c31d9013b55c",
+    "dceb236abd05f641:9388d1b3f189e88b:f19ae08058f34812",
+    "d4d1b2e7c5b6a4c6:9440c90a95a38482:10e82254d884bcb7",
+    "032f7364a6bafc74:215c4d4427a01173:6bbc5657113b6ca4",
+    "cc09c01ba7b9f2a5:ae7fb57e93daee70:cb7f3072eefbf6f1",
+    "412ff1016555a8d2:1957c74822e0dbca:15cf63bf6c964f42",
+    "3d9a431658a68dd4:9d317e29a14f6e5f:380a8234ebd7b470",
+    "6ff2f91d72d5d701:880914e7108373b2:a4794f00fcf8e3d0",
+    "ea72593defdd939d:e88691e989dfb62f:65d213f6fc4b4963",
+    "af10fb5355cc2253:64657d4c8871b852:9e91097a7d62dc1b",
+    "2d34f3296fcd6cff:7fe19fbe53cb6bc6:ddab39bc59ba595b",
+    "20e8b00354257c09:bef15ab6cf3c36a4:0f8de8e7169daa5a",
+    "5ba0ef3edcebc96a:e7d82486e1673b58:949b7bb7c091e702",
+    "960d4d105ddcabc1:65936b55fcfed4b5:31962ca3ba76ec85",
+    "5475829de49f4602:55b0d0e5ceb368db:3f525c4d80a8153f",
+    "d0b7b6014b53f314:3bf440d9fc4bf527:ad566aea2205fe5a",
+    "8edb5fcc1ad36fb8:f7b200614c55ac05:5e17c5c306d81da9",
+    "84e5309d2290098e:2ba90ecf901b935c:3f5053f739f4ee9d",
+    "dafdd9b19041233d:d4b60969b81c6990:6f8338dbd9732bb5"
+   ],
+   "final": "dafdd9b19041233d:d4b60969b81c6990:6f8338dbd9732bb5",
+   "setup": {
+    "planet": 7,
+    "touch": 3
+   }
+  }
+ }
 }

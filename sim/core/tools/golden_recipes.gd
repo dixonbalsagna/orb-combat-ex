@@ -114,6 +114,7 @@ static func build() -> Dictionary:
 	g.replays = []
 	for rp in [scriptedReplay(11, 3000, false, [1500, 2100]), scriptedReplay(12, 2400, true, [])]:
 		g.replays.append({"replay": rp, "run": goldenRun("default", rp.seed, rp)})
+	g.planet = planetGolden()   # last, so every key before it is as it was
 	return g
 
 
@@ -523,10 +524,10 @@ static func _full(S: SimState, V: SimFxView, cam: SimCamera) -> String:
 ## One golden run. Every tick folds a light digest (time, rng, fighters' core numbers and state, feed lines, fx events);
 ## every CHECK_EVERY ticks and at the end the full state is recorded (sim, reference cosmetic view, camera). With a
 ## replay the run applies its AI toggles and intents for exactly replay.ticks; without, it runs to KO + 3 s or 18000.
-static func goldenRun(arm: String, seed: int, replay, cap: int = CAP) -> Dictionary:
+static func goldenRun(arm: String, seed: int, replay, cap: int = CAP, setup: Dictionary = {}) -> Dictionary:
 	var S := SimCore.createSim()
 	var cam := SimCamera.new()
-	SimCore.newMatch(S, seed, replay.ai if replay != null else {})
+	SimCore.newMatch(S, seed, replay.ai if replay != null else {}, setup)
 	var V := SimFxView.new(seed)
 	applyArm(arm, S.fighters)
 	var h := SimHash.Hasher.new()
@@ -563,6 +564,8 @@ static func goldenRun(arm: String, seed: int, replay, cap: int = CAP) -> Diction
 		if steps % CHECK_EVERY == 0:
 			checkpoints.append(_full(S, V, cam))
 	var result := {"arm": arm, "seed": seed, "cap": cap, "ticks": steps, "light": h.hex(), "checkpoints": checkpoints, "final": _full(S, V, cam)}
+	if not setup.is_empty():
+		result["setup"] = setup.duplicate(true)
 	SimCore.dispose(S)
 	return result
 
@@ -636,3 +639,33 @@ static func compareRun(got: Dictionary, want: Dictionary, label: String) -> Stri
 	if got.final != want.final:
 		return "%s: final state %s, golden %s" % [label, got.final, want.final]
 	return ""
+
+
+## The planet's golden keys (World's windows 0 and 1, c6980e25; docs/world/planet-window2.md, shifting-arena-design.md):
+## World's slice hashes, the tick-0 gameplay hash of planet matches (the Whole ring and the Half), and one AI match.
+const PLANET_SLICES: Array = [[7, 3], [7, 9], [11, 2]]
+const PLANET_TICK0: Array = [["7/3", {"planet": 7, "touch": 3}], ["11/2", {"planet": 11, "touch": 2}], ["7/3/half", {"planet": 7, "touch": 3, "arena": {"cols": 2400}}]]
+const PLANET_MATCH: Dictionary = {"seed": 1, "cap": 3600, "setup": {"planet": 7, "touch": 3}}
+
+
+static func planetSlices() -> Dictionary:
+	var out := {}
+	SimConst.setArena(SimConst.PLANET_NC)   # a slice is cut for the arena's length: the Whole ring's
+	for pt in PLANET_SLICES:
+		var sl = WorldPlanet.sliceFor(int(pt[0]), int(pt[1]))
+		out["%d/%d" % [pt[0], pt[1]]] = "%08x" % WorldPlanet.sliceHash(sl) if sl != null else "none"
+	return out
+
+
+static func planetTick0() -> Dictionary:
+	var out := {}
+	for pt in PLANET_TICK0:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 1, {}, pt[1].duplicate(true))
+		out[pt[0]] = SimHash.stateHash(S).gameplay
+		SimCore.dispose(S)
+	return out
+
+
+static func planetGolden() -> Dictionary:
+	return {"slices": planetSlices(), "tick0": planetTick0(), "match": goldenRun("default", int(PLANET_MATCH.seed), null, int(PLANET_MATCH.cap), PLANET_MATCH.setup.duplicate(true))}
