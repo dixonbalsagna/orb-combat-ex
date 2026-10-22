@@ -127,10 +127,6 @@ func _ready() -> void:
 	panes = [pane]
 	# Every effect's shader drawn once, off-screen and behind the notice, so the driver's compile is not a fight's
 	# first beam or crack (render/core/warmup.gd; Performance's audit 3.6). Not in a tool's main; `nowarmup` skips it.
-	if not manual and not args.has("nowarmup"):
-		var warm := RenderWarmup.new()
-		add_child(warm)
-		warm.start(pane.get_world_3d())
 	cam_rig = pane.cam_rig
 	planet = pane.planet
 	fighters_root = pane.fighters_root
@@ -225,6 +221,10 @@ func _ready() -> void:
 		_sync_split_options()
 		if not args.has("nosplit"):
 			split_view.attach(self)
+	if not manual and not args.has("nowarmup"):
+		var warm := RenderWarmup.new()
+		add_child(warm)
+		warm.start(pane.get_world_3d())   # after the split view: pane 0's own world, with its environment
 	# Tools' capture hook (--flashcap, on the web /play/?flashcap=1): the game is stepped a tick at a time from the
 	# page, for the frame analyser. Never in normal play, and never under a tool's own main.
 	if args.has("flashcap") and not manual and OS.has_feature("web") and get_parent() == get_tree().root:

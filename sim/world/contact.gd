@@ -106,6 +106,7 @@ class Body:
 	var embedOK: bool = true      # the launched fighter is out of the embed cool-down
 	var feet: bool = false        # the launch is a knock-back skid (a slide on the feet): a wall ends it with the bump, never the silent halt
 	var z: float = 0.0            # depth (T: the row the ground is read on when depth is on)
+	var rics: int = 0             # Simulation's ricochets in this send's row so far (SimRicochet.inRow): a glance's cap
 
 
 # ===================================================================== data
@@ -402,6 +403,22 @@ static func _land(S: SimState, b: Body, g: float, ev: Array) -> void:
 	# lip launch is a bounce or a skid by the usual rules (a journey makes one mark)
 	var slam: bool = sea or (sin2 >= K_SLAM2 and (first or wasHopped))
 	var forceTumble: bool = b.contacts >= K_MAXC or b.t >= K_MAXT
+	if S.ricOn and not sea and not forceTumble and SimRicochet.steepGround(s):   # Simulation's ricochet (sim/core/ricochet.gd): fast and shallow on steep ground, a glance
+		var gl: PackedFloat64Array = SimRicochet.rule(vn, vt, b.rics)
+		if int(gl[0]) == SimRicochet.GLANCE:
+			var vxg: float = (gl[2] - s * gl[1]) / q
+			var vyg: float = (s * gl[2] + gl[1]) / q
+			b.vx = vxg * tv
+			b.vy = vyg
+			b.rics += 1
+			b.spin = _spinFor(b, vt)
+			info["k"] = "bounce"   # paid and told as a bounce that keeps SimRicochet.keep
+			info["glance"] = true
+			info["n"] = int(b.bounces)
+			info["keep"] = SimRicochet.keep
+			ev.append(info)
+			ev.append({"k": "left_ground", "cause": "glance", "x": b.x, "y": g, "vx": b.vx, "vy": b.vy, "speed": SimDetMath.hypot(vxg, vyg), "slope": s})
+			return
 	if slam:
 		var hop: bool = (not sea) and sp >= K_HOPSPEED and not b.hopped
 		if hop and first and b.embedOK:   # a blow that will embed him digs in and stays there: no hop
@@ -649,6 +666,7 @@ static func toBody(S: SimState, f) -> Body:
 	b.tier = by.tier
 	b.slideD = f.slideD
 	b.lips = f.jLips
+	b.rics = SimRicochet.inRow(f)
 	b.mode = AIR
 	if f.slide > 0.0:
 		b.mode = TUMBLE if f.tumbleT >= 0 else SKID
@@ -772,6 +790,8 @@ static func _apply(S: SimState, f, by, b: Body, e: Dictionary) -> void:
 		WorldBrunt.endFlight(S, f)
 	elif k in ["skid", "tumble", "bounce", "slam"]:
 		_contact(S, f, by, b, e)
+		if e.get("glance", false):
+			SimRicochet.told(S, f, "glance", String(e.surface), float(e.x), float(e.y))   # Simulation's: the row, the event
 	elif k == "stop":
 		pass
 	elif k == "left_ground":

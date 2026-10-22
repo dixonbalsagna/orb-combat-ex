@@ -48,6 +48,7 @@ var formsOn: bool = false             # forms (sim/core/forms.gd): the Protagoni
 var flightOn: bool = false            # the launch's curve (sim/core/flight.gd): data/fight/flight.json's switch, or the setup's "flight"; off
 var hitstopOn: bool = false           # hit-stop by weight (sim/core/hitstop.gd): data/fight/hitstop.json's switch, or the setup's "hitstop"; off
 var hs = null                         # ... its freeze budget: StopState while hitstopOn, null otherwise
+var ricOn: bool = false               # the ricochet's glance (sim/core/ricochet.gd): data/fight/ricochet.json's switch, or the setup's "ricochet"; off
 var cata = null                       # the catastrophe's state (sim/core/cata.gd): CataState from the first blast cloud, null before
 var out := Out.new()
 
@@ -563,6 +564,8 @@ class Fighter:
 	var brk = null                   # the air brake: BrakeState while S.brakeOn (sim/core/brake.gd), null otherwise
 	var form = null                  # forms: FormState while S.formsOn (sim/core/forms.gd), null otherwise
 	var flt = null                   # the launch's curve: FlightState while S.flightOn (sim/core/flight.gd), null otherwise
+	var rics: int = 0                # ricochets (glances and plants) in this send's row (sim/core/ricochet.gd); hashed only while S.ricOn
+	var ricN: int = 0                # ... the launch number the row belongs to (a new send starts a new row)
 	var fd = null                    # forms: his FormsDef while S.formsOn, when his data has steps; not hashed (data)
 	var wd = null                    # D1a: the fighter's FighterData.WoundsDef (data; covered by the data hash, not hashed here)
 	var md = null                    # D1b: its FighterData.MetersDef (the same)

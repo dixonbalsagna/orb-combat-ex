@@ -19,13 +19,20 @@ var _flare: MeshInstance3D
 var _cyl: CylinderMesh
 
 
+## A beam layer's prism: a unit cylinder of 16 sides with 24 rings along it (the width swells and thins along it:
+## VfxBeamLook, the shader's `wob`). The one source for this view and for anything that warms its first draw.
+static func prism_mesh() -> CylinderMesh:
+	var c := CylinderMesh.new()
+	c.top_radius = 0.5
+	c.bottom_radius = 0.5
+	c.height = 1.0
+	c.radial_segments = 16
+	c.rings = 24
+	return c
+
+
 func _ready() -> void:
-	_cyl = CylinderMesh.new()
-	_cyl.top_radius = 0.5
-	_cyl.bottom_radius = 0.5
-	_cyl.height = 1.0
-	_cyl.radial_segments = 16
-	_cyl.rings = 24            # rings along the beam: the width swells and thins along it (VfxBeamLook, the shader's `wob`)
+	_cyl = prism_mesh()
 	var s := SphereMesh.new()
 	s.radius = 0.5
 	s.height = 1.0

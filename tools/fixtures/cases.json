@@ -296197,6 +296197,99 @@
         "rule": "maximum",
         "pointer": "/borrowed/firstBreakSooner"
       }
+    },
+    {
+      "id": "fight-ricochet-valid",
+      "schema": "fight-ricochet.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/ricochet.json",
+          "set": {
+            "/schema": "fight.ricochet/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-ricochet-required-schema",
+      "schema": "fight-ricochet.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/ricochet.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-ricochet-extra-key",
+      "schema": "fight-ricochet.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/ricochet.json",
+          "set": {
+            "/bounce": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/bounce"
+      }
+    },
+    {
+      "id": "fight-ricochet-enabled-not-bool",
+      "schema": "fight-ricochet.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/ricochet.json",
+          "set": {
+            "/enabled": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "fight-ricochet-keep-over-one",
+      "schema": "fight-ricochet.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/ricochet.json",
+          "set": {
+            "/keep": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/keep"
+      }
+    },
+    {
+      "id": "fight-ricochet-angle-zero",
+      "schema": "fight-ricochet.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/ricochet.json",
+          "set": {
+            "/maxAngle": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/maxAngle"
+      }
     }
   ],
   "text": [

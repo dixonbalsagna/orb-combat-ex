@@ -219,6 +219,14 @@ static func airBrake(S: SimState, f, phase: String, why: String, speed: float, u
 ## The launch's curve (sim/core/flight.gd), for the camera: text kick (the send's ramp begins; amount the peak), glide
 ## (the cruise is reached), arrive (his contact is the arrival's ticks ahead) or end (the paced leg is over: kind
 ## contact, brake or send); amount the speed he shows, n the launch number, t the live ticks since the send.
+## A ricochet (sim/core/ricochet.gd), for Encounter and Camera: kind glance (or Encounter's plant), text the surface
+## (the ground's surface name, or building), at x, y; ux, uy his direction after it and amount his speed (normalised:
+## the traversal factor divided out); n the ricochets in this row so far, this one included.
+static func ricochet(S: SimState, f, kind: String, surface: String, x: float, y: float, ux: float, uy: float, amount: float, n: int) -> void:
+	var e := _ev(S, "ricochet")
+	e.actor = float(S.fighters.find(f)); e.kind = kind; e.text = surface; e.x = x; e.y = y; e.ux = ux; e.uy = uy; e.amount = amount; e.n = n
+
+
 static func flight(S: SimState, f, text: String, amount: float, t: int, why: String = "") -> void:
 	var e := _ev(S, "flight")
 	e.actor = float(S.fighters.find(f)); e.text = text; e.kind = why; e.amount = amount; e.n = int(f.launchN); e.t = float(t)

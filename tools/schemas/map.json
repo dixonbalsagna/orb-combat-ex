@@ -566,6 +566,10 @@
     {
       "match": "data/fight/boons.json",
       "schema": "fight-boons.schema.json"
+    },
+    {
+      "match": "data/fight/ricochet.json",
+      "schema": "fight-ricochet.schema.json"
     }
   ]
 }

@@ -83,3 +83,34 @@ The beam scene's first beam, crack and shards come at tick 83. That is inside Pe
 - **Determinism and the sim:** on af5151b5 all 17 render gates pass on the batch. On d9cbba71 all pass but the depth check, which fails the same way on HEAD alone: since Simulation's depth window (46734840), a held pair drifts in depth inside a tick, and the lane cues hold the pair's mark at their level. Determinism passes plain and `--intro`, as do the pane, flight, ground, seam, shape and city checks and UI's `hud_check`. The sim is not touched.
 - **Pixels:** the plan is frame-for-frame captures of `mashcity`, `signaturecity`, `ring` and `collapse` before and after, against a repeat of the same build as the noise floor. Pose stills differ by 1 to 2 k pixels in the street's crowd band between two captures of one build, and collapse in reduced mode diverges after tick 910 between two runs of one export. These wait for the end of Tools' record run.
 - **Primitives and the hitches:** Performance's frame-bench against the same commit, after the record run.
+
+## The warm-up's world (2026-10-22)
+
+Performance's report on the live demo (`docs/perf/inset-hitches-aura-2026-10-22.md`) found two first-use hitches left with the warm-up on:
+- the AI match's first hit, tick 131, about 90 ms;
+- its first crater, tick 238, about 160 ms, about 55 ms of it Camera's strip.
+
+**What the time was.** A Chrome trace of the 238 frame, on Performance's web repro through Tools' launcher:
+- Three shader programs were linked in that frame: VFX's `beam_scar` and `crack`, and the beam's prisms.
+- The page waited on each link while the browser compiled its Direct3D shaders (`D3DCompile`, 15 to 69 ms each).
+- Nothing on the ground's path (the crater's deformation, the heat) compiled.
+- The same stage code had been compiled at boot, all but one to the letter, but in other variants. One boot variant lacked the tonemap and scene-data blocks.
+
+**Why.** `main.gd` started the warm-up with pane 0's world before the split view moved pane 0 into its own SubViewport (`own_world_3d`). So the warm-up drew into the world the pane had left, without the pane's environment (its sky and tonemap), and compiled variants the game never draws with.
+
+**The fix.** The warm-up starts after the split view attaches, with pane 0's own world. With `--nosplit` the pane stays in the window's world, which is then its own.
+
+**Measured** (`frame-bench --scene ai --reduced --ticks 400`, the web export, every run valid by the load rule):
+
+| Build | Strip | Hitches over 50 ms |
+| :--- | :--- | :--- |
+| HEAD | off | 131 (76 ms), 238 (164 ms) |
+| the warm-up after the split view | off | none; none but one 59 ms frame at 143 in one run |
+| the same, with VFX's real crack and beam meshes too | off | none; none |
+| the warm-up after the split view | on | none (worst frame 12.8 ms) |
+
+**What was tried first, without effect** (both still in the old world):
+- drawing the real beam (its prisms and `VfxBeamLook`'s materials) and a mesh in the crack's vertex layout;
+- drawing the warm set under the pane's camera at boot. The camera's near plane, set on the first frame, clipped it.
+
+**`BeamView.prism_mesh()`** is the one source of the beam's prism (16 sides, 24 rings), for the view and for anything that warms its first draw.

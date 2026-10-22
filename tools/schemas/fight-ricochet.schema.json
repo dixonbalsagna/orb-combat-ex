@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/fight-ricochet",
+  "title": "fight-ricochet (schema \"fight.ricochet/1\")",
+  "description": "data/fight/ricochet.json: the ricochet's glance (docs/architecture/ricochet-core.md; Game Design's fight-feel.md section 3). Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "enabled",
+    "line",
+    "maxAngle",
+    "keep",
+    "minSlope",
+    "maxInRow"
+  ],
+  "properties": {
+    "schema": {
+      "const": "fight.ricochet/1"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "the one switch (off: nothing reads the rest)"
+    },
+    "line": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100000,
+      "description": "units a second of his whole speed: at or above it a shallow contact glances"
+    },
+    "maxAngle": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 89,
+      "description": "degrees to the surface: under it, a glance"
+    },
+    "keep": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "the share of his speed a glance keeps"
+    },
+    "minSlope": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 89,
+      "description": "degrees: the ground a ricochet comes off is sloped this much or more"
+    },
+    "maxInRow": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 16,
+      "description": "the most ricochets in a row for one send"
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

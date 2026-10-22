@@ -174,6 +174,8 @@ static func dataHash(setup: Dictionary = {}) -> String:
 		h.text(SimBrake.dataHash())
 	if setup.get("flight", SimFlight.enabled()) == true:   # the launch's curve: data/fight/flight.json, only for a match with it on
 		h.text(SimFlight.dataHash())
+	if setup.get("ricochet", SimRicochet.enabled()) == true:   # the ricochet's glance: data/fight/ricochet.json, only for a match with it on
+		h.text(SimRicochet.dataHash())
 	if setup.get("hitstop", SimHitstop.enabled()) == true:   # hit-stop by weight: data/fight/hitstop.json, only for a match with it on
 		h.text(SimHitstop.dataHash())
 	if setup.get("forms", SimForms.enabled()) == true:   # forms: data/fight/forms.json and each fighter's forms.json, only for a match with them on

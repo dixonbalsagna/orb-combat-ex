@@ -1,0 +1,16 @@
+{
+  "_note": "The ricochet's glance (Game Design's fight-feel.md section 3; rulings-2026-10-22.md 2b; sim/core/ricochet.gd; docs/architecture/ricochet-core.md). Speeds are normalised: a launch's traversal factor divided out, as World's contact reads them.",
+  "schema": "fight.ricochet/1",
+  "enabled": false,
+  "_enabled": "the one switch. SimCore.newMatch copies it into S.ricOn unless the match's setup has its own \"ricochet\". Off: no glance, no ricochet state hashed, no ricochet event, and this file is not read into a replay",
+  "line": 1500.0,
+  "_line": "units a second of his whole speed (Game Design's rulings-2026-10-22.md 4: it was the speed along the surface's normal, which no shallow contact reached): at or above it a glancing contact glances; below it is Combat's plant (Encounter's)",
+  "maxAngle": 40.0,
+  "_maxAngle": "degrees to the surface: under it, a glance; at or above it, the wall slam, the lodge or the chain as before",
+  "keep": 0.7,
+  "_keep": "the share of his speed a glance keeps (angle in equal to angle out)",
+  "minSlope": 30.0,
+  "_minSlope": "degrees: the ground a ricochet comes off is sloped this much or more (a hillside, a ridge, a cliff, a crater's wall); flatter ground keeps the skid, the bounce, the tumble and the slam. Building faces always count",
+  "maxInRow": 2,
+  "_maxInRow": "the most ricochets in a row for one send, glances and plants together: then the next surface is a plain contact"
+}

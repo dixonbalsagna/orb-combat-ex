@@ -239,6 +239,12 @@ static func settle(S: SimState, f) -> void:
 		_end(S, f, "contact")
 
 
+## The paced leg ends here for a reason of another system's (a ricochet: SimRicochet.told), told with it.
+static func endLeg(S: SimState, f, why: String) -> void:
+	if f.flt != null and f.flt.on:
+		_end(S, f, why)
+
+
 static func _end(S: SimState, f, why: String) -> void:
 	var p = f.flt
 	p.on = false

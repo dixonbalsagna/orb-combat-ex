@@ -649,6 +649,8 @@ static func checkHit(S: SimState, f, ox: float, oy: float) -> bool:
 	if yc < gy - 10.0 or yc > gy + WorldStructures.curH(b):
 		f.aimB = -1
 		return false
+	if S.ricOn and SimRicochet.offFace(S, f, b, yc, edge, dir):
+		return true   # Simulation's ricochet: he glanced off the face, and struck nothing
 	hit(S, f, b, yc, edge, dir)
 	return true
 
@@ -670,6 +672,8 @@ static func _checkHitSwept(S: SimState, f, ox: float, oy: float) -> bool:
 	var dir: float = -1.0 if f.vx < 0.0 else 1.0
 	if f.aimB != hr.b:
 		f.aimB = hr.b   # an unaimed flight met it: the hit and its chain read the aim fields
+	if S.ricOn and SimRicochet.offFace(S, f, b, hr.y, hr.x, dir):
+		return true   # Simulation's ricochet: he glanced off the face, and struck nothing
 	hit(S, f, b, hr.y, hr.x, dir)
 	return true
 
