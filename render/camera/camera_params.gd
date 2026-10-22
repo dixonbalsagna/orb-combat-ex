@@ -33,6 +33,7 @@ const REF_MARGIN_Y: float = 500.0
 const REF_TIER: float = 0.06
 const ZONE_W: float = 0.0  # 0 = off. Was 0.51 (UI's clear-zone width) to keep fighters out from under UI's edge chips; Orb preferred the longer shared zoom-out, and the chips dodge the fighters instead             # UI's fighter-clear zone is 51% of the width (docs/ui/hud-spec.md 2.1): both fighters fit inside it
 const ZOOM_MIN: float = 0.006
+const RING_SHOW: float = 0.9           # on World's ring arena no pane shows more than this share of the ring (the ground would repeat on the screen): SplitRig.z_min
 const ZOOM_MAX: float = 1.15          # the reference camera's cap, kept for the parity docs; v2 uses R_MAX
 
 # --- divider geometry (section 3) ---
@@ -260,6 +261,20 @@ const ARR_WIDE: float = 0.15
 const ARR_IN: float = 0.15
 const ARR_HOLD: float = 0.45
 const ARR_OUT: float = 0.35
+# Pacing (docs/camera/director.md section 6): relax, build, peak and fade, from the blows landed in the last
+# PACE_WINDOW, the feed's story weight and the decisive events (a launch, a transformation, a finisher, `decisive`). It weights the
+# blow push by state (the anticipation's push stays as it is: weighting it moved the view under a strip), and sizes the one view by state (PACE_ZOOM: the reference size in relax and build,
+# a little tighter at a peak and a little wider in the fade after it), eased over PACE_ZOOM_TAU in the plain one view only and
+# held while the layout changes.
+const PACE_WINDOW: float = 2.0
+const PACE_BUILD_HITS: int = 3           # landed blows in the window for build
+const PACE_STORY: int = 4                # a running plan of this story weight or more is a peak (a finisher is 5)
+const PACE_BIG_HOLD: float = 1.0         # a decisive event keeps peak this long
+const PACE_FADE: float = 1.5             # fade's length after a peak (unless the blows keep coming: build)
+const PACE_MIN: float = 0.5              # a state holds at least this long
+const PACE_BLOW: Dictionary = {"relax": 0.6, "build": 1.0, "peak": 1.3, "fade": 0.8}
+const PACE_ZOOM: Dictionary = {"relax": 1.0, "build": 1.0, "peak": 1.05, "fade": 0.93}
+const PACE_ZOOM_TAU: float = 0.6
 const HIT_PUSH: float = 0.06           # zoom push on the first building hit; later links push less
 const HIT_PUSH_LATER: float = 0.03
 const LOW_AIR_DEAD: float = 112.0       # a launched body this near the ground (1.5 body heights) is not followed up; 0 turns it off

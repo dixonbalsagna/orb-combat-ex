@@ -781,6 +781,7 @@ func _seed_rig() -> void:
 func _watch_first() -> void:
 	_tick = 1
 	_clear_prev = null   # a re-seeded rig starts its rectangles again
+	_prev_disp = null    # ... and its display frames: a re-seed is a new match (a cut), not a move of the camera
 	_clear_grow_tick = [-1000, -1000]
 	_clear_miss = [0, 0]
 	_disp_t = float(_tick) * SplitRig.DT
