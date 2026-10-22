@@ -27,6 +27,8 @@ Controls, 2026-10-22. Nothing in CI or a runner lists the input tests, so this i
 | `touch_glue_test.gd` | 16 | the touch bridge |
 | `touch_test.gd` | 181 | touch Simple |
 
+**T1 is being tightened** (2026-10-22): the 38 checks counted any event but the tick mark as a reaction, so Encounter's `press_ack` ("queued") passed for a start. The tightened test is parked in `docs/controls/pending/t1-7a/` (62 checks: 24 START rows that need a real start on the press tick, 24 ACK rows that need the acknowledgement on it, 14 dodge and guard); it fails 24 of 62 on main until Encounter's 7a lands, then replaces the file and this row's 38 becomes 62.
+
 Counts are as of the date above; a window that adds checks updates its own line. A failure of `t1_latency_test.gd` means a layout, the hub or the director has put a delay between a press and its first visible reaction: fix the cause, never the threshold (the budget is 0 ticks, `input-scheme.md` T1).
 
 ## 2. The rest of the gate
