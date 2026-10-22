@@ -540,6 +540,10 @@
       "schema": "anim-guard-pass.schema.json"
     },
     {
+      "match": "data/anim/clinch.json",
+      "schema": "anim-clinch.schema.json"
+    },
+    {
       "match": "data/anim/throws.json",
       "schema": "anim-throws.schema.json"
     },

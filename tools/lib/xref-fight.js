@@ -1079,6 +1079,17 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor, root }) {
       if (typeof cv.now === 'number' && typeof cv.was === 'number' && cv.now > cv.was) err('data/anim/guard_pass.json', `/contacts/${esc(ck)}/now`, 'anim-guard-pass-order', `"${ck}" is ${cv.now} from the guard now and was ${cv.was}: the pass must not move a hand away`);
       if (typeof cv.now === 'number' && isObj(gp.goal) && typeof gp.goal.hand === 'number' && cv.hand_l && cv.now > gp.goal.hand + 1e-9) err('data/anim/guard_pass.json', `/contacts/${esc(ck)}/now`, 'anim-guard-pass-goal', `"${ck}" is ${cv.now} from the guard, above the hand goal ${gp.goal.hand}`);
     }
+    const cli = get('data/anim/clinch.json');
+    if (isObj(cli)) {
+      const CL = 'data/anim/clinch.json';
+      const ok = (id) => !posesP.size || posesP.has(id) || seqsP.has(id);
+      if (isObj(cli.poses)) for (const [k, id] of Object.entries(cli.poses)) if (!k.startsWith('_') && typeof id === 'string' && !ok(id)) err(CL, `/poses/${esc(k)}`, 'anim-clinch-pose', `pose "${id}" is neither a pose nor a sequence of any wave`);
+      if (isObj(cli.held_poses)) for (const [k, id] of Object.entries(cli.held_poses)) {
+        if (k.startsWith('_')) continue;
+        if (!isObj(cli.poses) || !(k in cli.poses)) err(CL, `/held_poses/${esc(k)}`, 'anim-clinch-held', `held_poses names the kind "${k}", which is not a kind of poses`);
+        if (typeof id === 'string' && !ok(id)) err(CL, `/held_poses/${esc(k)}`, 'anim-clinch-pose', `pose "${id}" is neither a pose nor a sequence of any wave`);
+      }
+    }
     const thr = get('data/anim/throws.json');
     if (isObj(thr) && isObj(thr.sends)) {
       const used = new Set();

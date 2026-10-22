@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-clinch",
+  "title": "anim.clinch/1",
+  "description": "data/anim/clinch.json: the clinch's grip layer (docs/animation/clinch-sizing.md, slice C2; AnimFighter._grip_layer): the sim's hold arrives as a read (partner, kind, role, grade, side) and the layer mixes these poses in. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references in tools/lib/xref-fight.js (anim-clinch-pose: every pose named exists; anim-clinch-held: every held_poses key is a kind of poses).",
+  "type": "object",
+  "required": [
+    "schema",
+    "poses",
+    "held_poses",
+    "ramp_ticks",
+    "gap_budget",
+    "hand_back",
+    "depth_offset"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.clinch/1"
+    },
+    "poses": {
+      "type": "object",
+      "required": [
+        "reach",
+        "seat",
+        "ahead",
+        "behind",
+        "pummel_l",
+        "pummel_r",
+        "brace",
+        "pin",
+        "carry",
+        "strain",
+        "whiff",
+        "apart"
+      ],
+      "properties": {
+        "reach": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The pose of a hold's read \"reach\" (a real pose: rule anim-clinch-pose)."
+        },
+        "seat": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The pose of a hold's read \"seat\" (a real pose: rule anim-clinch-pose)."
+        },
+        "ahead": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The pose of a hold's read \"ahead\" (a real pose: rule anim-clinch-pose)."
+        },
+        "behind": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The pose of a hold's read \"behind\" (a real pose: rule anim-clinch-pose)."
+        },
+        "pummel_l": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The pose of a hold's read \"pummel_l\" (a real pose: rule anim-clinch-pose)."
+        },
+        "pummel_r": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The pose of a hold's read \"pummel_r\" (a real pose: rule anim-clinch-pose)."
+        },
+        "brace": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The pose of a hold's read \"brace\" (a real pose: rule anim-clinch-pose)."
+        },
+        "pin": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The pose of a hold's read \"pin\" (a real pose: rule anim-clinch-pose)."
+        },
+        "carry": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The pose of a hold's read \"carry\" (a real pose: rule anim-clinch-pose)."
+        },
+        "strain": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The pose of a hold's read \"strain\" (a real pose: rule anim-clinch-pose)."
+        },
+        "whiff": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The pose of a hold's read \"whiff\" (a real pose: rule anim-clinch-pose)."
+        },
+        "apart": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The pose of a hold's read \"apart\" (a real pose: rule anim-clinch-pose)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The pose of each kind of a hold."
+    },
+    "held_poses": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+        "description": "The pose the held body takes for this kind."
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The pose the held (pinned) body takes, by kind (each key a kind of poses: rule anim-clinch-held)."
+    },
+    "ramp_ticks": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 60,
+      "description": "Ticks the layer takes to mix a pose in."
+    },
+    "gap_budget": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 20,
+      "description": "How much of the gap between the pair the layer may close, in body units."
+    },
+    "hand_back": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "How far the hand comes back toward the guard when the hold ends, 0 to 1."
+    },
+    "depth_offset": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 30,
+      "description": "How far the holder stands off in depth, in units."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

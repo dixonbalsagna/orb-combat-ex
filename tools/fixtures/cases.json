@@ -296276,6 +296276,352 @@
       }
     },
     {
+      "id": "anim-clinch-valid",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "set": {
+            "/schema": "anim.clinch/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-clinch-key-required-schema",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-clinch-key-required-poses",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "del": [
+            "/poses"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-clinch-key-required-held-poses",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "del": [
+            "/held_poses"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-clinch-key-required-ramp-ticks",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "del": [
+            "/ramp_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-clinch-key-required-gap-budget",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "del": [
+            "/gap_budget"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-clinch-key-required-hand-back",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "del": [
+            "/hand_back"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-clinch-key-required-depth-offset",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "del": [
+            "/depth_offset"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-clinch-unknown-key",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-clinch-underscore-key-ok",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-clinch-schema-version",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "set": {
+            "/schema": "anim.clinch/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-clinch-kind-missing",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "del": [
+            "/poses/pin"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/poses"
+      }
+    },
+    {
+      "id": "anim-clinch-kind-unknown",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "set": {
+            "/poses/choke": "cl.hold.pin"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/poses/choke"
+      }
+    },
+    {
+      "id": "anim-clinch-pose-shape",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "set": {
+            "/poses/seat": "Seat It"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/poses/seat"
+      }
+    },
+    {
+      "id": "anim-clinch-pose-missing",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "set": {
+            "/poses/seat": "cl.hold.no_such_pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-clinch-pose",
+        "pointer": "/poses/seat"
+      }
+    },
+    {
+      "id": "anim-clinch-held-kind-unknown",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "set": {
+            "/held_poses/choke": "cl.hold.pin_brace"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-clinch-held",
+        "pointer": "/held_poses/choke"
+      }
+    },
+    {
+      "id": "anim-clinch-held-pose-missing",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "set": {
+            "/held_poses/pin": "cl.hold.no_such_pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-clinch-pose",
+        "pointer": "/held_poses/pin"
+      }
+    },
+    {
+      "id": "anim-clinch-ramp-zero",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "set": {
+            "/ramp_ticks": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/ramp_ticks"
+      }
+    },
+    {
+      "id": "anim-clinch-ramp-fraction",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "set": {
+            "/ramp_ticks": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/ramp_ticks"
+      }
+    },
+    {
+      "id": "anim-clinch-gap-negative",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "set": {
+            "/gap_budget": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/gap_budget"
+      }
+    },
+    {
+      "id": "anim-clinch-hand-back-over-one",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "set": {
+            "/hand_back": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/hand_back"
+      }
+    },
+    {
+      "id": "anim-clinch-depth-offset-negative",
+      "schema": "anim-clinch.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/clinch.json",
+          "set": {
+            "/depth_offset": -2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/depth_offset"
+      }
+    },
+    {
       "id": "fight-ricochet-angle-zero",
       "schema": "fight-ricochet.schema.json",
       "mutate": [
