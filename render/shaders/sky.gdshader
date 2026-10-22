@@ -33,6 +33,7 @@ uniform float cloud_cover = 0.52;    // RenderLook.CLOUD_COVER
 uniform vec2 react_r = vec2(0.7, 0.24);   // RenderLook.SKY_REACT_R: the gap's half width and half height, in half screen heights
 uniform vec3 react_at = vec3(0.45, 0.46, 1.0);   // RenderLook.SKY_REACT_AT: how far above him the gap sits, and the lowest and highest its middle goes (heights above the horizon, as the cloud band's)
 uniform vec4 sky_react[2];           // xyz: the direction from the camera to a fighter (world axes); w: the reaction, 0 to 1
+uniform float sky_turn = 0.0;        // the slow drift (World's window 2): the angle the sky has turned about the fight, as the far land has; 0 off
 uniform float star_turn = 0.0;       // how far the sky's sphere has turned (RenderLook.STAR_TURN times the place of the lap)
 uniform float star_period = 6.0;     // RenderLook.STAR_TURN: the field repeats every turn
 uniform vec2 star_floor = vec2(0.4, 0.8);   // RenderLook.STAR_FLOOR
@@ -77,7 +78,7 @@ void sky() {
 		}
 	}
 	// The stars: on the sky's sphere (turning with the lap), never lower than star_floor, only where the sky is dark.
-	vec2 g = vec2(mod((p.x + star_turn) * 260.0, star_period * 260.0), p.y * 260.0);   // repeats every lap, so the wrap is seamless
+	vec2 g = vec2(mod((p.x + star_turn + sky_turn) * 260.0, star_period * 260.0), p.y * 260.0);   // repeats every lap, so the wrap is seamless
 	float hs = hash21(floor(g));
 	float star = step(0.994, hs) * (1.0 - smoothstep(0.08, 0.2, length(fract(g) - 0.5)));
 	float fade = smoothstep(star_floor.x, star_floor.y, h) * (1.0 - smoothstep(star_dark.x, star_dark.y, dot(c, vec3(0.2126, 0.7152, 0.0722))));
@@ -109,7 +110,7 @@ void sky() {
 			}
 			tint /= max(tw, 0.0001);   // where two gaps meet, their colours blend by weight: never their sum
 		}
-		vec2 cp = vec2(p.x * 2.2 + cloud_shift, (q - horizon) / sky_tan * 5.0);   // the plain height: see the header
+		vec2 cp = vec2((p.x + sky_turn) * 2.2 + cloud_shift, (q - horizon) / sky_tan * 5.0);   // the plain height: see the header
 		float n = cloud_noise(cp, cloud_period) * 0.65 + cloud_noise(vec2(cp.x * 2.0, cp.y * 2.9 + 11.0), cloud_period * 2.0) * 0.35;
 		float band = smoothstep(0.04, 0.3, h) * (1.0 - smoothstep(1.3, 2.3, h)) * (1.0 - space);
 		// The clouds that are there open: none inside the gap. No cloud is made, so a clear sky shows nothing.

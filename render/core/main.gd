@@ -64,6 +64,8 @@ var occlusion: int = PaneWorld.OCCL_HOLE   # every pane's occlusion method (Ctrl
 var inset: PaneWorld = null         # Camera's inset pane (make_inset), or null
 var camera_roll := RenderCameraRoll.new()   # the climaxes' dutch tilt for the main panes (off unless roll_on)
 var roll_on: bool = false
+var drift_on: bool = false                # the slow drift of the far land and sky (World's window 2): off unless SLOW_DRIFT_ON or --drift
+var _drift_t0: float = 0.0                # the match time the drift last started from 0 (a match's start, World's turn)
 var compositor: Object = null:
 	set(v):
 		compositor = v
@@ -214,6 +216,7 @@ func _ready() -> void:
 	if args.has("legacy-hud"):
 		set_legacy_hud(true)
 	roll_on = RenderLook.CAMERA_ROLL_ON or args.has("roll")   # the camera roll on climaxes: off by default (2026-10-22)
+	drift_on = RenderLook.SLOW_DRIFT_ON or args.has("drift")   # the slow drift of the far land and sky: off by default (2026-10-22)
 	hud.key_help = args.has("keyhelp")   # the greybox prompt and key help: off by Orb's minimal rule (2026-10-19)
 	if not manual:
 		split_view = SplitView.new()
@@ -256,6 +259,7 @@ func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:
 	var own: bool = not (setup is Dictionary)
 	host.new_match(seed, ai, _match_setup(seed) if own else setup, own)
 	camera_roll.reset()
+	_drift_t0 = host.S.T
 	var fl: Array = UiSimBridge.fighters(host.S)
 	ui_hud.setup(fl[0], fl[1])
 	for p in all_panes():
@@ -310,6 +314,17 @@ func make_inset(size: Vector2i) -> SubViewport:
 ## The climaxes' dutch tilt this frame, in degrees (RenderCameraRoll), for the main panes; 0 with it off.
 func _roll(a: float) -> float:
 	return camera_roll.update(host.S.T + a * SimConst.DT) if roll_on else 0.0
+
+
+## The slow drift's angle at interpolation a (radians): DRIFT_DEG_PER_MIN of match time since it last started, up to
+## DRIFT_MAX_DEG; 0 when off. A seek back restarts it.
+func _drift(a: float) -> float:
+	if not drift_on:
+		return 0.0
+	var t: float = host.S.T + a * SimConst.DT
+	if t < _drift_t0:
+		_drift_t0 = t
+	return deg_to_rad(minf(RenderLook.DRIFT_MAX_DEG, RenderLook.DRIFT_DEG_PER_MIN * (t - _drift_t0) / 60.0))
 
 
 ## A new pane that draws the first pane's world, in sv, built into the current match. markers false leaves out the
@@ -528,6 +543,9 @@ func frame(delta: float) -> void:
 ## from the split rig's camera for it (the first always, since it applies the world's changes), then the composite.
 func render_view(a: float) -> void:
 	var S: SimState = host.S
+	var dr: float = _drift(a)
+	for p in all_panes():
+		p.drift = dr
 	if compositor != null:
 		if "pitch_deg" in split_rig:
 			split_rig.pitch_deg = cam_pitch
@@ -607,6 +625,7 @@ func _arena_turn(e) -> void:
 	for p in all_panes():
 		p.planet.build(host.S)
 	host.impact.turn(float(e.x))
+	_drift_t0 = host.S.T   # the slow drift starts again from the new ring, under the turn's cut
 	host.sky.towns_again(host.S)
 
 
@@ -1241,7 +1260,7 @@ const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off",
 ## without UI's notice, change how a match starts or hold a debug value, and are dropped unless the page is on a local
 ## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze, keyhelp, roll.
 const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]
-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll"]
+const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift"]
 
 
 ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of

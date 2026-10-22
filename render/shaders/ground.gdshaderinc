@@ -9,6 +9,7 @@ uniform int nc = 1200;
 uniform int tw = 1200;
 uniform int rpl = 1;
 uniform float far_scale = 1.0;       // WS: the far relief's depth wavelengths grow with the world
+uniform float drift_tan = 0.0;       // the slow drift (World's window 2): tan of the angle the far land has turned about the fight; 0 off
 uniform float sea_base = -30.0;      // WorldWater.RESERVOIR_BASE: base ground below this is the sea
 uniform float wet_min = 0.5;         // WorldWater.MIN_DEPTH: water shallower than this counts as dry
 uniform float dent_min = 6.0;        // a dent deeper than this colours as a crater floor (6 x WS)
@@ -238,7 +239,7 @@ vec3 far_noise3(float x, float z) {
 float far_x(float xw, float z, float s) {
 	float t = 6.2831853 / world_w;
 	float m = 0.6 * sin(3.0 * t * xw + 0.00047 / far_scale * z + 0.4) + 0.4 * sin(8.0 * t * xw - 0.00083 / far_scale * z + 2.2);
-	float xs = xw + meander_amp * m * s * s;
+	float xs = xw + meander_amp * m * s * s - z * drift_tan * s;   // the slow drift: a turn about the fight shears the far land by its depth
 	return xs - world_w * floor(xs / world_w);
 }
 

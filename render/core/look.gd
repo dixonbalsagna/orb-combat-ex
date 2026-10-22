@@ -445,6 +445,12 @@ const HAZE_SAT: float = 0.7
 const CAMERA_ROLL_ON: bool = false
 const ROLL_DEG := Vector2(4.0, 8.0)
 const ROLL_TIMES := Vector3(0.25, 0.8, 0.9)
+## The slow drift (World's window 2; docs/rendering/slow-drift.md): the far land and the sky turn round the fight at
+## DRIFT_DEG_PER_MIN degrees a minute of match time, up to DRIFT_MAX_DEG, from 0 at a match's start and again at World's
+## turn (under its hard cut). Render only; off unless SLOW_DRIFT_ON or main's --drift (?drift=1 on a page).
+const SLOW_DRIFT_ON: bool = false
+const DRIFT_DEG_PER_MIN: float = 3.0
+const DRIFT_MAX_DEG: float = 30.0
 ## The climaxes that roll, each with its weight (0: ROLL_DEG.x, 1: ROLL_DEG.y): the sim's events by type, and a decisive
 ## exchange won by its kind. Motivated and rare (the EP, 2026-10-22): a plain knock-back, a heavy clash, a beam won, an
 ## interrupt, a shot and a barrage do not roll.

@@ -963,12 +963,14 @@ func _mm_child(parent: Node3D, n: String, mm: MultiMesh, mat: Material = null) -
 
 
 var _calm: bool = false              # the grooves are drawn calm (set_calm)
+var _drift_sent: float = 0.0         # the slow drift's tan last sent to the ground's materials (set_drift)
 var _crater_now: float = -1.0        # the match time last sent to the ground's materials (a new crater's age)
 
 
 func _make_materials() -> void:
 	_terrain_mat = ShaderMaterial.new()
 	_terrain_mat.shader = TERRAIN_SHADER
+	_drift_sent = 0.0
 	_water_mat = ShaderMaterial.new()
 	_water_mat.shader = WATER_SHADER
 	for m in [_terrain_mat, _water_mat]:
@@ -1115,6 +1117,16 @@ func open_faces(S: SimState, cam_x: float) -> Array:
 
 ## The camera's world position this frame, for the foreground rule in the ground and water shaders.
 ## The grooves' calm form, under reduced flashing or reduced motion (PaneWorld.flash_calm): a fainter glow and char.
+## The slow drift's turn (World's window 2): tan of the angle the far land has turned about the fight, on the ground's
+## materials (ground.gdshaderinc far_x). Sent only when it changes.
+func set_drift(t: float) -> void:
+	if _terrain_mat == null or t == _drift_sent:
+		return
+	_drift_sent = t
+	_terrain_mat.set_shader_parameter("drift_tan", t)
+	_water_mat.set_shader_parameter("drift_tan", t)
+
+
 func set_calm(on: bool) -> void:
 	if _terrain_mat == null or on == _calm:
 		return
