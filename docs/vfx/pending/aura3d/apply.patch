@@ -406,7 +406,7 @@
  			if e.type == "last_stand_ready":
 --- a/tools/schemas/map.json
 +++ b/tools/schemas/map.json
-@@ -484,6 +484,10 @@
+@@ -488,6 +488,10 @@
        "schema": "vfx-catastrophe.schema.json"
      },
      {
@@ -559,7 +559,7 @@
 +}
 --- /dev/null
 +++ b/docs/vfx/aura3d.md
-@@ -0,0 +1,64 @@
+@@ -0,0 +1,67 @@
 +# The 3D auras (Orb's direction, 2026-10-18)
 +
 +Owner: VFX Director. Built in scratch and parked (`docs/vfx/pending/aura3d/`), **off by default**. Orb's words (homework, 2026-10-18): "cool, pulsating, 3D visual auras that can shimmer, froth, undulate etc. based on whose aura. Ideally protagonist and rival have similar but inverted themes on their auras, not just color ... develop a unique aura style to convey each character's power foundation." Not a clearance; **Legal has not seen it** (see the last section).
@@ -624,9 +624,12 @@
 +How it is wired: `VfxAura3D.hull_material(fighter)` makes one hull material per fighter; Rendering's FighterView chains it after the outline pass and gives it the projection anchor each frame (a few lines, a grant: `grant-fighter-view.patch`); the view (`aura3d_view.gd`) only writes its parameters each frame from the standing aura's level, so it works the same in every pane. Behind the same switch as before (`hub.aura3d_enabled`, off; turning it on turns the old flat standing aura off). Not a Legal clearance: Legal's earlier rule asked for a thin outline; this is richer and needs their re-screen.
 +
 +Limits: the fringe test is a screen-space heuristic of the baked normals, so a hand crossing the torso can still tint a little of the body; the band is not a perfect offset of the sprite (it is the mesh's, so it stands off by model units, a little more where the baked normals are long); the headless outline check needs a window and was not run.
++
++## The first draw (Performance, 2026-10-22)
++A hitch of 50 to 110 ms at the first tick the aura draws appeared although the shader is in the boot warm-up's table: the pipeline is the shader on the SKINNED fighter mesh with the depth read, in the REAL pane's viewport (the driver sets pipelines up per viewport, so the warm-up's own 64 pixel viewport did not warm it). `VfxAura3D.warm_node()` is a real fighter body (AnimBody as FighterView builds it) with a hull chained after its outline, which VFX's `warm.gd` hands to the boot warm-up (park `warm-first-use`) to stand in the pane's view for its three frames behind the notice. Measured on Performance's cold repro (the city beam scene with the aura held up): the tick-6 hitch (75 to 111 ms) is gone.
 --- /dev/null
 +++ b/render/vfx/aura3d.gd
-@@ -0,0 +1,142 @@
+@@ -0,0 +1,176 @@
 +class_name VfxAura3D
 +extends RefCounted
 +## The 3D aura (docs/vfx/aura3d.md; Orb's direction 2026-10-18): a shader-driven shell round each fighter whose surface pulses, shimmers, froths and undulates, a different foundation for each fighter,
@@ -661,13 +664,47 @@
 +	var id: int = f.get_instance_id()
 +	if _hulls.has(id):
 +		return _hulls[id]
++	var m: ShaderMaterial = _new_hull()
++	_hulls[id] = m
++	return m
++
++
++static func _new_hull() -> ShaderMaterial:
 +	var m := ShaderMaterial.new()
 +	m.shader = preload("res://render/vfx/shaders/aura3d.gdshader")
 +	m.set_shader_parameter("ortho", 1.0)
 +	m.set_shader_parameter("level", 0.0)
 +	m.render_priority = -1       # before the water (priority 0): a fighter below the waterline gets his band under the water's tint, as his body has it
-+	_hulls[id] = m
 +	return m
++
++
++## The aura's first draw, at boot (Performance's audit: a hitch of 50 to 110 ms at the first tick the aura draws, although the shader is in the warm-up's table: the pipeline is the shader on the SKINNED fighter
++## mesh with the depth texture read, chained after the outline pass). A real fighter body (AnimBody, as FighterView builds it) with a hull material at a low level chained after its outline; its anchor is its own
++## position. The warm-up puts it in the REAL pane for its frames, behind the notice (the depth copy the shader asks for belongs to the pane's own viewport) and frees it.
++class WarmBody:
++	extends Node3D
++	var body: AnimBody
++
++	func _ready() -> void:
++		body.set_anchor(global_position)
++
++
++static func warm_node() -> Node3D:
++	var pal: Dictionary = {
++		"body": RenderLook.col(RenderLook.OUTLINE), "legs": RenderLook.col(RenderLook.LEGS), "arms": RenderLook.col(RenderLook.ARM), "skin": RenderLook.col(RenderLook.SKIN),
++		"gear": RenderLook.col("#cdd6e4"), "accent": Color(0.56, 0.84, 1.0), "hair": RenderLook.col(RenderLook.OUTLINE),
++	}
++	var w := WarmBody.new()
++	var b := AnimBody.new()
++	b.build(pal, true)
++	var hull: ShaderMaterial = _new_hull()
++	hull.set_shader_parameter("level", 0.05)
++	var outline := (b.mi.material_override as ShaderMaterial).next_pass as ShaderMaterial
++	if outline != null:
++		outline.next_pass = hull
++	w.body = b
++	w.add_child(b)
++	return w
 +
 +
 +static func clear_hulls() -> void:

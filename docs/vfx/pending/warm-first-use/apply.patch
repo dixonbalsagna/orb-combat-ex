@@ -1,0 +1,174 @@
+--- a/render/core/warmup.gd
++++ b/render/core/warmup.gd
+@@ -100,9 +100,56 @@
+ 		x += 0.5
+ 
+ 
++var _real: Array = []        # the warm nodes standing in the real pane for these frames
++var real_nodes: int = 0      # how many were stood there (for the checks)
++
++
+ func _process(_delta: float) -> void:
+ 	if _vp == null:
+ 		return
+ 	_frames += 1
++	# VFX's and Rendering's first draws in the REAL pane (Performance's audit, docs/perf/inset-hitches-aura-2026-10-22.md: the first hit, the first crater and the first beam hitch for 50 to 160 ms; the driver sets a
++	# pipeline up per viewport, so a draw in the warm-up's own 64 pixel viewport does not warm the pane's). For these frames, behind the notice, every MultiMesh the pane's views built is drawn again from a copy with
++	# its own real material and one invisible instance (alpha 0), and render/vfx/warm.gd's real meshes (a crack, a beam's prisms, the aura's body) stand in the pane's view. Measured on Performance's cold repro (the AI
++	# match, 400 ticks, reduced and full): the hitches at ticks 71, 74, 131 and 238 (56 to 213 ms) are gone, the worst frame 35 to 45 ms.
++	if _frames == 1:
++		var m = get_parent()
++		if m != null and m.get("pane") != null and m.get("host") != null and m.host != null:
++			var at := Vector3(0.0, m.host.S.fighters[0].y + 40.0, 0.0)
++			_real = _real_nodes(m.pane, at)
++			real_nodes = _real.size()
++			for n in _real:
++				m.pane.add_child(n)
+ 	if _frames >= WARM_FRAMES:
++		for n in _real:
++			n.queue_free()
+ 		queue_free()
++
++
++## One invisible copy of every MultiMesh under `pane` (same mesh, instance format and buffer size, its real material, one instance with alpha 0), plus VFX's real meshes, all at `at`.
++func _real_nodes(pane: Node, at: Vector3) -> Array:
++	var out: Array = []
++	var stack: Array = [pane]
++	while not stack.is_empty():
++		var n: Node = stack.pop_back()
++		for c in n.get_children():
++			stack.append(c)
++		if not (n is MultiMeshInstance3D) or n.multimesh == null or n.material_override == null:
++			continue
++		var mm: MultiMesh = (n as MultiMeshInstance3D).multimesh.duplicate()
++		mm.visible_instance_count = 1
++		mm.set_instance_transform(0, Transform3D(Basis.IDENTITY.scaled(Vector3(2.0, 2.0, 2.0)), Vector3.ZERO))
++		if mm.use_colors:
++			mm.set_instance_color(0, Color(1.0, 1.0, 1.0, 0.0))
++		if mm.use_custom_data:
++			mm.set_instance_custom_data(0, Color(0.0, 0.0, 0.0, 0.0))
++		var mmi := MultiMeshInstance3D.new()
++		mmi.multimesh = mm
++		mmi.material_override = (n as MultiMeshInstance3D).material_override
++		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
++		mmi.position = at
++		out.append(mmi)
++	for wn in VfxWarm.nodes():
++		wn.position = at
++		out.append(wn)
++	return out
+--- a/render/vfx/tools/effects_check.gd
++++ b/render/vfx/tools/effects_check.gd
+@@ -223,6 +223,7 @@
+ 	_scorch_budget()
+ 	_press_load()
+ 	_real()
++	_warm_check()
+ 	_stages()
+ 	_real_stages()
+ 	_small_rings_check()
+@@ -4963,6 +4964,31 @@
+ 
+ 
+ ## The catastrophe light class (docs/vfx/catastrophe-plan.md section 1; Legal c01 to c05): the gap, the floors, the calm form, the ash, one answer per event, no red, and a hammer of random asks.
++func _warm_check() -> void:
++	print("the first-use warm-up")
++	var ns: Array = VfxWarm.nodes()
++	var crack_ok: bool = false
++	var prisms: int = 0
++	for n in ns:
++		if n is MeshInstance3D and n.mesh is ArrayMesh:
++			crack_ok = (n.mesh as ArrayMesh).surface_get_format(0) & (Mesh.ARRAY_FORMAT_CUSTOM0) != 0 and n.material_override is ShaderMaterial
++		elif n is MeshInstance3D and n.mesh is CylinderMesh:
++			var cm := n.mesh as CylinderMesh
++			if cm.radial_segments == 16 and cm.rings == 24 and n.material_override is ShaderMaterial:
++				prisms += 1
++	_check(crack_ok and prisms == 3, "the warm-up has a real crack mesh (a float custom0, the crack material) and the beam's three prisms (16 sides, 24 rings: %d)" % prisms)
++	var same: bool = true
++	var real_cyl := CylinderMesh.new()
++	real_cyl.radial_segments = 16
++	real_cyl.rings = 24
++	for n in ns:
++		if n is MeshInstance3D and n.mesh is CylinderMesh:
++			same = same and n.mesh.radial_segments == real_cyl.radial_segments and n.mesh.rings == real_cyl.rings
++	_check(same, "the prisms are cut as BeamView cuts them")
++	for n in ns:
++		n.free()
++
++
+ func _cat_class() -> void:
+ 	print("the catastrophe light class")
+ 	var white := Color(1.0, 1.0, 1.0)
+--- /dev/null
++++ b/render/vfx/warm.gd
+@@ -0,0 +1,70 @@
++class_name VfxWarm
++extends RefCounted
++## What VFX draws FIRST in a match, drawn once at boot in the same configuration (Performance's audit, docs/perf/inset-hitches-aura-2026-10-22.md: the match's first crater and first beam hitch for 50 to 160 ms
++## because the graphics driver's first use of a pipeline is in the frame that needs it). The boot warm-up (render/core/warmup.gd, Rendering's) draws every shader once on a plain quad; a pipeline is more than the
++## shader: it is the shader with the MESH's vertex format and the material's state. These nodes are the real ones, built the way the views build them, to be added to the warm-up's viewport:
++##   - a ground crack: an ArrayMesh with the crack mesh's exact arrays (vertex, colour, a float custom0, uv, index) and the crack material (crack_view.gd, crack_mesh.gd);
++##   - a beam: the three nested prisms of BeamView, a 16-sided, 24-ring cylinder each with its layer's material (beam_look.gd): the first beam's three draws;
++##   - the 3D aura's fighter body with the hull chained, when the aura is in the tree.
++## The warm-up (Rendering's) stands them in the REAL pane's view for its frames behind the notice (a pipeline is set up per viewport, so the warm-up's own 64 pixel viewport does not warm the pane's), nothing of
++## them is seen, and each node is freed with the warm-up. Presentation only.
++
++
++## The warm-up places each node itself, inside the pane camera's view (a node outside the frustum is culled and never drawn).
++static func nodes() -> Array:
++	var out: Array = []
++	out.append(_crack(Vector3.ZERO))
++	for j in range(3):
++		out.append(_prism(j, Vector3.ZERO))
++	# the 3D aura's first draw (render/vfx/aura3d.gd, if it is in the tree: looked up by path, so this file needs nothing of it)
++	if ResourceLoader.exists("res://render/vfx/aura3d.gd"):
++		var au = load("res://render/vfx/aura3d.gd")
++		if au != null and au.has_method("warm_node"):
++			out.append(au.warm_node())
++	return out
++
++
++static func _crack(at: Vector3) -> MeshInstance3D:
++	var verts := PackedVector3Array([Vector3(-1.0, -1.0, 0.0), Vector3(1.0, -1.0, 0.0), Vector3(0.0, 1.0, 0.0)])
++	var cols := PackedColorArray([Color(0.1, 0.1, 0.1, 1.0), Color(0.1, 0.1, 0.1, 1.0), Color(0.1, 0.1, 0.1, 1.0)])
++	var cust := PackedFloat32Array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
++	var uvs := PackedVector2Array([Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(0.5, 1.0)])
++	var idx := PackedInt32Array([0, 1, 2])
++	var arrays: Array = []
++	arrays.resize(Mesh.ARRAY_MAX)
++	arrays[Mesh.ARRAY_VERTEX] = verts
++	arrays[Mesh.ARRAY_COLOR] = cols
++	arrays[Mesh.ARRAY_CUSTOM0] = cust
++	arrays[Mesh.ARRAY_TEX_UV] = uvs
++	arrays[Mesh.ARRAY_INDEX] = idx
++	var m := ArrayMesh.new()
++	m.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {}, VfxCrackMesh.FLAGS)
++	m.custom_aabb = AABB(Vector3(-10.0, -10.0, -10.0), Vector3(20.0, 20.0, 20.0))
++	var mat := ShaderMaterial.new()
++	mat.shader = preload("res://render/vfx/shaders/crack.gdshader")
++	mat.render_priority = 0
++	mat.set_shader_parameter("grow_t", VfxLook.CRACK_GROW_S)
++	var mi := MeshInstance3D.new()
++	mi.mesh = m
++	mi.material_override = mat
++	mi.position = at
++	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
++	return mi
++
++
++static func _prism(layer: int, at: Vector3) -> MeshInstance3D:
++	var cyl := CylinderMesh.new()
++	cyl.top_radius = 0.5
++	cyl.bottom_radius = 0.5
++	cyl.height = 1.0
++	cyl.radial_segments = 16
++	cyl.rings = 24
++	var mi := MeshInstance3D.new()
++	mi.mesh = cyl
++	var mat: ShaderMaterial = VfxBeamLook.new_material(layer)
++	mat.set_shader_parameter("strength", 0.0)       # drawn, never seen
++	mi.material_override = mat
++	mi.position = at
++	mi.scale = Vector3(1.0, 1.0, 1.0)
++	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
++	return mi
