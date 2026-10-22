@@ -20,7 +20,7 @@
  	["res://render/shaders/glow.gdshader", "mesh"],              # Rendering: glows
 --- a/render/vfx/tools/effects_check.gd
 +++ b/render/vfx/tools/effects_check.gd
-@@ -215,6 +215,7 @@
+@@ -216,6 +216,7 @@
  	_cat_class()
  	_tremor()
  	_blast_cloud()
@@ -28,12 +28,22 @@
  	_stage_stagger()
  	_depth()
  	_panes()
-@@ -4915,6 +4916,102 @@
+@@ -4916,6 +4917,120 @@
  	_check(states[0] == states[1], "the same cue gives the same cloud (determinism)")
  
  
 +## Orb's 3D auras (docs/vfx/aura3d.md): the data against the defaults, that the two themes are INVERSIONS of one another and not recolours, every rate under 2 Hz in both forms, the alpha cap, the
 +## colours (the lane colour, a lighter tint and a dark shade: never white, gold or red), the calm form, the tier's sizes, purity, and that nothing changes until the switch is on.
++class AuraHostStub:
++	var S
++
++
++func _aura_host_stub(S) -> AuraHostStub:
++	var hs := AuraHostStub.new()
++	hs.S = S
++	return hs
++
++
 +func _aura3d() -> void:
 +	print("the 3D auras")
 +	var jd = JSON.parse_string(FileAccess.get_file_as_string("res://data/vfx/aura3d.json"))
@@ -102,7 +112,7 @@
 +	var p4: Dictionary = VfxAura3D.params("protagonist", 4, 1.0, false, 3.0, lane_p, 0.0)
 +	var r4: Dictionary = VfxAura3D.params("rival", 4, 1.0, false, 3.0, lane_p, 0.0)
 +	var c4: Dictionary = VfxAura3D.params("protagonist", 4, 1.0, true, 3.0, lane_p, 0.0)
-+	_check(str(p1) == str(p1b) and p4["size"].y > p1["size"].y and p4["size"].x > p1["size"].x and p4["size"].y > r4["size"].y, "the shell is a pure function of its inputs, grows with the tier, and the Protagonist's is larger than the Anti-hero's")
++	_check(str(p1) == str(p1b) and float(p4["hull_bh"]) > float(p1["hull_bh"]) and float(p4["hull_bh"]) > float(r4["hull_bh"]), "the aura band is a pure function of its inputs, grows with the tier (%.3f to %.3f body heights), and the Protagonist's stands further off the body than the Anti-hero's (%.3f against %.3f)" % [float(p1["hull_bh"]), float(p4["hull_bh"]), float(p4["hull_bh"]), float(r4["hull_bh"])])
 +	_check(float(c4["calm"]) == 1.0 and float(c4["pulse_amp"]) < float(p4["pulse_amp"]) and float(c4["pulse_hz"]) < float(p4["pulse_hz"]) and float(c4["cell_rate"]) < float(p4["cell_rate"]) and float(c4["band"]) < float(p4["band"]), "the calm form pulses smaller and slower, the froth turns slower, the band is fainter, and nothing pops")
 +	_check(float(VfxAura3D.params("protagonist", 9, 1.0, false, 0.0, lane_p, 0.0)["tier"]) == 4.0 and float(VfxAura3D.params("protagonist", 0, 1.0, false, 0.0, lane_p, 0.0)["tier"]) == 1.0 and VfxAura3D.theme_block("nobody")["theme"] == VfxAura3D.theme_block("default")["theme"], "a tier outside 1 to 4 is clamped and an unknown fighter takes the default theme")
 +	# Inert until the switch: off by default, and turning it on switches the old standing aura off (one aura, not two); the standing aura's eased level still runs.
@@ -122,9 +132,17 @@
 +	for k in range(20):
 +		_tick(S, h, [])
 +	_check(h.aura.level[0] > 0.5, "with the 3D auras on the standing aura's ease still runs while a fighter charges (level %.2f)" % h.aura.level[0])
++	var mh: ShaderMaterial = VfxAura3D.hull_material(S.fighters[0])
++	_check(mh == VfxAura3D.hull_material(S.fighters[0]) and mh != VfxAura3D.hull_material(S.fighters[1]) and float(mh.get_shader_parameter("level")) == 0.0, "each fighter has his own hull material, the same one every time, drawing nothing until the aura is up")
 +	var v := VfxAura3DView.new()
 +	root.add_child(v)
-+	_check(v.shells.size() == VfxAura3DView.SLOTS and v.shells[0].mesh is SphereMesh and not v.shells[0].visible, "the view builds one hidden shell per fighter")
++	h.aura3d_demo = true
++	v.update(h, _aura_host_stub(S), 0.0, 0.0, 400.0)
++	_check(float(mh.get_shader_parameter("level")) > 0.99 and v.shown == 2, "in the showcase both hulls are up at full level (shown %d)" % v.shown)
++	h.set_aura3d(false)
++	v.update(h, _aura_host_stub(S), 0.0, 0.0, 400.0)
++	_check(float(mh.get_shader_parameter("level")) == 0.0 and v.shown == 0, "with the switch off the hull is down again")
++	VfxAura3D.clear_hulls()
 +	v.free()
 +
 +
@@ -171,7 +189,7 @@
  var aura := VfxAura.new()
  var react_enabled: bool = VfxLook.REACT_DEFAULT      # from tier 3 the world answers: rubble, standing cracks, windows blowing out (docs/vfx/react-plan.md)
  var flicker_enabled: bool = VfxLook.FLICKER_DEFAULT  # the aura flickers when the fighter is worn
-@@ -203,6 +205,12 @@
+@@ -206,6 +208,12 @@
  
  
  ## One tick's fx events, in order, plus the state after the tick.
@@ -184,7 +202,7 @@
  func consume(S: SimState, events: Array) -> void:
  	if not enabled:
  		return
-@@ -281,7 +289,7 @@
+@@ -284,7 +292,7 @@
  				if not f.flash_ok:
  					gate = 0.0
  		VfxTransform.flash_scale = gate
@@ -193,7 +211,7 @@
  		aura.step(S, frozen, xform.forms)
  	for e in events:
  		if e.type == "land" or e.type == "bounce" or e.type == "journey_end":
-@@ -304,7 +312,7 @@
+@@ -307,7 +315,7 @@
  				_speed_heavy(S, e)
  	debris.now = fx_now(S)
  	earth.entrance_now = false
@@ -217,34 +235,24 @@
      },
 --- /dev/null
 +++ b/data/vfx/aura3d.json
-@@ -0,0 +1,118 @@
+@@ -0,0 +1,108 @@
 +{
 +  "version": 1,
 +  "_note": "Orb's 3D auras (docs/vfx/aura3d.md): the shell's size, alpha and the two inverted themes. Presentation only.",
 +  "common": {
 +    "alpha_max": 0.5,
-+    "rim_alpha": 0.55,
 +    "pattern_alpha": 0.8,
-+    "radius_x_bh": [
-+      0.5,
-+      0.55,
-+      0.6,
-+      0.66
-+    ],
-+    "radius_y_bh": [
-+      0.72,
-+      0.78,
-+      0.86,
-+      0.94
-+    ],
-+    "centre_y_bh": 0.52,
-+    "depth_k": 0.8,
-+    "z_off": -4.0,
 +    "calm_pulse_k": 0.4,
 +    "calm_shimmer": 0.5,
 +    "tint_lift": 0.3,
 +    "max_hz": 2.0,
-+    "rim_in": 0.16
++    "hull_rag": 0.7,
++    "hull_bh": [
++      0.065,
++      0.08,
++      0.1,
++      0.12
++    ]
 +  },
 +  "themes": {
 +    "protagonist": {
@@ -338,7 +346,7 @@
 +}
 --- /dev/null
 +++ b/docs/vfx/aura3d.md
-@@ -0,0 +1,46 @@
+@@ -0,0 +1,54 @@
 +# The 3D auras (Orb's direction, 2026-10-18)
 +
 +Owner: VFX Director. Built in scratch and parked (`docs/vfx/pending/aura3d/`), **off by default**. Orb's words (homework, 2026-10-18): "cool, pulsating, 3D visual auras that can shimmer, froth, undulate etc. based on whose aura. Ideally protagonist and rival have similar but inverted themes on their auras, not just color ... develop a unique aura style to convey each character's power foundation." Not a clearance; **Legal has not seen it** (see the last section).
@@ -382,12 +390,20 @@
 +- **Legal:** the standing aura's rule (`docs/legal/rule-of-cool-screen.md`) asks for "a thin outline or rings in the fighter's lane colour, not a flame shape streaming upward, no gold, white or red, no lightning, no spiky hair". This is a richer surface (a shell with froth and facets), still a lane-colour shell with no flame, lightning or spikes, but **it is not a thin outline and the earlier screen's re-screen of the aura "when VFX's first version exists" is now due.** It stays off until Legal rules.
 +- **Needs from others:** Legal (the re-screen); Narrative (a power foundation for the Empress and the Cyborg, one sentence each); Art (the tint and the seam shade against the lane colours); Tools (fixtures for `vfx-aura3d.schema.json`: one valid and three invalid, e.g. a `pulse_hz` of 2.5, an `alpha_max` of 0.6, a `froth` entry of 1.5).
 +
-+## Rim only: the energy hugs the outline, the body stays clear (2026-10-19)
++## An inverted hull on the fighter's own mesh: the energy follows his real silhouette (2026-10-22; supersedes the shell above)
 +
-+The EP's look gate sent the first cut back: the egg-shaped shell covered the whole fighter (Orb: nothing obscures the fighters). Now the shell is **a band along its own silhouette only**: the shader's `rim_in` (0.16) clears everything where the shell faces the camera, so the fighter inside is fully visible, and the boil's bubbles and froth (the Protagonist) and the facets and seams (the Anti-hero) live in the band along the outline, with a thin crisp line in the dark shade of the lane colour at the very edge so it reads against any ground. The shell is tighter to the body (radii 0.50 to 0.66 and 0.72 to 0.94 fighter heights, was 0.56 to 0.82 and 0.78 to 1.08) and the interior fill is gone. Every inversion is kept (out and up against in and down, bubbles against crystal facets, rings on clear against cells between seams). The first cut's rates and alpha cap (0.5) are unchanged. Still behind a switch, off by default, and Legal has not seen it.
++The look gate sent the shell and the rim band back (ADR 0010): a thin ellipse round each fighter is not his outline and not the living aura Orb described. The aura is now a **second outline pass on the fighter's own skinned mesh**. The body already has an outline (`fighter_hull.gdshader`: back faces only, every vertex pushed along the direction baked into its NORMAL by its reach in UV2.x). The aura (`shaders/aura3d.gdshader`) is chained after it and pushes the same vertices a further `hull_bh` of the body's height (6.5 to 12 percent by tier, in model units, so as thick on a small fighter as on a big one), so it stands off the real silhouette in every pose, limb by limb, and the body's front faces hide the rest through the depth test. Two things keep the body clear:
++- only the silhouette's fringe is kept: an inflated hull's back faces also lie in front of body parts behind them (an arm over the chest), and those faces turn away from the camera, so the fragment keeps the grazing ones (`fringe_lo` 0.22 to `fringe_hi` 0.5 of facing) and discards the rest;
++- the band is thin, ragged only at the edge, and alpha-blended at most 0.5.
++
++Inside the band the surface is alive in object space, so it wraps and moves with the limbs: **the Protagonist's boil** (the band swells out and relaxes, bubbles grow, ring and thin out, froth between them thickening with the tier, the skin drifting up, a bright band up the body each pulse, a ragged breathing edge) and **the Anti-hero's facets** (the band draws in and holds, hard dark seams between bright crystal cells glinting in turn, settling down, a band down the body each pulse, a smooth edge, the seams lit from inside from tier 3). Every inversion of the first cut is kept; the rates, the lane colours (never gold, white or red) and the alpha cap are unchanged.
++
++How it is wired: `VfxAura3D.hull_material(fighter)` makes one hull material per fighter; Rendering's FighterView chains it after the outline pass and gives it the projection anchor each frame (a few lines, a grant: `grant-fighter-view.patch`); the view (`aura3d_view.gd`) only writes its parameters each frame from the standing aura's level, so it works the same in every pane. Behind the same switch as before (`hub.aura3d_enabled`, off; turning it on turns the old flat standing aura off). Not a Legal clearance: Legal's earlier rule asked for a thin outline; this is richer and needs their re-screen.
++
++Limits: the fringe test is a screen-space heuristic of the baked normals, so a hand crossing the torso can still tint a little of the body; the band is not a perfect offset of the sprite (it is the mesh's, so it stands off by model units, a little more where the baked normals are long); the headless outline check needs a window and was not run.
 --- /dev/null
 +++ b/render/vfx/aura3d.gd
-@@ -0,0 +1,112 @@
+@@ -0,0 +1,132 @@
 +class_name VfxAura3D
 +extends RefCounted
 +## The 3D aura (docs/vfx/aura3d.md; Orb's direction 2026-10-18): a shader-driven shell round each fighter whose surface pulses, shimmers, froths and undulates, a different foundation for each fighter,
@@ -403,8 +419,8 @@
 +
 +const DEFAULTS: Dictionary = {
 +	"common": {
-+		"alpha_max": 0.5, "rim_alpha": 0.55, "pattern_alpha": 0.8,
-+		"radius_x_bh": [0.5, 0.55, 0.6, 0.66], "radius_y_bh": [0.72, 0.78, 0.86, 0.94], "centre_y_bh": 0.52, "rim_in": 0.16, "depth_k": 0.8, "z_off": -4.0,
++		"alpha_max": 0.5, "pattern_alpha": 0.8,
++		"hull_bh": [0.065, 0.08, 0.1, 0.12], "hull_rag": 0.7,
 +		"calm_pulse_k": 0.4, "calm_shimmer": 0.5, "tint_lift": 0.3, "max_hz": 2.0,
 +	},
 +	"themes": {
@@ -413,6 +429,27 @@
 +		"default": {"theme": 0.0, "scale": 1.0, "pulse_hz": 0.7, "pulse_amp": 0.05, "pulse_dir": 1.0, "flow": [0.0, 0.2, 0.0], "cells": [3.0, 3.3, 3.6, 4.0], "cell_rate": 0.4, "rim_k": 2.6, "disp": 0.05, "fill": 0.1, "froth": [0.0, 0.2, 0.4, 0.6], "band": 0.35},
 +	},
 +}
++
++## The hull material of a fighter (Rendering's FighterView chains it after his outline pass): one per fighter object, made on first ask, written each frame by the view. `level` 0 until it is up.
++static var _hulls: Dictionary = {}
++
++
++static func hull_material(f) -> ShaderMaterial:
++	var id: int = f.get_instance_id()
++	if _hulls.has(id):
++		return _hulls[id]
++	var m := ShaderMaterial.new()
++	m.shader = preload("res://render/vfx/shaders/aura3d.gdshader")
++	m.set_shader_parameter("ortho", 1.0)
++	m.set_shader_parameter("level", 0.0)
++	m.render_priority = 1
++	_hulls[id] = m
++	return m
++
++
++static func clear_hulls() -> void:
++	_hulls.clear()
++
 +
 +static var _data: Dictionary = {}
 +static var _loaded: bool = false
@@ -475,8 +512,7 @@
 +	var th: Dictionary = theme_block(id)
 +	var ti: int = clampi(tier, 1, 4) - 1
 +	var cells: Array = th["cells"]
-+	var rx: Array = common("radius_x_bh")
-+	var ry: Array = common("radius_y_bh")
++	var hp: Array = common("hull_bh")
 +	var fl: Array = th["flow"]
 +	var cm: float = 1.0 if calm else 0.0
 +	var sh: float = float(common("calm_shimmer")) if calm else 1.0
@@ -485,12 +521,12 @@
 +	return {
 +		"t": t, "level": level, "theme": float(th["theme"]), "tier": float(ti + 1),
 +		"col_a": lane, "col_b": tint(lane), "col_c": shade(lane),
-+		"alpha_max": float(common("alpha_max")), "rim_in": float(common("rim_in")), "rim_alpha": float(common("rim_alpha")), "pattern_alpha": float(common("pattern_alpha")),
++		"alpha_max": float(common("alpha_max")), "pattern_alpha": float(common("pattern_alpha")),
 +		"fill_alpha": float(th["fill"]), "froth": float(th["froth"][ti]), "band": float(th["band"]) * (0.5 if calm else 1.0),
 +		"pulse_hz": float(th["pulse_hz"]) * (0.6 if calm else 1.0), "pulse_amp": float(th["pulse_amp"]) * pk, "pulse_dir": float(th["pulse_dir"]),
 +		"flow": Vector3(float(fl[0]), float(fl[1]), float(fl[2])) * sh, "cells": float(cells[ti]), "cell_rate": float(th["cell_rate"]) * sh, "rim_k": float(th["rim_k"]), "disp": float(th["disp"]) * pk,
 +		"shimmer": sh, "calm": cm, "seed": seed_v,
-+		"size": Vector3(float(rx[ti]) * sc, float(ry[ti]) * sc, float(rx[ti]) * sc * float(common("depth_k"))),
++		"hull_bh": float(hp[ti]) * sc,
 +	}
 +
 +
@@ -506,75 +542,43 @@
 +uid://cix257ebb78ch
 --- /dev/null
 +++ b/render/vfx/aura3d_view.gd
-@@ -0,0 +1,69 @@
+@@ -0,0 +1,37 @@
 +class_name VfxAura3DView
 +extends Node3D
-+## The 3D auras for one pane (aura3d.gd has the rules, shaders/aura3d.gdshader the look): one shell per fighter, a sphere mesh scaled to his tier's oval, placed round his body, its material
-+## carrying his theme. A child of the trail view, like the dust and cloud views. Reads only. Hidden unless `hub.aura3d_enabled`; the shell is drawn while the standing aura's eased level
-+## (aura.gd) is up, or always at full level in the showcase (`hub.aura3d_demo`, the capture and the prototype).
++## The 3D auras for one pane (aura3d.gd has the rules, shaders/aura3d.gdshader the look). The aura is an inverted hull on the fighter's own skinned mesh, chained after his outline pass (Rendering's
++## FighterView does that: `VfxAura3D.hull_material(fighter)` is the outline's next pass), so this view draws nothing of its own: each frame it writes the fighters' hull materials, one per fighter, shared by
++## every pane. A child of the trail view, like the dust and cloud views. Reads only. The material draws nothing (`level` 0) unless `hub.aura3d_enabled`; the aura is drawn while the standing aura's
++## eased level (aura.gd) is up, or always at full level in the showcase (`hub.aura3d_demo`, the capture and the prototype).
 +
 +const SLOTS: int = 2
 +
-+var shells: Array = []
-+var shown: int = 0                  # shells visible last frame (for the tests)
++var shown: int = 0                  # fighters whose aura was up last frame (for the tests)
 +
 +
-+func _ready() -> void:
-+	var sm := SphereMesh.new()
-+	sm.radius = 1.0
-+	sm.height = 2.0
-+	sm.radial_segments = 64
-+	sm.rings = 32
-+	for i in range(SLOTS):
-+		var mi := MeshInstance3D.new()
-+		mi.mesh = sm
-+		var m := ShaderMaterial.new()
-+		m.shader = preload("res://render/vfx/shaders/aura3d.gdshader")
-+		m.render_priority = 1
-+		mi.material_override = m
-+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-+		mi.visible = false
-+		mi.extra_cull_margin = 4000.0
-+		add_child(mi)
-+		shells.append(mi)
-+
-+
-+## a: the frame's interpolation between the last two ticks. cam_x: this pane's wrapped camera x; half_w: half the visible width in world units.
-+func update(hub: VfxHub, host: SimHost, a: float, cam_x: float, half_w: float) -> void:
++## a: the frame's interpolation between the last two ticks. cam_x and half_w are the pane's (unused: the hull follows the body wherever he is).
++func update(hub: VfxHub, host, a: float, _cam_x: float, _half_w: float) -> void:
 +	shown = 0
-+	if not hub.aura3d_enabled:
-+		for mi in shells:
-+			mi.visible = false
-+		return
 +	var calm: bool = hub.flashes.reduced
 +	var t: float = (float(hub.aura.clock) + a) / 60.0
 +	for i in range(mini(SLOTS, host.S.fighters.size())):
-+		var mi: MeshInstance3D = shells[i]
 +		var f = host.S.fighters[i]
-+		var lvl: float = 1.0 if hub.aura3d_demo else lerpf(hub.aura.prev[i], hub.aura.level[i], a)
-+		var in_form: bool = false
-+		for fm in hub.xform.forms:
-+			if fm.slot == i:
-+				in_form = true
-+		if lvl < 0.01 or (in_form and not hub.aura3d_demo):
-+			mi.visible = false
++		var m: ShaderMaterial = VfxAura3D.hull_material(f)
++		var lvl: float = 0.0
++		if hub.aura3d_enabled:
++			lvl = 1.0 if hub.aura3d_demo else lerpf(hub.aura.prev[i], hub.aura.level[i], a)
++			var in_form: bool = false
++			for fm in hub.xform.forms:
++				if fm.slot == i:
++					in_form = true
++			if in_form and not hub.aura3d_demo:
++				lvl = 0.0
++		if lvl < 0.01:
++			m.set_shader_parameter("level", 0.0)
 +			continue
-+		var rel: float = SimWrap.sdx(cam_x, host.fighter_x(i, a))
-+		if absf(rel) > half_w + 8.0 * VfxLook.BH:
-+			mi.visible = false
-+			continue
-+		var ps: Vector3 = host.fighter_pose(i, a)
-+		var fz: float = host.fighter_z(i, a)
 +		var id: String = VfxBeamLook.key_of(f)
 +		var pr: Dictionary = VfxAura3D.params(id, int(floor(float(f.tier) + 0.001)), smoothstep(0.0, 1.0, lvl), calm, t, VfxAura.lane_color(String(f.aura)), float(i) * 7.31)
-+		var m: ShaderMaterial = mi.material_override
 +		for k in pr.keys():
-+			if k != "size":
-+				m.set_shader_parameter(k, pr[k])
-+		var sz: Vector3 = pr["size"] * VfxLook.BH
-+		mi.scale = sz
-+		mi.position = Vector3(rel, ps.y + float(VfxAura3D.common("centre_y_bh")) * VfxLook.BH, fz + float(VfxAura3D.common("z_off")))
-+		mi.visible = true
++			m.set_shader_parameter(k, pr[k])
 +		shown += 1
 --- /dev/null
 +++ b/render/vfx/aura3d_view.gd.uid
@@ -582,31 +586,32 @@
 +uid://xqpuk8ya5as
 --- /dev/null
 +++ b/render/vfx/shaders/aura3d.gdshader
-@@ -0,0 +1,148 @@
-+// The 3D aura (docs/vfx/aura3d.md): a shell round a fighter, a real mesh seen from the side camera, its surface alive with a pattern in OBJECT space, so it wraps round the body, drifts and
-+// turns the way a volume would, and the fighter's own body hides the shell's far half. One shader, two inverted themes (`theme` 0 to 1):
-+//   0, the Protagonist's BOIL (a furnace that is giving heat away): the shell swells OUTWARD and relaxes, its surface froths with round bubbles that grow, ring and thin out (a fine froth
-+//      between them that thickens with the tier), the whole skin drifting UP the shell like convection, and each pulse sends a bright band UP the shell; a soft rim. Bright RINGS on a clear skin.
-+//   1, the Anti-hero's FACETS (cold pride, held in): the shell draws INWARD and holds, its surface is a lattice of crystal facets with hard dark seams, the facets glinting in turn like frost, the
-+//      whole skin settling DOWN the shell like cold air, each pulse sending a band DOWN it; a crisp rim; at tier 3 and up the seams fracture and are lit from inside (pride cracking). Bright
-+//      FACETS between dark SEAMS (the boil's polarity inverted).
-+// Both are a shell, a fresnel rim, a cellular pattern and a travelling band; every motion, polarity and rhythm is inverted. Alpha-blended in the fighter's lane colour, a lighter tint of it and a dark
-+// shade of it: never additive, so it can never add up to white (Legal's aura rule: no gold, white or red). No clock of its own: `t` is the sim's, so a pause and a hit-stop hold it still.
+@@ -0,0 +1,161 @@
++// The 3D aura as an inverted hull on the fighter's OWN mesh (docs/vfx/aura3d.md; Orb's direction 2026-10-18 and the look gate of 2026-10-22: the energy follows the sprite's real silhouette, the body stays visible).
++// It is a second outline pass: the fighter's skinned body already has an outline (fighter_hull.gdshader: back faces only, each vertex pushed along the direction baked into NORMAL, by its reach in UV2.x,
++// a few pixels). This pass is chained after it (the outline's `next_pass`) and pushes the same vertices several pixels further, so it appears only as a band just OUTSIDE the body's actual silhouette,
++// pose and all (the body's front faces hide the rest through the depth test). Inside the band the surface is alive, in OBJECT space, so it wraps the limbs and the torso and moves with them:
++//   0, the Protagonist's BOIL (a furnace giving heat away): the band swells OUTWARD and relaxes (an exhale), its skin froths with round bubbles that grow, ring and thin out, drifting UP like
++//      convection; each pulse sends a brighter band UP the body; the edge is ragged and breathing. Bright RINGS on a clear skin.
++//   1, the Anti-hero's FACETS (cold pride, held in): the band draws INWARD and holds (a smooth inhale), tight to the body, its surface a lattice of crystal facets between hard dark seams, each facet
++//      glinting in its own slow turn like frost, settling DOWN like cold air; each pulse sends a band DOWN; a smooth, crisp edge; at tier 3 and up the seams are lit from inside (pride cracking).
++// Both are the same machinery with every motion, polarity and rhythm inverted. Alpha-blended in the fighter's lane colour, a lighter tint and a dark shade of it: never additive, so never white (Legal's aura
++// rule: no gold, white or red). No clock of its own: `t` is the sim's, so a pause and a hit-stop hold it still.
 +shader_type spatial;
-+render_mode unshaded, cull_disabled, blend_mix, depth_draw_never;
++render_mode unshaded, cull_front, blend_mix, depth_draw_never;
++
++#include "res://render/shaders/bend.gdshaderinc"
++#include "res://render/shaders/ortho.gdshaderinc"
 +
 +uniform float t = 0.0;                 // seconds of unfrozen sim time
-+uniform float level = 0.0;             // 0 to 1, the standing aura's own ease
++uniform float level = 0.0;             // 0 to 1, the standing aura's own ease: 0 draws nothing
 +uniform float theme = 0.0;             // 0 boil, 1 facets
 +uniform float tier = 1.0;
 +uniform vec4 col_a : source_color = vec4(0.56, 0.84, 1.0, 1.0);    // the lane colour
 +uniform vec4 col_b : source_color = vec4(0.72, 0.9, 1.0, 1.0);     // a lighter tint of it, never white
 +uniform vec4 col_c : source_color = vec4(0.1, 0.2, 0.3, 1.0);      // a dark shade of it (the seams)
 +uniform float alpha_max = 0.5;
-+uniform float rim_alpha = 0.4;
-+uniform float pattern_alpha = 0.55;
-+uniform float fill_alpha = 0.08;
-+uniform float rim_in = 0.5;               // where the visible band starts, as 1 minus the shell's facing the camera: the shell's middle (where it faces him) is clear, only its rim shows: the body is never covered
++uniform float pattern_alpha = 0.8;
 +uniform float froth = 0.0;             // 0 to 1: the fine froth between the big bubbles (grows with the tier)
 +uniform float band = 0.4;              // the travelling band's strength
 +uniform float pulse_hz = 0.9;
@@ -615,11 +620,15 @@
 +uniform vec3 flow = vec3(0.0, 0.3, 0.0);
 +uniform float cells = 4.0;
 +uniform float cell_rate = 0.5;
-+uniform float rim_k = 2.2;
-+uniform float disp = 0.05;
++uniform float disp = 0.05;             // how ragged the outer edge is (the boil undulates, the facets stay smooth)
 +uniform float shimmer = 1.0;           // the calm form halves it
 +uniform float calm = 0.0;              // 1 under Reduce flashing / Reduced motion: no popping, a still lattice that glints slowly
 +uniform float seed = 0.0;
++uniform float hull_bh = 0.06;          // how far the band stands off the body's outline, in body heights (a share of it breathes with the pulse): the body is about 90 units tall
++uniform float outline_px = 1.5;        // the body's own outline (RenderLook.OUTLINE_PX): the band starts outside it
++uniform float min_px = 0.75;
++uniform float fringe_lo = 0.22;         // the share of the surface turned toward the camera that still shows: below this much facing it is the fringe, above fringe_hi it is hidden
++uniform float fringe_hi = 0.5;
 +
 +varying vec3 v_obj;
 +
@@ -671,27 +680,40 @@
 +}
 +
 +void vertex() {
-+	v_obj = VERTEX;
++	v_obj = VERTEX * (1.0 / 45.0);       // object space in body halves: the body is about 90 units tall
++	vec4 wp = MODEL_MATRIX * vec4(VERTEX, 1.0);
++	float w = ortho > 0.5 ? (PROJECTION_MATRIX * (VIEW_MATRIX * vec4(anchor, 1.0))).w : (PROJECTION_MATRIX * (VIEW_MATRIX * wp)).w;
++	float world_per_px = 2.0 * w / (abs(PROJECTION_MATRIX[1][1]) * VIEWPORT_SIZE.y);
++	float s = max(length(MODEL_MATRIX[0].xyz), 1e-6);
++	float w0 = (PROJECTION_MATRIX * (VIEW_MATRIX * vec4(anchor.xy, 0.0, 1.0))).w;
++	// the band's width in pixels: the boil breathes out fast and back slowly (an exhale), the facets draw in and hold (a smooth inhale); the edge is ragged by 3D noise, a lot for the boil and little for the facets
 +	float ph = t * pulse_hz * 6.2831853;
 +	float sw = 0.5 + 0.5 * sin(ph);
-+	// the boil breathes out fast and back slowly (an exhale); the facets draw in and hold (a smooth inhale): the pulse's shape is inverted too
 +	float pl = mix(sw * sw * sw, 0.5 - 0.5 * cos(ph), theme);
-+	float n = vn3(VERTEX * 2.1 + flow * t * 0.8 + seed) - 0.5;
-+	float dn = mix(1.0, 0.35, theme);       // the facets stay smooth: a crystal does not undulate
-+	float r = 1.0 + pulse_dir * pulse_amp * (pl - 0.4) + disp * dn * n;
-+	VERTEX = v_obj * r;
++	float n = vn3(v_obj * 2.4 + flow * t * 0.8 + seed) - 0.5;
++	float dn = mix(1.0, 0.35, theme);
++	float k_band = clamp(1.0 + pulse_dir * pulse_amp * 4.0 * (pl - 0.4) + disp * dn * 6.0 * n, 0.25, 2.2);
++	float depth_k = ortho > 0.5 ? clamp(w0 / max(w, 1e-6), 0.0, 2.0) : 1.0;
++	float outline_u = max(outline_px * depth_k, min(outline_px, min_px)) * world_per_px / s;     // the body's own outline, in model units, as fighter_hull has it
++	float band_u = hull_bh * 90.0 * k_band * step(0.001, level);        // the band: a share of the body's height in model units, so it is as thick on a small fighter as on a big one
++	vec3 d = NORMAL * UV2.x;
++	vec3 v = VERTEX + d * (outline_u + band_u);
++	POSITION = ortho > 0.5 ? ortho_clip(MODEL_MATRIX, VIEW_MATRIX, PROJECTION_MATRIX, v) : bent_clip(MODEL_MATRIX, VIEW_MATRIX, PROJECTION_MATRIX, v);
 +}
 +
 +void fragment() {
-+	vec3 nrm = normalize(NORMAL);
-+	float edge_f = 1.0 - clamp(abs(dot(nrm, normalize(VIEW))), 0.0, 1.0);
-+	float fr = pow(edge_f, rim_k);
-+	float rim_mask = smoothstep(rim_in, rim_in + 0.3, edge_f);       // energy along the outline only, the body inside stays clear
++	// Only the silhouette's fringe: an inflated hull's back faces also lie in front of the body parts behind them (an arm over the chest, the head over the shoulders), where they would tint the body. Those
++	// faces turn away from the camera; the fringe outside the outline is where the surface is at a grazing angle to it. Keep the grazing ones, fade the rest out.
++	float graze = abs(dot(normalize(NORMAL), normalize(VIEW)));
++	float fringe = 1.0 - smoothstep(fringe_lo, fringe_hi, graze);
++	if (fringe < 0.01) {
++		discard;
++	}
 +	float yy = v_obj.y * 0.5 + 0.5;
-+	// the travelling band: once a pulse, up for the boil and down for the facets; a pixel is in it for about a quarter of a second
++	// the travelling band: once a pulse, up for the boil and down for the facets
 +	float bp = fract(t * pulse_hz * 0.5 + seed * 0.37);
 +	float bpos = pulse_dir > 0.0 ? bp : 1.0 - bp;
-+	float bnd = band * exp(-pow((yy - bpos) / 0.09, 2.0));
++	float bnd = band * exp(-pow((yy - bpos) / 0.12, 2.0));
 +	vec3 q = v_obj * cells;
 +	vec3 pq = q - flow * t * 1.2 * mix(1.0, shimmer, theme);
 +	vec3 w = worley(pq);
@@ -706,29 +728,24 @@
 +	float life2 = fract(t * cell_rate * 1.7 + w2.z);
 +	float ring2 = (1.0 - smoothstep(0.0, 0.09, abs(w2.x - mix(0.1, 0.36, mix(life2, 1.0, calm * 0.6))))) * mix(1.0 - smoothstep(0.7, 1.0, life2), 1.0, calm) * froth;
 +	float boil = clamp(ring * fade + ring2 * 0.8 + inside * fade, 0.0, 1.0);
-+	float a_boil = (rim_alpha * fr + pattern_alpha * boil * 1.1 + bnd * (0.4 + 0.6 * fr)) * rim_mask;
-+	vec3 c_boil = mix(col_a.rgb, col_b.rgb, clamp(boil * 0.9 + fr * 0.3 + bnd, 0.0, 1.0));
++	float a_boil = 0.34 + pattern_alpha * boil * 0.9 + bnd * 0.6;
++	vec3 c_boil = mix(col_a.rgb, col_b.rgb, clamp(boil * 0.9 + bnd, 0.0, 1.0));
 +
 +	// ---- the facets: bright cells between dark seams; each cell glints in its own slow turn; at tier 3 and up the seams are lit from inside
 +	float seam = 1.0 - smoothstep(0.015, 0.075, w.y - w.x);
 +	float glint = pow(0.5 + 0.5 * sin(t * 0.85 * shimmer + w.z * 6.2831853), 4.0);
 +	float crack = smoothstep(2.5, 3.5, tier);
 +	float fill_f = 0.5 + 0.3 * w.z;
-+	float a_facet = (rim_alpha * fr + pattern_alpha * fill_f * (1.0 - seam) * 1.1 * (1.0 - 0.45 * crack) + seam * mix(0.5, 0.75, crack) + bnd * (0.4 + 0.6 * fr)) * rim_mask;
-+	vec3 c_facet = mix(col_a.rgb, col_b.rgb, clamp(glint * 0.9 + 0.15 * w.z + fr * 0.25 + bnd, 0.0, 1.0));
++	float a_facet = 0.34 + pattern_alpha * fill_f * (1.0 - seam) * (1.0 - 0.45 * crack) * 0.9 + seam * mix(0.35, 0.6, crack) + bnd * 0.6;
++	vec3 c_facet = mix(col_a.rgb, col_b.rgb, clamp(glint * 0.9 + 0.15 * w.z + bnd, 0.0, 1.0));
 +	c_facet = mix(c_facet, col_c.rgb, seam * (1.0 - crack));
 +	c_facet = mix(c_facet, col_b.rgb, seam * crack);
-+	c_facet = mix(c_facet, col_a.rgb * 0.8, crack * (1.0 - seam) * 0.35);   // the facets darken a little so the lit seams read
++	c_facet = mix(c_facet, col_a.rgb * 0.8, crack * (1.0 - seam) * 0.35);
 +
 +	float a = mix(a_boil, a_facet, theme);
 +	vec3 col = mix(c_boil, c_facet, theme);
-+	// the aura's brightness breathes with the pulse, a few percent, and by a smaller amount in the calm form
 +	a *= 1.0 + 0.5 * pulse_amp * pulse_dir * sin(t * pulse_hz * 6.2831853);
-+	// the outline: the shell's own edge is a thin crisp line in the dark shade of the lane colour, so the energy reads against any ground and the body is framed, never covered
-+	float outline = smoothstep(0.82, 0.96, edge_f);
-+	col = mix(col, col_c.rgb, outline * 0.85);
-+	a = max(a, outline * 0.5);
-+	ALPHA = clamp(level * a, 0.0, alpha_max);
++	ALPHA = clamp(level * a * fringe, 0.0, alpha_max);
 +	ALBEDO = col;
 +}
 --- /dev/null
@@ -737,7 +754,7 @@
 +uid://jor4cgcakftg
 --- /dev/null
 +++ b/tools/schemas/vfx-aura3d.schema.json
-@@ -0,0 +1,195 @@
+@@ -0,0 +1,165 @@
 +{
 +  "$schema": "https://json-schema.org/draft/2020-12/schema",
 +  "$id": "meridian/vfx-aura3d",
@@ -759,50 +776,10 @@
 +          "exclusiveMinimum": 0,
 +          "maximum": 0.5
 +        },
-+        "rim_alpha": {
-+          "type": "number",
-+          "exclusiveMinimum": 0,
-+          "maximum": 1.0
-+        },
 +        "pattern_alpha": {
 +          "type": "number",
 +          "exclusiveMinimum": 0,
 +          "maximum": 1.0
-+        },
-+        "radius_x_bh": {
-+          "type": "array",
-+          "minItems": 4,
-+          "maxItems": 4,
-+          "items": {
-+            "type": "number",
-+            "minimum": 0.2,
-+            "maximum": 2.0
-+          }
-+        },
-+        "radius_y_bh": {
-+          "type": "array",
-+          "minItems": 4,
-+          "maxItems": 4,
-+          "items": {
-+            "type": "number",
-+            "minimum": 0.2,
-+            "maximum": 2.5
-+          }
-+        },
-+        "centre_y_bh": {
-+          "type": "number",
-+          "minimum": 0,
-+          "maximum": 1.0
-+        },
-+        "depth_k": {
-+          "type": "number",
-+          "exclusiveMinimum": 0.2,
-+          "maximum": 2.0
-+        },
-+        "z_off": {
-+          "type": "number",
-+          "minimum": -60,
-+          "maximum": 20
 +        },
 +        "calm_pulse_k": {
 +          "type": "number",
@@ -824,10 +801,20 @@
 +          "exclusiveMinimum": 0,
 +          "maximum": 2.0
 +        },
-+        "rim_in": {
++        "hull_rag": {
 +          "type": "number",
 +          "minimum": 0,
-+          "maximum": 0.9
++          "maximum": 2
++        },
++        "hull_bh": {
++          "type": "array",
++          "minItems": 4,
++          "maxItems": 4,
++          "items": {
++            "type": "number",
++            "exclusiveMinimum": 0,
++            "maximum": 0.3
++          }
 +        }
 +      },
 +      "additionalProperties": false
