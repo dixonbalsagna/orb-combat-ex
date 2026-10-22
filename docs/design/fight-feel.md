@@ -111,7 +111,7 @@ Combat's §4, ruled (`rulings-2026-10-22.md` §2d).
 
 | Blow | Ticks |
 | :--- | ---: |
-| A mashed or burst light | 2 |
+| A mashed or burst light | 2 for a mash's first blow; **0 for the rest,** which flow and sell the contact by the struck body's shake, the spark and the sound. A mash is one fighter's mashed or burst blows, each within 12 ticks of his last (2026-10-22, `rulings-2026-10-22.md` §6: Orb's "smooth and responsive") |
 | A tapped light | 3 |
 | A medium | 5 |
 | A heavy | 8 |
