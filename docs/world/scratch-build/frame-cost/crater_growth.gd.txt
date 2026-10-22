@@ -1,0 +1,62 @@
+extends SceneTree
+# How the ground's marks grow through an AI match (what Rendering's ground band has to sum): crater records, how many overlap a column, scorch, rubble, cracks.
+#   godot --headless --path . --script res://sim/world/tools/crater_growth.gd [-- --ticks=7200 --planet=7 --seed=1]
+
+
+func _init() -> void:
+	var ticks: int = 7200
+	var planet: int = 0
+	var sd: int = 1
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--ticks="):
+			ticks = int(a.substr(8))
+		if a.begins_with("--planet="):
+			planet = int(a.substr(9))
+		if a.begins_with("--seed="):
+			sd = int(a.substr(7))
+	var S := SimCore.createSim()
+	var setup: Dictionary = {"intro": false}
+	if planet > 0:
+		setup = {"planet": planet, "touch": 3, "arena": {"cols": 4800}, "intro": false}
+	SimCore.newMatch(S, sd, {}, setup)
+	var NC: int = SimConst.NC
+	var COL: float = SimConst.COL
+	print("tick  craters  cols>=1  cols>=3  cols>=6(K)  maxOverlap  sumR(cols)  scorchCols  rubbleCols  crackCols  slides")
+	for t in range(ticks + 1):
+		if t % 600 == 0:
+			var cnt := PackedInt32Array()
+			cnt.resize(NC)
+			var sumr: float = 0.0
+			for c in S.craters:
+				var r: float = float(c.r)
+				sumr += r / COL
+				var i0: int = int(floor((float(c.x) - r) / COL))
+				var i1: int = int(floor((float(c.x) + r) / COL))
+				for i in range(i0, i1 + 1):
+					cnt[posmod(i, NC)] += 1
+			var c1: int = 0
+			var c3: int = 0
+			var c6: int = 0
+			var mx: int = 0
+			for i in range(NC):
+				if cnt[i] >= 1:
+					c1 += 1
+				if cnt[i] >= 3:
+					c3 += 1
+				if cnt[i] >= 6:
+					c6 += 1
+				mx = maxi(mx, cnt[i])
+			var sc: int = 0
+			var rb: int = 0
+			var ck: int = 0
+			for i in range(NC):
+				if S.scorch[i] > 0.01:
+					sc += 1
+				if S.rubble[i] > 0.01:
+					rb += 1
+				if S.crack[i] > 0.01:
+					ck += 1
+			print("%5d  %7d  %7d  %7d  %10d  %10d  %10.0f  %10d  %10d  %9d  %6d" % [t, S.craters.size(), c1, c3, c6, mx, sumr, sc, rb, ck, S.slides.size()])
+		if t < ticks:
+			SimCore.step(S)
+	quit()

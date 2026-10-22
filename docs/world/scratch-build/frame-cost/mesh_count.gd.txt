@@ -1,0 +1,43 @@
+extends SceneTree
+# Triangles of the planet view's ground meshes per chunk, counted the way PlanetView._make_ground_meshes lays them out (nothing is built).
+func _init() -> void:
+	var rows: Array = PlanetView.ground_rows()
+	var runs: Array = []
+	var start: int = 0
+	for i in range(1, rows.size()):
+		var a: int = PlanetView.stride_at(rows[i - 1])
+		var b: int = PlanetView.stride_at(rows[i])
+		if a == b:
+			continue
+		var bnd: int = i if b < a else i - 1
+		runs.append([rows.slice(start, bnd + 1), a])
+		start = bnd
+	runs.append([rows.slice(start), PlanetView.stride_at(rows[-1])])
+	var smallest: int = int(RenderLook.STRIDES[0][1])
+	var largest: int = int(RenderLook.STRIDES[-1][1])
+	var cc: int = RenderLook.CHUNK_COLS
+	print("rows %d, runs: %s" % [rows.size(), str(runs.map(func(r): return [r[0].size(), r[1]]))])
+	for NC in [4800, 2400, 1200]:
+		var near: int = 0
+		var mid: int = 0
+		var far: int = 0
+		var nchunk: int = 0
+		for c0 in range(0, NC, cc):
+			var c1: int = mini(c0 + cc, NC)
+			nchunk += 1
+			for k in range(runs.size()):
+				var st: int = runs[k][1]
+				if st == largest:
+					continue
+				var ncols: int = len(range(c0, c1 + 1, st))
+				var tri: int = (ncols - 1) * (runs[k][0].size() - 1) * 2
+				if st == smallest:
+					near += tri
+				else:
+					mid += tri
+		for k in range(runs.size()):
+			if runs[k][1] == largest:
+				var ncols2: int = len(range(0, NC + 1, largest))
+				far += (ncols2 - 1) * (runs[k][0].size() - 1) * 2
+		print("arena %d columns: %d chunks; per chunk near %d tris, mid %d tris; all chunks %d; far mesh (always drawn) %d" % [NC, nchunk, near / nchunk, mid / nchunk, near + mid, far])
+	quit()
