@@ -215,7 +215,17 @@ static func _cache() -> void:
 	for k in D.surfaces:
 		K_BRAKE[k] = float(D.surfaces[k].brake)
 		K_TUMBLEONLY[k] = bool(D.surfaces[k].tumble)
-	# the biome's surface per terrain column: the biome layout is fixed, so this is built once
+	_buildSurf()   # the biome's surface per terrain column, for the world built now (and again for each world a match builds: surfaceAt)
+
+
+static var _colSurfKey: int = -1
+
+
+## The biome's surface per terrain column, for the world the current match built (WorldBiomes.worldId): the hand-made world's biome layout is fixed, a planet's is its slice's, and the
+## columns are the arena's.
+static func _buildSurf() -> void:
+	var D: Dictionary = _d
+	_colSurfKey = WorldBiomes.worldId
 	_colSurf.resize(SimConst.NC)
 	for i in range(SimConst.NC):
 		var biome: String = WorldBiomes.biomeAt(float(i) * SimConst.COL)
@@ -239,6 +249,8 @@ static func _g(a: String, b: String) -> float:
 
 ## The surface class of the ground at x, by priority: rubble heap, paving (inside a paved biome and not dug), the biome's own.
 static func surfaceAt(S: SimState, x: float) -> String:
+	if _colSurfKey != WorldBiomes.worldId or _colSurf.size() != SimConst.NC:
+		_buildSurf()
 	var col: int = int(floor(SimWrap.wrap(x) / SimConst.COL)) % SimConst.NC
 	if S.rubble[col] >= K_RUBBLE_MIN:
 		return "rubble"
