@@ -45,7 +45,7 @@ const ROW_RUB_HI := ROW_RUB_LO + 1
 const ROW_SHORE := ROW_RUB_HI + 1
 const ROWS := ROW_SHORE + 1
 const NO_SHORE := -1.0e9
-const SHORE_CHUNK := 64   # the water is compared in runs of this many columns, to find the few that changed
+const SHORE_CHUNK := 64   # the water and the deform are compared in runs of this many columns, to find the few that changed
 const TW_MAX := 2048
 ## Biome index order for the biome row and the shaders' biome_colors array.
 const BIOME_ORDER: Array = ["ocean", "plains", "city", "village", "forest", "desert", "mountains"]
@@ -189,11 +189,16 @@ func update(S: SimState, heat: PackedFloat32Array, heat_changed: bool) -> bool:
 	var moved := PackedInt32Array()   # columns whose ground or water changed, for the shore levels
 	if cchg or S.deform != _deform_seen:
 		var nc: int = SimConst.NC
-		for i in range(nc):
-			if dirty[i] == 1 or S.deform[i] != _deform_seen[i]:
-				dirty[i] = 1
-				_g_col(S, i)
-				moved.append(i)
+		# Only a run with a dirty column or a changed deform is walked column by column (the slices compare in the engine).
+		for c0 in range(0, nc, SHORE_CHUNK):
+			var c1: int = mini(c0 + SHORE_CHUNK, nc)
+			if not dirty.slice(c0, c1).has(1) and S.deform.slice(c0, c1) == _deform_seen.slice(c0, c1):
+				continue
+			for i in range(c0, c1):
+				if dirty[i] == 1 or S.deform[i] != _deform_seen[i]:
+					dirty[i] = 1
+					_g_col(S, i)
+					moved.append(i)
 		_deform_seen = S.deform.duplicate()
 		shape = true
 		any_dirty = true

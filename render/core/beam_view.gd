@@ -33,6 +33,12 @@ static func prism_mesh() -> CylinderMesh:
 
 func _ready() -> void:
 	_cyl = prism_mesh()
+	# The first beam's costs at boot, not in the fight (Performance's frame pacing, 2026-10-22: on an old laptop the first
+	# beam's frame was 50 to 70 ms): the beam look's data, and the first slot's three layers with their materials, hidden.
+	VfxBeamLook.warm()
+	_grow_pool(0)
+	for mi in _pool[0]:
+		mi.visible = false
 	var s := SphereMesh.new()
 	s.radius = 0.5
 	s.height = 1.0
@@ -111,9 +117,8 @@ static func clash_strength(t: float, dur: float) -> float:
 	return smoothstep(0.0, RenderLook.CLASH_RISE_S, t) * (1.0 - smoothstep(dur - RenderLook.CLASH_FALL_S, dur, t))
 
 
-## One beam from a to e (this view's x and the world's y). za, ze: the depth at each end (the sim's Beam.oz and zs; 0 on
-## the fighter plane). A beam with no depth is placed exactly as it always was.
-func _beam(i: int, a: Vector2, e: Vector2, w: float, c: Color, k: float, z: float, bright: bool = true, za: float = 0.0, ze: float = 0.0, who = null, hex: String = "", t: float = 0.0, at_heel: bool = true, short: bool = false) -> void:
+## Beam slots up to slot i: three layers each (a sheath, a body and a core), with their own materials.
+func _grow_pool(i: int) -> void:
 	while _pool.size() <= i:
 		var layers: Array = []
 		for j in range(LAYER_COUNT):
@@ -124,6 +129,12 @@ func _beam(i: int, a: Vector2, e: Vector2, w: float, c: Color, k: float, z: floa
 			add_child(mi)
 			layers.append(mi)
 		_pool.append(layers)
+
+
+## One beam from a to e (this view's x and the world's y). za, ze: the depth at each end (the sim's Beam.oz and zs; 0 on
+## the fighter plane). A beam with no depth is placed exactly as it always was.
+func _beam(i: int, a: Vector2, e: Vector2, w: float, c: Color, k: float, z: float, bright: bool = true, za: float = 0.0, ze: float = 0.0, who = null, hex: String = "", t: float = 0.0, at_heel: bool = true, short: bool = false) -> void:
+	_grow_pool(i)
 	var d: Vector2 = e - a
 	var l: float = d.length()
 	for j in range(LAYER_COUNT):

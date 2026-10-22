@@ -147,3 +147,30 @@ The water is the same grid again.
   - At tick 2,000, 136 pixels differ by 1 to 14 levels (127 of them by 1 or 2) on a translucent effect at a fighter's side. That is a changed blending order of see-through draws, with the water's far mesh now in chunks.
   - Repeat captures of each build are identical, so the difference is real but invisible.
 - **The checks:** `ground_check` and `seam_sweep` pass with the new layout, as do the other render gates.
+
+## The first crater on an old laptop (2026-10-22)
+
+Performance's frame pacing (`docs/perf/batch-e09dbbbf-2026-10-22.md`): with the warm-up fixed, the AI match's first crater (tick 238) is still a 67 to 69 ms frame on the old-laptop bound (the integrated GPU, Chrome's CPU throttle 4). Frames of 50 to 60 ms follow at 240 to 270.
+
+**What the frame is.** Per section, over its median frame:
+
+| Section | x4 on the web (four runs) | Native, ms |
+| :--- | :--- | :--- |
+| the host's tick (the sim, VFX's hub, the consumers) | +9 to +13 | 0.6 (drained) + 0.7 (VFX's consume) |
+| VFX's layer | +7 to +10 | 1.0 |
+| the planet's update (the ground, the props) | +7 to +10 | 1.0 (deform scan 0.3, shore 0.3, upload 0.3) + 0.2 |
+| the beams (Rendering's view, its first beam) | +2.6 to +3.9 | 3.4 |
+| the fighters | +1 to +2.5 | |
+
+Camera's strip opens on the same frame, adding 31 draws and about 460 k triangles. It is no one cost: every owner's first work at a crater lands in one tick.
+
+**What this changes:**
+- **The beam view** loads the beam look's data (`VfxBeamLook.warm()`, `data/vfx/energy.json`) and makes its first slot at boot: three layers with their materials, hidden. Natively the first beam's frame cost 3.35 ms in the beams and now 0.27.
+- **The ground's deform scan** compares runs of 64 columns in the engine and walks only the runs that changed: the same columns, in the same order. Natively 0.34 ms becomes 0.20 at the first crater.
+- **The first crater's native frame** goes from 10.1 to 7.2 ms.
+- **On the web at x4** the beams' share falls from 2.6 to 3.9 ms to 2.0. The frame itself moves within the noise of these runs (medians of 17 to 28 ms between valid runs).
+
+**Measured and not changed:**
+- **The ground texture's upload** (the whole 400 KB image whenever the heat or the scorch changes) is about 1 ms a frame at x4 during a fight's fires (planet update median 2.05 against 3.10 ms with the heat and scorch uploads cut in a timing build).
+- **Splitting the heat and scorch rows into their own small texture** would save that on most frames after a crater. The shaders would read three textures; that is a follow-up.
+- **The rest of the first crater's frame** is VFX's, the host's (the sim and its consumers) and the strip's.
