@@ -4,7 +4,7 @@ Owner: Simulation and Engine. 2026-10-22. Game Design's glance (`fight-feel.md` 
 
 ## Apply
 
-On a clean export of e50bdc3e (main with the planet golden keys) or later, from the repo root, in one commit:
+On a clean export of c847bf8f (main with the planet golden keys) or later, from the repo root, in one commit:
 
 ```
 python docs/architecture/pending/ricochet/ricochet.py .
@@ -37,8 +37,8 @@ Then `--import` (a new class).
 
 ## Results (scratch)
 
-**On e50bdc3e** (79693404 with the planet keys, the same sim):
-- Import clean. Parity on the committed golden: 69 of 69, "the ricochet's glance" and "planet worlds (golden)" included. The golden regenerates byte-identical.
-- The full gates: npm 5 of 5, determinism and its intro, seam, the flash count and its check-log, the validator 0 and 0, the self-test 8,590 of 8,590, QA's run-all, the loader and the flash self-test. All 15 of Rendering's checks pass.
+**Re-cut to Game Design's 4, on c847bf8f** (main's sim to 03427822):
+- Alone: import clean, parity on the committed golden 69 of 69 ("the ricochet's glance" re-cut, on the test world's 49-degree uphill), golden byte-identical.
+- With `hitstop2/`: parity 69 of 69, golden byte-identical. The full gates pass: npm 5 of 5, determinism and its intro, seam, the flash count and its check-log, the validator 0 and 0, the self-test 8,590 of 8,590, QA's run-all, the loader and the flash self-test. All 15 of Rendering's checks pass.
 
-**In play:** 6 AI matches of 7,200 ticks, with the switch on, glance 0 times, with the curve off or on. As ruled, the line is on the speed into the ground, and today's shallow contacts are slow into it. `../../ricochet-core.md` section 4 has the numbers, and what a line on the whole speed would give.
+**In play:** 6 AI matches of 7,200 ticks with the switch on gave 2 glances, none off a face. With the switch off, 7 of 58 ground contacts were on ground sloped 30 degrees or more (3 would glance, 1 is under the line, 3 are steeper). `../../ricochet-core.md` section 4 has the reading.

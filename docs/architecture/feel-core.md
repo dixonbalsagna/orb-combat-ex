@@ -87,7 +87,7 @@ Owner: Simulation and Engine. 2026-10-19. The core's build of Game Design's laun
 | QA's rows: a full launch's 1.0 to 1.6 s, the frame's share, the frozen time a minute | QA |
 | The schemas for the two files | Tools (applied with c09c3bef) |
 
-## 6. The curve shared with the predictors (parked at `pending/shared/`)
+## 6. The curve shared with the predictors (applied in c6980e25)
 
 Encounter's ask (`docs/director/camera-intent.md` section 3): the planner (`DirLaunch.predictFlight`) and World's predictors (`WorldBrunt.flightTo`, `chainPlan`, `next`) must fly the same curve as the step, or the plan and the flight part.
 
@@ -115,3 +115,21 @@ Encounter's ask (`docs/director/camera-intent.md` section 3): the planner (`DirL
 Two of Encounter's other asks ride in the same park:
 - **`SimBrake.controlBack`**, the brake's control back under a public name, for the recoil flip with ground contact off.
 - **A `cam_intent` cue is left out of the light digest** (`SimHash.hashFx`), so switching the camera feed on moves no golden. The feed is the view's: it reads, draws nothing and writes nothing hashed. Out of the digest, its own determinism is held by my check: one AI match run twice with the feed on gives the same cues on the same ticks, and the same play.
+
+## 7. Hit-stop re-cut (parked at `pending/hitstop2/`)
+
+Game Design's `rulings-2026-10-22.md` 5b, after Encounter measured 30% of AI v AI play frozen. Behind the same switch, so with it off nothing moves.
+
+| Rule (Game Design's) | As built |
+| :--- | :--- |
+| **The table:** a mashed or burst light 2, a tapped light 3, a medium 5, a heavy 8, a launch or a close 12, a full launch 14, decisive 20, the KO 24 at most | `ticks` in `hitstop.json` |
+| **The budget is 18%** | Of a rolling 10 s of fight (`windowS` 10, live seconds in buckets): 108 frozen ticks |
+| **The second step:** over the budget, every stop under a decisive blow ×0.75, rounded, at least 2, until the share falls back under. Decisive blows are never cut | `cutMul` 0.75, `cutFloor` 2. Over the budget: 2, 2, 4, 6, 9, 11 for the six weights under decisive (half up, as the sim rounds); 20 and 24 for decisive and the KO. The old mashed-light floor, the one lever that didn't bite, is gone |
+
+**Whole ticks, a finding of the core's.** The step counts a stop down in seconds: `S.dirS.stop -= 1/60` each frozen tick, until it isn't above 0. Taking 1/60 from n/60 n times leaves about 1e-17 for every n of 3 or more, so **a stop froze one tick more than asked:** a 4 held 5, and the brawl's heavy 6 holds 7 today. With the switch on, `frozen()` drops the residue (anything under 1e-9 s), so a stop of n ticks freezes n. The damage event's `stop` field counts the same way (`SimFx.stopTicks(stop, whole)`).
+
+**With the switch off, today's count stands.** It is in every golden match: every stop of 3 ticks or more in today's game is a tick longer than its data. Fixing it there too would move every match and the feel of every blow, a re-baseline that is Game Design's and the EP's call. It ends anyway once hit-stop by weight is on.
+
+**For Encounter:** `brawl.gd`'s `int(ceil(maxf(0.0, S.dirS.stop) * TICKS_PER_SEC))` (the slide held for the blow's stop) can read n + 1 for a stop of n ticks set as n / 60, by the same float. Their windows that "end at least 5 live ticks after the freeze" should count the freeze in whole ticks.
+
+**The check** ("hit-stop by weight", re-cut): the new table; a heavy and a light merging at 8; the budget 108 of 10 s; over it the cut values above, with decisive and the KO uncut; 10 s of fight later the budget is back; a stop of n ticks freezes n for every n in the table, and the event's field says so; with the switch off, `stopTicks` still counts today's n + 1.

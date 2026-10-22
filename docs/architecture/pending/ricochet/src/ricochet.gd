@@ -1,14 +1,16 @@
 class_name SimRicochet
 extends RefCounted
-## The ricochet's glance (Game Design's fight-feel.md section 3; rulings-2026-10-22.md 2b; docs/architecture/ricochet-core.md).
-## Behind data/fight/ricochet.json (off): with it off, every match, replay and checkpoint is the same to the bit.
+## The ricochet's glance (Game Design's fight-feel.md section 3; rulings-2026-10-22.md 2b and 4; docs/architecture/
+## ricochet-core.md). Behind data/fight/ricochet.json (off): with it off, every match, replay and checkpoint is the same
+## to the bit.
 ##
-## A sent body meeting a surface that holds, at `line` units a second or more into it (the speed along its normal, the
-## traversal factor divided out) and under `maxAngle` to it, glances: it keeps `keep` of its speed, angle in equal to
-## angle out, and flies on. Below the line it is Combat's plant (Encounter's, which tells it here too); steeper, the
-## wall slam, the lodge or the chain, as before. At most `maxInRow` ricochets in a row (glances and plants together, for
-## one send): then the next surface is a plain contact.
-## Where: World's contact meets the ground, a slope or a cliff (WorldContact._land, a granted branch) and a building's
+## A sent body meeting a surface that holds at `line` units a second or more of his whole speed (the traversal factor
+## divided out) and under `maxAngle` to it glances: it keeps `keep` of its speed, angle in equal to angle out, and flies
+## on. Below the line it is Combat's plant (Encounter's, which tells it here too); steeper, the wall slam, the lodge or
+## the chain, as before. At most `maxInRow` ricochets in a row (glances and plants together, for one send): then the
+## next surface is a plain contact. The surfaces are a building's face and ground sloped `minSlope` (30 degrees) or
+## more; flatter ground keeps the knocked-about rules (the skid, the bounce, the tumble, the slam: Game Design's 4).
+## Where: World's contact meets steep ground (WorldContact._land, a granted branch, asking steepGround) and a building's
 ## face (WorldBrunt.checkHit, a granted call to offFace). rule() is the classification in a surface's frame, shared by
 ## them, by World's journey predictor and by predict() for the choreographer. told() counts, hands the curve's paced leg
 ## over (his velocity takes the speed he showed) and sends the `ricochet` event that Encounter and Camera read.
@@ -27,7 +29,9 @@ static var line: float = 1500.0
 static var maxAngle: float = 40.0
 static var keep: float = 0.7
 static var maxInRow: int = 2
+static var minSlope: float = 30.0
 static var sin2Max: float = 0.413   # derived: sin^2(maxAngle)
+static var tanMin: float = 0.577   # derived: tan(minSlope), the ground's least slope (dy/dx) a glance comes off
 
 
 static func _ensure() -> void:
@@ -56,8 +60,11 @@ static func _ensure() -> void:
 		_err("maxInRow: a whole number from 0 to 16")
 		n = 0
 	maxInRow = int(n)
-	var sn: float = SimDetMath.sin(maxAngle * SimMathx.f64("400921fb54442d18") / 180.0)   # the sim's own sine and pi (the same bits on every platform)
+	minSlope = _num("minSlope", j.get("minSlope"), 0.0, 89.0)
+	var rad: float = SimMathx.f64("400921fb54442d18") / 180.0   # the sim's own pi, sine and cosine (the same bits on every platform)
+	var sn: float = SimDetMath.sin(maxAngle * rad)
 	sin2Max = sn * sn
+	tanMin = SimDetMath.sin(minSlope * rad) / SimDetMath.cos(minSlope * rad)
 
 
 static func enabled() -> bool:
@@ -81,17 +88,19 @@ static func reload() -> void:
 
 
 ## The rule in a surface's frame (normalised units): vn the speed along its outward normal (negative: into it), vt along
-## it; inRow the ricochets so far in this row. [GLANCE, vn', vt'] for a glance (keep of the speed, angle in equal to angle
-## out); [BELOW, vn, vt] under the line (Combat's plant); [NONE, vn, vt] otherwise (steeper than maxAngle at or over the
-## line, moving away, or the row is full). Every caller's classification, live and predicted.
+## it; inRow the ricochets so far in this row. The line is on his whole speed (Game Design's 4). [GLANCE, vn', vt'] for a
+## glance (keep of the speed, angle in equal to angle out); [BELOW, vn, vt] under the line (Combat's plant); [NONE, vn,
+## vt] otherwise (at or over the line and steeper than maxAngle, moving away, or the row is full). Every caller's
+## classification, live and predicted. The surface's scope is the caller's: a face, or steepGround.
 static func rule(vn: float, vt: float, inRow: int) -> PackedFloat64Array:
 	_ensure()
 	var into: float = -vn
 	if into <= 0.0 or inRow >= maxInRow:
 		return PackedFloat64Array([float(NONE), vn, vt])
-	if into < line:
+	var sp2: float = vn * vn + vt * vt
+	if sp2 < line * line:
 		return PackedFloat64Array([float(BELOW), vn, vt])
-	if into * into >= sin2Max * (vn * vn + vt * vt):
+	if into * into >= sin2Max * sp2:
 		return PackedFloat64Array([float(NONE), vn, vt])
 	return PackedFloat64Array([float(GLANCE), -keep * vn, keep * vt])
 
@@ -102,6 +111,13 @@ static func rule(vn: float, vt: float, inRow: int) -> PackedFloat64Array:
 static func predict(vx: float, vy: float, nx: float, ny: float, inRow: int = 0) -> PackedFloat64Array:
 	var r: PackedFloat64Array = rule(vx * nx + vy * ny, vx * ny - vy * nx, inRow)
 	return PackedFloat64Array([r[0], r[1] * nx + r[2] * ny, r[1] * ny - r[2] * nx])
+
+
+## Is ground of slope s (dy/dx) a ricochet's surface? Sloped minSlope or more (a hillside, a ridge, a cliff, a crater's
+## wall); flatter ground keeps the knocked-about rules.
+static func steepGround(s: float) -> bool:
+	_ensure()
+	return absf(s) >= tanMin
 
 
 ## The ricochets so far in his current send's row (0 for a new send). World's contact reads it into its body.

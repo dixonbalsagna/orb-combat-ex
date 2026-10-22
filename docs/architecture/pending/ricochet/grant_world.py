@@ -1,8 +1,9 @@
 # GRANT (World's sim/world/contact.gd and brunt.gd, for Simulation's ricochet.py beside this): where a sent body meets a
 # surface, the ricochet's glance (SimRicochet, behind data/fight/ricochet.json, off). Every line runs only with S.ricOn;
 # off, World's contact is as before to the bit.
-#   contact.gd  Body.rics (the row so far, from SimRicochet.inRow in toBody); _land: a fast, shallow landing on ground,
-#               a slope or a cliff (not the sea, not past the journey's caps) glances by SimRicochet.rule in the slope's
+#   contact.gd  Body.rics (the row so far, from SimRicochet.inRow in toBody); _land: a fast, shallow landing on ground
+#               sloped 30 degrees or more (SimRicochet.steepGround; not the sea, not past the journey's caps; flatter
+#               ground keeps its skid, bounce, tumble and slam) glances by SimRicochet.rule in the slope's
 #               frame, as a bounce World already pays (keep 0.7: wear and area by the speed removed, World's bounce
 #               event with its keep) and leaves the ground; _apply tells it (SimRicochet.told: the count, the event)
 #   brunt.gd    checkHit and its swept test: a building's face glances a fast, steep-to-the-face send (SimRicochet.offFace)
@@ -25,7 +26,7 @@ edit('sim/world/contact.gd', [
  "\tb.lips = f.jLips\n\tb.rics = SimRicochet.inRow(f)\n\tb.mode = AIR\n"),
 ("\tvar forceTumble: bool = b.contacts >= K_MAXC or b.t >= K_MAXT\n\tif slam:\n",
  "\tvar forceTumble: bool = b.contacts >= K_MAXC or b.t >= K_MAXT\n"
- "\tif S.ricOn and not sea and not forceTumble:   # Simulation's ricochet (sim/core/ricochet.gd): a fast, shallow contact glances\n"
+ "\tif S.ricOn and not sea and not forceTumble and SimRicochet.steepGround(s):   # Simulation's ricochet (sim/core/ricochet.gd): fast and shallow on steep ground, a glance\n"
  "\t\tvar gl: PackedFloat64Array = SimRicochet.rule(vn, vt, b.rics)\n"
  "\t\tif int(gl[0]) == SimRicochet.GLANCE:\n"
  "\t\t\tvar vxg: float = (gl[2] - s * gl[1]) / q\n"

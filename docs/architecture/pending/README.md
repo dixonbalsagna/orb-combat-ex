@@ -2,9 +2,9 @@
 
 Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator, the sim or Godot (`docs/` is hidden from Godot). It holds slices that are built and proven in a scratch copy and wait for the sim slot.
 
-**A parked build:** `ricochet/`: the ricochet's glance (Game Design's fight-feel.md section 3), behind `data/fight/ricochet.json` (off): a fast, shallow contact with the ground or a building's face glances on at 0.7, at most two in a row; the `ricochet` event; `SimRicochet.predict` for the choreographer. With World's lines (`grant_world.py`) and Tools' schema (`grant_tools.py`), same commit. No golden moves. Its page is `../ricochet-core.md`.
+**A parked build:** `hitstop2/`: hit-stop by weight re-cut to Game Design's 5b (the table 2, 3, 5, 8, 12, 14, 20, 24; over an 18% budget of a rolling 10 s, every stop under a decisive blow ×0.75), and a stop of n ticks freezing n (the count-down's float residue gave n + 1), behind the hit-stop switch; with Tools' schema lines (`grant_tools.py`). No golden moves. Its page is `../feel-core.md` section 7.
 
-**A parked build:** `shared/`: Encounter's three asks of 2026-10-22: the launch curve as shared functions for the planner and World's predictors (`SimFlight.share`, `kOf`, `toFloor`, a `Track` stepped by `tick` to the bit as the flight, `predict` to its touchdown), `SimBrake.controlBack` (a public name for the recoil flip), and a `cam_intent` cue left out of the light digest. No golden moves. Its page is `../feel-core.md` section 6.
+**A parked build:** `ricochet/`: the ricochet's glance, re-cut to Game Design's 4, behind `data/fight/ricochet.json` (off): at 1,500 u/s of his whole speed, a contact under 40° with a building's face or ground sloped 30° or more glances on at 0.7, at most two in a row; flatter ground keeps its skid, bounce, tumble and slam; the `ricochet` event; `SimRicochet.predict` for the choreographer. With World's lines (`grant_world.py`) and Tools' schema (`grant_tools.py`), same commit. No golden moves. Its page is `../ricochet-core.md`.
 
 **A paper, not a build:** `arena-conditions.md`: my conditions on World's shifting arena (windows 0 and 1), with the exact lines: the `arena.cols` guard, and one sim's world statics bound again at every step.
 
@@ -14,9 +14,9 @@ Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator
 
 **Tools' schema for `data/fight/boons.json`** is `grant_tools_fight.py` (it also held catastrophe, flight and hitstop, applied with c09c3bef): run it after `boons/`; it writes only what is missing.
 
-Each applies alone on main (4d2f568b), and together in the order shared, brake2, boons.
+Each applies alone on main (c847bf8f or later); `hitstop2/` and `ricochet/` are proved together.
 
-The launch's curve and hit-stop by weight (`feel/`), the forms' working rule (`forms3/`) and the blast cloud's cue and ash (`cata/`) were applied in c09c3bef (2026-10-20) with Tools' schemas, and their scripts are deleted. The pages are `../feel-core.md`, `../forms-core.md` section 8 and `../run-core.md` section 6.
+Encounter's three asks (`shared/`: the curve's shared functions, `SimBrake.controlBack`, the camera feed out of the light digest) were applied in c6980e25 with World's arena windows 0 and 1 (`arena-conditions.md` is the review, kept as the record), and the script is deleted. The launch's curve and hit-stop by weight (`feel/`), the forms' working rule (`forms3/`) and the blast cloud's cue and ash (`cata/`) were applied in c09c3bef (2026-10-20) with Tools' schemas, and their scripts are deleted. The pages are `../feel-core.md`, `../forms-core.md` section 8 and `../run-core.md` section 6.
 
 The forms (`forms/`) were applied in 8f157894 (2026-10-17) with Encounter's four lines, their branches (`forms-branches/`) in 421134e0, and the air brake (`brake/`) in 167a10a2 (2026-10-18) with World's `brakeEnd`; their scripts are deleted. The pages are `../forms-core.md` and `../brake-core.md`.
 
