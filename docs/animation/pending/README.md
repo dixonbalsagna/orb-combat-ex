@@ -4,12 +4,17 @@ Nothing is parked here that has not been applied. The eighteen patches of 2026-1
 
 Accounts: `docs/animation/many-bodies-and-runs.md`, `tenth-round.md`, `combat-pieces.md`, `homework4.md`, `pulled-frames.md` and `homework4b.md`, `guard-pass.md`, `ragdoll-slices.md`, `clinch-sizing.md`.
 
-## Parked: `fixes-18oct.patch` (2026-10-18), 3 files, render side only
+## Parked: `fix-reach-gap-perf.patch` (2026-10-19, re-proved on e2f5d2ea 2026-10-22), 3 files, render side only
 
-- `render/anim/anim_fighter.gd`: a dodge beat with no args (the spaced profile) plays the plain dodge (`cue_check --profile=spaced` printed "Nonexistent function 'get' in base 'Nil'" 430 times on seed 4); the charge's held flight pose (`ag.hold.charge_heavy`, `charge_light`) is let go the moment he is carried off faster than `cut_speed` (a rush, lunge, drift or bounce), after `lead_scan --strict` found him laid out feet first at 718 u/s on the launcher build; the flight lead's doc comment moved back above its function.
-- `data/anim/agency.json`: `charge.cut_speed` 300 (new key: the agency schema, if closed, needs it).
-- `render/anim/tools/anim_check.gd`: `_test_charge_cut`.
-- The lead frame could not be reproduced from the park's README (no seed or tick in it): 8 and 12 seeds and 4 bodies read 0 on a scratch export with launch anywhere, G2, forms-holds and the grants applied and the switch on.
+- **The red `anim_check` default run** (`seed 12345 mix/snappy: a blow within reach ends 5.00 units short of the defender`): `_contact_one` measured the gap in three dimensions, and a limit-respecting arm that reaches across the depth offset ends that far short in the plane; it now measures on the plane (the sim's reach is a plane distance). `anim_check`'s allowance is 3 units (2.4 the worst on real seeds). A 5% reach slack and a bigger retreat were tried and dropped (one broke `_test_energy_reach` by a degree).
+- **Perf** (`fighters_update`): the idle wing check skipped when its bones are unchanged (`WING_SIG_BONES`), `debug["slew_state"]` only under `debug_checks`, the ragdoll tier read every 12 ticks, the air brake layer's early exit, the ragdoll's out-of-plane zeroing once. `_free_arm_slew` 13.5 to 2.5 microseconds a call.
+- Files: `render/anim/anim_fighter.gd`, `anim_ragdoll.gd`, `tools/anim_check.gd`. Applies on main alone, and before or after the other parks. The sim and its golden are not touched.
+
+## Parked: `recoil-flips.patch` (2026-10-22), 11 files, apply after the three above
+
+- Encounter's `recoil` cue (DirRecoil, `recoilFlip.enabled` false): `RenderAnim` reads `source` (skip, handspring, tuck, backflip) and `dur` and calls `AnimFighter.on_recoil`; `_recoil_layer` turns the body once, backward, about its middle (`pivot_y` 34) while the sim's bowed path carries it (`arc` 12 for the flips, on top of the sim's 60). Ricochets (`ricochet_wall`, `ricochet_ground`) are built for Combat's section 2 and idle until that cue sends a surface normal. `RenderAnim.recoil_flips`, `--no-recoil-flips`, and reduced motion keeps the sequence and drops the turn.
+- Wave `recoil1` (prefix `rc`, 26 poses, 8 sequences): the skip, the two-handed handspring (Protagonist) and one-handed (Anti-hero), the layout backflip (Protagonist) and the compact tuck (Anti-hero), the back tuck, the wall plant and the ground plant. `data/anim/recoil.json` is a new key set: Tools' closed schema needs it.
+- `_test_recoil` (turn, direction, the head down at the middle, upright at the end, the wall plant, no NaN, no limit past, the sim's x never moved), the held lint's `rc.` class, study scenarios `rc_backflip`, `rc_handspring`, `rc_wall`.
 
 ## Parked: `finisher-styles.patch` and `grip-layer.patch` (2026-10-18), in this order, render side only
 
