@@ -1,3 +1,25 @@
+--- a/data/vfx/aura.json
++++ b/data/vfx/aura.json
+@@ -2,7 +2,17 @@
+   "version": 1,
+   "_note": "VFX's standing aura (docs/vfx/aura-plan.md): the current tier's aura shape and colour shows while a fighter charges or attacks, eased in and out, weaker than the transformation's own (data/vfx/transform.json, whose per-tier shapes it reuses). Orb's rule (2026-10-01): on only when charging or attacking, not a constant standing aura and not gone. Authored by the VFX Director session (Claude, claude-sonnet-5-5), 2026-10-01. Presentation only: read by render/vfx/aura.gd, never by the sim. A missing key falls back to the same default in aura.gd. Ticks are whole ticks (60 a second), alphas 0..1. At quality low the fill is dropped (the outline stays); at medium and high it is drawn; reduced motion drops the breathing pulse.",
+   "standing": {
+-    "ease_in_ticks": 8, "ease_out_ticks": 24, "hold_ticks": 18,
+-    "alpha": 0.4, "fill_scale": 0.5, "pulse": 0.03, "pulse_ticks": 50, "min_tier": 1
++    "ease_in_ticks": 8,
++    "ease_out_ticks": 24,
++    "hold_ticks": 18,
++    "alpha": 0.4,
++    "fill_scale": 0.5,
++    "pulse": 0.03,
++    "pulse_ticks": 50,
++    "min_tier": 1,
++    "burst_rise": 18,
++    "burst_hold": 54,
++    "burst_fall": 48,
++    "burst_gap": 240
+   }
+ }
 --- a/docs/vfx/README.md
 +++ b/docs/vfx/README.md
 @@ -10,6 +10,7 @@
@@ -18,9 +40,109 @@
  	["res://render/shaders/particle.gdshader", "multimesh"],     # Rendering: particles
  	["res://render/shaders/flash.gdshader", "multimesh"],        # Rendering: hit flashes
  	["res://render/shaders/glow.gdshader", "mesh"],              # Rendering: glows
+--- a/render/vfx/aura.gd
++++ b/render/vfx/aura.gd
+@@ -10,7 +10,8 @@
+ ## Presentation only: reads the sim, writes nothing, draws no randomness.
+ 
+ const DEFAULTS: Dictionary = {
+-	"standing": {"ease_in_ticks": 8, "ease_out_ticks": 24, "hold_ticks": 18, "alpha": 0.4, "fill_scale": 0.5, "pulse": 0.03, "pulse_ticks": 50, "min_tier": 1},
++	"standing": {"ease_in_ticks": 8, "ease_out_ticks": 24, "hold_ticks": 18, "alpha": 0.4, "fill_scale": 0.5, "pulse": 0.03, "pulse_ticks": 50, "min_tier": 1,
++		"burst_rise": 18, "burst_hold": 54, "burst_fall": 48, "burst_gap": 240},
+ }
+ 
+ static var _data: Dictionary = {}
+@@ -21,6 +22,16 @@
+ var _hold := PackedInt32Array([0, 0])          # ticks since the fighter was last charging or attacking
+ var clock: int = 0                             # unfrozen ticks, for the breathing pulse
+ var started: int = 0                           # times a slot's level rose from zero (for the tests)
++## The 3D aura's transient envelope (Legal fx06: "conveys emotion briefly, then disappears", never a constant standing glow): when a fighter starts charging or attacking (the standing aura's rising edge) and the
++## last burst ended at least `burst_gap` ticks ago, one burst runs: up over `burst_rise`, held for `burst_hold`, down over `burst_fall`, whatever he is doing meanwhile; the next one waits for a new rising edge
++## after the gap. 0 to 1 per slot, with last tick's value for drawing between ticks. The flat standing aura above is unchanged.
++var burst := PackedFloat32Array([0.0, 0.0])
++var burst_prev := PackedFloat32Array([0.0, 0.0])
++var bursts_made: int = 0
++var _bphase := PackedInt32Array([0, 0])        # 0 idle, 1 rising, 2 holding, 3 falling
++var _bt := PackedInt32Array([0, 0])            # ticks in the phase
++var _bgap := PackedInt32Array([100000, 100000])  # ticks since the last burst ended
++var _bon := PackedInt32Array([0, 0])           # the standing aura's `on` last tick
+ 
+ 
+ static func warm() -> void:
+@@ -52,6 +63,13 @@
+ 	mark_prev = PackedFloat32Array([0.0, 0.0])
+ 	mark_burst = PackedInt32Array([0, 0])
+ 	marks_made = 0
++	burst = PackedFloat32Array([0.0, 0.0])
++	burst_prev = PackedFloat32Array([0.0, 0.0])
++	bursts_made = 0
++	_bphase = PackedInt32Array([0, 0])
++	_bt = PackedInt32Array([0, 0])
++	_bgap = PackedInt32Array([100000, 100000])
++	_bon = PackedInt32Array([0, 0])
+ 	clock = 0
+ 	started = 0
+ 	warm()
+@@ -83,6 +101,7 @@
+ 		if fm.slot >= 0 and fm.slot < 2:
+ 			in_form[fm.slot] = true
+ 	for i in range(n):
++		burst_prev[i] = burst[i]
+ 		prev[i] = level[i]
+ 		if in_form[i]:
+ 			level[i] = 0.0     # the transformation draws its own aura, and the standing one starts again after it
+@@ -96,6 +115,7 @@
+ 			continue
+ 		var f = S.fighters[i]
+ 		var on: bool = is_active(S, f) and f.tier >= p("standing", "min_tier")
++		_step_burst(i, on)
+ 		if on:
+ 			_hold[i] = 0
+ 		else:
+@@ -108,6 +128,40 @@
+ 			level[i] = maxf(level[i] - 1.0 / maxf(p("standing", "ease_out_ticks"), 1.0), 0.0)
+ 
+ 
++func _step_burst(i: int, on: bool) -> void:
++	var rise: int = maxi(int(p("standing", "burst_rise")), 1)
++	var hold: int = int(p("standing", "burst_hold"))
++	var fall: int = maxi(int(p("standing", "burst_fall")), 1)
++	var edge: bool = on and _bon[i] == 0
++	_bon[i] = 1 if on else 0
++	if _bphase[i] == 0:
++		_bgap[i] = mini(_bgap[i] + 1, 100000)
++		if edge and _bgap[i] >= int(p("standing", "burst_gap")):
++			_bphase[i] = 1
++			_bt[i] = 0
++			bursts_made += 1
++	else:
++		_bt[i] += 1
++		if _bphase[i] == 1 and _bt[i] >= rise:
++			_bphase[i] = 2
++			_bt[i] = 0
++		elif _bphase[i] == 2 and _bt[i] >= hold:
++			_bphase[i] = 3
++			_bt[i] = 0
++		elif _bphase[i] == 3 and _bt[i] >= fall:
++			_bphase[i] = 0
++			_bgap[i] = 0
++	match _bphase[i]:
++		0:
++			burst[i] = 0.0
++		1:
++			burst[i] = smoothstep(0.0, 1.0, float(_bt[i]) / float(rise))
++		2:
++			burst[i] = 1.0
++		3:
++			burst[i] = 1.0 - smoothstep(0.0, 1.0, float(_bt[i]) / float(fall))
++
++
+ ## The colour an aura, a transformation's ring and its flash are drawn in: the fighter's own `aura` colour, except that
+ ## Legal's screen (docs/legal/rule-of-cool-screen.md) rules out gold, white and red for them. A colour in the fire range
+ ## (red, orange, gold) or close to white is swapped for Art's Anti-hero accent (data/art/flashes.json, accents.A.mid), the
 --- a/render/vfx/tools/effects_check.gd
 +++ b/render/vfx/tools/effects_check.gd
-@@ -216,6 +216,7 @@
+@@ -217,6 +217,7 @@
  	_cat_class()
  	_tremor()
  	_blast_cloud()
@@ -28,10 +150,10 @@
  	_stage_stagger()
  	_depth()
  	_panes()
-@@ -4916,6 +4917,120 @@
- 	_check(states[0] == states[1], "the same cue gives the same cloud (determinism)")
- 
- 
+@@ -4960,6 +4961,174 @@
+ 	# The shader's text holds the rules: the pattern is hue-told, its brightness is `pat_k`, the ring and the cell are tinted from the two same-luminance tints.
+ 	var src: String = FileAccess.get_file_as_string("res://render/vfx/shaders/beam_core.gdshaderinc")
+ 	_check(src.contains("pat_ring") and src.contains("pat_cell") and src.contains("mix(tint_a.rgb, tint_b.rgb") and src.contains("pat_tex = 1.0 + pat_k * feat"), "the shader tells the pattern apart by the second tint and moves the brightness only by pat_k")
 +## Orb's 3D auras (docs/vfx/aura3d.md): the data against the defaults, that the two themes are INVERSIONS of one another and not recolours, every rate under 2 Hz in both forms, the alpha cap, the
 +## colours (the lane colour, a lighter tint and a dark shade: never white, gold or red), the calm form, the tier's sizes, purity, and that nothing changes until the switch is on.
 +class AuraHostStub:
@@ -42,6 +164,54 @@
 +	var hs := AuraHostStub.new()
 +	hs.S = S
 +	return hs
++
++
++func _aura_burst() -> void:
++	# Legal fx06: the 3D aura is transient, never a constant standing glow: one burst when a fighter starts charging or attacking, then nothing until a new start after the gap.
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 4)
++	var au := VfxAura.new()
++	au.reset()
++	var f = S.fighters[0]
++	f.tier = 2.0
++	f.state = "charging"
++	var rise: int = int(VfxAura.p("standing", "burst_rise"))
++	var hold: int = int(VfxAura.p("standing", "burst_hold"))
++	var fall: int = int(VfxAura.p("standing", "burst_fall"))
++	var gap: int = int(VfxAura.p("standing", "burst_gap"))
++	var peak: float = 0.0
++	var at_one: int = 0
++	var max_step: float = 0.0
++	var prev: float = 0.0
++	var standing_at_end: float = 0.0
++	var after: float = 0.0
++	for k in range(rise + hold + fall + 120):
++		au.step(S, false, [])
++		peak = maxf(peak, au.burst[0])
++		if au.burst[0] >= 0.999:
++			at_one += 1
++		max_step = maxf(max_step, absf(au.burst[0] - prev))
++		prev = au.burst[0]
++		standing_at_end = au.level[0]
++		after = au.burst[0]
++	_check(peak >= 0.999 and at_one >= hold - 1, "a burst rises to full and holds for %d ticks (held %d)" % [hold, at_one])
++	_check(after == 0.0 and standing_at_end > 0.9 and au.bursts_made == 1, "then it is gone although the fighter is still charging (the flat standing aura's level is still %.2f): one burst, not a standing glow (%d made)" % [standing_at_end, au.bursts_made])
++	_check(max_step < 0.2, "it never jumps: the largest step in a tick is %.3f" % max_step)
++	# a new start before the gap makes no burst; after it, one
++	f.state = "free"
++	for k in range(10):
++		au.step(S, false, [])
++	f.state = "charging"
++	for k in range(5):
++		au.step(S, false, [])
++	_check(au.bursts_made == 1, "a new start soon after the last burst makes none (the gap is %d ticks)" % gap)
++	f.state = "free"
++	for k in range(gap):
++		au.step(S, false, [])
++	f.state = "charging"
++	for k in range(5):
++		au.step(S, false, [])
++	_check(au.bursts_made == 2 and au.burst[0] > 0.0, "a start after the gap makes the next")
 +
 +
 +func _aura3d() -> void:
@@ -112,7 +282,7 @@
 +	var p4: Dictionary = VfxAura3D.params("protagonist", 4, 1.0, false, 3.0, lane_p, 0.0)
 +	var r4: Dictionary = VfxAura3D.params("rival", 4, 1.0, false, 3.0, lane_p, 0.0)
 +	var c4: Dictionary = VfxAura3D.params("protagonist", 4, 1.0, true, 3.0, lane_p, 0.0)
-+	_check(str(p1) == str(p1b) and float(p4["hull_bh"]) > float(p1["hull_bh"]) and float(p4["hull_bh"]) > float(r4["hull_bh"]), "the aura band is a pure function of its inputs, grows with the tier (%.3f to %.3f body heights), and the Protagonist's stands further off the body than the Anti-hero's (%.3f against %.3f)" % [float(p1["hull_bh"]), float(p4["hull_bh"]), float(p4["hull_bh"]), float(r4["hull_bh"])])
++	_check(str(p1) == str(p1b) and is_equal_approx(float(p4["hull_bh"]), float(p1["hull_bh"])) and float(p4["hull_bh"]) > float(r4["hull_bh"]), "the aura band is a pure function of its inputs, stands off the body by the same small distance at every tier (%.3f of his height: it does not grow into a silhouette with the tier), and the Protagonist's stands a little further off than the Anti-hero's (%.3f against %.3f)" % [float(p4["hull_bh"]), float(p4["hull_bh"]), float(r4["hull_bh"])])
 +	_check(float(c4["calm"]) == 1.0 and float(c4["pulse_amp"]) < float(p4["pulse_amp"]) and float(c4["pulse_hz"]) < float(p4["pulse_hz"]) and float(c4["cell_rate"]) < float(p4["cell_rate"]) and float(c4["band"]) < float(p4["band"]), "the calm form pulses smaller and slower, the froth turns slower, the band is fainter, and nothing pops")
 +	_check(float(VfxAura3D.params("protagonist", 9, 1.0, false, 0.0, lane_p, 0.0)["tier"]) == 4.0 and float(VfxAura3D.params("protagonist", 0, 1.0, false, 0.0, lane_p, 0.0)["tier"]) == 1.0 and VfxAura3D.theme_block("nobody")["theme"] == VfxAura3D.theme_block("default")["theme"], "a tier outside 1 to 4 is clamped and an unknown fighter takes the default theme")
 +	# Inert until the switch: off by default, and turning it on switches the old standing aura off (one aura, not two); the standing aura's eased level still runs.
@@ -142,13 +312,19 @@
 +	h.set_aura3d(false)
 +	v.update(h, _aura_host_stub(S), 0.0, 0.0, 400.0)
 +	_check(float(mh.get_shader_parameter("level")) == 0.0 and v.shown == 0, "with the switch off the hull is down again")
++	var other := SimCore.createSim()
++	SimCore.newMatch(other, 5)
++	var kept: ShaderMaterial = VfxAura3D.hull_material(S.fighters[0])
++	VfxAura3D.hull_material(other.fighters[0])
++	VfxAura3D.prune(S.fighters)
++	_check(VfxAura3D.hull_material(S.fighters[0]) == kept and VfxAura3D._hulls.size() == 1 + (1 if VfxAura3D._hulls.has(S.fighters[1].get_instance_id()) else 0), "a new match prunes the hulls of fighters that are gone (%d kept)" % VfxAura3D._hulls.size())
++	_check(kept.render_priority < 0, "the hull is drawn before the water (priority %d), so a submerged fighter's band takes the water's tint like his body" % kept.render_priority)
 +	VfxAura3D.clear_hulls()
 +	v.free()
-+
-+
++	_aura_burst()
+ 
+ 
  ## The catastrophe light class (docs/vfx/catastrophe-plan.md section 1; Legal c01 to c05): the gap, the floors, the calm form, the ash, one answer per event, no red, and a hammer of random asks.
- func _cat_class() -> void:
- 	print("the catastrophe light class")
 --- a/render/vfx/trail_view.gd
 +++ b/render/vfx/trail_view.gd
 @@ -15,6 +15,7 @@
@@ -189,7 +365,15 @@
  var aura := VfxAura.new()
  var react_enabled: bool = VfxLook.REACT_DEFAULT      # from tier 3 the world answers: rubble, standing cracks, windows blowing out (docs/vfx/react-plan.md)
  var flicker_enabled: bool = VfxLook.FLICKER_DEFAULT  # the aura flickers when the fighter is worn
-@@ -206,6 +208,12 @@
+@@ -129,6 +131,7 @@
+ 
+ 
+ func reset(S: SimState, p_seed: int) -> void:
++	VfxAura3D.prune(S.fighters)       # the 3D aura's per-fighter hull materials of an earlier match
+ 	seed = p_seed & 0xFFFFFFFF
+ 	ticks = 0
+ 	_rng_trail = SimRng.new(SimRng.deriveSeed(seed, "vfx.trail"))
+@@ -207,6 +210,12 @@
  
  
  ## One tick's fx events, in order, plus the state after the tick.
@@ -202,7 +386,7 @@
  func consume(S: SimState, events: Array) -> void:
  	if not enabled:
  		return
-@@ -284,7 +292,7 @@
+@@ -285,7 +294,7 @@
  				if not f.flash_ok:
  					gate = 0.0
  		VfxTransform.flash_scale = gate
@@ -211,7 +395,7 @@
  		aura.step(S, frozen, xform.forms)
  	for e in events:
  		if e.type == "land" or e.type == "bounce" or e.type == "journey_end":
-@@ -307,7 +315,7 @@
+@@ -308,7 +317,7 @@
  				_speed_heavy(S, e)
  	debris.now = fx_now(S)
  	earth.entrance_now = false
@@ -233,6 +417,35 @@
        "match": "data/narrative/combat_barks.json",
        "schema": "narrative-barks.schema.json"
      },
+--- a/tools/schemas/vfx-aura.schema.json
++++ b/tools/schemas/vfx-aura.schema.json
+@@ -57,6 +57,26 @@
+           "minimum": 1,
+           "maximum": 4,
+           "description": "The lowest power tier that shows it."
++        },
++        "burst_rise": {
++          "type": "integer",
++          "minimum": 1,
++          "description": "The 3D aura's transient envelope (Legal fx06): ticks to rise."
++        },
++        "burst_hold": {
++          "type": "integer",
++          "minimum": 0,
++          "maximum": 180,
++          "description": "Ticks it is held at full strength: at most three seconds."
++        },
++        "burst_fall": {
++          "type": "integer",
++          "minimum": 1
++        },
++        "burst_gap": {
++          "type": "integer",
++          "minimum": 60,
++          "description": "Ticks after a burst ends before the next may start (at least a second): never a constant standing glow."
+         }
+       },
+       "additionalProperties": false,
 --- /dev/null
 +++ b/data/vfx/aura3d.json
 @@ -0,0 +1,108 @@
@@ -248,10 +461,10 @@
 +    "max_hz": 2.0,
 +    "hull_rag": 0.7,
 +    "hull_bh": [
-+      0.065,
-+      0.08,
-+      0.1,
-+      0.12
++      0.07,
++      0.07,
++      0.07,
++      0.07
 +    ]
 +  },
 +  "themes": {
@@ -346,7 +559,7 @@
 +}
 --- /dev/null
 +++ b/docs/vfx/aura3d.md
-@@ -0,0 +1,54 @@
+@@ -0,0 +1,64 @@
 +# The 3D auras (Orb's direction, 2026-10-18)
 +
 +Owner: VFX Director. Built in scratch and parked (`docs/vfx/pending/aura3d/`), **off by default**. Orb's words (homework, 2026-10-18): "cool, pulsating, 3D visual auras that can shimmer, froth, undulate etc. based on whose aura. Ideally protagonist and rival have similar but inverted themes on their auras, not just color ... develop a unique aura style to convey each character's power foundation." Not a clearance; **Legal has not seen it** (see the last section).
@@ -392,9 +605,19 @@
 +
 +## An inverted hull on the fighter's own mesh: the energy follows his real silhouette (2026-10-22; supersedes the shell above)
 +
-+The look gate sent the shell and the rim band back (ADR 0010): a thin ellipse round each fighter is not his outline and not the living aura Orb described. The aura is now a **second outline pass on the fighter's own skinned mesh**. The body already has an outline (`fighter_hull.gdshader`: back faces only, every vertex pushed along the direction baked into its NORMAL by its reach in UV2.x). The aura (`shaders/aura3d.gdshader`) is chained after it and pushes the same vertices a further `hull_bh` of the body's height (6.5 to 12 percent by tier, in model units, so as thick on a small fighter as on a big one), so it stands off the real silhouette in every pose, limb by limb, and the body's front faces hide the rest through the depth test. Two things keep the body clear:
-+- only the silhouette's fringe is kept: an inflated hull's back faces also lie in front of body parts behind them (an arm over the chest), and those faces turn away from the camera, so the fragment keeps the grazing ones (`fringe_lo` 0.22 to `fringe_hi` 0.5 of facing) and discards the rest;
-+- the band is thin, ragged only at the edge, and alpha-blended at most 0.5.
++The look gate sent the shell and the rim band back (ADR 0010): a thin ellipse round each fighter is not his outline and not the living aura Orb described. The aura is now a **second outline pass on the fighter's own skinned mesh**. The body already has an outline (`fighter_hull.gdshader`: back faces only, every vertex pushed along the direction baked into its NORMAL by its reach in UV2.x). The aura (`shaders/aura3d.gdshader`) is chained after it and pushes the same vertices a further `hull_bh` of the body's height (6.5 to 12 percent by tier, in model units, so as thick on a small fighter as on a big one), so it stands off the real silhouette in every pose, limb by limb, and the body's front faces hide the rest through the depth test. Three things keep the body clear (the EP's look gate of 2026-10-22: no stroke inside the body's outline, even with a hand over the torso):
++- **the depth test against the opaque scene (`hull_gap`, 60 units):** a hull face lying over the torso (an arm's, the head's) has the body just behind it, while the fringe outside the silhouette has the ground or the sky far behind; the fragment reads the opaque depth behind it (`hint_depth_texture`) and is discarded unless the scene is at least `hull_gap` units farther than itself. This is what removes the strokes over the torso, the arm and the other fighter;
++- only the silhouette's fringe is kept: the back faces that remain turn away from the camera, so the fragment keeps the grazing ones (`fringe_lo` 0.22 to `fringe_hi` 0.5 of facing);
++- the band is thin, a constant distance off the body (7 percent of his height at every tier), ragged only a little at the edge, and alpha-blended at most 0.5.
++
++## Legal's conditions (fx06, docs/legal/aura3d-screen.md)
++1. **Transient, one mark, never a standing glow:** the aura runs as a BURST (aura.gd `burst`): when a fighter starts charging or attacking (the standing aura's rising edge) and the last burst ended at least `burst_gap` (240 ticks, four seconds) ago, it rises over 18 ticks, holds for 54 (0.9 s), falls over 48, and is gone whatever he is doing, until a new start after the gap. It does not grow with the tier (the same distance off the body at every tier). With the 3D aura on, the old flat standing aura is off.
++2. **No tongues, crackle, pulse of the whole aura, or white/gold/red core:** the band's thickness and alpha no longer breathe with the pulse (the pulse now only sends the travelling band along the body); the edge noise is a few percent of the band; the tier-3 lit seams are inside the facets, not strokes between the fighter and the ground.
++3. **Rates and alpha asserted:** pulse, shimmer and froth at most 2 Hz (held under 1), `alpha_max` 0.5; the closed schema rejects 2.5 Hz and 0.6 alpha; proposed fixtures for Tools are in `fixtures.json` beside this page.
++4. **Calm form** (Reduce flashing): slower, lower alpha, as before. **5. Faces and glasses:** nothing is drawn inside the outline, so no stroke can cover a face or the glasses. **6. Not in public material** until Orb approves the look.
++
++## The water, the old laptop, the registry
++The hull is drawn before the water (render priority -1), so a fighter below the waterline gets his band under the water's tint as his body has it. It is chained after the outline pass only while its level is up (FighterView), so it costs nothing when the aura is off. The per-fighter hull materials are pruned to the current fighters at each match's reset.
 +
 +Inside the band the surface is alive in object space, so it wraps and moves with the limbs: **the Protagonist's boil** (the band swells out and relaxes, bubbles grow, ring and thin out, froth between them thickening with the tier, the skin drifting up, a bright band up the body each pulse, a ragged breathing edge) and **the Anti-hero's facets** (the band draws in and holds, hard dark seams between bright crystal cells glinting in turn, settling down, a band down the body each pulse, a smooth edge, the seams lit from inside from tier 3). Every inversion of the first cut is kept; the rates, the lane colours (never gold, white or red) and the alpha cap are unchanged.
 +
@@ -403,7 +626,7 @@
 +Limits: the fringe test is a screen-space heuristic of the baked normals, so a hand crossing the torso can still tint a little of the body; the band is not a perfect offset of the sprite (it is the mesh's, so it stands off by model units, a little more where the baked normals are long); the headless outline check needs a window and was not run.
 --- /dev/null
 +++ b/render/vfx/aura3d.gd
-@@ -0,0 +1,132 @@
+@@ -0,0 +1,142 @@
 +class_name VfxAura3D
 +extends RefCounted
 +## The 3D aura (docs/vfx/aura3d.md; Orb's direction 2026-10-18): a shader-driven shell round each fighter whose surface pulses, shimmers, froths and undulates, a different foundation for each fighter,
@@ -420,7 +643,7 @@
 +const DEFAULTS: Dictionary = {
 +	"common": {
 +		"alpha_max": 0.5, "pattern_alpha": 0.8,
-+		"hull_bh": [0.065, 0.08, 0.1, 0.12], "hull_rag": 0.7,
++		"hull_bh": [0.07, 0.07, 0.07, 0.07], "hull_rag": 0.7,
 +		"calm_pulse_k": 0.4, "calm_shimmer": 0.5, "tint_lift": 0.3, "max_hz": 2.0,
 +	},
 +	"themes": {
@@ -442,13 +665,23 @@
 +	m.shader = preload("res://render/vfx/shaders/aura3d.gdshader")
 +	m.set_shader_parameter("ortho", 1.0)
 +	m.set_shader_parameter("level", 0.0)
-+	m.render_priority = 1
++	m.render_priority = -1       # before the water (priority 0): a fighter below the waterline gets his band under the water's tint, as his body has it
 +	_hulls[id] = m
 +	return m
 +
 +
 +static func clear_hulls() -> void:
 +	_hulls.clear()
++
++
++## Drop the hull materials of fighters that are not in this match (the hub's reset calls it with the new fighters): the registry is keyed by instance id and would otherwise grow by two a match.
++static func prune(fighters: Array) -> void:
++	var keep: Dictionary = {}
++	for f in fighters:
++		keep[f.get_instance_id()] = true
++	for id in _hulls.keys():
++		if not keep.has(id):
++			_hulls.erase(id)
 +
 +
 +static var _data: Dictionary = {}
@@ -565,7 +798,7 @@
 +		var m: ShaderMaterial = VfxAura3D.hull_material(f)
 +		var lvl: float = 0.0
 +		if hub.aura3d_enabled:
-+			lvl = 1.0 if hub.aura3d_demo else lerpf(hub.aura.prev[i], hub.aura.level[i], a)
++			lvl = 1.0 if hub.aura3d_demo else lerpf(hub.aura.burst_prev[i], hub.aura.burst[i], a)       # transient: a burst, not the standing level (Legal fx06)
 +			var in_form: bool = false
 +			for fm in hub.xform.forms:
 +				if fm.slot == i:
@@ -586,7 +819,7 @@
 +uid://xqpuk8ya5as
 --- /dev/null
 +++ b/render/vfx/shaders/aura3d.gdshader
-@@ -0,0 +1,161 @@
+@@ -0,0 +1,171 @@
 +// The 3D aura as an inverted hull on the fighter's OWN mesh (docs/vfx/aura3d.md; Orb's direction 2026-10-18 and the look gate of 2026-10-22: the energy follows the sprite's real silhouette, the body stays visible).
 +// It is a second outline pass: the fighter's skinned body already has an outline (fighter_hull.gdshader: back faces only, each vertex pushed along the direction baked into NORMAL, by its reach in UV2.x,
 +// a few pixels). This pass is chained after it (the outline's `next_pass`) and pushes the same vertices several pixels further, so it appears only as a band just OUTSIDE the body's actual silhouette,
@@ -629,6 +862,8 @@
 +uniform float min_px = 0.75;
 +uniform float fringe_lo = 0.22;         // the share of the surface turned toward the camera that still shows: below this much facing it is the fringe, above fringe_hi it is hidden
 +uniform float fringe_hi = 0.5;
++uniform float hull_gap = 60.0;         // a stroke may land only where the opaque scene behind it is at least this many units farther: open air or ground behind, never the body (or the other fighter) just behind it
++uniform sampler2D depth_tex : hint_depth_texture, repeat_disable, filter_nearest;
 +
 +varying vec3 v_obj;
 +
@@ -692,7 +927,7 @@
 +	float pl = mix(sw * sw * sw, 0.5 - 0.5 * cos(ph), theme);
 +	float n = vn3(v_obj * 2.4 + flow * t * 0.8 + seed) - 0.5;
 +	float dn = mix(1.0, 0.35, theme);
-+	float k_band = clamp(1.0 + pulse_dir * pulse_amp * 4.0 * (pl - 0.4) + disp * dn * 6.0 * n, 0.25, 2.2);
++	float k_band = clamp(1.0 + disp * dn * 6.0 * n, 0.6, 1.5);       // a constant distance off the body, ragged only a little at the edge: no whole-aura pulse, no tongues (Legal fx06)
 +	float depth_k = ortho > 0.5 ? clamp(w0 / max(w, 1e-6), 0.0, 2.0) : 1.0;
 +	float outline_u = max(outline_px * depth_k, min(outline_px, min_px)) * world_per_px / s;     // the body's own outline, in model units, as fighter_hull has it
 +	float band_u = hull_bh * 90.0 * k_band * step(0.001, level);        // the band: a share of the body's height in model units, so it is as thick on a small fighter as on a big one
@@ -704,6 +939,15 @@
 +void fragment() {
 +	// Only the silhouette's fringe: an inflated hull's back faces also lie in front of the body parts behind them (an arm over the chest, the head over the shoulders), where they would tint the body. Those
 +	// faces turn away from the camera; the fringe outside the outline is where the surface is at a grazing angle to it. Keep the grazing ones, fade the rest out.
++	// No stroke inside the body's outline (the EP's look gate, 2026-10-22): read the opaque depth behind this fragment. A hull face lying over the torso (an arm's, the head's) has the body just behind it; the fringe
++	// outside the silhouette has the ground or the sky far behind. Compare the two depths in view units.
++	float scene_d = texture(depth_tex, SCREEN_UV).x * 2.0 - 1.0;
++	float frag_d = FRAGCOORD.z * 2.0 - 1.0;
++	float zs = PROJECTION_MATRIX[3][2] / (scene_d + PROJECTION_MATRIX[2][2]);
++	float zf = PROJECTION_MATRIX[3][2] / (frag_d + PROJECTION_MATRIX[2][2]);
++	if (zs - zf < hull_gap) {
++		discard;
++	}
 +	float graze = abs(dot(normalize(NORMAL), normalize(VIEW)));
 +	float fringe = 1.0 - smoothstep(fringe_lo, fringe_hi, graze);
 +	if (fringe < 0.01) {
@@ -744,7 +988,6 @@
 +
 +	float a = mix(a_boil, a_facet, theme);
 +	vec3 col = mix(c_boil, c_facet, theme);
-+	a *= 1.0 + 0.5 * pulse_amp * pulse_dir * sin(t * pulse_hz * 6.2831853);
 +	ALPHA = clamp(level * a * fringe, 0.0, alpha_max);
 +	ALBEDO = col;
 +}

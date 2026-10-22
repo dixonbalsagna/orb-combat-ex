@@ -1,0 +1,11 @@
+{
+  "_note": "Proposed schema fixtures for Tools (Legal fx06 condition 3: the closed schema rejects 2.5 Hz and an alpha of 0.6). Same shape as tools/fixtures/cases.json; append these cases to its list and a map.json row for data/vfx/aura3d.json is already in the patch. Not applied: tools/fixtures is Tools' file.",
+  "cases": [
+    { "id": "vfx-aura3d-live-valid", "schema": "vfx-aura3d.schema.json", "mutate": [ { "file": "data/vfx/aura3d.json", "set": { "/version": 1 } } ], "expect": null },
+    { "id": "vfx-aura3d-pulse-hz-2.5-rejected", "schema": "vfx-aura3d.schema.json", "mutate": [ { "file": "data/vfx/aura3d.json", "set": { "/themes/protagonist/pulse_hz": 2.5 } } ], "expect": { "rule": "maximum", "pointer": "/themes/protagonist/pulse_hz" } },
+    { "id": "vfx-aura3d-cell-rate-2.5-rejected", "schema": "vfx-aura3d.schema.json", "mutate": [ { "file": "data/vfx/aura3d.json", "set": { "/themes/rival/cell_rate": 2.5 } } ], "expect": { "rule": "maximum", "pointer": "/themes/rival/cell_rate" } },
+    { "id": "vfx-aura3d-alpha-max-0.6-rejected", "schema": "vfx-aura3d.schema.json", "mutate": [ { "file": "data/vfx/aura3d.json", "set": { "/common/alpha_max": 0.6 } } ], "expect": { "rule": "maximum", "pointer": "/common/alpha_max" } },
+    { "id": "vfx-aura-burst-gap-too-short-rejected", "schema": "vfx-aura.schema.json", "mutate": [ { "file": "data/vfx/aura.json", "set": { "/standing/burst_gap": 20 } } ], "expect": { "rule": "minimum", "pointer": "/standing/burst_gap" } },
+    { "id": "vfx-aura-burst-hold-too-long-rejected", "schema": "vfx-aura.schema.json", "mutate": [ { "file": "data/vfx/aura.json", "set": { "/standing/burst_hold": 400 } } ], "expect": { "rule": "maximum", "pointer": "/standing/burst_hold" } }
+  ]
+}

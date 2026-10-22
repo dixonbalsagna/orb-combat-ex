@@ -1,30 +1,34 @@
 --- a/render/core/fighter_view.gd
 +++ b/render/core/fighter_view.gd
-@@ -57,6 +57,7 @@
+@@ -57,6 +57,8 @@
  var ripple: MeshInstance3D
  var streaks: Array = []
  var glows: Array = []          # every glow material, for the projection anchor
-+var _aura_hull: ShaderMaterial     # VFX's 3D aura: an inverted hull chained after the outline pass (render/vfx/aura3d.gd); VFX writes it, this file only chains it and gives it the anchor
++var _aura_outline: ShaderMaterial  # VFX's 3D aura (render/vfx/aura3d.gd): the outline pass, and the hull material that is chained after it only while the aura is up (nothing is drawn, or paid for, when it is off)
++var _aura_hull: ShaderMaterial
  var flash_view: FlashView      # head flashes (render/core/flash_view.gd)
  var anim_body: AnimBody        # the A1 mannequin (render/anim/), null with --noanim
  var depth: float = 0.0         # B3: the sim's depth of this fighter this frame (Fighter.z; the pane sets it before update)
-@@ -231,6 +232,10 @@
+@@ -231,6 +233,9 @@
  	bm.set_shader_parameter("grime", RenderLook.col(RenderLook.DAMAGE_GRIME))
  	bm.set_shader_parameter("bruise", RenderLook.col(RenderLook.DAMAGE_BRUISE))
  	bm.set_shader_parameter("damage_seed", damage_seed(String(f.id)))
-+	var outline_m := bm.next_pass as ShaderMaterial
-+	if outline_m != null:
-+		_aura_hull = VfxAura3D.hull_material(f)
-+		outline_m.next_pass = _aura_hull
++	_aura_outline = bm.next_pass as ShaderMaterial
++	if _aura_outline != null:
++		_aura_hull = VfxAura3D.hull_material(f)       # not chained yet: update() chains it while its level is up
  	# How much of each mark the fighter's outfit shows at each stage: Art's stage data (render/core/damage_look.gd).
  	var marks: Dictionary = RenderDamage.marks(damage_outfit(String(f.id)))
  	bm.set_shader_parameter("mark_scuff", marks["scuff"])
-@@ -518,6 +523,8 @@
+@@ -518,6 +523,12 @@
  	var anchor: Vector3 = pivot.global_position
  	if anim_body != null:
  		anim_body.set_anchor(anchor)
 +		if _aura_hull != null:
-+			_aura_hull.set_shader_parameter("anchor", anchor)
++			var up: bool = float(_aura_hull.get_shader_parameter("level")) > 0.0
++			if (_aura_outline.next_pass != null) != up:
++				_aura_outline.next_pass = _aura_hull if up else null
++			if up:
++				_aura_hull.set_shader_parameter("anchor", anchor)
  	for p in solid:
  		p[3].set_shader_parameter("anchor", anchor)
  		p[4].set_shader_parameter("anchor", anchor)
