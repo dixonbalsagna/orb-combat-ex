@@ -1,0 +1,174 @@
+diff --git a/render/camera/tests/clip_digest.gd b/render/camera/tests/clip_digest.gd
+index b386646..e7200e8 100644
+--- a/render/camera/tests/clip_digest.gd
++++ b/render/camera/tests/clip_digest.gd
+@@ -14,6 +14,10 @@ var modes: Array = ["normal", "reduced"]
+ var digest_path: String = "digest.txt"
+ var panel_flash_off: String = "-"   # "-" the rig's default; "" none; or kind names joined by +
+ var ticks_cap: int = 0
++var arena_cols: int = 0   # --arena=N: the match is played on a ring of N columns of planet 7 (World's arena; 0 the default world)
++var _widest: float = 0.0
++var _wide90: int = 0
++var _wide100: int = 0
+ var ev_types: Array = []   # --events=a,b: print each event of these types with its tick
+ var trace_from: int = -1
+ var trace_to: int = -1
+@@ -25,6 +29,11 @@ var _cut_ticks: int = 0
+ var _mode_changes: int = 0
+ var _nc_spans: Array = []   # the cam_intent plans' do-not-cut spans [from, to] (Encounter's feed, when it is on)
+ var _nc_plans: int = 0
++var _sends: Array = []   # the feed's sends being followed: {slot, x, n, k, t0, seen_at, lead_sum, lead_n, ret_t, ret_off, done}
++var _sends_done: Array = []
++var _shots: Array = []   # expensive shots as they start: [tick, type]
++var _shot_prev: Dictionary = {}
++var _pace: Dictionary = {}
+ var _nc_changes: int = 0
+ var _nc_cuts: int = 0
+ var _fade_ticks: int = 0
+@@ -61,6 +70,8 @@ func _initialize() -> void:
+ 			budget_on = true
+ 		elif a.begins_with("--tmax="):
+ 			tmax = float(a.substr(7))
++		elif a.begins_with("--arena="):
++			arena_cols = int(a.substr(8))
+ 		elif a.begins_with("--events="):
+ 			ev_types = Array(a.substr(9).split(","))
+ 		elif a.begins_with("--trace="):
+@@ -111,7 +122,10 @@ func _digest_play(out: FileAccess, label: String, mode: String, sc: String, seed
+ 	var ai_set: Dictionary = {"p1": ai[0], "p2": ai[1]}
+ 	for i in range(2, slots.size()):
+ 		ai_set["p%d" % (i + 1)] = sc == "ring"
+-	main.start_match(seed, ai_set, null if slots.is_empty() else {"slots": slots})
++	var setup = null if slots.is_empty() else {"slots": slots}
++	if arena_cols > 0:
++		setup = {"planet": 7, "touch": 3, "arena": {"cols": arena_cols}} if setup == null else setup.merged({"planet": 7, "touch": 3, "arena": {"cols": arena_cols}})
++	main.start_match(seed, ai_set, setup)
+ 	var host: SimHost = main.host
+ 	host.vfx.force_reduced = reduced
+ 	main.ui_hud.opts["reduce_flashing"] = reduced
+@@ -129,6 +143,8 @@ func _digest_play(out: FileAccess, label: String, mode: String, sc: String, seed
+ 				_nc_plans += 1
+ 				for sp in e.get_meta("plan").get("noCut", []):
+ 					_nc_spans.append([int(sp[0]), int(sp[1])])
++			if String(e.type) == "cue" and String(e.get("kind")) == "cam_intent" and String(e.get("text")) == "launch" and int(e.get("target")) >= 0:
++				_sends.append({"slot": int(e.get("target")), "x": float(e.get("x")), "n": int(e.get("n")), "k": int(e.get("k")), "t0": int(host.S.tick), "seen_at": -1, "lead_sum": 0.0, "lead_n": 0, "ret_t": -1, "ret_off": 0, "done": false, "flight_in": 0, "flight_n": 0})
+ 	host.drained.connect(cb_nc)
+ 	var guard: int = 0
+ 	while host.ticks < total and guard < total * 4:
+@@ -148,6 +164,24 @@ func _digest_play(out: FileAccess, label: String, mode: String, sc: String, seed
+ 					_nc_changes += 1
+ 			if fr.cut and _in_nocut(host.S.tick):
+ 				_nc_cuts += 1
++			_lead_tick(fr, host.S)
++			for wp in range(2):
++				if wp == 0 or fr.shows(wp):
++					var share: float = main.split_rig.vw / maxf(float(fr.cam_z[wp]), 1e-6) / SimConst.W
++					_widest = maxf(_widest, share)
++					if share > 0.9:
++						_wide90 += 1
++					if share > 1.0:
++						_wide100 += 1
++			var rg_s = main.split_rig
++			var cur_shots: Dictionary = {"strip:" + str(fr.panel.get("kind", "")): fr.panel.get("kind", "") != "", "overlay:" + str(rg_s._ov_kind): rg_s._ov_kind != "", "solo:" + str(rg_s.solo_kind): rg_s.solo_kind != "" and rg_s.solo_kind != "launch", "slam": fr.slam}
++			for key in cur_shots:
++				if bool(cur_shots[key]) and not bool(_shot_prev.get(key, false)):
++					_shots.append([int(host.S.tick), key])
++			_shot_prev = cur_shots
++			var pc = rg_s.get("pace")
++			if pc != null:
++				_pace[str(pc)] = int(_pace.get(str(pc), 0)) + 1
+ 			_prev_mode = fr.mode
+ 			if fr.fade > 0.0:
+ 				_fade_ticks += 1
+@@ -226,6 +260,30 @@ func _digest_play(out: FileAccess, label: String, mode: String, sc: String, seed
+ 	for sp in _nc_spans:
+ 		for t in range(int(sp[0]), int(sp[1]) + 1):
+ 			nct[t] = true
++	for sd in _sends:
++		_sends_done.append(sd)
++	_lead_report(label, mode)
++	print("WIDEST %s %s ring %d units: the widest pane shows %.3f of it; pane-ticks over 0.9 %d, over 1.0 (the ground repeats) %d" % [label, mode, int(SimConst.W), _widest, _wide90, _wide100])
++	_widest = 0.0
++	_wide90 = 0
++	_wide100 = 0
++	var same10: int = 0
++	var any3: int = 0
++	var kinds: Dictionary = {}
++	for a in range(_shots.size()):
++		kinds[_shots[a][1]] = int(kinds.get(_shots[a][1], 0)) + 1
++		for b in range(a):
++			var dt: int = int(_shots[a][0]) - int(_shots[b][0])
++			if _shots[a][1] == _shots[b][1] and dt < 600:
++				same10 += 1
++			if dt < 180:
++				any3 += 1
++	print("SHOTS %s %s %d expensive shots %s, same type within 10 s %d, two within 3 s %d, pace %s" % [label, mode, _shots.size(), str(kinds), same10, any3, str(_pace)])
++	_shots = []
++	_shot_prev = {}
++	_pace = {}
++	_sends = []
++	_sends_done = []
+ 	print("INTENTFEED %s %s plans %d, do-not-cut spans %d over %d ticks, layout changes inside %d, cut ticks inside %d, holds %s" % [label, mode, _nc_plans, _nc_spans.size(), nct.size(), _nc_changes, _nc_cuts, str(main.split_rig.get("nocut_holds"))])
+ 	host.drained.disconnect(cb_nc)
+ 	_nc_spans = []
+@@ -275,3 +333,60 @@ func _in_nocut(t: int) -> bool:
+ 		if t >= int(sp[0]) and t <= int(sp[1]):
+ 			return true
+ 	return false
++
++
++## The feed's sends, followed: before the touchdown, is the touchdown point in the picture that shows him, and how much room
++## is ahead of him (a share of the width, in the way he flies); after it, how long until the pair is in one view again, and
++## fighter-ticks outside the picture meanwhile (3 s at most).
++func _lead_tick(fr: SplitFrame, S) -> void:
++	var t: int = int(S.tick)
++	var vw: float = main.split_rig.vw
++	var vh: float = main.split_rig.vh
++	for sd in _sends:
++		if bool(sd["done"]):
++			continue
++		var v: int = int(sd["slot"])
++		var f = S.fighters[v]
++		var pi: int = v if fr.shows(v) else 0
++		if t < int(sd["n"]):
++			if f.state != "launched":
++				continue
++			var gy: float = WorldTerrain.groundY(S, float(sd["x"]))
++			var lp: Vector2 = fr.screen_pos(pi, float(sd["x"]), gy + CamParams.CHEST, float(f.z))
++			var bp: Vector2 = fr.screen_pos(pi, f.x, f.y + CamParams.CHEST, float(f.z))
++			sd["flight_n"] = int(sd["flight_n"]) + 1
++			if bp.x >= 0.0 and bp.x <= vw and bp.y >= 0.0 and bp.y <= vh:
++				sd["flight_in"] = int(sd["flight_in"]) + 1
++			if lp.x >= 0.0 and lp.x <= vw and lp.y >= 0.0 and lp.y <= vh:
++				if int(sd["seen_at"]) < 0:
++					sd["seen_at"] = t
++			else:
++				sd["seen_at"] = -1   # it must stay in view up to the touchdown to count
++			var dir: float = signf(SimWrap.sdx(f.x, float(sd["x"])))
++			if dir != 0.0:
++				sd["lead_sum"] = float(sd["lead_sum"]) + ((vw - bp.x) if dir > 0.0 else bp.x) / vw
++				sd["lead_n"] = int(sd["lead_n"]) + 1
++		else:
++			var both: bool = true
++			for fi in range(2):
++				var pj: int = fi if fr.shows(fi) else 0
++				var g = S.fighters[fi]
++				var q: Vector2 = fr.screen_pos(pj, g.x, g.y + CamParams.CHEST, float(g.z))
++				if q.x < 0.0 or q.x > vw or q.y < 0.0 or q.y > vh:
++					sd["ret_off"] = int(sd["ret_off"]) + 1
++					both = false
++			if fr.mode == "merged" and both and int(sd["ret_t"]) < 0:
++				sd["ret_t"] = t - int(sd["n"])
++			if int(sd["ret_t"]) >= 0 or t - int(sd["n"]) >= 180:
++				sd["done"] = true
++
++
++func _lead_report(label: String, mode: String) -> void:
++	var names: Array = ["up", "across", "down", "behind", "building"]
++	for sd in _sends_done:
++		var k: int = int(sd["k"])
++		var flight: int = int(sd["n"]) - int(sd["t0"])
++		var seen: int = (int(sd["n"]) - int(sd["seen_at"])) if int(sd["seen_at"]) >= 0 else 0
++		var lead: float = float(sd["lead_sum"]) / maxf(1.0, float(sd["lead_n"]))
++		print("SEND %s %s t %d %s flight %d ticks (%d chased) touchdown seen %d ticks ahead, room ahead %.2f, in frame %d of %d, back in one view after %s ticks, fighter-ticks outside %d" % [label, mode, int(sd["t0"]), names[k] if k >= 0 and k < 5 else str(k), flight, int(sd["lead_n"]), seen, lead, int(sd["flight_in"]), int(sd["flight_n"]), str(sd["ret_t"]) if int(sd["ret_t"]) >= 0 else "180+", int(sd["ret_off"])])
++

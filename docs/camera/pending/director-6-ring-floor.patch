@@ -1,0 +1,71 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index 85c9f4a..57f24be 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -33,6 +33,7 @@ const REF_MARGIN_Y: float = 500.0
+ const REF_TIER: float = 0.06
+ const ZONE_W: float = 0.0  # 0 = off. Was 0.51 (UI's clear-zone width) to keep fighters out from under UI's edge chips; Orb preferred the longer shared zoom-out, and the chips dodge the fighters instead             # UI's fighter-clear zone is 51% of the width (docs/ui/hud-spec.md 2.1): both fighters fit inside it
+ const ZOOM_MIN: float = 0.006
++const RING_SHOW: float = 0.9           # on World's ring arena no pane shows more than this share of the ring (the ground would repeat on the screen): SplitRig.z_min
+ const ZOOM_MAX: float = 1.15          # the reference camera's cap, kept for the parity docs; v2 uses R_MAX
+ 
+ # --- divider geometry (section 3) ---
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 88dbc08..4e6caa5 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -490,7 +490,7 @@ static func zoom_u(vw_: float, vh_: float, ad: float, dy: float, tier: float, m:
+ 	z *= 1.0 - CamParams.REF_TIER * (tier - 1.0)
+ 	if floored:
+ 		z = maxf(z, CamParams.R_FLOOR * vh_ / CamParams.BODY_H)
+-	return clampf(z, CamParams.ZOOM_MIN, zcap)
++	return clampf(z, z_min(vw_), zcap)
+ 
+ 
+ ## The zoom setting's multiplier on every size target.
+@@ -1821,7 +1821,7 @@ func _start_overlay(kind: String, slot: int, pt: Vector3, r0: float, r1: float,
+ func _overlay_cam(S: SimState) -> Vector3:
+ 	var p: float = clampf(_ov_t / maxf(_ov_dur, 0.01), 0.0, 1.0)
+ 	var r: float = lerpf(_ov_r0, _ov_r1, smoothstep(0.0, 1.0, p)) * _m()
+-	var z: float = clampf(r * vh / CamParams.BODY_H / cos(deg_to_rad(_pitch_now)), CamParams.ZOOM_MIN, _zcap() * 1.5)
++	var z: float = clampf(r * vh / CamParams.BODY_H / cos(deg_to_rad(_pitch_now)), z_min(vw), _zcap() * 1.5)
+ 	var fx: float = _ov_pt.x
+ 	var fy: float = _ov_pt.y
+ 	var fz: float = _ov_pt.z
+@@ -2273,7 +2273,7 @@ func _struggle_tick(S: SimState) -> void:
+ func _merged_target(S: SimState) -> Vector3:
+ 	if fold_active:
+ 		var fit: float = minf(vw, vh) / (CamParams.FOLD_FIT * maxf(_fold.z, 1.0))
+-		return Vector3(_fold.x, _fold.y, clampf(fit, CamParams.ZOOM_MIN, _zcap()))
++		return Vector3(_fold.x, _fold.y, clampf(fit, z_min(vw), _zcap()))
+ 	var A = S.fighters[0]
+ 	var B = S.fighters[1]
+ 	var d: float = SimWrap.sdx(A.x, B.x)
+@@ -2350,7 +2350,7 @@ func _merged_target(S: SimState) -> Vector3:
+ 	if A.state != "launched" and B.state != "launched":
+ 		gov_m = _scroll_gov(maxf(_vsm_m, _gov_armed()), z * pz)   # the picture's scale is the zoom times the pitch's: that is what the scenery crosses at
+ 	_gov_bind_m = gov_m < 0.999
+-	z = clampf(z * mult * pz * _wide_mult() * gov_m, maxf(CamParams.ZOOM_MIN, maxf(CamParams.R_FLOOR * vh / CamParams.BODY_H, many_z) * pz), _zcap() * pz * (1.0 + CamParams.TIER_PUSH))
++	z = clampf(z * mult * pz * _wide_mult() * gov_m, maxf(z_min(vw), maxf(CamParams.R_FLOOR * vh / CamParams.BODY_H, many_z) * pz), _zcap() * pz * (1.0 + CamParams.TIER_PUSH))
+ 	if _ant_w > 0.001 and _st_w <= 0.0 and not fold_active and _lg_slot < 0 and not _lg_rel:
+ 		# anticipation: toward the coming contact, both fighters kept inside 0.42 of the width
+ 		var sh_a: float = CamParams.ANT_SHIFT * _ant_w * SimWrap.sdx(mx, _ant_x)
+@@ -2659,7 +2659,7 @@ func _own_zoom_target(S: SimState, i: int) -> float:
+ 		z = zmax if den <= 1.0 / zmax else 1.0 / den
+ 	if many_framing:
+ 		z = maxf(z * float(_many_pzf[i]), minf(z, CamParams.MANY_PIX_PRINCIPAL / CamParams.BODY_H))   # the bodies assigned to this pane, down to the principal's pixel floor
+-	return clampf(z * pz, CamParams.ZOOM_MIN, zmax * pz)
++	return clampf(z * pz, z_min(vw), zmax * pz)
+ 
+ 
+ func _anchor_rest(i: int) -> Vector2:
+@@ -4145,3 +4145,9 @@ func _no_cut(S: SimState) -> bool:
+ 		if t >= int(sp[0]) and t <= int(sp[1]):
+ 			return true
+ 	return false
++
++
++## The zoom floor: CamParams.ZOOM_MIN, and on World's ring arena the zoom at which a pane vw_ wide shows RING_SHOW of the ring,
++## so the ground never repeats on the screen (Rendering's copies scale with the ring; docs/camera/director.md).
++static func z_min(vw_: float) -> float:
++	return maxf(CamParams.ZOOM_MIN, vw_ / (CamParams.RING_SHOW * SimConst.W))

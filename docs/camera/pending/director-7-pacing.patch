@@ -1,0 +1,144 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index 57f24be..78225ae 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -261,6 +261,20 @@ const ARR_WIDE: float = 0.15
+ const ARR_IN: float = 0.15
+ const ARR_HOLD: float = 0.45
+ const ARR_OUT: float = 0.35
++# Pacing (docs/camera/director.md section 6): relax, build, peak and fade, from the blows landed in the last
++# PACE_WINDOW, the feed's story weight and the decisive events (a launch, a transformation, a finisher, `decisive`). It weights the
++# blow push by state (the anticipation's push stays as it is: weighting it moved the view under a strip), and sizes the one view by state (PACE_ZOOM: the reference size in relax and build,
++# a little tighter at a peak and a little wider in the fade after it), eased over PACE_ZOOM_TAU in the plain one view only and
++# held while the layout changes.
++const PACE_WINDOW: float = 2.0
++const PACE_BUILD_HITS: int = 3           # landed blows in the window for build
++const PACE_STORY: int = 4                # a running plan of this story weight or more is a peak (a finisher is 5)
++const PACE_BIG_HOLD: float = 1.0         # a decisive event keeps peak this long
++const PACE_FADE: float = 1.5             # fade's length after a peak (unless the blows keep coming: build)
++const PACE_MIN: float = 0.5              # a state holds at least this long
++const PACE_BLOW: Dictionary = {"relax": 0.6, "build": 1.0, "peak": 1.3, "fade": 0.8}
++const PACE_ZOOM: Dictionary = {"relax": 1.0, "build": 1.0, "peak": 1.05, "fade": 0.93}
++const PACE_ZOOM_TAU: float = 0.6
+ const HIT_PUSH: float = 0.06           # zoom push on the first building hit; later links push less
+ const HIT_PUSH_LATER: float = 0.03
+ const LOW_AIR_DEAD: float = 112.0       # a launched body this near the ground (1.5 body heights) is not followed up; 0 turns it off
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 999573f..eba9fa0 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -179,6 +179,12 @@ var _stiff_w: float = 0.0               # 0..1: how far the slam's stiff filters
+ var wreck_dir: int = 0                   # the winner's shot: +1 wreckage on the right of him, -1 on the left, 0 none to speak of
+ var wreck_score: float = 0.0             # the wreckage in view, summed (craters, ruined buildings, slide trenches)
+ var launch_governor: bool = false        # the scroll governor on a launched body (the flash count's, 2026-10-12): off since 2026-10-19, so the body is chased at his size and the background carries the speed (docs/camera/director.md step 4)
++var pacing: bool = true                    # relax, build, peak, fade (CamParams.PACE_*): the push weights by state, fade's re-establish
++var pace: String = "relax"                 # the state now, for the debug feed and Rendering's roll (a climax rolls in peak)
++var _pc_hits: Array = []                   # times of the blows landed lately
++var _pc_big_t: float = -99.0               # the last decisive event
++var _pc_t: float = 0.0                     # time in this state
++var _pc_zoom: float = 1.0                  # the one view's size by pace (CamParams.PACE_ZOOM), eased
+ var arrival_hold: bool = true             # the launch curve's arrival: widen to the landing, hold, let go (docs/camera/director.md step 4b)
+ var arrivals: int = 0
+ var _arr_t: Array = [-1.0, -1.0]           # seconds since this fighter's arrival was told, or -1
+@@ -347,6 +353,11 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
+ 	_ci_nocut = []
+ 	_ci_story_end = -1
+ 	_ci_land = [null, null]
++	pace = "relax"
++	_pc_hits = []
++	_pc_big_t = -99.0
++	_pc_t = 0.0
++	_pc_zoom = 1.0
+ 	story_w = 0
+ 	story_tags = []
+ 	story_a = -1
+@@ -435,6 +446,7 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
+ 	_update_pushes()
+ 	_update_merged_lead(S)
+ 	_intent_tick(S)
++	_pace_tick(S)
+ 	_update_cameras(S)
+ 	if cut:
+ 		_snap_cameras(S)
+@@ -1095,9 +1107,13 @@ func _read_events(S: SimState, events: Array) -> void:
+ 	for ev in events:
+ 		var bt: String = String(_ef(ev, "type", ""))
+ 		if bt == "damage" and int(_ef(ev, "attacker", -1)) >= 0:
++			_pc_hits.append(time)
+ 			_blow(String(_ef(ev, "kind", "")), int(_ef(ev, "stop", 0)))
+ 		elif bt == "launch":
+ 			_blow("launch", 0)
++			_pc_big_t = time
++		elif bt == "decisive" or bt == "transform" or bt == "finisher_start":
++			_pc_big_t = time
+ 		elif bt == "flight" and arrival_hold and not reduced_motion:
+ 			var fa: int = int(_ef(ev, "actor", -1))
+ 			if fa >= 0 and fa < 2:
+@@ -1566,6 +1582,7 @@ func _update_solo(S: SimState) -> void:
+ ## dropped. `slot` is whose close-up it is: the attacker for a signature, a finisher and an earned hit, the broken
+ ## fighter for a crippling blow, the winner for the KO (the main view is on the loser then).
+ func _panel_request(S: SimState, kind: String, slot: int) -> void:
++	_pc_big_t = time   # a strip-worthy moment (a signature, a clash, a riposte) is a peak, whether or not its strip is drawn
+ 	if panel_mode == "off" or slot < 0 or slot > 1 or fold_active or solo_kind == "transform" or intro_active:
+ 		return
+ 	if flash_reduced and panel_flash_off.has(kind):
+@@ -2110,7 +2127,7 @@ func _blow_mult() -> float:
+ func _blow(kind: String, stop_ticks: int) -> void:
+ 	if not blow_push or reduced_motion or intro_active or not CamParams.BLOW_PUSH.has(kind):
+ 		return
+-	var amp: float = float(CamParams.BLOW_PUSH[kind])
++	var amp: float = float(CamParams.BLOW_PUSH[kind]) * (float(CamParams.PACE_BLOW.get(pace, 1.0)) if pacing else 1.0)
+ 	if amp <= _blow_mult() - 1.0:
+ 		return
+ 	_bp_amp = amp
+@@ -2365,6 +2382,7 @@ func _merged_target(S: SimState) -> Vector3:
+ 		var hi_a: float = minf(da_a, db_a) + hf_a
+ 		mx = SimWrap.wrap(mx + (clampf(sh_a, lo_a, hi_a) if lo_a <= hi_a else 0.0))
+ 		z *= 1.0 + CamParams.ANT_PUSH * _ant_w * _ant_pw
++	z *= _pc_zoom   # the pace's size: a little wider when calm and after a peak, a little tighter at one
+ 	if _mlead != 0.0 and not fold_active and _lg_slot < 0 and not _lg_rel and _st_w <= 0.0:
+ 		# the lead, kept so that both fighters stay inside the middle MERGED_LEAD_KEEP of the width at this zoom
+ 		var half_k: float = 0.5 * CamParams.MERGED_LEAD_KEEP * vw / maxf(z, 0.001)
+@@ -4159,3 +4177,30 @@ func _no_cut(S: SimState) -> bool:
+ ## so the ground never repeats on the screen (Rendering's copies scale with the ring; docs/camera/director.md).
+ static func z_min(vw_: float) -> float:
+ 	return maxf(CamParams.ZOOM_MIN, vw_ / (CamParams.RING_SHOW * SimConst.W))
++
++
++## The pace: peak on a decisive event (PACE_BIG_HOLD), a running plan of story PACE_STORY or more, or the brink (a flurry of
++## blows is not a peak: an AI brawl lands 8 in 2 s most of the time); build on blows, a lean or a clash; fade for PACE_FADE after a peak when the blows stop; relax otherwise.
++## Each state holds PACE_MIN. Render-only: it reads the sim and the cues and writes nothing back.
++func _pace_tick(S: SimState) -> void:
++	while not _pc_hits.is_empty() and time - float(_pc_hits[0]) > CamParams.PACE_WINDOW:
++		_pc_hits.pop_front()
++	var hits: int = _pc_hits.size()
++	var story_on: bool = story_w >= CamParams.PACE_STORY and int(S.tick) <= _ci_story_end
++	var want: String = "relax"
++	if time - _pc_big_t <= CamParams.PACE_BIG_HOLD or story_on or _brink_w > 0.0:
++		want = "peak"
++	elif hits >= CamParams.PACE_BUILD_HITS or _ant_w > 0.05 or S.game.clash != null:
++		want = "build"
++	elif pace == "peak" or (pace == "fade" and _pc_t < CamParams.PACE_FADE):
++		want = "fade"
++	_pc_t += DT
++	if want != pace and (_pc_t >= CamParams.PACE_MIN or want == "peak"):
++		pace = want
++		_pc_t = 0.0
++	var plain: bool = pacing and not reduced_motion and not intro_active and sep <= 0.001 and not split_wanted and solo_kind == "" and S.game.clash == null
++	if plain and _ov_kind == "":   # held while a cut-in has the screen (a strip is drawn over the main view: it eases on under it)
++		var kz: float = 1.0 - exp(-DT / CamParams.PACE_ZOOM_TAU)
++		_pc_zoom += (float(CamParams.PACE_ZOOM.get(pace, 1.0)) - _pc_zoom) * kz
++	elif reduced_motion or not pacing:
++		_pc_zoom = 1.0
+diff --git a/render/camera/tests/split_sweep.gd b/render/camera/tests/split_sweep.gd
+index b131266..21004bc 100644
+--- a/render/camera/tests/split_sweep.gd
++++ b/render/camera/tests/split_sweep.gd
+@@ -781,6 +781,7 @@ func _seed_rig() -> void:
+ func _watch_first() -> void:
+ 	_tick = 1
+ 	_clear_prev = null   # a re-seeded rig starts its rectangles again
++	_prev_disp = null    # ... and its display frames: a re-seed is a new match (a cut), not a move of the camera
+ 	_clear_grow_tick = [-1000, -1000]
+ 	_clear_miss = [0, 0]
+ 	_disp_t = float(_tick) * SplitRig.DT

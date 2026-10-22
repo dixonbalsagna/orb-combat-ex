@@ -186,3 +186,42 @@ I built a framing that takes in the striker, the recoiler and his landing from t
 
 **Story slots for the roll (parked: docs/camera/pending/story-slots.patch).** `story_a` and `story_d`, the running plan's attacker and defender slots, sit next to `story_w` and `story_tags`. Rendering's dutch tilt can then roll toward the plan's defender on story_w of 3 or more or the decisive and finisher tags. Gates on 5fe08207, feed on and off: split sweep, determinism plain and --intro, and pane check pass.
 
+**Lead and return, measured (2026-10-22; no build).** These numbers are from `clip_digest.gd` SEND, over 19 sends the feed announced in 8 scenes:
+- **Lead.** The feed's touchdown is the first ground contact, and most flights reach it in 1 to 18 ticks. The chase keeps 0.44 to 0.72 of the width ahead of the body. The landing comes into view 0 to 6 ticks before the touchdown. Only 2 of the 19 flights are longer than 30 ticks. The building lead (`_aim`) already shows a building send's target, so ground and mountain sends need nothing more.
+- **Return.** In human play the opponent keeps a pane. After a far send the pair is back in one view in 58 to 120 ticks, with 0 to 8 fighter-ticks outside the picture (rushcity). In AI against AI the launch shot shows only the sent body by design.
+- **Off the table** unless Orb asks: the lead whip that pans ahead of him, like the destination cut, because QA's in-frame row rules it out.
+
+**The variety rule, measured (no build yet).** `clip_digest.gd` SHOTS counts the expensive shots: strips, cut-ins, transformation shots and the divider slam.
+- An AI match has 6 to 9 in 2 minutes. At most one same-type pair falls within 10 s per match. The pairs within 3 s are one clash beat: the signature strip, then the clash strip.
+- The repeats are the rush's divider slam in rushcity (11 in 2 minutes), which is the rush's own door.
+- The existing rationing (strip priority and earned gap, the cut-in cooldown and per-minute cap) already keeps variety. A shared ledger would change nothing today, so it waits for the next shot types (angles, whips).
+
+**The zoom floor on the ring (parked: docs/camera/pending/director-6-ring-floor.patch).** `SplitRig.z_min(vw)` is `ZOOM_MIN`, or the zoom at which a pane shows `RING_SHOW` (0.9) of World's ring, whichever is larger. It applies wherever the floor clamps.
+- In play the widest pane shows at most 0.19 of a 600-column ring and 0.11 of a 1,200-column ring, so the floor never binds there.
+- A forced fold (a probe on planet 7) is where it matters. With a radius of 8,000 on a 600-column ring the pane showed 1.73 rings, so the ground repeated. A radius of 30,000 showed 5.31. With the floor both are 0.89.
+- No sim code sends `fold_start` today; the floor guards the fold and the composed wides.
+- `clip_digest.gd` takes `--arena=N` and prints WIDEST.
+- Gates: split sweep, seam sweep, pane check, determinism plain and --intro all pass.
+
+**Pacing (parked: docs/camera/pending/director-7-pacing.patch, on the ring floor).** `SplitRig.pace` is relax, build, peak or fade (render-only, read by the debug feed and, later, the shot choices):
+- **Peak:** a decisive event, a launch, a transformation, a finisher or a strip-worthy moment in the last second, a running plan of story 4 or more, or the brink.
+- **Build:** 3 blows in 2 s, a lean or a clash.
+- **Fade:** 1.5 s after a peak when the blows stop.
+- **Relax:** the rest.
+- Each state holds at least 0.5 s.
+- Blow density alone is not a peak, because an AI brawl lands 8 blows in 2 s most of the time. In the first cut peak was 25 to 50% of the time.
+
+Measured share of time: in AI matches peak 12 to 27%, build 55 to 70% and relax 6 to 21%; rushcity and clashcity are mostly relax.
+
+What pacing changes:
+- **Blow push weight:** relax 0.6, build 1.0, peak 1.3, fade 0.8.
+- **One-view size:** the reference size in relax and build, 1.05 at a peak and 0.93 in the fade after it. It is eased over 0.6 s, in the plain one view only, and held under a cut-in. A strip is drawn over the main view, so the size eases on under it. About 7 peaks a minute reach the one view.
+
+Tried and dropped:
+- Weighting the anticipation push by pace moved the main view under a strip.
+- Sizing relax at 0.95 changed the reference framing the sweep holds.
+
+The sweep's `_watch_first` now starts the display-frame chain afresh on a re-seed. A re-seed is a new match: the panel rows run twice from one rig, and the pace size of the first run made a jump between them that no player sees.
+
+Cuts, layout changes and the time outside the picture are unchanged. The effect is subtle on purpose: a few percent of framing. Gates: split sweep, seam sweep, pane check, determinism plain and --intro all pass. Clips: homework/camera/10-pacing/ (two AI-match segments around a peak and its fade against main, and ai 7's opening against d3f1ca0e).
+
