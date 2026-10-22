@@ -56,6 +56,9 @@ const CUE_SCENARIOS := {
 	"rd_launch": {"kind": "rd", "actor": 0, "target": -1, "text": "launch", "span": 0, "label": "a launch (the left one): a heavy blow at tick 6, then 84 ticks of flight with the ragdoll (RG0 to RG3: `window.__oop = 1` for the out-of-plane joints)"},
 	"rd_brake": {"kind": "rd", "actor": 0, "target": -1, "text": "brake", "span": 0, "label": "the mid-air skid (the left one): launched at 1,500 u/s, the sim's air brake from tick 30 to 60 (RG2)"},
 	"rd_poses": {"kind": "rd", "actor": 0, "target": -1, "text": "poses", "span": 0, "label": "pose sheet (the left one): the poses named in `window.__poses` (a comma list), ten ticks each, up to nine, standing in place"},
+	"fs_open_palm": {"kind": "fs", "actor": 0, "target": -1, "text": "open_palm", "span": 0, "n": 150, "label": "finisher style Open Palm (Protagonist): the blast over, then one open hand held out low to the fallen rival; a wide low camera pulling back and up; one steady Trial-teal pulse"},
+	"fs_held_breath": {"kind": "fs", "actor": 0, "target": -1, "text": "held_breath", "span": 0, "n": 150, "label": "finisher style Held Breath (Protagonist): the head bowed, looking back for the people; a tight push-in, then a hard cut wide; one steady Witness-blue pulse"},
+	"fs_both_roads": {"kind": "fs", "actor": 0, "target": -1, "text": "both_roads", "span": 0, "n": 150, "label": "finisher style Both Roads (Protagonist): one open hand raised to the shoulder, palm out, a pledge; a slow half circle round him; one steady two-tone pulse"},
 	"cue_interject": {"kind": "windup", "actor": 0, "target": -1, "text": "interject", "span": 24, "dur": 24.0, "label": "an interjection's tell: the guard (the left one) shows a 24-tick wind-up"},
 }
 const PAL_A := {"body": Color("#3d8fdc"), "legs": Color("#1b1f2a"), "arms": Color("#e6b995"), "skin": Color("#efc7a2"), "gear": Color("#cdd6e4"), "accent": Color("#4fb9a8"), "hair": Color("#22c7a0")}
@@ -78,6 +81,7 @@ var tier_gap: int = 80
 var rd_launch_n: int = 0
 var rd_opp_tier: float = 1.0
 var rd_poses: Array = []
+var pulse: ColorRect   # the finisher scenarios' one steady pulse: a colour wash over the frame that rises and falls once (a peak of 0.16)
 var tier_windup: int = 28
 var tier_first: int = 44
 var tier_hands_pk: Array = []   # the arm of each blow of a tier run (`window.__hands_pk`, `__hands_rk`: "r,r,l,..."): the free arm (l) mirrors the key set (Legal e09: the arm is chosen per throw)
@@ -250,6 +254,11 @@ func _build_view() -> void:
 	if sil:
 		label.add_theme_color_override("font_color", Color(0.1, 0.1, 0.12))
 	cl.add_child(label)
+	pulse = ColorRect.new()
+	pulse.color = Color(1, 1, 1, 0)
+	pulse.size = Vector2(4096, 2160)
+	pulse.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cl.add_child(pulse)
 
 
 func _tier_pieces() -> Array:
@@ -298,6 +307,7 @@ func _scenarios() -> Array:
 
 
 func _start_scenario() -> void:
+	_cam_reset()
 	var list: Array = _scenarios()
 	var sc: Dictionary = list[scn_i % list.size()]
 	var pcs: Dictionary = PIECES[fighter]
@@ -331,7 +341,7 @@ func _start_scenario() -> void:
 		ex = null
 		S.dirS.ex = null
 		sent = []
-		n_ticks = 90
+		n_ticks = int(sc.cue.get("n", 90))
 		k = 0
 		S.tick = 1000
 		S.T = 200.0
@@ -361,6 +371,58 @@ func _start_scenario() -> void:
 	S.T = 200.0
 
 
+func _cam_reset() -> void:
+	if cam == null:
+		return   # --measure draws nothing
+	cam.size = 380.0 if far else (112.0 if near else 118.0)
+	cam.position = Vector3(offset * 0.5 if near else 0.0, 8.0 if not far else -20.0, 300.0)
+	cam.rotation = Vector3.ZERO
+	if pulse != null:
+		pulse.color = Color(1, 1, 1, 0)
+
+
+## The three finisher styles' stage (docs/art/hero-forms-look.md section 3): the Protagonist's closing sequence on the left, the rival down, a camera that moves as Art describes and one steady colour pulse (Trial teal, Witness blue,
+## or the two). A pulse is one slow rise and fall of at most 0.16 of the frame's alpha, over half a second: no strobe, never gold, white or red.
+func _fs_tick(style: String, k: int) -> void:
+	if k == 0:
+		f1.state = "down"
+	if k == 8:
+		var id: String = "fn." + style
+		if AnimData.entries.has(id):
+			RenderAnim.fighter(S, f0)._seq = {"id": id, "t0": S.T, "dur": float(AnimData.entries[id].dur) / 60.0, "wt": 1.0}
+	if cam == null:
+		return   # --measure draws nothing
+	var cx: float = -DIST * 0.5
+	var t: float = clampf(float(k) / float(n_ticks), 0.0, 1.0)
+	cam.rotation = Vector3.ZERO
+	match style:
+		"open_palm":
+			# wide and low, pulling back and up
+			cam.size = lerpf(74.0, 150.0, smoothstep(0.0, 1.0, t))
+			cam.position = Vector3(cx * 0.5, lerpf(-14.0, 44.0, smoothstep(0.0, 1.0, t)), 300.0)
+		"held_breath":
+			# a tight push-in on him, then a hard cut wide
+			if k < 80:
+				var u: float = float(k) / 80.0
+				cam.size = lerpf(112.0, 60.0, smoothstep(0.0, 1.0, u))
+				cam.position = Vector3(cx, lerpf(8.0, 22.0, u), 300.0)
+			else:
+				cam.size = 170.0
+				cam.position = Vector3(cx * 0.5, 14.0, 300.0)
+		"both_roads":
+			# a slow half circle round him
+			var a: float = PI * smoothstep(0.0, 1.0, clampf(float(k - 10) / 120.0, 0.0, 1.0))
+			var c := Vector3(cx, 14.0, 0.0)
+			cam.size = 104.0
+			cam.position = c + Vector3(sin(a) * 300.0, 0.0, cos(a) * 300.0)
+			cam.look_at(c, Vector3.UP)
+	var pk: float = 0.0
+	if k >= 40 and k <= 70:
+		pk = sin(PI * float(k - 40) / 30.0)
+	var col := Color("#2dbeab") if style == "open_palm" else (Color("#598ecf") if style == "held_breath" else Color("#2dbeab").lerp(Color("#598ecf"), clampf(float(k - 40) / 30.0, 0.0, 1.0)))
+	pulse.color = Color(col.r, col.g, col.b, 0.16 * pk)
+
+
 func _step_tick() -> void:
 	var list: Array = _scenarios()
 	var sc: Dictionary = list[scn_i % list.size()]
@@ -381,6 +443,8 @@ func _step_tick() -> void:
 			var fb := FakeBeam.new()
 			fb.A = f0
 			S.beams = [fb]
+	if sc.has("cue") and String(sc.cue.kind) == "fs":
+		_fs_tick(String(sc.cue.text), k)
 	if sc.has("cue") and String(sc.cue.kind) == "rd":
 		# a launched body flying free (no ground): the flail, the brace and, with the brake event, the skid. The study draws a body in place, so only its shape shows
 		if k == 0:
@@ -413,7 +477,7 @@ func _step_tick() -> void:
 			he.amount = 90.0
 			he.region = "core"
 			RenderAnim.consume(S, [he])
-	if sc.has("cue") and k == 10 and String(sc.cue.kind) != "beam" and String(sc.cue.kind) != "rd":
+	if sc.has("cue") and k == 10 and String(sc.cue.kind) != "beam" and String(sc.cue.kind) != "rd" and String(sc.cue.kind) != "fs":
 		var cd: Dictionary = sc.cue
 		var ce := SimState.FxEvent.new()
 		ce.type = "cue"

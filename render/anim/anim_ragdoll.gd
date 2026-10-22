@@ -85,6 +85,7 @@ var weighted: bool = false                     # RG1 on: impulses are scaled by 
 var mass: float = 1.0
 var tier: float = 1.0
 var _tick: int = 0
+var _oop_live: bool = false                    # the out-of-plane joints have been running since they were last still
 var _pend: Array = []                          # [due tick, degree of freedom, impulse] waiting for the lag
 
 
@@ -266,9 +267,14 @@ func step(dt: float, v: Vector2, a: Vector2, free_t: float, amp: float, tt: floa
 	# reduced motion also narrows every joint's range (a hard tumble saturates the limits at any amplitude, so the drive alone does not calm it)
 	var lk: float = REDUCED_LIMIT if amp < 0.999 else 1.0
 	_tick += 1
-	for zi in range(n_on, N):
-		th[zi] = 0.0
-		om[zi] = 0.0
+	if n_on < N:
+		if _oop_live:
+			_oop_live = false   # the out-of-plane joints were just switched off: set them still once
+			for zi in range(n_on, N):
+				th[zi] = 0.0
+				om[zi] = 0.0
+	else:
+		_oop_live = true
 	if not _pend.is_empty():
 		var keep: Array = []
 		for pi in _pend:
@@ -289,7 +295,9 @@ func step(dt: float, v: Vector2, a: Vector2, free_t: float, amp: float, tt: floa
 	var wb: float = w_brace * amp
 	var ws: float = w_skid * amp
 	var wc: float = w_crumple * amp
-	var wf: float = w_flail * amp * gain()
+	var wf: float = w_flail * amp
+	if wf > 0.001:
+		wf *= gain()
 	for _s in range(2):
 		for i in range(n_on):
 			var kk: float = lerpf(k_stiff[i], k_loose[i], free)

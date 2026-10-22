@@ -96,6 +96,8 @@ var _ag_sq: Dictionary = {}            # the agency slice's own sequence (the em
 var _lead_w: float = 0.0               # the flight lead (docs 9.23): how hard it is chasing its aim now, and the turn it holds (a world angle added to the sim's own, radians)
 var _lead_d: float = 0.0
 var _seq_next: Dictionary = {}          # the sequence that follows `_seq` when it ends (the ceiling's slam, then its rebound)
+var _gr: Dictionary = {}                # the clinch's hold read (on_hold): partner, kind, role, grade, side, grips
+var _gr_w: float = 0.0                 # the hold's weight now: in over ramp_ticks, out over the same
 var _ab_on: bool = false                # the sim's air brake is on (an air_brake event)
 var _ab_w: float = 0.0                 # the skid's weight now: in over enter_ticks, out over exit_ticks
 var _ab_str: float = 0.0               # how hard it is from the deceleration he shows (0 to 1)
@@ -180,6 +182,7 @@ var _ip_have: bool = false
 var _ip_cos: float = cos(INERTIA_JUMP * 0.5)
 # The active ragdoll (overhaul unit A): stepped once per sim tick from the fighter's own state, shown at out_w.
 var _rd := AnimRagdoll.new()
+var _rd_tier_tk: int = -1000              # the tick the ragdoll's tier and mass were last read
 var _rd_flights: int = 0               # RG0: how many flights this body has begun (with the slot and the launch number, the seed of the flail)
 var _rd_prev_flying: bool = false
 var _rd_rot: float = 0.0                # the body's last turn (the sim's rot): the side of a hit is judged against it
@@ -470,6 +473,109 @@ func on_agency(kind: String, T: float, e: Dictionary) -> void:
 			debug["agency"] = int(debug.get("agency", 0)) + 1
 
 
+## The clinch's grip layer (docs/animation/clinch-sizing.md slice C2; data/anim/clinch.json). The sim's hold arrives as a read, `on_hold(read, T)`: {partner (a fighter's slot), kind (tie, pummel, brace, pin, carry, strain, whiff,
+## apart), role ("holder" or "held"), grade (-2 to 2), side ("l" or "r": the pummel's hand), grips ({"hand_r": "collar_r", ...}: each gripping hand to a region of the partner's body)}. The layer runs after the pose is made and
+## before the flight lead: it mixes the pose of the kind in at a weight that ramps over `ramp_ticks`, then solves each gripping hand onto its region (IK, never bending past a limit: a hand that cannot reach ends short, and the
+## shortfall is counted). The sim places the pair; this layer never moves a position.
+func on_hold(read: Dictionary, T: float) -> void:
+	_gr = read.duplicate(true)
+	_gr["on"] = true
+	_gr["t0"] = T
+
+
+func on_hold_end(_T: float) -> void:
+	if not _gr.is_empty():
+		_gr["on"] = false
+
+
+## True while a hold is drawn.
+func gripping() -> bool:
+	return _gr_w > 0.001
+
+
+func _grip_layer(S: SimState, f, dt: float) -> void:
+	var C: Dictionary = AnimData.clinch
+	if C.is_empty() or not RenderAnim.grip_layer or _gr.is_empty():
+		_gr_w = 0.0
+		return
+	var ramp: float = maxf(float(C.get("ramp_ticks", 6)), 1.0)
+	var want: float = 1.0 if bool(_gr.get("on", false)) else 0.0
+	_gr_w = move_toward(_gr_w, want, dt * 60.0 / ramp)
+	if _gr_w <= 0.001 and want <= 0.0:
+		_gr = {}
+		_gr_w = 0.0
+		return
+	var pi: int = int(_gr.get("partner", -1))
+	if pi < 0 or pi >= S.fighters.size() or S.fighters[pi] == f:
+		return
+	var opp = S.fighters[pi]
+	var oaf: AnimFighter = RenderAnim.fighter(S, opp)
+	if oaf.version == 0:
+		return
+	var w: float = _gr_w * (0.6 if RenderAnim.reduced_motion else 1.0)
+	var kind: String = String(_gr.get("kind", "tie"))
+	# the two bodies pass in depth by a few units (render only: the sim's plane is flat), the lower slot nearer the camera, so two arms reaching across do not pass through one another
+	root_off.z += float(C.get("depth_offset", 0.0)) * (1.0 if slot < pi else -1.0) * w
+	var P: Dictionary = C.get("poses", {})
+	var held_role: bool = String(_gr.get("role", "holder")) == "held"
+	# the pose of the kind: a tie-up is the even seat mixed toward the ahead or the behind pose by the grade; the pummel is its own hand's; the pinned body has its own brace
+	var pid: String = ""
+	if held_role and C.get("held_poses", {}).has(kind):
+		pid = String(C.held_poses[kind])
+	elif kind == "tie":
+		pid = String(P.get("seat", ""))
+	elif kind == "pummel":
+		pid = String(P.get("pummel_" + String(_gr.get("side", "l")), ""))
+	else:
+		pid = String(P.get(kind, ""))
+	if pid != "" and AnimData.pose_exists(pid):
+		_mix_pose(AnimData.pose(pid), w)
+	if kind == "tie" and not held_role:
+		var g: float = clampf(float(_gr.get("grade", 0.0)) / 2.0, -1.0, 1.0)
+		var gid: String = String(P.get("ahead" if g > 0.0 else "behind", ""))
+		if absf(g) > 0.001 and AnimData.pose_exists(gid):
+			_mix_pose(AnimData.pose(gid), w * absf(g))
+	# the grips: each hand onto its region of the partner
+	for hand in _gr.get("grips", {}):
+		_grip_one(S, f, opp, oaf, String(hand), String(_gr.grips[hand]), w)
+
+
+## One hand to one region of the partner's body: the wrist goes to the region's point, short of it by `hand_back` of the hand's length, in this body's own model space (the partner's point through the world and back). IK keeps the elbow on the side the pose has it.
+func _grip_one(S: SimState, f, opp, oaf: AnimFighter, hand: String, region: String, w: float) -> void:
+	var C: Dictionary = AnimData.clinch
+	var sk: Dictionary = AnimData.sockets.get("limbs", {}).get("hand", {})
+	if sk.is_empty() or not hand.begins_with("hand_"):
+		return
+	var sfx: String = hand.substr(hand.length() - 1)
+	var rp: Vector3 = oaf._region_point(region)
+	var dx: float = SimWrap.sdx(f.x, opp.x)
+	var mx: float = (dx + oaf.vface * rp.x) * vface
+	var my: float = (opp.y - f.y) + rp.y
+	var ix: Dictionary = AnimRig.index
+	var ch: Array = sk["chain"]
+	var a: int = ix[String(ch[0]) + "_" + sfx]
+	var b: int = ix[String(ch[1]) + "_" + sfx]
+	var c: int = ix[hand]
+	var tgt := Vector3(mx - float(C.get("hand_back", 0.7)) * float(sk.get("end_len", 6.0)), my, rp.z - root_off.z)
+	AnimPose.fk(q, hips, gq, gp)
+	_full_fk = true
+	var qa0: Quaternion = q[a]
+	var qb0: Quaternion = q[b]
+	var pole: Vector3 = gp[b]
+	AnimPose.ik_limb(q, gq, gp, a, b, c, tgt, pole, 1.0, _rd.shape_key, 0.0, RenderAnim.source_limits)
+	q[a] = AnimJoints.slerp_limb(qa0, q[a], w) if AnimJoints.ik_limits else qa0.slerp(q[a], w)
+	q[b] = qb0.slerp(q[b], w)
+	if RenderAnim.source_limits and AnimJoints.ik_limits:
+		if AnimJoints.bone_excess(q, a, _rd.shape_key) > 0.0:
+			AnimJoints.clamp_bone(q, a, _rd.shape_key)
+		if AnimJoints.bone_excess(q, b, _rd.shape_key) > 0.0:
+			AnimJoints.clamp_bone(q, b, _rd.shape_key)
+	AnimPose.fk(q, hips, gq, gp)
+	var gap: float = (tgt - gp[c]).length()
+	debug["grip_gap_max"] = maxf(float(debug.get("grip_gap_max", 0.0)), gap) if w > 0.95 else float(debug.get("grip_gap_max", 0.0))
+	debug["grips"] = int(debug.get("grips", 0)) + 1
+
+
 ## The mid-air skid (docs/animation/ragdoll-physics-paper.md section 3a). The sim's brake state arrives as an `air_brake` event (text start or end, kind the reason, amount the speed): while it is on and the body is flying
 ## free, he is braced against his own velocity. On the sim's start the weight ramps in over `enter_ticks`; on its end, out over `exit_ticks`.
 func on_air_brake(phase: String, _reason: String, _speed: float, _T: float) -> void:
@@ -492,6 +598,10 @@ func _air_brake_layer(S: SimState, f, dt: float) -> void:
 		_ab_w = 0.0
 		_ab_str = 0.0
 		_ab_on = false
+		return
+	if not _ab_on and _ab_w <= 0.0:
+		_ab_str = 0.0
+		_ab_speed = -1.0   # nothing to show: no speed is tracked until the sim's brake starts
 		return
 	var flying: bool = (f.state == "launched" or f.state == "dropped") and f.slide <= 0.0
 	var v := Vector2(f.vx, f.vy)
@@ -1782,6 +1892,7 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 	_inertialise(dt, prof)
 	if RenderAnim.debug_checks:
 		layers = ("cue:" + String(_cue.get("kind", "")) + " " if not _cue.is_empty() else "") + ("rush " if _rushing else "") + ("react " if not _reacts.is_empty() else "") + ("ik " if _ci_w > 0.001 else "") + ("beam " if f.beamCharge != null else "") + (f.state + " ")
+	_grip_layer(S, f, dt)
 	_air_brake_layer(S, f, dt)
 	_lead_layer(S, f, dt)
 	if not zip.is_empty() or absf(_zip_tilt) > 0.002 or _zip_depth != 0.0 or (f.rush != null and float(f.rush.arc) != 0.0):
@@ -3310,7 +3421,8 @@ func _contact_one(S: SimState, f, base_limb: String, second: bool) -> void:
 				AnimJoints.clamp_bone(q, a, _rd.shape_key)
 			if AnimJoints.bone_excess(q, b, _rd.shape_key) > 0.0:
 				AnimJoints.clamp_bone(q, b, _rd.shape_key)
-		gap = maxf(0.0, (ik_t - gp[c]).length())
+		# the gap is what the player sees: on the plane (the target's depth is a nominal reach_z, and the limit-respecting solve leaves the wrist a few units off it, which the side-on view cannot show). In depth (fighters off the plane) it stays three-dimensional
+		gap = maxf(0.0, (ik_t - gp[c]).length() if S.depthOn else Vector2(ik_t.x - gp[c].x, ik_t.y - gp[c].y).length())
 		if gap > 0.0 and (gp[c] - gp[a]).length() > (ik_t - gp[a]).length():
 			gap = 0.0   # the limb folds no further than its joint allows, so it ends past a target that is nearer than that (inside the defender), not short of it
 	hips.x += lunge
@@ -3334,9 +3446,14 @@ func _contact_one(S: SimState, f, base_limb: String, second: bool) -> void:
 ## The free arm of a blow (the one that is not striking) may turn only so far in one solve (data `joints.json` `slew.free_arm_deg`, degrees a 60th of a second; homework 4b: the key poses
 ## of a blow put the free arm at a plane of its own and the blend from the guard to it turned the upper arm 60 to 120 degrees in two ticks, the elbow's plane flipping on the way, which
 ## reads as the arm snapping). The striking arm is the blow's own timing and is never slowed; neither is a two-limb blow's. The drawn arm keeps to the limit, and catches up on the next ticks.
+const WING_SIG_BONES := ["pelvis", "spine_1", "spine_2", "neck", "head", "clavicle_r", "clavicle_l", "upper_arm_r", "forearm_r", "upper_arm_l", "forearm_l"]
+const SLEW_BONES := ["upper_arm_r", "forearm_r", "upper_arm_l", "forearm_l"]
+var _wing_sig: float = 1.0e9             # the idle wing check's last signature of the pose it judged (the spine, the clavicles and the arms): an unchanged idle pose is not judged again
+
+
 func _free_arm_slew(dt: float, state: String = "") -> void:
 	var ix: Dictionary = AnimRig.index
-	var names: Array = ["upper_arm_r", "forearm_r", "upper_arm_l", "forearm_l"]
+	var names: Array = SLEW_BONES
 	if _sl_prev.size() != 4:
 		_sl_prev.resize(4)
 		_sl_have = false
@@ -3349,11 +3466,24 @@ func _free_arm_slew(dt: float, state: String = "") -> void:
 		if _ci_side:
 			strike_side = "l" if strike_side == "r" else "r"
 	var mx: float = deg_to_rad(limit) * minf(dt / DT, 3.0)
-	debug["slew_state"] = "%s have=%s part=%s ciw=%.2f l2=%s dt=%.3f" % [str(strike), str(_sl_have), _part, _ci_w, _ci_limb2, dt]
+	if RenderAnim.debug_checks:
+		debug["slew_state"] = "%s have=%s part=%s ciw=%.2f l2=%s dt=%.3f" % [str(strike), str(_sl_have), _part, _ci_w, _ci_limb2, dt]
 	# a free arm caught in a wing between two keys (the elbow up and behind its shoulder, the forearm hanging from it) is drawn toward the guard arm by how much of a wing it is
 	# (and a body that is standing or flying upright with no blow and no sequence: an idle arm can sit in one too)
 	var idle_ok: bool = (state == "free" or state == "locked") and _part == "" and _seq.is_empty() and _ci_w < 0.001
-	if AnimJoints.wing_runtime > 0.0 and AnimData.pose_exists("stance.aggressive") and (strike or idle_ok or _wing_w[0] > 0.001 or _wing_w[1] > 0.001):
+	var skip_idle: bool = false
+	if idle_ok and not strike and _wing_w[0] <= 0.001 and _wing_w[1] <= 0.001:
+		# an idle body whose spine, clavicles and arms are the pose they were last tick (and had no wing then) is the same answer: it is not judged again (the check forward-kinematics the whole body)
+		var sg: float = 0.0
+		for bn in WING_SIG_BONES:
+			var qq: Quaternion = q[int(ix[bn])]
+			sg += qq.x + 2.0 * qq.y + 3.0 * qq.z + 4.0 * qq.w
+		if absf(sg - _wing_sig) < 0.000001:
+			skip_idle = true
+		_wing_sig = sg
+	else:
+		_wing_sig = 1.0e9
+	if not skip_idle and AnimJoints.wing_runtime > 0.0 and AnimData.pose_exists("stance.aggressive") and (strike or idle_ok or _wing_w[0] > 0.001 or _wing_w[1] > 0.001):
 		var gd: AnimPose = AnimData.pose("stance.aggressive")
 		var sides: Array = ["r", "l"]
 		if strike or idle_ok:
@@ -3601,7 +3731,8 @@ func _rd_tick(S: SimState, f, dt: float) -> void:
 	_rd_rot = f.rot
 	_rd.n_on = AnimRagdoll.N if (RenderAnim.rd_oop and not RenderAnim.reduced_motion) else AnimRagdoll.N_BASE   # reduced motion keeps the body in its plane
 	_rd.weighted = RenderAnim.rd_weight
-	if RenderAnim.rd_weight:
+	if RenderAnim.rd_weight and (S.tick - _rd_tier_tk >= 12 or S.tick < _rd_tier_tk):
+		_rd_tier_tk = S.tick   # the mass and the opponent's tier change rarely: read them twelve ticks apart, not every tick
 		_rd.mass = float(AnimRagdoll.mass_of.get(String(f.id), AnimRagdoll.mass_of.get("default", 1.0)))
 		var rdo = _opponent(S, f)
 		_rd.tier = float(rdo.tier) if rdo != null else 1.0

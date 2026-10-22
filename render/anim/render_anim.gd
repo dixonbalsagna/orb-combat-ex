@@ -38,6 +38,7 @@ static var rd_weight: bool = true            # RG1: the ragdoll has weight: impu
 static var rd_oop: bool = false             # RG3: six more degrees of freedom out of the plane (spine twist and side bend, head roll, each upper arm's twist, the pelvis's twist): a flailing body turns about its long axis as a rag does. Off by default until Orb has seen the before and after; --rd-oop switches it on
 static var air_brake: bool = true            # RG2: the sim's air brake braces a launched fighter against his velocity (an `air_brake` event; inert without one); --no-air-brake is the before
 static var chain_poses: bool = true          # RG4: World's interior contacts and its lodge play the ceiling's slam and rebound and the climb out (data/anim/chain.json); inert without those events; --no-chain-poses is the before
+static var grip_layer: bool = true            # the clinch's grip layer (docs/animation/clinch-sizing.md slice C2): the sim's hold read mixes the clinch poses in and puts each gripping hand on its region of the partner; inert without a read; --no-grip-layer is the before
 static var kick_retreat: bool = true          # a kick whose hips are past its target gives ground instead of swinging the thigh back through its limit (data sockets.json limbs.foot.min_fwd); false is the before
 static var mash_press: bool = true            # a run of mashed blows leans in (data styles.<style>.press_run); false is the before
 static var march: bool = true                  # a mashed heavy takes a footfall (data styles.super.march); false is the before
@@ -120,6 +121,8 @@ static func _read_args() -> void:
 			air_brake = false
 		elif a == "--no-chain-poses":
 			chain_poses = false
+		elif a == "--no-grip-layer":
+			grip_layer = false
 		elif a == "--step3-cues":
 			step3_cues = true
 		elif a == "--no-step3-cues":

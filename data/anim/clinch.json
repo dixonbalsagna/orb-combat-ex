@@ -1,0 +1,14 @@
+{
+  "schema": "anim.clinch/1",
+  "_about": "The clinch's grip layer (docs/animation/clinch-sizing.md slice C2; AnimFighter._grip_layer). The sim's hold arrives as a read (AnimFighter.on_hold): partner (the other fighter's slot), kind (tie, pummel, brace, pin, carry, strain, whiff, apart), role (holder, or held for the pinned body), grade (-2 behind to 2 ahead; a tie-up mixes the seat toward ahead or behind by it), side (l or r, for the pummel) and grips (each gripping hand to a region of the partner's body in sockets.json). The layer mixes the pose of the kind in at a weight that ramps over ramp_ticks, then solves each gripping hand by IK onto its region, and ends any frame's hand short of its point by the gap budget at most, never bending past a limit to reach (the shortfall is counted in debug.grip_gap_max). hand_back: how much of the hand's length the wrist stands short of the region's point. depth_offset: how far each body steps out of the plane, in opposite directions (render only), so arms reaching across pass. poses: the pose of each kind (the wave cl1); held_poses: the pose of the pinned body. Render only, outside the sim's data hash. First values, Animation's.",
+  "poses": {
+    "reach": "cl.hold.tie_reach", "seat": "cl.hold.seat", "ahead": "cl.hold.ahead", "behind": "cl.hold.behind",
+    "pummel_l": "cl.hold.pummel_l", "pummel_r": "cl.hold.pummel_r", "brace": "cl.hold.brace", "pin": "cl.hold.pin",
+    "carry": "cl.hold.carry", "strain": "cl.hold.strain", "whiff": "cl.hold.whiff", "apart": "cl.hold.apart"
+  },
+  "held_poses": {"pin": "cl.hold.pin_brace"},
+  "ramp_ticks": 6,
+  "gap_budget": 3,
+  "hand_back": 0.7,
+  "depth_offset": 7
+}

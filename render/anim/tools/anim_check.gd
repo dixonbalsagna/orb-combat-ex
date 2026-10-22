@@ -2153,6 +2153,165 @@ func _test_charge_cut() -> void:
 	print("charge cut: held while he stands, let go %d ticks after he is carried at 718 u/s" % (cut_at - 40))
 
 
+## C2 of the clinch (docs/animation/clinch-sizing.md): the grip layer. Two fighters tied up (the read the sim will send, handed to both by the scan): each hand lands on its region of the other (the shortfall within the data's gap
+## budget), no joint is past a limit, the bodies do not pass through one another (pair_clear: the bone capsules of one against the other's, the gripping forearms apart, to within 1.5 units: two arms crossing in a hold touch), the hands never lace (g02: 8 or more between one's hand
+## and the other's), and the heads and torsos keep a forearm's length of air (g06). It also scans the spacing from 26 to 46 units and prints, for each grade of the grip, the least spacing at which all of that holds: the
+## table Simulation holds the pair to.
+func _seg_dist(p1: Vector3, p2: Vector3, q1: Vector3, q2: Vector3) -> float:
+	var d1: Vector3 = p2 - p1
+	var d2: Vector3 = q2 - q1
+	var r: Vector3 = p1 - q1
+	var a: float = d1.dot(d1)
+	var e: float = d2.dot(d2)
+	var fq: float = d2.dot(r)
+	var s: float = 0.0
+	var t: float = 0.0
+	if a <= 0.00001 and e <= 0.00001:
+		return r.length()
+	if a <= 0.00001:
+		t = clampf(fq / e, 0.0, 1.0)
+	else:
+		var c: float = d1.dot(r)
+		if e <= 0.00001:
+			s = clampf(-c / a, 0.0, 1.0)
+		else:
+			var b: float = d1.dot(d2)
+			var den: float = a * e - b * b
+			s = clampf((b * fq - c * e) / den, 0.0, 1.0) if den > 0.00001 else 0.0
+			t = (b * s + fq) / e
+			if t < 0.0:
+				t = 0.0
+				s = clampf(-c / a, 0.0, 1.0)
+			elif t > 1.0:
+				t = 1.0
+				s = clampf((b - c) / a, 0.0, 1.0)
+	return (p1 + d1 * s).distance_to(q1 + d2 * t)
+
+
+func _segs_of(af: AnimFighter, f) -> Array:
+	# [name, from, to, radius] in world space (x with the facing, y, z): the torso, the head, the upper arms, the thighs and shins (the forearms are the grip's own contact and are left out)
+	var out: Array = []
+	var wp := func(n: String) -> Vector3:
+		var s: Vector3 = af.socket(n)
+		return Vector3(f.x + af.vface * s.x, f.y + s.y, s.z)
+	var hc: Vector3 = af.head_center()
+	var head := Vector3(f.x + af.vface * hc.x, f.y + hc.y, hc.z)
+	out.append(["torso", wp.call("pelvis"), wp.call("neck"), 6.5])
+	out.append(["head", head, head, 5.0])
+	for sd in ["r", "l"]:
+		out.append(["upper_arm_" + sd, wp.call("upper_arm_" + sd), wp.call("forearm_" + sd), 3.5])
+		out.append(["thigh_" + sd, wp.call("thigh_" + sd), wp.call("shin_" + sd), 4.5])
+		out.append(["shin_" + sd, wp.call("shin_" + sd), wp.call("foot_" + sd), 3.5])
+	return out
+
+
+func _grip_scene(grade: float, spacing: float, kind: String = "tie", grips: Dictionary = {"hand_r": "collar_r", "hand_l": "upper_arm_l"}, role_b: String = "holder") -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = "PROTAGONIST"
+	f1.id = "RIVAL"
+	f0.x = 1000.0
+	f1.x = 1000.0 + spacing
+	f0.y = 0.0
+	f1.y = 0.0
+	f0.vx = 0.0
+	f1.vx = 0.0
+	f0.state = "locked"
+	f1.state = "locked"
+	var res := {"nan": 0, "viol": 0, "gap": 0.0, "clear": 1.0e9, "laced": 1.0e9, "g06": 1.0e9, "hand_d": 0.0}
+	var a0: AnimFighter = null
+	var a1: AnimFighter = null
+	for k in range(18):
+		S.tick = 5000 + k
+		S.T = 600.0 + float(k) / 60.0
+		if k == 2:
+			RenderAnim.fighter(S, f0).on_hold({"partner": 1, "kind": kind, "role": "holder", "grade": grade, "side": "l", "grips": grips}, S.T)
+			RenderAnim.fighter(S, f1).on_hold({"partner": 0, "kind": kind, "role": role_b, "grade": -grade, "side": "r", "grips": grips if role_b == "holder" else {}}, S.T)
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		a0 = RenderAnim.solve(S, f0)
+		a1 = RenderAnim.solve(S, f1)
+		for af in [a0, a1]:
+			for i in range(AnimRig.N):
+				if is_nan(af.q[i].x) or is_nan(af.q[i].w):
+					res.nan += 1
+			res.viol += AnimJoints.violations(af.q, af._rd.shape_key).size()
+	res.gap = maxf(float(a0.debug.get("grip_gap_max", 0.0)), float(a1.debug.get("grip_gap_max", 0.0)))
+	var sa: Array = _segs_of(a0, f0)
+	var sb: Array = _segs_of(a1, f1)
+	for x in sa:
+		for y in sb:
+			var cl: float = _seg_dist(x[1], x[2], y[1], y[2]) - float(x[3]) - float(y[3])
+			if cl < float(res.clear):
+				res["worst"] = "%s / %s" % [x[0], y[0]]
+			res.clear = minf(float(res.clear), cl)
+			if (String(x[0]) == "torso" or String(x[0]) == "head") and (String(y[0]) == "torso" or String(y[0]) == "head"):
+				res.g06 = minf(float(res.g06), cl)
+	for h0 in ["hand_r", "hand_l"]:
+		for h1 in ["hand_r", "hand_l"]:
+			var p0: Vector3 = a0.socket(h0)
+			var p1: Vector3 = a1.socket(h1)
+			var w0 := Vector3(f0.x + a0.vface * p0.x, f0.y + p0.y, p0.z)
+			var w1 := Vector3(f1.x + a1.vface * p1.x, f1.y + p1.y, p1.z)
+			res.laced = minf(float(res.laced), w0.distance_to(w1))
+	return res
+
+
+func _test_grip() -> void:
+	AnimData.load_every_wave()
+	var table: Array = []
+	var worst_nan: int = 0
+	var worst_viol: int = 0
+	var worst_gap_at_40: float = 0.0
+	var all_ok_by: Dictionary = {}
+	for grade in [-1.0, 0.0, 1.0]:
+		var least: float = -1.0
+		var most: float = -1.0
+		for spacing in range(26, 47, 2):
+			var r: Dictionary = _grip_scene(grade, float(spacing))
+			worst_nan += int(r.nan)
+			worst_viol += int(r.viol)
+			if spacing == 40:
+				worst_gap_at_40 = maxf(worst_gap_at_40, float(r.gap))
+			var ok: bool = float(r.gap) <= float(AnimData.clinch.get("gap_budget", 3.0)) and float(r.clear) >= -1.5 and float(r.laced) >= 8.0 and float(r.g06) >= 15.0
+			if ok and least < 0.0:
+				least = float(spacing)
+			if ok:
+				most = float(spacing)
+		table.append([grade, least, most])
+		all_ok_by[grade] = least
+	_expect(worst_nan == 0 and worst_viol == 0, "grip: no NaN (%d) and no joint past a limit (%d) through the tie-up at every grade and spacing from 26 to 46" % [worst_nan, worst_viol])
+	var fits: bool = true
+	for row in table:
+		if float(row[1]) < 0.0 or float(row[2]) - float(row[1]) < 4.0:
+			fits = false   # a window of at least 4 units for the sim to hold the pair in
+	_expect(fits, "grip: each grade has a window of 4 units or more (least and most spacing) where the hands land (gap within the budget), the bodies clear to within 1.5 (arms crossing in a hold touch: a bone capsule is a fat model of an arm), no hands laced (8) and heads and torsos a forearm apart (15): %s" % str(table))
+	# every kind of hold once, at 34 units: no NaN, no joint past a limit, the hands on their regions (the refused grip over-reaches by design)
+	var kinds := {
+		"pummel": [{"hand_r": "collar_r", "hand_l": "upper_arm_l"}, "holder"],
+		"brace": [{"hand_r": "collar_r"}, "holder"],
+		"pin": [{"hand_r": "shoulder_r", "hand_l": "upper_arm_l"}, "held"],
+		"carry": [{"hand_r": "collar_r", "hand_l": "waist"}, "holder"],
+		"strain": [{"hand_r": "collar_r", "hand_l": "waist"}, "holder"],
+		"whiff": [{"hand_r": "collar_r"}, "holder"],
+		"apart": [{}, "holder"]}
+	var kbad: Array = []
+	for kd in kinds:
+		var kr: Dictionary = _grip_scene(0.0, 34.0, kd, kinds[kd][0], kinds[kd][1])
+		if int(kr.nan) > 0 or int(kr.viol) > 0 or (kd != "whiff" and float(kr.gap) > float(AnimData.clinch.get("gap_budget", 3.0))):
+			kbad.append("%s nan %d viol %d gap %.1f" % [kd, int(kr.nan), int(kr.viol), float(kr.gap)])
+	_expect(kbad.is_empty(), "grip: each kind of hold (pummel, brace, pin with the pinned body's brace, carry, strain, the refused grip, the push apart) is clean at 34 units %s" % str(kbad))
+	print("grip: the least and most spacing (units) that hold the gap, the clearance, g02 and g06, by grade behind, even, ahead: [grade, least, most] %s; the largest shortfall at 40 units %.1f" % [str(table), worst_gap_at_40])
+
+
 func _test_pulled() -> void:
 	AnimData.load_every_wave()
 	main.start_match(4, {"p1": false, "p2": false})
@@ -4778,7 +4937,8 @@ func _run() -> void:
 			gl.sort()
 			var gworst: float = gl.back() if gl.size() > 0 else 0.0
 			_expect(ikf > 0 and gl.size() > 0, "seed %d %s: the contact solve never ran (%d IK frames, %d reachable contacts)" % [seed, mode, ikf, gl.size()])
-			_expect(gworst < 1.0, "seed %d %s: a blow within reach ends %.2f units short of the defender" % [seed, mode, gworst])
+			# measured on the plane (the side-on view cannot show a few units of depth). 3 units, not 1: the limit-respecting solve (the pulled-frames patch) stops an arm raised to the head at its shoulder's range, 2.4 units short at worst on the real seeds (seed 12345 tick 2509: 5.0 as a three-dimensional gap)
+			_expect(gworst < 3.0, "seed %d %s: a blow within reach ends %.2f units short of the defender (3 allowed)" % [seed, mode, gworst])
 			report.runs.append({"seed": seed, "mode": mode, "contact_err_max": cerr, "contact_gap_worst": gworst, "contacts_within_reach": gl.size(), "contacts_beyond_reach": far, "solve_us": float(RenderAnim.solve_usec) / maxf(1.0, RenderAnim.solve_count), "late_blows": late, "blows": blows, "catches": catches})
 			print("  contact solve: %d IK frames, %d contacts within reach (worst gap %.2f units), %d beyond reach (the sim put the fighters farther apart than the arm, lunge and step-in reach), %d facing flips" % [ikf, gl.size(), gworst, far, flips])
 			print("  base variants played: %s" % [vars])
@@ -4823,6 +4983,7 @@ func _run() -> void:
 	_test_chain()
 	_test_grapple_c0_c1()
 	_test_charge_cut()
+	_test_grip()
 	_test_pulled()
 	_test_bends()
 	_test_styles()
