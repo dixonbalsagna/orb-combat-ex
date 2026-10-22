@@ -439,6 +439,7 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 		force *= kf
 		if "launchPower" in tgt:
 			tgt.launchPower = lpow * (kf if DirBrawl.freshHurts() else 1.0)   # for the building ladder and the flight's recovery (Simulation's and World's, when granted)
+	DirCamIntent.launch(S, att, tgt, r.best)   # the camera-intent feed: the send's plan (render-only)
 	DirLaunch.doLaunch(S, att, tgt, r.best, force, longOnly)
 	DirBrawl.powerCue(S, att, tgt, lkind, (lpow * kf) if lpow >= 0.0 else 1.0)
 	DirBrawl.markKind(S, tgt, lkind)

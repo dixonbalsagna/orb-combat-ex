@@ -286,6 +286,7 @@ static func guardPress(S: SimState, f) -> bool:
 		b.args["perfect"] = true
 	else:
 		b.args.o["perfect"] = true
+	DirCamIntent.read(S, f, S.dirS.ex, b)   # the camera-intent feed: who wins the read
 	return true
 
 

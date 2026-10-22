@@ -927,6 +927,7 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		tr.target = float(S.fighters.find(o))
 		tr.n = S.tick + lead
 	DirExchange.schedule(ex, ex.t + (float(lead + (0 if _inTick else 1)) - 0.25) / DirData.TICKS_PER_SEC, "strike", args)
+	DirCamIntent.blow(S, f, o, args, S.tick + lead)   # the camera-intent feed: a close or a launcher, known at its throw
 	_s(f, LINE, 1)
 	_s(f, KIND, kind)
 	_s(f, CONTACT, now + lead)
@@ -2653,6 +2654,7 @@ static func _double(S: SimState, ex) -> void:
 		blowAt(S, ex, f, LIGHT, lead, dmg, {"double": true, "sure": true, "style": "tech"})
 	_inTick = was
 	_s(ex.A, DBL_AT, _now(S) + lead)
+	DirCamIntent.doubleHit(S, ex, S.tick + lead)
 	_s(ex.A, DBL_N, 0)
 	_s(ex.A, PART_N, 0)
 	var m: PackedFloat64Array = _mid(ex)
@@ -3588,6 +3590,7 @@ static func aiInput(S: SimState, f) -> void:
 	_s(f, AI_MEDS, 1 if (_g(o, LAST2) == HEAVY2 and SimRng.keyed(seed, "brawl.meds", S.tick * 2 + slot) < float(bl.get("mediumVsHeavies", 0.0))) else 0)
 	_aiPress(S, f, i, _aiPick(S, ex, f, bl), bl)
 	_aiNudge(S, ex, f, true)
+	DirCamIntent.aiString(S, f, o, _g(f, AI_LEFT) + 1, _g(f, AI_GAP), int(c.light.contactTicks))   # the camera-intent feed: the AI's string, as it starts it
 
 
 ## f has moved by `d` units on this tick (the core's step; then a step in, giving ground, the attraction): the closing

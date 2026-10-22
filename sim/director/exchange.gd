@@ -329,6 +329,7 @@ static func _start(S: SimState, A, kind: String) -> int:
 		planCheck.call(chk, ex, S.rng.a, "sig" if kind == "sig" else "melee")
 	DirBlur.onStart(S, ex, kind)   # a light press in the blur style starts a blur string: its cadence and its pattern
 	DirRecipe.dress(S, ex)   # the alchemist: each strike of the plan takes a piece from the pool its fighter's style calls
+	DirCamIntent.exchange(S, ex)   # the camera-intent feed: the planned beats and their climax (render-only)
 	var stanceLabel: String = DirData.defLabel if DirData.defLabel != "" else ("CHARGING" if dState == "charging" else STN[int(D.stance)])   # step 2b: NEUTRAL too
 	SimEvents.feed(S, A.name + " " + kind.to_upper() + " vs " + stanceLabel, ex.tag + ("  (ambush)" if A.ambush else ""))
 	SimFx.attack(S, A, D, kind, stanceLabel, ex.tag, A.ambush)

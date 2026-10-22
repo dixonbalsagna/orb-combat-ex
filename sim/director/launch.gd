@@ -301,7 +301,8 @@ static func bruntScore(S: SimState, A, plan: Dictionary) -> float:
 ## Where a launched fighter would come to rest: the free-flight part of SimFighter.stepLaunched (gravity, air drag,
 ## water drag and the stop in water, ground impacts by the slam-or-slide rule of world/slide.gd), without buildings (a launch
 ## collides only with the building it is aimed at: WorldBrunt.aim and chainPlan predict that). It reads the terrain
-## and never writes state. Returns {"x": landing x, "travel": horizontal distance, "water": ends in the sea}.
+## and never writes state. Returns {"x": landing x, "travel": horizontal distance, "water": ends in the sea}, with "t"
+## the time to the first touchdown, "land" its x and "slide" what a knock-back slide adds after it (the camera-intent feed).
 static func predictFlight(S: SimState, x0: float, y0: float, vx0: float, vy0: float, trav: float = 1.0) -> Dictionary:
 	var dt: float = SimConst.DT
 	var kAir: float = SimDetMath.pow(0.55, dt)
@@ -325,7 +326,7 @@ static func predictFlight(S: SimState, x0: float, y0: float, vx0: float, vy0: fl
 			vx *= kWx
 			vy *= kWy
 			if SimDetMath.hypot(vx, vy) < 200.0 and t > 0.3:
-				return {"x": x, "travel": absf(travel), "water": true, "t": t}
+				return {"x": x, "travel": absf(travel), "water": true, "t": t, "land": x}
 		var g: float = WorldTerrain.groundY(S, x)
 		if y <= g:
 			# The same rule as SimFighter.impact: a slam (or the sea, or too slow) lands here; anything shallower is a
@@ -334,11 +335,11 @@ static func predictFlight(S: SimState, x0: float, y0: float, vx0: float, vy0: fl
 			var spN: float = SimDetMath.hypot(vx / trav, vy)
 			var sea: bool = WorldTerrain.seaAt(S, x)
 			if sea or spN <= WorldSlide.MIN_IMPACT or WorldSlide.isSlam(vx, vy):
-				return {"x": x, "travel": absf(travel), "water": sea, "t": t}
+				return {"x": x, "travel": absf(travel), "water": sea, "t": t, "land": x}
 			var dir: float = 1.0 if vx >= 0.0 else -1.0
 			var d: float = minf(WorldSlide.slideDistance(spN, WorldSlide.slope(S, x, dir), trav), SimConst.W * 0.25)
-			return {"x": SimWrap.wrap(x + dir * d), "travel": absf(travel) + d, "water": false, "t": t}
-	return {"x": x, "travel": absf(travel), "water": y < 0.0 and WorldTerrain.seaAt(S, x), "t": t}
+			return {"x": SimWrap.wrap(x + dir * d), "travel": absf(travel) + d, "water": false, "t": t, "land": x, "slide": d}
+	return {"x": x, "travel": absf(travel), "water": y < 0.0 and WorldTerrain.seaAt(S, x), "t": t, "land": x}
 
 
 ## special marks a signature, a finisher or a break launch: its ground impact may leave a big crater (world/crater.gd).

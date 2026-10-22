@@ -3609,6 +3609,23 @@
         "noRegrab"
       ],
       "additionalProperties": false
+    },
+    "cameraIntent": {
+      "type": "object",
+      "description": "The camera-intent feed: render-only cues of what the director has decided ahead.",
+      "properties": {
+        "_note": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "False: no cue."
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false
     }
   },
   "additionalProperties": false,

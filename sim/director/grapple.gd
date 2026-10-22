@@ -265,6 +265,7 @@ static func _tieUp(S: SimState, ex, f, o) -> void:
 	var e = _cue(S, f, o, "grapple_clinch", "start")
 	e.k = float(lead)
 	e.n = S.tick
+	DirCamIntent.clinch(S, f, o, S.tick, int(c.max), int(c.pulse))   # the camera-intent feed: the clinch's clock
 	SimEvents.feed(S, "CLINCH", f.name + " ties up " + o.name + (", one ahead" if lead > 0 else ", even"))
 
 
