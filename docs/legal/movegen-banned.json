@@ -671,6 +671,11 @@
       "id": "fx05",
       "rule": "the calm beam (every beam under Reduce flashing, the default): the full beam at 0.86 strength with a 0.3 s rise, never a thin line and never a white core, is accepted only if the release set reads it at or under the primary limit in both modes; the explosion flame is read for red by the standard's own test on linear values (R/(R+G+B) of 0.8 or more with a chromaticity change over 0.2), where a cel orange can sit near 0.8 even though its gamma-encoded ratio is 0.56: the analyser, not the colour code, is the authority and must read red flashes 0 on the set with the explosions in",
       "why": "beam look and explosions, 2026-10-16"
+    },
+    {
+      "id": "fx06",
+      "rule": "the 3D aura (an energy outline on the fighter's own mesh): lane colours only, no white, gold or red core, no flame tongues, lightning or upward spikes, no whole-aura pulse; one of the seven marks and at most one other mark at a time (k01); transient rather than a constant standing glow and never growing into a flame silhouette with tier; pulse, shimmer and froth at or under 2 Hz (VFX holds under 1 Hz), alpha at most 0.5, alpha-blended never additive, the schema rejecting 2.5 Hz and 0.6 alpha; luminance change against a bright background under 10% per second; a calm form under Reduce flashing; never covers glasses or faces; not in a public trailer, page or screenshot until Orb approves the look and the published build's flash set reads it",
+      "why": "RL-170"
     }
   ],
   "catastrophe": [
