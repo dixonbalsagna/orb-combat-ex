@@ -4,16 +4,16 @@ Owner: Narrative and Fighter Identity. Version 1, 2026-10-19. Orb (homework 31, 
 
 ## 1. The planet's name workshop
 
-If every run is a fresh planet, **the name stops being a place and becomes a title**: the thing the show calls the stage. That changes what a good name is. It must be easy to say a thousand times, sound right for any biome mix, and carry a little meaning without explaining itself. Eighteen candidates in four styles (earlier picks kept, so Orb can compare):
+If every run is a fresh planet, **the name stops being a place and becomes a title**: the thing the show calls the stage. That changes what a good name is. It must be easy to say a thousand times, sound right for any biome mix, and carry a little meaning without explaining itself. Eighteen candidates in four styles (seventeen now: Legal cleared the names as in-game names, 2026-10-22, but asked that "The Long Way Round" not be a public name) (earlier picks kept, so Orb can compare):
 
 | Style | What it sounds like | Candidates |
 |---|---|---|
 | **1. Plain compound** | Like the places on it (stem + suffix), so the planet and its towns sound like one world | **Brindle** (my earlier pick: a patchwork coat, which is what a planet of mixed lands is), **Everhold** (World's working name), **Wayhold**, **Tallowmere** |
 | **2. Short and invented** | Soft, two or three syllables, no meaning to argue with | **Tessane**, **Oarel**, **Kestrane**, **Ostrel**, **Marrowell** |
 | **3. Old and weathered** | A name from earlier seasons, the kind people say without thinking | **Carrowdeep**, **Harrowfell**, **Thornmarch**, **Sallowgate** |
-| **4. A title, or tied to the lore** | What the show calls it; the last three lean on Orb's lore pick (homework 37) | **The Round**, **The Long Way Round**, **Kindlewick** (the Furnace), **Ebbhold** (the Tide), **Gazemere** (the Regard) |
+| **4. A title, or tied to the lore** | What the show calls it; the last three lean on Orb's lore pick (homework 37) | **The Round**, ~~The Long Way Round~~ (withdrawn as a public name, Legal 2026-10-22; fine as something a character says), **Kindlewick** (the Furnace), **Ebbhold** (the Tide), **Gazemere** (the Regard) |
 
-**My short list:** **Brindle** (it says "mixed" in a word), **The Long Way Round** (it is the planet's own trick: fly either way and come back), and **Tessane** (the easiest to say; the safest for a name used a thousand times). The lore-tied names wait for Orb's lore pick, and one of them only makes sense if that idea wins.
+**My short list:** **Brindle** (it says "mixed" in a word), **Oarel** (short, and easy to say a thousand times), and **Tessane** (the easiest to say; the safest for a name used a thousand times). The lore-tied names wait for Orb's lore pick, and one of them only makes sense if that idea wins.
 
 **Why the same name each run can make sense in the story** (two options):
 - **"It means home."** In every language of the show, the word for the fighters' world is the same word, so each planet a run lands on is "Brindle" to the people on it. The planet changes; the word does not.

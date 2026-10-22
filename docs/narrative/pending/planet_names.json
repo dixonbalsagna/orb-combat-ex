@@ -23,7 +23,6 @@
     ],
     "title_or_lore": [
       "The Round",
-      "The Long Way Round",
       "Kindlewick",
       "Ebbhold",
       "Gazemere"
@@ -31,7 +30,7 @@
   },
   "shortlist": [
     "Brindle",
-    "The Long Way Round",
+    "Oarel",
     "Tessane"
   ],
   "same_name_reasons": [
@@ -87,5 +86,8 @@
       "line": "Smells like old steel. My favourite kind of lunch!"
     }
   ],
-  "reserved": "The polar outposts stay free as a set piece for a later fighter."
+  "reserved": "The polar outposts stay free as a set piece for a later fighter.",
+  "withdrawn": {
+    "The Long Way Round": "Legal, 2026-10-22: not a public name; fine as something a character says."
+  }
 }

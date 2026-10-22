@@ -122,7 +122,7 @@
           "w": 3
         },
         {
-          "feature": "place:quay_or_pier",
+          "feature": "coast:quay_or_pier",
           "w": 2
         },
         {
