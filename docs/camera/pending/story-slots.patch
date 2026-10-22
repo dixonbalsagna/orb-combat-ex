@@ -1,0 +1,40 @@
+diff --git a/render/camera/split_rig.gd b/render/camera/split_rig.gd
+index 88dbc08..e93a52b 100644
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -191,6 +191,8 @@ var nocut_hold: bool = true              # no discretionary layout change inside
+ var intent_src: String = ""                # "feed" or "ex": where this tick's read came from, for the debug feed
+ var story_w: int = 0                       # the running plan's story weight (0 to 5) and tags, for the debug feed and the climax shots
+ var story_tags: Array = []
++var story_a: int = -1                      # the running plan's attacker and defender slots (-1 none): who the climax favours, for Rendering's roll
++var story_d: int = -1
+ var nocut_holds: int = 0                   # ticks a layout change waited for a do-not-cut span to end
+ var _ci_seen: bool = false                 # a cam_intent cue has come this match: the feed replaces the reading of the beats
+ var _ci_beats: Array = []                  # told contacts still ahead: [n, kind, d]
+@@ -347,6 +349,8 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
+ 	_ci_land = [null, null]
+ 	story_w = 0
+ 	story_tags = []
++	story_a = -1
++	story_d = -1
+ 	_mlead = 0.0
+ 	_bp_t = -1.0
+ 	_stg_on = [false, false]
+@@ -4117,6 +4121,8 @@ func _read_intent(S: SimState, ev) -> void:
+ 		if int(st.get("w", 0)) >= story_w or int(S.tick) > _ci_story_end:
+ 			story_w = int(st.get("w", 0))
+ 			story_tags = st.get("tags", []).duplicate()
++			story_a = int(plan.get("a", -1))
++			story_d = int(plan.get("d", -1))
+ 			_ci_story_end = int(_ef(ev, "n", S.tick))
+ 	elif it == "launch":
+ 		var sent: int = int(_ef(ev, "target", -1))
+@@ -4133,6 +4139,8 @@ func _ci_prune(S: SimState) -> void:
+ 	if t > _ci_story_end + 30:
+ 		story_w = 0
+ 		story_tags = []
++		story_a = -1
++		story_d = -1
+ 	for i in range(2):
+ 		if _ci_land[i] != null and int(_ci_land[i]["n"]) < t - 60:
+ 			_ci_land[i] = null

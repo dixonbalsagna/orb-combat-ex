@@ -165,3 +165,24 @@ With the curve on, the split sweep failed in three real-match rows by a hair: pa
 QA's row (the sent body in frame for at least 95% of the flight) measures 100% in ai 4, 7, 9, 39 and rushcity, in both modes. Cuts, layout changes and the time outside the picture are unchanged. The arrival takes the launched body's median from 71 to 68 px in ai 4 and from 71 to 66 px in ai 7.
 
 Gates were run on 84951962 with steps 4a and 4b and Simulation's feel park, curve on and curve off: split sweep, seam sweep, pane check, determinism plain and --intro all pass. Clips: homework/camera/8-launch-curve/. The left side is the curve on with main's camera (a), the right side is the curve on with this patch (b): a curved launch in ai 4 and a short one in ai 7.
+
+**The speed cut: built in scratch, measured, looked at, not shipped (2026-10-22).** Game Design's ruling 19b says a cut is the only answer above 5,000 units a second. I built it as follows:
+- A pane chasing a send still faster than 5,000 u/s as it nears the touchdown Encounter's feed predicts (`launch` cue: x and n, exact) cuts to a still frame.
+- The frame puts the touchdown at 0.70 of the width from the side he comes from, with him already in it. It holds through the impact, then cuts back in.
+
+What happened:
+- **The fighter slides out.** He keeps sliding 2,000 or more units past the touchdown, so the first version lost him: launched-body in-frame fell to 71-85%. Ending the still once he nears its edge brought it back to 100%.
+- **The geometry leaves too little time.** At a readable size the still frame is 1,500 to 2,500 units wide. At 9,000 to 20,000 u/s it can hold him only for the last 4 to 15 ticks before the touchdown. Any earlier cut loses him, which breaks QA's 95% row.
+- **At the floor size it fires but looks worse.** The still frame came 9 ticks ahead, and the fighter was a speck at 23 px.
+- **At 36 px it rarely fits.** It never fired in the web capture at 1024 x 768.
+
+Looked at side by side in ai 7, the chase at fight size with VFX's flight streaks (steps 4a and 4b) reads better than either still. So above 5,000 u/s the answer stays the chase. Simulation's curve brings the glide to 2,000-3,000 u/s, and then only the 8-tick kick is above 5,000, which is the whip. A cut to the destination needs the body to be allowed out of the frame. That is a ruling for Game Design and QA, not a camera change.
+
+**Combat's four camera events (2026-10-22).** Only `recoil` exists. It is Encounter's park (docs/director/pending/recoil-flips/, `recoilFlip`, off) with its `counter_rush` cue. Ricochet, clash_meet and turn are not built yet.
+
+I applied the recoil park in scratch with the feed on: 8 recoil cues in 12 minutes of AI play (ai 4, 7, 9 and 106), 5 flips, 2 flourishes and 1 counter-rush. Across the windows from each cue to 20 ticks past its landing, the existing camera keeps both fighters in the picture on every tick and changes layout once in 8 windows. An exit is 1 to 4 body heights, and that fits inside the one view's fight-size frame.
+
+I built a framing that takes in the striker, the recoiler and his landing from the cue, and holds the layout through the counter window. It changed nothing measurable, so it is not parked. The cue is read again when ricochets (a body leaving the frame) and B meets (`big`) exist.
+
+**Story slots for the roll (parked: docs/camera/pending/story-slots.patch).** `story_a` and `story_d`, the running plan's attacker and defender slots, sit next to `story_w` and `story_tags`. Rendering's dutch tilt can then roll toward the plan's defender on story_w of 3 or more or the decisive and finisher tags. Gates on 5fe08207, feed on and off: split sweep, determinism plain and --intro, and pane check pass.
+
