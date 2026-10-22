@@ -1,0 +1,325 @@
+class_name WorldEpoch
+## The calm-moment turn (docs/world/shifting-arena-design.md section 4, docs/world/calm-turn-world.md; Game Design rulings-2026-10-19b.md section 1; Encounter's docs/director/calm-turn.md).
+## At a calm moment the arena's ring turns about the pair: a new plane through the pair's point, at most 10 degrees of bearing from the old, at most 4 turns a fight, at least 60 s of fight
+## time apart, at most 40 degrees of drift of the ring's axis in all. The ground near the pair stays (a zone of carryUnits each way keeps its columns, its craters, its buildings and people);
+## beyond it the ground is the new ring's, with the new ring's places laid fresh. Everything is a function of the match's state and the planet: a turn happens on a tick the sim chooses
+## (Encounter's DirCalm.hold, World's calm check), so a replay turns on the same tick, and the slice it reads is computed then if the host has not warmed it.
+##
+## The calls (nothing runs unless S.epoch is set: the data's turn switch, or setup.arena.turn):
+##   ask(S, why, pivotX, side, due) -> candidates       when a moment is coming (Encounter's DirCalm.ask); [] when the caps refuse
+##   choose(S, i)                                       Encounter's pick (DirCalm.pick): the turn is decided; prewarm may start
+##   prewarm(S, n)                                      the host's few columns a frame (the module owns no clock); optional: swap computes what is missing
+##   tick(S, hold)                                      each live tick (SimCore.step): swap when decided, held (Encounter's hold) and calm (below)
+##   calm(S)                                            World's check: no beam, shot, flight, rush, slide, open set piece, water flowing or catastrophe
+
+static var _jobs: Dictionary = {}   # worldId -> RingJob (the warm read of the chosen ring): derived data outside the state
+
+
+static func data() -> Dictionary:
+	return WorldRingPick.cfg().turn
+
+
+## Is the turn on for this setup? The data's switch, or setup.arena.turn.
+static func enabled(setup: Dictionary) -> bool:
+	var a = setup.get("arena", null)
+	if a is Dictionary and a.has("turn"):
+		return a.turn == true
+	return int(data().on) == 1
+
+
+# ===================================================================== the epoch's state
+
+## The epoch of a new planet match (WorldPlanetWorld.gen, after the world is built): the ring it plays on, the turn counters, the settlements' chords and districts (for the carry). A
+## Dictionary, hashed only through n, lastT and drift.
+static func begin(S: SimState, seed: int, ring: Dictionary, spec: Dictionary, chords: Array, dlist: Array) -> Dictionary:
+	return {"seed": seed, "n": 0, "lastT": 0.0, "drift": 0.0, "c0": spec.c, "ring": spec, "ask": null, "next": null, "chords": chords, "dlist": dlist}
+
+
+# ===================================================================== the geometry
+
+static func _rot(v: Array, axis: Array, a: float) -> Array:
+	var c: float = SimDetMath.cos(a)
+	var s: float = SimDetMath.sin(a)
+	var k: Array = WorldPlanet._cross(axis, v)
+	var d: float = axis[0] * v[0] + axis[1] * v[1] + axis[2] * v[2]
+	return [v[0] * c + k[0] * s + axis[0] * d * (1.0 - c), v[1] * c + k[1] * s + axis[1] * d * (1.0 - c), v[2] * c + k[2] * s + axis[2] * d * (1.0 - c)]
+
+
+## The ring that results from turning `ring` by `deg` degrees (positive is counter-clockwise seen from outside) about its point at column pc: through the same point, the same length, the
+## touch-down placed so that column pc is still that point (the fighters' columns do not move). Returns {c, t, cols}.
+static func turned(P: WorldPlanet.Planet, spec: Dictionary, pc: int, deg: float) -> Dictionary:
+	var cols: int = int(spec.cols)
+	var ring: Dictionary = WorldRingPick.ringFrom(spec.c, cols, spec.t)
+	var st: float = ring.st
+	var ct: float = ring.ct
+	var mid: int = WorldPlanet.touchCol()
+	var step: float = SimConst.COL / (P.R * st)
+	var a: float = float(pc - mid) * step
+	var M: Array = WorldRingPick.ringPoint(ring, a)
+	var u: Array = ring.u
+	var v: Array = ring.v
+	var co: float = SimDetMath.cos(a)
+	var si: float = SimDetMath.sin(a)
+	var T: Array = WorldPlanet._unit([-u[0] * si + v[0] * co, -u[1] * si + v[1] * co, -u[2] * si + v[2] * co])
+	var T2: Array = _rot(T, M, deg * PI / 180.0)
+	var ng: Array = WorldPlanet._unit(WorldPlanet._cross(M, T2))
+	var c2: Array = WorldPlanet._unit([M[0] * ct + ng[0] * st, M[1] * ct + ng[1] * st, M[2] * ct + ng[2] * st])
+	var ringM: Dictionary = WorldRingPick.ringFrom(c2, cols, M)
+	var t2: Array = WorldRingPick.ringPoint(ringM, -a)   # the point (pc - mid) columns before M along the new ring: column mid
+	return {"c": c2, "t": t2, "cols": cols}
+
+
+## The angle in degrees between two rings' axes: how far the loop has drifted.
+static func driftOf(c0: Array, c: Array) -> float:
+	return WorldPlanet.acosf(SimMathx.jclamp(c0[0] * c[0] + c0[1] * c[1] + c0[2] * c[2], -1.0, 1.0)) * 180.0 / PI
+
+
+static func _held(P: WorldPlanet.Planet, ring: Dictionary, i: int) -> bool:
+	var lat: float = WorldPlanet.lateral(P, ring, P.px[i], P.py[i], P.pz[i])
+	var reach: float = (P.c.cityReach if P.kind[i] == WorldPlanet.KIND_CITY else P.c.townReach) * P.rad[i]
+	return absf(lat) < reach
+
+
+## The candidate turns on a side (+1 toward +x, -1 toward -x), from the pivot column: one for each of the data's bearings, with the places the turn brings into view (places the new ring
+## holds that the old did not, within viewUnits of the pivot, with their signed arc from it), the spec of the new ring, and the drift it would make. Encounter picks one (DirCalm.pick).
+## Candidates that would pass the drift cap are left out.
+static func candidates(P: WorldPlanet.Planet, E: Dictionary, pc: int, side: int) -> Array:
+	var d: Dictionary = data()
+	var spec: Dictionary = E.ring
+	var old: Dictionary = WorldRingPick.ringFrom(spec.c, int(spec.cols), spec.t)
+	var out: Array = []
+	var mid: int = WorldPlanet.touchCol()
+	var s: float = 1.0 if side >= 0 else -1.0
+	for deg in d.bearings:
+		var ns: Dictionary = turned(P, spec, pc, float(deg) * s)
+		var drift: float = driftOf(E.c0, ns.c)
+		if drift > float(d.driftDeg):
+			continue
+		var nr: Dictionary = WorldRingPick.ringFrom(ns.c, int(ns.cols), ns.t)
+		var places: Array = []
+		var arcR: float = P.R * float(nr.st)
+		for i in range(P.n):
+			if not _held(P, nr, i) or _held(P, old, i):
+				continue
+			var q: Array = [P.px[i], P.py[i], P.pz[i]]
+			var along: float = WorldPlanet.atan2f(q[0] * nr.v[0] + q[1] * nr.v[1] + q[2] * nr.v[2], q[0] * nr.u[0] + q[1] * nr.u[1] + q[2] * nr.u[2])
+			var arc: float = SimWrap.sdx(float(pc) * SimConst.COL, (along * arcR) + float(mid) * SimConst.COL)
+			if absf(arc) > float(d.viewUnits):
+				continue
+			places.append({"id": i, "kind": "city" if P.kind[i] == WorldPlanet.KIND_CITY else "town", "owner": -1, "arc": arc})
+		out.append({"bearing": float(deg) * s, "places": places, "spec": ns, "drift": drift})
+	return out
+
+
+# ===================================================================== asking, choosing, preparing
+
+## A calm moment is coming. Returns the candidates Encounter scores, or [] when the caps refuse (4 turns, 60 s of fight apart) or a turn is already decided.
+static func ask(S: SimState, why: String, pivotX: float, side: int, due: int) -> Array:
+	var E = S.epoch
+	if E == null or E.next != null:
+		return []
+	var d: Dictionary = data()
+	if int(E.n) >= int(d.maxTurns) or S.T - float(E.lastT) < float(d.gapSeconds):
+		return []
+	var P := WorldPlanet.make(int(E.seed))
+	var pc: int = posmod(int(round(pivotX / SimConst.COL)), SimConst.NC)
+	var cands: Array = candidates(P, E, pc, side)
+	if cands.is_empty():
+		return []
+	E.ask = {"why": why, "pc": pc, "side": side, "due": due, "cands": cands}
+	return cands
+
+
+## Encounter's pick: candidate i. The turn is decided (from here the swap waits only for the hold).
+static func choose(S: SimState, i: int) -> void:
+	var E = S.epoch
+	if E == null or E.ask == null:
+		return
+	var c: Dictionary = E.ask.cands[clampi(i, 0, E.ask.cands.size() - 1)]
+	E.next = {"spec": c.spec, "pc": E.ask.pc, "bearing": c.bearing, "drift": c.drift, "why": E.ask.why}
+	E.ask = null
+	_jobs.erase(S.worldId)
+
+
+static func _key(S: SimState) -> int:
+	return S.worldId
+
+
+## The host warms the chosen ring's slice a few columns a frame (n columns); true when it is read. Not needed for correctness: the swap reads what is missing, on its own tick.
+static func prewarm(S: SimState, n: int) -> bool:
+	var E = S.epoch
+	if E == null or E.next == null:
+		return false
+	var job = _jobs.get(_key(S))
+	if job == null:
+		var P := WorldPlanet.make(int(E.seed))
+		var ring: Dictionary = WorldRingPick.ringFrom(E.next.spec.c, int(E.next.spec.cols), E.next.spec.t)
+		job = WorldPlanet.RingJob.new(P, ring)
+		_jobs[_key(S)] = job
+	if not job.done:
+		job.step(n)
+		if job.done:
+			WorldPlanet.memoRing(int(E.seed), job.ring, job.slice)
+	return job.done
+
+
+# ===================================================================== calm
+
+## World's part of calm (Encounter's docs/director/calm-turn.md section 1): nothing in flight and nothing moving that the swap would disturb.
+static func calm(S: SimState) -> bool:
+	if S.beams.size() > 0 or S.shots.size() > 0 or S.waterWin.size() > 0:
+		return false
+	if S.cata != null or S.world.evtToken != 0.0:
+		return false
+	for f in S.fighters:
+		if f.state == "launched" or f.rush != null or f.slide > 0.0 or f.interior != null:
+			return false
+	return true
+
+
+## Each live tick (SimCore.step), with Encounter's hold: the swap, if a turn is decided, held and calm.
+static func tick(S: SimState, hold: bool = true) -> void:
+	var E = S.epoch
+	if E == null or E.next == null or not hold or not calm(S):
+		return
+	swap(S)
+
+
+# ===================================================================== the swap
+
+static func _w(px: float, i: int, Z0: float, Z1: float) -> float:
+	var s: float = absf(SimWrap.sdx(px, float(i) * SimConst.COL))
+	if s <= Z0:
+		return 0.0
+	if s >= Z1:
+		return 1.0
+	var t: float = (s - Z0) / (Z1 - Z0)
+	return t * t * (3.0 - 2.0 * t)
+
+
+## The swap, in one step, on a calm tick (docs/world/calm-turn-world.md). The ground inside the zone keeps its columns and fades into the new ring's; the marks (craters, rubble, scorch, cracks)
+## fade the same way and are gone outside; the buildings inside the zone stay as they are, with their people; the new ring's other places are laid fresh outside it; the fighters keep their
+## columns and are set on the new ground. The epoch moves on. An `arena_turn` event tells Rendering and Camera.
+static func swap(S: SimState) -> void:
+	var E: Dictionary = S.epoch
+	var nx: Dictionary = E.next
+	var seed: int = int(E.seed)
+	var P := WorldPlanet.make(seed)
+	var spec: Dictionary = nx.spec
+	var ring: Dictionary = WorldRingPick.ringFrom(spec.c, int(spec.cols), spec.t)
+	var job = _jobs.get(_key(S))
+	var sl: WorldPlanet.Slice = job.slice if (job != null and job.done) else WorldPlanet.sliceRing(seed, ring)
+	_jobs.erase(_key(S))
+	var NC: int = SimConst.NC
+	var COL: float = SimConst.COL
+	var d: Dictionary = data()
+	var px: float = float(nx.pc) * COL
+	var Z1: float = minf(float(d.carryUnits), SimConst.W * 0.25)
+	var Z0: float = Z1 * 0.25
+	var wt := PackedFloat32Array()
+	wt.resize(NC)
+	for i in range(NC):
+		wt[i] = _w(px, i, Z0, Z1)
+	# --- the ground and its marks
+	var newBase: PackedFloat32Array = sl.heights
+	for i in range(NC):
+		var w: float = wt[i]
+		S.base[i] = S.base[i] * (1.0 - w) + newBase[i] * w
+		S.deform[i] = S.deform[i] * (1.0 - w)
+		S.rubble[i] = S.rubble[i] * (1.0 - w)
+		S.scorch[i] = S.scorch[i] * (1.0 - w)
+		S.crack[i] = S.crack[i] * (1.0 - w)
+	# --- the buildings: those inside the zone stay; the places they belong to are not laid again
+	var keep: Array = []
+	var keptPlaces: Dictionary = {}
+	for b in S.buildings:
+		if absf(SimWrap.sdx(px, b.x)) <= Z1:
+			keep.append(b)
+			keptPlaces[b.place] = true
+	var keptChords: Array = []
+	for ch in E.chords:
+		if keptPlaces.has(ch[0]):
+			keptChords.append(ch)
+	var newChords: Array = WorldPlanetWorld.chordsOf(sl, newBase)
+	var fresh: Array = []
+	for ch in newChords:
+		if not keptPlaces.has(ch[0]):
+			fresh.append(ch)
+	# the districts the kept buildings use, in order, and the new ones after them
+	var used: Dictionary = {}
+	for b in keep:
+		used[b.district] = true
+	var remap: Dictionary = {}
+	var dlist: Array = []
+	var dkeys: Array = used.keys()
+	dkeys.sort()
+	var maxSet: int = -1
+	for k in dkeys:
+		remap[k] = dlist.size()
+		dlist.append(E.dlist[k])
+		maxSet = maxi(maxSet, int(E.dlist[k].get("settlement", -1)))
+	for b in keep:
+		b.district = remap[b.district]
+	var wsum: float = 0.0
+	for ch in newChords:
+		wsum += float(P.people[ch[0]])
+	var gen: Dictionary = WorldPlanetWorld.settle(S, P, fresh, wsum, int(E.n) + 1, dlist.size(), maxSet + 1)
+	var made: Array = []
+	for b in gen.buildings:
+		if absf(SimWrap.sdx(px, b.x)) > Z1:
+			made.append(b)
+	for dd in gen.dlist:
+		dlist.append(dd)
+	S.buildings = keep + made
+	# the biome of each column, and a settlement's ground; then the platforms under every settlement, kept and fresh, over the blended ground
+	var chordsAll: Array = keptChords.duplicate()
+	for ch in fresh:
+		chordsAll.append(ch)
+	var cols := PackedByteArray()
+	cols.resize(NC)
+	for i in range(NC):
+		cols[i] = sl.biomes[i] if wt[i] >= 0.5 else S.planetCols[i]
+	WorldPlanetWorld.settleBiomes(cols, S.base, chordsAll)
+	WorldPlanetWorld.platform(S.base, chordsAll)
+	WorldBiomes.planetCols = cols
+	S.planetCols = cols
+	# --- the derived and per-building state
+	S.lanes = WorldLanes.build(S, dlist)
+	WorldStructures.buildIndex(S)
+	var lot := PackedFloat32Array()
+	lot.resize(S.buildings.size())
+	lot.fill(0.0)
+	S.world.lotAcc = lot
+	S.popHist.fill(0.0)
+	for b in S.buildings:
+		S.popHist[WorldCollateral.histBucket(b.x)] += b.popAlive
+	WorldWater.init(S)
+	var cr: Array = []
+	for c in S.craters:
+		if absf(SimWrap.sdx(px, c.x)) <= Z1:
+			cr.append(c)
+	S.craters = cr
+	var sk: Array = []
+	for s in S.slides:
+		if absf(SimWrap.sdx(px, s.x0)) <= Z1:
+			sk.append(s)
+	S.slides = sk
+	# --- the fighters keep their columns and stand on the new ground
+	for f in S.fighters:
+		var g: float = WorldTerrain.groundY(S, f.x)
+		if f.y < g:
+			f.y = g
+	# --- the epoch moves on
+	S.worldId = WorldBiomes.claim()   # the director's tables and the renderer's caches follow the world
+	E.n = int(E.n) + 1
+	E.lastT = S.T
+	E.drift = nx.drift
+	E.ring = spec
+	E.chords = chordsAll
+	E.dlist = dlist
+	E.next = null
+	var ev := SimFx._ev(S, "arena_turn")
+	ev.n = int(E.n)
+	ev.x = px
+	ev.amount = float(nx.bearing)
+	ev.k = float(nx.drift)

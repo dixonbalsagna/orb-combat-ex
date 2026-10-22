@@ -1,0 +1,50 @@
+extends SceneTree
+# Dumps a real turn for the picture: the ring before and after, the biome of each column, the buildings, a crater.
+#   godot --headless --path . --script res://sim/world/tools/turn_dump.gd -- <cols> <seed> <touch> <deg_index> <side> <out.json>
+func cell(S: SimState, step: int) -> Array:
+	var out: Array = []
+	for i in range(0, SimConst.NC, step):
+		out.append(int(S.planetCols[i]))
+	return out
+func blds(S: SimState) -> Array:
+	var out: Array = []
+	for b in S.buildings:
+		out.append([snappedf(b.x, 1.0), snappedf(b.w, 1.0), snappedf(b.h, 1.0), 1 if b.alive else 0, snappedf(b.hp / maxf(b.maxhp, 1.0), 0.01), int(b.place), int(b.kind != "" and b.kind != null)])
+	return out
+func _init() -> void:
+	var a := OS.get_cmdline_user_args()
+	var cols: int = int(a[0])
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 1, {}, {"planet": int(a[1]), "touch": int(a[2]), "arena": {"cols": cols, "turn": true}, "intro": false})
+	for t in range(30):
+		SimCore.step(S)
+	S.T = 100.0
+	var px: float = 0.5 * (S.fighters[0].x + S.fighters[1].x)
+	# hurt two buildings near the pair and dig a crater, as a fight would
+	var near: Array = S.buildings.duplicate()
+	near.sort_custom(func(p, q): return absf(SimWrap.sdx(px, p.x)) < absf(SimWrap.sdx(px, q.x)))
+	var k: int = 0
+	for b in near:
+		if k >= 3:
+			break
+		if absf(SimWrap.sdx(px, b.x)) < 6000.0:
+			if k == 0:
+				b.hp = b.maxhp * 0.3
+			else:
+				b.alive = false
+				b.hp = 0.0
+			k += 1
+	var cr = WorldCrater.dig(S, px + 400.0, 6.0, S.fighters[1], "impact", 0.0, 1.0)
+	var E: Dictionary = S.epoch
+	var before := {"ring": E.ring, "cells": cell(S, 16), "blds": blds(S), "T": S.T}
+	var cands: Array = WorldEpoch.ask(S, "dump", px, int(a[4]), 0)
+	var idx: int = clampi(int(a[3]), 0, cands.size() - 1)
+	WorldEpoch.choose(S, idx)
+	WorldEpoch.tick(S, true)
+	var after := {"ring": E.ring, "cells": cell(S, 16), "blds": blds(S)}
+	var f := FileAccess.open(a[5], FileAccess.WRITE)
+	var pcol: int = posmod(int(round(px / SimConst.COL)), SimConst.NC)
+	f.store_string(JSON.stringify({"cols": cols, "pivotCol": pcol, "px": px, "step": 16, "Z": minf(float(WorldRingPick.cfg().turn.carryUnits), SimConst.W * 0.25), "bearing": cands[idx].bearing, "drift": cands[idx].drift, "before": before, "after": after, "crater": [cr.x if cr != null else -1.0, cr.r if cr != null else 0.0], "W": SimConst.W}))
+	f.close()
+	print("dumped turn: bearing %.1f, %d buildings before, %d after" % [cands[idx].bearing, before.blds.size(), after.blds.size()])
+	quit()
