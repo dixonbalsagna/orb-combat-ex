@@ -11,6 +11,7 @@ Owner: Controls and Game Feel. Date: 2026-09-29. Design first; code in `sim/inpu
 | [local-two-player.md](local-two-player.md) | **Local two-player:** the join rule, every pairing of devices, leaving, per-player layouts, what Rendering and UI wire, and Orb's manual checks |
 | [remap.md](remap.md) | The Full touch preset and what UI's Remap screen calls (overrides, checks, persistence, shared names) |
 | [i2c.md](i2c.md) | **I2c as built:** the layout layer produces intent v2 for keyboard, pad and touch; files, glue, proof, gaps |
+| [input-gates.md](input-gates.md) | The input gates: every test in sim/input/test (with T1, the press-tick latency test) and the rest of a window's gate |
 | [phone-test-checklist.md](phone-test-checklist.md) | A 15-minute real-phone test for Orb: landscape, several fingers, left-handed, portrait, latency, browser interference |
 | [touch-bridge.md](touch-bridge.md) | The touch Simple bridge to today's intents: mapping, files, host patch, tests, what UI builds |
 | [input-scheme.md](input-scheme.md) | **Current (ADR 0008):** actions, the three controller layouts, tap and hold rules, keyboard (solo and shared), touch Simple and Full, the intent record, stage plan, tests |
