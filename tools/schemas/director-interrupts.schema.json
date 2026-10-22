@@ -3742,6 +3742,99 @@
         "minLiveTicks"
       ],
       "additionalProperties": false
+    },
+    "calmTurn": {
+      "type": "object",
+      "description": "The calm-moment turn, the director's part: the ask at a send, the pick, the hold.",
+      "properties": {
+        "_note": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "False: nothing runs."
+        },
+        "landedTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Live ticks after he comes to rest from a send in which the landing's moment holds."
+        },
+        "setSpeed": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Under this speed (units a second) a free fighter is set."
+        },
+        "warmCols": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The least the host is asked to warm a frame, in columns."
+        },
+        "warmColsMax": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The most (the EP: 32): the rate asked is the columns over the ticks to the moment, between the two (the calm_turn cue carries it), and the swap waits the columns over it, in ticks, since the pick; a pausing form step whose new ring would need more is not a moment for one."
+        },
+        "formTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Live ticks after a pausing form step's pause that are a moment."
+        },
+        "predictMargin": {
+          "type": "number",
+          "minimum": 0,
+          "description": "At a send, added to the predicted spread from the pivot (units) when choosing a bearing that keeps World's moveMax."
+        },
+        "score": {
+          "type": "object",
+          "description": "What each place a turn brings into view is worth to the pick.",
+          "properties": {
+            "rivalHome": {
+              "type": "number",
+              "minimum": 0,
+              "description": "The rival's home."
+            },
+            "landmark": {
+              "type": "number",
+              "minimum": 0,
+              "description": "A landmark."
+            },
+            "city": {
+              "type": "number",
+              "minimum": 0,
+              "description": "A city."
+            },
+            "ownHome": {
+              "type": "number",
+              "minimum": 0,
+              "description": "His own home."
+            },
+            "town": {
+              "type": "number",
+              "minimum": 0,
+              "description": "A town."
+            }
+          },
+          "required": [
+            "rivalHome",
+            "landmark",
+            "city",
+            "ownHome",
+            "town"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "enabled",
+        "landedTicks",
+        "setSpeed",
+        "warmCols",
+        "warmColsMax",
+        "formTicks",
+        "predictMargin",
+        "score"
+      ],
+      "additionalProperties": false
     }
   },
   "additionalProperties": false,

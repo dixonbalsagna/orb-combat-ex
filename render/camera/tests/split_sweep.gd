@@ -201,6 +201,8 @@ func _run() -> void:
 	await _scenario("transformation", func(): return _transformation(), {})
 	await _scenario("tier-up push", func(): return _tier_push(), {})
 	await _scenario("fold", func(): return _fold(), {})
+	await _scenario("arena turn, one view", func(): return _arena_turn(600.0), {})
+	await _scenario("arena turn, split", func(): return _arena_turn(9000.0), {})
 	await _scenario("solo follow", func(): return _solo_follow(), {})
 	await _scenario("hard cut", func(): return _hard_cut(), {})
 	await _scenario("shake per pane", func(): return _shake_panes(), {})
@@ -3823,6 +3825,54 @@ func _fold() -> Dictionary:
 	for _i in range(300):
 		_tick_rig()
 	_check(_rig.split_wanted, "%s: no split after the unfold" % _label)
+	return {}
+
+
+## World's ring turns at a calm moment (arena_turn; Rendering rebuilds the ground on its tick): the cut is on that tick, to a
+## wide (every shown pane at TURN_WIDE of its size, both fighters on the screen, the picture still while the pair is still),
+## and after TURN_HOLD a cut back to the framing it had.
+func _arena_turn(gap: float) -> Dictionary:
+	var ax: float = 20000.0
+	_pose(ax, 40.0, ax + gap, 40.0)
+	_seed_rig()
+	for _i in range(240):
+		_tick_rig()
+	var before: SplitFrame = _rig.current()
+	var z0: Array = [before.cam_z[0], before.cam_z[1]]
+	var ev := SimState.FxEvent.new()
+	ev.type = "arena_turn"
+	ev.x = ax + gap * 0.5
+	ev.amount = 10.0
+	_tick_rig([ev])
+	var at: SplitFrame = _rig.current()
+	_check(at.cut, "%s: no cut on the turn's tick" % _label)
+	var shown: Array = [true, at.shows(1)]
+	for i in range(2):
+		if bool(shown[i]):
+			_check(float(at.cam_z[i]) < float(z0[i]) * 0.8, "%s: pane %d is not wider on the cut (%.3f from %.3f)" % [_label, i, at.cam_z[i], z0[i]])
+	var off: int = 0
+	var moved: float = 0.0
+	var prev: SplitFrame = at
+	var back_t: int = -1
+	for k in range(1, int(CamParams.TURN_HOLD * 60.0) + 30):
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		if cur.cut and back_t < 0:
+			back_t = k
+		if back_t < 0:
+			for i in range(2):
+				if not _on_screen(cur, i):
+					off += 1
+				moved = maxf(moved, absf(log(float(cur.cam_z[i])) - log(float(prev.cam_z[i]))))
+		prev = cur
+	_check(off == 0, "%s: a fighter was off the screen for %d ticks of the turn's wide" % [_label, off])
+	_check(moved < 0.002, "%s: the wide moved (zoom %.4f in a tick)" % [_label, moved])
+	_check(absi(back_t - int(round(CamParams.TURN_HOLD * 60.0))) <= 1, "%s: the cut back came at tick %d (want %d)" % [_label, back_t, int(round(CamParams.TURN_HOLD * 60.0))])
+	var after: SplitFrame = _rig.current()
+	for i in range(2):
+		if bool(shown[i]):
+			_check(absf(log(float(after.cam_z[i])) - log(float(z0[i]))) < 0.05, "%s: pane %d did not come back to its framing (%.3f, was %.3f)" % [_label, i, after.cam_z[i], z0[i]])
+	stats["arena turn " + _label] = "split %s, zoom %.3f / %.3f to %.3f / %.3f, back at tick %d" % [str(bool(shown[1])), z0[0], z0[1], at.cam_z[0], at.cam_z[1], back_t]
 	return {}
 
 

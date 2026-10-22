@@ -447,6 +447,11 @@ func _upload(S: SimState, craters_changed: bool) -> void:
 		ctex.update(cimg)
 
 
+## A new world on the same length (planet_view.gd): the far rows follow its biomes. rebuild() uploads them.
+func far_again() -> void:
+	_far = far_rows()
+
+
 ## The far terrain's per-column relief amplitude and base multiplier (RenderLook.FAR_RELIEF by biome), box-smoothed
 ## over RenderLook.FAR_SMOOTH_COLS each side so biome borders don't step, then each column's biome index. Three rows
 ## of NC: amplitude, multiplier, biome.
@@ -466,11 +471,13 @@ static func far_rows() -> PackedFloat32Array:
 	out.resize(nc * 2)
 	var m: int = RenderLook.FAR_SMOOTH_COLS
 	for row in range(2):
+		# A running box sum, so a new world (World's turn) costs a few milliseconds, not tens.
+		var s: float = 0.0
+		for k in range(-m, m + 1):
+			s += raw[row * nc + posmod(k, nc)]
 		for i in range(nc):
-			var s: float = 0.0
-			for k in range(-m, m + 1):
-				s += raw[row * nc + (i + k + nc) % nc]
 			out[row * nc + i] = s / float(2 * m + 1)
+			s += raw[row * nc + posmod(i + m + 1, nc)] - raw[row * nc + posmod(i - m, nc)]
 	return out + biome
 
 

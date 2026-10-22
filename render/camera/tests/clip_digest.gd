@@ -14,6 +14,11 @@ var modes: Array = ["normal", "reduced"]
 var digest_path: String = "digest.txt"
 var panel_flash_off: String = "-"   # "-" the rig's default; "" none; or kind names joined by +
 var ticks_cap: int = 0
+var turn_at: int = -1     # --turn-at=T (with --arena): ask World for the ring's turn at tick T and take the widest bearing (window 3), as Rendering's stills did
+var _turn_seen: int = -1
+var _turn_base: int = -1   # the rig's turn_cuts at the scene's start (the counter runs on across scenes)
+var _turn_off: int = 0
+var _turn_cut_ok: bool = false
 var arena_cols: int = 0   # --arena=N: the match is played on a ring of N columns of planet 7 (World's arena; 0 the default world)
 var _widest: float = 0.0
 var _wide90: int = 0
@@ -72,6 +77,8 @@ func _initialize() -> void:
 			tmax = float(a.substr(7))
 		elif a.begins_with("--arena="):
 			arena_cols = int(a.substr(8))
+		elif a.begins_with("--turn-at="):
+			turn_at = int(a.substr(10))
 		elif a.begins_with("--events="):
 			ev_types = Array(a.substr(9).split(","))
 		elif a.begins_with("--trace="):
@@ -124,7 +131,10 @@ func _digest_play(out: FileAccess, label: String, mode: String, sc: String, seed
 		ai_set["p%d" % (i + 1)] = sc == "ring"
 	var setup = null if slots.is_empty() else {"slots": slots}
 	if arena_cols > 0:
-		setup = {"planet": 7, "touch": 3, "arena": {"cols": arena_cols}} if setup == null else setup.merged({"planet": 7, "touch": 3, "arena": {"cols": arena_cols}})
+		var ar: Dictionary = {"cols": arena_cols}
+		if turn_at >= 0:
+			ar["turn"] = true
+		setup = {"planet": 7, "touch": 3, "arena": ar} if setup == null else setup.merged({"planet": 7, "touch": 3, "arena": ar})
 	main.start_match(seed, ai_set, setup)
 	var host: SimHost = main.host
 	host.vfx.force_reduced = reduced
@@ -149,6 +159,11 @@ func _digest_play(out: FileAccess, label: String, mode: String, sc: String, seed
 	var guard: int = 0
 	while host.ticks < total and guard < total * 4:
 		_drive(sc, host.ticks, host.S)
+		if turn_at >= 0 and host.S.tick == turn_at and host.S.get("epoch") != null:
+			var mid: float = SimWrap.wrap(host.S.fighters[0].x + SimWrap.sdx(host.S.fighters[0].x, host.S.fighters[1].x) * 0.5)
+			var cands: Array = WorldEpoch.ask(host.S, "digest", mid, 1, 0)
+			if not cands.is_empty():
+				WorldEpoch.choose(host.S, cands.size() - 1)
 		var before: int = host.ticks
 		main.frame(DT)
 		guard += 1
@@ -165,6 +180,20 @@ func _digest_play(out: FileAccess, label: String, mode: String, sc: String, seed
 			if fr.cut and _in_nocut(host.S.tick):
 				_nc_cuts += 1
 			_lead_tick(fr, host.S)
+			if turn_at >= 0:
+				var tc = main.split_rig.get("turn_cuts")
+				if _turn_base < 0:
+					_turn_base = int(tc) if tc != null else 0
+				if tc != null and int(tc) > _turn_base and _turn_seen < 0:
+					_turn_seen = int(host.S.tick)
+					_turn_cut_ok = fr.cut
+				if _turn_seen >= 0 and int(host.S.tick) - _turn_seen <= int(CamParams.TURN_HOLD * 60.0):
+					for fi3 in range(2):
+						var pj3: int = fi3 if fr.shows(fi3) else 0
+						var g3 = host.S.fighters[fi3]
+						var q3: Vector2 = fr.screen_pos(pj3, g3.x, g3.y + CamParams.CHEST, float(g3.z))
+						if q3.x < 0.0 or q3.x > main.split_rig.vw or q3.y < 0.0 or q3.y > main.split_rig.vh:
+							_turn_off += 1
 			for wp in range(2):
 				if wp == 0 or fr.shows(wp):
 					var share: float = main.split_rig.vw / maxf(float(fr.cam_z[wp]), 1e-6) / SimConst.W
@@ -263,6 +292,12 @@ func _digest_play(out: FileAccess, label: String, mode: String, sc: String, seed
 	for sd in _sends:
 		_sends_done.append(sd)
 	_lead_report(label, mode)
+	if turn_at >= 0:
+		print("TURN %s %s asked at %d, the cut at tick %d (cut flag on that frame %s), fighter-ticks outside the picture in the wide %d" % [label, mode, turn_at, _turn_seen, str(_turn_cut_ok), _turn_off])
+		_turn_seen = -1
+		_turn_base = -1
+		_turn_off = 0
+		_turn_cut_ok = false
 	print("WIDEST %s %s ring %d units: the widest pane shows %.3f of it; pane-ticks over 0.9 %d, over 1.0 (the ground repeats) %d" % [label, mode, int(SimConst.W), _widest, _wide90, _wide100])
 	_widest = 0.0
 	_wide90 = 0

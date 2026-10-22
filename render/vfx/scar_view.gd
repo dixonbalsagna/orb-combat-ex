@@ -45,9 +45,9 @@ func update(hub: VfxHub, cam_x: float, zoom: float) -> void:
 	for s in sc.list:
 		if n >= CAP:
 			break
-		if s.reach < 2.0:
+		if s.reach < 2.0 or s.keep < 0.1:
 			continue
-		var hw: float = VfxBeamScar.half_width(s, zoom)
+		var hw: float = VfxBeamScar.half_width(s, zoom) * s.keep
 		var hwmax: float = hw / 0.8
 		var a := Vector2(SimWrap.sdx(cam_x, s.ox), s.oy)
 		var u := Vector2(s.ux, s.uy)

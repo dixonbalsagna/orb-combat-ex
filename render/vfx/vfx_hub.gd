@@ -34,6 +34,7 @@ class Hole:
 	var w: float = 100.0
 	var h: float = 100.0
 	var seed: float = 0.0
+	var keep: float = 1.0       # the ring's turn: the share of its opacity kept (_arena_turn)
 
 var enabled: bool = true
 var quality: int = VfxLook.Q_HIGH
@@ -255,6 +256,9 @@ func _consume(S: SimState, events: Array) -> void:
 		tremor.rubble(S, debris, reduced_motion or reduced_flashing)
 		blastcloud.step(S, flashes, ash)
 		blastcloud.on_events(S, events)
+	for e in events:
+		if e.type == "arena_turn":
+			_arena_turn(S, e)
 	if scar_enabled:
 		scars.step(S)
 	else:
@@ -847,6 +851,58 @@ func _speed_heavy(S: SimState, e) -> void:
 
 
 ## The events the reference particle consumer (render/core/particle_view.gd's source, `SimFxView`) should be given: the tick's
+## The ring's turn (World's window 3, Rendering's 2026-10-22d, the EP's brief): at `arena_turn {n, x (the pivot), amount, k}` the sim drops its marks beyond the pivot's zone (12,000 units each way) and keeps the
+## ones inside, faded out across it; Rendering fades its crater heat the same way. The ground and building marks of VFX follow on the same tick: the beams' scars, the ground cracks, the facade holes, the
+## scorches the energy arts leave and the resting chunks, embers and puffs of the debris pool are GONE beyond the zone; inside it each keeps a share by its distance (1 in the inner quarter, a smooth fall to 0 at the
+## edge): a hole its opacity, a scar its width, a crack set stays while the share is over a third and goes below it (a crack mesh has no opacity of its own). Presentation only: it reads the event and
+## the lists it owns, and writes nothing of the sim. `carry` may be set on the event (a test's small zone); the default is World's 12,000.
+const TURN_CARRY := 12000.0
+
+
+static func turn_weight(d: float, carry: float = TURN_CARRY) -> float:
+	var inner: float = carry * 0.25
+	if d <= inner:
+		return 1.0
+	if d >= carry:
+		return 0.0
+	return 1.0 - smoothstep(inner, carry, d)
+
+
+func _arena_turn(S: SimState, e) -> void:
+	var px: float = float(e.x)
+	var carry: float = float(_g(e, "carry", TURN_CARRY))
+	var kept: Array = []
+	for h in holes:
+		h.keep = turn_weight(absf(SimWrap.sdx(px, h.x)), carry)
+		if h.keep >= 0.05:
+			kept.append(h)
+	holes = kept
+	var cs_kept: Array = []
+	for cs in crack_sets:
+		if turn_weight(absf(SimWrap.sdx(px, cs.x)), carry) >= 1.0 / 3.0:
+			cs_kept.append(cs)
+	crack_sets = cs_kept
+	var cp_kept: Array = []
+	for cs in crack_pending:
+		if turn_weight(absf(SimWrap.sdx(px, cs.x)), carry) >= 1.0 / 3.0:
+			cp_kept.append(cs)
+	crack_pending = cp_kept
+	var sc_kept: Array = []
+	var gone: Array = []
+	for sc in scars.list:
+		var mid: float = SimWrap.wrap(sc.ox + sc.ux * sc.reach * 0.5)
+		sc.keep = turn_weight(absf(SimWrap.sdx(px, mid)), carry)
+		if sc.keep >= 0.1:
+			sc_kept.append(sc)
+		else:
+			gone.append(sc)
+	scars.list = sc_kept
+	# the dropped scars stay in the model's id table (a beam still alive must not make a new scar): the model forgets them once their beam is gone
+	inreach.fx = inreach.fx.filter(func(f): return not (f.style == "scorch" and absf(SimWrap.sdx(px, float(f.x))) > carry))
+	debris.bits = debris.bits.filter(func(b): return absf(SimWrap.sdx(px, float(b.x))) <= carry)
+	stages._next_puff.clear()       # the smoking shells are keyed by building index, and the buildings are laid again
+
+
 ## Orb's rule for every ring round a fighter (2026-10-22): hug the contact point, small, or remove it. The sim's own `ring` events (the power-up's, a launch's, a landing's: growth 300 to 1,300 units a second,
 ## so a ring of two to ten body heights) go to the reference consumer with their growth cut to a share (`ring_growth_k`) and capped (`ring_growth_max`), and their start radius capped, so each is a small ring
 ## at the point it happened and no more. The events themselves are not touched (audio and the hash read the originals): the consumer gets copies.

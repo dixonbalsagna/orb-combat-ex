@@ -34,6 +34,17 @@ func _init() -> void:
 	reset(1)
 
 
+## World's turn (window 3): the heat fades out across the carried zone round the pivot px as World fades the marks
+## (WorldEpoch's weight: none in the zone's first quarter, smoothly to all at its edge), and is gone beyond it, where
+## the craters are gone.
+func turn(px: float) -> void:
+	var z1: float = minf(float(WorldRingPick.cfg().turn.carryUnits), SimConst.W * 0.25)
+	var z0: float = z1 * 0.25
+	for i in range(heat.size()):
+		heat[i] *= 1.0 - smoothstep(z0, z1, absf(SimWrap.sdx(px, float(i) * SimConst.COL)))
+	heat_changed = true
+
+
 func reset(seed: int) -> void:
 	parts.clear()
 	if heat.size() != SimConst.NC:

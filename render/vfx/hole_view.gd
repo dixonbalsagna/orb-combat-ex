@@ -58,7 +58,7 @@ func update(hub: VfxHub, cam_x: float, half_w: float) -> void:
 		_buf[o + 12] = 1.0
 		_buf[o + 13] = 1.0
 		_buf[o + 14] = 1.0
-		_buf[o + 15] = 1.0
+		_buf[o + 15] = h.keep       # the ring's turn fades a hole inside the zone (COLOR.a)
 		_buf[o + 16] = h.seed
 		_buf[o + 17] = 0.0
 		_buf[o + 18] = 0.0

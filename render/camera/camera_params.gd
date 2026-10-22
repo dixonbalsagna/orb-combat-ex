@@ -261,6 +261,14 @@ const ARR_WIDE: float = 0.15
 const ARR_IN: float = 0.15
 const ARR_HOLD: float = 0.45
 const ARR_OUT: float = 0.35
+# The ring's turn (World's window 3, `arena_turn`; Rendering rebuilds every pane's ground on that tick): a motivated hard cut on
+# the tick to a low wide on the pair, the far land (the only land the turn changes: past 12,000 units) against the sky, every pane
+# at TURN_WIDE of its size and TURN_PITCH degrees (a low angle, limited so the camera stays above the ground; a high angle looked
+# into the slope behind the pair), held TURN_HOLD, then a hard cut back. The
+# ridges behind change on the cut, never under a still camera (148,000 pixels at fight framing).
+const TURN_WIDE: float = 0.6
+const TURN_PITCH: float = -6.0
+const TURN_HOLD: float = 1.2
 # Pacing (docs/camera/director.md section 6): relax, build, peak and fade, from the blows landed in the last
 # PACE_WINDOW, the feed's story weight and the decisive events (a launch, a transformation, a finisher, `decisive`). It weights the
 # blow push by state (the anticipation's push stays as it is: weighting it moved the view under a strip), and sizes the one view by state (PACE_ZOOM: the reference size in relax and build,

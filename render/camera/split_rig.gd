@@ -185,6 +185,10 @@ var _pc_hits: Array = []                   # times of the blows landed lately
 var _pc_big_t: float = -99.0               # the last decisive event
 var _pc_t: float = 0.0                     # time in this state
 var _pc_zoom: float = 1.0                  # the one view's size by pace (CamParams.PACE_ZOOM), eased
+var turn_cut: bool = true                  # the ring's turn: a hard cut to a wide on its tick and back (CamParams.TURN_*)
+var turn_cuts: int = 0
+var _turn_t: float = -1.0                  # time into the turn's wide, or -1
+var _turn_snap: bool = false
 var arrival_hold: bool = true             # the launch curve's arrival: widen to the landing, hold, let go (docs/camera/director.md step 4b)
 var arrivals: int = 0
 var _arr_t: Array = [-1.0, -1.0]           # seconds since this fighter's arrival was told, or -1
@@ -362,6 +366,8 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_ci_nocut = []
 	_ci_story_end = -1
 	_ci_land = [null, null]
+	_turn_t = -1.0
+	_turn_snap = false
 	pace = "relax"
 	_pc_hits = []
 	_pc_big_t = -99.0
@@ -435,6 +441,8 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 	for ev in events:
 		if String(_ef(ev, "type", "")) == "relocate":
 			cut = true
+		elif String(_ef(ev, "type", "")) == "arena_turn" and turn_cut and not intro_active:
+			cut = true   # the ring's turn: every camera snaps to the wide on its tick (_read_events starts the wide)
 	_read_events(S, events)
 	_rush_commit(S)
 	_update_lunge(S)
@@ -467,6 +475,9 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 	_intent_tick(S)
 	_pace_tick(S)
 	_update_cameras(S)
+	if _turn_snap:
+		cut = true   # the turn's wide is over: snap back to the fight's framing
+		_turn_snap = false
 	if cut:
 		_snap_cameras(S)
 	_cut_fade = maxf(0.0, _cut_fade - DT)
@@ -1128,6 +1139,12 @@ func _read_events(S: SimState, events: Array) -> void:
 		if bt == "damage" and int(_ef(ev, "attacker", -1)) >= 0:
 			_pc_hits.append(time)
 			_blow(String(_ef(ev, "kind", "")), int(_ef(ev, "stop", 0)))
+		elif bt == "arena_turn" and turn_cut and not intro_active:
+			# World turned the ring and Rendering rebuilds the ground on this tick: the cut is on it, to the wide
+			_turn_t = 0.0
+			turn_cuts += 1
+			if solo_kind == "":
+				_shot_pitch = _turn_pitch()   # a low angle, the far land against the sky (a solo shot keeps its own)
 		elif bt == "launch":
 			_blow("launch", 0)
 			_pc_big_t = time
@@ -2166,6 +2183,15 @@ func _wide_mult() -> float:
 
 
 func _update_pushes() -> void:
+	if _turn_t >= 0.0:
+		_turn_t += DT
+		if _turn_t >= CamParams.TURN_HOLD:
+			_turn_t = -1.0
+			_turn_snap = true   # the hard cut back to the fight's framing (step snaps the cameras)
+			if solo_kind == "" and _shot_pitch != 0.0:
+				_shot_pitch = 0.0
+				_pitch_now = pitch_deg   # on this tick, so the snap is at the level angle and no second cut follows
+				_last_pitch = _pitch_now
 	for ai in range(2):
 		if float(_arr_t[ai]) >= 0.0:
 			_arr_t[ai] = float(_arr_t[ai]) + DT
@@ -2392,7 +2418,7 @@ func _merged_target(S: SimState) -> Vector3:
 	if A.state != "launched" and B.state != "launched":
 		gov_m = _scroll_gov(maxf(_vsm_m, _gov_armed()), z * pz)   # the picture's scale is the zoom times the pitch's: that is what the scenery crosses at
 	_gov_bind_m = gov_m < 0.999
-	z = clampf(z * mult * pz * _wide_mult() * gov_m, maxf(z_min(vw), maxf(CamParams.R_FLOOR * vh / CamParams.BODY_H, many_z) * pz), _zcap() * pz * (1.0 + CamParams.TIER_PUSH))
+	z = clampf(z * mult * pz * _wide_mult() * _turn_mult() * gov_m, maxf(z_min(vw), maxf(CamParams.R_FLOOR * vh / CamParams.BODY_H, many_z) * pz), _zcap() * pz * (1.0 + CamParams.TIER_PUSH))
 	if _ant_w > 0.001 and _st_w <= 0.0 and not fold_active and _lg_slot < 0 and not _lg_rel:
 		# anticipation: toward the coming contact, both fighters kept inside 0.42 of the width
 		var sh_a: float = CamParams.ANT_SHIFT * _ant_w * SimWrap.sdx(mx, _ant_x)
@@ -2667,7 +2693,7 @@ func _own_zoom_target(S: SimState, i: int) -> float:
 				r = lerpf(CamParams.R_WRECK_0, CamParams.R_WRECK, smoothstep(0.0, 1.0, wp)) * m
 				alt_f = 1.0
 	var z: float = r * vh / CamParams.BODY_H * tier_f * alt_f
-	z *= _push_mult(i) * _hit_mult(i) * _arr_mult(i)
+	z *= _push_mult(i) * _hit_mult(i) * _arr_mult(i) * _turn_mult()
 	if f.state != "launched" and chase_slot != i and not (solo_kind != "" and solo_slot == i):
 		var zfl: float = CamParams.R_FLOOR * vh / CamParams.BODY_H
 		if many_framing and S.fighters.size() > 2:
@@ -4297,3 +4323,18 @@ func _pace_tick(S: SimState) -> void:
 		_pc_zoom += (float(CamParams.PACE_ZOOM.get(pace, 1.0)) - _pc_zoom) * kz
 	elif reduced_motion or not pacing:
 		_pc_zoom = 1.0
+
+
+## The ring's turn: every pane at TURN_WIDE of its size while the wide holds.
+func _turn_mult() -> float:
+	return CamParams.TURN_WIDE if _turn_t >= 0.0 else 1.0
+
+
+## The turn's low angle: TURN_PITCH, limited as the transformation's break is so the camera stays above the ground at the pair's
+## feet, at the wide's zoom and the one view's anchor height.
+func _turn_pitch() -> float:
+	var z: float = maxf(minf(_mz, minf(float(_zo[0]), float(_zo[1]))) * CamParams.TURN_WIDE, 0.01)
+	var off: float = vh * (CamParams.PLANE_Y - 0.5)
+	var lim: float = ((CamParams.BREAK_CAM_MIN_H - CamParams.CHEST) * z - off) / (CamParams.K_FACTOR * vh)
+	var total_min: float = rad_to_deg(asin(clampf(lim, -1.0, 1.0)))
+	return minf(0.0, maxf(CamParams.TURN_PITCH, total_min - pitch_deg))

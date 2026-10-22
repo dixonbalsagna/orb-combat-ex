@@ -401,7 +401,24 @@ func reset(S: SimState) -> void:
 	_scan_t = -INF
 	var n: int = S.fighters.size()
 	spawn_x = SimWrap.wrap(S.fighters[0].x + 0.5 * SimWrap.sdx(S.fighters[0].x, S.fighters[n - 1].x)) if n > 0 else 0.0
-	# The towns: the buildings in runs along the ground, a new one wherever the gap is wider than SKY_TOWN_GAP.
+	_make_towns(S)
+
+
+## World's turn (window 3): the buildings were renumbered and the ring's other towns are new. The towns are made again,
+## each with the glow of the brightest old town within SKY_TOWN_GAP of its middle (the towns round the pair stay lit),
+## and their damage is read again at once.
+func towns_again(S: SimState) -> void:
+	var old: Array = towns
+	_make_towns(S)
+	for tw in towns:
+		for o in old:
+			if absf(SimWrap.sdx(float(o.x), float(tw.x))) <= RenderLook.SKY_TOWN_GAP:
+				tw.glow = maxf(float(tw.glow), float(o.glow))
+	_scan_t = -INF
+
+
+## The towns: the buildings in runs along the ground, a new one wherever the gap is wider than SKY_TOWN_GAP.
+func _make_towns(S: SimState) -> void:
 	towns = []
 	var order: Array = range(S.buildings.size())
 	order.sort_custom(func(a, b): return S.buildings[a].x < S.buildings[b].x)

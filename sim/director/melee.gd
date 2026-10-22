@@ -466,6 +466,7 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 	DirBrawl.powerCue(S, att, tgt, lkind, (lpow * kf) if lpow >= 0.0 else 1.0)
 	holdSend(S, longOnly, (lpow * kf) if lpow >= 0.0 else 1.0)   # hit-stop by weight: the send holds a launch's stop
 	DirCamIntent.launched(S, tgt)   # the camera-intent feed: with the launch curve, the touchdown is the curve's
+	DirCalm.atSend(S, att, tgt, r.best)   # the calm-moment turn: the moment after this landing is coming, so World is asked now
 	DirBrawl.markKind(S, tgt, lkind)
 	# The showcase (section 2): a string's ender launched at flow showcaseAt is the showcase ender. The cue is the panel's;
 	# Combat's showcase rows and the extra impact wear wait for their data and for a wear hook on a launch.

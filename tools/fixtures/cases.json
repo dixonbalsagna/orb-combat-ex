@@ -292345,6 +292345,22 @@
       }
     },
     {
+      "id": "rings-turn-bearing-over-10",
+      "schema": "biomes-rings.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/rings.json",
+          "set": {
+            "/turn/bearings/3": 12
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/turn/bearings/3"
+      }
+    },
+    {
       "id": "rings-minimum-land-over-one",
       "schema": "biomes-rings.schema.json",
       "mutate": [

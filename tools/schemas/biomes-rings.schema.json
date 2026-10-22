@@ -15,7 +15,8 @@
     "mustAt",
     "avoidWeight",
     "homeBonus",
-    "coastRef"
+    "coastRef",
+    "turn"
   ],
   "properties": {
     "schema": {
@@ -248,6 +249,98 @@
       "minimum": 0.5,
       "maximum": 20,
       "description": "Coast crossings that count as a full coast."
+    },
+    "turn": {
+      "type": "object",
+      "required": [
+        "on",
+        "maxTurns",
+        "gapSeconds",
+        "driftDeg",
+        "bearings",
+        "carryUnits",
+        "viewUnits",
+        "moveMax",
+        "minDeg",
+        "warmCols",
+        "fallbackDeg"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "on": {
+          "enum": [
+            0,
+            1
+          ],
+          "description": "The calm-moment turn: 0 off, 1 on."
+        },
+        "maxTurns": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 12,
+          "description": "Turns a fight (Game Design: 4)."
+        },
+        "gapSeconds": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 600,
+          "description": "Fight seconds between turns (Game Design: 60)."
+        },
+        "driftDeg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 90,
+          "description": "The most the ring's axis may move in all, in degrees (Game Design: 40)."
+        },
+        "bearings": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "number",
+            "minimum": 0.5,
+            "maximum": 10,
+            "description": "A candidate turn in degrees: none over 10 (Game Design)."
+          },
+          "description": "The candidate bearings."
+        },
+        "carryUnits": {
+          "type": "number",
+          "minimum": 1000,
+          "maximum": 40000,
+          "description": "How far each way from the pair the ground and its marks and buildings stay."
+        },
+        "viewUnits": {
+          "type": "number",
+          "minimum": 1000,
+          "maximum": 40000,
+          "description": "How far each way a turn counts the places it brings into view."
+        },
+        "moveMax": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5000,
+          "description": "The most the ground under a fighter may move at a turn, in units (Game Design: 300): a turn about a mispredicted pivot is scaled down to it."
+        },
+        "minDeg": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 10,
+          "description": "The least angle a turn is scaled to (Game Design: 2 degrees)."
+        },
+        "warmCols": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4800,
+          "description": "The columns of each of a decided turn's rings the sim reads a tick, unless Encounter's pick brings its own (16 to 32). 32 reads a Whole ring in 150 ticks."
+        },
+        "fallbackDeg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "The bearing in degrees of the second ring a decided turn warms (a landing off the pivot falls back to it), unless Encounter's pick brings its own; 0 for none."
+        }
+      }
     }
   },
   "additionalProperties": false

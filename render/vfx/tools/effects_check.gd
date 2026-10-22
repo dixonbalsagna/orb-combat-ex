@@ -226,6 +226,7 @@ func _run() -> void:
 	_stages()
 	_real_stages()
 	_small_rings_check()
+	_arena_turn_check()
 	print("\neffects check passed" if fails == 0 else "\neffects check FAILED (%d)" % fails)
 	quit(0 if fails == 0 else 1)
 
@@ -5178,6 +5179,67 @@ func _tick(S: SimState, h: VfxHub, events: Array) -> void:
 
 
 ## The beams' look (docs/vfx/beam-look.md; Legal fx03): a real width by default, a thin one as a fighter's own, a ripple that moves hue at steady luminance, 2 Hz or slower, no white core, the flavour by roster id.
+func _arena_turn_check() -> void:
+	print("the ring's turn")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var hub := VfxHub.new()
+	hub.reset(S, 4)
+	var pivot: float = 1000.0
+	var carry: float = 4000.0
+	var mkhole := func(x: float) -> VfxHub.Hole:
+		var h := VfxHub.Hole.new()
+		h.x = SimWrap.wrap(x)
+		return h
+	hub.holes = [mkhole.call(pivot + 500.0), mkhole.call(pivot + 3000.0), mkhole.call(pivot + 6000.0)]
+	var cs0 := VfxHub.CrackSet.new()
+	cs0.x = pivot + 700.0
+	var cs1 := VfxHub.CrackSet.new()
+	cs1.x = pivot + 5000.0
+	hub.crack_sets = [cs0, cs1]
+	var sc_in := VfxBeamScar.Scar.new()
+	sc_in.ox = pivot + 200.0
+	sc_in.ux = 1.0
+	sc_in.reach = 400.0
+	var sc_far := VfxBeamScar.Scar.new()
+	sc_far.ox = pivot + 7000.0
+	sc_far.ux = 1.0
+	sc_far.reach = 400.0
+	hub.scars.list = [sc_in, sc_far]
+	_check(is_equal_approx(VfxHub.turn_weight(0.0, carry), 1.0) and is_equal_approx(VfxHub.turn_weight(carry * 0.25, carry), 1.0) and VfxHub.turn_weight(carry, carry) == 0.0 and VfxHub.turn_weight(carry * 0.6, carry) > 0.0 and VfxHub.turn_weight(carry * 0.6, carry) < 1.0, "the share kept is 1 in the inner quarter, falls smoothly, and is 0 at the edge")
+	var ev := VfxMock.ev("arena_turn", {"n": 1, "x": pivot, "amount": 5.0, "k": 0.5, "carry": carry})
+	hub._arena_turn(S, ev)
+	_check(hub.holes.size() == 2 and is_equal_approx(hub.holes[0].keep, 1.0) and hub.holes[1].keep < 1.0 and hub.holes[1].keep > 0.0, "a hole beyond the zone is gone, the ones inside keep a share of their opacity by distance (%d left, %.2f)" % [hub.holes.size(), hub.holes[1].keep])
+	_check(hub.crack_sets.size() == 1 and hub.crack_sets[0] == cs0, "a crack set beyond the zone is gone, the inner one stays")
+	_check(hub.scars.list.size() == 1 and hub.scars.list[0] == sc_in and is_equal_approx(sc_in.keep, 1.0), "a beam's scar beyond the zone is gone, the inner one stays at full width")
+	var sc_mid := VfxBeamScar.Scar.new()
+	sc_mid.ox = pivot + 2900.0
+	sc_mid.ux = 1.0
+	sc_mid.reach = 200.0
+	hub.scars.list.append(sc_mid)
+	hub._arena_turn(S, ev)
+	_check(sc_mid.keep < 1.0 and sc_mid.keep > 0.0, "a scar across the zone's fade narrows by its distance (%.2f of its width)" % sc_mid.keep)
+	var far_bit := VfxDebris.Bit.new()
+	far_bit.x = SimWrap.wrap(pivot + 9000.0)
+	var near_bit := VfxDebris.Bit.new()
+	near_bit.x = SimWrap.wrap(pivot + 100.0)
+	hub.debris.bits = [far_bit, near_bit]
+	hub._arena_turn(S, ev)
+	_check(hub.debris.bits.size() == 1 and hub.debris.bits[0] == near_bit, "the resting debris beyond the zone is gone at once")
+	# through the tick: an arena_turn event reaches the handler
+	var hub2 := VfxHub.new()
+	hub2.reset(S, 4)
+	hub2.holes = [mkhole.call(pivot + 9000.0)]
+	_tick(S, hub2, [ev])
+	_check(hub2.holes.is_empty(), "the event is handled on its own tick")
+	# no event, nothing is touched
+	var hub3 := VfxHub.new()
+	hub3.reset(S, 4)
+	hub3.holes = [mkhole.call(pivot + 9000.0)]
+	_tick(S, hub3, [])
+	_check(hub3.holes.size() == 1 and is_equal_approx(hub3.holes[0].keep, 1.0), "without the event, nothing changes")
+
+
 func _small_rings_check() -> void:
 	print("the sim's rings, small")
 	var S := SimCore.createSim()

@@ -208,6 +208,13 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 		if b.marks != 0:
 			out.append(float(b.marks))   # World: repeats escalate (only with brunt.json repeatMarks above 0)
 	out.append(1.0 if S.contactOn else 0.0)   # World's ground contact (G2)
+	if S.epoch != null:   # World's calm-moment turn: only a match that can turn hashes it, so a match without it hashes as before. The count, the last turn's time, the drift, whether a turn is decided
+		out.append(float(S.epoch.n)); out.append(S.epoch.lastT); out.append(S.epoch.drift)   # (and its bearing and pivot column), and the hash of the ring's slice: the world the match is on
+		out.append(1.0 if S.epoch.next != null else 0.0)
+		if S.epoch.next != null:
+			out.append(S.epoch.next.bearing); out.append(float(S.epoch.next.pc)); out.append(float(WorldEpoch.warmAngles(S).size()))   # and how many of its rings are read: when a swap may happen
+			out.append(float(S.epoch.next.k)); out.append(S.epoch.next.fb)   # and how it is warmed (the columns a tick, the second ring's bearing)
+		out.append(float(S.epoch.sh))
 	out.append(float(S.trees.size()))
 	for t in S.trees:
 		_obj(out, t, TREE)
@@ -333,7 +340,7 @@ const FX_FIELDS: Dictionary = {
 	"left_ground": ["actor", "x", "y", "z", "spd", "n", "cause", "vx", "vy", "slope", "contacts", "dur"], "bounce": ["actor", "x", "y", "z", "spd", "n", "k", "keep", "vn", "vt", "surface", "sina", "slope", "contacts", "dur"],
 	"land": ["actor", "x", "y", "z", "spd", "n", "kind", "sina", "slope", "surface", "vn", "vt", "contacts", "dur"], "tumble_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "dur"],
 	"journey_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "lips", "nb", "dur"],
-	"interior_contact": ["actor", "x", "y", "z", "spd", "n", "b", "floor", "kind", "nx", "ny", "vn", "vt", "keep", "punch", "k", "stop"], "interior_end": ["actor", "x", "y", "z", "spd", "n", "b", "end", "contacts", "t"],
+	"arena_turn": ["n", "x", "amount", "k"], "interior_contact": ["actor", "x", "y", "z", "spd", "n", "b", "floor", "kind", "nx", "ny", "vn", "vt", "keep", "punch", "k", "stop"], "interior_end": ["actor", "x", "y", "z", "spd", "n", "b", "end", "contacts", "t"],
 	"cue": ["actor", "kind", "text", "source"], "struggle_press": ["actor", "kind", "n"],
 }
 

@@ -4,7 +4,9 @@ extends Node3D
 ## same planet's terrain, fading into the sky), and the buildings, trees and crowd. Everything anchored to the world is
 ## built once per match in world x [0, W) and drawn as copies one planet apart, placed at k * W - cam.x: the ground
 ## and water in 2 * PLANET_COPIES + 1 copies (the horizon is wide), the props in three, and more on a shorter arena
-## (World's shifting arena: copies_each_side keeps the reach in world units). The copies are identical, so the seam at x = 0 / W can never pop, at any zoom or separation, and a
+## (World's shifting arena: copies_each_side keeps the reach in world units). The ground's meshes are geometry only: each
+## column's biome is read from the ground texture, so a new world on the same length (a planet match after another,
+## World's turn) is an upload, not new meshes. The copies are identical, so the seam at x = 0 / W can never pop, at any zoom or separation, and a
 ## view wider than the planet (tiny zoom on an ultra-wide or phone screen) still shows every object at every place it
 ## appears. Per-frame cost is three node moves plus whatever changed in the sim since the last frame: the ground field
 ## (render/core/ground_field.gd: round crater bowls in depth, scorch, water) when craters dig, beams scorch or water
@@ -40,6 +42,7 @@ var _terrain_meshes: Array = []   # [ArrayMesh]: every chunk of the near and mid
 var _water_meshes: Array = []
 var _water_cols := PackedInt32Array()   # per water mesh: its first and last column (-1, -1: the far mesh, the whole planet)
 var _built_nc: int = 0                  # the arena's length in columns the ground's data, meshes and materials were made for
+var _built_cols := PackedByteArray()    # the world's biome by column (S.planetCols; empty for the hand-made world) the far rows were made for
 var _water_nodes: Array = []            # this pane's water nodes per mesh, one a copy
 var _water_drawn: int = -1              # the ground's water_version this pane last decided its water chunks for
 var _crowd_mat: ShaderMaterial
@@ -136,6 +139,12 @@ func build(S: SimState) -> void:
 			_water_meshes = []
 			_water_cols = PackedInt32Array()
 		_terrain_mat = null
+	if _built_cols != S.planetCols:
+		# A new world on the same length (World's planet worlds, a match after another; World's turn, window 3): the
+		# far rows follow its biomes. ground.rebuild below uploads them with the ground; the meshes carry no biome.
+		_built_cols = S.planetCols.duplicate()
+		if source == null:
+			ground.far_again()
 	if source != null:
 		ground = source.ground
 		_terrain_meshes = source._terrain_meshes
@@ -1258,7 +1267,6 @@ static func _grid(tv: Array, c0: int, c1: int, rows: Array, stride: int, snap_fi
 	var nr: int = rows.size()
 	var ncols: int = 0
 	for c in range(c0, c1 + 1, stride):
-		var col: Color = _biome_col(c)
 		for r in range(nr):
 			var z: float = rows[r]
 			var flag: float = 0.0
@@ -1271,7 +1279,6 @@ static func _grid(tv: Array, c0: int, c1: int, rows: Array, stride: int, snap_fi
 			tv[0].append(Vector3(float(c) * SimConst.COL, 0.0, z))
 			tv[1].append(Vector2(float(c), 0.0 if water else 1.0))
 			tv[2].append(Vector2(1.0, flag))
-			tv[3].append(col)
 		ncols += 1
 	for ci in range(ncols - 1):
 		var a: int = base + ci * nr
@@ -1280,15 +1287,8 @@ static func _grid(tv: Array, c0: int, c1: int, rows: Array, stride: int, snap_fi
 			tv[4].append_array([a + r, a + r + 1, b + r, b + r, a + r + 1, b + r + 1])
 
 
-static func _biome_col(c: int) -> Color:
-	var biome: String = WorldBiomes.biomeAt(float(posmod(c, SimConst.NC)) * SimConst.COL)
-	var col: Color = RenderLook.col(RenderLook.BIOME[biome])
-	col.a = 1.0 if biome == "desert" else 0.0
-	return col
-
-
 static func _finish(tv: Array, x0: float, x1: float, water: bool) -> ArrayMesh:
-	var m := _mesh(tv[0], tv[1], tv[2], PackedColorArray() if water else tv[3], tv[4])
+	var m := _mesh(tv[0], tv[1], tv[2], tv[3], tv[4])   # tv[3], the colours, stays empty: the terrain shader reads the biome
 	var z0: float = INF
 	var z1: float = -INF
 	for v in tv[0]:

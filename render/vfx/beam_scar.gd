@@ -22,6 +22,7 @@ class Scar:
 	var ended: bool = false
 	var seed: float = 0.0
 	var who = null             # the fighter whose beam it is
+	var keep: float = 1.0      # the ring's turn: the share of its width kept (VfxHub._arena_turn)
 
 var list: Array = []         # Scar, oldest first
 var made: int = 0            # counters, for the tests
@@ -82,6 +83,8 @@ func step(S: SimState) -> void:
 	for id in _by_id.keys():
 		if not seen.has(id):
 			_by_id[id].ended = true
+			if not list.has(_by_id[id]):
+				_by_id.erase(id)       # a scar the ring's turn dropped (or one already healed): its beam is gone, forget it
 	# healed all along: the oldest point of a scar is its firer's end, the newest its far end
 	var keep: Array = []
 	for sc in list:

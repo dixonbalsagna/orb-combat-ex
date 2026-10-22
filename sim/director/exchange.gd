@@ -824,6 +824,7 @@ static func _transforms(S: SimState) -> void:
 		if pz.version == SimPause.LIVE:
 			S.dirS.cool = SimMathx.jmax(S.dirS.cool, hold)
 			f.stunTicks = maxi(f.stunTicks, int(pz.ticks))
+		DirCalm.atPause(S, f, pz)   # the calm-moment turn's first moment (Game Design's 5a): a pausing step, the pivot fixed as it starts
 		SimEvents.feed(S, f.name + " TRANSFORMS", "tier " + SimMathx.jstr(f.tier))
 		return
 

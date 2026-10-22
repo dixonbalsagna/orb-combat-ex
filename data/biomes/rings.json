@@ -1,6 +1,6 @@
 {
   "schema": "biomes.rings/1",
-  "_about": "The ring picker's numbers (docs/world/shifting-arena-design.md window 4; WorldRingPick). sizes: the columns of Game Design's three sizes (Close 38,400 units, Half 76,800, Whole 153,600). minimum: what a ring must hold by size (standing cities and towns, kinds of ground of at least biomeShare of the ring, and the share that is land). candidates: how many rings are tried for a claim at a size. stride: columns between the coarse read's samples. ref: the share of the ring (or the count) at which a claim's suit counts in full. mustAt: the least value of a must-cross feature. avoidWeight: how much of an avoided feature's value comes off the score. homeBonus: added when the ring holds the claim's home place. coastRef: coast crossings (water to land and back) that count as a full coast. The claims themselves are Narrative's (docs/narrative/opponent_grounds.json) and are passed in; features the planet function cannot see are proxies (WorldRingPick.featureValue).",
+  "_about": "The ring picker's numbers (docs/world/shifting-arena-design.md window 4; WorldRingPick). sizes: the columns of Game Design's three sizes (Close 38,400 units, Half 76,800, Whole 153,600). minimum: what a ring must hold by size (standing cities and towns, kinds of ground of at least biomeShare of the ring, and the share that is land). candidates: how many rings are tried for a claim at a size. stride: columns between the coarse read's samples. ref: the share of the ring (or the count) at which a claim's suit counts in full. mustAt: the least value of a must-cross feature. avoidWeight: how much of an avoided feature's value comes off the score. homeBonus: added when the ring holds the claim's home place. coastRef: coast crossings (water to land and back) that count as a full coast. The claims themselves are Narrative's (docs/narrative/opponent_grounds.json) and are passed in; features the planet function cannot see are proxies (WorldRingPick.featureValue). turn: the calm-moment turn (docs/world/calm-turn-world.md; WorldEpoch; Game Design rulings-2026-10-19b.md 1a to 1d): on 0 or 1 (off), maxTurns a fight, gapSeconds of fight time between turns, driftDeg the most the ring's axis may move in all, bearings the candidate turns in degrees (none over 10), carryUnits how far each way from the pair the ground, craters and buildings stay, viewUnits how far each way a turn counts the places it brings into view, moveMax the most the ground under a fighter may move at a turn (a turn about a mispredicted pivot is scaled down to it: Game Design 2026-10-22 5a) minDeg the least angle it is scaled to warmCols the columns of each of a decided turn's rings the sim reads a tick and fallbackDeg the bearing of the second ring it warms (Encounter's pick may set its own).",
   "sizes": {
     "close": 1200,
     "half": 2400,
@@ -37,5 +37,23 @@
   "mustAt": 0.2,
   "avoidWeight": 0.5,
   "homeBonus": 0.25,
-  "coastRef": 2
+  "coastRef": 2,
+  "turn": {
+    "on": 0,
+    "maxTurns": 4,
+    "gapSeconds": 60.0,
+    "driftDeg": 40.0,
+    "bearings": [
+      2.5,
+      5.0,
+      7.5,
+      10.0
+    ],
+    "carryUnits": 12000.0,
+    "viewUnits": 16000.0,
+    "moveMax": 300.0,
+    "minDeg": 2.0,
+    "warmCols": 32,
+    "fallbackDeg": 2.5
+  }
 }

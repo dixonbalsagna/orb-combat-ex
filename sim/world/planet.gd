@@ -736,7 +736,14 @@ class Slice extends RefCounted:
 ## Reads the circle as columns. One surfAt a column; the fine relief only on ordinary land (and a quarter of it on an ice sheet). The held places, with their
 ## nearest column (our own atan2 of the place's point in the circle's frame) and their lateral offset (our own asin).
 static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByteArray = PackedByteArray()) -> Slice:
-	var c: Dictionary = P.c
+	var S: Slice = readBegin(P, circ, T)
+	readColumns(P, S, 0, SimConst.NC)
+	readHeld(P, S, standing)
+	return S
+
+
+## The read in three steps (a host spends a few columns a frame: RingJob; the module owns no clock). readSlice is these three in order, so a stepped read is the same slice.
+static func readBegin(P: Planet, circ: Dictionary, T: Array) -> Slice:
 	var S := Slice.new()
 	S.seed = P.seed
 	S.circ = circ
@@ -744,6 +751,13 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
 	var nc: int = SimConst.NC
 	S.heights.resize(nc)
 	S.biomes.resize(nc)
+	return S
+
+
+## Columns i0 up to i1 (exclusive) of the slice.
+static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
+	var c: Dictionary = P.c
+	var circ: Dictionary = S.circ
 	var u: Array = circ.u
 	var v: Array = circ.v
 	var small: bool = circ.has("st")
@@ -751,7 +765,7 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
 	var ct: float = circ.get("ct", 0.0)
 	var ca: Array = circ.get("c", u)
 	var tc: int = touchCol()
-	for i in range(nc):
+	for i in range(i0, i1):
 		var ang: float = float(i - tc) * SimConst.COL / (P.R * stf)
 		var co: float = SimDetMath.cos(ang)
 		var si: float = SimDetMath.sin(ang)
@@ -771,6 +785,17 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
 			h += (_fbm(P.R, qx, qy, qz, c.detailScale, int(c.detailOct), P.seed + int(c.sDetail)) - 0.5) * c.detailAmp * c.detailSheet
 		S.heights[i] = h
 		S.biomes[i] = b
+
+
+## The places the line holds, with their nearest column and lateral offset.
+static func readHeld(P: Planet, S: Slice, standing: PackedByteArray = PackedByteArray()) -> void:
+	var c: Dictionary = P.c
+	var circ: Dictionary = S.circ
+	var u: Array = circ.u
+	var v: Array = circ.v
+	var stf: float = circ.get("st", 1.0)
+	var nc: int = SimConst.NC
+	var tc: int = touchCol()
 	for i in range(P.n):
 		var lat: float = lateral(P, circ, P.px[i], P.py[i], P.pz[i])
 		var reach: float = (c.cityReach if P.kind[i] == KIND_CITY else c.townReach) * P.rad[i]
@@ -782,7 +807,31 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
 		var half: float = sqrt(maxf(0.0, P.rad[i] * P.rad[i] - lat * lat))
 		S.held.append({"id": i, "kind": int(P.kind[i]), "col": col, "d": lat, "half": half, "r": P.rad[i],
 			"standing": standing.size() == 0 or standing[i] != 0})
-	return S
+
+
+## A stepped read of a ring (WorldEpoch.prewarm): `step(n)` reads n more columns; at the end the places. `slice` is readSlice's answer once `done`.
+class RingJob extends RefCounted:
+	var P: WorldPlanet.Planet
+	var ring: Dictionary
+	var slice: WorldPlanet.Slice
+	var i: int = 0
+	var done: bool = false
+
+	func _init(p: WorldPlanet.Planet, r: Dictionary) -> void:
+		P = p
+		ring = r
+		slice = WorldPlanet.readBegin(P, ring, ring.u)
+
+	func step(n: int) -> bool:
+		if done:
+			return true
+		var j: int = mini(SimConst.NC, i + n)
+		WorldPlanet.readColumns(P, slice, i, j)
+		i = j
+		if i >= SimConst.NC:
+			WorldPlanet.readHeld(P, slice)
+			done = true
+		return done
 
 
 ## The slice memoised outside the sim state: keyed by the planet, the touch, the pick index and the data hash. The read is pure, so the cache cannot change a match.
@@ -831,8 +880,19 @@ static func farColumn(P: Planet, ring: Dictionary, i: int, z: float) -> Array:
 
 
 ## The slice of an explicit ring (WorldRingPick: an axis, the columns, a touch-down), memoised outside the state like sliceFor's. The ring is the arena's, so its columns are SimConst.NC.
+static func _ringKey(seed: int, ring: Dictionary, standing: PackedByteArray) -> String:
+	return "ring/%d/%s/%s/%s/%d" % [seed, str(ring.c), str(ring.u), str(standing.hex_encode()), SimConst.NC]
+
+
+## A ring's slice read in steps is put where sliceRing finds it.
+static func memoRing(seed: int, ring: Dictionary, slice: Slice) -> void:
+	if _slices.size() > 4:
+		_slices.clear()
+	_slices[_ringKey(seed, ring, PackedByteArray())] = slice
+
+
 static func sliceRing(seed: int, ring: Dictionary, standing: PackedByteArray = PackedByteArray()) -> Slice:
-	var key: String = "ring/%d/%s/%s/%s/%d" % [seed, str(ring.c), str(ring.u), str(standing.hex_encode()), SimConst.NC]
+	var key: String = _ringKey(seed, ring, standing)
 	if _slices.has(key):
 		return _slices[key]
 	var P: Planet = make(seed)

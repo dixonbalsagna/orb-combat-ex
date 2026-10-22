@@ -6,7 +6,8 @@
 // sight line to the fighter plane. Columns coarsen away from the fighter plane in runs (planet_view.gd); a run's
 // boundary row snaps to the coarser stride.
 // UV.x: terrain column (NC wraps to 0). UV2.y: 1 on the fighter-plane row, 2 or more a snapping boundary.
-// COLOR: biome colour, alpha 1 in desert. Scorch chars the ground, heat glows, cracked pavement darkens (S.crack),
+// The biome colour is each column's biome in the ground field's biome row (ground_field.gd), as the far land reads it,
+// so a new world (World's turn) is a texture upload, never new meshes. Scorch chars the ground, heat glows, cracked pavement darkens (S.crack),
 // rubble heaps (S.rubble, in depth as ground.gdshaderinc lays them) take the rubble colour, broken up in blocks.
 // In a district the streets of the lane table are painted under all of that (sidewalks, kerb parking, carriageways),
 // and the lane cue lies over it: a stripe at a fighter's depth, in his colour (ground.gdshaderinc).
@@ -63,12 +64,13 @@ void vertex() {
 	vec4 g = ground_vertex(UV.x, UV2.y, z, MODEL_MATRIX[3].x);
 	float h = g.x;
 	float s = far_weight(z);
-	v_col = COLOR.rgb;
-	v_desert = COLOR.a;
+	float bio = gf(i, 14);   // the column's biome, BIOME_ORDER (desert 5)
+	v_col = biome_colors[int(bio + 0.5)].rgb;
+	v_desert = abs(bio - 5.0) < 0.5 ? 1.0 : 0.0;
 	v_base = b;
 	if (s > 0.0) {
 		float xs = far_x(xw, z, s);
-		v_col = mix(COLOR.rgb, biome_rgb(xs), s);
+		v_col = mix(v_col, biome_rgb(xs), s);
 		v_desert = abs(far_biome(xs) - 5.0) < 0.5 ? 1.0 : 0.0;
 		v_base = mix(b, gfx(xs, 0), s);
 	}

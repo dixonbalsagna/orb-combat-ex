@@ -588,6 +588,9 @@ func _on_drained(events: Array, lines: Array) -> void:
 	if compositor != null:
 		var vp: Vector2 = get_viewport().get_visible_rect().size
 		split_rig.step(host.S, vp.x, vp.y, events)
+	for e in events:
+		if String(e.type) == "arena_turn":
+			_arena_turn(e)
 	planet.consume(events, host.S.T)
 	if roll_on:
 		camera_roll.consume(host.S, events, split_rig if compositor != null else null)   # the rig's story, once it has read the tick
@@ -595,6 +598,16 @@ func _on_drained(events: Array, lines: Array) -> void:
 	ui_hud.consume_all(events)
 	_haptics_from_events(events)
 	UiSimBridge.feed(ui_hud, lines)
+
+
+## World's turn (window 3, docs/world/calm-turn-world.md): on a calm tick the ring turned about the pair. Every pane
+## makes its ground, far rows and buildings (with the crowd) again from the new world in this frame, and the sky its
+## towns: a hard cut, never a dissolve, fade or wipe (ADR 0010). Camera decides the cut's moment and shot.
+func _arena_turn(e) -> void:
+	for p in all_panes():
+		p.planet.build(host.S)
+	host.impact.turn(float(e.x))
+	host.sky.towns_again(host.S)
 
 
 ## A player joined or left (Controls' input hub, through the host; docs/controls/local-two-player.md): the match is

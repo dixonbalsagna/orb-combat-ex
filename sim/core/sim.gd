@@ -52,6 +52,7 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
 	S.arenaCols = _arenaCols(setup)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's 4,800
 	SimConst.setArena(S.arenaCols)
 	WorldBiomes.planetCols = PackedByteArray()
+	S.epoch = null   # World's calm-moment turn (world/epoch.gd): a planet match with it on sets it
 	if not (setup.has("planet") and WorldPlanetWorld.gen(S, setup)):   # a setup with a planet reads its world from the slice; without one, today's world
 		WorldTerrain.genWorld(S)
 	S.planetCols = WorldBiomes.planetCols   # the statics a world sets belong to this match: step takes them again when another match has built since
@@ -164,15 +165,21 @@ static func step(S: SimState, inputs = null) -> bool:
 		SimFx.tickMark(S, dt, false)   # ... but effects run at full speed (not a pause's tenth), so the landing's dust and debris settle
 		return false
 	if SimPause.frozenTick(S):   # Q10: a pausing set piece is a run of frozen ticks, ahead of the hit-stop
+		if S.epoch != null:
+			WorldEpoch.tick(S, false)   # the calm turn's warm runs under a pause too: no hold, so it only reads
 		SimFx.tickMark(S, dt, true)
 		return false
 	if S.dirS.stop > 0.0:
 		S.dirS.stop -= dtReal
 		if S.hitstopOn:
 			SimHitstop.frozen(S)   # the freeze budget counts every frozen tick of a hit-stop
+		if S.epoch != null:
+			WorldEpoch.tick(S, false)   # ... and the calm turn's warm, as under a pause
 		SimFx.tickMark(S, dt, true)
 		return false
 	S.T += dt
+	if S.epoch != null:
+		WorldEpoch.tick(S, DirCalm.hold(S))   # the calm-moment turn: swap when decided, held (Encounter's DirCalm.hold) and calm
 	if S.hitstopOn:
 		SimHitstop.live(S)   # ... over the last minute of fight
 	SimPause.liveTick(S)   # Q10: the pause bank accrues on match time
