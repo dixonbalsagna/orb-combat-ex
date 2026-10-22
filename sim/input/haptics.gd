@@ -196,8 +196,9 @@ static func push_share(point: float, pusher_is_firer: bool) -> float:
 ##   launcher_open        actor = the fighter who may launch           -> that slot, launch_open
 ##   transform_ready      actor                                        -> that slot, form_prompt
 ##   charge_full          actor = the charger                          -> that slot, charge_full
-##   air_brake text "ready"  actor (the brake can be set: Simulation's -> that slot, brake_ready
-##                        event to add; start and end rumble nothing)
+##   air_brake text "ready"  actor = the sent fighter (sim/core/brake.gd, -> that slot, brake_ready
+##                        once a send, the first tick he could brake;
+##                        start and end rumble nothing)
 ##   grapple_pulse        actor, target, amount = the catcher's grip   -> both, clinch_pulse, scaled by |grip| / 5
 ##   beam_surge           actor (the pusher), target, amount = the    -> the pusher struggle_push, the other struggle_pushed, both
 ##                        point after it, text "sharp" (a surge in the  scaled by the pusher's share of the point (a sharp one
