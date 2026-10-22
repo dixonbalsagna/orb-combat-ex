@@ -1,0 +1,530 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -451,6 +451,13 @@
+ const SLOW_DRIFT_ON: bool = false
+ const DRIFT_DEG_PER_MIN: float = 3.0
+ const DRIFT_MAX_DEG: float = 30.0
++## The planet's own far land (World's WorldFarMap; render/core/far_land.gd): on a planet match that may turn, the far
++## rows read a FAR_MAP_N square map of the planet, built FAR_MAP_STEP texels a frame (FAR_MAP_N 192: about 9 s at
++## 60 frames a second, once a planet) and shown from a hard cut. Off unless FAR_MAP_ON or main's --farmap (?farmap=1).
++const FAR_MAP_ON: bool = false
++const FAR_MAP_N: int = 192
++const FAR_MAP_STEP: int = 64
++const FAR_MAP_LOD_MAX: int = 5   # the coarsest mip level a far row reads (a texel of about 13,000 units at 192)
+ ## The climaxes that roll, each with its weight (0: ROLL_DEG.x, 1: ROLL_DEG.y): the sim's events by type, and a decisive
+ ## exchange won by its kind. Motivated and rare (the EP, 2026-10-22): a plain knock-back, a heavy clash, a beam won, an
+ ## interrupt, a shot and a barrage do not roll.
+--- a/render/shaders/ground.gdshaderinc
++++ b/render/shaders/ground.gdshaderinc
+@@ -10,6 +10,22 @@
+ uniform int rpl = 1;
+ uniform float far_scale = 1.0;       // WS: the far relief's depth wavelengths grow with the world
+ uniform float drift_tan = 0.0;       // the slow drift (World's window 2): tan of the angle the far land has turned about the fight; 0 off
++uniform sampler2D far_map : filter_nearest_mipmap, repeat_disable;    // RGBAF, far_map_n square with mip levels (World's WorldFarMap, octahedral about the planet's y;
++                                     // render/core/far_land.gd): the height x its biome's far multiplier, its biome's relief amplitude, the height
++uniform sampler2D far_bio0 : filter_nearest_mipmap, repeat_disable;   // RGBA8, the same texels: the biomes' shares, BIOME_ORDER 0 to 3,
++uniform sampler2D far_bio1 : filter_nearest_mipmap, repeat_disable;   // and 4 to 6
++uniform bool far_map_on = false;     // the far land is the planet's own beside the ring (far_dir); else the band's columns wander into it (far_x)
++uniform int far_map_n = 192;
++uniform float far_texel_w = 400.0;   // a texel of the finest level, in units
++uniform float far_lod_k = 0.000375;  // RenderLook.ROW_GROWTH / far_texel_w: a far row reads the level whose texel is its spacing in depth
++uniform int far_lod_max = 5;
++uniform vec3 ring_c = vec3(0.0, 1.0, 0.0);   // the ring the match plays on (WorldRingPick.ringFrom): its axis,
++uniform vec3 ring_u = vec3(1.0, 0.0, 0.0);   // the way from its axis to the touch-down,
++uniform vec3 ring_v = vec3(0.0, 0.0, 1.0);   // the way its columns run,
++uniform vec2 ring_sc = vec2(1.0, 0.0);       // the sine and cosine of its angular radius,
++uniform float ring_step = 0.0013;            // its angle a column (SimConst.COL / (R x sine)),
++uniform float ring_mid = 2400.0;             // and its touch-down's column (WorldPlanet.touchCol)
++uniform float planet_r = 24446.0;            // the planet's radius
+ uniform float sea_base = -30.0;      // WorldWater.RESERVOIR_BASE: base ground below this is the sea
+ uniform float wet_min = 0.5;         // WorldWater.MIN_DEPTH: water shallower than this counts as dry
+ uniform float dent_min = 6.0;        // a dent deeper than this colours as a crater floor (6 x WS)
+@@ -280,6 +296,98 @@
+ 	return s * s * (3.0 - 2.0 * s);
+ }
+ 
++// The planet's ground beside the ring (a unit vector): column c (fractional) moved z units over the surface at right
++// angles to the ring, behind (negative z) toward the ring's axis, as WorldPlanet.farColumn's positive z.
++vec3 far_dir(float c, float z) {
++	float a = (c - ring_mid) * ring_step;
++	float ca = cos(a);
++	float sa = sin(a);
++	vec3 p = ring_c * ring_sc.y + ring_sc.x * (ring_u * ca + ring_v * sa);
++	vec3 back = normalize(cross(p, ring_v * ca - ring_u * sa));
++	float b = -z / planet_r;
++	return p * cos(b) + back * sin(b);
++}
++
++// The map level a far row at depth z reads: as coarse as the rows' spacing there (RenderLook.ROW_GROWTH of the
++// distance), so the planet's features finer than the rows never alias between them.
++int far_lod(float z) {
++	return clamp(int(floor(log2(max(1.0, far_lod_k * abs(z))))), 0, far_lod_max);
++}
++
++// Where the direction q falls on the map's level L: the first of the four texels around it, and the weights.
++void far_cell(vec3 q, int L, out ivec2 i0, out vec2 f) {
++	vec2 p = q.xz / (abs(q.x) + abs(q.y) + abs(q.z));
++	if (q.y < 0.0) {
++		p = vec2((1.0 - abs(p.y)) * (p.x >= 0.0 ? 1.0 : -1.0), (1.0 - abs(p.x)) * (p.y >= 0.0 ? 1.0 : -1.0));
++	}
++	vec2 t = (p * 0.5 + 0.5) * float(max(far_map_n >> L, 1)) - 0.5;
++	i0 = ivec2(floor(t));
++	f = t - vec2(i0);
++}
++
++// A map texture's texel (i, j) on level L, folded back across the map's edge (WorldFarMap._tex).
++vec4 far_texel(sampler2D tex, int i, int j, int L) {
++	int n = max(far_map_n >> L, 1);
++	if (i < 0) {
++		i = 0;
++		j = n - 1 - j;
++	} else if (i >= n) {
++		i = n - 1;
++		j = n - 1 - j;
++	}
++	if (j < 0) {
++		j = 0;
++		i = n - 1 - i;
++	} else if (j >= n) {
++		j = n - 1;
++		i = n - 1 - i;
++	}
++	return texelFetch(tex, ivec2(clamp(i, 0, n - 1), clamp(j, 0, n - 1)), L);
++}
++
++// A map texture at a far_cell, bilinear (WorldFarMap.height).
++vec4 far_fetch(sampler2D tex, ivec2 i0, vec2 f, int L) {
++	vec4 a = far_texel(tex, i0.x, i0.y, L);
++	vec4 b = far_texel(tex, i0.x + 1, i0.y, L);
++	vec4 c = far_texel(tex, i0.x, i0.y + 1, L);
++	vec4 d = far_texel(tex, i0.x + 1, i0.y + 1, L);
++	return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
++}
++
++// The far land at world x xw, depth z, far weight s: (height, d/dx, d/dz, the base height the sea test reads); wet:
++// the band's water row says the place is wet. The place read turns with the slow drift (a shear by depth, so the
++// fighter plane never moves), relief and all. far_map_on: the planet's own ground beside the ring with its biome's
++// relief; else the band's columns wandering into the distance (far_x). grad: work out the slope.
++vec4 far4(float xw, float z, float s, bool grad, out bool wet) {
++	float k = drift_tan * s;
++	float xd = xw - z * k;
++	vec4 f;
++	wet = false;
++	if (far_map_on) {
++		int L = far_lod(z);
++		float d = 0.5 * far_texel_w * exp2(float(L));   // the slope is read over half a texel of the level
++		float c = xd / col_w;
++		ivec2 i0;
++		vec2 fr;
++		far_cell(far_dir(c, z), L, i0, fr);
++		vec4 m = far_fetch(far_map, i0, fr, L);
++		vec3 n = far_noise3(xd, z);
++		f = vec4(m.r + m.g * n.x, m.g * n.y, m.g * n.z, m.b);
++		if (grad) {
++			far_cell(far_dir(c + d / col_w, z), L, i0, fr);
++			f.y += (far_fetch(far_map, i0, fr, L).r - m.r) / d;
++			far_cell(far_dir(c, z + d), L, i0, fr);
++			f.z += (far_fetch(far_map, i0, fr, L).r - m.r) / d;
++		}
++	} else {
++		float xs = far_x(xw, z, s);
++		f = vec4(far_height3(xs, xd, z), gfx(xs, 0));
++		wet = gfx(xs, 4) >= wet_min;
++	}
++	f.z -= k * f.y;   // the sheared field's slope in depth
++	return f;
++}
++
+ // The fighter-plane row at column i: its ground, and its top (the standing water over the ground, if any).
+ float fp_ground(int i) {
+ 	return gf(i, 0) + gf(i, 1);
+@@ -380,11 +488,11 @@
+ 	float s = far_weight(z);
+ 	float top = h;
+ 	if (s > 0.0) {
+-		float xs = far_x(xw, z, s);
+-		vec3 f = far_height3(xs, xw, z);
++		bool wet;
++		vec4 f = far4(xw, z, s, true, wet);
+ 		h = mix(h, f.x, s);
+ 		grad = mix(grad, f.yz, s);
+-		top = (h < 0.0 && (mix(b, gfx(xs, 0), s) < sea_base || gfx(xs, 4) >= wet_min)) ? 0.0 : h;
++		top = (h < 0.0 && (mix(b, f.w, s) < sea_base || wet)) ? 0.0 : h;
+ 	} else {
+ 		float wd = gf(i, 4);
+ 		float surf = b + gf(i, 1) + wd;
+--- a/render/shaders/terrain.gdshader
++++ b/render/shaders/terrain.gdshader
+@@ -68,7 +68,21 @@
+ 	v_col = biome_colors[int(bio + 0.5)].rgb;
+ 	v_desert = abs(bio - 5.0) < 0.5 ? 1.0 : 0.0;
+ 	v_base = b;
+-	if (s > 0.0) {
++	if (s > 0.0 && far_map_on) {
++		// the planet's own far land (World's map beside the ring; ground.gdshaderinc far4), turned by the slow drift:
++		// its colour from the biomes' shares at the row's level
++		int L = far_lod(z);
++		ivec2 i0;
++		vec2 fr;
++		far_cell(far_dir((xw - z * drift_tan * s) / col_w, z), L, i0, fr);
++		vec4 w0 = far_fetch(far_bio0, i0, fr, L);
++		vec4 w1 = far_fetch(far_bio1, i0, fr, L);
++		vec3 fc = biome_colors[0].rgb * w0.x + biome_colors[1].rgb * w0.y + biome_colors[2].rgb * w0.z + biome_colors[3].rgb * w0.w
++			+ biome_colors[4].rgb * w1.x + biome_colors[5].rgb * w1.y + biome_colors[6].rgb * w1.z;
++		v_col = mix(v_col, fc / max(dot(w0, vec4(1.0)) + w1.x + w1.y + w1.z, 0.001), s);
++		v_desert = w1.y > 0.5 ? 1.0 : 0.0;
++		v_base = mix(b, far_fetch(far_map, i0, fr, L).b, s);
++	} else if (s > 0.0) {
+ 		float xs = far_x(xw, z, s);
+ 		v_col = mix(v_col, biome_rgb(xs), s);
+ 		v_desert = abs(far_biome(xs) - 5.0) < 0.5 ? 1.0 : 0.0;
+--- a/render/shaders/water.gdshader
++++ b/render/shaders/water.gdshader
+@@ -72,10 +72,11 @@
+ 			v_ok = 1.0;
+ 		}
+ 	} else {
+-		float xs = far_x(xw, z, s);
+-		ground = mix(b, far_height3(xs, xw, z).x, s);
++		bool wet;
++		vec4 f = far4(xw, z, s, false, wet);
++		ground = mix(b, f.x, s);
+ 		surf = 0.0;
+-		v_wet = (ground < 0.0 && (mix(b, gfx(xs, 0), s) < sea_base || gfx(xs, 4) >= wet_min)) ? 1.0 : 0.0;
++		v_wet = (ground < 0.0 && (mix(b, f.w, s) < sea_base || wet)) ? 1.0 : 0.0;
+ 		v_ok = 1.0;
+ 	}
+ 	// The foreground rule on the surface and the ground under it, as the terrain shader applies it to that ground.
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -964,6 +964,7 @@
+ 
+ var _calm: bool = false              # the grooves are drawn calm (set_calm)
+ var _drift_sent: float = 0.0         # the slow drift's tan last sent to the ground's materials (set_drift)
++var _far_sent: int = -1              # the far land's version last sent to the ground's materials (set_far)
+ var _crater_now: float = -1.0        # the match time last sent to the ground's materials (a new crater's age)
+ 
+ 
+@@ -971,6 +972,7 @@
+ 	_terrain_mat = ShaderMaterial.new()
+ 	_terrain_mat.shader = TERRAIN_SHADER
+ 	_drift_sent = 0.0
++	_far_sent = -1
+ 	_water_mat = ShaderMaterial.new()
+ 	_water_mat.shader = WATER_SHADER
+ 	for m in [_terrain_mat, _water_mat]:
+@@ -1127,6 +1129,15 @@
+ 	_water_mat.set_shader_parameter("drift_tan", t)
+ 
+ 
++## The planet's own far land (render/core/far_land.gd): its map and the ring on the ground's materials, when they change.
++func set_far(f: FarLand) -> void:
++	if _terrain_mat == null or f.version == _far_sent:
++		return
++	_far_sent = f.version
++	f.apply(_terrain_mat)
++	f.apply(_water_mat)
++
++
+ func set_calm(on: bool) -> void:
+ 	if _terrain_mat == null or on == _calm:
+ 		return
+--- a/render/core/pane_world.gd
++++ b/render/core/pane_world.gd
+@@ -29,6 +29,7 @@
+ var source: PaneWorld = null       # a second pane: the first, whose world it draws
+ var view_cam_x: float = 0.0        # this frame's camera's wrapped world x
+ var drift: float = 0.0             # the slow drift's angle this frame (radians; World's window 2), set by main; 0 off
++var far: FarLand = null            # the planet's own far land (render/core/far_land.gd), set by main; null off
+ var markers: bool = true           # the fighters' head markers (the stance badge); main's inset pane has none
+ var occlusion: int = OCCL_HOLE     # main sets it (a debug toggle)
+ ## Camera's request for this pane's cut-away, each frame (docs/camera/camera-v2.md section 6). Every key is optional:
+@@ -153,6 +154,8 @@
+ 		cam_rig.basis = cam_rig.basis * Basis(Vector3.BACK, deg_to_rad(roll))   # the climaxes' dutch tilt (RenderCameraRoll), about the view axis
+ 	planet.set_focus(focus_z)
+ 	planet.set_drift(tan(drift))
++	if far != null:
++		planet.set_far(far)
+ 	if _sky_mat != null:
+ 		_sky_mat.set_shader_parameter("sky_turn", drift)
+ 	planet.set_crowd_near(S.depthOn)
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -66,6 +66,9 @@
+ var roll_on: bool = false
+ var drift_on: bool = false                # the slow drift of the far land and sky (World's window 2): off unless SLOW_DRIFT_ON or --drift
+ var _drift_t0: float = 0.0                # the match time the drift last started from 0 (a match's start, World's turn)
++var far_on: bool = false                  # the planet's own far land (World's map): off unless FAR_MAP_ON or --farmap
++var far_land := FarLand.new()
++var _far_now: bool = false                # --farnow: a planet's far map is built whole at the match's start (stills, probes)
+ var compositor: Object = null:
+ 	set(v):
+ 		compositor = v
+@@ -217,6 +220,8 @@
+ 		set_legacy_hud(true)
+ 	roll_on = RenderLook.CAMERA_ROLL_ON or args.has("roll")   # the camera roll on climaxes: off by default (2026-10-22)
+ 	drift_on = RenderLook.SLOW_DRIFT_ON or args.has("drift")   # the slow drift of the far land and sky: off by default (2026-10-22)
++	far_on = RenderLook.FAR_MAP_ON or args.has("farmap")   # the planet's own far land: off by default (2026-10-22)
++	_far_now = args.has("farnow")
+ 	hud.key_help = args.has("keyhelp")   # the greybox prompt and key help: off by Orb's minimal rule (2026-10-19)
+ 	if not manual:
+ 		split_view = SplitView.new()
+@@ -260,6 +265,8 @@
+ 	host.new_match(seed, ai, _match_setup(seed) if own else setup, own)
+ 	camera_roll.reset()
+ 	_drift_t0 = host.S.T
++	if far_on:
++		far_land.begin(host.S, _far_now)   # a match's start is a cut: the planet's far land shows from here if its map is whole
+ 	var fl: Array = UiSimBridge.fighters(host.S)
+ 	ui_hud.setup(fl[0], fl[1])
+ 	for p in all_panes():
+@@ -544,8 +551,11 @@
+ func render_view(a: float) -> void:
+ 	var S: SimState = host.S
+ 	var dr: float = _drift(a)
++	if far_on:
++		far_land.step(RenderLook.FAR_MAP_STEP)
+ 	for p in all_panes():
+ 		p.drift = dr
++		p.far = far_land if far_on else null
+ 	if compositor != null:
+ 		if "pitch_deg" in split_rig:
+ 			split_rig.pitch_deg = cam_pitch
+@@ -626,6 +636,8 @@
+ 		p.planet.build(host.S)
+ 	host.impact.turn(float(e.x))
+ 	_drift_t0 = host.S.T   # the slow drift starts again from the new ring, under the turn's cut
++	if far_on:
++		far_land.turn(host.S)   # the planet's far land beside the new ring, and from here if its map is whole by now
+ 	host.sky.towns_again(host.S)
+ 
+ 
+@@ -1260,7 +1272,7 @@
+ ## without UI's notice, change how a match starts or hold a debug value, and are dropped unless the page is on a local
+ ## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze, keyhelp, roll.
+ const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]
+-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift"]
++const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow"]
+ 
+ 
+ ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of
+--- /dev/null
++++ b/render/core/far_land.gd
+@@ -0,0 +1,157 @@
++class_name FarLand
++extends RefCounted
++## The planet's own far land (World's window 2; docs/rendering/slow-drift.md). On a planet match that may turn (World's
++## epoch), the ground's far rows read World's WorldFarMap, a cached height-and-biome map of the planet, beside the
++## ring the match plays on (ground.gdshaderinc far_dir, far4), with each biome's far relief on it as before. The map
++## has mip levels: each far row reads the level as coarse as its spacing in depth, so the planet's small features never
++## alias between the far rows (streaks of sea across a distant plain). Render only. The map is built RenderLook.FAR_MAP_STEP texels a frame and kept for the planet, so the same planet
++## again has it from the first frame. It shows only from a hard cut, never in view: a match's start if the map is whole
++## by then, else World's next turn. Until then the far land is the band's own, as ever.
++
++const KEEP: int = 2   # the planets whose whole maps are kept
++
++static var _texs: Dictionary = {}   # planet seed -> its whole map as the shaders read it: {h, b0, b1} (ImageTextures with mip levels)
++
++var active: bool = false    # this match is on a planet that may turn
++var planet: int = 0         # its seed
++var on: bool = false        # the ground reads the map, from the last cut
++var ring: Dictionary = {}   # the ring the match plays on now (WorldRingPick.ringFrom)
++var version: int = 0        # moves whenever what the ground's materials read changes
++var _map: WorldFarMap = null           # the map being built (null once whole)
++var _px := PackedFloat32Array()        # its texels so far as the shaders read them: the height x its biome's far
++                                       # multiplier, its biome's relief amplitude, the height, 0
++var _b0 := PackedByteArray()           # and its biome as shares (255 for its own): BIOME_ORDER 0 to 3,
++var _b1 := PackedByteArray()           # 4 to 6 (so a coarser level holds each biome's share of its texels)
++var _mul := PackedFloat32Array()       # by the planet's biome (WorldPlanetWorld.BIOME_NAME): RenderLook.FAR_RELIEF
++var _amp := PackedFloat32Array()
++var _idx := PackedInt32Array()
++
++
++## A new match (after SimCore.newMatch). now: build the map whole at once (stills and probes).
++func begin(S: SimState, now: bool = false) -> void:
++	var E = S.epoch
++	active = E is Dictionary
++	ring = {}
++	if active:
++		var p: int = int(E.seed)
++		if p != planet or (_map == null and not _texs.has(p)):   # another planet, or this one's map was let go
++			planet = p
++			_map = null
++			_clear()
++			if not _texs.has(p):
++				_map = WorldFarMap.new(WorldPlanet.make(p), RenderLook.FAR_MAP_N)
++				_tables()
++		if now:
++			step(RenderLook.FAR_MAP_N * RenderLook.FAR_MAP_N)
++		ring = _ring_of(E)
++	cut()
++
++
++## A hard cut: the ground reads the map from here if it is whole.
++func cut() -> void:
++	on = active and _texs.has(planet)
++	version += 1
++
++
++## World's turn: the new ring, under the turn's cut.
++func turn(S: SimState) -> void:
++	if active and S.epoch is Dictionary:
++		ring = _ring_of(S.epoch)
++	cut()
++
++
++## Once a frame: `count` more texels of the map while it is not whole. A whole map shows from the next cut.
++func step(count: int) -> void:
++	if _map == null:
++		return
++	var k0: int = _map.next
++	_map.step(count)
++	var k1: int = _map.next
++	var hs: PackedFloat32Array = _map.hs
++	var bs: PackedByteArray = _map.bs
++	var chunk := PackedFloat32Array()
++	chunk.resize(4 * (k1 - k0))
++	var c0 := PackedByteArray()
++	c0.resize(4 * (k1 - k0))
++	var c1 := PackedByteArray()
++	c1.resize(4 * (k1 - k0))
++	for k in range(k0, k1):
++		var b: int = bs[k]
++		var j: int = 4 * (k - k0)
++		chunk[j] = hs[k] * _mul[b]
++		chunk[j + 1] = _amp[b]
++		chunk[j + 2] = hs[k]
++		if _idx[b] < 4:
++			c0[j + _idx[b]] = 255
++		else:
++			c1[j + _idx[b] - 4] = 255
++	_px.append_array(chunk)
++	_b0.append_array(c0)
++	_b1.append_array(c1)
++	if _map.done:
++		if _texs.size() >= KEEP:
++			_texs.clear()
++		_texs[planet] = {"h": _tex(_px.to_byte_array(), Image.FORMAT_RGBAF), "b0": _tex(_b0, Image.FORMAT_RGBA8), "b1": _tex(_b1, Image.FORMAT_RGBA8)}
++		_map = null
++		_clear()
++
++
++## The far map and the ring on a ground material (planet_view.gd set_far).
++func apply(m: ShaderMaterial) -> void:
++	m.set_shader_parameter("far_map_on", on)
++	if not on:
++		return
++	var t: Dictionary = _texs[planet]
++	var P: WorldPlanet.Planet = WorldPlanet.make(planet)
++	var st: float = float(ring.st)
++	var n: int = (t.h as ImageTexture).get_width()
++	var texel: float = PI * P.R / float(n)   # a texel of the finest level, in units of the surface (about)
++	m.set_shader_parameter("far_map", t.h)
++	m.set_shader_parameter("far_bio0", t.b0)
++	m.set_shader_parameter("far_bio1", t.b1)
++	m.set_shader_parameter("far_map_n", n)
++	m.set_shader_parameter("far_texel_w", texel)
++	m.set_shader_parameter("far_lod_k", RenderLook.ROW_GROWTH / texel)
++	m.set_shader_parameter("far_lod_max", RenderLook.FAR_MAP_LOD_MAX)
++	m.set_shader_parameter("ring_c", _v3(ring.c))
++	m.set_shader_parameter("ring_u", _v3(ring.u))
++	m.set_shader_parameter("ring_v", _v3(ring.v))
++	m.set_shader_parameter("ring_sc", Vector2(st, float(ring.ct)))
++	m.set_shader_parameter("ring_step", SimConst.COL / (P.R * st))
++	m.set_shader_parameter("ring_mid", float(WorldPlanet.touchCol()))
++	m.set_shader_parameter("planet_r", P.R)
++
++
++func _clear() -> void:
++	_px = PackedFloat32Array()
++	_b0 = PackedByteArray()
++	_b1 = PackedByteArray()
++
++
++## A map level 0 and its mip levels (box-filtered: the heights average, and the biomes' shares).
++func _tex(bytes: PackedByteArray, format: int) -> ImageTexture:
++	var img: Image = Image.create_from_data(_map.n, _map.n, false, format, bytes)
++	img.generate_mipmaps()
++	return ImageTexture.create_from_image(img)
++
++
++func _tables() -> void:
++	var names: Array = WorldPlanetWorld.BIOME_NAME
++	_mul.resize(names.size())
++	_amp.resize(names.size())
++	_idx.resize(names.size())
++	for b in range(names.size()):
++		var name: String = names[b]
++		var r: Array = RenderLook.FAR_RELIEF[name]
++		_mul[b] = r[0]
++		_amp[b] = r[1] * (RenderLook.MS if name == "mountains" else RenderLook.WS)
++		_idx[b] = GroundField.BIOME_ORDER.find(name)
++
++
++static func _ring_of(E: Dictionary) -> Dictionary:
++	var sp: Dictionary = E.ring
++	return WorldRingPick.ringFrom(sp.c, int(sp.cols), sp.t)
++
++
++static func _v3(a: Array) -> Vector3:
++	return Vector3(a[0], a[1], a[2])
+--- /dev/null
++++ b/render/core/far_land.gd.uid
+@@ -0,0 +1 @@
++uid://bjxcmmf28d83o
+--- a/docs/rendering/README.md
++++ b/docs/rendering/README.md
+@@ -663,6 +663,7 @@
+ 
+ Both are other directors' work, hosted here as their docs ask (`docs/ui/hud-spec.md` section 14, `audio/README.md` "Hooking it up"). Both only read.
+ - **By roster id (2026-10-06; `docs/architecture/pending/fighter-split.md` section 10).** The old HUD looks a fighter up by his roster id: his name and his title are UI's (`UiData.display_name`, `display_title`), and with no title the line is his stance alone. The sim keeps no title and its name is the id. The damage marks' seed belongs to the outfit (`RenderLook.DAMAGE_SEED_97`, the numbers the marks have always had), so the roster's rename moved no mark. The old spellings of the two ids are gone from `DAMAGE_OUTFIT` since the rename (part C). `tools/hud_words_check.gd` asks for the old HUD's words, since no other headless gate draws that HUD.
++- **The planet's own far land (2026-10-22, `slow-drift.md`).** On a planet match that may turn, the far rows read World's map of the planet beside the ring (`render/core/far_land.gd`; the shaders' `far4`), each row at the map's mip level for its spacing in depth, so nothing aliases. It shows only from a hard cut: a match's start once the map is whole, else World's next turn. Off by default (`RenderLook.FAR_MAP_ON`; `--farmap`).
+ - **The slow drift (2026-10-22, `slow-drift.md`).** World's window 2: between turns the far land shears sideways by its depth and the sky turns its azimuth by the same angle, 3 degrees a minute of match time, so the land and sky turn slowly round the fight while the band never moves. It starts from 0 at a match's start and at World's turn, under its hard cut. Off by default (`RenderLook.SLOW_DRIFT_ON`; `--drift`, `?drift=1`).
+ - **The camera roll on climaxes (2026-10-22, `camera-roll.md`).** A dutch tilt of 4 to 8 degrees on the top climaxes only (a finisher, a KO, a beam clash, a guard break or a launch; at least 8 s apart bar a finisher and a KO; with Encounter's feed on, the story picks how much and which way), eased in and out, leaning toward the loser; the HUD and Camera's inset stay level. Off by default (`RenderLook.CAMERA_ROLL_ON`; `--roll`, `?roll=1`).
+ - **Orb's minimal rule (2026-10-19, `docs/ep/taste.md`): nothing on, over or between the fighters.** The stance badge (`RenderLook.STANCE_BADGE_ON`) and the guard arc (`GUARD_ARC_ON`) are off. The greybox overlay draws its demo prompt, key help and seed and tick line only with `--keyhelp` (on the web `?keyhelp=1`); F3's readout is unchanged. Before and after: `img/minimal-before-after.png` (uncommitted).
+--- a/docs/rendering/slow-drift.md
++++ b/docs/rendering/slow-drift.md
+@@ -15,9 +15,31 @@
+ - **Crisp:** no fade, no blur, no blend; the far land and sky are drawn as they always were, at a turned angle.
+ - **Off by default:** `RenderLook.SLOW_DRIFT_ON` false. Main's `--drift` or `?drift=1` on a page turns it on.
+ 
+-## The far land itself
++## The planet's own far land (2026-10-22)
+ 
+-The far land is still the render's own: each column's base height, scaled by its biome, with relief. World's `farColumn` (the planet's real ground beside the ring) costs about 50 µs a sample natively, nearly all of it the surface read. A far field for a turn's new ring would cost too much at the turn on an old laptop. World has been asked for a cheaper bulk read. When it lands, the drift reads the planet's own far land with no other change.
++On a planet match that may turn (World's epoch), the far land is the planet's own ground beside the ring, read from World's `WorldFarMap` (`render/core/far_land.gd`).
++
++- **The map:**
++  - a `RenderLook.FAR_MAP_N` (192) square octahedral map of the planet's heights and biomes;
++  - built `FAR_MAP_STEP` (64) texels a frame: 575 frames, about 9.6 s at 60 frames a second, about 1.3 ms a frame natively;
++  - kept for the planet (the last two), so the same planet again has it at once.
++- **Read on the GPU.** The ground's shaders find each far point on the planet themselves (`ground.gdshaderinc` `far_dir`): the ring's point at the column, moved over the surface at right angles to the ring. Behind the fighter plane is toward the ring's axis, as `farColumn`'s positive z. They then read the map there (`far_cell`, `far_fetch`, `far4`).
++  - A turn costs nothing on the CPU: only the ring's uniforms change.
++  - World's `field()` is not called. It is the check: a GDScript twin of the shader reads within 0.004 units of it on planet 7, at ten depths from -120,000 to 9,000.
++- **Its look:**
++  - each texel carries its biome's far multiplier and relief amplitude (`FAR_RELIEF`), so the far relief is drawn as before, over the planet's own shape;
++  - the colour comes from the biomes' shares at the texel.
++- **No aliasing.** The map has mip levels. A far row reads the level whose texel matches the rows' spacing in depth there (`far_lod`: `ROW_GROWTH` of the distance, up to `FAR_MAP_LOD_MAX` 5). Without them, the planet's small seas aliased between the sparse far rows into streaks along the horizon.
++- **Only from a hard cut:**
++  - it shows from a match's first frame if the map is whole by then, else from World's next turn (`arena_turn`), under its cut;
++  - until then the far land is the band's own, as ever;
++  - it never switches in view.
++- **The slow drift turns it too:** the place read moves along the ring by z × tan(angle), relief and all. It also fixes 22i, which turned the base and the biomes but left the relief noise fixed: the relief now turns too, with the sheared field's slope in depth.
++- **Off by default:** `RenderLook.FAR_MAP_ON` false. Main's `--farmap` (`?farmap=1`) turns it on; `--farnow` (`?farnow=1`) builds the map whole at the match's start, for stills and probes.
++- **Not yet:**
++  - a planet match without World's turn keeps the band's far land: the render reads the ring from the epoch (`S.epoch.ring`);
++  - after a turn, the far land beside the carry zone's columns (the old ring's) is read beside the new ring; the rings cross at the pivot, so near it they nearly agree;
++  - settlements are not in World's map, so no towns or cities stand in the far land.
+ 
+ ## Checked
+ 
+@@ -27,3 +49,9 @@
+   - `img/drift-7200-d3f1ca0e.png`: d3f1ca0e, then tick 7,200 with the drift off and on (about 4.8 degrees by then);
+   - `homework/progress-2026-10-22/slow-drift-time-lapse.gif`: two minutes of the match, off and on side by side, 40 times faster;
+   - `homework/progress-2026-10-22/slow-drift-real-speed.gif`: four seconds at the real speed, drift on.
++- The planet's own far land, on HEAD plus World's far read (`docs/world/scratch-build/far-read/`):
++  - `gates9` (17 checks) and `cue_check` pass with it off, with 0 script or shader errors. With both switches off nothing changes: the band's far land reads the same place as before.
++  - A native probe:
++    - the shader's twin against World's `field()` and `farField` (above);
++    - the hard cut: off at the start of a new planet's match, whole after 575 steps, still off until a cut, on after a turn, on at once for the same planet again, inactive on the hand-made world.
++  - `img/farland-d3f1ca0e.png` (uncommitted): d3f1ca0e, then planet 7 on a 2,400-column ring at ticks 600, 3,000 and 6,600, and at 7,200 with the drift on; the band's far land on the left, the planet's own on the right (seed 4, the AI match, reduced; Tools' launcher).
