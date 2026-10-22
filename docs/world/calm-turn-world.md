@@ -34,6 +34,10 @@ The new ring is read (0.15 to 0.7 s of work by size, warm or on the tick), then 
 
 **Why the zone carries by place on the ground and not by plan index** (a finding): I expected the collateral window's `(place, plan)` identity to survive a turn and it does not. A settlement's layout is generated from its chord on the line, so the same place on a ring 10 degrees away is a different layout: laying the same city on four chords gave 12, 12, 8 and 16 buildings (Bellgate) and a per-index match of 15 of 32 (row, kind, floors, width), 18 of 37 for the village. So the buildings near the pair are carried as they stand, and a place is laid again only where no building of it was kept. **Until a city is generated from its own plan (planet window 3), a place whose chord moves across the zone's edge is cut there.** A plan index is its index in its settlement plus 1,000 for each turn, so `(place, plan)` stays unique.
 
+## A landing turns less (Game Design 2026-10-22 5a)
+
+The pivot is fixed at the ask, at where the pair are expected to rest, and a mispredicted landing leaves the pair `s` units from it (a median of 3,600 in Encounter's six matches). The ring turns about the pivot, so the ground under a fighter moves `s` x sin(angle). **The angle is scaled at the swap so that it moves at most `moveMax` (300 units), never under `minDeg` (2 degrees) and never over the chosen bearing** (the 10 degree cap). The pivot is not re-picked (a new ring read on the swap tick). A scaled turn's ring is read on the tick: a hitch of 150 to 450 ms by size, only when the pair is off the pivot; the warm read is of the chosen angle.
+
 ## The picture
 
 `homework/31c-a-turn.svg` is from the game's own code: planet 7 (Everhold), touch 3, a Whole ring; at 100 s two buildings near the pair are felled or hurt and a crater is dug; then `ask`, `choose` (10 degrees) and `tick`. The strips are the biome of every 16th column before and after, with the buildings; the blue box is what carried over (133 buildings before, 96 after). The globe animates the turn.

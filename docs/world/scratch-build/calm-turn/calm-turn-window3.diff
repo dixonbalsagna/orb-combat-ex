@@ -1,16 +1,16 @@
 diff --git a/data/biomes/rings.json b/data/biomes/rings.json
-index 48abec3..b43fa60 100644
+index 48abec3..bb594c8 100644
 --- a/data/biomes/rings.json
 +++ b/data/biomes/rings.json
 @@ -1,6 +1,6 @@
  {
    "schema": "biomes.rings/1",
 -  "_about": "The ring picker's numbers (docs/world/shifting-arena-design.md window 4; WorldRingPick). sizes: the columns of Game Design's three sizes (Close 38,400 units, Half 76,800, Whole 153,600). minimum: what a ring must hold by size (standing cities and towns, kinds of ground of at least biomeShare of the ring, and the share that is land). candidates: how many rings are tried for a claim at a size. stride: columns between the coarse read's samples. ref: the share of the ring (or the count) at which a claim's suit counts in full. mustAt: the least value of a must-cross feature. avoidWeight: how much of an avoided feature's value comes off the score. homeBonus: added when the ring holds the claim's home place. coastRef: coast crossings (water to land and back) that count as a full coast. The claims themselves are Narrative's (docs/narrative/opponent_grounds.json) and are passed in; features the planet function cannot see are proxies (WorldRingPick.featureValue).",
-+  "_about": "The ring picker's numbers (docs/world/shifting-arena-design.md window 4; WorldRingPick). sizes: the columns of Game Design's three sizes (Close 38,400 units, Half 76,800, Whole 153,600). minimum: what a ring must hold by size (standing cities and towns, kinds of ground of at least biomeShare of the ring, and the share that is land). candidates: how many rings are tried for a claim at a size. stride: columns between the coarse read's samples. ref: the share of the ring (or the count) at which a claim's suit counts in full. mustAt: the least value of a must-cross feature. avoidWeight: how much of an avoided feature's value comes off the score. homeBonus: added when the ring holds the claim's home place. coastRef: coast crossings (water to land and back) that count as a full coast. The claims themselves are Narrative's (docs/narrative/opponent_grounds.json) and are passed in; features the planet function cannot see are proxies (WorldRingPick.featureValue). turn: the calm-moment turn (docs/world/calm-turn-world.md; WorldEpoch; Game Design rulings-2026-10-19b.md 1a to 1d): on 0 or 1 (off), maxTurns a fight, gapSeconds of fight time between turns, driftDeg the most the ring's axis may move in all, bearings the candidate turns in degrees (none over 10), carryUnits how far each way from the pair the ground, craters and buildings stay, viewUnits how far each way a turn counts the places it brings into view.",
++  "_about": "The ring picker's numbers (docs/world/shifting-arena-design.md window 4; WorldRingPick). sizes: the columns of Game Design's three sizes (Close 38,400 units, Half 76,800, Whole 153,600). minimum: what a ring must hold by size (standing cities and towns, kinds of ground of at least biomeShare of the ring, and the share that is land). candidates: how many rings are tried for a claim at a size. stride: columns between the coarse read's samples. ref: the share of the ring (or the count) at which a claim's suit counts in full. mustAt: the least value of a must-cross feature. avoidWeight: how much of an avoided feature's value comes off the score. homeBonus: added when the ring holds the claim's home place. coastRef: coast crossings (water to land and back) that count as a full coast. The claims themselves are Narrative's (docs/narrative/opponent_grounds.json) and are passed in; features the planet function cannot see are proxies (WorldRingPick.featureValue). turn: the calm-moment turn (docs/world/calm-turn-world.md; WorldEpoch; Game Design rulings-2026-10-19b.md 1a to 1d): on 0 or 1 (off), maxTurns a fight, gapSeconds of fight time between turns, driftDeg the most the ring's axis may move in all, bearings the candidate turns in degrees (none over 10), carryUnits how far each way from the pair the ground, craters and buildings stay, viewUnits how far each way a turn counts the places it brings into view, moveMax the most the ground under a fighter may move at a turn (a turn about a mispredicted pivot is scaled down to it: Game Design 2026-10-22 5a) and minDeg the least angle it is scaled to.",
    "sizes": {
      "close": 1200,
      "half": 2400,
-@@ -37,5 +37,19 @@
+@@ -37,5 +37,21 @@
    "mustAt": 0.2,
    "avoidWeight": 0.5,
    "homeBonus": 0.25,
@@ -28,7 +28,9 @@ index 48abec3..b43fa60 100644
 +      10.0
 +    ],
 +    "carryUnits": 12000.0,
-+    "viewUnits": 16000.0
++    "viewUnits": 16000.0,
++    "moveMax": 300.0,
++    "minDeg": 2.0
 +  }
  }
 diff --git a/sim/core/hash.gd b/sim/core/hash.gd
@@ -105,10 +107,10 @@ index 34bf421..f6686b7 100644
  				push_error("consume: unknown event " + e.type)
 diff --git a/sim/world/epoch.gd b/sim/world/epoch.gd
 new file mode 100644
-index 0000000..c834cb4
+index 0000000..62ca581
 --- /dev/null
 +++ b/sim/world/epoch.gd
-@@ -0,0 +1,326 @@
+@@ -0,0 +1,363 @@
 +class_name WorldEpoch
 +## The calm-moment turn (docs/world/shifting-arena-design.md section 4, docs/world/calm-turn-world.md; Game Design rulings-2026-10-19b.md section 1; Encounter's docs/director/calm-turn.md).
 +## At a calm moment the arena's ring turns about the pair: a new plane through the pair's point, at most 10 degrees of bearing from the old, at most 4 turns a fight, at least 60 s of fight
@@ -247,7 +249,17 @@ index 0000000..c834cb4
 +	if E == null or E.ask == null:
 +		return
 +	var c: Dictionary = E.ask.cands[clampi(i, 0, E.ask.cands.size() - 1)]
-+	E.next = {"spec": c.spec, "pc": E.ask.pc, "bearing": c.bearing, "drift": c.drift, "why": E.ask.why}
++	E.next = {"spec": c.spec, "pc": E.ask.pc, "bearing": c.bearing, "drift": c.drift, "why": E.ask.why, "tick": S.tick, "due": E.ask.due}   # tick: the pick's; due: the moment it is for (the director paces the warm read by them). Not hashed
++	E.ask = null
++	_jobs.erase(S.worldId)
++
++
++## Encounter's cancel (DirCalm): a pending pick whose pair has moved off its pivot is dropped, so the director can ask again.
++static func cancel(S: SimState) -> void:
++	var E = S.epoch
++	if E == null:
++		return
++	E.next = null
 +	E.ask = null
 +	_jobs.erase(S.worldId)
 +
@@ -308,6 +320,32 @@ index 0000000..c834cb4
 +	return t * t * (3.0 - 2.0 * t)
 +
 +
++## A landing turns less rather than not at all (Game Design rulings-2026-10-22 5a): the pivot was fixed at the ask, at where the pair were expected to rest; the ring turns about it, so the
++## ground under a fighter s units from it moves s x sin(angle). If the larger s over the fighters would move more than moveMax (300 units), the angle is scaled down to the one that moves
++## exactly that much, never under minDeg (2) and never over the chosen bearing. The pivot is not re-picked (that would be a new ring read on the swap tick); a scaled turn reads its ring on the
++## tick (a warm read is of the chosen angle), a hitch only when the pair is off the pivot. nx is changed: its spec, bearing and drift are the ones used.
++static func _scale(S: SimState, E: Dictionary, nx: Dictionary, P: WorldPlanet.Planet) -> void:
++	var d: Dictionary = data()
++	var px: float = float(nx.pc) * SimConst.COL
++	var smax: float = 0.0
++	for f in S.fighters:
++		smax = maxf(smax, absf(SimWrap.sdx(px, f.x)))
++	var deg: float = absf(float(nx.bearing))
++	if smax * sin(deg * PI / 180.0) <= float(d.moveMax):
++		return
++	var want: float = asin(minf(1.0, float(d.moveMax) / smax)) * 180.0 / PI
++	var use: float = minf(deg, maxf(float(d.minDeg), want))
++	if use >= deg - 1e-9:
++		return
++	var sgn: float = 1.0 if float(nx.bearing) >= 0.0 else -1.0
++	var ns: Dictionary = turned(P, E.ring, int(nx.pc), sgn * use)
++	nx.spec = ns
++	nx.bearing = sgn * use
++	nx.drift = driftOf(E.c0, ns.c)
++	nx.scaled = true
++	_jobs.erase(_key(S))   # the warm read was of the chosen angle
++
++
 +## The swap, in one step, on a calm tick (docs/world/calm-turn-world.md). The ground inside the zone keeps its columns and fades into the new ring's; the marks (craters, rubble, scorch, cracks)
 +## fade the same way and are gone outside; the buildings inside the zone stay as they are, with their people; the new ring's other places are laid fresh outside it; the fighters keep their
 +## columns and are set on the new ground. The epoch moves on. An `arena_turn` event tells Rendering and Camera.
@@ -316,6 +354,7 @@ index 0000000..c834cb4
 +	var nx: Dictionary = E.next
 +	var seed: int = int(E.seed)
 +	var P := WorldPlanet.make(seed)
++	_scale(S, E, nx, P)
 +	var spec: Dictionary = nx.spec
 +	var ring: Dictionary = WorldRingPick.ringFrom(spec.c, int(spec.cols), spec.t)
 +	var job = _jobs.get(_key(S))
@@ -757,10 +796,10 @@ index 649fb71..b1f4915 100644
  			_cErrors.append("rings.json: %s is a number" % k)
 diff --git a/sim/world/tools/epoch_check.gd b/sim/world/tools/epoch_check.gd
 new file mode 100644
-index 0000000..11c674b
+index 0000000..adbc1a5
 --- /dev/null
 +++ b/sim/world/tools/epoch_check.gd
-@@ -0,0 +1,272 @@
+@@ -0,0 +1,310 @@
 +extends SceneTree
 +# The calm-moment turn (docs/world/calm-turn-world.md; world/epoch.gd; data/biomes/rings.json turn):
 +#   godot --headless --path . --script res://sim/world/tools/epoch_check.gd [-- --ticks=600]
@@ -987,6 +1026,44 @@ index 0000000..11c674b
 +						if not WorldEpoch._held(PL, nr2, pp.id) or WorldEpoch._held(PL, old2, pp.id) or absf(pp.arc) > float(d.viewUnits):
 +							wrong += 1
 +	ok(lists >= 40 and wrong == 0, "over 8 planets, 3 pivots and both sides (%d candidate lists), every place a turn lists (%d in all) is held by the new ring, not the old, within view" % [lists, listed])
++	# --- a landing turns less rather than not at all: the angle is scaled so the ground under the fighters moves at most 300 units, never under 2 degrees
++	var scaledOk: bool = true
++	var scaleLog: Array = []
++	for off in [0.0, 3600.0, 9000.0, 40000.0]:
++		var Sg := ready(4800)
++		var pxg: float = mid(Sg)
++		var P4 := WorldPlanet.make(7)
++		WorldEpoch.ask(Sg, "landing", pxg - off, 1, 0)   # the pivot predicted `off` units from where the pair rest
++		WorldEpoch.choose(Sg, 3)   # the 10 degree candidate
++		var ringG: Dictionary = WorldRingPick.ringFrom(Sg.epoch.ring.c, 4800, Sg.epoch.ring.t)
++		var smax: float = 0.0
++		for f in Sg.fighters:
++			smax = maxf(smax, absf(SimWrap.sdx(float(Sg.epoch.next.pc) * SimConst.COL, f.x)))
++		WorldEpoch.tick(Sg, true)
++		var used: float = 0.0
++		for e in Sg.out.fx:
++			if e.type == "arena_turn":
++				used = e.amount
++		var want: float = 10.0
++		if smax * sin(10.0 * PI / 180.0) > 300.0:
++			want = maxf(2.0, asin(300.0 / smax) * 180.0 / PI)
++		var nrG: Dictionary = WorldRingPick.ringFrom(Sg.epoch.ring.c, 4800, Sg.epoch.ring.t)
++		var move: float = 0.0
++		for f in Sg.fighters:
++			var colf: int = posmod(int(round(f.x / SimConst.COL)), SimConst.NC)
++			var a1: Array = WorldPlanet.columnPoint(P4, ringG, colf)
++			var b1: Array = WorldPlanet.columnPoint(P4, nrG, colf)
++			move = maxf(move, sqrt(pow(a1[0] - b1[0], 2) + pow(a1[1] - b1[1], 2) + pow(a1[2] - b1[2], 2)) * P4.R)
++		if Sg.epoch.n != 1 or absf(used - want) > 1e-6 or (want > 2.0 and move > 300.0 * 1.02):
++			scaledOk = false
++		scaleLog.append("%.0f off: smax %.0f, %.2f degrees (wanted %.2f), ground moved %.0f" % [off, smax, used, want, move])
++	ok(scaledOk, "a turn about a pivot off by 0, 3,600, 9,000 and 40,000 units: the angle is the 10 degrees, then scaled so the ground under the fighters moves at most 300, never under 2 (%s)" % " | ".join(scaleLog))
++	var Sc := ready(2400)
++	WorldEpoch.ask(Sc, "t", mid(Sc), 1, 0)
++	WorldEpoch.choose(Sc, 0)
++	ok(Sc.epoch.next.tick == Sc.tick and Sc.epoch.next.due == 0, "choose records its tick and the moment's due")
++	WorldEpoch.cancel(Sc)
++	ok(Sc.epoch.next == null and Sc.epoch.ask == null and not WorldEpoch.ask(Sc, "t", mid(Sc), 1, 0).is_empty(), "cancel drops a pending pick, and the director can ask again")
 +	# --- the warm read is the read
 +	var Sw := ready(1200)
 +	WorldEpoch.ask(Sw, "test", mid(Sw), 1, 0)
@@ -1068,7 +1145,7 @@ index 997f30c..e4429f3 100644
        "id": "rings-minimum-land-over-one",
        "schema": "biomes-rings.schema.json",
 diff --git a/tools/schemas/biomes-rings.schema.json b/tools/schemas/biomes-rings.schema.json
-index fbb3820..163c08a 100644
+index fbb3820..388b4e0 100644
 --- a/tools/schemas/biomes-rings.schema.json
 +++ b/tools/schemas/biomes-rings.schema.json
 @@ -15,7 +15,8 @@
@@ -1081,7 +1158,7 @@ index fbb3820..163c08a 100644
    ],
    "properties": {
      "schema": {
-@@ -248,6 +249,70 @@
+@@ -248,6 +249,84 @@
        "minimum": 0.5,
        "maximum": 20,
        "description": "Coast crossings that count as a full coast."
@@ -1095,7 +1172,9 @@ index fbb3820..163c08a 100644
 +        "driftDeg",
 +        "bearings",
 +        "carryUnits",
-+        "viewUnits"
++        "viewUnits",
++        "moveMax",
++        "minDeg"
 +      ],
 +      "additionalProperties": false,
 +      "properties": {
@@ -1147,6 +1226,18 @@ index fbb3820..163c08a 100644
 +          "minimum": 1000,
 +          "maximum": 40000,
 +          "description": "How far each way a turn counts the places it brings into view."
++        },
++        "moveMax": {
++          "type": "number",
++          "minimum": 0,
++          "maximum": 5000,
++          "description": "The most the ground under a fighter may move at a turn, in units (Game Design: 300): a turn about a mispredicted pivot is scaled down to it."
++        },
++        "minDeg": {
++          "type": "number",
++          "minimum": 0.1,
++          "maximum": 10,
++          "description": "The least angle a turn is scaled to (Game Design: 2 degrees)."
 +        }
 +      }
      }

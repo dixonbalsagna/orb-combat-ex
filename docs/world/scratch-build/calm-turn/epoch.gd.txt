@@ -136,7 +136,17 @@ static func choose(S: SimState, i: int) -> void:
 	if E == null or E.ask == null:
 		return
 	var c: Dictionary = E.ask.cands[clampi(i, 0, E.ask.cands.size() - 1)]
-	E.next = {"spec": c.spec, "pc": E.ask.pc, "bearing": c.bearing, "drift": c.drift, "why": E.ask.why}
+	E.next = {"spec": c.spec, "pc": E.ask.pc, "bearing": c.bearing, "drift": c.drift, "why": E.ask.why, "tick": S.tick, "due": E.ask.due}   # tick: the pick's; due: the moment it is for (the director paces the warm read by them). Not hashed
+	E.ask = null
+	_jobs.erase(S.worldId)
+
+
+## Encounter's cancel (DirCalm): a pending pick whose pair has moved off its pivot is dropped, so the director can ask again.
+static func cancel(S: SimState) -> void:
+	var E = S.epoch
+	if E == null:
+		return
+	E.next = null
 	E.ask = null
 	_jobs.erase(S.worldId)
 
@@ -197,6 +207,32 @@ static func _w(px: float, i: int, Z0: float, Z1: float) -> float:
 	return t * t * (3.0 - 2.0 * t)
 
 
+## A landing turns less rather than not at all (Game Design rulings-2026-10-22 5a): the pivot was fixed at the ask, at where the pair were expected to rest; the ring turns about it, so the
+## ground under a fighter s units from it moves s x sin(angle). If the larger s over the fighters would move more than moveMax (300 units), the angle is scaled down to the one that moves
+## exactly that much, never under minDeg (2) and never over the chosen bearing. The pivot is not re-picked (that would be a new ring read on the swap tick); a scaled turn reads its ring on the
+## tick (a warm read is of the chosen angle), a hitch only when the pair is off the pivot. nx is changed: its spec, bearing and drift are the ones used.
+static func _scale(S: SimState, E: Dictionary, nx: Dictionary, P: WorldPlanet.Planet) -> void:
+	var d: Dictionary = data()
+	var px: float = float(nx.pc) * SimConst.COL
+	var smax: float = 0.0
+	for f in S.fighters:
+		smax = maxf(smax, absf(SimWrap.sdx(px, f.x)))
+	var deg: float = absf(float(nx.bearing))
+	if smax * sin(deg * PI / 180.0) <= float(d.moveMax):
+		return
+	var want: float = asin(minf(1.0, float(d.moveMax) / smax)) * 180.0 / PI
+	var use: float = minf(deg, maxf(float(d.minDeg), want))
+	if use >= deg - 1e-9:
+		return
+	var sgn: float = 1.0 if float(nx.bearing) >= 0.0 else -1.0
+	var ns: Dictionary = turned(P, E.ring, int(nx.pc), sgn * use)
+	nx.spec = ns
+	nx.bearing = sgn * use
+	nx.drift = driftOf(E.c0, ns.c)
+	nx.scaled = true
+	_jobs.erase(_key(S))   # the warm read was of the chosen angle
+
+
 ## The swap, in one step, on a calm tick (docs/world/calm-turn-world.md). The ground inside the zone keeps its columns and fades into the new ring's; the marks (craters, rubble, scorch, cracks)
 ## fade the same way and are gone outside; the buildings inside the zone stay as they are, with their people; the new ring's other places are laid fresh outside it; the fighters keep their
 ## columns and are set on the new ground. The epoch moves on. An `arena_turn` event tells Rendering and Camera.
@@ -205,6 +241,7 @@ static func swap(S: SimState) -> void:
 	var nx: Dictionary = E.next
 	var seed: int = int(E.seed)
 	var P := WorldPlanet.make(seed)
+	_scale(S, E, nx, P)
 	var spec: Dictionary = nx.spec
 	var ring: Dictionary = WorldRingPick.ringFrom(spec.c, int(spec.cols), spec.t)
 	var job = _jobs.get(_key(S))

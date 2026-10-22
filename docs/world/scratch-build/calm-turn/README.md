@@ -1,12 +1,17 @@
 # The calm-moment turn (window 3): in scratch on main's HEAD, parked, not applied
 
-Re-cut 2026-10-22 on 79693404 (windows 0, 1, 4 and farColumn applied, and the surface-class fix) against Encounter's `docs/director/calm-turn.md` and Game Design's `rulings-2026-10-19b.md` section 1 with 1e. Design and findings: `docs/world/calm-turn-world.md`. **Behind a switch, off (`rings.json` `turn.on` 0, or `setup.arena.turn`): the golden is unchanged.**
+Re-cut 2026-10-22 on 03427822 (the calm turn's fix, Game Design's rulings-2026-10-22 5a, below), earlier on 79693404 (windows 0, 1, 4 and farColumn applied, and the surface-class fix) against Encounter's `docs/director/calm-turn.md` and Game Design's `rulings-2026-10-19b.md` section 1 with 1e. Design and findings: `docs/world/calm-turn-world.md`. **Behind a switch, off (`rings.json` `turn.on` 0, or `setup.arena.turn`): the golden is unchanged.**
 
 | File | What |
 | :--- | :--- |
 | `calm-turn-window3.diff` (14 files) | `sim/world/epoch.gd` (`WorldEpoch`) and `epoch_check.gd` (+ `.uid`); `planet.gd` (`readSlice` in three steps, `RingJob`, `memoRing`); `planet_world.gd` (`gen` split into `chordsOf`, `settleBiomes`, `platform`, `settle`: the same world); `ringpick.gd`, `rings.json` and its schema (the `turn` block); **Simulation's lines** `state.gd`, `hash.gd`, `view/fx.gd`, `sim.gd`; **Tools'** one case in `cases.json`. `mk_turn.py` makes it |
 | `epoch.gd.txt`, `planet_world_tail.gd.txt`, `epoch_check.gd.txt` | The module, the new `planet_world.gd`, the check as they stand |
 | `turn_dump.gd.txt`, `gen_turn.py`, `turn_whole.json` | The picture: a real turn dumped by `turn_dump.gd`, drawn by `gen_turn.py` into `homework/31c-a-turn.svg` |
+
+## Game Design's fix (rulings-2026-10-22 5a) and Encounter's grant, both in
+
+- **A landing turns less rather than not at all.** The pivot is fixed at the ask. At the swap the larger distance `s` of a fighter from it is read: if `s` x sin(angle) would move the ground under a fighter more than `moveMax` (300 units, in the data), the angle is scaled down to the one that moves exactly that much, never under `minDeg` (2) and never over the chosen bearing (the 10 degree cap stands). The pivot is not re-picked at the swap. A scaled turn reads its ring on the tick (a warm read is of the chosen angle): a hitch (about 150 to 450 ms) only when the pair is off the pivot. `epoch_check`: a pivot off by 0, 3,600, 9,000 and 40,000 units gives 10.00, 4.60, 2.00 and 2.00 degrees; the ground under the fighters moved 22, 299, 311 and (floor) units.
+- **Encounter's calm-turn grant is folded in** (`choose` records the pick's tick and `due`, `cancel(S)` drops a pending pick): do not run `docs/director/pending/calm-turn/grant_world.cjs` (it refuses: `cancel` exists already). Neither is hashed.
 
 ## Simulation's two conditions on `hash.gd` (2026-10-22), in
 

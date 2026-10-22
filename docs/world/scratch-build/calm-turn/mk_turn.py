@@ -186,8 +186,8 @@ def viewfx(s):
 
 def rings_json(p):
     d = json.load(open(p, encoding='utf-8'), object_pairs_hook=OD)
-    d['turn'] = OD([("on", 0), ("maxTurns", 4), ("gapSeconds", 60.0), ("driftDeg", 40.0), ("bearings", [2.5, 5.0, 7.5, 10.0]), ("carryUnits", 12000.0), ("viewUnits", 16000.0)])
-    d['_about'] = d['_about'] + " turn: the calm-moment turn (docs/world/calm-turn-world.md; WorldEpoch; Game Design rulings-2026-10-19b.md 1a to 1d): on 0 or 1 (off), maxTurns a fight, gapSeconds of fight time between turns, driftDeg the most the ring's axis may move in all, bearings the candidate turns in degrees (none over 10), carryUnits how far each way from the pair the ground, craters and buildings stay, viewUnits how far each way a turn counts the places it brings into view."
+    d['turn'] = OD([("on", 0), ("maxTurns", 4), ("gapSeconds", 60.0), ("driftDeg", 40.0), ("bearings", [2.5, 5.0, 7.5, 10.0]), ("carryUnits", 12000.0), ("viewUnits", 16000.0), ("moveMax", 300.0), ("minDeg", 2.0)])
+    d['_about'] = d['_about'] + " turn: the calm-moment turn (docs/world/calm-turn-world.md; WorldEpoch; Game Design rulings-2026-10-19b.md 1a to 1d): on 0 or 1 (off), maxTurns a fight, gapSeconds of fight time between turns, driftDeg the most the ring's axis may move in all, bearings the candidate turns in degrees (none over 10), carryUnits how far each way from the pair the ground, craters and buildings stay, viewUnits how far each way a turn counts the places it brings into view, moveMax the most the ground under a fighter may move at a turn (a turn about a mispredicted pivot is scaled down to it: Game Design 2026-10-22 5a) and minDeg the least angle it is scaled to."
     open(p, 'w', encoding='utf-8', newline='').write(json.dumps(d, indent=2) + '\n')
 
 
@@ -195,14 +195,16 @@ def rings_schema(p):
     j = json.load(open(p, encoding='utf-8'), object_pairs_hook=OD)
     j['required'].append('turn')
     num = lambda lo, hi, desc: OD([("type", "number"), ("minimum", lo), ("maximum", hi), ("description", desc)])
-    j['properties']['turn'] = OD([("type", "object"), ("required", ["on", "maxTurns", "gapSeconds", "driftDeg", "bearings", "carryUnits", "viewUnits"]), ("additionalProperties", False), ("properties", OD([
+    j['properties']['turn'] = OD([("type", "object"), ("required", ["on", "maxTurns", "gapSeconds", "driftDeg", "bearings", "carryUnits", "viewUnits", "moveMax", "minDeg"]), ("additionalProperties", False), ("properties", OD([
         ("on", OD([("enum", [0, 1]), ("description", "The calm-moment turn: 0 off, 1 on.")])),
         ("maxTurns", OD([("type", "integer"), ("minimum", 0), ("maximum", 12), ("description", "Turns a fight (Game Design: 4).")])),
         ("gapSeconds", num(0, 600, "Fight seconds between turns (Game Design: 60).")),
         ("driftDeg", num(0, 90, "The most the ring's axis may move in all, in degrees (Game Design: 40).")),
         ("bearings", OD([("type", "array"), ("minItems", 1), ("maxItems", 8), ("items", num(0.5, 10, "A candidate turn in degrees: none over 10 (Game Design).")), ("description", "The candidate bearings.")])),
         ("carryUnits", num(1000, 40000, "How far each way from the pair the ground and its marks and buildings stay.")),
-        ("viewUnits", num(1000, 40000, "How far each way a turn counts the places it brings into view."))]))])
+        ("viewUnits", num(1000, 40000, "How far each way a turn counts the places it brings into view.")),
+        ("moveMax", num(0, 5000, "The most the ground under a fighter may move at a turn, in units (Game Design: 300): a turn about a mispredicted pivot is scaled down to it.")),
+        ("minDeg", num(0.1, 10, "The least angle a turn is scaled to (Game Design: 2 degrees)."))]))])
     open(p, 'w', encoding='utf-8', newline='').write(json.dumps(j, indent=2) + '\n')
 
 

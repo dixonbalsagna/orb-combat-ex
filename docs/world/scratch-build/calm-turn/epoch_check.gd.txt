@@ -224,6 +224,44 @@ func _init() -> void:
 						if not WorldEpoch._held(PL, nr2, pp.id) or WorldEpoch._held(PL, old2, pp.id) or absf(pp.arc) > float(d.viewUnits):
 							wrong += 1
 	ok(lists >= 40 and wrong == 0, "over 8 planets, 3 pivots and both sides (%d candidate lists), every place a turn lists (%d in all) is held by the new ring, not the old, within view" % [lists, listed])
+	# --- a landing turns less rather than not at all: the angle is scaled so the ground under the fighters moves at most 300 units, never under 2 degrees
+	var scaledOk: bool = true
+	var scaleLog: Array = []
+	for off in [0.0, 3600.0, 9000.0, 40000.0]:
+		var Sg := ready(4800)
+		var pxg: float = mid(Sg)
+		var P4 := WorldPlanet.make(7)
+		WorldEpoch.ask(Sg, "landing", pxg - off, 1, 0)   # the pivot predicted `off` units from where the pair rest
+		WorldEpoch.choose(Sg, 3)   # the 10 degree candidate
+		var ringG: Dictionary = WorldRingPick.ringFrom(Sg.epoch.ring.c, 4800, Sg.epoch.ring.t)
+		var smax: float = 0.0
+		for f in Sg.fighters:
+			smax = maxf(smax, absf(SimWrap.sdx(float(Sg.epoch.next.pc) * SimConst.COL, f.x)))
+		WorldEpoch.tick(Sg, true)
+		var used: float = 0.0
+		for e in Sg.out.fx:
+			if e.type == "arena_turn":
+				used = e.amount
+		var want: float = 10.0
+		if smax * sin(10.0 * PI / 180.0) > 300.0:
+			want = maxf(2.0, asin(300.0 / smax) * 180.0 / PI)
+		var nrG: Dictionary = WorldRingPick.ringFrom(Sg.epoch.ring.c, 4800, Sg.epoch.ring.t)
+		var move: float = 0.0
+		for f in Sg.fighters:
+			var colf: int = posmod(int(round(f.x / SimConst.COL)), SimConst.NC)
+			var a1: Array = WorldPlanet.columnPoint(P4, ringG, colf)
+			var b1: Array = WorldPlanet.columnPoint(P4, nrG, colf)
+			move = maxf(move, sqrt(pow(a1[0] - b1[0], 2) + pow(a1[1] - b1[1], 2) + pow(a1[2] - b1[2], 2)) * P4.R)
+		if Sg.epoch.n != 1 or absf(used - want) > 1e-6 or (want > 2.0 and move > 300.0 * 1.02):
+			scaledOk = false
+		scaleLog.append("%.0f off: smax %.0f, %.2f degrees (wanted %.2f), ground moved %.0f" % [off, smax, used, want, move])
+	ok(scaledOk, "a turn about a pivot off by 0, 3,600, 9,000 and 40,000 units: the angle is the 10 degrees, then scaled so the ground under the fighters moves at most 300, never under 2 (%s)" % " | ".join(scaleLog))
+	var Sc := ready(2400)
+	WorldEpoch.ask(Sc, "t", mid(Sc), 1, 0)
+	WorldEpoch.choose(Sc, 0)
+	ok(Sc.epoch.next.tick == Sc.tick and Sc.epoch.next.due == 0, "choose records its tick and the moment's due")
+	WorldEpoch.cancel(Sc)
+	ok(Sc.epoch.next == null and Sc.epoch.ask == null and not WorldEpoch.ask(Sc, "t", mid(Sc), 1, 0).is_empty(), "cancel drops a pending pick, and the director can ask again")
 	# --- the warm read is the read
 	var Sw := ready(1200)
 	WorldEpoch.ask(Sw, "test", mid(Sw), 1, 0)
