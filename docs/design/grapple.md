@@ -68,7 +68,7 @@ The clinch's rules are the clinch pitch's, with the pulse of every timed contest
 | **The reversal** | The one two behind | His sharp pummel on the same pulse as the leader's throw throws instead, by his own stick. It hands the brawl what that throw would |
 | **A broken region** | The striker | A vicious blow that breaks a region ends the clinch, and the broken fighter staggers for 24 ticks: an opening |
 | **The push-off** | Either, from even or ahead | A on the pulse with the stick away from him. Both are 3 bh apart, the brawl lets go, and the pusher has a 20-tick first move. No damage |
-| **The time** | The grip's leader | At 90 ticks both part 1.5 bh, and **the leader has a 20-tick first move** (re-ruled 2026-10-17, §9). At even, nobody does, and the brawl goes on |
+| **The time** | The grip's leader | At 60 ticks **a fighter one or more ahead throws,** by his stick, instead of parting (2026-10-22, `rulings-2026-10-22.md` §1c). Only an even grip parts: 1.5 bh, and the brawl goes on |
 | **The tech** | The one caught | His own tap of A within 8 ticks of the catch breaks it before the clinch: both 1.5 bh apart |
 | **A burst** | The one who bursts | As a burst does: it breaks any grab, at its price in ki |
 | **An interjection** (one versus many) | The ring | A ring blow that lands on him in a clinch breaks it, and both part. One partner and the ring's single blows still hold (`empress-guards.md` §5) |
@@ -101,12 +101,12 @@ The clinch's rules are the clinch pitch's, with the pulse of every timed contest
 | :--- | :--- |
 | A stray moves the grip | Never (hard) |
 | A masher of A in the clinch against a fighter who doesn't press | Wins no more grip |
-| The clinch's length | Median 30 to 55 ticks, at most 60 (hard); time-outs under 30% |
+| The clinch's length | Median 35 to 60 ticks, at most 60 (hard); evens timing out under 30% (2026-10-22) |
 | A thrown fighter grabbed again inside 120 ticks | Never (hard) |
 | The AI's tech starts within its reaction time of the tell's start | Never (hard) |
-| Throws a match, default arm | 1 to 4 |
+| Throws a match, default arm | 2 to 5 (2026-10-22) |
 | A throw's opening (a bury, an air throw or a wall slam) followed by a launch | 15 to 40% of them: the chain happens |
-| **Grab and follow,** against medium: he catches when in reach, pummels within 3 ticks of the pulse, throws down at two ahead, and presses B on the bury | Wins 25 to 50%. It replaces the A-only row (2026-10-19): a grab-only player has no damage of his own by design, since the grapple is "a way to set up combo chains" |
+| **Guard and grab** against medium: he guards whenever the AI winds up and he isn't in a clinch, catches in reach, pummels within 3 ticks, throws down and presses B on the bury. Against **guard only,** the same script without grabs | Guard and grab wins 15 to 45%, and at least 15 points more than guard only (2026-10-22, `rulings-2026-10-22.md` §1d): grabs add to a defended game |
 | Catch tells a minute, AI against AI | 1 to 3 |
 | The route player and launches a match, with grappling on | Read again: the route's edges and the band of 4 to 10 launches a match |
 

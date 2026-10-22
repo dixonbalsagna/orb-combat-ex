@@ -42,7 +42,7 @@ The launcher keeps its 14-tick wind-up. **It is armoured against lights, and ful
 | :--- | :--- | :--- |
 | **Open** (an opening) | **Sure:** it always lands | None. He keeps half his nudge, so he has a say in where he goes |
 | **Reeling from a medium, a heavy, a vicious blow or a perfect follow-up** | **Hard to answer:** his reel covers most of the wind-up | A perfect block, giving ground started at once, or a burst |
-| **Reeling from a light or a bolt, or free** | **Answerable** | All of the above, plus a catch (`grapple.md`) or a medium started early. Its armour takes one light, and a second within 6 ticks of the first stops it, so a flurry is an answer and a busy string's spaced lights aren't |
+| **Reeling from a light or a bolt, or free, after a string of one point** | **Answerable** | All of the above, plus a catch (`grapple.md`) or a medium started early. Its armour takes one light, and a second within 6 ticks of the first stops it. **A string of two points or more makes it hard to answer instead,** armoured against lights whatever the last blow was (2026-10-22, `rulings-2026-10-22.md` §1b), so a real string isn't trapped |
 
 **What an answered launcher costs him:**
 - **Perfect-blocked:** the reversal, and the launcher's player staggers for 20 ticks. That is an opening, so the defender's own launcher is sure: **the counter-launch.**
@@ -102,7 +102,8 @@ So "X then B" thrown at a fighter who answers is punished. A string worked up to
 | **Full launches** a match (power 0.7 or more at the send, after freshness): the AI against itself, both together, per 7 minutes of fight | 6 to 12. By the route's player and on him: watched, not banded (homework 30, `rulings-2026-10-18b.md`). The route's edges are the dominance test |
 | All launches a match, pops included | Watched, not banded |
 | One kind's share of a fighter's launches, default arm | At most 50% |
-| The spammer's launchers answered by medium | 20 to 50% (re-banded 2026-10-17, §11) |
+| The spammer's launchers (one light, then B) answered by medium | 50 to 80%: the weakest launcher should be answered more often than not (re-scoped 2026-10-22, `rulings-2026-10-22.md` §1b) |
+| **The string launcher** (two blows or a medium, then B) answered by medium; AI v AI's launchers answered | 20 to 50%; 20 to 50% |
 
 **The levers, in order, and none of them a timer:**
 1. freshness, from ×0.75 to ×0.65;
