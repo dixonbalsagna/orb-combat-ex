@@ -29,7 +29,7 @@ A launched body no longer flies at one speed. Its speed follows a curve the came
 
 - **In a smaller arena** (`rulings-2026-10-19b.md` §3: Whole, Half, Close), the glide's cruise is scaled by the arena's size, so a launch never carries more than a sixth of the loop: 6,400 units on Close.
 - **The AI's free-flight approach** is capped near Camera's whip limit unless the camera rides with it (`rulings-2026-10-19b.md` §4d). **A chase of a launch lifts the cap,** since the camera rides it.
-- **The AI chases a launch it threw** on 10, 25 or 40% of its launches by level: more when the send goes up into open sky, and only with the zip's ki. QA's row: 1 to 4 chases a match, AI v AI (`rulings-2026-10-22.md` §5d).
+- **The AI chases a launch it threw** on 10, 25 or 40% of its launches by level: more when the send goes up into open sky. **A chase is the zip and pays its ki:** it flies at 1.25 times the sent body's speed, at least 1,900 u/s, so it catches within about 60 ticks. Without the ki there is no chase (`rulings-2026-10-22.md` §7c). QA's row: 1 to 4 chases a match, AI v AI (`rulings-2026-10-22.md` §5d).
 - **Who builds it.** Simulation: the curve as a speed profile on a sent body, deterministic. Encounter: the planner predicts with it. Camera: the push, the whip, the chase and the arrival's framing.
 - **QA's rows:** a full launch's flight from 1.0 to 1.6 s; the sent body inside the frame (or its pane) for at least 95% of a flight's ticks.
 
@@ -119,5 +119,6 @@ Combat's §4, ruled (`rulings-2026-10-22.md` §2d).
 | A decisive blow (a finisher's last, a duel of perfects' send, a blow that breaks a region) | 20, and the KO 24 at most |
 
 - **Both bodies freeze,** and the struck one shakes more.
-- **The budget is 18%** of a minute of fight. Overlapping stops merge. **The second step:** over the budget in any rolling 10 s, every stop under a decisive blow is ×0.75 (rounded, at least 2) until it falls back under. Decisive blows are never cut.
+- **A player's press after an exchange waits at most 6 ticks, and 12 after a set piece's end** (`rulings-2026-10-22.md` §7a). The AI keeps the director's beat.
+- **The budget is 18%** of a match's fight time (12.4% read, accepted: `rulings-2026-10-22.md` §7d). A ten-second block over 18% triggers the step; **no block may exceed 40% frozen,** and over that the step is ×0.5 in the block. Overlapping stops merge. **The second step:** over the budget in any rolling 10 s, every stop under a decisive blow is ×0.75 (rounded, at least 2) until it falls back under. Decisive blows are never cut.
 - **No window shortens:** the perfect and parry windows end at least 5 live ticks after the freeze ends.
