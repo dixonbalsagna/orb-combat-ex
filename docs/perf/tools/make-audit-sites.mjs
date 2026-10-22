@@ -18,6 +18,7 @@
 //   evlog      base + the event-type log of each tick (what the sim did at a hitching tick)
 //   lat        base + the input-latency scene (hook-latency.mjs; docs/perf/tools/latency-bench.mjs reads it)
 //   strip      base + page flag sx= that switches off one piece of the strip at a time (hook-strip.mjs)
+//   ring       base + main's own ring read (WorldPlanet.readSlice) behind window.__slicebench (k1200, k2400, k4800), for the old-laptop cost of World's ring read
 //   evprof     evlog + the profiling timers (the CPU time of each section at a hitching tick)
 //   aura       base + VFX's parked 3D aura (apply.patch, grant-fighter-view.patch) and a page flag aura=1 (auradem=1: both shells at full level)
 //   lowprof    depthprof + a page flag lowq=1 (VFX quality low, automatic step off): the reduced-effects mode
@@ -56,6 +57,7 @@ const SPEC = {
   nowarm: { patches: ['R:docs/perf/tools/scratch-hooks/inset-warm.patch'], hooks: ['perf', 'slice'] },
   lat: { patches: [], hooks: ['perf', 'slice', 'latency'] },
   strip: { patches: [], hooks: ['perf', 'slice', 'strip'] },
+  ring: { patches: [], hooks: ['perf', 'slice', 'ring'] },
   evlog: { patches: [], hooks: ['perf', 'slice', 'evlog'] },
   evprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'evlog'] },
   aura: { patches: ['docs/vfx/pending/aura3d/apply.patch', 'docs/vfx/pending/aura3d/grant-fighter-view.patch'], hooks: ['perf', 'slice', 'aura'] },
@@ -65,7 +67,7 @@ const SPEC = {
   layerprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'layers'] },
   lowprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'depth', 'lowq'] },
 };
-const HOOK = { perf: ['hook-perf.mjs'], slice: ['hook-slice.mjs', SLICE_LIB], prof: ['hook-prof.mjs'], slicec8: ['hook-slice-c8.mjs'], depth: ['hook-depth.mjs'], layers: ['hook-layers.mjs'], lowq: ['hook-lowq.mjs'], aura: ['hook-aura.mjs'], evlog: ['hook-evlog.mjs'], latency: ['hook-latency.mjs'], strip: ['hook-strip.mjs'] };
+const HOOK = { perf: ['hook-perf.mjs'], slice: ['hook-slice.mjs', SLICE_LIB], prof: ['hook-prof.mjs'], slicec8: ['hook-slice-c8.mjs'], depth: ['hook-depth.mjs'], layers: ['hook-layers.mjs'], lowq: ['hook-lowq.mjs'], aura: ['hook-aura.mjs'], evlog: ['hook-evlog.mjs'], latency: ['hook-latency.mjs'], strip: ['hook-strip.mjs'], ring: ['hook-ring.mjs'] };
 
 function godot(dir, args, log, limitS) {
   return new Promise((ok) => {

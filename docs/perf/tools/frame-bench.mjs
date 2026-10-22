@@ -197,6 +197,7 @@ try {
       over_16_7_per_600: Array.from({ length: Math.ceil(n / 600) }, (_, b) => r.slice(b * 600, (b + 1) * 600).filter((x) => x > 16.7).length),
     };
   }
+  if (argv.includes('--save-rtt')) result.rtt = raw.rtt.map((x) => +x.toFixed(1));   // every frame time of the measured part, for an offline look at periods
   result.over_16_7 = raw.rtt.filter((x) => x > 16.7).length; result.over_25 = raw.rtt.filter((x) => x > 25).length;   // on a display-locked GPU run a frame is 16.7 or 33.3 ms: frames over 25 ms are the missed refreshes result.over_33_3 = raw.rtt.filter((x) => x > 33.3).length;
   result.tickReached = raw.tick;
   result.ticks_per_frame = +(raw.ticks / raw.frames).toFixed(3);   // 1 is one tick per animation frame, as in play

@@ -8,6 +8,8 @@ Owner: Performance and Platform (`docs/directors/performance-platform.md`).
 | [audit-2026-10-16.md](audit-2026-10-16.md) | A measured audit of main: frame time in the web build against the tiers, the cost of the parked work, the hot spots, budgets for the planet slice and the run mode |
 | [inset-hitches-aura-2026-10-22.md](inset-hitches-aura-2026-10-22.md) | The inset warm-up measured (no effect on the tick-238 hitch), the tick-131 hitch is the driver, the aura's cost on the old-laptop bound, the repro |
 | [input-latency-2026-10-22.md](input-latency-2026-10-22.md) | Press to first changed picture for a light, a dash and a guard on the web build (RTX, integrated GPU, CPU x4): the light starts 5 ticks late in the sim; the rest is inside budget |
+| [frame-pacing-2026-10-22.md](frame-pacing-2026-10-22.md) | A 2-minute AI match and a 2-player brawl: the distribution, the worst 1%, the swing between frames, repeating spikes (none), and why the integrated GPU has slow stretches (the terrain grows with craters) |
+| [batch-e09dbbbf-2026-10-22.md](batch-e09dbbbf-2026-10-22.md) | The hitch repro and the ring read (k32 at x4) re-run on e09dbbbf |
 | [stores-and-consoles.md](stores-and-consoles.md) | Where the game can be listed, consoles included, with requirements, cost, order, and what PlayStation friends can do today |
 | [phone-web-fullscreen.md](phone-web-fullscreen.md) | Full screen, Home Screen install and landscape on phones in the web build; a checklist for a real phone |
 | `web-shell/` | The web page's phone block (`ocx-shell.js`, the manifest, placeholder icons, the site-builder patch) |
