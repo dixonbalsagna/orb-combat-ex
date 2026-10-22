@@ -17,6 +17,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { exportPinned } from '../site-pin.mjs';
 
 const HERE = import.meta.dirname;
 const DEFAULT_HISTORY = join(HERE, 'nightly-seeds.json');
@@ -25,6 +26,13 @@ export const TAKE_DOWN_ABOVE_OWNER = 3.5;   // under Orb's owner-approved interi
 
 /** The limit the nightly applies for a site config: 3.5 while the interim is the owner's decision, else 3. */
 export function limitFor(config) { return config && config.interim && typeof config.interim.owner === 'string' && config.interim.owner.trim() ? TAKE_DOWN_ABOVE_OWNER : TAKE_DOWN_ABOVE; }
+
+/** The limit from the interim's own record (tools/site-interim-owner.json "record".take_down_above), used when the site is offline or a pin is given: site.json then says nothing about the
+ *  interim (offline, interim null), and reading it would apply 3 where the owner-approved limit is 3.5. A missing or odd record gives 3, the stricter limit. Pure. */
+export function limitFromRecord(words) {
+  const v = words && words.record && words.record.take_down_above;
+  return typeof v === 'number' && Number.isFinite(v) && v >= TAKE_DOWN_ABOVE ? v : TAKE_DOWN_ABOVE;
+}
 
 /** The next `count` seeds from `base` that are in neither the recorded set nor the history. Pure. */
 export function nextSeeds(count, base, recorded, used) {
@@ -64,6 +72,10 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   // the pinned commit: tools/site-pin.mjs (the recorded one), or --pin <sha> (a test or a recorded run not yet flipped online)
   let config = {};
   try { config = JSON.parse(readFileSync(join(HERE, '..', 'site.json'), 'utf8')); } catch { /* no config: the default limit */ }
+  // --pin <sha> works while the site is offline: the export is made from that commit directly (not through site.json, which has no pin to give when offline) and the limit comes from the
+  // interim's record (tools/site-interim-owner.json), not from site.json
+  let words = null;
+  try { words = JSON.parse(readFileSync(resolve(opt('--record', join(HERE, '..', 'site-interim-owner.json'))), 'utf8')); } catch { /* no record: the stricter limit */ }
   const pinRun = opt('--pin') ? { status: 0, stdout: opt('--pin'), stderr: '' } : spawnSync(process.execPath, [join(HERE, '..', 'site-pin.mjs')], { encoding: 'utf8' });
   const pin = (pinRun.stdout || '').trim();
   if (pinRun.status !== 0 || !/^[0-9a-f]{40}$/.test(pin)) { console.error(`nightly seeds: no pinned commit (the site is offline, or the pass file has no usable record): ${(pinRun.stderr || '').trim()}`); process.exit(2); }
@@ -79,14 +91,22 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (args.includes('--dry-run')) process.exit(0);
   mkdirSync(work, { recursive: true });
   if (!existsSync(join(web, 'index.html')) && !args.includes('--no-export')) {
-    const ex = spawnSync(process.execPath, [join(HERE, '..', 'site-pin.mjs'), '--export', web, '--tree', join(work, 'tree')], { stdio: 'inherit', env: process.env });
-    if (ex.status !== 0) { console.error('nightly seeds: the pinned export failed (is $GODOT set?)'); process.exit(2); }
+    if (opt('--pin')) {
+      try {
+        const tree = exportPinned(pin, web, { tree: join(work, 'tree'), godot: opt('--godot') || process.env.GODOT, lock: true });   // lock: the interim's export, as the site would serve it
+        console.log(`pinned ${pin.slice(0, 8)} exported to ${web} (tree ${tree})`);
+      } catch (e) { console.error(`nightly seeds: the pinned export failed (is $GODOT set?): ${e.message}`); process.exit(2); }
+    } else {
+      const ex = spawnSync(process.execPath, [join(HERE, '..', 'site-pin.mjs'), '--export', web, '--tree', join(work, 'tree')], { stdio: 'inherit', env: process.env });
+      if (ex.status !== 0) { console.error('nightly seeds: the pinned export failed (is $GODOT set?)'); process.exit(2); }
+    }
   }
   const out = join(work, date);
   const rp = spawnSync(process.execPath, [join(HERE, 'run-pixels.mjs'), '--dir', web, '--path', '/index.html?flashcap=1', '--out', join(out, 'clips'), '--jobs', jobs, '--cpu-cap', cap, '--seeds', seeds.join(',')], { stdio: 'inherit', env: { ...process.env, MERIDIAN_SESSION: process.env.MERIDIAN_SESSION || 'tools' } });
   let rows = [];
   try { rows = JSON.parse(readFileSync(join(out, 'clips', 'summary.json'), 'utf8')); } catch { /* reported as missing */ }
-  const limit = limitFor(config);   // 3 normally; 3.5 under the owner-approved interim (Legal's addendum 11)
+  // 3.5 under the owner-approved interim (Legal's addendum 11); the record gives it when the site is offline or a pin was given, the live site.json when the interim is online
+  const limit = opt('--pin') || config.offline === true || !config.interim ? limitFromRecord(words) : limitFor(config);
   const r = readRun(rows, seeds, limit);
   const line = reportLine(date, pin, seeds, r, limit);
   console.log(line);

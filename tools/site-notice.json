@@ -12,7 +12,7 @@
       "h2": "A limited test build is up for now."
     },
     {
-      "p": "It sits behind a notice because our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent photosensitivity analyser has been run. It is a limited test build and may be taken down without notice. There is no date for a full release."
+      "p": "It sits behind a notice because our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent photosensitivity analyzer has been run. It is a limited test build and may be taken down without notice. There is no date for a full release."
     },
     {
       "h2": "Combos that build as you fight"

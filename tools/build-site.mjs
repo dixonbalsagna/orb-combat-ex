@@ -295,7 +295,7 @@ writeFileSync(
 </head>
 <body>
 <h1>Orb Combat EX</h1>
-<p>Free to play. The build runs in your browser. Built with AI tools under one person's direction; licence not chosen yet, all rights reserved for now.</p>
+<p>Free to play. The build runs in your browser. Built with AI tools under one person's direction; license not chosen yet, all rights reserved for now.</p>
 <ul>
   <li><a href="play/">Play the Godot build</a> (work in progress)</li>
 </ul>

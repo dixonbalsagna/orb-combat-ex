@@ -49,7 +49,7 @@ export function aboutPage(text, lic, links) {
   parts.push(blocksHtml(text.about.blocks));
   parts.push(`<p><a href="${esc(links.play)}">${esc(text.gate.button)}: the game's first screen</a></p>`);
   parts.push('<h2>Godot Engine</h2>');
-  parts.push(`<p>This game runs on the Godot Engine ${esc(lic.godot_version)} (godotengine.org), under its MIT licence:</p>`);
+  parts.push(`<p>This game runs on the Godot Engine ${esc(lic.godot_version)} (godotengine.org), under its MIT License:</p>`);
   parts.push(`<pre>${esc(lic.license_text)}</pre>`);
   parts.push('<h2>Open Sans</h2>');
   for (const c of (lic.copyright || []).filter((x) => /open sans/i.test(x.name))) for (const p of c.parts) {
@@ -57,7 +57,7 @@ export function aboutPage(text, lic, links) {
   }
   if (lic.licenses && lic.licenses['OFL-1.1']) parts.push(`<pre>${esc(lic.licenses['OFL-1.1'])}</pre>`);
   parts.push('<h2>Other components in the engine</h2>');
-  parts.push('<p class="small">The components the Godot Engine itself lists, with their copyright holders and licences. The licence texts follow.</p>');
+  parts.push('<p class="small">The components the Godot Engine itself lists, with their copyright holders and licenses. The license texts follow.</p>');
   const rows = [];
   for (const c of lic.copyright || []) {
     if (/^godot engine$/i.test(c.name)) continue;

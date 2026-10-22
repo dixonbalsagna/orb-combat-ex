@@ -9,7 +9,7 @@
 //   - "Not now" on the gate does not go to the holding page;
 //   - any page lacks noindex or has a description, keywords, og: or twitter: tag;
 //   - "Reduce flashing" is not on by default in the shipped prefs (ui/data/options.json default, ui/data/features.json, and the default in ui/hud/ui_hud.gd);
-//   - the gate's words lack what Legal ruled (flashing effects, the finding against three a second, "no independent analyser has been run", the advice for photosensitive epilepsy,
+//   - the gate's words lack what Legal ruled (flashing effects, the finding against three a second, "no independent analyzer has been run", the advice for photosensitive epilepsy,
 //     "I understand, start", "Not now", the Reduce flashing line, the AI line) or the About page lacks the AI line, the privacy line of the feedback target in use (ui/data/send.json),
 //     the Godot (MIT) line or the Open Sans (OFL) line; or any page uses "safe", "seizure-safe", "tested for photosensitivity", "WCAG compliant", "certified" or "no flashing";
 //   - the placeholder-name scan finds KAI, VORR, Meridian or Calamity in a page, or in a file of the game's pack that is not on the allowlist (tools/site-name-scan.json).
@@ -39,8 +39,14 @@ const LEGAL_AI = 'Orb Combat EX is a one-person project. Orb directs it, and AI 
 const PRIVACY = {
   none: 'This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button copies a report to your clipboard for you to paste to Orb; nothing is sent by the game.',
 };
-const GODOT_LINE = 'Made with Godot Engine. Copyright (c) 2014-present Godot Engine contributors; copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur. Released under the MIT licence.';
-const SANS_LINE = 'Open Sans: Copyright 2020 The Open Sans Project Authors. Released under the SIL Open Font Licence 1.1.';
+const GODOT_LINE = 'Made with Godot Engine. Copyright (c) 2014-present Godot Engine contributors; copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur. Released under the MIT License.';
+const SANS_LINE = 'Open Sans: Copyright 2020 The Open Sans Project Authors. Released under the SIL Open Font License 1.1.';
+// Legal's fixed lines for the owner-approved page, word for word (docs/legal/page-fixed-lines.md, RL-166, 2026-10-22): the flash notice (the gate and the About page carry the same words) and the lock line
+const OWNER_FLASH = 'This game contains flashing effects. Our own automated check found some scenes that go over the recommended limit of three flashes a second, and they are not fixed yet. No independent analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.';
+const OWNER_LOCK = 'Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes.';
+// British spellings Legal lists; the public text is American English (Orb's rule p03). Internal setting ids may keep them: only text a visitor can read is scanned.
+const BRITISH = /\b(colour|behaviour|grey|centre|artefact|programme|catalogue|neighbour|organis|recognis|licence|analyser)/i;
+const visibleText = (html) => textOf(html.replace(/<ul class="small">[\s\S]*?<\/ul>/g, ' '));   // not the engine's own component list (third-party names); <pre> texts are dropped by textOf
 const decode = (s) => s.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 const textOf = (html) => decode(html.replace(/<pre>[\s\S]*?<\/pre>/g, ' ').replace(/<style>[\s\S]*?<\/style>/g, ' ').replace(/<script>[\s\S]*?<\/script>/g, ' ').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ');
 
@@ -120,7 +126,7 @@ if (play) {
   const need = [
     [/This game contains flashing effects/, 'the gate does not say the game contains flashing effects'],
     [/three flashes a second/, 'the gate does not state the finding against the recommended three flashes a second'],
-    [/[Nn]o independent analyser has been run/, 'the gate does not say no independent analyser has been run'],
+    [/[Nn]o independent analyzer has been run/, 'the gate does not say no independent analyzer has been run'],
     [/photosensitive epilepsy, please do not play this version/, 'the gate does not carry the advice for people with photosensitive epilepsy'],
     [/I understand, start/, 'the gate has no "I understand, start" button'],
     OWNER ? [/Reduce flashing is on and cannot be turned off in this version\. It lowers some effects but does not remove the flagged scenes\./, "the gate's line that Reduce flashing is on and cannot be turned off (Legal's addendum 11 wording) is missing"] : [/Reduce flashing is on\. It lowers some effects but does not remove the flagged scenes\./, "the gate's small line about Reduce flashing is missing"],
@@ -130,6 +136,9 @@ if (play) {
   if (!OWNER && !gateText.includes(LEGAL_FIRST)) bad("/play/: the gate's first sentence is not Legal's (RL-137)");
   if (OWNER && words && words.gate && words.gate.blocks && words.gate.blocks[0] && !gateText.includes(words.gate.blocks[0].p)) bad("/play/: the gate does not carry the owner-approved paragraph of the interim words");
   if (OWNER && !/some scenes that go over the recommended limit/.test(gateText)) bad('/play/: the owner-approved gate does not say that some scenes go over the recommended limit');
+  if (OWNER && !gateText.includes(OWNER_FLASH)) bad("/play/: the gate's flash notice is not Legal's fixed line word for word (docs/legal/page-fixed-lines.md; it ends 'and they are not fixed yet')");
+  if (OWNER && !gateText.includes(OWNER_LOCK)) bad("/play/: the gate's lock line is not Legal's fixed line word for word");
+  if (OWNER && /working to fix them|we are fixing them/i.test(gateText)) bad('/play/: the gate promises a fix ("working to fix them"): flash work is paused, so the notice must say "not fixed yet"');
   for (const re of FORBIDDEN) if (re.test(gateText)) bad(`/play/'s gate uses a word Legal forbids: ${re}`);
 }
 
@@ -168,6 +177,9 @@ for (const p of ALLOWED.filter((x) => x !== 'play/index.html')) {
     if (!t.includes(LEGAL_AI)) bad("/about/ does not carry Legal's AI line");
     if (!OWNER && !t.includes(LEGAL_FIRST)) bad("/about/'s flashing-effects paragraph does not start with Legal's first sentence (RL-137)");
     if (OWNER && words && words.gate && words.gate.blocks && words.gate.blocks[0] && !t.includes(words.gate.blocks[0].p)) bad("/about/'s flashing-effects paragraph does not carry the owner-approved paragraph");
+    if (OWNER && !t.includes(OWNER_FLASH)) bad("/about/'s flash notice is not Legal's fixed line word for word (docs/legal/page-fixed-lines.md)");
+    if (OWNER && !t.includes(OWNER_LOCK)) bad("/about/'s lock line is not Legal's fixed line word for word");
+    if (OWNER && /working to fix them|we are fixing them/i.test(t)) bad('/about/ promises a fix ("working to fix them"): flash work is paused');
     if (!t.includes(GODOT_LINE)) bad('/about/ does not carry the Godot (MIT) notice line');
     if (!t.includes(SANS_LINE)) bad('/about/ does not carry the Open Sans (OFL) notice line');
     if (!/MIT License|Permission is hereby granted/.test(about)) bad("/about/ does not carry Godot's licence text");
@@ -182,6 +194,9 @@ for (const p of ALLOWED.filter((x) => x !== 'play/index.html')) {
     }
   }
 }
+
+// American spelling: every page's visible text (and, below, the words file) is scanned for the British spellings Legal lists
+for (const p of htmls) { const m = BRITISH.exec(visibleText(read(p))); if (m) bad(`${p} uses the British spelling "${m[0]}" (the public text is American English: docs/legal/page-fixed-lines.md)`); }
 
 // the game's pack: the placeholder-name scan
 if (!args.includes('--no-pack-scan') && files.includes('play/index.pck')) {
@@ -215,6 +230,7 @@ if (words) {
   const strip = (v) => (Array.isArray(v) ? v.map(strip) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).filter(([k]) => !k.startsWith('_')).map(([k, x]) => [k, strip(x)])) : v);
   const all = JSON.stringify(strip(words));
   for (const re of FORBIDDEN) if (re.test(all)) bad(`the interim words use a word Legal forbids: ${re}`);
+  const br = BRITISH.exec(all); if (br) bad(`the interim words use the British spelling "${br[0]}"`);
 }
 
 if (problems.length) { for (const p of problems) console.error(`interim site check FAILED: ${p}`); process.exit(1); }
