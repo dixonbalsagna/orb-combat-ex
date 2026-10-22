@@ -2,7 +2,7 @@
 
 Owner: Simulation and Engine. 2026-10-17 (the coil re-ruled the same day, edd7dcd8). The core's build of Game Design's `docs/design/hero-forms.md` sections 4 and 4b, with the hold and release signals Narrative asked for (`docs/narrative/waiting-game-lines.md`). **Applied in 8f157894 (2026-10-17), and the branches (section 7) in 421134e0.** Behind one data switch that is off: with it off, every match, replay and checkpoint is the same to the bit.
 
-**The working rule of 2026-10-18 (section 8) is built and parked at `pending/forms3/`.** It replaces the banking release and the release's extras in section 2: one step a transformation, and the coil makes that one form stronger.
+**The working rule of 2026-10-18 (section 8) was applied in c09c3bef (2026-10-20).** It replaces the banking release and the release's extras in section 2: one step a transformation, and the coil makes that one form stronger.
 
 ## 1. What it is
 
@@ -115,7 +115,7 @@ The second window: Game Design's section 3 and section 4's pick. Behind the same
 - **Game Design's row** (each branch taken in at least 25% of matches) **fails by its numbers, not by the build.** It needs Witness's `perPerson` about four times higher, or Trial's `commit` and `opponentForm` lower: theirs to rule. Each match played the same twice.
 - **Game Design ruled `perPerson` 4** (fda9b426). It is in the working rule's park (section 8).
 
-## 8. The working rule: the next single form is stronger (parked at `pending/forms3/`)
+## 8. The working rule: the next single form is stronger (applied in c09c3bef)
 
 Game Design's rulings of 2026-10-18 (`rulings-2026-10-18b.md` item 2), the working rule until Narrative's lore paper. Behind the same switch, so with forms off nothing moves.
 
@@ -132,8 +132,8 @@ Game Design's rulings of 2026-10-18 (`rulings-2026-10-18b.md` item 2), the worki
 - **The factor multiplies the step gains** (`gain × steps × formMul`), as the lasting gain did. It does not touch a branch's extras.
 - **A release spends the whole coil,** even with more steps ready behind it. Those steps start a new coil at the next break, as any ready step does.
 
-**In the core:** `forms.gd`, `state.gd`, the Protagonist's `forms.json`, the two forms checks in `tools/parity.gd`, and `form_release`'s row in `fx-events.md`. Tools' schema for the release block, the self-test's fixture hero and its release cases are `pending/forms3/grant_tools.py`, in the same commit. Three comments in `damage.gd` and `fighter.gd` that named the surge are corrected.
+**In the core:** `forms.gd`, `state.gd`, the Protagonist's `forms.json`, the two forms checks in `tools/parity.gd`, and `form_release`'s row in `fx-events.md`. Tools' schema for the release block, the self-test's fixture hero and its release cases came in the same commit. Three comments in `damage.gd` and `fighter.gd` that named the surge are corrected.
 
 **The checks:** the release takes step I alone with four still ready, sends a `form_release` of 1 with the coil and no `tier_up`, and sets the form's factor from the coil; the next step taken at once is plain; a full coil's form is × 2 and no more. With I and II ready the release is live (I alone), and after it II is not. The branches' picks happen one step at a time: a release from base at 65 takes I and picks nothing, and the next, at II, picks.
 
-**Results:** in `pending/forms3/README.md`.
+**Results:** every check passed on the applied commit (c09c3bef).

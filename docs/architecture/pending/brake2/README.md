@@ -30,3 +30,4 @@ python docs/architecture/pending/brake2/grant_audio.py .
 
 - Import clean. Parity on the committed golden: 63 of 63.
 - The golden regenerates byte-identical.
+- Re-proved on 4d2f568b (2026-10-22, after feel, forms3 and cata landed): import clean, parity on the committed golden 66 of 66, golden byte-identical.

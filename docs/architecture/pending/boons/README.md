@@ -27,3 +27,4 @@ python docs/architecture/pending/grant_tools_fight.py .
 
 - Import clean (one new class). Parity on the committed golden: 64 of 64.
 - The golden regenerates byte-identical.
+- Re-proved on 4d2f568b (2026-10-22): import clean, parity on the committed golden 67 of 67, golden byte-identical.

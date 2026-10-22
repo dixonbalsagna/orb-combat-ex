@@ -1,0 +1,32 @@
+## Live ticks until his course meets the ground, the water or the building he is aimed at, at the speed he shows
+## (toFloor, on his own numbers).
+static func toContact(S: SimState, f, shown: float) -> float:
+	return toFloor(S, f.x, f.y, f.vx, f.vy, shown, f.aimB)
+
+
+## Live ticks until a course from (x, y) heading along (vx, vy) at `shown` a second meets the ground, the water or the
+## face of building aimB (-1: none): the course is marched a tick at a time in the velocity's direction, at most
+## arriveTicks + 1 ticks ahead (the ground and the water); the building's face is met on a straight line. A large number
+## when none is that near.
+static func toFloor(S: SimState, x0: float, y0: float, vx: float, vy: float, shown: float, aimB: int) -> float:
+	var v: float = SimDetMath.hypot(vx, vy)
+	if v <= 0.0 or shown <= 0.0:
+		return 1.0e9
+	var ux: float = vx / v
+	var uy: float = vy / v
+	var perTick: float = shown * SimConst.DT
+	var best: float = 1.0e9
+	var x: float = x0
+	var y: float = y0
+	for n in range(1, arriveTicks + 2):
+		x = SimWrap.wrap(x + ux * perTick)
+		y += uy * perTick
+		if y <= _floor(S, x):
+			best = float(n)
+			break
+	if aimB >= 0 and aimB < S.buildings.size():
+		var b = S.buildings[aimB]
+		var dx: float = SimWrap.sdx(x0, b.x)
+		if b.alive and dx * ux > 0.0 and ux != 0.0:
+			best = SimMathx.jmin(best, SimMathx.jmax(0.0, absf(dx) - b.w * 0.5) / (absf(ux) * perTick))
+	return best

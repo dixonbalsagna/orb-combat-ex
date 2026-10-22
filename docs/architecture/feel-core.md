@@ -1,6 +1,6 @@
 # The fight's feel in the core: the launch's curve and hit-stop by weight
 
-Owner: Simulation and Engine. 2026-10-19. The core's build of Game Design's launch flight and hit-stop table (`docs/design/fight-feel.md` sections 1 and 6; `rulings-2026-10-19.md` item 1 and `rulings-2026-10-19b.md` section 4), from Research's recommendations 9 and 10 (`docs/research/cinematic-storytelling.md`), for the camera. **Built and proved in scratch, parked at `pending/feel/`; nothing is in the tree.** Two data switches, both off: with them off, every match, replay and checkpoint is the same to the bit.
+Owner: Simulation and Engine. 2026-10-19. The core's build of Game Design's launch flight and hit-stop table (`docs/design/fight-feel.md` sections 1 and 6; `rulings-2026-10-19.md` item 1 and `rulings-2026-10-19b.md` section 4), from Research's recommendations 9 and 10 (`docs/research/cinematic-storytelling.md`), for the camera. **Applied in c09c3bef (2026-10-20).** Two data switches, both off: with them off, every match, replay and checkpoint is the same to the bit.
 
 ## 1. The launch's curve (`data/fight/flight.json`, `sim/core/flight.gd`)
 
@@ -73,7 +73,7 @@ Owner: Simulation and Engine. 2026-10-19. The core's build of Game Design's laun
 - The step counts a 10-tick stop as 10 frozen ticks.
 - A broken region holds 24; the KO's blow 30.
 
-**Results:** in `pending/feel/README.md`.
+**Results:** every check passed on the applied commit (c09c3bef), and with the other parks of its batch (parity 67 of 67, the full gates and Rendering's 15 checks).
 
 ## 5. Not in this window
 
@@ -85,4 +85,33 @@ Owner: Simulation and Engine. 2026-10-19. The core's build of Game Design's laun
 | The struck body's larger shake | Animation |
 | The cap of a sixth of the loop in a smaller arena | Simulation, with the shifting arena's length |
 | QA's rows: a full launch's 1.0 to 1.6 s, the frame's share, the frozen time a minute | QA |
-| The schemas for the two files | Tools (`pending/grant_tools_fight.py`) |
+| The schemas for the two files | Tools (applied with c09c3bef) |
+
+## 6. The curve shared with the predictors (parked at `pending/shared/`)
+
+Encounter's ask (`docs/director/camera-intent.md` section 3): the planner (`DirLaunch.predictFlight`) and World's predictors (`WorldBrunt.flightTo`, `chainPlan`, `next`) must fly the same curve as the step, or the plan and the flight part.
+
+**What they need is the timing, not the path.** The curve paces the body along its physics path, so the path the predictors integrate today stays right with the curve on. What changes is when he gets there.
+
+| Function (`SimFlight`) | What |
+| :--- | :--- |
+| `share(t, arr, from)` | The share of the peak at live tick `t`: the curve, or the arrival's ramp from `from` once it started on tick `arr` |
+| `kOf(c, peak, vx, vy)` | The pace: the factor his physics steps by to show `c` of the peak, held between `kMin` and `kMax` |
+| `toFloor(S, x, y, vx, vy, shown, aimB)` | Live ticks until a course meets the ground, the water or the aimed building's face (the arrival's march) |
+| `track(x, y, vx, vy, aimB)` and `tick(S, track)` | A send's first leg on plain numbers (a `Track`, no fighter and no state in `S`), stepped one live tick at a time **with the step's own arithmetic, to the bit:** the share, the arrival's march, the pace, the first leg's gravity and drag |
+| `predict(S, x, y, vx, vy, aimB)` | The curved flight run to its touchdown on the ground or the water: the live tick and where. Buildings are the caller's, as in the flight: step `tick` and test them |
+
+- **The live step uses the same functions** (`pace` calls `share` and `kOf`, `toContact` calls `toFloor`), so a predictor and the flight cannot drift apart.
+- **No touchdown is stored on the body.** The arrival comes from the march, and the march is in `tick`, so a predictor finds the same arrival tick the flight will. The camera's launch cue can take its touchdown tick from `predict` at the send.
+- **The stop at the send** (14, or 16 for a full launch) is hit-stop by weight's (`SimHitstop.hold`), before the first live tick.
+- **A match in its KO slow motion** steps by less than a live tick: `tick` takes the dt.
+
+**The check** ("the curve's shared functions, the brake's control back, the camera feed"):
+- `share` and `kOf` by their rule.
+- For a shallow and a steep send, a track stepped beside the live flight equals it to the bit every tick (position, velocity, tick, arrival, pace).
+- `predict` names the flight's touchdown tick.
+- `SimBrake.controlBack` ends a flight; a `cam_intent` cue leaves the light digest as it was and another cue moves it; the feed on twice gives the same cues.
+
+Two of Encounter's other asks ride in the same park:
+- **`SimBrake.controlBack`**, the brake's control back under a public name, for the recoil flip with ground contact off.
+- **A `cam_intent` cue is left out of the light digest** (`SimHash.hashFx`), so switching the camera feed on moves no golden. The feed is the view's: it reads, draws nothing and writes nothing hashed. Out of the digest, its own determinism is held by my check: one AI match run twice with the feed on gives the same cues on the same ticks, and the same play.
