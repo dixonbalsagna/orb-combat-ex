@@ -135,7 +135,7 @@ func _init() -> void:
 	var quiet0: bool = FighterData.quiet
 	FighterData.quiet = true
 	var guard_ok: bool = true
-	for bad in [{"cols": 599}, {"cols": 4802}, {"cols": 1201}, {"cols": "2400"}, {"cols": 2400.5}, {}, 7]:
+	for bad in [{"cols": 599}, {"cols": 4802}, {"cols": 1201}, {"cols": 1204}, {"cols": 2402}, {"cols": "2400"}, {"cols": 2400.5}, {}, 7]:
 		var Sg := SimCore.createSim()
 		SimCore.newMatch(Sg, 1, {}, {"planet": 7, "touch": 3, "arena": bad})
 		if Sg.arenaCols != 4800 or SimConst.NC != 4800:
@@ -145,7 +145,7 @@ func _init() -> void:
 	if Sn.arenaCols != 4800 or SimConst.NC != 4800:
 		guard_ok = false
 	FighterData.quiet = quiet0
-	ok(guard_ok, "a bad arena (under 600, over 4,800, odd, a string, a fraction, no columns, not a dictionary, or no planet) is the planet's own 4,800")
+	ok(guard_ok, "a bad arena (under 600, over 4,800, odd, even but not a multiple of 8, a string, a fraction, no columns, not a dictionary, or no planet) is the planet's own 4,800")
 	var SA := SimCore.createSim()
 	SimCore.newMatch(SA, 1, {}, {"planet": 7, "touch": 3, "arena": {"cols": 2400}, "intro": false})
 	var SB := SimCore.createSim()

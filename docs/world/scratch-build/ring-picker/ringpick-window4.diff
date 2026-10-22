@@ -85,10 +85,10 @@ index b44119c..df1ef3d 100644
  	var P: WorldPlanet.Planet = WorldPlanet.make(seed)
 diff --git a/sim/world/ringpick.gd b/sim/world/ringpick.gd
 new file mode 100644
-index 0000000..901292b
+index 0000000..649fb71
 --- /dev/null
 +++ b/sim/world/ringpick.gd
-@@ -0,0 +1,463 @@
+@@ -0,0 +1,467 @@
 +class_name WorldRingPick
 +## The ring picker (docs/world/shifting-arena-design.md window 4; Narrative's opponent claims, docs/narrative/opponent-grounds.md): given a planet, an opponent's claim and a size,
 +## which ring of the planet should the stage be fought on? A ring is a plane's circle: an axis `c` (the circle's centre, a unit vector), its length in columns, and a touch-down `t` on it
@@ -153,6 +153,10 @@ index 0000000..901292b
 +		for sec in ["sizes", "minimum", "candidates"]:
 +			if not (j.get(sec) is Dictionary) or not j[sec].has(sz):
 +				_cErrors.append("rings.json: %s.%s is missing" % [sec, sz])
++	if j.get("sizes") is Dictionary:
++		for sz in j.sizes:
++			if int(j.sizes[sz]) % 8 != 0:
++				_cErrors.append("rings.json: sizes.%s is a multiple of 8 columns (the ground's largest stride)" % sz)
 +	for k in ["stride", "biomeShare", "ref", "mustAt", "avoidWeight", "homeBonus", "coastRef"]:
 +		if not (j.get(k) is float or j.get(k) is int):
 +			_cErrors.append("rings.json: %s is a number" % k)
@@ -744,10 +748,10 @@ index 0000000..792c587
 @@ -0,0 +1 @@
 +uid://codo2huji3dnx
 diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
-index 6179340..f53b097 100644
+index 6179340..997f30c 100644
 --- a/tools/fixtures/cases.json
 +++ b/tools/fixtures/cases.json
-@@ -292296,6 +292296,54 @@
+@@ -292296,6 +292296,70 @@
          "pointer": "/meterNorm"
        }
      },
@@ -784,6 +788,22 @@ index 6179340..f53b097 100644
 +      }
 +    },
 +    {
++      "id": "rings-size-not-multiple-of-8",
++      "schema": "biomes-rings.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/rings.json",
++          "set": {
++            "/sizes/half": 2404
++          }
++        }
++      ],
++      "expect": {
++        "rule": "multipleOf",
++        "pointer": "/sizes/half"
++      }
++    },
++    {
 +      "id": "rings-minimum-land-over-one",
 +      "schema": "biomes-rings.schema.json",
 +      "mutate": [
@@ -804,10 +824,10 @@ index 6179340..f53b097 100644
        "schema": "biomes-props.schema.json",
 diff --git a/tools/schemas/biomes-rings.schema.json b/tools/schemas/biomes-rings.schema.json
 new file mode 100644
-index 0000000..1c01719
+index 0000000..fbb3820
 --- /dev/null
 +++ b/tools/schemas/biomes-rings.schema.json
-@@ -0,0 +1,251 @@
+@@ -0,0 +1,254 @@
 +{
 +  "$schema": "https://json-schema.org/draft/2020-12/schema",
 +  "$id": "meridian/biomes-rings",
@@ -847,19 +867,22 @@ index 0000000..1c01719
 +          "type": "integer",
 +          "minimum": 600,
 +          "maximum": 4800,
-+          "description": "The ring's columns (a column is 32 units of arc)."
++          "multipleOf": 8,
++          "description": "The ring's columns (a column is 32 units of arc), a multiple of 8: the ground's largest stride."
 +        },
 +        "half": {
 +          "type": "integer",
 +          "minimum": 600,
 +          "maximum": 4800,
-+          "description": "The ring's columns (a column is 32 units of arc)."
++          "multipleOf": 8,
++          "description": "The ring's columns (a column is 32 units of arc), a multiple of 8: the ground's largest stride."
 +        },
 +        "whole": {
 +          "type": "integer",
 +          "minimum": 600,
 +          "maximum": 4800,
-+          "description": "The ring's columns (a column is 32 units of arc)."
++          "multipleOf": 8,
++          "description": "The ring's columns (a column is 32 units of arc), a multiple of 8: the ground's largest stride."
 +        }
 +      },
 +      "description": "Game Design's three sizes in columns: close 1,200, half 2,400, whole 4,800."

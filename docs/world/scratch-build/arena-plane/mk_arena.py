@@ -35,17 +35,16 @@ def sim(s):
 	S.arenaCols = _arenaCols(setup)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's 4,800
 	SimConst.setArena(S.arenaCols)
 	WorldBiomes.planetCols = PackedByteArray()''')
-    s = rep(s, '''## One fixed step (sim.js step).''', '''## The arena's columns from the setup, guarded: setup.arena {"cols": n, "side": 1 or -1} with a setup.planet, n an even whole number from 600 to 4,800 (a ring a fight fits
-## in, with a middle column); anything else is the planet's own 4,800, with an error (World: docs/world/shifting-arena-design.md section 3).
+    s = rep(s, '''## One fixed step (sim.js step).''', '''## The arena's columns from the setup, guarded: setup.arena {"cols": n, "side": 1 or -1} with a setup.planet, n a whole number from 600 to 4,800 and a multiple of 8 (the ground's largest stride: Rendering's chunks and copies; a ring a fight fits in); anything else is the planet's own 4,800, with an error (World: docs/world/shifting-arena-design.md section 3).
 static func _arenaCols(setup: Dictionary) -> int:
 	var arena = setup.get("arena", null)
 	if arena == null:
 		return SimConst.PLANET_NC
 	var n = arena.get("cols", null) if arena is Dictionary else null
-	var ok: bool = setup.has("planet") and (n is int or n is float) and float(n) == floorf(float(n)) and float(n) >= 600.0 and float(n) <= float(SimConst.PLANET_NC) and int(n) % 2 == 0
+	var ok: bool = setup.has("planet") and (n is int or n is float) and float(n) == floorf(float(n)) and float(n) >= 600.0 and float(n) <= float(SimConst.PLANET_NC) and int(n) % 8 == 0
 	if not ok:
 		if not FighterData.quiet:
-			push_error("SimCore.newMatch: setup.arena %s needs a planet and cols an even whole number from 600 to %d; the planet's own arena plays" % [str(arena), SimConst.PLANET_NC])
+			push_error("SimCore.newMatch: setup.arena %s needs a planet and cols a whole number from 600 to %d, a multiple of 8; the planet's own arena plays" % [str(arena), SimConst.PLANET_NC])
 		return SimConst.PLANET_NC
 	return int(n)
 

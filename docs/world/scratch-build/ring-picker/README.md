@@ -4,9 +4,11 @@ Built on b3a3aa74 with windows 0 and 1 applied (`../arena-plane/`). Design: `doc
 
 | File | What |
 | :--- | :--- |
-| `ringpick-window4.diff` (10 files) | `sim/world/ringpick.gd` (`WorldRingPick`), `data/biomes/rings.json` and `tools/schemas/biomes-rings.schema.json`; `WorldPlanet.sliceRing` and the arena that names its ring (`planet_world.gd`); `ringpick_check.gd`; **Tools' lines**: a rule in `map.json` and three invalid cases in `cases.json` (the same commit as the schema). `mk_ringpick.py` makes it |
+| `ringpick-window4.diff` (10 files) | `sim/world/ringpick.gd` (`WorldRingPick`), `data/biomes/rings.json` and `tools/schemas/biomes-rings.schema.json`; `WorldPlanet.sliceRing` and the arena that names its ring (`planet_world.gd`); `ringpick_check.gd`; **Tools' lines**: a rule in `map.json` and four invalid cases in `cases.json` (the same commit as the schema). `mk_ringpick.py` makes it |
 | `farcolumn-window2.diff` (3 files) | `WorldPlanet.farColumn` and `far_check.gd`. `mk_far.py` makes it |
 | `*.gd.txt` | The modules and checks as they stand |
+
+**A ring's length is a multiple of 8 columns** (Rendering's rule: the ground's largest stride): the schema says `multipleOf` 8 on the sizes, `rings.json`'s loader reports a size that is not, and `_arenaCols` refuses one.
 
 ## What the picker does
 

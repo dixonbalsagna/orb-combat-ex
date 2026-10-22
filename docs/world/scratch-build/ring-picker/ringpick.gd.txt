@@ -62,6 +62,10 @@ static func _cLoad() -> void:
 		for sec in ["sizes", "minimum", "candidates"]:
 			if not (j.get(sec) is Dictionary) or not j[sec].has(sz):
 				_cErrors.append("rings.json: %s.%s is missing" % [sec, sz])
+	if j.get("sizes") is Dictionary:
+		for sz in j.sizes:
+			if int(j.sizes[sz]) % 8 != 0:
+				_cErrors.append("rings.json: sizes.%s is a multiple of 8 columns (the ground's largest stride)" % sz)
 	for k in ["stride", "biomeShare", "ref", "mustAt", "avoidWeight", "homeBonus", "coastRef"]:
 		if not (j.get(k) is float or j.get(k) is int):
 			_cErrors.append("rings.json: %s is a number" % k)

@@ -23,13 +23,15 @@ A setup with a `planet` and `arena: {cols, side}` plays on a ring of the planet:
 
 ## Re-cut 2026-10-22 on b3a3aa74: Simulation's three conditions
 
-1. **Guard `arena.cols`:** `SimCore._arenaCols(setup)`: needs a `planet` and `cols` an even whole number from 600 to 4,800; anything else is the planet's own 4,800, with an error (quiet under `FighterData.quiet`).
+1. **Guard `arena.cols`:** `SimCore._arenaCols(setup)`: needs a `planet` and `cols` a whole number from 600 to 4,800 and **a multiple of 8** (Rendering's rule: the ground's largest stride); anything else is the planet's own 4,800, with an error (quiet under `FighterData.quiet`).
 2. **Re-assert in `SimCore.step`:** the match keeps `S.arenaCols`, `S.planetCols` and `S.worldId` (state.gd, not hashed); at the top of `step`, if the static arena length or `WorldBiomes.worldId` is not this match's, it sets its own again. Two matches alive in one process, stepped alternately, play as each plays alone (`arena_check`: a 2,400-column match and a default one, 100 ticks at a time, equal their solo hashes).
 3. **The four load-time constants:** re-scanned on b3a3aa74: still the same four (`location.gd` `STEP`, `collateral.gd` `HIST_STEP`, `structures.gd` `BUCKET_W`, `planet.gd` `TOUCH_COL`), all four are functions or statics in the patch.
 
 **Encounter's location.gd lines changed from what they were told:** the tables are keyed on the arena's length and `WorldBiomes.worldId` (a counter `newMatch` claims for each world it builds), so there is **no `reset()`** and a planet world rebuilds them too. At the default arena `STEP` is `W / 48` = 3,200 exactly, as before.
 
 **The gates on the re-cut tree (clean export of b3a3aa74 plus both patches, below-normal):** `run-all.js` all 5 stages passed (unit 12.2 s, parity 78.3 s, soak 19.8 s, golden 0.6 s, godot 304.8 s); Rendering's 15 gates all passed; `arena_check` 0 failed. The diffs are 6 files (window 0) and 13 files (window 1), apply on the newest main and equal the scratch tree.
+
+**Final (2026-10-22), with the multiple-of-8 rule re-proved:** `run-all.js` all 5 stages passed (unit 11.0 s, parity 78.7 s, soak 16.6 s, golden 0.5 s, godot 273.1 s), Rendering's 15 gates all passed, `arena_check` and World's checks 0 failed; with Encounter's two grants and Simulation's brake2 (`brake2.py` and `grant_world.py`) applied on top, `arena_check`, `planet_check`, `planet_world_check`, `brunt_check`, `wall_check`, `collateral_check`, `interior_check`, `repeat_check`, `props_check` and `probe` all 0 failed. The diffs are frozen.
 
 ## Lines in files that are not World's
 

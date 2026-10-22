@@ -31,7 +31,7 @@ sch = OD([("$schema", "https://json-schema.org/draft/2020-12/schema"), ("$id", "
           ("description", "data/biomes/rings.json: the ring picker's numbers (docs/world/shifting-arena-design.md window 4; WorldRingPick): the three sizes in columns, the minimum a ring holds by size, how many candidates are tried, and the scoring weights. Every key required. Version field: schema. Policy: closed except keys starting with an underscore."),
           ("type", "object"), ("required", ["schema", "sizes", "minimum", "candidates", "stride", "biomeShare", "ref", "mustAt", "avoidWeight", "homeBonus", "coastRef"]),
           ("properties", OD([("schema", OD([("const", "biomes.rings/1")])), ("_about", OD([("type", "string")])),
-                             ("sizes", sizes3(integer(600, 4800, "The ring's columns (a column is 32 units of arc)."), "Game Design's three sizes in columns: close 1,200, half 2,400, whole 4,800.")),
+                             ("sizes", sizes3(OD([("type", "integer"), ("minimum", 600), ("maximum", 4800), ("multipleOf", 8), ("description", "The ring's columns (a column is 32 units of arc), a multiple of 8: the ground's largest stride.")]), "Game Design's three sizes in columns: close 1,200, half 2,400, whole 4,800.")),
                              ("minimum", sizes3(minimum, "What a ring of each size must hold.")),
                              ("candidates", sizes3(integer(1, 400, "Rings tried."), "How many candidate rings are tried for a claim at each size.")),
                              ("stride", integer(1, 64, "Columns between the coarse read's samples.")),
@@ -110,6 +110,22 @@ CASES = '''    {
       "expect": {
         "rule": "minimum",
         "pointer": "/sizes/close"
+      }
+    },
+    {
+      "id": "rings-size-not-multiple-of-8",
+      "schema": "biomes-rings.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/rings.json",
+          "set": {
+            "/sizes/half": 2404
+          }
+        }
+      ],
+      "expect": {
+        "rule": "multipleOf",
+        "pointer": "/sizes/half"
       }
     },
     {
