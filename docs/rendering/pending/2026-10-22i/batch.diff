@@ -1,0 +1,230 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -445,6 +445,12 @@
+ const CAMERA_ROLL_ON: bool = false
+ const ROLL_DEG := Vector2(4.0, 8.0)
+ const ROLL_TIMES := Vector3(0.25, 0.8, 0.9)
++## The slow drift (World's window 2; docs/rendering/slow-drift.md): the far land and the sky turn round the fight at
++## DRIFT_DEG_PER_MIN degrees a minute of match time, up to DRIFT_MAX_DEG, from 0 at a match's start and again at World's
++## turn (under its hard cut). Render only; off unless SLOW_DRIFT_ON or main's --drift (?drift=1 on a page).
++const SLOW_DRIFT_ON: bool = false
++const DRIFT_DEG_PER_MIN: float = 3.0
++const DRIFT_MAX_DEG: float = 30.0
+ ## The climaxes that roll, each with its weight (0: ROLL_DEG.x, 1: ROLL_DEG.y): the sim's events by type, and a decisive
+ ## exchange won by its kind. Motivated and rare (the EP, 2026-10-22): a plain knock-back, a heavy clash, a beam won, an
+ ## interrupt, a shot and a barrage do not roll.
+--- a/render/shaders/ground.gdshaderinc
++++ b/render/shaders/ground.gdshaderinc
+@@ -9,6 +9,7 @@
+ uniform int tw = 1200;
+ uniform int rpl = 1;
+ uniform float far_scale = 1.0;       // WS: the far relief's depth wavelengths grow with the world
++uniform float drift_tan = 0.0;       // the slow drift (World's window 2): tan of the angle the far land has turned about the fight; 0 off
+ uniform float sea_base = -30.0;      // WorldWater.RESERVOIR_BASE: base ground below this is the sea
+ uniform float wet_min = 0.5;         // WorldWater.MIN_DEPTH: water shallower than this counts as dry
+ uniform float dent_min = 6.0;        // a dent deeper than this colours as a crater floor (6 x WS)
+@@ -238,7 +239,7 @@
+ float far_x(float xw, float z, float s) {
+ 	float t = 6.2831853 / world_w;
+ 	float m = 0.6 * sin(3.0 * t * xw + 0.00047 / far_scale * z + 0.4) + 0.4 * sin(8.0 * t * xw - 0.00083 / far_scale * z + 2.2);
+-	float xs = xw + meander_amp * m * s * s;
++	float xs = xw + meander_amp * m * s * s - z * drift_tan * s;   // the slow drift: a turn about the fight shears the far land by its depth
+ 	return xs - world_w * floor(xs / world_w);
+ }
+ 
+--- a/render/shaders/sky.gdshader
++++ b/render/shaders/sky.gdshader
+@@ -33,6 +33,7 @@
+ uniform vec2 react_r = vec2(0.7, 0.24);   // RenderLook.SKY_REACT_R: the gap's half width and half height, in half screen heights
+ uniform vec3 react_at = vec3(0.45, 0.46, 1.0);   // RenderLook.SKY_REACT_AT: how far above him the gap sits, and the lowest and highest its middle goes (heights above the horizon, as the cloud band's)
+ uniform vec4 sky_react[2];           // xyz: the direction from the camera to a fighter (world axes); w: the reaction, 0 to 1
++uniform float sky_turn = 0.0;        // the slow drift (World's window 2): the angle the sky has turned about the fight, as the far land has; 0 off
+ uniform float star_turn = 0.0;       // how far the sky's sphere has turned (RenderLook.STAR_TURN times the place of the lap)
+ uniform float star_period = 6.0;     // RenderLook.STAR_TURN: the field repeats every turn
+ uniform vec2 star_floor = vec2(0.4, 0.8);   // RenderLook.STAR_FLOOR
+@@ -77,7 +78,7 @@
+ 		}
+ 	}
+ 	// The stars: on the sky's sphere (turning with the lap), never lower than star_floor, only where the sky is dark.
+-	vec2 g = vec2(mod((p.x + star_turn) * 260.0, star_period * 260.0), p.y * 260.0);   // repeats every lap, so the wrap is seamless
++	vec2 g = vec2(mod((p.x + star_turn + sky_turn) * 260.0, star_period * 260.0), p.y * 260.0);   // repeats every lap, so the wrap is seamless
+ 	float hs = hash21(floor(g));
+ 	float star = step(0.994, hs) * (1.0 - smoothstep(0.08, 0.2, length(fract(g) - 0.5)));
+ 	float fade = smoothstep(star_floor.x, star_floor.y, h) * (1.0 - smoothstep(star_dark.x, star_dark.y, dot(c, vec3(0.2126, 0.7152, 0.0722))));
+@@ -109,7 +110,7 @@
+ 			}
+ 			tint /= max(tw, 0.0001);   // where two gaps meet, their colours blend by weight: never their sum
+ 		}
+-		vec2 cp = vec2(p.x * 2.2 + cloud_shift, (q - horizon) / sky_tan * 5.0);   // the plain height: see the header
++		vec2 cp = vec2((p.x + sky_turn) * 2.2 + cloud_shift, (q - horizon) / sky_tan * 5.0);   // the plain height: see the header
+ 		float n = cloud_noise(cp, cloud_period) * 0.65 + cloud_noise(vec2(cp.x * 2.0, cp.y * 2.9 + 11.0), cloud_period * 2.0) * 0.35;
+ 		float band = smoothstep(0.04, 0.3, h) * (1.0 - smoothstep(1.3, 2.3, h)) * (1.0 - space);
+ 		// The clouds that are there open: none inside the gap. No cloud is made, so a clear sky shows nothing.
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -963,12 +963,14 @@
+ 
+ 
+ var _calm: bool = false              # the grooves are drawn calm (set_calm)
++var _drift_sent: float = 0.0         # the slow drift's tan last sent to the ground's materials (set_drift)
+ var _crater_now: float = -1.0        # the match time last sent to the ground's materials (a new crater's age)
+ 
+ 
+ func _make_materials() -> void:
+ 	_terrain_mat = ShaderMaterial.new()
+ 	_terrain_mat.shader = TERRAIN_SHADER
++	_drift_sent = 0.0
+ 	_water_mat = ShaderMaterial.new()
+ 	_water_mat.shader = WATER_SHADER
+ 	for m in [_terrain_mat, _water_mat]:
+@@ -1115,6 +1117,16 @@
+ 
+ ## The camera's world position this frame, for the foreground rule in the ground and water shaders.
+ ## The grooves' calm form, under reduced flashing or reduced motion (PaneWorld.flash_calm): a fainter glow and char.
++## The slow drift's turn (World's window 2): tan of the angle the far land has turned about the fight, on the ground's
++## materials (ground.gdshaderinc far_x). Sent only when it changes.
++func set_drift(t: float) -> void:
++	if _terrain_mat == null or t == _drift_sent:
++		return
++	_drift_sent = t
++	_terrain_mat.set_shader_parameter("drift_tan", t)
++	_water_mat.set_shader_parameter("drift_tan", t)
++
++
+ func set_calm(on: bool) -> void:
+ 	if _terrain_mat == null or on == _calm:
+ 		return
+--- a/render/core/pane_world.gd
++++ b/render/core/pane_world.gd
+@@ -28,6 +28,7 @@
+ var shadows: Array = []            # per fighter: the ground shadow under him (render/shaders/shadow.gdshader)
+ var source: PaneWorld = null       # a second pane: the first, whose world it draws
+ var view_cam_x: float = 0.0        # this frame's camera's wrapped world x
++var drift: float = 0.0             # the slow drift's angle this frame (radians; World's window 2), set by main; 0 off
+ var markers: bool = true           # the fighters' head markers (the stance badge); main's inset pane has none
+ var occlusion: int = OCCL_HOLE     # main sets it (a debug toggle)
+ ## Camera's request for this pane's cut-away, each frame (docs/camera/camera-v2.md section 6). Every key is optional:
+@@ -151,6 +152,9 @@
+ 	if roll != 0.0:
+ 		cam_rig.basis = cam_rig.basis * Basis(Vector3.BACK, deg_to_rad(roll))   # the climaxes' dutch tilt (RenderCameraRoll), about the view axis
+ 	planet.set_focus(focus_z)
++	planet.set_drift(tan(drift))
++	if _sky_mat != null:
++		_sky_mat.set_shader_parameter("sky_turn", drift)
+ 	planet.set_crowd_near(S.depthOn)
+ 	_pan_haze(host, a, cam_x, vp)
+ 	_sky_drive(host, a, cam_x)
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -64,6 +64,8 @@
+ var inset: PaneWorld = null         # Camera's inset pane (make_inset), or null
+ var camera_roll := RenderCameraRoll.new()   # the climaxes' dutch tilt for the main panes (off unless roll_on)
+ var roll_on: bool = false
++var drift_on: bool = false                # the slow drift of the far land and sky (World's window 2): off unless SLOW_DRIFT_ON or --drift
++var _drift_t0: float = 0.0                # the match time the drift last started from 0 (a match's start, World's turn)
+ var compositor: Object = null:
+ 	set(v):
+ 		compositor = v
+@@ -214,6 +216,7 @@
+ 	if args.has("legacy-hud"):
+ 		set_legacy_hud(true)
+ 	roll_on = RenderLook.CAMERA_ROLL_ON or args.has("roll")   # the camera roll on climaxes: off by default (2026-10-22)
++	drift_on = RenderLook.SLOW_DRIFT_ON or args.has("drift")   # the slow drift of the far land and sky: off by default (2026-10-22)
+ 	hud.key_help = args.has("keyhelp")   # the greybox prompt and key help: off by Orb's minimal rule (2026-10-19)
+ 	if not manual:
+ 		split_view = SplitView.new()
+@@ -256,6 +259,7 @@
+ 	var own: bool = not (setup is Dictionary)
+ 	host.new_match(seed, ai, _match_setup(seed) if own else setup, own)
+ 	camera_roll.reset()
++	_drift_t0 = host.S.T
+ 	var fl: Array = UiSimBridge.fighters(host.S)
+ 	ui_hud.setup(fl[0], fl[1])
+ 	for p in all_panes():
+@@ -312,6 +316,17 @@
+ 	return camera_roll.update(host.S.T + a * SimConst.DT) if roll_on else 0.0
+ 
+ 
++## The slow drift's angle at interpolation a (radians): DRIFT_DEG_PER_MIN of match time since it last started, up to
++## DRIFT_MAX_DEG; 0 when off. A seek back restarts it.
++func _drift(a: float) -> float:
++	if not drift_on:
++		return 0.0
++	var t: float = host.S.T + a * SimConst.DT
++	if t < _drift_t0:
++		_drift_t0 = t
++	return deg_to_rad(minf(RenderLook.DRIFT_MAX_DEG, RenderLook.DRIFT_DEG_PER_MIN * (t - _drift_t0) / 60.0))
++
++
+ ## A new pane that draws the first pane's world, in sv, built into the current match. markers false leaves out the
+ ## fighters' head markers (the stance badge), which would poke into the inset's close-up strip.
+ func _follower(sv: SubViewport, markers: bool = true) -> PaneWorld:
+@@ -528,6 +543,9 @@
+ ## from the split rig's camera for it (the first always, since it applies the world's changes), then the composite.
+ func render_view(a: float) -> void:
+ 	var S: SimState = host.S
++	var dr: float = _drift(a)
++	for p in all_panes():
++		p.drift = dr
+ 	if compositor != null:
+ 		if "pitch_deg" in split_rig:
+ 			split_rig.pitch_deg = cam_pitch
+@@ -607,6 +625,7 @@
+ 	for p in all_panes():
+ 		p.planet.build(host.S)
+ 	host.impact.turn(float(e.x))
++	_drift_t0 = host.S.T   # the slow drift starts again from the new ring, under the turn's cut
+ 	host.sky.towns_again(host.S)
+ 
+ 
+@@ -1241,7 +1260,7 @@
+ ## without UI's notice, change how a match starts or hold a debug value, and are dropped unless the page is on a local
+ ## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze, keyhelp, roll.
+ const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]
+-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll"]
++const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift"]
+ 
+ 
+ ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of
+--- a/docs/rendering/README.md
++++ b/docs/rendering/README.md
+@@ -663,6 +663,7 @@
+ 
+ Both are other directors' work, hosted here as their docs ask (`docs/ui/hud-spec.md` section 14, `audio/README.md` "Hooking it up"). Both only read.
+ - **By roster id (2026-10-06; `docs/architecture/pending/fighter-split.md` section 10).** The old HUD looks a fighter up by his roster id: his name and his title are UI's (`UiData.display_name`, `display_title`), and with no title the line is his stance alone. The sim keeps no title and its name is the id. The damage marks' seed belongs to the outfit (`RenderLook.DAMAGE_SEED_97`, the numbers the marks have always had), so the roster's rename moved no mark. The old spellings of the two ids are gone from `DAMAGE_OUTFIT` since the rename (part C). `tools/hud_words_check.gd` asks for the old HUD's words, since no other headless gate draws that HUD.
++- **The slow drift (2026-10-22, `slow-drift.md`).** World's window 2: between turns the far land shears sideways by its depth and the sky turns its azimuth by the same angle, 3 degrees a minute of match time, so the land and sky turn slowly round the fight while the band never moves. It starts from 0 at a match's start and at World's turn, under its hard cut. Off by default (`RenderLook.SLOW_DRIFT_ON`; `--drift`, `?drift=1`).
+ - **The camera roll on climaxes (2026-10-22, `camera-roll.md`).** A dutch tilt of 4 to 8 degrees on the top climaxes only (a finisher, a KO, a beam clash, a guard break or a launch; at least 8 s apart bar a finisher and a KO; with Encounter's feed on, the story picks how much and which way), eased in and out, leaning toward the loser; the HUD and Camera's inset stay level. Off by default (`RenderLook.CAMERA_ROLL_ON`; `--roll`, `?roll=1`).
+ - **Orb's minimal rule (2026-10-19, `docs/ep/taste.md`): nothing on, over or between the fighters.** The stance badge (`RenderLook.STANCE_BADGE_ON`) and the guard arc (`GUARD_ARC_ON`) are off. The greybox overlay draws its demo prompt, key help and seed and tick line only with `--keyhelp` (on the web `?keyhelp=1`); F3's readout is unchanged. Before and after: `img/minimal-before-after.png` (uncommitted).
+ - **The demo's key help on a short screen (2026-10-06).** The key help under the demo's prompt keeps to the screen's lowest fifth: lines go from the end, the debug keys first, and the prompt always shows. At 720 high nothing changes; at 450 it is one line, which used to be four lines over the fighters. Before and now at 800 by 450: ![before](img/keyhelp-800-before.png) ![now](img/keyhelp-800-now.png)
+--- /dev/null
++++ b/docs/rendering/slow-drift.md
+@@ -0,0 +1,29 @@
++# The slow drift (Rendering, 2026-10-22)
++
++World's window 2 (`docs/world/shifting-arena-design.md`): between turns the arena is fixed, and the far land and the sky turn slowly round the fight. It is cosmetic and render only. The sim's band never moves.
++
++## What it does
++
++- **The far land shears sideways by its depth.** A point `z` units behind the fighter plane is read `z` × tan(angle) further along the ring (`ground.gdshaderinc` `far_x`, uniform `drift_tan`), weighted by the far blend. So:
++  - the crater band and everything the fight stands on stay exactly where they are;
++  - the land beyond turns about the fight, more the further it lies.
++- **The sky turns its azimuth by the same angle** (`sky.gdshader` `sky_turn`): the clouds and the stars. Far land at the horizon and the sky move together.
++- **The rate is constant:** `RenderLook.DRIFT_DEG_PER_MIN` (3) degrees a minute of match time, up to `DRIFT_MAX_DEG` (30). It starts from 0 at each match's start.
++  - Match time stands still in a hit-stop or a set piece's pause, so the drift does too.
++  - About 0.0008 degrees a frame: never motion you can see from frame to frame, only a slow change over half a minute or so.
++- **At World's turn** (`arena_turn`) it starts from 0 again on the new ring, under the turn's hard cut.
++- **Crisp:** no fade, no blur, no blend; the far land and sky are drawn as they always were, at a turned angle.
++- **Off by default:** `RenderLook.SLOW_DRIFT_ON` false. Main's `--drift` or `?drift=1` on a page turns it on.
++
++## The far land itself
++
++The far land is still the render's own: each column's base height, scaled by its biome, with relief. World's `farColumn` (the planet's real ground beside the ring) costs about 50 µs a sample natively, nearly all of it the surface read. A far field for a turn's new ring would cost too much at the turn on an old laptop. World has been asked for a cheaper bulk read. When it lands, the drift reads the planet's own far land with no other change.
++
++## Checked
++
++- `gates9` (17 checks) and `cue_check` pass with the drift off, with 0 script errors.
++- With it on, a native AI match: the angle grows 0.66, 1.32, 1.99 and 2.66 degrees at ticks 1,000 to 4,000 (53 s of match time), and the ground's `drift_tan` follows.
++- Stills and GIFs (seed 4, the AI match, reduced as the demo plays it; Tools' launcher), uncommitted:
++  - `img/drift-7200-d3f1ca0e.png`: d3f1ca0e, then tick 7,200 with the drift off and on (about 4.8 degrees by then);
++  - `homework/progress-2026-10-22/slow-drift-time-lapse.gif`: two minutes of the match, off and on side by side, 40 times faster;
++  - `homework/progress-2026-10-22/slow-drift-real-speed.gif`: four seconds at the real speed, drift on.
