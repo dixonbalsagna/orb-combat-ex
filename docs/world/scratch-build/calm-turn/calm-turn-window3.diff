@@ -84,14 +84,14 @@ index a87f294..e853125 100644
  		SimHitstop.live(S)   # ... over the last minute of fight
  	SimPause.liveTick(S)   # Q10: the pause bank accrues on match time
 diff --git a/sim/core/state.gd b/sim/core/state.gd
-index c4a2f2d..37c07a7 100644
+index c4a2f2d..8616098 100644
 --- a/sim/core/state.gd
 +++ b/sim/core/state.gd
 @@ -14,6 +14,7 @@ var game := Game.new()
  var arenaCols: int = 4800            # World: this match's arena length in columns (SimConst.setArena; newMatch sets it, step sets the static again when another match has changed it). Not hashed
  var planetCols := PackedByteArray()  # World: this match's planet world's biome by column (WorldBiomes.planetCols), kept for the same reason; empty for the hand-made world. Not hashed
  var worldId: int = 0                 # World: which world this match built (WorldBiomes.claim); step compares it with the last built. Not hashed
-+var epoch = null                      # World: the calm-moment turn's state (world/epoch.gd), a Dictionary while the arena may turn, else null. Hashed through n, lastT and drift
++var epoch = null                      # World: the calm-moment turn's state (world/epoch.gd), a Dictionary while the arena may turn, else null. Hashed (hash.gd) only while set: the turns made (n), the last turn's time, the drift, the ring's slice hash, and for a decided turn its bearing, pivot column, how many of its rings are read, k and the fallback bearing
  var contactOn: bool = false           # ground contact on (World, G2: a copy of data/biomes/contact.json enabled, taken by newMatch)
  var dirS := DirS.new()
  var fighters: Array = []
@@ -110,10 +110,10 @@ index 34bf421..f6686b7 100644
  				push_error("consume: unknown event " + e.type)
 diff --git a/sim/world/epoch.gd b/sim/world/epoch.gd
 new file mode 100644
-index 0000000..ddf065a
+index 0000000..9730c57
 --- /dev/null
 +++ b/sim/world/epoch.gd
-@@ -0,0 +1,428 @@
+@@ -0,0 +1,429 @@
 +class_name WorldEpoch
 +## The calm-moment turn (docs/world/shifting-arena-design.md section 4, docs/world/calm-turn-world.md; Game Design rulings-2026-10-19b.md section 1; Encounter's docs/director/calm-turn.md).
 +## At a calm moment the arena's ring turns about the pair: a new plane through the pair's point, at most 10 degrees of bearing from the old, at most 4 turns a fight, at least 60 s of fight
@@ -130,6 +130,7 @@ index 0000000..ddf065a
 +##   cancel(S)                                          Encounter's: drop a pending pick (the director asks again)
 +##   calm(S)                                            World's check: no beam, shot, flight, rush, slide, open set piece, water flowing or catastrophe
 +
++static var _PI: float = SimMathx.f64("400921fb54442d18")   # pi from its bits, and SimDetMath for every sin and cos: no engine trig in the sim (the parity lint allows no float literal over 15 digits)
 +static var _jobs: Dictionary = {}   # "worldId/bearing" -> RingJob (the warm read of a candidate ring, kept whole until the swap): derived data outside the state; the state keeps how many columns it was asked for
 +
 +
@@ -179,7 +180,7 @@ index 0000000..ddf065a
 +	var co: float = SimDetMath.cos(a)
 +	var si: float = SimDetMath.sin(a)
 +	var T: Array = WorldPlanet._unit([-u[0] * si + v[0] * co, -u[1] * si + v[1] * co, -u[2] * si + v[2] * co])
-+	var T2: Array = _rot(T, M, deg * PI / 180.0)
++	var T2: Array = _rot(T, M, deg * _PI / 180.0)
 +	var ng: Array = WorldPlanet._unit(WorldPlanet._cross(M, T2))
 +	var c2: Array = WorldPlanet._unit([M[0] * ct + ng[0] * st, M[1] * ct + ng[1] * st, M[2] * ct + ng[2] * st])
 +	var ringM: Dictionary = WorldRingPick.ringFrom(c2, cols, M)
@@ -189,7 +190,7 @@ index 0000000..ddf065a
 +
 +## The angle in degrees between two rings' axes: how far the loop has drifted.
 +static func driftOf(c0: Array, c: Array) -> float:
-+	return WorldPlanet.acosf(SimMathx.jclamp(c0[0] * c[0] + c0[1] * c[1] + c0[2] * c[2], -1.0, 1.0)) * 180.0 / PI
++	return WorldPlanet.acosf(SimMathx.jclamp(c0[0] * c[0] + c0[1] * c[1] + c0[2] * c[2], -1.0, 1.0)) * 180.0 / _PI
 +
 +
 +static func _held(P: WorldPlanet.Planet, ring: Dictionary, i: int) -> bool:
@@ -373,7 +374,7 @@ index 0000000..ddf065a
 +		return
 +	var d: Dictionary = data()
 +	var smax: float = _reach(S, int(E.next.pc))
-+	if smax * sin(float(d.minDeg) * PI / 180.0) > float(d.moveMax):
++	if smax * SimDetMath.sin(float(d.minDeg) * _PI / 180.0) > float(d.moveMax):
 +		E.refused = int(E.refused) + 1
 +		cancel(S)
 +		return
@@ -382,7 +383,7 @@ index 0000000..ddf065a
 +		if int(w.cols) < SimConst.NC:
 +			continue
 +		var a: float = absf(float(w.deg))
-+		if a < float(d.minDeg) - 1e-9 or smax * sin(a * PI / 180.0) > float(d.moveMax):
++		if a < float(d.minDeg) - 1e-9 or smax * SimDetMath.sin(a * _PI / 180.0) > float(d.moveMax):
 +			continue
 +		if best == null or a > absf(float(best.deg)):
 +			best = w

@@ -1,0 +1,13 @@
+7/1200 hash 2833587438 held 1  11.0 us/col (13 ms)
+7/2400 hash 713084292 held 2  10.0 us/col (24 ms)
+7/4800 hash 1796267095 held 6  11.7 us/col (56 ms)
+3/1200 hash 2973050903 held 1  6.8 us/col (8 ms)
+3/2400 hash 648931602 held 3  8.8 us/col (21 ms)
+3/4800 hash 111264617 held 4  10.3 us/col (49 ms)
+11/1200 hash 2603306661 held 0  13.9 us/col (17 ms)
+11/2400 hash 633813060 held 4  12.9 us/col (31 ms)
+11/4800 hash 2849232720 held 8  13.3 us/col (64 ms)
+25/1200 hash 1383108576 held 1  12.2 us/col (15 ms)
+25/2400 hash 2288383709 held 2  11.5 us/col (28 ms)
+25/4800 hash 1311726002 held 6  16.4 us/col (79 ms)
+RINGBENCH: 12.0 us/col over 33600 columns

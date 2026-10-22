@@ -1,6 +1,6 @@
 # The calm-moment turn (window 3): in scratch on main's HEAD, parked, not applied
 
-Re-cut 2026-10-22 on 6fd83f6d (the sim drives the warm: no host calls anything; then the warm-only swap and the refusal, the Executive Producer's two rulings, below; before that Game Design's rulings-2026-10-22 5a), earlier on 79693404 (windows 0, 1, 4 and farColumn applied, and the surface-class fix) against Encounter's `docs/director/calm-turn.md` and Game Design's `rulings-2026-10-19b.md` section 1 with 1e. Design and findings: `docs/world/calm-turn-world.md`. **Behind a switch, off (`rings.json` `turn.on` 0, or `setup.arena.turn`): the golden is unchanged.**
+Re-cut 2026-10-22 on 14c284ff (every sin and cos is the sim's own: SimDetMath, pi from its bits; the sim drives the warm: no host calls anything; then the warm-only swap and the refusal, the Executive Producer's two rulings, below; before that Game Design's rulings-2026-10-22 5a), earlier on 79693404 (windows 0, 1, 4 and farColumn applied, and the surface-class fix) against Encounter's `docs/director/calm-turn.md` and Game Design's `rulings-2026-10-19b.md` section 1 with 1e. Design and findings: `docs/world/calm-turn-world.md`. **Behind a switch, off (`rings.json` `turn.on` 0, or `setup.arena.turn`): the golden is unchanged.**
 
 | File | What |
 | :--- | :--- |
@@ -19,12 +19,12 @@ Re-cut 2026-10-22 on 6fd83f6d (the sim drives the warm: no host calls anything; 
 - **(b) The turned world is pinned:** the epoch keeps the hash of the slice of the ring the match is on (`WorldPlanet.sliceHash`, set when the match starts and at each swap) and the hash holds it, so the new ground and biomes show in the state hash and not only the buildings. `epoch_check` has two new checks: a decided turn and its bearing change the hash before the swap, and after the swap two different turns from one state hash differently and the hash holds the new ring's slice hash.
 - The surface-class fix (`contact.gd`) is on main (79693404), so the patch no longer carries it.
 
-## Proof (clean export of 6fd83f6d plus the patch; below-normal priority, one Godot at a time)
+## Proof (clean export of 14c284ff plus the patch; below-normal priority, one Godot at a time)
 
 - `epoch_check.gd`: **0 failed** (41 checks). New for the sim-driven warm: `SimCore.step` alone warms (10 ticks at k 16 read 160 columns of each ring); fallbackDeg 0 warms one ring and 2.5 two, a fallback not under the chosen bearing is left out, and `k` and the fallback are in the hash; **a headless replay of matches that turn (seeds 1 and 2, played by `SimCore.step` alone with no host) swaps on the same tick (186 and 65) and to the same hash when replayed, when the slices kept outside the state are lost mid-warm (the catch-up), and when the state is hashed every tick**. The earlier checks stand: no ring is read on the swap tick (`E.cold` 0), a part-read ring never swaps, the swap table (10 / 2.5 / waits / waits / refused / refused for pivots off by 0 / 3,600 / 7,000 / 7,800 / 9,000 / 40,000 units), geometry, caps, carry, hash, drift cap, listed places, Close and Whole.
 - The twelve other World checks: 0 failed.
 - `sim/core/tools/run-all.js`: **all 5 stages passed** (unit 9.6 s, parity 69.5 s, soak 15.1 s, golden 0.4 s, godot 284.9 s): the golden is unchanged. Rendering's 15 gates all passed. `node tools/validate.js` 234 files, 0 errors, 0 warnings; `--self-test` 8577 of 8577.
-- `git apply --check` of the diff on 6fd83f6d: ok.
+- `git apply --check` of the diff on 14c284ff: ok. The move test in `tick` and the geometry use `SimDetMath` and pi from its bits (`_PI`), no engine trig; `state.gd`'s comment names the hashed terms.
 - **Cost:** the slice read 450 ms Whole, 286 ms Half, 147 ms Close, spread over k columns of each ring a tick; the swap itself a tick with no read. Rendering's old-laptop bench puts the read at about 0.75 ms a column: see the profile note once it lands.
 
 ## For the others

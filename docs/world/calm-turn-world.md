@@ -21,7 +21,7 @@ The director's part of calm (no exchange, approach, clinch, flip, queued press, 
 
 ## The swap, and what is carried
 
-The new ring is read beforehand (0.15 to 0.7 s of work by size, a few columns a tick: `prewarm`), read by the sim in the ticks after the pick, then one step on the calm tick, **with no ring read on that tick**:
+The new ring is read beforehand (0.15 to 0.7 s of work by size, a few columns a tick: `prewarm`), read by the sim in the ticks after the pick (0.15 to 0.7 s of work by size; about a ninth of that with the ring-read speed park, `scratch-build/ring-speed/`), then one step on the calm tick, **with no ring read on that tick**:
 
 | State | How |
 | :--- | :--- |

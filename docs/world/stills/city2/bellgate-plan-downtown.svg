@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1288" height="1142" viewBox="0 0 1288 1142" font-family="Segoe UI, Arial, sans-serif">
+<rect width="100%" height="100%" fill="#f4f1ea"/>
+<text x="20" y="28" font-size="18" font-weight="600" fill="#222">Bellgate downtown: lanes, streets, blocks and what stands in them (plan)</text>
+<text x="20" y="48" font-size="12" fill="#555">Plan view from above; the camera is at the bottom. x runs left to right (47467 to 52667 units), depth z runs from the camera (bottom) to the back (top). One fighter is 75 units.</text>
+<rect x="20" y="997.0" width="1248.0" height="90.0" fill="#e9efe1"/>
+<rect x="20" y="790.0" width="1248.0" height="162.0" fill="#e2ded4"/>
+<rect x="20" y="646.0" width="1248.0" height="144.0" fill="#ece7da"/>
+<rect x="20" y="538.0" width="1248.0" height="108.0" fill="#e2ded4"/>
+<rect x="20" y="376.0" width="1248.0" height="162.0" fill="#ece7da"/>
+<rect x="20" y="106.0" width="1248.0" height="144.0" fill="#e9efe1"/>
+<rect x="20" y="934.0" width="1248.0" height="18.0" fill="#cfcac0"/>
+<rect x="20" y="912.4" width="1248.0" height="21.6" fill="#b9b3a6"/>
+<rect x="20" y="829.6" width="1248.0" height="82.8" fill="#8c8a86"/>
+<rect x="20" y="808.0" width="1248.0" height="21.6" fill="#b9b3a6"/>
+<rect x="20" y="790.0" width="1248.0" height="18.0" fill="#cfcac0"/>
+<rect x="20" y="628.0" width="1248.0" height="18.0" fill="#cfcac0"/>
+<rect x="20" y="556.0" width="1248.0" height="72.0" fill="#8c8a86"/>
+<rect x="20" y="538.0" width="1248.0" height="18.0" fill="#cfcac0"/>
+<rect x="20" y="376.0" width="1248.0" height="576.0" fill="none" stroke="#c0392b" stroke-width="1.4" stroke-dasharray="8 5"/>
+<text x="26" y="389.0" font-size="11" fill="#c0392b">the fighters' band (32 bh deep)</text>
+<rect x="494.4" y="646.0" width="210.4" height="144.0" fill="#8c8a86" opacity="0.85"/>
+<rect x="494.4" y="376.0" width="210.4" height="162.0" fill="#8c8a86" opacity="0.85"/>
+<rect x="26.8" y="112.0" width="147.4" height="131.9" fill="#6f8fb3" stroke="#111" stroke-width="0.6" opacity="0.92"/>
+<rect x="195.8" y="110.9" width="190.5" height="134.3" fill="#6f8fb3" stroke="#111" stroke-width="0.6" opacity="0.92"/>
+<rect x="704.8" y="109.7" width="191.7" height="136.7" fill="#6f8fb3" stroke="#111" stroke-width="0.6" opacity="0.92"/>
+<rect x="917.8" y="113.3" width="196.4" height="129.5" fill="#6f8fb3" stroke="#111" stroke-width="0.6" opacity="0.92"/>
+<rect x="1129.7" y="112.5" width="130.8" height="131.0" fill="#6f8fb3" stroke="#111" stroke-width="0.6" opacity="0.92"/>
+<rect x="1237.7" y="376.0" width="216.0" height="162.0" fill="#4f729c" stroke="#c0392b" stroke-width="1.8" opacity="0.92"/>
+<rect x="704.8" y="382.6" width="200.7" height="155.4" fill="#6f8fb3" stroke="#111" stroke-width="0.6" opacity="0.92"/>
+<rect x="300.4" y="384.2" width="193.7" height="153.8" fill="#6f8fb3" stroke="#111" stroke-width="0.6" opacity="0.92"/>
+<rect x="1077.5" y="384.5" width="141.3" height="153.5" fill="#6f8fb3" stroke="#111" stroke-width="0.6" opacity="0.92"/>
+<rect x="927.0" y="385.2" width="128.1" height="152.8" fill="#6f8fb3" stroke="#111" stroke-width="0.6" opacity="0.92"/>
+<rect x="55.5" y="387.3" width="227.0" height="150.7" fill="#6f8fb3" stroke="#111" stroke-width="0.6" opacity="0.92"/>
+<rect x="-145.1" y="392.5" width="177.8" height="145.5" fill="#6f8fb3" stroke="#111" stroke-width="0.6" opacity="0.92"/>
+<rect x="730.7" y="646.0" width="180.0" height="144.0" fill="#4f729c" stroke="#c0392b" stroke-width="1.8" opacity="0.92"/>
+<rect x="949.3" y="648.3" width="200.9" height="141.7" fill="#6f8fb3" stroke="#111" stroke-width="0.6" opacity="0.92"/>
+<rect x="135.3" y="650.2" width="188.2" height="139.8" fill="#6f8fb3" stroke="#111" stroke-width="0.6" opacity="0.92"/>
+<rect x="1172.9" y="653.1" width="239.1" height="136.9" fill="#6f8fb3" stroke="#111" stroke-width="0.6" opacity="0.92"/>
+<line x1="20.0" y1="64" x2="20.0" y2="1102.0" stroke="#555" stroke-width="0.8" stroke-dasharray="3 4"/>
+<text x="23.0" y="60" font-size="11" fill="#333" font-weight="600">downtown</text>
+<g transform="translate(20.0,1116.0)"><rect width="240.0" height="5" fill="#222"/><text x="0" y="16" font-size="11" fill="#222">1,000 units (13 fighter heights)</text></g>
+<rect x="404.0" y="1112.0" width="18.0" height="18.0" fill="#c0392b"/><text x="414.0" y="1122.0" font-size="11" fill="#c0392b">a fighter</text>
+<rect x="640.0" y="1112" width="10" height="10" fill="#c9a27a"/><text x="654.0" y="1121" font-size="11" fill="#333">house</text>
+<rect x="730.0" y="1112" width="10" height="10" fill="#8fa7c2"/><text x="744.0" y="1121" font-size="11" fill="#333">low tower</text>
+<rect x="820.0" y="1112" width="10" height="10" fill="#6f8fb3"/><text x="834.0" y="1121" font-size="11" fill="#333">mid-rise</text>
+<rect x="910.0" y="1112" width="10" height="10" fill="#37557d"/><text x="924.0" y="1121" font-size="11" fill="#333">downtown</text>
+</svg>

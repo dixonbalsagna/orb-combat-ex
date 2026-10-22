@@ -14,6 +14,7 @@ class_name WorldEpoch
 ##   cancel(S)                                          Encounter's: drop a pending pick (the director asks again)
 ##   calm(S)                                            World's check: no beam, shot, flight, rush, slide, open set piece, water flowing or catastrophe
 
+static var _PI: float = SimMathx.f64("400921fb54442d18")   # pi from its bits, and SimDetMath for every sin and cos: no engine trig in the sim (the parity lint allows no float literal over 15 digits)
 static var _jobs: Dictionary = {}   # "worldId/bearing" -> RingJob (the warm read of a candidate ring, kept whole until the swap): derived data outside the state; the state keeps how many columns it was asked for
 
 
@@ -63,7 +64,7 @@ static func turned(P: WorldPlanet.Planet, spec: Dictionary, pc: int, deg: float)
 	var co: float = SimDetMath.cos(a)
 	var si: float = SimDetMath.sin(a)
 	var T: Array = WorldPlanet._unit([-u[0] * si + v[0] * co, -u[1] * si + v[1] * co, -u[2] * si + v[2] * co])
-	var T2: Array = _rot(T, M, deg * PI / 180.0)
+	var T2: Array = _rot(T, M, deg * _PI / 180.0)
 	var ng: Array = WorldPlanet._unit(WorldPlanet._cross(M, T2))
 	var c2: Array = WorldPlanet._unit([M[0] * ct + ng[0] * st, M[1] * ct + ng[1] * st, M[2] * ct + ng[2] * st])
 	var ringM: Dictionary = WorldRingPick.ringFrom(c2, cols, M)
@@ -73,7 +74,7 @@ static func turned(P: WorldPlanet.Planet, spec: Dictionary, pc: int, deg: float)
 
 ## The angle in degrees between two rings' axes: how far the loop has drifted.
 static func driftOf(c0: Array, c: Array) -> float:
-	return WorldPlanet.acosf(SimMathx.jclamp(c0[0] * c[0] + c0[1] * c[1] + c0[2] * c[2], -1.0, 1.0)) * 180.0 / PI
+	return WorldPlanet.acosf(SimMathx.jclamp(c0[0] * c[0] + c0[1] * c[1] + c0[2] * c[2], -1.0, 1.0)) * 180.0 / _PI
 
 
 static func _held(P: WorldPlanet.Planet, ring: Dictionary, i: int) -> bool:
@@ -257,7 +258,7 @@ static func tick(S: SimState, hold: bool = true) -> void:
 		return
 	var d: Dictionary = data()
 	var smax: float = _reach(S, int(E.next.pc))
-	if smax * sin(float(d.minDeg) * PI / 180.0) > float(d.moveMax):
+	if smax * SimDetMath.sin(float(d.minDeg) * _PI / 180.0) > float(d.moveMax):
 		E.refused = int(E.refused) + 1
 		cancel(S)
 		return
@@ -266,7 +267,7 @@ static func tick(S: SimState, hold: bool = true) -> void:
 		if int(w.cols) < SimConst.NC:
 			continue
 		var a: float = absf(float(w.deg))
-		if a < float(d.minDeg) - 1e-9 or smax * sin(a * PI / 180.0) > float(d.moveMax):
+		if a < float(d.minDeg) - 1e-9 or smax * SimDetMath.sin(a * _PI / 180.0) > float(d.moveMax):
 			continue
 		if best == null or a > absf(float(best.deg)):
 			best = w

@@ -162,7 +162,7 @@ def sim(s):
 
 
 def state(s):
-    return rep(s, '''var contactOn: bool = false           # ground contact on''', '''var epoch = null                      # World: the calm-moment turn's state (world/epoch.gd), a Dictionary while the arena may turn, else null. Hashed through n, lastT and drift
+    return rep(s, '''var contactOn: bool = false           # ground contact on''', '''var epoch = null                      # World: the calm-moment turn's state (world/epoch.gd), a Dictionary while the arena may turn, else null. Hashed (hash.gd) only while set: the turns made (n), the last turn's time, the drift, the ring's slice hash, and for a decided turn its bearing, pivot column, how many of its rings are read, k and the fallback bearing
 var contactOn: bool = false           # ground contact on''')
 
 
