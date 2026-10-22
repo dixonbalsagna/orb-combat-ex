@@ -1,0 +1,81 @@
+diff -ruN a/ui/hud/ui_hud.gd b/ui/hud/ui_hud.gd
+--- a/ui/hud/ui_hud.gd	2026-10-22 06:02:27.409903400 -0700
++++ b/ui/hud/ui_hud.gd	2026-10-22 06:02:27.604441700 -0700
+@@ -1922,6 +1922,8 @@
+ 
+ ## The join prompt's opacity now (0 to 1): full from the start, fading after UiJoin.SHOW seconds of fight time. The pause menu shows it as a line whatever this is.
+ func join_prompt_alpha() -> float:
++	if UiData.feature("minimal_hud"):
++		return 0.0   # minimal_hud: "P2: press T to join" is not on the play screen (the pause menu draws its own join line); a launched body can fly past it
+ 	return UiJoin.alpha(_join_t) if (join_due() and _join_note.is_empty()) else 0.0
+ 
+ 
+diff -ruN a/ui/tools/hud_check.gd b/ui/tools/hud_check.gd
+--- a/ui/tools/hud_check.gd	2026-10-22 06:02:27.449229900 -0700
++++ b/ui/tools/hud_check.gd	2026-10-22 06:02:27.531559600 -0700
+@@ -68,6 +68,7 @@
+ 	await _cut_rules()
+ 	await _minimal_hud_rules()
+ 	await _minimal_teach_rules()
++	await _minimal_join_rules()
+ 	await _brawl_marks_rules()
+ 	_rate_rules()
+ 	await _block_toggle_rules()
+@@ -98,6 +99,7 @@
+ 
+ func _terms() -> void:
+ 	UiData.reload()
++	UiData.set_feature("minimal_hud", false)   # reload() drops every override: the older rules look at the full HUD
+ 	var must: Array = ["stance.press", "stance.guard", "stance.dodge", "stance.escape", "meter.respect", "meter.pride", "meter.wrath",
+ 		"meter.hunger", "meter.charge", "region.head", "region.core", "region.arms", "region.legs", "region.mantle", "stage.bruised",
+ 		"stage.battered", "stage.broken", "card.brink", "card.rally.protagonist", "card.heat.1", "card.heat.2", "card.heat.3",
+@@ -6177,6 +6179,33 @@
+ 	UiPrefs.path = "user://ui_prefs.json"
+ 
+ 
++## "P2: press T to join" is not on the play screen under minimal_hud (Orb's rule: nothing in the fight space); the pause menu keeps its own line.
++func _minimal_join_rules() -> void:
++	root.size = Vector2i(1280, 720)
++	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
++	hud.size = Vector2(1280, 720)
++	root.add_child(hud)
++	await process_frame
++	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
++	hud.join_enabled = true
++	hud.hub.patch(0, {"ai": false})
++	hud.hub.patch(1, {"ai": true})
++	for i in range(4):
++		hud.advance(1.0 / 60.0)
++		await process_frame
++	UiData.set_feature("minimal_hud", false)
++	var a_old: float = hud.join_prompt_alpha()
++	UiData.set_feature("minimal_hud", true)
++	var a_play: float = hud.join_prompt_alpha()
++	hud.show_pause_menu(false)
++	var pm_join: bool = not (hud.pause_menu_plan().get("join_lines", PackedStringArray()) as PackedStringArray).is_empty()
++	hud._pm_close("test")
++	_ok(hud.join_due() and a_old > 0.0 and a_play == 0.0 and pm_join, "minimal hud: the join prompt shows as it did with the switch off and not on the play screen (%.2f, %.2f)" % [a_old, a_play])
++	UiData.set_feature("minimal_hud", false)
++	hud.queue_free()
++	await process_frame
++
++
+ ## The two grey circles cut on 2026-10-18 (Orb: "the weird gray circle between the two fighters"): the planet ring map and the beam struggle's steady rings, each behind a switch that is off.
+ func _cut_rules() -> void:
+ 	UiData.set_feature("ring_map", null)
+@@ -7758,6 +7787,7 @@
+ 
+ func _faces_rules() -> void:
+ 	UiData.reload()
++	UiData.set_feature("minimal_hud", false)   # reload() drops every override: the older rules look at the full HUD
+ 	var fd: Dictionary = UiData.faces()
+ 	var slots_ok := true
+ 	for id in ["default", "protagonist", "anti_hero", "empress", "cyborg"]:
+@@ -8010,6 +8040,7 @@
+ 
+ func _two_player_rules() -> void:
+ 	UiData.reload()
++	UiData.set_feature("minimal_hud", false)   # reload() drops every override: the older rules look at the full HUD
+ 	for id in ["join", "join_short", "join_key", "join_key_short", "joined", "left", "pause_p2_leave", "pause_p2_join"]:
+ 		_ok(UiData.t("prompt." + id) != "prompt." + id, "two players: the word %s exists" % id)
+ 	var od: Dictionary = UiData.options()
