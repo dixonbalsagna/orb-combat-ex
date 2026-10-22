@@ -1229,32 +1229,34 @@ func _make_ground_meshes() -> void:
 	runs.append([rows.slice(start), stride_at(rows[-1])])
 	var smallest: int = int(RenderLook.STRIDES[0][1])
 	var largest: int = int(RenderLook.STRIDES[-1][1])
-	var cc: int = RenderLook.CHUNK_COLS
-	for group in ["near", "mid"]:
+	# One mesh per run (one stride on one side of the fighter plane; the finest spans both) and per chunk, so the
+	# frustum culls each band on its own: a chunk whose far rows reach the wide horizon does not draw its fine rows
+	# too, and the rows in front of the camera are not drawn from behind it (Performance's frame pacing, 2026-10-22:
+	# the drawn triangles followed how much of the ring the camera saw). The finest run's chunks come first
+	# (near_chunks()); the coarsest runs are cut into chunks of FAR_CHUNK_COLS, their water always shown (the far rows
+	# read other columns' land: far_x).
+	var order: Array = []
+	for k in range(runs.size()):
+		if runs[k][1] == smallest:
+			order.push_front(k)
+		else:
+			order.append(k)
+	for k in order:
+		var st: int = runs[k][1]
+		var far: bool = st == largest
+		var cc: int = RenderLook.FAR_CHUNK_COLS if far else RenderLook.CHUNK_COLS
+		var sf: int = runs[k - 1][1] if not far and k > 0 and runs[k - 1][1] > st else 0
+		var sl: int = runs[k + 1][1] if not far and k + 1 < runs.size() and runs[k + 1][1] > st else 0
 		for c0 in range(0, SimConst.NC, cc):
-			var c1: int = mini(c0 + cc, SimConst.NC)   # a partial last chunk on an arena that is not a multiple of CHUNK_COLS
+			var c1: int = mini(c0 + cc, SimConst.NC)   # a partial last chunk on an arena that is not a multiple of the chunk
 			var tv: Array = [[], []]
-			for k in range(runs.size()):
-				var st: int = runs[k][1]
-				if (group == "near") != (st == smallest) or st == largest:
-					continue
-				var sf: int = runs[k - 1][1] if k > 0 and runs[k - 1][1] > st else 0
-				var sl: int = runs[k + 1][1] if k + 1 < runs.size() and runs[k + 1][1] > st else 0
-				_grid(tv[0], c0, c1, runs[k][0], st, sf, sl, false)
-				_grid(tv[1], c0, c1, runs[k][0], st, 0, 0, true)
+			_grid(tv[0], c0, c1, runs[k][0], st, sf, sl, false)
+			_grid(tv[1], c0, c1, runs[k][0], st, 0, 0, true)
 			if tv[0].is_empty():
 				continue
 			_terrain_meshes.append(_finish(tv[0], c0 * SimConst.COL, c1 * SimConst.COL, false))
 			_water_meshes.append(_finish(tv[1], c0 * SimConst.COL, c1 * SimConst.COL, true))
-			_water_cols.append_array([c0, c1])
-	var far: Array = [[], []]
-	for k in range(runs.size()):
-		if runs[k][1] == largest:
-			_grid(far[0], 0, SimConst.NC, runs[k][0], largest, 0, 0, false)
-			_grid(far[1], 0, SimConst.NC, runs[k][0], largest, 0, 0, true)
-	_terrain_meshes.append(_finish(far[0], 0.0, SimConst.W, false))
-	_water_meshes.append(_finish(far[1], 0.0, SimConst.W, true))
-	_water_cols.append_array([-1, -1])
+			_water_cols.append_array([-1, -1] if far else [c0, c1])
 
 
 ## A top grid (ground) or surface grid (water) over columns c0..c1 at the given stride and rows, appended to the

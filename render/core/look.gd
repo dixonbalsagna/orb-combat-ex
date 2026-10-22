@@ -54,6 +54,7 @@ const ROW_STEP0: float = 16.0
 const ROW_GROWTH: float = 0.15
 const STRIDES: Array = [[400.0, 1], [2000.0, 2], [-Z_TERRAIN_BACK, 4], [1.0e12, 8]]
 const CHUNK_COLS: int = 320              # a multiple of the largest stride
+const FAR_CHUNK_COLS: int = 1280         # the coarsest runs' chunks (planet_view.gd): a multiple of the largest stride
 const Z_BUILDING_FRONT: float = -140.0   # a building with no depth from the sim stands here (B1 gives z and d)
 ## Buildings in depth (World's B1, docs/world/buildings-in-depth.md): each stands at its sim z with footprint depth d,
 ## on the highest ground under its footprint, its footing extended down to the lowest. An implode sinks it straight

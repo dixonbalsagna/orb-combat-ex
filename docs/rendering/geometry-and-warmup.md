@@ -114,3 +114,36 @@ Performance's report on the live demo (`docs/perf/inset-hitches-aura-2026-10-22.
 - drawing the warm set under the pane's camera at boot. The camera's near plane, set on the first frame, clipped it.
 
 **`BeamView.prism_mesh()`** is the one source of the beam's prism (16 sides, 24 rings), for the view and for anything that warms its first draw.
+
+## The ground by band (2026-10-22)
+
+Performance's frame-pacing report (`docs/perf/frame-pacing-2026-10-22.md`) found the AI match on the integrated GPU missing 60 Hz in stretches, and the ground's triangles growing over the match. World's reading (`docs/world/scratch-build/frame-cost/README.md`): craters change texels, never the mesh. The count follows how many ground chunks the frustum keeps.
+
+**Why so many.** Each 320-column chunk was one mesh for its finest rows (within 400 units of the fighter plane) and one for all its middle rows, from 9,000 units in front of the plane to 9,000 behind. The coarsest rows were one mesh for the whole ring, from 120,000 behind to 1,000,000 in front. The frustum culls a mesh only when all of it is out of view. So:
+- a chunk whose back rows reached the wide horizon drew all its rows;
+- every far mesh drew its rows in front of the fighter plane, which are behind the camera and can never show: about 40,000 of its 63,600 triangles;
+- each copy of the ring the view reached added another far mesh.
+
+The water is the same grid again.
+
+**The fix.** One mesh per run (one stride on one side of the fighter plane; the finest run spans both sides) and per chunk. So the frustum culls each band on its own.
+- The coarsest runs are cut into chunks of `FAR_CHUNK_COLS` (1,280).
+- The finest run's chunks come first (`near_chunks()`, the rows with the fighter plane's exact row).
+- The water follows the same split. Its far chunks are always shown, as before, since the far rows read other columns' land (`far_x`).
+- The vertices and the shader are unchanged.
+
+**Measured** (the AI match as Performance's bench plays it, 6,000 frames on the integrated Radeon; Performance's `frame-bench` with its perf hook; every run valid by the load rule):
+
+| Build | p50 | p95 | Frames over 16.7 ms | Over 25 ms | Median triangles | Draw calls |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| main (2 runs) | 9.8 to 9.9 ms | 23.5 to 23.9 ms | 812 to 837 | 116 to 162 | 359 k | 108 |
+| by band (2 runs) | 7.5 to 8.1 ms | 17.6 to 18.0 ms | 349 to 388 | 40 to 55 | 140 k | 118 |
+
+- **In view, the ground's triangles fall from 108 to 193 k to 23 to 62 k** (a native count of the meshes inside pane 0's frustum along the match).
+- **What is left is one very wide shot** (ticks 5,870 to 6,120: the view about 7,800 units across). There the ground is still about 176 k triangles and the frame 19 ms; with the ground cut it is 7 ms.
+  - Camera's strip is not it: the same with `nopanel=1`.
+  - A stride that coarsens with the zoom would take it, but it would pop where it switches. That is a look decision, not taken here.
+- **The look** (seed 4, reduced): pixel-identical at ticks 500, 4,000 and 5,500.
+  - At tick 2,000, 136 pixels differ by 1 to 14 levels (127 of them by 1 or 2) on a translucent effect at a fighter's side. That is a changed blending order of see-through draws, with the water's far mesh now in chunks.
+  - Repeat captures of each build are identical, so the difference is real but invisible.
+- **The checks:** `ground_check` and `seam_sweep` pass with the new layout, as do the other render gates.
