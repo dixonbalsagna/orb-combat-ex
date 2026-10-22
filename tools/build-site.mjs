@@ -57,7 +57,7 @@ mkdirSync(outDir, { recursive: true });
 
 if (config.offline) {
   // The notice, and no game: no wasm, pck, script, manifest or icon of the export, and no /bench/ or /band/ build either (the bench runs a match with no gate; the band is playable).
-  // the offline words (RL-121: "The playable build is offline for now.", "We have taken the build down while we fix them."): tools/site-notice-offline.json, whatever the interim's holding page says
+  // the offline words (Legal RL-171: "The playable build is offline for now.", "... they are not fixed yet."): tools/site-notice-offline.json, whatever the interim's holding page says
   const page = siteNotice(JSON.parse(readFileSync(join(import.meta.dirname, 'site-notice-offline.json'), 'utf8')));
   for (const where of ['index.html', 'play/index.html', 'bench/index.html', 'band/index.html', '404.html']) {
     mkdirSync(join(outDir, where, '..'), { recursive: true });

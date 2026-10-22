@@ -12,7 +12,7 @@
       "h2": "The playable build is offline for now."
     },
     {
-      "p": "Our own automated check found some scenes that flash more often than the recommended limit of three times a second. We have taken the build down while we fix them. No independent photosensitivity analyzer has been run. There is no date yet."
+      "p": "Our own automated check found some scenes that flash more often than the recommended limit of three times a second, and they are not fixed yet. No independent photosensitivity analyzer has been run. There is no date for its return."
     },
     {
       "h2": "Combos that build as you fight"

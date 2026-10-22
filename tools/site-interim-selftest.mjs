@@ -55,7 +55,15 @@ writeFileSync(join(web, 'index.html'), exportHtml);
 for (const f of ['index.js', 'index.wasm', 'index.pck']) writeFileSync(join(web, f), 'x');
 
 // the interim words of the test: the real file (a copy, so the real one is never touched)
-const words = JSON.parse(readFileSync(join(here, 'site-interim.json'), 'utf8'));
+// tools/site-interim.json holds no flash words any more (Legal RL-171 retired the RL-136 text: "we are fixing them" is untrue while flash work is paused), and is a draft; the ruling-based path
+// (no interim.owner) is still exercised, so the test brings its OWN copy of the old words as a fixture. It is never published.
+const RULING_WORDS = {
+  "gateP": "This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.",
+  "under": "Reduce flashing is on. It lowers some effects but does not remove the flagged scenes.",
+  "aboutP": "This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version. Reduce flashing is on by default. It lowers some effects but does not remove the flagged scenes."
+};
+const real = JSON.parse(readFileSync(join(here, 'site-interim.json'), 'utf8'));
+const words = { ...real, draft: false, gate: { ...real.gate, blocks: [{ p: RULING_WORDS.gateP }], under: RULING_WORDS.under }, about: { ...real.about, blocks: [...real.about.blocks.slice(0, 4), { h2: 'Flashing effects' }, { p: RULING_WORDS.aboutP + ' Reduce flashing is on by default. It lowers some effects but does not remove the flagged scenes.' }, ...real.about.blocks.slice(4)] } };
 const wordsFile = join(tmp, 'words.json');
 writeFileSync(wordsFile, JSON.stringify(words));
 const cfg = (over = {}) => ({ offline: false, approved: '2026-10-14', interim: { legal: 'RL-136', approved: '2026-10-14', expires: '2026-10-22', notice: wordsFile, ...over } });
@@ -265,7 +273,8 @@ try {
     const co = node('check-site-offline.mjs', ['--site', out, '--config', f]);
     check('the build after the kill switch is the holding page alone and passes the offline check', bo.status === 0 && co.status === 0 && !existsSync(join(out, 'play/index.pck')), (bo.stderr || co.stderr).slice(0, 300));
     const page = existsSync(join(out, 'index.html')) ? readFileSync(join(out, 'index.html'), 'utf8') : '';
-    check('after the kill switch the holding page says the build is offline again (Legal: "The playable build is offline for now." and "We have taken the build down while we fix them.")', page.includes('The playable build is offline for now.') && page.includes('We have taken the build down while we fix them.') && !page.includes('limited test build'));
+    check('after the kill switch the holding page says the build is offline again (Legal RL-171: "The playable build is offline for now." and "they are not fixed yet.")', page.includes('The playable build is offline for now.') && page.includes('they are not fixed yet.') && page.includes('There is no date for its return.') && !/fix them|fixing them/.test(page) && !page.includes('limited test build'));
+    check('the shipped words file is an empty draft, so a build from it is refused (the RL-136 text must not be used by accident)', real.draft === true && real.gate.blocks.length === 0 && !JSON.stringify(real).includes('fixing them') && build(join(tmp, 'site-realwords'), cfg({ notice: join(here, 'site-interim.json') }), []).status === 1);
     check('the same holding page is /bench/, /band/, /404.html and /play/ (no game, no link)', ['bench/index.html', 'band/index.html', '404.html', 'play/index.html'].every((p) => existsSync(join(out, p)) && readFileSync(join(out, p), 'utf8') === page));
   }
 } finally {
