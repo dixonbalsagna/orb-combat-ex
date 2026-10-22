@@ -199,6 +199,15 @@ var story_w: int = 0                       # the running plan's story weight (0 
 var story_tags: Array = []
 var story_a: int = -1                      # the running plan's attacker and defender slots (-1 none): who the climax favours, for Rendering's roll
 var story_d: int = -1
+var angles: bool = true                    # angles by context on a decisive peak (CamParams.ANGLE_*)
+var angle_shots: int = 0
+var angle_now: String = ""                 # "low" or "high" while an angle holds, for the debug feed
+var _ang_want: String = ""                 # this tick's decisive kind, if any
+var _ang_t: float = -1.0
+var _ang_pitch: float = 0.0
+var _ang_last_t: float = -99.0             # the ledger: the last angle shot's time and family
+var _ang_last_family: String = ""
+var _ang_snap: bool = false
 var nocut_holds: int = 0                   # ticks a layout change waited for a do-not-cut span to end
 var _ci_seen: bool = false                 # a cam_intent cue has come this match: the feed replaces the reading of the beats
 var _ci_beats: Array = []                  # told contacts still ahead: [n, kind, d]
@@ -358,6 +367,12 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_pc_big_t = -99.0
 	_pc_t = 0.0
 	_pc_zoom = 1.0
+	_ang_want = ""
+	_ang_t = -1.0
+	_ang_last_t = -99.0
+	_ang_last_family = ""
+	_ang_snap = false
+	angle_now = ""
 	story_w = 0
 	story_tags = []
 	story_a = -1
@@ -431,6 +446,10 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 	_update_solo(S)
 	_update_panel(S)
 	_update_intro(S)
+	_angle_tick(S)
+	if _ang_snap:
+		cut = true   # an angle's cut, in or back: the cameras snap (after this tick's update)
+		_ang_snap = false
 	_impact_evt = [false, false]
 	_journey_end_evt = [false, false]
 	var clash_now: bool = S.game.clash != null
@@ -1220,6 +1239,8 @@ func _read_events(S: SimState, events: Array) -> void:
 				_panel_request(S, "ko", int(_ef(ev, "winner", -1)))
 			"decisive":
 				var dk: String = String(_ef(ev, "kind", ""))
+				if CamParams.ANGLE_KINDS.has(dk):
+					_ang_want = dk
 				if dk == "clash" or dk == "beam_clash":
 					_panel_request(S, "clash", int(_ef(ev, "winner", -1)))
 			"parry":
@@ -4177,6 +4198,78 @@ func _no_cut(S: SimState) -> bool:
 ## so the ground never repeats on the screen (Rendering's copies scale with the ring; docs/camera/director.md).
 static func z_min(vw_: float) -> float:
 	return maxf(CamParams.ZOOM_MIN, vw_ / (CamParams.RING_SHOW * SimConst.W))
+
+
+## Angles by context: on a decisive moment (a peak by the pace's own rule) in the plain one view (as it stood last tick), with no strip, cut-in or shot of its own, and no angle
+## in the last ANGLE_GAP, a hard cut to the angle the ground under the pair asks (CamParams.ANGLE_BIOME; the rest alternate),
+## held ANGLE_HOLD, then a hard cut back (sooner when the plain view ends).
+func _angle_tick(S: SimState) -> void:
+	var want: String = _ang_want
+	_ang_want = ""
+	var plain: bool = sep <= 0.001 and not split_wanted and solo_kind == "" and _ov_kind == "" and _pn.is_empty() and not intro_active and not fold_active and _lg_slot < 0
+	if _ang_t >= 0.0:
+		_ang_t += DT
+		if _ang_t >= CamParams.ANGLE_HOLD or not plain:
+			_ang_t = -1.0
+			angle_now = ""
+			if _shot_pitch == _ang_pitch:
+				_shot_pitch = 0.0
+				_pitch_now = pitch_deg + _shot_pitch
+				_last_pitch = _pitch_now
+				_ang_snap = true
+		return
+	if want == "" or not angles or reduced_motion or not plain or time - _ang_last_t < CamParams.ANGLE_GAP or _shot_pitch != 0.0:
+		return
+	var A = S.fighters[0]
+	var mid: float = SimWrap.wrap(A.x + SimWrap.sdx(A.x, S.fighters[1].x) * 0.5)
+	var fam: String = String(CamParams.ANGLE_BIOME.get(WorldBiomes.biomeAt(mid), ""))
+	if fam == "":
+		fam = "high" if _ang_last_family == "low" else "low"
+	if fam == "high" and not _ground_shows(S, mid):
+		fam = "low"   # a high angle only over ground with something to show; elsewhere the low angle (or none)
+	var p: float = CamParams.ANGLE_HIGH if fam == "high" else _ground_low(CamParams.ANGLE_LOW, _mz)
+	if absf(p) < 1.0:
+		return   # the ground leaves no room for the low angle here
+	_ang_pitch = p
+	_shot_pitch = p
+	_pitch_now = pitch_deg + _shot_pitch
+	_last_pitch = _pitch_now
+	_ang_t = 0.0
+	_ang_last_t = time
+	_ang_last_family = fam
+	angle_now = fam
+	_ang_snap = true
+	_cut_now = true
+	angle_shots += 1
+
+
+## A low angle deg (negative) limited so the camera stays above the ground at the fighters' feet, at zoom z and the one view's anchor
+## height (the transformation's break rule).
+func _ground_low(deg: float, z: float) -> float:
+	var zz: float = maxf(z, 0.01)
+	var off: float = vh * (CamParams.PLANE_Y - 0.5)
+	var lim: float = ((CamParams.BREAK_CAM_MIN_H - CamParams.CHEST) * zz - off) / (CamParams.K_FACTOR * vh)
+	var total_min: float = rad_to_deg(asin(clampf(lim, -1.0, 1.0)))
+	return minf(0.0, maxf(deg, total_min - pitch_deg))
+
+
+## Whether the ground near the pair has something a high angle shows: a crater, a building, or ANGLE_SHOW_COLS columns of
+## scorch or cracks within ANGLE_SHOW_R of x.
+func _ground_shows(S: SimState, x: float) -> bool:
+	for c in S.craters:
+		if absf(SimWrap.sdx(x, float(c.x))) < CamParams.ANGLE_SHOW_R:
+			return true
+	for b in S.buildings:
+		if absf(SimWrap.sdx(x, float(b.x))) < CamParams.ANGLE_SHOW_R + float(b.w) * 0.5:
+			return true
+	var n: int = 0
+	var c0: int = int(floor((x - CamParams.ANGLE_SHOW_R) / SimConst.COL))
+	var cols: int = int(2.0 * CamParams.ANGLE_SHOW_R / SimConst.COL)
+	for k in range(cols):
+		var ci: int = posmod(c0 + k, SimConst.NC)
+		if (ci < S.scorch.size() and S.scorch[ci] > 0.3) or (ci < S.crack.size() and S.crack[ci] > 0.3):
+			n += 1
+	return n >= CamParams.ANGLE_SHOW_COLS
 
 
 ## The pace: peak on a decisive event (PACE_BIG_HOLD), a running plan of story PACE_STORY or more, or the brink (a flurry of

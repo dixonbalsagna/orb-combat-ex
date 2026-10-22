@@ -254,7 +254,7 @@ func _digest_play(out: FileAccess, label: String, mode: String, sc: String, seed
 	_jerk = 0.0
 	_room_n = 0
 	_room_sum = 0.0
-	print("DIRECTOR %s %s anticipations %s, brink ticks %s" % [label, mode, str(main.split_rig.get("ant_starts")), str(main.split_rig.get("brink_ticks"))])
+	print("DIRECTOR %s %s anticipations %s, brink ticks %s, angle shots %s" % [label, mode, str(main.split_rig.get("ant_starts")), str(main.split_rig.get("brink_ticks")), str(main.split_rig.get("angle_shots"))])
 	print("STATS %s %s cuts %d fighter-ticks outside the picture %d of %d layout changes %d dip ticks %d strips %d blow pushes %s" % [label, mode, _cut_ticks, _off_ticks, total * 2, _mode_changes, _fade_ticks, _panels, str(main.split_rig.get("blows"))])
 	var nct: Dictionary = {}
 	for sp in _nc_spans:

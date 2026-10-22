@@ -275,6 +275,18 @@ const PACE_MIN: float = 0.5              # a state holds at least this long
 const PACE_BLOW: Dictionary = {"relax": 0.6, "build": 1.0, "peak": 1.3, "fade": 0.8}
 const PACE_ZOOM: Dictionary = {"relax": 1.0, "build": 1.0, "peak": 1.05, "fade": 0.93}
 const PACE_ZOOM_TAU: float = 0.6
+# Angles by context (docs/camera/director.md section 6): a decisive moment at a peak (ANGLE_KINDS: a knockback, a guard break, an
+# interrupt, a barrage, a beam or a clash) in the plain one view gets a hard cut to an angle chosen by the ground under the pair,
+# held ANGLE_HOLD while the camera keeps following, then a hard cut back. The variety ledger spaces them: one in ANGLE_GAP at most.
+const ANGLE_LOW: float = -7.0          # city, towns, mountains: the towers and the ridge loom (limited so the camera stays above the ground)
+const ANGLE_HIGH: float = 5.5          # ocean and forest, and only where the ground has something to show (ANGLE_SHOW_*): 5.5 degrees down keeps about
+                                       # a third of the frame for the horizon and the sky (10 took it all, the EP's look gate, 2026-10-22)
+const ANGLE_SHOW_R: float = 1000.0     # ... within this of the pair: a crater, a building, or ANGLE_SHOW_COLS columns scorched or cracked
+const ANGLE_SHOW_COLS: int = 8
+const ANGLE_HOLD: float = 1.0
+const ANGLE_GAP: float = 20.0
+const ANGLE_KINDS: Array = ["knockback", "guard_break", "interrupt", "barrage", "beam", "beam_clash", "clash"]
+const ANGLE_BIOME: Dictionary = {"city": "low", "village": "low", "mountains": "low", "ocean": "high", "forest": "high"}   # the rest alternate
 const HIT_PUSH: float = 0.06           # zoom push on the first building hit; later links push less
 const HIT_PUSH_LATER: float = 0.03
 const LOW_AIR_DEAD: float = 112.0       # a launched body this near the ground (1.5 body heights) is not followed up; 0 turns it off

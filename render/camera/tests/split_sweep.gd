@@ -25,6 +25,7 @@ extends SceneTree
 const DISPLAY_HZ: float = 144.0
 const GRID_X: int = 32
 const GRID_Y: int = 18
+const ESCAPE_OFF: int = 6   # ticks outside the picture an escaping fighter (2,500 to 5,000 u/s) may have in 3 s
 const TOL: float = 1.03   # slack on the comfort limits (interpolation at 144 Hz between ticks)
 const REPLAYED: Array = ["out and back dy=0", "antipode right", "antipode left", "pass-through", "slam", "slam feint", "launch far 10816", "launch up and down 10816", "transformation", "panel signature", "panel modes"]
 const SPIKE: float = 4.0   # a frame-to-frame picture change this many times its neighbours' is a pop
@@ -248,6 +249,9 @@ func _run() -> void:
 		await _scenario("transformation calm, %s" % tc[0], func(): return _shot_transform_calm(bool(tc[1])), {})
 	for gv in [["fast", 100.0, false, false], ["fast, reduced flashing", 100.0, false, true], ["fast, reduced motion", 100.0, true, false], ["slow", 20.0, false, false]]:
 		await _scenario("scroll governor %s" % gv[0], func(): return _scroll_gov_run(float(gv[1]), bool(gv[2]), bool(gv[3])), {})
+	for spd in [2500.0, 3500.0, 4500.0, 5000.0]:
+		for red in [false, true]:
+			await _scenario("escape %d %s" % [int(spd), "reduced" if red else "normal"], func(): return _escape(spd, red), {})
 	for zv in [["home", false, 0.0, "home", "", "done", false], ["far side", false, 0.0, "far", "over", "done", false], ["point over", false, 0.0, "point", "over", "done", false],
 			["point under", false, 0.0, "point", "under", "done", false], ["home at 49 degrees", false, 49.0, "home", "", "done", false],
 			["far side at 49 degrees", false, 49.0, "far", "over", "done", false], ["home across the seam", false, 0.0, "home", "", "done", true],
@@ -2603,6 +2607,38 @@ func _double_hit_run() -> Dictionary:
 	_check(off == 0, "%s: a fighter was off the screen for %d ticks of a double hit" % [_label, off])
 	_check(cuts == 0, "%s: %d cuts during a double hit" % [_label, cuts])
 	stats["double hit result"] = "close-ups %s, open at the contact %.2f, shut by tick %d, main zoom %.3f at the contact to %.3f 24 ticks later, off %d, cuts %d" % [str(plays), open_at_contact, closed_by, z_contact, z_after, off, cuts]
+	return {}
+
+
+## A fighter escapes at spd units a second while the other gives chase at 3,500, as shipped (the travel budget off, whatever
+## --budget says; Camera, 2026-10-22): both are held in the picture that shows them, in the ordinary mode and under reduced
+## flashing. A fighter outside the picture for more than ESCAPE_OFF ticks of the 3 s fails.
+func _escape(spd: float, red: bool) -> Dictionary:
+	var ax: float = 20000.0
+	_pose(ax, 200.0, ax + 400.0, 200.0)
+	_rig.flash_reduced = red
+	_rig.travel_budget = false   # the game ships with the budget off; the row tests what players get
+	_seed_rig()
+	for _i in range(120):
+		_tick_rig()
+	var A = _S.fighters[0]
+	var B = _S.fighters[1]
+	var off: Array = [0, 0]
+	for k in range(180):
+		B.x = SimWrap.wrap(B.x + spd / 60.0)
+		B.vx = spd
+		A.x = SimWrap.wrap(A.x + 3500.0 / 60.0)
+		A.vx = 3500.0
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		for i in range(2):
+			if not _on_screen(cur, i):
+				off[i] += 1
+	_check(off[1] <= ESCAPE_OFF, "%s: the escaper was outside the picture for %d ticks of 180" % [_label, off[1]])
+	_check(off[0] <= ESCAPE_OFF, "%s: the chaser was outside the picture for %d ticks of 180" % [_label, off[0]])
+	stats["escape " + _label] = "escaper off %d, chaser off %d, ends %s" % [off[1], off[0], _rig.current().mode]
+	_rig.flash_reduced = false
+	_rig.travel_budget = budget_on
 	return {}
 
 
