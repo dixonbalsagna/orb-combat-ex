@@ -168,6 +168,8 @@ static func dataHash(setup: Dictionary = {}) -> String:
 	h.text(WorldStructures.stagesHash())   # World's building stages: data/biomes/stages.json
 	if SimDepth.enabled():   # fighters in depth: data/combat/depth.json, once its switch is on (a match with depth off reads none of it)
 		h.text(SimDepth.dataHash())
+	if setup.has("boons"):   # the run's rare boons: data/fight/boons.json, only for a setup that names one
+		h.text(SimBoons.dataHash())
 	if setup.get("brake", SimBrake.enabled()) == true:   # the air brake: data/fight/brake.json, only for a match with it on
 		h.text(SimBrake.dataHash())
 	if setup.get("flight", SimFlight.enabled()) == true:   # the launch's curve: data/fight/flight.json, only for a match with it on

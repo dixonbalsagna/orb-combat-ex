@@ -8,15 +8,13 @@ Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator
 
 **A paper, not a build:** `arena-conditions.md`: my conditions on World's shifting arena (windows 0 and 1), with the exact lines: the `arena.cols` guard, and one sim's world statics bound again at every step.
 
-**A parked build:** `brake2/`: the air brake's second window (air sense 10% a mark, the window from the launcher's power, a flight's end clears it, and Controls' `brake_ready` as an `air_brake` ready), behind the brake switch; with World's two reset lines (`grant_world.py`), Encounter's marks line (`grant_encounter.py`) and Audio's one line (`grant_audio.py`), same commit. No golden moves. Its page is `../brake-core.md` section 5.
-
 **A parked build:** `boons/`: the run's three rare boons (Born ready, Second skin, the borrowed form), run-only: a setup names them, and versus never does. No golden moves. Its page is `../boons-core.md`.
 
 **Tools' schema for `data/fight/boons.json`** is `grant_tools_fight.py` (it also held catastrophe, flight and hitstop, applied with c09c3bef): run it after `boons/`; it writes only what is missing.
 
 Each applies alone on main (c847bf8f or later); `hitstop2/` and `ricochet/` are proved together.
 
-Encounter's three asks (`shared/`: the curve's shared functions, `SimBrake.controlBack`, the camera feed out of the light digest) were applied in c6980e25 with World's arena windows 0 and 1 (`arena-conditions.md` is the review, kept as the record), and the script is deleted. The launch's curve and hit-stop by weight (`feel/`), the forms' working rule (`forms3/`) and the blast cloud's cue and ash (`cata/`) were applied in c09c3bef (2026-10-20) with Tools' schemas, and their scripts are deleted. The pages are `../feel-core.md`, `../forms-core.md` section 8 and `../run-core.md` section 6.
+The air brake's second window (`brake2/`: air sense 10%, the window from the launcher's power, a flight's end clears it, Controls' `brake_ready`) was applied in 982b7b65 with World's, Encounter's and Audio's grants, and the script is deleted. Encounter's three asks (`shared/`: the curve's shared functions, `SimBrake.controlBack`, the camera feed out of the light digest) were applied in c6980e25 with World's arena windows 0 and 1 (`arena-conditions.md` is the review, kept as the record), and the script is deleted. The launch's curve and hit-stop by weight (`feel/`), the forms' working rule (`forms3/`) and the blast cloud's cue and ash (`cata/`) were applied in c09c3bef (2026-10-20) with Tools' schemas, and their scripts are deleted. The pages are `../feel-core.md`, `../forms-core.md` section 8 and `../run-core.md` section 6.
 
 The forms (`forms/`) were applied in 8f157894 (2026-10-17) with Encounter's four lines, their branches (`forms-branches/`) in 421134e0, and the air brake (`brake/`) in 167a10a2 (2026-10-18) with World's `brakeEnd`; their scripts are deleted. The pages are `../forms-core.md` and `../brake-core.md`.
 

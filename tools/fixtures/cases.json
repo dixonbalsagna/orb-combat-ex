@@ -296120,6 +296120,83 @@
         "rule": "required",
         "pointer": "/ticks"
       }
+    },
+    {
+      "id": "fight-boons-valid",
+      "schema": "fight-boons.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/boons.json",
+          "set": {
+            "/schema": "fight.boons/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-boons-required-schema",
+      "schema": "fight-boons.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/boons.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-boons-extra-key",
+      "schema": "fight-boons.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/boons.json",
+          "set": {
+            "/bonus": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/bonus"
+      }
+    },
+    {
+      "id": "fight-boons-born-ready-steps-zero",
+      "schema": "fight-boons.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/boons.json",
+          "set": {
+            "/born_ready/steps": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/born_ready/steps"
+      }
+    },
+    {
+      "id": "fight-boons-borrowed-sooner-too-high",
+      "schema": "fight-boons.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/boons.json",
+          "set": {
+            "/borrowed/firstBreakSooner": 0.95
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/borrowed/firstBreakSooner"
+      }
     }
   ],
   "text": [

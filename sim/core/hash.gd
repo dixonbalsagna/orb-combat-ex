@@ -138,6 +138,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 		_obj(out, f, FIGHTER)
 		if float(f.launchPower) != 1.0:
 			out.append(f.launchPower)   # a launcher's power, hashed only while a launch carries one
+		if f.boon != "":
+			out.append(f.boon)   # the run's rare boon, only when the setup names one
 		var r = f.rush
 		if r == null:
 			out.append(null)

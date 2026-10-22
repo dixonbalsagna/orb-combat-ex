@@ -562,6 +562,10 @@
     {
       "match": "data/fight/hitstop.json",
       "schema": "fight-hitstop.schema.json"
+    },
+    {
+      "match": "data/fight/boons.json",
+      "schema": "fight-boons.schema.json"
     }
   ]
 }

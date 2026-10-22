@@ -104,7 +104,10 @@ static func pickRegion(S: SimState, f, fam: String) -> int:
 
 static func addWear(S: SimState, f, region: int, damage: float) -> void:
 	var wd = f.wd
-	var add: int = int(SimMathx.jround(damage * wearK(S, f)))
+	var k: float = wearK(S, f)
+	if f.boon != "":
+		k *= SimBoons.wearMul(f)   # the borrowed form's price: his first broken region comes sooner
+	var add: int = int(SimMathx.jround(damage * k))
 	if wd.spill[region]:
 		# Pitch A: a limb wears to battered and stops; the rest spills into the core (all of it once the limb is broken).
 		var cap: int = f.wear[region] if f.stage[region] == 3 else wd.stageAt[2] - 1

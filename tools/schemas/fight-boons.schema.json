@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/fight-boons",
+  "title": "fight-boons (schema \"fight.boons/1\")",
+  "description": "data/fight/boons.json: the run's rare boons (docs/architecture/boons-core.md; Game Design's rulings-2026-10-18b.md section 4). Run-only: a match's setup names them. Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "born_ready",
+    "second_skin",
+    "borrowed"
+  ],
+  "properties": {
+    "schema": {
+      "const": "fight.boons/1"
+    },
+    "born_ready": {
+      "type": "object",
+      "required": [
+        "steps"
+      ],
+      "properties": {
+        "steps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5,
+          "description": "the forms above base every fight starts in"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "second_skin": {
+      "type": "object",
+      "required": [
+        "steps"
+      ],
+      "properties": {
+        "steps": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 5,
+          "description": "... one higher than born_ready's"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "borrowed": {
+      "type": "object",
+      "required": [
+        "firstBreakSooner"
+      ],
+      "properties": {
+        "firstBreakSooner": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.89,
+          "description": "the share sooner his first broken region comes"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

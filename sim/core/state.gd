@@ -602,6 +602,7 @@ class Fighter:
 	var zWay: bool = false           # L0: a depth waypoint is armed for this flight whether or not it is aimed (aimX0, aimZ0, aimZ1, aimD)
 	var splashed := PackedInt32Array()   # buildings already splashed by this launch (at most WorldBrunt.SPLASH_CAP)
 	var launchSpecial: bool = false  # the current launch is a signature, finisher or break launch (its ground mark may be big)
+	var boon: String = ""           # the run's rare boon (sim/core/boons.gd): born_ready, second_skin or borrowed; "" for none
 	var launchPower: float = 1.0     # the current launch's power (Encounter's launcher, launch-anywhere.md section 4); 1 for any other
 	var jContacts: int = 0           # ground contact (World, G2; world/contact.gd): contacts of this journey so far
 	var jT: int = 0                  # ticks since the journey's first contact (cap 240)

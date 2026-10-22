@@ -82,6 +82,7 @@ func _init() -> void:
 	check("agency lines", _agencyLines())
 	check("a clash's meeting point", _clashMid())
 	check("the blow cue's run stays out of the hash", _cueRun())
+	check("the run's rare boons", _boons())
 	check("the catastrophe's blast cloud and ash", _cata())
 	check("the launch's curve", _flight())
 	check("hit-stop by weight", _hitstop())
@@ -5170,7 +5171,9 @@ func _flight() -> String:
 	var R := SimCore.createSim()
 	var rec := SimReplay.recorder(R, 11, {}, {"flight": true, "hitstop": true})
 	var kicks: int = 0
-	for t in range(3600):
+	var tk: int = 0
+	while tk < 10800 and (kicks == 0 or tk < 3600):
+		tk += 1
 		rec.step([null, null])
 		for e in R.out.fx:
 			if e.type == "flight" and e.text == "kick":
@@ -5184,9 +5187,10 @@ func _flight() -> String:
 	return ""
 
 
-## Hit-stop by weight (sim/core/hitstop.gd). Off: a hit's stop is the one passed. On: each weight's ticks; a hit that
-## names none keeps the one passed; stops merge; over the budget a mashed light holds the floor, and a minute of fight
-## later the budget is back; the step counts the frozen ticks; a broken region's decisive and the KO's cap (in ko).
+## Hit-stop by weight (sim/core/hitstop.gd). Off: a hit's stop is the one passed, and a stop's count-down is today's.
+## On: each weight's ticks; a hit that names none keeps the one passed; stops merge; over the budget every stop under
+## a decisive blow is x0.75 (rounded, at least 2) and decisive blows are not, and 10 s of fight later the budget is
+## back; a stop of n ticks freezes n; a broken region's decisive and the KO's cap (in ko).
 func _hitstop() -> String:
 	if not SimHitstop.errors().is_empty():
 		return "the hit-stop's data: " + "; ".join(SimHitstop.errors())
@@ -5203,7 +5207,7 @@ func _hitstop() -> String:
 	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"hitstop": true})
 	var A = S.fighters[0]
 	var D = S.fighters[1]
-	var want: Dictionary = {"light_mash": 3, "light": 4, "medium": 7, "heavy": 10, "launch": 14, "launch_full": 16, "decisive": 24, "ko": 30}
+	var want: Dictionary = {"light_mash": 2, "light": 3, "medium": 5, "heavy": 8, "launch": 12, "launch_full": 14, "decisive": 20, "ko": 24}
 	for w in want:
 		S.dirS.stop = 0.0
 		SimDamage.hit(S, null, A, D, 1.0, {"weight": w, "stop": 0.5})
@@ -5216,28 +5220,40 @@ func _hitstop() -> String:
 	S.dirS.stop = 0.0
 	SimDamage.hit(S, null, A, D, 1.0, {"weight": "heavy"})
 	SimDamage.hit(S, null, A, D, 1.0, {"weight": "light"})
-	if S.dirS.stop != 10.0 * SimConst.DT:
-		return "a heavy and a light in one tick held %s ticks (want the heavy's 10: they merge)" % str(S.dirS.stop / SimConst.DT)
-	if SimHitstop.budgetTicks != 432:
-		return "the budget is %d ticks (want 12%% of a minute, 432)" % SimHitstop.budgetTicks
+	if S.dirS.stop != 8.0 * SimConst.DT:
+		return "a heavy and a light in one tick held %s ticks (want the heavy's 8: they merge)" % str(S.dirS.stop / SimConst.DT)
+	if SimHitstop.budgetTicks != 108 or SimHitstop.windowS != 10:
+		return "the budget is %d ticks of %d s (want 18%% of 10 s, 108)" % [SimHitstop.budgetTicks, SimHitstop.windowS]
+	S.dirS.stop = 0.0
 	for i in range(SimHitstop.budgetTicks):
 		SimHitstop.frozen(S)
-	if SimHitstop.ticks(S, "light_mash") != SimHitstop.mashFloor or SimHitstop.ticks(S, "light") != 4:
-		return "over the budget: a mashed light %d (want %d), a tapped one %d (want 4)" % [SimHitstop.ticks(S, "light_mash"), SimHitstop.mashFloor, SimHitstop.ticks(S, "light")]
+	var cut: Dictionary = {"light_mash": 2, "light": 2, "medium": 4, "heavy": 6, "launch": 9, "launch_full": 11, "decisive": 20, "ko": 24}
+	for w in cut:
+		if SimHitstop.ticks(S, w) != cut[w]:
+			return "over the budget, %s holds %d (want %d: x0.75, rounded, at least 2; decisive and the KO never cut)" % [w, SimHitstop.ticks(S, w), cut[w]]
 	var h0: String = SimHash.stateHash(S).gameplay
 	for i in range(SimHitstop.windowS * 60 - 1):
 		SimHitstop.live(S)
-	if SimHitstop.ticks(S, "light_mash") != SimHitstop.mashFloor:
-		return "the budget came back before a minute of fight"
+	if SimHitstop.ticks(S, "heavy") != 6:
+		return "the budget came back before 10 s of fight"
 	SimHitstop.live(S)
-	if SimHitstop.ticks(S, "light_mash") != 3 or S.hs.sum != 0 or SimHash.stateHash(S).gameplay == h0:
-		return "a minute of fight later: a mashed light %d (want 3), %d frozen ticks counted; the budget's state not hashed" % [SimHitstop.ticks(S, "light_mash"), S.hs.sum]
-	S.dirS.stop = 10.0 * SimConst.DT
-	var n0: int = S.hs.n
-	for t in range(15):
-		SimCore.step(S, [null, null])
-	if S.hs.sum < 10 or S.hs.sum > 11 or S.hs.n == n0:
-		return "the step counted %d frozen ticks of a 10-tick stop (live %d)" % [S.hs.sum, S.hs.n - n0]
+	if SimHitstop.ticks(S, "heavy") != 8 or S.hs.sum != 0 or SimHash.stateHash(S).gameplay == h0:
+		return "10 s of fight later: a heavy %d (want 8), %d frozen ticks counted; the budget's state not hashed" % [SimHitstop.ticks(S, "heavy"), S.hs.sum]
+	# whole ticks: a stop of n ticks freezes n (the count-down's residue gave n + 1 for n of 3 or more), and the damage
+	# event's view field says so; with the switch off, today's count stands
+	for n in [2, 3, 4, 5, 6, 8, 12, 14, 20, 24]:
+		S.dirS.stop = float(n) * SimConst.DT
+		var s0: int = S.hs.sum
+		var steps: int = 0
+		while S.dirS.stop > 0.0 and steps < 100:
+			SimCore.step(S, [null, null])
+			steps += 1
+		if S.hs.sum - s0 != n or steps != n:
+			return "a stop of %d ticks froze %d" % [n, S.hs.sum - s0]
+		for i in range(SimHitstop.windowS * 60):
+			SimHitstop.live(S)   # the budget empty again
+	if SimFx.stopTicks(6.0 * SimConst.DT, true) != 6 or SimFx.stopTicks(6.0 * SimConst.DT) != 7:
+		return "the event's stop: %d whole (want 6), %d today's (want 7)" % [SimFx.stopTicks(6.0 * SimConst.DT, true), SimFx.stopTicks(6.0 * SimConst.DT)]
 	S.dirS.stop = 0.0
 	SimHitstop.afterHit(S, D, [0, 2, 0, 0])
 	if S.dirS.stop != 0.0:
@@ -5245,13 +5261,13 @@ func _hitstop() -> String:
 	var st: Array = D.stage.duplicate()
 	D.stage[1] = 3
 	SimHitstop.afterHit(S, D, st)
-	if S.dirS.stop != 24.0 * SimConst.DT:
-		return "a broken region held %s ticks (want decisive's 24)" % str(S.dirS.stop / SimConst.DT)
+	if S.dirS.stop != 20.0 * SimConst.DT:
+		return "a broken region held %s ticks (want decisive's 20)" % str(S.dirS.stop / SimConst.DT)
 	D.stage = st
 	S.dirS.stop = 4.0 * SimConst.DT   # the finisher's last blow, then the KO in the same tick
 	SimDamage.ko(S, D, A)
-	if S.game.ko != D or S.dirS.stop != 30.0 * SimConst.DT:
-		return "the KO held %s ticks (want the cap's 30), KO %s" % [str(S.dirS.stop / SimConst.DT), str(S.game.ko == D)]
+	if S.game.ko != D or S.dirS.stop != 24.0 * SimConst.DT:
+		return "the KO held %s ticks (want the cap's 24), KO %s" % [str(S.dirS.stop / SimConst.DT), str(S.game.ko == D)]
 	SimCore.dispose(S)
 	return ""
 
@@ -5415,4 +5431,70 @@ func _planetGolden(g: Dictionary) -> String:
 	if e != "":
 		return e
 	print("      %d slices, %d tick-0 states, a planet match of %d ticks: identical" % [want.slices.size(), want.tick0.size(), got.ticks])
+	return ""
+
+
+## The run's rare boons (rulings-2026-10-18b.md section 4; docs/architecture/boons-core.md). A match that names none has
+## none, and a replay's data hash takes boons.json only when its setup names one. Each starts its fighter in his boon's
+## form at its floor, without forms (tiers 2, 3 and 4) and with them (steps I, II and V, the branch the first tie's);
+## second skin on the rival fills the Protagonist's Trial at once; the borrowed form's wear runs 1 / (1 - share) as fast
+## until a region breaks; the collateral reads the higher tier from the start; a boon match replays.
+func _boons() -> String:
+	if not SimBoons.errors().is_empty():
+		return "the boons' data: " + "; ".join(SimBoons.errors())
+	var d0: String = SimReplay.dataHash()
+	if SimReplay.dataHash({"boons": {"0": "born_ready"}}) == d0:
+		return "a replay that names a boon does not carry the boons' data"
+	var S0 := SimCore.createSim()
+	SimCore.newMatch(S0, 5, {"p1": false, "p2": false})
+	if S0.fighters[0].boon != "" or S0.fighters[0].tier != 1.0:
+		return "a match that names no boon has one"
+	SimCore.dispose(S0)
+	for w in [["born_ready", 2.0, 35.0], ["second_skin", 3.0, 65.0], ["borrowed", 4.0, 100.0]]:
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"boons": {"0": w[0]}})
+		var p = S.fighters[0]
+		if p.boon != w[0] or p.tier != w[1] or p.power != w[2] or S.world.maxTier < w[1] or S.fighters[1].tier != 1.0:
+			return "%s without forms: tier %s at power %s (want %s at %s), the world's top tier %s" % [w[0], str(p.tier), str(p.power), str(w[1]), str(w[2]), str(S.world.maxTier)]
+		SimCore.dispose(S)
+	for w in [["born_ready", 1, 1.0, 20.0, ""], ["second_skin", 2, 2.0, 35.0, "trial"], ["borrowed", 5, 4.0, 100.0, "trial"]]:
+		var F := SimCore.createSim()
+		SimCore.newMatch(F, 5, {"p1": false, "p2": false}, {"forms": true, "boons": {"0": w[0]}})
+		var p = F.fighters[0]
+		if p.form.step != w[1] or p.tier != w[2] or p.power != w[3] or p.form.branch != w[4]:
+			return "%s with forms: step %d, tier %s, power %s, branch '%s'" % [w[0], p.form.step, str(p.tier), str(p.power), p.form.branch]
+		SimCore.dispose(F)
+	var R2 := SimCore.createSim()
+	SimCore.newMatch(R2, 5, {"p1": false, "p2": false}, {"forms": true, "boons": {"1": "second_skin"}})
+	if R2.fighters[1].tier != 3.0 or R2.fighters[0].form.trial != R2.fighters[0].fd.tForm:
+		return "second skin on the rival: his tier %s, the Protagonist's Trial %s (want %s)" % [str(R2.fighters[1].tier), str(R2.fighters[0].form.trial), str(R2.fighters[0].fd.tForm)]
+	SimCore.dispose(R2)
+	# the borrowed form's price
+	var B := SimCore.createSim()
+	SimCore.newMatch(B, 5, {"p1": false, "p2": false}, {"boons": {"0": "borrowed"}})
+	var p = B.fighters[0]
+	var q = B.fighters[1]
+	var want: int = int(SimMathx.jround(10.0 * (SimWounds.wearK(B, p) * (1.0 / (1.0 - SimBoons.sooner)))))
+	var wq: int = int(SimMathx.jround(10.0 * SimWounds.wearK(B, q)))
+	var p0: int = int(p.wear[SimWounds.CORE])
+	var q0: int = int(q.wear[SimWounds.CORE])
+	SimWounds.addWear(B, p, SimWounds.CORE, 10.0)
+	SimWounds.addWear(B, q, SimWounds.CORE, 10.0)
+	if int(p.wear[SimWounds.CORE]) - p0 != want or int(q.wear[SimWounds.CORE]) - q0 != wq or want <= wq:
+		return "the borrowed form's wear: %d (want %d), the rival's %d (want %d)" % [int(p.wear[SimWounds.CORE]) - p0, want, int(q.wear[SimWounds.CORE]) - q0, wq]
+	p.stage[SimWounds.ARMS] = 3
+	if SimBoons.wearMul(p) != 1.0 or SimBoons.wearMul(q) != 1.0:
+		return "the borrowed form's wear runs fast after his first broken region"
+	SimCore.dispose(B)
+	# a boon match replays
+	var R := SimCore.createSim()
+	var rec := SimReplay.recorder(R, 9, {}, {"boons": {"0": "born_ready"}})
+	for t in range(1200):
+		rec.step([null, null])
+		R.out.fx.clear()
+		R.out.feed.clear()
+	var rp: Dictionary = rec.finish()
+	SimCore.dispose(R)
+	if rp.data != SimReplay.dataHash({"boons": {"0": "born_ready"}}) or not SimReplay.play(JSON.parse_string(JSON.stringify(rp))).ok:
+		return "a boon match does not carry the boons' data, or does not play back"
 	return ""

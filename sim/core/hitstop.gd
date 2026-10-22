@@ -11,22 +11,29 @@ extends RefCounted
 ##   the core's own two: a hit that breaks a region holds `decisive` at least, and the KO (SimDamage.ko, the one place
 ##                a match ends) holds `ko`, the cap.
 ##   hold(S, weight): any other moment of the director's (a launch's send, a perfect's duel), merged the same way.
-##   the budget:  the frozen ticks of the last minute of fight (live seconds, in buckets) are counted, whatever froze
-##                them. Over `share` of the minute, a mashed light's stop is `mashFloor` (2). Stops merge (the longer
-##                one holds), as today; they never add.
+##   the budget:  the frozen ticks of the last windowS (10) seconds of fight (live seconds, in buckets) are counted,
+##                whatever froze them. Over `share` (18%) of it, every stop under a decisive blow is x cutMul (0.75,
+##                rounded, at least cutFloor 2) until the share falls back under (Game Design's rulings-2026-10-22.md
+##                5b). Decisive blows and the KO are never cut. Stops merge (the longer one holds); they never add.
+##   whole ticks: a stop of n ticks freezes n. The step counts a stop down in seconds, and 1/60 taken n times from n/60
+##                leaves about 1e-17 for n of 3 or more, a tick more than asked; frozen() drops that residue. With the
+##                switch off, today's count stands.
 ## Both bodies freeze, as every hit-stop does (the whole sim holds). The struck one's shake is Animation's.
 
 const FILE: String = "res://data/fight/hitstop.json"
 const WEIGHTS: Array = ["light_mash", "light", "medium", "heavy", "launch", "launch_full", "decisive", "ko"]
+const NEVER_CUT: Array = ["decisive", "ko"]
+const RESIDUE: float = 1.0e-9   # seconds: far under a tick, far over the count-down's float residue
 
 static var _d = null
 static var _hash: String = ""
 static var _errors: Array = []
 static var on_: bool = false
 static var ticks_: Dictionary = {}
-static var mashFloor: int = 2
-static var windowS: int = 60
-static var budgetTicks: int = 432   # derived: share x windowS seconds of ticks
+static var cutMul: float = 0.75
+static var cutFloor: int = 2
+static var windowS: int = 10
+static var budgetTicks: int = 108   # derived: share x windowS seconds of ticks
 
 
 static func _ensure() -> void:
@@ -56,7 +63,12 @@ static func _ensure() -> void:
 		ticks_[w] = _int("ticks." + w, t.get(w), 0, 120)
 	if ticks_.ko < ticks_.decisive:
 		_err("ticks.ko is the cap: at least ticks.decisive")
-	mashFloor = _int("mashFloor", j.get("mashFloor"), 0, int(ticks_.light_mash))
+	var cm = j.get("cutMul")
+	if not (cm is float or cm is int) or float(cm) <= 0.0 or float(cm) > 1.0:
+		_err("cutMul: a share above 0, at most 1")
+		cm = 1.0
+	cutMul = float(cm)
+	cutFloor = _int("cutFloor", j.get("cutFloor"), 0, 120)
 	var b = j.get("budget", {})
 	if not (b is Dictionary):
 		_err("budget must be an object")
@@ -101,19 +113,21 @@ static func setup(S: SimState) -> void:
 		S.hs.sec.fill(0)
 
 
-## The frozen ticks of the last minute of fight are over the budget.
+## The frozen ticks of the last windowS seconds of fight are over the budget.
 static func over(S: SimState) -> bool:
 	return S.hs.sum >= budgetTicks
 
 
-## The table's ticks for a weight, after the budget (a mashed light at its floor when over). -1 for a weight not in it.
+## The table's ticks for a weight, after the budget: over it, a stop under a decisive blow is x cutMul (rounded, at
+## least cutFloor). -1 for a weight not in it.
 static func ticks(S: SimState, weight: String) -> int:
 	_ensure()
 	if not ticks_.has(weight):
 		return -1
-	if weight == "light_mash" and over(S):
-		return mashFloor
-	return int(ticks_[weight])
+	var n: int = int(ticks_[weight])
+	if over(S) and not NEVER_CUT.has(weight):
+		n = maxi(cutFloor, int(SimMathx.jround(float(n) * cutMul)))
+	return n
 
 
 ## A hit's stop in seconds (SimDamage.hit): the table's for the weight it names, else the one the director passed.
@@ -139,14 +153,17 @@ static func afterHit(S: SimState, D, stage0: Array) -> void:
 			return
 
 
-## Each frozen tick of a hit-stop (SimCore.step): counted in this second's bucket.
+## Each frozen tick of a hit-stop (SimCore.step, after the count-down): counted in this second's bucket; and the
+## count-down's float residue dropped, so a stop of n ticks freezes n.
 static func frozen(S: SimState) -> void:
+	if S.dirS.stop < RESIDUE:
+		S.dirS.stop = 0.0
 	var h = S.hs
 	h.sec[h.i] = int(h.sec[h.i]) + 1
 	h.sum += 1
 
 
-## Each live tick (SimCore.step): a minute of fight is windowS live seconds; the oldest second's frozen ticks leave it.
+## Each live tick (SimCore.step): the window is windowS live seconds; the oldest second's frozen ticks leave it.
 static func live(S: SimState) -> void:
 	var h = S.hs
 	h.n += 1

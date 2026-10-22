@@ -117,6 +117,7 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
 	SimBrake.setup(S)   # each fighter's brake state while the brake is on
 	S.formsOn = setup.get("forms", SimForms.enabled()) == true   # forms: the data's switch (data/fight/forms.json), or the setup's own for this match
 	SimForms.setup(S)   # each fighter's form state while forms are on, and his own steps when his data has them
+	SimBoons.apply(S, setup)   # the run's rare boons (the setup's "boons"): none in versus
 	S.flightOn = setup.get("flight", SimFlight.enabled()) == true   # the launch's curve: the data's switch (data/fight/flight.json), or the setup's own
 	SimFlight.setup(S)   # each fighter's flight state while the curve is on
 	S.hitstopOn = setup.get("hitstop", SimHitstop.enabled()) == true   # hit-stop by weight: the data's switch (data/fight/hitstop.json), or the setup's own

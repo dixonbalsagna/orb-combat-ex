@@ -8,7 +8,8 @@
     "schema",
     "enabled",
     "ticks",
-    "mashFloor",
+    "cutMul",
+    "cutFloor",
     "budget"
   ],
   "properties": {
@@ -86,11 +87,17 @@
         "^_": true
       }
     },
-    "mashFloor": {
+    "cutMul": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "over the budget, a stop under a decisive blow is x this"
+    },
+    "cutFloor": {
       "type": "integer",
       "minimum": 0,
       "maximum": 120,
-      "description": "a mashed light's stop over the budget"
+      "description": "... rounded, at least this many ticks"
     },
     "budget": {
       "type": "object",

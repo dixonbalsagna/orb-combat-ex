@@ -120,7 +120,7 @@ static func hit(S: SimState, ex, A, D, dmg: float, o = null) -> float:
 	if S.hitstopOn:
 		SimHitstop.afterHit(S, D, st0)   # a blow that breaks a region holds decisive
 	if n0 < S.out.fx.size() and S.out.fx[n0].type == "damage":   # view fields outside the hash (Animation): the hit-stop in force after this hit, and the hitter's tier
-		S.out.fx[n0].stop = SimFx.stopTicks(S.dirS.stop)
+		S.out.fx[n0].stop = SimFx.stopTicks(S.dirS.stop, S.hitstopOn)
 		S.out.fx[n0].tier = A.tier
 	if kind == "heavy" and dd > 0.0:
 		SimWounds.stagger(S, D)

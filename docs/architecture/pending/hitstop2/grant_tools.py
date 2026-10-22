@@ -1,6 +1,6 @@
 # GRANT (Tools' tools/schemas/fight-hitstop.schema.json and the self-test's virtual copy, for Simulation's hitstop2.py
 # beside this): the second step's keys, cutMul (a share above 0, at most 1) and cutFloor (whole ticks), in place of
-# mashFloor; the virtual folder's copy of data/fight/hitstop.json follows the data. The schema is closed, so it changes
+# mashFloor; the ticks' new weight light_flow (a mash's flowing blow, 0); the virtual folder's copy of data/fight/hitstop.json follows the data. The schema is closed, so it changes
 # in the same commit. Run after hitstop2.py. Tools applies it, or grants it. Usage: python grant_tools.py <repo root>
 import json, os, shutil, sys
 os.chdir(sys.argv[1])
@@ -19,6 +19,9 @@ req = []
 for k in d['required']:
     req += ['cutMul', 'cutFloor'] if k == 'mashFloor' else [k]
 d['required'] = req
+t = d['properties']['ticks']   # Game Design's 6: a mash's flowing blow, light_flow, no stop
+t['properties'] = dict([('light_flow', {"type": "integer", "minimum": 0, "maximum": 120, "description": "a hit's stop in ticks"})] + [(k, v) for k, v in t['properties'].items() if k != 'light_flow'])
+t['required'] = ['light_flow'] + [k for k in t['required'] if k != 'light_flow']
 open(p, 'w', encoding='utf-8', newline='\n').write(json.dumps(d, indent=2, ensure_ascii=False) + '\n')
 shutil.copyfile('data/fight/hitstop.json', 'tools/fixtures/virtual/data/fight/hitstop.json')
-print("Tools: the hit-stop schema's second step, and the virtual copy")
+print("Tools: the hit-stop schema's second step and light_flow, and the virtual copy")

@@ -33,9 +33,12 @@ edit(p, [
  "##                5b). Decisive blows and the KO are never cut. Stops merge (the longer one holds); they never add.\n"
  "##   whole ticks: a stop of n ticks freezes n. The step counts a stop down in seconds, and 1/60 taken n times from n/60\n"
  "##                leaves about 1e-17 for n of 3 or more, a tick more than asked; frozen() drops that residue. With the\n"
- "##                switch off, today's count stands.\n"),
+ "##                switch off, today's count stands.\n"
+ "##   a mash flows: light_flow is 0, no stop (Game Design's rulings-2026-10-22.md 6): a mash's later blows, which\n"
+ "##                Encounter names. Only the mash's first blow stops (light_mash, 2). A 0 is never raised by the cut's floor,\n"
+ "##                and freezes nothing, so the budget never counts it.\n"),
 ("const WEIGHTS: Array = [\"light_mash\", \"light\", \"medium\", \"heavy\", \"launch\", \"launch_full\", \"decisive\", \"ko\"]\n",
- "const WEIGHTS: Array = [\"light_mash\", \"light\", \"medium\", \"heavy\", \"launch\", \"launch_full\", \"decisive\", \"ko\"]\n"
+ "const WEIGHTS: Array = [\"light_flow\", \"light_mash\", \"light\", \"medium\", \"heavy\", \"launch\", \"launch_full\", \"decisive\", \"ko\"]\n"
  "const NEVER_CUT: Array = [\"decisive\", \"ko\"]\n"
  "const RESIDUE: float = 1.0e-9   # seconds: far under a tick, far over the count-down's float residue\n"),
 ("static var mashFloor: int = 2\nstatic var windowS: int = 60\nstatic var budgetTicks: int = 432   # derived: share x windowS seconds of ticks\n",
@@ -58,13 +61,13 @@ edit(p, [
  "\t\treturn mashFloor\n"
  "\treturn int(ticks_[weight])\n",
  "## The table's ticks for a weight, after the budget: over it, a stop under a decisive blow is x cutMul (rounded, at\n"
- "## least cutFloor). -1 for a weight not in it.\n"
+ "## least cutFloor); a stop of 0 (a mash's flowing blow) stays 0. -1 for a weight not in it.\n"
  "static func ticks(S: SimState, weight: String) -> int:\n"
  "\t_ensure()\n"
  "\tif not ticks_.has(weight):\n"
  "\t\treturn -1\n"
  "\tvar n: int = int(ticks_[weight])\n"
- "\tif over(S) and not NEVER_CUT.has(weight):\n"
+ "\tif n > 0 and over(S) and not NEVER_CUT.has(weight):\n"
  "\t\tn = maxi(cutFloor, int(SimMathx.jround(float(n) * cutMul)))\n"
  "\treturn n\n"),
 ("## Each frozen tick of a hit-stop (SimCore.step): counted in this second's bucket.\n"
@@ -91,8 +94,8 @@ for k, v in d.items():
         out['_cut'] = "Game Design's second step (rulings-2026-10-22.md 5b): over the budget, every stop under a decisive blow is x cutMul, rounded, at least cutFloor, until the share falls back under. Decisive blows and the KO are never cut"
         continue
     out[k] = v
-out['ticks'] = {"light_mash": 2, "light": 3, "medium": 5, "heavy": 8, "launch": 12, "launch_full": 14, "decisive": 20, "ko": 24,
-                "_note": "a hit's stop in ticks by the weight it names (o.weight), Game Design's table of rulings-2026-10-22.md 5b: a mashed or burst light 2, a tapped light 3, a medium 5, a heavy 8, a launch or a close 12, a full launch 14; decisive (a finisher's last, a duel of perfects' send, a blow that breaks a region: the core's) 20; ko the KO, 24 at most. A stop of n ticks freezes n"}
+out['ticks'] = {"light_flow": 0, "light_mash": 2, "light": 3, "medium": 5, "heavy": 8, "launch": 12, "launch_full": 14, "decisive": 20, "ko": 24,
+                "_note": "a hit's stop in ticks by the weight it names (o.weight), Game Design's table of rulings-2026-10-22.md 5b and 6: a mash's later blows flow (light_flow, 0: no stop; Encounter names them), its first blow stops (light_mash, a mashed or burst light, 2), a tapped light 3, a medium 5, a heavy 8, a launch or a close 12, a full launch 14; decisive (a finisher's last, a duel of perfects' send, a blow that breaks a region: the core's) 20; ko the KO, 24 at most. A stop of n ticks freezes n"}
 out['budget'] = {"share": 0.18, "windowS": 10,
                  "_note": "the frozen time of the last windowS live seconds is at most share of it (18% of 10 s: 108 ticks). Over it, the second step (cutMul) applies"}
 s = json.dumps(out, indent=2, ensure_ascii=False) + '\n'
@@ -111,7 +114,7 @@ edit('sim/core/damage.gd', [
 p = 'sim/core/tools/parity.gd'
 edit(p, [
 ("\tvar want: Dictionary = {\"light_mash\": 3, \"light\": 4, \"medium\": 7, \"heavy\": 10, \"launch\": 14, \"launch_full\": 16, \"decisive\": 24, \"ko\": 30}\n",
- "\tvar want: Dictionary = {\"light_mash\": 2, \"light\": 3, \"medium\": 5, \"heavy\": 8, \"launch\": 12, \"launch_full\": 14, \"decisive\": 20, \"ko\": 24}\n"),
+ "\tvar want: Dictionary = {\"light_flow\": 0, \"light_mash\": 2, \"light\": 3, \"medium\": 5, \"heavy\": 8, \"launch\": 12, \"launch_full\": 14, \"decisive\": 20, \"ko\": 24}\n"),
 ])
 s = open(p, encoding='utf-8').read()
 i = s.index("\tS.dirS.stop = 0.0\n\tSimDamage.hit(S, null, A, D, 1.0, {\"weight\": \"heavy\"})\n\tSimDamage.hit(S, null, A, D, 1.0, {\"weight\": \"light\"})\n")

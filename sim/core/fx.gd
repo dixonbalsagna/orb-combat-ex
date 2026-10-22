@@ -659,10 +659,10 @@ static func contactEvent(S: SimState, type: String, f, x: float, y: float, speed
 ## frame points the right way. n: the launch number that pairs a journey's events (World's launchN; 0 until it lands).
 ## The hit-stop's length in live ticks as SimCore.step spends it: each frozen tick takes SimConst.DT off it while it is
 ## above 0 (a hit's damage event carries it, for Animation).
-static func stopTicks(stop: float) -> int:
+static func stopTicks(stop: float, whole: bool = false) -> int:   # whole: hit-stop by weight's count (no residue's extra tick)
 	var n: int = 0
 	var s: float = stop
-	while s > 0.0 and n < 3600:
+	while s > (SimHitstop.RESIDUE if whole else 0.0) and n < 3600:
 		s -= SimConst.DT
 		n += 1
 	return n

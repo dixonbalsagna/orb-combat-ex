@@ -1,6 +1,6 @@
 # hitstop2: hit-stop by weight, re-cut (parked)
 
-Owner: Simulation and Engine. 2026-10-22. Game Design's `rulings-2026-10-22.md` 5b (the table cut, the second step, an 18% budget) and the core's whole-tick count, behind the hit-stop switch (`data/fight/hitstop.json`, off). The page is `../../feel-core.md` section 7.
+Owner: Simulation and Engine. 2026-10-22. Game Design's `rulings-2026-10-22.md` 5b (the table cut, the second step, an 18% budget) and 6 (a mash flows: `light_flow`, 0), and the core's whole-tick count, behind the hit-stop switch (`data/fight/hitstop.json`, off). The page is `../../feel-core.md` section 7.
 
 ## Apply
 
@@ -11,12 +11,12 @@ python docs/architecture/pending/hitstop2/hitstop2.py .
 python docs/architecture/pending/hitstop2/grant_tools.py .
 ```
 
-`grant_tools.py` is Tools': the hit-stop schema's `cutMul` and `cutFloor` in place of `mashFloor`, and the self-test's virtual copy of the data.
+`grant_tools.py` is Tools': the hit-stop schema's `cutMul` and `cutFloor` in place of `mashFloor`, the ticks' `light_flow`, and the self-test's virtual copy of the data.
 
 ## What it changes
 
 - `sim/core/hitstop.gd`: the second step (`cutMul`, `cutFloor`; decisive and the KO never cut), the 10 s window, and `frozen()` dropping the count-down's residue.
-- `data/fight/hitstop.json`: the table, the cut, the budget (0.18 of 10 s).
+- `data/fight/hitstop.json`: the table (with `light_flow` 0), the cut, the budget (0.18 of 10 s).
 - `sim/core/fx.gd`: `stopTicks(stop, whole)`.
 - `sim/core/damage.gd`: the damage event's `stop`, whole with the switch on.
 - `sim/core/tools/parity.gd`: the hit-stop check, re-cut; the curve check's replay test plays until a launch is paced.
