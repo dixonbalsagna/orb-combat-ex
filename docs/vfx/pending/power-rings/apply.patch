@@ -68,14 +68,15 @@
        "additionalProperties": false,
 --- a/render/vfx/shots_view.gd
 +++ b/render/vfx/shots_view.gd
-@@ -215,12 +215,45 @@
+@@ -215,6 +215,7 @@
  					var l2: float = e.size * 0.4 * (1.0 - u * 0.5)
  					var lc: Color = c1 if k % 2 == 0 else c2
  					n = _put(n, Vector2(rx, e.y) + dv2 * (d1 - l2 * 0.5), dv2, l2, maxf(6.0, minpx * 1.5), ez + 0.4, lc, 0.5, 0.05, SHAPE_STREAK)
 +	n = _ground_rings(n, hub, host, a, cam_x, bh, minpx)
+ 	n = _flight_streaks(n, hub, host, a, cam_x, half_w, bh, minpx)
  	count = n
  	multimesh.visible_instance_count = n
- 	if n > 0:
+@@ -222,6 +223,38 @@
  		multimesh.buffer = _buf
  
  
@@ -111,6 +112,6 @@
 +	return n
 +
 +
- ## The charge at the forearm of the arm toward the rival: plates stacking along it (the Anti-hero) or thin rings stacking along it
- ## (the others), more of them as the charge builds; a pulse ring along the forearm when it is full. Never a sphere in a palm.
- func _hand(n: int, S: SimState, host, slot: int, c: VfxShots.Charge, lvl: float, rel: float, a: float, bh: float, minpx: float, alpha: float) -> int:
+ ## The background carries a launch's speed (Research's cinematic paper, recs 8 and 12): while a body is flying fast, thin streaks anchored in the WORLD (a hashed grid, so they stay put as the camera chases him and
+ ## slide past it) lie along his line of flight, behind the fighters' plane, in his lane colour lightened, quiet. They are never over a fighter: they stand at the background's depth and skip anything within a
+ ## body height and a half of either fighter. No flicker, no random number (a hash of the cell), none when the body is slow or lands. Reads the fighters' velocity and state only.

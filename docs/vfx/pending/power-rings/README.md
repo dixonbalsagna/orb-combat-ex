@@ -1,5 +1,7 @@
 # Parked: the power-up's ring leaves the ground, not the body (VFX, 2026-10-19, on HEAD 09d465c0)
 
+**Re-cut 2026-10-22 on HEAD b3a3aa74** (after the flight streaks and the struggle were applied): the ground ring's code now sits before `_flight_streaks` in shots_view.gd, and transform.gd's defaults carry the gather, dim and flash changes too (the first cut missed them and failed 'data and defaults agree'). Applied first, then beam-patterns: `git apply --check` clean in that order, effects_check passes with both (and depth, flash_reg, after, pane, flash, cue checks).
+
 Orb (via the EP): the rings around a fighter powering up obscure him, and the big expanding ring (homework/beam-scar/4-closeup-three-moments.png, middle and right, the tier-4 break). Research's cinematic paper rec 14: the power-up is told by the environment (a ground ring, lifting debris, the aura) and released on one sharp beat. This supersedes my first cut of this park (data only), which failed effects_check's "data and defaults agree" check: it is replaced by this one.
 
 ## Apply
