@@ -172,5 +172,25 @@ Camera's strip opens on the same frame, adding 31 draws and about 460 k triangle
 
 **Measured and not changed:**
 - **The ground texture's upload** (the whole 400 KB image whenever the heat or the scorch changes) is about 1 ms a frame at x4 during a fight's fires (planet update median 2.05 against 3.10 ms with the heat and scorch uploads cut in a timing build).
-- **Splitting the heat and scorch rows into their own small texture** would save that on most frames after a crater. The shaders would read three textures; that is a follow-up.
+- **Splitting the heat and scorch rows into their own small texture** would save that on most frames after a crater. Done the same day: see "The scorch and the heat on their own".
 - **The rest of the first crater's frame** is VFX's, the host's (the sim and its consumers) and the strip's.
+
+## The scorch and the heat on their own (2026-10-22)
+
+A fight's fires change the ground's scorch and heat every tick, and the ground field (`GroundField`) uploaded its whole texture each time: 21 data rows of every column, about 400 KB at 4,800 columns.
+
+**The change:**
+- The scorch and the heat are their own small texture (`hot`, two rows, `htex`), uploaded when they change.
+- The whole field is uploaded only when the ground's shape, water or cracks change.
+- The shaders read them with `gh()` (`ground.gdshaderinc`): the grooves' width (`groove_half_at`) and the terrain's char and glow.
+- `row_bytes()` answers the scorch and heat rows from `hot`, so the checks read what the shaders read.
+
+**The look:**
+- Pixel-identical against the build without it, seed 4, at ticks 250, 280, 500 and 1,500 (reduced) and at 250 and 1,180 (normal).
+- A control build with `hot` left unbound changes 258 pixels at tick 1,180 in normal mode, so the scorch and heat are on screen there, and the split draws them exactly.
+- Under Reduce flashing they do not show in these frames: the calm look keeps the heat at 0.
+- `img/heat-split-1180.png`, uncommitted: the build without it on the left, with it on the right.
+
+**The cost** (the AI scene as the hook plays it, ticks 240 to 400, after the first crater):
+- **Natively:** the whole field is uploaded on 23 frames instead of 57, and the uploads' mean falls from 0.108 to 0.041 ms a frame. The small texture's uploads are each under 0.1 ms.
+- **On the web at x4** (Performance's repro, four valid runs, interleaved): the planet update's median over those ticks is 1.2 and 2.3 ms with it against 1.0 and 1.3 without. That is within the noise of runs on a shared machine (one run's frames were twice as slow as the others'). The timing build that cut the scorch and heat uploads altogether measured about 1 ms a frame at x4.

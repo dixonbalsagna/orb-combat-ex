@@ -4,6 +4,7 @@
 // or RenderLook by planet_view.gd, so nothing here assumes today's world scale.
 uniform sampler2D heights : filter_nearest, repeat_disable;   // RF: 21 data rows of NC, each as rpl texture rows of tw
 uniform sampler2D craters : filter_nearest, repeat_disable;   // RGBAF, 400 x 2
+uniform sampler2D hot : filter_nearest, repeat_disable;       // RF: the scorch and the heat, 2 data rows of NC as `heights` lays them, uploaded on their own
 uniform int nc = 1200;
 uniform int tw = 1200;
 uniform int rpl = 1;
@@ -46,6 +47,11 @@ float gf(int i, int row) {
 	return texelFetch(heights, ivec2(i % tw, row * rpl + i / tw), 0).r;
 }
 
+// The scorch (row 0) and the heat (row 1) at column i: a fight's fires change them every tick (ground_field.gd).
+float gh(int i, int row) {
+	return texelFetch(hot, ivec2(i % tw, row * rpl + i / tw), 0).r;
+}
+
 // (height, d height / du) of WorldCrater.profile.
 vec2 crater_profile(float u, float d, float hr) {
 	if (u < 1.0) {
@@ -84,7 +90,7 @@ vec3 furrow(float dx, float z, float r, float skid, float sd) {
 
 // ground_field.gd groove_half(): a slide trench's own half width, else a beam groove's (from its burn), else spread_w.
 float groove_half_at(int i) {
-	float s = gf(i, 3);
+	float s = gh(i, 0);
 	float tr = gf(i, 16);
 	float w = s > 0.01 ? groove_w0 + groove_wp * clamp((s - groove_i0) / groove_ip, groove_pmin, groove_pmax) : 0.0;
 	if (tr > 0.0) {

@@ -55,6 +55,8 @@ var img: Image
 var tex: ImageTexture
 var cimg: Image
 var ctex: ImageTexture
+var himg: Image                      # the scorch and the heat: two data rows of NC, uploaded on their own (a fight's fires
+var htex: ImageTexture               # change them every tick; the whole field above only when its shape, water or cracks do)
 var g := PackedFloat32Array()        # residual per column
 var lists := PackedFloat32Array()    # K rows of NC: crater index or -1
 var cdata := PackedFloat32Array()    # LIST_W x 2 texels x 4
@@ -104,6 +106,8 @@ func _init() -> void:
 	tex = ImageTexture.create_from_image(img)
 	cimg = Image.create_empty(LIST_W, 2, false, Image.FORMAT_RGBAF)
 	ctex = ImageTexture.create_from_image(cimg)
+	himg = Image.create_empty(tw, 2 * rpl, false, Image.FORMAT_RF)
+	htex = ImageTexture.create_from_image(himg)
 
 
 ## Everything from state: a new match, or any change that is not the crater list growing.
@@ -137,6 +141,7 @@ func rebuild(S: SimState) -> void:
 	_crack_seen = S.crack.duplicate()
 	water_version += 1
 	_upload(S, true)
+	_upload_hot(S)
 
 
 ## Per frame. heat is the render-side glow (ImpactFx); heat_changed says whether it moved. Returns whether the ground
@@ -202,7 +207,8 @@ func update(S: SimState, heat: PackedFloat32Array, heat_changed: bool) -> bool:
 		_deform_seen = S.deform.duplicate()
 		shape = true
 		any_dirty = true
-	var other: bool = S.scorch != _scorch_seen or S.water != _water_seen or S.crack != _crack_seen
+	var scorched: bool = S.scorch != _scorch_seen
+	var other: bool = S.water != _water_seen or S.crack != _crack_seen
 	if S.water != _water_seen:
 		water_version += 1
 		var nc2: int = SimConst.NC
@@ -214,14 +220,16 @@ func update(S: SimState, heat: PackedFloat32Array, heat_changed: bool) -> bool:
 						moved.append(i)
 	if not moved.is_empty():
 		_shore_near(S, moved)
-	if other:
+	if scorched or other:
 		_scorch_seen = S.scorch.duplicate()
 		_water_seen = S.water.duplicate()
 		_crack_seen = S.crack.duplicate()
 	if heat_changed:
 		_heat = heat
-	if shape or other or heat_changed:
+	if shape or other:
 		_upload(S, cchg)
+	if scorched or heat_changed:
+		_upload_hot(S)
 	return shape
 
 
@@ -457,6 +465,12 @@ func far_again() -> void:
 	_far = far_rows()
 
 
+## The scorch and the heat, the rows the shaders read from `hot` (ground.gdshaderinc gh()): the scorch first, then the heat.
+func _upload_hot(S: SimState) -> void:
+	himg.set_data(tw, 2 * rpl, false, Image.FORMAT_RF, S.scorch.to_byte_array() + _heat.to_byte_array())
+	htex.update(himg)
+
+
 ## The far terrain's per-column relief amplitude and base multiplier (RenderLook.FAR_RELIEF by biome), box-smoothed
 ## over RenderLook.FAR_SMOOTH_COLS each side so biome borders don't step, then each column's biome index. Three rows
 ## of NC: amplitude, multiplier, biome.
@@ -488,6 +502,9 @@ static func far_rows() -> PackedFloat32Array:
 
 ## The bytes the GPU holds for one data row (for tests).
 func row_bytes(row: int) -> PackedByteArray:
-	var d: PackedByteArray = img.get_data()
 	var w: int = SimConst.NC * 4
+	if row == ROW_SCORCH or row == ROW_HEAT:
+		var h: int = 0 if row == ROW_SCORCH else 1   # the scorch and the heat the shaders read are in `hot`
+		return himg.get_data().slice(h * w, (h + 1) * w)
+	var d: PackedByteArray = img.get_data()
 	return d.slice(row * w, (row + 1) * w)

@@ -973,6 +973,7 @@ func _make_materials() -> void:
 	_water_mat.shader = WATER_SHADER
 	for m in [_terrain_mat, _water_mat]:
 		m.set_shader_parameter("heights", ground.tex)
+		m.set_shader_parameter("hot", ground.htex)
 		m.set_shader_parameter("craters", ground.ctex)
 		m.set_shader_parameter("nc", SimConst.NC)
 		m.set_shader_parameter("tw", ground.tw)

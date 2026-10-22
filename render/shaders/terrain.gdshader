@@ -80,8 +80,8 @@ void vertex() {
 	v_h = h;
 	float w = groove_half_at(i);
 	float t = clamp(1.0 - z * z / (w * w), 0.0, 1.0);
-	v_scorch = gf(i, 3) * t;
-	v_heat = gf(i, 5) * t;
+	v_scorch = gh(i, 0) * t;
+	v_heat = gh(i, 1) * t;
 	v_crack = gf(i, 15) * t;
 	v_rubble = abs(z) <= -z_band_back ? rubble_at(i, z) : 0.0;
 	v_px = vec2(xw, z);
