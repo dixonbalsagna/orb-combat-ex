@@ -28,6 +28,7 @@ func _run() -> void:
 	SimCore.newMatch(S, 4)
 	_hits()
 	_flurry()
+	_mash()
 	_sounds()
 	_launcher()
 	_windup()
@@ -220,6 +221,29 @@ func _flurry_digest() -> String:
 		for c in tick(20000 + 6 * i, [blow(0, "light"), dmg(0, "light", 12.0)]):
 			lines.append("%d|%s|%d|%.3f|%.4f" % [i, c.sound, c.variant, c.gain_db, c.pitch])
 	return "\n".join(lines).sha256_text().substr(0, 16)
+
+
+# ---- a mash flows (GD rulings 2026-10-22 section 6): only its first blow stops; every blow sounds, stopped or not
+func _mash() -> void:
+	print("2b. a mash: the hit sound plays on every blow, whether or not the sim froze on it")
+	var digs: Array = []
+	var counts: Array = []
+	for mode in range(3):      # 0: only the first blow stops (2 ticks), 1: none stops, 2: every blow stops
+		cues.reset(91)
+		var lines := PackedStringArray()
+		var n: int = 0
+		for i in range(8):
+			var d := dmg(0, "light", 12.0)
+			d.stop = 2 if (mode == 2 or (mode == 0 and i == 0)) else 0
+			for c in tick(22000 + 12 * i, [blow(0, "light"), d]):
+				lines.append("%d|%s|%d|%.3f|%.4f" % [i, c.sound, c.variant, c.gain_db, c.pitch])
+				if c.kind == "sfx" and c.sound.begins_with("impact."):
+					n += 1
+		digs.append("
+".join(lines).sha256_text().substr(0, 16))
+		counts.append(n)
+	ok(counts[0] == 8 and counts[1] == 8 and counts[2] == 8, "eight blows 12 ticks apart make eight hit sounds in each case (%s)" % str(counts))
+	ok(digs[0] == digs[1] and digs[1] == digs[2], "and they are the same sounds, pitch and level whatever the stop (nothing in audio reads it)")
 
 
 # ---- the new sounds render and sit where intended
