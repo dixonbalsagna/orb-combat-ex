@@ -87,6 +87,8 @@ Copied word for word from `docs/legal/page-fixed-lines.md` (Legal, RL-166, 2026-
 
 **Order on the page:** title; AI line; the flash box with its lock line; the description; the play button; the small lines (in development, privacy, license).
 
+**Not carried here (RL-171):** the offline page's words and the on-page "It sits behind a notice..." paragraph live in `docs/legal/page-fixed-lines.md`, "Holding-page words", and Tools applies them in the site-notice files. This file does not copy them, so there is no second text to keep in step. The flash box and lock line above are the same words as those notices' flash sentence ("not fixed yet", "analyzer").
+
 The earlier sentence "We are fixing them" is gone: Orb paused flash work on 2026-10-18, so the honest words are "they are not fixed yet" (Legal's reasoning in RL-166).
 
 ## Version A: plain (119 words)
