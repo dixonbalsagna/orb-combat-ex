@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/narrative-opponent-grounds",
+  "title": "narrative.opponent_grounds/1",
+  "description": "DRAFT for Tools (via the EP). data/narrative/opponent_grounds.json: the ground each story opponent claims, read by sim/world/ringpick.gd. Policy: closed except keys starting with an underscore. Feature names are the picker's vocabulary (featureValue in ringpick.gd); a cross-check that every feature is in that vocabulary and every `home` is a home name in the homes data would be a tools/lib/xref.js case. A claim's `line` is checked by the narrative lint (4 to 12 words).",
+  "type": "object",
+  "required": [
+    "schema",
+    "claims"
+  ],
+  "properties": {
+    "schema": {
+      "const": "narrative.opponent_grounds/1"
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "fallbacks": {
+      "type": "object"
+    },
+    "legal_ln04": {
+      "type": "string"
+    },
+    "claims": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "enum": [
+          "RIVAL",
+          "EMPRESS",
+          "CYBORG",
+          "PROTAGONIST"
+        ]
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "home",
+          "suits",
+          "must_cross",
+          "avoids",
+          "size"
+        ],
+        "properties": {
+          "home": {
+            "type": "string",
+            "minLength": 1
+          },
+          "suits": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "feature",
+                "w"
+              ],
+              "properties": {
+                "feature": {
+                  "type": "string",
+                  "pattern": "^(?:biome:desert|biome:desert_empty|biome:forest_dense|biome:ice|biome:mountains|biome:ocean_open|biome:plains|biome:plains>=0[.]33|coast|coast:breakwater|coast:dry_with_hulks|coast:quay_or_pier|coast:river_mouth|coast:straight|place:city_end_of_avenue|place:city_in_ruins|place:city_with_terrace|place:coastal_town|place:dense_city_no_exit|place:settled|state:damaged_or_fallen|state:untouched_place_with_people)(?:[|](?:biome:desert|biome:desert_empty|biome:forest_dense|biome:ice|biome:mountains|biome:ocean_open|biome:plains|biome:plains>=0[.]33|coast|coast:breakwater|coast:dry_with_hulks|coast:quay_or_pier|coast:river_mouth|coast:straight|place:city_end_of_avenue|place:city_in_ruins|place:city_with_terrace|place:coastal_town|place:dense_city_no_exit|place:settled|state:damaged_or_fallen|state:untouched_place_with_people))*$"
+                },
+                "w": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 3
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "must_cross": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(?:biome:desert|biome:desert_empty|biome:forest_dense|biome:ice|biome:mountains|biome:ocean_open|biome:plains|biome:plains>=0[.]33|coast|coast:breakwater|coast:dry_with_hulks|coast:quay_or_pier|coast:river_mouth|coast:straight|place:city_end_of_avenue|place:city_in_ruins|place:city_with_terrace|place:coastal_town|place:dense_city_no_exit|place:settled|state:damaged_or_fallen|state:untouched_place_with_people)(?:[|](?:biome:desert|biome:desert_empty|biome:forest_dense|biome:ice|biome:mountains|biome:ocean_open|biome:plains|biome:plains>=0[.]33|coast|coast:breakwater|coast:dry_with_hulks|coast:quay_or_pier|coast:river_mouth|coast:straight|place:city_end_of_avenue|place:city_in_ruins|place:city_with_terrace|place:coastal_town|place:dense_city_no_exit|place:settled|state:damaged_or_fallen|state:untouched_place_with_people))*$"
+            }
+          },
+          "avoids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(?:biome:desert|biome:desert_empty|biome:forest_dense|biome:ice|biome:mountains|biome:ocean_open|biome:plains|biome:plains>=0[.]33|coast|coast:breakwater|coast:dry_with_hulks|coast:quay_or_pier|coast:river_mouth|coast:straight|place:city_end_of_avenue|place:city_in_ruins|place:city_with_terrace|place:coastal_town|place:dense_city_no_exit|place:settled|state:damaged_or_fallen|state:untouched_place_with_people)(?:[|](?:biome:desert|biome:desert_empty|biome:forest_dense|biome:ice|biome:mountains|biome:ocean_open|biome:plains|biome:plains>=0[.]33|coast|coast:breakwater|coast:dry_with_hulks|coast:quay_or_pier|coast:river_mouth|coast:straight|place:city_end_of_avenue|place:city_in_ruins|place:city_with_terrace|place:coastal_town|place:dense_city_no_exit|place:settled|state:damaged_or_fallen|state:untouched_place_with_people))*$"
+            }
+          },
+          "size": {
+            "type": "object",
+            "required": [
+              "early",
+              "mid",
+              "boss"
+            ],
+            "properties": {
+              "early": {
+                "enum": [
+                  "close",
+                  "half",
+                  "whole"
+                ]
+              },
+              "mid": {
+                "enum": [
+                  "close",
+                  "half",
+                  "whole"
+                ]
+              },
+              "boss": {
+                "enum": [
+                  "close",
+                  "half",
+                  "whole"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "why": {
+            "type": "string"
+          },
+          "line": {
+            "type": "string"
+          },
+          "legal": {
+            "type": "string"
+          }
+        },
+        "patternProperties": {
+          "^_": {}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "patternProperties": {
+    "^_": {}
+  },
+  "additionalProperties": false
+}
