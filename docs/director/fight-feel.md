@@ -4,9 +4,11 @@ Owner: Encounter Systems Director. This builds Game Design's `docs/design/fight-
 
 | Rule | State | Park |
 | :--- | :--- | :--- |
-| 2a Recoil flips | built, behind `recoilFlip.enabled` (false) | `pending/recoil-flips/` |
-| 2b Ricochets and wall kicks | next, after QA's flip row | |
-| 2c Clashes and clash exchanges | after 2b | |
+| 2a Recoil flips | built, behind `recoilFlip.enabled` (false); Game Design's 1a (the tapped heavy's 1.5 bh recoil) to fold in after the grants | `pending/recoil-flips/` |
+| 2b The wall kick | built on today's wall contact, behind `wallKick.enabled` (false) | `pending/wall-kick/` |
+| 2b The plant and the glance | wait for Simulation's glance event and World's surfaces | |
+| 2c Meets and the clash exchange | after QA's rows | |
+| 2d Turns | after 2c | |
 
 ## 1. Recoil flips (2a)
 
@@ -44,9 +46,13 @@ Owner: Encounter Systems Director. This builds Game Design's `docs/design/fight-
 - **The counter-rush's window** counts from the landing, so it runs 22 to 42 ticks after the knock-back.
 - **The AI's counter shares** are mine.
 
-## 2. Ricochets and wall kicks (2b): next
+## 2. Ricochets and wall kicks (2b)
 
-Simulation owns the glance (under 40°: 0.7 of the speed, reflected) and the wall kick's push. World owns the faces that hold. The director owns the wall kick's dodge window (4 ticks either side of a wall contact), the kick's rush blow, the AI's shares (15, 35, 55%), and the choreographer's taste for a send that ricochets into open air or back into the brawl.
+Game Design's `rulings-2026-10-22.md` 2b draws the line at 1,500 u/s into the surface.
+- **Below it: Combat's plant.** He plants for 4 ticks with a tell of at least 6, then springs back. X, Y or B within 6 ticks makes the rebound a blow; a dodge tap aims it. **Not built:** it needs the slower contacts as an event (Simulation's and World's).
+- **At or above it: the glance** (under 40°: 0.7 of the speed, reflected). Simulation builds it as an event the director reads.
+- **The wall kick:** at a face that holds, a dodge tap within 4 ticks. Half the slam's damage, a kick-off at 0.6 of the speed. **Built on today's wall slam** (`pending/wall-kick/`). The kick-off is the director's (a rush back to the rival, or a push along the stick), so no new physics. A slam staggers him on contact, so only the 4 ticks before it can take a press.
+- **At most two ricochets in a row,** then the next surface is a plain stop. That counts once the glance exists.
 
 ## 3. Clashes (2c): after 2b
 

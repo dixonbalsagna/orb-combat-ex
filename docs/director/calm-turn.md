@@ -68,11 +68,11 @@ A tie or no push (0) leaves the side to World's keyed draw.
 | World's check, the caps, the read, the plane | World | As in its design |
 | The gate and the swap | Simulation | `hold` and World's check, on a live tick |
 
-## 6. For Game Design
+## 6. Game Design's answers (ruling 1e, 2026-10-22)
 
-1. Is the landing's settle `landedTicks` 30, and is "set" under 60 u/s right?
-2. Does a landing in the water count as landed? I'd say yes: he surfaces set.
-3. May the hero's pick bring a city into view? 1c says the coolest place. His care term only lowers its score.
+1. **The settle is `landedTicks` 30,** with both fighters under 60 u/s and nothing in flight.
+2. **A landing in the water counts once he surfaces set.** A skip across the water is still flight.
+3. **The hero may show a city.** His care term only lowers its score.
 
 ## 7. QA's rows (proposed)
 
