@@ -245,3 +245,37 @@ Measured:
 
 Gates on main plus World's window 3, Rendering's 22d and VFX's arena-turn park: split sweep, seam sweep, pane check, determinism plain and --intro all pass. Clips: homework/camera/11-arena-turn/. One is the same turn with the still camera against the cut. The other is d3f1ca0e's ai 4 for the look against the cut (d3f1ca0e has no planet world, so it is a different moment).
 
+**Angles by context (parked: docs/camera/pending/director-9-angles.patch; it applies before or after director-8 in either order).** A decisive moment (a peak by the pace's own rule) in the plain one view gets a hard cut to an angle:
+- **The triggers:** a knockback, a guard break, an interrupt, a barrage, a beam or a clash.
+- **The conditions:** no strip, cut-in, shot or lunge of its own.
+- **The angle comes from the ground under the pair:**
+  - low (-7 degrees, ground-limited) in the city, the towns and the mountains;
+  - high (+10) over the ocean and the forest;
+  - on open ground it alternates with the last angle used.
+- **The shot:** held 1.0 s while the camera keeps following, then a hard cut back. Both cuts snap the cameras.
+- **The variety ledger:** one angle shot in 20 s at most.
+
+`SplitRig.angles`, `angle_shots`, `angle_now`, `CamParams.ANGLE_*`.
+
+Measured:
+- About 7 decisive moments a minute reach the plain one view in AI play, nearly all knockbacks, so the ledger is the rationing.
+- Angle shots were 2 to 3 per 2-minute scene: ai 4 low at 356 (desert) and high at 2023; ai 39 low at 840 and high at 3007 (forest); collapse low at 151 and 2201 (city). Each adds two cuts.
+- Size and the time outside the picture are unchanged.
+- Looked at: the low angle sets the pair against the sky with the horizon low. The high angle looks down on the field, where the ground's cracks and scorches read.
+
+Gates on babc83d8: split sweep (also with director-8 stacked), seam sweep, pane check, determinism plain and --intro all pass. Clips: homework/camera/12-angles/ (a low angle in the desert and a high one over the forest, each against main, and d3f1ca0e against this).
+
+**An escaping fighter, measured (2026-10-22, for Encounter's 4d; no build).** The probe is a scratch sweep row: one fighter flies off at a given speed, the other chases at 3,500 u/s, and it counts the ticks each spends outside the picture that shows him, over 3 s.
+
+| Escape speed | Normal mode, escaper off | Reduced (the shipped default), escaper off |
+| :--- | ---: | ---: |
+| 2,500 u/s | 0 of 180 ticks | 4 |
+| 3,500 u/s | 0 | 85 |
+| 4,500 u/s | 33 | 118 |
+| 5,500 u/s | 77 | 106 |
+| 12,685 u/s | 168 | 165 |
+
+- A free fighter is followed under the scroll governor and, in the reduced mode, the travel budget (0.03 of the width a tick: about 2,200 u/s at fight size). Both are flash-count rules.
+- Only a launched body is chased at fight size (step 4a).
+- Above about 5,000 u/s nothing in the background reads anyway, as with the launches.
+
