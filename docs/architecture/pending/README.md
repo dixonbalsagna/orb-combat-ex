@@ -2,6 +2,8 @@
 
 Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator, the sim or Godot (`docs/` is hidden from Godot). It holds slices that are built and proven in a scratch copy and wait for the sim slot.
 
+**A parked build:** `ricochet/`: the ricochet's glance (Game Design's fight-feel.md section 3), behind `data/fight/ricochet.json` (off): a fast, shallow contact with the ground or a building's face glances on at 0.7, at most two in a row; the `ricochet` event; `SimRicochet.predict` for the choreographer. With World's lines (`grant_world.py`) and Tools' schema (`grant_tools.py`), same commit. No golden moves. Its page is `../ricochet-core.md`.
+
 **A parked build:** `shared/`: Encounter's three asks of 2026-10-22: the launch curve as shared functions for the planner and World's predictors (`SimFlight.share`, `kOf`, `toFloor`, a `Track` stepped by `tick` to the bit as the flight, `predict` to its touchdown), `SimBrake.controlBack` (a public name for the recoil flip), and a `cam_intent` cue left out of the light digest. No golden moves. Its page is `../feel-core.md` section 6.
 
 **A paper, not a build:** `arena-conditions.md`: my conditions on World's shifting arena (windows 0 and 1), with the exact lines: the `arena.cols` guard, and one sim's world statics bound again at every step.
