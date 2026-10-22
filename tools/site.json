@@ -1,7 +1,12 @@
 {
   "_why": "The one switch for what the public site serves. \"offline\": true publishes only the plain notice (tools/site-notice.json), as /, /play/, /bench/, /band/ and 404.html, and copies nothing of the web export. To bring the playable site back: set \"offline\" to false AND \"approved\" to the date of Orb's word, with a recorded full-set pass of the pixel check for the commit (tools/flash/release-pass.json); build-site.mjs refuses to build the playable site otherwise. CI exports and checks the build either way. Orb's order, 2026-10-06. INTERIM (Orb's word 2026-10-14, Legal's interim terms): set \"offline\": false, \"approved\" to the date, and \"interim\": {\"legal\": \"RL-<n>\", \"approved\": \"<date>\", \"expires\": \"<date>\", \"notice\": \"site-interim.json\"} to build the playable site behind a click-through without a recorded full-set pass (docs/tools/site-interim.md); tools/check-site-interim.mjs gates it in CI. \"interim\": null is the full-set path above, unchanged.",
-  "offline": true,
-  "approved": null,
-  "interim": null,
+  "offline": false,
+  "approved": "2026-10-18",
+  "interim": {
+    "owner": "Orb 2026-10-18",
+    "approved": "2026-10-18",
+    "expires": "2026-10-25",
+    "notice": "site-interim-owner.json"
+  },
   "pin": "257a766c26f8766fb09b063864c41c5d8ba64dc0"
 }
