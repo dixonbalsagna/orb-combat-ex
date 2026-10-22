@@ -116,19 +116,20 @@ Two of Encounter's other asks ride in the same park:
 - **`SimBrake.controlBack`**, the brake's control back under a public name, for the recoil flip with ground contact off.
 - **A `cam_intent` cue is left out of the light digest** (`SimHash.hashFx`), so switching the camera feed on moves no golden. The feed is the view's: it reads, draws nothing and writes nothing hashed. Out of the digest, its own determinism is held by my check: one AI match run twice with the feed on gives the same cues on the same ticks, and the same play.
 
-## 7. Hit-stop re-cut (parked at `pending/hitstop2/`)
+## 7. Hit-stop re-cut (applied in 83405d99)
 
 Game Design's `rulings-2026-10-22.md` 5b, after Encounter measured 30% of AI v AI play frozen. Behind the same switch, so with it off nothing moves.
 
 | Rule (Game Design's) | As built |
 | :--- | :--- |
 | **The table:** a mashed or burst light 2, a tapped light 3, a medium 5, a heavy 8, a launch or a close 12, a full launch 14, decisive 20, the KO 24 at most | `ticks` in `hitstop.json` |
+| **A mash flows** (`rulings-2026-10-22.md` 6): only a mash's first blow stops, for 2; its later blows, each within 12 ticks of the last, carry no stop | **Parked at `pending/mash-flow/`** (it came after the re-cut was applied): `light_flow` 0, the weight Encounter names for a mash's later blows (`light_mash`, 2, for its first). A 0 freezes nothing, so the budget never counts it, and the cut's floor never raises it to 2 |
 | **The budget is 18%** | Of a rolling 10 s of fight (`windowS` 10, live seconds in buckets): 108 frozen ticks |
-| **The second step:** over the budget, every stop under a decisive blow ×0.75, rounded, at least 2, until the share falls back under. Decisive blows are never cut | `cutMul` 0.75, `cutFloor` 2. Over the budget: 2, 2, 4, 6, 9, 11 for the six weights under decisive (half up, as the sim rounds); 20 and 24 for decisive and the KO. The old mashed-light floor, the one lever that didn't bite, is gone |
+| **The second step:** over the budget, every stop under a decisive blow ×0.75, rounded, at least 2, until the share falls back under. Decisive blows are never cut | `cutMul` 0.75, `cutFloor` 2. Over the budget: 2, 2, 4, 6, 9, 11 for the six weights from `light_mash` up to decisive (a flowing blow stays 0) (half up, as the sim rounds); 20 and 24 for decisive and the KO. The old mashed-light floor, the one lever that didn't bite, is gone |
 
 **Whole ticks, a finding of the core's.** The step counts a stop down in seconds: `S.dirS.stop -= 1/60` each frozen tick, until it isn't above 0. Taking 1/60 from n/60 n times leaves about 1e-17 for every n of 3 or more, so **a stop froze one tick more than asked:** a 4 held 5, and the brawl's heavy 6 holds 7 today. With the switch on, `frozen()` drops the residue (anything under 1e-9 s), so a stop of n ticks freezes n. The damage event's `stop` field counts the same way (`SimFx.stopTicks(stop, whole)`).
 
-**With the switch off, today's count stands.** It is in every golden match: every stop of 3 ticks or more in today's game is a tick longer than its data. Fixing it there too would move every match and the feel of every blow, a re-baseline that is Game Design's and the EP's call. It ends anyway once hit-stop by weight is on.
+**With the switch off, today's count stands.** It is in every golden match: every stop of 3 ticks or more in today's game is a tick longer than its data. Fixing it there too would move every match and the feel of every blow. **The EP's decision (2026-10-23): leave it.** A re-baseline of every golden match isn't worth a one-tick feel change, and it ends once hit-stop by weight is on.
 
 **For Encounter:** `brawl.gd`'s `int(ceil(maxf(0.0, S.dirS.stop) * TICKS_PER_SEC))` (the slide held for the blow's stop) can read n + 1 for a stop of n ticks set as n / 60, by the same float. Their windows that "end at least 5 live ticks after the freeze" should count the freeze in whole ticks.
 

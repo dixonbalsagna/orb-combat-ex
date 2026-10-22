@@ -2,7 +2,7 @@
 
 Owner: Simulation and Engine. 2026-10-17. The core's build of Game Design's air brake (`docs/design/buildings.md` section 7.2, ruled 2026-10-17), with the `air_brake` event Animation asked for (`docs/animation/ragdoll-physics-paper.md` section 5). **Applied in 167a10a2 (2026-10-18), with World's `brakeEnd`.** Behind one data switch that is off: with it off, every match, replay and checkpoint is the same to the bit.
 
-**The second window (section 5) is built and parked at `pending/brake2/`:** air sense at 10% a mark, the window read from the launcher's power, and the marks set by the sender.
+**The second window (section 5) was applied in 982b7b65:** air sense at 10% a mark, the window read from the launcher's power, and the marks set by the sender.
 
 ## 1. The rule as built
 
@@ -60,17 +60,17 @@ It is sent only while the brake is on, and it is hashed (`FX_FIELDS`). With the 
 
 **Results:** every check passed on the applied commit (167a10a2).
 
-## 5. The second window (parked at `pending/brake2/`)
+## 5. The second window (applied in 982b7b65)
 
 Game Design's rulings of 2026-10-18 (`rulings-2026-10-18b.md` 1b) and launch anywhere on main (f4e8269c). Behind the brake's switch, so with it off nothing moves.
 
 | Rule | As built |
 | :--- | :--- |
 | **Air sense: 10% sooner a mark** (it was 25%) | `brake.json` `airSense` 0.1. The window is × (1 − 0.1 × marks) |
-| **The marks are the send kind's, set by the sender** | Encounter's line in `melee.gd`, just before the launch: `tgt.brk.marks = DirBrawl.freshMarks(S, tgt, kind)`, with the brake on (`pending/brake2/grant_encounter.py`). The core spends them at the send, so a later send without a mark has none |
+| **The marks are the send kind's, set by the sender** | Encounter's line in `melee.gd`, just before the launch: `tgt.brk.marks = DirBrawl.freshMarks(S, tgt, kind)`, with the brake on (Encounter's grant, applied with 982b7b65). The core spends them at the send, so a later send without a mark has none |
 | **The window reads the send's power** | `SimBrake.power`: the launcher's (`Fighter.launchPower`) when the launch carries one, else the send's own speed over a full launch's, at most 1, as before |
-| **A flight's end clears the launcher's power** | `launchPower` goes back to 1 wherever a flight ends: the core's impact (as on main), its water recovery and the brake's control back, and World's two journey ends (`_finish` and `brakeEnd`, `pending/brake2/grant_world.py`). Without these, a knock-back after a contact-on flight would read the last launcher's power |
+| **A flight's end clears the launcher's power** | `launchPower` goes back to 1 wherever a flight ends: the core's impact (as on main), its water recovery and the brake's control back, and World's two journey ends (`_finish` and `brakeEnd`, World's grant, applied with 982b7b65). Without these, a knock-back after a contact-on flight would read the last launcher's power |
 
 **The checks** (in "the air brake"): the window for speeds of 0.3, 0.55, 0.775, 1 and 2 times `fullSpeed` is 8, 8, 14, 20 and 20 ticks, and 18 at power 1 with one mark. A launcher's power of 0.9 with two marks sets the window `window(0.9, 2)`, and the marks are spent at the send. A flight's end clears the power.
 
-**Results:** in `pending/brake2/README.md`.
+**Results:** every check passed on the applied commit (982b7b65).

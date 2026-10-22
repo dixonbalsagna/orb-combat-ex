@@ -1,6 +1,6 @@
 # The run's rare boons in the core
 
-Owner: Simulation and Engine. 2026-10-18. The core's build of Game Design's three rare boons (`docs/design/rulings-2026-10-18b.md` section 4, a draft for Orb to react to in play): a base form that is a transformation. **Built and proved in scratch, parked at `pending/boons/`; nothing is in the tree.** Run-only: a match's setup names them, and no versus match does, so with none named every match, replay and checkpoint is the same to the bit.
+Owner: Simulation and Engine. 2026-10-18. The core's build of Game Design's three rare boons (`docs/design/rulings-2026-10-18b.md` section 4, a draft for Orb to react to in play): a base form that is a transformation. **Applied in 83405d99 (2026-10-23), with Tools' schema.** Run-only: a match's setup names them, and no versus match does, so with none named every match, replay and checkpoint is the same to the bit.
 
 ## 1. What it is
 
@@ -47,7 +47,7 @@ Owner: Simulation and Engine. 2026-10-18. The core's build of Game Design's thre
 - The borrowed form's wear is the ordinary wear × 4/3 (the rival's is ordinary), and is ordinary again once a region breaks.
 - A boon match of 1,200 ticks carries the boons' data and plays back.
 
-**Results:** in `pending/boons/README.md`.
+**Results:** every check passed on the applied commit (83405d99).
 
 ## 5. Not in this window
 
@@ -56,5 +56,5 @@ Owner: Simulation and Engine. 2026-10-18. The core's build of Game Design's thre
 | Offering them (the run's draw, rarity shown, never rolled) and the run's ceiling | The run's window (Simulation, with Encounter) |
 | Their names and their lines | Narrative |
 | The boon's card and the borrowed form's warning | UI |
-| The schema for `data/fight/boons.json` | Tools (`pending/grant_tools_fight.py`) |
+| The schema for `data/fight/boons.json` | Tools (on main since 83405d99) |
 | The AI with a boon (whether it plays a started form differently) | Encounter |

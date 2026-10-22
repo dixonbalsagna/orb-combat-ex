@@ -1,6 +1,6 @@
 # The ricochet's glance in the core
 
-Owner: Simulation and Engine. 2026-10-22. The core's build of Game Design's glance (`docs/design/fight-feel.md` section 3; `rulings-2026-10-22.md` 2b, re-ruled in 4), on the EP's briefs of 2026-10-22. **Built and proved in scratch, parked at `pending/ricochet/` (re-cut to the ruling of 4); nothing is in the tree.** Behind one data switch that is off: with it off, every match, replay and checkpoint is the same to the bit.
+Owner: Simulation and Engine. 2026-10-22. The core's build of Game Design's glance (`docs/design/fight-feel.md` section 3; `rulings-2026-10-22.md` 2b, re-ruled in 4), on the EP's briefs of 2026-10-22. **Applied in e09dbbbf (2026-10-23), re-cut to the ruling of 4, with World's and Tools' grants.** Behind one data switch that is off: with it off, every match, replay and checkpoint is the same to the bit.
 
 ## 1. The rule as built
 
@@ -13,7 +13,7 @@ Owner: Simulation and Engine. 2026-10-22. The core's build of Game Design's glan
 | **Below the line: Combat's plant** | The rule classifies it (`BELOW`). The plant itself is Encounter's, and it tells it through `told` (kind plant), so it counts in the same row and sends the same event |
 | **At most two ricochets in a row,** plants and glances together; then the next surface is a plain stop | `maxInRow` 2, counted per send (`Fighter.rics`, with the launch number it belongs to). At the cap the rule says "not a ricochet", and World's contact takes it as it would today |
 
-**Where it acts**, by World's granted lines (`pending/ricochet/grant_world.py`):
+**Where it acts**, by World's granted lines (applied with it):
 - **Ground sloped 30° or more:** World's landing (`WorldContact._land`) already measures the contact in the slope's frame. A glance there is a new branch before the slam, taken only when `steepGround` says so. It is paid and told as a bounce that keeps 0.7: the wear and the area by the speed it removes, World's `bounce` event with its `keep`, and his leaving the ground. Not on the sea, not past the journey's own caps, and never on flatter ground.
 - **A building's face:** World's hit test (`WorldBrunt.checkHit`, and its swept form with depth on) asks `SimRicochet.offFace` first. A fast send steep to the face (moving along it) glances off. He stands just outside the face, no longer aimed at it, and the building takes nothing.
 
@@ -62,7 +62,7 @@ Owner: Simulation and Engine. 2026-10-22. The core's build of Game Design's glan
   - at a whole 1,077, or near level to the face's normal, it doesn't.
 - **A match with the ricochet on** replays, and carries the data.
 
-**Results:** in `pending/ricochet/README.md`.
+**Results:** every gate passed on the applied commit (e09dbbbf), and the golden stayed byte-identical.
 
 **In play, as re-ruled** (scratch probes, 6 AI matches of 7,200 ticks, the default world, every match with the switch on played twice and the same both times):
 - **2 glances in the 6 matches** (seeds 4 and 5), none off a face, with 3 to 6 sends a match.
