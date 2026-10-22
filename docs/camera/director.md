@@ -265,17 +265,24 @@ Measured:
 
 Gates on babc83d8: split sweep (also with director-8 stacked), seam sweep, pane check, determinism plain and --intro all pass. Clips: homework/camera/12-angles/ (a low angle in the desert and a high one over the forest, each against main, and d3f1ca0e against this).
 
-**An escaping fighter, measured (2026-10-22, for Encounter's 4d; no build).** The probe is a scratch sweep row: one fighter flies off at a given speed, the other chases at 3,500 u/s, and it counts the ticks each spends outside the picture that shows him, over 3 s.
+**The high angle, re-cut (2026-10-22, the EP's look gate).** At +10 degrees the sky was gone and a flat brown ground plane filled half the frame. The camera's vertical field is 30 degrees, so looking down by p puts the horizon 1.866 tan p of the height above the middle. +5.5 degrees keeps about a third of the frame for the horizon and the sky (+10 kept a sixth, before ridges).
 
-| Escape speed | Normal mode, escaper off | Reduced (the shipped default), escaper off |
-| :--- | ---: | ---: |
-| 2,500 u/s | 0 of 180 ticks | 4 |
-| 3,500 u/s | 0 | 85 |
-| 4,500 u/s | 33 | 118 |
-| 5,500 u/s | 77 | 106 |
-| 12,685 u/s | 168 | 165 |
+The high angle is now used only where the ground has something to show:
+- **The test:** within 1,000 units of the pair, a crater, a building, or 8 columns scorched or cracked (`_ground_shows`, `CamParams.ANGLE_SHOW_*`).
+- **Elsewhere:** the ground-limited low angle, or none.
 
-- A free fighter is followed under the scroll governor and, in the reduced mode, the travel budget (0.03 of the width a tick: about 2,200 u/s at fight size). Both are flash-count rules.
-- Only a launched body is chased at fight size (step 4a).
-- Above about 5,000 u/s nothing in the background reads anyway, as with the launches.
+The low angle (-7, ground-limited) is unchanged. In ai 4, 39 and 7 the high angles fired at 2023 (desert, among craters), 3007 (forest, scorched) and 2244, each at +5.5 degrees. Clips: homework/camera/12-angles/4 and 5 (the re-cut, forest and desert craters, against main). The +10 version was removed.
+
+**An escaping fighter (2026-10-22; a guard row, no camera change).** As the game ships (the travel budget off), the camera keeps an escaper in the picture that shows him:
+
+| Escape speed | Ticks off of 180, both modes |
+| :--- | ---: |
+| 2,500 to 6,000 u/s | 0 |
+| 9,000 u/s | 5 |
+| 12,685 u/s | 0 |
+| 20,000 u/s | 9 (a short catch-up) |
+
+My first report said the opposite. The probe was a split_sweep row, and split_sweep runs with the travel budget on (`budget_on`), which the game does not ship. The escaper's median drawn height is 46 to 47 px above 4,500 u/s. That size comes from the one view widening as the pair parts before the split, not from the scroll governor (the chase at size moved it to 50 px), so no change was made.
+
+The guard is parked as docs/camera/pending/escape-row.patch: the split_sweep rows `escape 2500 to 5000`, normal and reduced, with the row setting the shipped budget off itself. Each fighter may be outside the picture at most 6 ticks in 3 s.
 
