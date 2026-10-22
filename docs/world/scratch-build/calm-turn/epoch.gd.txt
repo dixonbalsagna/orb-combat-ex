@@ -8,11 +8,13 @@ class_name WorldEpoch
 ## The calls (nothing runs unless S.epoch is set: the data's turn switch, or setup.arena.turn):
 ##   ask(S, why, pivotX, side, due) -> candidates       when a moment is coming (Encounter's DirCalm.ask); [] when the caps refuse
 ##   choose(S, i)                                       Encounter's pick (DirCalm.pick): the turn is decided; prewarm may start
-##   prewarm(S, n)                                      the host's few columns a frame (the module owns no clock); optional: swap computes what is missing
-##   tick(S, hold)                                      each live tick (SimCore.step): swap when decided, held (Encounter's hold) and calm (below)
+##   prewarm(S, n)                                      Encounter's few columns a sim tick (the module owns no clock): the chosen bearing's ring and the smallest candidate's. The swap needs one of them warm
+##   warmAngles(S)                                      the bearings (signed, degrees) whose ring is read: the angles a swap may use
+##   tick(S, hold)                                      each live tick (SimCore.step): when decided, held (Encounter's hold) and calm (below): swap on the largest warm angle that keeps the pair's ground within moveMax, wait if none does, refuse if even minDeg would not
+##   cancel(S)                                          Encounter's: drop a pending pick (the director asks again)
 ##   calm(S)                                            World's check: no beam, shot, flight, rush, slide, open set piece, water flowing or catastrophe
 
-static var _jobs: Dictionary = {}   # worldId -> RingJob (the warm read of the chosen ring): derived data outside the state
+static var _jobs: Dictionary = {}   # "worldId/bearing" -> RingJob (the warm read of a candidate ring, kept whole until the swap): derived data outside the state; the state keeps how many columns it was asked for
 
 
 static func data() -> Dictionary:
@@ -32,7 +34,7 @@ static func enabled(setup: Dictionary) -> bool:
 ## The epoch of a new planet match (WorldPlanetWorld.gen, after the world is built): the ring it plays on, the turn counters, the settlements' chords and districts (for the carry). A
 ## Dictionary, hashed only through n, lastT and drift.
 static func begin(S: SimState, seed: int, ring: Dictionary, spec: Dictionary, chords: Array, dlist: Array, sliceHash: int) -> Dictionary:
-	return {"seed": seed, "sh": sliceHash, "n": 0, "lastT": 0.0, "drift": 0.0, "c0": spec.c, "ring": spec, "ask": null, "next": null, "chords": chords, "dlist": dlist}
+	return {"seed": seed, "sh": sliceHash, "n": 0, "lastT": 0.0, "drift": 0.0, "c0": spec.c, "ring": spec, "ask": null, "next": null, "warm": [], "refused": 0, "waited": 0, "cold": 0, "chords": chords, "dlist": dlist}
 
 
 # ===================================================================== the geometry
@@ -130,15 +132,24 @@ static func ask(S: SimState, why: String, pivotX: float, side: int, due: int) ->
 	return cands
 
 
-## Encounter's pick: candidate i. The turn is decided (from here the swap waits only for the hold).
+## Encounter's pick: candidate i. The turn is decided (from here the swap waits for the hold, a calm tick and a warm ring). Two rings are to be warmed: the chosen bearing's and the smallest
+## candidate's (the second is what a landing off the pivot falls back to).
 static func choose(S: SimState, i: int) -> void:
 	var E = S.epoch
 	if E == null or E.ask == null:
 		return
-	var c: Dictionary = E.ask.cands[clampi(i, 0, E.ask.cands.size() - 1)]
+	var cands: Array = E.ask.cands
+	var c: Dictionary = cands[clampi(i, 0, cands.size() - 1)]
 	E.next = {"spec": c.spec, "pc": E.ask.pc, "bearing": c.bearing, "drift": c.drift, "why": E.ask.why, "tick": S.tick, "due": E.ask.due}   # tick: the pick's; due: the moment it is for (the director paces the warm read by them). Not hashed
+	var low: Dictionary = c
+	for k in cands:
+		if absf(float(k.bearing)) < absf(float(low.bearing)):
+			low = k
+	E.warm = [{"deg": c.bearing, "spec": c.spec, "cols": 0}]
+	if low != c:
+		E.warm.append({"deg": low.bearing, "spec": low.spec, "cols": 0})
 	E.ask = null
-	_jobs.erase(S.worldId)
+	_dropJobs(S)
 
 
 ## Encounter's cancel (DirCalm): a pending pick whose pair has moved off its pivot is dropped, so the director can ask again.
@@ -148,29 +159,58 @@ static func cancel(S: SimState) -> void:
 		return
 	E.next = null
 	E.ask = null
-	_jobs.erase(S.worldId)
+	E.warm = []
+	_dropJobs(S)
 
 
-static func _key(S: SimState) -> int:
-	return S.worldId
+static func _jkey(S: SimState, deg: float) -> String:
+	return "%d/%s" % [S.worldId, str(deg)]
 
 
-## The host warms the chosen ring's slice a few columns a frame (n columns); true when it is read. Not needed for correctness: the swap reads what is missing, on its own tick.
+static func _dropJobs(S: SimState) -> void:
+	var pre: String = "%d/" % S.worldId
+	for k in _jobs.keys():
+		if String(k).begins_with(pre):
+			_jobs.erase(k)
+
+
+## Encounter warms the decided turn's rings, n columns a sim tick for each (a Whole ring is 4,800 columns, so a full pause of k ticks at n = 4,800 / k reads both). The module owns no clock: how far a
+## ring is read is counted in the state (`cols`, columns asked for), so when a ring counts as warm is a function of the calls and not of the host's speed. True when every ring is read.
 static func prewarm(S: SimState, n: int) -> bool:
 	var E = S.epoch
 	if E == null or E.next == null:
 		return false
-	var job = _jobs.get(_key(S))
-	if job == null:
-		var P := WorldPlanet.make(int(E.seed))
-		var ring: Dictionary = WorldRingPick.ringFrom(E.next.spec.c, int(E.next.spec.cols), E.next.spec.t)
-		job = WorldPlanet.RingJob.new(P, ring)
-		_jobs[_key(S)] = job
-	if not job.done:
+	var all: bool = true
+	for w in E.warm:
+		if int(w.cols) >= SimConst.NC:
+			continue
+		var key: String = _jkey(S, float(w.deg))
+		var job = _jobs.get(key)
+		if job == null:
+			var P := WorldPlanet.make(int(E.seed))
+			job = WorldPlanet.RingJob.new(P, WorldRingPick.ringFrom(w.spec.c, int(w.spec.cols), w.spec.t))
+			_jobs[key] = job
 		job.step(n)
+		w.cols = int(w.cols) + n
 		if job.done:
+			w.cols = maxi(int(w.cols), SimConst.NC)
 			WorldPlanet.memoRing(int(E.seed), job.ring, job.slice)
-	return job.done
+		else:
+			w.cols = mini(int(w.cols), SimConst.NC - 1)
+			all = false
+	return all
+
+
+## The bearings (signed, degrees) whose ring is read: the angles a swap may use. [] when no turn is decided.
+static func warmAngles(S: SimState) -> Array:
+	var out: Array = []
+	var E = S.epoch
+	if E == null or E.next == null:
+		return out
+	for w in E.warm:
+		if int(w.cols) >= SimConst.NC:
+			out.append(float(w.deg))
+	return out
 
 
 # ===================================================================== calm
@@ -187,11 +227,47 @@ static func calm(S: SimState) -> bool:
 	return true
 
 
-## Each live tick (SimCore.step), with Encounter's hold: the swap, if a turn is decided, held and calm.
+## How far from the pivot the farthest fighter is, in units.
+static func _reach(S: SimState, pc: int) -> float:
+	var px: float = float(pc) * SimConst.COL
+	var smax: float = 0.0
+	for f in S.fighters:
+		smax = maxf(smax, absf(SimWrap.sdx(px, f.x)))
+	return smax
+
+
+## Each live tick (SimCore.step), with Encounter's hold: a turn that is decided, held and calm swaps. The ring turns about the pivot fixed at the ask, so the ground under a fighter s units from it moves
+## s x sin(angle) (Game Design rulings-2026-10-22 5a: at most moveMax, 300 units). There is NO ring read on this tick (Executive Producer, 2026-10-22: the swap must not hitch): the swap uses the largest
+## WARM angle (warmAngles) that keeps that within moveMax, which is the chosen bearing when the pair rest on the pivot. If none does the turn waits (it stays decided; Encounter's cancel drops it at
+## the end of the moment). If even minDeg (2) would move the pair's ground more than moveMax (the pair about 8,600 units or more off the pivot) the turn is refused: the pick is dropped, so the director
+## asks again at its next send. The 300 rule wins over "never under 2 degrees".
 static func tick(S: SimState, hold: bool = true) -> void:
 	var E = S.epoch
 	if E == null or E.next == null or not hold or not calm(S):
 		return
+	var d: Dictionary = data()
+	var smax: float = _reach(S, int(E.next.pc))
+	if smax * sin(float(d.minDeg) * PI / 180.0) > float(d.moveMax):
+		E.refused = int(E.refused) + 1
+		cancel(S)
+		return
+	var best = null
+	for w in E.warm:
+		if int(w.cols) < SimConst.NC:
+			continue
+		var a: float = absf(float(w.deg))
+		if a < float(d.minDeg) - 1e-9 or smax * sin(a * PI / 180.0) > float(d.moveMax):
+			continue
+		if best == null or a > absf(float(best.deg)):
+			best = w
+	if best == null:
+		E.waited = int(E.waited) + 1
+		return
+	var nx: Dictionary = E.next
+	nx.scaled = absf(float(best.deg)) < absf(float(nx.bearing)) - 1e-9
+	nx.spec = best.spec
+	nx.bearing = best.deg
+	nx.drift = driftOf(E.c0, best.spec.c)
 	swap(S)
 
 
@@ -207,32 +283,6 @@ static func _w(px: float, i: int, Z0: float, Z1: float) -> float:
 	return t * t * (3.0 - 2.0 * t)
 
 
-## A landing turns less rather than not at all (Game Design rulings-2026-10-22 5a): the pivot was fixed at the ask, at where the pair were expected to rest; the ring turns about it, so the
-## ground under a fighter s units from it moves s x sin(angle). If the larger s over the fighters would move more than moveMax (300 units), the angle is scaled down to the one that moves
-## exactly that much, never under minDeg (2) and never over the chosen bearing. The pivot is not re-picked (that would be a new ring read on the swap tick); a scaled turn reads its ring on the
-## tick (a warm read is of the chosen angle), a hitch only when the pair is off the pivot. nx is changed: its spec, bearing and drift are the ones used.
-static func _scale(S: SimState, E: Dictionary, nx: Dictionary, P: WorldPlanet.Planet) -> void:
-	var d: Dictionary = data()
-	var px: float = float(nx.pc) * SimConst.COL
-	var smax: float = 0.0
-	for f in S.fighters:
-		smax = maxf(smax, absf(SimWrap.sdx(px, f.x)))
-	var deg: float = absf(float(nx.bearing))
-	if smax * sin(deg * PI / 180.0) <= float(d.moveMax):
-		return
-	var want: float = asin(minf(1.0, float(d.moveMax) / smax)) * 180.0 / PI
-	var use: float = minf(deg, maxf(float(d.minDeg), want))
-	if use >= deg - 1e-9:
-		return
-	var sgn: float = 1.0 if float(nx.bearing) >= 0.0 else -1.0
-	var ns: Dictionary = turned(P, E.ring, int(nx.pc), sgn * use)
-	nx.spec = ns
-	nx.bearing = sgn * use
-	nx.drift = driftOf(E.c0, ns.c)
-	nx.scaled = true
-	_jobs.erase(_key(S))   # the warm read was of the chosen angle
-
-
 ## The swap, in one step, on a calm tick (docs/world/calm-turn-world.md). The ground inside the zone keeps its columns and fades into the new ring's; the marks (craters, rubble, scorch, cracks)
 ## fade the same way and are gone outside; the buildings inside the zone stay as they are, with their people; the new ring's other places are laid fresh outside it; the fighters keep their
 ## columns and are set on the new ground. The epoch moves on. An `arena_turn` event tells Rendering and Camera.
@@ -241,12 +291,16 @@ static func swap(S: SimState) -> void:
 	var nx: Dictionary = E.next
 	var seed: int = int(E.seed)
 	var P := WorldPlanet.make(seed)
-	_scale(S, E, nx, P)
 	var spec: Dictionary = nx.spec
 	var ring: Dictionary = WorldRingPick.ringFrom(spec.c, int(spec.cols), spec.t)
-	var job = _jobs.get(_key(S))
-	var sl: WorldPlanet.Slice = job.slice if (job != null and job.done) else WorldPlanet.sliceRing(seed, ring)
-	_jobs.erase(_key(S))
+	var job = _jobs.get(_jkey(S, float(nx.bearing)))
+	var sl: WorldPlanet.Slice
+	if job != null and job.done:
+		sl = job.slice
+	else:
+		E.cold = int(E.cold) + 1   # a ring read on the swap tick: only for a state carried into a process that never warmed it (the same slice, and a hitch). tick() swaps only on a ring the state counts as read, so this stays 0
+		sl = WorldPlanet.sliceRing(seed, ring)
+	_dropJobs(S)
 	var NC: int = SimConst.NC
 	var COL: float = SimConst.COL
 	var d: Dictionary = data()
@@ -356,6 +410,7 @@ static func swap(S: SimState) -> void:
 	E.chords = chordsAll
 	E.dlist = dlist
 	E.next = null
+	E.warm = []
 	var ev := SimFx._ev(S, "arena_turn")
 	ev.n = int(E.n)
 	ev.x = px

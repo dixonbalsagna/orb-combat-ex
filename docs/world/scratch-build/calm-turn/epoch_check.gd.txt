@@ -32,6 +32,11 @@ func ready(cols: int, seed: int = 1) -> SimState:
 	return S
 
 
+## The host's part: warm every ring of the decided turn (Encounter does it a few columns a sim tick; here all at once).
+func warmAll(S: SimState, n: int = 100000) -> void:
+	WorldEpoch.prewarm(S, n)
+
+
 func nearest(S: SimState, x: float):
 	var best = null
 	for b in S.buildings:
@@ -119,6 +124,11 @@ func _init() -> void:
 	var cas0: float = S.world.casualties
 	var nbCount0: int = S.buildings.size()
 	WorldEpoch.choose(S, 1)
+	ok(WorldEpoch.warmAngles(S).is_empty() and S.epoch.warm.size() == 2, "a decided turn has two rings to warm (the chosen bearing and the smallest candidate) and none is warm yet")
+	WorldEpoch.tick(S, true)
+	ok(S.epoch.n == 0 and S.epoch.cold == 0, "no ring is read on the tick: a decided turn on calm ground with no warm ring does not swap")
+	warmAll(S)
+	ok(WorldEpoch.warmAngles(S).size() == 2 and absf(WorldEpoch.warmAngles(S).min()) == 2.5 and absf(WorldEpoch.warmAngles(S).max()) == 5.0, "warmAngles says which bearings are read (5 and 2.5)")
 	# calm: not while a fighter is in flight; a hold of false does nothing
 	S.fighters[0].state = "launched"
 	WorldEpoch.tick(S, true)
@@ -139,6 +149,9 @@ func _init() -> void:
 	var hDecided3: String = str(SimHash.stateHash(Se).gameplay)
 	ok(hUndecided != hDecided0 and hDecided0 != hDecided3, "a turn that is decided but not yet swapped is in the state hash, and its bearing with it")
 	var shBefore: int = Sd.epoch.sh
+	warmAll(Sd)
+	ok(str(SimHash.stateHash(Sd).gameplay) != hDecided0, "how many of a decided turn's rings are read is in the hash (when a swap may happen)")
+	warmAll(Se)
 	WorldEpoch.tick(Sd, true)
 	WorldEpoch.tick(Se, true)
 	ok(Sd.epoch.sh != shBefore and Sd.epoch.sh == WorldPlanet.sliceHash(WorldPlanet.sliceRing(7, WorldRingPick.ringFrom(Sd.epoch.ring.c, 2400, Sd.epoch.ring.t))) and Sd.epoch.sh != Se.epoch.sh and str(SimHash.stateHash(Sd).gameplay) != str(SimHash.stateHash(Se).gameplay), "after the swap the state hash holds the new ring's slice hash: two different turns from one state hash differently")
@@ -225,26 +238,29 @@ func _init() -> void:
 							wrong += 1
 	ok(lists >= 40 and wrong == 0, "over 8 planets, 3 pivots and both sides (%d candidate lists), every place a turn lists (%d in all) is held by the new ring, not the old, within view" % [lists, listed])
 	# --- a landing turns less rather than not at all: the angle is scaled so the ground under the fighters moves at most 300 units, never under 2 degrees
+	# Warm rings only: the chosen bearing (10) and the smallest candidate (2.5). The swap takes the largest warm angle that keeps the pair's ground within 300 units; if none does it waits; if even 2 degrees
+	# would not it refuses (the pick is dropped, the director asks again).
 	var scaledOk: bool = true
 	var scaleLog: Array = []
-	for off in [0.0, 3600.0, 9000.0, 40000.0]:
+	var seen: Dictionary = {}
+	for off in [0.0, 3600.0, 7000.0, 7800.0, 9000.0, 40000.0]:
 		var Sg := ready(4800)
 		var pxg: float = mid(Sg)
 		var P4 := WorldPlanet.make(7)
 		WorldEpoch.ask(Sg, "landing", pxg - off, 1, 0)   # the pivot predicted `off` units from where the pair rest
 		WorldEpoch.choose(Sg, 3)   # the 10 degree candidate
+		warmAll(Sg)
 		var ringG: Dictionary = WorldRingPick.ringFrom(Sg.epoch.ring.c, 4800, Sg.epoch.ring.t)
 		var smax: float = 0.0
 		for f in Sg.fighters:
 			smax = maxf(smax, absf(SimWrap.sdx(float(Sg.epoch.next.pc) * SimConst.COL, f.x)))
+		var kind: String = "refuse" if smax * sin(2.0 * PI / 180.0) > 300.0 else ("wait" if smax * sin(2.5 * PI / 180.0) > 300.0 and smax * sin(10.0 * PI / 180.0) > 300.0 else ("ten" if smax * sin(10.0 * PI / 180.0) <= 300.0 else "twofive"))
+		seen[kind] = true
 		WorldEpoch.tick(Sg, true)
 		var used: float = 0.0
 		for e in Sg.out.fx:
 			if e.type == "arena_turn":
 				used = e.amount
-		var want: float = 10.0
-		if smax * sin(10.0 * PI / 180.0) > 300.0:
-			want = maxf(2.0, asin(300.0 / smax) * 180.0 / PI)
 		var nrG: Dictionary = WorldRingPick.ringFrom(Sg.epoch.ring.c, 4800, Sg.epoch.ring.t)
 		var move: float = 0.0
 		for f in Sg.fighters:
@@ -252,10 +268,27 @@ func _init() -> void:
 			var a1: Array = WorldPlanet.columnPoint(P4, ringG, colf)
 			var b1: Array = WorldPlanet.columnPoint(P4, nrG, colf)
 			move = maxf(move, sqrt(pow(a1[0] - b1[0], 2) + pow(a1[1] - b1[1], 2) + pow(a1[2] - b1[2], 2)) * P4.R)
-		if Sg.epoch.n != 1 or absf(used - want) > 1e-6 or (want > 2.0 and move > 300.0 * 1.02):
+		var good: bool = Sg.epoch.cold == 0
+		if kind == "refuse":
+			good = good and Sg.epoch.n == 0 and Sg.epoch.next == null and Sg.epoch.refused == 1 and WorldEpoch.warmAngles(Sg).is_empty() and not WorldEpoch.ask(Sg, "again", pxg, 1, 0).is_empty()
+		elif kind == "wait":
+			good = good and Sg.epoch.n == 0 and Sg.epoch.next != null and Sg.epoch.waited >= 1
+			# the next moment: the pair on the pivot, and the same decided turn goes ahead at its own bearing
+			for f in Sg.fighters:
+				f.x = float(Sg.epoch.next.pc) * SimConst.COL
+			WorldEpoch.tick(Sg, true)
+			good = good and Sg.epoch.n == 1 and Sg.epoch.cold == 0
+			for e in Sg.out.fx:
+				if e.type == "arena_turn":
+					used = e.amount
+			good = good and absf(used - 10.0) < 1e-9
+		else:
+			var wantDeg: float = 10.0 if kind == "ten" else 2.5
+			good = good and Sg.epoch.n == 1 and absf(used - wantDeg) < 1e-9 and move <= 300.0 * 1.02
+		if not good:
 			scaledOk = false
-		scaleLog.append("%.0f off: smax %.0f, %.2f degrees (wanted %.2f), ground moved %.0f" % [off, smax, used, want, move])
-	ok(scaledOk, "a turn about a pivot off by 0, 3,600, 9,000 and 40,000 units: the angle is the 10 degrees, then scaled so the ground under the fighters moves at most 300, never under 2 (%s)" % " | ".join(scaleLog))
+		scaleLog.append("%.0f off: smax %.0f %s%s" % [off, smax, kind, "" if kind == "refuse" or kind == "wait" else " (%.1f degrees, ground moved %.0f)" % [used, move]])
+	ok(scaledOk and seen.has("ten") and seen.has("twofive") and seen.has("wait") and seen.has("refuse"), "swap on a warm ring only: the 10 degrees, else the warm 2.5 if it holds the ground within 300, else it waits for the next moment, and when even 2 would move it more it refuses and the director can ask again (%s)" % " | ".join(scaleLog))
 	var Sc := ready(2400)
 	WorldEpoch.ask(Sc, "t", mid(Sc), 1, 0)
 	WorldEpoch.choose(Sc, 0)
@@ -269,6 +302,11 @@ func _init() -> void:
 	var spw: int = 0
 	while not WorldEpoch.prewarm(Sw, 64):
 		spw += 1
+		if spw == 3:
+			WorldEpoch.tick(Sw, true)   # a ring that is part read is not warm: no swap
+			if Sw.epoch.n != 0 or not WorldEpoch.warmAngles(Sw).is_empty():
+				fails += 1
+				print("  FAIL  a part-read ring swapped or counted warm")
 	var rr: Dictionary = WorldRingPick.ringFrom(Sw.epoch.next.spec.c, 1200, Sw.epoch.next.spec.t)
 	var slw = WorldPlanet.sliceRing(7, rr)
 	var P3 := WorldPlanet.make(7)
@@ -276,23 +314,28 @@ func _init() -> void:
 	ok(spw >= 15 and WorldPlanet.sliceHash(slw) == WorldPlanet.sliceHash(cold) and slw.held.size() == cold.held.size(), "a ring read 64 columns at a time (%d steps) is readSlice's slice, hash and held places" % (spw + 1))
 	# --- a turn is the same with or without the warm read, and on every size, and plays on
 	var hashes: Array = []
-	for warm in [false, true]:
+	var colds: Array = []
+	for warm in [0, 1, 2]:   # warmed 100 columns a call, warmed 640 a call, and a state carried into a process that never warmed it (the jobs are gone: the swap reads, and says so)
 		var Sx := ready(2400)
 		WorldEpoch.ask(Sx, "test", mid(Sx), 1, 0)
 		WorldEpoch.choose(Sx, 2)
-		if warm:
-			while not WorldEpoch.prewarm(Sx, 100):
-				pass
+		var step: int = 100 if warm == 0 else 640
+		while not WorldEpoch.prewarm(Sx, step):
+			pass
+		if warm == 2:
+			WorldEpoch._jobs.clear()
 		WorldEpoch.tick(Sx, true)
 		for t in range(ticks):
 			SimCore.step(Sx)
 		hashes.append("%d/%s" % [Sx.epoch.n, str(SimHash.stateHash(Sx).gameplay)])
-	ok(hashes[0] == hashes[1] and hashes[0].begins_with("1/"), "a Half match turned at 100 s plays %d ticks on to the same hash with or without the warm read (%s)" % [ticks, hashes[0].substr(0, 14)])
+		colds.append(Sx.epoch.cold)
+	ok(hashes[0] == hashes[1] and hashes[1] == hashes[2] and hashes[0].begins_with("1/") and colds == [0, 0, 1], "a Half match turned at 100 s plays %d ticks on to the same hash however the rings were warmed (100 or 640 columns a call, or read cold: the cold read is counted, %s) (%s)" % [ticks, str(colds), hashes[0].substr(0, 14)])
 	var runs: Array = []
 	for r in range(2):
 		var Sy := ready(1200)
 		WorldEpoch.ask(Sy, "test", mid(Sy), -1, 0)
 		WorldEpoch.choose(Sy, 3)
+		warmAll(Sy)
 		WorldEpoch.tick(Sy, true)
 		for t in range(ticks):
 			SimCore.step(Sy)
@@ -302,6 +345,7 @@ func _init() -> void:
 	var zb: int = Sz.buildings.size()
 	WorldEpoch.ask(Sz, "test", mid(Sz), 1, 0)
 	WorldEpoch.choose(Sz, 0)
+	warmAll(Sz)
 	WorldEpoch.tick(Sz, true)
 	for t in range(300):
 		SimCore.step(Sz)

@@ -40,6 +40,7 @@ func _init() -> void:
 	var cands: Array = WorldEpoch.ask(S, "dump", px, int(a[4]), 0)
 	var idx: int = clampi(int(a[3]), 0, cands.size() - 1)
 	WorldEpoch.choose(S, idx)
+	WorldEpoch.prewarm(S, 100000)   # the swap reads no ring: both are warmed first
 	WorldEpoch.tick(S, true)
 	var after := {"ring": E.ring, "cells": cell(S, 16), "blds": blds(S)}
 	var f := FileAccess.open(a[5], FileAccess.WRITE)

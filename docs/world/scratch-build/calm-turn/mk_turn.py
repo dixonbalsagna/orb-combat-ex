@@ -173,7 +173,7 @@ def hashf(s):
 		out.append(float(S.epoch.n)); out.append(S.epoch.lastT); out.append(S.epoch.drift)   # (and its bearing and pivot column), and the hash of the ring's slice: the world the match is on
 		out.append(1.0 if S.epoch.next != null else 0.0)
 		if S.epoch.next != null:
-			out.append(S.epoch.next.bearing); out.append(float(S.epoch.next.pc))
+			out.append(S.epoch.next.bearing); out.append(float(S.epoch.next.pc)); out.append(float(WorldEpoch.warmAngles(S).size()))   # and how many of its rings are read: when a swap may happen
 		out.append(float(S.epoch.sh))
 ''')
     s = rep(s, '''"interior_contact": [''', '''"arena_turn": ["n", "x", "amount", "k"], "interior_contact": [''')

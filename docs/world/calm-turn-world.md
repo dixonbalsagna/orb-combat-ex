@@ -11,16 +11,18 @@ At a calm moment the arena's ring turns about the pair: a new plane through the 
 | Call | Who | What |
 | :--- | :--- | :--- |
 | `WorldEpoch.ask(S, why, pivotX, side, due)` | Encounter's `DirCalm.ask` result | The candidates on a side: one for each bearing in the data (2.5, 5, 7.5, 10 degrees), each `{bearing, places: [{id, kind, owner, arc}], spec, drift}`. `places` are the places the turn brings into view (held by the new ring, not the old, within 16,000 units of the pivot), by place index only, **without reading the ring**. `[]` when the caps refuse (4 turns, 60 s) or a turn is already decided. Candidates that would pass the 40-degree drift cap are left out |
-| `WorldEpoch.choose(S, i)` | Encounter's `DirCalm.pick` | The turn is decided: the next ring is recorded in the state, deterministic |
-| `WorldEpoch.prewarm(S, n)` | the host | Reads n more columns of the chosen ring (`WorldPlanet.RingJob`, bit-identical to `readSlice`), memoised outside `S`. Optional: **the swap reads what is missing, on its own tick**, so a replay does not depend on how far the host got |
-| `WorldEpoch.tick(S, hold)` | `SimCore.step`, with Encounter's `DirCalm.hold(S)` | Swap when a turn is decided, held and `calm(S)` |
+| `WorldEpoch.choose(S, i)` | Encounter's `DirCalm.pick` | The turn is decided: the next ring is recorded in the state, deterministic. Two rings are to be warmed: the chosen bearing's and the smallest candidate's (`E.warm`) |
+| `WorldEpoch.prewarm(S, n)` | Encounter, a few columns each sim tick | Reads n more columns of **each** of the two rings (`WorldPlanet.RingJob`, bit-identical to `readSlice`). How far a ring is read is counted in the state (`cols`), so when a ring is warm is a function of the calls, never of the host's speed. True when both are read |
+| `WorldEpoch.warmAngles(S)` | Encounter, the host | The bearings (signed, degrees) whose ring is read: the angles a swap may use. `[]` when no turn is decided |
+| `WorldEpoch.tick(S, hold)` | `SimCore.step`, with Encounter's `DirCalm.hold(S)` | When a turn is decided, held and `calm(S)`: swap on the largest warm angle that keeps the pair's ground within 300 units, **wait** if none does, **refuse** if even 2 degrees would not (below) |
+| `WorldEpoch.cancel(S)` | Encounter's `DirCalm` | Drops a pending pick (and its warm reads); the director can ask again |
 | `WorldEpoch.calm(S)` | World | No beam, shot, flight, rush, slide or interior chain, no open set piece, no water flowing, no catastrophe |
 
 The director's part of calm (no exchange, approach, clinch, flip, queued press, finisher) is Encounter's `hold`; World's check is the world's part. With the switch off (`rings.json` `turn.on` 0 and no `setup.arena.turn`) `S.epoch` is null and nothing runs.
 
 ## The swap, and what is carried
 
-The new ring is read (0.15 to 0.7 s of work by size, warm or on the tick), then one step on the calm tick:
+The new ring is read beforehand (0.15 to 0.7 s of work by size, a few columns a tick: `prewarm`), then one step on the calm tick, **with no ring read on that tick**:
 
 | State | How |
 | :--- | :--- |
@@ -36,7 +38,16 @@ The new ring is read (0.15 to 0.7 s of work by size, warm or on the tick), then 
 
 ## A landing turns less (Game Design 2026-10-22 5a)
 
-The pivot is fixed at the ask, at where the pair are expected to rest, and a mispredicted landing leaves the pair `s` units from it (a median of 3,600 in Encounter's six matches). The ring turns about the pivot, so the ground under a fighter moves `s` x sin(angle). **The angle is scaled at the swap so that it moves at most `moveMax` (300 units), never under `minDeg` (2 degrees) and never over the chosen bearing** (the 10 degree cap). The pivot is not re-picked (a new ring read on the swap tick). A scaled turn's ring is read on the tick: a hitch of 150 to 450 ms by size, only when the pair is off the pivot; the warm read is of the chosen angle.
+The pivot is fixed at the ask, at where the pair are expected to rest, and a mispredicted landing leaves the pair `s` units from it (a median of 3,600 in Encounter's six matches). The ring turns about the pivot, so the ground under a fighter moves `s` x sin(angle), at most `moveMax` (300 units). **No hitch (Executive Producer, 2026-10-22 on Game Design's "no hitch"): the swap never reads a ring.** Only the two rings Encounter warms can be swapped to: the chosen bearing (up to 10 degrees) and the smallest candidate (2.5). At the calm tick, with `s` the farthest fighter from the pivot:
+
+| The pair | The swap |
+| :--- | :--- |
+| `s` x sin(chosen bearing) is within 300 | the chosen bearing |
+| else `s` x sin(2.5) is within 300 (`s` under about 6,900) | the 2.5 degree ring |
+| else `s` x sin(2) is within 300 (`s` about 6,900 to 8,600) | **waits**: the turn stays decided and the next calm tick looks again (the pair may be nearer); Encounter's `cancel` drops it at the end of the moment |
+| else (`s` over about 8,600) | **refused**: the pick is dropped (`E.refused` counts it), so the director asks again at its next send. The 300 rule wins over "never under 2 degrees" |
+
+A ring counts as warm only when all its columns have been asked for through `prewarm`, so a part-read ring never swaps. The host's frame rate does not matter: warm is counted in the state, and the number of warm rings is in the state hash. `E.cold` counts a swap that had to read (a state carried into a process that never warmed it: the same ring, so the same result, and a hitch); in play it stays 0.
 
 ## The picture
 
@@ -50,9 +61,9 @@ The pivot is fixed at the ask, at where the pair are expected to rest, and a mis
 
 | Who | Lines |
 | :--- | :--- |
-| **Simulation** | `state.gd`: `var epoch = null`. `hash.gd`: only while `S.epoch` is set (a match without it hashes as before): `n`, `lastT`, `drift`, 0 or 1 for a decided turn (and its bearing and pivot column), and the hash of the ring's slice (Simulation's conditions a and b, 2026-10-22); and the `arena_turn` event's fields. `view/fx.gd`: the event in the pass list. `sim.gd` `newMatch`: `S.epoch = null`; `step`: `WorldEpoch.tick(S)` after `S.T += dt` (with `DirCalm.hold(S)` as its second argument when Encounter's exists) |
+| **Simulation** | `state.gd`: `var epoch = null`. `hash.gd`: only while `S.epoch` is set (a match without it hashes as before): `n`, `lastT`, `drift`, 0 or 1 for a decided turn (and its bearing, pivot column and how many of its rings are read), and the hash of the ring's slice (Simulation's conditions a and b, 2026-10-22); and the `arena_turn` event's fields. `view/fx.gd`: the event in the pass list. `sim.gd` `newMatch`: `S.epoch = null`; `step`: `WorldEpoch.tick(S)` after `S.T += dt` (with `DirCalm.hold(S)` as its second argument when Encounter's exists) |
 | **Tools** | One case in `cases.json` (`rings-turn-bearing-over-10`) with the schema's `turn` block |
-| **Encounter** | `DirCalm.ask`, `pick`, `hold` as in its paper; the candidates' `places` carry `{id, kind, owner, arc}` (kind `city` or `town`; there is no landmark or home on the planet yet: `owner` is -1) |
+| **Encounter** | `DirCalm.ask`, `pick`, `hold` as in its paper, `cancel`, and **`prewarm(S, n)` from the sim tick** (n columns of each of the two rings: a Whole ring is 4,800 columns, so n = 4,800 / k reads both in k ticks) and `warmAngles(S)`; a refused turn (`E.refused`) just re-asks at the next send, and a waiting one is cancelled at the end of its moment; the candidates' `places` carry `{id, kind, owner, arc}` (kind `city` or `town`; there is no landmark or home on the planet yet: `owner` is -1) |
 | **Rendering and Camera** | The `arena_turn` event `{n, x (the pivot), amount (the bearing, degrees), k (the drift)}`: the ground, the far land and the buildings are rebuilt at Camera's hard cut; the zone is `x` plus or minus 12,000 units |
 | **Game Design** | The first values: carry 12,000 units, view 16,000 units, the bearings 2.5, 5, 7.5, 10 |
 
