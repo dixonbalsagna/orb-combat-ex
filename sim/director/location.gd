@@ -11,7 +11,8 @@ class_name DirLocation
 const PATH: String = "res://data/director/location.json"
 ## The biome index order of S.dirS.biomeT (the schema's enum order).
 const BIOMES: Array = ["ocean", "village", "plains", "city", "forest", "desert", "mountains"]
-const STEP: float = 200.0 * SimConst.PS   # one histogram bucket: SimConst.W / BUCKETS
+static var STEP: float = 200.0 * SimConst.PS   # one histogram bucket: SimConst.W / BUCKETS (set in _ensure: the arena's length can change)
+static var _key: String = ""
 const BUCKETS: int = 48                    # WorldCollateral.HIST_BUCKETS
 const WINDOW: int = 2                      # +-2 buckets approximate popNear(x, 900 * WS)
 const EMPTY: float = 0.1                   # a bucket (or its window) at or below this population is empty ground
@@ -25,17 +26,22 @@ static var _bucketBiome := PackedInt32Array()  # the biome index at each bucket'
 
 
 static func _ensure() -> void:
-	if _d != null:
-		return
-	_text = FileAccess.get_file_as_string(PATH)
-	_d = JSON.parse_string(_text)
 	if _d == null:
-		push_error("DirLocation: could not parse " + PATH)
-		_d = {}
+		_text = FileAccess.get_file_as_string(PATH)
+		_d = JSON.parse_string(_text)
+		if _d == null:
+			push_error("DirLocation: could not parse " + PATH)
+			_d = {}
+	# the tables follow the arena's length and a planet's world: rebuilt when either changes (a match on the hand-made world keeps today's)
+	var key: String = "%s/%d" % [str(SimConst.W), WorldBiomes.worldId]
+	if key == _key:
+		return
+	_key = key
+	STEP = SimConst.W / float(BUCKETS)
 	_planet.resize(BIOMES.size())
 	_planet.fill(0.0)
 	for sg in WorldBiomes.SEG:
-		_planet[BIOMES.find(sg[2])] += (sg[1] - sg[0]) / SimConst.W
+		_planet[BIOMES.find(sg[2])] += (sg[1] - sg[0]) / (9600.0 * SimConst.PS)
 	_bucketBiome.resize(BUCKETS)
 	for k in range(BUCKETS):
 		_bucketBiome[k] = BIOMES.find(WorldBiomes.biomeAt(k * STEP + STEP / 2.0))

@@ -151,6 +151,13 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 			if tilt == 0 and not town.is_empty() and A.tier >= float(town.get("bruntFromTier", 99.0)):
 				plan.s += float(town.get("bruntPrefer", 0.0))   # a building on the line, no stick held: preferred from this tier
 			c.append(plan)
+		var ip = _insideAim(S, A, D, S.buildings[bi], force * (DirBrawl.freshMul(S, D, 4) if fresh else 1.0), tierF, longOnly, plan)
+		if ip != null and not (fwdOnly and float(ip.ux) * f < 0.0):
+			hadBrunt = true
+			ip.s = bruntScore(S, A, ip) + _insideScore(A)
+			if tilt == 0 and not town.is_empty() and A.tier >= float(town.get("bruntFromTier", 99.0)):
+				ip.s += float(town.get("bruntPrefer", 0.0))
+			c.append(ip)
 	for sign in [-1.0, 1.0]:
 		if fwdOnly and sign * f < 0.0:
 			continue
@@ -272,6 +279,33 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 ## is in the building and, for a fighter who feeds on collateral, how tall it is), drama on top (capped: personality decides
 ## which building, drama decides among near equals), the pity counter, a repeat penalty, and a penalty for a chain that would
 ## exceed the casualty budget the runtime will enforce.
+## The interior aim (launch.json interiorAim; World's finding, camera-intent.md section 5): with it on and World's interior
+## chain on, a send into b aimed inside the chain's gate (WorldBrunt.aimInside over interiorAim.uy), when the low aim
+## (low, aim's plan or null) would not start the chain itself. Null otherwise, and always with it off.
+static func _insideAim(S: SimState, A, D, b, force: float, tierF: float, special: bool, low):
+	var ia: Dictionary = data().get("interiorAim", {})
+	if not bool(ia.get("enabled", false)) or not WorldInterior.on(S):
+		return null
+	if low != null and bool(low.brunt.hit.get("ok", false)) and WorldInterior.fits(S, b, float(low.brunt.hit.vx) / WorldSlide.launchTravel(float(low.ux), float(low.uy)), float(low.brunt.hit.vy)):
+		return null   # the low aim already starts it
+	var ai := Callable(WorldBrunt, "aimInside")
+	if not ai.is_valid():
+		return null   # World's grant is not in
+	return ai.call(S, A, D, b, force, tierF, special, ia.uy)
+
+
+## What a send inside a tower is worth to him (interiorAim.score): by his care's sign, or his role at care 0 (hero;
+## villain or rival), as the AI's launcher aim reads it. The Anti-hero seeks the chain; the hero avoids it.
+static func _insideScore(A) -> float:
+	var sc: Dictionary = data().get("interiorAim", {}).get("score", {})
+	var pers: String = "hero" if A.care > 0.0 else ("villain" if A.care < 0.0 else "")
+	if pers == "":
+		var dd = FighterData.def(A.id)
+		var role: String = String(dd.get("role", "")) if dd is Dictionary else ""
+		pers = "hero" if role == "hero" else ("villain" if (role == "villain" or role == "rival") else "")
+	return float(sc.get(pers, 0.0))
+
+
 static func bruntScore(S: SimState, A, plan: Dictionary) -> float:
 	var chain: Array = plan.brunt.chain
 	var pers: float = 0.0
@@ -466,6 +500,7 @@ static func knock(S: SimState, att, tgt, mul: float = 1.0, ox: float = NAN) -> v
 		tgt.vx = s * sp            # ... and its speed is the data's, whatever the tier scaling of a launch
 		tgt.vy = float(kb.skidUy) * sp
 		SimFx.knockback(S, tgt, att, "slideLong", dist, S.tick + int(ceil(2.0 * dist / sp * DirData.TICKS_PER_SEC)))   # the end is an estimate (a steady brake); World's journey decides
+		DirRecoil.knocked(S, att, tgt, dist, 1, S.tick + int(ceil(2.0 * dist / sp * DirData.TICKS_PER_SEC)))   # recoil flips: his window out of the skid
 		return
 	var r := SimState.Rush.new()
 	r.px = SimWrap.wrap(tgt.x + s * dist)
@@ -492,6 +527,7 @@ static func knock(S: SimState, att, tgt, mul: float = 1.0, ox: float = NAN) -> v
 	r.end = S.T + ticks * SimConst.DT
 	tgt.rush = r
 	SimFx.knockback(S, tgt, att, "bump" if bumpKind > 0 else ("slideShort" if slide else "drift"), dist, S.tick + int(ticks))
+	DirRecoil.knocked(S, att, tgt, dist, 2 if slide else 3, S.tick + int(ticks))   # recoil flips: his window out of the slide or the drift
 	tgt.vx = 0.0
 	tgt.vy = 0.0
 	SimFx.ring(S, tgt.x, tgt.y + 34.0, 300.0, "#ffffff", 0.25, 12.0)

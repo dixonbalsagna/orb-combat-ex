@@ -192,7 +192,7 @@ func _init() -> void:
 	var pr: Dictionary = WorldPlanet.pick(P, 3)
 	var S: WorldPlanet.Slice = WorldPlanet.readSlice(P, pr.circle, pr.T)
 	ok(S.heights.size() == SimConst.NC and S.biomes.size() == SimConst.NC, "a slice is %d columns of height and biome" % S.heights.size())
-	var mid: Array = WorldPlanet.columnPoint(P, pr.circle, WorldPlanet.TOUCH_COL)
+	var mid: Array = WorldPlanet.columnPoint(P, pr.circle, WorldPlanet.touchCol())
 	ok(absf(mid[0] - pr.T[0]) < 1.0e-9 and absf(mid[1] - pr.T[1]) < 1.0e-9 and absf(mid[2] - pr.T[2]) < 1.0e-9, "the middle column is the touch-down")
 	var nHeldCities: int = 0
 	for h in S.held:

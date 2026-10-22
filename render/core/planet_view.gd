@@ -3,7 +3,8 @@ extends Node3D
 ## The wrapped planet: the ground and water, one surface from the fighter plane to the horizon (the far part is the
 ## same planet's terrain, fading into the sky), and the buildings, trees and crowd. Everything anchored to the world is
 ## built once per match in world x [0, W) and drawn as copies one planet apart, placed at k * W - cam.x: the ground
-## and water in 2 * PLANET_COPIES + 1 copies (the horizon is wide), the props in three. The copies are identical, so the seam at x = 0 / W can never pop, at any zoom or separation, and a
+## and water in 2 * PLANET_COPIES + 1 copies (the horizon is wide), the props in three, and more on a shorter arena
+## (World's shifting arena: copies_each_side keeps the reach in world units). The copies are identical, so the seam at x = 0 / W can never pop, at any zoom or separation, and a
 ## view wider than the planet (tiny zoom on an ultra-wide or phone screen) still shows every object at every place it
 ## appears. Per-frame cost is three node moves plus whatever changed in the sim since the last frame: the ground field
 ## (render/core/ground_field.gd: round crater bowls in depth, scorch, water) when craters dig, beams scorch or water
@@ -38,6 +39,7 @@ var source: PlanetView = null         # a second pane's planet: the planet it dr
 var _terrain_meshes: Array = []   # [ArrayMesh]: every chunk of the near and middle tiers, then the far tier
 var _water_meshes: Array = []
 var _water_cols := PackedInt32Array()   # per water mesh: its first and last column (-1, -1: the far mesh, the whole planet)
+var _built_nc: int = 0                  # the arena's length in columns the ground's data, meshes and materials were made for
 var _water_nodes: Array = []            # this pane's water nodes per mesh, one a copy
 var _water_drawn: int = -1              # the ground's water_version this pane last decided its water chunks for
 var _crowd_mat: ShaderMaterial
@@ -123,6 +125,17 @@ func build(S: SimState) -> void:
 		remove_child(c)
 		c.free()
 	_copies.clear()
+	if _built_nc != SimConst.NC:
+		# The arena's length changed (World's shifting arena; and the first build): the ground's data, its meshes and
+		# the materials that read them are sized by it, so they are made again. A second pane takes the first's.
+		_built_nc = SimConst.NC
+		if source == null:
+			if ground.tw * ground.rpl != SimConst.NC:
+				ground = GroundField.new()
+			_terrain_meshes = []
+			_water_meshes = []
+			_water_cols = PackedInt32Array()
+		_terrain_mat = null
 	if source != null:
 		ground = source.ground
 		_terrain_meshes = source._terrain_meshes
@@ -203,9 +216,11 @@ func build(S: SimState) -> void:
 		var cm: ShaderMaterial = _crowd_mat.duplicate() as ShaderMaterial
 		cm.set_shader_parameter("id_base", _crowd.firsts[c])
 		_crowd_mats.append(cm)
-	for k in range(-RenderLook.PLANET_COPIES, RenderLook.PLANET_COPIES + 1):
+	var nk: int = copies_each_side()
+	var np: int = prop_copies_each_side()
+	for k in range(-nk, nk + 1):
 		var n := Node3D.new()
-		n.name = "Copy%d" % (k + RenderLook.PLANET_COPIES)
+		n.name = "Copy%d" % (k + nk)
 		n.set_meta("k", k)
 		add_child(n)
 		for m in range(_terrain_meshes.size()):
@@ -214,7 +229,7 @@ func build(S: SimState) -> void:
 			if _water_nodes.size() <= m:
 				_water_nodes.append([])
 			_water_nodes[m].append(n.get_node("Water%d" % m))
-		if absi(k) <= 1:
+		if absi(k) <= np:
 			_mm_child(n, "Buildings", _bld, _bld_mat)
 			_mm_child(n, "Buildings0", _bld0, _front_mat)
 			_mm_child(n, "Trees", _tree, _tree_mat)
@@ -223,6 +238,17 @@ func build(S: SimState) -> void:
 		_copies.append(n)
 	if source == null:
 		refresh(S, true)
+
+
+## The ground's and water's copies each side of the camera: PLANET_COPIES planets of the whole planet's length, so a
+## shorter arena (World's shifting arena) takes as many more as keep that reach in world units.
+static func copies_each_side() -> int:
+	return maxi(RenderLook.PLANET_COPIES, ceili(float(RenderLook.PLANET_COPIES * SimConst.PLANET_NC) / float(SimConst.NC)))
+
+
+## The props' copies each side: one whole planet's length, the same way.
+static func prop_copies_each_side() -> int:
+	return maxi(1, ceili(float(SimConst.PLANET_NC) / float(SimConst.NC)))
 
 
 ## Which water chunks can draw anything, decided again whenever the water changes (Performance's audit, 2026-10-16:
@@ -514,7 +540,7 @@ func terrain_meshes() -> Array:
 
 ## How many of terrain_meshes() are finest-run chunks (the ones holding the fighter-plane row).
 func near_chunks() -> int:
-	return SimConst.NC / RenderLook.CHUNK_COLS
+	return ceili(float(SimConst.NC) / float(RenderLook.CHUNK_COLS))   # the last may be partial on an arena that is not a multiple
 
 
 ## Props: buildings, roofs, trees and civilians whose state changed, or whose ground did (they stand on the ground as
@@ -1197,6 +1223,7 @@ func _make_ground_meshes() -> void:
 	var cc: int = RenderLook.CHUNK_COLS
 	for group in ["near", "mid"]:
 		for c0 in range(0, SimConst.NC, cc):
+			var c1: int = mini(c0 + cc, SimConst.NC)   # a partial last chunk on an arena that is not a multiple of CHUNK_COLS
 			var tv: Array = [[], []]
 			for k in range(runs.size()):
 				var st: int = runs[k][1]
@@ -1204,13 +1231,13 @@ func _make_ground_meshes() -> void:
 					continue
 				var sf: int = runs[k - 1][1] if k > 0 and runs[k - 1][1] > st else 0
 				var sl: int = runs[k + 1][1] if k + 1 < runs.size() and runs[k + 1][1] > st else 0
-				_grid(tv[0], c0, c0 + cc, runs[k][0], st, sf, sl, false)
-				_grid(tv[1], c0, c0 + cc, runs[k][0], st, 0, 0, true)
+				_grid(tv[0], c0, c1, runs[k][0], st, sf, sl, false)
+				_grid(tv[1], c0, c1, runs[k][0], st, 0, 0, true)
 			if tv[0].is_empty():
 				continue
-			_terrain_meshes.append(_finish(tv[0], c0 * SimConst.COL, (c0 + cc) * SimConst.COL, false))
-			_water_meshes.append(_finish(tv[1], c0 * SimConst.COL, (c0 + cc) * SimConst.COL, true))
-			_water_cols.append_array([c0, c0 + cc])
+			_terrain_meshes.append(_finish(tv[0], c0 * SimConst.COL, c1 * SimConst.COL, false))
+			_water_meshes.append(_finish(tv[1], c0 * SimConst.COL, c1 * SimConst.COL, true))
+			_water_cols.append_array([c0, c1])
 	var far: Array = [[], []]
 	for k in range(runs.size()):
 		if runs[k][1] == largest:

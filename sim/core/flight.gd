@@ -17,6 +17,8 @@ extends RefCounted
 ## first leg ends at his first contact, a slide, a building struck, water or the air brake; from there his journey's
 ## own physics runs as today. At the brake his velocity takes the speed he shows, so the brake starts from it.
 ## The flight cue (SimFx.flight) tells the camera each phase: kick, glide, arrive and end.
+## The predictors fly the same curve (Encounter's planner, World's flightTo, chainPlan and next): share, kOf, toFloor and
+## a Track stepped by tick() are the step's own arithmetic on plain numbers, and predict() runs one to its touchdown.
 
 const FILE: String = "res://data/fight/flight.json"
 const HASHED: Array = ["n", "t", "peak", "on", "arr", "from", "k"]
@@ -112,11 +114,83 @@ static func curve(t: int) -> float:
 	return 1.0 + (glide - 1.0) * u * u * (3.0 - 2.0 * u)
 
 
-## The share of the peak he shows now: the curve, or the arrival's ramp once it has started.
+## The share of the peak at live tick t of a send: the curve, or the arrival's ramp from `from` once it started on
+## tick arr (-1: not yet). Shared by the step and every predictor.
+static func share(t: int, arr: int, from: float) -> float:
+	if arr < 0:
+		return curve(t)
+	return from + (arrive - from) * SimMathx.jmin(1.0, float(t - arr) / float(arriveTicks))
+
+
+## The share of the peak he shows now (his flight state).
 static func level(p) -> float:
-	if p.arr < 0:
-		return curve(p.t)
-	return p.from + (arrive - p.from) * SimMathx.jmin(1.0, float(p.t - p.arr) / float(arriveTicks))
+	return share(p.t, p.arr, p.from)
+
+
+## The pace: his physics steps by dt x k this tick, so that at velocity (vx, vy) he shows c of the peak.
+static func kOf(c: float, peak: float, vx: float, vy: float) -> float:
+	var v: float = SimDetMath.hypot(vx, vy)
+	return SimMathx.jclamp(c * peak / v, kMin, kMax) if v > 0.0 else kMax
+
+
+## A send's first leg on plain numbers, for the predictors (Encounter's DirLaunch.predictFlight, World's
+## WorldBrunt.flightTo, chainPlan and next): no fighter and no S state. Make one with track(), step it with tick().
+class Track:
+	var x: float = 0.0
+	var y: float = 0.0
+	var vx: float = 0.0      # world units a second, the traversal factor in it (as the fighter's vx)
+	var vy: float = 0.0
+	var peak: float = 0.0    # the send's speed at the send
+	var t: int = 0           # live ticks since the send
+	var arr: int = -1        # the tick the arrival's ramp started, or -1
+	var from: float = 0.0    # ... the share it started from
+	var k: float = 1.0       # this tick's pace
+	var aimB: int = -1       # the building the send is aimed at, or -1
+
+
+## A track for a send leaving (x, y) at (vx, vy), aimed at building aimB (or -1): as the step starts one.
+static func track(x: float, y: float, vx: float, vy: float, aimB: int = -1) -> Track:
+	var tr := Track.new()
+	tr.x = x
+	tr.y = y
+	tr.vx = vx
+	tr.vy = vy
+	tr.peak = SimDetMath.hypot(vx, vy)
+	tr.aimB = aimB
+	return tr
+
+
+## One live tick of the curved flight's first leg (the step's own arithmetic, to the bit: the share, the arrival's
+## march, the pace, then the first leg's gravity and drag at dt x k, as SimFighter.stepLaunched and World's moveAir fly
+## it before any contact). It reads the world (the ground, the water, the aimed building) and writes only the track.
+## dt is a live tick (SimConst.DT); a match in its KO slow-motion steps by less.
+static func tick(S: SimState, tr: Track, dt: float = SimConst.DT) -> void:
+	_ensure()
+	tr.t += 1
+	var c: float = share(tr.t, tr.arr, tr.from)
+	if tr.arr < 0 and tr.t > ramp + hold and toFloor(S, tr.x, tr.y, tr.vx, tr.vy, c * tr.peak, tr.aimB) <= float(arriveTicks):
+		tr.arr = tr.t
+		tr.from = c
+	tr.k = kOf(c, tr.peak, tr.vx, tr.vy)
+	var d: float = dt * tr.k
+	tr.vy -= 1000.0 * d * 1.0
+	tr.vx *= SimDetMath.pow(0.55, d)
+	tr.x = SimWrap.wrap(tr.x + tr.vx * d)
+	tr.y += tr.vy * d
+
+
+## The curved flight run to its first touchdown on the ground or the water (buildings are the caller's: step tick()
+## and test them as the flight does). [live ticks, x, y, vx, vy] at the touchdown, or ticks -1 when there is none
+## within maxTicks. For the camera's launch cue (the touchdown's tick) and the planner's timing.
+static func predict(S: SimState, x: float, y: float, vx: float, vy: float, aimB: int = -1, maxTicks: int = 900) -> PackedFloat64Array:
+	var tr := track(x, y, vx, vy, aimB)
+	if tr.peak <= 0.0:
+		return PackedFloat64Array([-1.0, x, y, vx, vy])
+	while tr.t < maxTicks:
+		tick(S, tr)
+		if tr.y <= _floor(S, tr.x):
+			return PackedFloat64Array([float(tr.t), tr.x, tr.y, tr.vx, tr.vy])
+	return PackedFloat64Array([-1.0, tr.x, tr.y, tr.vx, tr.vy])
 
 
 ## Each live tick of a launched fighter while the curve is on (SimFighter.stepLaunched, first): the dt his flight's
@@ -149,8 +223,7 @@ static func pace(S: SimState, f, dt: float) -> float:
 		p.arr = p.t
 		p.from = c
 		SimFx.flight(S, f, "arrive", c * p.peak, p.t)
-	var v: float = SimDetMath.hypot(f.vx, f.vy)
-	p.k = SimMathx.jclamp(c * p.peak / v, kMin, kMax) if v > 0.0 else kMax
+	p.k = kOf(c, p.peak, f.vx, f.vy)
 	if p.t == 1:
 		SimFx.flight(S, f, "kick", p.peak, p.t)
 	elif p.t == easeTo and p.arr < 0:
@@ -172,28 +245,35 @@ static func _end(S: SimState, f, why: String) -> void:
 	SimFx.flight(S, f, "end", level(p) * p.peak, p.t, why)
 
 
-## Live ticks until his course meets the ground, the water or the building he is aimed at, at the speed he shows:
-## his course is marched a tick at a time in his velocity's direction, at most arriveTicks + 1 ticks ahead (the ground
-## and the water); the aimed building's face is met on a straight line. A large number when none is that near.
+## Live ticks until his course meets the ground, the water or the building he is aimed at, at the speed he shows
+## (toFloor, on his own numbers).
 static func toContact(S: SimState, f, shown: float) -> float:
-	var v: float = SimDetMath.hypot(f.vx, f.vy)
+	return toFloor(S, f.x, f.y, f.vx, f.vy, shown, f.aimB)
+
+
+## Live ticks until a course from (x, y) heading along (vx, vy) at `shown` a second meets the ground, the water or the
+## face of building aimB (-1: none): the course is marched a tick at a time in the velocity's direction, at most
+## arriveTicks + 1 ticks ahead (the ground and the water); the building's face is met on a straight line. A large number
+## when none is that near.
+static func toFloor(S: SimState, x0: float, y0: float, vx: float, vy: float, shown: float, aimB: int) -> float:
+	var v: float = SimDetMath.hypot(vx, vy)
 	if v <= 0.0 or shown <= 0.0:
 		return 1.0e9
-	var ux: float = f.vx / v
-	var uy: float = f.vy / v
+	var ux: float = vx / v
+	var uy: float = vy / v
 	var perTick: float = shown * SimConst.DT
 	var best: float = 1.0e9
-	var x: float = f.x
-	var y: float = f.y
+	var x: float = x0
+	var y: float = y0
 	for n in range(1, arriveTicks + 2):
 		x = SimWrap.wrap(x + ux * perTick)
 		y += uy * perTick
 		if y <= _floor(S, x):
 			best = float(n)
 			break
-	if f.aimB >= 0 and f.aimB < S.buildings.size():
-		var b = S.buildings[f.aimB]
-		var dx: float = SimWrap.sdx(f.x, b.x)
+	if aimB >= 0 and aimB < S.buildings.size():
+		var b = S.buildings[aimB]
+		var dx: float = SimWrap.sdx(x0, b.x)
 		if b.alive and dx * ux > 0.0 and ux != 0.0:
 			best = SimMathx.jmin(best, SimMathx.jmax(0.0, absf(dx) - b.w * 0.5) / (absf(ux) * perTick))
 	return best

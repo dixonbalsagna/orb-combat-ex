@@ -336,6 +336,8 @@ const FX_FIELDS: Dictionary = {
 
 static func hashFx(h: Hasher, events: Array) -> void:
 	for e in events:
+		if e.type == "cue" and e.kind == "cam_intent":
+			continue   # the camera feed (Encounter's camintent.gd): a plan for the view, read-only, outside the light digest
 		h.text(e.type)
 		for k in FX_FIELDS[e.type]:
 			var v = e.get(k)

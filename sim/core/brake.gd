@@ -175,6 +175,12 @@ static func _event(S: SimState, f, phase: String, why: String) -> void:
 	SimFx.airBrake(S, f, phase, why, v, ux, uy)
 
 
+## The brake's control back, for the director (Encounter's recoil flip with ground contact off): his flight ends where
+## he is, with his own speed, as the brake ends it.
+static func controlBack(S: SimState, f) -> void:
+	_control(S, f)
+
+
 ## Control back in the air: his flight ends where he is, with his own speed (the traversal factor divided out of it).
 ## With ground contact on, World ends the journey (WorldContact.brakeEnd: its journey_end, kind "brake"); without it,
 ## as a landing in water ends a flight here.

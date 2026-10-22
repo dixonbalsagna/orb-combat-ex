@@ -3626,6 +3626,109 @@
         "enabled"
       ],
       "additionalProperties": false
+    },
+    "recoilFlip": {
+      "type": "object",
+      "description": "Recoil flips: a dodge tap early in a knock-back backflips him out of it, and his next blow is a counter-rush.",
+      "properties": {
+        "_note": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "False: nothing runs and no cue is sent."
+        },
+        "windowTicks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Live ticks after a knock-back in which a dodge tap flips him."
+        },
+        "flipTicks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Live ticks from the flip to his landing, set."
+        },
+        "flipBh": {
+          "type": "number",
+          "description": "How much further back the flip carries him, in body heights.",
+          "minimum": 0
+        },
+        "arcBh": {
+          "type": "number",
+          "description": "How far the flip bows up at its middle, in body heights.",
+          "minimum": 0
+        },
+        "counterTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Live ticks after the landing in which his next blow is a counter-rush."
+        },
+        "counterRush": {
+          "type": "object",
+          "description": "The counter-rush approach: its speed (units a second) and its ticks.",
+          "properties": {
+            "speed": {
+              "type": "number",
+              "description": "Units a second.",
+              "minimum": 1
+            },
+            "minTicks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "At least."
+            },
+            "maxTicks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "At most."
+            }
+          },
+          "required": [
+            "speed",
+            "minTicks",
+            "maxTicks"
+          ],
+          "additionalProperties": false
+        },
+        "flourishOverBh": {
+          "type": "number",
+          "description": "With no press, a knock-back on the ground longer than this (body heights) ends in the flourish.",
+          "minimum": 0
+        },
+        "aiTapTicks": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "The AI taps this many live ticks into the window, from and to."
+        },
+        "aiCounterTicks": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "The AI presses its counter-rush this many live ticks after the landing, from and to."
+        }
+      },
+      "required": [
+        "enabled",
+        "windowTicks",
+        "flipTicks",
+        "flipBh",
+        "arcBh",
+        "counterTicks",
+        "counterRush",
+        "flourishOverBh",
+        "aiTapTicks",
+        "aiCounterTicks"
+      ],
+      "additionalProperties": false
     }
   },
   "additionalProperties": false,

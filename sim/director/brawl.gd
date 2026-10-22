@@ -3041,6 +3041,13 @@ static func returnTell(S: SimState, ex, A, D) -> void:
 	e.dur = float(rw)
 
 
+## A recoil flip (DirRecoil): he is no longer sent, the first move is not the rival's, and he is not returning.
+static func recoilFree(f) -> void:
+	_s(f, SENT, 0)
+	_s(f, MOVE_AT, 0)
+	_s(f, RET_N, 0)
+
+
 ## True while the first move is the rival's: f was sent, and is free for fewer than firstMove.lockTicks.
 static func moveLocked(S: SimState, f) -> bool:
 	return on() and (_g(f, SENT) == 1 or S.tick < _g(f, MOVE_AT))

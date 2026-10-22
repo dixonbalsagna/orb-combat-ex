@@ -194,6 +194,8 @@ static func _start(S: SimState, A, kind: String) -> int:
 		return WAIT   # step 3: a staggered fighter's requests wait
 	if A.state != "free" and A.state != "charging":
 		return WAIT
+	if DirRecoil.flipping(S, A):
+		return WAIT   # in the air of his recoil flip: the press waits for his landing
 	if D.state == "launched" or D.state == "locked" or DirZip.untouchable(D) or DirZip.leaving(S, D):
 		return WAIT   # (no strike reaches a zipper on his way out, or about to leave)
 	if kind == "sig" and A.ki < 45.0 and not SimFighter.sigFree(A):   # the last stand's signature is free
@@ -596,6 +598,7 @@ static func dirUpdate(S: SimState, dt: float) -> void:
 	DirBlast.tick(S)   # blasts winding up leave; the AI weighs a perfect block against a shot about to arrive
 	DirBury.tick(S)   # a burial starts and ends
 	DirLaunch.tick(S)   # an upright slide that ends early against an obstacle: the bump
+	DirRecoil.tick(S)   # recoil flips: the window out of a knock-back, the flip, the landing and the counter-rush
 	_setupLapse(S)   # the part of a set-up lapses with the brink
 	_queues(S)   # step 2: upgrades, expiry, and the next queued request once the director can take it
 	var ex = S.dirS.ex

@@ -17,10 +17,19 @@ const TRAV_FREE: float = 10.0  # dash speed multiplier at long range: a lap take
 const TRAV_LAUNCH: float = 6.0 # horizontal launch speed multiplier (impact damage and energy use the unboosted speed)
 const BOOST_NEAR: float = 1500.0   # free-flight boost starts when the opponent is farther than this ...
 const BOOST_FAR: float = 12000.0   # ... and is full at this separation
-const W: float = 9600.0 * PS   # planet circumference; x wraps into [0, W)
 const COL: float = 32.0        # terrain column width (0.43 fighter heights)
-const NC: int = 4800           # number of terrain columns (W / COL)
-const HALF: float = W / 2.0    # the largest shortest-arc separation
+const PLANET_NC: int = 4800    # the planet's circumference in columns: fixed (the planet is 4,800 columns round whatever the arena is)
+## The arena's length (docs/world/shifting-arena-design.md): the planet's great circle by default, or a smaller ring of a planet's plane through the pair. Set once at the top
+## of newMatch from setup.arena (its columns), so a match always sets it and none is stale; absent means the planet's own 4,800.
+static var W: float = 9600.0 * PS   # the arena's length: x wraps into [0, W)
+static var NC: int = 4800           # number of terrain columns (W / COL)
+static var HALF: float = 9600.0 * PS / 2.0    # the largest shortest-arc separation
+
+
+static func setArena(cols: int) -> void:
+	NC = cols
+	W = float(cols) * COL
+	HALF = W / 2.0
 const CEILING: float = 24000.0 # flight ceiling (was 2,600): above the tallest building
 const START_X: float = 5600.0 * PS   # where the first fighter starts: open ground at the desert's west edge, clear of every town (balance-targets.md §4b ruling 3; was 2150 x PS, the plains by the city); the second is START_GAP units on
 const START_GAP: float = 900.0   # was 750: Camera's entrance needs the two landing spots this far apart (EP, 2026-10-02)

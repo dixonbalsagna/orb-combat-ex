@@ -46,6 +46,12 @@
     "stickWins": 200.0,
     "_note": "Staying in town and aiming for a building (docs/design/buildings.md section 3). biomes: the settlement biomes. haulTarget, haulMin: from a settlement SMASH ACROSS carries him haulTarget units along the street and no further, kept while he lands inside the settlement and at least haulMin on; where the street does not run that far it is the long haul. distMul: from a settlement the distance bonus of a landing on open ground is this share of itself. newBiomeEveryS: the new-biome bonus is paid once in this many seconds of the match. bruntFromTier, bruntPrefer: with no stick held, a building on the line scores bruntPrefer more from this tier. stickWins: with the stick toward a building that has a plan, it scores this much more, which is always enough"
   },
+  "interiorAim": {
+    "_note": "The interior aim (sim/director/launch.gd _insideAim; docs/director/camera-intent.md section 5, World's finding): the planner's sends into a tower fly at 3 to 22 degrees, where World's interior chain starts at 15 to 60 (brunt.json interiorTanMin and interiorTanMax). With enabled and World's interiorChain on, each building also offers a send aimed inside the gate: World's aimInside over uy (each a send's upward part against its forward one), the first whose arrival fits. It is scored as any building send plus score by personality (hero, villain: the care's sign, or the role at care 0). Off: no candidate and no draw.",
+    "enabled": false,
+    "uy": [0.3, 0.45, 0.65, 0.9],
+    "score": {"hero": -8, "villain": 8}
+  },
   "knockBack": {
     "score": 25.0,
     "distBh": [3.5, 5.0, 6.5, 8.0],

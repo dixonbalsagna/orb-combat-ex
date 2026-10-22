@@ -908,13 +908,13 @@ static func _finish(S: SimState, f, by, b: Body) -> void:
 ## The air brake gave him control back in the air (SimBrake; docs/architecture/brake-core.md): his journey ends where he
 ## is, as a recovery. journey_end says so (kind "brake"), the flight's aim and chain are released, and he is free, with
 ## the speed he has (SimBrake has divided the traversal factor out of it).
-static func brakeEnd(S: SimState, f) -> void:
+static func brakeEnd(S: SimState, f, kind: String = "brake") -> void:
 	var je := SimFx.contactEvent(S, "journey_end", f, f.x, f.y, SimDetMath.hypot(f.vx, f.vy))
 	je.contacts = f.jContacts
 	je.lips = f.jLips
 	je.nb = int(f.bounces)
 	je.dur = float(f.jT) * SimConst.DT
-	je.kind = "brake"
+	je.kind = kind
 	je.n = _launchN(f)
 	f.slide = 0.0
 	f.tumbleT = -1
@@ -927,6 +927,22 @@ static func brakeEnd(S: SimState, f) -> void:
 	f.slideFeet = false
 	f.hopped = false
 	WorldBrunt.endFlight(S, f)
+
+
+## A recoil flip (sim/director/recoil.gd; Game Design's rulings-2026-10-19.md 2a) cuts a knock-back's skid short:
+## the slide so far is paid and recorded as a skid's end would be, and the journey ends where he is, as the brake's
+## does (journey_end kind "recoil"). He is free, at rest: the director carries him through his flip.
+static func recoilEnd(S: SimState, f) -> void:
+	var by = f.launchBy
+	if by != null:
+		if f.slideAcc > 0.0:
+			_pay(S, f, by, f.slideAcc)
+			f.slideAcc = 0.0
+		if f.slideEvt != 0.0:
+			_record(S, f, by)
+	f.vx = 0.0
+	f.vy = 0.0
+	brakeEnd(S, f, "recoil")
 
 
 static func _record(S: SimState, f, by) -> void:

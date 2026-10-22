@@ -78,11 +78,10 @@ const SHELTER_CAP: float = 2.0
 ## evacuee, times 425 / pop0. Anguish gets nothing from evacuees.
 const EVAC_MENACE: float = 0.45
 const HIST_BUCKETS: int = 48           # the lure's population histogram (director/ai.gd LURE_STEP = W / 48)
-const HIST_STEP: float = SimConst.W / 48.0
 
 
 static func histBucket(x: float) -> int:
-	return mini(int(SimWrap.wrap(x) / HIST_STEP), HIST_BUCKETS - 1)
+	return mini(int(SimWrap.wrap(x) / (SimConst.W / 48.0)), HIST_BUCKETS - 1)   # one bucket is a 48th of the arena (director/location.gd STEP)
 
 
 ## Start of a match, after the buildings exist: the window, the state and the lure histogram.

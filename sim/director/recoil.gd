@@ -210,7 +210,7 @@ static func _endSkid(S: SimState, f) -> bool:
 			return false
 		re.call(S, f)
 	else:
-		SimBrake._control(S, f)   # Simulation's: control back where he is
+		SimBrake.controlBack(S, f)   # Simulation's: control back where he is
 	return f.state == "free"
 
 

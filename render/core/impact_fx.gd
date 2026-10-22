@@ -36,6 +36,8 @@ func _init() -> void:
 
 func reset(seed: int) -> void:
 	parts.clear()
+	if heat.size() != SimConst.NC:
+		heat.resize(SimConst.NC)   # the arena's length (World's shifting arena) may change between matches
 	heat.fill(0.0)
 	heat_changed = true
 	_hot = false

@@ -20,7 +20,9 @@ const BIO_ICE_SHEET := 5
 const BIO_SEA_ICE := 6
 const KIND_CITY := 0
 const KIND_TOWN := 1
-const TOUCH_COL := SimConst.NC / 2       # the touch-down is the middle column of its slice (the seam is the antipode)
+## The touch-down is the middle column of its slice (the seam is the antipode); the slice is the arena's columns (SimConst.NC).
+static func touchCol() -> int:
+	return SimConst.NC / 2
 const MASK := 0xFFFFFFFF
 
 static var _TAN_PI_8: float = SimMathx.f64("3fda827999fcef32")   # tan(pi/8) = sqrt(2) - 1, from its bits (the parity lint allows no float literal over 15 digits)
@@ -225,7 +227,7 @@ static func make(seed: int) -> Planet:
 	var P := Planet.new()
 	P.seed = seed
 	P.c = cfg()
-	P.L = float(SimConst.NC) * SimConst.COL
+	P.L = float(SimConst.PLANET_NC) * SimConst.COL
 	P.R = P.L / (2.0 * PI)
 	_placeAll(P)
 	if _planets.size() > 6:
@@ -400,13 +402,44 @@ static func circleOf(T: Array, n: Array) -> Dictionary:
 	return {"u": u, "v": v, "n": n}
 
 
+## A ring of the arena's length (docs/world/shifting-arena-design.md section 1): the small circle through the great circle's touch-down T (= circ.u), tangent to it there, of
+## `cols` columns, on the left (side 1, towards the great circle's normal) or the right of it. Its radius is sin(theta) = cols / 4,800 of the planet's, so a column is exactly
+## SimConst.COL of arc and the ring closes. Returns the same dictionary shape as circleOf (u: the direction from the centre to T, v: the travel direction, n: the axis) plus
+## c (the axis), st and ct (sin and cos of the angular radius), th (the radius) and s (the side), which read as "a ring". cols of 4,800 or more is the great circle itself.
+static func ringThrough(circ: Dictionary, cols: int, side: int) -> Dictionary:
+	var st: float = float(cols) / float(SimConst.PLANET_NC)
+	if st >= 1.0:
+		return circ
+	var ct: float = sqrt(1.0 - st * st)
+	var s: float = 1.0 if side >= 0 else -1.0
+	var n: Array = circ.n
+	var t: Array = circ.u
+	var c: Array = _unit([t[0] * ct + n[0] * (s * st), t[1] * ct + n[1] * (s * st), t[2] * ct + n[2] * (s * st)])
+	var e1: Array = _unit([t[0] * st - n[0] * (s * ct), t[1] * st - n[1] * (s * ct), t[2] * st - n[2] * (s * ct)])
+	return {"u": e1, "v": circ.v, "n": c, "c": c, "st": st, "ct": ct, "th": asinf(st), "s": s}
+
+
+## A place's signed lateral offset from the line (units, left of the line positive): from a great circle by its normal, from a ring by its angular radius.
+static func lateral(P: Planet, circ: Dictionary, x: float, y: float, z: float) -> float:
+	if circ.has("st"):
+		var c: Array = circ.c
+		return circ.s * P.R * (circ.th - acosf(SimMathx.jclamp(c[0] * x + c[1] * y + c[2] * z, -1.0, 1.0)))
+	var n: Array = circ.n
+	return P.R * asinf(n[0] * x + n[1] * y + n[2] * z)
+
+
 ## The point at column i of the circle: the middle column is T, a column is SimConst.COL units of arc.
 static func columnPoint(P: Planet, circ: Dictionary, i: int) -> Array:
-	var ang: float = float(i - TOUCH_COL) * SimConst.COL / P.R
+	var stf: float = circ.get("st", 1.0)
+	var ang: float = float(i - touchCol()) * SimConst.COL / (P.R * stf)
 	var co: float = SimDetMath.cos(ang)
 	var si: float = SimDetMath.sin(ang)
 	var u: Array = circ.u
 	var v: Array = circ.v
+	if circ.has("st"):
+		var c: Array = circ.c
+		var ct: float = circ.ct
+		return [c[0] * ct + stf * (u[0] * co + v[0] * si), c[1] * ct + stf * (u[1] * co + v[1] * si), c[2] * ct + stf * (u[2] * co + v[2] * si)]
 	return [u[0] * co + v[0] * si, u[1] * co + v[1] * si, u[2] * co + v[2] * si]
 
 
@@ -657,13 +690,22 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
 	S.biomes.resize(nc)
 	var u: Array = circ.u
 	var v: Array = circ.v
+	var small: bool = circ.has("st")
+	var stf: float = circ.get("st", 1.0)
+	var ct: float = circ.get("ct", 0.0)
+	var ca: Array = circ.get("c", u)
+	var tc: int = touchCol()
 	for i in range(nc):
-		var ang: float = float(i - TOUCH_COL) * SimConst.COL / P.R
+		var ang: float = float(i - tc) * SimConst.COL / (P.R * stf)
 		var co: float = SimDetMath.cos(ang)
 		var si: float = SimDetMath.sin(ang)
 		var qx: float = u[0] * co + v[0] * si
 		var qy: float = u[1] * co + v[1] * si
 		var qz: float = u[2] * co + v[2] * si
+		if small:
+			qx = ca[0] * ct + stf * qx
+			qy = ca[1] * ct + stf * qy
+			qz = ca[2] * ct + stf * qz
 		surfAt(P, qx, qy, qz)
 		var h: float = P.outH
 		var b: int = P.outB
@@ -673,14 +715,13 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
 			h += (_fbm(P.R, qx, qy, qz, c.detailScale, int(c.detailOct), P.seed + int(c.sDetail)) - 0.5) * c.detailAmp * c.detailSheet
 		S.heights[i] = h
 		S.biomes[i] = b
-	var n: Array = circ.n
 	for i in range(P.n):
-		var lat: float = P.R * asinf(n[0] * P.px[i] + n[1] * P.py[i] + n[2] * P.pz[i])
+		var lat: float = lateral(P, circ, P.px[i], P.py[i], P.pz[i])
 		var reach: float = (c.cityReach if P.kind[i] == KIND_CITY else c.townReach) * P.rad[i]
 		if absf(lat) >= reach:
 			continue
 		var along: float = atan2f(P.px[i] * v[0] + P.py[i] * v[1] + P.pz[i] * v[2], P.px[i] * u[0] + P.py[i] * u[1] + P.pz[i] * u[2])
-		var col: int = TOUCH_COL + int(floor(along * P.R / SimConst.COL + 0.5))
+		var col: int = tc + int(floor(along * (P.R * stf) / SimConst.COL + 0.5))
 		col = ((col % nc) + nc) % nc
 		var half: float = sqrt(maxf(0.0, P.rad[i] * P.rad[i] - lat * lat))
 		S.held.append({"id": i, "kind": int(P.kind[i]), "col": col, "d": lat, "half": half, "r": P.rad[i],
@@ -689,15 +730,57 @@ static func readSlice(P: Planet, circ: Dictionary, T: Array, standing: PackedByt
 
 
 ## The slice memoised outside the sim state: keyed by the planet, the touch, the pick index and the data hash. The read is pure, so the cache cannot change a match.
-static func sliceFor(seed: int, touch: int, standing: PackedByteArray = PackedByteArray(), relaxed: bool = false) -> Slice:
-	var key: String = "%d/%d/%s/%d/%s" % [seed, touch, str(standing.hex_encode()), 1 if relaxed else 0, dataHash()]
+static func sliceFor(seed: int, touch: int, standing: PackedByteArray = PackedByteArray(), relaxed: bool = false, side: int = 1) -> Slice:
+	var key: String = "%d/%d/%s/%d/%s/%d/%d" % [seed, touch, str(standing.hex_encode()), 1 if relaxed else 0, dataHash(), SimConst.NC, side]
 	if _slices.has(key):
 		return _slices[key]
 	var P: Planet = make(seed)
 	var r: Dictionary = pick(P, touch, standing, relaxed)
 	if not r.ok:
 		return null
-	var S: Slice = readSlice(P, r.circle, r.T, standing)
+	var S: Slice = readSlice(P, ringThrough(r.circle, SimConst.NC, side), r.T, standing)   # the arena's columns: the great circle itself at 4,800, else a ring through the touch-down
+	if _slices.size() > 4:
+		_slices.clear()
+	_slices[key] = S
+	return S
+
+
+## The ground beside a ring (window 2, the slow drift: Rendering's far land and sky read the planet's own ground, not a wander): the height and biome at column i of the ring, moved `z` units
+## sideways over the surface (z positive toward the ring's centre, negative away from it, along the great circle through the column at right angles to the ring). At z = 0 it is the slice's
+## own column, height and biome to the bit. Returns [height, biome]. A pure function of the planet and the ring: no state, no clock.
+static func farColumn(P: Planet, ring: Dictionary, i: int, z: float) -> Array:
+	var c: Dictionary = P.c
+	var p: Array = columnPoint(P, ring, i)
+	var qx: float = p[0]
+	var qy: float = p[1]
+	var qz: float = p[2]
+	if z != 0.0:
+		var m: Array = ring.get("c", ring.n)
+		var d: float = m[0] * p[0] + m[1] * p[1] + m[2] * p[2]
+		var t: Array = _unit([m[0] - p[0] * d, m[1] - p[1] * d, m[2] - p[2] * d])   # the way to the centre (for a great circle, towards its normal's side)
+		var a: float = z / P.R
+		var co: float = SimDetMath.cos(a)
+		var si: float = SimDetMath.sin(a)
+		qx = p[0] * co + t[0] * si
+		qy = p[1] * co + t[1] * si
+		qz = p[2] * co + t[2] * si
+	surfAt(P, qx, qy, qz)
+	var h: float = P.outH
+	var b: int = P.outB
+	if b >= BIO_PLAINS and b <= BIO_MOUNTAINS:
+		h += (_fbm(P.R, qx, qy, qz, c.detailScale, int(c.detailOct), P.seed + int(c.sDetail)) - 0.5) * c.detailAmp
+	elif b == BIO_ICE_SHEET and h > 100.0:
+		h += (_fbm(P.R, qx, qy, qz, c.detailScale, int(c.detailOct), P.seed + int(c.sDetail)) - 0.5) * c.detailAmp * c.detailSheet
+	return [h, b]
+
+
+## The slice of an explicit ring (WorldRingPick: an axis, the columns, a touch-down), memoised outside the state like sliceFor's. The ring is the arena's, so its columns are SimConst.NC.
+static func sliceRing(seed: int, ring: Dictionary, standing: PackedByteArray = PackedByteArray()) -> Slice:
+	var key: String = "ring/%d/%s/%s/%s/%d" % [seed, str(ring.c), str(ring.u), str(standing.hex_encode()), SimConst.NC]
+	if _slices.has(key):
+		return _slices[key]
+	var P: Planet = make(seed)
+	var S: Slice = readSlice(P, ring, ring.u, standing)
 	if _slices.size() > 4:
 		_slices.clear()
 	_slices[key] = S
@@ -948,7 +1031,7 @@ static func wearMarks(P: Planet, wear: Dictionary, S: Slice) -> Array:
 	var out: Array = []
 	var u: Array = S.circ.u
 	var v: Array = S.circ.v
-	var n: Array = S.circ.n
+	var stf: float = S.circ.get("st", 1.0)
 	var nc: int = SimConst.NC
 	var band: float = c.bandUnits
 	var pts: Array = []   # [x, y, z, radius16, depth16, cause, place]
@@ -962,11 +1045,11 @@ static func wearMarks(P: Planet, wear: Dictionary, S: Slice) -> Array:
 	for o in wear.open:
 		pts.append([float(o[0]) / 1000000.0, float(o[1]) / 1000000.0, float(o[2]) / 1000000.0, o[3], o[4], o[5], -1])
 	for q in pts:
-		var lat: float = P.R * asinf(n[0] * q[0] + n[1] * q[1] + n[2] * q[2])
+		var lat: float = lateral(P, S.circ, q[0], q[1], q[2])
 		if absf(lat) > band + float(q[3]) / 16.0:
 			continue
 		var along: float = atan2f(q[0] * v[0] + q[1] * v[1] + q[2] * v[2], q[0] * u[0] + q[1] * u[1] + q[2] * u[2])
-		var col: int = TOUCH_COL + int(floor(along * P.R / SimConst.COL + 0.5))
+		var col: int = touchCol() + int(floor(along * (P.R * stf) / SimConst.COL + 0.5))
 		col = ((col % nc) + nc) % nc
 		out.append({"col": col, "lateral": int(floor(lat + 0.5)), "radius16": q[3], "depth16": q[4], "cause": q[5], "place": q[6]})
 	return out

@@ -49,7 +49,13 @@ static func dispose(S: SimState) -> void:
 static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Dictionary = {}) -> void:
 	S.game.seed = float(seed & 0xFFFFFFFF)
 	S.rng = SimRng.new(seed & 0xFFFFFFFF)
-	WorldTerrain.genWorld(S)
+	S.arenaCols = _arenaCols(setup)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's 4,800
+	SimConst.setArena(S.arenaCols)
+	WorldBiomes.planetCols = PackedByteArray()
+	if not (setup.has("planet") and WorldPlanetWorld.gen(S, setup)):   # a setup with a planet reads its world from the slice; without one, today's world
+		WorldTerrain.genWorld(S)
+	S.planetCols = WorldBiomes.planetCols   # the statics a world sets belong to this match: step takes them again when another match has built since
+	S.worldId = WorldBiomes.claim()
 	S.contactOn = WorldContact.enabled()   # World's ground contact (world/contact.gd): a copy of the data's switch
 	var p1ai: bool = bool(ai["p1"]) if ai.has("p1") and ai["p1"] != null else (S.fighters[0].ai != null if S.fighters.size() > 0 else true)
 	var p2ai: bool = bool(ai["p2"]) if ai.has("p2") and ai["p2"] != null else (S.fighters[1].ai != null if S.fighters.size() > 1 else true)
@@ -63,6 +69,8 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
 	var start_x: float = SimConst.START_X
 	if setup.get("start", "") == "crossing":   # a demo start astride a crossing of the city (World: lanes.json demo_start); default off
 		start_x = WorldLanes.demoStartX(S, SimConst.START_GAP, SimConst.START_X)
+	if setup.has("planet"):
+		start_x = float(WorldPlanet.touchCol()) * SimConst.COL - SimConst.START_GAP * 0.5   # astride the touch-down
 	var x0: float = start_x
 	var x1: float = start_x + SimConst.START_GAP
 	var flip: bool = setup.get("flip", false)
@@ -124,10 +132,28 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
 	S.dt = 0.0
 
 
+## The arena's columns from the setup, guarded: setup.arena {"cols": n, "side": 1 or -1} with a setup.planet, n a whole number from 600 to 4,800 and a multiple of 8 (the ground's largest stride: Rendering's chunks and copies; a ring a fight fits in); anything else is the planet's own 4,800, with an error (World: docs/world/shifting-arena-design.md section 3).
+static func _arenaCols(setup: Dictionary) -> int:
+	var arena = setup.get("arena", null)
+	if arena == null:
+		return SimConst.PLANET_NC
+	var n = arena.get("cols", null) if arena is Dictionary else null
+	var ok: bool = setup.has("planet") and (n is int or n is float) and float(n) == floorf(float(n)) and float(n) >= 600.0 and float(n) <= float(SimConst.PLANET_NC) and int(n) % 8 == 0
+	if not ok:
+		if not FighterData.quiet:
+			push_error("SimCore.newMatch: setup.arena %s needs a planet and cols a whole number from 600 to %d, a multiple of 8; the planet's own arena plays" % [str(arena), SimConst.PLANET_NC])
+		return SimConst.PLANET_NC
+	return int(n)
+
+
 ## One fixed step (sim.js step). inputs is [intent or null, ...] a slot, or null (AI fighters ignore it; a slot past the
 ## list's end has none). Returns
 ## false during hit-stop (no input consumed; the host keeps its key presses for the next tick), true otherwise.
 static func step(S: SimState, inputs = null) -> bool:
+	if SimConst.NC != S.arenaCols or WorldBiomes.worldId != S.worldId:   # the arena's length and a planet's biomes are statics: a match takes its own again, whatever another match has built since (two sims alive in one process)
+		SimConst.setArena(S.arenaCols)
+		WorldBiomes.planetCols = S.planetCols
+		WorldBiomes.worldId = S.worldId
 	var dtReal: float = SimConst.DT
 	var dt: float = dtReal * S.game.ts
 	S.dt = dt

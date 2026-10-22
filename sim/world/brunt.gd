@@ -536,15 +536,29 @@ static func candidates(S: SimState, D) -> Array:
 ## the first uy in AIM_UY whose flight enters b above the ground and below its top at AIM_MIN_SP or more. The result has
 ## the plan fields the launch needs (ux, uy, fm) and "brunt": {"b", "hit", "chain", "deaths", "z1", "aimD"}.
 static func aim(S: SimState, A, D, b, force: float, tierF: float, special: bool = false):
+	return _aimBy(S, A, D, b, force, tierF, special, AIM_UY, false)
+
+
+## The planner's send aimed inside the interior chain's gate (sim/director/launch.gd interiorAim; World's finding of
+## 2026-10-19): as aim, over the planner's uys, and only a flight whose arrival fits WorldInterior's angle band.
+## Its "brunt" carries "inside": true. Null when none does.
+static func aimInside(S: SimState, A, D, b, force: float, tierF: float, special: bool, uys: Array):
+	return _aimBy(S, A, D, b, force, tierF, special, uys, true)
+
+
+static func _aimBy(S: SimState, A, D, b, force: float, tierF: float, special: bool, uys: Array, inside: bool):
 	var sign_: float = 1.0 if SimWrap.sdx(D.x, b.x) >= 0.0 else -1.0
-	for uy in AIM_UY:
+	for uy in uys:
 		var trav: float = WorldSlide.launchTravel(sign_, uy)
 		var fr: Dictionary = flightTo(S, D.x, D.y, WorldSlide.launchVX(sign_, uy, force * tierF), uy * force * tierF, trav, b, D.z)
-		if fr.ok and fr.spN >= AIM_MIN_SP:
+		if fr.ok and fr.spN >= AIM_MIN_SP and (not inside or WorldInterior.fits(S, b, fr.vx / trav, fr.vy)):
 			var chain: Array = chainPlan(S, tierOf(A, D), special, b, fr, trav)
 			var edge: float = SimWrap.wrap(b.x - sign_ * b.w * 0.5)
-			return {"ux": sign_, "uy": uy, "fm": 1.0, "name": "BUILDING SMASH",
+			var plan := {"ux": sign_, "uy": float(uy), "fm": 1.0, "name": "BUILDING SMASH",
 				"brunt": {"b": b.idx, "hit": fr, "chain": chain, "deaths": chainDeaths(chain), "z1": faceZ(b), "aimD": absf(SimWrap.sdx(D.x, edge))}}
+			if inside:
+				plan.brunt["inside"] = true
+			return plan
 	return null
 
 

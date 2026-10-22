@@ -228,6 +228,51 @@
         "^_": true
       }
     },
+    "interiorAim": {
+      "type": "object",
+      "description": "The interior aim: a send aimed inside the interior chain's gate, offered beside the low one.",
+      "properties": {
+        "_note": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "False: no candidate."
+        },
+        "uy": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "minItems": 1,
+          "description": "The upward parts tried, in order."
+        },
+        "score": {
+          "type": "object",
+          "properties": {
+            "hero": {
+              "type": "number"
+            },
+            "villain": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "hero",
+            "villain"
+          ],
+          "additionalProperties": false,
+          "description": "Added to its score by personality."
+        }
+      },
+      "required": [
+        "enabled",
+        "uy",
+        "score"
+      ],
+      "additionalProperties": false
+    },
     "knockBack": {
       "type": "object",
       "required": [

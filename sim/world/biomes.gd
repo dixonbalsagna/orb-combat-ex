@@ -6,8 +6,23 @@ const P: float = SimConst.PS
 const SEG: Array = [[0.0 * P, 1200.0 * P, "ocean"], [1200.0 * P, 1800.0 * P, "village"], [1800.0 * P, 2350.0 * P, "plains"], [2350.0 * P, 3850.0 * P, "city"], [3850.0 * P, 4500.0 * P, "village"], [4500.0 * P, 5500.0 * P, "forest"], [5500.0 * P, 6500.0 * P, "desert"], [6500.0 * P, 7600.0 * P, "mountains"], [7600.0 * P, 8000.0 * P, "village"], [8000.0 * P, 8300.0 * P, "plains"], [8300.0 * P, 9600.0 * P, "ocean"]]
 
 
+## A match on a planet's slice (WorldPlanetWorld.gen): the biome of each column, as an index into WorldPlanetWorld.BIOME_NAME; empty for the hand-made world.
+static var planetCols := PackedByteArray()
+static var worldId: int = 0   # the last world a match built (SimCore.newMatch: claim); a match's step takes its own tables again when this is not its id
+static var _ids: int = 0
+
+
+## A new id for the world a match is building, which is now the current one.
+static func claim() -> int:
+	_ids += 1
+	worldId = _ids
+	return worldId
+
+
 static func biomeAt(x: float) -> String:
 	x = SimWrap.wrap(x)
+	if planetCols.size() > 0:
+		return WorldPlanetWorld.BIOME_NAME[planetCols[mini(int(x / SimConst.COL), planetCols.size() - 1)]]
 	for s in SEG:
 		if x >= s[0] and x < s[1]:
 			return s[2]

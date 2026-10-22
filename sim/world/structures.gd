@@ -29,7 +29,6 @@ const PLANE_ROW: float = 1.0
 const Z_REACH: float = 260.0 * WS
 ## Spatial index: buildings by the bucket of their centre. A query reaches every bucket within r plus the widest half width.
 const BUCKETS: int = 128
-const BUCKET_W: float = SimConst.W / 128.0
 const MAX_HALF_W: float = 64.0 * WS / 2.0 + 8.0
 # ---- implode and rubble (blast-levelled buildings, buildings-in-depth.md 4c) ----
 const IMPLODE_SPEED: float = 1000.0 * WS   # the ripple's speed, units per second (cosmetic delay)
@@ -254,7 +253,7 @@ static func buildIndex(S: SimState) -> void:
 	for i in range(S.buildings.size()):
 		var b = S.buildings[i]
 		b.idx = i
-		var k: int = mini(int(SimWrap.wrap(b.x) / BUCKET_W), BUCKETS - 1)
+		var k: int = mini(int(SimWrap.wrap(b.x) / (SimConst.W / 128.0)), BUCKETS - 1)
 		S.bIdx[k].append(i)
 
 
@@ -266,8 +265,9 @@ static func near(S: SimState, x: float, r: float) -> Array:
 		for i in range(S.buildings.size()):
 			out.append(i)
 		return out
-	var k0: int = int(floor((SimWrap.wrap(x) - reach) / BUCKET_W))
-	var k1: int = int(floor((SimWrap.wrap(x) + reach) / BUCKET_W))
+	var bw: float = SimConst.W / 128.0   # a bucket is a 128th of the arena
+	var k0: int = int(floor((SimWrap.wrap(x) - reach) / bw))
+	var k1: int = int(floor((SimWrap.wrap(x) + reach) / bw))
 	for k in range(k0, k1 + 1):
 		for i in S.bIdx[posmod(k, BUCKETS)]:
 			out.append(i)

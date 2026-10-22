@@ -554,6 +554,29 @@
                     "answer"
                   ],
                   "additionalProperties": false
+                },
+                "recoil": {
+                  "type": "object",
+                  "description": "The AI's recoil flips (interrupts.json recoilFlip).",
+                  "properties": {
+                    "flip": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of its knock-backs it flips out of."
+                    },
+                    "counter": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of its flips it follows with a counter-rush."
+                    }
+                  },
+                  "required": [
+                    "flip",
+                    "counter"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "description": "The AI's brawl play at this level.",
@@ -1096,6 +1119,29 @@
                     "answer"
                   ],
                   "additionalProperties": false
+                },
+                "recoil": {
+                  "type": "object",
+                  "description": "The AI's recoil flips (interrupts.json recoilFlip).",
+                  "properties": {
+                    "flip": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of its knock-backs it flips out of."
+                    },
+                    "counter": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of its flips it follows with a counter-rush."
+                    }
+                  },
+                  "required": [
+                    "flip",
+                    "counter"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "description": "The AI's brawl play at this level.",
@@ -1636,6 +1682,29 @@
                     "launcher",
                     "inString",
                     "answer"
+                  ],
+                  "additionalProperties": false
+                },
+                "recoil": {
+                  "type": "object",
+                  "description": "The AI's recoil flips (interrupts.json recoilFlip).",
+                  "properties": {
+                    "flip": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of its knock-backs it flips out of."
+                    },
+                    "counter": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1,
+                      "description": "The share of its flips it follows with a counter-rush."
+                    }
+                  },
+                  "required": [
+                    "flip",
+                    "counter"
                   ],
                   "additionalProperties": false
                 }

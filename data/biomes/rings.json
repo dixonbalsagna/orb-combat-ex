@@ -1,0 +1,41 @@
+{
+  "schema": "biomes.rings/1",
+  "_about": "The ring picker's numbers (docs/world/shifting-arena-design.md window 4; WorldRingPick). sizes: the columns of Game Design's three sizes (Close 38,400 units, Half 76,800, Whole 153,600). minimum: what a ring must hold by size (standing cities and towns, kinds of ground of at least biomeShare of the ring, and the share that is land). candidates: how many rings are tried for a claim at a size. stride: columns between the coarse read's samples. ref: the share of the ring (or the count) at which a claim's suit counts in full. mustAt: the least value of a must-cross feature. avoidWeight: how much of an avoided feature's value comes off the score. homeBonus: added when the ring holds the claim's home place. coastRef: coast crossings (water to land and back) that count as a full coast. The claims themselves are Narrative's (docs/narrative/opponent_grounds.json) and are passed in; features the planet function cannot see are proxies (WorldRingPick.featureValue).",
+  "sizes": {
+    "close": 1200,
+    "half": 2400,
+    "whole": 4800
+  },
+  "minimum": {
+    "close": {
+      "cities": 1,
+      "towns": 0,
+      "biomes": 2,
+      "land": 0.4
+    },
+    "half": {
+      "cities": 1,
+      "towns": 2,
+      "biomes": 2,
+      "land": 0.5
+    },
+    "whole": {
+      "cities": 2,
+      "towns": 3,
+      "biomes": 3,
+      "land": 0.5
+    }
+  },
+  "candidates": {
+    "close": 48,
+    "half": 48,
+    "whole": 32
+  },
+  "stride": 8,
+  "biomeShare": 0.05,
+  "ref": 0.25,
+  "mustAt": 0.2,
+  "avoidWeight": 0.5,
+  "homeBonus": 0.25,
+  "coastRef": 2
+}

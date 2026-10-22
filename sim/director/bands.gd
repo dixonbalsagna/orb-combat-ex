@@ -115,10 +115,13 @@ static func begin(S: SimState, A, D, weight: int, entry: int, pressTick: int, op
 	var m: Dictionary = c.lunge
 	if b == FAR:
 		m = c.charge[_weightName(weight)] if charge else c.far[_weightName(weight)]
+	var cr: bool = not charge and DirRecoil.counter(S, A)   # out of his recoil flip: the counter-rush, at its own speed
+	if cr:
+		m = DirRecoil.cfg().counterRush
 	var n: int = clampi(int(ceil(maxf(0.0, d - eng) / float(m.speed) * DirData.TICKS_PER_SEC)), int(m.minTicks), int(m.maxTicks))
 	# The mid-band lunge winds up before it moves (melee-press-feel.md section 2b): a crouch the defender can read.
-	var wind: int = int(c.lunge.get("windupTicks", {}).get(_weightName(weight), 0)) if (b == MID and not charge) else 0
-	var ret: bool = DirBrawl.returning(S, A)
+	var wind: int = int(c.lunge.get("windupTicks", {}).get(_weightName(weight), 0)) if (b == MID and not charge and not cr) else 0   # (the counter-rush has no crouch)
+	var ret: bool = DirBrawl.returning(S, A) and not cr
 	if ret:
 		# His approach back from a send (bands.return): long enough to read, and a crouch before it moves.
 		var rc: Dictionary = c.get("return", {})
@@ -194,7 +197,7 @@ static func _endOff(S: SimState, D, side: float) -> float:
 static func farPressNow(S: SimState, A, weight: int, entry: int) -> bool:
 	if not farOn() or S.dirS.ex != null or S.game.ko != null or who(S) >= 0:
 		return false
-	if (A.state != "free" and A.state != "charging") or A.stunTicks > 0 or DirInterrupt.opening(S, A) != 0:
+	if (A.state != "free" and A.state != "charging") or A.stunTicks > 0 or DirInterrupt.opening(S, A) != 0 or DirRecoil.flipping(S, A):
 		return false
 	var D = SimRoster.opp(S, A)
 	if band(A, D) != FAR:
@@ -202,7 +205,7 @@ static func farPressNow(S: SimState, A, weight: int, entry: int) -> bool:
 	A.state = "free"
 	if taunting(D):
 		meet(S, A, D, weight, entry, S.tick)
-	elif DirBrawl.pursues(S, A, D):
+	elif DirBrawl.pursues(S, A, D) or DirRecoil.due(S, A):
 		begin(S, A, D, weight, entry, S.tick)   # the first move is his: his press from afar flies in, where a tap would open a taunt
 	else:
 		farPress(S, A, D, weight, entry, S.tick)

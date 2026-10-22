@@ -1,0 +1,170 @@
+extends SceneTree
+# The arena as a plane (docs/world/shifting-arena-design.md section 3): the arena's length is a static set by each match; a ring of the planet's is read like the great circle.
+#   godot --headless --path . --script res://sim/world/tools/arena_check.gd [-- --ticks=3600]
+var fails: int = 0
+
+
+func ok(c: bool, w: String) -> void:
+	print("  %s  %s" % ["ok  " if c else "FAIL", w])
+	if not c:
+		fails += 1
+
+
+func play(setup: Dictionary, seed: int, ticks: int) -> Dictionary:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, seed, {}, setup)
+	var cols: int = SimConst.NC
+	var inside: bool = true
+	for b in S.buildings:
+		if b.x < 0.0 or b.x >= SimConst.W:
+			inside = false
+	for t in range(ticks):
+		SimCore.step(S)
+		if S.game.ko != null:
+			break
+	for f in S.fighters:
+		if f.x < 0.0 or f.x >= SimConst.W:
+			inside = false
+	return {"hash": str(SimHash.stateHash(S).gameplay), "cols": cols, "base": S.base.size(), "deform": S.deform.size(), "bld": S.buildings.size(), "inside": inside, "tick": S.tick, "pop": S.world.pop0}
+
+
+func _init() -> void:
+	var ticks: int = 3600
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--ticks="):
+			ticks = int(a.substr(8))
+	# --- the statics
+	ok(SimConst.NC == 4800 and SimConst.W == 153600.0 and SimConst.HALF == 76800.0 and SimConst.PLANET_NC == 4800, "the defaults are today's (4,800 columns, 153,600 units)")
+	SimConst.setArena(1600)
+	ok(SimConst.NC == 1600 and SimConst.W == 51200.0 and SimConst.HALF == 25600.0 and SimWrap.wrap(51200.0 + 5.0) == 5.0 and absf(SimWrap.sdx(50000.0, 1000.0) - 2200.0) < 0.001, "setArena(1600): 51,200 round, the wrap and the shortest arc follow")
+	SimConst.setArena(SimConst.PLANET_NC)
+	# --- the ring
+	var P := WorldPlanet.make(7)
+	var pr: Dictionary = WorldPlanet.pick(P, 3)
+	ok(pr.ok, "planet 7, touch 3 has a slice to read")
+	var circ: Dictionary = pr.circle
+	var T: Array = pr.T
+	var geom: bool = true
+	var tang: bool = true
+	for cols in [2400, 1600, 1200, 600]:
+		SimConst.setArena(cols)
+		var ring: Dictionary = WorldPlanet.ringThrough(circ, cols, 1)
+		var mid: int = WorldPlanet.touchCol()
+		var p0: Array = WorldPlanet.columnPoint(P, ring, mid)
+		var u: Array = circ.u
+		if absf(p0[0] - u[0]) > 1e-9 or absf(p0[1] - u[1]) > 1e-9 or absf(p0[2] - u[2]) > 1e-9:
+			geom = false
+		# unit points, an arc of one column between neighbours, a closed ring
+		var worst: float = 0.0
+		var arcErr: float = 0.0
+		for i in range(0, cols, maxi(1, cols / 97)):
+			var q: Array = WorldPlanet.columnPoint(P, ring, i)
+			worst = maxf(worst, absf(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] - 1.0))
+			var q2: Array = WorldPlanet.columnPoint(P, ring, i + 1)
+			var dd: float = acos(clampf(q[0] * q2[0] + q[1] * q2[1] + q[2] * q2[2], -1.0, 1.0)) * P.R
+			arcErr = maxf(arcErr, absf(dd - SimConst.COL) / SimConst.COL)
+		var a: Array = WorldPlanet.columnPoint(P, ring, 0)
+		var b: Array = WorldPlanet.columnPoint(P, ring, cols)
+		var gap: float = sqrt((a[0] - b[0]) * (a[0] - b[0]) + (a[1] - b[1]) * (a[1] - b[1]) + (a[2] - b[2]) * (a[2] - b[2])) * P.R
+		if worst > 1e-9 or arcErr > 0.002 or gap > 0.01:
+			geom = false
+		# tangent to the great circle at the touch-down: the next column lies along the great circle's travel direction
+		var pn: Array = WorldPlanet.columnPoint(P, ring, mid + 1)
+		var pm: Array = WorldPlanet.columnPoint(P, ring, mid - 1)
+		var v: Array = circ.v
+		var d: Array = [pn[0] - pm[0], pn[1] - pm[1], pn[2] - pm[2]]
+		var dl: float = sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2])
+		var cosv: float = (d[0] * v[0] + d[1] * v[1] + d[2] * v[2]) / dl
+		if cosv < 0.99999:
+			tang = false
+		# the ring's own lateral offset is zero
+		var lat: float = WorldPlanet.lateral(P, ring, a[0], a[1], a[2])
+		if absf(lat) > 0.01:
+			geom = false
+	SimConst.setArena(SimConst.PLANET_NC)
+	ok(geom, "a ring of 2,400, 1,600, 1,200 and 600 columns: unit points, a column of arc between neighbours (within 0.2%), closed (a gap under 0.01 unit), the touch-down at the middle column, zero lateral on itself")
+	ok(tang, "and tangent to the great circle at the touch-down (the next column lies along its travel direction)")
+	# --- the great circle through the new path is today's, to the bit
+	var s0 = WorldPlanet.sliceFor(7, 3)
+	ok(s0 != null and "%08x" % WorldPlanet.sliceHash(s0) == "d0f86ade" and s0.heights.size() == 4800, "the Planet slice (planet 7, touch 3) is today's: hash d0f86ade, 4,800 columns")
+	# --- the slices of the rings
+	var hs: Dictionary = {}
+	for cols in [2400, 1600, 1200, 600]:
+		SimConst.setArena(cols)
+		var sl = WorldPlanet.sliceFor(7, 3)
+		var sl2 = WorldPlanet.sliceFor(7, 3)
+		var fine: bool = sl != null and sl.heights.size() == cols and sl.biomes.size() == cols
+		var heldOk: bool = true
+		for h in sl.held:
+			if h.col < 0 or h.col >= cols:
+				heldOk = false
+		var centre: bool = absf(sl.heights[WorldPlanet.touchCol()] - s0.heights[2400]) < 0.0001   # the same touch-down point, the same ground
+		hs[cols] = WorldPlanet.sliceHash(sl)
+		ok(fine and heldOk and centre and sl == sl2, "a %d-column slice: %d heights, %d places held, every held column inside, the middle column is the Planet slice's middle column" % [cols, sl.heights.size(), sl.held.size()])
+	SimConst.setArena(SimConst.PLANET_NC)
+	# a place's lateral offset from a ring is its geodesic distance to the ring (checked against the nearest of the ring's columns)
+	SimConst.setArena(1600)
+	var ring1: Dictionary = WorldPlanet.ringThrough(circ, 1600, 1)
+	var latOk: int = 0
+	var latN: int = 0
+	for i in range(P.n):
+		var lat: float = WorldPlanet.lateral(P, ring1, P.px[i], P.py[i], P.pz[i])
+		var best: float = 1.0e18
+		for k in range(0, 1600, 4):
+			var q: Array = WorldPlanet.columnPoint(P, ring1, k)
+			var dd: float = acos(clampf(q[0] * P.px[i] + q[1] * P.py[i] + q[2] * P.pz[i], -1.0, 1.0)) * P.R
+			best = minf(best, dd)
+		if absf(lat) < 6000.0:
+			latN += 1
+			if absf(absf(lat) - best) <= 0.02 * best + 130.0:
+				latOk += 1
+	ok(latN >= 3 and latOk == latN, "a place's lateral offset from the ring is its distance to the ring (%d of %d places within 6,000 units)" % [latOk, latN])
+	SimConst.setArena(SimConst.PLANET_NC)
+	# --- a match on each size
+	var base: Dictionary = play({"planet": 7, "touch": 3}, 1, 600)
+	var whole: Dictionary = play({"planet": 7, "touch": 3, "arena": {"cols": 4800}}, 1, 600)
+	ok(base.hash == whole.hash and whole.cols == 4800, "an arena of 4,800 columns plays the same as none (hash %s)" % base.hash.substr(0, 8))
+	for cols in [2400, 1600, 1200, 600]:
+		var r1: Dictionary = play({"planet": 7, "touch": 3, "arena": {"cols": cols}}, 1, ticks)
+		var r2: Dictionary = play({"planet": 7, "touch": 3, "arena": {"cols": cols}}, 1, ticks)
+		ok(r1.cols == cols and r1.base == cols and r1.deform == cols and r1.inside and r1.bld > 0 and r1.hash == r2.hash, "a %d-column match: %d buildings, %.0f people, every building and fighter inside the world, %d ticks played, the same hash twice (%s)" % [cols, r1.bld, r1.pop, r1.tick, r1.hash.substr(0, 8)])
+	# a default match after a small one is the default world again (no stale static)
+	var after: Dictionary = play({}, 1, 600)
+	ok(after.cols == 4800 and SimConst.W == 153600.0 and after.bld == 118, "a default match after a small one is today's world (4,800 columns, 118 buildings)")
+	# --- Simulation's conditions: a guarded setup, and two matches alive in one process each keep their own arena
+	var quiet0: bool = FighterData.quiet
+	FighterData.quiet = true
+	var guard_ok: bool = true
+	for bad in [{"cols": 599}, {"cols": 4802}, {"cols": 1201}, {"cols": 1204}, {"cols": 2402}, {"cols": "2400"}, {"cols": 2400.5}, {}, 7]:
+		var Sg := SimCore.createSim()
+		SimCore.newMatch(Sg, 1, {}, {"planet": 7, "touch": 3, "arena": bad})
+		if Sg.arenaCols != 4800 or SimConst.NC != 4800:
+			guard_ok = false
+	var Sn := SimCore.createSim()
+	SimCore.newMatch(Sn, 1, {}, {"arena": {"cols": 1200}})   # no planet: the hand-made world is 4,800
+	if Sn.arenaCols != 4800 or SimConst.NC != 4800:
+		guard_ok = false
+	FighterData.quiet = quiet0
+	ok(guard_ok, "a bad arena (under 600, over 4,800, odd, even but not a multiple of 8, a string, a fraction, no columns, not a dictionary, or no planet) is the planet's own 4,800")
+	var SA := SimCore.createSim()
+	SimCore.newMatch(SA, 1, {}, {"planet": 7, "touch": 3, "arena": {"cols": 2400}, "intro": false})
+	var SB := SimCore.createSim()
+	SimCore.newMatch(SB, 2, {}, {"intro": false})
+	for r in range(6):
+		for t in range(100):
+			SimCore.step(SA)
+		for t in range(100):
+			SimCore.step(SB)
+	var ha: String = str(SimHash.stateHash(SA).gameplay)
+	var hb: String = str(SimHash.stateHash(SB).gameplay)
+	var SA2 := SimCore.createSim()
+	SimCore.newMatch(SA2, 1, {}, {"planet": 7, "touch": 3, "arena": {"cols": 2400}, "intro": false})
+	for t in range(600):
+		SimCore.step(SA2)
+	var SB2 := SimCore.createSim()
+	SimCore.newMatch(SB2, 2, {}, {"intro": false})
+	for t in range(600):
+		SimCore.step(SB2)
+	ok(ha == str(SimHash.stateHash(SA2).gameplay) and hb == str(SimHash.stateHash(SB2).gameplay) and SA.arenaCols == 2400 and SB.arenaCols == 4800, "a 2,400-column match and a default one stepped alternately 100 ticks at a time play as each plays alone (%s, %s)" % [ha.substr(0, 8), hb.substr(0, 8)])
+	print("ARENA: %d check(s) failed" % fails)
+	quit()

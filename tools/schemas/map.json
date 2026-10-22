@@ -432,6 +432,10 @@
       "schema": "biomes-collateral.schema.json"
     },
     {
+      "match": "data/biomes/rings.json",
+      "schema": "biomes-rings.schema.json"
+    },
+    {
       "match": "data/biomes/props.json",
       "schema": "biomes-props.schema.json"
     },

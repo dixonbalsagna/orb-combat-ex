@@ -292297,6 +292297,70 @@
       }
     },
     {
+      "id": "rings-schema-version",
+      "schema": "biomes-rings.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/rings.json",
+          "set": {
+            "/schema": "biomes.rings/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "rings-size-too-small",
+      "schema": "biomes-rings.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/rings.json",
+          "set": {
+            "/sizes/close": 100
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/sizes/close"
+      }
+    },
+    {
+      "id": "rings-size-not-multiple-of-8",
+      "schema": "biomes-rings.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/rings.json",
+          "set": {
+            "/sizes/half": 2404
+          }
+        }
+      ],
+      "expect": {
+        "rule": "multipleOf",
+        "pointer": "/sizes/half"
+      }
+    },
+    {
+      "id": "rings-minimum-land-over-one",
+      "schema": "biomes-rings.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/rings.json",
+          "set": {
+            "/minimum/half/land": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/minimum/half/land"
+      }
+    },
+    {
       "id": "props-schema-version",
       "schema": "biomes-props.schema.json",
       "mutate": [
