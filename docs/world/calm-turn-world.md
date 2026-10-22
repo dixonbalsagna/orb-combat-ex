@@ -38,7 +38,7 @@ The new ring is read (0.15 to 0.7 s of work by size, warm or on the tick), then 
 
 `homework/31c-a-turn.svg` is from the game's own code: planet 7 (Everhold), touch 3, a Whole ring; at 100 s two buildings near the pair are felled or hurt and a crater is dug; then `ask`, `choose` (10 degrees) and `tick`. The strips are the biome of every 16th column before and after, with the buildings; the blue box is what carried over (133 buildings before, 96 after). The globe animates the turn.
 
-## A bug this found in windows 0 and 1 (fixed in this park)
+## A bug this found in windows 0 and 1 (fixed on main, 79693404)
 
 `WorldContact._colSurf` (each column's surface class: soil, sand, rock, paving) was built **once**, from the hand-made world's biome layout. On a planet world its biomes are the slice's, and on a smaller arena the table is shorter than the ring or longer than the one a Whole match built: matches read the wrong surface (a landing on soil that is rock) and, in the other order, **read past the end** (a script error when a 4,800-column match followed a 2,400-column one in one process). It is rebuilt for each world a match builds (keyed on `WorldBiomes.worldId`). The default world is unchanged (its layout is the same), so no golden moves; the arena check (descending sizes) never read past the end.
 
@@ -46,7 +46,7 @@ The new ring is read (0.15 to 0.7 s of work by size, warm or on the tick), then 
 
 | Who | Lines |
 | :--- | :--- |
-| **Simulation** | `state.gd`: `var epoch = null`. `hash.gd`: three numbers (`n`, `lastT`, `drift`) only while `S.epoch` is set (a match without it hashes as before), and the `arena_turn` event's fields. `view/fx.gd`: the event in the pass list. `sim.gd` `newMatch`: `S.epoch = null`; `step`: `WorldEpoch.tick(S)` after `S.T += dt` (with `DirCalm.hold(S)` as its second argument when Encounter's exists) |
+| **Simulation** | `state.gd`: `var epoch = null`. `hash.gd`: only while `S.epoch` is set (a match without it hashes as before): `n`, `lastT`, `drift`, 0 or 1 for a decided turn (and its bearing and pivot column), and the hash of the ring's slice (Simulation's conditions a and b, 2026-10-22); and the `arena_turn` event's fields. `view/fx.gd`: the event in the pass list. `sim.gd` `newMatch`: `S.epoch = null`; `step`: `WorldEpoch.tick(S)` after `S.T += dt` (with `DirCalm.hold(S)` as its second argument when Encounter's exists) |
 | **Tools** | One case in `cases.json` (`rings-turn-bearing-over-10`) with the schema's `turn` block |
 | **Encounter** | `DirCalm.ask`, `pick`, `hold` as in its paper; the candidates' `places` carry `{id, kind, owner, arc}` (kind `city` or `town`; there is no landmark or home on the planet yet: `owner` is -1) |
 | **Rendering and Camera** | The `arena_turn` event `{n, x (the pivot), amount (the bearing, degrees), k (the drift)}`: the ground, the far land and the buildings are rebuilt at Camera's hard cut; the zone is `x` plus or minus 12,000 units |

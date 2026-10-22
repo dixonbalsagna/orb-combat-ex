@@ -32,19 +32,23 @@ index 48abec3..b43fa60 100644
 +  }
  }
 diff --git a/sim/core/hash.gd b/sim/core/hash.gd
-index badaccb..d04f847 100644
+index badaccb..7440ca9 100644
 --- a/sim/core/hash.gd
 +++ b/sim/core/hash.gd
-@@ -204,6 +204,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
+@@ -204,6 +204,12 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
  		if b.marks != 0:
  			out.append(float(b.marks))   # World: repeats escalate (only with brunt.json repeatMarks above 0)
  	out.append(1.0 if S.contactOn else 0.0)   # World's ground contact (G2)
-+	if S.epoch != null:   # World's calm-moment turn: only a match that can turn hashes it, so a match without it hashes as before
-+		out.append(float(S.epoch.n)); out.append(S.epoch.lastT); out.append(S.epoch.drift)
++	if S.epoch != null:   # World's calm-moment turn: only a match that can turn hashes it, so a match without it hashes as before. The count, the last turn's time, the drift, whether a turn is decided
++		out.append(float(S.epoch.n)); out.append(S.epoch.lastT); out.append(S.epoch.drift)   # (and its bearing and pivot column), and the hash of the ring's slice: the world the match is on
++		out.append(1.0 if S.epoch.next != null else 0.0)
++		if S.epoch.next != null:
++			out.append(S.epoch.next.bearing); out.append(float(S.epoch.next.pc))
++		out.append(float(S.epoch.sh))
  	out.append(float(S.trees.size()))
  	for t in S.trees:
  		_obj(out, t, TREE)
-@@ -329,7 +331,7 @@ const FX_FIELDS: Dictionary = {
+@@ -329,7 +335,7 @@ const FX_FIELDS: Dictionary = {
  	"left_ground": ["actor", "x", "y", "z", "spd", "n", "cause", "vx", "vy", "slope", "contacts", "dur"], "bounce": ["actor", "x", "y", "z", "spd", "n", "k", "keep", "vn", "vt", "surface", "sina", "slope", "contacts", "dur"],
  	"land": ["actor", "x", "y", "z", "spd", "n", "kind", "sina", "slope", "surface", "vn", "vt", "contacts", "dur"], "tumble_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "dur"],
  	"journey_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "lips", "nb", "dur"],
@@ -99,44 +103,12 @@ index 34bf421..f6686b7 100644
  				pass   # director and Rally readouts are the HUD's, Camera's and Audio's; nothing to spawn here
  			_:
  				push_error("consume: unknown event " + e.type)
-diff --git a/sim/world/contact.gd b/sim/world/contact.gd
-index 3bc731a..ff615e7 100644
---- a/sim/world/contact.gd
-+++ b/sim/world/contact.gd
-@@ -215,7 +215,17 @@ static func _cache() -> void:
- 	for k in D.surfaces:
- 		K_BRAKE[k] = float(D.surfaces[k].brake)
- 		K_TUMBLEONLY[k] = bool(D.surfaces[k].tumble)
--	# the biome's surface per terrain column: the biome layout is fixed, so this is built once
-+	_buildSurf()   # the biome's surface per terrain column, for the world built now (and again for each world a match builds: surfaceAt)
-+
-+
-+static var _colSurfKey: int = -1
-+
-+
-+## The biome's surface per terrain column, for the world the current match built (WorldBiomes.worldId): the hand-made world's biome layout is fixed, a planet's is its slice's, and the
-+## columns are the arena's.
-+static func _buildSurf() -> void:
-+	var D: Dictionary = _d
-+	_colSurfKey = WorldBiomes.worldId
- 	_colSurf.resize(SimConst.NC)
- 	for i in range(SimConst.NC):
- 		var biome: String = WorldBiomes.biomeAt(float(i) * SimConst.COL)
-@@ -239,6 +249,8 @@ static func _g(a: String, b: String) -> float:
- 
- ## The surface class of the ground at x, by priority: rubble heap, paving (inside a paved biome and not dug), the biome's own.
- static func surfaceAt(S: SimState, x: float) -> String:
-+	if _colSurfKey != WorldBiomes.worldId or _colSurf.size() != SimConst.NC:
-+		_buildSurf()
- 	var col: int = int(floor(SimWrap.wrap(x) / SimConst.COL)) % SimConst.NC
- 	if S.rubble[col] >= K_RUBBLE_MIN:
- 		return "rubble"
 diff --git a/sim/world/epoch.gd b/sim/world/epoch.gd
 new file mode 100644
-index 0000000..3ea9eeb
+index 0000000..c834cb4
 --- /dev/null
 +++ b/sim/world/epoch.gd
-@@ -0,0 +1,325 @@
+@@ -0,0 +1,326 @@
 +class_name WorldEpoch
 +## The calm-moment turn (docs/world/shifting-arena-design.md section 4, docs/world/calm-turn-world.md; Game Design rulings-2026-10-19b.md section 1; Encounter's docs/director/calm-turn.md).
 +## At a calm moment the arena's ring turns about the pair: a new plane through the pair's point, at most 10 degrees of bearing from the old, at most 4 turns a fight, at least 60 s of fight
@@ -170,8 +142,8 @@ index 0000000..3ea9eeb
 +
 +## The epoch of a new planet match (WorldPlanetWorld.gen, after the world is built): the ring it plays on, the turn counters, the settlements' chords and districts (for the carry). A
 +## Dictionary, hashed only through n, lastT and drift.
-+static func begin(S: SimState, seed: int, ring: Dictionary, spec: Dictionary, chords: Array, dlist: Array) -> Dictionary:
-+	return {"seed": seed, "n": 0, "lastT": 0.0, "drift": 0.0, "c0": spec.c, "ring": spec, "ask": null, "next": null, "chords": chords, "dlist": dlist}
++static func begin(S: SimState, seed: int, ring: Dictionary, spec: Dictionary, chords: Array, dlist: Array, sliceHash: int) -> Dictionary:
++	return {"seed": seed, "sh": sliceHash, "n": 0, "lastT": 0.0, "drift": 0.0, "c0": spec.c, "ring": spec, "ask": null, "next": null, "chords": chords, "dlist": dlist}
 +
 +
 +# ===================================================================== the geometry
@@ -454,6 +426,7 @@ index 0000000..3ea9eeb
 +	E.lastT = S.T
 +	E.drift = nx.drift
 +	E.ring = spec
++	E.sh = WorldPlanet.sliceHash(sl)   # the ring now played on, as the state hash sees it
 +	E.chords = chordsAll
 +	E.dlist = dlist
 +	E.next = null
@@ -585,7 +558,7 @@ index 728de69..ded999a 100644
  		return _slices[key]
  	var P: Planet = make(seed)
 diff --git a/sim/world/planet_world.gd b/sim/world/planet_world.gd
-index df1ef3d..06b6d15 100644
+index df1ef3d..e74e332 100644
 --- a/sim/world/planet_world.gd
 +++ b/sim/world/planet_world.gd
 @@ -15,53 +15,44 @@ const ARCH_CITY: String = "bellgate"
@@ -767,7 +740,7 @@ index df1ef3d..06b6d15 100644
 +	if WorldEpoch.enabled(setup):   # the calm-moment turn (docs/world/calm-turn-world.md): the epoch starts on the ring this match plays on
 +		var spec: Dictionary = specOf(sl.circ)
 +		if not spec.is_empty():
-+			S.epoch = WorldEpoch.begin(S, seed, sl.circ, spec, chords, dlist)
++			S.epoch = WorldEpoch.begin(S, seed, sl.circ, spec, chords, dlist, WorldPlanet.sliceHash(sl))
  	return true
 diff --git a/sim/world/ringpick.gd b/sim/world/ringpick.gd
 index 649fb71..b1f4915 100644
@@ -784,10 +757,10 @@ index 649fb71..b1f4915 100644
  			_cErrors.append("rings.json: %s is a number" % k)
 diff --git a/sim/world/tools/epoch_check.gd b/sim/world/tools/epoch_check.gd
 new file mode 100644
-index 0000000..d47de5a
+index 0000000..11c674b
 --- /dev/null
 +++ b/sim/world/tools/epoch_check.gd
-@@ -0,0 +1,257 @@
+@@ -0,0 +1,272 @@
 +extends SceneTree
 +# The calm-moment turn (docs/world/calm-turn-world.md; world/epoch.gd; data/biomes/rings.json turn):
 +#   godot --headless --path . --script res://sim/world/tools/epoch_check.gd [-- --ticks=600]
@@ -917,6 +890,21 @@ index 0000000..d47de5a
 +	WorldEpoch.tick(S, false)
 +	ok(S.epoch.n == 0, "no hold, no turn")
 +	var hashBefore: String = str(SimHash.stateHash(S).gameplay)
++	# Simulation's conditions on the hash: a turn that is decided but not swapped, and the ring a match is on, are in it
++	var Sd := ready(2400)
++	var hUndecided: String = str(SimHash.stateHash(Sd).gameplay)
++	WorldEpoch.ask(Sd, "test", mid(Sd), 1, 0)
++	WorldEpoch.choose(Sd, 0)
++	var hDecided0: String = str(SimHash.stateHash(Sd).gameplay)
++	var Se := ready(2400)
++	WorldEpoch.ask(Se, "test", mid(Se), 1, 0)
++	WorldEpoch.choose(Se, 3)
++	var hDecided3: String = str(SimHash.stateHash(Se).gameplay)
++	ok(hUndecided != hDecided0 and hDecided0 != hDecided3, "a turn that is decided but not yet swapped is in the state hash, and its bearing with it")
++	var shBefore: int = Sd.epoch.sh
++	WorldEpoch.tick(Sd, true)
++	WorldEpoch.tick(Se, true)
++	ok(Sd.epoch.sh != shBefore and Sd.epoch.sh == WorldPlanet.sliceHash(WorldPlanet.sliceRing(7, WorldRingPick.ringFrom(Sd.epoch.ring.c, 2400, Sd.epoch.ring.t))) and Sd.epoch.sh != Se.epoch.sh and str(SimHash.stateHash(Sd).gameplay) != str(SimHash.stateHash(Se).gameplay), "after the swap the state hash holds the new ring's slice hash: two different turns from one state hash differently")
 +	var fx0: int = S.out.fx.size()
 +	WorldEpoch.tick(S, true)
 +	ok(S.epoch.n == 1 and S.epoch.next == null and absf(S.epoch.lastT - 100.0) < 1e-9, "calm and held: the turn happens (epoch 1 at 100 s)")

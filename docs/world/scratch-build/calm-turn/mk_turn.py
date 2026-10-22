@@ -169,8 +169,12 @@ var contactOn: bool = false           # ground contact on''')
 def hashf(s):
     s = rep(s, '''	out.append(1.0 if S.contactOn else 0.0)   # World's ground contact (G2)
 ''', '''	out.append(1.0 if S.contactOn else 0.0)   # World's ground contact (G2)
-	if S.epoch != null:   # World's calm-moment turn: only a match that can turn hashes it, so a match without it hashes as before
-		out.append(float(S.epoch.n)); out.append(S.epoch.lastT); out.append(S.epoch.drift)
+	if S.epoch != null:   # World's calm-moment turn: only a match that can turn hashes it, so a match without it hashes as before. The count, the last turn's time, the drift, whether a turn is decided
+		out.append(float(S.epoch.n)); out.append(S.epoch.lastT); out.append(S.epoch.drift)   # (and its bearing and pivot column), and the hash of the ring's slice: the world the match is on
+		out.append(1.0 if S.epoch.next != null else 0.0)
+		if S.epoch.next != null:
+			out.append(S.epoch.next.bearing); out.append(float(S.epoch.next.pc))
+		out.append(float(S.epoch.sh))
 ''')
     s = rep(s, '''"interior_contact": [''', '''"arena_turn": ["n", "x", "amount", "k"], "interior_contact": [''')
     return s
@@ -264,7 +268,9 @@ static func _buildSurf() -> void:
     return s
 
 
-rw(R, 'sim/world/contact.gd', contact)
+import os
+if '_buildSurf' not in open(R + 'sim/world/contact.gd', encoding='utf-8').read():   # the surface-class fix is on main (79693404) once applied
+    rw(R, 'sim/world/contact.gd', contact)
 rw(R, 'sim/world/planet.gd', planet)
 rw(R, 'sim/world/planet_world.gd', planet_world)
 rw(R, 'sim/world/ringpick.gd', rings_cfg)

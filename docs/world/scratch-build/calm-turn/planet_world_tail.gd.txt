@@ -150,5 +150,5 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 	if WorldEpoch.enabled(setup):   # the calm-moment turn (docs/world/calm-turn-world.md): the epoch starts on the ring this match plays on
 		var spec: Dictionary = specOf(sl.circ)
 		if not spec.is_empty():
-			S.epoch = WorldEpoch.begin(S, seed, sl.circ, spec, chords, dlist)
+			S.epoch = WorldEpoch.begin(S, seed, sl.circ, spec, chords, dlist, WorldPlanet.sliceHash(sl))
 	return true

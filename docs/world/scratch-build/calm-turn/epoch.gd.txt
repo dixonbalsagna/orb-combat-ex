@@ -31,8 +31,8 @@ static func enabled(setup: Dictionary) -> bool:
 
 ## The epoch of a new planet match (WorldPlanetWorld.gen, after the world is built): the ring it plays on, the turn counters, the settlements' chords and districts (for the carry). A
 ## Dictionary, hashed only through n, lastT and drift.
-static func begin(S: SimState, seed: int, ring: Dictionary, spec: Dictionary, chords: Array, dlist: Array) -> Dictionary:
-	return {"seed": seed, "n": 0, "lastT": 0.0, "drift": 0.0, "c0": spec.c, "ring": spec, "ask": null, "next": null, "chords": chords, "dlist": dlist}
+static func begin(S: SimState, seed: int, ring: Dictionary, spec: Dictionary, chords: Array, dlist: Array, sliceHash: int) -> Dictionary:
+	return {"seed": seed, "sh": sliceHash, "n": 0, "lastT": 0.0, "drift": 0.0, "c0": spec.c, "ring": spec, "ask": null, "next": null, "chords": chords, "dlist": dlist}
 
 
 # ===================================================================== the geometry
@@ -315,6 +315,7 @@ static func swap(S: SimState) -> void:
 	E.lastT = S.T
 	E.drift = nx.drift
 	E.ring = spec
+	E.sh = WorldPlanet.sliceHash(sl)   # the ring now played on, as the state hash sees it
 	E.chords = chordsAll
 	E.dlist = dlist
 	E.next = null
