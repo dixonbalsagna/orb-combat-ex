@@ -167,6 +167,7 @@ const LEGEND_REST := 2.0
 const LEGEND_FADE := 1.0
 var _legend_g: Array = [{"a": 0.0, "on": false, "t": -1.0e9}, {"a": 0.0, "on": false, "t": -1.0e9}]   # the legend's own gate (asked for only on a keyboard or a pad, upright)
 var _you_g: Array = [{"a": 0.0, "on": false, "t": -1.0e9}, {"a": 0.0, "on": false, "t": -1.0e9}]      # and the YOU pill's and the touch captions' (asked for on every screen)
+var _cap_open_left: float = 0.0        # seconds the "He is open" caption stays after the launch closes (so it cannot blink)
 var _match_no: int = 1                 # which match of the session this is (the full legend shows only at the start of the first, under minimal_hud)
 var _hint_t0: Array = [0.0, 0.0]       # when each fighter became a human (the legend shows for 12 s from then)
 var _prev_ai: Array = [true, true]
@@ -693,6 +694,11 @@ func _update_layers() -> void:
 		_chip_big = bh >= UiSplit.BIG_FROM or (_chip_big and bh >= UiSplit.BIG_UNTIL)   # a far rival gets the larger chip, with a margin so it does not flicker
 		chips = UiSplit.pointers(layout, _split, _anchors, layout.s, _chip_big)
 		chips = UiIncoming.held(chips, _inc_keep, _t)   # the warning of his coming back does not blink as the closing speed crosses its threshold
+		if _struggle_holds_chips():
+			chips = []   # a beam struggle holds both fighters in frame: no pointer says otherwise, nor for 0.3 s after
+			_inc_keep = [null, null]
+		elif UiData.feature("minimal_hud"):
+			chips = UiSplit.chips_off_bodies(layout, chips, _anchors, _chip_big)   # nothing over a body, a launched one included
 		# The bodies the camera left out of the frame (more than two in the fight): one steady marker each.
 		_many_marks = UiMany.held(UiMany.marks(layout, _split), _many_keep, _t)
 	else:
@@ -1916,6 +1922,8 @@ func join_due() -> bool:
 
 ## The join prompt's opacity now (0 to 1): full from the start, fading after UiJoin.SHOW seconds of fight time. The pause menu shows it as a line whatever this is.
 func join_prompt_alpha() -> float:
+	if UiData.feature("minimal_hud"):
+		return 0.0   # minimal_hud: "P2: press T to join" is not on the play screen (the pause menu draws its own join line); a launched body can fly past it
 	return UiJoin.alpha(_join_t) if (join_due() and _join_note.is_empty()) else 0.0
 
 
@@ -3485,6 +3493,10 @@ func _update_launch() -> void:
 ## The one-line hints that are not the sim's: "Press any key to play" while nobody is playing (minimal_hud), and the two that teach (once each, with Control hints on; Orb's picks, homework 6):
 ## the first charge held to the click, and the first miss by the rival (the lit button is the medium's, so only where the three strengths light it).
 func _update_teach() -> void:
+	_cap_open_left = maxf(0.0, _cap_open_left - _dt)
+	for hm in hub.models:
+		if hm.launcher_open and not hm.ai:
+			_cap_open_left = 0.8
 	var overlay: bool = _notice_open or _howto_open or _set_open or _pm_open or _fb_open or _turn_open
 	if UiData.feature("minimal_hud"):
 		var demo: bool = _humans() == 0 and hub.models.size() >= 2 and not overlay and not hub.sim_paused and not hub.intro_active
@@ -3496,10 +3508,15 @@ func _update_teach() -> void:
 	if str(opts["control_hints"]) == "off" or not hub.hint.is_empty() or hub.sim_paused or overlay:
 		return
 	for m in hub.models:
-		if not m.ai and m.charge_on and UiHints.charge_frac(m, false) >= 0.999 and not UiPrefs.get_bool("taught_charge"):
-			hub.hint = {"id": "full_charge", "key": "full_charge", "text": UiData.t("prompt.hint_full"), "kind": "hint", "age": 0.0, "plain": true}
-			UiPrefs.set_bool("taught_charge", true)
-			return
+		if not m.ai and m.charge_on and m.charge_cell == "b" and m.launcher_known and UiHints.charge_frac(m, false) >= 0.999:
+			# The heavy's full charge has two states. Launcher resting: letting go knocks him back (Orb's line). Launcher ready: it launches (the line is waiting on Game Design and Narrative: it shows once `prompt.hint_full_launch` exists).
+			var launching: bool = m.launcher_ready
+			var key: String = "taught_charge_launch" if launching else "taught_charge"
+			var line: String = UiData.t("prompt.hint_full_launch" if launching else "prompt.hint_full")
+			if line != "prompt.hint_full_launch" and not UiPrefs.get_bool(key):
+				hub.hint = {"id": "full_charge", "key": "full_charge", "text": line, "kind": "hint", "age": 0.0, "plain": true}
+				UiPrefs.set_bool(key, true)
+				return
 		if m.ai and m.open_left > 0.0 and _humans() >= 1 and UiStance.three() and not UiPrefs.get_bool("taught_miss"):
 			hub.hint = {"id": "first_miss", "key": "first_miss", "text": UiData.t("prompt.hint_miss"), "kind": "hint", "age": 0.0, "plain": true}
 			UiPrefs.set_bool("taught_miss", true)
@@ -3586,13 +3603,19 @@ func _paint_tele(ci: CanvasItem) -> void:
 	UiReads.draw_telegraph(ci, hub, layout, layout.s, bool(opts["show_prompts"]), bool(opts["reduced_motion"]))
 
 
+## Whether a beam struggle is on, or ended less than 0.3 s ago: the pointer chips stay down.
+func _struggle_holds_chips() -> bool:
+	if hub.tug.is_empty():
+		return false
+	return str(hub.tug["end"]) == "" or float(hub.tug["end_t"]) < 0.3
+
+
 ## The line the cue caption says now: a beam struggle while one is on, else that a launch is open for a human; "" for nothing.
 func caption_text() -> String:
 	if not hub.caption.is_empty():
 		return str(hub.caption["text"])
-	for m in hub.models:
-		if m.launcher_open and not m.ai:
-			return UiData.t("prompt.cap_open")
+	if _cap_open_left > 0.0:
+		return UiData.t("prompt.cap_open")
 	return ""
 
 

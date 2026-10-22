@@ -68,6 +68,7 @@ func _run() -> void:
 	await _cut_rules()
 	await _minimal_hud_rules()
 	await _minimal_teach_rules()
+	await _minimal_join_rules()
 	await _brawl_marks_rules()
 	_rate_rules()
 	await _block_toggle_rules()
@@ -98,6 +99,7 @@ func _run() -> void:
 
 func _terms() -> void:
 	UiData.reload()
+	UiData.set_feature("minimal_hud", false)   # reload() drops every override: the older rules look at the full HUD
 	var must: Array = ["stance.press", "stance.guard", "stance.dodge", "stance.escape", "meter.respect", "meter.pride", "meter.wrath",
 		"meter.hunger", "meter.charge", "region.head", "region.core", "region.arms", "region.legs", "region.mantle", "stage.bruised",
 		"stage.battered", "stage.broken", "card.brink", "card.rally.protagonist", "card.heat.1", "card.heat.2", "card.heat.3",
@@ -5980,6 +5982,49 @@ func _minimal_hud_rules() -> void:
 	UiData.set_feature("minimal_hud", true)
 	var e_min: Dictionary = UiIncoming.entry(lay, sp, inc, an0, 0, lay.s, "10", true)
 	_ok(not e_full.is_empty() and not e_min.is_empty() and not bool(e_full["compact"]) and bool(e_min["compact"]), "minimal hud: the incoming chip is the small one (the arrow and the countdown only)")
+	# A beam struggle holds the pointer chips down, and for 0.3 s after; and no chip is ever over a body.
+	UiData.set_feature("minimal_hud", true)
+	var lay3 := UiLayout.new()
+	lay3.dp = 1.0
+	lay3.compute(Vector2(1280, 720), false)
+	var body := {"pos": Vector2(300.0, 560.0), "h": 90.0, "visible": false}   # a launched body low in the frame; the flag reads false
+	var far := {"pos": Vector2(980.0, 380.0), "h": 90.0, "visible": true}
+	var chips_in: Array = [{"slot": 0, "pos": Vector2(300.0, 560.0), "dir": Vector2(1.0, 0.0), "text": "15"}, {"slot": 1, "pos": Vector2(980.0, 640.0), "dir": Vector2(-1.0, 0.0), "text": "15"}]
+	var kept_c: Array = UiSplit.chips_off_bodies(lay3, chips_in, [body, far], false)
+	_ok(kept_c.size() == 1 and int(kept_c[0]["slot"]) == 1, "minimal hud: a chip over a fighter's body (a launched one, with the visible flag false) is not drawn; one clear of every body is")
+	var hud2: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud2.size = Vector2(1280, 720)
+	root.add_child(hud2)
+	await process_frame
+	hud2.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	var vpx: Vector2 = hud2.layout.vp
+	hud2.anchor_fn = func(slot: int) -> Dictionary:
+		return {"pos": Vector2(vpx.x * (0.2 if slot == 0 else 0.85), vpx.y * 0.45), "h": vpx.y * 0.12, "visible": true}
+	hud2.split_fn = func():
+		return {"sep": 1.0, "c": Vector2(640.0, 360.0), "n": Vector2(1.0, 0.0), "gap": 3.0, "fade": 1.0, "sigma": 1.0, "pointer": "split", "dist_bh": 15.0,
+			"ring": {"angle_A": 1.0, "angle_B": 2.0, "sigma": 1.0, "arc_A": 0.3, "arc_B": 0.3, "swing": 0.0, "sep": 1.0}}
+	for i in range(6):
+		hud2.advance(1.0 / 60.0)
+		await process_frame
+	var chips_before: int = hud2._chips.size()
+	hud2.hub.consume({"type": "cue", "actor": 0, "kind": "beam_struggle", "text": "start", "target": 1, "n": 600})
+	hud2.hub.set_clash_mid(0.5)
+	for i in range(6):
+		hud2.advance(1.0 / 60.0)
+		await process_frame
+	var chips_during: int = hud2._chips.size()
+	hud2.hub.consume({"type": "cue", "actor": 0, "kind": "beam_end", "text": "time", "x": 0.5})
+	hud2.advance(0.1)
+	await process_frame
+	var chips_just_after: int = hud2._chips.size()
+	hud2.advance(0.4)
+	await process_frame
+	hud2.advance(1.0 / 60.0)
+	await process_frame
+	var chips_later: int = hud2._chips.size()
+	_ok(chips_before >= 1 and chips_during == 0 and chips_just_after == 0 and chips_later >= 1, "minimal hud: the pointer chips are down during a beam struggle and for 0.3 s after it, then back (%d, %d, %d, %d)" % [chips_before, chips_during, chips_just_after, chips_later])
+	hud2.queue_free()
+	await process_frame
 	# The cue captions: off by default; on, one line at the bottom edge for a beam struggle and for an open launch, and nothing else.
 	UiData.set_feature("minimal_hud", true)
 	hud.set_option("edge_captions", false)
@@ -6001,12 +6046,15 @@ func _minimal_hud_rules() -> void:
 	await process_frame
 	_ok(hud.caption_text() == "He is open: press B" and hud._l_caption.sig != null, "minimal hud: an open launch for a human is named at the bottom edge")
 	hud.hub.consume({"type": "cue", "actor": 0, "kind": "launcher_close"})
-	hud.advance(1.0 / 60.0)
+	hud.advance(0.3)
+	await process_frame
+	var held_on: bool = hud.caption_text() == "He is open: press B"   # the caption holds 0.8 s after the launch closes, so a relit B cannot make it blink
+	hud.advance(0.8)
 	await process_frame
 	var keys := PackedStringArray()
 	for r in UiSettings.rows():
 		keys.append(str(r["key"]))
-	_ok(hud.caption_text() == "" and keys.has("edge_captions"), "minimal hud: the caption goes when the launch closes, and Settings lists Cue captions")
+	_ok(held_on and hud.caption_text() == "" and keys.has("edge_captions"), "minimal hud: the open-launch caption holds 0.8 s after the launch closes, then goes; Settings lists Cue captions")
 	UiData.set_feature("minimal_hud", false)
 	hud.set_option("edge_captions", false)
 	hud.queue_free()
@@ -6052,9 +6100,20 @@ func _minimal_teach_rules() -> void:
 	m0.charge_cell = "y"
 	m0.charge_dur = 0.5
 	m0.charge_t = 0.6
+	m0.launcher_known = true
+	m0.launcher_ready = false
 	hud.advance(1.0 / 60.0)
 	await process_frame
-	_ok(not hud.hub.hint.is_empty() and str(hud.hub.hint["text"]) == "Full! Let go to knock him back." and UiPrefs.get_bool("taught_charge"), "minimal hud: a charge held to the click says Full! Let go to knock him back.")
+	_ok(hud.hub.hint.is_empty() and not UiPrefs.get_bool("taught_charge"), "minimal hud: a medium (Y) held to the click does not knock him back, so the hint is not shown")
+	m0.charge_cell = "b"
+	m0.launcher_ready = true
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(hud.hub.hint.is_empty() and not UiPrefs.get_bool("taught_charge"), "minimal hud: nor for a heavy while the launcher is ready (it launches)")
+	m0.launcher_ready = false
+	hud.advance(1.0 / 60.0)
+	await process_frame
+	_ok(not hud.hub.hint.is_empty() and str(hud.hub.hint["text"]) == "Full! Let go to knock him back." and UiPrefs.get_bool("taught_charge"), "minimal hud: a heavy held to the click with the launcher resting says Full! Let go to knock him back. (it knocks him back)")
 	hud.hub.hint = {}
 	m0.charge_t = 0.7
 	hud.advance(1.0 / 60.0)
@@ -6118,6 +6177,33 @@ func _minimal_teach_rules() -> void:
 	if FileAccess.file_exists(UiPrefs.path):
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(UiPrefs.path))
 	UiPrefs.path = "user://ui_prefs.json"
+
+
+## "P2: press T to join" is not on the play screen under minimal_hud (Orb's rule: nothing in the fight space); the pause menu keeps its own line.
+func _minimal_join_rules() -> void:
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	hud.setup(["protagonist", "anti_hero"], ["ONE", "TWO"])
+	hud.join_enabled = true
+	hud.hub.patch(0, {"ai": false})
+	hud.hub.patch(1, {"ai": true})
+	for i in range(4):
+		hud.advance(1.0 / 60.0)
+		await process_frame
+	UiData.set_feature("minimal_hud", false)
+	var a_old: float = hud.join_prompt_alpha()
+	UiData.set_feature("minimal_hud", true)
+	var a_play: float = hud.join_prompt_alpha()
+	hud.show_pause_menu(false)
+	var pm_join: bool = not (hud.pause_menu_plan().get("join_lines", PackedStringArray()) as PackedStringArray).is_empty()
+	hud._pm_close("test")
+	_ok(hud.join_due() and a_old > 0.0 and a_play == 0.0 and pm_join, "minimal hud: the join prompt shows as it did with the switch off and not on the play screen (%.2f, %.2f)" % [a_old, a_play])
+	UiData.set_feature("minimal_hud", false)
+	hud.queue_free()
+	await process_frame
 
 
 ## The two grey circles cut on 2026-10-18 (Orb: "the weird gray circle between the two fighters"): the planet ring map and the beam struggle's steady rings, each behind a switch that is off.
@@ -7701,6 +7787,7 @@ func _bark_obj(slot: int, prio: int = 2, style: String = "caption", kind: String
 
 func _faces_rules() -> void:
 	UiData.reload()
+	UiData.set_feature("minimal_hud", false)   # reload() drops every override: the older rules look at the full HUD
 	var fd: Dictionary = UiData.faces()
 	var slots_ok := true
 	for id in ["default", "protagonist", "anti_hero", "empress", "cyborg"]:
@@ -7953,6 +8040,7 @@ func key_event_for(code: int) -> InputEventKey:
 
 func _two_player_rules() -> void:
 	UiData.reload()
+	UiData.set_feature("minimal_hud", false)   # reload() drops every override: the older rules look at the full HUD
 	for id in ["join", "join_short", "join_key", "join_key_short", "joined", "left", "pause_p2_leave", "pause_p2_join"]:
 		_ok(UiData.t("prompt." + id) != "prompt." + id, "two players: the word %s exists" % id)
 	var od: Dictionary = UiData.options()

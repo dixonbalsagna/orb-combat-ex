@@ -239,6 +239,28 @@ static func pointers(lay: UiLayout, sp: Dictionary, anchors: Array, s: float, bi
 	return out
 
 
+## The chips that do not sit over a fighter's body: a chip whose rectangle meets the box of a body (an anchor's torso, one drawn height by about one wide) hides rather than cover him. The anchor's
+## `visible` flag is not asked (it can read false beside him); his place on the screen is. A launched body is a body like any other.
+static func chips_off_bodies(lay: UiLayout, chips: Array, anchors: Array, big: bool = false) -> Array:
+	var out: Array = []
+	for e in chips:
+		var sz: Vector2 = e["size"] if e.has("size") else pointer_size(lay.s, big)
+		var r := Rect2((e["pos"] as Vector2) - sz * 0.5, sz)
+		var over := false
+		for an in anchors:
+			if an.is_empty() or not an.has("pos"):
+				continue
+			var q: Vector2 = an["pos"]
+			var h: float = float(an.get("h", 0.0))
+			if q == Vector2.ZERO or h <= 0.0 or not Rect2(Vector2.ZERO, lay.vp).grow(h).has_point(q):
+				continue
+			if r.intersects(Rect2(q - Vector2(h * 0.5, h * 0.6), Vector2(h, h * 1.2))):
+				over = true
+		if not over:
+			out.append(e)
+	return out
+
+
 ## The y of a chip that rides the bottom edge: just above the planet strip (or the safe area's foot where there is none).
 static func _edge_y(lay: UiLayout, big: bool = false) -> float:
 	var psz: Vector2 = pointer_size(lay.s, big)
