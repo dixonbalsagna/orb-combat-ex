@@ -1,0 +1,16 @@
+{
+  "schema": "anim.recoil/1",
+  "_about": "Recoil exits and ricochets (docs/combat/choreography-feel.md sections 1 and 2; Orb, homework 6). Encounter's DirRecoil sends a cue `recoil` (actor the one who recoils, source the exit: skip, handspring, tuck or backflip; dur its ticks to the landing; a ricochet adds ux and uy, the surface normal, once Combat's section 2 sends it); AnimFighter.on_recoil plays the kind's sequence (wave recoil1, prefix rc: the shapes of the body in its own frame) and AnimFighter._recoil_layer turns the whole body about its middle (pivot_y above the feet) over the exit's ticks, lifts it along an arc and lands it: the position is the sim's knock-back, never moved. turns: whole turns backward (a flip is 1); arc: the height the middle rises on top of whatever path the sim gives it (the flips 17 to 25: enough that the lowest of the head and hands clears the ground at the middle of the flip with no bow under them, at any duration from 8 ticks; DirRecoil's own bow is 60); plant (a ricochet): how far through the exit the feet meet the surface (0 to 1), where the body is turned so its feet face the surface along the normal and then springs back upright. fighters: a roster id's own sequence for a kind (the Protagonist's layout backflip and two-handed handspring, the Anti-hero's tuck and one-handed handspring). Under reduced motion the body does not turn: the sequence plays in place. Render only, outside the sim's data hash. First values, Animation's.",
+  "pivot_y": 34,
+  "kinds": {
+    "skip": {"seq": "rc.skip", "turns": 0, "arc": 3},
+    "handspring": {"seq": "rc.handspring", "turns": 1, "arc": 17},
+    "tuck": {"seq": "rc.back_tuck", "turns": 1, "arc": 25},
+    "backflip": {"seq": "rc.backflip_layout", "turns": 1, "arc": 25},
+    "ricochet_wall": {"seq": "rc.wall", "turns": 0, "arc": 0, "plant": 0.42},
+    "ricochet_ground": {"seq": "rc.ground", "turns": 0, "arc": 14}
+  },
+  "fighters": {
+    "RIVAL": {"backflip": "rc.backflip_tuck", "handspring": "rc.handspring_one"}
+  }
+}

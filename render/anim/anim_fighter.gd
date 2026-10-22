@@ -98,6 +98,8 @@ var _lead_d: float = 0.0
 var _seq_next: Dictionary = {}          # the sequence that follows `_seq` when it ends (the ceiling's slam, then its rebound)
 var _gr: Dictionary = {}                # the clinch's hold read (on_hold): partner, kind, role, grade, side, grips
 var _gr_w: float = 0.0                 # the hold's weight now: in over ramp_ticks, out over the same
+var _rc: Dictionary = {}                # the recoil exit playing (on_recoil): kind, t0, dur, cfg, seq, the surface's normal
+var _fid: String = ""                 # this body's roster id, kept from the ragdoll's tick (for the per-fighter sequences)
 var _ab_on: bool = false                # the sim's air brake is on (an air_brake event)
 var _ab_w: float = 0.0                 # the skid's weight now: in over enter_ticks, out over exit_ticks
 var _ab_str: float = 0.0               # how hard it is from the deceleration he shows (0 to 1)
@@ -473,6 +475,65 @@ func on_agency(kind: String, T: float, e: Dictionary) -> void:
 			debug["agency"] = int(debug.get("agency", 0)) + 1
 
 
+## Recoil exits and ricochets (docs/combat/choreography-feel.md sections 1 and 2; data/anim/recoil.json). Encounter's cue `recoil` names the kind and the landing tick: the shapes of the body play as a sequence in the body's own frame
+## and this layer turns the whole body over about its middle, lifts it along an arc and lands it. The sim's knock-back is the path; the layer only turns and lifts the drawn body, and never moves a position.
+func on_recoil(kind: String, ticks: int, T: float, nx: float = 0.0, ny: float = 1.0) -> void:
+	var R: Dictionary = AnimData.recoil
+	if R.is_empty() or not RenderAnim.recoil_flips or ticks < 4:
+		return
+	var cfg: Dictionary = R.get("kinds", {}).get(kind, {})
+	if cfg.is_empty():
+		return
+	var seq: String = String(R.get("fighters", {}).get(_fid, {}).get(kind, cfg.get("seq", "")))
+	if not AnimData.entries.has(seq):
+		return
+	_rc = {"kind": kind, "t0": T, "dur": float(ticks) * DT, "cfg": cfg, "seq": seq, "nx": nx, "ny": ny}
+	_rd.out_w = 1.0
+	debug["recoils"] = int(debug.get("recoils", 0)) + 1
+
+
+## True while an exit is drawn (the lead layer stands aside, the lead scan reads it).
+func recoiling() -> bool:
+	return not _rc.is_empty()
+
+
+func _recoil_layer(S: SimState, f, dt: float) -> void:
+	if _rc.is_empty():
+		return
+	var R: Dictionary = AnimData.recoil
+	var T: float = S.T
+	var u: float = (T - float(_rc.t0)) / maxf(float(_rc.dur), 0.001)
+	if u >= 1.0 or R.is_empty() or not RenderAnim.recoil_flips:
+		_rc = {}
+		return
+	u = clampf(u, 0.0, 1.0)
+	var cfg: Dictionary = _rc.cfg
+	_entry_layer(float(_rc.t0), float(_rc.dur), String(_rc.seq), T, DT, 1.0, true)
+	var turns: float = float(cfg.get("turns", 0.0))
+	var phi: float = 0.0
+	var arc: float = float(cfg.get("arc", 0.0))
+	if RenderAnim.reduced_motion:
+		turns = 0.0
+		arc *= 0.4
+	if turns > 0.0:
+		# a back flip: the head goes back first (the model's own positive turn about z), eased in and out so the take-off and the landing are slow and the middle quick
+		phi = turns * TAU * smoothstep(0.0, 1.0, u)
+	elif cfg.has("plant") and not RenderAnim.reduced_motion:
+		# a ricochet: the body turns so its feet face the surface along the normal (the surface's normal points out toward him), then springs back upright
+		var pl: float = float(cfg.plant)
+		var nx: float = float(_rc.nx)
+		var ny: float = float(_rc.ny)
+		var to: float = atan2(-nx, ny) * vface * 1.2
+		phi = to * (smoothstep(0.0, pl, u) - smoothstep(pl + 0.08, 1.0, u))
+	var py: float = float(R.get("pivot_y", 34.0))
+	if absf(phi) > 0.0005:
+		q[0] = Quaternion(Vector3(0, 0, 1), phi) * q[0]
+		root_off += Vector3(py * sin(phi), py * (1.0 - cos(phi)), 0.0)
+	root_off.y += arc * sin(PI * u)
+	_lead_d = 0.0
+	_lead_w = 0.0
+
+
 ## The clinch's grip layer (docs/animation/clinch-sizing.md slice C2; data/anim/clinch.json). The sim's hold arrives as a read, `on_hold(read, T)`: {partner (a fighter's slot), kind (tie, pummel, brace, pin, carry, strain, whiff,
 ## apart), role ("holder" or "held"), grade (-2 to 2), side ("l" or "r": the pummel's hand), grips ({"hand_r": "collar_r", ...}: each gripping hand to a region of the partner's body)}. The layer runs after the pose is made and
 ## before the flight lead: it mixes the pose of the kind in at a weight that ramps over `ramp_ticks`, then solves each gripping hand onto its region (IK, never bending past a limit: a hand that cannot reach ends short, and the
@@ -645,6 +706,8 @@ func _air_brake_layer(S: SimState, f, dt: float) -> void:
 ## `_lead_d` is a world-space angle added to the sim's own (the view's pivot turns by -rot): it chases its aim by the short way, holds when the flight slows and
 ## is let go when the launch ends. It is the root's rotation and a shift that keeps the middle in place. Read from the sim's state only.
 func _lead_layer(S: SimState, f, dt: float) -> void:
+	if not _rc.is_empty():
+		return   # a recoil exit turns the body itself
 	var L: Dictionary = AnimData.flight
 	if L.is_empty() or not RenderAnim.flight_lead:
 		_lead_d = 0.0
@@ -1894,6 +1957,7 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 		layers = ("cue:" + String(_cue.get("kind", "")) + " " if not _cue.is_empty() else "") + ("rush " if _rushing else "") + ("react " if not _reacts.is_empty() else "") + ("ik " if _ci_w > 0.001 else "") + ("beam " if f.beamCharge != null else "") + (f.state + " ")
 	_grip_layer(S, f, dt)
 	_air_brake_layer(S, f, dt)
+	_recoil_layer(S, f, dt)
 	_lead_layer(S, f, dt)
 	if not zip.is_empty() or absf(_zip_tilt) > 0.002 or _zip_depth != 0.0 or (f.rush != null and float(f.rush.arc) != 0.0):
 		AnimZip.orient(self, S, f, dt)
@@ -3729,6 +3793,7 @@ func _rd_tick(S: SimState, f, dt: float) -> void:
 	var flying: bool = (st == "launched" or st == "dropped") and not sliding
 	var speed: float = vw.length()
 	_rd_rot = f.rot
+	_fid = String(f.id)
 	_rd.n_on = AnimRagdoll.N if (RenderAnim.rd_oop and not RenderAnim.reduced_motion) else AnimRagdoll.N_BASE   # reduced motion keeps the body in its plane
 	_rd.weighted = RenderAnim.rd_weight
 	if RenderAnim.rd_weight and (S.tick - _rd_tier_tk >= 12 or S.tick < _rd_tier_tk):

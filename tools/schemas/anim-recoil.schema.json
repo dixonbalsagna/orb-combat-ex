@@ -1,0 +1,290 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-recoil",
+  "title": "anim.recoil/1",
+  "description": "data/anim/recoil.json: the recoil exits and ricochets (docs/combat/choreography-feel.md sections 1 and 2; AnimFighter.on_recoil and _recoil_layer): the kind's sequence, the turns, the arc, and a roster id's own sequence for a kind. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references in tools/lib/xref-fight.js (anim-recoil-seq: every sequence named exists; anim-recoil-fighter: each kind a fighter names is a kind of kinds).",
+  "type": "object",
+  "required": [
+    "schema",
+    "pivot_y",
+    "kinds",
+    "fighters"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.recoil/1"
+    },
+    "pivot_y": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "description": "The height of the turning point above the feet, in units."
+    },
+    "kinds": {
+      "type": "object",
+      "required": [
+        "skip",
+        "handspring",
+        "tuck",
+        "backflip",
+        "ricochet_wall",
+        "ricochet_ground"
+      ],
+      "properties": {
+        "skip": {
+          "type": "object",
+          "required": [
+            "seq",
+            "turns",
+            "arc"
+          ],
+          "properties": {
+            "seq": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sequence the exit plays (a sequence of a wave: rule anim-recoil-seq)."
+            },
+            "turns": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3,
+              "description": "Whole turns backward over the exit (a flip is 1; a skip or a ricochet 0)."
+            },
+            "arc": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 60,
+              "description": "The height the body's middle rises on top of the sim's path, in units (DirRecoil's own bow is 60)."
+            },
+            "plant": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "A ricochet: how far through the exit the feet meet the surface, 0 to 1."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "handspring": {
+          "type": "object",
+          "required": [
+            "seq",
+            "turns",
+            "arc"
+          ],
+          "properties": {
+            "seq": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sequence the exit plays (a sequence of a wave: rule anim-recoil-seq)."
+            },
+            "turns": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3,
+              "description": "Whole turns backward over the exit (a flip is 1; a skip or a ricochet 0)."
+            },
+            "arc": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 60,
+              "description": "The height the body's middle rises on top of the sim's path, in units (DirRecoil's own bow is 60)."
+            },
+            "plant": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "A ricochet: how far through the exit the feet meet the surface, 0 to 1."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "tuck": {
+          "type": "object",
+          "required": [
+            "seq",
+            "turns",
+            "arc"
+          ],
+          "properties": {
+            "seq": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sequence the exit plays (a sequence of a wave: rule anim-recoil-seq)."
+            },
+            "turns": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3,
+              "description": "Whole turns backward over the exit (a flip is 1; a skip or a ricochet 0)."
+            },
+            "arc": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 60,
+              "description": "The height the body's middle rises on top of the sim's path, in units (DirRecoil's own bow is 60)."
+            },
+            "plant": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "A ricochet: how far through the exit the feet meet the surface, 0 to 1."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "backflip": {
+          "type": "object",
+          "required": [
+            "seq",
+            "turns",
+            "arc"
+          ],
+          "properties": {
+            "seq": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sequence the exit plays (a sequence of a wave: rule anim-recoil-seq)."
+            },
+            "turns": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3,
+              "description": "Whole turns backward over the exit (a flip is 1; a skip or a ricochet 0)."
+            },
+            "arc": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 60,
+              "description": "The height the body's middle rises on top of the sim's path, in units (DirRecoil's own bow is 60)."
+            },
+            "plant": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "A ricochet: how far through the exit the feet meet the surface, 0 to 1."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "ricochet_wall": {
+          "type": "object",
+          "required": [
+            "seq",
+            "turns",
+            "arc"
+          ],
+          "properties": {
+            "seq": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sequence the exit plays (a sequence of a wave: rule anim-recoil-seq)."
+            },
+            "turns": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3,
+              "description": "Whole turns backward over the exit (a flip is 1; a skip or a ricochet 0)."
+            },
+            "arc": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 60,
+              "description": "The height the body's middle rises on top of the sim's path, in units (DirRecoil's own bow is 60)."
+            },
+            "plant": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "A ricochet: how far through the exit the feet meet the surface, 0 to 1."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "ricochet_ground": {
+          "type": "object",
+          "required": [
+            "seq",
+            "turns",
+            "arc"
+          ],
+          "properties": {
+            "seq": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The sequence the exit plays (a sequence of a wave: rule anim-recoil-seq)."
+            },
+            "turns": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 3,
+              "description": "Whole turns backward over the exit (a flip is 1; a skip or a ricochet 0)."
+            },
+            "arc": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 60,
+              "description": "The height the body's middle rises on top of the sim's path, in units (DirRecoil's own bow is 60)."
+            },
+            "plant": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "A ricochet: how far through the exit the feet meet the surface, 0 to 1."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The six exits."
+    },
+    "fighters": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(_.*|[A-Z][A-Z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "propertyNames": {
+          "pattern": "^[a-z_]+$"
+        },
+        "additionalProperties": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "A roster id's own sequence for this kind."
+        },
+        "description": "Kind to sequence."
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "A roster id to its own sequences, by kind."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

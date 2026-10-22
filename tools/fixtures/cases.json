@@ -296638,6 +296638,342 @@
       }
     },
     {
+      "id": "anim-recoil-valid",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "set": {
+            "/schema": "anim.recoil/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-recoil-key-required-schema",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-recoil-key-required-pivot-y",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "del": [
+            "/pivot_y"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-recoil-key-required-kinds",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "del": [
+            "/kinds"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-recoil-key-required-fighters",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "del": [
+            "/fighters"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-recoil-unknown-key",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-recoil-underscore-key-ok",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-recoil-schema-version",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "set": {
+            "/schema": "anim.recoil/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-recoil-pivot-over-100",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "set": {
+            "/pivot_y": 150
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/pivot_y"
+      }
+    },
+    {
+      "id": "anim-recoil-kind-missing",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "del": [
+            "/kinds/tuck"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/kinds"
+      }
+    },
+    {
+      "id": "anim-recoil-kind-unknown",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "set": {
+            "/kinds/cartwheel": {
+              "seq": "rc.skip",
+              "turns": 0,
+              "arc": 3
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/kinds/cartwheel"
+      }
+    },
+    {
+      "id": "anim-recoil-kind-key-missing",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "del": [
+            "/kinds/skip/arc"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/kinds/skip"
+      }
+    },
+    {
+      "id": "anim-recoil-turns-fraction",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "set": {
+            "/kinds/tuck/turns": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/kinds/tuck/turns"
+      }
+    },
+    {
+      "id": "anim-recoil-turns-over-three",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "set": {
+            "/kinds/tuck/turns": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/kinds/tuck/turns"
+      }
+    },
+    {
+      "id": "anim-recoil-arc-negative",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "set": {
+            "/kinds/skip/arc": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/kinds/skip/arc"
+      }
+    },
+    {
+      "id": "anim-recoil-plant-over-one",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "set": {
+            "/kinds/ricochet_wall/plant": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/kinds/ricochet_wall/plant"
+      }
+    },
+    {
+      "id": "anim-recoil-seq-shape",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "set": {
+            "/kinds/skip/seq": "Skip It"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/kinds/skip/seq"
+      }
+    },
+    {
+      "id": "anim-recoil-seq-missing",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "set": {
+            "/kinds/skip/seq": "rc.no_such_sequence"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-recoil-seq",
+        "pointer": "/kinds/skip/seq"
+      }
+    },
+    {
+      "id": "anim-recoil-fighter-seq-missing",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "set": {
+            "/fighters/RIVAL/backflip": "rc.no_such_sequence"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-recoil-seq",
+        "pointer": "/fighters/RIVAL/backflip"
+      }
+    },
+    {
+      "id": "anim-recoil-fighter-key-not-an-id",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "set": {
+            "/fighters/ghost": {
+              "backflip": "rc.backflip_tuck"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/fighters/ghost"
+      }
+    },
+    {
+      "id": "anim-recoil-fighter-kind-unknown",
+      "schema": "anim-recoil.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/recoil.json",
+          "set": {
+            "/fighters/RIVAL/cartwheel": "rc.backflip_tuck"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-recoil-fighter",
+        "pointer": "/fighters/RIVAL/cartwheel"
+      }
+    },
+    {
       "id": "fight-ricochet-angle-zero",
       "schema": "fight-ricochet.schema.json",
       "mutate": [

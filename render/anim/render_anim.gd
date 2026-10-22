@@ -39,6 +39,7 @@ static var rd_oop: bool = false             # RG3: six more degrees of freedom o
 static var air_brake: bool = true            # RG2: the sim's air brake braces a launched fighter against his velocity (an `air_brake` event; inert without one); --no-air-brake is the before
 static var chain_poses: bool = true          # RG4: World's interior contacts and its lodge play the ceiling's slam and rebound and the climb out (data/anim/chain.json); inert without those events; --no-chain-poses is the before
 static var grip_layer: bool = true            # the clinch's grip layer (docs/animation/clinch-sizing.md slice C2): the sim's hold read mixes the clinch poses in and puts each gripping hand on its region of the partner; inert without a read; --no-grip-layer is the before
+static var recoil_flips: bool = true          # recoil exits and ricochets (docs/combat/choreography-feel.md): Encounter's cue `recoil` turns the struck body over in an arc (back flip, handspring, back tuck, skip, ricochet); inert without the cue; --no-recoil-flips is the before
 static var kick_retreat: bool = true          # a kick whose hips are past its target gives ground instead of swinging the thigh back through its limit (data sockets.json limbs.foot.min_fwd); false is the before
 static var mash_press: bool = true            # a run of mashed blows leans in (data styles.<style>.press_run); false is the before
 static var march: bool = true                  # a mashed heavy takes a footfall (data styles.super.march); false is the before
@@ -123,6 +124,8 @@ static func _read_args() -> void:
 			chain_poses = false
 		elif a == "--no-grip-layer":
 			grip_layer = false
+		elif a == "--no-recoil-flips":
+			recoil_flips = false
 		elif a == "--step3-cues":
 			step3_cues = true
 		elif a == "--no-step3-cues":
@@ -355,6 +358,9 @@ static func consume(S: SimState, events: Array) -> void:
 					elif kd == "launcher_close":
 						for ic in range(S.fighters.size()):
 							fighter(S, S.fighters[ic]).on_launcher_close(String(e.text))
+					elif kd == "recoil":
+						# Encounter's recoil flip (DirRecoil): source the exit (skip, handspring, tuck, backflip) and dur its ticks to the landing; the sim's own bowed path carries him, the body only turns
+						fighter(S, S.fighters[who]).on_recoil(String(_ev(e, "source", "")), int(roundf(float(_ev(e, "dur", 0.0)))), t_cue, float(_ev(e, "ux", 0.0)), float(_ev(e, "uy", 1.0)))
 					elif kd == "charge_full":
 						fighter(S, S.fighters[who]).on_charge_full(t_cue)
 					elif kd == "tech":

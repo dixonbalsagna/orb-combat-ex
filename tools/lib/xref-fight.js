@@ -1090,6 +1090,20 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor, root }) {
         if (typeof id === 'string' && !ok(id)) err(CL, `/held_poses/${esc(k)}`, 'anim-clinch-pose', `pose "${id}" is neither a pose nor a sequence of any wave`);
       }
     }
+    const rcl = get('data/anim/recoil.json');
+    if (isObj(rcl)) {
+      const RC = 'data/anim/recoil.json';
+      const okSeq = (id) => !seqsP.size || seqsP.has(id);
+      if (isObj(rcl.kinds)) for (const [k, v] of Object.entries(rcl.kinds)) if (!k.startsWith('_') && isObj(v) && typeof v.seq === 'string' && !okSeq(v.seq)) err(RC, `/kinds/${esc(k)}/seq`, 'anim-recoil-seq', `sequence "${v.seq}" is not a sequence of any wave`);
+      if (isObj(rcl.fighters)) for (const [who, ks] of Object.entries(rcl.fighters)) {
+        if (who.startsWith('_') || !isObj(ks)) continue;
+        for (const [k, id] of Object.entries(ks)) {
+          if (k.startsWith('_')) continue;
+          if (!isObj(rcl.kinds) || !(k in rcl.kinds)) err(RC, `/fighters/${esc(who)}/${esc(k)}`, 'anim-recoil-fighter', `${who} names the kind "${k}", which is not a kind of kinds`);
+          if (typeof id === 'string' && !okSeq(id)) err(RC, `/fighters/${esc(who)}/${esc(k)}`, 'anim-recoil-seq', `sequence "${id}" is not a sequence of any wave`);
+        }
+      }
+    }
     const thr = get('data/anim/throws.json');
     if (isObj(thr) && isObj(thr.sends)) {
       const used = new Set();

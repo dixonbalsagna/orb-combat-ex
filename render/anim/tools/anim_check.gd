@@ -2312,6 +2312,113 @@ func _test_grip() -> void:
 	print("grip: the least and most spacing (units) that hold the gap, the clearance, g02 and g06, by grade behind, even, ahead: [grade, least, most] %s; the largest shortfall at 40 units %.1f" % [str(table), worst_gap_at_40])
 
 
+## Recoil exits and ricochets (docs/combat/choreography-feel.md; data/anim/recoil.json). Each kind plays on the struck fighter's own body at the cue's landing tick: a back flip turns the whole body once, backward (the head goes
+## back first), through upside down, and lands upright; a handspring puts the hands to the ground at the top; a back tuck and a flip are inverted at the middle; a wall ricochet turns the feet to face the wall; a skip does not turn.
+## Nothing may be NaN or past a limit, the exit ends on its tick and hands the body back clean, and the sim's position is never moved (the layer only turns and lifts the drawn body).
+func _recoil_probe(kind: String, ticks: int, nx: float, ny: float, who: String) -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = who
+	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+	f0.x = 1000.0
+	f1.x = 1070.0
+	f0.y = 0.0
+	f1.y = 0.0
+	f0.state = "free"
+	f1.state = "free"
+	f0.vx = 0.0
+	var res := {"nan": 0, "viol": 0, "min_head": 1.0e9, "low": 1.0e9, "min_hand": 1.0e9, "turn": 0.0, "first_back": 0.0, "end_head": 0.0, "feet_dot": -1.0, "x_moved": 0.0, "ended": false, "recoiled": 0}
+	var prev_ang: float = 0.0
+	var have_prev: bool = false
+	var unwrapped: float = 0.0
+	var a0: AnimFighter = null
+	for k in range(ticks + 8):
+		S.tick = 7000 + k
+		S.T = 800.0 + float(k) / 60.0
+		if k == 2:
+			RenderAnim.fighter(S, f0).on_recoil(kind, ticks, S.T, nx, ny)
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		a0 = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		for i in range(AnimRig.N):
+			if is_nan(a0.q[i].x) or is_nan(a0.q[i].w):
+				res.nan += 1
+		res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size()
+		var pel: Vector3 = a0.socket("pelvis")
+		var hd: Vector3 = a0.head_center()
+		var dv := Vector2((hd.x - pel.x) * a0.vface, hd.y - pel.y)
+		var ang: float = atan2(dv.x, dv.y)   # 0 upright, positive leaning toward +x (forward on screen when he faces right)
+		if have_prev:
+			unwrapped += wrapf(ang - prev_ang, -PI, PI)
+		prev_ang = ang
+		have_prev = true
+		if k >= 2 and k < 2 + ticks:
+			res.min_head = minf(float(res.min_head), hd.y - pel.y)
+			res.min_hand = minf(float(res.min_hand), minf(a0.socket("hand_r").y, a0.socket("hand_l").y))
+			res.low = minf(float(res.low), minf(hd.y - 9.0, minf(a0.socket("hand_r").y, a0.socket("hand_l").y)))
+			var u: float = float(k - 2) / float(ticks)
+			if u > 0.2 and u < 0.3 and absf(res.first_back) < 0.001:
+				res.first_back = dv.x
+			if u > 0.38 and u < 0.46:
+				var feet: Vector3 = (a0.socket("foot_r") + a0.socket("foot_l")) * 0.5 - pel
+				var fd := Vector2(feet.x * a0.vface, feet.y).normalized()
+				res.feet_dot = maxf(float(res.feet_dot), fd.dot(Vector2(-nx, -ny)))
+		res.x_moved = maxf(float(res.x_moved), absf(f0.x - 1000.0))
+	res.turn = unwrapped
+	res.end_head = (a0.head_center().y - a0.socket("pelvis").y)
+	res.ended = not a0.recoiling()
+	res.recoiled = int(a0.debug.get("recoils", 0))
+	return res
+
+
+func _test_recoil() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: Array = []
+	for who in ["PROTAGONIST", "RIVAL"]:
+		for kd in ["backflip", "tuck", "handspring"]:
+			var tk: int = {"backflip": 24, "tuck": 16, "handspring": 18}[kd]
+			var r: Dictionary = _recoil_probe(kd, tk, 0.0, 1.0, who)
+			seen.append("%s %s turn %.1f head %.0f hand %.0f" % [who.substr(0, 1), kd, rad_to_deg(float(r.turn)), float(r.min_head), float(r.min_hand)])
+			if int(r.nan) > 0 or int(r.viol) > 0 or not bool(r.ended) or int(r.recoiled) != 1:
+				bad.append("%s %s: nan %d viol %d ended %s recoiled %d" % [who, kd, int(r.nan), int(r.viol), str(r.ended), int(r.recoiled)])
+			# one whole turn, backward (the head goes back first), upside down at the middle, upright at the end, and the sim's x never moved
+			if absf(absf(float(r.turn)) - TAU) > 0.5 or float(r.first_back) >= 0.0 or float(r.min_head) > -12.0 or float(r.end_head) < 12.0 or float(r.x_moved) > 0.001:
+				bad.append("%s %s: turn %.0f deg, first_back %.1f, lowest head %.1f, end head %.1f, moved %.3f" % [who, kd, rad_to_deg(float(r.turn)), float(r.first_back), float(r.min_head), float(r.end_head), float(r.x_moved)])
+	for who2 in ["PROTAGONIST", "RIVAL"]:
+		for kd2 in ["backflip", "tuck", "handspring"]:
+			for tk2 in [8, 12, 18, 24]:
+				var r2: Dictionary = _recoil_probe(kd2, tk2, 0.0, 1.0, who2)
+				if int(r2.viol) > 0 or int(r2.nan) > 0 or not bool(r2.ended) or absf(absf(float(r2.turn)) - TAU) > 0.5:
+					bad.append("%s %s over %d ticks: viol %d nan %d turn %.0f" % [who2, kd2, tk2, int(r2.viol), int(r2.nan), rad_to_deg(float(r2.turn))])
+				# no body point below the ground (hands at the fingertips, the head a head's radius under its centre) with no path under it: nothing sinks through the floor at any duration
+				if float(r2.low) < -1.0:
+					bad.append("%s %s over %d ticks: the lowest point is %.1f under the ground" % [who2, kd2, tk2, -float(r2.low)])
+	var hs: Dictionary = _recoil_probe("handspring", 18, 0.0, 1.0, "PROTAGONIST")
+	if float(hs.min_hand) > 8.0:
+		bad.append("handspring: the hands come no nearer the ground than %.1f (8 or under: they take it)" % float(hs.min_hand))
+	var wl: Dictionary = _recoil_probe("ricochet_wall", 14, 1.0, 0.0, "PROTAGONIST")
+	if float(wl.feet_dot) < 0.85 or int(wl.nan) > 0 or int(wl.viol) > 0 or not bool(wl.ended):
+		bad.append("wall: the feet face the wall by %.2f (0.85 needed), nan %d viol %d ended %s" % [float(wl.feet_dot), int(wl.nan), int(wl.viol), str(wl.ended)])
+	var sk: Dictionary = _recoil_probe("skip", 10, 0.0, 1.0, "PROTAGONIST")
+	if absf(float(sk.turn)) > 0.6 or float(sk.min_head) < 10.0 or int(sk.viol) > 0 or not bool(sk.ended):
+		bad.append("skip: turn %.0f, lowest head %.1f, viol %d" % [rad_to_deg(float(sk.turn)), float(sk.min_head), int(sk.viol)])
+	var gr: Dictionary = _recoil_probe("ricochet_ground", 12, 0.0, 1.0, "PROTAGONIST")
+	if int(gr.nan) > 0 or int(gr.viol) > 0 or not bool(gr.ended):
+		bad.append("ground ricochet: nan %d viol %d ended %s" % [int(gr.nan), int(gr.viol), str(gr.ended)])
+	_expect(bad.is_empty(), "recoil: every exit plays clean and does what it should: %s" % str(bad))
+	print("recoil: %s; wall feet %.2f, handspring hands %.1f" % [" | ".join(seen), float(wl.feet_dot), float(hs.min_hand)])
+
+
 func _test_pulled() -> void:
 	AnimData.load_every_wave()
 	main.start_match(4, {"p1": false, "p2": false})
@@ -4984,6 +5091,7 @@ func _run() -> void:
 	_test_grapple_c0_c1()
 	_test_charge_cut()
 	_test_grip()
+	_test_recoil()
 	_test_pulled()
 	_test_bends()
 	_test_styles()
