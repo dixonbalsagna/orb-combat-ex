@@ -14,7 +14,7 @@ A launched body no longer flies at one speed. Its speed follows a curve the came
 
 | Phase | What happens | First values |
 | :--- | :--- | :--- |
-| **1. The stop** | Hit-stop on the launching blow: everything holds, and the camera pushes in (Camera's 2%) | 14 ticks for a launch, 16 for a full one (the hit-stop table, `rulings-2026-10-19b.md` §4) |
+| **1. The stop** | Hit-stop on the launching blow: everything holds, and the camera pushes in (Camera's 2%) | 12 ticks for a launch, 14 for a full one (the hit-stop table, §6) |
 | **2. The kick** | He leaves fast, but never in one tick (Research's recommendation 9). The camera's whip follows him out (Camera's) | A ramp up to the peak over 5 ticks, then the peak held for 3: the send's own speed, by power and tier |
 | **3. The glide** | His speed eases down to a cruise and holds there. Long enough for the camera to frame him and his attacker, for the attacker to chase or zip, and for the brake to start | Eased from the peak to 0.4 of it over ticks 8 to 30, then held |
 | **4. The arrival** | Into a building, the ground or the water: his speed rises again to 0.6 of the peak, ramped over the last 10 ticks, so the impact reads hard without a jump. Or he brakes, and the skid shows it (`buildings.md` §7.2) | |
@@ -28,7 +28,8 @@ A launched body no longer flies at one speed. Its speed follows a curve the came
 | A knock-back | Its own slide, as now (`balance-targets.md` §20) | |
 
 - **In a smaller arena** (`rulings-2026-10-19b.md` §3: Whole, Half, Close), the glide's cruise is scaled by the arena's size, so a launch never carries more than a sixth of the loop: 6,400 units on Close.
-- **The AI's free-flight approach** is capped near Camera's whip limit unless the camera rides with it (`rulings-2026-10-19b.md` §4d).
+- **The AI's free-flight approach** is capped near Camera's whip limit unless the camera rides with it (`rulings-2026-10-19b.md` §4d). **A chase of a launch lifts the cap,** since the camera rides it.
+- **The AI chases a launch it threw** on 10, 25 or 40% of its launches by level: more when the send goes up into open sky, and only with the zip's ki. QA's row: 1 to 4 chases a match, AI v AI (`rulings-2026-10-22.md` §5d).
 - **Who builds it.** Simulation: the curve as a speed profile on a sent body, deterministic. Encounter: the planner predicts with it. Camera: the push, the whip, the chase and the arrival's framing.
 - **QA's rows:** a full launch's flight from 1.0 to 1.6 s; the sent body inside the frame (or its pane) for at least 95% of a flight's ticks.
 
@@ -54,7 +55,7 @@ Reconciled with Combat's §2 (`rulings-2026-10-22.md` §2b). **The line is 1,500
 | :--- | :--- | :--- |
 | **Below the line** | **The plant** (Combat's): he plants on it (a 4-tick stop, a tell of at least 6 ticks) and springs back toward the rival, landing in range | **X, Y or B within 6 ticks of the plant** makes the rebound a blow of that strength: a flying knee, a driving medium, or a rebound heavy. **A dodge tap** aims the spring by the stick instead. No press: he springs back unarmed |
 | **At or above it, glancing** (under 40° to the surface) | **The glance:** he keeps 0.7 of his speed, angle in equal to angle out, and doesn't stop | |
-| **At or above it, steeper** | The wall slam, the lodge or the building chain, as ruled (`buildings.md` §2, §6 and §7.3) | **The wall kick:** a dodge tap within 4 ticks either side of the contact. He kicks off toward his stick at 0.6 of his speed, and the slam's damage is halved. If he reaches the rival, his first blow is a rush blow |
+| **At or above it, steeper** | The wall slam, the lodge or the building chain, as ruled (`buildings.md` §2, §6 and §7.3) | **The wall kick:** a dodge tap within 4 ticks either side of the contact. It replaces the slam's stagger: half the slam's damage, no stagger, and he kicks off toward his stick at 0.6 of his speed, in control again 8 ticks after the push starts. The attacker's first move after a wall slam is void. Toward the rival, his first blow within 20 ticks is a rush blow (`rulings-2026-10-22.md` §5c) |
 
 - **At most two ricochets in a row,** plants and glances together. Then the next surface is a plain stop.
 - **A rebound heavy launches only into an opening,** as any B does. Otherwise it is a heavy, with its 1.5 bh recoil.
@@ -106,17 +107,17 @@ Combat's §4, ruled (`rulings-2026-10-22.md` §2d).
 
 ## 6. Hit-stop by weight
 
-(`rulings-2026-10-19b.md` §4, from Research's recommendation 10.)
+(`rulings-2026-10-22.md` §5b, re-cut from `rulings-2026-10-19b.md` §4 after Encounter's read: 30% of AI v AI play frozen.)
 
 | Blow | Ticks |
 | :--- | ---: |
-| A mashed or burst light | 2 to 3 |
-| A tapped light | 4 |
-| A medium | 7 |
-| A heavy | 10 |
-| A launch or a close; a full launch | 14; 16 |
-| A decisive blow (a finisher's last, a duel of perfects' send, a blow that breaks a region) | 24, capped at 30 for the KO |
+| A mashed or burst light | 2 |
+| A tapped light | 3 |
+| A medium | 5 |
+| A heavy | 8 |
+| A launch or a close; a full launch | 12; 14 |
+| A decisive blow (a finisher's last, a duel of perfects' send, a blow that breaks a region) | 20, and the KO 24 at most |
 
 - **Both bodies freeze,** and the struck one shakes more.
-- **The budget:** frozen time is at most 12% of a minute of fight. Overlapping stops merge. Over it, the mashed and burst lights go to 2 first.
+- **The budget is 18%** of a minute of fight. Overlapping stops merge. **The second step:** over the budget in any rolling 10 s, every stop under a decisive blow is ×0.75 (rounded, at least 2) until it falls back under. Decisive blows are never cut.
 - **No window shortens:** the perfect and parry windows end at least 5 live ticks after the freeze ends.
