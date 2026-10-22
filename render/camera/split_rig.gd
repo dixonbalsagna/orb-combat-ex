@@ -186,6 +186,17 @@ var _arr_end: Array = [-1.0, -1.0]         # the time the paced leg ended (the c
 var anticipation: bool = true            # read the choreographer's next contact and lean into it (docs/camera/director.md, phase A)
 var intent_now: String = ""                # the director's read this tick, for the debug feed and the probes
 var ant_starts: int = 0
+var intent_feed: bool = true             # read Encounter's cam_intent cues (docs/director/camera-intent.md) once they come; until then S.dirS.ex's beats
+var nocut_hold: bool = true              # no discretionary layout change inside the plan's do-not-cut spans (a string, a beam's fire to its impact, the clinch)
+var intent_src: String = ""                # "feed" or "ex": where this tick's read came from, for the debug feed
+var story_w: int = 0                       # the running plan's story weight (0 to 5) and tags, for the debug feed and the climax shots
+var story_tags: Array = []
+var nocut_holds: int = 0                   # ticks a layout change waited for a do-not-cut span to end
+var _ci_seen: bool = false                 # a cam_intent cue has come this match: the feed replaces the reading of the beats
+var _ci_beats: Array = []                  # told contacts still ahead: [n, kind, d]
+var _ci_nocut: Array = []                  # [from, to] in ticks
+var _ci_story_end: int = -1
+var _ci_land: Array = [null, null]         # per sent slot: {x, n}, the send's predicted touchdown (for the lead whip)
 var _ant_w: float = 0.0
 var _ant_x: float = 0.0
 var _ant_y: float = 0.0
@@ -329,6 +340,13 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_brink_win = -1
 	_brink_until = -1.0
 	_ant_w = 0.0
+	_ci_seen = false
+	_ci_beats = []
+	_ci_nocut = []
+	_ci_story_end = -1
+	_ci_land = [null, null]
+	story_w = 0
+	story_tags = []
 	_mlead = 0.0
 	_bp_t = -1.0
 	_stg_on = [false, false]
@@ -564,7 +582,10 @@ func _update_trigger(S: SimState) -> void:
 		var dwell: float = CamParams.SPLIT_DWELL + (CamParams.WIDE_HOLD if _sep_rate > 500.0 and r_now > floor_r else 0.0)
 		if r_now <= floor_r:
 			dwell = 0.0
-		if (_below_t >= dwell or out_of_frame or knocked_apart) and age_ok and (guard_ok or out_of_frame or knocked_apart):
+		var held: bool = nocut_hold and not out_of_frame and not knocked_apart and _no_cut(S)
+		if held and _below_t >= dwell and age_ok and guard_ok:
+			nocut_holds += 1
+		if (_below_t >= dwell or out_of_frame or knocked_apart) and age_ok and (guard_ok or out_of_frame or knocked_apart) and not held:
 			_set_split(true, "out of frame" if (_below_t < dwell or _layout_age < CamParams.MIN_MERGED_AGE) else "trigger")
 	else:
 		# A pair that is moving apart fast is judged on the separation it will have (MERGE_LOOKAHEAD seconds on): the shared view that merges them zooms
@@ -576,7 +597,10 @@ func _update_trigger(S: SimState) -> void:
 			r_merge_now = minf(r_now, CamParams.BODY_H * zoom_u(vw, vh, ad_p, _pair_dy(A, B), maxf(A.tier, B.tier)) / vh)
 		_above_t = _above_t + DT if (r_merge_now > rm and chase_slot < 0) else 0.0   # not while one is being chased
 		if _above_t >= CamParams.MERGE_DWELL and _layout_age >= CamParams.MIN_SPLIT_AGE:
-			_set_split(false)
+			if nocut_hold and _no_cut(S):
+				nocut_holds += 1
+			else:
+				_set_split(false)
 	_apply_solo_follow(S)
 
 
@@ -1086,6 +1110,8 @@ func _read_events(S: SimState, events: Array) -> void:
 			var mk: String = String(_ef(ev, "kind", ""))
 			if mk == "perfect_block":
 				_blow("perfect_block", 4)
+			elif mk == "cam_intent" and intent_feed:
+				_read_intent(S, ev)
 			if mk == "lunge_light" or mk == "lunge_heavy" or mk == "charge_light" or mk == "charge_heavy" or mk == "zip_light" or mk == "zip_heavy":
 				_read_move_cue(S, ev, mk)
 			elif mk == "double_hit":
@@ -4001,8 +4027,30 @@ func _update_merged_lead(S: SimState) -> void:
 func _intent_tick(S: SimState) -> void:
 	var tgt: float = 0.0
 	intent_now = ""
+	intent_src = ""
 	var ex = S.dirS.ex
-	if anticipation and not reduced_motion and not intro_active and ex != null and S.game.clash == null and sep <= 0.001 and not split_wanted and solo_kind == "":
+	_ci_prune(S)
+	var plain: bool = anticipation and not reduced_motion and not intro_active and S.game.clash == null and sep <= 0.001 and not split_wanted and solo_kind == ""
+	if plain and _ci_seen:
+		# The feed: the told contacts of the plans (a planned exchange's beats from its start, a brawl blow at its throw, the
+		# AI's string, the double hit), sorted by tick. A light is not told ahead; it has no lean anyway.
+		for c in _ci_beats:
+			var ahead: float = float(int(c[0]) - int(S.tick))
+			if ahead > CamParams.ANT_LEAD_TICKS:
+				break
+			var kind: String = String(c[1])
+			var w: float = float(CamParams.ANT_W.get(kind, 0.0))
+			var d: int = int(c[2])
+			if w > tgt and d >= 0 and d < S.fighters.size():
+				var victim = S.fighters[d]
+				tgt = w
+				_ant_x = float(victim.x)
+				_ant_y = float(victim.y) + CamParams.CHEST
+				_ant_pw = float(CamParams.ANT_PUSH_W.get(kind, 1.0))
+				intent_src = "feed"
+				intent_now = "%s in %d ticks on slot %d (story %d)" % [kind, int(ahead), d, story_w]
+	elif plain and ex != null:
+		intent_src = "ex"
 		for b in ex.beats:
 			if b.done or (b.op != "strike" and b.op != "launch"):
 				continue
@@ -4047,3 +4095,53 @@ func _arr_mult(i: int) -> float:
 	if te >= 0.0:
 		w *= 1.0 - smoothstep(te + CamParams.ARR_HOLD, te + CamParams.ARR_HOLD + CamParams.ARR_OUT, time)
 	return 1.0 - CamParams.ARR_WIDE * w
+
+
+## Encounter's cam_intent cue (docs/director/camera-intent.md section 2): a plan's told contacts, its do-not-cut spans and
+## its story; a send's predicted touchdown. Render-only: read here, nothing written back.
+func _read_intent(S: SimState, ev) -> void:
+	_ci_seen = true
+	var it: String = String(_ef(ev, "text", ""))
+	if it == "plan" and ev is Object and ev.has_meta("plan"):
+		var plan: Dictionary = ev.get_meta("plan")
+		for b in plan.get("beats", []):
+			var kind: String = String(b.get("kind", ""))
+			if kind == "set" and String(b.get("op", "")) == "strike":
+				kind = "ender"
+			if CamParams.ANT_W.get(kind, 0.0) > 0.0 and int(b.get("n", -1)) >= int(S.tick):
+				_ci_beats.append([int(b.n), kind, int(b.get("d", -1))])
+		_ci_beats.sort_custom(func(x, y): return int(x[0]) < int(y[0]))
+		for sp in plan.get("noCut", []):
+			_ci_nocut.append([int(sp[0]), int(sp[1])])
+		var st: Dictionary = plan.get("story", {})
+		if int(st.get("w", 0)) >= story_w or int(S.tick) > _ci_story_end:
+			story_w = int(st.get("w", 0))
+			story_tags = st.get("tags", []).duplicate()
+			_ci_story_end = int(_ef(ev, "n", S.tick))
+	elif it == "launch":
+		var sent: int = int(_ef(ev, "target", -1))
+		if sent >= 0 and sent < 2:
+			_ci_land[sent] = {"x": float(_ef(ev, "x", 0.0)), "n": int(_ef(ev, "n", 0))}
+
+
+## Drops what the feed told that is behind us.
+func _ci_prune(S: SimState) -> void:
+	var t: int = int(S.tick)
+	while not _ci_beats.is_empty() and int(_ci_beats[0][0]) < t - 1:
+		_ci_beats.pop_front()
+	_ci_nocut = _ci_nocut.filter(func(sp): return int(sp[1]) >= t)
+	if t > _ci_story_end + 30:
+		story_w = 0
+		story_tags = []
+	for i in range(2):
+		if _ci_land[i] != null and int(_ci_land[i]["n"]) < t - 60:
+			_ci_land[i] = null
+
+
+## Inside a plan's do-not-cut span now (a string, a beam's fire to its impact, the clinch): a layout change waits.
+func _no_cut(S: SimState) -> bool:
+	var t: int = int(S.tick)
+	for sp in _ci_nocut:
+		if t >= int(sp[0]) and t <= int(sp[1]):
+			return true
+	return false

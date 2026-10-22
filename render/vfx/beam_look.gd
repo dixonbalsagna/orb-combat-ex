@@ -12,16 +12,16 @@ extends RefCounted
 
 const DEFAULTS: Dictionary = {
 	"beam": {
-		"default": {"width_k": 1.0, "hue_shift": 28.0, "hz": 1.0, "wavelength": 130.0, "flow": 70.0, "turb": 0.15, "heel": 0.5, "seed": 0.0, "wob_k": 1.0, "fil": 0.6, "soft_k": 1.0},
-		"protagonist": {"width_k": 1.15, "hue_shift": 30.0, "hue_shift_tritan": -30.0, "hz": 1.1, "wavelength": 150.0, "flow": 80.0, "turb": 0.12, "heel": 0.7, "seed": 0.0, "wob_k": 0.9, "fil": 0.7, "soft_k": 0.9},
-		"rival": {"width_k": 1.1, "hue_shift": 34.0, "hue_max": 320.0, "hz": 0.8, "wavelength": 80.0, "flow": 60.0, "turb": 0.05, "heel": 0.25, "seed": 2.1, "wob_k": 0.25, "fil": 0.9, "soft_k": 1.35},
+		"default": {"width_k": 1.0, "hue_shift": 28.0, "hz": 1.0, "wavelength": 130.0, "flow": 70.0, "turb": 0.15, "heel": 0.5, "seed": 0.0, "wob_k": 1.0, "fil": 0.6, "soft_k": 1.0, "pat": 0.0, "pat_k": 0.0, "pat_a": 0.0, "pat_scale": 90.0},
+		"protagonist": {"width_k": 1.15, "hue_shift": 30.0, "hue_shift_tritan": -30.0, "hz": 1.1, "wavelength": 150.0, "flow": 80.0, "turb": 0.12, "heel": 0.7, "seed": 0.0, "wob_k": 0.9, "fil": 0.7, "soft_k": 0.9, "pat": 1.0, "pat_k": 0.03, "pat_a": 0.18, "pat_scale": 95.0},
+		"rival": {"width_k": 1.1, "hue_shift": 34.0, "hue_max": 320.0, "hz": 0.8, "wavelength": 80.0, "flow": 60.0, "turb": 0.05, "heel": 0.25, "seed": 2.1, "wob_k": 0.25, "fil": 0.9, "soft_k": 1.35, "pat": 2.0, "pat_k": 0.03, "pat_a": 0.2, "pat_scale": 64.0},
 		"rival_short": {"width_k": 0.4, "hue_shift": 34.0, "hue_max": 320.0, "hz": 0.8, "wavelength": 80.0, "flow": 60.0, "turb": 0.0, "heel": 0.1, "seed": 2.1, "wob_k": 0.0, "fil": 0.0, "soft_k": 1.35},
 		"reference": {"width_k": 0.8, "hue_shift": 12.0, "hz": 0.5, "wavelength": 160.0, "flow": 40.0, "turb": 0.04, "heel": 0.1, "seed": 5.3, "wob_k": 0.2, "fil": 0.2, "soft_k": 1.0},
 	},
 	"layers": [
-		{"k": 1.8, "px": 2.0, "alpha": 0.12, "soft": 1.0, "len_k": 0.3, "turb_k": 1.6, "lum_amp": 0.16, "sat": 2.2, "val": 0.7, "lighten": 0.0, "flow_k": 0.8, "wob": 0.22},
-		{"k": 1.4, "px": 2.0, "alpha": 0.95, "soft": 0.4, "len_k": 0.26, "turb_k": 1.0, "lum_amp": 0.07, "sat": 2.0, "val": 0.88, "lighten": 0.0, "flow_k": 1.0, "wob": 0.12},
-		{"k": 0.6, "px": 2.0, "alpha": 1.0, "soft": 0.3, "len_k": 0.14, "turb_k": 0.0, "lum_amp": 0.04, "sat": 0.85, "val": 1.0, "lighten": 0.1, "flow_k": 1.4, "wob": 0.05},
+		{"k": 1.8, "px": 2.0, "alpha": 0.12, "soft": 1.0, "len_k": 0.3, "turb_k": 1.6, "lum_amp": 0.16, "sat": 2.2, "val": 0.7, "lighten": 0.0, "flow_k": 0.8, "wob": 0.22, "pat_w": 0.0},
+		{"k": 1.4, "px": 2.0, "alpha": 0.95, "soft": 0.4, "len_k": 0.26, "turb_k": 1.0, "lum_amp": 0.07, "sat": 2.0, "val": 0.88, "lighten": 0.0, "flow_k": 1.0, "wob": 0.12, "pat_w": 1.0},
+		{"k": 0.6, "px": 2.0, "alpha": 1.0, "soft": 0.3, "len_k": 0.14, "turb_k": 0.0, "lum_amp": 0.04, "sat": 0.85, "val": 1.0, "lighten": 0.1, "flow_k": 1.4, "wob": 0.05, "pat_w": 0.6},
 	],
 	"calm": {"strength": 0.86, "rise_s": 0.3},
 	"cap": 40.0,
@@ -189,3 +189,9 @@ static func set_layer(m: ShaderMaterial, f, lane: Color, i: int, k: float, calm:
 	m.set_shader_parameter("seed", float(fl["seed"]) + beam_id * 1.37)
 	m.set_shader_parameter("wob", float(ly["wob"]) * float(fl["wob_k"]))
 	m.set_shader_parameter("fil", float(fl["fil"]))
+	# the fighter's own pattern (the Protagonist's boil, the Anti-hero's facets): the sheath's soft glow has none; the calm form halves the texture and keeps the silhouette
+	var pw: float = float(ly.get("pat_w", 0.0))
+	m.set_shader_parameter("pat", float(fl["pat"]) if pw > 0.0 else 0.0)
+	m.set_shader_parameter("pat_k", float(fl["pat_k"]) * pw * (0.5 if calm else 1.0))
+	m.set_shader_parameter("pat_a", float(fl["pat_a"]) * pw)
+	m.set_shader_parameter("pat_scale", float(fl["pat_scale"]))

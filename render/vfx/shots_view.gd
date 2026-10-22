@@ -215,11 +215,44 @@ func update(hub: VfxHub, host, a: float, cam_x: float, zoom: float, half_w: floa
 					var l2: float = e.size * 0.4 * (1.0 - u * 0.5)
 					var lc: Color = c1 if k % 2 == 0 else c2
 					n = _put(n, Vector2(rx, e.y) + dv2 * (d1 - l2 * 0.5), dv2, l2, maxf(6.0, minpx * 1.5), ez + 0.4, lc, 0.5, 0.05, SHAPE_STREAK)
+	n = _ground_rings(n, hub, host, a, cam_x, bh, minpx)
 	n = _flight_streaks(n, hub, host, a, cam_x, half_w, bh, minpx)
 	count = n
 	multimesh.visible_instance_count = n
 	if n > 0:
 		multimesh.buffer = _buf
+
+
+## The power-up's ground ring (Research's cinematic paper, rec 14: the environment tells it; Orb: nothing over the fighters): on the break one thin flat ring leaves the fighter's feet along the ground, in his
+## own colour, behind him, a wide flat ellipse a few body heights across and a fifth as tall. It replaces the ring that used to leave his chest. Reads the transformation's forms only.
+func _ground_rings(n: int, hub: VfxHub, host, a: float, cam_x: float, bh: float, minpx: float) -> int:
+	if not hub.transform_enabled:
+		return n
+	var rt: float = VfxTransform.p("break", "gring_ticks")
+	var amax: float = VfxTransform.p("break", "gring_alpha")
+	if amax <= 0.0:
+		return n
+	for f in hub.xform.forms:
+		if n >= CAP - 4:
+			break
+		var t: float = f.at(a)
+		if t < float(f.g):
+			continue
+		var tb: float = t - float(f.g)
+		if tb >= rt:
+			continue
+		var rel: float = SimWrap.sdx(cam_x, host.fighter_x(f.slot, a))
+		if absf(rel) > 12.0 * bh:
+			continue
+		var pose: Vector3 = host.fighter_pose(f.slot, a)
+		var fz: float = host.fighter_z(f.slot, a)
+		var u: float = tb / rt
+		var rr: float = lerpf(VfxTransform.p("break", "gring_r0_bh"), VfxTransform.p("break", "gring_r1_bh"), 1.0 - pow(1.0 - u, 2.0)) * bh
+		var col: Color = VfxAura.lane_color(String(host.S.fighters[f.slot].aura))
+		col.a = amax * pow(1.0 - u, 1.4)
+		var flat: float = VfxTransform.p("break", "gring_flat")
+		n = _put(n, Vector2(rel, pose.y + 3.0), Vector2(1.0, 0.0), rr * 2.0, rr * 2.0 * flat, fz - 3.0, col, maxf(VfxTransform.p("break", "gring_thick"), 1.6 * minpx / maxf(rr, 1.0)), 0.0, SHAPE_RING)
+	return n
 
 
 ## The background carries a launch's speed (Research's cinematic paper, recs 8 and 12): while a body is flying fast, thin streaks anchored in the WORLD (a hashed grid, so they stay put as the camera chases him and
@@ -730,7 +763,7 @@ func _reach(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 				var sc: float = 0.6 if e.guard else 1.0
 				rc.shown += 1
 				# The crack: two crossed thin lines, hard, the shot's own mark (the fist's smear and thud are the press look).
-				var cl: float = (56.0 if e.blast else 34.0) * sc
+				var cl: float = (30.0 if e.blast else 20.0) * sc
 				var glow: Color = e.col.lightened(0.45)
 				glow.a = al * 0.75 * (1.0 - u * u)
 				col = e.col.darkened(0.5)
@@ -739,8 +772,8 @@ func _reach(n: int, S: SimState, hub: VfxHub, host, cam_x: float, half_w: float,
 					n = _put(n, c, Vector2(0.707, 0.707 * sg), cl, 9.0 if e.blast else 7.0, lz - 0.05, glow, 0.5, 0.5, SHAPE_STREAK)
 					n = _put(n, c, Vector2(0.707, 0.707 * sg), cl, 4.0 if e.blast else 3.0, lz, col, 0.5, 0.5, SHAPE_STREAK)
 				# The ring: hollow, widening.
-				var r0: float = (10.0 if e.blast else 6.0) * sc
-				var r1: float = (36.0 if e.blast else 20.0) * sc
+				var r0: float = (6.0 if e.blast else 4.0) * sc
+				var r1: float = (16.0 if e.blast else 10.0) * sc
 				var rg: float = lerpf(r0, r1, 1.0 - pow(1.0 - u, 2.0))
 				var rcol: Color = e.col.darkened(0.15)
 				rcol.a = al * (1.0 - u)

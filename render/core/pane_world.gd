@@ -143,11 +143,13 @@ func build_fighters(S: SimState) -> void:
 ## Draw one frame from a camera: its wrapped world x (float64), cam.y and cam.z (the reference camera's height and
 ## zoom, as SimHost.camera gives them), its screen shake in pixels and its pitch in degrees (CameraRig). The first pane
 ## also applies the world's changes.
-func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2, pitch: float = 0.0) -> void:
+func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2, pitch: float = 0.0, roll: float = 0.0) -> void:
 	var S: SimState = host.S
 	var vp: Vector2 = get_viewport().get_visible_rect().size
 	view_cam_x = cam_x
 	cam_rig.frame(cam.y, cam.z, jitter, vp.y, pitch, focus_z)
+	if roll != 0.0:
+		cam_rig.basis = cam_rig.basis * Basis(Vector3.BACK, deg_to_rad(roll))   # the climaxes' dutch tilt (RenderCameraRoll), about the view axis
 	planet.set_focus(focus_z)
 	planet.set_crowd_near(S.depthOn)
 	_pan_haze(host, a, cam_x, vp)

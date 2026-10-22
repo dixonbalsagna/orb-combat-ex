@@ -190,6 +190,32 @@
           "type": "number",
           "minimum": 0,
           "maximum": 1
+        },
+        "gring_r0_bh": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "gring_r1_bh": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "gring_ticks": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "gring_flat": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "gring_thick": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "gring_alpha": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
         }
       },
       "additionalProperties": false,

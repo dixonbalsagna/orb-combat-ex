@@ -437,6 +437,13 @@ const HAZE_SEA: float = 0.9
 ## greyer and a ridge never reaches the colour of the sky behind it. The water hazes toward the band itself.
 const HAZE_VALUE: float = 0.6
 const HAZE_SAT: float = 0.7
+## The camera roll on climaxes (render/core/camera_roll.gd; docs/rendering/camera-roll.md): a dutch tilt of ROLL_DEG.x
+## (a decisive launch, guard break or interrupt) to ROLL_DEG.y degrees (a finisher, a KO; a clash or a beam between),
+## in over ROLL_TIMES.x seconds of match time, held ROLL_TIMES.y, out over ROLL_TIMES.z, eased. Off by default: main's
+## --roll (or ?roll=1 on a page) turns it on.
+const CAMERA_ROLL_ON: bool = false
+const ROLL_DEG := Vector2(4.0, 8.0)
+const ROLL_TIMES := Vector3(0.25, 0.8, 0.9)
 ## ... but in the far field (HAZE_AT[2] to HAZE_AT[3]) the haze's target moves toward the sky's own colour in that
 ## direction, HAZE_SKY of the way: far peaks melt into the sky behind them, as d3f1ca0e's far land did (Orb's playtest,
 ## 2026-10-19: the far ridge read as a huge brown wall). Art's ladder holds nearer.

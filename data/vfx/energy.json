@@ -13,7 +13,11 @@
    "seed": 0,
    "wob_k": 1.0,
    "fil": 0.6,
-   "soft_k": 1.0
+   "soft_k": 1.0,
+   "pat": 0.0,
+   "pat_k": 0.0,
+   "pat_a": 0.0,
+   "pat_scale": 90.0
   },
   "protagonist": {
    "width_k": 1.15,
@@ -27,7 +31,11 @@
    "wob_k": 0.9,
    "fil": 0.7,
    "soft_k": 0.9,
-   "hue_shift_tritan": -30
+   "hue_shift_tritan": -30,
+   "pat": 1.0,
+   "pat_k": 0.03,
+   "pat_a": 0.18,
+   "pat_scale": 95.0
   },
   "rival": {
    "width_k": 1.1,
@@ -41,7 +49,11 @@
    "wob_k": 0.25,
    "fil": 0.9,
    "soft_k": 1.35,
-   "hue_max": 320
+   "hue_max": 320,
+   "pat": 2.0,
+   "pat_k": 0.03,
+   "pat_a": 0.2,
+   "pat_scale": 64.0
   },
   "rival_short": {
    "width_k": 0.4,
@@ -84,7 +96,8 @@
    "lighten": 0.0,
    "flow_k": 0.8,
    "wob": 0.22,
-   "len_k": 0.3
+   "len_k": 0.3,
+   "pat_w": 0.0
   },
   {
    "k": 1.4,
@@ -98,7 +111,8 @@
    "lighten": 0.0,
    "flow_k": 1.0,
    "wob": 0.12,
-   "len_k": 0.26
+   "len_k": 0.26,
+   "pat_w": 1.0
   },
   {
    "k": 0.6,
@@ -112,7 +126,8 @@
    "lighten": 0.1,
    "flow_k": 1.4,
    "wob": 0.05,
-   "len_k": 0.14
+   "len_k": 0.14,
+   "pat_w": 0.6
   }
  ],
  "calm": {

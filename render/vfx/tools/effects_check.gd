@@ -207,6 +207,7 @@ func _run() -> void:
 	_small_blasts()
 	_beam_look()
 	_beam_struggle_beams()
+	_beam_pattern()
 	_beam_scar()
 	_multi()
 	_ghosts()
@@ -224,6 +225,7 @@ func _run() -> void:
 	_real()
 	_stages()
 	_real_stages()
+	_small_rings_check()
 	print("\neffects check passed" if fails == 0 else "\neffects check FAILED (%d)" % fails)
 	quit(0 if fails == 0 else 1)
 
@@ -4916,6 +4918,50 @@ func _blast_cloud() -> void:
 	_check(states[0] == states[1], "the same cue gives the same cloud (determinism)")
 
 
+## Each fighter's beam made unmistakable (docs/vfx/beam-look.md, "Distinct patterns"): the Protagonist's BOIL (rounded scallops along the edge, bubble rings of the second tint inside) and the Anti-hero's FACETS (a straight zigzag edge, a mosaic of two close hues), told apart by shape and by hue, never by a step in brightness (Legal fx03).
+func _beam_pattern() -> void:
+	print("the beams' own patterns")
+	var P := {"id": "PROTAGONIST"}
+	var R := {"id": "RIVAL"}
+	var X := {"id": "SOMEONE"}
+	var fp: Dictionary = VfxBeamLook.flavour(P)
+	var fr: Dictionary = VfxBeamLook.flavour(R)
+	var fs: Dictionary = VfxBeamLook.flavour(R, true)
+	var fx: Dictionary = VfxBeamLook.flavour(X)
+	_check(float(fp["pat"]) == 1.0 and float(fr["pat"]) == 2.0 and float(fs["pat"]) == 0.0 and float(fx["pat"]) == 0.0, "the Protagonist's beam is the boil (1), the Anti-hero's the facets (2); his thin needle and everyone else's stay plain (0)")
+	var small: bool = true
+	for k in ["protagonist", "rival", "rival_short", "reference", "default"]:
+		var fl: Dictionary = VfxBeamLook.flavour({"id": k.to_upper()}) if k != "default" else VfxBeamLook.flavour(X)
+		if float(fl["pat_k"]) > 0.03 + 1e-9 or float(fl["pat_a"]) > 0.5 or float(fl["pat_scale"]) < 30.0:
+			small = false
+	_check(small, "no pattern moves the brightness by more than 3% (the rest is shape and hue) or cuts the edge deeper than half the radius")
+	var lum_ok: bool = true
+	for j in range(3):
+		var ly: Dictionary = VfxBeamLook.layer(j)
+		var pw: float = float(ly.get("pat_w", 0.0))
+		if j > 0 and float(ly["lum_amp"]) + float(fp["pat_k"]) * pw > 0.10 + 1e-9:
+			lum_ok = false         # the body's and the core's shimmer and pattern together stay under a tenth (the sheath's glow has no pattern and is as it was)
+	_check(lum_ok and float(VfxBeamLook.layer(0).get("pat_w", 0.0)) == 0.0, "the shimmer and the pattern together move the body and the core by at most a tenth, and the sheath's glow has no pattern")
+	# What reaches the shader, by layer and by form.
+	var mats: Array = []
+	for j in range(3):
+		mats.append(VfxBeamLook.new_material(j))
+	var lane := Color("#9a80d8")
+	for j in range(3):
+		VfxBeamLook.set_layer(mats[j], R, lane, j, 1.0, false, 3.0, 2000.0, true, 0.0, false)
+	var calm_mat := VfxBeamLook.new_material(1)
+	VfxBeamLook.set_layer(calm_mat, R, lane, 1, 1.0, true, 3.0, 2000.0, true, 0.0, false)
+	var pm: ShaderMaterial = mats[1]
+	_check(float(mats[0].get_shader_parameter("pat")) == 0.0 and float(pm.get_shader_parameter("pat")) == 2.0 and float(mats[2].get_shader_parameter("pat")) == 2.0, "the sheath has no pattern; the body and the core carry the Anti-hero's")
+	_check(absf(float(calm_mat.get_shader_parameter("pat_k")) - 0.5 * float(pm.get_shader_parameter("pat_k"))) < 1e-9 and float(calm_mat.get_shader_parameter("pat_a")) == float(pm.get_shader_parameter("pat_a")), "the calm form halves the pattern's brightness and keeps its silhouette")
+	var mp := VfxBeamLook.new_material(1)
+	VfxBeamLook.set_layer(mp, P, Color("#8fd6ff"), 1, 1.0, false, 3.0, 2000.0, true, 0.0, false)
+	_check(float(mp.get_shader_parameter("pat")) == 1.0 and float(mp.get_shader_parameter("pat_scale")) != float(pm.get_shader_parameter("pat_scale")) and float(mp.get_shader_parameter("pat_a")) != float(pm.get_shader_parameter("pat_a")), "the two fighters' patterns differ in kind, scale and depth")
+	# The shader's text holds the rules: the pattern is hue-told, its brightness is `pat_k`, the ring and the cell are tinted from the two same-luminance tints.
+	var src: String = FileAccess.get_file_as_string("res://render/vfx/shaders/beam_core.gdshaderinc")
+	_check(src.contains("pat_ring") and src.contains("pat_cell") and src.contains("mix(tint_a.rgb, tint_b.rgb") and src.contains("pat_tex = 1.0 + pat_k * feat"), "the shader tells the pattern apart by the second tint and moves the brightness only by pat_k")
+
+
 ## The catastrophe light class (docs/vfx/catastrophe-plan.md section 1; Legal c01 to c05): the gap, the floors, the calm form, the ash, one answer per event, no red, and a hammer of random asks.
 func _cat_class() -> void:
 	print("the catastrophe light class")
@@ -5132,6 +5178,28 @@ func _tick(S: SimState, h: VfxHub, events: Array) -> void:
 
 
 ## The beams' look (docs/vfx/beam-look.md; Legal fx03): a real width by default, a thin one as a fighter's own, a ripple that moves hue at steady luminance, 2 Hz or slower, no white core, the flavour by roster id.
+func _small_rings_check() -> void:
+	print("the sim's rings, small")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	var hub := VfxHub.new()
+	hub.reset(S, 4)
+	SimFx.ring(S, 100.0, 50.0, 1300.0, "#ffffff", 0.8, 20.0)
+	SimFx.ring(S, 100.0, 50.0, 90.0, "#ffffff", 0.5, 8.0)
+	var evs: Array = S.out.fx.duplicate()
+	var got: Array = hub.reference_events(evs)
+	var rings: Array = got.filter(func(e): return e.type == "ring")
+	_check(rings.size() == 2, "both rings reach the consumer (%d)" % rings.size())
+	var big_r: float = float(rings[0].r0) + float(rings[0].gr) * float(rings[0].life)
+	_check(big_r < 1.3 * VfxLook.BH * 1.6, "the power-up's ring (1,300 a second, 0.8 s) ends at %.0f units, a body and a half, not %.0f" % [big_r, 20.0 + 1300.0 * 0.8])
+	_check(float(rings[1].gr) <= 90.0 * VfxHub.RING_GROWTH_K + 0.001 or float(rings[1].gr) == 90.0 * VfxHub.RING_GROWTH_K, "a slow ring is cut by the same share")
+	var orig: Array = evs.filter(func(e): return e.type == "ring")
+	_check(float(orig[0].gr) == 1300.0 and float(orig[0].r0) == 20.0, "the sim's own events are untouched (audio and the hash read them)")
+	hub.rings_small_enabled = false
+	var off: Array = hub.reference_events(evs).filter(func(e): return e.type == "ring")
+	_check(float(off[0].gr) == 1300.0, "with the switch off the rings are as they were")
+
+
 func _beam_scar() -> void:
 	print("the scar a beam leaves in the air")
 	var S := SimCore.createSim()

@@ -55,6 +55,7 @@ var react_enabled: bool = VfxLook.REACT_DEFAULT      # from tier 3 the world ans
 var flicker_enabled: bool = VfxLook.FLICKER_DEFAULT  # the aura flickers when the fighter is worn
 var react := VfxReact.new()
 var speedlines_enabled: bool = VfxLook.SPEEDLINES_DEFAULT   # speed lines alone on every launch and landed heavy (impact treatment B)
+var rings_small_enabled: bool = true                    # the sim's own expanding rings are shrunk to the contact point (Orb's ring rule): _small_rings, for the reference consumer
 var speed := VfxSpeed.new()
 var rocks_enabled: bool = VfxLook.ROCKS_DEFAULT   # prototype: rocks hang about a tier 3 or 4 fighter (rocks.gd)
 var rocks := VfxRocks.new()
@@ -846,10 +847,43 @@ func _speed_heavy(S: SimState, e) -> void:
 
 
 ## The events the reference particle consumer (render/core/particle_view.gd's source, `SimFxView`) should be given: the tick's
+## Orb's rule for every ring round a fighter (2026-10-22): hug the contact point, small, or remove it. The sim's own `ring` events (the power-up's, a launch's, a landing's: growth 300 to 1,300 units a second,
+## so a ring of two to ten body heights) go to the reference consumer with their growth cut to a share (`ring_growth_k`) and capped (`ring_growth_max`), and their start radius capped, so each is a small ring
+## at the point it happened and no more. The events themselves are not touched (audio and the hash read the originals): the consumer gets copies.
+const RING_GROWTH_K := 0.12
+const RING_GROWTH_MAX := 80.0
+const RING_R0_MAX := 12.0
+
+
+func _small_rings(events: Array) -> Array:
+	var any: bool = false
+	for e in events:
+		if e.type == "ring":
+			any = true
+			break
+	if not any:
+		return events
+	var out: Array = []
+	for e in events:
+		if e.type != "ring":
+			out.append(e)
+			continue
+		var c := SimState.FxEvent.new()
+		for pr in e.get_property_list():
+			if int(pr["usage"]) & PROPERTY_USAGE_SCRIPT_VARIABLE:
+				c.set(pr["name"], e.get(pr["name"]))
+		c.gr = minf(float(e.gr) * RING_GROWTH_K, RING_GROWTH_MAX)
+		c.r0 = minf(float(e.r0), RING_R0_MAX)
+		out.append(c)
+	return out
+
+
 ## events less the `debris`, `fire` and `dust` events this hub draws itself as material chunks, cel flames and dust puffs (VfxEarth). Rendering's
 ## host passes this to the reference consumer so a chunk or a flame is not drawn twice; with the effects off, or the hub disabled,
 ## it returns the events as they came.
 func reference_events(events: Array) -> Array:
+	if enabled and rings_small_enabled:
+		events = _small_rings(events)
 	if not (enabled and earth_enabled):
 		return events
 	for e in events:

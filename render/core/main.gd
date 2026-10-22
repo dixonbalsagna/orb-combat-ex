@@ -62,6 +62,8 @@ var flashcap: FlashCapture = null     # Tools' capture hook (--flashcap, on the 
 var cam_pitch: float = 0.0          # the cameras' pitch in degrees (Alt+F9), unless the rig's frame carries its own
 var occlusion: int = PaneWorld.OCCL_HOLE   # every pane's occlusion method (Ctrl+F9)
 var inset: PaneWorld = null         # Camera's inset pane (make_inset), or null
+var camera_roll := RenderCameraRoll.new()   # the climaxes' dutch tilt for the main panes (off unless roll_on)
+var roll_on: bool = false
 var compositor: Object = null:
 	set(v):
 		compositor = v
@@ -215,6 +217,7 @@ func _ready() -> void:
 		take_over()
 	if args.has("legacy-hud"):
 		set_legacy_hud(true)
+	roll_on = RenderLook.CAMERA_ROLL_ON or args.has("roll")   # the camera roll on climaxes: off by default (2026-10-22)
 	hud.key_help = args.has("keyhelp")   # the greybox prompt and key help: off by Orb's minimal rule (2026-10-19)
 	if not manual:
 		split_view = SplitView.new()
@@ -252,6 +255,7 @@ func all_panes() -> Array:
 func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:
 	var own: bool = not (setup is Dictionary)
 	host.new_match(seed, ai, _match_setup(seed) if own else setup, own)
+	camera_roll.reset()
 	var fl: Array = UiSimBridge.fighters(host.S)
 	ui_hud.setup(fl[0], fl[1])
 	for p in all_panes():
@@ -301,6 +305,11 @@ func make_inset(size: Vector2i) -> SubViewport:
 	inset = _follower(sv, false)
 	inset.name = "Inset"
 	return sv
+
+
+## The climaxes' dutch tilt this frame, in degrees (RenderCameraRoll), for the main panes; 0 with it off.
+func _roll(a: float) -> float:
+	return camera_roll.update(host.S.T + a * SimConst.DT) if roll_on else 0.0
 
 
 ## A new pane that draws the first pane's world, in sv, built into the current match. markers false leaves out the
@@ -540,7 +549,7 @@ func render_view(a: float) -> void:
 				panes[i].cutaway = PaneWorld.request(cw[i] if cw is Array and i < cw.size() else ({"only": i} if two else {}), cl[i] if cl is Array and i < cl.size() else null)
 				panes[i].focus_z = float(fzs[i]) if fzs != null and i < fzs.size() else 0.0
 				panes[i].near_lobbies = bool(split_rig.get("depth_dolly")) if split_rig != null else false   # Camera's depth follow: its rule for a near tower goes with it
-				panes[i].render(host, a, split_frame.cam_x[i], Vector3(0.0, split_frame.cam_y[i], split_frame.cam_z[i]), j, pitch)
+				panes[i].render(host, a, split_frame.cam_x[i], Vector3(0.0, split_frame.cam_y[i], split_frame.cam_z[i]), j, pitch, _roll(a))
 				if float(split_frame.cam_z[i]) > zmax:
 					zmax = float(split_frame.cam_z[i])
 					zfocus = panes[i].focus_z
@@ -559,7 +568,7 @@ func render_view(a: float) -> void:
 		pane.cutaway = {}
 		pane.focus_z = 0.0
 		pane.near_lobbies = false
-		pane.render(host, a, host.camera_x(a), host.camera(a), PaneShake.capped(host.jitter, vh, _shake()), cam_pitch)
+		pane.render(host, a, host.camera_x(a), host.camera(a), PaneShake.capped(host.jitter, vh, _shake()), cam_pitch, _roll(a))
 		_flash_scale(host.camera(a).z)
 	view_cam_x = pane.view_cam_x
 	host.impact.heat_changed = false
@@ -580,6 +589,8 @@ func _on_drained(events: Array, lines: Array) -> void:
 		var vp: Vector2 = get_viewport().get_visible_rect().size
 		split_rig.step(host.S, vp.x, vp.y, events)
 	planet.consume(events, host.S.T)
+	if roll_on:
+		camera_roll.consume(host.S, events)
 	RenderAnim.consume(host.S, events)
 	ui_hud.consume_all(events)
 	_haptics_from_events(events)
@@ -1215,9 +1226,9 @@ func _notification(what: int) -> void:
 const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off", "charges_off_p2"]
 ## The options a web page's URL may set (parse_args): off unless the URL names them. Those in LOCAL_ONLY_ARGS start
 ## without UI's notice, change how a match starts or hold a debug value, and are dropped unless the page is on a local
-## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze, keyhelp.
+## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze, keyhelp, roll.
 const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]
-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp"]
+const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll"]
 
 
 ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of
