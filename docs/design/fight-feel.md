@@ -48,7 +48,7 @@ Reconciled with Combat's `docs/combat/choreography-feel.md` §1 (`rulings-2026-1
 
 ## 3. Ricochets off the world: plants, glances and the wall kick
 
-Reconciled with Combat's §2 (`rulings-2026-10-22.md` §2b). **The line is 1,500 units a second into the surface,** the speed along its normal. The surfaces are a building's face that holds, a slope, a ridge or a cliff, flat ground, a parked car, a post or a tree.
+Reconciled with Combat's §2 (`rulings-2026-10-22.md` §2b). **The line is 1,500 units a second of his whole speed** (re-ruled 2026-10-22: it was the speed along the surface's normal, which no shallow contact ever reached, so nothing glanced). Speed decides plant or not, and the angle decides glance or slam. **The surfaces are a building's face that holds, and ground sloped 30° or more** (a hillside, a ridge, a cliff, a crater's wall). Props join when they stop a flight. **On ground under 30°, the knocked-about rules stand:** the skid, the bounce, the tumble and the slam (`balance-targets.md` §20). The skid in its trench is Orb's own picture, and a glance doesn't replace it.
 
 | Into the surface | What happens | The press |
 | :--- | :--- | :--- |
