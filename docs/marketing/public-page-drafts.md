@@ -1,14 +1,14 @@
 # Public page: three drafts for when the build returns
 
-Status: draft, private, not reviewed by Legal. Nothing here is live. Written 2026-10-16 by Marketing for the EP's brief; Orb sees every public line before it is used. Orb's note: "high quality before you show me, don't be afraid to iterate until it reads perfectly."
+Status: draft, private. The fixed lines were replaced on 2026-10-22 by Legal's `docs/legal/page-fixed-lines.md` (RL-166), word for word, in American spelling; the description is Orb's chosen version A. Nothing here is live: the demo is offline until Tools' change to the gate lands. Written 2026-10-16 by Marketing for the EP's brief; Orb sees every public line before it is used. Orb's note: "high quality before you show me, don't be afraid to iterate until it reads perfectly."
 
 ## What these are
 
 Three versions of the page's description, in three tones, each 80 to 150 words (the counts are in the headings). Each was drafted, then revised three times against the checklist below. The revision log shows what failed each time, so nothing here is a first draft.
 
-The words around the description are **fixed and identical** in all three: the AI line, the flash notice, the in-development line, the privacy and licence lines. They are Legal's wording and are not counted in the 80 to 150. Where Legal's wording uses an internal word, it is flagged in the open questions, not changed here.
+The words around the description are **fixed and identical** in all three: the AI line, the flash notice, the in-development line, the lock line, and the privacy and license lines. They are Legal's wording (see "The fixed parts" below) and are not counted in the 80 to 150.
 
-**Order on the page** (a suggestion for the EP and Legal): the title with "(working title)"; the AI line; the flash notice in its own box; the description; a play button whose label says what happens next ("Play in your browser: a notice comes first"); then the small lines. The click-through gate on the play page stays as it is.
+**Order on the page** (Legal's, from `page-fixed-lines.md`): title; AI line; the flash box with its lock line; the description; the play button ("Play in your browser: a notice comes first"); the small lines.
 
 ## Final: version A, as Orb chose (2026-10-18)
 
@@ -19,13 +19,13 @@ Orb's answers to homework 28 (through the EP): version A; American spelling; cut
 > This is a fighting game set on a planet you can fly all the way around. Go one way for long enough, through ocean, city, desert and mountains, and you come back from the other direction, so nobody gets cornered. The goal is combos that look choreographed but stay in your hands, in real time. You fly, dodge, guard and hit light or heavy. There are no combo lists to learn: you pick the moment and the blow, and the fight director strings them together. Beams dig trenches. Buildings crack and come apart in stages, and the damage stays until the match ends. Play against the computer, or share one screen with a friend, on keyboard or controller. It is free and runs in your browser. It is an early test version, with two fighters.
 
 What changed from version A above:
-- **New sentence 3:** "The goal is combos that look choreographed but stay in your hands, in real time." It is Orb's pitch, kept as a goal ("the goal is"), not a promise. I dropped "spectacular" because that is a judgement the visitor should make, and the goal sentence is true without it. Orb may put it back; Legal's writing note allows puffery.
+- **New sentence 3:** "The goal is combos that look choreographed but stay in your hands, in real time." It is Orb's pitch, kept as a goal ("the goal is"), not a promise. I dropped "spectacular" because that is a judgment the visitor should make, and the goal sentence is true without it. Orb may put it back; Legal's writing note allows puffery.
 - **"the game strings them together"** became **"the fight director strings them together."** It is accurate: the fight director is the system that composes each exchange from the moves you press (pillars.md pillar 2; docs/combat/exchange-templates.md), and Legal's AI line directly above the description already says it is ordinary game code. The word is explained by the page itself.
 - **No signature, close-up or finishing move** is mentioned anywhere in the text (Legal's rule).
 - **American spelling:** the description had no British spellings to change.
 - Checks: 135 words; the script's only flags are "choreographed" and "director", the two team words Orb has now chosen to keep.
 
-**American spelling touches Legal's fixed lines.** The lines contain "analyser" (the flash notice) and "Licence" (the licence line). In American spelling these are "analyzer" and "License". The gate's notice is compared word for word by Tools' checks (`docs/ui/start-menu.md`), so the change needs Legal's word and the checks updated in the same commit. Until Legal says so, the fixed lines stay exactly as they are, and I have changed nothing in them.
+**American spelling and the fixed lines: settled (2026-10-22).** Legal's RL-166 gives the fixed lines in American spelling ("analyzer", "License") and adds the lock line. They are copied word for word under "The fixed parts" below. Tools changes the live gate in the same pass and updates its word-for-word checks.
 
 **New claim for Legal, P14:** "The goal is combos that look choreographed but stay in your hands, in real time." Evidence: Orb's pitch (docs/ep/vision.md, 2026-10-18); howto.json ("No combo inputs to learn"); pillars.md pillar 2. Check on the day: play a fight and see that combos form from your button presses in real time. It is a goal statement. P4 (the fight director strings them together) is unchanged.
 
@@ -73,12 +73,21 @@ Everything in the three versions is something a visitor can do or see in the pla
 
 ## The fixed parts (identical around all three)
 
+Copied word for word from `docs/legal/page-fixed-lines.md` (Legal, RL-166, 2026-10-22). American spelling. The page's flash box and the gate carry the same words. Do not edit them here; change them only on Legal's word.
+
 - **Title:** Orb Combat EX (working title)
-- **AI line** (Legal's plain version, verbatim, as on the play page's gate): "Orb Combat EX is a one-person project. Orb directs it, and AI tools write the code and draft the art, animation, dialogue and design documents. Nothing in the game is generated by AI while you play: the fight director and the world are ordinary game code."
-- **Flash notice** (the gate's words, verbatim): "This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version." Then: "Reduce flashing is on by default. It lowers some effects but does not remove the flagged scenes."
+- **AI line:** "Orb Combat EX is a one-person project. Orb directs it, and AI tools write the code and draft the art, animation, dialogue and design documents. Nothing in the game is generated by AI while you play: the fight director and the world are ordinary game code."
+- **Flash notice** (the page's box and the gate, identical): "This game contains flashing effects. Our own automated check found some scenes that go over the recommended limit of three flashes a second, and they are not fixed yet. No independent analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version."
+- **Lock line** (under the flash box on the page, and under the gate's button): "Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes."
+- **Buttons:** "I understand, start" and "Not now". Never "safe", "tested" or "compliant".
 - **In development:** "Everything here is in development and may change."
-- **Privacy** (the About page's words): "This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button copies a report to your clipboard for you to paste to Orb; nothing is sent by the game."
-- **Licence:** "Licence: not chosen yet, so all rights are reserved for now." A link to "Licences, notices and privacy".
+- **Privacy:** "This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button copies a report to your clipboard for you to paste to Orb; nothing is sent by the game."
+- **License:** "License: not chosen yet, so all rights are reserved for now." Link: "Licenses, notices and privacy". Third-party notices keep their official spelling ("MIT License", "SIL Open Font License 1.1").
+- **Play button label:** "Play in your browser: a notice comes first".
+
+**Order on the page:** title; AI line; the flash box with its lock line; the description; the play button; the small lines (in development, privacy, license).
+
+The earlier sentence "We are fixing them" is gone: Orb paused flash work on 2026-10-18, so the honest words are "they are not fixed yet" (Legal's reasoning in RL-166).
 
 ## Version A: plain (119 words)
 
@@ -143,9 +152,9 @@ All are claims about the playable demo. None is a promise. Legal status is "unre
 
 ## Open questions
 
-1. **Legal and Orb: the word "director" in the AI line.** Orb's rule for in-game copy says "director" is an internal word, but Legal's plain AI line names "the fight director". Legal's writing note says the facts must stay and the wording is free. May the line read "how the fights play out and the world are ordinary game code"? I kept Legal's words verbatim until told.
+1. ~~The word "director" in the AI line.~~ Settled: Orb said to keep "fight director" because it is accurate (2026-10-18).
 2. **Legal: P10** ("slam your rival into a building and the building pays for it"). It appears in version B only; A and C do not carry it.
 3. **EP: the live demo.** Please have someone play it once against each claim in the table, since I have not.
-4. **Orb: spelling.** The project's public pages use British spelling ("memorise", "colour"). Keep it, or switch to American?
-5. **Orb: the tone.** A, B, C, or a mix. A tick sheet is in `homework/28-public-page.md`.
-6. **Legal: the placement** of the flash notice (a box under the AI line, above the description) and of the play button.
+4. ~~Spelling.~~ Settled: American (Orb, 2026-10-18; Legal's RL-166 applies it to the fixed lines).
+5. ~~The tone.~~ Settled: version A (Orb, 2026-10-18). Versions B and C stay in the file for reference only.
+6. ~~The placement of the flash notice and play button.~~ Settled by Legal's page order (RL-166).
