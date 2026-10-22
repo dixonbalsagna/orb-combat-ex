@@ -1,18 +1,18 @@
-diff --git a/hp18/data/anim/recoil.json b/data/anim/recoil.json
+diff --git a/hp19/data/anim/recoil.json b/data/anim/recoil.json
 new file mode 100644
-index 0000000..b047605
+index 0000000..4e52227
 --- /dev/null
 +++ b/data/anim/recoil.json
 @@ -0,0 +1,16 @@
 +{
 +  "schema": "anim.recoil/1",
-+  "_about": "Recoil exits and ricochets (docs/combat/choreography-feel.md sections 1 and 2; Orb, homework 6). Encounter's DirRecoil sends a cue `recoil` (actor the one who recoils, source the exit: skip, handspring, tuck or backflip; dur its ticks to the landing; a ricochet adds ux and uy, the surface normal, once Combat's section 2 sends it); AnimFighter.on_recoil plays the kind's sequence (wave recoil1, prefix rc: the shapes of the body in its own frame) and AnimFighter._recoil_layer turns the whole body about its middle (pivot_y above the feet) over the exit's ticks, lifts it along an arc and lands it: the position is the sim's knock-back, never moved. turns: whole turns backward (a flip is 1); arc: the height the middle rises on top of whatever path the sim gives it (the flips 12: enough that the head and hands clear the ground with no bow under them; DirRecoil's own bow is 60); plant (a ricochet): how far through the exit the feet meet the surface (0 to 1), where the body is turned so its feet face the surface along the normal and then springs back upright. fighters: a roster id's own sequence for a kind (the Protagonist's layout backflip and two-handed handspring, the Anti-hero's tuck and one-handed handspring). Under reduced motion the body does not turn: the sequence plays in place. Render only, outside the sim's data hash. First values, Animation's.",
++  "_about": "Recoil exits and ricochets (docs/combat/choreography-feel.md sections 1 and 2; Orb, homework 6). Encounter's DirRecoil sends a cue `recoil` (actor the one who recoils, source the exit: skip, handspring, tuck or backflip; dur its ticks to the landing; a ricochet adds ux and uy, the surface normal, once Combat's section 2 sends it); AnimFighter.on_recoil plays the kind's sequence (wave recoil1, prefix rc: the shapes of the body in its own frame) and AnimFighter._recoil_layer turns the whole body about its middle (pivot_y above the feet) over the exit's ticks, lifts it along an arc and lands it: the position is the sim's knock-back, never moved. turns: whole turns backward (a flip is 1); arc: the height the middle rises on top of whatever path the sim gives it (the flips 17 to 25: enough that the lowest of the head and hands clears the ground at the middle of the flip with no bow under them, at any duration from 8 ticks; DirRecoil's own bow is 60); plant (a ricochet): how far through the exit the feet meet the surface (0 to 1), where the body is turned so its feet face the surface along the normal and then springs back upright. fighters: a roster id's own sequence for a kind (the Protagonist's layout backflip and two-handed handspring, the Anti-hero's tuck and one-handed handspring). Under reduced motion the body does not turn: the sequence plays in place. Render only, outside the sim's data hash. First values, Animation's.",
 +  "pivot_y": 34,
 +  "kinds": {
 +    "skip": {"seq": "rc.skip", "turns": 0, "arc": 3},
-+    "handspring": {"seq": "rc.handspring", "turns": 1, "arc": 12},
-+    "tuck": {"seq": "rc.back_tuck", "turns": 1, "arc": 12},
-+    "backflip": {"seq": "rc.backflip_layout", "turns": 1, "arc": 12},
++    "handspring": {"seq": "rc.handspring", "turns": 1, "arc": 17},
++    "tuck": {"seq": "rc.back_tuck", "turns": 1, "arc": 25},
++    "backflip": {"seq": "rc.backflip_layout", "turns": 1, "arc": 25},
 +    "ricochet_wall": {"seq": "rc.wall", "turns": 0, "arc": 0, "plant": 0.42},
 +    "ricochet_ground": {"seq": "rc.ground", "turns": 0, "arc": 14}
 +  },
@@ -20,7 +20,7 @@ index 0000000..b047605
 +    "RIVAL": {"backflip": "rc.backflip_tuck", "handspring": "rc.handspring_one"}
 +  }
 +}
-diff --git a/hp18/data/anim/waves/recoil1.poses.json b/data/anim/waves/recoil1.poses.json
+diff --git a/hp19/data/anim/waves/recoil1.poses.json b/data/anim/waves/recoil1.poses.json
 new file mode 100644
 index 0000000..d4aadb6
 --- /dev/null
@@ -55,7 +55,7 @@ index 0000000..d4aadb6
 +  "rc.ground.reach": {"family":"crouched","lean":40,"hips":[10,-8,0],"spine":{"lean":30},"head":{"pitch":20},"hand_r":[28,14,14],"hand_l":[26,12,-12],"foot_r":[-4,6,8],"foot_l":[-8,4,-7],"hands":{"r":"open","l":"open"},"_orig":"a rebound off the ground: the hands set down in front, the weight over them","_legal":["no_clasp"]},
 +  "rc.ground.spring": {"family":"airborne_extended","lean":-14,"hips":[-4,8,0],"spine":{"lean":-12},"head":{"pitch":-6},"hand_r":[10,64,22],"hand_l":[8,60,-20],"foot_r":[-10,8,8],"foot_l":[-14,6,-7],"hands":{"r":"open","l":"open"},"_orig":"the spring back up: the arms swinging up, the legs trailing, the head up","_legal":["no_clasp"]}
 + }}
-diff --git a/hp18/data/anim/waves/recoil1.sequences.json b/data/anim/waves/recoil1.sequences.json
+diff --git a/hp19/data/anim/waves/recoil1.sequences.json b/data/anim/waves/recoil1.sequences.json
 new file mode 100644
 index 0000000..6cd50e7
 --- /dev/null
@@ -261,10 +261,10 @@ index a7f474f..1ec44d5 100644
  						fighter(S, S.fighters[who]).on_charge_full(t_cue)
  					elif kd == "tech":
 diff --git a/render/anim/tools/anim_check.gd b/render/anim/tools/anim_check.gd
-index 286423b..61eb899 100644
+index 286423b..6a48a7c 100644
 --- a/render/anim/tools/anim_check.gd
 +++ b/render/anim/tools/anim_check.gd
-@@ -2312,6 +2312,103 @@ func _test_grip() -> void:
+@@ -2312,6 +2312,113 @@ func _test_grip() -> void:
  	print("grip: the least and most spacing (units) that hold the gap, the clearance, g02 and g06, by grade behind, even, ahead: [grade, least, most] %s; the largest shortfall at 40 units %.1f" % [str(table), worst_gap_at_40])
  
  
@@ -288,7 +288,7 @@ index 286423b..61eb899 100644
 +	f0.state = "free"
 +	f1.state = "free"
 +	f0.vx = 0.0
-+	var res := {"nan": 0, "viol": 0, "min_head": 1.0e9, "min_hand": 1.0e9, "turn": 0.0, "first_back": 0.0, "end_head": 0.0, "feet_dot": -1.0, "x_moved": 0.0, "ended": false, "recoiled": 0}
++	var res := {"nan": 0, "viol": 0, "min_head": 1.0e9, "low": 1.0e9, "min_hand": 1.0e9, "turn": 0.0, "first_back": 0.0, "end_head": 0.0, "feet_dot": -1.0, "x_moved": 0.0, "ended": false, "recoiled": 0}
 +	var prev_ang: float = 0.0
 +	var have_prev: bool = false
 +	var unwrapped: float = 0.0
@@ -320,6 +320,7 @@ index 286423b..61eb899 100644
 +		if k >= 2 and k < 2 + ticks:
 +			res.min_head = minf(float(res.min_head), hd.y - pel.y)
 +			res.min_hand = minf(float(res.min_hand), minf(a0.socket("hand_r").y, a0.socket("hand_l").y))
++			res.low = minf(float(res.low), minf(hd.y - 9.0, minf(a0.socket("hand_r").y, a0.socket("hand_l").y)))
 +			var u: float = float(k - 2) / float(ticks)
 +			if u > 0.2 and u < 0.3 and absf(res.first_back) < 0.001:
 +				res.first_back = dv.x
@@ -349,6 +350,15 @@ index 286423b..61eb899 100644
 +			# one whole turn, backward (the head goes back first), upside down at the middle, upright at the end, and the sim's x never moved
 +			if absf(absf(float(r.turn)) - TAU) > 0.5 or float(r.first_back) >= 0.0 or float(r.min_head) > -12.0 or float(r.end_head) < 12.0 or float(r.x_moved) > 0.001:
 +				bad.append("%s %s: turn %.0f deg, first_back %.1f, lowest head %.1f, end head %.1f, moved %.3f" % [who, kd, rad_to_deg(float(r.turn)), float(r.first_back), float(r.min_head), float(r.end_head), float(r.x_moved)])
++	for who2 in ["PROTAGONIST", "RIVAL"]:
++		for kd2 in ["backflip", "tuck", "handspring"]:
++			for tk2 in [8, 12, 18, 24]:
++				var r2: Dictionary = _recoil_probe(kd2, tk2, 0.0, 1.0, who2)
++				if int(r2.viol) > 0 or int(r2.nan) > 0 or not bool(r2.ended) or absf(absf(float(r2.turn)) - TAU) > 0.5:
++					bad.append("%s %s over %d ticks: viol %d nan %d turn %.0f" % [who2, kd2, tk2, int(r2.viol), int(r2.nan), rad_to_deg(float(r2.turn))])
++				# no body point below the ground (hands at the fingertips, the head a head's radius under its centre) with no path under it: nothing sinks through the floor at any duration
++				if float(r2.low) < -1.0:
++					bad.append("%s %s over %d ticks: the lowest point is %.1f under the ground" % [who2, kd2, tk2, -float(r2.low)])
 +	var hs: Dictionary = _recoil_probe("handspring", 18, 0.0, 1.0, "PROTAGONIST")
 +	if float(hs.min_hand) > 8.0:
 +		bad.append("handspring: the hands come no nearer the ground than %.1f (8 or under: they take it)" % float(hs.min_hand))
@@ -368,7 +378,7 @@ index 286423b..61eb899 100644
  func _test_pulled() -> void:
  	AnimData.load_every_wave()
  	main.start_match(4, {"p1": false, "p2": false})
-@@ -4984,6 +5081,7 @@ func _run() -> void:
+@@ -4984,6 +5091,7 @@ func _run() -> void:
  	_test_grapple_c0_c1()
  	_test_charge_cut()
  	_test_grip()
@@ -422,7 +432,7 @@ index c225c4e..022d712 100644
  
  const poses = JSON.parse(readFileSync(join(project, 'data/anim/poses.json'), 'utf8')).poses;
  const mod = await import(pathToFileURL(resolve(project, 'render/anim/tools/waves/' + wave + '.mjs')).href);
-diff --git a/hp18/render/anim/tools/waves/recoil1.mjs b/render/anim/tools/waves/recoil1.mjs
+diff --git a/hp19/render/anim/tools/waves/recoil1.mjs b/render/anim/tools/waves/recoil1.mjs
 new file mode 100644
 index 0000000..b1a6770
 --- /dev/null
