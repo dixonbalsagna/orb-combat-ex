@@ -1,0 +1,8 @@
+# The turn GIF for Orb (homework 31d), how it was made (World, 2026-10-22)
+
+A scratch copy of main (a06f6920 then 3c2e6808's data) with two switches on: `data/biomes/rings.json` `turn.on` 1 and `data/director/interrupts.json` `calmTurn.enabled` true. Nothing in the repo changed.
+
+1. `turn_find.gd.txt` (copy to `sim/world/tools/`): runs AI matches headless on planet 7 at 2,400 columns and prints the ticks a turn is asked for and made (`-- --from=1 --to=9 --ticks=7200 --cols=2400`). Seed 9 turns at tick 5,031 (asked at 4,885); 12, 20, 22, 25 and 6 turn too. Most asks never reach a calm moment inside 8,000 ticks, and every pick was the smallest bearing (2.5) because no candidate brings a place into view.
+2. A scratch web build: `render/tools/flash_capture.gd` gets a scenario `turn` (AI against AI, nothing staged, setup `{planet: 7, touch: 3, arena: {cols: 2400}, intro: false}`, the sim's `epoch.n` published as `window.__flashcap.turns`). Exported with `--export-release "Web"`.
+3. Tools' launcher: `node tools/machine/capture.mjs frames --dir <web build> --path "/index.html?flashcap=1&nointro=1" --first 4930 --count 5230 --every 3 --step-js "window.__flashcap.step()" --tick-js "window.__flashcap.tick" --info-js "window.__flashcap.turns" --init-js <start('turn', {seed: 9, skip: 4929}) when ready> --wait-js "window.__flashcap.scenario==='turn'" --width 960 --height 540 --session world` (the web build's turn came on tick 5,032, the headless sim's tick 5,031).
+4. `mk_gif.py <frames> out.gif 420 40 50 4970 5130`: Pillow, one 40-colour palette for the clip, every third tick, 50 ms a frame, so it plays at the real speed.

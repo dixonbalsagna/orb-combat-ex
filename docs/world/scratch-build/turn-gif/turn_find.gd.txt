@@ -1,0 +1,32 @@
+extends SceneTree
+# Finds AI matches that turn the arena: godot --headless --path . --script res://sim/world/tools/turn_find.gd -- --from=1 --to=20 --ticks=3600 --planet=7 --cols=2400
+func _init() -> void:
+	var a0: int = 1
+	var a1: int = 20
+	var ticks: int = 3600
+	var planet: int = 7
+	var cols: int = 2400
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--from="): a0 = int(a.substr(7))
+		if a.begins_with("--to="): a1 = int(a.substr(5))
+		if a.begins_with("--ticks="): ticks = int(a.substr(8))
+		if a.begins_with("--planet="): planet = int(a.substr(9))
+		if a.begins_with("--cols="): cols = int(a.substr(7))
+	for sd in range(a0, a1 + 1):
+		var S := SimCore.createSim()
+		SimCore.newMatch(S, sd, {}, {"planet": planet, "touch": 3, "arena": {"cols": cols}, "intro": false})
+		var turns: Array = []
+		var asks: Array = []
+		var hadNext: bool = false
+		var nSeen: int = 0
+		for t in range(ticks):
+			SimCore.step(S)
+			if S.epoch != null:
+				if S.epoch.next != null and not hadNext:
+					asks.append("t%d(%s %.1f)" % [t, str(S.epoch.next.why), float(S.epoch.next.bearing)])
+				hadNext = S.epoch.next != null
+				if int(S.epoch.n) > nSeen:
+					nSeen = int(S.epoch.n)
+					turns.append("t%d(%.1fdeg)" % [t, float(S.epoch.drift)])
+		print("seed %d epoch %s: asks %s turns %s  ko %s" % [sd, str(S.epoch != null), str(asks), str(turns), str(S.game.ko != null)])
+	quit()
