@@ -1,0 +1,162 @@
+--- a/data/vfx/transform.json
++++ b/data/vfx/transform.json
+@@ -17,9 +17,9 @@
+   },
+   "settle": { "aura_alpha": 0.6, "ease_ticks": 10, "fade_ticks": 24 },
+   "aura": {
+-    "1": { "w_bh": 1.0, "h_bh": 1.45, "lobes": 0, "fill": 0.14, "mix": 0.0 },
+-    "2": { "w_bh": 1.2, "h_bh": 1.6, "lobes": 1, "fill": 0.15, "mix": 0.0 },
+-    "3": { "w_bh": 1.45, "h_bh": 1.75, "lobes": 2, "fill": 0.16, "mix": 0.0 },
+-    "4": { "w_bh": 1.7, "h_bh": 1.9, "lobes": 3, "fill": 0.17, "mix": 0.0 }
++    "1": { "w_bh": 0.7, "h_bh": 1.12, "lobes": 0, "fill": 0.14, "mix": 0.0 },
++    "2": { "w_bh": 0.8, "h_bh": 1.2, "lobes": 1, "fill": 0.15, "mix": 0.0 },
++    "3": { "w_bh": 0.9, "h_bh": 1.3, "lobes": 2, "fill": 0.16, "mix": 0.0 },
++    "4": { "w_bh": 1.0, "h_bh": 1.4, "lobes": 3, "fill": 0.17, "mix": 0.0 }
+   }
+ }
+--- a/render/vfx/press.gd
++++ b/render/vfx/press.gd
+@@ -18,9 +18,9 @@
+ 
+ const DEFAULTS: Dictionary = {
+ 	"press": {"hist": 64.0, "reach": 24.0, "lunge": 12.0, "echo_back": 24.0, "glint_life": 5.0, "glint_r": 14.0, "alpha": 0.9,
+-		"speed_life": 8.0, "speed_ring_life": 6.0, "speed_w": 7.0, "speed_ring_r": 20.0,
++		"speed_life": 8.0, "speed_ring_life": 6.0, "speed_w": 7.0, "speed_ring_r": 14.0,
+ 		"tech_life": 11.0, "echo_pop": 2.5, "line_life": 7.0, "diamond_life": 5.0, "diamond_r": 14.0,
+-		"wind_life": 26.0, "wind_r": 34.0, "heavy_life": 18.0, "ghost_life": 5.0, "crescent_life": 4.0, "ring_life": 12.0, "ring_r": 40.0, "fly_max": 40.0, "fly_ghosts": 3.0,
++		"wind_life": 26.0, "wind_r": 22.0, "heavy_life": 18.0, "ghost_life": 5.0, "crescent_life": 4.0, "ring_life": 12.0, "ring_r": 18.0, "fly_max": 40.0, "fly_ghosts": 3.0,
+ 		"block_life": 12.0, "flash_life": 7.0, "shield_h": 40.0},
+ }
+ const STYLES: Array = ["speed", "tech", "heavy", "block"]
+--- a/render/vfx/shots_view.gd
++++ b/render/vfx/shots_view.gd
+@@ -730,7 +730,7 @@
+ 				var sc: float = 0.6 if e.guard else 1.0
+ 				rc.shown += 1
+ 				# The crack: two crossed thin lines, hard, the shot's own mark (the fist's smear and thud are the press look).
+-				var cl: float = (56.0 if e.blast else 34.0) * sc
++				var cl: float = (30.0 if e.blast else 20.0) * sc
+ 				var glow: Color = e.col.lightened(0.45)
+ 				glow.a = al * 0.75 * (1.0 - u * u)
+ 				col = e.col.darkened(0.5)
+@@ -739,8 +739,8 @@
+ 					n = _put(n, c, Vector2(0.707, 0.707 * sg), cl, 9.0 if e.blast else 7.0, lz - 0.05, glow, 0.5, 0.5, SHAPE_STREAK)
+ 					n = _put(n, c, Vector2(0.707, 0.707 * sg), cl, 4.0 if e.blast else 3.0, lz, col, 0.5, 0.5, SHAPE_STREAK)
+ 				# The ring: hollow, widening.
+-				var r0: float = (10.0 if e.blast else 6.0) * sc
+-				var r1: float = (36.0 if e.blast else 20.0) * sc
++				var r0: float = (6.0 if e.blast else 4.0) * sc
++				var r1: float = (16.0 if e.blast else 10.0) * sc
+ 				var rg: float = lerpf(r0, r1, 1.0 - pow(1.0 - u, 2.0))
+ 				var rcol: Color = e.col.darkened(0.15)
+ 				rcol.a = al * (1.0 - u)
+--- a/render/vfx/transform.gd
++++ b/render/vfx/transform.gd
+@@ -24,10 +24,10 @@
+ 	"live": [10, 14, 24],
+ }
+ const DEFAULT_AURA: Dictionary = {
+-	1: {"w_bh": 1.0, "h_bh": 1.45, "lobes": 0, "fill": 0.14, "mix": 0.0},
+-	2: {"w_bh": 1.2, "h_bh": 1.6, "lobes": 1, "fill": 0.15, "mix": 0.0},
+-	3: {"w_bh": 1.45, "h_bh": 1.75, "lobes": 2, "fill": 0.16, "mix": 0.0},
+-	4: {"w_bh": 1.7, "h_bh": 1.9, "lobes": 3, "fill": 0.17, "mix": 0.0},
++	1: {"w_bh": 0.7, "h_bh": 1.12, "lobes": 0, "fill": 0.14, "mix": 0.0},
++	2: {"w_bh": 0.8, "h_bh": 1.2, "lobes": 1, "fill": 0.15, "mix": 0.0},
++	3: {"w_bh": 0.9, "h_bh": 1.3, "lobes": 2, "fill": 0.16, "mix": 0.0},
++	4: {"w_bh": 1.0, "h_bh": 1.4, "lobes": 3, "fill": 0.17, "mix": 0.0},
+ }
+ const MOTE_STRIDE := 5   # theta, start radius share, phase, length jitter, kind (0 aura mote, 1 dust)
+ 
+--- a/render/vfx/vfx_hub.gd
++++ b/render/vfx/vfx_hub.gd
+@@ -55,6 +55,7 @@
+ var flicker_enabled: bool = VfxLook.FLICKER_DEFAULT  # the aura flickers when the fighter is worn
+ var react := VfxReact.new()
+ var speedlines_enabled: bool = VfxLook.SPEEDLINES_DEFAULT   # speed lines alone on every launch and landed heavy (impact treatment B)
++var rings_small_enabled: bool = true                    # the sim's own expanding rings are shrunk to the contact point (Orb's ring rule): _small_rings, for the reference consumer
+ var speed := VfxSpeed.new()
+ var rocks_enabled: bool = VfxLook.ROCKS_DEFAULT   # prototype: rocks hang about a tier 3 or 4 fighter (rocks.gd)
+ var rocks := VfxRocks.new()
+@@ -846,10 +847,43 @@
+ 
+ 
+ ## The events the reference particle consumer (render/core/particle_view.gd's source, `SimFxView`) should be given: the tick's
++## Orb's rule for every ring round a fighter (2026-10-22): hug the contact point, small, or remove it. The sim's own `ring` events (the power-up's, a launch's, a landing's: growth 300 to 1,300 units a second,
++## so a ring of two to ten body heights) go to the reference consumer with their growth cut to a share (`ring_growth_k`) and capped (`ring_growth_max`), and their start radius capped, so each is a small ring
++## at the point it happened and no more. The events themselves are not touched (audio and the hash read the originals): the consumer gets copies.
++const RING_GROWTH_K := 0.12
++const RING_GROWTH_MAX := 80.0
++const RING_R0_MAX := 12.0
++
++
++func _small_rings(events: Array) -> Array:
++	var any: bool = false
++	for e in events:
++		if e.type == "ring":
++			any = true
++			break
++	if not any:
++		return events
++	var out: Array = []
++	for e in events:
++		if e.type != "ring":
++			out.append(e)
++			continue
++		var c := SimState.FxEvent.new()
++		for pr in e.get_property_list():
++			if int(pr["usage"]) & PROPERTY_USAGE_SCRIPT_VARIABLE:
++				c.set(pr["name"], e.get(pr["name"]))
++		c.gr = minf(float(e.gr) * RING_GROWTH_K, RING_GROWTH_MAX)
++		c.r0 = minf(float(e.r0), RING_R0_MAX)
++		out.append(c)
++	return out
++
++
+ ## events less the `debris`, `fire` and `dust` events this hub draws itself as material chunks, cel flames and dust puffs (VfxEarth). Rendering's
+ ## host passes this to the reference consumer so a chunk or a flame is not drawn twice; with the effects off, or the hub disabled,
+ ## it returns the events as they came.
+ func reference_events(events: Array) -> Array:
++	if enabled and rings_small_enabled:
++		events = _small_rings(events)
+ 	if not (enabled and earth_enabled):
+ 		return events
+ 	for e in events:
+--- a/render/vfx/tools/effects_check.gd
++++ b/render/vfx/tools/effects_check.gd
+@@ -224,6 +224,7 @@
+ 	_real()
+ 	_stages()
+ 	_real_stages()
++	_small_rings_check()
+ 	print("\neffects check passed" if fails == 0 else "\neffects check FAILED (%d)" % fails)
+ 	quit(0 if fails == 0 else 1)
+ 
+@@ -5132,6 +5133,28 @@
+ 
+ 
+ ## The beams' look (docs/vfx/beam-look.md; Legal fx03): a real width by default, a thin one as a fighter's own, a ripple that moves hue at steady luminance, 2 Hz or slower, no white core, the flavour by roster id.
++func _small_rings_check() -> void:
++	print("the sim's rings, small")
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 6)
++	var hub := VfxHub.new()
++	hub.reset(S, 4)
++	SimFx.ring(S, 100.0, 50.0, 1300.0, "#ffffff", 0.8, 20.0)
++	SimFx.ring(S, 100.0, 50.0, 90.0, "#ffffff", 0.5, 8.0)
++	var evs: Array = S.out.fx.duplicate()
++	var got: Array = hub.reference_events(evs)
++	var rings: Array = got.filter(func(e): return e.type == "ring")
++	_check(rings.size() == 2, "both rings reach the consumer (%d)" % rings.size())
++	var big_r: float = float(rings[0].r0) + float(rings[0].gr) * float(rings[0].life)
++	_check(big_r < 1.3 * VfxLook.BH * 1.6, "the power-up's ring (1,300 a second, 0.8 s) ends at %.0f units, a body and a half, not %.0f" % [big_r, 20.0 + 1300.0 * 0.8])
++	_check(float(rings[1].gr) <= 90.0 * VfxHub.RING_GROWTH_K + 0.001 or float(rings[1].gr) == 90.0 * VfxHub.RING_GROWTH_K, "a slow ring is cut by the same share")
++	var orig: Array = evs.filter(func(e): return e.type == "ring")
++	_check(float(orig[0].gr) == 1300.0 and float(orig[0].r0) == 20.0, "the sim's own events are untouched (audio and the hash read them)")
++	hub.rings_small_enabled = false
++	var off: Array = hub.reference_events(evs).filter(func(e): return e.type == "ring")
++	_check(float(off[0].gr) == 1300.0, "with the switch off the rings are as they were")
++
++
+ func _beam_scar() -> void:
+ 	print("the scar a beam leaves in the air")
+ 	var S := SimCore.createSim()
