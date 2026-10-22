@@ -178,6 +178,25 @@ try {
   result.draws = dist(col(3)); result.objects = dist(col(4)); result.prims = dist(col(5)); result.particles = dist(col(6));
   result.video_mem_bytes = dist(col(7)); result.texture_mem_bytes = dist(col(8)); result.static_mem_bytes = dist(col(9));
   result.render_cpu_ms = dist(col(10)); result.render_gpu_ms = dist(col(11));
+  // frame pacing (not the average): the worst 1%, the swing between consecutive frames, and spikes that come at a regular interval
+  {
+    const r = raw.rtt, n = r.length, med = pct(r, 0.5), sw = r.slice(1).map((x, i) => Math.abs(x - r[i]));
+    const worst = [...r].sort((a, b) => b - a).slice(0, Math.max(1, Math.floor(n / 100)));
+    const spikeT = med * 2 + 6;   // a frame that is more than twice the median and 6 ms over
+    const idx = r.map((x, i) => (x > spikeT ? i : -1)).filter((i) => i >= 0);
+    const gaps = idx.slice(1).map((v, i) => v - idx[i]);
+    const hist = {}; for (const g of gaps) hist[g] = (hist[g] || 0) + 1;
+    const top = Object.entries(hist).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([g, c]) => [Number(g), c]);
+    // a period: the most common gap that at least a third of the spikes repeat at (gaps within 1 frame count as the same)
+    result.pacing = {
+      frames: n, median: +med.toFixed(2), worst1pct_mean: +mean(worst).toFixed(2), worst1pct_min: +Math.min(...worst).toFixed(2), max: +Math.max(...r).toFixed(1),
+      swing: dist(sw), swing_over_10: sw.filter((x) => x > 10).length, swing_over_16_7: sw.filter((x) => x > 16.7).length,
+      over_16_7: r.filter((x) => x > 16.7).length, over_25: r.filter((x) => x > 25).length, over_33: r.filter((x) => x > 33.4).length, over_50: r.filter((x) => x > 50).length,
+      spike_threshold_ms: +spikeT.toFixed(1), spikes: idx.length, spike_gap_top: top, first_spikes: idx.slice(0, 40).map((i) => [raw.tick - n + i, +r[i].toFixed(1)]),
+      // the frames over 16.7 ms in blocks of 600 ticks (10 s at 60 Hz), to see a drift
+      over_16_7_per_600: Array.from({ length: Math.ceil(n / 600) }, (_, b) => r.slice(b * 600, (b + 1) * 600).filter((x) => x > 16.7).length),
+    };
+  }
   result.over_16_7 = raw.rtt.filter((x) => x > 16.7).length; result.over_25 = raw.rtt.filter((x) => x > 25).length;   // on a display-locked GPU run a frame is 16.7 or 33.3 ms: frames over 25 ms are the missed refreshes result.over_33_3 = raw.rtt.filter((x) => x > 33.3).length;
   result.tickReached = raw.tick;
   result.ticks_per_frame = +(raw.ticks / raw.frames).toFixed(3);   // 1 is one tick per animation frame, as in play
