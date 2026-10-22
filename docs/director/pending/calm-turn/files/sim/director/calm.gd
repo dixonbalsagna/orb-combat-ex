@@ -213,8 +213,11 @@ static func _afterForm(S: SimState) -> bool:
 	return p.left == 0 and p.kind == SimPause.TRANSFORM and p.version != SimPause.LIVE and p.sinceEnd <= int(cfg().get("formTicks", 30))
 
 
-## WorldEpoch.tick's hold, each live tick.
+## WorldEpoch.tick's hold, each live tick. With the director's calm turn off (calmTurn.enabled false) the director takes
+## no part and holds nothing back: World's own calm decides, as before the hold existed (a turn World's own checks decide).
 static func hold(S: SimState) -> bool:
+	if not bool(cfg().get("enabled", false)):
+		return true
 	return why(S) == ""
 
 
