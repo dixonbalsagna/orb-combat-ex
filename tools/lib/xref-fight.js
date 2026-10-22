@@ -12,12 +12,13 @@ const STYLE = 'data/fight/style.json';
 // The per-second counters a style label may measure (docs/architecture/mood-style.md section 2), plus the derived total.
 const MEASURES = new Set(['stance0', 'stance1', 'stance2', 'stance3', 'light', 'heavy', 'sig', 'closing', 'opened', 'charge', 'chargeCut', 'sigLanded', 'stanceTotal']);
 
-function xrefFight({ get, err, esc, isObj, plainKeys, docsFor }) {
+function xrefFight({ get, err, esc, isObj, plainKeys, docsFor, root }) {
   require('./xref-brawl-cues').xrefBrawlCues({ get, err, esc, isObj });
   require('./xref-beat-cues').xrefBeatCues({ get, err, esc, isObj });
   require('./xref-lanes').xrefLanes({ get, err, esc, isObj });
   require('./xref-brawl-keys').xrefBrawlKeys({ get, err, esc, isObj });
   require('./xref-brunt').xrefBrunt({ get, err, esc, isObj });
+  require('./xref-grounds').xrefGrounds({ get, err, esc, isObj, root });
   require('./xref-art').xrefArt({ get, err, esc, isObj });
   // ---- reach (data/anim/reach.json) ----
   const reachDoc = get('data/anim/reach.json');

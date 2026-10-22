@@ -496,6 +496,10 @@
       "schema": "narrative-hints-fix.schema.json"
     },
     {
+      "match": "data/narrative/opponent_grounds.json",
+      "schema": "narrative-opponent-grounds.schema.json"
+    },
+    {
       "match": "data/art/polar.json",
       "schema": "art-polar.schema.json"
     },

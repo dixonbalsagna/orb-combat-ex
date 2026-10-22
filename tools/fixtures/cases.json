@@ -295825,6 +295825,287 @@
       }
     },
     {
+      "id": "narrative-opponent-grounds-valid",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "set": {
+            "/schema": "narrative.opponent_grounds/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "narrative-opponent-grounds-underscore-key-ok",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "narrative-opponent-grounds-key-required-claims",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "del": [
+            "/claims"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "narrative-opponent-grounds-schema-version",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "set": {
+            "/schema": "narrative.opponent_grounds/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "narrative-opponent-grounds-unknown-key",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "narrative-opponent-grounds-unknown-fighter",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "set": {
+            "/claims/GHOST": {
+              "home": "X",
+              "suits": [
+                {
+                  "feature": "coast",
+                  "w": 1
+                }
+              ],
+              "must_cross": [],
+              "avoids": [],
+              "size": {
+                "early": "close",
+                "mid": "half",
+                "boss": "whole"
+              }
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/claims/GHOST"
+      }
+    },
+    {
+      "id": "narrative-opponent-grounds-weight-over-three",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "set": {
+            "/claims/RIVAL/suits/0/w": 4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/claims/RIVAL/suits/0/w"
+      }
+    },
+    {
+      "id": "narrative-opponent-grounds-weight-fraction",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "set": {
+            "/claims/RIVAL/suits/0/w": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/claims/RIVAL/suits/0/w"
+      }
+    },
+    {
+      "id": "narrative-opponent-grounds-no-suits",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "set": {
+            "/claims/RIVAL/suits": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/claims/RIVAL/suits"
+      }
+    },
+    {
+      "id": "narrative-opponent-grounds-size-not-a-size",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "set": {
+            "/claims/RIVAL/size/boss": "huge"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/claims/RIVAL/size/boss"
+      }
+    },
+    {
+      "id": "narrative-opponent-grounds-claim-key-missing",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "del": [
+            "/claims/EMPRESS/avoids"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/claims/EMPRESS"
+      }
+    },
+    {
+      "id": "narrative-opponent-grounds-claim-unknown-key",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "set": {
+            "/claims/EMPRESS/power": 9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/claims/EMPRESS/power"
+      }
+    },
+    {
+      "id": "narrative-opponent-grounds-feature-grammar",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "set": {
+            "/claims/RIVAL/must_cross/0": "Biome Mountains"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/claims/RIVAL/must_cross/0"
+      }
+    },
+    {
+      "id": "narrative-opponent-grounds-feature-not-in-picker",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "set": {
+            "/claims/RIVAL/suits/0/feature": "biome:lava"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:opponent-grounds-feature",
+        "pointer": "/claims/RIVAL/suits/0/feature"
+      }
+    },
+    {
+      "id": "narrative-opponent-grounds-feature-part-not-in-picker",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "set": {
+            "/claims/CYBORG/must_cross/0": "biome:desert|state:burning"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:opponent-grounds-feature",
+        "pointer": "/claims/CYBORG/must_cross/0"
+      }
+    },
+    {
+      "id": "narrative-opponent-grounds-avoid-not-in-picker",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "set": {
+            "/claims/PROTAGONIST/avoids/0": "place:harbour_crane"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:opponent-grounds-feature",
+        "pointer": "/claims/PROTAGONIST/avoids/0"
+      }
+    },
+    {
+      "id": "narrative-opponent-grounds-home-shared",
+      "schema": "narrative-opponent-grounds.schema.json",
+      "mutate": [
+        {
+          "file": "data/narrative/opponent_grounds.json",
+          "set": {
+            "/claims/EMPRESS/home": "Rankhold"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:opponent-grounds-home",
+        "pointer": "/claims/EMPRESS/home"
+      }
+    },
+    {
       "id": "fight-hitstop-ticks-missing-ko",
       "schema": "fight-hitstop.schema.json",
       "mutate": [

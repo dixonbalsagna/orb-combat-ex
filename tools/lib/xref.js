@@ -878,7 +878,7 @@ function xref(docs, root = repoRoot) {
   }
 
   xrefInput({ get, err, esc, isObj });
-  xrefFight({ get, err, esc, isObj, plainKeys, docsFor: (re) => [...docs.keys()].filter((k) => re.test(k)).sort() });
+  xrefFight({ get, err, esc, isObj, plainKeys, docsFor: (re) => [...docs.keys()].filter((k) => re.test(k)).sort(), root });
   return findings;
 }
 
