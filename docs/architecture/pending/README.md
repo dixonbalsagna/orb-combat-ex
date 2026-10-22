@@ -2,7 +2,7 @@
 
 Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator, the sim or Godot (`docs/` is hidden from Godot). It holds slices that are built and proven in a scratch copy and wait for the sim slot.
 
-**A parked build:** `mash-flow/`: a mash flows (Game Design's 6): the weight `light_flow` holds no stop (a mash's later blows, which Encounter names), never raised by the cut's floor and never counted by the budget, behind the hit-stop switch; with Tools' schema line (`grant_tools.py`). No golden moves. Its page is `../feel-core.md` section 7.
+**A parked build:** `mash-flow/`: a mash flows (Game Design's 6): the weight `light_flow` holds no stop (a mash's later blows, which Encounter names), never raised by the cut's floor and never counted by the budget; and the budget's deep step (7d: over 40% of the window, ×0.5 in place of ×0.75); behind the hit-stop switch; with Tools' schema line (`grant_tools.py`). No golden moves. Its page is `../feel-core.md` section 7.
 
 **A paper, not a build:** `arena-conditions.md`: my conditions on World's shifting arena (windows 0 and 1), with the exact lines: the `arena.cols` guard, and one sim's world statics bound again at every step.
 
