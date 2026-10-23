@@ -1,0 +1,1492 @@
+{
+  "schema": "narrative.beat_templates/1",
+  "_about": "PARKED DRAFT (docs/narrative/pending/). A template library for the between-stage story beat, for any of the three co-op campaign pitches (homework 41: A Planet Run, B Episodes, C The Siege). Slots only: no new lore and no new names (Orb writes the universe). 30 templates in 9 families, the slot vocabulary, each fighter's voice hooks, and 45 filled samples (5 per family) for Orb to read; every sample line passes the narrative lint. Sample place names (Rankhold, Mendquay, Crownreach, Slagholt, Furrowlea) are placeholders pending Orb's marks. Claude-written.",
+  "slots": {
+    "opp": "The opponent fighter of the stage (a roster id; the display name comes from the names file).",
+    "p1": "The first player's fighter.",
+    "p2": "The second player's fighter, or the CPU partner. Absent in a solo run.",
+    "ally": "Whichever of p2 or a CPU partner is on the player's side.",
+    "third": "A fighter who is neither opponent nor player (a roster id), or `silhouette` when unknown.",
+    "home": "The opponent's home place name (World's homes: Mendquay, Rankhold, Crownreach, Slagholt; names pending Orb).",
+    "home_wear": "The home place's wear state: untouched, damaged or fallen. A place state only.",
+    "place": "This stage's place name.",
+    "prev_place": "The previous stage's place name.",
+    "claim": "The opponent's claim phrase (table below), from World's ring claim.",
+    "last": "The last result between these fighters: none, won, lost, won_close, lost_close, draw (time cap).",
+    "wrecked": "What the last meeting wrecked, from events the sim has: a tower, a crater, a fire, the pier (or `nothing`).",
+    "mode": "1v1, 2v1 (co-op vs one), 3v1 (the Empress and her guards), or horde.",
+    "n_left": "Stages left before the boss.",
+    "next": "The next stage's opponent and place, for a cliffhanger.",
+    "toll_band": "none, some or many: a coarse band of the run's toll. NEVER read by a Cyborg line (Legal ln04) and never worded as a score (c08)."
+  },
+  "claim_phrases": {
+    "RIVAL": "the high ground",
+    "EMPRESS": "the open ground",
+    "CYBORG": "the wreckage",
+    "PROTAGONIST": "the water"
+  },
+  "speakers": [
+    "p1",
+    "ally",
+    "opp",
+    "third",
+    "radio",
+    "crowd"
+  ],
+  "voice_hooks": {
+    "PROTAGONIST": {
+      "voice": "Warm, quick, tactile. He grins, grades the blow, asks for the opponent's best. Concern for people is said to the opponent (\"Fight me over here\"). No apology during a fight; an apology and an offer to rebuild come after the fight.",
+      "react": "a grin and a question or a dare to start",
+      "home": "plain pride in the place, or a worry for it",
+      "after": "the apology and the promise to mend (flag a)",
+      "never": [
+        "an apology during a fight",
+        "a righteous speech",
+        "talking to objects or off-screen helpers"
+      ]
+    },
+    "RIVAL": {
+      "voice": "Short, clipped, contractions. Live trash talk and the rank gag, now and then (third-rate, barely top ten, amateur, clown). Denies the opponent's skill; never admits respect openly; hates a head start.",
+      "open": "a put-down in a few words",
+      "grudge": "denies the last result, promises a different one",
+      "boast": "recalls the result as a rank",
+      "deny": "calls it a fluke",
+      "needle": "an insult aimed at the opponent",
+      "never": [
+        "Pathetic",
+        "I dare you",
+        "tired complaints"
+      ]
+    },
+    "EMPRESS": {
+      "voice": "Royal \"we\", a booming laugh (Hahaha, Gahaha), sadistic and theatrical. Insults: rat, insect, clown. \"Petitioner\" at most once a beat and rarely. Never calls a guard in a 1v1; in a 3v1 she commands them.",
+      "open": "a laugh, then a threat",
+      "claim": "the open ground, as hers",
+      "grudge": "names the cost in a limb",
+      "boast": "claims she let the player win",
+      "deny": "refuses the clock or the result",
+      "warn": "a short message from the throne",
+      "never": [
+        "calling guards in a 1v1",
+        "whining about her silk",
+        "dry bureaucratic jokes"
+      ]
+    },
+    "CYBORG": {
+      "voice": "Ravenous bio-mech: protein, calories, chassis, limiter, sensors, snack, wreckage as fuel. Loud and lurching, never polite. No \"sir\", no waiter, chef or restaurant words.",
+      "open": "an invitation to the yard",
+      "claim": "the wreckage as free fuel",
+      "grudge": "thanks the player for wreckage; refuses the clock",
+      "wreck": "reads the place's wear as fuel",
+      "warn": "his stomach is counting",
+      "ln04": "Legal ln04: he reads a place's wear state (damaged, fallen) and a thing wrecked, never a casualty count (`toll_band` is not a slot for him), never a person, never a toll. No line, caption or card mentions people at a fallen place. No advantage grows with deaths. Nothing about him changes with the toll.",
+      "never": [
+        "sir, madam, menu, table, chef, order, kitchen",
+        "a line that changes with casualties",
+        "hunger for civilians or children"
+      ]
+    }
+  },
+  "templates": [
+    {
+      "id": "arr_waiting",
+      "family": "arrival",
+      "name": "Waiting at home",
+      "reads": [
+        "opp",
+        "home",
+        "p1"
+      ],
+      "when": "The stage is the opponent's home or a place its claim picked",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "open",
+          "does": "greets the player on their own ground"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "takes in the place"
+        }
+      ],
+      "fits": "A B C",
+      "note": "The home is colour and set piece, never numbers."
+    },
+    {
+      "id": "arr_claim",
+      "family": "arrival",
+      "name": "A claimed ground",
+      "reads": [
+        "opp",
+        "claim",
+        "place"
+      ],
+      "when": "A ring was picked by the opponent's claim",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "claim",
+          "does": "names what they came for: the ground"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "answers"
+        }
+      ],
+      "fits": "A B C",
+      "note": ""
+    },
+    {
+      "id": "arr_horde_first",
+      "family": "arrival",
+      "name": "The warm-up crowd",
+      "reads": [
+        "opp",
+        "place",
+        "mode"
+      ],
+      "when": "A horde stage comes first, the opponent after",
+      "beats": [
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "sizes up the crowd"
+        },
+        {
+          "role": "ally",
+          "hook": "needle",
+          "does": "claims a side"
+        }
+      ],
+      "fits": "A B C",
+      "note": "Henchmen carry no lines of their own and no names."
+    },
+    {
+      "id": "arr_first_stage",
+      "family": "arrival",
+      "name": "Home, and a visitor",
+      "reads": [
+        "p1",
+        "home",
+        "opp"
+      ],
+      "when": "First stage of a run, round the player's own home",
+      "beats": [
+        {
+          "role": "p1",
+          "hook": "home",
+          "does": "says something about home"
+        },
+        {
+          "role": "opp",
+          "hook": "needle",
+          "does": "a short remark from the visitor"
+        }
+      ],
+      "fits": "A B",
+      "note": "Shown at most once a run."
+    },
+    {
+      "id": "grudge_wrecked",
+      "family": "grudge",
+      "name": "You wrecked my ground",
+      "reads": [
+        "opp",
+        "wrecked",
+        "home"
+      ],
+      "when": "The player wrecked something on the opponent's ground earlier",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "grudge",
+          "does": "names what was wrecked and what it will cost"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "takes it in stride"
+        }
+      ],
+      "fits": "B C",
+      "note": "A thing wrecked, never a person."
+    },
+    {
+      "id": "grudge_humbled",
+      "family": "grudge",
+      "name": "Humbled, returning",
+      "reads": [
+        "opp",
+        "last"
+      ],
+      "when": "last is won (the player beat them)",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "grudge",
+          "does": "denies the loss, promises a different result"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "welcomes the rematch"
+        }
+      ],
+      "fits": "A B C",
+      "note": ""
+    },
+    {
+      "id": "grudge_unfinished",
+      "family": "grudge",
+      "name": "Unfinished business",
+      "reads": [
+        "opp",
+        "last"
+      ],
+      "when": "last is draw (the time cap)",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "grudge",
+          "does": "refuses the clock"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "offers round two"
+        }
+      ],
+      "fits": "B C",
+      "note": ""
+    },
+    {
+      "id": "rematch_beaten",
+      "family": "rematch",
+      "name": "They beat you",
+      "reads": [
+        "opp",
+        "last"
+      ],
+      "when": "last is lost",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "boast",
+          "does": "recalls the result"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "asks for another go"
+        }
+      ],
+      "fits": "B C",
+      "note": ""
+    },
+    {
+      "id": "rematch_beat_them",
+      "family": "rematch",
+      "name": "You beat them",
+      "reads": [
+        "opp",
+        "last"
+      ],
+      "when": "last is won",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "deny",
+          "does": "claims they let you"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "answers lightly"
+        }
+      ],
+      "fits": "B C",
+      "note": ""
+    },
+    {
+      "id": "rematch_close",
+      "family": "rematch",
+      "name": "A near thing",
+      "reads": [
+        "opp",
+        "last"
+      ],
+      "when": "last is won_close or lost_close",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "deny",
+          "does": "calls it a fluke"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "wants the real one"
+        }
+      ],
+      "fits": "B C",
+      "note": ""
+    },
+    {
+      "id": "rematch_wreck",
+      "family": "rematch",
+      "name": "What was wrecked",
+      "reads": [
+        "opp",
+        "last",
+        "wrecked",
+        "prev_place"
+      ],
+      "when": "last was at prev_place and left something wrecked",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "wreck",
+          "does": "points at what is left"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "pulls attention back to the fight"
+        }
+      ],
+      "fits": "B C",
+      "note": "For the Cyborg the wreckage is fuel; nothing about people (ln04)."
+    },
+    {
+      "id": "ambush_road",
+      "family": "ambush",
+      "name": "On the road",
+      "reads": [
+        "opp",
+        "place"
+      ],
+      "when": "An unplanned fight between stages (A: a detour node; B: a twist)",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "open",
+          "does": "strikes first, with a remark"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "greets it"
+        }
+      ],
+      "fits": "A B C",
+      "note": ""
+    },
+    {
+      "id": "ambush_drag",
+      "family": "ambush",
+      "name": "Dragged to their ground",
+      "reads": [
+        "opp",
+        "claim",
+        "home"
+      ],
+      "when": "The opponent's claim pulls a stage onto their ground",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "claim",
+          "does": "calls it a shortcut"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "complains cheerfully"
+        }
+      ],
+      "fits": "A C",
+      "note": ""
+    },
+    {
+      "id": "ambush_split",
+      "family": "ambush",
+      "name": "One of you alone",
+      "reads": [
+        "opp",
+        "p1",
+        "p2",
+        "mode"
+      ],
+      "when": "Co-op: the opponent catches one player apart from the partner",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "needle",
+          "does": "mocks the one alone"
+        },
+        {
+          "role": "ally",
+          "hook": "react",
+          "does": "is exactly where it meant to be"
+        }
+      ],
+      "fits": "A B C",
+      "note": "Never a rule that punishes the split."
+    },
+    {
+      "id": "third_interrupts",
+      "family": "third_party",
+      "name": "A third arrives mid-fight",
+      "reads": [
+        "third",
+        "opp",
+        "p1"
+      ],
+      "when": "A third fighter arrives while two fight",
+      "beats": [
+        {
+          "role": "third",
+          "hook": "open",
+          "does": "joins the edge of the fight"
+        },
+        {
+          "role": "opp",
+          "hook": "needle",
+          "does": "tells them to stay out"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "welcomes it"
+        }
+      ],
+      "fits": "B C",
+      "note": "Never names a third beyond the roster."
+    },
+    {
+      "id": "third_steals",
+      "family": "third_party",
+      "name": "A third takes the prize",
+      "reads": [
+        "third",
+        "opp"
+      ],
+      "when": "The opponent's claim (its wreckage, its high ground) is taken",
+      "beats": [
+        {
+          "role": "third",
+          "hook": "claim",
+          "does": "takes it"
+        },
+        {
+          "role": "opp",
+          "hook": "needle",
+          "does": "objects"
+        }
+      ],
+      "fits": "B C",
+      "note": ""
+    },
+    {
+      "id": "third_watches",
+      "family": "third_party",
+      "name": "Someone is watching",
+      "reads": [
+        "third",
+        "place"
+      ],
+      "when": "A third is on the ring and not fighting",
+      "beats": [
+        {
+          "role": "radio",
+          "hook": "report",
+          "does": "says someone is watching"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "plays to it"
+        }
+      ],
+      "fits": "A B C",
+      "note": ""
+    },
+    {
+      "id": "ally_leaves",
+      "family": "ally_switches",
+      "name": "The partner goes",
+      "reads": [
+        "ally",
+        "opp"
+      ],
+      "when": "A CPU partner leaves the player's side",
+      "beats": [
+        {
+          "role": "ally",
+          "hook": "leave",
+          "does": "explains in their own voice"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "keeps going"
+        }
+      ],
+      "fits": "B C",
+      "note": "Co-op only if the partner is the CPU's; a human partner never leaves."
+    },
+    {
+      "id": "ally_arrives",
+      "family": "ally_switches",
+      "name": "An opponent helps",
+      "reads": [
+        "opp",
+        "p1"
+      ],
+      "when": "An opponent fights with the player for one stage",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "arrive",
+          "does": "announces a side, for today"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "welcomes them"
+        }
+      ],
+      "fits": "B C",
+      "note": ""
+    },
+    {
+      "id": "ally_torn",
+      "family": "ally_switches",
+      "name": "The partner hesitates",
+      "reads": [
+        "ally",
+        "opp"
+      ],
+      "when": "A partner is split between two claims",
+      "beats": [
+        {
+          "role": "ally",
+          "hook": "torn",
+          "does": "voices the pull, in their own terms"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "asks them to pick"
+        }
+      ],
+      "fits": "B C",
+      "note": ""
+    },
+    {
+      "id": "home_player",
+      "family": "home_threat",
+      "name": "The player's home",
+      "reads": [
+        "p1",
+        "home",
+        "home_wear"
+      ],
+      "when": "The player's own home is damaged or in danger",
+      "beats": [
+        {
+          "role": "radio",
+          "hook": "report",
+          "does": "reports the place"
+        },
+        {
+          "role": "p1",
+          "hook": "home",
+          "does": "moves"
+        }
+      ],
+      "fits": "A B C",
+      "note": "A place and its wear only, no counts."
+    },
+    {
+      "id": "home_opp",
+      "family": "home_threat",
+      "name": "The opponent's home",
+      "reads": [
+        "opp",
+        "home",
+        "home_wear"
+      ],
+      "when": "The opponent's home is threatened by a third",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "home",
+          "does": "stops the fight for it"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "lets them go"
+        }
+      ],
+      "fits": "B C",
+      "note": ""
+    },
+    {
+      "id": "home_wear",
+      "family": "home_threat",
+      "name": "Home is wreckage",
+      "reads": [
+        "opp",
+        "home",
+        "home_wear"
+      ],
+      "when": "home_wear is damaged or fallen",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "wreck",
+          "does": "reads the ground"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "refocuses"
+        }
+      ],
+      "fits": "B C",
+      "note": "The Cyborg's lines read WEAR STATE only: never a casualty count, never people (ln04)."
+    },
+    {
+      "id": "home_after",
+      "family": "home_threat",
+      "name": "After the fight, the mending",
+      "reads": [
+        "p1",
+        "home",
+        "place"
+      ],
+      "when": "After a stage that damaged a home",
+      "beats": [
+        {
+          "role": "p1",
+          "hook": "after",
+          "does": "apologises and offers to rebuild"
+        },
+        {
+          "role": "crowd",
+          "hook": "react",
+          "does": "answers"
+        }
+      ],
+      "fits": "A B C",
+      "note": "The apology is after the fight, never during it (Orb)."
+    },
+    {
+      "id": "taunt_afar",
+      "family": "boss_taunt",
+      "name": "From afar",
+      "reads": [
+        "opp",
+        "n_left"
+      ],
+      "when": "n_left is 2 or more; the boss reaches the player before the stage",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "warn",
+          "does": "a short message"
+        }
+      ],
+      "fits": "A B C",
+      "note": ""
+    },
+    {
+      "id": "taunt_arrival",
+      "family": "boss_taunt",
+      "name": "On arrival",
+      "reads": [
+        "opp",
+        "claim"
+      ],
+      "when": "Boss stage starts",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "claim",
+          "does": "welcomes them to the ground"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "answers"
+        }
+      ],
+      "fits": "A B C",
+      "note": ""
+    },
+    {
+      "id": "taunt_loss",
+      "family": "boss_taunt",
+      "name": "After a loss",
+      "reads": [
+        "opp",
+        "last"
+      ],
+      "when": "last is lost to the boss",
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "boast",
+          "does": "rubs it in"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "asks for another go"
+        }
+      ],
+      "fits": "A B C",
+      "note": ""
+    },
+    {
+      "id": "cliff_next",
+      "family": "cliffhanger",
+      "name": "Next time",
+      "reads": [
+        "next",
+        "opp",
+        "home"
+      ],
+      "when": "The end of an episode (B) or a node (A)",
+      "beats": [
+        {
+          "role": "radio",
+          "hook": "warn",
+          "does": "names who or where is next"
+        }
+      ],
+      "fits": "A B",
+      "note": ""
+    },
+    {
+      "id": "cliff_shadow",
+      "family": "cliffhanger",
+      "name": "A shadow",
+      "reads": [
+        "third"
+      ],
+      "when": "The end of an episode with a twist unresolved",
+      "beats": [
+        {
+          "role": "radio",
+          "hook": "warn",
+          "does": "a silhouette teaser, no name"
+        }
+      ],
+      "fits": "B",
+      "note": ""
+    },
+    {
+      "id": "cliff_front",
+      "family": "cliffhanger",
+      "name": "While you fought",
+      "reads": [
+        "place",
+        "n_left"
+      ],
+      "when": "C: a front moved while the player fought elsewhere",
+      "beats": [
+        {
+          "role": "radio",
+          "hook": "report",
+          "does": "a place took damage while they fought"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "turns to it"
+        }
+      ],
+      "fits": "C",
+      "note": "A place and its wear only: no toll, no remains (c08, ln04)."
+    }
+  ],
+  "samples": [
+    {
+      "family": "arrival",
+      "template": "arr_waiting",
+      "slots": "opp=RIVAL, home=Rankhold, p1=PROTAGONIST",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "Took you long enough. Come up, amateur."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Nice view! Is the whole stair yours?"
+        }
+      ]
+    },
+    {
+      "family": "arrival",
+      "template": "arr_claim",
+      "slots": "opp=EMPRESS, claim=the open ground, place=Furrowlea",
+      "lines": [
+        {
+          "who": "EMPRESS",
+          "text": "Our plains now, petitioner. Admire the horizon!"
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Flat and clear. I'll see you coming!"
+        }
+      ]
+    },
+    {
+      "family": "arrival",
+      "template": "arr_waiting",
+      "slots": "opp=CYBORG, home=Slagholt, p1=PROTAGONIST",
+      "lines": [
+        {
+          "who": "CYBORG",
+          "text": "Come in! Plenty of scrap, plenty of room!"
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Big yard! Where do the cranes go?"
+        }
+      ]
+    },
+    {
+      "family": "arrival",
+      "template": "arr_first_stage",
+      "slots": "p1=PROTAGONIST, home=Mendquay, opp=RIVAL",
+      "lines": [
+        {
+          "who": "PROTAGONIST",
+          "text": "Same crooked plank. Good to be home!"
+        },
+        {
+          "who": "RIVAL",
+          "text": "Cute pier. Shame about the company."
+        }
+      ]
+    },
+    {
+      "family": "arrival",
+      "template": "arr_horde_first",
+      "slots": "p1=PROTAGONIST, ally=RIVAL, mode=horde",
+      "lines": [
+        {
+          "who": "PROTAGONIST",
+          "text": "Warm-up crowd! Save some for me!"
+        },
+        {
+          "who": "RIVAL",
+          "text": "Keep up. I'm taking the left."
+        }
+      ]
+    },
+    {
+      "family": "grudge",
+      "template": "grudge_wrecked",
+      "slots": "opp=EMPRESS, wrecked=a tower, home=Crownreach",
+      "lines": [
+        {
+          "who": "EMPRESS",
+          "text": "You broke our tower, rat. We'll break your arm."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Fair! Hit me as hard as you like!"
+        }
+      ]
+    },
+    {
+      "family": "grudge",
+      "template": "grudge_humbled",
+      "slots": "opp=RIVAL, last=won",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "Lucky swing. I've been counting the days."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Count harder! I've been training too!"
+        }
+      ]
+    },
+    {
+      "family": "grudge",
+      "template": "grudge_unfinished",
+      "slots": "opp=CYBORG, last=draw",
+      "lines": [
+        {
+          "who": "CYBORG",
+          "text": "Time called it. My stomach didn't!"
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Fine! Round two. Bring more plating!"
+        }
+      ]
+    },
+    {
+      "family": "grudge",
+      "template": "grudge_wrecked",
+      "slots": "opp=CYBORG, wrecked=a crater, home=Slagholt",
+      "lines": [
+        {
+          "who": "CYBORG",
+          "text": "You left good wreckage back there. Thanks!"
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Don't thank me. Fight me!"
+        }
+      ]
+    },
+    {
+      "family": "grudge",
+      "template": "grudge_humbled",
+      "slots": "opp=RIVAL, ally=EMPRESS (co-op)",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "You, the loud one. I owe you a rematch."
+        },
+        {
+          "who": "EMPRESS",
+          "text": "Hahaha! Come and collect, clown!"
+        }
+      ]
+    },
+    {
+      "family": "rematch",
+      "template": "rematch_beaten",
+      "slots": "opp=RIVAL, last=lost",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "Back again? I ranked you last time."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Rank me again. I'll climb!"
+        }
+      ]
+    },
+    {
+      "family": "rematch",
+      "template": "rematch_beat_them",
+      "slots": "opp=EMPRESS, last=won",
+      "lines": [
+        {
+          "who": "EMPRESS",
+          "text": "We let you win, rat. Try that twice!"
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "You let me? Then let me again!"
+        }
+      ]
+    },
+    {
+      "family": "rematch",
+      "template": "rematch_close",
+      "slots": "opp=RIVAL, last=won_close",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "A fluke. Flukes don't repeat."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Then show me the real one!"
+        }
+      ]
+    },
+    {
+      "family": "rematch",
+      "template": "rematch_wreck",
+      "slots": "opp=CYBORG, wrecked=a crater",
+      "lines": [
+        {
+          "who": "CYBORG",
+          "text": "Your crater's still warm. Good steel in it!"
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Keep your eyes on me, not the dirt!"
+        }
+      ]
+    },
+    {
+      "family": "rematch",
+      "template": "rematch_beat_them",
+      "slots": "opp=EMPRESS, last=draw",
+      "lines": [
+        {
+          "who": "EMPRESS",
+          "text": "Time ended it. We refuse to be timed!"
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Ha! Then no clock this time!"
+        }
+      ]
+    },
+    {
+      "family": "ambush",
+      "template": "ambush_road",
+      "slots": "opp=RIVAL, place=the coast road",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "Did you think the road was empty?"
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Oh, hello! Ready when you are!"
+        }
+      ]
+    },
+    {
+      "family": "ambush",
+      "template": "ambush_drag",
+      "slots": "opp=CYBORG, home=Slagholt, claim=the wreckage",
+      "lines": [
+        {
+          "who": "CYBORG",
+          "text": "Shortcut! It goes right through my yard."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "This is not on the map!"
+        }
+      ]
+    },
+    {
+      "family": "ambush",
+      "template": "ambush_split",
+      "slots": "opp=EMPRESS, p1=PROTAGONIST alone, ally=RIVAL",
+      "lines": [
+        {
+          "who": "EMPRESS",
+          "text": "Only one of you? How careless, rat."
+        },
+        {
+          "who": "RIVAL",
+          "text": "Careless? I'm exactly where I meant to be."
+        }
+      ]
+    },
+    {
+      "family": "ambush",
+      "template": "ambush_road",
+      "slots": "opp=PROTAGONIST, p1=RIVAL",
+      "lines": [
+        {
+          "who": "PROTAGONIST",
+          "text": "Surprise! I've been waiting up here!"
+        },
+        {
+          "who": "RIVAL",
+          "text": "Predictable. I counted your footsteps."
+        }
+      ]
+    },
+    {
+      "family": "ambush",
+      "template": "ambush_road",
+      "slots": "opp=RIVAL, mode=2v1",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "Streets are clear. Something is coming this way."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Everyone inside! I'll meet it!"
+        }
+      ]
+    },
+    {
+      "family": "third_party",
+      "template": "third_interrupts",
+      "slots": "third=EMPRESS, opp=RIVAL, p1=PROTAGONIST",
+      "lines": [
+        {
+          "who": "EMPRESS",
+          "text": "Hahaha! Carry on. We'll take the winner."
+        },
+        {
+          "who": "RIVAL",
+          "text": "Stay out of this."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "The more the merrier! Who's first?"
+        }
+      ]
+    },
+    {
+      "family": "third_party",
+      "template": "third_steals",
+      "slots": "third=CYBORG, opp=RIVAL",
+      "lines": [
+        {
+          "who": "CYBORG",
+          "text": "That wreck is mine. I smelled it first!"
+        },
+        {
+          "who": "RIVAL",
+          "text": "Back off, scrap. I'm busy."
+        }
+      ]
+    },
+    {
+      "family": "third_party",
+      "template": "third_watches",
+      "slots": "third=silhouette, place=the ridge",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "Someone's watching from the ridge. Not moving."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Let them look. Show them something!"
+        }
+      ]
+    },
+    {
+      "family": "third_party",
+      "template": "third_interrupts",
+      "slots": "third=PROTAGONIST, p1=RIVAL",
+      "lines": [
+        {
+          "who": "PROTAGONIST",
+          "text": "Need a hand? Keep your guard up!"
+        },
+        {
+          "who": "RIVAL",
+          "text": "I didn't ask. Stay out of my way."
+        }
+      ]
+    },
+    {
+      "family": "third_party",
+      "template": "third_watches",
+      "slots": "third=silhouette",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "Nobody knows who it is yet."
+        },
+        {
+          "who": "CROWD",
+          "text": "Is that another fighter?"
+        }
+      ]
+    },
+    {
+      "family": "ally_switches",
+      "template": "ally_leaves",
+      "slots": "ally=RIVAL (CPU), opp=EMPRESS",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "I rank myself first. Goodbye, amateur."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Fine! I'll beat you both!"
+        }
+      ]
+    },
+    {
+      "family": "ally_switches",
+      "template": "ally_arrives",
+      "slots": "opp=EMPRESS, p1=PROTAGONIST",
+      "lines": [
+        {
+          "who": "EMPRESS",
+          "text": "Hahaha! We choose our side. Today, yours."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Welcome aboard! Try to keep up!"
+        }
+      ]
+    },
+    {
+      "family": "ally_switches",
+      "template": "ally_torn",
+      "slots": "ally=CYBORG, opp=RIVAL",
+      "lines": [
+        {
+          "who": "CYBORG",
+          "text": "Wrecks on both sides. I'm torn!"
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Pick me! I promise a good fight!"
+        }
+      ]
+    },
+    {
+      "family": "ally_switches",
+      "template": "ally_leaves",
+      "slots": "ally=RIVAL returns",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "I never switched. I outranked you."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Sure! Whatever you say!"
+        }
+      ]
+    },
+    {
+      "family": "ally_switches",
+      "template": "ally_leaves",
+      "slots": "ally=EMPRESS (CPU)",
+      "lines": [
+        {
+          "who": "EMPRESS",
+          "text": "Partners? We have a court."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Then bring your court along!"
+        }
+      ]
+    },
+    {
+      "family": "home_threat",
+      "template": "home_player",
+      "slots": "p1=PROTAGONIST, home=Mendquay, home_wear=damaged",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "Smoke over Mendquay! The pier's burning!"
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Not my pier! Move, move!"
+        }
+      ]
+    },
+    {
+      "family": "home_threat",
+      "template": "home_opp",
+      "slots": "opp=RIVAL, home=Rankhold, home_wear=damaged",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "Someone's climbing my stair. Hold the fight."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Go! Then I want my turn!"
+        }
+      ]
+    },
+    {
+      "family": "home_threat",
+      "template": "home_wear",
+      "slots": "opp=CYBORG, home=Slagholt, home_wear=fallen",
+      "lines": [
+        {
+          "who": "CYBORG",
+          "text": "Home's all wreckage now. Lovely fuel!"
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Come on, then. Fight me for it!"
+        }
+      ]
+    },
+    {
+      "family": "home_threat",
+      "template": "home_opp",
+      "slots": "opp=EMPRESS, home=Crownreach, home_wear=damaged",
+      "lines": [
+        {
+          "who": "EMPRESS",
+          "text": "Someone cracks our banners? Move, rat!"
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Go! I'll wait right here!"
+        }
+      ]
+    },
+    {
+      "family": "home_threat",
+      "template": "home_after",
+      "slots": "p1=PROTAGONIST, home=Mendquay  [after the fight]",
+      "lines": [
+        {
+          "who": "PROTAGONIST",
+          "text": "Sorry about the pier, everyone. I'll help rebuild.",
+          "after_fight": true
+        },
+        {
+          "who": "CROWD",
+          "text": "Just don't break it twice!"
+        }
+      ]
+    },
+    {
+      "family": "boss_taunt",
+      "template": "taunt_afar",
+      "slots": "opp=EMPRESS, n_left=3",
+      "lines": [
+        {
+          "who": "EMPRESS",
+          "text": "We are watching, rat. Do hurry up!"
+        }
+      ]
+    },
+    {
+      "family": "boss_taunt",
+      "template": "taunt_arrival",
+      "slots": "opp=CYBORG, claim=the wreckage",
+      "lines": [
+        {
+          "who": "CYBORG",
+          "text": "Tick tock, snack. My stomach's counting!"
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Let it count. I'm ready!"
+        }
+      ]
+    },
+    {
+      "family": "boss_taunt",
+      "template": "taunt_loss",
+      "slots": "opp=RIVAL, last=lost",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "That's all? Third-rate, start to finish."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Again! I just found your timing!"
+        }
+      ]
+    },
+    {
+      "family": "boss_taunt",
+      "template": "taunt_arrival",
+      "slots": "opp=EMPRESS, ally=RIVAL",
+      "lines": [
+        {
+          "who": "EMPRESS",
+          "text": "Your friend looks lost, rat. Poor thing!"
+        },
+        {
+          "who": "RIVAL",
+          "text": "Lost? I'm taking your crown."
+        }
+      ]
+    },
+    {
+      "family": "boss_taunt",
+      "template": "taunt_arrival",
+      "slots": "opp=RIVAL, home=Mendquay",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "Your pier's still crooked. So are you."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Crooked but standing! Come and see!"
+        }
+      ]
+    },
+    {
+      "family": "cliffhanger",
+      "template": "cliff_next",
+      "slots": "next=RIVAL at Rankhold",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "Next: Rankhold. Someone's waiting on the stair."
+        }
+      ]
+    },
+    {
+      "family": "cliffhanger",
+      "template": "cliff_shadow",
+      "slots": "third=silhouette",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "Someone's coming. We'll meet them next time."
+        }
+      ]
+    },
+    {
+      "family": "cliffhanger",
+      "template": "cliff_front",
+      "slots": "place=the harbour (damaged)",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "While you fought, the harbour took damage."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Then let's go and help!"
+        }
+      ]
+    },
+    {
+      "family": "cliffhanger",
+      "template": "cliff_next",
+      "slots": "opp=EMPRESS",
+      "lines": [
+        {
+          "who": "EMPRESS",
+          "text": "We will see you at the throne, rat."
+        }
+      ]
+    },
+    {
+      "family": "cliffhanger",
+      "template": "cliff_next",
+      "slots": "ally=RIVAL (co-op)",
+      "lines": [
+        {
+          "who": "PROTAGONIST",
+          "text": "Same time next stage? Don't be late!"
+        },
+        {
+          "who": "RIVAL",
+          "text": "I'm never late. You're early."
+        }
+      ]
+    }
+  ],
+  "rules": [
+    "Slots only; no new lore or names.",
+    "A beat is two or three lines (4 to 12 words each), skippable, and never decides an outcome.",
+    "A place state (untouched, damaged, fallen) and a thing wrecked are readable; a casualty count is not, and never for the Cyborg (ln04).",
+    "A home is colour and set piece, never numbers.",
+    "The Protagonist apologises only after a fight.",
+    "The Empress's guards speak only in a 3v1 (mode 3v1).",
+    "At most two beats a gap (one aftermath, one ahead), as in story-beats.md."
+  ]
+}
