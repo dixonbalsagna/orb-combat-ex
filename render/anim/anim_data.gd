@@ -41,6 +41,7 @@ static var agency: Dictionary = {}       # data/anim/agency.json: how the agency
 static var intro: Dictionary = {}        # data/anim/intro.json: the opening's timings and each shape's staredown beat
 static var brake: Dictionary = {}        # data/anim/brake.json: the mid-air skid (docs/animation/ragdoll-physics-paper.md section 3a)
 static var clinch: Dictionary = {}       # data/anim/clinch.json: the clinch's grip layer (docs/animation/clinch-sizing.md slice C2)
+static var struggle: Dictionary = {}     # data/anim/struggle.json: the beam struggle's dig-in (the loser's legs, pelvis and drag, the winner's lean)
 static var press_ack: Dictionary = {}    # data/anim/press_ack.json: the anticipation of a press that has to wait (Encounter's press_ack queued)
 static var recoil: Dictionary = {}       # data/anim/recoil.json: recoil exits and ricochets (docs/combat/choreography-feel.md)
 static var chain: Dictionary = {}        # data/anim/chain.json: the chain inside a tower (docs/animation/ragdoll-physics-paper.md section 4)
@@ -157,6 +158,7 @@ static func load_all() -> void:
 	clinch = _read("clinch.json")
 	recoil = _read("recoil.json")
 	press_ack = _read("press_ack.json")
+	struggle = _read("struggle.json")
 	personality = _read("personality.json")
 	winner = _read("winner.json")
 	quality_levels = _read("quality.json").get("levels", {})

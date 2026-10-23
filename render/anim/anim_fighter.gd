@@ -101,6 +101,9 @@ var _gr_w: float = 0.0                 # the hold's weight now: in over ramp_tic
 var _rc: Dictionary = {}                # the recoil exit playing (on_recoil): kind, t0, dur, cfg, seq, the surface's normal
 var _fid: String = ""                 # this body's roster id, kept from the ragdoll's tick (for the per-fighter sequences)
 var _ack: Dictionary = {}               # the press-tick anticipation playing (on_press_ack): pose, weight, start, hold, end, the hits taken at the start
+var _str_w: float = 0.0                # the beam struggle's dig-in: how far he is being pushed back (0 to 1), eased
+var _str_lead: float = 0.0             # ... and how far he is winning (0 to 1)
+var _str_slide: float = 0.0            # ... and how far the drawn body has been dragged back along the ground, in model units
 var _ab_on: bool = false                # the sim's air brake is on (an air_brake event)
 var _ab_w: float = 0.0                 # the skid's weight now: in over enter_ticks, out over exit_ticks
 var _ab_str: float = 0.0               # how hard it is from the deceleration he shows (0 to 1)
@@ -592,6 +595,43 @@ func _ack_layer(S: SimState, f, dt: float) -> void:
 	if RenderAnim.reduced_motion:
 		w *= 0.6
 	_mix_pose(AnimData.pose(String(_ack.pose)), w * float(_ack.w))
+
+
+## The beam struggle's dig-in (docs/animation/struggle-dig-in.md; data/anim/struggle.json). Encounter's struggle writes the meeting point `S.game.clash.mid` (0 at A's hands, 1 at D's). The fighter it is pushing back
+## digs in: the squash pose's legs, pelvis and spine mixed in by how far past the middle the point is on his side, a tremble from the strain, and the drawn body dragged back along the ground (the feet carving it).
+## The winner leans in a little. Position is the sim's: only the drawn root moves. Weights ramp over `enter_ticks` (6 or more: the snappy profile solves on twos, so a shorter ramp reads as a snap).
+func _struggle_layer(S: SimState, f, dt: float) -> void:
+	var C: Dictionary = AnimData.struggle
+	var c = S.game.clash
+	var losing: float = 0.0
+	var winning: float = 0.0
+	if not C.is_empty() and RenderAnim.struggle_dig and c != null and float(c.mid) >= 0.0 and (c.A == f or c.D == f):
+		var m: float = float(c.mid) if c.A == f else 1.0 - float(c.mid)   # 0.5 even; under it the point is nearer his hands and he is the one being pushed back
+		losing = clampf((0.5 - m) * 2.0, 0.0, 1.0)
+		winning = clampf((m - 0.5) * 2.0, 0.0, 1.0)
+	var step: float = dt * 60.0 / maxf(float(C.get("enter_ticks", 10)), 6.0)
+	_str_w = move_toward(_str_w, losing, step)
+	_str_lead = move_toward(_str_lead, winning, step)
+	var rate: float = float(C.get("slide_rate", 14.0)) if losing * float(C.get("slide_max", 9.0)) > _str_slide else float(C.get("return_rate", 10.0))
+	_str_slide = move_toward(_str_slide, losing * float(C.get("slide_max", 9.0)), dt * rate)
+	if _str_w <= 0.001 and _str_lead <= 0.001 and _str_slide <= 0.01:
+		_str_w = 0.0
+		_str_lead = 0.0
+		_str_slide = 0.0
+		return
+	var calm: float = 0.4 if RenderAnim.reduced_motion else 1.0
+	if _str_w > 0.001:
+		var sp: Dictionary = AnimData.press.get("squash_pose", {})
+		var pid: String = String(sp.get("by_fighter", {}).get(pair_key, sp.get("default", "brace")))
+		if AnimData.pose_exists(pid):
+			var spp: AnimPose = AnimData.pose(pid)
+			var w: float = float(C.get("dig_w", 0.85)) * _str_w
+			for bn in sp.get("bones", []):
+				var bi: int = AnimRig.index[String(bn)]
+				_press_slerp(bi, spp.q[bi], w)
+			hips.y = minf(hips.y, lerpf(hips.y, spp.hips.y, w))
+	# the feet carve: dragged back by the strain, trembling; the winner leans in
+	_pr_dx += -_str_slide * calm + float(C.get("lead_dx", 2.5)) * _str_lead + _signed(S.tick, slot) * float(C.get("tremble", 0.6)) * _str_w * calm
 
 
 ## The clinch's grip layer (docs/animation/clinch-sizing.md slice C2; data/anim/clinch.json). The sim's hold arrives as a read, `on_hold(read, T)`: {partner (a fighter's slot), kind (tie, pummel, brace, pin, carry, strain, whiff,
@@ -1940,6 +1980,7 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 			_rip_cue = {}
 	# 4. the signature beam, and a transformation
 	_beam_layer(S, f, T)
+	_struggle_layer(S, f, dt)
 	if not _form.is_empty():
 		_transform_layer(S, T)
 	# 4a. the head looks at the opponent

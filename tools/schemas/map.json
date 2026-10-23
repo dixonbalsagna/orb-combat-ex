@@ -552,6 +552,10 @@
       "schema": "anim-press-ack.schema.json"
     },
     {
+      "match": "data/anim/struggle.json",
+      "schema": "anim-struggle.schema.json"
+    },
+    {
       "match": "data/anim/recoil.json",
       "schema": "anim-recoil.schema.json"
     },

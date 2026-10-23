@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-struggle",
+  "title": "anim.struggle/1",
+  "description": "data/anim/struggle.json: the beam struggle's dig-in (docs/animation/struggle-dig-in.md; AnimFighter._struggle_layer): while a beam struggle holds a meeting point, the fighter being pushed back digs in (the squash pose's legs, pelvis and spine) and is dragged back, and the pusher leans in. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore; every key is required.",
+  "type": "object",
+  "required": [
+    "schema",
+    "enter_ticks",
+    "dig_w",
+    "slide_max",
+    "slide_rate",
+    "return_rate",
+    "lead_dx",
+    "tremble"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.struggle/1"
+    },
+    "enter_ticks": {
+      "type": "integer",
+      "minimum": 6,
+      "maximum": 30,
+      "description": "Ticks the dig-in takes to ease in."
+    },
+    "dig_w": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "How far the squash pose is mixed in on the loser, 0 to 1."
+    },
+    "slide_max": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 30,
+      "description": "The most the loser is dragged back, in units."
+    },
+    "slide_rate": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 60,
+      "description": "How fast the loser slides back, in units a second."
+    },
+    "return_rate": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 60,
+      "description": "How fast the body returns when the point moves back, in units a second."
+    },
+    "lead_dx": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 10,
+      "description": "How far the winner leans forward, in units."
+    },
+    "tremble": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 3,
+      "description": "The strain tremor, in units."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

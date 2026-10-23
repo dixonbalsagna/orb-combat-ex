@@ -41,6 +41,7 @@ static var chain_poses: bool = true          # RG4: World's interior contacts an
 static var grip_layer: bool = true            # the clinch's grip layer (docs/animation/clinch-sizing.md slice C2): the sim's hold read mixes the clinch poses in and puts each gripping hand on its region of the partner; inert without a read; --no-grip-layer is the before
 static var recoil_flips: bool = true          # recoil exits and ricochets (docs/combat/choreography-feel.md): Encounter's cue `recoil` turns the struck body over in an arc (back flip, handspring, back tuck, skip, ricochet); inert without the cue; --no-recoil-flips is the before
 static var press_ack: bool = true            # the anticipation of a press that has to wait (Encounter's cue press_ack, text queued): the first frames of the wind-up on the press tick, handed over to the real one; --no-press-ack is the before
+static var struggle_dig: bool = true         # the beam struggle's dig-in (S.game.clash.mid): the pushed-back fighter sinks, trembles and is dragged back along the ground, the winner leans in; --no-struggle-dig is the before
 static var shiver_by_weight: bool = true       # the struck body's shake follows the hit-stop's weight (2 ticks a little over half, 8 as before, 24 at 1.6) and a blow with no stop of its own (a mash's later blows) still shakes, small; --no-shiver-weight is the before
 static var kick_retreat: bool = true          # a kick whose hips are past its target gives ground instead of swinging the thigh back through its limit (data sockets.json limbs.foot.min_fwd); false is the before
 static var mash_press: bool = true            # a run of mashed blows leans in (data styles.<style>.press_run); false is the before
@@ -130,6 +131,8 @@ static func _read_args() -> void:
 			recoil_flips = false
 		elif a == "--no-press-ack":
 			press_ack = false
+		elif a == "--no-struggle-dig":
+			struggle_dig = false
 		elif a == "--no-shiver-weight":
 			shiver_by_weight = false
 		elif a == "--step3-cues":

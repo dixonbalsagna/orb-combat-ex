@@ -66,6 +66,7 @@ const CUE_SCENARIOS := {
 	"pa_light": {"kind": "pa", "actor": 0, "target": -1, "text": "x", "span": 24, "n": 56, "label": "press-tick anticipation: a light that has to wait 24 ticks (the Protagonist, then the Anti-hero)"},
 	"pa_heavy": {"kind": "pa", "actor": 0, "target": -1, "text": "y", "span": 24, "n": 56, "label": "press-tick anticipation: a heavy that has to wait 24 ticks"},
 	"pa_sig": {"kind": "pa", "actor": 0, "target": -1, "text": "b", "span": 24, "n": 56, "label": "press-tick anticipation: a signature that has to wait 24 ticks"},
+	"st_dig": {"kind": "st", "actor": 0, "target": -1, "text": "dig", "span": 0, "n": 90, "label": "the beam struggle: both fire, the meeting point drifts to the right-hand fighter and he digs in (then the left-hand one)"},
 	"cue_interject": {"kind": "windup", "actor": 0, "target": -1, "text": "interject", "span": 24, "dur": 24.0, "label": "an interjection's tell: the guard (the left one) shows a 24-tick wind-up"},
 }
 const PAL_A := {"body": Color("#3d8fdc"), "legs": Color("#1b1f2a"), "arms": Color("#e6b995"), "skin": Color("#efc7a2"), "gear": Color("#cdd6e4"), "accent": Color("#4fb9a8"), "hair": Color("#22c7a0")}
@@ -150,6 +151,8 @@ func _ready() -> void:
 			RenderAnim.free_arm_slew = false
 		if float(_js("window.__noshiver || 0", 0.0)) > 0.0:   # the shake by weight's before: every stop shakes the profile's amount, a blow with no stop of its own not at all
 			RenderAnim.shiver_by_weight = false
+		if float(_js("window.__nodig || 0", 0.0)) > 0.0:   # the beam struggle's before: no dig-in, the rest as it was
+			RenderAnim.struggle_dig = false
 		if float(_js("window.__noab || 0", 0.0)) > 0.0:   # RG2's before: no mid-air skid
 			RenderAnim.air_brake = false
 		if float(_js("window.__novary || 0", 0.0)) > 0.0:   # RG0's before: every launch flails the same, a hit always folds
@@ -461,6 +464,20 @@ func _step_tick() -> void:
 		f0.state = "free"   # the study's staging: the presser stands idle and free while he waits
 		f0.rush = null
 		RenderAnim.fighter(S, f0).on_press_ack(String(sc.cue.text), -1, int(sc.cue.span), S.T)
+	if sc.has("cue") and String(sc.cue.kind) == "st":
+		# both fire (a fake beam each) and the meeting point drifts from the middle toward the right-hand fighter, so he is the one pushed back; held, then back to the middle
+		var fb0 := FakeBeam.new()
+		fb0.A = f0
+		var fb1 := FakeBeam.new()
+		fb1.A = f1
+		S.beams = [fb0, fb1]
+		var stc := SimState.Clash.new()
+		stc.A = f0
+		stc.D = f1
+		stc.t0 = S.T
+		stc.dur = 5.0
+		stc.mid = 0.5 + 0.42 * smoothstep(8.0, 40.0, float(k)) * (1.0 - smoothstep(66.0, 86.0, float(k)))
+		S.game.clash = stc
 	if sc.has("cue") and String(sc.cue.kind) == "rd":
 		# a launched body flying free (no ground): the flail, the brace and, with the brake event, the skid. The study draws a body in place, so only its shape shows
 		if k == 0:
@@ -493,7 +510,7 @@ func _step_tick() -> void:
 			he.amount = 90.0
 			he.region = "core"
 			RenderAnim.consume(S, [he])
-	if sc.has("cue") and k == 10 and String(sc.cue.kind) != "beam" and String(sc.cue.kind) != "rd" and String(sc.cue.kind) != "fs" and String(sc.cue.kind) != "pa" and String(sc.cue.kind) != "rc":
+	if sc.has("cue") and k == 10 and String(sc.cue.kind) != "beam" and String(sc.cue.kind) != "rd" and String(sc.cue.kind) != "fs" and String(sc.cue.kind) != "st" and String(sc.cue.kind) != "pa" and String(sc.cue.kind) != "rc":
 		var cd: Dictionary = sc.cue
 		var ce := SimState.FxEvent.new()
 		ce.type = "cue"

@@ -299317,6 +299317,448 @@
       }
     },
     {
+      "id": "anim-struggle-valid",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/schema": "anim.struggle/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-struggle-underscore-key-ok",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-struggle-key-required-schema",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-struggle-key-required-enter-ticks",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "del": [
+            "/enter_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-struggle-key-required-dig-w",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "del": [
+            "/dig_w"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-struggle-key-required-slide-max",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "del": [
+            "/slide_max"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-struggle-key-required-slide-rate",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "del": [
+            "/slide_rate"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-struggle-key-required-return-rate",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "del": [
+            "/return_rate"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-struggle-key-required-lead-dx",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "del": [
+            "/lead_dx"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-struggle-key-required-tremble",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "del": [
+            "/tremble"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-struggle-unknown-key",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-struggle-schema-version",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/schema": "anim.struggle/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-struggle-enter-under-6",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/enter_ticks": 5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/enter_ticks"
+      }
+    },
+    {
+      "id": "anim-struggle-enter-over-30",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/enter_ticks": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/enter_ticks"
+      }
+    },
+    {
+      "id": "anim-struggle-enter-fraction",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/enter_ticks": 10.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enter_ticks"
+      }
+    },
+    {
+      "id": "anim-struggle-dig-negative",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/dig_w": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/dig_w"
+      }
+    },
+    {
+      "id": "anim-struggle-dig-over-one",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/dig_w": 1.2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/dig_w"
+      }
+    },
+    {
+      "id": "anim-struggle-slide-max-negative",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/slide_max": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/slide_max"
+      }
+    },
+    {
+      "id": "anim-struggle-slide-max-over-30",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/slide_max": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/slide_max"
+      }
+    },
+    {
+      "id": "anim-struggle-slide-rate-zero",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/slide_rate": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/slide_rate"
+      }
+    },
+    {
+      "id": "anim-struggle-slide-rate-over-60",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/slide_rate": 61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/slide_rate"
+      }
+    },
+    {
+      "id": "anim-struggle-return-rate-zero",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/return_rate": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/return_rate"
+      }
+    },
+    {
+      "id": "anim-struggle-return-rate-over-60",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/return_rate": 80
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/return_rate"
+      }
+    },
+    {
+      "id": "anim-struggle-lead-negative",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/lead_dx": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/lead_dx"
+      }
+    },
+    {
+      "id": "anim-struggle-lead-over-10",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/lead_dx": 11
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/lead_dx"
+      }
+    },
+    {
+      "id": "anim-struggle-tremble-negative",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/tremble": -0.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/tremble"
+      }
+    },
+    {
+      "id": "anim-struggle-tremble-over-3",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/tremble": 4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/tremble"
+      }
+    },
+    {
+      "id": "anim-struggle-value-not-a-number",
+      "schema": "anim-struggle.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/struggle.json",
+          "set": {
+            "/dig_w": "full"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/dig_w"
+      }
+    },
+    {
       "id": "fight-ricochet-angle-zero",
       "schema": "fight-ricochet.schema.json",
       "mutate": [

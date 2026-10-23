@@ -2582,6 +2582,104 @@ func _test_press_ack() -> void:
 	print("press-tick anticipation: %s" % " | ".join(seen))
 
 
+## The beam struggle's dig-in (docs/animation/struggle-dig-in.md). With the meeting point past the middle the fighter it pushes back digs in (the pelvis sinks, the drawn body is dragged back) and trembles; the winner leans in a
+## little; an even point and no point show nothing; and it all eases away when the struggle ends, with nothing popping. Nothing may be NaN or past a limit, and the sim's position is never moved.
+func _struggle_probe(who: String, mid: float, ticks: int, end_at: int, off: bool) -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = who
+	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+	f0.x = 1000.0
+	f1.x = 1180.0
+	f0.y = 0.0
+	f1.y = 0.0
+	f0.state = "free"
+	f1.state = "free"
+	RenderAnim.struggle_dig = not off
+	var res := {"nan": 0, "viol": 0, "moved": 0.0}
+	var s0: Array = []
+	var s1: Array = []
+	for k in range(ticks):
+		S.tick = 8500 + k
+		S.T = 870.0 + float(k) / 60.0
+		if k < end_at and mid != -9.0:
+			var c := SimState.Clash.new()
+			c.A = f0
+			c.D = f1
+			c.t0 = S.T
+			c.dur = 3.0
+			c.mid = mid
+			S.game.clash = c
+		else:
+			S.game.clash = null
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		var a0: AnimFighter = RenderAnim.solve(S, f0)
+		var a1: AnimFighter = RenderAnim.solve(S, f1)
+		for i in range(AnimRig.N):
+			if is_nan(a0.q[i].x) or is_nan(a1.q[i].x):
+				res.nan += 1
+		res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size() + AnimJoints.violations(a1.q, a1._rd.shape_key).size()
+		s0.append([a0.socket("pelvis").x, a0.socket("pelvis").y])
+		s1.append([a1.socket("pelvis").x, a1.socket("pelvis").y])
+		res.moved = maxf(float(res.moved), absf(f0.x - 1000.0) + absf(f1.x - 1180.0))
+	S.game.clash = null
+	RenderAnim.struggle_dig = true
+	res["a"] = s0
+	res["d"] = s1
+	return res
+
+
+func _test_struggle() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: Array = []
+	for who in ["PROTAGONIST", "RIVAL"]:
+		var on: Dictionary = _struggle_probe(who, 0.9, 80, 999, false)   # D is being pushed back
+		var off: Dictionary = _struggle_probe(who, 0.9, 80, 999, true)
+		var d_drop: float = float(off.d[79][1]) - float(on.d[79][1])
+		var d_back: float = float(off.d[79][0]) - float(on.d[79][0])
+		var a_lean: float = float(on.a[79][0]) - float(off.a[79][0])
+		var a_drop: float = absf(float(off.a[79][1]) - float(on.a[79][1]))
+		seen.append("%s loser drop %.1f back %.1f, winner lean %.1f drop %.1f" % [who.substr(0, 1), d_drop, d_back, a_lean, a_drop])
+		if int(on.nan) > 0 or int(on.viol) > 0 or float(on.moved) > 0.001:
+			bad.append("%s: nan %d viol %d moved %.3f" % [who, int(on.nan), int(on.viol), float(on.moved)])
+		if d_drop < 3.0 or d_back < 5.0:
+			bad.append("%s: the loser digs in by %.1f down and %.1f back (3 and 5 wanted)" % [who, d_drop, d_back])
+		if a_lean < 1.0 or a_lean > 4.0 or a_drop > 1.0:
+			bad.append("%s: the winner leans %.1f and sinks %.1f (1 to 4 forward, no sink)" % [who, a_lean, a_drop])
+		# the mirror: A losing
+		var mir: Dictionary = _struggle_probe(who, 0.1, 80, 999, false)
+		if float(off.a[79][1]) - float(mir.a[79][1]) < 3.0:
+			bad.append("%s: with the point at 0.1 the first fighter does not dig in (%.1f)" % [who, float(off.a[79][1]) - float(mir.a[79][1])])
+		# even and none: nothing
+		var even: Dictionary = _struggle_probe(who, 0.5, 60, 999, false)
+		var none: Dictionary = _struggle_probe(who, -1.0, 60, 999, false)
+		var base: Dictionary = _struggle_probe(who, -9.0, 120, 999, false)
+		for k in [30, 59]:
+			for o in [even, none]:
+				if absf(float(o.d[k][0]) - float(base.d[k][0])) > 0.3 or absf(float(o.d[k][1]) - float(base.d[k][1])) > 0.3:
+					bad.append("%s: an even point or none changes the body at tick %d" % [who, k])
+		# it ends: eased back, in small steps
+		var endr: Dictionary = _struggle_probe(who, 0.9, 120, 50, false)
+		var rest: float = absf(float(endr.d[119][0]) - float(base.d[119][0])) + absf(float(endr.d[119][1]) - float(base.d[119][1]))
+		var step: float = 0.0
+		for k in range(1, 120):
+			step = maxf(step, Vector2(float(endr.d[k][0]) - float(endr.d[k - 1][0]), float(endr.d[k][1]) - float(endr.d[k - 1][1])).length())
+		if rest > 0.6 or step > 3.0:
+			bad.append("%s: after the struggle the body is %.2f off the stand and moves %.2f in a tick (0.6 and 3 at most)" % [who, rest, step])
+	_expect(bad.is_empty(), "the beam struggle's dig-in: the pushed fighter digs in and is dragged back, the winner leans, it eases away: %s" % str(bad))
+	print("struggle dig-in: %s" % " | ".join(seen))
+
+
 func _test_pulled() -> void:
 	AnimData.load_every_wave()
 	main.start_match(4, {"p1": false, "p2": false})
@@ -5256,6 +5354,7 @@ func _run() -> void:
 	_test_grip()
 	_test_recoil()
 	_test_press_ack()
+	_test_struggle()
 	_test_shake()
 	_test_pulled()
 	_test_bends()

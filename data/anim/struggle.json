@@ -1,0 +1,11 @@
+{
+  "schema": "anim.struggle/1",
+  "_about": "The beam struggle's dig-in (docs/animation/struggle-dig-in.md). While Encounter's beam struggle holds a meeting point (S.game.clash.mid, 0 at A's hands to 1 at D's) the fighter it is pushing back digs in: the squash pose's legs, pelvis and spine (data/anim/press_styles.json squash_pose) mixed in up to `dig_w` by how far past the middle the point is on his side (0 at the middle, 1 at his hands), a tremble from the strain, and the drawn body dragged back along the ground up to `slide_max` units at `slide_rate` units a second, which is the feet carving it (the sim's position is never moved: this is the drawn root). It comes back at `return_rate` when the struggle turns or ends. The fighter who is winning leans in by `lead_dx` units. Weights ramp over `enter_ticks` (not fewer than 6: the snappy profile solves on twos, so a short ramp is read as a snap). Under reduced motion the drag and the tremble are 0.4. Render only, outside the sim's data hash. First values, Animation's.",
+  "enter_ticks": 10,
+  "dig_w": 0.85,
+  "slide_max": 9.0,
+  "slide_rate": 14.0,
+  "return_rate": 10.0,
+  "lead_dx": 2.5,
+  "tremble": 0.6
+}

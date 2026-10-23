@@ -20,3 +20,9 @@ Account: `docs/animation/press-ack.md`. Clip: `homework/press-ack/press-ack-befo
 - `data/anim/press_ack.json` is a new key set: **Tools' closed schema needs an entry** (the request is in the account).
 - Gates on a scratch export of main with the shake-by-weight park applied: `anim_check` with no arguments, the scans `--strict`, the 4-body scans, determinism plain and `--intro` all pass.
 
+## Parked: `struggle-dig-in.patch` (2026-10-23), render side only; apply after `shiver-by-weight.patch` and `press-ack.patch`
+
+Account: `docs/animation/struggle-dig-in.md`. Clip: `homework/struggle-dig-in/struggle-dig-in-before-after.gif`.
+
+- The beam struggle's loser digs in (the squash pose's legs, pelvis and spine, a tremble, the drawn body dragged back along the ground, up to 9 units) and the winner leans in 2.5 units, by `S.game.clash.mid`. `RenderAnim.struggle_dig`, `--no-struggle-dig`.
+- `data/anim/struggle.json` is a new key set: **Tools' closed schema needs an entry** (the request is in the account).
