@@ -1,0 +1,169 @@
+diff -ruN a/ui/core/ui_warm.gd b/ui/core/ui_warm.gd
+--- a/ui/core/ui_warm.gd	1969-12-31 16:00:00.000000000 -0800
++++ b/ui/core/ui_warm.gd	2026-10-23 02:18:30.159939600 -0700
+@@ -0,0 +1,74 @@
++class_name UiWarm
++extends Control
++## The HUD's text warm-up at boot. The first time a font is asked for a glyph at a size (and, for an outline, at an outline width), the text server draws that glyph
++## into the font's atlas and the renderer uploads the texture: on an integrated GPU that is a hitch of tens of milliseconds the first time a banner, a bark or a card
++## reaches the screen (VFX's finding: tick 36 of the city beam scene, the first signature wind-up, where the banner's text is drawn at its size for the first time).
++## So at boot, behind the flashing-effects notice, one line of the common glyphs is drawn once at every size and outline the HUD uses, in a node nobody sees
++## (1% opaque for three frames), and the node frees itself. Presentation only: it reads no sim state, writes none, and draws nothing a player can read.
++## Sizes are the HUD's own: the design sizes its widgets pass to UiText.px (the plates 24, 20 and 18, the legend, the cards, the barks, the hints, the toll), and the banner's
++## own fit, each at the layout's scale. Outlines are the ones UiText.draw asks for (2 px for barks and card titles, and the banner's 9% of its size).
++
++const DESIGN_SIZES: Array = [14.0, 15.0, 16.0, 18.0, 19.0, 20.0, 22.0, 23.0, 24.0, 28.0, 30.0, 34.0, 36.0, 38.0]
++const GLYPHS := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,:;!?'\"-+()/%[]&x*"
++const FRAMES := 3
++const OPACITY := 0.012
++
++var pairs: Array = []        # [font size, outline px], what is drawn (for the checks)
++var _frames: int = 0
++
++
++## The sizes and outlines for a layout scale and viewport: pure, so the checks read the same list the draw uses.
++static func plan(scale: float, vp: Vector2) -> Array:
++	var out: Array = []
++	var seen := {}
++	for d in DESIGN_SIZES:
++		var fs: int = UiText.px(float(d), scale)
++		for ol in ([0, 2] if fs >= 16 else [0]):
++			var key: String = "%d/%d" % [fs, ol]
++			if not seen.has(key):
++				seen[key] = true
++				out.append([fs, ol])
++	var bfs: int = UiText.px(clampf(vp.x * 0.03, 30.0, 46.0) / maxf(scale, 0.01), scale, 22.0)   # the banner's size, as UiCenter.draw_banner fits it
++	var bol: int = int(ceil(maxf(2.0, float(bfs) * 0.09)))
++	for pr in [[bfs, bol], [bfs, 0]]:
++		var key2: String = "%d/%d" % [pr[0], pr[1]]
++		if not seen.has(key2):
++			seen[key2] = true
++			out.append(pr)
++	return out
++
++
++func start(scale: float, vp: Vector2) -> void:
++	pairs = plan(scale, vp)
++	position = Vector2.ZERO
++	size = vp
++	mouse_filter = Control.MOUSE_FILTER_IGNORE
++	modulate = Color(1.0, 1.0, 1.0, OPACITY)
++	queue_redraw()
++
++
++func _process(_dt: float) -> void:
++	_frames += 1
++	queue_redraw()
++	if _frames > FRAMES:
++		queue_free()
++
++
++func _draw() -> void:
++	var fnt: Font = UiText.f()
++	var col := Color(1.0, 1.0, 1.0, 1.0)
++	var ol := Color(0.03, 0.04, 0.07, 1.0)
++	var y: float = 24.0
++	var x: float = 8.0
++	for pr in pairs:
++		var fs: int = int(pr[0])
++		var w: float = fnt.get_string_size(GLYPHS, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
++		if y > size.y - float(fs):
++			y = 24.0
++			x += 16.0   # the rows past the bottom of the window are still drawn (the glyphs are made when the line is drawn); they just overlap
++		if int(pr[1]) > 0:
++			draw_string_outline(fnt, Vector2(x, y), GLYPHS, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, int(pr[1]), ol)
++		draw_string(fnt, Vector2(x, y), GLYPHS, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, col)
++		y += float(fs) * 1.25
++		if w < 0.0:
++			break
+diff -ruN a/ui/core/ui_warm.gd.uid b/ui/core/ui_warm.gd.uid
+--- a/ui/core/ui_warm.gd.uid	1969-12-31 16:00:00.000000000 -0800
++++ b/ui/core/ui_warm.gd.uid	2026-10-23 02:18:30.160939400 -0700
+@@ -0,0 +1 @@
++uid://bk3wm7warmu1x
+diff -ruN a/ui/data/features.json b/ui/data/features.json
+--- a/ui/data/features.json	2026-10-23 02:18:30.009049500 -0700
++++ b/ui/data/features.json	2026-10-23 02:18:30.164451500 -0700
+@@ -12,6 +12,7 @@
+     "lock_reduce_flashing": false,
+     "ring_map": false,
+     "minimal_hud": true,
++    "text_warm": true,
+     "tug_rings": false,
+     "start_menu": true,
+     "launch_marks": true,
+diff -ruN a/ui/hud/ui_hud.gd b/ui/hud/ui_hud.gd
+--- a/ui/hud/ui_hud.gd	2026-10-23 02:18:30.022075400 -0700
++++ b/ui/hud/ui_hud.gd	2026-10-23 02:18:30.186255100 -0700
+@@ -401,6 +401,7 @@
+ 	_apply_vision()
+ 	_last_size = Vector2.ZERO
+ 	_relayout()
++	_warm_text()
+ 	if notice_auto_allowed(DisplayServer.get_name(), notice_args_text(), bypass_allowed()):
+ 		notice_seen_session = true
+ 		if UiData.feature("start_menu"):
+@@ -409,6 +410,16 @@
+ 			show_photo_notice(true)
+ 
+ 
++## The text warm-up (UiWarm): every font size and outline the HUD draws is made once at boot, behind the notice, so no banner, bark or card draws its glyphs for the first time in a fight.
++func _warm_text() -> void:
++	if not UiData.feature("text_warm") or DisplayServer.get_name() == "headless":
++		return
++	var w := UiWarm.new()
++	w.name = "TextWarm"
++	add_child(w)
++	w.start(layout.s, layout.vp)
++
++
+ func consume(e) -> void:
+ 	hub.consume(e)
+ 
+diff -ruN a/ui/tools/hud_check.gd b/ui/tools/hud_check.gd
+--- a/ui/tools/hud_check.gd	2026-10-23 02:18:30.032277600 -0700
++++ b/ui/tools/hud_check.gd	2026-10-23 02:18:30.197313800 -0700
+@@ -69,6 +69,7 @@
+ 	await _minimal_hud_rules()
+ 	await _minimal_teach_rules()
+ 	await _minimal_join_rules()
++	_text_warm_rules()
+ 	await _brawl_marks_rules()
+ 	_rate_rules()
+ 	await _block_toggle_rules()
+@@ -6206,6 +6207,35 @@
+ 	await process_frame
+ 
+ 
++## The text warm-up (UiWarm): the sizes and outlines the HUD draws, made once at boot (VFX's tick 36 on the integrated GPU: the first banner draws its glyphs for the first time).
++func _text_warm_rules() -> void:
++	var seen_bad := PackedStringArray()
++	for cs in [[Vector2(1280, 720), 0.667], [Vector2(1920, 1080), 1.0], [Vector2(844, 390), 0.4], [Vector2(2532, 1170), 2.5]]:
++		var vp: Vector2 = cs[0]
++		var sc: float = cs[1]
++		var pairs: Array = UiWarm.plan(sc, vp)
++		var keys := {}
++		var dup := false
++		for pr in pairs:
++			var k: String = "%d/%d" % [pr[0], pr[1]]
++			dup = dup or keys.has(k)
++			keys[k] = true
++		var bfs: int = UiText.px(clampf(vp.x * 0.03, 30.0, 46.0) / maxf(sc, 0.01), sc, 22.0)
++		var bol: int = int(ceil(maxf(2.0, float(bfs) * 0.09)))
++		var has_banner: bool = keys.has("%d/%d" % [bfs, bol])
++		var has_name: bool = keys.has("%d/0" % UiText.px(24.0, sc)) and keys.has("%d/0" % UiText.px(18.0, sc))
++		if dup or not has_banner or not has_name or pairs.size() > 60 or pairs.is_empty():
++			seen_bad.append("%s s %.2f (dup %s banner %s name %s n %d)" % [str(vp), sc, str(dup), str(has_banner), str(has_name), pairs.size()])
++	_ok(seen_bad.is_empty(), "text warm: at four sizes the plan holds every HUD font size, no size twice, the banner's size with its outline, and at most 60 lines (%s)" % str(seen_bad))
++	var missing := PackedStringArray()
++	for i in range(UiWarm.GLYPHS.length()):
++		var cp: int = UiWarm.GLYPHS.unicode_at(i)
++		if not UiText.f().has_char(cp):
++			missing.append(UiWarm.GLYPHS[i])
++	_ok(missing.is_empty(), "text warm: the font has every glyph the warm-up draws (%s missing)" % str(missing))
++	_ok(UiData.feature("text_warm"), "text warm: the switch is on as shipped")
++
++
+ ## The two grey circles cut on 2026-10-18 (Orb: "the weird gray circle between the two fighters"): the planet ring map and the beam struggle's steady rings, each behind a switch that is off.
+ func _cut_rules() -> void:
+ 	UiData.set_feature("ring_map", null)
