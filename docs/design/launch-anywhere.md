@@ -162,3 +162,12 @@ Encounter built it and read it on main with window 2 (`docs/director/pending/lau
 
 - **The ki stays 5.** It is the next soft lever only if the full-launch bands fail, from 5 to 10.
 - **Re-read** the route and the gates on the build with fix 1, as Encounter has them PENDING.
+
+## 12. The pop and the send (2026-10-23, `rulings-2026-10-23c.md`)
+
+**This section overrides §3's string armour and §4's use of power below 0.8.** Encounter's arms found the cause of long matches: weak launches separated the fighters, and the string armour made them land.
+- **A launcher under power 0.8 (after freshness) is a pop.** He goes up 1.5 to 3 bh by power and comes down in reach within 30 ticks, with no journey, no freshness mark, no wary window and no first move. The brawl holds: a juggle. A landed pop counts 2 points toward the next launcher's string.
+- **A launcher at 0.8 or more is the send:** the journey, the flight curve, the building ladder, freshness, the paying landing (9a) and the wary window (10c).
+- **No string armour:** a launcher is sure in an opening, hard to answer after a medium, heavy or perfect follow-up, and answerable after a light.
+- **Freshness** is ×0.9 a kind, ×0.97 general, floor ×0.7, and reads sends only.
+- **Pending Orb's one question** (`rulings-2026-10-23c.md`): pop early and send once the combo builds (recommended), or always send.
