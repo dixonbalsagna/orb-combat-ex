@@ -73,7 +73,18 @@ func _init() -> void:
 
 func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 300000, start_mode: String = "") -> Dictionary:
 	var S := SimCore.createSim()
-	SimCore.newMatch(S, seed, {}, ({"start": start_mode} if start_mode != "" else {}))
+	SimCore.newMatch(S, seed, {}, ({"start": start_mode} if start_mode == "crossing" else {}))
+	if start_mode == "city":   # both fighters start in a city (Encounter's wall kick probe does the same): the seed picks the spot, so wall slams are common
+		var cxs := []
+		var cx := 0.0
+		while cx < 153600.0:
+			if WorldBiomes.biomeAt(cx) == "city":
+				cxs.append(cx)
+			cx += 200.0
+		if cxs.size() > 0:
+			var cx0: float = float(cxs[seed % cxs.size()])
+			S.fighters[0].x = cx0
+			S.fighters[1].x = SimWrap.wrap(cx0 + 300.0)
 	SimGolden.applyArm(arm, S.fighters)
 	var fs: Array = S.fighters
 	var slot := {}
@@ -339,7 +350,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			if e.type == "cue":   # the director's cues by kind: perfect_block, dodge_cancel, burst (step 3)
 				var cq: String = str(e.get("kind"))
 				rec.cues[cq] = rec.cues.get(cq, 0) + 1
-				if cq == "perfect_block" or cq == "windup" or cq == "miss" or cq == "launcher_open" or cq == "launcher_close" or cq == "energy_reach" or cq == "energy_land" or cq == "burst" or cq == "recoil":   # Game Design's rows by strength and kind: the cue's text says which (Encounter's names, brawl-plan.md section 10.3)
+				if cq == "perfect_block" or cq == "windup" or cq == "miss" or cq == "launcher_open" or cq == "launcher_close" or cq == "energy_reach" or cq == "energy_land" or cq == "burst" or cq == "recoil" or cq == "chase" or cq == "wall_kick" or cq == "counter_rush" or cq == "calm_turn":   # Game Design's rows by strength and kind: the cue's text says which (Encounter's names, brawl-plan.md section 10.3)
 					var cqt: String = cq + ":" + str(e.get("text"))
 					if cq == "windup" and str(e.get("text")) == "start" and _ei(e, "k") == 1:
 						cqt = "windup:opening"   # a B thrown in an opening (the launcher) is not a wind-up the AI chose

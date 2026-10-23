@@ -15,7 +15,8 @@ for (const l of fs.readFileSync(src, 'utf8').split(/\r?\n/)) {
   let k = kind, bound = '';
   if (p.length >= 3) { bound = p[2]; if (/hard|every time/i.test(bound)) k = 'hard'; else if (!k) k = 'band'; } else if (p.length === 2) k = 'hard';
   if (/^[45]\./.test(sec)) k = /\(hard\)|^Every/.test(bound) ? 'hard' : 'band';
-  rows.push({ id: p[0], group: p[0].replace(/[0-9b]+$/, ''), section: sec, kind: k, what: p[1], bound });
+  const seen = rows.filter(r => r.id === p[0] || r.id.startsWith(p[0] + '~')).length;   // a repeated id in the list (L17 twice, 2026-10-23) gets a suffix: L17, L17~2
+  rows.push({ id: seen ? p[0] + '~' + (seen + 1) : p[0], group: p[0].replace(/[0-9b]+$/, ''), section: sec, kind: k, what: p[1], bound });
 }
 fs.writeFileSync(out, JSON.stringify(rows, null, 1) + '\n');
 console.log(`${rows.length} rows written to ${path.relative(process.cwd(), out)}`);

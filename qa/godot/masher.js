@@ -174,6 +174,8 @@ async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'
   const nl = Math.min(n, 60);
   for (const m of ['ai', 'route', 'spam', 'varied', 'string']) T.push(() => runProbe('lap-' + m, 'lap.gd', [String(nl), String(base), '--mode=' + m, '--level=medium', '--anywhere=1']));
   for (const m of ['ai', 'alone', 'guardgrab', 'guardonly', 'mash', 'idle', 'pulse']) T.push(() => runProbe('gp-' + m, 'gp.gd', [String(m === 'guardgrab' || m === 'guardonly' ? Math.min(n, 100) : nl), String(base), '--mode=' + m, '--level=medium']));   // the two scripts of the brink row at the whole n (100)
+  // the calm turn (rulings-2026-10-22 7b; the switch is turned on in memory by the probe): turns a match by the ring, 30 matches a ring on planet 7
+  for (const cols of [4800, 2400, 1200]) T.push(() => runProbe('calm-' + cols, 'calm.gd', [String(Math.min(n, 30)), String(base), '--cols=' + cols]));
   // Giving ground (Orb's test 2): a fighter who presses nothing and takes his stick away from a seeded tick of the rival's wind-up, against a B or Y tapper who does not follow and one who does.
   T.push(() => runPair('give-b-free', 'giver:forms=1', W + ':btn=B:gap=40:tap=4:off=7', n1, base, caps));
   T.push(() => runPair('give-b-follow', 'giver:forms=1', W + ':btn=B:gap=40:tap=4:off=7:follow=1', n1, base, caps));
@@ -217,6 +219,7 @@ const DESIGN_READ = {
   L11: ['route.win.medium', 'the route\'s win share, on 200 matches'], L12: ['route.over.masher', 'the route over its masher'], L18: ['§2 Match length, 10th percentile', 'bands.js, the default arm'],
   L17: ['§5 No launch type above 45%', 'bands.js reads the planner\'s launch types, top 45% (the row says 50%)'], F15: ['§1 Protagonist win rate', 'bands.js, 45 to 55%'],
   B10: ['5b.share and 5c.mix.brunt', 'bands.js, 4 to 15% both (2026-10-17)'], B11: ['5c.mix.halted:, 10.longHaul and 5c.lip', 'bands.js: halted of ground endings 40 to 60%, long launches of non-building launches at least 30%, lip 0.4 to 2.5'],
+  L17: ['newcomer.wins.medium and newcomer.wins.easy', 'the newcomer pair jobs: the win share of the lit-B newcomer, read beside newcomer.first60'], 'L17~2': ['§5 No launch type above 45%', 'bands.js reads the launch types of the planner, top 45% (the row says 50%)'],
   L15: ['ruling.5a.answered, ruling.1b.string and ruling.1b.ai', 'the lap probe: the spammer at least 50, the string launcher 20 to 50, AI against AI 20 to 50'], X1: ['frame.inflight and frame.flightlen', 'inframe.js (the launch probe of Camera) with the feel switch on'],
   X2: ['flip.perMin (flips only)', 'the recoil cue on a build that has the park; plants, glances and wall kicks wait for ricochets'],
   G4: ['ruling.5c.*, ruling.5d.* and ruling.G4.*', 'the grapple probe: grab and follow, the clinch, tells, throws, the chain'], B12: ['x.bodies', 'the crossing run, 4 to 8 (the band stays; waits for the new sources)'], R20: ['§2 Match length, 10th percentile', 'bands.js (the 10th percentile 300 s; the median band there is 360 to 480 s, the run\'s is 5 to 7 minutes)']
@@ -266,6 +269,20 @@ function rulingRows(results) {
       rows.push({ id: 'ruling.L13.spammer', ref: 'qa-rows L13', what: 'The spammer, a defended player: below the route, and at most 70% once anyone wins; while every script loses, his damage dealt a match below the route\'s (rulings-2026-10-23 7c)', status: !lapOn(sp) || noDmg ? 'PENDING' : (anyWin ? (ws <= 0.70 && ws < wr ? 'PASS' : 'FAIL') : (dsp < dro ? 'PASS' : 'FAIL')), value: !lapOn(sp) ? 'launch anywhere is not on' : noDmg ? 'this job has no damage count (an older lap.gd)' : `damage dealt a match: spammer ${Math.round(dsp)}, route ${Math.round(dro)}${anyWin ? '' : ' (every script loses)'}; wins spammer ${pct(ws)} (${sp.wins0} of ${sp.n}), route ${pct(wr)} (${ro.wins0} of ${ro.n})`, band: 'below the route; wins at most 70%', note: 'wins are KOs of the AI inside the probe\'s 5-minute cap' });
       if (va && !bad(va)) { const wv = va.wins0 / Math.max(1, va.n), dva = va.dmgTo1 / Math.max(1, va.n); rows.push({ id: 'ruling.L14.varied', ref: 'qa-rows L14', what: 'The varied route (the stick turned through the kinds), a defended player: within 10 points of the route\'s wins; while every script loses, his damage dealt a match within 10% of the route\'s (rulings-2026-10-23 7c)', status: !lapOn(va) || noDmg || va.dmgTo1 === undefined ? 'PENDING' : (anyWin ? (Math.abs(wv - wr) <= 0.10 ? 'PASS' : 'FAIL') : (dro > 0 && Math.abs(dva - dro) / dro <= 0.10 ? 'PASS' : 'FAIL')), value: !lapOn(va) ? 'launch anywhere is not on' : noDmg || va.dmgTo1 === undefined ? 'this job has no damage count (an older lap.gd)' : `damage dealt a match: varied ${Math.round(dva)}, route ${Math.round(dro)}: ${dro ? ((dva - dro) / dro * 100).toFixed(1) : '-'}%; wins ${pct(wv)} and ${pct(wr)}`, band: 'within 10% (damage) or 10 points (wins)', note: `${va.n} and ${ro.n} matches` }); }
     }
+  }
+  // the calm turn: Whole (4,800 columns) 0.8 to 3 a match, Half (2,400) and Close (1,200) 1 to 3; hard: no bad swap, none on a cold ring, none over World's ground rule
+  { const rings = [[4800, 'Whole', 0.8], [2400, 'Half', 1], [1200, 'Close', 1]], hardBad = [];
+    for (const [cols, nm, lo] of rings) {
+      const c = job('calm-' + cols);
+      if (!c) continue;
+      const id = 'calm.' + nm.toLowerCase(), what = `Calm turns a match, the ${nm} ring (${cols} columns), AI against AI on planet 7 (${lo} to 3; rulings-2026-10-23)`;
+      if (bad(c)) { rows.push(inv(id, what, `${lo} to 3`, c)); continue; }
+      if (!c.on || !(c.n > 0)) { rows.push({ id, ref: 'rulings 7b', what, status: 'PENDING', value: 'the calm turn did not switch on in this run', band: `${lo} to 3`, note: '' }); continue; }
+      const rate = c.turns / Math.max(1, c.n);
+      rows.push({ id, ref: 'rulings 7b', what, status: rate >= lo && rate <= 3 ? 'PASS' : 'FAIL', value: `${rate.toFixed(2)} a match (${c.turns} turns in ${c.n} matches); by moment ${JSON.stringify(c.turnsBy || {})}; asks ${JSON.stringify(c.asks || {})}`, band: `${lo} to 3`, note: `${c.n} matches from seed 1; the most ground moved under a fighter ${Math.max(0, ...(c.turnList || []).map(t => t.moved))}` });
+      hardBad.push([nm, c.bad || 0, c.cold || 0, c.overGround || 0]);
+    }
+    if (hardBad.length) rows.push({ id: 'calm.hard', ref: 'rulings 7b', what: 'No calm turn swaps the ring with an exchange, an approach, a queued action or a body in motion (bad), on a cold ring (cold), or over the ground rule of World (hard)', status: hardBad.every(h => h[1] + h[2] + h[3] === 0) ? 'PASS' : 'FAIL', value: hardBad.map(h => `${h[0]}: bad ${h[1]}, cold ${h[2]}, over ground ${h[3]}`).join('; '), band: 'none', note: '' });
   }
   const st = job('lap-string');
   if (st) {
@@ -328,6 +345,9 @@ function elevenRows(results) {
     const lc = ((r.brawl || {}).launcher) || {}, by = lc.routeBy || [], on = lc.routeOn || [], fl = (lc.firstLaunchSec || []).filter(x => x >= 0), dec = r.aWins + r.bWins;
     if (!by.length) { rows.push({ id, ref: '§14 eleventh round', what, status: 'PENDING', value: 'no launcher records in this build', band: `at least ${lv === 'easy' ? 90 : 75}%`, note: '' }); continue; }
     const f30 = fl.filter(x => x <= 30).length / by.length, f60 = fl.filter(x => x <= 60).length / by.length, mean = a => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
+    // L17 (rulings-2026-10-23 10a), read beside the first-launch row: the lit-B newcomer wins at most 50% against medium and 50 to 95% against easy
+    { const w = dec ? r.aWins / dec : NaN, lo = lv === 'easy' ? 0.50 : 0, hi = lv === 'easy' ? 0.95 : 0.50;
+      rows.push({ id: 'newcomer.wins.' + lv, ref: 'qa-rows L17', what: `The lit-B newcomer (mash X, B 0 to 20 ticks after the light) wins ${lv === 'easy' ? '50 to 95%' : 'at most 50%'} against the ${lv} AI (L17, read beside the first-launch row)`, status: Number.isFinite(w) ? (w >= lo && w <= hi ? 'PASS' : 'FAIL') : 'PENDING', value: Number.isFinite(w) ? `${pct(w)} (${r.aWins} of ${dec}); ${mean(by).toFixed(1)} launches a match by him, ${mean(on).toFixed(1)} on him` : 'no decided match', band: lv === 'easy' ? '50 to 95%' : 'at most 50%', note: `${r.n} matches` }); }
     rows.push({ id, ref: '§14 eleventh round', what, status: f60 >= (lv === 'easy' ? 0.90 : 0.75) ? 'PASS' : 'FAIL', value: `${pct(f60)} of ${by.length} matches inside 60 s (${fl.length} had a launch at all); inside 30 s ${pct(f30)}`, band: `at least ${lv === 'easy' ? 90 : 75}%`, note: `${r.n} matches; the newcomer wins ${dec ? pct(r.aWins / dec) : '-'}; ${mean(by).toFixed(2)} launches a match by him, ${mean(on).toFixed(2)} on him` });
   }
   // 2. the return from a launch: the AI's first blow back lands unanswered (main 775968bc: 97% against a striker; Encounter's parked fix 41%)

@@ -342,6 +342,21 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     assert.strictEqual(id(f(mk(15, 8)), 'flip.counter').status, 'INFO');
     assert.strictEqual(id(f(mk(0, 0, false)), 'flip.perMin').status, 'PENDING');
   });
+  await t('the chase and the wall kick: chases a match 1 to 4 and at least 60% catch; wall kicks 1 to 4; PENDING without the cues', async () => {
+    const mk = (starts, catches, kicks) => Array.from({ length: 20 }, () => rec({ koAt: 300, cues: { ...(starts ? { chase: starts + catches } : {}), ...(kicks ? { wall_kick: kicks } : {}) }, cueText: { 'chase:start': starts, 'chase:catch': catches, 'wall_kick:rush': kicks, 'wall_kick:push': 0 }, bh: { wall: { n: 1 } } }));
+    const f = D => evaluate({ default: D }), id = (rows, k) => rows.find(r => r.id === k);
+    assert.strictEqual(id(f(mk(2, 2, 1)), 'chase.perMatch').status, 'PASS'); assert.strictEqual(id(f(mk(2, 2, 1)), 'chase.catch').status, 'PASS');
+    assert.strictEqual(id(f(mk(2, 1, 1)), 'chase.catch').status, 'FAIL');
+    assert.strictEqual(id(f(mk(2, 2, 1)), 'wallkick.perMatch').status, 'PASS'); assert.strictEqual(id(f(mk(0, 0, 0)), 'wallkick.perMatch').status, 'PENDING'); assert.strictEqual(id(f(mk(0, 0, 0)), 'chase.perMatch').status, 'PENDING');
+  });
+  await t('L17: the lit-B newcomer wins at most 50% against medium and 50 to 95% against easy', async () => {
+    const { masherRows } = require('./masher');
+    const nc = (lv, w) => ({ pair: 'newcomer-' + lv, n: 100, aWins: w, bWins: 100 - w, brawl: { launcher: { routeBy: Array(100).fill(5), routeOn: Array(100).fill(5), firstLaunchSec: Array(100).fill(8) } } });
+    const id = (rows, k) => rows.find(r => r.id === k), ok = masherRows([nc('medium', 40), nc('easy', 80)]), bad = masherRows([nc('medium', 100), nc('easy', 100)]);
+    assert.strictEqual(id(ok, 'newcomer.wins.medium').status, 'PASS'); assert.strictEqual(id(ok, 'newcomer.wins.easy').status, 'PASS');
+    assert.strictEqual(id(bad, 'newcomer.wins.medium').status, 'FAIL'); assert.strictEqual(id(bad, 'newcomer.wins.easy').status, 'FAIL');
+    assert.strictEqual(id(ok, 'design.L17').status, 'INFO');
+  });
   console.log(`godot qa selftest: ${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
 })();

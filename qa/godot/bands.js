@@ -550,6 +550,23 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
       R.pending('flip.perMin', '§fight-feel 2', 'Recoil flips a minute, both fighters (2 to 6)', 'no `recoil` cue: recoil flips are not on this build (the park docs/director/pending/recoil-flips, switch recoilFlip.enabled)');
       R.pending('flip.counter', '§fight-feel 2', 'Counter-rush follow-ups after a flip', 'no `recoil` cue on this build');
     }
+    // the chase of a launch (rulings-2026-10-22 7c; brawl-second-pass.md section 16): the cue `chase` with text start, catch, landing or stopped; X7 AI v AI: 1 to 4 chases a match, and at least 60% of them catch
+    { const ct = k => sum(D.map(r => (r.cueText || {})[k] || 0)), cs = ct('chase:start');
+      if (D.some(r => (r.cues || {}).chase)) {
+        R.point('chase.perMatch', '§X7 chase', 'The chases of a launch the AI threw, a match, AI against AI (1 to 4; the cue chase with text start)', { v: cs / D.length, lo: 1, hi: 4, unit: 'num' });
+        R.point('chase.catch', '§X7 chase', 'Of the chases of the AI, the share that catch the body (at least 60%; the cue chase with text catch over start)', { v: cs ? ct('chase:catch') / cs : NaN, lo: 0.60, unit: 'pct' });
+        R.info('chase.ends', '§X7 chase', 'How the chases of the AI end', `start ${cs}, catch ${ct('chase:catch')}, landing ${ct('chase:landing')}, stopped ${ct('chase:stopped')}`, `${D.length} matches`);
+      } else {
+        R.pending('chase.perMatch', '§X7 chase', 'The chases of a launch the AI threw, a match, AI against AI (1 to 4)', 'no chase cue: the chase is off on this build (data/director/interrupts.json chase.enabled)');
+        R.pending('chase.catch', '§X7 chase', 'Of the chases of the AI, the share that catch the body (at least 60%)', 'no chase cue on this build');
+      } }
+    // the wall kick (fight-feel.md section 3): the cue `wall_kick` with text rush (toward the rival) or push; wall kicks a match 1 to 4, read with the wall slams beside it
+    { const wk = (r => ((r.cueText || {})['wall_kick:rush'] || 0) + ((r.cueText || {})['wall_kick:push'] || 0)), slams = sum(D.map(r => ((r.bh || {}).wall || {}).n || 0));
+      if (D.some(r => (r.cues || {}).wall_kick) || sum(D.map(wk)) > 0) {
+        R.point('wallkick.perMatch', '§fight-feel 3', 'Wall kicks a match (1 to 4; the cue wall_kick with text rush or push)', { v: sum(D.map(wk)) / D.length, lo: 1, hi: 4, unit: 'num' });
+        R.info('wallkick.detail', '§fight-feel 3', 'Wall kicks beside the wall slams', `${sum(D.map(wk))} kicks (rush ${sum(D.map(r => (r.cueText || {})['wall_kick:rush'] || 0))}, push ${sum(D.map(r => (r.cueText || {})['wall_kick:push'] || 0))}) and ${slams} wall slams in ${D.length} matches (${(slams / D.length).toFixed(2)} slams a match)`, 'a kick needs a send into a face that holds');
+      } else R.pending('wallkick.perMatch', '§fight-feel 3', 'Wall kicks a match (1 to 4)', slams ? `no wall_kick cue in ${D.length} matches with ${slams} wall slams: the kick is off on this build or the AI never armed one (data/director/interrupts.json wallKick.enabled)` : 'no wall_kick cue and no wall slam: the kick is off on this build, or the start is not in town');
+    }
     // launch anywhere (Game Design's thirteenth round, docs/design/qa-rows-2026-10-17.md L16): full launches a match, the AI against itself; every launch is watched, pops included
     if (D.every(r => r.pow && r.pow.has)) R.point('design.L16.ai', '§launch anywhere L16', 'Full launches a match, the AI against itself (power 0.8 or more at the send, after freshness; 6 to 12)', { v: sum(D.map(r => r.pow.full[0] + r.pow.full[1])) / D.length, lo: 6, hi: 12, unit: 'num' });
     else R.pending('design.L16.ai', '§launch anywhere L16', 'Full launches a match, the AI against itself (power 0.8 or more at the send, after freshness; 6 to 12)', 'no launchPower on this build (launch anywhere is not on it)');
