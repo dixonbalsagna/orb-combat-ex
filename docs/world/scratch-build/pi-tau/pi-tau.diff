@@ -1,0 +1,162 @@
+diff --git a/sim/world/contact.gd b/sim/world/contact.gd
+index 0c616f3..7e67084 100644
+--- a/sim/world/contact.gd
++++ b/sim/world/contact.gd
+@@ -299,7 +299,7 @@ static func spinFighter(f, dt: float, how: int) -> void:
+ ## rot taken to the nearest whole turn of zero (not a jump, the same pose): the ease upright then goes the short way instead of
+ ## unwinding every turn the body had made.
+ static func _wrapRot(r: float) -> float:
+-	return r - TAU * floorf(r / TAU + 0.5)
++	return r - SimMathx.TAU * floorf(r / SimMathx.TAU + 0.5)
+ 
+ 
+ ## The airborne part of a tick: gravity, drag, the move, the water (entry, skim, sink). Appends events {"k": ...}.
+diff --git a/sim/world/planet.gd b/sim/world/planet.gd
+index 1a07eb2..a41d89e 100644
+--- a/sim/world/planet.gd
++++ b/sim/world/planet.gd
+@@ -86,7 +86,7 @@ static func atanf(x: float) -> float:
+ 	var off: float = 0.0
+ 	if a > _TAN_PI_8:
+ 		a = (a - 1.0) / (a + 1.0)
+-		off = PI / 4.0
++		off = SimMathx.PI / 4.0
+ 	var a2: float = a * a
+ 	var s: float = a
+ 	var t: float = a
+@@ -95,7 +95,7 @@ static func atanf(x: float) -> float:
+ 		s += t / float(2 * k + 1)
+ 	var r: float = off + s
+ 	if inv:
+-		r = PI / 2.0 - r
++		r = SimMathx.PI / 2.0 - r
+ 	return -r if x < 0.0 else r
+ 
+ 
+@@ -104,12 +104,12 @@ static func atan2f(y: float, x: float) -> float:
+ 		return atanf(y / x)
+ 	if x < 0.0:
+ 		if y >= 0.0:
+-			return atanf(y / x) + PI
+-		return atanf(y / x) - PI
++			return atanf(y / x) + SimMathx.PI
++		return atanf(y / x) - SimMathx.PI
+ 	if y > 0.0:
+-		return PI / 2.0
++		return SimMathx.PI / 2.0
+ 	if y < 0.0:
+-		return -PI / 2.0
++		return -SimMathx.PI / 2.0
+ 	return 0.0
+ 
+ 
+@@ -288,7 +288,7 @@ static func make(seed: int) -> Planet:
+ 	P.seed = seed
+ 	P.c = cfg()
+ 	P.L = float(SimConst.PLANET_NC) * SimConst.COL
+-	P.R = P.L / (2.0 * PI)
++	P.R = P.L / (2.0 * SimMathx.PI)
+ 	_placeAll(P)
+ 	if _planets.size() > 6:
+ 		_planets.clear()
+@@ -438,7 +438,7 @@ static func surf(P: Planet, px: float, py: float, pz: float) -> Array:
+ ## ===================================================================== points and circles
+ static func unitFromDraws(a: float, b: float) -> Array:
+ 	var z: float = -1.0 + 2.0 * a
+-	var ang: float = 2.0 * PI * b
++	var ang: float = 2.0 * SimMathx.PI * b
+ 	var q: float = sqrt(1.0 - z * z)
+ 	return [q * SimDetMath.cos(ang), z, q * SimDetMath.sin(ang)]
+ 
+@@ -506,7 +506,7 @@ static func columnPoint(P: Planet, circ: Dictionary, i: int) -> Array:
+ ## ===================================================================== the places
+ static func _randUnit(r: SimRng) -> Array:
+ 	var z: float = r.range_(-1.0, 1.0)
+-	var a: float = r.range_(0.0, 2.0 * PI)
++	var a: float = r.range_(0.0, 2.0 * SimMathx.PI)
+ 	var q: float = sqrt(1.0 - z * z)
+ 	return [q * SimDetMath.cos(a), z, q * SimDetMath.sin(a)]
+ 
+@@ -619,7 +619,7 @@ static func evalCircle(P: Planet, circ: Dictionary, standing: PackedByteArray, m
+ 	var u: Array = circ.u
+ 	var v: Array = circ.v
+ 	for k in range(cnt):
+-		var ang: float = float(k) / float(cnt) * 2.0 * PI
++		var ang: float = float(k) / float(cnt) * 2.0 * SimMathx.PI
+ 		var co: float = SimDetMath.cos(ang)
+ 		var si: float = SimDetMath.sin(ang)
+ 		surfAt(P, u[0] * co + v[0] * si, u[1] * co + v[1] * si, u[2] * co + v[2] * si)
+diff --git a/sim/world/ringpick.gd b/sim/world/ringpick.gd
+index b1f4915..e8f5929 100644
+--- a/sim/world/ringpick.gd
++++ b/sim/world/ringpick.gd
+@@ -172,14 +172,14 @@ static func candidates(P: WorldPlanet.Planet, size: String, stream: int, pinned:
+ 	var out: Array = []
+ 	var whole: bool = cols >= SimConst.PLANET_NC
+ 	for id in pinned:
+-		var phi: float = rg.next() * 2.0 * PI
++		var phi: float = rg.next() * 2.0 * SimMathx.PI
+ 		var sp: Dictionary = throughSpec(placePoint(P, int(id)), cols, phi) if whole else roundSpec(placePoint(P, int(id)), cols, phi)
+ 		sp["kind"] = "through" if whole else "round"
+ 		sp["place"] = int(id)
+ 		out.append(sp)
+ 	var k: int = 0
+ 	while out.size() < count:
+-		var phi2: float = rg.next() * 2.0 * PI
++		var phi2: float = rg.next() * 2.0 * SimMathx.PI
+ 		var which: int = k % 3
+ 		k += 1
+ 		var sp2: Dictionary
+@@ -214,7 +214,7 @@ static func evalRing(P: WorldPlanet.Planet, spec: Dictionary, standing: PackedBy
+ 	bs.resize(cnt)
+ 	var seen := [0, 0, 0, 0, 0, 0, 0]
+ 	for k in range(cnt):
+-		var p: Array = ringPoint(ring, float(k) / float(cnt) * 2.0 * PI)
++		var p: Array = ringPoint(ring, float(k) / float(cnt) * 2.0 * SimMathx.PI)
+ 		WorldPlanet.surfAt(P, p[0], p[1], p[2])
+ 		bs[k] = P.outB
+ 		seen[P.outB] += 1
+@@ -238,7 +238,7 @@ static func evalRing(P: WorldPlanet.Planet, spec: Dictionary, standing: PackedBy
+ 			if h.id == pi:
+ 				already = true
+ 		if not already:
+-			held.append({"id": pi, "kind": int(P.kind[pi]), "along": 0.0, "half": PI, "lat": 0.0, "fallen": standing.size() > 0 and standing[pi] == 0, "damaged": damaged.has(pi)})
++			held.append({"id": pi, "kind": int(P.kind[pi]), "along": 0.0, "half": SimMathx.PI, "lat": 0.0, "fallen": standing.size() > 0 and standing[pi] == 0, "damaged": damaged.has(pi)})
+ 	var cities: int = 0
+ 	var towns: int = 0
+ 	for h in held:
+@@ -264,10 +264,10 @@ static func evalRing(P: WorldPlanet.Planet, spec: Dictionary, standing: PackedBy
+ 	for k in range(cnt):
+ 		if bs[k] != BIO_DESERT:
+ 			continue
+-		var ang: float = float(k) / float(cnt) * 2.0 * PI
++		var ang: float = float(k) / float(cnt) * 2.0 * SimMathx.PI
+ 		var inside: bool = false
+ 		for h in held:
+-			var dd: float = absf(fposmod(ang - h.along + PI, 2.0 * PI) - PI)
++			var dd: float = absf(fposmod(ang - h.along + SimMathx.PI, 2.0 * SimMathx.PI) - SimMathx.PI)
+ 			if dd < h.half:
+ 				inside = true
+ 		if not inside:
+@@ -448,7 +448,7 @@ static func _better(a: Array, b: Array) -> bool:
+ ## The first fight of a run: a Close ring round the player's own home (Game Design 2c), the touch-down on a seeded bearing.
+ static func firstRing(P: WorldPlanet.Planet, homeId: int, stream: int) -> Dictionary:
+ 	var rg := SimRng.new((stream * 7919 + 15485863) & 0xFFFFFFFF)
+-	return roundSpec(placePoint(P, homeId), sizeCols("close"), rg.next() * 2.0 * PI)
++	return roundSpec(placePoint(P, homeId), sizeCols("close"), rg.next() * 2.0 * SimMathx.PI)
+ 
+ 
+ ## The boss's ring: the Whole circle through the boss's home and the most populous place still standing (Game Design 2c), the touch-down at the home. Null when no other place stands.
+diff --git a/sim/world/terrain.gd b/sim/world/terrain.gd
+index 38a2cf4..f259a6e 100644
+--- a/sim/world/terrain.gd
++++ b/sim/world/terrain.gd
+@@ -50,7 +50,7 @@ static func genWorld(S: SimState) -> void:
+ 			t[i] = (-340.0 + n * 35.0) * WS
+ 		elif b == "mountains":
+ 			var k: float = SimMathx.jclamp((xn - 6500.0) / 1100.0, 0.0, 1.0)
+-			var env: float = SimDetMath.sin(PI * k)
++			var env: float = SimDetMath.sin(SimMathx.PI * k)
+ 			t[i] = env * (330.0 + 560.0 * absf(SimDetMath.sin(xn * 0.0042 + 0.7)) * (0.55 + 0.45 * SimDetMath.sin(xn * 0.013))) * SimConst.MS
+ 		elif b == "desert":
+ 			t[i] = n * 28.0 * WS
