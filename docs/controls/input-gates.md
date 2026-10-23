@@ -22,12 +22,12 @@ Controls, 2026-10-22. Nothing in CI or a runner lists the input tests, so this i
 | `remap_test.gd` | 138 | rebinding |
 | `stance_test.gd` | 186 | stance masks |
 | `struggle_test.gd` | 105 | the struggle's presses |
-| **`t1_latency_test.gd`** | **38** | **T1: a real press (keyboard and Arena pad) reaches a visible sim reaction on the press tick, at three distances, held and tapped; dodge and guard from the act record. Added 2026-10-22 (Encounter's press-tick fix, aa927bb5); it failed 24 of 38 at tick 5 before the fix** |
+| **`t1_latency_test.gd`** | **62** | **T1: a real press (keyboard and Arena pad) STARTS something on the press tick (an exchange, a rush, or a state, velocity or position change; a press_ack alone does not count), at three distances, held and tapped (24 START rows), is acknowledged by a press_ack on that tick (24 ACK rows), and dodge and guard react from the act record (14 rows). Tightened 2026-10-22 with Encounter's 7a (74ee6b04); it read 38 of 38 before while the start was still 5 ticks late, and 24 of 62 failed until 7a. A BODY row (the body moves, or the crouch shows, within the band's wind-up) follows when Animation's crouch lands**|
 | `touch_full_test.gd` | 848 | Full touch |
 | `touch_glue_test.gd` | 16 | the touch bridge |
 | `touch_test.gd` | 181 | touch Simple |
 
-**T1 is being tightened** (2026-10-22): the 38 checks counted any event but the tick mark as a reaction, so Encounter's `press_ack` ("queued") passed for a start. The tightened test is parked in `docs/controls/pending/t1-7a/` (62 checks: 24 START rows that need a real start on the press tick, 24 ACK rows that need the acknowledgement on it, 14 dodge and guard); it fails 24 of 62 on main until Encounter's 7a lands, then replaces the file and this row's 38 becomes 62.
+**T1 history:** the first T1 (38 checks) counted any event but the tick mark as a reaction, so Encounter's `press_ack` ("queued") passed for a start. The tightened test (62 checks) separates the start from the acknowledgement and is on main with 7a.
 
 Counts are as of the date above; a window that adds checks updates its own line. A failure of `t1_latency_test.gd` means a layout, the hub or the director has put a delay between a press and its first visible reaction: fix the cause, never the threshold (the budget is 0 ticks, `input-scheme.md` T1).
 
