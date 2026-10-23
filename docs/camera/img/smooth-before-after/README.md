@@ -1,0 +1,3 @@
+Before (7c1a4300) and after (d60500ee, the smoothness audit), the real web build, ai 4 (seed 4, Reduce flashing on), frames from Tools' launcher (session camera-whip). Top row before, bottom row after.
+- 1-angle-shot.png: the low angle used to cut in and back; it now tilts in and out. 2-arena-turn.png: both cut in on the turn (a scene change; the turn forced at tick 4800 in scratch); before cut back, after eases back. 3-blow-push.png: centre crop, the 1.6% push in 3 frames before, 7 after with a soft landing.
+No catch-up whip shown: in 16 minutes of play over eight scenes no catch-up fired (the sweep's launch rows exercise it); a staged teleport would only show a path play never reaches.
