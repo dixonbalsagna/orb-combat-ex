@@ -1,5 +1,5 @@
 // SCRATCH HOOK (scratch export only): two AI-against-AI scenes on a Half planet arena (planet 7, touch 3, 2,400 columns): `turn`, where the hook stages the director's ask and pick at tick 10
-// (WorldEpoch.ask, then WorldEpoch.choose with the largest bearing, k = 32 columns a tick, the fallback 2.5 degrees), and `turnoff`, the same match with World's turn off. The director's own
+// (WorldEpoch.ask, then WorldEpoch.choose with the largest bearing; k and the fallback from the page: turnk=16&turnfb=2.5 is a landing, turnk=32&turnfb=0 a form step; default k 32, fallback 2.5), and `turnoff`, the same match with World's turn off. The director's own
 // switch (data/director/interrupts.json calmTurn.enabled) stays off, as shipped: then DirCalm.hold holds nothing back and World's own calm decides when the swap happens, so the turn
 // happens at the first calm tick after both rings are read. The tick of every `arena_turn` event goes to window.__turns (frame-bench.mjs reads it into turnWindows); window.__pick and
 // window.__dbg say what the staging did. Needs a build with World's window 3 on main. Apply after hook-perf.mjs.
@@ -28,7 +28,9 @@ func _turn_pick(S: SimState) -> void:
 	S.epoch.lastT = -1.0e9   # staging: the 60 s gap between turns is not what is measured
 	var c: Array = WorldEpoch.ask(S, "perf", pivot, side, S.tick + 80)
 	if not c.is_empty():
-		WorldEpoch.choose(S, c.size() - 1, 32, 2.5)
+		var kk: int = int(_page_kv("turnk")) if _page_kv("turnk") != "" else 32
+		var fbd: float = float(_page_kv("turnfb")) if _page_kv("turnfb") != "" else 2.5
+		WorldEpoch.choose(S, c.size() - 1, kk, fbd)
 	JavaScriptBridge.eval("window.__pick = %s;" % JSON.stringify({"tick": S.tick, "cands": c.size()}), true)
 
 

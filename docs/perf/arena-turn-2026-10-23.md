@@ -72,6 +72,22 @@ With my own timers (`PaneWorld.PT`) on the AI match at x4, valid, two runs; the 
 - **No web-only first-call cost in the sim**: the first crater's `host_advance` (12.6 to 14.8 ms) is inside the later craters' range (9.6 to 17.2), so the sim's dig and scorch step does not hitch on its first call in wasm. (Simulation's native result, the sim being +0.2 ms of the first crater's host tick, agrees.)
 - **The first crater's extra cost is on the render side**: the view update is 20 ms heavier (31 to 38 against 12 to 18), of which the planet view's refresh is +8 ms (13 against 4 to 6), the fighters' view +2 to 4 ms, and the rest (about 10 ms) is the first draw of what a crater adds (a material or buffer used for the first time). At x1 this whole frame is 160 ms before the warm-up and cleared after it; at x4 it is 55 to 67 ms.
 
+## Second run: World's prepared swap (32d58f72) and the director's real warm rates (build d09e64a0)
+
+World prepares the swap in the warm ticks (the carry weights, the slice hash, the fresh places' layouts, the blended ground), and notes that the director's real rates are 8 to 16 columns a ring for a landing (two rings, at most 32 a tick in all) and 16 to 32 for a form step (one ring), so the first run's 64 a tick overstated the warm phase. The hook now takes k and the fallback from the page: a **landing** is k 16 with the 2.5 degree fallback (32 columns a tick, 150 warm ticks on a Half arena), a **form step** is k 32 with no fallback (32 columns a tick, 75 ticks). Same method, 3 seeds, valid runs, ms.
+
+| Config | Turn frame, landing / form step | Sim step on the swap tick (prepared) | Rendering's rebuild | Warm phase, mean frame against the switch-off match: landing / form step |
+|---|---|---|---|---|
+| RTX | 38.9 to 39.9 / 38.1 to 39.0 | 1.4 to 1.6 (7.8 on two seeds' landings) | 31.7 to 32.6 | +0.6 to +0.7 / +0.4 to +0.6 |
+| Radeon | 41.2 to 61.2 / 41.6 to 42.4 | 1.5 to 1.6 (7.9 to 9.2 on two landings) | 32.4 to 37 | 0.0 / 0.0 |
+| RTX at x4 | 189.1 to 232.6 / 186.9 to 190.1 | 6.4 to 6.7 (34.8 to 39.7 on two landings) | 147 to 157 | +3.2 to +3.5 / +1.8 to +2.7 |
+| Radeon at x4 | 204.6 to 230.6 / 186.6 to 192.6 | 6.6 to 7.0 (35.3 to 35.6 on two landings) | 150 to 166 | +3.6 to +4.3 / +2.1 to +2.5 |
+
+- **World's prepared swap works**: the sim's step on the swap tick falls from 8.7 to **1.4 to 1.6 ms** on the RTX (38 to 46 to 6.4 to 7 ms at x4). On two of the three landings (seeds 1 and 3, the swap at tick 159) the step was the old 7.8 to 9.2 ms (35 to 40 at x4): the swap came the tick the rings finished warming, so the preparation was not ready and the swap made its own, as World said it would. A landing pick therefore pays the old step when the swap comes at the first possible tick.
+- **The cut frame is now Rendering's**: 38 to 42 ms on the RTX and Radeon (2.3 to 2.5 dropped 60 Hz frames; the 61 ms is the one unprepared Radeon landing), and 186 to 233 ms at x4. The rebuild is still 32 ms (147 to 166 at x4): of 39 ms, 32 is the rebuild. The first run's proposal (keep the copy nodes, or build them ahead) is now the whole remaining lever: it would take the cut frame to about 22 ms.
+- **The real warm phase costs little**: a landing +0.6 to +0.7 ms a frame on the RTX and +3.2 to +4.3 ms at x4 for 150 ticks; a form step +0.4 to +0.6 ms and +1.8 to +2.7 ms at x4 for 75 ticks; none on the Radeon at x1. The first run's +5 to +8 ms a frame at x4 was the staged 64 columns. A p95 frame during it stays at 33 to 34 ms (it was 49).
+- **Nothing after the cut** again: the 45 ticks after are within 0.5 ms of the switch-off match at x1 and within 1.5 ms at x4.
+
 ## Files
 
 `make-audit-sites.mjs` variants `turn`, `turnprof`, `turn7b`; `scratch-hooks/hook-turn.mjs`, `hook-turnprof.mjs`, `hook-calm7b.mjs`; `frame-bench.mjs` (`turns`, `turnWindows`, `turnDebug`, `craterRows`). Raw runs are in my scratch folder.

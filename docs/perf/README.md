@@ -12,6 +12,7 @@ Owner: Performance and Platform (`docs/directors/performance-platform.md`).
 | [batch-e09dbbbf-2026-10-22.md](batch-e09dbbbf-2026-10-22.md) | The hitch repro and the ring read (k32 at x4) re-run on e09dbbbf |
 | [ground-by-band-and-heat-2026-10-23.md](ground-by-band-and-heat-2026-10-23.md) | 22f (the ground by band) and 22h (scorch and heat texture) before and after on main: big gain on weak GPUs, neutral to better at CPU x4 |
 | [arena-turn-2026-10-23.md](arena-turn-2026-10-23.md) | The arena turn on a Half arena: the swap frame (38-60 ms, 220-280 at x4), what it is made of (59% node churn), a split, the warm phase, and the first crater at x4 (no web-only sim cost) |
+| [batch-1b66c4bb-2026-10-23.md](batch-1b66c4bb-2026-10-23.md) | Item 3 on Encounter's four parks (off): no change in the steady frame cost; one x4 pair that read slower was noise |
 | [stores-and-consoles.md](stores-and-consoles.md) | Where the game can be listed, consoles included, with requirements, cost, order, and what PlayStation friends can do today |
 | [phone-web-fullscreen.md](phone-web-fullscreen.md) | Full screen, Home Screen install and landscape on phones in the web build; a checklist for a real phone |
 | `web-shell/` | The web page's phone block (`ocx-shell.js`, the manifest, placeholder icons, the site-builder patch) |
