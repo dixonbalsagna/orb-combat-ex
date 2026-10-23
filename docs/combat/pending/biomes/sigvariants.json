@@ -22,14 +22,14 @@
     "ember": "the groove glows: its surface reads ember for durTicks, then crust; it lights props and grass. With hazard, a fighter standing or sliding on it while it glows takes fire's hazard wear, as fireLine; cooled to crust it is plain ground (Game Design 23b item 5)",
     "glaze": "meltwater refreezes in the groove: its surface reads ice for the rest of the match (a slick strip)",
     "split": "every floe the path crosses breaks at the path into two plates that drift gapBh apart: a lead of open water (a real gap in the ground)",
-    "part": "the sea parts along the groove for openTicks, an open trench walled by water; then the sea rushes back as a wave that pushes anything at the surface (fighters and props) pushBh along the beam's line (Game Design 23b item 8)"
+    "part": "the sea parts along the groove for openTicks, an open trench walled by water; then the sea rushes back as a wave that pushes anything at the surface (fighters and props) pushBh along the beam's line (Game Design 23b items 8 and 10). Where the wave's line meets land within shoreCols, it runs up the shore: wet ground and props knocked over. The run-up is the same wave reaching land: it moves no fighter beyond the pushBh push and puts no one in water"
   },
   "variants": {
     "ocean": {
-      "name": "HORIZON CLEAVE", "asBuilt": true, "_rename": "TIDE CLEAVE is with Legal as a rename only (RL-006: 'Horizon' is a brand); Game Design keeps this name",
-      "_ruled": "Game Design 23b item 8: the ocean's own aftermath settles ocean against plains. The groove and looks stay today's, so the row is still asBuilt with aftermathOn false",
+      "name": "HORIZON CLEAVE", "asBuilt": true, "_rename": "TIDE CLEAVE: Legal cleared it for adoption (RL-175; RL-006 found 'Horizon' a brand) and Game Design has no objection (23b item 8); it waits on Orb's pick",
+      "_ruled": "Game Design 23b items 8 and 10: the ocean's own aftermath settles ocean against plains; the sea parts for 1.5 s. The groove and looks stay today's, so the row is still asBuilt with aftermathOn false",
       "scorch": [1.0, 1.0], "structMul": 1.0, "trees": "area", "fx": {"dust": "#9b8f7e", "spray": true},
-      "aftermath": {"kind": "part", "openTicks": 180, "pushBh": 2.0},
+      "aftermath": {"kind": "part", "openTicks": 90, "pushBh": 2.0, "shoreCols": 40},
       "outcomes": {"CLASH": "the sea under the meeting point is pressed down into a bowl ringed by walls of water", "GUARD": "the guard is driven back along the open trench between the walls", "DODGE": "the dodge goes up and over a wall of water", "HIT": "rule: he is driven under, and surfaces set within 30 ticks (the water rule)", "ESCAPE": "he breaks away along the trench before the sea rushes back"}
     },
     "city": {
@@ -127,10 +127,12 @@
   "_aftermathOn": "ruled on (Game Design 23b items 5, 7, 8). Off, every row's name, groove and looks are read and nothing is left behind, which makes the seven built rows bit-identical with today: the first step of landing the table, before World builds the aftermath kinds",
   "waterRule": {"surfaceWithinTicks": 30, "downState": false, "landedAtSurface": true, "_ruled": "Game Design 23b item 7 (and rulings-2026-10-19b.md 1e): a fighter dropped or landing in water by any row surfaces set within 30 ticks, with no down state beyond that, and counts as landed once he surfaces"},
   "adoptProposed": false,
-  "_adoptProposed": "true reads each row of proposed in place of the built row of the same biome. Left: the village's LANE SWEEP, waiting on Legal and Orb, with its collateral at Game Design (docs/combat/biomes.md section 2b). The ocean's row was ruled into variants (23b item 8)",
+  "_adoptProposed": "true reads each row of proposed in place of the built row of the same biome. Left: the village's LANE SWEEP. Legal cleared it (RL-175) and Game Design ruled its collateral (23b item 9); it waits on Orb's pick (docs/combat/biomes.md section 2b). The ocean's row was ruled into variants (23b item 8)",
   "proposed": {
     "village": {
-      "name": "LANE SWEEP", "_why": "today the village plays the city's BOULEVARD RAZE exactly. Its own carve (signature-variants.md 5.3): a low, wide graze that scars along the lane, flattening a row of low houses a little each rather than gutting one. A wider structure radius at a lower bite. The name is Narrative's working label. Game Design: villages hold 2 to 6 people a house against the city's towers, so the sweep should still read as a real cost to the hero's anguish",
+      "name": "LANE SWEEP", "_why": "today the village plays the city's BOULEVARD RAZE exactly. Its own carve (signature-variants.md 5.3): a low, wide graze that scars along the lane, flattening a row of low houses a little each rather than gutting one. A wider structure radius at a lower bite. The name is Narrative's, cleared by Legal (RL-175)",
+      "collateral": "the standing rules, no special case (Game Design 23b item 9): every person killed is on the firer's account, and the hero's own kills cost him (his cost meter, and 2 off Witness each); the tier's collateral budget caps the deaths, with no borrowing at tiers 1 and 2, so a row of houses over budget evacuates instead",
+      "personality": {"near": "occupied houses", "hero": {"widthMul": 0.6}, "villain": {"widthMul": 1.3}, "_ruled": "Game Design 23b item 9: near occupied houses the carer's graze narrows to 0.6 of its width and the villain's widens to 1.3, in place of byPersonality's widths for this row. The hero's LANE SWEEP takes the lane and spares more of the row"},
       "scorch": [0.7, 1.3], "areaMul": 1.4, "structMul": 0.7, "trees": "area", "fx": {"dust": "#9b8f7e"},
       "aftermath": null,
       "outcomes": {"CLASH": "every roof along the lane lifts in a line, both ways from the meeting point", "GUARD": "the guard is driven back down the lane, fences going flat ahead of him", "DODGE": "the dodge vaults a roof ridge", "HIT": "he is swept along the lane through the row of sheds", "ESCAPE": "he breaks away low between the houses"}

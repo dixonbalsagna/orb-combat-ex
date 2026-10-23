@@ -6,12 +6,12 @@ One short scene per biome, describing how a typical exchange plays there once th
 - Nothing here is built yet.
 - Game Design has ruled the numbers and the open questions (`docs/design/rulings-2026-10-23b.md`); the scenes follow its rulings.
 - The variant names are working labels waiting on Legal, and the new biomes' own names wait on World.
-- The village uses the proposed row, LANE SWEEP, which waits on Legal and on Orb (`biomes.md` §2b).
+- The village uses LANE SWEEP, which Legal has cleared and which waits on Orb's yes (`biomes.md` §2b).
 
 **Ocean.** The fight hangs low over open water.
 - A dash kicks up a wake. A knock-back skims a fighter across the surface before he sinks to the waist.
 - Instead of losing him far out to sea, the director can skim him back toward land in a few long bounces.
-- The signature, HORIZON CLEAVE, parts the sea. For three seconds the beam's path is an open trench between two walls of water. Then the sea rushes back as a wave that shoves anyone at the surface along the beam's line. A defender caught by the hit is driven under and comes back up a moment later, ready to fight.
+- The signature, HORIZON CLEAVE (TIDE CLEAVE, if Orb takes the new name), parts the sea. For a second and a half the beam's path is an open trench between two walls of water. Then the sea rushes back as a wave that shoves anyone at the surface along the beam's line and, near land, runs up the beach. A defender caught by the hit is driven under and comes back up a moment later, ready to fight.
 
 **Plains.** Open ground and soft soil: the clean stage the others are measured against.
 - Every knock-back ploughs a furrow, with a berm of earth heaped in front of the feet. A slam leaves a plain round bowl.
@@ -28,6 +28,7 @@ One short scene per biome, describing how a typical exchange plays there once th
 - LANE SWEEP grazes along the lane instead of up, partly flattening a whole row of houses.
 - A clash lifts every roof along the lane both ways, and a hit sweeps the defender through a row of sheds.
 - It costs fewer people than a tower, but the damage is spread over many homes.
+- The Protagonist's sweep narrows near occupied houses and spares more of the row. Every life it takes still costs him, and a row the fight's budget can't afford is evacuated instead.
 
 **Forest.** Trunks everywhere.
 - The director likes to drive a fighter down into the forest floor.

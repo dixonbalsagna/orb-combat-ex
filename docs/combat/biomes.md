@@ -45,7 +45,9 @@ Owner: Combat and Choreography. Date: 2026-10-23. Paper and three parked data fi
 | 5 | A fire line and a glowing ember strip hurt lightly, by fire's hazard rules, within the 15% hazard cap. Flying over costs nothing; cooled crust is plain ground | The savanna and volcanic aftermaths gain `hazard`, and the table's text says so |
 | 6 | The care term decides; the per-candidate bonuses are accepted as flavour. The signature's personality term goes on, inside every collateral budget | `byPersonality.enabled` is on |
 | 7 | All five twists stand. Water rule: a fighter in water surfaces set within 30 ticks, with no down state beyond, landed once he surfaces. The ice sheet's push-back is distance only | `sigvariants.json` gains `waterRule`; the water twists cite it; the ice sheet's GUARD line says he guards throughout |
-| 8 | Ocean against plains: HORIZON CLEAVE keeps its name and gains its own aftermath. The sea parts for 3 s, then a wave pushes anything at the surface 2 bh along the beam's line. A HIT over the sea drives him under | The ocean row carries it (section 2b), and my TIDE CLEAVE proposal is withdrawn as a carve. City against village waits on LANE SWEEP's name |
+| 8 | Ocean against plains: HORIZON CLEAVE keeps its name and gains its own aftermath. The sea parts (for 1.5 s, row 10), then a wave pushes anything at the surface 2 bh along the beam's line. A HIT over the sea drives him under. TIDE CLEAVE as its name: Legal's to confirm, no objection | The ocean row carries it (section 2b), with my surge kept as the wave's run-up on the shore. TIDE CLEAVE is cleared by Legal (RL-175) and waits on Orb |
+| 9 | LANE SWEEP costs the hero by the standing rules, with no special case: kills go on the firer's account, the tier's budget caps them and a row over budget evacuates. Near occupied houses the carer narrows to 0.6 and the villain widens to 1.3 | The village row gains `collateral` and its own `personality` (0.6 and 1.3 near occupied houses) |
+| 10 | The parted sea lasts 1.5 s (90 ticks), Combat's, not 3 s | The ocean's `part`: `openTicks` 90 |
 
 ## 2. Signature variants by biome
 
@@ -68,7 +70,7 @@ The full rows, with every outcome's line, are in `pending/biomes/sigvariants.jso
 
 **The seven built rows keep their grooves and looks:** HORIZON CLEAVE, BOULEVARD RAZE (city and village), FIELD SCAR, FIRESTORM, GLASS TRENCH and RIDGE BORE.
 - HORIZON CLEAVE also gains the ocean's own aftermath (section 2b).
-- The renames proposed earlier are carried as notes and stay unadopted: TIDE CLEAVE, FURROW SCAR and CANOPY BURN.
+- TIDE CLEAVE, cleared by Legal (RL-175), waits on Orb's pick. FURROW SCAR and CANOPY BURN stay unadopted notes.
 - LANE SWEEP, the village's own row, is in `proposed` (section 2b).
 
 **Outcome flavour.** Every row has a line for each outcome: CLASH, GUARD, DODGE, HIT and ESCAPE.
@@ -89,18 +91,22 @@ The full rows, with every outcome's line, are in `pending/biomes/sigvariants.jso
 **Against pillar 7.** The table has 17 rows.
 - All ten new rows differ from each other and from the built ones in what they carve, what they do to trees and what they leave.
 - **Ocean and plains** are settled by the ocean's ruled aftermath (section 2b).
-- **City and village** still play alike until LANE SWEEP is adopted.
+- **City and village** still play alike until Orb adopts LANE SWEEP (Legal has cleared it).
 - **The personality term** of `signature-variants.md` §5.1 is on, as ruled: near people the carer narrows the bite and the villain widens it, inside every collateral budget.
 
 ## 2b. The two pairs that played alike
 
 | Biome | Built | Now | What sets it apart |
 | :--- | :--- | :--- | :--- |
-| **Ocean** | HORIZON CLEAVE, carving as plains does | **HORIZON CLEAVE with the ocean's own aftermath** (ruled, in `variants`) | **The sea parts:** for 3 s the groove is an open trench walled by water. Then the sea rushes back as a wave that pushes anything at the surface (fighters and props) 2 bh along the beam's line. A HIT drives him under, and he surfaces set within 30 ticks. The groove and looks stay today's |
-| **Village** | BOULEVARD RAZE, the city's row exactly | **LANE SWEEP** (proposed, read only with `adoptProposed` on) | A low, wide graze along the lane (0.7 × 1.3), with a structure radius 1.4 times as wide at a bite of 0.7. A row of low houses is each partly flattened, not one gutted: the scar runs along the ground, where the city's runs up through towers |
+| **Ocean** | HORIZON CLEAVE, carving as plains does | **HORIZON CLEAVE with the ocean's own aftermath** (ruled, in `variants`) | **The sea parts:** for 1.5 s the groove is an open trench walled by water. Then the sea rushes back as a wave that pushes anything at the surface (fighters and props) 2 bh along the beam's line. A HIT drives him under, and he surfaces set within 30 ticks. Where the wave meets land within 40 columns it runs up the shore (wet ground, props knocked over); it moves no fighter beyond the 2 bh push and puts no one in water. The groove and looks stay today's |
+| **Village** | BOULEVARD RAZE, the city's row exactly | **LANE SWEEP** (proposed, read only with `adoptProposed` on) | A low, wide graze along the lane (0.7 × 1.3), with a structure radius 1.4 times as wide at a bite of 0.7. A row of low houses is each partly flattened, not one gutted: the scar runs along the ground, where the city's runs up through towers. Collateral by the standing rules (row 9): near occupied houses the Protagonist's graze narrows to 0.6 of its width, sparing more of the row, and the villain's widens to 1.3 |
 
-- **TIDE CLEAVE** stays with Legal as a rename of HORIZON CLEAVE only ("Horizon" is a brand, RL-006). My proposed carve under that name (a deeper, narrower cut, the sea parted for 1.5 s, a surge to shore) is withdrawn in favour of Game Design's ruling.
-- **LANE SWEEP** waits on Legal and Orb (`lane-sweep-for-orb.md`). Its collateral is with Game Design: villages hold 2 to 6 people a house against the city's towers, so it should still cost the hero.
+- **The surge and the wave don't conflict.** My surge is the same wave reaching land, so it stays as the wave's run-up on the shore. Row 8's 2 bh push is the only thing it does to a fighter. On the shore it wets the ground and knocks props over, and it puts no one in water.
+- **My TIDE CLEAVE's deeper, narrower groove stays withdrawn:** the ruled row keeps today's groove, and only its 1.5 s parting came back (row 10).
+- **TIDE CLEAVE as the ocean's name:** Legal cleared it (RL-175), and Game Design has no objection. It waits on Orb.
+- **LANE SWEEP:** Legal cleared it (RL-175), and Game Design ruled its collateral (row 9). It waits only on Orb (`lane-sweep-for-orb.md`).
+  - Every death is on the firer's account, and the hero's own cost him (his cost meter, and Witness).
+  - The tier's budget caps the deaths, and a row over budget is evacuated instead.
 - **Proven by the cross-check:** with LANE SWEEP adopted, all 17 rows carve differently (groove, structure radius and bite, trees and aftermath) and all 17 names end on different words.
 
 ## 3. The launch planner by biome
@@ -247,7 +253,7 @@ Each schema's description lists the cross-references proposed for Tools' xref.
   - a biome name for each new biome, ending `BIOME_NAME`'s aliasing of ice;
   - the surface classes and their brakes;
   - `surfaceAt(x)`, including the aftermath strips;
-  - the nine aftermath kinds, and the ocean's `part` (an open trench for 3 s, then the wave's 2 bh push);
+  - the nine aftermath kinds, and the ocean's `part` (an open trench for 1.5 s, then the wave's 2 bh push and its run-up within 40 columns of the shore);
   - fire's hazard wear on a burning fire line and a glowing ember strip;
   - ice's control point at rock's stop, and the embed threshold scaled by depth;
   - the crater shapes;
@@ -270,7 +276,7 @@ Each schema's description lists the cross-references proposed for Tools' xref.
 - **Tools:**
   - the two schemas, the `biome` fragment, the map rows and the nine fixture cases;
   - its grant is on Orb's word.
-- **Legal:** LANE SWEEP and TIDE CLEAVE (now a rename only) are already with Legal. Ten new names to screen: ICEFIELD THAW, FLOE SPLIT, VINE SHEAR, GRASSLAND BLAZE, FROST HEAVE, PINE BREAK, MIRE BOIL, SHORE SCOUR, SCREE RUN, CRUST SEAR. An originality judge (a subagent) found no borrowing, and before this I changed five of my first names:
+- **Legal:** LANE SWEEP and TIDE CLEAVE are cleared for adoption (RL-175). Ten new names to screen: ICEFIELD THAW, FLOE SPLIT, VINE SHEAR, GRASSLAND BLAZE, FROST HEAVE, PINE BREAK, MIRE BOIL, SHORE SCOUR, SCREE RUN, CRUST SEAR. An originality judge (a subagent) found no borrowing, and before this I changed five of my first names:
   - TINDER LINE, because "Tinder" is an app's trademark;
   - CINDER VEIN, which echoes a published game's title;
   - SURF SPLIT, which repeats a word and is a common move name in another franchise;
@@ -278,5 +284,5 @@ Each schema's description lists the cross-references proposed for Tools' xref.
   - THAW LINE, which broke the naming pattern.
 
   All 17 rows now end on different words.
-- **Game Design:** everything here is ruled (section 1b). Still open there: LANE SWEEP's collateral.
-- **Orb:** LANE SWEEP, in three plain lines (`lane-sweep-for-orb.md`).
+- **Game Design:** everything here is ruled (section 1b, rows 1 to 10). Nothing is open.
+- **Orb:** two names to pick: LANE SWEEP (three plain lines in `lane-sweep-for-orb.md`) and TIDE CLEAVE for the ocean.

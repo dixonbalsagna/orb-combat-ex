@@ -51,6 +51,62 @@
               "minimum": 0.2,
               "maximum": 3
             },
+            "collateral": {
+              "type": "string",
+              "minLength": 1
+            },
+            "personality": {
+              "type": "object",
+              "properties": {
+                "near": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "hero": {
+                  "type": "object",
+                  "properties": {
+                    "widthMul": {
+                      "type": "number",
+                      "minimum": 0.2,
+                      "maximum": 3
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": {}
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "widthMul"
+                  ]
+                },
+                "villain": {
+                  "type": "object",
+                  "properties": {
+                    "widthMul": {
+                      "type": "number",
+                      "minimum": 0.2,
+                      "maximum": 3
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": {}
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "widthMul"
+                  ]
+                }
+              },
+              "patternProperties": {
+                "^_": {}
+              },
+              "additionalProperties": false,
+              "required": [
+                "near",
+                "hero",
+                "villain"
+              ]
+            },
             "structMul": {
               "type": "number",
               "minimum": 0,
@@ -224,6 +280,11 @@
                       "type": "number",
                       "minimum": 0,
                       "maximum": 20
+                    },
+                    "shoreCols": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 400
                     },
                     "hazard": {
                       "type": "boolean"
@@ -353,6 +414,62 @@
               "minimum": 0.2,
               "maximum": 3
             },
+            "collateral": {
+              "type": "string",
+              "minLength": 1
+            },
+            "personality": {
+              "type": "object",
+              "properties": {
+                "near": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "hero": {
+                  "type": "object",
+                  "properties": {
+                    "widthMul": {
+                      "type": "number",
+                      "minimum": 0.2,
+                      "maximum": 3
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": {}
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "widthMul"
+                  ]
+                },
+                "villain": {
+                  "type": "object",
+                  "properties": {
+                    "widthMul": {
+                      "type": "number",
+                      "minimum": 0.2,
+                      "maximum": 3
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": {}
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "widthMul"
+                  ]
+                }
+              },
+              "patternProperties": {
+                "^_": {}
+              },
+              "additionalProperties": false,
+              "required": [
+                "near",
+                "hero",
+                "villain"
+              ]
+            },
             "structMul": {
               "type": "number",
               "minimum": 0,
@@ -526,6 +643,11 @@
                       "type": "number",
                       "minimum": 0,
                       "maximum": 20
+                    },
+                    "shoreCols": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 400
                     },
                     "hazard": {
                       "type": "boolean"
