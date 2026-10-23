@@ -1,6 +1,6 @@
 # The run: its state, the carry, the stage header and tier 5 (the core's side, paper)
 
-Owner: Simulation and Engine. 2026-10-16. The core's answer to Game Design's `docs/design/run-mode.md` (7022b7df, with Legal's RL-145 and section 10's answers, 0dfe3f91), section 7 and the sim questions in sections 1.3, 2, 3.1 and 10. It builds on `planet-slice-core.md` (the world as a function of the setup, the wear list in a place's frame). **Paper, except section 11 (each stage's ground), which is built and parked at `pending/run-ground/`.** Every number below is Game Design's or World's; the core adds none.
+Owner: Simulation and Engine. 2026-10-16. The core's answer to Game Design's `docs/design/run-mode.md` (7022b7df, with Legal's RL-145 and section 10's answers, 0dfe3f91), section 7 and the sim questions in sections 1.3, 2, 3.1 and 10. It builds on `planet-slice-core.md` (the world as a function of the setup, the wear list in a place's frame). **Paper, except section 11 (each stage's ground), applied in 07876704.** Every number below is Game Design's or World's; the core adds none.
 
 ## 1. The answers in short
 
@@ -186,7 +186,7 @@ Game Design's planet ceiling (at most 40% of the planet's people dead before the
 | 6 and 7: tier 5, the tremor, the breach, the blast cloud, the ash | The setup's ceiling in the tier cap; the tremor's trigger; `S.cata` with the event counts and the hazard-wear share; `tier5.json` and the tier tables' reads; the moves are Encounter's, World's and VFX's on top |
 | 8: fail forward and the score | Rules in `carry` |
 
-## 11. A stage's ground (built, parked at `pending/run-ground/`, 2026-10-23)
+## 11. A stage's ground (applied in 07876704, 2026-10-23)
 
 Orb wants the opponents' stages assigned programmatically in story mode. World's ring picker (`WorldRingPick`, window 4, on main) picks a ring of the planet for an opponent's claim (Narrative's `data/narrative/opponent_grounds.json`). The run hosts it, behind `data/fight/run.json`'s `ground.enabled` (off).
 
@@ -198,7 +198,7 @@ Orb wants the opponents' stages assigned programmatically in story mode. World's
 
 | Chapter | The ring | Size |
 | :--- | :--- | :--- |
-| 1 | `firstRing`: round the player's own home (Game Design's run-mode.md 1.2; Narrative's `first_stage`) | Close |
+| 1 | `firstRing`: round the player's own home (Game Design's run-mode.md 1.2; Narrative's `first_stage`). Under Close's minimum it turns toward land, the home kept on it (`rulings-2026-10-23.md` 6; World's stepped `beginFirstRing`, switched in by `pending/first-ring-host/`) | Close |
 | 2 to `stagesBeforeBoss` | `pick`: the opponent's claim, his home tried first, with the places' states (`standing`, `damaged`) as the run has them | The claim's size for the chapter's phase (`phases`: early, early, mid); Close at a Proving ground |
 | The boss (the next chapter) | `bossRing`: the Whole circle through his home and the most populous place still standing (Game Design 2c). With no other place standing, his claim at Whole | Whole. **The story's ring wins:** the minimum is waived while the ring holds his home and a standing city (`rulings-2026-10-23.md` 4), so the result says `waived` and nothing falls back |
 
@@ -220,10 +220,10 @@ A run seed is 16 hex digits. The check pins three of its answers, so a port can 
 
 **Open:**
 - **Narrative's tie rule** ("each ring goes to the opponent whose claim scores highest; ties go to the rival") is about a chapter's offers. It lands with the offers, which give one chapter several opponents. The same goes for `rival_steps_in`.
-- **The first ring can miss Close's minimum.** One sample's coastal home gave a ring 70% ocean. Game Design decides whether the boss's waiver extends to it, or whether World turns its bearing toward land.
+- **The first ring can miss Close's minimum** (a coastal home gave a ring 70% ocean). Game Design ruled it turns toward land, keeping the home (`rulings-2026-10-23.md` 6). World built it, and `pending/first-ring-host/` steps it.
 - **The run file's player re-picks to check a header's setup.** So the run file's data hash takes the claims and `data/biomes/rings.json`, when the run file is built.
 
-**Proof and samples** (in `pending/run-ground/README.md`): every gate passes and the golden is byte-identical. Two sample runs pick a ground for every stage; each pick is the same stepped as at once, and each stage built from its setup alone plays the same twice. A Half pick takes 48 frames, about 0.2 s natively in all.
+**Proof and samples** (the park's README, in 07876704's parent): every gate passes and the golden is byte-identical. Two sample runs pick a ground for every stage; each pick is the same stepped as at once, and each stage built from its setup alone plays the same twice. A Half pick takes 48 frames, about 0.2 s natively in all.
 
 **The first samples' two findings are ruled:**
 - **Same ring twice.** In one sample the Cyborg's wreckage-seeking claim took the ring the stage before was fought on. The EP ruled that a run never fights the same ring twice; World's `opts.used` and the used list above answer it.
