@@ -66,6 +66,10 @@ A ring counts as warm only when all its columns have been read by the sim's tick
 | **Rendering and Camera** | The `arena_turn` event `{n, x (the pivot), amount (the bearing, degrees), k (the drift)}`: the ground, the far land and the buildings are rebuilt at Camera's hard cut; the zone is `x` plus or minus 12,000 units |
 | **Game Design** | The first values: carry 12,000 units, view 16,000 units, the bearings 2.5, 5, 7.5, 10 |
 
+## The swap's preparation, and the one way it could go stale (2026-10-23)
+
+While a turn waits, the warm ticks prepare most of the swap (`WorldEpoch._prep`: the carry weights, the new ring's slice hash, the kept and fresh places, the fresh places' layouts, the blended and platformed ground, the biome table), so the cut tick costs about a sixth of what it did (Performance's `docs/perf/arena-turn-2026-10-23.md`). The swap takes what is ready and makes the rest itself with the same functions (`E.unprep` counts it), so the turn is the same either way. **The risk: the preparation assumes that, between the decision and the cut, the base ground (`S.base`), the set of buildings (their places, columns and the list's members), `S.planetCols` and the epoch's places and districts do not change.** Today nothing changes them (`S.base` is written only at generation and by the swap; buildings are only marked, never added or removed, in a fight). **Anything that adds or removes a building or edits `S.base` while a turn is decided would make the preparation stale:** it would have to call `WorldEpoch.cancel`, or drop `WorldEpoch._plans`, so the swap recomputes. `epoch_check` has the equal-either-way test (the same state hash with the preparation and with it lost).
+
 ## What is not here
 
 - **Steering** (the side from the brawl's drag and the last launch, the pick by combat alchemy's score) is Encounter's; World gives the candidates and applies the pick. The check stands in for Encounter with a scripted ask.
