@@ -1,0 +1,284 @@
+--- a/docs/vfx/beam-struggle.md
++++ b/docs/vfx/beam-struggle.md
+@@ -6,17 +6,20 @@
+ 
+ | Moment | What the beams do |
+ |---|---|
+-| **Who is pushing** | The beam of the one gaining ground is **thicker**, his rival's **thinner** (up to 1.5 and down to 0.5 times the width, eased over 0.35 s, so the sim's 10 to 15% jump of the point reads as a quick shift, never a pop). |
++| **Who is pushing** | The beam of the one gaining ground is **a little thicker** (up to 1.3 times the width, eased over 0.35 s, so the sim's 10 to 15% jump of the point reads as a quick shift, never a pop). His rival's beam is **never thinner** than its own width (Orb, 2026-10-22: "instead of thinning out"): it buckles instead, see below. |
+ | **The beat** | A **swell** leaves each fighter's hand 14 ticks before every pulse and runs down his beam to reach the meeting point **on the pulse**: the player follows the beat as the two swells close on the point. No marker; the music and the pad carry the rest. |
+ | **A surge** (a press on the pulse) | A bigger swell runs down the **presser's own beam**, hand to point; the point swells a little more. A sharp surge's swell is 1.4 times bigger and wider. |
+ | **A stray** (a press off the pulse) | A **pinch** runs down his own beam (the beam narrows for an instant): shape only, nothing flickers. |
+ | **The meeting point** | Swells **slowly** over the first 1.8 s of the struggle, and each surge adds a little, which decays over 2.5 s. A swell, never a flash. |
++| **The loser's beam buckles** (Orb, 2026-10-22) | As the point is pushed back toward him, his beam **bulges** where the push lands (up to +70% of its radius there, a third of the way in from the point), **bows** sideways between his hand and the point (up to a tenth of its length, 70 units at the most, anchored at both ends) and **quivers**: two slow travelling waves shake its axis (up to 3% of its length, 24 units). All of it grows with the ground he has lost (0 at an even struggle, full when he is nearly at his own hands, eased) and all of it is **geometry**: the beam's brightness does not move with it. |
+ | **The loser** | His standing aura **flares** in proportion to the ground he has lost (up to +30% size and +60% alpha as he digs in), and both fighters hold their aura up for the whole clash (aura.gd `is_active`). |
+ 
+-Everything is a **change of width** (a smooth bulge on the beam's radius), with at most 8% of alpha on a swell; the beams' brightness stays steady (Legal fx03, and fx04 for the struggle's marks). The edges stay as crisp as the crisp beam's.
++Everything but the buckling is a **change of width** (a smooth bulge on the beam's radius), with at most 8% of alpha on a swell; the beams' brightness stays steady (Legal fx03, and fx04 for the struggle's marks). The edges stay as crisp as the crisp beam's.
+ 
+ ## Reduce flashing (the default) and Reduced motion
+ 
++The buckling's rates: the bow breathes at 0.7 Hz and the quiver's waves travel at 1.6 Hz, so any point of the beam moves at **2 Hz or slower** (the schema's bound); under Reduce flashing or Reduced motion it is half the size and 0.6 of the rate (a quiver at about 1 Hz). It moves edges, not brightness, but the rates are kept inside Legal's fx03 anyway.
++
+ Same rates as the rings it replaces (RL-141 to RL-143): the beat's swell is shown for **every second pulse only** (a 40-tick beat, 1.5 Hz), swell amplitudes at 0.8, and a surge or stray swell is not made within 40 ticks of the last one (the point's own movement still shows each press).
+ 
+ ## Where it lives
+--- a/data/vfx/energy.json
++++ b/data/vfx/energy.json
+@@ -194,7 +194,7 @@
+   "cap": 10
+  },
+  "struggle": {
+-  "push_k": 0.5,
++  "push_k": 0.3,
+   "ease_s": 0.35,
+   "wave_ticks": 14,
+   "surge_amp": 0.8,
+@@ -211,6 +211,18 @@
+   "calm_gap": 40,
+   "amp_calm": 0.8,
+   "flare_k": 0.3,
+-  "flare_ease_s": 0.4
++  "flare_ease_s": 0.4,
++  "lose_min": 1.0,
++  "buck_bulge": 0.7,
++  "buck_bow": 0.09,
++  "buck_bow_max": 70.0,
++  "buck_quiv": 0.03,
++  "buck_quiv_max": 24.0,
++  "buck_bow_hz": 0.7,
++  "buck_quiv_hz": 1.6,
++  "buck_wave": 0.3,
++  "buck_wave_min": 130.0,
++  "buck_calm": 0.5,
++  "buck_calm_hz": 0.6
+  }
+ }
+--- a/render/vfx/beam_struggle.gd
++++ b/render/vfx/beam_struggle.gd
+@@ -19,8 +19,10 @@
+ 	var big: bool = false
+ 
+ const DEFAULTS: Dictionary = {
+-	"push_k": 0.5, "ease_s": 0.35, "wave_ticks": 14.0, "surge_amp": 0.8, "sharp_k": 1.4, "beat_amp": 0.34, "stray_amp": -0.4, "wave_half": 0.15, "wave_half_max": 120.0, "lum": 0.08,
++	"push_k": 0.3, "ease_s": 0.35, "wave_ticks": 14.0, "surge_amp": 0.8, "sharp_k": 1.4, "beat_amp": 0.34, "stray_amp": -0.4, "wave_half": 0.15, "wave_half_max": 120.0, "lum": 0.08,
+ 	"knot_amp": 0.6, "knot_s": 1.8, "knot_surge": 0.14, "knot_decay_s": 2.5, "calm_gap": 40.0, "amp_calm": 0.8, "flare_k": 0.3, "flare_ease_s": 0.4,
++	"lose_min": 1.0, "buck_bulge": 0.7, "buck_bow": 0.09, "buck_bow_max": 70.0, "buck_quiv": 0.03, "buck_quiv_max": 24.0, "buck_bow_hz": 0.7, "buck_quiv_hz": 1.6, "buck_wave": 0.3,
++	"buck_wave_min": 130.0, "buck_calm": 0.5, "buck_calm_hz": 0.6,
+ }
+ 
+ var active: bool = false
+@@ -191,12 +193,20 @@
+ 	made["stray"] = int(made.get("stray", 0)) + 1
+ 
+ 
+-## The width factor of a side's beam: the winner's thicker (1 + push_k at the most), the loser's thinner.
++## The width factor of a side's beam: the winner's thicker (1 + push_k at the most); the loser's is never thinner than `lose_min` (1: Orb, 2026-10-22, "instead of thinning out"): he buckles instead (`lost`).
+ func width_k(side: int) -> float:
+ 	if not active:
+ 		return 1.0
+ 	var s: float = push if side == 0 else -push
+-	return clampf(1.0 + p("push_k") * s, 0.5, 1.5)
++	return clampf(1.0 + p("push_k") * s, p("lose_min"), 1.5)
++
++
++## How much ground a side has lost, 0 to 1, eased: what the buckling grows with (his side of the push, smoothed so it starts gently).
++func lost(side: int) -> float:
++	if not active:
++		return 0.0
++	var gain: float = push if side == 0 else -push
++	return smoothstep(0.0, 1.0, clampf(-gain, 0.0, 1.0))
+ 
+ 
+ ## The flare of a fighter's aura (0 to flare_k): the loser's grows with the ground he has lost, the winner's is nil. The standing aura's size and alpha read it (transform_view.gd).
+@@ -236,6 +246,11 @@
+ 	if active and knot_level > 0.002:
+ 		kv = Vector4(len, minf(len * 0.2, p("wave_half_max") * 1.2), p("knot_amp") * knot_level * scale, 0.0)
+ 	mat.set_shader_parameter("wv2", kv)
++	# the loser's buckling: geometry only, in his own beam, growing with the ground he has lost; calm (Reduce flashing or Reduced motion): half the size at 0.6 of the rate
++	var ck: float = p("buck_calm") if _calm else 1.0
++	var hk: float = p("buck_calm_hz") if _calm else 1.0
++	mat.set_shader_parameter("buck", Vector4(lost(side), minf(len * p("buck_bow"), p("buck_bow_max")) * ck, minf(len * p("buck_quiv"), p("buck_quiv_max")) * ck, p("buck_bulge") * ck))
++	mat.set_shader_parameter("buck2", Vector4(p("buck_bow_hz") * hk, p("buck_quiv_hz") * hk, maxf(len * p("buck_wave"), p("buck_wave_min")), 1.0 if side == 0 else -1.0))
+ 
+ 
+ const LAYER_SCALE: Array = [1.15, 1.0, 0.75]
+@@ -254,3 +269,4 @@
+ static func sk_clear(mat: ShaderMaterial) -> void:
+ 	for n in ["wv0", "wv1", "wv2"]:
+ 		mat.set_shader_parameter(n, Vector4(0.0, 1.0, 0.0, 0.0))
++	mat.set_shader_parameter("buck", Vector4(0.0, 0.0, 0.0, 0.0))
+--- a/render/vfx/shaders/beam_core.gdshaderinc
++++ b/render/vfx/shaders/beam_core.gdshaderinc
+@@ -26,6 +26,12 @@
+ uniform vec4 wv0 = vec4(0.0, 1.0, 0.0, 0.0);
+ uniform vec4 wv1 = vec4(0.0, 1.0, 0.0, 0.0);
+ uniform vec4 wv2 = vec4(0.0, 1.0, 0.0, 0.0);
++// The loser's buckling (render/vfx/beam_struggle.gd, Orb 2026-10-22: the losing beam bulges and quivers like it is buckling under pressure, instead of thinning). All GEOMETRY, no brightness:
++// buck = (how much ground he has lost 0 to 1, the bow in world units, the quiver in world units, the bulge as a share of the radius), buck2 = (the bow's Hz, the quiver's Hz, the quiver's wavelength in
++// world units, the side the bow leans: +1 up, -1 down). The beam stays anchored at the hand and at the meeting point; between them it bows, its width swells where the push lands, and two slow travelling waves
++// shake its axis. A point of the beam moves at buck2.x or buck2.y Hz at most (data bounds: 2 Hz), so nothing flickers.
++uniform vec4 buck = vec4(0.0, 0.0, 0.0, 0.0);
++uniform vec4 buck2 = vec4(0.7, 1.6, 160.0, 1.0);
+ 
+ float wbump(float s, vec4 w) {
+ 	float u = (s - w.x) / max(w.y, 1.0);
+@@ -79,7 +85,20 @@
+ 	vec3 v = VERTEX;
+ 	float s0 = (head_at_zero > 0.5 ? 1.0 - UV.y : UV.y) * len;
+ 	float wsum = wv0.z * wbump(s0, wv0) + wv1.z * wbump(s0, wv1) + wv2.z * wbump(s0, wv2);
++	float bu = clamp(s0 / max(len, 1.0), 0.0, 1.0);
++	if (buck.x > 0.0) {
++		float gb = (bu - 0.62) / 0.3;
++		wsum += buck.w * buck.x * exp(-gb * gb);
++	}
+ 	v.xz *= max(0.2, 1.0 + wsum);
++	if (buck.x > 0.0) {
++		float env = sin(3.14159265 * bu);
++		float bow = buck.y * (0.72 + 0.28 * sin(6.2831853 * buck2.x * time + 1.3));
++		float lam = max(buck2.z, 1.0);
++		float q = buck.z * 0.625 * (sin(6.2831853 * (s0 / lam - buck2.y * time)) + 0.6 * sin(6.2831853 * (s0 / (0.57 * lam) + 0.7 * buck2.y * time) + 2.1));
++		vec3 up_m = inverse(mat3(MODEL_MATRIX)) * vec3(0.0, 1.0, 0.0);
++		v += up_m * (buck2.w * buck.x * env * (bow + q));
++	}
+ 	if (wob > 0.0) {
+ 		float sw = (vn(vec2(s0 * 0.011 - time * flow * 0.012, seed + 3.0)) - 0.5) * 2.0;
+ 		v.xz *= 1.0 + wob * sw;
+--- a/render/vfx/tools/effects_check.gd
++++ b/render/vfx/tools/effects_check.gd
+@@ -5370,12 +5370,52 @@
+ 		sk.step(S, [], false)
+ 		if i == 0:
+ 			first = sk.width_k(0)
+-	_check(sk.width_k(0) > 1.0 and sk.width_k(1) < 1.0 and first < sk.width_k(0), "the winner's beam is thicker, the loser's thinner, and the shift is eased (%.3f then %.3f)" % [first, sk.width_k(0)])
++	_check(sk.width_k(0) > 1.0 and sk.width_k(1) >= 1.0 and first < sk.width_k(0), "the winner's beam is thicker, the loser's is not thinner (it buckles instead), and the shift is eased (%.3f then %.3f)" % [first, sk.width_k(0)])
+ 	for i in range(240):
+ 		S.tick += 1
+ 		sk.step(S, [], false)
+ 	var kmax: float = 1.0 + VfxBeamStruggle.p("push_k")
+-	_check(sk.width_k(0) <= kmax + 0.001 and sk.width_k(1) >= 1.0 - VfxBeamStruggle.p("push_k") * 0.6 - 0.001 and sk.width_k(0) > 1.1, "it settles inside the limits (%.2f and %.2f)" % [sk.width_k(0), sk.width_k(1)])
++	_check(sk.width_k(0) <= kmax + 0.001 and sk.width_k(1) >= VfxBeamStruggle.p("lose_min") - 0.001 and sk.width_k(0) > 1.1, "it settles inside the limits (%.2f and %.2f)" % [sk.width_k(0), sk.width_k(1)])
++	# the loser buckles (Orb, 2026-10-22): geometry in his own beam, growing with the ground he has lost, never a brightness change
++	_check(sk.lost(1) > 0.3 and sk.lost(0) == 0.0, "the loser has lost ground (%.2f) and the winner has not (%.2f)" % [sk.lost(1), sk.lost(0)])
++	var mw := VfxBeamLook.new_material(0)
++	var ml := VfxBeamLook.new_material(0)
++	sk.apply(mw, 0, 800.0, 1.0)
++	sk.apply(ml, 1, 800.0, 1.0)
++	var bw: Vector4 = mw.get_shader_parameter("buck")
++	var bl: Vector4 = ml.get_shader_parameter("buck")
++	var bl2: Vector4 = ml.get_shader_parameter("buck2")
++	_check(bw.x == 0.0 and bl.x > 0.3 and bl.y > 0.0 and bl.z > 0.0 and bl.w > 0.0, "the buckling is in the loser's beam only (winner %.2f, loser %.2f; bow %.0f, quiver %.0f, bulge %.2f)" % [bw.x, bl.x, bl.y, bl.z, bl.w])
++	_check(bl2.x <= 2.0 and bl2.y <= 2.0 and bl2.x > 0.0 and bl2.y > 0.0, "its rates are 2 Hz or slower (Legal): the bow at %.2f and the quiver at %.2f" % [bl2.x, bl2.y])
++	var half_hz: bool = true
++	for key in ["buck_bow_hz", "buck_quiv_hz"]:
++		half_hz = half_hz and VfxBeamStruggle.p(key) <= 2.0
++	_check(half_hz, "the data's rates are 2 Hz or slower too")
++	var skc := VfxBeamStruggle.new()
++	c.mid = 0.8
++	S.tick = 700
++	skc.step(S, [], true)
++	for i in range(240):
++		S.tick += 1
++		skc.step(S, [], true)
++	var mc := VfxBeamLook.new_material(0)
++	skc.apply(mc, 1, 800.0, 1.0)
++	var bc: Vector4 = mc.get_shader_parameter("buck")
++	var bc2: Vector4 = mc.get_shader_parameter("buck2")
++	_check(bc.y < bl.y and bc.z < bl.z and bc2.y < bl2.y, "under Reduce flashing or Reduced motion the buckling is smaller and slower (bow %.0f against %.0f, quiver rate %.2f against %.2f)" % [bc.y, bl.y, bc2.y, bl2.y])
++	var skg := VfxBeamStruggle.new()
++	var lost_by_mid: Array = []
++	for m_to in [0.45, 0.35, 0.2]:
++		c.mid = m_to
++		for i in range(240):
++			S.tick += 1
++			skg.step(S, [], false)
++		lost_by_mid.append(skg.lost(0))
++	_check(lost_by_mid[0] < lost_by_mid[1] and lost_by_mid[1] < lost_by_mid[2], "it grows as he loses ground (%.2f, %.2f, %.2f)" % [lost_by_mid[0], lost_by_mid[1], lost_by_mid[2]])
++	VfxBeamStruggle.sk_clear(ml)
++	var bcl: Vector4 = ml.get_shader_parameter("buck")
++	_check(bcl.x == 0.0, "a beam that is not in a struggle (cleared) does not buckle")
++	c.mid = 0.8
+ 	# the loser's aura flares, the winner's does not
+ 	var fa: float = sk.flare(0)
+ 	var fd: float = sk.flare(1)
+--- a/tools/schemas/vfx-energy.schema.json
++++ b/tools/schemas/vfx-energy.schema.json
+@@ -404,6 +404,78 @@
+           "type": "number",
+           "maximum": 5,
+           "exclusiveMinimum": 0.02
++        },
++        "lose_min": {
++          "type": "number",
++          "description": "the loser's beam is never thinner than this share of its width (Orb, 2026-10-22: it buckles instead of thinning)",
++          "maximum": 1.2,
++          "minimum": 0.8
++        },
++        "buck_bulge": {
++          "type": "number",
++          "description": "how much the loser's beam swells where the push lands at full ground lost, a share of the radius",
++          "maximum": 1.5,
++          "minimum": 0
++        },
++        "buck_bow": {
++          "type": "number",
++          "description": "the loser's bow at full ground lost, a share of the beam's length",
++          "maximum": 0.3,
++          "minimum": 0
++        },
++        "buck_bow_max": {
++          "type": "number",
++          "description": "the bow's cap in world units",
++          "maximum": 200,
++          "minimum": 0
++        },
++        "buck_quiv": {
++          "type": "number",
++          "description": "the quiver's amplitude, a share of the beam's length",
++          "maximum": 0.15,
++          "minimum": 0
++        },
++        "buck_quiv_max": {
++          "type": "number",
++          "description": "the quiver's cap in world units",
++          "maximum": 80,
++          "minimum": 0
++        },
++        "buck_bow_hz": {
++          "type": "number",
++          "description": "the bow's rate in Hz (Legal: 2 or slower)",
++          "maximum": 2,
++          "exclusiveMinimum": 0
++        },
++        "buck_quiv_hz": {
++          "type": "number",
++          "description": "the quiver's rate in Hz (Legal: 2 or slower)",
++          "maximum": 2,
++          "exclusiveMinimum": 0
++        },
++        "buck_wave": {
++          "type": "number",
++          "description": "the quiver's wavelength, a share of the beam's length",
++          "maximum": 1,
++          "minimum": 0.1
++        },
++        "buck_wave_min": {
++          "type": "number",
++          "description": "the quiver's shortest wavelength in world units",
++          "maximum": 400,
++          "minimum": 40
++        },
++        "buck_calm": {
++          "type": "number",
++          "description": "the share of the buckling's size kept under Reduce flashing or Reduced motion",
++          "maximum": 1,
++          "minimum": 0
++        },
++        "buck_calm_hz": {
++          "type": "number",
++          "description": "the share of the buckling's rates kept under Reduce flashing or Reduced motion",
++          "maximum": 1,
++          "minimum": 0
+         }
+       },
+       "additionalProperties": false
