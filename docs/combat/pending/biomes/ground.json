@@ -25,8 +25,8 @@
     "shingle": {"exists": false, "readsAs": "sand",   "forWorld": {"brake": 1.1, "tumble": false}, "forAnimation": {"bounceMul": 0.8}}
   },
   "biomeSurface": {
-    "_about": "proposed rows for World's contact.json biomeSurface for the new biomes (World's ids to come), and the two ice biomes that are aliased today. Settlements keep paving (contact.json paving). Aftermath strips override: glaze reads ice, ember reads crust, scree reads rubble, flood reads water",
-    "jungle": "litter", "savanna": "turf", "tundra": "frost", "taiga": "snow", "wetland": "mud", "coast": "shingle", "highland": "turf", "volcanic": "crust", "ice_sheet": "snow", "sea_ice": "ice"
+    "_about": "proposed rows for World's contact.json biomeSurface, keyed by World's fine biome names (climate.json fine): the new biomes, and the two ice biomes that are aliased today. Settlements keep paving (contact.json paving). Aftermath strips override: glaze reads ice, ember reads crust, scree reads rubble, flood reads water",
+    "jungle": "litter", "savanna": "turf", "tundra": "frost", "taiga": "snow", "wetland": "mud", "beach": "shingle", "highland": "turf", "volcanic": "crust", "ice_sheet": "snow", "sea_ice": "ice"
   },
   "skidStop": {
     "_about": "how a body carried along the ground comes to rest: the upright slide of a short knock-back, the skid of a long one (World's slide on the feet), a guard's push-back. pose: Animation's stop (a shared pose with each fighter's flavour); trail: VFX's mark along the path; end: how he is left at rest; spin: true turns him through the slide so he ends square to the one who sent him. Distances are World's (the brake); nothing here holds a press",

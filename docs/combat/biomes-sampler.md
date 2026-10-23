@@ -90,7 +90,7 @@ One short scene per biome, describing how a typical exchange plays there once th
 - The director likes to slam people straight down into the marsh, which swallows them and closes over the hole. The Protagonist favours it because almost nothing is destroyed.
 - MIRE BOIL boils the marsh and floods the cut, so a defender hit there lands in water.
 
-**Coast.** Shingle beaches, surf and cliffs.
+**Beach.** Shingle, surf and sea cliffs.
 - Pebbles roll underfoot as a fighter is driven back.
 - A fight drifting out over the sea gets skimmed back onto the beach, and the cliffs are there to throw people into.
 - Craters near the water fill with seawater.

@@ -39,7 +39,7 @@
         "probe": {"stepBh": 7.0, "reachBh": 166.0, "minRiseBh": 2.0, "minTan": 1.2},
         "score": 18.0, "perRiseBh": 1.0, "riseCap": 8.0,
         "hero": 0.0, "villain": 2.0,
-        "where": "highland crags, volcanic cones, coast cliffs, the ice shelf's 36-unit edge (0.5 bh: too low, so not offered there), tundra's heaved plates when 2 bh or more"
+        "where": "highland crags, volcanic cones, sea cliffs, the ice shelf's 36-unit edge (0.5 bh: too low, so not offered there), tundra's heaved plates when 2 bh or more"
       },
       "ICE SKID": {
         "_about": "a flat, low send onto ice: the body skids far for little force. Offered when the ground within onIceBh of the target is ice. The slide reads World's ice brake, so its length is World's; the planner's predicted travel reads that brake too. Ruled (23b item 2): the slide stays ice's length, but he has control again where the same send would have stopped on rock (brake 0.8, ground.json surfaces.ice controlAtBrake); the rest is a skate he can act out of",
@@ -54,7 +54,7 @@
         "sends": "down", "ux": 0.1, "uy": -1.2,
         "maxAltBh": 12.0, "score": 16.0, "embedMul": 1.8, "alwaysEmbeds": true,
         "hero": 6.0, "villain": -2.0,
-        "where": "wetland; coast mudflats if World makes them mud"
+        "where": "wetland; beach mudflats if World makes them mud"
       },
       "TREE LINE": {
         "_about": "a low send through a stand of trees: each trunk on the path snaps and slows him, the way BUILDING SMASH chains buildings. Offered when at least minTrees trunks stand on the predicted line within the send's first reachBh",
@@ -69,7 +69,7 @@
         "sends": "across", "uy": 0.1,
         "maxSkims": 6, "landBh": 160.0, "score": 14.0,
         "hero": 0.0, "villain": 0.0,
-        "where": "coast, ocean next to land, wetland channels, sea ice leads"
+        "where": "beach, ocean next to land, wetland channels, sea ice leads"
       },
       "DOWNHILL": {
         "_about": "a send down the slope on the far side: he tumbles down it. Offered when the ground falls at least minDropBh within dropRunBh ahead and the slope's surface is one that tumbles or rolls",

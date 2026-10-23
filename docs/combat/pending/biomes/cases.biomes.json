@@ -14,7 +14,7 @@
       ],
       "expect": {
         "pointer": "/variants/jungle/name",
-        "_seen": "error  data/combat/sigvariants.json:244 /variants/jungle/name  [pattern] must match /^[A-Z][A-Z ]{2,23}$/ (got \"vine shear\")"
+        "_seen": "error  data/combat/sigvariants.json:254 /variants/jungle/name  [pattern] must match /^[A-Z][A-Z ]{2,23}$/ (got \"vine shear\")"
       }
     },
     {
@@ -34,7 +34,7 @@
       ],
       "expect": {
         "pointer": "/variants/tundra/scorch",
-        "_seen": "error  data/combat/sigvariants.json:300 /variants/tundra/scorch  [maxItems] must have at most 2 items (got 3)"
+        "_seen": "error  data/combat/sigvariants.json:309 /variants/tundra/scorch  [maxItems] must have at most 2 items (got 3)"
       }
     },
     {
@@ -44,13 +44,13 @@
         {
           "file": "data/combat/sigvariants.json",
           "set": {
-            "/variants/coast/aftermath/kind": "tsunami"
+            "/variants/beach/aftermath/kind": "tsunami"
           }
         }
       ],
       "expect": {
-        "pointer": "/variants/coast/aftermath",
-        "_seen": "error  data/combat/sigvariants.json:386 /variants/coast/aftermath  [oneOf] matches none of 2 alternatives; closest: /variants/coast/aftermath [type] must be null (got object)"
+        "pointer": "/variants/beach/aftermath",
+        "_seen": "error  data/combat/sigvariants.json:395 /variants/beach/aftermath  [oneOf] matches none of 2 alternatives; closest: /variants/beach/aftermath [type] must be null (got object)"
       }
     },
     {

@@ -31,7 +31,9 @@ Owner: Combat and Choreography. Date: 2026-10-23. Paper and three parked data fi
    - With `touchBuilt` off, a world without the new biomes plays exactly as today even with the blocks on.
 3. **Today's rows are carried exactly.** The seven built variants keep their groove numbers and looks. With `aftermathOn` and the personality term off, moving to the new table is bit-identical. Game Design ruled both on, so the table lands in two steps: first both off, then on.
 4. **Keys.**
-   - Biomes are keyed by the names `WorldBiomes.biomeAt` returns. The eight new ones (jungle, savanna, tundra, taiga, wetland, coast, highland, volcanic) are provisional until World names its ids. A rename is a key change.
+   - **Biomes are keyed by World's fine biome names** (`data/biomes/climate.json` `fine`, 1460d351: 0 ocean, 1 plains, 2 forest, 3 desert, 4 mountains, 5 ice_sheet, 6 sea_ice, 7 jungle, 8 savanna, 9 tundra, 10 taiga, 11 wetland, 12 beach, 13 highland, 14 volcanic). Each fine row carries its `fineId`, and the cross-check holds every one to `climate.json`.
+   - **City and village key by settlement.** They are the settlement grounds the director already names (`WorldPlanetWorld.BIOME_NAME` 8 and 7), each row carrying its kind (`city`, `town`). A settlement's ground overrides the fine biome under it, so a beach town fires the village's row.
+   - **Until the director reads the fine name,** a gen 2 planet shows it each fine biome's alias: jungle and taiga play forest's row, savanna, tundra and wetland plains', beach desert's, and highland and volcanic mountains'.
    - Surfaces are keyed by World's classes. Each new class says what it reads as until World builds it.
 
 ## 1b. Game Design's rulings, folded in
@@ -62,7 +64,7 @@ The full rows, with every outcome's line, are in `pending/biomes/sigvariants.jso
 | **Tundra** | **FROST HEAVE** | 0.9 × 1.0 | none | **Heave:** the rim is thrown up as frozen plates twice the usual berm. A slide stops against them and a ricochet plants on them |
 | **Taiga** | **PINE BREAK** | 1.0 × 1.0 | snapped, crowns drop | **Snow dump:** snow off the trees refills 40% of the groove within 2 s. A shallower scar |
 | **Wetland** | **MIRE BOIL** | 1.1 × 0.9 | area | **Flood:** the groove fills to the water table at once. A water trench under the ocean rules |
-| **Coast** | **SHORE SCOUR** | 1.0 × 1.1 | area | **Flood from the sea:** where the floor is below sea level within 30 columns of open water |
+| **Beach** | **SHORE SCOUR** | 1.0 × 1.1 | area | **Flood from the sea:** where the floor is below sea level within 30 columns of open water |
 | **Highland** | **SCREE RUN** | 1.2 × 0.9 | area | **Scree:** on a slope steeper than 0.25, rubble runs downhill up to 10 columns. A strip that tumbles a slide |
 | **Volcanic** | **CRUST SEAR** | 1.3 × 0.8 | burned | **Ember:** the groove glows for 10 s, then reads as crust. It lights props and grass, and a fighter on it while it glows takes fire's light hazard wear |
 
@@ -84,7 +86,7 @@ The full rows, with every outcome's line, are in `pending/biomes/sigvariants.jso
   - **Sea ice, HIT:** when the lead opens under him, he drops into the water and climbs out.
   - **Tundra, GUARD:** the push-back stops against the heaved plates.
   - **Wetland, HIT:** he lands in the flooded trench.
-  - **Coast, HIT:** the sea floods the cut behind him, and he lands in it where the floor is below sea level.
+  - **Beach, HIT:** the sea floods the cut behind him, and he lands in it where the floor is below sea level.
   - **Ocean, HIT** (section 2b): he is driven under.
 - **The water rule** covers every twist that puts him in water: he surfaces set within 30 ticks, with no down state beyond that, and counts as landed once he surfaces.
 
@@ -119,7 +121,7 @@ A block for `data/director/launch.json` (`pending/biomes/launch.biome.json`).
 
 | Candidate | Offered when | Send | Score (first values) | What happens |
 | :--- | :--- | :--- | :--- | :--- |
-| **CLIFFSIDE** | A rise ahead steeper than 1.2 over at least 2 bh, out to 166 bh, found from the heights and not from a biome name | across | 18, +1 a bh of rise (cap 8); villain +2 | MOUNTAINSIDE for any biome: highland crags, volcanic cones, coast cliffs. He hits the face: the slide's wall stop, or an embed |
+| **CLIFFSIDE** | A rise ahead steeper than 1.2 over at least 2 bh, out to 166 bh, found from the heights and not from a biome name | across | 18, +1 a bh of rise (cap 8); villain +2 | MOUNTAINSIDE for any biome: highland crags, volcanic cones, sea cliffs. He hits the face: the slide's wall stop, or an embed |
 | **ICE SKID** | Ice within 1 bh of him | across, low and flat, force 0.8 | 14; +6 when it ends in open water, +8 against a berg; hero +2 | **Ice to skid on:** a long slide for little force. Its length is World's ice brake. Ending in a lead puts him in the water. **Ruled:** he has control again where the same send would have stopped on rock, and the rest is a skate he can act out of |
 | **MARSH SWALLOW** | Mud under him, at most 12 bh up | down | 16; hero +6, villain −2 | **The marsh swallows the slam:** it always embeds (the one deliberate embed, as ruled), he sits 1.8 times as deep, the crater closes again and little is destroyed, so the carer likes it |
 | **TREE LINE** | 2 to 6 trunks on the line within 60 bh | across, low | 10, +2 a trunk; hero +2 | **Trees to smash through:** each trunk snaps and slows him by 12%, the way BUILDING SMASH chains buildings |
@@ -165,7 +167,7 @@ The sand and rubble rows are today's classes, so they apply only with `touchBuil
 | **litter** | jungle | 1.2 | soil |
 | **ash** | volcanic, where World lays it | 1.5 | sand |
 | **crust** | volcanic; the ember strip after it glows | 0.9 | rock |
-| **shingle** | coast | 1.1 | sand |
+| **shingle** | beach | 1.1 | sand |
 
 The aftermath strips override the biome's class: glaze reads ice, ember reads crust, scree reads rubble, and a flood reads water.
 

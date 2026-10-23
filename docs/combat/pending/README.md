@@ -16,6 +16,56 @@
 
 `retired/` holds parked files that have landed or been overtaken, with a README. The step 2b files described below are there now; the text is kept as the record.
 
+## The biome layer (`biomes/`): apply plan
+
+Keyed by World's fine biome names (`data/biomes/climate.json` `fine`, 1460d351). City and village key by settlement. **Order: Tools, then World, then Encounter, then Animation and VFX.** Every step sits behind the park's switches, so each can land alone.
+
+1. **Tools** (on Orb's word)
+   - The schemas `combat-sigvariants.schema.json` and `combat-ground.schema.json` go into `tools/schemas/`.
+   - The `biome` property goes into `director-launch.schema.json` (from `director-launch-biome.fragment.json`).
+   - Map rows for `data/combat/sigvariants.json` and `data/combat/ground.json`.
+   - The nine cases in `cases.biomes.json` go into `tools/fixtures/cases.json`, with the two files copied into the virtual tree.
+   - The xref rules are in each schema's description, including two new ones: every variants key is a fine name or a settlement, and each `fineId` matches `climate.json`.
+2. **World**
+   - **A fine-name lookup for the director.**
+     - On a gen 2 planet it returns the column's fine name; on gen 1 it returns the alias.
+     - Settlements override, as `city` and `village`.
+     - Keep the settlement codes apart from the fine ids: in `BIOME_NAME`, 7 and 8 are town and city ground, while in `climate.json` they are jungle and savanna.
+   - **The join with window 2** (`docs/world/scratch-build/gen2-w2/`, parked).
+     - World's per-biome profiles carry the physics (grip, absorb, rough, furrow) over three surface classes. This park's `ground.json` carries the choreography looks over the look classes.
+     - Proposed: each profile names its look class (`look`: one of the nine new or the five built). This park's `forWorld` brakes and `biomeSurface` are then dropped in favour of World's profile. The numbers are close: World's ice grip of 0.45 on rock's brake gives 0.36 against my 0.3, and its wetland grip of 1.5 on soil gives 1.95 against my mud's 2.0.
+     - Window 2's `rough` tumbles more bodies in jungle, mountains and volcanic, and a tumble holds control. That is Game Design's to rule, as shingle's tumble was.
+   - **Aftermaths:** the ten kinds (`part` with its run-up), `surfaceAt` with their strips, fire's hazard wear and breakable floes.
+   - **Props:** window 2 lays trees. Still needed: lone trees, outcrops, boulders, bergs and vents as props the planner can find.
+   - **Physics:** ice's control point at rock's stop, the embed threshold scaled by depth, and the crater shapes.
+   - **The hash:** the sim numbers in `ground.json` go into hashed data (`contact.json` or window 2's `data/biomes/ground.json`), or `replay.gd` hashes the file.
+3. **Encounter** (and Simulation for the hash)
+   - **Step 1, bit-identical:**
+     - read `sigvariants.json` in place of `templates.json` `beam.variants`, `crater.gd` `SCORCH_VARIANT` and `beam.gd`'s branches, with `aftermathOn` and `byPersonality.enabled` off;
+     - delete `beam.gd`'s unused `VARIANT`;
+     - Simulation adds the file to `DirData.dataHash`.
+   - **Step 2:**
+     - `planBeam` picks by World's fine name;
+     - `aftermathOn` and the personality term go on (LANE SWEEP's own widths, if adopted);
+     - the five twists and the ocean's HIT, with the water rule.
+   - **Launch:** the `biome` block in `launch.json`, already in its hash:
+     - the eight candidates, `surfaceLand`, `downBonus` (forest's hard-coded +8 moves into it) and `distMul`;
+     - the stick and freshness rules;
+     - MARSH SWALLOW's sure embed and ICE SKID's control point.
+   - **The ground atoms:** the skid-stop, landing and approach by look class, and three events: `skid_stop`, `ground_land` and `crater_shape`.
+4. **Animation**
+   - Eleven shared stop poses, each with the fighter's flavour: heel dig, plough, sink slide, spin-out, deep plough, skitter, sink drag, heel peel, root catch, pebble slip, skim sink.
+   - The ice landing slide.
+   - Bounce multipliers for the new look classes.
+   - Read the three events.
+5. **VFX** (with Rendering for the decals)
+   - The trails, bursts and ejecta by look class, and the crack decals.
+   - The variants' looks (steam, shards, plates, powder, spray, embers, ash) and debris looks for the ten new names (`debris.gd` reads names).
+   - The parted sea with its wave and run-up, the fire line and the ember strip.
+   - **The look gate (ADR 0010)** applies to each: a side-by-side, and nothing fades or dissolves. The sea's walls fall, a fire burns out to char, and an ember strip cools to dark crust.
+
+**Waiting on Orb:** LANE SWEEP (`adoptProposed`) and TIDE CLEAVE (a rename of the ocean row).
+
 ## Parked data for Encounter's step 2b (landed)
 
 Merged, ready-to-apply copies of the three combat data files, prepared on 2026-10-01 from the live files. They are parked here because they change the combat data hash and the goldens; files under `docs/` are not loaded or hashed by the sim. The EP says when to apply them. They replace the earlier Q4 copies.

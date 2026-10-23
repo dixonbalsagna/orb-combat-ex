@@ -29,6 +29,17 @@
         "^[a-z][a-z_]*$": {
           "type": "object",
           "properties": {
+            "fineId": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 63
+            },
+            "settlement": {
+              "enum": [
+                "city",
+                "town"
+              ]
+            },
             "name": {
               "type": "string",
               "pattern": "^[A-Z][A-Z ]{2,23}$"
@@ -392,6 +403,17 @@
         "^[a-z][a-z_]*$": {
           "type": "object",
           "properties": {
+            "fineId": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 63
+            },
+            "settlement": {
+              "enum": [
+                "city",
+                "town"
+              ]
+            },
             "name": {
               "type": "string",
               "pattern": "^[A-Z][A-Z ]{2,23}$"
