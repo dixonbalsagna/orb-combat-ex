@@ -1,0 +1,227 @@
+diff --git a/data/biomes/rings.json b/data/biomes/rings.json
+index 5df2d3c..6204348 100644
+--- a/data/biomes/rings.json
++++ b/data/biomes/rings.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": "biomes.rings/1",
+-  "_about": "The ring picker's numbers (docs/world/shifting-arena-design.md window 4; WorldRingPick). sizes: the columns of Game Design's three sizes (Close 38,400 units, Half 76,800, Whole 153,600). minimum: what a ring must hold by size (standing cities and towns, kinds of ground of at least biomeShare of the ring, and the share that is land). candidates: how many rings are tried for a claim at a size. stride: columns between the coarse read's samples. ref: the share of the ring (or the count) at which a claim's suit counts in full. mustAt: the least value of a must-cross feature. avoidWeight: how much of an avoided feature's value comes off the score. homeBonus: added when the ring holds the claim's home place. coastRef: coast crossings (water to land and back) that count as a full coast. The claims themselves are Narrative's (docs/narrative/opponent_grounds.json) and are passed in; features the planet function cannot see are proxies (WorldRingPick.featureValue). turn: the calm-moment turn (docs/world/calm-turn-world.md; WorldEpoch; Game Design rulings-2026-10-19b.md 1a to 1d): on 0 or 1 (off), maxTurns a fight, gapSeconds of fight time between turns, driftDeg the most the ring's axis may move in all, bearings the candidate turns in degrees (none over 10), carryUnits how far each way from the pair the ground, craters and buildings stay, viewUnits how far each way a turn counts the places it brings into view, moveMax the most the ground under a fighter may move at a turn (a turn about a mispredicted pivot is scaled down to it: Game Design 2026-10-22 5a) minDeg the least angle it is scaled to warmCols the columns of each of a decided turn's rings the sim reads a tick and fallbackDeg the bearing of the second ring it warms (Encounter's pick may set its own). usedCos, usedPenalty: a ring a run has already fought (opts.used) is the same circle as a candidate of the same length when their axes make at least this cosine (0.9976 is about 4 degrees: the ground they cross is mostly the same; a Whole ring's axis counts either way round), and it is passed over unless nothing else meets the size's minimum, when it is scored down by usedPenalty.",
++  "_about": "The ring picker's numbers (docs/world/shifting-arena-design.md window 4; WorldRingPick). sizes: the columns of Game Design's three sizes (Close 38,400 units, Half 76,800, Whole 153,600). minimum: what a ring must hold by size (standing cities and towns, kinds of ground of at least biomeShare of the ring, and the share that is land). candidates: how many rings are tried for a claim at a size. stride: columns between the coarse read's samples. ref: the share of the ring (or the count) at which a claim's suit counts in full. mustAt: the least value of a must-cross feature. avoidWeight: how much of an avoided feature's value comes off the score. homeBonus: added when the ring holds the claim's home place. coastRef: coast crossings (water to land and back) that count as a full coast. The claims themselves are Narrative's (docs/narrative/opponent_grounds.json) and are passed in; features the planet function cannot see are proxies (WorldRingPick.featureValue). turn: the calm-moment turn (docs/world/calm-turn-world.md; WorldEpoch; Game Design rulings-2026-10-19b.md 1a to 1d): on 0 or 1 (off), maxTurns a fight, gapSeconds of fight time between turns, driftDeg the most the ring's axis may move in all, bearings the candidate turns in degrees (none over 10), carryUnits how far each way from the pair the ground, craters and buildings stay, viewUnits how far each way a turn counts the places it brings into view, moveMax the most the ground under a fighter may move at a turn (a turn about a mispredicted pivot is scaled down to it: Game Design 2026-10-22 5a) minDeg the least angle it is scaled to warmCols the columns of each of a decided turn's rings the sim reads a tick and fallbackDeg the bearing of the second ring it warms (Encounter's pick may set its own). usedCos, usedPenalty: a ring a run has already fought (opts.used) is the same circle as a candidate of the same length when their axes make at least this cosine (0.9976 is about 4 degrees: the ground they cross is mostly the same; a Whole ring's axis counts either way round), and it is passed over unless nothing else meets the size's minimum, when it is scored down by usedPenalty. first: the first stage's ring (a Close ring round the player's home) turns toward land when it is under Close's minimum (Game Design rulings-2026-10-23 section 6): bearings is how many evenly spaced bearings of a ring through the home are tried.",
+   "sizes": {
+     "close": 1200,
+     "half": 2400,
+@@ -38,6 +38,9 @@
+   "avoidWeight": 0.5,
+   "homeBonus": 0.25,
+   "coastRef": 2,
++  "first": {
++    "bearings": 12
++  },
+   "usedCos": 0.9976,
+   "usedPenalty": 0.5,
+   "turn": {
+diff --git a/sim/world/ringpick.gd b/sim/world/ringpick.gd
+index 641fd3f..cc971e8 100644
+--- a/sim/world/ringpick.gd
++++ b/sim/world/ringpick.gd
+@@ -68,6 +68,8 @@ static func _cLoad() -> void:
+ 				_cErrors.append("rings.json: sizes.%s is a multiple of 8 columns (the ground's largest stride)" % sz)
+ 	if not (j.get("turn") is Dictionary):
+ 		_cErrors.append("rings.json: turn is an object")
++	if not (j.get("first") is Dictionary and int(j.first.get("bearings", 0)) >= 1):
++		_cErrors.append("rings.json: first has bearings")
+ 	for k in ["stride", "biomeShare", "ref", "mustAt", "avoidWeight", "homeBonus", "coastRef", "usedCos", "usedPenalty"]:
+ 		if not (j.get(k) is float or j.get(k) is int):
+ 			_cErrors.append("rings.json: %s is a number" % k)
+@@ -495,10 +497,92 @@ static func _better(a: Array, b: Array) -> bool:
+ 	return false
+ 
+ 
+-## The first fight of a run: a Close ring round the player's own home (Game Design 2c), the touch-down on a seeded bearing.
+-static func firstRing(P: WorldPlanet.Planet, homeId: int, stream: int) -> Dictionary:
++## The first fight of a run: a Close ring round the player's own home (Game Design 2c), the touch-down on a seeded bearing. **When that ring is under Close's minimum** (a coastal home gives a ring
++## mostly sea: Game Design rulings-2026-10-23 section 6) **the ring turns toward land, keeping the home on it**: the rings through the home at data `first.bearings` evenly spaced bearings (from the
++## same seeded one) are read and the one that meets Close's minimum with the most land (then the most biomes) is taken. If no bearing meets it the story's ring stands as it is, as the boss's does.
++## opts: standing, damaged (as the picker takes them). Returns {c, t, cols, kind ("round" or "through"), turned, land}; the same answer however it is stepped (`beginFirstRing`).
++static func firstRing(P: WorldPlanet.Planet, homeId: int, stream: int, opts: Dictionary = {}) -> Dictionary:
++	var job: FirstJob = beginFirstRing(P, homeId, stream, opts)
++	job.finishNow()
++	return job.spec
++
++
++static func beginFirstRing(P: WorldPlanet.Planet, homeId: int, stream: int, opts: Dictionary = {}) -> FirstJob:
++	var j := FirstJob.new()
++	j.P = P
++	j.home = homeId
++	j.standing = opts.get("standing", PackedByteArray())
++	j.damaged = opts.get("damaged", [])
+ 	var rg := SimRng.new((stream * 7919 + 15485863) & 0xFFFFFFFF)
+-	return roundSpec(placePoint(P, homeId), sizeCols("close"), rg.next() * 2.0 * SimMathx.PI)
++	var phi0: float = rg.next() * 2.0 * SimMathx.PI
++	var cols: int = sizeCols("close")
++	j.base = roundSpec(placePoint(P, homeId), cols, phi0)
++	j.base["kind"] = "round"
++	j.base["place"] = homeId
++	var n: int = int(cfg().first.bearings)
++	var T: Array = placePoint(P, homeId)
++	for k in range(n):
++		var sp: Dictionary = throughSpec(T, cols, phi0 + 2.0 * SimMathx.PI * float(k) / float(n))
++		sp["kind"] = "through"
++		sp["place"] = homeId
++		j.cands.append(sp)
++	return j
++
++
++## A first ring in steps (the host spends a few reads a frame): step(n) reads up to n more rings (the story's first, then the turned ones only if it is under the minimum); true when made. `spec`
++## is the answer. `total` is how many reads it may take (1 + bearings).
++class FirstJob extends RefCounted:
++	var P: WorldPlanet.Planet
++	var home: int = -1
++	var standing := PackedByteArray()
++	var damaged: Array = []
++	var base: Dictionary = {}
++	var cands: Array = []
++	var evs: Array = []
++	var done: bool = false
++	var spec: Dictionary = {}
++	var _baseEv: Dictionary = {}
++	var _baseRead: bool = false
++
++	var total: int:
++		get:
++			return 1 + cands.size()
++
++	func step(n: int) -> bool:
++		while n > 0 and not done:
++			n -= 1
++			if not _baseRead:
++				_baseEv = WorldRingPick.evalRing(P, base, standing, damaged)
++				_baseRead = true
++				if WorldRingPick.meets(_baseEv, "close"):
++					_finish(base, false, _baseEv)
++				continue
++			evs.append(WorldRingPick.evalRing(P, cands[evs.size()], standing, damaged))
++			if evs.size() >= cands.size():
++				_choose()
++		return done
++
++	func finishNow() -> void:
++		step(1 << 30)
++
++	func _choose() -> void:
++		var best: int = -1
++		var bestKey: Array = []
++		for k in range(cands.size()):
++			if not WorldRingPick.meets(evs[k], "close"):
++				continue
++			var key: Array = [evs[k].land, evs[k].biomes, -k]
++			if best < 0 or WorldRingPick._better(key, bestKey):
++				best = k
++				bestKey = key
++		if best < 0:
++			_finish(base, false, _baseEv)   # no bearing meets the minimum: the story's ring stands
++		else:
++			_finish(cands[best], true, evs[best])
++
++	func _finish(sp: Dictionary, turned: bool, ev: Dictionary) -> void:
++		spec = {"c": sp.c, "t": sp.t, "cols": sp.cols, "kind": sp.kind, "turned": turned, "land": ev.land}
++		done = true
+ 
+ 
+ ## The boss's ring: the Whole circle through the boss's home and the most populous place still standing (Game Design 2c), the touch-down at the home. Null when no other place stands.
+diff --git a/sim/world/tools/ringpick_check.gd b/sim/world/tools/ringpick_check.gd
+index b8baa71..c1b4d97 100644
+--- a/sim/world/tools/ringpick_check.gd
++++ b/sim/world/tools/ringpick_check.gd
+@@ -212,5 +212,55 @@ func _init() -> void:
+ 	while not jbu.step(2):
+ 		pass
+ 	ok(jbu.result.idx == skip.idx and bitsEq(jbu.result.spec.c, skip.spec.c), "a stepped pick with a used list is the one made at once")
++	# --- the first ring turns toward land when it is under Close's minimum (Game Design rulings-2026-10-23 section 6)
++	var P3 := WorldPlanet.make(3)
++	var coastal: int = 8   # planet 3's city 8: the ring round it is 26% land against Close's 40%
++	var base3: Dictionary = WorldRingPick.roundSpec(WorldRingPick.placePoint(P3, coastal), 1200, 0.0)
++	var ev3: Dictionary = WorldRingPick.evalRing(P3, {"c": base3.c, "t": base3.t, "cols": 1200, "kind": "round", "place": coastal})
++	var fr3: Dictionary = WorldRingPick.firstRing(P3, coastal, 11)
++	var evt: Dictionary = WorldRingPick.evalRing(P3, {"c": fr3.c, "t": fr3.t, "cols": fr3.cols, "kind": "through", "place": coastal})
++	var ring3: Dictionary = WorldRingPick.ringFrom(fr3.c, fr3.cols, fr3.t)
++	var hp: Array = WorldRingPick.placePoint(P3, coastal)
++	ok(not WorldRingPick.meets(ev3, "close") and ev3.land < 0.4 and fr3.turned and fr3.kind == "through" and WorldRingPick.meets(evt, "close") and evt.land > ev3.land and absf(WorldPlanet.lateral(P3, ring3, hp[0], hp[1], hp[2])) < 0.5, "a coastal home (planet 3, city 8: the ring round it is %.0f%% land): the first ring turns to a ring through the home that meets Close's minimum with %.0f%% land, the home on it" % [100.0 * ev3.land, 100.0 * evt.land])
++	var P7b := WorldPlanet.make(7)
++	var keep: Dictionary = WorldRingPick.firstRing(P7b, 0, 3)
++	var old: Dictionary = WorldRingPick.roundSpec(WorldRingPick.placePoint(P7b, 0), 1200, SimRng.new((3 * 7919 + 15485863) & 0xFFFFFFFF).next() * 2.0 * SimMathx.PI)
++	ok(not keep.turned and keep.kind == "round" and bitsEq(keep.c, old.c) and bitsEq(keep.t, old.t), "a first ring that already meets the minimum is the ring it was, to the bit (planet 7, home 0)")
++	var fallen := PackedByteArray()
++	fallen.resize(P3.n)
++	fallen.fill(0)
++	var stands: Dictionary = WorldRingPick.firstRing(P3, coastal, 11, {"standing": fallen})
++	var story: Dictionary = WorldRingPick.roundSpec(WorldRingPick.placePoint(P3, coastal), 1200, SimRng.new((11 * 7919 + 15485863) & 0xFFFFFFFF).next() * 2.0 * SimMathx.PI)
++	ok(not stands.turned and stands.kind == "round" and bitsEq(stands.c, story.c) and bitsEq(stands.t, story.t), "when no bearing meets the minimum (every place fallen) the story's ring stands as it is")
++	var fixedN: int = 0
++	var failN: int = 0
++	var allOk: bool = true
++	for pl in range(1, 9):
++		var PQ := WorldPlanet.make(pl)
++		for h in range(PQ.n):
++			if int(PQ.kind[h]) != WorldPlanet.KIND_CITY:
++				continue
++			var fb2: Dictionary = WorldRingPick.roundSpec(WorldRingPick.placePoint(PQ, h), 1200, 0.0)
++			var fe2: Dictionary = WorldRingPick.evalRing(PQ, {"c": fb2.c, "t": fb2.t, "cols": 1200, "kind": "round", "place": h})
++			if WorldRingPick.meets(fe2, "close"):
++				continue
++			failN += 1
++			var turned: Dictionary = WorldRingPick.firstRing(PQ, h, 11)
++			var te2: Dictionary = WorldRingPick.evalRing(PQ, {"c": turned.c, "t": turned.t, "cols": turned.cols, "kind": turned.kind, "place": h})
++			if turned.turned and WorldRingPick.meets(te2, "close"):
++				fixedN += 1
++			else:
++				allOk = false
++	ok(failN >= 8 and allOk, "over 8 planets' cities, every first ring that missed the minimum (%d of them) was turned to one that meets it (%d)" % [failN, fixedN])
++	var jf: WorldRingPick.FirstJob = WorldRingPick.beginFirstRing(P3, coastal, 11)
++	var fsteps: int = 0
++	while not jf.step(2):
++		fsteps += 1
++	ok(jf.spec.turned and bitsEq(jf.spec.c, fr3.c) and bitsEq(jf.spec.t, fr3.t) and fsteps >= 2 and jf.total == 13, "a stepped first ring (%d steps of 2, up to %d reads) is the one made at once, and the same twice" % [fsteps + 1, jf.total])
++	var S3 := SimCore.createSim()
++	SimCore.newMatch(S3, 1, {}, {"planet": 3, "touch": 3, "arena": WorldRingPick.arenaOf(fr3), "intro": false})
++	for t in range(120):
++		SimCore.step(S3)
++	ok(S3.arenaCols == 1200 and S3.fighters.size() == 2, "the turned first ring plays: a match on its arena, 120 ticks")
+ 	print("RINGPICK: %d check(s) failed" % fails)
+ 	quit()
+diff --git a/tools/schemas/biomes-rings.schema.json b/tools/schemas/biomes-rings.schema.json
+index 6e609ba..37e9080 100644
+--- a/tools/schemas/biomes-rings.schema.json
++++ b/tools/schemas/biomes-rings.schema.json
+@@ -18,7 +18,8 @@
+     "coastRef",
+     "turn",
+     "usedCos",
+-    "usedPenalty"
++    "usedPenalty",
++    "first"
+   ],
+   "properties": {
+     "schema": {
+@@ -252,6 +253,21 @@
+       "maximum": 20,
+       "description": "Coast crossings that count as a full coast."
+     },
++    "first": {
++      "type": "object",
++      "required": [
++        "bearings"
++      ],
++      "additionalProperties": false,
++      "properties": {
++        "bearings": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 72,
++          "description": "How many evenly spaced bearings of a ring through the home the first stage tries when its ring round the home is under Close's minimum."
++        }
++      }
++    },
+     "usedCos": {
+       "type": "number",
+       "minimum": 0.5,
