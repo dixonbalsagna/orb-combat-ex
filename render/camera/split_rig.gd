@@ -193,6 +193,9 @@ var _wp_x0: Array = [0.0, 0.0]
 var _wp_y0: Array = [0.0, 0.0]
 var whips: int = 0
 var _plead: Array = [0.0, 0.0]            # each pane's lead, px along x (CamParams.PANE_LEAD_*)
+var mass: bool = true                     # the camera's mass (CamParams.MASS_*)
+var _mp: Array = [null, null]             # each pane's last drawn camera point (x, y) and velocity, units a tick
+var _mv: Array = [Vector2.ZERO, Vector2.ZERO]
 var _turn_p0: float = 0.0                 # the turn's angle at the cut, eased back to level ...
 var _turn_pa: float = 0.0                 # ... and the angle it last set (another shot's angle is left alone)
 var arrival_hold: bool = true             # the launch curve's arrival: widen to the landing, hold, let go (docs/camera/director.md step 4b)
@@ -374,6 +377,8 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_ci_story_end = -1
 	_ci_land = [null, null]
 	_plead = [0.0, 0.0]
+	_mp = [null, null]
+	_mv = [Vector2.ZERO, Vector2.ZERO]
 	_wp_t = [-1, -1]
 	_turn_t = -1.0
 	pace = "relax"
@@ -2317,6 +2322,7 @@ func _snap_cameras(S: SimState) -> void:
 		_snap_focus(S, i)
 		_zo[i] = _own_zoom_target(S, i)
 	_snap_merged(S)
+	_mp = [null, null]   # a snap lands where it is aimed: the mass starts again from there
 	_outputs(S)
 
 
@@ -3587,6 +3593,7 @@ func _outputs(S: SimState) -> void:
 		_oz[0] = oc.z
 		_oz[1] = oc.z
 	_oz_valid = true
+	_mass_stage(_cut_now)   # before the travel budget: the budget keeps the last word on how far a picture moves in a tick
 	_travel_budget(S)
 
 
@@ -4423,4 +4430,56 @@ func _catch_up(i: int, f, dist_w: float) -> void:
 ## ease out, so the angle never jumps (a launch shot starting under an angle shot cut 5.5 degrees in a tick).
 func _pitch_in_move() -> bool:
 	return (_ang_t >= 0.0 and _ang_pa != 0.0 and _shot_pitch == _ang_pa) or (_turn_t >= 0.0 and _turn_pa != 0.0 and _shot_pitch == _turn_pa)
+
+
+## The camera's mass: each pane's drawn point (x, y) follows the follow's aim with a bounded change of velocity a tick
+## (MASS_ACC of the width), kept within MASS_DEV of the width of the aim. Passes through (and keeps its state) where it is off.
+func _mass_stage(was_cut: bool) -> void:
+	var on: bool = mass and not reduced_motion and not intro_active and not was_cut and (sep <= 0.001 or sep >= 0.999) and _slam_slot < 0 and _ov_kind == "" and (e < 0.001 or (solo_kind == "launch" and solo_w >= 0.999 and e >= 0.999)) and not fold_active
+	for i in range(2):
+		var o: Vector3 = _outs[i]
+		var aim: Vector2 = Vector2(o.x, o.y)
+		var z: float = maxf(o.z, 0.001)
+		if _mp[i] == null or was_cut:
+			_mp[i] = aim
+			_mv[i] = Vector2.ZERO
+			continue
+		var pp: Vector2 = _mp[i]
+		var want_v: Vector2 = Vector2(SimWrap.sdx(pp.x, aim.x), aim.y - pp.y)
+		if not on or _own_step(i):
+			# (a building send, its stage's relay and hand-over move by their own eased step)
+			_mv[i] = want_v
+			_mp[i] = aim
+			continue
+		var acc: float = CamParams.MASS_ACC * vw / z
+		var v: Vector2 = Vector2(_mv[i])
+		var dv: Vector2 = want_v - v
+		if dv.length() > acc:
+			dv = dv.normalized() * acc
+		v += dv
+		var np: Vector2 = Vector2(SimWrap.wrap(pp.x + v.x), pp.y + v.y)
+		# never far from the aim: beyond MASS_DEV of the width it gives way at once (framing first)
+		var dev: Vector2 = Vector2(SimWrap.sdx(np.x, aim.x), aim.y - np.y)
+		var dmax: float = CamParams.MASS_DEV * vw / z
+		if dev.length() > dmax:
+			var fix: Vector2 = dev - dev.normalized() * dmax
+			np = Vector2(SimWrap.wrap(np.x + fix.x), np.y + fix.y)
+			v += fix
+		_mv[i] = v
+		_mp[i] = np
+		_outs[i] = Vector3(np.x, np.y, o.z)
+
+
+## Whether pane i shows a body whose framing moves by its own eased step (a building send, its stage's relay, the hand-over):
+## the shot's subject in a shot, either fighter in one view, the pane's own fighter in the split.
+func _own_step(i: int) -> bool:
+	var subj: Array = [i]
+	if solo_kind != "" and solo_slot >= 0 and solo_w > 0.0:
+		subj = [solo_slot]
+	elif sep <= 0.001:
+		subj = [0, 1]
+	for s in subj:
+		if bool(_stg_on[s]) or int(_stg_rel[s]) > 0 or _aim[s] != null:
+			return true
+	return false
 

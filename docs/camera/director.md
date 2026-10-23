@@ -383,3 +383,24 @@ Measured (`clip_digest.gd`, reduced, 3,600 ticks), the room ahead of a fighter f
 
 Gates on 97ec9985: the 18 headless render checks pass (after, city, cue --profile=spaced, depth, flash, flash_reg, flight, ground, hud_words, lane, open, pane, patch, shape, sky, stage, seam sweep at 1280x720, determinism; outline and cull need a window and were not run), as do split_sweep and determinism --intro. Clips: homework/camera/14-speed-lead/ (a rush in the city, main against this, and d3f1ca0e against this).
 
+**The flight follow's mass (2026-10-23, window 1; parked: docs/camera/pending/director-12-flight-mass.patch).** Orb: "rides the action with mass". The follow's springs aimed well, but each pane's camera could change its velocity at once: a fighter turning, a lead switching on, the pair's midpoint jumping as one fighter dashed. A last stage in `_outputs` (`_mass_stage`, before the travel budget, which keeps the last word) now gives the drawn camera a mass:
+- Its velocity changes by at most 0.006 of the width a tick, each tick (`MASS_ACC`). It speeds up into travel and settles out of it, rather than stepping.
+- It never strays more than 0.05 of the width from where the follow aims (`MASS_DEV`). Beyond that it gives way at once: framing comes first.
+- It is off where another part of the rig owns the move: a layout morph, a slam, a cut-in, a stage, a building aim, an opening (the expansion), the intro, the fold and reduced motion. In a shot it applies only to a launch's follow. A cut or a snap starts it again from where it lands.
+- No cut is added and none is kept. The braking lag is the mass itself; the lead into travel is the speed lead (director-11, on main).
+
+Measured (`clip_digest.gd` with a scratch probe, reduced, on 0c782165): steps in a pane's camera velocity over 0.01 of the width a tick, main then this (over 0.02 in brackets):
+
+| Scene | Main | This |
+| :--- | ---: | ---: |
+| ai 4 | 78 (37) | 57 (27) |
+| ai 7 | 119 (47) | 87 (40) |
+| ai 39 | 50 (36) | 34 (25) |
+| rushcity | 110 (62) | 83 (53) |
+| signaturecity | 72 (55) | 51 (37) |
+| mashcity | 8 (8) | 8 (8) |
+
+- Cuts, layout changes, strips, blow pushes and the time outside the picture are identical in every scene. Launched bodies stay in the frame.
+- Most of what is left is in the slam and the split's morph (`slam//morph`, `opening//morph`), which the mass leaves alone. That is window 4.
+
+Before/after: docs/camera/img/flight-mass/flight-mass-before-after.gif (main on the left, the mass on the right; ai 4 and ai 7, real web build, Tools' launcher).

@@ -245,6 +245,12 @@ const ANT_LEAD_TICKS: float = 18.0     # how far ahead a scheduled contact is re
 const ANT_SHIFT: float = 0.25          # the focus moves this share of the way to the contact point
 const ANT_PUSH: float = 0.20           # ... and the view tightens by this much
 const ANT_TAU_IN: float = 0.18
+# The camera's mass (2026-10-23, Orb: "rides the action with mass"; Research's follow is a damped spring): each pane's drawn
+# camera changes its velocity by at most MASS_ACC of the width a tick each tick, so it speeds up and settles rather than
+# stepping, and never strays more than MASS_DEV of the width from where the follow aims (beyond that it gives way at once).
+# Off on a cut, in a layout change, the slam, a shot's own camera, the intro and reduced motion.
+const MASS_ACC: float = 0.006
+const MASS_DEV: float = 0.05
 const WHIP_TICKS: int = 12            # a catch-up the follow cannot make is a crisp whip of this many frames, a hard ease at both ends, no blur
 const WHIP_MAX: float = 3.0            # ... up to this many widths; beyond it a move would only smear, and it cuts (a change of space)
 const ANT_TAU_OUT: float = 0.25
