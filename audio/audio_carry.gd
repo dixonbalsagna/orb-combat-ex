@@ -99,6 +99,8 @@ func on_event(S: SimState, e, out: Array) -> void:
 			_coil_release(S, e, out)
 		"air_brake":
 			_brake(S, e, out)
+		"arena_turn":
+			_arena(S, e, out)
 
 
 ## Once a tick after the events: the groove's later sounds, and the beams cracking as the point nears a fighter.
@@ -259,6 +261,21 @@ func _rush(S: SimState, e, out: Array) -> void:
 	var ticks: int = maxi(int(e.n) - S.tick, 1)
 	var pitch: float = clampf(float(R.nominal_ticks) / float(ticks), float(R.pitch_min), float(R.pitch_max))
 	out.append(_fixed(String(R.sound), _pos(S, a), float(R.gain_db), pitch, int(R.priority), String(R.cls), int(R.cap)))
+
+
+## The ring turns at Camera's hard cut (an `arena_turn` event: `amount` the bearing in degrees, `x` the pivot, `n` the turn, `k` the
+## drift). One low shift of the ground and its settle, at the pair (the pivot can be thousands of units off the fight), under the
+## fight: a bigger turn is a little deeper and louder. Never a whoosh: the cut is a cut. The slow drift of the axis between turns
+## makes no sound; it is below anything a player could hear as motion.
+func _arena(S: SimState, e, out: Array) -> void:
+	var A: Dictionary = cfg.arena
+	var u: float = clampf(absf(float(e.amount)) / float(A.bearing_ref), 0.0, 1.0)
+	var p := Vector2(0.0, 0.0)
+	if S.fighters.size() >= 2:
+		var a = S.fighters[0]
+		var b = S.fighters[1]
+		p = Vector2(SimWrap.wrap(a.x + SimWrap.sdx(a.x, b.x) * 0.5), (a.y + b.y) * 0.5)
+	out.append(_fixed(String(A.sound), p, float(A.gain_db) + float(A.gain_db_per_ref) * u, lerpf(float(A.pitch_at_zero), float(A.pitch_at_ref), u), int(A.priority), String(A.cls), int(A.cap)))
 
 
 ## A perfect block: the guard's thud with a round tone over it. `actor` is the blocker.

@@ -9,6 +9,7 @@ Owner: Audio and Music. Answers the EP's brief on Orb's ruling for a minimalist 
 | `struggle-beat-dry.wav` (7.2 s) | A struggle: the clash thud, then ten pulses with the groove locked to them, plain and sharp surges cracking, a stray's droop, the beams cracking as the point nears an end, the rising bed, and the overwhelming end |
 | `grip-dry.wav` (6.9 s) | A clinch: the clasp, the creak on each pulse climbing with the grip, pummels (a step, a sharp one with the tok, a void one that is silent), a stray that is silent, two refusals in the lockout |
 | `forms-brake-rush-dry.wav` (17 s) | The ready form's sting; the coil's hum rising in three steps and released; two brakes, fast and slow; two rushes, a long and a short; a perfect block |
+| `arena-turn-dry.wav` (9 s) | The ring's turn: a full turn, a small one (2.5 degrees), and a full one again. Quiet under a fight, as it would sit |
 
 ## What each ask became
 
@@ -29,6 +30,7 @@ Owner: Audio and Music. Answers the EP's brief on Orb's ruling for a minimalist 
 | **The coil's low hum, rising** | `drone.coil`: a looped low drone (82 Hz with harmonics so small speakers get it), started by the first `form_hold`, moved by each later one (louder and up to four semitones at a coil of 100), stopped by `form_release`. It sits under the music | `form_hold` (`amount` the coil, 0 to 100), `form_release` | Built, parked |
 | **The brake's skid** | `brake.skid`: a low scrape that swells and falls, louder and higher for a faster send (5000 a second is "full"), cut when the brake ends | `air_brake` `start` / `end` (`amount` the speed) | Built, parked |
 | **Panned rush sounds in place of the incoming chip** | `rush.whoosh`: air parted close by, falling in pitch as it passes, **at the rusher's place** so the stereo position says where he is coming from (the voice pool pans it by his x from the camera); sized to the ticks to his arrival (a short rush is higher) | `rush` (an event of its own type; `n` the arrival) | Built, parked |
+| **The ring's turn** (2026-10-23, the shifting arena) | `arena.shift`: the ground shifting under the fight and settling, at Camera's hard cut. A low thump (95 down to 55 Hz), a rumble that dies in about 0.8 s, a few low crumbs, and one smaller thud as it settles at 0.38 s. No whoosh, no sweep, no bright layer. Placed at the pair (not at the pivot, which can be thousands of units off), on Sfx so it sits under the fight; a full 10-degree turn is 2 dB louder and a little deeper (x0.90) than a small one (x1.05 at none). A turn happens at most `maxTurns` a fight, so it can be a presence | `arena_turn` (an event of its own type: `amount` the bearing in degrees, `x` the pivot, `n` the turn, `k` the drift) | Built, parked (the turn itself is off by default) |
 
 Not made, because the pad or the picture does it: the rumble patterns (Controls), and deaf and hard-of-hearing players get the same cues through rumble, poses and the edge caption option (UI's).
 
@@ -44,6 +46,8 @@ Not made, because the pad or the picture does it: the rumble patterns (Controls)
 - **Voices:** every class has a cap (the groove and cracks 2 each, the creak 1, the coil 2, the skid 1, the rush 3); information cues have priority 55 to 85 against the hits' 40 to 60, so they are not the ones dropped.
 - **No new capability:** the coil uses the looped voice built for the struggle's bed.
 - **Checks:** `carry_check` (parked, the groove's timing and pitch steps, the crack thresholds and their re-arming, the grip, the forms, the brake, the rush, the perfect block, determinism, the coil's hum through the real voice pool), `tone_check` (the heard spectra: crack 579 Hz, skid 559, rush 656, creak 600, thud 494, clasp 463, ready sting 239, perfect block 326, coil 208), `tug_check`, `host_check`.
+
+**The slow drift** of the ring's axis between turns (at most 40 degrees in all, spread over whole turns) gets no bed: it is not motion anyone could hear, and a drone for it would only be noise under the fight. The turn's cut is the only sound.
 
 ## For Orb and the EP to decide
 

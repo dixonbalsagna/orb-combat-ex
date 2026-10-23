@@ -164,5 +164,16 @@
     "priority": 80,
     "cls": "block.perfect",
     "cap": 1
+  },
+  "arena": {
+    "sound": "arena.shift",
+    "gain_db": -4.0,
+    "bearing_ref": 10.0,
+    "gain_db_per_ref": 2.0,
+    "pitch_at_ref": 0.9,
+    "pitch_at_zero": 1.05,
+    "priority": 78,
+    "cls": "arena.turn",
+    "cap": 1
   }
 }

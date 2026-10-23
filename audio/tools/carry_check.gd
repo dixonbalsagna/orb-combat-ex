@@ -213,6 +213,21 @@ func _forms_brake_rush() -> void:
 	ok(with_sound(r, "brake.skid")[0].gain_db < sk[0].gain_db, "a slow send skids quieter")
 	r = tick(t + 430, [ev("air_brake", 1, {"text": "end", "kind": "speed", "amount": 1200.0})])
 	ok(r.size() == 1 and r[0].stop_group == "brake.1" and r[0].fade_ms == 150, "the end of the brake cuts it")
+	# the ring's turn
+	var keep_x: Array = [S.fighters[0].x, S.fighters[1].x]
+	S.fighters[0].x = 2500.0
+	S.fighters[1].x = 2700.0
+	r = tick(t + 450, [ev("arena_turn", 0, {"n": 1.0, "x": 9000.0, "amount": 10.0, "k": 10.0})])
+	var at: Array = with_sound(r, "arena.shift")
+	ok(at.size() == 1 and absf(at[0].x - 2600.0) < 0.01 and at[0].bus == "Sfx", "the ring's turn is one low shift at the pair (x %.0f), not at the far pivot" % at[0].x)
+	r = tick(t + 460, [ev("arena_turn", 0, {"n": 2.0, "x": 9000.0, "amount": 2.5, "k": 12.5})])
+	var at2: Array = with_sound(r, "arena.shift")
+	ok(at2.size() == 1 and at2[0].pitch > at[0].pitch and at2[0].gain_db < at[0].gain_db, "a small turn is a little higher and quieter than a full one (x%.3f, %.1f dB against x%.3f, %.1f dB)" % [at2[0].pitch, at2[0].gain_db, at[0].pitch, at[0].gain_db])
+	cues.carry.cfg["enabled"] = false
+	ok(tick(t + 470, [ev("arena_turn", 0, {"n": 3.0, "x": 9000.0, "amount": 5.0})]).is_empty(), "parked, it makes nothing")
+	cues.carry.cfg["enabled"] = true
+	S.fighters[0].x = keep_x[0]
+	S.fighters[1].x = keep_x[1]
 	# rush
 	S.fighters[0].x = 2500.0
 	r = tick(t + 500, [ev("rush", 0, {"n": t + 500 + 18})])

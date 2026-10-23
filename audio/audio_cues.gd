@@ -87,7 +87,7 @@ func consume(S: SimState, events: Array) -> Array:
 					if c != null:
 						out.append(c)
 	for e in events:
-		if e.type in ["rush", "transform_ready", "form_hold", "form_release", "air_brake"]:
+		if e.type in ["rush", "transform_ready", "form_hold", "form_release", "air_brake", "arena_turn"]:
 			carry.on_event(S, e, out)
 	tug.after(S, out)
 	carry.after(S, out)

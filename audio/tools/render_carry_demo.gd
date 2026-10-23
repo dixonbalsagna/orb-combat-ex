@@ -3,7 +3,7 @@ extends SceneTree
 ## mappers (AudioTug and AudioCarry) from STAGED events: the cues of the beam struggle, the grip, the forms, the brake, a rush and a
 ## perfect block. From the repo root:
 ##   godot --headless --path . --script res://audio/tools/render_carry_demo.gd [-- --out=DIR]
-## Writes DIR/struggle-beat-dry.wav, DIR/grip-dry.wav and DIR/forms-brake-rush-dry.wav (default audio/preview/carry). Mono 16-bit at
+## Writes DIR/struggle-beat-dry.wav, DIR/grip-dry.wav, DIR/forms-brake-rush-dry.wav and DIR/arena-turn-dry.wav (default audio/preview/carry). Mono 16-bit at
 ## 22.05 kHz; a looped voice (the struggle's bed, the coil's hum) is rendered by following its updates. The stereo place a
 ## cue would have in the game is not heard in a mono file. Not a game recording.
 
@@ -23,6 +23,7 @@ func _init() -> void:
 	_scene("struggle-beat-dry", out_dir, _struggle_script(), true)
 	_scene("grip-dry", out_dir, _grip_script(), false)
 	_scene("forms-brake-rush-dry", out_dir, _forms_script(), false)
+	_scene("arena-turn-dry", out_dir, _arena_script(), false)
 	quit(0)
 
 
@@ -120,6 +121,15 @@ func _forms_script() -> Dictionary:
 	add.call(810, _ev("rush", 1, {"n": 819}))
 	add.call(880, _cue("perfect_block", "", 1))
 	return {"events": s, "mid": [], "last": 950}
+
+
+## The ring's turn at the hard cut: a full turn (10 degrees), a small one (2.5), a full one again.
+func _arena_script() -> Dictionary:
+	var s: Dictionary = {}
+	s[40] = [_ev("arena_turn", 0, {"n": 1.0, "x": 4050.0, "amount": 10.0, "k": 10.0})]
+	s[200] = [_ev("arena_turn", 0, {"n": 2.0, "x": 4050.0, "amount": 2.5, "k": 12.5})]
+	s[360] = [_ev("arena_turn", 0, {"n": 3.0, "x": 4050.0, "amount": -10.0, "k": 12.5})]
+	return {"events": s, "mid": [], "last": 470}
 
 
 func _scene(name: String, out_dir: String, sc: Dictionary, with_clash: bool) -> void:
