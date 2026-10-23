@@ -1,0 +1,153 @@
+{
+  "_about": "PROPOSED fixture cases for tools/fixtures/cases.json (Combat, 2026-10-23): three refusals per new schema, in that file's shape. Each was run against the draft schemas with Tools' validator in a scratch root; '_seen' is the finding it printed, for Tools to set expect.rule from. The virtual fixture tree needs copies of data/combat/sigvariants.json and data/combat/ground.json (docs/combat/pending/biomes/), and launch.json with the biome block",
+  "cases": [
+    {
+      "id": "sigvariants-name-lower",
+      "schema": "combat-sigvariants.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/sigvariants.json",
+          "set": {
+            "/variants/jungle/name": "vine shear"
+          }
+        }
+      ],
+      "expect": {
+        "pointer": "/variants/jungle/name",
+        "_seen": "error  data/combat/sigvariants.json:235 /variants/jungle/name  [pattern] must match /^[A-Z][A-Z ]{2,23}$/ (got \"vine shear\")"
+      }
+    },
+    {
+      "id": "sigvariants-scorch-three",
+      "schema": "combat-sigvariants.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/sigvariants.json",
+          "set": {
+            "/variants/tundra/scorch": [
+              1.0,
+              1.0,
+              1.0
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "pointer": "/variants/tundra/scorch",
+        "_seen": "error  data/combat/sigvariants.json:290 /variants/tundra/scorch  [maxItems] must have at most 2 items (got 3)"
+      }
+    },
+    {
+      "id": "sigvariants-aftermath-kind",
+      "schema": "combat-sigvariants.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/sigvariants.json",
+          "set": {
+            "/variants/coast/aftermath/kind": "tsunami"
+          }
+        }
+      ],
+      "expect": {
+        "pointer": "/variants/coast/aftermath",
+        "_seen": "error  data/combat/sigvariants.json:376 /variants/coast/aftermath  [oneOf] matches none of 2 alternatives; closest: /variants/coast/aftermath [type] must be null (got object)"
+      }
+    },
+    {
+      "id": "ground-reads-as-new",
+      "schema": "combat-ground.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/ground.json",
+          "set": {
+            "/surfaces/ice/readsAs": "snow"
+          }
+        }
+      ],
+      "expect": {
+        "pointer": "/surfaces/ice/readsAs",
+        "_seen": "error  data/combat/ground.json:26 /surfaces/ice/readsAs  [enum] must be one of \"paving\", \"rock\", \"soil\", \"sand\", \"rubble\" (got \"snow\")"
+      }
+    },
+    {
+      "id": "ground-refill-over-one",
+      "schema": "combat-ground.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/ground.json",
+          "set": {
+            "/craters/mud/refill": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "pointer": "/craters/mud/refill",
+        "_seen": "error  data/combat/ground.json:374 /craters/mud/refill  [maximum] must be <= 1 (got 1.5)"
+      }
+    },
+    {
+      "id": "ground-end-unknown",
+      "schema": "combat-ground.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/ground.json",
+          "set": {
+            "/skidStop/mud/end": "stuck"
+          }
+        }
+      ],
+      "expect": {
+        "pointer": "/skidStop/mud/end",
+        "_seen": "error  data/combat/ground.json:184 /skidStop/mud/end  [enum] must be one of \"crouch\", \"low_crouch\", \"kneel\", \"shin_deep\", \"sunk\", \"waist_deep\" (got \"stuck\")"
+      }
+    },
+    {
+      "id": "launch-biome-send-unknown",
+      "schema": "director-launch.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/launch.json",
+          "set": {
+            "/biome/candidates/ICE SKID/sends": "sideways"
+          }
+        }
+      ],
+      "expect": {
+        "pointer": "/biome/candidates/ICE",
+        "_seen": "error  data/director/launch.json:204 /biome/candidates/ICE SKID/sends  [enum] must be one of \"across\", \"down\", \"up\" (got \"sideways\")"
+      }
+    },
+    {
+      "id": "launch-biome-distmul-negative",
+      "schema": "director-launch.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/launch.json",
+          "set": {
+            "/biome/distMul/savanna": -1
+          }
+        }
+      ],
+      "expect": {
+        "pointer": "/biome/distMul/savanna",
+        "_seen": "error  data/director/launch.json:130 /biome/distMul/savanna  [minimum] must be >= 0.2 (got -1)"
+      }
+    },
+    {
+      "id": "launch-biome-soft-over-one",
+      "schema": "director-launch.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/launch.json",
+          "set": {
+            "/biome/surfaceLand/snow/soft": 2
+          }
+        }
+      ],
+      "expect": {
+        "pointer": "/biome/surfaceLand/snow/soft",
+        "_seen": "error  data/director/launch.json:148 /biome/surfaceLand/snow/soft  [maximum] must be <= 1 (got 2)"
+      }
+    }
+  ]
+}

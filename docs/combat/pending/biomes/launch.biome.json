@@ -1,0 +1,96 @@
+{
+  "schema": "director.launch/1",
+  "_target": "data/director/launch.json, as a new block 'biome' (tools/schemas/director-launch.schema.json gains it: the schema is closed, so Tools adds the property; draft fragment director-launch-biome.fragment.json)",
+  "_about": "PARKED (Combat, 2026-10-23; docs/combat/biomes.md section 3). Launch-planner terms by biome and surface for sim/director/launch.gd chooseLaunch: eight scored candidates that use the ground (a cliff, ice to skid on, a marsh that swallows a slam, trees to smash through, a skim ashore, a slope, a vent, a big prop), terms on the landing's surface, and two biome tables that replace hard-coded numbers. Every score is in the planner's points and is a first value for Game Design. The planner's shared terms (noise, care at the landing, distance, new biome, water, repeats, launch anywhere's freshness) apply to every new candidate as to SMASH ACROSS; a new candidate is never offered when its feature is missing, so a biome without it plays exactly as today. A candidate's hero and villain are added by personality as interiorAim's score is (the care's sign, or the role at care 0). Lengths are in body heights (75 units). With enabled false nothing is offered or added. The block rides launch.json, which DirLaunch.dataText() already folds into the replay's data hash.",
+  "biome": {
+    "enabled": false,
+    "touchBuilt": false,
+    "_touchBuilt": "the surfaceLand rows for today's classes (sand, rubble) apply only when this is true, so with the block on a world without the new biomes still plays as today",
+    "downBonus": {
+      "_about": "added to DRIVE DOWN's score when the target is over this biome. Replaces launch.gd's hard-coded 'bio == forest: + 8', so forest's row keeps today's number",
+      "forest": 8, "jungle": 8, "taiga": 8, "wetland": 6, "tundra": 4
+    },
+    "distMul": {
+      "_about": "times the distance term (DIST_W) when the predicted landing is in this biome: open country rewards the long haul, closed country shortens it. Missing biomes read 1",
+      "savanna": 1.25, "tundra": 1.2, "sea_ice": 1.2, "ice_sheet": 1.15, "wetland": 0.8, "jungle": 0.7
+    },
+    "surfaceLand": {
+      "_about": "added by the send's kind (up, down, across, from launch.gd SENDS) when the predicted landing's surface is this class (World's surfaceAt). soft: the impact's damage times this (a soft landing hurts less and digs less). Missing classes add nothing",
+      "ice":     {"across": 6, "down": 0, "up": 0},
+      "snow":    {"across": 2, "down": 6, "up": 0, "soft": 0.85},
+      "mud":     {"across": -4, "down": 8, "up": 0, "soft": 0.85},
+      "sand":    {"across": 0, "down": 2, "up": 0, "soft": 0.9},
+      "ash":     {"across": 0, "down": 4, "up": 0, "soft": 0.9},
+      "shingle": {"across": 2, "down": 0, "up": 0},
+      "crust":   {"across": 0, "down": 4, "up": 0},
+      "rubble":  {"across": 2, "down": 2, "up": 0}
+    },
+    "candidates": {
+      "CLIFFSIDE": {
+        "_about": "MOUNTAINSIDE for any biome: the first rise ahead steeper than minTan over at least minRiseBh, out to reachBh, found from heights (WorldTerrain.groundY), not from a biome name. The landing is the face: the slide's WALL stop or an embed. MOUNTAINSIDE keeps the mountains biome, so a face inside mountains is not offered twice",
+        "sends": "across", "uy": 0.05,
+        "probe": {"stepBh": 7.0, "reachBh": 166.0, "minRiseBh": 2.0, "minTan": 1.2},
+        "score": 18.0, "perRiseBh": 1.0, "riseCap": 8.0,
+        "hero": 0.0, "villain": 2.0,
+        "where": "highland crags, volcanic cones, coast cliffs, the ice shelf's 36-unit edge (0.5 bh: too low, so not offered there), tundra's heaved plates when 2 bh or more"
+      },
+      "ICE SKID": {
+        "_about": "a flat, low send onto ice: the body skids far for little force. Offered when the ground within onIceBh of the target is ice. The slide reads World's ice brake, so its length is World's; the planner's predicted travel reads that brake too. A skid is a journey, and control returns when the journey ends (contact.gd), so a brake of 0.3 against soil's 1.3 returns control several times later: Game Design rules whether that stands, is capped, or the brake rises",
+        "sends": "across", "uy": 0.04, "force": 0.8,
+        "onIceBh": 1.0, "score": 14.0,
+        "endBonus": {"water": 6.0, "berg": 8.0, "_note": "a skid that ends in a lead of open water (he goes in) or against a berg (a ricochet plant) scores this more; the water penalty is waived for a skid that ends in a lead"},
+        "hero": 2.0, "villain": 0.0,
+        "where": "sea ice, ice sheet glaze (ICEFIELD THAW's strip), frozen lakes if World adds them"
+      },
+      "MARSH SWALLOW": {
+        "_about": "a slam straight down into mud: the marsh swallows him. Offered when the target is over mud within maxAltBh. The body embeds embedMul times as deep (World's embed; its time is World's unchanged 60-tick down state, but a deeper bowl reaches the embed threshold more often, which is Game Design's to rule), the crater refills (ground.json craters.mud), and little is destroyed, so the carer likes it",
+        "sends": "down", "ux": 0.1, "uy": -1.2,
+        "maxAltBh": 12.0, "score": 16.0, "embedMul": 1.8,
+        "hero": 6.0, "villain": -2.0,
+        "where": "wetland; coast mudflats if World makes them mud"
+      },
+      "TREE LINE": {
+        "_about": "a low send through a stand of trees: each trunk on the path snaps and slows him, the way BUILDING SMASH chains buildings. Offered when at least minTrees trunks stand on the predicted line within the send's first reachBh",
+        "sends": "across", "uy": 0.08,
+        "minTrees": 2, "maxTrees": 6, "reachBh": 60.0,
+        "score": 10.0, "perTree": 2.0, "brakePerTree": 0.12,
+        "hero": 2.0, "villain": 0.0,
+        "where": "forest, jungle, taiga; savanna's lone trees count one each"
+      },
+      "SKIM ASHORE": {
+        "_about": "from over water, a low send that skims and comes ashore: World's water skim already bounces a fast flat body (contact.json water). Offered when the target is over water and the predicted path skims at most maxSkims times and lands on dry ground within landBh. It takes the water penalty off and pays score instead, so fights over the sea come back to land (the old ocean-heavy launch mix)",
+        "sends": "across", "uy": 0.1,
+        "maxSkims": 6, "landBh": 160.0, "score": 14.0,
+        "hero": 0.0, "villain": 0.0,
+        "where": "coast, ocean next to land, wetland channels, sea ice leads"
+      },
+      "DOWNHILL": {
+        "_about": "a send down the slope on the far side: he tumbles down it. Offered when the ground falls at least minDropBh within dropRunBh ahead and the slope's surface is one that tumbles or rolls",
+        "sends": "across", "uy": 0.15,
+        "minDropBh": 4.0, "dropRunBh": 40.0, "surfaces": ["rubble", "turf", "snow", "ash", "shingle"],
+        "score": 8.0, "perDropBh": 0.8, "dropCap": 12.0,
+        "hero": 0.0, "villain": 0.0,
+        "where": "highland, mountains' flanks, volcanic cones, SCREE RUN's strip"
+      },
+      "VENT LIFT": {
+        "_about": "an uppercut over a vent: the vent's blast carries him higher. Offered when a vent prop (World's) is within withinBh of the target. The launch's up force is times liftMul",
+        "sends": "up", "withinBh": 2.0, "liftMul": 1.25, "score": 12.0,
+        "hero": 0.0, "villain": 2.0,
+        "where": "volcanic"
+      },
+      "PROP SMASH": {
+        "_about": "a send into one big prop on the line: a lone tree, a rock outcrop, a boulder or a berg, the way BUILDING SMASH takes a building but with no people and no chain. Offered when such a prop stands on the predicted line within reachBh. The prop breaks (World) and the body stops at it",
+        "sends": "across", "uy": 0.05,
+        "props": ["lone_tree", "outcrop", "boulder", "berg"], "reachBh": 40.0,
+        "score": 10.0, "hero": 2.0, "villain": 2.0,
+        "where": "savanna, highland, tundra, sea ice; any biome where World places such props"
+      }
+    },
+    "sends": {
+      "_about": "added to launch.gd SENDS, so a piece that names where it sends (launch enders, the stick's aim) keeps these too",
+      "across": ["CLIFFSIDE", "ICE SKID", "TREE LINE", "SKIM ASHORE", "DOWNHILL", "PROP SMASH"],
+      "down": ["MARSH SWALLOW"],
+      "up": ["VENT LIFT"]
+    }
+  }
+}

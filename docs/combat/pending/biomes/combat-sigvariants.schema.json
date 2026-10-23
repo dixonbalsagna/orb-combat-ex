@@ -1,0 +1,361 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/combat-sigvariants",
+  "title": "combat.sigvariants/1",
+  "description": "DRAFT by Combat for Tools (docs/combat/biomes.md section 2): data/combat/sigvariants.json, the signature's variant by the biome under the defender. It replaces templates.json beam.variants, crater.gd SCORCH_VARIANT and sampleBeam's variant branches; rows marked asBuilt carry today's numbers. Policy: closed except keys starting with an underscore. Cross-references for Tools' xref (proposed): every variants key is a biome WorldBiomes can return (today's seven, ice_sheet and sea_ice, and World's new ids once named); every biome WorldBiomes can return has a row; no two non-settlement rows share a name (city and village share BOULEVARD RAZE until LANE SWEEP is adopted); every aftermath kind used is a key of the file's aftermath table",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "combat.sigvariants/1"
+    },
+    "fields": {
+      "type": "object"
+    },
+    "aftermath": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {},
+        "^[a-zA-Z]+$": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "variants": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {},
+        "^[a-z][a-z_]*$": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z ]{2,23}$"
+            },
+            "asBuilt": {
+              "type": "boolean"
+            },
+            "scorch": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.2,
+                "maximum": 3
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "structMul": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "trees": {
+              "enum": [
+                "area",
+                "burn",
+                "fell",
+                "snap",
+                "none"
+              ]
+            },
+            "fx": {
+              "type": "object",
+              "properties": {
+                "dust": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-f]{6}$"
+                },
+                "sparks": {
+                  "type": "object",
+                  "properties": {
+                    "n": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 20
+                    },
+                    "col": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "speed": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 5000
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": {}
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "n",
+                    "col",
+                    "speed"
+                  ]
+                },
+                "fire": {
+                  "type": "object",
+                  "properties": {
+                    "withinAbove": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 2000
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": {}
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "withinAbove"
+                  ]
+                },
+                "steam": {
+                  "type": "boolean"
+                },
+                "shards": {
+                  "type": "boolean"
+                },
+                "plates": {
+                  "type": "boolean"
+                },
+                "powder": {
+                  "type": "boolean"
+                },
+                "spray": {
+                  "type": "boolean"
+                },
+                "embers": {
+                  "type": "boolean"
+                },
+                "ash": {
+                  "type": "boolean"
+                }
+              },
+              "patternProperties": {
+                "^_": {}
+              },
+              "additionalProperties": false,
+              "required": [
+                "dust"
+              ]
+            },
+            "aftermath": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "clearing",
+                        "fireLine",
+                        "heave",
+                        "snowDump",
+                        "flood",
+                        "scree",
+                        "ember",
+                        "glaze",
+                        "split"
+                      ]
+                    },
+                    "spreadTicks": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 600
+                    },
+                    "durTicks": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 36000
+                    },
+                    "reachCols": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 200
+                    },
+                    "rimMul": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 5
+                    },
+                    "refill": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "source": {
+                      "enum": [
+                        "waterTable",
+                        "sea"
+                      ]
+                    },
+                    "seaCols": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 400
+                    },
+                    "minSlope": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 5
+                    },
+                    "gapBh": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 10
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": {}
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "kind"
+                  ]
+                }
+              ]
+            },
+            "outcomes": {
+              "type": "object",
+              "properties": {
+                "CLASH": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "GUARD": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "DODGE": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "HIT": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "ESCAPE": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "patternProperties": {
+                "^_": {}
+              },
+              "additionalProperties": false,
+              "required": [
+                "CLASH",
+                "GUARD",
+                "DODGE",
+                "HIT",
+                "ESCAPE"
+              ]
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "scorch",
+            "structMul",
+            "trees",
+            "fx",
+            "aftermath",
+            "outcomes"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "byPersonality": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "hero": {
+          "type": "object",
+          "properties": {
+            "widthMul": {
+              "type": "number",
+              "minimum": 0.2,
+              "maximum": 3
+            },
+            "structMul": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "whenPopAbove": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false,
+          "required": [
+            "widthMul",
+            "structMul",
+            "whenPopAbove"
+          ]
+        },
+        "villain": {
+          "type": "object",
+          "properties": {
+            "widthMul": {
+              "type": "number",
+              "minimum": 0.2,
+              "maximum": 3
+            },
+            "structMul": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "whenPopAbove": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false,
+          "required": [
+            "widthMul",
+            "structMul",
+            "whenPopAbove"
+          ]
+        }
+      },
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "hero",
+        "villain"
+      ]
+    }
+  },
+  "patternProperties": {
+    "^_": {}
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "variants"
+  ]
+}

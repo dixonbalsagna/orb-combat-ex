@@ -1,0 +1,128 @@
+{
+  "schema": "combat.sigvariants/1",
+  "_target": "data/combat/sigvariants.json",
+  "_about": "PARKED (Combat, 2026-10-23; docs/combat/biomes.md section 2). The signature's variant by the biome under the defender, one row a biome: its name, how its beam bites the terrain and structures, what it leaves behind, and its outcome flavour. It replaces the tables that hold this today: data/combat/templates.json beam.variants (the names), sim/world/crater.gd SCORCH_VARIANT (depth and width factors), the variant branches in sim/director/beam.gd sampleBeam (dust, sparks, fire), and beam.gd's unused copy const VARIANT (to delete on the switch). render/vfx/debris.gd also branches by the variant's name (glass flecks, spray puffs, larger embers); it keeps reading the name, which does not change. The seven rows marked asBuilt carry today's numbers exactly, so reading this file instead of the three is bit-identical; only the new rows add behaviour. Biome keys are the names WorldBiomes.biomeAt returns; the eight new keys are provisional until World names its ids. Names are working labels until Legal screens them and Orb picks. The file picks what the beam carves, so it goes into DirData.dataHash as enders.json does.",
+  "fields": {
+    "name": "the label in the director's feed and the banner: upper case, place or material plus effect (Legal RL-008's pattern)",
+    "scorch": "[depth factor, width factor] on the groove (crater.gd: depth (D0 + D_P x P) x depth factor, half width (HW0 + HW_P x P) x width factor)",
+    "structMul": "times the beam's structure bite (b.sf) for the whole beam. The variant is picked once, when the signature is planned, from the biome under the defender (as planBeam does today), and holds for the whole path",
+    "trees": "what the beam does to trees on its path: area (today's area damage), burn, fell (fall inward across the groove), snap (crowns drop), none",
+    "fx": "VFX's keys: dust colour, sparks, fire (sampleBeam's branches today; fire.withinAbove is in the prototype's units, times SimConst.WS as sampleBeam reads it); the other flags are new looks for VFX. Positions and counts stay in the code as today (one dust puff at g + 8 and the sparks at g + 6, inside the beam's reach test; one fire at g, under its own height test): the table carries only what varies",
+    "aftermath": "what the scar leaves for the rest of the fight (World's to build): null, or a kind from the aftermath table with its numbers. It is laid only on the groove's columns whose biome is the variant's own; where the beam carves on into another biome the groove there is plain",
+    "outcomes": "the flavour of each outcome here. Presentation unless the line starts with 'rule:', which marks a mechanical twist for Encounter and World"
+  },
+  "aftermath": {
+    "clearing": "the canopy over the groove is gone for the match: the strip no longer counts as forest cover, and the trees lie across it as fallen trunks (props a ricochet can plant on)",
+    "fireLine": "dry grass burns outward from the groove: spreads 1 column each spreadTicks for durTicks, up to reachCols each side; burns props and grass; no damage to fighters unless Game Design rules it",
+    "heave": "the groove's rim is thrown up as frozen plates rimMul x the berm: ground a slide stops against (World's WALL rule) and a slope a ricochet plants on",
+    "snowDump": "snow off the trees refills refill of the groove's depth over durTicks: a shallower scar under a powder curtain",
+    "flood": "the groove fills with water to the water table (wetland) or the sea (coast, where its floor is below sea level within seaCols of open water): a water trench under the ocean rules (sink, skim, submerge)",
+    "scree": "on a slope steeper than minSlope, rubble runs downhill from the groove up to reachCols over durTicks: a rubble strip (surface rubble: a slide over it tumbles)",
+    "ember": "the groove glows: its surface reads ember for durTicks, then crust; it lights props and grass; no damage to fighters unless Game Design rules it",
+    "glaze": "meltwater refreezes in the groove: its surface reads ice for the rest of the match (a slick strip)",
+    "split": "every floe the path crosses breaks at the path into two plates that drift gapBh apart: a lead of open water (a real gap in the ground)"
+  },
+  "variants": {
+    "ocean": {
+      "name": "HORIZON CLEAVE", "asBuilt": true, "_rename": "TIDE CLEAVE proposed (RL-006: 'Horizon' is a brand)",
+      "scorch": [1.0, 1.0], "structMul": 1.0, "trees": "area", "fx": {"dust": "#9b8f7e"}, "aftermath": null,
+      "outcomes": {"CLASH": "the beams meet over a standing column of spray", "GUARD": "the guard is driven back across the surface, a wake behind", "DODGE": "the dodge throws up a sheet of spray", "HIT": "he is driven under and surfaces in a boil of foam", "ESCAPE": "he breaks away low along the water, skimming"}
+    },
+    "city": {
+      "name": "BOULEVARD RAZE", "asBuilt": true,
+      "scorch": [0.8, 1.0], "structMul": 1.0, "trees": "area", "fx": {"dust": "#9b8f7e"}, "aftermath": null,
+      "outcomes": {"CLASH": "the meeting point blows out the windows of the street below", "GUARD": "the guard skids back down the street on paving, sparks under the heels", "DODGE": "the dodge goes up a facade and off it", "HIT": "he is carried into the tower behind the scar", "ESCAPE": "he breaks away between the towers, low along the street"}
+    },
+    "village": {
+      "name": "BOULEVARD RAZE", "asBuilt": true, "_rename": "LANE SWEEP proposed (signature-variants.md 5.3): today the city and village rows play the same, which pillar 7 does not allow; LANE SWEEP's low graze along the lane is a scorch of [0.7, 1.3] once adopted",
+      "scorch": [0.8, 1.0], "structMul": 1.0, "trees": "area", "fx": {"dust": "#9b8f7e"}, "aftermath": null,
+      "outcomes": {"CLASH": "roof tiles lift off the houses below in a ring", "GUARD": "the guard skids back down the lane, scattering a fence", "DODGE": "the dodge vaults a roof ridge", "HIT": "he is thrown along the lane through a row of sheds", "ESCAPE": "he breaks away over the rooftops"}
+    },
+    "plains": {
+      "name": "FIELD SCAR", "asBuilt": true, "_rename": "FURROW SCAR proposed (glossary section 10)",
+      "scorch": [1.0, 1.0], "structMul": 1.0, "trees": "area", "fx": {"dust": "#9b8f7e"}, "aftermath": null,
+      "outcomes": {"CLASH": "the ground under the meeting point is flattened in a wide ring", "GUARD": "the guard ploughs a furrow back through the soil", "DODGE": "the dodge kicks up a wall of earth", "HIT": "he is buried at the end of the scar", "ESCAPE": "he breaks away low over open ground"}
+    },
+    "forest": {
+      "name": "FIRESTORM", "asBuilt": true, "_rename": "CANOPY BURN proposed (RL-008)",
+      "scorch": [1.0, 1.1], "structMul": 1.0, "trees": "area", "fx": {"dust": "#9b8f7e", "fire": {"withinAbove": 140}}, "aftermath": null,
+      "outcomes": {"CLASH": "the canopy under the meeting point bursts into flame", "GUARD": "the guard is driven back through saplings that snap", "DODGE": "the dodge goes up into the canopy", "HIT": "he is thrown through a line of trunks", "ESCAPE": "he breaks away under the canopy"}
+    },
+    "desert": {
+      "name": "GLASS TRENCH", "asBuilt": true,
+      "scorch": [0.8, 1.3], "structMul": 1.0, "trees": "area", "fx": {"dust": "#e6c47a", "sparks": {"n": 2, "col": "#ffd98a", "speed": 300}}, "aftermath": null,
+      "outcomes": {"CLASH": "the sand under the meeting point fuses into a glass disc", "GUARD": "the guard sinks and slides, a fan of sand thrown back", "DODGE": "the dodge raises a curtain of sand", "HIT": "he lands in the glass trench and it cracks under him", "ESCAPE": "he breaks away behind the dust"}
+    },
+    "mountains": {
+      "name": "RIDGE BORE", "asBuilt": true,
+      "scorch": [1.6, 0.8], "structMul": 1.0, "trees": "area", "fx": {"dust": "#9b8f7e"}, "aftermath": null,
+      "outcomes": {"CLASH": "the rock under the meeting point splits in a star", "GUARD": "the guard grinds back across bare rock", "DODGE": "the dodge kicks off a crag", "HIT": "he is driven into the rock face and chips rain down", "ESCAPE": "he breaks away over the ridge"}
+    },
+    "ice_sheet": {
+      "name": "ICEFIELD THAW", "_today": "read as mountains (WorldPlanetWorld.BIOME_NAME aliases it), so it plays RIDGE BORE",
+      "scorch": [0.9, 1.0], "structMul": 1.0, "trees": "none", "fx": {"dust": "#e8f1f6", "steam": true},
+      "aftermath": {"kind": "glaze"},
+      "outcomes": {"CLASH": "the snow under the meeting point melts to a steaming pool that freezes as it ends", "GUARD": "rule: the guard's push-back on the glazed strip slides 2.5 times as far", "DODGE": "the dodge throws up a burst of powder", "HIT": "he lands on the fresh glaze and skids its length", "ESCAPE": "he breaks away along the glaze, sliding"}
+    },
+    "sea_ice": {
+      "name": "FLOE SPLIT", "_today": "read as plains (aliased), so it plays FIELD SCAR",
+      "scorch": [0.6, 1.0], "structMul": 1.0, "trees": "none", "fx": {"dust": "#e8f1f6", "shards": true},
+      "aftermath": {"kind": "split", "gapBh": 1.0},
+      "outcomes": {"CLASH": "the floe under the meeting point cracks in a ring and tilts", "GUARD": "the guard skids back across the floe toward its edge", "DODGE": "the dodge hops to the next floe", "HIT": "rule: when the lead opens under him he drops into the water (the ocean rules) and climbs out", "ESCAPE": "he breaks away across the floes, floe to floe"}
+    },
+    "jungle": {
+      "name": "VINE SHEAR", "_provisional": "World names the id",
+      "scorch": [1.0, 0.9], "structMul": 1.0, "trees": "fell", "fx": {"dust": "#6b5a3a", "steam": true},
+      "aftermath": {"kind": "clearing"},
+      "outcomes": {"CLASH": "steam bursts out of the wet ground under the meeting point", "GUARD": "the guard is driven back through hanging vines that tear", "DODGE": "the dodge swings off a trunk", "HIT": "the felled trunks come down across him at the end of the cut", "ESCAPE": "he breaks away into the canopy beside the clearing"}
+    },
+    "savanna": {
+      "name": "GRASSLAND BLAZE", "_provisional": "World names the id",
+      "scorch": [0.8, 1.2], "structMul": 1.0, "trees": "burn", "fx": {"dust": "#c9a95c", "fire": {"withinAbove": 140}},
+      "aftermath": {"kind": "fireLine", "spreadTicks": 15, "durTicks": 240, "reachCols": 12},
+      "outcomes": {"CLASH": "a ring of grass fire races out from under the meeting point", "GUARD": "the guard skids back through the grass, a strip of it flattened", "DODGE": "the dodge leaps the fire line", "HIT": "he is thrown down behind the flames", "ESCAPE": "he breaks away through the smoke, low over the grass"}
+    },
+    "tundra": {
+      "name": "FROST HEAVE", "_provisional": "World names the id",
+      "scorch": [0.9, 1.0], "structMul": 1.0, "trees": "none", "fx": {"dust": "#d7dcd8", "plates": true},
+      "aftermath": {"kind": "heave", "rimMul": 2.0},
+      "outcomes": {"CLASH": "frozen plates heave up in a ring under the meeting point", "GUARD": "rule: the guard's push-back stops against the heaved plates", "DODGE": "the dodge kicks off a rising plate", "HIT": "he lands across the plates and they break under him", "ESCAPE": "he breaks away behind the heave"}
+    },
+    "taiga": {
+      "name": "PINE BREAK", "_provisional": "World names the id",
+      "scorch": [1.0, 1.0], "structMul": 1.0, "trees": "snap", "fx": {"dust": "#e8f1f6", "powder": true},
+      "aftermath": {"kind": "snowDump", "refill": 0.4, "durTicks": 120},
+      "outcomes": {"CLASH": "every pine around the meeting point sheds its snow at once", "GUARD": "the guard ploughs back through deep snow", "DODGE": "the dodge vanishes into the falling snow and reappears beside it", "HIT": "the snapped crowns and their snow come down on him", "ESCAPE": "he breaks away through the snowfall between the trunks"}
+    },
+    "wetland": {
+      "name": "MIRE BOIL", "_provisional": "World names the id",
+      "scorch": [1.1, 0.9], "structMul": 1.0, "trees": "area", "fx": {"dust": "#5a5a3c", "steam": true},
+      "aftermath": {"kind": "flood", "source": "waterTable"},
+      "outcomes": {"CLASH": "the marsh under the meeting point boils in a wide steaming ring", "GUARD": "the guard sinks and is dragged back through the mud", "DODGE": "the dodge throws up a wall of muddy water", "HIT": "rule: he lands in the flooded trench (the ocean rules)", "ESCAPE": "he breaks away behind the steam wall"}
+    },
+    "coast": {
+      "name": "SHORE SCOUR", "_provisional": "World names the id",
+      "scorch": [1.0, 1.1], "structMul": 1.0, "trees": "area", "fx": {"dust": "#b9ad94", "spray": true},
+      "aftermath": {"kind": "flood", "source": "sea", "seaCols": 30},
+      "outcomes": {"CLASH": "the sea draws back from the shore under the meeting point and breaks back in", "GUARD": "the guard skids back over the shingle, pebbles rolling", "DODGE": "the dodge goes through the thrown-up wave", "HIT": "rule: the sea floods the cut behind him, and he lands in it when the floor is below sea level", "ESCAPE": "he breaks away along the surf line"}
+    },
+    "highland": {
+      "name": "SCREE RUN", "_provisional": "World names the id (the brief offers highland or volcanic)",
+      "scorch": [1.2, 0.9], "structMul": 1.0, "trees": "area", "fx": {"dust": "#8f8a7a"},
+      "aftermath": {"kind": "scree", "minSlope": 0.25, "reachCols": 10, "durTicks": 180},
+      "outcomes": {"CLASH": "turf peels off the slope under the meeting point and the stone shows", "GUARD": "the guard skids back over the turf, a strip peeled up", "DODGE": "the dodge kicks off an outcrop", "HIT": "he goes down the slope in the scree", "ESCAPE": "he breaks away downhill with the scree"}
+    },
+    "volcanic": {
+      "name": "CRUST SEAR", "_provisional": "World names the id (the brief offers highland or volcanic)",
+      "scorch": [1.3, 0.8], "structMul": 1.0, "trees": "burn", "fx": {"dust": "#4a4440", "embers": true, "ash": true},
+      "aftermath": {"kind": "ember", "durTicks": 600},
+      "outcomes": {"CLASH": "the crust under the meeting point breaks and glows in a ring", "GUARD": "the guard skids back over breaking crust, a glowing line behind", "DODGE": "the dodge goes up into the ash plume", "HIT": "he lands across the glowing vein in a burst of ash", "ESCAPE": "he breaks away behind the ash"}
+    }
+  },
+  "byPersonality": {
+    "enabled": false,
+    "_about": "signature-variants.md 5.1, for Game Design to rule: the carer narrows the bite where people are, the one who feeds on collateral widens it. Off keeps every row as above",
+    "hero": {"widthMul": 0.85, "structMul": 0.8, "whenPopAbove": 0.2},
+    "villain": {"widthMul": 1.15, "structMul": 1.2, "whenPopAbove": 0.2}
+  }
+}
