@@ -12,7 +12,7 @@ A faceted swell under a clean horizon; the sea owns mid blue. Sheet: `art/concep
 | Rock | #6c7075 | #4f5a64 | #363f48 |
 | Vegetation | #5fa06a | #3f7a50 | #2a5a3a |
 
-Subsoil (what a crater shows) #17426a; secondary cover #3f7a50; trunk #4a3a2a; water shallow #3a88b4, deep #1f5a88; accent #e4ecee; sky at noon #2c74bc (top) to #bfdcec (horizon); far land #8db2b0, #7aa197, #638e7c; from orbit #2f6894.
+Subsoil (what a crater shows) #183d5f; secondary cover #3f7a50; trunk #4a3a2a; water shallow #3a88b4, deep #1f5a88; accent #e4ecee; sky at noon #2c74bc (top) to #bfdcec (horizon); far land #8db2b0, #7aa197, #638e7c; from orbit #2f6894.
 
 **Ground profile:** swell, amplitude 14 units over about 260; far land: none. **Cover:** stack (2 per 1,200 units, 120 to 260 units tall); whitecap (9 per 1,200 units, 10 to 22 units tall).
 
@@ -39,10 +39,10 @@ Pale sand, a wet-sand band, a foam line; palms and dune grass behind. Sheet: `ar
 | Part | Lit | Mid | Shade |
 |---|---|---|---|
 | Ground | #ead7a2 | #d8c088 | #b09a62 |
-| Rock | #a39a8c | #857c70 | #5f584e |
+| Rock | #a69985 | #857c70 | #5f584e |
 | Vegetation | #6cb85a | #4a9440 | #2f6a34 |
 
-Subsoil (what a crater shows) #a89060; secondary cover #7f9a48; trunk #7a5a38; water shallow #3595ac, deep #2c78a8; accent #f1f0e6; sky at noon #3a82c8 (top) to #cfe6ee (horizon); far land #a0c3ad, #8db593, #78a576; from orbit #d6cfa6.
+Subsoil (what a crater shows) #a89060; secondary cover #7c9745; trunk #7a5a38; water shallow #3595ac, deep #2c78a8; accent #f1f0e6; sky at noon #3a82c8 (top) to #cfe6ee (horizon); far land #a0c3ad, #8db593, #78a576; from orbit #d6cfa6.
 
 **Ground profile:** shore, amplitude 10 units over about 340; far land: low. **Cover:** palm (3 per 1,200 units, 150 to 240 units tall); dunegrass (8 per 1,200 units, 20 to 40 units tall); boulder (3 per 1,200 units, 24 to 60 units tall); driftwood (2 per 1,200 units, 14 to 20 units tall).
 
@@ -71,11 +71,11 @@ Rolling meadow; scattered broadleaf trees, boulders, tufts. Sheet: `art/concepts
 
 | Part | Lit | Mid | Shade |
 |---|---|---|---|
-| Ground | #8cbc58 | #70a246 | #4e7c36 |
-| Rock | #9a968a | #7e7a6e | #5a574e |
+| Ground | #8abd50 | #70a246 | #4e7c36 |
+| Rock | #908a77 | #7e7a6e | #5a574e |
 | Vegetation | #4f9040 | #3b7634 | #2a5628 |
 
-Subsoil (what a crater shows) #6b5338; secondary cover #86b04c; trunk #6a4a30; water shallow #428eae, deep #2f6f98; accent #e2b04a; sky at noon #2f7cc4 (top) to #c4e0ee (horizon); far land #94b6aa, #81a58e, #6b926f; from orbit #82b362.
+Subsoil (what a crater shows) #6b5338; secondary cover #86b04c; trunk #6a4a30; water shallow #477b88, deep #376b7c; accent #e2b04a; sky at noon #2f7cc4 (top) to #c4e0ee (horizon); far land #94b6aa, #81a58e, #6b926f; from orbit #82b362.
 
 **Ground profile:** rolling, amplitude 30 units over about 520; far land: hills. **Cover:** tree (4 per 1,200 units, 130 to 220 units tall); tuft (14 per 1,200 units, 16 to 34 units tall); boulder (3 per 1,200 units, 22 to 54 units tall); shrub (5 per 1,200 units, 30 to 56 units tall).
 
@@ -87,7 +87,7 @@ Subsoil (what a crater shows) #6b5338; secondary cover #86b04c; trunk #6a4a30; w
 
 **Destruction:** Dirt and divots: brown clods and green turf chunks in an arc, a low wide dust cloud in the soil's colour.
 
-**Readability:** worst aura 21.1 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 23.6 (rule 15).
+**Readability:** worst aura 23.0 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 23.4 (rule 15).
 
 **Transitions:**
 - to Beach and coast: Sand gives way to dune grass tufts, then grass; one low dune ridge between.
@@ -108,7 +108,7 @@ Gold dry grass, flat-topped acacias, red earth showing, termite towers. Sheet: `
 | Rock | #b0a08a | #8e806c | #645a4c |
 | Vegetation | #78a040 | #5b8434 | #3e5e28 |
 
-Subsoil (what a crater shows) #a8643c; secondary cover #c8b25a; trunk #6e4a30; water shallow #6aa8a0, deep #3f7a80; accent #c86a3c; sky at noon #3a84cc (top) to #ecdcb0 (horizon); far land #b7b884, #a2aa72, #8a9a5f; from orbit #a8a25c.
+Subsoil (what a crater shows) #a8643c; secondary cover #c8b25a; trunk #6e4a30; water shallow #639d80, deep #3f7a80; accent #c86a3c; sky at noon #3a84cc (top) to #ecdcb0 (horizon); far land #b7b884, #a2aa72, #8a9a5f; from orbit #a8a25c.
 
 **Ground profile:** rolling, amplitude 16 units over about 680; far land: hills. **Cover:** acacia (3 per 1,200 units, 120 to 200 units tall); tuft (16 per 1,200 units, 24 to 50 units tall); termite (2 per 1,200 units, 50 to 90 units tall); boulder (2 per 1,200 units, 30 to 80 units tall).
 
@@ -120,7 +120,7 @@ Subsoil (what a crater shows) #a8643c; secondary cover #c8b25a; trunk #6e4a30; w
 
 **Destruction:** Red-ochre dust, tall and wide, with tumbling grass clumps; it hangs a little longer than sand because the dust is fine.
 
-**Readability:** worst aura 21.9 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 21.5 (rule 15).
+**Readability:** worst aura 26.7 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 21.5 (rule 15).
 
 **Transitions:**
 - to Beach and coast: Dry scrub and driftwood on the sand; the sand stains toward red earth.
@@ -136,10 +136,10 @@ Dense broadleaf and fir; a green floor; a leaf-litter ground. Sheet: `art/concep
 | Part | Lit | Mid | Shade |
 |---|---|---|---|
 | Ground | #5e9446 | #487a38 | #335a2a |
-| Rock | #8a8678 | #6e6a5e | #4c4a42 |
+| Rock | #848072 | #6e6a5e | #4c4a42 |
 | Vegetation | #4a9a48 | #327c3a | #1f5a2c |
 
-Subsoil (what a crater shows) #4e3a28; secondary cover #5a9442; trunk #62422a; water shallow #428eaa, deep #2f6e90; accent #d8883a; sky at noon #2f7cc4 (top) to #c0dce8 (horizon); far land #8db4a6, #79a48c, #62926e; from orbit #3e7b4e.
+Subsoil (what a crater shows) #4e3a28; secondary cover #5a9442; trunk #62422a; water shallow #3f7c89, deep #3d6076; accent #d8883a; sky at noon #2f7cc4 (top) to #c0dce8 (horizon); far land #8db4a6, #79a48c, #62926e; from orbit #3e7b4e.
 
 **Ground profile:** rolling, amplitude 42 units over about 440; far land: hills. **Cover:** tree (6 per 1,200 units, 200 to 340 units tall); fir (5 per 1,200 units, 220 to 380 units tall); shrub (5 per 1,200 units, 30 to 60 units tall); boulder (2 per 1,200 units, 30 to 70 units tall); tuft (8 per 1,200 units, 14 to 28 units tall).
 
@@ -151,7 +151,7 @@ Subsoil (what a crater shows) #4e3a28; secondary cover #5a9442; trunk #62422a; w
 
 **Destruction:** Leaf shred and splinters: green and orange leaf shards swirl, pale splinters and bark chunks arc out, a dark dirt cloud below.
 
-**Readability:** worst aura 21.4 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 23.9 (rule 15).
+**Readability:** worst aura 24.4 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 23.8 (rule 15).
 
 **Transitions:**
 - to Plains: Parkland: lone trees, then groves, then closed forest; the grass shortens under the trees.
@@ -167,7 +167,7 @@ Tall layered canopy, buttress trunks, giant leaves, dark floor, a few vivid flow
 | Part | Lit | Mid | Shade |
 |---|---|---|---|
 | Ground | #4a8a42 | #386e36 | #264e2a |
-| Rock | #7a8a72 | #5e6e5a | #404e40 |
+| Rock | #728567 | #5e6e5a | #404e40 |
 | Vegetation | #5cb04a | #3a8f3c | #1f6a30 |
 
 Subsoil (what a crater shows) #4a3626; secondary cover #6eb040; trunk #5a3e28; water shallow #5a9a7a, deep #2f6a58; accent #e0527a; sky at noon #3a88c0 (top) to #b8d8cc (horizon); far land #89b896, #76ab80, #619c67; from orbit #3e975c.
@@ -182,7 +182,7 @@ Subsoil (what a crater shows) #4a3626; secondary cover #6eb040; trunk #5a3e28; w
 
 **Destruction:** Shredded leaves and split trunks with a rising column of grey steam from the wet ground; bright flower petals among the debris.
 
-**Readability:** worst aura 32.9 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 31.6 (rule 15).
+**Readability:** worst aura 32.9 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 33.0 (rule 15).
 
 **Transitions:**
 - to Beach and coast: A palm line stands right on the sand, then the canopy wall; the jungle floor begins at the back of the beach.
@@ -198,10 +198,10 @@ Shallow tea-green water, reed beds, mangrove roots, flat mud banks. Sheet: `art/
 | Part | Lit | Mid | Shade |
 |---|---|---|---|
 | Ground | #789a62 | #5f804e | #436038 |
-| Rock | #8a8a7c | #6e6e62 | #4a4a42 |
+| Rock | #7f7f6a | #6e6e62 | #4a4a42 |
 | Vegetation | #7fa05a | #5a8048 | #3e5e36 |
 
-Subsoil (what a crater shows) #4a4232; secondary cover #a0a458; trunk #4e3a2a; water shallow #7ab0a0, deep #4a8478; accent #d8d4b8; sky at noon #4a8ec0 (top) to #c6dcd4 (horizon); far land #9db69f, #8ca68a, #7a9572; from orbit #5a9286.
+Subsoil (what a crater shows) #4a4232; secondary cover #a0a458; trunk #4e3a2a; water shallow #6ca682, deep #4d8474; accent #d8d4b8; sky at noon #4a8ec0 (top) to #c6dcd4 (horizon); far land #9db69f, #8ca68a, #7a9572; from orbit #5a9286.
 
 **Ground profile:** flat, amplitude 8 units over about 300; far land: low. **Cover:** reed (14 per 1,200 units, 60 to 120 units tall); mangrove (3 per 1,200 units, 120 to 200 units tall); pool (4 per 1,200 units, 6 to 8 units tall); tree (2 per 1,200 units, 140 to 220 units tall).
 
@@ -213,7 +213,7 @@ Subsoil (what a crater shows) #4a4232; secondary cover #a0a458; trunk #4e3a2a; w
 
 **Destruction:** Mud splash: dark brown globs on arcs, flung reeds, a ring of ripple; the water goes cloudy for a moment and settles.
 
-**Readability:** worst aura 22.8 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 24.8 (rule 15).
+**Readability:** worst aura 31.6 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 24.8 (rule 15).
 
 **Transitions:**
 - to Open ocean: A river-mouth: the shallows go tea-green in steps, reed islands stand out in the water, the shoreline is a mud bank.
@@ -233,7 +233,7 @@ Long dunes with a steep lee, red mesas, cacti and scrub; sun-bleached. Sheet: `a
 | Rock | #d29a5a | #b87a44 | #8a5634 |
 | Vegetation | #6aa050 | #4d8040 | #386030 |
 
-Subsoil (what a crater shows) #a07a44; secondary cover #8a8448; trunk #6a4a30; water shallow #299faa, deep #2a7a8c; accent #d0e0e8; sky at noon #3c94d0 (top) to #f0e4c0 (horizon); far land #daba8e, #d1a97b, #c79664; from orbit #dbb781.
+Subsoil (what a crater shows) #a07a44; secondary cover #8a8448; trunk #6a4a30; water shallow #387b87, deep #357a85; accent #d0e0e8; sky at noon #3c94d0 (top) to #f0e4c0 (horizon); far land #daba8e, #d1a97b, #c79664; from orbit #dbb781.
 
 **Ground profile:** dunes, amplitude 46 units over about 460; far land: mesas. **Cover:** cactus (3 per 1,200 units, 90 to 170 units tall); scrub (6 per 1,200 units, 24 to 50 units tall); mesa (1 per 1,200 units, 160 to 240 units tall); boulder (3 per 1,200 units, 30 to 80 units tall).
 
@@ -245,7 +245,7 @@ Subsoil (what a crater shows) #a07a44; secondary cover #8a8448; trunk #6a4a30; w
 
 **Destruction:** A sand plume: tall, wide, pale gold with a darker core; it falls fast and the dune face slumps and slides for a second.
 
-**Readability:** worst aura 20.9 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 15.6 (rule 15).
+**Readability:** worst aura 26.2 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 15.6 (rule 15).
 
 **Transitions:**
 - to Beach and coast: The dune sea runs to the shore; only the sand colour steps from pale to gold; no grass at all.
@@ -261,10 +261,10 @@ Grey faceted rock, snow on the shade side, conifers low down, scree. Sheet: `art
 | Part | Lit | Mid | Shade |
 |---|---|---|---|
 | Ground | #6e9a58 | #547e46 | #3a5c34 |
-| Rock | #a8a398 | #7e786c | #524e46 |
+| Rock | #aea28a | #7e786c | #524e46 |
 | Vegetation | #3f7a50 | #2c5e3e | #1e4430 |
 
-Subsoil (what a crater shows) #5a5448; secondary cover #6a8056; trunk #5a4230; water shallow #3d8eb6, deep #356f98; accent #e6eef2; sky at noon #3a82c8 (top) to #c4daea (horizon); far land #a8b3b8, #9da3a3, #90918d; from orbit #8e8d86.
+Subsoil (what a crater shows) #5a5448; secondary cover #6a8056; trunk #5a4230; water shallow #367882, deep #366577; accent #e6eef2; sky at noon #3a82c8 (top) to #c4daea (horizon); far land #a8b3b8, #9da3a3, #90918d; from orbit #8e8d86.
 
 **Ground profile:** jagged, amplitude 190 units over about 520; far land: peaks. **Cover:** fir (4 per 1,200 units, 160 to 280 units tall); boulder (6 per 1,200 units, 30 to 110 units tall); scree (4 per 1,200 units, 20 to 50 units tall); snowpatch (3 per 1,200 units, 8 to 14 units tall).
 
@@ -276,7 +276,7 @@ Subsoil (what a crater shows) #5a5448; secondary cover #6a8056; trunk #5a4230; w
 
 **Destruction:** Rock shards: angular chunks on long arcs and a grey dust cloud; on a slope the scree slides downhill for two seconds.
 
-**Readability:** worst aura 20.8 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 23.1 (rule 15).
+**Readability:** worst aura 25.7 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 23.1 (rule 15).
 
 **Transitions:**
 - to Plains: Foothills: the hills rise in steps, rock outcrops through the grass, fir groves on the slopes.
@@ -297,7 +297,7 @@ Black basalt, grey ash slopes, a cone with a rim, a few cooled lava flows; the r
 | Rock | #6a666e | #4a464e | #2e2c32 |
 | Vegetation | #6a8a48 | #4a6a38 | #34502a |
 
-Subsoil (what a crater shows) #1e1c22; secondary cover #6a666e; trunk #3a2c24; water shallow #408fab, deep #2a6688; accent #dc6a26; sky at noon #4a78a8 (top) to #d8c8b0 (horizon); far land #9f9489, #887f79, #6f6867; from orbit #525361.
+Subsoil (what a crater shows) #1e1c22; secondary cover #6a666e; trunk #3a2c24; water shallow #497b89, deep #3f6578; accent #dc6a26; sky at noon #4a78a8 (top) to #d8c8b0 (horizon); far land #9f9489, #887f79, #6f6867; from orbit #525361.
 
 **Ground profile:** cones, amplitude 120 units over about 520; far land: cones. **Cover:** basaltcol (3 per 1,200 units, 80 to 170 units tall); boulder (5 per 1,200 units, 30 to 100 units tall); vent (2 per 1,200 units, 40 to 70 units tall); shrub (3 per 1,200 units, 26 to 50 units tall); lavaflow (1 per 1,200 units, 10 to 14 units tall).
 
@@ -309,7 +309,7 @@ Subsoil (what a crater shows) #1e1c22; secondary cover #6a666e; trunk #3a2c24; w
 
 **Destruction:** Ash and clinker: a dark grey column that rises slowly and spreads, black blocks on arcs, a few steady orange ember chips.
 
-**Readability:** worst aura 21.2 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 21.1 (rule 15).
+**Readability:** worst aura 22.2 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 21.1 (rule 15).
 
 **Note:** a hot state (lava rivers glowing) is an event, not a biome: static orange, small area, Legal photosensitivity and the saturated-red test apply.
 
@@ -325,11 +325,11 @@ Grey-green lichen ground, snow in the hollows, dark spruce thinning poleward to 
 
 | Part | Lit | Mid | Shade |
 |---|---|---|---|
-| Ground | #8ea27c | #738868 | #53664c |
-| Rock | #8c8c90 | #6e6e74 | #4a4a52 |
+| Ground | #7a9a59 | #738868 | #53664c |
+| Rock | #787878 | #6e6e74 | #4a4a52 |
 | Vegetation | #3a6a58 | #2a5444 | #1c3c30 |
 
-Subsoil (what a crater shows) #5a5448; secondary cover #a0aa84; trunk #4a3a2c; water shallow #468eb7, deep #356888; accent #e4ecf0; sky at noon #4a88c4 (top) to #cadce8 (horizon); far land #91a8ab, #7a9493, #607d78; from orbit #839786.
+Subsoil (what a crater shows) #5a5448; secondary cover #aeae7f; trunk #4a3a2c; water shallow #3c7884, deep #3b6276; accent #e4ecf0; sky at noon #4a88c4 (top) to #cadce8 (horizon); far land #91a8ab, #7a9493, #607d78; from orbit #839786.
 
 **Ground profile:** hummock, amplitude 22 units over about 380; far land: hills. **Cover:** spruce (5 per 1,200 units, 180 to 320 units tall); krummholz (4 per 1,200 units, 30 to 60 units tall); snowpatch (5 per 1,200 units, 8 to 16 units tall); boulder (4 per 1,200 units, 24 to 70 units tall); tuft (8 per 1,200 units, 10 to 22 units tall).
 
@@ -341,7 +341,7 @@ Subsoil (what a crater shows) #5a5448; secondary cover #a0aa84; trunk #4a3a2c; w
 
 **Destruction:** A snow burst: a pale powder cloud that rises and falls, white and blue crystal shards, dark soil clods under it.
 
-**Readability:** worst aura 20.6 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 22.3 (rule 15).
+**Readability:** worst aura 24.2 CIEDE2000 (rule 20), worst body against ground, rock or vegetation 22.3 (rule 15).
 
 **Transitions:**
 - to Plains: Sparse spruce on cold grass; lichen replaces the grass; the first snow patches in hollows.

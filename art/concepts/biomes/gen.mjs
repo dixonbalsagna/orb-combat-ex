@@ -10,6 +10,9 @@ import { BIOMES, PAIRS, neighboursOf } from './spec.mjs';
 import { scene, mix, Frame } from './draw.mjs';
 import { plumePanel } from './plume.mjs';
 import { measureBiome } from './measure.mjs';
+import { cvBiome, KINDS as CVK } from './cv.mjs';
+import { coverSheet } from './covers.mjs';
+import { writeCoverDoc } from './coverdoc.mjs';
 
 const OUT = dirname(fileURLToPath(import.meta.url)), ROOT = join(OUT, '..', '..', '..');
 const F = n => (Math.round(n * 100) / 100).toString();
@@ -90,17 +93,40 @@ function allSheet() {
 }
 
 
+
+// ---------------------------------------------------------------------------------------------------------------- the light keys: each biome under golden, sunset, dawn and night with the world-light tints
+import { WORLD, tinted, dE00 } from '../sky/world.mjs';
+import { KEYS, skyAt } from '../sky/keys.mjs';
+import { tonesOf } from './measure.mjs';
+const LAN = { aura: ['#8fd6ff', '#9a80d8'], body: ['#3d8fdc', '#a52a2a'] };
+function atKey(b, key) { let a = 99, bd = 99; for (const [name, hex, layer] of tonesOf(b)) { const g = tinted(hex, WORLD[key][layer]); for (const c of LAN.aura) a = Math.min(a, dE00(c, g)); if (/ground|rock|vegetation|secondary/.test(name)) for (const c of LAN.body) bd = Math.min(bd, dE00(c, g)); } return [a, bd]; }
+function keySheet(key) {
+  const k = KEYS.find(q => q.id === key), W = 1860, PW = 600, PH = 230, X0 = 24, ids = Object.keys(BIOMES), NOTES = { golden: 'late afternoon: amber climbs from the horizon', sunset: 'the current look of the build: indigo, violet, coral, peach', dawn: 'teal into rose into apricot, cooler and greener than the sunset', night: 'blue-black with a cold rim; the ground about a tenth of noon with a cool lift' };
+  let s = rect(0, 0, W, 104, INK) + text(30, 46, `Thirteen biomes at ${key}: the world-light tints on the ground, trees and water`, { size: 30, weight: 700, fill: '#f4f0fa' });
+  s += paras(30, 70, `The sky is the game's ${key} key (${NOTES[key]}); each biome's ground, rock, vegetation and water take that key's world-light multiply (data/art/sky.json), and the keyline stays. The fighters' auras and bodies are never dimmed: under each panel, the worst aura and body distance to any of that biome's tones at this key (rule 20 and 15). Same strips, same seeds as the noon sheet.`, 260, 12, 15, { fill: '#cfc6e6' });
+  ids.forEach((id, i) => {
+    const b = BIOMES[id], x = X0 + (i % 3) * (PW + 12), y = 124 + Math.floor(i / 3) * (PH + 62), sc = scene({ id, px: x, py: y, S: 0.5, ww: 1200, wh: 460, seed: 7, key });
+    scaleFigure(sc.f, 520, sc.G + sc.prof(520), '');
+    const [a, bd] = atKey(b, key);
+    s += clipped(x, y, PW, PH, sc.f.svg()) + text(x + 4, y + PH + 16, `${b.order}. ${b.name}`, { size: 14, weight: 700 }) + text(x + PW - 4, y + PH + 16, `aura ${a.toFixed(1)}, body ${bd.toFixed(1)}`, { size: 11, anchor: 'end', op: 0.75 });
+  });
+  const H = 124 + Math.ceil(ids.length / 3) * (PH + 62) + 10;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${rect(0, 0, W, H, '#dcd8e6')}${s}</svg>`;
+}
+export function keyNumbers() { const out = {}; for (const key of ['golden', 'sunset', 'dawn', 'night']) { out[key] = {}; for (const [id, b] of Object.entries(BIOMES)) { const [a, bd] = atKey(b, key); out[key][id] = { aura: +a.toFixed(1), body: +bd.toFixed(1) }; } } return out; }
+
 // ---------------------------------------------------------------------------------------------------------------- the data and the generated pages
 const SCARS = { desert: ['#1f3d38', '#bfe0d8'], beach: ['#1f3d38', '#bfe0d8'], ice: ['#485765', '#5f8aa2'], seaice: ['#485765', '#5f8aa2'], volcanic: ['#8a868e', '#dc6a26'] };
 export function writeData() {
-  const out = { version: 1, note: 'The biome look bible as data (docs/art/biomes.md, docs/art/biomes-pages.md). Written by art/concepts/biomes/gen.mjs; do not edit by hand. Noon colours: the world-light tint per key (data/art/sky.json) multiplies them. Proposals pending Orb, Rendering and VFX; Tools adds the schema.', rules: { faces: 'lit, mid and shade are the three faces of one surface; flat colours with the keyline (#0a0d14); no gradients, no blur, no fades', readability: 'an aura stays 20 or more CIEDE2000 from every ground, rock, vegetation and water tone and a body 15 or more from ground, rock and vegetation, at every sky key with the world-light tint (the rival coat and the sea are advisory)', far_land: 'three ridges, each hazed toward the horizon: far1 nearest and darkest', orbit: 'the colour a biome reads as from far away, 12 percent toward the atmosphere blue (8 for ice)' }, orbit_separation: orbitSeparation(), biomes: {}, pairs: PAIRS.map(([a, b, eco, note]) => ({ a, b, eco, note })) };
+  const out = { version: 1, note: 'The biome look bible as data (docs/art/biomes.md, docs/art/biomes-pages.md). Written by art/concepts/biomes/gen.mjs; do not edit by hand. Noon colours: the world-light tint per key (data/art/sky.json) multiplies them. Proposals pending Orb, Rendering and VFX; Tools adds the schema.', rules: { faces: 'lit, mid and shade are the three faces of one surface; flat colours with the keyline (#0a0d14); no gradients, no blur, no fades', readability: 'an aura stays 20 or more CIEDE2000 from every ground, rock, vegetation and water tone and a body 15 or more from ground, rock and vegetation, at every sky key with the world-light tint (the rival coat and the sea are advisory)', far_land: 'three ridges, each hazed toward the horizon: far1 nearest and darkest', orbit: 'the colour a biome reads as from far away, 12 percent toward the atmosphere blue (8 for ice)' }, orbit_separation: orbitSeparation(), _cover_set: coverSheet().table, biomes: {}, pairs: PAIRS.map(([a, b, eco, note]) => ({ a, b, eco, note })) };
   for (const [id, b] of Object.entries(BIOMES)) {
     const rows = measureBiome(b), L = ladder(b);
-    out.biomes[id] = { name: b.name, order: b.order, line: b.line, palette: { ground: b.pal.g, subsoil: b.pal.sub, rock: b.pal.r, vegetation: b.pal.v, secondary: b.pal.v2, trunk: b.pal.t, water: { shallow: b.pal.w[0], deep: b.pal.w[1] }, accent: b.pal.acc, sky_noon: { top: b.pal.sky[0], horizon: b.pal.sky[1] } }, far_ladder: { far1: L[2], far2: L[1], far3: L[0] }, orbit: orbitHex(id), profile: b.profile, far_land: b.far, cover: b.cover.filter(c => c.n > 0), plume: b.plume, scar: { fill: (SCARS[id] ?? ['#221c18', '#4a4036'])[0], edge: (SCARS[id] ?? ['#221c18', '#4a4036'])[1] }, damage: b.damage, destruction: b.destruction, neighbours: neighboursOf(id).map(n => ({ id: n.other, eco: n.eco, note: n.note })), readability: { worst_aura_dE00: Math.min(...rows.map(r => r.aura)), worst_body_dE00: Math.min(...rows.filter(r => /ground|rock|vegetation|secondary/.test(r.name)).map(r => r.bodyP)) }, ...(b.note ? { note: b.note } : {}) };
+    out.biomes[id] = { name: b.name, order: b.order, line: b.line, palette: { ground: b.pal.g, subsoil: b.pal.sub, rock: b.pal.r, vegetation: b.pal.v, secondary: b.pal.v2, trunk: b.pal.t, water: { shallow: b.pal.w[0], deep: b.pal.w[1] }, accent: b.pal.acc, sky_noon: { top: b.pal.sky[0], horizon: b.pal.sky[1] } }, far_ladder: { far1: L[2], far2: L[1], far3: L[0] }, orbit: orbitHex(id), profile: b.profile, far_land: b.far, cover: b.cover.filter(c => c.n > 0), plume: b.plume, scar: { fill: (SCARS[id] ?? ['#221c18', '#4a4036'])[0], edge: (SCARS[id] ?? ['#221c18', '#4a4036'])[1] }, damage: b.damage, destruction: b.destruction, neighbours: neighboursOf(id).map(n => ({ id: n.other, eco: n.eco, note: n.note })), _colour_vision: (() => { const cr = cvBiome(b); const worst = {}; for (const k of CVK) worst[k] = Math.min(...cr.map(r => r.w[k].aura)); return { rule: 'the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key', worst_aura_dE00: worst, failing_tones: cr.filter(r => !r.ok).map(r => ({ tone: r.name, hex: r.hex })) }; })(), readability: { worst_aura_dE00: Math.min(...rows.map(r => r.aura)), worst_body_dE00: Math.min(...rows.filter(r => /ground|rock|vegetation|secondary/.test(r.name)).map(r => r.bodyP)) }, ...(b.note ? { note: b.note } : {}) };
   }
   writeFileSync(join(ROOT, 'data', 'art', 'biomes.json'), JSON.stringify(out, null, 2) + '\n');
   return out;
 }
+
 export function writePages() {
   let md = '# Biome pages: the thirteen biomes, one by one\n\nOwner: Art Director. 2026-10-23. **Generated** by `art/concepts/biomes/gen.mjs` from `art/concepts/biomes/spec.mjs`; do not edit by hand (edit the spec and regenerate). The bible and its rules are `docs/art/biomes.md`; the numbers as data are `data/art/biomes.json`; the pictures are `art/concepts/biomes/biome-<id>.svg`, `biomes-sheet.svg` and `orbit.svg`. Concept art, working labels; biomes only, no character art, so these may be shown freely.\n\n';
   for (const [id, b] of Object.entries(BIOMES)) {
@@ -122,6 +148,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const results = {};
   for (const id of Object.keys(BIOMES)) { if (only && only !== id && only !== 'all') continue; const r = biomeSheet(id); writeFileSync(join(OUT, `biome-${id}.svg`), r.svg); results[id] = r.rows; console.log('wrote biome-' + id + '.svg'); }
   if (!only || only === 'all' || only === 'sheet') { writeFileSync(join(OUT, 'biomes-sheet.svg'), allSheet()); console.log('wrote biomes-sheet.svg'); }
+  if (!only || only === 'all' || only === 'keys') { for (const key of ['golden', 'sunset', 'dawn', 'night']) { writeFileSync(join(OUT, `biomes-${key}.svg`), keySheet(key)); console.log('wrote biomes-' + key + '.svg'); } }
+  if (!only || only === 'all' || only === 'cover') { const r = coverSheet(); writeFileSync(join(OUT, 'cover-sheet.svg'), r.svg); writeCoverDoc(); console.log('wrote cover-sheet.svg and docs/art/biomes-cover.md'); }
   if (!only || only === 'all' || only === 'data') { writeData(); writePages(); console.log('wrote data/art/biomes.json and docs/art/biomes-pages.md'); }
   if (!only || only === 'all' || only === 'orbit') { const { orbitSheet } = await import('./orbit.mjs'); writeFileSync(join(OUT, 'orbit.svg'), orbitSheet()); console.log('wrote orbit.svg'); }
 }

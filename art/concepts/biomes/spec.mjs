@@ -7,7 +7,7 @@
 export const BIOMES = {
   ocean: {
     name: 'Open ocean', order: 1, line: 'a faceted swell under a clean horizon; the sea owns mid blue',
-    pal: { g: ['#3a88b4', '#2c78a8', '#1f5a88'], sub: '#17426a', r: ['#6c7075', '#4f5a64', '#363f48'], v: ['#5fa06a', '#3f7a50', '#2a5a3a'], v2: ['#5fa06a', '#3f7a50', '#2a5a3a'], t: '#4a3a2a', w: ['#3a88b4', '#1f5a88'], acc: '#e4ecee', sky: ['#2c74bc', '#bfdcec'] },
+    pal: { g: ['#3a88b4', '#2c78a8', '#1f5a88'], sub: '#183d5f', r: ['#6c7075', '#4f5a64', '#363f48'], v: ['#5fa06a', '#3f7a50', '#2a5a3a'], v2: ['#5fa06a', '#3f7a50', '#2a5a3a'], t: '#4a3a2a', w: ['#3a88b4', '#1f5a88'], acc: '#e4ecee', sky: ['#2c74bc', '#bfdcec'] },
     profile: { kind: 'swell', amp: 14, wave: 260 }, far: { kind: 'none' },
     cover: [{ k: 'stack', n: 2, h: [120, 260] }, { k: 'whitecap', n: 9, h: [10, 22] }],
     plume: { kind: 'water', cols: ['#e4ecee', '#9cc8de', '#4a86b0'], ej: ['#e4ecee', '#6aa6c8'], h: 320, w: 120, ring: true },
@@ -17,16 +17,16 @@ export const BIOMES = {
   },
   beach: {
     name: 'Beach and coast', order: 2, line: 'pale sand, a wet-sand band, a foam line; palms and dune grass behind',
-    pal: { g: ['#ead7a2', '#d8c088', '#b09a62'], sub: '#a89060', r: ['#a39a8c', '#857c70', '#5f584e'], v: ['#6cb85a', '#4a9440', '#2f6a34'], v2: ['#a9bd62', '#7f9a48', '#58763a'], t: '#7a5a38', w: ['#3595ac', '#2c78a8'], acc: '#f1f0e6', sky: ['#3a82c8', '#cfe6ee'] },
+    pal: { g: ['#ead7a2', '#d8c088', '#b09a62'], sub: '#a89060', r: ['#a69985', '#857c70', '#5f584e'], v: ['#6cb85a', '#4a9440', '#2f6a34'], v2: ['#a9bd62', '#7c9745', '#58763a'], t: '#7a5a38', w: ['#3595ac', '#2c78a8'], acc: '#f1f0e6', sky: ['#3a82c8', '#cfe6ee'] },
     profile: { kind: 'shore', amp: 10, wave: 340 }, far: { kind: 'low', amp: 26 },
     cover: [{ k: 'palm', n: 3, h: [150, 240] }, { k: 'dunegrass', n: 8, h: [20, 40] }, { k: 'boulder', n: 3, h: [24, 60] }, { k: 'driftwood', n: 2, h: [14, 20] }],
-    plume: { kind: 'sand', cols: ['#f3e4b2', '#dcc58a', '#a89060'], ej: ['#dcc58a', '#a39a8c'], h: 300, w: 200, wet: true },
+    plume: { kind: 'sand', cols: ['#f3e4b2', '#dcc58a', '#a89060'], ej: ['#dcc58a', '#a69985'], h: 300, w: 200, wet: true },
     damage: { scorch: 'a glassy black-green band fused into the sand (a beam path), its edge a thin pale line', crater: 'a shallow bowl in dry sand that floods from the water side: wet-sand dark inside, a collapsed rim', burned: 'palms standing as black trunks with no crown, dune grass burnt to stubble, grey ash drifted into the dune lee' },
     destruction: 'Sand and spray: a wide pale plume that settles fast, and a ring of wet dark sand around the impact.',
   },
   plains: {
     name: 'Plains', order: 3, line: 'rolling meadow; scattered broadleaf trees, boulders, tufts',
-    pal: { g: ['#8cbc58', '#70a246', '#4e7c36'], sub: '#6b5338', r: ['#9a968a', '#7e7a6e', '#5a574e'], v: ['#4f9040', '#3b7634', '#2a5628'], v2: ['#a4cc62', '#86b04c', '#5e8a38'], t: '#6a4a30', w: ['#428eae', '#2f6f98'], acc: '#e2b04a', sky: ['#2f7cc4', '#c4e0ee'] },
+    pal: { g: ['#8abd50', '#70a246', '#4e7c36'], sub: '#6b5338', r: ['#908a77', '#7e7a6e', '#5a574e'], v: ['#4f9040', '#3b7634', '#2a5628'], v2: ['#a4cc62', '#86b04c', '#5e8a38'], t: '#6a4a30', w: ['#477b88', '#376b7c'], acc: '#e2b04a', sky: ['#2f7cc4', '#c4e0ee'] },
     profile: { kind: 'rolling', amp: 30, wave: 520 }, far: { kind: 'hills', amp: 60 },
     cover: [{ k: 'tree', n: 4, h: [130, 220] }, { k: 'tuft', n: 14, h: [16, 34] }, { k: 'boulder', n: 3, h: [22, 54] }, { k: 'shrub', n: 5, h: [30, 56] }],
     plume: { kind: 'dirt', cols: ['#9a7a52', '#6b5338', '#4a3826'], ej: ['#70a246', '#6b5338'], h: 280, w: 190 },
@@ -35,7 +35,7 @@ export const BIOMES = {
   },
   savanna: {
     name: 'Savanna', order: 4, line: 'gold dry grass, flat-topped acacias, red earth showing, termite towers',
-    pal: { g: ['#d6c26c', '#c0a650', '#8f7a38'], sub: '#a8643c', r: ['#b0a08a', '#8e806c', '#645a4c'], v: ['#78a040', '#5b8434', '#3e5e28'], v2: ['#e2cf7a', '#c8b25a', '#9a8640'], t: '#6e4a30', w: ['#6aa8a0', '#3f7a80'], acc: '#c86a3c', sky: ['#3a84cc', '#ecdcb0'] },
+    pal: { g: ['#d6c26c', '#c0a650', '#8f7a38'], sub: '#a8643c', r: ['#b0a08a', '#8e806c', '#645a4c'], v: ['#78a040', '#5b8434', '#3e5e28'], v2: ['#e2cf7a', '#c8b25a', '#9a8640'], t: '#6e4a30', w: ['#639d80', '#3f7a80'], acc: '#c86a3c', sky: ['#3a84cc', '#ecdcb0'] },
     profile: { kind: 'rolling', amp: 16, wave: 680 }, far: { kind: 'hills', amp: 34 },
     cover: [{ k: 'acacia', n: 3, h: [120, 200] }, { k: 'tuft', n: 16, h: [24, 50] }, { k: 'termite', n: 2, h: [50, 90] }, { k: 'boulder', n: 2, h: [30, 80] }],
     plume: { kind: 'dust', cols: ['#e8c88a', '#c0884c', '#8a5a34'], ej: ['#c8b25a', '#a8643c'], h: 320, w: 230 },
@@ -44,7 +44,7 @@ export const BIOMES = {
   },
   forest: {
     name: 'Temperate forest', order: 5, line: 'dense broadleaf and fir; a green floor; a leaf-litter ground',
-    pal: { g: ['#5e9446', '#487a38', '#335a2a'], sub: '#4e3a28', r: ['#8a8678', '#6e6a5e', '#4c4a42'], v: ['#4a9a48', '#327c3a', '#1f5a2c'], v2: ['#79b058', '#5a9442', '#3e6e30'], t: '#62422a', w: ['#428eaa', '#2f6e90'], acc: '#d8883a', sky: ['#2f7cc4', '#c0dce8'] },
+    pal: { g: ['#5e9446', '#487a38', '#335a2a'], sub: '#4e3a28', r: ['#848072', '#6e6a5e', '#4c4a42'], v: ['#4a9a48', '#327c3a', '#1f5a2c'], v2: ['#79b058', '#5a9442', '#3e6e30'], t: '#62422a', w: ['#3f7c89', '#3d6076'], acc: '#d8883a', sky: ['#2f7cc4', '#c0dce8'] },
     profile: { kind: 'rolling', amp: 42, wave: 440 }, far: { kind: 'hills', amp: 90 },
     cover: [{ k: 'tree', n: 6, h: [200, 340] }, { k: 'fir', n: 5, h: [220, 380] }, { k: 'shrub', n: 5, h: [30, 60] }, { k: 'boulder', n: 2, h: [30, 70] }, { k: 'tuft', n: 8, h: [14, 28] }],
     plume: { kind: 'leaf', cols: ['#79b058', '#4a9a48', '#1f5a2c'], ej: ['#d8883a', '#62422a'], h: 330, w: 210 },
@@ -53,7 +53,7 @@ export const BIOMES = {
   },
   jungle: {
     name: 'Jungle', order: 6, line: 'tall layered canopy, buttress trunks, giant leaves, dark floor, a few vivid flowers',
-    pal: { g: ['#4a8a42', '#386e36', '#264e2a'], sub: '#4a3626', r: ['#7a8a72', '#5e6e5a', '#404e40'], v: ['#5cb04a', '#3a8f3c', '#1f6a30'], v2: ['#9ad052', '#6eb040', '#478a30'], t: '#5a3e28', w: ['#5a9a7a', '#2f6a58'], acc: '#e0527a', sky: ['#3a88c0', '#b8d8cc'] },
+    pal: { g: ['#4a8a42', '#386e36', '#264e2a'], sub: '#4a3626', r: ['#728567', '#5e6e5a', '#404e40'], v: ['#5cb04a', '#3a8f3c', '#1f6a30'], v2: ['#9ad052', '#6eb040', '#478a30'], t: '#5a3e28', w: ['#5a9a7a', '#2f6a58'], acc: '#e0527a', sky: ['#3a88c0', '#b8d8cc'] },
     profile: { kind: 'rolling', amp: 50, wave: 380 }, far: { kind: 'hills', amp: 110 },
     cover: [{ k: 'jungletree', n: 3, h: [250, 380] }, { k: 'fern', n: 8, h: [50, 110] }, { k: 'flower', n: 3, h: [30, 50] }, { k: 'boulder', n: 2, h: [40, 90] }],
     plume: { kind: 'leaf', cols: ['#9ad052', '#3a8f3c', '#1f6a30'], ej: ['#e0527a', '#5a3e28'], h: 360, w: 240, steam: true },
@@ -62,7 +62,7 @@ export const BIOMES = {
   },
   wetland: {
     name: 'Wetland', order: 7, line: 'shallow tea-green water, reed beds, mangrove roots, flat mud banks',
-    pal: { g: ['#789a62', '#5f804e', '#436038'], sub: '#4a4232', r: ['#8a8a7c', '#6e6e62', '#4a4a42'], v: ['#7fa05a', '#5a8048', '#3e5e36'], v2: ['#c0c070', '#a0a458', '#6a7e3a'], t: '#4e3a2a', w: ['#7ab0a0', '#4a8478'], acc: '#d8d4b8', sky: ['#4a8ec0', '#c6dcd4'] },
+    pal: { g: ['#789a62', '#5f804e', '#436038'], sub: '#4a4232', r: ['#7f7f6a', '#6e6e62', '#4a4a42'], v: ['#7fa05a', '#5a8048', '#3e5e36'], v2: ['#c0c070', '#a0a458', '#6a7e3a'], t: '#4e3a2a', w: ['#6ca682', '#4d8474'], acc: '#d8d4b8', sky: ['#4a8ec0', '#c6dcd4'] },
     profile: { kind: 'flat', amp: 8, wave: 300 }, far: { kind: 'low', amp: 22 },
     cover: [{ k: 'reed', n: 14, h: [60, 120] }, { k: 'mangrove', n: 3, h: [120, 200] }, { k: 'pool', n: 4, h: [6, 8] }, { k: 'tree', n: 2, h: [140, 220] }],
     plume: { kind: 'mud', cols: ['#a09a72', '#6a6448', '#3e3a2a'], ej: ['#7ab0a0', '#a0a458'], h: 240, w: 230 },
@@ -71,7 +71,7 @@ export const BIOMES = {
   },
   desert: {
     name: 'Desert', order: 8, line: 'long dunes with a steep lee, red mesas, cacti and scrub; sun-bleached',
-    pal: { g: ['#ecd28c', '#d8b868', '#a88a44'], sub: '#a07a44', r: ['#d29a5a', '#b87a44', '#8a5634'], v: ['#6aa050', '#4d8040', '#386030'], v2: ['#a8a060', '#8a8448', '#625e34'], t: '#6a4a30', w: ['#299faa', '#2a7a8c'], acc: '#d0e0e8', sky: ['#3c94d0', '#f0e4c0'] },
+    pal: { g: ['#ecd28c', '#d8b868', '#a88a44'], sub: '#a07a44', r: ['#d29a5a', '#b87a44', '#8a5634'], v: ['#6aa050', '#4d8040', '#386030'], v2: ['#a8a060', '#8a8448', '#625e34'], t: '#6a4a30', w: ['#387b87', '#357a85'], acc: '#d0e0e8', sky: ['#3c94d0', '#f0e4c0'] },
     profile: { kind: 'dunes', amp: 46, wave: 460 }, far: { kind: 'mesas', amp: 80 },
     cover: [{ k: 'cactus', n: 3, h: [90, 170] }, { k: 'scrub', n: 6, h: [24, 50] }, { k: 'mesa', n: 1, h: [160, 240] }, { k: 'boulder', n: 3, h: [30, 80] }, { k: 'skull', n: 0, h: [0, 0] }],
     plume: { kind: 'sand', cols: ['#f3e4b2', '#d8b868', '#a88a44'], ej: ['#d8b868', '#a45a3a'], h: 360, w: 260 },
@@ -80,16 +80,16 @@ export const BIOMES = {
   },
   mountains: {
     name: 'Mountains', order: 9, line: 'grey faceted rock, snow on the shade side, conifers low down, scree',
-    pal: { g: ['#6e9a58', '#547e46', '#3a5c34'], sub: '#5a5448', r: ['#a8a398', '#7e786c', '#524e46'], v: ['#3f7a50', '#2c5e3e', '#1e4430'], v2: ['#8aa070', '#6a8056', '#4a5e3c'], t: '#5a4230', w: ['#3d8eb6', '#356f98'], acc: '#e6eef2', sky: ['#3a82c8', '#c4daea'] },
+    pal: { g: ['#6e9a58', '#547e46', '#3a5c34'], sub: '#5a5448', r: ['#aea28a', '#7e786c', '#524e46'], v: ['#3f7a50', '#2c5e3e', '#1e4430'], v2: ['#8aa070', '#6a8056', '#4a5e3c'], t: '#5a4230', w: ['#367882', '#366577'], acc: '#e6eef2', sky: ['#3a82c8', '#c4daea'] },
     profile: { kind: 'jagged', amp: 190, wave: 520 }, far: { kind: 'peaks', amp: 260 },
     cover: [{ k: 'fir', n: 4, h: [160, 280] }, { k: 'boulder', n: 6, h: [30, 110] }, { k: 'scree', n: 4, h: [20, 50] }, { k: 'snowpatch', n: 3, h: [8, 14] }],
-    plume: { kind: 'rock', cols: ['#a8a398', '#7e786c', '#524e46'], ej: ['#7e786c', '#e6eef2'], h: 300, w: 200 },
+    plume: { kind: 'rock', cols: ['#aea28a', '#7e786c', '#524e46'], ej: ['#7e786c', '#e6eef2'], h: 300, w: 200 },
     damage: { scorch: 'a black soot streak along the rock, snow on it melted to a dark wet line, the scree glassy in the middle', crater: 'a bowl in broken rock, the rim a ring of angular blocks and a skirt of scree sliding down the slope', burned: 'conifers charred black, snow patches grey with soot, bare pale rock where the slope slid' },
     destruction: 'Rock shards: angular chunks on long arcs and a grey dust cloud; on a slope the scree slides downhill for two seconds.',
   },
   volcanic: {
     name: 'Volcanic highland', order: 10, line: 'black basalt, grey ash slopes, a cone with a rim, a few cooled lava flows; the rocky highland in its cold state',
-    pal: { g: ['#5e5a64', '#43404a', '#2a2830'], sub: '#1e1c22', r: ['#6a666e', '#4a464e', '#2e2c32'], v: ['#6a8a48', '#4a6a38', '#34502a'], v2: ['#8a868e', '#6a666e', '#4a464e'], t: '#3a2c24', w: ['#408fab', '#2a6688'], acc: '#dc6a26', sky: ['#4a78a8', '#d8c8b0'] },
+    pal: { g: ['#5e5a64', '#43404a', '#2a2830'], sub: '#1e1c22', r: ['#6a666e', '#4a464e', '#2e2c32'], v: ['#6a8a48', '#4a6a38', '#34502a'], v2: ['#8a868e', '#6a666e', '#4a464e'], t: '#3a2c24', w: ['#497b89', '#3f6578'], acc: '#dc6a26', sky: ['#4a78a8', '#d8c8b0'] },
     profile: { kind: 'cones', amp: 120, wave: 520 }, far: { kind: 'cones', amp: 230 },
     cover: [{ k: 'basaltcol', n: 3, h: [80, 170] }, { k: 'boulder', n: 5, h: [30, 100] }, { k: 'vent', n: 2, h: [40, 70] }, { k: 'shrub', n: 3, h: [26, 50] }, { k: 'lavaflow', n: 1, h: [10, 14] }],
     plume: { kind: 'ash', cols: ['#8a868e', '#4a464e', '#22202a'], ej: ['#dc6a26', '#3a363e'], h: 400, w: 220, embers: true },
@@ -99,7 +99,7 @@ export const BIOMES = {
   },
   tundra: {
     name: 'Tundra and taiga', order: 11, line: 'grey-green lichen ground, snow in the hollows, dark spruce thinning poleward to stunted scrub',
-    pal: { g: ['#8ea27c', '#738868', '#53664c'], sub: '#5a5448', r: ['#8c8c90', '#6e6e74', '#4a4a52'], v: ['#3a6a58', '#2a5444', '#1c3c30'], v2: ['#c0c8a0', '#a0aa84', '#78825e'], t: '#4a3a2c', w: ['#468eb7', '#356888'], acc: '#e4ecf0', sky: ['#4a88c4', '#cadce8'] },
+    pal: { g: ['#7a9a59', '#738868', '#53664c'], sub: '#5a5448', r: ['#787878', '#6e6e74', '#4a4a52'], v: ['#3a6a58', '#2a5444', '#1c3c30'], v2: ['#c0c8a0', '#aeae7f', '#78825e'], t: '#4a3a2c', w: ['#3c7884', '#3b6276'], acc: '#e4ecf0', sky: ['#4a88c4', '#cadce8'] },
     profile: { kind: 'hummock', amp: 22, wave: 380 }, far: { kind: 'hills', amp: 70 },
     cover: [{ k: 'spruce', n: 5, h: [180, 320] }, { k: 'krummholz', n: 4, h: [30, 60] }, { k: 'snowpatch', n: 5, h: [8, 16] }, { k: 'boulder', n: 4, h: [24, 70] }, { k: 'tuft', n: 8, h: [10, 22] }],
     plume: { kind: 'snow', cols: ['#e4ecf0', '#a8bccb', '#6a7e90'], ej: ['#e4ecf0', '#4a3a2c'], h: 340, w: 220 },

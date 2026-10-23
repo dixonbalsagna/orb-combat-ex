@@ -11,6 +11,555 @@
     "min": 9.8,
     "pair": "wetland / tundra"
   },
+  "_cover_set": [
+    {
+      "kind": "stack",
+      "biomes": [
+        "ocean"
+      ],
+      "height_range_u": [
+        120,
+        260
+      ],
+      "height_range_px": [
+        138,
+        298
+      ],
+      "tris_clean": 15,
+      "tris_charred": 15
+    },
+    {
+      "kind": "whitecap",
+      "biomes": [
+        "ocean"
+      ],
+      "height_range_u": [
+        10,
+        22
+      ],
+      "height_range_px": [
+        11,
+        25
+      ],
+      "tris_clean": 3,
+      "tris_charred": 3
+    },
+    {
+      "kind": "palm",
+      "biomes": [
+        "beach"
+      ],
+      "height_range_u": [
+        150,
+        240
+      ],
+      "height_range_px": [
+        172,
+        275
+      ],
+      "tris_clean": 18,
+      "tris_charred": 2
+    },
+    {
+      "kind": "dunegrass",
+      "biomes": [
+        "beach"
+      ],
+      "height_range_u": [
+        20,
+        40
+      ],
+      "height_range_px": [
+        23,
+        46
+      ],
+      "tris_clean": 6,
+      "tris_charred": 7
+    },
+    {
+      "kind": "boulder",
+      "biomes": [
+        "beach",
+        "plains",
+        "savanna",
+        "forest",
+        "jungle",
+        "desert",
+        "mountains",
+        "volcanic",
+        "tundra"
+      ],
+      "height_range_u": [
+        22,
+        110
+      ],
+      "height_range_px": [
+        25,
+        126
+      ],
+      "tris_clean": 5,
+      "tris_charred": 5
+    },
+    {
+      "kind": "driftwood",
+      "biomes": [
+        "beach"
+      ],
+      "height_range_u": [
+        14,
+        20
+      ],
+      "height_range_px": [
+        16,
+        23
+      ],
+      "tris_clean": 4,
+      "tris_charred": 4
+    },
+    {
+      "kind": "tree",
+      "biomes": [
+        "plains",
+        "forest",
+        "wetland"
+      ],
+      "height_range_u": [
+        130,
+        340
+      ],
+      "height_range_px": [
+        149,
+        390
+      ],
+      "tris_clean": 17,
+      "tris_charred": 14
+    },
+    {
+      "kind": "tuft",
+      "biomes": [
+        "plains",
+        "savanna",
+        "forest",
+        "tundra"
+      ],
+      "height_range_u": [
+        10,
+        50
+      ],
+      "height_range_px": [
+        11,
+        57
+      ],
+      "tris_clean": 7,
+      "tris_charred": 7
+    },
+    {
+      "kind": "shrub",
+      "biomes": [
+        "plains",
+        "forest",
+        "volcanic"
+      ],
+      "height_range_u": [
+        26,
+        60
+      ],
+      "height_range_px": [
+        30,
+        69
+      ],
+      "tris_clean": 7,
+      "tris_charred": 7
+    },
+    {
+      "kind": "acacia",
+      "biomes": [
+        "savanna"
+      ],
+      "height_range_u": [
+        120,
+        200
+      ],
+      "height_range_px": [
+        138,
+        229
+      ],
+      "tris_clean": 13,
+      "tris_charred": 12
+    },
+    {
+      "kind": "termite",
+      "biomes": [
+        "savanna"
+      ],
+      "height_range_u": [
+        50,
+        90
+      ],
+      "height_range_px": [
+        57,
+        103
+      ],
+      "tris_clean": 6,
+      "tris_charred": 6
+    },
+    {
+      "kind": "fir",
+      "biomes": [
+        "forest",
+        "mountains"
+      ],
+      "height_range_u": [
+        160,
+        380
+      ],
+      "height_range_px": [
+        183,
+        436
+      ],
+      "tris_clean": 12,
+      "tris_charred": 16
+    },
+    {
+      "kind": "jungletree",
+      "biomes": [
+        "jungle"
+      ],
+      "height_range_u": [
+        250,
+        380
+      ],
+      "height_range_px": [
+        287,
+        436
+      ],
+      "tris_clean": 34,
+      "tris_charred": 16
+    },
+    {
+      "kind": "fern",
+      "biomes": [
+        "jungle"
+      ],
+      "height_range_u": [
+        50,
+        110
+      ],
+      "height_range_px": [
+        57,
+        126
+      ],
+      "tris_clean": 12,
+      "tris_charred": 7
+    },
+    {
+      "kind": "flower",
+      "biomes": [
+        "jungle"
+      ],
+      "height_range_u": [
+        30,
+        50
+      ],
+      "height_range_px": [
+        34,
+        57
+      ],
+      "tris_clean": 12,
+      "tris_charred": 4
+    },
+    {
+      "kind": "reed",
+      "biomes": [
+        "wetland"
+      ],
+      "height_range_u": [
+        60,
+        120
+      ],
+      "height_range_px": [
+        69,
+        138
+      ],
+      "tris_clean": 14,
+      "tris_charred": 11
+    },
+    {
+      "kind": "mangrove",
+      "biomes": [
+        "wetland"
+      ],
+      "height_range_u": [
+        120,
+        200
+      ],
+      "height_range_px": [
+        138,
+        229
+      ],
+      "tris_clean": 30,
+      "tris_charred": 10
+    },
+    {
+      "kind": "pool",
+      "biomes": [
+        "wetland"
+      ],
+      "height_range_u": [
+        6,
+        8
+      ],
+      "height_range_px": [
+        7,
+        9
+      ],
+      "tris_clean": 4,
+      "tris_charred": 0
+    },
+    {
+      "kind": "cactus",
+      "biomes": [
+        "desert"
+      ],
+      "height_range_u": [
+        90,
+        170
+      ],
+      "height_range_px": [
+        103,
+        195
+      ],
+      "tris_clean": 16,
+      "tris_charred": 2
+    },
+    {
+      "kind": "scrub",
+      "biomes": [
+        "desert"
+      ],
+      "height_range_u": [
+        24,
+        50
+      ],
+      "height_range_px": [
+        28,
+        57
+      ],
+      "tris_clean": 7,
+      "tris_charred": 7
+    },
+    {
+      "kind": "mesa",
+      "biomes": [
+        "desert"
+      ],
+      "height_range_u": [
+        160,
+        240
+      ],
+      "height_range_px": [
+        183,
+        275
+      ],
+      "tris_clean": 14,
+      "tris_charred": 14
+    },
+    {
+      "kind": "scree",
+      "biomes": [
+        "mountains"
+      ],
+      "height_range_u": [
+        20,
+        50
+      ],
+      "height_range_px": [
+        23,
+        57
+      ],
+      "tris_clean": 9,
+      "tris_charred": 9
+    },
+    {
+      "kind": "snowpatch",
+      "biomes": [
+        "mountains",
+        "tundra",
+        "ice"
+      ],
+      "height_range_u": [
+        8,
+        16
+      ],
+      "height_range_px": [
+        9,
+        18
+      ],
+      "tris_clean": 3,
+      "tris_charred": 3
+    },
+    {
+      "kind": "basaltcol",
+      "biomes": [
+        "volcanic"
+      ],
+      "height_range_u": [
+        80,
+        170
+      ],
+      "height_range_px": [
+        92,
+        195
+      ],
+      "tris_clean": 25,
+      "tris_charred": 25
+    },
+    {
+      "kind": "vent",
+      "biomes": [
+        "volcanic"
+      ],
+      "height_range_u": [
+        40,
+        70
+      ],
+      "height_range_px": [
+        46,
+        80
+      ],
+      "tris_clean": 25,
+      "tris_charred": 25
+    },
+    {
+      "kind": "lavaflow",
+      "biomes": [
+        "volcanic"
+      ],
+      "height_range_u": [
+        10,
+        14
+      ],
+      "height_range_px": [
+        11,
+        16
+      ],
+      "tris_clean": 4,
+      "tris_charred": 4
+    },
+    {
+      "kind": "spruce",
+      "biomes": [
+        "tundra"
+      ],
+      "height_range_u": [
+        180,
+        320
+      ],
+      "height_range_px": [
+        206,
+        367
+      ],
+      "tris_clean": 17,
+      "tris_charred": 16
+    },
+    {
+      "kind": "krummholz",
+      "biomes": [
+        "tundra"
+      ],
+      "height_range_u": [
+        30,
+        60
+      ],
+      "height_range_px": [
+        34,
+        69
+      ],
+      "tris_clean": 24,
+      "tris_charred": 10
+    },
+    {
+      "kind": "icespire",
+      "biomes": [
+        "ice",
+        "seaice"
+      ],
+      "height_range_u": [
+        60,
+        160
+      ],
+      "height_range_px": [
+        69,
+        183
+      ],
+      "tris_clean": 12,
+      "tris_charred": 12
+    },
+    {
+      "kind": "crevasse",
+      "biomes": [
+        "ice"
+      ],
+      "height_range_u": [
+        10,
+        14
+      ],
+      "height_range_px": [
+        11,
+        16
+      ],
+      "tris_clean": 3,
+      "tris_charred": 3
+    },
+    {
+      "kind": "nunatak",
+      "biomes": [
+        "ice"
+      ],
+      "height_range_u": [
+        120,
+        200
+      ],
+      "height_range_px": [
+        138,
+        229
+      ],
+      "tris_clean": 7,
+      "tris_charred": 7
+    },
+    {
+      "kind": "berg",
+      "biomes": [
+        "seaice"
+      ],
+      "height_range_u": [
+        90,
+        220
+      ],
+      "height_range_px": [
+        103,
+        252
+      ],
+      "tris_clean": 8,
+      "tris_charred": 8
+    },
+    {
+      "kind": "floeblock",
+      "biomes": [
+        "seaice"
+      ],
+      "height_range_u": [
+        14,
+        30
+      ],
+      "height_range_px": [
+        16,
+        34
+      ],
+      "tris_clean": 4,
+      "tris_charred": 4
+    }
+  ],
   "biomes": {
     "ocean": {
       "name": "Open ocean",
@@ -22,7 +571,7 @@
           "#2c78a8",
           "#1f5a88"
         ],
-        "subsoil": "#17426a",
+        "subsoil": "#183d5f",
         "rock": [
           "#6c7075",
           "#4f5a64",
@@ -136,6 +685,28 @@
           "note": "Black cliffs drop straight into the sea; sea stacks stand off the cliff; a thin steam vent stands on the shore (grey facets)."
         }
       ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 9.3,
+          "deutan": 8.9,
+          "tritan": 15.5
+        },
+        "failing_tones": [
+          {
+            "tone": "sea lit",
+            "hex": "#3a88b4"
+          },
+          {
+            "tone": "sea mid",
+            "hex": "#2c78a8"
+          },
+          {
+            "tone": "sea shade",
+            "hex": "#1f5a88"
+          }
+        ]
+      },
       "readability": {
         "worst_aura_dE00": 21,
         "worst_body_dE00": 22.2
@@ -153,7 +724,7 @@
         ],
         "subsoil": "#a89060",
         "rock": [
-          "#a39a8c",
+          "#a69985",
           "#857c70",
           "#5f584e"
         ],
@@ -164,7 +735,7 @@
         ],
         "secondary": [
           "#a9bd62",
-          "#7f9a48",
+          "#7c9745",
           "#58763a"
         ],
         "trunk": "#7a5a38",
@@ -236,7 +807,7 @@
         ],
         "ej": [
           "#dcc58a",
-          "#a39a8c"
+          "#a69985"
         ],
         "h": 300,
         "w": 200,
@@ -303,6 +874,24 @@
           "note": "Black sand beach: the sand steps from pale to grey to black, black boulders in the surf."
         }
       ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 9,
+          "deutan": 8.9,
+          "tritan": 14.1
+        },
+        "failing_tones": [
+          {
+            "tone": "water shallow",
+            "hex": "#3595ac"
+          },
+          {
+            "tone": "water deep",
+            "hex": "#2c78a8"
+          }
+        ]
+      },
       "readability": {
         "worst_aura_dE00": 20.6,
         "worst_body_dE00": 22.8
@@ -314,13 +903,13 @@
       "line": "rolling meadow; scattered broadleaf trees, boulders, tufts",
       "palette": {
         "ground": [
-          "#8cbc58",
+          "#8abd50",
           "#70a246",
           "#4e7c36"
         ],
         "subsoil": "#6b5338",
         "rock": [
-          "#9a968a",
+          "#908a77",
           "#7e7a6e",
           "#5a574e"
         ],
@@ -336,8 +925,8 @@
         ],
         "trunk": "#6a4a30",
         "water": {
-          "shallow": "#428eae",
-          "deep": "#2f6f98"
+          "shallow": "#477b88",
+          "deep": "#376b7c"
         },
         "accent": "#e2b04a",
         "sky_noon": {
@@ -469,9 +1058,18 @@
           "note": "Pools open in the grass, reeds ring them, the grass grows darker and wetter."
         }
       ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 14,
+          "deutan": 14,
+          "tritan": 14
+        },
+        "failing_tones": []
+      },
       "readability": {
-        "worst_aura_dE00": 21.1,
-        "worst_body_dE00": 23.6
+        "worst_aura_dE00": 23,
+        "worst_body_dE00": 23.4
       }
     },
     "savanna": {
@@ -502,7 +1100,7 @@
         ],
         "trunk": "#6e4a30",
         "water": {
-          "shallow": "#6aa8a0",
+          "shallow": "#639d80",
           "deep": "#3f7a80"
         },
         "accent": "#c86a3c",
@@ -621,8 +1219,17 @@
           "note": "A floodplain: flat, gold grass with pools and reeds, a few acacias on the higher ground."
         }
       ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 14,
+          "deutan": 14.2,
+          "tritan": 15.6
+        },
+        "failing_tones": []
+      },
       "readability": {
-        "worst_aura_dE00": 21.9,
+        "worst_aura_dE00": 26.7,
         "worst_body_dE00": 21.5
       }
     },
@@ -638,7 +1245,7 @@
         ],
         "subsoil": "#4e3a28",
         "rock": [
-          "#8a8678",
+          "#848072",
           "#6e6a5e",
           "#4c4a42"
         ],
@@ -654,8 +1261,8 @@
         ],
         "trunk": "#62422a",
         "water": {
-          "shallow": "#428eaa",
-          "deep": "#2f6e90"
+          "shallow": "#3f7c89",
+          "deep": "#3d6076"
         },
         "accent": "#d8883a",
         "sky_noon": {
@@ -781,9 +1388,18 @@
           "note": "A swamp forest: trees stand in shallow water with arched roots; the floor is mud."
         }
       ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 14,
+          "deutan": 14,
+          "tritan": 14.5
+        },
+        "failing_tones": []
+      },
       "readability": {
-        "worst_aura_dE00": 21.4,
-        "worst_body_dE00": 23.9
+        "worst_aura_dE00": 24.4,
+        "worst_body_dE00": 23.8
       }
     },
     "jungle": {
@@ -798,7 +1414,7 @@
         ],
         "subsoil": "#4a3626",
         "rock": [
-          "#7a8a72",
+          "#728567",
           "#5e6e5a",
           "#404e40"
         ],
@@ -934,9 +1550,18 @@
           "note": "A cloud forest: the canopy stays but the ridges rise behind it, darker; ferns on the rock."
         }
       ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 15.2,
+          "deutan": 15.3,
+          "tritan": 14.3
+        },
+        "failing_tones": []
+      },
       "readability": {
         "worst_aura_dE00": 32.9,
-        "worst_body_dE00": 31.6
+        "worst_body_dE00": 33
       }
     },
     "wetland": {
@@ -951,7 +1576,7 @@
         ],
         "subsoil": "#4a4232",
         "rock": [
-          "#8a8a7c",
+          "#7f7f6a",
           "#6e6e62",
           "#4a4a42"
         ],
@@ -967,8 +1592,8 @@
         ],
         "trunk": "#4e3a2a",
         "water": {
-          "shallow": "#7ab0a0",
-          "deep": "#4a8478"
+          "shallow": "#6ca682",
+          "deep": "#4d8474"
         },
         "accent": "#d8d4b8",
         "sky_noon": {
@@ -1093,8 +1718,17 @@
           "note": "A mangrove swamp: prop roots, dark water, hanging vines."
         }
       ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 14.8,
+          "deutan": 14.7,
+          "tritan": 14.1
+        },
+        "failing_tones": []
+      },
       "readability": {
-        "worst_aura_dE00": 22.8,
+        "worst_aura_dE00": 31.6,
         "worst_body_dE00": 24.8
       }
     },
@@ -1126,8 +1760,8 @@
         ],
         "trunk": "#6a4a30",
         "water": {
-          "shallow": "#299faa",
-          "deep": "#2a7a8c"
+          "shallow": "#387b87",
+          "deep": "#357a85"
         },
         "accent": "#d0e0e8",
         "sky_noon": {
@@ -1245,8 +1879,17 @@
           "note": "A black lava plain with sand drifted in streaks; basalt columns; the sand steps to black."
         }
       ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 14.3,
+          "deutan": 14.2,
+          "tritan": 17.5
+        },
+        "failing_tones": []
+      },
       "readability": {
-        "worst_aura_dE00": 20.9,
+        "worst_aura_dE00": 26.2,
         "worst_body_dE00": 15.6
       }
     },
@@ -1262,7 +1905,7 @@
         ],
         "subsoil": "#5a5448",
         "rock": [
-          "#a8a398",
+          "#aea28a",
           "#7e786c",
           "#524e46"
         ],
@@ -1278,8 +1921,8 @@
         ],
         "trunk": "#5a4230",
         "water": {
-          "shallow": "#3d8eb6",
-          "deep": "#356f98"
+          "shallow": "#367882",
+          "deep": "#366577"
         },
         "accent": "#e6eef2",
         "sky_noon": {
@@ -1339,7 +1982,7 @@
       "plume": {
         "kind": "rock",
         "cols": [
-          "#a8a398",
+          "#aea28a",
           "#7e786c",
           "#524e46"
         ],
@@ -1411,8 +2054,17 @@
           "note": "Glacier tongues run down between the rock ridges; the snow line is a hard step."
         }
       ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 15.3,
+          "deutan": 14.3,
+          "tritan": 16
+        },
+        "failing_tones": []
+      },
       "readability": {
-        "worst_aura_dE00": 20.8,
+        "worst_aura_dE00": 25.7,
         "worst_body_dE00": 23.1
       }
     },
@@ -1444,8 +2096,8 @@
         ],
         "trunk": "#3a2c24",
         "water": {
-          "shallow": "#408fab",
-          "deep": "#2a6688"
+          "shallow": "#497b89",
+          "deep": "#3f6578"
         },
         "accent": "#dc6a26",
         "sky_noon": {
@@ -1565,8 +2217,17 @@
           "note": "The rock turns from grey to black, ash slopes replace scree, a cone stands behind."
         }
       ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 14,
+          "deutan": 14,
+          "tritan": 14.7
+        },
+        "failing_tones": []
+      },
       "readability": {
-        "worst_aura_dE00": 21.2,
+        "worst_aura_dE00": 22.2,
         "worst_body_dE00": 21.1
       },
       "note": "a hot state (lava rivers glowing) is an event, not a biome: static orange, small area, Legal photosensitivity and the saturated-red test apply"
@@ -1577,13 +2238,13 @@
       "line": "grey-green lichen ground, snow in the hollows, dark spruce thinning poleward to stunted scrub",
       "palette": {
         "ground": [
-          "#8ea27c",
+          "#7a9a59",
           "#738868",
           "#53664c"
         ],
         "subsoil": "#5a5448",
         "rock": [
-          "#8c8c90",
+          "#787878",
           "#6e6e74",
           "#4a4a52"
         ],
@@ -1594,13 +2255,13 @@
         ],
         "secondary": [
           "#c0c8a0",
-          "#a0aa84",
+          "#aeae7f",
           "#78825e"
         ],
         "trunk": "#4a3a2c",
         "water": {
-          "shallow": "#468eb7",
-          "deep": "#356888"
+          "shallow": "#3c7884",
+          "deep": "#3b6276"
         },
         "accent": "#e4ecf0",
         "sky_noon": {
@@ -1726,8 +2387,17 @@
           "note": "Shore-fast ice: a flat white shelf along the coast, floes at its edge in dark water."
         }
       ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 14,
+          "deutan": 14,
+          "tritan": 14
+        },
+        "failing_tones": []
+      },
       "readability": {
-        "worst_aura_dE00": 20.6,
+        "worst_aura_dE00": 24.2,
         "worst_body_dE00": 22.3
       }
     },
@@ -1864,6 +2534,24 @@
           "note": "A shelf edge: a vertical slate cliff of ice over dark water, bergs calved off it, floes beyond."
         }
       ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 5.3,
+          "deutan": 6.4,
+          "tritan": 12.8
+        },
+        "failing_tones": [
+          {
+            "tone": "ground lit",
+            "hex": "#ebe8e2"
+          },
+          {
+            "tone": "water shallow",
+            "hex": "#2f6a84"
+          }
+        ]
+      },
       "readability": {
         "worst_aura_dE00": 22.6,
         "worst_body_dE00": 22.7
@@ -1995,6 +2683,24 @@
           "note": "A shelf edge: a vertical slate cliff of ice over dark water, bergs calved off it, floes beyond."
         }
       ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 4.6,
+          "deutan": 5.4,
+          "tritan": 10.7
+        },
+        "failing_tones": [
+          {
+            "tone": "ground lit",
+            "hex": "#e3e4e0"
+          },
+          {
+            "tone": "water shallow",
+            "hex": "#2f6a84"
+          }
+        ]
+      },
       "readability": {
         "worst_aura_dE00": 20.7,
         "worst_body_dE00": 25.2

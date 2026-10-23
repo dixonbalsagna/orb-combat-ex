@@ -2,6 +2,8 @@
 // Written by the Art Director session (Claude, claude-sonnet-5-5), 2026-10-23. Human direction: Orb, via the EP.
 // A scene is drawn in WORLD UNITS (a fighter is 75 units tall) with y up; sx, sy map to the sheet. Everything is a flat polygon with a thin keyline: lit, mid and shade faces, no gradients, no blur, no fades.
 import { BIOMES } from './spec.mjs';
+import { WORLD, tinted } from '../sky/world.mjs';
+import { skyAt, KEYS } from '../sky/keys.mjs';
 
 // ---------------------------------------------------------------------------------------------------------------- colour and number helpers
 const h2r = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
@@ -18,12 +20,13 @@ const lerp = (a, b, t) => a + (b - a) * t;
 // ---------------------------------------------------------------------------------------------------------------- the scene frame
 // win: the world window (wx0 left, width ww in units, wh height in units); S px per unit; the panel is at (px, py) on the sheet
 export class Frame {
-  constructor({ px = 0, py = 0, S = 1, wx0 = 0, ww = 1200, wh = 450 }) { Object.assign(this, { px, py, S, wx0, ww, wh }); this.out = []; this.W = ww * S; this.H = wh * S; }
+  constructor({ px = 0, py = 0, S = 1, wx0 = 0, ww = 1200, wh = 450 }) { Object.assign(this, { px, py, S, wx0, ww, wh }); this.out = []; this.W = ww * S; this.H = wh * S; this.layer = 'none'; this.tint = null; }
+  col(c) { return this.tint && this.layer !== 'none' && c !== KEY && /^#[0-9a-f]{6}$/i.test(c) ? tinted(c, this.tint[this.layer]) : c; }
   X(x) { return this.px + (x - this.wx0) * this.S; }
   Y(y) { return this.py + this.H - y * this.S; }
   pt(p) { return `${F(this.X(p[0]))},${F(this.Y(p[1]))}`; }
-  poly(pts, fill, { key = true, op = 1, sw = 1.1 } = {}) { this.out.push(`<polygon points="${pts.map(p => this.pt(p)).join(' ')}" fill="${fill}"${key ? ` stroke="${KEY}" stroke-width="${sw}" stroke-linejoin="round"` : ` stroke="${fill}" stroke-width="0.7" stroke-linejoin="round"`}${op < 1 ? ` opacity="${op}"` : ''}/>`); }
-  line(pts, stroke, w = 1.2) { this.out.push(`<polyline points="${pts.map(p => this.pt(p)).join(' ')}" fill="none" stroke="${stroke}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`); }
+  poly(pts, fill0, { key = true, op = 1, sw = 1.1 } = {}) { const fill = this.col(fill0); this.out.push(`<polygon points="${pts.map(p => this.pt(p)).join(' ')}" fill="${fill}"${key ? ` stroke="${KEY}" stroke-width="${sw}" stroke-linejoin="round"` : ` stroke="${fill}" stroke-width="0.7" stroke-linejoin="round"`}${op < 1 ? ` opacity="${op}"` : ''}/>`); }
+  line(pts, stroke0, w = 1.2) { const stroke = this.col(stroke0); this.out.push(`<polyline points="${pts.map(p => this.pt(p)).join(' ')}" fill="none" stroke="${stroke}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`); }
   rect(x0, y0, x1, y1, fill, key = false) { this.poly([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], fill, { key }); }
   svg() { return this.out.join(''); }
 }
@@ -180,19 +183,21 @@ export const COVER = {
 const SCAR = { desert: ['#1f3d38', '#bfe0d8'], beach: ['#1f3d38', '#bfe0d8'], ice: ['#485765', '#5f8aa2'], seaice: ['#485765', '#5f8aa2'], volcanic: ['#8a868e', '#dc6a26'] };
 export function scene(o) {
   const S = o.S ?? 1.2, ww = o.ww ?? 1200, wh = o.wh ?? 460, f = new Frame({ px: o.px ?? 0, py: o.py ?? 0, S, wx0: o.wx0 ?? 0, ww, wh });
+  const keyDef = o.key ? KEYS.find(k => k.id === o.key) : null, bands = keyDef ? skyAt(keyDef.phase).bands : null; if (keyDef) f.tint = WORLD[keyDef.id];
   const A = BIOMES[o.id ?? o.mix.a], B = o.mix ? BIOMES[o.mix.b] : A, pal = A.pal, state = o.state ?? 'clean', seed = o.seed ?? 7, G = 118;   // the ground line, in units from the panel's bottom
   const mixAt = x => { if (!o.mix) return 0; const t = (x - o.mix.x0) / (o.mix.x1 - o.mix.x0); return t <= 0 ? 0 : t >= 1 ? 1 : (Math.floor(t * 5) + 0.5) / 5; };   // stepped, never a fade
   const smoothT = x => { if (!o.mix) return 0; return smoothstep(o.mix.x0, o.mix.x1, x); };
   const palAt = (x, k, i) => mix(A.pal[k][i], B.pal[k][i], mixAt(x));
-  const skyZ = mix(A.pal.sky[0], B.pal.sky[0], o.mix ? 0.5 : 0), skyH = mix(A.pal.sky[1], B.pal.sky[1], o.mix ? 0.5 : 0);
+  const skyZ = bands ? bands.top : mix(A.pal.sky[0], B.pal.sky[0], o.mix ? 0.5 : 0), skyH = bands ? bands.horizon : mix(A.pal.sky[1], B.pal.sky[1], o.mix ? 0.5 : 0);
   // sky: four hard bands
   const hz = 262;
-  [[0, 1], [0.33, 0.75], [0.66, 0.5], [1, 0.25]].forEach(([t, k], i, arr) => { const y0 = hz + (wh - hz) * (i / 4), y1 = hz + (wh - hz) * ((i + 1) / 4); f.rect(f.wx0, y0 - (i ? 0 : 400), f.wx0 + ww, y1, mix(skyH, skyZ, [0, 0.33, 0.66, 1][i])); });
+  [[0, 1], [0.33, 0.75], [0.66, 0.5], [1, 0.25]].forEach(([t, k], i, arr) => { const y0 = hz + (wh - hz) * (i / 4), y1 = hz + (wh - hz) * ((i + 1) / 4); f.rect(f.wx0, y0 - (i ? 0 : 400), f.wx0 + ww, y1, bands ? [bands.horizon, bands.lower, bands.upper, bands.top][i] : mix(skyH, skyZ, [0, 0.33, 0.66, 1][i])); });
+  f.layer = 'ground';
   // far land: three ridges, a value ladder toward the haze, each ridge cut into lit and shade facets
   const pa = profileFn(A.profile.kind, A.profile.amp, A.profile.wave, seed + 1), pb = profileFn(B.profile.kind, B.profile.amp, B.profile.wave, seed + 2);
   const farBase = b => b.far.kind === 'peaks' || b.far.kind === 'mesas' || b.far.kind === 'cones' ? b.pal.r[1] : b.far.kind === 'shelf' ? b.pal.g[0] : mix(b.pal.v[1], b.pal.r[1], 0.25);
   const hazeC = skyH, noFar = A.far.kind === 'none' && B.far.kind === 'none';
-  const seaPlaneFull = () => { const bio = [A, B].find(b => b.profile.kind === 'floes') ?? [A, B].find(b => b.profile.kind === 'shore') ?? A; const wc = bio.pal.w[1]; [[0.5, 0], [0.3, 1], [0.14, 2]].forEach(([k_, k]) => { const lo = hz - 48 * (k + 1), hi = hz - 48 * k; f.poly([[f.wx0 - 80, lo], [f.wx0 + ww + 80, lo], [f.wx0 + ww + 80, hi], [f.wx0 - 80, hi]], mix(wc, hazeC, k_), { key: false }); }); f.poly([[f.wx0 - 80, G - 4], [f.wx0 + ww + 80, G - 4], [f.wx0 + ww + 80, hz - 144], [f.wx0 - 80, hz - 144]], mix(wc, hazeC, 0.02), { key: false }); };
+  const seaPlaneFull = () => { f.layer = 'water'; const bio = [A, B].find(b => b.profile.kind === 'floes') ?? [A, B].find(b => b.profile.kind === 'shore') ?? A; const wc = bio.pal.w[1]; [[0.5, 0], [0.3, 1], [0.14, 2]].forEach(([k_, k]) => { const lo = hz - 48 * (k + 1), hi = hz - 48 * k; f.poly([[f.wx0 - 80, lo], [f.wx0 + ww + 80, lo], [f.wx0 + ww + 80, hi], [f.wx0 - 80, hi]], mix(wc, hazeC, k_), { key: false }); }); f.poly([[f.wx0 - 80, G - 4], [f.wx0 + ww + 80, G - 4], [f.wx0 + ww + 80, hz - 144], [f.wx0 - 80, hz - 144]], mix(wc, hazeC, 0.02), { key: false }); f.layer = 'ground'; };
   const bandsOf = () => o.mix ? [[f.wx0 - 80, o.mix.x0, 0], ...Array.from({ length: 5 }, (_, q) => [o.mix.x0 + (o.mix.x1 - o.mix.x0) * q / 5, o.mix.x0 + (o.mix.x1 - o.mix.x0) * (q + 1) / 5, (q + 0.5) / 5]), [o.mix.x1, f.wx0 + ww + 80, 1]] : [[f.wx0 - 80, f.wx0 + ww + 80, 0]];
   const coast = [A, B].some(b => b.profile.kind === 'shore' || b.profile.kind === 'floes'), floesOnly = [A, B].every(b => b.profile.kind === 'floes' || b.profile.kind === 'swell') && [A, B].some(b => b.profile.kind === 'floes'), landFrom = coast && !floesOnly ? 260 : -1e9, landK = x => coast ? smoothstep(landFrom, landFrom + 380, x) : 1;
   if (coast) seaPlaneFull();
@@ -213,8 +218,9 @@ export function scene(o) {
   }
   // the sea plane: stepped bands from the waterline to the horizon, lighter toward the haze (a visible horizon: one hard step to the sky)
   const seaBiome = x => (BIOMES[o.id ?? (mixAt(x) < 0.5 ? o.mix.a : o.mix.b)]);
-  const seaPlane = (x0, x1, yWater, bio) => { const wc = bio.pal.w[1]; [[0.5, 0], [0.3, 1], [0.14, 2]].forEach(([hz_, k]) => { const ya = hz - 48 * (k + 1) + 48, yb = hz - 48 * k; const lo = Math.max(yWater, hz - 48 * (k + 1)), hi = hz - 48 * k; if (hi <= yWater) return; f.poly([[x0, lo], [x1, lo], [x1, hi], [x0, hi]], mix(wc, hazeC, hz_), { key: false }); }); };
+  const seaPlane = (x0, x1, yWater, bio) => { f.layer = 'water'; const wc = bio.pal.w[1]; [[0.5, 0], [0.3, 1], [0.14, 2]].forEach(([hz_, k]) => { const ya = hz - 48 * (k + 1) + 48, yb = hz - 48 * k; const lo = Math.max(yWater, hz - 48 * (k + 1)), hi = hz - 48 * k; if (hi <= yWater) return; f.poly([[x0, lo], [x1, lo], [x1, hi], [x0, hi]], mix(wc, hazeC, hz_), { key: false }); }); };
   if (o.id === 'ocean') seaPlane(f.wx0 - 80, f.wx0 + ww + 80, 0, A);
+  f.layer = o.id === 'ocean' ? 'water' : 'ground';
   // the near ground: profile with the crater carved in, facets coloured by slope
   const R = o.crater ? o.crater.R : 0, cx = o.crater ? o.crater.x : 0, depth = R * 0.26, rimH = depth * 0.5;
   const craterAt = x => { if (!o.crater) return 0; const u = Math.abs(x - cx) / R; if (u < 1) return -depth * (1 - u * u) ** 2 + (u > 0.7 ? rimH * smoothstep(0.7, 1, u) : 0); if (u < 2) return rimH * (1 - smoothstep(1, 2, u)); return 0; };
@@ -243,6 +249,7 @@ export function scene(o) {
     if (ocean) { for (let x = scarSpan.x0; x < scarSpan.x1; x += 70) { const y = G + prof(x); f.poly([[x, y + 2], [x + 18, y + 20 + (x % 3) * 4], [x + 40, y + 8], [x + 60, y + 2]], '#cfdde6', { sw: 0.8 }); } }
     else { const top = [], bot = []; for (let x = scarSpan.x0; x <= scarSpan.x1; x += 16) { top.push([x, G + prof(x) + 1]); bot.push([x, G + prof(x) - 13 - 3 * Math.sin(x * 0.07)]); } f.poly([...top, ...bot.reverse()], fillc, { key: false }); f.line(top, edge, 1.6); }
   }
+  f.layer = 'water';
   // water in the lows: the sea surface for beach and sea ice, and wetland pools drawn as cover
   const waterId = (x) => { const bsel = mixAt(x) < 0.5 ? A : B; return bsel; };
   const needsWater = ['beach', 'seaice'].includes(o.id) || (o.mix && (['beach', 'seaice'].includes(o.mix.a) || ['beach', 'seaice'].includes(o.mix.b)));
@@ -254,6 +261,7 @@ export function scene(o) {
     for (let i = 0; i < wpts.length - 1; i++) { const x0 = wpts[i], x1 = wpts[i + 1], y0 = G + prof(x0), y1 = G + prof(x1); if (y0 >= wl - 30 && y1 >= wl - 30) continue; f.poly([[x0, wl - 30], [x1, wl - 30], [x1, Math.min(y1, wl - 30)], [x0, Math.min(y0, wl - 30)]], waterId((x0 + x1) / 2).pal.w[1], { key: false }); }
     f.line([[f.wx0, wl], [f.wx0 + ww, wl]], A.pal.acc, 1.2);
   }
+  f.layer = 'trees';
   // cover: back to front (the small ones in the mid land first, then the strip's own)
   const rnd = rng(seed + 11);
   const placeCover = (biome, x0, x1, scale, yAt, filterFn) => {
