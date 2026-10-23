@@ -1,0 +1,4 @@
+{
+  "_why": "Whole files the determinism lint (tools/lint-determinism.mjs) does not scan. Empty today on purpose: the deterministic wrappers (sim/core/detmath.gd SimDetMath, mathx.gd SimMathx, rng.gd SimRng) are CLEAN, so they are scanned like everything else and a regression inside one would fail. A call THROUGH a wrapper (SimDetMath.sin(x), SimRng.keyed(...), rng.randf()) is never a finding: only a bare engine call is. Add { \"path\": \"sim/...gd\", \"why\": \"...\" } only for a file whose job is to wrap an engine function, with the reason; for a single line use a comment `# det-ok: <reason>` on the line or the line above.",
+  "files": []
+}

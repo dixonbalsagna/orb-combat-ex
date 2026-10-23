@@ -704,6 +704,67 @@
       "patternProperties": {
         "^_": true
       }
+    },
+    "arena": {
+      "type": "object",
+      "required": [
+        "sound",
+        "gain_db",
+        "priority",
+        "cls",
+        "cap",
+        "bearing_ref",
+        "gain_db_per_ref",
+        "pitch_at_ref",
+        "pitch_at_zero"
+      ],
+      "properties": {
+        "sound": {
+          "type": "string"
+        },
+        "gain_db": {
+          "type": "number"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cls": {
+          "type": "string"
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "bearing_ref": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 10,
+          "description": "The turn, in degrees, at which the gain and pitch reach their \"at ref\" values (a turn is at most 10 degrees)."
+        },
+        "gain_db_per_ref": {
+          "type": "number",
+          "minimum": -12,
+          "maximum": 12,
+          "description": "Decibels added to gain_db at bearing_ref (scaled by the turn's size)."
+        },
+        "pitch_at_ref": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4,
+          "description": "Pitch at bearing_ref."
+        },
+        "pitch_at_zero": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4,
+          "description": "Pitch for a turn of zero."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
     }
   },
   "additionalProperties": false,
