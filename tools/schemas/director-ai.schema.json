@@ -681,6 +681,18 @@
                 "holdS"
               ],
               "additionalProperties": false
+            },
+            "wallKick": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The share of its sends into a wall that holds it kicks off."
+            },
+            "chaseShare": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The share of its sends it chases (Game Design's 5d: 10, 25, 40%)."
             }
           },
           "additionalProperties": false,
@@ -1246,6 +1258,18 @@
                 "holdS"
               ],
               "additionalProperties": false
+            },
+            "wallKick": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The share of its sends into a wall that holds it kicks off."
+            },
+            "chaseShare": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The share of its sends it chases (Game Design's 5d: 10, 25, 40%)."
             }
           },
           "additionalProperties": false,
@@ -1811,6 +1835,18 @@
                 "holdS"
               ],
               "additionalProperties": false
+            },
+            "wallKick": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The share of its sends into a wall that holds it kicks off."
+            },
+            "chaseShare": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "The share of its sends it chases (Game Design's 5d: 10, 25, 40%)."
             }
           },
           "additionalProperties": false,

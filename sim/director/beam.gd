@@ -197,6 +197,7 @@ static func startClash(S: SimState, ex, variant: String, dAdd: float = 0.0) -> v
 	c.dur = 1.6
 	c.aw = aw
 	S.game.clash = c
+	DirCalm.atSetPiece(S, ex, S.tick + int(round((c.dur + 1.0) * DirData.TICKS_PER_SEC)))   # (rulings-2026-10-23 3: its end is a calm moment; ask now)
 	SimFx.banner(S, "BEAM CLASH", "#ffffff", 1.2)
 	DirExchange.schedule(ex, ex.t + 1.6, "clashResolve", {"aw": aw, "variant": variant})
 	DirExchange.schedule(ex, ex.t + 2.6, "nop")

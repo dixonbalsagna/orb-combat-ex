@@ -142,8 +142,8 @@ static func aiInput(S: SimState, f) -> void:
 		i.light = true
 	elif za == 4:
 		i.heavy = true
-	if f.state == "free" and DirRecoil.aiPress(S, f) == 1:
-		i.light = true   # its counter-rush out of a recoil flip (DirRecoil)
+	if f.state == "free" and (DirRecoil.aiPress(S, f) == 1 or DirWallKick.aiPress(S, f) == 1):
+		i.light = true   # its counter-rush out of a recoil flip (DirRecoil), or its rush blow off a wall kick (DirWallKick)
 	var st: float = a.st
 	# The held states for the chosen stance: Guard holds guard; Dodge re-taps the dodge before its window lapses; Escape
 	# sprints (and moves away, below); Press holds nothing. They are written in every state, so a downed AI keeps its guard.
@@ -240,7 +240,8 @@ static func aiInput(S: SimState, f) -> void:
 	# Underwater and not hiding there: dash for the surface (underwater is a hiding state, not a place to fight).
 	if sea and f.y < 0.0 and i.my > 0.0:
 		i.dash = true
-	_capApproach(S, f, o, i)   # 4d: at a human, its free-flight approach is held near Camera's whip limit
+	if st == 3.0 or not DirChase.steer(S, f, o, i):   # 7c: its chase of a launch it threw (not in Escape): the zip's rush, which the cap doesn't hold
+		_capApproach(S, f, o, i)   # 4d: at a human, its free-flight approach is held near Camera's whip limit
 	# A hunter sometimes swings blind at the last-seen spot (it pays the lock-lost cost: 2 ki and a 0.5 s cooldown).
 	# A beat is not spent on a press the director would refuse (the cooldown, or a target in the air): it waits.
 	var ready: bool = S.dirS.cool <= 0.0 and o.state != "launched" and o.state != "locked" and DirBands.who(S) < 0 and not DirBands.taunting(o)

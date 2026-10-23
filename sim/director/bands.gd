@@ -115,7 +115,7 @@ static func begin(S: SimState, A, D, weight: int, entry: int, pressTick: int, op
 	var m: Dictionary = c.lunge
 	if b == FAR:
 		m = c.charge[_weightName(weight)] if charge else c.far[_weightName(weight)]
-	var cr: bool = not charge and DirRecoil.counter(S, A)   # out of his recoil flip: the counter-rush, at its own speed
+	var cr: bool = not charge and (DirRecoil.counter(S, A) or DirWallKick.rushBlow(S, A))   # out of his recoil flip (or his wall kick's push toward the rival, 5c): the counter-rush, at its own speed
 	if cr:
 		m = DirRecoil.cfg().counterRush
 	var n: int = clampi(int(ceil(maxf(0.0, d - eng) / float(m.speed) * DirData.TICKS_PER_SEC)), int(m.minTicks), int(m.maxTicks))
@@ -197,7 +197,7 @@ static func _endOff(S: SimState, D, side: float) -> float:
 static func farPressNow(S: SimState, A, weight: int, entry: int) -> bool:
 	if not farOn() or S.dirS.ex != null or S.game.ko != null or who(S) >= 0:
 		return false
-	if (A.state != "free" and A.state != "charging") or A.stunTicks > 0 or DirInterrupt.opening(S, A) != 0 or DirRecoil.flipping(S, A):
+	if (A.state != "free" and A.state != "charging") or A.stunTicks > 0 or DirInterrupt.opening(S, A) != 0 or DirRecoil.flipping(S, A) or DirWallKick.pushing(S, A):
 		return false
 	var D = SimRoster.opp(S, A)
 	if band(A, D) != FAR:
@@ -205,7 +205,7 @@ static func farPressNow(S: SimState, A, weight: int, entry: int) -> bool:
 	A.state = "free"
 	if taunting(D):
 		meet(S, A, D, weight, entry, S.tick)
-	elif DirBrawl.pursues(S, A, D) or DirRecoil.due(S, A):
+	elif DirBrawl.pursues(S, A, D) or DirRecoil.due(S, A) or DirWallKick.due(S, A):
 		begin(S, A, D, weight, entry, S.tick)   # the first move is his: his press from afar flies in, where a tap would open a taunt
 	else:
 		farPress(S, A, D, weight, entry, S.tick)

@@ -750,7 +750,11 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 	# --- splash on the neighbours, once per launch ---
 	_splash(S, f, b, oc.dmg, by, evt, cx, far, dir, passes and nx.b >= 0)
 	# --- the fighter ---
-	SimDamage.hurt(S, f, spN * FIGHTER_DMG, by)
+	# The wall kick (Encounter's DirWallKick; rulings-2026-10-22 2b): an armed kick takes a face that holds. Its slam
+	# is damageMul of a slam; no hold, rebound or stagger; his journey ends here.
+	var kicked: bool = not passes and not inside and DirWallKick.atWall(S, f, b, edge, dir, spN)
+	var km: float = DirWallKick.damageMul() if kicked else 1.0
+	SimDamage.hurt(S, f, spN * FIGHTER_DMG * km, by)
 	SimFx.debris(S, f.x, y + 20.0, 6, "#77808f", 500.0)
 	if not inside:
 		var stop: float = STOP_FIRST if link == 1 else STOP_LINK
@@ -776,11 +780,12 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 		endFlight(S, f)
 		return
 	if not passes:
-		_hold(S, f, lodgeSeconds(tierB, f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
+		if not kicked:
+			_hold(S, f, lodgeSeconds(tierB, f.launchSpecial))   # held at the wall for the lodge's seconds, then he comes off it
 		# the wall slam (buildings.md section 2): he takes the building's hit again over (wallSlamMul, Game Design's twice); the stagger is set below
 		var slam: float = float(cm.wallSlamMul) - 1.0
 		if slam > 0.0:
-			SimDamage.hurt(S, f, spN * FIGHTER_DMG * slam, by)
+			SimDamage.hurt(S, f, spN * FIGHTER_DMG * slam * km, by)
 	if passes:
 		f.vx *= keep
 		f.vy *= keep
@@ -797,6 +802,17 @@ static func hit(S: SimState, f, b, y: float, edge: float, dir: float) -> void:
 			f.aimD = maxf(float(nx.r.get("aimD", absf(SimWrap.sdx(f.x, nx.r.x)))), 1.0)
 			SimFx.chainLink(S, f, by, b, nb, y, nx.r, link + 1)
 		else:
+			endFlight(S, f)
+	elif kicked:
+		# the kick-off is the director's (his rush or his push, set in atWall): the journey ends at the face
+		if S.contactOn:
+			WorldContact.brakeEnd(S, f, "kick")
+		else:
+			f.state = "free"
+			f.stateT = 0.0
+			f.launchBy = null
+			f.launchT = 1.0
+			f.launchSpecial = false
 			endFlight(S, f)
 	else:
 		# a rebound: a quarter of the speed backward, outside the near face; the chain ends

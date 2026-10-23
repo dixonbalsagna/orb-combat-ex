@@ -20,7 +20,8 @@ class_name DirCalm
 ##    open finisher), and a moment: the first formTicks live ticks after a pausing form step's pause, or a fighter at rest
 ##    from a send within landedTicks with both down or set (under setSpeed). World adds its own check and swaps.
 ##  - The pick: each place a candidate brings into view scores by its kind (score); a tie goes to the smaller bearing.
-## Stateless: it reads the match and World's epoch, and writes only through World's ask, choose and cancel.
+## State: two f.act.dirI slots after DirPress's (the tick each came to rest, Game Design's 7b), written only while the
+## calm turn is on; otherwise it reads the match and World's epoch, and writes only through World's ask, choose and cancel.
 ## Not here: a set piece's cutaway as a moment (World's calm refuses an open set piece).
 
 
@@ -30,6 +31,69 @@ static func cfg() -> Dictionary:
 
 static func on(S: SimState) -> bool:
 	return bool(cfg().get("enabled", false)) and S.epoch != null
+
+
+const CM_WAS: int = 0    # his state at the director's last tick: 0 other, 1 launched, 2 down
+const CM_REST: int = 1   # the live tick he came to rest (his journey's end: down after the slide, or out of a flight
+                         # into the water), plus 1; 0 none
+const CM_SP: int = 2     # the live tick a set piece of his ended (a beam struggle, a clash exchange: rulings-2026-10-23 3), plus 1
+const CM_N: int = 3
+
+
+## A beam struggle starts (DirBeam.startClash): its end is coming, due at its exchange's end. World is asked now, about
+## the pair as it stands, so the ring is warm by then (the smallest bearing: the loser is blown away at its end).
+static func atSetPiece(S: SimState, ex, due: int) -> void:
+	if not on(S) or ex == null:
+		return
+	var A = ex.A
+	var D = ex.D
+	var margin: float = float(cfg().get("predictMargin", 1500.0))
+	if S.epoch.next != null and _keeps(S, [A.x, D.x], margin):
+		return   # the pick waiting keeps the ground rule here: it may take this moment
+	if not _clear(S):
+		return
+	var side: int = 1 if SimWrap.sdx(A.x, D.x) >= 0.0 else -1
+	_ask(S, A, D, "setpiece", SimWrap.wrap(A.x + 0.5 * SimWrap.sdx(A.x, D.x)), side, due, 1.0e9)   # (a spread no bearing fits: the smallest, one ring)
+
+
+## An exchange ended (DirExchange.endEx): a set piece's end (a beam struggle, a clash exchange) opens a moment.
+static func onSetPieceEnd(S: SimState, ex) -> void:
+	if not on(S) or ex == null:
+		return
+	if ex.kind != "sig" and not String(ex.tag).contains("CLASH"):
+		return
+	for f in [ex.A, ex.D]:
+		_s(f, CM_SP, DirBrawl._now(S) + 1)
+
+
+static func _base() -> int:
+	return DirRecoil._base() + DirRecoil.RC_N   # after the recoil flips' (the chain's front holds the mash run's and the press wait's)
+
+
+static func _g(f, k: int) -> int:
+	var i: int = _base() + k
+	return f.act.dirI[i] if i < f.act.dirI.size() else 0
+
+
+static func _s(f, k: int, v: int) -> void:
+	DirGrapple._size(f)
+	if f.act.dirI.size() < _base() + CM_N:
+		f.act.dirI.resize(_base() + CM_N)
+	f.act.dirI[_base() + k] = v
+
+
+## Once a live tick (DirExchange.dirUpdate), while the calm turn is on: the tick each fighter comes to rest (Game Design's
+## 7b: a landing's moment starts at the end of his journey, the slide's end, not at his first contact).
+static func tick(S: SimState) -> void:
+	if not on(S):
+		return
+	for f in S.fighters:
+		var d: int = 2 if f.state == "down" else (1 if f.state == "launched" else 0)
+		var was: int = _g(f, CM_WAS)
+		if (d == 2 and was != 2) or (was == 1 and d == 0):
+			_s(f, CM_REST, DirBrawl._now(S) + 1)   # down, or out of his flight (a water landing counts)
+		if d != was:
+			_s(f, CM_WAS, d)
 
 
 ## A pausing form step (DirExchange._transforms, at its pause's request; pz: SimPause.request's answer): a moment.
@@ -237,7 +301,8 @@ static func why(S: SimState) -> String:
 		return "beam clash"
 	var c: Dictionary = cfg()
 	var form: bool = _afterForm(S)
-	var settle: float = float(c.get("landedTicks", 45)) * SimConst.DT
+	var settle: int = int(c.get("landedTicks", 45))
+	var now: int = DirBrawl._now(S)
 	var setV: float = float(c.get("setSpeed", 60.0))
 	var landed: bool = false
 	var still: bool = true
@@ -252,8 +317,10 @@ static func why(S: SimState) -> String:
 		var set: bool = f.state == "free" and f.rush == null and SimDetMath.hypot(f.vx, f.vy) < setV
 		if not (down or set):
 			still = false
-		if f.stateT <= settle and (down or DirBrawl.returning(S, f)):
-			landed = true   # he came to rest from a send within the settle
+		if _g(f, CM_REST) > 0 and now - (_g(f, CM_REST) - 1) <= settle:
+			landed = true   # he came to rest (his journey's end) within landedTicks live ticks (7b)
+		if _g(f, CM_SP) > 0 and now - (_g(f, CM_SP) - 1) <= settle:
+			landed = true   # a set piece of his ended within landedTicks (rulings-2026-10-23 3)
 	if form:
 		return ""   # the form step's moment: the burst may still be carrying the rival
 	if not still:

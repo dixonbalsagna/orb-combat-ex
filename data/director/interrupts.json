@@ -404,11 +404,14 @@
       "lateTicks": 24,
       "flightMul": 1,
       "anywhere": {
-        "_note": "Launch anywhere, Game Design's thirteenth round (docs/design/launch-anywhere.md) as re-ruled in ff68e994, behind enabled (false: window 1's launcher, its rest and its hammer, read from the keys above). link: B within this many ticks of one of his clean landed blows is the launcher; kept: a B pressed this many ticks or fewer before one lands is held and thrown as the launcher; mashTicks: a B within this of his last B is the heavy flurry. power: string by his run (1 to 4 points) x state (sure, hard, answerable) x timing (perfect, chain, max: waiting on the perfect window) x wounds (the region the piece strikes); it scales the launching blow's worth and the send. fresh: each launch marks its kind on the fighter it sends; x factor for each mark of the kind and x general for each mark of any kind within windowS, never under floor; the planner takes preferW off a candidate for each mark of its kind (the brake's air sense is Simulation's, data/fight/brake.json). aim.bendCos: the most the choreographer bends a send inside the stick's kind (the cosine of 30 degrees). full: a launch whose power at the send is this or more is full (QA's counter; the cue launch_power). The launcher is armoured against lights (an answerable one takes one light, and a second in its wind-up stops it: 2026-10-18), and only a sure one holds his stagger. fresh.destruction false: freshness never lowers the power World's building ladder reads (Orb, homework 30). aiAim: the AI's launcher aim by its personality, up, across and down weights for the hero (care above 0, or the hero role at care 0; across less where people are popAtBh body heights along the line, within popR) and the Anti-hero (care below 0, or a villain or rival role).",
+        "_note": "Launch anywhere, Game Design's thirteenth round (docs/design/launch-anywhere.md) as re-ruled in ff68e994, behind enabled (false: window 1's launcher, its rest and its hammer, read from the keys above). link: B within this many ticks of one of his clean landed blows is the launcher; kept: a B pressed this many ticks or fewer before one lands is held and thrown as the launcher; mashTicks: a B within this of his last B is the heavy flurry. power: string by his run (1 to 4 points) x state (sure, hard, answerable) x timing (perfect, chain, max: waiting on the perfect window) x wounds (the region the piece strikes); it scales the launching blow's worth and the send. fresh: each launch marks its kind on the fighter it sends; x factor for each mark of the kind and x general for each mark of any kind within windowS, never under floor; the planner takes preferW off a candidate for each mark of its kind (the brake's air sense is Simulation's, data/fight/brake.json). aim.bendCos: the most the choreographer bends a send inside the stick's kind (the cosine of 30 degrees). full: a launch whose power at the send is this or more is full (QA's counter; the cue launch_power). The launcher is armoured against lights (an answerable one takes one light, and a second in its wind-up stops it: 2026-10-18; armourLightTicks: only if it lands within this many live ticks of the first, and a later one is the new first, so only a real flurry stops it: 2026-10-19, 5a), and only a sure one holds his stagger. fresh.destruction false: freshness never lowers the power World's building ladder reads (Orb, homework 30). aiAim: the AI's launcher aim by its personality, up, across and down weights for the hero (care above 0, or the hero role at care 0; across less where people are popAtBh body heights along the line, within popR) and the Anti-hero (care below 0, or a villain or rival role).",
         "enabled": false,
         "link": 24,
         "kept": 10,
         "mashTicks": 9,
+        "armourLightTicks": 6,
+        "hardFromChain": 2,
+        "chainGapTicks": 24,
         "power": {"string": [0.55, 0.7, 0.85, 1.0], "state": {"sure": 1.0, "hard": 0.9, "answerable": 0.8}, "perfect": 1.25, "chain": 0.05, "max": 1.5, "wounds": {"battered": 1.1, "broken": 1.2}},
         "fresh": {"windowS": 60, "factor": 0.75, "general": 0.9, "floor": 0.4, "preferW": 12, "destruction": false},
         "aim": {"bendCos": 0.866},
@@ -505,11 +508,32 @@
     "_note": "A mash's later blows flow (sim/director/mash.gd; Game Design's rulings-2026-10-22.md 6 (b); Simulation's light_flow). A mash is a run of one fighter's mashed or burst blows (a brawl blow that names light_mash), each within flowGapTicks live ticks of his last; it starts again after that many without one. Its first blow keeps light_mash; each later one names light_flow, which holds no stop. Only while hit-stop by weight is on.",
     "flowGapTicks": 12
   },
+  "wallKick": {
+    "_note": "The wall kick (sim/director/wallkick.gd; Game Design's rulings-2026-10-22.md 2b and 5c; fight-feel.md section 3), on a face that holds (World's wall slam). A dodge tap in the last beforeTicks live ticks before he meets it arms the kick; at the contact, if he meets it at minIntoWall units a second or more into it (below that is Combat's plant, not built), the kick replaces the slam's stagger: he takes damageMul of the slam, with no hold, rebound or stagger, and the rival's first move after a wall slam (brawl.firstMove) is void. He kicks off toward his stick at keep of his arrival speed (neutral or into the face: straight off it; the AI: at the rival), a push of pushTicks live ticks in which his presses wait, then he has control again in free flight at the push's speed. A push toward the rival (within towardDot of the way to him) makes his first blow within rushBlowTicks of its start a rush blow, as the recoil flip's counter-rush is (recoilFlip.counterRush's speed, no crouch, no return, no first-move lock); into open air, plain free flight. The AI kicks on its level's wallKick share (ai.json), never sooner than its reaction time after the send, and presses the rush blow on its brawl.recoil.counter share. enabled false: nothing runs and no cue is sent.",
+    "enabled": false,
+    "beforeTicks": 4,
+    "minIntoWall": 1500,
+    "keep": 0.6,
+    "damageMul": 0.5,
+    "pushTicks": 8,
+    "rushBlowTicks": 20,
+    "towardDot": 0.5
+  },
+  "chase": {
+    "_note": "The chase of a launch is the zip (sim/director/chase.gd; Game Design's rulings-2026-10-22.md 7c; brawl-second-pass.md section 16). A player presses X or Y with LT held while his own launch flies; the AI chases at a send of its own on its level's chaseShare (ai.json; times skyMul when the send goes up into open sky), no sooner than its reaction time. Either pays the zip's ki (the strike's or the heavy's); without it there is no chase. The chase is a rush at the body re-aimed each live tick at speedMul times his speed, never under minSpeed u/s. Within catchBh of him while he flies the zip's blow lands and sends him on (the launch planner from where he is, at sendForce, the chaser's stick its tilt); when his landing comes first it arrives at his landing, for the first move; at most maxTicks. enabled false: nothing runs.",
+    "enabled": false,
+    "speedMul": 1.25,
+    "minSpeed": 1900,
+    "catchBh": 1.5,
+    "sendForce": 1600,
+    "skyMul": 1.5,
+    "maxTicks": 120
+  },
   "grapple": {
     "_note": "The grapple's director side, slice G1 (sim/director/grapple.gd; Game Design's docs/design/grapple.md; docs/director/grapple-director.md). enabled: false, A in a brawl is as before (an empty press). catch: tell, the ticks from A's press in a brawl to its landing (a blow that lands on him in them stops it); tech, the caught fighter's A within this many ticks of the landing breaks it; whiffOpen, a catch out of reach leaves him open this long. clinch: max ticks from the tie-up; a pulse every `pulse` ticks; an A inside `window` of one claims it, sharp inside `sharp`; the grip runs from -grip to grip; leadGuard, the catcher's lead on a rival who guards, winds or charges; partBh, both part this far past striking distance at the time and the tech; pushBh and pushFirstMove, the push-off's parting and the pusher's first move; aiOffsets, the AI's pummels off the pulse (never sharp). throw: acrossBh, a throw across is a knock-back this long; upBh and upOpen, a throw up lifts him this far and he is open this long; bury, a throw down to the ground buries him this long (both openings). lockout: the ticks a grab is refused after each attempt, and for both after a clinch ends with nobody thrown; noRegrab: a thrown fighter can't be grabbed for this long. G2: when both pummel one pulse the one nearer it by the tick takes the step; clinch.timeFirstMove, the grip's leader's first move at the time (the brawl lets go; at even it goes on); throw.ai, the AI's throw weights: down and up (halved while it lacks the launcher's ki), across scaled by 1 + (-care) x careW x the people within popR body heights of where he would land (over the planet reference, WorldStructures.popNearRef). throw.worth: a throw lands worth this many brawl lights (a heavy), before what it hands the brawl (2026-10-18). Later slices add Game Design's vicious, damage, wear, lead and pin, brace, braceRest and carry.",
     "enabled": false,
     "catch": {"tell": 10, "tech": 8, "whiffOpen": 20},
-    "clinch": {"max": 90, "pulse": 20, "window": 4, "sharp": 2, "grip": 2, "leadGuard": 1, "partBh": 1.5, "pushBh": 3, "pushFirstMove": 20, "timeFirstMove": 20, "aiOffsets": [-4, -3, 3, 4]},
+    "clinch": {"max": 60, "timeThrows": true, "pulse": 20, "window": 4, "sharp": 2, "grip": 2, "leadGuard": 1, "partBh": 1.5, "pushBh": 3, "pushFirstMove": 20, "timeFirstMove": 20, "aiOffsets": [-4, -3, 3, 4]},
     "throw": {"acrossBh": 8, "upBh": 4, "upOpen": 16, "bury": 20, "worth": 6, "ai": {"down": 1.0, "up": 0.7, "across": 0.7, "careW": 1.5, "popR": 3}},
     "lockout": 90,
     "noRegrab": 120

@@ -899,6 +899,7 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 			args["safety"] = safety
 			_ls(f, LA_SAFE, safety)
 			_ls(f, LA_LHIT, 0)
+			_ls(f, LA_LHIT_AT, 0)
 			args["power"] = _power(S, f, o, safety)   # string x state x timing; wounds at its landing, freshness at its send
 			if safety != 1:
 				o2["weighed"] = true   # the AI cannot react to a launcher in time: it answers only by a guess made at the landing before it (_laAnswerPlan)
@@ -1253,13 +1254,14 @@ static func contact(S: SimState, ex, b) -> void:
 	var dmg: float = float(a.dmg)
 	var laStop: bool = false   # launch anywhere: a second light into an answerable launcher's wind-up stops it (2026-10-18, 1a)
 	if oWinding and oKind == BIG and (_g(o, FLAV) == 0 or (_g(o, FLAV) == 2 and anywhere())) and not special:   # launch anywhere: the launcher is armoured against lights too
-		if not wound and _g(o, FLAV) == 2 and _lg(o, LA_SAFE) == 3 and _lg(o, LA_LHIT) >= 1:
-			laStop = true   # its armour has taken its one light
+		if not wound and _g(o, FLAV) == 2 and _lg(o, LA_SAFE) == 3 and _lg(o, LA_LHIT) >= 1 and _flurried(S, o):
+			laStop = true   # its armour has taken its one light, and this second one lands close behind it (5a)
 		elif not wound:
 			armour = true
 			dmg *= float(c.heavy.armour.lightMul)
 			if _g(o, FLAV) == 2:
 				_ls(o, LA_LHIT, _lg(o, LA_LHIT) + 1)
+				_ls(o, LA_LHIT_AT, _now(S))   # the newest light it took: the next must land within armourLightTicks of it
 		elif kind == MEDIUM and now - _g(o, HOLD_AT) >= int(c.heavy.armour.mediumUntilTicks):
 			armour = true
 	if kind == MEDIUM and energy == "" and not special and (ex.sD if o == ex.D else ex.sA) == 1.0:
@@ -1387,6 +1389,10 @@ static func contact(S: SimState, ex, b) -> void:
 	if o.stunTicks <= 0 or bool(c.flurry.staggeredAddsRun):
 		_s(f, RUN, _g(f, RUN) + (int(c.burst.runHalves) * RUN_U / 2 if bool(a.get("burst", false)) else (int(c.energy.reach.bolt.runHalves) * RUN_U / 2 if bolt else pts)))
 	_s(o, RUN, maxi(0, _g(o, RUN) - pts * int(c.flurry.replyTakes)))
+	if anywhere():
+		var chNow: int = _now(S)
+		_ls(f, LA_CH_N, (_lg(f, LA_CH_N) + 1) if (_lg(f, LA_CH_AT) > 0 and chNow - _lg(f, LA_CH_AT) <= int(la().get("chainGapTicks", 24))) else 1)
+		_ls(f, LA_CH_AT, chNow)   # 2a: his landed blows in one chain of links
 	if kind == BIG:
 		_bigLanded(S, ex, f, o, a)
 		return
@@ -1679,7 +1685,7 @@ static func _stagger(S: SimState, ex, f, o, ticks: int, text: String, opening: b
 
 # ---------------------------------------------------------------- launch anywhere (the thirteenth round, behind its switch)
 
-## Its integers sit after the grapple's (DirGrapple.END), found at run time and sized only when written: with
+## Its integers sit after the press wait's (_laBase), found at run time and sized only when written: with
 ## brawl.launcher.anywhere.enabled off nothing is written, so play and the hash are window 1's.
 const LA_LINK: int = 0    # S.tick his last blow landed clean: B within anywhere.link of it is the launcher
 const LA_HITK: int = 1    # the kind of the last blow that landed clean on him, plus 1 (a reel from a medium or a heavy is hard to answer)
@@ -1690,7 +1696,10 @@ const LA_FP: int = 5      # his last blow's family and path for Combat's enders:
 const LA_FRESH: int = 6   # the kinds of send marked on him (up, across, down, behind, building), four live ticks each; kept across brawls
 const LA_SAFE: int = 26   # the launcher on his line: its safety (1 sure, 2 hard, 3 answerable)
 const LA_LHIT: int = 27   # ... and the lights its armour has taken (an answerable one takes one)
-const LA_N: int = 28
+const LA_LHIT_AT: int = 28   # ... and the live tick the newest of them landed (5a: a second must land within anywhere.armourLightTicks)
+const LA_CH_N: int = 29     # his blows landed in one chain of links (2a: each within anywhere.chainGapTicks of his last)
+const LA_CH_AT: int = 30    # ... and the live tick his last landed
+const LA_N: int = 31
 
 
 static func la() -> Dictionary:
@@ -1702,16 +1711,29 @@ static func anywhere() -> bool:
 	return on() and bool(la().get("enabled", false))
 
 
+## Where launch anywhere's integers start: after the mash run's and the press wait's, which a player writes with every
+## switch off, so a slot added here never moves his.
+static func _laBase() -> int:
+	return DirPress._base() + DirPress.PR_N
+
+
 static func _lg(f, k: int) -> int:
-	var i: int = DirGrapple.END + k
+	var i: int = _laBase() + k
 	return f.act.dirI[i] if i < f.act.dirI.size() else 0
 
 
 static func _ls(f, k: int, v: int) -> void:
 	DirGrapple._size(f)
-	if f.act.dirI.size() < DirGrapple.END + LA_N:
-		f.act.dirI.resize(DirGrapple.END + LA_N)
-	f.act.dirI[DirGrapple.END + k] = v
+	if f.act.dirI.size() < _laBase() + LA_N:
+		f.act.dirI.resize(_laBase() + LA_N)
+	f.act.dirI[_laBase() + k] = v
+
+
+## Game Design's 5a (rulings-2026-10-19.md): only a real flurry stops an answerable launcher. True when a light landing now
+## comes within anywhere.armourLightTicks live ticks of the last one its armour took (0 or missing: any second light).
+static func _flurried(S: SimState, o) -> bool:
+	var w: int = int(la().get("armourLightTicks", 0))
+	return w <= 0 or _now(S) - _lg(o, LA_LHIT_AT) <= w
 
 
 ## True when a B of f's pressed at p is in his string (docs/design/launch-anywhere.md section 2): within anywhere.link
@@ -1740,6 +1762,9 @@ static func _safety(S: SimState, f, o) -> int:
 	var k: int = _lg(o, LA_HITK) - 1
 	if _now(S) < _g(o, REEL_AT) and (k == MEDIUM or k == BIG):
 		return 2
+	var hc: int = int(la().get("hardFromChain", 0))
+	if hc > 0 and _lg(f, LA_CH_N) >= hc and _now(S) - _lg(f, LA_CH_AT) <= int(la().get("chainGapTicks", 24)):
+		return 2   # Game Design's 2a (rulings-2026-10-23): his string of landed blows makes the launcher hard to answer
 	return 3
 
 
@@ -2439,8 +2464,8 @@ static func _reset(ex) -> void:
 	for f in [ex.A, ex.D]:
 		f.act.dirI[FLASH_AT] = flash
 		for k in range(LA_LINK, LA_FRESH):
-			if DirGrapple.END + k < f.act.dirI.size():
-				f.act.dirI[DirGrapple.END + k] = 0   # (written only with launch anywhere on)
+			if _laBase() + k < f.act.dirI.size():
+				f.act.dirI[_laBase() + k] = 0   # (written only with launch anywhere on)
 
 
 ## The brawl's movement, once a live tick (brawl-second-pass.md section 1). Each stick goes through Controls' ramp

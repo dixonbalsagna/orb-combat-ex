@@ -59,6 +59,8 @@ static func _request(S: SimState, A, kind: String) -> void:
 		return   # a brawl is on and he is in it: the press is a blow on his own line, never a request
 	if not DirBrawl.holding:
 		DirBrawl.pressedOut(S, A, kind)   # an X that stays down is a hold; any other press ends one
+	if DirChase.takes(S, A, kind):
+		return   # 7c: LT with X or Y while his own launch flies: the chase, a zip at the body
 	if DirZip.takes(S, A, kind):
 		return   # a zip: its start with LT held in the mid band, a zipper's own press, or his rival's answer where he stands
 	if DirBrawl.moveLocked(S, A) and (kind != "sig" or big) and A.act.mode != 1 and DirBands.band(A, SimRoster.opp(S, A)) != DirBands.CLOSE:
@@ -236,6 +238,8 @@ static func _start(S: SimState, A, kind: String) -> int:
 		return WAIT
 	if DirRecoil.flipping(S, A):
 		return WAIT   # in the air of his recoil flip: the press waits for his landing
+	if DirWallKick.pushing(S, A):
+		return WAIT   # in his wall kick's push: the press waits for its end (5c)
 	if D.state == "launched" or D.state == "locked" or DirZip.untouchable(D) or DirZip.leaving(S, D):
 		return WAIT   # (no strike reaches a zipper on his way out, or about to leave)
 	if kind == "sig" and A.ki < 45.0 and not SimFighter.sigFree(A):   # the last stand's signature is free
@@ -604,6 +608,7 @@ static func endEx(S: SimState, ex) -> void:
 	S.dirS.ex = null
 	S.dirS.cool = DirBrawl.coolAfter(ex) if DirBrawl.isBrawl(ex) else cooldownAfter(ex)   # no pause after a brawl, except after a launch
 	DirPress.onEnd(S, ex)   # 7a: the cooldown holds a player at most a beat (the AI keeps all of it)
+	DirCalm.onSetPieceEnd(S, ex)   # (rulings-2026-10-23 3: a beam struggle's or a clash exchange's end is a calm moment)
 	DirBeamPlay.onEnd(S, ex)   # no pause after a walk through a beam
 	DirInterrupt.onEnd(S, ex)   # step 3: a fully blocked string leaves its attacker behind
 	DirBury.onEnd(S, ex)   # a defender taken in his crater is out of it, with his safety
@@ -626,6 +631,7 @@ static func cooldownAfter(ex) -> float:
 static func dirUpdate(S: SimState, dt: float) -> void:
 	_update(S, dt)
 	DirWindows.afterTick(S)   # 4c: a freeze that starts now leaves every open window its live ticks (hit-stop by weight only)
+	DirCalm.tick(S)   # 7b: the calm turn notes when each fighter came to rest
 
 
 static func _update(S: SimState, dt: float) -> void:
@@ -649,6 +655,8 @@ static func _update(S: SimState, dt: float) -> void:
 	DirBury.tick(S)   # a burial starts and ends
 	DirLaunch.tick(S)   # an upright slide that ends early against an obstacle: the bump
 	DirRecoil.tick(S)   # recoil flips: the window out of a knock-back, the flip, the landing and the counter-rush
+	DirWallKick.tick(S)   # the wall kick: a dodge tap just before a sent body meets a wall that holds arms it
+	DirChase.tick(S)   # 7c: each chase is re-aimed, catches, or arrives at the landing
 	_setupLapse(S)   # the part of a set-up lapses with the brink
 	_queues(S)   # step 2: upgrades, expiry, and the next queued request once the director can take it
 	var ex = S.dirS.ex

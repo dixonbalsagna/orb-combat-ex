@@ -2472,6 +2472,21 @@
                   "minimum": 0,
                   "description": "A B within this many ticks of his last B is the heavy flurry, never the launcher."
                 },
+                "armourLightTicks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A second light stops an answerable launcher only if it lands within this many live ticks of the first; 0: any second light."
+                },
+                "hardFromChain": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "A launcher thrown after this many of his blows landed in one chain of links (each within chainGapTicks of his last) is hard to answer, whatever its last blow; 0: off."
+                },
+                "chainGapTicks": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "A landed blow within this many live ticks of his last landed blow is in the same chain."
+                },
                 "power": {
                   "type": "object",
                   "description": "The launcher's power: string x state x timing x wounds (x freshness at the send).",
@@ -3493,6 +3508,10 @@
               "type": "integer",
               "minimum": 0,
               "description": "The grip's leader's first move at the time, in ticks."
+            },
+            "timeThrows": {
+              "type": "boolean",
+              "description": "At the time, a fighter ahead on the grip throws (by his last claim's stick); only an even grip parts. False: the leader takes the first move and both part."
             }
           },
           "required": [
@@ -3928,6 +3947,121 @@
       },
       "required": [
         "flowGapTicks"
+      ],
+      "additionalProperties": false
+    },
+    "wallKick": {
+      "type": "object",
+      "description": "The wall kick: a dodge tap just before a sent body meets a wall that holds.",
+      "properties": {
+        "_note": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "False: nothing runs and no cue is sent."
+        },
+        "beforeTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Live ticks before the contact in which a dodge tap arms the kick."
+        },
+        "minIntoWall": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The least speed into the face (units a second) a kick takes; under it, Combat's plant."
+        },
+        "keep": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "His kick-off speed, as a share of his arrival speed."
+        },
+        "damageMul": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The share of the slam's damage he takes."
+        },
+        "pushTicks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "His push off the face, in live ticks: his presses wait, then he has control again."
+        },
+        "rushBlowTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "A push toward the rival: his first blow within this many live ticks of its start is a rush blow."
+        },
+        "towardDot": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1,
+          "description": "A push counts as toward the rival when its direction's dot with the way to him is at least this."
+        }
+      },
+      "required": [
+        "enabled",
+        "beforeTicks",
+        "minIntoWall",
+        "keep",
+        "damageMul",
+        "pushTicks",
+        "rushBlowTicks",
+        "towardDot"
+      ],
+      "additionalProperties": false
+    },
+    "chase": {
+      "type": "object",
+      "description": "The chase of a launch is the zip (Game Design's 7c).",
+      "properties": {
+        "_note": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "False: nothing runs."
+        },
+        "speedMul": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The chase flies at this times the sent body's speed ..."
+        },
+        "minSpeed": {
+          "type": "number",
+          "minimum": 0,
+          "description": "... and never under this (u/s)."
+        },
+        "catchBh": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Within this many body heights of him while he flies, the chase catches him."
+        },
+        "sendForce": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The force the catch's blow sends him on with (the launch planner's)."
+        },
+        "skyMul": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The AI's chaseShare times this when the send goes up into open sky."
+        },
+        "maxTicks": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The longest chase, in live ticks."
+        }
+      },
+      "required": [
+        "enabled",
+        "speedMul",
+        "minSpeed",
+        "catchBh",
+        "sendForce",
+        "skyMul",
+        "maxTicks"
       ],
       "additionalProperties": false
     }

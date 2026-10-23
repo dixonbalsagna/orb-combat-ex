@@ -333,6 +333,9 @@ static func _clinch(S: SimState, ex) -> void:
 		var g: int = _g(ex.A, GRIP)
 		if g == 0:
 			_part(S, ex, ex.A, ex.D, "time", float(c.partBh))   # even: nobody has the first move, and the brawl goes on
+		elif bool(c.get("timeThrows", false)):
+			var ld = ex.A if g > 0 else ex.D
+			_throw(S, ex, ld, ex.D if g > 0 else ex.A, _g(ld, CLAIM_Q), "throw")   # Game Design's 1c (rulings-2026-10-22): the leader throws at the time
 		else:
 			_timeLead(S, ex, ex.A if g > 0 else ex.D, ex.D if g > 0 else ex.A)
 

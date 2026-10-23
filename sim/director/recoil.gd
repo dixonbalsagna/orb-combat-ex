@@ -42,7 +42,7 @@ static func on() -> bool:
 
 
 static func _base() -> int:
-	return DirGrapple.END + DirBrawl.LA_N
+	return DirBrawl._laBase() + DirBrawl.LA_N
 
 
 static func _g(f, k: int) -> int:

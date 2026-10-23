@@ -140,7 +140,9 @@ static func tick(S: SimState) -> void:
 				_end(S, A, D, "landing")   # he came down before the catch: the chaser arrives at his landing, for the first move
 			continue
 		var d: float = DirBands.dist(A, D)
-		if d <= float(c.get("catchBh", 1.5)) * DirInterrupt.BH:
+		# within catchBh of him, plus the gap he opens in one live tick: the rush steps to where he is before he moves,
+		# so a chaser that has caught him reads one tick behind (at a fast send, more than catchBh)
+		if d <= float(c.get("catchBh", 1.5)) * DirInterrupt.BH + SimDetMath.hypot(D.vx, D.vy) * SimConst.DT:
 			_catch(S, A, D)
 			continue
 		var v: float = _speed(D)
@@ -174,9 +176,20 @@ static func _catch(S: SimState, A, D) -> void:
 		_end(S, A, D, "catch")
 		return
 	var force: float = float(c.get("sendForce", 1600.0))
-	var plan: Dictionary = DirLaunch.chooseLaunch(S, A, D, force, false, "", _tilt(A), true)
-	if not plan.is_empty():
-		DirLaunch.doLaunch(S, A, D, plan, force)
+	var r: Dictionary = DirLaunch.chooseLaunch(S, A, D, force, false, "", _tilt(A), true)
+	var all: PackedStringArray = []
+	for k in r.all:
+		all.append(k.name + " " + SimMathx.jstr(SimMathx.jround(k.s)))
+	SimFx.launchPlan(S, A, D, "|".join(all), r.best.name)
+	if r.best.name != "KNOCK BACK":   # (never with noKnock; a send as melee's, with no launcher's power carried)
+		var lkind: int = DirBrawl.kindOfSend(r.best)
+		DirCamIntent.launch(S, A, D, r.best)
+		if S.brakeOn and D.brk != null:
+			D.brk.marks = DirBrawl.freshMarks(S, D, lkind)
+		DirLaunch.doLaunch(S, A, D, r.best, force)
+		DirCamIntent.launched(S, D)
+		DirCalm.atSend(S, A, D, r.best)
+		DirBrawl.markKind(S, D, lkind)
 	_end(S, A, D, "catch")
 
 

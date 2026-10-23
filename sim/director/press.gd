@@ -7,7 +7,7 @@ class_name DirPress
 ## raised by anything else (a lost lock, a live form step) holds a player as it holds the AI. Positional rules (the sent
 ## fighter's first move) are not this wait and stay.
 ## Only a player's fighter (f.ai null) is written: the AI's records never change, so the AI v AI golden doesn't move.
-## State: one f.act.dirI slot after the mash run's (sized only when written).
+## State: one f.act.dirI slot after the mash run's (sized only when written); launch anywhere's follow it.
 
 const PR_FREE: int = 0   # S.tick from which the cooldown no longer holds his request, plus 1; 0 none (it holds him as the AI)
 const PR_N: int = 1

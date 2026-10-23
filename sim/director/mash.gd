@@ -5,7 +5,7 @@ class_name DirMash
 ## one. Its first blow keeps light_mash (2 ticks); each later one names light_flow, which Simulation's table holds for no
 ## stop and the budget's floor never raises. Every other blow keeps its table stop.
 ## Only while hit-stop by weight is on (S.hitstopOn): off, nothing is written and the slot is never sized, so the golden
-## doesn't move. State: one f.act.dirI slot after the recoil flips' (the wall kick's follow it).
+## doesn't move. State: one f.act.dirI slot, the first after the grapple's (the press wait's follows it).
 
 const MS_AT: int = 0   # the live tick of his last mashed or burst blow, plus 1; 0 none
 const MS_N: int = 1
@@ -16,7 +16,7 @@ static func cfg() -> Dictionary:
 
 
 static func _base() -> int:
-	return DirRecoil._base() + DirRecoil.RC_N
+	return DirGrapple.END   # the chain's front: this block and the press wait's are written with every switch off, so no later block's slots move them
 
 
 static func _g(f, k: int) -> int:
