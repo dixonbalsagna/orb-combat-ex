@@ -192,6 +192,7 @@ var _wp_t: Array = [-1, -1]               # a catch-up whip's tick per pane (-1 
 var _wp_x0: Array = [0.0, 0.0]
 var _wp_y0: Array = [0.0, 0.0]
 var whips: int = 0
+var _plead: Array = [0.0, 0.0]            # each pane's lead, px along x (CamParams.PANE_LEAD_*)
 var _turn_p0: float = 0.0                 # the turn's angle at the cut, eased back to level ...
 var _turn_pa: float = 0.0                 # ... and the angle it last set (another shot's angle is left alone)
 var arrival_hold: bool = true             # the launch curve's arrival: widen to the landing, hold, let go (docs/camera/director.md step 4b)
@@ -372,6 +373,7 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_ci_nocut = []
 	_ci_story_end = -1
 	_ci_land = [null, null]
+	_plead = [0.0, 0.0]
 	_wp_t = [-1, -1]
 	_turn_t = -1.0
 	pace = "relax"
@@ -476,6 +478,7 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 	_update_layout()
 	_update_pushes()
 	_update_merged_lead(S)
+	_update_pane_lead(S)
 	_intent_tick(S)
 	_pace_tick(S)
 	_update_cameras(S)
@@ -3517,7 +3520,7 @@ func _update_cameras(S: SimState) -> void:
 
 func _outputs(S: SimState) -> void:
 	for i in range(2):
-		_anchors[i] = _anchor(S, i)
+		_anchors[i] = _anchor(S, i) + Vector2(float(_plead[i]), 0.0)
 		_owns[i] = _cam_from_focus(i, _zo[i], _anchors[i], float(S.fighters[i].z) - float(_fz[i]))
 	var shared: Vector3 = Vector3(_mx, _my, _mz)
 	var fz_sh: float = _fzm
@@ -4091,14 +4094,47 @@ func _make_frame(S: SimState) -> SplitFrame:
 ## The one view's lead (docs/camera/feel.md step 4): eased once a tick toward the pair's shared speed times MERGED_LEAD_T, capped at
 ## MERGED_LEAD_X of the width at the merged zoom, faded in with the speed; none when they move apart, in a launch, a zip, the fold or
 ## the struggle, or in reduced motion. _merged_target applies it, kept inside the frame.
+## The pane's lead (CamParams.PANE_LEAD_*): in the full split, room ahead of the pane's own free fighter's travel, eased; kept
+## off the divider. Off in a shot, a chase, an expansion, a layout change and reduced motion.
+func _update_pane_lead(S: SimState) -> void:
+	var n: Vector2 = Vector2(cos(theta), sin(theta))
+	for i in range(2):
+		var tgt: float = 0.0
+		var f = S.fighters[i]
+		if merged_lead and not reduced_motion and sep >= 0.999 and e < 0.001 and solo_kind == "" and chase_slot != i and f.state != "launched" and _lg_slot < 0:
+			var w: float = smoothstep(CamParams.PANE_LEAD_V0, CamParams.PANE_LEAD_V1, absf(f.vx))
+			var dx: float = -clampf(f.vx * CamParams.PANE_LEAD_T * maxf(float(_zo[i]), 0.001), -CamParams.PANE_LEAD_X * vw, CamParams.PANE_LEAD_X * vw) * w
+			# kept off the divider: his distance from it along n stays at least PANE_LEAD_KEEP of the rest anchor's
+			var s: float = -1.0 if i == 0 else 1.0
+			var rest_d: float = (_anchor_rest(i) - Vector2(vw * 0.5, vh * 0.5)).dot(n) * s
+			var toward: float = s * dx * n.x
+			if rest_d > 0.0 and toward < -(1.0 - CamParams.PANE_LEAD_KEEP) * rest_d:
+				dx *= (1.0 - CamParams.PANE_LEAD_KEEP) * rest_d / -toward
+			tgt = dx
+		_plead[i] = float(_plead[i]) + (tgt - float(_plead[i])) * (1.0 - exp(-DT / CamParams.PANE_LEAD_TAU))
+		if absf(float(_plead[i])) < 0.05 and tgt == 0.0:
+			_plead[i] = 0.0
+
+
 func _update_merged_lead(S: SimState) -> void:
 	var tgt: float = 0.0
 	if merged_lead and not reduced_motion and S.fighters.size() >= 2:
 		var A = S.fighters[0]
 		var B = S.fighters[1]
 		var same: bool = signf(A.vx) == signf(B.vx) and A.state != "launched" and B.state != "launched"
+		var vm: float = 0.0
+		var lead_on: bool = false
 		if same:
-			var vm: float = (A.vx + B.vx) * 0.5
+			vm = (A.vx + B.vx) * 0.5
+			lead_on = true
+		elif A.state != "launched" and B.state != "launched":
+			# Only one of them moving away from the other (a dash out, an escape): lead his travel.
+			var fa = A if absf(A.vx) >= absf(B.vx) else B
+			var fo = B if fa == A else A
+			if signf(fa.vx) == signf(SimWrap.sdx(fo.x, fa.x)) and absf(fa.vx) > 0.0:
+				vm = fa.vx * CamParams.MERGED_LEAD_FAST
+				lead_on = true
+		if lead_on:
 			var w: float = smoothstep(CamParams.MERGED_LEAD_V0, CamParams.MERGED_LEAD_V1, absf(vm))
 			var cap: float = CamParams.MERGED_LEAD_X * vw / maxf(_mz, 0.001)
 			tgt = clampf(vm * CamParams.MERGED_LEAD_T, -cap, cap) * w

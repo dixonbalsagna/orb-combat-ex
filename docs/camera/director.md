@@ -363,3 +363,23 @@ It is the compositor's own test (`weight1`), widened by the feather, half the li
 
 Rendering culls or coarsens the terrain chunks that fall wholly outside it. A split_sweep check on every display frame of every row confirms that no sampled point a pane shows falls outside its plane. Gates: split sweep, seam sweep, pane check, determinism plain and --intro all pass.
 
+**The speed lead (2026-10-23; parked: docs/camera/pending/director-11-speed-lead.patch).** The framing leads the faster fighter's travel. Every part is eased and none of it cuts (section 11).
+- **One view.** The lead (`merged_lead`, step 4) worked only when the pair moved the same way. Now, when only one fighter is moving away from the other (a dash out, an escape), the focus leads his travel by half his speed (the pair's midpoint moves at half his speed) times 0.3 s (`MERGED_LEAD_FAST`). The same cap applies, and both fighters stay inside the middle 80% of the width.
+- **Split panes.** They had no lead room for a free fighter. Each pane now leaves room ahead of its own free fighter: his speed times 0.3 s, at most 0.08 of the width, faded in between 600 and 2,500 u/s, eased over 0.35 s (`PANE_LEAD_*`, `_update_pane_lead`). It is never closer to the divider than 0.6 of the rest anchor's distance from it, and it is off in a shot, a chase, an expansion, a layout change and reduced motion.
+
+Measured (`clip_digest.gd`, reduced, 3,600 ticks), the room ahead of a fighter faster than 1,200 u/s as a share of the width, main then this:
+
+| Scene | Split pane | One view, the faster moving away |
+| :--- | :--- | :--- |
+| ai 4 | 0.769 to 0.785 | (none) |
+| ai 7 | 0.780 to 0.833 | 0.230 to 0.261 |
+| ai 39 | 0.780 to 0.793 | (none) |
+| rushcity | 0.640 to 0.670 | 0.328 to 0.349 |
+| signaturecity | 0.774 to 0.810 | 0.457 to 0.469 |
+
+- Cuts, layout changes and the time outside the picture are unchanged. Zoom reversals are the same, except rushcity's (39 to 41).
+- The effect is modest. The split's anchors already sit a fighter on the outer side, and in one view keeping both fighters inside 80% limits it.
+- To watch: in the split, the left pane's fighter may sit about 30 px nearer the screen's left edge, where the key help is drawn.
+
+Gates on 97ec9985: the 18 headless render checks pass (after, city, cue --profile=spaced, depth, flash, flash_reg, flight, ground, hud_words, lane, open, pane, patch, shape, sky, stage, seam sweep at 1280x720, determinism; outline and cull need a window and were not run), as do split_sweep and determinism --intro. Clips: homework/camera/14-speed-lead/ (a rush in the city, main against this, and d3f1ca0e against this).
+

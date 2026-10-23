@@ -256,6 +256,18 @@ const MERGED_LEAD_V0: float = 300.0
 const MERGED_LEAD_V1: float = 1200.0
 const MERGED_LEAD_TAU: float = 0.35
 const MERGED_LEAD_KEEP: float = 0.80
+# The speed lead (2026-10-23): the framing leads the faster fighter's travel. In one view, when only one of them is moving away
+# from the other, the focus leads by MERGED_LEAD_FAST of his speed times MERGED_LEAD_T (the pair's midpoint moves at half his speed).
+# In the split, each pane leaves room ahead of its own free fighter: his speed times PANE_LEAD_T, at most PANE_LEAD_X of the
+# width, faded in between PANE_LEAD_V0 and PANE_LEAD_V1, eased over PANE_LEAD_TAU, never closer to the divider than
+# PANE_LEAD_KEEP of his rest distance from it.
+const MERGED_LEAD_FAST: float = 0.5
+const PANE_LEAD_T: float = 0.3
+const PANE_LEAD_X: float = 0.08
+const PANE_LEAD_V0: float = 600.0
+const PANE_LEAD_V1: float = 2500.0
+const PANE_LEAD_TAU: float = 0.35
+const PANE_LEAD_KEEP: float = 0.6
 const BLOW_DOWN: float = 0.25
 # The launch curve's arrival (docs/camera/director.md step 4b, Simulation's `flight` cue): from `arrive` (the contact about 10 ticks
 # ahead) the chased body's pane widens by ARR_WIDE to take in where he lands, holds it ARR_HOLD past the contact, and lets go over ARR_OUT.
