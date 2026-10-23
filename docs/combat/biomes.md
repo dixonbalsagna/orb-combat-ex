@@ -1,6 +1,6 @@
 # Biomes that change the fight: signatures, launches and the ground
 
-Owner: Combat and Choreography. Date: 2026-10-23. Paper and three parked data files (`pending/biomes/`); nothing is built.
+Owner: Combat and Choreography. Date: 2026-10-23. Paper and three parked data files (`pending/biomes/`); nothing is built. **Ruled by Game Design the same day** (`docs/design/rulings-2026-10-23b.md`), and folded in: section 1b lists what each ruling changed.
 
 **Orb** (2026-10-23): "pour resources into improving our planet generation, biomes, fighter animations". **The goal here:** the new biomes change how a fight plays out, not only how it looks. This covers pillar 7 (signatures adapt) and choreography that reads the ground.
 
@@ -20,20 +20,32 @@ Owner: Combat and Choreography. Date: 2026-10-23. Paper and three parked data fi
    - **Two things the ground decides already hold control today:**
      - a carried body's journey (a launch or a long skid): control returns when it ends, so a lower brake returns it later;
      - an embed: World's 60-tick down state when a slam digs 1.75 bh deep.
-   - **Every proposal that moves either is marked and routed to Game Design (section 6):**
-     - ice's brake makes journeys longer;
-     - MARSH SWALLOW and the snow and mud craters make embeds more frequent;
-     - the ice, sand and rock craters make them less frequent;
-     - mud makes movement wait 6 ticks.
+   - **Game Design ruled both so they keep to the rule (section 1b):**
+     - on ice, control comes back where the same send would have stopped on rock, and the rest of the slide is a skate;
+     - an embed keeps today's rate on every surface, with MARSH SWALLOW the one deliberate embed;
+     - mud's 6-tick wait on movement is accepted.
    - **A recoil exit's landing slide comes after control has returned:** momentum he can act out of. Nothing here makes a new tumble.
 2. **Nothing is offered where its feature is missing, and everything is behind switches.**
    - Both new blocks have `enabled`.
    - Both have `touchBuilt`, which gates their rows for today's five classes: the sand and rubble landing terms, the built classes' crater shapes and sand's sink.
    - With `touchBuilt` off, a world without the new biomes plays exactly as today even with the blocks on.
-3. **Today's rows are carried exactly.** The seven built variants keep their numbers, so moving to the new table is bit-identical.
+3. **Today's rows are carried exactly.** The seven built variants keep their groove numbers and looks. With `aftermathOn` and the personality term off, moving to the new table is bit-identical. Game Design ruled both on, so the table lands in two steps: first both off, then on.
 4. **Keys.**
    - Biomes are keyed by the names `WorldBiomes.biomeAt` returns. The eight new ones (jungle, savanna, tundra, taiga, wetland, coast, highland, volcanic) are provisional until World names its ids. A rename is a key change.
    - Surfaces are keyed by World's classes. Each new class says what it reads as until World builds it.
+
+## 1b. Game Design's rulings, folded in
+
+| # | Game Design ruled (2026-10-23b) | What changed in the park |
+| :--- | :--- | :--- |
+| 1 | The candidates' values accepted as a set. The stick still wins, freshness goes by kind, and QA's bands are as proposed | `launch.biome.json` gains `rules` (stick wins, freshness by kind, personality) and `qa`. The cross-check proves the largest total the biome terms can add (44) stays below `stickWins` (200) |
+| 2 | On ice, control returns where the same send would have stopped on rock (brake 0.8); the rest is a skate | `ground.json`: ice gains `controlAtBrake` 0.8, and its skid-stop gains `skate`. ICE SKID's text says so |
+| 3 | Embeds keep today's rate on every surface: the threshold scales with the depth factor. MARSH SWALLOW always embeds. QA's row is 0.2 to 1 embeds a minute | `ground.json` gains `embedThresholdScales` and `qa`; the embed factor is how deep he sits, not how often. MARSH SWALLOW gains `alwaysEmbeds` |
+| 4 | Mud's 6-tick wait accepted, only at the end of a skid in mud | The mud stop's note says so |
+| 5 | A fire line and a glowing ember strip hurt lightly, by fire's hazard rules, within the 15% hazard cap. Flying over costs nothing; cooled crust is plain ground | The savanna and volcanic aftermaths gain `hazard`, and the table's text says so |
+| 6 | The care term decides; the per-candidate bonuses are accepted as flavour. The signature's personality term goes on, inside every collateral budget | `byPersonality.enabled` is on |
+| 7 | All five twists stand. Water rule: a fighter in water surfaces set within 30 ticks, with no down state beyond, landed once he surfaces. The ice sheet's push-back is distance only | `sigvariants.json` gains `waterRule`; the water twists cite it; the ice sheet's GUARD line says he guards throughout |
+| 8 | Ocean against plains: HORIZON CLEAVE keeps its name and gains its own aftermath. The sea parts for 3 s, then a wave pushes anything at the surface 2 bh along the beam's line. A HIT over the sea drives him under | The ocean row carries it (section 2b), and my TIDE CLEAVE proposal is withdrawn as a carve. City against village waits on LANE SWEEP's name |
 
 ## 2. Signature variants by biome
 
@@ -44,19 +56,20 @@ The full rows, with every outcome's line, are in `pending/biomes/sigvariants.jso
 | **Ice sheet** (today read as mountains) | **ICEFIELD THAW** | 0.9 × 1.0 | none | **Glaze:** the meltwater refreezes, and the groove reads as ice for the match. A slick strip |
 | **Sea ice** (today read as plains) | **FLOE SPLIT** | 0.6 × 1.0 | none | **Split:** each floe on the path breaks in two, 1 bh apart. A lead of open water, a real gap |
 | **Jungle** | **VINE SHEAR** | 1.0 × 0.9 | felled inward across the cut | **Clearing:** the strip loses its canopy cover, and the trunks lie across it (props a ricochet can plant on) |
-| **Savanna** | **GRASSLAND BLAZE** | 0.8 × 1.2 | burned | **Fire line:** the grass burns outward, 1 column every 15 ticks for 4 s, up to 12 columns each side. It burns props |
+| **Savanna** | **GRASSLAND BLAZE** | 0.8 × 1.2 | burned | **Fire line:** the grass burns outward, 1 column every 15 ticks for 4 s, up to 12 columns each side. It burns props, and a fighter standing or sliding in it takes fire's light hazard wear |
 | **Tundra** | **FROST HEAVE** | 0.9 × 1.0 | none | **Heave:** the rim is thrown up as frozen plates twice the usual berm. A slide stops against them and a ricochet plants on them |
 | **Taiga** | **PINE BREAK** | 1.0 × 1.0 | snapped, crowns drop | **Snow dump:** snow off the trees refills 40% of the groove within 2 s. A shallower scar |
 | **Wetland** | **MIRE BOIL** | 1.1 × 0.9 | area | **Flood:** the groove fills to the water table at once. A water trench under the ocean rules |
 | **Coast** | **SHORE SCOUR** | 1.0 × 1.1 | area | **Flood from the sea:** where the floor is below sea level within 30 columns of open water |
 | **Highland** | **SCREE RUN** | 1.2 × 0.9 | area | **Scree:** on a slope steeper than 0.25, rubble runs downhill up to 10 columns. A strip that tumbles a slide |
-| **Volcanic** | **CRUST SEAR** | 1.3 × 0.8 | burned | **Ember:** the groove glows for 10 s, then reads as crust. It lights props and grass |
+| **Volcanic** | **CRUST SEAR** | 1.3 × 0.8 | burned | **Ember:** the groove glows for 10 s, then reads as crust. It lights props and grass, and a fighter on it while it glows takes fire's light hazard wear |
 
 **Where the leavings go.** An aftermath is laid only on the groove's columns in the variant's own biome. Where the beam carves on into the next biome, the groove there is plain.
 
-**The seven built rows stay as they are:** HORIZON CLEAVE, BOULEVARD RAZE (city and village), FIELD SCAR, FIRESTORM, GLASS TRENCH and RIDGE BORE.
-- The renames proposed earlier are carried as notes and stay unadopted: TIDE CLEAVE, LANE SWEEP, FURROW SCAR and CANOPY BURN.
-- LANE SWEEP's low graze along the lane (0.7 × 1.3) is the one that would make the village play differently from the city.
+**The seven built rows keep their grooves and looks:** HORIZON CLEAVE, BOULEVARD RAZE (city and village), FIELD SCAR, FIRESTORM, GLASS TRENCH and RIDGE BORE.
+- HORIZON CLEAVE also gains the ocean's own aftermath (section 2b).
+- The renames proposed earlier are carried as notes and stay unadopted: TIDE CLEAVE, FURROW SCAR and CANOPY BURN.
+- LANE SWEEP, the village's own row, is in `proposed` (section 2b).
 
 **Outcome flavour.** Every row has a line for each outcome: CLASH, GUARD, DODGE, HIT and ESCAPE.
 - **Most lines are presentation,** and they come mostly for free from the ground atoms (section 4):
@@ -70,31 +83,25 @@ The full rows, with every outcome's line, are in `pending/biomes/sigvariants.jso
   - **Tundra, GUARD:** the push-back stops against the heaved plates.
   - **Wetland, HIT:** he lands in the flooded trench.
   - **Coast, HIT:** the sea floods the cut behind him, and he lands in it where the floor is below sea level.
+  - **Ocean, HIT** (section 2b): he is driven under.
+- **The water rule** covers every twist that puts him in water: he surfaces set within 30 ticks, with no down state beyond that, and counts as landed once he surfaces.
 
 **Against pillar 7.** The table has 17 rows.
 - All ten new rows differ from each other and from the built ones in what they carve, what they do to trees and what they leave.
-- **Two pairs still play alike as built:**
-  - city and village, until LANE SWEEP is adopted;
-  - ocean and plains: both carve 1.0 × 1.0, and only the sea's own splash and seabed set the ocean apart.
+- **Ocean and plains** are settled by the ocean's ruled aftermath (section 2b).
+- **City and village** still play alike until LANE SWEEP is adopted.
+- **The personality term** of `signature-variants.md` §5.1 is on, as ruled: near people the carer narrows the bite and the villain widens it, inside every collateral budget.
 
-  Section 2b proposes a row for each.
-- **The personality term** of `signature-variants.md` §5.1 is in the file, switched off, for Game Design: near people the carer narrows the bite and the villain widens it.
+## 2b. The two pairs that played alike
 
-## 2b. Proposed: the two pairs that still play alike
+| Biome | Built | Now | What sets it apart |
+| :--- | :--- | :--- | :--- |
+| **Ocean** | HORIZON CLEAVE, carving as plains does | **HORIZON CLEAVE with the ocean's own aftermath** (ruled, in `variants`) | **The sea parts:** for 3 s the groove is an open trench walled by water. Then the sea rushes back as a wave that pushes anything at the surface (fighters and props) 2 bh along the beam's line. A HIT drives him under, and he surfaces set within 30 ticks. The groove and looks stay today's |
+| **Village** | BOULEVARD RAZE, the city's row exactly | **LANE SWEEP** (proposed, read only with `adoptProposed` on) | A low, wide graze along the lane (0.7 × 1.3), with a structure radius 1.4 times as wide at a bite of 0.7. A row of low houses is each partly flattened, not one gutted: the scar runs along the ground, where the city's runs up through towers |
 
-Two rows in the park's `proposed` block. Each is read in place of the built row only with `adoptProposed` on, so the built game is untouched until Legal screens the names, Game Design rules the numbers and Orb picks.
-
-| Biome | Built row | Proposed row | The groove | The structures | What it leaves |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Ocean** | HORIZON CLEAVE, 1.0 × 1.0, carving as plains does | **TIDE CLEAVE** | 1.4 × 0.7: a deep, narrow cut in the seabed | as today | **The sea parts:** for 1.5 s the strip along the cut is dry, walled by water. Then the walls fall back and anyone in it is under. The fall sends a surge 40 columns to the shore, wetting the low ground and knocking props over |
-| **Village** | BOULEVARD RAZE, the city's row exactly | **LANE SWEEP** | 0.7 × 1.3: low and wide along the lane | structure radius 1.4 times as wide, bite 0.7 | A row of low houses each partly flattened, not one gutted: the scar runs along the ground, where the city's runs up through towers |
-
-- **Ocean, HIT, is a rule:** when the walls fall he is under (the ocean rules) and comes up in the surge.
-- **Both names are Narrative's earlier proposals,** already on Legal's list: TIDE CLEAVE replaces "Horizon", a brand (RL-006), and LANE SWEEP is from `signature-variants.md` §5.3.
-- **Proven by the cross-check:** with the two rows adopted, all 17 rows carve differently (groove, structure radius and bite, trees and aftermath) and all 17 names end on different words.
-- **For Game Design:**
-  - the sweep's collateral, since villages hold 2 to 6 people a house against the city's towers, so it should still cost the hero;
-  - the parted sea's 90 ticks.
+- **TIDE CLEAVE** stays with Legal as a rename of HORIZON CLEAVE only ("Horizon" is a brand, RL-006). My proposed carve under that name (a deeper, narrower cut, the sea parted for 1.5 s, a surge to shore) is withdrawn in favour of Game Design's ruling.
+- **LANE SWEEP** waits on Legal and Orb (`lane-sweep-for-orb.md`). Its collateral is with Game Design: villages hold 2 to 6 people a house against the city's towers, so it should still cost the hero.
+- **Proven by the cross-check:** with LANE SWEEP adopted, all 17 rows carve differently (groove, structure radius and bite, trees and aftermath) and all 17 names end on different words.
 
 ## 3. The launch planner by biome
 
@@ -102,12 +109,13 @@ A block for `data/director/launch.json` (`pending/biomes/launch.biome.json`).
 - **The shared terms apply to every new candidate** as they do to SMASH ACROSS: noise, care at the landing, distance, new biome, water, the repeat penalties and launch anywhere's freshness.
 - **Each new candidate joins `SENDS`,** so the stick's aim and the launch enders reach it.
 - **The block rides `launch.json`,** which the replay's data hash already covers.
+- **Ruled (section 1b):** the stick still wins (the biome terms never outweigh `stickWins`, and a held stick's kind is never changed), and freshness goes by each candidate's kind.
 
 | Candidate | Offered when | Send | Score (first values) | What happens |
 | :--- | :--- | :--- | :--- | :--- |
 | **CLIFFSIDE** | A rise ahead steeper than 1.2 over at least 2 bh, out to 166 bh, found from the heights and not from a biome name | across | 18, +1 a bh of rise (cap 8); villain +2 | MOUNTAINSIDE for any biome: highland crags, volcanic cones, coast cliffs. He hits the face: the slide's wall stop, or an embed |
-| **ICE SKID** | Ice within 1 bh of him | across, low and flat, force 0.8 | 14; +6 when it ends in open water, +8 against a berg; hero +2 | **Ice to skid on:** a long slide for little force. Its length is World's ice brake. Ending in a lead puts him in the water. A skid is a journey, so a brake of 0.3 against soil's 1.3 returns control several times later: Game Design's |
-| **MARSH SWALLOW** | Mud under him, at most 12 bh up | down | 16; hero +6, villain −2 | **The marsh swallows the slam:** he embeds 1.8 times as deep, the crater closes again and little is destroyed, so the carer likes it. A deeper bowl embeds more often, and an embed is World's 60-tick down state: Game Design's |
+| **ICE SKID** | Ice within 1 bh of him | across, low and flat, force 0.8 | 14; +6 when it ends in open water, +8 against a berg; hero +2 | **Ice to skid on:** a long slide for little force. Its length is World's ice brake. Ending in a lead puts him in the water. **Ruled:** he has control again where the same send would have stopped on rock, and the rest is a skate he can act out of |
+| **MARSH SWALLOW** | Mud under him, at most 12 bh up | down | 16; hero +6, villain −2 | **The marsh swallows the slam:** it always embeds (the one deliberate embed, as ruled), he sits 1.8 times as deep, the crater closes again and little is destroyed, so the carer likes it |
 | **TREE LINE** | 2 to 6 trunks on the line within 60 bh | across, low | 10, +2 a trunk; hero +2 | **Trees to smash through:** each trunk snaps and slows him by 12%, the way BUILDING SMASH chains buildings |
 | **SKIM ASHORE** | He is over water, and the path skims 6 times or fewer and lands on dry ground within 160 bh | across, low | 14, and the water penalty is waived | Fights over the sea come back to land. That answers the old ocean-heavy launch mix |
 | **DOWNHILL** | The ground falls 4 bh or more within 40 bh ahead, on rubble, turf, snow, ash or shingle | across | 8, +0.8 a bh of drop (cap 12) | He tumbles down the slope |
@@ -130,7 +138,7 @@ The sand and rubble rows are today's classes, so they apply only with `touchBuil
 - **`downBonus`:** forest keeps today's +8. Jungle and taiga add 8, wetland 6, tundra 4.
 - **`distMul`:** open country rewards the long haul, closed country shortens it. Savanna 1.25, tundra 1.2, sea ice 1.2, ice sheet 1.15, wetland 0.8, jungle 0.7.
 
-**What to measure** (QA's bands to set):
+**What to measure** (QA's bands, as ruled; in the block's `qa`):
 - each new candidate is taken in 5 to 30% of the launches where it is offered;
 - no candidate takes more than 40% of launches inside its biome;
 - the share of launches landing in the sea falls when SKIM ASHORE is on.
@@ -165,10 +173,10 @@ How a body carried along the ground comes to rest. That covers a short knock-bac
 | soil, ash | both feet plough | a furrow and its berm; an ash plume | crouch |
 | sand | the feet sink and slide | a spray and a trough | low crouch |
 | rubble | a roll | debris | on a knee |
-| **ice** | **a spin-out:** he turns through the slide and a hand brakes him, ending square to the one who sent him | a polished streak | crouch |
+| **ice** | **a spin-out:** he turns through the slide and a hand brakes him, ending square to the one who sent him. Control is back where rock would have stopped him; the rest is a skate | a polished streak | crouch |
 | **snow** | a deep plough, a powder bow-wave | a channel | shin-deep |
 | frost | skittering steps, the crust cracking | a crack line | crouch |
-| **mud** | the feet sink and are dragged | a mud wave | **sunk:** movement waits 6 ticks while he pulls free; presses are taken as ever |
+| **mud** | the feet sink and are dragged | a mud wave | **sunk:** movement waits 6 ticks while he pulls free, only at the end of a skid in mud; presses are taken as ever (accepted) |
 | turf | the heels peel a strip of turf that flips up | a peeled strip | crouch |
 | **litter** | above 1,100 speed a root catches a foot: a stumble into a roll, a look inside the stop's own distance and time | leaves scattered | on a knee above that speed, else crouch |
 | shingle | the pebbles roll under him, a slip and a catch | a pebble spray | crouch |
@@ -186,7 +194,7 @@ How a body carried along the ground comes to rest. That covers a short knock-bac
 
 Each factor multiplies today's bowl. These are proposals for World's crater (`crater.gd` `dig`, `contact.json` `embed`).
 - The rows for paving, rock, soil, sand and rubble apply only with `touchBuilt` on.
-- Depth and the embed factor change how often a slam reaches the embed threshold: more often in snow and mud, less in ice, sand and rock. That shift is Game Design's to rule.
+- **Embeds keep today's rate on every surface,** as ruled: the embed threshold scales with the surface's depth factor. The embed factor is how deep he sits, not how often. QA's row is 0.2 to 1 embeds a minute.
 
 | Surface | Radius × depth | Rim, wall | Refills | Body embeds | Cracks and ejecta | Extra |
 | :--- | :--- | :--- | :--- | ---: | :--- | :--- |
@@ -219,7 +227,7 @@ Each factor multiplies today's bowl. These are proposals for World's crater (`cr
 | `ground.json` | `data/combat/ground.json` | **`combat.ground/1`**, draft `combat-ground.schema.json` |
 
 **Proven with Tools' own validator** in a scratch root, with the drafts and map rows added:
-- all three files read 0 errors and 0 warnings (the ground schema carries both switches; the variants schema carries `proposed`, `adoptProposed`, `areaMul` and the `part` aftermath);
+- all three files read 0 errors and 0 warnings (the ground schema carries both switches, `embedThresholdScales`, `qa`, `controlAtBrake` and `skate`; the variants schema carries `aftermathOn`, `waterRule`, `proposed`, `adoptProposed`, `areaMul`, the `part` aftermath and `hazard`; the launch fragment carries `rules` and `qa`);
 - nine refusals, three for each schema, each fail at their pointer, or at its parent for the aftermath's either-null-or-object rule. They are written in the shape of `tools/fixtures/cases.json` as `cases.biomes.json`.
 
 **Cross-checks:**
@@ -227,6 +235,7 @@ Each factor multiplies today's bowl. These are proposals for World's crater (`cr
 - every surface has a skid-stop and a crater;
 - each surface's `exists` flag matches `contact.json`;
 - every candidate is in exactly the sends list of its own send;
+- the largest total the biome terms can add stays below `stickWins`;
 - the built rows match `crater.gd`.
 
 Each schema's description lists the cross-references proposed for Tools' xref.
@@ -238,13 +247,16 @@ Each schema's description lists the cross-references proposed for Tools' xref.
   - a biome name for each new biome, ending `BIOME_NAME`'s aliasing of ice;
   - the surface classes and their brakes;
   - `surfaceAt(x)`, including the aftermath strips;
-  - the nine aftermath kinds;
+  - the nine aftermath kinds, and the ocean's `part` (an open trench for 3 s, then the wave's 2 bh push);
+  - fire's hazard wear on a burning fire line and a glowing ember strip;
+  - ice's control point at rock's stop, and the embed threshold scaled by depth;
   - the crater shapes;
   - breakable floes;
   - props: trees on a path, lone trees, outcrops, boulders, bergs and vents.
 - **Encounter:**
   - read `sigvariants.json` in place of the three tables, and delete `beam.gd`'s unused `VARIANT` copy;
-  - the five rule twists;
+  - the five rule twists and the ocean's HIT, with the water rule (surfaces set within 30 ticks);
+  - MARSH SWALLOW's sure embed;
   - the eight candidates and the surface terms in `chooseLaunch`;
   - pick the ground atoms and send the three events.
 - **Simulation:** two things for the replay's hash:
@@ -258,7 +270,7 @@ Each schema's description lists the cross-references proposed for Tools' xref.
 - **Tools:**
   - the two schemas, the `biome` fragment, the map rows and the nine fixture cases;
   - its grant is on Orb's word.
-- **Legal:** ten new names to screen: ICEFIELD THAW, FLOE SPLIT, VINE SHEAR, GRASSLAND BLAZE, FROST HEAVE, PINE BREAK, MIRE BOIL, SHORE SCOUR, SCREE RUN, CRUST SEAR. An originality judge (a subagent) found no borrowing, and before this I changed five of my first names:
+- **Legal:** LANE SWEEP and TIDE CLEAVE (now a rename only) are already with Legal. Ten new names to screen: ICEFIELD THAW, FLOE SPLIT, VINE SHEAR, GRASSLAND BLAZE, FROST HEAVE, PINE BREAK, MIRE BOIL, SHORE SCOUR, SCREE RUN, CRUST SEAR. An originality judge (a subagent) found no borrowing, and before this I changed five of my first names:
   - TINDER LINE, because "Tinder" is an app's trademark;
   - CINDER VEIN, which echoes a published game's title;
   - SURF SPLIT, which repeats a word and is a common move name in another franchise;
@@ -266,10 +278,5 @@ Each schema's description lists the cross-references proposed for Tools' xref.
   - THAW LINE, which broke the naming pattern.
 
   All 17 rows now end on different words.
-- **Game Design:**
-  - every score and factor;
-  - whether a fire line or an ember strip ever hurts a fighter (here they don't);
-  - whether mud's 6-tick wait on movement is within the press-feel rule;
-  - the journey on ice (a brake of 0.3 returns control several times later than soil): stand, cap, or raise the brake;
-  - the embed shift from the crater depths and MARSH SWALLOW;
-  - the personality term.
+- **Game Design:** everything here is ruled (section 1b). Still open there: LANE SWEEP's collateral.
+- **Orb:** LANE SWEEP, in three plain lines (`lane-sweep-for-orb.md`).

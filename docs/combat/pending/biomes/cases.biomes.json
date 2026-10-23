@@ -14,7 +14,7 @@
       ],
       "expect": {
         "pointer": "/variants/jungle/name",
-        "_seen": "error  data/combat/sigvariants.json:237 /variants/jungle/name  [pattern] must match /^[A-Z][A-Z ]{2,23}$/ (got \"vine shear\")"
+        "_seen": "error  data/combat/sigvariants.json:243 /variants/jungle/name  [pattern] must match /^[A-Z][A-Z ]{2,23}$/ (got \"vine shear\")"
       }
     },
     {
@@ -34,7 +34,7 @@
       ],
       "expect": {
         "pointer": "/variants/tundra/scorch",
-        "_seen": "error  data/combat/sigvariants.json:292 /variants/tundra/scorch  [maxItems] must have at most 2 items (got 3)"
+        "_seen": "error  data/combat/sigvariants.json:299 /variants/tundra/scorch  [maxItems] must have at most 2 items (got 3)"
       }
     },
     {
@@ -50,7 +50,7 @@
       ],
       "expect": {
         "pointer": "/variants/coast/aftermath",
-        "_seen": "error  data/combat/sigvariants.json:378 /variants/coast/aftermath  [oneOf] matches none of 2 alternatives; closest: /variants/coast/aftermath [type] must be null (got object)"
+        "_seen": "error  data/combat/sigvariants.json:385 /variants/coast/aftermath  [oneOf] matches none of 2 alternatives; closest: /variants/coast/aftermath [type] must be null (got object)"
       }
     },
     {
@@ -66,7 +66,7 @@
       ],
       "expect": {
         "pointer": "/surfaces/ice/readsAs",
-        "_seen": "error  data/combat/ground.json:26 /surfaces/ice/readsAs  [enum] must be one of \"paving\", \"rock\", \"soil\", \"sand\", \"rubble\" (got \"snow\")"
+        "_seen": "error  data/combat/ground.json:35 /surfaces/ice/readsAs  [enum] must be one of \"paving\", \"rock\", \"soil\", \"sand\", \"rubble\" (got \"snow\")"
       }
     },
     {
@@ -82,7 +82,7 @@
       ],
       "expect": {
         "pointer": "/craters/mud/refill",
-        "_seen": "error  data/combat/ground.json:374 /craters/mud/refill  [maximum] must be <= 1 (got 1.5)"
+        "_seen": "error  data/combat/ground.json:386 /craters/mud/refill  [maximum] must be <= 1 (got 1.5)"
       }
     },
     {
@@ -98,7 +98,7 @@
       ],
       "expect": {
         "pointer": "/skidStop/mud/end",
-        "_seen": "error  data/combat/ground.json:184 /skidStop/mud/end  [enum] must be one of \"crouch\", \"low_crouch\", \"kneel\", \"shin_deep\", \"sunk\", \"waist_deep\" (got \"stuck\")"
+        "_seen": "error  data/combat/ground.json:196 /skidStop/mud/end  [enum] must be one of \"crouch\", \"low_crouch\", \"kneel\", \"shin_deep\", \"sunk\", \"waist_deep\" (got \"stuck\")"
       }
     },
     {
@@ -114,7 +114,7 @@
       ],
       "expect": {
         "pointer": "/biome/candidates/ICE",
-        "_seen": "error  data/director/launch.json:204 /biome/candidates/ICE SKID/sends  [enum] must be one of \"across\", \"down\", \"up\" (got \"sideways\")"
+        "_seen": "error  data/director/launch.json:219 /biome/candidates/ICE SKID/sends  [enum] must be one of \"across\", \"down\", \"up\" (got \"sideways\")"
       }
     },
     {
@@ -130,7 +130,7 @@
       ],
       "expect": {
         "pointer": "/biome/distMul/savanna",
-        "_seen": "error  data/director/launch.json:130 /biome/distMul/savanna  [minimum] must be >= 0.2 (got -1)"
+        "_seen": "error  data/director/launch.json:145 /biome/distMul/savanna  [minimum] must be >= 0.2 (got -1)"
       }
     },
     {
@@ -146,7 +146,7 @@
       ],
       "expect": {
         "pointer": "/biome/surfaceLand/snow/soft",
-        "_seen": "error  data/director/launch.json:148 /biome/surfaceLand/snow/soft  [maximum] must be <= 1 (got 2)"
+        "_seen": "error  data/director/launch.json:163 /biome/surfaceLand/snow/soft  [maximum] must be <= 1 (got 2)"
       }
     }
   ]

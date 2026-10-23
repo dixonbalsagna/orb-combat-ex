@@ -4,14 +4,14 @@ A sampler for Orb. Combat and Choreography, 2026-10-23.
 
 One short scene per biome, describing how a typical exchange plays there once the parked biome layer is built (`biomes.md`).
 - Nothing here is built yet.
-- The numbers are first values for Game Design to rule.
+- Game Design has ruled the numbers and the open questions (`docs/design/rulings-2026-10-23b.md`); the scenes follow its rulings.
 - The variant names are working labels waiting on Legal, and the new biomes' own names wait on World.
-- Ocean and village use the proposed rows (`biomes.md` §2b).
+- The village uses the proposed row, LANE SWEEP, which waits on Legal and on Orb (`biomes.md` §2b).
 
 **Ocean.** The fight hangs low over open water.
 - A dash kicks up a wake. A knock-back skims a fighter across the surface before he sinks to the waist.
 - Instead of losing him far out to sea, the director can skim him back toward land in a few long bounces.
-- The signature, TIDE CLEAVE, parts the sea. For a moment the defender stands in a dry trench between two walls of water. If he's still there when they fall, he goes under and comes up in the surge rolling to shore.
+- The signature, HORIZON CLEAVE, parts the sea. For three seconds the beam's path is an open trench between two walls of water. Then the sea rushes back as a wave that shoves anyone at the surface along the beam's line. A defender caught by the hit is driven under and comes back up a moment later, ready to fight.
 
 **Plains.** Open ground and soft soil: the clean stage the others are measured against.
 - Every knock-back ploughs a furrow, with a berm of earth heaped in front of the feet. A slam leaves a plain round bowl.
@@ -50,13 +50,13 @@ One short scene per biome, describing how a typical exchange plays there once th
 **Ice sheet.** Deep snow over ice.
 - A fighter knocked back ploughs a channel through the snow and ends up shin-deep.
 - Slams sink deep, clean holes that slowly drift back in.
-- ICEFIELD THAW melts a channel that refreezes into glass-smooth ice for the rest of the fight. That strip is now a slide: knock someone onto it and he skids its whole length. How long that slide may run is for Game Design to rule.
+- ICEFIELD THAW melts a channel that refreezes into glass-smooth ice for the rest of the fight. That strip is now a slide: knock someone onto it and he skids its whole length. He gets his hands back as early as he would on rock, and rides out the rest of the slide as a skate he can attack out of.
 
 **Sea ice.** Flat floes over black water.
 - Nobody stops cleanly on ice. A fighter driven back spins out, a hand braking him, and comes round to face his opponent.
 - The director can send him skidding across a floe into open water, or against an iceberg.
 - A slam punches through the floe into the sea.
-- FLOE SPLIT opens a lead of water along the beam. A defender hit as it opens drops in and has to climb out.
+- FLOE SPLIT opens a lead of water along the beam. A defender hit as it opens drops in and comes back up a moment later.
 
 **Jungle.** Dense, wet and tangled, and the director prefers short launches here.
 - Driven back fast, a fighter catches a foot on a root and goes over into a roll.
@@ -68,7 +68,7 @@ One short scene per biome, describing how a typical exchange plays there once th
 - A fighter driven back peels up a strip of turf with his heels.
 - The director can smash him into a lone tree.
 - GRASSLAND BLAZE lights the grass. A fire line spreads out from the cut for a few seconds, and the next exchange happens across it or through the smoke.
-- Whether the fire hurts anyone is for Game Design. As parked, it only burns the grass and props.
+- Anyone standing in the flames takes a light singe. Flying over them costs nothing.
 
 **Tundra.** Frozen ground that cracks.
 - Footing skitters as a fighter is driven back, the crust cracking under him.
@@ -84,7 +84,7 @@ One short scene per biome, describing how a typical exchange plays there once th
 - PINE BREAK snaps the trunks along the beam, and every tree around sheds its snow at once. The crowns and their snow come down on a defender who's hit, and the scar partly fills with snow.
 
 **Wetland.** Mud and standing water.
-- A fighter driven back sinks and is dragged through the mud. He has to pull his feet free before he can move again; Game Design still has to rule on that beat.
+- A fighter skidding to a stop in mud sinks and is dragged. He takes a brief beat to pull his feet free before he can move, though he can still strike.
 - Skids end short.
 - The director likes to slam people straight down into the marsh, which swallows them and closes over the hole. The Protagonist favours it because almost nothing is destroyed.
 - MIRE BOIL boils the marsh and floods the cut, so a defender hit there lands in water.
@@ -104,4 +104,4 @@ One short scene per biome, describing how a typical exchange plays there once th
 - Crust breaks under the heels of a fighter driven back, leaving glowing cracks, and slams crack in a glowing star.
 - An uppercut over a vent gets an extra blast of lift.
 - The cones are cliffs to throw people into.
-- CRUST SEAR leaves a glowing vein that lights anything burnable for ten seconds. Whether it hurts a fighter is for Game Design.
+- CRUST SEAR leaves a glowing vein for ten seconds. It lights anything burnable, and it singes a fighter who stands on it while it glows.

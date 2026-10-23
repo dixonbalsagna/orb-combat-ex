@@ -14,6 +14,28 @@
     "touchBuilt": {
       "type": "boolean"
     },
+    "embedThresholdScales": {
+      "type": "boolean"
+    },
+    "qa": {
+      "type": "object",
+      "properties": {
+        "embedsPerMinute": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 60
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false
+    },
     "surfaces": {
       "type": "object",
       "patternProperties": {
@@ -43,6 +65,11 @@
                 },
                 "tumble": {
                   "type": "boolean"
+                },
+                "controlAtBrake": {
+                  "type": "number",
+                  "minimum": 0.05,
+                  "maximum": 4
                 }
               },
               "patternProperties": {
@@ -144,6 +171,9 @@
                 "sunk",
                 "waist_deep"
               ]
+            },
+            "skate": {
+              "type": "boolean"
             }
           },
           "patternProperties": {

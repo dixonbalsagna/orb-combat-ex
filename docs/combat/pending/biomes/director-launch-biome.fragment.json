@@ -9,6 +9,44 @@
       "touchBuilt": {
         "type": "boolean"
       },
+      "rules": {
+        "type": "object",
+        "patternProperties": {
+          "^_": {},
+          "^[a-zA-Z]+$": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "qa": {
+        "type": "object",
+        "properties": {
+          "takenWhereOffered": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "maxInOwnBiome": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "seaLandingsFall": {
+            "type": "boolean"
+          }
+        },
+        "patternProperties": {
+          "^_": {}
+        },
+        "additionalProperties": false
+      },
       "downBonus": {
         "type": "object",
         "patternProperties": {
