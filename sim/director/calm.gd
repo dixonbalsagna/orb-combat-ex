@@ -155,7 +155,7 @@ static func _ask(S: SimState, a, b, why: String, mid: float, side: int, due: int
 		return   # a form step: no bearing keeps the ground under them within moveMax, so no turn at this moment
 	var fb: float = 0.0 if why == "form" else _leastDeg()   # a form pick's pivot is exact: one ring
 	var rings: int = 2 if fb > 0.0 and fb < absf(float(cands[i].bearing)) - 0.0001 else 1
-	var k: int = _rate(int(cands[i].spec.get("cols", SimConst.NC)), due - S.tick, rings)
+	var k: int = _rate(int(cands[i].spec.get("cols", SimConst.NC)), due - S.tick - (_prep() - 1), rings)   # read by the moment less World's preparation
 	WorldEpoch.choose(S, i, k, fb)   # the sim reads k columns of each ring a tick (World's tick)
 	SimFx.cue(S, a, "calm_turn", "asked", why)
 	var e = S.out.fx[S.out.fx.size() - 1]
@@ -264,11 +264,17 @@ static func warmRate(S: SimState) -> int:
 	return maxi(1, int(S.epoch.next.get("k", int(cfg().get("warmColsMax", 32)))))
 
 
-## The ticks the sim needs to read the waiting pick's rings at that rate, from the pick (each ring k columns a tick).
+## The ticks the sim needs to read the waiting pick's rings at that rate, from the pick (each ring k columns a tick),
+## and World's preparation after the reading (a ring is warm prepTicks after it is read: ade02e47).
 static func warmTicks(S: SimState) -> int:
 	var nx: Dictionary = S.epoch.next
 	var cols: int = int(nx.spec.get("cols", SimConst.NC)) if nx.get("spec") is Dictionary else SimConst.NC
-	return int(ceil(float(cols) / float(warmRate(S))))
+	return int(ceil(float(cols) / float(warmRate(S)))) + _prep() - 1
+
+
+## World's preparation ticks (WorldEpoch.data().prepTicks), at least 1.
+static func _prep() -> int:
+	return maxi(1, int(WorldEpoch.data().get("prepTicks", 1)))
 
 
 ## A pausing form step's pause ended within formTicks live ticks: a moment, under the step's own camera.

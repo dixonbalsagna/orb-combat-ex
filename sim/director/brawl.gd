@@ -825,7 +825,7 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 			worth = float(er.blast.worth)
 		elif lau:
 			if any:
-				worth = float(c.launcher.worth) * _power(S, f, o, safety)   # launch anywhere: the launching blow's worth is worth x power
+				worth = float(la().get("worth", c.launcher.worth)) * _power(S, f, o, safety)   # launch anywhere: the launching blow's worth is anywhere.worth x power (9a: 5, where window 1's launcher is 3)
 			else:
 				worth = float(c.launcher.worth) if launcherRest(S, o) == 0 else float(c.heavy.worth)   # a resting launcher is the hammer: a full heavy on the launcher's wind-up
 		elif st == 1 and inFl:
@@ -1389,7 +1389,7 @@ static func contact(S: SimState, ex, b) -> void:
 	if o.stunTicks <= 0 or bool(c.flurry.staggeredAddsRun):
 		_s(f, RUN, _g(f, RUN) + (int(c.burst.runHalves) * RUN_U / 2 if bool(a.get("burst", false)) else (int(c.energy.reach.bolt.runHalves) * RUN_U / 2 if bolt else pts)))
 	_s(o, RUN, maxi(0, _g(o, RUN) - pts * int(c.flurry.replyTakes)))
-	if anywhere():
+	if anywhere() and not (bool(la().get("placedOnly", false)) and weightOf(a) == "light_mash"):   # 10b: a mashed or burst blow builds no string
 		var chNow: int = _now(S)
 		_ls(f, LA_CH_N, (_lg(f, LA_CH_N) + 1) if (_lg(f, LA_CH_AT) > 0 and chNow - _lg(f, LA_CH_AT) <= int(la().get("chainGapTicks", 24))) else 1)
 		_ls(f, LA_CH_AT, chNow)   # 2a: his landed blows in one chain of links
@@ -1699,11 +1699,48 @@ const LA_LHIT: int = 27   # ... and the lights its armour has taken (an answerab
 const LA_LHIT_AT: int = 28   # ... and the live tick the newest of them landed (5a: a second must land within anywhere.armourLightTicks)
 const LA_CH_N: int = 29     # his blows landed in one chain of links (2a: each within anywhere.chainGapTicks of his last)
 const LA_CH_AT: int = 30    # ... and the live tick his last landed
-const LA_N: int = 31
+const LA_PAY: int = 31      # a launcher's send on him: its power x 1000, plus 1, for its journey's pay (9a); 0 none
+const LA_PAYN: int = 32     # ... and the launch number it was for (a later send is never paid as this one)
+const LA_WAS: int = 33      # 1 while he was launched at the director's last tick (10c)
+const LA_LANDED: int = 34   # the live tick he last came down from a launch, plus 1: his wary window (10c); 0 none
+const LA_N: int = 35
 
 
 static func la() -> Dictionary:
 	return cfg().get("launcher", {}).get("anywhere", {})
+
+
+## Game Design's 9a (rulings-2026-10-23 §9): a launcher's send pays. Its power goes with the send (DirMelee, after
+## the send, so the launch number is the journey's), and World's contact pay reads payMul while that journey lasts.
+static func paySend(o, p: float) -> void:
+	if not anywhere() or float(la().get("landPay", 0.0)) <= 0.0:
+		return
+	_ls(o, LA_PAY, int(round(maxf(0.0, p) * 1000.0)) + 1)
+	_ls(o, LA_PAYN, int(o.launchN))
+
+
+## The pay of his journey's wear (WorldContact._pay): x (1 + anywhere.landPay x power) for a launcher's send, else 1.
+## Game Design's 10c: each live tick (DirExchange.dirUpdate), the tick each fighter came down from a launch (left
+## "launched"), which opens his wary window in _safety.
+static func laTick(S: SimState) -> void:
+	if not anywhere() or int(la().get("waryTicks", 0)) <= 0:
+		return
+	for f in S.fighters:
+		var was: int = _lg(f, LA_WAS)
+		var up: int = 1 if f.state == "launched" else 0
+		if was == 1 and up == 0:
+			_ls(f, LA_LANDED, _now(S) + 1)
+		if was != up:
+			_ls(f, LA_WAS, up)
+
+
+static func payMul(f) -> float:
+	if not anywhere():
+		return 1.0
+	var v: int = _lg(f, LA_PAY)
+	if v <= 0 or _lg(f, LA_PAYN) != int(f.launchN):
+		return 1.0
+	return 1.0 + float(la().get("landPay", 0.0)) * float(v - 1) / 1000.0
 
 
 ## True when launch anywhere is on (data/director/interrupts.json brawl.launcher.anywhere.enabled).
@@ -1759,6 +1796,9 @@ static func _bMash(f, p: int) -> bool:
 static func _safety(S: SimState, f, o) -> int:
 	if o.stunTicks > 0:
 		return 1
+	var wary: int = int(la().get("waryTicks", 0))
+	if wary > 0 and _lg(o, LA_LANDED) > 0 and _now(S) - (_lg(o, LA_LANDED) - 1) <= wary:
+		return 3   # Game Design's 10c: he came down from a launch within waryTicks, so a launcher that isn't sure is answerable
 	var k: int = _lg(o, LA_HITK) - 1
 	if _now(S) < _g(o, REEL_AT) and (k == MEDIUM or k == BIG):
 		return 2

@@ -757,7 +757,9 @@ static func _pay(S: SimState, f, by, amount: float) -> void:
 		return
 	if f.slideFeet:
 		amount *= K_WFEET   # a knock-back skid hurts half as much as a launch's impact (agency-pass.md section 13, rule 4)
-	var a: float = minf(amount, maxf(f.jV0 * 0.018 * K_WCAP - f.slideDmg, 0.0))
+	var pay: float = DirBrawl.payMul(f)   # Game Design's 9a: a launcher's send pays x (1 + power), its cap with it (1 off launch anywhere)
+	amount *= pay
+	var a: float = minf(amount, maxf(f.jV0 * 0.018 * K_WCAP * pay - f.slideDmg, 0.0))
 	if a > 0.0:
 		f.slideDmg += a
 		SimDamage.hurt(S, f, a, by)

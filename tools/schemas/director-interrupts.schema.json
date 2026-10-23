@@ -2487,6 +2487,25 @@
                   "minimum": 1,
                   "description": "A landed blow within this many live ticks of his last landed blow is in the same chain."
                 },
+                "placedOnly": {
+                  "type": "boolean",
+                  "description": "Game Design's 10b: only placed blows (tapped lights, mediums, heavies, perfect follow-ups) build the string that makes a launcher hard to answer; a mashed or burst blow (light_mash) builds none."
+                },
+                "waryTicks": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Game Design's 10c: for this many live ticks after he comes down from a launch, a launcher at him that isn't sure is answerable; 0: off."
+                },
+                "worth": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "The launching blow's worth in brawl lights, times its power (Game Design's 9a: 5). Absent: launcher.worth."
+                },
+                "landPay": {
+                  "type": "number",
+                  "minimum": 0,
+                  "description": "A launcher's send pays its journey's wear x (1 + landPay x power) (9a: 1, so a full launch pays double); 0: off."
+                },
                 "power": {
                   "type": "object",
                   "description": "The launcher's power: string x state x timing x wounds (x freshness at the send).",

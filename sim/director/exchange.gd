@@ -632,6 +632,7 @@ static func dirUpdate(S: SimState, dt: float) -> void:
 	_update(S, dt)
 	DirWindows.afterTick(S)   # 4c: a freeze that starts now leaves every open window its live ticks (hit-stop by weight only)
 	DirCalm.tick(S)   # 7b: the calm turn notes when each fighter came to rest
+	DirBrawl.laTick(S)   # 10c: launch anywhere notes when each fighter came down from a launch
 
 
 static func _update(S: SimState, dt: float) -> void:

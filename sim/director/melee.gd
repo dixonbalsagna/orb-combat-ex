@@ -472,6 +472,8 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 	if S.brakeOn and tgt.brk != null:   # the air brake's air sense: the marks of this kind already on him (SimBrake spends them)
 		tgt.brk.marks = DirBrawl.freshMarks(S, tgt, lkind)
 	DirLaunch.doLaunch(S, att, tgt, r.best, force, longOnly)
+	if lpow >= 0.0:
+		DirBrawl.paySend(tgt, lpow * kf)   # 9a: a launcher's send pays on its journey (after the send: its launch number)
 	DirBrawl.powerCue(S, att, tgt, lkind, (lpow * kf) if lpow >= 0.0 else 1.0)
 	holdSend(S, longOnly, (lpow * kf) if lpow >= 0.0 else 1.0)   # hit-stop by weight: the send holds a launch's stop
 	DirCamIntent.launched(S, tgt)   # the camera-intent feed: with the launch curve, the touchdown is the curve's
