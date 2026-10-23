@@ -2,12 +2,12 @@ extends SceneTree
 ## Probe: launch anywhere (the thirteenth round). --mode=ai: the AI on both sides. Otherwise slot 0 is a scripted player
 ## against the AI at --level: route (X every 8 ticks, B at every opening), spam (one light, then B, every string: B 6
 ## ticks after each of his landed blows) or varied (the route, his stick turned through up, toward and down in turn at
-## each B). Every launcher is found as a beat of the exchange (args.launcher), once: its owner, safety (1 sure, 2 hard,
+## each B), or string (Game Design's 1b row: X every 8 ticks, and B 6 ticks after his second landed blow of a string). Every launcher is found as a beat of the exchange (args.launcher), once: its owner, safety (1 sure, 2 hard,
 ## 3 answerable) and power. Its fate, within 60 ticks: launched (a launch plan of its owner's), perfect-blocked (the
 ## rival's perfect_block), or not (stopped, missed or guarded). Launches are counted by kind of send and by who launched,
 ## a match. The AI's guard presses while a launcher that isn't sure is open on it are counted (each is a guess the
 ## director fixed at an earlier landing, before the launcher existed).
-## -- <matches> <seed0> [--mode=ai|route|spam|varied] [--level=medium] [--cap=18000]
+## -- <matches> <seed0> [--mode=ai|route|spam|varied|string] [--level=medium] [--cap=18000]
 
 
 func _init() -> void:
@@ -39,6 +39,7 @@ func _init() -> void:
 		var turn := 0
 		var wasOpen := false
 		var wantB := false
+		var strN := 0
 		var seen := {}
 		var open := []       # [owner slot, safety, the tick it was seen, the press tick, done]
 		var guardWas := [DirInterrupt.gi(S.fighters[0], DirInterrupt.GUARD_AT), DirInterrupt.gi(S.fighters[1], DirInterrupt.GUARD_AT)]
@@ -131,6 +132,11 @@ func _init() -> void:
 						r.launches.on0 += 1
 			if human and mode == "spam" and bAt < 0 and DirBrawl._lg(me, DirBrawl.LA_LINK) == S.tick:
 				bAt = S.tick + 6
+			if human and mode == "string" and DirBrawl._lg(me, DirBrawl.LA_LINK) == S.tick:
+				strN += 1
+				if strN >= 2 and bAt < 0:
+					bAt = S.tick + 6
+					strN = 0
 			# the AI's guard presses while a launcher that isn't sure is open on it
 			for s in [0, 1]:
 				var g: int = DirInterrupt.gi(S.fighters[s], DirInterrupt.GUARD_AT)

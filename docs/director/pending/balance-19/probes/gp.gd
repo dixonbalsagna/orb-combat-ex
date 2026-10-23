@@ -4,6 +4,8 @@ extends SceneTree
 ##   tapA: A every 8 ticks and nothing else (a masher of A);
 ##   alone: A only, as it is meant (Game Design's re-defined row): a catch every 30 ticks while free in a brawl, and in a
 ##   clinch one A for each pulse, at a human's spread (-3 to 3 ticks off, by the pulse);
+##   guardgrab and guardonly: Game Design's 1d rows (rulings-2026-10-22): guard whenever the AI winds up and he isn't in a
+##   clinch; guardgrab also does follow's catches, pummels, throws down and B; guardonly grabs nothing;
 ##   follow: Game Design's grab-and-follow (rulings-2026-10-19.md 5c): alone's catches and pummels, each pummel with the
 ##   stick down, so a throw of his is down (buried on the ground), and B 2 ticks after it;
 ##   mash, idle, pulse: X every 8 ticks, and A every 30 ticks while free in a brawl (a catch); in a clinch, A every 3
@@ -14,7 +16,7 @@ extends SceneTree
 ## fighter thrown less than noRegrab ago, and the AI's tech sooner than its reaction time after the tell began.
 ## --grip=N sets clinch.grip in memory (Game Design's lever for 5d), --worth=W the throw's worth in lights (5c's); --trace logs, for slot 0's first 3 throws down or up,
 ## his ki and the next 14 ticks of his cues and launch plans.
-## -- <matches> <seed0> [--mode=ai|tapA|alone|follow|mash|idle|pulse] [--level=medium] [--cap=54000] [--grip=N] [--trace]
+## -- <matches> <seed0> [--mode=ai|tapA|alone|follow|guardgrab|guardonly|mash|idle|pulse] [--level=medium] [--cap=54000] [--grip=N] [--trace]
 
 
 func _init() -> void:
@@ -69,14 +71,18 @@ func _init() -> void:
 				elif bAt > 0 and S.tick >= bAt:
 					it.sig = true   # held until a live tick takes it: a press in a hit-stop waits, as a player's does (Controls' rule)
 					it.sigHeld = true
-				elif mode == "alone" or mode == "follow":
+				elif (mode == "guardgrab" or mode == "guardonly") and DirBrawl.inBrawl(S, me) and DirBrawl._windOn(S.fighters[1]) and (gn.is_empty() or String(gn.mode) != "clinch"):
+					it.guard = true   # the AI winds up and he isn't in a clinch: he guards
+				elif mode == "guardonly":
+					pass
+				elif mode == "alone" or mode == "follow" or mode == "guardgrab":
 					if not gn.is_empty() and String(gn.mode) == "clinch":
 						var ta: int = S.tick - int(gn.t0)
 						var kp: int = int(round(float(ta) / float(int(g.clinch.pulse))))
 						var off: int = ((int(gn.t0) * 5 + kp * 3) % 7) - 3   # a human's spread, by the pulse
 						if kp >= 1 and ta == kp * int(g.clinch.pulse) + off:
 							it.context = true
-							if mode == "follow":
+							if mode == "follow" or mode == "guardgrab":
 								it.my = -1.0   # the stick down at the claim: his throw is down
 					elif gn.is_empty() and DirBrawl.inBrawl(S, me) and not DirBrawl.busy(S, me) and S.tick - lastA >= 30:
 						it.context = true

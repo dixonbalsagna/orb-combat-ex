@@ -6,11 +6,11 @@ It sits behind `wallKick.enabled` (false) in `data/director/interrupts.json`. Of
 
 ## To build it
 
-On main (the recoil flips are on it; the kick's slots follow theirs):
-1. `node wk.cjs <root>` from this folder;
+After the calm turn's 7b (its slots follow `DirCalm`'s rest record, which follows the press wait's (7a) and the mash run's; the order on main is press-tick, the mash run, 7a, 7b, then this):
+1. `node wk.cjs <root>` from this folder (it refuses until `calm.gd` has 7b's record);
 2. `node grant_world.cjs <root>` (World's YES, 2026-10-22; unchanged by the re-cut).
 
-`--check` reads every anchor and writes nothing. The AI chase (`../chase/`) applies after it.
+`--check` reads every anchor and writes nothing. The chase (`../chase/`) applies after it.
 
 | File | Owner | Change |
 | :--- | :--- | :--- |

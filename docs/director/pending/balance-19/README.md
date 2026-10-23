@@ -9,6 +9,9 @@ Owner: Encounter Systems Director. Game Design's §5 (`docs/design/rulings-2026-
 | 5c | The grab-and-follow row, 25 to 50% against medium | No change of mine. `probes/gp.gd --mode=follow` is the row: the catches and pummels of the A-only row (each pummel within 3 ticks of its pulse), with the stick down at each claim so his throw is down, and B 2 ticks after it |
 | 5d | The clinch is 60 ticks at most: three pulses | `grapple.clinch.max` 60, where it was 90 |
 | 5e | Route rows: by him 20 to 50, on him 10 to 40; AI v AI full launches 6 to 12 | QA's rows. `probes/lap.gd --mode=route` and `--mode=ai` read them |
+| 1b (2026-10-22) | A string of 2 points or more makes the launcher hard to answer, whatever its last blow | `anywhere.hardFromRun` 2: `_safety` is 2 when his run is 2 points or more |
+| 1c (2026-10-22) | At the time, a fighter ahead on the grip throws; only an even grip parts | `grapple.clinch.timeThrows` true: the leader throws by his last claim's stick |
+| 1d (2026-10-22) | The row compares two scripts that both guard: guard and grab wins at least 15 points more than guard only, and 15 to 45% against medium | No change of mine. `probes/gp.gd --mode=guardgrab` and `--mode=guardonly` (guard while the AI winds up and he isn't in a clinch; guardgrab also catches in reach, pummels within 3 ticks, throws down and presses B on the bury) |
 
 ## To build it
 
@@ -16,11 +19,24 @@ Owner: Encounter Systems Director. Game Design's §5 (`docs/design/rulings-2026-
 
 | File | Owner | Change |
 | :--- | :--- | :--- |
-| `sim/director/brawl.gd` | Encounter | 5a: `_flurried`, the slot, the stop's condition |
-| `data/director/interrupts.json` | Encounter | `anywhere.armourLightTicks` 6 and its note; `grapple.clinch.max` 60 |
-| `tools/schemas/director-interrupts.schema.json` | **Tools** | `armourLightTicks` |
+| `sim/director/brawl.gd` | Encounter | 5a: `_flurried`, the slot, the stop's condition. 1b: `_safety`'s run rule |
+| `sim/director/grapple.gd` | Encounter | 1c: the leader's throw at the time |
+| `data/director/interrupts.json` | Encounter | `anywhere.armourLightTicks` 6 and `hardFromRun` 2 with their note; `grapple.clinch.max` 60 and `timeThrows` true |
+| `tools/schemas/director-interrupts.schema.json` | **Tools** | `armourLightTicks`, `hardFromRun`, `clinch.timeThrows` |
 
-## What it read (main 5385a86d, in scratch; launch anywhere and the grapple on)
+## What it read again with 1b, 1c and 1d (main 9cb5b6ba, in scratch; launch anywhere and the grapple on; 10 matches each)
+
+| # | Row | Read | Band |
+| :--- | :--- | :--- | :--- |
+| 5a with 1b | Answerable launchers answered: the spammer, the string script (`lap.gd --mode=string`), AI v AI | **71.8%**, **73.9%**, 50.0%. The string's launchers are still 649 of 711 at safety 3: a run of 2 points is rarely reached before his launcher | 20 to 50 ✗ |
+| 5d with 1c | The clinch, AI v AI (88 clinches) | time-outs **11%** (10), from 57%; the rest end in 30 techs and 49 throws (17 across, 16 down, 16 up). Median **60** (the cap) | under 30% ✓; 30 to 55 ✗ |
+| 1d | Guard and grab against medium, and guard only | **0 of 10, and 0 of 10.** Guard and grab leaves the AI on 0 to 960 HP (4 of 10 at 0, still not a win), with 21 throws a match. Guard only leaves it on 1,568 to 1,600 | 15 to 45%, +15 points ✗ |
+
+- **1c is the one that lands:** the clinch now ends by a throw at the time, instead of a stand-off.
+- **1b and 1d don't reach their bands.** The scripts lose every match, and a run of 2 points comes too rarely before a launcher. They are Game Design's and QA's to re-target.
+- **Gate list** (off; 1b, 1c and 1d with 5a and 5d): **35 of 35 at 0**. The golden is main's, byte for byte.
+
+## What it read before (main 5385a86d, in scratch; launch anywhere and the grapple on)
 
 | # | Row | Read | Band |
 | :--- | :--- | :--- | :--- |

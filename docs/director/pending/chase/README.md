@@ -1,46 +1,28 @@
-# The AI chases a launch it threw (parked, 2026-10-22)
+# The chase of a launch is the zip (parked, FROZEN for the break, 2026-10-22: built, NOT read)
 
-Owner: Encounter Systems Director. Game Design's `rulings-2026-10-22.md` 5d and `fight-feel.md` §1 (the glide: the attacker can chase or zip). It sits behind `data/director/ai.json` `chase.enabled` (false). Off, nothing runs, no slot is written and no cue is sent, so play and the golden don't move.
+Owner: Encounter Systems Director. Game Design's `rulings-2026-10-22.md` 7c (and 5d's shares) and `brawl-second-pass.md` §16 ("chasing your own launch": a zip at a launched rival that follows the body and lands a blow that sends him on, nudged by the stick). It sits behind `data/director/interrupts.json` `chase.enabled` (false). Off, nothing runs, no slot is written and no cue is sent.
 
 ## To build it
 
 After the wall kick (`../wall-kick/`; its slots follow the kick's): `node ch.cjs <root>` from this folder. `--check` reads every anchor and writes nothing.
 
+The whole chain on main is press-tick (on main), the mash run, 7a (`../press-wait/`), 7b (`../calm-7b/`), the wall kick and World's grant, then this. It composes and validates (245 files, 0 errors).
+
 | File | Change |
 | :--- | :--- |
-| `sim/director/chase.gd` (+ `.uid`) | New: `DirChase.steer` (the draw, the start, the stick), `_sky`, the cue |
-| `sim/director/ai.gd` | `DirChase.steer` before 4d's cap, which a chase lifts. Not in the Escape stance |
-| `data/director/ai.json`, `tools/schemas/director-ai.schema.json` (**Tools'**) | `chase` {`enabled` false, `skyMul` 1.5, `maxTicks` 90}; each level's `chaseShare` (0.1, 0.25, 0.4) |
+| `sim/director/chase.gd` (+ `.uid`) | Rewritten for 7c: `DirChase.takes` (a player's press), `steer` (the AI's draw and start), `tick` (the rush re-aimed each live tick, the catch, the landing), `_catch` (the zip's blow and the send on), `_tilt`, `_sky` |
+| `sim/director/exchange.gd` | `DirChase.takes` before the zip's in `requestAttack`; `DirChase.tick` after the wall kick's |
+| `sim/director/ai.gd` | `DirChase.steer` before 4d's cap, which a chase doesn't meet. Not in the Escape stance |
+| `data/director/interrupts.json` (`chase`), `data/director/ai.json` (each level's `chaseShare` 0.1, 0.25, 0.4), their schemas (**Tools'**) | `chase` {`enabled` false, `speedMul` 1.25, `minSpeed` 1900, `catchBh` 1.5, `sendForce` 1600, `skyMul` 1.5, `maxTicks` 120} |
 
 ## The rules as built
 
-- **At a send of its own** (the rival launched by it, not a set piece's), the AI draws once (keyed) against its level's `chaseShare`. The share is times `skyMul` when the send goes up into open sky: he rises faster than he travels, and no building stands over him.
-- **Only with the zip's ki** (the zip strike's 20). It is a gate and is not paid: the chase is free flight, and a zip at the arrival pays as ever. This is my reading of "only with the zip's ki"; Game Design can rule otherwise.
-- **The chase starts** no sooner than its reaction time after the send. It is dashed free flight straight at the sent body, with the approach cap of 4d lifted, while he is launched, at most `maxTicks` (90). It ends when he lands, when he is caught, or when the AI is not free.
-- **The cue:** `chase`, text `start` or `end`, target the sent fighter's slot, n his launch number.
+- **Who:** a player pressing X or Y with LT held while his own launch flies, or the AI at a send of its own on its level's `chaseShare`. The share is times `skyMul` for a send up into open sky, and the AI starts no sooner than its reaction time.
+- **The price:** the zip's ki, the strike's 20 or the heavy's 30. Without it there is no chase.
+- **The flight:** the director's rush at the body, re-aimed each live tick, at 1.25 times his speed and never under 1,900 u/s. **No Simulation lines.**
+- **The catch:** within 1.5 bh of him while he flies, the zip's blow lands (26 for the strike, 132 for the heavy) and sends him on, through the launch planner from where he is, at `sendForce`, with the chaser's stick as its tilt. The chaser is free in the air and may chase again with the ki.
+- **Too late:** when his landing comes before the catch, the chase flies to beside his landing and arrives with it, for the first move.
 
-## What it read (main 372c327b plus the wall kick and this, in scratch; 10 AI matches a level)
+## Not proven
 
-| Level | Sends | Chases | A match | Of them on a sky send |
-| :--- | :--- | :--- | :--- | :--- |
-| Easy | 77 | 3 | 0.3 (0, 1) | 1 |
-| Medium | 77 | 11 | **1.1** (0 to 3; 7 of 10 matches in QA's 1 to 4) | 5 |
-| Hard | 127 | 31 | 3.1 (1 to 6) | 7 |
-
-With `chase` off: none.
-
-**The chase rarely catches.**
-- The chaser's top speed is mostly 800 to 1,400 u/s, his dash, against a glide of about 1,500. So 7 of medium's 11 chases ran out at 90 ticks with the body still in flight.
-- At the landing he is a median 4,000 units behind (1,100 to 11,500).
-
-That is the open question for Game Design: chase at the glide's speed, for example by paying the zip's ki for it, or let it stay a gesture the camera rides.
-
-**The gate list** (switches off, with the wall kick): 34 of 35 at 0, anim_check main's known red then. The golden is main's, byte for byte.
-
-## Probe (`probes/chp.gd`, from a copy's root)
-
-`chp.gd -- <matches> <seed0> [--level=easy|medium|hard] [--off]`. It reads:
-- sends, chases, the sky share and chases a match;
-- the chaser's top speed;
-- the gap at the landing;
-- how each chase ended.
+The probe (`probes/chp.gd`: the AI's catch share by level against QA's 60%, and a player's chase) and the gate list were queued and **didn't run** before the break. The 5d reads of the earlier build (a dash chase that rarely caught) are superseded.

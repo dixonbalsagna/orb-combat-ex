@@ -1,67 +1,119 @@
 extends SceneTree
-## Probe (5d): the AI's chase of a launch it threw, AI v AI, chase on in memory, at a level. Reads: its sends (launch
-## events by an AI), chases started (chase cue "start"), those on a sky send, chases a match (QA's row: 1 to 4), the
-## chaser's top speed in a chase, the gap to the sent body when he lands (his first tick not launched), and how each
-## chase ended; with --off, no chase may start.
-## -- <matches> <seed0> [--level=medium] [--off] [--ticks=10800]
+## Probe (7c): the chase of a launch is the zip; data/director/interrupts.json chase on in memory.
+##  --mode=ai: AI v AI at a level. Chases (cue chase start), catches, landings, stops; the catch share (QA: at least 60%);
+##    chases a match; the ki each paid; the chaser's speed.
+##  --mode=player: slot 0 a player sends slot 1 across (the launch planner at 1,800), then presses X with LT held 4 ticks
+##    after; for 150 ticks: the chase's start, its speed, the catch (and the send on after it) or the landing, the ki paid.
+## -- <matches> <seed0> [--mode=ai|player] [--level=medium] [--ticks=10800]
 
 
 func _init() -> void:
 	var args: PackedStringArray = OS.get_cmdline_user_args()
 	var n: int = int(args[0]) if args.size() > 0 else 5
 	var seed0: int = int(args[1]) if args.size() > 1 else 1
+	var mode := "ai"
 	var ticks := 10800
 	for s in args:
-		if s.begins_with("--ticks="):
-			ticks = int(s.substr(8))
+		if s.begins_with("--mode="):
+			mode = s.substr(7)
 		elif s.begins_with("--level="):
 			DirAI.level = s.substr(8)
-	if not args.has("--off"):
-		DirAI.skill()["chase"]["enabled"] = true
-	var r := {"level": DirAI.level if DirAI.level != "" else "default", "on": DirChase.on(), "matches": n, "sends": 0, "chases": 0, "sky": 0, "perMatch": [], "topSpeed": [], "gapAtLanding": [], "ended": {}, "minutes": 0.0}
-	for m in range(n):
-		var S := SimCore.createSim()
-		SimCore.newMatch(S, seed0 + m, {}, {})
-		var here := 0
-		var chasing := [-1, -1]   # the sent fighter's slot each chaser is after, or -1
-		var top := [0.0, 0.0]
-		var wasLaunched := [false, false]
-		for t in range(ticks):
-			SimCore.step(S)
-			for e in S.out.fx:
-				var ty: String = String(e.type)
-				if ty == "launch":
-					r.sends += 1
-				elif ty == "cue" and String(e.kind) == "chase":
-					var a: int = int(e.actor)
-					if String(e.text) == "start":
-						r.chases += 1
-						here += 1
-						chasing[a] = int(e.target)
-						top[a] = 0.0
-						if DirChase._sky(S, S.fighters[int(e.target)]):
-							r.sky += 1
-					else:
-						var why: String = "landed" if S.fighters[int(e.target)].state != "launched" else S.fighters[a].state
-						r.ended[why] = int(r.ended.get(why, 0)) + 1
-						r.topSpeed.append(int(top[a]))
-						chasing[a] = -1
-			for a in range(2):
-				if chasing[a] >= 0:
-					top[a] = maxf(top[a], SimDetMath.hypot(S.fighters[a].vx, S.fighters[a].vy))
-			for k in range(2):
-				var f = S.fighters[k]
-				if wasLaunched[k] and f.state != "launched" and chasing[1 - k] == k:
-					r.gapAtLanding.append(int(DirBands.dist(S.fighters[1 - k], f)))
-				wasLaunched[k] = f.state == "launched"
-			S.out.fx.clear()
-			S.out.feed.clear()
-			if S.game.ko != null:
-				break
-		r.perMatch.append(here)
-		r.minutes += S.T / 60.0
-	r["minutes"] = snappedf(r.minutes, 0.1)
-	r.topSpeed.sort()
-	r.gapAtLanding.sort()
+		elif s.begins_with("--ticks="):
+			ticks = int(s.substr(8))
+	DirInterrupt.data()["chase"]["enabled"] = true
+	var r := {"mode": mode, "level": DirAI.level if DirAI.level != "" else "default", "on": DirChase.on()}
+	if mode == "player":
+		r["runs"] = []
+		for m in range(n):
+			r.runs.append(_player(seed0 + m))
+	else:
+		r["matches"] = n
+		r["chases"] = {"start": 0, "catch": 0, "landing": 0, "stopped": 0}
+		r["perMatch"] = []
+		r["kiPaid"] = {}
+		r["speeds"] = []
+		r["minutes"] = 0.0
+		for m in range(n):
+			var S := SimCore.createSim()
+			SimCore.newMatch(S, seed0 + m, {}, {})
+			var here := 0
+			for t in range(ticks):
+				var k0 := [S.fighters[0].ki, S.fighters[1].ki]
+				SimCore.step(S)
+				for e in S.out.fx:
+					if String(e.type) == "cue" and String(e.kind) == "chase":
+						var tx: String = String(e.text)
+						r.chases[tx] = int(r.chases.get(tx, 0)) + 1
+						if tx == "start":
+							here += 1
+							var a: int = int(e.actor)
+							var paid: int = int(round(float(k0[a]) - S.fighters[a].ki))
+							r.kiPaid[str(paid)] = int(r.kiPaid.get(str(paid), 0)) + 1
+							r.speeds.append(int(e.amount))
+				S.out.fx.clear()
+				S.out.feed.clear()
+				if S.game.ko != null:
+					break
+			r.perMatch.append(here)
+			r.minutes += S.T / 60.0
+		r["minutes"] = snappedf(r.minutes, 0.1)
+		r["catchShare"] = snappedf(float(r.chases.catch) / maxf(1.0, float(r.chases.start)), 0.01)
+		r.speeds.sort()
 	print(JSON.stringify(r))
 	quit()
+
+
+func _player(seed: int) -> Dictionary:
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, seed, {"p1": false, "p2": false}, {"v2": [true, true], "intro": false})
+	for k in range(60):
+		SimCore.step(S, [SimIntent.new(), SimIntent.new()])
+	S.out.fx.clear()
+	S.out.feed.clear()
+	var me = S.fighters[0]
+	var it = S.fighters[1]
+	S.dirS.ex = null
+	S.dirS.cool = 0.0
+	for f in [me, it]:
+		f.state = "free"
+		f.rush = null
+		f.vx = 0.0
+		f.vy = 0.0
+		f.stunTicks = 0
+	it.x = SimWrap.wrap(me.x + 150.0)
+	me.y = WorldTerrain.groundY(S, me.x) + 120.0
+	it.y = me.y
+	me.ki = 100.0
+	var plan: Dictionary = DirLaunch.chooseLaunch(S, me, it, 1800.0, true)
+	if plan.is_empty():
+		return {"err": "no plan"}
+	DirLaunch.doLaunch(S, me, it, plan, 1800.0)
+	var out := {"plan": String(plan.get("name", "")), "start": -1, "speed": 0, "catch": -1, "landing": -1, "stopped": -1, "sendOn": "", "kiPaid": 0, "gapAtEnd": -1}
+	var ki0: float = me.ki
+	for k in range(150):
+		var i := SimIntent.new()
+		if k == 4:
+			i.light = true
+			i.stanceMask = DirZip.LT
+		elif k > 4:
+			i.stanceMask = DirZip.LT
+		SimCore.step(S, [i, SimIntent.new()])
+		for e in S.out.fx:
+			var ty: String = String(e.type)
+			if ty == "cue" and String(e.kind) == "chase" and int(e.actor) == 0:
+				var tx: String = String(e.text)
+				if out.get(tx, -2) is int and int(out[tx]) == -1:
+					out[tx] = k
+				if tx == "start":
+					out.speed = int(e.amount)
+					out.kiPaid = int(round(ki0 - me.ki))
+				if tx != "start":
+					out.gapAtEnd = int(DirBands.dist(me, it))
+			elif ty == "launch" and int(e.actor) == 1 and out.catch >= 0 and out.sendOn == "":
+				out.sendOn = "sent on at " + str(int(e.amount)) + " u/s"
+		S.out.fx.clear()
+		S.out.feed.clear()
+		if out.catch >= 0 or out.landing >= 0 or out.stopped >= 0:
+			if k > 20 + maxi(int(out.catch), maxi(int(out.landing), int(out.stopped))):
+				break
+	return out
