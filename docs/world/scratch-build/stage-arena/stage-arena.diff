@@ -1,0 +1,379 @@
+diff --git a/data/biomes/rings.json b/data/biomes/rings.json
+index 9d5bff9..4f03fa0 100644
+--- a/data/biomes/rings.json
++++ b/data/biomes/rings.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": "biomes.rings/1",
+-  "_about": "The ring picker's numbers (docs/world/shifting-arena-design.md window 4; WorldRingPick). sizes: the columns of Game Design's three sizes (Close 38,400 units, Half 76,800, Whole 153,600). minimum: what a ring must hold by size (standing cities and towns, kinds of ground of at least biomeShare of the ring, and the share that is land). candidates: how many rings are tried for a claim at a size. stride: columns between the coarse read's samples. ref: the share of the ring (or the count) at which a claim's suit counts in full. mustAt: the least value of a must-cross feature. avoidWeight: how much of an avoided feature's value comes off the score. homeBonus: added when the ring holds the claim's home place. coastRef: coast crossings (water to land and back) that count as a full coast. The claims themselves are Narrative's (docs/narrative/opponent_grounds.json) and are passed in; features the planet function cannot see are proxies (WorldRingPick.featureValue). turn: the calm-moment turn (docs/world/calm-turn-world.md; WorldEpoch; Game Design rulings-2026-10-19b.md 1a to 1d): on 0 or 1 (off), maxTurns a fight, gapSeconds of fight time between turns, driftDeg the most the ring's axis may move in all, bearings the candidate turns in degrees (none over 10), carryUnits how far each way from the pair the ground, craters and buildings stay, viewUnits how far each way a turn counts the places it brings into view, moveMax the most the ground under a fighter may move at a turn (a turn about a mispredicted pivot is scaled down to it: Game Design 2026-10-22 5a) minDeg the least angle it is scaled to warmCols the columns of each of a decided turn's rings the sim reads a tick and fallbackDeg the bearing of the second ring it warms (Encounter's pick may set its own).",
++  "_about": "The ring picker's numbers (docs/world/shifting-arena-design.md window 4; WorldRingPick). sizes: the columns of Game Design's three sizes (Close 38,400 units, Half 76,800, Whole 153,600). minimum: what a ring must hold by size (standing cities and towns, kinds of ground of at least biomeShare of the ring, and the share that is land). candidates: how many rings are tried for a claim at a size. stride: columns between the coarse read's samples. ref: the share of the ring (or the count) at which a claim's suit counts in full. mustAt: the least value of a must-cross feature. avoidWeight: how much of an avoided feature's value comes off the score. homeBonus: added when the ring holds the claim's home place. coastRef: coast crossings (water to land and back) that count as a full coast. The claims themselves are Narrative's (docs/narrative/opponent_grounds.json) and are passed in; features the planet function cannot see are proxies (WorldRingPick.featureValue). turn: the calm-moment turn (docs/world/calm-turn-world.md; WorldEpoch; Game Design rulings-2026-10-19b.md 1a to 1d): on 0 or 1 (off), maxTurns a fight, gapSeconds of fight time between turns, driftDeg the most the ring's axis may move in all, bearings the candidate turns in degrees (none over 10), carryUnits how far each way from the pair the ground, craters and buildings stay, viewUnits how far each way a turn counts the places it brings into view, moveMax the most the ground under a fighter may move at a turn (a turn about a mispredicted pivot is scaled down to it: Game Design 2026-10-22 5a) minDeg the least angle it is scaled to warmCols the columns of each of a decided turn's rings the sim reads a tick and fallbackDeg the bearing of the second ring it warms (Encounter's pick may set its own). stage: the run's story stages (WorldRingPick.stageArena): claimKey names the key of the opponent's claim (Narrative's data/narrative/opponent_grounds.json, size.early, size.mid, size.boss) that gives a stage kind's size (the stage before the boss reads the middle size), proving the size of a Proving ground (Game Design 2c, rulings-2026-10-19b section 3). The first fight (a Close ring round the player's home) and the boss (the Whole circle through his home) are not read from a claim.",
+   "sizes": {
+     "close": 1200,
+     "half": 2400,
+@@ -55,5 +55,14 @@
+     "minDeg": 2.0,
+     "warmCols": 32,
+     "fallbackDeg": 2.5
++  },
++  "stage": {
++    "claimKey": {
++      "early": "early",
++      "mid": "mid",
++      "late": "mid",
++      "boss": "boss"
++    },
++    "proving": "close"
+   }
+ }
+diff --git a/sim/world/ringpick.gd b/sim/world/ringpick.gd
+index b1f4915..bd3b7fb 100644
+--- a/sim/world/ringpick.gd
++++ b/sim/world/ringpick.gd
+@@ -68,6 +68,8 @@ static func _cLoad() -> void:
+ 				_cErrors.append("rings.json: sizes.%s is a multiple of 8 columns (the ground's largest stride)" % sz)
+ 	if not (j.get("turn") is Dictionary):
+ 		_cErrors.append("rings.json: turn is an object")
++	if not (j.get("stage") is Dictionary and j.stage.get("claimKey") is Dictionary and ["close", "half", "whole"].has(str(j.stage.get("proving", "")))):
++		_cErrors.append("rings.json: stage has claimKey and proving")
+ 	for k in ["stride", "biomeShare", "ref", "mustAt", "avoidWeight", "homeBonus", "coastRef"]:
+ 		if not (j.get(k) is float or j.get(k) is int):
+ 			_cErrors.append("rings.json: %s is a number" % k)
+@@ -467,3 +469,127 @@ static func bossRing(P: WorldPlanet.Planet, homeId: int, standing: PackedByteArr
+ 	if _dot(cr, cr) < 1.0e-12:
+ 		return null
+ 	return {"c": WorldPlanet._unit(cr), "t": a, "cols": SimConst.PLANET_NC, "other": best}
++
++
++# ===================================================================== story stages
++
++const GROUNDS_PATH := "res://data/narrative/opponent_grounds.json"
++static var _grounds: Dictionary = {}   # Narrative's claims by roster id: a pure read of a data file, memoised outside the sim state
++
++
++## Narrative's claims (data/narrative/opponent_grounds.json), by the opponent's roster id (RIVAL, EMPRESS, CYBORG, PROTAGONIST). {} if the file cannot be read.
++static func grounds() -> Dictionary:
++	if _grounds.is_empty():
++		var j = JSON.parse_string(FileAccess.get_file_as_string(GROUNDS_PATH))
++		if j is Dictionary and j.get("claims") is Dictionary:
++			_grounds = j.claims
++	return _grounds
++
++
++## The stand-in home until Orb names the homes (homework 39): the most populous city still standing (ties to the lower id); the most populous place if no city stands; -1 if nothing does.
++static func standInHome(P: WorldPlanet.Planet, standing: PackedByteArray = PackedByteArray()) -> int:
++	var best: int = -1
++	for pass_ in range(2):
++		for i in range(P.n):
++			if standing.size() > 0 and standing[i] == 0:
++				continue
++			if pass_ == 0 and int(P.kind[i]) != WorldPlanet.KIND_CITY:
++				continue
++			if best < 0 or P.people[i] > P.people[best]:
++				best = i
++		if best >= 0:
++			break
++	return best
++
++
++## The ring for a stage of a run, in steps (the host spends a few candidates a frame across the previous stage's beats: `step(n)`, true when it is made; `result` then). stage:
++##   kind       "first" (a Close ring round the player's home), "early", "mid", "late" (the stage before the boss), "proving" (a Proving ground), "boss" (the Whole circle through the boss's home and
++##              the most populous place still standing)
++##   opponent   the opponent's roster id (the key of his claim); a first stage and a boss's ring read no claim
++##   home       a place id: the player's home for "first", the boss's for "boss", the claim's for the rest (-1: none). Absent: standInHome
++##   standing   the places still standing (a byte each, as WorldPlanet's); absent: all
++##   damaged    the wear (the picker's `damaged`); absent: none
++##   size       "close", "half" or "whole": a size forced in place of the claim's (absent: the claim's, by data/biomes/rings.json stage.claimKey; a Proving ground's by stage.proving)
++## `stream`: the run's seeded stream for this stage (the picker's, as pick takes it). A pure function of the planet, the stage, the stream and the data, so a run replays.
++## result: {ok, arena (setup.arena: {cols, c, t} as exact bits), spec {c, t, cols}, stage, opponent, size, home, place, kind, score, must, relaxed, tried}, or {ok: false, error, arena: {}}.
++static func beginStage(P: WorldPlanet.Planet, stage: Dictionary, stream: int) -> StageJob:
++	var j := StageJob.new()
++	j.P = P
++	j.stage = stage
++	var kind: String = str(stage.get("kind", "early"))
++	var opp: String = str(stage.get("opponent", ""))
++	var standing: PackedByteArray = stage.get("standing", PackedByteArray())
++	var home: int = int(stage.home) if stage.has("home") else standInHome(P, standing)
++	j.home = home
++	if kind == "first":
++		if home < 0:
++			return j._fail("no home to fight round")
++		return j._made(firstRing(P, home, stream), "close", home, home, "round")
++	if kind == "boss":
++		var br = bossRing(P, home, standing) if home >= 0 else null
++		if br != null:
++			return j._made({"c": br.c, "t": br.t, "cols": br.cols}, "whole", home, int(br.other), "through")
++		pass   # no ring through two places: the claim's own Whole pick, below
++	var claims: Dictionary = grounds()
++	if not claims.has(opp):
++		return j._fail("no claim for '%s'" % opp)
++	var claim: Dictionary = claims[opp]
++	var sz: String = str(stage["size"]) if stage.has("size") else ""
++	if sz == "":
++		if kind == "proving":
++			sz = str(cfg().stage.proving)
++		else:
++			var key: String = str(cfg().stage.claimKey.get(kind, "mid"))
++			sz = str(claim.get("size", {}).get(key, "half"))
++	j.size = sz
++	j._pick = beginPick(P, claim, sz, stream, {"standing": standing, "damaged": stage.get("damaged", []), "home": home})
++	j.total = j._pick.cands.size()
++	return j
++
++
++## The same, all at once (a tool, a test, a host that does not mind the wait: 120 to 330 ms native).
++static func stageArena(P: WorldPlanet.Planet, stage: Dictionary, stream: int) -> Dictionary:
++	var job: StageJob = beginStage(P, stage, stream)
++	job.finishNow()
++	return job.result
++
++
++class StageJob extends RefCounted:
++	var P: WorldPlanet.Planet
++	var stage: Dictionary = {}
++	var home: int = -1
++	var size: String = ""
++	var total: int = 0          # candidates to read (0 for a first stage or a boss's ring: made at once)
++	var done: bool = false
++	var result: Dictionary = {}
++	var _pick: WorldRingPick.PickJob = null
++
++	## Reads up to n more candidates; true when the stage's ring is made.
++	func step(n: int) -> bool:
++		if not done and _pick != null and _pick.step(n):
++			var r: Dictionary = _pick.result
++			result = {"ok": r.ok, "arena": WorldRingPick.arenaOf(r.spec), "spec": r.spec, "stage": str(stage.get("kind", "early")), "opponent": str(stage.get("opponent", "")), "size": size, "home": home,
++				"place": r.place, "kind": r.kind, "score": r.score, "must": r.must, "relaxed": r.relaxed, "tried": r.tried}
++			done = true
++		return done
++
++	func finishNow() -> void:
++		step(1 << 30)
++
++	## 0 to 1: how much of the pick is read (a ring made at once is 1).
++	func progress() -> float:
++		if done or _pick == null:
++			return 1.0
++		return float(_pick.evs.size()) / float(maxi(total, 1))
++
++	func _made(spec: Dictionary, sz: String, homeId: int, place: int, kind: String) -> StageJob:
++		size = sz
++		result = {"ok": true, "arena": WorldRingPick.arenaOf(spec), "spec": spec, "stage": str(stage.get("kind", "early")), "opponent": str(stage.get("opponent", "")), "size": sz, "home": homeId,
++			"place": place, "kind": kind, "score": 0.0, "must": true, "relaxed": false, "tried": 0}
++		done = true
++		return self
++
++	func _fail(why: String) -> StageJob:
++		result = {"ok": false, "error": why, "arena": {}, "spec": {}, "stage": str(stage.get("kind", "early")), "opponent": str(stage.get("opponent", ""))}
++		done = true
++		return self
+diff --git a/sim/world/tools/stage_check.gd b/sim/world/tools/stage_check.gd
+new file mode 100644
+index 0000000..b55f8ce
+--- /dev/null
++++ b/sim/world/tools/stage_check.gd
+@@ -0,0 +1,88 @@
++extends SceneTree
++# The ring picker's story-stage entry point (WorldRingPick.stageArena / beginStage / StageJob; data/biomes/rings.json stage):
++#   godot --headless --path . --script res://sim/world/tools/stage_check.gd
++var fails: int = 0
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func _init() -> void:
++	ok(WorldRingPick.dataErrors().is_empty(), "rings.json is clean with its stage block (%s)" % str(WorldRingPick.dataErrors()))
++	var claims: Dictionary = WorldRingPick.grounds()
++	ok(claims.keys() == ["RIVAL", "EMPRESS", "CYBORG", "PROTAGONIST"], "Narrative's claims load by roster id (%s)" % str(claims.keys()))
++	var P := WorldPlanet.make(7)
++	var home: int = WorldRingPick.standInHome(P)
++	var other: int = -1
++	for i in range(P.n):
++		if i != home and int(P.kind[i]) == WorldPlanet.KIND_CITY and (other < 0 or P.people[i] > P.people[other]):
++			other = i
++	ok(home >= 0 and int(P.kind[home]) == WorldPlanet.KIND_CITY and WorldRingPick.standInHome(P, PackedByteArray()) == home, "the stand-in home is the most populous city (place %d of planet 7)" % home)
++	# --- the first stage: a Close ring round the player's home
++	var f: Dictionary = WorldRingPick.stageArena(P, {"kind": "first", "opponent": "RIVAL"}, 11)
++	var fr: Dictionary = WorldRingPick.firstRing(P, home, 11)
++	var back: Dictionary = WorldRingPick.ringOfArena(JSON.parse_string(JSON.stringify(f.arena)))
++	var ring: Dictionary = WorldRingPick.ringFrom(fr.c, fr.cols, fr.t)
++	ok(f.ok and f.size == "close" and f.arena.cols == 1200 and f.spec.cols == fr.cols and f.spec.c == fr.c and f.spec.t == fr.t and f.spec.c[0] * P.px[home] + f.spec.c[1] * P.py[home] + f.spec.c[2] * P.pz[home] > 0.999999 and back.c == ring.c, "kind first: the Close ring centred on the home (firstRing), through setup.arena and JSON bit for bit")
++	# --- the boss: the Whole circle through the home and the next most populous place
++	var b: Dictionary = WorldRingPick.stageArena(P, {"kind": "boss", "opponent": "EMPRESS"}, 12)
++	var br = WorldRingPick.bossRing(P, home, PackedByteArray())
++	ok(b.ok and b.size == "whole" and b.arena.cols == 4800 and b.place == int(br.other) and b.spec.c == br.c and b.kind == "through", "kind boss: the Whole circle through the home and place %d, the most populous other (bossRing)" % b.place)
++	# --- the picks: sizes by claim and kind
++	var sizes := {}
++	for opp in ["RIVAL", "EMPRESS", "CYBORG", "PROTAGONIST"]:
++		for kind in ["early", "mid", "late", "proving"]:
++			var r: Dictionary = WorldRingPick.stageArena(P, {"kind": kind, "opponent": opp}, 21)
++			sizes["%s/%s" % [opp, kind]] = [r.size, r.ok]
++	var sizeOk: bool = sizes["RIVAL/early"][0] == "close" and sizes["EMPRESS/early"][0] == "half" and sizes["RIVAL/mid"][0] == "half" and sizes["CYBORG/late"][0] == "half" and sizes["PROTAGONIST/early"][0] == "close"
++	for k in sizes:
++		if k.ends_with("/proving") and sizes[k][0] != "close":
++			sizeOk = false
++	ok(sizeOk, "sizes: a claim's early, mid and late read its size keys (RIVAL early close, EMPRESS early half, mid and late half), a Proving ground is Close")
++	var okCount: int = 0
++	for k in sizes:
++		if sizes[k][1]:
++			okCount += 1
++	ok(okCount >= 14, "%d of 16 picks on planet 7 found a ring that meets their size's minimum" % okCount)
++	# --- stepped is the same as all at once, and the same twice
++	var stage := {"kind": "mid", "opponent": "CYBORG"}
++	var whole: Dictionary = WorldRingPick.stageArena(P, stage, 33)
++	var job: WorldRingPick.StageJob = WorldRingPick.beginStage(P, stage, 33)
++	var steps: int = 0
++	while not job.step(3):
++		steps += 1
++		if job.progress() > 1.0:
++			break
++	ok(job.done and JSON.stringify(job.result.arena) == JSON.stringify(whole.arena) and job.result.score == whole.score and steps > 5 and job.total > 10 and WorldRingPick.stageArena(P, stage, 33).arena == whole.arena, "a stepped pick (%d candidates, %d steps of 3) is the one made at once, and the same twice" % [job.total, steps + 1])
++	var different: bool = false
++	for sd in range(34, 40):
++		if WorldRingPick.stageArena(P, stage, sd).arena != whole.arena:
++			different = true
++	ok(different, "another stream gives another ring")
++	# --- the stage's inputs: standing, damaged, home, forced size, and errors
++	var standing := PackedByteArray()
++	standing.resize(P.n)
++	standing.fill(1)
++	standing[home] = 0
++	ok(WorldRingPick.standInHome(P, standing) != home and WorldRingPick.stageArena(P, {"kind": "boss", "standing": standing}, 5).place != home, "a fallen home is not the stand-in, nor a boss's second place")
++	var forced: Dictionary = WorldRingPick.stageArena(P, {"kind": "late", "opponent": "RIVAL", "size": "whole"}, 41)
++	ok(forced.size == "whole" and forced.arena.cols == 4800, "a size in the stage forces it")
++	var hnone: Dictionary = WorldRingPick.stageArena(P, {"kind": "early", "opponent": "RIVAL", "home": -1}, 42)
++	var hset: Dictionary = WorldRingPick.stageArena(P, {"kind": "early", "opponent": "RIVAL", "home": other}, 42)
++	ok(hnone.home == -1 and hset.home == other and hnone.ok and hset.ok, "home in the stage is used as given (-1 for none)")
++	var bad: Dictionary = WorldRingPick.stageArena(P, {"kind": "early", "opponent": "NOBODY"}, 1)
++	ok(not bad.ok and bad.has("error") and bad.arena.is_empty(), "an opponent with no claim is a refusal with its reason, not a crash")
++	# --- a stage's ring plays: the match takes setup.arena as it is
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {}, {"planet": 7, "touch": 3, "arena": f.arena, "intro": false})
++	var S2 := SimCore.createSim()
++	SimCore.newMatch(S2, 1, {}, {"planet": 7, "touch": 3, "arena": whole.arena, "intro": false})
++	for t in range(60):
++		SimCore.step(S)
++		SimCore.step(S2)
++	ok(S.arenaCols == 1200 and S2.arenaCols == int(whole.arena.cols) and S.fighters.size() == 2 and S2.buildings.size() >= 0, "a first stage and a mid stage's arenas play (%d and %d columns, 60 ticks each)" % [S.arenaCols, S2.arenaCols])
++	print("STAGE: %d check(s) failed" % fails)
++	quit()
+diff --git a/sim/world/tools/stage_check.gd.uid b/sim/world/tools/stage_check.gd.uid
+new file mode 100644
+index 0000000..ce92841
+--- /dev/null
++++ b/sim/world/tools/stage_check.gd.uid
+@@ -0,0 +1 @@
++uid://cl4ir0cyo1364
+diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
+index 7f21e00..06d8e33 100644
+--- a/tools/fixtures/cases.json
++++ b/tools/fixtures/cases.json
+@@ -292344,6 +292344,22 @@
+         "pointer": "/sizes/half"
+       }
+     },
++    {
++      "id": "rings-stage-proving-unknown",
++      "schema": "biomes-rings.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/rings.json",
++          "set": {
++            "/stage/proving": "tiny"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "enum",
++        "pointer": "/stage/proving"
++      }
++    },
+     {
+       "id": "rings-turn-bearing-over-10",
+       "schema": "biomes-rings.schema.json",
+diff --git a/tools/schemas/biomes-rings.schema.json b/tools/schemas/biomes-rings.schema.json
+index a1b40cd..d103a9f 100644
+--- a/tools/schemas/biomes-rings.schema.json
++++ b/tools/schemas/biomes-rings.schema.json
+@@ -16,7 +16,8 @@
+     "avoidWeight",
+     "homeBonus",
+     "coastRef",
+-    "turn"
++    "turn",
++    "stage"
+   ],
+   "properties": {
+     "schema": {
+@@ -341,6 +342,68 @@
+           "description": "The bearing in degrees of the second ring a decided turn warms (a landing off the pivot falls back to it), unless Encounter's pick brings its own; 0 for none."
+         }
+       }
++    },
++    "stage": {
++      "type": "object",
++      "required": [
++        "claimKey",
++        "proving"
++      ],
++      "additionalProperties": false,
++      "properties": {
++        "claimKey": {
++          "type": "object",
++          "required": [
++            "early",
++            "mid",
++            "late",
++            "boss"
++          ],
++          "additionalProperties": false,
++          "properties": {
++            "early": {
++              "enum": [
++                "early",
++                "mid",
++                "boss"
++              ],
++              "description": "The claim size key a stage in the run's first half reads."
++            },
++            "mid": {
++              "enum": [
++                "early",
++                "mid",
++                "boss"
++              ],
++              "description": "The claim size key a middle stage reads."
++            },
++            "late": {
++              "enum": [
++                "early",
++                "mid",
++                "boss"
++              ],
++              "description": "The claim size key the stage before the boss reads."
++            },
++            "boss": {
++              "enum": [
++                "early",
++                "mid",
++                "boss"
++              ],
++              "description": "The claim size key the boss's pick reads when it has no ring through two places (the fallback)."
++            }
++          }
++        },
++        "proving": {
++          "enum": [
++            "close",
++            "half",
++            "whole"
++          ],
++          "description": "The size of a Proving ground (Game Design 2c: Close)."
++        }
++      }
+     }
+   },
+   "additionalProperties": false

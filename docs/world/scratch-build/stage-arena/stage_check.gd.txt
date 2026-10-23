@@ -1,0 +1,88 @@
+extends SceneTree
+# The ring picker's story-stage entry point (WorldRingPick.stageArena / beginStage / StageJob; data/biomes/rings.json stage):
+#   godot --headless --path . --script res://sim/world/tools/stage_check.gd
+var fails: int = 0
+
+
+func ok(c: bool, w: String) -> void:
+	print("  %s  %s" % ["ok  " if c else "FAIL", w])
+	if not c:
+		fails += 1
+
+
+func _init() -> void:
+	ok(WorldRingPick.dataErrors().is_empty(), "rings.json is clean with its stage block (%s)" % str(WorldRingPick.dataErrors()))
+	var claims: Dictionary = WorldRingPick.grounds()
+	ok(claims.keys() == ["RIVAL", "EMPRESS", "CYBORG", "PROTAGONIST"], "Narrative's claims load by roster id (%s)" % str(claims.keys()))
+	var P := WorldPlanet.make(7)
+	var home: int = WorldRingPick.standInHome(P)
+	var other: int = -1
+	for i in range(P.n):
+		if i != home and int(P.kind[i]) == WorldPlanet.KIND_CITY and (other < 0 or P.people[i] > P.people[other]):
+			other = i
+	ok(home >= 0 and int(P.kind[home]) == WorldPlanet.KIND_CITY and WorldRingPick.standInHome(P, PackedByteArray()) == home, "the stand-in home is the most populous city (place %d of planet 7)" % home)
+	# --- the first stage: a Close ring round the player's home
+	var f: Dictionary = WorldRingPick.stageArena(P, {"kind": "first", "opponent": "RIVAL"}, 11)
+	var fr: Dictionary = WorldRingPick.firstRing(P, home, 11)
+	var back: Dictionary = WorldRingPick.ringOfArena(JSON.parse_string(JSON.stringify(f.arena)))
+	var ring: Dictionary = WorldRingPick.ringFrom(fr.c, fr.cols, fr.t)
+	ok(f.ok and f.size == "close" and f.arena.cols == 1200 and f.spec.cols == fr.cols and f.spec.c == fr.c and f.spec.t == fr.t and f.spec.c[0] * P.px[home] + f.spec.c[1] * P.py[home] + f.spec.c[2] * P.pz[home] > 0.999999 and back.c == ring.c, "kind first: the Close ring centred on the home (firstRing), through setup.arena and JSON bit for bit")
+	# --- the boss: the Whole circle through the home and the next most populous place
+	var b: Dictionary = WorldRingPick.stageArena(P, {"kind": "boss", "opponent": "EMPRESS"}, 12)
+	var br = WorldRingPick.bossRing(P, home, PackedByteArray())
+	ok(b.ok and b.size == "whole" and b.arena.cols == 4800 and b.place == int(br.other) and b.spec.c == br.c and b.kind == "through", "kind boss: the Whole circle through the home and place %d, the most populous other (bossRing)" % b.place)
+	# --- the picks: sizes by claim and kind
+	var sizes := {}
+	for opp in ["RIVAL", "EMPRESS", "CYBORG", "PROTAGONIST"]:
+		for kind in ["early", "mid", "late", "proving"]:
+			var r: Dictionary = WorldRingPick.stageArena(P, {"kind": kind, "opponent": opp}, 21)
+			sizes["%s/%s" % [opp, kind]] = [r.size, r.ok]
+	var sizeOk: bool = sizes["RIVAL/early"][0] == "close" and sizes["EMPRESS/early"][0] == "half" and sizes["RIVAL/mid"][0] == "half" and sizes["CYBORG/late"][0] == "half" and sizes["PROTAGONIST/early"][0] == "close"
+	for k in sizes:
+		if k.ends_with("/proving") and sizes[k][0] != "close":
+			sizeOk = false
+	ok(sizeOk, "sizes: a claim's early, mid and late read its size keys (RIVAL early close, EMPRESS early half, mid and late half), a Proving ground is Close")
+	var okCount: int = 0
+	for k in sizes:
+		if sizes[k][1]:
+			okCount += 1
+	ok(okCount >= 14, "%d of 16 picks on planet 7 found a ring that meets their size's minimum" % okCount)
+	# --- stepped is the same as all at once, and the same twice
+	var stage := {"kind": "mid", "opponent": "CYBORG"}
+	var whole: Dictionary = WorldRingPick.stageArena(P, stage, 33)
+	var job: WorldRingPick.StageJob = WorldRingPick.beginStage(P, stage, 33)
+	var steps: int = 0
+	while not job.step(3):
+		steps += 1
+		if job.progress() > 1.0:
+			break
+	ok(job.done and JSON.stringify(job.result.arena) == JSON.stringify(whole.arena) and job.result.score == whole.score and steps > 5 and job.total > 10 and WorldRingPick.stageArena(P, stage, 33).arena == whole.arena, "a stepped pick (%d candidates, %d steps of 3) is the one made at once, and the same twice" % [job.total, steps + 1])
+	var different: bool = false
+	for sd in range(34, 40):
+		if WorldRingPick.stageArena(P, stage, sd).arena != whole.arena:
+			different = true
+	ok(different, "another stream gives another ring")
+	# --- the stage's inputs: standing, damaged, home, forced size, and errors
+	var standing := PackedByteArray()
+	standing.resize(P.n)
+	standing.fill(1)
+	standing[home] = 0
+	ok(WorldRingPick.standInHome(P, standing) != home and WorldRingPick.stageArena(P, {"kind": "boss", "standing": standing}, 5).place != home, "a fallen home is not the stand-in, nor a boss's second place")
+	var forced: Dictionary = WorldRingPick.stageArena(P, {"kind": "late", "opponent": "RIVAL", "size": "whole"}, 41)
+	ok(forced.size == "whole" and forced.arena.cols == 4800, "a size in the stage forces it")
+	var hnone: Dictionary = WorldRingPick.stageArena(P, {"kind": "early", "opponent": "RIVAL", "home": -1}, 42)
+	var hset: Dictionary = WorldRingPick.stageArena(P, {"kind": "early", "opponent": "RIVAL", "home": other}, 42)
+	ok(hnone.home == -1 and hset.home == other and hnone.ok and hset.ok, "home in the stage is used as given (-1 for none)")
+	var bad: Dictionary = WorldRingPick.stageArena(P, {"kind": "early", "opponent": "NOBODY"}, 1)
+	ok(not bad.ok and bad.has("error") and bad.arena.is_empty(), "an opponent with no claim is a refusal with its reason, not a crash")
+	# --- a stage's ring plays: the match takes setup.arena as it is
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 1, {}, {"planet": 7, "touch": 3, "arena": f.arena, "intro": false})
+	var S2 := SimCore.createSim()
+	SimCore.newMatch(S2, 1, {}, {"planet": 7, "touch": 3, "arena": whole.arena, "intro": false})
+	for t in range(60):
+		SimCore.step(S)
+		SimCore.step(S2)
+	ok(S.arenaCols == 1200 and S2.arenaCols == int(whole.arena.cols) and S.fighters.size() == 2 and S2.buildings.size() >= 0, "a first stage and a mid stage's arenas play (%d and %d columns, 60 ticks each)" % [S.arenaCols, S2.arenaCols])
+	print("STAGE: %d check(s) failed" % fails)
+	quit()

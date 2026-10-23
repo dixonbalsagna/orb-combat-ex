@@ -30,3 +30,7 @@ Re-cut 2026-10-22 on e09dbbbf (the arena_turn event at the end of the pass list,
 ## For the others
 
 See `docs/world/calm-turn-world.md`: Simulation's lines (`state.gd`, `hash.gd`, `view/fx.gd`, `sim.gd`), Tools' case, Encounter's `DirCalm` calls, Rendering's and Camera's `arena_turn` event, Game Design's first values. 
+
+## The ground rule to 450 units (Game Design 2026-10-23, ruling 3), parked: `move-450.diff`
+
+`data/biomes/rings.json` `turn.moveMax` 300 to 450 at every size, with `epoch.gd`'s comments and `epoch_check`'s pivots and thresholds following the data (`mk_move450.py`). At 450 a turn takes the chosen 10 degrees up to 2,590 units off the pivot, the 2.5 degree ring up to 10,300, waits up to 12,900 and is refused past it; `epoch_check` pivots 0 / 3,600 / 11,000 / 12,000 / 14,000 / 40,000 give 10 degrees, 2.5, waits, waits, refused, refused. Proved: `epoch_check` 0 of 41 failed, World's other 14 checks, `run-all` 5 of 5 (the golden unchanged), Rendering's 15 gates. Encounter's `DirCalm` reads `moveMax` from the data, so it follows.
