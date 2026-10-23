@@ -18,6 +18,7 @@ var hs := PackedFloat32Array()
 var bs := PackedByteArray()
 var next: int = 0
 var done: bool = false
+var sites := PackedByteArray()   # the settlements' layer, whole from the start: 0 none, 1 a town's ground, 2 a city's (each place's own radius, WorldPlanet's), as the map's texels see it
 
 
 func _init(p: WorldPlanet.Planet, size: int = 256) -> void:
@@ -25,6 +26,47 @@ func _init(p: WorldPlanet.Planet, size: int = 256) -> void:
 	n = size
 	hs.resize(n * n)
 	bs.resize(n * n)
+	sites.resize(n * n)
+	sites.fill(0)
+	_mark_sites()
+
+
+## The settlements' layer: every texel whose centre lies within a place's radius of its centre (and the texel that holds the centre, however small the place) is its kind's; a city over a town.
+## About 1.4 degrees (600 units) a texel at 256 against radii of 2,400 (a town) and 6,500 (a city) units.
+func _mark_sites() -> void:
+	var inv: float = 1.0 / float(n)
+	for k in range(P.n):
+		var kind: int = 2 if int(P.kind[k]) == WorldPlanet.KIND_CITY else 1
+		var rad: float = float(P.rad[k])
+		var cx: float = P.px[k]
+		var cy: float = P.py[k]
+		var cz: float = P.pz[k]
+		var t: Vector2 = _uv(cx, cy, cz)
+		var ci: int = int(floor(t.x + 0.5))
+		var cj: int = int(floor(t.y + 0.5))
+		var w: int = int(ceil(rad / (P.R * 1.77 * inv))) + 1   # a texel is at most about twice its mean angle (3.54 / n radians) across
+		var chord: float = rad / P.R
+		for j in range(maxi(0, cj - w), mini(n, cj + w + 1)):
+			for i in range(maxi(0, ci - w), mini(n, ci + w + 1)):
+				var d: Array = decode((float(i) + 0.5) * inv, (float(j) + 0.5) * inv)
+				var dx: float = d[0] - cx
+				var dy: float = d[1] - cy
+				var dz: float = d[2] - cz
+				if sqrt(dx * dx + dy * dy + dz * dz) <= chord:
+					sites[j * n + i] = maxi(int(sites[j * n + i]), kind)
+		if ci >= 0 and ci < n and cj >= 0 and cj < n:
+			sites[cj * n + ci] = maxi(int(sites[cj * n + ci]), kind)
+
+
+## The places beside a ring (WorldPlanet.farPlaces) within `maxLateral` units, for drawing a distant town or city where it stands.
+func places(ring: Dictionary, maxLateral: float = 1.0e18) -> Array:
+	return WorldPlanet.farPlaces(P, ring, maxLateral)
+
+
+## The settlement under a unit vector: 0 none, 1 a town's ground, 2 a city's (the nearest texel's, as biome()).
+func site(qx: float, qy: float, qz: float) -> int:
+	var t: Vector2 = _uv(qx, qy, qz)
+	return sites[_tex(int(floor(t.x + 0.5)), int(floor(t.y + 0.5)))]
 
 
 ## Read `count` more texels; true when the map is whole.
@@ -106,7 +148,7 @@ func biome(qx: float, qy: float, qz: float) -> int:
 	return bs[_tex(int(floor(t.x + 0.5)), int(floor(t.y + 0.5)))]
 
 
-## WorldPlanet.farField's block of ground, read from the map: the height and biome at `ncols` columns of the ring from column c0 every `stride`, each moved sideways by each of `depths`. Index di * ncols + ci.
+## WorldPlanet.farField's block of ground, read from the map (and "s", the settlement under each sample: 0 none, 1 town, 2 city): the height and biome at `ncols` columns of the ring from column c0 every `stride`, each moved sideways by each of `depths`. Index di * ncols + ci.
 func field(ring: Dictionary, c0: int, ncols: int, stride: int, depths: PackedFloat64Array) -> Dictionary:
 	var m: Array = ring.get("c", ring.n)
 	var px := PackedFloat64Array()
@@ -133,8 +175,10 @@ func field(ring: Dictionary, c0: int, ncols: int, stride: int, depths: PackedFlo
 		tz[ci] = t[2]
 	var hout := PackedFloat64Array()
 	var bout := PackedByteArray()
+	var sout := PackedByteArray()
 	hout.resize(ncols * depths.size())
 	bout.resize(ncols * depths.size())
+	sout.resize(ncols * depths.size())
 	for di in range(depths.size()):
 		var z: float = depths[di]
 		var co: float = 1.0
@@ -149,4 +193,5 @@ func field(ring: Dictionary, c0: int, ncols: int, stride: int, depths: PackedFlo
 			var qz: float = pz[ci] * co + tz[ci] * si
 			hout[di * ncols + ci] = height(qx, qy, qz)
 			bout[di * ncols + ci] = biome(qx, qy, qz)
-	return {"h": hout, "b": bout}
+			sout[di * ncols + ci] = site(qx, qy, qz)
+	return {"h": hout, "b": bout, "s": sout}

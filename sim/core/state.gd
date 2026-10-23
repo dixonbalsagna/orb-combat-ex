@@ -14,6 +14,7 @@ var game := Game.new()
 var arenaCols: int = 4800            # World: this match's arena length in columns (SimConst.setArena; newMatch sets it, step sets the static again when another match has changed it). Not hashed
 var planetCols := PackedByteArray()  # World: this match's planet world's biome by column (WorldBiomes.planetCols), kept for the same reason; empty for the hand-made world. Not hashed
 var worldId: int = 0                 # World: which world this match built (WorldBiomes.claim); step compares it with the last built. Not hashed
+var planetRing = {}                  # World: the ring this match's planet world plays on ({seed, c, t, cols}: the axis, the touch-down point and the columns, as WorldRingPick.ringFrom takes them), for a planet match with the calm-moment turn on or off, kept up to date at a turn; {} for the hand-made world. A renderer's far land reads it. Not hashed
 var epoch = null                      # World: the calm-moment turn's state (world/epoch.gd), a Dictionary while the arena may turn, else null. Hashed (hash.gd) only while set: the turns made (n), the last turn's time, the drift, the ring's slice hash, and for a decided turn its bearing, pivot column, how many of its rings are read, k and the fallback bearing
 var contactOn: bool = false           # ground contact on (World, G2: a copy of data/biomes/contact.json enabled, taken by newMatch)
 var dirS := DirS.new()

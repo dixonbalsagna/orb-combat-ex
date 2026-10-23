@@ -10,6 +10,7 @@
     "ticks",
     "cutMul",
     "cutFloor",
+    "cutDeepMul",
     "budget"
   ],
   "properties": {
@@ -23,6 +24,7 @@
     "ticks": {
       "type": "object",
       "required": [
+        "light_flow",
         "light_mash",
         "light",
         "medium",
@@ -33,6 +35,12 @@
         "ko"
       ],
       "properties": {
+        "light_flow": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 120,
+          "description": "a hit's stop in ticks"
+        },
         "light_mash": {
           "type": "integer",
           "minimum": 0,
@@ -99,11 +107,18 @@
       "maximum": 120,
       "description": "... rounded, at least this many ticks"
     },
+    "cutDeepMul": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "over budget.deepShare, a stop under a decisive blow is x this in place of cutMul"
+    },
     "budget": {
       "type": "object",
       "required": [
         "share",
-        "windowS"
+        "windowS",
+        "deepShare"
       ],
       "properties": {
         "share": {
@@ -111,6 +126,12 @@
           "minimum": 0,
           "maximum": 1,
           "description": "the most of the window that may be frozen"
+        },
+        "deepShare": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "over this much of the window frozen, the deep step"
         },
         "windowS": {
           "type": "integer",

@@ -4,6 +4,8 @@ Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator
 
 **A parked build:** `mash-flow/`: a mash flows (Game Design's 6): the weight `light_flow` holds no stop (a mash's later blows, which Encounter names), never raised by the cut's floor and never counted by the budget; and the budget's deep step (7d: over 40% of the window, ×0.5 in place of ×0.75); behind the hit-stop switch; with Tools' schema line (`grant_tools.py`). No golden moves. Its page is `../feel-core.md` section 7.
 
+**A parked build:** `run-ground/`: each stage's ring for the run (`SimRun`: the run's keyed hash `H`, and `beginGround`, a `GroundJob` the host steps during the previous stage's beats), picked by World's `WorldRingPick` from Narrative's claims, behind `data/fight/run.json` (off); with Tools' schema grant (`grant_tools.py`). No golden moves. It applies alone on 52eefa5e or later. Its page is `../run-core.md` section 11.
+
 **A parked build:** `simmathx-pi/`: the sim's own pi and tau (`SimMathx.PI`, `SimMathx.TAU`, from their bits) for Tools' determinism lint, so Encounter and World can swap the engine's PI and TAU one word each. The engine's doubles exactly, so no golden moves. It applies alone on 4c3b25d4 or later.
 
 **A paper, not a build:** `arena-conditions.md`: my conditions on World's shifting arena (windows 0 and 1), with the exact lines: the `arena.cols` guard, and one sim's world statics bound again at every step.

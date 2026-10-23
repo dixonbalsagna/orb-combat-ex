@@ -52,6 +52,7 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
 	S.arenaCols = _arenaCols(setup)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's 4,800
 	SimConst.setArena(S.arenaCols)
 	WorldBiomes.planetCols = PackedByteArray()
+	S.planetRing = {}   # World: the planet match's ring (planet_world.gd sets it)
 	S.epoch = null   # World's calm-moment turn (world/epoch.gd): a planet match with it on sets it
 	if not (setup.has("planet") and WorldPlanetWorld.gen(S, setup)):   # a setup with a planet reads its world from the slice; without one, today's world
 		WorldTerrain.genWorld(S)

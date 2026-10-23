@@ -4,6 +4,7 @@
   "enabled": false,
   "_enabled": "the one switch. SimCore.newMatch copies it into S.hitstopOn unless the match's setup has its own \"hitstop\". Off: every hit holds the clock as today, no budget state, and this file is not read into a replay",
   "ticks": {
+    "light_flow": 0,
     "light_mash": 2,
     "light": 3,
     "medium": 5,
@@ -12,14 +13,16 @@
     "launch_full": 14,
     "decisive": 20,
     "ko": 24,
-    "_note": "a hit's stop in ticks by the weight it names (o.weight), Game Design's table of rulings-2026-10-22.md 5b: a mashed or burst light 2, a tapped light 3, a medium 5, a heavy 8, a launch or a close 12, a full launch 14; decisive (a finisher's last, a duel of perfects' send, a blow that breaks a region: the core's) 20; ko the KO, 24 at most. A stop of n ticks freezes n"
+    "_note": "a hit's stop in ticks by the weight it names (o.weight), Game Design's table of rulings-2026-10-22.md 5b and 6: a mash's later blows flow (light_flow, 0: no stop; Encounter names them, each within 12 ticks of the last), its first blow stops (light_mash, a mashed or burst light, 2), a tapped light 3, a medium 5, a heavy 8, a launch or a close 12, a full launch 14; decisive (a finisher's last, a duel of perfects' send, a blow that breaks a region: the core's) 20; ko the KO, 24 at most. A stop of n ticks freezes n"
   },
   "cutMul": 0.75,
   "cutFloor": 2,
-  "_cut": "Game Design's second step (rulings-2026-10-22.md 5b): over the budget, every stop under a decisive blow is x cutMul, rounded, at least cutFloor, until the share falls back under. Decisive blows and the KO are never cut",
+  "cutDeepMul": 0.5,
+  "_cut": "Game Design's second step (rulings-2026-10-22.md 5b): over the budget, every stop under a decisive blow is x cutMul, rounded, at least cutFloor, until the share falls back under; over budget.deepShare, x cutDeepMul in place of cutMul, against stutter (7d: no ten-second block over 40% frozen). Decisive blows and the KO are never cut, and a stop of 0 stays 0",
   "budget": {
     "share": 0.18,
     "windowS": 10,
-    "_note": "the frozen time of the last windowS live seconds is at most share of it (18% of 10 s: 108 ticks). Over it, the second step (cutMul) applies"
+    "deepShare": 0.4,
+    "_note": "the frozen time of the last windowS live seconds is at most share of it (18% of 10 s: 108 ticks). Over it, the second step (cutMul) applies; over deepShare of it (40%: 240 ticks), the deep step (cutDeepMul)"
   }
 }

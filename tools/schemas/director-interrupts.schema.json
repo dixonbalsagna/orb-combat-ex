@@ -3857,6 +3857,24 @@
         "ackQueued"
       ],
       "additionalProperties": false
+    },
+    "mash": {
+      "type": "object",
+      "description": "A mash's later blows flow (light_flow): Game Design's 6 (b).",
+      "properties": {
+        "_note": {
+          "type": "string"
+        },
+        "flowGapTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "A mashed or burst blow within this many live ticks of the fighter's last one is a later blow of the run (light_flow)."
+        }
+      },
+      "required": [
+        "flowGapTicks"
+      ],
+      "additionalProperties": false
     }
   },
   "additionalProperties": false,

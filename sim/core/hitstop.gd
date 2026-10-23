@@ -15,13 +15,19 @@ extends RefCounted
 ##                whatever froze them. Over `share` (18%) of it, every stop under a decisive blow is x cutMul (0.75,
 ##                rounded, at least cutFloor 2) until the share falls back under (Game Design's rulings-2026-10-22.md
 ##                5b). Decisive blows and the KO are never cut. Stops merge (the longer one holds); they never add.
+##   the deep step: over `deepShare` (40%) of the window, the step is x cutDeepMul (0.5, rounded, at least cutFloor)
+##                in place of x cutMul, against stutter: no ten-second block over 40% frozen (Game Design's
+##                rulings-2026-10-22.md 7d).
 ##   whole ticks: a stop of n ticks freezes n. The step counts a stop down in seconds, and 1/60 taken n times from n/60
 ##                leaves about 1e-17 for n of 3 or more, a tick more than asked; frozen() drops that residue. With the
 ##                switch off, today's count stands.
+##   a mash flows: light_flow is 0, no stop (Game Design's rulings-2026-10-22.md 6): a mash's later blows, which
+##                Encounter names; only the mash's first blow stops (light_mash, 2). A 0 is never raised by the cut's
+##                floor, and freezes nothing, so the budget never counts it.
 ## Both bodies freeze, as every hit-stop does (the whole sim holds). The struck one's shake is Animation's.
 
 const FILE: String = "res://data/fight/hitstop.json"
-const WEIGHTS: Array = ["light_mash", "light", "medium", "heavy", "launch", "launch_full", "decisive", "ko"]
+const WEIGHTS: Array = ["light_flow", "light_mash", "light", "medium", "heavy", "launch", "launch_full", "decisive", "ko"]
 const NEVER_CUT: Array = ["decisive", "ko"]
 const RESIDUE: float = 1.0e-9   # seconds: far under a tick, far over the count-down's float residue
 
@@ -31,9 +37,11 @@ static var _errors: Array = []
 static var on_: bool = false
 static var ticks_: Dictionary = {}
 static var cutMul: float = 0.75
+static var cutDeepMul: float = 0.5
 static var cutFloor: int = 2
 static var windowS: int = 10
 static var budgetTicks: int = 108   # derived: share x windowS seconds of ticks
+static var deepTicks: int = 240     # derived: deepShare x windowS seconds of ticks
 
 
 static func _ensure() -> void:
@@ -68,6 +76,11 @@ static func _ensure() -> void:
 		_err("cutMul: a share above 0, at most 1")
 		cm = 1.0
 	cutMul = float(cm)
+	var dm = j.get("cutDeepMul")
+	if not (dm is float or dm is int) or float(dm) <= 0.0 or float(dm) > cutMul:
+		_err("cutDeepMul: a share above 0, at most cutMul")
+		dm = cutMul
+	cutDeepMul = float(dm)
 	cutFloor = _int("cutFloor", j.get("cutFloor"), 0, 120)
 	var b = j.get("budget", {})
 	if not (b is Dictionary):
@@ -81,6 +94,11 @@ static func _ensure() -> void:
 	else:
 		share = float(sh)
 	budgetTicks = int(SimMathx.jround(share * float(windowS) / SimConst.DT))
+	var ds = b.get("deepShare")
+	if not (ds is float or ds is int) or float(ds) < share or float(ds) > 1.0:
+		_err("budget.deepShare: a share from budget.share to 1")
+		ds = 1.0
+	deepTicks = int(SimMathx.jround(float(ds) * float(windowS) / SimConst.DT))
 
 
 static func enabled() -> bool:
@@ -118,15 +136,21 @@ static func over(S: SimState) -> bool:
 	return S.hs.sum >= budgetTicks
 
 
-## The table's ticks for a weight, after the budget: over it, a stop under a decisive blow is x cutMul (rounded, at
-## least cutFloor). -1 for a weight not in it.
+## ... and over the deep line: the step cuts deeper.
+static func deep(S: SimState) -> bool:
+	return S.hs.sum >= deepTicks
+
+
+## The table's ticks for a weight, after the budget: over it, a stop under a decisive blow is x cutMul, over the deep
+## line x cutDeepMul (rounded, at least cutFloor); a stop of 0 (a mash's flowing blow) stays 0. -1 for a weight not
+## in it.
 static func ticks(S: SimState, weight: String) -> int:
 	_ensure()
 	if not ticks_.has(weight):
 		return -1
 	var n: int = int(ticks_[weight])
-	if over(S) and not NEVER_CUT.has(weight):
-		n = maxi(cutFloor, int(SimMathx.jround(float(n) * cutMul)))
+	if n > 0 and over(S) and not NEVER_CUT.has(weight):
+		n = maxi(cutFloor, int(SimMathx.jround(float(n) * (cutDeepMul if deep(S) else cutMul))))
 	return n
 
 

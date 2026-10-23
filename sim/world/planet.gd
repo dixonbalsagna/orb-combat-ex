@@ -951,6 +951,27 @@ static func farField(P: Planet, ring: Dictionary, c0: int, ncols: int, stride: i
 	return {"h": hs, "b": bs}
 
 
+## The places beside a ring, for a renderer's far land (the towns and cities past the arena, which the map's heights and biomes do not show): every place within `maxLateral` units of the ring, as
+## {id, kind (KIND_CITY or KIND_TOWN), col (its column along the ring, a float in [0, NC)), z (its signed lateral offset, farColumn's z: positive toward the ring's centre, so farColumn(ring, col, z)
+## is at its centre), rad (its radius in units), dir ([x, y, z], the unit vector of its centre), people (the place's weight)}. Sorted by id. A pure function of the planet and the ring.
+static func farPlaces(P: Planet, ring: Dictionary, maxLateral: float = 1.0e18) -> Array:
+	var out: Array = []
+	var stf: float = ring.get("st", 1.0)
+	var tc: int = touchCol()
+	var nc: float = float(SimConst.NC)
+	var u: Array = ring.u
+	var v: Array = ring.v
+	for i in range(P.n):
+		var lat: float = lateral(P, ring, P.px[i], P.py[i], P.pz[i])
+		if absf(lat) > maxLateral:
+			continue
+		var along: float = atan2f(P.px[i] * v[0] + P.py[i] * v[1] + P.pz[i] * v[2], P.px[i] * u[0] + P.py[i] * u[1] + P.pz[i] * u[2])
+		var col: float = float(tc) + along * (P.R * stf) / SimConst.COL
+		col -= floor(col / nc) * nc
+		out.append({"id": i, "kind": int(P.kind[i]), "col": col, "z": lat, "rad": P.rad[i], "dir": [P.px[i], P.py[i], P.pz[i]], "people": int(P.people[i])})
+	return out
+
+
 ## The slice of an explicit ring (WorldRingPick: an axis, the columns, a touch-down), memoised outside the state like sliceFor's. The ring is the arena's, so its columns are SimConst.NC.
 static func _ringKey(seed: int, ring: Dictionary, standing: PackedByteArray) -> String:
 	return "ring/%d/%s/%s/%s/%d" % [seed, str(ring.c), str(ring.u), str(standing.hex_encode()), SimConst.NC]

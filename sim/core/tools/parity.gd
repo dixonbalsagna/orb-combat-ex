@@ -5208,7 +5208,7 @@ func _hitstop() -> String:
 	SimCore.newMatch(S, 5, {"p1": false, "p2": false}, {"hitstop": true})
 	var A = S.fighters[0]
 	var D = S.fighters[1]
-	var want: Dictionary = {"light_mash": 2, "light": 3, "medium": 5, "heavy": 8, "launch": 12, "launch_full": 14, "decisive": 20, "ko": 24}
+	var want: Dictionary = {"light_flow": 0, "light_mash": 2, "light": 3, "medium": 5, "heavy": 8, "launch": 12, "launch_full": 14, "decisive": 20, "ko": 24}
 	for w in want:
 		S.dirS.stop = 0.0
 		SimDamage.hit(S, null, A, D, 1.0, {"weight": w, "stop": 0.5})
@@ -5228,18 +5228,37 @@ func _hitstop() -> String:
 	S.dirS.stop = 0.0
 	for i in range(SimHitstop.budgetTicks):
 		SimHitstop.frozen(S)
-	var cut: Dictionary = {"light_mash": 2, "light": 2, "medium": 4, "heavy": 6, "launch": 9, "launch_full": 11, "decisive": 20, "ko": 24}
+	var cut: Dictionary = {"light_flow": 0, "light_mash": 2, "light": 2, "medium": 4, "heavy": 6, "launch": 9, "launch_full": 11, "decisive": 20, "ko": 24}
 	for w in cut:
 		if SimHitstop.ticks(S, w) != cut[w]:
 			return "over the budget, %s holds %d (want %d: x0.75, rounded, at least 2; decisive and the KO never cut)" % [w, SimHitstop.ticks(S, w), cut[w]]
+	# the deep step (Game Design's 7d): over 40% of the window, x0.5, rounded, at least 2
+	if SimHitstop.deepTicks != 240:
+		return "the deep line is %d ticks (want 40%% of 10 s, 240)" % SimHitstop.deepTicks
+	for i in range(SimHitstop.deepTicks - SimHitstop.budgetTicks - 1):
+		SimHitstop.frozen(S)
+	if SimHitstop.ticks(S, "heavy") != 6:
+		return "a tick under the deep line, a heavy holds %d (want 6: x0.75)" % SimHitstop.ticks(S, "heavy")
+	SimHitstop.frozen(S)
+	var deep: Dictionary = {"light_flow": 0, "light_mash": 2, "light": 2, "medium": 3, "heavy": 4, "launch": 6, "launch_full": 7, "decisive": 20, "ko": 24}
+	for w in deep:
+		if SimHitstop.ticks(S, w) != deep[w]:
+			return "over the deep line, %s holds %d (want %d: x0.5, rounded, at least 2; decisive and the KO never cut)" % [w, SimHitstop.ticks(S, w), deep[w]]
 	var h0: String = SimHash.stateHash(S).gameplay
 	for i in range(SimHitstop.windowS * 60 - 1):
 		SimHitstop.live(S)
-	if SimHitstop.ticks(S, "heavy") != 6:
+	if SimHitstop.ticks(S, "heavy") != 4:
 		return "the budget came back before 10 s of fight"
 	SimHitstop.live(S)
 	if SimHitstop.ticks(S, "heavy") != 8 or S.hs.sum != 0 or SimHash.stateHash(S).gameplay == h0:
 		return "10 s of fight later: a heavy %d (want 8), %d frozen ticks counted; the budget's state not hashed" % [SimHitstop.ticks(S, "heavy"), S.hs.sum]
+	# a mash flows (Game Design's 6): a flowing blow holds no stop, and the clock runs on
+	S.dirS.stop = 0.0
+	var tf: float = S.T
+	SimDamage.hit(S, null, A, D, 1.0, {"weight": "light_flow", "stop": 0.5})
+	SimCore.step(S, [null, null])
+	if S.dirS.stop != 0.0 or S.T == tf:
+		return "a mash's flowing blow held %s ticks, the clock %s" % [str(S.dirS.stop / SimConst.DT), "ran" if S.T != tf else "froze"]
 	# whole ticks: a stop of n ticks freezes n (the count-down's residue gave n + 1 for n of 3 or more), and the damage
 	# event's view field says so; with the switch off, today's count stands
 	for n in [2, 3, 4, 5, 6, 8, 12, 14, 20, 24]:

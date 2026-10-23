@@ -164,8 +164,10 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 	S.slides.clear()
 	WorldWater.init(S)
 	WorldCollateral.init(S)
+	var spec: Dictionary = specOf(sl.circ)
+	if not spec.is_empty():
+		S.planetRing = {"seed": seed, "c": spec.c, "t": spec.t, "cols": spec.cols}   # unhashed: the ring this match plays on, whether or not it can turn (a renderer's far land)
 	if WorldEpoch.enabled(setup):   # the calm-moment turn (docs/world/calm-turn-world.md): the epoch starts on the ring this match plays on
-		var spec: Dictionary = specOf(sl.circ)
 		if not spec.is_empty():
 			S.epoch = WorldEpoch.begin(S, seed, sl.circ, spec, chords, dlist, WorldPlanet.sliceHash(sl))
 	return true

@@ -417,6 +417,7 @@ static func swap(S: SimState) -> void:
 	E.lastT = S.T
 	E.drift = nx.drift
 	E.ring = spec
+	S.planetRing = {"seed": seed, "c": spec.c, "t": spec.t, "cols": spec.cols}   # unhashed: the ring now played on
 	E.sh = WorldPlanet.sliceHash(sl)   # the ring now played on, as the state hash sees it
 	E.chords = chordsAll
 	E.dlist = dlist

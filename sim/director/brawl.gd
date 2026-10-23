@@ -1268,7 +1268,7 @@ static func contact(S: SimState, ex, b) -> void:
 	if energy != "":
 		_shotHit(S, ex, f, o, dmg, a, ex.sD if o == ex.D else ex.sA)   # a point-blank shot is the blast's own hit, with no exchange
 	else:
-		DirMelee.weigh(S, a.o, weightOf(a))   # hit-stop by weight: the blow names its weight
+		DirMelee.weigh(S, a.o, DirMash.name(S, f, weightOf(a)))   # hit-stop by weight: the blow names its weight (a mash's later blows light_flow)
 		DirMelee.strike(S, ex, f, o, dmg, a.o)
 	_inTick = was
 	f.ambush = false   # an ambush is its first blow
