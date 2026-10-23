@@ -77,6 +77,11 @@ jobs:
         run: node tools/validate.js --self-test
       - name: Validate the data
         run: node tools/validate.js
+      # The sim must use its own math, random numbers and clock, never the engine's (docs/tools/determinism-lint.md): a bare sin, cos, atan2, PI, TAU, randf or clock under sim/ fails the job.
+      - name: Determinism lint self-test
+        run: node tools/lint-determinism-selftest.mjs
+      - name: Determinism lint (no engine trig, PI, random numbers or clock in the sim)
+        run: node tools/lint-determinism.mjs
       # Platform's phone head block in export_presets.cfg must match docs/perf/web-shell/ (node built-ins, a fifth of a second).
       - name: The web export's phone head is current
         run: node docs/perf/tools/web-head.mjs --check

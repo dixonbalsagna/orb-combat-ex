@@ -1,4 +1,4 @@
-# The determinism lint (parked: not wired into CI yet)
+# The determinism lint (wired into CI, data job)
 
 Owner: Tools. 2026-10-23. The EP's brief after two slips in one week (World's epoch.gd `sin`/`PI`, Encounter's calm.gd `sin(deg_to_rad)`): the simulation must use our own math, RNG and clock, never the engine's.
 
@@ -37,7 +37,7 @@ Self-test: `node tools/lint-determinism-selftest.mjs` (67 checks: every kind fou
 
 sim/core and sim/input have none. Suggestion for the EP (Simulation's file, not mine): one shared `SimMathx.PI` / `SimMathx.TAU` built from bits would make each fix a one-word edit and give the lint a name to point to.
 
-## To wire it (parked until the 24 are cleared, or the owners waive them), in one commit
+## Wired (2026-10-23: the sim reads 0 on main, 07876704)
 
 1. `.github/workflows/ci.yml`, in the data job beside the validator, two steps:
    ```
