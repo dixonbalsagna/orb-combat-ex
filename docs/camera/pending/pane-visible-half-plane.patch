@@ -1,0 +1,61 @@
+diff --git a/render/camera/camera_params.gd b/render/camera/camera_params.gd
+index 58576b1..914885b 100644
+--- a/render/camera/camera_params.gd
++++ b/render/camera/camera_params.gd
+@@ -206,6 +206,7 @@ const ANCHOR_REPORT_STEP: float = 0.15   # the frame's reported anchor moves at
+ const DIVIDER_STEP: float = 0.06       # divider centre motion per tick, times vw, outside the slam
+ const SHAKE_CAP: float = 0.03          # times vh
+ const SHAKE_HIT_STEP: float = 1.0
++const VIS_MARGIN_PX: float = 8.0       # SplitFrame.visible_half_plane's slack past the largest shake (SHAKE_CAP x SHAKE_PREF_TOP of the height) and the divider's feather and line
+ 
+ # --- the lag bound (camera v2 section 2) ---
+ const LAG_SOFT: float = 0.06           # a tracked fighter this far from his anchor (screen widths): ordinary filter
+diff --git a/render/camera/split_frame.gd b/render/camera/split_frame.gd
+index 370047c..f87ab41 100644
+--- a/render/camera/split_frame.gd
++++ b/render/camera/split_frame.gd
+@@ -87,6 +87,21 @@ func duplicate() -> SplitFrame:
+ 
+ ## Weight of pane 1 at screen point p (pane 0's is one minus this). Zero or one away from the divider; a smooth blend
+ ## across the feather while the panes dissolve into one view.
++## Pane i's visible region on the screen, for culling what lies wholly on the hidden side of the divider (Rendering, the
++## split's second terrain draw: Performance, 2026-10-23). {"all": true} when the pane fills the screen, {"none": true} when it
++## is not drawn, else {"n": Vector2, "d": float}: a screen point p (px) can show in pane i only if n.dot(p) >= d. Conservative:
++## d sits past the divider by its feather, half its line, the largest shake (a pane's camera jitter moves its picture, not the
++## divider) and VIS_MARGIN_PX. The same test as weight1, so the compositor never shows a pixel the plane excludes.
++func visible_half_plane(i: int) -> Dictionary:
++	if not bool(active[i]):
++		return {"none": true}
++	if not bool(active[1 - i]):
++		return {"all": true}
++	var m: float = feather + gap * 0.5 + CamParams.SHAKE_CAP * CamParams.SHAKE_PREF_TOP * vh + CamParams.VIS_MARGIN_PX
++	var nn: Vector2 = n if i == 1 else -n
++	return {"n": nn, "d": nn.dot(c) - m}
++
++
+ func weight1(p: Vector2) -> float:
+ 	if not bool(active[1]):
+ 		return 0.0
+diff --git a/render/camera/tests/split_sweep.gd b/render/camera/tests/split_sweep.gd
+index cef648f..716c5a5 100644
+--- a/render/camera/tests/split_sweep.gd
++++ b/render/camera/tests/split_sweep.gd
+@@ -576,6 +576,18 @@ func _frame_checks(fr: SplitFrame, cur: SplitFrame, alpha: float = 1.0) -> void:
+ 			var head: float = a.y - (CamParams.BODY_H * 0.5 + CamParams.BODY_H * 1.0) * fr.cam_z[i]
+ 			if head < 0.0:
+ 				_fail_once("headroom", "%s: fighter %d has less than a body height of headroom" % [_label, i])
++	# The visible half-plane (Rendering culls on it): every sampled point a pane shows lies inside its plane.
++	for gy in range(3):
++		for gx in range(5):
++			var pt: Vector2 = Vector2(vw * (0.05 + 0.225 * gx), vh * (0.1 + 0.4 * gy))
++			var w1p: float = fr.weight1(pt)
++			for i in range(2):
++				var wi: float = w1p if i == 1 else 1.0 - w1p
++				if wi > 0.001:
++					var hp: Dictionary = fr.visible_half_plane(i)
++					var inside: bool = hp.has("all") or (hp.has("n") and Vector2(hp["n"]).dot(pt) >= float(hp["d"]))
++					if not inside:
++						_fail_once("visplane", "%s: pane %d shows %s but its visible half-plane excludes it (%s)" % [_label, i, str(pt), str(hp)])
+ 	# 3. limits between consecutive display frames
+ 	if _prev_disp != null and not cur.cut:
+ 		var dt: float = 1.0 / DISPLAY_HZ

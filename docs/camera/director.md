@@ -352,3 +352,14 @@ Orb, 2026-10-22 (docs/ep/vision.md): "the camera looks like it snaps too fast, a
 
 Gates on 6ef1e3f1: split sweep, seam sweep, pane check, determinism plain and --intro all pass. Clips: homework/camera/13-smooth/.
 
+**Each pane's visible half-plane, for Rendering's culling (2026-10-23; parked: docs/camera/pending/pane-visible-half-plane.patch).** The integrated GPU's 33 ms stretches in the city beam (Performance, ticks 470-563 and 1162-1316) are not a wide shot. Read from the camera, no pane in any scene is wider than 4,160 units. At those ticks the camera is in the split. Each split pane renders the whole world full-screen while only its side of the divider is shown, so the terrain is drawn twice (205k to 211k triangles against 132k).
+
+`SplitFrame.visible_half_plane(i)` returns:
+- `{"all": true}` when pane i fills the screen;
+- `{"none": true}` when it is not drawn;
+- else `{"n", "d"}`: a screen point p can show in pane i only if n.dot(p) >= d.
+
+It is the compositor's own test (`weight1`), widened by the feather, half the line, the largest shake (4.2% of the height: a pane's jitter moves its picture, not the divider) and 8 px (`VIS_MARGIN_PX`).
+
+Rendering culls or coarsens the terrain chunks that fall wholly outside it. A split_sweep check on every display frame of every row confirms that no sampled point a pane shows falls outside its plane. Gates: split sweep, seam sweep, pane check, determinism plain and --intro all pass.
+
