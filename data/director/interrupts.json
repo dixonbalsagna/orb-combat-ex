@@ -493,9 +493,12 @@
     "score": {"rivalHome": 5, "landmark": 4, "city": 3, "ownHome": 2, "town": 1}
   },
   "press": {
-    "_note": "A player's attack press reacts on its own tick (Controls' T1; the EP's brief of 2026-10-22 after Performance's input-latency-2026-10-22.md, where a light first reacted 5 ticks late: the opening cooldown). Only a player's presses (the AI's are as before). skipOpenCool: his request is not held by the match's opening cooldown (SimCore.newMatch's 0.6 s) while no exchange has started this match; a cooldown after an exchange still holds it. ackQueued: a request still waiting after the drain is acknowledged on its press tick, the cue press_ack, text queued, source its cell, n the tick it is due when the wait is a cooldown (else -1), amount the ticks to it.",
+    "_note": "A player's attack press reacts on its own tick (Controls' T1; the EP's brief of 2026-10-22 after Performance's input-latency-2026-10-22.md, where a light first reacted 5 ticks late: the opening cooldown). Only a player's presses (the AI's are as before). skipOpenCool: his request is not held by the match's opening cooldown (SimCore.newMatch's 0.6 s) while no exchange has started this match; a cooldown after an exchange still holds it. ackQueued: a request still waiting after the drain is acknowledged on its press tick, the cue press_ack, text queued, source its cell, n the tick it is due when the wait is a cooldown (else -1), amount the ticks to it. capTicks and setPieceCapTicks (Game Design's 7a): after an exchange ends the cooldown holds a player's request at most capTicks, after a set piece's end setPieceCapTicks (a signature's exchange, a finisher, a template tagged with one of setPieceTags, a throw); it is kept and thrown at the cap. The AI keeps the whole cooldown. capTicks -1: off.",
     "skipOpenCool": true,
-    "ackQueued": true
+    "ackQueued": true,
+    "capTicks": 6,
+    "setPieceCapTicks": 12,
+    "setPieceTags": ["CLASH"]
   },
   "mash": {
     "_note": "A mash's later blows flow (sim/director/mash.gd; Game Design's rulings-2026-10-22.md 6 (b); Simulation's light_flow). A mash is a run of one fighter's mashed or burst blows (a brawl blow that names light_mash), each within flowGapTicks live ticks of his last; it starts again after that many without one. Its first blow keeps light_mash; each later one names light_flow, which holds no stop. Only while hit-stop by weight is on.",

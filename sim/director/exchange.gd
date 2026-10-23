@@ -38,7 +38,16 @@ const APPROACH: int = 3   # the request began an approach (DirBands): it is spen
 ## An attack press. For a v2 slot it is one request (ADR 0008): it joins the fighter's queue (SimAct, depth queueMax), and
 ## the director starts the oldest request as soon as it can (_drain: here, and every tick). A press the queue has no room
 ## for is ignored. A slot that is not v2 starts its attack directly, as before.
+## An attack press (SimControl.control): the director's request, then a player's acknowledgement on its own tick
+## (Controls' T1: started, or queued with the tick it is due).
 static func requestAttack(S: SimState, A, kind: String) -> void:
+	var ex0 = S.dirS.ex
+	var who0: int = DirBands.who(S)
+	_request(S, A, kind)
+	_ack(S, A, kind, ex0, who0)
+
+
+static func _request(S: SimState, A, kind: String) -> void:
 	# A press during a live clash belongs to the clash (docs/controls/tech-and-pulse-input.md section 2): it is spent,
 	# never queued, so mashed clash presses do not fire as attacks after it.
 	if DirBeam.inClash(S, A):
@@ -72,7 +81,6 @@ static func requestAttack(S: SimState, A, kind: String) -> void:
 		return   # the far band: the press fires on its tick as a taunt, an answer or (held) a charge; it never waits
 	SimAct.push(A, KIND.find(kind), A.act.mode, entry, S.tick)
 	_drain(S)
-	_ackQueued(S, A, kind)   # a player's press that waits is acknowledged on its own tick (Controls' T1)
 
 
 ## The press block (data/director/interrupts.json press): a player's attack press reacts on its own tick.
@@ -83,17 +91,27 @@ static func pressCfg() -> Dictionary:
 ## A player's request still waiting after the drain, on its press tick: the cue press_ack "queued" (source its cell),
 ## n the tick it is due to start when the wait is the cooldown (else -1) and amount the ticks to it. Animation shows the
 ## anticipation from it, and the HUD marks the cell. The AI's presses are not acknowledged.
-static func _ackQueued(S: SimState, A, kind: String) -> void:
+## A player's attack press, on its tick: press_ack "started" when it began an exchange or an approach (ex0 and who0: the
+## exchange and the approach before it), "queued" when it waits (n the tick it is due when the wait is the cooldown, else
+## -1; amount the ticks to it); nothing when the brawl, the zip or the chase acknowledged it already, or it was a blow on a
+## brawl's line (its own events say so). The AI's presses are not acknowledged.
+static func _ack(S: SimState, A, kind: String, ex0, who0: int) -> void:
 	if A.ai != null or not bool(pressCfg().get("ackQueued", false)):
 		return
+	var slot: int = S.fighters.find(A)
+	for e0 in S.out.fx:
+		if String(e0.type) == "cue" and String(e0.kind) == "press_ack" and int(e0.actor) == slot:
+			return
 	var q: Array = A.act.queue
-	if q.is_empty() or int(q[q.size() - 1][3]) != S.tick:
-		return   # it started, or it was not queued
-	var e = DirBrawl._ev(S, A, "press_ack", "queued", DirBrawl._cell(kind))
-	var wait: int = int(ceil(S.dirS.cool * DirData.TICKS_PER_SEC - 0.0001)) if (S.dirS.ex == null and S.dirS.cool > 0.0) else -1
+	var queued: bool = not q.is_empty() and int(q[q.size() - 1][3]) == S.tick
+	var started: bool = (ex0 == null and S.dirS.ex != null and S.dirS.ex.A == A) or (who0 != slot and DirBands.who(S) == slot)
+	if not queued and not started:
+		return
+	var e = DirBrawl._ev(S, A, "press_ack", "queued" if queued else "started", DirBrawl._cell(kind))
+	e.target = float(S.fighters.find(SimRoster.opp(S, A)))
+	var wait: int = 0 if started else (DirPress.waitTicks(S, A) if (S.dirS.ex == null and DirPress.held(S, A)) else -1)   # 7a: a player's capped wait
 	e.n = S.tick + wait if wait >= 0 else -1
 	e.amount = float(wait)
-	e.target = float(S.fighters.find(SimRoster.opp(S, A)))
 
 
 ## The entry of the request being started (+1 toward, 0, -1 away); 0 outside _drain. Not state: it lives for one call.
@@ -145,8 +163,8 @@ static func _drain(S: SimState) -> void:
 	if S.dirS.ex != null or S.game.ko != null:
 		return
 	# Step 3: a fighter with an opening (a riposte, a reversal, a punish) starts through the cooldown.
-	if S.dirS.cool > 0.0 and DirInterrupt.opening(S, S.fighters[0]) == 0 and DirInterrupt.opening(S, S.fighters[1]) == 0 and not DirBury.followUp(S, S.fighters[0], S.fighters[1]) and not DirBury.followUp(S, S.fighters[1], S.fighters[0]):
-		return
+	if S.dirS.cool > 0.0 and DirInterrupt.opening(S, S.fighters[0]) == 0 and DirInterrupt.opening(S, S.fighters[1]) == 0 and not DirBury.followUp(S, S.fighters[0], S.fighters[1]) and not DirBury.followUp(S, S.fighters[1], S.fighters[0]) and not DirPress.anyFree(S):
+		return   # (a player's request free of the cooldown goes on: DirPress)
 	var q0: Array = SimAct.peek(S.fighters[0])
 	var q1: Array = SimAct.peek(S.fighters[1])
 	if q0.is_empty() and q1.is_empty():
@@ -210,7 +228,7 @@ static func _start(S: SimState, A, kind: String) -> int:
 	var fu: bool = kind != "sig" and not engaging and DirBury.followUp(S, A, D)
 	if DirBury.safe(S, D):
 		return WAIT
-	if S.dirS.cool > 0.0 and opn == 0 and not fu and not (A.ai == null and S.dirS.exN == 0 and bool(pressCfg().get("skipOpenCool", false))):
+	if opn == 0 and not fu and DirPress.held(S, A):   # the cooldown, as it holds him (DirPress: a player's cap, and the opening skip)
 		return WAIT   # (a player's press is not held by the match's opening cooldown: no exchange yet, the opening beat is the intro's)
 	if A.stunTicks > 0 and DirInterrupt.on():
 		return WAIT   # step 3: a staggered fighter's requests wait
@@ -234,6 +252,7 @@ static func _start(S: SimState, A, kind: String) -> int:
 	if D.hidden:
 		A.ki = SimMathx.jmax(0.0, A.ki - 2.0)
 		S.dirS.cool = 0.5
+		DirPress.onCool(S)
 		if A.ai == null:
 			SimFx.banner(S, "LOCK LOST — TARGET HIDDEN", "#9fb4ff", 0.9)
 		SimFx.lockLost(S, A, D)
@@ -584,6 +603,7 @@ static func endEx(S: SimState, ex) -> void:
 		SimFx.exchangeEnd(S, ex.A, "launch" if le == DirInterrupt.END_LAUNCH else ("knockback" if le == DirInterrupt.END_KNOCK else "continue"))
 	S.dirS.ex = null
 	S.dirS.cool = DirBrawl.coolAfter(ex) if DirBrawl.isBrawl(ex) else cooldownAfter(ex)   # no pause after a brawl, except after a launch
+	DirPress.onEnd(S, ex)   # 7a: the cooldown holds a player at most a beat (the AI keeps all of it)
 	DirBeamPlay.onEnd(S, ex)   # no pause after a walk through a beam
 	DirInterrupt.onEnd(S, ex)   # step 3: a fully blocked string leaves its attacker behind
 	DirBury.onEnd(S, ex)   # a defender taken in his crater is out of it, with his safety
@@ -845,6 +865,7 @@ static func _transforms(S: SimState) -> void:
 		f.vy = 0.0
 		if pz.version == SimPause.LIVE:
 			S.dirS.cool = SimMathx.jmax(S.dirS.cool, hold)
+			DirPress.onCool(S)   # (a live form step's hold holds a player too)
 			f.stunTicks = maxi(f.stunTicks, int(pz.ticks))
 		DirCalm.atPause(S, f, pz)   # the calm-moment turn's first moment (Game Design's 5a): a pausing step, the pivot fixed as it starts
 		SimEvents.feed(S, f.name + " TRANSFORMS", "tier " + SimMathx.jstr(f.tier))

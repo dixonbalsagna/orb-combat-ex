@@ -51,7 +51,7 @@
     ],
     "carryUnits": 12000.0,
     "viewUnits": 16000.0,
-    "moveMax": 300.0,
+    "moveMax": 450.0,
     "minDeg": 2.0,
     "warmCols": 32,
     "fallbackDeg": 2.5

@@ -245,10 +245,10 @@ static func _reach(S: SimState, pc: int) -> float:
 
 
 ## Each live tick (SimCore.step), with Encounter's hold: a turn that is decided, held and calm swaps. The ring turns about the pivot fixed at the ask, so the ground under a fighter s units from it moves
-## s x sin(angle) (Game Design rulings-2026-10-22 5a: at most moveMax, 300 units). There is NO ring read on this tick (Executive Producer, 2026-10-22: the swap must not hitch): the swap uses the largest
+## s x sin(angle) (Game Design rulings-2026-10-22 5a: at most moveMax, 300 units; 450 from rulings-2026-10-23 ruling 3, at every size). There is NO ring read on this tick (Executive Producer, 2026-10-22: the swap must not hitch): the swap uses the largest
 ## WARM angle (warmAngles) that keeps that within moveMax, which is the chosen bearing when the pair rest on the pivot. If none does the turn waits (it stays decided; Encounter's cancel drops it at
-## the end of the moment). If even minDeg (2) would move the pair's ground more than moveMax (the pair about 8,600 units or more off the pivot) the turn is refused: the pick is dropped, so the director
-## asks again at its next send. The 300 rule wins over "never under 2 degrees".
+## the end of the moment). If even minDeg (2) would move the pair's ground more than moveMax (the pair about 12,900 units or more off the pivot at 450) the turn is refused: the pick is dropped, so the director
+## asks again at its next send. The moveMax rule wins over "never under 2 degrees".
 static func tick(S: SimState, hold: bool = true) -> void:
 	var E = S.epoch
 	if E == null or E.next == null:

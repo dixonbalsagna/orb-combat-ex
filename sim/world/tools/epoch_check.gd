@@ -257,13 +257,14 @@ func _init() -> void:
 						if not WorldEpoch._held(PL, nr2, pp.id) or WorldEpoch._held(PL, old2, pp.id) or absf(pp.arc) > float(d.viewUnits):
 							wrong += 1
 	ok(lists >= 40 and wrong == 0, "over 8 planets, 3 pivots and both sides (%d candidate lists), every place a turn lists (%d in all) is held by the new ring, not the old, within view" % [lists, listed])
-	# --- a landing turns less rather than not at all: the angle is scaled so the ground under the fighters moves at most 300 units, never under 2 degrees
-	# Warm rings only: the chosen bearing (10) and the smallest candidate (2.5). The swap takes the largest warm angle that keeps the pair's ground within 300 units; if none does it waits; if even 2 degrees
+	# --- a landing turns less rather than not at all: the angle is scaled so the ground under the fighters moves at most moveMax units (450 since Game Design 2026-10-23), never under 2 degrees
+	var MM: float = float(d.moveMax)
+	# Warm rings only: the chosen bearing (10) and the smallest candidate (2.5). The swap takes the largest warm angle that keeps the pair's ground within moveMax units; if none does it waits; if even 2 degrees
 	# would not it refuses (the pick is dropped, the director asks again).
 	var scaledOk: bool = true
 	var scaleLog: Array = []
 	var seen: Dictionary = {}
-	for off in [0.0, 3600.0, 7000.0, 7800.0, 9000.0, 40000.0]:
+	for off in [0.0, 3600.0, 11000.0, 12000.0, 14000.0, 40000.0]:   # 450: ten to 2,590 units, 2.5 degrees to 10,300, waits to 12,900, refused past
 		var Sg := ready(4800)
 		var pxg: float = mid(Sg)
 		var P4 := WorldPlanet.make(7)
@@ -274,7 +275,7 @@ func _init() -> void:
 		var smax: float = 0.0
 		for f in Sg.fighters:
 			smax = maxf(smax, absf(SimWrap.sdx(float(Sg.epoch.next.pc) * SimConst.COL, f.x)))
-		var kind: String = "refuse" if smax * sin(2.0 * PI / 180.0) > 300.0 else ("wait" if smax * sin(2.5 * PI / 180.0) > 300.0 and smax * sin(10.0 * PI / 180.0) > 300.0 else ("ten" if smax * sin(10.0 * PI / 180.0) <= 300.0 else "twofive"))
+		var kind: String = "refuse" if smax * sin(2.0 * PI / 180.0) > MM else ("wait" if smax * sin(2.5 * PI / 180.0) > MM and smax * sin(10.0 * PI / 180.0) > MM else ("ten" if smax * sin(10.0 * PI / 180.0) <= MM else "twofive"))
 		seen[kind] = true
 		WorldEpoch.tick(Sg, true)
 		var used: float = 0.0
@@ -304,11 +305,11 @@ func _init() -> void:
 			good = good and absf(used - 10.0) < 1e-9
 		else:
 			var wantDeg: float = 10.0 if kind == "ten" else 2.5
-			good = good and Sg.epoch.n == 1 and absf(used - wantDeg) < 1e-9 and move <= 300.0 * 1.02
+			good = good and Sg.epoch.n == 1 and absf(used - wantDeg) < 1e-9 and move <= MM * 1.02
 		if not good:
 			scaledOk = false
 		scaleLog.append("%.0f off: smax %.0f %s%s" % [off, smax, kind, "" if kind == "refuse" or kind == "wait" else " (%.1f degrees, ground moved %.0f)" % [used, move]])
-	ok(scaledOk and seen.has("ten") and seen.has("twofive") and seen.has("wait") and seen.has("refuse"), "swap on a warm ring only: the 10 degrees, else the warm 2.5 if it holds the ground within 300, else it waits for the next moment, and when even 2 would move it more it refuses and the director can ask again (%s)" % " | ".join(scaleLog))
+	ok(scaledOk and seen.has("ten") and seen.has("twofive") and seen.has("wait") and seen.has("refuse"), "swap on a warm ring only: the 10 degrees, else the warm 2.5 if it holds the ground within moveMax (450), else it waits for the next moment, and when even 2 would move it more it refuses and the director can ask again (%s)" % " | ".join(scaleLog))
 	var Sc := ready(2400)
 	WorldEpoch.ask(Sc, "t", mid(Sc), 1, 0)
 	WorldEpoch.choose(Sc, 0)

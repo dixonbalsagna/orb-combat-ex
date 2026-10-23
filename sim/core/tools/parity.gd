@@ -81,6 +81,7 @@ func _init() -> void:
 	check("shots: buildings, wild deflects, the spray, mines", _shots2())
 	check("agency lines", _agencyLines())
 	check("a clash's meeting point", _clashMid())
+	check("SimMathx.PI and TAU", _piTau())
 	check("the blow cue's run stays out of the hash", _cueRun())
 	check("the run's rare boons", _boons())
 	check("the catastrophe's blast cloud and ash", _cata())
@@ -5459,6 +5460,15 @@ func _planetGolden(g: Dictionary) -> String:
 ## form at its floor, without forms (tiers 2, 3 and 4) and with them (steps I, II and V, the branch the first tie's);
 ## second skin on the rival fills the Protagonist's Trial at once; the borrowed form's wear runs 1 / (1 - share) as fast
 ## until a region breaks; the collateral reads the higher tier from the start; a boon match replays.
+## Our own pi and tau: from their bits, tau twice pi exactly, and both the engine's doubles, so a swap moves nothing.
+func _piTau() -> String:
+	if SimMathx.bits(SimMathx.PI) != "400921fb54442d18" or SimMathx.bits(SimMathx.TAU) != "401921fb54442d18" or SimMathx.TAU != 2.0 * SimMathx.PI:
+		return "pi %s, tau %s (want 400921fb54442d18 and twice it)" % [SimMathx.bits(SimMathx.PI), SimMathx.bits(SimMathx.TAU)]
+	if SimMathx.PI != PI or SimMathx.TAU != TAU:
+		return "the engine's PI or TAU is another double on this build: the swaps would move a result"
+	return ""
+
+
 func _boons() -> String:
 	if not SimBoons.errors().is_empty():
 		return "the boons' data: " + "; ".join(SimBoons.errors())

@@ -3,6 +3,11 @@ class_name SimMathx
 ## every bit: sign(-0.0) is +0 (JS keeps -0); max and min pick a zero by argument order (JS max prefers +0, min
 ## prefers -0); round() rounds halves away from zero (JS rounds them up). Use these wherever the JS core uses Math.*.
 
+## pi and tau from their bits: the sim's own, in place of the engine's PI and TAU (Tools' determinism lint). The same
+## doubles as the engine's today (tau is twice pi, exact); never assigned.
+static var PI: float = f64("400921fb54442d18")    # det-ok: the definition, from its bits
+static var TAU: float = f64("401921fb54442d18")   # det-ok: the definition, from its bits
+
 
 ## mathx.js clamp.
 static func jclamp(v: float, a: float, b: float) -> float:

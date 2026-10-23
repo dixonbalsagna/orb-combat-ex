@@ -3850,11 +3850,31 @@
         "ackQueued": {
           "type": "boolean",
           "description": "A player's request still waiting after the drain is acknowledged on its press tick (press_ack, queued)."
+        },
+        "capTicks": {
+          "type": "integer",
+          "minimum": -1,
+          "description": "After an exchange ends, the cooldown holds a player's request at most this many ticks (-1: off, the cooldown holds him as the AI)."
+        },
+        "setPieceCapTicks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "... after a set piece's end (a signature's exchange, a finisher, a tagged template, a throw)."
+        },
+        "setPieceTags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A planned exchange whose tag holds one of these is a set piece."
         }
       },
       "required": [
         "skipOpenCool",
-        "ackQueued"
+        "ackQueued",
+        "capTicks",
+        "setPieceCapTicks",
+        "setPieceTags"
       ],
       "additionalProperties": false
     },

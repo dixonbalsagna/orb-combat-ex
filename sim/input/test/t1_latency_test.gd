@@ -1,11 +1,11 @@
 extends SceneTree
 ## T1 (docs/controls/input-scheme.md): a tap's sim reaction is on the SAME TICK as the press. Real presses go through the real hub (the solo
 ## keyboard's J, K, L, Space, Shift; the Arena pad's west, north, east, LB) into SimCore with the host's own setup (v2 slots) and an idle
-## dummy, at three distances, tapped and held. Dodge and guard are read from the act record (dodgeTick, guardSince); light, heavy and
-## signature must show a reaction the sim makes on the press tick: an exchange, a rush, a state or velocity change, or any event but the
-## tick mark (press_ack, rush, windup, lunge ...). Performance measured the light at 5 ticks, every trial, on 2026-10-22
-## (docs/perf/input-latency-2026-10-22.md); this test fails until the melee start is fixed (Encounter's) and must pass after.
-## PARKED: not in sim/input/test while it fails on main. When Encounter's fix lands, move it to sim/input/test/ and add it to the gates.
+## dummy, at three distances, tapped and held. Dodge and guard are read from the act record (dodgeTick, guardSince).
+## TIGHTENED (2026-10-22, after Encounter found the opening-cooldown skip never runs): for light, heavy and signature a reaction is a START
+## made by the sim on the press tick: an exchange (S.dirS.ex), a rush or approach (the fighter's rush, or a `rush` event), or the fighter's
+## state, velocity or position changing. A press_ack alone is an acknowledgement, NOT a start, and does not count. The acknowledgement has
+## its own row: a press_ack event appears on the press tick. Performance measured the light at 5 ticks (docs/perf/input-latency-2026-10-22.md).
 ##   godot --headless --path . --script res://sim/input/test/t1_latency_test.gd
 ## Exit 0 if every check passes.
 
@@ -67,6 +67,7 @@ func _case(dev: String, code: String, what: String, dist: float, hold: bool) -> 
 		S.out.fx.clear()
 	var x0: float = a.x
 	var first: int = -1
+	var ack: int = -1
 	for t in range(WATCH):
 		if t == 0:
 			_press(hub, dev, code, true)
@@ -83,10 +84,15 @@ func _case(dev: String, code: String, what: String, dist: float, hold: bool) -> 
 			_:
 				reacted = S.dirS.ex != null or a.rush != null or a.state != "free" or absf(a.vx) > 0.0 or absf(SimWrap.sdx(x0, a.x)) > 0.0
 				for e in S.out.fx:
-					if String(e.type) != "tick":
-						reacted = true
+					var nm: String = String(e.kind) if String(e.type) == "cue" else String(e.type)
+					if nm == "rush":
+						reacted = true   # the rush's own event; a press_ack, a lunge or windup cue is only an announcement
+					elif nm == "press_ack" and int(e.actor) == 0 and ack < 0:
+						ack = t
 		S.out.fx.clear()
 		if reacted and first < 0:
 			first = t
 	SimCore.dispose(S)
-	ok(first == 0, "T1: %s %s (%s, %.0f units, %s) reacts on the press tick (first reaction: %s)" % [what, code, dev, dist, "held" if hold else "tapped", "never in %d ticks" % WATCH if first < 0 else "tick %d" % first])
+	if what != "dodge" and what != "guard":
+		ok(ack == 0, "ACK: %s %s (%s, %.0f units, %s) is acknowledged by a press_ack on the press tick (first ack: %s)" % [what, code, dev, dist, "held" if hold else "tapped", "never in %d ticks" % WATCH if ack < 0 else "tick %d" % ack])
+	ok(first == 0, "T1: %s %s (%s, %.0f units, %s) STARTS on the press tick (an exchange, a rush, or a state, velocity or position change; first start: %s)" % [what, code, dev, dist, "held" if hold else "tapped", "never in %d ticks" % WATCH if first < 0 else "tick %d" % first])
