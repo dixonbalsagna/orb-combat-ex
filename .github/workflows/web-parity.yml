@@ -1,0 +1,59 @@
+# Web parity (docs/architecture/web-parity.md): is the sim bit for bit the same on the native build and the web (WebAssembly) build? Online rollback and shared replays both need it.
+# One command, sim/core/tools/web_parity.mjs: it imports the project, runs the probe natively (headless), exports the Web build with the project's own "Web" preset, plays it in headless
+# Chrome through Tools' launcher (tools/machine/browser.mjs: a time limit, below-normal priority) and compares both with sim/core/test/golden.json key by key. About 5 minutes on a PC.
+#
+# Its own workflow, so the path filter applies to it alone and the main CI stays as fast as it is: it runs on a push or pull request that touches the sim, the data, the engine pin
+# (.github/actions/setup-godot) or what the check itself uses, and every night, and by hand. Chrome is already on the runner (the pixel pipeline's self-test uses it).
+name: Web parity
+
+on:
+  push:
+    paths:
+      - 'sim/**'
+      - 'data/**'
+      - 'project.godot'
+      - 'export_presets.cfg'
+      - 'tools/machine/**'
+      - '.github/actions/setup-godot/**'
+      - '.github/workflows/web-parity.yml'
+  pull_request:
+    paths:
+      - 'sim/**'
+      - 'data/**'
+      - 'project.godot'
+      - 'export_presets.cfg'
+      - 'tools/machine/**'
+      - '.github/actions/setup-godot/**'
+      - '.github/workflows/web-parity.yml'
+  schedule:
+    - cron: '17 3 * * *'   # every night, 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push cancels an older run of the same branch, except on main, where every run finishes.
+concurrency:
+  group: web-parity-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  web-parity:
+    name: Web parity (native and web give the same sim bits)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24.19.0'
+      - uses: ./.github/actions/setup-godot
+        with:
+          web-templates: 'true'
+      - name: Web parity (golden.json natively and on the web, and the switched-off extras)
+        env:
+          CI: 'true'
+          MERIDIAN_SESSION: ci-web-parity
+        run: node sim/core/tools/web_parity.mjs --godot "$GODOT" --time-limit 2400

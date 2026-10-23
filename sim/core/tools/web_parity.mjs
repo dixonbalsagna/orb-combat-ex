@@ -55,6 +55,9 @@ function copyProject() {
   const s2 = s.replace(/run\/main_scene="[^"]*"/, `run/main_scene="${SCENE}"`);
   if (s2 === s) throw new Error('project.godot has no run/main_scene to replace');
   writeFileSync(p, s2);
+  // The export presets leave the in-game tools folders out of the pack (they are never run in the game), and the probe lives in sim/core/tools: this copy keeps that one folder.
+  const ep = join(ROOT, 'export_presets.cfg');
+  if (existsSync(ep)) writeFileSync(ep, readFileSync(ep, 'utf8').split(', sim/core/tools/*').join(''));
 }
 
 async function webRun(site) {
@@ -64,7 +67,9 @@ async function webRun(site) {
   let b, page;
   try {
     b = await launchBrowser({ session: SESSION, purpose: 'webparity', timeoutS: LIMIT_S, log,
-      flags: ['--window-size=640,360', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows'] });
+      flags: ['--window-size=640,360', '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows',
+        // a CI runner has no GPU: the Compatibility renderer needs WebGL2, so Chrome falls back to its software renderer (it must be asked to since Chrome 137)
+        ...(process.env.CI ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] : [])] });
     page = await Cdp.open(b.target.webSocketDebuggerUrl);
     await page.send('Page.enable');
     const t0 = Date.now();
