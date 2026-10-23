@@ -1,10 +1,10 @@
-// Origin: the biome look bible's data: thirteen biomes, their palettes, ground profiles, cover, damage and destruction looks (deterministic, no randomness, no external images or fonts).
+// Origin: the biome look bible's data: fifteen biomes, their palettes, ground profiles, cover, damage and destruction looks (deterministic, no randomness, no external images or fonts).
 // Written by the Art Director session (Claude, claude-sonnet-5-5), 2026-10-23. Human direction: Orb, via the EP ("pour resources into improving our planet generation, biomes, fighter animations").
 // Brief: docs/art/biomes.md. The look rules it keeps: flat faceted colours with a thin keyline, no gradients inside a surface, no blur, no fades or dissolves (Orb); original shapes, no franchise look-alikes.
 // A palette is [lit, mid, shade] triples at noon: lit faces take the sun, shade faces turn from it. The world-light tint per key (data/art/sky.json) multiplies them, so only noon is authored here.
 //   g ground, sub subsoil (what a crater shows), r rock, v primary vegetation, v2 secondary (grass, scrub), t trunk, w water [shallow, deep], acc the accent, sky [zenith, horizon] at noon
 
-export const BIOMES = {
+const RAW = {
   ocean: {
     name: 'Open ocean', order: 1, line: 'a faceted swell under a clean horizon; the sea owns mid blue',
     pal: { g: ['#3a88b4', '#2c78a8', '#1f5a88'], sub: '#183d5f', r: ['#6c7075', '#4f5a64', '#363f48'], v: ['#5fa06a', '#3f7a50', '#2a5a3a'], v2: ['#5fa06a', '#3f7a50', '#2a5a3a'], t: '#4a3a2a', w: ['#3a88b4', '#1f5a88'], acc: '#e4ecee', sky: ['#2c74bc', '#bfdcec'] },
@@ -16,7 +16,7 @@ export const BIOMES = {
     walks: 'fighters fly over it; the shore, the stacks and the floating wreck are the only fixed marks',
   },
   beach: {
-    name: 'Beach and coast', order: 2, line: 'pale sand, a wet-sand band, a foam line; palms and dune grass behind',
+    name: 'Beach and coast', order: 13, line: 'pale sand, a wet-sand band, a foam line; palms and dune grass behind',
     pal: { g: ['#ead7a2', '#d8c088', '#b09a62'], sub: '#a89060', r: ['#a69985', '#857c70', '#5f584e'], v: ['#6cb85a', '#4a9440', '#2f6a34'], v2: ['#a9bd62', '#7c9745', '#58763a'], t: '#7a5a38', w: ['#3595ac', '#2c78a8'], acc: '#f1f0e6', sky: ['#3a82c8', '#cfe6ee'] },
     profile: { kind: 'shore', amp: 10, wave: 340 }, far: { kind: 'low', amp: 26 },
     cover: [{ k: 'palm', n: 3, h: [150, 240] }, { k: 'dunegrass', n: 8, h: [20, 40] }, { k: 'boulder', n: 3, h: [24, 60] }, { k: 'driftwood', n: 2, h: [14, 20] }],
@@ -25,7 +25,7 @@ export const BIOMES = {
     destruction: 'Sand and spray: a wide pale plume that settles fast, and a ring of wet dark sand around the impact.',
   },
   plains: {
-    name: 'Plains', order: 3, line: 'rolling meadow; scattered broadleaf trees, boulders, tufts',
+    name: 'Plains', order: 2, line: 'rolling meadow; scattered broadleaf trees, boulders, tufts',
     pal: { g: ['#8abd50', '#70a246', '#4e7c36'], sub: '#6b5338', r: ['#908a77', '#7e7a6e', '#5a574e'], v: ['#4f9040', '#3b7634', '#2a5628'], v2: ['#a4cc62', '#86b04c', '#5e8a38'], t: '#6a4a30', w: ['#477b88', '#376b7c'], acc: '#e2b04a', sky: ['#2f7cc4', '#c4e0ee'] },
     profile: { kind: 'rolling', amp: 30, wave: 520 }, far: { kind: 'hills', amp: 60 },
     cover: [{ k: 'tree', n: 4, h: [130, 220] }, { k: 'tuft', n: 14, h: [16, 34] }, { k: 'boulder', n: 3, h: [22, 54] }, { k: 'shrub', n: 5, h: [30, 56] }],
@@ -34,7 +34,7 @@ export const BIOMES = {
     destruction: 'Dirt and divots: brown clods and green turf chunks in an arc, a low wide dust cloud in the soil\'s colour.',
   },
   savanna: {
-    name: 'Savanna', order: 4, line: 'gold dry grass, flat-topped acacias, red earth showing, termite towers',
+    name: 'Savanna', order: 9, line: 'gold dry grass, flat-topped acacias, red earth showing, termite towers',
     pal: { g: ['#d6c26c', '#c0a650', '#8f7a38'], sub: '#a8643c', r: ['#b0a08a', '#8e806c', '#645a4c'], v: ['#78a040', '#5b8434', '#3e5e28'], v2: ['#e2cf7a', '#c8b25a', '#9a8640'], t: '#6e4a30', w: ['#639d80', '#3f7a80'], acc: '#c86a3c', sky: ['#3a84cc', '#ecdcb0'] },
     profile: { kind: 'rolling', amp: 16, wave: 680 }, far: { kind: 'hills', amp: 34 },
     cover: [{ k: 'acacia', n: 3, h: [120, 200] }, { k: 'tuft', n: 16, h: [24, 50] }, { k: 'termite', n: 2, h: [50, 90] }, { k: 'boulder', n: 2, h: [30, 80] }],
@@ -43,7 +43,7 @@ export const BIOMES = {
     destruction: 'Red-ochre dust, tall and wide, with tumbling grass clumps; it hangs a little longer than sand because the dust is fine.',
   },
   forest: {
-    name: 'Temperate forest', order: 5, line: 'dense broadleaf and fir; a green floor; a leaf-litter ground',
+    name: 'Temperate forest', order: 3, line: 'dense broadleaf and fir; a green floor; a leaf-litter ground',
     pal: { g: ['#5e9446', '#487a38', '#335a2a'], sub: '#4e3a28', r: ['#848072', '#6e6a5e', '#4c4a42'], v: ['#4a9a48', '#327c3a', '#1f5a2c'], v2: ['#79b058', '#5a9442', '#3e6e30'], t: '#62422a', w: ['#3f7c89', '#3d6076'], acc: '#d8883a', sky: ['#2f7cc4', '#c0dce8'] },
     profile: { kind: 'rolling', amp: 42, wave: 440 }, far: { kind: 'hills', amp: 90 },
     cover: [{ k: 'tree', n: 6, h: [200, 340] }, { k: 'fir', n: 5, h: [220, 380] }, { k: 'shrub', n: 5, h: [30, 60] }, { k: 'boulder', n: 2, h: [30, 70] }, { k: 'tuft', n: 8, h: [14, 28] }],
@@ -52,7 +52,7 @@ export const BIOMES = {
     destruction: 'Leaf shred and splinters: green and orange leaf shards swirl, pale splinters and bark chunks arc out, a dark dirt cloud below.',
   },
   jungle: {
-    name: 'Jungle', order: 6, line: 'tall layered canopy, buttress trunks, giant leaves, dark floor, a few vivid flowers',
+    name: 'Jungle', order: 8, line: 'tall layered canopy, buttress trunks, giant leaves, dark floor, a few vivid flowers',
     pal: { g: ['#4a8a42', '#386e36', '#264e2a'], sub: '#4a3626', r: ['#728567', '#5e6e5a', '#404e40'], v: ['#5cb04a', '#3a8f3c', '#1f6a30'], v2: ['#9ad052', '#6eb040', '#478a30'], t: '#5a3e28', w: ['#5a9a7a', '#2f6a58'], acc: '#e0527a', sky: ['#3a88c0', '#b8d8cc'] },
     profile: { kind: 'rolling', amp: 50, wave: 380 }, far: { kind: 'hills', amp: 110 },
     cover: [{ k: 'jungletree', n: 3, h: [250, 380] }, { k: 'fern', n: 8, h: [50, 110] }, { k: 'flower', n: 3, h: [30, 50] }, { k: 'boulder', n: 2, h: [40, 90] }],
@@ -61,7 +61,7 @@ export const BIOMES = {
     destruction: 'Shredded leaves and split trunks with a rising column of grey steam from the wet ground; bright flower petals among the debris.',
   },
   wetland: {
-    name: 'Wetland', order: 7, line: 'shallow tea-green water, reed beds, mangrove roots, flat mud banks',
+    name: 'Wetland', order: 12, line: 'shallow tea-green water, reed beds, mangrove roots, flat mud banks',
     pal: { g: ['#789a62', '#5f804e', '#436038'], sub: '#4a4232', r: ['#7f7f6a', '#6e6e62', '#4a4a42'], v: ['#7fa05a', '#5a8048', '#3e5e36'], v2: ['#c0c070', '#a0a458', '#6a7e3a'], t: '#4e3a2a', w: ['#6ca682', '#4d8474'], acc: '#d8d4b8', sky: ['#4a8ec0', '#c6dcd4'] },
     profile: { kind: 'flat', amp: 8, wave: 300 }, far: { kind: 'low', amp: 22 },
     cover: [{ k: 'reed', n: 14, h: [60, 120] }, { k: 'mangrove', n: 3, h: [120, 200] }, { k: 'pool', n: 4, h: [6, 8] }, { k: 'tree', n: 2, h: [140, 220] }],
@@ -70,7 +70,7 @@ export const BIOMES = {
     destruction: 'Mud splash: dark brown globs on arcs, flung reeds, a ring of ripple; the water goes cloudy for a moment and settles.',
   },
   desert: {
-    name: 'Desert', order: 8, line: 'long dunes with a steep lee, red mesas, cacti and scrub; sun-bleached',
+    name: 'Desert', order: 4, line: 'long dunes with a steep lee, red mesas, cacti and scrub; sun-bleached',
     pal: { g: ['#ecd28c', '#d8b868', '#a88a44'], sub: '#a07a44', r: ['#d29a5a', '#b87a44', '#8a5634'], v: ['#6aa050', '#4d8040', '#386030'], v2: ['#a8a060', '#8a8448', '#625e34'], t: '#6a4a30', w: ['#387b87', '#357a85'], acc: '#d0e0e8', sky: ['#3c94d0', '#f0e4c0'] },
     profile: { kind: 'dunes', amp: 46, wave: 460 }, far: { kind: 'mesas', amp: 80 },
     cover: [{ k: 'cactus', n: 3, h: [90, 170] }, { k: 'scrub', n: 6, h: [24, 50] }, { k: 'mesa', n: 1, h: [160, 240] }, { k: 'boulder', n: 3, h: [30, 80] }, { k: 'skull', n: 0, h: [0, 0] }],
@@ -79,7 +79,7 @@ export const BIOMES = {
     destruction: 'A sand plume: tall, wide, pale gold with a darker core; it falls fast and the dune face slumps and slides for a second.',
   },
   mountains: {
-    name: 'Mountains', order: 9, line: 'grey faceted rock, snow on the shade side, conifers low down, scree',
+    name: 'Mountains', order: 5, line: 'grey faceted rock, snow on the shade side, conifers low down, scree',
     pal: { g: ['#6e9a58', '#547e46', '#3a5c34'], sub: '#5a5448', r: ['#aea28a', '#7e786c', '#524e46'], v: ['#3f7a50', '#2c5e3e', '#1e4430'], v2: ['#8aa070', '#6a8056', '#4a5e3c'], t: '#5a4230', w: ['#367882', '#366577'], acc: '#e6eef2', sky: ['#3a82c8', '#c4daea'] },
     profile: { kind: 'jagged', amp: 190, wave: 520 }, far: { kind: 'peaks', amp: 260 },
     cover: [{ k: 'fir', n: 4, h: [160, 280] }, { k: 'boulder', n: 6, h: [30, 110] }, { k: 'scree', n: 4, h: [20, 50] }, { k: 'snowpatch', n: 3, h: [8, 14] }],
@@ -88,7 +88,7 @@ export const BIOMES = {
     destruction: 'Rock shards: angular chunks on long arcs and a grey dust cloud; on a slope the scree slides downhill for two seconds.',
   },
   volcanic: {
-    name: 'Volcanic highland', order: 10, line: 'black basalt, grey ash slopes, a cone with a rim, a few cooled lava flows; the rocky highland in its cold state',
+    name: 'Volcanic ground', order: 15, line: 'black basalt, grey ash slopes, a cone with a rim, a few cooled lava flows; World\'s volcanic biome (the weathered rock highland is its own biome)',
     pal: { g: ['#5e5a64', '#43404a', '#2a2830'], sub: '#1e1c22', r: ['#6a666e', '#4a464e', '#2e2c32'], v: ['#6a8a48', '#4a6a38', '#34502a'], v2: ['#8a868e', '#6a666e', '#4a464e'], t: '#3a2c24', w: ['#497b89', '#3f6578'], acc: '#dc6a26', sky: ['#4a78a8', '#d8c8b0'] },
     profile: { kind: 'cones', amp: 120, wave: 520 }, far: { kind: 'cones', amp: 230 },
     cover: [{ k: 'basaltcol', n: 3, h: [80, 170] }, { k: 'boulder', n: 5, h: [30, 100] }, { k: 'vent', n: 2, h: [40, 70] }, { k: 'shrub', n: 3, h: [26, 50] }, { k: 'lavaflow', n: 1, h: [10, 14] }],
@@ -98,16 +98,34 @@ export const BIOMES = {
     note: 'a hot state (lava rivers glowing) is an event, not a biome: static orange, small area, Legal photosensitivity and the saturated-red test apply',
   },
   tundra: {
-    name: 'Tundra and taiga', order: 11, line: 'grey-green lichen ground, snow in the hollows, dark spruce thinning poleward to stunted scrub',
-    pal: { g: ['#7a9a59', '#738868', '#53664c'], sub: '#5a5448', r: ['#787878', '#6e6e74', '#4a4a52'], v: ['#3a6a58', '#2a5444', '#1c3c30'], v2: ['#c0c8a0', '#aeae7f', '#78825e'], t: '#4a3a2c', w: ['#3c7884', '#3b6276'], acc: '#e4ecf0', sky: ['#4a88c4', '#cadce8'] },
-    profile: { kind: 'hummock', amp: 22, wave: 380 }, far: { kind: 'hills', amp: 70 },
-    cover: [{ k: 'spruce', n: 5, h: [180, 320] }, { k: 'krummholz', n: 4, h: [30, 60] }, { k: 'snowpatch', n: 5, h: [8, 16] }, { k: 'boulder', n: 4, h: [24, 70] }, { k: 'tuft', n: 8, h: [10, 22] }],
+    name: 'Tundra', order: 10, line: 'open grey-green lichen ground, snow in the hollows, stunted scrub and boulders; no trees',
+    pal: { g: ['#7a9a59', '#738868', '#53664c'], sub: '#5a5448', r: ['#787878', '#6e6e74', '#4a4a52'], v: ['#768a55', '#5f7248', '#46563a'], v2: ['#c0c8a0', '#aeae7f', '#78825e'], t: '#4a3a2c', w: ['#3c7884', '#3b6276'], acc: '#e4ecf0', sky: ['#4a88c4', '#cadce8'] },
+    profile: { kind: 'hummock', amp: 22, wave: 380 }, far: { kind: 'hills', amp: 60 },
+    cover: [{ k: 'krummholz', n: 6, h: [30, 70] }, { k: 'snowpatch', n: 6, h: [8, 16] }, { k: 'boulder', n: 5, h: [24, 70] }, { k: 'tuft', n: 10, h: [10, 24] }, { k: 'shrub', n: 3, h: [20, 40] }],
     plume: { kind: 'snow', cols: ['#e4ecf0', '#a8bccb', '#6a7e90'], ej: ['#e4ecf0', '#4a3a2c'], h: 340, w: 220 },
-    damage: { scorch: 'a black band through lichen and snow: the snow melted to dark wet ground, the lichen burnt to grey crisp', crater: 'a bowl of dark frozen soil with a ring of snow thrown out, ice lenses glinting blue in the wall', burned: 'spruce charred black and snow-capped, black circles where stunted scrub burned, grey ash on the snow' },
+    damage: { scorch: 'a black band through lichen and snow: the snow melted to dark wet ground, the lichen burnt to grey crisp', crater: 'a bowl of dark frozen soil with a ring of snow thrown out, ice lenses glinting blue in the wall', burned: 'black circles where stunted scrub burned, grey ash on the snow, the lichen gone to bare grey ground' },
     destruction: 'A snow burst: a pale powder cloud that rises and falls, white and blue crystal shards, dark soil clods under it.',
   },
-  ice: {
-    name: 'Ice sheet', order: 12, line: 'two tones: a warm-white lit face and a cold slate face; crevasses; rock peaks through',
+  taiga: {
+    name: 'Taiga', order: 11, line: 'dense dark spruce on a mossy floor, snow lying in the hollows, narrow shadows; the boreal forest between the forest and the tundra',
+    pal: { g: ['#6f8a74', '#57705f', '#3c5446'], sub: '#4a4036', r: ['#757779', '#6c6e72', '#4a4c52'], v: ['#3a6a58', '#2a5444', '#1c3c30'], v2: ['#6e8a6a', '#587052', '#405540'], t: '#4a3a2c', w: ['#3c7884', '#3b6276'], acc: '#e4ecf0', sky: ['#4a88c4', '#c4d8e6'] },
+    profile: { kind: 'rolling', amp: 36, wave: 460 }, far: { kind: 'hills', amp: 100 },
+    cover: [{ k: 'spruce', n: 8, h: [220, 360] }, { k: 'snowpatch', n: 6, h: [8, 16] }, { k: 'shrub', n: 4, h: [26, 50] }, { k: 'boulder', n: 3, h: [30, 80] }, { k: 'tuft', n: 6, h: [12, 26] }],
+    plume: { kind: 'snow', cols: ['#e4ecf0', '#9fb6c4', '#587084'], ej: ['#e4ecf0', '#2a5444'], h: 330, w: 210 },
+    damage: { scorch: 'a black band through the spruce: trunks charred on one side, needles singed rust-brown, the snow in the hollows melted to a dark line', crater: 'a bowl of dark mossy loam with a ring of felled spruce lying outward like spokes and snow thrown over them', burned: 'a standing burn: black bare spruce with a few rust needles, grey ash on the snow, the moss floor black' },
+    destruction: 'Snow and needles: a pale powder column, white and blue crystals, dark needle shards and bark chunks arcing out, a low dark dirt skirt under it.',
+  },
+  highland: {
+    name: 'Highland', order: 14, line: 'weathered grey rock, mauve heather and russet bracken, wind-bent trees, stacked granite tors; the rocky highland (not volcanic)',
+    pal: { g: ['#758558', '#687452', '#4c5640'], sub: '#4a4234', r: ['#aea28e', '#8c8070', '#5e5648'], v: ['#8a5f78', '#6c4660', '#4c3248'], v2: ['#a89a62', '#8a7e4c', '#645c38'], t: '#5a4a38', w: ['#487787', '#2f5a6e'], acc: '#cfc6b0', sky: ['#4a84c0', '#c8dae6'] },
+    profile: { kind: 'hummock', amp: 70, wave: 480 }, far: { kind: 'hills', amp: 120 },
+    cover: [{ k: 'tor', n: 3, h: [90, 190] }, { k: 'heath', n: 9, h: [18, 40] }, { k: 'boulder', n: 5, h: [24, 80] }, { k: 'tuft', n: 8, h: [14, 30] }, { k: 'krummholz', n: 2, h: [50, 90] }, { k: 'scree', n: 2, h: [20, 40] }],
+    plume: { kind: 'rock', cols: ['#aea28e', '#8c8070', '#5e5648'], ej: ['#8c8070', '#8a5f78'], h: 300, w: 200 },
+    damage: { scorch: 'a black soot streak across the heather and the rock, the heather burnt to a grey crust and the rock lichen to bare pale stone', crater: 'a bowl in thin peaty soil over rock, the rim a ring of shattered granite blocks and torn heather', burned: 'a heath fire: the heather and bracken black and ash-grey over a wide patch, the wind-bent trees black, the tors sooted dark' },
+    destruction: 'Rock and peat: pale granite chips on long arcs, a brown-grey dust cloud with torn heather in it; a tor sheds blocks that roll downhill.',
+  },
+  ice_sheet: {
+    name: 'Ice sheet', order: 6, line: 'two tones: a warm-white lit face and a cold slate face; crevasses; rock peaks through',
     pal: { g: ['#ebe8e2', '#ebe8e2', '#485765'], sub: '#485765', r: ['#7e766a', '#6a645c', '#4a463f'], v: ['#ebe8e2', '#ebe8e2', '#485765'], v2: ['#ebe8e2', '#ebe8e2', '#485765'], t: '#485765', w: ['#2f6a84', '#1b3f57'], acc: '#5f8aa2', sky: ['#4c8ccc', '#d4e2ec'] },
     profile: { kind: 'sheet', amp: 26, wave: 600 }, far: { kind: 'shelf', amp: 40 },
     cover: [{ k: 'icespire', n: 3, h: [60, 160] }, { k: 'crevasse', n: 3, h: [10, 14] }, { k: 'nunatak', n: 1, h: [120, 200] }, { k: 'snowpatch', n: 4, h: [8, 14] }],
@@ -115,8 +133,8 @@ export const BIOMES = {
     damage: { scorch: 'a slate streak melted into the ice, the edge a thin melt-blue line (it refreezes in ten seconds)', crater: 'a bowl in the ice with a clean blue wall and a ring of shattered white blocks; fine cracks run out along the surface', burned: 'a dark soot band and a melt pool in a bowl; meltwater blue, the pool refreezing at its rim' },
     destruction: 'Ice shatter: a white powder burst and large crystal shards (cut blue facets), a slow-falling glitter of fine shards.',
   },
-  seaice: {
-    name: 'Sea ice', order: 13, line: 'flat floes with a warm-white top and a slate edge in dark cold water; bergs',
+  sea_ice: {
+    name: 'Sea ice', order: 7, line: 'flat floes with a warm-white top and a slate edge in dark cold water; bergs',
     pal: { g: ['#e3e4e0', '#e3e4e0', '#485765'], sub: '#485765', r: ['#e3e4e0', '#e3e4e0', '#485765'], v: ['#e3e4e0', '#e3e4e0', '#485765'], v2: ['#e3e4e0', '#e3e4e0', '#485765'], t: '#485765', w: ['#2f6a84', '#1b3f57'], acc: '#5f8aa2', sky: ['#5890c0', '#c4d2de'] },
     profile: { kind: 'floes', amp: 10, wave: 260 }, far: { kind: 'floesfar', amp: 14 },
     cover: [{ k: 'berg', n: 2, h: [90, 220] }, { k: 'floeblock', n: 5, h: [14, 30] }, { k: 'icespire', n: 1, h: [60, 110] }],
@@ -129,7 +147,7 @@ export const BIOMES = {
 // the borders (undirected). eco: the cover that appears only in the zone; ground: the ground steps; note: what Rendering draws
 export const PAIRS = [
   ['ocean', 'beach', ['foam'], 'The sea shallows in three hard steps (deep, mid, shallow) and a pale foam line runs along the sand; wet sand is a darker band above it.'],
-  ['ocean', 'seaice', ['floeblock'], 'The sea darkens to polar water and floe fragments appear, thickening into the pack; the floe edges are slate.'],
+  ['ocean', 'sea_ice', ['floeblock'], 'The sea darkens to polar water and floe fragments appear, thickening into the pack; the floe edges are slate.'],
   ['ocean', 'wetland', ['reed'], 'A river-mouth: the shallows go tea-green in steps, reed islands stand out in the water, the shoreline is a mud bank.'],
   ['ocean', 'volcanic', ['stack'], 'Black cliffs drop straight into the sea; sea stacks stand off the cliff; a thin steam vent stands on the shore (grey facets).'],
   ['beach', 'plains', ['dunegrass'], 'Sand gives way to dune grass tufts, then grass; one low dune ridge between.'],
@@ -138,28 +156,42 @@ export const PAIRS = [
   ['beach', 'wetland', ['reed'], 'Tidal flats: sand turns to grey-green mud in steps, pools with a pale rim, reeds begin.'],
   ['beach', 'desert', ['dunegrass'], 'The dune sea runs to the shore; only the sand colour steps from pale to gold; no grass at all.'],
   ['beach', 'volcanic', ['boulder'], 'Black sand beach: the sand steps from pale to grey to black, black boulders in the surf.'],
+  ['beach', 'highland', ['boulder'], 'Coastal heath: the sand gives way to heather and bracken on a low cliff, grey boulders at its foot.'],
   ['plains', 'forest', ['tree'], 'Parkland: lone trees, then groves, then closed forest; the grass shortens under the trees.'],
   ['plains', 'savanna', ['acacia'], 'The green dries to gold in steps; acacias appear among the grass; the first red earth shows.'],
   ['plains', 'desert', ['scrub'], 'Grass breaks into tufts on bare sand; scrub, then dunes; the ground steps from green to gold in five hard bands.'],
   ['plains', 'mountains', ['boulder'], 'Foothills: the hills rise in steps, rock outcrops through the grass, fir groves on the slopes.'],
-  ['plains', 'tundra', ['spruce'], 'Sparse spruce on cold grass; lichen replaces the grass; the first snow patches in hollows.'],
+  ['plains', 'taiga', ['spruce'], 'Sparse spruce on cold grass; moss replaces the grass; the first snow patches in hollows.'],
   ['plains', 'wetland', ['pool'], 'Pools open in the grass, reeds ring them, the grass grows darker and wetter.'],
+  ['plains', 'highland', ['heath'], 'Meadow gives way to moor: heather mounds and bracken among the grass, the first granite boulders, the ground rising in low humps.'],
   ['savanna', 'jungle', ['jungletree'], 'A gallery forest: a dense green wall of tall trees along a river, with golden grass right up to it.'],
   ['savanna', 'desert', ['scrub'], 'Thorn scrub thins; red earth takes over from gold grass; acacias become single trees.'],
   ['savanna', 'wetland', ['reed'], 'A floodplain: flat, gold grass with pools and reeds, a few acacias on the higher ground.'],
   ['forest', 'jungle', ['jungletree'], 'The trees get taller and the canopy closes; giant leaves appear under them; the green shifts toward yellow-green.'],
-  ['forest', 'tundra', ['spruce'], 'Broadleaf gives way to spruce; the trees shrink poleward; lichen and snow patches take the floor.'],
+  ['forest', 'taiga', ['spruce'], 'Broadleaf gives way to spruce; the trees narrow and darken; moss and snow patches take the floor.'],
   ['forest', 'mountains', ['fir'], 'The tree line climbs the slope: tall firs, then small firs, then scree and rock.'],
   ['forest', 'wetland', ['mangrove'], 'A swamp forest: trees stand in shallow water with arched roots; the floor is mud.'],
+  ['forest', 'highland', ['tree'], 'The wood thins to wind-bent trees on heather; granite boulders stand in the clearings.'],
   ['jungle', 'wetland', ['mangrove'], 'A mangrove swamp: prop roots, dark water, hanging vines.'],
   ['jungle', 'mountains', ['fern'], 'A cloud forest: the canopy stays but the ridges rise behind it, darker; ferns on the rock.'],
   ['desert', 'mountains', ['scree'], 'Badlands: red mesas and scree fans spill from the grey rock; no soil between.'],
   ['desert', 'volcanic', ['basaltcol'], 'A black lava plain with sand drifted in streaks; basalt columns; the sand steps to black.'],
+  ['desert', 'highland', ['scree'], 'Dry moor: the sand turns to bare weathered rock and thin heather; tors stand on the ridges.'],
   ['mountains', 'volcanic', ['vent'], 'The rock turns from grey to black, ash slopes replace scree, a cone stands behind.'],
+  ['mountains', 'taiga', ['fir'], 'Tall spruce thin up the slope to small ones, then scree; snow lies in the folds.'],
   ['mountains', 'tundra', ['krummholz'], 'Bare rock above, lichen and stunted scrub below, snow in the folds.'],
-  ['mountains', 'ice', ['icespire'], 'Glacier tongues run down between the rock ridges; the snow line is a hard step.'],
-  ['tundra', 'ice', ['snowpatch'], 'Snow patches join into full snow cover; lichen shows only on the ridges; the ground steps to two tones.'],
-  ['tundra', 'seaice', ['floeblock'], 'Shore-fast ice: a flat white shelf along the coast, floes at its edge in dark water.'],
-  ['ice', 'seaice', ['berg'], 'A shelf edge: a vertical slate cliff of ice over dark water, bergs calved off it, floes beyond.'],
+  ['mountains', 'ice_sheet', ['icespire'], 'Glacier tongues run down between the rock ridges; the snow line is a hard step.'],
+  ['mountains', 'highland', ['tor'], 'The crags lower into rounded heath with tors: jagged ridgelines settle into humps, snow gives way to heather.'],
+  ['volcanic', 'highland', ['basaltcol'], 'Black basalt gives way to pale weathered granite; heather grows in the older, softer ground.'],
+  ['taiga', 'tundra', ['krummholz'], 'The spruce shrink and thin to single stunted trees, then none; the moss becomes lichen.'],
+  ['taiga', 'wetland', ['pool'], 'A bog: dark pools among the spruce, the trees small and thin, moss and reeds at the water.'],
+  ['taiga', 'highland', ['spruce'], 'Spruce stands break up into heather moor; the trees stay in the folds and along the streams.'],
+  ['tundra', 'ice_sheet', ['snowpatch'], 'Snow patches join into full snow cover; lichen shows only on the ridges; the ground steps to two tones.'],
+  ['tundra', 'sea_ice', ['floeblock'], 'Shore-fast ice: a flat white shelf along the coast, floes at its edge in dark water.'],
+  ['tundra', 'highland', ['heath'], 'Alpine tundra: lichen and heather mix, boulders and tors stand in the open; snow lies in the hollows.'],
+  ['wetland', 'highland', ['pool'], 'An upland bog: peat pools among heather and reed, the ground low and wet between the humps.'],
+  ['ice_sheet', 'sea_ice', ['berg'], 'A shelf edge: a vertical slate cliff of ice over dark water, bergs calved off it, floes beyond.'],
 ];
 export const neighboursOf = id => PAIRS.filter(p => p[0] === id || p[1] === id).map(p => ({ other: p[0] === id ? p[1] : p[0], eco: p[2], note: p[3] }));
+
+export const BIOMES = Object.fromEntries(Object.entries(RAW).sort((a, b) => a[1].order - b[1].order).map(([id, b]) => [id, { id, ...b }]));

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/art-biomes",
   "title": "art.biomes (version 1)",
-  "description": "data/art/biomes.json: the biome look bible (docs/art/biomes.md; written by art/concepts/biomes/gen.mjs): per biome the palettes, the far ladder, the orbit colour, the ground profile, the cover per 1,200 units, the destruction plume, the scar colours, the neighbours and the readability numbers; the 33 neighbour pairs. Presentation only. Version field: version. Policy: closed except keys starting with an underscore. Cross-references in tools/lib/xref-biome-look.js (biomes-look-order, -neighbour, -pair, -far-land, -cover, -orbit).",
+  "description": "data/art/biomes.json: the biome look bible (docs/art/biomes.md; written by art/concepts/biomes/gen.mjs): per biome the palettes, the far ladder, the orbit colour, the ground profile, the cover per 1,200 units, the destruction plume, the scar colours, the neighbours and the readability numbers; the neighbour pairs. Presentation only. Version field: version. Policy: closed except keys starting with an underscore. Cross-references in tools/lib/xref-biome-look.js (biomes-look-order, -neighbour, -pair, -far-land, -cover, -orbit).",
   "type": "object",
   "required": [
     "version",
@@ -68,7 +68,7 @@
         },
         "pair": {
           "type": "string",
-          "pattern": "^[a-z0-9]+ / [a-z0-9]+$",
+          "pattern": "^[a-z0-9_]+ / [a-z0-9_]+$",
           "description": "The closest pair, \"a / b\" (biome ids: rule biomes-look-orbit)."
         }
       },
@@ -81,21 +81,23 @@
       "type": "object",
       "required": [
         "ocean",
-        "beach",
         "plains",
-        "savanna",
         "forest",
-        "jungle",
-        "wetland",
         "desert",
         "mountains",
-        "volcanic",
+        "ice_sheet",
+        "sea_ice",
+        "jungle",
+        "savanna",
         "tundra",
-        "ice",
-        "seaice"
+        "taiga",
+        "wetland",
+        "beach",
+        "highland",
+        "volcanic"
       ],
       "propertyNames": {
-        "pattern": "^(_.*|[a-z][a-z0-9]*)$"
+        "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
       },
       "additionalProperties": {
         "type": "object",

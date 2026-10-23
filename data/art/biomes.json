@@ -8,8 +8,8 @@
     "orbit": "the colour a biome reads as from far away, 12 percent toward the atmosphere blue (8 for ice)"
   },
   "orbit_separation": {
-    "min": 9.8,
-    "pair": "wetland / tundra"
+    "min": 9.3,
+    "pair": "mountains / highland"
   },
   "_cover_set": [
     {
@@ -45,78 +45,6 @@
       "tris_charred": 3
     },
     {
-      "kind": "palm",
-      "biomes": [
-        "beach"
-      ],
-      "height_range_u": [
-        150,
-        240
-      ],
-      "height_range_px": [
-        172,
-        275
-      ],
-      "tris_clean": 18,
-      "tris_charred": 2
-    },
-    {
-      "kind": "dunegrass",
-      "biomes": [
-        "beach"
-      ],
-      "height_range_u": [
-        20,
-        40
-      ],
-      "height_range_px": [
-        23,
-        46
-      ],
-      "tris_clean": 6,
-      "tris_charred": 7
-    },
-    {
-      "kind": "boulder",
-      "biomes": [
-        "beach",
-        "plains",
-        "savanna",
-        "forest",
-        "jungle",
-        "desert",
-        "mountains",
-        "volcanic",
-        "tundra"
-      ],
-      "height_range_u": [
-        22,
-        110
-      ],
-      "height_range_px": [
-        25,
-        126
-      ],
-      "tris_clean": 5,
-      "tris_charred": 5
-    },
-    {
-      "kind": "driftwood",
-      "biomes": [
-        "beach"
-      ],
-      "height_range_u": [
-        14,
-        20
-      ],
-      "height_range_px": [
-        16,
-        23
-      ],
-      "tris_clean": 4,
-      "tris_charred": 4
-    },
-    {
       "kind": "tree",
       "biomes": [
         "plains",
@@ -138,9 +66,11 @@
       "kind": "tuft",
       "biomes": [
         "plains",
-        "savanna",
         "forest",
-        "tundra"
+        "savanna",
+        "tundra",
+        "taiga",
+        "highland"
       ],
       "height_range_u": [
         10,
@@ -154,54 +84,50 @@
       "tris_charred": 7
     },
     {
+      "kind": "boulder",
+      "biomes": [
+        "plains",
+        "forest",
+        "desert",
+        "mountains",
+        "jungle",
+        "savanna",
+        "tundra",
+        "taiga",
+        "beach",
+        "highland",
+        "volcanic"
+      ],
+      "height_range_u": [
+        22,
+        110
+      ],
+      "height_range_px": [
+        25,
+        126
+      ],
+      "tris_clean": 5,
+      "tris_charred": 5
+    },
+    {
       "kind": "shrub",
       "biomes": [
         "plains",
         "forest",
+        "tundra",
+        "taiga",
         "volcanic"
       ],
       "height_range_u": [
-        26,
+        20,
         60
       ],
       "height_range_px": [
-        30,
+        23,
         69
       ],
       "tris_clean": 7,
       "tris_charred": 7
-    },
-    {
-      "kind": "acacia",
-      "biomes": [
-        "savanna"
-      ],
-      "height_range_u": [
-        120,
-        200
-      ],
-      "height_range_px": [
-        138,
-        229
-      ],
-      "tris_clean": 13,
-      "tris_charred": 12
-    },
-    {
-      "kind": "termite",
-      "biomes": [
-        "savanna"
-      ],
-      "height_range_u": [
-        50,
-        90
-      ],
-      "height_range_px": [
-        57,
-        103
-      ],
-      "tris_clean": 6,
-      "tris_charred": 6
     },
     {
       "kind": "fir",
@@ -219,102 +145,6 @@
       ],
       "tris_clean": 12,
       "tris_charred": 16
-    },
-    {
-      "kind": "jungletree",
-      "biomes": [
-        "jungle"
-      ],
-      "height_range_u": [
-        250,
-        380
-      ],
-      "height_range_px": [
-        287,
-        436
-      ],
-      "tris_clean": 34,
-      "tris_charred": 16
-    },
-    {
-      "kind": "fern",
-      "biomes": [
-        "jungle"
-      ],
-      "height_range_u": [
-        50,
-        110
-      ],
-      "height_range_px": [
-        57,
-        126
-      ],
-      "tris_clean": 12,
-      "tris_charred": 7
-    },
-    {
-      "kind": "flower",
-      "biomes": [
-        "jungle"
-      ],
-      "height_range_u": [
-        30,
-        50
-      ],
-      "height_range_px": [
-        34,
-        57
-      ],
-      "tris_clean": 12,
-      "tris_charred": 4
-    },
-    {
-      "kind": "reed",
-      "biomes": [
-        "wetland"
-      ],
-      "height_range_u": [
-        60,
-        120
-      ],
-      "height_range_px": [
-        69,
-        138
-      ],
-      "tris_clean": 14,
-      "tris_charred": 11
-    },
-    {
-      "kind": "mangrove",
-      "biomes": [
-        "wetland"
-      ],
-      "height_range_u": [
-        120,
-        200
-      ],
-      "height_range_px": [
-        138,
-        229
-      ],
-      "tris_clean": 30,
-      "tris_charred": 10
-    },
-    {
-      "kind": "pool",
-      "biomes": [
-        "wetland"
-      ],
-      "height_range_u": [
-        6,
-        8
-      ],
-      "height_range_px": [
-        7,
-        9
-      ],
-      "tris_clean": 4,
-      "tris_charred": 0
     },
     {
       "kind": "cactus",
@@ -367,7 +197,8 @@
     {
       "kind": "scree",
       "biomes": [
-        "mountains"
+        "mountains",
+        "highland"
       ],
       "height_range_u": [
         20,
@@ -384,8 +215,9 @@
       "kind": "snowpatch",
       "biomes": [
         "mountains",
+        "ice_sheet",
         "tundra",
-        "ice"
+        "taiga"
       ],
       "height_range_u": [
         8,
@@ -397,6 +229,328 @@
       ],
       "tris_clean": 3,
       "tris_charred": 3
+    },
+    {
+      "kind": "icespire",
+      "biomes": [
+        "ice_sheet",
+        "sea_ice"
+      ],
+      "height_range_u": [
+        60,
+        160
+      ],
+      "height_range_px": [
+        69,
+        183
+      ],
+      "tris_clean": 12,
+      "tris_charred": 12
+    },
+    {
+      "kind": "crevasse",
+      "biomes": [
+        "ice_sheet"
+      ],
+      "height_range_u": [
+        10,
+        14
+      ],
+      "height_range_px": [
+        11,
+        16
+      ],
+      "tris_clean": 3,
+      "tris_charred": 3
+    },
+    {
+      "kind": "nunatak",
+      "biomes": [
+        "ice_sheet"
+      ],
+      "height_range_u": [
+        120,
+        200
+      ],
+      "height_range_px": [
+        138,
+        229
+      ],
+      "tris_clean": 7,
+      "tris_charred": 7
+    },
+    {
+      "kind": "berg",
+      "biomes": [
+        "sea_ice"
+      ],
+      "height_range_u": [
+        90,
+        220
+      ],
+      "height_range_px": [
+        103,
+        252
+      ],
+      "tris_clean": 8,
+      "tris_charred": 8
+    },
+    {
+      "kind": "floeblock",
+      "biomes": [
+        "sea_ice"
+      ],
+      "height_range_u": [
+        14,
+        30
+      ],
+      "height_range_px": [
+        16,
+        34
+      ],
+      "tris_clean": 4,
+      "tris_charred": 4
+    },
+    {
+      "kind": "jungletree",
+      "biomes": [
+        "jungle"
+      ],
+      "height_range_u": [
+        250,
+        380
+      ],
+      "height_range_px": [
+        287,
+        436
+      ],
+      "tris_clean": 34,
+      "tris_charred": 16
+    },
+    {
+      "kind": "fern",
+      "biomes": [
+        "jungle"
+      ],
+      "height_range_u": [
+        50,
+        110
+      ],
+      "height_range_px": [
+        57,
+        126
+      ],
+      "tris_clean": 12,
+      "tris_charred": 7
+    },
+    {
+      "kind": "flower",
+      "biomes": [
+        "jungle"
+      ],
+      "height_range_u": [
+        30,
+        50
+      ],
+      "height_range_px": [
+        34,
+        57
+      ],
+      "tris_clean": 12,
+      "tris_charred": 4
+    },
+    {
+      "kind": "acacia",
+      "biomes": [
+        "savanna"
+      ],
+      "height_range_u": [
+        120,
+        200
+      ],
+      "height_range_px": [
+        138,
+        229
+      ],
+      "tris_clean": 13,
+      "tris_charred": 12
+    },
+    {
+      "kind": "termite",
+      "biomes": [
+        "savanna"
+      ],
+      "height_range_u": [
+        50,
+        90
+      ],
+      "height_range_px": [
+        57,
+        103
+      ],
+      "tris_clean": 6,
+      "tris_charred": 6
+    },
+    {
+      "kind": "krummholz",
+      "biomes": [
+        "tundra",
+        "highland"
+      ],
+      "height_range_u": [
+        30,
+        90
+      ],
+      "height_range_px": [
+        34,
+        103
+      ],
+      "tris_clean": 24,
+      "tris_charred": 10
+    },
+    {
+      "kind": "spruce",
+      "biomes": [
+        "taiga"
+      ],
+      "height_range_u": [
+        220,
+        360
+      ],
+      "height_range_px": [
+        252,
+        413
+      ],
+      "tris_clean": 17,
+      "tris_charred": 16
+    },
+    {
+      "kind": "reed",
+      "biomes": [
+        "wetland"
+      ],
+      "height_range_u": [
+        60,
+        120
+      ],
+      "height_range_px": [
+        69,
+        138
+      ],
+      "tris_clean": 14,
+      "tris_charred": 11
+    },
+    {
+      "kind": "mangrove",
+      "biomes": [
+        "wetland"
+      ],
+      "height_range_u": [
+        120,
+        200
+      ],
+      "height_range_px": [
+        138,
+        229
+      ],
+      "tris_clean": 30,
+      "tris_charred": 10
+    },
+    {
+      "kind": "pool",
+      "biomes": [
+        "wetland"
+      ],
+      "height_range_u": [
+        6,
+        8
+      ],
+      "height_range_px": [
+        7,
+        9
+      ],
+      "tris_clean": 4,
+      "tris_charred": 0
+    },
+    {
+      "kind": "palm",
+      "biomes": [
+        "beach"
+      ],
+      "height_range_u": [
+        150,
+        240
+      ],
+      "height_range_px": [
+        172,
+        275
+      ],
+      "tris_clean": 18,
+      "tris_charred": 2
+    },
+    {
+      "kind": "dunegrass",
+      "biomes": [
+        "beach"
+      ],
+      "height_range_u": [
+        20,
+        40
+      ],
+      "height_range_px": [
+        23,
+        46
+      ],
+      "tris_clean": 6,
+      "tris_charred": 7
+    },
+    {
+      "kind": "driftwood",
+      "biomes": [
+        "beach"
+      ],
+      "height_range_u": [
+        14,
+        20
+      ],
+      "height_range_px": [
+        16,
+        23
+      ],
+      "tris_clean": 4,
+      "tris_charred": 4
+    },
+    {
+      "kind": "tor",
+      "biomes": [
+        "highland"
+      ],
+      "height_range_u": [
+        90,
+        190
+      ],
+      "height_range_px": [
+        103,
+        218
+      ],
+      "tris_clean": 44,
+      "tris_charred": 44
+    },
+    {
+      "kind": "heath",
+      "biomes": [
+        "highland"
+      ],
+      "height_range_u": [
+        18,
+        40
+      ],
+      "height_range_px": [
+        21,
+        46
+      ],
+      "tris_clean": 12,
+      "tris_charred": 8
     },
     {
       "kind": "basaltcol",
@@ -445,123 +599,11 @@
       ],
       "tris_clean": 4,
       "tris_charred": 4
-    },
-    {
-      "kind": "spruce",
-      "biomes": [
-        "tundra"
-      ],
-      "height_range_u": [
-        180,
-        320
-      ],
-      "height_range_px": [
-        206,
-        367
-      ],
-      "tris_clean": 17,
-      "tris_charred": 16
-    },
-    {
-      "kind": "krummholz",
-      "biomes": [
-        "tundra"
-      ],
-      "height_range_u": [
-        30,
-        60
-      ],
-      "height_range_px": [
-        34,
-        69
-      ],
-      "tris_clean": 24,
-      "tris_charred": 10
-    },
-    {
-      "kind": "icespire",
-      "biomes": [
-        "ice",
-        "seaice"
-      ],
-      "height_range_u": [
-        60,
-        160
-      ],
-      "height_range_px": [
-        69,
-        183
-      ],
-      "tris_clean": 12,
-      "tris_charred": 12
-    },
-    {
-      "kind": "crevasse",
-      "biomes": [
-        "ice"
-      ],
-      "height_range_u": [
-        10,
-        14
-      ],
-      "height_range_px": [
-        11,
-        16
-      ],
-      "tris_clean": 3,
-      "tris_charred": 3
-    },
-    {
-      "kind": "nunatak",
-      "biomes": [
-        "ice"
-      ],
-      "height_range_u": [
-        120,
-        200
-      ],
-      "height_range_px": [
-        138,
-        229
-      ],
-      "tris_clean": 7,
-      "tris_charred": 7
-    },
-    {
-      "kind": "berg",
-      "biomes": [
-        "seaice"
-      ],
-      "height_range_u": [
-        90,
-        220
-      ],
-      "height_range_px": [
-        103,
-        252
-      ],
-      "tris_clean": 8,
-      "tris_charred": 8
-    },
-    {
-      "kind": "floeblock",
-      "biomes": [
-        "seaice"
-      ],
-      "height_range_u": [
-        14,
-        30
-      ],
-      "height_range_px": [
-        16,
-        34
-      ],
-      "tris_clean": 4,
-      "tris_charred": 4
     }
   ],
   "biomes": {
     "ocean": {
+      "_world_id": 0,
       "name": "Open ocean",
       "order": 1,
       "line": "a faceted swell under a clean horizon; the sea owns mid blue",
@@ -664,7 +706,7 @@
           "note": "The sea shallows in three hard steps (deep, mid, shallow) and a pale foam line runs along the sand; wet sand is a darker band above it."
         },
         {
-          "id": "seaice",
+          "id": "sea_ice",
           "eco": [
             "floeblock"
           ],
@@ -712,194 +754,10 @@
         "worst_body_dE00": 22.2
       }
     },
-    "beach": {
-      "name": "Beach and coast",
-      "order": 2,
-      "line": "pale sand, a wet-sand band, a foam line; palms and dune grass behind",
-      "palette": {
-        "ground": [
-          "#ead7a2",
-          "#d8c088",
-          "#b09a62"
-        ],
-        "subsoil": "#a89060",
-        "rock": [
-          "#a69985",
-          "#857c70",
-          "#5f584e"
-        ],
-        "vegetation": [
-          "#6cb85a",
-          "#4a9440",
-          "#2f6a34"
-        ],
-        "secondary": [
-          "#a9bd62",
-          "#7c9745",
-          "#58763a"
-        ],
-        "trunk": "#7a5a38",
-        "water": {
-          "shallow": "#3595ac",
-          "deep": "#2c78a8"
-        },
-        "accent": "#f1f0e6",
-        "sky_noon": {
-          "top": "#3a82c8",
-          "horizon": "#cfe6ee"
-        }
-      },
-      "far_ladder": {
-        "far1": "#a0c3ad",
-        "far2": "#8db593",
-        "far3": "#78a576"
-      },
-      "orbit": "#d6cfa6",
-      "profile": {
-        "kind": "shore",
-        "amp": 10,
-        "wave": 340
-      },
-      "far_land": {
-        "kind": "low",
-        "amp": 26
-      },
-      "cover": [
-        {
-          "k": "palm",
-          "n": 3,
-          "h": [
-            150,
-            240
-          ]
-        },
-        {
-          "k": "dunegrass",
-          "n": 8,
-          "h": [
-            20,
-            40
-          ]
-        },
-        {
-          "k": "boulder",
-          "n": 3,
-          "h": [
-            24,
-            60
-          ]
-        },
-        {
-          "k": "driftwood",
-          "n": 2,
-          "h": [
-            14,
-            20
-          ]
-        }
-      ],
-      "plume": {
-        "kind": "sand",
-        "cols": [
-          "#f3e4b2",
-          "#dcc58a",
-          "#a89060"
-        ],
-        "ej": [
-          "#dcc58a",
-          "#a69985"
-        ],
-        "h": 300,
-        "w": 200,
-        "wet": true
-      },
-      "scar": {
-        "fill": "#1f3d38",
-        "edge": "#bfe0d8"
-      },
-      "damage": {
-        "scorch": "a glassy black-green band fused into the sand (a beam path), its edge a thin pale line",
-        "crater": "a shallow bowl in dry sand that floods from the water side: wet-sand dark inside, a collapsed rim",
-        "burned": "palms standing as black trunks with no crown, dune grass burnt to stubble, grey ash drifted into the dune lee"
-      },
-      "destruction": "Sand and spray: a wide pale plume that settles fast, and a ring of wet dark sand around the impact.",
-      "neighbours": [
-        {
-          "id": "ocean",
-          "eco": [
-            "foam"
-          ],
-          "note": "The sea shallows in three hard steps (deep, mid, shallow) and a pale foam line runs along the sand; wet sand is a darker band above it."
-        },
-        {
-          "id": "plains",
-          "eco": [
-            "dunegrass"
-          ],
-          "note": "Sand gives way to dune grass tufts, then grass; one low dune ridge between."
-        },
-        {
-          "id": "savanna",
-          "eco": [
-            "scrub"
-          ],
-          "note": "Dry scrub and driftwood on the sand; the sand stains toward red earth."
-        },
-        {
-          "id": "jungle",
-          "eco": [
-            "palm"
-          ],
-          "note": "A palm line stands right on the sand, then the canopy wall; the jungle floor begins at the back of the beach."
-        },
-        {
-          "id": "wetland",
-          "eco": [
-            "reed"
-          ],
-          "note": "Tidal flats: sand turns to grey-green mud in steps, pools with a pale rim, reeds begin."
-        },
-        {
-          "id": "desert",
-          "eco": [
-            "dunegrass"
-          ],
-          "note": "The dune sea runs to the shore; only the sand colour steps from pale to gold; no grass at all."
-        },
-        {
-          "id": "volcanic",
-          "eco": [
-            "boulder"
-          ],
-          "note": "Black sand beach: the sand steps from pale to grey to black, black boulders in the surf."
-        }
-      ],
-      "_colour_vision": {
-        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
-        "worst_aura_dE00": {
-          "protan": 9,
-          "deutan": 8.9,
-          "tritan": 14.1
-        },
-        "failing_tones": [
-          {
-            "tone": "water shallow",
-            "hex": "#3595ac"
-          },
-          {
-            "tone": "water deep",
-            "hex": "#2c78a8"
-          }
-        ]
-      },
-      "readability": {
-        "worst_aura_dE00": 20.6,
-        "worst_body_dE00": 22.8
-      }
-    },
     "plains": {
+      "_world_id": 1,
       "name": "Plains",
-      "order": 3,
+      "order": 2,
       "line": "rolling meadow; scattered broadleaf trees, boulders, tufts",
       "palette": {
         "ground": [
@@ -1044,11 +902,11 @@
           "note": "Foothills: the hills rise in steps, rock outcrops through the grass, fir groves on the slopes."
         },
         {
-          "id": "tundra",
+          "id": "taiga",
           "eco": [
             "spruce"
           ],
-          "note": "Sparse spruce on cold grass; lichen replaces the grass; the first snow patches in hollows."
+          "note": "Sparse spruce on cold grass; moss replaces the grass; the first snow patches in hollows."
         },
         {
           "id": "wetland",
@@ -1056,6 +914,13 @@
             "pool"
           ],
           "note": "Pools open in the grass, reeds ring them, the grass grows darker and wetter."
+        },
+        {
+          "id": "highland",
+          "eco": [
+            "heath"
+          ],
+          "note": "Meadow gives way to moor: heather mounds and bracken among the grass, the first granite boulders, the ground rising in low humps."
         }
       ],
       "_colour_vision": {
@@ -1072,170 +937,10 @@
         "worst_body_dE00": 23.4
       }
     },
-    "savanna": {
-      "name": "Savanna",
-      "order": 4,
-      "line": "gold dry grass, flat-topped acacias, red earth showing, termite towers",
-      "palette": {
-        "ground": [
-          "#d6c26c",
-          "#c0a650",
-          "#8f7a38"
-        ],
-        "subsoil": "#a8643c",
-        "rock": [
-          "#b0a08a",
-          "#8e806c",
-          "#645a4c"
-        ],
-        "vegetation": [
-          "#78a040",
-          "#5b8434",
-          "#3e5e28"
-        ],
-        "secondary": [
-          "#e2cf7a",
-          "#c8b25a",
-          "#9a8640"
-        ],
-        "trunk": "#6e4a30",
-        "water": {
-          "shallow": "#639d80",
-          "deep": "#3f7a80"
-        },
-        "accent": "#c86a3c",
-        "sky_noon": {
-          "top": "#3a84cc",
-          "horizon": "#ecdcb0"
-        }
-      },
-      "far_ladder": {
-        "far1": "#b7b884",
-        "far2": "#a2aa72",
-        "far3": "#8a9a5f"
-      },
-      "orbit": "#a8a25c",
-      "profile": {
-        "kind": "rolling",
-        "amp": 16,
-        "wave": 680
-      },
-      "far_land": {
-        "kind": "hills",
-        "amp": 34
-      },
-      "cover": [
-        {
-          "k": "acacia",
-          "n": 3,
-          "h": [
-            120,
-            200
-          ]
-        },
-        {
-          "k": "tuft",
-          "n": 16,
-          "h": [
-            24,
-            50
-          ]
-        },
-        {
-          "k": "termite",
-          "n": 2,
-          "h": [
-            50,
-            90
-          ]
-        },
-        {
-          "k": "boulder",
-          "n": 2,
-          "h": [
-            30,
-            80
-          ]
-        }
-      ],
-      "plume": {
-        "kind": "dust",
-        "cols": [
-          "#e8c88a",
-          "#c0884c",
-          "#8a5a34"
-        ],
-        "ej": [
-          "#c8b25a",
-          "#a8643c"
-        ],
-        "h": 320,
-        "w": 230
-      },
-      "scar": {
-        "fill": "#221c18",
-        "edge": "#4a4036"
-      },
-      "damage": {
-        "scorch": "a black scorch band through the dry grass with a glowing-free ember edge (grey, not lit), the red earth showing in the middle",
-        "crater": "a round bowl of red-orange earth, the dry grass flattened outward in a star",
-        "burned": "a grass fire: the gold turned to black and ash-grey over a wide patch, acacia crowns gone, trunks black, termite towers dusted grey"
-      },
-      "destruction": "Red-ochre dust, tall and wide, with tumbling grass clumps; it hangs a little longer than sand because the dust is fine.",
-      "neighbours": [
-        {
-          "id": "beach",
-          "eco": [
-            "scrub"
-          ],
-          "note": "Dry scrub and driftwood on the sand; the sand stains toward red earth."
-        },
-        {
-          "id": "plains",
-          "eco": [
-            "acacia"
-          ],
-          "note": "The green dries to gold in steps; acacias appear among the grass; the first red earth shows."
-        },
-        {
-          "id": "jungle",
-          "eco": [
-            "jungletree"
-          ],
-          "note": "A gallery forest: a dense green wall of tall trees along a river, with golden grass right up to it."
-        },
-        {
-          "id": "desert",
-          "eco": [
-            "scrub"
-          ],
-          "note": "Thorn scrub thins; red earth takes over from gold grass; acacias become single trees."
-        },
-        {
-          "id": "wetland",
-          "eco": [
-            "reed"
-          ],
-          "note": "A floodplain: flat, gold grass with pools and reeds, a few acacias on the higher ground."
-        }
-      ],
-      "_colour_vision": {
-        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
-        "worst_aura_dE00": {
-          "protan": 14,
-          "deutan": 14.2,
-          "tritan": 15.6
-        },
-        "failing_tones": []
-      },
-      "readability": {
-        "worst_aura_dE00": 26.7,
-        "worst_body_dE00": 21.5
-      }
-    },
     "forest": {
+      "_world_id": 2,
       "name": "Temperate forest",
-      "order": 5,
+      "order": 3,
       "line": "dense broadleaf and fir; a green floor; a leaf-litter ground",
       "palette": {
         "ground": [
@@ -1367,11 +1072,11 @@
           "note": "The trees get taller and the canopy closes; giant leaves appear under them; the green shifts toward yellow-green."
         },
         {
-          "id": "tundra",
+          "id": "taiga",
           "eco": [
             "spruce"
           ],
-          "note": "Broadleaf gives way to spruce; the trees shrink poleward; lichen and snow patches take the floor."
+          "note": "Broadleaf gives way to spruce; the trees narrow and darken; moss and snow patches take the floor."
         },
         {
           "id": "mountains",
@@ -1386,6 +1091,13 @@
             "mangrove"
           ],
           "note": "A swamp forest: trees stand in shallow water with arched roots; the floor is mud."
+        },
+        {
+          "id": "highland",
+          "eco": [
+            "tree"
+          ],
+          "note": "The wood thins to wind-bent trees on heather; granite boulders stand in the clearings."
         }
       ],
       "_colour_vision": {
@@ -1402,9 +1114,676 @@
         "worst_body_dE00": 23.8
       }
     },
-    "jungle": {
-      "name": "Jungle",
+    "desert": {
+      "_world_id": 3,
+      "name": "Desert",
+      "order": 4,
+      "line": "long dunes with a steep lee, red mesas, cacti and scrub; sun-bleached",
+      "palette": {
+        "ground": [
+          "#ecd28c",
+          "#d8b868",
+          "#a88a44"
+        ],
+        "subsoil": "#a07a44",
+        "rock": [
+          "#d29a5a",
+          "#b87a44",
+          "#8a5634"
+        ],
+        "vegetation": [
+          "#6aa050",
+          "#4d8040",
+          "#386030"
+        ],
+        "secondary": [
+          "#a8a060",
+          "#8a8448",
+          "#625e34"
+        ],
+        "trunk": "#6a4a30",
+        "water": {
+          "shallow": "#387b87",
+          "deep": "#357a85"
+        },
+        "accent": "#d0e0e8",
+        "sky_noon": {
+          "top": "#3c94d0",
+          "horizon": "#f0e4c0"
+        }
+      },
+      "far_ladder": {
+        "far1": "#daba8e",
+        "far2": "#d1a97b",
+        "far3": "#c79664"
+      },
+      "orbit": "#dbb781",
+      "profile": {
+        "kind": "dunes",
+        "amp": 46,
+        "wave": 460
+      },
+      "far_land": {
+        "kind": "mesas",
+        "amp": 80
+      },
+      "cover": [
+        {
+          "k": "cactus",
+          "n": 3,
+          "h": [
+            90,
+            170
+          ]
+        },
+        {
+          "k": "scrub",
+          "n": 6,
+          "h": [
+            24,
+            50
+          ]
+        },
+        {
+          "k": "mesa",
+          "n": 1,
+          "h": [
+            160,
+            240
+          ]
+        },
+        {
+          "k": "boulder",
+          "n": 3,
+          "h": [
+            30,
+            80
+          ]
+        }
+      ],
+      "plume": {
+        "kind": "sand",
+        "cols": [
+          "#f3e4b2",
+          "#d8b868",
+          "#a88a44"
+        ],
+        "ej": [
+          "#d8b868",
+          "#a45a3a"
+        ],
+        "h": 360,
+        "w": 260
+      },
+      "scar": {
+        "fill": "#1f3d38",
+        "edge": "#bfe0d8"
+      },
+      "damage": {
+        "scorch": "a glass trench: the sand fused into a dark green-black glassy band with a bright pale edge (the prototype's GLASS TRENCH)",
+        "crater": "a deep clean bowl with a sharp rim; the dune lee collapses into it, the inside packed darker orange sand",
+        "burned": "fused glass patches and black-scorched rock; cacti blackened and split; the dunes streaked grey with ash"
+      },
+      "destruction": "A sand plume: tall, wide, pale gold with a darker core; it falls fast and the dune face slumps and slides for a second.",
+      "neighbours": [
+        {
+          "id": "beach",
+          "eco": [
+            "dunegrass"
+          ],
+          "note": "The dune sea runs to the shore; only the sand colour steps from pale to gold; no grass at all."
+        },
+        {
+          "id": "plains",
+          "eco": [
+            "scrub"
+          ],
+          "note": "Grass breaks into tufts on bare sand; scrub, then dunes; the ground steps from green to gold in five hard bands."
+        },
+        {
+          "id": "savanna",
+          "eco": [
+            "scrub"
+          ],
+          "note": "Thorn scrub thins; red earth takes over from gold grass; acacias become single trees."
+        },
+        {
+          "id": "mountains",
+          "eco": [
+            "scree"
+          ],
+          "note": "Badlands: red mesas and scree fans spill from the grey rock; no soil between."
+        },
+        {
+          "id": "volcanic",
+          "eco": [
+            "basaltcol"
+          ],
+          "note": "A black lava plain with sand drifted in streaks; basalt columns; the sand steps to black."
+        },
+        {
+          "id": "highland",
+          "eco": [
+            "scree"
+          ],
+          "note": "Dry moor: the sand turns to bare weathered rock and thin heather; tors stand on the ridges."
+        }
+      ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 14.3,
+          "deutan": 14.2,
+          "tritan": 17.5
+        },
+        "failing_tones": []
+      },
+      "readability": {
+        "worst_aura_dE00": 26.2,
+        "worst_body_dE00": 15.6
+      }
+    },
+    "mountains": {
+      "_world_id": 4,
+      "name": "Mountains",
+      "order": 5,
+      "line": "grey faceted rock, snow on the shade side, conifers low down, scree",
+      "palette": {
+        "ground": [
+          "#6e9a58",
+          "#547e46",
+          "#3a5c34"
+        ],
+        "subsoil": "#5a5448",
+        "rock": [
+          "#aea28a",
+          "#7e786c",
+          "#524e46"
+        ],
+        "vegetation": [
+          "#3f7a50",
+          "#2c5e3e",
+          "#1e4430"
+        ],
+        "secondary": [
+          "#8aa070",
+          "#6a8056",
+          "#4a5e3c"
+        ],
+        "trunk": "#5a4230",
+        "water": {
+          "shallow": "#367882",
+          "deep": "#366577"
+        },
+        "accent": "#e6eef2",
+        "sky_noon": {
+          "top": "#3a82c8",
+          "horizon": "#c4daea"
+        }
+      },
+      "far_ladder": {
+        "far1": "#a8b3b8",
+        "far2": "#9da3a3",
+        "far3": "#90918d"
+      },
+      "orbit": "#8e8d86",
+      "profile": {
+        "kind": "jagged",
+        "amp": 190,
+        "wave": 520
+      },
+      "far_land": {
+        "kind": "peaks",
+        "amp": 260
+      },
+      "cover": [
+        {
+          "k": "fir",
+          "n": 4,
+          "h": [
+            160,
+            280
+          ]
+        },
+        {
+          "k": "boulder",
+          "n": 6,
+          "h": [
+            30,
+            110
+          ]
+        },
+        {
+          "k": "scree",
+          "n": 4,
+          "h": [
+            20,
+            50
+          ]
+        },
+        {
+          "k": "snowpatch",
+          "n": 3,
+          "h": [
+            8,
+            14
+          ]
+        }
+      ],
+      "plume": {
+        "kind": "rock",
+        "cols": [
+          "#aea28a",
+          "#7e786c",
+          "#524e46"
+        ],
+        "ej": [
+          "#7e786c",
+          "#e6eef2"
+        ],
+        "h": 300,
+        "w": 200
+      },
+      "scar": {
+        "fill": "#221c18",
+        "edge": "#4a4036"
+      },
+      "damage": {
+        "scorch": "a black soot streak along the rock, snow on it melted to a dark wet line, the scree glassy in the middle",
+        "crater": "a bowl in broken rock, the rim a ring of angular blocks and a skirt of scree sliding down the slope",
+        "burned": "conifers charred black, snow patches grey with soot, bare pale rock where the slope slid"
+      },
+      "destruction": "Rock shards: angular chunks on long arcs and a grey dust cloud; on a slope the scree slides downhill for two seconds.",
+      "neighbours": [
+        {
+          "id": "plains",
+          "eco": [
+            "boulder"
+          ],
+          "note": "Foothills: the hills rise in steps, rock outcrops through the grass, fir groves on the slopes."
+        },
+        {
+          "id": "forest",
+          "eco": [
+            "fir"
+          ],
+          "note": "The tree line climbs the slope: tall firs, then small firs, then scree and rock."
+        },
+        {
+          "id": "jungle",
+          "eco": [
+            "fern"
+          ],
+          "note": "A cloud forest: the canopy stays but the ridges rise behind it, darker; ferns on the rock."
+        },
+        {
+          "id": "desert",
+          "eco": [
+            "scree"
+          ],
+          "note": "Badlands: red mesas and scree fans spill from the grey rock; no soil between."
+        },
+        {
+          "id": "volcanic",
+          "eco": [
+            "vent"
+          ],
+          "note": "The rock turns from grey to black, ash slopes replace scree, a cone stands behind."
+        },
+        {
+          "id": "taiga",
+          "eco": [
+            "fir"
+          ],
+          "note": "Tall spruce thin up the slope to small ones, then scree; snow lies in the folds."
+        },
+        {
+          "id": "tundra",
+          "eco": [
+            "krummholz"
+          ],
+          "note": "Bare rock above, lichen and stunted scrub below, snow in the folds."
+        },
+        {
+          "id": "ice_sheet",
+          "eco": [
+            "icespire"
+          ],
+          "note": "Glacier tongues run down between the rock ridges; the snow line is a hard step."
+        },
+        {
+          "id": "highland",
+          "eco": [
+            "tor"
+          ],
+          "note": "The crags lower into rounded heath with tors: jagged ridgelines settle into humps, snow gives way to heather."
+        }
+      ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 15.3,
+          "deutan": 14.3,
+          "tritan": 16
+        },
+        "failing_tones": []
+      },
+      "readability": {
+        "worst_aura_dE00": 25.7,
+        "worst_body_dE00": 23.1
+      }
+    },
+    "ice_sheet": {
+      "_world_id": 5,
+      "name": "Ice sheet",
       "order": 6,
+      "line": "two tones: a warm-white lit face and a cold slate face; crevasses; rock peaks through",
+      "palette": {
+        "ground": [
+          "#ebe8e2",
+          "#ebe8e2",
+          "#485765"
+        ],
+        "subsoil": "#485765",
+        "rock": [
+          "#7e766a",
+          "#6a645c",
+          "#4a463f"
+        ],
+        "vegetation": [
+          "#ebe8e2",
+          "#ebe8e2",
+          "#485765"
+        ],
+        "secondary": [
+          "#ebe8e2",
+          "#ebe8e2",
+          "#485765"
+        ],
+        "trunk": "#485765",
+        "water": {
+          "shallow": "#2f6a84",
+          "deep": "#1b3f57"
+        },
+        "accent": "#5f8aa2",
+        "sky_noon": {
+          "top": "#4c8ccc",
+          "horizon": "#d4e2ec"
+        }
+      },
+      "far_ladder": {
+        "far1": "#dde4e8",
+        "far2": "#e1e5e6",
+        "far3": "#e5e6e5"
+      },
+      "orbit": "#e6e6e3",
+      "profile": {
+        "kind": "sheet",
+        "amp": 26,
+        "wave": 600
+      },
+      "far_land": {
+        "kind": "shelf",
+        "amp": 40
+      },
+      "cover": [
+        {
+          "k": "icespire",
+          "n": 3,
+          "h": [
+            60,
+            160
+          ]
+        },
+        {
+          "k": "crevasse",
+          "n": 3,
+          "h": [
+            10,
+            14
+          ]
+        },
+        {
+          "k": "nunatak",
+          "n": 1,
+          "h": [
+            120,
+            200
+          ]
+        },
+        {
+          "k": "snowpatch",
+          "n": 4,
+          "h": [
+            8,
+            14
+          ]
+        }
+      ],
+      "plume": {
+        "kind": "snow",
+        "cols": [
+          "#ebe8e2",
+          "#c4cdd4",
+          "#485765"
+        ],
+        "ej": [
+          "#ebe8e2",
+          "#5f8aa2"
+        ],
+        "h": 320,
+        "w": 220
+      },
+      "scar": {
+        "fill": "#485765",
+        "edge": "#5f8aa2"
+      },
+      "damage": {
+        "scorch": "a slate streak melted into the ice, the edge a thin melt-blue line (it refreezes in ten seconds)",
+        "crater": "a bowl in the ice with a clean blue wall and a ring of shattered white blocks; fine cracks run out along the surface",
+        "burned": "a dark soot band and a melt pool in a bowl; meltwater blue, the pool refreezing at its rim"
+      },
+      "destruction": "Ice shatter: a white powder burst and large crystal shards (cut blue facets), a slow-falling glitter of fine shards.",
+      "neighbours": [
+        {
+          "id": "mountains",
+          "eco": [
+            "icespire"
+          ],
+          "note": "Glacier tongues run down between the rock ridges; the snow line is a hard step."
+        },
+        {
+          "id": "tundra",
+          "eco": [
+            "snowpatch"
+          ],
+          "note": "Snow patches join into full snow cover; lichen shows only on the ridges; the ground steps to two tones."
+        },
+        {
+          "id": "sea_ice",
+          "eco": [
+            "berg"
+          ],
+          "note": "A shelf edge: a vertical slate cliff of ice over dark water, bergs calved off it, floes beyond."
+        }
+      ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 5.3,
+          "deutan": 6.4,
+          "tritan": 12.8
+        },
+        "failing_tones": [
+          {
+            "tone": "ground lit",
+            "hex": "#ebe8e2"
+          },
+          {
+            "tone": "water shallow",
+            "hex": "#2f6a84"
+          }
+        ]
+      },
+      "readability": {
+        "worst_aura_dE00": 22.6,
+        "worst_body_dE00": 22.7
+      }
+    },
+    "sea_ice": {
+      "_world_id": 6,
+      "name": "Sea ice",
+      "order": 7,
+      "line": "flat floes with a warm-white top and a slate edge in dark cold water; bergs",
+      "palette": {
+        "ground": [
+          "#e3e4e0",
+          "#e3e4e0",
+          "#485765"
+        ],
+        "subsoil": "#485765",
+        "rock": [
+          "#e3e4e0",
+          "#e3e4e0",
+          "#485765"
+        ],
+        "vegetation": [
+          "#e3e4e0",
+          "#e3e4e0",
+          "#485765"
+        ],
+        "secondary": [
+          "#e3e4e0",
+          "#e3e4e0",
+          "#485765"
+        ],
+        "trunk": "#485765",
+        "water": {
+          "shallow": "#2f6a84",
+          "deep": "#1b3f57"
+        },
+        "accent": "#5f8aa2",
+        "sky_noon": {
+          "top": "#5890c0",
+          "horizon": "#c4d2de"
+        }
+      },
+      "far_ladder": {
+        "far1": "#d0d9df",
+        "far2": "#d5dcdf",
+        "far3": "#dbdfdf"
+      },
+      "orbit": "#bacbda",
+      "profile": {
+        "kind": "floes",
+        "amp": 10,
+        "wave": 260
+      },
+      "far_land": {
+        "kind": "floesfar",
+        "amp": 14
+      },
+      "cover": [
+        {
+          "k": "berg",
+          "n": 2,
+          "h": [
+            90,
+            220
+          ]
+        },
+        {
+          "k": "floeblock",
+          "n": 5,
+          "h": [
+            14,
+            30
+          ]
+        },
+        {
+          "k": "icespire",
+          "n": 1,
+          "h": [
+            60,
+            110
+          ]
+        }
+      ],
+      "plume": {
+        "kind": "snow",
+        "cols": [
+          "#e3e4e0",
+          "#b8c8d4",
+          "#485765"
+        ],
+        "ej": [
+          "#e3e4e0",
+          "#2f6a84"
+        ],
+        "h": 300,
+        "w": 200,
+        "ring": true
+      },
+      "scar": {
+        "fill": "#485765",
+        "edge": "#5f8aa2"
+      },
+      "damage": {
+        "scorch": "a dark slate band across the floe, the water beside it steaming for a second",
+        "crater": "the floe cracks in a star, the bowl floods with black water and the pieces tilt",
+        "burned": "a soot-black floe and a lane of steaming water; cracked floes drifting apart"
+      },
+      "destruction": "A floe burst: white shards and chunks thrown out, black water ringing the cracks, a short column of white spray.",
+      "neighbours": [
+        {
+          "id": "ocean",
+          "eco": [
+            "floeblock"
+          ],
+          "note": "The sea darkens to polar water and floe fragments appear, thickening into the pack; the floe edges are slate."
+        },
+        {
+          "id": "tundra",
+          "eco": [
+            "floeblock"
+          ],
+          "note": "Shore-fast ice: a flat white shelf along the coast, floes at its edge in dark water."
+        },
+        {
+          "id": "ice_sheet",
+          "eco": [
+            "berg"
+          ],
+          "note": "A shelf edge: a vertical slate cliff of ice over dark water, bergs calved off it, floes beyond."
+        }
+      ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 4.6,
+          "deutan": 5.4,
+          "tritan": 10.7
+        },
+        "failing_tones": [
+          {
+            "tone": "ground lit",
+            "hex": "#e3e4e0"
+          },
+          {
+            "tone": "water shallow",
+            "hex": "#2f6a84"
+          }
+        ]
+      },
+      "readability": {
+        "worst_aura_dE00": 20.7,
+        "worst_body_dE00": 25.2
+      }
+    },
+    "jungle": {
+      "_world_id": 7,
+      "name": "Jungle",
+      "order": 8,
       "line": "tall layered canopy, buttress trunks, giant leaves, dark floor, a few vivid flowers",
       "palette": {
         "ground": [
@@ -1564,9 +1943,519 @@
         "worst_body_dE00": 33
       }
     },
+    "savanna": {
+      "_world_id": 8,
+      "name": "Savanna",
+      "order": 9,
+      "line": "gold dry grass, flat-topped acacias, red earth showing, termite towers",
+      "palette": {
+        "ground": [
+          "#d6c26c",
+          "#c0a650",
+          "#8f7a38"
+        ],
+        "subsoil": "#a8643c",
+        "rock": [
+          "#b0a08a",
+          "#8e806c",
+          "#645a4c"
+        ],
+        "vegetation": [
+          "#78a040",
+          "#5b8434",
+          "#3e5e28"
+        ],
+        "secondary": [
+          "#e2cf7a",
+          "#c8b25a",
+          "#9a8640"
+        ],
+        "trunk": "#6e4a30",
+        "water": {
+          "shallow": "#639d80",
+          "deep": "#3f7a80"
+        },
+        "accent": "#c86a3c",
+        "sky_noon": {
+          "top": "#3a84cc",
+          "horizon": "#ecdcb0"
+        }
+      },
+      "far_ladder": {
+        "far1": "#b7b884",
+        "far2": "#a2aa72",
+        "far3": "#8a9a5f"
+      },
+      "orbit": "#a8a25c",
+      "profile": {
+        "kind": "rolling",
+        "amp": 16,
+        "wave": 680
+      },
+      "far_land": {
+        "kind": "hills",
+        "amp": 34
+      },
+      "cover": [
+        {
+          "k": "acacia",
+          "n": 3,
+          "h": [
+            120,
+            200
+          ]
+        },
+        {
+          "k": "tuft",
+          "n": 16,
+          "h": [
+            24,
+            50
+          ]
+        },
+        {
+          "k": "termite",
+          "n": 2,
+          "h": [
+            50,
+            90
+          ]
+        },
+        {
+          "k": "boulder",
+          "n": 2,
+          "h": [
+            30,
+            80
+          ]
+        }
+      ],
+      "plume": {
+        "kind": "dust",
+        "cols": [
+          "#e8c88a",
+          "#c0884c",
+          "#8a5a34"
+        ],
+        "ej": [
+          "#c8b25a",
+          "#a8643c"
+        ],
+        "h": 320,
+        "w": 230
+      },
+      "scar": {
+        "fill": "#221c18",
+        "edge": "#4a4036"
+      },
+      "damage": {
+        "scorch": "a black scorch band through the dry grass with a glowing-free ember edge (grey, not lit), the red earth showing in the middle",
+        "crater": "a round bowl of red-orange earth, the dry grass flattened outward in a star",
+        "burned": "a grass fire: the gold turned to black and ash-grey over a wide patch, acacia crowns gone, trunks black, termite towers dusted grey"
+      },
+      "destruction": "Red-ochre dust, tall and wide, with tumbling grass clumps; it hangs a little longer than sand because the dust is fine.",
+      "neighbours": [
+        {
+          "id": "beach",
+          "eco": [
+            "scrub"
+          ],
+          "note": "Dry scrub and driftwood on the sand; the sand stains toward red earth."
+        },
+        {
+          "id": "plains",
+          "eco": [
+            "acacia"
+          ],
+          "note": "The green dries to gold in steps; acacias appear among the grass; the first red earth shows."
+        },
+        {
+          "id": "jungle",
+          "eco": [
+            "jungletree"
+          ],
+          "note": "A gallery forest: a dense green wall of tall trees along a river, with golden grass right up to it."
+        },
+        {
+          "id": "desert",
+          "eco": [
+            "scrub"
+          ],
+          "note": "Thorn scrub thins; red earth takes over from gold grass; acacias become single trees."
+        },
+        {
+          "id": "wetland",
+          "eco": [
+            "reed"
+          ],
+          "note": "A floodplain: flat, gold grass with pools and reeds, a few acacias on the higher ground."
+        }
+      ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 14,
+          "deutan": 14.2,
+          "tritan": 15.6
+        },
+        "failing_tones": []
+      },
+      "readability": {
+        "worst_aura_dE00": 26.7,
+        "worst_body_dE00": 21.5
+      }
+    },
+    "tundra": {
+      "_world_id": 9,
+      "name": "Tundra",
+      "order": 10,
+      "line": "open grey-green lichen ground, snow in the hollows, stunted scrub and boulders; no trees",
+      "palette": {
+        "ground": [
+          "#7a9a59",
+          "#738868",
+          "#53664c"
+        ],
+        "subsoil": "#5a5448",
+        "rock": [
+          "#787878",
+          "#6e6e74",
+          "#4a4a52"
+        ],
+        "vegetation": [
+          "#768a55",
+          "#5f7248",
+          "#46563a"
+        ],
+        "secondary": [
+          "#c0c8a0",
+          "#aeae7f",
+          "#78825e"
+        ],
+        "trunk": "#4a3a2c",
+        "water": {
+          "shallow": "#3c7884",
+          "deep": "#3b6276"
+        },
+        "accent": "#e4ecf0",
+        "sky_noon": {
+          "top": "#4a88c4",
+          "horizon": "#cadce8"
+        }
+      },
+      "far_ladder": {
+        "far1": "#a1b1ac",
+        "far2": "#90a095",
+        "far3": "#7e8d7a"
+      },
+      "orbit": "#a1ac96",
+      "profile": {
+        "kind": "hummock",
+        "amp": 22,
+        "wave": 380
+      },
+      "far_land": {
+        "kind": "hills",
+        "amp": 60
+      },
+      "cover": [
+        {
+          "k": "krummholz",
+          "n": 6,
+          "h": [
+            30,
+            70
+          ]
+        },
+        {
+          "k": "snowpatch",
+          "n": 6,
+          "h": [
+            8,
+            16
+          ]
+        },
+        {
+          "k": "boulder",
+          "n": 5,
+          "h": [
+            24,
+            70
+          ]
+        },
+        {
+          "k": "tuft",
+          "n": 10,
+          "h": [
+            10,
+            24
+          ]
+        },
+        {
+          "k": "shrub",
+          "n": 3,
+          "h": [
+            20,
+            40
+          ]
+        }
+      ],
+      "plume": {
+        "kind": "snow",
+        "cols": [
+          "#e4ecf0",
+          "#a8bccb",
+          "#6a7e90"
+        ],
+        "ej": [
+          "#e4ecf0",
+          "#4a3a2c"
+        ],
+        "h": 340,
+        "w": 220
+      },
+      "scar": {
+        "fill": "#221c18",
+        "edge": "#4a4036"
+      },
+      "damage": {
+        "scorch": "a black band through lichen and snow: the snow melted to dark wet ground, the lichen burnt to grey crisp",
+        "crater": "a bowl of dark frozen soil with a ring of snow thrown out, ice lenses glinting blue in the wall",
+        "burned": "black circles where stunted scrub burned, grey ash on the snow, the lichen gone to bare grey ground"
+      },
+      "destruction": "A snow burst: a pale powder cloud that rises and falls, white and blue crystal shards, dark soil clods under it.",
+      "neighbours": [
+        {
+          "id": "mountains",
+          "eco": [
+            "krummholz"
+          ],
+          "note": "Bare rock above, lichen and stunted scrub below, snow in the folds."
+        },
+        {
+          "id": "taiga",
+          "eco": [
+            "krummholz"
+          ],
+          "note": "The spruce shrink and thin to single stunted trees, then none; the moss becomes lichen."
+        },
+        {
+          "id": "ice_sheet",
+          "eco": [
+            "snowpatch"
+          ],
+          "note": "Snow patches join into full snow cover; lichen shows only on the ridges; the ground steps to two tones."
+        },
+        {
+          "id": "sea_ice",
+          "eco": [
+            "floeblock"
+          ],
+          "note": "Shore-fast ice: a flat white shelf along the coast, floes at its edge in dark water."
+        },
+        {
+          "id": "highland",
+          "eco": [
+            "heath"
+          ],
+          "note": "Alpine tundra: lichen and heather mix, boulders and tors stand in the open; snow lies in the hollows."
+        }
+      ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 14,
+          "deutan": 14,
+          "tritan": 14
+        },
+        "failing_tones": []
+      },
+      "readability": {
+        "worst_aura_dE00": 24.2,
+        "worst_body_dE00": 22.3
+      }
+    },
+    "taiga": {
+      "_world_id": 10,
+      "name": "Taiga",
+      "order": 11,
+      "line": "dense dark spruce on a mossy floor, snow lying in the hollows, narrow shadows; the boreal forest between the forest and the tundra",
+      "palette": {
+        "ground": [
+          "#6f8a74",
+          "#57705f",
+          "#3c5446"
+        ],
+        "subsoil": "#4a4036",
+        "rock": [
+          "#757779",
+          "#6c6e72",
+          "#4a4c52"
+        ],
+        "vegetation": [
+          "#3a6a58",
+          "#2a5444",
+          "#1c3c30"
+        ],
+        "secondary": [
+          "#6e8a6a",
+          "#587052",
+          "#405540"
+        ],
+        "trunk": "#4a3a2c",
+        "water": {
+          "shallow": "#3c7884",
+          "deep": "#3b6276"
+        },
+        "accent": "#e4ecf0",
+        "sky_noon": {
+          "top": "#4a88c4",
+          "horizon": "#c4d8e6"
+        }
+      },
+      "far_ladder": {
+        "far1": "#8da6aa",
+        "far2": "#779292",
+        "far3": "#5f7c77"
+      },
+      "orbit": "#497266",
+      "profile": {
+        "kind": "rolling",
+        "amp": 36,
+        "wave": 460
+      },
+      "far_land": {
+        "kind": "hills",
+        "amp": 100
+      },
+      "cover": [
+        {
+          "k": "spruce",
+          "n": 8,
+          "h": [
+            220,
+            360
+          ]
+        },
+        {
+          "k": "snowpatch",
+          "n": 6,
+          "h": [
+            8,
+            16
+          ]
+        },
+        {
+          "k": "shrub",
+          "n": 4,
+          "h": [
+            26,
+            50
+          ]
+        },
+        {
+          "k": "boulder",
+          "n": 3,
+          "h": [
+            30,
+            80
+          ]
+        },
+        {
+          "k": "tuft",
+          "n": 6,
+          "h": [
+            12,
+            26
+          ]
+        }
+      ],
+      "plume": {
+        "kind": "snow",
+        "cols": [
+          "#e4ecf0",
+          "#9fb6c4",
+          "#587084"
+        ],
+        "ej": [
+          "#e4ecf0",
+          "#2a5444"
+        ],
+        "h": 330,
+        "w": 210
+      },
+      "scar": {
+        "fill": "#221c18",
+        "edge": "#4a4036"
+      },
+      "damage": {
+        "scorch": "a black band through the spruce: trunks charred on one side, needles singed rust-brown, the snow in the hollows melted to a dark line",
+        "crater": "a bowl of dark mossy loam with a ring of felled spruce lying outward like spokes and snow thrown over them",
+        "burned": "a standing burn: black bare spruce with a few rust needles, grey ash on the snow, the moss floor black"
+      },
+      "destruction": "Snow and needles: a pale powder column, white and blue crystals, dark needle shards and bark chunks arcing out, a low dark dirt skirt under it.",
+      "neighbours": [
+        {
+          "id": "plains",
+          "eco": [
+            "spruce"
+          ],
+          "note": "Sparse spruce on cold grass; moss replaces the grass; the first snow patches in hollows."
+        },
+        {
+          "id": "forest",
+          "eco": [
+            "spruce"
+          ],
+          "note": "Broadleaf gives way to spruce; the trees narrow and darken; moss and snow patches take the floor."
+        },
+        {
+          "id": "mountains",
+          "eco": [
+            "fir"
+          ],
+          "note": "Tall spruce thin up the slope to small ones, then scree; snow lies in the folds."
+        },
+        {
+          "id": "tundra",
+          "eco": [
+            "krummholz"
+          ],
+          "note": "The spruce shrink and thin to single stunted trees, then none; the moss becomes lichen."
+        },
+        {
+          "id": "wetland",
+          "eco": [
+            "pool"
+          ],
+          "note": "A bog: dark pools among the spruce, the trees small and thin, moss and reeds at the water."
+        },
+        {
+          "id": "highland",
+          "eco": [
+            "spruce"
+          ],
+          "note": "Spruce stands break up into heather moor; the trees stay in the folds and along the streams."
+        }
+      ],
+      "_colour_vision": {
+        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
+        "worst_aura_dE00": {
+          "protan": 14.1,
+          "deutan": 14,
+          "tritan": 14.2
+        },
+        "failing_tones": []
+      },
+      "readability": {
+        "worst_aura_dE00": 21.3,
+        "worst_body_dE00": 22.2
+      }
+    },
     "wetland": {
+      "_world_id": 11,
       "name": "Wetland",
-      "order": 7,
+      "order": 12,
       "line": "shallow tea-green water, reed beds, mangrove roots, flat mud banks",
       "palette": {
         "ground": [
@@ -1716,6 +2605,20 @@
             "mangrove"
           ],
           "note": "A mangrove swamp: prop roots, dark water, hanging vines."
+        },
+        {
+          "id": "taiga",
+          "eco": [
+            "pool"
+          ],
+          "note": "A bog: dark pools among the spruce, the trees small and thin, moss and reeds at the water."
+        },
+        {
+          "id": "highland",
+          "eco": [
+            "pool"
+          ],
+          "note": "An upland bog: peat pools among heather and reed, the ground low and wet between the humps."
         }
       ],
       "_colour_vision": {
@@ -1732,89 +2635,90 @@
         "worst_body_dE00": 24.8
       }
     },
-    "desert": {
-      "name": "Desert",
-      "order": 8,
-      "line": "long dunes with a steep lee, red mesas, cacti and scrub; sun-bleached",
+    "beach": {
+      "_world_id": 12,
+      "name": "Beach and coast",
+      "order": 13,
+      "line": "pale sand, a wet-sand band, a foam line; palms and dune grass behind",
       "palette": {
         "ground": [
-          "#ecd28c",
-          "#d8b868",
-          "#a88a44"
+          "#ead7a2",
+          "#d8c088",
+          "#b09a62"
         ],
-        "subsoil": "#a07a44",
+        "subsoil": "#a89060",
         "rock": [
-          "#d29a5a",
-          "#b87a44",
-          "#8a5634"
+          "#a69985",
+          "#857c70",
+          "#5f584e"
         ],
         "vegetation": [
-          "#6aa050",
-          "#4d8040",
-          "#386030"
+          "#6cb85a",
+          "#4a9440",
+          "#2f6a34"
         ],
         "secondary": [
-          "#a8a060",
-          "#8a8448",
-          "#625e34"
+          "#a9bd62",
+          "#7c9745",
+          "#58763a"
         ],
-        "trunk": "#6a4a30",
+        "trunk": "#7a5a38",
         "water": {
-          "shallow": "#387b87",
-          "deep": "#357a85"
+          "shallow": "#3595ac",
+          "deep": "#2c78a8"
         },
-        "accent": "#d0e0e8",
+        "accent": "#f1f0e6",
         "sky_noon": {
-          "top": "#3c94d0",
-          "horizon": "#f0e4c0"
+          "top": "#3a82c8",
+          "horizon": "#cfe6ee"
         }
       },
       "far_ladder": {
-        "far1": "#daba8e",
-        "far2": "#d1a97b",
-        "far3": "#c79664"
+        "far1": "#a0c3ad",
+        "far2": "#8db593",
+        "far3": "#78a576"
       },
-      "orbit": "#dbb781",
+      "orbit": "#d6cfa6",
       "profile": {
-        "kind": "dunes",
-        "amp": 46,
-        "wave": 460
+        "kind": "shore",
+        "amp": 10,
+        "wave": 340
       },
       "far_land": {
-        "kind": "mesas",
-        "amp": 80
+        "kind": "low",
+        "amp": 26
       },
       "cover": [
         {
-          "k": "cactus",
+          "k": "palm",
           "n": 3,
           "h": [
-            90,
-            170
-          ]
-        },
-        {
-          "k": "scrub",
-          "n": 6,
-          "h": [
-            24,
-            50
-          ]
-        },
-        {
-          "k": "mesa",
-          "n": 1,
-          "h": [
-            160,
+            150,
             240
+          ]
+        },
+        {
+          "k": "dunegrass",
+          "n": 8,
+          "h": [
+            20,
+            40
           ]
         },
         {
           "k": "boulder",
           "n": 3,
           "h": [
-            30,
-            80
+            24,
+            60
+          ]
+        },
+        {
+          "k": "driftwood",
+          "n": 2,
+          "h": [
+            14,
+            20
           ]
         }
       ],
@@ -1822,173 +2726,221 @@
         "kind": "sand",
         "cols": [
           "#f3e4b2",
-          "#d8b868",
-          "#a88a44"
+          "#dcc58a",
+          "#a89060"
         ],
         "ej": [
-          "#d8b868",
-          "#a45a3a"
+          "#dcc58a",
+          "#a69985"
         ],
-        "h": 360,
-        "w": 260
+        "h": 300,
+        "w": 200,
+        "wet": true
       },
       "scar": {
         "fill": "#1f3d38",
         "edge": "#bfe0d8"
       },
       "damage": {
-        "scorch": "a glass trench: the sand fused into a dark green-black glassy band with a bright pale edge (the prototype's GLASS TRENCH)",
-        "crater": "a deep clean bowl with a sharp rim; the dune lee collapses into it, the inside packed darker orange sand",
-        "burned": "fused glass patches and black-scorched rock; cacti blackened and split; the dunes streaked grey with ash"
+        "scorch": "a glassy black-green band fused into the sand (a beam path), its edge a thin pale line",
+        "crater": "a shallow bowl in dry sand that floods from the water side: wet-sand dark inside, a collapsed rim",
+        "burned": "palms standing as black trunks with no crown, dune grass burnt to stubble, grey ash drifted into the dune lee"
       },
-      "destruction": "A sand plume: tall, wide, pale gold with a darker core; it falls fast and the dune face slumps and slides for a second.",
+      "destruction": "Sand and spray: a wide pale plume that settles fast, and a ring of wet dark sand around the impact.",
       "neighbours": [
         {
-          "id": "beach",
+          "id": "ocean",
           "eco": [
-            "dunegrass"
+            "foam"
           ],
-          "note": "The dune sea runs to the shore; only the sand colour steps from pale to gold; no grass at all."
+          "note": "The sea shallows in three hard steps (deep, mid, shallow) and a pale foam line runs along the sand; wet sand is a darker band above it."
         },
         {
           "id": "plains",
           "eco": [
-            "scrub"
+            "dunegrass"
           ],
-          "note": "Grass breaks into tufts on bare sand; scrub, then dunes; the ground steps from green to gold in five hard bands."
+          "note": "Sand gives way to dune grass tufts, then grass; one low dune ridge between."
         },
         {
           "id": "savanna",
           "eco": [
             "scrub"
           ],
-          "note": "Thorn scrub thins; red earth takes over from gold grass; acacias become single trees."
+          "note": "Dry scrub and driftwood on the sand; the sand stains toward red earth."
         },
         {
-          "id": "mountains",
+          "id": "jungle",
           "eco": [
-            "scree"
+            "palm"
           ],
-          "note": "Badlands: red mesas and scree fans spill from the grey rock; no soil between."
+          "note": "A palm line stands right on the sand, then the canopy wall; the jungle floor begins at the back of the beach."
+        },
+        {
+          "id": "wetland",
+          "eco": [
+            "reed"
+          ],
+          "note": "Tidal flats: sand turns to grey-green mud in steps, pools with a pale rim, reeds begin."
+        },
+        {
+          "id": "desert",
+          "eco": [
+            "dunegrass"
+          ],
+          "note": "The dune sea runs to the shore; only the sand colour steps from pale to gold; no grass at all."
         },
         {
           "id": "volcanic",
           "eco": [
-            "basaltcol"
+            "boulder"
           ],
-          "note": "A black lava plain with sand drifted in streaks; basalt columns; the sand steps to black."
+          "note": "Black sand beach: the sand steps from pale to grey to black, black boulders in the surf."
+        },
+        {
+          "id": "highland",
+          "eco": [
+            "boulder"
+          ],
+          "note": "Coastal heath: the sand gives way to heather and bracken on a low cliff, grey boulders at its foot."
         }
       ],
       "_colour_vision": {
         "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
         "worst_aura_dE00": {
-          "protan": 14.3,
-          "deutan": 14.2,
-          "tritan": 17.5
+          "protan": 9,
+          "deutan": 8.9,
+          "tritan": 14.1
         },
-        "failing_tones": []
+        "failing_tones": [
+          {
+            "tone": "water shallow",
+            "hex": "#3595ac"
+          },
+          {
+            "tone": "water deep",
+            "hex": "#2c78a8"
+          }
+        ]
       },
       "readability": {
-        "worst_aura_dE00": 26.2,
-        "worst_body_dE00": 15.6
+        "worst_aura_dE00": 20.6,
+        "worst_body_dE00": 22.8
       }
     },
-    "mountains": {
-      "name": "Mountains",
-      "order": 9,
-      "line": "grey faceted rock, snow on the shade side, conifers low down, scree",
+    "highland": {
+      "_world_id": 13,
+      "name": "Highland",
+      "order": 14,
+      "line": "weathered grey rock, mauve heather and russet bracken, wind-bent trees, stacked granite tors; the rocky highland (not volcanic)",
       "palette": {
         "ground": [
-          "#6e9a58",
-          "#547e46",
-          "#3a5c34"
+          "#758558",
+          "#687452",
+          "#4c5640"
         ],
-        "subsoil": "#5a5448",
+        "subsoil": "#4a4234",
         "rock": [
-          "#aea28a",
-          "#7e786c",
-          "#524e46"
+          "#aea28e",
+          "#8c8070",
+          "#5e5648"
         ],
         "vegetation": [
-          "#3f7a50",
-          "#2c5e3e",
-          "#1e4430"
+          "#8a5f78",
+          "#6c4660",
+          "#4c3248"
         ],
         "secondary": [
-          "#8aa070",
-          "#6a8056",
-          "#4a5e3c"
+          "#a89a62",
+          "#8a7e4c",
+          "#645c38"
         ],
-        "trunk": "#5a4230",
+        "trunk": "#5a4a38",
         "water": {
-          "shallow": "#367882",
-          "deep": "#366577"
+          "shallow": "#487787",
+          "deep": "#2f5a6e"
         },
-        "accent": "#e6eef2",
+        "accent": "#cfc6b0",
         "sky_noon": {
-          "top": "#3a82c8",
-          "horizon": "#c4daea"
+          "top": "#4a84c0",
+          "horizon": "#c8dae6"
         }
       },
       "far_ladder": {
-        "far1": "#a8b3b8",
-        "far2": "#9da3a3",
-        "far3": "#90918d"
+        "far1": "#a6a5b2",
+        "far2": "#99909d",
+        "far3": "#8a7886"
       },
-      "orbit": "#8e8d86",
+      "orbit": "#918486",
       "profile": {
-        "kind": "jagged",
-        "amp": 190,
-        "wave": 520
+        "kind": "hummock",
+        "amp": 70,
+        "wave": 480
       },
       "far_land": {
-        "kind": "peaks",
-        "amp": 260
+        "kind": "hills",
+        "amp": 120
       },
       "cover": [
         {
-          "k": "fir",
-          "n": 4,
+          "k": "tor",
+          "n": 3,
           "h": [
-            160,
-            280
+            90,
+            190
+          ]
+        },
+        {
+          "k": "heath",
+          "n": 9,
+          "h": [
+            18,
+            40
           ]
         },
         {
           "k": "boulder",
-          "n": 6,
+          "n": 5,
           "h": [
-            30,
-            110
+            24,
+            80
+          ]
+        },
+        {
+          "k": "tuft",
+          "n": 8,
+          "h": [
+            14,
+            30
+          ]
+        },
+        {
+          "k": "krummholz",
+          "n": 2,
+          "h": [
+            50,
+            90
           ]
         },
         {
           "k": "scree",
-          "n": 4,
+          "n": 2,
           "h": [
             20,
-            50
-          ]
-        },
-        {
-          "k": "snowpatch",
-          "n": 3,
-          "h": [
-            8,
-            14
+            40
           ]
         }
       ],
       "plume": {
         "kind": "rock",
         "cols": [
-          "#aea28a",
-          "#7e786c",
-          "#524e46"
+          "#aea28e",
+          "#8c8070",
+          "#5e5648"
         ],
         "ej": [
-          "#7e786c",
-          "#e6eef2"
+          "#8c8070",
+          "#8a5f78"
         ],
         "h": 300,
         "w": 200
@@ -1998,80 +2950,95 @@
         "edge": "#4a4036"
       },
       "damage": {
-        "scorch": "a black soot streak along the rock, snow on it melted to a dark wet line, the scree glassy in the middle",
-        "crater": "a bowl in broken rock, the rim a ring of angular blocks and a skirt of scree sliding down the slope",
-        "burned": "conifers charred black, snow patches grey with soot, bare pale rock where the slope slid"
+        "scorch": "a black soot streak across the heather and the rock, the heather burnt to a grey crust and the rock lichen to bare pale stone",
+        "crater": "a bowl in thin peaty soil over rock, the rim a ring of shattered granite blocks and torn heather",
+        "burned": "a heath fire: the heather and bracken black and ash-grey over a wide patch, the wind-bent trees black, the tors sooted dark"
       },
-      "destruction": "Rock shards: angular chunks on long arcs and a grey dust cloud; on a slope the scree slides downhill for two seconds.",
+      "destruction": "Rock and peat: pale granite chips on long arcs, a brown-grey dust cloud with torn heather in it; a tor sheds blocks that roll downhill.",
       "neighbours": [
         {
-          "id": "plains",
+          "id": "beach",
           "eco": [
             "boulder"
           ],
-          "note": "Foothills: the hills rise in steps, rock outcrops through the grass, fir groves on the slopes."
+          "note": "Coastal heath: the sand gives way to heather and bracken on a low cliff, grey boulders at its foot."
+        },
+        {
+          "id": "plains",
+          "eco": [
+            "heath"
+          ],
+          "note": "Meadow gives way to moor: heather mounds and bracken among the grass, the first granite boulders, the ground rising in low humps."
         },
         {
           "id": "forest",
           "eco": [
-            "fir"
+            "tree"
           ],
-          "note": "The tree line climbs the slope: tall firs, then small firs, then scree and rock."
-        },
-        {
-          "id": "jungle",
-          "eco": [
-            "fern"
-          ],
-          "note": "A cloud forest: the canopy stays but the ridges rise behind it, darker; ferns on the rock."
+          "note": "The wood thins to wind-bent trees on heather; granite boulders stand in the clearings."
         },
         {
           "id": "desert",
           "eco": [
             "scree"
           ],
-          "note": "Badlands: red mesas and scree fans spill from the grey rock; no soil between."
+          "note": "Dry moor: the sand turns to bare weathered rock and thin heather; tors stand on the ridges."
+        },
+        {
+          "id": "mountains",
+          "eco": [
+            "tor"
+          ],
+          "note": "The crags lower into rounded heath with tors: jagged ridgelines settle into humps, snow gives way to heather."
         },
         {
           "id": "volcanic",
           "eco": [
-            "vent"
+            "basaltcol"
           ],
-          "note": "The rock turns from grey to black, ash slopes replace scree, a cone stands behind."
+          "note": "Black basalt gives way to pale weathered granite; heather grows in the older, softer ground."
+        },
+        {
+          "id": "taiga",
+          "eco": [
+            "spruce"
+          ],
+          "note": "Spruce stands break up into heather moor; the trees stay in the folds and along the streams."
         },
         {
           "id": "tundra",
           "eco": [
-            "krummholz"
+            "heath"
           ],
-          "note": "Bare rock above, lichen and stunted scrub below, snow in the folds."
+          "note": "Alpine tundra: lichen and heather mix, boulders and tors stand in the open; snow lies in the hollows."
         },
         {
-          "id": "ice",
+          "id": "wetland",
           "eco": [
-            "icespire"
+            "pool"
           ],
-          "note": "Glacier tongues run down between the rock ridges; the snow line is a hard step."
+          "note": "An upland bog: peat pools among heather and reed, the ground low and wet between the humps."
         }
       ],
       "_colour_vision": {
         "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
         "worst_aura_dE00": {
-          "protan": 15.3,
-          "deutan": 14.3,
-          "tritan": 16
+          "protan": 14.3,
+          "deutan": 14.1,
+          "tritan": 14.6
         },
         "failing_tones": []
       },
       "readability": {
-        "worst_aura_dE00": 25.7,
-        "worst_body_dE00": 23.1
+        "worst_aura_dE00": 21.5,
+        "worst_body_dE00": 17.4
       }
     },
     "volcanic": {
-      "name": "Volcanic highland",
-      "order": 10,
-      "line": "black basalt, grey ash slopes, a cone with a rim, a few cooled lava flows; the rocky highland in its cold state",
+      "_world_id": 14,
+      "name": "Volcanic ground",
+      "order": 15,
+      "line": "black basalt, grey ash slopes, a cone with a rim, a few cooled lava flows; World's volcanic biome (the weathered rock highland is its own biome)",
       "palette": {
         "ground": [
           "#5e5a64",
@@ -2215,6 +3182,13 @@
             "vent"
           ],
           "note": "The rock turns from grey to black, ash slopes replace scree, a cone stands behind."
+        },
+        {
+          "id": "highland",
+          "eco": [
+            "basaltcol"
+          ],
+          "note": "Black basalt gives way to pale weathered granite; heather grows in the older, softer ground."
         }
       ],
       "_colour_vision": {
@@ -2231,480 +3205,6 @@
         "worst_body_dE00": 21.1
       },
       "note": "a hot state (lava rivers glowing) is an event, not a biome: static orange, small area, Legal photosensitivity and the saturated-red test apply"
-    },
-    "tundra": {
-      "name": "Tundra and taiga",
-      "order": 11,
-      "line": "grey-green lichen ground, snow in the hollows, dark spruce thinning poleward to stunted scrub",
-      "palette": {
-        "ground": [
-          "#7a9a59",
-          "#738868",
-          "#53664c"
-        ],
-        "subsoil": "#5a5448",
-        "rock": [
-          "#787878",
-          "#6e6e74",
-          "#4a4a52"
-        ],
-        "vegetation": [
-          "#3a6a58",
-          "#2a5444",
-          "#1c3c30"
-        ],
-        "secondary": [
-          "#c0c8a0",
-          "#aeae7f",
-          "#78825e"
-        ],
-        "trunk": "#4a3a2c",
-        "water": {
-          "shallow": "#3c7884",
-          "deep": "#3b6276"
-        },
-        "accent": "#e4ecf0",
-        "sky_noon": {
-          "top": "#4a88c4",
-          "horizon": "#cadce8"
-        }
-      },
-      "far_ladder": {
-        "far1": "#91a8ab",
-        "far2": "#7a9493",
-        "far3": "#607d78"
-      },
-      "orbit": "#839786",
-      "profile": {
-        "kind": "hummock",
-        "amp": 22,
-        "wave": 380
-      },
-      "far_land": {
-        "kind": "hills",
-        "amp": 70
-      },
-      "cover": [
-        {
-          "k": "spruce",
-          "n": 5,
-          "h": [
-            180,
-            320
-          ]
-        },
-        {
-          "k": "krummholz",
-          "n": 4,
-          "h": [
-            30,
-            60
-          ]
-        },
-        {
-          "k": "snowpatch",
-          "n": 5,
-          "h": [
-            8,
-            16
-          ]
-        },
-        {
-          "k": "boulder",
-          "n": 4,
-          "h": [
-            24,
-            70
-          ]
-        },
-        {
-          "k": "tuft",
-          "n": 8,
-          "h": [
-            10,
-            22
-          ]
-        }
-      ],
-      "plume": {
-        "kind": "snow",
-        "cols": [
-          "#e4ecf0",
-          "#a8bccb",
-          "#6a7e90"
-        ],
-        "ej": [
-          "#e4ecf0",
-          "#4a3a2c"
-        ],
-        "h": 340,
-        "w": 220
-      },
-      "scar": {
-        "fill": "#221c18",
-        "edge": "#4a4036"
-      },
-      "damage": {
-        "scorch": "a black band through lichen and snow: the snow melted to dark wet ground, the lichen burnt to grey crisp",
-        "crater": "a bowl of dark frozen soil with a ring of snow thrown out, ice lenses glinting blue in the wall",
-        "burned": "spruce charred black and snow-capped, black circles where stunted scrub burned, grey ash on the snow"
-      },
-      "destruction": "A snow burst: a pale powder cloud that rises and falls, white and blue crystal shards, dark soil clods under it.",
-      "neighbours": [
-        {
-          "id": "plains",
-          "eco": [
-            "spruce"
-          ],
-          "note": "Sparse spruce on cold grass; lichen replaces the grass; the first snow patches in hollows."
-        },
-        {
-          "id": "forest",
-          "eco": [
-            "spruce"
-          ],
-          "note": "Broadleaf gives way to spruce; the trees shrink poleward; lichen and snow patches take the floor."
-        },
-        {
-          "id": "mountains",
-          "eco": [
-            "krummholz"
-          ],
-          "note": "Bare rock above, lichen and stunted scrub below, snow in the folds."
-        },
-        {
-          "id": "ice",
-          "eco": [
-            "snowpatch"
-          ],
-          "note": "Snow patches join into full snow cover; lichen shows only on the ridges; the ground steps to two tones."
-        },
-        {
-          "id": "seaice",
-          "eco": [
-            "floeblock"
-          ],
-          "note": "Shore-fast ice: a flat white shelf along the coast, floes at its edge in dark water."
-        }
-      ],
-      "_colour_vision": {
-        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
-        "worst_aura_dE00": {
-          "protan": 14,
-          "deutan": 14,
-          "tritan": 14
-        },
-        "failing_tones": []
-      },
-      "readability": {
-        "worst_aura_dE00": 24.2,
-        "worst_body_dE00": 22.3
-      }
-    },
-    "ice": {
-      "name": "Ice sheet",
-      "order": 12,
-      "line": "two tones: a warm-white lit face and a cold slate face; crevasses; rock peaks through",
-      "palette": {
-        "ground": [
-          "#ebe8e2",
-          "#ebe8e2",
-          "#485765"
-        ],
-        "subsoil": "#485765",
-        "rock": [
-          "#7e766a",
-          "#6a645c",
-          "#4a463f"
-        ],
-        "vegetation": [
-          "#ebe8e2",
-          "#ebe8e2",
-          "#485765"
-        ],
-        "secondary": [
-          "#ebe8e2",
-          "#ebe8e2",
-          "#485765"
-        ],
-        "trunk": "#485765",
-        "water": {
-          "shallow": "#2f6a84",
-          "deep": "#1b3f57"
-        },
-        "accent": "#5f8aa2",
-        "sky_noon": {
-          "top": "#4c8ccc",
-          "horizon": "#d4e2ec"
-        }
-      },
-      "far_ladder": {
-        "far1": "#dde4e8",
-        "far2": "#e1e5e6",
-        "far3": "#e5e6e5"
-      },
-      "orbit": "#e6e6e3",
-      "profile": {
-        "kind": "sheet",
-        "amp": 26,
-        "wave": 600
-      },
-      "far_land": {
-        "kind": "shelf",
-        "amp": 40
-      },
-      "cover": [
-        {
-          "k": "icespire",
-          "n": 3,
-          "h": [
-            60,
-            160
-          ]
-        },
-        {
-          "k": "crevasse",
-          "n": 3,
-          "h": [
-            10,
-            14
-          ]
-        },
-        {
-          "k": "nunatak",
-          "n": 1,
-          "h": [
-            120,
-            200
-          ]
-        },
-        {
-          "k": "snowpatch",
-          "n": 4,
-          "h": [
-            8,
-            14
-          ]
-        }
-      ],
-      "plume": {
-        "kind": "snow",
-        "cols": [
-          "#ebe8e2",
-          "#c4cdd4",
-          "#485765"
-        ],
-        "ej": [
-          "#ebe8e2",
-          "#5f8aa2"
-        ],
-        "h": 320,
-        "w": 220
-      },
-      "scar": {
-        "fill": "#485765",
-        "edge": "#5f8aa2"
-      },
-      "damage": {
-        "scorch": "a slate streak melted into the ice, the edge a thin melt-blue line (it refreezes in ten seconds)",
-        "crater": "a bowl in the ice with a clean blue wall and a ring of shattered white blocks; fine cracks run out along the surface",
-        "burned": "a dark soot band and a melt pool in a bowl; meltwater blue, the pool refreezing at its rim"
-      },
-      "destruction": "Ice shatter: a white powder burst and large crystal shards (cut blue facets), a slow-falling glitter of fine shards.",
-      "neighbours": [
-        {
-          "id": "mountains",
-          "eco": [
-            "icespire"
-          ],
-          "note": "Glacier tongues run down between the rock ridges; the snow line is a hard step."
-        },
-        {
-          "id": "tundra",
-          "eco": [
-            "snowpatch"
-          ],
-          "note": "Snow patches join into full snow cover; lichen shows only on the ridges; the ground steps to two tones."
-        },
-        {
-          "id": "seaice",
-          "eco": [
-            "berg"
-          ],
-          "note": "A shelf edge: a vertical slate cliff of ice over dark water, bergs calved off it, floes beyond."
-        }
-      ],
-      "_colour_vision": {
-        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
-        "worst_aura_dE00": {
-          "protan": 5.3,
-          "deutan": 6.4,
-          "tritan": 12.8
-        },
-        "failing_tones": [
-          {
-            "tone": "ground lit",
-            "hex": "#ebe8e2"
-          },
-          {
-            "tone": "water shallow",
-            "hex": "#2f6a84"
-          }
-        ]
-      },
-      "readability": {
-        "worst_aura_dE00": 22.6,
-        "worst_body_dE00": 22.7
-      }
-    },
-    "seaice": {
-      "name": "Sea ice",
-      "order": 13,
-      "line": "flat floes with a warm-white top and a slate edge in dark cold water; bergs",
-      "palette": {
-        "ground": [
-          "#e3e4e0",
-          "#e3e4e0",
-          "#485765"
-        ],
-        "subsoil": "#485765",
-        "rock": [
-          "#e3e4e0",
-          "#e3e4e0",
-          "#485765"
-        ],
-        "vegetation": [
-          "#e3e4e0",
-          "#e3e4e0",
-          "#485765"
-        ],
-        "secondary": [
-          "#e3e4e0",
-          "#e3e4e0",
-          "#485765"
-        ],
-        "trunk": "#485765",
-        "water": {
-          "shallow": "#2f6a84",
-          "deep": "#1b3f57"
-        },
-        "accent": "#5f8aa2",
-        "sky_noon": {
-          "top": "#5890c0",
-          "horizon": "#c4d2de"
-        }
-      },
-      "far_ladder": {
-        "far1": "#d0d9df",
-        "far2": "#d5dcdf",
-        "far3": "#dbdfdf"
-      },
-      "orbit": "#bacbda",
-      "profile": {
-        "kind": "floes",
-        "amp": 10,
-        "wave": 260
-      },
-      "far_land": {
-        "kind": "floesfar",
-        "amp": 14
-      },
-      "cover": [
-        {
-          "k": "berg",
-          "n": 2,
-          "h": [
-            90,
-            220
-          ]
-        },
-        {
-          "k": "floeblock",
-          "n": 5,
-          "h": [
-            14,
-            30
-          ]
-        },
-        {
-          "k": "icespire",
-          "n": 1,
-          "h": [
-            60,
-            110
-          ]
-        }
-      ],
-      "plume": {
-        "kind": "snow",
-        "cols": [
-          "#e3e4e0",
-          "#b8c8d4",
-          "#485765"
-        ],
-        "ej": [
-          "#e3e4e0",
-          "#2f6a84"
-        ],
-        "h": 300,
-        "w": 200,
-        "ring": true
-      },
-      "scar": {
-        "fill": "#485765",
-        "edge": "#5f8aa2"
-      },
-      "damage": {
-        "scorch": "a dark slate band across the floe, the water beside it steaming for a second",
-        "crater": "the floe cracks in a star, the bowl floods with black water and the pieces tilt",
-        "burned": "a soot-black floe and a lane of steaming water; cracked floes drifting apart"
-      },
-      "destruction": "A floe burst: white shards and chunks thrown out, black water ringing the cracks, a short column of white spray.",
-      "neighbours": [
-        {
-          "id": "ocean",
-          "eco": [
-            "floeblock"
-          ],
-          "note": "The sea darkens to polar water and floe fragments appear, thickening into the pack; the floe edges are slate."
-        },
-        {
-          "id": "tundra",
-          "eco": [
-            "floeblock"
-          ],
-          "note": "Shore-fast ice: a flat white shelf along the coast, floes at its edge in dark water."
-        },
-        {
-          "id": "ice",
-          "eco": [
-            "berg"
-          ],
-          "note": "A shelf edge: a vertical slate cliff of ice over dark water, bergs calved off it, floes beyond."
-        }
-      ],
-      "_colour_vision": {
-        "rule": "the preset lane auras (data/art/colour-vision.json) under each vision stay 14 or more CIEDE2000 from every tone at every sky key",
-        "worst_aura_dE00": {
-          "protan": 4.6,
-          "deutan": 5.4,
-          "tritan": 10.7
-        },
-        "failing_tones": [
-          {
-            "tone": "ground lit",
-            "hex": "#e3e4e0"
-          },
-          {
-            "tone": "water shallow",
-            "hex": "#2f6a84"
-          }
-        ]
-      },
-      "readability": {
-        "worst_aura_dE00": 20.7,
-        "worst_body_dE00": 25.2
-      }
     }
   },
   "pairs": [
@@ -2718,7 +3218,7 @@
     },
     {
       "a": "ocean",
-      "b": "seaice",
+      "b": "sea_ice",
       "eco": [
         "floeblock"
       ],
@@ -2789,6 +3289,14 @@
       "note": "Black sand beach: the sand steps from pale to grey to black, black boulders in the surf."
     },
     {
+      "a": "beach",
+      "b": "highland",
+      "eco": [
+        "boulder"
+      ],
+      "note": "Coastal heath: the sand gives way to heather and bracken on a low cliff, grey boulders at its foot."
+    },
+    {
       "a": "plains",
       "b": "forest",
       "eco": [
@@ -2822,11 +3330,11 @@
     },
     {
       "a": "plains",
-      "b": "tundra",
+      "b": "taiga",
       "eco": [
         "spruce"
       ],
-      "note": "Sparse spruce on cold grass; lichen replaces the grass; the first snow patches in hollows."
+      "note": "Sparse spruce on cold grass; moss replaces the grass; the first snow patches in hollows."
     },
     {
       "a": "plains",
@@ -2835,6 +3343,14 @@
         "pool"
       ],
       "note": "Pools open in the grass, reeds ring them, the grass grows darker and wetter."
+    },
+    {
+      "a": "plains",
+      "b": "highland",
+      "eco": [
+        "heath"
+      ],
+      "note": "Meadow gives way to moor: heather mounds and bracken among the grass, the first granite boulders, the ground rising in low humps."
     },
     {
       "a": "savanna",
@@ -2870,11 +3386,11 @@
     },
     {
       "a": "forest",
-      "b": "tundra",
+      "b": "taiga",
       "eco": [
         "spruce"
       ],
-      "note": "Broadleaf gives way to spruce; the trees shrink poleward; lichen and snow patches take the floor."
+      "note": "Broadleaf gives way to spruce; the trees narrow and darken; moss and snow patches take the floor."
     },
     {
       "a": "forest",
@@ -2891,6 +3407,14 @@
         "mangrove"
       ],
       "note": "A swamp forest: trees stand in shallow water with arched roots; the floor is mud."
+    },
+    {
+      "a": "forest",
+      "b": "highland",
+      "eco": [
+        "tree"
+      ],
+      "note": "The wood thins to wind-bent trees on heather; granite boulders stand in the clearings."
     },
     {
       "a": "jungle",
@@ -2925,12 +3449,28 @@
       "note": "A black lava plain with sand drifted in streaks; basalt columns; the sand steps to black."
     },
     {
+      "a": "desert",
+      "b": "highland",
+      "eco": [
+        "scree"
+      ],
+      "note": "Dry moor: the sand turns to bare weathered rock and thin heather; tors stand on the ridges."
+    },
+    {
       "a": "mountains",
       "b": "volcanic",
       "eco": [
         "vent"
       ],
       "note": "The rock turns from grey to black, ash slopes replace scree, a cone stands behind."
+    },
+    {
+      "a": "mountains",
+      "b": "taiga",
+      "eco": [
+        "fir"
+      ],
+      "note": "Tall spruce thin up the slope to small ones, then scree; snow lies in the folds."
     },
     {
       "a": "mountains",
@@ -2942,15 +3482,55 @@
     },
     {
       "a": "mountains",
-      "b": "ice",
+      "b": "ice_sheet",
       "eco": [
         "icespire"
       ],
       "note": "Glacier tongues run down between the rock ridges; the snow line is a hard step."
     },
     {
+      "a": "mountains",
+      "b": "highland",
+      "eco": [
+        "tor"
+      ],
+      "note": "The crags lower into rounded heath with tors: jagged ridgelines settle into humps, snow gives way to heather."
+    },
+    {
+      "a": "volcanic",
+      "b": "highland",
+      "eco": [
+        "basaltcol"
+      ],
+      "note": "Black basalt gives way to pale weathered granite; heather grows in the older, softer ground."
+    },
+    {
+      "a": "taiga",
+      "b": "tundra",
+      "eco": [
+        "krummholz"
+      ],
+      "note": "The spruce shrink and thin to single stunted trees, then none; the moss becomes lichen."
+    },
+    {
+      "a": "taiga",
+      "b": "wetland",
+      "eco": [
+        "pool"
+      ],
+      "note": "A bog: dark pools among the spruce, the trees small and thin, moss and reeds at the water."
+    },
+    {
+      "a": "taiga",
+      "b": "highland",
+      "eco": [
+        "spruce"
+      ],
+      "note": "Spruce stands break up into heather moor; the trees stay in the folds and along the streams."
+    },
+    {
       "a": "tundra",
-      "b": "ice",
+      "b": "ice_sheet",
       "eco": [
         "snowpatch"
       ],
@@ -2958,15 +3538,31 @@
     },
     {
       "a": "tundra",
-      "b": "seaice",
+      "b": "sea_ice",
       "eco": [
         "floeblock"
       ],
       "note": "Shore-fast ice: a flat white shelf along the coast, floes at its edge in dark water."
     },
     {
-      "a": "ice",
-      "b": "seaice",
+      "a": "tundra",
+      "b": "highland",
+      "eco": [
+        "heath"
+      ],
+      "note": "Alpine tundra: lichen and heather mix, boulders and tors stand in the open; snow lies in the hollows."
+    },
+    {
+      "a": "wetland",
+      "b": "highland",
+      "eco": [
+        "pool"
+      ],
+      "note": "An upland bog: peat pools among heather and reed, the ground low and wet between the humps."
+    },
+    {
+      "a": "ice_sheet",
+      "b": "sea_ice",
       "eco": [
         "berg"
       ],

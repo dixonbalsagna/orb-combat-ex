@@ -7,9 +7,9 @@ import { dE00 } from '../sky/colour.mjs';
 export function ladder(b) { const base = ['peaks', 'mesas', 'cones'].includes(b.far.kind) ? b.pal.r[1] : ['shelf', 'floesfar'].includes(b.far.kind) ? b.pal.g[0] : mix(b.pal.v[1], b.pal.r[1], 0.25); return [0.26, 0.44, 0.6].map(k => mix(base, b.pal.sky[1], k)); }
 
 // the orbit colour: what the biome reads as from far away. Authored per biome (a blend of its ground and its green or white cover), then 12 percent toward the atmosphere blue.
-// Seen from orbit the thirteen must stay apart (a minimum pairwise CIEDE2000 is measured in gen.mjs and reported in the doc).
+// Seen from orbit the fifteen must stay apart (a minimum pairwise CIEDE2000 is measured in gen.mjs and reported in the doc).
 const ORBIT_BASE = {
-  ocean: '#1f5a88', beach: '#dccf9c', plains: '#7db04f', savanna: '#a89c48', forest: '#2f7038', jungle: '#2f9048', wetland: '#4f8a78', desert: '#e2b472', mountains: '#8a8478', volcanic: '#46424e', tundra: '#7e9078', ice: '#ebe8e2', seaice: '#bccbd8',
+  ocean: '#1f5a88', beach: '#dccf9c', plains: '#7db04f', savanna: '#a89c48', forest: '#2f7038', jungle: '#2f9048', wetland: '#4f8a78', desert: '#e2b472', mountains: '#8a8478', volcanic: '#46424e', tundra: '#a0a78a', taiga: '#3c6654', highland: '#8e7a78', ice_sheet: '#ebe8e2', sea_ice: '#bccbd8',
 };
-export function orbitHex(id) { return mix(ORBIT_BASE[id], '#a8cdee', id === 'ice' || id === 'seaice' ? 0.08 : 0.12); }
+export function orbitHex(id) { return mix(ORBIT_BASE[id], '#a8cdee', id === 'ice_sheet' || id === 'sea_ice' ? 0.08 : 0.12); }
 export function orbitSeparation() { const ids = Object.keys(BIOMES); let min = [99, '']; for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) { const d = dE00(orbitHex(ids[i]), orbitHex(ids[j])); if (d < min[0]) min = [d, `${ids[i]} / ${ids[j]}`]; } return { min: +min[0].toFixed(1), pair: min[1] }; }

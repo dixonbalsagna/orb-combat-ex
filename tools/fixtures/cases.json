@@ -292383,7 +292383,11 @@
         {
           "file": "data/biomes/climate.json",
           "set": {
-            "/tempEdges": [0.2, 0.4, 0.6]
+            "/tempEdges": [
+              0.2,
+              0.4,
+              0.6
+            ]
           }
         }
       ],
@@ -297818,7 +297822,7 @@
         {
           "file": "data/art/biomes.json",
           "del": [
-            "/biomes/ice"
+            "/biomes/ice_sheet"
           ]
         }
       ],
@@ -298226,7 +298230,7 @@
         {
           "file": "data/art/biomes.json",
           "set": {
-            "/biomes/plains/neighbours/0/id": "ice"
+            "/biomes/plains/neighbours/0/id": "ice_sheet"
           }
         }
       ],

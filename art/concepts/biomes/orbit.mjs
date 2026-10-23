@@ -1,4 +1,4 @@
-// Origin: the planet-from-orbit colour study of the biome look bible: a faceted sphere coloured by the thirteen biomes, three views and a flat map (deterministic, seeded; no blur, no gradients).
+// Origin: the planet-from-orbit colour study of the biome look bible: a faceted sphere coloured by the fifteen biomes, three views and a flat map (deterministic, seeded; no blur, no gradients).
 // Written by the Art Director session (Claude, claude-sonnet-5-5), 2026-10-23. The terrain here is a stand-in (a smooth sum of waves, not World's planet function): the study is about COLOUR and the READ of the biomes from far away, not the shapes of the continents.
 import { BIOMES } from './spec.mjs';
 import { mix, lite, dark, rng } from './draw.mjs';
@@ -14,11 +14,13 @@ const SEA = 0.02;   // elevation of the shore (about a third of the sphere is la
 export function biomeAt(p) {
   const e = E(p), lat = Math.asin(p[1]) * 180 / Math.PI, al = Math.abs(lat), m = (M(p) + 1) / 2, tn = T(p) * 0.08;
   const heat = Math.pow(Math.max(0, 1 - al / 82), 1.15) + tn - 0.28 * Math.max(0, e - SEA - 0.2);
-  if (e < SEA) return al > 66 && heat < 0.28 ? 'seaice' : 'ocean';
-  if (heat < 0.14) return 'ice';
+  if (e < SEA) return al > 66 && heat < 0.28 ? 'sea_ice' : 'ocean';
+  if (heat < 0.14) return 'ice_sheet';
   if (hot.some(h => p[0] * h[0] + p[1] * h[1] + p[2] * h[2] > 0.992) && e > SEA + 0.04) return 'volcanic';
-  if (e > SEA + 0.34) return heat < 0.3 ? 'ice' : 'mountains';
-  if (heat < 0.3) return 'tundra';
+  if (e > SEA + 0.34) return heat < 0.3 ? 'ice_sheet' : 'mountains';
+  if (e > SEA + 0.24 && heat >= 0.3) return 'highland';
+  if (heat < 0.3) return m < 0.46 ? 'tundra' : 'taiga';
+  if (heat < 0.42 && m > 0.5) return 'taiga';
   if (e < SEA + 0.016 && heat > 0.32) return 'beach';
   if (e < SEA + 0.09 && m > 0.56 && heat > 0.36) return 'wetland';
   if (heat > 0.68) return m < 0.44 ? 'desert' : m < 0.53 ? 'savanna' : 'jungle';
@@ -56,7 +58,7 @@ export function disc(cx, cy, R, { lon0 = 0, tilt = 0.3, sun = [-0.55, 0.35, 0.75
 export function orbitSheet() {
   const W = 1800, ids = Object.keys(BIOMES); let s = '';
   const text = (x, y, t, { size = 12, weight = 400, fill = '#1b1428', anchor = 'start', op = 1 } = {}) => `<text x="${F(x)}" y="${F(y)}" font-family="'Segoe UI', system-ui, Arial, sans-serif" font-size="${size}" font-weight="${weight}" fill="${fill}" text-anchor="${anchor}" opacity="${op}">${t.replace(/&/g, '&amp;')}</text>`;
-  s += `<rect x="0" y="0" width="${W}" height="104" fill="#1b1428"/>` + text(30, 46, 'The planet from orbit: a colour study', { size: 30, weight: 700, fill: '#f4f0fa' }) + text(30, 72, 'Three views of a stand-in planet coloured by the thirteen biomes (the terrain is a smooth stand-in, not World\'s planet function: this study is about colour and read, not continents). Hard steps in light, a thin crisp atmosphere rim, no blur and no fade.', { size: 12, fill: '#cfc6e6' }) + text(30, 90, 'From orbit every biome is its ground colour mixed 14 to 16 percent toward the atmosphere blue, and a land biome is a blend of its ground and its vegetation by how much of it is green; ice and sea ice are warm-white, the sea its deep blue.', { size: 12, fill: '#cfc6e6' });
+  s += `<rect x="0" y="0" width="${W}" height="104" fill="#1b1428"/>` + text(30, 46, 'The planet from orbit: a colour study', { size: 30, weight: 700, fill: '#f4f0fa' }) + text(30, 72, 'Three views of a stand-in planet coloured by the fifteen biomes (the terrain is a smooth stand-in, not World\'s planet function: this study is about colour and read, not continents). Hard steps in light, a thin crisp atmosphere rim, no blur and no fade.', { size: 12, fill: '#cfc6e6' }) + text(30, 90, 'From orbit every biome is its ground colour mixed 14 to 16 percent toward the atmosphere blue, and a land biome is a blend of its ground and its vegetation by how much of it is green; ice and sea ice are warm-white, the sea its deep blue.', { size: 12, fill: '#cfc6e6' });
   const y0 = 124, views = [['Day side', { lon0: -0.4, tilt: 0.28, sun: [-0.55, 0.35, 0.75] }], ['The pole', { lon0: 0.6, tilt: 1.15, sun: [-0.4, 0.75, 0.5] }], ['The terminator', { lon0: 2.2, tilt: 0.15, sun: [0.95, 0.12, 0.28] }]];
   views.forEach(([name, o], i) => { const x = 24 + i * 592; s += `<rect x="${x}" y="${y0}" width="580" height="560" fill="#05070f" stroke="#1b1428" stroke-opacity="0.4"/>` + disc(x + 290, y0 + 285, 205, { ...o, seed: 5 + i }) + text(x + 12, y0 + 26, name, { size: 15, weight: 700, fill: '#e6ecf8' }); });
   // the flat map

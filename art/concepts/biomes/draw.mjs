@@ -159,6 +159,19 @@ export const COVER = {
   dunegrass(c, x, y, h) { const { f, pal, state, rnd } = c; if (state === 'burned') return stubs(c, x, y, h, 5, 26); const v = col3(pal, 'v2', state); for (let i = 0; i < 6; i++) { const bx = x + (i - 3) * 3, lean = (i - 3) * h * 0.22; f.poly([[bx - 1.4, y], [bx + 1.4, y], [bx + lean, y + h * (0.8 + rnd() * 0.4)]], [v[0], v[1]][i % 2], { key: false }); } },
   krummholz(c, x, y, h) { const { f, pal, state, rnd } = c; if (state === 'burned') return charredTree(c, x, y, h, 3); const v = col3(pal, 'v', state); f.poly([[x - 3, y], [x + 3, y], [x + 8, y + h * 0.45], [x + 3, y + h * 0.5]], pal.t); for (const dx of [0.4, 0.9, 1.3]) fan(f, [x + h * dx * 0.5, y + h * (0.5 + dx * 0.05)], blob([x + h * dx * 0.5, y + h * (0.5 + dx * 0.05)], h * 0.34, h * 0.2, 7, rnd, 0.14), v); f.poly([[x + h * 0.1, y + h * 0.66], [x + h * 0.55, y + h * 0.74], [x + h * 0.7, y + h * 0.64]], pal.acc, { key: false }); },
   boulder(c, x, y, h) { const { f, pal, rnd } = c; const r = col3(pal, 'r', c.state === 'burned' ? 'scorched' : c.state); fan(f, [x, y + h * 0.4], [[x - h * 0.95, y], [x - h * 0.7, y + h * 0.7], [x - h * 0.1, y + h * 0.95], [x + h * 0.6, y + h * 0.75], [x + h * 0.95, y]], r); },
+  tor(c, x, y, h) {
+    const { f, pal, state } = c; const r = col3(pal, 'r', state === 'burned' ? 'scorched' : state), w = h * 0.34;
+    // stacked weathered blocks, each a little wider or narrower than the one below, a skirt of fallen blocks
+    const blocks = [[-w * 0.95, w * 0.95, 0, 0.34], [-w * 0.75, w * 0.88, 0.34, 0.62], [-w * 0.55, w * 0.62, 0.62, 0.84], [-w * 0.4, w * 0.45, 0.84, 1.0]];
+    for (const [x0, x1, t0, t1] of blocks) { f.poly([[x + x0, y + h * t0], [x + x0 - 3, y + h * (t0 + t1) / 2], [x + x0 + 4, y + h * t1], [x + x1 - 2, y + h * t1 - 3], [x + x1 + 3, y + h * (t0 + t1) / 2], [x + x1, y + h * t0]], r[1]); f.poly([[x + (x0 + x1) * 0.25, y + h * t0], [x + (x0 + x1) * 0.25 + 4, y + h * t1], [x + x1 - 2, y + h * t1 - 3], [x + x1 + 3, y + h * (t0 + t1) / 2], [x + x1, y + h * t0]], r[2], { sw: 0.8 }); f.line([[x + x0 + 6, y + h * t1 - 2], [x + x1 - 8, y + h * t1 - 1]], r[0], 1.2); }
+    for (const dx of [-w * 1.3, w * 1.25]) fan(f, [x + dx, y + h * 0.07], [[x + dx - h * 0.1, y], [x + dx - h * 0.06, y + h * 0.12], [x + dx + h * 0.05, y + h * 0.14], [x + dx + h * 0.1, y]], r);
+  },
+  heath(c, x, y, h) {
+    const { f, pal, state, rnd } = c; if (state === 'burned') return stubs(c, x, y, h, 6, 46);
+    const v = col3(pal, 'v', state), dots = col3(pal, 'v2', state);
+    fan(f, [x, y + h * 0.35], blob([x, y + h * 0.35], h * 1.05, h * 0.5, 8, rnd, 0.16), v);
+    for (let i = 0; i < 4; i++) { const bx = x + (rnd() - 0.5) * h * 1.4, by = y + h * (0.45 + rnd() * 0.3); f.poly([[bx - 2, by], [bx, by + 3], [bx + 2, by]], lite(v[0], 0.25), { key: false }); }
+  },
   scree(c, x, y, h) { const { f, pal, rnd } = c; const r = col3(pal, 'r', c.state === 'burned' ? 'scorched' : c.state); for (let i = 0; i < 9; i++) { const bx = x + (i - 4) * 14 + (rnd() - 0.5) * 6, s = 5 + rnd() * h * 0.5; f.poly([[bx - s, y], [bx - s * 0.2, y + s * 0.9], [bx + s * 0.8, y]], r[i % 3], { sw: 0.8 }); } },
   mesa(c, x, y, h) { const { f, pal, state } = c; const r = col3(pal, 'r', state === 'burned' ? 'scorched' : state), bands = 5, w = h * 0.34; f.poly([[x - w * 2.3, y], [x - w * 0.95, y + h * 0.3], [x + w * 0.95, y + h * 0.3], [x + w * 2.3, y]], mix(r[1], pal.g[1], 0.35)); for (let i = 0; i < bands; i++) { const t0 = 0.3 + i * 0.14, t1 = t0 + 0.14, w0 = w * (1 - (t0 - 0.3) * 0.2), w1 = w * (1 - (t1 - 0.3) * 0.2); f.poly([[x - w0, y + h * t0], [x - w1, y + h * Math.min(1, t1)], [x + w1, y + h * Math.min(1, t1)], [x + w0, y + h * t0]], i % 2 ? r[1] : r[0], { sw: 0.9 }); } f.poly([[x + w * 0.1, y + h * 0.3], [x + w * 0.1, y + h], [x + w * 0.86, y + h], [x + w, y + h * 0.3]], r[2], { sw: 0.9, op: 0.45 }); },
   stack(c, x, y, h) { const { f, pal, rnd } = c; const r = pal.r, w = h * 0.2, V = [[x - w * 1.5, y - 10], [x - w * 1.2, y + h * 0.4], [x - w * 0.8, y + h * 0.82], [x - w * 0.1, y + h], [x + w * 0.7, y + h * 0.9], [x + w * 1.0, y + h * 0.5], [x + w * 1.5, y - 10]]; f.poly(V, r[1]); f.poly([V[3], V[4], V[5], V[6], [x + w * 0.1, y - 10]], r[2], { sw: 0.9 }); f.poly([V[0], V[1], V[2], V[3], [x - w * 0.1, y + h * 0.4]], r[0], { sw: 0.9, op: 0.9 }); f.line([[x - w * 1.3, y + h * 0.35], [x + w * 1.1, y + h * 0.4]], r[2], 1.1); f.line([[x - w * 0.9, y + h * 0.68], [x + w * 0.8, y + h * 0.72]], r[2], 1.1); },
@@ -180,7 +193,7 @@ export const COVER = {
 
 // ---------------------------------------------------------------------------------------------------------------- the strip scene
 // opts: id (biome), mix (for transitions: { a, b, x0, x1 }), state, seed, damage: { x0, x1 } (the span), crater: { x, R }, S, ww, wh, px, py
-const SCAR = { desert: ['#1f3d38', '#bfe0d8'], beach: ['#1f3d38', '#bfe0d8'], ice: ['#485765', '#5f8aa2'], seaice: ['#485765', '#5f8aa2'], volcanic: ['#8a868e', '#dc6a26'] };
+const SCAR = { desert: ['#1f3d38', '#bfe0d8'], beach: ['#1f3d38', '#bfe0d8'], ice_sheet: ['#485765', '#5f8aa2'], sea_ice: ['#485765', '#5f8aa2'], volcanic: ['#8a868e', '#dc6a26'] };
 export function scene(o) {
   const S = o.S ?? 1.2, ww = o.ww ?? 1200, wh = o.wh ?? 460, f = new Frame({ px: o.px ?? 0, py: o.py ?? 0, S, wx0: o.wx0 ?? 0, ww, wh });
   const keyDef = o.key ? KEYS.find(k => k.id === o.key) : null, bands = keyDef ? skyAt(keyDef.phase).bands : null; if (keyDef) f.tint = WORLD[keyDef.id];
@@ -207,12 +220,12 @@ export function scene(o) {
     for (let x = f.wx0 - 80; x < f.wx0 + ww + 80; x += stepX) {
       const x1 = x + stepX, y0 = hAt(x), y1 = hAt(x1), tm = mixAt(x + stepX / 2), base = mix(farBase(A), farBase(B), tm), col = mix(base, hazeC, haze), sl = y1 - y0;
       f.poly([[x, farBot], [x, y0], [x1, y1], [x1, farBot]], sl > 5 ? lite(col, 0.07) : sl < -5 ? dark(col, 0.1) : col, { key: false });
-      const capKind = ['peaks', 'cones'].includes((tm < 0.5 ? A : B).far.kind) && (tm < 0.5 ? A : B).id !== 'volcanic' && (tm < 0.5 ? A : B).name !== 'Volcanic highland', th = base0 + (tm < 0.5 ? A : B).far.amp * amp * 0.8 * 0.5;
+      const capKind = ['peaks', 'cones'].includes((tm < 0.5 ? A : B).far.kind) && (tm < 0.5 ? A : B).id !== 'volcanic' && (tm < 0.5 ? A : B).name !== 'Volcanic ground', th = base0 + (tm < 0.5 ? A : B).far.amp * amp * 0.8 * 0.5;
       if (capKind && (y0 > th || y1 > th)) f.poly([[x, Math.max(y0, th)], [x1, Math.max(y1, th)], [x1, Math.min(th, y1)], [x, Math.min(th, y0)]], mix(sl > 5 ? '#f2f6f8' : '#b8c8d6', hazeC, haze * 0.7), { key: false });
     }
   });
   // the mid land: a hazed hill line under the near strip's cover
-  if (!(o.id === 'ocean') && !floesOnly && !(o.id === 'seaice')) {
+  if (!(o.id === 'ocean') && !floesOnly && !(o.id === 'sea_ice')) {
     const midY = x => G + 26 + 0.8 * lerp(pa(x * 0.8 + 300), pb(x * 0.8 + 300), smoothT(x));
     for (let x = f.wx0 - 80; x < f.wx0 + ww + 80; x += 48) { const x1 = x + 48, tm = mixAt(x + 24); if (coast && x1 < landFrom) continue; f.poly([[x, 0], [x, coast ? G - 6 + (midY(x) - G + 6) * landK(x) : midY(x)], [x1, coast ? G - 6 + (midY(x1) - G + 6) * landK(x1) : midY(x1)], [x1, 0]], mix(mix(A.pal.g[1], B.pal.g[1], tm), hazeC, 0.22), { key: false }); }
   }
@@ -252,7 +265,7 @@ export function scene(o) {
   f.layer = 'water';
   // water in the lows: the sea surface for beach and sea ice, and wetland pools drawn as cover
   const waterId = (x) => { const bsel = mixAt(x) < 0.5 ? A : B; return bsel; };
-  const needsWater = ['beach', 'seaice'].includes(o.id) || (o.mix && (['beach', 'seaice'].includes(o.mix.a) || ['beach', 'seaice'].includes(o.mix.b)));
+  const needsWater = ['beach', 'sea_ice'].includes(o.id) || (o.mix && (['beach', 'sea_ice'].includes(o.mix.a) || ['beach', 'sea_ice'].includes(o.mix.b)));
   if (needsWater) {
     for (let x = f.wx0 - 80; x < f.wx0 + ww + 80; x += 48) { if (G + prof(x + 24) < G - 6 && G + prof(x) < G - 6 || (o.mix && false)) seaPlane(x, x + 48, G, waterId(x + 24)); }
     const wl = G; const wpts = []; for (let x = f.wx0 - 40; x <= f.wx0 + ww + 40; x += step) wpts.push(x);
