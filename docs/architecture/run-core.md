@@ -1,6 +1,6 @@
 # The run: its state, the carry, the stage header and tier 5 (the core's side, paper)
 
-Owner: Simulation and Engine. 2026-10-16. The core's answer to Game Design's `docs/design/run-mode.md` (7022b7df, with Legal's RL-145 and section 10's answers, 0dfe3f91), section 7 and the sim questions in sections 1.3, 2, 3.1 and 10. It builds on `planet-slice-core.md` (the world as a function of the setup, the wear list in a place's frame). **Paper, except section 11 (each stage's ground, applied in 07876704) and section 12 (the run state and its carry, parked at `pending/run-state/`).** Every number below is Game Design's or World's; the core adds none.
+Owner: Simulation and Engine. 2026-10-16. The core's answer to Game Design's `docs/design/run-mode.md` (7022b7df, with Legal's RL-145 and section 10's answers, 0dfe3f91), section 7 and the sim questions in sections 1.3, 2, 3.1 and 10. It builds on `planet-slice-core.md` (the world as a function of the setup, the wear list in a place's frame). **Paper, except section 11 (each stage's ground, applied in 07876704) and section 12 (the run state and its carry, applied in 502e67e7).** Every number below is Game Design's or World's; the core adds none.
 
 ## 1. The answers in short
 
@@ -14,7 +14,7 @@ Owner: Simulation and Engine. 2026-10-16. The core's answer to Game Design's `do
 
 ## 2. The run state
 
-**Superseded in part by section 12** (built, parked at `pending/run-state/`): Game Design reshaped the run on 2026-10-16. Every fight starts from base with a ceiling, there are lives and retries in place of chances, and Dread is the villains' kills alone. The rows below marked (old) are kept for the record.
+**Superseded in part by section 12** (applied in 502e67e7): Game Design reshaped the run on 2026-10-16. Every fight starts from base with a ceiling, there are lives and retries in place of chances, and Dread is the villains' kills alone. The rows below marked (old) are kept for the record.
 
 **What it is.** Everything that passes from one stage to the next (`run-mode.md` section 7), as one JSON document of **whole numbers and short strings only**: exact in JSON, hashed by the core's canonical hasher (`FighterData._canon`, the one the fighters' data already use), the same in any language. A share is kept in thousandths, a fill in thousandths of its meter. The sim never reads it: the host builds each stage's setup from it (section 3).
 
@@ -231,7 +231,7 @@ A run seed is 16 hex digits. The check pins three of its answers, so a port can 
 - **Same ring twice.** In one sample the Cyborg's wreckage-seeking claim took the ring the stage before was fought on. The EP ruled that a run never fights the same ring twice; World's `opts.used` and the used list above answer it.
 - **The boss's Whole circle can hold fewer places than Whole's minimum.** Game Design waived the minimum for it (section 11's table).
 
-## 12. The run state and its carry, as built (parked at `pending/run-state/`, 2026-10-23)
+## 12. The run state and its carry, as built (applied in 502e67e7, 2026-10-23)
 
 The core's half of piece 3, to Game Design's reshaped run (`run-mode.md` 1.3, 1.4, 4.1, 5.2 and 7). It lives in `SimRun` (`sim/core/run.gd`), and the carry's numbers are in `data/fight/run.json` (`carry`). Nothing in a match reads it, so no golden moves.
 
