@@ -755,6 +755,11 @@
       "id": "ln04",
       "rule": "the Cyborg's ground: the picker scores a place's wear state (damaged, fallen), never its casualty count; no line, caption or card mentions people there and his line stays about wreckage and does not change with the toll; no bodies or remains are drawn in a fallen place; fighting on fallen ground gives him no gameplay advantage that grows with deaths (a home is colour only); the toll stays a count (c08)",
       "why": "RL-165; opponent-grounds.md"
+    },
+    {
+      "id": "ln05",
+      "rule": "story-beat templates: the picker refuses a Cyborg line that reads toll_band or any count, and the lint blocks people, toll and casualty words in Cyborg lines (people, person, civilians, killed, dead, died, victims, bodies, children, kids, toll, casualties; 'gone' or 'lost' about people); the wrecked slot is a structure or terrain event, never derived from a casualty event; the Cyborg's home_wear reads only his own home (the breaking yard, no residents); fronts and homes read place and wear only (no toll, count, body, school, hospital, place of worship or child as victim); a villain may threaten a structure or a fighter, never say the people of a place will suffer",
+      "why": "RL-173; extends ln04 and c08"
     }
   ]
 }
