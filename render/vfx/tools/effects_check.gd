@@ -58,6 +58,17 @@ func _run() -> void:
 	S.T += 5.0
 	_tick(S, h2, [])
 	_check(h2.crack_sets.size() == S.craters.size() - 2 and h2.debris.jobs.is_empty(), "sets rebuilt long after their records have no vents")
+	# A queued set's mesh waits VfxLook.CRACK_BUILD_DELAY ticks, so the crater's own tick does not carry the strip build (the old laptop's first crater).
+	var hd := VfxHub.new()
+	hd.cracks_enabled = true
+	hd.reset(S, 4)
+	_tick(S, hd, [])
+	var queued: int = hd.crack_pending.size()
+	hd.build_next_crack(S, null)
+	_check(queued > 0 and hd.crack_builds == 0 and hd.crack_pending.size() == queued, "a set queued this tick is not built this tick (%d pending, %d builds)" % [hd.crack_pending.size(), hd.crack_builds])
+	for k in range(VfxLook.CRACK_BUILD_DELAY):
+		_tick(S, hd, [])
+	_check(hd.ticks - hd.crack_pending[0].made >= VfxLook.CRACK_BUILD_DELAY, "after %d ticks it is due (made %d, now %d)" % [VfxLook.CRACK_BUILD_DELAY, hd.crack_pending[0].made, hd.ticks])
 	# Embers by variant (at a mid framing: the scorch column's area is held to a share of the register's threshold in screen pixels, so a close one keeps fewer).
 	print("embers")
 	h.px_per_unit = 0.6

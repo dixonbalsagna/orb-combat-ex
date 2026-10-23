@@ -68,7 +68,21 @@ void vertex() {
 	v_col = biome_colors[int(bio + 0.5)].rgb;
 	v_desert = abs(bio - 5.0) < 0.5 ? 1.0 : 0.0;
 	v_base = b;
-	if (s > 0.0) {
+	if (s > 0.0 && far_map_on) {
+		// the planet's own far land (World's map beside the ring; ground.gdshaderinc far4), turned by the slow drift:
+		// its colour from the biomes' shares at the row's level
+		int L = far_lod(z);
+		ivec2 i0;
+		vec2 fr;
+		far_cell(far_dir((xw - z * drift_tan * s) / col_w, z), L, i0, fr);
+		vec4 w0 = far_fetch(far_bio0, i0, fr, L);
+		vec4 w1 = far_fetch(far_bio1, i0, fr, L);
+		vec3 fc = biome_colors[0].rgb * w0.x + biome_colors[1].rgb * w0.y + biome_colors[2].rgb * w0.z + biome_colors[3].rgb * w0.w
+			+ biome_colors[4].rgb * w1.x + biome_colors[5].rgb * w1.y + biome_colors[6].rgb * w1.z;
+		v_col = mix(v_col, fc / max(dot(w0, vec4(1.0)) + w1.x + w1.y + w1.z, 0.001), s);
+		v_desert = w1.y > 0.5 ? 1.0 : 0.0;
+		v_base = mix(b, far_fetch(far_map, i0, fr, L).b, s);
+	} else if (s > 0.0) {
 		float xs = far_x(xw, z, s);
 		v_col = mix(v_col, biome_rgb(xs), s);
 		v_desert = abs(far_biome(xs) - 5.0) < 0.5 ? 1.0 : 0.0;

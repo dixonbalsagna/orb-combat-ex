@@ -964,6 +964,7 @@ func _mm_child(parent: Node3D, n: String, mm: MultiMesh, mat: Material = null) -
 
 var _calm: bool = false              # the grooves are drawn calm (set_calm)
 var _drift_sent: float = 0.0         # the slow drift's tan last sent to the ground's materials (set_drift)
+var _far_sent: int = -1              # the far land's version last sent to the ground's materials (set_far)
 var _crater_now: float = -1.0        # the match time last sent to the ground's materials (a new crater's age)
 
 
@@ -971,6 +972,7 @@ func _make_materials() -> void:
 	_terrain_mat = ShaderMaterial.new()
 	_terrain_mat.shader = TERRAIN_SHADER
 	_drift_sent = 0.0
+	_far_sent = -1
 	_water_mat = ShaderMaterial.new()
 	_water_mat.shader = WATER_SHADER
 	for m in [_terrain_mat, _water_mat]:
@@ -1125,6 +1127,15 @@ func set_drift(t: float) -> void:
 	_drift_sent = t
 	_terrain_mat.set_shader_parameter("drift_tan", t)
 	_water_mat.set_shader_parameter("drift_tan", t)
+
+
+## The planet's own far land (render/core/far_land.gd): its map and the ring on the ground's materials, when they change.
+func set_far(f: FarLand) -> void:
+	if _terrain_mat == null or f.version == _far_sent:
+		return
+	_far_sent = f.version
+	f.apply(_terrain_mat)
+	f.apply(_water_mat)
 
 
 func set_calm(on: bool) -> void:

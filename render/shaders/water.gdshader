@@ -72,10 +72,11 @@ void vertex() {
 			v_ok = 1.0;
 		}
 	} else {
-		float xs = far_x(xw, z, s);
-		ground = mix(b, far_height3(xs, xw, z).x, s);
+		bool wet;
+		vec4 f = far4(xw, z, s, false, wet);
+		ground = mix(b, f.x, s);
 		surf = 0.0;
-		v_wet = (ground < 0.0 && (mix(b, gfx(xs, 0), s) < sea_base || gfx(xs, 4) >= wet_min)) ? 1.0 : 0.0;
+		v_wet = (ground < 0.0 && (mix(b, f.w, s) < sea_base || wet)) ? 1.0 : 0.0;
 		v_ok = 1.0;
 	}
 	// The foreground rule on the surface and the ground under it, as the terrain shader applies it to that ground.

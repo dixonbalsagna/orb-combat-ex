@@ -24,6 +24,7 @@ class CrackSet:
 	var fissures: int = 0
 	var biome: String = "plains"
 	var slot: int = -1            # kind 2 (a high-tier fighter's standing cracks, react.gd): the fighter's slot
+	var made: int = 0             # the hub's unfrozen tick count when the set was queued (its mesh is built CRACK_BUILD_DELAY ticks later)
 
 ## A hole a fighter left in a facade.
 class Hole:
@@ -750,6 +751,7 @@ func _queue_slide(S: SimState, sl) -> void:
 func _add(cs: CrackSet) -> void:
 	cs.id = _next_id
 	_next_id += 1
+	cs.made = ticks
 	crack_sets.append(cs)
 	crack_pending.append(cs)
 	while crack_sets.size() > VfxLook.CRACK_SETS_MAX:
@@ -760,6 +762,11 @@ func _add(cs: CrackSet) -> void:
 ## Build the next queued set's mesh (the layer calls this, a couple a frame, once the ground is uploaded).
 func build_next_crack(S: SimState, ground: GroundField) -> void:
 	if crack_pending.is_empty():
+		return
+	# The crater's own tick carries the sim's dig, the ejecta, the blast and the ground's update; the crack's mesh (a GDScript strip build, about 0.7 ms natively, 5 ms or more on an old laptop) waits
+	# for the ticks after it. The crack grows from its `born` time, so a set that appears two ticks late is a crack two ticks (a thirtieth of a second) into its growth.
+	var first: CrackSet = crack_pending[0]
+	if ticks >= first.made and ticks - first.made < VfxLook.CRACK_BUILD_DELAY:
 		return
 	var cs: CrackSet = crack_pending.pop_front()
 	var t0: int = Time.get_ticks_usec()

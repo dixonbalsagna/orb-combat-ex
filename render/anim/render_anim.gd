@@ -40,6 +40,7 @@ static var air_brake: bool = true            # RG2: the sim's air brake braces a
 static var chain_poses: bool = true          # RG4: World's interior contacts and its lodge play the ceiling's slam and rebound and the climb out (data/anim/chain.json); inert without those events; --no-chain-poses is the before
 static var grip_layer: bool = true            # the clinch's grip layer (docs/animation/clinch-sizing.md slice C2): the sim's hold read mixes the clinch poses in and puts each gripping hand on its region of the partner; inert without a read; --no-grip-layer is the before
 static var recoil_flips: bool = true          # recoil exits and ricochets (docs/combat/choreography-feel.md): Encounter's cue `recoil` turns the struck body over in an arc (back flip, handspring, back tuck, skip, ricochet); inert without the cue; --no-recoil-flips is the before
+static var shiver_by_weight: bool = true       # the struck body's shake follows the hit-stop's weight (2 ticks a little over half, 8 as before, 24 at 1.6) and a blow with no stop of its own (a mash's later blows) still shakes, small; --no-shiver-weight is the before
 static var kick_retreat: bool = true          # a kick whose hips are past its target gives ground instead of swinging the thigh back through its limit (data sockets.json limbs.foot.min_fwd); false is the before
 static var mash_press: bool = true            # a run of mashed blows leans in (data styles.<style>.press_run); false is the before
 static var march: bool = true                  # a mashed heavy takes a footfall (data styles.super.march); false is the before
@@ -126,6 +127,8 @@ static func _read_args() -> void:
 			grip_layer = false
 		elif a == "--no-recoil-flips":
 			recoil_flips = false
+		elif a == "--no-shiver-weight":
+			shiver_by_weight = false
 		elif a == "--step3-cues":
 			step3_cues = true
 		elif a == "--no-step3-cues":
@@ -403,7 +406,7 @@ static func consume(S: SimState, events: Array) -> void:
 					var hang: float = 0.0
 					if a >= 0 and a < S.fighters.size() and String(e.kind) == "light":
 						hang = clampf(fighter(S, S.fighters[a])._pin_until - S.T, 0.0, 0.2)
-					vfa.on_hit(S.T, String(e.region), front, float(e.amount) / 70.0, String(e.kind), dm, float(e.amount) / 60.0, S.tick, hang, int(_ev(e, "duel", 0)))
+					vfa.on_hit(S.T, String(e.region), front, float(e.amount) / 70.0, String(e.kind), dm, float(e.amount) / 60.0, S.tick, hang, int(_ev(e, "duel", 0)), int(roundf(float(_ev(e, "stop", -1.0)))))
 					if String(e.kind) == "guard" and a >= 0 and a < S.fighters.size():
 						fighter(S, S.fighters[a]).on_blocked(S.T)
 

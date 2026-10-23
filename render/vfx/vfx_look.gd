@@ -84,6 +84,7 @@ const EARTH_DEFAULT: bool = true         # tumbling material chunks, cel flames 
 const CRACK_SETS_MAX: int = 90          # crater and slide crack sets kept (oldest dropped)
 const CRACK_VISIBLE_MAX: int = 24       # drawn per pane: the nearest
 const CRACK_BUILD_PER_FRAME: int = 1
+const CRACK_BUILD_DELAY: int = 2            # ticks a queued crack set waits before its mesh is built, so the crater's own tick does not carry it
 const CR_E_MIN: float = 0.5             # below this energy an impact leaves no cracks
 const CR_SPOKES_BASE: float = 3.0
 const CR_SPOKES_SQRT_E: float = 1.7

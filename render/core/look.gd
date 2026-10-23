@@ -451,6 +451,13 @@ const ROLL_TIMES := Vector3(0.25, 0.8, 0.9)
 const SLOW_DRIFT_ON: bool = false
 const DRIFT_DEG_PER_MIN: float = 3.0
 const DRIFT_MAX_DEG: float = 30.0
+## The planet's own far land (World's WorldFarMap; render/core/far_land.gd): on a planet match that may turn, the far
+## rows read a FAR_MAP_N square map of the planet, built FAR_MAP_STEP texels a frame (FAR_MAP_N 192: about 9 s at
+## 60 frames a second, once a planet) and shown from a hard cut. Off unless FAR_MAP_ON or main's --farmap (?farmap=1).
+const FAR_MAP_ON: bool = false
+const FAR_MAP_N: int = 192
+const FAR_MAP_STEP: int = 64
+const FAR_MAP_LOD_MAX: int = 5   # the coarsest mip level a far row reads (a texel of about 13,000 units at 192)
 ## The climaxes that roll, each with its weight (0: ROLL_DEG.x, 1: ROLL_DEG.y): the sim's events by type, and a decisive
 ## exchange won by its kind. Motivated and rare (the EP, 2026-10-22): a plain knock-back, a heavy clash, a beam won, an
 ## interrupt, a shot and a barrage do not roll.

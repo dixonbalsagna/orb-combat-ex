@@ -66,6 +66,9 @@ var camera_roll := RenderCameraRoll.new()   # the climaxes' dutch tilt for the m
 var roll_on: bool = false
 var drift_on: bool = false                # the slow drift of the far land and sky (World's window 2): off unless SLOW_DRIFT_ON or --drift
 var _drift_t0: float = 0.0                # the match time the drift last started from 0 (a match's start, World's turn)
+var far_on: bool = false                  # the planet's own far land (World's map): off unless FAR_MAP_ON or --farmap
+var far_land := FarLand.new()
+var _far_now: bool = false                # --farnow: a planet's far map is built whole at the match's start (stills, probes)
 var compositor: Object = null:
 	set(v):
 		compositor = v
@@ -217,6 +220,8 @@ func _ready() -> void:
 		set_legacy_hud(true)
 	roll_on = RenderLook.CAMERA_ROLL_ON or args.has("roll")   # the camera roll on climaxes: off by default (2026-10-22)
 	drift_on = RenderLook.SLOW_DRIFT_ON or args.has("drift")   # the slow drift of the far land and sky: off by default (2026-10-22)
+	far_on = RenderLook.FAR_MAP_ON or args.has("farmap")   # the planet's own far land: off by default (2026-10-22)
+	_far_now = args.has("farnow")
 	hud.key_help = args.has("keyhelp")   # the greybox prompt and key help: off by Orb's minimal rule (2026-10-19)
 	if not manual:
 		split_view = SplitView.new()
@@ -260,6 +265,8 @@ func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:
 	host.new_match(seed, ai, _match_setup(seed) if own else setup, own)
 	camera_roll.reset()
 	_drift_t0 = host.S.T
+	if far_on:
+		far_land.begin(host.S, _far_now)   # a match's start is a cut: the planet's far land shows from here if its map is whole
 	var fl: Array = UiSimBridge.fighters(host.S)
 	ui_hud.setup(fl[0], fl[1])
 	for p in all_panes():
@@ -544,8 +551,11 @@ func frame(delta: float) -> void:
 func render_view(a: float) -> void:
 	var S: SimState = host.S
 	var dr: float = _drift(a)
+	if far_on:
+		far_land.step(RenderLook.FAR_MAP_STEP)
 	for p in all_panes():
 		p.drift = dr
+		p.far = far_land if far_on else null
 	if compositor != null:
 		if "pitch_deg" in split_rig:
 			split_rig.pitch_deg = cam_pitch
@@ -626,6 +636,8 @@ func _arena_turn(e) -> void:
 		p.planet.build(host.S)
 	host.impact.turn(float(e.x))
 	_drift_t0 = host.S.T   # the slow drift starts again from the new ring, under the turn's cut
+	if far_on:
+		far_land.turn(host.S)   # the planet's far land beside the new ring, and from here if its map is whole by now
 	host.sky.towns_again(host.S)
 
 
@@ -1260,7 +1272,7 @@ const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off",
 ## without UI's notice, change how a match starts or hold a debug value, and are dropped unless the page is on a local
 ## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze, keyhelp, roll.
 const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]
-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift"]
+const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow"]
 
 
 ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of

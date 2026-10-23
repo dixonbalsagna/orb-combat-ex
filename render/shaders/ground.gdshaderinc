@@ -10,6 +10,22 @@ uniform int tw = 1200;
 uniform int rpl = 1;
 uniform float far_scale = 1.0;       // WS: the far relief's depth wavelengths grow with the world
 uniform float drift_tan = 0.0;       // the slow drift (World's window 2): tan of the angle the far land has turned about the fight; 0 off
+uniform sampler2D far_map : filter_nearest_mipmap, repeat_disable;    // RGBAF, far_map_n square with mip levels (World's WorldFarMap, octahedral about the planet's y;
+                                     // render/core/far_land.gd): the height x its biome's far multiplier, its biome's relief amplitude, the height
+uniform sampler2D far_bio0 : filter_nearest_mipmap, repeat_disable;   // RGBA8, the same texels: the biomes' shares, BIOME_ORDER 0 to 3,
+uniform sampler2D far_bio1 : filter_nearest_mipmap, repeat_disable;   // and 4 to 6
+uniform bool far_map_on = false;     // the far land is the planet's own beside the ring (far_dir); else the band's columns wander into it (far_x)
+uniform int far_map_n = 192;
+uniform float far_texel_w = 400.0;   // a texel of the finest level, in units
+uniform float far_lod_k = 0.000375;  // RenderLook.ROW_GROWTH / far_texel_w: a far row reads the level whose texel is its spacing in depth
+uniform int far_lod_max = 5;
+uniform vec3 ring_c = vec3(0.0, 1.0, 0.0);   // the ring the match plays on (WorldRingPick.ringFrom): its axis,
+uniform vec3 ring_u = vec3(1.0, 0.0, 0.0);   // the way from its axis to the touch-down,
+uniform vec3 ring_v = vec3(0.0, 0.0, 1.0);   // the way its columns run,
+uniform vec2 ring_sc = vec2(1.0, 0.0);       // the sine and cosine of its angular radius,
+uniform float ring_step = 0.0013;            // its angle a column (SimConst.COL / (R x sine)),
+uniform float ring_mid = 2400.0;             // and its touch-down's column (WorldPlanet.touchCol)
+uniform float planet_r = 24446.0;            // the planet's radius
 uniform float sea_base = -30.0;      // WorldWater.RESERVOIR_BASE: base ground below this is the sea
 uniform float wet_min = 0.5;         // WorldWater.MIN_DEPTH: water shallower than this counts as dry
 uniform float dent_min = 6.0;        // a dent deeper than this colours as a crater floor (6 x WS)
@@ -280,6 +296,98 @@ float far_weight(float z) {
 	return s * s * (3.0 - 2.0 * s);
 }
 
+// The planet's ground beside the ring (a unit vector): column c (fractional) moved z units over the surface at right
+// angles to the ring, behind (negative z) toward the ring's axis, as WorldPlanet.farColumn's positive z.
+vec3 far_dir(float c, float z) {
+	float a = (c - ring_mid) * ring_step;
+	float ca = cos(a);
+	float sa = sin(a);
+	vec3 p = ring_c * ring_sc.y + ring_sc.x * (ring_u * ca + ring_v * sa);
+	vec3 back = normalize(cross(p, ring_v * ca - ring_u * sa));
+	float b = -z / planet_r;
+	return p * cos(b) + back * sin(b);
+}
+
+// The map level a far row at depth z reads: as coarse as the rows' spacing there (RenderLook.ROW_GROWTH of the
+// distance), so the planet's features finer than the rows never alias between them.
+int far_lod(float z) {
+	return clamp(int(floor(log2(max(1.0, far_lod_k * abs(z))))), 0, far_lod_max);
+}
+
+// Where the direction q falls on the map's level L: the first of the four texels around it, and the weights.
+void far_cell(vec3 q, int L, out ivec2 i0, out vec2 f) {
+	vec2 p = q.xz / (abs(q.x) + abs(q.y) + abs(q.z));
+	if (q.y < 0.0) {
+		p = vec2((1.0 - abs(p.y)) * (p.x >= 0.0 ? 1.0 : -1.0), (1.0 - abs(p.x)) * (p.y >= 0.0 ? 1.0 : -1.0));
+	}
+	vec2 t = (p * 0.5 + 0.5) * float(max(far_map_n >> L, 1)) - 0.5;
+	i0 = ivec2(floor(t));
+	f = t - vec2(i0);
+}
+
+// A map texture's texel (i, j) on level L, folded back across the map's edge (WorldFarMap._tex).
+vec4 far_texel(sampler2D tex, int i, int j, int L) {
+	int n = max(far_map_n >> L, 1);
+	if (i < 0) {
+		i = 0;
+		j = n - 1 - j;
+	} else if (i >= n) {
+		i = n - 1;
+		j = n - 1 - j;
+	}
+	if (j < 0) {
+		j = 0;
+		i = n - 1 - i;
+	} else if (j >= n) {
+		j = n - 1;
+		i = n - 1 - i;
+	}
+	return texelFetch(tex, ivec2(clamp(i, 0, n - 1), clamp(j, 0, n - 1)), L);
+}
+
+// A map texture at a far_cell, bilinear (WorldFarMap.height).
+vec4 far_fetch(sampler2D tex, ivec2 i0, vec2 f, int L) {
+	vec4 a = far_texel(tex, i0.x, i0.y, L);
+	vec4 b = far_texel(tex, i0.x + 1, i0.y, L);
+	vec4 c = far_texel(tex, i0.x, i0.y + 1, L);
+	vec4 d = far_texel(tex, i0.x + 1, i0.y + 1, L);
+	return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
+// The far land at world x xw, depth z, far weight s: (height, d/dx, d/dz, the base height the sea test reads); wet:
+// the band's water row says the place is wet. The place read turns with the slow drift (a shear by depth, so the
+// fighter plane never moves), relief and all. far_map_on: the planet's own ground beside the ring with its biome's
+// relief; else the band's columns wandering into the distance (far_x). grad: work out the slope.
+vec4 far4(float xw, float z, float s, bool grad, out bool wet) {
+	float k = drift_tan * s;
+	float xd = xw - z * k;
+	vec4 f;
+	wet = false;
+	if (far_map_on) {
+		int L = far_lod(z);
+		float d = 0.5 * far_texel_w * exp2(float(L));   // the slope is read over half a texel of the level
+		float c = xd / col_w;
+		ivec2 i0;
+		vec2 fr;
+		far_cell(far_dir(c, z), L, i0, fr);
+		vec4 m = far_fetch(far_map, i0, fr, L);
+		vec3 n = far_noise3(xd, z);
+		f = vec4(m.r + m.g * n.x, m.g * n.y, m.g * n.z, m.b);
+		if (grad) {
+			far_cell(far_dir(c + d / col_w, z), L, i0, fr);
+			f.y += (far_fetch(far_map, i0, fr, L).r - m.r) / d;
+			far_cell(far_dir(c, z + d), L, i0, fr);
+			f.z += (far_fetch(far_map, i0, fr, L).r - m.r) / d;
+		}
+	} else {
+		float xs = far_x(xw, z, s);
+		f = vec4(far_height3(xs, xd, z), gfx(xs, 0));
+		wet = gfx(xs, 4) >= wet_min;
+	}
+	f.z -= k * f.y;   // the sheared field's slope in depth
+	return f;
+}
+
 // The fighter-plane row at column i: its ground, and its top (the standing water over the ground, if any).
 float fp_ground(int i) {
 	return gf(i, 0) + gf(i, 1);
@@ -380,11 +488,11 @@ vec4 ground4(int i, float xw, float z, bool exact, float ox) {
 	float s = far_weight(z);
 	float top = h;
 	if (s > 0.0) {
-		float xs = far_x(xw, z, s);
-		vec3 f = far_height3(xs, xw, z);
+		bool wet;
+		vec4 f = far4(xw, z, s, true, wet);
 		h = mix(h, f.x, s);
 		grad = mix(grad, f.yz, s);
-		top = (h < 0.0 && (mix(b, gfx(xs, 0), s) < sea_base || gfx(xs, 4) >= wet_min)) ? 0.0 : h;
+		top = (h < 0.0 && (mix(b, f.w, s) < sea_base || wet)) ? 0.0 : h;
 	} else {
 		float wd = gf(i, 4);
 		float surf = b + gf(i, 1) + wd;

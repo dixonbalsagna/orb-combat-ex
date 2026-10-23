@@ -2419,6 +2419,71 @@ func _test_recoil() -> void:
 	print("recoil: %s; wall feet %.2f, handspring hands %.1f" % [" | ".join(seen), float(wl.feet_dot), float(hs.min_hand)])
 
 
+## The shake by weight (rulings-2026-10-22 5b and section 6). A hit-stop's shake follows its weight (a mashed light's 2 ticks a little over half the profile's, 8 ticks as before, 24 at 1.6), and a blow that flows with no stop
+## of its own (a mash's later blows) shakes the struck body a little for 6 ticks, drawn only; a guard and a blow with a stop of its own add nothing past the stop.
+func _shiver_probe(stop_ticks: int, hit_stop: int, kind: String, ticks: int, hold: int = -1) -> Array:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	RenderAnim._fighters.clear()
+	RenderAnim.debug_checks = true
+	var out: Array = []
+	var hl: int = stop_ticks if hold < 0 else hold
+	var af: AnimFighter = RenderAnim.fighter(S, f0)
+	for k in range(ticks):
+		S.tick = 9000 + k
+		S.T = 900.0 + float(k) / 60.0
+		if k == 2:
+			if hit_stop >= 0:
+				af.on_hit(S.T, "core", true, 0.3, kind, Vector2(-1, 0), 0.4, S.tick, 0.0, 0, hit_stop)
+		S.dirS.stop = float(stop_ticks) / 60.0 if (stop_ticks > 0 and k >= 2 and k < 2 + hl) else 0.0
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = S.dirS.stop > 0.0
+		RenderAnim.consume(S, [te])
+		var a0: AnimFighter = RenderAnim.solve(S, f0)
+		out.append(float(a0.debug.get("shiver", 0.0)))
+	RenderAnim.debug_checks = false
+	return out
+
+
+func _test_shake() -> void:
+	var bad: Array = []
+	var peak: Dictionary = {}
+	for n in [2, 3, 5, 8, 12, 24]:
+		var o: Array = _shiver_probe(n, n, "heavy", 40, 30)   # the stop held 30 ticks at that weight, so the peak is over many jitters
+		peak[n] = (o.slice(2, 32) as Array).max()
+	var base: float = float(peak[8])
+	if base < 0.05:
+		bad.append("the 8-tick stop does not shake at all (%.3f)" % base)
+	else:
+		if float(peak[2]) / base > 0.62 or float(peak[2]) / base < 0.4:
+			bad.append("a 2-tick stop shakes %.2f of the 8-tick one (about 0.5 wanted)" % (float(peak[2]) / base))
+		if float(peak[24]) / base < 1.4:
+			bad.append("a 24-tick stop shakes %.2f of the 8-tick one (1.6 at most, 1.4 at least)" % (float(peak[24]) / base))
+		if float(peak[12]) < float(peak[8]) * 1.1 or float(peak[5]) > float(peak[8]) or float(peak[3]) > float(peak[5]) * 1.001:
+			bad.append("the shake does not rise with the stop: %s" % str(peak))
+	# a blow with no stop of its own: a small shake for the contact, gone in 6 ticks
+	var fl: Array = _shiver_probe(0, 0, "light", 20)
+	var fl_peak: float = (fl.slice(2, 6) as Array).max()
+	var fl_after: float = (fl.slice(10, 20) as Array).max()
+	if fl_peak < 0.04 or fl_peak > base * 0.8:
+		bad.append("a flowing light's shake is %.3f against the 8-tick stop's %.3f (small but there)" % [fl_peak, base])
+	if fl_after > 0.001:
+		bad.append("a flowing blow's shake lasts past 6 ticks (%.3f at tick 8 on)" % fl_after)
+	var gd: Array = _shiver_probe(0, 0, "guard", 12)
+	if (gd as Array).max() > 0.001:
+		bad.append("a guarded blow shakes (%.3f)" % (gd as Array).max())
+	var st: Array = _shiver_probe(4, 4, "light", 20)
+	if (st.slice(2 + 4, 20) as Array).max() > 0.001:
+		bad.append("a blow with a stop of its own shakes past it (%.3f)" % (st.slice(6, 20) as Array).max())
+	_expect(bad.is_empty(), "the shake by weight: %s" % str(bad))
+	print("shake by weight: stops 2 %.2f, 3 %.2f, 5 %.2f, 8 %.2f, 12 %.2f, 24 %.2f; a flowing light %.2f, gone by tick 10 (%.3f)" % [peak[2], peak[3], peak[5], peak[8], peak[12], peak[24], fl_peak, fl_after])
+
+
 func _test_pulled() -> void:
 	AnimData.load_every_wave()
 	main.start_match(4, {"p1": false, "p2": false})
@@ -5092,6 +5157,7 @@ func _run() -> void:
 	_test_charge_cut()
 	_test_grip()
 	_test_recoil()
+	_test_shake()
 	_test_pulled()
 	_test_bends()
 	_test_styles()

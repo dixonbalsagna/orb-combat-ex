@@ -29,6 +29,7 @@ var shadows: Array = []            # per fighter: the ground shadow under him (r
 var source: PaneWorld = null       # a second pane: the first, whose world it draws
 var view_cam_x: float = 0.0        # this frame's camera's wrapped world x
 var drift: float = 0.0             # the slow drift's angle this frame (radians; World's window 2), set by main; 0 off
+var far: FarLand = null            # the planet's own far land (render/core/far_land.gd), set by main; null off
 var markers: bool = true           # the fighters' head markers (the stance badge); main's inset pane has none
 var occlusion: int = OCCL_HOLE     # main sets it (a debug toggle)
 ## Camera's request for this pane's cut-away, each frame (docs/camera/camera-v2.md section 6). Every key is optional:
@@ -153,6 +154,8 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 		cam_rig.basis = cam_rig.basis * Basis(Vector3.BACK, deg_to_rad(roll))   # the climaxes' dutch tilt (RenderCameraRoll), about the view axis
 	planet.set_focus(focus_z)
 	planet.set_drift(tan(drift))
+	if far != null:
+		planet.set_far(far)
 	if _sky_mat != null:
 		_sky_mat.set_shader_parameter("sky_turn", drift)
 	planet.set_crowd_near(S.depthOn)

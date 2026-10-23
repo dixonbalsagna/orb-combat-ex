@@ -29,6 +29,7 @@ const PIECES := {   # blows that land on the chest or the gut (a blow aimed at t
 ## contacts are ticks from the scenario's start; `pre` and `post` are the idle ticks before the first and after the last contact
 const SCENARIOS := [
 	{"id": "xtap", "label": "X tap: one light, the plain light's pin (the hand set on him 6 ticks)", "style": "speed", "set": "light", "kind": "light", "dmg": 20.0, "contacts": [30], "plain": true, "post": 44},
+	{"id": "hsw", "label": "the shake by weight: a mash whose first blow freezes 2 ticks and the rest flow (small shakes), then blows that freeze 8, 12 and 24 ticks", "style": "speed", "set": "light", "kind": "light", "dmg": 20.0, "contacts": [24, 30, 36, 42, 80, 118, 160], "stops": [2, 0, 0, 0, 8, 12, 24], "post": 50},
 	{"id": "xtap0", "label": "X tap: one light, no pin (before)", "style": "speed", "set": "light", "kind": "light", "dmg": 20.0, "contacts": [30], "post": 44},
 	{"id": "ytap", "label": "Y tap: one medium on its 12-tick wind-up", "style": "medium", "set": "medium", "kind": "heavy", "dmg": 50.0, "contacts": [44], "windup": 12, "post": 48},
 	{"id": "btap", "label": "B tap: one heavy on its 28-tick wind-up (a turn, an unwind)", "style": "super", "set": "tap_heavy", "kind": "heavy", "dmg": 90.0, "contacts": [60], "windup": 28, "post": 60},
@@ -144,6 +145,8 @@ func _ready() -> void:
 			RenderAnim.kick_retreat = false
 			RenderAnim.hand_retreat = false
 			RenderAnim.free_arm_slew = false
+		if float(_js("window.__noshiver || 0", 0.0)) > 0.0:   # the shake by weight's before: every stop shakes the profile's amount, a blow with no stop of its own not at all
+			RenderAnim.shiver_by_weight = false
 		if float(_js("window.__noab || 0", 0.0)) > 0.0:   # RG2's before: no mid-air skid
 			RenderAnim.air_brake = false
 		if float(_js("window.__novary || 0", 0.0)) > 0.0:   # RG0's before: every launch flails the same, a hit always folds
@@ -505,6 +508,8 @@ func _step_tick() -> void:
 		ce2.text = String(sc.cue.end_text)
 		ce2.tick = S.tick
 		RenderAnim.consume(S, [ce2])
+	if S.dirS.stop > 0.0:
+		S.dirS.stop = maxf(0.0, S.dirS.stop - 1.0 / 60.0)   # a hit-stop runs down a tick a frame (the shake by weight's scenario `hsw`)
 	var contacts: Array = sc.contacts
 	for bi in range(contacts.size()):
 		if not sent[bi] and k >= int(contacts[bi]):
@@ -516,6 +521,10 @@ func _step_tick() -> void:
 			de.kind = String(sc.kind)
 			de.amount = float(sc.dmg)
 			de.region = "core"
+			if sc.has("stops"):
+				de.stop = int(sc.stops[bi])
+				if int(sc.stops[bi]) > 0:
+					S.dirS.stop = float(sc.stops[bi]) / 60.0
 			RenderAnim.consume(S, [de])
 	var af0: AnimFighter = RenderAnim.solve(S, f0)
 	var af1: AnimFighter = RenderAnim.solve(S, f1)

@@ -237,6 +237,9 @@ var _foot_shift: float = 0.0           # the pelvis shift of the last placement 
 var _foot_dh := Vector2.ZERO           # the ground under each foot relative to under him (for tools)
 var _skid_pitch: float = 0.0
 var _hit_n: int = 0                     # hits taken (the variant hash)
+var _stop_pk: float = 0.0                # the longest hit-stop seen in this freeze, in seconds (the shake scales by its weight)
+var _shake_t0: float = -10.0            # sim time of the last blow that carried no hit-stop of its own (a mash's later blows): the drawn-only shake keyed to the contact
+var _shake_k: float = 0.0               # its strength, 0 to 1 of the profile's shiver
 var _hit_free: float = 0.0              # how loose a hit leaves the limbs; decays, slower with wear
 var layers: String = ""                # tools: which layers shaped this frame (set only with debug_checks)
 var _rushing: bool = false
@@ -1488,7 +1491,7 @@ func on_cue_other(kind: String, t_event: float) -> void:
 ## damage over 60 (0.15 to 1.6). The reaction is the pose (a flinch) plus the ragdoll's own motion along d: a head snap, a torso
 ## fold or arch, limbs thrown by the push, a step; scaled by the blow's force and by the victim's wear, with a deterministic
 ## variant per hit (a hash of the tick, the slot and the hit count: no random stream, so a replay shows the same).
-func on_hit(T: float, region: String, front: bool, amp: float, kind: String = "", d: Vector2 = Vector2.ZERO, force: float = -1.0, tick: int = 0, hang: float = 0.0, duel: int = 0) -> void:
+func on_hit(T: float, region: String, front: bool, amp: float, kind: String = "", d: Vector2 = Vector2.ZERO, force: float = -1.0, tick: int = 0, hang: float = 0.0, duel: int = 0, stop: int = -1) -> void:
 	if d == Vector2.ZERO:
 		d = Vector2(-1.0 if front else 1.0, 0.0)
 	if force < 0.0:
@@ -1497,6 +1500,10 @@ func on_hit(T: float, region: String, front: bool, amp: float, kind: String = ""
 		force = (force if force >= 0.0 else amp * 70.0 / 60.0) * 0.3   # armour (a heavy winding or charging): a light does 0.3 of its worth to him, and shows it
 		amp = maxf(0.2, amp * 0.5)
 	_hit_n += 1
+	if RenderAnim.shiver_by_weight and stop == 0 and kind != "guard":
+		# a blow that flows with no hit-stop (GD section 6: a mash freezes only its first) still shakes the struck body, small for a light, drawn only
+		_shake_t0 = T
+		_shake_k = 0.3 + 0.4 * clampf(amp, 0.2, 1.0)
 	var h: int = _hash(tick, slot, _hit_n)
 	var u: float = float(h & 1023) / 511.5 - 1.0
 	var u2: float = float((h >> 10) & 1023) / 511.5 - 1.0
@@ -1937,10 +1944,21 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 	if _worn > 0.04 or _brinkp > 0.4:
 		_wear_motion(f, T)
 	var shiver: float = float(prof.get("shiver", 0.0))
-	if S.dirS.stop > 0.0 and shiver > 0.0:
-		root_off = Vector3(_signed(S.tick, slot), _signed(S.tick + 13, slot) * 0.6, 0.0) * shiver
+	if S.dirS.stop > 0.0:
+		_stop_pk = maxf(_stop_pk, S.dirS.stop)
 	else:
-		root_off = root_off * 0.0
+		_stop_pk = 0.0
+	var shv := Vector3.ZERO
+	if S.dirS.stop > 0.0 and shiver > 0.0:
+		# the shake follows the stop's weight: a mashed light's 2 ticks a little over half the profile's, 8 ticks as before, a launch's 12 a fifth more, a decisive blow's 20 and the KO's 24 at most 1.6
+		var wk: float = clampf(sqrt(_stop_pk * 60.0 / 8.0), 0.5, 1.6) if RenderAnim.shiver_by_weight else 1.0
+		shv = Vector3(_signed(S.tick, slot), _signed(S.tick + 13, slot) * 0.6, 0.0) * shiver * wk
+	elif RenderAnim.shiver_by_weight and shiver > 0.0 and S.T - _shake_t0 < SHAKE_S:
+		var sk: float = _shake_k * (1.0 - (S.T - _shake_t0) / SHAKE_S)
+		shv = Vector3(_signed(S.tick, slot), _signed(S.tick + 13, slot) * 0.6, 0.0) * shiver * sk
+	root_off = shv   # the root's own offset starts again from nothing each frame, as it did
+	if RenderAnim.debug_checks:
+		debug["shiver"] = shv.length()
 	root_off.x += _recoil_x + _step_x + _pr_dx
 	root_off.y += _zip_dy
 	if _lean_t0 > -5.0 or _over_t0 > -5.0 or _block_t0 > -5.0:
@@ -3511,6 +3529,7 @@ func _contact_one(S: SimState, f, base_limb: String, second: bool) -> void:
 ## of a blow put the free arm at a plane of its own and the blend from the guard to it turned the upper arm 60 to 120 degrees in two ticks, the elbow's plane flipping on the way, which
 ## reads as the arm snapping). The striking arm is the blow's own timing and is never slowed; neither is a two-limb blow's. The drawn arm keeps to the limit, and catches up on the next ticks.
 const WING_SIG_BONES := ["pelvis", "spine_1", "spine_2", "neck", "head", "clavicle_r", "clavicle_l", "upper_arm_r", "forearm_r", "upper_arm_l", "forearm_l"]
+const SHAKE_S: float = 6.0 / 60.0   # the contact-keyed shake of a blow with no hit-stop of its own: 6 ticks, decaying
 const SLEW_BONES := ["upper_arm_r", "forearm_r", "upper_arm_l", "forearm_l"]
 var _wing_sig: float = 1.0e9             # the idle wing check's last signature of the pose it judged (the spine, the clavicles and the arms): an unchanged idle pose is not judged again
 
