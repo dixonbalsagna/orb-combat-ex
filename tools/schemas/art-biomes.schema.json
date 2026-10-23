@@ -1,0 +1,670 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/art-biomes",
+  "title": "art.biomes (version 1)",
+  "description": "data/art/biomes.json: the biome look bible (docs/art/biomes.md; written by art/concepts/biomes/gen.mjs): per biome the palettes, the far ladder, the orbit colour, the ground profile, the cover per 1,200 units, the destruction plume, the scar colours, the neighbours and the readability numbers; the 33 neighbour pairs. Presentation only. Version field: version. Policy: closed except keys starting with an underscore. Cross-references in tools/lib/xref-biome-look.js (biomes-look-order, -neighbour, -pair, -far-land, -cover, -orbit).",
+  "type": "object",
+  "required": [
+    "version",
+    "note",
+    "rules",
+    "orbit_separation",
+    "biomes",
+    "pairs"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Provenance and status."
+    },
+    "rules": {
+      "type": "object",
+      "required": [
+        "faces",
+        "readability",
+        "far_land",
+        "orbit"
+      ],
+      "properties": {
+        "faces": {
+          "type": "string",
+          "minLength": 1
+        },
+        "readability": {
+          "type": "string",
+          "minLength": 1
+        },
+        "far_land": {
+          "type": "string",
+          "minLength": 1
+        },
+        "orbit": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The look rules, in words."
+    },
+    "orbit_separation": {
+      "type": "object",
+      "required": [
+        "min",
+        "pair"
+      ],
+      "properties": {
+        "min": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "The least CIEDE2000 between any two biomes' orbit colours."
+        },
+        "pair": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+ / [a-z0-9]+$",
+          "description": "The closest pair, \"a / b\" (biome ids: rule biomes-look-orbit)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "biomes": {
+      "type": "object",
+      "required": [
+        "ocean",
+        "beach",
+        "plains",
+        "savanna",
+        "forest",
+        "jungle",
+        "wetland",
+        "desert",
+        "mountains",
+        "volcanic",
+        "tundra",
+        "ice",
+        "seaice"
+      ],
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z][a-z0-9]*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "name",
+          "order",
+          "line",
+          "palette",
+          "far_ladder",
+          "orbit",
+          "profile",
+          "far_land",
+          "cover",
+          "plume",
+          "scar",
+          "damage",
+          "destruction",
+          "neighbours",
+          "readability"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The biome's name."
+          },
+          "order": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64,
+            "description": "Its place in the bible (1 to the number of biomes, each once: rule biomes-look-order)."
+          },
+          "line": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The one-line look."
+          },
+          "palette": {
+            "type": "object",
+            "required": [
+              "ground",
+              "subsoil",
+              "rock",
+              "vegetation",
+              "secondary",
+              "trunk",
+              "water",
+              "accent",
+              "sky_noon"
+            ],
+            "properties": {
+              "ground": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-f]{6}$",
+                  "description": "A colour, #rrggbb in lower case."
+                },
+                "description": "Lit, mid and shade."
+              },
+              "subsoil": {
+                "type": "string",
+                "pattern": "^#[0-9a-f]{6}$",
+                "description": "A colour, #rrggbb in lower case."
+              },
+              "rock": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-f]{6}$",
+                  "description": "A colour, #rrggbb in lower case."
+                },
+                "description": "Lit, mid and shade."
+              },
+              "vegetation": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-f]{6}$",
+                  "description": "A colour, #rrggbb in lower case."
+                },
+                "description": "Lit, mid and shade."
+              },
+              "secondary": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-f]{6}$",
+                  "description": "A colour, #rrggbb in lower case."
+                },
+                "description": "Lit, mid and shade."
+              },
+              "trunk": {
+                "type": "string",
+                "pattern": "^#[0-9a-f]{6}$",
+                "description": "A colour, #rrggbb in lower case."
+              },
+              "water": {
+                "type": "object",
+                "required": [
+                  "shallow",
+                  "deep"
+                ],
+                "properties": {
+                  "shallow": {
+                    "type": "string",
+                    "pattern": "^#[0-9a-f]{6}$",
+                    "description": "A colour, #rrggbb in lower case."
+                  },
+                  "deep": {
+                    "type": "string",
+                    "pattern": "^#[0-9a-f]{6}$",
+                    "description": "A colour, #rrggbb in lower case."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                }
+              },
+              "accent": {
+                "type": "string",
+                "pattern": "^#[0-9a-f]{6}$",
+                "description": "A colour, #rrggbb in lower case."
+              },
+              "sky_noon": {
+                "type": "object",
+                "required": [
+                  "top",
+                  "horizon"
+                ],
+                "properties": {
+                  "top": {
+                    "type": "string",
+                    "pattern": "^#[0-9a-f]{6}$",
+                    "description": "A colour, #rrggbb in lower case."
+                  },
+                  "horizon": {
+                    "type": "string",
+                    "pattern": "^#[0-9a-f]{6}$",
+                    "description": "A colour, #rrggbb in lower case."
+                  }
+                },
+                "additionalProperties": false,
+                "patternProperties": {
+                  "^_": true
+                }
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            },
+            "description": "Flat colours (lit, mid, shade are the three faces of one surface)."
+          },
+          "far_ladder": {
+            "type": "object",
+            "required": [
+              "far1",
+              "far2",
+              "far3"
+            ],
+            "properties": {
+              "far1": {
+                "type": "string",
+                "pattern": "^#[0-9a-f]{6}$",
+                "description": "A colour, #rrggbb in lower case."
+              },
+              "far2": {
+                "type": "string",
+                "pattern": "^#[0-9a-f]{6}$",
+                "description": "A colour, #rrggbb in lower case."
+              },
+              "far3": {
+                "type": "string",
+                "pattern": "^#[0-9a-f]{6}$",
+                "description": "A colour, #rrggbb in lower case."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            },
+            "description": "The three hazed ridges."
+          },
+          "orbit": {
+            "type": "string",
+            "pattern": "^#[0-9a-f]{6}$",
+            "description": "The colour the biome reads as from far away (12 percent toward the atmosphere blue; 8 for ice)."
+          },
+          "profile": {
+            "type": "object",
+            "required": [
+              "kind",
+              "amp",
+              "wave"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "cones",
+                  "dunes",
+                  "flat",
+                  "floes",
+                  "hummock",
+                  "jagged",
+                  "rolling",
+                  "sheet",
+                  "shore",
+                  "swell"
+                ],
+                "description": "The ground's profile."
+              },
+              "amp": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1000,
+                "description": "Amplitude in units."
+              },
+              "wave": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 5000,
+                "description": "Wavelength in units."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "far_land": {
+            "type": "object",
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "cones",
+                  "floesfar",
+                  "hills",
+                  "low",
+                  "mesas",
+                  "none",
+                  "peaks",
+                  "shelf"
+                ]
+              },
+              "amp": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1000,
+                "description": "Height of the far ridges; absent only for kind \"none\" (rule biomes-look-far-land)."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "cover": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 12,
+            "items": {
+              "type": "object",
+              "required": [
+                "k",
+                "n",
+                "h"
+              ],
+              "properties": {
+                "k": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$",
+                  "description": "The kind of cover (a prop the renderer draws)."
+                },
+                "n": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 64,
+                  "description": "How many per 1,200 units."
+                },
+                "h": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "number",
+                    "minimum": 1,
+                    "maximum": 2000,
+                    "description": "Height in units."
+                  },
+                  "description": "[least, greatest] height (rule biomes-look-cover)."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "description": "Cover per 1,200 units."
+          },
+          "plume": {
+            "type": "object",
+            "required": [
+              "kind",
+              "cols",
+              "ej",
+              "h",
+              "w"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "ash",
+                  "dirt",
+                  "dust",
+                  "leaf",
+                  "mud",
+                  "rock",
+                  "sand",
+                  "snow",
+                  "water"
+                ]
+              },
+              "cols": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 3,
+                "items": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-f]{6}$",
+                  "description": "A colour, #rrggbb in lower case."
+                },
+                "description": "The plume's three colours."
+              },
+              "ej": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-f]{6}$",
+                  "description": "A colour, #rrggbb in lower case."
+                },
+                "description": "The ejecta's two colours."
+              },
+              "h": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 2000,
+                "description": "Height."
+              },
+              "w": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 2000,
+                "description": "Width."
+              },
+              "ring": {
+                "type": "boolean"
+              },
+              "wet": {
+                "type": "boolean"
+              },
+              "steam": {
+                "type": "boolean"
+              },
+              "embers": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            },
+            "description": "The destruction plume."
+          },
+          "scar": {
+            "type": "object",
+            "required": [
+              "fill",
+              "edge"
+            ],
+            "properties": {
+              "fill": {
+                "type": "string",
+                "pattern": "^#[0-9a-f]{6}$",
+                "description": "A colour, #rrggbb in lower case."
+              },
+              "edge": {
+                "type": "string",
+                "pattern": "^#[0-9a-f]{6}$",
+                "description": "A colour, #rrggbb in lower case."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            },
+            "description": "The crater scar's colours."
+          },
+          "damage": {
+            "type": "object",
+            "required": [
+              "scorch",
+              "crater",
+              "burned"
+            ],
+            "properties": {
+              "scorch": {
+                "type": "string",
+                "minLength": 1,
+                "description": "How a scorch reads here."
+              },
+              "crater": {
+                "type": "string",
+                "minLength": 1,
+                "description": "How a crater reads here."
+              },
+              "burned": {
+                "type": "string",
+                "minLength": 1,
+                "description": "How burned cover reads here."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            }
+          },
+          "destruction": {
+            "type": "string",
+            "minLength": 1,
+            "description": "How destruction looks here."
+          },
+          "neighbours": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 12,
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "eco",
+                "note"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$",
+                  "description": "A biome id other than this one (rule biomes-look-neighbour)."
+                },
+                "eco": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$"
+                  }
+                },
+                "note": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "How the two meet."
+                }
+              },
+              "additionalProperties": false,
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "description": "The biomes this one meets, each as in `pairs` (rule biomes-look-pair)."
+          },
+          "readability": {
+            "type": "object",
+            "required": [
+              "worst_aura_dE00",
+              "worst_body_dE00"
+            ],
+            "properties": {
+              "worst_aura_dE00": {
+                "type": "number",
+                "minimum": 20,
+                "maximum": 200,
+                "description": "The least CIEDE2000 between an aura and any ground, rock, vegetation or water tone: 20 or more."
+              },
+              "worst_body_dE00": {
+                "type": "number",
+                "minimum": 15,
+                "maximum": 200,
+                "description": "The least CIEDE2000 between a body and ground, rock or vegetation: 15 or more."
+              }
+            },
+            "additionalProperties": false,
+            "patternProperties": {
+              "^_": true
+            },
+            "description": "The readability numbers (the rule in `rules.readability`)."
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A remark."
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The biomes by id; the thirteen of the bible are required."
+    },
+    "pairs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "a",
+          "b",
+          "eco",
+          "note"
+        ],
+        "properties": {
+          "a": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "b": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "eco": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            }
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "description": "Each pair of biomes that meet, once."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

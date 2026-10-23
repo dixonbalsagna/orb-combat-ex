@@ -297610,6 +297610,721 @@
       }
     },
     {
+      "id": "art-biomes-valid",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/version": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-biomes-underscore-key-ok",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-biomes-key-required-version",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "del": [
+            "/version"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-biomes-key-required-note",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "del": [
+            "/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-biomes-key-required-rules",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "del": [
+            "/rules"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-biomes-key-required-orbit-separation",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "del": [
+            "/orbit_separation"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-biomes-key-required-biomes",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "del": [
+            "/biomes"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-biomes-key-required-pairs",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "del": [
+            "/pairs"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-biomes-unknown-key",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "art-biomes-version",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/version": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/version"
+      }
+    },
+    {
+      "id": "art-biomes-biome-missing",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "del": [
+            "/biomes/ice"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/biomes"
+      }
+    },
+    {
+      "id": "art-biomes-biome-unknown-key",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/wind": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/biomes/plains/wind"
+      }
+    },
+    {
+      "id": "art-biomes-biome-key-missing",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "del": [
+            "/biomes/plains/scar"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/biomes/plains"
+      }
+    },
+    {
+      "id": "art-biomes-order-zero",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/order": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/biomes/plains/order"
+      }
+    },
+    {
+      "id": "art-biomes-order-duplicate",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/order": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:biomes-look-order",
+        "pointer": "/biomes/plains/order"
+      }
+    },
+    {
+      "id": "art-biomes-colour-not-hex",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/orbit": "green"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/biomes/plains/orbit"
+      }
+    },
+    {
+      "id": "art-biomes-colour-upper-case",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/palette/subsoil": "#6B5338"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/biomes/plains/palette/subsoil"
+      }
+    },
+    {
+      "id": "art-biomes-ground-needs-three",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/palette/ground": [
+              "#3a88b4",
+              "#2c78a8"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/biomes/plains/palette/ground"
+      }
+    },
+    {
+      "id": "art-biomes-far-ladder-missing",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "del": [
+            "/biomes/plains/far_ladder/far3"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/biomes/plains/far_ladder"
+      }
+    },
+    {
+      "id": "art-biomes-profile-kind",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/profile/kind": "wobbly"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/biomes/plains/profile/kind"
+      }
+    },
+    {
+      "id": "art-biomes-profile-amp-negative",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/profile/amp": -5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/biomes/plains/profile/amp"
+      }
+    },
+    {
+      "id": "art-biomes-far-land-kind",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/far_land/kind": "volcano"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/biomes/plains/far_land/kind"
+      }
+    },
+    {
+      "id": "art-biomes-far-land-needs-amp",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "del": [
+            "/biomes/plains/far_land/amp"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "xref:biomes-look-far-land",
+        "pointer": "/biomes/plains/far_land"
+      }
+    },
+    {
+      "id": "art-biomes-far-land-none-with-amp",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/ocean/far_land/amp": 30
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:biomes-look-far-land",
+        "pointer": "/biomes/ocean/far_land"
+      }
+    },
+    {
+      "id": "art-biomes-cover-count-zero",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/cover/0/n": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/biomes/plains/cover/0/n"
+      }
+    },
+    {
+      "id": "art-biomes-cover-height-reversed",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/cover/0/h": [
+              90,
+              30
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:biomes-look-cover",
+        "pointer": "/biomes/plains/cover/0/h"
+      }
+    },
+    {
+      "id": "art-biomes-cover-kind-shape",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/cover/0/k": "Big Tree"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/biomes/plains/cover/0/k"
+      }
+    },
+    {
+      "id": "art-biomes-plume-kind",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/plume/kind": "glitter"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/biomes/plains/plume/kind"
+      }
+    },
+    {
+      "id": "art-biomes-plume-cols-need-three",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/plume/cols": [
+              "#ffffff"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/biomes/plains/plume/cols"
+      }
+    },
+    {
+      "id": "art-biomes-plume-flag-not-bool",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/ocean/plume/ring": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/biomes/ocean/plume/ring"
+      }
+    },
+    {
+      "id": "art-biomes-scar-colour",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/scar/fill": "black"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/biomes/plains/scar/fill"
+      }
+    },
+    {
+      "id": "art-biomes-damage-empty",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/damage/scorch": ""
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minLength",
+        "pointer": "/biomes/plains/damage/scorch"
+      }
+    },
+    {
+      "id": "art-biomes-neighbour-self",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/neighbours/0/id": "plains"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:biomes-look-neighbour",
+        "pointer": "/biomes/plains/neighbours/0/id"
+      }
+    },
+    {
+      "id": "art-biomes-neighbour-unknown",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/neighbours/0/id": "atlantis"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:biomes-look-neighbour",
+        "pointer": "/biomes/plains/neighbours/0/id"
+      }
+    },
+    {
+      "id": "art-biomes-neighbour-eco-empty",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/neighbours/0/eco": []
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/biomes/plains/neighbours/0/eco"
+      }
+    },
+    {
+      "id": "art-biomes-neighbour-without-pair",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/neighbours/0/id": "ice"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:biomes-look-pair",
+        "pointer": "/biomes/plains/neighbours/0/id"
+      }
+    },
+    {
+      "id": "art-biomes-pair-self",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/pairs/0/b": "ocean"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:biomes-look-pair",
+        "pointer": "/pairs/0/b"
+      }
+    },
+    {
+      "id": "art-biomes-pair-unknown-biome",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/pairs/0/b": "atlantis"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:biomes-look-pair",
+        "pointer": "/pairs/0/b"
+      }
+    },
+    {
+      "id": "art-biomes-pair-duplicate",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/pairs/1": {
+              "a": "beach",
+              "b": "ocean",
+              "eco": [
+                "foam"
+              ],
+              "note": "x"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:biomes-look-pair",
+        "pointer": "/pairs/1"
+      }
+    },
+    {
+      "id": "art-biomes-pair-eco-differs",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/pairs/0/eco": [
+              "palm"
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:biomes-look-pair",
+        "pointer": "/pairs/0"
+      }
+    },
+    {
+      "id": "art-biomes-aura-readability-under-20",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/readability/worst_aura_dE00": 19
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/biomes/plains/readability/worst_aura_dE00"
+      }
+    },
+    {
+      "id": "art-biomes-body-readability-under-15",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/biomes/plains/readability/worst_body_dE00": 14
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/biomes/plains/readability/worst_body_dE00"
+      }
+    },
+    {
+      "id": "art-biomes-orbit-pair-shape",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/orbit_separation/pair": "wetland-tundra"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/orbit_separation/pair"
+      }
+    },
+    {
+      "id": "art-biomes-orbit-pair-unknown",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/orbit_separation/pair": "wetland / atlantis"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:biomes-look-orbit",
+        "pointer": "/orbit_separation/pair"
+      }
+    },
+    {
       "id": "fight-ricochet-angle-zero",
       "schema": "fight-ricochet.schema.json",
       "mutate": [

@@ -512,6 +512,10 @@
       "schema": "art-vehicles.schema.json"
     },
     {
+      "match": "data/art/biomes.json",
+      "schema": "art-biomes.schema.json"
+    },
+    {
       "match": "audio/data/tug_cues.json",
       "schema": "audio-tug-cues.schema.json"
     },
