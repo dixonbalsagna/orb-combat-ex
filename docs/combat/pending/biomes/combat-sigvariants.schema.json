@@ -46,6 +46,11 @@
               "minItems": 2,
               "maxItems": 2
             },
+            "areaMul": {
+              "type": "number",
+              "minimum": 0.2,
+              "maximum": 3
+            },
             "structMul": {
               "type": "number",
               "minimum": 0,
@@ -160,7 +165,8 @@
                         "scree",
                         "ember",
                         "glaze",
-                        "split"
+                        "split",
+                        "part"
                       ]
                     },
                     "spreadTicks": {
@@ -208,6 +214,277 @@
                       "type": "number",
                       "minimum": 0,
                       "maximum": 10
+                    },
+                    "openTicks": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 3600
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": {}
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "kind"
+                  ]
+                }
+              ]
+            },
+            "outcomes": {
+              "type": "object",
+              "properties": {
+                "CLASH": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "GUARD": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "DODGE": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "HIT": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "ESCAPE": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "patternProperties": {
+                "^_": {}
+              },
+              "additionalProperties": false,
+              "required": [
+                "CLASH",
+                "GUARD",
+                "DODGE",
+                "HIT",
+                "ESCAPE"
+              ]
+            }
+          },
+          "patternProperties": {
+            "^_": {}
+          },
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "scorch",
+            "structMul",
+            "trees",
+            "fx",
+            "aftermath",
+            "outcomes"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "adoptProposed": {
+      "type": "boolean"
+    },
+    "proposed": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {},
+        "^[a-z][a-z_]*$": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "pattern": "^[A-Z][A-Z ]{2,23}$"
+            },
+            "asBuilt": {
+              "type": "boolean"
+            },
+            "scorch": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.2,
+                "maximum": 3
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "areaMul": {
+              "type": "number",
+              "minimum": 0.2,
+              "maximum": 3
+            },
+            "structMul": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "trees": {
+              "enum": [
+                "area",
+                "burn",
+                "fell",
+                "snap",
+                "none"
+              ]
+            },
+            "fx": {
+              "type": "object",
+              "properties": {
+                "dust": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-f]{6}$"
+                },
+                "sparks": {
+                  "type": "object",
+                  "properties": {
+                    "n": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 20
+                    },
+                    "col": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "speed": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 5000
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": {}
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "n",
+                    "col",
+                    "speed"
+                  ]
+                },
+                "fire": {
+                  "type": "object",
+                  "properties": {
+                    "withinAbove": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 2000
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": {}
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "withinAbove"
+                  ]
+                },
+                "steam": {
+                  "type": "boolean"
+                },
+                "shards": {
+                  "type": "boolean"
+                },
+                "plates": {
+                  "type": "boolean"
+                },
+                "powder": {
+                  "type": "boolean"
+                },
+                "spray": {
+                  "type": "boolean"
+                },
+                "embers": {
+                  "type": "boolean"
+                },
+                "ash": {
+                  "type": "boolean"
+                }
+              },
+              "patternProperties": {
+                "^_": {}
+              },
+              "additionalProperties": false,
+              "required": [
+                "dust"
+              ]
+            },
+            "aftermath": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "clearing",
+                        "fireLine",
+                        "heave",
+                        "snowDump",
+                        "flood",
+                        "scree",
+                        "ember",
+                        "glaze",
+                        "split",
+                        "part"
+                      ]
+                    },
+                    "spreadTicks": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 600
+                    },
+                    "durTicks": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 36000
+                    },
+                    "reachCols": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 200
+                    },
+                    "rimMul": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 5
+                    },
+                    "refill": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "source": {
+                      "enum": [
+                        "waterTable",
+                        "sea"
+                      ]
+                    },
+                    "seaCols": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 400
+                    },
+                    "minSlope": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 5
+                    },
+                    "gapBh": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 10
+                    },
+                    "openTicks": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 3600
                     }
                   },
                   "patternProperties": {

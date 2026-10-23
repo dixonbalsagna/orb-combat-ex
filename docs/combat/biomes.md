@@ -77,8 +77,24 @@ The full rows, with every outcome's line, are in `pending/biomes/sigvariants.jso
   - city and village, until LANE SWEEP is adopted;
   - ocean and plains: both carve 1.0 × 1.0, and only the sea's own splash and seabed set the ocean apart.
 
-  LANE SWEEP settles the first, once Legal and Orb adopt it. Nothing proposed so far settles the second: TIDE CLEAVE and FURROW SCAR change only names. Ocean needs a carve or an aftermath of its own, which is open and not proposed here.
+  Section 2b proposes a row for each.
 - **The personality term** of `signature-variants.md` §5.1 is in the file, switched off, for Game Design: near people the carer narrows the bite and the villain widens it.
+
+## 2b. Proposed: the two pairs that still play alike
+
+Two rows in the park's `proposed` block. Each is read in place of the built row only with `adoptProposed` on, so the built game is untouched until Legal screens the names, Game Design rules the numbers and Orb picks.
+
+| Biome | Built row | Proposed row | The groove | The structures | What it leaves |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Ocean** | HORIZON CLEAVE, 1.0 × 1.0, carving as plains does | **TIDE CLEAVE** | 1.4 × 0.7: a deep, narrow cut in the seabed | as today | **The sea parts:** for 1.5 s the strip along the cut is dry, walled by water. Then the walls fall back and anyone in it is under. The fall sends a surge 40 columns to the shore, wetting the low ground and knocking props over |
+| **Village** | BOULEVARD RAZE, the city's row exactly | **LANE SWEEP** | 0.7 × 1.3: low and wide along the lane | structure radius 1.4 times as wide, bite 0.7 | A row of low houses each partly flattened, not one gutted: the scar runs along the ground, where the city's runs up through towers |
+
+- **Ocean, HIT, is a rule:** when the walls fall he is under (the ocean rules) and comes up in the surge.
+- **Both names are Narrative's earlier proposals,** already on Legal's list: TIDE CLEAVE replaces "Horizon", a brand (RL-006), and LANE SWEEP is from `signature-variants.md` §5.3.
+- **Proven by the cross-check:** with the two rows adopted, all 17 rows carve differently (groove, structure radius and bite, trees and aftermath) and all 17 names end on different words.
+- **For Game Design:**
+  - the sweep's collateral, since villages hold 2 to 6 people a house against the city's towers, so it should still cost the hero;
+  - the parted sea's 90 ticks.
 
 ## 3. The launch planner by biome
 
@@ -203,7 +219,7 @@ Each factor multiplies today's bowl. These are proposals for World's crater (`cr
 | `ground.json` | `data/combat/ground.json` | **`combat.ground/1`**, draft `combat-ground.schema.json` |
 
 **Proven with Tools' own validator** in a scratch root, with the drafts and map rows added:
-- all three files read 0 errors and 0 warnings (the ground schema carries both switches);
+- all three files read 0 errors and 0 warnings (the ground schema carries both switches; the variants schema carries `proposed`, `adoptProposed`, `areaMul` and the `part` aftermath);
 - nine refusals, three for each schema, each fail at their pointer, or at its parent for the aftermath's either-null-or-object rule. They are written in the shape of `tools/fixtures/cases.json` as `cases.biomes.json`.
 
 **Cross-checks:**

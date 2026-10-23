@@ -5,6 +5,7 @@
   "fields": {
     "name": "the label in the director's feed and the banner: upper case, place or material plus effect (Legal RL-008's pattern)",
     "scorch": "[depth factor, width factor] on the groove (crater.gd: depth (D0 + D_P x P) x depth factor, half width (HW0 + HW_P x P) x width factor)",
+    "areaMul": "optional, 1 when missing: times the radius of the beam's structure damage (sampleBeam's damageArea) for the whole beam",
     "structMul": "times the beam's structure bite (b.sf) for the whole beam. The variant is picked once, when the signature is planned, from the biome under the defender (as planBeam does today), and holds for the whole path",
     "trees": "what the beam does to trees on its path: area (today's area damage), burn, fell (fall inward across the groove), snap (crowns drop), none",
     "fx": "VFX's keys: dust colour, sparks, fire (sampleBeam's branches today; fire.withinAbove is in the prototype's units, times SimConst.WS as sampleBeam reads it); the other flags are new looks for VFX. Positions and counts stay in the code as today (one dust puff at g + 8 and the sparks at g + 6, inside the beam's reach test; one fire at g, under its own height test): the table carries only what varies",
@@ -20,7 +21,8 @@
     "scree": "on a slope steeper than minSlope, rubble runs downhill from the groove up to reachCols over durTicks: a rubble strip (surface rubble: a slide over it tumbles)",
     "ember": "the groove glows: its surface reads ember for durTicks, then crust; it lights props and grass; no damage to fighters unless Game Design rules it",
     "glaze": "meltwater refreezes in the groove: its surface reads ice for the rest of the match (a slick strip)",
-    "split": "every floe the path crosses breaks at the path into two plates that drift gapBh apart: a lead of open water (a real gap in the ground)"
+    "split": "every floe the path crosses breaks at the path into two plates that drift gapBh apart: a lead of open water (a real gap in the ground)",
+    "part": "the sea along the groove is pushed aside for openTicks: the strip is dry (no water rules) with walls of water each side; then the walls fall back, and a fighter in the strip is under (the ocean rules). The fall sends a surge to the shore within seaCols, wetting the low shore columns and knocking over props there"
   },
   "variants": {
     "ocean": {
@@ -117,6 +119,22 @@
       "scorch": [1.3, 0.8], "structMul": 1.0, "trees": "burn", "fx": {"dust": "#4a4440", "embers": true, "ash": true},
       "aftermath": {"kind": "ember", "durTicks": 600},
       "outcomes": {"CLASH": "the crust under the meeting point breaks and glows in a ring", "GUARD": "the guard skids back over breaking crust, a glowing line behind", "DODGE": "the dodge goes up into the ash plume", "HIT": "he lands across the glowing vein in a burst of ash", "ESCAPE": "he breaks away behind the ash"}
+    }
+  },
+  "adoptProposed": false,
+  "_adoptProposed": "true reads each row of proposed in place of the built row of the same biome. The built rows stay until Legal screens the names, Game Design rules the numbers and Orb picks (docs/combat/biomes.md section 2b)",
+  "proposed": {
+    "ocean": {
+      "name": "TIDE CLEAVE", "_why": "today ocean and plains carve the same (1.0 x 1.0, area, nothing left), so over the sea the beam plays as it does over a field. Its own carve: a deep, narrow cut in the seabed, and the sea parted along it. The name is Narrative's rename of HORIZON CLEAVE (RL-006: 'Horizon' is a brand)",
+      "scorch": [1.4, 0.7], "structMul": 1.0, "trees": "area", "fx": {"dust": "#9b8f7e", "spray": true},
+      "aftermath": {"kind": "part", "openTicks": 90, "seaCols": 40},
+      "outcomes": {"CLASH": "the sea under the meeting point is pressed down into a bowl ringed by walls of water", "GUARD": "the guard is driven back along the dry trench between the walls", "DODGE": "the dodge goes up and over a wall of water", "HIT": "rule: when the walls fall back he is under (the ocean rules) and surfaces in the surge", "ESCAPE": "he breaks away along the trench before it closes"}
+    },
+    "village": {
+      "name": "LANE SWEEP", "_why": "today the village plays the city's BOULEVARD RAZE exactly. Its own carve (signature-variants.md 5.3): a low, wide graze that scars along the lane, flattening a row of low houses a little each rather than gutting one. A wider structure radius at a lower bite. The name is Narrative's working label. Game Design: villages hold 2 to 6 people a house against the city's towers, so the sweep should still read as a real cost to the hero's anguish",
+      "scorch": [0.7, 1.3], "areaMul": 1.4, "structMul": 0.7, "trees": "area", "fx": {"dust": "#9b8f7e"},
+      "aftermath": null,
+      "outcomes": {"CLASH": "every roof along the lane lifts in a line, both ways from the meeting point", "GUARD": "the guard is driven back down the lane, fences going flat ahead of him", "DODGE": "the dodge vaults a roof ridge", "HIT": "he is swept along the lane through the row of sheds", "ESCAPE": "he breaks away low between the houses"}
     }
   },
   "byPersonality": {

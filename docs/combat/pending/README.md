@@ -6,7 +6,7 @@
 
 `launch/` holds the launch enders as the file Encounter's launch anywhere reads (`data/combat/enders.json`): `enders.json` on the live recipes, to land now, and `enders.next.json` on the split, to land with it; and a draft schema for Tools, `combat-enders.schema.json` (the note is `../launch-enders.md`). `throwables/` (2026-10-18) holds `throwables.json`: the pick-up and throw by size and by fighter, on Game Design's ruling (`../throwable-cars.md`).
 
-`biomes/` (2026-10-23) holds the biome layer of `../biomes.md`: `sigvariants.json` (the signature's variant by biome, 17 rows, the seven built ones exact), `launch.biome.json` (the launch planner's `biome` block), `ground.json` (skid-stops, landings, approaches and crater shapes by surface), the draft schemas `combat-sigvariants.schema.json`, `combat-ground.schema.json` and `director-launch-biome.fragment.json`, and `cases.biomes.json` (nine fixture cases for Tools).
+`biomes/` (2026-10-23) holds the biome layer of `../biomes.md` (with a scene per biome for Orb in `../biomes-sampler.md`): `sigvariants.json` (the signature's variant by biome, 17 rows, the seven built ones exact, plus `proposed` rows TIDE CLEAVE and LANE SWEEP behind `adoptProposed`), `launch.biome.json` (the launch planner's `biome` block), `ground.json` (skid-stops, landings, approaches and crater shapes by surface), the draft schemas `combat-sigvariants.schema.json`, `combat-ground.schema.json` and `director-launch-biome.fragment.json`, and `cases.biomes.json` (nine fixture cases for Tools).
 
 `choreo/` (2026-10-19) holds `feel.json`: recoil exits, ricochets, clash meets and turns, each with its three beats for Camera and what Encounter, Animation and World need (`../choreography-feel.md`).
 
