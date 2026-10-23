@@ -290,3 +290,65 @@ The guard is parked as docs/camera/pending/escape-row.patch: the split_sweep row
 
 Re-armed at each match, it drew the inset at tick 0 (52.6 ms there), and tick 238 did not drop. On a quiet machine Performance found that the strip adds nothing measurable at tick 238: the hitch is the first crater's first use, which Rendering's boot warm-up (22e) clears. So the warm-up is removed: the patch restores the code as it was before it. Pane check and determinism plain and --intro pass.
 
+## 11. Smoothness: every instant change, eased, whipped or justified (2026-10-23)
+
+Orb, 2026-10-22 (docs/ep/vision.md): "the camera looks like it snaps too fast, all dynamic camera movement should be smooth, no instant movement unless well justified by real cinematography theory". Research's docs/research/cuts-and-eases.md gives the frame: every change is an ease, a cut or a crisp whip (8 to 15 frames, a hard ease at both ends, no blur: Orb's taste rejects blur). A cut needs one of five reasons and meets its conditions. Parked: docs/camera/pending/director-10-smooth.patch.
+
+**How the audit was done.** Each place the rig cuts or snaps carried a counter in a scratch copy. Nine scenes were digested in both modes, 3,600 ticks each (ai 4, 7 and 39, rushcity, signaturecity, collapse, mashcity, clashcity, transform).
+- The angle shots were the most frequent visible cuts: two per shot, two or three shots per 2-minute scene.
+- The follow's catch-ups fired only at a scene's first tick.
+- The side swap's cut flag carries no visible move.
+
+**Eased now (no cut):**
+
+| Change | Before | Now | Research's range |
+| :--- | :--- | :--- | :--- |
+| The angle shot | a hard cut to the angle and back | a crane tilt: in over 27 frames, held 1 s, back over 36 frames; at most 0.4 degrees a tick (`ANGLE_IN`, `ANGLE_OUT`) | reframe, 18 to 36 |
+| A change of angle | any pitch change marked the frame a cut | only a jump over 1 degree in a tick is a cut (`PITCH_CUT_DEG`): the authored shots' jumps | |
+| The arena turn's way back | a hard cut back after 1.2 s | eased back to the fight's size and level over 30 frames (`TURN_OUT`) | return, 18 to 30 |
+| The blow push | up in 3 frames | up in 7 frames, a fast start and a soft landing (ease-out); back over 15 frames as before (`BLOW_UP`) | impact push, in 5 to 10, back 15 to 25 |
+| The transformation's live punch-in | a 6-frame triangle | a 12-frame eased pulse, peak at 6 (`LIVE_PUNCH_LEN`) | impact push |
+| The anticipation lean | a 0.10 s ease in | a 0.18 s ease in (`ANT_TAU_IN`) | reframe |
+
+**No jump when moves overlap.** An eased angle (an angle shot, the turn's way back) keeps the angle while it eases. A shot that starts or ends meanwhile (a launch shot, a merge) leaves it to ease out instead of setting it level at once (`_pitch_in_move`). The first web capture of the eased build caught it: a launch at tick 2106 under a high angle jumped 5.5 degrees in a tick (102,656 pixels). It is gone, and in five scenes no pitch jump over 1 degree is left in play.
+
+**Whipped now (no cut):** the follow's catch-ups. A fighter more than a screen from his anchor (the lag bound, a rush ended early, a launch hold let go) is reached by a crisp whip of 12 frames (`WHIP_TICKS`, smootherstep, hard at both ends, no blur), up to 3 widths. Research: "the framing target jumped is not a reason". Beyond 3 widths a move would only smear: that is a change of space, and it cuts (`WHIP_MAX`, `_catch_up`). The sweep's launch rows whip (2.9 widths) and pass. In five scenes of play none fired.
+
+**Kept as cuts, each with its reason (Research's five) and its conditions:**
+
+| Cut | When | Reason | Conditions |
+| :--- | :--- | :--- | :--- |
+| The arena turn's cut in | World turns the ring; Rendering rebuilds the ground on that tick | 3, a scene change: the world beyond the pair is a new one, and under a still or eased camera the ridges pop (148,000 pixels at fight framing) | 1.67 times the scale (a shot size); at a calm pause the director holds; the pair stay at the centre. Its way back is eased |
+| The transformation's break and settle (full version, ordinary mode) | the break's beat and the settle's | 5, a shock beat (a transformation's release); 1, on the break's onset | an authored low angle, a shot size; on the beat. Under Reduce flashing it is eased with no cut |
+| The building smash insert, in and back | a big building's first hit | 1, cut on action, and 4, the reveal of the damage; the return ends the insert | a wide of the wall, more than a shot size; at the impact; the return to where he was |
+| The rush pin | a rush longer than a screen | 3, a jump a move would only smear (a blitz): the departure matched to the arrival | the pane at the arrival; at the rush's onset |
+| The hold's cut to the victim (launch_follow "hold", an option, off) | the impact | 1, cut on action at the impact | |
+| A relocation, a replay seek | the sim moves the pair | 3, a change of space or time | |
+| The intro's face cuts and two-shot | the staredown | 3, into and out of an authored set piece (shot and reverse shot) | |
+| A shot over another (the KO's wreck after the close-up) | the KO's beats | 3, an authored set piece's shots | |
+| A catch-up beyond 3 widths | a scene's first tick, a subject on the far side | 3, a change of space | |
+| The side swap's cut flag in one view | the pair change sides | Not a visible change: the divider is not shown in one view | |
+
+**Not mine, suggested:** Rendering's roll eases in over 0.25 s (`RenderLook.ROLL_TIMES.x`), which is 15 frames. Research's dutch roll is 30 to 90 frames; 0.5 s would sit in it.
+
+**Unchanged and already eased:** the split's openings and closings morph at the comfort rates. The divider slam is a 0.14 s door that closes on the rusher's impact: a motion on the action, not a cut.
+
+**Measured** (`clip_digest.gd` STATS, cuts in 3,600 ticks, reduced / ordinary):
+
+| Scene | Main | This |
+| :--- | ---: | ---: |
+| ai 4 | 5 / 7 | 1 / 3 |
+| ai 7 | 7 / 9 | 3 / 5 |
+| ai 39 | 5 / 7 | 1 / 3 |
+| rushcity | 22 / 20 | 16 / 14 |
+| signaturecity | 10 / 10 | 5 / 5 |
+| transform | 5 / 7 | 2 / 4 |
+
+- Sizes, layout changes and the time outside the picture are unchanged.
+- In the web captures (960 x 540) the new build has no frame-to-frame jump over 150,000 pixels in the angle segments. In the turn it has only the cut in (142,000 at tick 4939); main also cut back (148,000 at 5010).
+- New split_sweep rows:
+  - `angle shot`: the tilt reaches its angle and returns to level, never steps more than 1 degree a tick, and never cuts.
+  - `arena turn`: the cut in is on the tick and the wide holds still; the way back has no cut, keeps the zoom step under the comfort rate, keeps both fighters on screen and returns within 5%.
+
+Gates on 6ef1e3f1: split sweep, seam sweep, pane check, determinism plain and --intro all pass. Clips: homework/camera/13-smooth/.
+
