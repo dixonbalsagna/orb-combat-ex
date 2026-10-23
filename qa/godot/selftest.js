@@ -277,7 +277,7 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     assert.strictEqual(id(low, 'x.bodies').status, 'FAIL'); assert.strictEqual(id(low, 'x.wall').status, 'FAIL');
     assert.strictEqual(id(good, 'x.depth.cap').status, 'PENDING'); assert.strictEqual(id(good, 'x.depth.streets').status, 'PENDING');
   });
-  await t('eleventh-round rows: the newcomer inside 60 s (90% at medium), the return reported, charged blows perfect-blocked 2 to 5% at medium, the answers rise by level, no reaction to a release and no stale mark; the beam struggle PENDING; an invalid job is not a measurement', async () => {
+  await t('eleventh-round rows: the newcomer inside 60 s (75% at medium), the return reported, charged blows perfect-blocked 2 to 5% at medium, the answers rise by level, no reaction to a release and no stale mark; the beam struggle PENDING; an invalid job is not a measurement', async () => {
     const { masherRows } = require('./masher');
     const nc = (firsts) => ({ pair: 'newcomer-medium', n: firsts.length, aWins: 60, bWins: 40, brawl: { launcher: { routeBy: firsts.map(() => 5), routeOn: firsts.map(() => 4), firstLaunchSec: firsts } } });
     const ch = (c, lv, rel, pb, over = {}) => ({ probe: 'charge', probeTag: `charge-${c}-${lv}`, cell: c, level: lv, n: 60, requested: 60, wallCapped: 0, releases: rel, perfect: pb, pressBefore: pb, pressAfter: 0, sameTick: 0, pressSameTick: 0, pressAfterRelease: 0, ...over });
@@ -292,8 +292,8 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     assert.strictEqual(id(good, 'charge.pb.easy').status, 'INFO');
     assert.strictEqual(id(good, 'charge.noreact').status, 'PASS');
     assert.strictEqual(id(good, 'beam.struggle.more').status, 'PENDING');
-    const slow = rowsOf([nc([...Array(80).fill(20), ...Array(20).fill(90)]), ch('b', 'medium', 700, 245, { pressAfterRelease: 3 }), ch('y', 'medium', 500, 5)]);
-    assert.strictEqual(id(slow, 'newcomer.first60.medium').status, 'FAIL');   // 80% inside 60 s
+    const slow = rowsOf([nc([...Array(70).fill(20), ...Array(30).fill(90)]), ch('b', 'medium', 700, 245, { pressAfterRelease: 3 }), ch('y', 'medium', 500, 5)]);
+    assert.strictEqual(id(slow, 'newcomer.first60.medium').status, 'FAIL');   // 70% inside 60 s
     assert.strictEqual(id(slow, 'charge.pb.medium').status, 'FAIL');   // 250 of 1,200 is 20.8%
     assert.strictEqual(id(slow, 'charge.noreact').status, 'FAIL');
     const stale = rowsOf([ch('b', 'medium', 700, 30, { stale: 12 })]);
@@ -317,13 +317,18 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
   });
   await t('2026-10-22 rulings: the spammer answered 50 to 80% and the string launcher 20 to 50% (1b), guard and grab at the brink in 30 to 70% of matches with 1.5 times the damage of guard only (2026-10-23), the clinch median 35 to 60, max 60, time-outs under 30%, throws 2 to 5 (1c), the route bands under launch anywhere (5e)', async () => {
     const { masherRows } = require('./masher');
-    const lap = (mode, extra) => ({ probe: 'lap', probeTag: 'lap-' + mode, mode, n: 60, requested: 60, wallCapped: 0, anywhere: true, wins0: 10, launchers0: 100, bySafety0: { '2': 60, '3': 40 }, fate0: { launched: 30, not: 70 }, answeredShare0: 0.70, ...extra });
+    const lap = (mode, extra) => ({ probe: 'lap', probeTag: 'lap-' + mode, mode, n: 60, requested: 60, wallCapped: 0, anywhere: true, wins0: 10, launchers0: 100, bySafety0: { '2': 60, '3': 40 }, fate0: { launched: 30, not: 70 }, answeredShare0: 0.70, dmgTo1: 5000 * 60, ...extra });
     const gp = (mode, extra) => ({ probe: 'gp', probeTag: 'gp-' + mode, mode, n: 60, requested: 60, wallCapped: 0, matches: 60, wins0: 20, catch: { tell: 40 }, ends: { throw_down: 30, time: 5, tech: 20 }, clinches: 55, lenMedian: 45, lenMax: 58, tellsAMinute: 2, throwsAMatch: 3, openThrows: 30, openThenLaunch: 9, openThenLaunchShare: 0.3, steps0: 50, steps1: 40, brinkMatches: 20, dmgTo1: 9000, hard: { strayStep: 0, regrab: 0, aiTechSoon: 0 }, ...extra });
     const id = (rows, k) => rows.find(r => r.id === k);
-    const good = masherRows([lap('spam'), lap('route', { wins0: 30 }), lap('varied', { wins0: 33 }), lap('string', { answeredShare0: 0.35 }), lap('ai', { answeredShare0: 0.45 }), gp('guardgrab', { wins0: 24, hpEnd: Array.from({ length: 60 }, (_, i) => [0, i < 24 ? 0 : 800]), dmgTo1: 12000 }), gp('guardonly', { wins0: 6, hpEnd: Array.from({ length: 60 }, () => [0, 1600]), dmgTo1: 5000 }), gp('ai'), gp('mash')]);
+    const good = masherRows([lap('spam'), lap('route', { wins0: 30, dmgTo1: 6500 * 60 }), lap('varied', { wins0: 33, dmgTo1: 6800 * 60 }), lap('string', { answeredShare0: 0.35 }), lap('ai', { answeredShare0: 0.45 }), gp('guardgrab', { wins0: 24, hpEnd: Array.from({ length: 60 }, (_, i) => [0, i < 24 ? 0 : 800]), dmgTo1: 12000 }), gp('guardonly', { wins0: 6, hpEnd: Array.from({ length: 60 }, () => [0, 1600]), dmgTo1: 5000 }), gp('ai'), gp('mash')]);
     for (const k of ['ruling.5a.answered', 'ruling.L13.spammer', 'ruling.L14.varied', 'ruling.1b.string', 'ruling.1b.ai', 'ruling.5c.guardgrab', 'ruling.5d.median', 'ruling.5d.max', 'ruling.5d.timeouts', 'ruling.G4.tells', 'ruling.G4.throws', 'ruling.G4.chain', 'ruling.grapple.hard']) assert.strictEqual(id(good, k).status, 'PASS', k + ' ' + (id(good, k) || {}).value);
-    const bad = masherRows([lap('spam', { answeredShare0: 0.40, wins0: 40 }), lap('route', { wins0: 30 }), lap('string', { answeredShare0: 0.69 }), gp('guardgrab', { wins0: 10, hpEnd: Array.from({ length: 60 }, (_, i) => [0, i < 10 ? 0 : 800]), dmgTo1: 5200 }), gp('guardonly', { wins0: 6, hpEnd: Array.from({ length: 60 }, () => [0, 1600]), dmgTo1: 5000 }), gp('ai', { lenMedian: 85, lenMax: 90, throwsAMatch: 1, ends: { time: 20, time_lead: 10, tech: 10 } }), gp('mash', { lenMax: 90, hard: { strayStep: 1, regrab: 0, aiTechSoon: 0 } })]);
+    const bad = masherRows([lap('spam', { answeredShare0: 0.40, wins0: 40 }), lap('route', { wins0: 30, dmgTo1: 6500 * 60 }), lap('string', { answeredShare0: 0.69 }), gp('guardgrab', { wins0: 10, hpEnd: Array.from({ length: 60 }, (_, i) => [0, i < 10 ? 0 : 800]), dmgTo1: 5200 }), gp('guardonly', { wins0: 6, hpEnd: Array.from({ length: 60 }, () => [0, 1600]), dmgTo1: 5000 }), gp('ai', { lenMedian: 85, lenMax: 90, throwsAMatch: 1, ends: { time: 20, time_lead: 10, tech: 10 } }), gp('mash', { lenMax: 90, hard: { strayStep: 1, regrab: 0, aiTechSoon: 0 } })]);
     for (const k of ['ruling.5a.answered', 'ruling.L13.spammer', 'ruling.1b.string', 'ruling.5c.guardgrab', 'ruling.5d.median', 'ruling.5d.max', 'ruling.5d.timeouts', 'ruling.G4.throws', 'ruling.grapple.hard']) assert.strictEqual(id(bad, k).status, 'FAIL', k);
+    // every script loses (rulings-2026-10-23 7c): the rows read the damage dealt a match
+    const lose = masherRows([lap('spam', { wins0: 0 }), lap('route', { wins0: 0, dmgTo1: 6500 * 60 }), lap('varied', { wins0: 0, dmgTo1: 6800 * 60 })]);
+    assert.strictEqual(id(lose, 'ruling.L13.spammer').status, 'PASS'); assert.strictEqual(id(lose, 'ruling.L14.varied').status, 'PASS');
+    const lose2 = masherRows([lap('spam', { wins0: 0, dmgTo1: 7000 * 60 }), lap('route', { wins0: 0, dmgTo1: 6500 * 60 }), lap('varied', { wins0: 0, dmgTo1: 8000 * 60 })]);
+    assert.strictEqual(id(lose2, 'ruling.L13.spammer').status, 'FAIL'); assert.strictEqual(id(lose2, 'ruling.L14.varied').status, 'FAIL');
     const off = masherRows([lap('spam', { anywhere: false, launchers0: 0 }), gp('guardgrab', { catch: {} }), gp('guardonly', { catch: {} })]);
     assert.strictEqual(id(off, 'ruling.5a.answered').status, 'PENDING'); assert.strictEqual(id(off, 'ruling.5c.guardgrab').status, 'PENDING');
     const route = (powHas, by, on) => masherRows([{ pair: 'route-medium', n: 3, aWins: 2, bWins: 1, brawl: { launcher: { routeBy: [by, by, by], routeOn: [on, on, on], routeFullBy: [3, 3, 3], routeFullOn: [4, 4, 4], powHas, firstLaunchSec: [5, 6, 7], used: 5, lapsed: 0, open: 6 } } }]);

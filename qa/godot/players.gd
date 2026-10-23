@@ -557,6 +557,11 @@ class Pl:
 			return _kind_at(String(P.get("mix", "L")))
 		return -1
 
+	## The newcomer's B lights (a launcher_open or launcher_link cue names him): he presses a seeded 0 to react ticks later, once while a press is not already planned and not within 40 ticks of his last B.
+	func lit(tick: int) -> void:
+		if kind == "newcomer" and nc_at < 0 and tick - route_b > 40:
+			nc_at = tick + rng.randi_range(0, int(P.get("react", "20")))
+
 	## A press is due on the gap cadence: clock=tick the absolute S.tick count (every gap-th S.tick from start_off), since a gap of S.ticks after the last consumed press, live a gap of live ticks.
 	func _due(S, lt: int, ck: String) -> bool:
 		var gap: int = int(P.get("gap", "8"))
@@ -613,20 +618,30 @@ class Pl:
 				if _due(S, lt, String(P.get("clock", "since"))):
 					return 0
 			"newcomer":
+				# rulings-2026-10-23 7b: with launch anywhere and the minimal HUD there is no gauge to fill; what teaches him is the lit B (the cue launcher_open or launcher_link names him). He presses B a seeded 0 to `react` ticks (default 20)
+				# after it lights, sure or not. trigger=gauge keeps the earlier script (B after his run fills).
+				if String(P.get("trigger", "lit")) == "lit":
+					if nc_at >= 0 and S.tick >= nc_at and S.tick - route_b > 40:
+						route_b = S.tick
+						nc_at = -1
+						return 2
+					if _due(S, lt, String(P.get("clock", "tick"))):
+						return 0
+				else:
 				# the eleventh round's scripted newcomer (brawl-second-pass.md section 14): mashes X on a slow clock (default 10) and presses B within `react` ticks (a seeded 0 to react, default 20) of his
 				# gauge filling (his run at the close), as a first-time player would after the gauge shows; the press is dropped if the gauge empties first; one B in 40 ticks. No reaction to the opening itself.
-				if not Pl.gauge_full(S.fighters[slot]):
-					nc_at = -1
-					nc_was = false
-				elif not nc_was:
-					nc_was = true
-					nc_at = S.tick + rng.randi_range(0, int(P.get("react", "20")))
-				if nc_at >= 0 and S.tick >= nc_at and S.tick - route_b > 40:
-					route_b = S.tick
-					nc_at = -1
-					return 2
-				if _due(S, lt, String(P.get("clock", "tick"))):
-					return 0
+					if not Pl.gauge_full(S.fighters[slot]):
+						nc_at = -1
+						nc_was = false
+					elif not nc_was:
+						nc_was = true
+						nc_at = S.tick + rng.randi_range(0, int(P.get("react", "20")))
+					if nc_at >= 0 and S.tick >= nc_at and S.tick - route_b > 40:
+						route_b = S.tick
+						nc_at = -1
+						return 2
+					if _due(S, lt, String(P.get("clock", "tick"))):
+						return 0
 			"mix":
 				var gap2: int = int(P.get("gap", "12"))
 				if lt - last_press >= gap2:
@@ -1096,6 +1111,10 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 						last_closer = -1
 						if m_fb < 0:
 							m_fb = S.tick
+					elif ck == "launcher_link":
+						var lka: int = int(e.actor)
+						if lka >= 0 and lka < 2:
+							by_slot[lka].lit(S.tick)
 					elif ck == "brawl_end":
 						var why: String = str(e.get("text"))
 						g.ends[why] = int(g.ends.get(why, 0)) + 1
@@ -1147,6 +1166,8 @@ func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, w
 							g.giveLog[g.giveLog.size() - 1].miss = str(e.get("text"))
 					elif ck == "launcher_open":
 						g.lcOpen += 1
+						if int(e.actor) >= 0 and int(e.actor) < 2:
+							by_slot[int(e.actor)].lit(S.tick)
 						var loa: int = int(e.actor)
 						if loa >= 0 and loa < 2 and by_slot[loa].kind == "route":
 							by_slot[loa].open_n = _ei(e, "n")

@@ -41,6 +41,7 @@ func _init() -> void:
 		"aiGuardOnLauncher": 0, "aiGuardSoon": 0, "opensCue": [0, 0], "opensRead": 0, "full": {"by0": 0, "on0": 0, "all": 0, "allSends": 0}, "anywhere": DirBrawl.anywhere(), "aims": [{}, {}], "care": [], "reactTicks": react, "kos": 0, "wins0": 0}
 	var kindNames := ["up", "across", "down", "behind", "building"]
 	r["probe"] = "lap"
+	r["dmgTo1"] = 0.0
 	r["requested"] = n
 	r["n"] = 0
 	r["wallCapped"] = 0
@@ -62,6 +63,7 @@ func _init() -> void:
 		var turn := 0
 		var wasOpen := false
 		var wantB := false
+		var wind_until := -1   # the AI's wind-up lands, plus 4: a defended player guards until then unless he is attacking (rulings-2026-10-23 7c)
 		var str_last := -1000   # string mode: the tick of his last clean landing
 		var seen := {}
 		var open := []       # [owner slot, safety, the tick it was seen, the press tick, done]
@@ -89,6 +91,9 @@ func _init() -> void:
 				elif S.tick - last >= 8 and bAt < 0 and not wantB:
 					it.light = true
 					last = S.tick
+			if human and S.tick <= wind_until and bAt < 0 and S.tick >= bUp:
+				it.guard = true
+				it.light = false
 			SimCore.step(S, [it, null] if human else null)
 			# the route and the varied route: one B at each opening of his, read as QA's route reads it (DirBrawl.launcherOpen)
 			var lo: int = DirBrawl.launcherOpen(S, me)
@@ -123,8 +128,12 @@ func _init() -> void:
 					open.append([owner, sf, S.tick, false])
 			for e in S.out.fx:
 				var ty: String = String(e.type)
+				if ty == "damage" and int(e.attacker) == 0 and int(e.victim) == 1 and float(e.amount) > 0.0:
+					r.dmgTo1 += float(e.amount)
 				if ty == "cue":
 					var ck: String = String(e.kind)
+					if ck == "windup" and String(e.text) == "start" and int(e.actor) == 1:
+						wind_until = int(e.n) + 4
 					if ck == "launch_power":
 						r.full.allSends += 1
 						if int(e.k) == 1:
