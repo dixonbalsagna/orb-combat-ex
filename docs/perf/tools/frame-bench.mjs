@@ -173,6 +173,8 @@ try {
   result.hitchEvents = raw.rtt.map((x, i) => [raw.tick - raw.rtt.length + i, x, (raw.rows[i] || [])[13] || "", (raw.rows[i - 1] || [])[13] || ""]).filter((h) => h[1] > 50).slice(0, 12);
   // the whole row of each hitching frame (tick ms, fx ms, view ms, draws, objects, prims, particles, vmem, tmem, smem, renderer cpu, renderer gpu, profiling timers, events) and the one before
   result.hitchRows = raw.rtt.map((x, i) => [raw.tick - raw.rtt.length + i, x, raw.rows[i - 1] || [], raw.rows[i] || [], raw.rows[i + 1] || [], raw.rows[i + 3] || []]).filter((h) => h[1] > 50).slice(0, 4);
+  // frames whose tick carried a crater (evlog/evprof hook): the frame time, the game's timers and the profiling counters' growth over the frame, to compare the first crater with a later one
+  result.craterRows = raw.rows.map((r, i) => [raw.tick - raw.rtt.length + i, raw.rtt[i], r, raw.rows[i - 1] || []]).filter((x) => /crater/.test(x[2][13] || '')).slice(0, 14).map((x) => ({ tick: x[0], frame_ms: +x[1].toFixed(1), tick_ms: x[2][0], fx_ms: x[2][1], view_ms: x[2][2], particles: x[2][6], pt_us: Object.fromEntries(Object.keys(x[2][12] || {}).map((k) => [k, ((x[2][12][k] || 0) - ((x[3][12] || {})[k] || 0))])) }));
   result.hitches = raw.rtt.map((x, i) => [raw.tick - raw.rtt.length + i - 0, +x.toFixed(1)]).filter((h) => h[1] > 50).slice(0, 12);
   result.tick_ms = dist(col(0)); result.fx_ms = dist(col(1)); result.view_ms = dist(col(2));
   result.draws = dist(col(3)); result.objects = dist(col(4)); result.prims = dist(col(5)); result.particles = dist(col(6));
@@ -197,6 +199,16 @@ try {
       over_16_7_per_600: Array.from({ length: Math.ceil(n / 600) }, (_, b) => r.slice(b * 600, (b + 1) * 600).filter((x) => x > 16.7).length),
     };
   }
+  // the turn scenes (hook-turn.mjs): the frames around each arena_turn event, in ticks -5 to +45
+  try {
+    const turns = JSON.parse(await page.eval('JSON.stringify(window.__turns || [])'));
+    result.turnDebug = JSON.parse(await page.eval('JSON.stringify({ dbg: window.__dbg || null, asks: window.__asks || [], pick: window.__pick || null, bprof: window.__bprof || [], tprof: window.__tprof || [], bprof2: window.__bprof2 || [] })'));
+    if (turns.length) {
+      const base = raw.tick - raw.rtt.length;
+      result.turns = turns;
+      result.turnWindows = turns.map((t) => { const i0 = t - base; const sl = (a) => a.slice(Math.max(0, i0 - 5), i0 + 46); return { tick: t, frames: sl(raw.rtt).map((x) => +x.toFixed(1)), tick_ms: sl(raw.rows.map((r) => r[0])), fx_ms: sl(raw.rows.map((r) => r[1])), view_ms: sl(raw.rows.map((r) => r[2])), draws: sl(raw.rows.map((r) => r[3])), prims_k: sl(raw.rows.map((r) => Math.round(r[5] / 1000))) }; });
+    }
+  } catch { /* no turn scene */ }
   if (argv.includes('--save-rtt')) result.rtt = raw.rtt.map((x) => +x.toFixed(1));   // every frame time of the measured part, for an offline look at periods
   result.over_16_7 = raw.rtt.filter((x) => x > 16.7).length; result.over_25 = raw.rtt.filter((x) => x > 25).length;   // on a display-locked GPU run a frame is 16.7 or 33.3 ms: frames over 25 ms are the missed refreshes result.over_33_3 = raw.rtt.filter((x) => x > 33.3).length;
   result.tickReached = raw.tick;

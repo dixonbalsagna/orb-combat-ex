@@ -22,6 +22,7 @@
 //   p22f       base + Rendering's parked 22f (the ground by band)
 //   p22h       base + Rendering's parked 22h (the scorch and the heat on their own small texture)
 //   textwarm   base + UI's parked HUD text warm-up (docs/ui/pending/text-warm)
+//   turn       base + the scenes turn and turnoff (a Half planet arena with the calm-moment turn on or off) and the tick of each arena_turn event (hook-turn.mjs)
 //   evprof     evlog + the profiling timers (the CPU time of each section at a hitching tick)
 //   aura       base + VFX's parked 3D aura (apply.patch, grant-fighter-view.patch) and a page flag aura=1 (auradem=1: both shells at full level)
 //   lowprof    depthprof + a page flag lowq=1 (VFX quality low, automatic step off): the reduced-effects mode
@@ -64,6 +65,9 @@ const SPEC = {
   p22f: { patches: ['docs/rendering/pending/2026-10-22f/batch.diff'], hooks: ['perf', 'slice'] },
   p22h: { patches: ['docs/rendering/pending/2026-10-22h/batch.diff'], hooks: ['perf', 'slice'] },
   textwarm: { patches: ['docs/ui/pending/text-warm/text-warm.patch'], hooks: ['perf', 'slice'] },
+  turn: { patches: [], hooks: ['perf', 'slice', 'turn'] },
+  turn7b: { patches: [], hooks: ['calm7b', 'perf', 'slice', 'turn'] },
+  turnprof: { patches: [], hooks: ['perf', 'slice', 'turn', 'turnprof'] },
   evlog: { patches: [], hooks: ['perf', 'slice', 'evlog'] },
   evprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'evlog'] },
   aura: { patches: ['docs/vfx/pending/aura3d/apply.patch', 'docs/vfx/pending/aura3d/grant-fighter-view.patch'], hooks: ['perf', 'slice', 'aura'] },
@@ -73,7 +77,7 @@ const SPEC = {
   layerprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'layers'] },
   lowprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'depth', 'lowq'] },
 };
-const HOOK = { perf: ['hook-perf.mjs'], slice: ['hook-slice.mjs', SLICE_LIB], prof: ['hook-prof.mjs'], slicec8: ['hook-slice-c8.mjs'], depth: ['hook-depth.mjs'], layers: ['hook-layers.mjs'], lowq: ['hook-lowq.mjs'], aura: ['hook-aura.mjs'], evlog: ['hook-evlog.mjs'], latency: ['hook-latency.mjs'], strip: ['hook-strip.mjs'], ring: ['hook-ring.mjs'] };
+const HOOK = { perf: ['hook-perf.mjs'], slice: ['hook-slice.mjs', SLICE_LIB], prof: ['hook-prof.mjs'], slicec8: ['hook-slice-c8.mjs'], depth: ['hook-depth.mjs'], layers: ['hook-layers.mjs'], lowq: ['hook-lowq.mjs'], aura: ['hook-aura.mjs'], evlog: ['hook-evlog.mjs'], latency: ['hook-latency.mjs'], strip: ['hook-strip.mjs'], ring: ['hook-ring.mjs'], turn: ['hook-turn.mjs'], calm7b: ['hook-calm7b.mjs'], turnprof: ['hook-turnprof.mjs'] };
 
 function godot(dir, args, log, limitS) {
   return new Promise((ok) => {
