@@ -17,3 +17,7 @@ The project runs on a Claude Pro plan with zero budget. On the night of 2026-09-
 - Less happens in parallel. The critical path runs in bursts within each 5-hour window.
 - Idle directors keep their context, so resuming them later is cheap.
 - This ADR revises the effort and ultracode settings in ADR 0003.
+
+## Amendment, 2026-10-23 (Orb)
+
+For the end-of-week push on planet generation, biomes, fighter animation and camera work, Orb authorised workflows: "Workflows sounds good, why haven't we authorized this yet?" For those four areas, until the weekly window resets, directors may run workflows of up to about 10 agents for their briefed tasks. The machine rules still hold. Workflow agents author and analyse. Godot runs and browser captures stay inside the session's own caps: at most 6 Godot processes a session counting its workflows (3 while long runs are going), one software-rendered capture at a time, and long runs at below-normal priority. Ultracode stays off. Everything else in this ADR is unchanged.
