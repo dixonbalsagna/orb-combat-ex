@@ -49,8 +49,46 @@ edit('sim/director/exchange.gd', rep => {
   // act: it goes on when a queued request is free of the cooldown.
   rep('\tif S.dirS.cool > 0.0 and DirInterrupt.opening(S, S.fighters[0]) == 0 and DirInterrupt.opening(S, S.fighters[1]) == 0 and not DirBury.followUp(S, S.fighters[0], S.fighters[1]) and not DirBury.followUp(S, S.fighters[1], S.fighters[0]):\n\t\treturn\n',
       '\tif S.dirS.cool > 0.0 and DirInterrupt.opening(S, S.fighters[0]) == 0 and DirInterrupt.opening(S, S.fighters[1]) == 0 and not DirBury.followUp(S, S.fighters[0], S.fighters[1]) and not DirBury.followUp(S, S.fighters[1], S.fighters[0]) and not DirPress.anyFree(S):\n\t\treturn   # (a player\'s request free of the cooldown goes on: DirPress)\n');
-  rep('\tvar wait: int = int(ceil(S.dirS.cool * DirData.TICKS_PER_SEC - 0.0001)) if (S.dirS.ex == null and S.dirS.cool > 0.0) else -1\n',
-      '\tvar wait: int = DirPress.waitTicks(S, A) if (S.dirS.ex == null and DirPress.held(S, A)) else -1   # 7a: a player\'s capped wait\n');
+  // The acknowledgement (Controls' tightened T1): every player's attack press that starts, or waits, is acknowledged on its
+  // own tick. requestAttack becomes a wrapper: the request, then the ack.
+  rep('static func requestAttack(S: SimState, A, kind: String) -> void:\n',
+      '## An attack press (SimControl.control): the director\'s request, then a player\'s acknowledgement on its own tick\n' +
+      '## (Controls\' T1: started, or queued with the tick it is due).\n' +
+      'static func requestAttack(S: SimState, A, kind: String) -> void:\n' +
+      '\tvar ex0 = S.dirS.ex\n' +
+      '\tvar who0: int = DirBands.who(S)\n' +
+      '\t_request(S, A, kind)\n' +
+      '\t_ack(S, A, kind, ex0, who0)\n\n\n' +
+      'static func _request(S: SimState, A, kind: String) -> void:\n');
+  rep('\t_drain(S)\n\t_ackQueued(S, A, kind)   # a player\'s press that waits is acknowledged on its own tick (Controls\' T1)\n',
+      '\t_drain(S)\n');
+  rep('static func _ackQueued(S: SimState, A, kind: String) -> void:\n' +
+      '\tif A.ai != null or not bool(pressCfg().get("ackQueued", false)):\n\t\treturn\n' +
+      '\tvar q: Array = A.act.queue\n' +
+      '\tif q.is_empty() or int(q[q.size() - 1][3]) != S.tick:\n\t\treturn   # it started, or it was not queued\n' +
+      '\tvar e = DirBrawl._ev(S, A, "press_ack", "queued", DirBrawl._cell(kind))\n' +
+      '\tvar wait: int = int(ceil(S.dirS.cool * DirData.TICKS_PER_SEC - 0.0001)) if (S.dirS.ex == null and S.dirS.cool > 0.0) else -1\n' +
+      '\te.n = S.tick + wait if wait >= 0 else -1\n' +
+      '\te.amount = float(wait)\n' +
+      '\te.target = float(S.fighters.find(SimRoster.opp(S, A)))\n',
+      '## A player\'s attack press, on its tick: press_ack "started" when it began an exchange or an approach (ex0 and who0: the\n' +
+      '## exchange and the approach before it), "queued" when it waits (n the tick it is due when the wait is the cooldown, else\n' +
+      '## -1; amount the ticks to it); nothing when the brawl, the zip or the chase acknowledged it already, or it was a blow on a\n' +
+      '## brawl\'s line (its own events say so). The AI\'s presses are not acknowledged.\n' +
+      'static func _ack(S: SimState, A, kind: String, ex0, who0: int) -> void:\n' +
+      '\tif A.ai != null or not bool(pressCfg().get("ackQueued", false)):\n\t\treturn\n' +
+      '\tvar slot: int = S.fighters.find(A)\n' +
+      '\tfor e0 in S.out.fx:\n' +
+      '\t\tif String(e0.type) == "cue" and String(e0.kind) == "press_ack" and int(e0.actor) == slot:\n\t\t\treturn\n' +
+      '\tvar q: Array = A.act.queue\n' +
+      '\tvar queued: bool = not q.is_empty() and int(q[q.size() - 1][3]) == S.tick\n' +
+      '\tvar started: bool = (ex0 == null and S.dirS.ex != null and S.dirS.ex.A == A) or (who0 != slot and DirBands.who(S) == slot)\n' +
+      '\tif not queued and not started:\n\t\treturn\n' +
+      '\tvar e = DirBrawl._ev(S, A, "press_ack", "queued" if queued else "started", DirBrawl._cell(kind))\n' +
+      '\te.target = float(S.fighters.find(SimRoster.opp(S, A)))\n' +
+      '\tvar wait: int = 0 if started else (DirPress.waitTicks(S, A) if (S.dirS.ex == null and DirPress.held(S, A)) else -1)   # 7a: a player\'s capped wait\n' +
+      '\te.n = S.tick + wait if wait >= 0 else -1\n' +
+      '\te.amount = float(wait)\n');
 });
 edit('data/director/interrupts.json', rep => {
   rep('"skipOpenCool": true,\n    "ackQueued": true\n  },',
