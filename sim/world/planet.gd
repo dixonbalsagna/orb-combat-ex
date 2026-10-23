@@ -52,6 +52,8 @@ static func dataErrors() -> Array:
 static func dataHash() -> String:
 	if not _cLoaded:
 		_cLoad()
+	if WorldClimate.genNow() >= 2:
+		return _cHash + "/g2/" + WorldClimate.dataHash()   # a gen 2 planet's slices are not a gen 1 planet's, and follow climate.json
 	return _cHash
 
 
@@ -277,16 +279,25 @@ class Planet extends RefCounted:
 	var wr: float = 0.0
 	var outH: float = 0.0
 	var outB: int = 0
+	var outF: int = -1                       # gen 2: the fine biome of the last surfAt (WorldClimate.F_*); -1 where the stored biome is the fine one (sea, ice, a dome)
+	var gen: int = 1                         # the generation this planet is made by (WorldClimate.genNow)
+	var grid = null                          # gen 2: the climate grid (WorldClimate.Grid), made when first asked
 
 
 ## Memoised by the seed: the planet is a pure function of it and of the data.
 static func make(seed: int) -> Planet:
-	var key: int = seed
+	var gn: int = WorldClimate.genNow()
+	var key: int = seed * 4 + gn
 	if _planets.has(key):
 		return _planets[key]
 	var P := Planet.new()
 	P.seed = seed
+	P.gen = gn
 	P.c = cfg()
+	if gn >= 2:   # gen 2's own numbers over the stored ones (the polar caps are smaller: there is room for cold biomes)
+		P.c = cfg().duplicate()
+		for k in WorldClimate.data().planet:
+			P.c[k] = WorldClimate.data().planet[k]
 	P.L = float(SimConst.PLANET_NC) * SimConst.COL
 	P.R = P.L / (2.0 * SimMathx.PI)
 	_placeAll(P)
@@ -347,6 +358,8 @@ static func ground(P: Planet, px: float, py: float, pz: float) -> float:
 
 
 static func _plainBiome(P: Planet, px: float, py: float, pz: float, h: float) -> int:
+	if P.gen >= 2:
+		return WorldClimate.plain(P, px, py, pz, h)
 	var c: Dictionary = P.c
 	if h < 0.0:
 		return BIO_OCEAN
@@ -368,6 +381,7 @@ static func surfAt(P: Planet, px: float, py: float, pz: float) -> void:
 	var c: Dictionary = P.c
 	var s: int = P.seed
 	var y: float = py
+	P.outF = -1
 	var base: float = ground(P, px, py, pz)
 	if absf(y) < c.polarY:
 		P.outH = base
@@ -731,6 +745,7 @@ static func pickEither(P: Planet, touch: int, standing: PackedByteArray = Packed
 class Slice extends RefCounted:
 	var heights := PackedFloat32Array()       # stored as S.base is: float32
 	var biomes := PackedByteArray()
+	var fine := PackedByteArray()             # gen 2: the fine biome of each column (WorldClimate.F_*); empty for gen 1
 	var held: Array = []                      # {id, kind, col, d, half, r}: the places the line passes (d: signed lateral offset, units, left of the line positive)
 	var circ: Dictionary = {}
 	var T: Array = []
@@ -755,6 +770,8 @@ static func readBegin(P: Planet, circ: Dictionary, T: Array) -> Slice:
 	var nc: int = SimConst.NC
 	S.heights.resize(nc)
 	S.biomes.resize(nc)
+	if P.gen >= 2:
+		S.fine.resize(nc)
 	return S
 
 
@@ -769,6 +786,7 @@ static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
 	var ct: float = circ.get("ct", 0.0)
 	var ca: Array = circ.get("c", u)
 	var tc: int = touchCol()
+	var fine2: bool = P.gen >= 2
 	for i in range(i0, i1):
 		var ang: float = float(i - tc) * SimConst.COL / (P.R * stf)
 		var co: float = SimDetMath.cos(ang)
@@ -789,6 +807,8 @@ static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
 			h += (_fbm(P.R, qx, qy, qz, c.detailScale, int(c.detailOct), P.seed + int(c.sDetail)) - 0.5) * c.detailAmp * c.detailSheet
 		S.heights[i] = h
 		S.biomes[i] = b
+		if fine2:
+			S.fine[i] = P.outF if P.outF >= 0 else b
 
 
 ## The places the line holds, with their nearest column and lateral offset.
@@ -1004,6 +1024,8 @@ static func sliceHash(S: Slice) -> int:
 		h = SimRng.imul((h ^ hb[i]) & MASK, 0x01000193)
 	for i in range(S.biomes.size()):
 		h = SimRng.imul((h ^ S.biomes[i]) & MASK, 0x01000193)
+	for i in range(S.fine.size()):   # gen 2 only
+		h = SimRng.imul((h ^ S.fine[i]) & MASK, 0x01000193)
 	return h & MASK
 
 

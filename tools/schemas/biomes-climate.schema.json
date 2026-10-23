@@ -1,0 +1,456 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-climate",
+  "title": "biomes.climate/1",
+  "description": "data/biomes/climate.json: planet generation 2 (docs/world/planet-gen2.md; WorldClimate): the biome of a point from a climate. Version field: schema. Policy: every key required, objects closed except keys starting with an underscore. Orders (each edge list rises; the table has a row for each temperature band and a cell for each moisture band; fine ids run from 0 and the table names ids in fine) are checked by WorldClimate's own load and by climate_check.",
+  "type": "object",
+  "required": [
+    "schema",
+    "gen",
+    "grid",
+    "planet",
+    "temp",
+    "moist",
+    "tempEdges",
+    "moistEdges",
+    "table",
+    "coast",
+    "wetland",
+    "highland",
+    "volcanic",
+    "fine",
+    "_about"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "biomes.climate/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "gen": {
+      "enum": [
+        1,
+        2
+      ],
+      "description": "The generation a planet is made by unless a setup or a tool says otherwise: 1 the stored planet bit for bit, 2 this file."
+    },
+    "grid": {
+      "type": "object",
+      "required": [
+        "w",
+        "h"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "w": {
+          "type": "integer",
+          "minimum": 16,
+          "maximum": 720,
+          "description": "Columns of the moisture grid (longitude)."
+        },
+        "h": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 360,
+          "description": "Rows of the moisture grid (rows uniform in the sine of the latitude)."
+        }
+      }
+    },
+    "planet": {
+      "type": "object",
+      "required": [
+        "polarY",
+        "packEdgeY",
+        "southMaskY"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "polarY": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 0.98,
+          "description": "gen 2's polarY (the stored planet's is 0.72): where the polar caps begin."
+        },
+        "packEdgeY": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 0.99,
+          "description": "gen 2's packEdgeY."
+        },
+        "southMaskY": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 0.995,
+          "description": "gen 2's southMaskY."
+        }
+      },
+      "description": "The stored planet's numbers gen 2 replaces."
+    },
+    "temp": {
+      "type": "object",
+      "required": [
+        "eq",
+        "pow",
+        "lapse",
+        "hScale",
+        "noiseScale",
+        "noiseOct",
+        "noiseAmp",
+        "seed",
+        "jit",
+        "jitScale",
+        "jitSeed"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "eq": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 2,
+          "description": "Temperature at sea level on the equator."
+        },
+        "pow": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 4,
+          "description": "Temperature falls as cos(latitude) to this power."
+        },
+        "lapse": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Temperature lost per hScale units of height."
+        },
+        "hScale": {
+          "type": "number",
+          "minimum": 100,
+          "maximum": 20000,
+          "description": "Height scale of the lapse, units."
+        },
+        "noiseScale": {
+          "type": "number",
+          "minimum": 500,
+          "maximum": 100000,
+          "description": "Scale of the temperature noise, units."
+        },
+        "noiseOct": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Octaves of it."
+        },
+        "noiseAmp": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.5,
+          "description": "Its amplitude (about 0 to 1 temperature)."
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000,
+          "description": "Seed offset of the temperature noise."
+        },
+        "jit": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "How far the latitude is wobbled by a slow noise, so the belts of climate are wavy."
+        },
+        "jitScale": {
+          "type": "number",
+          "minimum": 500,
+          "maximum": 200000,
+          "description": "Scale of that wobble, units."
+        },
+        "jitSeed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000,
+          "description": "Its seed offset."
+        }
+      }
+    },
+    "moist": {
+      "type": "object",
+      "required": [
+        "wBand",
+        "wAdv",
+        "wNoise",
+        "noiseScale",
+        "noiseOct",
+        "seed",
+        "evap",
+        "rain0",
+        "rainOro",
+        "oroH",
+        "blur",
+        "blurLon",
+        "bias"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "wBand": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Weight of the latitude bands (wet equator, dry near 30 degrees, wet near 60)."
+        },
+        "wAdv": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Weight of the moisture the wind carries."
+        },
+        "wNoise": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Weight of the moisture noise."
+        },
+        "noiseScale": {
+          "type": "number",
+          "minimum": 500,
+          "maximum": 100000,
+          "description": "Scale of the moisture noise, units."
+        },
+        "noiseOct": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Octaves of it."
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000,
+          "description": "Seed offset of the moisture noise."
+        },
+        "evap": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Moisture the sea gives the wind each cell."
+        },
+        "rain0": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.2,
+          "description": "Moisture land rains out each cell."
+        },
+        "rainOro": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Moisture a climb of oroH units rains out."
+        },
+        "oroH": {
+          "type": "number",
+          "minimum": 100,
+          "maximum": 10000,
+          "description": "The climb that rains out rainOro, units."
+        },
+        "blur": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.5,
+          "description": "Blend between latitude rows."
+        },
+        "blurLon": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.5,
+          "description": "Blend between longitude columns."
+        },
+        "bias": {
+          "type": "number",
+          "minimum": -0.5,
+          "maximum": 0.5,
+          "description": "Added to the moisture."
+        }
+      }
+    },
+    "tempEdges": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "number",
+        "minimum": -1,
+        "maximum": 2
+      },
+      "description": "Upper edges of the cold, cool, temperate and warm temperature bands; hot is above the last."
+    },
+    "moistEdges": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "number",
+        "minimum": -1,
+        "maximum": 2
+      },
+      "description": "Upper edges of the arid, dry, middling and wet moisture bands; soaked is above the last."
+    },
+    "table": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {
+        "type": "array",
+        "minItems": 5,
+        "maxItems": 5,
+        "items": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 63,
+          "description": "A fine biome id."
+        }
+      },
+      "description": "The fine biome of each temperature band (rows, cold to hot) and moisture band (columns, arid to soaked)."
+    },
+    "coast": {
+      "type": "object",
+      "required": [
+        "beachH"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "beachH": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 500,
+          "description": "Land below this height (units) is beach."
+        }
+      }
+    },
+    "wetland": {
+      "type": "object",
+      "required": [
+        "moistMin",
+        "hMax",
+        "tempMin"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "moistMin": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Moisture from which low warm land is wetland."
+        },
+        "hMax": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000,
+          "description": "Wetland lies below this height."
+        },
+        "tempMin": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 2,
+          "description": "and above this temperature."
+        }
+      }
+    },
+    "highland": {
+      "type": "object",
+      "required": [
+        "h"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "h": {
+          "type": "number",
+          "minimum": 100,
+          "maximum": 10000,
+          "description": "Land from this height is rocky highland (mountains begin at the stored planet's mountainAbove)."
+        }
+      }
+    },
+    "volcanic": {
+      "type": "object",
+      "required": [
+        "scale",
+        "oct",
+        "seed",
+        "above",
+        "hMin"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "scale": {
+          "type": "number",
+          "minimum": 500,
+          "maximum": 100000,
+          "description": "Scale of the volcanic field noise, units."
+        },
+        "oct": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Octaves."
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000,
+          "description": "Seed offset."
+        },
+        "above": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The noise above this is volcanic ground."
+        },
+        "hMin": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5000,
+          "description": "Only land above this height."
+        }
+      }
+    },
+    "fine": {
+      "type": "array",
+      "minItems": 7,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "alias",
+          "color"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 63,
+            "description": "Its id (0, 1, 2 ... in order)."
+          },
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z_]*$",
+            "description": "Its name."
+          },
+          "alias": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 6,
+            "description": "The stored biome (ocean, plains, forest, desert, mountains, ice sheet, sea ice) a consumer that knows only those sees."
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "description": "Its colour on maps and stills."
+          }
+        }
+      },
+      "description": "The biomes, ids 0 to 6 the stored planet's."
+    }
+  }
+}

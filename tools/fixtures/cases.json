@@ -292345,6 +292345,54 @@
       }
     },
     {
+      "id": "climate-gen-unknown",
+      "schema": "biomes-climate.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/climate.json",
+          "set": {
+            "/gen": 3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/gen"
+      }
+    },
+    {
+      "id": "climate-grid-too-small",
+      "schema": "biomes-climate.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/climate.json",
+          "set": {
+            "/grid/w": 4
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grid/w"
+      }
+    },
+    {
+      "id": "climate-temp-edges-short",
+      "schema": "biomes-climate.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/climate.json",
+          "set": {
+            "/tempEdges": [0.2, 0.4, 0.6]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minItems",
+        "pointer": "/tempEdges"
+      }
+    },
+    {
       "id": "rings-turn-bearing-over-10",
       "schema": "biomes-rings.schema.json",
       "mutate": [

@@ -1,0 +1,201 @@
+{
+  "schema": "biomes.climate/1",
+  "_about": "Planet generation 2 (docs/world/planet-gen2.md; WorldClimate): the biome of a point from a climate, not from noise bands. gen: the generation a planet is made by (1 is the stored planet as it was, bit for bit; 2 reads this file); a setup may name its own (planetGen). Temperature falls with latitude (cos of it to tPow) and with height (lapse per hScale units) with a little noise; moisture is the sea's reach carried downwind row by row on a coarse grid (the sea recharges it, land rains it out by rain0 a cell and by rainOro for every oroH units of climb, so a range casts a rain shadow), blended with the latitude bands (wet at the equator, dry near 30 degrees, wet near 60) and a little noise. The biome is the table's cell for the two (tempEdges and moistEdges are the upper edges of each band), with coast (beach), wet lowland (wetland), rocky highland, mountain and volcanic overrides. fine lists the biomes (ids 0 to 6 are the stored planet's, 7 and after are new); alias is the stored biome a consumer that knows only those sees (the renderer and the director until they learn the new ones); color is for maps and stills.",
+  "gen": 1,
+  "grid": {
+    "w": 192,
+    "h": 96
+  },
+  "planet": {
+    "polarY": 0.84,
+    "packEdgeY": 0.93,
+    "southMaskY": 0.955
+  },
+  "temp": {
+    "eq": 1.02,
+    "pow": 2.0,
+    "lapse": 0.5,
+    "hScale": 3000.0,
+    "noiseScale": 16000.0,
+    "noiseOct": 3,
+    "noiseAmp": 0.2,
+    "seed": 9211,
+    "jit": 0.45,
+    "jitScale": 22000.0,
+    "jitSeed": 9533
+  },
+  "moist": {
+    "wBand": 0.15,
+    "wAdv": 0.65,
+    "wNoise": 0.55,
+    "noiseScale": 18000.0,
+    "noiseOct": 3,
+    "seed": 9323,
+    "evap": 0.5,
+    "rain0": 0.006,
+    "rainOro": 0.35,
+    "oroH": 1500.0,
+    "blur": 0.3,
+    "bias": 0.17,
+    "blurLon": 0.3
+  },
+  "tempEdges": [
+    0.22,
+    0.42,
+    0.62,
+    0.8
+  ],
+  "moistEdges": [
+    0.18,
+    0.32,
+    0.48,
+    0.65
+  ],
+  "table": [
+    [
+      9,
+      9,
+      9,
+      10,
+      10
+    ],
+    [
+      1,
+      1,
+      2,
+      10,
+      10
+    ],
+    [
+      3,
+      1,
+      1,
+      2,
+      2
+    ],
+    [
+      3,
+      8,
+      8,
+      2,
+      7
+    ],
+    [
+      3,
+      3,
+      8,
+      7,
+      7
+    ]
+  ],
+  "coast": {
+    "beachH": 70.0
+  },
+  "wetland": {
+    "moistMin": 0.78,
+    "hMax": 160.0,
+    "tempMin": 0.25
+  },
+  "highland": {
+    "h": 2300.0
+  },
+  "volcanic": {
+    "scale": 6500.0,
+    "oct": 1,
+    "seed": 9437,
+    "above": 0.88,
+    "hMin": 500.0
+  },
+  "fine": [
+    {
+      "id": 0,
+      "name": "ocean",
+      "alias": 0,
+      "color": "#2f5f9e"
+    },
+    {
+      "id": 1,
+      "name": "plains",
+      "alias": 1,
+      "color": "#9bbf5a"
+    },
+    {
+      "id": 2,
+      "name": "forest",
+      "alias": 2,
+      "color": "#3f7a3a"
+    },
+    {
+      "id": 3,
+      "name": "desert",
+      "alias": 3,
+      "color": "#d9c27a"
+    },
+    {
+      "id": 4,
+      "name": "mountains",
+      "alias": 4,
+      "color": "#8b8479"
+    },
+    {
+      "id": 5,
+      "name": "ice_sheet",
+      "alias": 5,
+      "color": "#eef3f7"
+    },
+    {
+      "id": 6,
+      "name": "sea_ice",
+      "alias": 6,
+      "color": "#c9dcea"
+    },
+    {
+      "id": 7,
+      "name": "jungle",
+      "alias": 2,
+      "color": "#1f5a2c"
+    },
+    {
+      "id": 8,
+      "name": "savanna",
+      "alias": 1,
+      "color": "#c9b75a"
+    },
+    {
+      "id": 9,
+      "name": "tundra",
+      "alias": 1,
+      "color": "#b9c4b0"
+    },
+    {
+      "id": 10,
+      "name": "taiga",
+      "alias": 2,
+      "color": "#4f6f58"
+    },
+    {
+      "id": 11,
+      "name": "wetland",
+      "alias": 1,
+      "color": "#6f9a7a"
+    },
+    {
+      "id": 12,
+      "name": "beach",
+      "alias": 3,
+      "color": "#efe2b0"
+    },
+    {
+      "id": 13,
+      "name": "highland",
+      "alias": 4,
+      "color": "#9a8a6a"
+    },
+    {
+      "id": 14,
+      "name": "volcanic",
+      "alias": 4,
+      "color": "#4a3f3a"
+    }
+  ]
+}

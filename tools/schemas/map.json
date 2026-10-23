@@ -424,6 +424,10 @@
       "schema": "biomes-brunt.schema.json"
     },
     {
+      "match": "data/biomes/climate.json",
+      "schema": "biomes-climate.schema.json"
+    },
+    {
       "match": "data/biomes/planet.json",
       "schema": "biomes-planet.schema.json"
     },
