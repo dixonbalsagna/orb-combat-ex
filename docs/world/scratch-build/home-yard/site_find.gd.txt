@@ -1,0 +1,32 @@
+extends SceneTree
+# Desert towns: godot --headless --path . --script res://sim/world/tools/site_find.gd
+func around(P: WorldPlanet.Planet, p: Array, dist: float, phi: float) -> Array:
+	var f: Array = WorldRingPick._perp(p, [0.0, 1.0, 0.0] if absf(p[1]) < 0.9 else [1.0, 0.0, 0.0])
+	var g: Array = WorldPlanet._cross(p, f)
+	var a: float = dist / P.R
+	var ca: float = SimDetMath.cos(a)
+	var sa: float = SimDetMath.sin(a)
+	var cp: float = SimDetMath.cos(phi)
+	var sp: float = SimDetMath.sin(phi)
+	return [p[0] * ca + (f[0] * cp + g[0] * sp) * sa, p[1] * ca + (f[1] * cp + g[1] * sp) * sa, p[2] * ca + (f[2] * cp + g[2] * sp) * sa]
+func _init() -> void:
+	for pl in range(1, 41):
+		var P := WorldPlanet.make(pl)
+		for i in range(P.n):
+			if int(P.kind[i]) != WorldPlanet.KIND_TOWN:
+				continue
+			var p: Array = [P.px[i], P.py[i], P.pz[i]]
+			WorldPlanet.surfAt(P, p[0], p[1], p[2])
+			var here: int = P.outB
+			var desert: int = 1 if here == WorldPlanet.BIO_DESERT else 0
+			var tot: int = 1
+			for dist in [900.0, 2600.0]:
+				for k in range(8):
+					var q: Array = around(P, p, dist, float(k) * 0.785398)
+					WorldPlanet.surfAt(P, q[0], q[1], q[2])
+					tot += 1
+					if P.outB == WorldPlanet.BIO_DESERT:
+						desert += 1
+			if desert >= tot - 1:
+				print("planet %d town %d: desert %d of %d, people %d, rad %.0f" % [pl, i, desert, tot, P.people[i], P.rad[i]])
+	quit()

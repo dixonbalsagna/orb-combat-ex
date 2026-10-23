@@ -1,0 +1,65 @@
+extends SceneTree
+# How many of a planet's towns suit each home class (the strict site rules of homes-and-arenas section 5, over existing places):
+func around(P: WorldPlanet.Planet, p: Array, dist: float, phi: float) -> Array:
+	var f: Array = WorldRingPick._perp(p, [0.0, 1.0, 0.0] if absf(p[1]) < 0.9 else [1.0, 0.0, 0.0])
+	var g: Array = WorldPlanet._cross(p, f)
+	var a: float = dist / P.R
+	var ca: float = SimDetMath.cos(a)
+	var sa: float = SimDetMath.sin(a)
+	var cp: float = SimDetMath.cos(phi)
+	var sp: float = SimDetMath.sin(phi)
+	return [p[0] * ca + (f[0] * cp + g[0] * sp) * sa, p[1] * ca + (f[1] * cp + g[1] * sp) * sa, p[2] * ca + (f[2] * cp + g[2] * sp) * sa]
+func bio(P: WorldPlanet.Planet, q: Array) -> int:
+	WorldPlanet.surfAt(P, q[0], q[1], q[2])
+	return P.outB
+func _init() -> void:
+	var tot := {"rival2": 0, "prot2": 0, "rival": 0, "empress": 0, "cyborg": 0, "protagonist": 0}
+	var planetsWith := {"rival2": 0, "prot2": 0, "rival": 0, "empress": 0, "cyborg": 0, "protagonist": 0}
+	var allFour: int = 0
+	var N: int = 30
+	var towns: int = 0
+	for pl in range(1, N + 1):
+		var P := WorldPlanet.make(pl)
+		var has := {"rival2": 0, "prot2": 0, "rival": 0, "empress": 0, "cyborg": 0, "protagonist": 0}
+		for i in range(P.n):
+			if int(P.kind[i]) != WorldPlanet.KIND_TOWN:
+				continue
+			towns += 1
+			var p: Array = [P.px[i], P.py[i], P.pz[i]]
+			var here: int = bio(P, p)
+			var n9 := {}
+			var n26 := {}
+			for b in range(7):
+				n9[b] = 0
+				n26[b] = 0
+			for k in range(8):
+				n9[bio(P, around(P, p, 900.0, float(k) * 0.785398))] += 1
+				n26[bio(P, around(P, p, 2600.0, float(k) * 0.785398))] += 1
+			var land9: int = 8 - n9[0]
+			var land26: int = 8 - n26[0]
+			if here != WorldPlanet.BIO_OCEAN and n26[WorldPlanet.BIO_MOUNTAINS] >= 2:
+				has.rival2 += 1
+			if here != WorldPlanet.BIO_OCEAN and n26[0] >= 1:
+				has.prot2 += 1
+			if here == WorldPlanet.BIO_DESERT and n9[WorldPlanet.BIO_DESERT] >= 6:
+				has.cyborg += 1
+			if (here == WorldPlanet.BIO_MOUNTAINS or n9[WorldPlanet.BIO_MOUNTAINS] >= 3) and land9 >= 6:
+				has.rival += 1
+			if here != WorldPlanet.BIO_OCEAN and here != WorldPlanet.BIO_MOUNTAINS and n9[0] >= 2 and n9[0] <= 5 and land26 >= 3:
+				has.protagonist += 1
+			if here == WorldPlanet.BIO_PLAINS and n9[WorldPlanet.BIO_PLAINS] >= 7 and (n26[WorldPlanet.BIO_PLAINS] + n26[WorldPlanet.BIO_FOREST]) >= 6:
+				has.empress += 1
+		var all: bool = true
+		for k in has:
+			tot[k] += has[k]
+			if has[k] > 0:
+				planetsWith[k] += 1
+			else:
+				all = false
+		if all:
+			allFour += 1
+	print("planets 1 to %d, %d towns in all" % [N, towns])
+	for k in tot:
+		print("%s: a qualifying town on %d planets, %.1f a planet" % [k, planetsWith[k], float(tot[k]) / float(N)])
+	print("all four classes have a qualifying town (distinct towns not yet checked): %d planets" % allFour)
+	quit()

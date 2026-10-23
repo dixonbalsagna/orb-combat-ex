@@ -1,0 +1,36 @@
+extends SceneTree
+func _init() -> void:
+	var P := WorldPlanet.make(5)
+	WorldPlanetWorld.homeOf = {12: "yard"}
+	var sp: Dictionary = WorldRingPick.throughSpec(WorldRingPick.placePoint(P, 12), 1200, 0.9)
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 3, {}, {"planet": 5, "arena": WorldRingPick.arenaOf(sp), "intro": false})
+	var rows: Array = []
+	var px: float = float(WorldPlanet.touchCol()) * SimConst.COL
+	var before: int = 0
+	for b in S.buildings:
+		if b.place == 12:
+			before += 1
+	for b in S.buildings:
+		if b.place == 12 and b.alive and (b.plan * 7 + 3) % 10 < 5:
+			WorldStructures.collapse(S, b, "yard", "burst", b.x, 0.0)
+	S.out.fx.clear()
+	for t in range(240):
+		SimCore.step(S)
+	var out: Array = []
+	for b in S.buildings:
+		if b.place == 12:
+			out.append({"x": b.x - px, "w": b.w, "h": b.h, "d": b.d, "z": b.z, "row": b.row, "shape": b.shape, "kind": b.kind, "alive": b.alive, "lm": b.landmark, "pop": b.pop, "floors": b.floors})
+	var prof: Array = []
+	for i in range(-120, 121):
+		var c: int = posmod(WorldPlanet.touchCol() + i * 3, SimConst.NC)
+		prof.append([float(i * 3) * SimConst.COL, S.base[c] + S.deform[c]])
+	var pop: float = 0.0
+	for b in S.buildings:
+		if b.place == 12:
+			pop += b.pop
+	var f := FileAccess.open("res://yard_dump.json", FileAccess.WRITE)
+	f.store_string(JSON.stringify({"b": out, "prof": prof, "fx": [S.fighters[0].x - px, S.fighters[1].x - px], "pop": pop, "n": before, "down": out.filter(func(e): return not e.alive).size()}))
+	f.close()
+	print("yard buildings %d, down %d, people %.0f" % [before, out.filter(func(e): return not e.alive).size(), pop])
+	quit()
