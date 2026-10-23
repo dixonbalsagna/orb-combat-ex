@@ -39,6 +39,20 @@ x4 (CPU four times slower, frames of 30 to 50 ms) lengthens the browser stage to
 - **The render adds at most one frame** (the interpolation draws the tick it just ran; the pose appears in the same or the next frame).
 - **The browser's share is one frame's wait**: 7 ms on average at 60 Hz (half a frame), 16 to 30 ms at x4 (half a slow frame). There is no extra queue between the key and the game.
 
+## Re-run on aa927bb5 (Encounter's press-tick), early and mid-match presses
+
+Build: HEAD 7410e1ac (aa927bb5 is in it). `latency-bench.mjs --timing early|mid`: early = the key about 0.5 s after the match starts (a claim press of E first, then the action about 0.15 s later, inside the match's 0.6 s opening cooldown); mid = the action about 9 s into the match (a claim press of E 8 s before).
+
+| Press | What the sim does | First changed picture |
+|---|---|---|
+| Early light, dash, guard (RTX, Radeon, x4) | **reacts on the press tick** (the light's press shows `queue = 1`, the dash and guard change their state on tick 0): the press-tick fix works | the light's picture changes about **10 frames (170 to 210 ms) later**, when the cooldown ends, as designed; the dash and guard could not be timed by pixels (the opening scene's camera still settles, idle noise 0.9 to 1.0 against 0.04 mid-match) |
+| **Mid-match light** | the rush starts **5 ticks (83 ms) after the press, still, in every trial** (RTX 10 of 10, Radeon 10 of 10 valid) | Radeon 132 ms p50 (p95 140); x4 145 ms (p95 324) |
+| Mid-match dash | tick 0 | Radeon 37 / 56 ms; x4 105 / 221 (the x4 numbers carry cold-start frames) |
+| Mid-match guard | tick 0 | Radeon 33 / 40 ms; x4 97 / 161 |
+
+- **So the 5-tick light start is not (only) the opening cooldown**: in the mid-match runs there has been no exchange and no recent press (the throwaway claim press of E was 8 s before), and the light's rush still starts exactly 5 ticks later, at 80, 150 and 250 units and for any hold. This is the same measurement as before the fix; Encounter is looking at it. A possible cause to rule out on their side: the claim press of E (the power button) being the player's "first press" and the light the second, so a rule on the second press, or the 5-tick grid Controls' T1 test found (24 of 62 fail on main, all starting at tick 5).
+- The RTX mid-match runs were invalid by load (the ticks are exact, the milliseconds are not reported). Re-run when Encounter's 7a lands.
+
 ## Files
 
 `docs/perf/tools/latency-bench.mjs` (`--hold`, `--page-args latd=80`, `--pace60`, `--throttle`, `--igpu`, `--raw`), `scratch-hooks/hook-latency.mjs`, the `lat` variant in `make-audit-sites.mjs`. The raw runs are in my scratch folder.

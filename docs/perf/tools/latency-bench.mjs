@@ -28,6 +28,7 @@ const W = Number(opt('--width', 1280)), H = Number(opt('--height', 720));
 const SESSION = opt('--session', process.env.MERIDIAN_SESSION || 'meridian-performance-platform');
 const TIME_LIMIT = Number(opt('--time-limit', 1500));
 const HOLD = opt('--hold') === undefined ? null : Number(opt('--hold'));
+const TIMING = opt('--timing', 'mid');   // early: the press 0.65 s after the match starts (inside the opening cooldown, as before the press-tick fix); mid: 8 s into the match
 const OUT = opt('--out'), IGPU = argv.includes('--igpu'), PACE = argv.includes('--pace60'), RAW = argv.includes('--raw');
 if (!SITE) { console.error('usage: node docs/perf/tools/latency-bench.mjs --site <built site> --label <name> [--igpu] [--throttle N] [--trials N] [--out file.json]'); process.exit(2); }
 const exe = opt('--browser-path') || browserExe('chrome');
@@ -55,9 +56,13 @@ function analyse(action, d, domTimes) {
   const sig = (t) => [t[3], t[4], t[5], t[6] >= 0, t[7], t[9], t[8] !== 0].join('|');
   const base = before ? sig(before) : '';
   const react = ticks.find((t) => t[0] >= kticks && sig(t) !== base);
+  // the body: the same without the acknowledgement and the queue (a press that only shows its mark)
+  const bsig = (t) => [t[3], t[4], t[6] >= 0, t[7], t[8] !== 0].join('|');
+  const bbase = before ? bsig(before) : '';
+  const bodyT = ticks.find((t) => t[0] >= kticks && bsig(t) !== bbase);
   const out = { dom_to_handler_ms: dom ? +(kt - dom[0]).toFixed(2) : null, handler_frame: kf, handler_tick: kticks };
   if (!react) { out.error = 'the sim never changed player one\'s action state'; out.base = base; return out; }
-  out.sim_react_tick = react[0]; out.sim_ticks = react[0] - kticks; out.react_state = sig(react); out.base_state = base;
+  out.sim_react_tick = react[0]; out.sim_ticks = react[0] - kticks; out.body_ticks = bodyT ? bodyT[0] - kticks : null; out.ack = react[9] || ''; out.react_state = sig(react); out.base_state = base;
   // the first frame that ran the reacting tick
   const simFrame = frames.find((f) => f[2] >= react[0] + 1);
   out.sim_frame = simFrame ? simFrame[0] : null;
@@ -82,7 +87,7 @@ function analyse(action, d, domTimes) {
 const server = await serve(SITE);
 const url = `http://127.0.0.1:${server.address().port}/play/index.html?flashcap=1${PACE ? '&lat60=1' : ''}${opt('--page-args') ? '&' + opt('--page-args') : ''}`;
 let b, page;
-const result = { label: LABEL, igpu: IGPU, throttle: THROTTLE, pace60: PACE, trials: TRIALS, viewport: `${W}x${H}`, session: SESSION, node: process.version, actions: {} };
+const result = { timing: TIMING, label: LABEL, igpu: IGPU, throttle: THROTTLE, pace60: PACE, trials: TRIALS, viewport: `${W}x${H}`, session: SESSION, node: process.version, actions: {} };
 try {
   const before = await sample(3000);
   result.loadBefore = { all: +mean(before).toFixed(0), cap: +mean(capCores(before)).toFixed(0) };
@@ -108,12 +113,12 @@ try {
     const rows = [];
     for (let i = 0; i < TRIALS && Date.now() < b.deadlineMs - 20000; i++) {
       await page.eval(`window.__flashcap.start('lat', { reduced: true })`);
-      await sleep(1500);
+      await sleep(TIMING === 'early' ? 300 : 1500);
       await key({ code: 'KeyE', key: 'e', vk: 69 }, true); await sleep(60); await key({ code: 'KeyE', key: 'e', vk: 69 }, false);   // the throwaway press: claims player one
-      await sleep(900);
+      await sleep(TIMING === 'early' ? 120 : 8000);
       await dump();
       await page.eval('window.__dom = []');
-      await sleep(rnd(300, 700));
+      await sleep(TIMING === 'early' ? rnd(0, 17) : rnd(300, 700));
       const K = { ...KEYS[action], ...(HOLD === null ? {} : { hold: HOLD }) };
       await key(K, true); await sleep(K.hold); await key(K, false);
       await sleep(700);
@@ -128,7 +133,7 @@ try {
     result.actions[action] = {
       trials: rows.length, ok: ok.length, errors: rows.filter((r) => r.error).map((r) => r.error),
       browser_ms: dist(ok.map((r) => r.dom_to_handler_ms).filter((x) => x !== null)),
-      sim_ticks: dist(ok.map((r) => r.sim_ticks)), draw_frames: dist(ok.filter((r) => r.draw_frames !== null).map((r) => r.draw_frames)),
+      sim_ticks: dist(ok.map((r) => r.sim_ticks)), body_ticks: dist(ok.filter((r) => r.body_ticks !== null).map((r) => r.body_ticks)), draw_frames: dist(ok.filter((r) => r.draw_frames !== null).map((r) => r.draw_frames)),
       total_frames: dist(ok.map((r) => r.total_frames)), total_ms: dist(ok.map((r) => r.total_ms).filter((x) => x !== null)),
       over_3_frames: ok.filter((r) => r.total_frames > 3).length,
       rows,

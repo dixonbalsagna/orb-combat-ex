@@ -19,6 +19,9 @@
 //   lat        base + the input-latency scene (hook-latency.mjs; docs/perf/tools/latency-bench.mjs reads it)
 //   strip      base + page flag sx= that switches off one piece of the strip at a time (hook-strip.mjs)
 //   ring       base + main's own ring read (WorldPlanet.readSlice) behind window.__slicebench (k1200, k2400, k4800), for the old-laptop cost of World's ring read
+//   p22f       base + Rendering's parked 22f (the ground by band)
+//   p22h       base + Rendering's parked 22h (the scorch and the heat on their own small texture)
+//   textwarm   base + UI's parked HUD text warm-up (docs/ui/pending/text-warm)
 //   evprof     evlog + the profiling timers (the CPU time of each section at a hitching tick)
 //   aura       base + VFX's parked 3D aura (apply.patch, grant-fighter-view.patch) and a page flag aura=1 (auradem=1: both shells at full level)
 //   lowprof    depthprof + a page flag lowq=1 (VFX quality low, automatic step off): the reduced-effects mode
@@ -58,6 +61,9 @@ const SPEC = {
   lat: { patches: [], hooks: ['perf', 'slice', 'latency'] },
   strip: { patches: [], hooks: ['perf', 'slice', 'strip'] },
   ring: { patches: [], hooks: ['perf', 'slice', 'ring'] },
+  p22f: { patches: ['docs/rendering/pending/2026-10-22f/batch.diff'], hooks: ['perf', 'slice'] },
+  p22h: { patches: ['docs/rendering/pending/2026-10-22h/batch.diff'], hooks: ['perf', 'slice'] },
+  textwarm: { patches: ['docs/ui/pending/text-warm/text-warm.patch'], hooks: ['perf', 'slice'] },
   evlog: { patches: [], hooks: ['perf', 'slice', 'evlog'] },
   evprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'evlog'] },
   aura: { patches: ['docs/vfx/pending/aura3d/apply.patch', 'docs/vfx/pending/aura3d/grant-fighter-view.patch'], hooks: ['perf', 'slice', 'aura'] },

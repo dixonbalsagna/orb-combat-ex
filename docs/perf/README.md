@@ -10,6 +10,7 @@ Owner: Performance and Platform (`docs/directors/performance-platform.md`).
 | [input-latency-2026-10-22.md](input-latency-2026-10-22.md) | Press to first changed picture for a light, a dash and a guard on the web build (RTX, integrated GPU, CPU x4): the light starts 5 ticks late in the sim; the rest is inside budget |
 | [frame-pacing-2026-10-22.md](frame-pacing-2026-10-22.md) | A 2-minute AI match and a 2-player brawl: the distribution, the worst 1%, the swing between frames, repeating spikes (none), and why the integrated GPU has slow stretches (the terrain grows with craters) |
 | [batch-e09dbbbf-2026-10-22.md](batch-e09dbbbf-2026-10-22.md) | The hitch repro and the ring read (k32 at x4) re-run on e09dbbbf |
+| [ground-by-band-and-heat-2026-10-23.md](ground-by-band-and-heat-2026-10-23.md) | 22f (the ground by band) and 22h (scorch and heat texture) before and after on main: big gain on weak GPUs, neutral to better at CPU x4 |
 | [stores-and-consoles.md](stores-and-consoles.md) | Where the game can be listed, consoles included, with requirements, cost, order, and what PlayStation friends can do today |
 | [phone-web-fullscreen.md](phone-web-fullscreen.md) | Full screen, Home Screen install and landscape on phones in the web build; a checklist for a real phone |
 | `web-shell/` | The web page's phone block (`ocx-shell.js`, the manifest, placeholder icons, the site-builder patch) |
