@@ -114,7 +114,7 @@ So "X then B" thrown at a fighter who answers is punished. A string worked up to
 
 ## 8. The AI
 
-- **When it launches:** after an opening, 0.15, 0.35 and 0.6 of the time by level (the data's 0.25 at medium is corrected to the paper's 0.35). In a string at a hard-to-answer moment, 0.08, 0.18 and 0.28 of the time (raised 2026-10-17 from 0.05, 0.12 and 0.2). It prefers fresh kinds.
+- **When it launches:** after an opening, 0.15, 0.35 and 0.6 of the time by level (the data's 0.25 at medium is corrected to the paper's 0.35). In a string at a hard-to-answer moment, 0.05, 0.12 and 0.2 of the time (raised to 0.08, 0.18 and 0.28 on 2026-10-17, back on 2026-10-23: `rulings-2026-10-23.md` §7a, as matches ran 571 s). It prefers fresh kinds.
 - **How it answers a launcher that isn't sure:** as a player must, by reading the 14-tick wind-up. Its answer starts no sooner than its reaction time after the wind-up begins, so it is a perfect block it was already guessing (the twelfth round's rule for charges), giving ground, or a medium it was already winding. Its lights don't stop it. Shares: 0.1, 0.25 and 0.4.
 - **Hard test:** it never answers within its reaction time.
 
