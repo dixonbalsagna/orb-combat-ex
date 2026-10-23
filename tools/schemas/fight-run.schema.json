@@ -6,7 +6,8 @@
   "type": "object",
   "required": [
     "schema",
-    "ground"
+    "ground",
+    "carry"
   ],
   "properties": {
     "schema": {
@@ -83,6 +84,82 @@
             "whole"
           ],
           "description": "a Proving ground's ring"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "carry": {
+      "type": "object",
+      "required": [
+        "damagedShare",
+        "fallenShare",
+        "livesStart",
+        "livesMax",
+        "fillsKeep",
+        "dreadDivisor"
+      ],
+      "properties": {
+        "damagedShare": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "thousandths: a place that has lost this share of its buildings or people is damaged"
+        },
+        "fallenShare": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "thousandths: under this share of a place's buildings standing or people present, it has fallen"
+        },
+        "livesStart": {
+          "type": "object",
+          "required": [
+            "story",
+            "standard",
+            "hard"
+          ],
+          "properties": {
+            "story": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9
+            },
+            "standard": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9
+            },
+            "hard": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "livesMax": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9,
+          "description": "at most this many lives held"
+        },
+        "fillsKeep": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000,
+          "description": "thousandths of the hero's fills carried to the next fight"
+        },
+        "dreadDivisor": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "thousandths: Dread is the villains' kills' share of the planet's people over this, at most 1"
         }
       },
       "additionalProperties": false,

@@ -20,5 +20,23 @@
     "_phases": "the claim's size phase by chapter before the boss (run-mode.md 2: early is stages 1 and 2, then mid); a chapter past the list takes its last. The first stage is always Close round the player's home, and the boss Whole",
     "provingSize": "close",
     "_provingSize": "a Proving ground's ring (run-mode.md 1.2: a Proving ground is Close)"
+  },
+  "carry": {
+    "damagedShare": 50,
+    "_damagedShare": "thousandths: a place that has lost this share of its buildings (down) or of its people (dead, or gone for good) is damaged (run-mode.md 1.3: 5%)",
+    "fallenShare": 400,
+    "_fallenShare": "thousandths: a place with under this share of its buildings standing, or of its people present, at a stage's end has fallen, and those who fled it are gone for good (run-mode.md 1.3: 40%). A place never goes back to fresh, nor up from fallen",
+    "livesStart": {
+      "story": 2,
+      "standard": 1,
+      "hard": 0
+    },
+    "_livesStart": "a run's lives by mode (run-mode.md 4.1)",
+    "livesMax": 3,
+    "_livesMax": "at most this many lives held: a clean win (no region broken at the fight's end) or a lifeline gives one (run-mode.md 4.1)",
+    "fillsKeep": 500,
+    "_fillsKeep": "thousandths of the hero's two fills carried to the next fight (run-mode.md 1.3: at half)",
+    "dreadDivisor": 400,
+    "_dreadDivisor": "thousandths: Dread is the share of the planet's people the villains have killed in the run over this, at most 1 (run-mode.md 5.2: 0.4)"
   }
 }

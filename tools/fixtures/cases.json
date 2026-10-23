@@ -296324,6 +296324,54 @@
       }
     },
     {
+      "id": "fight-run-required-carry",
+      "schema": "fight-run.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/run.json",
+          "del": [
+            "/carry"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-run-carry-fallen-share-zero",
+      "schema": "fight-run.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/run.json",
+          "set": {
+            "/carry/fallenShare": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/carry/fallenShare"
+      }
+    },
+    {
+      "id": "fight-run-carry-lives-mode-missing",
+      "schema": "fight-run.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/run.json",
+          "del": [
+            "/carry/livesStart/hard"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/carry/livesStart"
+      }
+    },
+    {
       "id": "fight-ricochet-valid",
       "schema": "fight-ricochet.schema.json",
       "mutate": [

@@ -52,6 +52,8 @@ The four causes the EP listed, as the code stands:
 
 **For CI (Tools'):** the Ubuntu runners already have Godot 4.7.2 with its web templates (`.github/actions/setup-godot`) and headless Chrome (the pixel pipeline's self-test uses it). A job that runs `node sim/core/tools/web_parity.mjs --godot "$GODOT"` on changes to `sim/`, `data/` or the engine pin would hold the line.
 
+**In CI since d435ca1d** (`.github/workflows/web-parity.yml`, Tools'): the first run on main passed (run 39967610998). In CI the tool folders are re-included in the copy's export filter, and the browser uses software GL.
+
 ## Traps met
 
 - **Key order.** `JSON.stringify` in Godot sorts keys by default, and `golden.json` is written unsorted, so compare parsed values, not text.

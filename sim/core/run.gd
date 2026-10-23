@@ -1,6 +1,7 @@
 class_name SimRun
 extends RefCounted
-## The run (docs/architecture/run-core.md). Built so far: the run's keyed hash H (section 4) and each stage's ground
+## The run (docs/architecture/run-core.md). Built so far: the run's keyed hash H (section 4), the run state and its
+## carry (section 12: newRun, stateHash, carry, the chain, groundOpts), and each stage's ground
 ## (section 11): the ring of the planet the next stage is fought on, picked by World's ring picker (WorldRingPick,
 ## sim/world/ringpick.gd) from Narrative's claims (data/narrative/opponent_grounds.json), a candidate every few frames
 ## of the previous stage's beats. Behind data/fight/run.json's ground.enabled (off): the story mode's host asks for
@@ -30,6 +31,9 @@ const FILE: String = "res://data/fight/run.json"
 const CLAIMS: String = "res://data/narrative/opponent_grounds.json"
 const MASK: int = 0xFFFFFFFF
 const SIZES: Array = ["close", "half", "whole"]
+const MODES: Array = ["story", "standard", "hard"]
+const CAUSES: Array = ["player", "opponent", "other"]
+const STATE_FORMAT: String = "meridian-run-state"
 
 static var _d = null
 static var _errors: Array = []
@@ -40,6 +44,12 @@ static var framesPerRead: Dictionary = {"close": 1, "half": 1, "whole": 3}
 static var stages: int = 3
 static var phases: Array = ["early", "early", "mid"]
 static var provingSize: String = "close"
+static var damagedShare: int = 50       # thousandths: a place lost this share of its buildings or people is damaged
+static var fallenShare: int = 400       # thousandths: under this share of its buildings standing or people present, fallen
+static var livesStart: Dictionary = {"story": 2, "standard": 1, "hard": 0}
+static var livesMax: int = 3
+static var fillsKeep: int = 500         # thousandths of a fill carried to the next fight
+static var dreadDivisor: int = 400      # thousandths: Dread is the villains' kills' share of the planet's people over this
 
 
 static func _ensure() -> void:
@@ -80,6 +90,19 @@ static func _ensure() -> void:
 	if not SIZES.has(provingSize):
 		_err("fight/run.json: ground.provingSize is close, half or whole")
 		provingSize = "close"
+	var cy = j.get("carry", {})
+	if not (cy is Dictionary):
+		_err("fight/run.json: carry must be an object")
+		cy = {}
+	damagedShare = _int("carry.damagedShare", cy.get("damagedShare"), 1, 1000)
+	fallenShare = _int("carry.fallenShare", cy.get("fallenShare"), 1, 1000)
+	livesMax = _int("carry.livesMax", cy.get("livesMax"), 0, 9)
+	var ls = cy.get("livesStart", {})
+	livesStart = {}
+	for m in MODES:
+		livesStart[m] = _int("carry.livesStart." + m, ls.get(m) if ls is Dictionary else null, 0, livesMax)
+	fillsKeep = _int("carry.fillsKeep", cy.get("fillsKeep"), 0, 1000)
+	dreadDivisor = _int("carry.dreadDivisor", cy.get("dreadDivisor"), 1, 1000)
 	_claims = {}
 	_order = []
 	var c = JSON.parse_string(FileAccess.get_file_as_string(CLAIMS)) if FileAccess.file_exists(CLAIMS) else null
@@ -303,6 +326,197 @@ class GroundJob extends RefCounted:
 	## The stage's match seed.
 	func matchSeed() -> int:
 		return SimRun.stageSeed(run, chapter, choice)
+
+
+# ===================================================================== the run state (run-core.md section 12)
+
+## A new run's state (run-core.md section 12; Game Design's run-mode.md 7): whole numbers and short strings only, so it
+## is exact in JSON and hashes the same on any machine. people: the planet's people at the run's start (World's
+## census), the measure of Dread. assist: {"endless": true} for the Endless retries assist (lives are never spent).
+static func newRun(run: String, mode: String, fighter: String, people: int, assist: Dictionary = {}) -> Dictionary:
+	_ensure()
+	return {"format": STATE_FORMAT, "v": 1, "run": run, "mode": mode, "endless": assist.get("endless", false) == true,
+		"chapter": 1, "planet": {"seed": planetSeed(run), "people": people}, "places": {},
+		"player": {"fighter": fighter, "ceiling": 0, "boons": [], "fills": {"witness": 0, "trial": 0}, "branches": [], "wounds": [0, 0, 0, 0],
+			"lives": int(livesStart.get(mode, 0)), "livesSpent": 0},
+		"villainKills": 0, "dread": 0, "sky": 0, "ledger": [], "over": ""}
+
+
+## The run state's hash: the core's canonical walk (dictionaries by sorted key, every value tagged, a whole float the
+## same number as its int), so a state that has been through JSON hashes as it did.
+static func stateHash(state: Dictionary) -> String:
+	var h := SimHash.Hasher.new()
+	h.text(STATE_FORMAT)
+	FighterData._canon(h, state)
+	return h.hex()
+
+
+## Why a stage header's run state is refused (run-core.md section 3), or "" when it is a run state.
+static func checkState(state) -> String:
+	if not (state is Dictionary) or state.get("format") != STATE_FORMAT or int(state.get("v", 0)) != 1:
+		return "not a %s v1" % STATE_FORMAT
+	if not (state.get("run") is String) or String(state.run).length() != 16 or not String(state.run).is_valid_hex_number(false):
+		return "the run seed is 16 hex digits"
+	if not MODES.has(state.get("mode")):
+		return "the mode is story, standard or hard"
+	if not (state.get("chapter") is int or state.get("chapter") is float) or int(state.chapter) < 1:
+		return "the chapter is a whole number from 1"
+	for k in ["planet", "places", "player"]:
+		if not (state.get(k) is Dictionary):
+			return "%s is an object" % k
+	if not (state.get("ledger") is Array):
+		return "the ledger is a list"
+	return ""
+
+
+## The next run state from a stage's end (run-mode.md 1.3, 1.4, 4.1, 5.2): a pure function, the input left as it was.
+## `end` (run-core.md section 12), as the host hands it:
+##   result "won" or "lost"; opponent (roster id), villain (his kills count toward Dread), offer (rampage, proving,
+##   crossing, first, boss), ticks, how, finisher; arena (the ring fought: setup.arena, so the run never fights it again);
+##   the player at the fight's end: wounds (a stage a region, 0 fresh to 3 broken), fills {witness, trial} (thousandths of
+##   each meter), branches; ash (thousandths); places {"<id>": {buildings (in the place), people (at the run's start),
+##   down (buildings down in all, at the end), dead {player, opponent, other} (this fight's), fled (this fight's), wear
+##   (World's list for the place, whole, as the slice ends it)}}; boon {kind (form, ability, lifeline, rest, or a rare
+##   boon's id), id} taken after a won fight, or none.
+static func carry(state: Dictionary, end: Dictionary) -> Dictionary:
+	_ensure()
+	var s: Dictionary = state.duplicate(true)
+	if s.over != "":
+		return s
+	var pl: Dictionary = s.player
+	if end.get("result") != "won":
+		# a lost fight is retried from its start, the run state as it began (run-mode.md 4.1): a life is spent
+		if s.endless:
+			pl.livesSpent = int(pl.livesSpent) + 1
+		elif int(pl.lives) > 0:
+			pl.lives = int(pl.lives) - 1
+			pl.livesSpent = int(pl.livesSpent) + 1
+		else:
+			s.over = "lost"
+			s.ledger.append(_record(s, end))
+		return s
+	# the places: the dead stay dead, those who fled a standing place come home, those who fled a fallen one are gone
+	var ps: Dictionary = end.get("places", {})
+	var keys: Array = ps.keys()
+	keys.sort_custom(func(a, b): return int(a) < int(b))   # place ids in number order
+	var fell: Array = []
+	for k in keys:
+		var e: Dictionary = ps[k]
+		var id: String = str(int(k)) if (k is int or k is float) else String(k)
+		var p: Dictionary = s.places.get(id, {"buildings": 0, "people": 0, "down": 0, "dead": {"player": 0, "opponent": 0, "other": 0}, "gone": 0, "status": "fresh", "changed": 0, "wear": []})
+		p.buildings = maxi(int(p.buildings), int(e.get("buildings", 0)))
+		p.people = maxi(int(p.people), int(e.get("people", 0)))
+		p.down = maxi(int(p.down), int(e.get("down", 0)))
+		var dead: Dictionary = e.get("dead", {})
+		for c in CAUSES:
+			p.dead[c] = int(p.dead[c]) + int(dead.get(c, 0))
+		if e.has("wear"):
+			p.wear = e.wear.duplicate(true)
+		var fled: int = int(e.get("fled", 0))
+		var deadAll: int = int(p.dead.player) + int(p.dead.opponent) + int(p.dead.other)
+		var present: int = int(p.people) - deadAll - int(p.gone) - fled
+		var st: String = "fresh"
+		if (int(p.buildings) > 0 and (int(p.buildings) - int(p.down)) * 1000 < fallenShare * int(p.buildings)) or (int(p.people) > 0 and present * 1000 < fallenShare * int(p.people)):
+			st = "fallen"
+		elif (int(p.buildings) > 0 and int(p.down) * 1000 >= damagedShare * int(p.buildings)) or (int(p.people) > 0 and (deadAll + int(p.gone)) * 1000 >= damagedShare * int(p.people)):
+			st = "damaged"
+		if st == "fallen" or p.status == "fallen":
+			p.gone = int(p.gone) + fled   # fled a fallen place: gone for good
+		if ["fresh", "damaged", "fallen"].find(st) > ["fresh", "damaged", "fallen"].find(p.status):
+			if st == "fallen":
+				fell.append(int(id))
+			p.status = st
+			p.changed = int(s.chapter)
+		s.places[id] = p
+		if end.get("villain", false) == true:
+			s.villainKills = int(s.villainKills) + int(dead.get("opponent", 0))
+	# the player (run-mode.md 1.3): every region heals one stage, a rest heals all; his fills at half; his branches
+	var w: Array = end.get("wounds", [0, 0, 0, 0])
+	var broken: bool = false
+	var wn: Array = []
+	for r in range(4):
+		var x: int = int(w[r]) if r < w.size() else 0
+		broken = broken or x >= 3
+		wn.append(maxi(0, x - 1))
+	var boon = end.get("boon", null)
+	var kind: String = String(boon.get("kind", "")) if boon is Dictionary else ""
+	if end.get("offer") == "crossing" or kind == "rest":
+		wn = [0, 0, 0, 0]
+	pl.wounds = wn
+	var fl: Dictionary = end.get("fills", {})
+	pl.fills = {"witness": int(fl.get("witness", 0)) * fillsKeep / 1000, "trial": int(fl.get("trial", 0)) * fillsKeep / 1000}
+	pl.branches = Array(end.get("branches", [])).duplicate(true)
+	# lives (run-mode.md 4.1): a clean win and a lifeline each give one, three at most; the boons (1.4)
+	if not broken:
+		pl.lives = mini(livesMax, int(pl.lives) + 1)
+	if kind == "lifeline":
+		pl.lives = mini(livesMax, int(pl.lives) + 1)
+	elif kind == "form":
+		pl.ceiling = int(pl.ceiling) + 1
+	elif kind != "" and kind != "rest":
+		pl.boons.append(String(boon.get("id", kind)))
+	# Dread (run-mode.md 5.2): the villains' kills' share of the planet's people, over dreadDivisor, at most 1
+	var people: int = int(s.planet.people)
+	s.dread = mini(1000, int(s.villainKills) * 1000000 / (people * dreadDivisor)) if people > 0 else 0
+	s.sky = int(end.get("ash", s.sky))
+	var rec: Dictionary = _record(s, end)
+	rec["fell"] = fell
+	s.ledger.append(rec)
+	s.chapter = int(s.chapter) + 1
+	return s
+
+
+## A stage's line in the ledger: facts, whole numbers and ids (the beat picker reads its bands from them).
+static func _record(s: Dictionary, end: Dictionary) -> Dictionary:
+	var dead := {"player": 0, "opponent": 0, "other": 0}
+	var ps: Dictionary = end.get("places", {})
+	for k in ps:
+		var d: Dictionary = ps[k].get("dead", {})
+		for c in CAUSES:
+			dead[c] = int(dead[c]) + int(d.get(c, 0))
+	var rec: Dictionary = {"chapter": int(s.chapter), "offer": String(end.get("offer", "")), "opponent": String(end.get("opponent", "")), "result": String(end.get("result", "")),
+		"how": String(end.get("how", "")), "finisher": String(end.get("finisher", "")), "ticks": int(end.get("ticks", 0)), "dead": dead}
+	if end.get("arena") is Dictionary:
+		rec["arena"] = end.arena.duplicate(true)
+	return rec
+
+
+## The chain through the stage headers (run-core.md section 4): link(0) = H(run, "run"); a stage's next link hashes
+## its link, the hash of the run state it started from, its final gameplay hash and the hash of the state it ended in.
+## The link travels in the header's run block, not in the state (a state can't hold its own hash).
+static func link0(run: String) -> String:
+	return "%08x" % H(run, "run", 0, 0)
+
+
+static func nextLink(link: String, startHash: String, finalHash: String, endHash: String) -> String:
+	var h := SimHash.Hasher.new()
+	h.text("link")
+	for x in [link, startHash, finalHash, endHash]:
+		h.text(x)
+	return h.hex()
+
+
+## beginGround's inputs from the run's history: standing (a byte a place of P, 0 for a fallen one), damaged (the place
+## ids no longer fresh, in order) and used (the ring of every fight won: a run never fights one twice).
+static func groundOpts(state: Dictionary, P: WorldPlanet.Planet) -> Dictionary:
+	var standing := PackedByteArray()
+	standing.resize(P.n)
+	standing.fill(1)
+	var damaged: Array = []
+	for k in state.places:
+		var i: int = int(k)
+		if i < 0 or i >= P.n:
+			continue
+		if state.places[k].status == "fallen":
+			standing[i] = 0
+		if state.places[k].status != "fresh":
+			damaged.append(i)
+	damaged.sort()
+	var used: Array = []
+	for rec in state.ledger:
+		if rec.get("result") == "won" and rec.get("arena") is Dictionary:
+			used.append(rec.arena)
+	return {"standing": standing, "damaged": damaged, "used": used}
 
 
 ## Game Design's waiver (rulings-2026-10-23.md 4): the boss's ring stands under Whole's minimum while it holds his

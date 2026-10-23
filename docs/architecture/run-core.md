@@ -1,6 +1,6 @@
 # The run: its state, the carry, the stage header and tier 5 (the core's side, paper)
 
-Owner: Simulation and Engine. 2026-10-16. The core's answer to Game Design's `docs/design/run-mode.md` (7022b7df, with Legal's RL-145 and section 10's answers, 0dfe3f91), section 7 and the sim questions in sections 1.3, 2, 3.1 and 10. It builds on `planet-slice-core.md` (the world as a function of the setup, the wear list in a place's frame). **Paper, except section 11 (each stage's ground), applied in 07876704.** Every number below is Game Design's or World's; the core adds none.
+Owner: Simulation and Engine. 2026-10-16. The core's answer to Game Design's `docs/design/run-mode.md` (7022b7df, with Legal's RL-145 and section 10's answers, 0dfe3f91), section 7 and the sim questions in sections 1.3, 2, 3.1 and 10. It builds on `planet-slice-core.md` (the world as a function of the setup, the wear list in a place's frame). **Paper, except section 11 (each stage's ground, applied in 07876704) and section 12 (the run state and its carry, parked at `pending/run-state/`).** Every number below is Game Design's or World's; the core adds none.
 
 ## 1. The answers in short
 
@@ -14,6 +14,8 @@ Owner: Simulation and Engine. 2026-10-16. The core's answer to Game Design's `do
 
 ## 2. The run state
 
+**Superseded in part by section 12** (built, parked at `pending/run-state/`): Game Design reshaped the run on 2026-10-16. Every fight starts from base with a ceiling, there are lives and retries in place of chances, and Dread is the villains' kills alone. The rows below marked (old) are kept for the record.
+
 **What it is.** Everything that passes from one stage to the next (`run-mode.md` section 7), as one JSON document of **whole numbers and short strings only**: exact in JSON, hashed by the core's canonical hasher (`FighterData._canon`, the one the fighters' data already use), the same in any language. A share is kept in thousandths, a fill in thousandths of its meter. The sim never reads it: the host builds each stage's setup from it (section 3).
 
 | Part | Fields |
@@ -21,8 +23,8 @@ Owner: Simulation and Engine. 2026-10-16. The core's answer to Game Design's `do
 | The run | `format` "meridian-run-state", `v` 1; `run` (the run seed, 64 bits as 16 hex digits: a JSON number is exact only below 2^53); `mode` (story, standard, hard), `pressure`, `assist`; `chapter` (the next stage's) |
 | The planet | `planet` (its seed, `H(run, "planet")`, and the hash of its places list) |
 | Each place (by the places list's id) | `status` (fresh, damaged, fallen); `wear` (the place-frame records of `planet-slice-core.md` section 5); `dead` (by cause: player, opponent, other); `fled`; `lost` (buildings brought down, by cause); `changed` (the chapter that last changed it) |
-| The player's carry | `fighter`; `tier`; `fills` (Witness and Trial); `branches` (the branch of each form taken, in order); `wounds` (a stage a region, 0 to 3); `cards` |
-| The run's counters | `dread` (thousandths); `chances`; `sky` (the ash, thousandths); the score's parts |
+| The player's carry (old) | `fighter`; `tier`; `fills` (Witness and Trial); `branches` (the branch of each form taken, in order); `wounds` (a stage a region, 0 to 3); `cards` |
+| The run's counters (old) | `dread` (thousandths); `chances`; `sky` (the ash, thousandths); the score's parts |
 | The ledger's stages | One record a stage: the offer's kind, the opponent, the result, how it ended, the finisher, its length in ticks |
 | The chain | `link` (section 4) |
 
@@ -36,9 +38,9 @@ Owner: Simulation and Engine. 2026-10-16. The core's answer to Game Design's `do
 | Places | The wear the match left on each place is turned into place-frame records and merged into the place's list (`planet-slice-core.md` section 5, with its cap). The dead are added by cause. Those who fled a standing place come home; those who fled a fallen place are gone. The status is worked out again (damaged at 5% of buildings or people lost, fallen under 40% standing or present) |
 | Open country | A crater outside every place is kept as a point on the sphere (section 10.2), in whole numbers: its unit vector times 2^30, rounded (about 0.00002 units at the planet's radius), with its radius, depth and rim. A later slice lays it on the columns whose point is within its reach (a dot product against `SimDetMath.cos(reach / R)`) |
 | People | The people present at the next stage's start: the slice's people at the run's start, less the dead, less those who fled a fallen place (section 10.2) |
-| The player | Tier: one step a stage, to the stage's ceiling (section 1.3). Wounds: broken stays broken (a rest heals it to battered), every other region heals one stage. Fills and branches as the form rules leave them. Power, ki, the hero's cost meter, the mood, the cooldowns and the timers are not carried: they reset at the start |
-| A lost stage | A chance is spent. The place falls: its people flee for good. Dread + 100 thousandths. No chance left: the run ends |
-| Dread | The villains' kills over the planet's people, over 0.4, plus 0.1 a place taken, at most 1: worked out again from the ledger each time, never accumulated as a float |
+| The player (old) | Tier: one step a stage, to the stage's ceiling (section 1.3). Wounds: broken stays broken (a rest heals it to battered), every other region heals one stage. Fills and branches as the form rules leave them. Power, ki, the hero's cost meter, the mood, the cooldowns and the timers are not carried: they reset at the start |
+| A lost stage (old) | A chance is spent. The place falls: its people flee for good. Dread + 100 thousandths. No chance left: the run ends |
+| Dread (old) | The villains' kills over the planet's people, over 0.4, plus 0.1 a place taken, at most 1: worked out again from the ledger each time, never accumulated as a float |
 | The sky | The match's ash at its end |
 
 ## 3. The stage header
@@ -228,3 +230,53 @@ A run seed is 16 hex digits. The check pins three of its answers, so a port can 
 **The first samples' two findings are ruled:**
 - **Same ring twice.** In one sample the Cyborg's wreckage-seeking claim took the ring the stage before was fought on. The EP ruled that a run never fights the same ring twice; World's `opts.used` and the used list above answer it.
 - **The boss's Whole circle can hold fewer places than Whole's minimum.** Game Design waived the minimum for it (section 11's table).
+
+## 12. The run state and its carry, as built (parked at `pending/run-state/`, 2026-10-23)
+
+The core's half of piece 3, to Game Design's reshaped run (`run-mode.md` 1.3, 1.4, 4.1, 5.2 and 7). It lives in `SimRun` (`sim/core/run.gd`), and the carry's numbers are in `data/fight/run.json` (`carry`). Nothing in a match reads it, so no golden moves.
+
+**The state** (`SimRun.newRun(run, mode, fighter, people, assist)`) holds whole numbers and short strings only. It is exact in JSON, and `stateHash` (the core's canonical walk, which reads a whole float as its int) hashes it the same after a JSON round trip.
+
+| Part | Fields |
+| :--- | :--- |
+| The run | `format` "meridian-run-state", `v` 1, `run` (16 hex digits), `mode` (story, standard, hard), `endless` (the Endless retries assist), `chapter` (the next fight's), `over` ("" or "lost") |
+| The planet | `seed` (H(run, "planet")), `people` (the planet's people at the start: World's census, Dread's measure) |
+| Each place, by its id as a string | `buildings`, `people`, `down`, `dead` {player, opponent, other}, `gone` (fled from a fallen place, for good), `status` (fresh, damaged, fallen), `changed` (the chapter), `wear` (World's list, kept as the stage hands it) |
+| The player | `fighter`, `ceiling` (forms unlocked above base), `boons` (ids), `fills` {witness, trial} (thousandths of each meter), `branches`, `wounds` (a stage a region: head, core, arms, legs), `lives`, `livesSpent` |
+| The run's counters | `villainKills`, `dread` (thousandths), `sky` (the ash, thousandths), and `ledger`: one record a fight won, and the run's last loss (chapter, offer, opponent, result, how, finisher, ticks, dead by cause, the places that fell, and the arena fought) |
+
+**The carry** (`SimRun.carry(state, end)`) is a pure function of the state and the stage's end, which the host hands in (`end`: below).
+
+| A fight that is | The carry |
+| :--- | :--- |
+| **Won** | Each place's dead are added by cause and its wear is kept. Its status is worked out with whole-number arithmetic: damaged at `damagedShare` (5%) of its buildings down or people lost; fallen under `fallenShare` (40%) of its buildings standing or people present, and then its fled are gone for good. A status never goes back. The wounds heal a stage (a Crossing or a rest: all fresh), the fills carry at `fillsKeep` (half), and the branches are kept. A clean win (no region broken) and a lifeline each give a life, `livesMax` (3) at most. A form raises the ceiling; any other boon is kept by its id. Dread is the villains' kills over the planet's people, over `dreadDivisor` (0.4), at most 1000. The sky is the stage's ash, the ledger gains the fight, and the chapter steps |
+| **Lost** | A life is spent and the state is otherwise the one the fight began with, since it is retried from its start (`run-mode.md` 4.1). With no life left the run is over. Endless spends none |
+
+**The stage's end** (`end`):
+- result, opponent, `villain` (his kills count toward Dread), offer, ticks, how, finisher;
+- `arena` (the ring fought);
+- the player at the end: wounds, fills in thousandths, branches;
+- ash;
+- `places` {id: buildings, people, down, dead by cause, fled, wear};
+- the boon taken.
+
+**Turning a match's final state into it is the open half.** Each place's buildings, people, deaths by cause and wear are World's, and need a building's place id (World's window 3). The tally's counters come at the core's choke points (section 5). Until then the caller builds `end`.
+
+**The chain:** `link0(run)` and `nextLink(link, start state hash, final gameplay hash, end state hash)`. The link travels in the stage header's run block (section 3), not in the state, which can't hold its own hash.
+
+**To the ground:** `groundOpts(state, P)` gives beginGround's `standing` (fallen places 0), `damaged` (every place no longer fresh, in order) and `used` (the ring of every fight won).
+
+**The check** ("the run's state and carry") runs a scripted run through every rule:
+- the three statuses at their exact lines (5% down; 30% standing fallen; 40% standing not fallen);
+- the wounds, fills, lives (capped), ceiling and Dread (capped);
+- a retry, a run ended, and the Endless assist;
+- the carry leaving its input untouched;
+- a state through JSON hashing and carrying the same;
+- beginGround's inputs;
+- the chain, with the scripted run's hashes pinned.
+
+**Still to come (piece 3's rest, with their owners):**
+- `stageSetup` and `newMatch` reading `setup.stage`: the ceiling, wounds, fills, menace from Dread, and ki 60. These touch the systems that read them, mine and Encounter's.
+- The match's end turned into `end` (World's extraction).
+- The offers (three a chapter), the boons' offer, and the score.
+- The run file and its player.

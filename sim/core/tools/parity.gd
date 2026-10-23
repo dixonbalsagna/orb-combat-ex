@@ -89,6 +89,7 @@ func _init() -> void:
 	check("hit-stop by weight", _hitstop())
 	check("the ricochet's glance", _ricochet())
 	check("the run's ground", _runGround())
+	check("the run's state and carry", _runState())
 	check("the curve's shared functions, the brake's control back, the camera feed", _shared())
 	check("the air brake", _brake())
 	check("forms: five steps and the slingshot", _forms())
@@ -5740,6 +5741,77 @@ func _runGround() -> String:
 	var g5: SimRun.GroundJob = SimRun.beginGround(run, SimRun.stages + 1, "RIVAL", {"standing": st})
 	if g5.rule != "boss_claim" or g5.size != "whole":
 		return "the boss with no other place standing: rule %s, size %s (want his claim at Whole)" % [g5.rule, g5.size]
+	return ""
+
+
+## The run state and its carry (run-core.md section 12): a scripted run through the carry's rules (place statuses at
+## their lines, wounds, fills, lives, the ceiling, Dread and its cap, a retry, a run ended, the Endless assist), the carry
+## pure, the hash the same through JSON, the chain, and beginGround's inputs from the history.
+func _runState() -> String:
+	SimRun.reload()
+	if not SimRun.errors().is_empty():
+		return "the run's data: %s" % str(SimRun.errors())
+	var run: String = "00c0ffee0badf00d"
+	var s0: Dictionary = SimRun.newRun(run, "story", "PROTAGONIST", 100000)
+	if int(s0.player.lives) != 2 or int(s0.chapter) != 1 or SimRun.checkState(s0) != "" or int(SimRun.newRun(run, "hard", "PROTAGONIST", 1).player.lives) != 0:
+		return "a new run: lives %d, chapter %d, check '%s' (want 2 lives on Story, 0 on Hard, chapter 1)" % [int(s0.player.lives), int(s0.chapter), SimRun.checkState(s0)]
+	# a won first fight: place 3 loses 2 of its 40 buildings (5%: damaged); place 7 keeps 3 of 10 standing (fallen: its
+	# 100 fled are gone for good); place 12 keeps 4 of 10 (40% is not under 40%: damaged); the villain kills 50; a
+	# region broken at the end, so no life for a clean win, and a lifeline taken
+	var a1: Dictionary = {"cols": 1200, "c": ["3ff0000000000000", "0", "0"], "t": ["0", "3ff0000000000000", "0"]}
+	var e1: Dictionary = {"result": "won", "opponent": "RIVAL", "villain": true, "offer": "first", "ticks": 9000, "how": "ko", "finisher": "", "arena": a1,
+		"wounds": [0, 2, 3, 0], "fills": {"witness": 801, "trial": 333}, "branches": ["witness"], "ash": 0, "boon": {"kind": "lifeline", "id": "lifeline"},
+		"places": {"3": {"buildings": 40, "people": 2000, "down": 2, "dead": {"player": 0, "opponent": 10, "other": 0}, "fled": 30, "wear": [1, 2, 3]},
+			"7": {"buildings": 10, "people": 1000, "down": 7, "dead": {"player": 5, "opponent": 40, "other": 0}, "fled": 100},
+			"12": {"buildings": 10, "people": 1000, "down": 6, "dead": {"player": 0, "opponent": 0, "other": 0}, "fled": 0}}}
+	var h0: String = SimRun.stateHash(s0)
+	var s1: Dictionary = SimRun.carry(s0, e1)
+	if SimRun.stateHash(s0) != h0:
+		return "carry changed the state it was given"
+	var st: Array = [s1.places["3"].status, s1.places["7"].status, s1.places["12"].status, int(s1.places["7"].gone), s1.places["3"].wear]
+	if st != ["damaged", "fallen", "damaged", 100, [1, 2, 3]]:
+		return "the places after a won fight: %s (want damaged at 5%% down, fallen under 40%% standing with its fled gone, damaged at exactly 40%%, the wear kept)" % str(st)
+	var p1: Array = [s1.player.wounds, int(s1.player.lives), s1.player.fills, int(s1.chapter), int(s1.villainKills), int(s1.dread), s1.ledger[0].fell, s1.ledger[0].dead]
+	if str(p1) != str([[0, 1, 2, 0], 3, {"witness": 400, "trial": 166}, 2, 50, 1, [7], {"player": 5, "opponent": 50, "other": 0}]):
+		return "the carry after a won fight: %s (want wounds a stage healed, 3 lives, fills at half, chapter 2, 50 kills, Dread 1, place 7 fell)" % str(p1)
+	# a lost fight: a life spent, the state otherwise the one the fight began with
+	var s2: Dictionary = SimRun.carry(s1, {"result": "lost", "opponent": "EMPRESS", "villain": true, "offer": "rampage"})
+	var s1b: Dictionary = s1.duplicate(true)
+	s1b.player.lives = 2
+	s1b.player.livesSpent = 1
+	if SimRun.stateHash(s2) != SimRun.stateHash(s1b):
+		return "a lost fight changed more than a life (lives %d, spent %d, chapter %d)" % [int(s2.player.lives), int(s2.player.livesSpent), int(s2.chapter)]
+	# the retry won clean on a Crossing (a rest) with a form; the villain kills 60,000 of place 20 (fallen on people
+	# present; Dread at its cap); place 7's 20 fled are gone, as it has fallen
+	var a3: Dictionary = {"cols": 2400, "c": ["0", "0", "3ff0000000000000"], "t": ["3ff0000000000000", "0", "0"]}
+	var e3: Dictionary = {"result": "won", "opponent": "EMPRESS", "villain": true, "offer": "crossing", "ticks": 8000, "how": "ko", "arena": a3,
+		"wounds": [1, 1, 1, 1], "fills": {"witness": 0, "trial": 1000}, "branches": ["witness", "trial"], "ash": 120, "boon": {"kind": "form", "id": "form"},
+		"places": {"7": {"buildings": 10, "people": 1000, "down": 7, "dead": {}, "fled": 20},
+			"20": {"buildings": 50, "people": 70000, "down": 1, "dead": {"opponent": 60000}, "fled": 0}}}
+	var s3: Dictionary = SimRun.carry(s2, e3)
+	var p3: Array = [s3.player.wounds, int(s3.player.lives), int(s3.player.ceiling), int(s3.dread), s3.places["20"].status, int(s3.places["7"].gone), int(s3.sky), int(s3.chapter)]
+	if str(p3) != str([[0, 0, 0, 0], 3, 1, 1000, "fallen", 120, 120, 3]):
+		return "the retry won: %s (want all healed on a Crossing, 3 lives at most, ceiling 1, Dread at 1000, place 20 fallen, 120 gone from 7, sky 120, chapter 3)" % str(p3)
+	# through JSON: the same hash, a valid header state, and the same next state
+	var sj = JSON.parse_string(JSON.stringify(s3))
+	var e4: Dictionary = {"result": "won", "opponent": "CYBORG", "villain": true, "offer": "proving", "wounds": [3, 0, 0, 0], "places": {"3": {"buildings": 40, "people": 2000, "down": 20, "dead": {"other": 5}, "fled": 1}}}
+	if SimRun.stateHash(sj) != SimRun.stateHash(s3) or SimRun.checkState(sj) != "" or SimRun.stateHash(SimRun.carry(sj, e4)) != SimRun.stateHash(SimRun.carry(s3, e4)):
+		return "a run state through JSON hashes or carries differently"
+	# beginGround's inputs from the history
+	var P: WorldPlanet.Planet = WorldPlanet.make(SimRun.planetSeed(run))
+	var go: Dictionary = SimRun.groundOpts(s3, P)
+	if P.n <= 20 or go.standing[7] != 0 or go.standing[20] != 0 or go.standing[3] != 1 or go.damaged != [3, 7, 12, 20] or str(go.used) != str([a1, a3]):
+		return "the ground's inputs: standing 3/7/20 %d/%d/%d, damaged %s, used %d (want 1/0/0, [3, 7, 12, 20], the two rings won on)" % [go.standing[3], go.standing[7], go.standing[20], str(go.damaged), go.used.size()]
+	# the end of a run: with no life left a loss ends it, and an ended run carries no further; Endless spends none
+	var sh: Dictionary = SimRun.carry(SimRun.newRun(run, "hard", "PROTAGONIST", 1000), {"result": "lost", "opponent": "RIVAL"})
+	var se: Dictionary = SimRun.carry(SimRun.newRun(run, "hard", "PROTAGONIST", 1000, {"endless": true}), {"result": "lost", "opponent": "RIVAL"})
+	if sh.over != "lost" or sh.ledger.size() != 1 or SimRun.stateHash(SimRun.carry(sh, e1)) != SimRun.stateHash(sh) or se.over != "" or int(se.player.livesSpent) != 1:
+		return "the run's end: over '%s', ledger %d, Endless over '%s' spent %d (want lost, 1, none, 1)" % [sh.over, sh.ledger.size(), se.over, int(se.player.livesSpent)]
+	# the chain, and the scripted run's hashes pinned (a port gives the same)
+	var l1: String = SimRun.nextLink(SimRun.link0(run), h0, "f00d", SimRun.stateHash(s1))
+	var pins: Array = [SimRun.link0(run), SimRun.stateHash(s3), l1]
+	if pins != ["d5c064e0", "188282d20a745852", "5801d92edd95f0f2"] or l1 == SimRun.nextLink(SimRun.link0(run), h0, "f00e", SimRun.stateHash(s1)):
+		return "the chain and the scripted run: %s (want the pinned three, and a link that moves with the final hash)" % str(pins)
 	return ""
 
 
