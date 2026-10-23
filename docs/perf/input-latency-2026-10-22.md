@@ -53,6 +53,21 @@ Build: HEAD 7410e1ac (aa927bb5 is in it). `latency-bench.mjs --timing early|mid`
 - **So the 5-tick light start is not (only) the opening cooldown**: in the mid-match runs there has been no exchange and no recent press (the throwaway claim press of E was 8 s before), and the light's rush still starts exactly 5 ticks later, at 80, 150 and 250 units and for any hold. This is the same measurement as before the fix; Encounter is looking at it. A possible cause to rule out on their side: the claim press of E (the power button) being the player's "first press" and the light the second, so a rule on the second press, or the 5-tick grid Controls' T1 test found (24 of 62 fail on main, all starting at tick 5).
 - The RTX mid-match runs were invalid by load (the ticks are exact, the milliseconds are not reported). Re-run when Encounter's 7a lands.
 
+## Re-run on 7a (74ee6b04, build 570c3113; 2026-10-23)
+
+Encounter's 7a is in. The hook now reads the press-acknowledge correctly (it is a `cue` event of kind `press_ack`, text `started` or `queued`) and the bench times two things: the first changed picture in the pair's area (the body), and the first changed picture anywhere (a 16 by 9 map of blocks, each against its own idle noise; the HUD's press mark is one of them). 12 presses per action, valid runs, RTX at 60 Hz pacing unless stated.
+
+| | Sim | First change anywhere on screen (the HUD's mark and the body) | The body (pair's area) |
+|---|---|---|---|
+| **Mid-match light** | **the `started` ack on the press tick (tick 0)**; the rush (the body) starts 5 ticks (83 ms) later | **1 frame, 32 ms p50 / 41 p95** (the blocks at the bottom centre: the press mark) | **7 frames, 132 ms p50 / 141 p95** |
+| Mid-match dash | tick 0 | 1 frame, 34.5 ms / 39 | 1 to 2 frames, 38 ms / 56 |
+| Mid-match guard | tick 0 | 1 frame, 34.5 ms / 40.5 | 1 frame, 34.5 ms / 40.5 |
+| Early light (inside the opening cooldown) | the `queued` ack on tick 0; the body at +5 ticks too | 1 to 2 frames, 38 ms / 54 (the mark) | 8 frames, 149 ms / 155 |
+| Early dash and guard | tick 0 | not timeable by pixels: the opening scene is still settling (idle noise 20 times higher) | |
+
+- **The light now answers at once and shows it in about 32 ms** (the mark), against the 50 ms budget excluding display. **The body still moves 5 ticks after the press (83 ms)**, so the body's first changed picture is 132 ms, about the 133 ms web budget before the display adds its frame. The EP said the 6-tick lunge crouch at 250 units is what Animation is drawing; until it is drawn, the body shows nothing for 5 ticks.
+- Other configs for the body: Radeon 130 / 143 ms; Radeon at CPU x4 145 / 179; RTX at x4 135 / 167. Dash and guard at x4: Radeon 60 / 180 and 57 / 133, RTX 76 / 218 and 55 / 66 (the p95 tails are single cold-start frames). Early presses on the other configs: light body 149 to 152 ms on all four.
+
 ## Files
 
 `docs/perf/tools/latency-bench.mjs` (`--hold`, `--page-args latd=80`, `--pace60`, `--throttle`, `--igpu`, `--raw`), `scratch-hooks/hook-latency.mjs`, the `lat` variant in `make-audit-sites.mjs`. The raw runs are in my scratch folder.

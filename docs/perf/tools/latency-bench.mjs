@@ -53,7 +53,7 @@ function analyse(action, d, domTimes) {
   const ticks = d.ticks, frames = d.frames;
   // the state before the press: the last tick row recorded before the handler's tick
   const before = [...ticks].reverse().find((t) => t[0] < kticks) || ticks[0];
-  const sig = (t) => [t[3], t[4], t[5], t[6] >= 0, t[7], t[9], t[8] !== 0].join('|');
+  const sig = (t) => [t[3], t[4], t[5], t[6] >= 0, t[7], t[9], t[8] !== 0, !!t[10]].join('|');
   const base = before ? sig(before) : '';
   const react = ticks.find((t) => t[0] >= kticks && sig(t) !== base);
   // the body: the same without the acknowledgement and the queue (a press that only shows its mark)
@@ -71,6 +71,12 @@ function analyse(action, d, domTimes) {
   const m = mean(pre), sd = Math.sqrt(mean(pre.map((x) => (x - m) ** 2)));
   const mx = pre.length ? Math.max(...pre) : 0; const thr = Math.max(m + 5 * sd, mx * 1.25, m + 0.05);
   out.noise = { mean: +m.toFixed(3), sd: +sd.toFixed(3), thr: +thr.toFixed(3) };
+  if (CELLS) {
+    const pre = frames.filter((f) => f[0] < kf && f[0] >= kf - 40 && f.length > 6 && Array.isArray(f[6]));
+    const mxc = Array.from({ length: 144 }, (_, c) => Math.max(0, ...pre.map((f) => f[6][c])));
+    const hit = frames.find((f) => f[0] >= kf && Array.isArray(f[6]) && f[6].some((v, c) => v > mxc[c] * 1.5 + 0.25));
+    if (hit) { const nx = frames.find((f) => f[0] === hit[0] + 1); out.any_frame = hit[0] - kf; out.any_cells = hit[6].map((v, c) => (v > mxc[c] * 1.5 + 0.25 ? c : -1)).filter((c) => c >= 0); out.any_ms = nx && dom ? +(nx[1] + off - dom[0]).toFixed(2) : null; }
+  }
   const px = frames.find((f) => f[0] >= kf && f.length > 5 && f[5] > thr);
   if (!px) { out.error = 'no picture change beyond the idle noise'; return out; }
   out.px_frame = px[0]; out.px_value = px[5];
@@ -85,7 +91,8 @@ function analyse(action, d, domTimes) {
 }
 
 const server = await serve(SITE);
-const url = `http://127.0.0.1:${server.address().port}/play/index.html?flashcap=1${PACE ? '&lat60=1' : ''}${opt('--page-args') ? '&' + opt('--page-args') : ''}`;
+const CELLS = argv.includes('--cells');   // also find the first frame in which ANY block of the picture (the HUD's press mark included) changed beyond its own idle noise
+const url = `http://127.0.0.1:${server.address().port}/play/index.html?flashcap=1${PACE ? '&lat60=1' : ''}${CELLS ? '&latcells=1' : ''}${opt('--page-args') ? '&' + opt('--page-args') : ''}`;
 let b, page;
 const result = { timing: TIMING, label: LABEL, igpu: IGPU, throttle: THROTTLE, pace60: PACE, trials: TRIALS, viewport: `${W}x${H}`, session: SESSION, node: process.version, actions: {} };
 try {
@@ -134,6 +141,7 @@ try {
       trials: rows.length, ok: ok.length, errors: rows.filter((r) => r.error).map((r) => r.error),
       browser_ms: dist(ok.map((r) => r.dom_to_handler_ms).filter((x) => x !== null)),
       sim_ticks: dist(ok.map((r) => r.sim_ticks)), body_ticks: dist(ok.filter((r) => r.body_ticks !== null).map((r) => r.body_ticks)), draw_frames: dist(ok.filter((r) => r.draw_frames !== null).map((r) => r.draw_frames)),
+      any_frame: dist(ok.filter((r) => r.any_frame !== undefined).map((r) => r.any_frame)), any_ms: dist(ok.filter((r) => r.any_ms).map((r) => r.any_ms)),
       total_frames: dist(ok.map((r) => r.total_frames)), total_ms: dist(ok.map((r) => r.total_ms).filter((x) => x !== null)),
       over_3_frames: ok.filter((r) => r.total_frames > 3).length,
       rows,

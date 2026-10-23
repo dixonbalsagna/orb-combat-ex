@@ -37,6 +37,12 @@ p50 ms and the engine's CPU time per frame, before (C) then after (D), per pair:
 - The tick-238 hitch (the first crater) is unchanged at x4 (66 to 73 ms before and after); this park does not touch it. One stray 208 ms frame at tick 390 in one "after" run on the Radeon at x4 did not repeat.
 - Verdict: **keep**.
 
+## The 33 ms frames on the Radeon since 74ee6b04: a wide shot in a changed match, not a regression of 7a
+
+On main (b60d1913 to 570c3113) the city beam on the Radeon has bursts of 33 ms frames (two vsyncs): 31 to 35 frames over 25 ms in 1,200 (p95 18.2 to 18.9 against 10.1 to 10.5), at ticks 470 to 563 and 1162 to 1316. The Radeon bisect on the same scene: 22f, 22h, 5595363e, 0612b4fe and e90590b8 all read p95 10.1 to 10.5 with 1 to 2 frames over 25 ms; the step is 74ee6b04 (7a, whose golden regenerated the human replays, so the scene's match is a different one). RTX x1 and x4 did not move.
+
+Layer cuts on the Radeon at those ticks (570c3113): the frame is 16.1 ms at tick 500 and 17.6 at tick 1,250 against about 8.7 ms elsewhere; **the terrain is 7.0 and 8.7 ms of it** (211 k and 205 k of the 323 k and 342 k primitives; the median frame has 132 k), buildings, trees and crowd 4.0 and 3.2 ms, everything else under 0.3 ms. So the bursts are, most likely, the **very wide shot** Rendering named as left over from 22f (about 7,800 units across, the coarsest stride's chunks all in view), now reached earlier in this scene (inferred from the terrain's primitives being 2.5 times the median; I did not read the camera's width). Owner: Rendering (a stride that coarsens with the zoom; needs a look decision, it would pop where it switches) with Camera (how wide the shot goes in a beam).
+
 ## Files
 
 `make-audit-sites.mjs` builds any commit with `--rev` (here `243d4b57~1`, `243d4b57`, `d92cce64`, `278bb83c`, `--only base`); `frame-bench.mjs` runs them. Raw runs are in my scratch folder.

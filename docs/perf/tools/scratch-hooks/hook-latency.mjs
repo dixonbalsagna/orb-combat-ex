@@ -40,6 +40,8 @@ var _lat_last_usec: int = 0
 var _lat_pace: bool = false
 var _lat_prev: PackedByteArray = PackedByteArray()
 var _lat_placed: bool = false
+var _lat_cells_on: bool = false
+var _lat_cells: Array = []
 var _lat_off: float = 0.0   # page clock (performance.now) minus Time.get_ticks_usec()/1000, ms
 
 
@@ -51,6 +53,7 @@ func _lat_begin() -> void:
 	_lat_prev = PackedByteArray()
 	_lat_last_usec = Time.get_ticks_usec()
 	_lat_pace = _page_flag("lat60")
+	_lat_cells_on = _page_flag("latcells")
 	_lat_off = float(JavaScriptBridge.eval("performance.now()", true)) - Time.get_ticks_usec() / 1000.0
 	_lat_placed = false
 	var host: SimHost = main.host
@@ -78,8 +81,8 @@ func _lat_tick(events: Array, _lines: Array) -> void:
 	var f = host.S.fighters[0]
 	var acks: PackedStringArray = []
 	for e in events:
-		if str(e.type) == "press_ack":
-			acks.append("ack")
+		if str(e.type) == "cue" and str(e.kind) == "press_ack":
+			acks.append(str(e.text))
 	var ex = host.S.dirS.ex
 	var exs: String = "" if ex == null else "%s/%s/%.3f/%d" % [ex.tpl, ex.kind, ex.t, ex.beats.size()]
 	_lat_ticks.append([host.ticks, Time.get_ticks_usec() / 1000.0, _lat_fi, str(f.state), f.rush != null, f.act.queue.size(), f.act.guardSince, f.act.dodgeTick, snappedf(f.vx, 1.0), ",".join(acks), exs])
@@ -120,9 +123,23 @@ func _lat_frame() -> void:
 						n += 3
 						i += 3
 				px = float(sum) / float(maxi(n, 1))
+				if _lat_cells_on:
+					var cells: Array = []
+					for cy in range(9):
+						for cx in range(16):
+							var cs: int = 0
+							for yy2 in range(cy * 10, cy * 10 + 10):
+								var i2: int = (yy2 * w + cx * 10) * 3
+								for _x2 in range(10):
+									cs += absi(int(d[i2]) - int(_lat_prev[i2])) + absi(int(d[i2 + 1]) - int(_lat_prev[i2 + 1])) + absi(int(d[i2 + 2]) - int(_lat_prev[i2 + 2]))
+									i2 += 3
+							cells.append(snappedf(float(cs) / 300.0, 0.01))
+					_lat_cells = cells
 			_lat_prev = d
 	if _lat_frames.size() > 0:
 		_lat_frames[_lat_frames.size() - 1].append(px)   # the previous frame's own picture: its change
+		if _lat_cells_on:
+			_lat_frames[_lat_frames.size() - 1].append(_lat_cells)
 	_lat_fi += 1
 	if scenario != "":
 		drive(scenario, host.ticks, host.S)
