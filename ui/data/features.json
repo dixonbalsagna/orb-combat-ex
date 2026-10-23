@@ -12,6 +12,7 @@
     "lock_reduce_flashing": false,
     "ring_map": false,
     "minimal_hud": true,
+    "text_warm": true,
     "tug_rings": false,
     "start_menu": true,
     "launch_marks": true,

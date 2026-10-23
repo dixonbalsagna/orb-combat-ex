@@ -69,6 +69,7 @@ func _run() -> void:
 	await _minimal_hud_rules()
 	await _minimal_teach_rules()
 	await _minimal_join_rules()
+	_text_warm_rules()
 	await _brawl_marks_rules()
 	_rate_rules()
 	await _block_toggle_rules()
@@ -6204,6 +6205,35 @@ func _minimal_join_rules() -> void:
 	UiData.set_feature("minimal_hud", false)
 	hud.queue_free()
 	await process_frame
+
+
+## The text warm-up (UiWarm): the sizes and outlines the HUD draws, made once at boot (VFX's tick 36 on the integrated GPU: the first banner draws its glyphs for the first time).
+func _text_warm_rules() -> void:
+	var seen_bad := PackedStringArray()
+	for cs in [[Vector2(1280, 720), 0.667], [Vector2(1920, 1080), 1.0], [Vector2(844, 390), 0.4], [Vector2(2532, 1170), 2.5]]:
+		var vp: Vector2 = cs[0]
+		var sc: float = cs[1]
+		var pairs: Array = UiWarm.plan(sc, vp)
+		var keys := {}
+		var dup := false
+		for pr in pairs:
+			var k: String = "%d/%d" % [pr[0], pr[1]]
+			dup = dup or keys.has(k)
+			keys[k] = true
+		var bfs: int = UiText.px(clampf(vp.x * 0.03, 30.0, 46.0) / maxf(sc, 0.01), sc, 22.0)
+		var bol: int = int(ceil(maxf(2.0, float(bfs) * 0.09)))
+		var has_banner: bool = keys.has("%d/%d" % [bfs, bol])
+		var has_name: bool = keys.has("%d/0" % UiText.px(24.0, sc)) and keys.has("%d/0" % UiText.px(18.0, sc))
+		if dup or not has_banner or not has_name or pairs.size() > 60 or pairs.is_empty():
+			seen_bad.append("%s s %.2f (dup %s banner %s name %s n %d)" % [str(vp), sc, str(dup), str(has_banner), str(has_name), pairs.size()])
+	_ok(seen_bad.is_empty(), "text warm: at four sizes the plan holds every HUD font size, no size twice, the banner's size with its outline, and at most 60 lines (%s)" % str(seen_bad))
+	var missing := PackedStringArray()
+	for i in range(UiWarm.GLYPHS.length()):
+		var cp: int = UiWarm.GLYPHS.unicode_at(i)
+		if not UiText.f().has_char(cp):
+			missing.append(UiWarm.GLYPHS[i])
+	_ok(missing.is_empty(), "text warm: the font has every glyph the warm-up draws (%s missing)" % str(missing))
+	_ok(UiData.feature("text_warm"), "text warm: the switch is on as shipped")
 
 
 ## The two grey circles cut on 2026-10-18 (Orb: "the weird gray circle between the two fighters"): the planet ring map and the beam struggle's steady rings, each behind a switch that is off.

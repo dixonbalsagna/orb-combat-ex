@@ -401,12 +401,23 @@ func setup(ids: Array, names: Array) -> void:
 	_apply_vision()
 	_last_size = Vector2.ZERO
 	_relayout()
+	_warm_text()
 	if notice_auto_allowed(DisplayServer.get_name(), notice_args_text(), bypass_allowed()):
 		notice_seen_session = true
 		if UiData.feature("start_menu"):
 			show_start_menu(false)   # the menu carries the notice and is the way in: nothing plays until Start
 		else:
 			show_photo_notice(true)
+
+
+## The text warm-up (UiWarm): every font size and outline the HUD draws is made once at boot, behind the notice, so no banner, bark or card draws its glyphs for the first time in a fight.
+func _warm_text() -> void:
+	if not UiData.feature("text_warm") or DisplayServer.get_name() == "headless":
+		return
+	var w := UiWarm.new()
+	w.name = "TextWarm"
+	add_child(w)
+	w.start(layout.s, layout.vp)
 
 
 func consume(e) -> void:
