@@ -9,6 +9,7 @@ Rules: `docs/art/ai-prompt-policy.md`. Record for `art/concepts/biomes/` (`spec.
 - purpose: a biome look bible Rendering and VFX can build from: thirteen biomes' palettes, ground strips, cover, damage states, destruction frames and transitions, one side-by-side sheet and one planet-from-orbit colour study
 - input images: none. The inputs are the game's look (docs/ep/taste.md), the sky and world-light data (data/art/sky.json), the polar palette and the biome list of docs/world/planet-module.md
 - outputs kept: the sheets and the data
+- 2026-10-24 follow-ups: the light-key sheets, the colour-vision pass (cv.mjs), the true-pixel cover sheet (covers.mjs), and a re-key to World's fifteen biome ids (the tundra and the taiga split, a new highland, `ice_sheet` and `sea_ice`); the prompt is the EP's briefs of 2026-10-24
 - outputs rejected: a first far land drawn as smooth blobs (made faceted); a plume of stacked balls (made a billow of overlapping puffs); an orbit planet with one continent and three biomes (retuned to thirteen)
 - what a human changed: Orb's words and the EP's brief direct the work; a human picks from the sheets
 - originality checklist: low-poly stylised nature (cone spruce, flat-topped acacia, faceted boulders, dunes, mesas, basalt columns, ice spires) is generic; no franchise shape, no named place; the palettes are our own. Checked by the Art Director session; Legal to screen
