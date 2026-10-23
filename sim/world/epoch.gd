@@ -15,6 +15,9 @@ class_name WorldEpoch
 ##   calm(S)                                            World's check: no beam, shot, flight, rush, slide, open set piece, water flowing or catastrophe
 
 static var _PI: float = SimMathx.f64("400921fb54442d18")   # pi from its bits, and SimDetMath for every sin and cos: no engine trig in the sim (the parity lint allows no float literal over 15 digits)
+const WT_STEP: int = 600      # columns of the carry weights made a warm tick
+const HASH_STEP: int = 3000   # bytes of a ring's slice hash made a warm tick
+static var _plans: Dictionary = {}   # worldId -> the swap's preparation: {wt, wtN, e: {ring key -> entry}}: derived data outside the state, made by the warm ticks from what the swap does not change
 static var _jobs: Dictionary = {}   # "worldId/bearing" -> RingJob (the warm read of a candidate ring, kept whole until the swap): derived data outside the state; the state keeps how many columns it was asked for
 
 
@@ -35,7 +38,7 @@ static func enabled(setup: Dictionary) -> bool:
 ## The epoch of a new planet match (WorldPlanetWorld.gen, after the world is built): the ring it plays on, the turn counters, the settlements' chords and districts (for the carry). A
 ## Dictionary, hashed only through n, lastT and drift.
 static func begin(S: SimState, seed: int, ring: Dictionary, spec: Dictionary, chords: Array, dlist: Array, sliceHash: int) -> Dictionary:
-	return {"seed": seed, "sh": sliceHash, "n": 0, "lastT": 0.0, "drift": 0.0, "c0": spec.c, "ring": spec, "ask": null, "next": null, "warm": [], "refused": 0, "waited": 0, "cold": 0, "chords": chords, "dlist": dlist}
+	return {"seed": seed, "sh": sliceHash, "n": 0, "lastT": 0.0, "drift": 0.0, "c0": spec.c, "ring": spec, "ask": null, "next": null, "warm": [], "refused": 0, "waited": 0, "cold": 0, "unprep": 0, "chords": chords, "dlist": dlist}
 
 
 # ===================================================================== the geometry
@@ -174,6 +177,7 @@ static func _jkey(S: SimState, deg: float) -> String:
 
 
 static func _dropJobs(S: SimState) -> void:
+	_plans.erase(S.worldId)
 	var pre: String = "%d/" % S.worldId
 	for k in _jobs.keys():
 		if String(k).begins_with(pre):
@@ -206,7 +210,163 @@ static func _warm(S: SimState) -> bool:
 		else:
 			w.cols = mini(int(w.cols), SimConst.NC - 1)
 			all = false
+	_prep(S, E)
 	return all
+
+
+# ===================================================================== the swap's preparation
+
+## The swap's preparation, a little each warm tick (Performance: the swap tick cost 8.7 ms, 38 to 46 at x4). What the swap computes without reading what it swaps is a pure function of the decided
+## turn and of state that does not change while a turn waits (the buildings' places and columns, the base ground, the planet's biome table, the epoch's places and districts): the carry weights
+## (from the pivot), the new ring's slice hash, the kept and fresh places, the fresh places' layouts, the blended and platformed ground and the biome table. They are made here, one step of each a
+## tick, once a ring is read, for every warm ring (the swap may use either), and the swap takes what is ready; what is not it makes itself with the same functions, so the turn is the same
+## either way (`E.unprep` counts a swap that had to). The marks (deform, rubble, scorch, cracks) change in a fight and are blended at the swap.
+static func _plan(S: SimState) -> Dictionary:
+	var pl = _plans.get(S.worldId)
+	if pl == null:
+		var wt := PackedFloat32Array()
+		wt.resize(SimConst.NC)
+		pl = {"wt": wt, "wtN": 0, "e": {}}
+		_plans[S.worldId] = pl
+	return pl
+
+
+static func _zone() -> Array:
+	var d: Dictionary = data()
+	var Z1: float = minf(float(d.carryUnits), SimConst.W * 0.25)
+	return [Z1 * 0.25, Z1]
+
+
+static func _wtStep(E: Dictionary, pl: Dictionary, n: int) -> void:
+	var NC: int = SimConst.NC
+	var z: Array = _zone()
+	var px: float = float(E.next.pc) * SimConst.COL
+	var i1: int = mini(NC, int(pl.wtN) + n)
+	for i in range(int(pl.wtN), i1):
+		pl.wt[i] = _w(px, i, z[0], z[1])
+	pl.wtN = i1
+
+
+static func _prep(S: SimState, E: Dictionary) -> void:
+	var pl: Dictionary = _plan(S)
+	_wtStep(E, pl, WT_STEP)
+	for w in E.warm:
+		if int(w.cols) < SimConst.NC:
+			continue
+		var key: String = _jkey(S, float(w.deg))
+		var job = _jobs.get(key)
+		if job == null or not job.done:
+			continue
+		var ep = pl.e.get(key)
+		if ep == null:
+			ep = _entry(job.slice)
+			pl.e[key] = ep
+		_prepStep(S, E, pl, w, ep, job.slice, HASH_STEP)
+
+
+static func _entry(sl: WorldPlanet.Slice) -> Dictionary:
+	return {"hb": sl.heights.to_byte_array() + sl.biomes, "pos": 0, "h": 0x811c9dc5, "sh": -1, "stage": 0, "fi": 0, "ready": false}
+
+
+## One step of a ring's preparation: the slice hash (`bytes` more of it) and the next stage of the geometry (once the weights are whole): 0 the kept and fresh places and the blended ground, then a
+## fresh place's layout a step, then the assembly (the biome table and the platforms over the blended ground).
+static func _prepStep(S: SimState, E: Dictionary, pl: Dictionary, w: Dictionary, ep: Dictionary, sl: WorldPlanet.Slice, bytes: int) -> void:
+	if int(ep.sh) < 0:
+		var h: int = ep.h
+		var hb: PackedByteArray = ep.hb
+		var i1: int = mini(hb.size(), int(ep.pos) + bytes)
+		for i in range(int(ep.pos), i1):
+			h = SimRng.imul((h ^ hb[i]) & WorldPlanet.MASK, 0x01000193)
+		ep.h = h
+		ep.pos = i1
+		if i1 >= hb.size():
+			ep.sh = h & WorldPlanet.MASK
+	if bool(ep.ready) or int(pl.wtN) < SimConst.NC:
+		return
+	var NC: int = SimConst.NC
+	var P := WorldPlanet.make(int(E.seed))
+	if int(ep.stage) == 0:
+		var z: Array = _zone()
+		var px: float = float(E.next.pc) * SimConst.COL
+		var newBase: PackedFloat32Array = sl.heights
+		var nb := PackedFloat32Array()
+		nb.resize(NC)
+		for i in range(NC):
+			nb[i] = S.base[i] * (1.0 - pl.wt[i]) + newBase[i] * pl.wt[i]
+		var keep: Array = []
+		var keptPlaces: Dictionary = {}
+		for b in S.buildings:
+			if absf(SimWrap.sdx(px, b.x)) <= z[1]:
+				keep.append(b)
+				keptPlaces[b.place] = true
+		var keptChords: Array = []
+		for ch in E.chords:
+			if keptPlaces.has(ch[0]):
+				keptChords.append(ch)
+		var newChords: Array = WorldPlanetWorld.chordsOf(sl, newBase)
+		var fresh: Array = []
+		for ch in newChords:
+			if not keptPlaces.has(ch[0]):
+				fresh.append(ch)
+		var used: Dictionary = {}
+		for b in keep:
+			used[b.district] = true
+		var remap: Dictionary = {}
+		var dlist: Array = []
+		var dkeys: Array = used.keys()
+		dkeys.sort()
+		var maxSet: int = -1
+		for k in dkeys:
+			remap[k] = dlist.size()
+			dlist.append(E.dlist[k])
+			maxSet = maxi(maxSet, int(E.dlist[k].get("settlement", -1)))
+		var wsum: float = 0.0
+		for ch in newChords:
+			wsum += float(P.people[ch[0]])
+		ep["nb"] = nb
+		ep["keep"] = keep
+		ep["keptChords"] = keptChords
+		ep["fresh"] = fresh
+		ep["remap"] = remap
+		ep["dlist"] = dlist
+		ep["maxSet"] = maxSet
+		ep["wsum"] = wsum
+		ep["genB"] = []
+		ep["stage"] = 1
+		return
+	if int(ep.fi) < ep.fresh.size():
+		# a fresh place's layout, laid on the blended ground: WorldSettle trims a place's span against S.base, so it is lent for the call
+		var saved: PackedFloat32Array = S.base
+		S.base = ep.nb
+		var g: Dictionary = WorldPlanetWorld.settle(S, P, [ep.fresh[int(ep.fi)]], float(ep.wsum), int(E.n) + 1, ep.dlist.size(), int(ep.maxSet) + 1 + int(ep.fi))
+		S.base = saved
+		for b in g.buildings:
+			ep.genB.append(b)
+		for dd in g.dlist:
+			ep.dlist.append(dd)
+		ep.fi = int(ep.fi) + 1
+		return
+	var z2: Array = _zone()
+	var px2: float = float(E.next.pc) * SimConst.COL
+	var made: Array = []
+	for b in ep.genB:
+		if absf(SimWrap.sdx(px2, b.x)) > z2[1]:
+			made.append(b)
+	var chordsAll: Array = ep.keptChords.duplicate()
+	for ch in ep.fresh:
+		chordsAll.append(ch)
+	var cols := PackedByteArray()
+	cols.resize(NC)
+	for i in range(NC):
+		cols[i] = sl.biomes[i] if pl.wt[i] >= 0.5 else S.planetCols[i]
+	var nbf: PackedFloat32Array = ep.nb.duplicate()
+	WorldPlanetWorld.settleBiomes(cols, nbf, chordsAll)
+	WorldPlanetWorld.platform(nbf, chordsAll)
+	ep["made"] = made
+	ep["chordsAll"] = chordsAll
+	ep["cols"] = cols
+	ep["base"] = nbf
+	ep["ready"] = true
 
 
 ## The bearings (signed, degrees) whose ring is read: the angles a swap may use. [] when no turn is decided.
@@ -304,89 +464,48 @@ static func swap(S: SimState) -> void:
 	var P := WorldPlanet.make(seed)
 	var spec: Dictionary = nx.spec
 	var ring: Dictionary = WorldRingPick.ringFrom(spec.c, int(spec.cols), spec.t)
-	var job = _jobs.get(_jkey(S, float(nx.bearing)))
+	var key: String = _jkey(S, float(nx.bearing))
+	var job = _jobs.get(key)
 	var sl: WorldPlanet.Slice
 	if job != null and job.done:
 		sl = job.slice
 	else:
 		E.cold = int(E.cold) + 1   # a ring read on the swap tick: only for a state carried into a process that never warmed it (the same slice, and a hitch). tick() swaps only on a ring the state counts as read, so this stays 0
 		sl = WorldPlanet.sliceRing(seed, ring)
+	# the preparation the warm ticks made (or, for what is not ready, the same made now)
+	var pl: Dictionary = _plan(S)
+	var ep = pl.e.get(key)
+	if ep == null:
+		ep = _entry(sl)
+		pl.e[key] = ep
+	if not (bool(ep.ready) and int(ep.sh) >= 0 and int(pl.wtN) >= SimConst.NC):
+		E.unprep = int(E.unprep) + 1
+		_wtStep(E, pl, SimConst.NC)
+		while not (bool(ep.ready) and int(ep.sh) >= 0):
+			_prepStep(S, E, pl, {}, ep, sl, 1 << 30)
 	_dropJobs(S)
 	var NC: int = SimConst.NC
 	var COL: float = SimConst.COL
-	var d: Dictionary = data()
 	var px: float = float(nx.pc) * COL
-	var Z1: float = minf(float(d.carryUnits), SimConst.W * 0.25)
-	var Z0: float = Z1 * 0.25
-	var wt := PackedFloat32Array()
-	wt.resize(NC)
-	for i in range(NC):
-		wt[i] = _w(px, i, Z0, Z1)
-	# --- the ground and its marks
-	var newBase: PackedFloat32Array = sl.heights
+	var z: Array = _zone()
+	var Z1: float = z[1]
+	var wt: PackedFloat32Array = pl.wt
+	# --- the ground and its marks (the base ground is the prepared one: it does not change in a fight)
 	for i in range(NC):
 		var w: float = wt[i]
-		S.base[i] = S.base[i] * (1.0 - w) + newBase[i] * w
 		S.deform[i] = S.deform[i] * (1.0 - w)
 		S.rubble[i] = S.rubble[i] * (1.0 - w)
 		S.scorch[i] = S.scorch[i] * (1.0 - w)
 		S.crack[i] = S.crack[i] * (1.0 - w)
-	# --- the buildings: those inside the zone stay; the places they belong to are not laid again
-	var keep: Array = []
-	var keptPlaces: Dictionary = {}
-	for b in S.buildings:
-		if absf(SimWrap.sdx(px, b.x)) <= Z1:
-			keep.append(b)
-			keptPlaces[b.place] = true
-	var keptChords: Array = []
-	for ch in E.chords:
-		if keptPlaces.has(ch[0]):
-			keptChords.append(ch)
-	var newChords: Array = WorldPlanetWorld.chordsOf(sl, newBase)
-	var fresh: Array = []
-	for ch in newChords:
-		if not keptPlaces.has(ch[0]):
-			fresh.append(ch)
-	# the districts the kept buildings use, in order, and the new ones after them
-	var used: Dictionary = {}
-	for b in keep:
-		used[b.district] = true
-	var remap: Dictionary = {}
-	var dlist: Array = []
-	var dkeys: Array = used.keys()
-	dkeys.sort()
-	var maxSet: int = -1
-	for k in dkeys:
-		remap[k] = dlist.size()
-		dlist.append(E.dlist[k])
-		maxSet = maxi(maxSet, int(E.dlist[k].get("settlement", -1)))
-	for b in keep:
-		b.district = remap[b.district]
-	var wsum: float = 0.0
-	for ch in newChords:
-		wsum += float(P.people[ch[0]])
-	var gen: Dictionary = WorldPlanetWorld.settle(S, P, fresh, wsum, int(E.n) + 1, dlist.size(), maxSet + 1)
-	var made: Array = []
-	for b in gen.buildings:
-		if absf(SimWrap.sdx(px, b.x)) > Z1:
-			made.append(b)
-	for dd in gen.dlist:
-		dlist.append(dd)
-	S.buildings = keep + made
-	# the biome of each column, and a settlement's ground; then the platforms under every settlement, kept and fresh, over the blended ground
-	var chordsAll: Array = keptChords.duplicate()
-	for ch in fresh:
-		chordsAll.append(ch)
-	var cols := PackedByteArray()
-	cols.resize(NC)
-	for i in range(NC):
-		cols[i] = sl.biomes[i] if wt[i] >= 0.5 else S.planetCols[i]
-	WorldPlanetWorld.settleBiomes(cols, S.base, chordsAll)
-	WorldPlanetWorld.platform(S.base, chordsAll)
-	WorldBiomes.planetCols = cols
-	S.planetCols = cols
+	S.base = ep.base
+	# --- the buildings: those inside the zone stay (their districts renumbered); the places the new ring holds that were not kept are the prepared fresh ones
+	for b in ep.keep:
+		b.district = ep.remap[b.district]
+	S.buildings = ep.keep + ep.made
+	WorldBiomes.planetCols = ep.cols
+	S.planetCols = ep.cols
 	# --- the derived and per-building state
-	S.lanes = WorldLanes.build(S, dlist)
+	S.lanes = WorldLanes.build(S, ep.dlist)
 	WorldStructures.buildIndex(S)
 	var lot := PackedFloat32Array()
 	lot.resize(S.buildings.size())
@@ -418,9 +537,9 @@ static func swap(S: SimState) -> void:
 	E.drift = nx.drift
 	E.ring = spec
 	S.planetRing = {"seed": seed, "c": spec.c, "t": spec.t, "cols": spec.cols}   # unhashed: the ring now played on
-	E.sh = WorldPlanet.sliceHash(sl)   # the ring now played on, as the state hash sees it
-	E.chords = chordsAll
-	E.dlist = dlist
+	E.sh = int(ep.sh)   # the ring now played on, as the state hash sees it (WorldPlanet.sliceHash, made a few bytes a warm tick)
+	E.chords = ep.chordsAll
+	E.dlist = ep.dlist
 	E.next = null
 	E.warm = []
 	var ev := SimFx._ev(S, "arena_turn")

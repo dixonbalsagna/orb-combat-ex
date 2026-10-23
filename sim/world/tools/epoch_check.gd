@@ -54,7 +54,7 @@ func playRun(sd: int, mode: int, fb: float = 2.5) -> Dictionary:
 			hs = str(SimHash.stateHash(S).gameplay)
 		if swapTick < 0 and S.epoch.n == 1:
 			swapTick = t
-	return {"tick": swapTick, "hash": str(SimHash.stateHash(S).gameplay), "cold": S.epoch.cold, "waited": S.epoch.waited, "refused": S.epoch.refused}
+	return {"tick": swapTick, "hash": str(SimHash.stateHash(S).gameplay), "cold": S.epoch.cold, "unprep": S.epoch.unprep, "waited": S.epoch.waited, "refused": S.epoch.refused}
 
 
 func nearest(S: SimState, x: float):
@@ -411,10 +411,80 @@ func _init() -> void:
 		var B: Dictionary = playRun(tr[0], 0)   # the replay
 		var Cc: Dictionary = playRun(tr[0], 1)   # slices lost mid-warm
 		var Dd: Dictionary = playRun(tr[0], 2)   # hashed every tick
-		var identical: bool = B.tick == tr[1].tick and B.hash == tr[1].hash and Cc.tick == tr[1].tick and Cc.hash == tr[1].hash and Dd.tick == tr[1].tick and Dd.hash == tr[1].hash and Cc.cold == 0 and tr[1].cold == 0
+		var identical: bool = B.tick == tr[1].tick and B.hash == tr[1].hash and Cc.tick == tr[1].tick and Cc.hash == tr[1].hash and Dd.tick == tr[1].tick and Dd.hash == tr[1].hash and Cc.cold == 0 and tr[1].cold == 0 and tr[1].unprep == 0
 		if not identical:
 			replayOk = false
 		rlog.append("seed %d swaps on tick %d (waited %d)" % [tr[0], tr[1].tick, tr[1].waited])
 	ok(replayOk, "a match played by SimCore.step alone (no host) turns on the same tick and to the same hash when replayed, when its slices are lost mid-warm, and when it is hashed every tick (%s)" % " | ".join(rlog))
+	# --- the swap's preparation is made by the warm ticks, and the turn is the same with or without it
+	var ph: Array = []
+	var pun: Array = []
+	var ptime: Array = []
+	for mode in [0, 1]:   # 0: the warm ticks prepared it; 1: the preparation is lost before the swap (the swap makes it itself)
+		var Sp := ready(2400)
+		WorldEpoch.ask(Sp, "prep", mid(Sp), 1, 0)
+		WorldEpoch.choose(Sp, 3, 64, 2.5)
+		var guard: int = 0
+		var allReady: bool = false
+		while not allReady and guard < 1500:
+			WorldEpoch.tick(Sp, false)
+			guard += 1
+			allReady = WorldEpoch.warmAngles(Sp).size() == Sp.epoch.warm.size() and WorldEpoch._plans.has(Sp.worldId)
+			if allReady:
+				var plp: Dictionary = WorldEpoch._plans[Sp.worldId]
+				allReady = int(plp.wtN) >= SimConst.NC and plp.e.size() == Sp.epoch.warm.size()
+				for kk in plp.e:
+					if not (plp.e[kk].ready and plp.e[kk].sh >= 0):
+						allReady = false
+		if mode == 1:
+			WorldEpoch._plans.clear()
+		for f in Sp.fighters:
+			f.x = float(Sp.epoch.next.pc) * SimConst.COL
+		var tp0: int = Time.get_ticks_usec()
+		WorldEpoch.tick(Sp, true)
+		ptime.append(float(Time.get_ticks_usec() - tp0) / 1000.0)
+		for t in range(120):
+			SimCore.step(Sp)
+		ph.append("%d/%s" % [Sp.epoch.n, str(SimHash.stateHash(Sp).gameplay)])
+		pun.append(int(Sp.epoch.unprep))
+	ok(ph[0] == ph[1] and ph[0].begins_with("1/") and pun == [0, 1], "a swap on the preparation the warm ticks made (%.1f ms) is the swap that makes it itself (%.1f ms): the same state hash after 120 ticks (%s); unprep counts [%s]" % [ptime[0], ptime[1], ph[0].substr(0, 14), ",".join(PackedStringArray(pun.map(func(v): return str(v))))])
+	# WorldWater.init is the water it was: the original laps, written out here, over a hand-made world and planet rings with and without sea
+	var waterOk: bool = true
+	var seaSeen: int = 0
+	var cases: Array = [[{"intro": false}, 1]]
+	for pl2 in [1, 3, 5, 7, 11]:
+		for cc in [1200, 2400, 4800]:
+			cases.append([{"planet": pl2, "touch": 3, "arena": {"cols": cc}, "intro": false}, pl2])
+	for cs in cases:
+		var Sw2 := SimCore.createSim()
+		SimCore.newMatch(Sw2, 1, {}, cs[0])
+		var ref := PackedFloat32Array()
+		ref.resize(SimConst.NC)
+		ref.fill(0.0)
+		var NC2: int = SimConst.NC
+		var lowr: PackedFloat32Array = WorldTerrain.lowD(Sw2)
+		for i in range(NC2):
+			if Sw2.base[i] < WorldWater.RESERVOIR_BASE:
+				ref[i] = maxf(0.0, WorldWater.SEA_LEVEL - (Sw2.base[i] + lowr[i]))
+		for dir in [1, -1]:
+			var wet: bool = false
+			for lap in range(2 * NC2):
+				var i2: int = lap % NC2 if dir == 1 else NC2 - 1 - (lap % NC2)
+				if Sw2.base[i2] < WorldWater.RESERVOIR_BASE:
+					wet = true
+				elif wet:
+					var g2: float = Sw2.base[i2] + lowr[i2]
+					if g2 < WorldWater.SHORE_WET:
+						ref[i2] = WorldWater.SEA_LEVEL - g2
+					else:
+						wet = false
+		WorldWater.init(Sw2)
+		if Sw2.water != ref:
+			waterOk = false
+		for i in range(NC2):
+			if ref[i] > 0.0:
+				seaSeen += 1
+				break
+	ok(waterOk and seaSeen >= 2, "WorldWater.init over the hand-made world and 15 planet rings (%d of them with sea): the same water as the original laps, bit for bit" % seaSeen)
 	print("EPOCH: %d check(s) failed" % fails)
 	quit()

@@ -75,17 +75,23 @@ static func init(S: SimState) -> void:
 	S.water.fill(0.0)
 	S.waterWin.clear()
 	S.waterTick = 0.0
+	var base: PackedFloat32Array = S.base
+	var low: PackedFloat32Array = WorldTerrain.lowD(S)
+	var any: bool = false
 	for i in range(NC):
-		if isReservoir(S, i):
-			S.water[i] = maxf(0.0, SEA_LEVEL - (S.base[i] + WorldTerrain.lowD(S)[i]))
+		if base[i] < RESERVOIR_BASE:
+			any = true
+			S.water[i] = maxf(0.0, SEA_LEVEL - (base[i] + low[i]))
+	if not any:
+		return   # no sea on this ring: nothing for the laps to carry
 	for dir in [1, -1]:
 		var wet: bool = false
 		for lap in range(2 * NC):   # two laps carry the fill across the seam
 			var i2: int = lap % NC if dir == 1 else NC - 1 - (lap % NC)
-			if isReservoir(S, i2):
+			if base[i2] < RESERVOIR_BASE:
 				wet = true
 			elif wet:
-				var g: float = S.base[i2] + WorldTerrain.lowD(S)[i2]
+				var g: float = base[i2] + low[i2]
 				if g < SHORE_WET:
 					S.water[i2] = SEA_LEVEL - g
 				else:
