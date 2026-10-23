@@ -1,0 +1,447 @@
+{
+ "approach": "base",
+ "title": "TODAY (WORLDPLANET)",
+ "params": {},
+ "seeds": {
+  "7": {
+   "map": {
+    "landPct": 58.4,
+    "landBiomes": [
+     [
+      "Grassland",
+      34.8
+     ],
+     [
+      "Temperate forest",
+      29.4
+     ],
+     [
+      "Hot desert",
+      13.4
+     ],
+     [
+      "Mountain rock",
+      11.9
+     ],
+     [
+      "Ice sheet",
+      10.6
+     ]
+    ],
+    "landBiomesOver1": 5,
+    "water": {
+     "Shallow sea": 39.1,
+     "Sea ice": 2.4
+    }
+   },
+   "ring": {
+    "candidate": 2,
+    "metMinimum": true,
+    "landPct": 68,
+    "biomes": [
+     [
+      "Grassland",
+      33.7
+     ],
+     [
+      "Hot desert",
+      26.7
+     ],
+     [
+      "Temperate forest",
+      26.2
+     ],
+     [
+      "Ice sheet",
+      13.1
+     ]
+    ],
+    "distinct": 4,
+    "changes": 15,
+    "coasts": 6,
+    "longestCols": 871,
+    "longestUnits": 27872,
+    "mountainPct": 0.2,
+    "rivers": 0,
+    "lakes": 0,
+    "hMax": 3209,
+    "hMin": -381
+   },
+   "cost": {
+    "latticeMarchesPerRing": 0,
+    "initMs": 0,
+    "ringReadMs": 6.5,
+    "baseRingReadMs": 6.5,
+    "perColumnVsToday": 1,
+    "initAsColumnsOfToday": 7,
+    "mapMs": 732
+   }
+  },
+  "11": {
+   "map": {
+    "landPct": 80.7,
+    "landBiomes": [
+     [
+      "Temperate forest",
+      40.2
+     ],
+     [
+      "Grassland",
+      23.4
+     ],
+     [
+      "Mountain rock",
+      21.5
+     ],
+     [
+      "Ice sheet",
+      8.3
+     ],
+     [
+      "Hot desert",
+      6.6
+     ]
+    ],
+    "landBiomesOver1": 5,
+    "water": {
+     "Shallow sea": 17,
+     "Sea ice": 2.3
+    }
+   },
+   "ring": {
+    "candidate": 1,
+    "metMinimum": true,
+    "landPct": 74.8,
+    "biomes": [
+     [
+      "Temperate forest",
+      54
+     ],
+     [
+      "Grassland",
+      20
+     ],
+     [
+      "Ice sheet",
+      17.3
+     ],
+     [
+      "Mountain rock",
+      8.7
+     ]
+    ],
+    "distinct": 4,
+    "changes": 16,
+    "coasts": 6,
+    "longestCols": 827,
+    "longestUnits": 26464,
+    "mountainPct": 6.5,
+    "rivers": 0,
+    "lakes": 0,
+    "hMax": 6039,
+    "hMin": -392
+   },
+   "cost": {
+    "latticeMarchesPerRing": 0,
+    "initMs": 0,
+    "ringReadMs": 5.2,
+    "baseRingReadMs": 4.9,
+    "perColumnVsToday": 1.08,
+    "initAsColumnsOfToday": 3,
+    "mapMs": 618
+   }
+  },
+  "23": {
+   "map": {
+    "landPct": 53.6,
+    "landBiomes": [
+     [
+      "Grassland",
+      33.2
+     ],
+     [
+      "Temperate forest",
+      26.4
+     ],
+     [
+      "Hot desert",
+      25.4
+     ],
+     [
+      "Ice sheet",
+      11
+     ],
+     [
+      "Mountain rock",
+      4
+     ]
+    ],
+    "landBiomesOver1": 5,
+    "water": {
+     "Shallow sea": 44.3,
+     "Sea ice": 2.1
+    }
+   },
+   "ring": {
+    "candidate": 1,
+    "metMinimum": true,
+    "landPct": 52.6,
+    "biomes": [
+     [
+      "Grassland",
+      44.8
+     ],
+     [
+      "Hot desert",
+      26
+     ],
+     [
+      "Temperate forest",
+      20.6
+     ],
+     [
+      "Mountain rock",
+      8.6
+     ]
+    ],
+    "distinct": 4,
+    "changes": 18,
+    "coasts": 6,
+    "longestCols": 721,
+    "longestUnits": 23072,
+    "mountainPct": 4.5,
+    "rivers": 0,
+    "lakes": 0,
+    "hMax": 4416,
+    "hMin": -392
+   },
+   "cost": {
+    "latticeMarchesPerRing": 0,
+    "initMs": 0,
+    "ringReadMs": 3.7,
+    "baseRingReadMs": 4.3,
+    "perColumnVsToday": 0.87,
+    "initAsColumnsOfToday": 5,
+    "mapMs": 468
+   }
+  },
+  "42": {
+   "map": {
+    "landPct": 81.4,
+    "landBiomes": [
+     [
+      "Temperate forest",
+      32.9
+     ],
+     [
+      "Mountain rock",
+      27.7
+     ],
+     [
+      "Grassland",
+      21.7
+     ],
+     [
+      "Hot desert",
+      10.1
+     ],
+     [
+      "Ice sheet",
+      7.6
+     ]
+    ],
+    "landBiomesOver1": 5,
+    "water": {
+     "Shallow sea": 16.3,
+     "Sea ice": 2.3
+    }
+   },
+   "ring": {
+    "candidate": 0,
+    "metMinimum": true,
+    "landPct": 67.8,
+    "biomes": [
+     [
+      "Mountain rock",
+      31.2
+     ],
+     [
+      "Ice sheet",
+      21.5
+     ],
+     [
+      "Hot desert",
+      21
+     ],
+     [
+      "Grassland",
+      14
+     ],
+     [
+      "Temperate forest",
+      12.3
+     ]
+    ],
+    "distinct": 5,
+    "changes": 23,
+    "coasts": 6,
+    "longestCols": 699,
+    "longestUnits": 22368,
+    "mountainPct": 21.1,
+    "rivers": 0,
+    "lakes": 0,
+    "hMax": 5585,
+    "hMin": -378
+   },
+   "cost": {
+    "latticeMarchesPerRing": 0,
+    "initMs": 0,
+    "ringReadMs": 4.6,
+    "baseRingReadMs": 3.7,
+    "perColumnVsToday": 1.22,
+    "initAsColumnsOfToday": 7,
+    "mapMs": 496
+   }
+  },
+  "101": {
+   "map": {
+    "landPct": 58,
+    "landBiomes": [
+     [
+      "Temperate forest",
+      38.6
+     ],
+     [
+      "Grassland",
+      38.2
+     ],
+     [
+      "Ice sheet",
+      10.6
+     ],
+     [
+      "Hot desert",
+      9
+     ],
+     [
+      "Mountain rock",
+      3.6
+     ]
+    ],
+    "landBiomesOver1": 5,
+    "water": {
+     "Shallow sea": 39.5,
+     "Sea ice": 2.4
+    }
+   },
+   "ring": {
+    "candidate": 1,
+    "metMinimum": true,
+    "landPct": 54.7,
+    "biomes": [
+     [
+      "Temperate forest",
+      50
+     ],
+     [
+      "Grassland",
+      31.4
+     ],
+     [
+      "Hot desert",
+      18.7
+     ]
+    ],
+    "distinct": 3,
+    "changes": 14,
+    "coasts": 8,
+    "longestCols": 998,
+    "longestUnits": 31936,
+    "mountainPct": 0,
+    "rivers": 0,
+    "lakes": 0,
+    "hMax": 1311,
+    "hMin": -320
+   },
+   "cost": {
+    "latticeMarchesPerRing": 0,
+    "initMs": 0,
+    "ringReadMs": 3,
+    "baseRingReadMs": 3.2,
+    "perColumnVsToday": 0.92,
+    "initAsColumnsOfToday": 5,
+    "mapMs": 496
+   }
+  },
+  "2026": {
+   "map": {
+    "landPct": 67.4,
+    "landBiomes": [
+     [
+      "Temperate forest",
+      37.7
+     ],
+     [
+      "Grassland",
+      30.1
+     ],
+     [
+      "Hot desert",
+      13.1
+     ],
+     [
+      "Mountain rock",
+      9.6
+     ],
+     [
+      "Ice sheet",
+      9.5
+     ]
+    ],
+    "landBiomesOver1": 5,
+    "water": {
+     "Shallow sea": 29.8,
+     "Sea ice": 2.9
+    }
+   },
+   "ring": {
+    "candidate": 0,
+    "metMinimum": true,
+    "landPct": 68.3,
+    "biomes": [
+     [
+      "Grassland",
+      49
+     ],
+     [
+      "Temperate forest",
+      30.8
+     ],
+     [
+      "Hot desert",
+      20.1
+     ]
+    ],
+    "distinct": 3,
+    "changes": 17,
+    "coasts": 6,
+    "longestCols": 785,
+    "longestUnits": 25120,
+    "mountainPct": 0,
+    "rivers": 0,
+    "lakes": 0,
+    "hMax": 2577,
+    "hMin": -397
+   },
+   "cost": {
+    "latticeMarchesPerRing": 0,
+    "initMs": 0,
+    "ringReadMs": 4.6,
+    "baseRingReadMs": 4.5,
+    "perColumnVsToday": 1.01,
+    "initAsColumnsOfToday": 3,
+    "mapMs": 525
+   }
+  }
+ }
+}

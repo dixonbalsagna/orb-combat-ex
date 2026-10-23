@@ -1,0 +1,3 @@
+# Full-size fixed-view globes: run.mjs writes them for sheets.mjs's comparison sheets, which hold them at half size.
+img/*/*-front.png
+img/*/*-back.png
