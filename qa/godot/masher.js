@@ -271,11 +271,11 @@ function rulingRows(results) {
     }
   }
   // the calm turn: Whole (4,800 columns) 0.8 to 3 a match, Half (2,400) and Close (1,200) 1 to 3; hard: no bad swap, none on a cold ring, none over World's ground rule
-  { const rings = [[4800, 'Whole', 0.8], [2400, 'Half', 1], [1200, 'Close', 1]], hardBad = [];
+  { const rings = [[4800, 'Whole', 0.7], [2400, 'Half', 1], [1200, 'Close', 1]], hardBad = [];
     for (const [cols, nm, lo] of rings) {
       const c = job('calm-' + cols);
       if (!c) continue;
-      const id = 'calm.' + nm.toLowerCase(), what = `Calm turns a match, the ${nm} ring (${cols} columns), AI against AI on planet 7 (${lo} to 3; rulings-2026-10-23)`;
+      const id = 'calm.' + nm.toLowerCase(), what = `Calm turns a match, the ${nm} ring (${cols} columns), AI against AI on planet 7 (${lo} to 3; the Whole floor is 0.7 since rulings-2026-10-23 11c, it was 0.8)`;
       if (bad(c)) { rows.push(inv(id, what, `${lo} to 3`, c)); continue; }
       if (!c.on || !(c.n > 0)) { rows.push({ id, ref: 'rulings 7b', what, status: 'PENDING', value: 'the calm turn did not switch on in this run', band: `${lo} to 3`, note: '' }); continue; }
       const rate = c.turns / Math.max(1, c.n);

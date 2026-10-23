@@ -56,3 +56,14 @@ Plants and glances, frozen time, the press to the wind-up (no self-contained swi
 ## Harness (uncommitted)
 
 `qa/godot/records.gd` (the cues `chase`, `wall_kick`, `counter_rush`, `calm_turn` in the cue texts; `--start=city`), `bands.js` (chase and wall kick rows), `masher.js` (the calm jobs and rows), new `calm.gd` (QA's copy of Encounter's calm-turn probe) and `run-arm.js` (one arm with its rows), and `selftest.js` (27 of 27). Saved jobs in my scratch: `gR.json`, `gH.json`, `gK.json`, `mN.json`.
+
+## Addendum (2026-10-24): the saved jobs read against Game Design's §11 bands (no new run)
+
+| Row | Read (unchanged) | New band | Now |
+| :--- | :--- | :--- | :--- |
+| Wall kicks a match, AI play from a city start | 0.26 (39 kicks in 150 matches) | **0.2 to 2** (with a human still 1 to 4; the default start is watched, not banded) | **PASS** (was FAIL against 1 to 4) |
+| Calm turns, the Whole ring | 0.77 a match | **0.7 to 3** (Half and Close stay 1 to 3) | **PASS** (was FAIL by 0.03 against 0.8) |
+| Calm turns, Half and Close | 1.33; 1.13 | 1 to 3 | PASS, as before |
+| Recoil flips a minute, AI play | 1.12 | 1.2 to 6; the AI's flip shares now 30, 60 and 85% (Encounter) | **FAIL, just under**: the saved job ran with the earlier shares (20, 45, 70%), so it says nothing about the new shares. It needs a run when Encounter's shares are on main |
+
+`records.gd` now writes `start` in each record, so the wall kick row knows a city start from the default one.

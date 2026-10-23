@@ -343,11 +343,12 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     assert.strictEqual(id(f(mk(0, 0, false)), 'flip.perMin').status, 'PENDING');
   });
   await t('the chase and the wall kick: chases a match 1 to 4 and at least 60% catch; wall kicks 1 to 4; PENDING without the cues', async () => {
-    const mk = (starts, catches, kicks) => Array.from({ length: 20 }, () => rec({ koAt: 300, cues: { ...(starts ? { chase: starts + catches } : {}), ...(kicks ? { wall_kick: kicks } : {}) }, cueText: { 'chase:start': starts, 'chase:catch': catches, 'wall_kick:rush': kicks, 'wall_kick:push': 0 }, bh: { wall: { n: 1 } } }));
+    const mk = (starts, catches, kicks, start = 'city') => Array.from({ length: 20 }, () => rec({ start, koAt: 300, cues: { ...(starts ? { chase: starts + catches } : {}), ...(kicks ? { wall_kick: kicks } : {}) }, cueText: { 'chase:start': starts, 'chase:catch': catches, 'wall_kick:rush': kicks, 'wall_kick:push': 0 }, bh: { wall: { n: 1 } } }));
     const f = D => evaluate({ default: D }), id = (rows, k) => rows.find(r => r.id === k);
     assert.strictEqual(id(f(mk(2, 2, 1)), 'chase.perMatch').status, 'PASS'); assert.strictEqual(id(f(mk(2, 2, 1)), 'chase.catch').status, 'PASS');
     assert.strictEqual(id(f(mk(2, 1, 1)), 'chase.catch').status, 'FAIL');
-    assert.strictEqual(id(f(mk(2, 2, 1)), 'wallkick.perMatch').status, 'PASS'); assert.strictEqual(id(f(mk(0, 0, 0)), 'wallkick.perMatch').status, 'PENDING'); assert.strictEqual(id(f(mk(0, 0, 0)), 'chase.perMatch').status, 'PENDING');
+    assert.strictEqual(id(f(mk(2, 2, 1)), 'wallkick.perMatch').status, 'PASS'); assert.strictEqual(id(f(mk(2, 2, 1, '')), 'wallkick.perMatch').status, 'INFO'); assert.strictEqual(id(f(mk(2, 2, 3)), 'wallkick.perMatch').status, 'FAIL');   // 0.2 to 2 from a city start; watched from the default start (rulings-2026-10-23 11a)
+     assert.strictEqual(id(f(mk(0, 0, 0)), 'wallkick.perMatch').status, 'PENDING'); assert.strictEqual(id(f(mk(0, 0, 0)), 'chase.perMatch').status, 'PENDING');
   });
   await t('L17: the lit-B newcomer wins at most 50% against medium and 50 to 95% against easy', async () => {
     const { masherRows } = require('./masher');
