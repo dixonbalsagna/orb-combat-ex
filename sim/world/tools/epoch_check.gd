@@ -35,7 +35,10 @@ func ready(cols: int, seed: int = 1) -> SimState:
 ## The sim warms a decided turn's rings itself, k columns of each a tick (WorldEpoch.tick); no host calls anything. Here k is made large so one tick, with no hold, reads them all.
 func warmAll(S: SimState) -> void:
 	S.epoch.next.k = 100000
-	WorldEpoch.tick(S, false)
+	var g: int = 0
+	while WorldEpoch.warmAngles(S).size() < S.epoch.warm.size() and g < 100:   # read at once; a ring counts as warm prepTicks ticks later, when its preparation is whole
+		WorldEpoch.tick(S, false)
+		g += 1
 
 
 ## A match that plays by SimCore.step alone (no host, no director) with a turn decided at tick 30: the tick it swaps on and its hash. mode 1: the slices kept outside the state are lost at tick 20 (a state
@@ -486,5 +489,36 @@ func _init() -> void:
 				seaSeen += 1
 				break
 	ok(waterOk and seaSeen >= 2, "WorldWater.init over the hand-made world and 15 planet rings (%d of them with sea): the same water as the original laps, bit for bit" % seaSeen)
+	# --- a ring counts as warm when its swap preparation is due, and a swap on that tick pays nothing
+	var pt: int = int(d.prepTicks)
+	var Su := ready(2400)
+	WorldEpoch.ask(Su, "u", mid(Su), 1, 0)
+	WorldEpoch.choose(Su, 3, 100000, 2.5)
+	var nTicks: int = 0
+	while WorldEpoch.warmAngles(Su).is_empty() and nTicks < 100:
+		WorldEpoch.tick(Su, false)
+		nTicks += 1
+	ok(nTicks == pt and WorldEpoch.warmAngles(Su).size() == 2, "a ring read in one tick counts as warm exactly prepTicks (%d) ticks later, not before" % pt)
+	var firstTick: Array = []
+	var swapUnprep: Array = []
+	for variant in range(3):   # a landing's picks as DirCalm makes them (k 16, fallback 2.5), a pause's one ring (k 32), and the preparation lost while it is being made
+		var Sq := ready(2400)
+		WorldEpoch.ask(Sq, "q", mid(Sq), 1, 0)
+		if variant == 1:
+			WorldEpoch.choose(Sq, 3, 32, 0.0)
+		else:
+			WorldEpoch.choose(Sq, 3, 16, 2.5)
+		for f in Sq.fighters:
+			f.x = float(Sq.epoch.next.pc) * SimConst.COL
+		var tt: int = 0
+		while Sq.epoch.n == 0 and tt < 600:
+			tt += 1
+			if variant == 2 and tt == 150 + 2:
+				WorldEpoch._plans.clear()   # the rings were read at tick 150: two ticks into the preparation
+			WorldEpoch.tick(Sq, true)
+		firstTick.append(tt)
+		swapUnprep.append(int(Sq.epoch.unprep))
+	var readTicks: int = 2400 / 16
+	ok(firstTick[0] == readTicks + pt - 1 and firstTick[1] == 2400 / 32 + pt - 1 and firstTick[2] == firstTick[0] and swapUnprep[0] == 0 and swapUnprep[1] == 0, "a landing pick (k 16, two rings) swaps on tick %d = the ticks to read (%d) + prepTicks - 1, a pause's pick (k 32, one ring) on %d, both with the preparation done (unprep %d, %d); with the preparation lost two ticks in the swap comes on the same tick (%d)" % [firstTick[0], readTicks, firstTick[1], swapUnprep[0], swapUnprep[1], firstTick[2]])
 	print("EPOCH: %d check(s) failed" % fails)
 	quit()

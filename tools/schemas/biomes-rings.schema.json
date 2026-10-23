@@ -293,7 +293,8 @@
         "moveMax",
         "minDeg",
         "warmCols",
-        "fallbackDeg"
+        "fallbackDeg",
+        "prepTicks"
       ],
       "additionalProperties": false,
       "properties": {
@@ -369,6 +370,12 @@
           "minimum": 0,
           "maximum": 10,
           "description": "The bearing in degrees of the second ring a decided turn warms (a landing off the pivot falls back to it), unless Encounter's pick brings its own; 0 for none."
+        },
+        "prepTicks": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60,
+          "description": "Ticks after a ring is read when it counts as warm: its swap preparation is scheduled to be whole by then (1: all at once, on the tick it is read)."
         }
       }
     }

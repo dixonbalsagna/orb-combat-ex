@@ -149,12 +149,12 @@ static func choose(S: SimState, i: int, k: int = 0, fallbackDeg: float = -1.0) -
 	var fb: float = float(d.fallbackDeg) if fallbackDeg < 0.0 else fallbackDeg
 	if fb > 0.0:
 		fb = maxf(fb, float(d.minDeg))
-	var warm: Array = [{"deg": c.bearing, "spec": c.spec, "cols": 0}]
+	var warm: Array = [{"deg": c.bearing, "spec": c.spec, "cols": 0, "ptk": -1}]
 	if fb > 0.0 and fb < absf(float(c.bearing)) - 1e-9:
 		var sgn: float = 1.0 if float(c.bearing) >= 0.0 else -1.0
 		var ns: Dictionary = turned(WorldPlanet.make(int(E.seed)), E.ring, int(E.ask.pc), sgn * fb)
 		if driftOf(E.c0, ns.c) <= float(d.driftDeg):
-			warm.append({"deg": sgn * fb, "spec": ns, "cols": 0})
+			warm.append({"deg": sgn * fb, "spec": ns, "cols": 0, "ptk": -1})
 	E.next = {"spec": c.spec, "pc": E.ask.pc, "bearing": c.bearing, "drift": c.drift, "why": E.ask.why, "tick": S.tick, "due": E.ask.due, "k": k if k > 0 else int(d.warmCols), "fb": absf(float(warm[1].deg)) if warm.size() > 1 else 0.0}   # tick: the pick's; due: the moment it is for. k and fb are hashed
 	E.warm = warm
 	E.ask = null
@@ -206,6 +206,8 @@ static func _warm(S: SimState) -> bool:
 		w.cols = int(w.cols) + n
 		if job.done:
 			w.cols = maxi(int(w.cols), SimConst.NC)
+			if int(w.ptk) < 0:
+				w.ptk = 0   # read: its preparation's ticks begin (the first is this one: _prep, below)
 			WorldPlanet.memoRing(int(E.seed), job.ring, job.slice)
 		else:
 			w.cols = mini(int(w.cols), SimConst.NC - 1)
@@ -250,37 +252,68 @@ static func _wtStep(E: Dictionary, pl: Dictionary, n: int) -> void:
 static func _prep(S: SimState, E: Dictionary) -> void:
 	var pl: Dictionary = _plan(S)
 	_wtStep(E, pl, WT_STEP)
+	var pt: int = int(data().prepTicks)
 	for w in E.warm:
-		if int(w.cols) < SimConst.NC:
-			continue
 		var key: String = _jkey(S, float(w.deg))
 		var job = _jobs.get(key)
-		if job == null or not job.done:
+		if job == null:
 			continue
 		var ep = pl.e.get(key)
 		if ep == null:
-			ep = _entry(job.slice)
+			ep = _entry()
 			pl.e[key] = ep
-		_prepStep(S, E, pl, w, ep, job.slice, HASH_STEP)
+		_hashTo(ep, job.slice, int(job.i))   # the slice's heights are hashed as the columns are read
+		if int(w.ptk) >= 0 and int(w.ptk) < pt:
+			_prepTo(S, E, pl, ep, job.slice, int(w.ptk), pt)   # the preparation's tick p of prepTicks
+			w.ptk = int(w.ptk) + 1
 
 
-static func _entry(sl: WorldPlanet.Slice) -> Dictionary:
-	return {"hb": sl.heights.to_byte_array() + sl.biomes, "pos": 0, "h": 0x811c9dc5, "sh": -1, "stage": 0, "fi": 0, "ready": false}
+static func _entry() -> Dictionary:
+	return {"pos": 0, "h": 0x811c9dc5, "sh": -1, "stage": 0, "fi": 0, "ready": false}
 
 
-## One step of a ring's preparation: the slice hash (`bytes` more of it) and the next stage of the geometry (once the weights are whole): 0 the kept and fresh places and the blended ground, then a
-## fresh place's layout a step, then the assembly (the biome table and the platforms over the blended ground).
-static func _prepStep(S: SimState, E: Dictionary, pl: Dictionary, w: Dictionary, ep: Dictionary, sl: WorldPlanet.Slice, bytes: int) -> void:
-	if int(ep.sh) < 0:
-		var h: int = ep.h
-		var hb: PackedByteArray = ep.hb
-		var i1: int = mini(hb.size(), int(ep.pos) + bytes)
-		for i in range(int(ep.pos), i1):
+## The slice hash (WorldPlanet.sliceHash: FNV over the heights' bytes, then the biomes') as far as `ncols` columns are read: the heights as they come, the biomes once the ring is whole. Catches up from
+## wherever it is, so a lost preparation is made again to the same value.
+static func _hashTo(ep: Dictionary, sl: WorldPlanet.Slice, ncols: int) -> void:
+	if int(ep.sh) >= 0:
+		return
+	var NC: int = SimConst.NC
+	var h: int = ep.h
+	var pos: int = ep.pos
+	var upto: int = mini(ncols, NC)
+	if pos < upto * 4:
+		var hb: PackedByteArray = sl.heights.slice(pos / 4, upto).to_byte_array()
+		for i in range(hb.size()):
 			h = SimRng.imul((h ^ hb[i]) & WorldPlanet.MASK, 0x01000193)
-		ep.h = h
-		ep.pos = i1
-		if i1 >= hb.size():
-			ep.sh = h & WorldPlanet.MASK
+		pos = upto * 4
+	if ncols >= NC:
+		for i in range(NC):
+			h = SimRng.imul((h ^ sl.biomes[i]) & WorldPlanet.MASK, 0x01000193)
+		ep.sh = h & WorldPlanet.MASK
+		pos = NC * 5
+	ep.h = h
+	ep.pos = pos
+
+
+## The preparation due by tick p of pt: the stage that needs the whole slice at p 0, then the new places' layouts spread so that all are laid by the last tick, and the assembly on it. Anything due that
+## is not yet made (a preparation lost and begun again) is made now, so the state after tick p is the same whatever came before.
+static func _prepTo(S: SimState, E: Dictionary, pl: Dictionary, ep: Dictionary, sl: WorldPlanet.Slice, p: int, pt: int) -> void:
+	if int(pl.wtN) < SimConst.NC:
+		_wtStep(E, pl, SimConst.NC)
+	_hashTo(ep, sl, SimConst.NC)
+	if int(ep.stage) == 0:
+		_geomStep(S, E, pl, ep, sl)
+	var F: int = ep.fresh.size()
+	var want: int = F if p >= pt - 1 else (F * p) / maxi(1, pt - 1)
+	while int(ep.fi) < want:
+		_geomStep(S, E, pl, ep, sl)
+	if p >= pt - 1 and not bool(ep.ready):
+		_geomStep(S, E, pl, ep, sl)
+
+
+## One step of a ring's geometry (once the weights are whole): stage 0 the kept and fresh places and the blended ground, then one fresh place's layout, then the assembly (the biome table and the platforms
+## over the blended ground).
+static func _geomStep(S: SimState, E: Dictionary, pl: Dictionary, ep: Dictionary, sl: WorldPlanet.Slice) -> void:
 	if bool(ep.ready) or int(pl.wtN) < SimConst.NC:
 		return
 	var NC: int = SimConst.NC
@@ -376,9 +409,14 @@ static func warmAngles(S: SimState) -> Array:
 	if E == null or E.next == null:
 		return out
 	for w in E.warm:
-		if int(w.cols) >= SimConst.NC:
+		if _usable(w):
 			out.append(float(w.deg))
 	return out
+
+
+## A warm ring a swap may use: read, and its preparation due (data prepTicks ticks after it was read: `ptk` counts them in the state).
+static func _usable(w: Dictionary) -> bool:
+	return int(w.cols) >= SimConst.NC and int(w.ptk) >= int(data().prepTicks)
 
 
 # ===================================================================== calm
@@ -424,7 +462,7 @@ static func tick(S: SimState, hold: bool = true) -> void:
 		return
 	var best = null
 	for w in E.warm:
-		if int(w.cols) < SimConst.NC:
+		if not _usable(w):
 			continue
 		var a: float = absf(float(w.deg))
 		if a < float(d.minDeg) - 1e-9 or smax * SimDetMath.sin(a * _PI / 180.0) > float(d.moveMax):
@@ -476,13 +514,11 @@ static func swap(S: SimState) -> void:
 	var pl: Dictionary = _plan(S)
 	var ep = pl.e.get(key)
 	if ep == null:
-		ep = _entry(sl)
+		ep = _entry()
 		pl.e[key] = ep
 	if not (bool(ep.ready) and int(ep.sh) >= 0 and int(pl.wtN) >= SimConst.NC):
-		E.unprep = int(E.unprep) + 1
-		_wtStep(E, pl, SimConst.NC)
-		while not (bool(ep.ready) and int(ep.sh) >= 0):
-			_prepStep(S, E, pl, {}, ep, sl, 1 << 30)
+		E.unprep = int(E.unprep) + 1   # a preparation lost (a state carried into another process): made now, on the same tick, with the same functions
+		_prepTo(S, E, pl, ep, sl, int(data().prepTicks) - 1, int(data().prepTicks))
 	_dropJobs(S)
 	var NC: int = SimConst.NC
 	var COL: float = SimConst.COL

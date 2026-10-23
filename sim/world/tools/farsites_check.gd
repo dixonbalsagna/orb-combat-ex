@@ -122,7 +122,10 @@ func _init() -> void:
 	if not WorldEpoch.ask(Se, "t", mid, 1, 0).is_empty():
 		WorldEpoch.choose(Se, 3)
 		Se.epoch.next.k = 100000
-		WorldEpoch.tick(Se, false)
+		var warmG: int = 0
+		while WorldEpoch.warmAngles(Se).size() < Se.epoch.warm.size() and warmG < 100:   # read at once; a ring counts as warm prepTicks ticks later
+			WorldEpoch.tick(Se, false)
+			warmG += 1
 		WorldEpoch.tick(Se, true)
 	var moved: bool = Se.epoch.n == 1 and (Se.planetRing.c[0] != before[0] or Se.planetRing.c[1] != before[1] or Se.planetRing.c[2] != before[2])
 	for k in range(3):
