@@ -540,6 +540,10 @@
       "schema": "anim-guard-pass.schema.json"
     },
     {
+      "match": "data/anim/press_ack.json",
+      "schema": "anim-press-ack.schema.json"
+    },
+    {
       "match": "data/anim/recoil.json",
       "schema": "anim-recoil.schema.json"
     },

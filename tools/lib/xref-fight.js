@@ -1104,6 +1104,16 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor, root }) {
         }
       }
     }
+    const pak = get('data/anim/press_ack.json');
+    if (isObj(pak)) {
+      const PK = 'data/anim/press_ack.json';
+      const okPose = (id) => !posesP.size || posesP.has(id);
+      if (isObj(pak.cells)) for (const [k, v] of Object.entries(pak.cells)) if (!k.startsWith('_') && isObj(v) && typeof v.pose === 'string' && !okPose(v.pose)) err(PK, `/cells/${esc(k)}/pose`, 'anim-press-ack-pose', `pose "${v.pose}" is not in poses.json nor a wave's poses file`);
+      if (isObj(pak.fighters)) for (const [who, cs] of Object.entries(pak.fighters)) {
+        if (who.startsWith('_') || !isObj(cs)) continue;
+        for (const [k, id] of Object.entries(cs)) if (!k.startsWith('_') && typeof id === 'string' && !okPose(id)) err(PK, `/fighters/${esc(who)}/${esc(k)}`, 'anim-press-ack-pose', `pose "${id}" is not in poses.json nor a wave's poses file`);
+      }
+    }
     const thr = get('data/anim/throws.json');
     if (isObj(thr) && isObj(thr.sends)) {
       const used = new Set();

@@ -41,6 +41,7 @@ static var agency: Dictionary = {}       # data/anim/agency.json: how the agency
 static var intro: Dictionary = {}        # data/anim/intro.json: the opening's timings and each shape's staredown beat
 static var brake: Dictionary = {}        # data/anim/brake.json: the mid-air skid (docs/animation/ragdoll-physics-paper.md section 3a)
 static var clinch: Dictionary = {}       # data/anim/clinch.json: the clinch's grip layer (docs/animation/clinch-sizing.md slice C2)
+static var press_ack: Dictionary = {}    # data/anim/press_ack.json: the anticipation of a press that has to wait (Encounter's press_ack queued)
 static var recoil: Dictionary = {}       # data/anim/recoil.json: recoil exits and ricochets (docs/combat/choreography-feel.md)
 static var chain: Dictionary = {}        # data/anim/chain.json: the chain inside a tower (docs/animation/ragdoll-physics-paper.md section 4)
 static var ground: Dictionary = {}       # data/anim/ground.json: how ground contact scales its poses (surface, speed, hold times)
@@ -118,16 +119,17 @@ static func load_all() -> void:
 	var b_flag: bool = RenderAnim.air_brake and not OS.get_cmdline_user_args().has("--no-air-brake")
 	var c_flag: bool = RenderAnim.chain_poses and not OS.get_cmdline_user_args().has("--no-chain-poses")
 	var r_flag: bool = RenderAnim.recoil_flips and not OS.get_cmdline_user_args().has("--no-recoil-flips")
+	var p_flag: bool = RenderAnim.press_ack and not OS.get_cmdline_user_args().has("--no-press-ack")
 	var k_flag: bool = RenderAnim.grip_layer and not OS.get_cmdline_user_args().has("--no-grip-layer")
 	var s3_flag: bool = (OS.get_cmdline_user_args().has("--step3-cues") or RenderAnim.step3_cues) and not OS.get_cmdline_user_args().has("--no-step3-cues")
-	if load_waves or live_flag or s3_flag or g_flag or i_flag or l_flag or a_flag or b_flag or c_flag or k_flag or r_flag or OS.get_cmdline_user_args().has("--waves"):
+	if load_waves or live_flag or s3_flag or g_flag or i_flag or l_flag or a_flag or b_flag or c_flag or k_flag or r_flag or p_flag or OS.get_cmdline_user_args().has("--waves"):
 		var da := DirAccess.open(DIR + "waves")
 		if da != null:
 			var names: Array = []
 			for fn in da.get_files():
 				if fn.ends_with(".poses.json"):
 					var wn0: String = fn.trim_suffix(".poses.json")
-					if load_waves or OS.get_cmdline_user_args().has("--waves") or (live_flag and wn0 == "wave1") or (s3_flag and wn0 == "step3") or (g_flag and wn0 == "ground1") or (i_flag and wn0 == "intro1") or (l_flag and wn0 == "laststand1") or (a_flag and wn0 == "agency1") or (b_flag and wn0 == "brake1") or (c_flag and (wn0 == "chain1" or wn0 == "lodge1")) or (k_flag and wn0 == "cl1") or (r_flag and wn0 == "recoil1"):   # the live flag loads wave 1 only, the step 3 flag its own cues
+					if load_waves or OS.get_cmdline_user_args().has("--waves") or (live_flag and wn0 == "wave1") or (s3_flag and wn0 == "step3") or (g_flag and wn0 == "ground1") or (i_flag and wn0 == "intro1") or (l_flag and wn0 == "laststand1") or (a_flag and wn0 == "agency1") or (b_flag and wn0 == "brake1") or (c_flag and (wn0 == "chain1" or wn0 == "lodge1")) or (k_flag and wn0 == "cl1") or (r_flag and wn0 == "recoil1") or (p_flag and wn0 == "ack1"):   # the live flag loads wave 1 only, the step 3 flag its own cues
 						names.append(wn0)
 			names.sort()
 			for wn in names:
@@ -154,6 +156,7 @@ static func load_all() -> void:
 	chain = _read("chain.json")
 	clinch = _read("clinch.json")
 	recoil = _read("recoil.json")
+	press_ack = _read("press_ack.json")
 	personality = _read("personality.json")
 	winner = _read("winner.json")
 	quality_levels = _read("quality.json").get("levels", {})

@@ -100,6 +100,7 @@ var _gr: Dictionary = {}                # the clinch's hold read (on_hold): part
 var _gr_w: float = 0.0                 # the hold's weight now: in over ramp_ticks, out over the same
 var _rc: Dictionary = {}                # the recoil exit playing (on_recoil): kind, t0, dur, cfg, seq, the surface's normal
 var _fid: String = ""                 # this body's roster id, kept from the ragdoll's tick (for the per-fighter sequences)
+var _ack: Dictionary = {}               # the press-tick anticipation playing (on_press_ack): pose, weight, start, hold, end, the hits taken at the start
 var _ab_on: bool = false                # the sim's air brake is on (an air_brake event)
 var _ab_w: float = 0.0                 # the skid's weight now: in over enter_ticks, out over exit_ticks
 var _ab_str: float = 0.0               # how hard it is from the deceleration he shows (0 to 1)
@@ -535,6 +536,62 @@ func _recoil_layer(S: SimState, f, dt: float) -> void:
 	root_off.y += arc * sin(PI * u)
 	_lead_d = 0.0
 	_lead_w = 0.0
+
+
+## The press-tick anticipation (docs/animation/press-ack.md; data/anim/press_ack.json). A player's press that has to wait (a cooldown after an exchange) is acknowledged by the sim on its own tick (Encounter's cue press_ack,
+## text queued): the body commits at once, the first frames of a wind-up mixed over the idle stance at a part weight, and hands over to the real wind-up when the exchange starts. It carries no information the sim doesn't
+## (nothing is drawn on the fighters): the lean, the weight shifted forward or sunk, the shoulder turning in.
+func on_press_ack(cell: String, n: int, wait: int, T: float) -> void:
+	var A: Dictionary = AnimData.press_ack
+	if A.is_empty() or not RenderAnim.press_ack:
+		return
+	if wait >= 0 and wait < int(A.get("min_wait", 3)):
+		return   # the exchange starts before it could read
+	var cfg: Dictionary = A.get("cells", {}).get(cell, {})
+	if cfg.is_empty():
+		return
+	var id: String = String(A.get("fighters", {}).get(_fid, {}).get(cell, cfg.get("pose", "")))
+	if not AnimData.pose_exists(id):
+		return
+	var hold_ticks: int = wait if wait >= 0 else int(A.get("max_ticks", 36))
+	_ack = {"pose": id, "w": float(cfg.get("w", 0.6)), "t0": T, "hold": float(hold_ticks) * DT, "end": -1.0, "hits": _hit_n, "wind": float(windup_cue.get("T", -10.0))}
+	debug["acks"] = int(debug.get("acks", 0)) + 1
+
+
+func _ack_layer(S: SimState, f, dt: float) -> void:
+	if _ack.is_empty():
+		return
+	var A: Dictionary = AnimData.press_ack
+	var T: float = S.T
+	if A.is_empty() or not RenderAnim.press_ack:
+		_ack = {}
+		return
+	if float(_ack.end) < 0.0:
+		# the exchange starts: the sim's wind-up cue, a blow taken, his state or an approach leaving the idle stand; or the wait runs out
+		var why: String = ""
+		if float(windup_cue.get("T", -10.0)) > float(_ack.wind):
+			why = "windup"
+		elif _hit_n != int(_ack.hits):
+			why = "hit"
+		elif String(f.state) != "free":
+			why = "state " + String(f.state)
+		elif f.rush != null:
+			why = "rush"
+		elif T - float(_ack.t0) >= float(_ack.hold):
+			why = "wait"
+		if why != "":
+			_ack.end = T
+			debug["ack_end"] = why
+	var w: float = smoothstep(0.0, maxf(float(A.get("enter_ticks", 3)) * DT, 0.001), T - float(_ack.t0))
+	if float(_ack.end) >= 0.0:
+		var x: float = (T - float(_ack.end)) / maxf(float(A.get("exit_ticks", 3)) * DT, 0.001)
+		if x >= 1.0:
+			_ack = {}
+			return
+		w *= 1.0 - smoothstep(0.0, 1.0, x)
+	if RenderAnim.reduced_motion:
+		w *= 0.6
+	_mix_pose(AnimData.pose(String(_ack.pose)), w * float(_ack.w))
 
 
 ## The clinch's grip layer (docs/animation/clinch-sizing.md slice C2; data/anim/clinch.json). The sim's hold arrives as a read, `on_hold(read, T)`: {partner (a fighter's slot), kind (tie, pummel, brace, pin, carry, strain, whiff,
@@ -1974,6 +2031,7 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 	if RenderAnim.debug_checks:
 		layers = ("cue:" + String(_cue.get("kind", "")) + " " if not _cue.is_empty() else "") + ("rush " if _rushing else "") + ("react " if not _reacts.is_empty() else "") + ("ik " if _ci_w > 0.001 else "") + ("beam " if f.beamCharge != null else "") + (f.state + " ")
 	_grip_layer(S, f, dt)
+	_ack_layer(S, f, dt)
 	_air_brake_layer(S, f, dt)
 	_recoil_layer(S, f, dt)
 	_lead_layer(S, f, dt)

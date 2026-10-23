@@ -63,6 +63,9 @@ const CUE_SCENARIOS := {
 	"rc_backflip": {"kind": "rc", "actor": 0, "target": -1, "text": "backflip", "span": 0, "n": 60, "label": "recoil: the backflip (24 ticks), the Protagonist then the Anti-hero"},
 	"rc_handspring": {"kind": "rc", "actor": 0, "target": -1, "text": "handspring", "span": 0, "n": 60, "label": "recoil: the back handspring (18 ticks)"},
 	"rc_wall": {"kind": "rc", "actor": 0, "target": -1, "text": "ricochet_wall", "span": 0, "n": 60, "label": "recoil: a ricochet off a wall on his right (14 ticks)"},
+	"pa_light": {"kind": "pa", "actor": 0, "target": -1, "text": "x", "span": 24, "n": 56, "label": "press-tick anticipation: a light that has to wait 24 ticks (the Protagonist, then the Anti-hero)"},
+	"pa_heavy": {"kind": "pa", "actor": 0, "target": -1, "text": "y", "span": 24, "n": 56, "label": "press-tick anticipation: a heavy that has to wait 24 ticks"},
+	"pa_sig": {"kind": "pa", "actor": 0, "target": -1, "text": "b", "span": 24, "n": 56, "label": "press-tick anticipation: a signature that has to wait 24 ticks"},
 	"cue_interject": {"kind": "windup", "actor": 0, "target": -1, "text": "interject", "span": 24, "dur": 24.0, "label": "an interjection's tell: the guard (the left one) shows a 24-tick wind-up"},
 }
 const PAL_A := {"body": Color("#3d8fdc"), "legs": Color("#1b1f2a"), "arms": Color("#e6b995"), "skin": Color("#efc7a2"), "gear": Color("#cdd6e4"), "accent": Color("#4fb9a8"), "hair": Color("#22c7a0")}
@@ -454,6 +457,10 @@ func _step_tick() -> void:
 	if sc.has("cue") and String(sc.cue.kind) == "rc" and (k == 10 or k == 40):
 		var rt: String = String(sc.cue.text)
 		RenderAnim.fighter(S, f0).on_recoil(rt, {"backflip": 24, "handspring": 18, "ricochet_wall": 14}.get(rt, 18), S.T, -1.0 if rt == "ricochet_wall" else 0.0, 0.0 if rt == "ricochet_wall" else 1.0)
+	if sc.has("cue") and String(sc.cue.kind) == "pa" and k == 10 and not (float(_js("window.__noack || 0", 0.0)) > 0.0):
+		f0.state = "free"   # the study's staging: the presser stands idle and free while he waits
+		f0.rush = null
+		RenderAnim.fighter(S, f0).on_press_ack(String(sc.cue.text), -1, int(sc.cue.span), S.T)
 	if sc.has("cue") and String(sc.cue.kind) == "rd":
 		# a launched body flying free (no ground): the flail, the brace and, with the brake event, the skid. The study draws a body in place, so only its shape shows
 		if k == 0:
@@ -486,7 +493,7 @@ func _step_tick() -> void:
 			he.amount = 90.0
 			he.region = "core"
 			RenderAnim.consume(S, [he])
-	if sc.has("cue") and k == 10 and String(sc.cue.kind) != "beam" and String(sc.cue.kind) != "rd" and String(sc.cue.kind) != "fs" and String(sc.cue.kind) != "rc":
+	if sc.has("cue") and k == 10 and String(sc.cue.kind) != "beam" and String(sc.cue.kind) != "rd" and String(sc.cue.kind) != "fs" and String(sc.cue.kind) != "pa" and String(sc.cue.kind) != "rc":
 		var cd: Dictionary = sc.cue
 		var ce := SimState.FxEvent.new()
 		ce.type = "cue"

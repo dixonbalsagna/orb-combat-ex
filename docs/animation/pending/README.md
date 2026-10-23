@@ -11,3 +11,12 @@ Apply on main (with the recoil flips). Account: `docs/animation/shiver-by-weight
 - The hit-stop's shake follows its weight: `sqrt(ticks / 8)`, 0.5 to 1.6 of the profile's `shiver` (2 ticks 0.5, 8 ticks as before, 12 ticks 1.22, 24 ticks 1.6). A blow with no stop of its own (a mash's later blows, GD section 6) shakes the struck body for 6 ticks, decaying, small for a light. `RenderAnim.shiver_by_weight`, `--no-shiver-weight` is the before.
 - `render/anim/anim_fighter.gd` (the shake; `on_hit` takes the damage event's `stop`), `render/anim/render_anim.gd` (passes it, the switch), `render/anim/tools/anim_check.gd` (`_test_shake`), `render/anim/tools/flurry_study.gd` (scenario `hsw`, `window.__noshiver`).
 - Not in it: the `_cue_windup` tolerance. A counter over 331 wind-up cues in AI v AI found 0 outside the 4 ticks, so there is nothing to widen.
+
+## Parked: `press-ack.patch` (2026-10-23), 11 files, render side only; apply after `shiver-by-weight.patch`
+
+Account: `docs/animation/press-ack.md`. Clip: `homework/press-ack/press-ack-before-after.gif`.
+
+- The press-tick anticipation (Encounter's `press_ack` text `queued`): on the press tick the fighter commits with the first frames of the wind-up (wave `ack1`, prefix `ak`, 6 poses: a light's lean in, a heavy's weight forward, a signature's sink, one each per fighter), ramped in over 6 ticks, held for the wait, let go over 6 ticks, and handed over to the real wind-up when the exchange starts. `RenderAnim.press_ack`, `--no-press-ack`.
+- `data/anim/press_ack.json` is a new key set: **Tools' closed schema needs an entry** (the request is in the account).
+- Gates on a scratch export of main with the shake-by-weight park applied: `anim_check` with no arguments, the scans `--strict`, the 4-body scans, determinism plain and `--intro` all pass.
+

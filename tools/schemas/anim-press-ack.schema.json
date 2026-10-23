@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-press-ack",
+  "title": "anim.press_ack/1",
+  "description": "data/anim/press_ack.json: the anticipation of a press that has to wait (docs/animation/press-ack.md; AnimFighter's press_ack layer): Encounter's cue press_ack names the button cell (x a light, y a heavy, b the big press); the layer eases the cell's pose in over enter_ticks, holds it at most max_ticks, and lets go over exit_ticks. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore. Cross-reference in tools/lib/xref-fight.js (anim-press-ack-pose: every pose named exists in a wave's poses).",
+  "type": "object",
+  "required": [
+    "schema",
+    "enter_ticks",
+    "exit_ticks",
+    "max_ticks",
+    "min_wait",
+    "cells",
+    "fighters"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.press_ack/1"
+    },
+    "enter_ticks": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20,
+      "description": "Ticks the pose takes to ease in."
+    },
+    "exit_ticks": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 20,
+      "description": "Ticks the pose takes to let go."
+    },
+    "max_ticks": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 120,
+      "description": "The longest an acknowledgement is held, in ticks."
+    },
+    "min_wait": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 60,
+      "description": "The shortest wait, in ticks, for which a press is acknowledged at all."
+    },
+    "cells": {
+      "type": "object",
+      "required": [
+        "x",
+        "y",
+        "b"
+      ],
+      "properties": {
+        "x": {
+          "type": "object",
+          "required": [
+            "pose",
+            "w"
+          ],
+          "properties": {
+            "pose": {
+              "type": "string",
+              "pattern": "^ak\\.[a-z0-9_]+\\.[a-z0-9_]+$",
+              "description": "A pose id of a wave (ak.<sequence>.<phase>): rule anim-press-ack-pose."
+            },
+            "w": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How far the pose is mixed in at the top of the ramp, 0 to 1."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "y": {
+          "type": "object",
+          "required": [
+            "pose",
+            "w"
+          ],
+          "properties": {
+            "pose": {
+              "type": "string",
+              "pattern": "^ak\\.[a-z0-9_]+\\.[a-z0-9_]+$",
+              "description": "A pose id of a wave (ak.<sequence>.<phase>): rule anim-press-ack-pose."
+            },
+            "w": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How far the pose is mixed in at the top of the ramp, 0 to 1."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        },
+        "b": {
+          "type": "object",
+          "required": [
+            "pose",
+            "w"
+          ],
+          "properties": {
+            "pose": {
+              "type": "string",
+              "pattern": "^ak\\.[a-z0-9_]+\\.[a-z0-9_]+$",
+              "description": "A pose id of a wave (ak.<sequence>.<phase>): rule anim-press-ack-pose."
+            },
+            "w": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "How far the pose is mixed in at the top of the ramp, 0 to 1."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The default pose and weight of each button cell: x a light, y a heavy, b the big press."
+    },
+    "fighters": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(_.*|[A-Z][A-Z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "propertyNames": {
+          "enum": [
+            "x",
+            "y",
+            "b"
+          ]
+        },
+        "additionalProperties": {
+          "type": "string",
+          "pattern": "^ak\\.[a-z0-9_]+\\.[a-z0-9_]+$",
+          "description": "A roster id's own pose for this cell."
+        },
+        "description": "Cell to pose."
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "A roster id to its own pose for a cell (x, y or b)."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

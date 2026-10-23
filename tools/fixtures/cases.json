@@ -297131,6 +297131,485 @@
       }
     },
     {
+      "id": "anim-press-ack-valid",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/schema": "anim.press_ack/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-ack-key-required-schema",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-press-ack-key-required-enter-ticks",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "del": [
+            "/enter_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-press-ack-key-required-exit-ticks",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "del": [
+            "/exit_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-press-ack-key-required-max-ticks",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "del": [
+            "/max_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-press-ack-key-required-min-wait",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "del": [
+            "/min_wait"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-press-ack-key-required-cells",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "del": [
+            "/cells"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-press-ack-key-required-fighters",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "del": [
+            "/fighters"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-press-ack-unknown-key",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-press-ack-underscore-key-ok",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-press-ack-schema-version",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/schema": "anim.press_ack/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-press-ack-enter-zero",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/enter_ticks": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/enter_ticks"
+      }
+    },
+    {
+      "id": "anim-press-ack-enter-over-20",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/enter_ticks": 21
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/enter_ticks"
+      }
+    },
+    {
+      "id": "anim-press-ack-exit-fraction",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/exit_ticks": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/exit_ticks"
+      }
+    },
+    {
+      "id": "anim-press-ack-exit-over-20",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/exit_ticks": 40
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/exit_ticks"
+      }
+    },
+    {
+      "id": "anim-press-ack-max-over-120",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/max_ticks": 121
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/max_ticks"
+      }
+    },
+    {
+      "id": "anim-press-ack-max-zero",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/max_ticks": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/max_ticks"
+      }
+    },
+    {
+      "id": "anim-press-ack-min-wait-negative",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/min_wait": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/min_wait"
+      }
+    },
+    {
+      "id": "anim-press-ack-min-wait-over-60",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/min_wait": 61
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/min_wait"
+      }
+    },
+    {
+      "id": "anim-press-ack-cell-missing",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "del": [
+            "/cells/b"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/cells"
+      }
+    },
+    {
+      "id": "anim-press-ack-cell-unknown",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/cells/z": {
+              "pose": "ak.x_p.set",
+              "w": 0.5
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/cells/z"
+      }
+    },
+    {
+      "id": "anim-press-ack-cell-key-missing",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "del": [
+            "/cells/x/w"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/cells/x"
+      }
+    },
+    {
+      "id": "anim-press-ack-weight-over-one",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/cells/y/w": 1.2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/cells/y/w"
+      }
+    },
+    {
+      "id": "anim-press-ack-weight-negative",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/cells/y/w": -0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/cells/y/w"
+      }
+    },
+    {
+      "id": "anim-press-ack-pose-shape",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/cells/x/pose": "Set It"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/cells/x/pose"
+      }
+    },
+    {
+      "id": "anim-press-ack-pose-not-ak",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/cells/x/pose": "rc.skip.hop"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/cells/x/pose"
+      }
+    },
+    {
+      "id": "anim-press-ack-pose-missing",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/cells/x/pose": "ak.no_such.pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-press-ack-pose",
+        "pointer": "/cells/x/pose"
+      }
+    },
+    {
+      "id": "anim-press-ack-fighter-pose-missing",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/fighters/RIVAL/y": "ak.no_such.pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-press-ack-pose",
+        "pointer": "/fighters/RIVAL/y"
+      }
+    },
+    {
+      "id": "anim-press-ack-fighter-cell-unknown",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/fighters/RIVAL/z": "ak.x_r.set"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/fighters/RIVAL/z"
+      }
+    },
+    {
+      "id": "anim-press-ack-fighter-key-not-an-id",
+      "schema": "anim-press-ack.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/press_ack.json",
+          "set": {
+            "/fighters/rival": {
+              "x": "ak.x_r.set"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/fighters/rival"
+      }
+    },
+    {
       "id": "fight-ricochet-angle-zero",
       "schema": "fight-ricochet.schema.json",
       "mutate": [

@@ -40,6 +40,7 @@ static var air_brake: bool = true            # RG2: the sim's air brake braces a
 static var chain_poses: bool = true          # RG4: World's interior contacts and its lodge play the ceiling's slam and rebound and the climb out (data/anim/chain.json); inert without those events; --no-chain-poses is the before
 static var grip_layer: bool = true            # the clinch's grip layer (docs/animation/clinch-sizing.md slice C2): the sim's hold read mixes the clinch poses in and puts each gripping hand on its region of the partner; inert without a read; --no-grip-layer is the before
 static var recoil_flips: bool = true          # recoil exits and ricochets (docs/combat/choreography-feel.md): Encounter's cue `recoil` turns the struck body over in an arc (back flip, handspring, back tuck, skip, ricochet); inert without the cue; --no-recoil-flips is the before
+static var press_ack: bool = true            # the anticipation of a press that has to wait (Encounter's cue press_ack, text queued): the first frames of the wind-up on the press tick, handed over to the real one; --no-press-ack is the before
 static var shiver_by_weight: bool = true       # the struck body's shake follows the hit-stop's weight (2 ticks a little over half, 8 as before, 24 at 1.6) and a blow with no stop of its own (a mash's later blows) still shakes, small; --no-shiver-weight is the before
 static var kick_retreat: bool = true          # a kick whose hips are past its target gives ground instead of swinging the thigh back through its limit (data sockets.json limbs.foot.min_fwd); false is the before
 static var mash_press: bool = true            # a run of mashed blows leans in (data styles.<style>.press_run); false is the before
@@ -127,6 +128,8 @@ static func _read_args() -> void:
 			grip_layer = false
 		elif a == "--no-recoil-flips":
 			recoil_flips = false
+		elif a == "--no-press-ack":
+			press_ack = false
 		elif a == "--no-shiver-weight":
 			shiver_by_weight = false
 		elif a == "--step3-cues":
@@ -364,6 +367,9 @@ static func consume(S: SimState, events: Array) -> void:
 					elif kd == "recoil":
 						# Encounter's recoil flip (DirRecoil): source the exit (skip, handspring, tuck, backflip) and dur its ticks to the landing; the sim's own bowed path carries him, the body only turns
 						fighter(S, S.fighters[who]).on_recoil(String(_ev(e, "source", "")), int(roundf(float(_ev(e, "dur", 0.0)))), t_cue, float(_ev(e, "ux", 0.0)), float(_ev(e, "uy", 1.0)))
+					elif kd == "press_ack" and String(e.text) == "queued":
+						# a press that has to wait, on its press tick: source its button cell (x, y, b), n the tick it is due to start (-1 when the wait is not a cooldown), amount the ticks to it
+						fighter(S, S.fighters[who]).on_press_ack(String(_ev(e, "source", "")), int(roundf(float(_ev(e, "n", -1.0)))), int(roundf(float(_ev(e, "amount", -1.0)))), t_cue)
 					elif kd == "charge_full":
 						fighter(S, S.fighters[who]).on_charge_full(t_cue)
 					elif kd == "tech":

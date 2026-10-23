@@ -2484,6 +2484,104 @@ func _test_shake() -> void:
 	print("shake by weight: stops 2 %.2f, 3 %.2f, 5 %.2f, 8 %.2f, 12 %.2f, 24 %.2f; a flowing light %.2f, gone by tick 10 (%.3f)" % [peak[2], peak[3], peak[5], peak[8], peak[12], peak[24], fl_peak, fl_after])
 
 
+## The press-tick anticipation (docs/animation/press-ack.md). A press that has to wait is committed to on its own tick: the body leans and sets (a light), moves its weight and winds a shoulder (a heavy) or sinks (a signature) over 6 ticks,
+## holds while the wait runs, and lets go over 6 ticks, or at once when the exchange starts (a blow taken, the wind-up cue). Nothing may be NaN or past a limit, and the body is exactly the idle stand again after it.
+func _ack_probe(cell: String, who: String, wait: int, ticks: int, hit_at: int, off: bool) -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = who
+	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+	f0.x = 1000.0
+	f1.x = 1180.0
+	f0.y = 0.0
+	f1.y = 0.0
+	f0.state = "free"
+	f1.state = "free"
+	f0.vx = 0.0
+	RenderAnim.press_ack = not off
+	var res := {"nan": 0, "viol": 0, "lean_peak": 0.0, "drop_peak": 0.0, "rest_diff": 0.0, "cleared_at": -1, "hold_diff": 0.0}
+	var base_head: Array = []
+	var a0: AnimFighter = null
+	for k in range(ticks):
+		S.tick = 8000 + k
+		S.T = 850.0 + float(k) / 60.0
+		if k == 4:
+			RenderAnim.fighter(S, f0).on_press_ack(cell, -1 if wait < 0 else 8000 + 4 + wait, wait, S.T)
+		if hit_at >= 0 and k == hit_at:
+			RenderAnim.fighter(S, f0).on_hit(S.T, "core", true, 0.3, "light", Vector2(-1, 0), 0.4, S.tick, 0.0, 0)
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		a0 = RenderAnim.solve(S, f0)
+		RenderAnim.solve(S, f1)
+		for i in range(AnimRig.N):
+			if is_nan(a0.q[i].x) or is_nan(a0.q[i].w):
+				res.nan += 1
+		res.viol += AnimJoints.violations(a0.q, a0._rd.shape_key).size()
+		var pel: Vector3 = a0.socket("pelvis")
+		var hd: Vector3 = a0.head_center()
+		base_head.append([(hd.x - pel.x) * a0.vface, pel.y, hd.y])
+		if res.cleared_at < 0 and k > 4 and a0._ack.is_empty():
+			res.cleared_at = k
+	res["samples"] = base_head
+	RenderAnim.press_ack = true
+	return res
+
+
+func _test_press_ack() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: Array = []
+	for who in ["PROTAGONIST", "RIVAL"]:
+		for cell in ["x", "y", "b"]:
+			var on: Dictionary = _ack_probe(cell, who, 20, 50, -1, false)
+			var off: Dictionary = _ack_probe(cell, who, 20, 50, -1, true)
+			var lean: float = 0.0
+			var drop: float = 0.0
+			for k in range(on.samples.size()):
+				lean = maxf(lean, absf(float(on.samples[k][0]) - float(off.samples[k][0])))
+				drop = maxf(drop, float(off.samples[k][1]) - float(on.samples[k][1]))
+			var rest: float = 0.0
+			for k in range(40, 50):
+				rest = maxf(rest, absf(float(on.samples[k][0]) - float(off.samples[k][0])) + absf(float(on.samples[k][1]) - float(off.samples[k][1])))
+			# nothing pops: the part the pose adds to the stand never changes by more than 0.6 of its whole size in one tick (the 6-tick ramps in and out, solved on twos: a pop is 0.7 or more)
+			var step: float = 0.0
+			var total: float = 0.0
+			for k in range(1, on.samples.size()):
+				var dk: float = (float(on.samples[k][0]) - float(off.samples[k][0])) - (float(on.samples[k - 1][0]) - float(off.samples[k - 1][0]))
+				var dh: float = (float(on.samples[k][1]) - float(off.samples[k][1])) - (float(on.samples[k - 1][1]) - float(off.samples[k - 1][1]))
+				step = maxf(step, Vector2(dk, dh).length())
+				total = maxf(total, Vector2(float(on.samples[k][0]) - float(off.samples[k][0]), float(on.samples[k][1]) - float(off.samples[k][1])).length())
+			if step > 0.6 * total:
+				bad.append("%s %s: the anticipation changes the body by %.2f of its %.2f units in one tick (0.6 at most)" % [who, cell, step, total])
+			var early: float = absf(float(on.samples[8][0]) - float(off.samples[8][0])) + absf(float(on.samples[8][1]) - float(off.samples[8][1]))
+			seen.append("%s %s lean %.1f drop %.1f rest %.2f cleared %d" % [who.substr(0, 1), cell, lean, drop, rest, int(on.cleared_at)])
+			if int(on.nan) > 0 or int(on.viol) > 0:
+				bad.append("%s %s: nan %d viol %d" % [who, cell, int(on.nan), int(on.viol)])
+			# it must show: a few units of lean or of sink by the end of the ramp; and be gone, to the idle stand, after the wait and the exit
+			if early < 1.2:
+				bad.append("%s %s: shows %.2f units 4 ticks in (1.2 wanted)" % [who, cell, early])
+			if rest > 0.35 or int(on.cleared_at) < 0:
+				bad.append("%s %s: not back to the stand after the wait (diff %.2f, cleared %d)" % [who, cell, rest, int(on.cleared_at)])
+	# a blow taken ends it at once: let go over its 6 ticks from the hit, not at the end of the wait
+	var hit: Dictionary = _ack_probe("x", "PROTAGONIST", 30, 50, 12, false)
+	if int(hit.cleared_at) < 0 or int(hit.cleared_at) > 12 + 8:
+		bad.append("a blow taken at tick 12 leaves it on until tick %d (20 at most)" % int(hit.cleared_at))
+	# a wait under min_wait shows nothing
+	var tiny: Dictionary = _ack_probe("y", "PROTAGONIST", 2, 20, -1, false)
+	if int(tiny.cleared_at) != 5:
+		bad.append("a 2-tick wait started an anticipation (cleared at %d: 5 means it never started)" % int(tiny.cleared_at))
+	_expect(bad.is_empty(), "press-tick anticipation: every cell and fighter plays clean, shows and hands back: %s" % str(bad))
+	print("press-tick anticipation: %s" % " | ".join(seen))
+
+
 func _test_pulled() -> void:
 	AnimData.load_every_wave()
 	main.start_match(4, {"p1": false, "p2": false})
@@ -5157,6 +5255,7 @@ func _run() -> void:
 	_test_charge_cut()
 	_test_grip()
 	_test_recoil()
+	_test_press_ack()
 	_test_shake()
 	_test_pulled()
 	_test_bends()
