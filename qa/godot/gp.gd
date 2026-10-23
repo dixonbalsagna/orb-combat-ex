@@ -46,6 +46,8 @@ func _init() -> void:
 		"clinches0": 0, "throwDmg": 0.0, "throwN": 0, "hpEnd": [], "hard": {"strayStep": 0, "regrab": 0, "aiTechSoon": 0}, "reactTicks": react}
 	r["probe"] = "gp"
 	r["brinkMatches"] = 0
+	r["maxAge"] = 0
+	r["maxLive"] = 0
 	r["dmgTo1"] = 0.0
 	r["requested"] = n
 	r["n"] = 0
@@ -58,6 +60,7 @@ func _init() -> void:
 			break
 		var t_match: int = Time.get_ticks_msec()
 		var capped := false
+		var live_age := 0   # the live ticks of the clinch running now (hit-stop ticks advance S.tick and not the clinch)
 		var brink1 := false   # the AI (slot 1) reached the brink in this match
 		var S := SimCore.createSim()
 		var human: bool = mode != "ai"
@@ -66,6 +69,8 @@ func _init() -> void:
 		var lastX := -1000
 		var lastA := -1000
 		var bAt := -1
+		var b_pending := false   # B is thrown on every tick until a LIVE tick has run (a hit-stop can swallow a one-tick press), then its level is held 2 live ticks (rulings-2026-10-23 9d)
+		var b_hold := 0
 		var wind_until := -1   # guardgrab and guardonly: the tick the AI's wind-up lands, plus 4; he guards until then (never in a clinch)
 		var tie := [-1, -1]      # the tie-up's S.tick, by the catcher's slot; -1 none
 		var tellAt := [-1, -1]   # the tell's press tick, by the catcher's slot
@@ -79,16 +84,20 @@ func _init() -> void:
 			var it := SimIntent.new()
 			if human:
 				var gn: Dictionary = DirGrapple.now(S, me)
-				if (mode == "guardgrab" or mode == "guardonly") and S.tick <= wind_until and (gn.is_empty() or String(gn.mode) != "clinch"):
-					it.guard = true
+				var guarding: bool = (mode == "guardgrab" or mode == "guardonly") and DirBrawl.inBrawl(S, me) and DirBrawl._windOn(S.fighters[1]) and (gn.is_empty() or String(gn.mode) != "clinch")   # the AI winds up and he is not in a clinch
 				if mode == "tapA":
 					if S.tick - lastA >= 8:
 						it.context = true
 						lastA = S.tick
-				elif S.tick == bAt:
+				elif b_pending or S.tick == bAt:
 					it.sig = true
 					it.sigHeld = true
+					b_pending = true
 					bAt = -1
+				elif b_hold > 0:
+					it.sigHeld = true
+				elif guarding:
+					it.guard = true   # exclusive: while he guards he presses nothing else, as Encounter's probe has it
 				elif mode == "guardonly":
 					pass   # the control: the same guard, no grab, no blow
 				elif mode == "alone" or mode == "guardgrab":
@@ -98,6 +107,8 @@ func _init() -> void:
 						var off: int = ((int(gn.t0) * 5 + kp * 3) % 7) - 3   # a human's spread, by the pulse
 						if kp >= 1 and ta == kp * int(g.clinch.pulse) + off:
 							it.context = true
+							if mode == "guardgrab" or mode == "alone":
+								it.my = -1.0   # the stick down at the claim: his throw is down, the bury opens the sure launcher (rulings-2026-10-23 9d)
 					elif gn.is_empty() and DirBrawl.inBrawl(S, me) and not DirBrawl.busy(S, me) and S.tick - lastA >= 30:
 						it.context = true
 						lastA = S.tick
@@ -115,7 +126,21 @@ func _init() -> void:
 					elif S.tick - lastX >= 8:
 						it.light = true
 						lastX = S.tick
-			SimCore.step(S, [it, null] if human else null)
+			var stepped: bool = SimCore.step(S, [it, null] if human else null)
+			var gn2: Dictionary = DirGrapple.now(S, me)   # the oldest clinch seen, read each tick from the grapple itself (S.tick less its start), not from the end cue
+			if not gn2.is_empty() and String(gn2.mode) == "clinch":
+				r.maxAge = maxi(int(r.maxAge), S.tick - int(gn2.t0))
+				if stepped:
+					live_age += 1
+					r.maxLive = maxi(int(r.maxLive), live_age)
+			else:
+				live_age = 0
+			if stepped:
+				if b_pending:
+					b_pending = false
+					b_hold = 2
+				elif b_hold > 0:
+					b_hold -= 1
 			for e in S.out.fx:
 				if String(e.type) == "brink_enter" and int(e.actor) == 1:
 					brink1 = true
