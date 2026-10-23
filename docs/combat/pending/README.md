@@ -6,7 +6,7 @@
 
 `launch/` holds the launch enders as the file Encounter's launch anywhere reads (`data/combat/enders.json`): `enders.json` on the live recipes, to land now, and `enders.next.json` on the split, to land with it; and a draft schema for Tools, `combat-enders.schema.json` (the note is `../launch-enders.md`). `throwables/` (2026-10-18) holds `throwables.json`: the pick-up and throw by size and by fighter, on Game Design's ruling (`../throwable-cars.md`).
 
-`biomes/` (2026-10-23) holds the biome layer of `../biomes.md` (with a scene per biome for Orb in `../biomes-sampler.md`): `sigvariants.json` (the signature's variant by biome, 17 rows, the seven built ones exact, with Game Design's 2026-10-23b rulings folded in, and the `proposed` row LANE SWEEP behind `adoptProposed`), `launch.biome.json` (the launch planner's `biome` block), `ground.json` (skid-stops, landings, approaches and crater shapes by surface), the draft schemas `combat-sigvariants.schema.json`, `combat-ground.schema.json` and `director-launch-biome.fragment.json`, and `cases.biomes.json` (nine fixture cases for Tools).
+`biomes/` (2026-10-23) holds the biome layer of `../biomes.md` (with a scene per biome for Orb in `../biomes-sampler.md`): `sigvariants.json` (the signature's variant by biome, 17 rows, the seven built ones exact, with Game Design's 2026-10-23b rulings folded in, and the `proposed` row LANE SWEEP behind `adoptProposed`), `launch.biome.json` (the launch planner's `biome` block), `ground_atoms.json` (skid-stops, landings, approaches and crater shapes by look class), the draft schemas `combat-sigvariants.schema.json`, `combat-ground-atoms.schema.json` and `director-launch-biome.fragment.json`, and `cases.biomes.json` (nine fixture cases for Tools).
 
 `choreo/` (2026-10-19) holds `feel.json`: recoil exits, ricochets, clash meets and turns, each with its three beats for Camera and what Encounter, Animation and World need (`../choreography-feel.md`).
 
@@ -21,9 +21,9 @@
 Keyed by World's fine biome names (`data/biomes/climate.json` `fine`, 1460d351). City and village key by settlement. **Order: Tools, then World, then Encounter, then Animation and VFX.** Every step sits behind the park's switches, so each can land alone.
 
 1. **Tools** (on Orb's word)
-   - The schemas `combat-sigvariants.schema.json` and `combat-ground.schema.json` go into `tools/schemas/`.
+   - The schemas `combat-sigvariants.schema.json` and `combat-ground-atoms.schema.json` go into `tools/schemas/`.
    - The `biome` property goes into `director-launch.schema.json` (from `director-launch-biome.fragment.json`).
-   - Map rows for `data/combat/sigvariants.json` and `data/combat/ground.json`.
+   - Map rows for `data/combat/sigvariants.json` and `data/combat/ground_atoms.json`.
    - The nine cases in `cases.biomes.json` go into `tools/fixtures/cases.json`, with the two files copied into the virtual tree.
    - The xref rules are in each schema's description, including two new ones: every variants key is a fine name or a settlement, and each `fineId` matches `climate.json`.
 2. **World**
@@ -31,14 +31,15 @@ Keyed by World's fine biome names (`data/biomes/climate.json` `fine`, 1460d351).
      - On a gen 2 planet it returns the column's fine name; on gen 1 it returns the alias.
      - Settlements override, as `city` and `village`.
      - Keep the settlement codes apart from the fine ids: in `BIOME_NAME`, 7 and 8 are town and city ground, while in `climate.json` they are jungle and savanna.
-   - **The join with window 2** (`docs/world/scratch-build/gen2-w2/`, parked).
-     - World's per-biome profiles carry the physics (grip, absorb, rough, furrow) over three surface classes. This park's `ground.json` carries the choreography looks over the look classes.
-     - Proposed: each profile names its look class (`look`: one of the nine new or the five built). This park's `forWorld` brakes and `biomeSurface` are then dropped in favour of World's profile. The numbers are close: World's ice grip of 0.45 on rock's brake gives 0.36 against my 0.3, and its wetland grip of 1.5 on soil gives 1.95 against my mud's 2.0.
+   - **The join with window 2** (`docs/world/scratch-build/gen2-w2/`, parked; accepted by the EP 2026-10-23).
+     - World's per-biome profiles (`data/biomes/ground.json`) are the source of grip, absorb, rough and furrow. This park's `ground_atoms.json` carries only the choreography looks, by look class; its brakes and biome map are dropped.
+     - **World adds `look` to each profile** (window 3 or 4), naming one of the nine new classes or the five built ones. `biomes.md` §4.1 lists the proposed look for each biome.
+     - Until then, a biome reads its profile's surface, and only the built looks show.
      - Window 2's `rough` tumbles more bodies in jungle, mountains and volcanic, and a tumble holds control. That is Game Design's to rule, as shingle's tumble was.
    - **Aftermaths:** the ten kinds (`part` with its run-up), `surfaceAt` with their strips, fire's hazard wear and breakable floes.
    - **Props:** window 2 lays trees. Still needed: lone trees, outcrops, boulders, bergs and vents as props the planner can find.
    - **Physics:** ice's control point at rock's stop, the embed threshold scaled by depth, and the crater shapes.
-   - **The hash:** the sim numbers in `ground.json` go into hashed data (`contact.json` or window 2's `data/biomes/ground.json`), or `replay.gd` hashes the file.
+   - **The hash:** the sim numbers in `ground_atoms.json` (crater factors, refill, the embed factor, the mud wait, the landing slide, the root trip, the ice control point) go into World's hashed data, or `replay.gd` hashes the file.
 3. **Encounter** (and Simulation for the hash)
    - **Step 1, bit-identical:**
      - read `sigvariants.json` in place of `templates.json` `beam.variants`, `crater.gd` `SCORCH_VARIANT` and `beam.gd`'s branches, with `aftermathOn` and `byPersonality.enabled` off;

@@ -42,7 +42,7 @@
         "where": "highland crags, volcanic cones, sea cliffs, the ice shelf's 36-unit edge (0.5 bh: too low, so not offered there), tundra's heaved plates when 2 bh or more"
       },
       "ICE SKID": {
-        "_about": "a flat, low send onto ice: the body skids far for little force. Offered when the ground within onIceBh of the target is ice. The slide reads World's ice brake, so its length is World's; the planner's predicted travel reads that brake too. Ruled (23b item 2): the slide stays ice's length, but he has control again where the same send would have stopped on rock (brake 0.8, ground.json surfaces.ice controlAtBrake); the rest is a skate he can act out of",
+        "_about": "a flat, low send onto ice: the body skids far for little force. Offered when the ground within onIceBh of the target is ice. The slide reads World's ice brake, so its length is World's; the planner's predicted travel reads that brake too. Ruled (23b item 2): the slide stays ice's length, but he has control again where the same send would have stopped on rock (brake 0.8, ground_atoms.json skidStop.ice controlAtBrake); the rest is a skate he can act out of",
         "sends": "across", "uy": 0.04, "force": 0.8,
         "onIceBh": 1.0, "score": 14.0,
         "endBonus": {"water": 6.0, "berg": 8.0, "_note": "a skid that ends in a lead of open water (he goes in) or against a berg (a ricochet plant) scores this more; the water penalty is waived for a skid that ends in a lead"},
@@ -50,7 +50,7 @@
         "where": "sea ice, ice sheet glaze (ICEFIELD THAW's strip), frozen lakes if World adds them"
       },
       "MARSH SWALLOW": {
-        "_about": "a slam straight down into mud: the marsh swallows him. Offered when the target is over mud within maxAltBh. It always embeds: the one deliberate embed (23b item 3), bounded by how often it is chosen. The body sits embedMul times as deep (World's embed, its 60-tick down state unchanged), the crater refills (ground.json craters.mud), and little is destroyed, so the carer likes it",
+        "_about": "a slam straight down into mud: the marsh swallows him. Offered when the target is over mud within maxAltBh. It always embeds: the one deliberate embed (23b item 3), bounded by how often it is chosen. The body sits embedMul times as deep (World's embed, its 60-tick down state unchanged), the crater refills (ground_atoms.json craters.mud), and little is destroyed, so the carer likes it",
         "sends": "down", "ux": 0.1, "uy": -1.2,
         "maxAltBh": 12.0, "score": 16.0, "embedMul": 1.8, "alwaysEmbeds": true,
         "hero": 6.0, "villain": -2.0,

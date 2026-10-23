@@ -1,32 +1,32 @@
 {
-  "schema": "combat.ground/1",
-  "_target": "data/combat/ground.json",
+  "schema": "combat.ground_atoms/1",
+  "_target": "data/combat/ground_atoms.json",
   "enabled": false,
   "touchBuilt": false,
   "embedThresholdScales": true,
   "_embedThresholdScales": "Game Design 23b item 3: a surface changes how deep a bowl looks, not how often he is held down. World's embed threshold (contact.json embed.minDepthBh) is times the surface's crater depth factor, so a slam embeds on every surface at today's rate. MARSH SWALLOW is the one deliberate embed (launch.biome.json). The down state stays 60 ticks everywhere",
   "qa": {"embedsPerMinute": [0.2, 1.0], "_ruled": "QA's row, 23b item 3: embeds a minute, both fighters together"},
   "_switches": "enabled: off, nothing here is read. touchBuilt: the rows for today's five classes (paving, rock, soil, sand, rubble) in landing and craters are read only when this is true, so a world without the new biomes plays as today with the file on",
-  "_about": "PARKED (Combat, 2026-10-23; docs/combat/biomes.md section 4). Choreography atoms that read the ground, keyed by World's surface class: the skid-stop a body makes when it is carried along the ground, how a recoil exit's landing changes, the approach's first steps, and the slam crater's shape. The rule over all of it (Orb's press feel, melee-press-feel.md): the ground changes distances, looks and the world, never when a press the brawl would take is taken. Two things the ground decides already hold control today, and Game Design ruled both (rulings-2026-10-23b.md): a carried body's journey, where ice returns control at rock's stop and the rest is a skate (item 2); and an embed, which keeps today's rate on every surface (item 3). Mud's 6-tick wait on movement is accepted (item 4). A recoil exit's landing slide comes after control has returned: momentum he can act out of. Its numbers that change the sim (brakes, crater factors, refill, embedMul, sunkMoveTicks, slideBh, tripAbove) need the replay's hash: in this file, or moved into contact.json, which WorldContact.dataHash already covers. surfaces: the classes World has (contact.json: paving, rock, soil, sand, rubble) and nine proposed, each with the class it reads as until World builds it, so this file works on today's world. World owns the surfaces' brakes and the craters; Animation the poses; VFX the trails and ejecta; Encounter picks the atoms and sends the events.",
+  "_about": "PARKED (Combat, 2026-10-23; docs/combat/biomes.md section 4). Choreography atoms that read the ground, keyed by World's surface class: the skid-stop a body makes when it is carried along the ground, how a recoil exit's landing changes, the approach's first steps, and the slam crater's shape. The rule over all of it (Orb's press feel, melee-press-feel.md): the ground changes distances, looks and the world, never when a press the brawl would take is taken. Two things the ground decides already hold control today, and Game Design ruled both (rulings-2026-10-23b.md): a carried body's journey, where ice returns control at rock's stop and the rest is a skate (item 2); and an embed, which keeps today's rate on every surface (item 3). Mud's 6-tick wait on movement is accepted (item 4). A recoil exit's landing slide comes after control has returned: momentum he can act out of. Its numbers that change the sim (crater factors, refill, embedMul, sunkMoveTicks, slideBh, tripAbove, controlAtBrake) need the replay's hash: in this file, or moved into World's hashed data. surfaces: the look classes, five that World has (contact.json: paving, rock, soil, sand, rubble) and nine new, each with the class it reads as until World's profiles name it. World's ground profiles (data/biomes/ground.json, window 2) are the source of grip, absorb, rough and furrow, and each names its biome's look class ('look', World's window 3 or 4; accepted by the EP 2026-10-23); until a profile names one, its biome reads its profile's surface, so only the built looks show. World owns the craters; Animation the poses; VFX the trails and ejecta; Encounter picks the atoms and sends the events.",
   "surfaces": {
     "paving":  {"exists": true},
     "rock":    {"exists": true},
     "soil":    {"exists": true},
     "sand":    {"exists": true},
     "rubble":  {"exists": true},
-    "ice":     {"exists": false, "readsAs": "rock",   "forWorld": {"brake": 0.3, "tumble": false, "controlAtBrake": 0.8}, "forAnimation": {"bounceMul": 1.2}},
-    "snow":    {"exists": false, "readsAs": "sand",   "forWorld": {"brake": 1.6, "tumble": false}, "forAnimation": {"bounceMul": 0.6}},
-    "frost":   {"exists": false, "readsAs": "rock",   "forWorld": {"brake": 0.9, "tumble": false}, "forAnimation": {"bounceMul": 1.1}},
-    "mud":     {"exists": false, "readsAs": "sand",   "forWorld": {"brake": 2.0, "tumble": false}, "forAnimation": {"bounceMul": 0.5}},
-    "turf":    {"exists": false, "readsAs": "soil",   "forWorld": {"brake": 1.0, "tumble": false}, "forAnimation": {"bounceMul": 1.0}},
-    "litter":  {"exists": false, "readsAs": "soil",   "forWorld": {"brake": 1.2, "tumble": false}, "forAnimation": {"bounceMul": 0.9}},
-    "ash":     {"exists": false, "readsAs": "sand",   "forWorld": {"brake": 1.5, "tumble": false}, "forAnimation": {"bounceMul": 0.7}},
-    "crust":   {"exists": false, "readsAs": "rock",   "forWorld": {"brake": 0.9, "tumble": false}, "forAnimation": {"bounceMul": 1.1}},
-    "shingle": {"exists": false, "readsAs": "sand",   "forWorld": {"brake": 1.1, "tumble": false}, "forAnimation": {"bounceMul": 0.8}}
+    "ice":     {"exists": false, "readsAs": "rock", "forAnimation": {"bounceMul": 1.2}},
+    "snow":    {"exists": false, "readsAs": "sand", "forAnimation": {"bounceMul": 0.6}},
+    "frost":   {"exists": false, "readsAs": "rock", "forAnimation": {"bounceMul": 1.1}},
+    "mud":     {"exists": false, "readsAs": "sand", "forAnimation": {"bounceMul": 0.5}},
+    "turf":    {"exists": false, "readsAs": "soil", "forAnimation": {"bounceMul": 1.0}},
+    "litter":  {"exists": false, "readsAs": "soil", "forAnimation": {"bounceMul": 0.9}},
+    "ash":     {"exists": false, "readsAs": "sand", "forAnimation": {"bounceMul": 0.7}},
+    "crust":   {"exists": false, "readsAs": "rock", "forAnimation": {"bounceMul": 1.1}},
+    "shingle": {"exists": false, "readsAs": "sand", "forAnimation": {"bounceMul": 0.8}}
   },
-  "biomeSurface": {
-    "_about": "proposed rows for World's contact.json biomeSurface, keyed by World's fine biome names (climate.json fine): the new biomes, and the two ice biomes that are aliased today. Settlements keep paving (contact.json paving). Aftermath strips override: glaze reads ice, ember reads crust, scree reads rubble, flood reads water",
-    "jungle": "litter", "savanna": "turf", "tundra": "frost", "taiga": "snow", "wetland": "mud", "beach": "shingle", "highland": "turf", "volcanic": "crust", "ice_sheet": "snow", "sea_ice": "ice"
+  "stripLooks": {
+    "_about": "the look class an aftermath strip reads as, over its biome's (sigvariants.json aftermath kinds): glaze reads ice, ember crust, scree rubble, and a flood water",
+    "glaze": "ice", "ember": "crust", "scree": "rubble", "flood": "water"
   },
   "skidStop": {
     "_about": "how a body carried along the ground comes to rest: the upright slide of a short knock-back, the skid of a long one (World's slide on the feet), a guard's push-back. pose: Animation's stop (a shared pose with each fighter's flavour); trail: VFX's mark along the path; end: how he is left at rest; spin: true turns him through the slide so he ends square to the one who sent him. Distances are World's (the brake); nothing here holds a press",
@@ -35,7 +35,7 @@
     "soil":    {"pose": "plough",       "trail": "furrow_berm",     "end": "crouch"},
     "sand":    {"pose": "sink_slide",   "trail": "spray_trough",    "end": "low_crouch"},
     "rubble":  {"pose": "tumble_roll",  "trail": "debris",          "end": "kneel"},
-    "ice":     {"pose": "spin_out",     "trail": "polished_streak", "end": "crouch", "spin": true, "handBrake": true, "skate": true, "_skate": "Game Design 23b item 2: control returns where the same send would have stopped at controlAtBrake (rock's 0.8); the rest of the slide is a skate he can act out of"},
+    "ice":     {"pose": "spin_out",     "trail": "polished_streak", "end": "crouch", "spin": true, "handBrake": true, "skate": true, "controlAtBrake": 0.8, "_skate": "Game Design 23b item 2: control returns where the same send would have stopped at controlAtBrake (rock's 0.8), whatever grip World's profile gives the ice; the rest of the slide is a skate he can act out of"},
     "snow":    {"pose": "plough_deep",  "trail": "powder_channel",  "end": "shin_deep"},
     "frost":   {"pose": "skitter",      "trail": "crack_line",      "end": "crouch"},
     "mud":     {"pose": "sink_drag",    "trail": "mud_wave",        "end": "sunk", "sunkMoveTicks": 6, "_sunk": "movement waits 6 ticks while he pulls his feet out; presses are taken as ever. Accepted (23b item 4): only at the end of a skid in mud, never on walking in it"},

@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "meridian/combat-ground",
-  "title": "combat.ground/1",
-  "description": "DRAFT by Combat for Tools (docs/combat/biomes.md section 4): data/combat/ground.json, choreography atoms that read the ground by surface class: skid-stops, recoil landings, approaches and the slam crater's shape. Policy: closed except keys starting with an underscore. Cross-references for Tools' xref (proposed): every surfaces row with exists true is a class of data/biomes/contact.json surfaces, and every class there has a row; every biomeSurface value, skidStop, landing, approach and craters key is a surfaces key or 'water'; a craters row with refill has refillTicks",
+  "$id": "meridian/combat-ground-atoms",
+  "title": "combat.ground_atoms/1",
+  "description": "DRAFT by Combat for Tools (docs/combat/biomes.md section 4): data/combat/ground_atoms.json, choreography atoms that read the ground by surface class: skid-stops, recoil landings, approaches and the slam crater's shape. Policy: closed except keys starting with an underscore. Cross-references for Tools' xref (proposed): every surfaces row with exists true is a class of data/biomes/contact.json surfaces, and every class there has a row; every skidStop, landing, approach and craters key and every stripLooks value is a surfaces key or 'water'; every stripLooks key is an aftermath kind of data/combat/sigvariants.json; each look a data/biomes/ground.json profile names is a surfaces key; a craters row with refill has refillTicks",
   "type": "object",
   "properties": {
     "schema": {
-      "const": "combat.ground/1"
+      "const": "combat.ground_atoms/1"
     },
     "enabled": {
       "type": "boolean"
@@ -55,32 +55,6 @@
                 "rubble"
               ]
             },
-            "forWorld": {
-              "type": "object",
-              "properties": {
-                "brake": {
-                  "type": "number",
-                  "minimum": 0.05,
-                  "maximum": 4
-                },
-                "tumble": {
-                  "type": "boolean"
-                },
-                "controlAtBrake": {
-                  "type": "number",
-                  "minimum": 0.05,
-                  "maximum": 4
-                }
-              },
-              "patternProperties": {
-                "^_": {}
-              },
-              "additionalProperties": false,
-              "required": [
-                "brake",
-                "tumble"
-              ]
-            },
             "forAnimation": {
               "type": "object",
               "properties": {
@@ -110,11 +84,11 @@
       },
       "additionalProperties": false
     },
-    "biomeSurface": {
+    "stripLooks": {
       "type": "object",
       "patternProperties": {
         "^_": {},
-        "^[a-z][a-z_]*$": {
+        "^[a-zA-Z]+$": {
           "type": "string",
           "pattern": "^[a-z][a-z_]*$"
         }
@@ -174,6 +148,11 @@
             },
             "skate": {
               "type": "boolean"
+            },
+            "controlAtBrake": {
+              "type": "number",
+              "minimum": 0.05,
+              "maximum": 4
             }
           },
           "patternProperties": {

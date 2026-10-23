@@ -41,8 +41,8 @@ Owner: Combat and Choreography. Date: 2026-10-23. Paper and three parked data fi
 | # | Game Design ruled (2026-10-23b) | What changed in the park |
 | :--- | :--- | :--- |
 | 1 | The candidates' values accepted as a set. The stick still wins, freshness goes by kind, and QA's bands are as proposed | `launch.biome.json` gains `rules` (stick wins, freshness by kind, personality) and `qa`. The cross-check proves the largest total the biome terms can add (44) stays below `stickWins` (200) |
-| 2 | On ice, control returns where the same send would have stopped on rock (brake 0.8); the rest is a skate | `ground.json`: ice gains `controlAtBrake` 0.8, and its skid-stop gains `skate`. ICE SKID's text says so |
-| 3 | Embeds keep today's rate on every surface: the threshold scales with the depth factor. MARSH SWALLOW always embeds. QA's row is 0.2 to 1 embeds a minute | `ground.json` gains `embedThresholdScales` and `qa`; the embed factor is how deep he sits, not how often. MARSH SWALLOW gains `alwaysEmbeds` |
+| 2 | On ice, control returns where the same send would have stopped on rock (brake 0.8); the rest is a skate | `ground_atoms.json`: the ice skid-stop carries `controlAtBrake` 0.8, and its skid-stop gains `skate`. ICE SKID's text says so |
+| 3 | Embeds keep today's rate on every surface: the threshold scales with the depth factor. MARSH SWALLOW always embeds. QA's row is 0.2 to 1 embeds a minute | `ground_atoms.json` gains `embedThresholdScales` and `qa`; the embed factor is how deep he sits, not how often. MARSH SWALLOW gains `alwaysEmbeds` |
 | 4 | Mud's 6-tick wait accepted, only at the end of a skid in mud | The mud stop's note says so |
 | 5 | A fire line and a glowing ember strip hurt lightly, by fire's hazard rules, within the 15% hazard cap. Flying over costs nothing; cooled crust is plain ground | The savanna and volcanic aftermaths gain `hazard`, and the table's text says so |
 | 6 | The care term decides; the per-candidate bonuses are accepted as flavour. The signature's personality term goes on, inside every collateral budget | `byPersonality.enabled` is on |
@@ -153,23 +153,27 @@ The sand and rubble rows are today's classes, so they apply only with `touchBuil
 
 ## 4. Choreography that reads the ground
 
-`pending/biomes/ground.json`, keyed by surface class.
+`pending/biomes/ground_atoms.json`, keyed by look class.
+- **World's ground profiles** (`data/biomes/ground.json`, window 2) are the source of grip, bounce absorption, roughness and furrow.
+- **Each profile names its biome's look class** (`look`, World's window 3 or 4; accepted by the EP).
+- **Until a profile names one,** a biome reads its profile's surface, so only the built looks show.
+- **This file carries no brakes or biome map of its own.**
 
 ### 4.1 Surfaces
 
-| Class | Biomes | Brake (proposed for World; today paving and rock 0.8, soil and sand 1.3) | Reads as until built |
-| :--- | :--- | ---: | :--- |
-| **ice** | sea ice; the glaze | 0.3 | rock |
-| **snow** | taiga, ice sheet | 1.6 | sand |
-| **frost** | tundra | 0.9 | rock |
-| **mud** | wetland | 2.0 | sand |
-| **turf** | savanna, highland | 1.0 | soil |
-| **litter** | jungle | 1.2 | soil |
-| **ash** | volcanic, where World lays it | 1.5 | sand |
-| **crust** | volcanic; the ember strip after it glows | 0.9 | rock |
-| **shingle** | beach | 1.1 | sand |
+| Look class | Biomes (proposed for World's `look`) | Reads as until built |
+| :--- | :--- | :--- |
+| **ice** | sea ice; the glaze | rock |
+| **snow** | taiga, ice sheet | sand |
+| **frost** | tundra | rock |
+| **mud** | wetland | sand |
+| **turf** | savanna, highland | soil |
+| **litter** | jungle | soil |
+| **ash** | volcanic, where World lays it | sand |
+| **crust** | volcanic; the ember strip after it glows | rock |
+| **shingle** | beach | sand |
 
-The aftermath strips override the biome's class: glaze reads ice, ember reads crust, scree reads rubble, and a flood reads water.
+The aftermath strips override the biome's look (`stripLooks`): glaze reads ice, ember reads crust, scree reads rubble, and a flood reads water.
 
 ### 4.2 Skid-stops by surface
 
@@ -232,10 +236,10 @@ Each factor multiplies today's bowl. These are proposals for World's crater (`cr
 | :--- | :--- | :--- |
 | `sigvariants.json` | `data/combat/sigvariants.json` | **`combat.sigvariants/1`**, draft `combat-sigvariants.schema.json` |
 | `launch.biome.json` | a `biome` block in `data/director/launch.json` | **`director.launch/1`** gains `biome` (the schema is closed), draft `director-launch-biome.fragment.json` |
-| `ground.json` | `data/combat/ground.json` | **`combat.ground/1`**, draft `combat-ground.schema.json` |
+| `ground_atoms.json` | `data/combat/ground_atoms.json` | **`combat.ground_atoms/1`**, draft `combat-ground-atoms.schema.json` |
 
 **Proven with Tools' own validator** in a scratch root, with the drafts and map rows added:
-- all three files read 0 errors and 0 warnings (the ground schema carries both switches, `embedThresholdScales`, `qa`, `controlAtBrake` and `skate`; the variants schema carries `aftermathOn`, `waterRule`, `proposed`, `adoptProposed`, `areaMul`, the `part` aftermath and `hazard`; the launch fragment carries `rules` and `qa`);
+- all three files read 0 errors and 0 warnings (the ground atoms schema carries both switches, `embedThresholdScales`, `qa`, `stripLooks`, `controlAtBrake` and `skate`; the variants schema carries `aftermathOn`, `waterRule`, `proposed`, `adoptProposed`, `areaMul`, the `part` aftermath and `hazard`; the launch fragment carries `rules` and `qa`);
 - nine refusals, three for each schema, each fail at their pointer, or at its parent for the aftermath's either-null-or-object rule. They are written in the shape of `tools/fixtures/cases.json` as `cases.biomes.json`.
 
 **Cross-checks:**
@@ -253,7 +257,7 @@ Each schema's description lists the cross-references proposed for Tools' xref.
 - **World:**
   - its final biome ids;
   - a biome name for each new biome, ending `BIOME_NAME`'s aliasing of ice;
-  - the surface classes and their brakes;
+  - a `look` on each ground profile (window 3 or 4), naming one of this park's look classes;
   - `surfaceAt(x)`, including the aftermath strips;
   - the nine aftermath kinds, and the ocean's `part` (an open trench for 1.5 s, then the wave's 2 bh push and its run-up within 40 columns of the shore);
   - fire's hazard wear on a burning fire line and a glowing ember strip;
@@ -269,7 +273,7 @@ Each schema's description lists the cross-references proposed for Tools' xref.
   - pick the ground atoms and send the three events.
 - **Simulation:** two things for the replay's hash:
   - fold `sigvariants.json` into `DirData.dataHash`, as `enders.json` already is;
-  - cover `ground.json`'s numbers that change the sim (crater factors, refill, the embed factor, `sunkMoveTicks`, `slideBh`, `tripAbove`): hash the file in `replay.gd`, or World moves them into `contact.json`, which `WorldContact.dataHash` already covers.
+  - cover `ground_atoms.json`'s numbers that change the sim (crater factors, refill, the embed factor, `sunkMoveTicks`, `slideBh`, `tripAbove`, `controlAtBrake`): hash the file in `replay.gd`, or World moves them into its own hashed data.
 - **Animation:**
   - the stop poses (shared, with each fighter's flavour): heel dig, plough, sink slide, spin-out, deep plough, skitter, sink drag, heel peel, root catch, pebble slip, skim sink;
   - the ice landing slide;

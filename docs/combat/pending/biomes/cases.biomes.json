@@ -1,5 +1,5 @@
 {
-  "_about": "PROPOSED fixture cases for tools/fixtures/cases.json (Combat, 2026-10-23): three refusals per new schema, in that file's shape. Each was run against the draft schemas with Tools' validator in a scratch root; '_seen' is the finding it printed, for Tools to set expect.rule from. The virtual fixture tree needs copies of data/combat/sigvariants.json and data/combat/ground.json (docs/combat/pending/biomes/), and launch.json with the biome block",
+  "_about": "PROPOSED fixture cases for tools/fixtures/cases.json (Combat, 2026-10-23): three refusals per new schema, in that file's shape. Each was run against the draft schemas with Tools' validator in a scratch root; '_seen' is the finding it printed, for Tools to set expect.rule from. The virtual fixture tree needs copies of data/combat/sigvariants.json and data/combat/ground_atoms.json (docs/combat/pending/biomes/), and launch.json with the biome block",
   "cases": [
     {
       "id": "sigvariants-name-lower",
@@ -55,10 +55,10 @@
     },
     {
       "id": "ground-reads-as-new",
-      "schema": "combat-ground.schema.json",
+      "schema": "combat-ground-atoms.schema.json",
       "mutate": [
         {
-          "file": "data/combat/ground.json",
+          "file": "data/combat/ground_atoms.json",
           "set": {
             "/surfaces/ice/readsAs": "snow"
           }
@@ -66,15 +66,15 @@
       ],
       "expect": {
         "pointer": "/surfaces/ice/readsAs",
-        "_seen": "error  data/combat/ground.json:35 /surfaces/ice/readsAs  [enum] must be one of \"paving\", \"rock\", \"soil\", \"sand\", \"rubble\" (got \"snow\")"
+        "_seen": "error  data/combat/ground_atoms.json:35 /surfaces/ice/readsAs  [enum] must be one of \"paving\", \"rock\", \"soil\", \"sand\", \"rubble\" (got \"snow\")"
       }
     },
     {
       "id": "ground-refill-over-one",
-      "schema": "combat-ground.schema.json",
+      "schema": "combat-ground-atoms.schema.json",
       "mutate": [
         {
-          "file": "data/combat/ground.json",
+          "file": "data/combat/ground_atoms.json",
           "set": {
             "/craters/mud/refill": 1.5
           }
@@ -82,15 +82,15 @@
       ],
       "expect": {
         "pointer": "/craters/mud/refill",
-        "_seen": "error  data/combat/ground.json:386 /craters/mud/refill  [maximum] must be <= 1 (got 1.5)"
+        "_seen": "error  data/combat/ground_atoms.json:344 /craters/mud/refill  [maximum] must be <= 1 (got 1.5)"
       }
     },
     {
       "id": "ground-end-unknown",
-      "schema": "combat-ground.schema.json",
+      "schema": "combat-ground-atoms.schema.json",
       "mutate": [
         {
-          "file": "data/combat/ground.json",
+          "file": "data/combat/ground_atoms.json",
           "set": {
             "/skidStop/mud/end": "stuck"
           }
@@ -98,7 +98,7 @@
       ],
       "expect": {
         "pointer": "/skidStop/mud/end",
-        "_seen": "error  data/combat/ground.json:196 /skidStop/mud/end  [enum] must be one of \"crouch\", \"low_crouch\", \"kneel\", \"shin_deep\", \"sunk\", \"waist_deep\" (got \"stuck\")"
+        "_seen": "error  data/combat/ground_atoms.json:154 /skidStop/mud/end  [enum] must be one of \"crouch\", \"low_crouch\", \"kneel\", \"shin_deep\", \"sunk\", \"waist_deep\" (got \"stuck\")"
       }
     },
     {
