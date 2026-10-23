@@ -13,14 +13,14 @@ Conventions:
 | The change | Do | Never |
 | :--- | :--- | :--- |
 | **Small:** within one shot size, same space (a reframe, push, lead room, zoom with separation) | **Ease** | Snap: a small instant change is a jump cut [CS 36], the "snaps too fast" look |
-| **Large, and the space between does not matter** (a new phase, place or set piece) | **Cut**, for a reason in section 2 | Slide there fast without blur |
-| **Large, and the space between matters** (riding a launched body, swinging to where a charge came from) | **Whip:** accelerate, blur briefly, decelerate to a sharp landing, in the direction of the motion | Whip with no motion to motivate it |
+| **Large, and the space between does not matter** (a new phase, place or set piece) | **Cut**, for a reason in section 2 | Slide there fast |
+| **Large, and the space between matters** (riding a launched body, swinging to where a charge came from) | **Crisp whip:** short (about 8 to 15 frames), a hard ease at both ends, background streaks, no blur, in the direction of the motion | Whip with no motion to motivate it |
 
-The middle is forbidden: a fast move with no blur, which is neither a cut nor a whip. Static backgrounds judder worst between about 0.36 widths a second and whip speed (CS 63, converted to 60 fps).
+The middle is forbidden: a long fast slide, which is neither a cut nor a crisp whip. A crisp pan judders worst between about 0.36 widths a second and whip speed (CS 63, converted to 60 fps). A crisp whip stays short and eases hard at both ends, so it spends little time in that band. The background streaks carry the speed, not blur, because Orb's taste rejects blur.
 
 A "snap" is any of three things:
 - a small instant change;
-- an unblurred fast slide;
+- a long fast slide;
 - a move with no ease at its start or end.
 
 ## 2. When a hard cut is justified
@@ -54,7 +54,7 @@ A "snap" is any of three things:
 | **Reframe** | Ease in and out; position and zoom on one curve | 18 to 36 frames *(est.)* | CS 40, 41 |
 | **Slow push** (power-up, menace) | Ease in and out | 60 to 180 frames *(est.)* | Slow pushes run several seconds [5] |
 | **Impact push** | In with a fast start and soft landing; hold for the hit-stop; ease back | In 5 to 10 frames, back 15 to 25 | Snap zooms run 2 to 4 frames at 24 fps [5, weak]; "a hard accent bounces back" [CS 32] |
-| **Whip** | Accelerate, blur, decelerate to a sharp landing | 15 to 30 frames, 10 to 20 of them blurred | Editors' whips run about 10 to 15 frames at 24 to 30 fps [6, weak] |
+| **Crisp whip** | Hard ease at both ends; background streaks; no blur | About 8 to 15 frames in all *(est.)*, with as few as possible in the judder band | Editors' whips run about 10 to 15 frames at 24 to 30 fps [6, weak]; judder band CS 63 |
 | **Background pan** | Constant speed, eased ends | Under about 0.36 widths/s, or whip speed with streaks | CS 63 |
 | **Dutch roll** (mood) | Slow ease in and out; level again on resolution | 30 to 90 frames, at most 5 to 8 degrees *(est.)* | CS 31 |
 | **Return** after a set piece | Ease in and out, or a cut on action if the angle differs a lot | 18 to 30 frames *(est.)* | |
