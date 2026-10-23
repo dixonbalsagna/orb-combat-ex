@@ -16,7 +16,9 @@
     "avoidWeight",
     "homeBonus",
     "coastRef",
-    "turn"
+    "turn",
+    "usedCos",
+    "usedPenalty"
   ],
   "properties": {
     "schema": {
@@ -249,6 +251,18 @@
       "minimum": 0.5,
       "maximum": 20,
       "description": "Coast crossings that count as a full coast."
+    },
+    "usedCos": {
+      "type": "number",
+      "minimum": 0.5,
+      "maximum": 1,
+      "description": "A ring a run has fought is the same circle as a candidate of the same length when their axes' cosine is at least this (0.9976: about 4 degrees)."
+    },
+    "usedPenalty": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 2,
+      "description": "What a repeated ring's score loses when nothing else meets the size's minimum."
     },
     "turn": {
       "type": "object",

@@ -50,7 +50,7 @@ static func genWorld(S: SimState) -> void:
 			t[i] = (-340.0 + n * 35.0) * WS
 		elif b == "mountains":
 			var k: float = SimMathx.jclamp((xn - 6500.0) / 1100.0, 0.0, 1.0)
-			var env: float = SimDetMath.sin(PI * k)
+			var env: float = SimDetMath.sin(SimMathx.PI * k)
 			t[i] = env * (330.0 + 560.0 * absf(SimDetMath.sin(xn * 0.0042 + 0.7)) * (0.55 + 0.45 * SimDetMath.sin(xn * 0.013))) * SimConst.MS
 		elif b == "desert":
 			t[i] = n * 28.0 * WS

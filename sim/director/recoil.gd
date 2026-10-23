@@ -28,7 +28,8 @@ const RC_AIR: int = 4     # live ticks left in the flip; 0 none
 const RC_CR: int = 5      # live ticks left in which his next blow is a counter-rush; 0 none
 const RC_AIC: int = 6     # the AI's counter press: live ticks until it presses, plus 1; 0 none
 const RC_DIST: int = 7    # the knock-back's distance, in units
-const RC_N: int = 8
+const RC_BSL: int = 8     # live ticks left in a heavy's recoil slide inside a brawl (Game Design's 1a); 0 none
+const RC_N: int = 9
 const EXITS: Array = ["skip", "handspring", "tuck", "backflip"]
 
 
@@ -107,6 +108,11 @@ static func tick(S: SimState) -> void:
 		var aic: int = _g(f, RC_AIC)
 		if aic > 0:
 			_s(f, RC_AIC, aic - 1)
+		var bsl: int = _g(f, RC_BSL)
+		if bsl > 0:
+			_s(f, RC_BSL, bsl - 1)
+			if bsl == 1:
+				DirBrawl._reel(S, f, int(cfg().get("heavy", {}).get("reelTicks", 6)))   # 1a: no flip, so he reels at the slide's end
 		var left: int = _g(f, RC_LEFT)
 		if left <= 0:
 			continue
@@ -117,6 +123,40 @@ static func tick(S: SimState) -> void:
 		var tap: bool = (f.ai == null and f.input.dodge and f.stunTicks <= 0) or (f.ai != null and ai == 1)
 		if tap:
 			_flip(S, f)
+
+
+## Game Design's 1a (rulings-2026-10-22): a tapped heavy that lands clean in a brawl (DirBrawl._bigLanded) recoils him
+## heavy.bh body heights as a slide of heavy.ticks, in place of its stagger in place. His blow on its way is lost, as a
+## stagger loses it. It opens the flip's window (kind 4: a slide inside the brawl, which holds: its pull rests while he
+## slides, and brings them back after). With no flip he reels heavy.reelTicks at its end. A wall behind him shortens it.
+## The recoil cue, text "exit", says so (Combat's exit by weight: a heavy's backflip, fitted to the slide).
+static func heavyRecoil(S: SimState, ex, f, o) -> bool:
+	var h: Dictionary = cfg().get("heavy", {})
+	if not on() or not bool(h.get("enabled", false)) or not o.act.v2:
+		return false
+	var dist: float = float(h.get("bh", 1.5)) * BH
+	var ticks: int = int(h.get("ticks", 8))
+	var dir: float = _away(f, o)
+	var g: float = WorldTerrain.groundY(S, o.x)
+	var ground: bool = o.y - g <= float(DirLaunch.data().knockBack.groundWithinBh) * BH and not WorldTerrain.seaAt(S, o.x)
+	var so := Callable(WorldContact, "slideObstacle")
+	if ground and so.is_valid():
+		var ob = so.call(S, o.x, o.z, dir, dist)
+		if ob is Dictionary and ob.get("hit", false):
+			dist = maxf(0.0, float(ob.d) - DirLaunch.BUMP_SHORT)   # a wall behind him: the slide stops short of it
+	DirBrawl._drop(S, ex, o)
+	var r := SimState.Rush.new()
+	r.px = SimWrap.wrap(o.x + dir * dist)
+	var g2: float = WorldTerrain.groundY(S, r.px)
+	r.py = g2 if ground else maxf(o.y, g2)
+	r.pz = o.z
+	r.end = S.T + float(ticks) * SimConst.DT
+	o.rush = r
+	knocked(S, f, o, dist, 4, S.tick + ticks)
+	_s(o, RC_BSL, ticks)
+	_cue(S, o, f, "exit", "backflip", o.x, o.y, r.px, S.tick + ticks, ticks, ground)
+	SimEvents.feed(S, o.name + " RECOILS", "a clean heavy sends him back " + str(snappedf(dist / BH, 0.1)) + " bh over " + str(ticks) + " ticks: a dodge tap flips him out")
+	return true
 
 
 ## While he is in the air of his flip: his presses wait for the landing.
@@ -167,7 +207,7 @@ static func _flip(S: SimState, f) -> void:
 		if not _endSkid(S, f):
 			return   # World's recoilEnd is not in yet: a skid can't be cut short (an upright slide and a drift still flip)
 	else:
-		if f.state != "free" or f.rush == null or f.rush.tgt != null:
+		if (f.state != "free" and not (kind == 4 and f.state == "locked")) or f.rush == null or f.rush.tgt != null:
 			_s(f, RC_LEFT, 0)
 			return   # his slide or drift has ended, or an approach has taken its place
 		dir = SimMathx.jsign(SimWrap.sdx(f.x, f.rush.px)) if SimWrap.sdx(f.x, f.rush.px) != 0.0 else dir
@@ -193,7 +233,9 @@ static func _flip(S: SimState, f) -> void:
 	f.rush = r
 	f.vx = 0.0
 	f.vy = 0.0
-	f.state = "free"
+	if kind != 4:
+		f.state = "free"   # (out of a heavy's recoil in a brawl he stays in it)
+	_s(f, RC_BSL, 0)   # a flip out of a heavy's recoil: no reel at its end
 	f.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(f.x, o.x)), f.face)
 	DirBrawl.recoilFree(f)   # no first-move lock and no return: the counter-rush is his
 	_s(f, RC_AIR, ticks)

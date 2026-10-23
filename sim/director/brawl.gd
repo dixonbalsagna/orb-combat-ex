@@ -796,6 +796,8 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		if _g(f, BLOWS) + _g(o, BLOWS) > 0:
 			_newString(S, ex)
 	var d: int = _closeTicks(f, o)   # the gap it closes on the way: it lands this much later
+	if d > 0 and DirRecoil.counter(S, f):
+		d = 0   # out of his recoil flip (Game Design's 1a): the counter-rush closes the gap at once
 	var gapBh: float = maxf(0.0, (DirBands.dist(f, o) - float(DirData.contact().reach)) / DirInterrupt.BH)
 	var lead: int
 	var length: int
@@ -2951,6 +2953,8 @@ static func _bigLanded(S: SimState, ex, f, o, a) -> void:
 		else:
 			_knock(S, ex, f, o, 0.0, int(a.get("aim", 0)))
 		return
+	if DirRecoil.heavyRecoil(S, ex, f, o):
+		return   # Game Design's 1a: a clean tapped heavy recoils him 1.5 bh, in place of the stagger
 	_stagger(S, ex, f, o, int(c.heavy.staggerTicks), "heavy")
 
 

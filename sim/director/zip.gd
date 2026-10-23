@@ -600,7 +600,7 @@ static func _pickExit(S: SimState, f, o) -> void:
 		var found: bool = false
 		var b: int = b0
 		for i in range(int(c.exit.probes)):
-			var rad: float = float(b) * PI / 180.0
+			var rad: float = float(b) * SimMathx.PI / 180.0
 			ex = SimWrap.wrap(o.x + dist * SimDetMath.cos(rad))
 			ey = o.y + dist * SimDetMath.sin(rad)
 			if not WorldStructures.blockedAt(S, ex, ey + clear, 0.0, clear):   # on the ground is clear; under it, or within clearBh of a building, is not

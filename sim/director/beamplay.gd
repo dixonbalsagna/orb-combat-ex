@@ -238,7 +238,7 @@ static func opReach(S: SimState, ex, args) -> void:
 ## the ground behind him. They are the attacker's, and share what is left of the beam's cap on buildings.
 static func _split(S: SimState, b, A, D, args) -> void:
 	var c: Dictionary = data().split
-	var a: float = float(c.spreadDeg) * PI / 180.0
+	var a: float = float(c.spreadDeg) * SimMathx.PI / 180.0
 	var cs: float = SimDetMath.cos(a)
 	var sn: float = SimDetMath.sin(a)
 	var ux: float = args.ux
@@ -258,12 +258,12 @@ static func _swat(S: SimState, b, A, D) -> void:
 	var len: float = float(c.lenBh) * DirInterrupt.BH
 	var away: float = -SimDamage.jor(SimMathx.jsign(SimWrap.sdx(D.x, A.x)), D.face)
 	var oy: float = D.y + 36.0
-	var g: float = float(c.groundDeg) * PI / 180.0
+	var g: float = float(c.groundDeg) * SimMathx.PI / 180.0
 	var ux: float = away * SimDetMath.cos(g)
 	var uy: float = -SimDetMath.sin(g)
 	var where: String = "into the ground"
 	if D.hasAnguish:
-		var s: float = float(c.skyDeg) * PI / 180.0
+		var s: float = float(c.skyDeg) * SimMathx.PI / 180.0
 		ux = away * SimDetMath.cos(s)
 		uy = SimDetMath.sin(s)
 		where = "at the sky"

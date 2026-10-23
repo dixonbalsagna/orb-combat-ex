@@ -475,7 +475,8 @@
     "counterRush": {"speed": 6000, "minTicks": 3, "maxTicks": 12},
     "flourishOverBh": 3,
     "aiTapTicks": [3, 7],
-    "aiCounterTicks": [2, 8]
+    "aiCounterTicks": [2, 8],
+    "heavy": {"enabled": true, "bh": 1.5, "ticks": 8, "reelTicks": 6, "_note": "Game Design's 1a (rulings-2026-10-22): a tapped heavy that lands clean in a brawl recoils him bh body heights as a slide of ticks, in place of its stagger in place; it opens the flip's window, and with no flip he reels reelTicks at its end. Only with recoilFlip on."}
   },
   "freezeWindows": {
     "_note": "No window gets shorter for a freeze (Game Design's rulings-2026-10-19b.md 4c; sim/director/windows.gd), while Simulation's hit-stop by weight is on (data/fight/hitstop.json; off: nothing here runs). A window open as a hit-stop starts keeps its live ticks through it; one at least minLiveTicks long has at least that many live ticks after the freeze (a perfect block's on a pending strike, the chain window, the brawl's riposte and launcher windows). A brawl light's window is its own 2 ticks and is left as it is.",

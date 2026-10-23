@@ -86,7 +86,7 @@ static func atanf(x: float) -> float:
 	var off: float = 0.0
 	if a > _TAN_PI_8:
 		a = (a - 1.0) / (a + 1.0)
-		off = PI / 4.0
+		off = SimMathx.PI / 4.0
 	var a2: float = a * a
 	var s: float = a
 	var t: float = a
@@ -95,7 +95,7 @@ static func atanf(x: float) -> float:
 		s += t / float(2 * k + 1)
 	var r: float = off + s
 	if inv:
-		r = PI / 2.0 - r
+		r = SimMathx.PI / 2.0 - r
 	return -r if x < 0.0 else r
 
 
@@ -104,12 +104,12 @@ static func atan2f(y: float, x: float) -> float:
 		return atanf(y / x)
 	if x < 0.0:
 		if y >= 0.0:
-			return atanf(y / x) + PI
-		return atanf(y / x) - PI
+			return atanf(y / x) + SimMathx.PI
+		return atanf(y / x) - SimMathx.PI
 	if y > 0.0:
-		return PI / 2.0
+		return SimMathx.PI / 2.0
 	if y < 0.0:
-		return -PI / 2.0
+		return -SimMathx.PI / 2.0
 	return 0.0
 
 
@@ -288,7 +288,7 @@ static func make(seed: int) -> Planet:
 	P.seed = seed
 	P.c = cfg()
 	P.L = float(SimConst.PLANET_NC) * SimConst.COL
-	P.R = P.L / (2.0 * PI)
+	P.R = P.L / (2.0 * SimMathx.PI)
 	_placeAll(P)
 	if _planets.size() > 6:
 		_planets.clear()
@@ -438,7 +438,7 @@ static func surf(P: Planet, px: float, py: float, pz: float) -> Array:
 ## ===================================================================== points and circles
 static func unitFromDraws(a: float, b: float) -> Array:
 	var z: float = -1.0 + 2.0 * a
-	var ang: float = 2.0 * PI * b
+	var ang: float = 2.0 * SimMathx.PI * b
 	var q: float = sqrt(1.0 - z * z)
 	return [q * SimDetMath.cos(ang), z, q * SimDetMath.sin(ang)]
 
@@ -506,7 +506,7 @@ static func columnPoint(P: Planet, circ: Dictionary, i: int) -> Array:
 ## ===================================================================== the places
 static func _randUnit(r: SimRng) -> Array:
 	var z: float = r.range_(-1.0, 1.0)
-	var a: float = r.range_(0.0, 2.0 * PI)
+	var a: float = r.range_(0.0, 2.0 * SimMathx.PI)
 	var q: float = sqrt(1.0 - z * z)
 	return [q * SimDetMath.cos(a), z, q * SimDetMath.sin(a)]
 
@@ -619,7 +619,7 @@ static func evalCircle(P: Planet, circ: Dictionary, standing: PackedByteArray, m
 	var u: Array = circ.u
 	var v: Array = circ.v
 	for k in range(cnt):
-		var ang: float = float(k) / float(cnt) * 2.0 * PI
+		var ang: float = float(k) / float(cnt) * 2.0 * SimMathx.PI
 		var co: float = SimDetMath.cos(ang)
 		var si: float = SimDetMath.sin(ang)
 		surfAt(P, u[0] * co + v[0] * si, u[1] * co + v[1] * si, u[2] * co + v[2] * si)

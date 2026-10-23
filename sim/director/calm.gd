@@ -135,7 +135,7 @@ static func pick(S: SimState, cands: Array, by, spread: float, orLeast: bool = t
 	return least
 
 
-static var _PI: float = SimMathx.f64("400921fb54442d18")   # pi from its bits: no engine trig in the sim
+static var _PI: float = SimMathx.PI   # the sim's own pi: no engine trig in the sim
 
 
 ## The sine of an angle in degrees: the sim's own (SimDetMath), as World's turn uses.

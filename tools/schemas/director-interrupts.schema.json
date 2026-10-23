@@ -3709,6 +3709,41 @@
           "minItems": 2,
           "maxItems": 2,
           "description": "The AI presses its counter-rush this many live ticks after the landing, from and to."
+        },
+        "heavy": {
+          "type": "object",
+          "description": "Game Design's 1a: a clean tapped heavy's recoil in a brawl.",
+          "properties": {
+            "_note": {
+              "type": "string"
+            },
+            "enabled": {
+              "type": "boolean",
+              "description": "False: the heavy staggers in place, as before."
+            },
+            "bh": {
+              "type": "number",
+              "minimum": 0,
+              "description": "How far, in body heights."
+            },
+            "ticks": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "The slide's live ticks."
+            },
+            "reelTicks": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "With no flip, his reel at the slide's end."
+            }
+          },
+          "required": [
+            "enabled",
+            "bh",
+            "ticks",
+            "reelTicks"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [

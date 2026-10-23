@@ -68,7 +68,7 @@ static func _cLoad() -> void:
 				_cErrors.append("rings.json: sizes.%s is a multiple of 8 columns (the ground's largest stride)" % sz)
 	if not (j.get("turn") is Dictionary):
 		_cErrors.append("rings.json: turn is an object")
-	for k in ["stride", "biomeShare", "ref", "mustAt", "avoidWeight", "homeBonus", "coastRef"]:
+	for k in ["stride", "biomeShare", "ref", "mustAt", "avoidWeight", "homeBonus", "coastRef", "usedCos", "usedPenalty"]:
 		if not (j.get(k) is float or j.get(k) is int):
 			_cErrors.append("rings.json: %s is a number" % k)
 	_c = j
@@ -172,14 +172,14 @@ static func candidates(P: WorldPlanet.Planet, size: String, stream: int, pinned:
 	var out: Array = []
 	var whole: bool = cols >= SimConst.PLANET_NC
 	for id in pinned:
-		var phi: float = rg.next() * 2.0 * PI
+		var phi: float = rg.next() * 2.0 * SimMathx.PI
 		var sp: Dictionary = throughSpec(placePoint(P, int(id)), cols, phi) if whole else roundSpec(placePoint(P, int(id)), cols, phi)
 		sp["kind"] = "through" if whole else "round"
 		sp["place"] = int(id)
 		out.append(sp)
 	var k: int = 0
 	while out.size() < count:
-		var phi2: float = rg.next() * 2.0 * PI
+		var phi2: float = rg.next() * 2.0 * SimMathx.PI
 		var which: int = k % 3
 		k += 1
 		var sp2: Dictionary
@@ -214,7 +214,7 @@ static func evalRing(P: WorldPlanet.Planet, spec: Dictionary, standing: PackedBy
 	bs.resize(cnt)
 	var seen := [0, 0, 0, 0, 0, 0, 0]
 	for k in range(cnt):
-		var p: Array = ringPoint(ring, float(k) / float(cnt) * 2.0 * PI)
+		var p: Array = ringPoint(ring, float(k) / float(cnt) * 2.0 * SimMathx.PI)
 		WorldPlanet.surfAt(P, p[0], p[1], p[2])
 		bs[k] = P.outB
 		seen[P.outB] += 1
@@ -238,7 +238,7 @@ static func evalRing(P: WorldPlanet.Planet, spec: Dictionary, standing: PackedBy
 			if h.id == pi:
 				already = true
 		if not already:
-			held.append({"id": pi, "kind": int(P.kind[pi]), "along": 0.0, "half": PI, "lat": 0.0, "fallen": standing.size() > 0 and standing[pi] == 0, "damaged": damaged.has(pi)})
+			held.append({"id": pi, "kind": int(P.kind[pi]), "along": 0.0, "half": SimMathx.PI, "lat": 0.0, "fallen": standing.size() > 0 and standing[pi] == 0, "damaged": damaged.has(pi)})
 	var cities: int = 0
 	var towns: int = 0
 	for h in held:
@@ -264,10 +264,10 @@ static func evalRing(P: WorldPlanet.Planet, spec: Dictionary, standing: PackedBy
 	for k in range(cnt):
 		if bs[k] != BIO_DESERT:
 			continue
-		var ang: float = float(k) / float(cnt) * 2.0 * PI
+		var ang: float = float(k) / float(cnt) * 2.0 * SimMathx.PI
 		var inside: bool = false
 		for h in held:
-			var dd: float = absf(fposmod(ang - h.along + PI, 2.0 * PI) - PI)
+			var dd: float = absf(fposmod(ang - h.along + SimMathx.PI, 2.0 * SimMathx.PI) - SimMathx.PI)
 			if dd < h.half:
 				inside = true
 		if not inside:
@@ -360,7 +360,7 @@ static func score(ev: Dictionary, claim: Dictionary, homeId: int = -1) -> Dictio
 # ===================================================================== the pick
 
 ## The ring for an opponent's claim at a size on planet P, from the run's stream. opts: standing, damaged (wear), home (the claim's home place id, or -1), pinned (place ids to try first:
-## the home). Returns {ok (a ring met the size's minimum), spec {c, t, cols}, score, must, home, relaxed, tried, kind, place, ev, idx}; never fails to return a ring (the best-scoring when none
+## the home), used (the rings the run has already fought, a run never fights one twice: see `usedMatch`; they are passed over, and scored down only when nothing else meets the size's minimum). Returns {ok (a ring met the size's minimum), spec {c, t, cols}, score, must, home, relaxed, tried, kind, place, ev, idx}; never fails to return a ring (the best-scoring when none
 ## meets the minimum), with ok false. One call reads every candidate; `beginPick` gives the same answer in steps (a read of a candidate is about 30 ms on a busy PC).
 static func pick(P: WorldPlanet.Planet, claim: Dictionary, size: String, stream: int, opts: Dictionary = {}) -> Dictionary:
 	var job: PickJob = beginPick(P, claim, size, stream, opts)
@@ -378,7 +378,42 @@ static func beginPick(P: WorldPlanet.Planet, claim: Dictionary, size: String, st
 	j.home = int(opts.get("home", -1))
 	var pinned: Array = opts.get("pinned", [j.home] if j.home >= 0 else [])
 	j.cands = candidates(P, size, stream, pinned)
+	j.used = usedList(opts.get("used", []))
 	return j
+
+
+## The rings a run has fought, as the picker compares them. Each entry is a ring's spec or setup.arena ({c, t, cols}, the numbers or the exact-bit strings arenaOf writes; only the axis c and the
+## columns are read) or a candidate's identity ({place, kind, cols}: a ring "round" or "through" that place). {c: [x, y, z], cols: n, place: -1, kind: ""} each.
+static func usedList(used: Array) -> Array:
+	var out: Array = []
+	for u in used:
+		if not (u is Dictionary):
+			continue
+		var e := {"c": [], "cols": int(u.get("cols", 0)), "place": int(u.get("place", -1)), "kind": str(u.get("kind", ""))}
+		if u.has("c") and u.c is Array and u.c.size() == 3:
+			var c: Array = []
+			for x in u.c:
+				c.append(SimMathx.f64(x) if x is String else float(x))
+			e.c = c
+		if e.c.size() == 3 or e.place >= 0:
+			out.append(e)
+	return out
+
+
+## Is candidate `cand` ({c, cols, kind, place}) the same ring as one of `used`: the same length and an axis within data usedCos of it (a Whole ring's axis either way round: it is the same
+## circle), or the same place and kind (and length, when the entry gives it).
+static func usedMatch(cand: Dictionary, used: Array) -> bool:
+	var cosMin: float = float(cfg().usedCos)
+	var whole: bool = int(cand.cols) >= SimConst.PLANET_NC
+	for e in used:
+		if e.c.size() == 3:
+			if int(e.cols) == int(cand.cols):
+				var d: float = _dot(e.c, cand.c)
+				if (whole and absf(d) >= cosMin) or (not whole and d >= cosMin):
+					return true
+		elif e.place >= 0 and int(cand.place) == e.place and (e.kind == "" or e.kind == str(cand.kind)) and (int(e.cols) == 0 or int(e.cols) == int(cand.cols)):
+			return true
+	return false
 
 
 ## A pick in steps (the host spends a few candidates a frame: the module owns no clock). The same answer however it is stepped: the reads are pure and the choice is made over them all at the end.
@@ -389,6 +424,7 @@ class PickJob extends RefCounted:
 	var standing := PackedByteArray()
 	var damaged: Array = []
 	var home: int = -1
+	var used: Array = []     # the rings the run has fought (WorldRingPick.usedList)
 	var cands: Array = []
 	var evs: Array = []
 	var done: bool = false
@@ -409,20 +445,34 @@ class PickJob extends RefCounted:
 	func _choose() -> void:
 		var best = null
 		var bestKey: Array = []
-		for relaxed in [false, true]:
-			for i in range(cands.size()):
-				if not WorldRingPick.meets(evs[i], size, relaxed):
-					continue
-				var sc: Dictionary = WorldRingPick.score(evs[i], claim, home)
-				var key: Array = [1 if sc.must else 0, sc.score, -i]
-				if best == null or WorldRingPick._better(key, bestKey):
-					best = _entry(i, sc, not relaxed, relaxed)
-					bestKey = key
+		var repeats := PackedByteArray()   # which candidates are rings the run has fought
+		repeats.resize(cands.size())
+		for i in range(cands.size()):
+			repeats[i] = 1 if (used.size() > 0 and WorldRingPick.usedMatch(cands[i], used)) else 0
+		var penalty: float = float(WorldRingPick.cfg().usedPenalty)
+		for pass_ in range(2):   # a ring the run has not fought first; a repeat only if nothing else meets even the crude minimum (scored down)
+			for relaxed in [false, true]:
+				for i in range(cands.size()):
+					if int(repeats[i]) != pass_ or not WorldRingPick.meets(evs[i], size, relaxed):
+						continue
+					var sc: Dictionary = WorldRingPick.score(evs[i], claim, home)
+					if pass_ == 1:
+						sc = sc.duplicate()
+						sc.score = float(sc.score) - penalty
+					var key: Array = [1 if sc.must else 0, sc.score, -i]
+					if best == null or WorldRingPick._better(key, bestKey):
+						best = _entry(i, sc, not relaxed, relaxed)
+						bestKey = key
+				if best != null:
+					break
 			if best != null:
 				break
 		if best == null:   # nothing meets even the crude minimum: the best-scoring candidate, whatever it holds (Narrative: no ring fits)
 			for i in range(cands.size()):
 				var sc2: Dictionary = WorldRingPick.score(evs[i], claim, home)
+				if int(repeats[i]) == 1:
+					sc2 = sc2.duplicate()
+					sc2.score = float(sc2.score) - penalty
 				var key2: Array = [1 if sc2.must else 0, sc2.score, -i]
 				if best == null or WorldRingPick._better(key2, bestKey):
 					best = _entry(i, sc2, false, true)
@@ -433,7 +483,7 @@ class PickJob extends RefCounted:
 
 	func _entry(i: int, sc: Dictionary, okFlag: bool, relaxed: bool) -> Dictionary:
 		var sp: Dictionary = cands[i]
-		return {"ok": okFlag, "spec": {"c": sp.c, "t": sp.t, "cols": sp.cols}, "score": sc.score, "must": sc.must, "home": sc.home, "relaxed": relaxed, "kind": sp.kind, "place": sp.place, "ev": evs[i], "idx": i}
+		return {"ok": okFlag, "spec": {"c": sp.c, "t": sp.t, "cols": sp.cols}, "score": sc.score, "must": sc.must, "home": sc.home, "relaxed": relaxed, "kind": sp.kind, "place": sp.place, "ev": evs[i], "idx": i, "repeat": used.size() > 0 and WorldRingPick.usedMatch(sp, used)}
 
 
 static func _better(a: Array, b: Array) -> bool:
@@ -448,7 +498,7 @@ static func _better(a: Array, b: Array) -> bool:
 ## The first fight of a run: a Close ring round the player's own home (Game Design 2c), the touch-down on a seeded bearing.
 static func firstRing(P: WorldPlanet.Planet, homeId: int, stream: int) -> Dictionary:
 	var rg := SimRng.new((stream * 7919 + 15485863) & 0xFFFFFFFF)
-	return roundSpec(placePoint(P, homeId), sizeCols("close"), rg.next() * 2.0 * PI)
+	return roundSpec(placePoint(P, homeId), sizeCols("close"), rg.next() * 2.0 * SimMathx.PI)
 
 
 ## The boss's ring: the Whole circle through the boss's home and the most populous place still standing (Game Design 2c), the touch-down at the home. Null when no other place stands.

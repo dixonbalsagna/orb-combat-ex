@@ -296215,6 +296215,115 @@
       }
     },
     {
+      "id": "fight-run-valid",
+      "schema": "fight-run.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/run.json",
+          "set": {
+            "/schema": "fight.run/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-run-required-ground",
+      "schema": "fight-run.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/run.json",
+          "del": [
+            "/ground"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-run-extra-key",
+      "schema": "fight-run.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/run.json",
+          "set": {
+            "/bonus": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/bonus"
+      }
+    },
+    {
+      "id": "fight-run-enabled-not-bool",
+      "schema": "fight-run.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/run.json",
+          "set": {
+            "/ground/enabled": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/ground/enabled"
+      }
+    },
+    {
+      "id": "fight-run-frames-per-read-zero",
+      "schema": "fight-run.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/run.json",
+          "set": {
+            "/ground/framesPerRead/whole": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/ground/framesPerRead/whole"
+      }
+    },
+    {
+      "id": "fight-run-phase-unknown",
+      "schema": "fight-run.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/run.json",
+          "set": {
+            "/ground/phases/0": "late"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/ground/phases/0"
+      }
+    },
+    {
+      "id": "fight-run-proving-size-unknown",
+      "schema": "fight-run.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/run.json",
+          "set": {
+            "/ground/provingSize": "tiny"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/ground/provingSize"
+      }
+    },
+    {
       "id": "fight-ricochet-valid",
       "schema": "fight-ricochet.schema.json",
       "mutate": [

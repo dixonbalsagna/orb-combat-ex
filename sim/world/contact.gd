@@ -299,7 +299,7 @@ static func spinFighter(f, dt: float, how: int) -> void:
 ## rot taken to the nearest whole turn of zero (not a jump, the same pose): the ease upright then goes the short way instead of
 ## unwinding every turn the body had made.
 static func _wrapRot(r: float) -> float:
-	return r - TAU * floorf(r / TAU + 0.5)
+	return r - SimMathx.TAU * floorf(r / SimMathx.TAU + 0.5)
 
 
 ## The airborne part of a tick: gravity, drag, the move, the water (entry, skim, sink). Appends events {"k": ...}.

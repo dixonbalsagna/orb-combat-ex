@@ -82,7 +82,7 @@ static func dataText() -> String:
 static func driveDir(alt: float) -> Array:
 	var d: Dictionary = data().drive
 	var t: float = SimMathx.jclamp((alt / BH - float(d.lowBh)) / (float(d.highBh) - float(d.lowBh)), 0.0, 1.0)
-	var a: float = (float(d.lowDeg) + (float(d.highDeg) - float(d.lowDeg)) * t) * PI / 180.0
+	var a: float = (float(d.lowDeg) + (float(d.highDeg) - float(d.lowDeg)) * t) * SimMathx.PI / 180.0
 	return [SimDetMath.cos(a), -SimDetMath.sin(a)]
 
 

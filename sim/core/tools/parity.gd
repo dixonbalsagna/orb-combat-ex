@@ -88,6 +88,7 @@ func _init() -> void:
 	check("the launch's curve", _flight())
 	check("hit-stop by weight", _hitstop())
 	check("the ricochet's glance", _ricochet())
+	check("the run's ground", _runGround())
 	check("the curve's shared functions, the brake's control back, the camera feed", _shared())
 	check("the air brake", _brake())
 	check("forms: five steps and the slingshot", _forms())
@@ -5672,6 +5673,72 @@ func _ricochet() -> String:
 
 
 ## The first x from `from` (in steps of 160) with 640 units of dry ground ahead within 3 units of level.
+## The run's stage ground (run-core.md section 11): the run's keyed hash pinned; the first stage Close round the
+## player's home; a stage between picked from its opponent's claim, the same stepped a candidate a frame as at once,
+## and its setup (read back from JSON, as a header is) building the match on that ring; with that arena in `used`,
+## another ring and no repeat; the boss on the Whole circle through his home, under Game Design's waiver when it
+## misses Whole's minimum, and on his claim when no other place stands. The data ships off.
+func _runGround() -> String:
+	SimRun.reload()
+	if not SimRun.errors().is_empty():
+		return "the run's data: %s" % str(SimRun.errors())
+	if SimRun.groundOn():
+		return "the run's ground is on in the data (it ships off)"
+	var run: String = "00c0ffee0badf00d"
+	var pins: Array = [SimRun.planetSeed(run), SimRun.stageSeed(run, 1, 0), SimRun.stageSeed(run, 2, 0)]
+	if pins != [2634364773, 2944602543, 4034252320]:
+		return "H: the planet and two stage seeds are %s (want [2634364773, 2944602543, 4034252320]: a port gives the same)" % str(pins)
+	if SimRun.H(run, "ground", 2, 0) == SimRun.H(run, "ground", 2, 1) or SimRun.H(run, "ground", 2, 0) == SimRun.H(run, "ground", 3, 0):
+		return "H: the chapter and the offer don't part the streams"
+	var P: WorldPlanet.Planet = WorldPlanet.make(SimRun.planetSeed(run))
+	var hm: Dictionary = SimRun.homes(P)
+	var g1: SimRun.GroundJob = SimRun.beginGround(run, 1, "RIVAL")
+	g1.finishNow()
+	if g1.rule != "first" or int(g1.result.spec.cols) != WorldRingPick.sizeCols("close") or not _ringHolds(g1.result.ev, int(hm.PROTAGONIST)):
+		return "the first stage: rule %s, %d columns, the player's home held %s (want first, Close, held)" % [g1.rule, int(g1.result.spec.cols), str(_ringHolds(g1.result.ev, int(hm.PROTAGONIST)))]
+	var g2: SimRun.GroundJob = SimRun.beginGround(run, 2, "EMPRESS")
+	var frames: int = 1
+	while not g2.frame():
+		frames += 1
+	var g2b: SimRun.GroundJob = SimRun.beginGround(run, 2, "EMPRESS")
+	g2b.finishNow()
+	var want: int = int(WorldRingPick.cfg().candidates.half)
+	if g2.rule != "claim" or g2.size != "half" or g2.reads != want or frames != want or JSON.stringify(g2.setup()) != JSON.stringify(g2b.setup()) or not g2.result.ok:
+		return "a stage between: rule %s, size %s, %d reads in %d frames (want claim, half, %d in %d), the same at once %s, ok %s" % [g2.rule, g2.size, g2.reads, frames, want, want,
+			str(JSON.stringify(g2.setup()) == JSON.stringify(g2b.setup())), str(g2.result.ok)]
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, g2.matchSeed(), {}, JSON.parse_string(JSON.stringify(g2.setup())))
+	var cols: int = S.arenaCols
+	SimCore.dispose(S)
+	if cols != WorldRingPick.sizeCols("half"):
+		return "a stage's setup built a match of %d columns, not its ring's %d" % [cols, WorldRingPick.sizeCols("half")]
+	var g3: SimRun.GroundJob = SimRun.beginGround(run, 2, "EMPRESS", {"used": [JSON.parse_string(JSON.stringify(g2.setup().arena))]})
+	g3.finishNow()
+	if JSON.stringify(g3.setup()) == JSON.stringify(g2.setup()) or g3.result.get("repeat", true) or g2.result.get("repeat", true):
+		return "with the stage's arena as fought (through JSON): the same ring %s, repeat %s (want another ring and no repeat)" % [str(JSON.stringify(g3.setup()) == JSON.stringify(g2.setup())), str(g3.result.get("repeat"))]
+	var g4: SimRun.GroundJob = SimRun.beginGround(run, SimRun.stages + 1, "RIVAL")
+	g4.finishNow()
+	if g4.rule != "boss" or int(g4.result.spec.cols) != SimConst.PLANET_NC or not _ringHolds(g4.result.ev, int(hm.RIVAL)):
+		return "the boss: rule %s, %d columns, his home held %s (want boss, the Whole circle, held)" % [g4.rule, int(g4.result.spec.cols), str(_ringHolds(g4.result.ev, int(hm.RIVAL)))]
+	if not g4.result.ok and not (g4.result.waived and SimRun.bossWaived(g4.result.ev, int(hm.RIVAL))):
+		return "the boss's ring is under Whole's minimum without Game Design's waiver (his home and a standing city held)"
+	var st := PackedByteArray()
+	st.resize(P.n)
+	st.fill(0)
+	st[int(hm.RIVAL)] = 1
+	var g5: SimRun.GroundJob = SimRun.beginGround(run, SimRun.stages + 1, "RIVAL", {"standing": st})
+	if g5.rule != "boss_claim" or g5.size != "whole":
+		return "the boss with no other place standing: rule %s, size %s (want his claim at Whole)" % [g5.rule, g5.size]
+	return ""
+
+
+func _ringHolds(ev: Dictionary, id: int) -> bool:
+	for h in ev.held:
+		if int(h.id) == id:
+			return true
+	return false
+
+
 func _flatX(S: SimState, from: float) -> float:
 	var x: float = from
 	for i in range(600):
