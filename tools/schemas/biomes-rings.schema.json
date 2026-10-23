@@ -18,7 +18,8 @@
     "coastRef",
     "turn",
     "usedCos",
-    "usedPenalty"
+    "usedPenalty",
+    "first"
   ],
   "properties": {
     "schema": {
@@ -251,6 +252,21 @@
       "minimum": 0.5,
       "maximum": 20,
       "description": "Coast crossings that count as a full coast."
+    },
+    "first": {
+      "type": "object",
+      "required": [
+        "bearings"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "bearings": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 72,
+          "description": "How many evenly spaced bearings of a ring through the home the first stage tries when its ring round the home is under Close's minimum."
+        }
+      }
     },
     "usedCos": {
       "type": "number",

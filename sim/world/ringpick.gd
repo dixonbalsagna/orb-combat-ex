@@ -68,6 +68,8 @@ static func _cLoad() -> void:
 				_cErrors.append("rings.json: sizes.%s is a multiple of 8 columns (the ground's largest stride)" % sz)
 	if not (j.get("turn") is Dictionary):
 		_cErrors.append("rings.json: turn is an object")
+	if not (j.get("first") is Dictionary and int(j.first.get("bearings", 0)) >= 1):
+		_cErrors.append("rings.json: first has bearings")
 	for k in ["stride", "biomeShare", "ref", "mustAt", "avoidWeight", "homeBonus", "coastRef", "usedCos", "usedPenalty"]:
 		if not (j.get(k) is float or j.get(k) is int):
 			_cErrors.append("rings.json: %s is a number" % k)
@@ -495,10 +497,92 @@ static func _better(a: Array, b: Array) -> bool:
 	return false
 
 
-## The first fight of a run: a Close ring round the player's own home (Game Design 2c), the touch-down on a seeded bearing.
-static func firstRing(P: WorldPlanet.Planet, homeId: int, stream: int) -> Dictionary:
+## The first fight of a run: a Close ring round the player's own home (Game Design 2c), the touch-down on a seeded bearing. **When that ring is under Close's minimum** (a coastal home gives a ring
+## mostly sea: Game Design rulings-2026-10-23 section 6) **the ring turns toward land, keeping the home on it**: the rings through the home at data `first.bearings` evenly spaced bearings (from the
+## same seeded one) are read and the one that meets Close's minimum with the most land (then the most biomes) is taken. If no bearing meets it the story's ring stands as it is, as the boss's does.
+## opts: standing, damaged (as the picker takes them). Returns {c, t, cols, kind ("round" or "through"), turned, land}; the same answer however it is stepped (`beginFirstRing`).
+static func firstRing(P: WorldPlanet.Planet, homeId: int, stream: int, opts: Dictionary = {}) -> Dictionary:
+	var job: FirstJob = beginFirstRing(P, homeId, stream, opts)
+	job.finishNow()
+	return job.spec
+
+
+static func beginFirstRing(P: WorldPlanet.Planet, homeId: int, stream: int, opts: Dictionary = {}) -> FirstJob:
+	var j := FirstJob.new()
+	j.P = P
+	j.home = homeId
+	j.standing = opts.get("standing", PackedByteArray())
+	j.damaged = opts.get("damaged", [])
 	var rg := SimRng.new((stream * 7919 + 15485863) & 0xFFFFFFFF)
-	return roundSpec(placePoint(P, homeId), sizeCols("close"), rg.next() * 2.0 * SimMathx.PI)
+	var phi0: float = rg.next() * 2.0 * SimMathx.PI
+	var cols: int = sizeCols("close")
+	j.base = roundSpec(placePoint(P, homeId), cols, phi0)
+	j.base["kind"] = "round"
+	j.base["place"] = homeId
+	var n: int = int(cfg().first.bearings)
+	var T: Array = placePoint(P, homeId)
+	for k in range(n):
+		var sp: Dictionary = throughSpec(T, cols, phi0 + 2.0 * SimMathx.PI * float(k) / float(n))
+		sp["kind"] = "through"
+		sp["place"] = homeId
+		j.cands.append(sp)
+	return j
+
+
+## A first ring in steps (the host spends a few reads a frame): step(n) reads up to n more rings (the story's first, then the turned ones only if it is under the minimum); true when made. `spec`
+## is the answer. `total` is how many reads it may take (1 + bearings).
+class FirstJob extends RefCounted:
+	var P: WorldPlanet.Planet
+	var home: int = -1
+	var standing := PackedByteArray()
+	var damaged: Array = []
+	var base: Dictionary = {}
+	var cands: Array = []
+	var evs: Array = []
+	var done: bool = false
+	var spec: Dictionary = {}
+	var _baseEv: Dictionary = {}
+	var _baseRead: bool = false
+
+	var total: int:
+		get:
+			return 1 + cands.size()
+
+	func step(n: int) -> bool:
+		while n > 0 and not done:
+			n -= 1
+			if not _baseRead:
+				_baseEv = WorldRingPick.evalRing(P, base, standing, damaged)
+				_baseRead = true
+				if WorldRingPick.meets(_baseEv, "close"):
+					_finish(base, false, _baseEv)
+				continue
+			evs.append(WorldRingPick.evalRing(P, cands[evs.size()], standing, damaged))
+			if evs.size() >= cands.size():
+				_choose()
+		return done
+
+	func finishNow() -> void:
+		step(1 << 30)
+
+	func _choose() -> void:
+		var best: int = -1
+		var bestKey: Array = []
+		for k in range(cands.size()):
+			if not WorldRingPick.meets(evs[k], "close"):
+				continue
+			var key: Array = [evs[k].land, evs[k].biomes, -k]
+			if best < 0 or WorldRingPick._better(key, bestKey):
+				best = k
+				bestKey = key
+		if best < 0:
+			_finish(base, false, _baseEv)   # no bearing meets the minimum: the story's ring stands
+		else:
+			_finish(cands[best], true, evs[best])
+
+	func _finish(sp: Dictionary, turned: bool, ev: Dictionary) -> void:
+		spec = {"c": sp.c, "t": sp.t, "cols": sp.cols, "kind": sp.kind, "turned": turned, "land": ev.land}
+		done = true
 
 
 ## The boss's ring: the Whole circle through the boss's home and the most populous place still standing (Game Design 2c), the touch-down at the home. Null when no other place stands.

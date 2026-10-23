@@ -54,6 +54,8 @@ func _init() -> void:
 		for h in ev.held:
 			held.append("%s%d%s%s" % ["city " if h.kind == WorldPlanet.KIND_CITY else "town ", h.id, " (home)" if h.id == g.home else "", " fallen" if h.fallen else ""])
 		var okText: String = str(r.ok) + (" (waived: Game Design 2026-10-23 4, his home and a standing city held)" if r.get("waived", false) else "")
+		if r.get("turned", false):
+			okText += " (turned toward land, the home kept on it: Game Design 2026-10-23 6, land %d%%)" % int(round(float(r.ev.land) * 100.0))
 		print("stage %d  %s  %s, %d cols  rule %s  ring %s%s  ok %s  must %s%s  score %.2f  repeat %s  damaged before: %s" % [ch, opp, g.size, int(r.spec.cols), g.rule, str(r.kind),
 			"" if int(r.place) < 0 else " of place %d" % int(r.place), okText, str(r.must), "  relaxed" if r.relaxed else "", float(r.score), str(r.get("repeat", false)), str(damaged)])
 		if g.rule == "boss" and not r.ok and not r.get("waived", false):

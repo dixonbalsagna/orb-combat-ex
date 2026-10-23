@@ -5674,7 +5674,7 @@ func _ricochet() -> String:
 
 ## The first x from `from` (in steps of 160) with 640 units of dry ground ahead within 3 units of level.
 ## The run's stage ground (run-core.md section 11): the run's keyed hash pinned; the first stage Close round the
-## player's home; a stage between picked from its opponent's claim, the same stepped a candidate a frame as at once,
+## player's home, and turned toward land, holding it, for a coastal home (Game Design's 2026-10-23 6); a stage between picked from its opponent's claim, the same stepped a candidate a frame as at once,
 ## and its setup (read back from JSON, as a header is) building the match on that ring; with that arena in `used`,
 ## another ring and no repeat; the boss on the Whole circle through his home, under Game Design's waiver when it
 ## misses Whole's minimum, and on his claim when no other place stands. The data ships off.
@@ -5696,6 +5696,17 @@ func _runGround() -> String:
 	g1.finishNow()
 	if g1.rule != "first" or int(g1.result.spec.cols) != WorldRingPick.sizeCols("close") or not _ringHolds(g1.result.ev, int(hm.PROTAGONIST)):
 		return "the first stage: rule %s, %d columns, the player's home held %s (want first, Close, held)" % [g1.rule, int(g1.result.spec.cols), str(_ringHolds(g1.result.ev, int(hm.PROTAGONIST)))]
+	if g1.result.get("turned", true):
+		return "the first stage turned a ring that meets Close's minimum"
+	var coast: String = "0123456789abcdef"   # its stand-in home is a coastal city: the ring round it is 70% ocean
+	var gc: SimRun.GroundJob = SimRun.beginGround(coast, 1, "RIVAL")
+	var fc: int = 1
+	while not gc.frame():
+		fc += 1
+	var hc: Dictionary = SimRun.homes(WorldPlanet.make(SimRun.planetSeed(coast)))
+	if not gc.result.get("turned", false) or not gc.result.ok or not _ringHolds(gc.result.ev, int(hc.PROTAGONIST)) or gc.reads != fc:
+		return "a coastal home's first ring: turned %s, ok %s, home held %s, %d reads in %d frames (want turned, ok, held, a read a frame)" % [str(gc.result.get("turned")), str(gc.result.ok),
+			str(_ringHolds(gc.result.ev, int(hc.PROTAGONIST))), gc.reads, fc]
 	var g2: SimRun.GroundJob = SimRun.beginGround(run, 2, "EMPRESS")
 	var frames: int = 1
 	while not g2.frame():

@@ -12,7 +12,8 @@ extends RefCounted
 ## same answer on any machine, however many frames it took.
 ##
 ## The rules (Game Design's run-mode.md 1.2; Narrative's fallbacks):
-##   the first stage: a Close ring round the player's own home (WorldRingPick.firstRing);
+##   the first stage: a Close ring round the player's own home, turned toward land when it is under Close's minimum
+##                with the home kept on it (WorldRingPick.beginFirstRing; Game Design's rulings-2026-10-23.md 6);
 ##   a stage between: the opponent's claim at its size for the chapter (the data's phases: early, early, mid), Close at
 ##                a Proving ground, with the opponent's home tried first (WorldRingPick.pick);
 ##   the boss:    the Whole circle through the boss's home and the most populous place still standing
@@ -213,17 +214,15 @@ static func beginGround(run: String, chapter: int, opponent: String, opts: Dicti
 	var stream: int = H(run, "ground", chapter, g.choice)
 	if g.rule == "first":
 		g.home = int(hm.get(String(opts.get("player", "PROTAGONIST")), -1))
-		if g.home >= 0:
-			g.spec = WorldRingPick.firstRing(g.P, g.home, stream)
-			g.spec["kind"] = "round"   # a ring round a place holds it (WorldRingPick.evalRing)
-			g.spec["place"] = g.home
+		if g.home >= 0:   # stepped like the others: one read, 13 when the ring is turned toward land
+			g.first = WorldRingPick.beginFirstRing(g.P, g.home, stream, {"standing": g.standing, "damaged": g.damaged})
 	elif g.rule == "boss":
 		g.home = int(hm.get(opponent, -1))
 		var b = WorldRingPick.bossRing(g.P, g.home, g.standing) if g.home >= 0 else null
 		if b != null:
 			g.spec = b
 			g.spec["place"] = g.home
-	if g.spec.is_empty():
+	if g.spec.is_empty() and g.first == null:
 		g.rule = "boss_claim" if g.rule == "boss" else "claim"
 		g.home = int(hm.get(opponent, -1))
 		g.job = WorldRingPick.beginPick(g.P, claim(opponent), g.size, stream, {"home": g.home, "standing": g.standing, "damaged": g.damaged, "used": g.used})
@@ -244,6 +243,7 @@ class GroundJob extends RefCounted:
 	var P: WorldPlanet.Planet
 	var spec: Dictionary = {}                 # the first or the boss's ring (read once, for the report)
 	var job: WorldRingPick.PickJob = null      # a claim's pick
+	var first: WorldRingPick.FirstJob = null   # the first stage's ring
 	var standing := PackedByteArray()
 	var damaged: Array = []
 	var used: Array = []
@@ -264,13 +264,22 @@ class GroundJob extends RefCounted:
 				result = job.result
 				result["waived"] = false
 			return done
+		while first != null and not first.done and n > 0:
+			first.step(1)
+			reads += 1
+			n -= 1
+		if first != null and spec.is_empty():
+			if not first.done or n <= 0:
+				return done
+			spec = first.spec.duplicate()
+			spec["place"] = home   # on the ring, round or through it (a round ring's centre counts as held)
 		var ev: Dictionary = WorldRingPick.evalRing(P, spec, standing, damaged)
 		reads += 1
 		var sc: Dictionary = WorldRingPick.score(ev, SimRun.claim(opponent), home)
 		var ok: bool = WorldRingPick.meets(ev, size)
 		var me: Dictionary = {"c": spec.c, "cols": int(spec.cols), "kind": str(spec.get("kind", "")), "place": int(spec.get("place", -1))}
 		result = {"ok": ok, "spec": {"c": spec.c, "t": spec.t, "cols": spec.cols}, "score": sc.score, "must": sc.must, "home": sc.home,
-			"relaxed": false, "kind": rule, "place": home, "ev": ev, "idx": -1, "tried": 1,
+			"relaxed": false, "kind": rule, "place": home, "ev": ev, "idx": -1, "tried": 1, "turned": bool(spec.get("turned", false)),
 			"repeat": WorldRingPick.usedMatch(me, WorldRingPick.usedList(used)), "waived": rule == "boss" and not ok and SimRun.bossWaived(ev, home)}
 		done = true
 		return done
