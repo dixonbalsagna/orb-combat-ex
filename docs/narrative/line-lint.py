@@ -60,6 +60,21 @@ def speaker_of(heading):
     return None
 
 
+CY = LINT["cyborg_ln04_ln05"]
+
+
+def cyborg_people(line):
+    """Legal ln04 and ln05: a Cyborg line never names people, a toll or a casualty. Returns (hard, soft)."""
+    hard, soft = [], []
+    for w in CY["people_toll_words"]:
+        if re.search(r"(?<![\w])" + re.escape(w) + r"(?![\w])", line, re.I):
+            hard.append(f"ln05: '{w}' is a people, toll or casualty word, banned in any Cyborg line")
+    for w in CY["review_words"]:
+        if re.search(r"(?<![\w])" + re.escape(w) + r"(?![\w])", line, re.I):
+            soft.append(f"ln05 REVIEW '{w}' (a human reads: it must not be about people)")
+    return hard, soft
+
+
 def check(line, heading=""):
     hard, soft = [], []
     who = speaker_of(heading)
@@ -72,6 +87,10 @@ def check(line, heading=""):
                 continue
             if re.search(r"(?<![\w])" + re.escape(w) + r"(?![\w])", line, re.I):
                 hard.append(f"Gemini bible: '{w}' is banned for {who}")
+    if who == "cyborg":
+        h5, s5 = cyborg_people(line)
+        hard += h5
+        soft += s5
     blk, rev = c10(line)
     for w in blk:
         hard.append(f"c10 block '{w}'")
@@ -115,7 +134,7 @@ def main(paths):
                 b["ell"].append((i, line))
                 print(f"{p}:{i}: CHECK ellipsis (hesitation, regret or performative exhaustion?)  {line}")
             for s in soft:
-                if s.startswith("c10 REVIEW"):
+                if s.startswith(("c10 REVIEW", "ln05 REVIEW")):
                     print(f"{p}:{i}: CHECK {s}  {line}")
             if hard:
                 failed += 1

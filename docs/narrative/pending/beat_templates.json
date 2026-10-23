@@ -1,6 +1,6 @@
 {
   "schema": "narrative.beat_templates/1",
-  "_about": "PARKED DRAFT (docs/narrative/pending/). A template library for the between-stage story beat, for any of the three co-op campaign pitches (homework 41: A Planet Run, B Episodes, C The Siege). Slots only: no new lore and no new names (Orb writes the universe). 30 templates in 9 families, the slot vocabulary, each fighter's voice hooks, and 45 filled samples (5 per family) for Orb to read; every sample line passes the narrative lint. Sample place names (Rankhold, Mendquay, Crownreach, Slagholt, Furrowlea) are placeholders pending Orb's marks. Claude-written.",
+  "_about": "PARKED DRAFT (docs/narrative/pending/). A template library for the between-stage story beat, for any of the three co-op campaign pitches (homework 41: A Planet Run, B Episodes, C The Siege). Slots only: no new lore and no new names (Orb writes the universe). 30 templates in 9 families, the slot vocabulary, each fighter's voice hooks, and 45 filled samples (5 per family) for Orb to read; every sample line passes the narrative lint. Sample place names (Rankhold, Mendquay, Crownreach, Slagholt, Furrowlea) are placeholders pending Orb's marks. Claude-written. Version 2 (2026-10-23): Legal ln05 applied (picker_rules; Cyborg home_wear only for his own yard; wrecked is a structure or terrain event only).",
   "slots": {
     "opp": "The opponent fighter of the stage (a roster id; the display name comes from the names file).",
     "p1": "The first player's fighter.",
@@ -8,16 +8,16 @@
     "ally": "Whichever of p2 or a CPU partner is on the player's side.",
     "third": "A fighter who is neither opponent nor player (a roster id), or `silhouette` when unknown.",
     "home": "The opponent's home place name (World's homes: Mendquay, Rankhold, Crownreach, Slagholt; names pending Orb).",
-    "home_wear": "The home place's wear state: untouched, damaged or fallen. A place state only.",
+    "home_wear": "The home place's wear state: untouched, damaged or fallen. A place state only. For the Cyborg it is read ONLY for his own breaking yard (the home with no residents); if he ever claims a town the template is off for him (Legal ln05).",
     "place": "This stage's place name.",
     "prev_place": "The previous stage's place name.",
     "claim": "The opponent's claim phrase (table below), from World's ring claim.",
     "last": "The last result between these fighters: none, won, lost, won_close, lost_close, draw (time cap).",
-    "wrecked": "What the last meeting wrecked, from events the sim has: a tower, a crater, a fire, the pier (or `nothing`).",
+    "wrecked": "What the last meeting wrecked: a STRUCTURE or TERRAIN event only (a tower, a bridge, a crater, a fire, the pier) or `nothing`. Never derived from a casualty event (Legal ln05), so a line of thanks for wreckage can never be thanks for a loss of life.",
     "mode": "1v1, 2v1 (co-op vs one), 3v1 (the Empress and her guards), or horde.",
     "n_left": "Stages left before the boss.",
     "next": "The next stage's opponent and place, for a cliffhanger.",
-    "toll_band": "none, some or many: a coarse band of the run's toll. NEVER read by a Cyborg line (Legal ln04) and never worded as a score (c08)."
+    "toll_band": "none, some or many: a coarse band of the run's toll. NEVER passed to a Cyborg template (Legal ln04, ln05), never a count, and never worded as a score (c08)."
   },
   "claim_phrases": {
     "RIVAL": "the high ground",
@@ -607,7 +607,11 @@
         }
       ],
       "fits": "A B C",
-      "note": "A place and its wear only, no counts."
+      "note": "A place and its wear only, no counts. Place and wear only: never a toll, a count, a body, a school, hospital or place of worship, or a child as a victim (ln05).",
+      "cyborg": {
+        "home_wear": "own_yard_only",
+        "off_if": "the Cyborg's claim picked a town or city, not his own breaking yard"
+      }
     },
     {
       "id": "home_opp",
@@ -632,7 +636,11 @@
         }
       ],
       "fits": "B C",
-      "note": ""
+      "note": "Place and wear only: never a toll, a count, a body, a school, hospital or place of worship, or a child as a victim (ln05).",
+      "cyborg": {
+        "home_wear": "own_yard_only",
+        "off_if": "the Cyborg's claim picked a town or city, not his own breaking yard"
+      }
     },
     {
       "id": "home_wear",
@@ -657,7 +665,11 @@
         }
       ],
       "fits": "B C",
-      "note": "The Cyborg's lines read WEAR STATE only: never a casualty count, never people (ln04)."
+      "note": "The Cyborg's lines read WEAR STATE only: never a casualty count, never people (ln04). Place and wear only: never a toll, a count, a body, a school, hospital or place of worship, or a child as a victim (ln05).",
+      "cyborg": {
+        "home_wear": "own_yard_only",
+        "off_if": "the Cyborg's claim picked a town or city, not his own breaking yard"
+      }
     },
     {
       "id": "home_after",
@@ -682,7 +694,7 @@
         }
       ],
       "fits": "A B C",
-      "note": "The apology is after the fight, never during it (Orb)."
+      "note": "The apology is after the fight, never during it (Orb). Place and wear only: never a toll, a count, a body, a school, hospital or place of worship, or a child as a victim (ln05)."
     },
     {
       "id": "taunt_afar",
@@ -769,7 +781,7 @@
         }
       ],
       "fits": "A B",
-      "note": ""
+      "note": "Place and wear only: never a toll, a count, a body, a school, hospital or place of worship, or a child as a victim (ln05)."
     },
     {
       "id": "cliff_shadow",
@@ -787,7 +799,7 @@
         }
       ],
       "fits": "B",
-      "note": ""
+      "note": "Place and wear only: never a toll, a count, a body, a school, hospital or place of worship, or a child as a victim (ln05)."
     },
     {
       "id": "cliff_front",
@@ -811,7 +823,7 @@
         }
       ],
       "fits": "C",
-      "note": "A place and its wear only: no toll, no remains (c08, ln04)."
+      "note": "A place and its wear only: no toll, no remains (c08, ln04). Place and wear only: never a toll, a count, a body, a school, hospital or place of worship, or a child as a victim (ln05)."
     }
   ],
   "samples": [
@@ -1488,5 +1500,38 @@
     "The Protagonist apologises only after a fight.",
     "The Empress's guards speak only in a 3v1 (mode 3v1).",
     "At most two beats a gap (one aftermath, one ahead), as in story-beats.md."
-  ]
+  ],
+  "picker_rules": {
+    "_about": "The beat picker's refusal rules, from Legal ln04 and ln05. beat-check.py is the reference check; the picker must apply the same filter before it scores a template.",
+    "cyborg_forbidden_slots": [
+      "toll_band"
+    ],
+    "cyborg_forbidden_slot_patterns": [
+      "toll",
+      "casualt",
+      "people",
+      "lost_n",
+      "count"
+    ],
+    "cyborg_home_wear": "own_yard_only",
+    "cyborg_off_if_claimed_town": true,
+    "wrecked_kinds": [
+      "tower",
+      "bridge",
+      "crater",
+      "fire",
+      "pier",
+      "nothing"
+    ],
+    "wrecked_never_from": [
+      "casualty events"
+    ],
+    "place_and_wear_only": [
+      "cliff_front",
+      "home_player",
+      "home_opp",
+      "home_wear"
+    ],
+    "filter": "A template is usable for a Cyborg opponent only if none of its reads is a forbidden slot or matches a forbidden pattern, and, if it reads home_wear, only when the home is his own breaking yard. toll_band and any count are never put into a Cyborg line's context at all."
+  }
 }

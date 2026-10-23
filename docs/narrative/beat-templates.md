@@ -1,6 +1,6 @@
 # Story-beat templates for the co-op campaign: 30 templates, 45 samples
 
-Owner: Narrative and Fighter Identity. Version 1, 2026-10-23. The EP's brief: a template library for the between-stage story beat that works for **any** of the three co-op campaign pitches in homework 41 (**A** the Planet Run, **B** Episodes, **C** the Siege). **Slots only, no new lore and no new names: Orb writes the universe.** Nine families, about thirty templates, the slots each reads, voice hooks for each fighter, Legal's ln04 for the Cyborg, and five filled samples a family for Orb to read. The data is `pending/beat_templates.json` (the samples there are lint-checked). It builds on `story-beats.md` (the run's grammar) and `opponent-grounds.md` (the claims). Every sample line follows the voice bibles and passes the lint. Sample place names are placeholders. Nothing is marked by Orb.
+Owner: Narrative and Fighter Identity. Version 2, 2026-10-23 (Legal's ln05 applied: section 6). The EP's brief: a template library for the between-stage story beat that works for **any** of the three co-op campaign pitches in homework 41 (**A** the Planet Run, **B** Episodes, **C** the Siege). **Slots only, no new lore and no new names: Orb writes the universe.** Nine families, about thirty templates, the slots each reads, voice hooks for each fighter, Legal's ln04 for the Cyborg, and five filled samples a family for Orb to read. The data is `pending/beat_templates.json` (the samples there are lint-checked). It builds on `story-beats.md` (the run's grammar) and `opponent-grounds.md` (the claims). Every sample line follows the voice bibles and passes the lint. Sample place names are placeholders. Nothing is marked by Orb.
 
 ## 1. The idea
 
@@ -340,15 +340,27 @@ The end of an episode, or a front that moved.
 > **Protagonist:** "Same time next stage? Don't be late!"
 > **Rival:** "I'm never late. You're early."
 
-## 6. What it needs
+## 6. Legal's ln05, enforced in the tools (2026-10-23)
+
+Legal passed the library with three conditions (`docs/legal/beat-templates-screen.md`). They are now rules the tools check, not only words on paper.
+
+1. **The Cyborg never reads a toll, and his lines never name people.**
+   - **The lint** (`line-lint.py`, the `cyborg_ln04_ln05` tier in `line-lint.json`) now fails any line in a Cyborg block that contains people, person, civilians, kill/killed, dead, died, death, victims, bodies, corpse, remains, survivors, residents, villagers, townsfolk, children, kids, humans, population, toll, casualties, count or tally (whole words). "Gone" and "lost" print a CHECK for a human, because they must not be about people. It ran over all 117 Cyborg lines we have (homework, taunts, run lines, beats, templates, Gemini's 7); **it caught one**, "Two warm bodies!" (final_4_arrive_cyborg), which is now "Two of you! My stomach's been waiting!".
+   - **The picker's filter** is `picker_rules` in `pending/beat_templates.json` and the function `usable()` in `beat-check.py`: a template is refused for a Cyborg opponent if it reads `toll_band` or any slot whose name contains toll, casualt, people, lost_n or count. `toll_band` and any count are never put into a Cyborg line's context at all.
+2. **`wrecked` is a structure or terrain event only** (a tower, a bridge, a crater, a fire, the pier), never derived from a casualty event. **`home_wear` for the Cyborg is read only for his own breaking yard** (the home with no residents). Three templates read it (`home_player`, `home_opp`, `home_wear`) and each now carries `cyborg: {home_wear: own_yard_only}`; if his claim picks a town or city the template is off for him.
+3. **Place and wear only** for the fronts and homes (`cliff_front`, `home_player`, `home_opp`, `home_wear`): no toll, count, body, school, hospital, place of worship or child as a victim. `beat-check.py` scans their sample lines for those words.
+
+**Run it:** `python docs/narrative/beat-check.py` (30 templates, 45 samples, 9 Cyborg lines, 0 failing). Standard library only, and it runs in a second.
+
+## 7. What it needs
 
 - **Game Design:** which events fill `last`, `wrecked`, `home_wear`, `third` and `mode` in a co-op run (the run ledger), and whether a 3v1 beat is allowed.
 - **World:** nothing new: a place name, its kind and its wear state.
 - **UI:** the beat card already exists (`beat-card`); a partner's face cut-in needs a speaker tag for `ally`.
 - **Tools:** a schema for `beat_templates` when Orb has marked the samples; it stays in `pending/` until then.
-- **Legal:** read the Cyborg's samples and template notes against ln04.
+- **Legal:** passed with ln05 (above). The picker (whoever writes it) must apply `picker_rules`; `beat-check.py` is the reference.
 
-## 7. Questions for Orb
+## 8. Questions for Orb
 
 1. Which sample lines sound right, and which fighter reads wrong? (Mark the samples.)
 2. Should a partner (human or CPU) speak in a beat, or only the opponent and the radio?

@@ -277,5 +277,65 @@
       "bone",
       "bricks"
     ]
+  },
+  "cyborg_ln04_ln05": {
+    "_about": "Legal ln04 and ln05 (docs/legal/beat-templates-screen.md): a Cyborg line never names people, a toll or a casualty. Whole-word match, hard fail, in any block whose heading names the Cyborg and in any JSON line whose speaker is the Cyborg. 'gone' and 'lost' are printed for a human to read (they fail when a people word is also in the line, which the hard list already catches).",
+    "people_toll_words": [
+      "people",
+      "person",
+      "persons",
+      "civilian",
+      "civilians",
+      "kill",
+      "kills",
+      "killed",
+      "killing",
+      "dead",
+      "die",
+      "dies",
+      "died",
+      "death",
+      "deaths",
+      "victim",
+      "victims",
+      "body",
+      "bodies",
+      "corpse",
+      "corpses",
+      "remains",
+      "survivor",
+      "survivors",
+      "resident",
+      "residents",
+      "villager",
+      "villagers",
+      "townsfolk",
+      "child",
+      "children",
+      "kid",
+      "kids",
+      "human",
+      "humans",
+      "population",
+      "toll",
+      "casualty",
+      "casualties",
+      "count",
+      "tally"
+    ],
+    "review_words": [
+      "gone",
+      "lost"
+    ],
+    "slots_he_may_never_read": [
+      "toll_band"
+    ],
+    "slot_name_patterns_he_may_never_read": [
+      "toll",
+      "casualt",
+      "people",
+      "lost_n",
+      "count"
+    ]
   }
 }
