@@ -201,6 +201,7 @@ func _run() -> void:
 	await _scenario("transformation", func(): return _transformation(), {})
 	await _scenario("tier-up push", func(): return _tier_push(), {})
 	await _scenario("fold", func(): return _fold(), {})
+	await _scenario("angle shot", func(): return _angle_shot(), {})
 	await _scenario("arena turn, one view", func(): return _arena_turn(600.0), {})
 	await _scenario("arena turn, split", func(): return _arena_turn(9000.0), {})
 	await _scenario("solo follow", func(): return _solo_follow(), {})
@@ -3828,9 +3829,45 @@ func _fold() -> Dictionary:
 	return {}
 
 
+## Angles by context (Orb, 2026-10-22: no instant move without a reason): a decisive moment in the plain one view tilts the camera
+## to its angle as a crane move: eased in, held, eased back to level, never more than PITCH_CUT_DEG in a tick and with no cut.
+func _angle_shot() -> Dictionary:
+	var ax: float = 20000.0
+	_pose(ax, 40.0, ax + 300.0, 40.0)
+	_seed_rig()
+	for _i in range(200):
+		_tick_rig()
+	_tick_rig([_shot_events("decisive", {"winner": 0.0, "loser": 1.0, "kind": "knockback"})])
+	var peak: float = 0.0
+	var step: float = 0.0
+	var cuts: int = 0
+	var off: int = 0
+	var prev_p: float = _rig.current().pitch
+	var n: int = int((CamParams.ANGLE_IN + CamParams.ANGLE_HOLD + CamParams.ANGLE_OUT) * 60.0) + 30
+	for _k in range(n):
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		peak = maxf(peak, absf(cur.pitch))
+		step = maxf(step, absf(cur.pitch - prev_p))
+		prev_p = cur.pitch
+		if cur.cut:
+			cuts += 1
+		for i in range(2):
+			if not _on_screen(cur, i):
+				off += 1
+	_check(_rig.angle_shots > 0 and peak >= 1.0, "%s: no angle (peak %.2f degrees)" % [_label, peak])
+	_check(cuts == 0, "%s: the angle shot cut %d times (it eases)" % [_label, cuts])
+	_check(step <= CamParams.PITCH_CUT_DEG, "%s: the angle stepped %.2f degrees in a tick" % [_label, step])
+	_check(absf(_rig.current().pitch) < 0.01, "%s: the angle did not come back to level (%.2f)" % [_label, _rig.current().pitch])
+	_check(off == 0, "%s: a fighter was off the screen for %d ticks" % [_label, off])
+	stats["angle shot"] = "peak %.2f degrees, largest step %.3f a tick, cuts %d" % [peak, step, cuts]
+	return {}
+
+
 ## World's ring turns at a calm moment (arena_turn; Rendering rebuilds the ground on its tick): the cut is on that tick, to a
-## wide (every shown pane at TURN_WIDE of its size, both fighters on the screen, the picture still while the pair is still),
-## and after TURN_HOLD a cut back to the framing it had.
+## wide (every shown pane at TURN_WIDE of its size, both fighters on the screen, the picture still while the pair is still);
+## after TURN_HOLD it eases back over TURN_OUT to the framing it had, with no second cut (Orb, 2026-10-22: no instant move
+## without a reason; the cut in is the scene change, the way back is a move).
 func _arena_turn(gap: float) -> Dictionary:
 	var ax: float = 20000.0
 	_pose(ax, 40.0, ax + gap, 40.0)
@@ -3852,27 +3889,34 @@ func _arena_turn(gap: float) -> Dictionary:
 			_check(float(at.cam_z[i]) < float(z0[i]) * 0.8, "%s: pane %d is not wider on the cut (%.3f from %.3f)" % [_label, i, at.cam_z[i], z0[i]])
 	var off: int = 0
 	var moved: float = 0.0
+	var step_back: float = 0.0
+	var cuts_back: int = 0
 	var prev: SplitFrame = at
-	var back_t: int = -1
-	for k in range(1, int(CamParams.TURN_HOLD * 60.0) + 30):
+	var hold_n: int = int(CamParams.TURN_HOLD * 60.0)
+	var back_n: int = int((CamParams.TURN_HOLD + CamParams.TURN_OUT) * 60.0) + 60
+	for k in range(1, back_n):
 		_tick_rig()
 		var cur: SplitFrame = _rig.current()
-		if cur.cut and back_t < 0:
-			back_t = k
-		if back_t < 0:
-			for i in range(2):
-				if not _on_screen(cur, i):
-					off += 1
-				moved = maxf(moved, absf(log(float(cur.cam_z[i])) - log(float(prev.cam_z[i]))))
+		for i in range(2):
+			if not _on_screen(cur, i):
+				off += 1
+			var dz: float = absf(log(float(cur.cam_z[i])) - log(float(prev.cam_z[i])))
+			if k < hold_n:
+				moved = maxf(moved, dz)
+			else:
+				step_back = maxf(step_back, dz)
+		if k >= hold_n and cur.cut:
+			cuts_back += 1
 		prev = cur
-	_check(off == 0, "%s: a fighter was off the screen for %d ticks of the turn's wide" % [_label, off])
+	_check(off == 0, "%s: a fighter was off the screen for %d ticks of the turn's wide and its way back" % [_label, off])
 	_check(moved < 0.002, "%s: the wide moved (zoom %.4f in a tick)" % [_label, moved])
-	_check(absi(back_t - int(round(CamParams.TURN_HOLD * 60.0))) <= 1, "%s: the cut back came at tick %d (want %d)" % [_label, back_t, int(round(CamParams.TURN_HOLD * 60.0))])
+	_check(cuts_back == 0, "%s: the way back cut %d times (it eases)" % [_label, cuts_back])
+	_check(step_back <= CamParams.ZOOM_RATE_TRANS * SplitRig.DT * 1.1, "%s: the way back stepped the zoom %.4f in a tick (comfort %.4f)" % [_label, step_back, CamParams.ZOOM_RATE_TRANS * SplitRig.DT])
 	var after: SplitFrame = _rig.current()
 	for i in range(2):
 		if bool(shown[i]):
 			_check(absf(log(float(after.cam_z[i])) - log(float(z0[i]))) < 0.05, "%s: pane %d did not come back to its framing (%.3f, was %.3f)" % [_label, i, after.cam_z[i], z0[i]])
-	stats["arena turn " + _label] = "split %s, zoom %.3f / %.3f to %.3f / %.3f, back at tick %d" % [str(bool(shown[1])), z0[0], z0[1], at.cam_z[0], at.cam_z[1], back_t]
+	stats["arena turn " + _label] = "split %s, zoom %.3f / %.3f to %.3f / %.3f, back to %.3f / %.3f, largest step back %.4f" % [str(bool(shown[1])), z0[0], z0[1], at.cam_z[0], at.cam_z[1], after.cam_z[0], after.cam_z[1], step_back]
 	return {}
 
 

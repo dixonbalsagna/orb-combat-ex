@@ -188,7 +188,12 @@ var _pc_zoom: float = 1.0                  # the one view's size by pace (CamPar
 var turn_cut: bool = true                  # the ring's turn: a hard cut to a wide on its tick and back (CamParams.TURN_*)
 var turn_cuts: int = 0
 var _turn_t: float = -1.0                  # time into the turn's wide, or -1
-var _turn_snap: bool = false
+var _wp_t: Array = [-1, -1]               # a catch-up whip's tick per pane (-1 none), and where its focus started
+var _wp_x0: Array = [0.0, 0.0]
+var _wp_y0: Array = [0.0, 0.0]
+var whips: int = 0
+var _turn_p0: float = 0.0                 # the turn's angle at the cut, eased back to level ...
+var _turn_pa: float = 0.0                 # ... and the angle it last set (another shot's angle is left alone)
 var arrival_hold: bool = true             # the launch curve's arrival: widen to the landing, hold, let go (docs/camera/director.md step 4b)
 var arrivals: int = 0
 var _arr_t: Array = [-1.0, -1.0]           # seconds since this fighter's arrival was told, or -1
@@ -211,7 +216,8 @@ var _ang_t: float = -1.0
 var _ang_pitch: float = 0.0
 var _ang_last_t: float = -99.0             # the ledger: the last angle shot's time and family
 var _ang_last_family: String = ""
-var _ang_snap: bool = false
+var _ang_w: float = 0.0                    # the angle shot's tilt, 0 level to 1 the angle (eased)
+var _ang_pa: float = 0.0                   # the angle it last set
 var nocut_holds: int = 0                   # ticks a layout change waited for a do-not-cut span to end
 var _ci_seen: bool = false                 # a cam_intent cue has come this match: the feed replaces the reading of the beats
 var _ci_beats: Array = []                  # told contacts still ahead: [n, kind, d]
@@ -366,8 +372,8 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_ci_nocut = []
 	_ci_story_end = -1
 	_ci_land = [null, null]
+	_wp_t = [-1, -1]
 	_turn_t = -1.0
-	_turn_snap = false
 	pace = "relax"
 	_pc_hits = []
 	_pc_big_t = -99.0
@@ -377,7 +383,6 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_ang_t = -1.0
 	_ang_last_t = -99.0
 	_ang_last_family = ""
-	_ang_snap = false
 	angle_now = ""
 	story_w = 0
 	story_tags = []
@@ -455,9 +460,6 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 	_update_panel(S)
 	_update_intro(S)
 	_angle_tick(S)
-	if _ang_snap:
-		cut = true   # an angle's cut, in or back: the cameras snap (after this tick's update)
-		_ang_snap = false
 	_impact_evt = [false, false]
 	_journey_end_evt = [false, false]
 	var clash_now: bool = S.game.clash != null
@@ -465,9 +467,11 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 		_push = [0.0, 0.0]   # the beam struggle opens with the tier push's shape: in, hold, out
 	_clash_prev = clash_now
 	_pitch_now = pitch_deg + _shot_pitch
-	if absf(_pitch_now - _last_pitch) > 0.01:
+	var d_pitch: float = absf(_pitch_now - _last_pitch)
+	if d_pitch > 0.01:
 		_last_pitch = _pitch_now
-		_cut_now = true
+		if d_pitch > CamParams.PITCH_CUT_DEG:
+			_cut_now = true   # a jump of angle is a cut (an authored shot's); an eased tilt (an angle shot, the turn's way back) is a move
 	_update_trigger(S)
 	_update_layout()
 	_update_pushes()
@@ -475,9 +479,6 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 	_intent_tick(S)
 	_pace_tick(S)
 	_update_cameras(S)
-	if _turn_snap:
-		cut = true   # the turn's wide is over: snap back to the fight's framing
-		_turn_snap = false
 	if cut:
 		_snap_cameras(S)
 	_cut_fade = maxf(0.0, _cut_fade - DT)
@@ -1143,8 +1144,12 @@ func _read_events(S: SimState, events: Array) -> void:
 			# World turned the ring and Rendering rebuilds the ground on this tick: the cut is on it, to the wide
 			_turn_t = 0.0
 			turn_cuts += 1
+			_turn_p0 = 0.0
+			_turn_pa = 0.0
 			if solo_kind == "":
 				_shot_pitch = _turn_pitch()   # a low angle, the far land against the sky (a solo shot keeps its own)
+				_turn_p0 = _shot_pitch
+				_turn_pa = _shot_pitch
 		elif bt == "launch":
 			_blow("launch", 0)
 			_pc_big_t = time
@@ -1460,7 +1465,8 @@ func _begin_solo(kind: String, slot: int, prio: int, sl: float, S: SimState = nu
 	_tf_phase = ""
 	_tf_ver = ""
 	_tf_calm = false
-	_shot_pitch = 0.0
+	if not _pitch_in_move():
+		_shot_pitch = 0.0   # an angle shot or the turn's way back eases its own angle out: no jump
 	solo_phase = "follow"
 	_solo_dur = 0.0
 	solo_target = 1.0
@@ -1507,7 +1513,8 @@ func _end_solo(S: SimState) -> void:
 	_tf_phase = ""
 	_tf_ver = ""
 	_tf_calm = false
-	_shot_pitch = 0.0
+	if not _pitch_in_move():
+		_shot_pitch = 0.0   # an angle shot or the turn's way back eases its own angle out: no jump
 	solo_prio = 0
 	solo_phase = ""
 	solo_target = 0.0
@@ -2058,7 +2065,8 @@ func _intro_land(S: SimState, a: int, crater_r: float) -> void:
 func _force_merged(S: SimState) -> void:
 	r_now = _metric(S)
 	_end_solo(S)
-	_shot_pitch = 0.0
+	if not _pitch_in_move():
+		_shot_pitch = 0.0   # an angle shot or the turn's way back eases its own angle out: no jump
 	sep = 0.0
 	e = 0.0
 	e_target = 0.0
@@ -2151,14 +2159,17 @@ func _punch_mult() -> float:
 func _punch_only() -> float:
 	if _punch_t < 0.0:
 		return 1.0
-	return 1.0 + _punch_amp * (1.0 - absf(2.0 * _punch_t / _punch_len - 1.0))
+	var sp: float = sin(PI * clampf(_punch_t / _punch_len, 0.0, 1.0))
+	return 1.0 + _punch_amp * sp * sp   # eased in and out (it was a triangle over 6 ticks)
 
 
 ## The blow push now: up over BLOW_UP, held for the blow's hit-stop, back over BLOW_DOWN.
 func _blow_mult() -> float:
 	if _bp_t < 0.0:
 		return 1.0
-	return 1.0 + _bp_amp * (smoothstep(0.0, CamParams.BLOW_UP, _bp_t) - smoothstep(CamParams.BLOW_UP + _bp_hold, CamParams.BLOW_UP + _bp_hold + CamParams.BLOW_DOWN, _bp_t))
+	var u_b: float = 1.0 - clampf(_bp_t / CamParams.BLOW_UP, 0.0, 1.0)
+	var rise: float = 1.0 - u_b * u_b * u_b   # a fast start and a soft landing (Research's impact push)
+	return 1.0 + _bp_amp * (rise - smoothstep(CamParams.BLOW_UP + _bp_hold, CamParams.BLOW_UP + _bp_hold + CamParams.BLOW_DOWN, _bp_t))
 
 
 ## A landed blow of this kind (a key of CamParams.BLOW_PUSH) and its hit-stop in ticks: starts a push when it is bigger than what is left of the one running.
@@ -2185,13 +2196,16 @@ func _wide_mult() -> float:
 func _update_pushes() -> void:
 	if _turn_t >= 0.0:
 		_turn_t += DT
-		if _turn_t >= CamParams.TURN_HOLD:
+		# The way back is a move, not a cut: the wide eases to the fight's framing and the angle to level over TURN_OUT.
+		var w_out: float = smoothstep(CamParams.TURN_HOLD, CamParams.TURN_HOLD + CamParams.TURN_OUT, _turn_t)
+		if _turn_pa != 0.0 and _shot_pitch == _turn_pa:
+			_shot_pitch = _turn_p0 * (1.0 - w_out)
+			_turn_pa = _shot_pitch
+		if _turn_t >= CamParams.TURN_HOLD + CamParams.TURN_OUT:
 			_turn_t = -1.0
-			_turn_snap = true   # the hard cut back to the fight's framing (step snaps the cameras)
-			if solo_kind == "" and _shot_pitch != 0.0:
+			if _shot_pitch == _turn_pa:
 				_shot_pitch = 0.0
-				_pitch_now = pitch_deg   # on this tick, so the snap is at the level angle and no second cut follows
-				_last_pitch = _pitch_now
+			_turn_pa = 0.0
 	for ai in range(2):
 		if float(_arr_t[ai]) >= 0.0:
 			_arr_t[ai] = float(_arr_t[ai]) + DT
@@ -3215,10 +3229,7 @@ func _update_cameras(S: SimState) -> void:
 					var dy_l: float = f.y + CamParams.CHEST - _fy[i]
 					var far_w: float = sqrt(dx_l * dx_l + dy_l * dy_l) * zc / vw
 					if far_w > CamParams.LH_CUT_OFFSET:
-						_fx[i] = f.x
-						_fy[i] = f.y + CamParams.CHEST
-						_cut_now = true
-						_cut_dip()
+						_catch_up(i, f, far_w)
 						launch_hold_cuts += 1
 					# the shared camera was frozen with the pane: it joins where it is wanted while it is hidden, so the merge that
 					# follows has no offset left in it
@@ -3277,11 +3288,8 @@ func _update_cameras(S: SimState) -> void:
 				var ux: float = SimWrap.sdx(_fx[i], f.x) * zc
 				var uy: float = (f.y + CamParams.CHEST - _fy[i]) * zc
 				if sqrt(ux * ux + uy * uy) / vw > CamParams.LAG_HARD:
-					_fx[i] = f.x
-					_fy[i] = f.y + CamParams.CHEST
+					_catch_up(i, f, sqrt(ux * ux + uy * uy) / vw)
 					rush_cuts += 1
-					_cut_now = true
-					_cut_dip()
 			else:
 				_rush_pin_t[i] = time
 				_fx[i] = SimWrap.wrap(rp.tgt.x + rp.off)
@@ -3313,16 +3321,13 @@ func _update_cameras(S: SimState) -> void:
 					gain = minf(gain, 3.0)
 				tau_x /= gain
 				tau_y /= gain
-			if e_w > cut_w:
-				_fx[i] = f.x
-				_fy[i] = f.y + CamParams.CHEST
+			if e_w > cut_w and int(_wp_t[i]) < 0:
+				_catch_up(i, f, e_w)
 				if lh_ph == 2:
 					launch_hold_cuts += 1
 					_lh[i] = 0
 				else:
 					lag_cuts += 1
-				_cut_now = true
-				_cut_dip()
 			var kx: float = 1.0 - exp(-DT / tau_x)
 			var ky: float = 1.0 - exp(-DT / tau_y)
 			# The lead that makes the discrete filter track a constant speed exactly: DT (1 - k) / k, about tau - DT / 2.
@@ -3378,6 +3383,18 @@ func _update_cameras(S: SimState) -> void:
 					_fx[i] = SimWrap.wrap(_fx[i] + qd * back)
 					_fy[i] += (f.y + CamParams.CHEST - _fy[i]) * back
 					lag_whips += 1
+			if int(_wp_t[i]) >= 0:
+				# A crisp whip to him (Research's cuts-and-eases.md: 8 to 15 frames, a hard ease at both ends, no blur; VFX's
+				# streaks carry the speed): from where the focus was to where he is now, every tick of it.
+				_wp_t[i] = int(_wp_t[i]) + 1
+				var u_w: float = clampf(float(_wp_t[i]) / float(CamParams.WHIP_TICKS), 0.0, 1.0)
+				var e_wp: float = u_w * u_w * u_w * (u_w * (u_w * 6.0 - 15.0) + 10.0)
+				var x0_w: float = float(_wp_x0[i])
+				var y0_w: float = float(_wp_y0[i])
+				_fx[i] = SimWrap.wrap(x0_w + SimWrap.sdx(x0_w, f.x) * e_wp)
+				_fy[i] = y0_w + (f.y + CamParams.CHEST - y0_w) * e_wp
+				if u_w >= 1.0:
+					_wp_t[i] = -1
 			# The re-frame limiter: after his velocity steps (a beam's launch out of hit-stop, ground that falls away under him)
 			# the focus may not take a larger step than SCROLL_CAP of the width a tick (0.03 under reduced motion or reduced
 			# flashing) or than the step it took last tick: it can slow down at once, it cannot speed up, so the re-frame is
@@ -3391,7 +3408,7 @@ func _update_cameras(S: SimState) -> void:
 			if lim_on:
 				_onset[i] = int(_onset[i]) - 1
 				_onset_run[i] = int(_onset_run[i]) + 1
-			if lim_on and not _cut_now and not (solo_kind == "intro" and solo_slot == i):
+			if lim_on and not _cut_now and int(_wp_t[i]) < 0 and not (solo_kind == "intro" and solo_slot == i):
 				var calm_c: bool = reduced_motion or flash_reduced
 				var floor_u: float = (CamParams.SCROLL_MAX_REDUCED if calm_c else CamParams.SCROLL_CAP) * vw / zc
 				var room: float = CamParams.CAP_LAG * vw / zc
@@ -4226,23 +4243,34 @@ static func z_min(vw_: float) -> float:
 	return maxf(CamParams.ZOOM_MIN, vw_ / (CamParams.RING_SHOW * SimConst.W))
 
 
-## Angles by context: on a decisive moment (a peak by the pace's own rule) in the plain one view (as it stood last tick), with no strip, cut-in or shot of its own, and no angle
-## in the last ANGLE_GAP, a hard cut to the angle the ground under the pair asks (CamParams.ANGLE_BIOME; the rest alternate),
-## held ANGLE_HOLD, then a hard cut back (sooner when the plain view ends).
+## Angles by context: on a decisive moment (a peak by the pace's own rule) in the plain one view (as it stood last tick), with no
+## strip, cut-in or shot of its own, and no angle in the last ANGLE_GAP, a crane tilt to the angle the ground under the pair asks
+## (CamParams.ANGLE_BIOME; the rest alternate): eased in over ANGLE_IN, held ANGLE_HOLD, eased back over ANGLE_OUT (sooner when
+## the plain view ends). No cut: Orb, 2026-10-22, "no instant movement unless well justified".
 func _angle_tick(S: SimState) -> void:
 	var want: String = _ang_want
 	_ang_want = ""
 	var plain: bool = sep <= 0.001 and not split_wanted and solo_kind == "" and _ov_kind == "" and _pn.is_empty() and not intro_active and not fold_active and _lg_slot < 0
 	if _ang_t >= 0.0:
+		# A crane tilt: eased in over ANGLE_IN, held, eased back over ANGLE_OUT (sooner when the plain view ends); no cut.
+		if _shot_pitch != _ang_pa:
+			_ang_t = -1.0   # another shot took the angle: it is its to set
+			_ang_w = 0.0
+			angle_now = ""
+			return
 		_ang_t += DT
-		if _ang_t >= CamParams.ANGLE_HOLD or not plain:
+		var holding: bool = _ang_t < CamParams.ANGLE_IN + CamParams.ANGLE_HOLD and plain
+		if holding:
+			_ang_w = minf(1.0, _ang_w + DT / CamParams.ANGLE_IN)
+		else:
+			_ang_w = maxf(0.0, _ang_w - DT / CamParams.ANGLE_OUT)
+		_shot_pitch = _ang_pitch * smoothstep(0.0, 1.0, _ang_w)
+		_ang_pa = _shot_pitch
+		if _ang_w <= 0.0 and not holding:
 			_ang_t = -1.0
 			angle_now = ""
-			if _shot_pitch == _ang_pitch:
-				_shot_pitch = 0.0
-				_pitch_now = pitch_deg + _shot_pitch
-				_last_pitch = _pitch_now
-				_ang_snap = true
+			_shot_pitch = 0.0
+			_ang_pa = 0.0
 		return
 	if want == "" or not angles or reduced_motion or not plain or time - _ang_last_t < CamParams.ANGLE_GAP or _shot_pitch != 0.0:
 		return
@@ -4257,15 +4285,12 @@ func _angle_tick(S: SimState) -> void:
 	if absf(p) < 1.0:
 		return   # the ground leaves no room for the low angle here
 	_ang_pitch = p
-	_shot_pitch = p
-	_pitch_now = pitch_deg + _shot_pitch
-	_last_pitch = _pitch_now
+	_ang_w = 0.0
+	_ang_pa = 0.0
 	_ang_t = 0.0
 	_ang_last_t = time
 	_ang_last_family = fam
 	angle_now = fam
-	_ang_snap = true
-	_cut_now = true
 	angle_shots += 1
 
 
@@ -4327,7 +4352,9 @@ func _pace_tick(S: SimState) -> void:
 
 ## The ring's turn: every pane at TURN_WIDE of its size while the wide holds.
 func _turn_mult() -> float:
-	return CamParams.TURN_WIDE if _turn_t >= 0.0 else 1.0
+	if _turn_t < 0.0:
+		return 1.0
+	return lerpf(CamParams.TURN_WIDE, 1.0, smoothstep(CamParams.TURN_HOLD, CamParams.TURN_HOLD + CamParams.TURN_OUT, _turn_t))
 
 
 ## The turn's low angle: TURN_PITCH, limited as the transformation's break is so the camera stays above the ground at the pair's
@@ -4338,3 +4365,26 @@ func _turn_pitch() -> float:
 	var lim: float = ((CamParams.BREAK_CAM_MIN_H - CamParams.CHEST) * z - off) / (CamParams.K_FACTOR * vh)
 	var total_min: float = rad_to_deg(asin(clampf(lim, -1.0, 1.0)))
 	return minf(0.0, maxf(CamParams.TURN_PITCH, total_min - pitch_deg))
+
+
+## A catch-up the follow cannot make (a fighter a screen and more from his anchor: the lag bound, a rush ended early, a launch
+## hold let go). Up to WHIP_MAX widths it is a crisp whip of WHIP_TICKS (Orb, 2026-10-22: no instant move without a reason; "the
+## framing target jumped" is not one, Research). Farther, a move would only smear: a cut, the space has changed.
+func _catch_up(i: int, f, dist_w: float) -> void:
+	if dist_w <= CamParams.WHIP_MAX and not reduced_motion:
+		_wp_t[i] = 0
+		_wp_x0[i] = _fx[i]
+		_wp_y0[i] = _fy[i]
+		whips += 1
+		return
+	_fx[i] = f.x
+	_fy[i] = f.y + CamParams.CHEST
+	_cut_now = true
+	_cut_dip()
+
+
+## Whether an eased move owns the angle now (an angle shot, the arena turn's way back): a shot that clears the angle leaves it to
+## ease out, so the angle never jumps (a launch shot starting under an angle shot cut 5.5 degrees in a tick).
+func _pitch_in_move() -> bool:
+	return (_ang_t >= 0.0 and _ang_pa != 0.0 and _shot_pitch == _ang_pa) or (_turn_t >= 0.0 and _turn_pa != 0.0 and _shot_pitch == _turn_pa)
+

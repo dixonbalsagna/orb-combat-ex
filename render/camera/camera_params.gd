@@ -234,7 +234,7 @@ const LEAD_MAX_Y: float = 0.12         # ... and of the height
 # The blow push (docs/camera/feel.md): every landed blow above a light pushes the picture in a little, by its weight, and lets go:
 # up over BLOW_UP, held for the hit-stop, back over BLOW_DOWN. After the filters, so it is crisp; a bigger one replaces a smaller one.
 const BLOW_PUSH: Dictionary = {"medium": 0.008, "heavy": 0.016, "guard_break": 0.016, "perfect_block": 0.010, "launch": 0.020}
-const BLOW_UP: float = 0.05
+const BLOW_UP: float = 0.12           # the push's rise: a fast start and a soft landing, 7 frames (Research's impact push, 5 to 10; 3 until 2026-10-23)
 # The one view leads a pair moving together (docs/camera/feel.md step 4): the focus sits ahead of them by their speed times
 # MERGED_LEAD_T, at most MERGED_LEAD_X of the width, faded in between MERGED_LEAD_V0 and MERGED_LEAD_V1 (units a second), eased
 # with MERGED_LEAD_TAU, and never so far that a fighter leaves the middle MERGED_LEAD_KEEP of the width.
@@ -244,7 +244,9 @@ const MERGED_LEAD_T: float = 0.3
 const ANT_LEAD_TICKS: float = 18.0     # how far ahead a scheduled contact is read
 const ANT_SHIFT: float = 0.25          # the focus moves this share of the way to the contact point
 const ANT_PUSH: float = 0.20           # ... and the view tightens by this much
-const ANT_TAU_IN: float = 0.10
+const ANT_TAU_IN: float = 0.18
+const WHIP_TICKS: int = 12            # a catch-up the follow cannot make is a crisp whip of this many frames, a hard ease at both ends, no blur
+const WHIP_MAX: float = 3.0            # ... up to this many widths; beyond it a move would only smear, and it cuts (a change of space)
 const ANT_TAU_OUT: float = 0.25
 const ANT_W: Dictionary = {"launch": 1.0, "ender": 1.0, "heavy": 0.7, "medium": 0.0, "light": 0.0}
 # the push's share by kind: a launch is followed by a chase or a split, so it tightens less (the opening starts from a camera near the pane's)
@@ -264,11 +266,12 @@ const ARR_OUT: float = 0.35
 # The ring's turn (World's window 3, `arena_turn`; Rendering rebuilds every pane's ground on that tick): a motivated hard cut on
 # the tick to a low wide on the pair, the far land (the only land the turn changes: past 12,000 units) against the sky, every pane
 # at TURN_WIDE of its size and TURN_PITCH degrees (a low angle, limited so the camera stays above the ground; a high angle looked
-# into the slope behind the pair), held TURN_HOLD, then a hard cut back. The
-# ridges behind change on the cut, never under a still camera (148,000 pixels at fight framing).
+# into the slope behind the pair), held TURN_HOLD, then eased back over TURN_OUT. The cut in is a scene change (the world beyond
+# the pair is a new one): the ridges change on the cut, never under a still camera (148,000 pixels at fight framing).
 const TURN_WIDE: float = 0.6
 const TURN_PITCH: float = -6.0
 const TURN_HOLD: float = 1.2
+const TURN_OUT: float = 0.5            # ... then the wide eases back to the fight's framing and level over this (the cut in is the scene change; the way back is a move)
 # Pacing (docs/camera/director.md section 6): relax, build, peak and fade, from the blows landed in the last
 # PACE_WINDOW, the feed's story weight and the decisive events (a launch, a transformation, a finisher, `decisive`). It weights the
 # blow push by state (the anticipation's push stays as it is: weighting it moved the view under a strip), and sizes the one view by state (PACE_ZOOM: the reference size in relax and build,
@@ -284,14 +287,17 @@ const PACE_BLOW: Dictionary = {"relax": 0.6, "build": 1.0, "peak": 1.3, "fade": 
 const PACE_ZOOM: Dictionary = {"relax": 1.0, "build": 1.0, "peak": 1.05, "fade": 0.93}
 const PACE_ZOOM_TAU: float = 0.6
 # Angles by context (docs/camera/director.md section 6): a decisive moment at a peak (ANGLE_KINDS: a knockback, a guard break, an
-# interrupt, a barrage, a beam or a clash) in the plain one view gets a hard cut to an angle chosen by the ground under the pair,
-# held ANGLE_HOLD while the camera keeps following, then a hard cut back. The variety ledger spaces them: one in ANGLE_GAP at most.
+# interrupt, a barrage, a beam or a clash) in the plain one view tilts to an angle chosen by the ground under the pair, a crane move
+# eased in over ANGLE_IN, held ANGLE_HOLD while the camera keeps following, eased back over ANGLE_OUT; no cut (Orb, 2026-10-22). The variety ledger spaces them: one in ANGLE_GAP at most.
 const ANGLE_LOW: float = -7.0          # city, towns, mountains: the towers and the ridge loom (limited so the camera stays above the ground)
 const ANGLE_HIGH: float = 5.5          # ocean and forest, and only where the ground has something to show (ANGLE_SHOW_*): 5.5 degrees down keeps about
                                        # a third of the frame for the horizon and the sky (10 took it all, the EP's look gate, 2026-10-22)
 const ANGLE_SHOW_R: float = 1000.0     # ... within this of the pair: a crater, a building, or ANGLE_SHOW_COLS columns scorched or cracked
 const ANGLE_SHOW_COLS: int = 8
 const ANGLE_HOLD: float = 1.0
+const ANGLE_IN: float = 0.45           # the angle shot is a crane tilt, eased in over this ... (Orb, 2026-10-22: no instant camera move without a reason)
+const ANGLE_OUT: float = 0.6           # ... and back to level over this; no cut either way
+const PITCH_CUT_DEG: float = 1.0       # a change of angle bigger than this in a tick is a cut (an authored jump); an eased tilt is a camera move
 const ANGLE_GAP: float = 20.0
 const ANGLE_KINDS: Array = ["knockback", "guard_break", "interrupt", "barrage", "beam", "beam_clash", "clash"]
 const ANGLE_BIOME: Dictionary = {"city": "low", "village": "low", "mountains": "low", "ocean": "high", "forest": "high"}   # the rest alternate
@@ -430,7 +436,7 @@ const CUTAWAY_BREAK_R: float = 0.5      # the break asks for an occlusion hole t
 const TRANSFORM_R0_SHORT: float = 0.125   # the short version's gather pushes half as far
 const LIVE_PUNCH: float = 0.08         # the live version's 6-tick punch-in at the break
 const LIVE_PUNCH_AT: int = 10          # ... after the 10-tick gather
-const LIVE_PUNCH_LEN: float = 0.10
+const LIVE_PUNCH_LEN: float = 0.20
 const LIVE_STEP_MAX: float = 1.2      # a transformation hold shorter than this is the live version (no pause): a push, no cut
 const WIDE_PULL: float = 0.75          # a world-change pause pulls the shared view out to this much of its zoom
 const WIDE_IN: float = 0.5             # seconds to get there, and to come back
