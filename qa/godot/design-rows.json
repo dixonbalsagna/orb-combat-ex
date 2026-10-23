@@ -44,7 +44,7 @@
   "group": "L",
   "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
   "kind": "hard",
-  "what": "A kind repeated is ×0.75 a mark, and every launch of him in the last 60 s ×0.9 more, never under ×0.4 in all",
+  "what": "A kind repeated is ×0.9 a mark, and every launch of him in the last 60 s ×0.97 more, never under ×0.7 in all (gentle since homework 30)",
   "bound": ""
  },
  {
@@ -116,16 +116,16 @@
   "group": "L",
   "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
   "kind": "band",
-  "what": "The spammer's launchers answered by medium",
-  "bound": "20 to 50% (re-banded 2026-10-17)"
+  "what": "Answered by medium: the spammer's launchers (one light, then B); the string launcher (two blows or a medium, then B); AI v AI's",
+  "bound": "50 to 80%; 20 to 50%; 20 to 50% (re-scoped 2026-10-22)"
  },
  {
   "id": "L16",
   "group": "L",
   "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
   "kind": "band",
-  "what": "**Full launches** a match (power 0.8 or more at the send, after freshness): by the route's player; on him; the AI against itself",
-  "bound": "4 to 12; 4 to 10; 6 to 12 (re-cut 2026-10-17). All launches, pops included, are watched"
+  "what": "Launches a match on launch anywhere (re-banded 2026-10-19, `rulings-2026-10-19.md` §5e): all launches by the route's player; on him; full launches (power 0.7 or more), AI against itself, both together per 7 minutes",
+  "bound": "20 to 50; 10 to 40; 6 to 12. The route's edges (L11, L12) are the dominance test"
  },
  {
   "id": "L17",
@@ -164,7 +164,7 @@
   "group": "F",
   "section": "2. The hero's forms (`hero-forms.md`)",
   "kind": "hard",
-  "what": "A banked step is never lost, and a release takes every banked step",
+  "what": "A ready step is never lost, and a release takes the next step only (homework 30)",
   "bound": ""
  },
  {
@@ -628,8 +628,72 @@
   "group": "G",
   "section": "5. Also ruled on 2026-10-17",
   "kind": "band",
-  "what": "The clinch's median; a player who only uses A (catching, pummelling within 3 ticks), against medium; catch tells a minute AI v AI",
-  "bound": "40 to 70 ticks; wins 10 to 35%; 1 to 3"
+  "what": "The clinch's median, at most 60 ticks, with the leader throwing at the time; evens timing out; throws a match; guard and grab against guard only, against medium",
+  "bound": "35 to 60 ticks; under 30%; 2 to 5; guard and grab brings the AI to the brink in 30 to 70% of matches, with at least 1.5 times guard only's damage (`rulings-2026-10-23.md` §2b)"
+ },
+ {
+  "id": "X1",
+  "group": "X",
+  "section": "5. Also ruled on 2026-10-17",
+  "kind": "band",
+  "what": "A full launch's flight (stop, kick, glide, arrival: `fight-feel.md` §1); the sent body inside its frame or pane",
+  "bound": "1.0 to 1.6 s; at least 95% of the flight's ticks"
+ },
+ {
+  "id": "X2",
+  "group": "X",
+  "section": "5. Also ruled on 2026-10-17",
+  "kind": "band",
+  "what": "Recoil flips a minute: with a human, both fighters; in AI play; plants and glances a match; wall kicks a match",
+  "bound": "2 to 6; 1.5 to 6 (`rulings-2026-10-23.md` §1); 2 to 8; 1 to 4 (at most two ricochets in a row)"
+ },
+ {
+  "id": "X3",
+  "group": "X",
+  "section": "5. Also ruled on 2026-10-17",
+  "kind": "band",
+  "what": "Meets a minute; clash exchanges a match",
+  "bound": "3 to 8; 1 to 4"
+ },
+ {
+  "id": "X4",
+  "group": "X",
+  "section": "5. Also ruled on 2026-10-17",
+  "kind": "band",
+  "what": "Turns a minute; a run of turns",
+  "bound": "2 to 8; 2 to 6 long"
+ },
+ {
+  "id": "X5",
+  "group": "X",
+  "section": "5. Also ruled on 2026-10-17",
+  "kind": "hard",
+  "what": "Calm turns of the ring a typical AI match: Half and Close; Whole; bad swaps",
+  "bound": "1 to 3; 0.8 to 3; none (hard) (`rulings-2026-10-23.md` §3)"
+ },
+ {
+  "id": "X6",
+  "group": "X",
+  "section": "5. Also ruled on 2026-10-17",
+  "kind": "hard",
+  "what": "Frozen time, by the table of `fight-feel.md` §6 (a mash flows after its first blow); the worst ten-second block",
+  "bound": "At most 18% of a match (12.4% read); no block over 40% (hard)"
+ },
+ {
+  "id": "X7",
+  "group": "X",
+  "section": "5. Also ruled on 2026-10-17",
+  "kind": "band",
+  "what": "The AI's chases of a launch it threw, AI v AI; of them, the share that catches",
+  "bound": "1 to 4 a match; at least 60% (the chase pays the zip's ki, 2026-10-22)"
+ },
+ {
+  "id": "X8",
+  "group": "X",
+  "section": "5. Also ruled on 2026-10-17",
+  "kind": "band",
+  "what": "A player's press to his blow's wind-up: after an exchange; after a set piece's end",
+  "bound": "At most 6 ticks; at most 12 (hard, 2026-10-22)"
  },
  {
   "id": "T1",

@@ -541,6 +541,15 @@ function evaluate(A, { scale = 'testbed', cap = 900 } = {}) {   // cap is the ma
     // 2026-10-17 (buildings.md section 4): read on the launches that do not end in a building, since a brunt stops a launch short by design; records without the flag read every launch
     const flN = fl.some(f => f.brunt !== undefined) ? fl.filter(f => !f.brunt) : fl;
     R.point('10.longHaul', '§10', `Launches with at least ${haul.toLocaleString('en-US')} units of horizontal travel (1,500 x the launch traversal factor), of the launches that do not end in a building`, { v: flN.filter(f => f.travel >= haul).length / flN.length, lo: 0.30, unit: 'pct' });
+    // recoil flips (fight-feel.md section 2, rulings 2a): the cue `recoil` with text flip (a dodge tap in the knock-back's first 10 ticks) or flourish (no press), and `counter_rush` for the blow that spends the flip; 2 to 6 flips a minute, both fighters
+    if (D.some(r => (r.cues || {}).recoil)) {
+      const fl = sum(D.map(r => (r.cueText || {})['recoil:flip'] || 0)), fo = sum(D.map(r => (r.cueText || {})['recoil:flourish'] || 0)), cr = sum(D.map(r => (r.cues || {}).counter_rush || 0)), mins2 = sum(D.map(r => r.koAt)) / 60;
+      R.point('flip.perMin', '§fight-feel 2', 'Recoil flips a minute, both fighters, in AI play (1.5 to 6; with a human 2 to 6; rulings-2026-10-23, it was 2 to 6 for all; re-read once the heavy recoil lands; the cue recoil with text flip)', { v: fl / mins2, lo: 1.5, hi: 6, unit: 'num' });
+      R.info('flip.counter', '§fight-feel 2', 'Counter-rush follow-ups: the cue counter_rush, its share of the flips, and the flourishes (a knock-back over 3 bh with no press)', `${cr} counter-rushes for ${fl} flips (${fl ? fmt.pct(cr / fl) : '-'}); ${(cr / mins2).toFixed(2)} a minute; ${fo} flourishes (${(fo / mins2).toFixed(2)} a minute)`, 'a counter-rush is the next blow within 20 ticks of the landing');
+    } else {
+      R.pending('flip.perMin', '§fight-feel 2', 'Recoil flips a minute, both fighters (2 to 6)', 'no `recoil` cue: recoil flips are not on this build (the park docs/director/pending/recoil-flips, switch recoilFlip.enabled)');
+      R.pending('flip.counter', '§fight-feel 2', 'Counter-rush follow-ups after a flip', 'no `recoil` cue on this build');
+    }
     // launch anywhere (Game Design's thirteenth round, docs/design/qa-rows-2026-10-17.md L16): full launches a match, the AI against itself; every launch is watched, pops included
     if (D.every(r => r.pow && r.pow.has)) R.point('design.L16.ai', '§launch anywhere L16', 'Full launches a match, the AI against itself (power 0.8 or more at the send, after freshness; 6 to 12)', { v: sum(D.map(r => r.pow.full[0] + r.pow.full[1])) / D.length, lo: 6, hi: 12, unit: 'num' });
     else R.pending('design.L16.ai', '§launch anywhere L16', 'Full launches a match, the AI against itself (power 0.8 or more at the send, after freshness; 6 to 12)', 'no launchPower on this build (launch anywhere is not on it)');

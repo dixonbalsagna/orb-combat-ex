@@ -169,6 +169,11 @@ async function runMasher({ n = 100, base = 1, levels = ['easy', 'medium', 'hard'
   for (const d of ['striker', 'guarder', 'idle']) T.push(() => runProbe('ret-' + d, 'ret.gd', [String(nr), String(base), '--def=' + d, '--react=15', '--from=cue', '--level=medium']));
   for (const lv of ['easy', 'medium', 'hard']) T.push(() => runProbe(`charge-b-${lv}`, 'charge.gd', [String(nr), String(base), '--cell=b', '--level=' + lv]));
   T.push(() => runProbe('charge-y-medium', 'charge.gd', [String(nr), String(base), '--cell=y', '--level=medium']));   // a medium has no charge on 0ca6f670 (brawl.gd: "a medium has no charge yet"): 0 releases there; the job is the proof
+  // 2026-10-22 (rulings-2026-10-19.md sections 5a to 5e): launch anywhere's probe (the spammer, the varied route, AI against itself) and the grapple's (grab and follow, the clinch). Launch anywhere is turned on in memory by --anywhere=1;
+  // the grapple's probe turns the grapple on itself. On a build without them the jobs read nothing and the rows are PENDING.
+  const nl = Math.min(n, 60);
+  for (const m of ['ai', 'route', 'spam', 'varied', 'string']) T.push(() => runProbe('lap-' + m, 'lap.gd', [String(nl), String(base), '--mode=' + m, '--level=medium', '--anywhere=1']));
+  for (const m of ['ai', 'alone', 'guardgrab', 'guardonly', 'mash', 'idle', 'pulse']) T.push(() => runProbe('gp-' + m, 'gp.gd', [String(nl), String(base), '--mode=' + m, '--level=medium']));
   // Giving ground (Orb's test 2): a fighter who presses nothing and takes his stick away from a seeded tick of the rival's wind-up, against a B or Y tapper who does not follow and one who does.
   T.push(() => runPair('give-b-free', 'giver:forms=1', W + ':btn=B:gap=40:tap=4:off=7', n1, base, caps));
   T.push(() => runPair('give-b-follow', 'giver:forms=1', W + ':btn=B:gap=40:tap=4:off=7:follow=1', n1, base, caps));
@@ -204,6 +209,7 @@ const DESIGN_NEEDS = {
   R: 'run mode (not built)',
   B: 'the building window\'s new sources and the air brake (parked behind a switch that is off)',
   G: 'the grapple (Encounter\'s G1, parked, switch off)',
+  X: 'the choreography pieces of fight-feel.md (recoil flips parked behind recoilFlip.enabled; ricochets, meets, turns, chases and frozen time not built)',
   T: 'thrown objects (the grapple\'s throws; not built)'
 };
 // rows an existing reader covers: [reader row id(s), note]
@@ -211,7 +217,9 @@ const DESIGN_READ = {
   L11: ['route.win.medium', 'the route\'s win share, on 200 matches'], L12: ['route.over.masher', 'the route over its masher'], L18: ['§2 Match length, 10th percentile', 'bands.js, the default arm'],
   L17: ['§5 No launch type above 45%', 'bands.js reads the planner\'s launch types, top 45% (the row says 50%)'], F15: ['§1 Protagonist win rate', 'bands.js, 45 to 55%'],
   B10: ['5b.share and 5c.mix.brunt', 'bands.js, 4 to 15% both (2026-10-17)'], B11: ['5c.mix.halted:, 10.longHaul and 5c.lip', 'bands.js: halted of ground endings 40 to 60%, long launches of non-building launches at least 30%, lip 0.4 to 2.5'],
-  B12: ['x.bodies', 'the crossing run, 4 to 8 (the band stays; waits for the new sources)'], R20: ['§2 Match length, 10th percentile', 'bands.js (the 10th percentile 300 s; the median band there is 360 to 480 s, the run\'s is 5 to 7 minutes)']
+  L15: ['ruling.5a.answered, ruling.1b.string and ruling.1b.ai', 'the lap probe: the spammer 50 to 80, the string launcher 20 to 50, AI against AI 20 to 50'], X1: ['frame.inflight and frame.flightlen', 'inframe.js (the launch probe of Camera) with the feel switch on'],
+  X2: ['flip.perMin (flips only)', 'the recoil cue on a build that has the park; plants, glances and wall kicks wait for ricochets'],
+  G4: ['ruling.5c.*, ruling.5d.* and ruling.G4.*', 'the grapple probe: grab and follow, the clinch, tells, throws, the chain'], B12: ['x.bodies', 'the crossing run, 4 to 8 (the band stays; waits for the new sources)'], R20: ['§2 Match length, 10th percentile', 'bands.js (the 10th percentile 300 s; the median band there is 360 to 480 s, the run\'s is 5 to 7 minutes)']
 };
 // scripts the list defines, kept with the row that needs them
 const DESIGN_SCRIPT = { G4: 'the A-only script (redefined 2026-10-17): catches in reach and pummels within 3 ticks of the pulse, presses nothing else', L13: 'the spammer: one light, then B 6 ticks after each of his landed blows', L14: 'the varied route: the route with the stick turned through up, toward and down at each B', L15: 'the launchers of the spammer, counted by their fate (stopped, missed, perfect-blocked, launched)' };
@@ -239,6 +247,74 @@ function designRows(results) {
 }
 
 // The eleventh round's rows (Orb's playtest, 2026-10-16): the newcomer's first launch, the return from a launch, the AI against charged blows, and the beam struggle (stubs until Encounter's window lands).
+// The 2026-10-22 rows (rulings-2026-10-19.md section 5): the spammer's launchers answered (5a), grab and follow (5c), the clinch (5d), the route's counts under launch anywhere (5e), the grapple's list (grapple.md section 7).
+function rulingRows(results) {
+  const rows = [], pct = x => (100 * x).toFixed(1) + '%', bad = r => !!(r && r.invalid), job = t => results.find(x => x.probeTag === t);
+  const inv = (id, what, band, r) => ({ id, ref: 'rulings 5', what, status: 'PENDING', value: `the job was marked invalid (${r.n} of ${r.requested || '?'} matches, ${r.wallCapped || 0} wall-capped): not a measurement`, band, note: '' });
+  const lapOn = r => r && r.anywhere === true;
+  // 5a and L15: the spammer (one light, then B 6 ticks after each landed blow) against medium: its launchers that are not sure, answered (stopped, missed or perfect-blocked) 20 to 50%
+  const sp = job('lap-spam'), ro = job('lap-route'), va = job('lap-varied'), ai = job('lap-ai');
+  if (sp) {
+    const id = 'ruling.5a.answered', what = 'The spammer\'s launchers (one light, then B) that are not sure, answered by the medium AI: stopped, missed or perfect-blocked (50 to 80%: the weakest launcher is answered more often than not; rulings-2026-10-22 1b, it was 20 to 50% until then)';
+    if (bad(sp)) rows.push(inv(id, what, '50 to 80%', sp));
+    else if (!lapOn(sp) || !(sp.launchers0 > 0)) rows.push({ id, ref: 'rulings 5a', what, status: 'PENDING', value: 'no launcher beats: launch anywhere is not on in this run', band: '50 to 80%', note: '' });
+    else rows.push({ id, ref: 'rulings 5a', what, status: sp.answeredShare0 >= 0.50 && sp.answeredShare0 <= 0.80 ? 'PASS' : 'FAIL', value: `${pct(sp.answeredShare0)}; his launchers ${sp.launchers0}, by safety ${JSON.stringify(sp.bySafety0)}, fates ${JSON.stringify(sp.fate0)}`, band: '50 to 80%', note: `${sp.n} matches from seed 1` });
+    // L13: the spammer below the route and at most 70% (the probe's route does not guard, so its win share is the probe's, not players.gd's)
+    if (ro && !bad(ro) && !bad(sp)) {
+      const ws = sp.wins0 / Math.max(1, sp.n), wr = ro.wins0 / Math.max(1, ro.n);
+      rows.push({ id: 'ruling.L13.spammer', ref: 'qa-rows L13', what: 'The spammer wins below the route and at most 70% against medium (the launcher is armoured against lights)', status: lapOn(sp) ? (ws <= 0.70 && ws < wr ? 'PASS' : 'FAIL') : 'PENDING', value: lapOn(sp) ? `spammer ${pct(ws)} (${sp.wins0} of ${sp.n}), route ${pct(wr)} (${ro.wins0} of ${ro.n}); the probe's route does not guard` : 'launch anywhere is not on', band: 'below the route; at most 70%', note: 'wins are KOs of the AI inside the probe\'s 5-minute cap' });
+      if (va && !bad(va)) { const wv = va.wins0 / Math.max(1, va.n); rows.push({ id: 'ruling.L14.varied', ref: 'qa-rows L14', what: 'The varied route (the stick turned through the kinds) wins within 10 points of the route', status: lapOn(va) ? (Math.abs(wv - wr) <= 0.10 ? 'PASS' : 'FAIL') : 'PENDING', value: lapOn(va) ? `varied ${pct(wv)}, route ${pct(wr)}: ${((wv - wr) * 100).toFixed(1)} points` : 'launch anywhere is not on', band: 'within 10 points', note: `${va.n} and ${ro.n} matches` }); }
+    }
+  }
+  const st = job('lap-string');
+  if (st) {
+    const id = 'ruling.1b.string', what = 'The string launcher (two clean blows within 30 ticks, then B) answered by the medium AI (20 to 50%: a string of two points or more makes the launcher hard to answer; rulings-2026-10-22 1b)';
+    if (bad(st)) rows.push(inv(id, what, '20 to 50%', st));
+    else if (!lapOn(st) || !(st.launchers0 > 0)) rows.push({ id, ref: 'rulings 1b', what, status: 'PENDING', value: 'no launcher beats: launch anywhere is not on in this run', band: '20 to 50%', note: '' });
+    else rows.push({ id, ref: 'rulings 1b', what, status: st.answeredShare0 >= 0.20 && st.answeredShare0 <= 0.50 ? 'PASS' : 'FAIL', value: `${pct(st.answeredShare0)}; his launchers ${st.launchers0}, by safety ${JSON.stringify(st.bySafety0)}, fates ${JSON.stringify(st.fate0)}`, band: '20 to 50%', note: `${st.n} matches from seed 1; the armour for a string of two points is not built on a build that still reads the one-light rule` });
+  }
+  if (ai && !bad(ai) && lapOn(ai) && ai.launchers0 > 0) rows.push({ id: 'ruling.1b.ai', ref: 'rulings 1b', what: 'AI against itself: the answered share of the first fighter\'s launchers that are not sure (20 to 50%; stays, rulings-2026-10-22 1b)', status: ai.answeredShare0 >= 0.20 && ai.answeredShare0 <= 0.50 ? 'PASS' : 'FAIL', value: `${pct(ai.answeredShare0)}; launchers ${ai.launchers0}, fates ${JSON.stringify(ai.fate0)}`, band: '20 to 50%', note: `${ai.n} matches (5-minute cap)` });
+  if (ai && !bad(ai) && lapOn(ai)) rows.push({ id: 'ruling.L16.ai.probe', ref: 'qa-rows L16', what: 'Full launches a match a fighter, AI against itself, in the probe (5-minute matches; reported; the row of record is the default arm\'s design.L16.ai: 6 to 12 both fighters)', status: 'INFO', value: `${ai.fullAMatchAFighter} a match a fighter (${ai.full ? ai.full.all : '?'} of ${ai.full ? ai.full.allSends : '?'} sends full)`, band: 'reported', note: `${ai.n} matches` });
+  // 5c and 5d: the grapple's probe
+  const gaone = job('gp-alone'), gg = job('gp-guardgrab'), go = job('gp-guardonly'), gai = job('gp-ai'), gm = ['gp-mash', 'gp-idle', 'gp-pulse'].map(job).filter(Boolean);
+  const gps = [gaone, gg, go, gai, ...gm].filter(Boolean);
+  if (gg && go) {
+    const id = 'ruling.5c.guardgrab', what = 'Guard and grab brings the medium AI to the brink in 30 to 70% of matches, with at least 1.5 times the damage of guard only (the grapple row is measured at the brink: rulings-2026-10-23; it was a win share until then)';
+    if (bad(gg) || bad(go)) rows.push(inv(id, what, '30 to 70%; 1.5x damage', bad(gg) ? gg : go));
+    else if (!((gg.catch || {}).tell > 0)) rows.push({ id, ref: 'rulings 2026-10-23', what, status: 'PENDING', value: 'no catch in this run: the grapple is not on this build', band: '30 to 70%; 1.5x damage', note: '' });
+    else if (!gg.hpEnd || !go.hpEnd || gg.dmgTo1 === undefined) rows.push({ id, ref: 'rulings 2026-10-23', what, status: 'PENDING', value: 'this job has no end HP or damage count (an older gp.gd)', band: '30 to 70%; 1.5x damage', note: '' });
+    else {
+      // the brink as the read of 2026-10-23 has it: the AI left on 0 HP (HP floors at 0; wounds decide the KO), counted from the end HP of each match
+      const atZero = j => j.hpEnd.filter(h => h[1] <= 0.5).length, med = j => { const a = j.hpEnd.map(h => h[1]).sort((x, y) => x - y); return a.length ? a[Math.floor(a.length / 2)] : NaN; };
+      const bg = atZero(gg) / Math.max(1, gg.n), bo = atZero(go) / Math.max(1, go.n), ratio = go.dmgTo1 > 0 ? gg.dmgTo1 / go.dmgTo1 : Infinity, wg = gg.wins0 / Math.max(1, gg.n), wo = go.wins0 / Math.max(1, go.n);
+      rows.push({ id, ref: 'rulings 2026-10-23', what, status: bg >= 0.30 && bg <= 0.70 && ratio >= 1.5 ? 'PASS' : 'FAIL', value: `guard and grab leaves him on 0 HP in ${pct(bg)} (${atZero(gg)} of ${gg.n}; his HP at the end: median ${Math.round(med(gg))}), guard only in ${pct(bo)} (${atZero(go)} of ${go.n}; median ${Math.round(med(go))}); the wounds' brink event in ${gg.brinkMatches} and ${go.brinkMatches} matches; damage dealt ${Math.round(gg.dmgTo1)} against ${Math.round(go.dmgTo1)}: ${Number.isFinite(ratio) ? ratio.toFixed(2) + ' times' : 'guard only dealt none'}; wins ${pct(wg)} and ${pct(wo)}; ${gg.throwsAMatch} throws a match, ${gg.openThenLaunch} of ${gg.openThrows} open throws followed by a launch`, band: '30 to 70%; at least 1.5 times', note: `${gg.n} matches each from seed 1` });
+    }
+  }
+  if (gaone) {
+    const id = 'ruling.5c.grabfollow', what = 'Grab and follow alone (no guard; catches in reach, pummels within 3 ticks, throws down, B on the bury) against medium (reported: the 25 to 50% band of 2026-10-19 was replaced by the guard-and-grab comparison above)';
+    if (bad(gaone)) rows.push(inv(id, what, 'reported', gaone));
+    else rows.push({ id, ref: 'rulings 5c', what, status: (gaone.catch || {}).tell > 0 ? 'INFO' : 'PENDING', value: (gaone.catch || {}).tell > 0 ? `${pct(gaone.wins0 / Math.max(1, gaone.n))} (${gaone.wins0} of ${gaone.n}); ${gaone.throwsAMatch} throws a match, ${gaone.openThrows} open throws, ${gaone.openThenLaunch} followed by a launch; steps won ${gaone.steps0} to ${gaone.steps1}` : 'no catch in this run: the grapple is not on this build', band: 'reported (was 25 to 50%)', note: `${gaone.n} matches from seed 1` });
+  }
+  if (gps.length) {
+    const live = gps.filter(x => !bad(x)), caught = live.filter(x => (x.catch || {}).tell > 0), lens = caught.map(x => x.lenMax).filter(x => x >= 0);
+    const hard = (k) => live.reduce((a, x) => a + ((x.hard || {})[k] || 0), 0);
+    if (!caught.length) rows.push({ id: 'ruling.5d.clinch', ref: 'rulings 5d', what: 'The clinch\'s length: median 35 to 60 ticks, at most 60 (hard), time-outs under 30%', status: 'PENDING', value: 'no clinch in this run: the grapple is not on this build', band: '35 to 60; at most 60; under 30%', note: '' });
+    else {
+      const gx = gai && !bad(gai) ? gai : caught[0], ends = gx.ends || {}, tot = Object.values(ends).reduce((a, b) => a + b, 0), tmo = (ends.time || 0) + (ends.time_lead || 0), max = Math.max(...lens);
+      rows.push({ id: 'ruling.5d.median', ref: 'rulings 5d', what: 'The clinch\'s median length, AI against AI (35 to 60 ticks; rulings-2026-10-22 1c, it was 30 to 55 until then)', status: gx.lenMedian >= 35 && gx.lenMedian <= 60 ? 'PASS' : 'FAIL', value: `${gx.lenMedian} ticks over ${gx.clinches} clinches (${gx.probeTag})`, band: '35 to 60 ticks', note: `${gx.n} matches` });
+      rows.push({ id: 'ruling.5d.max', ref: 'rulings 5d', what: 'No clinch lasts more than 60 ticks (hard test, every mode of the probe)', status: max <= 60 ? 'PASS' : 'FAIL', value: `the longest ${max} ticks (by mode: ${caught.map(x => x.probeTag.replace('gp-', '') + ' ' + x.lenMax).join(', ')})`, band: 'at most 60 ticks', note: 'the clinch\'s data maximum is clinch.max' });
+      rows.push({ id: 'ruling.5d.timeouts', ref: 'rulings 5d', what: 'Clinches that time out (even or to the leader), of those that end, AI against AI (under 30%)', status: tot ? (tmo / tot < 0.30 ? 'PASS' : 'FAIL') : 'PENDING', value: tot ? `${pct(tmo / tot)} (${tmo} of ${tot}); ends ${JSON.stringify(ends)}` : 'no clinch ended', band: 'under 30%', note: `${gx.n} matches` });
+    }
+    if (gai && !bad(gai) && (gai.catch || {}).tell > 0) {
+      rows.push({ id: 'ruling.G4.tells', ref: 'grapple §7', what: 'Catch tells a minute, AI against AI (1 to 3)', status: gai.tellsAMinute >= 1 && gai.tellsAMinute <= 3 ? 'PASS' : 'FAIL', value: `${gai.tellsAMinute} a minute`, band: '1 to 3', note: `${gai.n} matches` });
+      rows.push({ id: 'ruling.G4.throws', ref: 'grapple §7', what: 'Throws a match, AI against AI (2 to 5; rulings-2026-10-22 1c, it was 1 to 4 until then)', status: gai.throwsAMatch >= 2 && gai.throwsAMatch <= 5 ? 'PASS' : 'FAIL', value: `${gai.throwsAMatch} a match`, band: '2 to 5', note: `${gai.n} matches` });
+      rows.push({ id: 'ruling.G4.chain', ref: 'grapple §7', what: 'A throw\'s opening (bury, air throw or wall slam) followed by a launch (15 to 40%)', status: gai.openThrows ? (gai.openThenLaunchShare >= 0.15 && gai.openThenLaunchShare <= 0.40 ? 'PASS' : 'FAIL') : 'PENDING', value: gai.openThrows ? `${pct(gai.openThenLaunchShare)} (${gai.openThenLaunch} of ${gai.openThrows})` : 'no open throw', band: '15 to 40%', note: `${gai.n} matches` });
+    }
+    if (caught.length) rows.push({ id: 'ruling.grapple.hard', ref: 'grapple §7', what: 'Hard tests: a step or sharp pummel off its pulse by more than the window, a tell on a fighter thrown less than noRegrab ago, the AI\'s tech sooner than its reaction time after the tell began: none', status: hard('strayStep') + hard('regrab') + hard('aiTechSoon') === 0 ? 'PASS' : 'FAIL', value: `stray steps ${hard('strayStep')}, regrabs ${hard('regrab')}, early techs ${hard('aiTechSoon')}`, band: 'none', note: `${caught.length} probe modes` });
+  }
+  return rows;
+}
+
 function elevenRows(results) {
   const rows = [], pct = x => (100 * x).toFixed(1) + '%', bad = r => !!(r && r.invalid);
   const inv = (id, ref, what, band, r) => ({ id, ref, what, status: 'PENDING', value: `the job was marked invalid (${r.n} of ${r.requested || '?'} matches, ${r.wallCapped || 0} wall-capped, budget stop ${!!r.budgetStopped}): not a measurement`, band, note: '' });
@@ -468,7 +544,7 @@ function c2Rows(r, results) {
     const band = { easy: [0.70, 0.90], medium: [0.50, 0.75], hard: [0.30, 0.55] }[lv];
     if (!(lc.open > 0)) { rows.push(pend('route.' + lv, '§13 second pass', `The launcher's route (X every 8 ticks, a B tap when the stagger opens) launches in ${Math.round(band[0] * 100)} to ${Math.round(band[1] * 100)}% of the brawls it is tried in against ${lv}`, `${Math.round(band[0] * 100)} to ${Math.round(band[1] * 100)}%`, 'the build has no launcher_open cue (C2t)')); return rows; }
     const tried = b.brawls || 0, launches = by.reduce((x, y) => x + y, 0), share = tried ? launches / tried : 0;
-    rows.push({ id: 'route.' + lv, ref: '§13 second pass', what: `The launcher's route launches in ${Math.round(band[0] * 100)} to ${Math.round(band[1] * 100)}% of the brawls it is tried in against the ${lv} AI (launches by the route's player over brawls)`, status: share >= band[0] && share <= band[1] ? 'PASS' : 'FAIL', value: `${pct(share)} (${launches} launches in ${tried} brawls); route player wins ${dec ? pct(r.aWins / dec) : '-'}`, band: `${Math.round(band[0] * 100)} to ${Math.round(band[1] * 100)}%`, note: `${r.n} matches; an approximation: launches, not brawls with a launch` });
+    rows.push({ id: 'route.' + lv, ref: '§13 second pass', what: `The launcher's route launches in ${Math.round(band[0] * 100)} to ${Math.round(band[1] * 100)}% of the brawls it is tried in against the ${lv} AI (launches by the route's player over brawls)`, status: lc.powHas ? 'INFO' : (share >= band[0] && share <= band[1] ? 'PASS' : 'FAIL'), value: `${pct(share)} (${launches} launches in ${tried} brawls)${lc.powHas ? ' [launch anywhere is on: the window-1 band does not apply; reported]' : ''}; route player wins ${dec ? pct(r.aWins / dec) : '-'}`, band: `${Math.round(band[0] * 100)} to ${Math.round(band[1] * 100)}%`, note: `${r.n} matches; an approximation: launches, not brawls with a launch` });
     rows.push({ id: 'route.every.' + lv, ref: '§13 second pass', what: `From a stagger of 12 ticks or more a tapped B lands and launches, every time (hard test), against the ${lv} AI`, status: lc.lapsed === 0 && lc.used > 0 && launches >= 0.98 * lc.used ? 'PASS' : 'FAIL', value: `${lc.used} launchers used and ${lc.lapsed} lapsed by the route's player; ${launches} launches by him`, band: 'none lapsed, a launch for each', note: `${lc.open} launcher_open cues in ${r.n} matches` });
     if (lv === 'medium') {
       rows.push({ id: 'route.first30', ref: '§14 second pass', what: 'A first launch inside 30 s of the first brawl, in at least 65% of matches at medium (a first launch needs a close, and how often a masher earns one is the brawl\'s own texture)', status: fl.length ? (fl.filter(x => x <= 30).length / by.length >= 0.65 ? 'PASS' : 'FAIL') : 'FAIL', value: `${by.length ? pct(fl.filter(x => x <= 30).length / by.length) : '-'} of ${by.length} matches (${fl.length} had a launch at all)`, band: 'at least 65%', note: 'a launch by the route\'s player' });
@@ -476,7 +552,7 @@ function c2Rows(r, results) {
       const mb = mean(by), mo = mean(on);
       const xm = (results || []).find(x => x.pair === 'x-medium'), xdec = xm ? xm.aWins + xm.bWins : 0;
       rows.push({ id: 'route.vs.masher', ref: '§14 second pass', what: 'The route player against the pair script X masher, both against the medium AI (reported: the like-for-like comparison; masher.gd masher is a different script)', status: xdec ? 'INFO' : 'PENDING', value: xdec ? `route ${dec ? pct(r.aWins / dec) : '-'} (${r.aWins} of ${dec}); masher ${pct(xm.aWins / xdec)} (${xm.aWins} of ${xdec})` : 'no x-medium pair in this run', band: 'reported', note: 'the route is the masher plus one B on a launcher opening' });
-      rows.push({ id: 'route.perMatch', ref: '§13 second pass', what: 'Launches a match at medium: by the route\'s player (4 to 10), and on him (4 to 8); collateral is reported beside it (the arms\' rows)', status: mb >= 4 && mb <= 10 && mo >= 4 && mo <= 8 ? 'PASS' : 'FAIL', value: `${mb.toFixed(2)} by him, ${mo.toFixed(2)} on him`, band: '4 to 10; 4 to 8', note: `${by.length} matches; point estimates` });
+      rows.push({ id: 'route.perMatch', ref: '§13 second pass', what: 'Launches a match at medium: by the route\'s player (4 to 10), and on him (4 to 8); collateral is reported beside it (the arms\' rows)', status: lc.powHas ? (mb >= 20 && mb <= 50 && mo >= 10 && mo <= 40 ? 'PASS' : 'FAIL') : (mb >= 4 && mb <= 10 && mo >= 4 && mo <= 8 ? 'PASS' : 'FAIL'), value: `${mb.toFixed(2)} by him, ${mo.toFixed(2)} on him`, band: lc.powHas ? '20 to 50; 10 to 40 (launch anywhere, rulings 5e)' : '4 to 10; 4 to 8 (window 1)', note: `${by.length} matches; point estimates` });
     }
     return rows;
   }
@@ -541,6 +617,7 @@ function masherRows(results) {
   }
   for (const m of results.filter(r => r.mirror)) rows.push(...mirrorRows(m));
   rows.push(...elevenRows(results));
+  rows.push(...rulingRows(results));
   rows.push(...designRows(results));
   for (const b of ['X', 'Y', 'B']) rows.push({ id: `cell.${b.toLowerCase()}.tapped`, ref: '§15 second pass', what: `${b} tapped on every beat, alone against the medium AI (40 to 75%)`, status: 'PENDING', value: 'the beat (the skill strike on all three) is C3, not built', band: '40 to 75%', note: 'needs the skill strike and a script that presses on the beat' });
   rows.push({ id: 'masher.expert', ref: '§6 masher', what: 'An expert script (guards, punishes with a heavy, perfect-blocks heavies and enders) wins against the medium AI (at most 15%)', status: 'PENDING', value: '', band: 'at most 15%', note: 'needs the expert script: it reads the rival tells (Encounter scratch build has one, not in the tree)' });
