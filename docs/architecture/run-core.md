@@ -200,7 +200,9 @@ Orb wants the opponents' stages assigned programmatically in story mode. World's
 | :--- | :--- | :--- |
 | 1 | `firstRing`: round the player's own home (Game Design's run-mode.md 1.2; Narrative's `first_stage`) | Close |
 | 2 to `stagesBeforeBoss` | `pick`: the opponent's claim, his home tried first, with the places' states (`standing`, `damaged`) as the run has them | The claim's size for the chapter's phase (`phases`: early, early, mid); Close at a Proving ground |
-| The boss (the next chapter) | `bossRing`: the Whole circle through his home and the most populous place still standing (Game Design 2c). With no other place standing, his claim at Whole | Whole |
+| The boss (the next chapter) | `bossRing`: the Whole circle through his home and the most populous place still standing (Game Design 2c). With no other place standing, his claim at Whole | Whole. **The story's ring wins:** the minimum is waived while the ring holds his home and a standing city (`rulings-2026-10-23.md` 4), so the result says `waived` and nothing falls back |
+
+**A run never fights the same ring twice** (the EP's ruling). The host passes the rings the run has fought as `opts.used`: each stage's `setup.arena`, as its header carries it. World's picker (`opts.used`, applied with this park) passes them over. It takes a repeat only when nothing else meets even the crude minimum, scored down and flagged `repeat` in the result.
 
 **Seeds.** The pick's stream is `H(run, "ground", chapter, choice)`, the planet's seed is `H(run, "planet", 0, 0)`, and the match's seed is `H(run, "stage", chapter, choice)`. `H` is section 4's hash, built: FNV-1a over the key, then fmix32 over, in turn:
 - the run seed's high half;
@@ -218,10 +220,11 @@ A run seed is 16 hex digits. The check pins three of its answers, so a port can 
 
 **Open:**
 - **Narrative's tie rule** ("each ring goes to the opponent whose claim scores highest; ties go to the rival") is about a chapter's offers. It lands with the offers, which give one chapter several opponents. The same goes for `rival_steps_in`.
+- **The first ring can miss Close's minimum.** One sample's coastal home gave a ring 70% ocean. Game Design decides whether the boss's waiver extends to it, or whether World turns its bearing toward land.
 - **The run file's player re-picks to check a header's setup.** So the run file's data hash takes the claims and `data/biomes/rings.json`, when the run file is built.
 
 **Proof and samples** (in `pending/run-ground/README.md`): every gate passes and the golden is byte-identical. Two sample runs pick a ground for every stage; each pick is the same stepped as at once, and each stage built from its setup alone plays the same twice. A Half pick takes 48 frames, about 0.2 s natively in all.
 
-**Two findings:**
-- **A claim can take the ring the stage before was fought on.** In one sample the Cyborg's wreckage-seeking claim did. The picker needs the rings a run has used (World's option), and Game Design or Narrative rule whether a revisit may ever be the same ring.
-- **The boss's Whole circle, fixed by Game Design's 2c rule, can hold fewer places than Whole's minimum.**
+**The first samples' two findings are ruled:**
+- **Same ring twice.** In one sample the Cyborg's wreckage-seeking claim took the ring the stage before was fought on. The EP ruled that a run never fights the same ring twice; World's `opts.used` and the used list above answer it.
+- **The boss's Whole circle can hold fewer places than Whole's minimum.** Game Design waived the minimum for it (section 11's table).

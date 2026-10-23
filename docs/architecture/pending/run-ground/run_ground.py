@@ -1,6 +1,8 @@
 # PARKED BUILD (Simulation): the run's stage ground (docs/architecture/run-core.md section 11). Each stage's ring is
 # picked by World's ring picker (WorldRingPick, on main) from Narrative's claims (data/narrative/opponent_grounds.json),
-# in steps the host spends during the previous stage's beats. Behind data/fight/run.json's ground.enabled (off).
+# a candidate every few frames of the previous stage's beats, passing over the rings the run has fought (World's
+# opts.used, applied first), the boss's ring under Game Design's waiver. Behind data/fight/run.json's ground.enabled
+# (off).
 # Nothing in a match's tick reads it and nothing is hashed: the golden does not move.
 #   adds sim/core/run.gd (SimRun: H, the stage seeds, the stand-in homes, beginGround and GroundJob) and its .uid,
 #        sim/core/tools/run_ground.gd (a sample run's grounds) and its .uid, data/fight/run.json (the switch, off);
@@ -10,6 +12,7 @@
 import os, shutil, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 os.chdir(sys.argv[1])
+assert 'static func usedList' in open('sim/world/ringpick.gd', encoding='utf-8').read(), "apply World's used-rings (opts.used) first"
 FILES = ['sim/core/run.gd', 'sim/core/run.gd.uid', 'sim/core/tools/run_ground.gd', 'sim/core/tools/run_ground.gd.uid', 'data/fight/run.json']
 for f in FILES:
     assert not os.path.exists(f), f + ' is already there'
@@ -30,8 +33,9 @@ edit('sim/core/tools/parity.gd', [
 ("func _flatX(S: SimState, from: float) -> float:\n",
  "## The run's stage ground (run-core.md section 11): the run's keyed hash pinned; the first stage Close round the\n"
  "## player's home; a stage between picked from its opponent's claim, the same stepped a candidate a frame as at once,\n"
- "## and its setup (read back from JSON, as a header is) building the match on that ring; the boss on the Whole circle\n"
- "## through his home, and on his claim when no other place stands. The data ships off.\n"
+ "## and its setup (read back from JSON, as a header is) building the match on that ring; with that arena in `used`,\n"
+ "## another ring and no repeat; the boss on the Whole circle through his home, under Game Design's waiver when it\n"
+ "## misses Whole's minimum, and on his claim when no other place stands. The data ships off.\n"
  "func _runGround() -> String:\n"
  "\tSimRun.reload()\n"
  "\tif not SimRun.errors().is_empty():\n"
@@ -66,10 +70,16 @@ edit('sim/core/tools/parity.gd', [
  "\tSimCore.dispose(S)\n"
  "\tif cols != WorldRingPick.sizeCols(\"half\"):\n"
  "\t\treturn \"a stage's setup built a match of %d columns, not its ring's %d\" % [cols, WorldRingPick.sizeCols(\"half\")]\n"
+ "\tvar g3: SimRun.GroundJob = SimRun.beginGround(run, 2, \"EMPRESS\", {\"used\": [JSON.parse_string(JSON.stringify(g2.setup().arena))]})\n"
+ "\tg3.finishNow()\n"
+ "\tif JSON.stringify(g3.setup()) == JSON.stringify(g2.setup()) or g3.result.get(\"repeat\", true) or g2.result.get(\"repeat\", true):\n"
+ "\t\treturn \"with the stage's arena as fought (through JSON): the same ring %s, repeat %s (want another ring and no repeat)\" % [str(JSON.stringify(g3.setup()) == JSON.stringify(g2.setup())), str(g3.result.get(\"repeat\"))]\n"
  "\tvar g4: SimRun.GroundJob = SimRun.beginGround(run, SimRun.stages + 1, \"RIVAL\")\n"
  "\tg4.finishNow()\n"
  "\tif g4.rule != \"boss\" or int(g4.result.spec.cols) != SimConst.PLANET_NC or not _ringHolds(g4.result.ev, int(hm.RIVAL)):\n"
  "\t\treturn \"the boss: rule %s, %d columns, his home held %s (want boss, the Whole circle, held)\" % [g4.rule, int(g4.result.spec.cols), str(_ringHolds(g4.result.ev, int(hm.RIVAL)))]\n"
+ "\tif not g4.result.ok and not (g4.result.waived and SimRun.bossWaived(g4.result.ev, int(hm.RIVAL))):\n"
+ "\t\treturn \"the boss's ring is under Whole's minimum without Game Design's waiver (his home and a standing city held)\"\n"
  "\tvar st := PackedByteArray()\n"
  "\tst.resize(P.n)\n"
  "\tst.fill(0)\n"

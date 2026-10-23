@@ -16,7 +16,12 @@ extends RefCounted
 ##   a stage between: the opponent's claim at its size for the chapter (the data's phases: early, early, mid), Close at
 ##                a Proving ground, with the opponent's home tried first (WorldRingPick.pick);
 ##   the boss:    the Whole circle through the boss's home and the most populous place still standing
-##                (WorldRingPick.bossRing); with no other place standing, his claim at Whole.
+##                (WorldRingPick.bossRing); with no other place standing, his claim at Whole. The story's ring wins:
+##                Whole's minimum is waived while it holds his home and a standing city (Game Design's
+##                rulings-2026-10-23.md 4), so the result says `waived` and nothing falls back.
+## A run never fights the same ring twice (the EP's ruling): the host passes the rings the run has fought (each
+## stage's setup.arena, as its header carries it) as opts.used, and World's picker passes them over (a repeat only
+## when nothing else meets even the crude minimum, flagged `repeat`).
 ## Homes are a stand-in until Orb names them (homework 39): the claims' fighters, in the file's order, take the
 ## planet's cities by people, most first, then its towns.
 
@@ -188,7 +193,8 @@ static func sizeFor(opponent: String, chapter: int, kind: String = "") -> String
 ## The next stage's ground, to be stepped (GroundJob.step, or frame() once a frame for the data's pace) during the
 ## previous stage's beats, or picked at once (finishNow). opts: player (the player's fighter id, PROTAGONIST), choice
 ## (the offer's index, 0), kind ("proving" for a Proving ground), standing (a byte a place, 0 for a fallen one; empty:
-## all stand), damaged (place ids hurt earlier in the run), homes (fighter id -> place id, in place of the stand-in).
+## all stand), damaged (place ids hurt earlier in the run), used (the rings the run has fought: each stage's
+## setup.arena, or a spec; WorldRingPick.usedList), homes (fighter id -> place id, in place of the stand-in).
 static func beginGround(run: String, chapter: int, opponent: String, opts: Dictionary = {}) -> GroundJob:
 	_ensure()
 	var g := GroundJob.new()
@@ -200,6 +206,7 @@ static func beginGround(run: String, chapter: int, opponent: String, opts: Dicti
 	g.P = WorldPlanet.make(g.planet)
 	g.standing = opts.get("standing", PackedByteArray())
 	g.damaged = opts.get("damaged", [])
+	g.used = opts.get("used", [])
 	var hm: Dictionary = opts.get("homes", homes(g.P))
 	g.rule = ruleOf(chapter)
 	g.size = sizeFor(opponent, chapter, String(opts.get("kind", "")))
@@ -219,7 +226,7 @@ static func beginGround(run: String, chapter: int, opponent: String, opts: Dicti
 	if g.spec.is_empty():
 		g.rule = "boss_claim" if g.rule == "boss" else "claim"
 		g.home = int(hm.get(opponent, -1))
-		g.job = WorldRingPick.beginPick(g.P, claim(opponent), g.size, stream, {"home": g.home, "standing": g.standing, "damaged": g.damaged})
+		g.job = WorldRingPick.beginPick(g.P, claim(opponent), g.size, stream, {"home": g.home, "standing": g.standing, "damaged": g.damaged, "used": g.used})
 	return g
 
 
@@ -239,6 +246,7 @@ class GroundJob extends RefCounted:
 	var job: WorldRingPick.PickJob = null      # a claim's pick
 	var standing := PackedByteArray()
 	var damaged: Array = []
+	var used: Array = []
 	var reads: int = 0
 	var frames: int = 0
 	var done: bool = false
@@ -254,12 +262,16 @@ class GroundJob extends RefCounted:
 			reads += job.evs.size() - before
 			if done:
 				result = job.result
+				result["waived"] = false
 			return done
 		var ev: Dictionary = WorldRingPick.evalRing(P, spec, standing, damaged)
 		reads += 1
 		var sc: Dictionary = WorldRingPick.score(ev, SimRun.claim(opponent), home)
-		result = {"ok": WorldRingPick.meets(ev, size), "spec": {"c": spec.c, "t": spec.t, "cols": spec.cols}, "score": sc.score, "must": sc.must, "home": sc.home,
-			"relaxed": false, "kind": rule, "place": home, "ev": ev, "idx": -1, "tried": 1}
+		var ok: bool = WorldRingPick.meets(ev, size)
+		var me: Dictionary = {"c": spec.c, "cols": int(spec.cols), "kind": str(spec.get("kind", "")), "place": int(spec.get("place", -1))}
+		result = {"ok": ok, "spec": {"c": spec.c, "t": spec.t, "cols": spec.cols}, "score": sc.score, "must": sc.must, "home": sc.home,
+			"relaxed": false, "kind": rule, "place": home, "ev": ev, "idx": -1, "tried": 1,
+			"repeat": WorldRingPick.usedMatch(me, WorldRingPick.usedList(used)), "waived": rule == "boss" and not ok and SimRun.bossWaived(ev, home)}
 		done = true
 		return done
 
@@ -282,6 +294,19 @@ class GroundJob extends RefCounted:
 	## The stage's match seed.
 	func matchSeed() -> int:
 		return SimRun.stageSeed(run, chapter, choice)
+
+
+## Game Design's waiver (rulings-2026-10-23.md 4): the boss's ring stands under Whole's minimum while it holds his
+## home and at least one standing city.
+static func bossWaived(ev: Dictionary, home: int) -> bool:
+	var homeHeld: bool = false
+	var city: bool = false
+	for h in ev.held:
+		if int(h.id) == home:
+			homeHeld = true
+		if int(h.kind) == WorldPlanet.KIND_CITY and not h.fallen:
+			city = true
+	return homeHeld and city
 
 
 static func _int(where: String, x, lo: int, hi: int) -> int:
