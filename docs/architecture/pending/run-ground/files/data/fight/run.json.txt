@@ -1,0 +1,24 @@
+{
+  "_note": "The run's numbers (docs/architecture/run-core.md; sim/core/run.gd). Run-only: no versus match reads this file.",
+  "schema": "fight.run/1",
+  "ground": {
+    "enabled": false,
+    "_enabled": "the one switch: the story mode's host picks each stage's ground (the ring it is fought on) with World's ring picker from Narrative's claims (data/narrative/opponent_grounds.json) only while it is on",
+    "framesPerRead": {
+      "close": 1,
+      "half": 1,
+      "whole": 3
+    },
+    "_framesPerRead": "the host reads one candidate ring every this many frames during the previous stage's beats, by the ring's size (World: a read is about 2.6, 5.3 and 10.3 ms natively at Close, Half and Whole, and about 22, 32 and 63 ms on the old laptop); what is left when the beats end is read at once. The pick is the same however it is stepped",
+    "stagesBeforeBoss": 3,
+    "_stagesBeforeBoss": "the stages before the boss (Game Design's run-mode.md 8: the MVP is three stages and the boss); the boss is the chapter after them",
+    "phases": [
+      "early",
+      "early",
+      "mid"
+    ],
+    "_phases": "the claim's size phase by chapter before the boss (run-mode.md 2: early is stages 1 and 2, then mid); a chapter past the list takes its last. The first stage is always Close round the player's home, and the boss Whole",
+    "provingSize": "close",
+    "_provingSize": "a Proving ground's ring (run-mode.md 1.2: a Proving ground is Close)"
+  }
+}

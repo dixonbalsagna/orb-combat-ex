@@ -1,6 +1,6 @@
 # The run: its state, the carry, the stage header and tier 5 (the core's side, paper)
 
-Owner: Simulation and Engine. 2026-10-16. The core's answer to Game Design's `docs/design/run-mode.md` (7022b7df, with Legal's RL-145 and section 10's answers, 0dfe3f91), section 7 and the sim questions in sections 1.3, 2, 3.1 and 10. It builds on `planet-slice-core.md` (the world as a function of the setup, the wear list in a place's frame). **Paper only: nothing in `sim/` or `data/` changed.** Every number below is Game Design's or World's; the core adds none.
+Owner: Simulation and Engine. 2026-10-16. The core's answer to Game Design's `docs/design/run-mode.md` (7022b7df, with Legal's RL-145 and section 10's answers, 0dfe3f91), section 7 and the sim questions in sections 1.3, 2, 3.1 and 10. It builds on `planet-slice-core.md` (the world as a function of the setup, the wear list in a place's frame). **Paper, except section 11 (each stage's ground), which is built and parked at `pending/run-ground/`.** Every number below is Game Design's or World's; the core adds none.
 
 ## 1. The answers in short
 
@@ -185,3 +185,43 @@ Game Design's planet ceiling (at most 40% of the planet's people dead before the
 | 5: the ledger | `S.tally` and its counters at the choke points (with World's owners); the close |
 | 6 and 7: tier 5, the tremor, the breach, the blast cloud, the ash | The setup's ceiling in the tier cap; the tremor's trigger; `S.cata` with the event counts and the hazard-wear share; `tier5.json` and the tier tables' reads; the moves are Encounter's, World's and VFX's on top |
 | 8: fail forward and the score | Rules in `carry` |
+
+## 11. A stage's ground (built, parked at `pending/run-ground/`, 2026-10-23)
+
+Orb wants the opponents' stages assigned programmatically in story mode. World's ring picker (`WorldRingPick`, window 4, on main) picks a ring of the planet for an opponent's claim (Narrative's `data/narrative/opponent_grounds.json`). The run hosts it, behind `data/fight/run.json`'s `ground.enabled` (off).
+
+**How the host uses it:**
+1. When a stage ends, and the carry has the places' states, the host begins the next stage's ground: `SimRun.beginGround(run, chapter, opponent, opts)`.
+2. During that stage's beats, it calls `job.frame()` once a frame. That reads a candidate every `framesPerRead` frames for the ring's size: 1 at Close and Half, 3 at Whole. World measured a read at about 2.6, 5.3 and 10.3 ms natively, and about 22, 32 and 63 ms on the old laptop.
+3. If the beats end before the pick, `finishNow()` reads the rest at once.
+4. `job.setup()` is the next stage's `{planet, arena}`: the ring as exact bits (`WorldRingPick.arenaOf`), which the stage's header carries. The stage then replays from its header and never picks again.
+
+| Chapter | The ring | Size |
+| :--- | :--- | :--- |
+| 1 | `firstRing`: round the player's own home (Game Design's run-mode.md 1.2; Narrative's `first_stage`) | Close |
+| 2 to `stagesBeforeBoss` | `pick`: the opponent's claim, his home tried first, with the places' states (`standing`, `damaged`) as the run has them | The claim's size for the chapter's phase (`phases`: early, early, mid); Close at a Proving ground |
+| The boss (the next chapter) | `bossRing`: the Whole circle through his home and the most populous place still standing (Game Design 2c). With no other place standing, his claim at Whole | Whole |
+
+**Seeds.** The pick's stream is `H(run, "ground", chapter, choice)`, the planet's seed is `H(run, "planet", 0, 0)`, and the match's seed is `H(run, "stage", chapter, choice)`. `H` is section 4's hash, built: FNV-1a over the key, then fmix32 over, in turn:
+- the run seed's high half;
+- its low half;
+- `a` × 0x9E3779B1;
+- `b` × 0x85EBCA77.
+
+A run seed is 16 hex digits. The check pins three of its answers, so a port can match them.
+
+**Deterministic, and the golden unchanged.** The reads are pure, and the choice is made over all of them at the end, so the ring doesn't depend on how many frames the pick took. Nothing runs in a match's tick and nothing is hashed.
+
+**Stand-ins, until their owners land them:**
+- **Homes:** the claims' fighters, in the file's order, take the planet's cities by people, then its towns. Orb names the homes (homework 39), then World places them.
+- **Wear:** `standing` and `damaged` come from the run state's place statuses (section 2), which the carry doesn't build yet. The caller passes them.
+
+**Open:**
+- **Narrative's tie rule** ("each ring goes to the opponent whose claim scores highest; ties go to the rival") is about a chapter's offers. It lands with the offers, which give one chapter several opponents. The same goes for `rival_steps_in`.
+- **The run file's player re-picks to check a header's setup.** So the run file's data hash takes the claims and `data/biomes/rings.json`, when the run file is built.
+
+**Proof and samples** (in `pending/run-ground/README.md`): every gate passes and the golden is byte-identical. Two sample runs pick a ground for every stage; each pick is the same stepped as at once, and each stage built from its setup alone plays the same twice. A Half pick takes 48 frames, about 0.2 s natively in all.
+
+**Two findings:**
+- **A claim can take the ring the stage before was fought on.** In one sample the Cyborg's wreckage-seeking claim did. The picker needs the rings a run has used (World's option), and Game Design or Narrative rule whether a revisit may ever be the same ring.
+- **The boss's Whole circle, fixed by Game Design's 2c rule, can hold fewer places than Whole's minimum.**
