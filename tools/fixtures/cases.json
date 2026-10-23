@@ -298325,6 +298325,946 @@
       }
     },
     {
+      "id": "audio-world-cues-valid",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/schema": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-world-cues-underscore-key-ok",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-world-cues-key-required-schema",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-enabled",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/enabled"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-sounds",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/sounds"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-beds",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/beds"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-default-biome",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/default_biome"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-biomes",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/biomes"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-bed",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/bed"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-intensity",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/intensity"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-soil",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/soil"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-surfaces",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/surfaces"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-hit",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/hit"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-land",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/land"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-bounce",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/bounce"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-slide",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/slide"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-skim",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/skim"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-splash",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/splash"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-crater",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/crater"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-step",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/step"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-unknown-key",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "audio-world-cues-version",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/schema": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "audio-world-cues-enabled-not-bool",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/enabled": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "audio-world-cues-sound-key-missing",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/sounds/surf.sand.hit/peak_db"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/sounds/surf.sand.hit"
+      }
+    },
+    {
+      "id": "audio-world-cues-sound-unknown-key",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/sounds/surf.sand.hit/echo": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/sounds/surf.sand.hit/echo"
+      }
+    },
+    {
+      "id": "audio-world-cues-sound-peak-over-0",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/sounds/surf.sand.hit/peak_db": 3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/sounds/surf.sand.hit/peak_db"
+      }
+    },
+    {
+      "id": "audio-world-cues-layer-type",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/sounds/surf.sand.hit/layers/0/type": "screech"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/sounds/surf.sand.hit/layers/0/type"
+      }
+    },
+    {
+      "id": "audio-world-cues-layer-unknown-key",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/sounds/surf.sand.hit/layers/0/warp": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/sounds/surf.sand.hit/layers/0/warp"
+      }
+    },
+    {
+      "id": "audio-world-cues-noise-layer-needs-filter",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/sounds/surf.sand.hit/layers/0/filter"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/sounds/surf.sand.hit/layers/0"
+      }
+    },
+    {
+      "id": "audio-world-cues-layer-gain-negative",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/sounds/surf.sand.hit/layers/0/gain": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/sounds/surf.sand.hit/layers/0/gain"
+      }
+    },
+    {
+      "id": "audio-world-cues-grains-click-over-1",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/sounds/surf.sand.hit/layers/2/click": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/sounds/surf.sand.hit/layers/2/click"
+      }
+    },
+    {
+      "id": "audio-world-cues-bed-key-missing",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/beds/surf/seed"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/beds/surf"
+      }
+    },
+    {
+      "id": "audio-world-cues-bed-layer-type",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/beds/surf/layers/0/type": "thunder"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/beds/surf/layers/0/type"
+      }
+    },
+    {
+      "id": "audio-world-cues-bed-gust-needs-lo",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/beds/surf/layers/0/lo"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/beds/surf/layers/0"
+      }
+    },
+    {
+      "id": "audio-world-cues-bed-floor-over-1",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/beds/surf/layers/0/floor": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/beds/surf/layers/0/floor"
+      }
+    },
+    {
+      "id": "audio-world-cues-bed-seconds-zero",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/beds/surf/seconds": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/beds/surf/seconds"
+      }
+    },
+    {
+      "id": "audio-world-cues-default-biome-unknown",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/default_biome": "atlantis"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:world-cues-default",
+        "pointer": "/default_biome"
+      }
+    },
+    {
+      "id": "audio-world-cues-biome-bed-unknown",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/biomes/ocean/bed": "no_such_bed"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:world-cues-bed",
+        "pointer": "/biomes/ocean/bed"
+      }
+    },
+    {
+      "id": "audio-world-cues-bed-unused",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/beds/orphan": {
+              "rate": 6000,
+              "seconds": 4,
+              "seed": 1,
+              "peak_db": -12,
+              "layers": [
+                {
+                  "type": "hum",
+                  "f": 50,
+                  "partials": [
+                    [
+                      1,
+                      1
+                    ]
+                  ],
+                  "beat": 0,
+                  "beat_depth": 0,
+                  "gain": 0.2
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:world-cues-bed",
+        "pointer": "/beds/orphan"
+      }
+    },
+    {
+      "id": "audio-world-cues-biome-gain-over-12",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/biomes/ocean/gain_db": 30
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/biomes/ocean/gain_db"
+      }
+    },
+    {
+      "id": "audio-world-cues-biome-unknown-key",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/biomes/ocean/wind": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/biomes/ocean/wind"
+      }
+    },
+    {
+      "id": "audio-world-cues-soil-biome-unknown",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/soil/atlantis": "grass"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:world-cues-soil",
+        "pointer": "/soil/atlantis"
+      }
+    },
+    {
+      "id": "audio-world-cues-soil-surface-unknown",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/soil/plains": "lava"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:world-cues-soil",
+        "pointer": "/soil/plains"
+      }
+    },
+    {
+      "id": "audio-world-cues-surface-sound-unknown",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/surfaces/grass/hit": "surf.lava.hit"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:world-cues-surface",
+        "pointer": "/surfaces/grass/hit"
+      }
+    },
+    {
+      "id": "audio-world-cues-surface-slide-unknown",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/surfaces/sand/slide": "surf.nothing.slide"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:world-cues-surface",
+        "pointer": "/surfaces/sand/slide"
+      }
+    },
+    {
+      "id": "audio-world-cues-surface-key-missing",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/surfaces/grass/pitch"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/surfaces/grass"
+      }
+    },
+    {
+      "id": "audio-world-cues-sound-unused",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/sounds/surf.lava.hit": {
+              "rate": 24000,
+              "variants": 1,
+              "drive": 0,
+              "peak_db": -10,
+              "layers": [
+                {
+                  "type": "rumble",
+                  "lp": 100,
+                  "attack": 0.01,
+                  "t60": 0.3,
+                  "gain": 1
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:world-cues-surface",
+        "pointer": "/sounds/surf.lava.hit"
+      }
+    },
+    {
+      "id": "audio-world-cues-bus-shape",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/bed/bus": "not a bus!"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/bed/bus"
+      }
+    },
+    {
+      "id": "audio-world-cues-bed-cap-zero",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/bed/cap": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/bed/cap"
+      }
+    },
+    {
+      "id": "audio-world-cues-bed-priority-over-100",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/bed/priority": 200
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/bed/priority"
+      }
+    },
+    {
+      "id": "audio-world-cues-duck-positive",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/intensity/duck_db": 6
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/intensity/duck_db"
+      }
+    },
+    {
+      "id": "audio-world-cues-hit-cap-zero",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/hit/cap": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/hit/cap"
+      }
+    },
+    {
+      "id": "audio-world-cues-hit-pitch-over-4",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/hit/pitch_max": 9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/hit/pitch_max"
+      }
+    },
+    {
+      "id": "audio-world-cues-hit-unknown-key",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/hit/reverb": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/hit/reverb"
+      }
+    },
+    {
+      "id": "audio-world-cues-step-interval-zero",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/step/interval_fast": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/step/interval_fast"
+      }
+    },
+    {
+      "id": "audio-world-cues-slide-every-fraction",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/slide/every": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/slide/every"
+      }
+    },
+    {
+      "id": "audio-world-cues-crater-gain-over-12",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/crater/gain_db_max": 20
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/crater/gain_db_max"
+      }
+    },
+    {
       "id": "fight-ricochet-angle-zero",
       "schema": "fight-ricochet.schema.json",
       "mutate": [

@@ -115,7 +115,7 @@ func distance_db(dist: float) -> float:
 func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:
 	if cue.sound == "" and cue.stop_group != "":
 		return stop_group(cue.stop_group, cue.fade_ms)
-	var dx: float = SimWrap.sdx(cam_x, cue.x)
+	var dx: float = 0.0 if cue.ambient else SimWrap.sdx(cam_x, cue.x)
 	if cue.update:
 		return update_group(cue.group, cue.gain_db + distance_db(absf(dx)), cue.pitch, cue.ramp_ms, dx * zoom)
 	var dist: float = absf(dx)

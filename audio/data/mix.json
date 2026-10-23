@@ -28,6 +28,10 @@
     {
       "name": "Alert",
       "volume_db": 0.0
+    },
+    {
+      "name": "Ambience",
+      "volume_db": -4.0
     }
   ],
   "master_limiter": {

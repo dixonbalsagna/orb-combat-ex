@@ -1,0 +1,1446 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/audio-world-cues",
+  "title": "audio world cues (schema 1)",
+  "description": "audio/data/world_cues.json: biome sound (docs/audio/biomes.md; audio/audio_world.gd): a bed of ambience per biome, mixed under the brawl and ducked by the fight, and footfall, landing and impact layers by surface, read from the sim at the contact. Switched off by `enabled`. Version field: schema. Policy: closed except keys starting with an underscore. Cross-references in tools/lib/xref-world-cues.js (world-cues-bed, -default, -soil, -surface).",
+  "type": "object",
+  "required": [
+    "schema",
+    "note",
+    "enabled",
+    "sounds",
+    "beds",
+    "default_biome",
+    "biomes",
+    "bed",
+    "intensity",
+    "soil",
+    "surfaces",
+    "hit",
+    "land",
+    "bounce",
+    "slide",
+    "skim",
+    "splash",
+    "crater",
+    "step"
+  ],
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "note": {
+      "type": "string",
+      "minLength": 1
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "The one switch (off: nothing reads the rest)."
+    },
+    "sounds": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z]+([.][a-z]+)*)$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/sound"
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "ImpactSynth recipes, as in impacts.json; a surface names two of them."
+    },
+    "beds": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/bed"
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "AmbienceSynth recipes, looped; a biome names one."
+    },
+    "default_biome": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "The biome used when the ground has none (a key of biomes: rule world-cues-default)."
+    },
+    "biomes": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "bed",
+          "gain_db",
+          "alt_db"
+        ],
+        "properties": {
+          "bed": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "A bed of `beds` (rule world-cues-bed)."
+          },
+          "gain_db": {
+            "type": "number",
+            "minimum": -60,
+            "maximum": 12,
+            "description": "Level of the bed in this biome."
+          },
+          "alt_db": {
+            "type": "number",
+            "minimum": -60,
+            "maximum": 12,
+            "description": "Level change at altitude (over bed.alt_ref)."
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "Each biome of the sim and the bed it plays."
+    },
+    "bed": {
+      "type": "object",
+      "required": [
+        "bus",
+        "priority",
+        "cls",
+        "cap",
+        "hold_ticks",
+        "fade_ms",
+        "start_db",
+        "update_every",
+        "min_step_db",
+        "ramp_ms",
+        "alt_ref"
+      ],
+      "properties": {
+        "bus": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_ ]*$"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "cls": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$"
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "hold_ticks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3600,
+          "description": "Ticks a bed is kept after the ground changes."
+        },
+        "fade_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60000
+        },
+        "start_db": {
+          "type": "number",
+          "minimum": -80,
+          "maximum": 0
+        },
+        "update_every": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600,
+          "description": "Ticks between looks at the ground."
+        },
+        "min_step_db": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 12
+        },
+        "ramp_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "alt_ref": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100000,
+          "description": "The altitude, in units, at which alt_db applies in full."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "How a bed is played."
+    },
+    "intensity": {
+      "type": "object",
+      "required": [
+        "per_damage",
+        "per_crater",
+        "decay_s",
+        "duck_db"
+      ],
+      "properties": {
+        "per_damage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Intensity added per point of damage."
+        },
+        "per_crater": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "decay_s": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 60
+        },
+        "duck_db": {
+          "type": "number",
+          "minimum": -40,
+          "maximum": 0,
+          "description": "How far a fight ducks the bed."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "How the fight ducks the bed."
+    },
+    "soil": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$",
+        "description": "A surface of `surfaces` (rule world-cues-soil)."
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "Biome to the surface under it (a key of biomes)."
+    },
+    "surfaces": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "hit",
+          "slide",
+          "gain_db",
+          "pitch"
+        ],
+        "properties": {
+          "hit": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+            "description": "A sound of `sounds` (rule world-cues-surface)."
+          },
+          "slide": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+            "description": "A sound of `sounds`."
+          },
+          "gain_db": {
+            "type": "number",
+            "minimum": -60,
+            "maximum": 12
+          },
+          "pitch": {
+            "type": "number",
+            "minimum": 0.25,
+            "maximum": 4
+          }
+        },
+        "additionalProperties": false,
+        "patternProperties": {
+          "^_": true
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The sounds of each surface."
+    },
+    "hit": {
+      "type": "object",
+      "required": [
+        "near_ground",
+        "water_margin",
+        "min_amount",
+        "ref",
+        "gain_db",
+        "gain_exp",
+        "gain_db_min",
+        "gain_db_max",
+        "pitch_exp",
+        "pitch_min",
+        "pitch_max",
+        "priority",
+        "cls",
+        "cap"
+      ],
+      "properties": {
+        "near_ground": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        },
+        "water_margin": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2000
+        },
+        "min_amount": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "ref": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 10000
+        },
+        "gain_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "gain_exp": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "gain_db_min": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "gain_db_max": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "pitch_exp": {
+          "type": "number",
+          "minimum": -4,
+          "maximum": 4
+        },
+        "pitch_min": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4
+        },
+        "pitch_max": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Voice priority (higher wins)."
+        },
+        "cls": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The voice class the cap counts."
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "description": "The most voices of the class at once."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "land": {
+      "type": "object",
+      "required": [
+        "gain_db",
+        "ref_speed",
+        "gain_db_min",
+        "gain_db_max",
+        "pitch_slow",
+        "pitch_fast",
+        "min_speed",
+        "priority",
+        "cls",
+        "cap"
+      ],
+      "properties": {
+        "gain_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "ref_speed": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100000
+        },
+        "gain_db_min": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "gain_db_max": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "pitch_slow": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4
+        },
+        "pitch_fast": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4
+        },
+        "min_speed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Voice priority (higher wins)."
+        },
+        "cls": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The voice class the cap counts."
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "description": "The most voices of the class at once."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "bounce": {
+      "type": "object",
+      "required": [
+        "gain_db",
+        "ref_speed",
+        "gain_db_min",
+        "gain_db_max",
+        "pitch_slow",
+        "pitch_fast",
+        "min_speed",
+        "priority",
+        "cls",
+        "cap"
+      ],
+      "properties": {
+        "gain_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "ref_speed": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100000
+        },
+        "gain_db_min": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "gain_db_max": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "pitch_slow": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4
+        },
+        "pitch_fast": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4
+        },
+        "min_speed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Voice priority (higher wins)."
+        },
+        "cls": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The voice class the cap counts."
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "description": "The most voices of the class at once."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "slide": {
+      "type": "object",
+      "required": [
+        "every",
+        "gain_db",
+        "gain_db_per_spd",
+        "pitch",
+        "priority",
+        "cls",
+        "cap"
+      ],
+      "properties": {
+        "every": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600,
+          "description": "Ticks between slide sounds."
+        },
+        "gain_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "gain_db_per_spd": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "pitch": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Voice priority (higher wins)."
+        },
+        "cls": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The voice class the cap counts."
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "description": "The most voices of the class at once."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "skim": {
+      "type": "object",
+      "required": [
+        "gain_db",
+        "ref_speed",
+        "pitch_slow",
+        "pitch_fast",
+        "priority",
+        "cls",
+        "cap"
+      ],
+      "properties": {
+        "gain_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "ref_speed": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100000
+        },
+        "pitch_slow": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4
+        },
+        "pitch_fast": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Voice priority (higher wins)."
+        },
+        "cls": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The voice class the cap counts."
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "description": "The most voices of the class at once."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "splash": {
+      "type": "object",
+      "required": [
+        "gain_db",
+        "ref_n",
+        "gain_db_per_ln",
+        "gain_db_min",
+        "gain_db_max",
+        "pitch",
+        "priority",
+        "cls",
+        "cap"
+      ],
+      "properties": {
+        "gain_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "ref_n": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000
+        },
+        "gain_db_per_ln": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "gain_db_min": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "gain_db_max": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "pitch": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Voice priority (higher wins)."
+        },
+        "cls": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The voice class the cap counts."
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "description": "The most voices of the class at once."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "crater": {
+      "type": "object",
+      "required": [
+        "gain_db",
+        "ref",
+        "gain_exp",
+        "gain_db_min",
+        "gain_db_max",
+        "pitch_exp",
+        "pitch_min",
+        "pitch_max",
+        "min_energy",
+        "priority",
+        "cls",
+        "cap"
+      ],
+      "properties": {
+        "gain_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "ref": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000
+        },
+        "gain_exp": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "gain_db_min": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "gain_db_max": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "pitch_exp": {
+          "type": "number",
+          "minimum": -4,
+          "maximum": 4
+        },
+        "pitch_min": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4
+        },
+        "pitch_max": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4
+        },
+        "min_energy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Voice priority (higher wins)."
+        },
+        "cls": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The voice class the cap counts."
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "description": "The most voices of the class at once."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "step": {
+      "type": "object",
+      "required": [
+        "near_ground",
+        "max_vy",
+        "min_speed",
+        "interval_slow",
+        "interval_fast",
+        "speed_fast",
+        "gain_db",
+        "pitch",
+        "pitch_alt",
+        "priority",
+        "cls",
+        "cap"
+      ],
+      "properties": {
+        "near_ground": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 2000
+        },
+        "max_vy": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "min_speed": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "interval_slow": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600
+        },
+        "interval_fast": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600
+        },
+        "speed_fast": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100000
+        },
+        "gain_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 12
+        },
+        "pitch": {
+          "type": "number",
+          "minimum": 0.25,
+          "maximum": 4
+        },
+        "pitch_alt": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Voice priority (higher wins)."
+        },
+        "cls": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+          "description": "The voice class the cap counts."
+        },
+        "cap": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "description": "The most voices of the class at once."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  },
+  "$defs": {
+    "sound": {
+      "type": "object",
+      "required": [
+        "rate",
+        "variants",
+        "peak_db",
+        "layers"
+      ],
+      "properties": {
+        "rate": {
+          "type": "integer",
+          "minimum": 8000,
+          "maximum": 96000
+        },
+        "variants": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "drive": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "peak_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 0
+        },
+        "jitter": {
+          "type": "object",
+          "properties": {
+            "f": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "t60": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "gain": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "layers": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "items": {
+            "$ref": "#/$defs/layer"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "layer": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "noise",
+            "tone",
+            "rumble",
+            "grains"
+          ]
+        },
+        "filter": {
+          "enum": [
+            "lp",
+            "hp",
+            "bp"
+          ]
+        },
+        "f": {
+          "oneOf": [
+            {
+              "type": "number",
+              "minimum": 20,
+              "maximum": 20000,
+              "description": "Hz."
+            },
+            {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": 20,
+                "maximum": 20000,
+                "description": "Hz."
+              }
+            }
+          ],
+          "description": "Hz, or [low, high] for grains."
+        },
+        "f_to": {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 20000,
+          "description": "Hz."
+        },
+        "q": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 40
+        },
+        "attack": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "t60": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 10
+        },
+        "gain": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "tau": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 10
+        },
+        "drive": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "h2": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "h3": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "lp": {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 20000,
+          "description": "Hz."
+        },
+        "wobble": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "wobble_hz": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "rate0": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1000
+        },
+        "len": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 5
+        },
+        "at": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "click": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "noise"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "filter",
+              "f",
+              "q",
+              "attack",
+              "t60",
+              "gain"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "tone"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "f",
+              "f_to",
+              "tau",
+              "attack",
+              "t60",
+              "gain"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "rumble"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "lp",
+              "attack",
+              "t60",
+              "gain"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "grains"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "rate0",
+              "tau",
+              "len",
+              "f",
+              "t60",
+              "gain",
+              "at"
+            ]
+          }
+        }
+      ]
+    },
+    "bed": {
+      "type": "object",
+      "required": [
+        "rate",
+        "seconds",
+        "seed",
+        "peak_db",
+        "layers"
+      ],
+      "properties": {
+        "rate": {
+          "type": "integer",
+          "minimum": 2000,
+          "maximum": 48000
+        },
+        "seconds": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 120
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2147483647
+        },
+        "peak_db": {
+          "type": "number",
+          "minimum": -60,
+          "maximum": 0
+        },
+        "layers": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "items": {
+            "$ref": "#/$defs/bedLayer"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "bedLayer": {
+      "type": "object",
+      "required": [
+        "type",
+        "gain"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "gust",
+            "flutter",
+            "hum",
+            "pulses"
+          ]
+        },
+        "gain": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "filter": {
+          "enum": [
+            "lp",
+            "hp",
+            "bp"
+          ]
+        },
+        "lo": {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 20000,
+          "description": "Hz."
+        },
+        "hi": {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 20000,
+          "description": "Hz."
+        },
+        "q": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 40
+        },
+        "cycles": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64
+          }
+        },
+        "amps": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 4
+          }
+        },
+        "floor": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "sharp": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 16
+        },
+        "lo_gain": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "f": {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 20000,
+          "description": "Hz."
+        },
+        "rate_hz": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 60
+        },
+        "depth": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "partials": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "beat": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 60
+        },
+        "beat_depth": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200
+        },
+        "f_to": {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 20000,
+          "description": "Hz."
+        },
+        "len": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 5
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "gust"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "filter",
+              "lo",
+              "hi",
+              "q",
+              "cycles",
+              "amps",
+              "floor",
+              "sharp",
+              "lo_gain"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "flutter"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "filter",
+              "f",
+              "q",
+              "rate_hz",
+              "depth"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "hum"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "f",
+              "partials",
+              "beat",
+              "beat_depth"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "pulses"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "count",
+              "f",
+              "f_to",
+              "len"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

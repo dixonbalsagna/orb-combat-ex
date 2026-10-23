@@ -14,12 +14,14 @@ const BABBLE_PATH := "res://audio/data/babble.json"
 const TUG_PATH := "res://audio/data/tug_cues.json"
 const CUES_PATH := "res://audio/data/cues.json"
 const CARRY_PATH := "res://audio/data/carry_cues.json"
+const WORLD_PATH := "res://audio/data/world_cues.json"
 
 var impacts: Dictionary = {}
 var grunts: Dictionary = {}
 var babble: Dictionary = {}       # babble.json: the babble voice (syllable bank, moods, timeline)
 var drones: Dictionary = {}       # tug_cues.json `drones`: seamless loops (ids drone.<name>); not part of ids()
 var _tug_on: bool = false       # tug_cues.json `enabled`: the drones are warmed only when the struggle is switched on
+var world: Dictionary = {}         # world_cues.json: the ambience beds (ids amb.<name>) and the surface sounds (ids surf.<surface>.hit and .slide)
 var flashes: Dictionary = {}      # flash_cues.json: the 12 head-flash cues and the four sound families
 var _cache: Dictionary = {}       # "id#variant" -> AudioStreamWAV
 var render_ms: Dictionary = {}    # "id#variant" -> milliseconds it took to render
@@ -35,6 +37,7 @@ func _init() -> void:
 	drones = tug.get("drones", {})
 	_tug_on = bool(tug.get("enabled", false))
 	drones.merge(load_json(CARRY_PATH).get("drones", {}))
+	world = load_json(WORLD_PATH)
 
 
 static func load_json(path: String) -> Dictionary:
@@ -110,6 +113,8 @@ func buffer(id: String, variant: int) -> PackedFloat32Array:
 	if r.is_empty():
 		return PackedFloat32Array()
 	var v: int = posmod(variant, variants(id))
+	if id.begins_with("amb."):
+		return AmbienceSynth.render(r)
 	if id.begins_with("drone."):
 		return DroneSynth.render(r)
 	if id.begins_with("babble."):
@@ -128,6 +133,8 @@ func buffer(id: String, variant: int) -> PackedFloat32Array:
 
 
 func rate_of(id: String) -> int:
+	if id.begins_with("amb."):
+		return int(_recipe(id).get("rate", 16000))
 	if id.begins_with("drone."):
 		return int(_recipe(id).get("rate", 32000))
 	if id.begins_with("babble."):
@@ -174,6 +181,9 @@ func extra_ids() -> Array:
 	if _tug_on:
 		for k in drones:
 			out.append("drone." + String(k))
+	if bool(world.get("enabled", false)):
+		for k in world.get("sounds", {}):
+			out.append(String(k))      # the surfaces; the beds are warmed by the host for the ring (AudioWorld.warm_beds)
 	return out
 
 
@@ -219,6 +229,10 @@ func warm_step() -> bool:
 
 ## The recipe for an id, or an empty dictionary.
 func _recipe(id: String) -> Dictionary:
+	if id.begins_with("amb."):
+		return world.get("beds", {}).get(id.substr(4), {})
+	if id.begins_with("surf."):
+		return world.get("sounds", {}).get(id, {})
 	if id.begins_with("drone."):
 		return drones.get(id.substr(6), {})
 	if id.begins_with("babble."):

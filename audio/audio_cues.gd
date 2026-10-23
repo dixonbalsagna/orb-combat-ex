@@ -35,6 +35,7 @@ class Cue:
 	var loop: bool = false       # a looped voice (the beam struggle's bed): it keeps sounding until a stop request
 	var update: bool = false     # not a new sound: move the looped voice in `group` to this gain, pitch and place over ramp_ms
 	var ramp_ms: int = 100
+	var ambient: bool = false    # an ambience bed (AudioWorld): at the listener, no distance and no pan
 
 
 var cfg: Dictionary = {}
@@ -44,6 +45,7 @@ var _last_variant: Dictionary = {}    # sound id -> the variant played last
 var _last_grunt: Dictionary = {}      # "fighter.gesture" -> sim time it last fired
 var brawl: AudioBrawl                 # the brawl's cues (audio_brawl.gd)
 var carry: AudioCarry                   # what the HUD no longer draws (audio_carry.gd), parked behind data/carry_cues.json `enabled`
+var world: AudioWorld                   # biome sound: the beds and the surfaces (audio_world.gd), parked behind data/world_cues.json `enabled`
 var tug: AudioTug                     # the beam struggle's (audio_tug.gd), parked behind data/tug_cues.json `enabled`
 
 
@@ -53,6 +55,7 @@ func _init(p_bank: AudioBank = null) -> void:
 	brawl = AudioBrawl.new(self)
 	tug = AudioTug.new(self)
 	carry = AudioCarry.new(self)
+	world = AudioWorld.new(self)
 	reset(1)
 
 
@@ -64,6 +67,7 @@ func reset(p_seed: int) -> void:
 	brawl.reset()
 	tug.reset()
 	carry.reset()
+	world.reset()
 
 
 ## One tick's events, in order. Returns the cues to play.
@@ -91,6 +95,7 @@ func consume(S: SimState, events: Array) -> Array:
 			carry.on_event(S, e, out)
 	tug.after(S, out)
 	carry.after(S, out)
+	world.consume(S, events, out)
 	return out
 
 

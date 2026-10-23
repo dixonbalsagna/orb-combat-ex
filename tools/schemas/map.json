@@ -568,6 +568,10 @@
       "schema": "audio-carry-cues.schema.json"
     },
     {
+      "match": "audio/data/world_cues.json",
+      "schema": "audio-world-cues.schema.json"
+    },
+    {
       "match": "data/fight/catastrophe.json",
       "schema": "fight-catastrophe.schema.json"
     },
