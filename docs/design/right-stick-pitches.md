@@ -181,6 +181,8 @@ Controls' own §10 crossed with this page's §10. Where they differ, this sectio
 - **R23. The family is fixed at the first deflection** and held until the stick rests. A shoulder pressed or let go in the middle of a gesture doesn't change what that gesture does, and the next gesture reads the new family. A latched aim line still clears when RB is let go (R16): that is the line, not the gesture.
 - **R24. R10 is replaced.** R3 keeps its job (Escape, today; the transform is LT + RT). Controls ignores an R3 click while the stick is past 0.9, or within 6 ticks of being there, so a hard flick never clicks by accident.
 - **R25. Either stick sweeps a beam.** While his beam is out he is rooted (E48), so the left stick has nothing else to do and sweeps it on every layout, as E17 says. With the right stick on, its hold sweeps it too. If both are out of their dead zones, the right stick wins. A beam's sweep stays where a stick lets it go.
+- **R26. Under an energy hold, the aim line points where the stick points,** on Controls' 32-way aim, with no turning rate, so the aim is as quick as the thumb. A beam is different: it turns toward the stick at his fighter's sweep rate (E48 and E81), because the sweep is the beam's own weight.
+- **R27. The words:** a **pump** is a double flick the same way within 18 ticks. Up-and-down strokes are a **zig-zag** like any other, a vertical one.
 
 **Step 1's command set, for Controls to fix thresholds.** Patterns are off in every family in step 1, and come in step 2 after the capture (R20). Directions are relative to him.
 
