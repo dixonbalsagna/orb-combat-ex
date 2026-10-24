@@ -27,16 +27,16 @@ Research & Prototyping, 2026-10-23. The prototype `docs/ep/prototypes/right-stic
 - **Circle:** a sweep of 300 degrees or more.
 - **Half-circle:** 140 to 250 degrees.
 - **Zig-zag:** two reversals along one line.
-- **Pump:** two flicks the same way within 18 ticks.
+- **Pump:** two flicks the same way in a row within 18 ticks.
 
 **Directions** are relative to the rival.
 
 **Simplified in the prototype:**
 
-- No brawl, so §12's rushes inside a brawl are not modelled.
+- The brawl is a small stand-in for `sim/director/brawl.gd` on the data's numbers: bands, striking distance, the leash, the pull, the break and the idle. It has no damage and no blocks.
 - Flicks and holds under LB, LT or RT do nothing (step 2 and 3).
-- The aim line's hold turns the line toward the stick at 2 degrees a tick.
-- A beam turns toward the stick at the fighter's own sweep rate.
+- Under a hold the aim line points where the stick points, read 32 ways (GD's R26). A beam turns toward the stick at the fighter's own sweep rate.
+- A pump is two flicks the same way in a row within 18 ticks; up-down strokes are a vertical zig-zag (R27).
 
 ```
 node research/right-stick-proto/build.mjs

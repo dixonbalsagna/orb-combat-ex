@@ -6,7 +6,7 @@
 <title>Right stick, step 1</title>
 <style>
 :root{--text-primary:#1f1f1c;--text-secondary:#5f5e5a;--text-muted:#888780;--surface-1:#f6f5f0;--border:#d3d1c7;--bg-accent:#e6f1fb;--text-accent:#0c447c}
-body{font-family:sans-serif;margin:16px;max-width:1020px;color:var(--text-primary)}
+body{font-family:sans-serif;margin:16px;max-width:1040px;color:var(--text-primary)}
 button{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;color:var(--text-primary)}
 .lab{font-size:13px;color:var(--text-secondary)}
 .row{display:flex;gap:6px;flex-wrap:wrap}
@@ -24,7 +24,7 @@ kbd{border:1px solid var(--border);border-radius:4px;padding:0 4px;font-size:12p
   <label for="spd" class="lab">Playback speed</label>
   <div style="display:flex;gap:10px;align-items:center"><input id="spd" type="range" min="10" max="100" step="5" value="100" style="width:180px"><span id="spdo" class="lab">100%</span><span id="pad" class="lab"></span></div>
 </div>
-<canvas id="cv" width="1000" height="340" style="width:100%;border:0.5px solid var(--border);border-radius:12px;background:var(--surface-1)"></canvas>
+<canvas id="cv" width="1020" height="340" style="width:100%;border:0.5px solid var(--border);border-radius:12px;background:var(--surface-1)"></canvas>
 <ol id="steps"></ol>
 <p class="lab">Play: a gamepad works as it is (right stick, left stick, RB, LB, X, Y, B). Keyboard: <kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&rarr;</kbd> <kbd>&darr;</kbd> the right stick (tap to flick, hold to hold, two keys for a diagonal), <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> the left stick, <kbd>E</kbd> holds RB, <kbd>Q</kbd> holds LB, <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> are X, Y and B (hold <kbd>L</kbd> with RB for a beam). The rival drifts and fires now and then.</p>
 <script>

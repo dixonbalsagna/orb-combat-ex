@@ -6,7 +6,7 @@
 // code in node for the homework clips. 60 ticks a second, no randomness (a hash for every jitter), flat polygons only.
 var S = (function () {
 'use strict';
-var W = 1000, H = 340, AW = 720, GY = 300;
+var W = 1020, H = 340, AW = 720, GY = 300;
 var BH = 56;                        // a body height, drawn and as the unit of distance (1 bh = 56 px)
 var KEY = '#0a0d14';
 var C = { bg: '#f3f1ea', ground: '#e8e6dc', line: '#888780', dirt: '#b3a991', scorch: '#6d6a62', shade: '#d6d4c9', grey: '#a9a79e',
@@ -21,9 +21,14 @@ var FIGHTERS = [
 
 // ---- Controls' step-1 thresholds (right-stick.md section 11) and GD's step-1 moves (pitches section 11, first values) ----
 var RS = { deadZone: 0.25, on: 0.60, off: 0.35, rest: 0.2, flickRise: 3, flickSettle: 2, holdTicks: 10, holdDirs: 32, flightHyst: 8 };
-var MV = { reach: 1.6, mid: 6, lungeKi: 10, stepIn: 1, stepBack: 2, stepT: 8, hop: 2, hopT: 8, slip: 4, flight: 2.6,
+var MV = { lungeKi: 10, stepIn: 1, stepBack: 2, stepT: 8, hop: 2, hopT: 8, slip: 4, flight: 2.6,
   dash: 6, dashFree: 12, dashKi: 12, orbitRate: 4.5, wall: 4.5, skim: 5, skimAlt: 1, settle: 8, repeatWin: 180,
-  aimRate: 2, latch: 45, seek: 30, layReach: 3 };
+  latch: 45, seek: 30, layReach: 3 };
+// The press's bands and the brawl, from data/director/interrupts.json (bands, brawl) and data/combat/templates.json (the
+// striking distance, contact.offset 58 u), with 1 bh = 75 u. "In reach" is the close band.
+var BD = { close: 3, mid: 12.5, engage: 2.5, rush: 4000 / 75 / 60, lungeMin: 3, lungeMax: 20, farMin: 6, farMax: 90, pressWind: 6 };
+var BR = { closeMaxBh: 0.6, strike: 58 / 75, leash: 2.4, give: 5 / 60, pull: 0.5 / 60, breakBh: 4.5, idle: 60, closePerBh: 2, closeMax: 4, contact: 2, blowT: 12, reach: 0.6, crossT: 16, nudge: 0.4 };
+var SPARK = { core: '#ffffff', main: '#f4efe3', edge: '#8a857a' };
 var N = { boltGap: 6, beamLv: [30, 54, 84], beamLen: [20, 36, 54], pulseAdd: 4, lobT: 36 };
 
 function hash(n) { n = (n ^ 61) ^ (n >>> 16); n = (n + (n << 3)) | 0; n ^= n >>> 4; n = Math.imul(n, 0x27d4eb2d); n ^= n >>> 15; return (n >>> 0) / 4294967296; }
@@ -49,7 +54,7 @@ function spr(R, shp, l, wd, lc) { R.poly(shp(l + 3.5, wd + 3.5), KEY); R.poly(sh
 
 // ---- the recognizer: one quantised sample a tick, the family locked at the first deflection ----
 function mkReader() { return { on: false, lastRest: -99, crossT: -99, isFlick: false, flickDone: true, peak: null, holdN: 0, d4: null, fam: null, famOut: false,
-  trace: [], log: [], pat: { sum: 0, prevA: null, start: -99, restN: 99, axisSign: 0, strokes: 0, strokeMax: 0, said: {}, flicks: [] } }; }
+  trace: [], log: [], pat: { open: false, sum: 0, prevA: null, start: -99, restN: 0, axisSign: 0, axisV: null, strokes: 0, sec: -1, secT: 0, turn0: -1, turn1: -1, said: {}, flicks: [] } }; }
 function quant(x, y) {
   var m = Math.sqrt(x * x + y * y); if (m < RS.deadZone) return { x: 0, y: 0, m: 0 };
   var r = Math.round(Math.min(1, (m - RS.deadZone) / (1 - RS.deadZone)) * 16) / 16; return { x: x / m * r, y: y / m * r, m: r };
@@ -63,20 +68,20 @@ function famOf(mask) { return mask === 0 ? 'flight' : mask === 2 ? 'aim' : mask 
 function readStick(rd, t, x, y, mask) {
   var q = quant(x, y), out = { flick: null, hold: null, release: false, fam: null, q: q };
   rd.trace.push([x, y]); if (rd.trace.length > 44) rd.trace.shift();
-  if (q.m === 0) { if (!rd.on) rd.fam = null; }
+  if (q.m <= RS.rest) { if (!rd.on) rd.fam = null; }     // the stick rests: the next gesture reads the new family (R23)
   else if (rd.fam == null) { rd.fam = famOf(mask); }
   out.fam = rd.fam;
   if (q.m <= RS.rest) rd.lastRest = t;
-  if (!rd.on && q.m >= RS.on) { rd.on = true; rd.crossT = t; rd.isFlick = t - rd.lastRest <= RS.flickRise + 1; rd.flickDone = !rd.isFlick; rd.holdN = 0; rd.d4 = null; rd.peak = q; }
+  if (!rd.on && q.m >= RS.on) { rd.on = true; rd.crossT = t; rd.isFlick = t - rd.lastRest <= RS.flickRise; rd.flickDone = !rd.isFlick; rd.holdN = 0; rd.held = false; rd.d4 = null; rd.peak = q; }
   else if (rd.on && q.m < RS.off) {
     if (!rd.flickDone) { out.flick = dir4(rd.peak.x, rd.peak.y); rd.flickDone = true; }     // a flick quicker than the settle still fires
-    rd.on = false; if (rd.holdN >= RS.holdTicks) out.release = true; rd.holdN = 0;
+    rd.on = false; if (rd.held) out.release = true; rd.holdN = 0; rd.held = false;
   }
   if (rd.on) {
     rd.holdN++; if (q.m >= rd.peak.m) rd.peak = q;
     if (!rd.flickDone && t - rd.crossT >= RS.flickSettle) { out.flick = dir4(q.x, q.y); rd.flickDone = true; }
-    if (rd.holdN >= RS.holdTicks) {
-      var a = Math.atan2(-q.y, q.x) * 180 / Math.PI; if (a < 0) a += 360;
+    if (t - rd.crossT >= RS.holdTicks) {
+      rd.held = true; var a = Math.atan2(-q.y, q.x) * 180 / Math.PI; if (a < 0) a += 360;
       var step = 360 / RS.holdDirs, a32 = Math.round(a / step) % RS.holdDirs * step;
       // Flight reads a hold four ways, with 8 degrees of hysteresis at the diagonals
       var nd = dir4(q.x, q.y);
@@ -89,16 +94,29 @@ function readStick(rd, t, x, y, mask) {
   return out;
 }
 // Patterns are step 2's. Here they only name themselves in the panel (R20): the flicks and holds inside them still act.
+// They are off wherever the stick aims, under RB and the lay (R15). The collector opens at the first sample past rest and
+// closes after 5 ticks at rest or 12 with no new sector (Controls section 3); R22's windows: a zig-zag's two reversals on
+// one line inside 48 ticks, a half-circle of 140 to 250 degrees inside 36, a circle of 300 or more inside 48; a pump is two
+// flicks the same way in a row within 18 ticks (R27).
+function resetPat(P2) { P2.open = false; P2.sum = 0; P2.prevA = null; P2.strokes = 0; P2.axisSign = 0; P2.axisV = null; P2.sec = -1; P2.secT = 0; P2.restN = 0; P2.turn0 = -1; P2.turn1 = -1; P2.said = {}; }
+function closePat(rd, t) { var P2 = rd.pat; if (Math.abs(P2.sum) >= 140 && Math.abs(P2.sum) <= 250 && P2.turn1 - P2.turn0 <= 36) say(rd, t, 'half-circle'); resetPat(P2); }
 function patterns(rd, t, q, out) {
   var P2 = rd.pat;
-  if (q.m === 0) { P2.restN++; if (P2.restN === 5) { if (Math.abs(P2.sum) >= 140 && Math.abs(P2.sum) <= 250) say(rd, t, 'half-circle'); P2.sum = 0; P2.prevA = null; P2.strokes = 0; P2.axisSign = 0; P2.said = {}; } }
-  else { if (P2.restN >= 5) P2.start = t; P2.restN = 0; }
-  if (t - P2.start > 48) { P2.start = t; P2.sum = 0; P2.strokes = 0; P2.said = {}; }
-  if (q.m > RS.off) { var a = Math.atan2(-q.y, q.x) * 180 / Math.PI; if (P2.prevA != null) P2.sum += ((a - P2.prevA) % 360 + 540) % 360 - 180; P2.prevA = a; } else P2.prevA = null;     // through the middle is a stroke, not a turn
-  if (Math.abs(P2.sum) >= 300) say(rd, t, 'circle');
-  var vert = Math.abs(q.y) >= Math.abs(q.x), ax = vert ? q.y : q.x;     // a stroke reverses along one line; a turn onto the other axis is not a reversal
-  if (Math.abs(ax) >= 0.6) { var sg = ax > 0 ? 1 : -1; if (P2.axisV !== vert) { P2.axisV = vert; P2.axisSign = 0; } if (P2.axisSign && sg !== P2.axisSign) { P2.strokes++; if (P2.strokes >= 2) say(rd, t, 'zig-zag'); } P2.axisSign = sg; }
-  if (out.flick) { P2.flicks = P2.flicks.filter(function (f) { return t - f.t <= 18; }); if (P2.flicks.some(function (f) { return f.d === out.flick; })) say(rd, t, 'pump'); P2.flicks.push({ t: t, d: out.flick }); }
+  if (rd.fam === 'aim' || rd.fam === 'lay') { if (P2.open) resetPat(P2); P2.flicks = []; return; }
+  if (q.m <= RS.rest) { if (P2.open && ++P2.restN >= 5) closePat(rd, t); }
+  else {
+    if (!P2.open) { resetPat(P2); P2.open = true; P2.start = t; P2.secT = t; }
+    P2.restN = 0;
+    var sec = Math.round(((Math.atan2(-q.y, q.x) * 180 / Math.PI) + 360) / 45) % 8;
+    if (sec !== P2.sec) { P2.sec = sec; P2.secT = t; } else if (t - P2.secT > 12) closePat(rd, t);
+  }
+  if (P2.open) {
+    if (q.m > RS.off) { var a = Math.atan2(-q.y, q.x) * 180 / Math.PI; if (P2.prevA != null) { var dA = ((a - P2.prevA) % 360 + 540) % 360 - 180; if (Math.abs(dA) < 90 && dA) { P2.sum += dA; if (P2.turn0 < 0) P2.turn0 = t; P2.turn1 = t; } } P2.prevA = a; } else P2.prevA = null;     // through the middle is a stroke, not a turn
+    if (Math.abs(P2.sum) >= 300 && t - P2.start <= 48) say(rd, t, 'circle');
+    var vert = Math.abs(q.y) >= Math.abs(q.x), ax = vert ? q.y : q.x;     // a stroke reverses along one line; a turn onto the other axis starts over
+    if (Math.abs(ax) >= 0.6) { var sg = ax > 0 ? 1 : -1; if (P2.axisV !== vert) { P2.axisV = vert; P2.axisSign = 0; P2.strokes = 0; } if (P2.axisSign && sg !== P2.axisSign) { P2.strokes++; if (P2.strokes >= 2 && t - P2.start <= 48) say(rd, t, 'zig-zag'); } P2.axisSign = sg; }
+  }
+  if (out.flick) { var lf = P2.flicks[P2.flicks.length - 1]; if (lf && lf.d === out.flick && t - lf.t <= 18) say(rd, t, 'pump'); P2.flicks = [{ t: t, d: out.flick }]; }
 }
 function say(rd, t, k) { if (rd.pat.said[k]) return; rd.pat.said[k] = 1; note(rd, t, k.toUpperCase() + ': STEP 2', true); }
 function note(rd, t, text, dim) { rd.log.unshift({ t: t, text: text, dim: !!dim }); if (rd.log.length > 6) rd.log.pop(); }
@@ -106,10 +124,10 @@ function note(rd, t, text, dim) { rd.log.unshift({ t: t, text: text, dim: !!dim 
 // ---- the world: the Protagonist (you), the Rival (a stand-in), a cliff to run up and a lake to skim ----
 var CLIFF = { x: 660, top: 200 }, LAKE = { x0: 250, x1: 470 };
 function mkF(def, x, alt) { return { def: def, x: x, y: alt, dir: 1, ki: 100, vx: 0, vy: 0, mv: null, cmd: null, slip: 0, settle: 0, aimOff: 0, latched: false,
-  bchg: null, beam: null, lastBolt: -99, reps: { step: [], hop: [] }, reel: 0, orbit: null, tilt: 0, layOff: null, prev: {}, lean: 0, dashT: 0, skimDir: 0, home: [x, alt] }; }
+  bchg: null, beam: null, lastBolt: -99, seq: null, wait: 0, blow: null, cross: null, giving: false, reps: { step: [], hop: [] }, reel: 0, orbit: null, tilt: 0, layOff: null, prev: {}, lean: 0, dashT: 0, skimDir: 0, home: [x, alt] }; }
 function newWorld(clip, take, mode) {
   var T = clip ? clip.takes[take] : null;
-  var w = { t: 0, mode: mode, clip: clip, P: mkF(FIGHTERS[0], 160, 60), V: mkF(FIGHTERS[1], 540, 80), shots: [], fx: [], marks: [], mines: [], rd: mkReader(), seq: 0, sound: [], inp: {} };
+  var w = { t: 0, mode: mode, clip: clip, brawl: null, P: mkF(FIGHTERS[0], 160, 60), V: mkF(FIGHTERS[1], 540, 80), shots: [], fx: [], marks: [], mines: [], rd: mkReader(), seq: 0, sound: [], inp: {} };
   w.P.foe = w.V; w.V.foe = w.P;
   if (T && T.setup) T.setup(w);
   w.V.home = [w.V.x, w.V.y];
@@ -125,6 +143,72 @@ function floor(x) { return x > CLIFF.x ? CLIFF.top : 0; }
 // keep him out of the cliff: below its top he stays left of the face
 function bound(f) { f.y = clamp(f.y, 0, 270); if (f.y < CLIFF.top && f.x > CLIFF.x - 14) f.x = CLIFF.x - 14; f.x = clamp(f.x, 18, AW - 18); if (f.x > CLIFF.x) f.y = Math.max(f.y, CLIFF.top); }
 
+// ---- the brawl (a stand-in for sim/director/brawl.gd): blows at striking distance, the pull, the leash, the break ----
+function bhOf(f) { return dist(f, f.foe) / BH; }
+function rushTicks(d) { return clamp(Math.ceil(d / BD.rush), d > BD.mid ? BD.farMin : BD.lungeMin, d > BD.mid ? BD.farMax : BD.lungeMax); }
+function closeTicks(gap) { return Math.max(clamp(Math.ceil(gap * BR.closePerBh), 1, BR.closeMax), Math.ceil(gap / BR.closeMaxBh)); }     // and no more than closeMaxBh a tick
+// where he stands g bh from the rival, on his own side and at the rival's height
+function spotAt(f, g) { var s2 = f.x <= f.foe.x ? -1 : 1; return [f.foe.x + s2 * g * BH, f.foe.y]; }
+function plan(f, steps) { f.seq = steps; f.cmd = null; f.orbit = null; nextStep(f); }
+function nextStep(f) {
+  var st = f.seq && f.seq.shift(); if (!st) { f.seq = null; return; }
+  if (st.k === 'move') { var to = st.to(); tween(f, st.kind, to[0], to[1], st.dur); f.mv.seq = true; }
+  else if (st.k === 'wait') f.wait = st.n;
+  else if (st.k === 'blow') f.blow = { t: 0 };
+}
+function startBrawl(w) { if (w.brawl) return; w.brawl = { t: 0, idle: 0 }; note(w.rd, w.t, 'BRAWL ON'); }
+function endBrawl(w, why) { w.brawl = null; w.P.giving = false; note(w.rd, w.t, 'BRAWL ENDS: ' + why); }
+// X with no shoulder: a press. From the mid or far band it lunges in with its blow; in the close band or a brawl it closes
+// to striking distance and strikes. A press under way takes no stick command (the press wins, section 12 row 1).
+function press(w, f) {
+  if (f.seq || f.blow || f.cross) return false;
+  var d = bhOf(f), gap = d - BR.strike, steps = [];
+  if (w.brawl || d <= BD.close) {
+    if (gap > 0.05) steps.push({ k: 'move', kind: 'close', to: function () { return spotAt(f, BR.strike); }, dur: closeTicks(gap) });
+    steps.push({ k: 'blow' }); note(w.rd, w.t, 'X: BLOW');
+  } else {
+    steps.push({ k: 'move', kind: 'lunge', to: function () { return spotAt(f, BD.engage); }, dur: rushTicks(d - BD.engage) }, { k: 'wait', n: BD.pressWind },
+      { k: 'move', kind: 'close', to: function () { return spotAt(f, BR.strike); }, dur: closeTicks(BD.engage - BR.strike) }, { k: 'blow' });
+    note(w.rd, w.t, 'X: PRESS LUNGE, BLOW');
+  }
+  plan(f, steps); return true;
+}
+function blowStep(w, f) {
+  var b = f.blow; if (!b) return; b.t++;
+  if (b.t === 1 && w.brawl) w.brawl.idle = 0;
+  if (b.t === BR.contact) {
+    var foe = f.foe;
+    if (bhOf(f) <= BR.strike + BR.reach) {
+      foe.reel = 10; var c0 = chest(f), c1 = chest(foe), cl = dist({ x: c0[0], y: c0[1] }, { x: c1[0], y: c1[1] }) || 1; burst(w, c1[0] - (c1[0] - c0[0]) / cl * 12, c1[1] - (c1[1] - c0[1]) / cl * 12, 10, 7, SPARK, 5); sound(w, 'blow');
+      // the cross-up has no slip and no strike: a blow in the arc lands clean and leaves him where he was hit (row 5)
+      if (foe.cross) { foe.cross = null; foe.mv = null; foe.seq = null; foe.vx = foe.vy = 0; note(w.rd, w.t, 'HIT IN THE ARC: CLEAN'); }
+      startBrawl(w);
+    }
+  }
+  if (b.t >= BR.blowT) { f.blow = null; if (f.seq) nextStep(f); }
+}
+// the cross-up: a 16-tick rush in an arc over or under him, onto his other side at striking distance (row 5)
+function startCross(w, f, up) {
+  var foe = f.foe, a0 = Math.atan2(f.y - foe.y, f.x - foe.x), left = f.x < foe.x, a1 = left ? 0 : Math.PI;
+  if (up) { if (left && a0 < 0) a0 += 2 * Math.PI; if (!left && a0 < -Math.PI / 2) a0 += 2 * Math.PI; }
+  else { if (left && a0 > 0) a0 -= 2 * Math.PI; if (!left && a0 > Math.PI / 2) a0 -= 2 * Math.PI; a1 = left ? 0 : -Math.PI; }
+  f.cross = { t: 0, a0: a0, a1: a1, r0: dist(f, foe), r1: BR.strike * BH }; f.mv = null; f.seq = null; f.giving = false;
+  note(w.rd, w.t, up ? 'HOLD UP: CROSS-UP' : 'HOLD DOWN: CROSS-UNDER');
+}
+function crossStep(w, f) {
+  var c = f.cross, foe = f.foe; c.t++; var k = easeIO(c.t / BR.crossT), a = lerp(c.a0, c.a1, k), r = lerp(c.r0, c.r1, k), ox = f.x, oy = f.y;
+  f.x = foe.x + Math.cos(a) * r; f.y = Math.max(2, foe.y + Math.sin(a) * r); f.vx = f.x - ox; f.vy = f.y - oy;
+  if (c.t >= BR.crossT) { f.cross = null; f.vx = f.vy = 0; note(w.rd, w.t, 'SIDES SWAPPED'); }
+}
+function brawlStep(w) {
+  var B = w.brawl, P = w.P, V = w.V; if (!B) return;
+  B.t++; B.idle++;
+  if (B.idle > BR.idle) { endBrawl(w, 'IDLE'); return; }
+  if (bhOf(P) > BR.breakBh) { endBrawl(w, 'APART'); return; }
+  // the pull: back to striking distance and one height, resting while he gives ground or a rush runs
+  if (!P.mv && !P.cross && !P.giving && !P.seq && !P.wait) { var g = spotAt(P, BR.strike), px = BR.pull * BH; P.x += clamp(g[0] - P.x, -px, px); P.y += clamp(g[1] - P.y, -px, px); }
+}
+
 // ---- moves: tweens the director runs, then the hold's sustained commands ----
 function tween(f, k, x1, y1, dur) { f.mv = { k: k, x0: f.x, y0: f.y, x1: x1, y1: y1, t: 0, dur: dur }; f.cmd = null; f.orbit = null; }
 function slipFor(w, f, kind) {    // R8: the third step or hop inside 3 s keeps its movement and loses its slip frames
@@ -135,33 +219,54 @@ function rel(f, d4) { if (d4 === 'up' || d4 === 'down') return d4; return (d4 ==
 var WORD = { toward: 'TOWARD', away: 'AWAY', up: 'UP', down: 'DOWN' };
 function flightFlick(w, f, d4) {
   f.flickAlt = f.y - floor(f.x);     // the skim reads where he was when the gesture began, not where the drop took him
-  var r = rel(f, d4), foe = f.foe, d = dist(f, foe), sx = foe.x >= f.x ? 1 : -1;
+  f.flickDist = dist(f, f.foe);       // and the orbit his distance then: "at the same distance"
+  var r = rel(f, d4), foe = f.foe, d = dist(f, foe), sx = foe.x >= f.x ? 1 : -1, bh = d / BH;
+  if (w.brawl && (r === 'toward' || r === 'away')) {
+    // inside a brawl a step is a director rush: away gives ground up to the leash in one rush, toward takes it back
+    if (r === 'away') { var to = spotAt(f, Math.max(bh, BR.strike + BR.leash)); tween(f, 'give', to[0], to[1], MV.stepT); slipFor(w, f, 'step'); note(w.rd, w.t, 'FLICK AWAY: GIVE GROUND'); }
+    else if (bh - BR.strike > 0.05) { var bk = spotAt(f, BR.strike); tween(f, 'close', bk[0], bk[1], closeTicks(bh - BR.strike)); note(w.rd, w.t, 'FLICK TOWARD: TAKE BACK'); }
+    else note(w.rd, w.t, 'FLICK TOWARD: NONE GIVEN');
+    return;
+  }
   if (r === 'toward') {
-    if (d > MV.reach * BH) {
+    if (bh > BD.close) {
+      // the stick's lunge is the press's rush with no blow at its end: he arrives in reach free and even (row 1)
       if (f.ki < MV.lungeKi) { note(w.rd, w.t, 'FLICK TOWARD: NO KI'); return; }
-      f.ki -= MV.lungeKi; var k = (MV.reach * 0.85 * BH) / d; tween(f, 'lunge', foe.x - (foe.x - f.x) * k, foe.y - (foe.y - f.y) * k, d > MV.mid * BH ? 22 : 14);
+      f.ki -= MV.lungeKi; var at = spotAt(f, BD.engage); tween(f, 'lunge', at[0], at[1], rushTicks(bh - BD.engage));
       note(w.rd, w.t, 'FLICK TOWARD: LUNGE'); return;
     }
-    var nx = f.x + sx * MV.stepIn * BH; if (Math.abs(foe.x - nx) < 0.8 * BH) nx = foe.x - sx * 0.8 * BH;
+    var nx = f.x + sx * clamp(Math.abs(foe.x - f.x) - BR.strike * BH, 0, MV.stepIn * BH);     // never past him, never back
     tween(f, 'step', nx, f.y, 6); note(w.rd, w.t, 'FLICK TOWARD: STEP IN'); return;
   }
   if (r === 'away') { tween(f, 'step', f.x - sx * MV.stepBack * BH, f.y, MV.stepT); slipFor(w, f, 'step'); note(w.rd, w.t, 'FLICK AWAY: STEP BACK'); return; }
   var up = r === 'up'; tween(f, up ? 'hop' : 'drop', f.x, clamp(f.y + (up ? 1 : -1) * MV.hop * BH, overLake(f.x) ? 6 : 0, 250), MV.hopT); slipFor(w, f, 'hop');
   note(w.rd, w.t, up ? 'FLICK UP: HOP' : 'FLICK DOWN: DROP');
 }
+// holds inside a brawl: away gives ground to the leash and holds it (movement only, never the escape, never parting it);
+// toward takes it back; up or down is the cross-up (section 12 rows 4 and 5)
+function brawlHold(w, f, r) {
+  var key = 'brawl' + r, first = f.cmd !== key && f.cmd !== 'crossed' + r;
+  if (r === 'away') {
+    if (first) { f.cmd = key; note(w.rd, w.t, 'HOLD AWAY: TO THE LEASH'); }
+    f.giving = true; var to = spotAt(f, Math.max(bhOf(f), BR.strike + BR.leash)), px = BR.give * BH; f.x += clamp(to[0] - f.x, -px, px); f.y += clamp(to[1] - f.y, -px, px);
+  } else if (r === 'toward') {
+    if (first) { f.cmd = key; f.giving = false; var bh = bhOf(f); if (bh - BR.strike > 0.05) { var bk = spotAt(f, BR.strike); tween(f, 'close', bk[0], bk[1], closeTicks(bh - BR.strike)); f.cmd = key; note(w.rd, w.t, 'HOLD TOWARD: TAKE BACK'); } }
+  } else if (first && !f.cross) { startCross(w, f, r === 'up'); f.cmd = 'crossed' + r; }
+}
 function atWall(f, d4) { return d4 === 'right' && f.x >= CLIFF.x - 30 && f.y < CLIFF.top; }
 function flightHold(w, f, h) {
   var r = rel(f, h.d4), foe = f.foe, d = dist(f, foe), k;
+  if (w.brawl) { brawlHold(w, f, r); return; }
   if (atWall(f, h.d4)) k = 'wall';
   else if (f.orbit && !f.orbit.done && f.cmd === 'orbit' + r) k = 'orbit';      // an orbit under way keeps going until it crosses or he lets go
   else if (r === 'down' && (f.flickAlt != null ? f.flickAlt : f.y) < MV.skimAlt * BH + 4) k = 'skim';
   else if (r === 'toward' || r === 'away') k = 'dash';
-  else if (d <= MV.mid * BH) k = 'orbit';
+  else if (d <= BD.mid * BH) k = 'orbit';
   else k = 'climb';
   if (f.cmd !== k + r) {
     if (k === 'orbit' && f.cmd === 'crossed' + r) return;     // held through: the cross-up is done until he lets go
     f.cmd = k + r; f.dashT = 0;
-    if (k === 'orbit') { var a0 = Math.atan2(f.y - foe.y, f.x - foe.x); f.orbit = { a: a0, a0: a0, r: Math.max(0.9 * BH, d), dirn: (r === 'up' ? 1 : -1) * (f.x < foe.x ? -1 : 1), done: false }; }
+    if (k === 'orbit') { var a0 = Math.atan2(f.y - foe.y, f.x - foe.x), r1 = Math.max(0.9 * BH, Math.min(f.flickDist || d, r === 'down' ? foe.y - floor(foe.x) - 6 : 1e9)); f.orbit = { a: a0, a0: a0, r0: d, r1: r1, dirn: (r === 'up' ? 1 : -1) * (f.x < foe.x ? -1 : 1), done: false }; }
     if (k === 'skim') f.skimDir = f.vx ? (f.vx > 0 ? 1 : -1) : (foe.x >= f.x ? 1 : -1);
     note(w.rd, w.t, k === 'wall' ? 'HOLD INTO WALL: RUN' : k === 'skim' ? 'HOLD DOWN: SKIM' : k === 'dash' ? 'HOLD ' + WORD[r] + ': DASH' : k === 'orbit' ? 'HOLD ' + WORD[r] + ': ORBIT' : 'HOLD ' + WORD[r] + ': FLY');
   }
@@ -174,17 +279,18 @@ function flightHold(w, f, h) {
   } else if (k === 'climb') { f.vy = (r === 'up' ? 1 : -1) * 4; f.y += f.vy; f.vx = 0; }
   else if (k === 'orbit') {
     var o = f.orbit; if (o.done) return;
-    o.a += o.dirn * deg(MV.orbitRate); var sw = Math.abs(angN(o.a - o.a0));
-    var nx = foe.x + Math.cos(o.a) * o.r, ny = foe.y + Math.sin(o.a) * o.r;
+    o.a += o.dirn * deg(MV.orbitRate); var sw = Math.abs(angN(o.a - o.a0)), orr = lerp(o.r0, o.r1, Math.min(1, sw / deg(60)));
+    var nx = foe.x + Math.cos(o.a) * orr, ny = foe.y + Math.sin(o.a) * orr;
     f.vx = nx - f.x; f.vy = ny - f.y; f.x = nx; f.y = Math.max(f.y < 2 ? 0 : 2, ny);
-    if ((Math.cos(o.a) * Math.cos(o.a0) < 0 && Math.abs(Math.sin(o.a)) < 0.08) || sw > deg(200)) { o.done = true; f.cmd = 'crossed' + r; note(w.rd, w.t, 'CROSS-UP: OTHER SIDE'); }
-  } else if (k === 'wall') { f.x = CLIFF.x - 14; f.vy = MV.wall; f.y = Math.min(CLIFF.top - 2, f.y + MV.wall); f.vx = 0; f.tilt = f.dir * Math.PI / 2; if (w.t % 3 === 0) chips(w, CLIFF.x - 2, f.y + 4, 1, C.cliffDark, 1.5); }
+    if ((Math.cos(o.a) * Math.cos(o.a0) < 0 && Math.abs(Math.sin(o.a)) < 0.08) || sw > deg(200)) { o.done = true; f.cmd = 'crossed' + r; f.vx = f.vy = 0; note(w.rd, w.t, r === 'up' ? 'CROSS-UP: OTHER SIDE' : 'CROSS-UNDER: OTHER SIDE'); }
+  } else if (k === 'wall') { f.x = CLIFF.x - 14; f.vy = MV.wall; f.y = Math.min(CLIFF.top - 2, f.y + MV.wall); f.vx = 0; f.tilt = Math.PI / 2; if (w.t % 3 === 0) chips(w, CLIFF.x - 2, f.y + 4, 1, C.cliffDark, 1.5); }
   else if (k === 'skim') {
     f.y = Math.max(overLake(f.x) ? 5 : 4, f.y - 3); f.vx = (w.inp.lx ? (w.inp.lx > 0 ? 1 : -1) : f.skimDir) * MV.skim; f.vy = 0; f.x += f.vx; f.lean = 16;
     if (w.t % 2 === 0) chips(w, f.x - f.vx * 2, 2, 2, overLake(f.x) ? C.lakeLite : C.dirt, 2.5, true);
   }
 }
 // RB: the aim line, an angle off the line to him; it latches, and a toward flick (or letting go of RB) clears it
+function muzzle(f, a) { return [f.x + (Math.cos(a) >= 0 ? 1 : -1) * 22, f.y + 40]; }
 function aimAbs(f) { var h = hand(f), c = chest(f.foe); return Math.atan2(c[1] - h[1], c[0] - h[0]) + f.aimOff; }
 function aimFlick(w, f, d4) {
   var r = rel(f, d4), s = f.foe.x >= f.x ? 1 : -1;
@@ -195,15 +301,15 @@ function aimFlick(w, f, d4) {
 function aimHold(w, f, h) {
   var want = deg(h.ang);
   if (f.beam && !f.beam.end) { var b = f.beam; b.a += clamp(angN(want - b.a), -deg(f.def.sweep / 60), deg(f.def.sweep / 60)); if (f.cmd !== 'sweepB') { f.cmd = 'sweepB'; note(w.rd, w.t, 'HOLD: SWEEP THE BEAM'); } return; }
-  var cur = aimAbs(f), nxt = cur + clamp(angN(want - cur), -deg(MV.aimRate), deg(MV.aimRate));
-  f.aimOff = angN(nxt - (cur - f.aimOff)); f.latched = Math.abs(f.aimOff) > 0.02;
+  // R26: under a hold the line points where the stick points (32 ways, no turning rate); a beam turns at its fighter's rate
+  f.aimOff = angN(want - (aimAbs(f) - f.aimOff)); f.latched = Math.abs(f.aimOff) > 0.02;
   if (f.cmd !== 'sweepL') { f.cmd = 'sweepL'; note(w.rd, w.t, 'HOLD: SWEEP THE LINE'); }
 }
-function layFlick(w, f, d4) { var v = { right: [1, 0], left: [-1, 0], up: [0, 1], down: [0, -1] }[d4]; f.layOff = [v[0] * MV.layReach * BH * 0.6, v[1] * MV.layReach * BH * 0.6]; note(w.rd, w.t, 'LAY 3 BH ' + WORD[rel(f, d4)]); }
+function layFlick(w, f, d4) { var v = { right: [1, 0], left: [-1, 0], up: [0, 1], down: [0, -1] }[d4]; f.layOff = [v[0] * MV.layReach * BH, v[1] * MV.layReach * BH]; note(w.rd, w.t, 'LAY 3 BH ' + WORD[rel(f, d4)]); }
 
 // ---- shots ----
 function fire(w, f, k) {
-  var h = hand(f), a = aimAbs(f), seek = Math.abs(f.aimOff) <= deg(MV.seek) ? 0.1 : 0, L = f.def.L;
+  var a = aimAbs(f), h = muzzle(f, a), seek = Math.abs(f.aimOff) <= deg(MV.seek) ? 0.1 : 0, L = f.def.L;
   if (k === 'bolt') { w.shots.push({ k: 'bolt', o: f, x: h[0], y: h[1], vx: Math.cos(a) * 11, vy: Math.sin(a) * 11, sp: 11, seek: seek, t: 0, s: 6 }); note(w.rd, w.t, 'X: BOLT ALONG IT'); }
   else if (k === 'heavy') { w.shots.push({ k: 'heavy', o: f, x: h[0], y: h[1], vx: Math.cos(a) * 9, vy: Math.sin(a) * 9, sp: 9, seek: seek * 0.8, t: 0, s: 14 }); note(w.rd, w.t, 'B: BLAST ALONG IT'); }
   else if (k === 'lob') {
@@ -221,7 +327,7 @@ function shotsStep(w) {
     s.x += s.vx; s.y += s.vy; if (s.g) s.vy -= s.g;
     var L = s.o.def.L;
     if (!s.slipped && inBody(foe, s.x, s.y, s.k === 'heavy' ? 8 : 2)) {
-      if (foe.slip > 0 && s.k === 'bolt') { s.slipped = true; note(w.rd, w.t, 'SLIPPED A SHOT', true); }      // the step's slip frames: the shot goes by him
+      if (foe.slip > 0) { s.slipped = true; note(w.rd, w.t, 'SLIPPED A SHOT', true); }      // the step's slip frames: the shot goes by him
       else { burst(w, s.x, s.y, s.k === 'heavy' ? 30 : 11, s.k === 'heavy' ? 14 : 7, s.k === 'bolt' ? L.bolt : L.lob, 6); foe.reel = s.k === 'bolt' ? 6 : 14; if (s.k !== 'bolt') { foe.vx = (s.vx > 0 ? 1 : -1) * 4; foe.settle = MV.settle; } w.shots.splice(i, 1); continue; }
     }
     var fl = floor(s.x);
@@ -236,7 +342,7 @@ function beamStep(w, f, inp, held) {
   if (b.end) { b.end++; if (b.end > 9) f.beam = null; return; }
   b.t++;
   // the left stick sweeps it whenever the right is not holding (the right wins if both are out)
-  if (!held && inp.ly) { b.a += clamp(-inp.ly, -1, 1) * deg(f.def.sweep / 60); if (f.cmd !== 'sweepLeft') { f.cmd = 'sweepLeft'; note(w.rd, w.t, 'LEFT STICK: SWEEP'); } }
+  if (!held && inp.ly) { b.a += clamp(-inp.ly, -1, 1) * (Math.cos(b.a) < 0 ? -1 : 1) * deg(f.def.sweep / 60); if (f.cmd !== 'sweepLeft') { f.cmd = 'sweepLeft'; note(w.rd, w.t, 'LEFT STICK: SWEEP'); } }
   for (var k = b.pulses.length - 1; k >= 0; k--) { b.pulses[k] += 18; if (b.pulses[k] > b.len) b.pulses.splice(k, 1); }
   var h = hand(f), dx = Math.cos(b.a), dy = Math.sin(b.a), foe = f.foe, reach = 900;
   var fx = foe.x - h[0], fy = foe.y + 30 - h[1], along = fx * dx + fy * dy, off = Math.abs(fx * dy - fy * dx), half = (12 + 6 * b.lv) * f.def.bw / 2;
@@ -259,25 +365,28 @@ function fighterStep(w, f, inp, ev) {
   if (f.orbit) f.dir = f.foe.x >= f.x ? 1 : -1;
   f.tilt = 0;
   var rb = !!inp.RB, lb = !!inp.LB;
-  if (p.RB && !rb && f.latched) { f.aimOff = 0; f.latched = false; note(w.rd, w.t, 'RB LET GO: CLEARED'); }   // R16
+  var pressed = !rb && !lb && pr('X') && press(w, f);
   // the right stick's events, in the family locked at the first deflection
   if (ev) {
     var fam = ev.fam;
-    if (ev.flick) { if (fam === 'flight' && !f.beam) flightFlick(w, f, ev.flick); else if (fam === 'aim' && !(f.beam && !f.beam.end)) aimFlick(w, f, ev.flick); else if (fam === 'lay') layFlick(w, f, ev.flick); else if (fam === 'none') note(w.rd, w.t, 'NOTHING IN STEP 1'); }
-    if (ev.hold) { if (fam === 'flight' && !f.mv && !f.beam) flightHold(w, f, ev.hold); else if (fam === 'aim') aimHold(w, f, ev.hold); }
-    if (ev.release) { if (fam === 'flight' && f.cmd) { note(w.rd, w.t, 'RELEASE: SETTLE'); f.settle = MV.settle; } else if (fam === 'aim' && f.cmd === 'sweepL') note(w.rd, w.t, f.latched ? 'RELEASE: LATCHED' : 'RELEASE: CLEAR'); else if (f.cmd === 'sweepB') note(w.rd, w.t, 'RELEASE: BEAM STAYS'); f.cmd = null; f.orbit = null; }
-    if (!ev.hold && f.cmd && f.cmd !== 'sweepLeft' && !ev.release) { f.cmd = null; f.orbit = null; }
+    if (ev.flick) { if (fam === 'flight' && pressed && rel(f, ev.flick) === 'toward') note(w.rd, w.t, 'FLICK SPENT IN PRESS'); else if (fam === 'flight' && (f.seq || f.cross)) note(w.rd, w.t, 'PRESS UNDER WAY', true); else if (fam === 'flight' && !f.beam) flightFlick(w, f, ev.flick); else if (fam === 'aim' && rb && !(f.beam && !f.beam.end)) aimFlick(w, f, ev.flick); else if (fam === 'lay') layFlick(w, f, ev.flick); else if (fam === 'none') note(w.rd, w.t, 'NOTHING IN STEP 1'); }
+    if (ev.hold) { if (fam === 'flight' && !f.mv && !f.beam && !f.seq && !f.cross) flightHold(w, f, ev.hold); else if (fam === 'aim' && (rb || (f.beam && !f.beam.end))) aimHold(w, f, ev.hold); }
+    if (ev.release) { f.giving = false; if (fam === 'flight' && f.cmd) { note(w.rd, w.t, 'RELEASE: SETTLE'); f.settle = /^crossed/.test(f.cmd) ? 0 : MV.settle; } else if (fam === 'aim' && f.cmd === 'sweepL') note(w.rd, w.t, f.latched ? 'RELEASE: LATCHED' : 'RELEASE: CLEAR'); else if (f.cmd === 'sweepB') note(w.rd, w.t, 'RELEASE: BEAM STAYS'); f.cmd = null; f.orbit = null; }
+    if (!ev.hold && f.cmd && f.cmd !== 'sweepLeft' && !ev.release) { f.cmd = null; f.orbit = null; f.giving = false; }
   }
+  if (!rb && f.latched) { f.aimOff = 0; f.latched = false; if (p.RB) note(w.rd, w.t, 'RB LET GO: CLEARED'); }   // R16, R23: the line, not the gesture
   // tweens: the lunge, the steps, the hop and the drop
-  if (f.mv) { var m = f.mv; m.t++; var k = easeIO(m.t / m.dur), ox = f.x, oy = f.y; f.x = lerp(m.x0, m.x1, k); f.y = lerp(m.y0, m.y1, k); f.vx = f.x - ox; f.vy = f.y - oy; f.lean = m.k === 'lunge' ? 18 : m.k === 'step' ? (m.x1 - m.x0) * f.dir > 0 ? 10 : -10 : 0; if (m.t >= m.dur) { f.mv = null; f.settle = 5; } }
+  if (f.cross) crossStep(w, f);
+  else if (f.wait > 0) { if (--f.wait === 0) nextStep(f); }
+  else if (f.mv) { var m = f.mv; m.t++; var k = m.k === 'close' ? clamp(m.t / m.dur, 0, 1) : easeIO(m.t / m.dur), ox = f.x, oy = f.y; f.x = lerp(m.x0, m.x1, k); f.y = lerp(m.y0, m.y1, k); f.vx = f.x - ox; f.vy = f.y - oy; f.lean = m.k === 'lunge' || m.k === 'close' ? 18 : m.k === 'step' || m.k === 'give' ? (m.x1 - m.x0) * f.dir > 0 ? 10 : -10 : 0; if (m.t >= m.dur) { f.mv = null; f.vx = f.vy = 0; f.settle = 0; if (m.seq) nextStep(f); } }     // a rush ends where it ends: no drift after it
   else if (!f.cmd || f.cmd === 'sweepL' || f.cmd === 'sweepB' || f.cmd === 'sweepLeft') {
     // free flight on the left stick (rooted while his beam is out), or the settle after a command
-    if (!f.beam && (inp.lx || inp.ly)) { f.vx = (inp.lx || 0) * MV.flight; f.vy = -(inp.ly || 0) * MV.flight; f.x += f.vx; f.y += f.vy; }
+    if (!f.beam && (inp.lx || inp.ly)) { var fs = MV.flight * (w.brawl ? BR.nudge : 1); f.vx = (inp.lx || 0) * fs; f.vy = -(inp.ly || 0) * fs; f.x += f.vx; f.y += f.vy; }
     else if (f.settle > 0) { f.settle--; f.vx *= 0.75; f.vy *= 0.75; f.x += f.vx; f.y += f.vy; }
     else { f.vx = 0; f.vy = 0; }
   }
   // energy on RB: X, Y and B along the aim line; under LB + RB, X lays a spark mine where the flick set it
-  if (rb && lb) { if (pr('X')) { var hh = hand(f), off = f.layOff || [f.dir * 20, 0]; w.mines.push({ o: f, x: hh[0] + off[0], y: Math.max(floor(hh[0] + off[0]), hh[1] + off[1] - 40), t: 0 }); note(w.rd, w.t, 'X: LAY A SPARK MINE'); } }
+  if (rb && lb) { if (pr('X')) { var hh = hand(f), off = f.layOff || [f.dir * 20, 0]; w.mines.push({ o: f, x: clamp(hh[0] + off[0], 20, AW - 20), y: Math.max(floor(hh[0] + off[0]), hh[1] + off[1]), t: 0 }); note(w.rd, w.t, 'X: LAY A SPARK MINE'); } }
   else if (rb) {
     if (pr('X') && w.t - f.lastBolt >= N.boltGap && !f.bchg && !f.beam) { f.lastBolt = w.t; fire(w, f, 'bolt'); }
     if (pr('Y') && !f.bchg && !f.beam) fire(w, f, 'lob');
@@ -287,15 +396,18 @@ function fighterStep(w, f, inp, ev) {
   if (f.bchg) { var c = f.bchg; c.t++; var lv = c.t >= N.beamLv[2] ? 3 : c.t >= N.beamLv[1] ? 2 : c.t >= N.beamLv[0] ? 1 : 0; if (lv !== c.lv) { c.lv = lv; sound(w, 'click'); }
     if (!inp.B || !rb) { if (c.lv === 0) fire(w, f, 'heavy'); else fireBeam(w, f, c.lv); f.bchg = null; } }
   beamStep(w, f, inp, ev && ev.hold && ev.fam === 'aim');
+  blowStep(w, f);
   bound(f);
   f.prev = { RB: inp.RB, LB: inp.LB, X: inp.X, Y: inp.Y, B: inp.B };
 }
 // the Rival stand-in: flies to scripted spots, fires a bolt at you on cue; in Play it drifts and fires now and then
 function rivalStep(w, f, o) {
-  f.dir = f.foe.x >= f.x ? 1 : -1; f.reel = Math.max(0, f.reel - 1); f.slip = 0;
+  f.dir = f.foe.x >= f.x ? 1 : -1;
+  if ((o.blow || (w.mode === 'play' && w.brawl && w.t % 40 === 20)) && !f.blow) f.blow = { t: 0 };
+  blowStep(w, f); f.reel = Math.max(0, f.reel - 1); f.slip = 0;
   if (f.settle > 0) { f.settle--; f.x += f.vx; f.vx *= 0.8; }
   if (o.gx != null || o.gy != null) { var gx = o.gx == null ? f.x : o.gx, gy = o.gy == null ? f.y : o.gy, dx = gx - f.x, dy = gy - f.y, l = Math.sqrt(dx * dx + dy * dy), sp = o.gs || 2.5; if (l > 1) { f.x += dx / l * Math.min(sp, l); f.y += dy / l * Math.min(sp, l); } }
-  else if (w.mode === 'play') { var hx = f.home[0] + Math.sin(w.t * 0.011) * 60 - f.x, hy = f.home[1] + Math.sin(w.t * 0.017) * 40 - f.y; f.x += clamp(hx, -1.2, 1.2); f.y += clamp(hy, -1.2, 1.2); if (w.t % 200 === 120) o.fire = true; }
+  else if (w.mode === 'play' && !w.brawl) { var hx = f.home[0] + Math.sin(w.t * 0.011) * 60 - f.x, hy = f.home[1] + Math.sin(w.t * 0.017) * 40 - f.y; f.x += clamp(hx, -1.2, 1.2); f.y += clamp(hy, -1.2, 1.2); if (w.t % 200 === 120) o.fire = true; }
   if (o.fire) { var h = hand(f), c = chest(f.foe), a = Math.atan2(c[1] - h[1], c[0] - h[0]), sp2 = o.fireSp || 7; w.shots.push({ k: 'bolt', o: f, x: h[0], y: h[1], vx: Math.cos(a) * sp2, vy: Math.sin(a) * sp2, sp: sp2, seek: 0, t: 0, s: 6 }); }
   bound(f);
 }
@@ -322,12 +434,12 @@ function take(len, setup, stick, buttons) { return { len: len, setup: setup, inp
 var CLIPS = [
   { n: 'R1', name: 'The lunge and the steps', takes: [take(300, function (w) { w.P.x = 110; w.P.y = 70; w.V.x = 560; w.V.y = 70; },
       [[20, 24, 0], [84, 88, 0], [126, 130, 180], [190, 194, 90], [236, 240, 270]],
-      cat([['V', 'gx', 96, 116, 620], ['V', 'gs', 96, 116, 3], ['V', 'fire', 125, 126], ['V', 'fireSp', 120, 140, 14], ['V', 'fireSp', 180, 200, 6], ['V', 'fire', 186, 187]]))],
-    steps: [[0, 'Nothing held, so the right stick is Flight. A flick toward the rival from range is the lunge: he closes to reach for 10 ki, free and even, with no blow at the end.', 44],
+      cat([['V', 'gx', 96, 116, 620], ['V', 'gs', 96, 116, 3], ['V', 'fire', 122, 123], ['V', 'fireSp', 120, 140, 14], ['V', 'fireSp', 180, 200, 6], ['V', 'fire', 186, 187]]))],
+    steps: [[0, 'Nothing held, so the right stick is Flight. A flick toward the rival from range is the lunge: the press\'s rush with no blow at its end. He arrives in reach for 10 ki, free and even.', 40],
       [78, 'In reach, a flick toward him is a step in, 1 bh, and free.', 94],
       [120, 'A flick away is a step back, 2 bh in 8 ticks. For its first 4 ticks shots slip past him, and the rival\'s bolt goes by.', 131],
       [184, 'A flick up hops him 2 bh, and a flick down drops him back. Each slips shots for its first 4 ticks.', 206]] },
-  { n: 'R2', name: 'The dash, the orbit and the cross-up', takes: [take(360, function (w) { w.P.x = 330; w.P.y = 100; w.V.x = 470; w.V.y = 100; },
+  { n: 'R2', name: 'The dash, the orbit and the cross-up', takes: [take(360, function (w) { w.P.x = 330; w.P.y = 130; w.V.x = 470; w.V.y = 130; },
       [[20, 56, 180], [86, 112, 0], [150, 210, 90], [262, 330, 270]], [])],
     steps: [[0, 'A hold away is the dash: the step back, continued while he holds. It is free for 12 ticks, then costs ki like the boost.', 46],
       [80, 'A hold toward from range starts as its flick, the lunge, which brings him back to reach.', 104],
@@ -336,7 +448,7 @@ var CLIPS = [
       [256, 'A hold down orbits him under the rival and back.', 300]] },
   { n: 'R3', name: 'The wall run and the skim', takes: [take(300, function (w) { w.P.x = 590; w.P.y = 30; w.V.x = 300; w.V.y = 130; },
       [[20, 78, 0], [168, 250, 270]],
-      [['P', 'lx', 96, 160, -0.6], ['P', 'ly', 96, 160, 1], ['P', 'lx', 168, 250, -1]])],
+      [['P', 'lx', 96, 160, -0.6], ['P', 'ly', 96, 160, 1], ['P', 'lx', 168, 214, -1], ['P', 'lx', 214, 250, 1]])],
     steps: [[0, 'Next to the cliff, a hold into its face is the wall run: he runs up it.', 52],
       [80, 'Let go, and he settles. The left stick flies him as it always does.', 120],
       [162, 'Near the ground or the water, a hold down is the skim: he skims along the surface, and the left stick steers it.', 214]] },
@@ -358,12 +470,20 @@ var CLIPS = [
     steps: [[0, 'RB and B held: a beam. While it is out he is rooted, and holding the right stick sweeps it, at his own rate.', 112],
       [118, 'The rival climbs out of it, and holding the stick up sweeps the beam after him. Let go, and it stays where the stick left it.', 142],
       [210, 'Either stick sweeps a beam. Here the left stick sweeps it down, so the right thumb is free to press B and pulse it.', 320]] },
-  { n: 'R6', name: 'Patterns, coming later', takes: [take(220, function (w) { w.P.x = 220; w.P.y = 80; w.V.x = 520; w.V.y = 100; },
-      [[30, 38, 90], [40, 48, 270], [50, 58, 90], [60, 68, 270], [110, 160, 0, 1, 380]],
-      cat([['P', 'RB', 0, 220]], taps('P', 'X', [76, 172])))],
-    steps: [[0, 'Patterns are off in step 1; the panel only names them. With RB held, a zig-zag is just its flicks, so the line flicks up and down. In step 2 it becomes a fanned scatter.', 66],
-      [100, 'A circle is just a flick and a hold, so the line turns after the stick at its own rate. In step 2 it becomes a ring of bolts.', 150]] }];
+  { n: 'R6', name: 'Patterns, coming later', takes: [take(230, function (w) { w.P.x = 200; w.P.y = 100; w.V.x = 560; w.V.y = 110; },
+      [[30, 38, 90], [40, 48, 270], [50, 58, 90], [120, 128, 90], [130, 138, 270], [140, 148, 90]],
+      cat([['P', 'RB', 100, 200]], taps('P', 'X', [164])))],
+    steps: [[0, 'Patterns come in step 2, so for now the panel only names them. With nothing held, a zig-zag is just its flicks: a hop, a drop and a hop. In step 2 it will be the weave.', 56],
+      [96, 'With RB held the stick aims, and patterns are off wherever it aims: the same zig-zag only latches the line up, down and up again, and X fires along it.', 166]] }];
 
+CLIPS.push({ n: 'R7', name: 'Inside a brawl', takes: [take(440, function (w) { w.P.x = 150; w.P.y = 140; w.V.x = 520; w.V.y = 140; },
+    [[18, 22, 0], [70, 74, 180], [110, 114, 0], [150, 214, 180], [262, 300, 90], [330, 372, 270]],
+    cat(taps('P', 'X', [21, 236]), [50, 90, 130, 170, 210, 250, 296, 348, 386].map(function (t) { return ['V', 'blow', t, t + 1]; })))],
+  steps: [[0, 'A press of X from the mid band lunges in with its blow, and the brawl starts. A stick flick toward in the same tick is spent into the press at no ki: the press wins.', 34],
+    [60, 'Inside a brawl, a flick away gives ground in one rush, up to the leash, and a flick toward takes it back at once. Its slip is for shots only: never a dodge.', 82],
+    [140, 'A hold away gives ground to the leash and holds it there while held. It is movement only, never the escape, and the brawl never parts.', 196],
+    [230, 'A hold up is the cross-up: 16 ticks over him, onto his other side, and the brawl goes on with the sides swapped.', 284],
+    [320, 'He can\'t strike or slip in the arc: a blow that lands on him there lands clean and leaves him where he was hit.', 352]] });
 function clipLen(c) { return c.takes.reduce(function (a, t) { return a + t.len; }, 0); }
 function newRun(ci, mode) {
   if (mode === 'play') return { clip: null, w: newWorld(null, 0, 'play'), t: 0, take: 0, off: 0 };
@@ -380,7 +500,7 @@ function stepRun(run, keys) {
   var P = ip.P; w.inp = P; w.sound.length = 0;
   var mask = (P.LB ? 1 : 0) + (P.RB ? 2 : 0) + (P.RT ? 4 : 0) + (P.LT ? 8 : 0);
   var e = readStick(w.rd, w.t, P.rx || 0, P.ry || 0, mask);
-  fighterStep(w, w.P, P, e); rivalStep(w, w.V, ip.V);
+  fighterStep(w, w.P, P, e); rivalStep(w, w.V, ip.V); brawlStep(w);
   shotsStep(w); minesStep(w); fxStep(w);
   w.t++; run.t = run.off + w.t;
 }
@@ -388,22 +508,25 @@ function stepOf(c, t) { var k = 0; for (var i = 0; i < c.steps.length; i++) if (
 
 // ---- drawing ----
 function drawFighter(R, w, f) {
-  var d = f.dir, col = f.def.body, base = sy(f.y), cx = f.x, lean = f.lean + (f.reel > 0 ? -10 : 0), tilt = f.tilt;
+  var run = f.cmd && f.cmd.indexOf('wall') === 0, d = run ? 1 : f.dir, col = f.def.body, base = sy(f.y), cx = f.x, lean = f.lean + (f.reel > 0 ? -10 : 0), tilt = f.tilt;
   var fl = floor(f.x), sh = Math.max(0.2, 1 - (f.y - fl) / 220);
   R.poly(ngon(f.x, sy(fl) + 3, 15 * sh, 8, 0).map(function (v, i) { return i % 2 ? sy(fl) + 3 + (v - sy(fl) - 3) * 0.2 : v; }), C.shade);
   // a body in his own frame (y up from the feet), turned by tilt for the wall run
-  var air = f.y - fl > 4, run = f.cmd && f.cmd.indexOf('wall') === 0;
+  var air = f.y - fl > 4;
   var pts = { fa: air ? [d * 6, 2] : [d * 9, 0], fb: air ? [-d * 5, 4] : [-d * 7, 0], hip: [0, 22], ch: [d * lean * 0.6, 42], hd: [d * lean * 0.7, 51],
     h1: [d * 16, 40], h2: [d * 9, 32] };
   if (run) { pts.fa = [d * 10, 6]; pts.fb = [-d * 8, -2]; }
   if (f.mv && (f.mv.k === 'hop' || f.mv.k === 'drop')) { pts.fa = [d * 6, 8]; pts.fb = [-d * 4, 10]; }
   if (f.beam || f.bchg) { pts.h1 = [d * 22, 40]; pts.h2 = [-d * 6, 30]; }
+  if (f.blow) { var bq = Math.sin(Math.PI * Math.min(1, f.blow.t / 6)); pts.h1 = [d * (16 + 16 * bq), 44]; }
+  if (f.cross) { pts.fa = [d * 6, 10]; pts.fb = [-d * 4, 14]; }
   if (run) cx += 12;     // feet on the cliff's face
   var tx = function (p) { var c = Math.cos(tilt), s = Math.sin(tilt), x = p[0] * c - p[1] * s * d, y = p[0] * s * d + p[1] * c; return [cx + x, base - y]; };
   var P2 = {}; for (var k in pts) P2[k] = tx(pts[k]);
   limb(R, P2.fb, P2.hip, 7, col); limb(R, P2.fa, P2.hip, 7, col); limb(R, P2.hip, P2.ch, 9, col);
   limb(R, P2.ch, P2.h2, 5, col);
   if (f.def.id === 'protagonist') R.poly(ngon(P2.hd[0], P2.hd[1], 9, 8, 0.39), col); else R.poly([P2.hd[0], P2.hd[1] - 12, P2.hd[0] + 7, P2.hd[1] - 2, P2.hd[0] + 5, P2.hd[1] + 9, P2.hd[0] - 5, P2.hd[1] + 9, P2.hd[0] - 7, P2.hd[1] - 2], col);
+  if (f.blow) { var bq2 = Math.sin(Math.PI * Math.min(1, f.blow.t / 6)), fc = chest(f.foe), ba = Math.atan2(fc[1] - f.y - 40, fc[0] - f.x), bl = 16 + 18 * bq2; P2.h1 = [P2.ch[0] + Math.cos(ba) * bl, P2.ch[1] - Math.sin(ba) * bl]; }
   limb(R, P2.ch, P2.h1, 5, col);
   if (f.bchg && f.bchg.lv > 0) { var Lb = f.def.L.beam, rr = 6 + 3 * f.bchg.lv; ring(R, P2.h1[0], P2.h1[1], rr, 2.6, KEY, 16); ring(R, P2.h1[0], P2.h1[1], rr, 1.2, f.bchg.lv >= 3 ? Lb.main : Lb.edge, 16); }
   if (f.inp && f.inp.RB) { R.poly(ngon(P2.h1[0], P2.h1[1], 4.4, 8, 0), KEY); R.poly(ngon(P2.h1[0], P2.h1[1], 3.2, 8, 0), f.def.L.bolt.main); }
@@ -411,7 +534,7 @@ function drawFighter(R, w, f) {
 // the latched aim reads at his hand only: a short stub along the line, never a line to the rival (R7)
 function drawAim(R, w, f) {
   if (!f.latched || !(f.inp && f.inp.RB) || f.beam) return;
-  var h = hand(f), a = aimAbs(f), x0 = h[0] + Math.cos(a) * 8, y0 = sy(h[1] + Math.sin(a) * 8), x1 = h[0] + Math.cos(a) * 34, y1 = sy(h[1] + Math.sin(a) * 34), L = f.def.L.bolt;
+  var a = aimAbs(f), h = muzzle(f, a), x0 = h[0] + Math.cos(a) * 8, y0 = sy(h[1] + Math.sin(a) * 8), x1 = h[0] + Math.cos(a) * 34, y1 = sy(h[1] + Math.sin(a) * 34), L = f.def.L.bolt;
   quad(R, x0, y0, x1, y1, 4.5, 4.5, KEY); quad(R, x0, y0, x1, y1, 2, 2, L.edge);
   R.poly(xf([0, -4.5, 7, 0, 0, 4.5], x1, y1, -a, 1, 1), KEY); R.poly(xf([0.8, -2.6, 5, 0, 0.8, 2.6], x1, y1, -a, 1, 1), L.main);
 }
@@ -438,7 +561,7 @@ function drawPanel(R, w) {
   var rd = w.rd, f = w.P, fam = rd.fam, famCol = fam === 'aim' || fam === 'lay' ? f.def.L.bolt.edge : fam === 'flight' ? f.def.body : C.dim;
   R.poly([PX, 0, W, 0, W, H, PX, H], C.panel); R.poly([PX, 0, PX + 2, 0, PX + 2, H, PX, H], C.ring);
   var famName = { flight: 'FLIGHT', aim: 'ENERGY AIM (RB)', lay: 'LAY AIM (LB+RB)', none: 'NONE IN STEP 1' }[fam] || 'AT REST';
-  R.text(PX + 12, 10, 'RIGHT STICK', 14, C.dim); R.text(PX + 12, 28, famName, 14, fam ? famCol : C.dim);
+  R.text(PX + 12, 10, w.brawl ? 'RIGHT STICK, BRAWL' : 'RIGHT STICK', 14, C.dim); R.text(PX + 12, 28, famName, 14, fam ? famCol : C.dim);
   R.poly(ngon(PCX, PCY, PR, 40, 0), C.bg); ring(R, PCX, PCY, PR, 2, C.ring, 40);
   var rOn = PR * (RS.deadZone + RS.on * (1 - RS.deadZone)), rOff = PR * (RS.deadZone + RS.off * (1 - RS.deadZone));
   for (var i = 0; i < 32; i += 2) { var a0 = i * Math.PI / 16, a1 = (i + 1) * Math.PI / 16; quad(R, PCX + Math.cos(a0) * rOn, PCY + Math.sin(a0) * rOn, PCX + Math.cos(a1) * rOn, PCY + Math.sin(a1) * rOn, 1.4, 1.4, C.ring); }
@@ -446,7 +569,7 @@ function drawPanel(R, w) {
   R.poly(ngon(PCX, PCY, PR * RS.deadZone, 24, 0), C.dead);
   for (var j = 0; j < 4; j++) { var ad = Math.PI / 4 + j * Math.PI / 2; quad(R, PCX + Math.cos(ad) * PR * 0.3, PCY + Math.sin(ad) * PR * 0.3, PCX + Math.cos(ad) * PR, PCY + Math.sin(ad) * PR, 1, 1, C.dead); }
   // the hold's sector: a quarter in Flight, a 32nd for aim
-  if (rd.on && rd.holdN >= RS.holdTicks && fam !== 'none') {
+  if (rd.on && rd.held && fam !== 'none') {
     var q = quant(rd.trace[rd.trace.length - 1][0], rd.trace[rd.trace.length - 1][1]), a = Math.atan2(q.y, q.x), half = fam === 'flight' ? Math.PI / 4 : Math.PI / 32;
     if (fam === 'flight' && rd.d4) a = -deg(D4A[rd.d4]);
     var wedge = [PCX, PCY]; for (var k = 0; k <= 8; k++) { var aa = a - half + 2 * half * k / 8; wedge.push(PCX + Math.cos(aa) * PR, PCY + Math.sin(aa) * PR); } R.poly(wedge, C.dead);

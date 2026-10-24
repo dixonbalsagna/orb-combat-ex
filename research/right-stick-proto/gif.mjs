@@ -5,7 +5,7 @@
 // The rasteriser and the GIF encoder are copied from research/energy-proto/gif.mjs, with text added for the stick panel.
 //   node research/right-stick-proto/gif.mjs [out dir, default homework/49-right-stick] [only: e.g. R1,R4]
 //   node research/right-stick-proto/gif.mjs --check     (plays every clip, prints what the recognizer said, writes nothing)
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { Img } from '../planet-gen/lib/img.mjs';
 
@@ -112,14 +112,28 @@ function encodeGif(frames, delays) {
 }
 
 // ---- the clips, with one line each for Orb ----
-const STEM = { R1: 'R1-lunge-and-steps', R2: 'R2-dash-orbit-cross-up', R3: 'R3-wall-run-and-skim', R4: 'R4-aim-latch', R5: 'R5-beam-sweep', R6: 'R6-patterns-later' };
+
+// The README's generated part sits between these markers. Anything outside them (the EP's text and questions) is kept as it
+// is; a README without them gets the part inserted before its first question, and a missing README is written whole.
+const BEGIN = '<!-- research: clips begin (written by research/right-stick-proto/gif.mjs; edit outside the markers) -->', END = '<!-- research: clips end -->';
+function mergeReadme(path, title, block, question) {
+  const part = [BEGIN, ...block, END].join('\n');
+  if (!existsSync(path)) { writeFileSync(path, [title, '', part, '', ...question].join('\n')); return 'written'; }
+  let s = readFileSync(path, 'utf8'); const a = s.indexOf(BEGIN.slice(0, 30)), b = s.indexOf(END);
+  if (a >= 0 && b > a) s = s.slice(0, a) + part + s.slice(b + END.length);
+  else { const q = s.search(/^\*\*(One|Two|Three) questions?/m); s = q >= 0 ? s.slice(0, q) + part + '\n\n' + s.slice(q) : s.trimEnd() + '\n\n' + part + '\n'; }
+  writeFileSync(path, s); return 'merged';
+}
+
+const STEM = { R1: 'R1-lunge-and-steps', R2: 'R2-dash-orbit-cross-up', R3: 'R3-wall-run-and-skim', R4: 'R4-aim-latch', R5: 'R5-beam-sweep', R6: 'R6-patterns-later', R7: 'R7-inside-a-brawl' };
 const CAP = {
   R1: 'Flight, with nothing held: a flick toward him from range is the lunge (10 ki); in reach it is a step in; a flick away steps back and slips a shot; flicks up and down hop and drop.',
   R2: 'Holds continue their flicks: a hold away or toward is the dash; in reach, a hold up or down is the orbit, and held through it is the cross-up onto his other side.',
   R3: 'A hold into the cliff face runs him up it; near the ground or the water, a hold down skims along the surface while the left stick steers.',
   R4: 'With RB held the stick aims: flicks latch the line 45 degrees above or below him, or behind; a toward flick clears it; X, Y and B fire along it; a hold sweeps it.',
   R5: 'While his beam is out, a hold sweeps it after the rival at his own rate and it stays where the stick lets go; the left stick sweeps it too, so the thumb can pulse.',
-  R6: 'Patterns are step 2: a zig-zag or a circle drawn now is just its flicks and holds, and the panel only names what it will become.',
+  R7: 'Inside a brawl (Game Design section 12): the press beats a same-tick flick; a flick away gives ground and a flick toward takes it back; a hold away holds the leash; a hold up crosses over him, and a blow in the arc lands clean.',
+  R6: 'Patterns are step 2: with nothing held a zig-zag drawn now is just its flicks, and the panel names what it will become (the weave); under RB patterns are off, so the same zig-zag only latches the line.',
 };
 
 function play(ci, onTick) {
@@ -177,8 +191,7 @@ S.CLIPS.forEach((clip, ci) => {
   console.log(`${stem}.gif: ${frames.length} frames, ${(gif.length / 1024).toFixed(0)} KB`);
 });
 if (!only) {
-  const L = ['# 49. The right stick, step 1 (6 min to watch, one question)', '',
-    "Game Design's recommended pitch for the right stick is C, the family stick: whatever shoulder you already hold picks what the stick does, and a quick flick and a steady hold do different things. These clips are its step 1, as Game Design fixed it (`docs/design/right-stick-pitches.md` section 11) and as Controls reads it (`docs/controls/right-stick.md` section 11).",
+  const L = ['**The prototype: pitch C, step 1, with seven clips.** ' + "Game Design's recommended pitch for the right stick is C, the family stick: whatever shoulder you already hold picks what the stick does, and a quick flick and a steady hold do different things. These clips are its step 1, as Game Design fixed it (`docs/design/right-stick-pitches.md` section 11) and as Controls reads it (`docs/controls/right-stick.md` section 11).",
     '', '- **Nothing held: Flight.** Flicks are the lunge, the steps, the hop and the drop. Holds are the dash, the orbit and its cross-up, the wall run and the skim.',
     '- **RB held: the aim.** Flicks latch an aim line above, below or behind him, or clear it; X, Y and B fire along it; a hold sweeps it, or sweeps a beam that is out.',
     '- **Patterns** (zig-zags, circles) come in step 2. Here the panel only names them.',
@@ -188,7 +201,5 @@ if (!only) {
   S.CLIPS.forEach((c) => L.push(`- ${c.n}. \`${STEM[c.n]}.gif\`: ${CAP[c.n]}`));
   L.push('', '**The steps in each clip:**', '');
   S.CLIPS.forEach((c) => { L.push(`- **${c.n}. ${c.name}**`); c.steps.forEach((s, k) => L.push(`  ${k + 1}. ${s[1]}`)); });
-  L.push('', '**One question:** is this the right first step for the right stick?', '- (a) Yes, build step 1 as it is.', '- (b) Yes, with changes (say which clip and step).', '- (c) Not this pitch: tell us what you want the stick to do instead.', '', 'Your notes:', '');
-  writeFileSync(join(OUT, 'README.md'), L.join('\n'));
-  console.log('README.md written');
+  console.log('README.md ' + mergeReadme(join(OUT, 'README.md'), '# 49. The right stick, step 1', L, ['**One question:** is this the right first step for the right stick? (a) yes, (b) yes with changes, (c) not this pitch.', '', 'Your notes:', '']));
 }
