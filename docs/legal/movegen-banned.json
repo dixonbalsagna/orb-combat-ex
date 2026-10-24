@@ -676,6 +676,11 @@
       "id": "fx06",
       "rule": "the 3D aura (an energy outline on the fighter's own mesh): lane colours only, no white, gold or red core, no flame tongues, lightning or upward spikes, no whole-aura pulse; one of the seven marks and at most one other mark at a time (k01); transient rather than a constant standing glow and never growing into a flame silhouette with tier; pulse, shimmer and froth at or under 2 Hz (VFX holds under 1 Hz), alpha at most 0.5, alpha-blended never additive, the schema rejecting 2.5 Hz and 0.6 alpha; luminance change against a bright background under 10% per second; a calm form under Reduce flashing; never covers glasses or faces; not in a public trailer, page or screenshot until Orb approves the look and the published build's flash set reads it",
       "why": "RL-170"
+    },
+    {
+      "id": "fx07",
+      "rule": "biome impact plumes: the burst star is one pale frame per impact, a low-priority source refused under Reduce flashing, its counted area the disc as drawn at the framing in use, inside the register's cap of 3 a second and never repeating within a second; a puff whose luminance step from the ground is 10% or more counts in the drawn-area budget at weight 1.0 (only a step under 10% may count less); embers steady and amber-orange with red flashes read 0 on linear values; debris and chips never a regular moving pattern over a large area and under the pool's cap; clips staging a desert, an ice and a volcanic impact at a close framing are read in both modes with the margin rule before any public pin; not in public trailers, pages or screenshots until Orb approves the look",
+      "why": "RL-176"
     }
   ],
   "catastrophe": [

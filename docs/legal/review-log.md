@@ -195,6 +195,7 @@ First entries: 2026-09-28, P0 wave 1 (placeholder names, move names and the repo
 | RL-173 | Narrative's co-op story-beat library (beat-templates.md and beat_templates.json): the Cyborg's 9 sample lines and the template rules against ln04; taunts and home threats | Narrative | Low | Pass with three conditions (ln05): enforce ln04 in the picker and lint, wrecked is a structure event only and the Cyborg's home_wear is his own yard, fronts and homes read place and wear only | Open until the lint and picker carry ln05 |
 | RL-174 | Ten biome signature variant names (ICEFIELD THAW, FLOE SPLIT, VINE SHEAR, GRASSLAND BLAZE, FROST HEAVE, PINE BREAK, MIRE BOIL, SHORE SCOUR, SCREE RUN, CRUST SEAR) (sigvariants-screen.md) | Combat | Low | All CLEAR, no rename; fire and flood variants join the flash set when built | Closed (names); open for the flash set when built |
 | RL-175 | Adopting TIDE CLEAVE (ocean, replacing HORIZON CLEAVE) and LANE SWEEP (village) (biomes.md §2b) | Combat | Low | CLEAR to adopt; earlier GO confirmed; flash set when built | Closed |
+| RL-176 | VFX's biome impact plumes (biome-fx, parked): the burst star, ember chips, debris, and the luminance weight rule | VFX | Medium | Pass with conditions (fx07): weight 1.0 for any puff step of 10% or more; star at its drawn area inside the cap; staged plume clips in both modes before any public pin; embers read red 0; sheets seen, GIFs not | Open until the plume clips are read |
 
 Open flags for the P0 gate: RL-001, RL-002, RL-012, RL-014, RL-016 to RL-025, RL-027 to RL-030, RL-035, RL-036.
 
