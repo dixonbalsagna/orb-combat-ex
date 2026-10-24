@@ -2496,6 +2496,67 @@
                   "minimum": 0,
                   "description": "Game Design's 10c: for this many live ticks after he comes down from a launch, a launcher at him that isn't sure is answerable; 0: off."
                 },
+                "pop": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "enabled",
+                    "full",
+                    "bh",
+                    "ticks",
+                    "landReel",
+                    "techTicks",
+                    "burstAfter",
+                    "fallTicks",
+                    "stringPoints"
+                  ],
+                  "description": "Game Design's pop (rulings-2026-10-23c): a launcher under full pops him and the brawl holds; at full or more it sends.",
+                  "properties": {
+                    "_note": {
+                      "type": "string"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "full": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "bh": {
+                      "type": "array",
+                      "items": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "ticks": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "landReel": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "techTicks": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "burstAfter": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "fallTicks": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "stringPoints": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  }
+                },
                 "worth": {
                   "type": "number",
                   "minimum": 0,

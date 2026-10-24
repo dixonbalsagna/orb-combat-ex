@@ -1214,7 +1214,7 @@ static func contact(S: SimState, ex, b) -> void:
 	var special: bool = bool(a.get("double", false)) or bool(a.get("sure", false)) or bool(a.get("zip", false))
 	# The reach, read as it lands. A blow by rule (the double hit's, a sure one, a zip's) keeps the strike's own limit.
 	var ct: Dictionary = DirData.contact()
-	var far: float = DirBands.dist(f, o) - float(ct.offset) + (0.0 if special else float(_g(f, PRE)) / 16.0)   # past striking distance, with what its own step through its reach has covered added back
+	var far: float = (absf(SimWrap.sdx(f.x, o.x)) if _lg(o, LA_POP_UNTIL) > S.tick else DirBands.dist(f, o)) - float(ct.offset) + (0.0 if special else float(_g(f, PRE)) / 16.0)   # past striking distance, with what its own step through its reach has covered added back
 	if _g(f, GAPV_ON) == 1 and wound and not special:
 		far = float(_g(f, GAPV)) / 16.0   # a blow with a wind-up: the gap as counted since it began (tick, _giveStep)
 	_s(f, PRE, 0)
@@ -1327,7 +1327,7 @@ static func contact(S: SimState, ex, b) -> void:
 	_s(f, STRING_N, _g(f, STRING_N) + 1)
 	if anywhere():
 		_ls(f, LA_LINK, S.tick)   # his string's link: B within anywhere.link of this is the launcher
-		_ls(o, LA_HITK, kind + 1)
+		_ls(o, LA_HITK, (LA_RIPK if (popOn() and bool(a.get("riposte", false))) else kind) + 1)   # (with pops, a perfect follow-up is hard to answer)
 		_laAnswerPlan(S, f, o)   # an AI he hits may guess now that a launcher follows (never by reacting to one)
 		_linkCue(S, f, o)   # UI's lit B: his B is the launcher for the link
 	if DirGrapple.telling(o):
@@ -1703,7 +1703,12 @@ const LA_PAY: int = 31      # a launcher's send on him: its power x 1000, plus 1
 const LA_PAYN: int = 32     # ... and the launch number it was for (a later send is never paid as this one)
 const LA_WAS: int = 33      # 1 while he was launched at the director's last tick (10c)
 const LA_LANDED: int = 34   # the live tick he last came down from a launch, plus 1: his wary window (10c); 0 none
-const LA_N: int = 35
+const LA_POP_UNTIL: int = 35   # the pop (rulings-2026-10-23c 1): S.tick he comes down in reach; 0 not popped
+const LA_POP_AT: int = 36      # ... S.tick it began, plus 1
+const LA_POP_TECH: int = 37    # ... his landing: 1 the AI will tech it, 2 teched (he lands set); 0 neither
+const LA_POP_BURST: int = 38   # ... 1 the AI will burst out after pop.burstAfter
+const LA_N: int = 39
+const LA_RIPK: int = 7         # LA_HITK's mark for a perfect follow-up (the riposte): hard to answer, as a medium (with pops)
 
 
 static func la() -> Dictionary:
@@ -1723,6 +1728,8 @@ static func paySend(o, p: float) -> void:
 ## Game Design's 10c: each live tick (DirExchange.dirUpdate), the tick each fighter came down from a launch (left
 ## "launched"), which opens his wary window in _safety.
 static func laTick(S: SimState) -> void:
+	if popOn():
+		_popTick(S)
 	if not anywhere() or int(la().get("waryTicks", 0)) <= 0:
 		return
 	for f in S.fighters:
@@ -1741,6 +1748,116 @@ static func payMul(f) -> float:
 	if v <= 0 or _lg(f, LA_PAYN) != int(f.launchN):
 		return 1.0
 	return 1.0 + float(la().get("landPay", 0.0)) * float(v - 1) / 1000.0
+
+
+## Game Design's pop (rulings-2026-10-23c): on under launch anywhere with anywhere.pop.enabled.
+static func popOn() -> bool:
+	return anywhere() and bool(popCfg().get("enabled", false))
+
+
+static func popCfg() -> Dictionary:
+	return la().get("pop", {})
+
+
+## The landing launcher's power after freshness, for pop or send: the stick's kind of send (up, toward, down, away),
+## or with no stick the freshest kind, as the planner prefers fresh. Marks come from sends only.
+static func _popPower(S: SimState, f, o, aim: int) -> float:
+	var p: float = float(_lg(f, LA_POW)) / 1000.0
+	if aim >= 1 and aim <= 4:
+		return p * freshMul(S, o, aim - 1)
+	var best: float = 0.0
+	for kd in range(5):
+		best = maxf(best, freshMul(S, o, kd))
+	return p * best
+
+
+## f pops o (rulings-2026-10-23c 1): up and back down in reach, the brawl holding; his blow on its way is lost. The
+## pop counts stringPoints toward f's next launcher (2: the launcher's own landing counted one). A second pop while
+## he is still up lands him instead: down where the first began, with no tech. Cue "pop": up, slam.
+static func _pop(S: SimState, ex, f, o, p: float) -> void:
+	var pc: Dictionary = popCfg()
+	var reel: int = int(pc.get("landReel", 8))
+	var again: bool = _lg(o, LA_POP_UNTIL) > S.tick and o.rush != null
+	_s(f, RUN, _g(f, RUN) + maxi(0, int(pc.get("stringPoints", 2)) - 1) * RUN_U)
+	_drop(S, ex, o)
+	var base: float = o.rush.py if again else o.y
+	var r := SimState.Rush.new()
+	r.px = o.x
+	r.py = maxf(base, WorldTerrain.groundY(S, o.x))
+	r.pz = o.z
+	var ticks: int = int(pc.get("fallTicks", 6)) if again else int(pc.get("ticks", 30))
+	var h: float = 0.0
+	if not again:
+		var bh: Array = pc.get("bh", [1.5, 3.0])
+		h = lerpf(float(bh[0]), float(bh[1]), clampf(p / maxf(0.001, float(pc.get("full", 0.8))), 0.0, 1.0)) * DirInterrupt.BH
+		r.arc = h
+	r.end = S.T + float(ticks) * SimConst.DT
+	o.rush = r
+	o.vx = 0.0
+	o.vy = 0.0
+	o.stunTicks = maxi(o.stunTicks, ticks + reel)
+	_ls(o, LA_POP_UNTIL, S.tick + ticks)
+	_ls(o, LA_POP_TECH, 0)
+	_ls(o, LA_POP_BURST, 0)
+	if not again:
+		_ls(o, LA_POP_AT, S.tick + 1)
+		if o.ai != null:
+			var slot: int = S.fighters.find(o)
+			var lv: Dictionary = DirAI.lv().get("brawl", {})
+			if SimRng.keyed(int(S.game.seed), "pop.tech", S.tick * 4 + slot) < float(lv.get("recoil", {}).get("flip", 0.0)):
+				_ls(o, LA_POP_TECH, 1)
+			if SimRng.keyed(int(S.game.seed), "pop.burst", S.tick * 4 + slot) < float(lv.get("burst", 0.0)):
+				_ls(o, LA_POP_BURST, 1)
+	var e = _ev(S, o, "pop", "slam" if again else "up")
+	e.target = float(S.fighters.find(f))
+	e.n = S.tick + ticks
+	e.dur = float(ticks)
+	e.amount = h / DirInterrupt.BH
+	e.x = p
+	SimEvents.feed(S, o.name + (" IS BROUGHT DOWN" if again else " IS POPPED UP"), ("a second pop in a row lands him" if again else "power " + str(snappedf(p, 0.01)) + ": " + str(snappedf(h / DirInterrupt.BH, 0.1)) + " bh up and back down in reach over " + str(ticks) + " ticks"))
+
+
+## Each tick (laTick): a popped fighter's tech (a dodge tap in the landing's last techTicks), his burst out (a light
+## press after burstAfter: down in fallTicks), and his landing (set if teched, else he reels landReel). Cues "pop":
+## tech, burst, land (n 1 set, 0 reeling).
+static func _popTick(S: SimState) -> void:
+	var pc: Dictionary = popCfg()
+	for f in S.fighters:
+		var until: int = _lg(f, LA_POP_UNTIL)
+		if until <= 0:
+			continue
+		if S.tick >= until:
+			var landedSet: bool = _lg(f, LA_POP_TECH) == 2
+			if landedSet:
+				f.stunTicks = 0
+			_ls(f, LA_POP_UNTIL, 0)
+			_ls(f, LA_POP_TECH, 0)
+			_ls(f, LA_POP_BURST, 0)
+			var le = _ev(S, f, "pop", "land")
+			le.n = 1 if landedSet else 0
+			continue
+		if _lg(f, LA_POP_TECH) != 2 and until - S.tick <= int(pc.get("techTicks", 8)):
+			var tap: bool = (f.ai == null and f.input != null and f.input.dodge) or (f.ai != null and _lg(f, LA_POP_TECH) == 1)
+			if tap:
+				_ls(f, LA_POP_TECH, 2)
+				f.stunTicks = mini(f.stunTicks, until - S.tick)
+				_ev(S, f, "pop", "tech")
+		var at: int = _lg(f, LA_POP_AT) - 1
+		if at >= 0 and S.tick - at >= int(pc.get("burstAfter", 12)) and f.rush != null and float(f.rush.arc) != 0.0:
+			var out: bool = (f.ai == null and f.input != null and f.input.light) or (f.ai != null and _lg(f, LA_POP_BURST) == 1)
+			if out:
+				var ft: int = int(pc.get("fallTicks", 6))
+				var r := SimState.Rush.new()
+				r.px = f.x
+				r.py = f.rush.py
+				r.pz = f.z
+				r.end = S.T + float(ft) * SimConst.DT
+				f.rush = r
+				f.stunTicks = 0
+				_ls(f, LA_POP_UNTIL, S.tick + ft)
+				_ls(f, LA_POP_TECH, 2)
+				_ls(f, LA_POP_BURST, 0)
+				_ev(S, f, "pop", "burst")
 
 
 ## True when launch anywhere is on (data/director/interrupts.json brawl.launcher.anywhere.enabled).
@@ -1800,9 +1917,9 @@ static func _safety(S: SimState, f, o) -> int:
 	if wary > 0 and _lg(o, LA_LANDED) > 0 and _now(S) - (_lg(o, LA_LANDED) - 1) <= wary:
 		return 3   # Game Design's 10c: he came down from a launch within waryTicks, so a launcher that isn't sure is answerable
 	var k: int = _lg(o, LA_HITK) - 1
-	if _now(S) < _g(o, REEL_AT) and (k == MEDIUM or k == BIG):
+	if _now(S) < _g(o, REEL_AT) and (k == MEDIUM or k == BIG or k == LA_RIPK):
 		return 2
-	var hc: int = int(la().get("hardFromChain", 0))
+	var hc: int = 0 if popOn() else int(la().get("hardFromChain", 0))   # with pops, no string armour (rulings-2026-10-23c 3)
 	if hc > 0 and _lg(f, LA_CH_N) >= hc and _now(S) - _lg(f, LA_CH_AT) <= int(la().get("chainGapTicks", 24)):
 		return 2   # Game Design's 2a (rulings-2026-10-23): his string of landed blows makes the launcher hard to answer
 	return 3
@@ -2113,7 +2230,7 @@ static func _linkCue(S: SimState, f, o) -> void:
 	if f.ki < float(cfg().launcher.ki) or quiet(S.dirS.ex):
 		return
 	var k: int = _lg(o, LA_HITK) - 1
-	var sf: int = 1 if _g(f, LC_UNTIL) > 0 else (2 if (k == MEDIUM or k == BIG) else 3)
+	var sf: int = 1 if _g(f, LC_UNTIL) > 0 else (2 if (k == MEDIUM or k == BIG or k == LA_RIPK) else 3)
 	var link: int = int(la().get("link", 24))
 	var e = _ev(S, f, "launcher_link", "link")
 	e.target = float(S.fighters.find(o))
@@ -3004,7 +3121,11 @@ static func _bigLanded(S: SimState, ex, f, o, a) -> void:
 		if bool(a.get("ready", false)):
 			if a.has("power"):
 				_ls(f, LA_POW, int(round(float(a.power) * _woundMul(o, String(a.get("piece", ""))) * 1000.0)))
-			_send(S, ex, f, o, int(a.get("aim", 0)), "the launcher", float(c.launcher.flightMul))
+			var pp: float = _popPower(S, f, o, int(a.get("aim", 0))) if (popOn() and a.has("power")) else 9.0
+			if pp < float(popCfg().get("full", 0.8)):
+				_pop(S, ex, f, o, pp)   # rulings-2026-10-23c 1: a weak launch is a pop, and the brawl holds
+			else:
+				_send(S, ex, f, o, int(a.get("aim", 0)), "the launcher", float(c.launcher.flightMul))
 			if a.has("power"):
 				_ls(f, LA_POW, 0)
 		else:
