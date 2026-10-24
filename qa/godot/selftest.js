@@ -350,12 +350,14 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     assert.strictEqual(id(f(mk(2, 2, 1)), 'wallkick.perMatch').status, 'PASS'); assert.strictEqual(id(f(mk(2, 2, 1, '')), 'wallkick.perMatch').status, 'INFO'); assert.strictEqual(id(f(mk(2, 2, 3)), 'wallkick.perMatch').status, 'FAIL');   // 0.2 to 2 from a city start; watched from the default start (rulings-2026-10-23 11a)
      assert.strictEqual(id(f(mk(0, 0, 0)), 'wallkick.perMatch').status, 'PENDING'); assert.strictEqual(id(f(mk(0, 0, 0)), 'chase.perMatch').status, 'PENDING');
   });
-  await t('L17: the lit-B newcomer wins at most 50% against medium and 50 to 95% against easy', async () => {
+  await t('L17: the lit-B newcomer wins 10 to 50% against medium and 50 to 95% against easy', async () => {
     const { masherRows } = require('./masher');
     const nc = (lv, w) => ({ pair: 'newcomer-' + lv, n: 100, aWins: w, bWins: 100 - w, brawl: { launcher: { routeBy: Array(100).fill(5), routeOn: Array(100).fill(5), firstLaunchSec: Array(100).fill(8) } } });
     const id = (rows, k) => rows.find(r => r.id === k), ok = masherRows([nc('medium', 40), nc('easy', 80)]), bad = masherRows([nc('medium', 100), nc('easy', 100)]);
     assert.strictEqual(id(ok, 'newcomer.wins.medium').status, 'PASS'); assert.strictEqual(id(ok, 'newcomer.wins.easy').status, 'PASS');
     assert.strictEqual(id(bad, 'newcomer.wins.medium').status, 'FAIL'); assert.strictEqual(id(bad, 'newcomer.wins.easy').status, 'FAIL');
+    assert.strictEqual(id(masherRows([nc('medium', 5), nc('easy', 80)]), 'newcomer.wins.medium').status, 'FAIL');   // under 10% fails too (rulings-2026-10-23c item 13)
+    assert.strictEqual(id(masherRows([nc('medium', 10), nc('easy', 80)]), 'newcomer.wins.medium').status, 'PASS');
     assert.strictEqual(id(ok, 'design.L17').status, 'INFO');
   });
   console.log(`godot qa selftest: ${pass} passed, ${fail} failed`);

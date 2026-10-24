@@ -116,16 +116,16 @@
   "group": "L",
   "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
   "kind": "band",
-  "what": "Answered by medium: the spammer's launchers (one light, then B); the string launcher (two blows landed in a chain of links, then B); AI v AI's",
-  "bound": "At least 50%; 20 to 50%; 20 to 50% (2026-10-23: the last two read again once the string armour is built)"
+  "what": "Answered by medium: the spammer's launchers (one light, then B); AI v AI's",
+  "bound": "At least 50%; 20 to 50% (the string launcher's row retired with the string armour, `rulings-2026-10-23c.md` §3)"
  },
  {
   "id": "L16",
   "group": "L",
   "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
   "kind": "band",
-  "what": "Launches a match on launch anywhere (re-banded 2026-10-19, `rulings-2026-10-19.md` §5e): all launches by the route's player; on him; full launches (power 0.7 or more), AI against itself, both together per 7 minutes",
-  "bound": "20 to 50; 10 to 40; 6 to 12. The route's edges (L11, L12) are the dominance test"
+  "what": "Sends a match (journeys: a launcher's send at power 0.8 or more, and every other melee launch; pops aren't counted), AI v AI; the route's, by him and on him",
+  "bound": "8 to 16; read again with pops and re-banded (2026-10-23, `rulings-2026-10-23c.md` §6)"
  },
  {
   "id": "L17",
@@ -133,7 +133,7 @@
   "section": "1. Launch anywhere (`launch-anywhere.md`, the brawl's thirteenth round)",
   "kind": "band",
   "what": "The lit-B newcomer (mash X, B 0 to 20 ticks after the light): win share against medium; against easy",
-  "bound": "At most 50%; 50 to 95% (2026-10-23, `rulings-2026-10-23.md` §10a)"
+  "bound": "10 to 50%; 50 to 95% (`rulings-2026-10-23c.md` item 13)"
  },
  {
   "id": "L17~2",
@@ -652,8 +652,8 @@
   "group": "X",
   "section": "5. Also ruled on 2026-10-17",
   "kind": "band",
-  "what": "Recoil flips a minute: with a human, both fighters; in AI play; plants and glances a match; wall kicks a match",
-  "bound": "2 to 6; 1.2 to 6, with the AI's flip shares at 30, 60 and 85% (`rulings-2026-10-23.md` §5); 2 to 8; 1 to 4 (at most two ricochets in a row)"
+  "what": "Recoil flips a minute: with a human, both fighters; in AI play, with the AI's flip shares at 30, 60 and 85%; plants and glances a match; wall kicks a match, with a human, and in AI play from a city start",
+  "bound": "2 to 6; 1.2 to 6; 2 to 8; 1 to 4, and 0.2 to 2 (`rulings-2026-10-23.md` §11a)"
  },
  {
   "id": "X3",
@@ -677,7 +677,7 @@
   "section": "5. Also ruled on 2026-10-17",
   "kind": "hard",
   "what": "Calm turns of the ring a typical AI match: Half and Close; Whole; bad swaps",
-  "bound": "1 to 3; 0.8 to 3; none (hard) (`rulings-2026-10-23.md` §3)"
+  "bound": "1 to 3; 0.7 to 3; none (hard) (`rulings-2026-10-23.md` §11c)"
  },
  {
   "id": "X6",
