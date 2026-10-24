@@ -331,7 +331,7 @@ Orb, 2026-10-22 (docs/ep/vision.md): "the camera looks like it snaps too fast, a
 
 **Not mine, suggested:** Rendering's roll eases in over 0.25 s (`RenderLook.ROLL_TIMES.x`), which is 15 frames. Research's dutch roll is 30 to 90 frames; 0.5 s would sit in it.
 
-**Unchanged and already eased:** the split's openings and closings morph at the comfort rates. The divider slam is a 0.14 s door that closes on the rusher's impact: a motion on the action, not a cut.
+**Unchanged and already eased:** the split's openings and closings morph at the comfort rates, the panes blended by smootherstep of the separation. The divider slam was a 0.14 s door that closed on the rusher's impact; since follow-up 2 (below) it is a 12-frame crisp whip. Research's reason: a move across a gap a cut would make, on the action (the rush's contact), eased hard at both ends, no blur.
 
 **Measured** (`clip_digest.gd` STATS, cuts in 3,600 ticks, reduced / ordinary):
 
@@ -383,7 +383,7 @@ Measured (`clip_digest.gd`, reduced, 3,600 ticks), the room ahead of a fighter f
 
 Gates on 97ec9985: the 18 headless render checks pass (after, city, cue --profile=spaced, depth, flash, flash_reg, flight, ground, hud_words, lane, open, pane, patch, shape, sky, stage, seam sweep at 1280x720, determinism; outline and cull need a window and were not run), as do split_sweep and determinism --intro. Clips: homework/camera/14-speed-lead/ (a rush in the city, main against this, and d3f1ca0e against this).
 
-**The flight follow's mass (2026-10-23, window 1; parked: docs/camera/pending/director-12-flight-mass.patch).** Orb: "rides the action with mass". The follow's springs aimed well, but each pane's camera could change its velocity at once: a fighter turning, a lead switching on, the pair's midpoint jumping as one fighter dashed. A last stage in `_outputs` (`_mass_stage`, before the travel budget, which keeps the last word) now gives the drawn camera a mass:
+**The flight follow's mass (2026-10-23, window 1; on main in 4cbf8b37).** Orb: "rides the action with mass". The follow's springs aimed well, but each pane's camera could change its velocity at once: a fighter turning, a lead switching on, the pair's midpoint jumping as one fighter dashed. A last stage in `_outputs` (`_mass_stage`, before the travel budget, which keeps the last word) now gives the drawn camera a mass:
 - Its velocity changes by at most 0.006 of the width a tick, each tick (`MASS_ACC`). It speeds up into travel and settles out of it, rather than stepping.
 - It never strays more than 0.05 of the width from where the follow aims (`MASS_DEV`). Beyond that it gives way at once: framing comes first.
 - It is off where another part of the rig owns the move: a layout morph, a slam, a cut-in, a stage, a building aim, an opening (the expansion), the intro, the fold and reduced motion. In a shot it applies only to a launch's follow. A cut or a snap starts it again from where it lands.
@@ -405,7 +405,7 @@ Measured (`clip_digest.gd` with a scratch probe, reduced, on 0c782165): steps in
 
 Before/after: docs/camera/img/flight-mass/flight-mass-before-after.gif (main on the left, the mass on the right; ai 4 and ai 7, real web build, Tools' launcher).
 
-**The shot grammar for the big moments (2026-10-23, window 2; parked: docs/camera/pending/director-13-shot-grammar.patch).** The EP's brief: launches follow the sent body and reframe on the return; beam struggles push in slowly as they build, then release; transformations and power-ups get a low hero angle and a crane up; KOs get a held wide. Two were built, one was already there, and two were changed:
+**The shot grammar for the big moments (2026-10-23, window 2; on main in b8e759ed).** The EP's brief: launches follow the sent body and reframe on the return; beam struggles push in slowly as they build, then release; transformations and power-ups get a low hero angle and a crane up; KOs get a held wide. Two were built, one was already there, and two were changed:
 - **Transformations.** Before, the full version's break was a hard cut to a -8 degree low angle and the settle a hard cut back. Under Reduce flashing (shipped on) the break was calm and had no angle at all. Now:
   - The low hero angle eases in over the whole gather (smoothstep, at most 0.35 degrees a tick). The fighter sinks to 0.74 of the height with the sky above him.
   - The break holds it.
@@ -429,7 +429,7 @@ Gates on 4cbf8b37 with the patch: the 18 headless render checks (city: its oks, 
 
 Before/after: docs/camera/img/shot-grammar/shot-grammar-before-after.gif. It shows the transform scene's full transformation (tick 60, Reduce flashing on, so a calm break), then clashcity's beam clash (from tick 984).
 
-**The landscape shot (2026-10-23, window 3; parked: docs/camera/pending/director-14-landscape-shot.patch, on top of director-13).** The EP's brief: "a short eased establishing frame when a fight crosses into a new biome or set piece, never costing readability". World's gen 2 biomes and the settlements' landmarks give it real places. `_scape_tick` and `CamParams.SCAPE_*`:
+**The landscape shot (2026-10-23, window 3; on main in bf34d1d4).** The EP's brief: "a short eased establishing frame when a fight crosses into a new biome or set piece, never costing readability". World's gen 2 biomes and the settlements' landmarks give it real places. `_scape_tick` and `CamParams.SCAPE_*`:
 - **Triggers.**
   - The pair's middle enters a new biome and stays 0.5 s (`SCAPE_SETTLE`, no flicker at a border).
   - Or a standing landmark (`Building.landmark`) first comes into the frame; each landmark once a match.
@@ -448,7 +448,7 @@ Before/after: docs/camera/img/shot-grammar/shot-grammar-before-after.gif. It sho
 
 Measured (`clip_digest.gd`, both modes, on b8e759ed): one landscape shot each in ai 39 (a biome, tick 1910), rushcity (a landmark, tick 505) and collapse (a landmark, tick 1310); none in ai 4, ai 7 or signaturecity (its landmark comes into the frame among falling buildings). Cuts, layout changes, strips, the time outside the picture and the share of fighters under 40 px are identical to main's.
 
-Flash: the first build had no hold after a building's fall. Its shot in the collapse clip came at tick 1290, among the falls, and raised the collapse count to 3.5 in both modes. With the hold the shot comes at 1310, after them, and the clip reads normal 3 / 3.5 (main's 3 / 3.5) and reduced 2.5 / 3.5 (main's 3 / 3.5).
+Flash: the first build had no hold after a building's fall. Its shot in the collapse clip came at tick 1290, among the falls, and raised the collapse count to 3.5 in both modes. With the hold the shot comes at 1310, after them, and the clip reads normal 3 / 3.5 (main's 3 / 3.5) and reduced 2.5 / 3.5 (main's 3 / 3.5). These readings were taken with director-15 on top.
 
 split_sweep rows:
 - `landscape shot`: a flight from village to plains at 480 u/s. One shot at tick 304, widest x0.723, angle -4.0 with steps of 0.17, smallest fighter 63 px (from 86), no cut, both on screen, back within 2% of the same flight with it off.
@@ -457,25 +457,33 @@ split_sweep rows:
 
 Before/after: docs/camera/img/landscape-shot/landscape-shot-before-after.gif (rushcity's landmark, ticks 489 to 619).
 
-Gates on b8e759ed with director-14 and director-15: the 18 headless render checks (city: its oks, no failures), split_sweep and determinism plain and --intro pass.
+Gates: on b8e759ed with director-14 (and the since-withdrawn director-15 on top, which changes only the closing's shape), the 18 headless render checks (city: its oks, no failures), split_sweep and determinism plain and --intro pass. The EP's own gates ran director-14 alone. On main in bf34d1d4.
 
-**Split grace (2026-10-23, window 4; parked: docs/camera/pending/director-15-split-grace.patch, on top of director-14).** The EP's brief: "the divider's motion eased, framing that keeps both fighters readable at every separation". What was tried, measured with the mass probe (`clip_digest.gd`, reduced; steps in a pane's camera velocity over 0.01 and 0.02 of the width a tick):
+**Split grace, first try (2026-10-23, window 4): withdrawn.** It eased the split's separation `sep` (first the opening, the closing and the takeovers, then the closing alone) on the belief that the divider moved at one speed from the first tick to the last. It did not. The split's opening and closing were already eased on the screen:
+- `_outputs` blends each pane's camera with the shared one by `_smootherstep(sep)`.
+- The feather narrows by the same curve.
+- The divider line itself stays at the centre during an opening or a closing.
 
-| Variant | ai 4 | ai 7 | rushcity | signaturecity | Off-screen, layouts |
-| :--- | ---: | ---: | ---: | ---: | :--- |
-| Main + 13 + 14 | 57 / 27 | 87 / 40 | 83 / 53 | 50 / 37 | rushcity 127, 12 |
-| Everything eased (opening, closing, the takeovers) | 54 / 27 | 81 / 40 | 118 / 67 | 51 / 38 | rushcity 130, 13 |
-| The separation only | 55 / 27 | 84 / 40 | 115 / 66 | 51 / 38 | the same |
-| ... with the mass taking a pane back gently | 54 / 27 | 87 / 41 | 113 / 64 | 55 / 40 | rushcity 130, 13 |
-| An opening that starts at speed and lands soft, the closing eased | 55 / 27 | 84 / 40 | 82 / 58 | 54 / 36 | rushcity 169 and a cut |
-| **The closing only (parked)** | 55 / 27 | 87 / 40 | 84 / 53 | 50 / 38 | the same as main |
+So an eased `sep` only reshaped a curve that already started and landed at rest. Its before/after barely differed. The eased opening's regression (rushcity: a third more camera steps, 127 to 169 fighter-ticks outside the picture) came from easing twice: the blend started too slowly while a fighter flew out of the view. The EP withdrew director-15 before it landed.
 
-An eased opening starts slowly while a fighter is flying out of the view. The panes then catch up harder at full separation: in rushcity the steps moved from the morph into the split, and a third more of them. So:
-- **Parked: the closing.** The divider's speed rises over 30% of the closing and brakes to land (`CLOSE_RAMP`, `_close_step`). It never steps from rest to the full rate and back. The whole closing takes no longer: 30 ticks against T_CLOSE's 33. Cuts, layout changes and the time outside the picture are as main's in every scene.
-- **Kept linear: the opening.** It is a move on the action (a fighter flying out of the view), with Research's reason 1, and it starts at once. Its end is not braked, because braking it costs readability (the measurements above).
-- **Kept: the slam.** A 0.14 s door that closes on the rusher's impact (section 11), a motion on the action.
-- **Readable at every separation** was already gated: split_sweep's rows hold both fighters on the screen and above the floor through every opening, closing, slam and swing (`R_FLOOR`, the pane floor, the on-screen counts). The SIZE probe's share under 40 px is unchanged in every scene.
+What does move the divider at one speed is the expansion `e` (a pane taking the screen for a shot, or giving it back) and the slam's door. Those are the follow-ups below.
 
-Before/after: docs/camera/img/split-grace/split-grace-before-after.gif (two closings in play, every tick). Gates: as director-14's. Those, and director-14's collapse readings, were taken with director-15 on top.
+**The takeover's divider, eased (2026-10-23, follow-up 1; parked: docs/camera/pending/director-16-takeover-divider.patch, after the half-plane patch).** When a pane takes the screen for a shot from the split, or gives it back (the expansion `e`), the divider's centre moved by `e` times the half extent: one speed from the first tick to the last. Meanwhile the panes' anchors moved by `smoothstep(e)` (`_anchor`), so line and framing were out of step mid-sweep. The divider now sweeps by `smoothstep(e)` too, in step with the anchors. The slam's door keeps its own shape (follow-up 2).
+- In play the sweep happens a few times a match: ai 4 at ticks 1866, 2218 and 2537; ai 7 at 309 (a transformation) and 1904; signaturecity at 484.
+- The cameras do not change: the digests' camera hashes, STATS, SIZE, LAUNCHED and the mass probe are identical to main's in six scenes.
+- New split_sweep row, `takeover divider eased`: a transformation takes the screen from the split and gives it back. First step 10 px a tick, largest 36, against the linear 24 every tick.
 
-New split_sweep row, `split closing eased`: 30 ticks (T_CLOSE 33). The first step is 0.0044 a tick and the last 0.0136, where the linear rate is 0.0303 from the first tick to the last. The worst change of speed in a tick is 0.0061 (the ramp's own is 0.0044). Both fighters stay on the screen.
+Before/after: docs/camera/img/takeover-divider/takeover-divider-before-after.gif.
+
+**The slam's door as a crisp whip (2026-10-23, follow-up 2; parked: docs/camera/pending/director-17-slam-whip.patch, after director-16).** The door is the rusher's pane taking the screen as he closes on the other fighter. It took 0.14 s (8 frames) with the takeover as p cubed: a slow start and all its speed at the stop. Its last frame moved the divider 202 px (at 1024 wide), the largest single step the split makes. It is now Research's crisp whip:
+- 12 frames (`SLAM_TIME` 0.2), the takeover and the separation by smootherstep (a hard ease at both ends), landing on the contact.
+- No blur, no feather beyond the compositor's own.
+- The reason it is a whip and not a cut: the rusher crosses a gap a move would only smear, on the action (the contact). Reduced motion keeps its near-cut (`SLAM_TIME_REDUCED`).
+
+Measured:
+- split_sweep's new `slam door whip` row: 12 frames, first and last steps 3.3 px, largest 98 px, landing one tick before the contact. The old door read 8 frames, 2.9 px first, 202 px last.
+- Mass probe, steps in a pane's camera velocity over 0.01 (and 0.02) of the width a tick, main then this: ai 4 57 (27) to 51 (22); ai 7 87 (40) to 79 (36); ai 39 34 (25) to 37 (25); rushcity 83 (53) to 73 (43); signaturecity 51 (37), unchanged; transform 35 (24) to 29 (18).
+- Cuts, layout changes, strips and the time outside the picture are identical to main's; the share of fighters under 40 px moves by 0.1%.
+
+Gates on bf34d1d4's camera with the half-plane patch, director-16 and director-17: the 18 headless render checks (city: its oks, no failures), split_sweep and determinism plain and --intro pass. Not yet run at the pause (Orb's, 2026-10-23): the flash collapse clip for director-16 and director-17, and the slam's before/after GIF. The script is ready (see docs/camera/pending/README-followups.md).
+
