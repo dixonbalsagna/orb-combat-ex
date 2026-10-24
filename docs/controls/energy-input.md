@@ -35,22 +35,28 @@ M = the energy modifier held. Pad = Arena (RB held). Keys = solo keyboard (Q hel
 | **Energy medium** | M + Y | M + K | Power + Attack hold (12 ticks) | a lob after its 12-tick wind-up | a lob per press | a **charged lob** past 16 | fires at the charge reached |
 | **Energy heavy (beam)** | M + B | M + L | Power + Attack swipe up | the technique, short, after 28 ticks | short pulses, one per press | a **charged beam** past 32, in stages | fires at the stage reached |
 | **Energy grab** | M + A | M + I | Context (tap) | the technique's first beat: net, ring, ... (per fighter) | not defined (one beat per press) | held = the technique's carry or brace if it has one (GD) | ends the carry |
-| **Trap (Guard + energy)** | LB held + M + a face button | Shift held + M + a face key | see section 5 | the strength's blast leaves a mine where it lands | one mine per press, capped (GD) | the charged form leaves a bigger one | as the strength |
+| **Trap (a guarded throw)** | Guard (LB), then any energy face button within the window; see section 5 | Shift, then M + a face key within the window | Guard, then Attack within the window | the blast leaves a mine where it lands | one mine per press, capped (GD) | the charged form leaves a bigger one | as the strength |
 
-## 5. By device: can it be pressed?
+## 5. By device: can it be pressed? And the trap
 
-| Device | The modifier M | Guard + M + a face button | Verdict |
-| :--- | :--- | :--- | :--- |
-| **Arena pad** | RB (index) | LB + RB (both index) + a face button (thumb) | **Comfortable.** The left stick is the other thumb; three buttons, three digits, no re-grip |
-| **Solo keyboard** | Q | Shift + Q (left hand) + J, K, L or I (right hand) | **Fine, at the edge of ghosting** on a cheap board (Shift + Q + J + a move key). The latch and "energy: toggle" settings are the relief |
-| **Shared keyboard** | E (P1), O (P2) | Shift + E + F/G/R (P1); Semicolon + O + H/M/U (P2) | **Cramped**, as the shared layouts already are. Guard + energy is the weak point of two humans on one keyboard |
-| **Simple pad** | none (the director's `autoMode`); RT held is the Power layer | Guard is B (east) | **Reachable only if the Power layer becomes the energy layer** (below). Guard + RT + X is two thumbs and an index: possible, tight |
-| **Simple touch** | none (`autoMode`); Power is the layer | Guard + Power + Attack = three right-hand fingers | **Not reachable as a chord.** The trap must be one modifier or none: see below |
-| **Full touch** (tablets) | the Mode button (tap latches, hold is momentary) | Guard (left stack) + Mode (right) + a diamond button | **Reachable on a tablet** (two thumbs and an index), tight on a phone |
+| Device | The modifier M | Verdict |
+| :--- | :--- | :--- |
+| **Arena pad** | RB (index) | **Comfortable** for M + a face button. The left stick is the other thumb |
+| **Solo keyboard** | Q | **Fine**: Q with J, K, L or I |
+| **Shared keyboard** | E (P1), O (P2) | **Cramped**, as the shared layouts already are |
+| **Simple pad** | none (the director's `autoMode`); RT held is the Power layer | **Reachable only if the Power layer becomes the energy layer** (below) |
+| **Simple touch** | none (`autoMode`); Power is the layer | Same: Power + Attack tap, hold, swipe |
+| **Full touch** (tablets) | the Mode button (tap latches, hold is momentary) | **Reachable** (Mode + a diamond button) |
 
-**Simple layouts: the Power layer is the energy layer.** Simple has no mode control, and the director already chooses blasts at range and melee close. I propose that on Simple pad and Simple touch, **Power held means "energy" for the face buttons** (Attack tap, hold, swipe up map to light, medium, heavy; `special_auto` retires into those), and a Simple player who never touches Power gets the director's pick as today. That is one rule, and it keeps the layout at the four buttons the thumb already has.
+**Simple layouts: the Power layer is the energy layer.** Simple has no mode control, and the director already chooses blasts at range and melee close. I propose that on Simple pad and Simple touch, **Power held means "energy" for the face buttons** (Attack tap, hold, swipe up map to light, medium, heavy; `special_auto` retires into those), and a Simple player who never touches Power gets the director's pick as today.
 
-**The trap on touch has no chord.** I recommend the second of Orb's two readings: **a Guard held while an energy attack is thrown leaves the trap as the blast lands** ("defensive blocks while hitting energy attacks would leave mines"). On touch the player holds Guard with one finger and attacks with the thumb, which is the guard-and-attack case the phone doc already flags as the hard one (`phone-feasibility.md` section 2), but it needs no third finger. A one-finger form is a **Context tap that appears only when a trap can be laid**, using the same availability event as the transform. Game Design to rule which.
+**The trap: not a chord (corrected 2026-10-23).** My first draft read "defensive blocks while hitting energy attacks" as Guard + modifier + a face button held together. **The input layer cannot do that:** the four shoulder stances are exclusive (ruled 2026-10-04: the newest wins and the older button's fields go neutral; `stance_test.gd` asserts it), so pressing RB while LB is down drops the guard. Allowing the chord would mean un-ruling that exclusivity in the layer, plus a director branch that keeps the guard through a blast, and on touch it is three right-hand fingers. The cheaper readings, in order:
+
+1. **Recommended: the trap is a consequence of a block, read by the director, with no input change.** A fighter who has just *blocked* (a perfect block already opens a riposte window, 30 ticks in Game Design's rule) and throws an energy attack inside that window leaves a trap where the blast lands. "Blocking while hitting energy attacks" becomes "block, then answer with energy": press Guard, then an energy button. It works the same on every device including a phone (Guard tap, then Attack), needs no chord, no change to the exclusivity, no new intent bit and no new input state; the director needs only the block's tick, which it has for the riposte.
+2. **If Orb wants it without a successful block: a recent guard.** The sim keeps the last tick the guard was down (`guardLast`, one hashed field beside `guardSince`: Simulation's grant), and an energy attack thrown within W ticks (about 12) of it leaves the trap. A guard tap, then a face button, is the whole input. No chord, but one new sim field.
+3. **The explicit chord** (Guard + modifier + face together) as first drafted: only if Game Design wants the player to choose a trap at will. Cost: the exclusivity change in my layer, a director branch that holds the guard through a blast, and no touch form.
+
+**A already lays a mine** (energy family held outside an exchange, `DirBlast.layMine`): that stays the deliberate, placed mine. The trap above is the other kind, a by-product of a guarded counter.
 
 ## 6. Beam or blast, and not misfiring
 
@@ -77,16 +83,16 @@ Rumble is never the only cue (UI, sound and the body say the same), is silent on
 - **The modifier:** the existing "Energy: hold or toggle" setting (default hold) stays; with toggle, a tap of RB latches energy until the next tap. The Simple layouts need no modifier.
 - **Charges:** the existing latched-charge setting makes B press-on, press-off. A latched B charges until pressed again, then fires at the stage reached; **no auto-fire at full** is what makes this safe for a player who cannot time a release.
 - **Charges off:** every press is a tap, so a player who cannot hold gets the uncharged technique and never a beam. Game Design should decide whether that is acceptable or whether a "charge for me" assist exists.
-- **One hand:** the Simple layouts reduce the grammar to Attack + Power on the right and a stick on the left; a one-handed pad player is served by the latch (no held modifier, no held charge). The guard chord is the one thing a single hand cannot do: it needs the "Guard held while an energy attack is thrown" rule (section 5) to be satisfied by a guard toggle, which the phone doc already proposes.
+- **One hand:** the Simple layouts reduce the grammar to Attack + Power on the right and a stick on the left; a one-handed pad player is served by the latch (no held modifier, no held charge). The trap needs no chord (section 5), so nothing in the grammar asks for two held buttons from one hand beyond the modifier.
 - **Left-handed and rebinding:** nothing here adds a control; remapping covers it.
 
 ## 9. Risks, and questions
 
-- **Guard held + an attack press (Encounter).** I have not checked what the director does with a face press while Guard is held. For the trap to work it must keep the guard (stance DEFENSIVE) and throw the attack, not drop the guard. If it drops it today, that is a director change, not an input one.
+- **The trap needs a trigger Game Design picks** (section 5): a block's riposte window (recommended, no input change), a recent guard (one sim field) or an explicit chord (un-rules the stance exclusivity and needs a director branch). The Guard-then-Attack input is the same for the first two.
 - **Mash vs hold on the medium and heavy.** The decision points (16 and 32 ticks) are already used for martial and have the touch cost measured (a modelled 3.66% of touch taps read as a medium at 12). The same read applies to the energy strengths unchanged.
-- **Keyboard ghosting** on Shift + modifier + a face key + a move key. The shared keyboard is worst. Not new, but the trap adds a fourth key.
+- **Keyboard ghosting** is no longer a trap risk (no chord); it stays where it was for the modifier plus a face key plus a move key.
 - **Grab is the odd one.** "Each fighter treats it a bit differently" (net, ring, ...) means the grab has no common tap/hold meaning: a fighter's grab may be one beat, a hold or a placement. The input only guarantees tap, hold and release; each fighter's data must say which it uses.
-- **Questions for Game Design:** which strengths charge (I recommend medium and heavy, never the light); the stage count and lengths; whether Guard or a dodge cancels a charge; no auto-fire at full; whether a trap is a chord or a consequence of throwing while guarding; whether the old signature and the heavy technique are the same thing; and whether the Power layer replaces `special_auto` on Simple.
+- **Questions for Game Design:** which strengths charge (I recommend medium and heavy, never the light); the stage count and lengths; whether Guard or a dodge cancels a charge; no auto-fire at full; which of the three trap triggers in section 5; whether the old signature and the heavy technique are the same thing; and whether the Power layer replaces `special_auto` on Simple.
 
 ## 10. What building it would take (later, after the ruling)
 
