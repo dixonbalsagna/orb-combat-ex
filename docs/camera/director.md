@@ -404,3 +404,70 @@ Measured (`clip_digest.gd` with a scratch probe, reduced, on 0c782165): steps in
 - Most of what is left is in the slam and the split's morph (`slam//morph`, `opening//morph`), which the mass leaves alone. That is window 4.
 
 Before/after: docs/camera/img/flight-mass/flight-mass-before-after.gif (main on the left, the mass on the right; ai 4 and ai 7, real web build, Tools' launcher).
+
+**The shot grammar for the big moments (2026-10-23, window 2; parked: docs/camera/pending/director-13-shot-grammar.patch).** The EP's brief: launches follow the sent body and reframe on the return; beam struggles push in slowly as they build, then release; transformations and power-ups get a low hero angle and a crane up; KOs get a held wide. Two were built, one was already there, and two were changed:
+- **Transformations.** Before, the full version's break was a hard cut to a -8 degree low angle and the settle a hard cut back. Under Reduce flashing (shipped on) the break was calm and had no angle at all. Now:
+  - The low hero angle eases in over the whole gather (smoothstep, at most 0.35 degrees a tick). The fighter sinks to 0.74 of the height with the sky above him.
+  - The break holds it.
+  - The settle cranes up to level and back to the pose over 85% of the half it still runs (`TRANSFORM_CRANE`). The angle reaches level before the shot ends.
+  - The short version gets half the angle (`HERO_PITCH_SHORT`, -4), craned up over its break.
+  - The angle is a move, so the calm break keeps it too. One cut is left: the full version's break in ordinary mode, a shock beat on the break's onset (section 11). The angle no longer jumps at it. The settle's cut back is gone.
+  - Reduced motion: no angle.
+- **Power-ups.** A tier-up outside a transformation, in the plain one view, now asks the angle ledger for a low angle whatever the ground (`ANGLE_*`: in over 0.45 s, held 1 s, craned up to level over 0.6 s; one angle in 20 s at most).
+- **Beam struggles.** The push used to tighten only in the last 40% of the struggle's time (4%). It now builds over the whole clash, 8% (`STRUGGLE_BUILD`), timed on the clash's own length (1.6 s) instead of a 3 s guess. The lean's push near a fighter is as before. The release lets go with an ease out: fast first, soft landing (the weight squared on the way out, over `STRUGGLE_FADE`). Reduce flashing halves the push, as before.
+- **Launches.** Already in the grammar: the launch shot follows the sent body (`solo_kind` launch, trailing anchor), and its return eases back to the layout the pair needs over `T_SETTLE`. Window 1's mass now rides the follow too. No change.
+- **KOs.** Already a held wide: the loser's close-up, then the wreck's pull back to the winner small in the wreckage (`R_WRECK`, 29 px at 720p), held until the match resets. Its one cut is a set piece's shot (section 11). No change.
+
+New and changed split_sweep rows:
+- `shot transformation full`: one cut at the break; the angle eases in (-3.5 at tick 30, -8.0 at 58) and steps at most 0.35 degrees a tick; the crane reaches level by the shot's end at tick 134.
+- `transformation calm` (both): no cut, the angle down to -8 with steps of at most 0.35.
+- `shot transformation short`: no cut, the angle down to -4, back to level.
+- `power-up angle`: -7.0, steps of at most 0.39, no cut, back to level.
+- `beam struggle build and release`: x1.043 at 1.4 s, x1.080 at the end, released fast (a third in 8 ticks against about a quarter for an ease both ways), back to x1.000, no cut.
+
+Gates on 4cbf8b37 with the patch: the 18 headless render checks (city: its oks, no failures), split_sweep and determinism plain and --intro pass. The flash collapse clip reads the same as main in both modes (normal 3 / 3.5, reduced 3 / 3.5, main's own FAIL).
+
+Before/after: docs/camera/img/shot-grammar/shot-grammar-before-after.gif. It shows the transform scene's full transformation (tick 60, Reduce flashing on, so a calm break), then clashcity's beam clash (from tick 984).
+
+**The landscape shot (2026-10-23, window 3; parked: docs/camera/pending/director-14-landscape-shot.patch, on top of director-13).** The EP's brief: "a short eased establishing frame when a fight crosses into a new biome or set piece, never costing readability". World's gen 2 biomes and the settlements' landmarks give it real places. `_scape_tick` and `CamParams.SCAPE_*`:
+- **Triggers.**
+  - The pair's middle enters a new biome and stays 0.5 s (`SCAPE_SETTLE`, no flicker at a border).
+  - Or a standing landmark (`Building.landmark`) first comes into the frame; each landmark once a match.
+  - A relocation (the middle jumping more than half the view) adopts the new ground silently: it is a cut of its own. The match's first ground is the intro's to show.
+- **When.**
+  - The plain one view only: no split, shot, cut-in, strip, clash, ring turn, intro or fold.
+  - A calm pace (relax or fade), no anticipation of contact.
+  - Not while the scroll governor holds the view or a fighter travels faster than 1,200 u/s: a chase is action.
+  - None within 3 s of a peak, one in 30 s at most. A crossing not shown within 4 s is let pass.
+- **The shot.**
+  - The view eases out to 0.72 of its size, never taking a fighter under 0.06 of the height (43 px at 720p) or under his size before.
+  - A slight low angle (-4 degrees, ground-limited), because a dolly alone barely changes the far land.
+  - A lean of 0.15 of the width toward the new ground or the landmark, both fighters kept inside 0.42 of the width.
+  - In over 0.6 s, held 1 s, back over 0.6 s. No cut.
+  - A hit (a peak or a build), the anticipation of one, a shot or the split lets it go at once, eased. Another shot that takes the angle takes it; the view still eases back.
+
+Measured (`clip_digest.gd`, both modes, on 4cbf8b37 with director-13): one landscape shot each in ai 39 (a biome, tick 1910), rushcity (a landmark, tick 505) and signaturecity (a landmark, tick 1390); none in ai 4, ai 7 or transform. Cuts, layout changes, strips, blow pushes, the time outside the picture, anticipations, angle shots, the share of fighters under 40 px and the p10 size are identical. The median drawn size falls 2 to 3 px over the city scenes.
+
+split_sweep rows:
+- `landscape shot`: a flight from village to plains at 480 u/s. One shot at tick 304, widest x0.723, angle -4.0 with steps of 0.17, smallest fighter 63 px (from 86), no cut, both on screen, back within 2% of the same flight with it off.
+- `landscape shot let go by a hit`: a peak in the hold eases it out.
+- A fix to the sweep: a re-seed also clears the travel scan's last frame (a row that seeds twice compared its second flight with the first one's end).
+
+**Split grace (2026-10-23, window 4; parked: docs/camera/pending/director-15-split-grace.patch, on top of director-14).** The EP's brief: "the divider's motion eased, framing that keeps both fighters readable at every separation". What was tried, measured with the mass probe (`clip_digest.gd`, reduced; steps in a pane's camera velocity over 0.01 and 0.02 of the width a tick):
+
+| Variant | ai 4 | ai 7 | rushcity | signaturecity | Off-screen, layouts |
+| :--- | ---: | ---: | ---: | ---: | :--- |
+| Main + 13 + 14 | 57 / 27 | 87 / 40 | 83 / 53 | 50 / 37 | rushcity 127, 12 |
+| Everything eased (opening, closing, the takeovers) | 54 / 27 | 81 / 40 | 118 / 67 | 51 / 38 | rushcity 130, 13 |
+| The separation only | 55 / 27 | 84 / 40 | 115 / 66 | 51 / 38 | the same |
+| ... with the mass taking a pane back gently | 54 / 27 | 87 / 41 | 113 / 64 | 55 / 40 | rushcity 130, 13 |
+| An opening that starts at speed and lands soft, the closing eased | 55 / 27 | 84 / 40 | 82 / 58 | 54 / 36 | rushcity 169 and a cut |
+| **The closing only (parked)** | 55 / 27 | 87 / 40 | 84 / 53 | 50 / 38 | the same as main |
+
+An eased opening starts slowly while a fighter is flying out of the view. The panes then catch up harder at full separation: in rushcity the steps moved from the morph into the split, and a third more of them. So:
+- **Parked: the closing.** The divider's speed rises over 30% of the closing and brakes to land (`CLOSE_RAMP`, `_close_step`). It never steps from rest to the full rate and back. The whole closing takes no longer: 30 ticks against T_CLOSE's 33. Cuts, layout changes and the time outside the picture are as main's in every scene.
+- **Kept linear: the opening.** It is a move on the action (a fighter flying out of the view), with Research's reason 1, and it starts at once. Its end is not braked, because braking it costs readability (the measurements above).
+- **Kept: the slam.** A 0.14 s door that closes on the rusher's impact (section 11), a motion on the action.
+- **Readable at every separation** was already gated: split_sweep's rows hold both fighters on the screen and above the floor through every opening, closing, slam and swing (`R_FLOOR`, the pane floor, the on-screen counts). The SIZE probe's share under 40 px is unchanged in every scene.
+
+New split_sweep row, `split closing eased`: 30 ticks (T_CLOSE 33). The first step is 0.0044 a tick and the last 0.0136, where the linear rate is 0.0303 from the first tick to the last. The worst change of speed in a tick is 0.0061 (the ramp's own is 0.0044). Both fighters stay on the screen.

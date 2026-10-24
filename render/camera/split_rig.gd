@@ -114,7 +114,9 @@ var feather_mode: int = 0                # the feathered sweep of a layout chang
 var _gov_arm_until: float = -1.0e9       # the scroll governor is armed (at a charge's cue) until this time ...
 var _gov_arm_speed: float = 0.0          # ... as if the view were already moving this fast (units a second)
 var flash_ask: Callable = Callable()     # (source, area as a fraction of the screen, step) -> whether the flash register grants it; SplitView sets it
-var _tf_calm: bool = false               # this transformation's break is calm: no hard cut, no low angle (the register refused it, or reduced flashing)
+var _tf_calm: bool = false               # this transformation's break is calm: no hard cut (the register refused it, or reduced flashing)
+var _tf_w: float = 0.0                   # the hero angle's weight: 0 level, 1 the low angle (the gather eases it in, the settle cranes up)
+var _tf_p0: float = 0.0                  # the angle the shot took over (an angle shot still easing), eased from, not jumped
 var flash_reduced: bool = false          # the reduced-flashing setting (the host passes the register's `reduced`): calmer passes
 var scroll_gov_ticks: int = 0            # ticks the scroll governor held the zoom back (counted for the tests)
 var _vlx: Array = [0.0, 0.0]             # the velocity the follow point's lead uses, its change per tick limited (units a second)
@@ -1284,6 +1286,7 @@ func _read_events(S: SimState, events: Array) -> void:
 					var a: int = int(_ef(ev, "actor", -1))
 					if a >= 0 and a < 2 and not (solo_kind == "transform" and solo_slot == a):
 						_push[a] = 0.0
+						_ang_want = "tier_up"   # a power-up: the low hero angle, craned up after (shot grammar), on the angle ledger
 			"bounce", "land":
 				# World's ground contact (docs/world/ground-contact.md section 4). The first contact of a journey is the
 				# impact the human-attacker hold waits for; every bounce gets a small impact push on the pane that has him.
@@ -1473,8 +1476,10 @@ func _begin_solo(kind: String, slot: int, prio: int, sl: float, S: SimState = nu
 	_tf_phase = ""
 	_tf_ver = ""
 	_tf_calm = false
+	_tf_w = 0.0
 	if not _pitch_in_move():
 		_shot_pitch = 0.0   # an angle shot or the turn's way back eases its own angle out: no jump
+	_tf_p0 = _shot_pitch
 	solo_phase = "follow"
 	_solo_dur = 0.0
 	solo_target = 1.0
@@ -1908,9 +1913,13 @@ func _overlay_cam(S: SimState) -> Vector3:
 	return _cam_at(fx, fy, fz - _ov_focus_z, z, Vector2(vw * 0.5, vh * 0.62))
 
 
-## The transformation shot's three beats. Full: the break is a hard cut to a low wide angle (the pitch drops, the fighter
-## sits low in the frame against the sky), the settle cuts back to the pose and, halfway through, the shot ends and the
-## camera pulls back to frame both. Short: the break is a snap zoom out, the settle a straight pull back.
+## The transformation shot's three beats, in the shot grammar's low hero angle and crane up (2026-10-23, the EP's window 2):
+## the gather pushes in while the camera sinks to a low angle (the fighter low in the frame, the sky above him), eased over
+## the whole gather; the break holds it; the settle cranes up to level and back to the pose, eased, before the shot ends
+## and the camera pulls back to frame both. Full, ordinary mode: the break is one hard cut to the wide (a shock beat on the
+## break's onset, director.md section 11); the angle does not jump at it, it is already low. Under Reduce flashing or a
+## refusal from the flash register the break is calm: no cut, the zoom eased. Short: half the angle, the crane up over
+## the break, no cut. Reduced motion: no angle.
 func _transform_beats(S: SimState) -> void:
 	if _tf_phase == "":
 		return
@@ -1918,36 +1927,51 @@ func _transform_beats(S: SimState) -> void:
 	var ph: String = "gather" if ti < _tf_g else ("break" if ti < _tf_g + _tf_b else "settle")
 	if ph != _tf_phase:
 		_tf_phase = ph
-		# The break's hard cut to a low angle is a whole-frame change (more dark sky: 0.249 to 0.151 mean luminance in Tools' ai 4
-		# clip) and the settle's cut back another within half a second. It asks the flash register as the break begins; refused,
-		# or under reduced flashing, the break is calm: the same beats, the zoom easing (not snapped) and no cut or low angle.
+		# The break's hard cut is a whole-frame change (a shot size). It asks the flash register as the break begins; refused,
+		# or under reduced flashing, the break is calm: the same beats, the zoom easing (not snapped) and no cut.
 		if _tf_ver == "full" and ph == "break":
 			_tf_calm = flash_reduced or (flash_ask.is_valid() and not bool(flash_ask.call("transform_cut", 1.0, 0.4)))
-		if _tf_ver == "full" and _tf_calm:
-			pass   # the filters take the zoom to the break's and the settle's size: no cut, no snap
-		elif _tf_ver == "full":
+		if _tf_ver == "full" and ph == "break" and not _tf_calm:
 			_cut_now = true
 			_snap_focus(S, solo_slot)
 			_zo[solo_slot] = _own_zoom_target(S, solo_slot)
-			_shot_pitch = _break_pitch() if ph == "break" else 0.0
-		else:
+		elif _tf_ver != "full":
 			_zo[solo_slot] = _own_zoom_target(S, solo_slot)
+	_hero_angle(ti)
 	if _tf_ver == "full" and ti >= _tf_g + _tf_b + _tf_s / 2:
 		_end_solo(S)
 	elif _tf_ver == "short" and ti >= _tf_g + _tf_b:
 		_end_solo(S)
 
 
-## The break's pitch: BREAK_PITCH, limited so the camera stays above the ground at the fighter's feet. The camera orbits
-## the plane point at the screen's centre at distance K vh / zoom, so with the chest `off` pixels below the centre it is
-## CHEST + (off + K vh sin(pitch)) / zoom units above his feet (Rendering's rule, docs/rendering/README.md). The anchor
-## is fixed (0.74 vh), so a low zoom setting, which makes `zoom` small, is what pulls the angle back toward 0.
-func _break_pitch() -> float:
-	return _low_pitch(CamParams.BREAK_PITCH, 0.74)
+## The transformation's hero angle at beat tick `ti`: in over the gather, held through the break, craned up to level over the
+## settle's first TRANSFORM_CRANE share of the shot's remaining half (the short version's over its break), smoothstep both ways
+## (at most about 0.3 degrees a tick, under PITCH_CUT_DEG: a move, not a cut).
+func _hero_angle(ti: int) -> void:
+	if reduced_motion:
+		_tf_w = 0.0
+		return
+	var w: float = 1.0
+	if ti < _tf_g:
+		w = smoothstep(0.0, 1.0, float(ti) / float(maxi(_tf_g, 1)))
+	elif _tf_ver == "full" and ti >= _tf_g + _tf_b:
+		var n_up: float = maxf(float(_tf_s / 2) * CamParams.TRANSFORM_CRANE, 1.0)
+		w = 1.0 - smoothstep(0.0, 1.0, float(ti - _tf_g - _tf_b) / n_up)
+	elif _tf_ver != "full" and ti >= _tf_g:
+		w = 1.0 - smoothstep(0.0, 1.0, float(ti - _tf_g) / float(maxi(_tf_b - 2, 1)))
+	_tf_w = w
+	var deg: float = CamParams.BREAK_PITCH if _tf_ver == "full" else CamParams.HERO_PITCH_SHORT
+	var hp: float = _low_pitch(deg, lerpf(0.62, 0.74, w))
+	var from: float = _tf_p0 if ti < _tf_g else 0.0   # an angle it took over eases into the hero angle; the crane ends level
+	var want: float = lerpf(from, hp, w)
+	# the ground limit moves with the zoom (the short break's snap out): kept to a move, except on the full break's own cut
+	_shot_pitch = want if _cut_now else move_toward(_shot_pitch, want, CamParams.HERO_PITCH_RATE)
 
 
 ## The low angle `deg` (negative), limited so the camera stays above the ground at the fighter's feet when his chest is
-## at `anchor_y` of the screen height (the rule above).
+## at `anchor_y` of the screen height. The camera orbits the plane point at the screen's centre at distance K vh / zoom, so
+## with the chest `off` pixels below the centre it is CHEST + (off + K vh sin(pitch)) / zoom units above his feet
+## (Rendering's rule, docs/rendering/README.md): a low zoom setting, which makes `zoom` small, pulls the angle back toward 0.
 func _low_pitch(deg: float, anchor_y: float) -> float:
 	var z: float = maxf(_zo[solo_slot], 0.01)
 	var off: float = vh * (anchor_y - 0.5)
@@ -2344,7 +2368,8 @@ func _struggle_tick(S: SimState) -> void:
 			_st_mid = m
 			if _st_t1 <= time:
 				_st_t0 = time
-				_st_t1 = time + 3.0
+				var cdur = cl.get("dur")   # the clash's own length (1.6 s), so the push builds over the whole of it; 3 s where none is given
+				_st_t1 = time + (float(cdur) if cdur != null and float(cdur) > 0.0 else 3.0)
 		else:
 			_st_mid += (m - _st_mid) * (1.0 - exp(-DT / CamParams.STRUGGLE_MID_TAU))
 	_st_on = on
@@ -2416,10 +2441,12 @@ func _merged_target(S: SimState) -> Vector3:
 		mx = SimWrap.wrap(mx + shift)
 		var lean: float = absf(_st_mid - 0.5) * 2.0
 		var frac: float = clampf((time - _st_t0) / maxf(_st_t1 - _st_t0, 0.5), 0.0, 1.0)
-		var tight: float = CamParams.STRUGGLE_PUSH * smoothstep(0.3, 0.9, lean) + CamParams.STRUGGLE_TIME_PUSH * smoothstep(0.6, 1.0, frac)
+		# the shot grammar (2026-10-23): a slow push in as the struggle builds, over its whole time, then the release
+		var tight: float = CamParams.STRUGGLE_PUSH * smoothstep(0.3, 0.9, lean) + CamParams.STRUGGLE_BUILD * smoothstep(0.0, 1.0, frac)
 		var d_far: float = maxf(absf(SimWrap.sdx(mx, ca.x)), absf(SimWrap.sdx(mx, cd.x)))
 		var tight_cap: float = maxf(0.0, 0.44 * vw / maxf(d_far * z * mult, 1.0) - 1.0)   # the tightening leaves both fighters inside 0.44 of the width
-		mult *= 1.0 + minf(tight * sw_st * (0.5 if flash_reduced else 1.0), tight_cap)
+		var rel_w: float = sw_st if _st_on else _st_w * _st_w   # the release lets go fast and lands soft (an ease out), the build eased both ways
+		mult *= 1.0 + minf(tight * rel_w * (0.5 if flash_reduced else 1.0), tight_cap)
 		# The brink: the meeting point and the fighter about to lose, closer; the winner may go off the edge, his beam comes in from it.
 		var w_b: float = _brink_w
 		if w_b > 0.0:
@@ -2792,8 +2819,8 @@ func _anchor(S: SimState, i: int) -> Vector2:
 	if solo_kind == "wreck" and solo_slot == i:
 		var ap: float = 1.0 if reduced_motion else smoothstep(0.0, 1.0, clampf(solo_t / CamParams.WRECK_T, 0.0, 1.0))
 		solo_pt = Vector2(vw * (0.5 - CamParams.WRECK_ANCHOR_X * float(wreck_dir) * ap), vh * 0.70)
-	if solo_kind == "transform" and solo_slot == i and _tf_phase == "break" and _tf_ver == "full" and not _tf_calm:
-		solo_pt.y = vh * 0.74   # low in the frame, the sky above him
+	if solo_kind == "transform" and solo_slot == i and _tf_phase != "":
+		solo_pt.y = vh * lerpf(0.62, 0.74, _tf_w)   # low in the frame, the sky above him, as the hero angle sinks; back as it cranes up
 	# A shot's anchor is held while the shot fades out (solo_w easing to 0 after it ended): the fallback was the default one,
 	# and the picture jumped by the difference (0.13 of the width at the end of a launch's hold, tick 2167 of ai seed 1).
 	if solo_kind != "" and solo_slot == i:
@@ -4322,6 +4349,8 @@ func _angle_tick(S: SimState) -> void:
 	var fam: String = String(CamParams.ANGLE_BIOME.get(WorldBiomes.biomeAt(mid), ""))
 	if fam == "":
 		fam = "high" if _ang_last_family == "low" else "low"
+	if want == "tier_up":
+		fam = "low"   # a power-up is seen from below, whatever the ground
 	if fam == "high" and not _ground_shows(S, mid):
 		fam = "low"   # a high angle only over ground with something to show; elsewhere the low angle (or none)
 	var p: float = CamParams.ANGLE_HIGH if fam == "high" else _ground_low(CamParams.ANGLE_LOW, _mz)

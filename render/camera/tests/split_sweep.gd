@@ -202,6 +202,7 @@ func _run() -> void:
 	await _scenario("tier-up push", func(): return _tier_push(), {})
 	await _scenario("fold", func(): return _fold(), {})
 	await _scenario("angle shot", func(): return _angle_shot(), {})
+	await _scenario("power-up angle", func(): return _power_up_angle(), {})
 	await _scenario("arena turn, one view", func(): return _arena_turn(600.0), {})
 	await _scenario("arena turn, split", func(): return _arena_turn(9000.0), {})
 	await _scenario("solo follow", func(): return _solo_follow(), {})
@@ -231,6 +232,7 @@ func _run() -> void:
 		await _scenario("many bodies %s" % kind, func(): return _many_row(String(kind)), {})
 	await _scenario("beam struggle framing off", func(): return _struggle_row(false), {})
 	await _scenario("beam struggle framing on", func(): return _struggle_row(true), {})
+	await _scenario("beam struggle build and release", func(): return _struggle_build(), {})
 	for lh in [[6600.0, 13200.0, true], [6600.0, 13200.0, false], [9000.0, 18000.0, true], [3000.0, 6000.0, true]]:
 		await _scenario("launch hold %s %d u/s" % ["on" if bool(lh[2]) else "off", int(lh[0])], func(): return _launch_hold_run(float(lh[0]), float(lh[1]), bool(lh[2])), {})
 	for ln in [2, 3, 5]:
@@ -1416,7 +1418,7 @@ func _many_row(kind: String) -> Dictionary:
 
 ## The beam struggle's framing (docs/camera/beam-struggle.md): a stand-in for Encounter's tug of war (`S.game.clash` with A, D and `mid`, which Simulation's
 ## slice adds to Clash), the point driven from the middle to the defender's hands and back, 240 ticks, then no clash. With the framing on: the focus leans
-## toward the point by at most STRUGGLE_FOCUS of its offset, the view tightens by at most STRUGGLE_PUSH + STRUGGLE_TIME_PUSH, no tick travels over the
+## toward the point by at most STRUGGLE_FOCUS of its offset, the view tightens by at most STRUGGLE_PUSH + STRUGGLE_BUILD, no tick travels over the
 ## bound, the end of the struggle is no step (the weight fades over STRUGGLE_FADE), both fighters stay on the screen. With it off nothing moves.
 class FakeClash:
 	var A = null
@@ -1486,6 +1488,61 @@ func _struggle_row(on: bool) -> Dictionary:
 	else:
 		_check(max_lean < 1.0, "%s: the focus moved %.1f units with the framing off" % [_label, max_lean])
 	stats["detail " + _label] = "focus lean %.0f units, view tightened %.3f, worst travel %.4f at tick %d, off screen %d, the winner off the edge %d (brink %d ticks)" % [max_lean, max_tight, worst_travel, worst_k, off_screen, winner_off, brink_seen]
+	return {}
+
+
+## The shot grammar's beam struggle (2026-10-23): with the meeting point held at the middle (no lean, no brink), the view pushes in
+## slowly as the struggle builds, over its whole time, then the release lets go: a fast start and a soft landing, back to the
+## pair's framing, no tick over the travel bound, no cut, both fighters on the screen.
+func _struggle_build() -> Dictionary:
+	_rig.struggle_framing = true
+	var ax: float = 60000.0
+	_pose(ax, 40.0, ax + 800.0, 40.0)
+	_seed_rig()
+	for _i in range(90):
+		_tick_rig()
+	var z0: float = _rig.current().cam_z[0]
+	var fc := FakeClash.new()
+	fc.A = _S.fighters[0]
+	fc.D = _S.fighters[1]
+	fc.mid = 0.5
+	_S.game.clash = fc
+	var zs: Array = []
+	var prev: Vector3 = Vector3.ZERO
+	var prev_ok: bool = false
+	var worst_travel: float = 0.0
+	var cuts: int = 0
+	var off: int = 0
+	for k in range(300):
+		if k == 200:
+			_S.game.clash = null
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		var cam: Vector3 = Vector3(cur.cam_x[0], cur.cam_y[0], cur.cam_z[0])
+		zs.append(cam.z / z0)
+		if cur.cut:
+			cuts += 1
+		if prev_ok and not cur.cut:
+			var dx: float = SimWrap.sdx(prev.x, cam.x)
+			var dy: float = cam.y - prev.y
+			worst_travel = maxf(worst_travel, sqrt(dx * dx + dy * dy) * cam.z / vw + 0.5 * absf(log(cam.z / maxf(prev.z, 0.0001))))
+		prev = cam
+		prev_ok = true
+		for i in range(2):
+			if not _on_screen(cur, i):
+				off += 1
+	_S.game.clash = null
+	var z100: float = float(zs[100])
+	var z199: float = float(zs[199])
+	var drop: float = z199 - float(zs[299])
+	var early: float = z199 - float(zs[208])
+	_check(z199 > z100 + 0.02, "%s: the view did not keep pushing in as the struggle built (%.3f at 100 ticks, %.3f at 199)" % [_label, z100, z199])
+	_check(z199 >= 1.0 + 0.5 * CamParams.STRUGGLE_BUILD, "%s: the build pushed in only %.3f" % [_label, z199 - 1.0])
+	_check(absf(float(zs[299]) - 1.0) < 0.02, "%s: the release did not come back to the pair (%.3f)" % [_label, float(zs[299])])
+	_check(drop > 0.0 and early >= 0.3 * drop, "%s: the release did not let go fast (%.3f of %.3f in its first 8 ticks; an ease both ways gives about a quarter)" % [_label, early, drop])
+	_check(worst_travel <= CamParams.SCROLL_MAX, "%s: the camera travelled %.4f of the width in a tick (bound %.3f)" % [_label, worst_travel, CamParams.SCROLL_MAX])
+	_check(cuts == 0 and off == 0, "%s: %d cuts, %d ticks a fighter off the screen" % [_label, cuts, off])
+	stats["detail " + _label] = "zoom x%.3f at 1 s 40, x%.3f at the end (3 s 20), released %.3f of %.3f in 8 ticks, back to x%.3f, worst travel %.4f" % [z100, z199, early, drop, float(zs[299]), worst_travel]
 	return {}
 
 
@@ -3585,31 +3642,47 @@ func _shot_transform_full() -> Dictionary:
 	var size_break: float = 0.0
 	var size_settle: float = 0.0
 	var pitch_in_break: float = 0.0
+	var pitch_gather_end: float = 0.0
+	var pitch_mid_gather: float = 0.0
+	var pitch_step: float = 0.0
+	var pitch_at_end: float = 99.0
 	var ended_at: int = -1
 	var first: float = _apparent_px(0, _rig.current())
+	var p_prev: float = _rig.current().pitch
 	for k in range(1, 181):
 		_tick_rig()
-		if _rig.current().cut:
+		var cur: SplitFrame = _rig.current()
+		if cur.cut:
 			cut_ticks.append(k)
+		else:
+			pitch_step = maxf(pitch_step, absf(cur.pitch - p_prev))
+		p_prev = cur.pitch
+		if k == 30:
+			pitch_mid_gather = cur.pitch
 		if k == 58:
-			size_gather_end = _apparent_px(0, _rig.current())
+			size_gather_end = _apparent_px(0, cur)
+			pitch_gather_end = cur.pitch
 		if k == 80:
-			size_break = _apparent_px(0, _rig.current())
-			pitch_in_break = _rig.current().pitch
+			size_break = _apparent_px(0, cur)
+			pitch_in_break = cur.pitch
 		if k == 128:
-			size_settle = _apparent_px(0, _rig.current())
+			size_settle = _apparent_px(0, cur)
 		if ended_at < 0 and _rig.solo_kind == "":
 			ended_at = k
+			pitch_at_end = cur.pitch
 	for _i in range(200):
 		_tick_rig()
-	_check(cut_ticks.size() == 2 and absi(cut_ticks[0] - 60) <= 2 and absi(cut_ticks[1] - 90) <= 2, "%s: cuts at %s (want at the break, tick 60, and the settle, tick 90)" % [_label, str(cut_ticks)])
+	# the shot grammar (2026-10-23): the low hero angle eased in over the gather, one cut (the break's shock beat), a crane up to level
+	_check(cut_ticks.size() == 1 and absi(cut_ticks[0] - 60) <= 2, "%s: cuts at %s (want only at the break, tick 60)" % [_label, str(cut_ticks)])
 	_check(size_gather_end > first * 1.15, "%s: the gather did not push in (%.0f to %.0f px)" % [_label, first, size_gather_end])
 	_check(size_break < size_gather_end * 0.65, "%s: the break is not wide (%.0f px after %.0f)" % [_label, size_break, size_gather_end])
-	_check(pitch_in_break < -5.0, "%s: no low angle at the break (pitch %.1f)" % [_label, pitch_in_break])
-	_check(_rig.current().pitch == 0.0, "%s: the pitch did not return" % _label)
+	_check(pitch_mid_gather < -1.0 and pitch_mid_gather > pitch_gather_end, "%s: the hero angle did not ease in over the gather (%.1f at tick 30, %.1f at 58)" % [_label, pitch_mid_gather, pitch_gather_end])
+	_check(pitch_gather_end < -5.0 and pitch_in_break < -5.0, "%s: no low angle (pitch %.1f at the gather's end, %.1f in the break)" % [_label, pitch_gather_end, pitch_in_break])
+	_check(pitch_step <= CamParams.PITCH_CUT_DEG, "%s: the angle stepped %.2f degrees in a tick outside the cut" % [_label, pitch_step])
+	_check(absf(pitch_at_end) < 0.05 and _rig.current().pitch == 0.0, "%s: the crane up did not reach level by the shot's end (%.2f)" % [_label, pitch_at_end])
 	_check(size_settle > size_break * 1.3, "%s: the settle is not back to the pose (%.0f px)" % [_label, size_settle])
 	_check(ended_at >= 130 and ended_at <= 140, "%s: the shot ended at tick %d (want about 135)" % [_label, ended_at])
-	stats["shot transformation full"] = "cuts %s, sizes %.0f / %.0f / %.0f / %.0f px, end tick %d" % [str(cut_ticks), first, size_gather_end, size_break, size_settle, ended_at]
+	stats["detail shot transformation full"] = "cuts %s, sizes %.0f / %.0f / %.0f / %.0f px, pitch %.1f / %.1f / %.1f, worst step %.2f, end tick %d" % [str(cut_ticks), first, size_gather_end, size_break, size_settle, pitch_mid_gather, pitch_gather_end, pitch_in_break, pitch_step, ended_at]
 	return {}
 
 
@@ -3629,6 +3702,7 @@ func _shot_transform_calm(reduced_flashing: bool) -> Dictionary:
 	_tick_rig([_shot_events("transform", {"actor": 0.0, "tier": 2.0, "source": "x", "dur": 3.0})])
 	var cuts: int = 0
 	var worst_pitch: float = 0.0
+	var pitch_step: float = 0.0
 	var dz: float = 0.0
 	var dy: float = 0.0
 	var prev: SplitFrame = _rig.current()
@@ -3639,17 +3713,20 @@ func _shot_transform_calm(reduced_flashing: bool) -> Dictionary:
 		if cur.cut:
 			cuts += 1
 		worst_pitch = minf(worst_pitch, cur.pitch)
+		pitch_step = maxf(pitch_step, absf(cur.pitch - prev.pitch))
 		dz = maxf(dz, absf(log(cur.cam_z[0]) - log(prev.cam_z[0])))
 		dy = maxf(dy, absf(cur.cam_y[0] - prev.cam_y[0]) * cur.cam_z[0] / vh)
 		prev = cur
 		if ended_at < 0 and _rig.solo_kind == "":
 			ended_at = k
 	_check(cuts == 0, "%s: %d cuts in a calm break (want none)" % [_label, cuts])
-	_check(worst_pitch > -0.5, "%s: the camera pitched to %.1f degrees in a calm break" % [_label, worst_pitch])
+	# the hero angle is a move (eased in and craned up), so a calm break keeps it: no step of angle over PITCH_CUT_DEG
+	_check(worst_pitch < -5.0, "%s: no hero angle in a calm break (lowest %.1f degrees)" % [_label, worst_pitch])
+	_check(pitch_step <= CamParams.PITCH_CUT_DEG, "%s: the angle stepped %.2f degrees in a tick" % [_label, pitch_step])
 	_check(dz <= 0.06, "%s: the zoom moved %.3f (ln) in one tick (a snap)" % [_label, dz])
 	_check(dy <= 0.06, "%s: the camera moved %.3f of the screen height in one tick" % [_label, dy])
 	_check(ended_at >= 130 and ended_at <= 140, "%s: the shot ended at tick %d (want about 135)" % [_label, ended_at])
-	stats["transformation " + _label] = "cuts %d, lowest pitch %.1f, zoom step %.3f, height step %.3f of the screen, ended at %d" % [cuts, worst_pitch, dz, dy, ended_at]
+	stats["transformation " + _label] = "cuts %d, lowest pitch %.1f, pitch step %.2f, zoom step %.3f, height step %.3f of the screen, ended at %d" % [cuts, worst_pitch, pitch_step, dz, dy, ended_at]
 	_rig.flash_reduced = false
 	_rig.flash_ask = Callable()
 	return {}
@@ -3693,15 +3770,22 @@ func _shot_transform_short() -> Dictionary:
 	var first: float = _apparent_px(0, _rig.current())
 	var s_break: float = 0.0
 	var ended_at: int = -1
+	var low: float = 0.0
+	var p_step: float = 0.0
+	var p_prev: float = _rig.current().pitch
 	for k in range(1, 91):
 		_tick_rig()
 		if _rig.current().cut:
 			cuts += 1
+		low = minf(low, _rig.current().pitch)
+		p_step = maxf(p_step, absf(_rig.current().pitch - p_prev))
+		p_prev = _rig.current().pitch
 		if k == 34:
 			s_break = _apparent_px(0, _rig.current())
 		if ended_at < 0 and _rig.solo_kind == "":
 			ended_at = k
 	_check(cuts == 0, "%s: %d cuts in the short version (want none)" % [_label, cuts])
+	_check(low <= -2.0 and p_step <= CamParams.PITCH_CUT_DEG and _rig.current().pitch == 0.0, "%s: the hero angle (lowest %.1f, step %.2f, end %.2f)" % [_label, low, p_step, _rig.current().pitch])
 	_check(s_break < first * 0.8, "%s: no snap zoom out at the break (%.0f px from %.0f)" % [_label, s_break, first])
 	_check(ended_at >= 40 and ended_at <= 44, "%s: the shot ended at tick %d (want about 42)" % [_label, ended_at])
 	return {}
@@ -3861,6 +3945,44 @@ func _angle_shot() -> Dictionary:
 	_check(absf(_rig.current().pitch) < 0.01, "%s: the angle did not come back to level (%.2f)" % [_label, _rig.current().pitch])
 	_check(off == 0, "%s: a fighter was off the screen for %d ticks" % [_label, off])
 	stats["angle shot"] = "peak %.2f degrees, largest step %.3f a tick, cuts %d" % [peak, step, cuts]
+	return {}
+
+
+## The shot grammar's power-up (2026-10-23): a tier-up in the plain one view is seen from a low hero angle, eased in and craned up
+## to level, on the angle ledger; never more than PITCH_CUT_DEG in a tick, no cut, both fighters on the screen.
+func _power_up_angle() -> Dictionary:
+	var ax: float = 20000.0
+	_pose(ax, 40.0, ax + 300.0, 40.0)
+	_seed_rig()
+	for _i in range(200):
+		_tick_rig()
+	var ev := SimState.FxEvent.new()
+	ev.type = "tier_up"
+	ev.actor = 0.0
+	_tick_rig([ev])
+	var low: float = 0.0
+	var step: float = 0.0
+	var cuts: int = 0
+	var off: int = 0
+	var prev_p: float = _rig.current().pitch
+	var n: int = int((CamParams.ANGLE_IN + CamParams.ANGLE_HOLD + CamParams.ANGLE_OUT) * 60.0) + 30
+	for _k in range(n):
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		low = minf(low, cur.pitch)
+		step = maxf(step, absf(cur.pitch - prev_p))
+		prev_p = cur.pitch
+		if cur.cut:
+			cuts += 1
+		for i in range(2):
+			if not _on_screen(cur, i):
+				off += 1
+	_check(low <= -1.0, "%s: no low angle (lowest %.2f degrees)" % [_label, low])
+	_check(cuts == 0, "%s: the power-up angle cut %d times (it eases)" % [_label, cuts])
+	_check(step <= CamParams.PITCH_CUT_DEG, "%s: the angle stepped %.2f degrees in a tick" % [_label, step])
+	_check(absf(_rig.current().pitch) < 0.01, "%s: the crane up did not come back to level (%.2f)" % [_label, _rig.current().pitch])
+	_check(off == 0, "%s: a fighter was off the screen for %d ticks" % [_label, off])
+	stats["detail power-up angle"] = "lowest %.2f degrees, largest step %.3f a tick, cuts %d" % [low, step, cuts]
 	return {}
 
 
