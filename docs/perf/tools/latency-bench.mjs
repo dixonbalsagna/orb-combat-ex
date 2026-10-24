@@ -28,6 +28,8 @@ const W = Number(opt('--width', 1280)), H = Number(opt('--height', 720));
 const SESSION = opt('--session', process.env.MERIDIAN_SESSION || 'meridian-performance-platform');
 const TIME_LIMIT = Number(opt('--time-limit', 1500));
 const HOLD = opt('--hold') === undefined ? null : Number(opt('--hold'));
+const WAIT = Number(opt('--wait', 8000));   // ms between the claim press and the action in mid timing
+const SECOND = opt('--second') === undefined ? null : Number(opt('--second'));   // press the action a second time this many ms after the first one's release: the second press is the one analysed (a press that lands inside an exchange's end is acknowledged 'queued')
 const TIMING = opt('--timing', 'mid');   // early: the press 0.65 s after the match starts (inside the opening cooldown, as before the press-tick fix); mid: 8 s into the match
 const OUT = opt('--out'), IGPU = argv.includes('--igpu'), PACE = argv.includes('--pace60'), RAW = argv.includes('--raw');
 if (!SITE) { console.error('usage: node docs/perf/tools/latency-bench.mjs --site <built site> --label <name> [--igpu] [--throttle N] [--trials N] [--out file.json]'); process.exit(2); }
@@ -41,15 +43,17 @@ const capCores = (v) => v.slice(Math.floor(v.length * 0.75));
 const pct = (arr, p) => { if (!arr.length) return null; const s = [...arr].sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.max(0, Math.ceil(p * s.length) - 1))]; };
 const dist = (a) => (a.length ? { n: a.length, mean: +mean(a).toFixed(2), p50: +pct(a, 0.5).toFixed(2), p95: +pct(a, 0.95).toFixed(2), max: +Math.max(...a).toFixed(2) } : null);
 
-const KEYS = { light: { code: 'KeyJ', key: 'j', vk: 74, hold: 90 }, dash: { code: 'Space', key: ' ', vk: 32, hold: 90 }, guard: { code: 'ShiftLeft', key: 'Shift', vk: 16, hold: 500 } };
+const KEYS = { light: { code: 'KeyJ', key: 'j', vk: 74, hold: 90 }, dash: { code: 'Space', key: ' ', vk: 32, hold: 90 }, guard: { code: 'ShiftLeft', key: 'Shift', vk: 16, hold: 500 }, heavy: { code: 'KeyK', key: 'k', vk: 75, hold: 90 }, signature: { code: 'KeyL', key: 'l', vk: 76, hold: 90 } };
 
 function analyse(action, d, domTimes) {
   const K = KEYS[action];
-  const wantCode = action === 'guard' ? 'Shift' : action === 'dash' ? 'Space' : 'KeyJ';
-  const kd = d.keys.find((k) => k[3] === wantCode && k[4] === true);
+  const wantCode = action === 'guard' ? 'Shift' : action === 'dash' ? 'Space' : action === 'heavy' ? 'KeyK' : action === 'signature' ? 'KeyL' : 'KeyJ';
+  const downs = d.keys.filter((k) => k[3] === wantCode && k[4] === true);
+  const kd = SECOND === null ? downs[0] : downs[1];
   if (!kd) return { error: 'the game never received the key' };
   const [kt0, kf, kticks] = kd; const off = d.off || 0; const kt = kt0 + off;
-  const dom = domTimes.find((x) => x[1] === K.code && x[2] === 'keydown');
+  const doms = domTimes.filter((x) => x[1] === K.code && x[2] === 'keydown');
+  const dom = SECOND === null ? doms[0] : doms[1];
   const ticks = d.ticks, frames = d.frames;
   // the state before the press: the last tick row recorded before the handler's tick
   const before = [...ticks].reverse().find((t) => t[0] < kticks) || ticks[0];
@@ -122,12 +126,13 @@ try {
       await page.eval(`window.__flashcap.start('lat', { reduced: true })`);
       await sleep(TIMING === 'early' ? 300 : 1500);
       await key({ code: 'KeyE', key: 'e', vk: 69 }, true); await sleep(60); await key({ code: 'KeyE', key: 'e', vk: 69 }, false);   // the throwaway press: claims player one
-      await sleep(TIMING === 'early' ? 120 : 8000);
+      await sleep(TIMING === 'early' ? 120 : WAIT);
       await dump();
       await page.eval('window.__dom = []');
       await sleep(TIMING === 'early' ? rnd(0, 17) : rnd(300, 700));
       const K = { ...KEYS[action], ...(HOLD === null ? {} : { hold: HOLD }) };
       await key(K, true); await sleep(K.hold); await key(K, false);
+      if (SECOND !== null) { await sleep(SECOND); await key(K, true); await sleep(K.hold); await key(K, false); }
       await sleep(700);
       const d = await dump();
       const dom = JSON.parse(await page.eval('JSON.stringify(window.__dom)'));

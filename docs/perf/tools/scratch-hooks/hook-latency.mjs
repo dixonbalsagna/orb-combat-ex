@@ -17,7 +17,7 @@ s = s.replace('"mashdummy", "ring"', '"lat", "mashdummy", "ring"');
 s = s.replace('"mashdummy": [false, true]', '"lat": [false, false], "mashdummy": [false, true]');
 const a1 = '\t\t"ai":           # the real AI match, forms readied at 300 and 1500, a tier raised at 900';
 if (!s.includes(a1)) throw new Error('anchor ai scenario');
-s = s.replace(a1, '\t\t"lat":\n\t\t\tif t == 0:\n\t\t\t\t_lat_place(S)\n' + a1);
+s = s.replace(a1, '\t\t"lat":\n\t\t\tif t == 0:\n\t\t\t\t_lat_place(S)\n\t\t\tS.fighters[0].ki = 100.0   # a signature needs ki\n' + a1);
 
 // 2. poll(): the lat scene runs the game's own frame
 const a2 = '\tif int(st.get("pending", 0)) > 0';   // (hook-perf.mjs widens this line: "... or (auto and scenario != "")")

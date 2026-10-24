@@ -209,6 +209,7 @@ try {
       result.turnWindows = turns.map((t) => { const i0 = t - base; const sl = (a) => a.slice(Math.max(0, i0 - 5), i0 + 46); return { tick: t, frames: sl(raw.rtt).map((x) => +x.toFixed(1)), tick_ms: sl(raw.rows.map((r) => r[0])), fx_ms: sl(raw.rows.map((r) => r[1])), view_ms: sl(raw.rows.map((r) => r[2])), draws: sl(raw.rows.map((r) => r[3])), prims_k: sl(raw.rows.map((r) => Math.round(r[5] / 1000))) }; });
     }
   } catch { /* no turn scene */ }
+  try { result.cull = JSON.parse(await page.eval('JSON.stringify(window.__cull || null)')); } catch { /* no cull hook */ }
   if (argv.includes('--save-rtt')) result.rtt = raw.rtt.map((x) => +x.toFixed(1));   // every frame time of the measured part, for an offline look at periods
   result.over_16_7 = raw.rtt.filter((x) => x > 16.7).length; result.over_25 = raw.rtt.filter((x) => x > 25).length;   // on a display-locked GPU run a frame is 16.7 or 33.3 ms: frames over 25 ms are the missed refreshes result.over_33_3 = raw.rtt.filter((x) => x > 33.3).length;
   result.tickReached = raw.tick;

@@ -80,8 +80,10 @@ Build b9f8884d. Tapped presses (the key down 40 ms), mid-match (about 3 s into t
 
 - **The heavy and the signature now show the body in the first frame (26 to 31 ms)**, inside the 50 ms budget before the display's frame. Before this build I had not measured them.
 - **The light's body does not: 125 to 131 ms, the figure it had (about 132 ms).** The anticipation Animation built runs "on a press_ack `queued`"; a mid-match light is acknowledged `started`, not `queued`, so its lean-in either does not run or is under the detector's threshold (a block must change by more than 1.25 times its own idle maximum plus 0.12 of a 0 to 255 level). The six frames before the rush change no block of the pair's area. The queued case (a press inside a cooldown) is measured separately below.
-- x4 (a 4 times slower CPU): the runs were invalid twice on a loaded machine; the figures will follow in a valid window.
-- Held keys (400 ms) and the queued case (inside the opening cooldown) are queued behind the machine's quiet window.
+- **Held keys (400 ms) are the same as tapped**: RTX light body 133 ms (p95 141), heavy 34 (40), signature 35 (42); Radeon 128 (144), 26 (51), 30 (36).
+- **x4 (a 4 times slower CPU), tapped, valid**: light body 161 ms (p95 230), heavy 85 (105), signature 65 (87), with the press mark at 74 ms (light). The frames are 30 to 50 ms there, so these are one to three frames.
+- **Presses very early in the match (0.5 s, inside the opening cooldown)** are also acknowledged `started`, not `queued` (the 7a fix lets the first press start at once), and the opening scene is still settling (idle noise 20 times higher), so the body times there (light 150 ms RTX / 132 Radeon, heavy and signature 193 to 215 ms) are not comparable with the mid-match ones; the press mark is at 26 to 40 ms.
+- **The `queued` case is not measured.** A press is acknowledged `queued` only when it lands inside an exchange's end (the 6-tick cap), which is the case Animation's anticipation is for. The bench's second-press mode (`--second GAP`, 150 to 1,100 ms after the first press) ran but its analysis failed on all 8 presses of every action (0 of 8 ok); to be fixed before it can be used.
 
 ## Files
 
