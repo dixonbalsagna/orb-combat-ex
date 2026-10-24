@@ -405,6 +405,11 @@
       "id": "e14",
       "rule": "energy looks from the v2 names: a trap pillar is ground or a solid lane-colour slab (a post a few bh tall) rising over several ticks, never a vertical beam of light into the sky and never round a body; a sheaf of lances is straight, parallel, thin and unrotating (no spiral or corkscrew; no 'Drill' in a name); a thrown crown tumbles on an arc and is never a flat spinning disc or raised overhead, and clings to torso, back or arm, never the head, neck or face; the Cyborg's beam is vented from a chest furnace drawn as a plate or grille with vents, never a maw, teeth, jaw, mouth, head or belly (ln02), with no hazard glyph (c07); his trap is clamps, plates and a pit that holds and drops, never teeth or chewing or swallowing, and is named Scrap Pit; no taunt, zoom or finisher over a fighter kneeling from a banner cage",
       "why": "RL-178"
+    },
+    {
+      "id": "e15",
+      "rule": "the four energy kits: no net or ring wind-up drawn to the hip (draw to chest or shoulder height); an open palm chambered for a heavy stays at chest height and passes the lint at every tick; a lob's object forms as it leaves the hand and never on the palm during a charge; a thrown slab is a thick block tumbling end over end, never a thin flat disc spinning about its face, never held, charged or raised above the head; the free hand never rests on the firing shoulder, arm or wrist (a shoulder width away, or low and behind); a ring of flakes stays below the head and is one power mark under k01; extra names prefer 'Hanging' to 'Hung'; the arming tick is a soft single tick and never a repeating beep that builds like a bomb timer; no slam line leads with 'kneel before', 'bow before' or 'behold'",
+      "why": "RL-179"
     }
   ],
   "grabs": [
@@ -706,6 +711,11 @@
       "id": "fx08",
       "rule": "energy overhaul flash register: bolt muzzle flashes and hit sparks (a stream does not flash per bolt: a steady low muzzle light and one steady scorch glow on the target), lob bursts (at most 3 counted a second in a screen window, the rest drawn as smoke, dust and ember; a level-2 split counts as one event with summed area), the heavy blast and its flame column, beam start, level changes beyond a hand light, end and detonation, pulse flares (a pulse is a swell of under a 10% luminance step; its front flare is registered and refused beyond 3 a second; held pulses are swells only), charge steps (each rising over at least 0.1 s, never a one-frame pop), every mine flare and detonation (a string of mines staggered or counted as one event), grab catch and payoff flashes, and the struggle as built; all under the cap of 3 a second with the margin rule and red flashes 0; clips of a held and mashed stream, a lob barrage, beams at levels 1 to 3 with pulses, a string of mines, both grabs and the mixed string, in both modes, before any public pin",
       "why": "RL-177"
+    },
+    {
+      "id": "fx09",
+      "rule": "kit colours on the red test: the Empress's #d81f3c (about 0.92), the Cyborg's #c8321a (about 0.93) and #ff6a1a (about 0.87) all exceed R/(R+G+B) 0.8 on linear values; the analyser decides and must read red flashes 0 on clips of the largest events in those hues (level-3 beam start and end, a crater's flame column, the heavy blast, a level-2 burst, the banners); peak frames use the white-hot core so the ratio falls below 0.8 and the saturated hue stays on the body of the effect; a brightness wobble or sputter on a beam is held under a 10% step and 2 Hz, or lives in the edge and width and not the luminance; a barrage at 12 ticks counts at most 3 white bursts a second (the rest smoke, dust and ember) unless a clip proves a shared glow that never falls 10% between bursts",
+      "why": "RL-179"
     }
   ],
   "catastrophe": [

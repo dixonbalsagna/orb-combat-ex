@@ -73,3 +73,47 @@ All ten changed names are **CLEAR as in-game names**, with the looks conditions 
 3. **Trip Pillar against the column-of-light rule: clear** (see above).
 4. **Pressure Plate as a trap: confirmed.** A trap aimed at whoever steps on it is a plain mine (e13); its fan of needles is a registered burst.
 Also: **Banner Snare's cage slams a fighter to kneel:** fine as a catch and a payoff (e12), but no taunt, zoom or finisher over a kneeling fighter. The call-outs ("Kneel in our cage, rat!", "Full sheaf, clown. Try to dodge.", "Limiter's off! Venting everything!") pass.
+
+## Addendum 2 (2026-10-23, RL-179): the 12 extra names, the call-outs, and Combat's four kits
+Read: `docs/narrative/energy-names.md` section 5 and `docs/combat/pending/energy/` protagonist, rival, empress and cyborg (the README skimmed). Paper only; the JSON files and the sheets were not seen. A screen, not legal advice.
+
+### Names and call-outs: **CLEAR, with one word to avoid**
+- **The 12 snare and mine names:** Harbour Hammock, Flint Mine, Scorch Cup; Open Loop, Standing Pin, Hung Slab; Furled Banners, Hanging Sliver, Resting Crown; Cable Coil, Ticking Rivet, Slag Clot. All are plain descriptive words with no franchise move or mark. **Prefer "Hanging" to "Hung"** (Hung Slab, Hung Rivet: "hung" has a vulgar sense; use the alternates Hanging Plate and Hanging Rivet). "Slag Clot" is fine (slag); "Open Loop" is an ordinary phrase. "Ticking Rivet" is fine as a name: keep the arming tick a soft single tick, never a repeating beep that builds like a bomb timer (c07's "no countdown").
+- **Silk Slivers** (alternate Lace Cuts): CLEAR.
+- **The two call-outs** ("Down in our cage, rat!", "Mind the cut, rat!") avoid the well-known film line and are fine. Keep any slam line from using "kneel before", "bow before" or "behold" as a lead.
+
+### The kits against e10 to e14 and fx08: **Pass with conditions (e15, fx09)**
+**All four are inside the rules in their main lines:** one hand loaded and the other open and away; nothing held in a hand; charge as a brightness step at the heel or edge; the ring binds and never cuts and never spins; binds take arms and torso; no taunt, zoom or finisher over a bound fighter; the Cyborg's beam from a chest furnace with vents and his trap as clamps and plates with no teeth; no flash per bolt. What each needs fixed or watched:
+
+**The Protagonist.**
+1. **The net's wind-up draws the ring hand "back to the hip", then snaps it forward and opens.** That is the hip-drawn thrust the held-pose lint fails (h04: an open or loop hand with its wrist near the hip). Draw it back to chest or shoulder height, as the Rival's ring does. The tow-line-through-the-ring look is fine; the ring-hand shape (thumb and finger closed) is an ordinary gesture.
+2. **Whole Palm's gather draws the rear open palm "to the ribs"** with the hips coiled. It passes only if the lint passes at every tick (wrist at x 9 or more, not the hip zone), the palm holds nothing, and only the heel brightens. Leave the rear palm at chest height.
+3. **Pier Lob:** the kneel and low palm at shin height are fine (open hands, no scream, no fists at the sides). The lump forms as it leaves the hand: keep it so.
+4. Trip Pillar, Breakwater, the net's catch (arms and chest only), Harbour Hammock and the mines: pass.
+
+**The Anti-hero.**
+1. **Stair Split's flat hexagonal slab thrown overhand reads as the cutting disc** if it is thin and flat and spins like a saw. Make it **thick (a block), tumbling end over end on its arc, never spinning flat about its face, never held, charged or raised above the head** (a throwing arm's swing past the head is fine; a held slab is not). One hand only.
+2. **Lance Sheaf's charge puts "the other hand open on that shoulder".** That is a hand bracing the firing arm (e10). Keep the free hand open and a shoulder width away, or low and behind, as his intro line says ("fires one-handed with the other hand behind his back").
+3. **Regalia (a ring of flakes round the shoulders, never above or behind the head):** pass, kept below the head and never a halo; it is one power mark, so k01's cap of two applies.
+4. Pin Volley, Rank Breaker (a stack of plates rammed point first, no ball), Rank Ring (a thin open loop that flies facing forward, never spins, never above the head), Pressure Plate, Open Loop, Standing Pin and Hung (Hanging) Slab: pass.
+
+**The Empress.**
+1. **Crown Toss's tell has "the crown forms on her palm" and brightens in steps while she charges.** A glowing object formed on the palm during a charge is a held energy shape (e10, e11). Instead, **the crown forms as it leaves the hand** (as Pier Lob does) and the charge is a brightness step at the edge of the palm. Palm up at shoulder height, never above the head, is fine.
+2. The crown "five points on a ring, tumbling end over end, no cutting edge, clings to torso, back or arm": pass (e14).
+3. Banner Snare: six banners of light that cage the arms and torso and slam him to a knee: pass (e12; the kneel is a landing and never held; no slam line echoes "kneel before"). Hem Sweep (a thin straight cut from the hem), Velvet Rope (a rope between two hem plates, firing her level-1 beam), Throne Quake (a seam and a lens of light that slams shut), the mines and Furled Banners: pass. The mantle never wraps, coils or grabs (it must not read as a tail: g01).
+4. **Colour:** see fx09.
+
+**The Cyborg.**
+1. Rivet Spray, Slag Roll (slag from the chest grille, off hand braced on his own plate: fine), Wrecker Swing, Furnace Vent (a chest grille with vents: confirmed), Crane Hook (the throw), Scrap Pit, Cable Coil, Ticking Rivet and Slag Clot: pass. His set runs on wreckage and metal (ln02, ln04) and nothing eats, chews or swallows.
+2. **Furnace Vent's wobble and sputter** (before the final form: the beam wobbles plus or minus 20% and sputters in three uneven surges in its last 6 ticks) is a luminance change on a large area at a high rate if it is brightness. **Keep the wobble in the beam's edge and width, not its luminance, or hold any brightness wobble under a 10% step and 2 Hz** (fx09). The final form's plus or minus 8% is fine.
+3. **Colour:** see fx09.
+
+### The flags from Combat
+- **The lob barrage's 5 bursts a second against 3:** no, the count does not merge them by itself. Five separate rises and falls a second are five flashes. Either (a) **the fourth and fifth burst each second draw as smoke, dust and an ember, not a white flash** (the register refuses them), or (b) the bursts land on one spot with a slow shared glow that never falls 10% between them, **proved in the clip**. The cap of 3 holds either way.
+- **The Empress's colour (and the Cyborg's):** see below.
+
+### New row fx09: saturated red on the standard's own test
+The standard counts a red flash when R/(R+G+B) on linear values is 0.8 or more and the chromaticity changes by over 0.2 over a large area. **Computed from the hex codes, the kits' colours all exceed 0.8:** the Empress's #d81f3c about 0.92, the Cyborg's #c8321a about 0.93 and #ff6a1a about 0.87 (the Protagonist's cyan and the Rival's violet are far from it). A steady colour is not a flash, and small slivers, rivets and needles are not near the area threshold. **The risk is the biggest events in these hues:** a level-3 beam's start and end, a crater's flame column, a heavy blast, a level-2 burst and the mantle's banners in the Empress's or the Cyborg's colour. So: (1) **the analyser, not the colour code, decides** and must read red flashes 0 on the clips; (2) **peak frames use the white-hot core, which lowers the ratio below 0.8**, and the saturated hue stays on the body of the effect; (3) Art's non-red lane for the Empress is welcome and removes the question for her; the Cyborg's ember-red to orange needs the same read.
+
+### Not seen or not checked
+The JSON files, any picture, the Cyborg's README sections beyond the bits above. Nothing here ships: it is all behind `energy.v2`.
