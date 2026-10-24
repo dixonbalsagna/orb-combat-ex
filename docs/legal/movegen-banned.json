@@ -385,6 +385,21 @@
       "id": "e10",
       "rule": "a beam cast pose (the signature beam and any other): one arm out, the palm or its heel leading, is allowed when the other hand never grips, braces or cups the firing wrist or forearm and stays at least shoulder width from it (open, in guard, or low at the rear); never both palms; no ball, sphere or glow held in either hand; no scream; the charge pose keeps h05 (one arm drawn back at shoulder height or lower, never at a hip); the beam is a plain straight line (e04, e07)",
       "why": "RL-038's condition was the wrist-gripped palm-forward brace; the palm-forward one-arm release without that brace is an ordinary energy-in-reach hand. Closed 2026-10-16"
+    },
+    {
+      "id": "e11",
+      "rule": "energy-overhaul franchise shapes to avoid: a ball, sphere or orb held in or above a hand; a flat spinning disc or hoop held above the head; a beam with a spiral, drill or helix (a 'lance' is a thin straight beam and a 'twin' beam is two parallel beams with tints alternating along and never around); a beam from a hand-frame (hands forming a triangle or diamond); a fireball from two cupped palms; a lightning-wrapped hand; a finger-gun or two-finger beam; call-outs never shout the technique's own name, never split into a charge chant and a release shout, never shout a multiplier or a countdown; technique names never built on wave, flash, bomb, ball, disc or cannon, nor lead with Destructo, Spirit, Dragon or Final; a charge is a brightness step at the heel of the palm or a thin ring, never a ball, never above or between the hands",
+      "why": "RL-177"
+    },
+    {
+      "id": "e12",
+      "rule": "energy grabs: the ring binds and never cuts (no spinning disc, no edge, no sparks, never held, charged or raised above the head, never a saw); binds take arms, torso or body, never throat, face or hair; the held fighter is drawn struggling or bracing, never limp or hanging, with no sexualised wrapping; no slow motion, zoom or taunt over a bound fighter and no finisher on one; a cage is an energy cage in lane colour, brief, never a prison with a seated person",
+      "why": "RL-177"
+    },
+    {
+      "id": "e13",
+      "rule": "mines, traps and snares: small, in the fighter's colour, dim arming, a slow glow at or under 1 Hz, a 6-tick flare; fizzle after 12 s and never survive their fight, never a lasting hazard for the places or people of a run; never moved toward people or laid on one; the carer's mines hold while a person is in the burst; the people they kill are a count only (c08) with no score, cheer or achievement; the player-facing word is plain 'mine' with no joke about the real thing",
+      "why": "a landmine's real-world harm to civilians, RL-177"
     }
   ],
   "grabs": [
@@ -681,6 +696,11 @@
       "id": "fx07",
       "rule": "biome impact plumes: the burst star is one pale frame per impact, a low-priority source refused under Reduce flashing, its counted area the disc as drawn at the framing in use, inside the register's cap of 3 a second and never repeating within a second; a puff whose luminance step from the ground is 10% or more counts in the drawn-area budget at weight 1.0 (only a step under 10% may count less); embers steady and amber-orange with red flashes read 0 on linear values; debris and chips never a regular moving pattern over a large area and under the pool's cap; clips staging a desert, an ice and a volcanic impact at a close framing are read in both modes with the margin rule before any public pin; not in public trailers, pages or screenshots until Orb approves the look",
       "why": "RL-176"
+    },
+    {
+      "id": "fx08",
+      "rule": "energy overhaul flash register: bolt muzzle flashes and hit sparks (a stream does not flash per bolt: a steady low muzzle light and one steady scorch glow on the target), lob bursts (at most 3 counted a second in a screen window, the rest drawn as smoke, dust and ember; a level-2 split counts as one event with summed area), the heavy blast and its flame column, beam start, level changes beyond a hand light, end and detonation, pulse flares (a pulse is a swell of under a 10% luminance step; its front flare is registered and refused beyond 3 a second; held pulses are swells only), charge steps (each rising over at least 0.1 s, never a one-frame pop), every mine flare and detonation (a string of mines staggered or counted as one event), grab catch and payoff flashes, and the struggle as built; all under the cap of 3 a second with the margin rule and red flashes 0; clips of a held and mashed stream, a lob barrage, beams at levels 1 to 3 with pulses, a string of mines, both grabs and the mixed string, in both modes, before any public pin",
+      "why": "RL-177"
     }
   ],
   "catastrophe": [
