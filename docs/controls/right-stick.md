@@ -143,3 +143,43 @@ Naming first: **GD's "pump" is a double flick the same way** (stronger flick, 18
 **Intent fields and version.** A **second packed word** (intent v5), zero in every old replay: `rsHold` (active 1 bit, 16-way direction 4, magnitude 2 = 7 bits); `rsEvent` (type 3: none, flick, pump, zig-zag, half-circle, circle; direction 3 or orientation, plus 1 for a turning or axis bit = 7 bits); `rsLag` (2 bits: ticks since the onset, like `waited`). About 16 bits, the rest reserved. The events are one-tick edges, pending through a hit freeze like every edge; **the gesture windows count real host ticks** (the sim does not step in a freeze), as the touch layer does. The hash includes the word only when the right stick is switched on for the match (`switches.rightStick`, off by default), so every existing replay and checkpoint is unchanged.
 
 **What I still need from Game Design.** The command set per family and per gesture (so the 4-way against the 8-way split above can be fixed command by command); the left-stick against right-stick rule for a beam's sweep and for aim; and whether the first step (Flight and Energy with flicks and holds only, GD's recommended build order) needs any pattern at all: if not, **step 1 needs no recognizer beyond flick and hold**, which is small and safe to build first.
+
+## 11. Step 1, fixed against GD's command set (`right-stick-pitches.md` section 11, R21 to R25)
+
+Step 1 has **no patterns**: it needs only the flick and the hold, the family lock, the R3 guard and an aim angle. Nothing in it needs the pattern recognizer, which waits for the real-thumb capture (R20). Held until Orb picks.
+
+**The numbers (data: a `rightStick` block in `timing.json`, schema by patch, behind `switches.rightStick`, off).**
+
+| Key | Value | Notes |
+| :--- | :--- | :--- |
+| `deadZone` | 0.25 radial | setting 0.15 to 0.45; rescaled to 0 to 1, quantised to 1/16 |
+| `on`, `off` | 0.60, 0.35 | hysteresis on the rescaled magnitude |
+| `flickRise` | 3 ticks | rest (0.2) to `on`; setting 2 to 5 |
+| `flickSettle` | 2 ticks | the flick's direction is taken 2 ticks after the crossing; the event fires then |
+| `holdTicks` | 10 | a hold's level starts here (R4: the flick came first) |
+| `flickDirs` | 4 | screen up, down, left, right, 45 degrees either side; a tie goes to the vertical (integer compare `|y| > |x|`) |
+| `holdDirs` | 32 | 11.25-degree steps for the aim sweep; **Flight reads a hold as four-way with 8 degrees of hysteresis at the 45-degree edges**, so a thumb near a diagonal does not flip between the dash and the orbit |
+| `r3GuardMag`, `r3GuardTicks` | 0.9, 6 | an R3 click is ignored while the stick is past 0.9 or within 6 ticks of it (R24) |
+| `familyLock` | at the first deflection | until the stick rests (R23); the next gesture reads the new family |
+
+**What the layer emits, by family (the family is the stance mask at the first deflection).**
+
+| Mask at the first deflection | Family | The layer emits |
+| :--- | :--- | :--- |
+| 0 (nothing held) | Flight | a flick event (4 screen directions) and a hold level (4-way with hysteresis) |
+| 2 (RB) | Energy aim | a flick event (4 directions) and a hold level (32-way angle) |
+| 3 (LB+RB) | Lay aim | a flick event (4 directions) and a hold level (32-way angle) |
+| 1, 4, 8, 10, 9, 5... | none in step 1 | nothing (the R3 guard still applies) |
+
+The layer emits **screen directions**; the sim turns them into toward, away, up and down for the rival's side (R25's "directions are relative to him"), converts a 32-way hold angle into the aim line's angle off the line to him, and does the latching, the clearing (a toward flick, or RB let go), the seeking within 30 degrees and the beam sweep. The layer holds none of that, so the aim line follows him because the sim computes it from the current line to him each tick.
+
+**Both sticks sweep a beam (R25).** The intent carries both sticks, the left as today and the right as the hold level; "out of the dead zone" is the right stick's `hold` being active. The sim picks (the right wins if both are out). No rule is needed in the layer.
+
+**Sources, step 1.** Pad: the right stick (Rendering feeds pad axes 2 and 3 to the hub; one line, a host patch). Solo keyboard: the arrow keys (four directions; two arrows held give the diagonals for the aim sweep, in 45-degree steps; a tap is a flick, a hold is a hold). Shared keyboards: single keys, default unbound. Touch: a floating gesture stick (tablet: upper right; phone: the middle band); on a phone the family is the latched Guard and the director's energy at range, and on Simple the director performs Flight. Mouse is an option only if Orb makes it a supported device.
+
+**The build (after Orb picks, behind `switches.rightStick`).**
+1. `SimStickRead` (pure, in `sim/input/`): the flick, the hold, the dead zone, the family lock and the R3 guard, integers only; the tests (every row above, four-way accuracy on scripted noisy flicks, hysteresis at the diagonals, the family lock mid-gesture, the guard, freeze and pending edges, determinism).
+2. The hub and layout: a right-stick sample per slot per tick (`hub.right_stick(slot, x, y)`), the keyboard and touch sources, and the output into the intent.
+3. **Intent v5** (Simulation and Tools): the second word `rsHold` 7 bits, `rsEvent` 7 bits, `rsLag` 2 bits, the hash only with the switch on, the replay and schema. A 32-way hold angle is 5 bits, so `rsHold` becomes 8 bits: about 17 bits in all.
+4. The schema patch (`rightStick` block, `switches.rightStick`), the gate list, and the switch-off equivalence run.
+5. Encounter: the commands in the table above; Rendering: the axis line; UI: glyphs and the sensitivity settings.
