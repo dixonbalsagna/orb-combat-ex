@@ -400,6 +400,11 @@
       "id": "e13",
       "rule": "mines, traps and snares: small, in the fighter's colour, dim arming, a slow glow at or under 1 Hz, a 6-tick flare; fizzle after 12 s and never survive their fight, never a lasting hazard for the places or people of a run; never moved toward people or laid on one; the carer's mines hold while a person is in the burst; the people they kill are a count only (c08) with no score, cheer or achievement; the player-facing word is plain 'mine' with no joke about the real thing",
       "why": "a landmine's real-world harm to civilians, RL-177"
+    },
+    {
+      "id": "e14",
+      "rule": "energy looks from the v2 names: a trap pillar is ground or a solid lane-colour slab (a post a few bh tall) rising over several ticks, never a vertical beam of light into the sky and never round a body; a sheaf of lances is straight, parallel, thin and unrotating (no spiral or corkscrew; no 'Drill' in a name); a thrown crown tumbles on an arc and is never a flat spinning disc or raised overhead, and clings to torso, back or arm, never the head, neck or face; the Cyborg's beam is vented from a chest furnace drawn as a plate or grille with vents, never a maw, teeth, jaw, mouth, head or belly (ln02), with no hazard glyph (c07); his trap is clamps, plates and a pit that holds and drops, never teeth or chewing or swallowing, and is named Scrap Pit; no taunt, zoom or finisher over a fighter kneeling from a banner cage",
+      "why": "RL-178"
     }
   ],
   "grabs": [

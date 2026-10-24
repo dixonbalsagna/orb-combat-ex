@@ -50,3 +50,26 @@ The standard counts the **combined area** of luminance changes of 10% or more in
 
 ## What I need next
 Combat's four kits (I screen each shape, charge look and name), Narrative's final names, Animation's charge and grab poses, VFX's looks for mines and grabs, and the register's list as built.
+
+## Addendum (2026-10-23, RL-178): Narrative's v2 names re-fitted to Combat's map
+All ten changed names are **CLEAR as in-game names**, with the looks conditions below (row e14). Method as in section 4: general knowledge and no exact web hit; a screen, not a trademark search.
+
+| Name | Verdict |
+| :-- | :-- |
+| **Breakwater** (Protagonist beam: a wide driving wall) | CLEAR. A harbour word that suits Mendquay. The wide beam never fills the screen white |
+| **Trip Pillar** (his trap) | CLEAR, and **the column-of-light rule is not engaged**: it is about a power-up moment (a column of light round or over a body). A trap's pillar is made of **ground or a solid lane-colour slab, a post a few bh tall, rising over several ticks, never a vertical beam of light into the sky and never around a fighter's body.** The tripper is thrown by a launch through the planner |
+| **Stair Split** (Anti-hero lob, level 2 splits into three) | CLEAR. Three bursts count as one event in the register (fx08) |
+| **Lance Sheaf** (his beam: thin lances bundled) | CLEAR as a name. **"Drilling" must not be drawn as a drill:** the lances are straight, parallel, thin lines bundled in a sheaf, with no rotation, spiral or corkscrew (e07, e11). "They drill, not cut" is a flavour line about boring forward; keep the picture straight. **Drop the alternate "Drill Fan"** (it names the banned drill look); use "Needle Sheaf" or "Lance Fan" |
+| **Crown Toss** (Empress lob that clings and goes off 20 ticks later) | CLEAR. The crown **tumbles on an arc like a lob, never a flat spinning disc, never raised overhead**; it clings to the **torso, back or arm**, never the head, neck or face. The 20-tick go-off is its own register event |
+| **Hem Sweep** (Empress beam: a thin sweeping cut from the mantle hem or blade-hand) | CLEAR. A thin straight line swept, as already cleared; never a disc-slice; start and end flashes registered |
+| **Velvet Rope** (her trap: a line across the air that fires her level-1 beam) | CLEAR. Also the title of a well-known 1990s album, but a common phrase for a venue barrier, so no issue as a move name; "Tripline" is the neutral alternate |
+| **Slag Roll** (Cyborg lob: slag rolls along the ground) | CLEAR. Wreckage and metal (ln04) |
+| **Furnace Vent** (Cyborg beam, vented ragged from a chest furnace) | CLEAR, and **the chest furnace is confirmed**, not the stomach. It must be a plate or grille with vents and a glow: **no maw, no teeth, no jaw, no mouth or head as the source, and no belly worn as a second mouth** (ln02). "Furnace" is also one of Orb's lore options; if the lore pick goes elsewhere, check the name still fits. No trefoil or hazard glyph on it (c07) |
+| **Scrap Jaw** (Cyborg trap: a field that drags a passer down) | **Rename to Scrap Pit** (already the alternate). "Jaw" and the flavour "grows teeth" describe a mouth closing on a fighter, which breaches ln02 until the rating decision. Draw the field as **clamps, plates and a pit that holds and drops** (machinery, no teeth, no chewing, no swallowing). New flavour without teeth: "Block, and the scrap behind me clamps shut." |
+
+**Narrative's four flags, answered:**
+1. **The Cyborg's beam from a chest furnace, not the stomach: confirmed**, with the conditions above.
+2. **Scrap Jaw as machinery, not a mouth: confirmed only as machinery.** Prefer Scrap Pit and drop "teeth".
+3. **Trip Pillar against the column-of-light rule: clear** (see above).
+4. **Pressure Plate as a trap: confirmed.** A trap aimed at whoever steps on it is a plain mine (e13); its fan of needles is a registered burst.
+Also: **Banner Snare's cage slams a fighter to kneel:** fine as a catch and a payoff (e12), but no taunt, zoom or finisher over a kneeling fighter. The call-outs ("Kneel in our cage, rat!", "Full sheaf, clown. Try to dodge.", "Limiter's off! Venting everything!") pass.

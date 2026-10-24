@@ -11,7 +11,7 @@
     "RIVAL": {
       "grab": "a ring that binds his arms (never cuts)",
       "medium": "level 2 splits into three",
-      "beam": "a sheaf of thin drilling lances",
+      "beam": "a sheaf of thin straight lances (Combat says drilling; Legal e11 bans a drill beam, so they are straight)",
       "trap": "a pressure plate firing a fan of needles"
     },
     "EMPRESS": {
@@ -114,8 +114,8 @@
       },
       "beam": {
         "name": "Lance Sheaf",
-        "alternate": "Drill Fan",
-        "flavour": "Thin lances, bundled tight. They drill, not cut."
+        "alternate": "Ruled Lines",
+        "flavour": "Thin straight lances, bundled tight. Count them."
       }
     },
     "EMPRESS": {
