@@ -2,7 +2,7 @@
 // recognizer's input (one stick sample per 1/60 s tick), runs the recognizer (Controls' Python model today, the GDScript recognizer when it exists) and prints the tables the spec lists.
 //
 //   node tools/capture/right-stick-analyse.mjs <folder or files...> [--engine python|godot] [--rise 3] [--rises 2,3,4,5] [--by rating|pad|mode] [--pad-radius 60]
-//        [--export-traces <dir>] [--json <file>] [--include-interrupted] [--no-quant] [--python <exe>] [--model <right-stick-model.py>]
+//        [--export-traces <dir>] [--json <file>] [--include-interrupted] [--no-quant] [--guard-mag 0.9] [--guard-ticks 6] [--python <exe>] [--model <right-stick-model.py>]
 //        [--godot <exe> --godot-script res://<runner>.gd]
 //
 // Tables: who took part (against the spec's minimums); the confusion matrix per pattern and skill; direction accuracy four-way and eight-way (and the angle error); the span and rise-time
@@ -92,6 +92,11 @@ export function traceStats(ticks) {
     out.angle = Math.atan2(q[1], q[0]) * 180 / Math.PI;
   }
   return out;
+}
+/** The R3 guard (docs/controls/right-stick.md, R10/R24): an R3 click is ignored while the stick is past `mag` (0.9, dead zone rescaled) or within `within` (6) ticks after it was. Returns true when the click SURVIVES (would act). Pure. */
+export function guardSurvives(ticks, clickTick, mag = 0.9, within = 6) {
+  for (let i = clickTick - within; i <= clickTick; i++) { if (i < 0 || i >= ticks.length) continue; if (rescale(Math.hypot(ticks[i][0], ticks[i][1])) > mag) return false; }
+  return true;
 }
 export const angleErr = (a, sector) => { let d = (a - sector * 45) % 360; if (d > 180) d -= 360; if (d < -180) d += 360; return Math.abs(d); };
 
@@ -246,11 +251,13 @@ export function analyse(caps, o = {}) {
   const hard = meta.filter((m) => m.kind === 'hard' && m.mode === 'gamepad');
   const clicks = hard.map((m) => {
     const B = m.cap.buttons.slice(m.tr.b0 == null ? 0 : m.tr.b0, m.cap.buttons.length).filter((b) => b[1] >= m.tr.start_f && b[1] <= m.tr.end_f + 300 && b[3] === 1 && (b[2] === 10 || b[2] === 11));
-    return { who: m.who, pad: m.pad, n: B.length, r3: B.filter((b) => b[2] === 11).length, l3: B.filter((b) => b[2] === 10).length, standard: m.cap.env.gamepad && m.cap.env.gamepad.mapping === 'standard' };
+    const r3 = B.filter((b) => b[2] === 11);
+    const survive = r3.filter((b) => guardSurvives(m.ticks, Math.ceil((b[1] - m.tr.start_f) / TICK_MS), o.guardMag || 0.9, o.guardTicks || 6)).length;
+    return { who: m.who, pad: m.pad, n: B.length, r3: r3.length, l3: B.filter((b) => b[2] === 10).length, r3Survive: survive, standard: m.cap.env.gamepad && m.cap.env.gamepad.mapping === 'standard' };
   });
   const clickBy = {};
-  for (const c of clicks) { const r = (clickBy[c.pad] = clickBy[c.pad] || { pad: c.pad, trials: 0, clicks: 0, withClick: 0, r3: 0, l3: 0, standard: c.standard }); r.trials++; r.clicks += c.n; r.withClick += c.n ? 1 : 0; r.r3 += c.r3; r.l3 += c.l3; }
-  T.tables.hardClicks = { trials: clicks.length, clicks: clicks.reduce((s, c) => s + c.n, 0), withClick: clicks.filter((c) => c.n).length, perFlick: clicks.length ? Math.round(100 * clicks.reduce((s, c) => s + c.n, 0) / clicks.length) / 100 : null, byPad: Object.values(clickBy) };
+  for (const c of clicks) { const r = (clickBy[c.pad] = clickBy[c.pad] || { pad: c.pad, trials: 0, clicks: 0, withClick: 0, r3: 0, l3: 0, r3Survive: 0, standard: c.standard }); r.trials++; r.clicks += c.n; r.withClick += c.n ? 1 : 0; r.r3 += c.r3; r.l3 += c.l3; r.r3Survive += c.r3Survive; }
+  T.tables.hardClicks = { trials: clicks.length, clicks: clicks.reduce((s, c) => s + c.n, 0), withClick: clicks.filter((c) => c.n).length, perFlick: clicks.length ? Math.round(100 * clicks.reduce((s, c) => s + c.n, 0) / clicks.length) / 100 : null, r3: clicks.reduce((s, c) => s + c.r3, 0), r3Survive: clicks.reduce((s, c) => s + c.r3Survive, 0), r3SurvivePer100: clicks.length ? Math.round(1000 * clicks.reduce((s, c) => s + c.r3Survive, 0) / clicks.length) / 10 : null, guard: { mag: o.guardMag || 0.9, ticks: o.guardTicks || 6 }, byPad: Object.values(clickBy) };
 
   // ---- 9. rest and idle drift
   T.tables.drift = [];
@@ -283,7 +290,10 @@ export function analyse(caps, o = {}) {
   const free = fp['free|all'], idle = fp['idle|all'];
   if (free) bar.push({ measure: 'false patterns a minute, free aim', bar: '<= 1 (none, with patterns off in Aim)', value: free.perMinute, pass: free.perMinute <= 1 });
   if (idle) bar.push({ measure: 'false patterns at idle', bar: '0', value: idle.patterns, pass: idle.patterns === 0 });
-  if (T.tables.hardClicks.trials) bar.push({ measure: 'stick clicks per hard flick (R3 or L3, before any guard)', bar: 'the guard keeps accidental Escapes under 1 in 100', value: T.tables.hardClicks.perFlick, pass: null, note: `${T.tables.hardClicks.withClick} of ${T.tables.hardClicks.trials} hard flicks clicked` });
+  if (T.tables.hardClicks.trials) {
+    bar.push({ measure: 'stick clicks per hard flick (R3 or L3, raw, before the guard)', bar: 'information', value: T.tables.hardClicks.perFlick, pass: null, note: `${T.tables.hardClicks.withClick} of ${T.tables.hardClicks.trials} hard flicks clicked` });
+    bar.push({ measure: 'R3 clicks the guard lets through, per 100 hard flicks', bar: '< 1 (accidental Escapes under 1 in 100)', value: T.tables.hardClicks.r3SurvivePer100, pass: T.tables.hardClicks.r3SurvivePer100 < 1, note: `guard: ignore past ${T.tables.hardClicks.guard.mag} or within ${T.tables.hardClicks.guard.ticks} ticks; ${T.tables.hardClicks.r3Survive} of ${T.tables.hardClicks.r3} R3 clicks survive` });
+  }
   T.tables.bars = bar;
   T.meta = meta;
   return T;
@@ -322,8 +332,9 @@ function show(T) {
   h('8. R3 and L3 clicks on hard flicks (gamepad)');
   const hc = T.tables.hardClicks;
   if (!hc.trials) L.push('  (no hard-flick trials on a pad)'); else {
-    L.push(`  ${hc.trials} hard flicks, ${hc.clicks} clicks (${hc.perFlick} a flick), ${hc.withClick} flicks with a click`);
-    for (const r of hc.byPad) L.push(`  ${r.pad.slice(0, 50).padEnd(50)} flicks ${f(r.trials, 3)} clicks ${f(r.clicks, 3)} (R3 ${r.r3}, L3 ${r.l3})${r.standard ? '' : '  [layout not standard: button numbers may differ]'}`);
+    L.push(`  raw: ${hc.trials} hard flicks, ${hc.clicks} clicks (${hc.perFlick} a flick), ${hc.withClick} flicks with a click`);
+    L.push(`  with the R3 guard (ignore past ${hc.guard.mag} or within ${hc.guard.ticks} ticks of it): ${hc.r3Survive} of ${hc.r3} R3 clicks survive = ${hc.r3SurvivePer100} per 100 hard flicks (the bar is under 1)`);
+    for (const r of hc.byPad) L.push(`  ${r.pad.slice(0, 50).padEnd(50)} flicks ${f(r.trials, 3)} clicks ${f(r.clicks, 3)} (R3 ${r.r3}, of which ${r.r3Survive} past the guard; L3 ${r.l3})${r.standard ? '' : '  [layout not standard: button numbers may differ]'}`);
   }
   h('9. Rest and idle drift (stick units after quantising)');
   for (const r of T.tables.drift) L.push(`  ${r.kind.padEnd(5)} ${r.who.padEnd(14)} mean x ${f(r.meanX, 7)} y ${f(r.meanY, 7)}  largest ${f(r.maxMag, 6)}`);
@@ -339,14 +350,14 @@ function show(T) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
   const opt = (n, d) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : d; };
-  const flagsWithValue = new Set(['--engine', '--rise', '--rises', '--by', '--pad-radius', '--export-traces', '--json', '--python', '--model', '--godot', '--godot-script']);
+  const flagsWithValue = new Set(['--guard-mag', '--guard-ticks', '--engine', '--rise', '--rises', '--by', '--pad-radius', '--export-traces', '--json', '--python', '--model', '--godot', '--godot-script']);
   const inputs = []; for (let i = 0; i < args.length; i++) { if (args[i].startsWith('--')) { if (flagsWithValue.has(args[i])) i++; } else inputs.push(args[i]); }
-  if (!inputs.length) { console.error('usage: node tools/capture/right-stick-analyse.mjs <folder or files...> [--engine python|godot] [--rise 3] [--rises 2,3,4,5] [--by rating|pad|mode] [--pad-radius 60] [--export-traces <dir>] [--json <file>] [--include-interrupted] [--no-quant]'); process.exit(2); }
+  if (!inputs.length) { console.error('usage: node tools/capture/right-stick-analyse.mjs <folder or files...> [--engine python|godot] [--rise 3] [--rises 2,3,4,5] [--by rating|pad|mode] [--pad-radius 60] [--export-traces <dir>] [--json <file>] [--include-interrupted] [--no-quant] [--guard-mag 0.9] [--guard-ticks 6]'); process.exit(2); }
   const caps = loadCaptures(inputs);
   if (!caps.length) { console.error('right-stick-analyse: no captures found'); process.exit(1); }
   const o = {
     engine: opt('--engine', 'python'), rise: Number(opt('--rise', 3)), rises: opt('--rises', '2,3,4,5').split(',').map(Number), by: opt('--by', 'rating'), padRadius: Number(opt('--pad-radius', 60)),
-    includeInterrupted: args.includes('--include-interrupted'), quant: !args.includes('--no-quant'), python: opt('--python'), model: opt('--model'), godot: opt('--godot'), godotScript: opt('--godot-script')
+    includeInterrupted: args.includes('--include-interrupted'), quant: !args.includes('--no-quant'), guardMag: Number(opt('--guard-mag', 0.9)), guardTicks: Number(opt('--guard-ticks', 6)), python: opt('--python'), model: opt('--model'), godot: opt('--godot'), godotScript: opt('--godot-script')
   };
   if (!o.rises.includes(o.rise)) o.rises.push(o.rise);
   let T;
@@ -356,7 +367,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   if (ex) {
     mkdirSync(ex, { recursive: true });
     const byWho = {};
-    for (const m of T.meta) (byWho[m.who] = byWho[m.who] || []).push({ id: m.id, block: m.tr.block, prompt: m.tr.prompt, n: m.tr.n, speed: m.tr.speed, expect: m.tr.expect, label: m.tr.label || null, ticks: m.ticks });
+    for (const m of T.meta) (byWho[m.who] = byWho[m.who] || []).push({ id: m.id, block: m.tr.block, prompt: m.tr.prompt, n: m.tr.n, speed: m.tr.speed, expect: m.tr.expect, dir: m.tr.expect.dir || null, sector: m.tr.expect.sector == null ? null : m.tr.expect.sector, label: m.tr.label || null, ticks: m.ticks });
     for (const [who, trials] of Object.entries(byWho)) writeFileSync(join(ex, `${who}.traces.json`), JSON.stringify({ format: 'meridian.right-stick-traces/1', person: who, tick_hz: 60, y_up: true, trials }));
     console.log(`\nper-person traces written to ${ex}`);
   }

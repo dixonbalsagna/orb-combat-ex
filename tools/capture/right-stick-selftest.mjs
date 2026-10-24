@@ -7,7 +7,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import vm from 'node:vm';
-import { analyse, loadCaptures, percentiles, quant, rescale, trialTicks, traceStats, angleErr } from './right-stick-analyse.mjs';
+import { analyse, loadCaptures, percentiles, quant, rescale, trialTicks, traceStats, angleErr, guardSurvives } from './right-stick-analyse.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 let ran = 0, failed = 0;
@@ -55,6 +55,14 @@ for (const mode of ['gamepad', 'touch', 'keyboard']) {
 check('quantising goes to sixteenths', quant(0.5) === 0.5 && quant(0.53) === 0.5 && quant(0.57) === 0.5625);
 check('percentiles interpolate', percentiles([1, 2, 3, 4, 5], [0, 50, 100]).join() === '1,3,5');
 check('rescale takes out the dead zone', rescale(0.2) === 0 && Math.abs(rescale(1) - 1) < 1e-9 && Math.abs(rescale(0.625) - 0.5) < 1e-9);
+{
+  const rest = (n) => Array.from({ length: n }, () => [0, 0]), full = (n) => Array.from({ length: n }, () => [1, 0]);
+  const tr = [...rest(10), ...full(5), ...rest(30)];
+  check('the R3 guard ignores a click while the stick is past 0.9', !guardSurvives(tr, 12));
+  check('the R3 guard ignores a click up to 6 ticks after the stick was past 0.9', !guardSurvives(tr, 20) && !guardSurvives(tr, 14 + 6));
+  check('the R3 guard lets a click through 7 ticks after, or before the deflection', guardSurvives(tr, 14 + 7) && guardSurvives(tr, 5));
+  check('the R3 guard\'s numbers can be changed', guardSurvives(tr, 12, 1.1, 6) && !guardSurvives(tr, 25, 0.9, 12));
+}
 check('angle error wraps', angleErr(350, 0) === 10 && angleErr(-170, 4) === 10 && angleErr(95, 2) === 5);
 
 // ------------------------------------------------------------------ synthetic captures
@@ -160,6 +168,7 @@ try {
     check('no false pattern at idle (including a pad that drifts 0.02)', idle && idle.patterns === 0 && idle.minutes > 0.4, JSON.stringify(idle));
     check('no false pattern in a slow free sweep (a slow orbit)', free && free.patterns === 0 && free.minutes >= 0.99, JSON.stringify(free));
     check('the hard-flick click table finds the pad that clicks (4 clicks in 4 flicks) and the ones that do not', T.tables.hardClicks.trials === 12 && T.tables.hardClicks.clicks === 4 && T.tables.hardClicks.withClick === 4, JSON.stringify(T.tables.hardClicks));
+    check('the R3 guard leaves none of those clicks (each came with the stick at the edge), and the bars table judges the guarded rate', T.tables.hardClicks.r3 === 4 && T.tables.hardClicks.r3Survive === 0 && T.tables.hardClicks.r3SurvivePer100 === 0 && T.tables.bars.some((b) => /guard lets through/.test(b.measure) && b.pass === true) && T.tables.bars.some((b) => /raw, before the guard/.test(b.measure) && b.pass === null), JSON.stringify(T.tables.bars.filter((b) => /click/i.test(b.measure))));
     const rec = T.tables.patternRecall;
     check('ideal circles and zig-zags are mostly recognised on a pad', Object.values(rec).some((r) => r.n > 0) && Object.values(rec).every((r) => r.pct >= 60), JSON.stringify(rec));
     check('the touch and keyboard captures are analysed too (the keyboard table and the spans are present)', !!TA.tables.keyboard && TA.tables.keyboard.trials > 0 && TA.tables.distributions['span half (ticks)'].n >= 5, JSON.stringify(TA.tables.keyboard));
@@ -167,6 +176,9 @@ try {
     // the command line, end to end
     const r = spawnSync(process.execPath, [join(HERE, 'right-stick-analyse.mjs'), tmp, '--export-traces', join(tmp, 'tr'), '--json', join(tmp, 'tables.json')], { encoding: 'utf8' });
     check('the command prints the eleven tables and writes the traces and the json', r.status === 0 && /1\. Who took part/.test(r.stdout) && /11\. Against the proposed bars/.test(r.stdout) && existsSync(join(tmp, 'tr', 'ALPHA.traces.json')) && existsSync(join(tmp, 'tables.json')), (r.stderr || r.stdout).slice(0, 300));
+    const trs = JSON.parse(readFileSync(join(tmp, 'tr', 'ALPHA.traces.json'), 'utf8'));
+    const circles = trs.trials.filter((x) => x.block === 'circle');
+    check('the exported traces keep each circle trial\'s direction (clockwise or anticlockwise) and each flick\'s sector', circles.length > 0 && circles.every((x) => x.dir === 'cw' || x.dir === 'ccw') && new Set(circles.map((x) => x.dir)).size === 2 && trs.trials.filter((x) => x.block === 'flick4').every((x) => Number.isInteger(x.sector)));
     const bad = spawnSync(process.execPath, [join(HERE, 'right-stick-analyse.mjs'), tmp, '--engine', 'godot'], { encoding: 'utf8' });
     check('the GDScript engine says plainly that its runner does not exist yet', bad.status === 1 && /godot-script/.test(bad.stderr), bad.stderr.slice(0, 200));
   }

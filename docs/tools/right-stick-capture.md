@@ -34,15 +34,15 @@ Turns every trial into recognizer input (60 ticks a second, the last sample held
 5. the **span and rise-time distributions** (p5/25/50/75/95, in ticks) to set the windows and the dial;
 6. the **flick-versus-hold curve** for rise times 2 to 5;
 7. **false patterns a minute** in free aim and at idle;
-8. **R3 and L3 clicks per hard flick**, per pad;
+8. **R3 and L3 clicks per hard flick**, per pad, raw and with **the R3 guard** (a click is ignored while the stick is past 0.9 or within 6 ticks after it was; `--guard-mag`, `--guard-ticks`): the rate the guard would leave per 100 hard flicks is what the bar judges;
 9. rest and idle drift; 10. the keyboard's key-down times; 11. a summary against the spec's **proposed bars**.
 
-Options: `--rise N` (the rise the tables use, default 3), `--rises 2,3,4,5`, `--by rating|pad|mode`, `--export-traces <dir>` (each person's per-trial ticks, so a threshold can be re-fitted), `--json <file>`, `--include-interrupted`, `--no-quant`.
+Options: `--rise N` (the rise the tables use, default 3), `--rises 2,3,4,5`, `--by rating|pad|mode`, `--export-traces <dir>` (each person's per-trial ticks with each trial's direction: `dir` clockwise or anticlockwise for a circle, `sector` for a flick; so a threshold can be re-fitted), `--json <file>`, `--include-interrupted`, `--no-quant`, `--guard-mag 0.9`, `--guard-ticks 6`.
 
 **Engines.** `--engine python` (default) runs Controls' model, `docs/controls/right-stick-model.py`, through `tools/capture/right-stick-run.py` (it needs Python 3 on the PATH, or `--python <exe>`). `--engine godot --godot <exe> --godot-script res://<runner>.gd` will run the GDScript recognizer through a runner that speaks the same two small JSON files (the contract is at the top of the analyser and in the runner's docstring); that runner does not exist yet.
 
-Judgements Controls should confirm: a vertical zig-zag counts as the model's "pump" (or zig-zag); "casual" is *new to sticks* and *regular* (bar 85%), "practised" is *fighting-game or shooter player* (bar 95%); the circle trials do not discriminate direction (the model has one label per size); the click bar is reported raw (before the R3 guard).
+Judgements Controls should confirm: a vertical zig-zag counts as the model's "pump" (or zig-zag); "casual" is *new to sticks* and *regular* (bar 85%), "practised" is *fighting-game or shooter player* (bar 95%); the circle trials do not discriminate direction (the model has one label per size); the click bar is judged after the R3 guard (the raw figure is printed as information). **Controls confirmed these readings on 2026-10-23, and asked for the direction in the traces and the guarded click rate (both done).**
 
 ## Checks
 
-`node tools/capture/right-stick-selftest.mjs` (62 checks): lints the page (one inline script, no network, no storage, no external URL, a request-forbidding policy, the privacy promises), runs the protocol builder without a browser and checks the spec's counts, and runs the analysis on synthetic captures (an ideal thumb at 60 and 144 Hz, a pad that clicks on hard flicks, a phone, a keyboard) through the Python model. It is not in CI (it needs Python and Node together; it runs in about five seconds).
+`node tools/capture/right-stick-selftest.mjs` (68 checks): lints the page (one inline script, no network, no storage, no external URL, a request-forbidding policy, the privacy promises), runs the protocol builder without a browser and checks the spec's counts, and runs the analysis on synthetic captures (an ideal thumb at 60 and 144 Hz, a pad that clicks on hard flicks, a phone, a keyboard) through the Python model. It is not in CI (it needs Python and Node together; it runs in about five seconds).
