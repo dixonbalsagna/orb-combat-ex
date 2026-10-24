@@ -16,7 +16,7 @@
     },
     "EMPRESS": {
       "grab": "a cage of banners that slams him down to kneel",
-      "medium": "a thrown crown that clings and goes off 20 ticks later",
+      "medium": "a thrown crown that clings (to torso, back or arm, never head, neck or face) and goes off 20 ticks later",
       "beam": "a thin sweeping cut from the mantle hem or blade-hand",
       "trap": "a line across the air that fires her level-1 beam"
     },
@@ -24,7 +24,7 @@
       "grab": "a crane-hook lash that throws him 6 bh",
       "medium": "molten slag that rolls along the ground",
       "beam": "a ragged, unstable beam vented from the furnace",
-      "trap": "a scrap-jaw field that drags a passer down"
+      "trap": "a scrap-pit field that clamps shut and drags a passer down"
     }
   },
   "slots": {
@@ -172,9 +172,9 @@
         "flavour": "Hook's out! I'll throw you across the yard!"
       },
       "trap": {
-        "name": "Scrap Jaw",
-        "alternate": "Scrap Pit",
-        "flavour": "Block, and the scrap behind me grows teeth."
+        "name": "Scrap Pit",
+        "alternate": "Wired Heap",
+        "flavour": "Block, and the scrap behind me clamps shut."
       },
       "beam": {
         "name": "Furnace Vent",
