@@ -294,7 +294,7 @@ Orb asked to see how this will look once it is built, "so I know we're on the sa
 1. He holds B to level 3 and keeps holding. His hand stays lit as he flies.
 2. The rival sees the lit hand and keeps his distance, or guards, or dodges early.
 3. The moment the rival commits to a lunge, he lets go. The beam meets the lunge.
-4. Held too long, his ki runs out and the beam fires by itself. That is the price of carrying it.
+4. Held too long, his ki runs short. A step of light leaves his hand as the charge drops a level he can no longer pay for (E47). It never fires by itself: only letting go fires it. That is the price of carrying it.
 
 **C6. A struggle between two different beams.**
 1. Both fire level-2 beams, and they meet. One fighter's beam is wide like a wall, the other's a narrow lance.
@@ -303,12 +303,12 @@ Orb asked to see how this will look once it is built, "so I know we're on the sa
 4. Close to his own hands, the loser's surges push harder: the comeback.
 5. One side is overwhelmed and launched along the beam's line. In another take, the player who is losing presses A on the pulse, slips aside, and the winning beam carries on past him.
 
-**C7. Two energy grabs.**
-1. Fighter one taps A: a net seeks the rival, opens wide and wraps him. He hangs in it.
-2. The caught rival mashes. Each press tears at the net and shortens the hold.
-3. Fighter one presses A: his payoff, the bind. A bolt follows into the held rival, landing as on an open fighter.
-4. Fighter two taps A: a ring flies fast and snaps shut around the rival's arms.
-5. Fighter two presses A: his payoff, the yank. The rival is pulled into reach, and the brawl starts with fighter two's blow.
+**C7. Two energy grabs** (Combat's map, `docs/combat/energy-movesets.md` §3.3).
+1. The Protagonist taps A: a net seeks the Rival, opens wide and wraps him. He hangs in it.
+2. The caught Rival mashes. Each press tears at the net and shortens the hold.
+3. The Protagonist presses A: his payoff, the yank. The Rival is pulled into reach, and the brawl starts with the Protagonist's blow.
+4. Later, the Rival taps A: a thin ring flies fast, facing forward at hand height, and snaps shut round the Protagonist's arms and torso.
+5. The Rival presses A: his payoff, the bind. The Protagonist is held where he is, and a bolt follows into him, landing as on an open fighter.
 
 **C8. Guard and energy: mines and traps.**
 1. He holds LB and RB. His guard is up.
