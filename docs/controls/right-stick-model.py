@@ -24,6 +24,14 @@ def lerp(a, b, t):
 
 
 PATHMODE = True
+CIRCLE_SPEED_GATE = True
+MIN_DEG_PER_TICK = 3.0   # a drawn half circle is 140 degrees in 36 ticks or fewer; a slow sweep is 1 to 2
+STROKE_MAX_TICKS = 16   # a zig-zag stroke is a flick-speed move: slower sweeps are aiming, not a pattern
+STROKE_MIN_SPEED = 0.07  # mean radius per tick over the stroke (0.6 radius in 16 ticks is 0.0375; a flick-speed stroke is 0.1 or more)
+
+
+def STROKE_GATE(strokes):
+    return all(st[2] <= STROKE_MAX_TICKS and st[1] / max(1, st[2]) >= STROKE_MIN_SPEED for st in strokes)
 
 
 class Rec:
@@ -185,17 +193,16 @@ def classify_path(buf):
             strokes.append((d, L, n - t0))
     zz = False
     if len(strokes) >= 3:
-        zz = all(strokes[i][0][0] * strokes[i - 1][0][0] + strokes[i][0][1] * strokes[i - 1][0][1] < -0.5 for i in range(1, len(strokes))) and all(st[1] >= 0.6 for st in strokes[:3]) and n <= 60
-    circle = mono >= 0.8 and n <= 70 and deg >= 65
+        zz = STROKE_GATE(strokes[:3]) and all(strokes[i][0][0] * strokes[i - 1][0][0] + strokes[i][0][1] * strokes[i - 1][0][1] < -0.5 for i in range(1, len(strokes))) and all(st[1] >= 0.6 for st in strokes[:3]) and n <= 60
+    # a circle is a drawn move, not a slow sweep: the swept angle must arrive inside the class's window (ticks spent off centre)
+    WINDOW = {"quarter": 24, "half": 36, "full": 48}
+    cls = "full" if deg >= 300 else "half" if deg >= 140 else "quarter" if deg >= 65 else None
+    circle = mono >= 0.8 and cls is not None and ticks_in <= WINDOW[cls] and (not CIRCLE_SPEED_GATE or deg / max(1, ticks_in) >= MIN_DEG_PER_TICK)
     if zz and not circle:
         vertical = all(abs(st[0][1]) > 0.8 for st in strokes)
         return "pump" if vertical else "zigzag"
     if circle:
-        if deg >= 300:
-            return "full"
-        if deg >= 140:
-            return "half"
-        return "quarter"
+        return cls
     return None
 
 # ------------------------------------------------------------------ synthetic thumbs
