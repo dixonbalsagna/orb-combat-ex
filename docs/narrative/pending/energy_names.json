@@ -205,11 +205,11 @@
       },
       {
         "when": "beam_half",
-        "text": "Lances out. Don't flinch."
+        "text": "Thin and fast. Don't flinch."
       },
       {
         "when": "beam_full",
-        "text": "Full sheaf, clown. Try to dodge."
+        "text": "All of them, clown. Try to dodge."
       }
     ],
     "EMPRESS": [
@@ -229,7 +229,7 @@
     "CYBORG": [
       {
         "when": "grab",
-        "text": "Hook's out! Throwing you clear across!"
+        "text": "Got you! Throwing you clear across!"
       },
       {
         "when": "beam_half",
@@ -237,7 +237,7 @@
       },
       {
         "when": "beam_full",
-        "text": "Limiter's off! Venting everything!"
+        "text": "Limiter's off! Everything goes!"
       }
     ]
   }
