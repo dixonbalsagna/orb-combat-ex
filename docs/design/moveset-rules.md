@@ -282,7 +282,7 @@ This is one list per fighter. It merges §8 with Narrative's `docs/narrative/wor
 
 | Fighter | Stages, each with its mechanic and signature moment (Narrative's defining moments are kept) |
 | :--- | :--- |
-| **Empress** (revisions) | **1, the form on file**, bored under the salute. **2, louder**. **4, the hat**, and the guard check whether to salute it. **6, smaller**, with the train too long. **9, Field Revision:** armour, and her decree line doubles into twin lines. **10, Council Revision:** the fleet's shadow, and her volleys become barrages. **11, Executive Revision:** the train becomes the weapon, as blade-wings with +50% reach. **12, Final Approved:** she smiles, and finishes with the "seal of approval". Each revision adds one tell and never removes one, and her revision number is worn on her regalia |
+| **Empress** (revisions) | **1, the form on file**, bored under the salute. **2, louder**. **4, the hat**, and the guard check whether to salute it. **6, smaller**, with the train too long. **9, Field Revision:** armour, and her decree line doubles into twin lines. **10, Executive Revision:** the train becomes the weapon, as blade-wings with +50% reach. **11, Council Revision:** the fleet's shadow, and her volleys become barrages. **12, Final Approved:** she smiles, and finishes with the "seal of approval". Each revision adds one tell and never removes one, and her revision number is worn on her regalia |
 | **Protagonist** (Hot Blood) | **Heated:** seams glow, faster footwork, and he grins at his own steam. **Simmering:** heavier blows and more chains; he takes a hit to shelter a wall. **Boiling:** reckless and blitz-prone, a roar, hands shaking. **Boiled over:** the stagger and vent, and he looks round for who he might have hurt (heat memory: after two, he never cools below Heated). **Open Hand** (the reveal on the proving ground): locked at Boiling with no internal wear for 20 s, and the fragments spin out into a ring |
 | **Anti-hero** (pride ascension) | *Folded to three forms by Orb's pick of the Heavy Crown (`spec-wounds.md` §3): Regalia at Pride 60, Sovereign at 80 and Apex at 95, with the Heavy Crown's numbers replacing the per-form bonuses.* As first written: five forms at Pride 55, 65, 75, 85 and 95, each adding +5% damage and +3% speed. **Poise:** the noise drops out, and he parries one-handed. **Regalia:** a piece forms, and he checks they saw. **Hierarchy:** he talks *about* the rival, and a crown of barrage fire. **Sovereign:** he stands above the fight, with the height bonus of the Dais. **Apex:** he finishes only by hand, with a terrible smile. **The crash** (Pride below 50): he loses one form as the regalia flakes away, and he can climb back. **Abdicate** (Drop the Act): he sheds every form for unrestrained, once per match |
 | **Cyborg** (assimilation) | **Base:** the bow. **Scavenger** (first Hunger threshold): a girder bolted onto his arm, harder and faster. **Kitchen** (second threshold): the table set mid-fight, portal frames and sandwich hazards. **Assembled** (third threshold): a building block worn as a shawl, wreckage armour taking incoming wear ×0.85, and the hunt for the drive begins. **Online** (the drive docked): lights come on like a restaurant opening, the tech is online, and hidden weapons appear on trays, generated from what he ate |
@@ -357,10 +357,10 @@ The Empress's joke revisions stay small on purpose, because they are the comedy.
   - *The fill* is Wrath, then the 8 s processing that her guard reads out in three protocol gestures (no text).
   - *The ready tell:* the third gesture is held, and the revision number worn on her regalia turns over to the next number and lights. The sting is a deep chime. Hold Transform.
 - **The changes,** each one large:
-  - *Field Revision:* armour snaps on and bulks out her silhouette, and her decree line doubles;
-  - *Council Revision:* the fleet's shadow falls across the screen and stays over her, and her volleys become barrages;
-  - *Executive Revision:* her train rises into blade-wings, the biggest silhouette change on the roster;
-  - *Final Approved:* the sun dims, her regalia is complete, and she smiles.
+  - *9, Field Revision:* armour snaps on and bulks out her silhouette, and her decree line doubles;
+  - *10, Executive Revision:* her train rises into blade-wings, the biggest silhouette change on the roster;
+  - *11, Council Revision:* the fleet's shadow falls across the screen and stays over her, and her volleys become barrages;
+  - *12, Final Approved:* the sun dims, her regalia is complete, and she smiles.
 
 ### 10.6 The Cyborg: assimilation
 
