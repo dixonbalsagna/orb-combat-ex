@@ -68,6 +68,21 @@ Encounter's 7a is in. The hook now reads the press-acknowledge correctly (it is 
 - **The light now answers at once and shows it in about 32 ms** (the mark), against the 50 ms budget excluding display. **The body still moves 5 ticks after the press (83 ms)**, so the body's first changed picture is 132 ms, about the 133 ms web budget before the display adds its frame. The EP said the 6-tick lunge crouch at 250 units is what Animation is drawing; until it is drawn, the body shows nothing for 5 ticks.
 - Other configs for the body: Radeon 130 / 143 ms; Radeon at CPU x4 145 / 179; RTX at x4 135 / 167. Dash and guard at x4: Radeon 60 / 180 and 57 / 133, RTX 76 / 218 and 55 / 66 (the p95 tails are single cold-start frames). Early presses on the other configs: light body 149 to 152 ms on all four.
 
+## Re-measure on b9f8884d: Animation's press-tick anticipation (2026-10-23), light, heavy, signature
+
+Build b9f8884d. Tapped presses (the key down 40 ms), mid-match (about 3 s into the match), 14 presses per action, valid runs, 60 Hz pacing, the pair 250 units apart. `body` = the first changed picture in the pair's area; `any` = the first changed picture anywhere (the HUD's press mark counts); ms from the DOM keydown to the end of that frame.
+
+| Action | Sim: ack, body state | RTX body / any | Radeon body / any | What the picture does |
+|---|---|---|---|---|
+| **Light** | the `started` ack on the press tick; the rush at +5 ticks | **131 / 32 ms** (p95 138 / 39) | **125 / 30 ms** (p95 142 / 40) | the press mark at 30 ms; **nothing in the pair's area until the rush, 7 frames later** (the six frames in between change no block of the pair's area beyond the idle noise) |
+| **Heavy** | the ack on the press tick; the body state at +9 ticks | **31 ms** (p95 36) | **26 ms** (p95 37) | the body changes in the first frame (the shoulder loading), with the mark |
+| **Signature** | the ack on the press tick; the body state at +9 ticks | **28 ms** (p95 41) | **26 ms** (p95 37) | the body changes in the first frame (the sink), with the mark |
+
+- **The heavy and the signature now show the body in the first frame (26 to 31 ms)**, inside the 50 ms budget before the display's frame. Before this build I had not measured them.
+- **The light's body does not: 125 to 131 ms, the figure it had (about 132 ms).** The anticipation Animation built runs "on a press_ack `queued`"; a mid-match light is acknowledged `started`, not `queued`, so its lean-in either does not run or is under the detector's threshold (a block must change by more than 1.25 times its own idle maximum plus 0.12 of a 0 to 255 level). The six frames before the rush change no block of the pair's area. The queued case (a press inside a cooldown) is measured separately below.
+- x4 (a 4 times slower CPU): the runs were invalid twice on a loaded machine; the figures will follow in a valid window.
+- Held keys (400 ms) and the queued case (inside the opening cooldown) are queued behind the machine's quiet window.
+
 ## Files
 
 `docs/perf/tools/latency-bench.mjs` (`--hold`, `--page-args latd=80`, `--pace60`, `--throttle`, `--igpu`, `--raw`), `scratch-hooks/hook-latency.mjs`, the `lat` variant in `make-audit-sites.mjs`. The raw runs are in my scratch folder.
