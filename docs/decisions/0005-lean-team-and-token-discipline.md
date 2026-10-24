@@ -21,3 +21,5 @@ The project runs on a Claude Pro plan with zero budget. On the night of 2026-09-
 ## Amendment, 2026-10-23 (Orb)
 
 For the end-of-week push on planet generation, biomes, fighter animation and camera work, Orb authorised workflows: "Workflows sounds good, why haven't we authorized this yet?" For those four areas, until the weekly window resets, directors may run workflows of up to about 10 agents for their briefed tasks. The machine rules still hold. Workflow agents author and analyse. Godot runs and browser captures stay inside the session's own caps: at most 6 Godot processes a session counting its workflows (3 while long runs are going), one software-rendered capture at a time, and long runs at below-normal priority. Ultracode stays off. Everything else in this ADR is unchanged.
+
+Later the same evening Orb added: "keep going, run those agent workflows", and asked for an energy attack overhaul with prototype animations. The workflow allowance above now also covers the water pass and the energy overhaul design and prototype, on the same terms.
