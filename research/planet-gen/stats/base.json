@@ -70,11 +70,11 @@
    "cost": {
     "latticeMarchesPerRing": 0,
     "initMs": 0,
-    "ringReadMs": 6.5,
-    "baseRingReadMs": 6.5,
-    "perColumnVsToday": 1,
-    "initAsColumnsOfToday": 7,
-    "mapMs": 732
+    "ringReadMs": 3.5,
+    "baseRingReadMs": 3.5,
+    "perColumnVsToday": 1.01,
+    "initAsColumnsOfToday": 9,
+    "mapMs": 334
    }
   },
   "11": {
@@ -144,11 +144,11 @@
    "cost": {
     "latticeMarchesPerRing": 0,
     "initMs": 0,
-    "ringReadMs": 5.2,
-    "baseRingReadMs": 4.9,
-    "perColumnVsToday": 1.08,
+    "ringReadMs": 3.4,
+    "baseRingReadMs": 3.2,
+    "perColumnVsToday": 1.07,
     "initAsColumnsOfToday": 3,
-    "mapMs": 618
+    "mapMs": 351
    }
   },
   "23": {
@@ -218,11 +218,11 @@
    "cost": {
     "latticeMarchesPerRing": 0,
     "initMs": 0,
-    "ringReadMs": 3.7,
-    "baseRingReadMs": 4.3,
-    "perColumnVsToday": 0.87,
-    "initAsColumnsOfToday": 5,
-    "mapMs": 468
+    "ringReadMs": 2.7,
+    "baseRingReadMs": 2.4,
+    "perColumnVsToday": 1.1,
+    "initAsColumnsOfToday": 13,
+    "mapMs": 320
    }
   },
   "42": {
@@ -296,11 +296,11 @@
    "cost": {
     "latticeMarchesPerRing": 0,
     "initMs": 0,
-    "ringReadMs": 4.6,
-    "baseRingReadMs": 3.7,
-    "perColumnVsToday": 1.22,
-    "initAsColumnsOfToday": 7,
-    "mapMs": 496
+    "ringReadMs": 2.9,
+    "baseRingReadMs": 3.4,
+    "perColumnVsToday": 0.85,
+    "initAsColumnsOfToday": 8,
+    "mapMs": 356
    }
   },
   "101": {
@@ -366,11 +366,11 @@
    "cost": {
     "latticeMarchesPerRing": 0,
     "initMs": 0,
-    "ringReadMs": 3,
-    "baseRingReadMs": 3.2,
-    "perColumnVsToday": 0.92,
-    "initAsColumnsOfToday": 5,
-    "mapMs": 496
+    "ringReadMs": 2,
+    "baseRingReadMs": 1.9,
+    "perColumnVsToday": 1.01,
+    "initAsColumnsOfToday": 19,
+    "mapMs": 333
    }
   },
   "2026": {
@@ -436,11 +436,11 @@
    "cost": {
     "latticeMarchesPerRing": 0,
     "initMs": 0,
-    "ringReadMs": 4.6,
-    "baseRingReadMs": 4.5,
-    "perColumnVsToday": 1.01,
-    "initAsColumnsOfToday": 3,
-    "mapMs": 525
+    "ringReadMs": 3.9,
+    "baseRingReadMs": 2.8,
+    "perColumnVsToday": 1.39,
+    "initAsColumnsOfToday": 9,
+    "mapMs": 436
    }
   }
  }

@@ -15,6 +15,7 @@
    "coastRamp": 500,
    "recycleY": 0.45,
    "latticeCell": 1500,
+   "riseLattice": false,
    "band": [
     [
      0,
@@ -67,10 +68,11 @@
    "pNoise": 0.35,
    "pNoiseScale": 9000,
    "ditherScale": 5000,
+   "ditherOct": 3,
    "ditherT": 4,
    "ditherP": 0.45,
-   "beltScale": 12000,
-   "beltAmp": 0.07,
+   "beltScale": 10000,
+   "beltAmp": 0.13,
    "shelf": -450,
    "seaIceT": -6,
    "iceT": -9,
@@ -185,6 +187,8 @@
    "northY": 0.68,
    "northW": 0.2,
    "northH": 3200,
+   "northFull": 0.55,
+   "northSea": -500,
    "southY": 0.76,
    "southW": 0.16,
    "southLand": 600,
@@ -201,39 +205,39 @@
     "landBiomes": [
      [
       "Ice sheet",
-      15
+      14.8
      ],
      [
       "Grassland",
-      11.7
-     ],
-     [
-      "Temperate forest",
-      11.2
+      11.3
      ],
      [
       "Savanna",
-      10.9
+      11.3
+     ],
+     [
+      "Temperate forest",
+      11.1
      ],
      [
       "Tropical dry forest",
       10.2
      ],
      [
-      "Shrubland",
-      8.5
-     ],
-     [
       "Hot desert",
       8.5
      ],
      [
-      "Boreal forest",
-      5.7
+      "Shrubland",
+      8.3
      ],
      [
       "Alpine",
-      5.2
+      5.9
+     ],
+     [
+      "Boreal forest",
+      5.7
      ],
      [
       "Beach and coast",
@@ -241,11 +245,11 @@
      ],
      [
       "Cold steppe",
-      2.3
+      2
      ],
      [
       "Tundra",
-      1.7
+      1.6
      ],
      [
       "Snowcap",
@@ -257,138 +261,142 @@
      ],
      [
       "Wetland",
-      0.9
+      1
      ],
      [
       "Temperate rainforest",
       0.7
      ]
     ],
-    "landBiomesOver1": 14,
+    "landBiomesOver1": 15,
     "water": {
-     "Deep ocean": 7.8,
+     "Deep ocean": 10.7,
      "Shallow sea": 24.7,
-     "Sea ice": 6.2
+     "Sea ice": 3.3
     }
    },
    "ring": {
-    "candidate": 1,
+    "candidate": 2,
     "metMinimum": true,
-    "landPct": 58.8,
+    "landPct": 74.7,
     "biomes": [
      [
-      "Boreal forest",
-      20.5
-     ],
-     [
-      "Grassland",
-      16.3
-     ],
-     [
-      "Temperate forest",
-      15.7
-     ],
-     [
-      "Hot desert",
-      13.1
-     ],
-     [
-      "Shrubland",
-      11.6
+      "Tropical dry forest",
+      19.8
      ],
      [
       "Savanna",
-      8.3
-     ],
-     [
-      "Alpine",
-      7.1
-     ],
-     [
-      "Beach and coast",
-      5.2
-     ],
-     [
-      "Temperate rainforest",
-      1.2
-     ],
-     [
-      "Cold steppe",
-      1.1
-     ]
-    ],
-    "distinct": 10,
-    "changes": 47,
-    "coasts": 8,
-    "longestCols": 794,
-    "longestUnits": 25408,
-    "mountainPct": 4.1,
-    "rivers": 0,
-    "lakes": 0,
-    "hMax": 4547,
-    "hMin": -3339
-   },
-   "cost": {
-    "latticeMarchesPerRing": 411,
-    "initMs": 0,
-    "ringReadMs": 12.5,
-    "baseRingReadMs": 4.1,
-    "perColumnVsToday": 3.05,
-    "initAsColumnsOfToday": 12,
-    "mapMs": 1131
-   }
-  },
-  "11": {
-   "map": {
-    "landPct": 84,
-    "landBiomes": [
-     [
-      "Grassland",
-      16.4
+      18.9
      ],
      [
       "Ice sheet",
-      12.6
+      18.2
      ],
      [
-      "Alpine",
-      10.6
-     ],
-     [
-      "Savanna",
-      10.2
-     ],
-     [
-      "Temperate forest",
-      8.9
-     ],
-     [
-      "Tropical dry forest",
-      7.9
+      "Hot desert",
+      9.7
      ],
      [
       "Shrubland",
       7.3
      ],
      [
-      "Hot desert",
-      6.7
+      "Temperate forest",
+      6.8
      ],
      [
       "Boreal forest",
-      6.6
+      5.8
      ],
      [
-      "Snowcap",
-      4.2
-     ],
-     [
-      "Cold steppe",
-      4
+      "Grassland",
+      3.9
      ],
      [
       "Tundra",
-      2.9
+      3.6
+     ],
+     [
+      "Tropical rainforest",
+      3.1
+     ],
+     [
+      "Beach and coast",
+      1.2
+     ]
+    ],
+    "distinct": 11,
+    "changes": 34,
+    "coasts": 2,
+    "longestCols": 933,
+    "longestUnits": 29856,
+    "mountainPct": 0.6,
+    "rivers": 0,
+    "lakes": 0,
+    "hMax": 4319,
+    "hMin": -1948
+   },
+   "cost": {
+    "latticeMarchesPerRing": 364,
+    "initMs": 0,
+    "ringReadMs": 6,
+    "baseRingReadMs": 2.9,
+    "perColumnVsToday": 2.04,
+    "initAsColumnsOfToday": 12,
+    "mapMs": 471
+   }
+  },
+  "11": {
+   "map": {
+    "landPct": 83.9,
+    "landBiomes": [
+     [
+      "Grassland",
+      17.3
+     ],
+     [
+      "Ice sheet",
+      13.8
+     ],
+     [
+      "Savanna",
+      11.1
+     ],
+     [
+      "Alpine",
+      10.3
+     ],
+     [
+      "Temperate forest",
+      8.8
+     ],
+     [
+      "Tropical dry forest",
+      7.5
+     ],
+     [
+      "Shrubland",
+      7.2
+     ],
+     [
+      "Hot desert",
+      6.5
+     ],
+     [
+      "Boreal forest",
+      5.6
+     ],
+     [
+      "Snowcap",
+      4.1
+     ],
+     [
+      "Cold steppe",
+      3.8
+     ],
+     [
+      "Tundra",
+      2.2
      ],
      [
       "Beach and coast",
@@ -404,93 +412,93 @@
      ],
      [
       "Wetland",
-      0
+      0.1
      ]
     ],
     "landBiomesOver1": 13,
     "water": {
-     "Deep ocean": 7.1,
-     "Shallow sea": 3,
-     "Sea ice": 5.9
+     "Deep ocean": 10,
+     "Shallow sea": 3.1,
+     "Sea ice": 3
     }
    },
    "ring": {
     "candidate": 0,
     "metMinimum": true,
-    "landPct": 81.5,
+    "landPct": 80.2,
     "biomes": [
      [
       "Ice sheet",
-      21.8
-     ],
-     [
-      "Alpine",
-      13.1
+      26.9
      ],
      [
       "Temperate forest",
-      12.2
+      12.9
      ],
      [
-      "Tundra",
-      8.5
-     ],
-     [
-      "Grassland",
-      8.1
+      "Alpine",
+      12.3
      ],
      [
       "Shrubland",
-      7.5
+      9
+     ],
+     [
+      "Grassland",
+      8.2
      ],
      [
       "Boreal forest",
-      7.5
+      5.5
      ],
      [
       "Tropical dry forest",
-      5.7
+      5.4
      ],
      [
       "Savanna",
-      4.8
+      4.9
      ],
      [
       "Cold steppe",
-      4.6
+      4.5
+     ],
+     [
+      "Tundra",
+      4.4
      ],
      [
       "Hot desert",
-      2.3
-     ],
-     [
-      "Snowcap",
-      1.9
+      2.9
      ],
      [
       "Tropical rainforest",
       1.9
+     ],
+     [
+      "Snowcap",
+      1.1
      ]
     ],
     "distinct": 13,
-    "changes": 47,
+    "changes": 51,
     "coasts": 2,
-    "longestCols": 456,
-    "longestUnits": 14592,
-    "mountainPct": 12.3,
+    "longestCols": 462,
+    "longestUnits": 14784,
+    "mountainPct": 10.7,
     "rivers": 0,
     "lakes": 0,
     "hMax": 5923,
-    "hMin": -2912
+    "hMin": -1938
    },
    "cost": {
-    "latticeMarchesPerRing": 518,
+    "latticeMarchesPerRing": 318,
     "initMs": 0,
-    "ringReadMs": 16.5,
-    "baseRingReadMs": 4.7,
-    "perColumnVsToday": 3.47,
+    "ringReadMs": 5.5,
+    "baseRingReadMs": 3,
+    "perColumnVsToday": 1.82,
     "initAsColumnsOfToday": 5,
-    "mapMs": 1518
+    "mapMs": 492
    }
   },
   "23": {
@@ -499,31 +507,31 @@
     "landBiomes": [
      [
       "Savanna",
-      20
+      19.5
      ],
      [
       "Ice sheet",
       14
      ],
      [
-      "Grassland",
-      10.8
+      "Tropical dry forest",
+      11.2
      ],
      [
-      "Tropical dry forest",
-      10.6
+      "Grassland",
+      10.9
      ],
      [
       "Temperate forest",
-      9.4
-     ],
-     [
-      "Hot desert",
-      7.5
+      9.9
      ],
      [
       "Shrubland",
-      7.4
+      7.5
+     ],
+     [
+      "Hot desert",
+      7.1
      ],
      [
       "Beach and coast",
@@ -531,31 +539,31 @@
      ],
      [
       "Boreal forest",
-      5
+      4.8
      ],
      [
       "Alpine",
-      2.8
+      2.7
      ],
      [
       "Tundra",
-      2.3
+      2.2
      ],
      [
       "Snowcap",
-      1.7
+      1.5
      ],
      [
       "Cold steppe",
-      1.3
+      1.2
      ],
      [
       "Wetland",
-      0.8
+      0.9
      ],
      [
       "Tropical rainforest",
-      0.3
+      0.4
      ],
      [
       "Temperate rainforest",
@@ -564,109 +572,89 @@
     ],
     "landBiomesOver1": 13,
     "water": {
-     "Deep ocean": 7.4,
+     "Deep ocean": 10.6,
      "Shallow sea": 27.9,
-     "Sea ice": 6.2
+     "Sea ice": 3
     }
    },
    "ring": {
-    "candidate": 1,
+    "candidate": 2,
     "metMinimum": true,
-    "landPct": 64.9,
+    "landPct": 61.2,
     "biomes": [
      [
-      "Tundra",
-      15.7
+      "Tropical dry forest",
+      32.1
      ],
      [
       "Savanna",
-      15.3
-     ],
-     [
-      "Shrubland",
-      12.9
+      25.5
      ],
      [
       "Grassland",
-      11.7
-     ],
-     [
-      "Hot desert",
-      10.6
-     ],
-     [
-      "Boreal forest",
-      7.9
+      15.4
      ],
      [
       "Temperate forest",
-      7.9
+      11.2
      ],
      [
       "Beach and coast",
-      6.7
+      9.7
      ],
      [
-      "Alpine",
-      6
-     ],
-     [
-      "Snowcap",
-      3.2
-     ],
-     [
-      "Cold steppe",
-      1.8
+      "Wetland",
+      6.1
      ]
     ],
-    "distinct": 11,
-    "changes": 37,
-    "coasts": 4,
-    "longestCols": 441,
-    "longestUnits": 14112,
-    "mountainPct": 6,
+    "distinct": 6,
+    "changes": 24,
+    "coasts": 8,
+    "longestCols": 1043,
+    "longestUnits": 33376,
+    "mountainPct": 0,
     "rivers": 0,
     "lakes": 0,
-    "hMax": 4416,
-    "hMin": -3353
+    "hMax": 3127,
+    "hMin": -354
    },
    "cost": {
-    "latticeMarchesPerRing": 428,
+    "latticeMarchesPerRing": 328,
     "initMs": 0,
-    "ringReadMs": 12.8,
-    "baseRingReadMs": 4.3,
-    "perColumnVsToday": 2.96,
-    "initAsColumnsOfToday": 5,
-    "mapMs": 974
+    "ringReadMs": 3.7,
+    "baseRingReadMs": 1.8,
+    "perColumnVsToday": 2.1,
+    "initAsColumnsOfToday": 16,
+    "mapMs": 386
    }
   },
   "42": {
    "map": {
-    "landPct": 86,
+    "landPct": 85.3,
     "landBiomes": [
      [
       "Temperate forest",
-      18.6
+      19.3
      ],
      [
       "Grassland",
-      18.1
+      18.9
      ],
      [
       "Ice sheet",
-      16.3
+      17
      ],
      [
       "Alpine",
-      11.6
+      11.4
      ],
      [
       "Shrubland",
-      7.7
+      7.2
      ],
      [
       "Boreal forest",
-      7.6
+      6.8
      ],
      [
       "Hot desert",
@@ -674,23 +662,23 @@
      ],
      [
       "Snowcap",
-      4.1
-     ],
-     [
-      "Cold steppe",
-      3.4
+      3.8
      ],
      [
       "Savanna",
-      2.9
+      3.3
+     ],
+     [
+      "Cold steppe",
+      3.2
      ],
      [
       "Tundra",
-      2.6
+      1.9
      ],
      [
       "Tropical dry forest",
-      1.6
+      1.7
      ],
      [
       "Beach and coast",
@@ -698,137 +686,149 @@
      ],
      [
       "Temperate rainforest",
-      0.1
+      0.2
      ],
      [
       "Wetland",
-      0
+      0.1
      ]
     ],
     "landBiomesOver1": 12,
     "water": {
-     "Deep ocean": 4.2,
-     "Shallow sea": 3.9,
-     "Sea ice": 5.9
+     "Deep ocean": 7.1,
+     "Shallow sea": 4.4,
+     "Sea ice": 3.2
     }
    },
    "ring": {
     "candidate": 0,
     "metMinimum": true,
-    "landPct": 75.3,
+    "landPct": 74.7,
     "biomes": [
      [
       "Ice sheet",
-      29.9
+      29.3
      ],
      [
       "Temperate forest",
-      18.1
+      22.7
      ],
      [
       "Alpine",
-      14
-     ],
-     [
-      "Boreal forest",
-      11
+      13
      ],
      [
       "Grassland",
-      10.9
+      12
+     ],
+     [
+      "Boreal forest",
+      7.2
      ],
      [
       "Snowcap",
-      5
+      5.4
      ],
      [
       "Tundra",
       3
      ],
      [
+      "Hot desert",
+      1.9
+     ],
+     [
       "Shrubland",
-      2.8
+      1.5
+     ],
+     [
+      "Temperate rainforest",
+      1.2
      ],
      [
       "Cold steppe",
-      2.6
+      1.1
      ],
      [
-      "Hot desert",
-      2
+      "Savanna",
+      1.1
      ]
     ],
-    "distinct": 10,
-    "changes": 40,
+    "distinct": 12,
+    "changes": 49,
     "coasts": 4,
-    "longestCols": 639,
-    "longestUnits": 20448,
-    "mountainPct": 14.3,
+    "longestCols": 575,
+    "longestUnits": 18400,
+    "mountainPct": 13.8,
     "rivers": 0,
     "lakes": 0,
     "hMax": 5585,
-    "hMin": -2962
+    "hMin": -1055
    },
    "cost": {
-    "latticeMarchesPerRing": 468,
+    "latticeMarchesPerRing": 242,
     "initMs": 0,
-    "ringReadMs": 13.4,
-    "baseRingReadMs": 4.7,
-    "perColumnVsToday": 2.83,
-    "initAsColumnsOfToday": 6,
-    "mapMs": 1174
+    "ringReadMs": 4.8,
+    "baseRingReadMs": 3,
+    "perColumnVsToday": 1.59,
+    "initAsColumnsOfToday": 12,
+    "mapMs": 508
    }
   },
   "101": {
    "map": {
-    "landPct": 66.5,
+    "landPct": 61.3,
     "landBiomes": [
      [
-      "Ice sheet",
-      16.2
-     ],
-     [
       "Savanna",
-      14.1
+      15.2
      ],
      [
       "Temperate forest",
-      10.6
+      12.4
      ],
      [
       "Grassland",
-      10.5
+      10.8
+     ],
+     [
+      "Ice sheet",
+      10.6
      ],
      [
       "Tropical dry forest",
-      9.4
+      10.6
      ],
      [
       "Shrubland",
-      9.3
+      10.2
      ],
      [
       "Hot desert",
-      8.4
+      9.1
      ],
      [
       "Boreal forest",
-      7.1
+      6.5
      ],
      [
       "Beach and coast",
-      5.7
-     ],
-     [
-      "Tundra",
-      3
+      6.2
      ],
      [
       "Tropical rainforest",
-      2.1
+      2.3
+     ],
+     [
+      "Tundra",
+      2.2
      ],
      [
       "Temperate rainforest",
+      1.2
+     ],
+     [
+      "Wetland",
       1
      ],
      [
@@ -836,19 +836,15 @@
       0.9
      ],
      [
-      "Wetland",
-      0.8
-     ],
-     [
       "Cold steppe",
-      0.7
+      0.8
      ]
     ],
-    "landBiomesOver1": 12,
+    "landBiomesOver1": 13,
     "water": {
-     "Deep ocean": 5.7,
+     "Deep ocean": 10.5,
      "Shallow sea": 26.6,
-     "Sea ice": 1.3
+     "Sea ice": 1.5
     }
    },
    "ring": {
@@ -857,32 +853,32 @@
     "landPct": 72.4,
     "biomes": [
      [
-      "Shrubland",
-      18.8
+      "Temperate forest",
+      19.4
      ],
      [
-      "Grassland",
-      17.8
+      "Shrubland",
+      18.6
      ],
      [
       "Tropical dry forest",
-      16.3
-     ],
-     [
-      "Temperate forest",
       15.5
      ],
      [
       "Savanna",
-      12.6
+      14.4
      ],
      [
-      "Hot desert",
-      5.4
+      "Grassland",
+      13.2
      ],
      [
       "Beach and coast",
       5.3
+     ],
+     [
+      "Hot desert",
+      5.2
      ],
      [
       "Wetland",
@@ -894,7 +890,7 @@
      ]
     ],
     "distinct": 9,
-    "changes": 46,
+    "changes": 47,
     "coasts": 8,
     "longestCols": 607,
     "longestUnits": 19424,
@@ -902,61 +898,61 @@
     "rivers": 0,
     "lakes": 0,
     "hMax": 1836,
-    "hMin": -1764
+    "hMin": -1678
    },
    "cost": {
-    "latticeMarchesPerRing": 483,
+    "latticeMarchesPerRing": 472,
     "initMs": 0,
-    "ringReadMs": 11.6,
-    "baseRingReadMs": 3.1,
-    "perColumnVsToday": 3.73,
-    "initAsColumnsOfToday": 7,
-    "mapMs": 1253
+    "ringReadMs": 6.2,
+    "baseRingReadMs": 2.3,
+    "perColumnVsToday": 2.73,
+    "initAsColumnsOfToday": 16,
+    "mapMs": 571
    }
   },
   "2026": {
    "map": {
-    "landPct": 70,
+    "landPct": 69.7,
     "landBiomes": [
      [
       "Ice sheet",
-      18.1
+      18.4
      ],
      [
       "Savanna",
-      16.3
+      16.1
      ],
      [
       "Grassland",
-      10.4
+      11.8
      ],
      [
       "Tropical dry forest",
-      10.3
+      10
      ],
      [
       "Shrubland",
-      9.1
+      9.8
      ],
      [
       "Hot desert",
-      8.1
+      8
      ],
      [
       "Temperate forest",
-      6.5
+      5.7
      ],
      [
       "Alpine",
-      5.2
+      5.3
      ],
      [
       "Boreal forest",
-      4.9
+      4.5
      ],
      [
       "Beach and coast",
-      3.7
+      3.8
      ],
      [
       "Wetland",
@@ -964,30 +960,30 @@
      ],
      [
       "Snowcap",
-      2.3
+      2.2
      ],
      [
       "Tundra",
-      0.8
-     ],
-     [
-      "Tropical rainforest",
       0.7
      ],
      [
+      "Tropical rainforest",
+      0.6
+     ],
+     [
       "Cold steppe",
-      0.5
+      0.4
      ],
      [
       "Temperate rainforest",
-      0.4
+      0.3
      ]
     ],
     "landBiomesOver1": 12,
     "water": {
-     "Deep ocean": 5.6,
-     "Shallow sea": 18.2,
-     "Sea ice": 6.2
+     "Deep ocean": 8.6,
+     "Shallow sea": 18.1,
+     "Sea ice": 3.6
     }
    },
    "ring": {
@@ -997,47 +993,47 @@
     "biomes": [
      [
       "Savanna",
-      18.5
+      19.4
      ],
      [
       "Ice sheet",
-      13.4
+      13.8
      ],
      [
       "Grassland",
-      11.1
+      12.1
      ],
      [
       "Temperate forest",
-      9.9
+      9
      ],
      [
       "Hot desert",
-      8
+      7.6
      ],
      [
       "Shrubland",
-      7.2
-     ],
-     [
-      "Tropical dry forest",
-      7
-     ],
-     [
-      "Boreal forest",
-      6.8
+      7.4
      ],
      [
       "Wetland",
-      5.7
+      6.2
+     ],
+     [
+      "Tropical dry forest",
+      5.9
+     ],
+     [
+      "Boreal forest",
+      5.5
      ],
      [
       "Alpine",
-      3.3
+      4.5
      ],
      [
       "Tropical rainforest",
-      2.9
+      2.8
      ],
      [
       "Beach and coast",
@@ -1045,32 +1041,32 @@
      ],
      [
       "Tundra",
-      2
+      1.8
      ],
      [
       "Temperate rainforest",
-      1.6
+      1.3
      ]
     ],
     "distinct": 14,
-    "changes": 54,
+    "changes": 52,
     "coasts": 4,
-    "longestCols": 527,
-    "longestUnits": 16864,
-    "mountainPct": 2.5,
+    "longestCols": 973,
+    "longestUnits": 31136,
+    "mountainPct": 3.5,
     "rivers": 0,
     "lakes": 0,
     "hMax": 2954,
-    "hMin": -3087
+    "hMin": -1647
    },
    "cost": {
-    "latticeMarchesPerRing": 492,
+    "latticeMarchesPerRing": 400,
     "initMs": 0,
-    "ringReadMs": 18.9,
-    "baseRingReadMs": 4.8,
-    "perColumnVsToday": 3.92,
-    "initAsColumnsOfToday": 5,
-    "mapMs": 1534
+    "ringReadMs": 6.8,
+    "baseRingReadMs": 4.6,
+    "perColumnVsToday": 1.48,
+    "initAsColumnsOfToday": 6,
+    "mapMs": 537
    }
   }
  }

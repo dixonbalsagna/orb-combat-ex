@@ -8,7 +8,7 @@ import { performance } from 'node:perf_hooks';
 import { sampleMap, colorMap, drawRingOnMap, drawRivers, globe, pickRing, readRing, ringStats, mapStats, ringStrip, ringPoint } from './lib/render.mjs';
 import { NC, resetOct } from './lib/det.mjs';
 import { surf } from './gen/base.mjs';
-import { FROM_BASE } from './lib/biomes.mjs';
+import { FROM_BASE, B as Bm } from './lib/biomes.mjs';
 import { APPROACHES } from './gen/index.mjs';
 
 const args = process.argv.slice(2);
@@ -43,9 +43,10 @@ for (const seed of seeds) {
   const M = sampleMap(sample, W, W / 2);
   const mapMs = performance.now() - t1;
   const img = colorMap(M, { rivers: !A.overlay });
-  if (A.overlay) drawRivers(img, st.E);
+  const frozen = (x, y, z) => { const b = sample(x, y, z)[1]; return b === Bm.ICE_SHEET || b === Bm.SNOW; };
+  if (A.overlay) drawRivers(img, st.E, 0.72, frozen);
   const gsrc = colorMap(M, { rivers: !A.overlay });
-  if (A.overlay) drawRivers(gsrc, st.E);
+  if (A.overlay) drawRivers(gsrc, st.E, 0.72, frozen);
   drawRingOnMap(img, ring);
   const dir = join(OUT, 'img', key);
   mkdirSync(dir, { recursive: true });

@@ -6,6 +6,9 @@ Research & Prototyping, 2026-10-23. Fast JS prototypes that compare planet-gener
 
 ```
 node research/planet-gen/check-base.mjs         # the toolkit reads WorldPlanet's bits: 128 of 128 golden points
+node research/planet-gen/check-pure.mjs         # every approach reads the same cold, warm and fresh (300 points each)
+node research/planet-gen/check-lean.mjs         # the climate's lean path gives the full path's height and biome
+node research/planet-gen/bench-ring.mjs A       # per-column cost against today (median of 7 alternating pairs) and ring fingerprints
 node research/planet-gen/bench-js.mjs           # today's surface in JS (the checksums match gdbench/surf_bench.gd)
 node research/planet-gen/run.mjs base           # then A, B, C, Cb: pictures and stats for the six seeds (about 15 s each)
 node research/planet-gen/sheets.mjs             # comparison sheets, approach sheets, ring stacks, the legend
@@ -22,7 +25,8 @@ node research/planet-gen/costs.mjs 7            # approach C's grid cost against
 | `gen/climate.mjs` | **A.** The temperature and moisture table, with winds, a rain shadow and a moisture lattice |
 | `gen/plates.mjs` | **B.** Plate-lite: a warped Voronoi of plates, landforms decided by relative motion, hotspot chains |
 | `gen/erosion.mjs` | **C.** Erosion-lite on a cube-sphere grid: priority flood, routing, flow, implicit stream power, talus |
-| `gen/poles.mjs` | The polar design as a noisy bias on the ground, in place of today's straight-edged blend |
+| `gen/poles.mjs` | The polar design as a noisy bias on the ground, in place of today's straight-edged blend; the far north always ends in sea |
+| `gen/floes.mjs` | Today's floes, leads and bergs on the climate's sea ice (round 2) |
 | `gen/index.mjs` | The approaches as `init(seed)` and `sample(x, y, z)` |
 | `lib/render.mjs`, `lib/img.mjs`, `lib/biomes.mjs` | Maps, globes, the ring strip, the picker, the stats, the PNG writer and 5x7 font, the biome palette |
 | `run.mjs`, `sheets.mjs`, `tables.mjs`, `costs.mjs` | The runs |

@@ -1,13 +1,13 @@
 // Contact sheets from run.mjs's pictures: a comparison per seed (today, A, B, C: maps over globes), one sheet per
 // approach (six seeds), the fight rings of each seed stacked, and the biome legend.
-//   node research/planet-gen/sheets.mjs
+//   node research/planet-gen/sheets.mjs [root, default research/planet-gen]
 import { readFileSync, existsSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
 import { join } from 'node:path';
 import { Img } from './lib/img.mjs';
 import { BIOMES, IS_WATER } from './lib/biomes.mjs';
 
-const OUT = 'research/planet-gen/img', SEEDS = [7, 11, 23, 42, 101, 2026];
+const ROOT = process.argv[2] || 'research/planet-gen', OUT = join(ROOT, 'img'), SEEDS = [7, 11, 23, 42, 101, 2026];
 const ORDER = [['base', 'TODAY'], ['A', 'A CLIMATE'], ['B', 'B PLATES'], ['C', 'C EROSION ON B'], ['Cb', 'C EROSION ON A']];
 const BG = [24, 26, 34], INK = [232, 232, 236], DIM = [150, 154, 166];
 
@@ -67,7 +67,7 @@ for (const seed of SEEDS) {
 // 4. the legend: every biome and the approaches that use it (from stats/*.json land shares)
 const used = {};
 for (const [k] of ORDER) {
-  const p = join('research/planet-gen/stats', `${k}.json`);
+  const p = join(ROOT, 'stats', `${k}.json`);
   if (!existsSync(p)) continue;
   const j = JSON.parse(readFileSync(p, 'utf8'));
   for (const s of Object.values(j.seeds)) {

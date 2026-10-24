@@ -114,10 +114,22 @@ export function ringPoint(ring, i) {
   return [u[0] * co + v[0] * si, u[1] * co + v[1] * si, u[2] * co + v[2] * si];
 }
 // The picker, like WorldPlanet's minimum (half land, three biomes of 8% or more), on 96 samples; candidates 0..15.
+// The touch-down is on land, as WorldPlanet's (touchLand: redrawn until on land): each candidate is turned along its own
+// circle to the land column nearest its middle (not sea, not an ice sheet), searched every 8 columns.
+function landTouch(ring, sample) {
+  for (let d = 0; d <= NC / 2; d += 8) for (const i of d ? [NC / 2 + d, NC / 2 - d] : [NC / 2]) {
+    const p = ringPoint(ring, i % NC), r = sample(p[0], p[1], p[2]);
+    if (!IS_WATER[r[1]] && r[1] !== B.ICE_SHEET) {
+      const n = ring.n, v = [n[1] * p[2] - n[2] * p[1], n[2] * p[0] - n[0] * p[2], n[0] * p[1] - n[1] * p[0]];
+      return { ...ring, u: p, v };
+    }
+  }
+  return ring;
+}
 export function pickRing(seed, sample) {
   let best = null;
   for (let k = 0; k < 16; k++) {
-    const ring = makeRing(seed, k), cnt = new Map();
+    const ring = landTouch(makeRing(seed, k), sample), cnt = new Map();
     let land = 0;
     for (let s = 0; s < 96; s++) {
       const p = ringPoint(ring, Math.floor(s * NC / 96)), r = sample(p[0], p[1], p[2]);
@@ -202,20 +214,37 @@ export function ringStrip(S, label, { W = 1600, H = 250 } = {}) {
   return img;
 }
 
-// River lines for an erosion grid (cell centre to receiver), over a coloured equirect.
-export function drawRivers(img, E, polarY = 0.72) {
-  const W = img.w, H = img.h, P = E.P, col = COLOR[B.RIVER];
-  for (let c = 0; c < E.n; c++) {
-    const r = E.recv[c];
-    if (E.flow[c] < P.riverFlow || r < 0 || E.h[c] < 0 || Math.abs(E.dir[c * 3 + 1]) > polarY) continue;
-    const [x0, y0] = toPix([E.dir[c * 3], E.dir[c * 3 + 1], E.dir[c * 3 + 2]], W, H);
-    const [x1, y1] = toPix([E.dir[r * 3], E.dir[r * 3 + 1], E.dir[r * 3 + 2]], W, H);
-    if (Math.abs(x1 - x0) > W / 2) continue;
-    const big = E.flow[c] > 8 * P.riverFlow, steps = Math.max(1, Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) * 2));
-    for (let k = 0; k <= steps; k++) {
-      const x = x0 + (x1 - x0) * k / steps, y = y0 + (y1 - y0) * k / steps;
-      img.set(x, y, col);
-      if (big) { img.set(x + 1, y, col); img.set(x, y + 1, col); }
+// River lines for an erosion grid, over a coloured equirect: each run's polyline, the same one riverAt reads. Antialiased
+// (a pixel's coverage from its distance to the nearest segment, so a bend smaller than a pixel still shows), 1 px wide or
+// 2 px for a big river, and not over lakes (a pixel already in the lake's colour keeps it).
+export function drawRivers(img, E, polarY = 0.72, skipAt = null) {
+  const W = img.w, H = img.h, P = E.P, col = COLOR[B.RIVER], lk = COLOR[B.LAKE], K = E.K, sp = E.sp;
+  const cov = new Float32Array(W * H);
+  for (let s = 0; s < E.runs; s++) {
+    const c = E.sc[s];
+    if (Math.abs(E.dir[c * 3 + 1]) > polarY) continue;
+    if (skipAt) { const o = (s * (K + 1) + (K >> 1)) * 3; if (skipAt(sp[o], sp[o + 1], sp[o + 2])) continue; }   // frozen
+    const rw = E.sflow[s] > 8 * P.riverFlow ? 1.0 : 0.5;
+    for (let k = 0, o = s * (K + 1) * 3; k < K; k++, o += 3) {
+      const [x0, y0] = toPix([sp[o], sp[o + 1], sp[o + 2]], W, H), [x1, y1] = toPix([sp[o + 3], sp[o + 4], sp[o + 5]], W, H);
+      if (Math.abs(x1 - x0) > W / 2) continue;
+      const dx = x1 - x0, dy = y1 - y0, dd = dx * dx + dy * dy;
+      const xa = Math.floor(Math.min(x0, x1) - rw - 1), xb = Math.floor(Math.max(x0, x1) + rw + 1);
+      const ya = Math.max(0, Math.floor(Math.min(y0, y1) - rw - 1)), yb = Math.min(H - 1, Math.floor(Math.max(y0, y1) + rw + 1));
+      for (let y = ya; y <= yb; y++) for (let x = xa; x <= xb; x++) {
+        const px = x + 0.5 - x0, py = y + 0.5 - y0;
+        let t = dd > 0 ? (px * dx + py * dy) / dd : 0; if (t < 0) t = 0; if (t > 1) t = 1;
+        const ex = px - dx * t, ey = py - dy * t, a = rw + 0.5 - Math.sqrt(ex * ex + ey * ey);
+        if (a <= 0) continue;
+        const i = y * W + ((x % W) + W) % W;
+        if (a > cov[i]) cov[i] = a > 1 ? 1 : a;
+      }
     }
+  }
+  for (let i = 0; i < W * H; i++) {
+    if (!(cov[i] > 0)) continue;
+    const x = i % W, y = (i - x) / W, k = img.get(x, y);
+    if (k[0] === lk[0] && k[1] === lk[1] && k[2] === lk[2]) continue;
+    img.blend(x, y, col, cov[i]);
   }
 }
