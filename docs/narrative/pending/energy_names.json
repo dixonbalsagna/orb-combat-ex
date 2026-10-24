@@ -1,6 +1,32 @@
 {
   "schema": "narrative.energy_names/1",
-  "_about": "PARKED DRAFT (docs/narrative/pending/). A name and a one-line flavour for each fighter's six energy techniques (light volley, medium lob, heavy technique, energy grab, mine or trap, chargeable beam), with an alternate name for Orb, and three call-outs a fighter (grab, a half-charge beam release, a full-charge release). Orb's brief: docs/ep/vision.md, 'Energy attacks overhaul'. PROVISIONAL: tied to the six slots from Orb's words and to each fighter's identity, not yet to Combat's one-pagers (docs/combat/pending/energy/) or Game Design's system, which had not landed when this was written. Names follow the place-plus-verb default, never a franchise echo; flavour and call-outs are in the fighter's voice (voice bibles) and pass the lint. Claude-written; unmarked by Orb; unscreened by Legal.",
+  "_about": "PARKED DRAFT (docs/narrative/pending/). A name and a one-line flavour for each fighter's six energy techniques (light volley, medium lob, heavy technique, energy grab, mine or trap, chargeable beam), with an alternate name for Orb, and three call-outs a fighter (grab, a half-charge beam release, a full-charge release). Orb's brief: docs/ep/vision.md, 'Energy attacks overhaul'. Version 2 (2026-10-23): re-fitted to Combat's energy map as the EP forwarded it (see `combat_map`); Combat's one-pagers are still to follow. Names follow the place-plus-verb default, never a franchise echo; flavour and call-outs are in the fighter's voice (voice bibles) and pass the lint. Claude-written; unmarked by Orb; unscreened by Legal.",
+  "combat_map": {
+    "PROTAGONIST": {
+      "grab": "a net that yanks him into reach",
+      "medium": "level 2 bounces once toward the foe",
+      "beam": "a wide, driving wall",
+      "trap": "a pillar that throws a tripper up and away"
+    },
+    "RIVAL": {
+      "grab": "a ring that binds his arms (never cuts)",
+      "medium": "level 2 splits into three",
+      "beam": "a sheaf of thin drilling lances",
+      "trap": "a pressure plate firing a fan of needles"
+    },
+    "EMPRESS": {
+      "grab": "a cage of banners that slams him down to kneel",
+      "medium": "a thrown crown that clings and goes off 20 ticks later",
+      "beam": "a thin sweeping cut from the mantle hem or blade-hand",
+      "trap": "a line across the air that fires her level-1 beam"
+    },
+    "CYBORG": {
+      "grab": "a crane-hook lash that throws him 6 bh",
+      "medium": "molten slag that rolls along the ground",
+      "beam": "a ragged, unstable beam vented from the furnace",
+      "trap": "a scrap-jaw field that drags a passer down"
+    }
+  },
   "slots": {
     "light": {
       "label": "Light volley",
@@ -16,7 +42,7 @@
     },
     "grab": {
       "label": "Energy grab",
-      "means": "a unique catch: net, ring, snare, hook"
+      "means": "a unique catch: net, ring, banners, hook"
     },
     "trap": {
       "label": "Mine or trap",
@@ -36,8 +62,8 @@
       },
       "medium": {
         "name": "Pier Lob",
-        "alternate": "Warm Toss",
-        "flavour": "A big warm lump, thrown high. Duck!"
+        "alternate": "Skip Toss",
+        "flavour": "Thrown high, it bounces once toward you."
       },
       "heavy": {
         "name": "Whole Palm",
@@ -47,17 +73,17 @@
       "grab": {
         "name": "Harbour Net",
         "alternate": "Rope Catch",
-        "flavour": "I throw a net. Stay still, please!"
+        "flavour": "I throw a net and haul you in!"
       },
       "trap": {
-        "name": "Warm Patch",
-        "alternate": "Hot Doorstep",
-        "flavour": "Block, and the ground stays hot. Mind your feet!"
+        "name": "Trip Pillar",
+        "alternate": "Spring Post",
+        "flavour": "Block, and the ground springs up under your feet."
       },
       "beam": {
-        "name": "Open Reach",
-        "alternate": "Long Lance",
-        "flavour": "Charge it slow. Let it fly far!"
+        "name": "Breakwater",
+        "alternate": "Wide Drive",
+        "flavour": "A wide wall of heat. It drives you back!"
       }
     },
     "RIVAL": {
@@ -67,9 +93,9 @@
         "flavour": "Thin needles, one after another. Count them."
       },
       "medium": {
-        "name": "Stair Drop",
-        "alternate": "Step Lob",
-        "flavour": "One step down. Right on your head."
+        "name": "Stair Split",
+        "alternate": "Stair Drop",
+        "flavour": "One blast, three steps down. Count them."
       },
       "heavy": {
         "name": "Rank Breaker",
@@ -79,17 +105,17 @@
       "grab": {
         "name": "Rank Ring",
         "alternate": "Frame Ring",
-        "flavour": "Hold still. You're being ranked."
+        "flavour": "Arms down. You're being ranked."
       },
       "trap": {
         "name": "Pressure Plate",
         "alternate": "Quiet Step",
-        "flavour": "Step wrong, clown. It pops."
+        "flavour": "Step wrong, clown. A fan of needles pops."
       },
       "beam": {
-        "name": "Straight Edge",
-        "alternate": "Clean Cut",
-        "flavour": "A clean cut. No wasted motion."
+        "name": "Lance Sheaf",
+        "alternate": "Drill Fan",
+        "flavour": "Thin lances, bundled tight. They drill, not cut."
       }
     },
     "EMPRESS": {
@@ -99,9 +125,9 @@
         "flavour": "Pretty little sparks, rat. Do try to keep up!"
       },
       "medium": {
-        "name": "Throne Toss",
-        "alternate": "Crown Lob",
-        "flavour": "Gahaha! We toss a crown. You catch it!"
+        "name": "Crown Toss",
+        "alternate": "Clinging Crown",
+        "flavour": "Gahaha! We toss a crown. It clings, then bangs!"
       },
       "heavy": {
         "name": "Throne Quake",
@@ -110,18 +136,18 @@
       },
       "grab": {
         "name": "Banner Snare",
-        "alternate": "Silk Lash",
-        "flavour": "Our banners wrap, rat, and they never let go."
+        "alternate": "Banner Cage",
+        "flavour": "Our banners cage you, rat, and you kneel."
       },
       "trap": {
-        "name": "Carpet Snap",
-        "alternate": "Red Carpet",
-        "flavour": "Step on our carpet and it bites back!"
+        "name": "Velvet Rope",
+        "alternate": "Tripline",
+        "flavour": "Cross our velvet rope and the beam fires."
       },
       "beam": {
-        "name": "Crown Line",
-        "alternate": "Decree Beam",
-        "flavour": "A line from the crown. It cuts everything!"
+        "name": "Hem Sweep",
+        "alternate": "Mantle Cut",
+        "flavour": "A thin cut from the hem. It sweeps everything!"
       }
     },
     "CYBORG": {
@@ -131,9 +157,9 @@
         "flavour": "Spitting hot rivets! Small bites, big hunger!"
       },
       "medium": {
-        "name": "Slag Lob",
-        "alternate": "Scrap Toss",
-        "flavour": "Lump of hot slag, thrown with love!"
+        "name": "Slag Roll",
+        "alternate": "Slag Lob",
+        "flavour": "Hot slag, rolling your way. Mind your feet!"
       },
       "heavy": {
         "name": "Wrecker Swing",
@@ -143,17 +169,17 @@
       "grab": {
         "name": "Crane Hook",
         "alternate": "Chain Haul",
-        "flavour": "Hook's out! Come to the yard, snack!"
+        "flavour": "Hook's out! I'll throw you across the yard!"
       },
       "trap": {
-        "name": "Scrap Charge",
-        "alternate": "Wired Heap",
-        "flavour": "Block, and the scrap behind me is wired."
+        "name": "Scrap Jaw",
+        "alternate": "Scrap Pit",
+        "flavour": "Block, and the scrap behind me grows teeth."
       },
       "beam": {
-        "name": "Furnace Bore",
-        "alternate": "Slag Bore",
-        "flavour": "Limiter off. One long, hungry bore!"
+        "name": "Furnace Vent",
+        "alternate": "Slag Vent",
+        "flavour": "Limiter off. It vents out ragged and hot!"
       }
     }
   },
@@ -161,11 +187,11 @@
     "PROTAGONIST": [
       {
         "when": "grab",
-        "text": "Gotcha! Don't wriggle on me!"
+        "text": "Gotcha! Come in close!"
       },
       {
         "when": "beam_half",
-        "text": "Here it comes! Don't blink!"
+        "text": "Here it comes! Brace yourself!"
       },
       {
         "when": "beam_full",
@@ -175,35 +201,35 @@
     "RIVAL": [
       {
         "when": "grab",
-        "text": "Third-rate wriggling. Hold still."
+        "text": "Arms down. You're being ranked."
       },
       {
         "when": "beam_half",
-        "text": "One clean cut. Count it."
+        "text": "Lances out. Don't flinch."
       },
       {
         "when": "beam_full",
-        "text": "Straight through, clown. Don't blink."
+        "text": "Full sheaf, clown. Try to dodge."
       }
     ],
     "EMPRESS": [
       {
         "when": "grab",
-        "text": "Gahaha! Come to us, rat!"
+        "text": "Gahaha! Kneel in our cage, rat!"
       },
       {
         "when": "beam_half",
-        "text": "Hahaha! A line for the rat!"
+        "text": "Hahaha! A thin cut for the rat!"
       },
       {
         "when": "beam_full",
-        "text": "Gahaha! Kneel before the line!"
+        "text": "Gahaha! Kneel before the cut!"
       }
     ],
     "CYBORG": [
       {
         "when": "grab",
-        "text": "Got you! Reeling you into the yard!"
+        "text": "Hook's out! Throwing you clear across!"
       },
       {
         "when": "beam_half",
@@ -211,7 +237,7 @@
       },
       {
         "when": "beam_full",
-        "text": "Limiter's off! Eat this one!"
+        "text": "Limiter's off! Venting everything!"
       }
     ]
   }
