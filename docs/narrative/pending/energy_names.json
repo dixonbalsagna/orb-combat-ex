@@ -27,6 +27,76 @@
       "trap": "a scrap-pit field that clamps shut and drags a passer down"
     }
   },
+  "extras": {
+    "RIVAL": {
+      "snare": {
+        "name": "Open Loop",
+        "alternate": "Laid Ring",
+        "flavour": "Block, and an open loop waits. Step in."
+      },
+      "spark_mine": {
+        "name": "Standing Pin",
+        "alternate": "Upright Pin",
+        "flavour": "One needle, standing point up."
+      },
+      "blast_mine": {
+        "name": "Hung Slab",
+        "alternate": "Hanging Plate",
+        "flavour": "A small slab, hanging flat. Don't touch."
+      }
+    },
+    "EMPRESS": {
+      "snare": {
+        "name": "Furled Banners",
+        "alternate": "Banner Ring",
+        "flavour": "Our banners wait, furled, for the petitioner."
+      },
+      "spark_mine": {
+        "name": "Hanging Sliver",
+        "alternate": "Still Cut",
+        "flavour": "One upright sliver, hanging still. Do touch it."
+      },
+      "blast_mine": {
+        "name": "Resting Crown",
+        "alternate": "Little Crown",
+        "flavour": "A small crown, resting. It is not for wearing."
+      }
+    },
+    "CYBORG": {
+      "snare": {
+        "name": "Cable Coil",
+        "alternate": "Laid Hook",
+        "flavour": "A hook on a coil of cable. Step closer."
+      },
+      "spark_mine": {
+        "name": "Ticking Rivet",
+        "alternate": "Hung Rivet",
+        "flavour": "One hot rivet, hanging and ticking."
+      },
+      "blast_mine": {
+        "name": "Slag Clot",
+        "alternate": "Cracked Clot",
+        "flavour": "A crusted clot of slag, glowing at the cracks."
+      }
+    },
+    "PROTAGONIST": {
+      "snare": {
+        "name": "Harbour Hammock",
+        "alternate": "Slack Net",
+        "flavour": "Block, and a loose net hangs there. Walk in."
+      },
+      "spark_mine": {
+        "name": "Flint Mine",
+        "alternate": "Spark Pinch",
+        "flavour": "A pinch of sparks, hanging like struck flint."
+      },
+      "blast_mine": {
+        "name": "Scorch Cup",
+        "alternate": "Heat Cup",
+        "flavour": "A hot lump, sitting in a scorched cup."
+      }
+    }
+  },
   "slots": {
     "light": {
       "label": "Light volley",
@@ -58,12 +128,12 @@
       "light": {
         "name": "Knuckle Flick",
         "alternate": "Spark Jab",
-        "flavour": "Quick sparks off my knuckles. Catch!"
+        "flavour": "Quick sparks flicked off my palm. Catch!"
       },
       "medium": {
         "name": "Pier Lob",
         "alternate": "Skip Toss",
-        "flavour": "Thrown high, it bounces once toward you."
+        "flavour": "Thrown high and slow. Charge it and it hops after you."
       },
       "heavy": {
         "name": "Whole Palm",
@@ -78,7 +148,7 @@
       "trap": {
         "name": "Trip Pillar",
         "alternate": "Spring Post",
-        "flavour": "Block, and the ground springs up under your feet."
+        "flavour": "Block, and cracked ground waits. Trip it and fly!"
       },
       "beam": {
         "name": "Breakwater",
@@ -95,7 +165,7 @@
       "medium": {
         "name": "Stair Split",
         "alternate": "Stair Drop",
-        "flavour": "One blast, three steps down. Count them."
+        "flavour": "Charge it, and it takes three steps toward you."
       },
       "heavy": {
         "name": "Rank Breaker",
@@ -120,9 +190,9 @@
     },
     "EMPRESS": {
       "light": {
-        "name": "Silk Sparks",
-        "alternate": "Lace Burst",
-        "flavour": "Pretty little sparks, rat. Do try to keep up!"
+        "name": "Silk Slivers",
+        "alternate": "Lace Cuts",
+        "flavour": "Pretty little slivers, rat. Do try to keep up!"
       },
       "medium": {
         "name": "Crown Toss",
@@ -137,7 +207,7 @@
       "grab": {
         "name": "Banner Snare",
         "alternate": "Banner Cage",
-        "flavour": "Our banners cage you, rat, and you kneel."
+        "flavour": "Our banners cage you, rat, and you go down."
       },
       "trap": {
         "name": "Velvet Rope",
@@ -159,7 +229,7 @@
       "medium": {
         "name": "Slag Roll",
         "alternate": "Slag Lob",
-        "flavour": "Hot slag, rolling your way. Mind your feet!"
+        "flavour": "Slag lands short, then rolls at your feet."
       },
       "heavy": {
         "name": "Wrecker Swing",
@@ -215,7 +285,7 @@
     "EMPRESS": [
       {
         "when": "grab",
-        "text": "Gahaha! Kneel in our cage, rat!"
+        "text": "Gahaha! Down in our cage, rat!"
       },
       {
         "when": "beam_half",
@@ -223,7 +293,7 @@
       },
       {
         "when": "beam_full",
-        "text": "Gahaha! Kneel before the cut!"
+        "text": "Gahaha! Mind the cut, rat!"
       }
     ],
     "CYBORG": [
