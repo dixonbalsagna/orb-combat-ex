@@ -1,6 +1,6 @@
 # The right stick: pitches for Orb
 
-Owner: Game Design. Status: **pitches, 2026-10-23.** Paper only. Every number is a first value, and Controls is writing the input side (`docs/controls/right-stick.md`). Orb can pick one pitch or mix them, and §9 recommends one.
+Owner: Game Design. Status: **pitches, 2026-10-23,** reconciled with Controls' input side in §10, which rules where they differ. Paper only. Every number is a first value, and Controls is writing the input side (`docs/controls/right-stick.md`). Orb can pick one pitch or mix them, and §9 recommends one.
 
 **Orb's ask** (`docs/ep/vision.md`, "The right stick", 2026-10-23): the right stick as an attack, a mobility tool, or a hybrid that changes with what is held (defensive, energy and so on), with the hybrid preferred for agency. A quick flick and a steady hold should do different things. Free-form patterns such as zig-zags should work the way some skateboarding games do their tricks. "Another method of commanding your fighter."
 
@@ -131,3 +131,35 @@ Five patterns and no more, so the set fits in a thumb's memory. Directions are r
 **Not B:** it doubles the buttons, the one thumb makes it a replacement rather than an extra, and it sits nearest the launch call Orb set aside. Its best idea, called shots on the wounds, could come later as Guard's or Power's pattern.
 
 **The question for Orb**, for the EP to ask when it suits: "The right stick: the family stick, where the shoulder you hold picks what the stick does (recommended)? Or only the flight stick, or only the strike stick?" A second question, after Orb has played step 1: "Should tricks pay a little (D)?"
+
+## 10. Reconciled with Controls' input side
+
+Controls wrote the input side in parallel (`docs/controls/right-stick.md`, with a model of casual and practised thumbs). Where it differs from §1 to §9, this section rules. **The recommendation stands: C, in three steps,** and the input side makes B weaker still, since a four-way stick that is set and then let go is a poor attack stick.
+
+- **R11. Flicks are four-way:** toward, away, up and down, relative to him. Eight ways read right only about 3 times in 4 for a casual thumb, and four ways about 99 times in 100. Eight directions and analogue belong to holds and aim, so §3's bursts are four-way, and a diagonal comes from a hold.
+- **R12. The thresholds are Controls',** and they replace §2's first values: a dead zone of 0.25, hysteresis of 0.60 out and 0.35 back, a flick's rise within 3 ticks with its direction read 2 ticks after the crossing, a hold at 10 ticks, and a pattern committed about 5 ticks after the stick settles. All are data, with Controls' sensitivity options.
+- **R13. Patterns are garnish.** A casual thumb gets them 45 to 72% of the time (zig-zags 46%, pumps 53%), and they commit too late for a reflex. **So whatever protects him belongs to the flicks and holds a pattern is made of** (R5), and the pattern adds its look and a small bonus. A step-flick slips shots for its first 4 ticks, so the weave's protection is its steps' own; the weave chains them faster and gives the flowing look. The corkscrew is a roll to look at, with no deflect of its own.
+- **R14. A pattern never does damage, and a wrong match costs only a harmless command.** Patterns trigger movement, looks, guard shapes and style. So Power's style moves are flourishes (D's tricks), not attacks. Guard's half-circle counter and circle spin-off wait for the real-thumb capture (R20) before anything rides on them. Guard starts with the pump's shove-off (Controls' brace) as its only pattern.
+- **R15. Patterns are off wherever the stick aims:** the Energy family and the lay (mask 3). A sloppy aim sweep fires a false pattern about 5 to 6% of a second. The Energy family's four pattern shots (the ring, the scatter, the piercing bolt and the curve) leave the stick. Combat may give any of them to a fighter's kit as a shape (`energy-overhaul.md` §14).
+- **R16. Set, then let go: the energy aim latches.** The thumb can't hold the stick and press a face button at once. So in the Energy family a flick latches an aim line, and it stays.
+  - **Toward** clears it: straight at him.
+  - **Up or down** leads above or below him: a lead, or the ground under him.
+  - **Away** aims behind himself: a shot down his trail, or a mine at his back.
+  - **A hold** sweeps the line in analogue for fine aim, and letting go keeps it.
+
+  The line is an angle off the line to him, so it follows him as both of them move. Within 30° of him a shot still seeks him (E7). It clears when RB is let go. X, Y and B fire along it, so "fire on the move" is the left stick moving him while the latched line aims what he throws. While his beam is out the thumb is free, and a hold sweeps the beam.
+- **R17. One reading per family** (Controls' rule, so the thumb never has to guess). Flight, Guard, Manoeuvre and Power are **Step** (flick, hold, patterns on). Energy and the lay are **Aim** (a latched line, patterns off).
+- **R18. Parity.** Every command has a keyboard form: the arrow keys on the solo keyboard, where patterns are exact key sequences, and single rebindable keys on the shared keyboards. It has a touch form: a gesture pad on phones, where drawing is natural. And it has a button equivalent on every device, as Orb's parity rule requires. On Simple, the director still performs it for the player.
+- **R19. Intent version 5.** The stick needs a second packed word in the intent (Controls and Simulation). Step 1 can't ship without it. With the stick switched off, nothing changes.
+- **R20. The capture comes first.** Before any pattern ships, Controls' real-thumb capture (Research or QA on real pads) measures the read rates again. Step 2's patterns wait for it.
+
+**The families as they will be built** (this replaces §5's table for building; §5 stays as the pitch):
+
+| Held | Reading | Flick (four-way) | Hold | Patterns (garnish) | Step |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Nothing** | Step | A step that way, slipping shots for its first 4 ticks. Toward him from beyond reach, the lunge | Drift or orbit around him, the cross-up, the wall run, the skim | Zig-zag: the weave. Half-circle: the vault. Circle: a flourish. Pump away: the backflip | 1 for flicks and holds, 2 for patterns |
+| **LB** | Step | A slip. Toward an incoming blow, the aimed deflect | The guard's facing | Pump: the shove-off | 2 |
+| **RB** | Aim | Latches the aim line | Sweeps the line, and his beam | Off | 1 |
+| **LB + RB** | Aim | Sets where the next lay goes | E71's drift | Off | 1, with the lays |
+| **RT** | Step | An aura flare: it pushes small shots and debris aside 1 bh, with no damage | Channel on the move | His style flourishes (D) | 3 |
+| **LT** | Step | A burst of boost that way | The boost's direction, apart from the left stick | Circle: a roll | 2 |
