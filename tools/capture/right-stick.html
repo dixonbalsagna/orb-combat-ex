@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Self-contained: no library, no network request, no server. The policy below makes the browser refuse any request this page might try to make. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; media-src data: blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<meta name="robots" content="noindex">
+<title>Right-stick capture</title>
+<style>
+:root { --bg:#f6f7f9; --fg:#14171c; --mut:#5a6270; --card:#ffffff; --line:#d3d8e0; --acc:#1f5fd6; --accfg:#ffffff; --ok:#1c7c3c; --warn:#a85a00; --bad:#b3261e; --stick:#1f5fd6; }
+@media (prefers-color-scheme: dark) { :root { --bg:#0f1218; --fg:#e8ebf0; --mut:#9aa3b2; --card:#181c24; --line:#2c3340; --acc:#6ea0ff; --accfg:#0b1020; --ok:#5fd18a; --warn:#f0b35a; --bad:#ff8a80; --stick:#6ea0ff; } }
+* { box-sizing: border-box; }
+html, body { margin:0; background:var(--bg); color:var(--fg); }
+body { font:18px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; padding:16px; }
+main { max-width:44rem; margin:0 auto; }
+h1 { font-size:1.45rem; line-height:1.25; margin:.5rem 0 1rem; }
+h2 { font-size:1.15rem; margin:1.4rem 0 .4rem; }
+p, li { margin:.6rem 0; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin:12px 0; }
+.small { font-size:.85rem; color:var(--mut); }
+label { display:block; margin:.7rem 0 .25rem; font-weight:600; }
+input[type=text], select { font:inherit; padding:.5rem .6rem; border:1px solid var(--line); border-radius:6px; background:var(--bg); color:var(--fg); width:100%; max-width:22rem; }
+.row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin:.8rem 0; }
+button { font:inherit; font-weight:600; padding:.65rem 1.1rem; border-radius:8px; border:1px solid var(--line); background:var(--card); color:var(--fg); cursor:pointer; }
+button.primary { background:var(--acc); border-color:var(--acc); color:var(--accfg); }
+button:focus-visible, input:focus-visible, select:focus-visible { outline:3px solid var(--acc); outline-offset:2px; }
+button[disabled] { opacity:.5; cursor:default; }
+.prompt { text-align:center; padding:12px 0; }
+.big { font-size:4.2rem; line-height:1.1; font-weight:700; }
+.say { font-size:1.35rem; font-weight:600; }
+.bar { height:10px; background:var(--line); border-radius:6px; overflow:hidden; margin:10px 0; }
+.bar > i { display:block; height:100%; width:0; background:var(--acc); }
+.go { color:var(--ok); } .wait { color:var(--warn); }
+.stickbox { display:flex; justify-content:center; margin:8px 0; }
+canvas { width:180px; height:180px; max-width:50vw; border:1px solid var(--line); border-radius:50%; background:var(--bg); touch-action:none; }
+#pad { width:min(86vw,360px); height:min(86vw,360px); max-width:none; }
+.chips { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+.status { font-size:.9rem; color:var(--mut); }
+.ok { color:var(--ok); } .warn { color:var(--warn); } .bad { color:var(--bad); }
+</style>
+</head>
+<body>
+<main id="app"><noscript>This page needs JavaScript. It sends nothing anywhere.</noscript></main>
+<script>
+'use strict';
+(function () {
+  var VERSION = 1;
+
+  // ==PROTOCOL-BEGIN==
+  // The protocol (docs/controls/right-stick-capture.md): pure data, no DOM. Sectors count from the right, anticlockwise, with y up: 0 right, 1 up-right, 2 up, 3 up-left, 4 left, 5 down-left, 6 down, 7 down-right.
+  var DIRS8 = [
+    { name: 'right', arrow: '→', sector: 0 }, { name: 'up-right', arrow: '↗', sector: 1 }, { name: 'up', arrow: '↑', sector: 2 }, { name: 'up-left', arrow: '↖', sector: 3 },
+    { name: 'left', arrow: '←', sector: 4 }, { name: 'down-left', arrow: '↙', sector: 5 }, { name: 'down', arrow: '↓', sector: 6 }, { name: 'down-right', arrow: '↘', sector: 7 }
+  ];
+  var DIRS4 = [DIRS8[2], DIRS8[0], DIRS8[6], DIRS8[4]];   // up, right, down, left
+  var COUNTDOWN_MS = 1000, GAP_MS = 500;
+
+  function shuffle(a, rnd) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(rnd() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+  // mode: 'gamepad' | 'touch' | 'keyboard'. Returns the blocks, each with its trials.
+  function buildProtocol(mode, rnd) {
+    var verb = mode === 'keyboard' ? 'Tap' : mode === 'touch' ? 'Flick your thumb' : 'Flick the right stick';
+    var holdv = mode === 'keyboard' ? 'Press and hold' : mode === 'touch' ? 'Touch, drag out and hold' : 'Push the right stick';
+    var blocks = [];
+    function block(id, title, intro, trials) { blocks.push({ id: id, title: title, intro: intro, trials: trials }); }
+    var n;
+
+    block('rest', 'Rest calibration', 'Hold the ' + (mode === 'gamepad' ? 'pad' : mode === 'touch' ? 'phone' : 'keyboard') + ' as you normally would and do not touch ' + (mode === 'gamepad' ? 'the sticks' : mode === 'touch' ? 'the pad area' : 'the arrow keys') + ' for 2 seconds.',
+      [{ id: 'rest', n: 1, speed: null, expect: { kind: 'rest' }, win_ms: 2000, say: 'Keep still', big: '·', countdown: false }]);
+
+    var t4 = [], rep, speed, dirs;
+    var counts = {};
+    function nextN(key) { counts[key] = (counts[key] || 0) + 1; return counts[key]; }
+    for (rep = 0; rep < 6; rep++) { dirs = shuffle(DIRS4, rnd); dirs.forEach(function (d) { t4.push({ id: 'flick4.' + d.name + '.comfortable', n: nextN('f4c' + d.name), speed: 'comfortable', expect: { kind: 'flick', dir: d.name, sector: d.sector }, win_ms: 1400, say: verb + ' ' + d.name, big: d.arrow, hint: 'a comfortable flick, then let go' }); }); }
+    for (rep = 0; rep < 3; rep++) { dirs = shuffle(DIRS4, rnd); dirs.forEach(function (d) { t4.push({ id: 'flick4.' + d.name + '.fast', n: nextN('f4f' + d.name), speed: 'fast', expect: { kind: 'flick', dir: d.name, sector: d.sector }, win_ms: 1400, say: verb + ' ' + d.name + ' as fast as is comfortable', big: d.arrow, hint: 'quick, but still accurate' }); }); }
+    block('flick4', 'Four-way flicks', 'Up, right, down, left. Six at a comfortable speed in each direction, then three as fast as is comfortable.', t4);
+
+    var t8 = [];
+    for (rep = 0; rep < 3; rep++) { shuffle(DIRS8, rnd).forEach(function (d) { t8.push({ id: 'flick8.' + d.name, n: nextN('f8' + d.name), speed: 'comfortable', expect: { kind: 'flick', dir: d.name, sector: d.sector }, win_ms: 1400, say: verb + ' ' + d.name, big: d.arrow, hint: 'aim for the diagonal if it is one' }); }); }
+    block('flick8', 'Eight-way flicks', 'The four directions and the four diagonals, three each.', t8);
+
+    var th = [];
+    for (rep = 0; rep < 3; rep++) { shuffle(DIRS4, rnd).forEach(function (d) { th.push({ id: 'hold.' + d.name, n: nextN('h' + d.name), speed: 'comfortable', expect: { kind: 'hold', dir: d.name, sector: d.sector, hold_ms: 1500 }, win_ms: 2700, say: holdv + ' ' + d.name + ' and hold for 1.5 seconds, then let go', big: d.arrow, hint: 'hold it steady, then release' }); }); }
+    block('hold', 'Holds', 'Push and keep it there for a second and a half, then let go. Three in each direction.', th);
+
+    var tp = [];
+    shuffle(DIRS4.concat(shuffle(DIRS4, rnd).slice(0, 2)), rnd).forEach(function (d) { tp.push({ id: 'pump.' + d.name, n: nextN('p' + d.name), speed: 'comfortable', expect: { kind: 'pump', dir: d.name, sector: d.sector }, win_ms: 2500, say: verb + ' ' + d.name + ' twice, quickly, like a pump', big: d.arrow + d.arrow, hint: 'flick, recentre, flick again' }); });
+    block('pump', 'Double flicks', 'Two flicks in a row in the same direction, as quick as you can make them clean.', tp);
+
+    var tz = [];
+    [['horizontal', 'left and right'], ['vertical', 'up and down']].forEach(function (ax) { [3, 4].forEach(function (strokes) { for (var r = 0; r < 2; r++) { tz.push({ id: 'zigzag.' + ax[0] + '.' + strokes, n: nextN('z' + ax[0] + strokes), speed: 'comfortable', expect: { kind: 'zigzag', axis: ax[0], strokes: strokes }, win_ms: 3000, say: 'Zig-zag ' + ax[1] + ', ' + strokes + ' strokes', big: ax[0] === 'horizontal' ? '↔' : '↕', hint: strokes + ' strokes with no stop between them' }); } }); });
+    block('zigzag', 'Zig-zags', 'Back and forth along one line, three strokes and four strokes, horizontal and vertical.', shuffle(tz, rnd));
+
+    var tc = [];
+    [['quarter', 'a quarter circle', '◜'], ['half', 'a half circle', '◠'], ['full', 'a full circle', '◯']].forEach(function (c) { ['clockwise', 'anticlockwise'].forEach(function (dir) { for (var r = 0; r < 3; r++) { tc.push({ id: 'circle.' + c[0] + '.' + (dir === 'clockwise' ? 'cw' : 'ccw'), n: nextN('c' + c[0] + dir), speed: 'comfortable', expect: { kind: c[0], dir: dir === 'clockwise' ? 'cw' : 'ccw' }, win_ms: 3000, say: 'Sweep ' + c[1] + ', ' + dir, big: c[2], hint: 'smooth, from wherever you like' }); } }); });
+    block('circle', 'Circles', 'A quarter, a half and a full circle, clockwise and anticlockwise, three of each.', tc);
+
+    block('free', 'Free aim', 'Two 20-second sweeps. Aim around as if you were tracking a target that keeps moving. Do not try to make any pattern.',
+      [1, 2].map(function (k) { return { id: 'free', n: k, speed: null, expect: { kind: 'free' }, win_ms: 20000, say: 'Aim around as if tracking a target', big: '◎', hint: 'sweep ' + k + ' of 2' }; }));
+
+    var thd = [];
+    for (n = 0; n < 10; n++) { var d2 = DIRS4[n % 4]; thd.push({ id: 'hard.' + d2.name, n: nextN('hd' + d2.name), speed: 'hardest', expect: { kind: 'hard', dir: d2.name, sector: d2.sector }, win_ms: 1500, say: verb + ' ' + d2.name + ' as hard as you can', big: d2.arrow, hint: 'as hard as possible' }); }
+    block('hard', 'Hard flicks', 'Ten flicks as hard as you can. (Your pad may click the stick; that is what we are measuring.)', thd);
+
+    block('idle', 'Idle', 'Ten seconds with your hands on the ' + (mode === 'gamepad' ? 'pad' : mode === 'touch' ? 'phone' : 'keyboard') + ', not pressing anything.', [{ id: 'idle', n: 1, speed: null, expect: { kind: 'idle' }, win_ms: 10000, say: 'Keep still, hands on', big: '·', countdown: true }]);
+
+    var tf = [];
+    for (n = 1; n <= 5; n++) tf.push({ id: 'fight', n: n, speed: null, expect: { kind: 'fight' }, win_ms: 6000, say: 'Do it as you would in a fight', big: '⚔', hint: 'any flick, hold, zig-zag, pump or circle you would use', ask: true });
+    block('fight', 'As in a fight', 'Five free trials: use the right stick (or fingers, or keys) the way you would in a real fight, any pattern. Afterwards tell us what you did.', tf);
+
+    return blocks;
+  }
+
+  // Seconds the whole protocol takes if nobody pauses: each trial is a countdown, its window and a gap.
+  function estimateSeconds(blocks) {
+    var ms = 0;
+    blocks.forEach(function (b) { b.trials.forEach(function (t) { ms += (t.countdown === false ? 0 : COUNTDOWN_MS) + t.win_ms + GAP_MS + (t.ask ? 1500 : 0); }); });
+    return Math.round(ms / 1000);
+  }
+  // ==PROTOCOL-END==
+
+  // ---------------------------------------------------------------- state
+  var app = document.getElementById('app');
+  var S = {
+    screen: 'intro', mode: 'gamepad', person: { code: '', hand: 'right', thumb: 'right', rating: 'regular', pad_model: '' }, soundOn: true,
+    padIndex: -1, ax: 2, ay: 3, axisRange: null, blocks: [], bi: 0, ti: 0, phase: 'idle', phaseStart: 0, trialRec: null, trials: [], events: [], samples: [], buttons: [], touch: [], keys: [],
+    prevBtn: [], restDts: [], lastF: 0, started: null, complete: false, hidden: false, padLost: false, askedLabel: null, saved: false, endedEarly: false, fileBlobUrl: null
+  };
+  var audio = null;
+  function rnd() { return Math.random(); }
+  function nowF() { return performance.now(); }
+  function ev(type, extra) { var e = { f: nowF(), type: type }; if (extra) for (var k in extra) e[k] = extra[k]; S.events.push(e); }
+
+  // ---------------------------------------------------------------- small DOM helpers
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    if (attrs) for (var k in attrs) { if (k === 'text') e.textContent = attrs[k]; else if (k === 'class') e.className = attrs[k]; else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), attrs[k]); else e.setAttribute(k, attrs[k]); }
+    (kids || []).forEach(function (c) { if (c) e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return e;
+  }
+  function btn(text, fn, primary, id) { return el('button', { text: text, onclick: fn, class: primary ? 'primary' : '', id: id || '', type: 'button' }); }
+  function clear() { while (app.firstChild) app.removeChild(app.firstChild); }
+  function field(label, node) { return el('div', null, [el('label', { text: label }), node]); }
+  function select(opts, value, onchange) {
+    var s = el('select', null, opts.map(function (o) { var op = el('option', { value: o[0], text: o[1] }); if (o[0] === value) op.selected = true; return op; }));
+    s.addEventListener('change', function () { onchange(s.value); });
+    return s;
+  }
+  function beep(freq, ms) {
+    if (!S.soundOn) return;
+    try {
+      if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+      var o = audio.createOscillator(), g = audio.createGain();
+      o.frequency.value = freq; g.gain.value = 0.12; o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime + ms / 1000);
+    } catch (e) { /* no sound: the page still works */ }
+  }
+
+  // ---------------------------------------------------------------- screens
+  function showIntro() {
+    S.screen = 'intro'; clear();
+    app.appendChild(el('h1', { text: 'Right-stick capture' }));
+    app.appendChild(el('div', { class: 'card' }, [
+      el('p', { text: 'Thank you for helping. This takes about nine minutes. You will be asked to flick, hold and sweep the right stick of a game pad (or swipe on a phone, or tap the arrow keys) while this page records how your thumb moves.' }),
+      el('p', { text: 'What is recorded: the stick position on every screen frame, button presses, which prompt you were doing, and a few answers about you (below). No name, no email, no account.' }),
+      el('p', { text: 'Nothing is sent anywhere. This page has no network access at all. At the end it saves one file to your computer, and you pass that file on to whoever asked you to do this. You can stop at any time and still save what you have.' })
+    ]));
+    app.appendChild(el('div', { class: 'row' }, [btn('Start', showAbout, true, 'start')]));
+    app.appendChild(el('p', { class: 'small', text: 'A pad works in Chrome, Edge or Firefox on a computer. Plug it in or pair it first.' }));
+  }
+
+  function showAbout() {
+    S.screen = 'about'; clear();
+    var touchy = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+    var pads = navigator.getGamepads ? Array.prototype.filter.call(navigator.getGamepads(), function (g) { return g; }) : [];
+    if (S.person.code === '' && S.mode === 'gamepad') S.mode = pads.length ? 'gamepad' : (touchy ? 'touch' : 'gamepad');
+    app.appendChild(el('h1', { text: 'About you' }));
+    var code = el('input', { type: 'text', id: 'code', value: S.person.code, maxlength: '24', autocomplete: 'off', placeholder: 'the code you were given, or make one up' });
+    code.addEventListener('input', function () { S.person.code = code.value.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 24); updateStart(); });
+    var card = el('div', { class: 'card' }, [
+      field('Your code (letters and digits only; not your name)', code),
+      field('How are you taking part?', select([['gamepad', 'With a game pad'], ['touch', 'With a finger on a phone or tablet'], ['keyboard', 'With the arrow keys']], S.mode, function (v) { S.mode = v; })),
+      field('Which hand is on the right stick (or the pad)?', select([['right', 'Right hand'], ['left', 'Left hand']], S.person.hand, function (v) { S.person.hand = v; })),
+      field('Which thumb is on the right stick?', select([['right', 'Right thumb'], ['left', 'Left thumb']], S.person.thumb, function (v) { S.person.thumb = v; })),
+      field('How much do you play with sticks?', select([['new', 'New to sticks'], ['regular', 'Regular'], ['fps_fighting', 'Fighting-game or shooter player']], S.person.rating, function (v) { S.person.rating = v; }))
+    ]);
+    app.appendChild(card);
+    var start = btn('Continue', function () { if (S.mode === 'gamepad') showCheck(); else beginProtocol(); }, true, 'about-next');
+    app.appendChild(el('div', { class: 'row' }, [start, btn('Back', showIntro)]));
+    function updateStart() { start.disabled = S.person.code.length < 1; }
+    updateStart();
+  }
+
+  // Finds the right stick: standard-mapping pads use axes 2 and 3; any other pad is asked to move the right stick and the two axes that move most are taken.
+  function showCheck() {
+    S.screen = 'check'; clear();
+    S.axisRange = null; S.padIndex = -1;
+    app.appendChild(el('h1', { text: 'Check the stick' }));
+    var info = el('p', { id: 'check-info', text: 'Press any button on your pad so the browser can see it.' });
+    var status = el('p', { id: 'check-status', class: 'status', text: '' });
+    var cv = el('canvas', { width: '360', height: '360', id: 'preview' });
+    app.appendChild(el('div', { class: 'card' }, [info, status, el('div', { class: 'stickbox' }, [cv])]));
+    var selX = el('select', { id: 'selx' }), selY = el('select', { id: 'sely' });
+    var manual = el('div', { class: 'card', id: 'manual', style: 'display:none' }, [el('p', { class: 'small', text: 'If the preview does not follow your right stick, choose its axes here.' }), field('Horizontal axis', selX), field('Vertical axis', selY)]);
+    app.appendChild(manual);
+    var cont = btn('The dot follows my right stick: continue', function () { beginProtocol(); }, true, 'check-next'); cont.disabled = true;
+    app.appendChild(el('div', { class: 'row' }, [cont, btn('Back', showAbout)]));
+    selX.addEventListener('change', function () { S.ax = Number(selX.value); });
+    selY.addEventListener('change', function () { S.ay = Number(selY.value); });
+    var filled = false;
+    function tick() {
+      if (S.screen !== 'check') return;
+      var pads = navigator.getGamepads ? Array.prototype.filter.call(navigator.getGamepads(), function (g) { return g; }) : [];
+      if (pads.length) {
+        var gp = pads[0];
+        if (S.padIndex !== gp.index) {
+          S.padIndex = gp.index; S.person.pad_model = gp.id; S.axisRange = gp.axes.map(function (v) { return { min: v, max: v }; }); filled = false;
+          if (gp.mapping === 'standard') { S.ax = 2; S.ay = 3; } else { S.ax = Math.min(2, gp.axes.length - 1); S.ay = Math.min(3, gp.axes.length - 1); }
+          info.textContent = 'Found: ' + gp.id + (gp.mapping === 'standard' ? '' : ' (the browser does not know this pad’s layout; we will find the right stick by watching it move).');
+        }
+        gp.axes.forEach(function (v, i) { var r = S.axisRange[i] || (S.axisRange[i] = { min: v, max: v }); if (v < r.min) r.min = v; if (v > r.max) r.max = v; });
+        if (gp.mapping !== 'standard') {
+          var order = S.axisRange.map(function (r, i) { return [r.max - r.min, i]; }).sort(function (a, b) { return b[0] - a[0]; });
+          if (order[0] && order[0][0] > 0.5 && order[1] && order[1][0] > 0.5) { S.ax = Math.min(order[0][1], order[1][1]); S.ay = Math.max(order[0][1], order[1][1]); }
+        }
+        if (!filled) { [selX, selY].forEach(function (s) { while (s.firstChild) s.removeChild(s.firstChild); gp.axes.forEach(function (v, i) { s.appendChild(el('option', { value: String(i), text: 'axis ' + i })); }); }); filled = true; manual.style.display = 'block'; }
+        selX.value = String(S.ax); selY.value = String(S.ay);
+        var x = gp.axes[S.ax] || 0, y = gp.axes[S.ay] || 0;
+        drawStick(cv, x, y);
+        status.textContent = 'Right stick: x ' + x.toFixed(2) + '   y ' + y.toFixed(2) + (gp.mapping === 'standard' ? '' : '   (axes ' + S.ax + ' and ' + S.ay + ')');
+        var moved = Math.max(Math.abs(x), Math.abs(y)) > 0.5; if (moved) cont.dataset.moved = '1';
+        cont.disabled = !cont.dataset.moved;
+      } else { status.textContent = 'No pad seen yet.'; cont.disabled = true; }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function drawStick(cv, x, y) {
+    var c = cv.getContext('2d'), w = cv.width, h = cv.height, r = w / 2 - 6;
+    var cs = getComputedStyle(document.documentElement);
+    c.clearRect(0, 0, w, h);
+    c.strokeStyle = cs.getPropertyValue('--line'); c.lineWidth = 2;
+    c.beginPath(); c.arc(w / 2, h / 2, r, 0, Math.PI * 2); c.stroke();
+    c.beginPath(); c.moveTo(w / 2, 6); c.lineTo(w / 2, h - 6); c.moveTo(6, h / 2); c.lineTo(w - 6, h / 2); c.stroke();
+    c.fillStyle = cs.getPropertyValue('--stick');
+    c.beginPath(); c.arc(w / 2 + x * r, h / 2 + y * r, 12, 0, Math.PI * 2); c.fill();
+  }
+
+  // ---------------------------------------------------------------- the run
+  function beginProtocol() {
+    S.blocks = buildProtocol(S.mode, rnd);
+    S.bi = 0; S.ti = 0; S.trials = []; S.samples = []; S.buttons = []; S.touch = []; S.keys = []; S.events = []; S.restDts = []; S.prevBtn = []; S.complete = false; S.endedEarly = false; S.saved = false;
+    S.started = new Date().toISOString();
+    ev('start', { mode: S.mode });
+    S.screen = 'run';
+    showBlockIntro();
+    requestAnimationFrame(frame);
+  }
+
+  function showBlockIntro() {
+    S.phase = 'blockintro'; clear();
+    var b = S.blocks[S.bi];
+    app.appendChild(el('p', { class: 'small', text: 'Part ' + (S.bi + 1) + ' of ' + S.blocks.length }));
+    app.appendChild(el('h1', { text: b.title }));
+    app.appendChild(el('div', { class: 'card' }, [el('p', { text: b.intro }), el('p', { class: 'small', text: b.trials.length + (b.trials.length === 1 ? ' trial' : ' trials') + '. Each starts after a one-second countdown and ends with a tone.' })]));
+    app.appendChild(el('div', { class: 'row' }, [btn('Start this part', startBlock, true, 'block-start'), btn('Stop and save what I have', function () { finish(false); })]));
+    if (S.mode === 'gamepad') app.appendChild(el('p', { class: 'small', text: 'You can also press A (or ✕) on the pad to start.' }));
+  }
+
+  function startBlock() { S.ti = 0; ev('block', { id: S.blocks[S.bi].id }); runTrialScreen(); startTrial(); }
+
+  function runTrialScreen() {
+    clear();
+    var b = S.blocks[S.bi];
+    app.appendChild(el('p', { class: 'small', id: 'trial-count', text: b.title + ': ' + (S.ti + 1) + ' of ' + b.trials.length }));
+    var cv = null;
+    if (S.mode === 'gamepad') { cv = el('canvas', { width: '360', height: '360', id: 'live' }); }
+    var pad = S.mode === 'touch' ? el('canvas', { width: '720', height: '720', id: 'pad' }) : null;
+    app.appendChild(el('div', { class: 'card prompt' }, [
+      el('div', { class: 'big', id: 'bigtext', text: '' }), el('div', { class: 'say', id: 'saytext', text: '' }), el('p', { class: 'small', id: 'hinttext', text: '' }),
+      el('div', { class: 'bar' }, [el('i', { id: 'barfill' })]), el('div', { class: 'say wait', id: 'state', text: '' })
+    ]));
+    if (cv) app.appendChild(el('div', { class: 'stickbox' }, [cv]));
+    if (pad) { app.appendChild(el('div', { class: 'stickbox' }, [pad])); attachTouch(pad); }
+    app.appendChild(el('div', { class: 'chips', id: 'ask', style: 'display:none' }));
+    app.appendChild(el('div', { class: 'row' }, [btn('Stop and save what I have', function () { finish(false); })]));
+  }
+
+  function startTrial() {
+    var b = S.blocks[S.bi], t = b.trials[S.ti];
+    S.trialRec = { block: b.id, prompt: t.id, n: t.n, speed: t.speed, expect: t.expect, win_ms: t.win_ms, countdown_ms: t.countdown === false ? 0 : COUNTDOWN_MS, start_f: null, end_f: null, i0: null, i1: null, b0: null, b1: null, interrupted: false, label: null };
+    S.padLost = false; S.hidden = document.hidden;
+    S.phase = 'count'; S.phaseStart = nowF();
+    document.getElementById('bigtext').textContent = t.big || '';
+    document.getElementById('saytext').textContent = t.say || '';
+    document.getElementById('hinttext').textContent = t.hint || '';
+    document.getElementById('trial-count').textContent = b.title + ': ' + (S.ti + 1) + ' of ' + b.trials.length;
+    document.getElementById('ask').style.display = 'none';
+  }
+
+  function primaryLen() { return S.mode === 'gamepad' ? S.samples.length : S.mode === 'touch' ? S.touch.length : S.keys.length; }
+
+  function frame(f) {
+    if (S.screen !== 'run') return;
+    var dt = f - S.lastF; S.lastF = f;
+    if (S.mode === 'gamepad') recordPad(f);
+    var st = document.getElementById('state'), fill = document.getElementById('barfill');
+    if (S.phase === 'blockintro' || S.phase === 'blockdone') { pollAdvance(); }
+    else if (S.trialRec) {
+      var t = S.blocks[S.bi].trials[S.ti], el0 = f - S.phaseStart;
+      if (document.hidden || S.padLost) S.trialRec.interrupted = true;
+      if (S.phase === 'count') {
+        if (S.trialRec.countdown_ms === 0 || el0 >= S.trialRec.countdown_ms) { beginWindow(f); }
+        else { st.textContent = 'Get ready'; st.className = 'say wait'; fill.style.width = (100 * el0 / S.trialRec.countdown_ms) + '%'; }
+      }
+      if (S.phase === 'go') {
+        var e = f - S.phaseStart;
+        if (S.trialRec.block === 'rest') S.restDts.push(dt);
+        st.textContent = t.expect.kind === 'rest' || t.expect.kind === 'idle' ? 'Keep still' : 'Go'; st.className = 'say go'; fill.style.width = Math.min(100, 100 * e / t.win_ms) + '%';
+        if (e >= t.win_ms) { endWindow(f); }
+      } else if (S.phase === 'gap') {
+        if (f - S.phaseStart >= GAP_MS) { nextTrial(); }
+      } else if (S.phase === 'ask') {
+        /* waits for a choice */
+      }
+    }
+    var live = document.getElementById('live');
+    if (live && S.mode === 'gamepad') { var gp = currentPad(); if (gp) drawStick(live, gp.axes[S.ax] || 0, gp.axes[S.ay] || 0); }
+    requestAnimationFrame(frame);
+  }
+
+  function beginWindow(f) {
+    var tr = S.trialRec;
+    tr.start_f = f; tr.i0 = primaryLen(); tr.b0 = S.buttons.length;
+    S.phase = 'go'; S.phaseStart = f;
+    document.getElementById('barfill').style.width = '0%';
+  }
+
+  function endWindow(f) {
+    var tr = S.trialRec, t = S.blocks[S.bi].trials[S.ti];
+    tr.end_f = f; tr.i1 = primaryLen(); tr.b1 = S.buttons.length;
+    beep(880, 140);
+    document.getElementById('state').textContent = 'Done'; document.getElementById('state').className = 'say';
+    if (t.ask) { S.phase = 'ask'; showAsk(); } else { S.trials.push(tr); S.phase = 'gap'; S.phaseStart = f; }
+  }
+
+  function showAsk() {
+    var box = document.getElementById('ask'); box.style.display = 'flex'; while (box.firstChild) box.removeChild(box.firstChild);
+    box.appendChild(el('p', { class: 'say', text: 'What did you just do?', style: 'width:100%;text-align:center' }));
+    [['flick', 'A flick'], ['hold', 'A hold'], ['zigzag', 'A zig-zag'], ['pump', 'A pump (double flick)'], ['circle', 'A circle'], ['other', 'Something else'], ['nothing', 'Nothing']].forEach(function (o) {
+      box.appendChild(btn(o[1], function () { S.trialRec.label = o[0]; S.trials.push(S.trialRec); box.style.display = 'none'; S.phase = 'gap'; S.phaseStart = nowF(); }));
+    });
+  }
+
+  function nextTrial() {
+    var b = S.blocks[S.bi];
+    S.ti++;
+    if (S.ti < b.trials.length) { startTrial(); return; }
+    S.phase = 'blockdone'; showBlockDone();
+  }
+
+  function showBlockDone() {
+    clear();
+    var b = S.blocks[S.bi], last = S.bi === S.blocks.length - 1;
+    app.appendChild(el('h1', { text: b.title + ': done' }));
+    app.appendChild(el('div', { class: 'card' }, [el('p', { text: last ? 'That was the last part.' : 'Take a breath. When you are ready, go on, or do this part again if it went wrong.' })]));
+    var row = el('div', { class: 'row' }, [
+      btn(last ? 'Finish and save' : 'Next part', function () { if (last) finish(true); else { S.bi++; showBlockIntro(); } }, true, 'block-next'),
+      btn('Do this part again', function () { ev('repeat', { id: b.id }); showBlockIntro(); }),
+      btn('Stop and save what I have', function () { finish(false); })
+    ]);
+    app.appendChild(row);
+    S.phase = 'blockdone';
+  }
+
+  // A on the pad starts a part or goes on: the pad stays in the person's hands between parts.
+  function pollAdvance() {
+    var gp = currentPad(); if (!gp) return;
+    var a = gp.buttons[0] && gp.buttons[0].pressed;
+    if (a && !S.prevAdvance) { var go = document.getElementById('block-start') || document.getElementById('block-next'); if (go) go.click(); }
+    S.prevAdvance = a;
+  }
+
+  // ---------------------------------------------------------------- input recording
+  function currentPad() {
+    if (!navigator.getGamepads) return null;
+    var list = navigator.getGamepads();
+    if (S.padIndex >= 0 && list[S.padIndex]) return list[S.padIndex];
+    for (var i = 0; i < list.length; i++) if (list[i]) return list[i];
+    return null;
+  }
+  function recordPad(f) {
+    var gp = currentPad();
+    if (!gp) { if (!S.padLost) { S.padLost = true; ev('pad_lost'); } return; }
+    if (S.padLost) { S.padLost = false; ev('pad_back'); }
+    S.samples.push([gp.timestamp, f, gp.axes[S.ax] === undefined ? 0 : gp.axes[S.ax], gp.axes[S.ay] === undefined ? 0 : gp.axes[S.ay]]);
+    for (var i = 0; i < gp.buttons.length; i++) {
+      var on = gp.buttons[i].pressed ? 1 : 0;
+      if (S.prevBtn[i] !== on) { if (S.prevBtn[i] !== undefined || on) S.buttons.push([gp.timestamp, f, i, on, gp.buttons[i].value]); S.prevBtn[i] = on; }
+    }
+  }
+  var touchOrigin = {};
+  function attachTouch(pad) {
+    var c = pad.getContext('2d');
+    function paint(x, y) {
+      var cs = getComputedStyle(document.documentElement); c.clearRect(0, 0, pad.width, pad.height);
+      c.strokeStyle = cs.getPropertyValue('--line'); c.lineWidth = 3; c.beginPath(); c.arc(pad.width / 2, pad.height / 2, pad.width / 2 - 8, 0, Math.PI * 2); c.stroke();
+      if (x !== null) { c.fillStyle = cs.getPropertyValue('--stick'); c.beginPath(); c.arc(x, y, 22, 0, Math.PI * 2); c.fill(); }
+    }
+    paint(null, null);
+    function rec(e, phase) {
+      var o = touchOrigin[e.pointerId];
+      if (phase === 0) { touchOrigin[e.pointerId] = o = { x: e.clientX, y: e.clientY }; }
+      if (!o) return;
+      S.touch.push([e.timeStamp, nowF(), e.clientX - o.x, e.clientY - o.y, phase, e.pointerId]);
+      if (phase >= 2) delete touchOrigin[e.pointerId];
+      var r = pad.getBoundingClientRect(); paint(phase >= 2 ? null : (e.clientX - r.left) * pad.width / r.width, phase >= 2 ? null : (e.clientY - r.top) * pad.height / r.height);
+    }
+    pad.addEventListener('pointerdown', function (e) { e.preventDefault(); try { pad.setPointerCapture(e.pointerId); } catch (x) { /* fine */ } rec(e, 0); });
+    pad.addEventListener('pointermove', function (e) { if (touchOrigin[e.pointerId]) { e.preventDefault(); rec(e, 1); } });
+    pad.addEventListener('pointerup', function (e) { rec(e, 2); });
+    pad.addEventListener('pointercancel', function (e) { rec(e, 3); });
+  }
+  window.addEventListener('keydown', function (e) {
+    if (S.screen !== 'run' || S.mode !== 'keyboard') return;
+    if (e.key.indexOf('Arrow') === 0) { e.preventDefault(); S.keys.push([e.timeStamp, nowF(), e.key, 1, e.repeat ? 1 : 0]); }
+  });
+  window.addEventListener('keyup', function (e) {
+    if (S.screen !== 'run' || S.mode !== 'keyboard') return;
+    if (e.key.indexOf('Arrow') === 0) { e.preventDefault(); S.keys.push([e.timeStamp, nowF(), e.key, 0, 0]); }
+  });
+  document.addEventListener('visibilitychange', function () { ev(document.hidden ? 'hidden' : 'visible'); });
+  window.addEventListener('gamepadconnected', function (e) { ev('pad_connected', { id: e.gamepad.id }); });
+  window.addEventListener('gamepaddisconnected', function (e) { ev('pad_disconnected', { id: e.gamepad.id }); });
+  window.addEventListener('beforeunload', function (e) { if (S.screen === 'run' && !S.saved) { e.preventDefault(); e.returnValue = ''; } });
+
+  // ---------------------------------------------------------------- the file
+  function median(a) { if (!a.length) return 0; var b = a.slice().sort(function (x, y) { return x - y; }); return b[Math.floor(b.length / 2)]; }
+  function buildFile(complete) {
+    var gp = S.mode === 'gamepad' ? currentPad() : null;
+    var dt = median(S.restDts);
+    return {
+      format: 'meridian.right-stick-capture/1',
+      page: { version: VERSION },
+      saved_iso: new Date().toISOString(), started_iso: S.started, complete: !!complete,
+      person: { code: S.person.code, hand: S.person.hand, thumb: S.person.thumb, rating: S.person.rating, pad_model: S.mode === 'gamepad' ? S.person.pad_model : '' },
+      env: {
+        mode: S.mode, user_agent: navigator.userAgent, screen: { w: screen.width, h: screen.height, dpr: window.devicePixelRatio || 1 }, frame_ms_median_at_rest: dt, frame_hz_estimate: dt ? Math.round(10000 / dt) / 10 : 0,
+        gamepad: S.mode === 'gamepad' ? { mapping: gp ? gp.mapping : '', axes: gp ? gp.axes.length : 0, buttons: gp ? gp.buttons.length : 0, axis_x: S.ax, axis_y: S.ay } : null
+      },
+      protocol: { blocks: S.blocks.map(function (b) { return b.id; }), estimated_s: estimateSeconds(S.blocks) },
+      trials: S.trials, events: S.events,
+      samples: S.mode === 'gamepad' ? S.samples : [], buttons: S.mode === 'gamepad' ? S.buttons : [], touch: S.mode === 'touch' ? S.touch : [], keys: S.mode === 'keyboard' ? S.keys : []
+    };
+  }
+  function download(obj) {
+    var name = 'rsc-' + (S.person.code || 'anon') + '-' + S.mode + '-' + new Date().toISOString().slice(0, 10) + '.json';
+    var blob = new Blob([JSON.stringify(obj)], { type: 'application/json' });
+    if (S.fileBlobUrl) URL.revokeObjectURL(S.fileBlobUrl);
+    S.fileBlobUrl = URL.createObjectURL(blob);
+    var a = document.createElement('a'); a.href = S.fileBlobUrl; a.download = name; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    S.saved = true;
+    return name;
+  }
+  function finish(complete) {
+    S.complete = !!complete; S.endedEarly = !complete; S.screen = 'done'; ev('end', { complete: !!complete });
+    var file = buildFile(complete), name = download(file);
+    clear();
+    app.appendChild(el('h1', { text: complete ? 'All done, thank you' : 'Saved what you had, thank you' }));
+    app.appendChild(el('div', { class: 'card' }, [
+      el('p', { text: 'A file called ' + name + ' should have been saved to your Downloads folder. Please send that one file to whoever asked you to do this.' }),
+      el('p', { class: 'small', text: file.trials.length + ' trials recorded, ' + (file.samples.length + file.touch.length + file.keys.length) + ' input samples. Nothing was sent from this page.' })
+    ]));
+    app.appendChild(el('div', { class: 'row' }, [btn('Save the file again', function () { download(buildFile(S.complete)); }, true, 'save-again'), btn('Start over', function () { S.person.code = ''; showIntro(); })]));
+  }
+
+  window.__rsc = { buildProtocol: buildProtocol, estimateSeconds: estimateSeconds, state: S, buildFile: buildFile, version: VERSION };
+  showIntro();
+}());
+</script>
+</body>
+</html>

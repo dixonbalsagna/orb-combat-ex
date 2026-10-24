@@ -32,3 +32,6 @@ homework/
 docs/ui/img/run/
 docs/ui/mock/
 docs/ui/img/*-mock.png
+
+# Real-thumb captures of the right stick (tools/capture): raw files hold anonymous codes and stick samples; only the summary tables are committed
+tools/capture/raw/
