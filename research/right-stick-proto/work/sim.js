@@ -1,0 +1,479 @@
+// ==== STICK SIM (no DOM) ====
+// Right stick, step 1 (docs/design/right-stick-pitches.md section 11 and 12, pitch C's family stick), read with Controls'
+// fixed thresholds (docs/controls/right-stick.md section 11). The recognizer reads one sample a tick: the dead zone, the
+// on/off hysteresis, the flick by its onset speed, the hold, and the family locked at the first deflection. Patterns are
+// off in step 1: the panel only names the ones it sees, as "step 2". No DOM: the page drives it, and gif.mjs runs the same
+// code in node for the homework clips. 60 ticks a second, no randomness (a hash for every jitter), flat polygons only.
+var S = (function () {
+'use strict';
+var W = 1000, H = 340, AW = 720, GY = 300;
+var BH = 56;                        // a body height, drawn and as the unit of distance (1 bh = 56 px)
+var KEY = '#0a0d14';
+var C = { bg: '#f3f1ea', ground: '#e8e6dc', line: '#888780', dirt: '#b3a991', scorch: '#6d6a62', shade: '#d6d4c9', grey: '#a9a79e',
+  cliff: '#a39a8a', cliffDark: '#7d7466', lake: '#7fb0cf', lakeLite: '#c9e2ef', ink: '#1f1f1c', hud: '#d3d1c7',
+  panel: '#e6e3d9', ring: '#b9b6ab', dead: '#d3d0c4', dim: '#8a877d' };
+function lane(core, main, edge) { return { core: core, main: main, edge: edge }; }
+var FIGHTERS = [
+  { id: 'protagonist', name: 'Protagonist', body: '#1f4f4a',
+    L: { bolt: lane('#f2fdff', '#10c2ea', '#0b7fb8'), lob: lane('#ecfaff', '#1eb0f4', '#0e6cc4'), beam: lane('#f4faff', '#2e90f2', '#0d58c4'), trap: lane('#e8f5ff', '#2a9cf4', '#0f62bc') }, sweep: 32, bw: 1.2 },
+  { id: 'rival', name: 'Rival', body: '#33295a',
+    L: { bolt: lane('#f0e6ff', '#4420c4', '#2e0c78'), lob: lane('#f6e6ff', '#5c1ca8', '#3c0c6c'), beam: lane('#ffe8fb', '#80127e', '#5a0c64'), trap: lane('#eee4ff', '#4c20ac', '#300c70') }, sweep: 34, bw: 0.85 }];
+
+// ---- Controls' step-1 thresholds (right-stick.md section 11) and GD's step-1 moves (pitches section 11, first values) ----
+var RS = { deadZone: 0.25, on: 0.60, off: 0.35, rest: 0.2, flickRise: 3, flickSettle: 2, holdTicks: 10, holdDirs: 32, flightHyst: 8 };
+var MV = { reach: 1.6, mid: 6, lungeKi: 10, stepIn: 1, stepBack: 2, stepT: 8, hop: 2, hopT: 8, slip: 4, flight: 2.6,
+  dash: 6, dashFree: 12, dashKi: 12, orbitRate: 4.5, wall: 4.5, skim: 5, skimAlt: 1, settle: 8, repeatWin: 180,
+  aimRate: 2, latch: 45, seek: 30, layReach: 3 };
+var N = { boltGap: 6, beamLv: [30, 54, 84], beamLen: [20, 36, 54], pulseAdd: 4, lobT: 36 };
+
+function hash(n) { n = (n ^ 61) ^ (n >>> 16); n = (n + (n << 3)) | 0; n ^= n >>> 4; n = Math.imul(n, 0x27d4eb2d); n ^= n >>> 15; return (n >>> 0) / 4294967296; }
+function ease(x) { return x < 0 ? 0 : x > 1 ? 1 : 1 - (1 - x) * (1 - x); }
+function easeIO(x) { return x < 0 ? 0 : x > 1 ? 1 : x < 0.5 ? 2 * x * x : 1 - 2 * (1 - x) * (1 - x); }
+function lerp(a, b, k) { return a + (b - a) * k; }
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function angN(a) { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; }
+function deg(d) { return d * Math.PI / 180; }
+function sy(alt) { return GY - alt; }
+
+// ---- shapes ----
+function ngon(cx, cy, r, n, rot) { var p = []; for (var i = 0; i < n; i++) { var a = rot + i * 2 * Math.PI / n; p.push(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } return p; }
+function star(cx, cy, r1, r2, n, rot) { var p = []; for (var i = 0; i < 2 * n; i++) { var a = rot + i * Math.PI / n, r = i % 2 ? r2 : r1; p.push(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } return p; }
+function xf(pts, cx, cy, rot, sx, sy2) { var c = Math.cos(rot), s = Math.sin(rot), o = []; for (var i = 0; i < pts.length; i += 2) { var x = pts[i] * sx, y = pts[i + 1] * sy2; o.push(cx + x * c - y * s, cy + x * s + y * c); } return o; }
+function quad(R, ax, ay, bx, by, w0, w1, col) {
+  var dx = bx - ax, dy = by - ay, l = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / l, ny = dx / l;
+  R.poly([ax + nx * w0 / 2, ay + ny * w0 / 2, bx + nx * w1 / 2, by + ny * w1 / 2, bx - nx * w1 / 2, by - ny * w1 / 2, ax - nx * w0 / 2, ay - ny * w0 / 2], col);
+}
+function limb(R, a, b, w, col) { quad(R, a[0], a[1], b[0], b[1], w, w, col); R.poly(ngon(a[0], a[1], w / 2, 8, 0.39), col); R.poly(ngon(b[0], b[1], w / 2, 8, 0.39), col); }
+function ring(R, cx, cy, r, w, col, n) { n = n || 24; for (var i = 0; i < n; i++) { var a0 = i * 6.283 / n, a1 = (i + 1) * 6.283 / n; quad(R, cx + Math.cos(a0) * r, cy + Math.sin(a0) * r, cx + Math.cos(a1) * r, cy + Math.sin(a1) * r, w, w, col); } }
+function spr(R, shp, l, wd, lc) { R.poly(shp(l + 3.5, wd + 3.5), KEY); R.poly(shp(l + 1.8, wd + 1.8), lc.edge); R.poly(shp(l, wd), lc.main); if (l > 3 && wd > 1.5) R.poly(shp(l * 0.45, wd * 0.45), lc.core); }
+
+// ---- the recognizer: one quantised sample a tick, the family locked at the first deflection ----
+function mkReader() { return { on: false, lastRest: -99, crossT: -99, isFlick: false, flickDone: true, peak: null, holdN: 0, d4: null, fam: null, famOut: false,
+  trace: [], log: [], pat: { sum: 0, prevA: null, start: -99, restN: 99, axisSign: 0, strokes: 0, strokeMax: 0, said: {}, flicks: [] } }; }
+function quant(x, y) {
+  var m = Math.sqrt(x * x + y * y); if (m < RS.deadZone) return { x: 0, y: 0, m: 0 };
+  var r = Math.round(Math.min(1, (m - RS.deadZone) / (1 - RS.deadZone)) * 16) / 16; return { x: x / m * r, y: y / m * r, m: r };
+}
+// four ways on the screen, a tie to the vertical; y is the screen's (down positive)
+function dir4(x, y) { return Math.abs(y) >= Math.abs(x) ? (y < 0 ? 'up' : 'down') : (x > 0 ? 'right' : 'left'); }
+var D4A = { right: 0, up: 90, left: 180, down: 270 };
+function famOf(mask) { return mask === 0 ? 'flight' : mask === 2 ? 'aim' : mask === 3 ? 'lay' : 'none'; }
+// returns this tick's events: a flick (screen direction), the hold level (four-way with hysteresis, a 32-way angle,
+// a magnitude band) and the release
+function readStick(rd, t, x, y, mask) {
+  var q = quant(x, y), out = { flick: null, hold: null, release: false, fam: null, q: q };
+  rd.trace.push([x, y]); if (rd.trace.length > 44) rd.trace.shift();
+  if (q.m === 0) { if (!rd.on) rd.fam = null; }
+  else if (rd.fam == null) { rd.fam = famOf(mask); }
+  out.fam = rd.fam;
+  if (q.m <= RS.rest) rd.lastRest = t;
+  if (!rd.on && q.m >= RS.on) { rd.on = true; rd.crossT = t; rd.isFlick = t - rd.lastRest <= RS.flickRise + 1; rd.flickDone = !rd.isFlick; rd.holdN = 0; rd.d4 = null; rd.peak = q; }
+  else if (rd.on && q.m < RS.off) {
+    if (!rd.flickDone) { out.flick = dir4(rd.peak.x, rd.peak.y); rd.flickDone = true; }     // a flick quicker than the settle still fires
+    rd.on = false; if (rd.holdN >= RS.holdTicks) out.release = true; rd.holdN = 0;
+  }
+  if (rd.on) {
+    rd.holdN++; if (q.m >= rd.peak.m) rd.peak = q;
+    if (!rd.flickDone && t - rd.crossT >= RS.flickSettle) { out.flick = dir4(q.x, q.y); rd.flickDone = true; }
+    if (rd.holdN >= RS.holdTicks) {
+      var a = Math.atan2(-q.y, q.x) * 180 / Math.PI; if (a < 0) a += 360;
+      var step = 360 / RS.holdDirs, a32 = Math.round(a / step) % RS.holdDirs * step;
+      // Flight reads a hold four ways, with 8 degrees of hysteresis at the diagonals
+      var nd = dir4(q.x, q.y);
+      if (rd.d4) { var off = Math.abs(((a - D4A[rd.d4]) % 360 + 540) % 360 - 180); if (off <= 45 + RS.flightHyst) nd = rd.d4; }
+      rd.d4 = nd;
+      out.hold = { d4: nd, ang: a32, band: q.m < 0.5 ? 1 : q.m < 0.8 ? 2 : 3 };
+    }
+  }
+  patterns(rd, t, q, out);
+  return out;
+}
+// Patterns are step 2's. Here they only name themselves in the panel (R20): the flicks and holds inside them still act.
+function patterns(rd, t, q, out) {
+  var P2 = rd.pat;
+  if (q.m === 0) { P2.restN++; if (P2.restN === 5) { if (Math.abs(P2.sum) >= 140 && Math.abs(P2.sum) <= 250) say(rd, t, 'half-circle'); P2.sum = 0; P2.prevA = null; P2.strokes = 0; P2.axisSign = 0; P2.said = {}; } }
+  else { if (P2.restN >= 5) P2.start = t; P2.restN = 0; }
+  if (t - P2.start > 48) { P2.start = t; P2.sum = 0; P2.strokes = 0; P2.said = {}; }
+  if (q.m > RS.off) { var a = Math.atan2(-q.y, q.x) * 180 / Math.PI; if (P2.prevA != null) P2.sum += ((a - P2.prevA) % 360 + 540) % 360 - 180; P2.prevA = a; } else P2.prevA = null;     // through the middle is a stroke, not a turn
+  if (Math.abs(P2.sum) >= 300) say(rd, t, 'circle');
+  var vert = Math.abs(q.y) >= Math.abs(q.x), ax = vert ? q.y : q.x;     // a stroke reverses along one line; a turn onto the other axis is not a reversal
+  if (Math.abs(ax) >= 0.6) { var sg = ax > 0 ? 1 : -1; if (P2.axisV !== vert) { P2.axisV = vert; P2.axisSign = 0; } if (P2.axisSign && sg !== P2.axisSign) { P2.strokes++; if (P2.strokes >= 2) say(rd, t, 'zig-zag'); } P2.axisSign = sg; }
+  if (out.flick) { P2.flicks = P2.flicks.filter(function (f) { return t - f.t <= 18; }); if (P2.flicks.some(function (f) { return f.d === out.flick; })) say(rd, t, 'pump'); P2.flicks.push({ t: t, d: out.flick }); }
+}
+function say(rd, t, k) { if (rd.pat.said[k]) return; rd.pat.said[k] = 1; note(rd, t, k.toUpperCase() + ': STEP 2', true); }
+function note(rd, t, text, dim) { rd.log.unshift({ t: t, text: text, dim: !!dim }); if (rd.log.length > 6) rd.log.pop(); }
+
+// ---- the world: the Protagonist (you), the Rival (a stand-in), a cliff to run up and a lake to skim ----
+var CLIFF = { x: 660, top: 200 }, LAKE = { x0: 250, x1: 470 };
+function mkF(def, x, alt) { return { def: def, x: x, y: alt, dir: 1, ki: 100, vx: 0, vy: 0, mv: null, cmd: null, slip: 0, settle: 0, aimOff: 0, latched: false,
+  bchg: null, beam: null, lastBolt: -99, reps: { step: [], hop: [] }, reel: 0, orbit: null, tilt: 0, layOff: null, prev: {}, lean: 0, dashT: 0, skimDir: 0, home: [x, alt] }; }
+function newWorld(clip, take, mode) {
+  var T = clip ? clip.takes[take] : null;
+  var w = { t: 0, mode: mode, clip: clip, P: mkF(FIGHTERS[0], 160, 60), V: mkF(FIGHTERS[1], 540, 80), shots: [], fx: [], marks: [], mines: [], rd: mkReader(), seq: 0, sound: [], inp: {} };
+  w.P.foe = w.V; w.V.foe = w.P;
+  if (T && T.setup) T.setup(w);
+  w.V.home = [w.V.x, w.V.y];
+  return w;
+}
+function hand(f) { return [f.x + f.dir * 22, f.y + 40]; }
+function chest(f) { return [f.x, f.y + 40]; }
+function dist(a, b) { var dx = b.x - a.x, dy = b.y - a.y; return Math.sqrt(dx * dx + dy * dy); }
+function burst(w, x, alt, r, dur, lc, n) { w.fx.push({ k: 'burst', x: x, y: alt, r: r, t: 0, dur: dur, lc: lc, n: n || 7, rot: hash(w.seq++) * 6.28 }); }
+function chips(w, x, alt, n, col, sp, up) { for (var i = 0; i < n; i++) { var a = hash(w.seq++) * 6.283, v = (sp || 3) * (0.5 + hash(w.seq++)); w.fx.push({ k: 'chip', x: x, y: alt, vx: Math.cos(a) * v, vy: Math.abs(Math.sin(a)) * v * (up ? 1.4 : 0.6) + 1, s: 2 + hash(w.seq++) * 2.5, t: 0, dur: 14 + hash(w.seq++) * 12, col: col, rot: hash(w.seq++) * 6 }); } }
+function overLake(x) { return x > LAKE.x0 && x < LAKE.x1; }
+function floor(x) { return x > CLIFF.x ? CLIFF.top : 0; }
+// keep him out of the cliff: below its top he stays left of the face
+function bound(f) { f.y = clamp(f.y, 0, 270); if (f.y < CLIFF.top && f.x > CLIFF.x - 14) f.x = CLIFF.x - 14; f.x = clamp(f.x, 18, AW - 18); if (f.x > CLIFF.x) f.y = Math.max(f.y, CLIFF.top); }
+
+// ---- moves: tweens the director runs, then the hold's sustained commands ----
+function tween(f, k, x1, y1, dur) { f.mv = { k: k, x0: f.x, y0: f.y, x1: x1, y1: y1, t: 0, dur: dur }; f.cmd = null; f.orbit = null; }
+function slipFor(w, f, kind) {    // R8: the third step or hop inside 3 s keeps its movement and loses its slip frames
+  var r = f.reps[kind] = f.reps[kind].filter(function (t) { return w.t - t < MV.repeatWin; }); r.push(w.t);
+  f.slip = r.length >= 3 ? 0 : MV.slip;
+}
+function rel(f, d4) { if (d4 === 'up' || d4 === 'down') return d4; return (d4 === 'right' ? 1 : -1) === (f.foe.x >= f.x ? 1 : -1) ? 'toward' : 'away'; }
+var WORD = { toward: 'TOWARD', away: 'AWAY', up: 'UP', down: 'DOWN' };
+function flightFlick(w, f, d4) {
+  f.flickAlt = f.y - floor(f.x);     // the skim reads where he was when the gesture began, not where the drop took him
+  var r = rel(f, d4), foe = f.foe, d = dist(f, foe), sx = foe.x >= f.x ? 1 : -1;
+  if (r === 'toward') {
+    if (d > MV.reach * BH) {
+      if (f.ki < MV.lungeKi) { note(w.rd, w.t, 'FLICK TOWARD: NO KI'); return; }
+      f.ki -= MV.lungeKi; var k = (MV.reach * 0.85 * BH) / d; tween(f, 'lunge', foe.x - (foe.x - f.x) * k, foe.y - (foe.y - f.y) * k, d > MV.mid * BH ? 22 : 14);
+      note(w.rd, w.t, 'FLICK TOWARD: LUNGE'); return;
+    }
+    var nx = f.x + sx * MV.stepIn * BH; if (Math.abs(foe.x - nx) < 0.8 * BH) nx = foe.x - sx * 0.8 * BH;
+    tween(f, 'step', nx, f.y, 6); note(w.rd, w.t, 'FLICK TOWARD: STEP IN'); return;
+  }
+  if (r === 'away') { tween(f, 'step', f.x - sx * MV.stepBack * BH, f.y, MV.stepT); slipFor(w, f, 'step'); note(w.rd, w.t, 'FLICK AWAY: STEP BACK'); return; }
+  var up = r === 'up'; tween(f, up ? 'hop' : 'drop', f.x, clamp(f.y + (up ? 1 : -1) * MV.hop * BH, overLake(f.x) ? 6 : 0, 250), MV.hopT); slipFor(w, f, 'hop');
+  note(w.rd, w.t, up ? 'FLICK UP: HOP' : 'FLICK DOWN: DROP');
+}
+function atWall(f, d4) { return d4 === 'right' && f.x >= CLIFF.x - 30 && f.y < CLIFF.top; }
+function flightHold(w, f, h) {
+  var r = rel(f, h.d4), foe = f.foe, d = dist(f, foe), k;
+  if (atWall(f, h.d4)) k = 'wall';
+  else if (f.orbit && !f.orbit.done && f.cmd === 'orbit' + r) k = 'orbit';      // an orbit under way keeps going until it crosses or he lets go
+  else if (r === 'down' && (f.flickAlt != null ? f.flickAlt : f.y) < MV.skimAlt * BH + 4) k = 'skim';
+  else if (r === 'toward' || r === 'away') k = 'dash';
+  else if (d <= MV.mid * BH) k = 'orbit';
+  else k = 'climb';
+  if (f.cmd !== k + r) {
+    if (k === 'orbit' && f.cmd === 'crossed' + r) return;     // held through: the cross-up is done until he lets go
+    f.cmd = k + r; f.dashT = 0;
+    if (k === 'orbit') { var a0 = Math.atan2(f.y - foe.y, f.x - foe.x); f.orbit = { a: a0, a0: a0, r: Math.max(0.9 * BH, d), dirn: (r === 'up' ? 1 : -1) * (f.x < foe.x ? -1 : 1), done: false }; }
+    if (k === 'skim') f.skimDir = f.vx ? (f.vx > 0 ? 1 : -1) : (foe.x >= f.x ? 1 : -1);
+    note(w.rd, w.t, k === 'wall' ? 'HOLD INTO WALL: RUN' : k === 'skim' ? 'HOLD DOWN: SKIM' : k === 'dash' ? 'HOLD ' + WORD[r] + ': DASH' : k === 'orbit' ? 'HOLD ' + WORD[r] + ': ORBIT' : 'HOLD ' + WORD[r] + ': FLY');
+  }
+  var sx = foe.x >= f.x ? 1 : -1;
+  if (k === 'dash') {
+    f.dashT++; var sp = MV.dash;
+    if (f.dashT > MV.dashFree) { if (f.ki > 0) f.ki = Math.max(0, f.ki - MV.dashKi / 60); else sp = MV.flight; }
+    var dx = (r === 'toward' ? sx : -sx) * sp; if (r === 'toward' && Math.abs(foe.x - f.x) < 1.0 * BH) dx = 0;
+    f.vx = dx; f.vy = 0; f.x += dx; f.lean = r === 'toward' ? 14 : -10;
+  } else if (k === 'climb') { f.vy = (r === 'up' ? 1 : -1) * 4; f.y += f.vy; f.vx = 0; }
+  else if (k === 'orbit') {
+    var o = f.orbit; if (o.done) return;
+    o.a += o.dirn * deg(MV.orbitRate); var sw = Math.abs(angN(o.a - o.a0));
+    var nx = foe.x + Math.cos(o.a) * o.r, ny = foe.y + Math.sin(o.a) * o.r;
+    f.vx = nx - f.x; f.vy = ny - f.y; f.x = nx; f.y = Math.max(f.y < 2 ? 0 : 2, ny);
+    if ((Math.cos(o.a) * Math.cos(o.a0) < 0 && Math.abs(Math.sin(o.a)) < 0.08) || sw > deg(200)) { o.done = true; f.cmd = 'crossed' + r; note(w.rd, w.t, 'CROSS-UP: OTHER SIDE'); }
+  } else if (k === 'wall') { f.x = CLIFF.x - 14; f.vy = MV.wall; f.y = Math.min(CLIFF.top - 2, f.y + MV.wall); f.vx = 0; f.tilt = f.dir * Math.PI / 2; if (w.t % 3 === 0) chips(w, CLIFF.x - 2, f.y + 4, 1, C.cliffDark, 1.5); }
+  else if (k === 'skim') {
+    f.y = Math.max(overLake(f.x) ? 5 : 4, f.y - 3); f.vx = (w.inp.lx ? (w.inp.lx > 0 ? 1 : -1) : f.skimDir) * MV.skim; f.vy = 0; f.x += f.vx; f.lean = 16;
+    if (w.t % 2 === 0) chips(w, f.x - f.vx * 2, 2, 2, overLake(f.x) ? C.lakeLite : C.dirt, 2.5, true);
+  }
+}
+// RB: the aim line, an angle off the line to him; it latches, and a toward flick (or letting go of RB) clears it
+function aimAbs(f) { var h = hand(f), c = chest(f.foe); return Math.atan2(c[1] - h[1], c[0] - h[0]) + f.aimOff; }
+function aimFlick(w, f, d4) {
+  var r = rel(f, d4), s = f.foe.x >= f.x ? 1 : -1;
+  if (r === 'toward') { f.aimOff = 0; f.latched = false; note(w.rd, w.t, 'FLICK TOWARD: CLEAR'); }
+  else if (r === 'away') { f.aimOff = Math.PI; f.latched = true; note(w.rd, w.t, 'FLICK AWAY: BEHIND'); }
+  else { f.aimOff = (r === 'up' ? 1 : -1) * s * deg(MV.latch); f.latched = true; note(w.rd, w.t, r === 'up' ? 'FLICK UP: LATCH HIGH' : 'FLICK DOWN: LATCH LOW'); }
+}
+function aimHold(w, f, h) {
+  var want = deg(h.ang);
+  if (f.beam && !f.beam.end) { var b = f.beam; b.a += clamp(angN(want - b.a), -deg(f.def.sweep / 60), deg(f.def.sweep / 60)); if (f.cmd !== 'sweepB') { f.cmd = 'sweepB'; note(w.rd, w.t, 'HOLD: SWEEP THE BEAM'); } return; }
+  var cur = aimAbs(f), nxt = cur + clamp(angN(want - cur), -deg(MV.aimRate), deg(MV.aimRate));
+  f.aimOff = angN(nxt - (cur - f.aimOff)); f.latched = Math.abs(f.aimOff) > 0.02;
+  if (f.cmd !== 'sweepL') { f.cmd = 'sweepL'; note(w.rd, w.t, 'HOLD: SWEEP THE LINE'); }
+}
+function layFlick(w, f, d4) { var v = { right: [1, 0], left: [-1, 0], up: [0, 1], down: [0, -1] }[d4]; f.layOff = [v[0] * MV.layReach * BH * 0.6, v[1] * MV.layReach * BH * 0.6]; note(w.rd, w.t, 'LAY 3 BH ' + WORD[rel(f, d4)]); }
+
+// ---- shots ----
+function fire(w, f, k) {
+  var h = hand(f), a = aimAbs(f), seek = Math.abs(f.aimOff) <= deg(MV.seek) ? 0.1 : 0, L = f.def.L;
+  if (k === 'bolt') { w.shots.push({ k: 'bolt', o: f, x: h[0], y: h[1], vx: Math.cos(a) * 11, vy: Math.sin(a) * 11, sp: 11, seek: seek, t: 0, s: 6 }); note(w.rd, w.t, 'X: BOLT ALONG IT'); }
+  else if (k === 'heavy') { w.shots.push({ k: 'heavy', o: f, x: h[0], y: h[1], vx: Math.cos(a) * 9, vy: Math.sin(a) * 9, sp: 9, seek: seek * 0.8, t: 0, s: 14 }); note(w.rd, w.t, 'B: BLAST ALONG IT'); }
+  else if (k === 'lob') {
+    var d = dist(f, f.foe), tx = h[0] + Math.cos(a) * d, ty = Math.max(floor(tx), h[1] + Math.sin(a) * d), T = N.lobT, g = 0.4;
+    w.shots.push({ k: 'lob', o: f, x: h[0], y: h[1], vx: (tx - h[0]) / T, vy: ((ty - h[1]) + 0.5 * g * T * T) / T, g: g, t: 0, s: 9 }); note(w.rd, w.t, 'Y: LOB ALONG IT');
+  }
+  f.lean = 8; sound(w, 'bolt');
+}
+function sound(w, k) { w.sound.push(k); }
+function inBody(f, x, alt, pad) { return Math.abs(x - f.x) < 12 + pad && alt > f.y - pad && alt < f.y + BH + pad; }
+function shotsStep(w) {
+  for (var i = w.shots.length - 1; i >= 0; i--) {
+    var s = w.shots[i], foe = s.o.foe; s.t++;
+    if (s.seek && !foe.slip) { var c = chest(foe), dx = c[0] - s.x, dy = c[1] - s.y, d = Math.sqrt(dx * dx + dy * dy) || 1; s.vx = lerp(s.vx, dx / d * s.sp, s.seek); s.vy = lerp(s.vy, dy / d * s.sp, s.seek); }
+    s.x += s.vx; s.y += s.vy; if (s.g) s.vy -= s.g;
+    var L = s.o.def.L;
+    if (!s.slipped && inBody(foe, s.x, s.y, s.k === 'heavy' ? 8 : 2)) {
+      if (foe.slip > 0 && s.k === 'bolt') { s.slipped = true; note(w.rd, w.t, 'SLIPPED A SHOT', true); }      // the step's slip frames: the shot goes by him
+      else { burst(w, s.x, s.y, s.k === 'heavy' ? 30 : 11, s.k === 'heavy' ? 14 : 7, s.k === 'bolt' ? L.bolt : L.lob, 6); foe.reel = s.k === 'bolt' ? 6 : 14; if (s.k !== 'bolt') { foe.vx = (s.vx > 0 ? 1 : -1) * 4; foe.settle = MV.settle; } w.shots.splice(i, 1); continue; }
+    }
+    var fl = floor(s.x);
+    if (s.y <= fl + 1 && (s.k === 'lob' || s.k === 'heavy' || s.vy < 0)) { burst(w, s.x, fl + 2, s.k === 'bolt' ? 9 : 28, s.k === 'bolt' ? 6 : 14, s.k === 'bolt' ? L.bolt : L.lob, 7); if (s.k !== 'bolt') { chips(w, s.x, fl + 2, 6, overLake(s.x) ? C.lakeLite : C.dirt, 3.5, true); if (!overLake(s.x)) w.marks.push({ k: 'crater', x: s.x, w: 30 }); if (Math.abs(foe.x - s.x) < 40 && foe.y < 50) foe.reel = 12; } w.shots.splice(i, 1); continue; }
+    if (s.x < -60 || s.x > AW + 40 || s.y > H + 60 || s.t > 200 || (s.x > CLIFF.x && s.y < CLIFF.top)) w.shots.splice(i, 1);
+  }
+}
+// ---- the beam: RB + B held; while it is out he is rooted, and either stick sweeps it (R25) ----
+function fireBeam(w, f, lv) { f.beam = { lv: lv, a: aimAbs(f), len: 0, t: 0, dur: N.beamLen[lv - 1], end: 0, pulses: [] }; f.ki -= [12, 20, 32][lv - 1]; note(w.rd, w.t, 'B HELD: BEAM, LEVEL ' + lv); sound(w, 'beam'); }
+function beamStep(w, f, inp, held) {
+  var b = f.beam; if (!b) return;
+  if (b.end) { b.end++; if (b.end > 9) f.beam = null; return; }
+  b.t++;
+  // the left stick sweeps it whenever the right is not holding (the right wins if both are out)
+  if (!held && inp.ly) { b.a += clamp(-inp.ly, -1, 1) * deg(f.def.sweep / 60); if (f.cmd !== 'sweepLeft') { f.cmd = 'sweepLeft'; note(w.rd, w.t, 'LEFT STICK: SWEEP'); } }
+  for (var k = b.pulses.length - 1; k >= 0; k--) { b.pulses[k] += 18; if (b.pulses[k] > b.len) b.pulses.splice(k, 1); }
+  var h = hand(f), dx = Math.cos(b.a), dy = Math.sin(b.a), foe = f.foe, reach = 900;
+  var fx = foe.x - h[0], fy = foe.y + 30 - h[1], along = fx * dx + fy * dy, off = Math.abs(fx * dy - fy * dx), half = (12 + 6 * b.lv) * f.def.bw / 2;
+  var inLine = along > 0 && off < half + 12;
+  for (var s = 0; s < 900; s += 6) { var x = h[0] + dx * s, yy = h[1] + dy * s; if (yy <= floor(x) || x < 0 || x > AW || (x > CLIFF.x - 2 && yy < CLIFF.top)) { reach = Math.min(reach, s); break; } }
+  if (inLine) reach = Math.min(reach, along);
+  b.len = Math.min(b.len + 40, reach);
+  if (inLine && b.len >= along - 1) { if (b.lv === 3) { foe.x += dx * 2.4; foe.y = Math.max(0, foe.y + dy * 2.4); } foe.reel = Math.max(foe.reel, 4); if (w.t % 5 === 0) chips(w, h[0] + dx * b.len, h[1] + dy * b.len, 1, f.def.L.beam.core, 3); }
+  var ex = h[0] + dx * b.len, ey = h[1] + dy * b.len;
+  if (ey <= floor(ex) + 4 && b.len < 880) { var key = Math.round(ex / 12); if (!overLake(ex) && !w.marks.some(function (m) { return m.k === 'trench' && m.key === key; })) w.marks.push({ k: 'trench', key: key, x: key * 12, d: 3 + 2 * b.lv }); if (w.t % 2 === 0) chips(w, ex, floor(ex) + 2, 1, overLake(ex) ? C.lakeLite : C.dirt, 3, true); }
+  if (b.t >= b.dur) { b.end = 1; f.cmd = null; }
+}
+
+// ---- the tick ----
+function fighterStep(w, f, inp, ev) {
+  var p = f.prev, pr = function (k) { return inp[k] && !p[k]; };
+  f.slip = Math.max(0, f.slip - 1); f.reel = Math.max(0, f.reel - 1); f.lean *= 0.8;
+  if (!f.beam && !f.bchg && !f.cmd) f.ki = Math.min(100, f.ki + 5 / 60);
+  if (!f.mv && !f.orbit) f.dir = f.foe.x >= f.x ? 1 : -1;
+  if (f.orbit) f.dir = f.foe.x >= f.x ? 1 : -1;
+  f.tilt = 0;
+  var rb = !!inp.RB, lb = !!inp.LB;
+  if (p.RB && !rb && f.latched) { f.aimOff = 0; f.latched = false; note(w.rd, w.t, 'RB LET GO: CLEARED'); }   // R16
+  // the right stick's events, in the family locked at the first deflection
+  if (ev) {
+    var fam = ev.fam;
+    if (ev.flick) { if (fam === 'flight' && !f.beam) flightFlick(w, f, ev.flick); else if (fam === 'aim' && !(f.beam && !f.beam.end)) aimFlick(w, f, ev.flick); else if (fam === 'lay') layFlick(w, f, ev.flick); else if (fam === 'none') note(w.rd, w.t, 'NOTHING IN STEP 1'); }
+    if (ev.hold) { if (fam === 'flight' && !f.mv && !f.beam) flightHold(w, f, ev.hold); else if (fam === 'aim') aimHold(w, f, ev.hold); }
+    if (ev.release) { if (fam === 'flight' && f.cmd) { note(w.rd, w.t, 'RELEASE: SETTLE'); f.settle = MV.settle; } else if (fam === 'aim' && f.cmd === 'sweepL') note(w.rd, w.t, f.latched ? 'RELEASE: LATCHED' : 'RELEASE: CLEAR'); else if (f.cmd === 'sweepB') note(w.rd, w.t, 'RELEASE: BEAM STAYS'); f.cmd = null; f.orbit = null; }
+    if (!ev.hold && f.cmd && f.cmd !== 'sweepLeft' && !ev.release) { f.cmd = null; f.orbit = null; }
+  }
+  // tweens: the lunge, the steps, the hop and the drop
+  if (f.mv) { var m = f.mv; m.t++; var k = easeIO(m.t / m.dur), ox = f.x, oy = f.y; f.x = lerp(m.x0, m.x1, k); f.y = lerp(m.y0, m.y1, k); f.vx = f.x - ox; f.vy = f.y - oy; f.lean = m.k === 'lunge' ? 18 : m.k === 'step' ? (m.x1 - m.x0) * f.dir > 0 ? 10 : -10 : 0; if (m.t >= m.dur) { f.mv = null; f.settle = 5; } }
+  else if (!f.cmd || f.cmd === 'sweepL' || f.cmd === 'sweepB' || f.cmd === 'sweepLeft') {
+    // free flight on the left stick (rooted while his beam is out), or the settle after a command
+    if (!f.beam && (inp.lx || inp.ly)) { f.vx = (inp.lx || 0) * MV.flight; f.vy = -(inp.ly || 0) * MV.flight; f.x += f.vx; f.y += f.vy; }
+    else if (f.settle > 0) { f.settle--; f.vx *= 0.75; f.vy *= 0.75; f.x += f.vx; f.y += f.vy; }
+    else { f.vx = 0; f.vy = 0; }
+  }
+  // energy on RB: X, Y and B along the aim line; under LB + RB, X lays a spark mine where the flick set it
+  if (rb && lb) { if (pr('X')) { var hh = hand(f), off = f.layOff || [f.dir * 20, 0]; w.mines.push({ o: f, x: hh[0] + off[0], y: Math.max(floor(hh[0] + off[0]), hh[1] + off[1] - 40), t: 0 }); note(w.rd, w.t, 'X: LAY A SPARK MINE'); } }
+  else if (rb) {
+    if (pr('X') && w.t - f.lastBolt >= N.boltGap && !f.bchg && !f.beam) { f.lastBolt = w.t; fire(w, f, 'bolt'); }
+    if (pr('Y') && !f.bchg && !f.beam) fire(w, f, 'lob');
+    if (f.beam && !f.beam.end && pr('B')) { f.beam.dur += N.pulseAdd; f.beam.pulses.push(0); note(w.rd, w.t, 'B: PULSE'); }
+    else if (pr('B') && !f.beam) f.bchg = { t: 0, lv: 0 };
+  }
+  if (f.bchg) { var c = f.bchg; c.t++; var lv = c.t >= N.beamLv[2] ? 3 : c.t >= N.beamLv[1] ? 2 : c.t >= N.beamLv[0] ? 1 : 0; if (lv !== c.lv) { c.lv = lv; sound(w, 'click'); }
+    if (!inp.B || !rb) { if (c.lv === 0) fire(w, f, 'heavy'); else fireBeam(w, f, c.lv); f.bchg = null; } }
+  beamStep(w, f, inp, ev && ev.hold && ev.fam === 'aim');
+  bound(f);
+  f.prev = { RB: inp.RB, LB: inp.LB, X: inp.X, Y: inp.Y, B: inp.B };
+}
+// the Rival stand-in: flies to scripted spots, fires a bolt at you on cue; in Play it drifts and fires now and then
+function rivalStep(w, f, o) {
+  f.dir = f.foe.x >= f.x ? 1 : -1; f.reel = Math.max(0, f.reel - 1); f.slip = 0;
+  if (f.settle > 0) { f.settle--; f.x += f.vx; f.vx *= 0.8; }
+  if (o.gx != null || o.gy != null) { var gx = o.gx == null ? f.x : o.gx, gy = o.gy == null ? f.y : o.gy, dx = gx - f.x, dy = gy - f.y, l = Math.sqrt(dx * dx + dy * dy), sp = o.gs || 2.5; if (l > 1) { f.x += dx / l * Math.min(sp, l); f.y += dy / l * Math.min(sp, l); } }
+  else if (w.mode === 'play') { var hx = f.home[0] + Math.sin(w.t * 0.011) * 60 - f.x, hy = f.home[1] + Math.sin(w.t * 0.017) * 40 - f.y; f.x += clamp(hx, -1.2, 1.2); f.y += clamp(hy, -1.2, 1.2); if (w.t % 200 === 120) o.fire = true; }
+  if (o.fire) { var h = hand(f), c = chest(f.foe), a = Math.atan2(c[1] - h[1], c[0] - h[0]), sp2 = o.fireSp || 7; w.shots.push({ k: 'bolt', o: f, x: h[0], y: h[1], vx: Math.cos(a) * sp2, vy: Math.sin(a) * sp2, sp: sp2, seek: 0, t: 0, s: 6 }); }
+  bound(f);
+}
+function minesStep(w) { for (var i = w.mines.length - 1; i >= 0; i--) { var m = w.mines[i]; m.t++; if (m.t > 12) { var f = m.o.foe; if (Math.abs(f.x - m.x) < 40 && Math.abs(f.y + 30 - m.y) < 60) { burst(w, m.x, m.y + 6, 20, 10, m.o.def.L.bolt, 7); f.reel = 6; w.mines.splice(i, 1); } } } }
+function fxStep(w) { for (var i = w.fx.length - 1; i >= 0; i--) { var e = w.fx[i]; e.t++; if (e.k === 'chip') { e.x += e.vx; e.y += e.vy; e.vy -= 0.3; if (e.y < 0) { e.y = 0; e.vy *= -0.3; e.vx *= 0.6; } e.rot += 0.2; } if (e.t >= e.dur) w.fx.splice(i, 1); } }
+
+// ---- clips: the GIFs for homework 49, each a list of takes ----
+// P's script gives the right stick as [from, to, screen degrees, magnitude] gestures (ramped in and out over 2 ticks, with a
+// little hash jitter), plus held buttons and the left stick; V's gives a spot to fly to and when to fire.
+function stickAt(list, t, seed) {
+  for (var i = 0; i < list.length; i++) {
+    var e = list[i]; if (t < e[0] || t >= e[1] + 2) continue;
+    var kin = Math.min(1, (t - e[0] + 1) / 2), kout = t >= e[1] ? Math.max(0, 1 - (t - e[1] + 1) / 2) : 1, m = (e[3] || 1) * Math.min(kin, kout);
+    var a = e[2], span = e[4] || 0; if (span) a += span * clamp((t - e[0]) / Math.max(1, e[1] - e[0]), 0, 1);
+    a = deg(a + (hash(t * 31 + seed) - 0.5) * 6); m = Math.min(1, m * (0.97 + hash(t * 17 + seed) * 0.06));
+    return [Math.cos(a) * m, -Math.sin(a) * m];
+  }
+  return [0, 0];
+}
+function ev(list, side, t) { var o = {}; for (var i = 0; i < list.length; i++) { var e = list[i]; if (e[0] === side && t >= e[2] && t < e[3]) o[e[1]] = e.length > 4 ? e[4] : true; } return o; }
+function taps(side, b, at) { return at.map(function (t) { return [side, b, t, t + 3]; }); }
+function cat() { var o = []; for (var i = 0; i < arguments.length; i++) o = o.concat(arguments[i]); return o; }
+function take(len, setup, stick, buttons) { return { len: len, setup: setup, input: function (w) { var b = ev(buttons, 'P', w.t), s = stickAt(stick, w.t, 7); b.rx = s[0]; b.ry = s[1]; return { P: b, V: ev(buttons, 'V', w.t) }; } }; }
+var CLIPS = [
+  { n: 'R1', name: 'The lunge and the steps', takes: [take(300, function (w) { w.P.x = 110; w.P.y = 70; w.V.x = 560; w.V.y = 70; },
+      [[20, 24, 0], [84, 88, 0], [126, 130, 180], [190, 194, 90], [236, 240, 270]],
+      cat([['V', 'gx', 96, 116, 620], ['V', 'gs', 96, 116, 3], ['V', 'fire', 125, 126], ['V', 'fireSp', 120, 140, 14], ['V', 'fireSp', 180, 200, 6], ['V', 'fire', 186, 187]]))],
+    steps: [[0, 'Nothing held, so the right stick is Flight. A flick toward the rival from range is the lunge: he closes to reach for 10 ki, free and even, with no blow at the end.', 44],
+      [78, 'In reach, a flick toward him is a step in, 1 bh, and free.', 94],
+      [120, 'A flick away is a step back, 2 bh in 8 ticks. For its first 4 ticks shots slip past him, and the rival\'s bolt goes by.', 131],
+      [184, 'A flick up hops him 2 bh, and a flick down drops him back. Each slips shots for its first 4 ticks.', 206]] },
+  { n: 'R2', name: 'The dash, the orbit and the cross-up', takes: [take(360, function (w) { w.P.x = 330; w.P.y = 100; w.V.x = 470; w.V.y = 100; },
+      [[20, 56, 180], [86, 112, 0], [150, 210, 90], [262, 330, 270]], [])],
+    steps: [[0, 'A hold away is the dash: the step back, continued while he holds. It is free for 12 ticks, then costs ki like the boost.', 46],
+      [80, 'A hold toward from range starts as its flick, the lunge, which brings him back to reach.', 104],
+      [144, 'In reach, a hold up is the orbit: he arcs over the rival at the same distance, facing him.', 178],
+      [196, 'Held through, the orbit is the cross-up, and he lands on the rival\'s other side.', 214],
+      [256, 'A hold down orbits him under the rival and back.', 300]] },
+  { n: 'R3', name: 'The wall run and the skim', takes: [take(300, function (w) { w.P.x = 590; w.P.y = 30; w.V.x = 300; w.V.y = 130; },
+      [[20, 78, 0], [168, 250, 270]],
+      [['P', 'lx', 96, 160, -0.6], ['P', 'ly', 96, 160, 1], ['P', 'lx', 168, 250, -1]])],
+    steps: [[0, 'Next to the cliff, a hold into its face is the wall run: he runs up it.', 52],
+      [80, 'Let go, and he settles. The left stick flies him as it always does.', 120],
+      [162, 'Near the ground or the water, a hold down is the skim: he skims along the surface, and the left stick steers it.', 214]] },
+  { n: 'R4', name: 'The aim line, latched: X, Y and B along it', takes: [take(440, function (w) { w.P.x = 230; w.P.y = 60; w.V.x = 430; w.V.y = 80; },
+      [[56, 60, 90], [140, 144, 270], [210, 214, 180], [262, 266, 0], [318, 372, 60, 1, -90]],
+      cat([['P', 'RB', 0, 440]], taps('P', 'X', [20, 72, 80]),
+        taps('P', 'Y', [152]), taps('P', 'X', [224]), taps('P', 'B', [274]), taps('P', 'X', [384, 392])))],
+    steps: [[0, 'Holding RB makes the right stick aim. With the line clear, X fires a bolt that seeks the rival.', 30],
+      [50, 'A flick up latches the line 45 degrees above him, a lead for a rival who climbs. Outside 30 degrees shots don\'t seek, so the bolts fly straight along it.', 90],
+      [134, 'A flick down latches it 45 degrees below: Y lobs onto the ground under him.', 186],
+      [204, 'A flick away latches it behind him, and X fires that way.', 232],
+      [256, 'A flick toward clears it: B fires the heavy blast straight at him.', 286],
+      [312, 'A hold sweeps the line round, and it stays latched where the stick lets go.', 396]] },
+  { n: 'R5', name: 'The beam sweep', takes: [
+      take(210, function (w) { w.P.x = 180; w.P.y = 60; w.V.x = 500; w.V.y = 90; }, [[112, 146, 90]],
+        cat([['P', 'RB', 0, 210], ['P', 'B', 18, 104]], [['V', 'gy', 100, 130, 170], ['V', 'gs', 100, 130, 4]])),
+      take(190, function (w) { w.P.x = 180; w.P.y = 90; w.V.x = 500; w.V.y = 110; }, [],
+        cat([['P', 'RB', 0, 190], ['P', 'B', 18, 74]], [['V', 'gy', 70, 140, 20], ['V', 'gs', 70, 140, 1.6]], [['P', 'ly', 82, 126, 1]], taps('P', 'B', [86, 94, 102, 110, 118])))],
+    steps: [[0, 'RB and B held: a beam. While it is out he is rooted, and holding the right stick sweeps it, at his own rate.', 112],
+      [118, 'The rival climbs out of it, and holding the stick up sweeps the beam after him. Let go, and it stays where the stick left it.', 142],
+      [210, 'Either stick sweeps a beam. Here the left stick sweeps it down, so the right thumb is free to press B and pulse it.', 320]] },
+  { n: 'R6', name: 'Patterns, coming later', takes: [take(220, function (w) { w.P.x = 220; w.P.y = 80; w.V.x = 520; w.V.y = 100; },
+      [[30, 38, 90], [40, 48, 270], [50, 58, 90], [60, 68, 270], [110, 160, 0, 1, 380]],
+      cat([['P', 'RB', 0, 220]], taps('P', 'X', [76, 172])))],
+    steps: [[0, 'Patterns are off in step 1; the panel only names them. With RB held, a zig-zag is just its flicks, so the line flicks up and down. In step 2 it becomes a fanned scatter.', 66],
+      [100, 'A circle is just a flick and a hold, so the line turns after the stick at its own rate. In step 2 it becomes a ring of bolts.', 150]] }];
+
+function clipLen(c) { return c.takes.reduce(function (a, t) { return a + t.len; }, 0); }
+function newRun(ci, mode) {
+  if (mode === 'play') return { clip: null, w: newWorld(null, 0, 'play'), t: 0, take: 0, off: 0 };
+  var c = CLIPS[ci]; return { clip: c, w: newWorld(c, 0, 'demo'), t: 0, take: 0, off: 0 };
+}
+// keys (Play): { rx, ry, lx, ly, RB, LB, X, Y, B } from the pad or the keyboard
+function stepRun(run, keys) {
+  var c = run.clip, w = run.w, ip;
+  if (c) {
+    var T = c.takes[run.take];
+    if (w.t >= T.len) { run.off += T.len; run.take++; if (run.take >= c.takes.length) { run.take = 0; run.off = 0; } run.w = w = newWorld(c, run.take, 'demo'); T = c.takes[run.take]; }
+    ip = T.input(w);
+  } else ip = { P: keys || {}, V: {} };
+  var P = ip.P; w.inp = P; w.sound.length = 0;
+  var mask = (P.LB ? 1 : 0) + (P.RB ? 2 : 0) + (P.RT ? 4 : 0) + (P.LT ? 8 : 0);
+  var e = readStick(w.rd, w.t, P.rx || 0, P.ry || 0, mask);
+  fighterStep(w, w.P, P, e); rivalStep(w, w.V, ip.V);
+  shotsStep(w); minesStep(w); fxStep(w);
+  w.t++; run.t = run.off + w.t;
+}
+function stepOf(c, t) { var k = 0; for (var i = 0; i < c.steps.length; i++) if (t >= c.steps[i][0]) k = i; return k; }
+
+// ---- drawing ----
+function drawFighter(R, w, f) {
+  var d = f.dir, col = f.def.body, base = sy(f.y), cx = f.x, lean = f.lean + (f.reel > 0 ? -10 : 0), tilt = f.tilt;
+  var fl = floor(f.x), sh = Math.max(0.2, 1 - (f.y - fl) / 220);
+  R.poly(ngon(f.x, sy(fl) + 3, 15 * sh, 8, 0).map(function (v, i) { return i % 2 ? sy(fl) + 3 + (v - sy(fl) - 3) * 0.2 : v; }), C.shade);
+  // a body in his own frame (y up from the feet), turned by tilt for the wall run
+  var air = f.y - fl > 4, run = f.cmd && f.cmd.indexOf('wall') === 0;
+  var pts = { fa: air ? [d * 6, 2] : [d * 9, 0], fb: air ? [-d * 5, 4] : [-d * 7, 0], hip: [0, 22], ch: [d * lean * 0.6, 42], hd: [d * lean * 0.7, 51],
+    h1: [d * 16, 40], h2: [d * 9, 32] };
+  if (run) { pts.fa = [d * 10, 6]; pts.fb = [-d * 8, -2]; }
+  if (f.mv && (f.mv.k === 'hop' || f.mv.k === 'drop')) { pts.fa = [d * 6, 8]; pts.fb = [-d * 4, 10]; }
+  if (f.beam || f.bchg) { pts.h1 = [d * 22, 40]; pts.h2 = [-d * 6, 30]; }
+  if (run) cx += 12;     // feet on the cliff's face
+  var tx = function (p) { var c = Math.cos(tilt), s = Math.sin(tilt), x = p[0] * c - p[1] * s * d, y = p[0] * s * d + p[1] * c; return [cx + x, base - y]; };
+  var P2 = {}; for (var k in pts) P2[k] = tx(pts[k]);
+  limb(R, P2.fb, P2.hip, 7, col); limb(R, P2.fa, P2.hip, 7, col); limb(R, P2.hip, P2.ch, 9, col);
+  limb(R, P2.ch, P2.h2, 5, col);
+  if (f.def.id === 'protagonist') R.poly(ngon(P2.hd[0], P2.hd[1], 9, 8, 0.39), col); else R.poly([P2.hd[0], P2.hd[1] - 12, P2.hd[0] + 7, P2.hd[1] - 2, P2.hd[0] + 5, P2.hd[1] + 9, P2.hd[0] - 5, P2.hd[1] + 9, P2.hd[0] - 7, P2.hd[1] - 2], col);
+  limb(R, P2.ch, P2.h1, 5, col);
+  if (f.bchg && f.bchg.lv > 0) { var Lb = f.def.L.beam, rr = 6 + 3 * f.bchg.lv; ring(R, P2.h1[0], P2.h1[1], rr, 2.6, KEY, 16); ring(R, P2.h1[0], P2.h1[1], rr, 1.2, f.bchg.lv >= 3 ? Lb.main : Lb.edge, 16); }
+  if (f.inp && f.inp.RB) { R.poly(ngon(P2.h1[0], P2.h1[1], 4.4, 8, 0), KEY); R.poly(ngon(P2.h1[0], P2.h1[1], 3.2, 8, 0), f.def.L.bolt.main); }
+}
+// the latched aim reads at his hand only: a short stub along the line, never a line to the rival (R7)
+function drawAim(R, w, f) {
+  if (!f.latched || !(f.inp && f.inp.RB) || f.beam) return;
+  var h = hand(f), a = aimAbs(f), x0 = h[0] + Math.cos(a) * 8, y0 = sy(h[1] + Math.sin(a) * 8), x1 = h[0] + Math.cos(a) * 34, y1 = sy(h[1] + Math.sin(a) * 34), L = f.def.L.bolt;
+  quad(R, x0, y0, x1, y1, 4.5, 4.5, KEY); quad(R, x0, y0, x1, y1, 2, 2, L.edge);
+  R.poly(xf([0, -4.5, 7, 0, 0, 4.5], x1, y1, -a, 1, 1), KEY); R.poly(xf([0.8, -2.6, 5, 0, 0.8, 2.6], x1, y1, -a, 1, 1), L.main);
+}
+function drawBeam(R, w, f) {
+  var b = f.beam, h = hand(f), L = f.def.L.beam, k = b.end ? Math.max(0, 1 - b.end / 9) : 1, len = b.len; if (len < 2 || k <= 0) return;
+  var wd = (12 + 6 * b.lv) * f.def.bw * k, ux = Math.cos(b.a), uy = -Math.sin(b.a), nx = -uy, ny = ux, x0 = h[0], y0 = sy(h[1]), hot = b.t < 5 || b.dur - b.t < 6 || b.end;
+  function band(fr, col) { var n = Math.max(2, Math.ceil(len / 10)), top = [], bot = []; for (var i = 0; i <= n; i++) { var s = len * i / n, m = 1; for (var j = 0; j < b.pulses.length; j++) { var dd = Math.abs(s - b.pulses[j]); if (dd < 18) m += 0.5 * (1 - dd / 18); } var hw = wd / 2 * m * fr + (fr > 1 ? 0 : 0), jit = i % 2 ? 0.7 : -0.7, cx = x0 + ux * s + nx * jit, cy = y0 + uy * s + ny * jit; top.push(cx + nx * hw, cy + ny * hw); bot.push(cx - nx * hw, cy - ny * hw); } var poly = top.slice(); for (var q = bot.length - 2; q >= 0; q -= 2) poly.push(bot[q], bot[q + 1]); R.poly(poly, col); }
+  band(1 + 4 / wd, KEY); band(1 + 2 / wd, L.edge); band(1, L.main); band(hot ? 0.7 : 0.38, hot ? '#ffffff' : L.core);
+  var fx = x0 + ux * len, fy = y0 + uy * len; spr(R, function (l2, w2) { return xf([-0.1, -0.55, 0.3, -0.5, 0.36, 0, 0.3, 0.5, -0.1, 0.55], fx, fy, Math.atan2(uy, ux), l2, w2); }, wd * 0.9, wd * 1.05, L);
+}
+function drawShot(R, w, s) {
+  var L = s.o.def.L, X = s.x, Y2 = sy(s.y), a = Math.atan2(-s.vy, s.vx);
+  if (s.k === 'bolt') spr(R, function (l, wd) { return xf([1.4, 0, 0, -0.5, -1.6, 0, 0, 0.5], X, Y2, a, l, wd); }, s.s, s.s * 0.9, L.bolt);
+  else if (s.k === 'lob') spr(R, function (l, wd) { return xf([-0.9, -0.6, 0.2, -0.95, 1, -0.2, 0.8, 0.6, -0.2, 0.9, -1, 0.3], X, Y2, s.t * 0.08, l, wd); }, s.s, s.s * 0.9, L.lob);
+  else spr(R, function (l, wd) { return xf([1, 0, 0.5, -0.55, -0.4, -0.35, -2.4, 0, -0.4, 0.35, 0.5, 0.55], X, Y2, a, l, wd); }, s.s, s.s * 0.9, L.lob);
+}
+function drawFx(R, e) {
+  if (e.k === 'burst') { var u = e.t / e.dur, r = u < 0.3 ? e.r * ease(u / 0.3) : e.r * (1 - (u - 0.3) / 0.7 * ((u - 0.3) / 0.7)); if (r < 1) return; R.poly(star(e.x, sy(e.y), r + 2.5, r * 0.5 + 2, e.n, e.rot), KEY); R.poly(star(e.x, sy(e.y), r, r * 0.5, e.n, e.rot), e.lc.main); R.poly(star(e.x, sy(e.y), r * 0.6, r * 0.28, e.n, e.rot + 0.3), e.lc.core); return; }
+  if (e.k === 'chip') { var s = e.s * (1 - e.t / e.dur); if (s < 0.4) return; R.poly(xf([0, -1, 0.9, 0.6, -0.9, 0.6], e.x, sy(e.y), e.rot, s, s), e.col); }
+}
+// the stick panel: the trace, the dead zone and the on and off rings, the hold's sector, and the recognizer's words
+var PX = AW, PW = W - AW, PCX = AW + PW / 2, PCY = 128, PR = 76;
+function drawPanel(R, w) {
+  var rd = w.rd, f = w.P, fam = rd.fam, famCol = fam === 'aim' || fam === 'lay' ? f.def.L.bolt.edge : fam === 'flight' ? f.def.body : C.dim;
+  R.poly([PX, 0, W, 0, W, H, PX, H], C.panel); R.poly([PX, 0, PX + 2, 0, PX + 2, H, PX, H], C.ring);
+  var famName = { flight: 'FLIGHT', aim: 'ENERGY AIM (RB)', lay: 'LAY AIM (LB+RB)', none: 'NONE IN STEP 1' }[fam] || 'AT REST';
+  R.text(PX + 12, 10, 'RIGHT STICK', 14, C.dim); R.text(PX + 12, 28, famName, 14, fam ? famCol : C.dim);
+  R.poly(ngon(PCX, PCY, PR, 40, 0), C.bg); ring(R, PCX, PCY, PR, 2, C.ring, 40);
+  var rOn = PR * (RS.deadZone + RS.on * (1 - RS.deadZone)), rOff = PR * (RS.deadZone + RS.off * (1 - RS.deadZone));
+  for (var i = 0; i < 32; i += 2) { var a0 = i * Math.PI / 16, a1 = (i + 1) * Math.PI / 16; quad(R, PCX + Math.cos(a0) * rOn, PCY + Math.sin(a0) * rOn, PCX + Math.cos(a1) * rOn, PCY + Math.sin(a1) * rOn, 1.4, 1.4, C.ring); }
+  ring(R, PCX, PCY, rOff, 1, C.dead, 32);
+  R.poly(ngon(PCX, PCY, PR * RS.deadZone, 24, 0), C.dead);
+  for (var j = 0; j < 4; j++) { var ad = Math.PI / 4 + j * Math.PI / 2; quad(R, PCX + Math.cos(ad) * PR * 0.3, PCY + Math.sin(ad) * PR * 0.3, PCX + Math.cos(ad) * PR, PCY + Math.sin(ad) * PR, 1, 1, C.dead); }
+  // the hold's sector: a quarter in Flight, a 32nd for aim
+  if (rd.on && rd.holdN >= RS.holdTicks && fam !== 'none') {
+    var q = quant(rd.trace[rd.trace.length - 1][0], rd.trace[rd.trace.length - 1][1]), a = Math.atan2(q.y, q.x), half = fam === 'flight' ? Math.PI / 4 : Math.PI / 32;
+    if (fam === 'flight' && rd.d4) a = -deg(D4A[rd.d4]);
+    var wedge = [PCX, PCY]; for (var k = 0; k <= 8; k++) { var aa = a - half + 2 * half * k / 8; wedge.push(PCX + Math.cos(aa) * PR, PCY + Math.sin(aa) * PR); } R.poly(wedge, C.dead);
+  }
+  // the trace: the last 44 samples, thinner as they age (never faded)
+  var tr = rd.trace;
+  for (var n = 1; n < tr.length; n++) { var t0 = tr[n - 1], t1 = tr[n], wd = 0.6 + 2.6 * n / tr.length; quad(R, PCX + t0[0] * PR, PCY + t0[1] * PR, PCX + t1[0] * PR, PCY + t1[1] * PR, wd, wd, C.ink); }
+  var cur = tr.length ? tr[tr.length - 1] : [0, 0]; R.poly(ngon(PCX + cur[0] * PR, PCY + cur[1] * PR, 6, 10, 0), KEY); R.poly(ngon(PCX + cur[0] * PR, PCY + cur[1] * PR, 4.5, 10, 0), rd.on ? famCol : C.grey);
+  // the recognizer's words, newest first
+  rd.log.forEach(function (e, i) { R.text(PX + 12, 212 + i * 20, e.text, 14, i === 0 && !e.dim ? C.ink : e.dim ? C.grey : C.dim); });
+}
+function draw(w, R) {
+  R.clear(C.bg);
+  R.poly([0, GY, AW, GY, AW, H, 0, H], C.ground); R.poly([0, GY, AW, GY, AW, GY + 1.5, 0, GY + 1.5], C.line);
+  R.poly([LAKE.x0 - 12, GY, LAKE.x0, GY - 1, LAKE.x1, GY - 1, LAKE.x1 + 12, GY, LAKE.x1 - 20, GY + 12, LAKE.x0 + 20, GY + 12], C.lake);
+  R.poly([CLIFF.x, GY + 1, CLIFF.x + 4, sy(CLIFF.top) + 6, CLIFF.x + 14, sy(CLIFF.top), AW, sy(CLIFF.top), AW, GY + 1], C.cliff);
+  R.poly([CLIFF.x, GY + 1, CLIFF.x + 4, sy(CLIFF.top) + 6, CLIFF.x + 9, sy(CLIFF.top) + 4, CLIFF.x + 6, GY + 1], C.cliffDark);
+  w.marks.forEach(function (m) { if (m.k === 'crater') { var b = m.w / 2; R.poly([m.x - b, GY + 1, m.x - b * 0.6, GY + b * 0.3, m.x + b * 0.6, GY + b * 0.3, m.x + b, GY + 1], C.scorch); } else R.poly([m.x - 7, GY + 1, m.x - 6, GY + m.d, m.x + 6, GY + m.d, m.x + 7, GY + 1], C.scorch); });
+  w.mines.forEach(function (m) { var lc = m.t > 12 ? m.o.def.L.trap : { core: C.grey, main: C.grey, edge: m.o.def.L.trap.edge }; spr(R, function (l, wd) { return xf([1.4, 0, 0, -0.5, -1.6, 0, 0, 0.5], m.x, sy(m.y) - 6, -Math.PI / 2, l, wd); }, 5, 4.5, lc); });
+  if (w.P.beam) drawBeam(R, w, w.P);
+  w.P.inp = w.inp; drawFighter(R, w, w.V); drawFighter(R, w, w.P); drawAim(R, w, w.P);
+  w.shots.forEach(function (s) { drawShot(R, w, s); }); w.fx.forEach(function (e) { drawFx(R, e); });
+  // ki at the screen's edge only
+  var k = 120 * clamp(w.P.ki / 100, 0, 1); R.poly([14, 12, 134, 12, 134, 16, 14, 16], C.hud); R.poly([14, 12, 14 + k, 12, 14 + k, 16, 14, 16], w.P.def.L.beam.edge);
+  if (w.P.bchg) for (var i = 0; i < 3; i++) R.poly([14 + i * 12, 21, 23 + i * 12, 21, 23 + i * 12, 26, 14 + i * 12, 26], i < w.P.bchg.lv ? w.P.def.L.beam.edge : C.hud);
+  drawPanel(R, w);
+}
+return { W: W, H: H, CLIPS: CLIPS, RS: RS, MV: MV, newRun: newRun, stepRun: stepRun, draw: function (run, R) { draw(run.w, R); }, stepOf: stepOf, clipLen: clipLen, readStick: readStick, mkReader: mkReader };
+})();
+// ==== PAGE (DOM) ====
