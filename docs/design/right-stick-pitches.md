@@ -1,6 +1,6 @@
 # The right stick: pitches for Orb
 
-Owner: Game Design. Status: **pitches, 2026-10-23,** reconciled with Controls' input side in §10 and §11, which rule where they differ. §11 holds step 1's command set. Paper only. Every number is a first value, and Controls is writing the input side (`docs/controls/right-stick.md`). Orb can pick one pitch or mix them, and §9 recommends one.
+Owner: Game Design. Status: **pitches, 2026-10-23,** reconciled with Controls' input side in §10 and §11, which rule where they differ. §11 holds step 1's command set, and §12 rules it against today's director. Paper only. Every number is a first value, and Controls is writing the input side (`docs/controls/right-stick.md`). Orb can pick one pitch or mix them, and §9 recommends one.
 
 **Orb's ask** (`docs/ep/vision.md`, "The right stick", 2026-10-23): the right stick as an attack, a mobility tool, or a hybrid that changes with what is held (defensive, energy and so on), with the hybrid preferred for agency. A quick flick and a steady hold should do different things. Free-form patterns such as zig-zags should work the way some skateboarding games do their tricks. "Another method of commanding your fighter."
 
@@ -205,3 +205,20 @@ Controls' own §10 crossed with this page's §10. Where they differ, this sectio
 | **LB, RT or LT held** | Any | Nothing in step 1. Guard and Manoeuvre come in step 2, and Power in step 3 | |
 
 Repeats follow R8: the third step or hop inside 3 s keeps its movement and loses its slip frames.
+
+## 12. Step 1 against today's director (Encounter's notes)
+
+Encounter read step 1 against the director (`docs/director/right-stick-step1-notes.md`): no inputs clash, and six meanings overlap. Each is ruled here, and where it differs from §11's table, this section rules.
+
+| # | The overlap | The ruling |
+| :--- | :--- | :--- |
+| 1 | **The lunge.** An attack press from the mid band already lunges with its blow | **The press wins.** If both arrive in one tick, the press's lunge runs, and the flick is spent into it at no ki. **The stick's lunge reuses the press's rush** (`DirBands.begin`) with no blow at its end: the mid band's rush from the mid band, and the far charge's approach from the far band, each for 10 ki. He arrives in reach free and even, with no first move: he can guard, grab or press. The ki is the price of arriving uncommitted, between the free press lunge (with a blow he is committed to) and the zip strike (20 ki, quicker, with a blow) |
+| 2 | **Steps inside a brawl** | **Inside a brawl, a stick step is a director rush,** as the recoil flip is, so the brawl's pull rests for it. **A step back is giving ground: one move, not two.** A flick away gives ground by up to `give.leashBh` in one rush. A flick toward takes the ground back at once, to striking distance. If he has given none, nothing happens. Outside a brawl, steps are free movement, as §11 has them |
+| 3 | **Slip frames** against today's dodge | **A stick step is never a dodge.** Its slip is a flag of its own, for shots only, for its first 4 ticks. It never sets stance 2, no exchange template reads it, and it never fires the recoil flip or the pop's tech. **Hops and drops slip shots only:** "and the blow it clears" is withdrawn from §11. Against blows, LT's dodge tap stays the one dodge |
+| 4 | **The dash on a hold away** | **Movement only.** It never sets `sprint` and is never the Escape stance, which keeps its own input (R24), its pursuit templates and its rules. Outside a brawl, it is free flight at the dash's speed. Inside a brawl, holding away gives ground to the leash and holds it there while held, with the pull resting. It never parts the brawl: parting is Escape's, or a knock-back's |
+| 5 | **The orbit and the cross-up inside a brawl** | **The brawl learns a side swap.** Outside a brawl the orbit is free flight. Inside one, a hold up or down is the cross-up: a director rush of 16 ticks in which he arcs over or under the rival and lands on his other side, and the brawl goes on with the sides swapped. While he arcs he can't strike, and he has no slip. **A blow that lands on him in the arc lands clean** and leaves him where he was hit. It is the fighting-game cross-up, which needs the brawl. Parting the brawl instead would lose it |
+| 6 | **The skim against a dive** | **Confirmed: the skim.** Over water, a hold down near the surface skims along it. The stick never takes him under, since the base game has no hiding (`rulings-2026-10-23b.md` row 13). A dive to hide is designed with a future fighter who can hide (`canHide`), and not before |
+
+**Two small fits, confirmed.**
+- **When beams lock in a struggle,** the aim line and either stick's beam sweep stop. The struggle's own rules hold, as built: the left stick leans him in, and up or down aims the overwhelm (`rule-of-cool.md`).
+- **R8's repeat count is per fighter and per kind:** two director slots, one for steps and one for hops and drops.
