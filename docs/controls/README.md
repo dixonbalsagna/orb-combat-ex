@@ -14,6 +14,7 @@ Owner: Controls and Game Feel. Date: 2026-09-29. Design first; code in `sim/inpu
 | [input-gates.md](input-gates.md) | The input gates: every test in sim/input/test (with T1, the press-tick latency test) and the rest of a window's gate |
 | [phone-feasibility.md](phone-feasibility.md) | **Is the phone scheme feasible?** What it does, the risks, what already helps, a five-minute test for Orb's phone, and the first two changes |
 | [energy-input.md](energy-input.md) | **Energy attacks overhaul, input grammar (proposal):** one grammar for martial and energy, press-by-press per action, devices, beam vs blast, feedback, accessibility |
+| [right-stick.md](right-stick.md) | **The right stick (Orb's brief), input side:** the deterministic flick / hold / pattern read, modelled misread rates, per-modifier modes, keyboard and touch parity, accessibility, cost |
 | [phone-test-checklist.md](phone-test-checklist.md) | A 15-minute real-phone test for Orb: landscape, several fingers, left-handed, portrait, latency, browser interference |
 | [touch-bridge.md](touch-bridge.md) | The touch Simple bridge to today's intents: mapping, files, host patch, tests, what UI builds |
 | [input-scheme.md](input-scheme.md) | **Current (ADR 0008):** actions, the three controller layouts, tap and hold rules, keyboard (solo and shared), touch Simple and Full, the intent record, stage plan, tests |
