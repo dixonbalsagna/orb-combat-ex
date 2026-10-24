@@ -810,6 +810,11 @@
       "id": "ln06",
       "rule": "grab call-outs: one call-out per grab, played on the throw or in the first 10 ticks of the catch inside the hit-stop and never extending it; nothing is said during the rest of the catch, over the payoff, or over a kneel or landing after a slam; no second line, no repeat, no reply while the fighter is held; the line never holds the action or triggers a zoom, a camera cut, a pause or a held pose, and no finisher follows it; insults follow ln01",
       "why": "RL-180; e12"
+    },
+    {
+      "id": "ln07",
+      "rule": "scope of ln02: it rules what is shown (no depicted biting, chewing or swallowing, no eaten limbs, no feeding gore or sound, no body or move drawn as a mouth, maw, teeth or jaw) and who the hunger is aimed at (fighters and wreckage, never civilians or children); it does not rule dialogue: 'snack', 'lunch', 'protein', 'crunchy' and 'tenderise' as the Cyborg's address for an opposing fighter are allowed in spoken lines; mouth words stay out of move names, flavour and any text an artist reads to draw a move; the address is never aimed at a bystander, civilian or child and is never played over an on-screen bite",
+      "why": "RL-181"
     }
   ]
 }
