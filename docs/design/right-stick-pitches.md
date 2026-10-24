@@ -1,6 +1,6 @@
 # The right stick: pitches for Orb
 
-Owner: Game Design. Status: **pitches, 2026-10-23,** reconciled with Controls' input side in §10, which rules where they differ. Paper only. Every number is a first value, and Controls is writing the input side (`docs/controls/right-stick.md`). Orb can pick one pitch or mix them, and §9 recommends one.
+Owner: Game Design. Status: **pitches, 2026-10-23,** reconciled with Controls' input side in §10 and §11, which rule where they differ. §11 holds step 1's command set. Paper only. Every number is a first value, and Controls is writing the input side (`docs/controls/right-stick.md`). Orb can pick one pitch or mix them, and §9 recommends one.
 
 **Orb's ask** (`docs/ep/vision.md`, "The right stick", 2026-10-23): the right stick as an attack, a mobility tool, or a hybrid that changes with what is held (defensive, energy and so on), with the hybrid preferred for agency. A quick flick and a steady hold should do different things. Free-form patterns such as zig-zags should work the way some skateboarding games do their tricks. "Another method of commanding your fighter."
 
@@ -163,3 +163,45 @@ Controls wrote the input side in parallel (`docs/controls/right-stick.md`, with 
 | **LB + RB** | Aim | Sets where the next lay goes | E71's drift | Off | 1, with the lays |
 | **RT** | Step | An aura flare: it pushes small shots and debris aside 1 bh, with no damage | Channel on the move | His style flourishes (D) | 3 |
 | **LT** | Step | A burst of boost that way | The boost's direction, apart from the left stick | Circle: a roll | 2 |
+
+## 11. Reconciled with Controls' §10, and step 1's command set
+
+Controls' own §10 crossed with this page's §10. Where they differ, this section rules, and it replaces §2's reads and R10.
+
+- **R21. A flick is read by how fast it starts:** from rest to 0.60 in 3 ticks or fewer. §2's "back inside the dead zone within 8 ticks" is dropped, since it would reject a flick that stays out, and a hold is its flick continued (R4).
+- **R22. The pattern windows are the model's,** and they replace §2's:
+
+| Pattern | Read |
+| :--- | :--- |
+| Pump | Two flicks the same way within 18 ticks. It commits at once |
+| Zig-zag | Two reversals (three strokes) inside 48 ticks, each stroke at least 0.6 of the radius |
+| Half-circle | 140° to 250° inside 36 ticks |
+| Circle | 300° or more inside 48 ticks |
+
+- **R23. The family is fixed at the first deflection** and held until the stick rests. A shoulder pressed or let go in the middle of a gesture doesn't change what that gesture does, and the next gesture reads the new family. A latched aim line still clears when RB is let go (R16): that is the line, not the gesture.
+- **R24. R10 is replaced.** R3 keeps its job (Escape, today; the transform is LT + RT). Controls ignores an R3 click while the stick is past 0.9, or within 6 ticks of being there, so a hard flick never clicks by accident.
+- **R25. Either stick sweeps a beam.** While his beam is out he is rooted (E48), so the left stick has nothing else to do and sweeps it on every layout, as E17 says. With the right stick on, its hold sweeps it too. If both are out of their dead zones, the right stick wins. A beam's sweep stays where a stick lets it go.
+
+**Step 1's command set, for Controls to fix thresholds.** Patterns are off in every family in step 1, and come in step 2 after the capture (R20). Directions are relative to him.
+
+| Family (fixed at the first deflection) | Gesture | Command | Cost |
+| :--- | :--- | :--- | :--- |
+| **Nothing held: Flight (Step)** | Flick toward, from beyond reach | **The lunge:** he closes to reach | 10 ki |
+| | Flick toward, in reach | A step in, 1 bh | Free |
+| | Flick away | A step back, 2 bh in 8 ticks, slipping shots for its first 4 ticks | Free |
+| | Flick up or down | A hop up or a drop down, 2 bh, slipping shots and the blow it clears for its first 4 ticks | Free |
+| | Hold toward or away | **The dash,** the step continued while held | Free for 12 ticks, then the boost's 12 ki a second |
+| | Hold up or down, in reach or the mid band | **The orbit:** he arcs over or under him at the same distance, facing him. Held through, it is the cross-up onto his other side | Free |
+| | Hold into a wall, a cliff or a building's face | **The wall run** along it | Free |
+| | Hold down near the ground | **The skim** along the surface | Free |
+| | Release | Ends it, with a short settle | |
+| **RB: Energy (Aim)** | Flick toward | Clears the aim line: straight at him | |
+| | Flick up or down | Latches the line 45° above or below him: a lead, or the ground under him. That is outside the 30° in which shots seek, so they fly straight | |
+| | Flick away | Latches the line behind himself | |
+| | Hold | Sweeps the line in analogue, latched where it is let go | |
+| | Hold while his beam is out | Sweeps the beam (R25) | |
+| **LB + RB: the lay (Aim)** | Flick | Sets where the next lay goes: up to 3 bh that way (E71) | |
+| | Hold | Points the way a held lay drifts (E71) | |
+| **LB, RT or LT held** | Any | Nothing in step 1. Guard and Manoeuvre come in step 2, and Power in step 3 | |
+
+Repeats follow R8: the third step or hop inside 3 s keeps its movement and loses its slip frames.
