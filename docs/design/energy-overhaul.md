@@ -1,6 +1,6 @@
 # Energy overhaul: the system spec
 
-Owner: Game Design. **Status: the full spec, 2026-10-23** (the frame, §1 to §12, then Part 2, §13 to §18). Every rule is numbered (E1, E2 and on) so Controls, Combat, Research, Narrative and Legal can build on it and cite it. It is paper only. Nothing is built, every number is a first value for data, and all of it sits behind one switch (`energy.v2`) until Orb has played it. Part 2 holds Orb's step-by-step clips, the fighter kit sheet, QA's bands, the data shape and what retires.
+Owner: Game Design. **Status: the full spec, 2026-10-23** (the frame, §1 to §12, then Part 2, §13 to §19, with the builders' constraints ruled in §19). Every rule is numbered (E1, E2 and on) so Controls, Combat, Research, Narrative and Legal can build on it and cite it. It is paper only. Nothing is built, every number is a first value for data, and all of it sits behind one switch (`energy.v2`) until Orb has played it. Part 2 holds Orb's step-by-step clips, the fighter kit sheet, QA's bands, the data shape and what retires.
 
 **Orb's ask** (`docs/ep/vision.md`, "Energy attacks overhaul", 2026-10-23), and where each part is answered:
 
@@ -20,12 +20,12 @@ Owner: Game Design. **Status: the full spec, 2026-10-23** (the frame, §1 to §1
 
 ## 1. The rules over all of it
 
-- **E1. Control first.** Every energy move is live. No move takes a player's hands for longer than its own hit-stop and reel. A charge can be dropped at any moment (E46). Nothing fires by itself while he still has a choice. The one exception is a loaded charge whose ki runs out (E47).
+- **E1. Control first.** Every energy move is live. No move takes a player's hands for longer than its own hit-stop and reel. A charge can be dropped at any moment (E46). Nothing ever fires by itself, not even at full charge (E47).
 - **E2. One press, one attack.** Every press is one bolt, one lob, one blast, one pulse, one grab or one mine. A hold is one attack too: the stream follows the held flurry's rule (E23).
-- **E3. No press is silent.** A press that can't do what it asks for shows it with a flicker in the hand and the "not ready" cue, and spends nothing.
+- **E3. No press is silent.** A press that can't do what it asks for shows it with a flicker in the hand and the "not ready" cue, and spends nothing. That includes a press swallowed by a pace limit (6, 12 or 24 ticks): it gets a lapsed press-ack (Controls).
 - **E4. No long locked scenes.** No energy move has a pause or a camera of its own. Only the RT + B signature keeps its pause, at most 1 s and only on a clean hit, as ruled. The camera eases to frame what happens (Orb, 2026-10-22).
 - **E5. Payoffs are subtle.** A payoff happens in the world and on the body: a crater, a scar, the parted sea, a sound, a rumble. There is no banner, no text and no number over the fight.
-- **E6. Nothing on, over or between the fighters.** No aim line, no charge bar, no mine marker. A charge reads in the hand, and a mine reads in the world (E77). Legal's charge rule holds: a thin ring or an edge light at the hand, never over the whole body.
+- **E6. Nothing on, over or between the fighters.** No aim line, no charge bar, no mine marker. A charge reads in the hand, and a mine reads in the world (E77). UI may show a charge's stage ticks at the charger's own screen edge, the edge HUD being the last channel after the fight, sound and rumble (`minimal-hud.md`), and never on the fighters. Legal's charge rule holds: a thin ring or an edge light at the hand, never over the whole body.
 - **E7. Never out of range (pillar 3).** Bolts, lobs, the heavy blast and the energy grab seek him and arrive within 45 ticks from any range, as seeking shots do today (`agency-pass.md` 6a). A beam reaches at any range, as the beam does today. Mines and traps are the one thing that stays where it is put, because that is their job.
 - **E8. Soft costs, no cooldowns.** Ki and freshness pay for everything. The one new limit is the field limit on mines (E76), and it exists for reading and frame rate. The limits already ruled stand: the grab lockout and the struggle's 5 s.
 - **E9. Deterministic, and in data.** Shots, mines and beams are sim objects stepped on the fixed tick with the seeded RNG. Every number here is a first value for data.
@@ -36,7 +36,7 @@ Owner: Game Design. **Status: the full spec, 2026-10-23** (the frame, §1 to §1
 - **E11. Stances.** RB held is the energy stance (mask 2), as today, held or toggled by Controls' setting. **LB + RB held is defensive energy (mask 3),** the reserved hybrid, switched on by this overhaul for mines and traps (§7). Switching is instant and free, and it cancels nothing (`melee-press-feel.md` §12).
 - **E12. The buttons keep their weights:** X light, Y medium, B heavy, A grab, as in the brawl.
 - **E13. Four gestures, read as the brawl reads them.** A tap. A mash, which is a press within 9 ticks of his last. A hold, which is the button still down at the end of its tap window. A release.
-- **E14. The tap window is the wind-up, so a tap costs no extra time.** X has none: a bolt fires on the press. Y's window is its 12-tick wind-up, B's is 16 ticks and A's is 10. The hand starts to gather on the press. A button still down when the window ends becomes a hold.
+- **E14. The tap window is the wind-up, so a tap costs no extra time.** X has none: a bolt fires on the press. Y's wind-up is 12 ticks, B's 16 and A's 10. The hand starts to gather on the press. **The hold is decided at the wind-up plus 4 ticks of grace, on live ticks, on every device** (Controls: shorter windows misread touch taps as holds). So a button still down at **16 ticks for Y, 20 for B and 14 for A** becomes a hold. These are the energy windows, which differ from the martial ones, so the wind-up read takes the press's mode (data `windupEnergyHeavy` 16, `windupEnergyGrab` 10). **One exception:** on Simple touch, Attack picks its weight by how long it is held, so a bolt goes out on the release, 3 to 12 ticks late. The hand gathers at touch-down to cover it.
 - **E15. The grammar on one page:**
 
 | | **X: light** | **Y: medium** | **B: heavy** | **A: grab** |
@@ -52,14 +52,14 @@ Owner: Game Design. **Status: the full spec, 2026-10-23** (the frame, §1 to §1
   - RB + B tapped is the heavy blast against his body: a knock-back of 5 bh, an ender by 5b's run rule. Held, it charges as at range, and a beam fired in reach carries him along it (C5).
   - RB + A in reach is the energy grab with no flight: it catches at once.
 - **E17. The stick.** Neutral always aims at him. While the stream is out, the stick sprays it. At a lob's release, it leads the landing (E33). While a beam is out, it sweeps the beam. While a lob or a beam charges, it moves him at half speed (E45).
-- **E18. The AI can do all of it** (Encounter). Simple's layout, touch and keyboard are Controls'. On Simple the director may throw energy for the player, as it throws the pairs.
+- **E18. The AI can do all of it** (Encounter). Simple's layout, touch and keyboard are Controls' (`docs/controls/energy-input.md`). On Simple the director picks energy at range and melee close, as today (`autoMode`), and may throw energy for the player, as it throws the pairs. **On Simple touch,** Attack's hold and swipe pick its weight, so rapid fire there is a mash of taps, and the stream and the charged lob are pad, keyboard and Full touch features. A swipe up held charges the beam. Power doesn't become an energy layer there (Controls withdrew it).
 
 ## 3. X: rapid fire
 
 - **E20. A tap fires one bolt at once:** half a light's worth, 1 ki, trade power 1, 60 units a tick, seeking.
 - **E21. Mashed, each press is a bolt,** at most one every 6 ticks, the brawl's flurry pace. A press faster than that flickers in the hand (E3) and fires nothing.
 - **E22. The flurry.** A bolt within 12 ticks of his last is in his flurry. A flurry is one use for freshness (E101). Its bolts trade one at a time, and bolts cancel in pairs, as today.
-- **E23. Held, X is the stream: the brawl's held flurry, carried over.** It opens with a burst of 8 bolts in under a second, then settles to one every 8 ticks while X is held and his ki lasts. Each bolt is worth 85% of a mashed bolt (0.085 a tick of gap, the brawl's floor pace). The stick sprays it up to 15° either way.
+- **E23. Held, X is the stream: the brawl's held flurry, carried over.** From 16 live ticks after the press (the brawl's burst start), it opens with a burst of 8 bolts in under a second, then settles to one every 8 ticks while X is held and his ki lasts. Each bolt is worth 85% of a mashed bolt (0.085 a tick of gap, the brawl's floor pace). The stick sprays it up to 15° either way.
 - **E24. On a guard, a bolt is a shot,** as 5b rules: half its wear goes to the arms and the rest reaches the core. A bolt never interrupts a heavy's armour.
 - **E25. Its job:** pressure and chip at any range, cheap, and the answer to his volleys. At range it never knocks back.
 - **E26. Each fighter's own:** the bolt's shape (needles, sparks or shards), its colour, its spread, and its speed within 20% either way (Combat).
@@ -68,7 +68,7 @@ Owner: Game Design. **Status: the full spec, 2026-10-23** (the frame, §1 to §1
 
 - **E30. A tap** winds up for 12 ticks, read as a medium's, and then throws a blast on an arc that lands on him 36 ticks later from any range. It bursts over 1.5 bh. At the centre it is worth a medium (2.5 lights), and at the edge half that. A clean centre hit knocks him back 3 bh. 6 ki, trade power 3.
 - **E31. Mashed, it is a barrage:** one lob a press, at most one every 12 ticks. A barrage is one use for freshness.
-- **E32. Held past the wind-up, it charges.**
+- **E32. Held past its decision point (16 ticks), it charges.**
   - **Level 1** at 28 ticks: a 2 bh burst worth ×1.4, a knock-back of 4 bh, 9 ki, trade power 4.
   - **Level 2** at 48 ticks: his own charged form, which Combat picks per fighter. Templates: it splits into three on landing, it clings and goes off 20 ticks later, or it rolls along the ground. 12 ki, trade power 5.
   - Held past level 2, it is loaded (E47).
@@ -79,9 +79,9 @@ Owner: Game Design. **Status: the full spec, 2026-10-23** (the frame, §1 to §1
 
 ## 5. B: the heavy, as a blast or a beam
 
-- **E40. The choice: tap B for the blast, hold B for the beam.** Every press of B starts the same gather in his hand. Let go inside 16 ticks, or at any point before level 1, and he throws the heavy blast. Hold to level 1 and it is a beam. So the choice is made by how long he holds, with the same thumb, and he can change his mind until level 1 lights.
+- **E40. The choice: tap B for the blast, hold B for the beam.** Every press of B starts the same gather in his hand. Let go at any point before level 1, a tap or a short hold, and he throws the heavy blast: never a wasted charge. Hold to level 1 and it is a beam. So the choice is made by how long he holds, with the same thumb, and he can change his mind until level 1 lights.
 - **E41. The heavy blast.** After its 16-tick wind-up, read as a heavy's, it is one big seeking shot. It is worth a heavy, a clean hit knocks him back 5 bh, and it craters 2 bh. 10 ki. Trade power 4: it eats four bolts or one lob and goes on.
-- **E42. The charge.** From 16 ticks the beam gathers through three levels, at 30, 54 and 84 ticks after the press (0.5, 0.9 and 1.4 s). Each level is a step brighter at the hand, with a click and a rumble tick.
+- **E42. The charge.** From its decision point at 20 ticks, the beam gathers through three levels, at 30, 54 and 84 ticks after the press (0.5, 0.9 and 1.4 s). Each level is a step brighter at the hand, with a click and a rumble tick. **Each level is one event,** `charge_stage` with its number k, and the last is `charge_full`, so the hand, the sound, the rumble and any edge HUD all follow one cue. The lob's two levels and a held grab's one work the same way. Thresholds are data.
 - **E43. Release fires the beam at the level reached.**
 
 | Level | Charged at | Length | Worth if all of it lands | Ki | Beam power |
@@ -98,17 +98,19 @@ Owner: Game Design. **Status: the full spec, 2026-10-23** (the frame, §1 to §1
   - A heavy, a grab or a launcher ends the charge at any level.
   - RB held means no guard (5b).
   - Knocked out of a charge, he pays nothing. The cost is the time he lost.
-- **E46. Dropping it.** A dodge tap (LT) ends any charge at once, for nothing, and dodges.
-- **E47. Loaded.** Held at level 3, a beam stays loaded for as long as he holds it, at 4 ki a second. A lob held at level 2 does the same at 2 ki a second. Either fires by itself when his ki runs out. A loaded beam is a threat he carries, and the rival can see his lit hand.
+- **E46. Dropping it.** A dodge tap (LT) or a press of Guard (LB) ends any charge at once, for nothing. The dodge dodges. Guard comes up, and the press counts as a perfect-block attempt, as every fresh LB press does.
+- **E46b. One charge at a time.** A press of another face button during a charge is ignored, with a lapsed press-ack (E3). A charge ends only by its release, a cancel (E46) or a blow that ends it (E45). No intent field is added.
+- **E46c. Charges off and the latch.** With the latch on, a press starts a charge and the next press releases it, so a player who can't hold still reaches every level. With charges off, every press is a tap: B is the heavy blast and never a beam. That is the setting's purpose, and the latch is the route to beams for a player who can't hold. No "charge for me" assist is added.
+- **E47. Loaded, and never fired by itself.** Held at level 3, a beam stays loaded for as long as he holds it, at 4 ki a second. A lob held at level 2 does the same at 2 ki a second. **When his ki can no longer pay for the level he holds, the charge steps down to the level he can pay,** and below level 1 it holds as the heavy blast. It fires only when he lets go (Controls: no auto-fire at full, which keeps the latch and one-hand play safe). A loaded beam is a threat he carries, and the rival can see his lit hand.
 - **E48. While the beam is out,** he is rooted, and the stick sweeps the beam at his fighter's sweep rate. A dodge tap ends it early. The beam eats the shots it meets and loses their trade power from its own. **Caught in a beam, he keeps control:** he can guard it at the guard's rate or dodge out of its line, and it reels him only at its end (E44).
 - **E49. The beam is his own** (§8). Its shape, width, sweep, end and how it fights in a struggle are Combat's per fighter, inside bands (Part 2).
 - **E50. Pulses: the rapid fire carried into the beam.** While his beam is out, each press of B is a pulse: a swell, a bulge that travels to the front, runs down the beam. Each pulse adds 0.1 of a heavy to what lands and makes the beam 4 ticks longer, for 2 ki. At most one pulse every 6 ticks counts, the flurry's pace, so even a flat-out mash lets the beam run down: it can stretch a beam to about three times its length, never hold it out for ever. B held while his beam is out pulses by itself every 8 ticks, the held flurry's pace, at 85%. **In a struggle, pulses don't count: the struggle's beat decides (E92).**
-- **E51. The RT + B signature is unchanged:** his defining art, held to its flashes, with its tiers, prices and pause. Where a fighter's signature is a beam, it is his beam's own top form, above level 3. RB + B's beam never takes a pause.
+- **E51. The RT + B signature is unchanged:** his defining art, held to its flashes, with its tiers, prices and pause. Where a fighter's signature is a beam, it is his beam's own top form, above level 3. RB + B's beam never takes a pause. **They are two moves, not one:** RB + B is his heavy technique, charged by levels, live and paid by level; RT + B is his signature, held to its flashes, with its tiers and prices. The one beam everyone shared retires. Until a fighter's signature is authored, RT + B fires his own beam's top form by the signature's rules.
 
 ## 6. A: the energy grab, each fighter's own
 
 - **E60. The frame every energy grab shares:** a throw, a catch, a way out and a payoff. The throw seeks him and arrives within 30 ticks from any range. The catch holds him for at most 40 ticks. Each fighter fills in the shape and the payoff (Combat), and Narrative names it.
-- **E61. A tap throws it** after a 10-tick wind-up. Held past 10 ticks, it charges or aims his own variant, such as a wider net or a ring thrown ahead to lead him, and the release throws it.
+- **E61. A tap throws it** after a 10-tick wind-up. Held past its decision point (14 ticks), it does one of three things, written in his data, since the input only guarantees a tap, a hold and a release (Controls): **charge** (one level: a wider net, a longer catch), **aim** (the stick leads the throw, as a lob's landing), or **place** (laid where the stick points, up to 6 bh, as a snare he can spring). The release throws or sets it. The payoff in the catch is one beat, a press of A (E65).
 - **E62. It beats a guard,** as every grab does. It loses to a dodge tap in its last 8 ticks, to any shot of trade power 2 or more that meets it in flight, and to a blow that lands on the thrower in his wind-up.
 - **E63. The catch.** It takes hit-stop 5. He is held by it and keeps half his nudge, as in the clinch. He can't guard or fire.
 - **E64. The way out is the rapid fire again.** Each press he makes in the catch takes 4 ticks off the hold, with at most one counted every 6 ticks. RT's burst breaks it at once after its first 12 ticks, as it breaks a pop.
@@ -130,7 +132,9 @@ Owner: Game Design. **Status: the full spec, 2026-10-23** (the frame, §1 to §1
 
 ## 7. LB + RB: mines and traps
 
-- **E70. Defensive energy is LB + RB held (mask 3).** His guard stays up. Each face press lays one mine or trap nearby, of that button's weight, instead of firing.
+- **E70. Defensive energy is LB + RB held (mask 3).** His guard stays up. Each face press lays one mine or trap nearby, of that button's weight. **Under mask 3 no shot is ever thrown:** every face press is a lay, so a press with guard and energy both held never drops the guard beyond the lay's own frames (E72). The input holds the guard throughout, and the sim drops it only for those frames. Mask 3 is switched on in data (`"hybrids": [3]`); every other pair stays newest-wins.
+- **E70b. The lay on each device** (Controls, `docs/controls/energy-input.md` §5). On a pad, LB + RB + a face button. On a keyboard and on Full touch, toggled or latched energy plus Guard held, which is the documented one-hand lay; it also keeps a toggled player in energy while guarding. On Simple pad and Simple touch, which have no energy button, the lay is Guard (held, or the one-shot tap that arms it for one blow or 90 ticks) plus a face button while the director is in energy mode at range; Encounter reads it. Pressing LB into the hybrid is also a perfect-block attempt, as every fresh LB press is.
+- **E70c. Why the chord and not a trap left by a riposte.** Orb's words are "using defensive blocks *while* hitting energy attacks would leave energy mines or traps *nearby*", and "these should *all* be combinable with the defensive button". The chord is that, literally: chosen, at will, beside him, for all four weights. A trap left only after a perfect block, where the blast lands, would be rare, far from him and not his choice. Controls says the chord is one data line, and it reaches every device by E70b. The cost is Encounter's: a director branch for a lay with the guard kept, built on today's `DirBlast.layMine`.
 - **E71. Laying.** It is laid at his hand, where he is. In the air it hangs, and on the ground it sets into the surface. The stick's lean flicks it up to 3 bh that way. Held past the lay, it goes farther, up to 6 bh, and is set on release.
 - **E72. The price of a lay.** His guard drops for the lay's own frames: X 4 ticks, Y 8, B 12, A 8. A blow that lands in them lands as on an open fighter. The ki is 3, 6, 12 and 10.
 - **E73. Arming.** A mine is dim and harmless until it arms: X after 12 ticks, Y 20, B 30, A 20. So a mine laid in reach can't go off on him in the same exchange.
@@ -191,11 +195,11 @@ Owner: Game Design. **Status: the full spec, 2026-10-23** (the frame, §1 to §1
 - A kind's mark fades after 6 s unused.
 - Freshness scales damage and wear only. It never touches ki, trade power or knock-back distance.
 
-**E102. Hit-stop.** At range, it holds only the body that was hit. The shooter is never frozen, so a stream or a beam keeps flowing. In reach, the brawl's rule holds: both freeze.
+**E102. Hit-stop.** At range, it holds only the body that was hit: the screen and the clock keep running, so the shooter's stream, barrage or beam keeps flowing. **"In reach" is the brawl's engage distance,** with no number of its own. In reach, the brawl's rule holds: the whole sim freezes. How the one body is held is Simulation's call (`docs/architecture/hold-one.md` recommends shifting his motion stamps at release).
 
 | What lands | Hit-stop (ticks) | Who it holds |
 | :--- | ---: | :--- |
-| A bolt at range | 0, with a 4-tick reel | |
+| A bolt at range | 0. Its 4-tick reel is a flinch he still moves and acts in, never a hold | |
 | A bolt in reach | The brawl's light: 3 tapped, 2 after the first of a mash | Both |
 | A lob: tapped, level 1, level 2 | 4, 6, 8 | The one hit |
 | The heavy blast | 8 | The one hit, or both in reach |
@@ -207,7 +211,9 @@ Owner: Game Design. **Status: the full spec, 2026-10-23** (the frame, §1 to §1
 | A struggle's end: an overwhelm or a detonation | 20 | Both |
 | A KO | 24 | Both |
 
-**E103. The freeze budget stands:** 18% of a match, and no 10 s block over 40% (`fight-feel.md`).
+**E103. The freeze budget stands:** 18% of a match, and no 10 s block over 40% (`fight-feel.md`). **A one-body hold at range doesn't count toward it,** since the screen doesn't freeze. It has its own guard against pinning (E104).
+
+**E104. No pinning.** After a one-body hold ends, he has **6 free ticks** in which hits still land and do their damage but don't hold him. And no body is held more than **24 of any 60 ticks**; past that, hits land with no hold. So mines, lobs and a stream together can hurt him but never pin him. A hold that lands on a held body merges by the longer, as Simulation has it. QA's row: no body held over 40% of any 60-tick window.
 
 ## 11. Collateral, tiers and biomes
 
@@ -362,14 +368,15 @@ Every row is AI v AI with energy on and 1 to 3 in, unless it says otherwise. The
 | The energy turtle: a script that only fires from range | Wins at most 50% against medium |
 | The mine turtle: a script that only guards and lays | Wins at most 30% against medium |
 | The shooter frozen at range | 0 ticks (E102) |
+| A body held at range (E104) | Never over 40% of any 60-tick window |
 | A fighter at 0 ki for more than 10 s at a stretch | Under 10% of matches |
 | Pillar 7 | Each biome's beam aftermath seen at least once in 20 matches. No beam of level 2 or more plays the same way in two biomes |
 
 ## 16. The data shape, proposed
 
 The shapes are Simulation's and Combat's to settle, and Tools adds the schemas in `tools/schemas/` in the same commit. **All of it sits behind `energy.v2`, so with the switch off the golden match and the parity profiles are unchanged.**
-- **Shared** (`data/fight/energy.json`): the tap windows, the paces, the charge levels and lengths, the ki table (E100), the hit-stop table (E102), freshness (E101), the field limit (E76), arming and flare times, and the trade powers.
-- **Per fighter** (an `energy` block in his fighter data, keyed by roster id: PROTAGONIST, RIVAL, REFERENCE): the sheet in §14, as kinds and multipliers inside the bands. A loader check rejects any value outside its band.
+- **Shared** (`data/fight/energy.json`): the tap windows, the paces, the charge levels and lengths, the ki table (E100), the hit-stop table (E102), freshness (E101), the field limit (E76), arming and flare times, and the trade powers, and the energy wind-ups (`windupEnergyHeavy` 16, `windupEnergyGrab` 10, Controls'). Mask 3 is `"hybrids": [3]` in `data/input/stances.json`.
+- **Per fighter** (an `energy` block in his fighter data, keyed by roster id: PROTAGONIST, RIVAL, REFERENCE): the sheet in §14, as kinds and multipliers inside the bands, with his grab's hold shape (charge, aim or place, E61). A loader check rejects any value outside its band.
 
 ## 17. What retires, and what stays
 
@@ -379,7 +386,7 @@ The shapes are Simulation's and Combat's to settle, and Tools adds the schemas i
 | RB + Y: the heavy shot, the charged shot (×0.6 to ×1.25 of a heavy) | The lob (E30 to E33). In reach, 5b's blast stays |
 | RB + B: the one beam everyone shares, held and live | Tap for the heavy blast, hold for a beam in three levels, release to fire, pulses while it's out. Each fighter has his own |
 | The short beam (held past a full charge, 20 ki) | Beam level 1 |
-| RB + A: a mine at range, the shove in reach | The energy grab. Mines move to LB + RB |
+| RB + A: a mine at range (today's `DirBlast.layMine`), the shove in reach | The energy grab. Mines move to LB + RB, built on `layMine` |
 | The arc, the burst, the shard spread | Kept only as a fighter's bolt or lob shapes, if Combat wants them |
 | LB + RB reserved ("a ki shield or a zone") | Defensive energy: mines, the trap and the snare. A fighter's trap may be a zone |
 
@@ -392,3 +399,33 @@ The shapes are Simulation's and Combat's to settle, and Tools adds the schemas i
 **Worth Orb knowing, no answer needed:**
 - The one hard limit is the field limit on mines (E76): 4 mines, 1 trap and 1 snare a fighter at a time. It is there so the screen stays readable and the frame rate holds.
 - A send through a fighter's own armed mine sets it off on him (E74). That is rule of cool, and the director's launch planner may aim for it.
+
+## 19. Rulings on the builders' constraints (2026-10-23, late)
+
+Controls (`docs/controls/energy-input.md`), Encounter and Simulation (`docs/architecture/hold-one.md`) answered the frame. Where a rule moved, it is amended in place above. This table is the record.
+
+| # | Asked | Ruled | Rule |
+| :--- | :--- | :--- | :--- |
+| 1 | Which strengths charge | Y (2 levels) and B (3). X never: its hold is the stream. A's hold is one level, an aim or a placement, per fighter | E15, E32, E42, E61 |
+| 2 | The hold's decision points | The wind-up plus 4 ticks of grace, on live ticks, on every device: Y 16, B 20, A 14. The wind-up read takes the press's mode | E14 |
+| 3 | Beam or blast | By button and by hold. X and Y are blasts. B tapped, or let go before level 1, is the heavy blast, and held to level 1 it is the beam. No misfire window | E40 |
+| 4 | A cancel | Wanted: a dodge tap or a Guard press drops any charge for nothing (Controls adds a `charge_cancel` read) | E46 |
+| 5 | Auto-fire at full | None. A loaded charge steps down as his ki runs short, and fires only on release | E1, E47 |
+| 6 | Charges off | Acceptable: every press is a tap. The latch is the route to beams for a player who can't hold. No assist | E46c |
+| 7 | Charge cues | `charge_stage` (k) at each level, `charge_full` at the last | E42 |
+| 8 | A press swallowed by a pace limit | A lapsed press-ack | E3 |
+| 9 | Two charges at once | No: one charge at a time, and no new intent field | E46b |
+| 10 | Mines: the chord, or a trap left by a riposte | **The chord:** mask 3 on, with Controls' form for each device, and no shot thrown under mask 3. The riposte trigger and the recent-guard fallback are declined, for the reasons in E70c | E70 to E70c |
+| 11 | Today's mine on RB + A (`DirBlast.layMine`) | It moves to the lays, and RB + A becomes the energy grab | E70c, §17 |
+| 12 | A with Guard alone (mask 1) | Unchanged: the reversal inside an exchange, the deflect outside. Only mask 3 makes A the snare | E75 |
+| 13 | The signature and the heavy technique | Two moves. The shared beam retires | E51 |
+| 14 | Power on Simple touch | No (Controls withdrew it). Simple touch's rapid fire is a mash of taps, and a swipe up held charges the beam | E18 |
+| 15 | X on Simple touch | It fires on the release, 3 to 12 ticks late, and the gather at touch-down covers it. A separate Light button is Controls' later fix | E14 |
+| 16 | When the stream starts | At 16 live ticks, the brawl's burst start | E23 |
+| 17 | Each grab's input shape | A tap throws. The hold is charge, aim or place, in his data. The payoff is one beat | E61 |
+| 18 | Rapid fire in beams | Pulses, one a press, as Controls proposed | E50 |
+| 19 | A one-body hold and the freeze budget | It doesn't count | E103 |
+| 20 | Pinning | 6 free ticks after a hold, and at most 24 held ticks in any 60 | E104 |
+| 21 | The bolt's reel | A flinch he moves and acts in, never a hold | E102 |
+| 22 | "In reach" | The brawl's engage distance | E102 |
+| 23 | Stage ticks on the edge HUD | Allowed, at the charger's own screen edge, never on the fighters | E6 |
