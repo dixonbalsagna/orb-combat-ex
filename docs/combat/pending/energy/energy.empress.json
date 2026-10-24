@@ -1,0 +1,391 @@
+{
+  "schema": "combat.energy/1",
+  "fighter": "EMPRESS",
+  "side": "villain",
+  "meter": "menace",
+  "lane": "empress",
+  "_lane": "colours are Art's lane, read from data/art/energy-lanes.json lanes.<lane>.kinds (core, main and edge for bolt, lob, beam, grab and trap) and never copied here; light.colour is the lane's light_colour, the bolt main",
+  "_meter": "assumed: she is a sadistic sovereign (README section 2)",
+  "frame": "docs/design/energy-overhaul.md (E1-E117)",
+  "_about": "Only the cells E81 and the kit sheet (section 14) leave to a fighter. Buttons, gestures, ki (E100), hit-stop (E102), tap windows (E14), charge levels (E42), beam lengths and worth (E43), pulses (E50), the grab's frame (E60-E68) and the lay price, arming, flare and field limit (E72-E76) are the frame's and are not repeated. 60 ticks a second; 1 bh = 75 units. Legal's conditions: docs/legal/energy-overhaul-screen.md e11-e14, fx08.",
+  "identity": "dominion",
+  "hand": "the blade hand's edge (bolts, every charge light, the slam's chop) and the mantle's hem (the beam, the bundle of staves, the trap's posts); the heavy blast leaves from her heel's stamp",
+  "names": {
+    "light": "Silk Slivers",
+    "medium": "Crown Toss",
+    "heavy": "Throne Quake",
+    "grab": "Banner Snare",
+    "trap": "Velvet Rope",
+    "beam": "Hem Sweep",
+    "snare": "Furled Banners",
+    "sparkMine": "Hanging Sliver",
+    "blastMine": "Resting Crown"
+  },
+  "light": {
+    "shape": "sliver: a short upright slit of light flying broadside (not a needle, spark or crescent)",
+    "colour": "#fffefa",
+    "spreadDeg": 4,
+    "spreadPlane": "vertical",
+    "_spread": "the stick sprays the stream (E23) in the vertical only, so a missed stream scores a neat row of cuts behind him",
+    "speedMul": 1.15,
+    "_speed": "69 a tick, inside the 20% band of 60",
+    "dmgMul": 1.0,
+    "look": "each bolt is one short stroke of the blade hand from the wrist; the stream shows as a steady light along the hand's edge, never a flash per bolt; a hit leaves a slit-shaped scorch",
+    "atoms": [
+      "en.empress.light.tap",
+      "en.empress.light.mash",
+      "en.empress.light.stream"
+    ]
+  },
+  "medium": {
+    "shape": "crown: five points on a ring, tumbling end over end; never spins flat, no cutting edge, never held or raised above her head",
+    "arcTicks": 40,
+    "_arc": "high and unhurried, inside 36 +/- 6; the last stretch falls almost straight down",
+    "dmgMul": 1.0,
+    "holdTicks": 16,
+    "_hold": "E14 as amended: still down at 16 ticks is a hold; a loaded level 2 never fires by itself (E47)",
+    "l1Ticks": 28,
+    "l2Ticks": 48,
+    "l2": {
+      "template": "cling",
+      "fuseTicks": 20,
+      "burstBh": 2.0,
+      "dmgMul": 1.7,
+      "_dmg": "1.7 of a tapped lob's centre: above level 1's 1.4 for the 20-tick warning; within 15% of the reference once Game Design sets it",
+      "knockBackBh": 4.0,
+      "clingsTo": [
+        "torso",
+        "back",
+        "arm"
+      ],
+      "_clingsTo": "never the head, neck or face (Legal e14)",
+      "whileClinging": "he keeps full control",
+      "answers": [
+        "a guard takes the burst at the guard's rate",
+        "a dodge tap in the fuse's last 8 ticks shakes it off; it bursts where he was"
+      ],
+      "onMiss": "it settles where it lands and goes off on the same 20-tick fuse",
+      "flash": "the landing and the later burst are two counted events (fx08)"
+    },
+    "look": "her palm turns up at her shoulder; charging, the palm's edge brightens a step at each level and nothing is held on it; a tip of the wrist throws, and the crown forms as it leaves the hand (Legal e15). Bursts leave a crater with a ring of five points scorched round it",
+    "atoms": [
+      "en.empress.medium.tap",
+      "en.empress.medium.charge",
+      "en.empress.medium.throw",
+      "en.empress.medium.cling"
+    ]
+  },
+  "heavy": {
+    "look": "the gather is her blade hand drawing the hem across her body, a brightness step along the hand's edge, her heel lifting. Let go before level 1 and she stamps: a hairline seam races from her heel to him (the seeking shot) and at him splits open into a lens of light 4 bh tall that slams shut; the ground bows into the frame's 2 bh crater and column of flame",
+    "lensHeightBh": 4.0,
+    "dmgMul": 1.0,
+    "_hold": "E14 as amended: still down at 20 ticks is a hold; let go any time before level 1 for the blast (E40)",
+    "atoms": [
+      "en.empress.gather",
+      "en.empress.heavy.stamp",
+      "en.empress.heavy.open"
+    ]
+  },
+  "beam": {
+    "shape": "sweeping: one thin straight cut from the mantle hem's edge, released at the end of an arm swing from the shoulder; never a fingertip, finger-gun, two-finger, hand-frame or spiral",
+    "widthMul": 0.4,
+    "sweepDegPerSec": 38,
+    "_sweep": "a speed, so E81's 20% band applies: the reference (the Protagonist) sweeps 32, so 38 is the band's edge and still the fastest. Steered by the stick (E48). No revision raises it",
+    "_width": "x0.4, the thinnest; whether width is banded is an open question for Game Design",
+    "loaded": "held at level 3 it stays loaded and fires only when she lets go (E47)",
+    "end": "the line snaps off the hem like a cut thread; the path it swept hangs as a scored hairline that cools for 60 ticks; a narrow, straight-edged trench at E111's depths",
+    "levelTicks": [
+      30,
+      54,
+      84
+    ],
+    "lenMul": 1.0,
+    "dmgMul": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "_bands": "worth per level and length are E43's, inside section 14's bands (15% and 25%)",
+    "trait": {
+      "kind": "edge",
+      "pushMul": 1.0,
+      "_note": "E96 and section 14: the struggle look changes no push"
+    },
+    "pulseLook": "a swell, under a 10% brightness step, that runs down the line; where it meets the ground the gash deepens a notch",
+    "struggleLook": "a surge drives the meeting point in as a wedge; only the point moves, and the other beam keeps its own look and never parts or thins (E96); losing, the line bellies into a bow and quivers like an overdrawn wire; it buckles and never thins. Twin lines (revision 9 on) press side by side, tints alternating along them, never braiding or wrapping (Legal e11)",
+    "chargeLook": "a brightness step along her blade hand's edge at each level, never a ball; she turns side-on and sets her heel down",
+    "atoms": [
+      "en.empress.gather",
+      "en.empress.beam.charge",
+      "en.empress.beam.fire",
+      "en.empress.beam.pulse",
+      "en.empress.beam.struggle"
+    ]
+  },
+  "grab": {
+    "look": "cage",
+    "_look": "the cage of bars, an energy cage in her colour, never a prison or cell: the hem casts one furled bundle of four banner staves that tumbles end over end to him; at him it bursts apart, the four staves stamp down into the ground round him (in the air they stand planted in the air), and their banners of light wrap his arms and torso, never his throat, face or hair. He strains against them",
+    "staves": 4,
+    "payoff": "slam",
+    "_payoff": "A in the catch: her blade hand chops down once and stops dead at the hip; the staves drive into the ground and their banners drag him down, a down send in place under the spike's rules. He lands on one knee in a crater under him (the kneel is the landing, never a held pose) and recovers by the slam's rules. No slow motion, zoom, taunt or finisher over it",
+    "throwTicks": 30,
+    "catchTicks": 40,
+    "held": "place",
+    "holdTicks": 14,
+    "_held": "E61 as amended: held past 14 ticks, the release sets the furled staves where the stick points, up to 6 bh off, standing furled as a snare that springs when he comes within its reach (the snare's arming, reach and flare); it counts as her one snare. From revision 10",
+    "placeMaxBh": 6.0,
+    "answers": [
+      "a dodge tap in the throw's last 8 ticks (E62)",
+      "any shot of trade power 2 or more that meets the bundle in flight (E62)",
+      "a blow on her in her 10-tick wind-up (E62)",
+      "in the catch, each press takes 4 ticks off, one counted every 6 ticks (E64)",
+      "in the catch, RT's burst breaks it after its first 12 ticks (E64)"
+    ],
+    "reads": "her hand at the clasp and the mantle flung open; one bundle tumbling in flight; four staves standing still in the world round him. Broken, the banners tear loose and the staves topple and burn out. Never swords, rods or strings, never a dome, and it never shrinks",
+    "atoms": [
+      "en.empress.grab.throw",
+      "en.empress.grab.place",
+      "en.empress.grab.catch",
+      "en.empress.grab.slam"
+    ]
+  },
+  "trap": {
+    "template": "line",
+    "what": "a rope of light across the air between two hem plates, laid across the way between her and him, at her hand or flicked by the stick (E71). Crossed, it flares once and fires her level-1 beam along itself, post to post, then swings shut like a gate toward the side he went",
+    "numbers": {
+      "lengthBh": 4.0,
+      "swingDeg": 60,
+      "swingTicks": 20,
+      "_swing": "about the post nearest him, over the level-1 beam's 20 ticks",
+      "hitMul": 0.9,
+      "_hit": "0.9 of her level-1 beam (inside section 14's 15%); carries the level-1 end's 4 bh knock-back, back across the rope",
+      "knockBackBh": 4.0
+    },
+    "trigger": "his chest crosses the armed rope; it flares once for the frame's 6 ticks first. A send through it sets it off at once (E74), her included",
+    "answer": "go round its ends; a lob or heavier sets it off where it is; guard at the guard's rate; a dodge tap in the flare; send her through it (E78)",
+    "look": "two small hem plates hanging still, a faint rope of light between them, dim while arming, a slow glow when armed; never moves, fizzles 12 s after arming",
+    "atoms": [
+      "en.empress.trap.lay",
+      "en.empress.trap.fire"
+    ]
+  },
+  "snare": {
+    "look": "the four furled staves, standing where she lays them; within reach they spring and their banners wrap his arms and torso as the cage (the bind, or the slam if she presses A)",
+    "atoms": [
+      "en.empress.snare.lay"
+    ]
+  },
+  "mines": {
+    "spark": "one upright sliver hanging still, edge on",
+    "blast": "a small crown resting upright",
+    "string": "a mashed string of spark mines flares staggered, one after another, never all at once",
+    "fizzle": "every armed mine fizzles after 12 s (E76) and never moves toward people (E79)",
+    "atoms": [
+      "en.empress.mine.spark.lay",
+      "en.empress.mine.blast.lay"
+    ]
+  },
+  "collateral": "E113: near occupied buildings her beam's width and her lob's burst widen to 1.3. The budget caps deaths, no borrowing at tiers 1 and 2 (E110). Casualties and fleeing people feed menace as for every villain. Her sweeps don't angle away from people, but nothing aims at people for their own sake, nor ever at schools, hospitals or places of worship (E117). Her scars are straight lines",
+  "forms": {
+    "base": "command stance (empress-guards.md section 3). Keeps the bolt and the beam: all of X, B held, and their laid forms (spark mine, Velvet Rope). Y is Engage, B let go before level 1 is Fall in, A is Summon",
+    "jokes1to8": "no number changes; each adds only its tell",
+    "rev9": "guards salute and withdraw. Adds Y (tap, barrage, level 1), B tapped, A tapped, the blast mine and the snare. The beam becomes twin lines 1 bh apart, each 0.5 of the worth",
+    "rev10": "adds the held grab, place (the staves set up to 6 bh off); the sweep stays 38, already at the band's edge",
+    "rev11": "adds Cling, the lob's level 2",
+    "rev12": "nothing new on RB; her RT + B signature is the beam's top form (E51)"
+  },
+  "atoms": {
+    "en.empress.light.tap": {
+      "windup": 0,
+      "active": 4,
+      "recover": 6,
+      "tell": "blade hand at her chest, edge forward",
+      "pose": "one short downward stroke from the wrist; body upright and still; the other hand at the small of her back"
+    },
+    "en.empress.light.mash": {
+      "windup": 0,
+      "active": 4,
+      "recover": 2,
+      "tell": "the same hand, flicking",
+      "pose": "alternate short down and up strokes from the wrist, one per press"
+    },
+    "en.empress.light.stream": {
+      "windup": 0,
+      "active": 0,
+      "recover": 8,
+      "_active": "held: as long as X is held (E23)",
+      "tell": "a steady light along the hand's edge",
+      "pose": "short wrist strokes on the stream's pace; the stick tilts the hand to spray in the vertical"
+    },
+    "en.empress.medium.tap": {
+      "windup": 12,
+      "active": 4,
+      "recover": 12,
+      "tell": "palm turns up at her shoulder, its edge lit",
+      "pose": "a tip of the wrist throws, and the crown forms as it leaves the hand (Legal e15); elbow stays in"
+    },
+    "en.empress.medium.charge": {
+      "windup": 12,
+      "active": 36,
+      "recover": 0,
+      "_active": "a hold from 16 ticks; level 1 at 28, level 2 at 48; loaded after, never fired by itself (E47)",
+      "tell": "the palm's edge brightens a step at 28 and 48 ticks; nothing is held on it",
+      "pose": "palm held at the shoulder, never above the head; chin up"
+    },
+    "en.empress.medium.throw": {
+      "windup": 0,
+      "active": 4,
+      "recover": 14,
+      "tell": "her head turns to the landing",
+      "pose": "a measured underhand toss"
+    },
+    "en.empress.medium.cling": {
+      "windup": 20,
+      "active": 6,
+      "recover": 0,
+      "_note": "a world beat on him: the 20-tick fuse, then the burst",
+      "tell": "the crown hisses and brightens where it clings",
+      "pose": "none of hers; he keeps control"
+    },
+    "en.empress.gather": {
+      "windup": 16,
+      "active": 0,
+      "recover": 0,
+      "_note": "B's shared gather (E40): let go now for the heavy blast, hold on for the beam",
+      "tell": "blade hand draws the hem across her body; a brightness step along the hand's edge; her heel lifts",
+      "pose": "upright, weight on the standing leg"
+    },
+    "en.empress.heavy.stamp": {
+      "windup": 0,
+      "active": 6,
+      "recover": 20,
+      "tell": "the lifted heel",
+      "pose": "the heel drops in one stamp; the arms do not move; then still as a statue"
+    },
+    "en.empress.heavy.open": {
+      "windup": 0,
+      "active": 8,
+      "recover": 0,
+      "_note": "a world beat at him when the seam arrives",
+      "tell": "the seam's bright head racing in",
+      "pose": "none of hers"
+    },
+    "en.empress.beam.charge": {
+      "windup": 16,
+      "active": 68,
+      "recover": 0,
+      "_active": "a hold from 20 ticks; levels at 30, 54 and 84 ticks after the press; loaded after, never fired by itself (E47)",
+      "tell": "the edge light steps brighter at each level with a click",
+      "pose": "side-on, heel set down, the hem gathered across her body in the blade hand"
+    },
+    "en.empress.beam.fire": {
+      "windup": 4,
+      "active": 54,
+      "recover": 16,
+      "_active": "20, 36 or 54 ticks by level (E43), longer with pulses",
+      "tell": "the arm swings the hem open from the shoulder",
+      "pose": "the line leaves the hem's edge at the end of the swing; the arm then holds and steers the sweep; never a body turn"
+    },
+    "en.empress.beam.pulse": {
+      "windup": 0,
+      "active": 2,
+      "recover": 0,
+      "tell": "a small hitch of the wrist",
+      "pose": "the arm stays set; the swell runs down the line"
+    },
+    "en.empress.beam.struggle": {
+      "windup": 0,
+      "active": 300,
+      "recover": 0,
+      "_active": "the struggle's 15 pulses (E93)",
+      "tell": "both feet set, mantle braced",
+      "pose": "upright, arm locked; losing, her wrist trembles as the line bows"
+    },
+    "en.empress.grab.throw": {
+      "windup": 10,
+      "active": 4,
+      "recover": 14,
+      "tell": "her hand takes the clasp at her throat and flings the mantle open; the hem casts one furled bundle of four staves",
+      "pose": "the arm ends straight out to the side, mantle spread; her feet don't move"
+    },
+    "en.empress.grab.place": {
+      "windup": 10,
+      "active": 4,
+      "recover": 16,
+      "_note": "a hold from 14 ticks (E14, E61); set on release where the stick points, up to 6 bh",
+      "tell": "the clasp held at her throat, her head turned to the place",
+      "pose": "as the throw, the bundle cast to the place, where it stamps in and stands furled"
+    },
+    "en.empress.grab.catch": {
+      "windup": 0,
+      "active": 40,
+      "recover": 0,
+      "_active": "at most; less by his presses (E64)",
+      "tell": "four staves standing round him, banners wrapped on his arms and torso; her blade hand raised, edge down",
+      "pose": "still, waiting; he strains against the banners"
+    },
+    "en.empress.grab.slam": {
+      "windup": 4,
+      "active": 8,
+      "recover": 14,
+      "tell": "the raised blade hand",
+      "pose": "one chop down that stops dead at the hip; he lands on one knee in the crater and recovers by the slam's rules"
+    },
+    "en.empress.trap.lay": {
+      "windup": 4,
+      "active": 4,
+      "recover": 4,
+      "_note": "E72's 12 lay ticks for B, guard down throughout",
+      "tell": "guard forearm up; two plates drop from the hem",
+      "pose": "a short sweep of the blade hand draws the rope between them"
+    },
+    "en.empress.mine.spark.lay": {
+      "windup": 1,
+      "active": 2,
+      "recover": 1,
+      "_note": "E72's 4 lay ticks for X, guard down throughout",
+      "tell": "guard forearm up; the blade hand flicks once",
+      "pose": "one sliver left hanging at her hand"
+    },
+    "en.empress.mine.blast.lay": {
+      "windup": 3,
+      "active": 2,
+      "recover": 3,
+      "_note": "E72's 8 lay ticks for Y, guard down throughout",
+      "tell": "guard forearm up; the palm turns up at her side",
+      "pose": "a small crown set down at her hand, upright"
+    },
+    "en.empress.snare.lay": {
+      "windup": 3,
+      "active": 2,
+      "recover": 3,
+      "_note": "E72's 8 lay ticks for A, guard down throughout",
+      "tell": "guard forearm up; the hem flicks",
+      "pose": "the furled staves stamp in and stand"
+    },
+    "en.empress.trap.fire": {
+      "windup": 6,
+      "active": 20,
+      "recover": 0,
+      "_note": "the flare, then the level-1 beam along the rope and the gate's swing",
+      "tell": "the rope pulls straight and brightens once",
+      "pose": "none of hers"
+    }
+  },
+  "legalAsks": [
+    "Crown Toss: a crown that tumbles end over end on an arc, never a flat spinning disc or hoop, no cutting edge, never held or raised above her head; Cling attaches to the torso, back or arm, never the head, neck or face (e14)",
+    "Throne Quake: a hairline seam from a heel stamp, opening into a lens; check it against ground-travelling wave moves from fighting games",
+    "Banner Snare: one tumbling bundle that bursts into four banner staves stamped into the ground round him, their banners wrapping his arms and torso; redrawn from six flying plates, which echoed a well-known franchise restraint spell; not swords, rods, strings, a dome or a cell; it never shrinks; no hand sign; binds take arms and torso only; the kneel is the slam's landing, with no slow motion, zoom, taunt or finisher (e11-e14)",
+    "Hem Sweep: a thin straight cut from the mantle's hem; never a fingertip, finger-gun, two-finger, hand-frame or spiral",
+    "The mantle never wraps, coils or grabs: it must never read as a tail",
+    "Colour: crimson to scarlet, never gold (the franchise emperor's best-known later form)",
+    "Lines for the slam must not echo 'kneel before ...' (a famous film line); Narrative's earlier beam call-out 'Kneel before the line!' wants a check"
+  ],
+  "openQuestions": [
+    "Game Design: base form keeps X and B held and their laid forms (spark mine, Velvet Rope). Is that the guards' compromise (empress-guards.md section 2)?",
+    "Game Design: moveset-rules.md section 8.2 gives revision 10 '+50% reach', past E81's 20% band; here revision 10 adds the held grab's place instead",
+    "Game Design: is beam width banded? Hers is x0.4",
+    "Game Design: section 14's starting points give the rival the clinging lob and the slamming grab; README section 2 gives them to her, and this file follows README section 2",
+    "Game Design: the clinging crown's answer (a dodge tap in its last 8 ticks) mirrors E34. A barrage at the 12-tick pace makes 5 bursts a second, over fx08's 3 counted: does the flash count merge them?"
+  ]
+}

@@ -1,0 +1,380 @@
+{
+  "schema": "combat.energy/1",
+  "fighter": "PROTAGONIST",
+  "side": "hero",
+  "meter": "anguish",
+  "lane": "protagonist",
+  "_lane": "colours are Art's lane, read from data/art/energy-lanes.json lanes.<lane>.kinds (core, main and edge for bolt, lob, beam, grab and trap) and never copied here; light.colour is the lane's light_colour, the bolt main",
+  "frame": "docs/design/energy-overhaul.md (E1-E117)",
+  "_about": "Combat and Choreography, 2026-10-23, parked. One-pager: protagonist.md. Only what E81 leaves to a fighter, plus the frame's numbers where he sits inside a band. Grammar, ki (E100), hit-stop (E102), freshness (E101) and collateral (E113) are the frame's. Identity (GD kit sheet section 14): control. Colour: cyan to azure, fired from the heel of the palm.",
+  "_legal": "Fitted to docs/legal/energy-overhaul-screen.md e10-e13 and fx08: no ball, sphere or orb in or above a hand; a charge is a steady brightness step at the heel of the palm (no pulse over 1 Hz), one hand loaded, the other open and a shoulder width away; the net binds arms and torso only and the held fighter struggles; the stream has one steady muzzle light and one steady scorch glow; each lob burst is one flash event; a pulse is under a 10% brightness step; mines fizzle after 12 s, never move toward people, and a string flares staggered.",
+  "identity": "control",
+  "names": {
+    "light": "Knuckle Flick",
+    "medium": "Pier Lob",
+    "heavy": "Whole Palm",
+    "grab": "Harbour Net",
+    "trap": "Trip Pillar",
+    "beam": "Breakwater",
+    "snare": "Harbour Hammock",
+    "sparkMine": "Flint Mine",
+    "blastMine": "Scorch Cup"
+  },
+  "light": {
+    "shape": "sparks: short streaks",
+    "colour": "#10c2ea",
+    "spreadDeg": 4,
+    "speedMul": 1.1,
+    "dmgMul": 1.0,
+    "_bands": "speed within 20% of 60 a tick (66 here), damage within 15%; tap, mash and stream pace are E20-E23",
+    "look": "One hand thrusts from the chest and turns from edge to flat; the fingers flick open from the knuckles as the spark leaves the heel of the palm. Presses alternate hands. Open hands, never a fist. Held, his shoulders turn with the stick's spray; the body stays still. While it streams a steady low light sits at the heel of the palm (no flash per spark), and its hits build one steady scorch glow.",
+    "atoms": [
+      "en.protagonist.light.tap",
+      "en.protagonist.light.stream"
+    ]
+  },
+  "medium": {
+    "shape": "a heavy cyan lump of heat with a dripping tail of sparks; it forms as it leaves the hand, never held in it",
+    "arcTicks": 40,
+    "dmgMul": 1.0,
+    "l1Ticks": 28,
+    "l2Ticks": 48,
+    "l2": {
+      "template": "bounce",
+      "what": "bursts where it lands, hops once toward the rival, and bursts again at half",
+      "firstBurstBh": 1.5,
+      "firstWorthMul": 1.0,
+      "_firstWorth": "a tapped lob's worth (a medium)",
+      "firstKnockBh": 3.0,
+      "hopBhMax": 3.0,
+      "hopTicks": 12,
+      "secondWorthMul": 0.5,
+      "secondBurstBh": 1.5,
+      "hitStop": [
+        8,
+        4
+      ],
+      "_flash": "each burst is its own flash event (fx08: at most 3 counted bursts a second in a window)",
+      "_frame": "12 ki and trade power 5, as E32"
+    },
+    "look": "Underhand scoop: in the 12-tick wind-up the rear knee drops almost to the ground and the palm sweeps down past the shin; the scoop rises with him and the lob leaves the heel of the palm at the top. The stick's lead (E33) reads in the scoop: a longer, higher sweep for farther, a short flick for nearer. Held: kneeling, the throwing palm low and open at shin height, the other hand open a shoulder width away; nothing sits on the palm, its heel brightens a step at each level and holds a steady light.",
+    "atoms": [
+      "en.protagonist.medium.tap",
+      "en.protagonist.medium.barrage",
+      "en.protagonist.medium.charge",
+      "en.protagonist.medium.release"
+    ],
+    "holdFromTicks": 16,
+    "loaded": "Held at level 2 it stays loaded at 2 ki a second; it never throws by itself: when his ki can't pay, it steps down a level (E47 as amended)"
+  },
+  "heavy": {
+    "look": "The gather every B press starts: the hips coil a half turn away and the rear palm draws back open to chest height as its heel brightens. One hand only: the other open and away; no shout, no ball (e10). Let go inside 20 ticks (the 16-tick wind-up plus 4 of grace, E14) and the hips unwind; the rear palm drives through heel-first and turns flat at full reach. A pale cyan core in a long azure teardrop of flame; a 2 bh crater with a column of flame. In reach the palm lands flat on the breastbone and the burst throws the rival 5 bh.",
+    "dmgMul": 1.0,
+    "_frame": "E41: 16-tick wind-up, worth a heavy, 10 ki, trade power 4, knock-back 5 bh, crater 2 bh, hit-stop 8; mashed at most one every 24 ticks",
+    "atoms": [
+      "en.protagonist.heavy.tap",
+      "en.protagonist.heavy.reach"
+    ]
+  },
+  "beam": {
+    "shape": "broad and driving, built on heat: cyan at the palm, azure toward the front, a step brighter at each level; it opens from the heel of the palm as the palm turns from edge to flat",
+    "widthMul": 1.2,
+    "sweepDegPerSec": 32,
+    "end": "a flat, blunt front of pale cyan heat that shoves a wave of dust ahead of it and breaks into a fan of azure flame where it stops",
+    "levelTicks": [
+      30,
+      54,
+      84
+    ],
+    "_frame": "E43: lengths 20, 36, 54 ticks; worth x1.0, x1.6, x2.4 of a heavy; ki 12, 20, 32; beam power 6, 9, 12. E44: level 3 carries. Section 14 bands: damage within 15%, length within 25% of the reference; these are the reference values. Near occupied buildings the width is x0.6 (E113).",
+    "trait": {
+      "kind": "wall",
+      "pushMul": 1.0,
+      "_note": "E96: the struggle trait changes the look only; the push is always 1.0"
+    },
+    "pulseLook": "Each B press shoves the lead palm forward a hand's length and a pale cyan swell (under a 10% brightness step) runs down to the front, which surges. E50: +0.1 of a heavy, 4 ticks longer, 2 ki, at most one every 6 ticks; B held pulses every 8 ticks at 85%",
+    "struggleLook": "A wall: his front flattens against the rival's beam like a palm against a door; a surge shoves the whole front forward as a slab. Losing, it bulges and quivers near his palm and his feet plough back; it never thins",
+    "atoms": [
+      "en.protagonist.beam.charge",
+      "en.protagonist.beam.fire",
+      "en.protagonist.beam.pulse",
+      "en.protagonist.beam.struggle"
+    ],
+    "holdFromTicks": 20,
+    "loaded": "Held at level 3 it stays loaded at 4 ki a second; it never fires by itself: when his ki can't pay, it steps down a level (E47 as amended)"
+  },
+  "grab": {
+    "look": "net",
+    "payoff": "yank",
+    "throwTicks": 30,
+    "catchTicks": 32,
+    "netBh": 2.0,
+    "heldNetBh": 3.0,
+    "held": "charge (E61): held from 14 ticks his gripping hand swings a loop of slack at his side; the one level lights at 24 ticks as a steady brightness step at the heel of the palm; released after it, a 3 bh net with a 40-tick catch (14 ki); released before it, the tapped net; it never throws by itself",
+    "_frame": "E60-E69: seeks, arrives within 30 ticks (his net takes all 30: slow); 10-tick wind-up, a hold from 14 (E14); catch hit-stop 5, the rival keeps half his nudge and can't guard or fire; A in the catch is the yank, X, Y or B fires that shot into him (E65); way out E64; lockout 90 ticks, 120 ticks immune after; 10 ki tapped, 14 held; in reach it catches at once",
+    "answers": [
+      "It beats a guard (E62)",
+      "A dodge tap in its last 8 ticks",
+      "A shot of trade power 2 or more that meets it in flight",
+      "A blow that lands on him in his 10-tick wind-up",
+      "Caught: each press takes 4 ticks off the catch, one counted every 6 ticks (E64)",
+      "Caught: RT's burst breaks it after its first 12 ticks"
+    ],
+    "reads": "His open hand, gripping the tow line, draws back to the shoulder (never the hip, Legal e15), then snaps forward and opens; a net of braided cyan cords spreads as the tow line pays out through his loosened grip, slow. Caught, the mesh closes round the arms and torso only (never throat, face or hair) and glows brightest where it grips; the rival struggles against it, never limp; no slow motion, zoom or taunt over him. The yank: hand over hand, then one big haul past his ear, elbow first; the rival arrives in reach and the brawl starts with the Protagonist's blow. A torn net whips back and burns out in sparks; slack cools to dull blue and crumbles.",
+    "atoms": [
+      "en.protagonist.grab.throw",
+      "en.protagonist.grab.held",
+      "en.protagonist.grab.catch",
+      "en.protagonist.grab.yank",
+      "en.protagonist.grab.reach"
+    ],
+    "holdFromTicks": 14,
+    "heldKind": "charge",
+    "heldLevelTicks": 24,
+    "heldCatchTicks": 40
+  },
+  "trap": {
+    "template": "pillar",
+    "what": "Trip Pillar: a square of cracked ground with cyan seams; tripped, a solid slab of ground (or the lane's own stone) rises with its top slanted away from people and pitches whoever is over it up and away from people (his relocate). A ground trap: laid in the air it sets into the ground below him",
+    "_legal": "e14: a solid slab of ground or lane-coloured stone a few bh tall, rising over several ticks; never a vertical light beam, never around a body",
+    "numbers": {
+      "zoneBh": 1.5,
+      "slabBh": 3.0,
+      "riseTicks": 8,
+      "worthMul": 0.9,
+      "_worth": "of a heavy: within section 14's 15% of a level-1 beam (x1.0)",
+      "throwUpBh": 5.0,
+      "throwAwayBh": 4.0,
+      "throwTicks": 24,
+      "hitStop": 8,
+      "_frame": "E72-E76: lay drops the guard 12 ticks, 12 ki; arms after 30 ticks; flares 6 ticks; field limit 1; fizzles 12 s after arming"
+    },
+    "trigger": "The rival within 1.5 bh: a 6-tick flare (the seams brighten), then the slab rises. A send that carries either fighter through it sets it off at once, with no flare (E74). While a person is inside its reach it waits with its seams glowing (E79)",
+    "answer": "Avoid it; shoot it with a lob or heavier; guard it at the guard's rate (no throw through a guard); a dodge tap in the flare; send the layer into it, and it throws him",
+    "look": "Laid with the guard up: the rear palm presses flat down and a 1 bh square of cracked ground sets into the surface, its seams dim while arming, a slow cyan glow when armed, bright for the 6-tick flare. Tripped, a solid slab of ground or lane stone rises 3 bh over 8 ticks beside or under the rival (never around him), its slanted top pitching him away from people; it stands a moment, then crumbles to rubble",
+    "atoms": [
+      "en.protagonist.trap.lay",
+      "en.protagonist.trap.erupt"
+    ]
+  },
+  "snare": {
+    "look": "The net laid: a loose hammock of glowing cyan cord hanging in the air, or lying flat on the ground. Catches as the grab; the bind unless he presses A for the yank (E75)",
+    "atoms": [
+      "en.protagonist.snare.lay"
+    ]
+  },
+  "mines": {
+    "spark": "a pinch of hanging cyan sparks, like struck flint",
+    "blast": "a lump of cyan heat sitting in a scorched cup",
+    "_legal": "fizzle after 12 s, never move toward people; a string of spark mines flares staggered",
+    "atoms": [
+      "en.protagonist.mine.spark",
+      "en.protagonist.mine.blast"
+    ]
+  },
+  "collateral": "E113 and E79: near occupied buildings Breakwater narrows to 0.6 of its width and Pier Lob's burst to 0.7; his mines and pillar hold while a person is in their burst; the pillar throws away from people by design. Each life his energy takes adds anguish as now, and his grin goes.",
+  "forms": "Heat. The forms change looks only; numbers stay inside E81's bands and the tier rules carry the power. Each form runs hotter: the cyan climbs toward a pale, white-hot azure and the light at the heel of his palm burns brighter; after a level-3 beam steam vents from his forearms. In his final form, where his artefacts take the fight, there is no one to narrow for.",
+  "atoms": {
+    "en.protagonist.light.tap": {
+      "windup": 0,
+      "active": 4,
+      "recover": 6,
+      "tell": "None beyond the hand: X fires on the press (E14)",
+      "pose": "One hand thrusts from the chest, turns from edge to flat, fingers flick open from the knuckles; the spark leaves the heel of the palm. Alternates hands"
+    },
+    "en.protagonist.light.stream": {
+      "windup": 0,
+      "active": 4,
+      "recover": 4,
+      "_loop": "E23: an opening burst of 8 in under a second, then one every 8 ticks",
+      "tell": "Shoulders square, both hands at chest height",
+      "pose": "Alternating flicks cut to a snap of the wrist; the shoulders turn with the spray, the body stays still; one steady low light at the heel of the palm, no flash per spark"
+    },
+    "en.protagonist.medium.tap": {
+      "windup": 12,
+      "active": 4,
+      "recover": 10,
+      "tell": "The rear knee drops almost to the ground and the palm sweeps down past the shin",
+      "pose": "An underhand scoop, flat palm up, from the shin to above the head, the body rising with it"
+    },
+    "en.protagonist.medium.barrage": {
+      "windup": 8,
+      "active": 4,
+      "recover": 0,
+      "_loop": "one lob every 12 ticks (E31)",
+      "tell": "A half crouch, both hands low",
+      "pose": "Short alternating underhand scoops from the knees"
+    },
+    "en.protagonist.medium.charge": {
+      "windup": 28,
+      "active": 0,
+      "recover": 0,
+      "levelTicks": [
+        28,
+        48
+      ],
+      "tell": "Kneeling on the rear knee, the throwing palm low and open at shin height, the other hand open a shoulder width away; nothing on the palm, its heel brightens a step at each level (steady, no pulse over 1 Hz)",
+      "pose": "Held; flies at half speed (E45)",
+      "_windup": "the hold starts at 16 (wind-up 12 plus 4 of grace); levels at 28 and 48"
+    },
+    "en.protagonist.medium.release": {
+      "windup": 0,
+      "active": 4,
+      "recover": 10,
+      "tell": "The kneel breaks",
+      "pose": "One long scoop, standing up through it; the length of the sweep shows the stick's lead"
+    },
+    "en.protagonist.heavy.tap": {
+      "windup": 16,
+      "active": 4,
+      "recover": 14,
+      "tell": "The gather: hips coil a half turn away, rear palm drawn back open to chest height, its heel brightening",
+      "pose": "The hips unwind; the rear palm drives through heel-first and turns flat at full reach; the other hand stays open and away. No shout, no ball",
+      "_tapWindow": "let go inside 20 ticks (wind-up 16 plus 4 of grace) or before level 1"
+    },
+    "en.protagonist.heavy.reach": {
+      "windup": 16,
+      "active": 4,
+      "recover": 14,
+      "tell": "The same gather, in reach",
+      "pose": "The palm lands flat on the breastbone, heel first; the burst throws the rival 5 bh"
+    },
+    "en.protagonist.beam.charge": {
+      "windup": 30,
+      "active": 0,
+      "recover": 0,
+      "levelTicks": [
+        30,
+        54,
+        84
+      ],
+      "tell": "Side-on in a long low stance; lead arm straight, palm edge-forward at chest height; rear hand held open and back, a shoulder width away. Each level turns the lead palm further toward flat and steps up the steady light at its heel, with a click and a rumble tick (E42)",
+      "pose": "Held; half-speed flight; a dodge tap drops it (E46)",
+      "_windup": "the hold starts at 20 (wind-up 16 plus 4 of grace); levels at 30, 54 and 84; held at level 3 it is loaded and never fires by itself"
+    },
+    "en.protagonist.beam.fire": {
+      "windup": 0,
+      "active": 20,
+      "recover": 10,
+      "activeByLevel": [
+        20,
+        36,
+        54
+      ],
+      "recoverByLevel": [
+        10,
+        14,
+        18
+      ],
+      "tell": "The palm turns fully flat and the beam opens from its heel",
+      "pose": "Rooted (E48), lead elbow locked; the back foot ploughs a short furrow from the recoil"
+    },
+    "en.protagonist.beam.pulse": {
+      "windup": 0,
+      "active": 6,
+      "recover": 0,
+      "tell": "The lead palm shoves forward a hand's length",
+      "pose": "A short shove on each B press; a pale cyan swell runs down the beam"
+    },
+    "en.protagonist.beam.struggle": {
+      "windup": 0,
+      "active": 0,
+      "recover": 20,
+      "_active": "loops for the struggle",
+      "tell": "Both feet dug in, the palm shoving on each surge",
+      "pose": "Winning: he leans in and steps forward. Losing: his beam bulges and quivers near the palm and his feet plough back"
+    },
+    "en.protagonist.grab.throw": {
+      "windup": 10,
+      "active": 30,
+      "recover": 12,
+      "_active": "the net's flight, at most; recover is on a miss",
+      "tell": "His open hand, gripping the tow line, draws back to the shoulder",
+      "pose": "The hand snaps forward and opens; the net spreads as the tow line pays out through his loosened grip"
+    },
+    "en.protagonist.grab.held": {
+      "windup": 14,
+      "active": 0,
+      "recover": 0,
+      "levelTicks": [
+        24
+      ],
+      "_windup": "the hold starts at 14 (wind-up 10 plus 4 of grace); the one charge level lights at 24; held on, it waits for release and never throws by itself",
+      "tell": "His gripping hand swings a loop of slack at his side; the heel of the palm steps brighter when the level lights (steady)",
+      "pose": "Release throws the 3 bh net, as the throw"
+    },
+    "en.protagonist.grab.catch": {
+      "windup": 0,
+      "active": 40,
+      "recover": 0,
+      "_active": "32 from the tapped net, 40 from the charged one; hit-stop 5 on the catch, both",
+      "tell": "The mesh glows brightest where it grips",
+      "pose": "The mesh binds the rival's arms and torso; he struggles against it, never limp; the Protagonist holds the tow line taut, the other hand ready. No slow motion, zoom or taunt"
+    },
+    "en.protagonist.grab.yank": {
+      "windup": 0,
+      "active": 12,
+      "recover": 0,
+      "tell": "His second hand takes the line",
+      "pose": "Hand over hand, then one big haul past his ear, elbow first; the rival arrives in reach and his blow comes first"
+    },
+    "en.protagonist.grab.reach": {
+      "windup": 10,
+      "active": 2,
+      "recover": 8,
+      "tell": "His open hand at the shoulder, gripping the tow line, in reach",
+      "pose": "The hand closes the net on the rival at once (E68)"
+    },
+    "en.protagonist.trap.lay": {
+      "windup": 4,
+      "active": 4,
+      "recover": 4,
+      "_ticks": "12 ticks with the guard dropped (E72)",
+      "tell": "Guard up, then the rear palm presses flat down",
+      "pose": "The ground cracks in a square under the heel of his palm, its seams dim"
+    },
+    "en.protagonist.trap.erupt": {
+      "windup": 6,
+      "active": 24,
+      "recover": 0,
+      "_who": "the one caught: windup is the flare, active the rise (8) and the throw; hit-stop 8; air recovery by the send rules",
+      "tell": "The seams of the cracked square brighten under him for 6 ticks, with a rising note",
+      "pose": "A solid slab of ground or lane stone rises 3 bh over 8 ticks under him (never around him); its slanted top pitches him up and away from people, tumbling"
+    },
+    "en.protagonist.snare.lay": {
+      "windup": 3,
+      "active": 2,
+      "recover": 3,
+      "_ticks": "8 ticks with the guard dropped (E72)",
+      "tell": "Guard up, the open hand flicks down",
+      "pose": "The folded net drops and spreads flat, or hangs loose in the air"
+    },
+    "en.protagonist.mine.spark": {
+      "windup": 1,
+      "active": 2,
+      "recover": 1,
+      "_ticks": "4 ticks with the guard dropped (E72)",
+      "tell": "Guard up, a flick of the fingers",
+      "pose": "A pinch of cyan sparks left hanging"
+    },
+    "en.protagonist.mine.blast": {
+      "windup": 3,
+      "active": 2,
+      "recover": 3,
+      "_ticks": "8 ticks with the guard dropped (E72)",
+      "tell": "Guard up, a short underhand toss down",
+      "pose": "A lump of heat settles into a scorched cup"
+    }
+  },
+  "legalAsks": [
+    "The names: Knuckle Flick, Pier Lob, Whole Palm, Breakwater, Harbour Net, Trip Pillar (Narrative's)",
+    "Breakwater's pose: one arm straight, the palm turning from edge to flat, the rear hand open and back a shoulder width away",
+    "Harbour Net's cast by an open hand gripping the tow line (no 'OK'-sign ring hand)",
+    "Pier Lob's underhand scoop from a kneel"
+  ],
+  "openQuestions": [
+    "The frame gives no numbers for a trap's throw: the pillar's 5 bh up and 4 bh away are ours; its 0.9 of a heavy sits inside section 14's band",
+    "The lob's level-2 bounce goes toward the rival (confirmed by Combat)",
+    "Parked and cut, as not in the frame: bolts that wear a guard open ('the read'), and his beam capped at level 2 near people at high anguish. Wanted as templates?"
+  ]
+}

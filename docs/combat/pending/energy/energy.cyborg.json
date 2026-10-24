@@ -1,0 +1,353 @@
+{
+  "schema": "combat.energy/1",
+  "fighter": "CYBORG",
+  "side": "villain",
+  "meter": "hunger",
+  "lane": "cyborg",
+  "_lane": "colours are Art's lane, read from data/art/energy-lanes.json lanes.<lane>.kinds (core, main and edge for bolt, lob, beam, grab and trap) and never copied here; light.colour is the lane's light_colour, the bolt main",
+  "frame": "docs/design/energy-overhaul.md (E1-E117)",
+  "_about": "The Demon Cyborg's energy kit, Combat and Choreography, 2026-10-23. Page: cyborg.md. Only what E81 and the kit sheet (section 14) leave to a fighter, plus the frame's numbers where he sits inside a band; the grammar, ki, hit-stop and rules are the frame's (E10, E100, E102). Fitted to Legal's screen (docs/legal/energy-overhaul-screen.md e11-e14, fx08). Units: 1 bh = 75 units, 60 ticks a second. His whole energy set runs on wreckage and metal, never on people (Legal ln02, ln04). Nothing here is built.",
+  "identity": "appetite (wreckage and metal only)",
+  "hand": "the slatted furnace grille across his chest plate (lob, heavy, beam, blast mine) and the rivet line on his wrist plates (bolts, spark mines). Never a hand-frame, never an arm cannon, never a belly, mouth or head",
+  "names": {
+    "light": "Rivet Spray",
+    "medium": "Slag Roll",
+    "heavy": "Wrecker Swing",
+    "grab": "Crane Hook",
+    "trap": "Scrap Pit",
+    "beam": "Furnace Vent",
+    "snare": "Cable Coil",
+    "sparkMine": "Ticking Rivet",
+    "blastMine": "Slag Clot"
+  },
+  "light": {
+    "shape": "hot rivets popped out of the rivet line on his wrist plate",
+    "colour": "#f58a22",
+    "spreadDeg": 8,
+    "speedMul": 0.9,
+    "dmgMul": 1.1,
+    "_bands": "speed 54 a tick (within 20% of 60); damage 14.3 (within 15% of 13): heavier and slower than most. The stream's pace is the frame's (E23)",
+    "flash": "the rivet line holds one steady glow while the stream runs, never a flash per rivet; hits build one steady scorch glow where they land (fx08)",
+    "look": "Tap: a backhand snap of the forearm and one rivet pops out and seeks. Held: the forearm level across his chest, rivets popping down the line one after another. Misses leave rivets smoking in walls and pocks in the ground",
+    "atoms": [
+      "en.cyborg.light.tap",
+      "en.cyborg.light.stream"
+    ]
+  },
+  "medium": {
+    "shape": "a jagged clot of glowing slag thrown out of the chest grille",
+    "arcTicks": 40,
+    "dmgMul": 1.0,
+    "l1Ticks": 28,
+    "l2Ticks": 48,
+    "l2": {
+      "template": "roll",
+      "what": "lands short of him (or at the lead) and rolls along the ground toward the point under him as molten slag, burning a glassy track; bursts once when it touches a fighter, reaches the point under him or runs out",
+      "rollMax": 300,
+      "rollSpeed": 15,
+      "rollTicksMax": 20,
+      "burstR": 150,
+      "burstH": 225,
+      "worthMul": 1.4,
+      "knockbackBh": 4,
+      "ki": 12,
+      "power": 5,
+      "water": "it sinks hissing and goes off as a steam column (E115's column and ring wave)",
+      "mark": "a glassy, smoking track ending in a 2 bh crater with a slag rim",
+      "_l2": "rolls up to 4 bh at 15 a tick (20 ticks); the burst reaches 2 bh around and 3 bh up, so a low flyer is caught. Worth x1.4 sits within 15% of level 1's; ki and trade power are the frame's (E32). Each burst is one flash event (fx08)"
+    },
+    "look": "Tap: a hammer fist cocked high, the grille's slats rattle open, and he hammers his own chest plate; the grille throws the clot up and over on a high, slow arc. Mashed: a hammer blow for each lob. Held: he leans back, off hand braced flat on the plate, the grille a step brighter at each level; the stick's lead reads in his shoulders",
+    "atoms": [
+      "en.cyborg.medium.tap",
+      "en.cyborg.medium.mash",
+      "en.cyborg.medium.charge",
+      "en.cyborg.medium.throw"
+    ]
+  },
+  "heavy": {
+    "look": "The gather: both clawed hands prise the edges of his chest plate apart and the grille steps brighter between them; nothing gathers in or above his hands (e12). Released before level 1, he swings his right forearm round from behind like a wrecker's boom, feet planted, never spinning, and slams it onto the grille; the blow knocks a jagged slab of molten scrap out, which tumbles end over end at the foe and leaves a crater studded with scrap",
+    "dmgMul": 1.0,
+    "atoms": [
+      "en.cyborg.heavy.gather",
+      "en.cyborg.heavy.swing"
+    ]
+  },
+  "beam": {
+    "shape": "ragged jets from the chest grille's slats that merge side by side into one rough, uneven column, its edges tearing and wobbling on a seeded draw, embers falling away (render only). It never rotates: no spiral, drill or helix (e11)",
+    "widthMul": 0.9,
+    "sweepDegPerSec": 26,
+    "_widthSweep": "pulled apart from the Protagonist's reference (width 1.2, 32 degrees a second): narrower and slower, the sweep within 20% of 32",
+    "end": "where it ends on the ground it sinks a pit with a slag rim at the end of its trench; its last 6 ticks sputter out in three uneven surges, each a step under 10% luminance (fx09)",
+    "levelTicks": [
+      30,
+      54,
+      84
+    ],
+    "_numbers": "lengths 20/36/54 ticks, worth x1.0/1.6/2.4 of a heavy, ki 12/20/32: the frame's (E43), inside the kit sheet's bands (damage within 15%, length within 25%). A pulse adds 4 ticks (E50)",
+    "trait": {
+      "kind": "heave",
+      "pushMul": 1.0,
+      "_note": "a struggle look changes only how a surge and a buckle look, never the push (E96)"
+    },
+    "wobble": {
+      "beforeFinal": 0.2,
+      "final": 0.08,
+      "_note": "look only: the limiter's sputter, steadied in the final form. It lives in the edge and the width, never in brightness (or a step under 10% and under 2 Hz, Legal fx09)"
+    },
+    "charge": "one pair of slats opens per level, each a brightness step at the grille with a click and a rumble tick; loaded, the grille holds a steady light, with no pulse over 1 Hz (e12)",
+    "pulseLook": "he lets go of the plate with one hand and hammers his chest plate; a swell runs down the column to the front, under a 10% brightness step (fx08). B held: he hammers by himself every 8 ticks",
+    "struggleLook": "surges come as swells heaving down the column; losing, the beam bulges in lumps and sputters back toward the grille, quivering, never thinning (E96)",
+    "look": "Firing: rooted, leaning back into the recoil, heels dug in, the torso turning slowly to sweep",
+    "atoms": [
+      "en.cyborg.beam.charge",
+      "en.cyborg.beam.fire",
+      "en.cyborg.beam.pulse",
+      "en.cyborg.beam.loaded"
+    ]
+  },
+  "grab": {
+    "look": "lash",
+    "what": "a crane hook on a cable that pays out from a winch drum inside his forearm plate; the hook is thrown by hand",
+    "payoff": "throw",
+    "payoffLook": "he takes the line in both hands and heaves his chassis through a third of a turn, feet planted, swinging the foe round and letting go: a launch through the planner, 6 bh along the stick (E66, e13)",
+    "throwTicks": 30,
+    "catchTicks": 40,
+    "heldKind": "aim",
+    "held": "aim, the long cast (E61): a hold from 14 ticks (E14); the hook is lofted ahead of the foe's flight, up to 4 bh by the stick, to catch him where he is going",
+    "heldLeadMax": 300,
+    "binds": "arms, torso or body; never throat, face or hair. The caught fighter struggles or braces, never limp. No slow motion, zoom or taunt over him, and no finisher starts on a bound fighter (e13)",
+    "answers": [
+      "It beats a guard, as every grab does (E62)",
+      "A dodge tap in its last 8 ticks of flight slips it",
+      "A shot of trade power 2 or more that meets it in flight knocks it down",
+      "A blow that lands on him in his 10-tick wind-up stops it",
+      "Caught: each press takes 4 ticks off the hold, one counted every 6 ticks; RT's burst breaks it after its first 12 ticks (E64)"
+    ],
+    "reads": "A scrapyard crane working a load: the hook catches round the arms or torso, the line goes taut and the winch ticks. It never reels anyone in",
+    "atoms": [
+      "en.cyborg.grab.cast",
+      "en.cyborg.grab.longcast",
+      "en.cyborg.grab.inreach",
+      "en.cyborg.grab.catch",
+      "en.cyborg.grab.throw"
+    ]
+  },
+  "trap": {
+    "template": "field",
+    "what": "a wired frame of scrap plates that folds down into a pit; clamps close on a passing fighter's torso, hold him and drop him into the ground. Machinery only: plates and clamps, no teeth, nothing that chews or bites, no swallowing (e14)",
+    "numbers": {
+      "fieldR": 75,
+      "fieldH": 225,
+      "knotR": 75,
+      "worthHeavy": 1.0,
+      "send": "down, in place, under the spike's rules",
+      "_numbers": "worth a level-1 beam (x1.0 of a heavy), inside the kit sheet's 15%. On the ground the field is the column 3 bh above a frame 2 bh across; laid in the air it hangs as a wired knot whose field is 1 bh round it",
+      "_frame": "lay: 12 ticks of open guard, 12 ki; arms in 30; flares 6 ticks before it closes; one live, a fresh lay fizzles the old; fizzles after 12 s; hit-stop 8, the clamps' hold (E72-E76, E100, E102)"
+    },
+    "trigger": "A foe in its field. The wires light and the plates rattle for 6 ticks (the flare, his window), then the plates fold into a pit, clamps close on his torso for the 8-tick hit-stop, and it drops him into the ground. A send that carries either fighter through it sets it off at once (E74)",
+    "answer": "Avoid it; set it off with a lob or heavier and the clamps close on nothing; guard takes it at the guard's rate with no drop; a dodge tap in the flare; send the Cyborg through it (E78). It never moves",
+    "look": "He strips a fistful of wire from his forearm wrap and drops it with a clutch of scrap plate; laid on rubble, it wires the rubble already there. Dim while arming, then a slow glow along the wires. Rusted plates before the final form, new metal in it",
+    "atoms": [
+      "en.cyborg.trap.lay",
+      "en.cyborg.trap.pit"
+    ]
+  },
+  "snare": {
+    "look": "the crane hook laid on a coil of cable; in its flare the coil twitches and the hook jumps, catching round arms or torso. Payoff the bind, or the throw if he presses A (E75)"
+  },
+  "mines": {
+    "spark": "one hot rivet hanging in the air, arming with one soft tick and never a repeating beep (Legal e15); a mashed string of them flares staggered (fx08)",
+    "blast": "a crusted clot of slag, glowing at its cracks",
+    "_all": "every mine fizzles after 12 s and never moves toward people (E76, E79)"
+  },
+  "collateral": "Near occupied buildings his beam and his lob's burst widen to 1.3 (E113), and his mines don't hold for people (E79, the villain's rule). Nothing else touches people: no energy move targets, feeds on or uses bystanders, and no death feeds his hunger (Legal ln02, ln04). Deaths go on his account under the collateral budget (E110)",
+  "forms": "The grammar and every number are the same in every form (E10). The limiter shows in looks and sound only. Before the final form: dull, uneven rivets with a dry rattle; the slats open partway, the beam wobbles 20% and sputters embers, with a governor click at each level; the winch grinds and its cable smokes; the pit's plates are rusted. Final form, online: the rivet line opens into clean rows of fins; a steady white core runs inside the column (8% wobble, no sputter); a silent winch; new metal plates. His hidden weapons show here only as these looks; the weapons themselves are Art's and Game Design's",
+  "atoms": {
+    "en.cyborg.light.tap": {
+      "windup": 0,
+      "active": 2,
+      "recover": 6,
+      "tell": "none: it fires on the press (E14); the forearm snaps out",
+      "pose": "a backhand snap of the right forearm; a hot rivet pops out of the wrist plate's rivet line"
+    },
+    "en.cyborg.light.stream": {
+      "windup": 0,
+      "active": 50,
+      "recover": 6,
+      "tell": "the forearm held level across his chest, one steady glow along the rivet line",
+      "pose": "rivets pop down the line one after another, 8 in the opening burst and then one every 8 ticks while held",
+      "_active": "the opening burst; then it loops one rivet every 8 ticks while X is held (E23)"
+    },
+    "en.cyborg.medium.tap": {
+      "windup": 12,
+      "active": 4,
+      "recover": 12,
+      "tell": "hammer fist cocked high; the chest grille's slats rattle open",
+      "pose": "the hammer fist drives into his own chest plate; the grille throws the slag clot up and over"
+    },
+    "en.cyborg.medium.mash": {
+      "windup": 8,
+      "active": 2,
+      "recover": 2,
+      "tell": "the fist stays cocked at the shoulder between blows",
+      "pose": "alternating hammer fists to the chest plate, one clot from each",
+      "_cycle": "12 ticks: one lob a press at most every 12 (E31)"
+    },
+    "en.cyborg.medium.charge": {
+      "windup": 48,
+      "active": 0,
+      "recover": 0,
+      "tell": "leans back, the off hand braced flat on the chest plate; the grille a step brighter at 28 and 48 ticks",
+      "pose": "hammer fist held high, shoulders turning toward the lead",
+      "_windup": "a hold from 16 ticks (E14); level 1 at 28, level 2 at 48 (E32); held past 48 it is loaded, a steady light, and never thrown by itself: when his ki can't pay, it steps down a level (E47)"
+    },
+    "en.cyborg.medium.throw": {
+      "windup": 0,
+      "active": 4,
+      "recover": 14,
+      "tell": "the braced hand lifts off the plate",
+      "pose": "one heavy hammer blow; the charged clot heaves out of the grille, high"
+    },
+    "en.cyborg.heavy.gather": {
+      "windup": 16,
+      "active": 0,
+      "recover": 0,
+      "tell": "both clawed hands grip the edges of his chest plate and prise it apart; the grille steps brighter between them",
+      "pose": "elbows wide, chest forward, heels set; nothing in or above the hands",
+      "_shared": "the same gather as the beam until level 1 (E40)"
+    },
+    "en.cyborg.heavy.swing": {
+      "windup": 0,
+      "active": 4,
+      "recover": 16,
+      "tell": "the right forearm drawn back behind him",
+      "pose": "the forearm swings round like a wrecker's boom and slams onto the grille, feet planted, no turn; a jagged slab of molten scrap tumbles out at the foe"
+    },
+    "en.cyborg.beam.charge": {
+      "windup": 84,
+      "active": 0,
+      "recover": 0,
+      "tell": "the gather held: a pair of slats opens at 30, 54 and 84 ticks, each a brightness step at the grille with a click and a rumble tick",
+      "pose": "hands prising the plate apart, elbows wide, flying at half speed",
+      "_windup": "a hold from 20 ticks (E14); levels at 30, 54 and 84 (E42)"
+    },
+    "en.cyborg.beam.fire": {
+      "windup": 2,
+      "active": 54,
+      "recover": 14,
+      "tell": "the slats slam fully open",
+      "pose": "rooted, leaning back into the recoil, heels dug in; the torso turns to sweep; ragged jets merge out of the grille into one column",
+      "_active": "20, 36 or 54 ticks by level (E43), plus 4 a pulse (E50)"
+    },
+    "en.cyborg.beam.pulse": {
+      "windup": 0,
+      "active": 2,
+      "recover": 4,
+      "tell": "one hand leaves the plate",
+      "pose": "a hammer fist to his chest plate; a swell runs down the column; the hand grips again"
+    },
+    "en.cyborg.beam.loaded": {
+      "windup": 0,
+      "active": 0,
+      "recover": 0,
+      "tell": "held at level 3: the grille holds a steady light, the slats rattle (sound only)",
+      "pose": "the gather held, shoulders braced",
+      "_when": "loaded, 4 ki a second. It never fires by itself: when his ki can't pay for the level, it steps down a level (a pair of slats closes, the grille a step dimmer), and below level 1 it holds as the heavy blast. It fires only when he lets go (E47)"
+    },
+    "en.cyborg.grab.cast": {
+      "windup": 10,
+      "active": 2,
+      "recover": 10,
+      "tell": "he unclips the crane hook from his forearm and lets it swing once behind him on its cable",
+      "pose": "an underarm-to-overhead heave casts the hook; the cable pays out from the winch inside his forearm plate"
+    },
+    "en.cyborg.grab.longcast": {
+      "windup": 10,
+      "active": 2,
+      "recover": 12,
+      "tell": "the hook swings lower and heavier behind him, his shoulders turned to the spot ahead of the foe",
+      "pose": "a longer heave lofts the hook ahead along the foe's flight",
+      "_windup": "10, a hold from 14 (E14), then aimed until release (E61, aim)"
+    },
+    "en.cyborg.grab.inreach": {
+      "windup": 10,
+      "active": 2,
+      "recover": 8,
+      "tell": "the hook unclipped and held short in his fist",
+      "pose": "he hooks it round the foe's arm by hand, no throw (E68)"
+    },
+    "en.cyborg.grab.catch": {
+      "windup": 0,
+      "active": 40,
+      "recover": 0,
+      "tell": "the line taut, the winch ticking",
+      "pose": "feet set, leaning back on the line, the cable wound once round his fist; the foe struggles against it",
+      "_active": "at most 40 (E60), less 4 a counted press (E64)"
+    },
+    "en.cyborg.grab.throw": {
+      "windup": 6,
+      "active": 6,
+      "recover": 14,
+      "tell": "he takes the line in both hands and sets his feet",
+      "pose": "a heave of the whole chassis through a third of a turn, feet planted, swinging the foe round and letting go into the planner's launch"
+    },
+    "en.cyborg.trap.lay": {
+      "windup": 4,
+      "active": 4,
+      "recover": 4,
+      "tell": "the guard arm stays up; the other hand strips a fistful of wire from his forearm wrap",
+      "pose": "he drops the wire with a clutch of scrap plate; it sets as a flat frame, or hangs as a knot in the air",
+      "_frames": "12 in all, the lay's open guard (E72)"
+    },
+    "en.cyborg.trap.pit": {
+      "windup": 6,
+      "active": 8,
+      "recover": 0,
+      "tell": "the flare: the wires light and the plates rattle",
+      "pose": "the plates fold down into a pit and clamps close on his torso, then drop him into the ground; no teeth, no swallowing",
+      "_object": "a world object, not a fighter pose: arms in 30, flares 6, holds for hit-stop 8"
+    },
+    "en.cyborg.snare.lay": {
+      "windup": 3,
+      "active": 3,
+      "recover": 2,
+      "_frames": "8 in all (E72)",
+      "tell": "the hook unclipped, held low",
+      "pose": "he sets the crane hook down on its coiled cable",
+      "_object": "arms in 20, flares 6, then catches as the grab (E73-E75)"
+    },
+    "en.cyborg.mine.spark": {
+      "windup": 1,
+      "active": 2,
+      "recover": 1,
+      "_frames": "4 in all (E72)",
+      "tell": "thumb set against the wrist plate's rivet line",
+      "pose": "the thumb flicks a hot rivet off the plate; it hangs where it is"
+    },
+    "en.cyborg.mine.blast": {
+      "windup": 3,
+      "active": 3,
+      "recover": 2,
+      "_frames": "8 in all (E72)",
+      "tell": "a short hammer fist cocked over the chest plate",
+      "pose": "a short blow on the plate drops a crusted clot of slag from the grille"
+    }
+  },
+  "legalAsks": [
+    "The chest grille reads as a slatted furnace grille across a chest plate: never a round emitter, and never a maw, mouth, teeth, jaw, head or belly (e14)",
+    "The beam never rotates: no spiral, drill or helix; never from a hand-frame; never an arm cannon (e11)",
+    "No ball, sphere or orb in or above a hand; every charge is a brightness step at the grille; a loaded grille is a steady light (e12)",
+    "The gather pose (both hands prising the chest plate's edges apart, elbows wide) checked against the two-handed charge cupped at the hip",
+    "No barrel on his arm in any form: rivets pop out of a flat plate's rivet line, and the hook's winch sits inside the forearm plate with the hook thrown by hand",
+    "Crane Hook binds arms, torso or body only; the caught fighter struggles; it never reels in and is never whirled overhead; the throw is a planner launch (e13)",
+    "Wrecker Swing is a boom swing with the feet planted, never a spin; the slab is jagged scrap, not a ball",
+    "Scrap Pit is machinery: plates and clamps on the torso, no teeth, no chewing, no biting, no swallowing (e14)",
+    "Wreckage and metal only: no energy move involves bystanders (ln02, ln04)"
+  ],
+  "openQuestions": [
+    "A siphon payoff (the drain first drawn, now dropped): the catch's remaining ticks move the foe's ki to the Cyborg at 0.5 a tick, at most 20. Only if a payoff may ever move ki",
+    "Forms in numbers, proposed and not used: level 3 only in the final form; the final form's speed (wind-ups x0.8)",
+    "Scrap Pit through a guard: read as the guard's rate with no drop. Confirm",
+    "The rolling lob reaches only 3 bh up: fine as a ground tool against a high flyer?"
+  ]
+}

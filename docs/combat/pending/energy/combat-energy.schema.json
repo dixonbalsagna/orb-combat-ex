@@ -1,0 +1,456 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/combat-energy",
+  "title": "combat.energy/1",
+  "description": "DRAFT by Combat for Tools (docs/combat/energy-movesets.md section 4): data/combat/energy/<fighter>.json, one fighter's energy kit inside Game Design's frame (docs/design/energy-overhaul.md E1-E117, the kit sheet section 14). It holds only what E81 leaves to a fighter; every other number is the frame's. Bands enforced here: bolt speed and damage multipliers (E81, 20% and 15%), the lob's arc (36 +- 6 ticks) and charge levels (28 and 48 +- 10%), the beam's levels (30, 54, 84 +- 10%), the beam's damage and length (15% and 25%), the struggle trait's push (always 1, E96), the beam's sweep (within 20% of the reference's 32 degrees a second), the grab's arrival (24 to 30 ticks) and catch (40), and the templates. Policy: the top level is closed except keys starting with an underscore; each cell is open past its checked keys, since each fighter names his own look. Cross-references for Tools' xref (proposed): lane is a key of data/art/energy-lanes.json lanes, and light.colour is that lane's light_colour; every atom a cell lists is a key of atoms; the file's name is its fighter in lower case; every fighter is a roster id once he is in the roster; each kit differs from every other in at least three of grab look, grab payoff, the lob's level-2 template, the trap template and the beam's trait (section 14)",
+  "type": "object",
+  "patternProperties": {
+    "^_": {}
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "fighter",
+    "side",
+    "meter",
+    "lane",
+    "names",
+    "light",
+    "medium",
+    "heavy",
+    "beam",
+    "grab",
+    "trap",
+    "atoms"
+  ],
+  "properties": {
+    "schema": {
+      "const": "combat.energy/1"
+    },
+    "fighter": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z_]*$"
+    },
+    "side": {
+      "enum": [
+        "hero",
+        "villain"
+      ]
+    },
+    "meter": {
+      "enum": [
+        "anguish",
+        "menace",
+        "hunger"
+      ]
+    },
+    "lane": {
+      "type": "string",
+      "pattern": "^[a-z][a-z_]*$"
+    },
+    "frame": {
+      "type": "string",
+      "minLength": 1
+    },
+    "hand": {
+      "type": "string",
+      "minLength": 1
+    },
+    "colour": {
+      "type": [
+        "object",
+        "string"
+      ]
+    },
+    "collateral": {
+      "type": [
+        "object",
+        "string"
+      ]
+    },
+    "forms": {
+      "type": [
+        "object",
+        "string"
+      ]
+    },
+    "identity": {
+      "type": "string",
+      "minLength": 1
+    },
+    "names": {
+      "type": "object",
+      "required": [
+        "light",
+        "medium",
+        "heavy",
+        "beam",
+        "grab",
+        "trap"
+      ],
+      "additionalProperties": true,
+      "properties": {
+        "light": {
+          "type": "string",
+          "minLength": 1
+        },
+        "medium": {
+          "type": "string",
+          "minLength": 1
+        },
+        "heavy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "beam": {
+          "type": "string",
+          "minLength": 1
+        },
+        "grab": {
+          "type": "string",
+          "minLength": 1
+        },
+        "trap": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "light": {
+      "type": "object",
+      "properties": {
+        "speedMul": {
+          "type": "number",
+          "minimum": 0.8,
+          "maximum": 1.2
+        },
+        "dmgMul": {
+          "type": "number",
+          "minimum": 0.85,
+          "maximum": 1.15
+        },
+        "spreadDeg": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 30
+        },
+        "shape": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "speedMul",
+        "dmgMul"
+      ]
+    },
+    "medium": {
+      "type": "object",
+      "properties": {
+        "arcTicks": {
+          "type": "number",
+          "minimum": 30,
+          "maximum": 42
+        },
+        "l1Ticks": {
+          "type": "number",
+          "minimum": 25.2,
+          "maximum": 30.8
+        },
+        "l2Ticks": {
+          "type": "number",
+          "minimum": 43.2,
+          "maximum": 52.8
+        },
+        "dmgMul": {
+          "type": "number",
+          "minimum": 0.85,
+          "maximum": 1.15
+        },
+        "l2": {
+          "type": "object",
+          "properties": {
+            "template": {
+              "enum": [
+                "bounce",
+                "split",
+                "cling",
+                "roll",
+                "own"
+              ]
+            }
+          },
+          "additionalProperties": true,
+          "required": [
+            "template"
+          ]
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "arcTicks",
+        "l2"
+      ]
+    },
+    "heavy": {
+      "type": "object",
+      "properties": {
+        "dmgMul": {
+          "type": "number",
+          "minimum": 0.85,
+          "maximum": 1.15
+        }
+      },
+      "additionalProperties": true
+    },
+    "beam": {
+      "type": "object",
+      "properties": {
+        "levelTicks": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "number",
+              "minimum": 27.0,
+              "maximum": 33.0
+            },
+            {
+              "type": "number",
+              "minimum": 48.6,
+              "maximum": 59.4
+            },
+            {
+              "type": "number",
+              "minimum": 75.6,
+              "maximum": 92.4
+            }
+          ],
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "widthMul": {
+          "type": "number",
+          "minimum": 0.2,
+          "maximum": 2.0
+        },
+        "lenMul": {
+          "type": "number",
+          "minimum": 0.75,
+          "maximum": 1.25
+        },
+        "dmgMul": {
+          "oneOf": [
+            {
+              "type": "number",
+              "minimum": 0.85,
+              "maximum": 1.15
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0.85,
+                "maximum": 1.15
+              },
+              "minItems": 3,
+              "maxItems": 3
+            }
+          ]
+        },
+        "sweepDegPerSec": {
+          "type": "number",
+          "minimum": 25.6,
+          "maximum": 38.4
+        },
+        "trait": {
+          "type": "object",
+          "properties": {
+            "pushMul": {
+              "const": 1.0
+            }
+          },
+          "additionalProperties": true,
+          "required": [
+            "pushMul"
+          ]
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "levelTicks",
+        "trait"
+      ]
+    },
+    "grab": {
+      "type": "object",
+      "properties": {
+        "look": {
+          "enum": [
+            "net",
+            "ring",
+            "lash",
+            "cage",
+            "own"
+          ]
+        },
+        "payoff": {
+          "enum": [
+            "yank",
+            "bind",
+            "slam",
+            "throw"
+          ]
+        },
+        "throwTicks": {
+          "type": "number",
+          "minimum": 24,
+          "maximum": 30
+        },
+        "catchTicks": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 40
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "look",
+        "payoff",
+        "catchTicks"
+      ]
+    },
+    "trap": {
+      "type": "object",
+      "properties": {
+        "template": {
+          "enum": [
+            "line",
+            "pillar",
+            "field",
+            "own"
+          ]
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "template"
+      ]
+    },
+    "snare": {
+      "type": "object"
+    },
+    "mines": {
+      "type": "object"
+    },
+    "atoms": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {},
+        "^en\\.[a-z]+\\.": {
+          "type": "object",
+          "required": [
+            "windup",
+            "active",
+            "recover"
+          ],
+          "additionalProperties": true,
+          "properties": {
+            "windup": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 600
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 600
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                {
+                  "type": "string",
+                  "minLength": 1
+                }
+              ]
+            },
+            "active": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 600
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 600
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                {
+                  "type": "string",
+                  "minLength": 1
+                }
+              ]
+            },
+            "recover": {
+              "oneOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 600
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 600
+                  },
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                {
+                  "type": "string",
+                  "minLength": 1
+                }
+              ]
+            },
+            "tell": {
+              "type": "string",
+              "minLength": 1
+            },
+            "pose": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "legalAsks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "openQuestions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

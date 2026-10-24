@@ -1,0 +1,355 @@
+{
+  "schema": "combat.energy/1",
+  "fighter": "RIVAL",
+  "side": "villain",
+  "meter": "menace",
+  "lane": "rival",
+  "_lane": "colours are Art's lane, read from data/art/energy-lanes.json lanes.<lane>.kinds (core, main and edge for bolt, lob, beam, grab and trap) and never copied here; light.colour is the lane's light_colour, the bolt main",
+  "frame": "docs/design/energy-overhaul.md (E1-E117)",
+  "identity": "precision: small, exact and many; he holds you still and denies the ground you stand on, then finishes by hand, never off the bind (Legal e12)",
+  "_about": "The Rival (the Anti-hero), parked. Combat and Choreography, 2026-10-23. Page: rival.md. Only the cells E81 leaves to a fighter, inside their bands, with README section 2's templates; the grammar, ki (E100), hit-stop (E102) and every other number are the frame's. Legal's conditions fitted: docs/legal/energy-overhaul-screen.md e10-e15, fx08; Game Design amendments to E14, E47, E50, E61, E96.",
+  "names": {
+    "light": "Pin Volley",
+    "medium": "Stair Split",
+    "heavy": "Rank Breaker",
+    "grab": "Rank Ring",
+    "trap": "Pressure Plate",
+    "beam": "Lance Sheaf",
+    "snare": "Open Loop",
+    "sparkMine": "Standing Pin",
+    "blastMine": "Hanging Plate"
+  },
+  "light": {
+    "shape": "needle: a thin blade-edged dart",
+    "colour": "#4420c4",
+    "spreadDeg": 4,
+    "speedMul": 1.15,
+    "dmgMul": 0.9,
+    "_bands": "speed 69 a tick (within 20% of 60); worth 0.9 of the frame's bolt (within 15%); tap, mash and stream pace are E20-E23",
+    "look": "Tapped or mashed: one needle flicked off the edge of the blade hand. Held: the stream's opening 8 leave as a fan from one backhand sweep, then the blade hand flicks back and forth in a short arc, a needle off each end. The other hand behind his back. Never both palms pumping in turn. One steady light at the hand, not a flash per needle; hits build one steady scorch glow (fx08).",
+    "atoms": [
+      "en.rival.light.tap",
+      "en.rival.light.mash",
+      "en.rival.light.stream"
+    ]
+  },
+  "medium": {
+    "shape": "a thick hexagonal block tumbling end over end, thrown overhand with one hand; never a thin spinning slab, never held, charged or raised overhead, never a sphere (Legal e15)",
+    "arcTicks": 32,
+    "dmgMul": 1,
+    "l1Ticks": 28,
+    "l2Ticks": 48,
+    "l2": {
+      "template": "split",
+      "what": "it lands where aimed and bursts, then cracks into three smaller blocks that hop to staggered spots on the line toward him (near, mid, far; the far one on him) and burst together as they land",
+      "landingWorth": 0.6,
+      "landingBurstBh": 1.5,
+      "pieces": 3,
+      "pieceWorth": 0.35,
+      "pieceBurstBh": 1,
+      "piecePower": 2,
+      "hopTicks": 12,
+      "spotsFrac": [
+        0.333,
+        0.667,
+        1
+      ],
+      "spotMaxBh": 4.5,
+      "burstTogether": true,
+      "knockBackBh": 4,
+      "worthAllLanding": 1.65,
+      "referenceWorth": 1.5,
+      "flashEvents": 2,
+      "_note": "worth in lobs; 1.65 is inside 15% of the reference 1.5. Spots are set at the split from his position then, so moving in the 12 ticks clears them and standing, guarding or hovering takes all three. One knock-back (4 bh) on the shared landing. A dodge tap as they land slips all three; a shot of trade power 2 or more sets a piece off early. Two burst events for the flash check (fx08): the first burst and the pieces landing together. 12 ki, trade power 5 (E32). Y is a hold from 16 ticks (E14)"
+    },
+    "look": "Low and quick arc. The palm turns up beside the shoulder in the 12-tick wind-up, a thick block forms on it, one overhand loop releases it and it tumbles end over end. It lands with a hexagonal burst; at level 2 it cracks into three along its facets.",
+    "atoms": [
+      "en.rival.medium.tap",
+      "en.rival.medium.l1",
+      "en.rival.medium.l2"
+    ],
+    "holdFromTicks": 16
+  },
+  "heavy": {
+    "look": "In the 16-tick wind-up the plates on his forearm stand up and stack toward the fist, a thin edge light along them, the fist drawn back at shoulder height. A straight punch sends a ram of stacked hexagonal plates, point first. On contact the stack bursts open flat, its plates shattering outward in a hexagonal ring over the frame's 2 bh crater and column of flame. Never a ball of light round the fist.",
+    "dmgMul": 1.1,
+    "_bands": "worth 1.1 heavies (within 15%); wind-up, seeking, knock-back 5 bh, 10 ki and trade power 4 are E41",
+    "atoms": [
+      "en.rival.heavy.tap"
+    ]
+  },
+  "beam": {
+    "shape": "a straight, parallel, unrotating sheaf of straight beams: thin lances, one off each plate on his forearm (7, 19, 37 by level). Violet and magenta alternate along each lance, never around it (e11-e14). Split by a perfect block, it forks straight.",
+    "widthMul": 0.85,
+    "sweepDegPerSec": 34,
+    "end": "The lances run out from the outside in, the centre lance last. Lances that missed stand in the ground along the trench and smoulder, with no flash; the whole line is one flash event at most (fx08). It is the trench's mark, no extra damage to a fighter.",
+    "levelTicks": [
+      30,
+      54,
+      84
+    ],
+    "lancesByLevel": [
+      7,
+      19,
+      37
+    ],
+    "_bands": "levels at the frame's 30/54/84; lengths 20/36/54 ticks, worth x1.0/1.6/2.4 of a heavy and ki 12/20/32 are E43, so damage and length sit inside the 15% and 25% bands. Pulses are E50 (each adds 4 ticks of length)",
+    "trait": {
+      "kind": "press",
+      "pushMul": 1,
+      "_note": "1.0 by E96: the trait changes only how a surge and a buckle look, never the push. A straight, unrotating press in place of the README's first template, per Legal e11-e14"
+    },
+    "pulseLook": "Each B press: his free hand's knife-edge strikes down the firing forearm and a swell runs up the bundle to the front, under a 10% brightness step (fx08).",
+    "struggleLook": "On each surge the sheaf presses straight and tightens into a narrower bundle, its tips stepping forward one after another. Losing, the bundle bulges and quivers as the lances bow, never thins, and loose tips fall and scorch the ground.",
+    "chargeLook": "Side-on, the firing arm drawn back at shoulder height, the free hand behind his back, as in his stream (Legal e10, e15). Each level lights one more forearm plate, a step brighter at the hand, never a ball.",
+    "atoms": [
+      "en.rival.beam.charge",
+      "en.rival.beam.fire",
+      "en.rival.beam.pulse",
+      "en.rival.beam.struggle"
+    ],
+    "holdFromTicks": 20,
+    "loaded": "Held at level 3 it stays loaded at 4 ki a second and never fires by itself; when his ki can no longer pay, it steps down a level, and below level 1 it holds as Rank Breaker (E47). Let go before level 1 and it is Rank Breaker (E40)."
+  },
+  "grab": {
+    "look": "ring",
+    "payoff": "bind",
+    "throwTicks": 25,
+    "catchTicks": 40,
+    "ringLook": "A thin open loop of violet light that leaves his hand on a straight-arm thrust, flies facing forward at hand height, never spinning, and snaps shut round the arms and torso, pinning the arms to his sides. Never a disc, a hoop or an edge; never held, charged or raised above the head; never cuts or throws sparks (e11-e13). It dims in six steps as the catch runs out.",
+    "bind": {
+      "what": "A in the catch: the loop pulls tight and he is held where he is; the Rival's next shot lands as on an open fighter, full worth and reel",
+      "endsOn": [
+        "that shot lands",
+        "the catch's 40 ticks end"
+      ],
+      "_note": "never past the 40-tick catch; the way out (E64) works throughout. No slow motion, zoom or taunt over a bound fighter, and the bind never leads into a finisher: the ring lets go first (Legal e12)"
+    },
+    "held": "Aim (E61): held past 14 ticks, the stick leads the throw up to 4 bh ahead along his travel, as a lob's landing, and the loop flies to where he will be. If he is not there it closes on empty air and fizzles. 14 ki.",
+    "heldNumbers": {
+      "leadMaxBh": 4
+    },
+    "answers": [
+      "It beats a guard (E62).",
+      "A dodge tap in its last 8 ticks slips it.",
+      "A shot of trade power 2 or more that meets it in flight breaks it.",
+      "A blow that lands on the Rival in his 10-tick wind-up stops it.",
+      "Caught: each press takes 4 ticks off the hold, one counted every 6 ticks (E64).",
+      "Caught: RT's burst breaks it after its first 12 ticks.",
+      "The aimed throw: change course after it leaves his hand.",
+      "Limits: the 90-tick grab lockout, and 120 ticks before a thrown fighter can be grabbed again (E67)."
+    ],
+    "reads": "A thin violet loop flying at hand height, then closed round his arms and torso; he struggles and braces against it, never hangs limp. Arms and torso only, never throat, face or hair.",
+    "atoms": [
+      "en.rival.grab.tap",
+      "en.rival.grab.held",
+      "en.rival.grab.bind",
+      "en.rival.grab.caught"
+    ],
+    "holdFromTicks": 14,
+    "heldMode": "aim",
+    "_bands": "arrives within 25 ticks, 17% faster than the frame's 30 (inside E81's 20%); catch 40 at most"
+  },
+  "trap": {
+    "template": "own",
+    "what": "Pressure Plate: a flat hexagonal plate set into the ground or hanging flat in the air. Crossed, it fires a fan of needles up from it: area denial of the air above a spot.",
+    "numbers": {
+      "zoneRBh": 2,
+      "zoneUpBh": 6,
+      "needles": 12,
+      "fanHalfDeg": 50,
+      "maxNeedlesOnOne": 8,
+      "worthAllLanding": 0.9,
+      "popUpBh": 2,
+      "hitStop": 8,
+      "_bands": "worth 0.9 of a heavy at most, within 15% of a level-1 beam (x1.0). Lay price (guard down 12 ticks, 12 ki), arming 30 ticks, the 6-tick flare, one trap, 12 s fizzle are E72-E76",
+      "_sim": "proposed as one area hit (a cone volume) drawn as 12 needles, so it spends no shot slots"
+    },
+    "trigger": "His body crossing the zone (E74's 'across its zone'). Its facets light for the 6-tick flare, then the fan erupts. A send that carries either fighter through it sets it off at once, with no flare.",
+    "answer": "Go round it or above 6 bh; shoot it with a lob or heavier; guard at the guard's rate; dodge tap in the flare; send the Rival into it (E78).",
+    "look": "Small, flat and violet: dim while arming, a slow glow when armed, its facets lighting in turn through the flare, then needles straight up in a fan. One flash event. Where the Protagonist's pillar throws and the Empress's line cuts across, his plate denies the air above a spot.",
+    "atoms": [
+      "en.rival.trap.lay",
+      "en.rival.trap.fire"
+    ]
+  },
+  "snare": {
+    "look": "The thin loop laid open in the air or flat on the ground, dim until armed. It catches as the grab; the payoff is the bind."
+  },
+  "mines": {
+    "spark": "A single needle standing point up, glowing. A string of them flares staggered.",
+    "blast": "A small hexagonal slab hanging flat."
+  },
+  "collateral": "Near occupied buildings his beam and his lob's burst widen to 1.3 (E113). His mines, plate and snare don't hold for people (E79), and none ever moves toward them. Casualties and fleeing people feed menace (the shared rule). The collateral budget caps the deaths at every tier (E110); nothing scores deaths (E117).",
+  "forms": "Pride ascension; looks, and numbers only inside the bands. Regalia: his forearm plates glow a step brighter and the stream's opening 8 leave from them; nothing circles his body (E6, e11). Sovereign: the sheaf thickens to 19/37/61 lances and his spread tightens to 3 degrees. Apex: needles at speedMul 1.2 and Rank Breaker at dmgMul 1.15, the tops of their bands. Pride crashed: he drops a form at once; a charge in hand is knocked out (costs nothing, E45) and a live catch lets go.",
+  "atoms": {
+    "en.rival.light.tap": {
+      "windup": 0,
+      "active": 4,
+      "recover": 6,
+      "tell": "the forearm plate's edge lights on the press",
+      "pose": "a short flick of the blade hand at chest height; the other hand behind his back"
+    },
+    "en.rival.light.mash": {
+      "windup": 0,
+      "active": 4,
+      "recover": 2,
+      "tell": "the plate's edge stays lit",
+      "pose": "the flick repeated, alternating ends of a short arc"
+    },
+    "en.rival.light.stream": {
+      "windup": 0,
+      "active": "while held: the opening 8, then one every 8 ticks",
+      "recover": 8,
+      "tell": "one steady light at the hand",
+      "pose": "one backhand sweep throws the opening fan, then the blade hand flicks back and forth in a short arc at chest height; chin up"
+    },
+    "en.rival.medium.tap": {
+      "windup": 12,
+      "active": 4,
+      "recover": 14,
+      "tell": "the palm turns up beside the shoulder and a thick hexagonal block forms on it",
+      "pose": "one overhand loop, released at the top of the arc; one hand"
+    },
+    "en.rival.medium.l1": {
+      "windup": 28,
+      "active": 4,
+      "recover": 16,
+      "tell": "the block on the palm a step brighter, edges lit",
+      "pose": "the arm cocked further back, his head turned to the landing, then the full loop"
+    },
+    "en.rival.medium.l2": {
+      "windup": 48,
+      "active": 4,
+      "recover": 18,
+      "tell": "a second brightness step; faint lines across the block where it will crack",
+      "pose": "as level 1; on landing it bursts, and three pieces hop to near, mid and far spots and burst together 12 ticks later"
+    },
+    "en.rival.heavy.tap": {
+      "windup": 16,
+      "active": 4,
+      "recover": 18,
+      "tell": "the forearm plates stand up and stack toward the fist, a thin edge light along them",
+      "pose": "the fist drawn back at shoulder height, then a straight punch; one arm"
+    },
+    "en.rival.beam.charge": {
+      "windup": 30,
+      "levelsAt": [
+        30,
+        54,
+        84
+      ],
+      "active": 0,
+      "recover": 0,
+      "tell": "one more forearm plate lit per level, a click and a rumble tick",
+      "pose": "side-on, the firing arm drawn back at shoulder height, the free hand behind his back; never at the hip, never a ball in the palm, never a hand on the firing arm"
+    },
+    "en.rival.beam.fire": {
+      "windup": 4,
+      "active": [
+        20,
+        36,
+        54
+      ],
+      "recover": [
+        14,
+        18,
+        24
+      ],
+      "tell": "the arm snaps straight at him",
+      "pose": "the arm straight, fist closed, the lit plates firing their lances together; rooted"
+    },
+    "en.rival.beam.pulse": {
+      "windup": 0,
+      "active": 2,
+      "recover": 4,
+      "tell": "the firing fist clenches tighter",
+      "pose": "the free hand a shoulder width away or behind his back, never touching the firing arm (Legal e15)"
+    },
+    "en.rival.beam.struggle": {
+      "windup": 0,
+      "active": "the struggle's length",
+      "recover": 20,
+      "tell": "his back foot digs in; the bundle tightens on a surge, bulges and quivers when losing",
+      "pose": "the firing arm locked, the free hand behind his back, chin up"
+    },
+    "en.rival.grab.tap": {
+      "windup": 10,
+      "active": 2,
+      "recover": 14,
+      "tell": "the blade hand drawn back level with his chest, the forearm plate's edge lit",
+      "pose": "a straight-arm thrust at hand height; the loop leaves the hand facing forward"
+    },
+    "en.rival.grab.held": {
+      "windup": 14,
+      "active": 2,
+      "recover": 16,
+      "tell": "the thrust held back past the hold point, his eyes on the point ahead of the foe",
+      "pose": "the same straight-arm thrust, angled to the lead point"
+    },
+    "en.rival.grab.bind": {
+      "windup": 2,
+      "active": "to the shot's landing or the catch's end",
+      "recover": 6,
+      "tell": "a short closing pull of his fist",
+      "pose": "he closes the throwing hand and draws it in an inch; the loop tightens"
+    },
+    "en.rival.grab.caught": {
+      "windup": 0,
+      "active": 40,
+      "recover": 6,
+      "tell": "the loop closed round his arms and torso, dimming in six steps",
+      "pose": "arms pinned at his sides, shoulders working against the loop, braced; never limp; keeps half his nudge"
+    },
+    "en.rival.trap.lay": {
+      "windup": 4,
+      "active": 4,
+      "recover": 4,
+      "tell": "his guard drops for its 12 ticks (E72); the free fist driven down at his feet",
+      "pose": "the plated forearm up before his face as he lays; a plate sets where the fist lands"
+    },
+    "en.rival.trap.fire": {
+      "windup": 6,
+      "active": 6,
+      "recover": 0,
+      "tell": "the plate's facets light in turn through the flare, with a rising note",
+      "pose": "the needles leave the plate straight up in a fan"
+    },
+    "en.rival.snare.lay": {
+      "windup": 3,
+      "active": 3,
+      "recover": 2,
+      "tell": "his guard drops for its 8 ticks (E72); the open hand sets the loop off his fingers",
+      "pose": "the loop set open in the air or laid flat"
+    },
+    "en.rival.mine.spark": {
+      "windup": 1,
+      "active": 2,
+      "recover": 1,
+      "tell": "his guard drops for its 4 ticks (E72)",
+      "pose": "a needle flicked down off the plate's edge to stand point up"
+    },
+    "en.rival.mine.blast": {
+      "windup": 3,
+      "active": 3,
+      "recover": 2,
+      "tell": "his guard drops for its 8 ticks (E72)",
+      "pose": "a small slab set flat off the palm"
+    }
+  },
+  "legalAsks": [
+    "Lance Sheaf: thin straight parallel lances, tints alternating along each lance, a straight, parallel, unrotating sheaf of straight beams; the struggle a straight press with tips stepping forward (e11-e14).",
+    "Rank Ring: a thin loop thrown from the hand at hand height, closing round arms and torso; never a disc, hoop or edge, never spinning, never raised.",
+    "Rank Breaker: a ram of stacked hexagonal plates from a straight punch; no ball of light round the fist.",
+    "Stair Split: a thick block tumbling end over end that cracks into three pieces hopping to staggered spots and bursting together; two burst events for fx08.",
+    "Pressure Plate: a fan of needles erupting up from a flat plate.",
+    "The stream: one arm flicking needles from a short arc, the other hand behind his back.",
+    "Names: Pin Volley, Stair Split, Rank Breaker, Rank Ring, Pressure Plate, Lance Sheaf (Narrative's, re-fitted).",
+    "Lance Sheaf charge: the free hand behind his back, never on the firing arm or shoulder (e10, e15)."
+  ],
+  "openQuestions": [
+    "The bind: may the open-fighter shot land after the catch has ended if it was fired inside it (a heavy blast's travel)? As written, it may not.",
+    "Can the Pressure Plate's needle fan be one area hit in the sim, drawn as 12 needles, so it spends no shot slots?",
+    "What crashes his pride (the forms' rule)?"
+  ]
+}
