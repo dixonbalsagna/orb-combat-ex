@@ -16,7 +16,7 @@ Combat and Choreography, 2026-10-23. Fitted to Game Design's frame (`docs/design
 - **Answers** (E34): guard at the guard's rate; a dodge tap in its last 8 ticks (for the roll, as it reaches him); a shot that meets it sets it off by trade power.
 
 ## Heavy, RB + B tapped: Wrecker Swing
-- **Tell: the gather** (16 ticks, a hold from 20, E14; shared with the beam until level 1, E40). Both clawed hands grip the edges of his chest plate and prise it apart, and the grille steps brighter between them. Nothing gathers in or above his hands (e12).
+- **Tell: the gather** (16 ticks, a hold from 20, E14; shared with the beam until level 1, E40). Both clawed hands grip the edges of his chest plate and prise it apart, above the hip zone (Legal, Addendum 3), and the grille steps brighter between them. Nothing gathers in or above his hands (e12).
 - **Release before level 1.** He swings his right forearm round from behind like a wrecker's boom, feet planted (he never spins), and slams it onto the grille. The blow knocks a jagged slab of molten scrap out, and it tumbles end over end at the foe. It is the frame's heavy blast (E41): worth a heavy, a 5 bh knock-back, a 2 bh crater with a column of flame, 10 ki, trade power 4. The crater is studded with scrap.
 - **Answers** are the frame's: a blow in the gather (E45), a dodge, a guard, or a beam that bursts it (E90).
 
@@ -41,6 +41,8 @@ Held past the gather, the grille opens one pair of slats per level, each a brigh
 - **The catch** (E63, at most 40 ticks). The hook catches round his arms or torso, never throat, face or hair (e13), with hit-stop 5. The line goes taut and the winch ticks. The foe struggles against it, keeping half his nudge, and can't guard or fire. No slow motion, zoom or taunt over him.
 - **The payoff, A: the throw.** He takes the line in both hands and heaves his chassis through a third of a turn, feet planted, swinging the foe round and letting go. It is a launch through the planner, 6 bh along the stick (E66). X, Y or B instead fires that shot into him (E65). No finisher starts on a bound fighter.
 - **Answers** (E62, E64): it beats a guard; a dodge tap in its last 8 ticks slips it; a shot of trade power 2 or more knocks it down in flight; a blow in his wind-up stops it. Caught, each press takes 4 ticks off (one counted every 6 ticks), and RT's burst breaks it after 12. It never reels anyone in.
+
+- **The call-out (Legal ln06):** one per grab, on the throw or in the first 10 ticks of the catch, inside the hit-stop and never extending it. Nothing is said over the rest of the catch, the payoff or a kneel.
 
 ## Trap, LB + RB + B: Scrap Pit (a field that holds and drops)
 - **Lay** (E71 to E73). His guard drops for the lay's 12 ticks; 12 ki. He strips a fistful of wire from his forearm wrap and drops it with a clutch of scrap plate (laid on rubble, it wires the rubble already there). On the ground it sets as a flat wired frame of plates 2 bh across; in the air it hangs as a wired knot. It arms in 30 ticks: dim, then a slow glow along the wires.

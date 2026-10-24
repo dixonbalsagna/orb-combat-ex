@@ -47,6 +47,9 @@ Everything fires from the heel of an open palm that turns from edge to flat as i
 - **The way out (E64).** Each press the rival makes takes 4 ticks off, with one counted every 6 ticks. RT's burst breaks the net after its first 12 ticks. A torn net whips back and burns out in sparks, and the slack cools to dull blue and crumbles.
 - **Answers to the throw (E62).** A dodge tap in its last 8 ticks, a shot of trade power 2 or more in flight, or a blow on him in his wind-up. It beats a guard. **In reach,** his hand closes the net at once.
 
+- **The call-out (Legal ln06):** one per grab, on the throw or in the first 10 ticks of the catch, inside the hit-stop and never extending it. Nothing is said over the rest of the catch, the payoff or a kneel.
+- **The tow line is a thin cord** (Legal, Addendum 3), never a rope or a chain.
+
 ## LB + RB: the trap, the snare and the mines (E70 to E79)
 - **B, his trap: Trip Pillar.**
   - **Laying it.** With his guard up, his rear palm presses flat down: 12 ticks with the guard dropped, 12 ki. A square of cracked ground 1 bh across sets into the surface, with a faint cyan seam in its cracks. It is a ground trap, so laid in the air it sets into the ground below him.

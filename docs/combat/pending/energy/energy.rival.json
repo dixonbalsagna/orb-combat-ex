@@ -148,7 +148,8 @@
     ],
     "holdFromTicks": 14,
     "heldMode": "aim",
-    "_bands": "arrives within 25 ticks, 17% faster than the frame's 30 (inside E81's 20%); catch 40 at most"
+    "_bands": "arrives within 25 ticks, 17% faster than the frame's 30 (inside E81's 20%); catch 40 at most",
+    "_callout": "Legal ln06: one call-out per grab, on the throw or in the first 10 ticks of the catch, inside the hit-stop and never extending it; nothing said over the rest of the catch, the payoff or a kneel"
   },
   "trap": {
     "template": "own",

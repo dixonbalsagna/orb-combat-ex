@@ -131,7 +131,9 @@
     "holdFromTicks": 14,
     "heldKind": "charge",
     "heldLevelTicks": 24,
-    "heldCatchTicks": 40
+    "heldCatchTicks": 40,
+    "_callout": "Legal ln06: one call-out per grab, on the throw or in the first 10 ticks of the catch, inside the hit-stop and never extending it; nothing said over the rest of the catch, the payoff or a kneel",
+    "_towLine": "a thin cord, never a rope or chain (Legal, Addendum 3)"
   },
   "trap": {
     "template": "pillar",

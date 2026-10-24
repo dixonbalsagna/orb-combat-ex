@@ -84,7 +84,8 @@
       "en.empress.gather",
       "en.empress.heavy.stamp",
       "en.empress.heavy.open"
-    ]
+    ],
+    "_legal": "never a crescent and never a travelling wave front (Legal, Addendum 3): a seam in the ground"
   },
   "beam": {
     "shape": "sweeping: one thin straight cut from the mantle hem's edge, released at the end of an arm swing from the shoulder; never a fingertip, finger-gun, two-finger, hand-frame or spiral",
@@ -147,7 +148,9 @@
       "en.empress.grab.place",
       "en.empress.grab.catch",
       "en.empress.grab.slam"
-    ]
+    ],
+    "_callout": "Legal ln06: one call-out per grab, on the throw or in the first 10 ticks of the catch, inside the hit-stop and never extending it; nothing said over the rest of the catch, the payoff or a kneel",
+    "_e16": "Legal e16: no lines of light join the staves into a box or barrier; no dome, cell or hand sign; the kneel is the slam's landing only"
   },
   "trap": {
     "template": "line",

@@ -87,7 +87,7 @@ Every energy grab shares the frame:
 | **The Empress** | A cage: four banner staves stamped into the ground round him, their banners wrapping his arms and torso | **The slam:** he is dragged down into the ground under him and lands kneeling: a down send in place, under the spike's rules. The kneel is the landing, never a held humiliation (Legal e12) |
 | **The Demon Cyborg** | A lash: a crane hook on a line | **The throw:** a swing on the line flings him 6 bh along the stick |
 
-**Four looks and four payoffs, one of each, so no two grabs read alike.** Every bind takes arms, torso or body, never throat, face or hair. The held fighter struggles or braces, and nothing slows, zooms, taunts or finishes over a bound fighter (Legal e12). The answers are the frame's (E62): a dodge tap in the throw's last 8 ticks, a shot of trade power 2 or more meeting it in flight, or a blow on the grabber in his wind-up.
+**Four looks and four payoffs, one of each, so no two grabs read alike.** Every bind takes arms, torso or body, never throat, face or hair. The held fighter struggles or braces, and nothing slows, zooms, taunts or finishes over a bound fighter (Legal e12). **One call-out per grab** (ln06): on the throw or in the first 10 ticks of the catch, inside the hit-stop and never extending it, and nothing said over the rest of the catch, the payoff or a kneel. The Empress's staves are never joined by light into a box, a barrier or a dome (e16). The answers are the frame's (E62): a dodge tap in the throw's last 8 ticks, a shot of trade power 2 or more meeting it in flight, or a blow on the grabber in his wind-up.
 
 ### 3.4 Traps as defence that bites (Game Design's E70 to E79)
 

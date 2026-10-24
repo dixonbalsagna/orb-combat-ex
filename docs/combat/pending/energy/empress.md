@@ -16,7 +16,7 @@ Combat and Choreography, 2026-10-23. Fitted to Game Design's frame (`docs/design
 - **Tell and pose:** her palm turns up at her shoulder, never above her head. Charging, the palm's edge brightens a step at each level, and nothing is held on it. A tip of the wrist throws, and the crown forms as it leaves the hand (Legal e15).
 
 ## B tapped: Throne Quake (E41)
-- **Hers, the look:** B's gather is her blade hand drawing the hem across her body, a brightness step along the hand's edge, her heel lifting. Let go before level 1 and she stamps. A hairline seam races from her heel to him (the seeking shot), and at him splits open into a lens of light 4 bh tall that slams shut. The ground bows into the frame's 2 bh crater and column of flame.
+- **Hers, the look:** B's gather is her blade hand drawing the hem across her body, a brightness step along the hand's edge, her heel lifting. Let go before level 1 and she stamps. (Never a crescent and never a travelling wave front, Legal Addendum 3: a seam in the ground.) A hairline seam races from her heel to him (the seeking shot), and at him splits open into a lens of light 4 bh tall that slams shut. The ground bows into the frame's 2 bh crater and column of flame.
 - **The frame's:** 16-tick wind-up, a hold from 20 ticks, let go any time before level 1 for the blast (E40), worth a heavy, 5 bh knock-back, 10 ki, power 4.
 
 ## B held: Hem Sweep, the beam (E42 to E50, E90 to E97)
@@ -33,6 +33,9 @@ Combat and Choreography, 2026-10-23. Fitted to Game Design's frame (`docs/design
 - **The frame's:** throw within 30 ticks; catch at most 40; X, Y or B in the catch fires that shot; the way out is his presses (4 ticks each) or RT's burst (E64); 10 and 14 ki; the lockouts.
 - **Answers (E62):** a dodge tap in the throw's last 8 ticks; any shot of power 2 or more that meets the bundle in flight; a blow on her in her wind-up. It beats a guard.
 - **Reads:** one bundle tumbling in flight, then four staves standing still in the world. Broken, the banners tear loose and the staves topple and burn out. Never swords, rods or strings, never a dome, and it never shrinks.
+
+- **The call-out (Legal ln06):** one per grab, on the throw or in the first 10 ticks of the catch, inside the hit-stop and never extending it. Nothing is said over the rest of the catch, the payoff or a kneel.
+- **The staves stand apart (Legal e16):** no lines of light join them into a box or a barrier, and there is no dome, no cell and no hand sign. The kneel is the slam's landing only.
 
 ## LB + RB with B: Velvet Rope, the trap (E70 to E79)
 - **What:** a line across the air: two hem plates hang 4 bh apart with a rope of light between them. It is laid across the way between her and him, at her hand or flicked by the stick (E71).

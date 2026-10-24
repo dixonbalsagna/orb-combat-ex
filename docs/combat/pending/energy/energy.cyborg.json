@@ -70,7 +70,8 @@
     "atoms": [
       "en.cyborg.heavy.gather",
       "en.cyborg.heavy.swing"
-    ]
+    ],
+    "_gather": "the gather's hands stay on the chest plate, above the hip zone (Legal, Addendum 3)"
   },
   "beam": {
     "shape": "ragged jets from the chest grille's slats that merge side by side into one rough, uneven column, its edges tearing and wobbling on a seeded draw, embers falling away (render only). It never rotates: no spiral, drill or helix (e11)",
@@ -130,7 +131,8 @@
       "en.cyborg.grab.inreach",
       "en.cyborg.grab.catch",
       "en.cyborg.grab.throw"
-    ]
+    ],
+    "_callout": "Legal ln06: one call-out per grab, on the throw or in the first 10 ticks of the catch, inside the hit-stop and never extending it; nothing said over the rest of the catch, the payoff or a kneel"
   },
   "trap": {
     "template": "field",
