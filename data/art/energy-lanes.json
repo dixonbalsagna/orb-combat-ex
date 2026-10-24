@@ -1,0 +1,637 @@
+{
+  "version": 1,
+  "note": "Each fighter's energy colour lane for bolts, lobs, beams, grabs and traps (docs/art/energy-lanes.md, art/concepts/energy/energy-lanes.svg). Written by art/concepts/energy/gen.mjs; do not edit by hand. Proposal pending the EP, Combat, VFX and Legal; Tools adds the schema (docs/art/pending/art-energy-lanes.schema.json). Keys starting with an underscore are measurements and notes, not for the game to read.",
+  "rules": {
+    "parts": "Each kind has three colours: core (the bright centre), main (the colour a player names it by) and edge (the darker rim); every sprite also carries the keyline (#0a0d14). Flat colours, no gradients, no blur, no fades. Energy is never dimmed by the world light.",
+    "saturated_red": "No colour has R/(R+G+B) of 0.8 or more on stored OR linear values (Legal: red count 0, the flash check's strict reading). The data holds every colour under 0.78.",
+    "readability": "The sprite (core, main, edge) is 20 or more CIEDE2000 from every ground, rock, vegetation, subsoil and water tone of the 15 biomes at every sky key with the world-light tint, and 14 or more under protan, deutan and tritan (Machado 2009, severity 1). The main colour alone does not meet it everywhere (see _measure.main_alone): the Protagonist's cyan misses on the open sea, beach shallows and the pale ices, the Rival's deep violet misses against dark water and dark ground on all 15 biomes, the Cyborg's orange misses on warm ground, the Empress's ivory on snow. The bright core and the dark edge carry the sprite (see _measure.sprite).",
+    "distinct": "Mains of any two lanes are 25 or more apart by default and 20 or more under each simulation (docs/art/colour-vision.md rule 2).",
+    "cyborg": "Wreckage and metal only (Legal): slag and scrap throw, never a person-shaped or body-part shape. The \"metal\" greys are for the scrap pieces that carry the glow.",
+    "empress": "Lines, not balls (Legal): bolts and beams are thin blades and lines, the lob is a tumbling block, the trap is two ropes. Colour is ivory with a deep gold rim; no saturated red anywhere in the lane."
+  },
+  "lanes": {
+    "protagonist": {
+      "name": "The Protagonist",
+      "family": "cyan to azure",
+      "light_colour": "#10c2ea",
+      "kinds": {
+        "bolt": {
+          "core": "#f2fdff",
+          "main": "#10c2ea",
+          "edge": "#0b7fb8"
+        },
+        "lob": {
+          "core": "#ecfaff",
+          "main": "#1eb0f4",
+          "edge": "#0e6cc4"
+        },
+        "beam": {
+          "core": "#f4faff",
+          "main": "#2e90f2",
+          "edge": "#0d58c4"
+        },
+        "grab": {
+          "core": "#ecfcff",
+          "main": "#1ca6f4",
+          "edge": "#0c78c0"
+        },
+        "trap": {
+          "core": "#e8f5ff",
+          "main": "#2a9cf4",
+          "edge": "#0f62bc"
+        }
+      },
+      "_measure": {
+        "red_max_linear": 0.316,
+        "red_max_stored": 0.326,
+        "red_ok": true,
+        "main_alone": {
+          "default": {
+            "worst": 8.7,
+            "biome": "ocean",
+            "at": "sea lit at noon",
+            "kind": "beam",
+            "below_need": [
+              "ocean",
+              "beach",
+              "highland",
+              "volcanic"
+            ]
+          },
+          "protan": {
+            "worst": 10.4,
+            "biome": "ocean",
+            "at": "sea lit at noon",
+            "kind": "beam",
+            "below_need": [
+              "ocean",
+              "sea_ice",
+              "ice_sheet",
+              "beach"
+            ]
+          },
+          "deutan": {
+            "worst": 9.3,
+            "biome": "ocean",
+            "at": "sea lit at noon",
+            "kind": "beam",
+            "below_need": [
+              "ocean",
+              "beach"
+            ]
+          },
+          "tritan": {
+            "worst": 6.6,
+            "biome": "beach",
+            "at": "water shallow at noon",
+            "kind": "beam",
+            "below_need": [
+              "beach",
+              "ocean",
+              "savanna",
+              "wetland",
+              "jungle",
+              "forest",
+              "desert"
+            ]
+          }
+        },
+        "sprite": {
+          "default": {
+            "worst": 31.4,
+            "biome": "beach",
+            "at": "water shallow noon",
+            "kind": "trap"
+          },
+          "protan": {
+            "worst": 21.2,
+            "biome": "sea_ice",
+            "at": "ground lit dawn",
+            "kind": "bolt"
+          },
+          "deutan": {
+            "worst": 27,
+            "biome": "sea_ice",
+            "at": "ground lit dawn",
+            "kind": "bolt"
+          },
+          "tritan": {
+            "worst": 20.7,
+            "biome": "plains",
+            "at": "ground lit noon",
+            "kind": "grab"
+          }
+        },
+        "sprite_with_keyline": {
+          "default": {
+            "worst": 34.7
+          },
+          "protan": {
+            "worst": 34.8
+          },
+          "deutan": {
+            "worst": 34.7
+          },
+          "tritan": {
+            "worst": 35.1
+          }
+        }
+      }
+    },
+    "rival": {
+      "name": "The Rival",
+      "family": "violet to magenta",
+      "light_colour": "#4420c4",
+      "kinds": {
+        "bolt": {
+          "core": "#f0e6ff",
+          "main": "#4420c4",
+          "edge": "#2e0c78"
+        },
+        "lob": {
+          "core": "#f6e6ff",
+          "main": "#5c1ca8",
+          "edge": "#3c0c6c"
+        },
+        "beam": {
+          "core": "#ffe8fb",
+          "main": "#80127e",
+          "edge": "#5a0c64"
+        },
+        "grab": {
+          "core": "#f4e6ff",
+          "main": "#521ab4",
+          "edge": "#340c78"
+        },
+        "trap": {
+          "core": "#eee4ff",
+          "main": "#4c20ac",
+          "edge": "#300c70"
+        }
+      },
+      "_measure": {
+        "red_max_linear": 0.501,
+        "red_max_stored": 0.471,
+        "red_ok": true,
+        "main_alone": {
+          "default": {
+            "worst": 13.4,
+            "biome": "tundra",
+            "at": "ground lit at night",
+            "kind": "trap",
+            "below_need": [
+              "tundra",
+              "wetland",
+              "mountains",
+              "ocean",
+              "volcanic",
+              "highland",
+              "plains",
+              "savanna",
+              "taiga",
+              "ice_sheet",
+              "sea_ice",
+              "forest",
+              "beach",
+              "desert",
+              "jungle"
+            ]
+          },
+          "protan": {
+            "worst": 3,
+            "biome": "ocean",
+            "at": "sea lit at night",
+            "kind": "beam",
+            "below_need": [
+              "ocean",
+              "beach",
+              "forest",
+              "volcanic",
+              "plains",
+              "desert",
+              "highland",
+              "mountains",
+              "savanna",
+              "tundra",
+              "taiga",
+              "ice_sheet",
+              "sea_ice",
+              "wetland",
+              "jungle"
+            ]
+          },
+          "deutan": {
+            "worst": 1.7,
+            "biome": "ocean",
+            "at": "sea shade at golden",
+            "kind": "beam",
+            "below_need": [
+              "ocean",
+              "sea_ice",
+              "ice_sheet",
+              "beach",
+              "plains",
+              "forest",
+              "highland",
+              "volcanic",
+              "mountains",
+              "tundra",
+              "taiga",
+              "desert",
+              "savanna",
+              "wetland",
+              "jungle"
+            ]
+          },
+          "tritan": {
+            "worst": 9.2,
+            "biome": "highland",
+            "at": "vegetation mid at sunset",
+            "kind": "beam",
+            "below_need": [
+              "highland",
+              "savanna",
+              "ice_sheet",
+              "sea_ice",
+              "ocean",
+              "plains",
+              "mountains",
+              "beach",
+              "volcanic",
+              "desert",
+              "forest",
+              "tundra",
+              "taiga"
+            ]
+          }
+        },
+        "sprite": {
+          "default": {
+            "worst": 34.4,
+            "biome": "taiga",
+            "at": "rock lit noon",
+            "kind": "trap"
+          },
+          "protan": {
+            "worst": 29.8,
+            "biome": "ocean",
+            "at": "sea lit golden",
+            "kind": "bolt"
+          },
+          "deutan": {
+            "worst": 30.3,
+            "biome": "beach",
+            "at": "water shallow golden",
+            "kind": "trap"
+          },
+          "tritan": {
+            "worst": 30.3,
+            "biome": "plains",
+            "at": "rock lit golden",
+            "kind": "beam"
+          }
+        },
+        "sprite_with_keyline": {
+          "default": {
+            "worst": 34.6
+          },
+          "protan": {
+            "worst": 33.6
+          },
+          "deutan": {
+            "worst": 34.4
+          },
+          "tritan": {
+            "worst": 34.3
+          }
+        }
+      }
+    },
+    "cyborg": {
+      "name": "The Demon Cyborg",
+      "family": "molten slag oranges, with scrap-metal grey (wreckage and metal only)",
+      "light_colour": "#f58a22",
+      "kinds": {
+        "bolt": {
+          "core": "#ffe9b0",
+          "main": "#f58a22",
+          "edge": "#4a2e20"
+        },
+        "lob": {
+          "core": "#ffe0a0",
+          "main": "#e8821e",
+          "edge": "#47291d"
+        },
+        "beam": {
+          "core": "#fff4cc",
+          "main": "#fa9a2e",
+          "edge": "#4a2e20"
+        },
+        "grab": {
+          "core": "#ffe4a8",
+          "main": "#ec8a24",
+          "edge": "#46291c"
+        },
+        "trap": {
+          "core": "#ffdc98",
+          "main": "#e07c1e",
+          "edge": "#40261a"
+        }
+      },
+      "metal": {
+        "light": "#a6abb3",
+        "mid": "#767c86",
+        "dark": "#4a4f58"
+      },
+      "_measure": {
+        "red_max_linear": 0.777,
+        "red_max_stored": 0.593,
+        "red_ok": true,
+        "main_alone": {
+          "default": {
+            "worst": 5.8,
+            "biome": "desert",
+            "at": "rock lit at sunset",
+            "kind": "trap",
+            "below_need": [
+              "desert",
+              "beach",
+              "savanna",
+              "mountains",
+              "highland"
+            ]
+          },
+          "protan": {
+            "worst": 1.9,
+            "biome": "plains",
+            "at": "ground lit at golden",
+            "kind": "beam",
+            "below_need": [
+              "plains",
+              "jungle",
+              "savanna",
+              "beach",
+              "forest",
+              "desert",
+              "wetland",
+              "tundra",
+              "mountains",
+              "volcanic",
+              "ocean",
+              "highland"
+            ]
+          },
+          "deutan": {
+            "worst": 3.7,
+            "biome": "savanna",
+            "at": "ground mid at golden",
+            "kind": "trap",
+            "below_need": [
+              "savanna",
+              "plains",
+              "desert",
+              "jungle",
+              "wetland",
+              "beach",
+              "tundra",
+              "forest",
+              "mountains",
+              "highland"
+            ]
+          },
+          "tritan": {
+            "worst": 4.7,
+            "biome": "desert",
+            "at": "rock lit at golden",
+            "kind": "beam",
+            "below_need": [
+              "desert",
+              "beach",
+              "savanna"
+            ]
+          }
+        },
+        "sprite": {
+          "default": {
+            "worst": 29.7,
+            "biome": "plains",
+            "at": "rock lit golden",
+            "kind": "bolt"
+          },
+          "protan": {
+            "worst": 28.7,
+            "biome": "tundra",
+            "at": "secondary mid dawn",
+            "kind": "lob"
+          },
+          "deutan": {
+            "worst": 28.7,
+            "biome": "plains",
+            "at": "rock lit golden",
+            "kind": "lob"
+          },
+          "tritan": {
+            "worst": 27.6,
+            "biome": "savanna",
+            "at": "ground mid dawn",
+            "kind": "lob"
+          }
+        },
+        "sprite_with_keyline": {
+          "default": {
+            "worst": 35.6
+          },
+          "protan": {
+            "worst": 34.7
+          },
+          "deutan": {
+            "worst": 35.7
+          },
+          "tritan": {
+            "worst": 33.9
+          }
+        }
+      }
+    },
+    "empress": {
+      "name": "The Empress",
+      "family": "ivory with a deep gold rim (lines, not balls)",
+      "light_colour": "#fffefa",
+      "kinds": {
+        "bolt": {
+          "core": "#ffffff",
+          "main": "#fffefa",
+          "edge": "#6b4c0e"
+        },
+        "lob": {
+          "core": "#ffffff",
+          "main": "#fffbee",
+          "edge": "#6b4c0e"
+        },
+        "beam": {
+          "core": "#ffffff",
+          "main": "#ffffff",
+          "edge": "#7a560e"
+        },
+        "grab": {
+          "core": "#ffffff",
+          "main": "#fffaf0",
+          "edge": "#5e420c"
+        },
+        "trap": {
+          "core": "#ffffff",
+          "main": "#fff7e6",
+          "edge": "#6b4c0e"
+        }
+      },
+      "_measure": {
+        "red_max_linear": 0.666,
+        "red_max_stored": 0.55,
+        "red_ok": true,
+        "main_alone": {
+          "default": {
+            "worst": 4.2,
+            "biome": "ice_sheet",
+            "at": "ground lit at noon",
+            "kind": "grab",
+            "below_need": [
+              "ice_sheet",
+              "sea_ice",
+              "beach",
+              "desert"
+            ]
+          },
+          "protan": {
+            "worst": 4.3,
+            "biome": "ice_sheet",
+            "at": "ground lit at noon",
+            "kind": "grab",
+            "below_need": [
+              "ice_sheet",
+              "sea_ice",
+              "beach"
+            ]
+          },
+          "deutan": {
+            "worst": 4.2,
+            "biome": "ice_sheet",
+            "at": "ground lit at noon",
+            "kind": "grab",
+            "below_need": [
+              "ice_sheet",
+              "sea_ice",
+              "beach"
+            ]
+          },
+          "tritan": {
+            "worst": 3.6,
+            "biome": "ice_sheet",
+            "at": "ground lit at noon",
+            "kind": "grab",
+            "below_need": [
+              "ice_sheet",
+              "sea_ice",
+              "beach"
+            ]
+          }
+        },
+        "sprite": {
+          "default": {
+            "worst": 28.1,
+            "biome": "desert",
+            "at": "ground lit dawn",
+            "kind": "beam"
+          },
+          "protan": {
+            "worst": 28.2,
+            "biome": "savanna",
+            "at": "water shallow noon",
+            "kind": "beam"
+          },
+          "deutan": {
+            "worst": 26.8,
+            "biome": "beach",
+            "at": "rock lit noon",
+            "kind": "beam"
+          },
+          "tritan": {
+            "worst": 26.9,
+            "biome": "tundra",
+            "at": "secondary mid sunset",
+            "kind": "beam"
+          }
+        },
+        "sprite_with_keyline": {
+          "default": {
+            "worst": 36.1
+          },
+          "protan": {
+            "worst": 36.1
+          },
+          "deutan": {
+            "worst": 36.1
+          },
+          "tritan": {
+            "worst": 36.1
+          }
+        }
+      }
+    }
+  },
+  "_distinct": [
+    {
+      "a": "protagonist",
+      "b": "rival",
+      "default": 35.7,
+      "protan": 27.2,
+      "deutan": 24.1,
+      "tritan": 31.4
+    },
+    {
+      "a": "protagonist",
+      "b": "cyborg",
+      "default": 50.3,
+      "protan": 47.6,
+      "deutan": 51.6,
+      "tritan": 54
+    },
+    {
+      "a": "protagonist",
+      "b": "empress",
+      "default": 28.7,
+      "protan": 22.2,
+      "deutan": 28.1,
+      "tritan": 28.8
+    },
+    {
+      "a": "rival",
+      "b": "cyborg",
+      "default": 56.8,
+      "protan": 60.2,
+      "deutan": 58.7,
+      "tritan": 31.7
+    },
+    {
+      "a": "rival",
+      "b": "empress",
+      "default": 62.7,
+      "protan": 57.3,
+      "deutan": 57,
+      "tritan": 56.2
+    },
+    {
+      "a": "cyborg",
+      "b": "empress",
+      "default": 29.1,
+      "protan": 29.5,
+      "deutan": 25.8,
+      "tritan": 28.7
+    }
+  ],
+  "_distinct_minimum": {
+    "default": 28.7,
+    "protan": 22.2,
+    "deutan": 24.1,
+    "tritan": 28.7
+  }
+}
