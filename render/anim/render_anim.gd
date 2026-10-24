@@ -42,6 +42,7 @@ static var grip_layer: bool = true            # the clinch's grip layer (docs/an
 static var recoil_flips: bool = true          # recoil exits and ricochets (docs/combat/choreography-feel.md): Encounter's cue `recoil` turns the struck body over in an arc (back flip, handspring, back tuck, skip, ricochet); inert without the cue; --no-recoil-flips is the before
 static var press_ack: bool = true            # the anticipation of a press that has to wait (Encounter's cue press_ack, text queued): the first frames of the wind-up on the press tick, handed over to the real one; --no-press-ack is the before
 static var struggle_dig: bool = true         # the beam struggle's dig-in (S.game.clash.mid): the pushed-back fighter sinks, trembles and is dragged back along the ground, the winner leans in; --no-struggle-dig is the before
+static var grip_feed: bool = true            # the grip fed from the sim's grapple (DirGrapple.now and its cues) as five stages: the reach, the tie-up by grade, the pummel, the leader's set and the cave; inert with the grapple off; --no-grip-feed is the before
 static var shiver_by_weight: bool = true       # the struck body's shake follows the hit-stop's weight (2 ticks a little over half, 8 as before, 24 at 1.6) and a blow with no stop of its own (a mash's later blows) still shakes, small; --no-shiver-weight is the before
 static var kick_retreat: bool = true          # a kick whose hips are past its target gives ground instead of swinging the thigh back through its limit (data sockets.json limbs.foot.min_fwd); false is the before
 static var mash_press: bool = true            # a run of mashed blows leans in (data styles.<style>.press_run); false is the before
@@ -133,6 +134,8 @@ static func _read_args() -> void:
 			press_ack = false
 		elif a == "--no-struggle-dig":
 			struggle_dig = false
+		elif a == "--no-grip-feed":
+			grip_feed = false
 		elif a == "--no-shiver-weight":
 			shiver_by_weight = false
 		elif a == "--step3-cues":
@@ -373,6 +376,16 @@ static func consume(S: SimState, events: Array) -> void:
 					elif kd == "press_ack" and String(e.text) == "queued":
 						# a press that has to wait, on its press tick: source its button cell (x, y, b), n the tick it is due to start (-1 when the wait is not a cooldown), amount the ticks to it
 						fighter(S, S.fighters[who]).on_press_ack(String(_ev(e, "source", "")), int(roundf(float(_ev(e, "n", -1.0)))), int(roundf(float(_ev(e, "amount", -1.0)))), t_cue)
+					elif kd == "grapple_end":
+						# the grapple's end: a throw (text throw_across, thrown_up, thrown_down or reversal, the actor the thrower) plays his own side of it; a send past him is the one he did not face
+						var gt: int = int(_ev(e, "target", -1))
+						var past: bool = false
+						if gt >= 0 and gt < S.fighters.size():
+							past = absf(S.fighters[gt].vx) > 1.0 and signf(S.fighters[gt].vx) != signf(SimWrap.sdx(S.fighters[who].x, S.fighters[gt].x))
+						fighter(S, S.fighters[who]).on_grip_throw(String(e.text), past, t_cue)
+					elif kd == "grapple_pummel":
+						# a pummel for the better grip (text step or sharp): the free hand swims in
+						fighter(S, S.fighters[who]).on_grip_pummel(String(e.text), t_cue)
 					elif kd == "charge_full":
 						fighter(S, S.fighters[who]).on_charge_full(t_cue)
 					elif kd == "tech":

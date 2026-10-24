@@ -299759,6 +299759,687 @@
       }
     },
     {
+      "id": "anim-grip-feed-valid",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/schema": "anim.grip_feed/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-grip-feed-underscore-key-ok",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-grip-feed-key-required-schema",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "del": [
+            "/schema"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-grip-feed-key-required-grade-ticks",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "del": [
+            "/grade_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-grip-feed-key-required-kind-ticks",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "del": [
+            "/kind_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-grip-feed-key-required-release-ticks",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "del": [
+            "/release_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-grip-feed-key-required-throw-release-ticks",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "del": [
+            "/throw_release_ticks"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-grip-feed-key-required-pummel",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "del": [
+            "/pummel"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-grip-feed-key-required-set-pose",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "del": [
+            "/set_pose"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-grip-feed-key-required-cave-pose",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "del": [
+            "/cave_pose"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-grip-feed-key-required-grips",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "del": [
+            "/grips"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-grip-feed-unknown-key",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "anim-grip-feed-schema-version",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/schema": "anim.grip_feed/2"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/schema"
+      }
+    },
+    {
+      "id": "anim-grip-feed-grade-ticks-zero",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/grade_ticks": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grade_ticks"
+      }
+    },
+    {
+      "id": "anim-grip-feed-grade-ticks-over-30",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/grade_ticks": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/grade_ticks"
+      }
+    },
+    {
+      "id": "anim-grip-feed-kind-ticks-zero",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/kind_ticks": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/kind_ticks"
+      }
+    },
+    {
+      "id": "anim-grip-feed-kind-ticks-over-30",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/kind_ticks": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/kind_ticks"
+      }
+    },
+    {
+      "id": "anim-grip-feed-release-ticks-zero",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/release_ticks": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/release_ticks"
+      }
+    },
+    {
+      "id": "anim-grip-feed-release-ticks-over-30",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/release_ticks": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/release_ticks"
+      }
+    },
+    {
+      "id": "anim-grip-feed-throw-release-ticks-zero",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/throw_release_ticks": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/throw_release_ticks"
+      }
+    },
+    {
+      "id": "anim-grip-feed-throw-release-ticks-over-30",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/throw_release_ticks": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/throw_release_ticks"
+      }
+    },
+    {
+      "id": "anim-grip-feed-throw-release-fraction",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/throw_release_ticks": 6.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/throw_release_ticks"
+      }
+    },
+    {
+      "id": "anim-grip-feed-throw-release-not-a-number",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/throw_release_ticks": "soon"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/throw_release_ticks"
+      }
+    },
+    {
+      "id": "anim-grip-feed-grade-fraction",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/grade_ticks": 2.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/grade_ticks"
+      }
+    },
+    {
+      "id": "anim-grip-feed-pummel-key-missing",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "del": [
+            "/pummel/w"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/pummel"
+      }
+    },
+    {
+      "id": "anim-grip-feed-pummel-unknown-key",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/pummel/force": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/pummel/force"
+      }
+    },
+    {
+      "id": "anim-grip-feed-pummel-in-negative",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/pummel/in_ticks": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/pummel/in_ticks"
+      }
+    },
+    {
+      "id": "anim-grip-feed-pummel-hold-over-30",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/pummel/hold_ticks": 31
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/pummel/hold_ticks"
+      }
+    },
+    {
+      "id": "anim-grip-feed-pummel-in-zero-ok",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/pummel/in_ticks": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-grip-feed-pummel-out-over-30",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/pummel/out_ticks": 40
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/pummel/out_ticks"
+      }
+    },
+    {
+      "id": "anim-grip-feed-pummel-w-over-one",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/pummel/w": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/pummel/w"
+      }
+    },
+    {
+      "id": "anim-grip-feed-pummel-w-negative",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/pummel/w": -0.2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/pummel/w"
+      }
+    },
+    {
+      "id": "anim-grip-feed-set-pose-shape",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/set_pose": "Set It"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/set_pose"
+      }
+    },
+    {
+      "id": "anim-grip-feed-set-pose-not-cs-hold",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/set_pose": "ak.x_p.set"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/set_pose"
+      }
+    },
+    {
+      "id": "anim-grip-feed-set-pose-missing",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/set_pose": "cs.hold.no_such_pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-grip-feed-pose",
+        "pointer": "/set_pose"
+      }
+    },
+    {
+      "id": "anim-grip-feed-cave-pose-missing",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/cave_pose": "cs.hold.no_such_pose"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-grip-feed-pose",
+        "pointer": "/cave_pose"
+      }
+    },
+    {
+      "id": "anim-grip-feed-grips-kind-missing",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "del": [
+            "/grips/tie"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/grips"
+      }
+    },
+    {
+      "id": "anim-grip-feed-grips-kind-unknown",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/grips/choke": {
+              "hand_r": "collar_r"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/grips/choke"
+      }
+    },
+    {
+      "id": "anim-grip-feed-grips-hand-unknown",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/grips/reach/hand_x": "collar_r"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "propertyNames",
+        "pointer": "/grips/reach/hand_x"
+      }
+    },
+    {
+      "id": "anim-grip-feed-grips-empty",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/grips/reach": {}
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minProperties",
+        "pointer": "/grips/reach"
+      }
+    },
+    {
+      "id": "anim-grip-feed-grips-region-shape",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/grips/reach/hand_r": "Collar R"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/grips/reach/hand_r"
+      }
+    },
+    {
+      "id": "anim-grip-feed-grips-region-missing",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/grips/reach/hand_r": "no_such_region"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-grip-feed-region",
+        "pointer": "/grips/reach/hand_r"
+      }
+    },
+    {
+      "id": "anim-grip-feed-grips-tie-region-missing",
+      "schema": "anim-grip-feed.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/grip_feed.json",
+          "set": {
+            "/grips/tie/hand_l": "no_such_region"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:anim-grip-feed-region",
+        "pointer": "/grips/tie/hand_l"
+      }
+    },
+    {
       "id": "fight-ricochet-angle-zero",
       "schema": "fight-ricochet.schema.json",
       "mutate": [

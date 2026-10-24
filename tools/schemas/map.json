@@ -552,6 +552,10 @@
       "schema": "anim-press-ack.schema.json"
     },
     {
+      "match": "data/anim/grip_feed.json",
+      "schema": "anim-grip-feed.schema.json"
+    },
+    {
       "match": "data/anim/struggle.json",
       "schema": "anim-struggle.schema.json"
     },

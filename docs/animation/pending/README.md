@@ -26,3 +26,37 @@ Account: `docs/animation/struggle-dig-in.md`. Clip: `homework/struggle-dig-in/st
 
 - The beam struggle's loser digs in (the squash pose's legs, pelvis and spine, a tremble, the drawn body dragged back along the ground, up to 9 units) and the winner leans in 2.5 units, by `S.game.clash.mid`. `RenderAnim.struggle_dig`, `--no-struggle-dig`.
 - `data/anim/struggle.json` is a new key set: **Tools' closed schema needs an entry** (the request is in the account).
+
+## Parked: `grip-stages.patch` (2026-10-23), render side only; apply after `shiver-by-weight.patch`, `press-ack.patch` and `struggle-dig-in.patch`
+
+Account: `docs/animation/grip-stages.md`. Clip: `homework/grip-stages/grip-stages-before-after.gif`.
+
+- The grip layer's feed from the sim's grapple (`DirGrapple.now`, the cue `grapple_pummel`): the tell's reach, the tie-up by grade as five stages (the grade eases a step at a time), the leader's set at two ahead and the cave at two behind (wave `cl2`, prefix `cs`, 2 poses), the pummel, a gentle release. `RenderAnim.grip_feed`, `--no-grip-feed`. Inert while the grapple is off.
+- `data/anim/grip_feed.json` is a new key set: **Tools' closed schema needs an entry** (the request is in the account).
+
+## Parked: `grip-throws.patch` (2026-10-23), render side only; apply after `grip-stages.patch`
+
+Account: the throws section of `docs/animation/grip-stages.md`. Clip: `homework/grip-stages/grip-throws-before-after.gif`.
+
+- The grapple's end as a throw: Encounter's `grapple_end` cue (`throw_across`, `thrown_up`, `thrown_down`, `reversal`) plays the thrower's own sequence from `throws.json` (the wave `pair3`, now loaded with the feed), started so the release lands on the sim's send tick; the hold lets go over 6 ticks, hands not chasing. `_test_grip_throw`.
+- One key added to `data/anim/grip_feed.json` (`throw_release_ticks`): Tools' schema for that file (requested with `grip-stages`) takes it.
+
+## Parked: `lunge-crouch.patch` (2026-10-23), render side plus one data key and its schema, apply on main
+
+Account: `docs/animation/lunge-crouch.md`. Clip: `docs/animation/img/lunge-crouch-before-after.gif`.
+
+- The mid-band lunge's authored wind-up crouch (light 6 ticks, heavy 10, the return's 10) drawn from Encounter's `lunge_light`, `lunge_heavy` and `return` cues on the press tick, deepening over the cue's ticks and handed to the travel over 6. `data/anim/press_ack.json` gains `lunge` and `tools/schemas/anim-press-ack.schema.json` the key (granted on Orb's word).
+
+## Parked: `flight-locomotion.patch` (2026-10-23), render side plus a new data file; apply after `lunge-crouch.patch`
+
+Account: `docs/animation/flight-locomotion.md`. Clip: `docs/animation/img/flight-locomotion-before-after.gif`.
+
+- Window 1 of Orb's push: a free fighter in the air leans into acceleration on an underdamped spring (the Protagonist floaty, the Anti-hero crisp), flares and leans back on a hard stop, coils at a dash's press, banks into a curve and breathes in the hover. Read from the sim's velocity, never written; every ramp 6 ticks or more. `RenderAnim.flight_loco`, `--no-flight-loco`.
+- `data/anim/locomotion.json` is a new key set: **Tools' schema `anim.locomotion/1` is needed** (the shape is in the account's schema request; granted on Orb's word).
+
+## Parked: `ground-locomotion.patch` (2026-10-23), render side plus a new data file; apply after `flight-locomotion.patch`
+
+Account: `docs/animation/ground-locomotion.md`. Clip: `docs/animation/img/ground-locomotion-before-after.gif`.
+
+- Window 2 of Orb's push: a free fighter on the ground walks and runs on a gait that follows the distance he covers (thighs, knee lift, hip bob, shoulders against the pelvis), kicks off the ground when he rises and absorbs his landing by the arrival speed and the surface (sand slides and sinks, rock and paving are crisp, rubble stumbles, water wades), each fighter his own (the Protagonist long and loose, the Anti-hero short and quick). `RenderAnim.ground_loco`, `--no-ground-loco`.
+- `data/anim/ground_motion.json` is a new key set: **Tools' schema `anim.ground_motion/1` is needed** (the shape is in the account; granted on Orb's word).

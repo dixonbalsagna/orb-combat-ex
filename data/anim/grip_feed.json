@@ -1,0 +1,15 @@
+{
+  "schema": "anim.grip_feed/1",
+  "_about": "The grip in the bodies as five stages, fed from the sim (docs/animation/grip-stages.md). Until now the grip layer (data/anim/clinch.json) waited for a read nothing sent. AnimFighter._hold_feed builds it every frame from Encounter's DirGrapple.now (mode tell or clinch, role catcher or caught, grip his grade -2 to 2) and the cues grapple_pummel and grapple_end: a catch's tell shows the catcher's reach (the caught shows nothing: a blow can still beat the grab), the clinch is the tie-up with the grade mixed in over `grade_ticks` a step (five stages: two behind, one behind, even, one ahead, two ahead), a pummel is its hand swimming in over the seat, and the end lets the hold go. At the top grade the leader sets his hips (`set_pose`, the throw can only come from here) and the one two behind caves (`cave_pose`). A kind that changes (the reach into the tie-up) crossfades over `kind_ticks` and a hold lets go over `release_ticks`. `grips` names the region each gripping hand goes to, by kind. Nothing here moves a position; with the grapple off (data/director/interrupts.json grapple.enabled false) no read exists and nothing plays. Render only, outside the sim's data hash. First values, Animation's.",
+  "grade_ticks": 12,
+  "kind_ticks": 10,
+  "release_ticks": 10,
+  "throw_release_ticks": 6,
+  "pummel": {"in_ticks": 4, "hold_ticks": 3, "out_ticks": 6, "w": 0.8},
+  "set_pose": "cs.hold.set",
+  "cave_pose": "cs.hold.cave",
+  "grips": {
+    "reach": {"hand_r": "collar_r"},
+    "tie": {"hand_r": "collar_r", "hand_l": "upper_arm_l"}
+  }
+}

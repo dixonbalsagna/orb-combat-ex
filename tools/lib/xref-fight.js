@@ -1116,6 +1116,17 @@ function xrefFight({ get, err, esc, isObj, plainKeys, docsFor, root }) {
         for (const [k, id] of Object.entries(cs)) if (!k.startsWith('_') && typeof id === 'string' && !okPose(id)) err(PK, `/fighters/${esc(who)}/${esc(k)}`, 'anim-press-ack-pose', `pose "${id}" is not in poses.json nor a wave's poses file`);
       }
     }
+    const gfd = get('data/anim/grip_feed.json');
+    if (isObj(gfd)) {
+      const GF = 'data/anim/grip_feed.json';
+      for (const k of ['set_pose', 'cave_pose']) if (typeof gfd[k] === 'string' && posesP.size && !posesP.has(gfd[k])) err(GF, `/${k}`, 'anim-grip-feed-pose', `pose "${gfd[k]}" is not in poses.json nor a wave's poses file`);
+      const gskt = get('data/anim/sockets.json');
+      const regs = isObj(gskt) && isObj(gskt.regions) ? Object.keys(gskt.regions).filter((r) => !r.startsWith('_')) : [];
+      if (regs.length && isObj(gfd.grips)) for (const [kind, hs] of Object.entries(gfd.grips)) {
+        if (kind.startsWith('_') || !isObj(hs)) continue;
+        for (const [h, r] of Object.entries(hs)) if (!h.startsWith('_') && typeof r === 'string' && !regs.includes(r)) err(GF, `/grips/${esc(kind)}/${esc(h)}`, 'anim-grip-feed-region', `region "${r}" is not a region of data/anim/sockets.json`);
+      }
+    }
     const thr = get('data/anim/throws.json');
     if (isObj(thr) && isObj(thr.sends)) {
       const used = new Set();

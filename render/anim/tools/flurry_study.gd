@@ -67,6 +67,10 @@ const CUE_SCENARIOS := {
 	"pa_heavy": {"kind": "pa", "actor": 0, "target": -1, "text": "y", "span": 24, "n": 56, "label": "press-tick anticipation: a heavy that has to wait 24 ticks"},
 	"pa_sig": {"kind": "pa", "actor": 0, "target": -1, "text": "b", "span": 24, "n": 56, "label": "press-tick anticipation: a signature that has to wait 24 ticks"},
 	"st_dig": {"kind": "st", "actor": 0, "target": -1, "text": "dig", "span": 0, "n": 90, "label": "the beam struggle: both fire, the meeting point drifts to the right-hand fighter and he digs in (then the left-hand one)"},
+	"gp_stages": {"kind": "gp", "actor": 0, "target": -1, "text": "stages", "span": 0, "n": 124, "label": "the grip as five stages: the reach, the tie-up at even, one ahead, two ahead (the leader sets his hips, the other caves), a pummel, the end (the left-hand fighter leads)"},
+	"gp_throw_up": {"kind": "gp2", "actor": 0, "target": -1, "text": "up", "span": 0, "n": 70, "label": "the grip ends in a throw up: the leader sets his hips at two ahead, then lifts"},
+	"gp_throw_down": {"kind": "gp2", "actor": 0, "target": -1, "text": "down", "span": 0, "n": 70, "label": "the grip ends in a throw down: the leader sets his hips at two ahead, then drives him down"},
+	"gp_throw_across": {"kind": "gp2", "actor": 0, "target": -1, "text": "across", "span": 0, "n": 70, "label": "the grip ends in a throw across: the leader sets his hips at two ahead, then sends him"},
 	"cue_interject": {"kind": "windup", "actor": 0, "target": -1, "text": "interject", "span": 24, "dur": 24.0, "label": "an interjection's tell: the guard (the left one) shows a 24-tick wind-up"},
 }
 const PAL_A := {"body": Color("#3d8fdc"), "legs": Color("#1b1f2a"), "arms": Color("#e6b995"), "skin": Color("#efc7a2"), "gear": Color("#cdd6e4"), "accent": Color("#4fb9a8"), "hair": Color("#22c7a0")}
@@ -153,6 +157,8 @@ func _ready() -> void:
 			RenderAnim.shiver_by_weight = false
 		if float(_js("window.__nodig || 0", 0.0)) > 0.0:   # the beam struggle's before: no dig-in, the rest as it was
 			RenderAnim.struggle_dig = false
+		if float(_js("window.__nogf || 0", 0.0)) > 0.0:   # the grip stages' before: no hold
+			RenderAnim.grip_feed = false
 		if float(_js("window.__noab || 0", 0.0)) > 0.0:   # RG2's before: no mid-air skid
 			RenderAnim.air_brake = false
 		if float(_js("window.__novary || 0", 0.0)) > 0.0:   # RG0's before: every launch flails the same, a hit always folds
@@ -478,6 +484,37 @@ func _step_tick() -> void:
 		stc.dur = 5.0
 		stc.mid = 0.5 + 0.42 * smoothstep(8.0, 40.0, float(k)) * (1.0 - smoothstep(66.0, 86.0, float(k)))
 		S.game.clash = stc
+	if sc.has("cue") and String(sc.cue.kind) == "gp":
+		# the sim's grapple read, as DirGrapple.now gives it: a tell (the catcher reaches), the clinch at even, one ahead, two ahead, the end
+		var gg: int = 0 if k < 44 else (1 if k < 74 else 2)
+		var gd0: Dictionary = {}
+		var gd1: Dictionary = {}
+		if k >= 4 and k < 16:
+			gd0 = {"mode": "tell", "role": "catcher", "grip": 0, "pulse": 0, "t0": 0}
+			gd1 = {"mode": "tell", "role": "caught", "grip": 0, "pulse": 0, "t0": 0}
+		elif k >= 16 and k < 108:
+			gd0 = {"mode": "clinch", "role": "catcher", "grip": gg, "pulse": 0, "t0": 0}
+			gd1 = {"mode": "clinch", "role": "caught", "grip": -gg, "pulse": 0, "t0": 0}
+		f0.state = "locked"
+		f1.state = "locked"
+		if RenderAnim.grip_feed:
+			RenderAnim.fighter(S, f0)._feed_from(S, f0, gd0, S.T)
+			RenderAnim.fighter(S, f1)._feed_from(S, f1, gd1, S.T)
+			if k == 90:
+				RenderAnim.fighter(S, f0).on_grip_pummel("step", S.T)
+	if sc.has("cue") and String(sc.cue.kind) == "gp2":
+		var td0: Dictionary = {}
+		var td1: Dictionary = {}
+		if k >= 4 and k < 40:
+			td0 = {"mode": "clinch", "role": "catcher", "grip": 2, "pulse": 0, "t0": 0}
+			td1 = {"mode": "clinch", "role": "caught", "grip": -2, "pulse": 0, "t0": 0}
+		f0.state = "locked"
+		f1.state = "locked"
+		if RenderAnim.grip_feed:
+			RenderAnim.fighter(S, f0)._feed_from(S, f0, td0, S.T)
+			RenderAnim.fighter(S, f1)._feed_from(S, f1, td1, S.T)
+			if k == 40:
+				RenderAnim.fighter(S, f0).on_grip_throw({"up": "thrown_up", "down": "thrown_down", "across": "throw_across"}.get(String(sc.cue.text), "throw_across"), false, S.T)
 	if sc.has("cue") and String(sc.cue.kind) == "rd":
 		# a launched body flying free (no ground): the flail, the brace and, with the brake event, the skid. The study draws a body in place, so only its shape shows
 		if k == 0:
@@ -510,7 +547,7 @@ func _step_tick() -> void:
 			he.amount = 90.0
 			he.region = "core"
 			RenderAnim.consume(S, [he])
-	if sc.has("cue") and k == 10 and String(sc.cue.kind) != "beam" and String(sc.cue.kind) != "rd" and String(sc.cue.kind) != "fs" and String(sc.cue.kind) != "st" and String(sc.cue.kind) != "pa" and String(sc.cue.kind) != "rc":
+	if sc.has("cue") and k == 10 and String(sc.cue.kind) != "beam" and String(sc.cue.kind) != "rd" and String(sc.cue.kind) != "fs" and String(sc.cue.kind) != "gp2" and String(sc.cue.kind) != "gp" and String(sc.cue.kind) != "st" and String(sc.cue.kind) != "pa" and String(sc.cue.kind) != "rc":
 		var cd: Dictionary = sc.cue
 		var ce := SimState.FxEvent.new()
 		ce.type = "cue"
@@ -569,6 +606,7 @@ func _step_tick() -> void:
 			pivots[bi].scale = Vector3(af.vface, 1.0, 1.0)
 			var wx: float = -DIST * 0.5 if i == 0 else DIST * 0.5 + offset + tier_slack
 			pivots[bi].position = Vector3(wx, -43.0, 0.0)
+			pivots[bi].visible = not (sc.has("cue") and String(sc.cue.kind) == "gp2" and i == 1 and k > 41)   # the thrown body is the sim's and the ragdoll's: the study does not throw him, so he is not drawn after the release
 			if sc.has("cue") and String(sc.cue.text) == "poses" and i == 0 and not rd_poses.is_empty():
 				var pid: String = String(rd_poses[(k / 10) % rd_poses.size()])
 				if AnimData.pose_exists(pid):

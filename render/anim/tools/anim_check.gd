@@ -2680,6 +2680,199 @@ func _test_struggle() -> void:
 	print("struggle dig-in: %s" % " | ".join(seen))
 
 
+## The grip fed from the sim as five stages (docs/animation/grip-stages.md). A catch's tell shows the catcher's reach and the caught nothing; the clinch is the tie-up, and the grade (-2 to 2) mixes the bodies in a step at a time:
+## the leader at two ahead sets his hips (lower than at one ahead), the one at two behind caves (up on the heels); a pummel swims a hand in and out; the end lets the hold go. Nothing may pop (the largest move of a pelvis
+## in a tick), no NaN, no joint past a limit, the hands stay within the grip budget on their regions, and the sim's position is never moved.
+func _grip_feed_run(who: String) -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = who
+	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+	f0.x = 1000.0
+	f1.x = 1034.0
+	f0.y = 0.0
+	f1.y = 0.0
+	f0.state = "locked"
+	f1.state = "locked"
+	var res := {"nan": 0, "viol": 0, "gap": 0.0, "caught_shows": 0, "moved": 0.0}
+	var p0: Array = []
+	var p1: Array = []
+	var a0: AnimFighter = null
+	var a1: AnimFighter = null
+	for k in range(130):
+		S.tick = 9500 + k
+		S.T = 900.0 + float(k) / 60.0
+		var g0: Dictionary = {}
+		var g1: Dictionary = {}
+		if k >= 4 and k < 14:
+			g0 = {"mode": "tell", "role": "catcher", "grip": 0, "pulse": 0, "t0": 9504}
+			g1 = {"mode": "tell", "role": "caught", "grip": 0, "pulse": 0, "t0": 9504}
+		elif k >= 14 and k < 104:
+			var gr: int = 0 if k < 40 else (1 if k < 62 else 2)
+			g0 = {"mode": "clinch", "role": "catcher", "grip": gr, "pulse": 0, "t0": 9514}
+			g1 = {"mode": "clinch", "role": "caught", "grip": -gr, "pulse": 0, "t0": 9514}
+		a0 = RenderAnim.fighter(S, f0)
+		a1 = RenderAnim.fighter(S, f1)
+		a0._feed_from(S, f0, g0, S.T)
+		a1._feed_from(S, f1, g1, S.T)
+		if k == 78:
+			a0.on_grip_pummel("step", S.T)
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		a0 = RenderAnim.solve(S, f0)
+		a1 = RenderAnim.solve(S, f1)
+		if k >= 4 and k < 14 and not a1._gr.is_empty():
+			res.caught_shows += 1
+		for af in [a0, a1]:
+			for i in range(AnimRig.N):
+				if is_nan(af.q[i].x) or is_nan(af.q[i].w):
+					res.nan += 1
+			res.viol += AnimJoints.violations(af.q, af._rd.shape_key).size()
+		if k >= 30 and k < 100:
+			res.gap = maxf(float(res.gap), maxf(float(a0.debug.get("grip_gap_max", 0.0)), float(a1.debug.get("grip_gap_max", 0.0))))
+		p0.append([a0.socket("pelvis").x, a0.socket("pelvis").y])
+		p1.append([a1.socket("pelvis").x, a1.socket("pelvis").y])
+		res.moved = maxf(float(res.moved), absf(f0.x - 1000.0) + absf(f1.x - 1034.0))
+	res["p0"] = p0
+	res["p1"] = p1
+	return res
+
+
+func _test_grip_feed() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: Array = []
+	for who in ["PROTAGONIST", "RIVAL"]:
+		var r: Dictionary = _grip_feed_run(who)
+		if int(r.nan) > 0 or int(r.viol) > 0 or float(r.moved) > 0.001:
+			bad.append("%s: nan %d viol %d moved %.3f" % [who, int(r.nan), int(r.viol), float(r.moved)])
+		if int(r.caught_shows) > 0:
+			bad.append("%s: the caught shows a hold in the catch's tell (%d frames)" % [who, int(r.caught_shows)])
+		# the five stages: the leader's hips go down a step at a time, the one behind's come up; the top step is lower than the one before it
+		var y_even: float = float(r.p0[38][1])
+		var y_one: float = float(r.p0[60][1])
+		var y_two: float = float(r.p0[98][1])
+		var b_even: float = float(r.p1[38][1])
+		var b_two: float = float(r.p1[98][1])
+		seen.append("%s leader hips even %.1f one ahead %.1f set %.1f; behind caves %.1f to %.1f; grip gap %.2f" % [who.substr(0, 1), y_even, y_one, y_two, b_even, b_two, float(r.gap)])
+		if not (y_one < y_even - 0.8 and y_two < y_one - 1.5):
+			bad.append("%s: the leader's hips do not go down a stage at a time (%.1f, %.1f, %.1f)" % [who, y_even, y_one, y_two])
+		if b_two < b_even + 1.0:
+			bad.append("%s: the one two behind does not cave up (%.1f to %.1f)" % [who, b_even, b_two])
+		if float(r.gap) > 4.0:
+			bad.append("%s: the hands end %.2f short of their regions (4 allowed, 3 the budget)" % [who, float(r.gap)])
+		# nothing pops: a pelvis never moves more than 2.5 units in a tick, through the reach into the tie-up, the steps, the pummel and the end
+		var step: float = 0.0
+		for k in range(1, 130):
+			step = maxf(step, Vector2(float(r.p0[k][0]) - float(r.p0[k - 1][0]), float(r.p0[k][1]) - float(r.p0[k - 1][1])).length())
+			step = maxf(step, Vector2(float(r.p1[k][0]) - float(r.p1[k - 1][0]), float(r.p1[k][1]) - float(r.p1[k - 1][1])).length())
+		if step > 2.5:
+			bad.append("%s: a pelvis moves %.2f units in a tick (2.5 at most)" % [who, step])
+		# the end lets go: back to the standing body
+		var rest: float = absf(float(r.p0[129][1]) - float(r.p0[0][1])) + absf(float(r.p0[129][0]) - float(r.p0[0][0]))
+		if rest > 1.0:
+			bad.append("%s: the leader is %.2f off his stand after the hold ends" % [who, rest])
+	_expect(bad.is_empty(), "the grip as five stages: the reach, the tie-up by grade, the pummel, the set and the cave, the end: %s" % str(bad))
+	print("grip stages: %s" % " | ".join(seen))
+
+
+## The grapple's end as a throw (docs/animation/grip-stages.md; data/anim/throws.json). The grapple_end cue (throw_across, thrown_up, thrown_down, reversal) plays the thrower's own sequence (both fighters, all four sends and the
+## send past him) from the tick the sim sends the other body, and the hold lets go without the hands chasing him. Nothing may be NaN or past a limit, the sequence plays and ends, and nothing pops.
+func _throw_probe(who: String, text: String, past: bool) -> Dictionary:
+	main.start_match(4, {"p1": false, "p2": false})
+	for i in range(10):
+		main.frame(1.0 / 60.0)
+	var S: SimState = main.host.S
+	var f0 = S.fighters[0]
+	var f1 = S.fighters[1]
+	RenderAnim._fighters.clear()
+	f0.id = who
+	f1.id = "PROTAGONIST" if who == "RIVAL" else "RIVAL"
+	f0.x = 1000.0
+	f1.x = 1034.0
+	f0.y = 0.0
+	f1.y = 0.0
+	f0.state = "locked"
+	f1.state = "locked"
+	var res := {"nan": 0, "viol": 0, "played": 0, "seq": "", "chased": 0, "step": 0.0, "rest": 0.0}
+	var prev := Vector2.ZERO
+	var base := Vector2.ZERO
+	for k in range(70):
+		S.tick = 9800 + k
+		S.T = 910.0 + float(k) / 60.0
+		var af0: AnimFighter = RenderAnim.fighter(S, f0)
+		var af1: AnimFighter = RenderAnim.fighter(S, f1)
+		var g0: Dictionary = {}
+		var g1: Dictionary = {}
+		if k >= 4 and k < 30:
+			g0 = {"mode": "clinch", "role": "catcher", "grip": 2, "pulse": 0, "t0": 9804}
+			g1 = {"mode": "clinch", "role": "caught", "grip": -2, "pulse": 0, "t0": 9804}
+		af0._feed_from(S, f0, g0, S.T)
+		af1._feed_from(S, f1, g1, S.T)
+		if k == 30:
+			af0.on_grip_throw(text, past, S.T)
+			res.seq = String(af0._seq.get("id", ""))
+			f1.x = 1034.0 + 200.0   # the other body has gone
+		var te := SimState.FxEvent.new()
+		te.type = "tick"
+		te.dt = 1.0 / 60.0
+		te.frozen = false
+		RenderAnim.consume(S, [te])
+		af0 = RenderAnim.solve(S, f0)
+		af1 = RenderAnim.solve(S, f1)
+		for af in [af0, af1]:
+			for i in range(AnimRig.N):
+				if is_nan(af.q[i].x) or is_nan(af.q[i].w):
+					res.nan += 1
+			res.viol += AnimJoints.violations(af.q, af._rd.shape_key).size()
+		var pel := Vector2(af0.socket("pelvis").x, af0.socket("pelvis").y)
+		if k == 0:
+			base = pel
+		if k > 0:
+			res.step = maxf(float(res.step), (pel - prev).length())
+		prev = pel
+		if k >= 30 and k < 46 and not af0._seq.is_empty():
+			res.played += 1
+		if k > 31 and int(af0.debug.get("grips", 0)) > 0 and k < 60:
+			pass
+	res.rest = (prev - base).length()
+	var a0b: AnimFighter = RenderAnim.fighter(S, f0)
+	res["grips_after"] = int(a0b.debug.get("grips", 0))
+	return res
+
+
+func _test_grip_throw() -> void:
+	AnimData.load_every_wave()
+	var bad: Array = []
+	var seen: Array = []
+	for who in ["PROTAGONIST", "RIVAL"]:
+		for tx in [["throw_across", false], ["throw_across", true], ["thrown_up", false], ["thrown_down", false], ["reversal", false]]:
+			var r: Dictionary = _throw_probe(who, String(tx[0]), bool(tx[1]))
+			seen.append("%s %s%s -> %s" % [who.substr(0, 1), String(tx[0]), " past" if bool(tx[1]) else "", String(r.seq).replace("zq.", "")])
+			if String(r.seq) == "":
+				bad.append("%s %s: no throw sequence started" % [who, String(tx[0])])
+			if int(r.nan) > 0 or int(r.viol) > 0:
+				bad.append("%s %s: nan %d viol %d" % [who, String(tx[0]), int(r.nan), int(r.viol)])
+			if float(r.step) > 8.0:
+				bad.append("%s %s: a pelvis moves %.2f units in a tick (8 at most: a throw is a quick blow, and the snappy profile solves on twos)" % [who, String(tx[0]), float(r.step)])
+			if float(r.rest) > 2.0:
+				bad.append("%s %s: the thrower is %.2f off his stand after the throw" % [who, String(tx[0]), float(r.rest)])
+	# nothing for a parting: the push-off, the time and a lapse are not throws
+	var none: Dictionary = _throw_probe("PROTAGONIST", "push_off", false)
+	if String(none.seq) != "":
+		bad.append("a push-off started a throw sequence (%s)" % String(none.seq))
+	_expect(bad.is_empty(), "the grapple's end as a throw: every send plays the thrower's own sequence clean and hands back: %s" % str(bad))
+	print("grip throws: %s" % " | ".join(seen))
+
+
 func _test_pulled() -> void:
 	AnimData.load_every_wave()
 	main.start_match(4, {"p1": false, "p2": false})
@@ -5355,6 +5548,8 @@ func _run() -> void:
 	_test_recoil()
 	_test_press_ack()
 	_test_struggle()
+	_test_grip_feed()
+	_test_grip_throw()
 	_test_shake()
 	_test_pulled()
 	_test_bends()

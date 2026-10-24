@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/anim-grip-feed",
+  "title": "anim.grip_feed/1",
+  "description": "data/anim/grip_feed.json: the grip in the bodies as five stages, fed from the sim (docs/animation/grip-stages.md; AnimFighter._hold_feed): how fast the grade, the kind and the release ease, the pummel's beat, the two poses the stages end in and the regions each hold's hands take. Render only, outside the sim's data hash. Version field: schema. Policy: closed except keys starting with an underscore; every key is required. Cross-references in tools/lib/xref-fight.js (anim-grip-feed-pose: both poses exist in a wave; anim-grip-feed-region: every region is in data/anim/sockets.json).",
+  "type": "object",
+  "required": [
+    "schema",
+    "grade_ticks",
+    "kind_ticks",
+    "release_ticks",
+    "throw_release_ticks",
+    "pummel",
+    "set_pose",
+    "cave_pose",
+    "grips"
+  ],
+  "properties": {
+    "schema": {
+      "const": "anim.grip_feed/1"
+    },
+    "grade_ticks": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 30,
+      "description": "Ticks the grip's grade takes to ease."
+    },
+    "kind_ticks": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 30,
+      "description": "Ticks a change of hold kind takes to ease."
+    },
+    "release_ticks": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 30,
+      "description": "Ticks the hold takes to let go."
+    },
+    "throw_release_ticks": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 30,
+      "description": "Ticks the hands take to let go when a throw has sent the other body away (sooner than release_ticks: they do not chase him)."
+    },
+    "pummel": {
+      "type": "object",
+      "required": [
+        "in_ticks",
+        "hold_ticks",
+        "out_ticks",
+        "w"
+      ],
+      "properties": {
+        "in_ticks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Ticks a pummel takes to come in."
+        },
+        "hold_ticks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Ticks it is held."
+        },
+        "out_ticks": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30,
+          "description": "Ticks it takes to go out."
+        },
+        "w": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How far the pummel is mixed in, 0 to 1."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The beat of a pummel."
+    },
+    "set_pose": {
+      "type": "string",
+      "pattern": "^cs\\.hold\\.[a-z0-9_]+$",
+      "description": "The pose of a set grip (a pose of a wave: rule anim-grip-feed-pose)."
+    },
+    "cave_pose": {
+      "type": "string",
+      "pattern": "^cs\\.hold\\.[a-z0-9_]+$",
+      "description": "The pose of a caved grip (a pose of a wave: rule anim-grip-feed-pose)."
+    },
+    "grips": {
+      "type": "object",
+      "required": [
+        "reach",
+        "tie"
+      ],
+      "properties": {
+        "reach": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "enum": [
+              "hand_r",
+              "hand_l"
+            ]
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "A region of data/anim/sockets.json (rule anim-grip-feed-region)."
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "Hand to the region it holds."
+        },
+        "tie": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "enum": [
+              "hand_r",
+              "hand_l"
+            ]
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "description": "A region of data/anim/sockets.json (rule anim-grip-feed-region)."
+          },
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "Hand to the region it holds."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The regions the hands take: the reach and the tie."
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

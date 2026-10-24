@@ -104,6 +104,8 @@ var _ack: Dictionary = {}               # the press-tick anticipation playing (o
 var _str_w: float = 0.0                # the beam struggle's dig-in: how far he is being pushed back (0 to 1), eased
 var _str_lead: float = 0.0             # ... and how far he is winning (0 to 1)
 var _str_slide: float = 0.0            # ... and how far the drawn body has been dragged back along the ground, in model units
+var _gr_gs: float = 0.0               # the grip's grade as drawn, eased a step at a time (five stages)
+var _gr_pm_side: int = 0              # which hand the next pummel swims in with (alternates)
 var _ab_on: bool = false                # the sim's air brake is on (an air_brake event)
 var _ab_w: float = 0.0                 # the skid's weight now: in over enter_ticks, out over exit_ticks
 var _ab_str: float = 0.0               # how hard it is from the deceleration he shows (0 to 1)
@@ -639,9 +641,17 @@ func _struggle_layer(S: SimState, f, dt: float) -> void:
 ## before the flight lead: it mixes the pose of the kind in at a weight that ramps over `ramp_ticks`, then solves each gripping hand onto its region (IK, never bending past a limit: a hand that cannot reach ends short, and the
 ## shortfall is counted). The sim places the pair; this layer never moves a position.
 func on_hold(read: Dictionary, T: float) -> void:
+	var from: String = ""
+	if not _gr.is_empty() and bool(_gr.get("on", false)) and _gr_w > 0.5 and String(_gr.get("kind", "")) != String(read.get("kind", "")):
+		from = String(_gr.get("kind", ""))   # the kind changes while he is held: the old pose gives way over kind_ticks
+	else:
+		_gr_gs = float(read.get("grade", 0.0))
 	_gr = read.duplicate(true)
 	_gr["on"] = true
 	_gr["t0"] = T
+	if from != "":
+		_gr["from"] = from
+		_gr["k_t0"] = T
 
 
 func on_hold_end(_T: float) -> void:
@@ -654,12 +664,101 @@ func gripping() -> bool:
 	return _gr_w > 0.001
 
 
+## The pose a hold's kind plays (data/anim/clinch.json): the pinned body has its own brace, a tie-up is the even seat (the grade is mixed in over it), the pummel is its hand's, the rest are named.
+func _hold_pose_id(kind: String, held_role: bool, P: Dictionary, C: Dictionary) -> String:
+	if held_role and C.get("held_poses", {}).has(kind):
+		return String(C.held_poses[kind])
+	if kind == "tie":
+		return String(P.get("seat", ""))
+	if kind == "pummel":
+		return String(P.get("pummel_" + String(_gr.get("side", "l")), ""))
+	return String(P.get(kind, ""))
+
+
+## The grip fed from the sim (docs/animation/grip-stages.md; data/anim/grip_feed.json). Every frame the hold's read is built from Encounter's DirGrapple.now (mode tell or clinch, role catcher or caught, grip the grade
+## this fighter holds, -2 to 2): a catch's tell shows the catcher's reach and the caught nothing, the clinch is the tie-up and the grade mixes the five stages in, the end of the grapple lets the hold go. With the grapple
+## off there is no read and nothing plays. The pummel and the end come as cues (`on_grip_pummel`).
+func _hold_feed(S: SimState, f, T: float) -> void:
+	if not RenderAnim.grip_feed or AnimData.grip_feed.is_empty() or AnimData.clinch.is_empty():
+		return
+	if not DirGrapple.on():
+		return   # no grapple, no read: a hold something else began (a test, a later feed) is left alone
+	_feed_from(S, f, DirGrapple.now(S, f), T)
+
+
+## The read from a grapple state (DirGrapple.now's shape; a seam for the tests): {} ends a hold this feed began.
+func _feed_from(S: SimState, f, g: Dictionary, T: float) -> void:
+	var fed: bool = bool(_gr.get("fed", false))
+	if g.is_empty():
+		if fed and bool(_gr.get("on", false)):
+			on_hold_end(T)
+		return
+	var mode: String = String(g.get("mode", ""))
+	if mode == "tell" and String(g.get("role", "")) != "catcher":
+		return   # the caught shows nothing: a blow can still beat the grab
+	var opp = SimRoster.opp(S, f)
+	var pi: int = S.fighters.find(opp)
+	if pi < 0:
+		return
+	var kind: String = "reach" if mode == "tell" else "tie"
+	var grade: float = float(g.get("grip", 0)) if mode == "clinch" else 0.0
+	if fed and bool(_gr.get("on", false)) and String(_gr.get("kind", "")) == kind and int(_gr.get("partner", -1)) == pi:
+		_gr["grade"] = grade   # the same hold: only the grade moves, and the layer eases to it
+		return
+	var grips: Dictionary = AnimData.grip_feed.get("grips", {}).get(kind, {})
+	on_hold({"partner": pi, "kind": kind, "role": "holder", "grade": grade, "side": "l", "grips": grips, "fed": true}, T)
+
+
+## A pummel for the better grip (cue grapple_pummel, text step or sharp): the free hand swims in over the seat, the hand alternating.
+func on_grip_pummel(_text: String, T: float) -> void:
+	if _gr.is_empty() or not bool(_gr.get("fed", false)) or String(_gr.get("kind", "")) != "tie":
+		return
+	_gr_pm_side = 1 - _gr_pm_side
+	_gr["pm_t"] = T
+	_gr["pm_side"] = "l" if _gr_pm_side == 0 else "r"
+	debug["grip_pummels"] = int(debug.get("grip_pummels", 0)) + 1
+
+
+## The grapple's end as a throw (Encounter's cue grapple_end: text throw_across, thrown_up, thrown_down or reversal, the actor the thrower; data/anim/throws.json). The leader has been in his set (the grip stage at two ahead);
+## the sim sends the other body on this tick, so the thrower's own sequence (the wave pair3, prefix zq: load, release, follow) plays from here as the release and the follow-through, and the hold lets go over a few ticks
+## without the hands chasing the body that has left. `past`: the send went behind him (the stick away), the throw of the other facing. The thrown body is the sim's and the ragdoll's.
+func on_grip_throw(text: String, past: bool, T: float) -> void:
+	if not RenderAnim.grip_feed or AnimData.throws.is_empty():
+		return
+	var send: String = ""
+	match text:
+		"throw_across", "reversal":
+			send = "across_away" if past else "across_toward"
+		"thrown_up":
+			send = "up"
+		"thrown_down":
+			send = "down"
+	if send == "":
+		return
+	var id: String = String(AnimData.throws.get("sends", {}).get(send, {}).get(pair_key, ""))
+	if id == "" or not AnimData.entries.has(id):
+		return
+	var en: Dictionary = AnimData.entries[id]
+	var dur: float = float(en.get("dur", 14))
+	# the sim has already sent him on this tick: the sequence is started so that its release lands on it, and the set the hold was in (the load) stands behind it, fading with the hold
+	var lead: float = float(en.phases[0].get("ticks", 0)) * DT
+	_seq = {"id": id, "t0": T - lead, "dur": dur * DT, "wt": 0.6 if RenderAnim.reduced_motion else 1.0, "fit": true}
+	if not _gr.is_empty():
+		_gr["on"] = false
+		_gr["thrown"] = true
+	debug["grip_throws"] = int(debug.get("grip_throws", 0)) + 1
+
+
 func _grip_layer(S: SimState, f, dt: float) -> void:
 	var C: Dictionary = AnimData.clinch
 	if C.is_empty() or not RenderAnim.grip_layer or _gr.is_empty():
 		_gr_w = 0.0
 		return
 	var ramp: float = maxf(float(C.get("ramp_ticks", 6)), 1.0)
+	if _gr.get("on", true) == false and RenderAnim.grip_feed and not AnimData.grip_feed.is_empty() and bool(_gr.get("fed", false)):
+		ramp = maxf(ramp, float(AnimData.grip_feed.get("release_ticks", 10)))
+		if bool(_gr.get("thrown", false)):
+			ramp = maxf(float(AnimData.grip_feed.get("throw_release_ticks", 6)), 1.0)   # the other body has left: the hands let go sooner, and do not chase him
 	var want: float = 1.0 if bool(_gr.get("on", false)) else 0.0
 	_gr_w = move_toward(_gr_w, want, dt * 60.0 / ramp)
 	if _gr_w <= 0.001 and want <= 0.0:
@@ -680,24 +779,43 @@ func _grip_layer(S: SimState, f, dt: float) -> void:
 	var P: Dictionary = C.get("poses", {})
 	var held_role: bool = String(_gr.get("role", "holder")) == "held"
 	# the pose of the kind: a tie-up is the even seat mixed toward the ahead or the behind pose by the grade; the pummel is its own hand's; the pinned body has its own brace
-	var pid: String = ""
-	if held_role and C.get("held_poses", {}).has(kind):
-		pid = String(C.held_poses[kind])
-	elif kind == "tie":
-		pid = String(P.get("seat", ""))
-	elif kind == "pummel":
-		pid = String(P.get("pummel_" + String(_gr.get("side", "l")), ""))
-	else:
-		pid = String(P.get(kind, ""))
+	var pid: String = _hold_pose_id(kind, held_role, P, C)
+	var F: Dictionary = AnimData.grip_feed if RenderAnim.grip_feed else {}
+	var ku: float = 1.0
+	if _gr.has("from"):
+		ku = smoothstep(0.0, maxf(float(F.get("kind_ticks", 6)), 1.0) * DT, S.T - float(_gr.get("k_t0", 0.0)))
+		if ku < 1.0:
+			var opid: String = _hold_pose_id(String(_gr.from), held_role, P, C)
+			if opid != "" and AnimData.pose_exists(opid):
+				_mix_pose(AnimData.pose(opid), w)
 	if pid != "" and AnimData.pose_exists(pid):
-		_mix_pose(AnimData.pose(pid), w)
+		_mix_pose(AnimData.pose(pid), w * ku)
 	if kind == "tie" and not held_role:
-		var g: float = clampf(float(_gr.get("grade", 0.0)) / 2.0, -1.0, 1.0)
+		# the five stages: the grade the sim gives eases a step at a time, so the bodies walk from one to the next
+		_gr_gs = move_toward(_gr_gs, float(_gr.get("grade", 0.0)), dt * 60.0 / maxf(float(F.get("grade_ticks", 8)), 1.0))
+		var g: float = clampf(_gr_gs / 2.0, -1.0, 1.0)
 		var gid: String = String(P.get("ahead" if g > 0.0 else "behind", ""))
 		if absf(g) > 0.001 and AnimData.pose_exists(gid):
 			_mix_pose(AnimData.pose(gid), w * absf(g))
-	# the grips: each hand onto its region of the partner
-	for hand in _gr.get("grips", {}):
+		if not F.is_empty():
+			# the last step of each end: the leader sets his hips (the throw can only come from here), the one two behind caves
+			var top: float = smoothstep(0.5, 1.0, absf(g))
+			var eid: String = String(F.get("set_pose", "")) if g > 0.0 else String(F.get("cave_pose", ""))
+			if top > 0.001 and AnimData.pose_exists(eid):
+				_mix_pose(AnimData.pose(eid), w * top)
+			# a pummel: the free hand swims in over the seat for a few ticks, in and out smoothly
+			if _gr.has("pm_t"):
+				var PM: Dictionary = F.get("pummel", {})
+				var pt: float = (S.T - float(_gr.pm_t)) / DT
+				var pin: float = maxf(float(PM.get("in_ticks", 4)), 1.0)
+				var phold: float = float(PM.get("hold_ticks", 3))
+				var pout: float = maxf(float(PM.get("out_ticks", 6)), 1.0)
+				var pe: float = smoothstep(0.0, pin, pt) * (1.0 - smoothstep(pin + phold, pin + phold + pout, pt))
+				var pmid: String = String(P.get("pummel_" + String(_gr.get("pm_side", "l")), ""))
+				if pe > 0.001 and AnimData.pose_exists(pmid):
+					_mix_pose(AnimData.pose(pmid), w * pe * float(PM.get("w", 0.8)))
+	# the grips: each hand onto its region of the partner (not once he has been thrown: the hands would chase him through the air)
+	for hand in (_gr.get("grips", {}) if not bool(_gr.get("thrown", false)) else {}):
 		_grip_one(S, f, opp, oaf, String(hand), String(_gr.grips[hand]), w)
 
 
@@ -2071,6 +2189,7 @@ func solve(S: SimState, f, prof: Dictionary) -> void:
 	_inertialise(dt, prof)
 	if RenderAnim.debug_checks:
 		layers = ("cue:" + String(_cue.get("kind", "")) + " " if not _cue.is_empty() else "") + ("rush " if _rushing else "") + ("react " if not _reacts.is_empty() else "") + ("ik " if _ci_w > 0.001 else "") + ("beam " if f.beamCharge != null else "") + (f.state + " ")
+	_hold_feed(S, f, T)
 	_grip_layer(S, f, dt)
 	_ack_layer(S, f, dt)
 	_air_brake_layer(S, f, dt)
