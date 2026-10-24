@@ -40,9 +40,9 @@
         "flavour": "One needle, standing point up."
       },
       "blast_mine": {
-        "name": "Hung Slab",
-        "alternate": "Hanging Plate",
-        "flavour": "A small slab, hanging flat. Don't touch."
+        "name": "Hanging Plate",
+        "alternate": "Hanging Slab",
+        "flavour": "A small plate, hanging flat. Don't touch."
       }
     },
     "EMPRESS": {
@@ -69,9 +69,9 @@
         "flavour": "A hook on a coil of cable. Step closer."
       },
       "spark_mine": {
-        "name": "Ticking Rivet",
-        "alternate": "Hung Rivet",
-        "flavour": "One hot rivet, hanging and ticking."
+        "name": "Hanging Rivet",
+        "alternate": "Pinned Rivet",
+        "flavour": "One hot rivet, hanging still in the air."
       },
       "blast_mine": {
         "name": "Slag Clot",
@@ -223,8 +223,8 @@
     "CYBORG": {
       "light": {
         "name": "Rivet Spray",
-        "alternate": "Spit Shot",
-        "flavour": "Spitting hot rivets! Small bites, big hunger!"
+        "alternate": "Rivet Line",
+        "flavour": "Hot rivets pop off my wrist plate, fast and many!"
       },
       "medium": {
         "name": "Slag Roll",
@@ -234,7 +234,7 @@
       "heavy": {
         "name": "Wrecker Swing",
         "alternate": "Crane Drop",
-        "flavour": "Chassis swings, wreckage flies. Duck, snack!"
+        "flavour": "Chassis swings, wreckage flies. Duck, scrap!"
       },
       "grab": {
         "name": "Crane Hook",
