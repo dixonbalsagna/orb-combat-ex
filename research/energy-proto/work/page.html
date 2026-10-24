@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Energy attacks prototype</title>
+<style>
+:root{--text-primary:#1f1f1c;--text-secondary:#5f5e5a;--text-muted:#888780;--surface-1:#f6f5f0;--border:#d3d1c7;--bg-accent:#e6f1fb;--text-accent:#0c447c}
+body{font-family:sans-serif;margin:16px;max-width:760px;color:var(--text-primary)}
+button{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;color:var(--text-primary)}
+.lab{font-size:13px;color:var(--text-secondary)}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+#steps{margin:10px 0 0;padding-left:22px;font-size:14px;line-height:1.5}
+#steps li{color:var(--text-muted)}
+#steps li.on{color:var(--text-primary);font-weight:bold}
+kbd{border:1px solid var(--border);border-radius:4px;padding:0 4px;font-size:12px}
+</style>
+</head>
+<body>
+<p>Energy overhaul prototype (Research, 2026-10-23), built to Game Design's frame (<code>docs/design/energy-overhaul.md</code>, with its section 19 rulings). The clips are its section 13, C1 to C10, plus C7b, the four grabs: watch one step by step, or Play. The four fighters carry Combat's energy kits (names provisional) in Art's colour lanes, drawn to Legal's look rules. Bodies are flat stand-ins, two at a time. Knock-backs are drawn at a third of the body's scale to fit the frame.</p>
+<div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;margin:0 0 12px">
+  <span class="lab">Clip</span><div id="rowC" class="row"></div>
+  <span class="lab">Mode</span><div id="rowM" class="row"></div>
+  <span class="lab" id="labL">Left (you)</span><div id="rowL" class="row"></div>
+  <span class="lab" id="labR">Right</span><div id="rowR" class="row"></div>
+  <label for="spd" class="lab">Playback speed</label>
+  <div style="display:flex;gap:10px;align-items:center"><input id="spd" type="range" min="10" max="100" step="5" value="100" style="width:180px"><span id="spdo" class="lab">100%</span></div>
+</div>
+<canvas id="cv" width="720" height="340" style="width:100%;border:0.5px solid var(--border);border-radius:12px;background:var(--surface-1)"></canvas>
+<ol id="steps"></ol>
+<p class="lab" id="keys">Play keys (the energy stance, RB, is held for you): <kbd>J</kbd> X light, <kbd>K</kbd> Y medium, <kbd>L</kbd> B heavy, <kbd>I</kbd> A grab, <kbd>Space</kbd> LB guard (with a face key it lays a mine, the trap or the snare), <kbd>Shift</kbd> LT dodge, <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> the stick (fly; it sprays the stream, leads a lob, sweeps a beam, flicks a mine). Tap <kbd>L</kbd> for the heavy blast, hold it for a beam in three steps, press it again while the beam is out to pulse. Hold <kbd>J</kbd> for the stream, hold <kbd>K</kbd> to charge the lob. Sound plays the charge clicks, the struggle's beat and the mines' notes after your first click.</p>
+<script>
+/*SIM*/
+(function () {
+var cv = document.getElementById('cv'), c = cv.getContext('2d');
+var R = { clear: function (col) { c.fillStyle = col; c.fillRect(0, 0, E.W, E.H); },
+  poly: function (p, col) { if (p.length < 6) return; c.fillStyle = col; c.beginPath(); c.moveTo(p[0], p[1]); for (var i = 2; i < p.length; i += 2) c.lineTo(p[i], p[i + 1]); c.closePath(); c.fill(); } };
+var st = { ci: 0, mode: 'demo', li: 0, ri: 1 }, run = null, keys = {}, spd = 1, acc = 0, last = 0, shown = -1, ac = null;
+function reset() { run = E.newRun(st.ci, st.mode, [st.li, st.ri]); if (st.mode === 'play') run.w.L.autoHome = false; shown = -1; renderSteps(); }
+function buttons(el, items, get, set) { el.innerHTML = ''; items.forEach(function (it, i) { var b = document.createElement('button'); b.type = 'button'; b.textContent = it; b.addEventListener('click', function () { set(i); paint(); reset(); b.blur(); audio(); }); el.appendChild(b); }); el._get = get; }
+function paintRow(el) { Array.prototype.forEach.call(el.children, function (b, i) { var on = el._get() === i; b.style.background = on ? 'var(--bg-accent)' : 'transparent'; b.style.color = on ? 'var(--text-accent)' : ''; }); }
+var rowC = document.getElementById('rowC'), rowM = document.getElementById('rowM'), rowL = document.getElementById('rowL'), rowR = document.getElementById('rowR');
+function paint() { [rowC, rowM, rowL, rowR].forEach(paintRow); var play = st.mode === 'play'; ['rowL', 'rowR', 'labL', 'labR'].forEach(function (id) { document.getElementById(id).style.opacity = play ? 1 : 0.4; }); }
+buttons(rowC, E.CLIPS.map(function (cl) { return cl.n; }), function () { return st.ci; }, function (i) { st.ci = i; st.mode = 'demo'; });
+buttons(rowM, ['Watch the clip', 'Play'], function () { return st.mode === 'demo' ? 0 : 1; }, function (i) { st.mode = i ? 'play' : 'demo'; });
+buttons(rowL, E.FIGHTERS.map(function (f) { return f.name; }), function () { return st.li; }, function (i) { st.li = i; st.mode = 'play'; });
+buttons(rowR, E.FIGHTERS.map(function (f) { return f.name; }), function () { return st.ri; }, function (i) { st.ri = i; st.mode = 'play'; });
+paint();
+var sl = document.getElementById('spd'); sl.addEventListener('input', function () { spd = sl.value / 100; document.getElementById('spdo').textContent = Math.round(sl.value) + '%'; });
+var MAP = { KeyJ: 'X', KeyK: 'Y', KeyL: 'B', KeyI: 'A', Space: 'LB', ShiftLeft: 'LT', ShiftRight: 'LT', KeyW: 'up', KeyS: 'down', KeyA: 'left', KeyD: 'right' };
+window.addEventListener('keydown', function (e) { if (MAP[e.code]) { audio(); if (st.mode !== 'play') { st.mode = 'play'; paint(); reset(); } keys[MAP[e.code]] = true; e.preventDefault(); } });
+window.addEventListener('keyup', function (e) { if (MAP[e.code]) { keys[MAP[e.code]] = false; e.preventDefault(); } });
+window.addEventListener('blur', function () { keys = {}; });
+function playKeys() { var w = run.w, d = w.L.dir, mx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0), my = (keys.up ? 1 : 0) - (keys.down ? 1 : 0);
+  return { RB: true, X: !!keys.X, Y: !!keys.Y, B: !!keys.B, A: !!keys.A, LB: !!keys.LB, LT: !!keys.LT, mx: mx, my: my, sx: mx * d, sy: my }; }
+function renderSteps() {
+  var ol = document.getElementById('steps'); ol.innerHTML = '';
+  if (st.mode === 'play') { var li = document.createElement('li'); li.textContent = 'Playing as the left fighter: the keys are below. The right fighter drifts in and out and fires now and then. Pick a clip to watch again.'; ol.appendChild(li); return; }
+  E.CLIPS[st.ci].steps.forEach(function (s) { var li = document.createElement('li'); li.textContent = s[1]; ol.appendChild(li); });
+}
+// sound: the charge clicks, the struggle's beat, the mines' arming tick and flare note (E42, E77)
+function audio() { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; } } }
+function tone(f0, f1, dur, vol, type) { if (!ac) return; var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime; o.type = type || 'square'; o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f1, t + dur); g.gain.setValueAtTime(vol, t); g.gain.linearRampToValueAtTime(0, t + dur); o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + dur + 0.02); }
+var SOUNDS = { click: function () { tone(1200, 1200, 0.03, 0.05); tone(70, 50, 0.08, 0.08, 'sine'); }, beat: function () { tone(220, 220, 0.06, 0.06, 'triangle'); }, arm: function () { tone(900, 900, 0.02, 0.03); }, flare: function () { tone(500, 1100, 0.1, 0.05, 'triangle'); }, boom: function () { tone(110, 40, 0.18, 0.08, 'sawtooth'); }, bolt: function () { tone(1600, 900, 0.03, 0.015); } };
+function frame(ts) {
+  if (!last) last = ts; var dt = Math.min(50, ts - last); last = ts; acc += dt / 16.667 * spd;
+  while (acc >= 1) { acc -= 1; E.stepRun(run, playKeys()); run.w.sound.forEach(function (k) { if (SOUNDS[k]) SOUNDS[k](); }); }
+  E.draw(run, R);
+  if (st.mode === 'demo') { var k = E.stepOf(run.clip, run.t); if (k !== shown) { shown = k; Array.prototype.forEach.call(document.getElementById('steps').children, function (li, i) { li.className = i === k ? 'on' : ''; }); } }
+  requestAnimationFrame(frame);
+}
+reset(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,989 @@
+// ==== ENERGY SIM (no DOM) ====
+// The energy overhaul (docs/design/energy-overhaul.md, E1 to E117, with section 19's rulings) as a 2D stand-in, with
+// Combat's four kits (docs/combat/pending/energy/*.md), Art's colour lanes (data/art/energy-lanes.json) and Legal's look
+// conditions (docs/legal/energy-overhaul-screen.md). No DOM: the page drives it, and research/energy-proto/gif.mjs runs
+// the same code in node for the homework clips. A fixed 60 ticks a second and no randomness (a hash for every jitter).
+// It draws only flat polygons, through R.poly(points, colour): no blur and no fades. Effects end by shrinking or breaking
+// into chips. Nothing is drawn on, over or between the fighters as a marker: a charge reads at the firing hand, the
+// forearm or the grille, and at the charger's own screen edge (E6, ruling 23). Every energy sprite carries Art's keyline.
+var E = (function () {
+'use strict';
+var W = 720, H = 340, GY = 300;
+var BH = 107;                       // a body height in pixels (feet to the top of the head)
+var KB = 34;                        // pixels per bh of knock-back and lead: distances are drawn at a third of the body's scale to fit the frame
+var MR = 40;                        // pixels per bh of a mine's or a trap's reach
+var KEY = '#0a0d14';                // Art's keyline, round every energy sprite
+var C = { bg: '#f3f1ea', ground: '#e8e6dc', line: '#888780', dirt: '#b3a991', scorch: '#6d6a62', shade: '#d6d4c9', grey: '#a9a79e',
+  stone: '#9a9284', stoneDark: '#6e675c', iron: '#5a5550', ironDark: '#3a3633',
+  sea: '#7fb0cf', seaDeep: '#5f93b6', seaLite: '#c9e2ef', house: '#c9bfa8', roof: '#8f6b55', wood: '#7a6650', leaf: '#5f8f4e',
+  leafDark: '#3f6a3a', char: '#4a463f', fire: '#e8873a', fire2: '#f3c552', lake: '#6fa6c8', ink: '#1f1f1c', hud: '#d3d1c7' };
+function lane(core, main, edge) { return { core: core, main: main, edge: edge }; }
+// The four kits (Combat, 2026-10-23), in Art's lanes. Names are Narrative's provisional ones.
+var FIGHTERS = [
+  { id: 'protagonist', name: 'Protagonist', body: '#1f4f4a', from: 'palm',
+    L: { bolt: lane('#f2fdff', '#10c2ea', '#0b7fb8'), lob: lane('#ecfaff', '#1eb0f4', '#0e6cc4'), beam: lane('#f4faff', '#2e90f2', '#0d58c4'), grab: lane('#ecfcff', '#1ca6f4', '#0c78c0'), trap: lane('#e8f5ff', '#2a9cf4', '#0f62bc') },
+    bolt: { k: 'streak', sp: 1.1, spread: 4, name: 'Knuckle Flick' }, lob: { k: 'lump', arc: 40, l2: 'bounce', name: 'Pier Lob' }, heavy: { k: 'teardrop', name: 'Whole Palm' },
+    beam: { k: 'broad', bw: 1.2, sweep: 32, name: 'Breakwater' }, grab: { k: 'net', pay: 'yank', arrive: 30, hold: 32, name: 'Harbour Net' }, trap: { k: 'pillar', name: 'Trip Pillar' } },
+  { id: 'rival', name: 'Rival', body: '#33295a', from: 'fist',
+    L: { bolt: lane('#f0e6ff', '#4420c4', '#2e0c78'), lob: lane('#f6e6ff', '#5c1ca8', '#3c0c6c'), beam: lane('#ffe8fb', '#80127e', '#5a0c64'), grab: lane('#f4e6ff', '#521ab4', '#340c78'), trap: lane('#eee4ff', '#4c20ac', '#300c70') },
+    bolt: { k: 'needle', sp: 1.15, spread: 4, fan: true, name: 'Pin Volley' }, lob: { k: 'block', arc: 32, l2: 'split', name: 'Stair Split' }, heavy: { k: 'plates', name: 'Rank Breaker' },
+    beam: { k: 'sheaf', bw: 0.85, sweep: 34, name: 'Lance Sheaf' }, grab: { k: 'ring', pay: 'bind', arrive: 25, hold: 40, name: 'Rank Ring' }, trap: { k: 'plate', name: 'Pressure Plate' } },
+  { id: 'empress', name: 'Empress', body: '#4e5428', from: 'edge',
+    L: { bolt: lane('#ffffff', '#fffefa', '#6b4c0e'), lob: lane('#ffffff', '#fffbee', '#6b4c0e'), beam: lane('#ffffff', '#ffffff', '#7a560e'), grab: lane('#ffffff', '#fffaf0', '#5e420c'), trap: lane('#ffffff', '#fff7e6', '#6b4c0e') },
+    bolt: { k: 'sliver', sp: 1.15, spread: 4, vert: true, name: 'Silk Slivers' }, lob: { k: 'crown', arc: 40, l2: 'cling', name: 'Crown Toss' }, heavy: { k: 'seam', name: 'Throne Quake' },
+    beam: { k: 'hem', bw: 0.4, sweep: 38, name: 'Hem Sweep' }, grab: { k: 'banners', pay: 'slam', arrive: 30, hold: 40, name: 'Banner Snare' }, trap: { k: 'rope', name: 'Velvet Rope' } },
+  { id: 'cyborg', name: 'Demon Cyborg', body: '#3b2f2b', from: 'grille',
+    L: { bolt: lane('#ffe9b0', '#f58a22', '#4a2e20'), lob: lane('#ffe0a0', '#e8821e', '#47291d'), beam: lane('#fff4cc', '#fa9a2e', '#4a2e20'), grab: lane('#ffe4a8', '#ec8a24', '#46291c'), trap: lane('#ffdc98', '#e07c1e', '#40261a') },
+    bolt: { k: 'rivet', sp: 0.9, spread: 8, name: 'Rivet Spray' }, lob: { k: 'slag', arc: 40, l2: 'roll', name: 'Slag Roll' }, heavy: { k: 'slab', name: 'Wrecker Swing' },
+    beam: { k: 'vent', bw: 0.9, sweep: 26, name: 'Furnace Vent' }, grab: { k: 'hook', pay: 'throw', arrive: 30, hold: 40, name: 'Crane Hook' }, trap: { k: 'pit', name: 'Scrap Pit' } }];
+
+// ---- the frame's numbers (first values, E20 to E104, section 19) ----
+var N = {
+  boltGap: 6, streamAfter: 16, streamBurst: 8, streamBurstGap: 6, streamGap: 8,
+  lobWind: 12, lobGap: 12, lobLv: [28, 48],
+  bWind: 16, bGap: 24, beamLv: [30, 54, 84], beamLen: [20, 36, 54], pulseGap: 6, pulseHeld: 8, pulseAdd: 4,
+  grabWind: 10, grabLock: 90, tearTake: 4, tearGap: 6, bindLate: 6,
+  lay: { spark: 4, blast: 8, trap: 12, snare: 8 }, arm: { spark: 12, blast: 20, trap: 30, snare: 20 },
+  reach: { spark: 1, blast: 2, snare: 1.5 }, flare: 6, fizzle: 720,
+  ki: { bolt: 1, lob: [6, 9, 12], heavy: 10, beam: [12, 20, 32], pulse: 2, grab: 10, spark: 3, blast: 6, trap: 12, snare: 10 },
+  hs: { lob: [4, 6, 8], heavy: 8, beamEnd: [6, 10], carry: 14, catchHs: 5, spark: 3, blast: 5, trap: 8, struggle: 20 },
+  beat: 20, beatWin: 4, struggleBeats: 15 };
+
+function hash(n) { n = (n ^ 61) ^ (n >>> 16); n = (n + (n << 3)) | 0; n ^= n >>> 4; n = Math.imul(n, 0x27d4eb2d); n ^= n >>> 15; return (n >>> 0) / 4294967296; }
+function ease(x) { return x < 0 ? 0 : x > 1 ? 1 : 1 - (1 - x) * (1 - x); }
+function easeIn(x) { return x < 0 ? 0 : x > 1 ? 1 : x * x; }
+function lerp(a, b, k) { return a + (b - a) * k; }
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function sy(alt) { return GY - alt; }        // screen y of an altitude
+
+// ---- shapes (flat arrays of x, y) ----
+function ngon(cx, cy, r, n, rot) { var p = []; for (var i = 0; i < n; i++) { var a = rot + i * 2 * Math.PI / n; p.push(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } return p; }
+function star(cx, cy, r1, r2, n, rot) { var p = []; for (var i = 0; i < 2 * n; i++) { var a = rot + i * Math.PI / n, r = i % 2 ? r2 : r1; p.push(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } return p; }
+function xf(pts, cx, cy, rot, sx, sy2) { var c = Math.cos(rot), s = Math.sin(rot), o = []; for (var i = 0; i < pts.length; i += 2) { var x = pts[i] * sx, y = pts[i + 1] * sy2; o.push(cx + x * c - y * s, cy + x * s + y * c); } return o; }
+function quad(R, ax, ay, bx, by, w0, w1, col) {
+  var dx = bx - ax, dy = by - ay, l = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / l, ny = dx / l;
+  R.poly([ax + nx * w0 / 2, ay + ny * w0 / 2, bx + nx * w1 / 2, by + ny * w1 / 2, bx - nx * w1 / 2, by - ny * w1 / 2, ax - nx * w0 / 2, ay - ny * w0 / 2], col);
+}
+function limb(R, a, b, w, col) { quad(R, a[0], a[1], b[0], b[1], w, w, col); R.poly(ngon(a[0], a[1], w / 2, 8, 0.39), col); R.poly(ngon(b[0], b[1], w / 2, 8, 0.39), col); }
+function ring(R, cx, cy, rx, ry, w, col, n) { n = n || 12; for (var i = 0; i < n; i++) { var a0 = i * 6.283 / n, a1 = (i + 1) * 6.283 / n; quad(R, cx + Math.cos(a0) * rx, cy + Math.sin(a0) * ry, cx + Math.cos(a1) * rx, cy + Math.sin(a1) * ry, w, w, col); } }
+// An energy sprite in its lane: the keyline, the edge (2 px), the main and the core. shp(l, w) gives the polygon at a
+// length and a width, so thin sprites keep a 2 px edge (Art's rule).
+function spr(R, shp, l, wd, lc, coreK) { R.poly(shp(l + 3.5, wd + 3.5), KEY); R.poly(shp(l + 1.8, wd + 1.8), lc.edge); R.poly(shp(l, wd), lc.main); if (l > 3 && wd > 1.5) R.poly(shp(l * (coreK || 0.45), wd * (coreK || 0.45)), lc.core); }
+// a strip of lane colour along a line (beams, ropes, cables): keyline, edge, main, core
+function strip(R, ax, ay, bx, by, wd, lc, core) { quad(R, ax, ay, bx, by, wd + 4, wd + 4, KEY); quad(R, ax, ay, bx, by, wd + 2, wd + 2, lc.edge); quad(R, ax, ay, bx, by, wd, wd, lc.main); if (core) quad(R, ax, ay, bx, by, wd * 0.4, wd * 0.4, lc.core); }
+
+// ---- the world ----
+function mkF(def, x, alt) {
+  return { def: def, x: x, y: alt, dir: 1, ki: 100, inp: {}, prev: {}, hs: 0, shake: 0, reel: 0, knock: null, send: null, dodge: null,
+    guard: false, layT: 0, xDown: 0, lastBolt: -99, stream: null, lastY: -99, ychg: null, bchg: null, lastB: -99,
+    beam: null, caught: null, catchTear: -99, melee: null, zip: null, lit: 0, notReady: 0, pulseHeldT: 0, armT: 0, armK: '',
+    home: x, homeY: alt, autoHome: true, kneel: 0, pressed: {}, grabbing: null, holding: null, grabLock: 0 };
+}
+function newWorld(clip, take, mode, picks) {
+  var T = clip ? clip.takes[take] : null, li = T ? T.l : picks[0], ri = T ? T.r : picks[1];
+  var w = { t: 0, clip: clip, take: take, mode: mode, L: mkF(FIGHTERS[li], 190, 50), R: mkF(FIGHTERS[ri], 530, 60), shots: [], fx: [], mines: [],
+    grabs: [], marks: [], struggle: null, seq: 0, scene: null, sound: [] };
+  w.L.foe = w.R; w.R.foe = w.L; w.L.side = 'L'; w.R.side = 'R';
+  if (T && T.setup) T.setup(w);
+  w.L.home = w.L.x; w.R.home = w.R.x; w.L.homeY = w.L.y; w.R.homeY = w.R.y;
+  if (w.scene && SCENES[w.scene.k].init) SCENES[w.scene.k].init(w);
+  return w;
+}
+function hand(f) { return [f.x + f.dir * 30, f.y + 72]; }
+function chest(f) { return [f.x, f.y + 70]; }
+// where his energy leaves him: the heel of the palm, the fist, the blade hand's edge, or the Cyborg's chest grille
+function muzzle(f, big) { return f.def.from === 'grille' && big ? [f.x + f.dir * 12, f.y + 70] : hand(f); }
+function sound(w, k) { w.sound.push(k); }
+function inBody(f, x, alt, pad) { return Math.abs(x - f.x) < 15 + (pad || 0) && alt > f.y - (pad || 0) && alt < f.y + BH + (pad || 0); }
+
+// ---- hits ----
+function hit(w, f, o) {
+  if (f.dodge && f.dodge.t >= 1 && f.dodge.t <= 12) return 'dodged';
+  var src = o.src, guarded = f.guard && !f.layT && !o.open && !o.unblockable && (o.anySide || (src && (src.x - f.x) * f.dir > 0));
+  if (guarded) { f.hs = Math.max(f.hs, Math.ceil((o.hs || 0) / 2)); chips(w, f.x + f.dir * 26, f.y + 70, 3, C.grey, 2); if (o.kb && !o.noGuardPush) knock(f, o.kb * 0.25, o.ang); return 'guard'; }
+  f.hs = Math.max(f.hs, o.hs || 0); f.shake = f.hs; f.zip = null; if (o.kb) f.melee = null;
+  f.reel = Math.max(f.reel, o.reel || 0);
+  if (o.kb) knock(f, o.kb, o.ang);
+  if (o.drop) dropCharge(f);
+  return 'hit';
+}
+function knock(f, bh, ang) { var d = bh * KB, a = ang == null ? (f.dir > 0 ? Math.PI : 0) : ang; f.knock = { vx: Math.cos(a) * d / 9, vy: -Math.sin(a) * d / 9, t: 0 }; }
+function dropCharge(f) { f.ychg = null; f.bchg = null; f.stream = null; }
+
+// ---- effects (shrink, never fade) ----
+function burst(w, x, y, r, dur, lc, n) { w.fx.push({ k: 'burst', x: x, y: y, r: r, t: 0, dur: dur, lc: lc, n: n || 7, rot: hash(w.seq++) * 6.28 }); }
+function chips(w, x, alt, n, col, sp, up) { for (var i = 0; i < n; i++) { var a = hash(w.seq++) * 6.283, v = (sp || 4) * (0.5 + hash(w.seq++)); w.fx.push({ k: 'chip', x: x, y: alt, vx: Math.cos(a) * v, vy: Math.abs(Math.sin(a)) * v * (up ? 1.4 : 0.6) + 1, s: 2 + hash(w.seq++) * 3, t: 0, dur: 16 + hash(w.seq++) * 14, col: col, rot: hash(w.seq++) * 6 }); } }
+function crater(w, x, bh) { if (w.scene && w.scene.k === 'sea') return; w.marks.push({ k: 'crater', x: x, w: bh * 26 }); if (w.marks.length > 40) w.marks.shift(); }
+var WHITE = lane('#ffffff', '#fff6e0', '#a89f8a'), SPARK = lane('#ffffff', '#f4efe3', '#8a857a');
+function fxStep(w) {
+  for (var i = w.fx.length - 1; i >= 0; i--) {
+    var e = w.fx[i]; e.t++;
+    if (e.k === 'chip') { e.x += e.vx; e.y += e.vy; e.vy -= 0.32; if (e.y < 0) { e.y = 0; e.vy *= -0.3; e.vx *= 0.6; } e.rot += 0.2; }
+    if (e.t >= e.dur) w.fx.splice(i, 1);
+  }
+}
+
+// ---- X: bolts, the mash and the stream (E20 to E23, ruling 16) ----
+function bolt(w, f, scale, fanAng) {
+  if (f.ki < N.ki.bolt) { f.notReady = 6; return; }
+  f.ki -= N.ki.bolt; f.lastBolt = w.t; f.armT = 5; f.armK = 'bolt'; f.boltHand = 1 - (f.boltHand || 0);
+  var d = f.def.bolt, h = hand(f), foe = f.foe, tc = chest(foe), dx = tc[0] - h[0], dy = tc[1] - h[1], dist = Math.sqrt(dx * dx + dy * dy) || 1;
+  var jit = (hash(w.seq++) - 0.5) * d.spread * Math.PI / 180, spray = (f.inp.sy || 0) * 0.26 + (fanAng || 0);
+  var sp = Math.max(9, dist / 30) * d.sp, a = Math.atan2(dy, dx) + (d.vert ? 0 : jit) + spray, seek = spray === 0 ? 0.12 : 0.02;
+  // aimed at his lob instead: where it will be when the bolt gets there (C2.6)
+  var lob = f.inp.shootLob && w.shots.filter(function (q) { return q.k === 'lob' && q.o === foe; })[0];
+  if (lob) { var best = 1, bd = 1e9; for (var n = 1; n < 60; n++) { var lx = lob.x + lob.vx * n - h[0], ly = lob.y + lob.vy * n - lob.g * n * (n - 1) / 2 - h[1]; if (ly + h[1] < 0) break; var e = Math.abs(Math.sqrt(lx * lx + ly * ly) / sp - n); if (e < bd) { bd = e; best = n; } }
+    a = Math.atan2(lob.y + lob.vy * best - lob.g * best * (best - 1) / 2 - h[1], lob.x + lob.vx * best - h[0]); seek = 0; }
+  w.shots.push({ k: 'bolt', o: f, x: h[0], y: h[1] + (d.vert ? jit * 60 : 0), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, sp: sp, s: 6 * (scale || 1), t: 0, seek: seek, power: 1 });
+  sound(w, 'bolt');
+}
+// ---- Y: the lob (E30 to E33), each kit's arc and level-2 form ----
+function throwLob(w, f, lv) {
+  var cost = N.ki.lob[lv]; if (f.ki < cost) { f.notReady = 6; return; }
+  f.ki -= cost; f.armT = 10; f.armK = 'throw'; f.lastThrowLv = lv;
+  var foe = f.foe, side = foe.x > f.x ? 1 : -1, lead = -(f.inp.sx || 0) * 4 * KB, tx = foe.x + side * lead + (f.inp.aimDx || 0);
+  var src = f.def.from === 'grille' ? muzzle(f, true) : [f.x + f.dir * 18, f.y + 76], T = f.def.lob.arc, g = 0.42, ty = foe.y + 40;
+  if (f.def.lob.k === 'lump') src = [f.x + f.dir * 24, f.y + 48];     // the Protagonist's underhand scoop leaves low
+  // the level-2 forms that travel (the bounce, the split, the roll) come down short of him and step, crack or roll the rest
+  var short = lv === 2 ? { bounce: 2.5, split: 3.5, roll: 3.2 }[f.def.lob.l2] : 0;
+  if (short) { tx -= side * short * KB; ty = 0; } else if (lead) ty = 0;     // a led lob comes down on the ground there
+  w.shots.push({ k: 'lob', o: f, lv: lv, x: src[0], y: src[1], vx: (tx - src[0]) / T, vy: ((ty - src[1]) + 0.5 * g * T * T) / T, g: g, s: 8 + 2.5 * lv, t: 0, power: 3 + lv, tx: tx, short: !!short });
+  sound(w, 'throw');
+}
+// ---- B: the heavy blast or the beam (E40 to E50, rulings 3 to 5) ----
+function heavyBlast(w, f) {
+  if (f.ki < N.ki.heavy) { f.notReady = 6; return; }
+  f.ki -= N.ki.heavy; f.lastB = w.t; f.armT = 14; f.armK = 'heavy';
+  var h = muzzle(f, true), foe = f.foe, tc = chest(foe), dx = tc[0] - h[0], dy = tc[1] - h[1], d = Math.sqrt(dx * dx + dy * dy) || 1, sp = Math.max(8, d / 34);
+  if (f.def.heavy.k === 'seam') { w.shots.push({ k: 'seam', o: f, x: f.x + f.dir * 8, y: 0, x0: f.x + f.dir * 8, vx: f.dir * Math.max(9, Math.abs(foe.x - f.x) / 30), vy: 0, s: 1, t: 0, power: 4 }); sound(w, 'heavy'); return; }
+  w.shots.push({ k: 'heavy', o: f, x: h[0] + f.dir * 10, y: h[1], vx: dx / d * sp, vy: dy / d * sp, sp: sp, s: 16, t: 0, seek: 0.08, power: 4 });
+  sound(w, 'heavy');
+}
+function fireBeam(w, f, lv) {
+  var h = muzzle(f, true), tc = chest(f.foe), a = Math.atan2(tc[1] - h[1], tc[0] - h[0]);
+  if (f.aimFlat) a = f.dir > 0 ? 0 : Math.PI;
+  f.ki -= N.ki.beam[lv - 1];
+  f.beam = { lv: lv, t: 0, dur: N.beamLen[lv - 1], base: N.beamLen[lv - 1], len: 0, a: a, pulses: [], caught: false, end: 0, buckle: 0 };
+  sound(w, 'beam');
+}
+function pulse(w, f, held) {
+  var b = f.beam; if (!b || b.end || w.t - (f.lastPulse || -99) < N.pulseGap) return false;
+  if (w.struggle) return false;             // E92: in a struggle the beat decides; pulses don't count
+  if (f.ki < N.ki.pulse) { f.notReady = 6; return false; }
+  f.lastPulse = w.t; f.ki -= N.ki.pulse; b.pulses.push({ s: 0, held: held }); b.dur = Math.min(b.dur + N.pulseAdd, b.base * 3); f.armT = 6; f.armK = 'pulse'; sound(w, 'pulse');
+  return true;
+}
+// ---- A: the energy grab (E60 to E66) ----
+function throwGrab(w, f) {
+  if (f.ki < N.ki.grab) { f.notReady = 6; return; }
+  f.ki -= N.ki.grab; f.armT = 10; f.armK = 'grab';
+  var h = f.def.grab.k === 'net' ? [f.x + f.dir * 20, f.y + 84] : hand(f);    // the net leaves from the shoulder, never the hip (Legal e15)
+  var g = { o: f, kind: f.def.grab.k, t: 0, st: 'fly', x: h[0], y: h[1], hold: 0, arrive: f.def.grab.arrive }; w.grabs.push(g); f.grabbing = g;
+  sound(w, 'grab');
+}
+// ---- LB + RB: mines, the trap and the snare (E70 to E78, ruling 24) ----
+function lay(w, f, kind, far) {
+  var cost = N.ki[kind]; if (f.ki < cost) { f.notReady = 6; return; }
+  f.ki -= cost; f.layT = N.lay[kind]; f.armT = N.lay[kind]; f.armK = 'lay';
+  var lean = f.inp.sx || 0, dist = lean * 3 * KB * (far ? 2 : 1) + (f.inp.layDx || 0), h = hand(f), tr = f.def.trap.k;
+  var ground = kind === 'trap' && tr !== 'rope';
+  var m = { o: f, kind: kind, x: clamp(h[0] + f.dir * dist, 30, W - 30), y: ground ? 0 : Math.max(0, f.y + 20), t: 0, st: 'arming', flare: 0, armedT: 0, gate: 0 };
+  if (kind === 'spark' || kind === 'blast') { var mines = w.mines.filter(function (q) { return q.o === f && (q.kind === 'spark' || q.kind === 'blast') && q.st !== 'gone'; }); if (mines.length >= 4) fizzle(w, mines[0]); }
+  else { var same = w.mines.filter(function (q) { return q.o === f && q.kind === kind && q.st !== 'gone'; }); if (same.length) fizzle(w, same[0]); }
+  w.mines.push(m); sound(w, 'lay');
+}
+function fizzle(w, m) { m.st = 'gone'; chips(w, m.x, m.y + 6, 3, C.grey, 2); }
+
+// ---- the fighters' tick ----
+function face(f) { if (!f.send && !f.knock && !f.dodge) f.dir = f.foe.x >= f.x ? 1 : -1; }
+function fighterStep(w, f) {
+  var i = f.inp, p = f.prev, pr = function (b) { return i[b] && !p[b]; };
+  f.pressed = { X: pr('X'), Y: pr('Y'), B: pr('B'), A: pr('A') };
+  f.armT = Math.max(0, f.armT - 1); f.notReady = Math.max(0, f.notReady - 1); f.layT = Math.max(0, f.layT - 1); f.lit = Math.max(0, f.lit - 1); f.kneel = Math.max(0, f.kneel - 1);
+  var busy = f.bchg || f.ychg || (f.beam && !f.beam.end) || f.stream;
+  if (!busy && !f.caught) f.ki = Math.min(100, f.ki + 5 / 60);
+  if (f.hs > 0) { f.hs--; f.shake = f.hs; f.prev = copyIn(i); return; }
+  if (f.send) { sendStep(w, f); f.prev = copyIn(i); return; }
+  if (f.knock) { var k = f.knock; f.x += k.vx; f.y = Math.max(0, f.y + k.vy); k.vx *= 0.86; k.vy *= 0.86; k.t++; throughMines(w, f); if (k.t > 18) f.knock = null; }
+  if (f.reel > 0) f.reel--;
+  if (f.caught) { if ((pr('X') || pr('Y') || pr('B') || pr('A')) && w.t - f.catchTear >= N.tearGap) { f.catchTear = w.t; var g = f.caught; g.hold = Math.max(0, g.hold - N.tearTake); g.tears = (g.tears || 0) + 1; chips(w, f.x, f.y + 70, 3, g.o.def.L.grab.main, 3, true); } f.prev = copyIn(i); return; }
+  if (f.dodge) { var d = f.dodge; d.t++; f.x += d.dx; f.y = clamp(f.y + d.dy, 0, 210); if (d.t >= 14) f.dodge = null; f.prev = copyIn(i); return; }
+  face(f);
+  // a dodge tap (LT), or a Guard press, drops any charge for nothing (E46, ruling 4)
+  if (pr('LT')) { dropCharge(f); if (f.beam && !f.beam.end) f.beam.end = 1; var sx0 = i.sx || 0, sy0 = i.sy || 0; if (!sx0 && !sy0) { sx0 = -0.6; sy0 = 0.7; } var l = Math.sqrt(sx0 * sx0 + sy0 * sy0) || 1; f.dodge = { t: 0, dx: f.dir * sx0 / l * 4.2, dy: sy0 / l * 4.2 }; sound(w, 'dodge'); f.prev = copyIn(i); return; }
+  if (pr('LB') && (f.bchg || f.ychg)) { dropCharge(f); sound(w, 'cancel'); }
+  if (f.zip) { zipStep(w, f); f.prev = copyIn(i); return; }
+  if (f.holding) { f.guard = false; f.prev = copyIn(i); return; }     // holding a catch: his presses are the catch's (E65), read in grabsStep
+  if (i.dodgeFlare && w.mines.some(function (m) { return m.st === 'flare' && m.victim === f; })) { dropCharge(f); f.dodge = { t: 0, dx: f.dir * 3.6, dy: 2.2 }; sound(w, 'dodge'); f.prev = copyIn(i); return; }
+  if (f.melee) meleeStep(w, f);
+  // the beam is out: he is rooted, the stick sweeps it at his rate, B pulses (E48, E50)
+  if (f.beam && !f.beam.end) {
+    if (pr('B')) pulse(w, f, false);
+    else if (i.B) { f.pulseHeldT++; if (f.pulseHeldT % N.pulseHeld === 0) pulse(w, f, true); }
+    if (!i.B) f.pulseHeldT = 0;
+    if (i.sy) f.beam.a += i.sy * f.def.beam.sweep * Math.PI / 180 / 60 * f.dir;
+    if (w.struggle) struggleInput(w, f);
+    f.prev = copyIn(i); return;
+  }
+  f.guard = !!i.LB;
+  var rb = i.RB !== false;
+  if (f.guard && rb) {                 // defensive energy (mask 3): each face press lays, and no shot is thrown (E70, ruling 10)
+    if (pr('X')) lay(w, f, 'spark', false); else if (pr('Y')) lay(w, f, 'blast', i.far); else if (pr('B')) lay(w, f, 'trap', i.far); else if (pr('A')) lay(w, f, 'snare', i.far);
+    f.stream = null;
+  } else if (!rb) {                    // the brawl (stand-ins for C9): X a jab, Y a heavier blow
+    if (pr('X') && !f.melee) f.melee = { k: 'jab', t: 0, dur: 9 }; else if (pr('Y') && !f.melee) f.melee = { k: 'hook', t: 0, dur: 13 };
+  } else if (!f.guard) {
+    var near = Math.abs(f.foe.x - f.x) < 82 && Math.abs(f.foe.y - f.y) < 50;
+    // X: one bolt a press at the 6-tick pace; held, the stream from 16 ticks (ruling 16)
+    var charging = f.bchg || f.ychg;
+    // one charge at a time (E46b): another face press during a charge is ignored, with a lapsed press-ack
+    if (charging && (pr('X') || pr('A') || (f.bchg && pr('Y')) || (f.ychg && pr('B')))) f.notReady = 6;
+    if (pr('X') && !charging) { if (near && i.pointBlank) { f.melee = { k: 'pbolt', t: 0, dur: 8 }; f.lit = 5; } else if (w.t - f.lastBolt >= N.boltGap) bolt(w, f, 1); else f.notReady = 5; f.xDown = 0; }
+    if (i.X && !charging) { f.xDown++; if (f.xDown === N.streamAfter && !f.stream) f.stream = { n: 0, next: w.t }; }
+    else { f.xDown = 0; f.stream = null; }
+    if (f.stream && w.t >= f.stream.next) {
+      var fan = f.def.bolt.fan && f.stream.n < N.streamBurst ? (f.stream.n - 3.5) * 0.07 : 0;   // the Rival's stream opens as a backhand fan of 8
+      bolt(w, f, 0.85, fan); f.stream.n++; f.stream.next = w.t + (f.stream.n < N.streamBurst ? N.streamBurstGap : N.streamGap);
+    }
+    // Y: the wind-up, then the throw; held, two levels; a loaded level 2 steps down when ki runs short, never throws itself
+    if (pr('Y') && !f.ychg && !f.bchg) { if (near && i.pointBlank) f.melee = { k: 'pblast', t: 0, dur: 10 }; else if (w.t - f.lastY >= N.lobGap) { f.lastY = w.t; f.ychg = { t: 0, lv: 0 }; } else f.notReady = 5; }
+    if (f.ychg) { var yc = f.ychg; yc.t++; var ylv = yc.t >= N.lobLv[1] ? 2 : yc.t >= N.lobLv[0] ? 1 : 0;
+      if (yc.lvCap != null) ylv = Math.min(ylv, yc.lvCap);
+      if (ylv !== yc.lv) { yc.lv = ylv; if (ylv) sound(w, 'click'); }
+      if (!i.Y && yc.t >= N.lobWind) { throwLob(w, f, yc.lv); f.ychg = null; }
+      else if (yc.lv === 2 && yc.t > N.lobLv[1]) { f.ki -= 2 / 60; if (f.ki < N.ki.lob[2]) yc.lvCap = 1; } }
+    // B: the gather starts on the press; let go before level 1 and it is the heavy blast (E40)
+    if (pr('B') && !f.bchg && !f.ychg && !f.beam && w.t - (f.beamOff || -99) > 20) { if (w.t - f.lastB >= N.bGap) f.bchg = { t: 0, lv: 0 }; else f.notReady = 5; }
+    if (f.bchg) { var bc = f.bchg; bc.t++; var lv = bc.t >= N.beamLv[2] ? 3 : bc.t >= N.beamLv[1] ? 2 : bc.t >= N.beamLv[0] ? 1 : 0;
+      if (bc.lvCap != null) lv = Math.min(lv, bc.lvCap);
+      while (lv > 0 && f.ki < N.ki.beam[lv - 1]) lv--;                 // what his ki can pay for
+      if (lv !== bc.lv) { if (lv > bc.lv) sound(w, 'click'); bc.lv = lv; }
+      if (!i.B) bc.released = true;
+      if (bc.released && bc.lv === 0) { if (bc.t >= N.bWind) { heavyBlast(w, f); f.bchg = null; } }
+      else if (bc.released) { fireBeam(w, f, bc.lv); f.bchg = null; }
+      else if (bc.lv === 3 && bc.t > N.beamLv[2]) { f.ki -= 4 / 60; if (f.ki < N.ki.beam[2]) bc.lvCap = 2; }   // loaded (E47, ruling 5): steps down, fires only on release
+    }
+    if (pr('A') && !charging) { if (!f.grabWind && !f.grabbing && w.t >= (f.grabLock || 0)) f.grabWind = { t: 0 }; else f.notReady = 6; }   // one grab at a time, then the lockout (E67)
+  }
+  if (f.grabWind) { f.grabWind.t++; if (f.grabWind.t >= N.grabWind) { throwGrab(w, f); f.grabWind = null; } }
+  if (i.zip && !f.zip && !f.melee) { f.zip = { t: 0 }; sound(w, 'zip'); }
+  // flight: the stick moves him, at half speed while a charge is held (E45)
+  var spd = (f.bchg || f.ychg) ? 1.1 : 2.2;
+  if (!f.knock && !f.melee && i.gx != null) { var gdx = i.gx - f.x, gdy = (i.gy == null ? f.y : i.gy) - f.y, gl = Math.sqrt(gdx * gdx + gdy * gdy); if (gl > 2) { var gs = Math.min(gl, i.gs || 3); f.x += gdx / gl * gs; f.y = clamp(f.y + gdy / gl * gs, 0, 210); } }
+  else if (!f.knock && !f.melee && i.follow) { var fx2 = f.foe.x - f.dir * i.follow - f.x; if (Math.abs(fx2) > 2) f.x += clamp(fx2, -3, 3); }
+  else if (!f.knock && !f.melee) {
+    var mvx = (i.mx || 0), mvy = (i.my || 0);
+    if (mvx || mvy) { f.x += mvx * spd; f.y = clamp(f.y + mvy * spd, 0, 210); }
+    else if (f.autoHome && !busy && !f.reel && (Math.abs(f.x - f.home) > 3 || Math.abs(f.y - f.homeY) > 3)) { var hx = f.home - f.x, hy = f.homeY - f.y, hl = Math.sqrt(hx * hx + hy * hy); f.x += hx / hl * 1.4; f.y += hy / hl * 1.4; }
+  }
+  f.x = clamp(f.x, 24, W - 24);
+  f.prev = copyIn(i);
+}
+function copyIn(o) { var c = {}; for (var k in o) c[k] = o[k]; return c; }
+function sendStep(w, f) {
+  var s = f.send; s.t++;
+  if (s.k === 'carry') return;                     // moved by the beam (beamsStep)
+  if (s.k === 'down') { f.y = Math.max(0, f.y - 6); if (f.y <= 0 && !s.landed) { s.landed = true; f.kneel = 30; } if (s.t >= s.dur) f.send = null; return; }
+  f.x += s.vx; f.y = Math.max(0, f.y + s.vy); s.vx *= 0.93; s.vy = s.vy * 0.93 - 0.05; throughMines(w, f);
+  if (s.t >= s.dur) { f.send = null; f.reel = 10; }
+  f.x = clamp(f.x, 30, W - 30);
+}
+// angles here are the screen's: 0 is right, -PI/2 is up
+function launch(w, f, ang, bh, dur) { var d = bh * KB; f.zip = null; f.melee = null; f.send = { k: 'launch', t: 0, dur: dur || 28, vx: Math.cos(ang) * d / 11, vy: -Math.sin(ang) * d / 11 }; dropCharge(f); if (f.beam) f.beam.end = f.beam.end || 1; }
+// A send through an armed mine sets it off at once, with no flare, on whoever is carried, the layer included (E74).
+function throughMines(w, f) { w.mines.forEach(function (m) { if ((m.st === 'armed' || m.st === 'flare') && m.kind !== 'trap') { var r = mineReach(m); if (Math.abs(f.x - m.x) < r && Math.abs(f.y + 40 - m.y) < r + 40) goOff(w, m, f, true); } }); }
+
+// ---- the brawl stand-ins for C9: jabs, the point-blank bolt and blast (5b), the zip strike ----
+function meleeStep(w, f) {
+  var m = f.melee, foe = f.foe; m.t++;
+  var reach = Math.abs(foe.x - f.x) < 84 && Math.abs(foe.y - f.y) < 50, L = f.def.L;
+  if (m.k === 'jab' && m.t === 4 && reach) { var r = hit(w, foe, { src: f, hs: 3, reel: 8, kb: 0.3 }); if (r === 'hit') { f.hs = 3; burst(w, foe.x - f.dir * 10, foe.y + 76, 9, 7, SPARK, 5); } }
+  if (m.k === 'hook' && m.t === 7 && reach) { var r2 = hit(w, foe, { src: f, hs: 5, reel: 12, kb: 0.6 }); if (r2 === 'hit') { f.hs = 5; burst(w, foe.x - f.dir * 10, foe.y + 70, 13, 8, SPARK, 6); } }
+  if (m.k === 'pbolt' && m.t === 5 && reach) { f.ki -= N.ki.bolt; hit(w, foe, { src: f, hs: 3, reel: 8, kb: 0.4 }); burst(w, foe.x - f.dir * 8, foe.y + 74, 12, 8, L.bolt, 5); sound(w, 'bolt'); }
+  if (m.k === 'pblast' && m.t === 6 && reach) { f.ki -= 6; var r3 = hit(w, foe, { src: f, hs: 6, reel: 16 }); burst(w, foe.x - f.dir * 6, foe.y + 70, 26, 12, L.lob, 7); if (r3 === 'hit') { foe.trail = { t: 0, lc: L.lob }; launch(w, foe, f.dir > 0 ? -0.12 : Math.PI + 0.12, 4, 54); } sound(w, 'heavy'); }
+  if (m.t >= m.dur) f.melee = null;
+}
+function zipStep(w, f) {
+  var z = f.zip, foe = f.foe; z.t++;
+  var dx = foe.x - f.dir * 60 - f.x, dy = foe.y - f.y, d = Math.sqrt(dx * dx + dy * dy);
+  if (d > 8 && z.t < 40) { var sp = Math.min(17, d); f.x += dx / d * sp; f.y = Math.max(0, f.y + dy / d * sp); if (z.t % 2 === 0) w.fx.push({ k: 'streak', x: f.x - f.dir * 20, y: f.y + 60, t: 0, dur: 6, dir: f.dir, col: f.def.body }); }
+  else { f.zip = null; f.melee = { k: 'jab', t: 0, dur: 9 }; }
+}
+
+// ---- shots ----
+function shotsStep(w) {
+  for (var i = w.shots.length - 1; i >= 0; i--) {
+    var s = w.shots[i]; s.t++;
+    if (s.dead) { w.shots.splice(i, 1); continue; }
+    if (s.delay > 0) { s.delay--; continue; }
+    var foe = s.o.foe, tc = chest(foe), Lc = s.o.def.L;
+    if (s.k === 'seam') { s.x += s.vx; if ((foe.x - s.x) * s.vx <= 0) { seamOpen(w, s, foe); w.shots.splice(i, 1); } continue; }
+    if (s.k === 'cling') { if (s.on) { s.x = s.on.x + s.dx; s.y = s.on.y + s.dy; } if (--s.fuse <= 0) { lobBurst(w, s, s.x, s.y, 'cling'); w.shots.splice(i, 1); } continue; }
+    if (s.k === 'roll') { s.x += s.vx; s.rolled += Math.abs(s.vx); if (inBody(foe, s.x, 30, 6) || Math.abs(s.x - s.tx) < 6 || s.rolled > 4 * KB * 1.2) { lobBurst(w, s, s.x, 4, 'roll'); w.shots.splice(i, 1); } continue; }
+    if (s.k === 'hop') { s.t2 = (s.t2 || 0) + 1; var q = s.t2 / s.dur; s.x = lerp(s.x0, s.x1, q); s.y = 4 + Math.sin(Math.PI * q) * s.hh; if (s.t2 >= s.dur) { lobBurst(w, s, s.x, 4, s.form); w.shots.splice(i, 1); } continue; }
+    if (s.seek && !foe.dodge) { var dx = tc[0] - s.x, dy = tc[1] - s.y, d = Math.sqrt(dx * dx + dy * dy) || 1; s.vx = lerp(s.vx, dx / d * s.sp, s.seek); s.vy = lerp(s.vy, dy / d * s.sp, s.seek); }
+    s.x += s.vx; s.y += s.vy; if (s.g) s.vy -= s.g;
+    // bolts cancel in pairs, and a bolt that meets a lob sets it off where they meet (C1.5, C2.6, E34)
+    var gone = false;
+    for (var j = 0; j < w.shots.length && !gone; j++) {
+      var o = w.shots[j]; if (o === s || o.o === s.o || o.dead || o.delay > 0) continue;
+      if (Math.abs(o.x - s.x) < 9 + (o.s + s.s) * 0.5 && Math.abs(o.y - s.y) < 9 + (o.s + s.s) * 0.5) {
+        if (s.k === 'bolt' && o.k === 'bolt') { burst(w, (s.x + o.x) / 2, (s.y + o.y) / 2, 9, 7, SPARK, 5); o.dead = true; gone = true; }
+        else if (s.k === 'bolt' && o.k === 'lob') { lobBurst(w, o, o.x, o.y, 'air'); o.dead = true; gone = true; }
+      }
+    }
+    if (gone) { w.shots.splice(i, 1); continue; }
+    // a mine a shot touches goes off where it is (E78)
+    for (var m = 0; m < w.mines.length; m++) { var mn = w.mines[m]; if (mn.o === s.o || mn.st === 'gone') continue; if (Math.abs(mn.x - s.x) < 14 && Math.abs(mn.y + 6 - s.y) < 16 && (mn.kind === 'spark' || mn.kind === 'snare' || s.power >= 3)) { goOff(w, mn, null, true); if (s.k === 'lob') lobBurst(w, s, s.x, s.y, 'air'); w.shots.splice(i, 1); gone = true; break; } }
+    if (gone) continue;
+    if ((!foe.caught || s.intoCatch) && !s.short) {
+      if (inBody(foe, s.x, s.y, s.k === 'heavy' ? 10 : 2)) {
+        // a shot fired into a catch lands as on an open fighter while the catch holds, or within 6 ticks of its end (E65, section 20 item 3)
+        var open = s.intoCatch && (foe.caught === s.grab || w.t <= (foe.openUntil || -1));
+        if (s.k === 'bolt') { var r = hit(w, foe, { src: s.o, hs: open ? 3 : 0, reel: open ? 12 : 4, open: open }); if (r !== 'dodged') { burst(w, s.x, s.y, open ? 14 : 10, 7, Lc.bolt, 5); if (s.endsBind && s.endsBind.st === 'catch') letGo(w, s.endsBind); w.shots.splice(i, 1); continue; } }
+        else if (s.k === 'lob') { if (s.lv === 2 && s.o.def.lob.l2 === 'cling') { clingOn(w, s, foe); w.shots.splice(i, 1); continue; } lobLand(w, s, s.x, s.y); w.shots.splice(i, 1); continue; }
+        else if (s.k === 'heavy') { var r4 = hit(w, foe, { src: s.o, hs: N.hs.heavy, reel: 14, kb: 5, open: open }); if (r4 !== 'dodged') { heavyImpact(w, s, foe); w.shots.splice(i, 1); continue; } }
+      }
+    }
+    if (s.k === 'lob' && s.y <= 2) { lobLand(w, s, s.x, 2); w.shots.splice(i, 1); continue; }
+    if (s.x < -80 || s.x > W + 80 || s.y < -40 || s.y > H + 40 || s.t > 240) w.shots.splice(i, 1);
+  }
+}
+// a lob lands: tapped and level 1 burst; level 2 is the kit's own form
+function lobLand(w, s, x, y) {
+  var f = s.o, foe = f.foe, form = s.lv === 2 && !s.child ? f.def.lob.l2 : null, dir = foe.x > x ? 1 : -1;
+  if (form === 'bounce') { lobBurst(w, s, x, y, 'first'); w.shots.push({ k: 'hop', o: f, lv: 1, child: true, x0: x, x1: x + dir * Math.min(3 * KB, Math.abs(foe.x - x)), x: x, y: 4, dur: 12, hh: 26, s: 7, t: 0, form: 'half', power: 3 }); return; }
+  if (form === 'split') {
+    lobBurst(w, s, x, y, 'first'); var far = Math.min(4.5 * KB, Math.abs(foe.x - x));
+    [0.33, 0.66, 1].forEach(function (k2) { w.shots.push({ k: 'hop', o: f, lv: 1, child: true, x0: x, x1: x + dir * far * k2, x: x, y: 4, dur: 12, hh: 18 + 10 * k2, s: 6, t: 0, form: 'piece', power: 3 }); });
+    return;
+  }
+  if (form === 'cling') { w.shots.push({ k: 'cling', o: f, lv: 2, x: x, y: 2, dx: 0, dy: 0, fuse: 20, s: 8, t: 0, power: 5 }); return; }
+  if (form === 'roll') { w.shots.push({ k: 'roll', o: f, lv: 2, x: x, y: 4, vx: dir * 6.8, rolled: 0, tx: foe.x, s: 8, t: 0, power: 5 }); return; }
+  lobBurst(w, s, x, y, null);
+}
+function clingOn(w, s, foe) { var dy = 52 + (hash(w.seq++) - 0.5) * 20; w.shots.push({ k: 'cling', o: s.o, lv: 2, on: foe, dx: -foe.dir * 6, dy: dy, x: foe.x, y: foe.y + dy, fuse: 20, s: 8, t: 0, power: 5 }); sound(w, 'cling'); }
+function lobBurst(w, s, x, y, how) {
+  var f = s.o, foe = f.foe, Lc = f.def.L.lob, big = how === 'cling' || how === 'roll';
+  var r = (how === 'half' ? 0.5 : how === 'piece' ? 0.66 : how === 'first' && f.def.lob.l2 === 'split' ? 0.8 : big ? 1.33 : s.lv === 1 ? 1.33 : 1) * 1.5 * MR * 0.5;
+  if (w.scene && w.scene.houses && Math.abs(x - w.scene.housesX) < 160) r *= f.def.id === 'protagonist' ? 0.7 : 1.3;
+  // a barrage past 3 bursts a second draws its extras as smoke and ember, not flashes (Legal fx09)
+  var plain = !how || how === 'air', smoke = plain && w.t - (f.lastBurstT || -99) < 20; if (plain) f.lastBurstT = w.t;
+  if (smoke) { chips(w, x, y, 6, C.grey, 2.5, true); chips(w, x, y, 3, C.fire, 3, true); }
+  else { burst(w, x, y, r * 1.6, 16, Lc, 7); chips(w, x, y, 5, y < 6 ? C.dirt : Lc.main, 4, true); }
+  var under = foe.y < 6 && Math.abs(foe.x - x) < 40 && y < 80;     // bursting on a grounded fighter marks the ground under him
+  if (y < 8 || under) crater(w, y < 8 ? x : foe.x, how === 'half' || how === 'piece' ? 1 : 1.5);
+  if (how === 'roll') chips(w, x, 4, 6, Lc.main, 3, true);
+  var dx = foe.x - x, dy = foe.y + 50 - y, d = Math.sqrt(dx * dx + dy * dy);
+  if (how !== 'air' && d < r + 24) { var centre = d < r * 0.7; hit(w, foe, { src: f, hs: N.hs.lob[Math.min(2, s.lv || 0)], reel: 12, kb: big ? 4 : centre ? 3 : 1.2, noGuardPush: true, ang: Math.atan2(-(dy), dx) }); }
+  sound(w, 'boom');
+}
+function heavyImpact(w, s, foe) {
+  var f = s.o, Lc = f.def.L.beam, k = f.def.heavy.k;
+  if (k === 'plates') { for (var i = 0; i < 6; i++) { var a = i * 1.047 + 0.3; w.fx.push({ k: 'plate', x: s.x, y: s.y, vx: Math.cos(a) * 4, vy: Math.sin(a) * 4, t: 0, dur: 16, lc: f.def.L.lob, rot: a }); } }
+  burst(w, s.x, s.y, 42, 16, k === 'teardrop' ? f.def.L.lob : Lc, 9); chips(w, s.x, s.y, 8, f.def.L.lob.main, 5);
+  if (foe.y < 30) { crater(w, foe.x - f.dir * 6, 2); w.fx.push({ k: 'column', x: foe.x - f.dir * 6, t: 0, dur: 18 }); }
+}
+// Throne Quake: the seam reaches him and opens into a lens of light that slams shut
+function seamOpen(w, s, foe) {
+  var f = s.o; w.fx.push({ k: 'lens', x: foe.x, y: foe.y, t: 0, dur: 16, lc: f.def.L.beam });
+  var r = hit(w, foe, { src: f, hs: N.hs.heavy, reel: 14, kb: 5, unblockable: false });
+  if (r !== 'dodged') { crater(w, foe.x, 2); w.fx.push({ k: 'column', x: foe.x, t: 0, dur: 18 }); }
+  sound(w, 'heavy');
+}
+
+// ---- beams and the struggle ----
+function beamGeom(f) { var b = f.beam, h = muzzle(f, true); return { x0: h[0], y0: h[1], dx: Math.cos(b.a), dy: Math.sin(b.a) }; }
+// drawn widths run x0.4 to x1.6, hit widths are banded x0.7 to x1.3 (section 20 item 1)
+function beamWidth(w, f, hitW) { var b = f.beam, wd = (12 + 6 * b.lv) * (hitW ? clamp(f.def.beam.bw, 0.7, 1.3) : f.def.beam.bw); if (w.scene && w.scene.houses) { var g = beamGeom(f), near = false; w.scene.houses.forEach(function (hs) { var t = (hs.x - g.x0) / g.dx; if (t > 0 && t < b.len && g.y0 + g.dy * t < hs.h + 60) near = true; }); if (near) wd *= f.def.id === 'protagonist' ? 0.6 : 1.3; } return wd; }
+function beamsStep(w) {
+  [w.L, w.R].forEach(function (f) {
+    var b = f.beam; if (!b) return;
+    if (b.end) { b.end++; if (b.end > 9) { f.beam = null; f.beamOff = w.t; if (f.foe.send && f.foe.send.k === 'carry') releaseCarry(w, f.foe, f); } return; }
+    if (f.hs > 0 && !w.struggle) return;
+    var g = beamGeom(f), foe = f.foe, Lc = f.def.L.beam;
+    for (var k = b.pulses.length - 1; k >= 0; k--) { var p = b.pulses[k]; p.s += 18; if (p.s >= b.len) { b.pulses.splice(k, 1); burst(w, g.x0 + g.dx * b.len, g.y0 + g.dy * b.len, 12 + 3 * b.lv, 8, Lc, 6); } }
+    if (w.struggle) return;
+    b.t++;
+    var reach = 900, fx = foe.x - g.x0, fy = foe.y + 60 - g.y0, along = fx * g.dx + fy * g.dy, off = Math.abs(fx * g.dy - fy * g.dx), half = beamWidth(w, f, true) / 2;
+    var inLine = along > 0 && off < half + 14 && !(foe.dodge && foe.dodge.t <= 12) && !foe.caught;
+    if (inLine && (!foe.send || foe.send.k === 'carry')) reach = along - 8;
+    b.len = Math.min(b.len + 40, reach);
+    b.caught = inLine && b.len >= reach - 1;
+    if (b.caught) {
+      if (foe.guard && !foe.layT) { if (w.t % 6 === 0) chips(w, foe.x + foe.dir * 26, foe.y + 70, 2, C.grey, 3); }
+      else if (b.lv === 3) { if (!foe.send) { foe.send = { k: 'carry', t: 0, by: f }; dropCharge(foe); foe.hs = N.hs.carry; foe.zip = null; foe.melee = null; } foe.x += g.dx * 2.6; foe.y = Math.max(0, foe.y + -g.dy * 2.6); foe.x = clamp(foe.x, 30, W - 30); }
+      else foe.reel = Math.max(foe.reel, 3);
+      if (w.t % 7 === 0) chips(w, g.x0 + g.dx * b.len, g.y0 + g.dy * b.len, 1, Lc.core, 3);
+    }
+    if (f.def.beam.k === 'broad' && w.t % 3 === 0 && g.y0 + g.dy * b.len < 120) chips(w, g.x0 + g.dx * b.len, 4, 1, C.dirt, 3, true);   // the blunt front shoves dust
+    if (w.scene && SCENES[w.scene.k].beam) SCENES[w.scene.k].beam(w, f, g, b);
+    else if (b.lv >= 2) trench(w, f, g, b);
+    if (b.t >= b.dur) {
+      b.end = 1;
+      if (b.caught && !(foe.guard && !foe.layT)) {
+        if (b.lv === 3) releaseCarry(w, foe, f);
+        else { foe.hs = N.hs.beamEnd[b.lv - 1]; knock(foe, b.lv === 1 ? 4 : 6, Math.atan2(-g.dy, g.dx)); foe.reel = 14; }
+      }
+      if (f.def.beam.k === 'vent' && g.y0 + g.dy * b.len < 100) crater(w, g.x0 + g.dx * b.len, 1.5);   // the Furnace Vent ends in a pit
+    }
+  });
+  struggleStep(w);
+}
+// a beam that loses breaks into chips along its line; it never thins (Orb, 2026-10-22)
+function shatter(w, f) { var b = f.beam; if (!b) return; var g = beamGeom(f), Lc = f.def.L.beam; for (var s = 10; s < b.len; s += 22) chips(w, g.x0 + g.dx * s, g.y0 + g.dy * s, 2, hash(w.seq++) < 0.5 ? Lc.main : Lc.edge, 3, true); f.beam = null; f.beamOff = w.t; }
+function releaseCarry(w, foe, f) { if (!foe.send || foe.send.k !== 'carry') return; foe.send = { k: 'launch', t: 0, dur: 26, vx: f.dir * 2.5, vy: -2 }; burst(w, foe.x, foe.y + 60, 30, 12, f.def.L.beam, 7); }
+function trench(w, f, g, b) {
+  for (var s = 0; s < b.len; s += 24) { var x = g.x0 + g.dx * s, alt = g.y0 + g.dy * s; if (alt < 95 && x > 0 && x < W) { var key = Math.round(x / 24); if (!w.marks.some(function (m) { return m.k === 'trench' && m.key === key; })) w.marks.push({ k: 'trench', key: key, x: key * 24, d: 4 + 3 * b.lv, water: 0 }); } }
+}
+// E90 to E97: two beams that meet struggle, decided by the beat. A press on the pulse surges; a press off it, or a second
+// in its window, is a stray that moves nothing and voids the next surge. No ki. Overwhelm, let go (A on the pulse), time.
+function struggleStep(w) {
+  var L = w.L, R = w.R, lb = L.beam, rb = R.beam;
+  if (!(lb && rb && !lb.end && !rb.end)) { if (w.struggle) w.struggle = null; return; }
+  var lh = muzzle(L, true), rh = muzzle(R, true);
+  if (!w.struggle) {
+    if (lh[0] + lb.len < rh[0] - rb.len - 4) return;
+    var lvd = (lb.lv - rb.lv) * 0.025;
+    w.struggle = { m: clamp(0.5 + lvd, 0.35, 0.65), t: 0, beat0: w.t, pend: [], void: { L: 0, R: 0 }, lastWin: { L: -1, R: -1 }, swell: 0 };
+    lb.a = 0; rb.a = Math.PI; sound(w, 'clash');
+  }
+  var S = w.struggle; S.t++;
+  var ph = (w.t - S.beat0) % N.beat; if (ph === 0) { S.swell = 10; sound(w, 'beat'); }
+  S.swell = Math.max(0, S.swell - 1);
+  for (var i = S.pend.length - 1; i >= 0; i--) { var p = S.pend[i]; p.t++; if (p.t >= 8) { S.m += (p.side === 'L' ? 1 : -1) * p.step; S.pend.splice(i, 1); burst(w, lerp(lh[0], rh[0], S.m), lh[1], 16, 8, w[p.side].def.L.beam, 7); } }
+  S.m = clamp(S.m, 0, 1);
+  var px = lerp(lh[0], rh[0], S.m);
+  lb.len = Math.max(0, px - lh[0]); rb.len = Math.max(0, rh[0] - px);
+  lb.buckle = clamp((0.5 - S.m) * 2.4, 0, 1); rb.buckle = clamp((S.m - 0.5) * 2.4, 0, 1);
+  if (S.t % 4 === 0) chips(w, px, lh[1], 1, hash(w.seq++) < 0.5 ? L.def.L.beam.core : R.def.L.beam.core, 4, true);
+  var beats = Math.floor((w.t - S.beat0) / N.beat), loser = null, detonate = false;
+  if (lb.len < 26) loser = L; else if (rb.len < 26) loser = R;
+  else if (beats >= N.struggleBeats) { if (Math.abs(S.m - 0.5) < 0.1) detonate = true; else loser = S.m < 0.5 ? L : R; S.timeout = true; }
+  if (detonate) { burst(w, px, lh[1], 60, 20, WHITE, 9); L.hs = R.hs = N.hs.struggle; knock(L, 2, Math.PI); knock(R, 2, 0); shatter(w, L); shatter(w, R); w.struggle = null; sound(w, 'boom'); return; }
+  if (loser) {
+    var win = loser.foe; w.struggle = null; shatter(w, loser); win.beam.t = Math.max(0, win.beam.dur - 16);
+    L.hs = R.hs = N.hs.struggle; burst(w, loser.x, lh[1], 56, 20, win.def.L.beam, 9);
+    if (S.timeout) knock(loser, 2, loser.dir > 0 ? Math.PI : 0); else launch(w, loser, loser.dir > 0 ? Math.PI + 0.2 : -0.2, 6, 30);
+    sound(w, 'boom');
+  }
+}
+function struggleInput(w, f) {
+  var S = w.struggle, i = f.inp, p = f.prev, side = f.side, pr = function (b) { return i[b] && !p[b]; };
+  var ph = (w.t - S.beat0) % N.beat, onBeat = ph <= N.beatWin || ph >= N.beat - N.beatWin, win = Math.round((w.t - S.beat0) / N.beat);
+  if (pr('A')) {                       // let go: A on the pulse slips aside, off it he is overwhelmed (E95)
+    var foe = f.foe; if (onBeat) { shatter(w, f); w.struggle = null; f.dodge = { t: 0, dx: 0, dy: 7.5 }; f.homeY = clamp(f.y + 105, 0, 210); foe.beam.t = Math.max(0, foe.beam.dur - 40); sound(w, 'dodge'); }
+    else { S.m = side === 'L' ? 0 : 1; }
+    return;
+  }
+  if (pr('X') || pr('Y') || pr('B')) {
+    if (onBeat && S.lastWin[side] !== win) {
+      S.lastWin[side] = win;
+      if (S.void[side]) { S.void[side] = 0; return; }
+      var own = side === 'L' ? S.m : 1 - S.m;           // how far the point is from his own hands
+      var step = 0.07 * (1 + 1.4 * clamp((0.45 - own) / 0.45, 0, 1));   // close to his own hands his surges push harder
+      S.pend.push({ side: side, t: 0, step: step }); f.beam.pulses.push({ s: 0, surge: true }); f.armT = 6; f.armK = 'pulse';
+    } else { S.void[side] = 1; f.notReady = 6; w.fx.push({ k: 'fizz', x: hand(f)[0], y: hand(f)[1], t: 0, dur: 8 }); }
+  }
+}
+
+// ---- grabs: a throw, a catch, a way out and a payoff (E60 to E66) ----
+function grabsStep(w) {
+  for (var i = w.grabs.length - 1; i >= 0; i--) {
+    var g = w.grabs[i], f = g.o, foe = f.foe, tc = chest(foe); g.t++;
+    if (g.st === 'fly') {
+      var dx = tc[0] - g.x, dy = tc[1] - g.y, d = Math.sqrt(dx * dx + dy * dy), sp = Math.max(4, d / Math.max(1, g.arrive - g.t));
+      if (foe.dodge && foe.dodge.t <= 12) { g.x += f.dir * sp; if (g.t > 40) { g.st = 'miss'; g.t = 0; endGrab(w, g); } continue; }
+      if (d <= sp + 6) {
+        g.st = 'catch'; g.t = 0; g.hold = f.def.grab.hold; foe.caught = g; f.holding = g; foe.send = null; foe.knock = null; dropCharge(foe); if (foe.beam) foe.beam.end = 1;
+        f.hs = foe.hs = N.hs.catchHs; burst(w, tc[0], tc[1], 18, 9, f.def.L.grab, 5); sound(w, 'catch');
+      } else { g.x += dx / d * sp; g.y += dy / d * sp; }
+    } else if (g.st === 'catch') {
+      g.x = tc[0]; g.y = tc[1];
+      var pz = f.pressed || {};
+      if (pz.A && !g.pay) { g.pay = { k: f.def.grab.pay, t: 0 }; sound(w, 'payoff'); }
+      // X, Y or B in the catch fire straight into him (E65); in the bind that shot is the one that ends it
+      else if ((!g.pay || g.pay.k === 'bind') && !g.shot && (pz.X || pz.Y || pz.B)) { var h = hand(f); g.shot = true; w.shots.push({ k: pz.X ? 'bolt' : 'heavy', o: f, x: h[0], y: h[1], vx: f.dir * 12, vy: 0, sp: 12, s: pz.X ? 6 : 16, t: 0, seek: 0.2, power: 2, intoCatch: true, grab: g, endsBind: g.pay ? g : null }); }
+      // the bind holds him where he is inside the catch's own ticks; it never adds to them
+      if (g.pay && g.pay.k !== 'bind') payoffStep(w, g);
+      else { if (g.pay) g.pay.t++; g.hold--; if (g.hold <= 0) letGo(w, g); }
+    } else if (g.st === 'done' || g.st === 'miss') { if (g.t >= 10) w.grabs.splice(i, 1); }
+  }
+}
+function letGo(w, g) { var foe = g.o.foe; if (foe.caught === g) { foe.caught = null; foe.openUntil = w.t + N.bindLate; } g.st = 'done'; g.t = 0; foe.reel = Math.max(foe.reel, 6); chips(w, foe.x, foe.y + 70, 6, g.o.def.L.grab.main, 3, true); endGrab(w, g); }
+function endGrab(w, g) { var f = g.o; if (f.grabbing === g) f.grabbing = null; if (f.holding === g) f.holding = null; f.grabLock = w.t + N.grabLock; }
+function payoffStep(w, g) {
+  var f = g.o, foe = f.foe, p = g.pay; p.t++;
+  if (p.k === 'yank') {      // hauled hand over hand into reach: the brawl starts with his blow
+    if (p.t === 1) { g.from = foe.x; g.fromY = foe.y; }
+    var k = ease(p.t / 18); foe.x = lerp(g.from, f.x + f.dir * 62, k); foe.y = lerp(g.fromY, f.y, k);
+    if (p.t === 18) { letGo(w, g); f.melee = { k: 'jab', t: 0, dur: 9 }; }
+  } else if (p.k === 'slam') {      // the staves drive down and drag him to one knee: a down send in place
+    if (p.t === 1) { g.fromY = foe.y; }
+    var k2 = easeIn(p.t / 12); foe.y = lerp(g.fromY, 0, k2);
+    if (p.t === 12) { letGo(w, g); foe.hs = 8; foe.reel = 20; foe.kneel = 34; burst(w, foe.x, 6, 26, 12, f.def.L.grab, 7); chips(w, foe.x, 2, 8, C.dirt, 4, true); crater(w, foe.x, 1.5); }
+  } else if (p.k === 'throw') {     // swung round a third of a turn and let go: 6 bh along the stick
+    if (p.t === 1) { g.cx = f.x; g.cy = f.y + 70; g.r0 = Math.abs(foe.x - f.x); g.a0 = foe.x > f.x ? 0 : Math.PI; }
+    var k3 = ease(p.t / 14), a = g.a0 + (f.dir > 0 ? 1 : -1) * 2.1 * k3;
+    foe.x = g.cx + Math.cos(a) * g.r0 * lerp(1, 0.7, k3); foe.y = Math.max(0, g.cy - 70 + Math.sin(a) * g.r0 * 0.5);
+    if (p.t === 14) { letGo(w, g); launch(w, foe, f.dir > 0 ? Math.PI * 0.85 : Math.PI * 0.15, 6, 28); }
+  }
+}
+
+// ---- mines and traps ----
+function mineReach(m) { return m.kind === 'trap' ? 0 : (N.reach[m.kind] || 1) * MR; }
+function minesStep(w) {
+  for (var i = w.mines.length - 1; i >= 0; i--) {
+    var m = w.mines[i]; m.t++;
+    if (m.st === 'gone') { if (m.gate != null && m.gateT > 0 && m.gateT < 20) { m.gateT++; continue; } w.mines.splice(i, 1); continue; }
+    if (m.st === 'arming' && m.t >= N.arm[m.kind]) { m.st = 'armed'; m.armedT = 0; sound(w, 'arm'); }
+    if (m.st === 'armed') { m.armedT++; if (m.armedT > N.fizzle) { fizzle(w, m); continue; } }
+    var f = m.o.foe;
+    if (m.st === 'armed' && !f.caught && !f.send) {
+      var trig = m.kind === 'trap' ? trapTouch(m, f) : (Math.abs(f.x - m.x) < mineReach(m) && Math.abs(f.y + 40 - m.y) < mineReach(m) + 40);
+      if (trig) { m.st = 'flare'; m.flare = 0; m.victim = f; m.side = f.x > m.x ? 1 : -1; sound(w, 'flare'); }
+    }
+    if (m.st === 'flare') { m.flare++; if (m.flare >= N.flare) goOff(w, m, m.victim, false); }
+  }
+}
+function trapTouch(m, f) {
+  var k = m.o.def.trap.k, dx = Math.abs(f.x - m.x);
+  if (k === 'rope') return dx < 12 && f.y < 150;                 // his chest crosses the rope
+  if (k === 'pillar') return dx < 1.5 * MR * 0.6 && f.y < 60;   // within 1.5 bh of the cracked square
+  if (k === 'plate') return dx < 2 * MR * 0.5 && f.y < 6 * MR * 0.6;   // the zone 2 bh round and 6 bh up
+  return dx < MR * 0.6 && f.y < 3 * MR;                          // the pit's column, 3 bh above the frame
+}
+function goOff(w, m, f, now) {
+  if (m.st === 'gone') return;
+  var d = m.o.def, Lt = d.L.trap; m.st = 'gone';
+  var dodged = f && f.dodge && f.dodge.t <= 12 && !now;
+  if (m.kind === 'spark') { burst(w, m.x, m.y + 8, 20, 10, d.L.bolt, 7); if (f && !dodged && Math.abs(f.x - m.x) < mineReach(m) + 6) hit(w, f, { src: m.o, hs: N.hs.spark, reel: 6 }); }
+  else if (m.kind === 'blast') { burst(w, m.x, m.y + 10, 1.1 * MR, 16, d.L.lob, 7); chips(w, m.x, m.y + 4, 8, C.dirt, 4, true); crater(w, m.x, 2); if (f && !dodged && Math.abs(f.x - m.x) < mineReach(m) + 10) hit(w, f, { src: m.o, hs: N.hs.blast, reel: 12, kb: 3, ang: f.x > m.x ? 0.5 : Math.PI - 0.5 }); }
+  else if (m.kind === 'trap') {
+    var k = d.trap.k;
+    // a trap's throw is a knock-back, never a send, at most 6 bh on either axis, and nothing of a trap goes through a guard (section 20 items 2, 9)
+    var T2 = { src: m.o, hs: N.hs.trap, reel: 14, anySide: true, noGuardPush: true }, sd = m.side || 1;
+    if (k === 'rope') { w.fx.push({ k: 'ropeBeam', x: m.x, t: 0, dur: 20, lc: d.L.beam }); m.gate = sd; m.gateT = 1; T2.kb = 4; T2.ang = sd > 0 ? -0.3 : Math.PI + 0.3; }
+    else if (k === 'pillar') { w.fx.push({ k: 'pillar', x: m.x, t: 0, dur: 40 }); T2.kb = 6.4; T2.ang = Math.atan2(-5, 4 * sd); }
+    else if (k === 'plate') { w.fx.push({ k: 'needleFan', x: m.x, t: 0, dur: 18, lc: d.L.bolt }); T2.kb = 2; T2.ang = -Math.PI / 2; T2.reel = 12; }
+    else { w.fx.push({ k: 'pit', x: m.x, t: 0, dur: 30, lc: Lt }); T2.kb = 1.5; T2.ang = Math.PI / 2; }
+    if (f && !dodged) { var tr = hit(w, f, T2); if (tr === 'hit' && k === 'pit') f.x = m.x; }
+  } else if (m.kind === 'snare') {
+    if (f && !dodged) { var g = { o: m.o, kind: d.grab.k, t: 0, st: 'catch', x: f.x, y: f.y + 70, hold: d.grab.hold }; f.caught = g; w.grabs.push(g); f.hs = N.hs.catchHs; if (!m.o.holding) m.o.holding = g; }
+    else burst(w, m.x, m.y + 8, 16, 8, d.L.grab, 5);
+  }
+  sound(w, 'boom');
+}
+
+// ---- scenes for C10: the sea, a village lane, a forest ----
+var SCENES = {
+  sea: {
+    init: function (w) { var S = w.scene; S.h = []; S.v = []; S.cut = []; for (var i = 0; i <= W / 6; i++) { S.h.push(0); S.v.push(0); S.cut.push(0); } S.part = 0; },
+    // the beam parts the water under it: a channel with the displaced water heaped along its walls
+    beam: function (w, f, g, b) {
+      var S = w.scene; S.part = 36;
+      for (var s2 = 0; s2 < b.len; s2 += 6) { var x = g.x0 + g.dx * s2, alt = g.y0 + g.dy * s2; if (alt < 112 && x > 0 && x < W) { var k = Math.round(x / 6); S.cut[k] = Math.max(S.cut[k], (112 - alt) * 0.9 + 14); } }
+      for (var q = 0; q < S.h.length; q++) {
+        var c = S.cut[q]; if (c > 0) { S.h[q] = lerp(S.h[q], -c * (0.75 + 0.25 * Math.sin(q * 0.7)), 0.35); S.v[q] = 0; }
+        else { var near = (S.cut[q - 1] || 0) > 0 || (S.cut[q + 1] || 0) > 0 || (S.cut[q - 2] || 0) > 0 || (S.cut[q + 2] || 0) > 0; if (near) { S.h[q] = lerp(S.h[q], 20, 0.3); S.v[q] = 0; } }
+      }
+    },
+    step: function (w) {
+      var S = w.scene, h = S.h, v = S.v, n = h.length;
+      if (S.part > 0) { S.part--; if (S.part === 0) for (var c = 0; c < n; c++) S.cut[c] = 0; return; }
+      for (var it = 0; it < 3; it++) { for (var i = 1; i < n - 1; i++) v[i] += (h[i - 1] + h[i + 1] - 2 * h[i]) * 0.22 - h[i] * 0.006; for (var j = 1; j < n - 1; j++) { h[j] += v[j]; v[j] *= 0.992; } }
+    },
+    draw: function (R, w) {
+      // seen from a little above: where the beam parts it, the water heaps into a wall behind, the wet seabed shows, and a low lip stays in front
+      var S = w.scene, back = [0, GY - 20], b;
+      for (b = 0; b < S.h.length; b++) back.push(b * 6, GY - 26 - Math.max(0, -S.h[b]) * 0.8); back.push(W, GY - 20); R.poly(back, C.sea);
+      for (b = 0; b < S.h.length; b++) if (S.h[b] < -6) { var by = GY - 26 + S.h[b] * 0.8; R.poly([b * 6 - 4, by + 1, b * 6, by - 4, b * 6 + 4, by + 1], C.seaLite); }
+      R.poly([0, GY - 25, W, GY - 25, W, GY + 6, 0, GY + 6], C.dirt);
+      var pts = [0, H]; for (var i = 0; i < S.h.length; i++) pts.push(i * 6, GY - 26 - S.h[i]); pts.push(W, H); R.poly(pts, C.sea);
+      var p2 = [0, H]; for (var j = 0; j < S.h.length; j++) p2.push(j * 6, GY - 6 - Math.min(0, S.h[j]) * 0.25); p2.push(W, H); R.poly(p2, C.seaDeep);
+      for (var k = 0; k < S.h.length; k++) if (S.h[k] > 5) { var y = GY - 26 - S.h[k]; R.poly([k * 6 - 4, y + 1, k * 6, y - 3 - S.h[k] * 0.12, k * 6 + 4, y + 1], C.seaLite); }
+    }
+  },
+  village: {
+    init: function (w) { var S = w.scene; S.houses = []; S.housesX = 400; for (var i = 0; i < 6; i++) S.houses.push({ x: 300 + i * 46, h: 34 + (i % 3) * 8, w: 30, dmg: 0 }); },
+    beam: function (w, f, g, b) {
+      var wd = beamWidth(w, f);
+      w.scene.houses.forEach(function (hs) { var t = (hs.x - g.x0) / g.dx, alt = g.y0 + g.dy * t; if (t > 0 && t < b.len && alt - wd / 2 < hs.h + 14) { hs.dmg = Math.min(1, hs.dmg + 0.05 * (wd / 24)); if (hs.dmg > 0.6 && w.t % 5 === 0) chips(w, hs.x, hs.h, 2, C.roof, 3, true); } });
+      trench(w, f, g, b);
+    },
+    draw: function (R, w) { w.scene.houses.forEach(function (hs) { var x = hs.x, hh = hs.h * (1 - 0.6 * hs.dmg); R.poly([x - hs.w / 2, GY, x + hs.w / 2, GY, x + hs.w / 2, GY - hh, x - hs.w / 2, GY - hh], C.house); if (hs.dmg < 0.5) R.poly([x - hs.w / 2 - 3, GY - hh, x + hs.w / 2 + 3, GY - hh, x, GY - hh - 16], C.roof); else R.poly([x - hs.w / 2, GY - hh, x + 4, GY - hh - 5, x + hs.w / 2, GY - hh + 3], C.char); }); }
+  },
+  forest: {
+    init: function (w) { var S = w.scene; S.trees = []; for (var i = 0; i < 9; i++) S.trees.push({ x: 250 + i * 40 + (i % 2) * 8, h: 52 + (i % 3) * 12, fire: 0, out: 0 }); S.lakeX = 90; S.fill = 0; S.fillAt = 0; },
+    beam: function (w, f, g, b) {
+      w.scene.trees.forEach(function (tr) { var t = (tr.x - g.x0) / g.dx, alt = g.y0 + g.dy * t; if (t > 0 && t < b.len && alt < tr.h + 16 && !tr.fire) tr.fire = 1; });
+      trench(w, f, g, b); if (!w.scene.fillAt) w.scene.fillAt = w.t + 120;
+    },
+    step: function (w) {
+      var S = w.scene; S.trees.forEach(function (tr) { if (tr.fire && !tr.out) tr.fire++; });
+      if (S.fillAt && w.t >= S.fillAt) { S.fill += 3; w.marks.forEach(function (m) { if (m.k === 'trench' && m.x < S.lakeX + 40 + S.fill) m.water = Math.min(1, m.water + 0.06); }); S.trees.forEach(function (tr) { if (tr.fire && tr.x < S.lakeX + 40 + S.fill) tr.out = Math.min(1, tr.out + 0.04); }); }
+    },
+    draw: function (R, w) {
+      var S = w.scene; R.poly([S.lakeX - 70, GY + 1, S.lakeX - 50, GY - 1, S.lakeX + 50, GY - 1, S.lakeX + 70, GY + 1, S.lakeX + 40, GY + 9, S.lakeX - 40, GY + 9], C.lake);
+      S.trees.forEach(function (tr) {
+        var x = tr.x, burnt = tr.fire > 60 || tr.out > 0;
+        R.poly([x - 3, GY, x + 3, GY, x + 3, GY - tr.h * 0.4, x - 3, GY - tr.h * 0.4], C.wood);
+        R.poly([x - 16, GY - tr.h * 0.35, x + 16, GY - tr.h * 0.35, x, GY - tr.h], burnt ? C.char : C.leaf);
+        R.poly([x - 11, GY - tr.h * 0.6, x + 11, GY - tr.h * 0.6, x, GY - tr.h - 8], burnt ? C.char : C.leafDark);
+        if (tr.fire && tr.out < 1) { var s = (1 - tr.out) * Math.min(1, tr.fire / 12); for (var k = 0; k < 3; k++) { var fx = x + (k - 1) * 9, sw = Math.sin(w.t * 0.12 + k * 2 + x) * 3, fh = (16 + 8 * (k % 2)) * s; if (fh < 1) continue; R.poly([fx - 6 * s, GY - tr.h * 0.5, fx + 6 * s, GY - tr.h * 0.5, fx + sw, GY - tr.h * 0.5 - fh], C.fire); R.poly([fx - 3 * s, GY - tr.h * 0.5, fx + 3 * s, GY - tr.h * 0.5, fx + sw * 0.6, GY - tr.h * 0.5 - fh * 0.55], C.fire2); } }
+      });
+    }
+  }
+};
+
+// ---- clips: section 13's C1 to C10 and the four grabs; each a list of takes, each take a script for both fighters ----
+// An event is [side, input, from, to, value]: the input is held (or set to value) for from <= t < to.
+function sc(list) { return function (w, side) { var o = { RB: true }, t = w.t; for (var i = 0; i < list.length; i++) { var e = list[i]; if (e[0] === side && t >= e[2] && t < e[3]) o[e[1]] = e.length > 4 ? e[4] : true; } return o; }; }
+function taps(side, b, from, to, every, len) { var o = []; for (var t = from; t < to; t += every) o.push([side, b, t, t + (len || 3)]); return o; }
+function cat() { var o = []; for (var i = 0; i < arguments.length; i++) o = o.concat(arguments[i]); return o; }
+var P = 0, V = 1, M = 2, Y = 3;   // the fighters' indexes: Protagonist, Rival, Empress, Demon Cyborg
+var CLIPS = [
+  { n: 'C1', name: 'Rapid fire (X)', takes: [{ l: P, r: V, len: 430,
+    setup: function (w) { w.R.y = 90; },
+    input: sc(cat(taps('L', 'X', 24, 25, 1), taps('L', 'X', 70, 150, 6), [['L', 'X', 176, 274]], [['L', 'sy', 216, 244, 1], ['L', 'sy', 244, 274, -1]],
+      [['R', 'my', 20, 60, 0.6], ['R', 'my', 60, 100, -0.6]], taps('R', 'X', 296, 380, 7), taps('L', 'X', 298, 382, 7))) }],
+    steps: [[0, 'He holds RB: his hands take his colour at the edges, a thin light and nothing more.'],
+      [20, 'One tap of X: one bolt leaves his palm at once and seeks the rival. A spark and a flinch, and the rival keeps flying.'],
+      [66, 'He mashes X: a bolt for every press, as quick as his thumb, up to ten a second.'],
+      [172, 'He holds X: a burst of eight in under a second, then a steady stream. The stick sprays it. A steady light at the palm, no flash per bolt.'],
+      [292, 'The rival fires back. Where their bolts meet, they cancel in pairs with small pops.']] },
+  { n: 'C2', name: 'The lob (Y)', takes: [{ l: V, r: P, len: 620,
+    setup: function (w) { w.L.y = 30; w.R.y = 0; w.R.x = 470; },
+    input: sc(cat(taps('L', 'Y', 20, 21, 1, 4), taps('L', 'Y', 120, 180, 20, 4), [['L', 'Y', 236, 292]], taps('L', 'Y', 380, 381, 1, 14), [['L', 'sx', 380, 400, -1]],
+      [['R', 'gx', 330, 374, 470], ['R', 'gy', 330, 374, 100], ['R', 'gx', 374, 430, 600], ['R', 'gy', 374, 430, 100], ['R', 'gs', 330, 430, 1.8]], taps('L', 'Y', 486, 487, 1, 4), taps('R', 'X', 506, 507, 1, 3), [['R', 'shootLob', 500, 512]])) }],
+    steps: [[0, 'A tap of Y: his arm winds back, a fifth of a second, and throws a heavier blast on an arc: for the Rival, a thick block tumbling end over end, low and quick.'],
+      [52, 'It drops onto the rival and bursts. The ground under him takes a small crater.', 64],
+      [116, 'He mashes Y: a barrage, one lob for each press, coming down where the rival is.'],
+      [232, 'He holds Y: his forearm steps up in light once, then twice. Released at level 2, his own form flies: it lands short and cracks into three blocks that hop toward the rival.'],
+      [370, 'Leaning the stick away from the rival as he throws: the lob lands behind the rival and cuts off his retreat.', 432],
+      [482, 'The rival shoots the lob in flight, and it bursts in the air halfway.', 520]] },
+  { n: 'C3', name: 'Blast or beam (B)', takes: [{ l: P, r: Y, len: 760,
+    setup: function (w) { w.L.y = 40; w.R.y = 0; },
+    input: sc(cat(taps('L', 'B', 20, 21, 1, 4), [['L', 'B', 180, 216]], [['L', 'my', 186, 210, 0.7]], [['L', 'B', 330, 420]], [['L', 'my', 334, 400, -0.6]], [['L', 'B', 560, 582]],
+      [['L', 'B', 650, 700]], taps('L', 'LT', 684, 685, 1, 2))) }],
+    steps: [[0, 'A tap of B: a short, heavy wind-up, and his most devastating single shot. It knocks the rival back and leaves a crater.', 60],
+      [176, 'He holds B. The heel of his palm steps up in light, with a click at each step. He can still fly at half speed.'],
+      [214, 'Released at level 1: a short beam. It knocks the rival back.', 222],
+      [326, 'Held to level 3 and released: a long beam. It catches the rival and carries him along it to its end, carving a trench below.'],
+      [556, 'He holds B, then lets go before the first step: it is the blast, not a beam. Until the first step lights, he can change his mind.'],
+      [646, 'Mid-charge, he taps LT: the charge drops, he dodges, and he spends nothing.']] },
+  { n: 'C4', name: 'Pulses: rapid fire in the beam', takes: [{ l: Y, r: P, len: 520,
+    setup: function (w) { w.L.y = 60; w.R.y = 60; },
+    input: sc(cat([['L', 'B', 20, 76]], taps('L', 'B', 84, 150, 6), [['L', 'B', 280, 336]], [['L', 'B', 342, 420]], taps('R', 'LT', 384, 385, 1, 2), [['R', 'sy', 384, 386, 1]])) }],
+    steps: [[0, 'A level-2 beam is out (the Demon Cyborg\'s, from the grille on his chest). He mashes B.', 100],
+      [86, 'With each press he hammers his chest plate and a swell runs down the beam to its front, and the front flares as it lands.'],
+      [160, 'The beam lasts longer for the pulses, and it still runs down in the end.', 152],
+      [276, 'This time he charges again, then holds B while the beam is out: the swells come by themselves at a steady beat.', 372],
+      [380, 'The rival dodges out of the beam\'s line. Caught in a beam, he always could.', 392]] },
+  { n: 'C5', name: 'Loaded', takes: [{ l: M, r: Y, len: 360,
+    setup: function (w) { w.L.y = 40; w.R.y = 40; w.R.x = 560; w.R.autoHome = false; },
+    input: sc(cat([['L', 'B', 20, 250]], [['L', 'my', 110, 150, 0.8], ['L', 'my', 150, 190, -0.8], ['L', 'mx', 110, 190, 0.35]], [['R', 'gx', 110, 160, 640], ['R', 'gs', 110, 160, 1.5]], [['R', 'LB', 160, 214]], taps('R', 'zip', 236, 237, 1, 2))) },
+    { l: M, r: Y, len: 320, setup: function (w) { w.L.y = 40; w.R.y = 40; w.L.ki = 40; },
+      input: sc(cat([['L', 'B', 20, 280]], [['L', 'my', 100, 140, 0.6], ['L', 'my', 140, 180, -0.6]])) }],
+    steps: [[0, 'She holds B to level 3 and keeps holding. The edge of her hand stays lit as she flies.', 150],
+      [120, 'The rival sees the lit hand, backs off to keep his distance, then guards.'],
+      [230, 'The moment the rival commits to a lunge, she lets go. The beam meets the lunge.'],
+      [360, 'Held too long, her ki runs short and the charge steps down a level. It never fires by itself: only letting go fires it (ruling 5).', 600]] },
+  { n: 'C6', name: 'A struggle between two beams', takes: [{ l: P, r: V, len: 440,
+    setup: function (w) { w.L.y = 60; w.R.y = 60; w.L.aimFlat = w.R.aimFlat = true; },
+    input: sc(cat([['L', 'B', 20, 80]], [['R', 'B', 20, 80]], taps('L', 'B', 104, 205, 20, 2), taps('L', 'B', 264, 350, 20, 2), taps('R', 'B', 104, 105, 1, 2), taps('R', 'B', 131, 132, 1, 2), taps('R', 'B', 144, 145, 1, 2),
+      taps('R', 'B', 224, 250, 20, 2))) },
+    { l: P, r: V, len: 300, setup: function (w) { w.L.y = 60; w.R.y = 60; w.L.aimFlat = w.R.aimFlat = true; },
+      input: sc(cat([['L', 'B', 20, 80]], [['R', 'B', 20, 80]], taps('L', 'B', 104, 200, 20, 2), taps('R', 'A', 184, 185, 1, 2))) }],
+    steps: [[0, 'Both fire level-2 beams, and they meet: the Protagonist\'s Breakwater, broad like a wall, and the Rival\'s Lance Sheaf, a straight bundle of thin lances.', 90],
+      [96, 'The pulse is a beat in the music and the pad. Each player presses on it, and each surge bulges the meeting point toward the rival. A press off the beat is a stray: it moves nothing and voids his next surge.'],
+      [170, 'The beam that is losing bulges and quivers as it buckles. It never thins.'],
+      [216, 'Close to his own hands, the loser\'s surges push harder: the comeback.'],
+      [340, 'One side is overwhelmed and launched along the beam\'s line. In another take, the player who is losing presses A on the pulse, slips aside, and the winning beam carries on past him.', 358]] },
+  { n: 'C7', name: 'Two energy grabs', takes: [{ l: P, r: Y, len: 230,
+    setup: function (w) { w.L.y = 50; w.R.y = 60; },
+    input: sc(cat(taps('L', 'A', 20, 21, 1, 3), taps('R', 'X', 64, 90, 7, 2), taps('L', 'A', 78, 79, 1, 2))) },
+    { l: V, r: M, len: 240, setup: function (w) { w.L.y = 50; w.R.y = 50; w.L.x = 250; w.R.x = 500; },
+      input: sc(cat(taps('L', 'A', 20, 21, 1, 3), taps('L', 'A', 58, 59, 1, 2), taps('L', 'X', 64, 65, 1, 2))) }],
+    steps: [[0, 'The Protagonist taps A: his net seeks the rival from his shoulder, opens wide and wraps him. He strains against it.'],
+      [62, 'The caught rival mashes. Each press tears at the net and shortens the hold.'],
+      [76, 'He presses A: his payoff, the yank. He hauls the rival into reach, and the brawl starts with his blow.', 90],
+      [230, 'The Rival taps A: a thin ring flies fast at hand height, never spinning, and snaps shut around the rival\'s arms.'],
+      [288, 'He presses A: his payoff, the bind. A bolt follows into the held rival, landing as on an open fighter.', 306]] },
+  { n: 'C7b', name: 'The four energy grabs', takes: [
+    { l: P, r: V, len: 170, setup: function (w) { w.L.y = 50; w.R.y = 50; }, input: sc(cat(taps('L', 'A', 16, 17, 1, 3), taps('L', 'A', 66, 67, 1, 2))) },
+    { l: V, r: Y, len: 170, setup: function (w) { w.L.y = 50; w.R.y = 50; w.L.x = 250; w.R.x = 500; }, input: sc(cat(taps('L', 'A', 16, 17, 1, 3), taps('L', 'A', 54, 55, 1, 2), taps('L', 'X', 60, 61, 1, 2))) },
+    { l: M, r: P, len: 170, setup: function (w) { w.L.y = 50; w.R.y = 60; }, input: sc(cat(taps('L', 'A', 16, 17, 1, 3), taps('L', 'A', 66, 67, 1, 2))) },
+    { l: Y, r: M, len: 190, setup: function (w) { w.L.y = 50; w.R.y = 50; }, input: sc(cat(taps('L', 'A', 16, 17, 1, 3), taps('L', 'A', 66, 67, 1, 2))) }],
+    steps: [[0, 'The Protagonist\'s Harbour Net: wide and slow on a tow line, binding arms and chest. Payoff, the yank: hauled into reach.', 72],
+      [170, 'The Rival\'s Rank Ring: a thin loop, fast and never spinning, pinning the arms. Payoff, the bind: his next shot lands as on an open fighter.', 236],
+      [340, 'The Empress\'s Banner Snare: four staves stamp down round him and their banners wrap his arms. Payoff, the slam: driven to one knee.'],
+      [510, 'The Demon Cyborg\'s Crane Hook: a hook on a cable round the arms. Payoff, the throw: swung round and flung.', 582]] },
+  { n: 'C8', name: 'Guard and energy: mines and traps', takes: [{ l: M, r: V, len: 600,
+    setup: function (w) { w.L.x = 360; w.L.y = 0; w.R.x = 660; w.R.y = 30; w.R.autoHome = false; w.L.autoHome = false; },
+    input: sc(cat([['L', 'LB', 6, 150]], taps('L', 'X', 22, 50, 12, 2), [['L', 'sx', 20, 24, 0.33], ['L', 'sx', 32, 36, 0.66], ['L', 'sx', 44, 48, 1]],
+      taps('L', 'Y', 70, 71, 1, 3), [['L', 'sx', 68, 74, -1]], taps('L', 'B', 100, 101, 1, 22), [['L', 'sx', 98, 124, -1], ['L', 'far', 98, 124]],
+      [['R', 'dodgeFlare', 140, 240]], [['R', 'gx', 150, 236, 520], ['R', 'gy', 150, 236, 30]],
+      taps('R', 'Y', 250, 251, 1, 3), [['R', 'aimDx', 250, 270, -72]],
+      [['R', 'gx', 316, 370, 360], ['R', 'gy', 316, 370, 160], ['R', 'gx', 370, 450, 150], ['R', 'gy', 370, 450, 60]],
+      taps('R', 'B', 490, 491, 1, 3))) }],
+    steps: [[0, 'She holds LB and RB. Her guard is up.'],
+      [18, 'She presses X, X, X, leaning the stick: three small spark mines in a short line. Her guard dips at each lay; they arm dim, then glow.'],
+      [66, 'A tap of Y lays a blast mine a little behind her. A tap of B lays her trap: the Velvet Rope, a faint line across the air.'],
+      [146, 'The rival flies in. A spark mine flares for a tenth of a second, and he dodges through the flare.'],
+      [246, 'The rival shoots the blast mine from range, and it goes off harmlessly where it sits.', 300],
+      [316, 'The rival crosses the rope. It fires her level-1 beam along itself and swings shut like a gate.', 440],
+      [470, 'Later the rival\'s heavy blast knocks her back along the ground, straight through her own last armed mine, which goes off on her.', 528]] },
+  { n: 'C9', name: 'The mixed string, close and far', takes: [{ l: P, r: V, len: 300,
+    setup: function (w) { w.L.x = 300; w.R.x = 370; w.L.y = 40; w.R.y = 40; w.R.autoHome = false; w.L.autoHome = false; },
+    input: sc(cat([['L', 'RB', 0, 300, false]], [['L', 'follow', 0, 64, 58]], taps('L', 'X', 10, 11, 1, 2), taps('L', 'X', 24, 25, 1, 2), [['L', 'RB', 34, 40, true], ['L', 'pointBlank', 34, 40, true]], taps('L', 'X', 36, 37, 1, 2),
+      taps('L', 'X', 50, 51, 1, 2), [['L', 'RB', 62, 70, true], ['L', 'pointBlank', 62, 70, true]], taps('L', 'Y', 64, 65, 1, 2),
+      [['L', 'RB', 76, 160, true]], taps('L', 'X', 78, 98, 6, 2), taps('L', 'Y', 102, 103, 1, 3), [['L', 'aimDx', 102, 118, 24]],
+      taps('L', 'zip', 190, 191, 1, 2), taps('L', 'X', 236, 237, 1, 2), taps('L', 'Y', 250, 251, 1, 2))) }],
+    steps: [[0, 'Punches, then RB and X: a point-blank bolt between two punches, with the hand lit just before it lands.'],
+      [60, 'RB and Y: the point-blank blast as the ender. The rival slides 4 bh away, the shot\'s colour trailing off his chest.'],
+      [76, 'The same thumb keeps going: RB and X is now bolts after him as he slides.'],
+      [100, 'A tap of Y lobs a blast where he will land.', 148],
+      [186, 'A zip strike closes the gap, and the brawl starts again.']] },
+  { n: 'C10', name: 'One level-3 beam in three places', takes: [{ l: P, r: V, len: 300,
+    setup: function (w) { w.scene = { k: 'sea' }; w.L.y = 12; w.R.y = 12; w.L.x = 120; w.R.x = 620; w.L.aimFlat = true; },
+    input: sc([['L', 'B', 20, 110]]) },
+    { l: P, r: V, len: 230, setup: function (w) { w.scene = { k: 'village' }; w.L.y = 0; w.R.y = 0; w.L.x = 120; w.R.x = 650; w.L.aimFlat = true; },
+      input: sc([['L', 'B', 20, 110]]) },
+    { l: Y, r: P, len: 230, setup: function (w) { w.scene = { k: 'village' }; w.L.y = 0; w.R.y = 0; w.L.x = 120; w.R.x = 650; w.L.aimFlat = true; },
+      input: sc([['L', 'B', 20, 110]]) },
+    { l: P, r: V, len: 420, setup: function (w) { w.scene = { k: 'forest' }; w.L.y = 0; w.R.y = 0; w.L.x = 170; w.R.x = 660; w.L.aimFlat = true; },
+      input: sc([['L', 'B', 20, 110]]) }],
+    steps: [[0, 'Over the sea, the beam parts the water for a moment, and the sea rushes back as a wave.'],
+      [300, 'Down a village lane, the hero\'s beam narrows near the houses and grazes the lane, sparing most of the row. The villain\'s (the Demon Cyborg\'s here) widens.', 430],
+      [760, 'Through a forest, the trees catch along the line. Later, water from the lake fills the trench and puts the fire out.', 1060]] }];
+
+// ---- the clip runner: takes play one after another, the steps on one clock ----
+function clipLen(c) { return c.takes.reduce(function (a, t) { return a + t.len; }, 0); }
+function newRun(ci, mode, picks) {
+  if (mode === 'play') { var w = newWorld(null, 0, 'play', picks); return { clip: null, w: w, t: 0, take: 0, off: 0 }; }
+  var c = CLIPS[ci]; return { clip: c, w: newWorld(c, 0, 'demo'), t: 0, take: 0, off: 0 };
+}
+function stepRun(run, keys) {
+  var c = run.clip, w = run.w;
+  if (c) {
+    var T = c.takes[run.take];
+    if (w.t >= T.len) { run.off += T.len; run.take++; if (run.take >= c.takes.length) { run.take = 0; run.off = 0; } run.w = w = newWorld(c, run.take, 'demo'); T = c.takes[run.take]; }
+    w.L.inp = T.input(w, 'L'); w.R.inp = T.input(w, 'R');
+  } else { w.L.inp = keys || { RB: true }; dummy(w); }
+  w.sound.length = 0;
+  fighterStep(w, w.L); fighterStep(w, w.R);
+  shotsStep(w); beamsStep(w); grabsStep(w); minesStep(w); fxStep(w);
+  if (w.scene && SCENES[w.scene.k].step) SCENES[w.scene.k].step(w);
+  [w.L, w.R].forEach(function (f) { f.x = clamp(f.x, 24, W - 24); f.y = clamp(f.y, 0, 230); });
+  w.t++; run.t = run.off + w.t;
+}
+// The rival in Play: drifts in toward you and back out, so mines get tripped, and returns fire now and then.
+function dummy(w) { var f = w.R, ph = Math.floor(w.t / 240) % 2, o = { RB: true }; f.autoHome = false; if (!f.caught && !f.send) { if (ph === 0 && Math.abs(f.x - w.L.x) > 140) o.mx = 0.7; else if (ph === 1 && Math.abs(f.x - f.home) > 6) o.mx = -0.7; if (w.t % 180 === 90) o.X = true; } f.inp = o; }
+function stepOf(c, t) { var k = 0; for (var i = 0; i < c.steps.length; i++) if (t >= c.steps[i][0]) k = i; return k; }
+
+// ---- drawing ----
+// One firing hand: the other stays open and away (Protagonist), behind his back (Rival), at the small of her back (Empress),
+// or on the chest plate (Demon Cyborg) (Legal e10, e15).
+function freeHand(f) { var x = f.x, d = f.dir, k = f.def.from; if (k === 'palm') return [x - d * 10, f.y + 54]; if (k === 'fist') return [x - d * 14, f.y + 50]; if (k === 'edge') return [x - d * 12, f.y + 48]; return [x + d * 10, f.y + 70]; }
+function pose(f, w) {
+  var x = f.x, d = f.dir, lean = 3, crouch = 0, h1 = [x + d * 22, f.y + 72], h2 = [x + d * 13, f.y + 58], one = false;
+  if (f.guard && !f.layT) { lean = 0; h1 = [x + d * 22, f.y + 82]; h2 = [x + d * 19, f.y + 66]; }
+  if (f.layT) { h1 = [x + d * 30, f.y + 50]; lean = 6; one = true; }
+  if (f.bchg) { var lv = f.bchg.lv; crouch = 4 + 3 * lv; lean = -3; h1 = [x + d * 28, f.y + 72 - crouch / 2]; one = true; }
+  if (f.ychg) { crouch = f.def.lob.k === 'lump' ? 18 : 4 + 3 * f.ychg.lv; lean = -4; h1 = f.def.lob.k === 'lump' ? [x + d * 16, f.y + 30] : [x - d * 12, f.y + 70]; one = true; }   // wind-ups at chest height (Legal e15)
+  if (f.beam && !f.beam.end) { lean = 8; crouch = 3; h1 = hand(f); one = true; }
+  if (f.stream || (f.armT > 0 && f.armK === 'bolt')) { h1 = [x + d * 32, f.y + 74]; lean = 6; one = true; }
+  if (f.armT > 0) {
+    if (f.armK === 'throw') { var k = 1 - f.armT / 10; h1 = f.def.lob.k === 'lump' ? [x + d * lerp(10, 30, k), f.y + lerp(30, 92, k)] : [x + d * lerp(-12, 30, k), f.y + lerp(70, 80, k)]; lean = lerp(-5, 9, k); one = true; }
+    if (f.armK === 'heavy') { var e = 1 - f.armT / 14; h1 = [x + d * lerp(-6, 38, ease(e)), f.y + 72]; lean = 14 * e; one = true; }
+    if (f.armK === 'grab') { h1 = [x + d * 36, f.y + (f.def.grab.k === 'net' ? 86 : 74)]; lean = 9; one = true; }
+    if (f.armK === 'pulse') { h1 = [x + d * 40, f.y + 72]; lean = 11; one = true; }
+  }
+  if (f.bchg && f.bchg.lv === 0 && f.bchg.t < N.bWind) { var gg = f.bchg.t / N.bWind; h1 = [x - d * 10 * gg + d * 16, f.y + 72]; lean = -6 * gg; crouch = 4 * gg; }
+  if (f.melee) { var m = f.melee, q = m.t / m.dur; h1 = [x + d * lerp(22, 46, Math.sin(Math.PI * q)), f.y + 76]; lean = m.k === 'hook' ? 12 : 8; one = false; }
+  if (f.zip) { lean = 18; h1 = [x + d * 30, f.y + 70]; }
+  if (f.reel > 0) { lean = -10 * Math.min(1, f.reel / 8); }
+  if (f.dodge) { lean = -14; crouch = 6; }
+  // caught: braced and straining against it, never limp (Legal)
+  if (f.caught) { lean = -8 + Math.sin(w.t * 0.6) * 3; crouch = 6; h1 = [x + d * 6, f.y + 64]; h2 = [x - d * 6, f.y + 62]; }
+  if (f.send) { lean = -26; h1 = [x - d * 12, f.y + 88]; h2 = [x + d * 16, f.y + 94]; }
+  if (one && f.def.from !== 'grille') h2 = freeHand(f);
+  if (f.def.from === 'grille' && (f.bchg || (f.beam && !f.beam.end))) { h1 = [x + d * 15, f.y + 80]; h2 = [x + d * 15, f.y + 60]; }   // both hands prise the chest plate apart (Legal Addendum 3)
+  return { lean: lean, crouch: crouch, h1: h1, h2: h2 };
+}
+function head(R, f, hx, hy, col) {
+  var id = f.def.id, d = f.dir;
+  if (id === 'protagonist') R.poly(ngon(hx, hy, 11, 8, 0.39), col);
+  else if (id === 'rival') R.poly([hx, hy - 15, hx + 9, hy - 2, hx + 6, hy + 11, hx - 6, hy + 11, hx - 9, hy - 2], col);
+  else if (id === 'empress') R.poly([hx - 14 * d, hy - 11, hx + 11 * d, hy - 3, hx + 5 * d, hy + 10, hx - 10 * d, hy + 5], col);
+  else R.poly([hx - 10, hy - 10, hx + 10, hy - 10, hx + 10, hy + 10, hx - 10, hy + 10], col);
+}
+// the charge read, never a ball: the heel of the palm (Protagonist), the forearm's plates (Rival), the hand's edge (Empress),
+// the chest grille's slats (Demon Cyborg), each a step brighter per level; plus one thin ring at the hand (Legal's rule)
+function chargeRead(R, f, H1, ch, lv, lit) {
+  var Lc = f.def.L.beam, d = f.dir, k = f.def.from, cols = [Lc.edge, Lc.main, Lc.main, Lc.core];
+  if (k === 'grille') { for (var i = 0; i < 3; i++) { var on = i < lv || lit; R.poly([ch[0] + d * 2 - 7, ch[1] - 8 + i * 6, ch[0] + d * 2 + 7, ch[1] - 8 + i * 6, ch[0] + d * 2 + 7, ch[1] - 5 + i * 6, ch[0] + d * 2 - 7, ch[1] - 5 + i * 6], on ? cols[Math.max(1, lv)] : C.ironDark); } return; }
+  if (k === 'fist') { for (var j = 0; j < 3; j++) { var px = lerp(ch[0], H1[0], 0.45 + j * 0.17), py = lerp(ch[1], H1[1], 0.45 + j * 0.17); R.poly(ngon(px, py, 3.2, 6, 0), j < lv || lit ? cols[Math.max(1, lv)] : f.def.body); } }
+  if (k === 'edge') { quad(R, H1[0] - d * 2, H1[1] - 6, H1[0] + d * 3, H1[1] + 5, 3.2, 3.2, lv > 0 || lit ? cols[Math.max(1, lv)] : f.def.body); }
+  if (k === 'palm') { R.poly(ngon(H1[0], H1[1], 5.4, 8, 0), KEY); R.poly(ngon(H1[0], H1[1], 4.2, 8, 0), lv > 0 || lit ? cols[Math.max(1, lv)] : Lc.edge); }
+  if (lv >= 1) { var rr = 9 + 3 * lv; ring(R, H1[0], H1[1], rr, rr, 3, KEY, 12); ring(R, H1[0], H1[1], rr, rr, 1.4, lv >= 3 ? Lc.main : Lc.edge, 12); }
+}
+function drawFighter(R, w, f) {
+  var d = f.dir, x = f.x + (f.shake > 0 && f.hs > 0 ? (f.shake % 2 ? 2 : -2) : 0), col = f.def.body, P2 = pose(f, w);
+  var base = sy(f.y), sh = Math.max(0.2, 1 - f.y / 220);
+  R.poly(ngon(f.x, GY + 3, 18 * sh, 8, 0).map(function (v, i) { return i % 2 ? GY + 3 + (v - GY - 3) * 0.2 : v; }), C.shade);
+  var kneel = f.kneel > 0 && f.y < 2;
+  var hip = [x, base - (kneel ? 24 : 38) + P2.crouch], ch = [x + d * P2.lean, base - (kneel ? 58 : 72) + P2.crouch], hd = [x + d * P2.lean * 1.15, base - (kneel ? 78 : 92) + P2.crouch];
+  var air = f.y > 4, fa = kneel ? [x - d * 14, base] : air ? [x + d * 8, base - 4] : [x + d * 12, base], fb = kneel ? [x + d * 10, base] : air ? [x - d * 6, base + 2] : [x - d * 9, base];
+  if (kneel) { limb(R, fa, [x - d * 14, base - 2], 8, col); limb(R, [x - d * 14, base - 2], hip, 8, col); limb(R, fb, [x + d * 14, base - 20], 8, col); limb(R, [x + d * 14, base - 20], hip, 8, col); }
+  else { limb(R, fb, hip, 8, col); limb(R, fa, hip, 8, col); }
+  limb(R, hip, ch, 10, col);
+  var dy0 = kneel ? 14 : 0, H1 = [P2.h1[0] + (x - f.x), sy(P2.h1[1]) + dy0], H2 = [P2.h2[0] + (x - f.x), sy(P2.h2[1]) + dy0];
+  limb(R, ch, H2, 6, col); head(R, f, hd[0], hd[1], col); limb(R, ch, H1, 6, col);
+  if (f.def.id === 'cyborg') R.poly([ch[0] + d * 2 - 8, ch[1] - 10, ch[0] + d * 2 + 8, ch[1] - 10, ch[0] + d * 2 + 8, ch[1] + 8, ch[0] + d * 2 - 8, ch[1] + 8], C.iron);   // the chest plate and its grille
+  var rb = f.inp.RB !== false, lv = f.bchg ? f.bchg.lv : f.ychg ? f.ychg.lv : -1, firing = f.stream || (f.beam && !f.beam.end);
+  var lit = f.lit > 0 || firing || (f.melee && (f.melee.k === 'pbolt' || f.melee.k === 'pblast'));
+  if (rb || lit || lv >= 0) chargeRead(R, f, H1, ch, Math.max(0, lv), lit);
+  if (f.notReady > 0) R.poly(star(H1[0], H1[1], 4, 2, 5, w.t * 0.5), C.grey);
+  if (f.guard && !f.layT) { var gx = x + d * 32, gb = base - 40, Lg = f.def.L.trap; R.poly([gx - d * 3, gb - 50, gx + d * 7, gb - 34, gx + d * 7, gb + 4, gx - d * 3, gb + 20, gx - d * 8, gb - 15], KEY); R.poly([gx - d * 2, gb - 47, gx + d * 5, gb - 33, gx + d * 5, gb + 2, gx - d * 2, gb + 17, gx - d * 6, gb - 15], Lg.edge); R.poly([gx - d * 1, gb - 38, gx + d * 3, gb - 28, gx + d * 3, gb - 2, gx - d * 1, gb + 8, gx - d * 4, gb - 15], Lg.main); }
+  if (f.trail && f.trail.t < 30) { f.trail.t++; for (var k = 0; k < 3; k++) { var tx = x - d * (8 + k * 14), ty = base - 70 + k * 5; spr(R, function (l, wd) { return xf([1, 0, 0, -1, -1, 0, 0, 1], tx + d * 20, ty, 0, l, wd); }, 4 - k, 3 - k * 0.6, f.trail.lc); } }
+}
+// beams: each kit's own, in its lane with Art's keyline; white-hot at the start and the end (Legal e15)
+function drawBeam(R, w, f) {
+  var b = f.beam, g = beamGeom(f), kit = f.def.beam.k, Lc = f.def.L.beam, sc2 = b.end ? Math.max(0, 1 - b.end / 9) : 1, len = b.len;
+  if (len < 2 || sc2 <= 0) return;
+  var hot = b.t < 5 || b.dur - b.t < 6 || b.end, wd = beamWidth(w, f), x0 = g.x0, y0 = sy(g.y0), nx = -g.dy, ny = -g.dx, ux = g.dx, uy = -g.dy;
+  function band(fr, col, off, buck, bowAmp) {
+    var n = Math.max(2, Math.ceil(len / 10)), top = [], bot = [];
+    for (var i = 0; i <= n; i++) {
+      var s = len * i / n, m = 1;
+      for (var j = 0; j < b.pulses.length; j++) { var dd = Math.abs(s - b.pulses[j].s); if (dd < 18) m += (b.pulses[j].surge ? 0.8 : 0.55) * (1 - dd / 18); }
+      var tip = s / len, z = 0, bk = b.buckle || 0, bow = 0;
+      if (bk > 0) {
+        if (buck === 'wall') z = tip < 0.45 ? (0.45 - tip) / 0.45 : 0;           // the wall bulges near his palm
+        else if (buck === 'heave') z = 0.5 + 0.5 * Math.sin(s * 0.09 - w.t * 0.2);
+        else z = tip > 0.5 ? (tip - 0.5) / 0.5 : 0;
+        if (buck !== 'bow' && buck !== 'press') m += bk * z * (0.6 + 0.45 * Math.sin(s * 0.16 - w.t * 0.5));
+        if (buck === 'bow' || buck === 'press') bow = Math.sin(Math.PI * tip) * bk * (bowAmp || 14);
+      }
+      var jit = (bk > 0 ? (hash(w.t * 97 + i) - 0.5) * 5 * bk : 0) + (i % 2 ? 0.8 : -0.8);
+      if (kit === 'vent') m *= 1 + 0.18 * (hash((w.t >> 2) * 31 + i) - 0.5);          // the vent wobbles in width only
+      var hw = wd / 2 * m * sc2 * fr, cx = x0 + ux * s + nx * (off + bow + jit), cy = y0 + uy * s + ny * (off + bow + jit);
+      top.push(cx + nx * hw, cy + ny * hw); bot.push(cx - nx * hw, cy - ny * hw);
+    }
+    var poly = top.slice(); for (var q = bot.length - 2; q >= 0; q -= 2) poly.push(bot[q], bot[q + 1]); R.poly(poly, col);
+  }
+  function layers(off, fr, buck, bowAmp) { band(fr * 1 + 4 / wd, KEY, off, buck, bowAmp); band(fr * 1 + 2 / wd, Lc.edge, off, buck, bowAmp); band(fr, Lc.main, off, buck, bowAmp); band(fr * (hot ? 0.7 : 0.38), hot ? '#ffffff' : Lc.core, off, buck, bowAmp); }
+  if (kit === 'sheaf') { var nL = 2 + b.lv, sp = wd / nL; for (var l = 0; l < nL; l++) { var off = (l - (nL - 1) / 2) * sp * 1.1; band(0.24 + 4 / wd, KEY, off, 'press', 10); band(0.24 + 1.6 / wd, Lc.edge, off, 'press', 10); band(0.24, l % 2 ? Lc.main : f.def.L.bolt.main, off, 'press', 10); band(0.09, hot ? '#ffffff' : Lc.core, off, 'press', 10); } }
+  else if (kit === 'hem') layers(0, 1, 'bow', 18);
+  else if (kit === 'vent') { var jets = Math.min(1, len / 40); if (len < 60) { for (var jn = -1; jn <= 1; jn++) layers(jn * 5 * (1 - jets), 0.45, 'heave'); } layers(0, 1, 'heave'); }
+  else layers(0, 1, 'wall');
+  var fx = x0 + ux * len, fy = y0 + uy * len, ang = Math.atan2(uy, ux);
+  if (kit === 'broad') { spr(R, function (l2, w2) { return xf([-0.1, -0.55, 0.3, -0.5, 0.36, 0, 0.3, 0.5, -0.1, 0.55], fx, fy, ang, l2, w2); }, wd * 0.9, wd * 1.05, Lc); }
+  if (kit === 'hem') { spr(R, function (l2, w2) { return xf([0, -0.5, 1.4, 0, 0, 0.5], fx, fy, ang, l2, w2); }, 6, wd * 0.9 + 3, Lc); }
+}
+// shots: each kit's bolt, lob and heavy blast
+function boltShape(k, x, y, a) {
+  if (k === 'streak') return function (l, wd) { return xf([1.4, 0, 0, -0.5, -1.6, 0, 0, 0.5], x, y, a, l, wd); };
+  if (k === 'needle') return function (l, wd) { return xf([2.0, 0, -1.2, -0.3, -1.5, 0, -1.2, 0.3], x, y, a, l, wd * 0.8); };
+  if (k === 'sliver') return function (l, wd) { return xf([0, -1.7, 0.45, 0, 0, 1.7, -0.45, 0], x, y, 0, wd * 1.3, l); };   // upright, flying broadside
+  return function (l, wd) { return ngon(x, y, l * 0.8, 6, 0.5); };                                                         // a rivet
+}
+function drawShot(R, w, s) {
+  var d = s.o.def, X = s.x, Y2 = sy(s.y), a = Math.atan2(-s.vy, s.vx), L = d.L;
+  if (s.delay > 0) return;
+  if (s.k === 'bolt') { spr(R, boltShape(d.bolt.k, X, Y2, a), s.s, s.s * 0.9, L.bolt); return; }
+  if (s.k === 'seam') { quad(R, s.x0, GY - 1, X, GY - 1, 2.5, 2.5, KEY); quad(R, s.x0, GY - 1, X, GY - 1, 1.2, 1.2, L.beam.edge); return; }
+  if (s.k === 'cling') { var sw = 1 - s.fuse / 20; spr(R, function (l, wd) { return star(X, Y2, l, wd, 5, 0); }, 9 + sw * 2, 5, L.lob); return; }
+  if (s.k === 'lob' || s.k === 'hop' || s.k === 'roll') {
+    var lk = d.lob.k, tum = Math.abs(Math.cos(s.t * 0.22)) * 0.65 + 0.35, sz = s.s;
+    if (lk === 'block') spr(R, function (l, wd) { return xf(ngon(0, 0, 1, 6, 0), X, Y2, 0, l, wd * tum); }, sz + 1, sz + 1, L.lob);              // tumbling end over end
+    else if (lk === 'crown') spr(R, function (l, wd) { return xf([-1, 0.5, -1, -0.2, -0.6, 0.1, -0.3, -0.8, 0, 0.05, 0.3, -0.8, 0.6, 0.1, 1, -0.2, 1, 0.5], X, Y2, 0, l, wd * tum); }, sz + 2, sz + 2, L.lob);
+    else if (lk === 'slag') spr(R, function (l, wd) { return xf([-1, -0.3, -0.4, -0.9, 0.5, -0.7, 1, 0, 0.6, 0.8, -0.3, 0.9, -0.9, 0.4], X, Y2, s.t * 0.12, l, wd); }, sz + 1, sz, L.lob);
+    else { spr(R, function (l, wd) { return xf([-0.9, -0.6, 0.2, -0.95, 1, -0.2, 0.8, 0.6, -0.2, 0.9, -1, 0.3], X, Y2, s.t * 0.08, l, wd); }, sz + 1, sz, L.lob); if (s.k === 'lob') for (var k = 1; k < 3; k++) spr(R, boltShape('streak', X - s.vx * k * 2.5, Y2 + s.vy * k * 2.5, a), 2.5, 2, L.bolt); }
+    return;
+  }
+  if (s.k === 'heavy') {
+    var hv = d.heavy.k, z2 = s.s;
+    if (hv === 'teardrop') spr(R, function (l, wd) { return xf([1, 0, 0.5, -0.55, -0.4, -0.35, -2.4, 0, -0.4, 0.35, 0.5, 0.55], X, Y2, a, l, wd); }, z2, z2 * 0.9, L.lob);
+    else if (hv === 'plates') { for (var p = 0; p < 4; p++) { var px = X - Math.cos(a) * p * 10, py = Y2 - Math.sin(a) * p * 10; spr(R, function (l, wd) { return xf(ngon(0, 0, 1, 6, 0), px, py, a, l * 0.5, wd); }, z2 * 0.9 - p, z2 * 0.9 - p, L.lob); } }
+    else if (hv === 'slab') spr(R, function (l, wd) { return xf([-1, -0.7, 0.2, -1, 1, -0.3, 0.7, 0.8, -0.4, 1, -0.9, 0.3], X, Y2, s.t * 0.2, l, wd); }, z2, z2 * 0.85, L.lob);
+  }
+}
+function drawGrab(R, w, g) {
+  var f = g.o, Lg = f.def.L.grab, h = g.kind === 'net' ? [f.x + f.dir * 24, f.y + 84] : g.kind === 'hook' ? hand(f) : hand(f), H1 = [h[0], sy(h[1])], gx = g.x, gy = sy(g.y), foe = f.foe;
+  if (g.st === 'done' || g.st === 'miss') return;
+  var held = g.st === 'catch', tight = g.pay && g.pay.k === 'bind' ? 0.8 : 1;
+  if (g.kind === 'net') {
+    var open = held ? 1 : Math.min(1, g.t / 16), wd = 16 + 30 * open, ht = 16 + 64 * open, nodes = [];
+    strip(R, H1[0], H1[1], gx - f.dir * wd * 0.4, gy, 1, Lg);   // the tow line, a thin cord (Legal Addendum 3)
+    for (var r2 = 0; r2 < 4; r2++) for (var c2 = 0; c2 < 4; c2++) { var nx = gx + (c2 / 3 - 0.5) * wd, ny = gy + (r2 / 3 - 0.5) * ht + (held ? Math.abs(c2 / 3 - 0.5) * 8 : 0); if (held && g.tears && (r2 * 4 + c2) % 5 === 1 && g.tears * 2 > c2) ny += 16; nodes.push([nx, ny]); }
+    for (var r3 = 0; r3 < 4; r3++) for (var c3 = 0; c3 < 4; c3++) { var p = nodes[r3 * 4 + c3]; if (c3 < 3) { var q = nodes[r3 * 4 + c3 + 1]; strip(R, p[0], p[1], q[0], q[1], 1.6, Lg); } if (r3 < 3) { var q2 = nodes[r3 * 4 + c3 + 4]; strip(R, p[0], p[1], q2[0], q2[1], 1.6, Lg); } }
+  } else if (g.kind === 'ring') {
+    var rr = held ? 17 * tight : 11, dim = held ? Math.ceil(6 * g.hold / f.def.grab.hold) / 6 : 1;
+    ring(R, gx, gy, rr * (held ? 1.05 : 0.45), rr, 4.6, KEY, 14); ring(R, gx, gy, rr * (held ? 1.05 : 0.45), rr, 3, dim > 0.5 ? Lg.main : Lg.edge, 14);   // a thin loop facing forward, never spinning
+  } else if (g.kind === 'banners') {
+    if (!held) { spr(R, function (l, wd) { return xf([-1, -0.25, 1, -0.25, 1, 0.25, -1, 0.25], gx, gy, g.t * 0.3, l, wd); }, 14, 5, Lg); }
+    else { [-1, -0.4, 0.4, 1].forEach(function (k2, i) { var sx2 = gx + k2 * 26, top = gy - 46, bot = Math.min(GY, gy + 46), ban = [sx2, top + 4, gx + k2 * 9, gy - 14 + i * 6, gx + k2 * 7, gy + 4 + i * 4, sx2, top + 26]; quad(R, sx2, top, sx2, bot, 5, 5, KEY); quad(R, sx2, top, sx2, bot, 2.6, 2.6, Lg.edge); R.poly(xf(ban.map(function (v, j) { return j % 2 ? v - gy : v - gx; }), gx, gy, 0, 1.1, 1.1), KEY); R.poly(ban, Lg.main); }); }   // solid staves standing apart, never joined by light (Legal e16)
+  } else {
+    var hx = held ? gx - f.dir * 4 : gx, hy = gy; strip(R, H1[0], H1[1], hx, hy, 2.2, { core: C.grey, main: C.iron, edge: C.ironDark });   // the cable
+    spr(R, function (l, wd) { return xf([0.9, -0.8, 0.9, 0.4, 0.2, 1, -0.6, 0.5, -0.6, 0.1, 0.1, 0.4, 0.4, 0.1, 0.4, -0.8], hx, hy, 0, l, wd); }, 9, 9, Lg);
+  }
+}
+function drawMine(R, w, m) {
+  var d = m.o.def, X = m.x, Y2 = sy(m.y), lit = m.st === 'armed', fl = m.st === 'flare', gone = m.st === 'gone', k = d.trap.k;
+  var Lb = { core: d.L.trap.core, main: fl ? d.L.trap.core : lit ? d.L.trap.main : d.L.trap.edge, edge: d.L.trap.edge };
+  if (m.kind === 'trap') {
+    if (k === 'rope') { var ang = m.gate ? m.gate * Math.min(1, (m.gateT || 0) / 20) * 1.05 : 0, top = [X + Math.sin(ang) * 150, GY - Math.cos(ang) * 150]; if (gone && !(m.gateT > 0 && m.gateT < 20)) return; R.poly(xf([-4, 0, 4, 0, 4, -10, -4, -10], X, GY, 0, 1, 1), C.stoneDark); strip(R, X, GY - 8, top[0], top[1], lit || fl ? 2.4 : 1.4, Lb); R.poly(xf([-4, 0, 4, 0, 4, 10, -4, 10], top[0], top[1], 0, 1, 1), C.stoneDark); return; }
+    if (gone) return;
+    if (k === 'pillar') { R.poly([X - 22, GY + 1, X - 20, GY - 2, X + 20, GY - 2, X + 22, GY + 1], C.stoneDark); for (var s2 = -1; s2 <= 1; s2 += 2) quad(R, X + s2 * 8, GY - 1, X - s2 * 6, GY - 1, 1.6, 1.6, fl ? Lb.core : lit ? Lb.main : C.stone); return; }
+    if (k === 'plate') { spr(R, function (l, wd) { return xf(ngon(0, 0, 1, 6, 0), X, GY - 2, 0, l, wd * 0.25); }, 20, 20, Lb); return; }
+    R.poly([X - 26, GY + 1, X - 24, GY - 3, X + 24, GY - 3, X + 26, GY + 1], C.iron); for (var i = -2; i <= 2; i++) quad(R, X + i * 10, GY - 2, X + i * 10 + 5, GY - 2, 1.6, 1.6, fl ? Lb.core : lit ? Lb.main : C.ironDark); return;
+  }
+  if (gone) return;
+  var sz = m.kind === 'spark' ? 4.5 : m.kind === 'blast' ? 6.5 : 6, s = sz * (fl ? 1.5 : lit ? 1 + 0.07 * Math.sin(m.armedT * 0.08) : 0.9);
+  if (m.kind === 'snare') { ring(R, X, Y2 - 6, s + 4, s + 2, 2, Lb.main, 10); return; }
+  var shp = m.kind === 'spark' ? boltShape(d.bolt.k, X, Y2 - 8, -Math.PI / 2) : function (l, wd) { return xf([-1, -0.3, -0.5, -1, 0.5, -1, 1, -0.3, 0.6, 0.6, -0.6, 0.6], X, Y2 - 6, 0, l, wd); };
+  spr(R, shp, s, s * 0.9, lit || fl ? Lb : { core: C.grey, main: C.grey, edge: d.L.trap.edge });
+}
+function drawFx(R, w, e) {
+  if (e.k === 'burst') { var u = e.t / e.dur, r = u < 0.3 ? e.r * ease(u / 0.3) : e.r * (1 - easeIn((u - 0.3) / 0.7)); if (r < 1) return; R.poly(star(e.x, sy(e.y), r + 2.5, r * 0.5 + 2, e.n, e.rot), KEY); R.poly(star(e.x, sy(e.y), r, r * 0.5, e.n, e.rot), e.lc.main); R.poly(star(e.x, sy(e.y), r * 0.6, r * 0.28, e.n, e.rot + 0.3), e.lc.core); return; }
+  if (e.k === 'chip') { var s = e.s * (1 - e.t / e.dur); if (s < 0.4) return; R.poly(xf([0, -1, 0.9, 0.6, -0.9, 0.6], e.x, sy(e.y), e.rot, s, s), e.col); return; }
+  if (e.k === 'fizz') { var s2 = 4 * (1 - e.t / e.dur); R.poly(star(e.x, sy(e.y), s2 + 2, s2, 5, e.t), C.grey); return; }
+  if (e.k === 'streak') { var k = 1 - e.t / e.dur; quad(R, e.x - e.dir * 30 * k, sy(e.y), e.x, sy(e.y), 2, 4 * k, e.col); quad(R, e.x - e.dir * 24 * k, sy(e.y) - 22, e.x - e.dir * 4, sy(e.y) - 22, 1.5, 3 * k, e.col); return; }
+  if (e.k === 'plate') { var q = 1 - e.t / e.dur, px = e.x + e.vx * e.t, py = sy(e.y + e.vy * e.t); if (q <= 0) return; spr(R, function (l, wd) { return xf(ngon(0, 0, 1, 6, 0), px, py, e.rot, l, wd * 0.5); }, 7 * q, 7 * q, e.lc); return; }
+  if (e.k === 'column') { var q2 = e.t < 6 ? ease(e.t / 6) : 1 - easeIn((e.t - 6) / (e.dur - 6)), hh = 70 * q2; if (hh < 2) return; R.poly([e.x - 9 * q2, GY, e.x - 4, GY - hh, e.x + 4, GY - hh, e.x + 9 * q2, GY], C.fire); R.poly([e.x - 4 * q2, GY, e.x - 1.5, GY - hh * 0.7, e.x + 1.5, GY - hh * 0.7, e.x + 4 * q2, GY], C.fire2); return; }
+  if (e.k === 'lens') { var q3 = e.t < 8 ? ease(e.t / 8) : 1 - easeIn((e.t - 8) / (e.dur - 8)), ww = 16 * q3, hl = 150; if (ww < 0.5) return; var cy = GY - hl / 2 - e.y * 0; R.poly([e.x, cy - hl / 2 - 2, e.x + ww + 2, cy, e.x, cy + hl / 2 + 2, e.x - ww - 2, cy], KEY); R.poly([e.x, cy - hl / 2, e.x + ww, cy, e.x, cy + hl / 2, e.x - ww, cy], e.lc.main); R.poly([e.x, cy - hl / 3, e.x + ww * 0.4, cy, e.x, cy + hl / 3, e.x - ww * 0.4, cy], e.lc.core); return; }
+  if (e.k === 'ropeBeam') { var q4 = 1 - e.t / e.dur, wd = 12 * Math.min(1, e.t / 3) * q4; if (wd < 0.5) return; R.poly([e.x - wd / 2 - 2, GY - 8, e.x + wd / 2 + 2, GY - 8, e.x + wd / 2 + 2, GY - 150, e.x - wd / 2 - 2, GY - 150], KEY); R.poly([e.x - wd / 2, GY - 8, e.x + wd / 2, GY - 8, e.x + wd / 2, GY - 150, e.x - wd / 2, GY - 150], e.lc.main); R.poly([e.x - wd / 5, GY - 8, e.x + wd / 5, GY - 8, e.x + wd / 5, GY - 150, e.x - wd / 5, GY - 150], e.lc.core); return; }
+  if (e.k === 'pillar') { var rise = e.t < 8 ? ease(e.t / 8) : e.t < 28 ? 1 : 1 - easeIn((e.t - 28) / 12), hh2 = 3 * MR * 0.9 * rise; if (hh2 < 1) return; R.poly([e.x - 18, GY, e.x - 18, GY - hh2 + 6, e.x + 18, GY - hh2 - 8, e.x + 18, GY], C.stone); R.poly([e.x - 18, GY - hh2 + 6, e.x + 18, GY - hh2 - 8, e.x + 18, GY - hh2 - 2, e.x - 18, GY - hh2 + 12], C.stoneDark); return; }
+  if (e.k === 'needleFan') { var q5 = e.t / e.dur; if (q5 >= 1) return; for (var n = 0; n < 12; n++) { var a = -Math.PI / 2 + (n / 11 - 0.5) * 1.75, dist = 20 + 140 * ease(q5), nx = e.x + Math.cos(a) * dist, ny = GY - 4 + Math.sin(a) * dist; spr(R, boltShape('needle', nx, ny, a), 6, 5, e.lc); } return; }
+  if (e.k === 'pit') { var q6 = e.t < 6 ? ease(e.t / 6) : e.t < 20 ? 1 : 1 - easeIn((e.t - 20) / 10); for (var pl = -2; pl <= 2; pl++) { var bx = e.x + pl * 10, tilt = (pl < 0 ? -1 : 1) * 0.6 * q6; R.poly(xf([-5, 0, 5, 0, 5, -3, -5, -3], bx, GY - 1, pl === 0 ? 0 : tilt, 1, 1), C.iron); } if (q6 > 0.3) { quad(R, e.x - 14, GY - 30, e.x - 4, GY - 44, 3, 3, C.ironDark); quad(R, e.x + 14, GY - 30, e.x + 4, GY - 44, 3, 3, C.ironDark); } }
+}
+function draw(w, R) {
+  R.clear(C.bg);
+  var scene = w.scene ? SCENES[w.scene.k] : null;
+  if (!scene || w.scene.k !== 'sea') { R.poly([0, GY, W, GY, W, H, 0, H], C.ground); R.poly([0, GY, W, GY, W, GY + 1.5, 0, GY + 1.5], C.line); }
+  w.marks.forEach(function (m) {
+    if (m.k === 'crater') { var b = m.w / 2; R.poly([m.x - b, GY + 1, m.x - b * 0.6, GY + b * 0.35, m.x + b * 0.6, GY + b * 0.35, m.x + b, GY + 1], C.scorch); R.poly([m.x - b - 4, GY, m.x - b, GY - 3, m.x - b + 6, GY], C.dirt); R.poly([m.x + b + 4, GY, m.x + b, GY - 3, m.x + b - 6, GY], C.dirt); }
+    if (m.k === 'trench') { R.poly([m.x - 13, GY + 1, m.x - 12, GY + m.d, m.x + 12, GY + m.d, m.x + 13, GY + 1], C.scorch); if (m.water > 0) R.poly([m.x - 12, GY + m.d * (1 - m.water) + 1, m.x + 12, GY + m.d * (1 - m.water) + 1, m.x + 12, GY + m.d, m.x - 12, GY + m.d], C.lake); }
+  });
+  if (scene && scene.draw) scene.draw(R, w);
+  w.mines.forEach(function (m) { drawMine(R, w, m); });
+  [w.L, w.R].forEach(function (f) { if (f.beam) drawBeam(R, w, f); });
+  if (w.struggle) { var S = w.struggle, lh = muzzle(w.L, true), rh = muzzle(w.R, true), px = lerp(lh[0], rh[0], S.m), py = sy(lh[1]), sw = 1 + 0.25 * (S.swell / 10), r = (19 + Math.sin(w.t * 0.25) * 1.5) * sw; R.poly(star(px, py, r + 2.5, r * 0.46 + 2, 7, w.t * 0.07), KEY); R.poly(star(px, py, r, r * 0.46, 7, w.t * 0.07), w.L.def.L.beam.main); R.poly(star(px, py, r * 0.8, r * 0.36, 7, -w.t * 0.09), w.R.def.L.beam.main); R.poly(star(px, py, r * 0.48, r * 0.24, 7, w.t * 0.05), '#ffffff'); }
+  drawFighter(R, w, w.L); drawFighter(R, w, w.R);
+  w.grabs.forEach(function (g) { drawGrab(R, w, g); });
+  w.shots.forEach(function (s) { drawShot(R, w, s); });
+  w.fx.forEach(function (e) { drawFx(R, w, e); });
+  // the screen edge only: each fighter's ki, and the charger's stage ticks at his own edge (ruling 23)
+  [w.L, w.R].forEach(function (f, j) {
+    var x0 = j ? W - 14 - 120 : 14, Lb = f.def.L.beam; R.poly([x0, 12, x0 + 120, 12, x0 + 120, 16, x0, 16], C.hud); var k = 120 * clamp(f.ki / 100, 0, 1);
+    if (j) R.poly([x0 + 120 - k, 12, x0 + 120, 12, x0 + 120, 16, x0 + 120 - k, 16], Lb.edge); else R.poly([x0, 12, x0 + k, 12, x0 + k, 16, x0, 16], Lb.edge);
+    var lv = f.bchg ? f.bchg.lv : f.ychg ? f.ychg.lv : -1, n = f.bchg ? 3 : 2;
+    if (lv >= 0) for (var i = 0; i < n; i++) { var tx = j ? x0 + 120 - 10 - i * 12 : x0 + i * 12; R.poly([tx, 21, tx + 9, 21, tx + 9, 26, tx, 26], i < lv ? Lb.edge : C.hud); }
+  });
+}
+return { W: W, H: H, FIGHTERS: FIGHTERS, CLIPS: CLIPS, N: N, newRun: newRun, stepRun: stepRun, draw: function (run, R) { draw(run.w, R); }, stepOf: stepOf, clipLen: clipLen };
+})();
+// ==== PAGE (DOM) ====
