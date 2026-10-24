@@ -410,6 +410,11 @@
       "id": "e15",
       "rule": "the four energy kits: no net or ring wind-up drawn to the hip (draw to chest or shoulder height); an open palm chambered for a heavy stays at chest height and passes the lint at every tick; a lob's object forms as it leaves the hand and never on the palm during a charge; a thrown slab is a thick block tumbling end over end, never a thin flat disc spinning about its face, never held, charged or raised above the head; the free hand never rests on the firing shoulder, arm or wrist (a shoulder width away, or low and behind); a ring of flakes stays below the head and is one power mark under k01; extra names prefer 'Hanging' to 'Hung'; the arming tick is a soft single tick and never a repeating beep that builds like a bomb timer; no slam line leads with 'kneel before', 'bow before' or 'behold'",
       "why": "RL-179"
+    },
+    {
+      "id": "e16",
+      "rule": "the Empress's banner cage: four banner staves stamped into the ground round him with cloth banners wrapping his arms and torso only; no lines of light joining the staves into a box or a four-point barrier, no dome, no cell, no hand sign, never six plates pinning the torso (the famous six-plate restraining spell); the kneel is the landing with no slow motion, zoom, taunt or finisher; Throne Quake stays a seam and a lens, never a crescent or a travelling wave front",
+      "why": "RL-180"
     }
   ],
   "grabs": [
@@ -800,6 +805,11 @@
       "id": "ln05",
       "rule": "story-beat templates: the picker refuses a Cyborg line that reads toll_band or any count, and the lint blocks people, toll and casualty words in Cyborg lines (people, person, civilians, killed, dead, died, victims, bodies, children, kids, toll, casualties; 'gone' or 'lost' about people); the wrecked slot is a structure or terrain event, never derived from a casualty event; the Cyborg's home_wear reads only his own home (the breaking yard, no residents); fronts and homes read place and wear only (no toll, count, body, school, hospital, place of worship or child as victim); a villain may threaten a structure or a fighter, never say the people of a place will suffer",
       "why": "RL-173; extends ln04 and c08"
+    },
+    {
+      "id": "ln06",
+      "rule": "grab call-outs: one call-out per grab, played on the throw or in the first 10 ticks of the catch inside the hit-stop and never extending it; nothing is said during the rest of the catch, over the payoff, or over a kneel or landing after a slam; no second line, no repeat, no reply while the fighter is held; the line never holds the action or triggers a zoom, a camera cut, a pause or a held pose, and no finisher follows it; insults follow ln01",
+      "why": "RL-180; e12"
     }
   ]
 }

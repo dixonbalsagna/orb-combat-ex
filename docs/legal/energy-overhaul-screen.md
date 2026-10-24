@@ -117,3 +117,53 @@ The standard counts a red flash when R/(R+G+B) on linear values is 0.8 or more a
 
 ### Not seen or not checked
 The JSON files, any picture, the Cyborg's README sections beyond the bits above. Nothing here ships: it is all behind `energy.v2`.
+
+## Addendum 3 (2026-10-23, RL-180): grab call-outs, and the kits' legalAsks answered
+Read: the four `energy.*.json` files' `legalAsks` and the one-pager sheets as committed (2c954dfa). A screen, not legal advice. The JSON beyond `legalAsks` and any picture were not seen.
+
+### 1. Do the grab call-outs count as taunts over a bound fighter (e12)? **Not if they follow ln06**
+e12 bans a taunt, zoom or slow motion that *holds* a scene over a bound fighter: a pose, pause or camera that dwells on the humiliation. A call-out said as the grab lands is part of the action, a short battle line (4 to 12 words), and passes if it follows ln06:
+- **One call-out per grab,** played **on the throw (as the grab leaves his hand) or in the first 10 ticks of the catch**, inside the hit-stop and never extending it.
+- **Nothing is said during the rest of the catch, over the payoff, or over a kneel or landing after a slam.** No second line, no repeat, no reply line from the grabber while the fighter is held.
+- The line never holds the action, triggers a zoom, a camera cut, a pause or a held pose, and no finisher follows it.
+- Insults in the line (rat, ranked, clown) follow ln01: at the fighter, never a slur. "Gotcha! Come in close!", "Arms down. You're being ranked.", "Gahaha! Down in our cage, rat!" and "Hook's out! Throwing you clear across!" all pass on this basis. The commands that name the move's act ("Arms down", "Hook's out") suit the throw; "Gotcha" suits the first ticks of the catch.
+
+### 2. The legalAsks, answered
+**Protagonist.**
+1. Names: **CLEAR.**
+2. Breakwater's pose (one arm straight, the palm turning edge to flat, the rear hand open and back a shoulder width away): **pass** (e10). The rear hand stays open, never cupped or gripping, above the hip zone or low at the rear, checked by the lint at every tick; one arm only.
+3. Harbour Net cast by an open hand holding the tow line (no OK-sign ring hand): **pass.** A thin cord from the hand to the net is a line and not a held glow. Keep the hand drawn back to chest or shoulder height (e15) and no glow gathering in the palm.
+4. Pier Lob's underhand scoop from a kneel: **pass.** Open hands, no scream, no fists at the sides; the lump forms as it leaves the hand.
+
+**Anti-hero.**
+1. Lance Sheaf (thin straight parallel unrotating lances, tints alternating along, the struggle a straight press with tips stepping forward): **pass** (e11 to e15).
+2. Rank Ring (a thin loop at hand height, closing round arms and torso, never a disc, hoop or edge, never spinning, never raised): **pass** (e12).
+3. Rank Breaker (a ram of stacked hexagonal plates from a straight punch, no ball of light round the fist): **pass.**
+4. Stair Split (a thick block tumbling end over end, cracking into three pieces that hop and burst together; two burst events for fx08): **pass** (e15), counted as two events and inside the cap of 3 a second.
+5. Pressure Plate (a fan of needles erupting from a flat plate): **pass** (e13), a registered burst.
+6. The stream (one arm flicking needles from a short arc, the other hand behind his back): **pass.** A hand behind the back is not a banned pose.
+7. Names: **CLEAR.**
+8. Lance Sheaf charge (the free hand behind his back, never on the firing arm or shoulder): **pass** (e10, e15). Your judge's redraw (the free hand no longer grips the firing arm) is right.
+
+**Empress.**
+1. Crown Toss (a crown tumbling end over end, never a flat spinning disc or hoop, no cutting edge, never held or raised above her head; Cling to torso, back or arm, never head, neck or face): **pass** (e14, e15). Confirm the crown forms as it leaves the hand and not on the palm during a charge.
+2. Throne Quake (a hairline seam from a heel stamp, opening into a lens, checked against ground-travelling wave moves): **pass.** A seam racing along the ground then a vertical lens of light that slams shut is not a crescent or travelling wave projectile, which is the shape the fighting games' ground waves take. **Keep it a seam and a lens, never a crescent or a wave front.**
+3. Banner Snare (one tumbling bundle that bursts into four banner staves stamped into the ground round him, the banners wrapping his arms and torso; redrawn from six flying plates): **pass, and the redraw is right.** Six light plates that fly out and pin a person's torso echo a famous six-plate restraining spell; four cloth banners on staves do not. **Conditions (e16):** no lines of light joining the staves into a box or a four-point barrier, no dome, no cell, no hand sign, banners that wrap arms and torso only, and the kneel is the landing with no slow motion, zoom, taunt or finisher.
+4. Hem Sweep (a thin straight cut from the hem; never a fingertip, finger-gun, two-finger, hand-frame or spiral): **pass.**
+5. The mantle never wraps, coils or grabs, so it never reads as a tail: **pass** (g01); keep it in the drawn poses.
+6. Colour (crimson to scarlet, never gold): **pass on gold** (the emperor's best-known later form), and **on red it is fx09:** the analyser decides, with white-hot peaks, red flashes 0. Art's non-red lane is welcome.
+7. Slam lines must not echo "kneel before": **confirmed.** "Kneel before the line!" and "Kneel before the cut!" are gone; "Down in our cage, rat!" and "Mind the cut, rat!" stand.
+
+**Cyborg.**
+1. The chest grille reads as a slatted furnace grille across a chest plate, never a round emitter, maw, mouth, teeth, jaw, head or belly: **pass** (e14).
+2. The beam never rotates, never from a hand-frame, never an arm cannon: **pass** (e11).
+3. No ball in or above a hand; every charge a brightness step at the grille; a loaded grille a steady light: **pass.**
+4. The gather pose (both hands prising the chest plate's edges apart, elbows wide) against the two-handed charge cupped at the hip: **pass.** The hands are at chest height, apart by the plate's width, holding the plate and not a glow; that is not the cupped-at-the-hip pose and not arms wide (the elbows are bent). Keep the hands above the hip zone and the lint at every tick.
+5. No barrel on his arm: rivets pop from a flat plate's rivet line, the winch sits inside the forearm plate and the hook is thrown by hand: **pass.** In the stream, a forearm held level across the chest is a one-arm fold and is allowed if the other hand stays free (h09).
+6. Crane Hook binds arms, torso or body only; the caught fighter struggles; it never reels in and is never whirled overhead; the throw is a planner launch: **pass** (e12; the third-of-a-turn swing is a throw, not a spin overhead).
+7. Wrecker Swing (a boom swing, feet planted, never a spin; the slab is jagged scrap, not a ball): **pass.**
+8. Scrap Pit (plates and clamps on the torso, no teeth, no chewing, biting or swallowing): **pass** (e14).
+9. Wreckage and metal only, no bystanders: **pass** (ln02, ln04).
+
+### Rows
+ln06 (the grab call-outs) and e16 (the Empress's banner staves) are in `movegen-banned.json`.
