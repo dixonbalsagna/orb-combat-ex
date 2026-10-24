@@ -19,3 +19,9 @@ Owner: Encounter Systems Director. A reading of `docs/design/right-stick-pitches
 | **Repeats (R8: the third inside 3 s loses its slip)** | | A per-fighter count: two director slots |
 
 **Today's zip (LT with X or Y)** is untouched: step 1 gives the stick nothing while LT is held. The chase (the zip at a launched rival) is untouched too.
+
+## Game Design's rulings (§12, 2026-10-23), and an early read of the cost
+
+GD ruled the six: the press's lunge wins in a shared tick (the flick spent into it, no ki) and the stick's lunge reuses `DirBands.begin` with no blow (10 ki, arriving free and even); brawl steps are director rushes, and a step back is giving ground (to `give.leashBh`; a flick toward takes it back); a slip is a shots-only flag for 4 ticks (never stance 2, never read by templates, never a flip or a tech); the dash away is movement only (never sprint or Escape; in a brawl a hold away gives ground to the leash and holds it); the cross-up swaps sides in a brawl (a 16-tick rush over or under him, no strike or slip in it, a blow landing in the arc lands clean); the skim never dives.
+
+**The side swap, early read:** the brawl keeps no stored side. `_stepIn` takes "his side of the rival" from the positions each time (`sdx`), and the pull reads the gap each tick. So a 16-tick rush to the other side (the pull rests while a rush is on, as for the recoil flip and the pop) leaves both reading the new side once he lands. What it needs: the rush itself, a wait on his presses while it runs (as the recoil flip's `RC_AIR`), the blows landing in the arc read clean (as the pop's horizontal gap), and his facing turned at the end. A small piece, not the large one feared; the fallback (a cross-up that parts the brawl) shouldn't be needed. To be confirmed when it is built.
