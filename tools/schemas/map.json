@@ -540,6 +540,10 @@
       "schema": "art-biomes.schema.json"
     },
     {
+      "match": "data/art/energy-lanes.json",
+      "schema": "art-energy-lanes.schema.json"
+    },
+    {
       "match": "audio/data/tug_cues.json",
       "schema": "audio-tug-cues.schema.json"
     },

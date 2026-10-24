@@ -1,0 +1,835 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/art-energy-lanes",
+  "title": "art.energy-lanes (version 1)",
+  "description": "data/art/energy-lanes.json: each fighter's energy colour lane (Art): the light colour and, per kind of energy (bolt, lob, beam, grab, trap), the core, main and edge colours; the rules in words. Presentation only. Version field: version. Policy: closed except keys starting with an underscore, which are free-form notes and measurements at every level. Adopted from Art's draft docs/art/pending/art-energy-lanes.schema.json.",
+  "type": "object",
+  "required": [
+    "version",
+    "note",
+    "rules",
+    "lanes"
+  ],
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  },
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "note": {
+      "type": "string"
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "lanes": {
+      "type": "object",
+      "required": [
+        "protagonist",
+        "rival",
+        "cyborg",
+        "empress"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "protagonist": {
+          "type": "object",
+          "required": [
+            "name",
+            "family",
+            "light_colour",
+            "kinds"
+          ],
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "family": {
+              "type": "string"
+            },
+            "light_colour": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "kinds": {
+              "type": "object",
+              "required": [
+                "bolt",
+                "lob",
+                "beam",
+                "grab",
+                "trap"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "bolt": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "lob": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "beam": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "grab": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "trap": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                }
+              },
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "metal": {
+              "type": "object",
+              "required": [
+                "light",
+                "mid",
+                "dark"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "light": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$"
+                },
+                "mid": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$"
+                },
+                "dark": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$"
+                }
+              },
+              "patternProperties": {
+                "^_": true
+              }
+            }
+          }
+        },
+        "rival": {
+          "type": "object",
+          "required": [
+            "name",
+            "family",
+            "light_colour",
+            "kinds"
+          ],
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "family": {
+              "type": "string"
+            },
+            "light_colour": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "kinds": {
+              "type": "object",
+              "required": [
+                "bolt",
+                "lob",
+                "beam",
+                "grab",
+                "trap"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "bolt": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "lob": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "beam": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "grab": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "trap": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                }
+              },
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "metal": {
+              "type": "object",
+              "required": [
+                "light",
+                "mid",
+                "dark"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "light": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$"
+                },
+                "mid": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$"
+                },
+                "dark": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$"
+                }
+              },
+              "patternProperties": {
+                "^_": true
+              }
+            }
+          }
+        },
+        "cyborg": {
+          "type": "object",
+          "required": [
+            "name",
+            "family",
+            "light_colour",
+            "kinds"
+          ],
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "family": {
+              "type": "string"
+            },
+            "light_colour": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "kinds": {
+              "type": "object",
+              "required": [
+                "bolt",
+                "lob",
+                "beam",
+                "grab",
+                "trap"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "bolt": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "lob": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "beam": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "grab": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "trap": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                }
+              },
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "metal": {
+              "type": "object",
+              "required": [
+                "light",
+                "mid",
+                "dark"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "light": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$"
+                },
+                "mid": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$"
+                },
+                "dark": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$"
+                }
+              },
+              "patternProperties": {
+                "^_": true
+              }
+            }
+          }
+        },
+        "empress": {
+          "type": "object",
+          "required": [
+            "name",
+            "family",
+            "light_colour",
+            "kinds"
+          ],
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "family": {
+              "type": "string"
+            },
+            "light_colour": {
+              "type": "string",
+              "pattern": "^#[0-9a-fA-F]{6}$"
+            },
+            "kinds": {
+              "type": "object",
+              "required": [
+                "bolt",
+                "lob",
+                "beam",
+                "grab",
+                "trap"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "bolt": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "lob": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "beam": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "grab": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                },
+                "trap": {
+                  "type": "object",
+                  "required": [
+                    "core",
+                    "main",
+                    "edge"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "core": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "main": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "edge": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    }
+                  },
+                  "patternProperties": {
+                    "^_": true
+                  }
+                }
+              },
+              "patternProperties": {
+                "^_": true
+              }
+            },
+            "metal": {
+              "type": "object",
+              "required": [
+                "light",
+                "mid",
+                "dark"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "light": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$"
+                },
+                "mid": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$"
+                },
+                "dark": {
+                  "type": "string",
+                  "pattern": "^#[0-9a-fA-F]{6}$"
+                }
+              },
+              "patternProperties": {
+                "^_": true
+              }
+            }
+          }
+        }
+      },
+      "patternProperties": {
+        "^_": true
+      }
+    }
+  }
+}

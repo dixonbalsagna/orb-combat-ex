@@ -292579,7 +292579,9 @@
         {
           "file": "data/biomes/lakes.json",
           "set": {
-            "/refuse": ["swamp"]
+            "/refuse": [
+              "swamp"
+            ]
           }
         }
       ],
@@ -300677,6 +300679,450 @@
       "expect": {
         "rule": "xref:anim-grip-feed-region",
         "pointer": "/grips/tie/hand_l"
+      }
+    },
+    {
+      "id": "art-energy-lanes-valid",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/version": 1
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-energy-lanes-underscore-key-ok",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-energy-lanes-underscore-key-in-lane-ok",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/lanes/protagonist/_check": {
+              "dE": 12
+            }
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-energy-lanes-underscore-key-in-kinds-ok",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/lanes/protagonist/kinds/_note": "x"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-energy-lanes-underscore-key-in-colours-ok",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/lanes/protagonist/kinds/bolt/_dE": 3.2
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-energy-lanes-key-required-version",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "del": [
+            "/version"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-energy-lanes-key-required-note",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "del": [
+            "/note"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-energy-lanes-key-required-rules",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "del": [
+            "/rules"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-energy-lanes-key-required-lanes",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "del": [
+            "/lanes"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "art-energy-lanes-unknown-key",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "art-energy-lanes-version",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/version": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "const",
+        "pointer": "/version"
+      }
+    },
+    {
+      "id": "art-energy-lanes-version-not-integer",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/version": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/version"
+      }
+    },
+    {
+      "id": "art-energy-lanes-rules-value-not-text",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/rules/faces": 3
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/rules/faces"
+      }
+    },
+    {
+      "id": "art-energy-lanes-lane-missing-protagonist",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "del": [
+            "/lanes/protagonist"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/lanes"
+      }
+    },
+    {
+      "id": "art-energy-lanes-lane-missing-rival",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "del": [
+            "/lanes/rival"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/lanes"
+      }
+    },
+    {
+      "id": "art-energy-lanes-lane-missing-cyborg",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "del": [
+            "/lanes/cyborg"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/lanes"
+      }
+    },
+    {
+      "id": "art-energy-lanes-lane-missing-empress",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "del": [
+            "/lanes/empress"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/lanes"
+      }
+    },
+    {
+      "id": "art-energy-lanes-lane-unknown",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/lanes/ghost": {
+              "name": "x",
+              "family": "x",
+              "light_colour": "#ffffff",
+              "kinds": {}
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/lanes/ghost"
+      }
+    },
+    {
+      "id": "art-energy-lanes-lane-key-missing",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "del": [
+            "/lanes/protagonist/family"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/lanes/protagonist"
+      }
+    },
+    {
+      "id": "art-energy-lanes-lane-unknown-key",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/lanes/protagonist/glow": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/lanes/protagonist/glow"
+      }
+    },
+    {
+      "id": "art-energy-lanes-light-colour-not-hex",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/lanes/protagonist/light_colour": "blue"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/lanes/protagonist/light_colour"
+      }
+    },
+    {
+      "id": "art-energy-lanes-light-colour-short-hex",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/lanes/protagonist/light_colour": "#fff"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/lanes/protagonist/light_colour"
+      }
+    },
+    {
+      "id": "art-energy-lanes-kind-missing",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "del": [
+            "/lanes/protagonist/kinds/trap"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/lanes/protagonist/kinds"
+      }
+    },
+    {
+      "id": "art-energy-lanes-kind-unknown",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/lanes/protagonist/kinds/mine": {
+              "core": "#ffffff",
+              "main": "#ffffff",
+              "edge": "#ffffff"
+            }
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/lanes/protagonist/kinds/mine"
+      }
+    },
+    {
+      "id": "art-energy-lanes-kind-colour-missing",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "del": [
+            "/lanes/protagonist/kinds/beam/edge"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/lanes/protagonist/kinds/beam"
+      }
+    },
+    {
+      "id": "art-energy-lanes-kind-colour-unknown-key",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/lanes/protagonist/kinds/beam/glow": "#ffffff"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/lanes/protagonist/kinds/beam/glow"
+      }
+    },
+    {
+      "id": "art-energy-lanes-kind-colour-not-hex",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/lanes/rival/kinds/bolt/core": "white"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/lanes/rival/kinds/bolt/core"
+      }
+    },
+    {
+      "id": "art-energy-lanes-kind-colour-not-string",
+      "schema": "art-energy-lanes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/energy-lanes.json",
+          "set": {
+            "/lanes/cyborg/kinds/grab/main": 16777215
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/lanes/cyborg/kinds/grab/main"
       }
     },
     {
