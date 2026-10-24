@@ -20,7 +20,7 @@ Combat and Choreography, 2026-10-23. Fitted to Game Design's frame (`docs/design
 - **The frame's:** 16-tick wind-up, a hold from 20 ticks, let go any time before level 1 for the blast (E40), worth a heavy, 5 bh knock-back, 10 ki, power 4.
 
 ## B held: Hem Sweep, the beam (E42 to E50, E90 to E97)
-- **Shape:** one thin straight cut that leaves the hem's edge at the end of an arm swing from the shoulder (never a body turn, never a hand-frame or spiral). Width ×0.4, the thinnest in the roster. **Sweep** 38° a second, steered by the stick (E48): the fastest, at the 20% band's edge over the reference's 32 (E81).
+- **Shape:** one thin straight cut that leaves the hem's edge at the end of an arm swing from the shoulder (never a body turn, never a hand-frame or spiral). Drawn width ×0.4, the thinnest in the roster, inside a hit width of ×0.7 (§20 item 1). **Sweep** 38° a second, steered by the stick (E48): the fastest, at the 20% band's edge over the reference's 32 (E81).
 - **Charge:** the edge light at her hand steps brighter at 30, 54 and 84 ticks with the frame's click and rumble; she turns side-on and sets her heel down. Held at level 3 it stays loaded and fires only when she lets go (E47). Lengths, worth, ki and power are E43's (inside §14's bands).
 - **Pulses (mashing B):** each is a swell, under a 10% brightness step, that runs down the line; where it meets the ground the gash deepens a notch. E50's numbers.
 - **End:** the line snaps off the hem like a cut thread, and the path it swept hangs as a scored hairline that cools for 60 ticks. The trench is narrow and straight-edged (E111's depths).
@@ -47,8 +47,8 @@ Combat and Choreography, 2026-10-23. Fitted to Game Design's frame (`docs/design
 
 | Form | What her RB and LB + RB hold |
 | :--- | :--- |
-| **Base, and jokes 1 to 8** | The command stance (`empress-guards.md` §3). She keeps the bolt and the beam: all of X, B held, and their laid forms, the spark mine and Velvet Rope. Y is Engage, B let go before level 1 is Fall in, A is Summon. Jokes change no number; each adds only its tell |
-| **9, Field Revision** | The guards salute and withdraw. Adds Y (tap, barrage, level 1), B tapped (Throne Quake), A tapped (Banner Snare), the blast mine and the snare. Her line doubles: twin straight lines 1 bh apart, each half the worth, with tints alternating along them. In a struggle they press side by side and never braid or wrap (Legal e11) |
+| **Base, and jokes 1 to 8** | The command stance (`empress-guards.md` §3). She keeps the bolt in all its gestures (tap, mash, stream), the spark mine and her orders: Y is Engage, B is Fall in, A is Summon (§20 item 6, Orb's guards compromise). Her RT + B signature is unchanged. Jokes change no number; each adds only its tell |
+| **9, Field Revision** | The guards salute and withdraw. Adds Y (tap, barrage, level 1), B tapped (Throne Quake), **B held (Hem Sweep, one thin line),** A tapped (Banner Snare), the blast mine, **Velvet Rope** and the snare (§20 item 6). The doubling of her decree line at this revision belongs to her RT + B signature (moveset-rules), not to this page |
 | **10, Executive Revision** | The blade-wings: adds the held grab, place (the staves set up to 6 bh off). Her sweep stays 38°, already at the band's edge |
 | **11, Council Revision** | Adds Cling, the lob's level 2 |
 | **12, Final Approved** | Nothing new on RB. Her RT + B signature is the beam's top form (E51), not this page's |
@@ -58,8 +58,11 @@ Combat and Choreography, 2026-10-23. Fitted to Game Design's frame (`docs/design
 - Casualties and fleeing people feed menace as for every villain. Her sweeps don't angle away from people as the Protagonist's do, but nothing aims at people for their own sake, nor ever at schools, hospitals or places of worship (E117). Her scars are straight: a city she swept reads as cut, not cratered.
 
 ## Open questions
-1. Game Design: base form keeps X and B held, and their laid forms. Is that the guards' compromise (`empress-guards.md` §2)?
-2. Game Design: `moveset-rules.md` §8.2 gives revision 10 "+50% reach", past E81's 20% band. Here revision 10 adds the held grab's place instead. Agreed? And is beam width banded? Hers is ×0.4.
-3. Settled: the EP kept README §2's map over §14's starting points, so the clinging lob and the slam are hers.
-4. Game Design: the answer to a clinging crown (a dodge tap in its last 8 ticks) mirrors E34. And a barrage at the 12-tick pace makes 5 bursts a second, over fx08's 3 counted: does the flash count merge them?
-5. Legal: the JSON's list: the crown, the seam, the staves and the kneel, the beam's source, the colour, and slam lines that must not echo "kneel before ...".
+Settled by Game Design's §20:
+- her base form keeps the bolt, the spark mine and her orders, and the beam and Velvet Rope come at revision 9 (item 6);
+- a beam's drawn width may be ×0.4 inside a hit width of ×0.7 (item 1);
+- the barrage's 4th and 5th bursts in a second draw as smoke (Legal fx09);
+- the clinging lob and the slam are hers (the EP).
+
+1. Game Design: `moveset-rules.md` §8.2 gives revision 10 "+50% reach", past E81's 20% band; here revision 10 adds the held grab's place instead. moveset-rules also lists her revisions twice in different orders: lines 193 to 196 run Field, Executive, Council, Final Approved, and lines 360 to 363 run Field, Council, Executive, Final Approved. This kit follows the numbered list, which Narrative shares.
+2. Legal: the JSON's list: the crown, the seam, the staves and the kneel, the beam's source, and slam lines that must not echo "kneel before ...".

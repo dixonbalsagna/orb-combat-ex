@@ -92,7 +92,7 @@
     "widthMul": 0.4,
     "sweepDegPerSec": 38,
     "_sweep": "a speed, so E81's 20% band applies: the reference (the Protagonist) sweeps 32, so 38 is the band's edge and still the fastest. Steered by the stick (E48). No revision raises it",
-    "_width": "x0.4, the thinnest; whether width is banded is an open question for Game Design",
+    "_width": "§20 item 1: drawn width (widthMul) x0.4 to x1.6, hit width (hitWidthMul) x0.7 to x1.3",
     "loaded": "held at level 3 it stays loaded and fires only when she lets go (E47)",
     "end": "the line snaps off the hem like a cut thread; the path it swept hangs as a scored hairline that cools for 60 ticks; a narrow, straight-edged trench at E111's depths",
     "levelTicks": [
@@ -121,7 +121,8 @@
       "en.empress.beam.fire",
       "en.empress.beam.pulse",
       "en.empress.beam.struggle"
-    ]
+    ],
+    "hitWidthMul": 0.7
   },
   "grab": {
     "look": "cage",
@@ -170,7 +171,9 @@
     "atoms": [
       "en.empress.trap.lay",
       "en.empress.trap.fire"
-    ]
+    ],
+    "_guard": "§20 item 9: no trap goes through a guard; a guard takes it at the guard's rate (only grabs and snares beat a guard)",
+    "_throw": "§20 item 2: a trap's throw is a knock-back, never a send, at most 6 bh on either axis"
   },
   "snare": {
     "look": "the four furled staves, standing where she lays them; within reach they spring and their banners wrap his arms and torso as the cage (the bind, or the slam if she presses A)",
@@ -190,9 +193,9 @@
   },
   "collateral": "E113: near occupied buildings her beam's width and her lob's burst widen to 1.3. The budget caps deaths, no borrowing at tiers 1 and 2 (E110). Casualties and fleeing people feed menace as for every villain. Her sweeps don't angle away from people, but nothing aims at people for their own sake, nor ever at schools, hospitals or places of worship (E117). Her scars are straight lines",
   "forms": {
-    "base": "command stance (empress-guards.md section 3). Keeps the bolt and the beam: all of X, B held, and their laid forms (spark mine, Velvet Rope). Y is Engage, B let go before level 1 is Fall in, A is Summon",
+    "base": "command stance (empress-guards.md section 3). Keeps the bolt in all its gestures (tap, mash, stream), the spark mine and her orders: Y is Engage, B is Fall in, A is Summon. Her RT + B signature is unchanged (§20 item 6)",
     "jokes1to8": "no number changes; each adds only its tell",
-    "rev9": "guards salute and withdraw. Adds Y (tap, barrage, level 1), B tapped, A tapped, the blast mine and the snare. The beam becomes twin lines 1 bh apart, each 0.5 of the worth",
+    "rev9": "guards salute and withdraw. Adds Y (tap, barrage, level 1), B tapped (Throne Quake), B held (Hem Sweep, one line), A tapped (Banner Snare), the blast mine, Velvet Rope and the snare (§20 item 6)",
     "rev10": "adds the held grab, place (the staves set up to 6 bh off); the sweep stays 38, already at the band's edge",
     "rev11": "adds Cling, the lob's level 2",
     "rev12": "nothing new on RB; her RT + B signature is the beam's top form (E51)"
@@ -385,10 +388,8 @@
     "Lines for the slam must not echo 'kneel before ...' (a famous film line); Narrative's earlier beam call-out 'Kneel before the line!' wants a check"
   ],
   "openQuestions": [
-    "Game Design: base form keeps X and B held and their laid forms (spark mine, Velvet Rope). Is that the guards' compromise (empress-guards.md section 2)?",
     "Game Design: moveset-rules.md section 8.2 gives revision 10 '+50% reach', past E81's 20% band; here revision 10 adds the held grab's place instead",
-    "Game Design: is beam width banded? Hers is x0.4",
-    "Game Design: section 14's starting points give the rival the clinging lob and the slamming grab; README section 2 gives them to her, and this file follows README section 2",
-    "Game Design: the clinging crown's answer (a dodge tap in its last 8 ticks) mirrors E34. A barrage at the 12-tick pace makes 5 bursts a second, over fx08's 3 counted: does the flash count merge them?"
+    "Game Design: the clinging crown's answer (a dodge tap in its last 8 ticks) mirrors E34. A barrage at the 12-tick pace makes 5 bursts a second, over fx08's 3 counted: does the flash count merge them?",
+    "Game Design: moveset-rules.md lists her revisions twice in different orders (lines 193-196: 9 Field, 10 Executive, 11 Council, 12 Final Approved; lines 360-363: Field, Council, Executive, Final Approved). This kit follows the numbered list, which Narrative shares"
   ]
 }

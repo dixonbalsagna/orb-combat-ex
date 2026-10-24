@@ -101,7 +101,9 @@
       "en.protagonist.beam.struggle"
     ],
     "holdFromTicks": 20,
-    "loaded": "Held at level 3 it stays loaded at 4 ki a second; it never fires by itself: when his ki can't pay, it steps down a level (E47 as amended)"
+    "loaded": "Held at level 3 it stays loaded at 4 ki a second; it never fires by itself: when his ki can't pay, it steps down a level (E47 as amended)",
+    "hitWidthMul": 1.2,
+    "_width": "§20 item 1: drawn width (widthMul) x0.4 to x1.6, hit width (hitWidthMul) x0.7 to x1.3"
   },
   "grab": {
     "look": "net",
@@ -149,7 +151,10 @@
       "throwAwayBh": 4.0,
       "throwTicks": 24,
       "hitStop": 8,
-      "_frame": "E72-E76: lay drops the guard 12 ticks, 12 ki; arms after 30 ticks; flares 6 ticks; field limit 1; fizzles 12 s after arming"
+      "_frame": "E72-E76: lay drops the guard 12 ticks, 12 ki; arms after 30 ticks; flares 6 ticks; field limit 1; fizzles 12 s after arming",
+      "upBh": 5.0,
+      "awayBh": 4.0,
+      "kind": "knockback"
     },
     "trigger": "The rival within 1.5 bh: a 6-tick flare (the seams brighten), then the slab rises. A send that carries either fighter through it sets it off at once, with no flare (E74). While a person is inside its reach it waits with its seams glowing (E79)",
     "answer": "Avoid it; shoot it with a lob or heavier; guard it at the guard's rate (no throw through a guard); a dodge tap in the flare; send the layer into it, and it throws him",
@@ -157,7 +162,9 @@
     "atoms": [
       "en.protagonist.trap.lay",
       "en.protagonist.trap.erupt"
-    ]
+    ],
+    "_guard": "§20 item 9: no trap goes through a guard; a guard takes it at the guard's rate (only grabs and snares beat a guard)",
+    "_throw": "§20 item 2: a trap's throw is a knock-back, never a send, at most 6 bh on either axis"
   },
   "snare": {
     "look": "The net laid: a loose hammock of glowing cyan cord hanging in the air, or lying flat on the ground. Catches as the grab; the bind unless he presses A for the yank (E75)",
@@ -375,7 +382,6 @@
     "Pier Lob's underhand scoop from a kneel"
   ],
   "openQuestions": [
-    "The frame gives no numbers for a trap's throw: the pillar's 5 bh up and 4 bh away are ours; its 0.9 of a heavy sits inside section 14's band",
     "The lob's level-2 bounce goes toward the rival (confirmed by Combat)",
     "Parked and cut, as not in the frame: bolts that wear a guard open ('the read'), and his beam capped at level 2 near people at high anguish. Wanted as templates?"
   ]

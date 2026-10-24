@@ -61,6 +61,6 @@ Near occupied buildings his beam and his lob's burst widen to 1.3 (E113), and hi
 
 ## Open questions (Game Design)
 1. **A siphon payoff** (the drain I first drew, now dropped): the catch's remaining ticks move the foe's ki to the Cyborg at 0.5 a tick, at most 20. Only worth it if a payoff may ever move ki.
-2. **Forms in numbers** (proposed, not used): level 3 only in the final form, and the final form's speed (wind-ups ×0.8).
-3. **Scrap Pit through a guard:** I read it as the guard's rate with no drop. Please confirm.
-4. **The rolling lob against a high flyer** reaches only 3 bh up. Is that fine for a ground tool?
+Settled by §20: no level-3 gate and no ×0.8 wind-ups; forms may move charge levels up to 10% and speeds up to 20% inside E81, and his limiter stays looks and sound (item 8). No trap goes through a guard: a guard takes Scrap Pit at the guard's rate, with no drop (item 9).
+
+2. **The rolling lob against a high flyer** reaches only 3 bh up. Is that fine for a ground tool?

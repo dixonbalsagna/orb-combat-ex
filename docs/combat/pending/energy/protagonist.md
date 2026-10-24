@@ -31,7 +31,7 @@ Everything fires from the heel of an open palm that turns from edge to flat as i
 
 ## B held, the beam: Breakwater (E42 to E50)
 - **The charge.** From the gather he settles side-on in a long low stance. His lead arm is straight with the palm edge-forward, and his rear hand is held open and back, a shoulder width away. Each level (30, 54, 84 ticks) turns the lead palm further toward flat and steps up the steady light at its heel, with the frame's click and rumble tick. On release the palm turns fully flat and the beam opens from its heel. Held at level 3, it stays loaded. It never fires by itself: when his ki can't pay, it steps down a level (E47).
-- **Shape:** broad and driving, **width ×1.2.** Cyan at the palm and azure toward the front, a step brighter at each level.
+- **Shape:** broad and driving, **width ×1.2,** drawn and hit alike (§20 item 1). Cyan at the palm and azure toward the front, a step brighter at each level.
 - **Sweep:** slow and heavy, 32 degrees a second.
 - **End:** a flat, blunt front of pale cyan heat that shoves a wave of dust ahead of it and breaks into a fan of azure flame where it stops.
 - **Pulses (E50).** Each B press shoves the lead palm forward a hand's length, and a pale cyan swell runs down to the front (under a 10% brightness step), which surges. Each adds +0.1 of a heavy and 4 ticks of length, for 2 ki, at most one every 6 ticks. While B is held, it pulses every 8 ticks at 85%.
@@ -53,7 +53,7 @@ Everything fires from the heel of an open palm that turns from edge to flat as i
 ## LB + RB: the trap, the snare and the mines (E70 to E79)
 - **B, his trap: Trip Pillar.**
   - **Laying it.** With his guard up, his rear palm presses flat down: 12 ticks with the guard dropped, 12 ki. A square of cracked ground 1 bh across sets into the surface, with a faint cyan seam in its cracks. It is a ground trap, so laid in the air it sets into the ground below him.
-  - **Tripping it.** It arms in 30 ticks. When the rival comes within 1.5 bh it flares for 6 ticks: the seams brighten. Then **a solid slab of ground (or the lane's own stone) rises 3 bh over 8 ticks** with its top slanted away from people. It pitches whoever is over it **5 bh up and 4 bh away from people.** That is a send under the send rules, worth 0.9 of a heavy (within §14's 15% of a level-1 beam), with hit-stop 8. The slab stands for a moment and then crumbles back into rubble.
+  - **Tripping it.** It arms in 30 ticks. When the rival comes within 1.5 bh it flares for 6 ticks: the seams brighten. Then **a solid slab of ground (or the lane's own stone) rises 3 bh over 8 ticks** with its top slanted away from people. It pitches whoever is over it **5 bh up and 4 bh away from people.** That is a knock-back, never a send (§20 item 2: at most 6 bh on either axis), worth 0.9 of a heavy (within §14's 15% of a level-1 beam), with hit-stop 8. The slab stands for a moment and then crumbles back into rubble.
   - **Legal's e14.** The pillar is solid stone, never a vertical beam of light, and it rises beside or under a body, never around one.
   - **Limits.** While a person is inside its 1.5 bh reach, it waits with its seams glowing (E79). He has one at a time, and it fizzles 12 s after it arms.
 - **Answers (E78).** Go round it. Shoot it with a lob or heavier. Guard it at the guard's rate, which means no throw. Dodge in the flare. Or send him into it, and it throws him.
@@ -77,7 +77,6 @@ The tells and poses are in the JSON.
 ## Open questions for Game Design
 Settled by the amended frame: E96 makes a struggle look change looks only, so the wall's push is ×1.0; and E50 makes a pulse 4 ticks longer.
 
-1. The frame gives no numbers for a trap's throw. The pillar's 5 bh up and 4 bh away are ours. Its 0.9 of a heavy sits inside §14's band.
 2. The lob's bounce goes toward the rival (confirmed by Combat).
 3. Parked and cut, as they were not in the frame: bolts that wear a guard open ("the read"), and his beam capped at level 2 near people at high anguish. Wanted as templates?
 

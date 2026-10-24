@@ -33,6 +33,12 @@ Combat and Choreography, 2026-10-23. **Orb's brief:** "Energy attacks overhaul" 
 | **LB + RB with X and Y, the spark and blast mines** | Only their look | Everyone's |
 
 - **The ki table is everyone's** (E100). Pulses are E50. Struggles are E90 to E97: a pulse on the beat counts double, and the losing beam bulges and quivers, never thins.
+- **§20's rulings** (Game Design):
+  - a beam's drawn width ×0.4 to ×1.6 and its hit width ×0.7 to ×1.3;
+  - a trap's throw is a knock-back, never a send, at most 6 bh on either axis;
+  - no trap goes through a guard;
+  - forms may move charge levels up to 10% and speeds up to 20% inside E81;
+  - TRAP LANDING is accepted.
 - **Hit-stop** is E102. **Collateral** is E113: near people the carer's beam narrows to 0.6 and his lob's burst to 0.7, and a villain's widen to 1.3. **Biomes** are E114 to E116.
 - **Legal's rule for names** (E117): "blast cloud", never nuclear words.
 
@@ -54,7 +60,7 @@ Combat and Choreography, 2026-10-23. **Orb's brief:** "Energy attacks overhaul" 
   - the Cyborg: Slag Roll, Furnace Vent, Scrap Pit, Crane Hook.
 - **Drain and confine became looks and payoffs inside the templates.** The ki table is everyone's, so no fighter takes another's ki. A siphon payoff may be proposed to Game Design as a future template.
 - **The Cyborg's whole energy set runs on wreckage and metal, never on people** (Legal ln02, ln04).
-- **The Empress's base form** trades the energy stance for her command stance (`docs/design/empress-guards.md`). She keeps one bolt and her beam, and her revisions add the rest.
+- **The Empress's base form** trades the energy stance for her command stance (`docs/design/empress-guards.md`). She keeps the bolt in all its gestures, the spark mine and her orders, and revision 9 adds the rest, the beam and Velvet Rope included (Game Design §20 item 6).
 - **The Cyborg's grammar stays whole in every form** (E10). His limiter shows in looks and sound until his final form, and any gating is an open question.
 
 ## 3. The data shape (`combat.energy/1`)

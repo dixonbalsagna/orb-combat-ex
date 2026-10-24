@@ -104,7 +104,9 @@
       "en.cyborg.beam.fire",
       "en.cyborg.beam.pulse",
       "en.cyborg.beam.loaded"
-    ]
+    ],
+    "hitWidthMul": 0.9,
+    "_width": "§20 item 1: drawn width (widthMul) x0.4 to x1.6, hit width (hitWidthMul) x0.7 to x1.3"
   },
   "grab": {
     "look": "lash",
@@ -152,7 +154,9 @@
     "atoms": [
       "en.cyborg.trap.lay",
       "en.cyborg.trap.pit"
-    ]
+    ],
+    "_guard": "§20 item 9: no trap goes through a guard; a guard takes it at the guard's rate (only grabs and snares beat a guard)",
+    "_throw": "§20 item 2: a trap's throw is a knock-back, never a send, at most 6 bh on either axis"
   },
   "snare": {
     "look": "the crane hook laid on a coil of cable; in its flare the coil twitches and the hook jumps, catching round arms or torso. Payoff the bind, or the throw if he presses A (E75)"
@@ -348,8 +352,7 @@
   ],
   "openQuestions": [
     "A siphon payoff (the drain first drawn, now dropped): the catch's remaining ticks move the foe's ki to the Cyborg at 0.5 a tick, at most 20. Only if a payoff may ever move ki",
-    "Forms in numbers, proposed and not used: level 3 only in the final form; the final form's speed (wind-ups x0.8)",
-    "Scrap Pit through a guard: read as the guard's rate with no drop. Confirm",
     "The rolling lob reaches only 3 bh up: fine as a ground tool against a high flyer?"
-  ]
+  ],
+  "_formsRuled": "§20 item 8: forms may move charge levels up to 10% and speeds up to 20% inside E81; no level-3 gate and no x0.8 wind-ups; his limiter stays looks and sound"
 }

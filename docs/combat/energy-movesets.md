@@ -30,7 +30,7 @@ Each fighter's page is in `pending/energy/` (`protagonist.md`, `rival.md`, `empr
 | | **The Protagonist** | **The Rival** | **The Empress** | **The Demon Cyborg** |
 | :--- | :--- | :--- | :--- | :--- |
 | **Identity; side** | Control; hero (anguish) | Precision; villain (menace) | Dominion; villain (menace) | Appetite, on wreckage and metal only; villain (hunger) |
-| **Colour (Art's lanes); where it fires from** | Cyan to azure; the heel of the palm | Violet to magenta; fists, the forearm plates, straight lines | Ivory with a deep gold rim; the blade hand's edge and the mantle's hem | Molten slag oranges with scrap-metal grey; the chest grille and the rivet line on the wrist plates |
+| **Colour (Art's lanes); where it fires from** | Cyan to azure; the heel of the palm | Violet to magenta; fists, the forearm plates, straight lines | Ivory with a deep gold rim; the blade hand's edge and the mantle's hem. Base form: the bolt, the spark mine and her orders; the rest from revision 9 (§20 item 6) | Molten slag oranges with scrap-metal grey; the chest grille and the rivet line on the wrist plates |
 | **X, the bolt** | Knuckle Flick: tight cyan sparks, speed ×1.1 | Pin Volley: needles, speed ×1.15, worth ×0.9; the stream opens with a backhand fan | Silk Slivers: upright slivers, ×1.15, sprayed vertically only | Rivet Spray: hot rivets, speed ×0.9, worth ×1.1, an 8° cone |
 | **Y, the lob, and its level 2** | Pier Lob: an underhand scoop on a high 40-tick arc. **Bounces** once toward the foe and bursts again at half | Stair Split: a hexagonal slab on a low 32-tick arc. **Splits** into three that hop toward him 8 ticks apart | Crown Toss: a crown tumbling end over end on a high 40-tick arc. **Clings** to torso, back or arm and goes off 20 ticks later | Slag Roll: slag hammered off the chest plate on a high 40-tick arc. **Rolls** up to 4 bh along the ground, then bursts |
 | **B tapped, the heavy blast** | Whole Palm: one palm driven heel-first, the other open and away | Rank Breaker: a straight punch sends a ram of stacked plates, worth ×1.1 | Throne Quake: a heel stamp sends a seam that opens into a lens of light | Wrecker Swing: a forearm swing knocks a jagged slab out of the grille |
@@ -38,7 +38,7 @@ Each fighter's page is in `pending/energy/` (`protagonist.md`, `rival.md`, `empr
 | **A, the grab** | Harbour Net: a wide, slow **net**; **the yank** into reach | Rank Ring: a thin **ring** round arms and torso; **the bind** | Banner Snare: a **cage** of four banner staves; **the slam**, landing him on one knee | Crane Hook: a hook on a cable, **a lash**; **the throw**, 6 bh along the stick |
 | **The trap** | Trip Pillar: a stone **pillar** rises 3 bh and throws him up and away from people | Pressure Plate: **his own**, a fan of needles fired up | Velvet Rope: a **line** that fires her level-1 beam and swings shut like a gate | Scrap Pit: a **field**, clamps and plates around a pit that holds and drops |
 | **Snare; spark and blast mines** (Narrative) | Harbour Hammock; Flint Mine, Scorch Cup | Open Loop; Standing Pin, Hanging Plate | Furled Banners; Hanging Sliver, Resting Crown | Cable Coil; Ticking Rivet, Slag Clot |
-| **Forms** | Looks only: hotter | His pride; open question | Base form: X, the beam, the spark mine and the rope; revisions 9 to 11 add the rest | Looks only: the limiter's sputter clears in the final form |
+| **Forms** | Looks only: hotter | His pride; open question | Base form: the bolt, the spark mine and her orders; revision 9 adds the lob, the heavy blast, the beam, the grab, the rope and the rest; 10 the held place; 11 Cling | Looks only: the limiter's sputter clears in the final form |
 
 **Every pair of kits differs in five cells** (the grab's look, its payoff, the lob's level-2 form, the trap and the beam's struggle look), against Game Design's rule of three (§14). **The held grab** differs too (E61): the Protagonist charges, the Rival and the Cyborg aim, and the Empress places. The numbers sit inside E81's bands against the reference fighter, the Protagonist: bolts and sweeps within 20%, lob level 2 within 15% of his 1.5, and the grab's arrival within 20% of 30. Whether beam width is banded is Game Design's to say. The ki table is untouched.
 
@@ -103,10 +103,10 @@ A trap is laid from the guard (LB + RB), so the director stages the laying as a 
 The spark and blast mines (X and Y with LB) are everyone's, and only their look is a fighter's. The snare (A with LB) is each fighter's grab, laid.
 
 **How traps compose the next exchanges:**
-- **Tripped:** walked, dashed or knocked into. Every trap flares for 6 ticks first: the answer window (E74).
+- **Tripped:** walked, dashed or knocked into. Every trap flares for 6 ticks first: the answer window (E74). A trap's throw is a knock-back, never a send, at most 6 bh on either axis, and no trap goes through a guard (§20 items 2 and 9).
 - **Shot:** a shot that touches a trap sets it off where it is (E78), so a volley can clear a path.
 - **Fed by a send:** a send that carries a fighter through an armed mine or trap sets it off at once with no flare, and that includes its layer (E74).
-  - **Proposed planner term, TRAP LANDING:** the launch planner scores a send of the foe onto the launcher's own armed trap, at base 12 plus the trap's bonus, inside the stick's win and freshness by kind.
+  - **TRAP LANDING, accepted by Game Design (§20 item 12):** the launch planner scores a send of the foe onto the launcher's own armed trap, at base 12 plus the trap's bonus, inside the stick's win and freshness by kind.
   - It is how the director composes "defence that bites" into a combo.
 - **Limits:** 4 mines, 1 trap and 1 snare per fighter. Laying another fizzles the oldest, and an armed mine fizzles after 12 s (E76).
 

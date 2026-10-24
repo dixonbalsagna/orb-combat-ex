@@ -37,7 +37,7 @@ His barrage made one: a straight, parallel, unrotating sheaf of straight beams, 
 
 ## LB + RB: the Pressure Plate, his snare and his mines (E70 to E79)
 - **B, his trap: the Pressure Plate.** A flat hexagonal plate set into the ground, or hanging flat in the air. Its zone is 2 bh round it and 6 bh up. Laying, arming, flare and limits are the frame's (guard down for 12 ticks, 12 ki, armed at 30, a 6-tick flare, one trap, fizzles after 12 s). Crossed, its facets light for the flare, then a fan of needles erupts upward, up to 50 degrees either side of straight up. One caught in it takes up to 8 of the 12 needles, worth ×0.9 of a heavy at most (inside 15% of a level-1 beam), hit-stop 8, and a pop of 2 bh up. It denies the air above a spot, where the Protagonist's pillar throws and the Empress's line cuts across.
-- **Answers (E78):** go round or above 6 bh, shoot it with a lob or heavier, guard at the guard's rate, dodge tap in the flare, or send him into it.
+- **Answers (E78):** go round or above 6 bh, shoot it with a lob or heavier, guard at the guard's rate (no trap goes through a guard, §20 item 9), dodge tap in the flare, or send him into it. The fan is one area hit (§20 item 4).
 - **A, his snare:** the loop laid open in the air or flat on the ground, dim until armed. It catches as the grab, and the payoff is the bind.
 - **X and Y, the spark and blast mines:** everyone's, in his look. The spark mine is a single needle standing point up. The blast mine is a small slab hanging flat (Narrative's Hanging Plate). A string of spark mines flares staggered, and every mine fizzles after 12 s.
 
@@ -64,6 +64,6 @@ His barrage made one: a straight, parallel, unrotating sheaf of straight beams, 
 - Casualties and fleeing people feed menace (the shared rule). The collateral budget caps the deaths at every tier (E110), and nothing scores deaths (E117).
 
 ## Open questions for Game Design
-1. The bind: may the open-fighter shot land after the catch has ended, if it was fired inside it (a heavy blast's travel, say)? As written, it may not.
-2. Can the plate's needle fan be one area hit in the sim, drawn as 12 needles, so it doesn't spend 12 of the 32 shot slots?
-3. What crashes his pride? That belongs to the forms, outside this page.
+Settled by §20: a shot fired inside the bind lands as on an open fighter if it arrives within 6 ticks of the catch's end (item 3), and the plate's fan is one area hit, drawn as needles (item 4).
+
+1. What crashes his pride? That belongs to the forms, outside this page.

@@ -109,7 +109,9 @@
       "en.rival.beam.struggle"
     ],
     "holdFromTicks": 20,
-    "loaded": "Held at level 3 it stays loaded at 4 ki a second and never fires by itself; when his ki can no longer pay, it steps down a level, and below level 1 it holds as Rank Breaker (E47). Let go before level 1 and it is Rank Breaker (E40)."
+    "loaded": "Held at level 3 it stays loaded at 4 ki a second and never fires by itself; when his ki can no longer pay, it steps down a level, and below level 1 it holds as Rank Breaker (E47). Let go before level 1 and it is Rank Breaker (E40).",
+    "hitWidthMul": 0.85,
+    "_width": "§20 item 1: drawn width (widthMul) x0.4 to x1.6, hit width (hitWidthMul) x0.7 to x1.3"
   },
   "grab": {
     "look": "ring",
@@ -149,7 +151,11 @@
     "holdFromTicks": 14,
     "heldMode": "aim",
     "_bands": "arrives within 25 ticks, 17% faster than the frame's 30 (inside E81's 20%); catch 40 at most",
-    "_callout": "Legal ln06: one call-out per grab, on the throw or in the first 10 ticks of the catch, inside the hit-stop and never extending it; nothing said over the rest of the catch, the payoff or a kneel"
+    "_callout": "Legal ln06: one call-out per grab, on the throw or in the first 10 ticks of the catch, inside the hit-stop and never extending it; nothing said over the rest of the catch, the payoff or a kneel",
+    "bindShot": {
+      "landsOpenWithinTicksOfCatchEnd": 6,
+      "_ruled": "§20 item 3: a shot fired inside the catch lands as on an open fighter if it arrives within 6 ticks of the catch's end"
+    }
   },
   "trap": {
     "template": "own",
@@ -164,7 +170,9 @@
       "popUpBh": 2,
       "hitStop": 8,
       "_bands": "worth 0.9 of a heavy at most, within 15% of a level-1 beam (x1.0). Lay price (guard down 12 ticks, 12 ki), arming 30 ticks, the 6-tick flare, one trap, 12 s fizzle are E72-E76",
-      "_sim": "proposed as one area hit (a cone volume) drawn as 12 needles, so it spends no shot slots"
+      "_sim": "proposed as one area hit (a cone volume) drawn as 12 needles, so it spends no shot slots",
+      "areaHit": true,
+      "_areaHit": "§20 item 4: the needle fan is one area hit, drawn as needles; it spends no shot slots"
     },
     "trigger": "His body crossing the zone (E74's 'across its zone'). Its facets light for the 6-tick flare, then the fan erupts. A send that carries either fighter through it sets it off at once, with no flare.",
     "answer": "Go round it or above 6 bh; shoot it with a lob or heavier; guard at the guard's rate; dodge tap in the flare; send the Rival into it (E78).",
@@ -172,7 +180,9 @@
     "atoms": [
       "en.rival.trap.lay",
       "en.rival.trap.fire"
-    ]
+    ],
+    "_guard": "§20 item 9: no trap goes through a guard; a guard takes it at the guard's rate (only grabs and snares beat a guard)",
+    "_throw": "§20 item 2: a trap's throw is a knock-back, never a send, at most 6 bh on either axis"
   },
   "snare": {
     "look": "The thin loop laid open in the air or flat on the ground, dim until armed. It catches as the grab; the payoff is the bind."
@@ -349,8 +359,6 @@
     "Lance Sheaf charge: the free hand behind his back, never on the firing arm or shoulder (e10, e15)."
   ],
   "openQuestions": [
-    "The bind: may the open-fighter shot land after the catch has ended if it was fired inside it (a heavy blast's travel)? As written, it may not.",
-    "Can the Pressure Plate's needle fan be one area hit in the sim, drawn as 12 needles, so it spends no shot slots?",
     "What crashes his pride (the forms' rule)?"
   ]
 }
