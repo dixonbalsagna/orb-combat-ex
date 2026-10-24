@@ -1,99 +1,99 @@
-# Energy attacks overhaul: the input grammar (paper, proposal)
+# Energy attacks overhaul: the input grammar (paper)
 
-Controls, 2026-10-23, for Orb's brief (`docs/ep/vision.md`, "Energy attacks overhaul") and Game Design's spec (`docs/design/energy-overhaul.md`, not yet written when this was drafted). **Paper only: no code until the spec is ruled.** Every number below is a proposal; the damage, ki and charge lengths are Game Design's and Combat's. My part is whether the grammar can be pressed on a pad, a keyboard and a phone, and how it feels.
+Controls, 2026-10-23, for Orb's brief (`docs/ep/vision.md`, "Energy attacks overhaul") and Game Design's frame (`docs/design/energy-overhaul.md`, E1 to E117). Reconciled to the frame the same day: where this and the frame differ, the frame rules and the difference is a constraint listed in section 9. **Paper only: no code until the spec is ruled.** My part is whether the grammar can be pressed on a pad, a keyboard and a phone, and how it reads and feels.
 
 ## 1. The idea in one paragraph
 
-**The energy modifier changes what a press makes, not how a press is read.** The four face buttons already mean light, medium, heavy and grab (X, Y, B, A), and hold-the-modifier already means "energy" (RB on the Arena pad, Q on the solo keyboard, E and O on the shared ones, the Mode button on Full touch). So energy light, medium, heavy and grab are the same four buttons with the modifier held, and **tap, mash, hold and release are read by the same code and the same timings as the martial strengths** (`SimPressRead`: the wind-up and its 4-tick grace, the burst's slowing auto-fire, the mash read, the latch). One grammar to learn, one set of tests, and the rapid-fire Orb wants carried over is not a new rule: it is the light's existing rule.
+**The energy modifier changes what a press makes, not how a press is read.** X, Y, B and A are already light, medium, heavy and grab (E12), and RB held is already the energy stance (E11). So energy light, medium, heavy and grab are the same four buttons with the stance held, and **tap, mash, hold and release (E13) are read by the same code as the martial strengths** (`SimPressRead`: a wind-up and its 4-tick grace, the slowing burst, the mash read, the latch). One grammar to learn, one set of tests, and the rapid fire Orb wants carried over is the light's existing rule.
 
-## 2. What exists today (so we know the size of the change)
+## 2. What exists today (the size of the change)
 
-- `mode` is momentary (hold RB; a setting makes it a toggle). A face press lands in the mode of its own tick (`agency-input.md` section 2). Simple layouts have no mode control: the director picks blasts at range and melee close (`autoMode`).
-- The signature (B) is the 45 ki beam, one shared beam. The Power layer (RT or LB held + a face button) carries the loadout specials and the signature.
-- A held X is a burst of eight lights that slows (`burst_read`, starts at 16 ticks); Y and B are wind-ups (12 and 28 live ticks, plus 4 of grace) that resolve as a tap or a charge (`charge_read`); the latch setting turns every hold into press-on, press-off; charges-off makes every press a tap.
-- The intent already carries everything the grammar below needs (`mode`, `guard`, the face edges and levels `lightHeld`, `heavyHeld`, `sigHeld`, `contextHeld`, and `waited` for edge time). **No new intent bit is expected.**
+- `mode` is momentary (hold RB; a setting makes it a toggle that latches). A face press lands in the mode of its own tick. Simple layouts have no mode control: the director picks blasts at range and melee close (`autoMode`).
+- The stances are the four shoulder bits (LB 1, RB 2, RT 4, LT 8), **exclusive** (ruled 2026-10-04: the newest wins, the older button's own fields go neutral), "until hybrids exist". **The hybrid mechanism is built and tested but switched off:** `data/input/stances.json` holds `"hybrids": []`, and `stance_test.gd` runs LB+RB (mask 3), LT+RB (10) and LT+LB (9) when they are listed.
+- A held X is a burst that slows (starts at 16 live ticks); Y and B are wind-ups that resolve as a tap or a charge at wind-up plus 4 ticks of grace on the live clock (`charge_read`); the latch makes every hold press-on, press-off; charges-off makes every press a tap; a one-shot latch arms a stance for one blow or 90 ticks.
+- The intent already carries what the grammar needs (`mode`, `guard`, `stanceMask`, the edges and the levels `lightHeld`, `heavyHeld`, `sigHeld`, `contextHeld`, `waited`). **No new intent bit is expected.**
 
-## 3. The press types, once, for every energy action
+## 3. The gestures (E13, E14) and how they are read
 
-| Press | Read as (the same as the martial button) | What it makes with the modifier held |
-| :--- | :--- | :--- |
-| **Tap** (released before the button's decision point: X none, Y 16, B 32 live ticks) | one attack, on the press tick for X; at the wind-up's end for Y and B | the **uncharged** form: a small bolt (X), a lob (Y), the heavy technique at its short length (B) |
-| **Mash** (taps closer than the decision point) | each press is its own attack (`mash_of`); a mash never charges | **rapid fire**: a stream of bolts (X), lobs (Y), short technique pulses (B) |
-| **Hold** past the decision point | X: auto-fire that slows (the burst). Y and B: **charge** | X: a rapid-fire stream. Y: a **charged lob**. B: a **charged beam** (stages, section 6) |
-| **Release** | ends the burst; fires the charge at the stage reached | the stream stops; the charged shot leaves |
-| **Cancel** (Guard or a dodge press during a charge) | a charge is dropped without firing (proposed, GD to confirm) | the charge is spent only up to what Game Design rules (ki already paid or refunded) |
+| Gesture | The frame | The read | Constraint |
+| :--- | :--- | :--- | :--- |
+| **Tap** | released inside the window | one attack: X on the press; Y, B and A at the window's end | window = the wind-up (Y 12, B 16, A 10) **plus 4 ticks of grace**, live ticks, every device: the **hold decision is Y 16, B 20, A 14** |
+| **Mash** | a press within 9 ticks of his last | each press is its own attack, capped (X 6, Y 12, B 24 ticks) | measured on true press ticks (`waited`); a press under the cap fires nothing but still gets a press-ack |
+| **Hold** | still down at the decision point | X: the stream (from the burst start, 16). Y: charges 2 levels. B: charges 3 (the beam). A: charges or aims the grab | a cue per charge level; none auto-fires |
+| **Release** | the button comes up | ends the stream; throws the charged lob; fires the beam at the level reached (before level 1 it is the heavy blast); throws the held grab | an edge at its true tick, even inside a hit-stop; level OFF |
 
-Two consequences. **X never charges** (its hold is rapid fire), so a beam charge belongs to the strengths that already wind up. And **a mash can never fire a beam**: a press shorter than the decision point is a tap, so "rapid-fire beams" are a stream of short beam pulses, one per press, the way a martial heavy mashed is a string of heavies.
+Two details. **A's 14 is the catch's number** (tell 10 plus grace 4), so one figure serves the catch, the carry, the brace and the energy grab's hold. And **the energy windows differ from the martial ones** (Y 12, B 28, A 12 martial; Y 12, B 16, A 10 energy), so `windup_for` becomes mode-aware: data keys `windupEnergyHeavy` 16 and `windupEnergyGrab` 10, the mode read from the press (a request already carries the mode of its own tick).
 
-## 4. Press by press, per action (Arena pad / solo keyboard / Simple touch)
+## 4. Press by press, per action (frame E15)
 
-M = the energy modifier held. Pad = Arena (RB held). Keys = solo keyboard (Q held). Touch = Simple touch, where Power held stands for M (see section 5).
+M = the energy stance (RB on Arena, Q on the solo keyboard, E and O on the shared ones, the Mode button on Full touch; held or toggled). Simple has no M: see section 5.
 
-| Action | Pad | Keys | Touch (Simple) | Tap | Mash | Hold | Release |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Energy light** | M + X | M + J | Power + Attack tap | one bolt, press tick | a bolt per press | auto-fire, slowing from 16 ticks | stops |
-| **Energy medium** | M + Y | M + K | Power + Attack hold (12 ticks) | a lob after its 12-tick wind-up | a lob per press | a **charged lob** past 16 | fires at the charge reached |
-| **Energy heavy (beam)** | M + B | M + L | Power + Attack swipe up | the technique, short, after 28 ticks | short pulses, one per press | a **charged beam** past 32, in stages | fires at the stage reached |
-| **Energy grab** | M + A | M + I | Context (tap) | the technique's first beat: net, ring, ... (per fighter) | not defined (one beat per press) | held = the technique's carry or brace if it has one (GD) | ends the carry |
-| **Trap (a guarded throw)** | Guard (LB), then any energy face button within the window; see section 5 | Shift, then M + a face key within the window | Guard, then Attack within the window | the blast leaves a mine where it lands | one mine per press, capped (GD) | the charged form leaves a bigger one | as the strength |
+| Action | Pad (Arena) | Keys (solo) | Tap | Mash | Hold | Release |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **X: light** | M + X | M + J | a bolt, on the press tick | a bolt a press, one per 6 ticks | the stream, fires while held (from 16) | ends it |
+| **Y: medium** | M + Y | M + K | a lob after its 12-tick window | a barrage, one lob a press | charges the lob, 2 levels (past 16) | throws it |
+| **B: heavy** | M + B | M + L | the heavy blast (most devastating single shot) | one per press, every 24 ticks | charges the beam, 3 levels (past 20) | fires at the level reached; before level 1 it is the blast |
+| **A: grab** | M + A | M + I | his energy grab, thrown | (in a catch, A is the payoff, E65) | charges or aims his grab (past 14) | throws it |
+| **Mine or trap (E70)** | LB + RB + a face button | Shift + M + a face key | one mine of that weight, laid nearby | one per press (X at most 1 per 6 ticks) | held past the lay it goes farther, set on release (E71) | sets it |
 
-## 5. By device: can it be pressed? And the trap
+## 5. By device: can it be pressed? And the lay (mask 3)
 
-| Device | The modifier M | Verdict |
-| :--- | :--- | :--- |
-| **Arena pad** | RB (index) | **Comfortable** for M + a face button. The left stick is the other thumb |
-| **Solo keyboard** | Q | **Fine**: Q with J, K, L or I |
-| **Shared keyboard** | E (P1), O (P2) | **Cramped**, as the shared layouts already are |
-| **Simple pad** | none (the director's `autoMode`); RT held is the Power layer | **Reachable only if the Power layer becomes the energy layer** (below) |
-| **Simple touch** | none (`autoMode`); Power is the layer | Same: Power + Attack tap, hold, swipe |
-| **Full touch** (tablets) | the Mode button (tap latches, hold is momentary) | **Reachable** (Mode + a diamond button) |
+| Device | The stance M | The lay (LB + RB + face) | Verdict |
+| :--- | :--- | :--- | :--- |
+| **Arena pad** | RB (index) | LB + RB (both index) + a face button (thumb) | **Comfortable.** The stick is the other thumb |
+| **Solo keyboard** | Q | Shift + Q + J, K, L or I | **Awkward while moving**: Shift, Q and WASD are all the left hand, and Shift + Q + a move key + J can ghost on a cheap board. **Toggle or latch is the recommended keyboard form**: energy latched, then Shift + a face key |
+| **Shared keyboard** | E (P1), O (P2) | Shift + E + F/G/R; Semicolon + O + H/M/U | **Cramped**, as the shared layouts already are. Toggle or latch |
+| **Simple pad** | none (the director's `autoMode`) | no RB to hold | the lay is **Guard (B) held, or tapped as a one-shot, plus a face button while the director is in energy mode** (range) |
+| **Simple touch** | none (`autoMode`) | no chord is reachable | **tap Guard (the one-shot latch arms it for one blow or 90 ticks), then tap Attack at range**: a lay. One finger at a time |
+| **Full touch** (tablets) | the Mode button (tap latches, hold is momentary) | Mode latched + Guard held + a diamond button | **Reachable** (two thumbs, or one if Guard is latched) |
 
-**Simple layouts: the Power layer is the energy layer.** Simple has no mode control, and the director already chooses blasts at range and melee close. I propose that on Simple pad and Simple touch, **Power held means "energy" for the face buttons** (Attack tap, hold, swipe up map to light, medium, heavy; `special_auto` retires into those), and a Simple player who never touches Power gets the director's pick as today.
+**Mask 3 can be switched on without breaking the exclusivity ruling.** The ruling is "exclusive *until hybrids exist*"; the mechanism is built (`SimStance.resolve`, `stances.json`, `stance_test.gd`). `"hybrids": [3]` makes the layout report LB+RB as mask 3 with `guard` and `mode` both live; every other pair stays newest-wins (RT still dominates). Cost on my side: one data line and one test assertion (the one that says no hybrid is enabled). Both press orders give mask 3 and nothing is dropped; a one-shot tap on each also arms both; LB pressed with RB held still fires its perfect-block edge. The guard stays held in the input for the whole lay: the sim drops it for the lay frames (E72), which is the director's.
 
-**The trap: not a chord (corrected 2026-10-23).** My first draft read "defensive blocks while hitting energy attacks" as Guard + modifier + a face button held together. **The input layer cannot do that:** the four shoulder stances are exclusive (ruled 2026-10-04: the newest wins and the older button's fields go neutral; `stance_test.gd` asserts it), so pressing RB while LB is down drops the guard. Allowing the chord would mean un-ruling that exclusivity in the layer, plus a director branch that keeps the guard through a blast, and on touch it is three right-hand fingers. The cheaper readings, in order:
+**Toggle mode is the one-hand lay.** With energy latched, holding LB alone is mask 3. It also fixes what a toggled player has today: guarding replaces the energy stance, because the newest button wins.
 
-1. **Recommended: the trap is a consequence of a block, read by the director, with no input change.** A fighter who has just *blocked* (a perfect block already opens a riposte window, 30 ticks in Game Design's rule) and throws an energy attack inside that window leaves a trap where the blast lands. "Blocking while hitting energy attacks" becomes "block, then answer with energy": press Guard, then an energy button. It works the same on every device including a phone (Guard tap, then Attack), needs no chord, no change to the exclusivity, no new intent bit and no new input state; the director needs only the block's tick, which it has for the riposte.
-2. **If Orb wants it without a successful block: a recent guard.** The sim keeps the last tick the guard was down (`guardLast`, one hashed field beside `guardSince`: Simulation's grant), and an energy attack thrown within W ticks (about 12) of it leaves the trap. A guard tap, then a face button, is the whole input. No chord, but one new sim field.
-3. **The explicit chord** (Guard + modifier + face together) as first drafted: only if Game Design wants the player to choose a trap at will. Cost: the exclusivity change in my layer, a director branch that holds the guard through a blast, and no touch form.
+**Simple layouts have no energy half to press.** The director supplies it at range, so for a Simple slot Guard (held or one-shot) plus a face button at range is the lay, read by the director with no input change. I have withdrawn my earlier idea of the Power layer as the energy layer: it made a lay three fingers (Guard, Power, Attack). On Simple touch, Attack picks the weight by its hold and swipe (tap light, hold medium, swipe up heavy), so a hold there cannot also mean "stream": **rapid fire on Simple touch is a mash of taps**, and the stream, the charged lob and the beam are pad, keyboard and Full-touch features, except that a swipe-up-and-hold can charge the beam (the finger stays down after the swipe).
 
-**A already lays a mine** (energy family held outside an exchange, `DirBlast.layMine`): that stays the deliberate, placed mine. The trap above is the other kind, a by-product of a guarded counter.
+An alternative trigger, if Game Design prefers it to mask 3: **the lay as a consequence of a block**: an energy attack thrown inside a perfect block's 30-tick riposte lays the trap. Same input on every device (Guard, then the face button), no hybrid and no new state. The mask-3 route is now cheap enough that it is Game Design's call.
 
 ## 6. Beam or blast, and not misfiring
 
-1. **Choose by button, not by hold on one button.** Light and medium are blasts; the heavy is the beam or technique. A player who wants a blast presses X or Y; a player who wants a beam presses B. There is no window in which a tap could become a beam.
-2. **The charge starts only past the decision point** (32 ticks on the heavy). A tap or a mash never reaches it.
-3. **A charge is released by the button or cancelled by Guard or a dodge press.** It is never fired by a timer: no auto-fire at full charge (I recommend this for accessibility, section 8), so a player who holds past full simply stays at full.
-4. **A stage count, not a bar.** The charge has N stages (2 or 3, Game Design's); each stage is one **cue** (`charge_stage` with `k`, and `charge_full` at the last, which exists today). The HUD, Audio and rumble all follow the cue, so none of them reads the sim.
-5. **Releasing before the first stage is a tap**, not a wasted charge: you get the uncharged technique.
-6. **Under a latched charge** the next press is the release, as today; the cancel is still Guard.
+1. **Choose by button.** X and Y are blasts; B is the heavy blast or the beam. No window exists in which a tap could become a beam: B tapped is the blast, B held past 20 ticks charges.
+2. **The charge starts only past the decision point** (B 20, Y 16). A tap or a mash never reaches it. A release before level 1 fires the heavy blast, not a wasted charge.
+3. **A charge is released by the button.** It is never fired by a timer (no auto-fire at full), so a player who cannot time a release stays at full.
+4. **The cancel** (Guard or a dodge press during a charge) is a Game Design question; if wanted I add a `charge_cancel` read.
+5. **Under a latched charge** the next press is the release; under charges-off every press is a tap, so the player gets the blast and never the beam (Game Design: acceptable, or a "charge for me" assist?).
+6. **A swallowed press** (faster than a button's cap) gets a press-ack, so a mashing finger sees why nothing fired.
 
 ## 7. Feedback, with no markers over the fighters
 
-| Channel | Charge | Fire | Cancel | Owner |
-| :--- | :--- | :--- | :--- | :--- |
-| **Fighter's own body** | hands and body gather and glow, deeper with each stage | the release pose | a shake-off | Animation, VFX |
-| **Screen-edge HUD** | an edge bar or stage ticks at the screen edge on the charger's side (not on the fighter) | the bar empties | the bar drops | UI |
-| **Rumble** | a pulse at each stage, firmer each time, and `charge_full` at the last; a held charge never buzzes continuously | one thump scaled by the stage | one short tick | Controls (`SimHaptics`): a `charge_stage` kind scaled by stage over stages, `charge_full` exists |
-| **Sound** | a rising tone, a step per stage | the release | a falling cut | Audio |
+| Channel | Charge | Fire | Owner |
+| :--- | :--- | :--- | :--- |
+| **The fighter's own body** | the hand gathers on the press (E14), deeper with each level | the release | Animation, VFX |
+| **Screen-edge HUD** | stage ticks at the screen edge on the charger's side | empties | UI |
+| **Rumble** | a pulse at each level, firmer each time, `charge_full` at the last; a held charge never buzzes continuously; a mine lay, a mine arming flare on the player's own device | one thump scaled by the level | Controls: a `charge_stage` kind scaled by level over levels (data), `charge_full` exists |
+| **Sound** | a rising tone, a step per level | the release | Audio |
 
-Rumble is never the only cue (UI, sound and the body say the same), is silent on a keyboard and on iOS Safari, and is gated by the haptics option. The only input-side requirement is the per-stage cue.
+Rumble is never the only cue, is silent on a keyboard and on iOS Safari, and is gated by the haptics option. **The input-side need is a cue per charge level** (`charge_stage`, `k`) from the director, so the HUD, Audio and rumble all follow one event.
 
 ## 8. Accessibility: hold or toggle, one hand
 
-- **The modifier:** the existing "Energy: hold or toggle" setting (default hold) stays; with toggle, a tap of RB latches energy until the next tap. The Simple layouts need no modifier.
-- **Charges:** the existing latched-charge setting makes B press-on, press-off. A latched B charges until pressed again, then fires at the stage reached; **no auto-fire at full** is what makes this safe for a player who cannot time a release.
-- **Charges off:** every press is a tap, so a player who cannot hold gets the uncharged technique and never a beam. Game Design should decide whether that is acceptable or whether a "charge for me" assist exists.
-- **One hand:** the Simple layouts reduce the grammar to Attack + Power on the right and a stick on the left; a one-handed pad player is served by the latch (no held modifier, no held charge). The trap needs no chord (section 5), so nothing in the grammar asks for two held buttons from one hand beyond the modifier.
-- **Left-handed and rebinding:** nothing here adds a control; remapping covers it.
+- **The stance:** the existing "Energy: hold or toggle" setting stays (E11). With toggle, RB latches; LB alone is then mask 3.
+- **Charges:** the latch makes B press-on, press-off, fired by the next press. No auto-fire at full is what makes it safe.
+- **Charges off:** every press is a tap (the blast, never the beam).
+- **One hand:** on a pad, toggle plus LB reaches every lay with one thumb free; on touch, the one-shot Guard then Attack; on Simple layouts the director holds the energy half.
+- **Rebinding and left-handed:** nothing here adds a control.
 
-## 9. Risks, and questions
+## 9. Constraints sent to Game Design, and open questions
 
-- **The trap needs a trigger Game Design picks** (section 5): a block's riposte window (recommended, no input change), a recent guard (one sim field) or an explicit chord (un-rules the stance exclusivity and needs a director branch). The Guard-then-Attack input is the same for the first two.
-- **Mash vs hold on the medium and heavy.** The decision points (16 and 32 ticks) are already used for martial and have the touch cost measured (a modelled 3.66% of touch taps read as a medium at 12). The same read applies to the energy strengths unchanged.
-- **Keyboard ghosting** is no longer a trap risk (no chord); it stays where it was for the modifier plus a face key plus a move key.
-- **Grab is the odd one.** "Each fighter treats it a bit differently" (net, ring, ...) means the grab has no common tap/hold meaning: a fighter's grab may be one beat, a hold or a placement. The input only guarantees tap, hold and release; each fighter's data must say which it uses.
-- **Questions for Game Design:** which strengths charge (I recommend medium and heavy, never the light); the stage count and lengths; whether Guard or a dodge cancels a charge; no auto-fire at full; which of the three trap triggers in section 5; whether the old signature and the heavy technique are the same thing; and whether the Power layer replaces `special_auto` on Simple.
+1. The hold decision is window plus 4 ticks of grace on live ticks on every device (Y 16, B 20, A 14), or touch taps misread as holds.
+2. `windup_for` becomes mode-aware (two data keys); no new intent field.
+3. X fires on the press everywhere **except Simple touch**, where it goes out on the release (3 to 12 ticks late); the gather on touch-down is the mitigation and a separate Light button the fix (`phone-feasibility.md`).
+4. A swallowed press under a cap still gets a press-ack.
+5. A cue per charge level (`charge_stage`, `k`).
+6. Mask 3 on by data, as section 5 says; mines and traps are lays on the keyboards best made by toggle or latch; on Simple and touch the lay is Guard (held or one-shot) plus a face button at range.
+7. Questions for Game Design: whether Guard or a dodge cancels a charge; whether charges-off should give a "charge for me" assist; whether the riposte-window trigger is wanted instead of mask 3; whether the old signature and the heavy blast are the same thing.
+8. A fighter's grab is one beat, a held carry or a placement (E63 and E64): the input only guarantees tap, hold and release, so each fighter's data must say which it uses.
 
-## 10. What building it would take (later, after the ruling)
+## 10. What building it would take (after the ruling)
 
-Small, and mostly data: the energy light, medium and heavy use the existing reads, so the input side needs (a) the Power layer taken as the energy layer on the two Simple layouts (a layout data change and a few `SimTouch` lines), (b) a per-stage cue and a `charge_stage` rumble kind (a data addition to `SimHaptics`), (c) a `charge_cancel` read if Guard cancels (a few lines in `SimPressRead` and tests), and (d) tests for each row of section 4 on each layout. The director's side (what each press makes, the trap, the stages, the cancel) is Encounter's and Combat's.
+Small, and mostly data: `"hybrids": [3]` and the test assertion; the energy windows (two keys) and a mode-aware `windup_for`; a `charge_stage` rumble kind; a `charge_cancel` read if Guard cancels; the Simple guard-at-range rule is the director's; and tests per row of section 4 on each layout. What each press makes (the shots, the mines, the stages, the cancel) is Encounter's and Combat's.
