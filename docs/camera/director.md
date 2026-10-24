@@ -438,7 +438,7 @@ Before/after: docs/camera/img/shot-grammar/shot-grammar-before-after.gif. It sho
   - The plain one view only: no split, shot, cut-in, strip, clash, ring turn, intro or fold.
   - A calm pace (relax or fade), no anticipation of contact.
   - Not while the scroll governor holds the view or a fighter travels faster than 1,200 u/s: a chase is action.
-  - None within 3 s of a peak, one in 30 s at most. A crossing not shown within 4 s is let pass.
+  - None within 3 s of a peak or of a building's fall (a fall fills the frame with dust and light), one in 30 s at most. A crossing not shown within 4 s is let pass.
 - **The shot.**
   - The view eases out to 0.72 of its size, never taking a fighter under 0.06 of the height (43 px at 720p) or under his size before.
   - A slight low angle (-4 degrees, ground-limited), because a dolly alone barely changes the far land.
@@ -446,12 +446,18 @@ Before/after: docs/camera/img/shot-grammar/shot-grammar-before-after.gif. It sho
   - In over 0.6 s, held 1 s, back over 0.6 s. No cut.
   - A hit (a peak or a build), the anticipation of one, a shot or the split lets it go at once, eased. Another shot that takes the angle takes it; the view still eases back.
 
-Measured (`clip_digest.gd`, both modes, on 4cbf8b37 with director-13): one landscape shot each in ai 39 (a biome, tick 1910), rushcity (a landmark, tick 505) and signaturecity (a landmark, tick 1390); none in ai 4, ai 7 or transform. Cuts, layout changes, strips, blow pushes, the time outside the picture, anticipations, angle shots, the share of fighters under 40 px and the p10 size are identical. The median drawn size falls 2 to 3 px over the city scenes.
+Measured (`clip_digest.gd`, both modes, on b8e759ed): one landscape shot each in ai 39 (a biome, tick 1910), rushcity (a landmark, tick 505) and collapse (a landmark, tick 1310); none in ai 4, ai 7 or signaturecity (its landmark comes into the frame among falling buildings). Cuts, layout changes, strips, the time outside the picture and the share of fighters under 40 px are identical to main's.
+
+Flash: the first build had no hold after a building's fall. Its shot in the collapse clip came at tick 1290, among the falls, and raised the collapse count to 3.5 in both modes. With the hold the shot comes at 1310, after them, and the clip reads normal 3 / 3.5 (main's 3 / 3.5) and reduced 2.5 / 3.5 (main's 3 / 3.5).
 
 split_sweep rows:
 - `landscape shot`: a flight from village to plains at 480 u/s. One shot at tick 304, widest x0.723, angle -4.0 with steps of 0.17, smallest fighter 63 px (from 86), no cut, both on screen, back within 2% of the same flight with it off.
 - `landscape shot let go by a hit`: a peak in the hold eases it out.
 - A fix to the sweep: a re-seed also clears the travel scan's last frame (a row that seeds twice compared its second flight with the first one's end).
+
+Before/after: docs/camera/img/landscape-shot/landscape-shot-before-after.gif (rushcity's landmark, ticks 489 to 619).
+
+Gates on b8e759ed with director-14 and director-15: the 18 headless render checks (city: its oks, no failures), split_sweep and determinism plain and --intro pass.
 
 **Split grace (2026-10-23, window 4; parked: docs/camera/pending/director-15-split-grace.patch, on top of director-14).** The EP's brief: "the divider's motion eased, framing that keeps both fighters readable at every separation". What was tried, measured with the mass probe (`clip_digest.gd`, reduced; steps in a pane's camera velocity over 0.01 and 0.02 of the width a tick):
 
@@ -469,5 +475,7 @@ An eased opening starts slowly while a fighter is flying out of the view. The pa
 - **Kept linear: the opening.** It is a move on the action (a fighter flying out of the view), with Research's reason 1, and it starts at once. Its end is not braked, because braking it costs readability (the measurements above).
 - **Kept: the slam.** A 0.14 s door that closes on the rusher's impact (section 11), a motion on the action.
 - **Readable at every separation** was already gated: split_sweep's rows hold both fighters on the screen and above the floor through every opening, closing, slam and swing (`R_FLOOR`, the pane floor, the on-screen counts). The SIZE probe's share under 40 px is unchanged in every scene.
+
+Before/after: docs/camera/img/split-grace/split-grace-before-after.gif (two closings in play, every tick). Gates: as director-14's. Those, and director-14's collapse readings, were taken with director-15 on top.
 
 New split_sweep row, `split closing eased`: 30 ticks (T_CLOSE 33). The first step is 0.0044 a tick and the last 0.0136, where the linear rate is 0.0303 from the first tick to the last. The worst change of speed in a tick is 0.0061 (the ramp's own is 0.0044). Both fighters stay on the screen.

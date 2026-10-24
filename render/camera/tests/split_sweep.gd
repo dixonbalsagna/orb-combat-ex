@@ -203,6 +203,8 @@ func _run() -> void:
 	await _scenario("fold", func(): return _fold(), {})
 	await _scenario("angle shot", func(): return _angle_shot(), {})
 	await _scenario("power-up angle", func(): return _power_up_angle(), {})
+	await _scenario("landscape shot", func(): return _landscape(false), {})
+	await _scenario("landscape shot let go by a hit", func(): return _landscape(true), {})
 	await _scenario("arena turn, one view", func(): return _arena_turn(600.0), {})
 	await _scenario("arena turn, split", func(): return _arena_turn(9000.0), {})
 	await _scenario("solo follow", func(): return _solo_follow(), {})
@@ -791,6 +793,7 @@ func _watch_first() -> void:
 	_tick = 1
 	_clear_prev = null   # a re-seeded rig starts its rectangles again
 	_prev_disp = null    # ... and its display frames: a re-seed is a new match (a cut), not a move of the camera
+	_trav_prev = null    # ... and the travel scan's (a row that seeds twice compared its second flight with the first one's end)
 	_clear_grow_tick = [-1000, -1000]
 	_clear_miss = [0, 0]
 	_disp_t = float(_tick) * SplitRig.DT
@@ -3983,6 +3986,90 @@ func _power_up_angle() -> Dictionary:
 	_check(absf(_rig.current().pitch) < 0.01, "%s: the crane up did not come back to level (%.2f)" % [_label, _rig.current().pitch])
 	_check(off == 0, "%s: a fighter was off the screen for %d ticks" % [_label, off])
 	stats["detail power-up angle"] = "lowest %.2f degrees, largest step %.3f a tick, cuts %d" % [low, step, cuts]
+	return {}
+
+
+## The shot grammar's landscape shot (2026-10-23): the pair flies across a biome border at 480 u/s in the plain one view. Once the
+## middle has stayed in the new ground SCAPE_SETTLE, the view eases out (never a fighter under SCAPE_MIN_R of the height, or his size
+## before if that was smaller), tilts low and leans toward the new ground, holds and eases back: one shot, no cut, the angle never
+## more than PITCH_CUT_DEG a tick, no tick over the travel bound, both fighters on the screen, and back within 2% of the same flight
+## with the shot off. `hit`: a peak during the hold lets it go at once, eased.
+func _landscape(hit: bool) -> Dictionary:
+	var x0: float = 20000.0
+	var b0: String = WorldBiomes.biomeAt(x0)
+	var bx: float = x0
+	while WorldBiomes.biomeAt(bx) == b0 and bx < x0 + 40000.0:
+		bx += 50.0
+	var runs: Array = []
+	for on in [false, true]:
+		_rig.landscape = on
+		_pose(bx - 2400.0, 40.0, bx - 2000.0, 40.0)
+		for f in _S.fighters:
+			f.vx = 480.0
+		_seed_rig()
+		for _i in range(120):
+			_tick_rig()   # (settled before the flight, as every row is)
+		var zs: Array = []
+		var cuts: int = 0
+		var off: int = 0
+		var p_step: float = 0.0
+		var low: float = 0.0
+		var min_px: float = 1.0e9
+		var px0: float = 0.0
+		var worst_travel: float = 0.0
+		var prev: SplitFrame = _rig.current()
+		var shot_k: int = -1
+		var w_at_hit: float = -1.0
+		var w_after: float = -1.0
+		for k in range(600):
+			for f in _S.fighters:
+				f.x = SimWrap.wrap(f.x + 8.0)
+			if on and hit and shot_k >= 0 and k == shot_k + 70:
+				w_at_hit = _rig._scape_w
+				_rig._pc_big_t = _rig.time   # a strip-worthy moment: a peak
+			_tick_rig()
+			var cur: SplitFrame = _rig.current()
+			if on and hit and shot_k >= 0 and k == shot_k + 74:
+				w_after = _rig._scape_w
+			if shot_k < 0 and _rig._scape_t >= 0.0:
+				shot_k = k
+				px0 = minf(_apparent_px(0, prev), _apparent_px(1, prev))
+			zs.append(cur.cam_z[0])
+			if cur.cut:
+				cuts += 1
+			p_step = maxf(p_step, absf(cur.pitch - prev.pitch))
+			low = minf(low, cur.pitch)
+			if _rig._scape_t >= 0.0:
+				min_px = minf(min_px, minf(_apparent_px(0, cur), _apparent_px(1, cur)))
+			if k > 0 and not cur.cut:
+				var dx: float = SimWrap.sdx(prev.cam_x[0], cur.cam_x[0]) - 8.0   # the flight's own travel is the follow's, not the shot's
+				var dy: float = cur.cam_y[0] - prev.cam_y[0]
+				worst_travel = maxf(worst_travel, sqrt(dx * dx + dy * dy) * cur.cam_z[0] / vw + 0.5 * absf(log(cur.cam_z[0] / maxf(prev.cam_z[0], 0.0001))))
+			for i in range(2):
+				if not _on_screen(cur, i):
+					off += 1
+			prev = cur
+		runs.append({"zs": zs, "shots": _rig.scape_shots, "cuts": cuts, "off": off, "p_step": p_step, "low": low, "min_px": min_px, "px0": px0, "travel": worst_travel, "shot_k": shot_k, "w_hit": w_at_hit, "w_after": w_after})
+	_rig.landscape = true
+	var r0: Dictionary = runs[0]
+	var r1: Dictionary = runs[1]
+	var z_end0: float = float(r0["zs"][-1])
+	var z_end1: float = float(r1["zs"][-1])
+	var widest: float = 1.0
+	for k in range(r1["zs"].size()):
+		widest = minf(widest, float(r1["zs"][k]) / maxf(float(r0["zs"][k]), 0.0001))
+	_check(int(r0["shots"]) == 0 and int(r1["shots"]) == 1, "%s: %d landscape shots (want 1; %d with it off)" % [_label, int(r1["shots"]), int(r0["shots"])])
+	_check(int(r1["cuts"]) == int(r0["cuts"]), "%s: %d cuts (%d with it off)" % [_label, int(r1["cuts"]), int(r0["cuts"])])
+	_check(float(r1["p_step"]) <= CamParams.PITCH_CUT_DEG, "%s: the angle stepped %.2f degrees in a tick" % [_label, float(r1["p_step"])])
+	_check(float(r1["min_px"]) >= 0.97 * minf(CamParams.SCAPE_MIN_R * vh, float(r1["px0"])), "%s: a fighter drawn %.0f px (floor %.0f)" % [_label, float(r1["min_px"]), minf(CamParams.SCAPE_MIN_R * vh, float(r1["px0"]))])
+	_check(float(r1["travel"]) <= CamParams.SCROLL_MAX, "%s: the camera travelled %.4f of the width in a tick" % [_label, float(r1["travel"])])
+	_check(int(r1["off"]) == 0, "%s: a fighter off the screen for %d ticks" % [_label, int(r1["off"])])
+	_check(absf(z_end1 / z_end0 - 1.0) < 0.02, "%s: not back to the flight's framing (zoom x%.3f of the same flight with it off)" % [_label, z_end1 / z_end0])
+	if hit:
+		_check(float(r1["w_hit"]) > 0.9 and float(r1["w_after"]) < float(r1["w_hit"]) - 0.05, "%s: the peak did not let it go (weight %.2f, then %.2f)" % [_label, float(r1["w_hit"]), float(r1["w_after"])])
+	else:
+		_check(widest < 0.9 and float(r1["low"]) < -1.0, "%s: no establishing frame (widest x%.3f, lowest angle %.2f)" % [_label, widest, float(r1["low"])])
+	stats["detail " + _label] = "%s to %s at x %.0f, shot at tick %d, widest x%.3f, lowest angle %.2f, step %.2f, smallest fighter %.0f px (from %.0f), travel %.4f" % [b0, WorldBiomes.biomeAt(bx), bx, int(r1["shot_k"]), widest, float(r1["low"]), float(r1["p_step"]), float(r1["min_px"]), float(r1["px0"]), float(r1["travel"])]
 	return {}
 
 

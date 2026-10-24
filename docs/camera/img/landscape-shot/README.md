@@ -1,0 +1,3 @@
+The landscape shot (window 3, docs/camera/pending/director-14-landscape-shot.patch): left main with the shot grammar, right with the landscape shot; the real web build of rushcity, Reduce flashing on, frames from Tools' launcher (session camera-whip).
+- Ticks 489-619: the village's landmark comes into the frame. The view eases out, tilts slightly low and leans toward it, holds about a second, then eases back. The fighters stay readable throughout. No cut, fade or blur.
+- In play it fires rarely: once each in ai 39, rushcity and signaturecity, never in ai 4 or ai 7. It only fires at a calm moment, at most once in 30 s.

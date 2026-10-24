@@ -317,6 +317,24 @@ const ANGLE_IN: float = 0.45           # the angle shot is a crane tilt, eased i
 const ANGLE_OUT: float = 0.6           # ... and back to level over this; no cut either way
 const PITCH_CUT_DEG: float = 1.0       # a change of angle bigger than this in a tick is a cut (an authored jump); an eased tilt is a camera move
 const ANGLE_GAP: float = 20.0
+# The landscape shot (the shot grammar, 2026-10-23): when the fight crosses into a new biome, or a standing landmark first comes into
+# the frame, a short establishing frame in the plain one view at a calm moment. The view eases out to SCAPE_WIDE of its size (never
+# with a fighter under SCAPE_MIN_R of the height), tilts to a slight low angle (the far land against the sky: a dolly alone barely
+# changes it) and leans SCAPE_LEAN of the width toward the new ground. In over SCAPE_IN, held SCAPE_HOLD, back over SCAPE_OUT; no cut.
+# A hit, the anticipation of one, a shot, the split or a clash lets it go at once, eased. One in SCAPE_GAP at most, none within
+# SCAPE_PEAK_GAP of a peak or a building's fall; a crossing not shown within SCAPE_WINDOW is let pass.
+const SCAPE_WIDE: float = 0.72
+const SCAPE_MIN_R: float = 0.06         # 43 px at 720p: the fighters stay readable
+const SCAPE_PITCH: float = -4.0
+const SCAPE_LEAN: float = 0.15
+const SCAPE_IN: float = 0.6
+const SCAPE_HOLD: float = 1.0
+const SCAPE_OUT: float = 0.6
+const SCAPE_SETTLE: float = 0.5         # the pair's middle stays in the new biome this long before the crossing counts (no flicker at a border)
+const SCAPE_GAP: float = 30.0
+const SCAPE_PEAK_GAP: float = 3.0
+const SCAPE_WINDOW: float = 4.0
+const SCAPE_SPEED_MAX: float = 1200.0  # not while either fighter travels faster than this (u/s) or the scroll governor holds the view: a chase is action
 const ANGLE_KINDS: Array = ["knockback", "guard_break", "interrupt", "barrage", "beam", "beam_clash", "clash"]
 const ANGLE_BIOME: Dictionary = {"city": "low", "village": "low", "mountains": "low", "ocean": "high", "forest": "high"}   # the rest alternate
 const HIT_PUSH: float = 0.06           # zoom push on the first building hit; later links push less

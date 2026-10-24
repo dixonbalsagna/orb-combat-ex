@@ -218,6 +218,25 @@ var angles: bool = true                    # angles by context on a decisive pea
 var angle_shots: int = 0
 var angle_now: String = ""                 # "low" or "high" while an angle holds, for the debug feed
 var _ang_want: String = ""                 # this tick's decisive kind, if any
+var landscape: bool = true                 # the landscape shot on a new biome or a landmark coming into the frame (CamParams.SCAPE_*)
+var scape_shots: int = 0
+var scape_now: String = ""                  # "biome" or "landmark" while one runs, for the debug feed
+var _scape_biome: String = ""               # the ground the fight is on (the match's first is the intro's to show)
+var _scape_new: String = ""                 # a biome the pair's middle has entered, and for how long
+var _scape_new_t: float = 0.0
+var _scape_due: float = -1.0                # a crossing or a landmark waits to be shown until this time (-1 none) ...
+var _scape_kind: String = ""
+var _scape_x: float = 0.0                   # ... toward where the new ground or the landmark is
+var _scape_t: float = -1.0                  # the running shot's time (-1 none), its weight, its angle and the angle it last set
+var _scape_w: float = 0.0
+var _scape_pitch: float = 0.0
+var _scape_pa: float = 0.0
+var _scape_own: bool = false                # the shot sets the angle (another shot that takes it makes this false)
+var _scape_wide: float = 1.0
+var _scape_last_t: float = -1.0e9
+var _scape_seen: Dictionary = {}            # landmarks already shown, by building index
+var _scape_busy_t: float = -1.0e9        # the last building to fall: destruction is not a calm moment for a landscape
+var _scape_mid: float = 0.0                 # the pair's middle last tick (a jump of more than half the view is a relocation: no shot)
 var _ang_t: float = -1.0
 var _ang_pitch: float = 0.0
 var _ang_last_t: float = -99.0             # the ledger: the last angle shot's time and family
@@ -391,6 +410,17 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_ang_want = ""
 	_ang_t = -1.0
 	_ang_last_t = -99.0
+	scape_now = ""
+	_scape_biome = ""
+	_scape_new = ""
+	_scape_due = -1.0
+	_scape_t = -1.0
+	_scape_w = 0.0
+	_scape_pa = 0.0
+	_scape_own = false
+	_scape_last_t = -1.0e9
+	_scape_seen = {}
+	_scape_busy_t = -1.0e9
 	_ang_last_family = ""
 	angle_now = ""
 	story_w = 0
@@ -469,6 +499,7 @@ func step(S: SimState, p_vw: float, p_vh: float, events: Array = []) -> void:
 	_update_panel(S)
 	_update_intro(S)
 	_angle_tick(S)
+	_scape_tick(S)
 	_impact_evt = [false, false]
 	_journey_end_evt = [false, false]
 	var clash_now: bool = S.game.clash != null
@@ -1299,6 +1330,8 @@ func _read_events(S: SimState, events: Array) -> void:
 						_hit_hold[ca] = CamParams.BOUNCE_HOLD
 						_bounce_t[ca] = time
 						bounce_pushes += 1
+			"building_fall":
+				_scape_busy_t = time   # (a falling building fills the frame with dust and light: no landscape shot over it)
 			"drop_start":
 				# A zipper shot out of his way out falls where the shot put him: nothing to hold for; the ordinary follow
 				# (the zoom rate and the lag bound) keeps him on the screen.
@@ -2468,7 +2501,7 @@ func _merged_target(S: SimState) -> Vector3:
 	if A.state != "launched" and B.state != "launched":
 		gov_m = _scroll_gov(maxf(_vsm_m, _gov_armed()), z * pz)   # the picture's scale is the zoom times the pitch's: that is what the scenery crosses at
 	_gov_bind_m = gov_m < 0.999
-	z = clampf(z * mult * pz * _wide_mult() * _turn_mult() * gov_m, maxf(z_min(vw), maxf(CamParams.R_FLOOR * vh / CamParams.BODY_H, many_z) * pz), _zcap() * pz * (1.0 + CamParams.TIER_PUSH))
+	z = clampf(z * mult * pz * _wide_mult() * _scape_mult() * _turn_mult() * gov_m, maxf(z_min(vw), maxf(CamParams.R_FLOOR * vh / CamParams.BODY_H, many_z) * pz), _zcap() * pz * (1.0 + CamParams.TIER_PUSH))
 	if _ant_w > 0.001 and _st_w <= 0.0 and not fold_active and _lg_slot < 0 and not _lg_rel:
 		# anticipation: toward the coming contact, both fighters kept inside 0.42 of the width
 		var sh_a: float = CamParams.ANT_SHIFT * _ant_w * SimWrap.sdx(mx, _ant_x)
@@ -2480,6 +2513,15 @@ func _merged_target(S: SimState) -> Vector3:
 		mx = SimWrap.wrap(mx + (clampf(sh_a, lo_a, hi_a) if lo_a <= hi_a else 0.0))
 		z *= 1.0 + CamParams.ANT_PUSH * _ant_w * _ant_pw
 	z *= _pc_zoom   # the pace's size: a little wider when calm and after a peak, a little tighter at one
+	if _scape_t >= 0.0 and _scape_w > 0.0:
+		# the landscape shot leans toward the new ground or the landmark, both fighters kept inside 0.42 of the width
+		var sh_l: float = CamParams.SCAPE_LEAN * vw / maxf(z, 0.001) * smoothstep(0.0, 1.0, _scape_w) * signf(SimWrap.sdx(mx, _scape_x))
+		var hf_l: float = 0.42 * vw / maxf(z, 0.001)
+		var da_l: float = SimWrap.sdx(mx, A.x)
+		var db_l: float = SimWrap.sdx(mx, B.x)
+		var lo_l: float = maxf(da_l, db_l) - hf_l
+		var hi_l: float = minf(da_l, db_l) + hf_l
+		mx = SimWrap.wrap(mx + (clampf(sh_l, lo_l, hi_l) if lo_l <= hi_l else 0.0))
 	if _mlead != 0.0 and not fold_active and _lg_slot < 0 and not _lg_rel and _st_w <= 0.0:
 		# the lead, kept so that both fighters stay inside the middle MERGED_LEAD_KEEP of the width at this zoom
 		var half_k: float = 0.5 * CamParams.MERGED_LEAD_KEEP * vw / maxf(z, 0.001)
@@ -4458,7 +4500,90 @@ func _catch_up(i: int, f, dist_w: float) -> void:
 ## Whether an eased move owns the angle now (an angle shot, the arena turn's way back): a shot that clears the angle leaves it to
 ## ease out, so the angle never jumps (a launch shot starting under an angle shot cut 5.5 degrees in a tick).
 func _pitch_in_move() -> bool:
-	return (_ang_t >= 0.0 and _ang_pa != 0.0 and _shot_pitch == _ang_pa) or (_turn_t >= 0.0 and _turn_pa != 0.0 and _shot_pitch == _turn_pa)
+	return (_ang_t >= 0.0 and _ang_pa != 0.0 and _shot_pitch == _ang_pa) or (_turn_t >= 0.0 and _turn_pa != 0.0 and _shot_pitch == _turn_pa) or (_scape_t >= 0.0 and _scape_own and _scape_pa != 0.0 and _shot_pitch == _scape_pa)
+
+
+## The landscape shot (the shot grammar's establishing frame, 2026-10-23): a new biome under the pair's middle (held SCAPE_SETTLE), or a
+## standing landmark coming into the frame, is shown within SCAPE_WINDOW at a calm moment in the plain one view: the view eases out
+## (SCAPE_WIDE, never a fighter under SCAPE_MIN_R), a slight low angle and a lean toward the new ground, held, and eased back. No cut.
+func _scape_tick(S: SimState) -> void:
+	var A = S.fighters[0]
+	var mid: float = SimWrap.wrap(A.x + SimWrap.sdx(A.x, S.fighters[1].x) * 0.5)
+	var bio: String = WorldBiomes.biomeAt(mid)
+	var half_w: float = 0.5 * vw / maxf(_mz, 0.001)
+	var jumped: bool = absf(SimWrap.sdx(_scape_mid, mid)) > half_w
+	_scape_mid = mid
+	if _scape_biome == "" or jumped:
+		_scape_biome = bio   # the match's first ground is the intro's to show; a relocation is a cut of its own
+	if bio != _scape_biome:
+		if bio != _scape_new:
+			_scape_new = bio
+			_scape_new_t = 0.0
+		_scape_new_t += DT
+		if _scape_new_t >= CamParams.SCAPE_SETTLE:
+			_scape_biome = bio
+			_scape_new = ""
+			_scape_due = time + CamParams.SCAPE_WINDOW
+			_scape_kind = "biome"
+			_scape_x = SimWrap.wrap(mid + (1500.0 if WorldBiomes.biomeAt(mid + 1500.0) == bio else -1500.0))   # the side the new ground goes on
+	else:
+		_scape_new = ""
+	for b in S.buildings:
+		if b.landmark != 0 and b.alive and not _scape_seen.has(b.idx) and absf(SimWrap.sdx(mid, b.x)) < half_w + 0.5 * b.w:
+			_scape_seen[b.idx] = true
+			_scape_due = time + CamParams.SCAPE_WINDOW
+			_scape_kind = "landmark"
+			_scape_x = b.x
+	if jumped:
+		_scape_due = -1.0
+	var plain: bool = landscape and not reduced_motion and sep <= 0.001 and not split_wanted and solo_kind == "" and _ov_kind == "" and _pn.is_empty() and not intro_active and not fold_active and _lg_slot < 0 and S.game.clash == null and _turn_t < 0.0
+	var calm: bool = (pace == "relax" or pace == "fade") and _ant_w < 0.05 and not _gov_bind_m and maxf(_body_speed(A), _body_speed(S.fighters[1])) < CamParams.SCAPE_SPEED_MAX
+	if _scape_t >= 0.0:
+		if _scape_own and _shot_pitch != _scape_pa:
+			_scape_own = false   # another shot took the angle: it is its to set; the view still eases back
+		_scape_t += DT
+		var holding: bool = _scape_t < CamParams.SCAPE_IN + CamParams.SCAPE_HOLD and plain and calm
+		if holding:
+			_scape_w = minf(1.0, _scape_w + DT / CamParams.SCAPE_IN)
+		else:
+			_scape_w = maxf(0.0, _scape_w - DT / CamParams.SCAPE_OUT)
+		if _scape_own:
+			_shot_pitch = _scape_pitch * smoothstep(0.0, 1.0, _scape_w)
+			_scape_pa = _shot_pitch
+		if _scape_w <= 0.0 and not holding:
+			_scape_t = -1.0
+			scape_now = ""
+			if _scape_own:
+				_shot_pitch = 0.0
+			_scape_pa = 0.0
+			_scape_own = false
+		return
+	if _scape_due < 0.0:
+		return
+	if time > _scape_due:
+		_scape_due = -1.0   # the moment passed
+		return
+	if not plain or not calm or time - _pc_big_t < CamParams.SCAPE_PEAK_GAP or time - _scape_busy_t < CamParams.SCAPE_PEAK_GAP or time - _scape_last_t < CamParams.SCAPE_GAP or _shot_pitch != 0.0 or _ang_t >= 0.0:
+		return
+	_scape_t = 0.0
+	_scape_w = 0.0
+	_scape_due = -1.0
+	_scape_last_t = time
+	_scape_wide = clampf(CamParams.SCAPE_MIN_R / maxf(r_now, 0.001), CamParams.SCAPE_WIDE, 1.0)
+	_scape_pitch = _ground_low(CamParams.SCAPE_PITCH, _mz * _scape_wide)
+	if absf(_scape_pitch) < 1.0:
+		_scape_pitch = 0.0   # the ground leaves no room for the angle here: the wide and the lean alone
+	_scape_own = true
+	_scape_pa = 0.0
+	scape_shots += 1
+	scape_now = _scape_kind
+
+
+## The landscape shot's size: SCAPE_WIDE (or what keeps the fighters at SCAPE_MIN_R), eased by its weight.
+func _scape_mult() -> float:
+	if _scape_t < 0.0:
+		return 1.0
+	return lerpf(1.0, _scape_wide, smoothstep(0.0, 1.0, _scape_w))
 
 
 ## The camera's mass: each pane's drawn point (x, y) follows the follow's aim with a bounded change of velocity a tick
