@@ -426,4 +426,8 @@ static func _groundZ(S: SimState, x: float, z: float) -> float:
 ## The sea basin: water only where the original (base) terrain is below sea level (the prototype's rule). Craters that
 ## fill with water are WorldWater's business (S.water); this rule is what the AI, launch planner and fighter speed use.
 static func seaAt(S: SimState, x: float) -> bool:
-	return S.base[int(floor(SimWrap.wrap(x) / SimConst.COL))] < WorldWater.RESERVOIR_BASE
+	var i: int = int(floor(SimWrap.wrap(x) / SimConst.COL))
+	if S.base[i] < WorldWater.RESERVOIR_BASE:
+		return true
+	# a gen 2 lake deep enough to hide in is sea to every rule that asks (a landing slams, a body skims or sinks): water is water (Game Design, rulings 2026-10-23b item 13)
+	return S.water[i] >= WorldWater.HIDE_MIN_DEPTH and WorldGround.live()

@@ -134,7 +134,25 @@ static func dataHash() -> String:
 	var h := SimHash.Hasher.new()
 	h.text("biomes.contact")
 	FighterData._canon(h, _parsed)   # the parsed data without the "_" notes, like the other loaders: a changed note keeps old replays
+	if skateOn():
+		h.text("skate")
+		h.text(_skateHash)   # ruling 12's switch, on: a replay must know
 	return h.hex()
+
+
+## Ruling 12 at runtime on or off (data/biomes/skate.json, off).
+static func skateOn() -> bool:
+	if not _skateLoaded:
+		_skateLoaded = true
+		var f := FileAccess.open(SKATE_PATH, FileAccess.READ)
+		if f != null:
+			var text: String = f.get_as_text()
+			var j = JSON.parse_string(text)
+			if j is Dictionary and j.get("schema", "") == "biomes.skate/1":
+				K_SKATE = bool(j.get("enabled", false))
+				K_SKATE_MIN = float(j.get("minSkate", 120.0))
+				_skateHash = str(text.hash())
+	return K_SKATE
 
 
 static func _load() -> void:
@@ -220,6 +238,18 @@ static func _cache() -> void:
 
 
 static var _colSurfKey: int = -1
+static var _gGrip := PackedFloat64Array()    # a gen 2 world's ground profile per column (world/ground.gd): the brake, the bounce's keep, the tumble band and the trench, each a multiplier; empty on any other world
+static var _gAbs := PackedFloat64Array()
+static var _gRough := PackedFloat64Array()
+const SKATE_PATH: String = "res://data/biomes/skate.json"
+const CTRL_NONE: int = 1000000                # ctrlT when a journey has no reference stop to hand over at (it tumbles)
+static var K_SKATE: bool = false              # ruling 12 at runtime (data/biomes/skate.json): control returns at the reference stop and the body skates on
+static var K_SKATE_MIN: float = 120.0         # ... only if it still has this much speed (a few ticks' difference between the two runs is not a skate)
+static var _skateLoaded: bool = false
+static var _skateHash: String = ""
+static var _refOn: bool = false               # journeyControl's reference run: the surface's own braking, grip and rough 1
+static var _colLook := PackedByteArray()      # a gen 2 world's look class per column (WorldGround.LOOKS; 255: the surface is the look); empty on any other world
+static var _gFur := PackedFloat64Array()
 
 
 ## The biome's surface per terrain column, for the world the current match built (WorldBiomes.worldId): the hand-made world's biome layout is fixed, a planet's is its slice's, and the
@@ -235,6 +265,23 @@ static func _buildSurf() -> void:
 		if D.paving.biomes.has(biome):
 			code |= 4
 		_colSurf[i] = code
+	_gGrip = PackedFloat64Array()
+	_gAbs = PackedFloat64Array()
+	_gRough = PackedFloat64Array()
+	_gFur = PackedFloat64Array()
+	_colLook = PackedByteArray()
+	var fc: PackedByteArray = WorldBiomes.fineCols
+	if fc.size() == SimConst.NC and WorldBiomes.planetCols.size() == SimConst.NC:   # a gen 2 world: the fine biome's profile (a town's or a city's ground keeps the rule above)
+		var gc: Dictionary = WorldGround.columns(fc, WorldBiomes.planetCols)
+		_gGrip = gc.grip
+		_gAbs = gc.absorb
+		_gRough = gc.rough
+		_gFur = gc.furrow
+		_colLook = gc.look
+		var sf: PackedByteArray = gc.surf
+		for i in range(SimConst.NC):
+			if sf[i] != 255:
+				_colSurf[i] = sf[i]
 
 
 ## Seconds in data to whole ticks (the caps are integer tick counts: 240 for 4 s, 72 for 1.2 s).
@@ -261,8 +308,78 @@ static func surfaceAt(S: SimState, x: float) -> String:
 	return SURF_NAMES[c & 3]
 
 
+## Ruling 12's hand-over (one tick of a skid or tumble, after the step): when a skid begins its reference run is made once and ctrlT is the journey tick control returns at; at that tick the journey ends here if
+## the body still has speed to skate. A tumble has no reference stop to hand over at.
+static func _skateCheck(S: SimState, f, b: Body) -> void:
+	if b.done:
+		return
+	if int(f.ctrlT) == -1:
+		if b.mode == SKID and b.vN > 0.0:
+			var ref: Body = _cloneBody(b)
+			_refOn = true
+			var rt: int = 0
+			while not ref.done and rt < TICK_CAP:
+				stepBody(S, ref, SimConst.DT, [])
+				rt += 1
+			_refOn = false
+			f.ctrlT = int(f.jT) + rt
+		elif b.mode == TUMBLE:
+			f.ctrlT = CTRL_NONE
+		return
+	if int(f.ctrlT) < CTRL_NONE and b.mode != AIR and b.vN > K_SKATE_MIN and int(f.jT) >= int(f.ctrlT):
+		b.done = true
+		b.end = "control"
+
+
+## The skate after control is back (called each tick from SimFighter.step while skateV is above 0): the body slides on with the real braking, as the skid did, and stops at a wall or at the stop speed.
+static func stepSkate(S: SimState, f, dt: float) -> void:
+	var vN: float = f.skateV
+	var dir: float = f.skateDir
+	var tv: float = f.skateTv
+	var g0: float = WorldTerrain.groundY(S, f.x, f.z)
+	var sl: float = (WorldTerrain.groundY(S, f.x + dir * SimConst.COL, f.z) - g0) / SimConst.COL
+	var a: float = WorldSlide.MU * _brake(S, f.x) + WorldSlide.KV * vN + WorldSlide.GRAV * sl
+	var vN2: float = maxf(0.0, vN - a * dt)
+	var dx: float = dir * (vN + vN2) * 0.5 * tv * dt
+	var x2: float = SimWrap.wrap(f.x + dx)
+	var y2: float = WorldTerrain.groundY(S, x2, f.z)
+	var rise: float = (y2 - g0) / maxf(absf(dx), 1.0e-6)
+	if (rise > K_WALL and vN2 > K_STOP) or vN2 <= K_STOP:
+		f.skateV = 0.0
+		return
+	f.x = x2
+	f.y = y2
+	f.skateV = vN2
+
+
+## The look class of the ground at x, for the director, Animation and VFX: on a gen 2 world the fine biome's look (ice, snow, frost, mud, turf, litter, ash, crust, shingle or a built class); a heap of rubble, paving, and any
+## other world read as the surface (surfaceAt).
+static func lookAt(S: SimState, x: float) -> String:
+	var surf: String = surfaceAt(S, x)
+	if _colLook.size() == 0 or surf == "rubble" or surf == "paving":
+		return surf
+	var code: int = _colLook[_colOf(x)]
+	return surf if code == 255 else String(WorldGround.LOOKS[code])
+
+
 static func _brake(S: SimState, x: float) -> float:
-	return float(K_BRAKE[surfaceAt(S, x)])
+	var surf: String = surfaceAt(S, x)
+	var k: float = float(K_BRAKE[surf])
+	if _refOn:
+		return k
+	if _gGrip.size() > 0 and surf != "rubble" and surf != "paving":
+		var ci: int = _colOf(x)
+		k *= _gGrip[ci] * _gRough[ci]   # gen 2: mud grips, ice slides; stones and roots brake (rough is at least 1: a skid is shortened, never lengthened, and never a tumble: Game Design, rulings 2026-10-23b item 11)
+	return k
+
+
+static func _colOf(x: float) -> int:
+	return int(floor(SimWrap.wrap(x) / SimConst.COL)) % SimConst.NC
+
+
+## A gen 2 ground profile's multiplier at x (1 on every other world).
+static func _pf(a: PackedFloat64Array, x: float) -> float:
+	return a[_colOf(x)] if a.size() > 0 else 1.0
 
 
 static func _gslope(S: SimState, x: float, z: float = 0.0) -> float:
@@ -446,7 +563,7 @@ static func _land(S: SimState, b: Body, g: float, ev: Array) -> void:
 		var cap: int = _bounceCap(b)
 		if sin2 >= K_SKID2 and int(b.bounces) < cap:
 			# a bounce: the normal part is reflected with the bounce's keep, the tangent part keeps its share
-			var e: float = float(K_VKEEP[mini(int(b.bounces), K_VKEEP.size() - 1)])
+			var e: float = float(K_VKEEP[mini(int(b.bounces), K_VKEEP.size() - 1)]) * _pf(_gAbs, b.x)
 			var vn2: float = -e * vn
 			var vt2: float = K_TKEEP * vt
 			var vxn2: float = (vt2 - s * vn2) / q
@@ -628,6 +745,52 @@ static func journey(S: SimState, b: Body) -> Dictionary:
 		"bounces": int(b.bounces), "tumble": tumbled, "dist": absf(SimWrap.sdx(x0, b.x)), "area": area, "ticks": ticks}
 
 
+## A copy of a body (every script variable): the lookahead's reference run starts from the real one's skid.
+static func _cloneBody(b: Body) -> Body:
+	var nb := Body.new()
+	for p in b.get_property_list():
+		if (int(p.usage) & PROPERTY_USAGE_SCRIPT_VARIABLE) != 0:
+			nb.set(p.name, b.get(p.name))
+	return nb
+
+
+## Game Design's ruling 12: where control returns in a journey. Runs the journey like `journey` (the same step, no draw) and, from the tick the skid begins, a copy of the body on reference ground (the
+## surface's own braking, grip and rough 1). Returns {"ticks": the real journey's ticks, "ctrl": the tick control returns (the reference stop's, or the real stop's when that is sooner), "refTicks": the
+## reference skid's end (-1 when the journey has no skid), "skate": the distance the real body slides after control is back, "dist": the real journey's distance, "skidAt": the tick the skid began (-1 none)}.
+static func journeyControl(S: SimState, b: Body) -> Dictionary:
+	var dt: float = SimConst.DT
+	var ticks: int = 0
+	var x0: float = b.x
+	var cum := PackedFloat64Array()   # distance moved by the end of each tick
+	cum.append(0.0)
+	var skidAt: int = -1
+	var ref: Body = null
+	var px: float = b.x
+	while not b.done and ticks < TICK_CAP:
+		var was: int = b.mode
+		stepBody(S, b, dt, [])
+		ticks += 1
+		cum.append(cum[cum.size() - 1] + absf(SimWrap.sdx(px, b.x)))
+		px = b.x
+		if ref == null and b.mode == SKID and was != SKID:
+			skidAt = ticks
+			ref = _cloneBody(b)
+	var out := {"ticks": ticks, "ctrl": ticks, "refTicks": -1, "skate": 0.0, "dist": cum[cum.size() - 1], "skidAt": skidAt}
+	if ref == null:
+		return out
+	_refOn = true
+	var rt: int = skidAt
+	while not ref.done and rt < TICK_CAP:
+		stepBody(S, ref, dt, [])
+		rt += 1
+	_refOn = false
+	out.refTicks = rt
+	if rt < ticks:
+		out.ctrl = rt
+		out.skate = cum[cum.size() - 1] - cum[mini(rt, cum.size() - 1)]
+	return out
+
+
 # ===================================================================== the runtime: one fighter, one tick
 
 static var _tb := Body.new()   # reused each tick (the sim is single threaded): the runtime step allocates nothing
@@ -722,6 +885,8 @@ static func stepFighter(S: SimState, f, dt: float) -> void:
 		fromBody(f, b)
 		if b.dxStep != 0.0:
 			_skidEffects(S, f, by, b, xa)
+		if skateOn():
+			_skateCheck(S, f, b)
 	for e in ev:
 		_apply(S, f, by, b, e)
 	if b.done:
@@ -734,7 +899,7 @@ static func _skidEffects(S: SimState, f, by, b: Body, xa: float) -> void:
 	var hw: float = WorldSlide.HW0 + WorldSlide.HW_E * sqrt(E)
 	var pav: bool = WorldSlide._paved(f.x)
 	var tierF: float = 1.0 + K_FUR[3] * (by.tier - 1.0)
-	var depth: float = minf(WorldSlide.D_MAX * K_FUR[2], (WorldSlide.D0 + WorldSlide.D_V * K_FUR[0] * b.vN) * tierF)
+	var depth: float = minf(WorldSlide.D_MAX * K_FUR[2], (WorldSlide.D0 + WorldSlide.D_V * K_FUR[0] * b.vN) * tierF) * _pf(_gFur, f.x)
 	if b.mode == SKID:
 		WorldCrater.carveSegment(S, xa, f.x, depth, pav, WorldSlide.CRACK0 + WorldSlide.CRACK_E * sqrt(E), f.z)
 	elif K_FUR[1] > 0.0:
@@ -896,13 +1061,18 @@ static func _contact(S: SimState, f, by, b: Body, e: Dictionary) -> void:
 
 ## The end of a journey: the berm and the record, the fighter down, the events.
 static func _finish(S: SimState, f, by, b: Body) -> void:
+	if b.end == "control":   # ruling 12: control returns here, the body skates on (the journey ends as a stop)
+		f.skateV = b.vN
+		f.skateDir = b.dir
+		f.skateTv = b.launchT
+		b.end = "stop"
 	var how: String = b.end
 	var E: float = f.slideE
 	if how == "wall":
 		pass
 	elif how in ["tumble", "stop"] and f.slideEvt != 0.0:
 		var hw: float = WorldSlide.HW0 + WorldSlide.HW_E * sqrt(E)
-		WorldCrater.berm(S, f.x, f.vx if f.vx != 0.0 else 1.0, hw, minf(WorldSlide.D_MAX * K_FUR[2], (WorldSlide.D0 + WorldSlide.D_V * K_FUR[0] * f.jV0 * 0.25) * (1.0 + K_FUR[3] * (by.tier - 1.0))) * WorldSlide.BERM * K_FUR[4], f.z)
+		WorldCrater.berm(S, f.x, f.vx if f.vx != 0.0 else 1.0, hw, minf(WorldSlide.D_MAX * K_FUR[2], (WorldSlide.D0 + WorldSlide.D_V * K_FUR[0] * f.jV0 * 0.25) * (1.0 + K_FUR[3] * (by.tier - 1.0))) * WorldSlide.BERM * K_FUR[4] * _pf(_gFur, f.x), f.z)
 	if f.slideAcc > 0.0:
 		_pay(S, f, by, f.slideAcc)
 		f.slideAcc = 0.0
@@ -926,6 +1096,7 @@ static func _finish(S: SimState, f, by, b: Body) -> void:
 	f.vx = 0.0
 	f.vy = 0.0
 	f.tumbleT = -1
+	f.ctrlT = -1
 	if how == "water":
 		return
 	f.state = "down"
@@ -953,6 +1124,7 @@ static func brakeEnd(S: SimState, f, kind: String = "brake") -> void:
 	je.n = _launchN(f)
 	f.slide = 0.0
 	f.tumbleT = -1
+	f.ctrlT = -1
 	f.state = "free"
 	f.stateT = 0.0
 	f.bounces = 0.0

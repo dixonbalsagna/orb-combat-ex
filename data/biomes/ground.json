@@ -1,0 +1,506 @@
+{
+  "schema": "biomes.ground/1",
+  "_about": "Planet generation 2's ground profiles (docs/world/planet-gen2.md, window 2; read by sim/world/ground.gd): what each fine biome (data/biomes/climate.json, ids in the same order) does to a body and what stands on it. Used only when a match is on a gen 2 planet; a gen 1 match never reads it. surface: the contact class the renderer's effects and Audio know (soil, sand, rock). grip: a multiplier on the surface's braking (contact.json surfaces; 1 is the surface's own, more is mud, less is ice). absorb: a multiplier on the bounce's vertical keep (soft ground eats a bounce). rough: a multiplier, at least 1, on the braking of stones, roots and rubble: a skid on rough ground is shortened (control returns sooner) and never lengthened, and it never becomes a tumble (Game Design, rulings 2026-10-23b item 11). look: the look class of the ground, one of the five built (paving, rock, soil, sand, rubble) or the nine Combat's biome park adds (ice, snow, frost, mud, turf, litter, ash, crust, shingle), read by the director, Animation and VFX through WorldContact.lookAt; the sim's own surface stays soil, sand or rock. furrow: a multiplier on the trench a skid cuts and the berm it heaps. trees: the gap between trees and their height, in feature units (WS) like genWorld's forest (16 to 40 apart, 46 to 110 tall), or null for none. cover: the hiding a fighter finds low among them: kind canopy (needs a tree near) or ridge (rock), low is how far above the ground, in feature units (WS); null for none. props: set dressing for the renderer, per 1000 units of ground, size a range of multiples of the prop's own size; the sim never reads them (WorldGround.propsIn lays them from the columns).",
+  "trees": {
+    "minGround": 6.0
+  },
+  "grounds": [
+    {
+      "id": 0,
+      "name": "ocean",
+      "surface": "soil",
+      "look": "soil",
+      "grip": 1.0,
+      "absorb": 1.0,
+      "rough": 1.0,
+      "furrow": 1.0,
+      "trees": null,
+      "cover": null,
+      "props": []
+    },
+    {
+      "id": 1,
+      "name": "plains",
+      "surface": "soil",
+      "look": "soil",
+      "grip": 1.0,
+      "absorb": 1.0,
+      "rough": 1.0,
+      "furrow": 1.0,
+      "trees": null,
+      "cover": null,
+      "props": [
+        {
+          "kind": "grass",
+          "per": 8.0,
+          "size": [
+            0.6,
+            1.2
+          ]
+        },
+        {
+          "kind": "boulder",
+          "per": 0.6,
+          "size": [
+            0.5,
+            1.4
+          ]
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "forest",
+      "surface": "soil",
+      "look": "soil",
+      "grip": 1.1,
+      "absorb": 0.9,
+      "rough": 1.15,
+      "furrow": 1.0,
+      "trees": {
+        "gap": [
+          16.0,
+          40.0
+        ],
+        "h": [
+          46.0,
+          110.0
+        ]
+      },
+      "cover": {
+        "kind": "canopy",
+        "low": 70.0
+      },
+      "props": [
+        {
+          "kind": "fern",
+          "per": 5.0,
+          "size": [
+            0.6,
+            1.1
+          ]
+        },
+        {
+          "kind": "log",
+          "per": 0.8,
+          "size": [
+            0.7,
+            1.3
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "desert",
+      "surface": "sand",
+      "look": "sand",
+      "grip": 1.0,
+      "absorb": 0.85,
+      "rough": 1.0,
+      "furrow": 1.25,
+      "trees": null,
+      "cover": null,
+      "props": [
+        {
+          "kind": "cactus",
+          "per": 1.5,
+          "size": [
+            0.6,
+            1.4
+          ]
+        },
+        {
+          "kind": "boulder",
+          "per": 1.0,
+          "size": [
+            0.5,
+            1.6
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "mountains",
+      "surface": "rock",
+      "look": "rock",
+      "grip": 1.0,
+      "absorb": 1.0,
+      "rough": 1.3,
+      "furrow": 0.6,
+      "trees": null,
+      "cover": {
+        "kind": "ridge",
+        "low": 40.0
+      },
+      "props": [
+        {
+          "kind": "boulder",
+          "per": 3.0,
+          "size": [
+            0.6,
+            2.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "ice_sheet",
+      "surface": "rock",
+      "look": "snow",
+      "grip": 0.45,
+      "absorb": 0.9,
+      "rough": 1.0,
+      "furrow": 0.35,
+      "trees": null,
+      "cover": null,
+      "props": [
+        {
+          "kind": "ice_spire",
+          "per": 1.2,
+          "size": [
+            0.6,
+            1.8
+          ]
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "sea_ice",
+      "surface": "rock",
+      "look": "ice",
+      "grip": 0.4,
+      "absorb": 0.9,
+      "rough": 1.0,
+      "furrow": 0.3,
+      "trees": null,
+      "cover": null,
+      "props": [
+        {
+          "kind": "ice_spire",
+          "per": 0.6,
+          "size": [
+            0.5,
+            1.2
+          ]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "jungle",
+      "surface": "soil",
+      "look": "litter",
+      "grip": 1.25,
+      "absorb": 0.8,
+      "rough": 1.3,
+      "furrow": 1.1,
+      "trees": {
+        "gap": [
+          10.0,
+          26.0
+        ],
+        "h": [
+          70.0,
+          150.0
+        ]
+      },
+      "cover": {
+        "kind": "canopy",
+        "low": 90.0
+      },
+      "props": [
+        {
+          "kind": "fern",
+          "per": 9.0,
+          "size": [
+            0.8,
+            1.6
+          ]
+        },
+        {
+          "kind": "vine",
+          "per": 3.0,
+          "size": [
+            0.8,
+            1.4
+          ]
+        },
+        {
+          "kind": "log",
+          "per": 1.0,
+          "size": [
+            0.8,
+            1.5
+          ]
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "savanna",
+      "surface": "soil",
+      "look": "turf",
+      "grip": 0.95,
+      "absorb": 0.95,
+      "rough": 1.0,
+      "furrow": 1.05,
+      "trees": {
+        "gap": [
+          90.0,
+          220.0
+        ],
+        "h": [
+          40.0,
+          80.0
+        ]
+      },
+      "cover": null,
+      "props": [
+        {
+          "kind": "tall_grass",
+          "per": 10.0,
+          "size": [
+            0.8,
+            1.5
+          ]
+        },
+        {
+          "kind": "termite_mound",
+          "per": 0.4,
+          "size": [
+            0.8,
+            1.4
+          ]
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "name": "tundra",
+      "surface": "soil",
+      "look": "frost",
+      "grip": 1.05,
+      "absorb": 1.05,
+      "rough": 1.0,
+      "furrow": 0.8,
+      "trees": null,
+      "cover": null,
+      "props": [
+        {
+          "kind": "lichen_rock",
+          "per": 2.0,
+          "size": [
+            0.5,
+            1.2
+          ]
+        },
+        {
+          "kind": "snow_drift",
+          "per": 1.5,
+          "size": [
+            0.8,
+            1.8
+          ]
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "taiga",
+      "surface": "soil",
+      "look": "snow",
+      "grip": 1.15,
+      "absorb": 0.85,
+      "rough": 1.15,
+      "furrow": 1.0,
+      "trees": {
+        "gap": [
+          12.0,
+          30.0
+        ],
+        "h": [
+          60.0,
+          130.0
+        ]
+      },
+      "cover": {
+        "kind": "canopy",
+        "low": 70.0
+      },
+      "props": [
+        {
+          "kind": "fern",
+          "per": 3.0,
+          "size": [
+            0.5,
+            1.0
+          ]
+        },
+        {
+          "kind": "snow_drift",
+          "per": 1.0,
+          "size": [
+            0.6,
+            1.4
+          ]
+        },
+        {
+          "kind": "log",
+          "per": 1.2,
+          "size": [
+            0.7,
+            1.3
+          ]
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "name": "wetland",
+      "surface": "soil",
+      "look": "mud",
+      "grip": 1.5,
+      "absorb": 0.55,
+      "rough": 1.0,
+      "furrow": 1.5,
+      "trees": {
+        "gap": [
+          60.0,
+          140.0
+        ],
+        "h": [
+          30.0,
+          60.0
+        ]
+      },
+      "cover": null,
+      "props": [
+        {
+          "kind": "reeds",
+          "per": 12.0,
+          "size": [
+            0.8,
+            1.6
+          ]
+        },
+        {
+          "kind": "puddle",
+          "per": 3.0,
+          "size": [
+            0.8,
+            2.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "name": "beach",
+      "surface": "sand",
+      "look": "shingle",
+      "grip": 1.0,
+      "absorb": 0.7,
+      "rough": 1.0,
+      "furrow": 1.3,
+      "trees": {
+        "gap": [
+          110.0,
+          260.0
+        ],
+        "h": [
+          40.0,
+          80.0
+        ]
+      },
+      "cover": null,
+      "props": [
+        {
+          "kind": "driftwood",
+          "per": 1.2,
+          "size": [
+            0.7,
+            1.6
+          ]
+        },
+        {
+          "kind": "shell",
+          "per": 3.0,
+          "size": [
+            0.4,
+            0.9
+          ]
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "name": "highland",
+      "surface": "rock",
+      "look": "turf",
+      "grip": 0.9,
+      "absorb": 1.0,
+      "rough": 1.25,
+      "furrow": 0.7,
+      "trees": null,
+      "cover": {
+        "kind": "ridge",
+        "low": 40.0
+      },
+      "props": [
+        {
+          "kind": "boulder",
+          "per": 2.5,
+          "size": [
+            0.6,
+            1.8
+          ]
+        },
+        {
+          "kind": "scrub",
+          "per": 3.0,
+          "size": [
+            0.5,
+            1.0
+          ]
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "name": "volcanic",
+      "surface": "rock",
+      "look": "crust",
+      "grip": 0.85,
+      "absorb": 1.05,
+      "rough": 1.5,
+      "furrow": 0.5,
+      "trees": null,
+      "cover": {
+        "kind": "ridge",
+        "low": 40.0
+      },
+      "props": [
+        {
+          "kind": "lava_rock",
+          "per": 3.5,
+          "size": [
+            0.6,
+            1.8
+          ]
+        },
+        {
+          "kind": "vent",
+          "per": 0.4,
+          "size": [
+            0.8,
+            1.6
+          ]
+        }
+      ]
+    }
+  ]
+}

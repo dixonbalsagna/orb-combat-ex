@@ -1,0 +1,104 @@
+{
+  "schema": "biomes.sites/1",
+  "_about": "Planet generation 2's placement (docs/world/planet-gen2.md, window 4; read by sim/world/sites.gd). sites: how a candidate place is scored in a gen 2 planet, on top of the stored planet's own score (spacing and height): city and town each have a weight per fine biome (climate.json's fine list, in its order; a weight at or under reject makes the candidate impossible) and a coast term: dirs points on a ring of radius reach round the candidate are read, and the share of them in the sea scores bonus when it is between low and high (a harbour: some sea, not an islet), 0 at no sea, and penalty over high. ecotones: a ring's fine biomes blend at their borders: a column within width columns of a different biome of the set takes that biome with a chance that falls from max at the border to 0 at width (a keyed draw per column), so a border is a ragged band and not a ruled line; the stored biome follows.",
+  "sites": {
+    "reject": -50.0,
+    "weights": {
+      "ocean": [
+        -100.0,
+        -100.0
+      ],
+      "plains": [
+        2.0,
+        1.5
+      ],
+      "forest": [
+        1.0,
+        1.5
+      ],
+      "desert": [
+        -1.5,
+        -0.5
+      ],
+      "mountains": [
+        -100.0,
+        -100.0
+      ],
+      "ice_sheet": [
+        -100.0,
+        -100.0
+      ],
+      "sea_ice": [
+        -100.0,
+        -100.0
+      ],
+      "jungle": [
+        -1.5,
+        -1.0
+      ],
+      "savanna": [
+        1.5,
+        1.5
+      ],
+      "tundra": [
+        -2.5,
+        -0.5
+      ],
+      "taiga": [
+        -0.5,
+        0.5
+      ],
+      "wetland": [
+        -2.0,
+        -1.5
+      ],
+      "beach": [
+        0.5,
+        0.5
+      ],
+      "highland": [
+        -2.5,
+        -1.0
+      ],
+      "volcanic": [
+        -100.0,
+        -100.0
+      ]
+    },
+    "coast": {
+      "dirs": 8,
+      "reach": [
+        4500.0,
+        2500.0
+      ],
+      "low": 1,
+      "high": 5,
+      "bonus": [
+        4.0,
+        1.5
+      ],
+      "penalty": [
+        -2.0,
+        -0.5
+      ]
+    },
+    "scale": 6
+  },
+  "ecotones": {
+    "biomes": [
+      "plains",
+      "forest",
+      "desert",
+      "jungle",
+      "savanna",
+      "tundra",
+      "taiga",
+      "wetland",
+      "highland"
+    ],
+    "width": 80,
+    "cell": 8,
+    "max": 0.7,
+    "seed": 9901
+  }
+}

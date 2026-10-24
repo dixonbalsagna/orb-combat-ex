@@ -138,6 +138,12 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 		_obj(out, f, FIGHTER)
 		if float(f.launchPower) != 1.0:
 			out.append(f.launchPower)   # a launcher's power, hashed only while a launch carries one
+		if int(f.ctrlT) != -1:
+			out.append(f.ctrlT)   # World's skate (ruling 12): hashed only while a skid carries a control tick or a skate runs
+		if float(f.skateV) > 0.0:
+			out.append(f.skateV)
+			out.append(f.skateDir)
+			out.append(f.skateTv)
 		if f.boon != "":
 			out.append(f.boon)   # the run's rare boon, only when the setup names one
 		var r = f.rush

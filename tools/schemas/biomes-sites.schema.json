@@ -1,0 +1,363 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-sites",
+  "title": "biomes.sites/1",
+  "description": "data/biomes/sites.json: planet generation 2's placement and transitions (docs/world/planet-gen2.md, window 4; WorldSites). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore. Cross-checks (every fine biome has a weight, low is at most high is at most dirs) are WorldSites' own load and sites_check.",
+  "type": "object",
+  "required": [
+    "schema",
+    "sites",
+    "ecotones",
+    "_about"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "biomes.sites/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "sites": {
+      "type": "object",
+      "required": [
+        "reject",
+        "scale",
+        "weights",
+        "coast"
+      ],
+      "additionalProperties": false,
+      "description": "How a candidate place is scored in a gen 2 planet.",
+      "properties": {
+        "reject": {
+          "type": "number",
+          "minimum": -1000.0,
+          "maximum": 0.0,
+          "description": "A weight at or under this makes a candidate impossible."
+        },
+        "scale": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 100.0,
+          "description": "The weights and the coast term are multiplied by this before they join the stored planet's score (spacing, height)."
+        },
+        "weights": {
+          "type": "object",
+          "required": [
+            "ocean",
+            "plains",
+            "forest",
+            "desert",
+            "mountains",
+            "ice_sheet",
+            "sea_ice",
+            "jungle",
+            "savanna",
+            "tundra",
+            "taiga",
+            "wetland",
+            "beach",
+            "highland",
+            "volcanic"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "ocean": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "[city, town] weight of a candidate place on this biome; at or under sites.reject is impossible."
+            },
+            "plains": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "[city, town] weight of a candidate place on this biome; at or under sites.reject is impossible."
+            },
+            "forest": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "[city, town] weight of a candidate place on this biome; at or under sites.reject is impossible."
+            },
+            "desert": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "[city, town] weight of a candidate place on this biome; at or under sites.reject is impossible."
+            },
+            "mountains": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "[city, town] weight of a candidate place on this biome; at or under sites.reject is impossible."
+            },
+            "ice_sheet": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "[city, town] weight of a candidate place on this biome; at or under sites.reject is impossible."
+            },
+            "sea_ice": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "[city, town] weight of a candidate place on this biome; at or under sites.reject is impossible."
+            },
+            "jungle": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "[city, town] weight of a candidate place on this biome; at or under sites.reject is impossible."
+            },
+            "savanna": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "[city, town] weight of a candidate place on this biome; at or under sites.reject is impossible."
+            },
+            "tundra": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "[city, town] weight of a candidate place on this biome; at or under sites.reject is impossible."
+            },
+            "taiga": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "[city, town] weight of a candidate place on this biome; at or under sites.reject is impossible."
+            },
+            "wetland": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "[city, town] weight of a candidate place on this biome; at or under sites.reject is impossible."
+            },
+            "beach": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "[city, town] weight of a candidate place on this biome; at or under sites.reject is impossible."
+            },
+            "highland": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "[city, town] weight of a candidate place on this biome; at or under sites.reject is impossible."
+            },
+            "volcanic": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "[city, town] weight of a candidate place on this biome; at or under sites.reject is impossible."
+            }
+          },
+          "description": "Per fine biome (climate.json's names)."
+        },
+        "coast": {
+          "type": "object",
+          "required": [
+            "dirs",
+            "reach",
+            "low",
+            "high",
+            "bonus",
+            "penalty"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "dirs": {
+              "type": "integer",
+              "minimum": 3,
+              "maximum": 64,
+              "description": "Points read on a ring round the candidate."
+            },
+            "reach": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": 100.0,
+                "maximum": 100000.0
+              },
+              "description": "The ring's radius in units, [city, town]."
+            },
+            "low": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 64,
+              "description": "At least this many of the points in the sea is a harbour."
+            },
+            "high": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 64,
+              "description": "More than this many is an islet or a spit (low and high are checked against dirs on load)."
+            },
+            "bonus": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "Added for a harbour, [city, town]."
+            },
+            "penalty": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "type": "number",
+                "minimum": -1000.0,
+                "maximum": 1000.0
+              },
+              "description": "Added where more than high of the points are in the sea, [city, town]."
+            }
+          }
+        }
+      }
+    },
+    "ecotones": {
+      "type": "object",
+      "required": [
+        "biomes",
+        "width",
+        "cell",
+        "max",
+        "seed"
+      ],
+      "additionalProperties": false,
+      "description": "The ragged border between fine biomes.",
+      "properties": {
+        "biomes": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "ocean",
+              "plains",
+              "forest",
+              "desert",
+              "mountains",
+              "ice_sheet",
+              "sea_ice",
+              "jungle",
+              "savanna",
+              "tundra",
+              "taiga",
+              "wetland",
+              "beach",
+              "highland",
+              "volcanic"
+            ]
+          },
+          "description": "The biomes that blend at their borders with one another."
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600,
+          "description": "Columns from a border over which the chance falls to 0."
+        },
+        "cell": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64,
+          "description": "Columns to a keyed draw (the patch size)."
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "The chance of the other biome next to the border."
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000,
+          "description": "Added to the planet's seed for the draws."
+        }
+      }
+    }
+  }
+}

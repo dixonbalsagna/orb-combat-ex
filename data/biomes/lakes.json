@@ -1,0 +1,17 @@
+{
+  "schema": "biomes.lakes/1",
+  "_about": "Planet generation 2's lakes (docs/world/planet-gen2.md, window 5; read by sim/world/lakes.gd). A gen 2 match's ring is a line of ground heights, and a valley in it that is walled on both sides holds a lake: from each local minimum the ground is climbed to a crest on each side, the lake stands at the lower crest, and the water is the depth from the valley floor to that level (a flat surface). A valley counts when its water is at least minDepth deep and minWidth columns wide, its floor is above minFloor (the sea is not a lake), its level is under maxLevel, no town or city stands within margin columns of it, and its floor's fine biome is not in refuse (no lake in a desert or on a volcano). Trees do not grow in water. The water is put in S.water at the match's start, where a crater's lake would be; the water module's flow leaves inland water alone.",
+  "minDepth": 50.0,
+  "minWidth": 16,
+  "minFloor": 5.0,
+  "maxLevel": 3500.0,
+  "margin": 10,
+  "maxSpan": 480,
+  "refuse": [
+    "desert",
+    "volcanic",
+    "ice_sheet",
+    "sea_ice",
+    "mountains"
+  ]
+}

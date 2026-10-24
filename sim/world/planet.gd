@@ -53,7 +53,7 @@ static func dataHash() -> String:
 	if not _cLoaded:
 		_cLoad()
 	if WorldClimate.genNow() >= 2:
-		return _cHash + "/g2/" + WorldClimate.dataHash()   # a gen 2 planet's slices are not a gen 1 planet's, and follow climate.json
+		return _cHash + "/g2/" + WorldClimate.dataHash() + "/" + WorldLand.dataHash() + "/" + WorldSites.dataHash()   # a gen 2 planet's slices are not a gen 1 planet's, and follow climate.json and land.json
 	return _cHash
 
 
@@ -282,6 +282,7 @@ class Planet extends RefCounted:
 	var outF: int = -1                       # gen 2: the fine biome of the last surfAt (WorldClimate.F_*); -1 where the stored biome is the fine one (sea, ice, a dome)
 	var gen: int = 1                         # the generation this planet is made by (WorldClimate.genNow)
 	var grid = null                          # gen 2: the climate grid (WorldClimate.Grid), made when first asked
+	var plates = null                        # gen 2: the plates (WorldLand.Plates), made when first asked
 
 
 ## Memoised by the seed: the planet is a pure function of it and of the data.
@@ -290,6 +291,15 @@ static func make(seed: int) -> Planet:
 	var key: int = seed * 4 + gn
 	if _planets.has(key):
 		return _planets[key]
+	var P: Planet = _newPlanet(seed, gn)
+	if gn >= 2:
+		WorldClimate.gridOf(P)   # the climate grid before the places are scored
+	_placeAll(P)
+	_memoPlanet(key, P)
+	return P
+
+
+static func _newPlanet(seed: int, gn: int) -> Planet:
 	var P := Planet.new()
 	P.seed = seed
 	P.gen = gn
@@ -300,11 +310,64 @@ static func make(seed: int) -> Planet:
 			P.c[k] = WorldClimate.data().planet[k]
 	P.L = float(SimConst.PLANET_NC) * SimConst.COL
 	P.R = P.L / (2.0 * SimMathx.PI)
-	_placeAll(P)
+	return P
+
+
+static func _memoPlanet(key: int, P: Planet) -> void:
 	if _planets.size() > 6:
 		_planets.clear()
 	_planets[key] = P
-	return P
+
+
+## A planet made in steps (a host spends a budget a frame; the module owns no clock): the climate grid of a gen 2 planet first (a budget unit is a grid cell, about 20 microseconds), then the places, a try-set
+## (cost PLACE_COST units, about 20 ms) at a time. `step(budget)` returns true when `P` is whole and memoised, where make(seed) then finds it at once. make(seed) is this job run to the end.
+class PlanetJob extends RefCounted:
+	const PLACE_COST: int = 1000
+	var seed: int = 0
+	var key: int = 0
+	var P: WorldPlanet.Planet
+	var done: bool = false
+	var _grid = null
+	var _st: Dictionary = {}
+
+	func _init(sd: int) -> void:
+		seed = sd
+		var gn: int = WorldClimate.genNow()
+		key = sd * 4 + gn
+		if WorldPlanet._planets.has(key):
+			P = WorldPlanet._planets[key]
+			done = true
+			return
+		P = WorldPlanet._newPlanet(sd, gn)
+		if gn >= 2:
+			_grid = WorldClimate.Grid.new(P)
+		_st = WorldPlanet._placeBegin(P)
+
+	func step(budget: int) -> bool:
+		if done:
+			return true
+		var left: int = budget
+		if _grid != null:
+			var before: int = _grid.cell
+			_grid.step(left)
+			left -= _grid.cell - before
+			if not _grid.done:
+				return false
+			P.grid = _grid
+			_grid = null
+		while true:
+			if WorldPlanet._placeStep(P, _st):
+				WorldPlanet._memoPlanet(key, P)
+				done = true
+				return true
+			left -= PLACE_COST
+			if left <= 0:
+				return false
+		return done
+
+
+static func makeJob(seed: int) -> PlanetJob:
+	return PlanetJob.new(seed)
 
 
 static func forget() -> void:
@@ -353,7 +416,12 @@ static func ground(P: Planet, px: float, py: float, pz: float) -> float:
 	var h: float = (e + c.seaShift) * c.hMul
 	if e > c.rangeFrom:
 		var m: float = _fbm(P.R, px, py, pz, c.reliefScale, int(c.reliefOct), s + int(c.sRelief))
-		h += (e - c.rangeFrom) * c.rangeMul * (c.reliefBase + m)
+		if P.gen >= 2:
+			h += (e - c.rangeFrom) * c.rangeMul * (c.reliefBase + m) * WorldLand.keep()   # gen 2: the plates build the ranges, the stored blobs are weaker
+		else:
+			h += (e - c.rangeFrom) * c.rangeMul * (c.reliefBase + m)
+	if P.gen >= 2:
+		h = WorldLand.shape(P, px, py, pz, h)   # ranges and rifts along the plate edges, the shoreline, plateaus and canyons (window 3)
 	return h
 
 
@@ -383,12 +451,15 @@ static func surfAt(P: Planet, px: float, py: float, pz: float) -> void:
 	var y: float = py
 	P.outF = -1
 	var base: float = ground(P, px, py, pz)
-	if absf(y) < c.polarY:
+	var polarY: float = c.polarY
+	if P.gen >= 2:
+		polarY += WorldLand.polarWob(P, px, py, pz)   # a ragged edge to the polar zone, not a ruled latitude (window 3)
+	if absf(y) < polarY:
 		P.outH = base
 		P.outB = _plainBiome(P, px, py, pz, base)
 		return
 	if y > 0.0:
-		var wN: float = _ss((y - c.polarY) / c.blend)
+		var wN: float = _ss((y - polarY) / c.blend)
 		var sea: float = c.seaNorth + (_fbm(P.R, px, py, pz, c.seaNoiseScale, int(c.seaNoiseOct), s + int(c.sSea)) - 0.5) * c.seaNoiseAmp
 		var conc: float = (y - c.packEdgeY) / c.packWidth + (_fbm(P.R, px, py, pz, c.packNoiseScale, int(c.packNoiseOct), s + int(c.sPackEdge)) - 0.5) * c.packNoiseAmp
 		if conc > c.packMin:
@@ -416,7 +487,7 @@ static func surfAt(P: Planet, px: float, py: float, pz: float) -> void:
 		P.outB = BIO_OCEAN if wN >= 1.0 else _plainBiome(P, px, py, pz, P.outH)
 		return
 	var ys: float = -y
-	var wS: float = _ss((ys - c.polarY) / c.blend)
+	var wS: float = _ss((ys - polarY) / c.blend)
 	var seaS: float = c.seaSouth + (_fbm(P.R, px, py, pz, c.seaNoiseScale, int(c.seaNoiseOct), s + int(c.sSea)) - 0.5) * c.seaNoiseAmp
 	var m: float = (ys - c.southMaskY) / c.southWidth + (_fbm(P.R, px, py, pz, c.southMaskScale, int(c.southMaskOct), s + int(c.sSouthMask)) - 0.5) * c.southMaskAmp
 	if m > 0.0:
@@ -546,6 +617,13 @@ static func _tryPlace(P: Planet, r: SimRng, kind: int, radius: float, tries: int
 		if dmin < c.placeGap:
 			continue
 		var sc: float = dmin * c.scoreGap - absf(h - c.scoreH0) * c.scoreHW + r.next()
+		if P.gen >= 2:   # window 4: a harbour for a city, a fertile biome, nothing on ice, in the sea or on a range
+			if sc + WorldSites.maxBonus(kind) <= bs:
+				continue   # the climate term cannot lift it past the best so far
+			var bonus: float = WorldSites.score(P, kind, p[0], p[1], p[2], bs - sc)
+			if bonus <= -1.0e8:
+				continue
+			sc += bonus
 		if sc > bs:
 			bs = sc
 			best = p
@@ -561,47 +639,76 @@ static func _tryPlace(P: Planet, r: SimRng, kind: int, radius: float, tries: int
 
 
 ## The places of a planet: first as picture A placed them (one stream, the ordinary ground), then the ones that fell inside a polar cap are placed again outside it
-## from a second stream. Cities first, then towns.
+## from a second stream. Cities first, then towns. A state machine (_placeBegin, _placeStep) so a host can step it (PlanetJob); _placeAll is it run to the end, draw for draw as before.
 static func _placeAll(P: Planet) -> void:
+	var st: Dictionary = _placeBegin(P)
+	while not _placeStep(P, st):
+		pass
+
+
+static func _placeBegin(P: Planet) -> Dictionary:
+	return {"r": SimRng.new(P.seed * int(P.c.placeSeedMul) + 1), "r2": null, "i": 0, "phase": 0, "dropped": [0, 0]}
+
+
+## One _tryPlace (or the step between the two streams, or the last step); true when the places are all made.
+static func _placeStep(P: Planet, st: Dictionary) -> bool:
 	var c: Dictionary = P.c
-	var r := SimRng.new(P.seed * int(c.placeSeedMul) + 1)
-	for k in range(int(c.cities)):
-		_tryPlace(P, r, KIND_CITY, c.cityRadius, int(c.cityTries), false)
-	for k in range(int(c.towns)):
-		_tryPlace(P, r, KIND_TOWN, c.townRadius, int(c.townTries), false)
-	var kept := PackedInt32Array()
-	var dropped := [0, 0]
-	for i in range(P.n):
-		if absf(P.py[i]) > c.placeYMax:
-			dropped[P.kind[i]] += 1
+	var nc: int = int(c.cities)
+	var nt: int = int(c.towns)
+	if int(st.phase) == 0:
+		var i: int = st.i
+		if i < nc:
+			_tryPlace(P, st.r, KIND_CITY, c.cityRadius, int(c.cityTries), false)
+		elif i < nc + nt:
+			_tryPlace(P, st.r, KIND_TOWN, c.townRadius, int(c.townTries), false)
+		st.i = i + 1
+		if int(st.i) < nc + nt:
+			return false
+		var kept := PackedInt32Array()
+		var dropped := [0, 0]
+		for k in range(P.n):
+			if absf(P.py[k]) > c.placeYMax:
+				dropped[P.kind[k]] += 1
+			else:
+				kept.append(k)
+		var kind2 := PackedByteArray()
+		var px2 := PackedFloat64Array()
+		var py2 := PackedFloat64Array()
+		var pz2 := PackedFloat64Array()
+		var rad2 := PackedFloat64Array()
+		for k in kept:
+			kind2.append(P.kind[k])
+			px2.append(P.px[k])
+			py2.append(P.py[k])
+			pz2.append(P.pz[k])
+			rad2.append(P.rad[k])
+		P.kind = kind2
+		P.px = px2
+		P.py = py2
+		P.pz = pz2
+		P.rad = rad2
+		P.n = kept.size()
+		st.dropped = dropped
+		st.r2 = SimRng.new(P.seed * int(c.placeSeedMul) + 2)
+		st.phase = 1
+		st.i = 0
+		return false
+	var dr: Array = st.dropped
+	var nd: int = int(dr[KIND_CITY]) + int(dr[KIND_TOWN])
+	var j: int = st.i
+	if j < nd:
+		if j < int(dr[KIND_CITY]):
+			_tryPlace(P, st.r2, KIND_CITY, c.cityRadius, int(c.replaceTries), true)
 		else:
-			kept.append(i)
-	var kind2 := PackedByteArray()
-	var px2 := PackedFloat64Array()
-	var py2 := PackedFloat64Array()
-	var pz2 := PackedFloat64Array()
-	var rad2 := PackedFloat64Array()
-	for i in kept:
-		kind2.append(P.kind[i])
-		px2.append(P.px[i])
-		py2.append(P.py[i])
-		pz2.append(P.pz[i])
-		rad2.append(P.rad[i])
-	P.kind = kind2
-	P.px = px2
-	P.py = py2
-	P.pz = pz2
-	P.rad = rad2
-	P.n = kept.size()
-	var r2 := SimRng.new(P.seed * int(c.placeSeedMul) + 2)
-	for k in range(dropped[KIND_CITY]):
-		_tryPlace(P, r2, KIND_CITY, c.cityRadius, int(c.replaceTries), true)
-	for k in range(dropped[KIND_TOWN]):
-		_tryPlace(P, r2, KIND_TOWN, c.townRadius, int(c.replaceTries), true)
+			_tryPlace(P, st.r2, KIND_TOWN, c.townRadius, int(c.replaceTries), true)
+		st.i = j + 1
+		if int(st.i) < nd:
+			return false
 	# people: a place's weight is its area (radius squared), so a city holds about seven towns' people (as Bellgate and the villages do)
 	P.people.resize(P.n)
-	for i in range(P.n):
-		P.people[i] = int(P.rad[i] * P.rad[i] / 1000000.0 * 100.0)
+	for k in range(P.n):
+		P.people[k] = int(P.rad[k] * P.rad[k] / 1000000.0 * 100.0)
+	return true
 
 
 ## The people of a place at full, by weight (relative). A slice's people are these over its held places, normalised to the slice's total (slicePeople).
@@ -813,6 +920,8 @@ static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
 
 ## The places the line holds, with their nearest column and lateral offset.
 static func readHeld(P: Planet, S: Slice, standing: PackedByteArray = PackedByteArray()) -> void:
+	if P.gen >= 2:
+		WorldSites.blend(P, S)   # window 4: the fine biomes meet in a ragged band (the last step of every read, whole or stepped, before anything hashes the biomes)
 	var c: Dictionary = P.c
 	var circ: Dictionary = S.circ
 	var u: Array = circ.u
@@ -994,7 +1103,7 @@ static func farPlaces(P: Planet, ring: Dictionary, maxLateral: float = 1.0e18) -
 
 ## The slice of an explicit ring (WorldRingPick: an axis, the columns, a touch-down), memoised outside the state like sliceFor's. The ring is the arena's, so its columns are SimConst.NC.
 static func _ringKey(seed: int, ring: Dictionary, standing: PackedByteArray) -> String:
-	return "ring/%d/%s/%s/%s/%d" % [seed, str(ring.c), str(ring.u), str(standing.hex_encode()), SimConst.NC]
+	return "ring/%d/%s/%s/%s/%d/%s" % [seed, str(ring.c), str(ring.u), str(standing.hex_encode()), SimConst.NC, dataHash()]   # dataHash carries the generation: a gen 2 slice is never handed to a gen 1 match
 
 
 ## A ring's slice read in steps is put where sliceRing finds it.

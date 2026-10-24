@@ -1,0 +1,66 @@
+{
+  "schema": "biomes.land/1",
+  "_about": "Planet generation 2's landforms (docs/world/planet-gen2.md, window 3; read by sim/world/land.gd): the shape of the ground a gen 2 planet adds to the stored continents. plates: a few seeded plates (a centre and a drift each), nearest and second nearest at a point give its plate edge and, from the two drifts, whether the plates close on each other. ranges: where they close, a ridged range along the edge (amp units, edge width in dot-product units, wobbled by a noise so the line is not straight, broken by a ridged noise). rifts: where they part, a valley on land and a mid-sea ridge in the sea. coast: noise that moves the shoreline, strongest at sea level and gone inland and at depth, so there are bays and capes. plateaus: on high dry land a terrace mask turns slopes into flat tops with steep sides (step units apart, the riser a fraction of a step), and canyons: ridged-noise lines cut into the plateaus. polar: the polar zone's edge (the latitude where the stored planet's ordinary ground gives way to its poles) is moved by a noise of amp (in the sine of the latitude) so a continent ends raggedly, not on a ruled line. keep: the share of the stored planet's own range relief a gen 2 planet keeps (the plates build the ranges; the old blobs are weaker).",
+  "plates": {
+    "n": 14,
+    "seed": 9701,
+    "tries": 10,
+    "speedMin": 0.35,
+    "wobScale": 9000.0,
+    "wobOct": 1,
+    "wobAmp": 0.05,
+    "wobSeed": 9723
+  },
+  "ranges": {
+    "amp": 6500,
+    "width": 0.09,
+    "ridgeScale": 3200.0,
+    "ridgeOct": 2,
+    "ridgeLo": 0.4,
+    "ridgeSeed": 9731,
+    "minConv": 0.05,
+    "sea": 0.2
+  },
+  "rifts": {
+    "amp": 1500.0,
+    "width": 0.05,
+    "seaRidge": 500.0
+  },
+  "coast": {
+    "band": 260.0,
+    "scaleA": 5200.0,
+    "octA": 1,
+    "ampA": 330.0,
+    "scaleB": 1300.0,
+    "octB": 1,
+    "ampB": 120.0,
+    "seed": 9741
+  },
+  "plateaus": {
+    "above": 450.0,
+    "maskScale": 14000.0,
+    "maskOct": 1,
+    "maskLo": 0.46,
+    "maskHi": 0.58,
+    "maskSeed": 9751,
+    "step": 300,
+    "riser": 0.65,
+    "mix": 0.8,
+    "fade": 220
+  },
+  "canyons": {
+    "scale": 6000.0,
+    "oct": 1,
+    "seed": 9757,
+    "edge": 0.82,
+    "depth": 480,
+    "above": 160.0
+  },
+  "polar": {
+    "scale": 14000.0,
+    "oct": 2,
+    "amp": 0.07,
+    "seed": 9763
+  },
+  "keep": 0.55
+}

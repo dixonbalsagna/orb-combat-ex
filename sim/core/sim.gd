@@ -52,10 +52,14 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
 	S.arenaCols = _arenaCols(setup)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's 4,800
 	SimConst.setArena(S.arenaCols)
 	WorldBiomes.planetCols = PackedByteArray()
+	WorldBiomes.fineCols = PackedByteArray()
+	WorldClimate.useGen(0)   # the data's generation unless the setup names one (WorldPlanetWorld.gen)
 	S.planetRing = {}   # World: the planet match's ring (planet_world.gd sets it)
 	S.epoch = null   # World's calm-moment turn (world/epoch.gd): a planet match with it on sets it
 	if not (setup.has("planet") and WorldPlanetWorld.gen(S, setup)):   # a setup with a planet reads its world from the slice; without one, today's world
 		WorldTerrain.genWorld(S)
+	S.fineCols = WorldBiomes.fineCols
+	S.planetGen = WorldClimate.curGen
 	S.planetCols = WorldBiomes.planetCols   # the statics a world sets belong to this match: step takes them again when another match has built since
 	S.worldId = WorldBiomes.claim()
 	S.contactOn = WorldContact.enabled()   # World's ground contact (world/contact.gd): a copy of the data's switch
@@ -157,6 +161,8 @@ static func step(S: SimState, inputs = null) -> bool:
 	if SimConst.NC != S.arenaCols or WorldBiomes.worldId != S.worldId:   # the arena's length and a planet's biomes are statics: a match takes its own again, whatever another match has built since (two sims alive in one process)
 		SimConst.setArena(S.arenaCols)
 		WorldBiomes.planetCols = S.planetCols
+		WorldBiomes.fineCols = S.fineCols
+		WorldClimate.curGen = S.planetGen
 		WorldBiomes.worldId = S.worldId
 	var dtReal: float = SimConst.DT
 	var dt: float = dtReal * S.game.ts

@@ -17,6 +17,13 @@ static func coverAt(S: SimState, f):
 	var ws: float = WorldWater.surfaceAt(S, f.x)
 	if f.y < ws - WorldWater.HIDE_BELOW_SURFACE and ws - g >= WorldWater.HIDE_MIN_DEPTH:
 		return "submerged"
+	if WorldGround.live():   # a gen 2 world: the fine biome's own hiding (data/biomes/ground.json), low among trees (canopy) or low on rock (ridge)
+		var cv = WorldGround.coverOf(f.x)
+		if cv != null and f.y < g + float(cv.low):
+			if cv.kind == "canopy":
+				return "canopy" if nearTree(S, f.x) else null
+			return "ridge"
+		return null
 	if b == "forest" and f.y < g + 70.0 * SimConst.WS and nearTree(S, f.x):
 		return "canopy"
 	if b == "mountains" and f.y < g + 40.0 * SimConst.WS:
@@ -30,7 +37,7 @@ static func nearestCover(x: float):
 	var off: float = 0.0
 	while off <= 4000.0 * SimConst.PS:
 		for s in ([1.0, -1.0] if off != 0.0 else [1.0]):
-			var b: String = WorldBiomes.biomeAt(x + s * off)
+			var b: String = WorldGround.coverName(x + s * off) if WorldGround.live() else WorldBiomes.biomeAt(x + s * off)
 			if b == "ocean" or b == "forest" or b == "mountains":
 				return {"off": s * off, "b": b}
 		off += 100.0 * SimConst.PS

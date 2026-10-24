@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-ground",
+  "title": "biomes.ground/1",
+  "description": "data/biomes/ground.json: planet generation 2's ground profiles (docs/world/planet-gen2.md, window 2; WorldGround): what each fine biome does to a body and what stands on it. Version field: schema. Policy: every key required, objects closed except keys starting with an underscore. Cross-checks (a profile for each of climate.json's fine biomes, in its order, by name; canopy cover needs trees) are WorldGround's own load and ground_check.",
+  "type": "object",
+  "required": [
+    "schema",
+    "trees",
+    "grounds",
+    "_about"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "biomes.ground/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "trees": {
+      "type": "object",
+      "required": [
+        "minGround"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "minGround": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 200,
+          "description": "Trees stand only where the ground is at least this high, in units (sea level is 0)."
+        }
+      }
+    },
+    "grounds": {
+      "type": "array",
+      "minItems": 15,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "surface",
+          "look",
+          "grip",
+          "absorb",
+          "rough",
+          "furrow",
+          "trees",
+          "cover",
+          "props"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The fine biome's id: its index in climate.json's fine list."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The fine biome's name: must be climate.json's fine[id].name (checked on load)."
+          },
+          "surface": {
+            "enum": [
+              "soil",
+              "sand",
+              "rock"
+            ],
+            "description": "The contact class on this ground (contact.json surfaces); the renderer's effects and Audio know these."
+          },
+          "look": {
+            "enum": [
+              "paving",
+              "rock",
+              "soil",
+              "sand",
+              "rubble",
+              "ice",
+              "snow",
+              "frost",
+              "mud",
+              "turf",
+              "litter",
+              "ash",
+              "crust",
+              "shingle"
+            ],
+            "description": "The look class of this ground: the five built (paving, rock, soil, sand, rubble) or the nine of Combat's biome park (ice, snow, frost, mud, turf, litter, ash, crust, shingle)."
+          },
+          "grip": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 3.0,
+            "description": "Multiplier on the surface's braking: more is mud, less is ice."
+          },
+          "absorb": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 3.0,
+            "description": "Multiplier on the bounce's vertical keep: soft ground eats a bounce."
+          },
+          "rough": {
+            "type": "number",
+            "minimum": 1.0,
+            "maximum": 3.0,
+            "description": "Multiplier, at least 1, on the braking of stones, roots and rubble: a skid on rough ground is shortened and never lengthened, and never becomes a tumble."
+          },
+          "furrow": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 3.0,
+            "description": "Multiplier on the trench a skid cuts and the berm it heaps."
+          },
+          "trees": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "gap",
+                  "h"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "gap": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    "description": "The gap between trees, [low, high], in feature units (WS)."
+                  },
+                  "h": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    "description": "A tree's height, [low, high], in feature units (WS)."
+                  }
+                }
+              }
+            ],
+            "description": "What grows here, or null for nothing."
+          },
+          "cover": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "kind",
+                  "low"
+                ],
+                "additionalProperties": false,
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "canopy",
+                      "ridge"
+                    ],
+                    "description": "canopy needs a tree near; ridge is rock."
+                  },
+                  "low": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "How far above the ground a fighter finds the hiding, in feature units (WS)."
+                  }
+                }
+              }
+            ],
+            "description": "Where a fighter hides on this ground, or null for nowhere."
+          },
+          "props": {
+            "type": "array",
+            "description": "Set dressing for the renderer.",
+            "items": {
+              "type": "object",
+              "required": [
+                "kind",
+                "per",
+                "size"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "per": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 30,
+                  "description": "How many to every 1,000 units of ground."
+                },
+                "size": {
+                  "type": "array",
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "items": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "description": "Size, [low, high], as multiples of the prop's own size."
+                }
+              }
+            }
+          }
+        }
+      },
+      "description": "One profile for each fine biome of climate.json, in its order."
+    }
+  }
+}

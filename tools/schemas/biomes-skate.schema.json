@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-skate",
+  "title": "biomes.skate/1",
+  "description": "data/biomes/skate.json: Game Design's ruling 12 at runtime (docs/world/planet-gen2.md, window 8; WorldContact.skateOn). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "_about",
+    "enabled",
+    "minSkate"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "biomes.skate/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "Ruling 12 at runtime: control returns at the stop on reference ground and the body skates on. Off by default."
+    },
+    "minSkate": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 2000.0,
+      "description": "The body hands over only if it still has at least this normalised speed at the control tick."
+    }
+  }
+}

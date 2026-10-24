@@ -1,0 +1,426 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-land",
+  "title": "biomes.land/1",
+  "description": "data/biomes/land.json: planet generation 2's landforms (docs/world/planet-gen2.md, window 3; WorldLand). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore. Order checks (maskHi above maskLo, at least 4 plates) are WorldLand's own load and land_check.",
+  "type": "object",
+  "required": [
+    "schema",
+    "_about",
+    "plates",
+    "ranges",
+    "rifts",
+    "coast",
+    "plateaus",
+    "canyons",
+    "polar",
+    "keep"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "biomes.land/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "plates": {
+      "type": "object",
+      "required": [
+        "n",
+        "seed",
+        "tries",
+        "speedMin",
+        "wobScale",
+        "wobOct",
+        "wobAmp",
+        "wobSeed"
+      ],
+      "additionalProperties": false,
+      "description": "The plates.",
+      "properties": {
+        "n": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 40,
+          "description": "How many plates."
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000,
+          "description": "Added to the planet's seed for the plates' draws."
+        },
+        "tries": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 40,
+          "description": "Best-candidate draws for each plate's centre (each the farthest from the ones before)."
+        },
+        "speedMin": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "The slowest drift; the fastest is 1."
+        },
+        "wobScale": {
+          "type": "number",
+          "exclusiveMinimum": 100.0,
+          "maximum": 200000.0,
+          "description": "The edge wobble noise's scale, in units."
+        },
+        "wobOct": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Its octaves."
+        },
+        "wobAmp": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 0.5,
+          "description": "How far the wobble moves the edge, in dot-product units (a 0.05 is about 1,200 units)."
+        },
+        "wobSeed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000,
+          "description": "Its seed offset."
+        }
+      }
+    },
+    "ranges": {
+      "type": "object",
+      "required": [
+        "amp",
+        "width",
+        "ridgeScale",
+        "ridgeOct",
+        "ridgeLo",
+        "ridgeSeed",
+        "minConv",
+        "sea"
+      ],
+      "additionalProperties": false,
+      "description": "Ranges where plates close.",
+      "properties": {
+        "amp": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 20000.0,
+          "description": "Height added at the top of a range where plates close head on, in units."
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0.005,
+          "maximum": 1.0,
+          "description": "The range's half width in dot-product units (a bump 1 / (1 + (x / width)^2)^2)."
+        },
+        "ridgeScale": {
+          "type": "number",
+          "exclusiveMinimum": 100.0,
+          "maximum": 200000.0,
+          "description": "The ridged noise that breaks the line into peaks and saddles: scale, in units."
+        },
+        "ridgeOct": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Its octaves."
+        },
+        "ridgeLo": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "The share of the amplitude left in a saddle."
+        },
+        "ridgeSeed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000,
+          "description": "Its seed offset."
+        },
+        "minConv": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Plates close slower than this make no range (and part slower than this no rift)."
+        },
+        "sea": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "The share of a range that stands over deep sea (island arcs, not new continents); land and shallows take it whole."
+        }
+      }
+    },
+    "rifts": {
+      "type": "object",
+      "required": [
+        "amp",
+        "width",
+        "seaRidge"
+      ],
+      "additionalProperties": false,
+      "description": "Rifts where plates part.",
+      "properties": {
+        "amp": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10000.0,
+          "description": "Depth of a rift valley on land where plates part, in units."
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0.005,
+          "maximum": 1.0,
+          "description": "Its half width in dot-product units."
+        },
+        "seaRidge": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10000.0,
+          "description": "Height of the ridge on the sea floor where plates part."
+        }
+      }
+    },
+    "coast": {
+      "type": "object",
+      "required": [
+        "band",
+        "scaleA",
+        "octA",
+        "ampA",
+        "scaleB",
+        "octB",
+        "ampB",
+        "seed"
+      ],
+      "additionalProperties": false,
+      "description": "The shoreline.",
+      "properties": {
+        "band": {
+          "type": "number",
+          "exclusiveMinimum": 10.0,
+          "maximum": 5000.0,
+          "description": "How far from sea level, in units of height, the shoreline noise reaches (a bump)."
+        },
+        "scaleA": {
+          "type": "number",
+          "exclusiveMinimum": 100.0,
+          "maximum": 200000.0,
+          "description": "The large bays and capes: scale, in units."
+        },
+        "octA": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Octaves."
+        },
+        "ampA": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 3000.0,
+          "description": "Amplitude, in units of height."
+        },
+        "scaleB": {
+          "type": "number",
+          "exclusiveMinimum": 100.0,
+          "maximum": 200000.0,
+          "description": "The small ones: scale, in units."
+        },
+        "octB": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Octaves."
+        },
+        "ampB": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 3000.0,
+          "description": "Amplitude, in units of height."
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000,
+          "description": "Seed offset."
+        }
+      }
+    },
+    "plateaus": {
+      "type": "object",
+      "required": [
+        "above",
+        "maskScale",
+        "maskOct",
+        "maskLo",
+        "maskHi",
+        "maskSeed",
+        "step",
+        "riser",
+        "mix",
+        "fade"
+      ],
+      "additionalProperties": false,
+      "description": "Plateaus.",
+      "properties": {
+        "above": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10000.0,
+          "description": "Plateaus form only on ground above this height."
+        },
+        "maskScale": {
+          "type": "number",
+          "exclusiveMinimum": 100.0,
+          "maximum": 200000.0,
+          "description": "The mask of where plateaus are: scale, in units."
+        },
+        "maskOct": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Octaves."
+        },
+        "maskLo": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Mask value where the terraces begin."
+        },
+        "maskHi": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Mask value where they are whole (above maskLo, checked on load)."
+        },
+        "maskSeed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000,
+          "description": "Seed offset."
+        },
+        "step": {
+          "type": "number",
+          "exclusiveMinimum": 10.0,
+          "maximum": 5000.0,
+          "description": "Height between terrace levels."
+        },
+        "riser": {
+          "type": "number",
+          "minimum": 0.02,
+          "maximum": 1.0,
+          "description": "The share of a step the steep side takes."
+        },
+        "mix": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "How far the ground is pulled onto the terraces."
+        },
+        "fade": {
+          "type": "number",
+          "minimum": 1.0,
+          "maximum": 5000.0,
+          "description": "Height over which plateaus and canyons fade in above `above`, so nothing steps."
+        }
+      }
+    },
+    "canyons": {
+      "type": "object",
+      "required": [
+        "scale",
+        "oct",
+        "seed",
+        "edge",
+        "depth",
+        "above"
+      ],
+      "additionalProperties": false,
+      "description": "Canyons cut into the plateaus.",
+      "properties": {
+        "scale": {
+          "type": "number",
+          "exclusiveMinimum": 100.0,
+          "maximum": 200000.0,
+          "description": "The ridged noise the canyons follow: scale, in units."
+        },
+        "oct": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Octaves."
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000,
+          "description": "Seed offset."
+        },
+        "edge": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 0.99,
+          "description": "Ridged value above which a canyon is cut."
+        },
+        "depth": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 5000.0,
+          "description": "Depth at the canyon's axis, in units."
+        },
+        "above": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 10000.0,
+          "description": "Canyons are cut only into ground above this."
+        }
+      }
+    },
+    "polar": {
+      "type": "object",
+      "required": [
+        "scale",
+        "oct",
+        "amp",
+        "seed"
+      ],
+      "additionalProperties": false,
+      "description": "The polar zone's ragged edge.",
+      "properties": {
+        "scale": {
+          "type": "number",
+          "exclusiveMinimum": 100.0,
+          "maximum": 200000.0,
+          "description": "The polar edge noise: scale, in units."
+        },
+        "oct": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "Octaves."
+        },
+        "amp": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 0.3,
+          "description": "How far it moves the polar zone's edge, in the sine of the latitude."
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000,
+          "description": "Seed offset."
+        }
+      }
+    },
+    "keep": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "The share of the stored planet's own range relief a gen 2 planet keeps."
+    }
+  }
+}

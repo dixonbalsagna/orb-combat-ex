@@ -116,6 +116,8 @@ static func specOf(circ: Dictionary) -> Dictionary:
 
 
 static func gen(S: SimState, setup: Dictionary) -> bool:
+	WorldClimate.useGen(int(setup.get("planetGen", 0)))   # the generation this match's planet is made by: its setup's, else the data's (gen 1 unless Orb has flipped it)
+	WorldBiomes.fineCols = PackedByteArray()
 	var seed: int = int(setup.planet)
 	var touch: int = int(setup.get("touch", 0))
 	var arena = setup.get("arena", {})
@@ -139,6 +141,13 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 	settleBiomes(cols, S.base, chords)
 	WorldBiomes.planetCols = cols
 	platform(S.base, chords)
+	var sh: int = WorldPlanet.sliceHash(sl)
+	var lakes: Array = []
+	if sl.fine.size() == NC:   # a gen 2 planet: the fine biomes, and the trees they grow (data/biomes/ground.json)
+		WorldBiomes.fineCols = sl.fine
+		S.trees = WorldGround.layTrees(sl.fine, cols, S.base, sh)
+		lakes = WorldLakes.plan(S.base, chords, sl.fine, cols)   # window 5: the valleys of the ring that hold water; trees do not grow in them
+		S.trees = WorldLakes.dryTrees(S.trees, lakes, NC)
 	# the settlements, by D1's generator
 	var wsum: float = 0.0
 	for ch in chords:
@@ -163,11 +172,15 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 	S.crack.fill(0.0)
 	S.slides.clear()
 	WorldWater.init(S)
+	WorldLakes.apply(S, lakes)
 	WorldCollateral.init(S)
 	var spec: Dictionary = specOf(sl.circ)
 	if not spec.is_empty():
 		S.planetRing = {"seed": seed, "c": spec.c, "t": spec.t, "cols": spec.cols}   # unhashed: the ring this match plays on, whether or not it can turn (a renderer's far land)
+		if sl.fine.size() == NC:
+			S.planetRing["fine"] = sl.fine   # a gen 2 ring's fine biomes: the turn blends them like planetCols
+			S.planetRing["lakes"] = lakes    # and its lakes: the water module keeps them level, the turn carries them
 	if WorldEpoch.enabled(setup):   # the calm-moment turn (docs/world/calm-turn-world.md): the epoch starts on the ring this match plays on
 		if not spec.is_empty():
-			S.epoch = WorldEpoch.begin(S, seed, sl.circ, spec, chords, dlist, WorldPlanet.sliceHash(sl))
+			S.epoch = WorldEpoch.begin(S, seed, sl.circ, spec, chords, dlist, sh)
 	return true

@@ -1,0 +1,6 @@
+{
+  "schema": "biomes.skate/1",
+  "_about": "Game Design's ruling 12 at runtime (docs/design/rulings-2026-10-23b.md item 12; docs/world/planet-gen2.md, window 8). enabled: control returns at the stop on reference ground (the surface's own braking, grip and rough 1), whatever the ground's grip, and the body skates on with the real braking after the get-up begins; lower grip only lengthens the slide. Off, a skid holds control until the body stops. minSkate: the body hands over only if it still has at least this normalised speed at that tick (a few ticks' difference between the reference run and the real skid, which digs its own trench, is not a skate). When enabled the data hash carries this file.",
+  "enabled": false,
+  "minSkate": 120.0
+}

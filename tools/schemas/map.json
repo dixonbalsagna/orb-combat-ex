@@ -428,6 +428,26 @@
       "schema": "biomes-climate.schema.json"
     },
     {
+      "match": "data/biomes/ground.json",
+      "schema": "biomes-ground.schema.json"
+    },
+    {
+      "match": "data/biomes/land.json",
+      "schema": "biomes-land.schema.json"
+    },
+    {
+      "match": "data/biomes/sites.json",
+      "schema": "biomes-sites.schema.json"
+    },
+    {
+      "match": "data/biomes/lakes.json",
+      "schema": "biomes-lakes.schema.json"
+    },
+    {
+      "match": "data/biomes/skate.json",
+      "schema": "biomes-skate.schema.json"
+    },
+    {
       "match": "data/biomes/planet.json",
       "schema": "biomes-planet.schema.json"
     },

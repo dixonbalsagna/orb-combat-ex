@@ -269,7 +269,7 @@ static func _prep(S: SimState, E: Dictionary) -> void:
 
 
 static func _entry() -> Dictionary:
-	return {"pos": 0, "h": 0x811c9dc5, "sh": -1, "stage": 0, "fi": 0, "ready": false}
+	return {"pos": 0, "h": 0x811c9dc5, "sh": -1, "stage": 0, "fi": 0, "si": 0, "ready": false}
 
 
 ## The slice hash (WorldPlanet.sliceHash: FNV over the heights' bytes, then the biomes') as far as `ncols` columns are read: the heights as they come, the biomes once the ring is whole. Catches up from
@@ -304,6 +304,14 @@ static func _prepTo(S: SimState, E: Dictionary, pl: Dictionary, ep: Dictionary, 
 	if int(ep.stage) == 0:
 		_geomStep(S, E, pl, ep, sl)
 	var F: int = ep.fresh.size()
+	if sl.fine.size() == SimConst.NC and S.planetRing.has("fine"):   # a gen 2 ring: the layouts, the assembly, the trees and the lakes are F + 3 steps spread over the ticks (si counts them)
+		var T: int = F + 3
+		var wantG: int = T if p >= pt - 1 else (T * p) / maxi(1, pt - 1)
+		while int(ep.si) < wantG and not bool(ep.ready):
+			_geomStep(S, E, pl, ep, sl)
+		while p >= pt - 1 and not bool(ep.ready):
+			_geomStep(S, E, pl, ep, sl)
+		return
 	var want: int = F if p >= pt - 1 else (F * p) / maxi(1, pt - 1)
 	while int(ep.fi) < want:
 		_geomStep(S, E, pl, ep, sl)
@@ -378,6 +386,17 @@ static func _geomStep(S: SimState, E: Dictionary, pl: Dictionary, ep: Dictionary
 		for dd in g.dlist:
 			ep.dlist.append(dd)
 		ep.fi = int(ep.fi) + 1
+		ep.si = int(ep.si) + 1
+		return
+	if ep.has("g2"):   # a gen 2 ring's last two steps: its trees (only where the ring is taken), then its lakes
+		if int(ep.g2) == 0:
+			ep["trees"] = WorldGround.layTrees(ep.fcols, ep.cols, ep.base, int(ep.sh), pl.wt)
+			ep["g2"] = 1
+		else:
+			ep["lakes"] = WorldLakes.onlyNew(WorldLakes.plan(ep.base, ep.chordsAll, ep.fcols, ep.cols), pl.wt)
+			ep["trees"] = WorldLakes.dryTrees(ep.trees, ep.lakes, NC)
+			ep["ready"] = true
+		ep.si = int(ep.si) + 1
 		return
 	var z2: Array = _zone()
 	var px2: float = float(E.next.pc) * SimConst.COL
@@ -395,11 +414,21 @@ static func _geomStep(S: SimState, E: Dictionary, pl: Dictionary, ep: Dictionary
 	var nbf: PackedFloat32Array = ep.nb.duplicate()
 	WorldPlanetWorld.settleBiomes(cols, nbf, chordsAll)
 	WorldPlanetWorld.platform(nbf, chordsAll)
+	if sl.fine.size() == NC and S.planetRing.has("fine"):   # a gen 2 ring: the fine biomes blend as the stored ones do, and the ring's trees are laid on them (the swap keeps the old ring's where the ground is kept)
+		var fcols := PackedByteArray()
+		fcols.resize(NC)
+		var oldF: PackedByteArray = S.planetRing.fine
+		for i in range(NC):
+			fcols[i] = sl.fine[i] if pl.wt[i] >= 0.5 else oldF[i]
+		ep["fcols"] = fcols
+		ep["g2"] = 0   # the trees and the lakes are the next two steps
 	ep["made"] = made
 	ep["chordsAll"] = chordsAll
 	ep["cols"] = cols
 	ep["base"] = nbf
-	ep["ready"] = true
+	ep.si = int(ep.si) + 1
+	if not ep.has("g2"):
+		ep["ready"] = true
 
 
 ## The bearings (signed, degrees) whose ring is read: the angles a swap may use. [] when no turn is decided.
@@ -540,6 +569,17 @@ static func swap(S: SimState) -> void:
 	S.buildings = ep.keep + ep.made
 	WorldBiomes.planetCols = ep.cols
 	S.planetCols = ep.cols
+	if ep.has("fcols"):   # gen 2: the fine biomes, and the trees: the old ring's where the ground is kept, the new ring's where it is new (the same weight as the ground's)
+		var kept: Array = []
+		for t in S.trees:
+			if wt[int(floor(SimWrap.wrap(t.x) / COL)) % NC] < 0.5:
+				kept.append(t)
+		for t in ep.trees:
+			if wt[int(floor(SimWrap.wrap(t.x) / COL)) % NC] >= 0.5:
+				kept.append(t)
+		S.trees = WorldLakes.dryTrees(kept, ep.lakes, NC)
+		WorldBiomes.fineCols = ep.fcols
+		S.fineCols = ep.fcols
 	# --- the derived and per-building state
 	S.lanes = WorldLanes.build(S, ep.dlist)
 	WorldStructures.buildIndex(S)
@@ -550,7 +590,19 @@ static func swap(S: SimState) -> void:
 	S.popHist.fill(0.0)
 	for b in S.buildings:
 		S.popHist[WorldCollateral.histBucket(b.x)] += b.popAlive
+	var oldWater: PackedFloat32Array = S.water.duplicate()
+	var oldLakes: Array = S.planetRing.get("lakes", [])
 	WorldWater.init(S)
+	var lakesNow: Array = []
+	if ep.has("lakes"):   # gen 2: the lakes of the kept core stand as they were (their water as the fight left it), the new ring's lakes on the new ground are planted
+		for lk in WorldLakes.onlyKept(oldLakes, wt):
+			for k in range(int(lk[3])):
+				var lc: int = (int(lk[0]) + k) % NC
+				S.water[lc] = oldWater[lc]
+			lakesNow.append(lk)
+		WorldLakes.apply(S, ep.lakes)
+		for lk in ep.lakes:
+			lakesNow.append(lk)
 	var cr: Array = []
 	for c in S.craters:
 		if absf(SimWrap.sdx(px, c.x)) <= Z1:
@@ -573,6 +625,9 @@ static func swap(S: SimState) -> void:
 	E.drift = nx.drift
 	E.ring = spec
 	S.planetRing = {"seed": seed, "c": spec.c, "t": spec.t, "cols": spec.cols}   # unhashed: the ring now played on
+	if ep.has("fcols"):
+		S.planetRing["fine"] = ep.fcols
+		S.planetRing["lakes"] = lakesNow
 	E.sh = int(ep.sh)   # the ring now played on, as the state hash sees it (WorldPlanet.sliceHash, made a few bytes a warm tick)
 	E.chords = ep.chordsAll
 	E.dlist = ep.dlist

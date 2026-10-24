@@ -121,14 +121,14 @@ func _init() -> void:
 		WorldPlanet.surfAt(P2, q[0], q[1], q[2])
 	var us2: float = float(Time.get_ticks_usec() - t0) / 6000.0
 	ok(us2 < us1 * 2.5, "surfAt on random points costs %.1f us in gen 2 against %.1f in gen 1 (%.2f times; the climate grid is made once a planet)" % [us2, us1, us2 / maxf(us1, 0.001)])
-	# heights are the stored planet's in window 1, so the places are too
+	# window 3 shapes the land, so a gen 2 planet has places of its own
 	WorldClimate.useGen(1)
 	var Pa := WorldPlanet.make(7)
 	var na: int = Pa.n
 	var xa: float = Pa.px[3]
 	WorldClimate.useGen(2)
 	var Pb := WorldPlanet.make(7)
-	ok(Pb.n == na and Pb.px[3] == xa and Pb.gen == 2 and Pa.gen == 1, "the same seed makes the same places in either generation (window 1 changes the biomes, not the land), and a planet knows its generation")
+	ok(Pb.n >= 20 and Pb.gen == 2 and Pa.gen == 1 and (Pb.n != na or Pb.px[3] != xa), "a gen 2 planet has places of its own (window 3's landforms moved them: %d against %d), and a planet knows its generation" % [Pb.n, na])
 	WorldClimate.useGen(0)
 	print("CLIMATE: %d check(s) failed" % fails)
 	quit()

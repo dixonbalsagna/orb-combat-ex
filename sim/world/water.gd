@@ -112,6 +112,8 @@ static func touched(S: SimState, c0: int, cols: int, minG: float) -> void:
 		var i: int = (c0 + k + NC) % NC
 		if base[i] < RESERVOIR_BASE:
 			S.water[i] = maxf(0.0, SEA_LEVEL - (base[i] + dfm[i]))
+	if not S.planetRing.is_empty():
+		WorldLakes.refill(S, c0, cols)   # a gen 2 ring's lakes stand flat when their bed is dug
 	if minG >= WET_GROUND:
 		return
 	var hw: int = mini(MAX_HALF, cols + PAD_COLS)

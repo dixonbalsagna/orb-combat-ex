@@ -292397,6 +292397,246 @@
       }
     },
     {
+      "id": "ground-surface-unknown",
+      "schema": "biomes-ground.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/ground.json",
+          "set": {
+            "/grounds/7/surface": "mud"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/grounds/7/surface"
+      }
+    },
+    {
+      "id": "ground-grip-zero",
+      "schema": "biomes-ground.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/ground.json",
+          "set": {
+            "/grounds/11/grip": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/grounds/11/grip"
+      }
+    },
+    {
+      "id": "ground-prop-per-zero",
+      "schema": "biomes-ground.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/ground.json",
+          "set": {
+            "/grounds/1/props/0/per": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/grounds/1/props/0/per"
+      }
+    },
+    {
+      "id": "land-plates-too-few",
+      "schema": "biomes-land.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/land.json",
+          "set": {
+            "/plates/n": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/plates/n"
+      }
+    },
+    {
+      "id": "land-keep-over-one",
+      "schema": "biomes-land.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/land.json",
+          "set": {
+            "/keep": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/keep"
+      }
+    },
+    {
+      "id": "land-range-width-zero",
+      "schema": "biomes-land.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/land.json",
+          "set": {
+            "/ranges/width": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/ranges/width"
+      }
+    },
+    {
+      "id": "sites-coast-dirs-two",
+      "schema": "biomes-sites.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/sites.json",
+          "set": {
+            "/sites/coast/dirs": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/sites/coast/dirs"
+      }
+    },
+    {
+      "id": "sites-ecotone-max-over-one",
+      "schema": "biomes-sites.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/sites.json",
+          "set": {
+            "/ecotones/max": 1.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/ecotones/max"
+      }
+    },
+    {
+      "id": "sites-scale-zero",
+      "schema": "biomes-sites.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/sites.json",
+          "set": {
+            "/sites/scale": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/sites/scale"
+      }
+    },
+    {
+      "id": "lakes-depth-zero",
+      "schema": "biomes-lakes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lakes.json",
+          "set": {
+            "/minDepth": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/minDepth"
+      }
+    },
+    {
+      "id": "lakes-width-one",
+      "schema": "biomes-lakes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lakes.json",
+          "set": {
+            "/minWidth": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/minWidth"
+      }
+    },
+    {
+      "id": "lakes-refuse-unknown-biome",
+      "schema": "biomes-lakes.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/lakes.json",
+          "set": {
+            "/refuse": ["swamp"]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/refuse/0"
+      }
+    },
+    {
+      "id": "skate-enabled-not-boolean",
+      "schema": "biomes-skate.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/skate.json",
+          "set": {
+            "/enabled": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "skate-min-negative",
+      "schema": "biomes-skate.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/skate.json",
+          "set": {
+            "/minSkate": -1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/minSkate"
+      }
+    },
+    {
+      "id": "skate-min-huge",
+      "schema": "biomes-skate.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/skate.json",
+          "set": {
+            "/minSkate": 5000
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/minSkate"
+      }
+    },
+    {
       "id": "rings-turn-bearing-over-10",
       "schema": "biomes-rings.schema.json",
       "mutate": [

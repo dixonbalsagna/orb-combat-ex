@@ -1,7 +1,9 @@
 extends SceneTree
 # An equirectangular map of a planet's biomes (and a hillshade of its heights), for looking at a generation:
 #   godot --headless --path . --script res://sim/world/tools/planet_map.gd -- --seeds=7,3,11,25 --gens=1,2 --w=720 --out=<folder>
-# Writes <out>/planet-<seed>-gen<g>-stored.png (the stored biomes: what the renderer sees) and, for gen 2, -fine.png (the fine biomes) and prints the share of each biome and the cost a sample.
+# --places marks the places on the fine and height pictures (a city a red square, a town a yellow one).
+# --edges draws the plates' edges on the height picture (red closing, blue parting, yellow neither); --height=0 leaves the height picture out.
+# Writes <out>/planet-<seed>-gen<g>-height.png (heights by colour, sea to snow), <out>/planet-<seed>-gen<g>-stored.png (the stored biomes: what the renderer sees) and, for gen 2, -fine.png (the fine biomes) and prints the share of each biome and the cost a sample.
 const LEGACY: Array = ["#2f5f9e", "#9bbf5a", "#3f7a3a", "#d9c27a", "#8b8479", "#eef3f7", "#c9dcea"]
 
 
@@ -10,6 +12,8 @@ func _init() -> void:
 	var gens: Array = [1, 2]
 	var w: int = 720
 	var out: String = "."
+	var edges: bool = false
+	var places: bool = false
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--seeds="):
 			seeds = Array(a.substr(8).split(",")).map(func(v): return int(v))
@@ -19,6 +23,10 @@ func _init() -> void:
 			w = int(a.substr(4))
 		if a.begins_with("--out="):
 			out = a.substr(6)
+		if a == "--edges":
+			edges = true
+		if a == "--places":
+			places = true
 	var h: int = w / 2
 	var fine: Array = WorldClimate.data().fine
 	for sd in seeds:
@@ -31,6 +39,7 @@ func _init() -> void:
 			var tGrid: float = float(Time.get_ticks_usec() - t0)
 			var imgL := Image.create(w, h, false, Image.FORMAT_RGB8)
 			var imgF := Image.create(w, h, false, Image.FORMAT_RGB8)
+			var imgH := Image.create(w, h, false, Image.FORMAT_RGB8)
 			var cntL := PackedInt32Array()
 			cntL.resize(7)
 			var cntF := PackedInt32Array()
@@ -52,11 +61,30 @@ func _init() -> void:
 					var cf: Color = Color.html(String(fine[f].color)) * shade if g >= 2 else cl
 					cf.a = 1.0
 					imgF.set_pixel(k, r, cf)
+					var hc: Color = _hcolor(P.outH)
+					if edges and g >= 2:
+						WorldLand._edge(P, c * SimDetMath.cos(lon), y, c * SimDetMath.sin(lon))
+						if absf(WorldLand._eEdge) < 0.004:
+							hc = Color(1.0, 0.15, 0.15) if WorldLand._eConv > 0.05 else (Color(0.2, 0.4, 1.0) if WorldLand._eConv < -0.05 else Color(0.95, 0.9, 0.2))
+					imgH.set_pixel(k, r, hc)
 					cntL[b] += 1
 					if g >= 2:
 						cntF[f] += 1
 			var tMap: float = float(Time.get_ticks_usec() - t1)
+			if places:
+				for pi in range(P.n):
+					var pxl: int = int(fposmod(atan2(P.pz[pi], P.px[pi]), SimMathx.TAU) / SimMathx.TAU * float(w)) % w
+					var pyl: int = clampi(int((0.5 - asin(P.py[pi]) / SimMathx.PI) * float(h)), 0, h - 1)
+					var big: int = 2 if int(P.kind[pi]) == WorldPlanet.KIND_CITY else 1
+					var mc: Color = Color(0.95, 0.1, 0.1) if big == 2 else Color(1.0, 0.9, 0.1)
+					for dy in range(-big, big + 1):
+						for dx in range(-big, big + 1):
+							var qx: int = (pxl + dx + w) % w
+							var qy: int = clampi(pyl + dy, 0, h - 1)
+							imgF.set_pixel(qx, qy, mc)
+							imgH.set_pixel(qx, qy, mc)
 			imgL.save_png("%s/planet-%d-gen%d-stored.png" % [out, sd, g])
+			imgH.save_png("%s/planet-%d-gen%d-height.png" % [out, sd, g])
 			if g >= 2:
 				imgF.save_png("%s/planet-%d-gen%d-fine.png" % [out, sd, g])
 			var tot: float = float(w * h)
@@ -71,3 +99,17 @@ func _init() -> void:
 				print("   fine:" + sf)
 	WorldClimate.useGen(0)
 	quit()
+
+
+## Height as a colour: the sea blue to deep, the land green, tan, brown, white by 6,000 units.
+func _hcolor(hh: float) -> Color:
+	if hh < 0.0:
+		return Color(0.12, 0.27, 0.52).lerp(Color(0.28, 0.5, 0.78), clampf(1.0 + hh / 3500.0, 0.0, 1.0))
+	var t: float = clampf(hh / 6000.0, 0.0, 1.0)
+	if t < 0.12:
+		return Color(0.3, 0.6, 0.25).lerp(Color(0.62, 0.72, 0.38), t / 0.12)
+	if t < 0.4:
+		return Color(0.62, 0.72, 0.38).lerp(Color(0.62, 0.5, 0.33), (t - 0.12) / 0.28)
+	if t < 0.7:
+		return Color(0.62, 0.5, 0.33).lerp(Color(0.42, 0.34, 0.3), (t - 0.4) / 0.3)
+	return Color(0.42, 0.34, 0.3).lerp(Color(1.0, 1.0, 1.0), (t - 0.7) / 0.3)

@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-lakes",
+  "title": "biomes.lakes/1",
+  "description": "data/biomes/lakes.json: planet generation 2's lakes (docs/world/planet-gen2.md, window 5; WorldLakes). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore. Cross-checks (refuse names climate.json's fine biomes; maxSpan at least minWidth) are WorldLakes' own load and lakes_check.",
+  "type": "object",
+  "required": [
+    "schema",
+    "_about",
+    "minDepth",
+    "minWidth",
+    "minFloor",
+    "maxLevel",
+    "margin",
+    "maxSpan",
+    "refuse"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "biomes.lakes/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "minDepth": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 5000.0,
+      "description": "A valley holds a lake only if its water is at least this deep, in units."
+    },
+    "minWidth": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 2400,
+      "description": "... and at least this many columns wide."
+    },
+    "minFloor": {
+      "type": "number",
+      "minimum": -100.0,
+      "maximum": 3000.0,
+      "description": "... and its floor above this height (the sea is not a lake)."
+    },
+    "maxLevel": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 20000.0,
+      "description": "... and its level under this height."
+    },
+    "margin": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 200,
+      "description": "No town or city within this many columns of the water."
+    },
+    "maxSpan": {
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 2400,
+      "description": "How far, in columns, the climb to a crest and the water's reach go (at least minWidth, checked on load)."
+    },
+    "refuse": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "ocean",
+          "plains",
+          "forest",
+          "desert",
+          "mountains",
+          "ice_sheet",
+          "sea_ice",
+          "jungle",
+          "savanna",
+          "tundra",
+          "taiga",
+          "wetland",
+          "beach",
+          "highland",
+          "volcanic"
+        ]
+      },
+      "description": "Fine biomes (climate.json's names) with no lake in them."
+    }
+  }
+}
