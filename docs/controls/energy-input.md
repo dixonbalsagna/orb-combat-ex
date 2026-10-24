@@ -53,15 +53,15 @@ M = the energy stance (RB on Arena, Q on the solo keyboard, E and O on the share
 
 **Simple layouts have no energy half to press.** The director supplies it at range, so for a Simple slot Guard (held or one-shot) plus a face button at range is the lay, read by the director with no input change. I have withdrawn my earlier idea of the Power layer as the energy layer: it made a lay three fingers (Guard, Power, Attack). On Simple touch, Attack picks the weight by its hold and swipe (tap light, hold medium, swipe up heavy), so a hold there cannot also mean "stream": **rapid fire on Simple touch is a mash of taps**, and the stream, the charged lob and the beam are pad, keyboard and Full-touch features, except that a swipe-up-and-hold can charge the beam (the finger stays down after the swipe).
 
-An alternative trigger, if Game Design prefers it to mask 3: **the lay as a consequence of a block**: an energy attack thrown inside a perfect block's 30-tick riposte lays the trap. Same input on every device (Guard, then the face button), no hybrid and no new state. The mask-3 route is now cheap enough that it is Game Design's call.
+**[GD to rule]** An alternative trigger, if Game Design prefers it to mask 3: **the lay as a consequence of a block**: an energy attack thrown inside a perfect block's 30-tick riposte lays the trap. Same input on every device (Guard, then the face button), no hybrid and no new state. The mask-3 route is now cheap enough that it is Game Design's call.
 
 ## 6. Beam or blast, and not misfiring
 
 1. **Choose by button.** X and Y are blasts; B is the heavy blast or the beam. No window exists in which a tap could become a beam: B tapped is the blast, B held past 20 ticks charges.
 2. **The charge starts only past the decision point** (B 20, Y 16). A tap or a mash never reaches it. A release before level 1 fires the heavy blast, not a wasted charge.
 3. **A charge is released by the button.** It is never fired by a timer (no auto-fire at full), so a player who cannot time a release stays at full.
-4. **The cancel** (Guard or a dodge press during a charge) is a Game Design question; if wanted I add a `charge_cancel` read.
-5. **Under a latched charge** the next press is the release; under charges-off every press is a tap, so the player gets the blast and never the beam (Game Design: acceptable, or a "charge for me" assist?).
+4. **The cancel** (Guard or a dodge press during a charge) **[GD to rule]**; if wanted I add a `charge_cancel` read.
+5. **Under a latched charge** the next press is the release; under charges-off every press is a tap, so the player gets the blast and never the beam **[GD to rule]**: acceptable, or a "charge for me" assist?.
 6. **A swallowed press** (faster than a button's cap) gets a press-ack, so a mashing finger sees why nothing fired.
 
 ## 7. Feedback, with no markers over the fighters
@@ -87,11 +87,11 @@ Rumble is never the only cue, is silent on a keyboard and on iOS Safari, and is 
 
 1. The hold decision is window plus 4 ticks of grace on live ticks on every device (Y 16, B 20, A 14), or touch taps misread as holds.
 2. `windup_for` becomes mode-aware (two data keys); no new intent field.
-3. X fires on the press everywhere **except Simple touch**, where it goes out on the release (3 to 12 ticks late); the gather on touch-down is the mitigation and a separate Light button the fix (`phone-feasibility.md`).
+3. **[GD to note]** X fires on the press everywhere **except Simple touch**, where it goes out on the release (3 to 12 ticks late); the gather on touch-down is the mitigation and a separate Light button the fix (`phone-feasibility.md`).
 4. A swallowed press under a cap still gets a press-ack.
 5. A cue per charge level (`charge_stage`, `k`).
-6. Mask 3 on by data, as section 5 says; mines and traps are lays on the keyboards best made by toggle or latch; on Simple and touch the lay is Guard (held or one-shot) plus a face button at range.
-7. Questions for Game Design: whether Guard or a dodge cancels a charge; whether charges-off should give a "charge for me" assist; whether the riposte-window trigger is wanted instead of mask 3; whether the old signature and the heavy blast are the same thing.
+6. **[GD to rule: mask 3 on, E70]** Mask 3 on by data, as section 5 says; mines and traps are lays on the keyboards best made by toggle or latch; on Simple and touch the lay is Guard (held or one-shot) plus a face button at range.
+7. **[GD to rule]** Questions for Game Design: whether Guard or a dodge cancels a charge; whether charges-off should give a "charge for me" assist; whether the riposte-window trigger is wanted instead of mask 3; whether the old signature and the heavy blast are the same thing.
 8. A fighter's grab is one beat, a held carry or a placement (E63 and E64): the input only guarantees tap, hold and release, so each fighter's data must say which it uses.
 
 ## 10. What building it would take (after the ruling)

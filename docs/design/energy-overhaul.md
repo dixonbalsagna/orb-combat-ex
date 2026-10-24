@@ -1,6 +1,6 @@
 # Energy overhaul: the system spec
 
-Owner: Game Design. **Status: the frame, 2026-10-23.** Every rule is numbered (E1, E2 and on) so Controls, Combat, Research, Narrative and Legal can build on it and cite it. It is paper only. Nothing is built, every number is a first value for data, and all of it sits behind one switch (`energy.v2`) until Orb has played it. Part 2 follows in this file: Orb's step-by-step pictures, the per-fighter templates, QA's bands, the data shape and what retires.
+Owner: Game Design. **Status: the full spec, 2026-10-23** (the frame, §1 to §12, then Part 2, §13 to §18). Every rule is numbered (E1, E2 and on) so Controls, Combat, Research, Narrative and Legal can build on it and cite it. It is paper only. Nothing is built, every number is a first value for data, and all of it sits behind one switch (`energy.v2`) until Orb has played it. Part 2 holds Orb's step-by-step clips, the fighter kit sheet, QA's bands, the data shape and what retires.
 
 **Orb's ask** (`docs/ep/vision.md`, "Energy attacks overhaul", 2026-10-23), and where each part is answered:
 
@@ -14,9 +14,9 @@ Owner: Game Design. **Status: the frame, 2026-10-23.** Every rule is numbered (E
 | Combined with the defensive button, energy leaves mines or traps | §7 |
 | A way to choose between a beam and single blasts | §5, E40 |
 | Beams charged before they fire | §5 |
-| The light's rapid fire carried over to beams and projectiles | §3, E50, E64, E92 |
+| The light's rapid fire carried over to beams and projectiles | §3, E31, E50, E64, E75 |
 | No more one beam shared by everyone | §5, §8 |
-| Prototype animations, step by step | Part 2 (Research builds the GIFs) |
+| Prototype animations, step by step | §13 (Research builds the GIFs) |
 
 ## 1. The rules over all of it
 
@@ -27,7 +27,7 @@ Owner: Game Design. **Status: the frame, 2026-10-23.** Every rule is numbered (E
 - **E5. Payoffs are subtle.** A payoff happens in the world and on the body: a crater, a scar, the parted sea, a sound, a rumble. There is no banner, no text and no number over the fight.
 - **E6. Nothing on, over or between the fighters.** No aim line, no charge bar, no mine marker. A charge reads in the hand, and a mine reads in the world (E77). Legal's charge rule holds: a thin ring or an edge light at the hand, never over the whole body.
 - **E7. Never out of range (pillar 3).** Bolts, lobs, the heavy blast and the energy grab seek him and arrive within 45 ticks from any range, as seeking shots do today (`agency-pass.md` 6a). A beam reaches at any range, as the beam does today. Mines and traps are the one thing that stays where it is put, because that is their job.
-- **E8. Soft costs, no cooldowns.** Ki and freshness pay for everything. The one limit is the field limit on mines (E76), and it exists for reading and frame rate.
+- **E8. Soft costs, no cooldowns.** Ki and freshness pay for everything. The one new limit is the field limit on mines (E76), and it exists for reading and frame rate. The limits already ruled stand: the grab lockout and the struggle's 5 s.
 - **E9. Deterministic, and in data.** Shots, mines and beams are sim objects stepped on the fixed tick with the seeded RNG. Every number here is a first value for data.
 - **E10. Fighters differ in shape, never in grammar.** A fighter's kit changes what each cell looks like, its reach, its timing inside a band and what it does to the world. The buttons, the gestures and the rules are the same for every fighter, so a player learns them once.
 
@@ -45,7 +45,7 @@ Owner: Game Design. **Status: the frame, 2026-10-23.** Every rule is numbered (E
 | **Mash** | One bolt a press, at most one every 6 ticks | A barrage: one lob a press, at most one every 12 ticks | One heavy blast a press, at most one every 24 ticks | (In a catch, A is his payoff, E65) |
 | **Hold** | The stream, which fires while held | Charges the lob through two levels | Charges the beam through three levels | Charges or aims his own grab |
 | **Release** | Ends the stream | Throws the charged lob | Fires the beam at the level reached. Before level 1 it is the heavy blast | Throws the held grab |
-| **Pressed while his beam is out** | | | A pulse (E50) | |
+| **Pressed while his beam is out** | | | A pulse (E50). In a struggle, the beat decides (E92) | |
 | **With LB held too** | A spark mine | A blast mine | His trap | His snare |
 
 - **E16. In reach, the brawl's energy blows stand** (`brawl-second-pass.md` §5b): RB + X is the point-blank bolt, and RB + Y is the blast, the string's ender. Two things are new in reach:
@@ -100,9 +100,9 @@ Owner: Game Design. **Status: the frame, 2026-10-23.** Every rule is numbered (E
   - Knocked out of a charge, he pays nothing. The cost is the time he lost.
 - **E46. Dropping it.** A dodge tap (LT) ends any charge at once, for nothing, and dodges.
 - **E47. Loaded.** Held at level 3, a beam stays loaded for as long as he holds it, at 4 ki a second. A lob held at level 2 does the same at 2 ki a second. Either fires by itself when his ki runs out. A loaded beam is a threat he carries, and the rival can see his lit hand.
-- **E48. While the beam is out,** he is rooted, and the stick sweeps the beam at his fighter's sweep rate. A dodge tap ends it early. The beam eats the shots it meets and loses their trade power from its own.
+- **E48. While the beam is out,** he is rooted, and the stick sweeps the beam at his fighter's sweep rate. A dodge tap ends it early. The beam eats the shots it meets and loses their trade power from its own. **Caught in a beam, he keeps control:** he can guard it at the guard's rate or dodge out of its line, and it reels him only at its end (E44).
 - **E49. The beam is his own** (§8). Its shape, width, sweep, end and how it fights in a struggle are Combat's per fighter, inside bands (Part 2).
-- **E50. Pulses: the rapid fire carried into the beam.** While his beam is out, each press of B is a pulse. A surge, a bulge that travels to the front, runs down the beam. Each pulse adds 0.1 of a heavy to what lands, pushes in a struggle (§9) and makes the beam 6 ticks longer, for 2 ki. At most one pulse every 6 ticks counts, the flurry's pace. B held while his beam is out pulses by itself every 8 ticks, the held flurry's pace, at 85%.
+- **E50. Pulses: the rapid fire carried into the beam.** While his beam is out, each press of B is a pulse: a swell, a bulge that travels to the front, runs down the beam. Each pulse adds 0.1 of a heavy to what lands and makes the beam 4 ticks longer, for 2 ki. At most one pulse every 6 ticks counts, the flurry's pace, so even a flat-out mash lets the beam run down: it can stretch a beam to about three times its length, never hold it out for ever. B held while his beam is out pulses by itself every 8 ticks, the held flurry's pace, at 85%. **In a struggle, pulses don't count: the struggle's beat decides (E92).**
 - **E51. The RT + B signature is unchanged:** his defining art, held to its flashes, with its tiers, prices and pause. Where a fighter's signature is a beam, it is his beam's own top form, above level 3. RB + B's beam never takes a pause.
 
 ## 6. A: the energy grab, each fighter's own
@@ -158,16 +158,16 @@ Owner: Game Design. **Status: the frame, 2026-10-23.** Every rule is numbered (E
 
 ## 9. Beam struggles, with every fighter's own beam
 
+**The beam struggle stays as Orb played and tuned it** (`rule-of-cool.md`, "The beam struggle, redesigned", 2026-10-16): a tug of war with a meeting point everyone can see, decided by the beat. This overhaul adds per-fighter beams and levels to it, and nothing else.
+
 - **E90. Two beams that meet struggle,** whatever their levels. A signature beam that meets a beam struggles too. Only beams start one. A shot that meets a beam is eaten (E48). A heavy blast that meets a beam bursts on it and pushes its front back 1 bh.
-- **E91. The start.** Each side's push is its beam's level (1, 2 or 3, and a signature counts 4), plus 0.5 for each power tier he has above the other.
-- **E92. The push.** Every pulse pushes (E50: a press of B, at most one counted every 6 ticks). **A pulse on the struggle's beat is a surge, worth double.** The beat comes every 15 ticks, with a window of 2 ticks either side; it is felt in the rumble and heard in the hum. No press ever voids anything: a mash pushes, and timing pushes harder. This answers Combat's struggle-scoring proposal: a stray press no longer voids a hit.
-- **E93. The front** moves by the difference. When it reaches a fighter, the winner's beam goes through at its level, with half the loser's added, and lands by E44.
-- **E94. The clock is ki,** and there is a backstop.
-  - Each pulse costs 2 ki. A side at 0 ki can't pulse, and its beam holds at its starting push.
-  - **At 3 s (180 ticks), if neither has won, both beams burst at the front:** both fighters are thrown back 4 bh, with hit-stop 20 for both. That is the standoff, and no struggle runs longer.
-- **E95. The way out.** A dodge tap ends his beam and slips the other by the dodge's rules: the beam's ESCAPE and DODGE outcomes, as today.
-- **E96. The look.** Orb's rule (2026-10-22): the losing beam bulges and quivers as it buckles, and never thins. Each fighter's beam has its own look in a struggle: a wide beam pushes as a wall, a lance drills, a twin beam braids. Its trait moves the push by at most 10% either way.
-- **E97. It is live.** There is no pause. The camera eases to frame both fighters and the front. Both players keep their thumbs and their dodge.
+- **E91. The level is part of the head start.** State is a head start and no more, at most 15% of the distance, as built. The beam's level counts with tier and ki inside that 15%: 2.5% toward the weaker side for each level between the two beams. A signature counts as level 4.
+- **E92. Inside a struggle the struggle's input rule takes over.** A press of X, Y or B on the pulse is a surge. A press off the pulse, or a second press in its window, is a stray: it moves nothing and voids his next surge. **So pulses (E50) don't count in a struggle,** and mashing feeds nothing, as built. The pulse's bulge is what a surge looks like there. The rapid fire carries into the beam everywhere except the struggle, where timing decides, which is the rule Orb asked for when they played it ("hit the pulse to surge").
+- **E93. How it ends, as built.** When the point reaches a fighter, he is overwhelmed: he takes the winner's beam and half of his own, and is launched along the beam's line. If time runs out with the point within 10% of the middle, the beams detonate. If time runs out with the point further over, the side it is on loses, with half the damage and no launch. The time limit is 15 pulses (5 s), as built.
+- **E94. No ki in the struggle.** Nothing costs ki during a struggle, and ki never pushes the point, as built, because spent ki would put state back into the outcome.
+- **E95. Letting go is A on the pulse,** as built: he slips aside and takes half the rival's beam with no launch. A off the pulse, he is caught letting go and overwhelmed.
+- **E96. Each fighter's beam has its own struggle look,** and nothing more. A wide beam pushes as a wall, a lance drills, a twin beam braids. The trait changes how a surge and a buckle look, never the push. Orb's rule (2026-10-22): the losing beam bulges and quivers as it buckles, and never thins.
+- **E97. It is live.** There is no pause and no marker. The camera eases to hold both fighters side-on and tightens as the point nears a side.
 
 ## 10. Ki, freshness and hit-stop
 
@@ -204,7 +204,7 @@ Owner: Game Design. **Status: the frame, 2026-10-23.** Every rule is numbered (E
 | A pulse | 0 | |
 | An energy grab's catch | 5 | Both |
 | A spark mine, a blast mine, a trap | 3, 5, 8 | The one caught |
-| A struggle's end, or the standoff | 20 | Both |
+| A struggle's end: an overwhelm or a detonation | 20 | Both |
 | A KO | 24 | Both |
 
 **E103. The freeze budget stands:** 18% of a match, and no 10 s block over 40% (`fight-feel.md`).
@@ -247,3 +247,148 @@ Owner: Game Design. **Status: the frame, 2026-10-23.** Every rule is numbered (E
 | QA | Part 2's bands |
 
 **The order.** First, in parallel: Controls' constraints, Combat's kits for the launch pair, and Research's prototype on this frame. Then Narrative and Legal on the kits. Then Encounter and Simulation build behind `energy.v2`. Then Orb plays it.
+
+# Part 2
+
+## 13. What Orb will see, step by step
+
+Orb asked to see how this will look once it is built, "so I know we're on the same page." These ten clips are that picture, one feature each. Research builds them as GIFs from the prototype, and each step below is a frame range the GIF should show. Every clip keeps the rules over all of it: nothing on or over the fighters, no pause, and the camera eases.
+
+**C1. Rapid fire (X).**
+1. He holds RB. His hands take his colour at the edges, a thin light and nothing more.
+2. One tap of X: one bolt leaves his palm at once and seeks the rival. It hits with a spark and a flinch, and the rival keeps flying.
+3. He mashes X: a bolt for every press, as quick as his thumb, up to ten a second. Each one is a separate crack.
+4. He holds X: a burst of eight in under a second, then a steady stream. The stick sprays it across the rival's path.
+5. The rival fires back. Where their bolts meet, they cancel in pairs with small pops in the air.
+
+**C2. The lob (Y).**
+1. A tap of Y: his arm winds back, about a fifth of a second, and throws a heavier blast high on an arc.
+2. It drops onto the rival and bursts. The ground under him takes a small crater.
+3. He mashes Y: a barrage, one lob for each press, coming down where the rival is.
+4. He holds Y: the hand gathers and steps up once, then twice. Released at level 2, his own form flies: for this fighter it splits into three as it lands.
+5. Leaning the stick away from the rival as he throws: the lob lands behind the rival and cuts off his retreat.
+6. The rival shoots the lob in flight, and it bursts in the air halfway.
+
+**C3. Blast or beam (B).**
+1. A tap of B: a short, heavy wind-up, and his most devastating single shot. A clean hit knocks the rival back 5 bh and leaves a 2 bh crater.
+2. He holds B. The hand steps up in light three times, with a click and a rumble tick at each step. He can still fly at half speed.
+3. Released at level 1: a short beam. It knocks the rival back.
+4. Held to level 3 and released: a long beam. It catches the rival and carries him along it to its end, carving a trench below.
+5. He holds B, then lets go before the first step: it is the blast, not a beam. Until the first step lights, he can still change his mind.
+6. Mid-charge, he taps LT: the charge drops, he dodges, and he spends nothing.
+
+**C4. Pulses: rapid fire in the beam.**
+1. A level-2 beam is out. He mashes B.
+2. With each press a swell runs down the beam to its front, and the front flares as it lands.
+3. The beam lasts longer for the pulses, and it still runs down in the end.
+4. Instead he holds B: the swells come at a steady beat by themselves.
+5. The rival dodges out of the beam's line. Caught in a beam, he always could.
+
+**C5. Loaded.**
+1. He holds B to level 3 and keeps holding. His hand stays lit as he flies.
+2. The rival sees the lit hand and keeps his distance, or guards, or dodges early.
+3. The moment the rival commits to a lunge, he lets go. The beam meets the lunge.
+4. Held too long, his ki runs out and the beam fires by itself. That is the price of carrying it.
+
+**C6. A struggle between two different beams.**
+1. Both fire level-2 beams, and they meet. One fighter's beam is wide like a wall, the other's a narrow lance.
+2. The pulse is a beat in the music and the pad. Each player presses on it, and each surge bulges the meeting point toward the rival.
+3. The beam that is losing bulges and quivers as it buckles. It never thins.
+4. Close to his own hands, the loser's surges push harder: the comeback.
+5. One side is overwhelmed and launched along the beam's line. In another take, the player who is losing presses A on the pulse, slips aside, and the winning beam carries on past him.
+
+**C7. Two energy grabs.**
+1. Fighter one taps A: a net seeks the rival, opens wide and wraps him. He hangs in it.
+2. The caught rival mashes. Each press tears at the net and shortens the hold.
+3. Fighter one presses A: his payoff, the bind. A bolt follows into the held rival, landing as on an open fighter.
+4. Fighter two taps A: a ring flies fast and snaps shut around the rival's arms.
+5. Fighter two presses A: his payoff, the yank. The rival is pulled into reach, and the brawl starts with fighter two's blow.
+
+**C8. Guard and energy: mines and traps.**
+1. He holds LB and RB. His guard is up.
+2. He presses X, X, X, leaning the stick. Three small spark mines are laid in a short line nearby. His guard dips for a moment at each lay, and they arm dim, then glow.
+3. A tap of Y lays a blast mine a little behind him. A tap of B lays his trap: for this fighter, a faint line across the air.
+4. The rival flies in. A spark mine flares for a tenth of a second, and he dodges through the flare.
+5. The rival shoots the blast mine from range, and it goes off harmlessly where it sits.
+6. The rival crosses the trap's line. The line fires a level-1 beam along itself.
+7. Later the rival sends the layer flying, straight through his own last armed mine, which goes off on him.
+
+**C9. The mixed string, close and far.**
+1. Punches, then RB + X: a point-blank bolt between two punches, with the hand lit just before it lands.
+2. RB + Y: the point-blank blast as the ender. The rival slides 4 bh away, with the shot's colour trailing off his chest.
+3. The same thumb keeps going: RB + X is now bolts after him as he slides.
+4. A tap of Y lobs a blast where he will land.
+5. A zip strike closes the gap, and the brawl starts again.
+
+**C10. One level-3 beam in three places.**
+1. Over the sea, the beam parts the water for 1.5 s, and the sea rushes back as a wave.
+2. Down a village lane, the hero's beam narrows near the houses and grazes the lane, sparing most of the row. The villain's widens.
+3. Through a forest, the trees catch along the line. Later, water from a nearby lake fills the trench and puts the fire out.
+
+## 14. The fighter kit sheet, for Combat
+
+Each fighter's energy is one sheet, filled inside E81's bands. **Orb asked for "some unique mechanic or variation" between most fighters, so a kit should differ from every other kit in what at least three of its cells do,** not only in how they look.
+
+| Cell | What Combat picks | The band (E81) |
+| :--- | :--- | :--- |
+| **Identity** | One line: what his energy is about, such as control, force, precision or spread | |
+| **Bolt (X)** | Shape, colour, spread, speed | Speed within 20% of 60 a tick. Damage within 15% |
+| **Lob (Y)** | Shape, arc (high or low), and its level-2 form: a split, a cling, a roll, or his own | Arc within 6 ticks of 36. Level-2 damage within 15% |
+| **Heavy blast (B tapped)** | Shape and burst | Damage within 15% of a heavy |
+| **Beam (B held)** | Shape (straight, wide, lance, twin, split, sweeping), width, sweep rate, end, struggle look | Damage per level within 15% of the reference. Length within 25%. The struggle look changes no push (E96) |
+| **Grab (A)** | Look (net, ring, lash, cage, his own), the held variant, and one payoff: yank, bind, slam or throw | Catch at most 40 ticks. Arrival within 30 ticks |
+| **Trap (LB + RB + B)** | A line, a pillar, a field, or his own | Its hit within 15% of a level-1 beam |
+| **Snare (LB + RB + A)** | His grab, laid | As his grab |
+| **His colour and his hand** | Where it fires from: the heel of the palm, the fists | Legal's charge rule (E6) |
+
+**Starting points for the launch pair** are suggestions only. Combat decides, and Narrative names them.
+- **The Protagonist** (cyan to azure, from the heel of the palm). A kit about **control:** a straight beam that serves as the reference, a ring that pins and yanks him into reach, a trap that holds rather than hurts. That fits a carer who would rather fight up close than spray a town.
+- **The rival** (violet to magenta, in fists, plates and straight lines). A kit about **force:** a wide beam that pushes as a wall, a lob that clings and goes off late, a net that slams him into the ground, a trap that erupts as a pillar.
+
+## 15. QA's bands, first values
+
+Every row is AI v AI with energy on and 1 to 3 in, unless it says otherwise. The rows that exist stay as they are: match length (median 360 to 480 s, 10th percentile at least 300 s), the masher's 35 to 50%, the freeze budget, and civilians lost inside today's band.
+
+| Row | Band |
+| :--- | :--- |
+| Energy's share of match damage | 15 to 30% (as today) |
+| Beams a match | 4 to 12. By level: level 1 30 to 60%, level 2 20 to 45%, level 3 10 to 30% |
+| B at range, blast or beam | Each between 30 and 70% of B presses, so both are used |
+| Struggles a match | 0.5 to 2, under the struggle's own rows in `rule-of-cool.md` |
+| Lobs a match, and their share of energy damage | 6 to 30, and 15 to 40% |
+| Energy grabs | 1 to 4 a match, catching 30 to 60% of throws |
+| Mines | 2 to 12 laid a match by each fighter. 20 to 50% of armed mines go off. Mines do at most 8% of match damage |
+| A send through a mine | At least 1 in 10 matches (rule of cool) |
+| The energy turtle: a script that only fires from range | Wins at most 50% against medium |
+| The mine turtle: a script that only guards and lays | Wins at most 30% against medium |
+| The shooter frozen at range | 0 ticks (E102) |
+| A fighter at 0 ki for more than 10 s at a stretch | Under 10% of matches |
+| Pillar 7 | Each biome's beam aftermath seen at least once in 20 matches. No beam of level 2 or more plays the same way in two biomes |
+
+## 16. The data shape, proposed
+
+The shapes are Simulation's and Combat's to settle, and Tools adds the schemas in `tools/schemas/` in the same commit. **All of it sits behind `energy.v2`, so with the switch off the golden match and the parity profiles are unchanged.**
+- **Shared** (`data/fight/energy.json`): the tap windows, the paces, the charge levels and lengths, the ki table (E100), the hit-stop table (E102), freshness (E101), the field limit (E76), arming and flare times, and the trade powers.
+- **Per fighter** (an `energy` block in his fighter data, keyed by roster id: PROTAGONIST, RIVAL, REFERENCE): the sheet in §14, as kinds and multipliers inside the bands. A loader check rejects any value outside its band.
+
+## 17. What retires, and what stays
+
+| Today | With `energy.v2` |
+| :--- | :--- |
+| RB + X: bolts, and the volley of three | Bolts, the mash and the stream (E20 to E23) |
+| RB + Y: the heavy shot, the charged shot (×0.6 to ×1.25 of a heavy) | The lob (E30 to E33). In reach, 5b's blast stays |
+| RB + B: the one beam everyone shares, held and live | Tap for the heavy blast, hold for a beam in three levels, release to fire, pulses while it's out. Each fighter has his own |
+| The short beam (held past a full charge, 20 ki) | Beam level 1 |
+| RB + A: a mine at range, the shove in reach | The energy grab. Mines move to LB + RB |
+| The arc, the burst, the shard spread | Kept only as a fighter's bolt or lob shapes, if Combat wants them |
+| LB + RB reserved ("a ki shield or a zone") | Defensive energy: mines, the trap and the snare. A fighter's trap may be a zone |
+
+**Unchanged:** the RT + B signature and its tiers, prices and pause; the beam struggle as built, with levels in the head start (§9); 5b's energy blows in reach; the grab lockout; and the brawl itself.
+
+## 18. For Orb
+
+**One question,** for the EP to ask when it suits: "To choose between a beam and a blast: tap B for a big single blast and hold B to charge a beam, with Y as the lobbed blasts (recommended)? Or should every button's hold be a beam of its own weight?" The second gives three beams a fighter and leaves light without its stream, which was Orb's rapid fire.
+
+**Worth Orb knowing, no answer needed:**
+- The one hard limit is the field limit on mines (E76): 4 mines, 1 trap and 1 snare a fighter at a time. It is there so the screen stays readable and the frame rate holds.
+- A send through a fighter's own armed mine sets it off on him (E74). That is rule of cool, and the director's launch planner may aim for it.
