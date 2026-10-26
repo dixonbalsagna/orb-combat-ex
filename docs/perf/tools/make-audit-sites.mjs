@@ -25,6 +25,8 @@
 //   turn       base + the scenes turn and turnoff (a Half planet arena with the calm-moment turn on or off) and the tick of each arena_turn event (hook-turn.mjs)
 //   basec, s22k..s22n  the same HEAD with the cull hook and the desert scene, plain, then 22k + Camera's half-plane, + 22l, + 22m, + 22n (Rendering's chain, in that order)
 //   s22o       the whole chain through 22o (the biome cover: MultiMesh shapes)
+//   r22n, r22o  HEAD (which carries 22k, the half-plane, 22l and 22m) + Rendering's re-cut 22n (no flat varyings), then + 22o
+//   gen2       World's gen 2 readiness benches behind window.__slicebench (hook-gen2.mjs; frame-bench.mjs --slice --slice-modes make1,make2,match1,match2,turn2:100000,flow,water)
 //   s22k, s22l 22k + Camera's half-plane patch, without and with 22l (the split culling; ?nocull=1 turns 22l off in the s22l build)
 //   warmmarks  base + UI's parked boot warm-up of the HUD's overlay marks (docs/ui/pending/warm-marks)
 //   evprof     evlog + the profiling timers (the CPU time of each section at a hitching tick)
@@ -79,6 +81,9 @@ const SPEC = {
   s22n: { patches: ['docs/rendering/pending/2026-10-23k/batch.diff', 'docs/camera/pending/pane-visible-half-plane.patch', 'docs/rendering/pending/2026-10-23l/batch.diff', 'docs/rendering/pending/2026-10-23m/batch.diff', 'docs/rendering/pending/2026-10-23n/batch.diff'], hooks: ['perf', 'slice', 'cullstat', 'desert'] },
   s22o: { patches: ['docs/rendering/pending/2026-10-23k/batch.diff', 'docs/camera/pending/pane-visible-half-plane.patch', 'docs/rendering/pending/2026-10-23l/batch.diff', 'docs/rendering/pending/2026-10-23m/batch.diff', 'docs/rendering/pending/2026-10-23n/batch.diff', 'docs/rendering/pending/2026-10-23o/batch.diff'], hooks: ['perf', 'slice', 'cullstat', 'desert'] },
   warmmarks: { patches: ['docs/ui/pending/warm-marks/warm-marks.patch'], hooks: ['perf', 'slice'] },
+  r22n: { patches: ['docs/rendering/pending/2026-10-23n/batch.diff'], hooks: ['perf', 'slice', 'cullstat', 'desert'] },
+  r22o: { patches: ['docs/rendering/pending/2026-10-23n/batch.diff', 'docs/rendering/pending/2026-10-23o/batch.diff'], hooks: ['perf', 'slice', 'cullstat', 'desert'] },
+  gen2: { patches: [], hooks: ['perf', 'slice', 'gen2'] },
   evlog: { patches: [], hooks: ['perf', 'slice', 'evlog'] },
   evprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'evlog'] },
   aura: { patches: ['docs/vfx/pending/aura3d/apply.patch', 'docs/vfx/pending/aura3d/grant-fighter-view.patch'], hooks: ['perf', 'slice', 'aura'] },
@@ -88,7 +93,7 @@ const SPEC = {
   layerprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'layers'] },
   lowprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'depth', 'lowq'] },
 };
-const HOOK = { perf: ['hook-perf.mjs'], slice: ['hook-slice.mjs', SLICE_LIB], prof: ['hook-prof.mjs'], slicec8: ['hook-slice-c8.mjs'], depth: ['hook-depth.mjs'], layers: ['hook-layers.mjs'], lowq: ['hook-lowq.mjs'], aura: ['hook-aura.mjs'], evlog: ['hook-evlog.mjs'], latency: ['hook-latency.mjs'], strip: ['hook-strip.mjs'], ring: ['hook-ring.mjs'], turn: ['hook-turn.mjs'], calm7b: ['hook-calm7b.mjs'], turnprof: ['hook-turnprof.mjs'], cullstat: ['hook-cullstat.mjs'], desert: ['hook-desert.mjs'] };
+const HOOK = { perf: ['hook-perf.mjs'], slice: ['hook-slice.mjs', SLICE_LIB], prof: ['hook-prof.mjs'], slicec8: ['hook-slice-c8.mjs'], depth: ['hook-depth.mjs'], layers: ['hook-layers.mjs'], lowq: ['hook-lowq.mjs'], aura: ['hook-aura.mjs'], evlog: ['hook-evlog.mjs'], latency: ['hook-latency.mjs'], strip: ['hook-strip.mjs'], ring: ['hook-ring.mjs'], turn: ['hook-turn.mjs'], calm7b: ['hook-calm7b.mjs'], turnprof: ['hook-turnprof.mjs'], cullstat: ['hook-cullstat.mjs'], desert: ['hook-desert.mjs'], gen2: ['hook-gen2.mjs'] };
 
 function godot(dir, args, log, limitS) {
   return new Promise((ok) => {
