@@ -816,5 +816,22 @@
       "rule": "scope of ln02: it rules what is shown (no depicted biting, chewing or swallowing, no eaten limbs, no feeding gore or sound, no body or move drawn as a mouth, maw, teeth or jaw) and who the hunger is aimed at (fighters and wreckage, never civilians or children); it does not rule dialogue: 'snack', 'lunch', 'protein', 'crunchy' and 'tenderise' as the Cyborg's address for an opposing fighter are allowed in spoken lines; mouth words stay out of move names, flavour and any text an artist reads to draw a move; the address is never aimed at a bystander, civilian or child and is never played over an on-screen bite",
       "why": "RL-181"
     }
+  ],
+  "mechanics": [
+    {
+      "id": "mc01",
+      "rule": "the cast's memory: no parameter of a non-player fighter (rank, title, promotion, demotion, ability, strength, weakness, fear, name, appearance, stats) changes because of what happened between him and the player's avatar; 'angrier' and 'wants a rematch' are line choices and beat tone only; no procedurally generated enemy individuals with names, traits or histories; no ladder, ranks, chain of command or replacement of fallen lieutenants; henchmen graded by column, anonymous and without memory; the ledger only selects lines, grounds and beats; any feature making a fighter's behaviour, stats or looks depend on past meetings with the player stops for Legal first",
+      "why": "a granted US patent (10,926,179) on NPC parameters and hierarchies changed by interactions with the player's avatar; RL-182"
+    },
+    {
+      "id": "mc02",
+      "rule": "campaign ledger slots: a thread is about fighters and places' wear only, never a casualty, toll, victim, avenging or a debt to the dead; lost_episode reads the place and the fighter, never what was lost in people; wrecked is structure and terrain only; the Cyborg's home_wear reads only his own yard; fronts and homes read place and wear only; a death attributed to whoever caused it is a count for the meters only, never a per-player tally on any screen, results page, comparison, leaderboard or achievement; saves across days are local with no personal data (cloud saves or online co-op change the privacy line and store answers first)",
+      "why": "ln05, c08; RL-182"
+    },
+    {
+      "id": "mc03",
+      "rule": "a patent attorney reads claim 1 of US 10,926,179 and its continuations before the campaign ships or sells; the original-ideas rule does not protect against a patent, which is infringed by what a game does",
+      "why": "RL-182"
+    }
   ]
 }
