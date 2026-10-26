@@ -53,7 +53,7 @@ static func dataHash() -> String:
 	if not _cLoaded:
 		_cLoad()
 	if WorldClimate.genNow() >= 2:
-		return _cHash + "/g2/" + WorldClimate.dataHash() + "/" + WorldLand.dataHash() + "/" + WorldSites.dataHash()   # a gen 2 planet's slices are not a gen 1 planet's, and follow climate.json and land.json
+		return _cHash + "/g2/" + WorldClimate.dataHash() + "/" + WorldLand.dataHash() + "/" + WorldSites.dataHash() + ("/r" + WorldRivers.dataHash() if WorldRivers.enabled() else "")   # a gen 2 planet's slices are not a gen 1 planet's, and follow climate.json and land.json
 	return _cHash
 
 
@@ -282,6 +282,7 @@ class Planet extends RefCounted:
 	var outF: int = -1                       # gen 2: the fine biome of the last surfAt (WorldClimate.F_*); -1 where the stored biome is the fine one (sea, ice, a dome)
 	var gen: int = 1                         # the generation this planet is made by (WorldClimate.genNow)
 	var grid = null                          # gen 2: the climate grid (WorldClimate.Grid), made when first asked
+	var flow = null                          # gen 2 with rivers.json on: the drainage of that grid (WorldRivers.Flow), made when first asked
 	var plates = null                        # gen 2: the plates (WorldLand.Plates), made when first asked
 	var platesB = null                       # gen 2 with land.json's b on: the B plates (WorldPlateB.State), made when first asked
 
@@ -358,6 +359,11 @@ class PlanetJob extends RefCounted:
 				return false
 			P.grid = _grid
 			_grid = null
+			if WorldRivers.enabled():   # the drainage of the grid (about 100 ms: FLOW_COST units), its own step of the job
+				WorldRivers.flowOf(P)
+				left -= WorldRivers.FLOW_COST
+				if left <= 0:
+					return false
 		while true:
 			if WorldPlanet._placeStep(P, _st):
 				WorldPlanet._memoPlanet(key, P)

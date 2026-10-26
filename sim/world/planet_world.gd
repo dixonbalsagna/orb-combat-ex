@@ -147,6 +147,12 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 		WorldBiomes.fineCols = sl.fine
 		S.trees = WorldGround.layTrees(sl.fine, cols, S.base, sh)
 		lakes = WorldLakes.plan(S.base, chords, sl.fine, cols)   # window 5: the valleys of the ring that hold water; trees do not grow in them
+		if WorldRivers.enabled():   # window 14: where the ring crosses a river it is cut into the ground and planted as a narrow shallow lake
+			var rsp: Dictionary = specOf(sl.circ)
+			if not rsp.is_empty():
+				var rv: Array = WorldRivers.plan(P, rsp, S.base, chords, sl.fine, cols, lakes)
+				WorldRivers.carve(S.base, rv)
+				lakes = lakes + rv
 		S.trees = WorldLakes.dryTrees(S.trees, lakes, NC)
 	# the settlements, by D1's generator
 	var wsum: float = 0.0

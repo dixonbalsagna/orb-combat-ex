@@ -16,9 +16,11 @@ const BANDS: Array = [250.0, 1000.0, 2000.0, 4000.0]
 ## windows of the loop, a one-shot at its loudest 128 ms.
 const LIMITS: Dictionary = {
 	"amb.surf": [520.0, 0.03], "amb.village": [450.0, 0.03], "amb.plains": [480.0, 0.03], "amb.city": [320.0, 0.03], "amb.forest": [500.0, 0.03],
+	"amb.icefield": [400.0, 0.03], "amb.seaice": [450.0, 0.03], "amb.savanna": [500.0, 0.03], "amb.taiga": [450.0, 0.03], "amb.highland": [400.0, 0.03], "amb.volcanic": [400.0, 0.03], "amb.shore": [560.0, 0.03],
 	"amb.desert": [550.0, 0.03], "amb.mountains": [380.0, 0.03], "amb.tundra": [360.0, 0.03], "amb.marsh": [400.0, 0.03], "amb.jungle": [520.0, 0.03],
 	"surf.sand.hit": [680.0, 0.04], "surf.sand.slide": [780.0, 0.04], "surf.snow.hit": [480.0, 0.04], "surf.snow.slide": [650.0, 0.04],
 	"surf.mud.hit": [480.0, 0.04], "surf.mud.slide": [480.0, 0.04], "surf.water.hit": [720.0, 0.04], "surf.water.slide": [750.0, 0.04],
+	"surf.water.fill": [650.0, 0.04], "surf.water.seep": [650.0, 0.04], "surf.water.wave": [650.0, 0.04], "surf.water.hiss": [800.0, 0.05],
 	"surf.rock.hit": [430.0, 0.04], "surf.rock.slide": [760.0, 0.04], "surf.grass.hit": [680.0, 0.04], "surf.grass.slide": [780.0, 0.04],
 	"surf.rubble.hit": [340.0, 0.04], "surf.rubble.slide": [460.0, 0.04], "surf.paving.hit": [700.0, 0.04], "surf.paving.slide": [880.0, 0.04],
 }
@@ -92,11 +94,14 @@ func _run() -> void:
 	cues.world.cfg["enabled"] = true
 	_bed()
 	_surface()
+	_fine()
 	_events()
 	_steps()
+	_water()
 	_sounds()
 	await _voices()
 	_matches()
+	_gen2()
 	SimCore.dispose(S)
 	print("\nworld check %s" % ("FAILED (%d)" % fails if fails > 0 else "passed"))
 	quit(1 if fails > 0 else 0)
@@ -108,7 +113,8 @@ func _parked() -> void:
 	place(float(_xs.values()[0]), 5.0, 300.0)
 	var t: int = 300000
 	var n: int = 0
-	for e in [ev("damage", {"x": S.fighters[0].x, "y": S.fighters[0].y, "amount": 60.0}), ev("land", {"x": S.fighters[0].x, "y": S.fighters[0].y, "spd": 1500.0, "surface": "sand"}), ev("crater", {"x": S.fighters[0].x, "y": S.fighters[0].y, "energy": 3.0})]:
+	for e in [ev("damage", {"x": S.fighters[0].x, "y": S.fighters[0].y, "amount": 60.0}), ev("land", {"x": S.fighters[0].x, "y": S.fighters[0].y, "spd": 1500.0, "surface": "sand"}), ev("crater", {"x": S.fighters[0].x, "y": S.fighters[0].y, "energy": 3.0}),
+			ev("water_fill", {"x": 4000.0, "y": 0.0, "amount": 80.0, "dur": 1.0, "spd": 700.0, "cause": "sea"}), ev("water_wave", {"x": 4000.0, "y": 0.0, "amount": 75.0, "dur": 0.2}), ev("water_douse", {"x": 4000.0, "n": 6})]:
 		n += world_cues(tick(t, [e])).size()
 		t += 60
 	for i in range(400):
@@ -222,6 +228,84 @@ func _surface() -> void:
 	S.rubble[col] = keep
 
 
+## Planet generation 2's fine biomes: read through World's own WorldBiomes.fineNameAt (the fine biome of the column, a settlement first, else the stored
+## biome's name). Here the columns are set by hand on the hand-made world, and then a real generation 2 match is read.
+func _fine() -> void:
+	print("3b. the fine biomes of planet generation 2")
+	var W = cues.world
+	var names: Array = []
+	for f in AudioBank.load_json("res://data/biomes/climate.json").fine:
+		names.append(String(f.name))
+	var every: bool = true
+	for n in names:
+		if not W.cfg.biomes.has(n) or not bank.world.beds.has(String(W.cfg.biomes[n].bed)):
+			every = false
+			print("    no row or no bed for the fine biome %s" % n)
+	ok(every and names.size() == 15, "all %d fine biomes of climate.json have a row and a bed" % names.size())
+	var grounds_ok: bool = true
+	for k in W.cfg.ground:
+		grounds_ok = grounds_ok and W.cfg.surfaces.has(String(W.cfg.ground[k]))
+	for k in W.cfg.soil:
+		grounds_ok = grounds_ok and W.cfg.surfaces.has(String(W.cfg.soil[k]))
+	ok(grounds_ok, "every ground and soil in the data is a ground that has sounds")
+	var plains_x: float = float(_xs.get("plains", _xs.values()[0])) + 40.0
+	ok(W.biome_at(plains_x) == WorldBiomes.biomeAt(plains_x), "with no fine columns the biome is the stored biome's name (%s)" % W.biome_at(plains_x))
+	var nc: int = int(SimConst.NC)
+	var keep_fine: PackedByteArray = WorldBiomes.fineCols
+	var keep_cols: PackedByteArray = WorldBiomes.planetCols
+	var fc := PackedByteArray()
+	fc.resize(nc)
+	fc.fill(1)
+	WorldBiomes.fineCols = fc
+	ok(W.biome_at(plains_x) == WorldBiomes.biomeAt(plains_x), "stale fine columns of another world (no stored columns here) are not read")
+	var stored := PackedByteArray()
+	stored.resize(nc)
+	stored.fill(1)
+	WorldBiomes.planetCols = stored
+	var col_of := func(x: float) -> int: return int(floor(SimWrap.wrap(x) / SimConst.COL))
+	var cases: Array = [["wetland", 11, "mud", "amb.marsh"], ["ice_sheet", 5, "snow", "amb.icefield"], ["beach", 12, "sand", "amb.shore"], ["highland", 13, "rock", "amb.highland"],
+		["jungle", 7, "mud", "amb.jungle"], ["savanna", 8, "grass", "amb.savanna"], ["volcanic", 14, "rock", "amb.volcanic"], ["taiga", 10, "grass", "amb.taiga"], ["tundra", 9, "snow", "amb.tundra"], ["sea_ice", 6, "snow", "amb.seaice"]]
+	for c in cases:
+		fc = PackedByteArray()
+		fc.resize(nc)
+		fc.fill(1)
+		fc[col_of.call(plains_x)] = c[1]
+		fc[col_of.call(plains_x) + 1] = c[1]
+		WorldBiomes.fineCols = fc
+		var nm: String = W.biome_at(plains_x)
+		var ground: String = W.surface_at(S, plains_x, WorldTerrain.groundY(S, plains_x) + 5.0)
+		var bed: String = "amb." + String(W.cfg.biomes[nm].bed) if W.cfg.biomes.has(nm) else "?"
+		ok(nm == c[0] and ground == c[2] and bed == c[3], "fine %d reads as %s: ground %s, bed %s" % [c[1], nm, ground, bed])
+	# a settlement keeps its own ground over whatever the fine column says
+	for pair in [["city", 8], ["village", 7]]:
+		var xb: float = float(_xs.get(pair[0], plains_x)) + 40.0
+		stored[col_of.call(xb)] = pair[1]
+		fc = PackedByteArray()
+		fc.resize(nc)
+		fc.fill(9)
+		WorldBiomes.fineCols = fc
+		WorldBiomes.planetCols = stored
+		ok(W.biome_at(xb) == pair[0], "a %s keeps its own bed over the fine column under it (%s)" % [pair[0], W.biome_at(xb)])
+		stored[col_of.call(xb)] = 1
+	# the bed follows a fine biome through the mapper, and warm_beds names it
+	cues.reset(33)
+	fc = PackedByteArray()
+	fc.resize(nc)
+	fc.fill(11)
+	WorldBiomes.fineCols = fc
+	place(plains_x, 400.0)
+	var started: Array = tick(380000, []).filter(func(c): return c.sound.begins_with("amb.") and not c.update)
+	ok(started.size() == 1 and started[0].sound == "amb.marsh", "a pair over wetland has the marsh bed (%s)" % (started[0].sound if started.size() == 1 else "none"))
+	stored[0] = 8
+	stored[8] = 7
+	WorldBiomes.planetCols = stored
+	var beds: Array = W.warm_beds(S)
+	ok(beds.has("amb.marsh") and beds.has("amb.city") and beds.has("amb.village") and not beds.has("amb.plains") and beds.all(func(i): return bank.has_sound(i)), "warm_beds names the fine beds the ring has: %s" % ", ".join(PackedStringArray(beds)))
+	WorldBiomes.fineCols = keep_fine
+	WorldBiomes.planetCols = keep_cols
+	cues.reset(34)
+
+
 func _events() -> void:
 	print("4. blows, landings, slides, skims, splashes and craters")
 	cues.reset(8)
@@ -326,6 +410,121 @@ func _steps() -> void:
 		S.fighters[1].vx = 0.0
 		steps.append_array(with_sound(tick(t + 3000 + i, []), "surf."))
 	ok(steps.size() >= 2 and steps[0].gain_db < -8.0 and steps[0].pitch > 1.1 and not (steps[0].pitch == steps[1].pitch), "a step is quiet and high, and the feet alternate (x%.2f, x%.2f)" % [steps[0].pitch, steps[1].pitch])
+
+
+## Water v2 (World, sim/world/fill.gd; data/biomes/water.json, off by default): a hole the fight digs fills (water_fill: cause sea, water or table, amount
+## the deepest dig, dur the seconds to settle, spd the front's units a second), a slam into deep water sends a ring wave (water_wave) and water reaching a
+## scorched column puts the fire out (water_douse). Staged events with the fields the sim gives them, then the real ones from the sim's own fill module.
+func _water() -> void:
+	print("5b. water v2: a fill, a wave, a douse")
+	var W = cues.world
+	var F: Dictionary = W.cfg.water.fill
+	cues.reset(40)
+	var t: int = 390000
+	var r: Array = tick(t, [ev("water_fill", {"x": 4000.0, "y": 0.0, "amount": 100.0, "dur": 1.0, "spd": 720.0, "cause": "sea", "r": 120.0})])
+	var f1: Array = with_sound(r, "surf.water.fill")
+	ok(f1.size() == 1 and f1[0].group == "water.fill.0" and f1[0].cls == "water.fill" and absf(f1[0].x - 4000.0) < 0.01, "a sea fill is one rushing swell at the front's start, in its own group")
+	var stopped: int = -1
+	for i in range(1, 200):
+		for c in tick(t + i, []):
+			if c.stop_group == "water.fill.0" and stopped < 0:
+				stopped = i
+				ok(c.fade_ms == int(F.stop_ms) and c.sound == "", "the swell is cut with a %d ms fade" % c.fade_ms)
+	ok(stopped == 60, "when the fill settles: 1.0 s later (tick +%d)" % stopped)
+	# a table's seep is a quiet trickle, a deeper dig a louder and lower swell
+	var tb: Array = with_sound(tick(t + 300, [ev("water_fill", {"x": 4000.0, "y": 0.0, "amount": 100.0, "dur": 1.0, "spd": 0.0, "cause": "table"})]), "surf.water.")
+	var sea: Array = with_sound(tick(t + 310, [ev("water_fill", {"x": 4000.0, "y": 0.0, "amount": 100.0, "dur": 1.0, "spd": 720.0, "cause": "sea"})]), "surf.water.")
+	ok(tb.size() == 1 and tb[0].sound == "surf.water.seep" and sea.size() == 1 and tb[0].gain_db < sea[0].gain_db - 3.0, "a table's seep is the trickle, quieter than a sea fill of the same dig (%.1f dB against %.1f dB)" % [tb[0].gain_db, sea[0].gain_db])
+	var small: Array = with_sound(tick(t + 320, [ev("water_fill", {"x": 4000.0, "y": 0.0, "amount": 20.0, "dur": 1.0, "spd": 720.0, "cause": "water"})]), "surf.water.")
+	var big: Array = with_sound(tick(t + 330, [ev("water_fill", {"x": 4000.0, "y": 0.0, "amount": 400.0, "dur": 1.0, "spd": 720.0, "cause": "water"})]), "surf.water.")
+	ok(small.size() == 1 and big.size() == 1 and big[0].gain_db > small[0].gain_db + 4.0 and big[0].pitch < small[0].pitch, "a deeper dig is louder and lower (%.1f dB x%.2f against %.1f dB x%.2f)" % [big[0].gain_db, big[0].pitch, small[0].gain_db, small[0].pitch])
+	# the length of the swell follows the fill, within the sound's own length
+	cues.reset(41)
+	var ends: Array = []
+	for dur in [0.1, 1.5, 30.0]:
+		var t0: int = t + 1000 + 400 * ends.size()
+		var made: Array = tick(t0, [ev("water_fill", {"x": 4000.0, "y": 0.0, "amount": 100.0, "dur": dur, "spd": 720.0, "cause": "sea"})])
+		var grp: String = with_sound(made, "surf.water.")[0].group
+		var at: int = -1
+		for i in range(1, 300):
+			for c in tick(t0 + i, []):
+				if c.stop_group == grp and at < 0:
+					at = i
+		ends.append(at)
+	ok(ends == [int(ceil(float(F.min_s) * 60.0)), 90, int(ceil(float(F.max_s) * 60.0))], "a tiny fill holds the shortest swell, a long one the longest (stops at +%s ticks)" % str(ends))
+	# the fills that are sounding take their groups in turn
+	cues.reset(42)
+	var groups: Array = []
+	for i in range(int(F.groups) + 1):
+		groups.append(with_sound(tick(t + 3000 + i, [ev("water_fill", {"x": 4000.0, "y": 0.0, "amount": 100.0, "dur": 1.0, "cause": "sea"})]), "surf.water.")[0].group)
+	ok(groups[0] == groups[int(F.groups)] and groups[0] != groups[1], "the fills in turn take %d groups and then the first again (%s)" % [int(F.groups), ", ".join(PackedStringArray(groups))])
+	# the wave and the douse
+	cues.reset(43)
+	var wv: Array = with_sound(tick(t + 4000, [ev("water_wave", {"x": 5000.0, "y": -20.0, "r": 600.0, "amount": 75.0, "n": 6, "dur": 0.2})]), "surf.water.")
+	ok(wv.size() == 1 and wv[0].sound == "surf.water.wave" and absf(wv[0].x - 5000.0) < 0.01 and wv[0].cls == "water.wave", "a ring wave is one heavy slosh at the slam")
+	var d1: Array = with_sound(tick(t + 4100, [ev("water_douse", {"x": 5000.0, "w": 200.0, "n": 2})]), "surf.water.")
+	var d2: Array = with_sound(tick(t + 4200, [ev("water_douse", {"x": 5000.0, "w": 200.0, "n": 40})]), "surf.water.")
+	ok(d1.size() == 1 and d2.size() == 1 and d1[0].sound == "surf.water.hiss" and d2[0].gain_db > d1[0].gain_db + 3.0, "a douse is a short hiss, bigger for more columns wet (%.1f dB against %.1f dB)" % [d2[0].gain_db, d1[0].gain_db])
+	# the real events: World's own module on a flat world with the sea at columns 0 to 299 (the way fill_check builds one)
+	var keep_on: bool = WorldFill.K_ON
+	WorldFill.K_ON = true
+	var Wd := SimCore.createSim()
+	SimCore.newMatch(Wd, 1, {}, {"intro": false})
+	Wd.base.fill(30.0)
+	for i in range(300):
+		Wd.base[i] = -300.0
+	Wd.deform.fill(0.0)
+	Wd.rubble.fill(0.0)
+	Wd.scorch.fill(0.0)
+	Wd.buildings.clear()
+	Wd.trees.clear()
+	Wd.craters.clear()
+	WorldWater.init(Wd)
+	Wd.fighters[0].x = 40000.0
+	Wd.fighters[1].x = 41000.0
+	for i in range(318, 342):
+		Wd.scorch[i] = 1.0                      # a scorched line the fill will reach
+	for k in range(-6, 7):
+		Wd.deform[330 + k] = -50.0 * (1.0 - absf(float(k)) / 7.0 * 0.3)
+	WorldWater.touched(Wd, 330, 10, 30.0 - 50.0)
+	cues.reset(44)
+	var real: Array = []
+	var seen_douse: bool = false
+	for step in range(0, 400):
+		Wd.tick = step
+		Wd.T = float(step) / 60.0
+		if step % 2 == 0:
+			WorldWater.step(Wd)
+		var evs: Array = []
+		for e in Wd.out.fx:
+			evs.append(e)
+		Wd.out.fx.clear()
+		real.append_array(with_sound(cues.consume(Wd, evs), "surf.water."))
+		seen_douse = seen_douse or not evs.filter(func(e): return e.type == "water_douse").is_empty()
+		if Wd.waterWin.is_empty() and step > 10:
+			break
+	ok(real.size() >= 1 and real[0].sound == "surf.water.fill" and real[0].gain_db > -20.0, "the sim's own fill (a trench by the sea) makes a swell (%d water cues, first %s at %.1f dB)" % [real.size(), real[0].sound if real.size() > 0 else "none", real[0].gain_db if real.size() > 0 else 0.0])
+	ok(seen_douse and not real.filter(func(c): return c.sound == "surf.water.hiss").is_empty(), "and the fire it reaches goes out with a hiss (the sim sent water_douse)")
+	Wd.tick = 5000
+	Wd.T = 5000.0 / 60.0
+	WorldFill.slam(Wd, 100.0 * SimConst.COL, 20.0)
+	var waves: Array = with_sound(cues.consume(Wd, Wd.out.fx.duplicate()), "surf.water.wave")
+	Wd.out.fx.clear()
+	ok(waves.size() == 1, "and a slam into the sea's deep water makes the wave's slosh (%d)" % waves.size())
+	WorldFill.K_ON = keep_on
+	SimCore.dispose(Wd)
+	# a real match with the water on: the sim's hash is unchanged by the set and the cue log is the same twice
+	WorldFill.K_ON = true
+	for sd in [4, 777]:
+		var plain: Array = _run_match(sd, false)
+		var a: Array = _run_match(sd, true)
+		var b: Array = _run_match(sd, true)
+		var n_water: int = 0
+		for c in a[2]:
+			if String(c).begins_with("surf.water.") and not String(c).ends_with(".hit") and not String(c).ends_with(".slide"):
+				n_water += 1
+		ok(str(plain[0]) == str(a[0]) and a[1] == b[1], "seed %d with water v2 on: the sim hash is unchanged by the set and the cue log is the same twice (%d water cues)" % [sd, n_water])
+	WorldFill.K_ON = keep_on
 
 
 func _sounds() -> void:
@@ -506,9 +705,9 @@ func _matches() -> void:
 		ok(float(a[4]) < 600.0, "seed %d: all the audio takes %.0f microseconds a tick on average, the set on (a tick is 16,667)" % [sd, float(a[4])])
 
 
-func _run_match(sd: int, with_world: bool) -> Array:
+func _run_match(sd: int, with_world: bool, setup: Dictionary = {}) -> Array:
 	var M := SimCore.createSim()
-	SimCore.newMatch(M, sd)
+	SimCore.newMatch(M, sd, {}, setup)
 	var c := AudioCues.new(bank)
 	c.world.cfg["enabled"] = with_world
 	c.reset(sd)
@@ -534,3 +733,33 @@ func _run_match(sd: int, with_world: bool) -> Array:
 	hashes.append(SimHash.stateHash(M).gameplay)
 	SimCore.dispose(M)
 	return [hashes, "\n".join(lines).sha256_text(), sounds, t, float(spent) / maxf(float(t), 1.0)]
+
+
+## A real generation 2 match: its columns are read, its beds are real beds, and the set on it leaves the sim's hash alone and gives the same cue log twice.
+func _gen2() -> void:
+	print("9. a real generation 2 planet")
+	var W = cues.world
+	var G := SimCore.createSim()
+	SimCore.newMatch(G, 1, {}, {"planet": 7, "touch": 0, "arena": {"cols": 2400}, "planetGen": 2, "intro": false})
+	var seen: Dictionary = {}
+	for i in range(0, int(SimConst.NC), 4):
+		seen[W.biome_at(float(i) * SimConst.COL)] = true
+	var good: bool = WorldBiomes.fineCols.size() == WorldBiomes.planetCols.size() and WorldBiomes.fineCols.size() > 0
+	var rows: bool = true
+	for k in seen:
+		rows = rows and W.cfg.biomes.has(k)
+	ok(good and rows and seen.size() >= 3, "a real generation 2 ring (planet 7) reads as %d biomes, each with a row: %s" % [seen.size(), ", ".join(PackedStringArray(seen.keys()))])
+	var wb: Array = W.warm_beds(G)
+	ok(wb.size() >= 3 and wb.all(func(i): return bank.has_sound(i)), "warm_beds names its beds: %s" % ", ".join(PackedStringArray(wb)))
+	SimCore.dispose(G)
+	for sd in [1, 2]:
+		var setup: Dictionary = {"planet": 7, "touch": sd, "arena": {"cols": 2400}, "planetGen": 2, "intro": false}
+		var plain: Array = _run_match(sd, false, setup)
+		var a: Array = _run_match(sd, true, setup)
+		var b: Array = _run_match(sd, true, setup)
+		var beds: Dictionary = {}
+		for c in a[2]:
+			if String(c).begins_with("amb."):
+				beds[String(c)] = true
+		ok(str(plain[0]) == str(a[0]), "seed %d on a generation 2 ring: the sim hash is unchanged by the set (%s)" % [sd, str(a[0][-1])])
+		ok(a[1] == b[1], "seed %d: the cue log is the same twice (%s); beds heard: %s" % [sd, a[1].substr(0, 12), ", ".join(PackedStringArray(beds.keys()))])

@@ -13,7 +13,8 @@
     "fill",
     "wade",
     "wave",
-    "douse"
+    "douse",
+    "surface"
   ],
   "additionalProperties": false,
   "properties": {
@@ -220,6 +221,27 @@
           "minimum": 0.0,
           "maximum": 1.0,
           "description": "A column scorched at least this is a fire line a fill puts out."
+        }
+      }
+    },
+    "surface": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "ticks"
+      ],
+      "additionalProperties": false,
+      "description": "The surfacing rule (Game Design 2026-10-23b item 7).",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "A launched body in water surfaces set within ticks, with no down state."
+        },
+        "ticks": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 600,
+          "description": "How many ticks."
         }
       }
     }

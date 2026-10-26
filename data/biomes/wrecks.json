@@ -1,20 +1,20 @@
 {
   "schema": "biomes.wrecks/1",
-  "_about": "The liftable wreck (Game Design 23d section 8 item 20, the Cyborg's Wreck Toss; Legal RL-183 and ln04: wreckage and metal only, empty, nothing living near; read by sim/world/wrecks.gd). A wreck is a building that has fallen and has not been hurled. reachBh: how near the fighter must be (in body heights, to the wreck's box). nearBh: no living civilian stands in a building within this many body heights of the wreck's edge (people are people in standing buildings; fighters are not counted unless fighters is true). fill: a wreck's mass is this share of its building's volume, in cubic body heights (the piece a fighter can take hold of, not the whole heap). minMass: a smaller wreck is not worth lifting. tierLift: the heaviest wreck each tier (1 to 4) lifts, in the same unit: Game Design and Combat's numbers to confirm; Encounter may pass its own. burst: the scrap's damage to structures when the wreck is hurled and lands: speed times the brunt ladder's tier factor and bruntMul (the same ladder as a body's brunt), scaled by the square root of the wreck's mass over massRef (kept within scaleMin and scaleMax), over a radius of radiusBh body heights likewise scaled and kept within radiusMinBh and radiusMaxBh.",
+  "_about": "The liftable wreck (Game Design 23d section 8 item 20, the Cyborg's Wreck Toss; Legal RL-183 and ln04: wreckage and metal only, empty, nothing living near; read by sim/world/wrecks.gd). A wreck is a building that has fallen and has not been hurled. reachBh: how near the fighter must be (in body heights, to the wreck's box). nearBh: no living civilian is within this many body heights of the wreck's edge, indoors or in the open (Legal RL-186: the people in the standing buildings, whose figures stand on their street side, and the people a district flight has put on the street while it runs; fighters, partners and henchmen are combatants and are not counted unless fighters is true). fill: a wreck's wreckMass is this share of its building's volume, in cubic body heights (wreckMass is the wreck's own unit, not the car classes' mass: bike 1, sedan 3, van 4, bus 8 are Art's classes) (the piece a fighter can take hold of, not the whole heap). minWreckMass: a lighter wreck is not worth lifting. tierLift: the heaviest wreckMass each tier (1 to 4) lifts (Game Design's, rulings 2026-10-26: 2, 6, 16, 57); Encounter may pass its own. burst: the scrap's damage to structures when the wreck is hurled and lands: speed times the brunt ladder's tier factor and bruntMul (the same ladder as a body's brunt), scaled by the square root of the wreck's mass over massRef (kept within scaleMin and scaleMax), over a radius of radiusBh body heights likewise scaled and kept within radiusMinBh and radiusMaxBh.",
   "reachBh": 2.0,
   "nearBh": 3.0,
   "fighters": false,
   "fill": 0.012,
-  "minMass": 0.2,
+  "minWreckMass": 0.2,
   "tierLift": [
-    0.8,
     2.0,
-    5.0,
-    14.0
+    6.0,
+    16.0,
+    57.0
   ],
   "burst": {
     "speed": 900.0,
-    "massRef": 1.5,
+    "wreckMassRef": 1.5,
     "scaleMin": 0.5,
     "scaleMax": 2.0,
     "radiusBh": 1.6,

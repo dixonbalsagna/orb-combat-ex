@@ -1,0 +1,1141 @@
+diff --git a/data/biomes/rivers.json b/data/biomes/rivers.json
+new file mode 100644
+index 0000000..856bd32
+--- /dev/null
++++ b/data/biomes/rivers.json
+@@ -0,0 +1,37 @@
++{
++  "schema": "biomes.rivers/1",
++  "_about": "Planet generation 2's rivers (docs/world/rivers.md; read by sim/world/rivers.gd). enabled: off, nothing here runs and a planet is as it was. rain: runoff a land cell sheds is its carried moisture over `dry` (times gain), none where the temperature is under `frozenT` (a frozen river is not a channel). flow: a cell whose runoff, added up downstream, passes `river` is a river cell; `ref` is the flow a river of the base width carries. span: where a ring crosses a river it is a channel `width0 + width1 x sqrt(flow / ref)` columns wide (at least minCols, at most maxCols), `depth0 + depth1 x sqrt(flow / ref)` units deep at most maxDepth (under the depth that hides a fighter, so a river is always waded), its flat surface `freeboard` under the lower of the two banks (read `bank` columns outside the channel), snapped to the lowest ground within `reach` columns of the geometric crossing, never on ground under `floor` (the sea's edge) or within `margin` columns of a settlement or on a settlement's ground. spacing: of the crossings at most one is kept in any gapUnits (Game Design 23b row 13: the strongest; crossings under 640 units apart are one span), and at most maxPerRing a ring. refuse: fine biomes a river does not cross.",
++  "enabled": false,
++  "rain": {
++    "dry": 0.2,
++    "gain": 1.0,
++    "frozenT": 0.16
++  },
++  "flow": {
++    "river": 6.0,
++    "ref": 40.0
++  },
++  "span": {
++    "minCols": 5,
++    "maxCols": 24,
++    "width0": 4.0,
++    "width1": 3.0,
++    "depth0": 20.0,
++    "depth1": 10.0,
++    "maxDepth": 70.0,
++    "freeboard": 6.0,
++    "reach": 14,
++    "bank": 3,
++    "margin": 10,
++    "floor": 5.0
++  },
++  "spacing": {
++    "gapUnits": 3000.0,
++    "maxPerRing": 12
++  },
++  "refuse": [
++    "ice_sheet",
++    "sea_ice",
++    "volcanic"
++  ]
++}
+diff --git a/sim/world/epoch.gd b/sim/world/epoch.gd
+index 3ea4eed..e92da70 100644
+--- a/sim/world/epoch.gd
++++ b/sim/world/epoch.gd
+@@ -409,6 +409,12 @@ static func _geomStep(S: SimState, E: Dictionary, pl: Dictionary, ep: Dictionary
+ 			ep["g2"] = 1
+ 		else:
+ 			ep["lakes"] = WorldLakes.onlyNew(WorldLakes.plan(ep.base, ep.chordsAll, ep.fcols, ep.cols), pl.wt)
++			if WorldRivers.enabled():   # window 14: the new ring's rivers, only where the ring is wholly new, cut into its prepared ground
++				var rsp: Dictionary = WorldPlanetWorld.specOf(sl.circ)
++				if not rsp.is_empty():
++					var rv: Array = WorldLakes.onlyNew(WorldRivers.plan(WorldPlanet.make(int(E.seed)), rsp, ep.base, ep.chordsAll, ep.fcols, ep.cols, ep.lakes), pl.wt)
++					WorldRivers.carve(ep.base, rv)
++					ep["lakes"] = ep.lakes + rv
+ 			ep["trees"] = WorldLakes.dryTrees(ep.trees, ep.lakes, NC)
+ 			ep["ready"] = true
+ 		ep.si = int(ep.si) + 1
+diff --git a/sim/world/planet.gd b/sim/world/planet.gd
+index e5037cc..7d9ab68 100644
+--- a/sim/world/planet.gd
++++ b/sim/world/planet.gd
+@@ -53,7 +53,7 @@ static func dataHash() -> String:
+ 	if not _cLoaded:
+ 		_cLoad()
+ 	if WorldClimate.genNow() >= 2:
+-		return _cHash + "/g2/" + WorldClimate.dataHash() + "/" + WorldLand.dataHash() + "/" + WorldSites.dataHash()   # a gen 2 planet's slices are not a gen 1 planet's, and follow climate.json and land.json
++		return _cHash + "/g2/" + WorldClimate.dataHash() + "/" + WorldLand.dataHash() + "/" + WorldSites.dataHash() + ("/r" + WorldRivers.dataHash() if WorldRivers.enabled() else "")   # a gen 2 planet's slices are not a gen 1 planet's, and follow climate.json and land.json
+ 	return _cHash
+ 
+ 
+@@ -282,6 +282,7 @@ class Planet extends RefCounted:
+ 	var outF: int = -1                       # gen 2: the fine biome of the last surfAt (WorldClimate.F_*); -1 where the stored biome is the fine one (sea, ice, a dome)
+ 	var gen: int = 1                         # the generation this planet is made by (WorldClimate.genNow)
+ 	var grid = null                          # gen 2: the climate grid (WorldClimate.Grid), made when first asked
++	var flow = null                          # gen 2 with rivers.json on: the drainage of that grid (WorldRivers.Flow), made when first asked
+ 	var plates = null                        # gen 2: the plates (WorldLand.Plates), made when first asked
+ 	var platesB = null                       # gen 2 with land.json's b on: the B plates (WorldPlateB.State), made when first asked
+ 
+@@ -358,6 +359,11 @@ class PlanetJob extends RefCounted:
+ 				return false
+ 			P.grid = _grid
+ 			_grid = null
++			if WorldRivers.enabled():   # the drainage of the grid (about 100 ms: FLOW_COST units), its own step of the job
++				WorldRivers.flowOf(P)
++				left -= WorldRivers.FLOW_COST
++				if left <= 0:
++					return false
+ 		while true:
+ 			if WorldPlanet._placeStep(P, _st):
+ 				WorldPlanet._memoPlanet(key, P)
+diff --git a/sim/world/planet_world.gd b/sim/world/planet_world.gd
+index 3de2eb9..038de40 100644
+--- a/sim/world/planet_world.gd
++++ b/sim/world/planet_world.gd
+@@ -147,6 +147,12 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
+ 		WorldBiomes.fineCols = sl.fine
+ 		S.trees = WorldGround.layTrees(sl.fine, cols, S.base, sh)
+ 		lakes = WorldLakes.plan(S.base, chords, sl.fine, cols)   # window 5: the valleys of the ring that hold water; trees do not grow in them
++		if WorldRivers.enabled():   # window 14: where the ring crosses a river it is cut into the ground and planted as a narrow shallow lake
++			var rsp: Dictionary = specOf(sl.circ)
++			if not rsp.is_empty():
++				var rv: Array = WorldRivers.plan(P, rsp, S.base, chords, sl.fine, cols, lakes)
++				WorldRivers.carve(S.base, rv)
++				lakes = lakes + rv
+ 		S.trees = WorldLakes.dryTrees(S.trees, lakes, NC)
+ 	# the settlements, by D1's generator
+ 	var wsum: float = 0.0
+diff --git a/sim/world/rivers.gd b/sim/world/rivers.gd
+new file mode 100644
+index 0000000..49dc37f
+--- /dev/null
++++ b/sim/world/rivers.gd
+@@ -0,0 +1,460 @@
++class_name WorldRivers
++extends RefCounted
++## Planet generation 2's rivers (docs/world/rivers.md, window 14; data/biomes/rivers.json, off by default). Cheap and cosmetic like the water: a river is a narrow, shallow, flat-surfaced channel where a fight ring
++## crosses a line of drainage, never deep enough to hide in or to sink a body (it is waded), planted exactly as a window 5 lake is (an entry of S.planetRing["lakes"]: the water module keeps it level, the calm
++## turn carries it, trees do not grow in it, a hole dug beside it fills from it).
++##
++## The flow field is routed on the climate grid the planet already has (192 by 96 cells, about 800 units a cell, equal area, heights from the ground itself): the depressions are filled from the sea inward
++## (a priority flood: every land cell drains), each cell sends its runoff to the cell it was flooded from, and the runoff is added up downstream. Runoff is the carried moisture over a dry line on land that is not
++## frozen; a cell whose flow passes `flow.river` is a river cell. A ring crossing a river's line (a segment from a river cell's centre to its receiver's) crosses it at a point found by geometry; the crossing is
++## snapped to the lowest ground within `reach` columns of it on the ring (so the channel lies in the ring's own valley), widened by its flow, cut into the ground with a taper, and given a flat surface a little
++## under the lower bank. Game Design's row 13 holds: of the crossings at most one is kept in any `gapUnits` (3,000), the strongest, so a river that runs along the ring (a comb of crossings) is one span.
++## Pure functions of the planet, the ring and the data: no draw. Gen 2 only (the grid is gen 2's).
++
++const PATH := "res://data/biomes/rivers.json"
++const SCHEMA := "biomes.rivers/1"
++const FLOW_COST: int = 5000   # a planet job's budget units the flow field costs (about 100 ms: a unit is about 20 microseconds)
++
++static var _d: Dictionary = {}
++static var _loaded: bool = false
++static var _errors: Array = []
++static var _hash: String = ""
++static var K_ON: bool = false
++static var K_DRY: float = 0.25
++static var K_GAIN: float = 1.0
++static var K_FROZEN: float = 0.16
++static var K_RIVER: float = 12.0
++static var K_REF: float = 60.0
++static var K_MIN_COLS: int = 5
++static var K_MAX_COLS: int = 24
++static var K_W0: float = 4.0
++static var K_W1: float = 3.0
++static var K_D0: float = 20.0
++static var K_D1: float = 10.0
++static var K_DMAX: float = 70.0
++static var K_FREE: float = 6.0
++static var K_REACH: int = 14
++static var K_BANK: int = 3
++static var K_MARGIN: int = 10
++static var K_FLOOR: float = 5.0
++static var K_GAP: float = 3000.0
++static var K_MAXN: int = 12
++static var _refuse := PackedByteArray()
++
++
++static func data() -> Dictionary:
++	if not _loaded:
++		_load()
++	return _d
++
++
++static func dataErrors() -> Array:
++	if not _loaded:
++		_load()
++	return _errors
++
++
++## The data's hash; the planet's data hash carries it only while the rivers are on.
++static func dataHash() -> String:
++	if not _loaded:
++		_load()
++	return _hash
++
++
++## Are the rivers on (rivers.json enabled)?
++static func enabled() -> bool:
++	if not _loaded:
++		_load()
++	return K_ON
++
++
++## For tools and checks: the switch for this process (the file is not touched).
++static func setOn(on: bool) -> void:
++	if not _loaded:
++		_load()
++	K_ON = on and _errors.is_empty()
++
++
++static func _load() -> void:
++	_loaded = true
++	_errors = []
++	_d = {}
++	var f := FileAccess.open(PATH, FileAccess.READ)
++	if f == null:
++		_errors.append("rivers.json: cannot open " + PATH)
++		return
++	var text: String = f.get_as_text()
++	var j = JSON.parse_string(text)
++	if not (j is Dictionary) or j.get("schema", "") != SCHEMA:
++		_errors.append("rivers.json: not a %s object" % SCHEMA)
++		return
++	for k in ["enabled", "rain", "flow", "span", "spacing", "refuse"]:
++		if not j.has(k):
++			_errors.append("rivers.json: %s is missing" % k)
++	if not _errors.is_empty():
++		return
++	var sp: Dictionary = j.span
++	if int(sp.minCols) < 1 or int(sp.maxCols) < int(sp.minCols) or float(sp.maxDepth) <= 0.0 or float(sp.maxDepth) >= WorldWater.HIDE_MIN_DEPTH or float(j.flow.river) <= 0.0 or float(j.flow.ref) <= 0.0:
++		_errors.append("rivers.json: span.minCols within maxCols, maxDepth above 0 and under the depth that hides a fighter, flow.river and flow.ref above 0")
++	var fine: Array = WorldClimate.data().get("fine", [])
++	var ref := PackedByteArray()
++	ref.resize(maxi(fine.size(), 1))
++	for nm in j.refuse:
++		var found: bool = false
++		for i in range(fine.size()):
++			if fine[i].name == nm:
++				ref[i] = 1
++				found = true
++		if not found:
++			_errors.append("rivers.json: refuse names '%s', which is not a fine biome" % nm)
++	if not _errors.is_empty():
++		return
++	_d = j
++	_hash = str(text.hash())
++	_refuse = ref
++	K_ON = bool(j.enabled)
++	K_DRY = float(j.rain.dry)
++	K_GAIN = float(j.rain.gain)
++	K_FROZEN = float(j.rain.frozenT)
++	K_RIVER = float(j.flow.river)
++	K_REF = float(j.flow.ref)
++	K_MIN_COLS = int(sp.minCols)
++	K_MAX_COLS = int(sp.maxCols)
++	K_W0 = float(sp.width0)
++	K_W1 = float(sp.width1)
++	K_D0 = float(sp.depth0)
++	K_D1 = float(sp.depth1)
++	K_DMAX = float(sp.maxDepth)
++	K_FREE = float(sp.freeboard)
++	K_REACH = int(sp.reach)
++	K_BANK = int(sp.bank)
++	K_MARGIN = int(sp.margin)
++	K_FLOOR = float(sp.floor)
++	K_GAP = float(j.spacing.gapUnits)
++	K_MAXN = int(j.spacing.maxPerRing)
++
++
++# ===================================================================== the flow field
++
++## The drainage of a planet's climate grid: for each cell the cell its runoff goes to (-1: the sea, or no way down), the flow it carries (runoff of all the cells that drain through it) and the order the cells
++## were reached in the flood (a cell comes after its receiver). Made once a planet (`flowOf`).
++class Flow extends RefCounted:
++	var w: int = 0
++	var h: int = 0
++	var recv := PackedInt32Array()
++	var flow := PackedFloat32Array()
++	var order := PackedInt32Array()
++	var px := PackedFloat64Array()
++	var py := PackedFloat64Array()
++	var pz := PackedFloat64Array()
++	var rivers: int = 0
++	var landCells: int = 0
++
++	func _init(G: WorldClimate.Grid) -> void:
++		w = G.w
++		h = G.h
++		var n: int = w * h
++		recv.resize(n)
++		recv.fill(-1)
++		flow.resize(n)
++		flow.fill(0.0)
++		px.resize(n)
++		py.resize(n)
++		pz.resize(n)
++		var d: Dictionary = WorldClimate.data()
++		var mp: Dictionary = d.moist
++		var tp: Dictionary = d.temp
++		var cs := PackedFloat64Array()
++		var sn := PackedFloat64Array()
++		cs.resize(w)
++		sn.resize(w)
++		for k in range(w):
++			var th: float = SimMathx.TAU * (float(k) + 0.5) / float(w)
++			cs[k] = SimDetMath.cos(th)
++			sn[k] = SimDetMath.sin(th)
++		for r in range(h):
++			var y: float = -1.0 + (float(r) + 0.5) * 2.0 / float(h)
++			var c: float = sqrt(maxf(0.0, 1.0 - y * y))
++			var band: float = float(mp.wBand) * WorldClimate.bandWet(y) + float(mp.bias)
++			var tEq: float = float(tp.eq) * SimDetMath.pow(c, float(tp.pow))
++			for k in range(w):
++				var i: int = r * w + k
++				px[i] = c * cs[k]
++				py[i] = y
++				pz[i] = c * sn[k]
++				var ht: float = G.ht[i]
++				if ht < 0.0:
++					continue
++				landCells += 1
++				var T: float = tEq - float(tp.lapse) * ht / float(tp.hScale)
++				if T < WorldRivers.K_FROZEN:
++					continue
++				var M: float = clampf(band + float(mp.wAdv) * G.adv[i], 0.0, 1.0)
++				flow[i] = maxf(0.0, M - WorldRivers.K_DRY) * WorldRivers.K_GAIN
++		# the priority flood from the sea inward: the lowest unvisited cell next (ties to the lower index), each neighbour reached takes it as its receiver
++		var seen := PackedByteArray()
++		seen.resize(n)
++		var heapP := PackedFloat64Array()
++		var heapI := PackedInt32Array()
++		for i in range(n):
++			if G.ht[i] < 0.0:
++				seen[i] = 1
++				_push(heapP, heapI, G.ht[i], i)
++		var fill := PackedFloat64Array()
++		fill.resize(n)
++		for i in range(n):
++			fill[i] = G.ht[i]
++		var out := PackedInt32Array()
++		while heapI.size() > 0:
++			var cur: int = heapI[0]
++			_pop(heapP, heapI)
++			out.append(cur)
++			var r0: int = cur / w
++			var k0: int = cur - r0 * w
++			for dr in range(-1, 2):
++				var rr: int = r0 + dr
++				if rr < 0 or rr >= h:
++					continue
++				for dk in range(-1, 2):
++					if dr == 0 and dk == 0:
++						continue
++					var nb: int = rr * w + posmod(k0 + dk, w)
++					if seen[nb] != 0:
++						continue
++					seen[nb] = 1
++					recv[nb] = cur
++					fill[nb] = maxf(G.ht[nb], fill[cur])
++					_push(heapP, heapI, fill[nb], nb)
++		order = out
++		# a cell the flood did not raise (not in a filled pit) drains down its steepest way: the lowest neighbour by slope over the cell's own arc (a lat-lon cell is wide at the equator and narrow toward the
++		# poles), so the rivers follow the land and not the flood's front. A strictly lower filled height is acyclic, and the flood's pop order (nondecreasing in filled height) still has every receiver first.
++		var dlon: float = SimMathx.TAU / float(w)
++		for i in range(n):
++			if G.ht[i] < 0.0 or fill[i] > G.ht[i] + 1.0e-9:
++				continue
++			var r1: int = i / w
++			var k1: int = i - r1 * w
++			var cl: float = sqrt(maxf(1.0e-9, 1.0 - py[i] * py[i]))
++			var bs: float = 0.0
++			var bn: int = -1
++			for dr in range(-1, 2):
++				var rr: int = r1 + dr
++				if rr < 0 or rr >= h:
++					continue
++				for dk in range(-1, 2):
++					if dr == 0 and dk == 0:
++						continue
++					var nb: int = rr * w + posmod(k1 + dk, w)
++					if fill[nb] >= fill[i]:
++						continue
++					var ax: float = dlon * cl * float(dk)
++					var ay: float = (2.0 / float(h)) / cl * float(dr)
++					var sl: float = (fill[i] - fill[nb]) / sqrt(ax * ax + ay * ay)
++					if sl > bs or (sl == bs and bn >= 0 and nb < bn):
++						bs = sl
++						bn = nb
++			if bn >= 0:
++				recv[i] = bn
++		# runoff added up downstream: a cell is reached after its receiver, so the reverse order visits every cell before its receiver
++		for q in range(out.size() - 1, -1, -1):
++			var i2: int = out[q]
++			var rc: int = recv[i2]
++			if rc >= 0 and G.ht[i2] >= 0.0:
++				flow[rc] += flow[i2]
++		for i in range(n):
++			if G.ht[i] >= 0.0 and flow[i] >= WorldRivers.K_RIVER:
++				rivers += 1
++
++	static func _less(pa: float, ia: int, pb: float, ib: int) -> bool:
++		return pa < pb or (pa == pb and ia < ib)
++
++	static func _push(hp: PackedFloat64Array, hi: PackedInt32Array, p: float, i: int) -> void:
++		hp.append(p)
++		hi.append(i)
++		var k: int = hi.size() - 1
++		while k > 0:
++			var up: int = (k - 1) / 2
++			if _less(hp[k], hi[k], hp[up], hi[up]):
++				var tp: float = hp[k]
++				hp[k] = hp[up]
++				hp[up] = tp
++				var ti: int = hi[k]
++				hi[k] = hi[up]
++				hi[up] = ti
++				k = up
++			else:
++				break
++
++	static func _pop(hp: PackedFloat64Array, hi: PackedInt32Array) -> void:
++		var last: int = hi.size() - 1
++		hp[0] = hp[last]
++		hi[0] = hi[last]
++		hp.resize(last)
++		hi.resize(last)
++		var k: int = 0
++		while true:
++			var l: int = 2 * k + 1
++			if l >= last:
++				break
++			var m: int = l
++			if l + 1 < last and _less(hp[l + 1], hi[l + 1], hp[l], hi[l]):
++				m = l + 1
++			if _less(hp[m], hi[m], hp[k], hi[k]):
++				var tp: float = hp[k]
++				hp[k] = hp[m]
++				hp[m] = tp
++				var ti: int = hi[k]
++				hi[k] = hi[m]
++				hi[m] = ti
++				k = m
++			else:
++				break
++
++
++## The planet's flow field, made when first asked (gen 2 only: the grid is gen 2's; null for a gen 1 planet).
++static func flowOf(P: WorldPlanet.Planet) -> Flow:
++	if not _loaded:
++		_load()
++	if P.gen < 2:
++		return null
++	if P.flow == null:
++		P.flow = Flow.new(WorldClimate.gridOf(P))
++	return P.flow
++
++
++# ===================================================================== the ring's crossings
++
++## The places a ring crosses a river's line: [[column (a float, the ring's own columns), flow]], by geometry (the segment from a river cell's centre to its receiver's against the ring's circle).
++static func crossings(P: WorldPlanet.Planet, spec: Dictionary, F: Flow) -> Array:
++	var cols: int = int(spec.cols)
++	var ring: Dictionary = WorldRingPick.ringFrom(spec.c, cols, spec.t)
++	var c: Array = ring.c
++	var ct: float = ring.ct
++	var u: Array = ring.u
++	var v: Array = ring.v
++	var step: float = SimConst.COL / (P.R * float(ring.st))
++	var mid: int = cols / 2
++	var out: Array = []
++	var G: WorldClimate.Grid = P.grid
++	var f := PackedFloat64Array()
++	f.resize(F.w * F.h)
++	for i in range(f.size()):
++		f[i] = c[0] * F.px[i] + c[1] * F.py[i] + c[2] * F.pz[i] - ct
++	for i in range(f.size()):
++		var rc: int = F.recv[i]
++		if rc < 0 or G.ht[i] < 0.0 or F.flow[i] < K_RIVER:
++			continue
++		var fa: float = f[i]
++		var fb: float = f[rc]
++		if (fa > 0.0) == (fb > 0.0) or fa == fb:
++			continue
++		var t: float = fa / (fa - fb)
++		var qx: float = F.px[i] + t * (F.px[rc] - F.px[i])
++		var qy: float = F.py[i] + t * (F.py[rc] - F.py[i])
++		var qz: float = F.pz[i] + t * (F.pz[rc] - F.pz[i])
++		var ql: float = sqrt(qx * qx + qy * qy + qz * qz)
++		qx /= ql
++		qy /= ql
++		qz /= ql
++		var along: float = WorldPlanet.atan2f(qx * v[0] + qy * v[1] + qz * v[2], qx * u[0] + qy * u[1] + qz * u[2])
++		out.append([float(mid) + along / step, F.flow[i]])
++	return out
++
++
++## A ring's rivers as lake entries [first column, last column, level, width, flow] (the water module and the turn treat them as lakes), in column order, from the ring's ground (`base`: after the platforms),
++## the settlements' chords, the fine and stored biomes of its columns and the lakes already planned. The ground is not changed here (`carve` does it, for the entries kept).
++static func plan(P: WorldPlanet.Planet, spec: Dictionary, base: PackedFloat32Array, chords: Array, fine: PackedByteArray, stored: PackedByteArray, lakes: Array) -> Array:
++	if not _loaded:
++		_load()
++	var F: Flow = flowOf(P)
++	if F == null:
++		return []
++	var n: int = base.size()
++	var cand: Array = []
++	for cr in crossings(P, spec, F):
++		var c0: int = posmod(int(round(float(cr[0]))), n)
++		var m: int = c0
++		var bm: float = 1.0e18
++		for off in range(-K_REACH, K_REACH + 1):
++			var cc: int = posmod(c0 + off, n)
++			if base[cc] < bm:
++				bm = base[cc]
++				m = cc
++		if bm < K_FLOOR:
++			continue
++		var fl: float = float(cr[1])
++		var W: int = clampi(int(round(K_W0 + K_W1 * sqrt(fl / K_REF))), K_MIN_COLS, K_MAX_COLS)
++		var first: int = posmod(m - W / 2, n)
++		var bad: bool = false
++		for x in range(W):
++			var cx: int = (first + x) % n
++			if stored[cx] >= 7:
++				bad = true
++				break
++		if bad:
++			continue
++		var fi: int = fine[m] if m < fine.size() else 0
++		if fi < _refuse.size() and _refuse[fi] == 1:
++			continue
++		for ch in chords:
++			if WorldLakes._overlap(first - K_MARGIN, first + W - 1 + K_MARGIN, int(ch[2]), int(ch[3]), n):
++				bad = true
++				break
++		if bad:
++			continue
++		for lk in lakes:
++			if WorldLakes._overlap(first, first + W - 1, int(lk[0]), int(lk[0]) + int(lk[3]) - 1, n):
++				bad = true
++				break
++		if bad:
++			continue
++		var lb: float = base[posmod(first - K_BANK, n)]
++		var rb: float = base[(first + W - 1 + K_BANK) % n]
++		var level: float = minf(lb, rb) - K_FREE
++		if level < K_FLOOR:
++			continue
++		cand.append({"m": m, "first": first, "W": W, "flow": fl, "level": level})
++	cand.sort_custom(func(a, b): return a.flow > b.flow or (a.flow == b.flow and a.m < b.m))
++	var gap: int = int(ceil(K_GAP / SimConst.COL))
++	var keep: Array = []
++	for cd in cand:
++		if keep.size() >= K_MAXN:
++			break
++		var near: bool = false
++		for k in keep:
++			var d: int = absi(posmod(int(cd.m) - int(k.m) + n / 2, n) - n / 2)
++			if d < gap:
++				near = true
++				break
++		if near:
++			continue
++		keep.append(cd)
++	keep.sort_custom(func(a, b): return a.first < b.first)
++	var out: Array = []
++	for k in keep:
++		out.append([int(k.first), (int(k.first) + int(k.W) - 1) % n, float(k.level), int(k.W), float(k.flow)])
++	return out
++
++
++## The depth of a river's bed at the middle of its span, from the flow in the entry.
++static func depthOf(flow: float) -> float:
++	return minf(K_DMAX, K_D0 + K_D1 * sqrt(flow / K_REF))
++
++
++## Cut the entries' channels into the ground `base`: the bed is the level less the depth in the middle of the span, easing up to the level at the edges (so a bank meets the water without a step); never raised.
++static func carve(base: PackedFloat32Array, entries: Array) -> void:
++	var n: int = base.size()
++	for e in entries:
++		var W: int = int(e[3])
++		var d: float = depthOf(float(e[4]))
++		var cf: float = float(W - 1) * 0.5
++		for x in range(W):
++			var u: float = absf(float(x) - cf) / (cf + 0.5)
++			var p: float = 1.0
++			if u > 0.5:
++				var s: float = (u - 0.5) / 0.5
++				p = 1.0 - s * s * (3.0 - 2.0 * s)
++			var cx: int = (int(e[0]) + x) % n
++			var bed: float = float(e[2]) - d * p
++			if bed < base[cx]:
++				base[cx] = bed
+diff --git a/sim/world/rivers.gd.uid b/sim/world/rivers.gd.uid
+new file mode 100644
+index 0000000..eed8b85
+--- /dev/null
++++ b/sim/world/rivers.gd.uid
+@@ -0,0 +1 @@
++uid://cwvg4262xr0pj
+diff --git a/sim/world/tools/gen2_soak.gd b/sim/world/tools/gen2_soak.gd
+index d51747c..f3da10a 100644
+--- a/sim/world/tools/gen2_soak.gd
++++ b/sim/world/tools/gen2_soak.gd
+@@ -1,7 +1,7 @@
+ extends SceneTree
+ # Gen 2 matches played through (World, window 4): AI against AI on gen 2 planets (the whole of gen 2: climate, profiles, trees, landforms, sites), some with the calm-moment turn on, a few ticks each, to
+ # see that nothing errors and that a match is the same twice. Prints a line a match.
+-#   godot --headless --path . --script res://sim/world/tools/gen2_soak.gd -- --ticks=900     (--b: with land.json's b switch on for the run, window 12)
++#   godot --headless --path . --script res://sim/world/tools/gen2_soak.gd -- --ticks=900     (--b: with land.json's b switch on for the run, window 12; --rivers: with rivers.json on, window 14)
+ func match_hash(setup: Dictionary, ticks: int) -> Array:
+ 	var S := SimCore.createSim()
+ 	SimCore.newMatch(S, 1, {}, setup)
+@@ -21,6 +21,8 @@ func _init() -> void:
+ 			ticks = int(a.substr(8))
+ 		if a == "--b":
+ 			WorldLand.setB(true)
++		if a == "--rivers":
++			WorldRivers.setOn(true)   # the rivers on for this run (window 14; the data stays off)
+ 	var bad: int = 0
+ 	var n: int = 0
+ 	for sd in [7, 3, 11, 25]:
+diff --git a/sim/world/tools/planet_map.gd b/sim/world/tools/planet_map.gd
+index 3ae9686..1a24686 100644
+--- a/sim/world/tools/planet_map.gd
++++ b/sim/world/tools/planet_map.gd
+@@ -2,6 +2,7 @@ extends SceneTree
+ # An equirectangular map of a planet's biomes (and a hillshade of its heights), for looking at a generation:
+ #   godot --headless --path . --script res://sim/world/tools/planet_map.gd -- --seeds=7,3,11,25 --gens=1,2 --w=720 --out=<folder>
+ # --places marks the places on the fine and height pictures (a city a red square, a town a yellow one).
++# --rivers draws the flow field's river cells on the height and fine pictures (window 14).
+ # --b turns land.json's b switch on for the run (Research's B plates, window 12; the files are planet-<seed>-gen2b-*.png).
+ # --edges draws the plates' edges on the height picture (red closing, blue parting, yellow neither); --height=0 leaves the height picture out.
+ # Writes <out>/planet-<seed>-gen<g>-height.png (heights by colour, sea to snow), <out>/planet-<seed>-gen<g>-stored.png (the stored biomes: what the renderer sees) and, for gen 2, -fine.png (the fine biomes) and prints the share of each biome and the cost a sample.
+@@ -16,6 +17,7 @@ func _init() -> void:
+ 	var edges: bool = false
+ 	var places: bool = false
+ 	var useB: bool = false
++	var showRivers: bool = false
+ 	for a in OS.get_cmdline_user_args():
+ 		if a.begins_with("--seeds="):
+ 			seeds = Array(a.substr(8).split(",")).map(func(v): return int(v))
+@@ -31,6 +33,8 @@ func _init() -> void:
+ 			places = true
+ 		if a == "--b":
+ 			useB = true
++		if a == "--rivers":
++			showRivers = true
+ 	if useB:
+ 		WorldLand.setB(true)   # Research's B plates for this run (window 12)
+ 	var tag: String = "b" if useB else ""
+@@ -90,6 +94,20 @@ func _init() -> void:
+ 							var qy: int = clampi(pyl + dy, 0, h - 1)
+ 							imgF.set_pixel(qx, qy, mc)
+ 							imgH.set_pixel(qx, qy, mc)
++			if showRivers and g >= 2:   # the drainage of the climate grid (window 14): its river cells, blue
++				var F: WorldRivers.Flow = WorldRivers.flowOf(P)
++				var nr: int = 0
++				for i in range(F.w * F.h):
++					if P.grid.ht[i] >= 0.0 and F.flow[i] >= WorldRivers.K_RIVER:
++						var rx: int = int(fposmod(atan2(F.pz[i], F.px[i]), SimMathx.TAU) / SimMathx.TAU * float(w)) % w
++						var ry: int = clampi(int((0.5 - asin(F.py[i]) / SimMathx.PI) * float(h)), 0, h - 1)
++						var big: int = 1 if F.flow[i] > 4.0 * WorldRivers.K_RIVER else 0
++						for dy in range(-big, big + 1):
++							for dx in range(-big, big + 1):
++								imgF.set_pixel((rx + dx + w) % w, clampi(ry + dy, 0, h - 1), Color(0.1, 0.35, 1.0))
++								imgH.set_pixel((rx + dx + w) % w, clampi(ry + dy, 0, h - 1), Color(0.1, 0.35, 1.0))
++						nr += 1
++				print("   rivers: %d river cells of %d land cells (%.1f%%)" % [nr, F.landCells, 100.0 * float(nr) / float(maxi(F.landCells, 1))])
+ 			imgL.save_png("%s/planet-%d-gen%d%s-stored.png" % [out, sd, g, tag if g >= 2 else ""])
+ 			imgH.save_png("%s/planet-%d-gen%d%s-height.png" % [out, sd, g, tag if g >= 2 else ""])
+ 			if g >= 2:
+diff --git a/sim/world/tools/rivers_check.gd b/sim/world/tools/rivers_check.gd
+new file mode 100644
+index 0000000..19d6346
+--- /dev/null
++++ b/sim/world/tools/rivers_check.gd
+@@ -0,0 +1,187 @@
++extends SceneTree
++# Planet generation 2's rivers (docs/world/rivers.md; WorldRivers, data/biomes/rivers.json): the flow field on the climate grid, a ring's crossings snapped to its valley and cut and planted as narrow shallow
++# lakes, Game Design's row 13 spacing, never deep enough to hide in, nothing changed with the switch off.
++#   godot --headless --path . --script res://sim/world/tools/rivers_check.gd
++var fails: int = 0
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func setup(sd: int, touch: int, turn: bool = false) -> Dictionary:
++	var arena: Dictionary = {"cols": 2400}
++	if turn:
++		arena["turn"] = true
++	return {"planet": sd, "touch": touch, "arena": arena, "planetGen": 2, "intro": false}
++
++
++func fresh(setup_: Dictionary) -> SimState:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {}, setup_)
++	S.out.fx.clear()
++	return S
++
++
++## The river entries of a state's ring: the lake entries with a flow (a fifth element).
++func riversOf(S: SimState) -> Array:
++	var out: Array = []
++	for lk in S.planetRing.get("lakes", []):
++		if lk.size() > 4:
++			out.append(lk)
++	return out
++
++
++func _init() -> void:
++	ok(WorldRivers.dataErrors().is_empty(), "rivers.json is clean (%s)" % str(WorldRivers.dataErrors()))
++	ok(not WorldRivers.enabled(), "rivers.json ships with the rivers off")
++	ok(WorldRivers.depthOf(1.0e9) == WorldRivers.K_DMAX and WorldRivers.K_DMAX < WorldWater.HIDE_MIN_DEPTH, "the deepest river (%.0f units) is under the depth that hides a fighter (%.0f): a river is always waded" % [WorldRivers.K_DMAX, WorldWater.HIDE_MIN_DEPTH])
++	WorldClimate.useGen(1)
++	ok(WorldRivers.flowOf(WorldPlanet.make(7)) == null, "a gen 1 planet has no flow field")
++	WorldClimate.useGen(2)
++	# the flow field
++	var drains: bool = true
++	var mono: bool = true
++	var det: bool = true
++	var frac: Array = []
++	var t0: int = Time.get_ticks_usec()
++	for sd in [7, 3, 11, 25]:
++		var P := WorldPlanet.make(sd)
++		var G: WorldClimate.Grid = WorldClimate.gridOf(P)
++		var tb: int = Time.get_ticks_usec()
++		var F: WorldRivers.Flow = WorldRivers.flowOf(P)
++		var tf: float = float(Time.get_ticks_usec() - tb) / 1000.0
++		var n: int = F.w * F.h
++		for i in range(n):
++			if G.ht[i] < 0.0:
++				continue
++			var cur: int = i
++			var steps: int = 0
++			while cur >= 0 and G.ht[cur] >= 0.0 and steps < n:
++				var rc: int = F.recv[cur]
++				if rc >= 0 and F.flow[rc] + 1.0e-4 < F.flow[cur] and G.ht[rc] >= 0.0:
++					mono = false
++				cur = rc
++				steps += 1
++			if cur < 0 or G.ht[cur] >= 0.0:
++				drains = false   # a land cell that never reaches the sea
++		var F2 := WorldRivers.Flow.new(G)
++		if F2.recv != F.recv or F2.flow != F.flow:
++			det = false
++		frac.append("%.1f%%" % (100.0 * float(F.rivers) / float(maxi(F.landCells, 1))))
++		print("    planet %d: flow field %.0f ms, %d river cells of %d land cells" % [sd, tf, F.rivers, F.landCells])
++	ok(drains, "every land cell's runoff reaches the sea (no dead end, no loop)")
++	ok(mono, "the flow never falls downstream")
++	ok(det, "the flow field is the same twice")
++	print("    river cells of the land: %s" % str(frac))
++	# a ring's rivers
++	WorldRivers.setOn(true)
++	var spansOk: bool = true
++	var gapOk: bool = true
++	var depthOk: bool = true
++	var rings: int = 0
++	var withRivers: int = 0
++	var most: int = 0
++	var tp: int = Time.get_ticks_usec()
++	var gap: int = int(ceil(WorldRivers.K_GAP / SimConst.COL))
++	for sd in [7, 3, 11, 25]:
++		var P := WorldPlanet.make(sd)
++		for touch in [0, 4, 8]:
++			var S := fresh(setup(sd, touch))
++			rings += 1
++			var rv: Array = riversOf(S)
++			if not rv.is_empty():
++				withRivers += 1
++			most = maxi(most, rv.size())
++			var n: int = SimConst.NC
++			for a in range(rv.size()):
++				var e: Array = rv[a]
++				if int(e[3]) < WorldRivers.K_MIN_COLS or int(e[3]) > WorldRivers.K_MAX_COLS or float(e[4]) <= 0.0:
++					spansOk = false
++				for b in range(a + 1, rv.size()):
++					var d: int = absi(posmod(int(e[0]) + int(e[3]) / 2 - int(rv[b][0]) - int(rv[b][3]) / 2 + n / 2, n) - n / 2)
++					if d < gap:
++						gapOk = false
++				# the bed: water to the flat level, never deeper than the data's deepest
++				var deepest: float = 0.0
++				for k in range(int(e[3])):
++					var c: int = (int(e[0]) + k) % n
++					deepest = maxf(deepest, S.water[c])
++					if S.water[c] > 0.0 and absf(S.base[c] + S.water[c] - float(e[2])) > 0.01:
++						spansOk = false
++				if deepest > WorldRivers.K_DMAX + 0.01 or deepest <= 0.0:
++					depthOk = false
++	var perRing: float = float(Time.get_ticks_usec() - tp) / 1000.0 / float(rings)
++	ok(rings == 12 and withRivers >= 4, "%d of %d rings (4 planets, 3 touch-downs) have a river in them (at most %d on one); a match starts in %.0f ms with them" % [withRivers, rings, most, perRing])
++	ok(spansOk, "each river's water lies flat at its level in a channel of the data's width")
++	ok(depthOk, "no river is deeper than %.0f units, and each holds water" % WorldRivers.K_DMAX)
++	ok(gapOk, "at most one river in any %.0f units of the ring (Game Design 23b row 13: the strongest of a comb of crossings)" % WorldRivers.K_GAP)
++	# a match with a river: no hiding, no trees in it, the same twice, and the switch off is the plain match
++	var pick = null
++	for sd in [7, 3, 11, 25]:
++		for touch in range(0, 12):
++			if pick == null and not riversOf(fresh(setup(sd, touch))).is_empty():
++				pick = [sd, touch]
++	ok(pick != null, "found a ring with a river to look at (planet %s, touch %s)" % [str(pick[0]) if pick != null else "-", str(pick[1]) if pick != null else "-"])
++	if pick != null:
++		var S1 := fresh(setup(pick[0], pick[1]))
++		var S2 := fresh(setup(pick[0], pick[1]))
++		var e0: Array = riversOf(S1)[0]
++		var mid: float = (float(e0[0]) + float(e0[3]) * 0.5) * SimConst.COL
++		ok(WorldWater.seaTop(S1, mid) == WorldWater.NO_SEA and not WorldTerrain.seaAt(S1, mid), "a river is not sea: a fighter in it is not below a surface that hides him (seaTop is none)")
++		var treesIn: int = 0
++		for t in S1.trees:
++			var tc: int = int(floor(SimWrap.wrap(t.x) / SimConst.COL)) % SimConst.NC
++			if posmod(tc - int(e0[0]), SimConst.NC) < int(e0[3]):
++				treesIn += 1
++		ok(treesIn == 0, "no tree grows in the river")
++		ok(str(SimHash.stateHash(S1).gameplay) == str(SimHash.stateHash(S2).gameplay), "a match with a river is the same twice")
++		WorldRivers.setOn(false)
++		var off := fresh(setup(pick[0], pick[1]))
++		var plain := fresh(setup(pick[0], pick[1]))
++		ok(str(SimHash.stateHash(off).gameplay) == str(SimHash.stateHash(plain).gameplay) and str(SimHash.stateHash(off).gameplay) != str(SimHash.stateHash(S1).gameplay) and riversOf(off).is_empty(), "with the switch off there is no river and the match is the plain one; with it on the ground is different")
++		WorldRivers.setOn(true)
++		# a hole dug beside the river fills from it (water v2's rule: water already standing is a source), and the river's own bed stays level when dug
++		var c0: int = int(e0[0]) + int(e0[3]) / 2
++		for k in range(-6, 7):
++			S1.deform[(c0 + k + SimConst.NC) % SimConst.NC] -= 50.0
++		WorldWater.touched(S1, c0, 10, S1.base[c0] + S1.deform[c0])
++		var flat: bool = true
++		for k in range(int(e0[3])):
++			var c: int = (int(e0[0]) + k) % SimConst.NC
++			if S1.water[c] > 0.0 and absf(S1.base[c] + WorldTerrain.lowD(S1)[c] + S1.water[c] - float(e0[2])) > 0.5:
++				flat = false
++		ok(flat, "a crater dug in the river's bed leaves its surface flat (the lakes' refill rule)")
++	# the calm turn plants the new ring's rivers where it is wholly new, and keeps the kept core's
++	var St := SimCore.createSim()
++	SimCore.newMatch(St, 1, {}, setup(7, 4, true))
++	for t in range(30):
++		SimCore.step(St)
++	St.T = 100.0
++	var px: float = 0.5 * (St.fighters[0].x + St.fighters[1].x)
++	var cands: Array = WorldEpoch.ask(St, "test", px, 1, 0)
++	var turnOk: bool = not cands.is_empty()
++	if turnOk:
++		WorldEpoch.choose(St, cands.size() - 1, 100000, 0.0)
++		var g: int = 0
++		while WorldEpoch.warmAngles(St).size() < St.epoch.warm.size() and g < 200:
++			WorldEpoch.tick(St, false)
++			g += 1
++		g = 0
++		while St.epoch.next != null and g < 40:
++			WorldEpoch.tick(St, true)
++			g += 1
++		turnOk = St.epoch.next == null
++	var flatT: bool = true
++	var nT: int = SimConst.NC
++	for lk in St.planetRing.get("lakes", []):
++		for k in range(int(lk[3])):
++			var c: int = (int(lk[0]) + k) % nT
++			if St.water[c] > 0.0 and absf(St.base[c] + WorldTerrain.lowD(St)[c] + St.water[c] - float(lk[2])) > 0.5:
++				flatT = false
++	ok(turnOk and flatT, "after a calm turn every lake and river of the ring (%d river(s)) lies flat at its level" % riversOf(St).size())
++	WorldRivers.setOn(false)
++	print("RIVERS: %d check(s) failed" % fails)
++	quit()
+diff --git a/sim/world/tools/rivers_check.gd.uid b/sim/world/tools/rivers_check.gd.uid
+new file mode 100644
+index 0000000..37ea574
+--- /dev/null
++++ b/sim/world/tools/rivers_check.gd.uid
+@@ -0,0 +1 @@
++uid://7v67lv1o4q7v
+diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
+index 4020474..a3221e3 100644
+--- a/tools/fixtures/cases.json
++++ b/tools/fixtures/cases.json
+@@ -292830,6 +292830,54 @@
+         "pointer": "/side/ringCols"
+       }
+     },
++    {
++      "id": "rivers-enabled-not-boolean",
++      "schema": "biomes-rivers.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/rivers.json",
++          "set": {
++            "/enabled": "on"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/enabled"
++      }
++    },
++    {
++      "id": "rivers-flow-river-zero",
++      "schema": "biomes-rivers.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/rivers.json",
++          "set": {
++            "/flow/river": 0
++          }
++        }
++      ],
++      "expect": {
++        "rule": "exclusiveMinimum",
++        "pointer": "/flow/river"
++      }
++    },
++    {
++      "id": "rivers-spacing-per-ring-zero",
++      "schema": "biomes-rivers.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/rivers.json",
++          "set": {
++            "/spacing/maxPerRing": 0
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/spacing/maxPerRing"
++      }
++    },
+     {
+       "id": "rings-turn-bearing-over-10",
+       "schema": "biomes-rings.schema.json",
+diff --git a/tools/schemas/biomes-rivers.schema.json b/tools/schemas/biomes-rivers.schema.json
+new file mode 100644
+index 0000000..ac61703
+--- /dev/null
++++ b/tools/schemas/biomes-rivers.schema.json
+@@ -0,0 +1,206 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "meridian/biomes-rivers",
++  "title": "biomes.rivers/1",
++  "description": "data/biomes/rivers.json: planet generation 2's rivers (docs/world/rivers.md; WorldRivers). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore. Order checks are WorldRivers' own load and rivers_check.",
++  "type": "object",
++  "required": [
++    "schema",
++    "_about",
++    "enabled",
++    "rain",
++    "flow",
++    "span",
++    "spacing",
++    "refuse"
++  ],
++  "additionalProperties": false,
++  "properties": {
++    "schema": {
++      "const": "biomes.rivers/1"
++    },
++    "_about": {
++      "type": "string"
++    },
++    "enabled": {
++      "type": "boolean",
++      "description": "Rivers on or off; off, nothing in WorldRivers runs and a planet is as it was."
++    },
++    "rain": {
++      "type": "object",
++      "required": [
++        "dry",
++        "gain",
++        "frozenT"
++      ],
++      "additionalProperties": false,
++      "description": "Runoff.",
++      "properties": {
++        "dry": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 1.0,
++          "description": "Moisture under which a land cell sheds no runoff."
++        },
++        "gain": {
++          "type": "number",
++          "exclusiveMinimum": 0.0,
++          "maximum": 100.0,
++          "description": "Runoff per unit of moisture over dry."
++        },
++        "frozenT": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 2.0,
++          "description": "Under this temperature a cell sheds none (a frozen river is not a channel)."
++        }
++      }
++    },
++    "flow": {
++      "type": "object",
++      "required": [
++        "river",
++        "ref"
++      ],
++      "additionalProperties": false,
++      "description": "The flow field.",
++      "properties": {
++        "river": {
++          "type": "number",
++          "exclusiveMinimum": 0.0,
++          "maximum": 100000.0,
++          "description": "A cell whose flow passes this is a river cell."
++        },
++        "ref": {
++          "type": "number",
++          "exclusiveMinimum": 0.0,
++          "maximum": 100000.0,
++          "description": "The flow a river of the base width carries."
++        }
++      }
++    },
++    "span": {
++      "type": "object",
++      "required": [
++        "minCols",
++        "maxCols",
++        "width0",
++        "width1",
++        "depth0",
++        "depth1",
++        "maxDepth",
++        "freeboard",
++        "reach",
++        "bank",
++        "margin",
++        "floor"
++      ],
++      "additionalProperties": false,
++      "description": "A river's channel.",
++      "properties": {
++        "minCols": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 200,
++          "description": "The narrowest channel, in columns."
++        },
++        "maxCols": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 400,
++          "description": "The widest (at least minCols: WorldRivers' load)."
++        },
++        "width0": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 400.0,
++          "description": "Columns wide at no flow."
++        },
++        "width1": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 400.0,
++          "description": "Columns added with the square root of flow over ref."
++        },
++        "depth0": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 1000.0,
++          "description": "Depth at no flow, in units."
++        },
++        "depth1": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 1000.0,
++          "description": "Depth added with the square root of flow over ref."
++        },
++        "maxDepth": {
++          "type": "number",
++          "exclusiveMinimum": 0.0,
++          "maximum": 1000.0,
++          "description": "The deepest a river is: under the depth that hides a fighter (WorldRivers' load)."
++        },
++        "freeboard": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 1000.0,
++          "description": "How far the surface lies under the lower bank."
++        },
++        "reach": {
++          "type": "integer",
++          "minimum": 0,
++          "maximum": 200,
++          "description": "Columns either side the crossing is snapped to the lowest ground within."
++        },
++        "bank": {
++          "type": "integer",
++          "minimum": 0,
++          "maximum": 100,
++          "description": "Columns outside the channel the banks are read at."
++        },
++        "margin": {
++          "type": "integer",
++          "minimum": 0,
++          "maximum": 200,
++          "description": "Columns kept clear of a settlement."
++        },
++        "floor": {
++          "type": "number",
++          "minimum": -1000.0,
++          "maximum": 1000.0,
++          "description": "No river on ground under this height (the sea's edge)."
++        }
++      }
++    },
++    "spacing": {
++      "type": "object",
++      "required": [
++        "gapUnits",
++        "maxPerRing"
++      ],
++      "additionalProperties": false,
++      "description": "How many rivers a ring keeps.",
++      "properties": {
++        "gapUnits": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 1000000.0,
++          "description": "Of the crossings at most one is kept in any this many units (Game Design 23b row 13: 3,000)."
++        },
++        "maxPerRing": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 200,
++          "description": "At most this many a ring."
++        }
++      }
++    },
++    "refuse": {
++      "type": "array",
++      "items": {
++        "type": "string"
++      },
++      "description": "Fine biomes a river does not cross (their names are checked by WorldRivers' load)."
++    }
++  }
++}
+diff --git a/tools/schemas/map.json b/tools/schemas/map.json
+index 2334a03..c413447 100644
+--- a/tools/schemas/map.json
++++ b/tools/schemas/map.json
+@@ -451,6 +451,10 @@
+       "match": "data/biomes/water.json",
+       "schema": "biomes-water.schema.json"
+     },
++    {
++      "match": "data/biomes/rivers.json",
++      "schema": "biomes-rivers.schema.json"
++    },
+     {
+       "match": "data/biomes/campaign.json",
+       "schema": "biomes-campaign.schema.json"

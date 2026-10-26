@@ -7,6 +7,8 @@ extends SceneTree
 ##   surface-<ground>-dry.wav   each ground: steps, a scuff under a blow, a landing slow and hard, a slide, a crater (about 6 s)
 ##   fight-<biome>-dry.wav      a staged fight in a biome with the set on (the bed under it, ducked by the blows; the ground under each blow near it)
 ##   fight-<biome>-without-dry.wav   the same fight with the set off, to hear what it adds
+##   water-fill-dry.wav, water-wave-dry.wav, water-douse-dry.wav   World's water v2: a hole filling (a small, a big, a deep dig, a table's seep), a ring wave, a douse
+##   fight-ocean-water-dry.wav, fight-ocean-water-without-dry.wav   the ocean fight with a slam's wave, a fill and a douse in it, with the set on and off
 ## A looped voice (the bed) is rendered by following its updates and stop. The stereo place a cue would have in the game is not
 ## heard in a mono file. Not a game recording.
 
@@ -33,9 +35,10 @@ func _init() -> void:
 			_xs[b] = float(x) + 120.0
 	_beds(out_dir)
 	_surfaces(out_dir)
-	for b in ["desert", "ocean", "city"]:
-		if _xs.has(b):
+	for b in ["desert", "ocean", "city", "ice_sheet", "volcanic"]:
+		if _xs.has(b) or b in _fine_ids():
 			_fight(out_dir, b)
+	_water_clips(out_dir)
 	SimCore.dispose(S)
 	quit(0)
 
@@ -70,9 +73,9 @@ func _place(x: float, up: float) -> void:
 func _beds(out_dir: String) -> void:
 	var made: Dictionary = {}
 	var peak: float = 0.0
-	var order: Array = ["ocean", "village", "plains", "city", "forest", "desert", "mountains"]
+	var order: Array = ["ocean", "village", "plains", "city", "forest", "desert", "mountains", "ice_sheet", "sea_ice", "jungle", "savanna", "tundra", "taiga", "wetland", "beach", "highland", "volcanic"]
 	for b in order:
-		if not _xs.has(b):
+		if not bank.world.biomes.has(b):
 			continue
 		var R: Dictionary = bank.world.biomes[b]
 		var buf := PackedFloat32Array()
@@ -133,12 +136,13 @@ func _surfaces(out_dir: String) -> void:
 
 
 # ---- a staged fight in a biome, with the set on and off
-func _fight(out_dir: String, biome: String) -> void:
-	var x: float = float(_xs[biome])
-	var on: Array = _fight_mix(x, biome, true)
-	var off: Array = _fight_mix(x, biome, false)
+func _fight(out_dir: String, biome: String, water: bool = false) -> void:
+	var x: float = float(_xs.get(biome, 0.0))
+	var on: Array = _fight_mix(x, biome, true, water)
+	var off: Array = _fight_mix(x, biome, false, water)
 	var k: float = AudioDsp.db_to_lin(-3.0) / maxf(maxf(AudioDsp.peak(on[0]), AudioDsp.peak(off[0])), 1e-6)
-	for pair in [["fight-%s-dry.wav" % biome, on], ["fight-%s-without-dry.wav" % biome, off]]:
+	var tag: String = "%s-water" % biome if water else biome
+	for pair in [["fight-%s-dry.wav" % tag, on], ["fight-%s-without-dry.wav" % tag, off]]:
 		var mix: PackedFloat32Array = pair[1][0]
 		for i in range(mix.size()):
 			mix[i] *= k
@@ -147,10 +151,47 @@ func _fight(out_dir: String, biome: String) -> void:
 		print("%s: %.1f s, %d cues, error %d" % [path, float(mix.size()) / RATE, pair[1][1], AudioDsp.to_wav(mix, RATE).save_to_wav(path)])
 
 
-func _fight_mix(x: float, biome: String, with_world: bool) -> Array:
+## The fine biomes of planet generation 2 by name (climate.json); a fight in one is staged on the plains of the hand-made world with the fine
+## columns set to that biome (WorldBiomes.fineCols, which World's generation 2 planets set) so the clip shows what the set does there.
+func _fine_ids() -> Array:
+	var out: Array = []
+	for f in AudioBank.load_json("res://data/biomes/climate.json").get("fine", []):
+		out.append(String(f.name))
+	return out
+
+
+var _keep_cols := PackedByteArray()
+var _keep_fine := PackedByteArray()
+
+
+func _mock_fine(biome: String) -> void:
+	var k: int = _fine_ids().find(biome)
+	var nc: int = int(SimConst.NC)
+	var fc := PackedByteArray()
+	fc.resize(nc)
+	fc.fill(k)
+	var stored := PackedByteArray()
+	stored.resize(nc)
+	stored.fill(1)
+	_keep_cols = WorldBiomes.planetCols
+	_keep_fine = WorldBiomes.fineCols
+	WorldBiomes.planetCols = stored
+	WorldBiomes.fineCols = fc
+
+
+func _unmock() -> void:
+	WorldBiomes.planetCols = _keep_cols
+	WorldBiomes.fineCols = _keep_fine
+
+
+func _fight_mix(x: float, biome: String, with_world: bool, water: bool = false) -> Array:
 	cues = AudioCues.new(bank)
 	cues.world.cfg["enabled"] = with_world
 	cues.reset(4)
+	var fine: bool = not _xs.has(biome)
+	if fine:
+		x = float(_xs["plains"]) + 120.0
+		_mock_fine(biome)
 	var sea: bool = biome == "ocean"
 	var g: float = WorldTerrain.groundY(S, x)
 	var ws: float = WorldWater.surfaceAt(S, x)
@@ -185,6 +226,11 @@ func _fight_mix(x: float, biome: String, with_world: bool) -> Array:
 	for t in [600, 640]:
 		add.call(t, _blow("heavy", 1, t))
 		add.call(t, _dmg(1, "heavy", 80.0, x, low))
+	if water:
+		# a slam into the sea at 284 sends a wave, a hole dug by the heavy at 280 fills, and the fire it reaches goes out
+		add.call(286, _ev("water_wave", {"x": x, "y": ws, "r": 600.0, "amount": 75.0, "n": 6, "dur": 0.2, "spd": 3000.0}))
+		add.call(300, _ev("water_fill", {"x": x + 200.0, "y": ws, "r": 160.0, "n": 41, "amount": 220.0, "dur": 1.6, "spd": 720.0, "cause": "sea"}))
+		add.call(345, _ev("water_douse", {"x": x + 200.0, "w": 320.0, "n": 18}))
 	var timeline: Array = []
 	var last: int = 780
 	_place(x, 30.0 if not sea else 400.0)
@@ -201,11 +247,62 @@ func _fight_mix(x: float, biome: String, with_world: bool) -> Array:
 	var mix := PackedFloat32Array()
 	mix.resize(int(total * RATE))
 	_mix_timeline(mix, timeline, total)
+	if fine:
+		_unmock()
 	return [mix, timeline.size()]
+
+
+func _water_clips(out_dir: String) -> void:
+	var sets: Dictionary = {
+		"water-fill-dry": [[30, "water_fill", {"amount": 40.0, "dur": 0.4, "spd": 720.0, "cause": "sea"}], [150, "water_fill", {"amount": 120.0, "dur": 1.0, "spd": 720.0, "cause": "sea"}],
+			[300, "water_fill", {"amount": 400.0, "dur": 2.0, "spd": 720.0, "cause": "water"}], [480, "water_fill", {"amount": 100.0, "dur": 1.5, "spd": 0.0, "cause": "table"}]],
+		"water-wave-dry": [[30, "water_wave", {"amount": 75.0, "dur": 0.2}], [150, "water_wave", {"amount": 75.0, "dur": 0.2}], [180, "water_wave", {"amount": 75.0, "dur": 0.2}], [320, "water_wave", {"amount": 75.0, "dur": 0.2}]],
+		"water-douse-dry": [[30, "water_douse", {"n": 2}], [120, "water_douse", {"n": 12}], [220, "water_douse", {"n": 40}]]}
+	var made: Dictionary = {}
+	var peak: float = 0.0
+	for name in sets:
+		cues = AudioCues.new(bank)
+		cues.world.cfg["enabled"] = true
+		cues.reset(4)
+		_place(4000.0, 300.0)
+		var ev_at: Dictionary = {}
+		var last: int = 0
+		for row in sets[name]:
+			var d: Dictionary = {"x": 4000.0, "y": 0.0, "w": 200.0, "r": 120.0}
+			d.merge(row[2], true)
+			if not ev_at.has(int(row[0])):
+				ev_at[int(row[0])] = []
+			ev_at[int(row[0])].append(_ev(String(row[1]), d))
+			last = maxi(last, int(row[0]))
+		var timeline: Array = []
+		for t in range(0, last + 240):
+			S.tick = t
+			S.T = float(t) / 60.0
+			for c in cues.consume(S, ev_at.get(t, [])):
+				if String(c.sound).begins_with("amb.") or String(c.group).begins_with("amb.") or String(c.stop_group).begins_with("amb."):
+					continue                       # the bed is not part of these clips
+				timeline.append([t, c])
+		var total: float = float(last + 240) / 60.0 + 0.5
+		var mix := PackedFloat32Array()
+		mix.resize(int(total * RATE))
+		_mix_timeline(mix, timeline, total)
+		peak = maxf(peak, AudioDsp.peak(mix))
+		made[name] = mix
+	var k: float = AudioDsp.db_to_lin(-3.0) / maxf(peak, 1e-6)
+	for name in made:
+		var mix: PackedFloat32Array = made[name]
+		for i in range(mix.size()):
+			mix[i] *= k
+		AudioDsp.fade(mix, 0.003, 0.3, RATE)
+		var path: String = "%s/%s.wav" % [out_dir, name]
+		print("%s: %.1f s, error %d" % [path, float(mix.size()) / RATE, AudioDsp.to_wav(mix, RATE).save_to_wav(path)])
+	if _xs.has("ocean"):
+		_fight(out_dir, "ocean", true)
 
 
 func _mix_timeline(mix: PackedFloat32Array, timeline: Array, total: float) -> void:
 	var loops: Dictionary = {}           # group -> {start, buf, rate, keys: [[t, gain, pitch]], end}
+	var shots: Array = []                # one-shots: {c, at, cut, fade}: a stop request for a one-shot's group cuts it with a fade
 	for entry in timeline:
 		var at: float = float(int(entry[0])) / 60.0
 		var c = entry[1]
@@ -213,6 +310,12 @@ func _mix_timeline(mix: PackedFloat32Array, timeline: Array, total: float) -> vo
 			if loops.has(c.stop_group) and loops[c.stop_group].end < 0.0:
 				loops[c.stop_group]["end"] = at
 				loops[c.stop_group]["fade"] = float(c.fade_ms) * 0.001
+			else:
+				for i in range(shots.size() - 1, -1, -1):
+					if String(shots[i].c.group) == String(c.stop_group) and float(shots[i].cut) < 0.0:
+						shots[i]["cut"] = at
+						shots[i]["fade"] = float(c.fade_ms) * 0.001
+						break
 			continue
 		if c.loop and c.update:
 			if loops.has(c.group) and loops[c.group].end < 0.0:
@@ -224,7 +327,10 @@ func _mix_timeline(mix: PackedFloat32Array, timeline: Array, total: float) -> vo
 		if c.loop:
 			loops[c.group] = {"start": at, "buf": bank.buffer(c.sound, c.variant), "rate": bank.rate_of(c.sound), "keys": [[at, c.gain_db, c.pitch]], "end": -1.0, "fade": 0.04}
 			continue
-		_mix_one(mix, bank.buffer(c.sound, c.variant), bank.rate_of(c.sound), at, c.pitch, c.gain_db)
+		shots.append({"c": c, "at": at, "cut": -1.0, "fade": 0.0})
+	for sh in shots:
+		var cc = sh.c
+		_mix_one(mix, bank.buffer(cc.sound, cc.variant), bank.rate_of(cc.sound), float(sh.at), cc.pitch, cc.gain_db, float(sh.cut), float(sh.fade))
 	for g in loops:
 		_mix_loop(mix, loops[g], total)
 
@@ -262,7 +368,7 @@ func _mix_loop(mix: PackedFloat32Array, L: Dictionary, total: float) -> void:
 		mix[i] += (a + (b - a) * f) * g
 
 
-func _mix_one(mix: PackedFloat32Array, src: PackedFloat32Array, rate: int, at: float, pitch: float, gain: float) -> void:
+func _mix_one(mix: PackedFloat32Array, src: PackedFloat32Array, rate: int, at: float, pitch: float, gain: float, cut: float = -1.0, fade: float = 0.0) -> void:
 	var step: float = pitch * float(rate) / float(RATE)
 	var g: float = AudioDsp.db_to_lin(gain)
 	var a0: int = int(at * RATE)
@@ -275,4 +381,9 @@ func _mix_one(mix: PackedFloat32Array, src: PackedFloat32Array, rate: int, at: f
 		var f: float = p - float(i0)
 		var a: float = src[i0]
 		var b: float = src[i0 + 1] if i0 + 1 < src.size() else 0.0
-		mix[a0 + j] += (a + (b - a) * f) * g
+		var gg: float = g
+		if cut >= 0.0:
+			var tt: float = float(a0 + j) / RATE
+			if tt > cut:
+				gg *= clampf(1.0 - (tt - cut) / maxf(fade, 1e-6), 0.0, 1.0)
+		mix[a0 + j] += (a + (b - a) * f) * gg

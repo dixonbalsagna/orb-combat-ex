@@ -29,3 +29,26 @@ FIGHTS: a staged fight in a biome, with the set on and with it off (14 seconds e
 
 Everything is low on purpose (your direction: chunky, not tinny or metallic). If a ground is too thuddy to tell
 which ground it is, say so: I would raise its crumbs, not its highs.
+
+ADDED 2026-10-23 (the fine biomes of World's planet generation 2; not in the game yet, waiting on the biome sound switch and World's window 2)
+BEDS (8 seconds each, same levels as the first seven)
+  bed-ice_sheet-dry.wav   a barren, very low wind and a slow deep creak of ice
+  bed-sea_ice-dry.wav     a faint swell under the ice, an occasional low creak
+  bed-jungle-dry.wav      dense rustle, a low hum, frog thrums
+  bed-savanna-dry.wav     slow open wind in dry grass, a far low thrum
+  bed-tundra-dry.wav      very quiet: a far low wind
+  bed-taiga-dry.wav       soft wind through needles on a deep wooden hum
+  bed-wetland-dry.wav     a low hum, wet rustle, glugs
+  bed-beach-dry.wav       short waves with a hiss on each, a low body
+  bed-highland-dry.wav    thin empty wind, a deep body, a few distant stones
+  bed-volcanic-dry.wav    a deep rumble that beats slowly, vent hiss, deep thumps
+FIGHTS (14 seconds each, a pair: with the set and without it; same fight as the others)
+  fight-ice_sheet-dry.wav   fight-ice_sheet-without-dry.wav   (snow under the blows)
+  fight-volcanic-dry.wav    fight-volcanic-without-dry.wav    (rock under the blows, the deep rumble under everything)
+
+ADDED 2026-10-26 (World's water v2: a hole the fight digs fills with water; not in the game yet, behind World's water switch and the biome sound switch)
+  water-fill-dry.wav    four fills in turn: a small dig, a bigger one, a deep one, and a table's seep (a quiet trickle). A rushing swell of low noise that is cut when the fill settles
+  water-wave-dry.wav    a slam into deep water sends a ring wave: one heavy slosh (four of them, two close together)
+  water-douse-dry.wav   water reaching a scorched column puts the fire out: a short low hiss (a small one, a bigger, the biggest); the quietest of the set
+  fight-ocean-water-dry.wav   fight-ocean-water-without-dry.wav   the ocean fight with a slam's wave, a fill and a douse in it, with the set on and off (same levels)
+

@@ -34,6 +34,8 @@ static var K_WAVE_BAND: float = 100.0
 static var K_WAVE_PUSH: float = 75.0
 static var K_WAVE_STEPS: int = 6
 static var K_DOUSE: float = 0.3
+static var K_SURF_ON: bool = false
+static var K_SURF_TICKS: int = 30
 
 
 static func data() -> Dictionary:
@@ -52,6 +54,26 @@ static func on() -> bool:
 	if not _loaded:
 		_load()
 	return K_ON
+
+
+## The surfacing rule (Game Design 2026-10-23b item 7): on, and in how many ticks a body that has gone under surfaces. Independent of the fill's switch.
+static func surfaceOn() -> bool:
+	if not _loaded:
+		_load()
+	return K_SURF_ON
+
+
+static func surfaceTicks() -> int:
+	if not _loaded:
+		_load()
+	return K_SURF_TICKS
+
+
+## For tools and checks: the surfacing rule's switch for this process (the file is not touched).
+static func setSurface(on: bool) -> void:
+	if not _loaded:
+		_load()
+	K_SURF_ON = on
 
 
 static func parsed() -> Dictionary:
@@ -80,6 +102,8 @@ static func _load() -> void:
 	for k in j.table:
 		if not names.has(String(k)):
 			_errors.append("water.json: table names %s, which climate.json does not have" % String(k))
+	if j.has("surface") and (not (j.surface is Dictionary) or int(j.surface.ticks) < 2):
+		_errors.append("water.json: surface is {enabled, ticks} with ticks at least 2")
 	if int(j.fill.halfMax) < 4 or int(j.fill.maxWindows) < 1 or float(j.fill.rate) <= 0.0 or int(j.near.reach) < 1 or float(j.near.front) <= 0.0:
 		_errors.append("water.json: fill.halfMax at least 4, maxWindows at least 1, rate above 0, near.reach at least 1, near.front above 0")
 	if not _errors.is_empty():
@@ -107,6 +131,8 @@ static func _load() -> void:
 	K_WAVE_PUSH = float(j.wave.push)
 	K_WAVE_STEPS = int(j.wave.steps)
 	K_DOUSE = float(j.douse.scorchMin)
+	K_SURF_ON = bool(j.surface.enabled) if j.has("surface") else false
+	K_SURF_TICKS = int(j.surface.ticks) if j.has("surface") else 30
 
 
 ## Water shallower than this at x is waded: a body passing through it is not dragged or sunk (it still skims). Always false with the switch off.

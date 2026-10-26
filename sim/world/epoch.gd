@@ -409,6 +409,12 @@ static func _geomStep(S: SimState, E: Dictionary, pl: Dictionary, ep: Dictionary
 			ep["g2"] = 1
 		else:
 			ep["lakes"] = WorldLakes.onlyNew(WorldLakes.plan(ep.base, ep.chordsAll, ep.fcols, ep.cols), pl.wt)
+			if WorldRivers.enabled():   # window 14: the new ring's rivers, only where the ring is wholly new, cut into its prepared ground
+				var rsp: Dictionary = WorldPlanetWorld.specOf(sl.circ)
+				if not rsp.is_empty():
+					var rv: Array = WorldLakes.onlyNew(WorldRivers.plan(WorldPlanet.make(int(E.seed)), rsp, ep.base, ep.chordsAll, ep.fcols, ep.cols, ep.lakes), pl.wt)
+					WorldRivers.carve(ep.base, rv)
+					ep["lakes"] = ep.lakes + rv
 			ep["trees"] = WorldLakes.dryTrees(ep.trees, ep.lakes, NC)
 			ep["ready"] = true
 		ep.si = int(ep.si) + 1

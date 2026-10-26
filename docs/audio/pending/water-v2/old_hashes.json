@@ -1,0 +1,7 @@
+{
+  "audio/audio_world.gd": "708eec2a43001f9c9c55c56ec7eb8ff85582cf8041e78430626016e8aa030036",
+  "audio/data/world_cues.json": "6752d59cf4a22796dc6d434ddfd26fd8e0b4aa8058b7af753c04d007e294026d",
+  "audio/tools/world_check.gd": "4497c49d281b4bc5b581b3f0726250d57ac4f25ffbd926b144447ac8489e248e",
+  "audio/tools/render_biome_demo.gd": "c072ceae1e2664c52f010d8e57137f732a1d66c238431b06d73559c5d7bb0b24",
+  "docs/audio/biomes.md": "3cf533a061871b6f71d266bc4d3c74e4e41849508336530c33758c3d88b896d4"
+}

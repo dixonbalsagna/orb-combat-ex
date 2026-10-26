@@ -39,14 +39,14 @@ func _init() -> void:
 	var top: float = WorldWrecks.lift(4.0)
 	var any: Dictionary = WorldWrecks.pick(S, f.x, f.y, f.z, top)
 	ok(any.is_empty() and WorldWrecks.within(S, f.x, f.y, f.z, top).is_empty(), "no wreck stands where nothing has fallen: the query returns nothing")
-	# the masses of the city's buildings, whole (for the data's numbers)
+	# the wreckMass of the city's buildings, whole (for the data's numbers)
 	var hm: Array = []
 	var tm: Array = []
 	for b in S.buildings:
-		(tm if b.floors >= WorldBrunt.FLOORS_MIN else hm).append(WorldWrecks.mass(b))
+		(tm if b.floors >= WorldBrunt.FLOORS_MIN else hm).append(WorldWrecks.wreckMass(b))
 	hm.sort()
 	tm.sort()
-	print("  houses %d: mass %.2f to %.2f (median %.2f); towers %d: %.2f to %.2f (median %.2f); lifts %s" % [hm.size(), hm[0], hm[hm.size() - 1], hm[hm.size() / 2], tm.size(), tm[0] if tm.size() > 0 else 0.0, tm[tm.size() - 1] if tm.size() > 0 else 0.0, tm[tm.size() / 2] if tm.size() > 0 else 0.0, str(WorldWrecks._d.tierLift)])
+	print("  houses %d: wreckMass %.2f to %.2f (median %.2f); towers %d: %.2f to %.2f (median %.2f); lifts %s" % [hm.size(), hm[0], hm[hm.size() - 1], hm[hm.size() / 2], tm.size(), tm[0] if tm.size() > 0 else 0.0, tm[tm.size() - 1] if tm.size() > 0 else 0.0, tm[tm.size() / 2] if tm.size() > 0 else 0.0, str(WorldWrecks._d.tierLift)])
 	# a fallen house, the fighter beside it
 	var b = pickBuilding(S, f.x, true)
 	ok(b != null, "the city has a house in the front row (hp %.0f, %.0f wide)" % [b.maxhp, b.w])
@@ -62,8 +62,8 @@ func _init() -> void:
 			saved.append([o, o.popAlive])
 			o.popAlive = 0.0
 	var pk: Dictionary = WorldWrecks.pick(S, f.x, f.y, f.z, top)
-	ok(not pk.is_empty() and pk.id == b.idx and absf(pk.mass - WorldWrecks.mass(b)) < 1.0e-9 and pk.dist == 0.0, "beside it, the query returns the wreck's id and mass (id %d, mass %.2f)" % [pk.get("id", -1), pk.get("mass", 0.0)])
-	var heavyLift: float = WorldWrecks.mass(b) * 0.5
+	ok(not pk.is_empty() and pk.id == b.idx and absf(pk.wreckMass - WorldWrecks.wreckMass(b)) < 1.0e-9 and pk.dist == 0.0, "beside it, the query returns the wreck's id and mass (id %d, mass %.2f)" % [pk.get("id", -1), pk.get("wreckMass", 0.0)])
+	var heavyLift: float = WorldWrecks.wreckMass(b) * 0.5
 	var why: Array = WorldWrecks.within(S, f.x, f.y, f.z, heavyLift)
 	ok(WorldWrecks.pick(S, f.x, f.y, f.z, heavyLift).is_empty() and why.size() == 1 and why[0].why == "heavy", "a lift under its mass returns nothing, and says heavy")
 	# reach: 2 body heights to the wreck's box
@@ -85,6 +85,24 @@ func _init() -> void:
 			gotLiving = true
 	var pl: Array = WorldWrecks.within(S, f.x, f.y, f.z, top)
 	ok(not gotLiving or (WorldWrecks.pick(S, f.x, f.y, f.z, top).is_empty() and pl[0].why == "living"), "with people in a building beside it (%s) the wreck is not offered (RL-183)" % ("there are" if gotLiving else "there are none here: the check is vacuous"))
+	# Legal RL-186: a civilian in the open counts as much as one indoors. A district flight that is running puts the people of the buildings near a heavy event on the street: while it runs, a wreck within reach of it is not offered
+	for s in saved:
+		s[0].popAlive = 0.0   # (nobody indoors beside the wreck for what follows)
+	var wkeep: Array = []
+	for o in S.buildings:
+		if o != b and o.alive and absf(SimWrap.sdx(b.x + 1500.0, o.x)) < WorldCollateral.EVAC_R and o.popAlive > 0.0 and absf(SimWrap.sdx(b.x, o.x)) - (b.w + o.w) * 0.5 >= WorldWrecks.K_NEAR * WorldWrecks.BH + 1.0:
+			wkeep.append(o)
+	S.world.heavyX = b.x + 1500.0
+	S.world.heavyT = S.T
+	S.world.cbSum = 1.0e9   # the collateral window is spent: the district flight runs
+	var fleeing: Array = WorldWrecks.within(S, f.x, f.y, f.z, top)
+	ok(not wkeep.is_empty() and WorldWrecks.pick(S, f.x, f.y, f.z, top).is_empty() and fleeing[0].why == "living", "RL-186: while a district flight runs (people of %d building(s) still to leave, on the street) the wreck is not offered, though no building beside it holds anyone" % wkeep.size())
+	S.T += WorldCollateral.EVAC_ACTIVE_S + 1.0
+	ok(not WorldWrecks.pick(S, f.x, f.y, f.z, top).is_empty(), "when the flight is over, it is offered again")
+	# fighters, a partner and henchmen are combatants: not counted, whoever stands at the wreck
+	S.fighters[1].x = b.x
+	S.fighters[1].y = f.y
+	ok(not WorldWrecks.pick(S, f.x, f.y, f.z, top).is_empty(), "a fighter standing at the wreck does not refuse it (RL-186: combatants are not counted)")
 	# an occupied wreck is never offered (made by hand: the game has none)
 	b.popAlive = 3.0
 	ok(WorldWrecks.pick(S, f.x, f.y, f.z, top).is_empty() and not WorldWrecks.empty(b), "a wreck with anyone in it is not offered")

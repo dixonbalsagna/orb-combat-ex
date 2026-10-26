@@ -1,12 +1,12 @@
 {
   "schema": "biomes.campaign/1",
-  "_about": "The campaign's route on the ring (docs/design/campaign.md sections 1.4, 2.2, 2.3 and 7; World's part of the first slice, docs/world/campaign-route.md; read by sim/world/campaign.gd). enabled: off, nothing here runs and the golden is as it was. flight: how fast the pair fly between places (units a second: the melee dash, 430 x 2.4, the traversal multiplier left out: with it a lap of the planet is 15 s and 10 to 25 s would be a lap or more), the least and most seconds of flight from the last stage to the near edge of a column's place, and the most for the climax (its home may be farther: the flight is the build-up). columns: for each of the five columns the fewest and most places it offers, the chance of the extra one (a seeded draw), how many must be settled (a town or city on the ring: a defence needs one), the pull toward settled places, and whether the place is the pinned one (the climax is the boss's home). sites: openStride the columns between open-ground samples, sepS the least seconds of flight between two of a column's places, jitter how far a seeded draw may move a place's score, novelty what a new kind of ground adds, fallen what a fallen place loses (it is not offered as settled ground), openMin the least land share around an open site. turn: between columns the ring may turn about the pair's point by these bearings (degrees, either way) when its places are better there: bonus is what a turn adds to a ring's score (the route changes direction), minGain how much better a ring must be than none turned for it to win. side: a side story's place is a standing city or town on the current ring within the usual flight, at least sepS seconds from the column's places; ringCols its own Close ring's length (Game Design size close). wear: the bands of a place's wounds (place state only, mc02): band is the share of its buildings lost that lifts a place to each band (1 scarred, 2 ruined, 3 fallen), then for each band 0 to 3 the share of its buildings already fallen when a later stage meets it (the lowest by seeded order) and the share of hp the others keep.",
+  "_about": "The campaign's route on the ring (docs/design/campaign.md sections 1.4, 2.2, 2.3 and 7; World's part of the first slice, docs/world/campaign-route.md; read by sim/world/campaign.gd). enabled: off, nothing here runs and the golden is as it was. flight: a column's places lie minCols to maxCols columns from the pair, each way (Game Design rulings 2026-10-26 item 1: the band is stated in columns, 322 to 806, the 10 to 25 s of the melee dash, 430 x 2.4 = 1,032 units a second; the speed here only turns columns into the seconds a site reports; on a Close ring the band ends at the far side, 600), and climaxCols is the most for the climax before its flight counts as the build-up. columns: for each of the five columns the fewest and most places it offers, the chance of the extra one (a seeded draw), how many must be settled (a town or city on the ring: a defence needs one), the pull toward settled places, and whether the place is the pinned one (the climax is the boss's home). sites: openStride the columns between open-ground samples, sepCols the least columns between two of a column's places, jitter how far a seeded draw may move a place's score, novelty what a new kind of ground adds, fallen what a fallen place loses (it is not offered as settled ground), openMin the least land share around an open site. turn: between columns the ring may turn about the pair's point by these bearings (degrees, either way) when its places are better there: bonus is what a turn adds to a ring's score (the route changes direction), minGain how much better a ring must be than none turned for it to win. Game Design's target (rulings 2026-10-26 item 5): 40 to 60% of columns 1 to 4 turn, minGain raised first, then bonus lowered; campaign_check measures it. side: a side story's place is a named city or town on the current ring (rulings 2026-10-26 item 2): in the flight band if there is one, else any on the ring, else the ring turns at the episode's end to bring one along it (a campaign turn); never an unnamed site, and if all fail the draw is spent; at least sepCols columns from the column's places; ringCols its own Close ring's length (Game Design size close). wear: the bands of a place's wounds (place state only, mc02): band is the share of its buildings lost that lifts a place to each band (1 scarred, 2 ruined, 3 fallen), then for each band 0 to 3 the share of its buildings already fallen when a later stage meets it (the lowest by seeded order) and the share of hp the others keep.",
   "enabled": false,
   "flight": {
     "speed": 1032.0,
-    "minS": 10.0,
-    "maxS": 25.0,
-    "climaxMaxS": 45.0
+    "minCols": 322,
+    "maxCols": 806,
+    "climaxCols": 1451
   },
   "columns": [
     { "min": 2, "max": 3, "pThree": 0.6, "settled": 0, "pull": 0.2, "pinned": false },
@@ -17,7 +17,7 @@
   ],
   "sites": {
     "openStride": 8,
-    "sepS": 5.0,
+    "sepCols": 161,
     "jitter": 0.25,
     "novelty": 0.4,
     "fallen": 1.0,
@@ -26,10 +26,10 @@
   "turn": {
     "bearings": [15.0, 30.0, 45.0, 60.0],
     "bonus": 0.3,
-    "minGain": 0.2
+    "minGain": 0.45
   },
   "side": {
-    "sepS": 3.0,
+    "sepCols": 97,
     "ringCols": 1200
   },
   "wear": {

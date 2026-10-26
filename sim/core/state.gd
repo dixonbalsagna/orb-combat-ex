@@ -589,6 +589,7 @@ class Fighter:
 	var ai = null            # AiState or null
 	var beamCharge = null    # float or null
 	var wet: bool = false
+	var wetT: int = 0              # World: ticks under the surface since a launch took him in (the surfacing rule); 0 when dry; hashed when not 0
 	var launchT: float = 1.0       # horizontal traversal factor of the current launch (WorldSlide.launchTravel)
 	var slide: float = 0.0         # 0, or the normalised start speed while a knockback slide runs
 	var slideX0: float = 0.0

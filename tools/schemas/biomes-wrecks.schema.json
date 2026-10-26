@@ -11,7 +11,7 @@
     "nearBh",
     "fighters",
     "fill",
-    "minMass",
+    "minWreckMass",
     "tierLift",
     "burst"
   ],
@@ -45,7 +45,7 @@
       "maximum": 10.0,
       "description": "A wreck's mass is this share of its building's volume (cubic body heights)."
     },
-    "minMass": {
+    "minWreckMass": {
       "type": "number",
       "minimum": 0.0,
       "maximum": 1000.0,
@@ -67,7 +67,7 @@
       "type": "object",
       "required": [
         "speed",
-        "massRef",
+        "wreckMassRef",
         "scaleMin",
         "scaleMax",
         "radiusBh",
@@ -83,7 +83,7 @@
           "maximum": 100000.0,
           "description": "The scrap's speed in the brunt ladder's terms."
         },
-        "massRef": {
+        "wreckMassRef": {
           "type": "number",
           "exclusiveMinimum": 0.0,
           "maximum": 100000.0,

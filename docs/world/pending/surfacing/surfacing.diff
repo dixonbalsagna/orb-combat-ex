@@ -1,0 +1,323 @@
+diff --git a/data/biomes/water.json b/data/biomes/water.json
+index 53b90da..785a2c1 100644
+--- a/data/biomes/water.json
++++ b/data/biomes/water.json
+@@ -1,6 +1,6 @@
+ {
+   "schema": "biomes.water/1",
+-  "_about": "Water v2 (docs/world/water-v2.md; read by sim/world/fill.gd): holes the fight digs fill with water where water would plausibly come from. enabled: the whole model (off: the water module is exactly as it was, gen 1 bit for bit). A hole opens a fill window when ground in the touched span is dug at least minDug below its original height; the window then fills each column toward its target level: the level of open water within near.reach columns (the sea at 0, a lake's flat surface, water already standing), for ground at most near.maxRise above it, and the biome's water table (table: the depth below the original ground the water stands at, 0 or missing for a dry biome; near: true if the table is there only with open water in reach). The fill is a cheap local rate, rate units of depth a step toward the target, behind a front that runs from the source at front columns a step (a seeping table has no front). A window is at most halfMax columns either side, at most maxWindows fills at once, closes after settle quiet steps or ageMax steps. It never trapping, lifting or slowing a fighter (Game Design 23b row 15) and does no damage (row 17). wade.below: water shallower than this is waded (a body passing through it is not dragged or sunk; it still skims). wave: a slam (impact energy at least minE) into water standing minDepth deep throws a ring wave that pushes anything within band of the surface and within radius units of the slam push units outward over steps steps. douse: a fill or wave that covers a column scorched at least scorchMin puts the fire out (an event for the steam; the sim keeps no fire).",
++  "_about": "Water v2 (docs/world/water-v2.md; read by sim/world/fill.gd): holes the fight digs fill with water where water would plausibly come from. enabled: the whole model (off: the water module is exactly as it was, gen 1 bit for bit). A hole opens a fill window when ground in the touched span is dug at least minDug below its original height; the window then fills each column toward its target level: the level of open water within near.reach columns (the sea at 0, a lake's flat surface, water already standing), for ground at most near.maxRise above it, and the biome's water table (table: the depth below the original ground the water stands at, 0 or missing for a dry biome; near: true if the table is there only with open water in reach). The fill is a cheap local rate, rate units of depth a step toward the target, behind a front that runs from the source at front columns a step (a seeping table has no front). A window is at most halfMax columns either side, at most maxWindows fills at once, closes after settle quiet steps or ageMax steps. It never trapping, lifting or slowing a fighter (Game Design 23b row 15) and does no damage (row 17). wade.below: water shallower than this is waded (a body passing through it is not dragged or sunk; it still skims). wave: a slam (impact energy at least minE) into water standing minDepth deep throws a ring wave that pushes anything within band of the surface and within radius units of the slam push units outward over steps steps. douse: a fill or wave that covers a column scorched at least scorchMin puts the fire out (an event for the steam; the sim keeps no fire). surface: Game Design's rule for a fighter who lands in water (rulings 2026-10-23b item 7): with enabled, a launched body in water that is not waded rises so as to reach the surface on the last of `ticks` ticks, and his flight ends there, set on the surface and landed.",
+   "enabled": false,
+   "table": {
+     "wetland": { "depth": 6.0, "near": false },
+@@ -14,5 +14,6 @@
+   "fill": { "rate": 9.0, "minDug": 6.0, "halfMax": 120, "pad": 6, "maxWindows": 4, "ageMax": 400, "settle": 3 },
+   "wade": { "below": 75.0 },
+   "wave": { "minE": 6.0, "minDepth": 40.0, "radius": 600.0, "band": 100.0, "push": 75.0, "steps": 6 },
+-  "douse": { "scorchMin": 0.3 }
++  "douse": { "scorchMin": 0.3 },
++  "surface": { "enabled": false, "ticks": 30 }
+ }
+diff --git a/sim/core/hash.gd b/sim/core/hash.gd
+index 7a8555d..18a658b 100644
+--- a/sim/core/hash.gd
++++ b/sim/core/hash.gd
+@@ -138,6 +138,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
+ 		_obj(out, f, FIGHTER)
+ 		if float(f.launchPower) != 1.0:
+ 			out.append(f.launchPower)   # a launcher's power, hashed only while a launch carries one
++		if int(f.wetT) != 0:
++			out.append(f.wetT)   # World's surfacing rule: hashed only while a body is under
+ 		if int(f.ctrlT) != -1:
+ 			out.append(f.ctrlT)   # World's skate (ruling 12): hashed only while a skid carries a control tick or a skate runs
+ 		if float(f.skateV) > 0.0:
+diff --git a/sim/core/state.gd b/sim/core/state.gd
+index 7c8fff6..bbc5107 100644
+--- a/sim/core/state.gd
++++ b/sim/core/state.gd
+@@ -589,6 +589,7 @@ class Fighter:
+ 	var ai = null            # AiState or null
+ 	var beamCharge = null    # float or null
+ 	var wet: bool = false
++	var wetT: int = 0              # World: ticks under the surface since a launch took him in (the surfacing rule); 0 when dry; hashed when not 0
+ 	var launchT: float = 1.0       # horizontal traversal factor of the current launch (WorldSlide.launchTravel)
+ 	var slide: float = 0.0         # 0, or the normalised start speed while a knockback slide runs
+ 	var slideX0: float = 0.0
+diff --git a/sim/world/contact.gd b/sim/world/contact.gd
+index b2bbff3..1fbf56a 100644
+--- a/sim/world/contact.gd
++++ b/sim/world/contact.gd
+@@ -93,6 +93,7 @@ class Body:
+ 	var spin: float = 0.0
+ 	var rot: float = 0.0
+ 	var wet: bool = false
++	var wetT: int = 0            # ticks under the surface since the launch took him in (the surfacing rule: WorldFill.surfaceOn)
+ 	var hopped: bool = false
+ 	var tier: float = 1.0
+ 	var done: bool = false
+@@ -137,6 +138,9 @@ static func dataHash() -> String:
+ 	if WorldFill.on():
+ 		h.text("biomes.water")
+ 		FighterData._canon(h, WorldFill.parsed())   # water v2's switch, on: a replay must know
++	if WorldFill.surfaceOn():
++		h.text("biomes.surface")
++		FighterData._canon(h, WorldFill.data().surface)   # the surfacing rule, on: a replay must know
+ 	if skateOn():
+ 		h.text("biomes.skate")
+ 		FighterData._canon(h, _skateParsed)   # the parsed data without the "_" notes, like contact.json: a changed note keeps old replays
+@@ -468,10 +472,25 @@ static func moveAir(S: SimState, b: Body, dt: float, ev: Array) -> void:
+ 		b.vy += grav   # water holds him up: it cancels the gravity of this tick, whatever it is
+ 		b.vx *= SimDetMath.pow(0.05, dt)
+ 		b.vy *= SimDetMath.pow(0.1, dt)
+-		if SimDetMath.hypot(b.vx, b.vy) < K_SINK and b.age > 0.3:
++		if WorldFill.surfaceOn():   # Game Design 2026-10-23b item 7: he surfaces set within the data's ticks, with no down state, and counts as landed there
++			b.wetT += 1
++			var left: int = WorldFill.surfaceTicks() - b.wetT
++			if left <= 0:
++				b.y = wsurf
++				b.vx = 0.0
++				b.vy = 0.0
++				b.wetT = 0
++				b.done = true
++				b.end = "water"
++				ev.append({"k": "sink", "x": b.x, "y": b.y})
++			else:
++				b.vy = maxf(b.vy, (wsurf - b.y) / (float(left) * dt))   # rise so as to arrive on the last tick
++		elif SimDetMath.hypot(b.vx, b.vy) < K_SINK and b.age > 0.3:
+ 			b.done = true
+ 			b.end = "water"
+ 			ev.append({"k": "sink", "x": b.x, "y": b.y})
++	else:
++		b.wetT = 0
+ 
+ 
+ ## The ground and the ceiling, after the move (and after the building collision, in the runtime).
+@@ -830,6 +849,7 @@ static func toBody(S: SimState, f) -> Body:
+ 	b.spin = f.spin
+ 	b.rot = f.rot
+ 	b.wet = f.wet
++	b.wetT = f.wetT
+ 	b.hopped = f.hopped
+ 	b.special = f.launchSpecial
+ 	b.embedOK = S.T - f.embedCool >= K_EMB_COOL
+@@ -859,6 +879,7 @@ static func fromBody(f, b: Body) -> void:
+ 	f.spin = b.spin
+ 	f.rot = b.rot
+ 	f.wet = b.wet
++	f.wetT = b.wetT
+ 	f.hopped = b.hopped
+ 	f.slideD = b.slideD
+ 	f.jLips = b.lips
+diff --git a/sim/world/fill.gd b/sim/world/fill.gd
+index 0c0b993..d94d246 100644
+--- a/sim/world/fill.gd
++++ b/sim/world/fill.gd
+@@ -34,6 +34,8 @@ static var K_WAVE_BAND: float = 100.0
+ static var K_WAVE_PUSH: float = 75.0
+ static var K_WAVE_STEPS: int = 6
+ static var K_DOUSE: float = 0.3
++static var K_SURF_ON: bool = false
++static var K_SURF_TICKS: int = 30
+ 
+ 
+ static func data() -> Dictionary:
+@@ -54,6 +56,26 @@ static func on() -> bool:
+ 	return K_ON
+ 
+ 
++## The surfacing rule (Game Design 2026-10-23b item 7): on, and in how many ticks a body that has gone under surfaces. Independent of the fill's switch.
++static func surfaceOn() -> bool:
++	if not _loaded:
++		_load()
++	return K_SURF_ON
++
++
++static func surfaceTicks() -> int:
++	if not _loaded:
++		_load()
++	return K_SURF_TICKS
++
++
++## For tools and checks: the surfacing rule's switch for this process (the file is not touched).
++static func setSurface(on: bool) -> void:
++	if not _loaded:
++		_load()
++	K_SURF_ON = on
++
++
+ static func parsed() -> Dictionary:
+ 	return data()
+ 
+@@ -80,6 +102,8 @@ static func _load() -> void:
+ 	for k in j.table:
+ 		if not names.has(String(k)):
+ 			_errors.append("water.json: table names %s, which climate.json does not have" % String(k))
++	if j.has("surface") and (not (j.surface is Dictionary) or int(j.surface.ticks) < 2):
++		_errors.append("water.json: surface is {enabled, ticks} with ticks at least 2")
+ 	if int(j.fill.halfMax) < 4 or int(j.fill.maxWindows) < 1 or float(j.fill.rate) <= 0.0 or int(j.near.reach) < 1 or float(j.near.front) <= 0.0:
+ 		_errors.append("water.json: fill.halfMax at least 4, maxWindows at least 1, rate above 0, near.reach at least 1, near.front above 0")
+ 	if not _errors.is_empty():
+@@ -107,6 +131,8 @@ static func _load() -> void:
+ 	K_WAVE_PUSH = float(j.wave.push)
+ 	K_WAVE_STEPS = int(j.wave.steps)
+ 	K_DOUSE = float(j.douse.scorchMin)
++	K_SURF_ON = bool(j.surface.enabled) if j.has("surface") else false
++	K_SURF_TICKS = int(j.surface.ticks) if j.has("surface") else 30
+ 
+ 
+ ## Water shallower than this at x is waded: a body passing through it is not dragged or sunk (it still skims). Always false with the switch off.
+diff --git a/sim/world/tools/surface_check.gd b/sim/world/tools/surface_check.gd
+new file mode 100644
+index 0000000..d6b2631
+--- /dev/null
++++ b/sim/world/tools/surface_check.gd
+@@ -0,0 +1,100 @@
++extends SceneTree
++# The surfacing rule (Game Design rulings 2026-10-23b item 7; data/biomes/water.json surface; sim/world/contact.gd): a launched body that goes into water surfaces set within 30 ticks, with no down state beyond.
++#   godot --headless --path . --script res://sim/world/tools/surface_check.gd
++var fails: int = 0
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func fresh() -> SimState:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {}, {"intro": false})
++	S.out.fx.clear()
++	return S
++
++
++func seaX(S: SimState) -> float:
++	for i in range(0, SimConst.NC, 7):
++		var x: float = (float(i) + 0.5) * SimConst.COL
++		if WorldTerrain.seaAt(S, x) and WorldTerrain.seaAt(S, x - 400.0) and WorldTerrain.seaAt(S, x + 400.0) and S.base[i] < -400.0:
++			return x
++	return -1.0
++
++
++## A launch into the sea from y 400 at (vx, vy): the tick he is first wet, the tick his flight ends (state free), where, and the state he is in.
++func dive(vx: float, vy: float) -> Dictionary:
++	var S := fresh()
++	var f = S.fighters[0]
++	f.x = seaX(S)
++	f.y = 400.0
++	f.vx = vx
++	f.vy = vy
++	f.state = "launched"
++	f.launchBy = S.fighters[1]
++	f.launchT = 1.0
++	f.stateT = 0.0
++	f.jContacts = 0
++	var wetTick: int = -1
++	var endTick: int = -1
++	var maxWetT: int = 0
++	var down: bool = false
++	for t in range(240):
++		SimFighter.stepLaunched(S, f, SimConst.DT)
++		S.tick += 1
++		if f.wet and wetTick < 0:
++			wetTick = t
++		maxWetT = maxi(maxWetT, f.wetT)
++		if f.state == "down":
++			down = true
++		if f.state != "launched":
++			endTick = t
++			break
++	return {"wet": wetTick, "end": endTick, "y": f.y, "state": f.state, "down": down, "maxWetT": maxWetT, "wetT": f.wetT, "S": S}
++
++
++func _init() -> void:
++	ok(WorldFill.dataErrors().is_empty(), "water.json is clean (%s)" % str(WorldFill.dataErrors()))
++	ok(not WorldFill.surfaceOn() and WorldFill.surfaceTicks() == 30, "the surfacing rule ships off, at 30 ticks")
++	var S0 := fresh()
++	ok(seaX(S0) > 0.0 and S0.contactOn, "the hand-made world has deep sea, and ground contact is on")
++	# off: today's rule (the body's flight ends where it has slowed under the sea)
++	var offs: Array = []
++	for v in [[300.0, -1500.0], [200.0, -3000.0], [600.0, -6000.0]]:
++		offs.append(dive(v[0], v[1]))
++	WorldFill.setSurface(true)
++	var onAll: bool = true
++	var line: String = ""
++	var deepest: int = 0
++	for v in [[300.0, -1500.0], [200.0, -3000.0], [600.0, -6000.0], [0.0, -800.0], [1500.0, -1200.0]]:
++		var d: Dictionary = dive(v[0], v[1])
++		if d.wet < 0 or d.end < 0 or d.end - d.wet > 30 or d.state != "free" or d.down or absf(d.y) > 1.0e-9 or d.wetT != 0:
++			onAll = false
++		line += " %d" % (d.end - d.wet)
++		deepest = maxi(deepest, d.maxWetT)
++	ok(onAll, "with the rule on, five launches into the sea (slow, steep, fast and glancing) each surface set on the surface within 30 ticks of going under (ticks under:%s), never down" % line)
++	ok(deepest <= 30, "the count of ticks under never passes 30 (%d)" % deepest)
++	# the rule is a change: the same launches with it off end elsewhere or later
++	var changed: int = 0
++	for k in range(offs.size()):
++		var on: Dictionary = dive([300.0, 200.0, 600.0][k], [-1500.0, -3000.0, -6000.0][k])
++		if offs[k].end != on.end or absf(offs[k].y - on.y) > 1.0 or offs[k].down:
++			changed += 1
++	ok(changed >= 1, "with the rule off, %d of 3 of those launches end at another tick or depth, or down (the old sink rule)" % changed)
++	# determinism, and what the state hash sees
++	var a: Dictionary = dive(300.0, -3000.0)
++	var b: Dictionary = dive(300.0, -3000.0)
++	ok(a.end == b.end and str(SimHash.stateHash(a.S).gameplay) == str(SimHash.stateHash(b.S).gameplay), "a dive is the same twice")
++	var Sa := fresh()
++	WorldFill.setSurface(false)
++	var h0: String = str(SimHash.stateHash(Sa).gameplay)
++	WorldFill.setSurface(true)
++	ok(h0 == str(SimHash.stateHash(Sa).gameplay), "a dry state hashes the same with the rule on or off (wetT is hashed only while not 0)")
++	Sa.fighters[0].wetT = 5
++	ok(str(SimHash.stateHash(Sa).gameplay) != h0, "a fighter who is under (wetT 5) is not the same state as a dry one")
++	WorldFill.setSurface(false)
++	print("SURFACE: %d check(s) failed" % fails)
++	quit()
+diff --git a/sim/world/tools/surface_check.gd.uid b/sim/world/tools/surface_check.gd.uid
+new file mode 100644
+index 0000000..ed51bcd
+--- /dev/null
++++ b/sim/world/tools/surface_check.gd.uid
+@@ -0,0 +1 @@
++uid://bytg8mxhxj4e0
+diff --git a/tools/schemas/biomes-water.schema.json b/tools/schemas/biomes-water.schema.json
+index fc15b77..4fbe715 100644
+--- a/tools/schemas/biomes-water.schema.json
++++ b/tools/schemas/biomes-water.schema.json
+@@ -13,7 +13,8 @@
+     "fill",
+     "wade",
+     "wave",
+-    "douse"
++    "douse",
++    "surface"
+   ],
+   "additionalProperties": false,
+   "properties": {
+@@ -222,6 +223,27 @@
+           "description": "A column scorched at least this is a fire line a fill puts out."
+         }
+       }
++    },
++    "surface": {
++      "type": "object",
++      "required": [
++        "enabled",
++        "ticks"
++      ],
++      "additionalProperties": false,
++      "description": "The surfacing rule (Game Design 2026-10-23b item 7).",
++      "properties": {
++        "enabled": {
++          "type": "boolean",
++          "description": "A launched body in water surfaces set within ticks, with no down state."
++        },
++        "ticks": {
++          "type": "integer",
++          "minimum": 2,
++          "maximum": 600,
++          "description": "How many ticks."
++        }
++      }
+     }
+   }
+ }

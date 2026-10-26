@@ -1,4 +1,14 @@
-# Rivers for gen 2: a design on paper (World, 2026-10-23)
+# Rivers for gen 2 (World, 2026-10-23 design; built as window 14, 2026-10-26)
+
+**Built.** `sim/world/rivers.gd` (`WorldRivers`), `data/biomes/rivers.json` (**`enabled: false`**: off, a planet and a match are as they were, bit for bit), `sim/world/tools/rivers_check.gd`, parked in `docs/world/pending/rivers/`. It is the design below, with these changes and numbers:
+- The flow field is routed on the climate grid as designed: a priority flood from the sea, then each cell the flood did not raise drains down its *steepest* way (the first cut, the flood's own receivers, drew straight diagonal lines; steepest descent follows the valleys), runoff added up downstream. Runoff is the carried moisture over a dry line (0.2) on land that is not frozen. About 4 to 5% of the land cells are river cells at `flow.river` 6 (a planet's flow field is 100 ms, a step of the planet job like the climate grid; `WorldPlanet.makeJob`'s budget is told).
+- A ring's crossings are found by geometry (the segment from a river cell's centre to its receiver's against the ring's circle), snapped to the lowest ground within 14 columns of the crossing on the ring's own ground, widened by flow (5 to 24 columns), cut into the ground with a taper, and planted as a lake-format entry with a fifth element (the flow): so refill, the calm turn's carry, the trees' exclusion and water v2's fill all work as they do for a lake. Row 13's spacing is a greedy keep of the strongest crossing in any 3,000 units.
+- A river is at most 70 units deep (the data refuses 100, the depth that hides a fighter), so it is never sea to a rule and always waded.
+- Proof: 6 of 12 test rings (4 planets, 3 touch-downs) have a river, at most 2 on one; every one holds its water flat at its level in a channel of the data's width; no two within 3,000 units; no tree in one; a match with rivers is the same twice and the switch off is the plain match; a crater dug in a bed leaves the surface flat; after a calm turn every lake and river of the new ring lies flat. The flow field: every land cell drains to the sea, flow never falls downstream, same twice.
+- Cost: the flow field 100 ms once a planet (in the job); a match start with rivers on, flow field included, was 103 ms on average over 12 rings in the check (the ring's own part was not timed apart).
+- `planet_map.gd --rivers` draws the river cells (blue) on the height and fine pictures.
+
+---
 
 Written during the EP's quiet window (no Godot run). Nothing here is built. Inputs: Research's round-2 C (`docs/research/planet-gen.md` sections 2 and 5, `research/planet-gen/gen/erosion.mjs`), Game Design's 23b row 13 (crossings closer than 640 units merge into one span; at most one span in any 3,000 units; lakes and rivers follow the sea's rules: launches skim or sink, shallow water is waded), window 5's lakes, window 10's water v2.
 

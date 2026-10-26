@@ -292831,6 +292831,54 @@
       }
     },
     {
+      "id": "rivers-enabled-not-boolean",
+      "schema": "biomes-rivers.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/rivers.json",
+          "set": {
+            "/enabled": "on"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "rivers-flow-river-zero",
+      "schema": "biomes-rivers.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/rivers.json",
+          "set": {
+            "/flow/river": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/flow/river"
+      }
+    },
+    {
+      "id": "rivers-spacing-per-ring-zero",
+      "schema": "biomes-rivers.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/rivers.json",
+          "set": {
+            "/spacing/maxPerRing": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/spacing/maxPerRing"
+      }
+    },
+    {
       "id": "rings-turn-bearing-over-10",
       "schema": "biomes-rings.schema.json",
       "mutate": [
@@ -301440,6 +301488,147 @@
       "expect": {
         "rule": "type",
         "pointer": "/lanes/cyborg/kinds/grab/main"
+      }
+    },
+    {
+      "id": "audio-world-cues-key-required-ground",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/ground"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-ground-biome-unknown",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/ground/atlantis": "sand"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:world-cues-ground",
+        "pointer": "/ground/atlantis"
+      }
+    },
+    {
+      "id": "audio-world-cues-ground-surface-unknown",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/ground/beach": "lava"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:world-cues-ground",
+        "pointer": "/ground/beach"
+      }
+    },
+    {
+      "id": "audio-world-cues-ground-surface-not-a-word",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/ground/beach": "Sand!"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/ground/beach"
+      }
+    },
+    {
+      "id": "audio-world-cues-ground-underscore-ok",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/ground/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "audio-world-cues-key-required-water",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/water"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-water-sound-unknown",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/water/wave/sound": "surf.water.nowhere"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:world-cues-water",
+        "pointer": "/water/wave/sound"
+      }
+    },
+    {
+      "id": "audio-world-cues-water-groups-zero",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/water/fill/groups": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/water/fill/groups"
+      }
+    },
+    {
+      "id": "audio-world-cues-water-douse-gain-over-12",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/water/douse/gain_db": 20
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/water/douse/gain_db"
       }
     },
     {

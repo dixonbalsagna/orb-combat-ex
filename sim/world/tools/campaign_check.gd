@@ -41,7 +41,7 @@ func _init() -> void:
 	WorldCampaign.setOn(true)
 	var COL: float = SimConst.COL
 	var speed: float = WorldCampaign.K_SPEED
-	var sepCols: int = int(ceil(WorldCampaign.K_SEP_S * speed / COL))
+	var sepCols: int = WorldCampaign.K_SEP_C
 	for gen in [1, 2]:
 		WorldClimate.useGen(gen)
 		var okN: int = 0
@@ -70,7 +70,7 @@ func _init() -> void:
 				counts[r.sites.size()] = int(counts.get(r.sites.size(), 0)) + 1
 				var settledN: int = 0
 				for s in r.sites:
-					if s.flightS < WorldCampaign.K_MIN_S - 1.0e-9 or s.flightS > WorldCampaign.K_MAX_S + 1.0e-9:
+					if s.entry < WorldCampaign.K_MIN_C or s.entry > mini(WorldCampaign.K_MAX_C, cols / 2):
 						bandOk = false
 					if s.settled:
 						settledN += 1
@@ -98,8 +98,8 @@ func _init() -> void:
 				here = r.start
 				pc = int(r.pc)
 		var ms: float = float(Time.get_ticks_usec() - t0) / 1000.0 / float(total)
-		ok(bandOk, "gen %d: every place of columns 1 to 4 is within %.0f to %.0f s of flight of the pair" % [gen, WorldCampaign.K_MIN_S, WorldCampaign.K_MAX_S])
-		ok(sepOk, "gen %d: the places of a column are at least %.0f s of flight apart" % [gen, WorldCampaign.K_SEP_S])
+		ok(bandOk, "gen %d: every place of columns 1 to 4 is %d to %d columns from the pair (on a Close ring the band ends at the far side)" % [gen, WorldCampaign.K_MIN_C, WorldCampaign.K_MAX_C])
+		ok(sepOk, "gen %d: the places of a column are at least %d columns apart" % [gen, WorldCampaign.K_SEP_C])
 		ok(okN >= total * 3 / 4, "gen %d: %d of %d columns got every place they ask for (sizes %s); the town in column 4: %s" % [gen, okN, total, str(counts), "always" if settledOk else "NOT always"])
 		ok(settledOk, "gen %d: column 4 offers a settled place whenever it is ok" % gen)
 		ok(turnOk, "gen %d: %d column(s) turned the ring: each new ring passes through the pair's point, within the data's bearings, the same length" % [gen, turned])
@@ -154,24 +154,39 @@ func _init() -> void:
 	var Hp: Array = WorldRingPick.placePoint(P7, home)
 	var latc: float = absf(WorldPlanet.lateral(P7, ringC, Hp[0], Hp[1], Hp[2]))
 	ok(okc and latc < 1.0, "the climax is one place, the boss's home (%d), on the whole ring through the pair and it (its lateral distance %.2f units), %.1f s of flight%s" % [home, latc, cl.sites[0].flightS, " (the build-up)" if cl.get("far", false) else ""])
-	# a side story: on some rings there is a place in reach and on some there is none (then no side story is offered); where there is, it is a standing place in the band with a Close ring round it
-	var sideTried: int = 0
-	var sideFound: int = 0
+	# a side story (Game Design rulings 2026-10-26 item 2): a named place in the flight band; else any named place on the ring; else the ring turns to bring one along it; never an unnamed site; if all fail the draw is spent
+	var how: Dictionary = {"band": 0, "widened": 0, "turned": 0, "none": 0}
 	var sideOk: bool = true
-	var sideWhat: String = ""
+	var tried: int = 0
+	var townReach: float = float(P7.c.townReach)
 	for nth in range(8):
 		for phi in [0.7, 2.0, 3.3, 4.6]:
 			var ar: Dictionary = ringThrough(P7, nth, 2400, phi)
 			var sd1: Dictionary = WorldCampaign.side(7, 77, 3, ar, 1200, {})
-			sideTried += 1
+			tried += 1
 			if not sd1.ok:
+				how.none += 1
+				if not (sd1.get("spent", false) and not sd1.has("place")):
+					sideOk = false
 				continue
-			sideFound += 1
+			how[sd1.how] += 1
 			var ringS: Dictionary = WorldRingPick.ringOfArena(sd1.arena)
 			var pp: Array = WorldRingPick.placePoint(P7, int(sd1.place))
-			if not (vclose(ringS.c, pp, 1.0e-9) and int(sd1.arena.cols) == WorldCampaign.K_SIDE_COLS and sd1.site.settled and not sd1.site.fallen and sd1.site.flightS >= WorldCampaign.K_MIN_S - 1.0e-9 and sd1.site.flightS <= WorldCampaign.K_MAX_S + 1.0e-9):
+			if not (sd1.place >= 0 and vclose(ringS.c, pp, 1.0e-9) and int(sd1.arena.cols) == WorldCampaign.K_SIDE_COLS and sd1.site.settled and not sd1.site.fallen):
 				sideOk = false
-			sideWhat = str(sd1.place)
+			var onRing: Dictionary = WorldRingPick.ringOfArena(sd1.ring)
+			var reach: float = townReach * P7.rad[int(sd1.place)] if P7.kind[int(sd1.place)] != WorldPlanet.KIND_CITY else float(P7.c.cityReach) * P7.rad[int(sd1.place)]
+			if sd1.how != "turned" and absf(WorldPlanet.lateral(P7, WorldRingPick.ringOfArena(ar), pp[0], pp[1], pp[2])) >= reach:
+				sideOk = false   # a place on the ring as it is lies on it
+			if sd1.how == "band" and (int(sd1.site.entry) < WorldCampaign.K_MIN_C or int(sd1.site.entry) > mini(WorldCampaign.K_MAX_C, 1200)):
+				sideOk = false
+			if sd1.how == "turned":
+				var degOk: bool = sd1.turn != null and WorldCampaign.K_BEAR.has(absf(float(sd1.turn.deg)))
+				if not degOk or absf(WorldPlanet.lateral(P7, onRing, pp[0], pp[1], pp[2])) >= reach:
+					sideOk = false   # the turned ring holds the place, at one of the data's bearings
+			elif sd1.turn != null:
+				sideOk = false
+	ok(sideOk and how.band + how.widened + how.turned + how.none == tried and how.band >= 1, "a side story's place is always a named city or town with a Close ring round it: of %d rings of planet 7, %d had one in the band, %d widened to any on the ring, %d turned the ring, %d had none (the draw is spent)" % [tried, how.band, how.widened, how.turned, how.none])
 	var sdAvoid: Dictionary = {}
 	for phi in [0.7, 2.0, 3.3, 4.6]:
 		for nth in range(8):
@@ -184,8 +199,27 @@ func _init() -> void:
 		if not sdAvoid.is_empty():
 			break
 	var avoidOk: bool = sdAvoid.is_empty() or (not sdAvoid.b.ok) or int(sdAvoid.b.place) != int(sdAvoid.a.place)
-	ok(sideFound >= 1 and sideOk, "a side story's place is a standing city or town within the flight band with a Close ring round it: %d of %d rings of planet 7 have one in reach (the others offer none)" % [sideFound, sideTried])
 	ok(avoidOk, "a side story's place keeps clear of a column's own places")
+	# how often the ring turns (rulings 2026-10-26 item 5: 40 to 60% of columns 1 to 4): 6 planets, 2 rings each, the four columns walked on as an episode would
+	var turnedN: int = 0
+	var colsN: int = 0
+	for gen in [1, 2]:
+		WorldClimate.useGen(gen)
+		for sd in [7, 3, 11, 25, 5, 9]:
+			var Pt := WorldPlanet.make(sd)
+			for nth in range(2):
+				var here: Dictionary = ringThrough(Pt, nth)
+				var pcw: int = 1200
+				for colw in range(1, 5):
+					var rj: Dictionary = WorldCampaign.column(sd, 100 + sd + nth, colw, here, pcw, {})
+					colsN += 1
+					if rj.turn != null:
+						turnedN += 1
+					here = rj.start
+					pcw = int(rj.pc)
+	var share: float = float(turnedN) / float(colsN)
+	ok(share >= 0.40 and share <= 0.60, "the ring turns in %.0f%% of %d columns (both generations, 6 planets, 2 rings, columns 1 to 4): Game Design's target is 40 to 60%% (minGain %.2f, bonus %.2f)" % [100.0 * share, colsN, WorldCampaign.K_TURN_GAIN, WorldCampaign.K_TURN_BONUS])
+	WorldClimate.useGen(1)
 	# the planet's wounds: place state only
 	var S0 := fresh({"planet": 7, "touch": 3, "arena": {"cols": 2400}, "intro": false})
 	var pl: int = -1

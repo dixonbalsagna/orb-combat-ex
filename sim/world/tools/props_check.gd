@@ -22,9 +22,14 @@ func _init() -> void:
 	var same: bool = true
 	for k in cl:
 		var v = art.vehicles[k]
-		if int(cl[k].length) != int(v.length) or int(cl[k].height) != int(v.height) or int(cl[k].mass) != int(v.mass_class) or int(cl[k].throwTier) != int(v.throw_tier):
+		if int(cl[k].length) != int(v.length) or int(cl[k].height) != int(v.height) or int(cl[k].mass) != int(v.mass_class):
 			same = false
-	ok(same, "each box, mass class and first tier is Art's (data/art/vehicles.json)")
+	ok(same, "each box and mass class is Art's (data/art/vehicles.json)")
+	# the first tier that lifts a car is the throwables ruling's (docs/design/rule-of-cool.md: tier 1 lifts a van, tier 2 a bus), not Art's throw_tier (1, 2, 3, 4, still in vehicles.json)
+	var tiers: Array = []
+	for k in cl:
+		tiers.append(int(cl[k].throwTier))
+	ok(tiers == [1, 1, 1, 2], "each class's first throw tier is the throwables ruling's: bike, sedan and van 1, bus 2 (%s)" % str(tiers))
 	# every class has all six slots and every point lies in its box
 	var inbox: bool = true
 	for k in cl:

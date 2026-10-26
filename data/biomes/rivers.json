@@ -1,0 +1,37 @@
+{
+  "schema": "biomes.rivers/1",
+  "_about": "Planet generation 2's rivers (docs/world/rivers.md; read by sim/world/rivers.gd). enabled: off, nothing here runs and a planet is as it was. rain: runoff a land cell sheds is its carried moisture over `dry` (times gain), none where the temperature is under `frozenT` (a frozen river is not a channel). flow: a cell whose runoff, added up downstream, passes `river` is a river cell; `ref` is the flow a river of the base width carries. span: where a ring crosses a river it is a channel `width0 + width1 x sqrt(flow / ref)` columns wide (at least minCols, at most maxCols), `depth0 + depth1 x sqrt(flow / ref)` units deep at most maxDepth (under the depth that hides a fighter, so a river is always waded), its flat surface `freeboard` under the lower of the two banks (read `bank` columns outside the channel), snapped to the lowest ground within `reach` columns of the geometric crossing, never on ground under `floor` (the sea's edge) or within `margin` columns of a settlement or on a settlement's ground. spacing: of the crossings at most one is kept in any gapUnits (Game Design 23b row 13: the strongest; crossings under 640 units apart are one span), and at most maxPerRing a ring. refuse: fine biomes a river does not cross.",
+  "enabled": false,
+  "rain": {
+    "dry": 0.2,
+    "gain": 1.0,
+    "frozenT": 0.16
+  },
+  "flow": {
+    "river": 6.0,
+    "ref": 40.0
+  },
+  "span": {
+    "minCols": 5,
+    "maxCols": 24,
+    "width0": 4.0,
+    "width1": 3.0,
+    "depth0": 20.0,
+    "depth1": 10.0,
+    "maxDepth": 70.0,
+    "freeboard": 6.0,
+    "reach": 14,
+    "bank": 3,
+    "margin": 10,
+    "floor": 5.0
+  },
+  "spacing": {
+    "gapUnits": 3000.0,
+    "maxPerRing": 12
+  },
+  "refuse": [
+    "ice_sheet",
+    "sea_ice",
+    "volcanic"
+  ]
+}

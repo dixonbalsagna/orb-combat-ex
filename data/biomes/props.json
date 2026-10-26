@@ -54,7 +54,7 @@
       "height": 62,
       "depth": 72,
       "mass": 3,
-      "throwTier": 2,
+      "throwTier": 1,
       "holds": {
         "frame": [
           0,
@@ -93,7 +93,7 @@
       "height": 86,
       "depth": 76,
       "mass": 4,
-      "throwTier": 3,
+      "throwTier": 1,
       "holds": {
         "frame": [
           0,
@@ -132,7 +132,7 @@
       "height": 137,
       "depth": 90,
       "mass": 8,
-      "throwTier": 4,
+      "throwTier": 2,
       "holds": {
         "frame": [
           0,

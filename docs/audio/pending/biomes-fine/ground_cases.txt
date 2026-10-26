@@ -1,0 +1,77 @@
+    {
+      "id": "audio-world-cues-key-required-ground",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "del": [
+            "/ground"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "audio-world-cues-ground-biome-unknown",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/ground/atlantis": "sand"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:world-cues-ground",
+        "pointer": "/ground/atlantis"
+      }
+    },
+    {
+      "id": "audio-world-cues-ground-surface-unknown",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/ground/beach": "lava"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "xref:world-cues-ground",
+        "pointer": "/ground/beach"
+      }
+    },
+    {
+      "id": "audio-world-cues-ground-surface-not-a-word",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/ground/beach": "Sand!"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/ground/beach"
+      }
+    },
+    {
+      "id": "audio-world-cues-ground-underscore-ok",
+      "schema": "audio-world-cues.schema.json",
+      "mutate": [
+        {
+          "file": "audio/data/world_cues.json",
+          "set": {
+            "/ground/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },

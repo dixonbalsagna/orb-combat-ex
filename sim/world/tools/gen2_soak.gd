@@ -1,7 +1,7 @@
 extends SceneTree
 # Gen 2 matches played through (World, window 4): AI against AI on gen 2 planets (the whole of gen 2: climate, profiles, trees, landforms, sites), some with the calm-moment turn on, a few ticks each, to
 # see that nothing errors and that a match is the same twice. Prints a line a match.
-#   godot --headless --path . --script res://sim/world/tools/gen2_soak.gd -- --ticks=900     (--b: with land.json's b switch on for the run, window 12)
+#   godot --headless --path . --script res://sim/world/tools/gen2_soak.gd -- --ticks=900     (--b: with land.json's b switch on for the run, window 12; --rivers: with rivers.json on, window 14)
 func match_hash(setup: Dictionary, ticks: int) -> Array:
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, 1, {}, setup)
@@ -21,6 +21,8 @@ func _init() -> void:
 			ticks = int(a.substr(8))
 		if a == "--b":
 			WorldLand.setB(true)
+		if a == "--rivers":
+			WorldRivers.setOn(true)   # the rivers on for this run (window 14; the data stays off)
 	var bad: int = 0
 	var n: int = 0
 	for sd in [7, 3, 11, 25]:

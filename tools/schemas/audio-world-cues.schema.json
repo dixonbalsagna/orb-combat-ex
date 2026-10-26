@@ -15,6 +15,7 @@
     "bed",
     "intensity",
     "soil",
+    "ground",
     "surfaces",
     "hit",
     "land",
@@ -23,7 +24,8 @@
     "skim",
     "splash",
     "crater",
-    "step"
+    "step",
+    "water"
   ],
   "properties": {
     "schema": {
@@ -244,6 +246,22 @@
         "^_": true
       },
       "description": "Biome to the surface under it (a key of biomes)."
+    },
+    "ground": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^(_.*|[a-z][a-z0-9_]*)$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$",
+        "description": "A surface of `surfaces` (rule world-cues-ground)."
+      },
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "Biome to the surface that takes the sim's soil, rock or sand class at a column of that fine biome (ice, a wetland, a beach): a key of biomes to a key of surfaces (rule world-cues-ground)."
     },
     "surfaces": {
       "type": "object",
@@ -881,6 +899,261 @@
       "patternProperties": {
         "^_": true
       }
+    },
+    "water": {
+      "type": "object",
+      "required": [
+        "fill",
+        "wave",
+        "douse"
+      ],
+      "properties": {
+        "fill": {
+          "type": "object",
+          "required": [
+            "sound",
+            "seep",
+            "gain_db",
+            "seep_db",
+            "ref_amount",
+            "gain_db_per_ln",
+            "gain_db_min",
+            "gain_db_max",
+            "pitch_exp",
+            "pitch_min",
+            "pitch_max",
+            "min_s",
+            "max_s",
+            "stop_ms",
+            "groups",
+            "priority",
+            "cls",
+            "cap"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "A sound of `sounds` (rule world-cues-water)."
+            },
+            "seep": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "A sound of `sounds` (rule world-cues-water)."
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 12
+            },
+            "seep_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 12,
+              "description": "Added for a table's seep (a quiet trickle)."
+            },
+            "ref_amount": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 100000,
+              "description": "The dig depth at which the level is gain_db."
+            },
+            "gain_db_per_ln": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 60
+            },
+            "gain_db_min": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 12
+            },
+            "gain_db_max": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 12
+            },
+            "pitch_exp": {
+              "type": "number",
+              "minimum": -2,
+              "maximum": 2
+            },
+            "pitch_min": {
+              "type": "number",
+              "minimum": 0.25,
+              "maximum": 4
+            },
+            "pitch_max": {
+              "type": "number",
+              "minimum": 0.25,
+              "maximum": 4
+            },
+            "min_s": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 10,
+              "description": "The shortest the swell is held, seconds."
+            },
+            "max_s": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 10,
+              "description": "The longest the swell is held, seconds (the sound itself is about this long)."
+            },
+            "stop_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5000,
+              "description": "The fade when the swell is cut at the fill's end."
+            },
+            "groups": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 8,
+              "description": "Voice groups the fills sounding take in turn."
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Voice priority (higher wins)."
+            },
+            "cls": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The voice class the cap counts."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 16,
+              "description": "The most voices of the class at once."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "A hole the fight dug fills (water_fill): a rushing swell, a trickle for a table."
+        },
+        "wave": {
+          "type": "object",
+          "required": [
+            "sound",
+            "gain_db",
+            "priority",
+            "cls",
+            "cap"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "A sound of `sounds` (rule world-cues-water)."
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 12
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Voice priority (higher wins)."
+            },
+            "cls": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The voice class the cap counts."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 16,
+              "description": "The most voices of the class at once."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "A slam into deep water sends a ring wave (water_wave): one heavy slosh."
+        },
+        "douse": {
+          "type": "object",
+          "required": [
+            "sound",
+            "gain_db",
+            "ref_n",
+            "gain_db_per_ln",
+            "gain_db_min",
+            "gain_db_max",
+            "priority",
+            "cls",
+            "cap"
+          ],
+          "properties": {
+            "sound": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "A sound of `sounds` (rule world-cues-water)."
+            },
+            "gain_db": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 12
+            },
+            "ref_n": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1000
+            },
+            "gain_db_per_ln": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 60
+            },
+            "gain_db_min": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 12
+            },
+            "gain_db_max": {
+              "type": "number",
+              "minimum": -60,
+              "maximum": 12
+            },
+            "priority": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "description": "Voice priority (higher wins)."
+            },
+            "cls": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*([.][a-z0-9_]+)*$",
+              "description": "The voice class the cap counts."
+            },
+            "cap": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 16,
+              "description": "The most voices of the class at once."
+            }
+          },
+          "additionalProperties": false,
+          "patternProperties": {
+            "^_": true
+          },
+          "description": "Water reaches a scorched column (water_douse): a short hiss."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "World's water v2 sounds (sim/world/fill.gd): the settings of the fill, the wave and the douse; their sounds are in `sounds` (rule world-cues-water)."
     }
   },
   "additionalProperties": false,

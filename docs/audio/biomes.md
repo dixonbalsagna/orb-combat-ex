@@ -6,7 +6,7 @@ Owner: Audio and Music. Orb's brief through the EP: "each biome sounds like a pl
 
 ### 1. The bed: where you are
 
-One looped ambience for the biome the pair is over. It plays at the listener (no distance, no pan; `Cue.ambient`) on a new **Ambience** bus (-4 dB), as a looped voice that `AudioWorld` moves.
+One looped ambience for the biome the pair is over (**17 beds for the 15 fine biomes of planet generation 2 and the two settlements**, read as below). It plays at the listener (no distance, no pan; `Cue.ambient`) on a new **Ambience** bus (-4 dB), as a looped voice that `AudioWorld` moves.
 
 | Biome id | Bed | What it is | Level (dB) | With height |
 | :--- | :--- | :--- | :--- | :--- |
@@ -17,8 +17,18 @@ One looped ambience for the biome the pair is over. It plays at the listener (no
 | `forest` | `forest` | rustle in the canopy, a low wind, a hollow thrum | -4 | +2 |
 | `desert` | `desert` | long, low gusts with sand hissing in them | -3 | +4 |
 | `mountains` | `mountains` | thin wind with a low howl and a deep body | -4 | +4 |
+| `ice_sheet` | `icefield` | a very low, barren wind with a slow deep creak of ice now and then | -3 | +3 |
+| `sea_ice` | `seaice` | a faint swell under the ice and the occasional low creak | -4 | -2 |
+| `jungle` | `jungle` | dense rustle, a low hum, frog thrums | -4 | +1 |
+| `savanna` | `savanna` | slow, open wind in dry grass, a far low thrum | -4 | +4 |
+| `tundra` | `tundra` | very quiet: a far low wind | -2 | +3 |
+| `taiga` | `taiga` | soft wind through needles on a deep wooden hum, one branch creak | -5 | +2 |
+| `wetland` | `marsh` | a low hum, wet rustle, glugs | -5 | +1 |
+| `beach` | `shore` | shorter waves than the sea with a hiss on each, a low body | -4 | -3 |
+| `highland` | `highland` | thin, empty wind, a deep body, a few distant stones | -4 | +4 |
+| `volcanic` | `volcanic` | a deep rumble that beats slowly, vent hiss, deep thumps | -3 | -2 |
 
-**Spare beds for the biomes World names next** (built, measured, not mapped to a name until it exists): `tundra` (very quiet, a far low wind), `marsh` (a low hum, wet rustle and glugs), `jungle` (dense rustle, a low hum, frog thrums). Rows already in `biomes` for the names I would guess (`ice`, `tundra`, `marsh`, `swamp`, `jungle`, `beach`); **a biome World adds is one row in `biomes` and one in `soil`**, and a name with no row takes `default_biome` (plains).
+**Which biome (2026-10-23, World's generation 2).** The fine id is read from `WorldBiomes.fineCols` (the fine biome of each column, parallel to `planetCols`, by reflection so the audio runs the same where it does not exist yet), with the stored biome's name, the alias, as the fallback: so a hand-made world or a generation 1 planet is the seven it always was. A village or a city (the settlement's own ground) is kept ahead of the fine column under it. The fine columns are used only when they are as long as this world's `planetCols` (World's own test: a hand-made match built after a generation 2 one leaves the old columns standing). A name with no row in `biomes` takes `default_biome` (plains); a new biome is one row in `biomes`, one in `soil` if its soil differs, and one in `ground` if it overrides the sim's class.
 
 How it behaves:
 
@@ -32,7 +42,7 @@ How it behaves:
 
 Eight grounds, each a **hit** (what a body does to it) and a **slide** (what dragging along it sounds like): `grass`, `sand`, `snow`, `mud`, `water`, `rock`, `rubble`, `paving`. One hit serves for a step (higher, quiet), a landing (lower, louder with speed), a bounce, a crater's layer and a scuff under a blow, so each ground costs two recipes.
 
-**Which ground is the sim's own read at the contact**, not a guess: `WorldContact.surfaceAt` (paving in a city or village that is not dug, rock, sand, rubble where a building has fallen, and soil), then standing water from `WorldWater` if the contact is at its surface, and for soil the biome's own ground (`soil` in the data: plains and village grass, forest mud, ice snow). The sim's `land` and `bounce` events already name the surface; the rest ask `surface_at(x, y)`. Nothing here writes the sim and nothing draws from its RNG.
+**Which ground is the sim's own read at the contact**, not a guess (with the fine biome's own ground over it where the sim's class is soil, rock or sand: ice sheet, sea ice and tundra are snow, a wetland and a jungle mud, a beach sand, highland and volcanic rock; the data's `ground`): `WorldContact.surfaceAt` (paving in a city or village that is not dug, rock, sand, rubble where a building has fallen, and soil), then standing water from `WorldWater` if the contact is at its surface, and for soil the biome's own ground (`soil` in the data: plains and village grass, forest mud, ice snow). The sim's `land` and `bounce` events already name the surface; the rest ask `surface_at(x, y)`. Nothing here writes the sim and nothing draws from its RNG.
 
 | The event | What plays | Sized by |
 | :--- | :--- | :--- |
@@ -47,12 +57,25 @@ Eight grounds, each a **hit** (what a body does to it) and a **slide** (what dra
 
 In the three seeded matches (3,600 ticks) the layers come to 13, 112 and 59 a minute: a fight is mostly in the air, so most of the time the bed is the biome and the surface speaks at the landings.
 
+### 3. The water: a hole filling, a ring wave, a fire put out (World's water v2, 2026-10-26)
+
+World's water v2 (`sim/world/fill.gd`, `data/biomes/water.json`, off by default) sends three fx events, and each has a sound, in the same low, soft-edged family. They need no new capability: the settings are in `world_cues.json` `water`, the four sounds in `sounds`, and the mapper is `AudioWorld`'s.
+
+| The event | What it carries | What plays |
+| :--- | :--- | :--- |
+| `water_fill` | `cause` (`sea`, `water` or `table`), `amount` (the deepest dig), `dur` (seconds to settle), `spd` (the front's units a second, 0 for a seep), `x` (where the front starts), `y` | `surf.water.fill`, a rushing swell of low noise with a rumble and a few low drips under it, at the front's start; louder and lower for a deeper dig (4 dB per e-fold of depth over 100 units, a little lower in pitch); **cut with a 350 ms fade when the fill settles** (`dur` clamped to 0.6 to 2.4 s, the sound's own length). A table's seep is `surf.water.seep`, a quiet trickle, 4 dB under a sea fill of the same dig |
+| `water_wave` | `x`, `y` (the surface), `r` (the ring, 600), `amount` (the push), `dur` | `surf.water.wave`, one heavy slosh at the slam: a deep thump, a swash of low noise and a rolling rumble |
+| `water_douse` | `x` (the fill's source), `w` (the extent), `n` (columns newly wet) | `surf.water.hiss`, a short low hiss with a thump of steam; louder for more columns |
+
+The fills sounding take four voice groups in turn so that each can be cut when its own fill settles. The wave adds a crater's worth to the fight's intensity (the bed ducks under a slam into the sea, as under any big impact). **A fill is quick** (`STEP_TICKS` is 2, so a typical dig settles in a second or less), which is why the swell is a one-shot with a scheduled cut and not a bed that follows the front.
+
 ## What it sounds like, by the heard spectrum
 
 (`world_check`; centroid in Hz of what a small speaker plays, A-weighted, below 180 Hz cut. Limits are in the file.)
 
-Beds: surf 411, village 339, plains 369, city 238, forest 386, desert 438, mountains 280 (spares: tundra 260, marsh 305, jungle 417); nothing over 2 kHz to speak of.
+Beds: surf 411, village 339, plains 369, city 238, forest 386, desert 438, mountains 280, icefield 227, seaice 356, savanna 358, tundra 260, taiga 319, marsh 305, shore 428, highland 281, volcanic 336, jungle 417; nothing over 2 kHz to speak of.
 Hits: grass 587, sand 561, snow 374, mud 371, water 600, rock 315, rubble 252, paving 588. Slides: 356 to 769.
+Water v2: fill 491, seep 501, wave 547, hiss 766 (the hiss is the brightest sound in the set, as a hiss is; its limit is 800).
 For comparison the brawl's own hits are limited at 560 to 850 (`tone_check`).
 
 The two "chunkiest" are rubble (252) and rock (315), the ones heavy fights make. If a ground should be more *recognisable* than it is low (rubble reads as a thump with a grumble rather than a clatter), I would raise its crumbs, not its highs: the grains have no click on purpose (the 3-sample click each grain had was where the tin came from).
@@ -71,7 +94,7 @@ The two "chunkiest" are rubble (252) and rock (315), the ones heavy fights make.
 ## What the host has to do
 
 1. **Play the cues as it already does.** Beds are ordinary cues (`ambient` true, `loop` true, `group` `amb.a` or `amb.b`, bus `Ambience`) with `update` cues and stop requests, the same shapes the struggle's bed and the coil use. `AudioVoices` needs only the one-line change in the park (`ambient` ignores the camera).
-2. **Warm the beds at the start of a match**: `AudioBank.warm_begin`/`extra_ids` already include the surface sounds when the set is on (16 sounds, about 150 ms in all); the beds are not in `extra_ids` (they depend on the world) and `cues.world.warm_beds(S)` names them for the ring (the seven today). They render in about 1.1 s in all on a loaded machine (about 160 ms each), so they must not be first-played in a fight: Rendering's boot warm-up adds those ids.
+2. **Warm the beds at the start of a match**: `AudioBank.warm_begin`/`extra_ids` already include the surface sounds when the set is on (16 sounds, about 150 ms in all); the beds are not in `extra_ids` (they depend on the world) and `cues.world.warm_beds(S)` names them for the ring (the seven on the hand-made world, up to seventeen on a generation 2 planet). They render in about 1.1 s in all on a loaded machine (about 160 ms each), so they must not be first-played in a fight: Rendering's boot warm-up adds those ids.
 3. **The Ambience bus** is in `mix.json` (the park adds it).
 
 ## What is not here, and why

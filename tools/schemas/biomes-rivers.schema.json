@@ -1,0 +1,206 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-rivers",
+  "title": "biomes.rivers/1",
+  "description": "data/biomes/rivers.json: planet generation 2's rivers (docs/world/rivers.md; WorldRivers). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore. Order checks are WorldRivers' own load and rivers_check.",
+  "type": "object",
+  "required": [
+    "schema",
+    "_about",
+    "enabled",
+    "rain",
+    "flow",
+    "span",
+    "spacing",
+    "refuse"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "biomes.rivers/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "Rivers on or off; off, nothing in WorldRivers runs and a planet is as it was."
+    },
+    "rain": {
+      "type": "object",
+      "required": [
+        "dry",
+        "gain",
+        "frozenT"
+      ],
+      "additionalProperties": false,
+      "description": "Runoff.",
+      "properties": {
+        "dry": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Moisture under which a land cell sheds no runoff."
+        },
+        "gain": {
+          "type": "number",
+          "exclusiveMinimum": 0.0,
+          "maximum": 100.0,
+          "description": "Runoff per unit of moisture over dry."
+        },
+        "frozenT": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 2.0,
+          "description": "Under this temperature a cell sheds none (a frozen river is not a channel)."
+        }
+      }
+    },
+    "flow": {
+      "type": "object",
+      "required": [
+        "river",
+        "ref"
+      ],
+      "additionalProperties": false,
+      "description": "The flow field.",
+      "properties": {
+        "river": {
+          "type": "number",
+          "exclusiveMinimum": 0.0,
+          "maximum": 100000.0,
+          "description": "A cell whose flow passes this is a river cell."
+        },
+        "ref": {
+          "type": "number",
+          "exclusiveMinimum": 0.0,
+          "maximum": 100000.0,
+          "description": "The flow a river of the base width carries."
+        }
+      }
+    },
+    "span": {
+      "type": "object",
+      "required": [
+        "minCols",
+        "maxCols",
+        "width0",
+        "width1",
+        "depth0",
+        "depth1",
+        "maxDepth",
+        "freeboard",
+        "reach",
+        "bank",
+        "margin",
+        "floor"
+      ],
+      "additionalProperties": false,
+      "description": "A river's channel.",
+      "properties": {
+        "minCols": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200,
+          "description": "The narrowest channel, in columns."
+        },
+        "maxCols": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 400,
+          "description": "The widest (at least minCols: WorldRivers' load)."
+        },
+        "width0": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 400.0,
+          "description": "Columns wide at no flow."
+        },
+        "width1": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 400.0,
+          "description": "Columns added with the square root of flow over ref."
+        },
+        "depth0": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1000.0,
+          "description": "Depth at no flow, in units."
+        },
+        "depth1": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1000.0,
+          "description": "Depth added with the square root of flow over ref."
+        },
+        "maxDepth": {
+          "type": "number",
+          "exclusiveMinimum": 0.0,
+          "maximum": 1000.0,
+          "description": "The deepest a river is: under the depth that hides a fighter (WorldRivers' load)."
+        },
+        "freeboard": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1000.0,
+          "description": "How far the surface lies under the lower bank."
+        },
+        "reach": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 200,
+          "description": "Columns either side the crossing is snapped to the lowest ground within."
+        },
+        "bank": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Columns outside the channel the banks are read at."
+        },
+        "margin": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 200,
+          "description": "Columns kept clear of a settlement."
+        },
+        "floor": {
+          "type": "number",
+          "minimum": -1000.0,
+          "maximum": 1000.0,
+          "description": "No river on ground under this height (the sea's edge)."
+        }
+      }
+    },
+    "spacing": {
+      "type": "object",
+      "required": [
+        "gapUnits",
+        "maxPerRing"
+      ],
+      "additionalProperties": false,
+      "description": "How many rivers a ring keeps.",
+      "properties": {
+        "gapUnits": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1000000.0,
+          "description": "Of the crossings at most one is kept in any this many units (Game Design 23b row 13: 3,000)."
+        },
+        "maxPerRing": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200,
+          "description": "At most this many a ring."
+        }
+      }
+    },
+    "refuse": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Fine biomes a river does not cross (their names are checked by WorldRivers' load)."
+    }
+  }
+}

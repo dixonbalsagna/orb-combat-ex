@@ -138,6 +138,8 @@ static func collect(S: SimState, lane: String, beatDetail: bool = true, V: SimFx
 		_obj(out, f, FIGHTER)
 		if float(f.launchPower) != 1.0:
 			out.append(f.launchPower)   # a launcher's power, hashed only while a launch carries one
+		if int(f.wetT) != 0:
+			out.append(f.wetT)   # World's surfacing rule: hashed only while a body is under
 		if int(f.ctrlT) != -1:
 			out.append(f.ctrlT)   # World's skate (ruling 12): hashed only while a skid carries a control tick or a skate runs
 		if float(f.skateV) > 0.0:

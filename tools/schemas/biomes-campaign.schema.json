@@ -31,9 +31,9 @@
       "type": "object",
       "required": [
         "speed",
-        "minS",
-        "maxS",
-        "climaxMaxS"
+        "minCols",
+        "maxCols",
+        "climaxCols"
       ],
       "additionalProperties": false,
       "description": "The flight band.",
@@ -44,23 +44,23 @@
           "maximum": 100000.0,
           "description": "Units a second the pair fly between places."
         },
-        "minS": {
-          "type": "number",
-          "exclusiveMinimum": 0.0,
-          "maximum": 1000.0,
-          "description": "The least seconds of flight to a place's near edge."
+        "minCols": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5000,
+          "description": "The least columns from the pair to a column's place (its near edge), each way."
         },
-        "maxS": {
-          "type": "number",
-          "exclusiveMinimum": 0.0,
-          "maximum": 1000.0,
-          "description": "The most (above minS: WorldCampaign's load)."
+        "maxCols": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5000,
+          "description": "The most (above minCols: WorldCampaign's load; on a Close ring the band ends at the far side)."
         },
-        "climaxMaxS": {
-          "type": "number",
-          "exclusiveMinimum": 0.0,
-          "maximum": 1000.0,
-          "description": "The most for the climax before it counts as the build-up."
+        "climaxCols": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20000,
+          "description": "The most for the climax before its flight counts as the build-up."
         }
       }
     },
@@ -123,7 +123,7 @@
       "type": "object",
       "required": [
         "openStride",
-        "sepS",
+        "sepCols",
         "jitter",
         "novelty",
         "fallen",
@@ -138,11 +138,11 @@
           "maximum": 400,
           "description": "Columns between open-ground samples."
         },
-        "sepS": {
-          "type": "number",
-          "minimum": 0.0,
-          "maximum": 1000.0,
-          "description": "The least seconds of flight between two of a column's places."
+        "sepCols": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000,
+          "description": "The least columns between two of a column's places."
         },
         "jitter": {
           "type": "number",
@@ -209,17 +209,17 @@
     "side": {
       "type": "object",
       "required": [
-        "sepS",
+        "sepCols",
         "ringCols"
       ],
       "additionalProperties": false,
       "description": "The side story's place.",
       "properties": {
-        "sepS": {
-          "type": "number",
-          "minimum": 0.0,
-          "maximum": 1000.0,
-          "description": "The least seconds of flight between a side story's place and a column's."
+        "sepCols": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5000,
+          "description": "The least columns between a side story's place and a column's."
         },
         "ringCols": {
           "type": "integer",

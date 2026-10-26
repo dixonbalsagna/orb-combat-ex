@@ -18,6 +18,7 @@ var hs := PackedFloat32Array()
 var bs := PackedByteArray()
 var next: int = 0
 var done: bool = false
+var rivers := PackedByteArray()   # the rivers' layer (rivers.json on, gen 2): 0 none, 1 to 3 a river's size at the texel (WorldRivers flow over the river line: under 4 times it, under 16 times, more), whole from the start
 var sites := PackedByteArray()   # the settlements' layer, whole from the start: 0 none, 1 a town's ground, 2 a city's (each place's own radius, WorldPlanet's), as the map's texels see it
 
 
@@ -29,6 +30,10 @@ func _init(p: WorldPlanet.Planet, size: int = 256) -> void:
 	sites.resize(n * n)
 	sites.fill(0)
 	_mark_sites()
+	rivers.resize(n * n)
+	rivers.fill(0)
+	if WorldRivers.enabled() and P.gen >= 2:
+		_mark_rivers()
 
 
 ## The settlements' layer: every texel whose centre lies within a place's radius of its centre (and the texel that holds the centre, however small the place) is its kind's; a city over a town.
@@ -56,6 +61,45 @@ func _mark_sites() -> void:
 					sites[j * n + i] = maxi(int(sites[j * n + i]), kind)
 		if ci >= 0 and ci < n and cj >= 0 and cj < n:
 			sites[cj * n + ci] = maxi(int(sites[cj * n + ci]), kind)
+
+
+## The rivers' layer: each river segment of the planet's flow field (from a river cell's centre to its receiver's, WorldRivers) is walked at a third of a texel and marks the texels it crosses with its size class
+## (the larger of two crossing). About 1,000 segments, a few thousand marks: a few milliseconds.
+func _mark_rivers() -> void:
+	var F: WorldRivers.Flow = WorldRivers.flowOf(P)
+	if F == null:
+		return
+	var G: WorldClimate.Grid = P.grid
+	var ref: float = WorldRivers.K_RIVER
+	var texel: float = 3.54 / float(n)   # a texel's mean angle, radians (at most about twice)
+	for i in range(F.w * F.h):
+		var rc: int = F.recv[i]
+		if rc < 0 or G.ht[i] < 0.0 or F.flow[i] < ref:
+			continue
+		var cls: int = 1 if F.flow[i] < 4.0 * ref else (2 if F.flow[i] < 16.0 * ref else 3)
+		var ax: float = F.px[i]
+		var ay: float = F.py[i]
+		var az: float = F.pz[i]
+		var dx: float = F.px[rc] - ax
+		var dy: float = F.py[rc] - ay
+		var dz: float = F.pz[rc] - az
+		var seg: float = sqrt(dx * dx + dy * dy + dz * dz)
+		var steps: int = maxi(2, int(ceil(seg / texel * 3.0)))
+		for s in range(steps + 1):
+			var t: float = float(s) / float(steps)
+			var qx: float = ax + dx * t
+			var qy: float = ay + dy * t
+			var qz: float = az + dz * t
+			var ql: float = sqrt(qx * qx + qy * qy + qz * qz)
+			var uv: Vector2 = _uv(qx / ql, qy / ql, qz / ql)
+			var k: int = _tex(int(floor(uv.x + 0.5)), int(floor(uv.y + 0.5)))
+			rivers[k] = maxi(int(rivers[k]), cls)
+
+
+## The river under a unit vector: 0 none, 1 to 3 its size (the nearest texel's, as biome()).
+func river(qx: float, qy: float, qz: float) -> int:
+	var t: Vector2 = _uv(qx, qy, qz)
+	return rivers[_tex(int(floor(t.x + 0.5)), int(floor(t.y + 0.5)))]
 
 
 ## The places beside a ring (WorldPlanet.farPlaces) within `maxLateral` units, for drawing a distant town or city where it stands.

@@ -1,0 +1,8 @@
+# Rivers for gen 2 (parked, window 14; behind `data/biomes/rivers.json` `enabled`, off)
+
+World and Environment, 2026-10-26. `rivers.diff` (sha1 ddac96823bcb, 13 files) is a git-apply diff on main (e2cbcc49) with the window 13, wreck-toss and campaign-route diffs applied, in that order. Design and numbers: `../../rivers.md`. **Off by default:** nothing in `WorldRivers` runs, a planet and a match are as they were, the golden is unchanged. Gen 2 only.
+
+- New: `sim/world/rivers.gd` (`WorldRivers`: the flow field on the climate grid, a ring's crossings, `plan`, `carve`), `data/biomes/rivers.json`, `sim/world/tools/rivers_check.gd` (18 checks), `tools/schemas/biomes-rivers.schema.json` (Tools', granted), a map rule and three invalid cases.
+- Edited (World's): `planet.gd` (`Planet.flow`; the flow field is a step of the planet job; the planet's data hash carries rivers.json only while on), `planet_world.gd` (a gen 2 ring's rivers planned after its lakes, cut into the ground and planted as lakes), `epoch.gd` (the calm turn plans the new ring's rivers where it is wholly new), `planet_map.gd` (`--rivers`), `gen2_soak.gd` (`--rivers`).
+- A river is a lake-format entry with the flow as a fifth element, so refill, the turn's carry, the trees' exclusion and water v2's fill need no change. Never deeper than 70 units (under the depth that hides a fighter): always waded, never sea.
+- Proof (scratch export of main plus the three diffs plus this): all 43 World tools, lint, validate and the Tools self-test (9115/9115), run-all 5 of 5 with the golden unchanged, and the 12-match gen 2 soak with B off, with B on and with the rivers on, all reproducible.

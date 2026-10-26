@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "note": "Biome sound (Orb, 2026-10-23: 'each biome sounds like a place, and fights in it sound like its material'; docs/audio/biomes.md). PARKED behind `enabled`: false. Beds: one looped ambience per biome, crossfaded as the pair crosses a border, ducked by the fight's intensity. Surfaces: a hit and a slide per ground, read from the sim at the contact (WorldContact.surfaceAt, WorldWater), used for the layer under a blow near the ground, a landing, a bounce, a slide, a skim, a splash, a crater and a step. Own synthesis only. A biome World adds is a row in `biomes` (and `soil`).",
+  "note": "Biome sound (Orb, 2026-10-23: 'each biome sounds like a place, and fights in it sound like its material'; docs/audio/biomes.md). PARKED behind `enabled`: false. Beds: one looped ambience per biome, crossfaded as the pair crosses a border, ducked by the fight's intensity. Surfaces: a hit and a slide per ground, read from the sim at the contact (WorldContact.surfaceAt, WorldWater), used for the layer under a blow near the ground, a landing, a bounce, a slide, a skim, a splash, a crater and a step. Own synthesis only. A biome World adds is a row in `biomes` (and `soil`). Water v2 (fill, wave, douse) is in `water`.",
   "enabled": false,
   "sounds": {
     "surf.sand.hit": {
@@ -643,6 +643,191 @@
           "wobble_hz": 7
         }
       ]
+    },
+    "surf.water.fill": {
+      "rate": 24000,
+      "variants": 1,
+      "drive": 0.0,
+      "peak_db": -9.0,
+      "jitter": {
+        "f": 0.08,
+        "t60": 0.1,
+        "gain": 0.1
+      },
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lp",
+          "f": 360,
+          "q": 0.8,
+          "attack": 0.35,
+          "t60": 2.0,
+          "gain": 1.0,
+          "f_to": 220,
+          "tau": 1.0
+        },
+        {
+          "type": "rumble",
+          "lp": 150,
+          "attack": 0.45,
+          "t60": 2.4,
+          "gain": 0.8,
+          "wobble": 0.3,
+          "wobble_hz": 5
+        },
+        {
+          "type": "grains",
+          "rate0": 40,
+          "tau": 1.2,
+          "len": 2.0,
+          "f": [
+            120,
+            320
+          ],
+          "t60": 0.06,
+          "gain": 0.35,
+          "at": 0.2,
+          "click": 0.0
+        }
+      ]
+    },
+    "surf.water.seep": {
+      "rate": 24000,
+      "variants": 1,
+      "drive": 0.0,
+      "peak_db": -16.0,
+      "jitter": {
+        "f": 0.08,
+        "t60": 0.1,
+        "gain": 0.1
+      },
+      "layers": [
+        {
+          "type": "grains",
+          "rate0": 25,
+          "tau": 1.5,
+          "len": 2.0,
+          "f": [
+            150,
+            380
+          ],
+          "t60": 0.05,
+          "gain": 1.0,
+          "at": 0.0,
+          "click": 0.0
+        },
+        {
+          "type": "noise",
+          "filter": "lp",
+          "f": 260,
+          "q": 0.7,
+          "attack": 0.5,
+          "t60": 1.6,
+          "gain": 0.35
+        }
+      ]
+    },
+    "surf.water.wave": {
+      "rate": 24000,
+      "variants": 2,
+      "drive": 0.0,
+      "peak_db": -6.0,
+      "jitter": {
+        "f": 0.08,
+        "t60": 0.1,
+        "gain": 0.1
+      },
+      "layers": [
+        {
+          "type": "tone",
+          "f": 80,
+          "f_to": 45,
+          "tau": 0.08,
+          "attack": 0.004,
+          "t60": 0.45,
+          "gain": 1.0,
+          "drive": 0.6,
+          "h2": 0.3,
+          "h3": 0.0
+        },
+        {
+          "type": "noise",
+          "filter": "lp",
+          "f": 380,
+          "q": 0.7,
+          "attack": 0.12,
+          "t60": 0.9,
+          "gain": 0.8,
+          "f_to": 160,
+          "tau": 0.3
+        },
+        {
+          "type": "rumble",
+          "lp": 140,
+          "attack": 0.05,
+          "t60": 1.0,
+          "gain": 0.8,
+          "wobble": 0.25,
+          "wobble_hz": 4
+        },
+        {
+          "type": "grains",
+          "rate0": 30,
+          "tau": 0.5,
+          "len": 0.9,
+          "f": [
+            110,
+            300
+          ],
+          "t60": 0.05,
+          "gain": 0.3,
+          "at": 0.15,
+          "click": 0.0
+        }
+      ]
+    },
+    "surf.water.hiss": {
+      "rate": 24000,
+      "variants": 2,
+      "drive": 0.0,
+      "peak_db": -12.0,
+      "jitter": {
+        "f": 0.08,
+        "t60": 0.1,
+        "gain": 0.1
+      },
+      "layers": [
+        {
+          "type": "noise",
+          "filter": "lp",
+          "f": 480,
+          "q": 0.7,
+          "attack": 0.01,
+          "t60": 0.35,
+          "gain": 1.0
+        },
+        {
+          "type": "noise",
+          "filter": "lp",
+          "f": 240,
+          "q": 0.7,
+          "attack": 0.02,
+          "t60": 0.3,
+          "gain": 0.6
+        },
+        {
+          "type": "tone",
+          "f": 90,
+          "f_to": 60,
+          "tau": 0.04,
+          "attack": 0.004,
+          "t60": 0.12,
+          "gain": 0.4,
+          "drive": 0.0,
+          "h2": 0.0,
+          "h3": 0.0
+        }
+      ]
     }
   },
   "beds": {
@@ -971,6 +1156,401 @@
         }
       ]
     },
+    "icefield": {
+      "rate": 6000,
+      "seconds": 10.0,
+      "seed": 111,
+      "peak_db": -18.0,
+      "layers": [
+        {
+          "type": "gust",
+          "filter": "lp",
+          "lo": 130,
+          "hi": 300,
+          "q": 0.7,
+          "cycles": [
+            1,
+            2
+          ],
+          "amps": [
+            1.0,
+            0.4
+          ],
+          "floor": 0.1,
+          "sharp": 2.2,
+          "lo_gain": 0.6,
+          "gain": 1.0
+        },
+        {
+          "type": "hum",
+          "f": 46,
+          "partials": [
+            [
+              1,
+              1.0
+            ],
+            [
+              2,
+              0.35
+            ]
+          ],
+          "beat": 1,
+          "beat_depth": 0.4,
+          "gain": 0.3
+        },
+        {
+          "type": "pulses",
+          "count": 2,
+          "f": 200,
+          "f_to": 110,
+          "len": 0.3,
+          "gain": 0.35
+        }
+      ]
+    },
+    "seaice": {
+      "rate": 6000,
+      "seconds": 10.0,
+      "seed": 112,
+      "peak_db": -16.0,
+      "layers": [
+        {
+          "type": "gust",
+          "filter": "lp",
+          "lo": 200,
+          "hi": 460,
+          "q": 0.7,
+          "cycles": [
+            2,
+            3
+          ],
+          "amps": [
+            1.0,
+            0.5
+          ],
+          "floor": 0.2,
+          "sharp": 1.6,
+          "lo_gain": 0.6,
+          "gain": 1.0
+        },
+        {
+          "type": "gust",
+          "filter": "lp",
+          "lo": 300,
+          "hi": 520,
+          "q": 0.7,
+          "cycles": [
+            1
+          ],
+          "amps": [
+            1.0
+          ],
+          "floor": 0.05,
+          "sharp": 2.5,
+          "lo_gain": 0.6,
+          "gain": 0.4
+        },
+        {
+          "type": "pulses",
+          "count": 2,
+          "f": 210,
+          "f_to": 120,
+          "len": 0.28,
+          "gain": 0.35
+        }
+      ]
+    },
+    "savanna": {
+      "rate": 6000,
+      "seconds": 10.0,
+      "seed": 113,
+      "peak_db": -12.0,
+      "layers": [
+        {
+          "type": "gust",
+          "filter": "lp",
+          "lo": 200,
+          "hi": 520,
+          "q": 0.7,
+          "cycles": [
+            1,
+            2
+          ],
+          "amps": [
+            1.0,
+            0.5
+          ],
+          "floor": 0.4,
+          "sharp": 1.3,
+          "lo_gain": 0.6,
+          "gain": 1.0
+        },
+        {
+          "type": "flutter",
+          "filter": "lp",
+          "f": 360,
+          "q": 0.6,
+          "rate_hz": 9.0,
+          "depth": 0.7,
+          "gain": 0.25
+        },
+        {
+          "type": "pulses",
+          "count": 2,
+          "f": 130,
+          "f_to": 100,
+          "len": 0.15,
+          "gain": 0.2
+        }
+      ]
+    },
+    "taiga": {
+      "rate": 6000,
+      "seconds": 10.0,
+      "seed": 114,
+      "peak_db": -12.0,
+      "layers": [
+        {
+          "type": "gust",
+          "filter": "lp",
+          "lo": 160,
+          "hi": 380,
+          "q": 0.7,
+          "cycles": [
+            2,
+            3
+          ],
+          "amps": [
+            1.0,
+            0.5
+          ],
+          "floor": 0.45,
+          "sharp": 1.2,
+          "lo_gain": 0.6,
+          "gain": 1.0
+        },
+        {
+          "type": "flutter",
+          "filter": "lp",
+          "f": 320,
+          "q": 0.6,
+          "rate_hz": 5.0,
+          "depth": 0.5,
+          "gain": 0.3
+        },
+        {
+          "type": "hum",
+          "f": 52,
+          "partials": [
+            [
+              1,
+              1.0
+            ],
+            [
+              2,
+              0.3
+            ]
+          ],
+          "beat": 0,
+          "beat_depth": 0.0,
+          "gain": 0.25
+        },
+        {
+          "type": "pulses",
+          "count": 1,
+          "f": 120,
+          "f_to": 90,
+          "len": 0.2,
+          "gain": 0.2
+        }
+      ]
+    },
+    "highland": {
+      "rate": 6000,
+      "seconds": 10.0,
+      "seed": 115,
+      "peak_db": -12.0,
+      "layers": [
+        {
+          "type": "gust",
+          "filter": "lp",
+          "lo": 150,
+          "hi": 340,
+          "q": 1.0,
+          "cycles": [
+            1,
+            3
+          ],
+          "amps": [
+            1.0,
+            0.5
+          ],
+          "floor": 0.25,
+          "sharp": 1.5,
+          "lo_gain": 0.6,
+          "gain": 1.0
+        },
+        {
+          "type": "hum",
+          "f": 44,
+          "partials": [
+            [
+              1,
+              1.0
+            ],
+            [
+              2,
+              0.4
+            ]
+          ],
+          "beat": 1,
+          "beat_depth": 0.3,
+          "gain": 0.3
+        },
+        {
+          "type": "pulses",
+          "count": 2,
+          "f": 170,
+          "f_to": 110,
+          "len": 0.1,
+          "gain": 0.2
+        }
+      ]
+    },
+    "volcanic": {
+      "rate": 6000,
+      "seconds": 10.0,
+      "seed": 116,
+      "peak_db": -12.0,
+      "layers": [
+        {
+          "type": "hum",
+          "f": 38,
+          "partials": [
+            [
+              1,
+              1.0
+            ],
+            [
+              2,
+              0.7
+            ],
+            [
+              3,
+              0.35
+            ]
+          ],
+          "beat": 2,
+          "beat_depth": 0.4,
+          "gain": 1.0
+        },
+        {
+          "type": "gust",
+          "filter": "lp",
+          "lo": 120,
+          "hi": 300,
+          "q": 0.7,
+          "cycles": [
+            1,
+            2
+          ],
+          "amps": [
+            1.0,
+            0.4
+          ],
+          "floor": 0.5,
+          "sharp": 1.0,
+          "lo_gain": 0.6,
+          "gain": 0.6
+        },
+        {
+          "type": "gust",
+          "filter": "lp",
+          "lo": 400,
+          "hi": 640,
+          "q": 0.7,
+          "cycles": [
+            2
+          ],
+          "amps": [
+            1.0
+          ],
+          "floor": 0.1,
+          "sharp": 2.5,
+          "lo_gain": 0.6,
+          "gain": 0.25
+        },
+        {
+          "type": "pulses",
+          "count": 3,
+          "f": 90,
+          "f_to": 55,
+          "len": 0.25,
+          "gain": 0.5
+        }
+      ]
+    },
+    "shore": {
+      "rate": 6000,
+      "seconds": 10.0,
+      "seed": 117,
+      "peak_db": -12.0,
+      "layers": [
+        {
+          "type": "gust",
+          "filter": "lp",
+          "lo": 260,
+          "hi": 640,
+          "q": 0.7,
+          "cycles": [
+            3,
+            4
+          ],
+          "amps": [
+            1.0,
+            0.6
+          ],
+          "floor": 0.2,
+          "sharp": 1.8,
+          "lo_gain": 0.6,
+          "gain": 1.0
+        },
+        {
+          "type": "gust",
+          "filter": "lp",
+          "lo": 480,
+          "hi": 760,
+          "q": 0.7,
+          "cycles": [
+            3
+          ],
+          "amps": [
+            1.0
+          ],
+          "floor": 0.05,
+          "sharp": 2.6,
+          "lo_gain": 0.6,
+          "gain": 0.45
+        },
+        {
+          "type": "hum",
+          "f": 70,
+          "partials": [
+            [
+              1,
+              1.0
+            ],
+            [
+              2,
+              0.3
+            ]
+          ],
+          "beat": 0,
+          "beat_depth": 0.0,
+          "gain": 0.2
+        }
+      ]
+    },
     "tundra": {
       "rate": 6000,
       "seconds": 10.0,
@@ -1158,35 +1738,55 @@
       "gain_db": -4.0,
       "alt_db": 4.0
     },
-    "ice": {
-      "bed": "tundra",
-      "gain_db": -2.0,
+    "ice_sheet": {
+      "bed": "icefield",
+      "gain_db": -3.0,
       "alt_db": 3.0
     },
-    "tundra": {
-      "bed": "tundra",
-      "gain_db": -2.0,
-      "alt_db": 3.0
-    },
-    "marsh": {
-      "bed": "marsh",
-      "gain_db": -5.0,
-      "alt_db": 1.0
-    },
-    "swamp": {
-      "bed": "marsh",
-      "gain_db": -5.0,
-      "alt_db": 1.0
+    "sea_ice": {
+      "bed": "seaice",
+      "gain_db": -4.0,
+      "alt_db": -2.0
     },
     "jungle": {
       "bed": "jungle",
       "gain_db": -4.0,
       "alt_db": 1.0
     },
-    "beach": {
-      "bed": "surf",
+    "savanna": {
+      "bed": "savanna",
       "gain_db": -4.0,
-      "alt_db": -4.0
+      "alt_db": 4.0
+    },
+    "tundra": {
+      "bed": "tundra",
+      "gain_db": -2.0,
+      "alt_db": 3.0
+    },
+    "taiga": {
+      "bed": "taiga",
+      "gain_db": -5.0,
+      "alt_db": 2.0
+    },
+    "wetland": {
+      "bed": "marsh",
+      "gain_db": -5.0,
+      "alt_db": 1.0
+    },
+    "beach": {
+      "bed": "shore",
+      "gain_db": -4.0,
+      "alt_db": -3.0
+    },
+    "highland": {
+      "bed": "highland",
+      "gain_db": -4.0,
+      "alt_db": 4.0
+    },
+    "volcanic": {
+      "bed": "volcanic",
+      "gain_db": -3.0,
+      "alt_db": -2.0
     }
   },
   "bed": {
@@ -1214,12 +1814,23 @@
     "city": "grass",
     "forest": "mud",
     "ocean": "mud",
-    "ice": "snow",
-    "tundra": "snow",
-    "marsh": "mud",
-    "swamp": "mud",
     "jungle": "mud",
-    "beach": "sand"
+    "savanna": "grass",
+    "taiga": "grass",
+    "tundra": "snow",
+    "wetland": "mud",
+    "ice_sheet": "snow",
+    "sea_ice": "snow"
+  },
+  "ground": {
+    "ice_sheet": "snow",
+    "sea_ice": "snow",
+    "tundra": "snow",
+    "wetland": "mud",
+    "jungle": "mud",
+    "beach": "sand",
+    "highland": "rock",
+    "volcanic": "rock"
   },
   "surfaces": {
     "grass": {
@@ -1367,5 +1978,45 @@
     "priority": 30,
     "cls": "surf.step",
     "cap": 2
+  },
+  "water": {
+    "fill": {
+      "sound": "surf.water.fill",
+      "seep": "surf.water.seep",
+      "gain_db": -5.0,
+      "seep_db": -4.0,
+      "ref_amount": 100.0,
+      "gain_db_per_ln": 4.0,
+      "gain_db_min": -14.0,
+      "gain_db_max": 2.0,
+      "pitch_exp": -0.15,
+      "pitch_min": 0.8,
+      "pitch_max": 1.2,
+      "min_s": 0.6,
+      "max_s": 2.4,
+      "stop_ms": 350,
+      "groups": 4,
+      "priority": 52,
+      "cls": "water.fill",
+      "cap": 3
+    },
+    "wave": {
+      "sound": "surf.water.wave",
+      "gain_db": -2.0,
+      "priority": 60,
+      "cls": "water.wave",
+      "cap": 2
+    },
+    "douse": {
+      "sound": "surf.water.hiss",
+      "gain_db": -7.0,
+      "ref_n": 8.0,
+      "gain_db_per_ln": 3.0,
+      "gain_db_min": -14.0,
+      "gain_db_max": -1.0,
+      "priority": 48,
+      "cls": "water.douse",
+      "cap": 2
+    }
   }
 }

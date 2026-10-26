@@ -93,6 +93,7 @@ class Body:
 	var spin: float = 0.0
 	var rot: float = 0.0
 	var wet: bool = false
+	var wetT: int = 0            # ticks under the surface since the launch took him in (the surfacing rule: WorldFill.surfaceOn)
 	var hopped: bool = false
 	var tier: float = 1.0
 	var done: bool = false
@@ -137,6 +138,9 @@ static func dataHash() -> String:
 	if WorldFill.on():
 		h.text("biomes.water")
 		FighterData._canon(h, WorldFill.parsed())   # water v2's switch, on: a replay must know
+	if WorldFill.surfaceOn():
+		h.text("biomes.surface")
+		FighterData._canon(h, WorldFill.data().surface)   # the surfacing rule, on: a replay must know
 	if skateOn():
 		h.text("biomes.skate")
 		FighterData._canon(h, _skateParsed)   # the parsed data without the "_" notes, like contact.json: a changed note keeps old replays
@@ -468,10 +472,25 @@ static func moveAir(S: SimState, b: Body, dt: float, ev: Array) -> void:
 		b.vy += grav   # water holds him up: it cancels the gravity of this tick, whatever it is
 		b.vx *= SimDetMath.pow(0.05, dt)
 		b.vy *= SimDetMath.pow(0.1, dt)
-		if SimDetMath.hypot(b.vx, b.vy) < K_SINK and b.age > 0.3:
+		if WorldFill.surfaceOn():   # Game Design 2026-10-23b item 7: he surfaces set within the data's ticks, with no down state, and counts as landed there
+			b.wetT += 1
+			var left: int = WorldFill.surfaceTicks() - b.wetT
+			if left <= 0:
+				b.y = wsurf
+				b.vx = 0.0
+				b.vy = 0.0
+				b.wetT = 0
+				b.done = true
+				b.end = "water"
+				ev.append({"k": "sink", "x": b.x, "y": b.y})
+			else:
+				b.vy = maxf(b.vy, (wsurf - b.y) / (float(left) * dt))   # rise so as to arrive on the last tick
+		elif SimDetMath.hypot(b.vx, b.vy) < K_SINK and b.age > 0.3:
 			b.done = true
 			b.end = "water"
 			ev.append({"k": "sink", "x": b.x, "y": b.y})
+	else:
+		b.wetT = 0
 
 
 ## The ground and the ceiling, after the move (and after the building collision, in the runtime).
@@ -830,6 +849,7 @@ static func toBody(S: SimState, f) -> Body:
 	b.spin = f.spin
 	b.rot = f.rot
 	b.wet = f.wet
+	b.wetT = f.wetT
 	b.hopped = f.hopped
 	b.special = f.launchSpecial
 	b.embedOK = S.T - f.embedCool >= K_EMB_COOL
@@ -859,6 +879,7 @@ static func fromBody(f, b: Body) -> void:
 	f.spin = b.spin
 	f.rot = b.rot
 	f.wet = b.wet
+	f.wetT = b.wetT
 	f.hopped = b.hopped
 	f.slideD = b.slideD
 	f.jLips = b.lips

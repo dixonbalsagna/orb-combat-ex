@@ -2,6 +2,7 @@ extends SceneTree
 # An equirectangular map of a planet's biomes (and a hillshade of its heights), for looking at a generation:
 #   godot --headless --path . --script res://sim/world/tools/planet_map.gd -- --seeds=7,3,11,25 --gens=1,2 --w=720 --out=<folder>
 # --places marks the places on the fine and height pictures (a city a red square, a town a yellow one).
+# --rivers draws the flow field's river cells on the height and fine pictures (window 14).
 # --b turns land.json's b switch on for the run (Research's B plates, window 12; the files are planet-<seed>-gen2b-*.png).
 # --edges draws the plates' edges on the height picture (red closing, blue parting, yellow neither); --height=0 leaves the height picture out.
 # Writes <out>/planet-<seed>-gen<g>-height.png (heights by colour, sea to snow), <out>/planet-<seed>-gen<g>-stored.png (the stored biomes: what the renderer sees) and, for gen 2, -fine.png (the fine biomes) and prints the share of each biome and the cost a sample.
@@ -16,6 +17,7 @@ func _init() -> void:
 	var edges: bool = false
 	var places: bool = false
 	var useB: bool = false
+	var showRivers: bool = false
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--seeds="):
 			seeds = Array(a.substr(8).split(",")).map(func(v): return int(v))
@@ -31,6 +33,8 @@ func _init() -> void:
 			places = true
 		if a == "--b":
 			useB = true
+		if a == "--rivers":
+			showRivers = true
 	if useB:
 		WorldLand.setB(true)   # Research's B plates for this run (window 12)
 	var tag: String = "b" if useB else ""
@@ -90,6 +94,20 @@ func _init() -> void:
 							var qy: int = clampi(pyl + dy, 0, h - 1)
 							imgF.set_pixel(qx, qy, mc)
 							imgH.set_pixel(qx, qy, mc)
+			if showRivers and g >= 2:   # the drainage of the climate grid (window 14): its river cells, blue
+				var F: WorldRivers.Flow = WorldRivers.flowOf(P)
+				var nr: int = 0
+				for i in range(F.w * F.h):
+					if P.grid.ht[i] >= 0.0 and F.flow[i] >= WorldRivers.K_RIVER:
+						var rx: int = int(fposmod(atan2(F.pz[i], F.px[i]), SimMathx.TAU) / SimMathx.TAU * float(w)) % w
+						var ry: int = clampi(int((0.5 - asin(F.py[i]) / SimMathx.PI) * float(h)), 0, h - 1)
+						var big: int = 1 if F.flow[i] > 4.0 * WorldRivers.K_RIVER else 0
+						for dy in range(-big, big + 1):
+							for dx in range(-big, big + 1):
+								imgF.set_pixel((rx + dx + w) % w, clampi(ry + dy, 0, h - 1), Color(0.1, 0.35, 1.0))
+								imgH.set_pixel((rx + dx + w) % w, clampi(ry + dy, 0, h - 1), Color(0.1, 0.35, 1.0))
+						nr += 1
+				print("   rivers: %d river cells of %d land cells (%.1f%%)" % [nr, F.landCells, 100.0 * float(nr) / float(maxi(F.landCells, 1))])
 			imgL.save_png("%s/planet-%d-gen%d%s-stored.png" % [out, sd, g, tag if g >= 2 else ""])
 			imgH.save_png("%s/planet-%d-gen%d%s-height.png" % [out, sd, g, tag if g >= 2 else ""])
 			if g >= 2:
