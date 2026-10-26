@@ -36,7 +36,7 @@
       {
         "combat_label": "Ring Hang",
         "name": "Ring Hold",
-        "alternate": "Ring Bind",
+        "alternate": "Loop Hold",
         "is": "grab in flight: the bind holds the body still in the air",
         "flavour": "Held in the air. Hold still."
       },
