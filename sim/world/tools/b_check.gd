@@ -97,5 +97,27 @@ func _init() -> void:
 				prev = h
 	var per: float = float(Time.get_ticks_usec() - t0) / (3.0 * 6.0 * 4800.0)
 	ok(worst < 900.0, "along 18 rings (3 seeds, 6 latitudes) the largest step between neighbouring columns is %.0f units (column %d); a ground read costs %.0f us" % [worst, wi, per])
+	# window 13: B's volcanic score makes the volcanic fields (the climate's own noise is not read while B is on)
+	var Pv := WorldPlanet.make(7)
+	var thr: float = WorldPlateB.K.volcanic
+	var seen: int = 0
+	var vol: int = 0
+	var cold: int = 0
+	var sample: int = 0
+	for k in range(60000):
+		var q: Array = WorldPlateB._randUnit(7, 8888, k)
+		var hh: float = WorldPlateB.ground(Pv, q[0], q[1], q[2])
+		if hh <= 0.0 or WorldPlateB.volcAt(Pv, q[0], q[1], q[2]) <= thr:
+			continue
+		seen += 1
+		WorldPlanet.surfAt(Pv, q[0], q[1], q[2])
+		if Pv.outF == WorldClimate.F_VOLCANIC:
+			vol += 1
+		elif hh < float(WorldClimate.data().coast.beachH) or float(WorldClimate.climateAt(Pv, q[0], q[1], q[2], hh)[0]) < float(WorldClimate.data().tempEdges[0]):
+			cold += 1
+		sample += 1
+		if seen >= 120:
+			break
+	ok(seen >= 20 and vol + cold == seen and vol >= seen / 2, "window 13: where B's volcanic score is over %.2f on land (%d points on planet 7) the fine biome is volcanic (%d), or too cold or a beach for it (%d)" % [thr, seen, vol, cold])
 	print("B: %d check(s) failed" % fails)
 	quit()

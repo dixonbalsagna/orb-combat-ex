@@ -301,7 +301,9 @@ static func plain(P: WorldPlanet.Planet, px: float, py: float, pz: float, h: flo
 	if h < 0.0:
 		P.outF = F_OCEAN
 		return WorldPlanet.BIO_OCEAN
-	if h > P.c.mountainAbove:
+	var onB: bool = WorldLand.plateB()   # Research's B plates: their volcanic score makes the volcanic fields, in place of the noise (window 13)
+	var bv: bool = onB and WorldPlateB.volcAt(P, px, py, pz) > WorldPlateB.K.volcanic
+	if h > P.c.mountainAbove and not bv:
 		P.outF = F_MOUNTAINS
 		return WorldPlanet.BIO_MOUNTAINS
 	var d: Dictionary = data()
@@ -310,9 +312,13 @@ static func plain(P: WorldPlanet.Planet, px: float, py: float, pz: float, h: flo
 	var M: float = cm[1]
 	var vc: Dictionary = d.volcanic
 	var fine: int
-	if h >= float(vc.hMin) and WorldPlanet._fbm(P.R, px, py, pz, vc.scale, int(vc.oct), P.seed + int(vc.seed)) > float(vc.above):
+	if bv and T >= float(d.tempEdges[0]) and h >= float(d.coast.beachH):   # not too cold for it, and not a beach (Research's notCold)
 		fine = F_VOLCANIC
-	elif h >= float(d.highland.h):
+	elif h > P.c.mountainAbove:
+		fine = F_MOUNTAINS
+	elif not onB and h >= float(vc.hMin) and WorldPlanet._fbm(P.R, px, py, pz, vc.scale, int(vc.oct), P.seed + int(vc.seed)) > float(vc.above):
+		fine = F_VOLCANIC
+	elif h >= (float(d.b.highlandH) if onB else float(d.highland.h)):
 		fine = F_HIGHLAND
 	elif h < float(d.coast.beachH):
 		fine = F_BEACH

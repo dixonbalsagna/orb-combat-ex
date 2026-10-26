@@ -159,6 +159,9 @@ class State extends RefCounted:
 	var pe := PackedFloat64Array()      # 9 a pair of cells a < b at (a * cells + b) * 9: edge normal, edge axis, a's motion less b's
 	var dots := PackedFloat64Array()
 	var volc: float = 0.0               # the volcanic score of the last ground read (0 to 1), a side output
+	var lx: float = 2.0                 # the point of that read (a unit vector's parts are within 1, so 2 is "none yet")
+	var ly: float = 2.0
+	var lz: float = 2.0
 	var ids := PackedInt32Array()
 	var ex := PackedFloat64Array()
 	var hold := PackedFloat64Array()
@@ -485,6 +488,14 @@ static func _strength(S: State, j: int) -> float:
 	return (-cvj if cvj < 0.0 else cvj) * S.hold[PAIRS[j][0]] * S.hold[PAIRS[j][1]]
 
 
+## The volcanic score (0 to 1) at a point: that of the last ground read when it was at this point (surfAt reads the ground and then the biome at the same point), else of a read made here.
+static func volcAt(P: WorldPlanet.Planet, px: float, py: float, pz: float) -> float:
+	var S: State = P.platesB if P.platesB != null else stateOf(P)
+	if S.lx != px or S.ly != py or S.lz != pz:
+		ground(P, px, py, pz)
+	return S.volc
+
+
 ## The ground at a point of the unit sphere: Research's plateGround (the full read, not the climate march's coarse one). Sets State.volc as a side output.
 static func ground(P: WorldPlanet.Planet, px: float, py: float, pz: float) -> float:
 	var S: State = P.platesB if P.platesB != null else stateOf(P)
@@ -788,4 +799,7 @@ static func ground(P: WorldPlanet.Planet, px: float, py: float, pz: float) -> fl
 			dn = WorldPlanet._fbm(R, px, py, pz, Pm.detailScale, Pm.detailOct, seed + Pm.sDetail)
 		h += (dn - 0.5) * 2.0 * Pm.detailAmp * WorldPlanet._ss(h / Pm.detailRamp)
 	S.volc = 1.0 if volc > 1.0 else volc
+	S.lx = px
+	S.ly = py
+	S.lz = pz
 	return h

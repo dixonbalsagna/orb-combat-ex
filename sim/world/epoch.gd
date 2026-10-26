@@ -53,12 +53,12 @@ static func _rot(v: Array, axis: Array, a: float) -> Array:
 
 ## The ring that results from turning `ring` by `deg` degrees (positive is counter-clockwise seen from outside) about its point at column pc: through the same point, the same length, the
 ## touch-down placed so that column pc is still that point (the fighters' columns do not move). Returns {c, t, cols}.
-static func turned(P: WorldPlanet.Planet, spec: Dictionary, pc: int, deg: float) -> Dictionary:
+static func turned(P: WorldPlanet.Planet, spec: Dictionary, pc: int, deg: float, midCol: int = -1) -> Dictionary:
 	var cols: int = int(spec.cols)
 	var ring: Dictionary = WorldRingPick.ringFrom(spec.c, cols, spec.t)
 	var st: float = ring.st
 	var ct: float = ring.ct
-	var mid: int = WorldPlanet.touchCol()
+	var mid: int = WorldPlanet.touchCol() if midCol < 0 else midCol   # midCol: the ring's own middle column, for a caller outside a match (the campaign's planner: SimConst.NC is not its ring's)
 	var step: float = SimConst.COL / (P.R * st)
 	var a: float = float(pc - mid) * step
 	var M: Array = WorldRingPick.ringPoint(ring, a)
@@ -136,6 +136,21 @@ static func ask(S: SimState, why: String, pivotX: float, side: int, due: int) ->
 	return cands
 
 
+## The campaign's turn (docs/world/campaign-route.md; campaign.md 2.3: between columns the ring turns at a calm moment so the next column's places lie along it): the same machinery as a fight's turn with one candidate,
+## the planner's bearing (WorldCampaign.column's `turn.deg`, up to the campaign data's largest, not the fight's 10 degrees), and none of the fight's caps (four turns, 60 s apart, 40 degrees of drift): a campaign
+## turn is not counted in `n`. Returns the one candidate (as `ask` does), or [] when a turn is already decided or the bearing is under minDeg. Encounter picks it with `choose(S, 0, k, 0.0)` (no fallback ring).
+static func askCampaign(S: SimState, pivotX: float, deg: float, due: int) -> Array:
+	var E = S.epoch
+	if E == null or E.next != null or absf(deg) < float(data().minDeg):
+		return []
+	var P := WorldPlanet.make(int(E.seed))
+	var pc: int = posmod(int(round(pivotX / SimConst.COL)), SimConst.NC)
+	var ns: Dictionary = turned(P, E.ring, pc, deg)
+	var cand: Dictionary = {"bearing": deg, "places": [], "spec": ns, "drift": driftOf(E.c0, ns.c)}
+	E.ask = {"why": "campaign", "pc": pc, "side": 1 if deg >= 0.0 else -1, "due": due, "cands": [cand], "camp": true}
+	return [cand]
+
+
 ## Encounter's pick: candidate i, with how it is warmed. k: the columns of each ring the sim reads a tick (Encounter's data; 0 = the data's warmCols). fallbackDeg: the second ring, the bearing a landing
 ## off the pivot falls back to (2.5 for a landing pick), on the chosen candidate's side; 0 for none (a form pick: its pivot is exact, so one ring, at up to 32 columns a tick). A fallback that is
 ## not under the chosen bearing, or would pass the drift cap, is left out. Both are kept in E.next and in the hash. From here tick() warms the rings and swaps when held, calm and warm.
@@ -155,7 +170,7 @@ static func choose(S: SimState, i: int, k: int = 0, fallbackDeg: float = -1.0) -
 		var ns: Dictionary = turned(WorldPlanet.make(int(E.seed)), E.ring, int(E.ask.pc), sgn * fb)
 		if driftOf(E.c0, ns.c) <= float(d.driftDeg):
 			warm.append({"deg": sgn * fb, "spec": ns, "cols": 0, "ptk": -1})
-	E.next = {"spec": c.spec, "pc": E.ask.pc, "bearing": c.bearing, "drift": c.drift, "why": E.ask.why, "tick": S.tick, "due": E.ask.due, "k": k if k > 0 else int(d.warmCols), "fb": absf(float(warm[1].deg)) if warm.size() > 1 else 0.0}   # tick: the pick's; due: the moment it is for. k and fb are hashed
+	E.next = {"spec": c.spec, "pc": E.ask.pc, "bearing": c.bearing, "drift": c.drift, "why": E.ask.why, "camp": bool(E.ask.get("camp", false)), "tick": S.tick, "due": E.ask.due, "k": k if k > 0 else int(d.warmCols), "fb": absf(float(warm[1].deg)) if warm.size() > 1 else 0.0}   # tick: the pick's; due: the moment it is for. k and fb are hashed
 	E.warm = warm
 	E.ask = null
 	_dropJobs(S)
@@ -620,7 +635,8 @@ static func swap(S: SimState) -> void:
 			f.y = g
 	# --- the epoch moves on
 	S.worldId = WorldBiomes.claim()   # the director's tables and the renderer's caches follow the world
-	E.n = int(E.n) + 1
+	if not bool(nx.get("camp", false)):
+		E.n = int(E.n) + 1   # a campaign turn is not one of the fight's four
 	E.lastT = S.T
 	E.drift = nx.drift
 	E.ring = spec

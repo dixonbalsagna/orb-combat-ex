@@ -78,6 +78,21 @@ export function consumeFx(V, S, events) {
         break;
       }
       case 'beamSplash': if (next(R['vfx.water']) < 0.6) splash(V, e.x, 0, 3, R['vfx.splash']); break;
+      // Water v2's cues (fx.gd's twin; the JS sim does not emit them yet).
+      case 'water_fill': {
+        splash(V, e.x, e.y, Math.min(6, 2 + Math.trunc(e.amount / 40)), R['vfx.splash']);
+        if (e.spd <= 0) break;
+        const way = groundY(S, e.x + 160) < groundY(S, e.x - 160) ? 1 : -1, w = R['vfx.water'];
+        for (let i = 0; i < 4; i++) P(V, {type:'splash', x:wrap(e.x + way*(40 + 60*i)), y:e.y, vx:way*range(w, 220,520), vy:range(w, 160,420), grav:1200, life:range(w, 0.5,1), col:'#d8f0ff', size:range(w, 2,4)});
+        break;
+      }
+      case 'water_wave': {
+        const r = R['vfx.splash'];
+        for (let i = 0; i < 8; i++){ const side = i % 2 === 0 ? -1 : 1;
+          P(V, {type:'splash', x:wrap(e.x + side*e.r*(0.12 + 0.11*(i >> 1))), y:e.y, vx:side*range(r, 150,350), vy:range(r, 120,320), grav:900, life:range(r, 0.5,0.9), col:'#d8f0ff', size:range(r, 2,4)}); }
+        break;
+      }
+      case 'water_douse': break;   // steam over the doused scorch: fx.gd's (the JS sim has no fill to douse with)
       case 'damage': V.floats.push({x:e.x, y:e.y, txt:String(Math.round(e.amount)), t:0, col:e.col}); break;
       case 'banner': V.banner = {text:e.text, col:e.col, t:0, dur:e.dur}; break;
       case 'shake': V.shake = Math.max(V.shake, e.k); break;

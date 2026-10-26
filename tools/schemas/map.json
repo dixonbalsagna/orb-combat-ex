@@ -452,6 +452,14 @@
       "schema": "biomes-water.schema.json"
     },
     {
+      "match": "data/biomes/campaign.json",
+      "schema": "biomes-campaign.schema.json"
+    },
+    {
+      "match": "data/biomes/wrecks.json",
+      "schema": "biomes-wrecks.schema.json"
+    },
+    {
       "match": "data/biomes/plates-b.json",
       "schema": "biomes-plates-b.schema.json"
     },

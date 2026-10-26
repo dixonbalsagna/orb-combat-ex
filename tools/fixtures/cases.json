@@ -292735,6 +292735,102 @@
       }
     },
     {
+      "id": "wrecks-reach-zero",
+      "schema": "biomes-wrecks.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/wrecks.json",
+          "set": {
+            "/reachBh": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/reachBh"
+      }
+    },
+    {
+      "id": "wrecks-fighters-not-boolean",
+      "schema": "biomes-wrecks.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/wrecks.json",
+          "set": {
+            "/fighters": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/fighters"
+      }
+    },
+    {
+      "id": "wrecks-burst-speed-zero",
+      "schema": "biomes-wrecks.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/wrecks.json",
+          "set": {
+            "/burst/speed": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/burst/speed"
+      }
+    },
+    {
+      "id": "campaign-enabled-not-boolean",
+      "schema": "biomes-campaign.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/campaign.json",
+          "set": {
+            "/enabled": "on"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "campaign-flight-speed-zero",
+      "schema": "biomes-campaign.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/campaign.json",
+          "set": {
+            "/flight/speed": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/flight/speed"
+      }
+    },
+    {
+      "id": "campaign-side-ring-too-short",
+      "schema": "biomes-campaign.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/campaign.json",
+          "set": {
+            "/side/ringCols": 50
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/side/ringCols"
+      }
+    },
+    {
       "id": "rings-turn-bearing-over-10",
       "schema": "biomes-rings.schema.json",
       "mutate": [

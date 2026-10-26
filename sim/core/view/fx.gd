@@ -145,6 +145,67 @@ func _fire(x: float, y: float, n: int, r: SimRng, z: float = 0.0) -> void:
 		_P(p)
 
 
+## Water v2's cues (World's sim/world/fill.gd): cosmetic only, on the water streams. A fill: a splash where the water
+## comes in and spray thrown the way the front runs (toward the lower ground beside the source; a seeping table has no
+## front, so only the splash). A wave: low spray running out both ways from the slam. A douse (sent once, as the water
+## first reaches a scorched line): steam over the scorched columns it covers, three puffs each, at most DOUSE_PUFFS.
+const DOUSE_PUFFS: int = 8
+
+func _waterFill(S: SimState, e, z: float) -> void:
+	var r: SimRng = rng["vfx.splash"]
+	_splash(e.x, e.y, mini(6, 2 + int(e.amount / 40.0)), r, z)
+	if e.spd <= 0.0:
+		return
+	var way: float = 1.0 if WorldTerrain.groundY(S, e.x + 160.0) < WorldTerrain.groundY(S, e.x - 160.0) else -1.0
+	var w: SimRng = rng["vfx.water"]
+	for i in range(4):
+		var p := Part.new()
+		p.type = "splash"; p.z = z
+		p.x = SimWrap.wrap(e.x + way * (40.0 + 60.0 * float(i)))
+		p.y = e.y
+		p.vx = way * w.range_(220.0, 520.0)
+		p.vy = w.range_(160.0, 420.0)
+		p.grav = 1200.0
+		p.life = w.range_(0.5, 1.0)
+		p.col = "#d8f0ff"
+		p.size = w.range_(2.0, 4.0)
+		_P(p)
+
+
+func _waterWave(e, z: float) -> void:
+	var r: SimRng = rng["vfx.splash"]
+	for i in range(8):
+		var side: float = -1.0 if i % 2 == 0 else 1.0
+		var p := Part.new()
+		p.type = "splash"; p.z = z
+		p.x = SimWrap.wrap(e.x + side * e.r * (0.12 + 0.11 * float(i >> 1)))
+		p.y = e.y
+		p.vx = side * r.range_(150.0, 350.0)
+		p.vy = r.range_(120.0, 320.0)
+		p.grav = 900.0
+		p.life = r.range_(0.5, 0.9)
+		p.col = "#d8f0ff"
+		p.size = r.range_(2.0, 4.0)
+		_P(p)
+
+
+func _waterDouse(S: SimState, e, z: float) -> void:
+	var nc: int = SimConst.NC
+	var c0: int = int(floor(SimWrap.wrap(e.x - e.w) / SimConst.COL)) % nc   # x is the fill's source, w its window's width: either way
+	var span: int = mini(nc, int(ceil(2.0 * e.w / SimConst.COL)) + 1)
+	var hot: Array = []   # the scorched columns standing in water now
+	for k in range(span):
+		var c: int = (c0 + k) % nc
+		if S.scorch.size() == nc and S.scorch[c] >= WorldFill.K_DOUSE and S.water[c] >= WorldWater.MIN_DEPTH:
+			hot.append(c)
+	var w: SimRng = rng["vfx.water"]
+	var n: int = mini(DOUSE_PUFFS, 3 * hot.size())
+	for i in range(n):
+		var c: int = hot[int(float(i * hot.size()) / float(n))]   # spread over them, first to last
+		var x: float = (float(c) + 0.5) * SimConst.COL
+		_dust(x, WorldTerrain.groundY(S, x) + S.water[c], 1, "#e4ecef", w, z)
+
+
 ## Particles (swap-remove when expired), then the damage numbers.
 func _stepParts(S: SimState, dt: float) -> void:
 	for i in range(parts.size() - 1, -1, -1):
@@ -219,6 +280,12 @@ func consume(S: SimState, events: Array) -> void:
 			"beamSplash":
 				if rng["vfx.water"].next() < 0.6:
 					_splash(e.x, 0.0, 3, rng["vfx.splash"], e.z)
+			"water_fill":
+				_waterFill(S, e, e.z)
+			"water_wave":
+				_waterWave(e, e.z)
+			"water_douse":
+				_waterDouse(S, e, e.z)
 			"damage":
 				if e.number:   # landings and collisions carry no damage number
 					var fl := DmgFloat.new()

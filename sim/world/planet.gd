@@ -309,6 +309,8 @@ static func _newPlanet(seed: int, gn: int) -> Planet:
 		P.c = cfg().duplicate()
 		for k in WorldClimate.data().planet:
 			P.c[k] = WorldClimate.data().planet[k]
+		if WorldLand.plateB():   # Research's B plates make taller ground: the mountain line moves up (climate.json b, window 13)
+			P.c["mountainAbove"] = float(WorldClimate.data().b.mountainAbove)
 	P.L = float(SimConst.PLANET_NC) * SimConst.COL
 	P.R = P.L / (2.0 * SimMathx.PI)
 	return P

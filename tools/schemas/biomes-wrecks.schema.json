@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-wrecks",
+  "title": "biomes.wrecks/1",
+  "description": "data/biomes/wrecks.json: the liftable wreck (Game Design 23d section 8 item 20; WorldWrecks). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore. Order checks (tierLift never falls, scaleMin within scaleMax) are WorldWrecks' own load and wrecks_check.",
+  "type": "object",
+  "required": [
+    "schema",
+    "_about",
+    "reachBh",
+    "nearBh",
+    "fighters",
+    "fill",
+    "minMass",
+    "tierLift",
+    "burst"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "biomes.wrecks/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "reachBh": {
+      "type": "number",
+      "exclusiveMinimum": 0.0,
+      "maximum": 20.0,
+      "description": "How near the fighter must be, in body heights, to the wreck's box."
+    },
+    "nearBh": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 50.0,
+      "description": "No living civilian in a building within this many body heights of the wreck's edge."
+    },
+    "fighters": {
+      "type": "boolean",
+      "description": "A fighter near the wreck counts as living too."
+    },
+    "fill": {
+      "type": "number",
+      "exclusiveMinimum": 0.0,
+      "maximum": 10.0,
+      "description": "A wreck's mass is this share of its building's volume (cubic body heights)."
+    },
+    "minMass": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1000.0,
+      "description": "A smaller wreck is not worth lifting."
+    },
+    "tierLift": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 8,
+      "items": {
+        "type": "number",
+        "exclusiveMinimum": 0.0,
+        "maximum": 100000.0,
+        "description": "The heaviest wreck this tier lifts."
+      },
+      "description": "Per tier from 1; never falls as the tier rises (WorldWrecks' load)."
+    },
+    "burst": {
+      "type": "object",
+      "required": [
+        "speed",
+        "massRef",
+        "scaleMin",
+        "scaleMax",
+        "radiusBh",
+        "radiusMinBh",
+        "radiusMaxBh"
+      ],
+      "additionalProperties": false,
+      "description": "The scrap's damage to structures.",
+      "properties": {
+        "speed": {
+          "type": "number",
+          "exclusiveMinimum": 0.0,
+          "maximum": 100000.0,
+          "description": "The scrap's speed in the brunt ladder's terms."
+        },
+        "massRef": {
+          "type": "number",
+          "exclusiveMinimum": 0.0,
+          "maximum": 100000.0,
+          "description": "The mass at which the damage and radius are as written."
+        },
+        "scaleMin": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 100.0,
+          "description": "Lowest damage scale (square root of mass over massRef)."
+        },
+        "scaleMax": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 100.0,
+          "description": "Highest damage scale."
+        },
+        "radiusBh": {
+          "type": "number",
+          "exclusiveMinimum": 0.0,
+          "maximum": 50.0,
+          "description": "The burst's radius in body heights at massRef."
+        },
+        "radiusMinBh": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 50.0,
+          "description": "Smallest radius."
+        },
+        "radiusMaxBh": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 50.0,
+          "description": "Largest radius."
+        }
+      }
+    }
+  }
+}

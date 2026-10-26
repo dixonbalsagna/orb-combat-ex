@@ -99,6 +99,10 @@
   "highland": {
     "h": 2300.0
   },
+  "b": {
+    "mountainAbove": 4200.0,
+    "highlandH": 3000.0
+  },
   "volcanic": {
     "scale": 6500.0,
     "oct": 1,

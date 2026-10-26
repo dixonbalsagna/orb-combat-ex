@@ -1,0 +1,1360 @@
+diff --git a/data/biomes/campaign.json b/data/biomes/campaign.json
+new file mode 100644
+index 0000000..0882c9f
+--- /dev/null
++++ b/data/biomes/campaign.json
+@@ -0,0 +1,40 @@
++{
++  "schema": "biomes.campaign/1",
++  "_about": "The campaign's route on the ring (docs/design/campaign.md sections 1.4, 2.2, 2.3 and 7; World's part of the first slice, docs/world/campaign-route.md; read by sim/world/campaign.gd). enabled: off, nothing here runs and the golden is as it was. flight: how fast the pair fly between places (units a second: the melee dash, 430 x 2.4, the traversal multiplier left out: with it a lap of the planet is 15 s and 10 to 25 s would be a lap or more), the least and most seconds of flight from the last stage to the near edge of a column's place, and the most for the climax (its home may be farther: the flight is the build-up). columns: for each of the five columns the fewest and most places it offers, the chance of the extra one (a seeded draw), how many must be settled (a town or city on the ring: a defence needs one), the pull toward settled places, and whether the place is the pinned one (the climax is the boss's home). sites: openStride the columns between open-ground samples, sepS the least seconds of flight between two of a column's places, jitter how far a seeded draw may move a place's score, novelty what a new kind of ground adds, fallen what a fallen place loses (it is not offered as settled ground), openMin the least land share around an open site. turn: between columns the ring may turn about the pair's point by these bearings (degrees, either way) when its places are better there: bonus is what a turn adds to a ring's score (the route changes direction), minGain how much better a ring must be than none turned for it to win. side: a side story's place is a standing city or town on the current ring within the usual flight, at least sepS seconds from the column's places; ringCols its own Close ring's length (Game Design size close). wear: the bands of a place's wounds (place state only, mc02): band is the share of its buildings lost that lifts a place to each band (1 scarred, 2 ruined, 3 fallen), then for each band 0 to 3 the share of its buildings already fallen when a later stage meets it (the lowest by seeded order) and the share of hp the others keep.",
++  "enabled": false,
++  "flight": {
++    "speed": 1032.0,
++    "minS": 10.0,
++    "maxS": 25.0,
++    "climaxMaxS": 45.0
++  },
++  "columns": [
++    { "min": 2, "max": 3, "pThree": 0.6, "settled": 0, "pull": 0.2, "pinned": false },
++    { "min": 2, "max": 3, "pThree": 0.6, "settled": 0, "pull": 0.2, "pinned": false },
++    { "min": 2, "max": 3, "pThree": 0.5, "settled": 0, "pull": 0.2, "pinned": false },
++    { "min": 2, "max": 3, "pThree": 0.5, "settled": 1, "pull": 0.6, "pinned": false },
++    { "min": 1, "max": 1, "pThree": 0.0, "settled": 1, "pull": 1.0, "pinned": true }
++  ],
++  "sites": {
++    "openStride": 8,
++    "sepS": 5.0,
++    "jitter": 0.25,
++    "novelty": 0.4,
++    "fallen": 1.0,
++    "openMin": 0.5
++  },
++  "turn": {
++    "bearings": [15.0, 30.0, 45.0, 60.0],
++    "bonus": 0.3,
++    "minGain": 0.2
++  },
++  "side": {
++    "sepS": 3.0,
++    "ringCols": 1200
++  },
++  "wear": {
++    "band": [0.08, 0.3, 0.6],
++    "fallen": [0.0, 0.1, 0.35, 0.7],
++    "hpKeep": [1.0, 0.92, 0.8, 0.6]
++  }
++}
+diff --git a/sim/world/campaign.gd b/sim/world/campaign.gd
+new file mode 100644
+index 0000000..e1ef55e
+--- /dev/null
++++ b/sim/world/campaign.gd
+@@ -0,0 +1,592 @@
++class_name WorldCampaign
++extends RefCounted
++## World's part of the campaign's first slice (docs/design/campaign.md sections 1.4, 2.2, 2.3 and 7; docs/world/campaign-route.md; data/biomes/campaign.json, off by default). Three things, all pure functions of
++## the planet, the ring, the episode's seed and the run's place state (no clock, no state, no draw from a stream: every draw is a keyed one):
++##   column(...)  the places a column offers on the ring the pair are flying, each within 10 to 25 s of flight of where they are, and, when the ring would offer a poorer choice than a turned one, the turn
++##                (the ring turns about the pair's point at a calm moment, between columns). The climax (column 5) is the boss's home: the ring through the pair and it.
++##   side(...)    a side story's place (campaign 1.4): a standing city or town on the current ring within the usual flight, and the Close ring round it for the filler episode.
++##   wounds       a place's wear is a band 0 to 3 (scarred, ruined, fallen) and nothing else (Legal mc02: place state only, never a count of people): wearOf reads a finished stage, mergeWear keeps the worse
++##                band, standingOf and damagedOf feed the ring picker, applyWear lays a place's wear on a later stage's buildings.
++## A ring travels as the setup's `arena` ({cols, c, t} with the axis and the touch-down as exact bits, WorldRingPick.arenaOf), so a run state holds it as JSON. The pair stands at column `pc` of it (the
++## touch-down's column, cols / 2, when a stage starts there); a result's `start` is the same ring with its touch-down at the pair's point, which is what the next stage's setup.arena wants.
++## The planner is independent of SimConst.NC (a match sets it; the planner runs between matches): columns are the ring's own, mid = cols / 2.
++
++const PATH := "res://data/biomes/campaign.json"
++const SCHEMA := "biomes.campaign/1"
++const BIO_OCEAN: int = 0
++const BIO_SEA_ICE: int = 6
++const BIO_NAMES: Array = ["ocean", "plains", "forest", "desert", "mountains", "ice_sheet", "sea_ice", "village", "city"]
++
++static var _d: Dictionary = {}
++static var _loaded: bool = false
++static var _errors: Array = []
++static var _hash: String = ""
++static var K_ON: bool = false
++static var K_SPEED: float = 1032.0
++static var K_MIN_S: float = 10.0
++static var K_MAX_S: float = 25.0
++static var K_CLIMAX_S: float = 45.0
++static var _cols: Array = []
++static var K_STRIDE: int = 8
++static var K_SEP_S: float = 5.0
++static var K_JIT: float = 0.25
++static var K_NOVEL: float = 0.4
++static var K_FALLEN: float = 1.0
++static var K_OPEN_MIN: float = 0.5
++static var K_BEAR: Array = []
++static var K_TURN_BONUS: float = 0.3
++static var K_TURN_GAIN: float = 0.2
++static var K_SIDE_SEP: float = 3.0
++static var K_SIDE_COLS: int = 1200
++static var K_W_BAND: Array = []
++static var K_W_FALLEN: Array = []
++static var K_W_HP: Array = []
++
++
++static func data() -> Dictionary:
++	if not _loaded:
++		_load()
++	return _d
++
++
++static func dataErrors() -> Array:
++	if not _loaded:
++		_load()
++	return _errors
++
++
++## The data's hash; the replay's data hash carries it only while the campaign is on (Simulation's call: nothing here is read otherwise).
++static func dataHash() -> String:
++	if not _loaded:
++		_load()
++	return _hash
++
++
++## Is the campaign on? The data's switch (campaign.enabled).
++static func enabled() -> bool:
++	if not _loaded:
++		_load()
++	return K_ON
++
++
++## For tools and checks: the switch for this process (the file is not touched).
++static func setOn(on: bool) -> void:
++	if not _loaded:
++		_load()
++	K_ON = on and _errors.is_empty()
++
++
++static func _load() -> void:
++	_loaded = true
++	_errors = []
++	_d = {}
++	var f := FileAccess.open(PATH, FileAccess.READ)
++	if f == null:
++		_errors.append("campaign.json: cannot open " + PATH)
++		return
++	var text: String = f.get_as_text()
++	var j = JSON.parse_string(text)
++	if not (j is Dictionary) or j.get("schema", "") != SCHEMA:
++		_errors.append("campaign.json: not a %s object" % SCHEMA)
++		return
++	for k in ["enabled", "flight", "columns", "sites", "turn", "side", "wear"]:
++		if not j.has(k):
++			_errors.append("campaign.json: %s is missing" % k)
++	if not _errors.is_empty():
++		return
++	if j.columns.size() != 5:
++		_errors.append("campaign.json: columns has the campaign's five entries")
++	for c in j.columns:
++		if int(c.min) < 1 or int(c.max) < int(c.min) or int(c.max) > 4 or float(c.pThree) < 0.0 or float(c.pThree) > 1.0 or int(c.settled) > int(c.max):
++			_errors.append("campaign.json: a column has 1 to 4 places (min within max), pThree in [0, 1] and no more settled than it offers")
++	var fl: Dictionary = j.flight
++	if float(fl.speed) <= 0.0 or float(fl.minS) <= 0.0 or float(fl.maxS) <= float(fl.minS) or float(fl.climaxMaxS) < float(fl.maxS):
++		_errors.append("campaign.json: flight.speed and minS above 0, maxS above minS, climaxMaxS at least maxS")
++	if int(j.sites.openStride) < 1 or int(j.side.ringCols) < 100:
++		_errors.append("campaign.json: sites.openStride at least 1 and side.ringCols at least 100")
++	if j.wear.band.size() != 3 or j.wear.fallen.size() != 4 or j.wear.hpKeep.size() != 4:
++		_errors.append("campaign.json: wear has 3 bands and 4 entries of fallen and hpKeep")
++	if not _errors.is_empty():
++		return
++	_d = j
++	_hash = str(text.hash())
++	K_ON = bool(j.enabled)
++	K_SPEED = float(fl.speed)
++	K_MIN_S = float(fl.minS)
++	K_MAX_S = float(fl.maxS)
++	K_CLIMAX_S = float(fl.climaxMaxS)
++	_cols = j.columns
++	K_STRIDE = int(j.sites.openStride)
++	K_SEP_S = float(j.sites.sepS)
++	K_JIT = float(j.sites.jitter)
++	K_NOVEL = float(j.sites.novelty)
++	K_FALLEN = float(j.sites.fallen)
++	K_OPEN_MIN = float(j.sites.openMin)
++	K_BEAR = j.turn.bearings
++	K_TURN_BONUS = float(j.turn.bonus)
++	K_TURN_GAIN = float(j.turn.minGain)
++	K_SIDE_SEP = float(j.side.sepS)
++	K_SIDE_COLS = int(j.side.ringCols)
++	K_W_BAND = j.wear.band
++	K_W_FALLEN = j.wear.fallen
++	K_W_HP = j.wear.hpKeep
++
++
++# ===================================================================== geometry
++
++## The signed number of columns from column `from` to column `to` the short way round a ring of `cols`.
++static func arcCols(from: int, to: int, cols: int) -> int:
++	var d: int = posmod(to - from, cols)
++	if d > cols / 2:
++		d -= cols
++	return d
++
++
++## The ring as {c, t, cols} (the touch-down as the point at angle 0) from the setup's `arena`.
++static func specOf(arena: Dictionary) -> Dictionary:
++	var ring: Dictionary = WorldRingPick.ringOfArena(arena)
++	return {"c": ring.c, "t": WorldRingPick.ringPoint(ring, 0.0), "cols": int(arena.cols)}
++
++
++## The same ring with its touch-down at the pair's point (column pc of `spec`): the ring a stage that starts where they stand plays on. mid is the touch-down's column, cols / 2.
++static func rebased(P: WorldPlanet.Planet, spec: Dictionary, pc: int) -> Dictionary:
++	var cols: int = int(spec.cols)
++	var ring: Dictionary = WorldRingPick.ringFrom(spec.c, cols, spec.t)
++	var a: float = float(pc - cols / 2) * SimConst.COL / (P.R * float(ring.st))
++	return {"c": spec.c, "t": WorldRingPick.ringPoint(ring, a), "cols": cols}
++
++
++## Turn `spec` by `deg` about its point at column pc (WorldEpoch.turned, with this ring's own middle column).
++static func turnedSpec(P: WorldPlanet.Planet, spec: Dictionary, pc: int, deg: float) -> Dictionary:
++	return WorldEpoch.turned(P, spec, pc, deg, int(spec.cols) / 2)
++
++
++static func _fineName(P: WorldPlanet.Planet) -> String:
++	return WorldClimate.fineName(P.outF) if P.outF >= 0 else BIO_NAMES[clampi(P.outB, 0, BIO_NAMES.size() - 1)]
++
++
++## What the ring holds within the flight band of the pair (at column pc): the settled places and open ground, as candidates {kind, place, col, half, arc, entry, flightS, settled, biome, fine, feats, band, fallen, key}.
++## arc: the signed columns from the pair to the place's centre; entry: the columns to its near edge (0 inside it); flightS: the seconds of flight to the edge. `wear`: place id (as text) to band.
++static func _candidates(P: WorldPlanet.Planet, spec: Dictionary, pc: int, minS: float, maxS: float, wear: Dictionary) -> Array:
++	var cols: int = int(spec.cols)
++	var mid: int = cols / 2
++	var ring: Dictionary = WorldRingPick.ringFrom(spec.c, cols, spec.t)
++	var step: float = SimConst.COL / (P.R * float(ring.st))
++	var COL: float = SimConst.COL
++	var c: Dictionary = P.c
++	var lo: int = int(ceil(minS * K_SPEED / COL))
++	var hi: int = mini(int(floor(maxS * K_SPEED / COL)), cols / 2)
++	var out: Array = []
++	var held: Array = []   # [centre column, half columns] of the places (open ground keeps clear of them)
++	var u: Array = ring.u
++	var v: Array = ring.v
++	var arcR: float = P.R * float(ring.st)
++	for i in range(P.n):
++		var lat: float = WorldPlanet.lateral(P, ring, P.px[i], P.py[i], P.pz[i])
++		var reach: float = (c.cityReach if P.kind[i] == WorldPlanet.KIND_CITY else c.townReach) * P.rad[i]
++		if absf(lat) >= reach:
++			continue
++		var along: float = WorldPlanet.atan2f(P.px[i] * v[0] + P.py[i] * v[1] + P.pz[i] * v[2], P.px[i] * u[0] + P.py[i] * u[1] + P.pz[i] * u[2])
++		var cc: int = posmod(mid + int(round(along / step)), cols)
++		var half: int = int(sqrt(maxf(0.0, P.rad[i] * P.rad[i] - lat * lat)) / COL)
++		held.append([cc, half])
++		var arc: int = arcCols(pc, cc, cols)
++		var entry: int = maxi(0, absi(arc) - half)
++		var fs: float = float(entry) * COL / K_SPEED
++		if fs < minS or fs > maxS:
++			continue
++		var band: int = int(wear.get(str(i), 0))
++		var city: bool = P.kind[i] == WorldPlanet.KIND_CITY
++		out.append({"kind": "city" if city else "town", "place": i, "col": cc, "half": half, "arc": arc, "entry": entry, "flightS": fs, "settled": true, "biome": 8 if city else 7, "fine": "", "feats": ["settled"], "band": band, "fallen": band >= 3, "key": 1000000 + i})
++	# open ground: every stride-th column in the band, either side, on land and clear of the places
++	for sgn in [-1, 1]:
++		var dd: int = lo
++		while dd <= hi:
++			var cc: int = posmod(pc + sgn * dd, cols)
++			dd += K_STRIDE
++			var inside: bool = false
++			for h in held:
++				if absi(arcCols(h[0], cc, cols)) <= int(h[1]) + 8:
++					inside = true
++					break
++			if inside:
++				continue
++			var p: Array = WorldRingPick.ringPoint(ring, float(cc - mid) * step)
++			WorldPlanet.surfAt(P, p[0], p[1], p[2])
++			var b: int = P.outB
++			if b == BIO_OCEAN or b == BIO_SEA_ICE:
++				continue
++			var fine: String = _fineName(P)
++			var land: int = 1
++			var coast: bool = false
++			for off in [-48, -24, 24, 48]:
++				var q: Array = WorldRingPick.ringPoint(ring, float(posmod(cc + off, cols) - mid) * step)
++				WorldPlanet.surfAt(P, q[0], q[1], q[2])
++				if P.outB == BIO_OCEAN or P.outB == BIO_SEA_ICE:
++					coast = true
++				else:
++					land += 1
++			if float(land) / 5.0 < K_OPEN_MIN:
++				continue
++			var feats: Array = [fine]
++			if coast:
++				feats.append("coast")
++			var oa: int = arcCols(pc, cc, cols)
++			out.append({"kind": "open", "place": -1, "col": cc, "half": 4, "arc": oa, "entry": absi(oa), "flightS": float(absi(oa)) * COL / K_SPEED, "settled": false, "biome": b, "fine": fine, "feats": feats, "band": 0, "fallen": false, "key": cc})
++	return out
++
++
++## The column's places from the candidates, greedily: the best base score first, a new kind of ground worth `novelty` more, at least sepS seconds of flight between two, and the settled ones the column asks for
++## taken first. Returns {sites (west to east), score}.
++static func _choose(cands: Array, col: int, epSeed: int, cfg: Dictionary, cols: int, used: Array) -> Dictionary:
++	var sepCols: int = int(ceil(K_SEP_S * K_SPEED / SimConst.COL))
++	var pool: Array = []
++	for c in cands:
++		if c.place >= 0 and used.has(c.place):
++			continue
++		var s: float = 1.0 + (float(cfg.pull) if c.settled else 0.0) - (K_FALLEN if c.fallen else 0.0)
++		s += (SimRng.keyed(epSeed, "camp/c%d" % col, int(c.key)) - 0.5) * 2.0 * K_JIT
++		var cc: Dictionary = c.duplicate()
++		cc["score"] = s
++		pool.append(cc)
++	var n: int = int(cfg.min)
++	for extra in range(int(cfg.max) - int(cfg.min)):
++		if SimRng.keyed(epSeed, "camp/n%d" % col, extra) < float(cfg.pThree):
++			n += 1
++		else:
++			break
++	var chosen: Array = []
++	var settledHave: int = 0
++	var total: float = 0.0
++	while chosen.size() < n and not pool.is_empty():
++		var forced: bool = int(cfg.settled) - settledHave >= n - chosen.size()
++		var best: int = -1
++		var bs: float = -1.0e9
++		for i in range(pool.size()):
++			var c: Dictionary = pool[i]
++			if forced and not c.settled:
++				continue
++			var clash: bool = false
++			for h in chosen:
++				if absi(arcCols(h.col, c.col, cols)) < sepCols:
++					clash = true
++					break
++			if clash:
++				continue
++			var s: float = c.score
++			var fresh: bool = true
++			for h in chosen:
++				if h.kind == c.kind and h.biome == c.biome:
++					fresh = false
++			if fresh and not chosen.is_empty():
++				s += K_NOVEL
++			if s > bs + 1.0e-12 or (absf(s - bs) <= 1.0e-12 and best >= 0 and c.key < pool[best].key):
++				bs = s
++				best = i
++		if best < 0:
++			break
++		var pick: Dictionary = pool[best]
++		pool.remove_at(best)
++		if pick.settled:
++			settledHave += 1
++		chosen.append(pick)
++		total += bs
++	if chosen.size() < int(cfg.min):
++		total -= 5.0 * float(int(cfg.min) - chosen.size())
++	if settledHave < int(cfg.settled):
++		total -= 5.0 * float(int(cfg.settled) - settledHave)
++	chosen.sort_custom(func(a, b): return a.arc < b.arc)
++	return {"sites": chosen, "score": total, "n": n}
++
++
++static func _publish(sites: Array) -> Array:
++	var out: Array = []
++	for k in range(sites.size()):
++		var s: Dictionary = sites[k]
++		out.append({"id": k, "kind": s.kind, "place": s.place, "arc": s.arc, "entry": s.entry, "half": s.half, "dir": 1 if s.arc >= 0 else -1, "flightS": s.flightS, "settled": s.settled, "biome": s.biome, "fine": s.fine, "feats": s.feats, "wear": s.band, "fallen": s.fallen})
++	return out
++
++
++# ===================================================================== the column
++
++## The places of column `col` (1 to 5) of an episode on the planet `planetSeed`, with the episode's seed `epSeed`, for a pair standing at column pc of the ring `arena` (a setup's arena).
++## opts: used (place ids the episode has used: not offered again), wear (the run's place state, id as text to band 0 to 3), pin (the climax's home place id: the boss's), turn (false: stay on this ring),
++## minS and maxS (the flight band, seconds; the data's by default).
++## Returns {ok (the column has all the places it asks for), col, turn (null, or {deg, from}: the ring turns about the pair's point), arena (the ring the places lie on, the pair at its column pc), start (the same ring
++## with its touch-down at the pair's point: the next stage's arena), pc (the pair's column in start: cols / 2), cols, resize (the climax's ring is a different length), sites, score, notes}. A site:
++## {id, kind (city, town, open), place (planet place id, or -1), arc (signed columns from the pair), entry (columns to its near edge), half, dir (-1 or 1: which way), flightS (seconds to its edge), settled,
++## biome, fine, feats, wear, fallen}. The first column's id order is west to east.
++static func column(planetSeed: int, epSeed: int, col: int, arena: Dictionary, pc: int, opts: Dictionary = {}) -> Dictionary:
++	var job: ColumnJob = beginColumn(planetSeed, epSeed, col, arena, pc, opts)
++	job.step(1 << 30)
++	return job.result
++
++
++## The same answer in steps (the host spends a ring's read a frame: the module owns no clock). A ring's read is 20 to 55 ms on a busy PC (the climax's is none); a column reads the ring as it is and each of the
++## turns the data's bearings allow, both ways (nine rings with the data's four), so `step(1)` a frame spreads a column over nine frames.
++static func beginColumn(planetSeed: int, epSeed: int, col: int, arena: Dictionary, pc: int, opts: Dictionary = {}) -> ColumnJob:
++	return ColumnJob.new(planetSeed, epSeed, col, arena, pc, opts)
++
++
++class ColumnJob extends RefCounted:
++	var P: WorldPlanet.Planet
++	var epSeed: int = 0
++	var col: int = 1
++	var cfg: Dictionary = {}
++	var base: Dictionary = {}
++	var cols: int = 0
++	var mid: int = 0
++	var wear: Dictionary = {}
++	var used: Array = []
++	var minS: float = 0.0
++	var maxS: float = 0.0
++	var pin: int = -1
++	var degs: Array = []
++	var res: Array = []
++	var notes: Array = []
++	var done: bool = false
++	var result: Dictionary = {}
++
++	func _init(planetSeed: int, es: int, c: int, arena: Dictionary, pc: int, opts: Dictionary) -> void:
++		P = WorldPlanet.make(planetSeed)
++		epSeed = es
++		col = c
++		cfg = WorldCampaign._cols_cfg(c)
++		var spec: Dictionary = WorldCampaign.specOf(arena)
++		cols = int(spec.cols)
++		mid = cols / 2
++		wear = opts.get("wear", {})
++		used = opts.get("used", [])
++		minS = float(opts.get("minS", WorldCampaign.K_MIN_S))
++		maxS = float(opts.get("maxS", WorldCampaign.K_MAX_S))
++		pin = int(opts.get("pin", -1))
++		base = WorldCampaign.rebased(P, spec, pc)
++		degs = [0.0]
++		if not bool(cfg.pinned) and bool(opts.get("turn", true)):
++			for dg in WorldCampaign.K_BEAR:
++				degs.append(float(dg))
++				degs.append(-float(dg))
++
++	## Reads up to n more rings; true when the column is made (`result`).
++	func step(n: int) -> bool:
++		if done:
++			return true
++		if bool(cfg.pinned):
++			result = WorldCampaign._climax(P, epSeed, col, base, pin, wear, notes)
++			done = true
++			return true
++		var left: int = n
++		while res.size() < degs.size() and left > 0:
++			var dg: float = degs[res.size()]
++			var ts: Dictionary = base if dg == 0.0 else WorldCampaign.turnedSpec(P, base, mid, dg)
++			res.append({"deg": dg, "spec": ts, "res": WorldCampaign._choose(WorldCampaign._candidates(P, ts, mid, minS, maxS, wear), col, epSeed, cfg, cols, used)})
++			left -= 1
++		if res.size() < degs.size():
++			return false
++		var best: Dictionary = res[0]
++		best["total"] = best.res.score
++		var noneTotal: float = best.res.score
++		notes.append("no turn: %d place(s), score %.2f" % [best.res.sites.size(), best.res.score])
++		for k in range(1, res.size()):
++			var r: Dictionary = res[k]
++			r["total"] = r.res.score + WorldCampaign.K_TURN_BONUS
++			notes.append("turn %+.0f: %d place(s), score %.2f" % [r.deg, r.res.sites.size(), r.total])
++			if r.total > float(best.total) + 1.0e-12:
++				best = r
++		if float(best.deg) != 0.0 and float(best.total) < noneTotal + WorldCampaign.K_TURN_GAIN:
++			best = res[0]
++			notes.append("the best turn gains less than %.2f: the ring stays" % WorldCampaign.K_TURN_GAIN)
++		var settledN: int = 0
++		for s in best.res.sites:
++			if s.settled:
++				settledN += 1
++		var ok: bool = best.res.sites.size() >= int(cfg.min) and settledN >= int(cfg.settled)
++		result = {"ok": ok, "col": col, "turn": null if float(best.deg) == 0.0 else {"deg": float(best.deg), "from": WorldRingPick.arenaOf(base)}, "arena": WorldRingPick.arenaOf(best.spec), "start": WorldRingPick.arenaOf(best.spec),
++			"pc": mid, "cols": cols, "resize": false, "sites": WorldCampaign._publish(best.res.sites), "score": float(best.total), "notes": notes}
++		done = true
++		return true
++
++
++static func _cols_cfg(col: int) -> Dictionary:
++	if not _loaded:
++		_load()
++	return _cols[clampi(col, 1, _cols.size()) - 1]
++
++
++## The climax (column 5): the ring through the pair's point and the boss's home place (the whole circle), the home its one place. pin < 0: the most populous standing city. The flight to it is the build-up
++## and may pass the band (`far` is true past climaxMaxS).
++static func _climax(P: WorldPlanet.Planet, epSeed: int, col: int, base: Dictionary, pin: int, wear: Dictionary, notes: Array) -> Dictionary:
++	var home: int = pin
++	if home < 0:
++		var bp: int = -1
++		for i in range(P.n):
++			if int(wear.get(str(i), 0)) >= 3:
++				continue
++			if bp < 0 or P.people[i] > P.people[bp] or (P.people[i] == P.people[bp] and i < bp):
++				bp = i
++		home = bp
++		notes.append("no pinned home: the most populous standing place, %d" % home)
++	if home < 0:
++		return {"ok": false, "col": col, "turn": null, "arena": WorldRingPick.arenaOf(base), "start": WorldRingPick.arenaOf(base), "pc": int(base.cols) / 2, "cols": int(base.cols), "resize": false, "sites": [], "score": 0.0, "notes": notes}
++	var T: Array = base.t
++	var H: Array = WorldRingPick.placePoint(P, home)
++	var n: Array = WorldPlanet._cross(T, H)
++	var nl: float = sqrt(n[0] * n[0] + n[1] * n[1] + n[2] * n[2])
++	if nl < 1.0e-9:   # the pair stand on the home (or opposite it): any great circle through the point
++		n = WorldPlanet._cross(T, [0.0, 1.0, 0.0] if absf(T[1]) < 0.9 else [1.0, 0.0, 0.0])
++	var cols: int = SimConst.PLANET_NC
++	var spec: Dictionary = {"c": WorldPlanet._unit(n), "t": T, "cols": cols}
++	var ang: float = WorldPlanet.acosf(SimMathx.jclamp(T[0] * H[0] + T[1] * H[1] + T[2] * H[2], -1.0, 1.0))
++	var arc: int = int(round(ang * P.R / SimConst.COL))
++	var rr: Dictionary = WorldRingPick.ringFrom(spec.c, cols, T)
++	var side: int = 1
++	var hv: float = H[0] * rr.v[0] + H[1] * rr.v[1] + H[2] * rr.v[2]
++	if hv < 0.0:
++		side = -1
++	arc *= side
++	var half: int = int(P.rad[home] / SimConst.COL)
++	var entry: int = maxi(0, absi(arc) - half)
++	var fs: float = float(entry) * SimConst.COL / K_SPEED
++	var city: bool = P.kind[home] == WorldPlanet.KIND_CITY
++	var band: int = int(wear.get(str(home), 0))
++	var site: Dictionary = {"id": 0, "kind": "city" if city else "town", "place": home, "arc": arc, "entry": entry, "half": half, "dir": side, "flightS": fs, "settled": true, "biome": 8 if city else 7, "fine": "", "feats": ["settled", "home"], "wear": band, "fallen": band >= 3}
++	notes.append("the climax: the ring through the pair and place %d, %.1f s of flight%s" % [home, fs, " (the build-up: past the band)" if fs > K_CLIMAX_S else ""])
++	var dgs: float = WorldEpoch.driftOf(base.c, spec.c)
++	return {"ok": true, "col": col, "turn": {"deg": dgs, "from": WorldRingPick.arenaOf(base), "toward": home}, "arena": WorldRingPick.arenaOf(spec), "start": WorldRingPick.arenaOf(spec), "pc": cols / 2, "cols": cols, "resize": cols != int(base.cols), "sites": [site], "score": 1.0, "notes": notes, "far": fs > K_CLIMAX_S}
++
++
++# ===================================================================== a side story
++
++## A side story's place (campaign 1.4): a standing city or town on the ring, within the flight band of the pair at column pc, and at least `side.sepS` seconds from each of the column's places (opts.sites: the
++## arcs of the places the column offers, in columns). opts: used (place ids), wear. `arcSeed` and `n` key the draw (the arc's, and the episode's number). Returns {ok, site, arena (a Close ring round the
++## place, the filler episode's ground), place} or {ok: false, why}. Nothing is drawn when the arc's own draw (H(arc, "side", n), the run's) said no: the caller asks only on a yes.
++static func side(planetSeed: int, arcSeed: int, n: int, arena: Dictionary, pc: int, opts: Dictionary = {}) -> Dictionary:
++	var P: WorldPlanet.Planet = WorldPlanet.make(planetSeed)
++	var spec: Dictionary = specOf(arena)
++	var cols: int = int(spec.cols)
++	var wear: Dictionary = opts.get("wear", {})
++	var used: Array = opts.get("used", [])
++	var avoid: Array = opts.get("sites", [])
++	var sepCols: int = int(ceil(K_SIDE_SEP * K_SPEED / SimConst.COL))
++	var base: Dictionary = rebased(P, spec, pc)
++	var best = null
++	var bs: float = -1.0e9
++	for c in _candidates(P, base, cols / 2, K_MIN_S, K_MAX_S, wear):
++		if not c.settled or c.fallen or used.has(c.place):
++			continue
++		var clash: bool = false
++		for a in avoid:
++			if absi(arcCols(int(a), int(c.arc), cols)) < sepCols:
++				clash = true
++		if clash:
++			continue
++		var s: float = 1.0 + (SimRng.keyed(arcSeed, "camp/side%d" % n, int(c.key)) - 0.5) * 2.0 * K_JIT + (0.2 if c.kind == "city" else 0.0)
++		if s > bs:
++			bs = s
++			best = c
++	if best == null:
++		return {"ok": false, "why": "no standing city or town within %.0f to %.0f s of flight on this ring" % [K_MIN_S, K_MAX_S]}
++	var phi: float = SimRng.keyed(arcSeed, "camp/sidering%d" % n, int(best.place)) * 2.0 * SimMathx.PI
++	var rs: Dictionary = WorldRingPick.roundSpec(WorldRingPick.placePoint(P, int(best.place)), K_SIDE_COLS, phi)
++	return {"ok": true, "site": _publish([best])[0], "place": int(best.place), "arena": WorldRingPick.arenaOf(rs)}
++
++
++# ===================================================================== the planet's wounds: place state only
++
++## A finished stage's wear: for each place that has buildings in S, its band 0 to 3 from the share of them that have fallen (the data's band thresholds), as {place id as text: band}, the places with band over 0 only.
++## Nothing about people is read.
++static func wearOf(S: SimState) -> Dictionary:
++	if not _loaded:
++		_load()
++	var tot: Dictionary = {}
++	var lost: Dictionary = {}
++	for b in S.buildings:
++		if b.place < 0:
++			continue
++		tot[b.place] = int(tot.get(b.place, 0)) + 1
++		if not b.alive:
++			lost[b.place] = int(lost.get(b.place, 0)) + 1
++	var out: Dictionary = {}
++	var ids: Array = tot.keys()
++	ids.sort()
++	for id in ids:
++		var share: float = float(int(lost.get(id, 0))) / float(int(tot[id]))
++		var band: int = 0
++		for k in range(3):
++			if share >= float(K_W_BAND[k]):
++				band = k + 1
++		if band > 0:
++			out[str(id)] = band
++	return out
++
++
++## The run's place state after a stage: the worse band of each place (a wound is never healed here).
++static func mergeWear(prev: Dictionary, now: Dictionary) -> Dictionary:
++	var out: Dictionary = {}
++	for k in prev.keys():
++		out[str(k)] = int(prev[k])
++	for k in now.keys():
++		out[str(k)] = maxi(int(out.get(str(k), 0)), int(now[k]))
++	return out
++
++
++## The standing byte of each of the planet's places for the ring picker: 0 for a fallen place (band 3), else 1.
++static func standingOf(P: WorldPlanet.Planet, wear: Dictionary) -> PackedByteArray:
++	var s := PackedByteArray()
++	s.resize(P.n)
++	s.fill(1)
++	for k in wear.keys():
++		if int(wear[k]) >= 3 and int(k) >= 0 and int(k) < P.n:
++			s[int(k)] = 0
++	return s
++
++
++## The place ids hurt (band 1 or more), ascending, for the ring picker's `damaged`.
++static func damagedOf(wear: Dictionary) -> Array:
++	var out: Array = []
++	for k in wear.keys():
++		if int(wear[k]) >= 1:
++			out.append(int(k))
++	out.sort()
++	return out
++
++
++## Lay a place's wear on a stage's buildings, at the match's start (WorldPlanetWorld.gen, before the collateral window): the share of each worn place's buildings the data names for its band are already fallen
++## (the lowest by a keyed order, so the same ones every time), their people gone (they count as no casualty of the stage), and the others keep the data's share of their hp. A fallen building leaves its heap.
++## Returns the number of buildings laid fallen.
++static func applyWear(S: SimState, wear: Dictionary) -> int:
++	if not _loaded:
++		_load()
++	var byPlace: Dictionary = {}
++	for b in S.buildings:
++		if b.place >= 0 and int(wear.get(str(b.place), 0)) > 0:
++			if not byPlace.has(b.place):
++				byPlace[b.place] = []
++			byPlace[b.place].append(b)
++	var ids: Array = byPlace.keys()
++	ids.sort()
++	var fell: int = 0
++	var gone: float = 0.0
++	for id in ids:
++		var band: int = clampi(int(wear.get(str(id), 0)), 0, 3)
++		var list: Array = byPlace[id]
++		var order: Array = []
++		for b in list:
++			order.append([SimRng.keyed(int(id) * 7919 + 13, "wear", int(b.plan)), b.idx])
++		order.sort_custom(func(a, c): return a[0] < c[0] or (a[0] == c[0] and a[1] < c[1]))
++		var nf: int = int(round(float(K_W_FALLEN[band]) * float(list.size())))
++		var keep: float = float(K_W_HP[band])
++		for k in range(order.size()):
++			var b = S.buildings[order[k][1]]
++			if k < nf:
++				b.alive = false
++				b.hp = 0.0
++				gone += b.pop
++				b.popAlive = 0.0
++				WorldStructures._heap(S, b)
++				fell += 1
++			else:
++				b.hp = maxf(b.maxhp * keep, 1.0)
++	if gone > 0.0:
++		S.world.pop0 = maxf(S.world.pop0 - gone, 1.0)
++	return fell
+diff --git a/sim/world/campaign.gd.uid b/sim/world/campaign.gd.uid
+new file mode 100644
+index 0000000..8f2da6c
+--- /dev/null
++++ b/sim/world/campaign.gd.uid
+@@ -0,0 +1 @@
++uid://e8kcki6xlctl
+diff --git a/sim/world/epoch.gd b/sim/world/epoch.gd
+index 0301de3..3ea4eed 100644
+--- a/sim/world/epoch.gd
++++ b/sim/world/epoch.gd
+@@ -53,12 +53,12 @@ static func _rot(v: Array, axis: Array, a: float) -> Array:
+ 
+ ## The ring that results from turning `ring` by `deg` degrees (positive is counter-clockwise seen from outside) about its point at column pc: through the same point, the same length, the
+ ## touch-down placed so that column pc is still that point (the fighters' columns do not move). Returns {c, t, cols}.
+-static func turned(P: WorldPlanet.Planet, spec: Dictionary, pc: int, deg: float) -> Dictionary:
++static func turned(P: WorldPlanet.Planet, spec: Dictionary, pc: int, deg: float, midCol: int = -1) -> Dictionary:
+ 	var cols: int = int(spec.cols)
+ 	var ring: Dictionary = WorldRingPick.ringFrom(spec.c, cols, spec.t)
+ 	var st: float = ring.st
+ 	var ct: float = ring.ct
+-	var mid: int = WorldPlanet.touchCol()
++	var mid: int = WorldPlanet.touchCol() if midCol < 0 else midCol   # midCol: the ring's own middle column, for a caller outside a match (the campaign's planner: SimConst.NC is not its ring's)
+ 	var step: float = SimConst.COL / (P.R * st)
+ 	var a: float = float(pc - mid) * step
+ 	var M: Array = WorldRingPick.ringPoint(ring, a)
+@@ -136,6 +136,21 @@ static func ask(S: SimState, why: String, pivotX: float, side: int, due: int) ->
+ 	return cands
+ 
+ 
++## The campaign's turn (docs/world/campaign-route.md; campaign.md 2.3: between columns the ring turns at a calm moment so the next column's places lie along it): the same machinery as a fight's turn with one candidate,
++## the planner's bearing (WorldCampaign.column's `turn.deg`, up to the campaign data's largest, not the fight's 10 degrees), and none of the fight's caps (four turns, 60 s apart, 40 degrees of drift): a campaign
++## turn is not counted in `n`. Returns the one candidate (as `ask` does), or [] when a turn is already decided or the bearing is under minDeg. Encounter picks it with `choose(S, 0, k, 0.0)` (no fallback ring).
++static func askCampaign(S: SimState, pivotX: float, deg: float, due: int) -> Array:
++	var E = S.epoch
++	if E == null or E.next != null or absf(deg) < float(data().minDeg):
++		return []
++	var P := WorldPlanet.make(int(E.seed))
++	var pc: int = posmod(int(round(pivotX / SimConst.COL)), SimConst.NC)
++	var ns: Dictionary = turned(P, E.ring, pc, deg)
++	var cand: Dictionary = {"bearing": deg, "places": [], "spec": ns, "drift": driftOf(E.c0, ns.c)}
++	E.ask = {"why": "campaign", "pc": pc, "side": 1 if deg >= 0.0 else -1, "due": due, "cands": [cand], "camp": true}
++	return [cand]
++
++
+ ## Encounter's pick: candidate i, with how it is warmed. k: the columns of each ring the sim reads a tick (Encounter's data; 0 = the data's warmCols). fallbackDeg: the second ring, the bearing a landing
+ ## off the pivot falls back to (2.5 for a landing pick), on the chosen candidate's side; 0 for none (a form pick: its pivot is exact, so one ring, at up to 32 columns a tick). A fallback that is
+ ## not under the chosen bearing, or would pass the drift cap, is left out. Both are kept in E.next and in the hash. From here tick() warms the rings and swaps when held, calm and warm.
+@@ -155,7 +170,7 @@ static func choose(S: SimState, i: int, k: int = 0, fallbackDeg: float = -1.0) -
+ 		var ns: Dictionary = turned(WorldPlanet.make(int(E.seed)), E.ring, int(E.ask.pc), sgn * fb)
+ 		if driftOf(E.c0, ns.c) <= float(d.driftDeg):
+ 			warm.append({"deg": sgn * fb, "spec": ns, "cols": 0, "ptk": -1})
+-	E.next = {"spec": c.spec, "pc": E.ask.pc, "bearing": c.bearing, "drift": c.drift, "why": E.ask.why, "tick": S.tick, "due": E.ask.due, "k": k if k > 0 else int(d.warmCols), "fb": absf(float(warm[1].deg)) if warm.size() > 1 else 0.0}   # tick: the pick's; due: the moment it is for. k and fb are hashed
++	E.next = {"spec": c.spec, "pc": E.ask.pc, "bearing": c.bearing, "drift": c.drift, "why": E.ask.why, "camp": bool(E.ask.get("camp", false)), "tick": S.tick, "due": E.ask.due, "k": k if k > 0 else int(d.warmCols), "fb": absf(float(warm[1].deg)) if warm.size() > 1 else 0.0}   # tick: the pick's; due: the moment it is for. k and fb are hashed
+ 	E.warm = warm
+ 	E.ask = null
+ 	_dropJobs(S)
+@@ -620,7 +635,8 @@ static func swap(S: SimState) -> void:
+ 			f.y = g
+ 	# --- the epoch moves on
+ 	S.worldId = WorldBiomes.claim()   # the director's tables and the renderer's caches follow the world
+-	E.n = int(E.n) + 1
++	if not bool(nx.get("camp", false)):
++		E.n = int(E.n) + 1   # a campaign turn is not one of the fight's four
+ 	E.lastT = S.T
+ 	E.drift = nx.drift
+ 	E.ring = spec
+diff --git a/sim/world/planet_world.gd b/sim/world/planet_world.gd
+index 6388892..3de2eb9 100644
+--- a/sim/world/planet_world.gd
++++ b/sim/world/planet_world.gd
+@@ -171,6 +171,8 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
+ 	S.crack.resize(NC)
+ 	S.crack.fill(0.0)
+ 	S.slides.clear()
++	if setup.has("wear") and WorldCampaign.enabled():   # the campaign's place state: a worn place's buildings are already fallen or weakened (window 14; place state only, never a count of people)
++		WorldCampaign.applyWear(S, setup.wear)
+ 	WorldWater.init(S)
+ 	WorldLakes.apply(S, lakes)
+ 	WorldCollateral.init(S)
+diff --git a/sim/world/tools/campaign_check.gd b/sim/world/tools/campaign_check.gd
+new file mode 100644
+index 0000000..5fd9843
+--- /dev/null
++++ b/sim/world/tools/campaign_check.gd
+@@ -0,0 +1,262 @@
++extends SceneTree
++# The campaign's route on the ring (docs/design/campaign.md; docs/world/campaign-route.md; WorldCampaign, data/biomes/campaign.json): the places of each column within the flight band, the ring turn between
++# columns, the climax's ring through the boss's home, the side story's place, and the planet's wounds as place state only.
++#   godot --headless --path . --script res://sim/world/tools/campaign_check.gd
++var fails: int = 0
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func vclose(a: Array, b: Array, e: float = 1e-6) -> bool:
++	return absf(a[0] - b[0]) < e and absf(a[1] - b[1]) < e and absf(a[2] - b[2]) < e
++
++
++## A Half ring through the planet's n-th city (the city is at the touch-down), as a setup's arena.
++func ringThrough(P: WorldPlanet.Planet, nth: int, cols: int = 2400, phi: float = 0.7) -> Dictionary:
++	var k: int = -1
++	var id: int = 0
++	for i in range(P.n):
++		if P.kind[i] == WorldPlanet.KIND_CITY:
++			k += 1
++			if k == nth:
++				id = i
++				break
++	return WorldRingPick.arenaOf(WorldRingPick.throughSpec(WorldRingPick.placePoint(P, id), cols, phi))
++
++
++func fresh(setup: Dictionary) -> SimState:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {}, setup)
++	S.out.fx.clear()
++	return S
++
++
++func _init() -> void:
++	ok(WorldCampaign.dataErrors().is_empty(), "campaign.json is clean (%s)" % str(WorldCampaign.dataErrors()))
++	ok(not WorldCampaign.enabled(), "campaign.json ships with the campaign off")
++	WorldCampaign.setOn(true)
++	var COL: float = SimConst.COL
++	var speed: float = WorldCampaign.K_SPEED
++	var sepCols: int = int(ceil(WorldCampaign.K_SEP_S * speed / COL))
++	for gen in [1, 2]:
++		WorldClimate.useGen(gen)
++		var okN: int = 0
++		var total: int = 0
++		var bandOk: bool = true
++		var sepOk: bool = true
++		var settledOk: bool = true
++		var turned: int = 0
++		var turnOk: bool = true
++		var counts: Dictionary = {}
++		var detOk: bool = true
++		var t0: int = Time.get_ticks_usec()
++		for sd in [7, 3, 11, 25]:
++			var P := WorldPlanet.make(sd)
++			var arena: Dictionary = ringThrough(P, 0)
++			var spec: Dictionary = WorldCampaign.specOf(arena)
++			var cols: int = int(spec.cols)
++			var pc: int = cols / 2
++			var used: Array = []
++			var here: Dictionary = arena
++			for col in range(1, 5):
++				var r: Dictionary = WorldCampaign.column(sd, 100 + sd, col, here, pc, {"used": used})
++				total += 1
++				if r.ok:
++					okN += 1
++				counts[r.sites.size()] = int(counts.get(r.sites.size(), 0)) + 1
++				var settledN: int = 0
++				for s in r.sites:
++					if s.flightS < WorldCampaign.K_MIN_S - 1.0e-9 or s.flightS > WorldCampaign.K_MAX_S + 1.0e-9:
++						bandOk = false
++					if s.settled:
++						settledN += 1
++					if s.place >= 0:
++						used.append(s.place)
++				for a in range(r.sites.size()):
++					for b in range(a + 1, r.sites.size()):
++						if absi(WorldCampaign.arcCols(pc + r.sites[a].arc, pc + r.sites[b].arc, int(r.cols))) < sepCols:
++							sepOk = false
++				if col == 4 and r.ok and settledN < 1:
++					settledOk = false
++				if sd == 7 and col == 1:
++					var again: Dictionary = WorldCampaign.column(sd, 100 + sd, 1, arena, pc, {})
++					var third: Dictionary = WorldCampaign.column(sd, 100 + sd, 1, arena, pc, {})
++					detOk = JSON.stringify(again) == JSON.stringify(third)
++				if r.turn != null:
++					turned += 1
++					# the turned ring passes through the pair's point: the old ring's point at pc is the new ring's point at its touch-down
++					var oldRing: Dictionary = WorldRingPick.ringOfArena(here)
++					var newRing: Dictionary = WorldRingPick.ringOfArena(r.start)
++					var pOld: Array = WorldRingPick.ringPoint(oldRing, float(pc - cols / 2) * COL / (P.R * float(oldRing.st)))
++					var pNew: Array = WorldRingPick.ringPoint(newRing, 0.0)
++					if not vclose(pOld, pNew, 1.0e-6) or absf(float(r.turn.deg)) > 61.0 or int(r.cols) != cols:
++						turnOk = false
++				here = r.start
++				pc = int(r.pc)
++		var ms: float = float(Time.get_ticks_usec() - t0) / 1000.0 / float(total)
++		ok(bandOk, "gen %d: every place of columns 1 to 4 is within %.0f to %.0f s of flight of the pair" % [gen, WorldCampaign.K_MIN_S, WorldCampaign.K_MAX_S])
++		ok(sepOk, "gen %d: the places of a column are at least %.0f s of flight apart" % [gen, WorldCampaign.K_SEP_S])
++		ok(okN >= total * 3 / 4, "gen %d: %d of %d columns got every place they ask for (sizes %s); the town in column 4: %s" % [gen, okN, total, str(counts), "always" if settledOk else "NOT always"])
++		ok(settledOk, "gen %d: column 4 offers a settled place whenever it is ok" % gen)
++		ok(turnOk, "gen %d: %d column(s) turned the ring: each new ring passes through the pair's point, within the data's bearings, the same length" % [gen, turned])
++		ok(detOk, "gen %d: a column is the same twice" % gen)
++		print("    cost: %.0f ms a column (turns tried both ways)" % ms)
++	WorldClimate.useGen(1)
++	# a different episode seed offers different places; a used place is not offered again
++	var P7 := WorldPlanet.make(7)
++	var arena7: Dictionary = ringThrough(P7, 0)
++	var pc7: int = 1200
++	var sets: Dictionary = {}
++	for es in range(10):
++		var r: Dictionary = WorldCampaign.column(7, 500 + es * 17, 2, arena7, pc7, {"turn": false})
++		var key: String = ""
++		for s in r.sites:
++			key += "%d/%d," % [s.place, s.arc]
++		sets[key] = true
++	ok(sets.size() >= 4, "ten episode seeds offer %d different sets of places in column 2 on one ring" % sets.size())
++	var c1: Dictionary = WorldCampaign.column(7, 500, 2, arena7, pc7, {"turn": false})
++	var usedPl: Array = []
++	for s in c1.sites:
++		if s.place >= 0:
++			usedPl.append(s.place)
++	var c1b: Dictionary = WorldCampaign.column(7, 500, 2, arena7, pc7, {"turn": false, "used": usedPl})
++	var reuse: bool = false
++	for s in c1b.sites:
++		if usedPl.has(s.place) and s.place >= 0:
++			reuse = true
++	ok(not reuse, "the places an episode has used are not offered again")
++	var job: WorldCampaign.ColumnJob = WorldCampaign.beginColumn(7, 500, 2, arena7, pc7, {})
++	var nSteps: int = 1
++	var tj0: int = Time.get_ticks_usec()
++	var worstStep: int = 0
++	while true:
++		var t1: int = Time.get_ticks_usec()
++		var fin: bool = job.step(1)
++		worstStep = maxi(worstStep, Time.get_ticks_usec() - t1)
++		if fin:
++			break
++		nSteps += 1
++	ok(nSteps == 9 and JSON.stringify(job.result) == JSON.stringify(WorldCampaign.column(7, 500, 2, arena7, pc7, {})), "stepped a ring a call, a column takes %d calls (the longest %.0f ms) and is the same answer as at once" % [nSteps, float(worstStep) / 1000.0])
++	# the climax: the ring through the pair and the boss's home
++	var home: int = -1
++	for i in range(P7.n):
++		if P7.kind[i] == WorldPlanet.KIND_CITY and absf(WorldPlanet.lateral(P7, WorldRingPick.ringOfArena(arena7), P7.px[i], P7.py[i], P7.pz[i])) > 20000.0:
++			home = i
++			break
++	home = 5 if home < 0 else home
++	var cl: Dictionary = WorldCampaign.column(7, 500, 5, arena7, pc7, {"pin": home})
++	var okc: bool = cl.ok and cl.sites.size() == 1 and cl.sites[0].place == home and int(cl.cols) == SimConst.PLANET_NC and cl.resize == true
++	var ringC: Dictionary = WorldRingPick.ringOfArena(cl.start)
++	var Hp: Array = WorldRingPick.placePoint(P7, home)
++	var latc: float = absf(WorldPlanet.lateral(P7, ringC, Hp[0], Hp[1], Hp[2]))
++	ok(okc and latc < 1.0, "the climax is one place, the boss's home (%d), on the whole ring through the pair and it (its lateral distance %.2f units), %.1f s of flight%s" % [home, latc, cl.sites[0].flightS, " (the build-up)" if cl.get("far", false) else ""])
++	# a side story: on some rings there is a place in reach and on some there is none (then no side story is offered); where there is, it is a standing place in the band with a Close ring round it
++	var sideTried: int = 0
++	var sideFound: int = 0
++	var sideOk: bool = true
++	var sideWhat: String = ""
++	for nth in range(8):
++		for phi in [0.7, 2.0, 3.3, 4.6]:
++			var ar: Dictionary = ringThrough(P7, nth, 2400, phi)
++			var sd1: Dictionary = WorldCampaign.side(7, 77, 3, ar, 1200, {})
++			sideTried += 1
++			if not sd1.ok:
++				continue
++			sideFound += 1
++			var ringS: Dictionary = WorldRingPick.ringOfArena(sd1.arena)
++			var pp: Array = WorldRingPick.placePoint(P7, int(sd1.place))
++			if not (vclose(ringS.c, pp, 1.0e-9) and int(sd1.arena.cols) == WorldCampaign.K_SIDE_COLS and sd1.site.settled and not sd1.site.fallen and sd1.site.flightS >= WorldCampaign.K_MIN_S - 1.0e-9 and sd1.site.flightS <= WorldCampaign.K_MAX_S + 1.0e-9):
++				sideOk = false
++			sideWhat = str(sd1.place)
++	var sdAvoid: Dictionary = {}
++	for phi in [0.7, 2.0, 3.3, 4.6]:
++		for nth in range(8):
++			var ar2: Dictionary = ringThrough(P7, nth, 2400, phi)
++			var s0: Dictionary = WorldCampaign.side(7, 77, 3, ar2, 1200, {})
++			if s0.ok:
++				var s1: Dictionary = WorldCampaign.side(7, 77, 3, ar2, 1200, {"sites": [int(s0.site.arc)]})
++				sdAvoid = {"a": s0, "b": s1}
++				break
++		if not sdAvoid.is_empty():
++			break
++	var avoidOk: bool = sdAvoid.is_empty() or (not sdAvoid.b.ok) or int(sdAvoid.b.place) != int(sdAvoid.a.place)
++	ok(sideFound >= 1 and sideOk, "a side story's place is a standing city or town within the flight band with a Close ring round it: %d of %d rings of planet 7 have one in reach (the others offer none)" % [sideFound, sideTried])
++	ok(avoidOk, "a side story's place keeps clear of a column's own places")
++	# the planet's wounds: place state only
++	var S0 := fresh({"planet": 7, "touch": 3, "arena": {"cols": 2400}, "intro": false})
++	var pl: int = -1
++	var cnt: Dictionary = {}
++	for b in S0.buildings:
++		if b.place >= 0:
++			cnt[b.place] = int(cnt.get(b.place, 0)) + 1
++	for k in cnt.keys():
++		if pl < 0 or cnt[k] > cnt[pl]:
++			pl = k
++	ok(pl >= 0 and WorldCampaign.wearOf(S0).is_empty(), "a stage that has lost nothing has no wear (the biggest place has %d buildings)" % [cnt.get(pl, 0)])
++	var kills: int = 0
++	for b in S0.buildings:
++		if b.place == pl and kills < int(float(cnt[pl]) * 0.4):
++			WorldStructures.damageBuilding(S0, b, 1.0e9, S0.fighters[0], "implode", b.x, 0.0)
++			kills += 1
++	var w0: Dictionary = WorldCampaign.wearOf(S0)
++	ok(w0.get(str(pl), 0) == 2, "a place that lost %d of %d buildings is band %s (ruined)" % [kills, cnt[pl], str(w0.get(str(pl), 0))])
++	var w1: Dictionary = WorldCampaign.mergeWear({str(pl): 3, "999": 1}, w0)
++	ok(w1[str(pl)] == 3 and w1["999"] == 1 and WorldCampaign.mergeWear(w0, {})[str(pl)] == 2, "the run's place state keeps the worse band of each place and nothing is healed")
++	var stand: PackedByteArray = WorldCampaign.standingOf(P7, w1)
++	ok(stand[pl] == 0 and WorldCampaign.damagedOf(w1).has(pl) and stand.size() == P7.n and stand.count(0) == 1, "a fallen place (band 3) is not standing for the ring picker, and the hurt ones are listed")
++	var plain := fresh({"planet": 7, "touch": 3, "arena": {"cols": 2400}, "intro": false})
++	var worn := fresh({"planet": 7, "touch": 3, "arena": {"cols": 2400}, "intro": false, "wear": {str(pl): 2}})
++	var worn2 := fresh({"planet": 7, "touch": 3, "arena": {"cols": 2400}, "intro": false, "wear": {str(pl): 2}})
++	var fallen: int = 0
++	var hpDown: bool = true
++	for i in range(plain.buildings.size()):
++		var a = plain.buildings[i]
++		var b = worn.buildings[i]
++		if a.place == pl:
++			if not b.alive:
++				fallen += 1
++			elif b.hp >= a.hp:
++				hpDown = false
++		elif a.alive != b.alive or a.hp != b.hp:
++			hpDown = false
++	var want: int = int(round(float(WorldCampaign.K_W_FALLEN[2]) * float(cnt[pl])))
++	ok(fallen == want and hpDown, "wear band 2 lays %d of the place's %d buildings fallen (the data's %.0f%%) and weakens the rest, and touches no other place" % [fallen, cnt[pl], 100.0 * float(WorldCampaign.K_W_FALLEN[2])])
++	ok(worn.world.casualties == 0.0 and worn.world.structuresLost == 0.0 and worn.world.pop0 < plain.world.pop0 and worn.world.pop0 >= 1.0, "the wear is no casualty and no loss of the stage: the people who are gone leave the stage's count (%.0f of %.0f)" % [worn.world.pop0, plain.world.pop0])
++	ok(str(SimHash.stateHash(worn).gameplay) == str(SimHash.stateHash(worn2).gameplay) and str(SimHash.stateHash(worn).gameplay) != str(SimHash.stateHash(plain).gameplay), "the same wear lays the same stage, and a worn stage is not a fresh one")
++	WorldCampaign.setOn(false)
++	var off := fresh({"planet": 7, "touch": 3, "arena": {"cols": 2400}, "intro": false, "wear": {str(pl): 2}})
++	ok(str(SimHash.stateHash(off).gameplay) == str(SimHash.stateHash(plain).gameplay), "with the campaign off a setup's wear is ignored: the match is the plain one")
++	WorldCampaign.setOn(true)
++	# the turn in a running sim: the campaign's bearing, the fight's machinery, no count against the fight's four
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {}, {"planet": 7, "touch": 3, "arena": {"cols": 2400, "turn": true}, "intro": false})
++	for t in range(30):
++		SimCore.step(S)
++	var px: float = 0.5 * (S.fighters[0].x + S.fighters[1].x)
++	var pcS: int = posmod(int(round(px / COL)), SimConst.NC)
++	var ring0: Dictionary = WorldRingPick.ringFrom(S.epoch.ring.c, int(S.epoch.ring.cols), S.epoch.ring.t)
++	var cands: Array = WorldEpoch.askCampaign(S, px, 40.0, 0)
++	ok(cands.size() == 1 and absf(float(cands[0].bearing) - 40.0) < 1e-9, "the campaign asks for a turn of 40 degrees (the fight's own are at most 10) and gets the one candidate")
++	WorldEpoch.choose(S, 0, 100000, 0.0)
++	var g: int = 0
++	while WorldEpoch.warmAngles(S).size() < S.epoch.warm.size() and g < 100:
++		WorldEpoch.tick(S, false)
++		g += 1
++	g = 0
++	while S.epoch.next != null and g < 40:
++		WorldEpoch.tick(S, true)
++		g += 1
++	var ring1: Dictionary = WorldRingPick.ringFrom(S.epoch.ring.c, int(S.epoch.ring.cols), S.epoch.ring.t)
++	var mid: int = SimConst.NC / 2
++	var stp: float = COL / (P7.R * float(ring0.st))
++	var q0: Array = WorldRingPick.ringPoint(ring0, float(pcS - mid) * stp)
++	var q1: Array = WorldRingPick.ringPoint(ring1, float(pcS - mid) * stp)
++	var drift: float = WorldEpoch.driftOf(ring0.c, ring1.c)
++	var wantDrift: float = 2.0 * WorldPlanet.asinf(float(ring0.st) * SimDetMath.sin(40.0 * SimMathx.PI / 180.0 * 0.5)) * 180.0 / SimMathx.PI   # the centre of a ring of angular radius theta moves this far when its heading at the pivot turns by 40 degrees
++	ok(S.epoch.next == null and int(S.epoch.n) == 0 and vclose(q0, q1, 1.0e-6) and absf(drift - wantDrift) < 0.5, "the turn happened on a calm tick: the ring's heading turned 40 degrees about the pair's point (its axis %.1f, as geometry says %.1f), the point did not move, and it is not counted among the fight's four (n %d)" % [drift, wantDrift, int(S.epoch.n)])
++	print("CAMPAIGN: %d check(s) failed" % fails)
++	quit()
+diff --git a/sim/world/tools/campaign_check.gd.uid b/sim/world/tools/campaign_check.gd.uid
+new file mode 100644
+index 0000000..050d74a
+--- /dev/null
++++ b/sim/world/tools/campaign_check.gd.uid
+@@ -0,0 +1 @@
++uid://xbdw1l4vvcru
+diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
+index 9194ed2..c96d06c 100644
+--- a/tools/fixtures/cases.json
++++ b/tools/fixtures/cases.json
+@@ -292780,6 +292780,54 @@
+         "pointer": "/burst/speed"
+       }
+     },
++    {
++      "id": "campaign-enabled-not-boolean",
++      "schema": "biomes-campaign.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/campaign.json",
++          "set": {
++            "/enabled": "on"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/enabled"
++      }
++    },
++    {
++      "id": "campaign-flight-speed-zero",
++      "schema": "biomes-campaign.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/campaign.json",
++          "set": {
++            "/flight/speed": 0
++          }
++        }
++      ],
++      "expect": {
++        "rule": "exclusiveMinimum",
++        "pointer": "/flight/speed"
++      }
++    },
++    {
++      "id": "campaign-side-ring-too-short",
++      "schema": "biomes-campaign.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/campaign.json",
++          "set": {
++            "/side/ringCols": 50
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/side/ringCols"
++      }
++    },
+     {
+       "id": "rings-turn-bearing-over-10",
+       "schema": "biomes-rings.schema.json",
+diff --git a/tools/schemas/biomes-campaign.schema.json b/tools/schemas/biomes-campaign.schema.json
+new file mode 100644
+index 0000000..e8ebf35
+--- /dev/null
++++ b/tools/schemas/biomes-campaign.schema.json
+@@ -0,0 +1,281 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "meridian/biomes-campaign",
++  "title": "biomes.campaign/1",
++  "description": "data/biomes/campaign.json: the campaign's route on the ring (docs/design/campaign.md; WorldCampaign). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore. Order checks (min within max, maxS above minS, five columns) are WorldCampaign's own load and campaign_check.",
++  "type": "object",
++  "required": [
++    "schema",
++    "_about",
++    "enabled",
++    "flight",
++    "columns",
++    "sites",
++    "turn",
++    "side",
++    "wear"
++  ],
++  "additionalProperties": false,
++  "properties": {
++    "schema": {
++      "const": "biomes.campaign/1"
++    },
++    "_about": {
++      "type": "string"
++    },
++    "enabled": {
++      "type": "boolean",
++      "description": "The campaign's route on or off; off, nothing in WorldCampaign runs and the golden is as it was."
++    },
++    "flight": {
++      "type": "object",
++      "required": [
++        "speed",
++        "minS",
++        "maxS",
++        "climaxMaxS"
++      ],
++      "additionalProperties": false,
++      "description": "The flight band.",
++      "properties": {
++        "speed": {
++          "type": "number",
++          "exclusiveMinimum": 0.0,
++          "maximum": 100000.0,
++          "description": "Units a second the pair fly between places."
++        },
++        "minS": {
++          "type": "number",
++          "exclusiveMinimum": 0.0,
++          "maximum": 1000.0,
++          "description": "The least seconds of flight to a place's near edge."
++        },
++        "maxS": {
++          "type": "number",
++          "exclusiveMinimum": 0.0,
++          "maximum": 1000.0,
++          "description": "The most (above minS: WorldCampaign's load)."
++        },
++        "climaxMaxS": {
++          "type": "number",
++          "exclusiveMinimum": 0.0,
++          "maximum": 1000.0,
++          "description": "The most for the climax before it counts as the build-up."
++        }
++      }
++    },
++    "columns": {
++      "type": "array",
++      "minItems": 5,
++      "maxItems": 5,
++      "items": {
++        "type": "object",
++        "required": [
++          "min",
++          "max",
++          "pThree",
++          "settled",
++          "pull",
++          "pinned"
++        ],
++        "additionalProperties": false,
++        "description": "One column of the episode.",
++        "properties": {
++          "min": {
++            "type": "integer",
++            "minimum": 1,
++            "maximum": 4,
++            "description": "The fewest places the column offers."
++          },
++          "max": {
++            "type": "integer",
++            "minimum": 1,
++            "maximum": 4,
++            "description": "The most (at least min: WorldCampaign's load)."
++          },
++          "pThree": {
++            "type": "number",
++            "minimum": 0.0,
++            "maximum": 1.0,
++            "description": "The chance of each extra place past min (a seeded draw)."
++          },
++          "settled": {
++            "type": "integer",
++            "minimum": 0,
++            "maximum": 4,
++            "description": "How many must be a city or town on the ring."
++          },
++          "pull": {
++            "type": "number",
++            "minimum": 0.0,
++            "maximum": 5.0,
++            "description": "The pull toward settled places in the score."
++          },
++          "pinned": {
++            "type": "boolean",
++            "description": "The column's place is the one the caller pins (the climax: the boss's home)."
++          }
++        }
++      },
++      "description": "The five columns, cold open to climax."
++    },
++    "sites": {
++      "type": "object",
++      "required": [
++        "openStride",
++        "sepS",
++        "jitter",
++        "novelty",
++        "fallen",
++        "openMin"
++      ],
++      "additionalProperties": false,
++      "description": "Choosing places.",
++      "properties": {
++        "openStride": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 400,
++          "description": "Columns between open-ground samples."
++        },
++        "sepS": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 1000.0,
++          "description": "The least seconds of flight between two of a column's places."
++        },
++        "jitter": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 5.0,
++          "description": "How far a seeded draw may move a place's score."
++        },
++        "novelty": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 5.0,
++          "description": "What a new kind of ground adds."
++        },
++        "fallen": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 5.0,
++          "description": "What a fallen place loses."
++        },
++        "openMin": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 1.0,
++          "description": "The least land share around an open site."
++        }
++      }
++    },
++    "turn": {
++      "type": "object",
++      "required": [
++        "bearings",
++        "bonus",
++        "minGain"
++      ],
++      "additionalProperties": false,
++      "description": "The ring turn between columns.",
++      "properties": {
++        "bearings": {
++          "type": "array",
++          "minItems": 0,
++          "maxItems": 12,
++          "items": {
++            "type": "number",
++            "minimum": 0.0,
++            "maximum": 90.0,
++            "description": "A bearing in degrees, tried both ways."
++          },
++          "description": "The turns a column may make."
++        },
++        "bonus": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 5.0,
++          "description": "What a turn adds to a ring's score."
++        },
++        "minGain": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 5.0,
++          "description": "How much a turn must gain over no turn."
++        }
++      }
++    },
++    "side": {
++      "type": "object",
++      "required": [
++        "sepS",
++        "ringCols"
++      ],
++      "additionalProperties": false,
++      "description": "The side story's place.",
++      "properties": {
++        "sepS": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 1000.0,
++          "description": "The least seconds of flight between a side story's place and a column's."
++        },
++        "ringCols": {
++          "type": "integer",
++          "minimum": 100,
++          "maximum": 4800,
++          "description": "The columns of the Close ring round a side story's place."
++        }
++      }
++    },
++    "wear": {
++      "type": "object",
++      "required": [
++        "band",
++        "fallen",
++        "hpKeep"
++      ],
++      "additionalProperties": false,
++      "description": "A place's wounds, as place state only (Legal mc02).",
++      "properties": {
++        "band": {
++          "type": "array",
++          "minItems": 3,
++          "maxItems": 3,
++          "items": {
++            "type": "number",
++            "minimum": 0.0,
++            "maximum": 1.0,
++            "description": "The share of a place's buildings lost that lifts it to the band."
++          },
++          "description": "Bands 1 to 3."
++        },
++        "fallen": {
++          "type": "array",
++          "minItems": 4,
++          "maxItems": 4,
++          "items": {
++            "type": "number",
++            "minimum": 0.0,
++            "maximum": 1.0,
++            "description": "The share of a worn place's buildings already fallen."
++          },
++          "description": "For bands 0 to 3."
++        },
++        "hpKeep": {
++          "type": "array",
++          "minItems": 4,
++          "maxItems": 4,
++          "items": {
++            "type": "number",
++            "minimum": 0.0,
++            "maximum": 1.0,
++            "description": "The share of hp the other buildings keep."
++          },
++          "description": "For bands 0 to 3."
++        }
++      }
++    }
++  }
++}
+diff --git a/tools/schemas/map.json b/tools/schemas/map.json
+index 794d929..c2262c8 100644
+--- a/tools/schemas/map.json
++++ b/tools/schemas/map.json
+@@ -451,6 +451,10 @@
+       "match": "data/biomes/water.json",
+       "schema": "biomes-water.schema.json"
+     },
++    {
++      "match": "data/biomes/campaign.json",
++      "schema": "biomes-campaign.schema.json"
++    },
+     {
+       "match": "data/biomes/wrecks.json",
+       "schema": "biomes-wrecks.schema.json"

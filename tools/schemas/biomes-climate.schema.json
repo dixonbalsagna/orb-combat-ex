@@ -17,6 +17,7 @@
     "coast",
     "wetland",
     "highland",
+    "b",
     "volcanic",
     "fine",
     "_about"
@@ -367,6 +368,29 @@
           "minimum": 100,
           "maximum": 10000,
           "description": "Land from this height is rocky highland (mountains begin at the stored planet's mountainAbove)."
+        }
+      }
+    },
+    "b": {
+      "type": "object",
+      "required": [
+        "mountainAbove",
+        "highlandH"
+      ],
+      "additionalProperties": false,
+      "description": "With land.json's b on (Research's B plates, window 13): the lines B's taller ground moves.",
+      "properties": {
+        "mountainAbove": {
+          "type": "number",
+          "minimum": 1000,
+          "maximum": 12000,
+          "description": "Land above this is mountains (the stored planet's is 3,200)."
+        },
+        "highlandH": {
+          "type": "number",
+          "minimum": 100,
+          "maximum": 12000,
+          "description": "Land from this height is rocky highland."
         }
       }
     },
