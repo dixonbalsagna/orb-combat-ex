@@ -842,6 +842,11 @@
       "id": "mc05",
       "rule": "elite henchmen under mc01: a trick is picked from the fixed list of six by the stage's seed and stage data only (column, boss, difficulty), never by anything the player did (how he beat the last elite, his habits, the ledger, to counter him); an elite appears in one stage, is never kept, never returns, never remembers the player and is never promoted; the grades are types and not ranks (no henchman becomes a veteran or elite from events, no survivor grows stronger); no name, insignia or story, the one-sided telling part is a silhouette cue; the counter-catch takes arms and torso and never the throat; the blitz's crouch is a lunge-low stance with one limb loaded and the other hand up, no fists at the sides, no scream, the aura a thin outline brightening over at least 0.1 s, no more than two marks at once; a thrown henchman is a combatant and never a civilian; a thrown car is empty with nothing living near it; a downed henchman earns no score, meter, achievement or unlock",
       "why": "RL-184; mc01"
+    },
+    {
+      "id": "mc06",
+      "rule": "authored main-story changes to a fighter (a form gained, a side switched, a rival stepping in) are outside mc01 when they are triggered by story position only (the chapter reached, or an explicit story choice at an authored decision point) and their numbers are authored per branch; they are never triggered or sized by how a fighter fared against this player (a close or flawless win, wounds taken, how often he was beaten); filler never resolves a main-story thread and nothing it does carries back; the provenance record says which story lines are Orb's and which are drafted by AI tools, and no public line says 'human-made' or 'written by hand' for the story as a whole",
+      "why": "RL-185; mc01"
     }
   ]
 }

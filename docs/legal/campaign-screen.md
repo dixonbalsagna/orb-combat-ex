@@ -40,3 +40,16 @@ Nothing else in the design raises a legal point: drop-in co-op, the ring as rout
 
 ## Rows
 `mc01` (no change to a fighter from what happens to the player), `mc02` (the ledger's slots and the co-op tally) and `mc03` (the patent read) are in `movegen-banned.json` under a new "mechanics" list.
+
+## Addendum (2026-10-25, RL-185): campaign.md section 1.1 and 1.2, the four kinds and Orb's authored changes
+Read: `docs/design/campaign.md` sections 1 to 1.3 (committed 36080a9c). A screen, not legal advice or a patent clearance.
+
+**1. Orb's main-story changes sit outside mc01 and the patent screen: confirmed, on one condition.** mc01 and the patent concern a non-player fighter's parameters changing because of what happened between him and the player's avatar, and the mechanism the patent describes is that interaction-driven change. A change Orb writes (a form gained in the story, a side switched, a rival who steps in) is **authored script, the same for every player who reaches that point, and does not read how this player fought.** It is not that mechanism. **The condition:** an authored change is triggered by **story position only** (the chapter reached, or an explicit story choice at an authored decision point), never by **how a fighter fared against this player** (a close win, a flawless win, the wounds he took, how often he was beaten), and its numbers are authored per branch, never computed from play. Orb's earlier branching ideas (the rival steps in to let the boss escape; a chosen boon changes who the fifth fight is) are fine on that footing: a fixed list of authored outcomes, picked by an explicit choice. If a future idea makes a fighter's strength, ability, rank or look depend on how he did against the player, it stops for me (mc01).
+
+**2. The four kinds (filler episode and arc, main-story episode and arc) and the "side story" place raise nothing new.** They are structure and authorship, not mechanics that touch a fighter's parameters. Specifically:
+- **Filler's "never adds lore, never resolves a main-story thread, nothing carries back"** keeps the generated content inside mc01 and mc02 (the ledger's slots read results, places and wear only).
+- **The side-story place** (a beacon on the ring that starts a filler episode) and **the half-numbered title card** ("Episode 12.5") are ordinary: nothing sold, no hidden random reward, nothing picked from a menu mid-play.
+- **A partner who joins a main-story episode as a guest** keeps his rewards and not the chapter: local progress only; no personal data (mc02).
+- **The planet's wounds carrying into the next main-story episode** are place state, not a fighter's parameters: fine (mc02: wear only, no toll).
+
+**3. One truthful-claims note for the main story.** When Orb writes the spine and key beats and the game generates the rest, the provenance record should say which is which (ai01), and any public line says only what the record supports, for example "Orb writes the story's spine and key beats; AI tools help draft the rest". Never "human-made" or "written by hand" for the story as a whole.
