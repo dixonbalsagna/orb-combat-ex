@@ -34,7 +34,23 @@ Radeon at x1, p50 / p95 ms, then frames over 33 ms of the scene:
 - **At x4** it is worse in the tail: RTX AI match p95 34.0, 39.2, 34.9 (plain, three runs) against 44.3, 38.3, 51.2 (22n), engine CPU per frame 29.6, 30.8, 27.2 against 32.5, 30.4, 38.7; Radeon AI p95 34.1, 34.2, 41.6 against 50.4, 42.4, 39.8; desert on the Radeon p50 14.2, 22.8, 21.7 against 20.6, 21.0, 20.7. The desert on the RTX at x4 is unchanged (20.1, 21.0, 13.4 against 21.1, 20.9, 13.7; the three repeats ran at different speeds as the machine drifted, so compare within a repeat).
 - **Cannot go on as it is for the old-GPU tier**: a Radeon that held 6.5 ms would run the ground at 21 ms (about 48 fps) with a p95 of 48 ms. Rendering needs a cheaper path for weak GPUs (fewer fetches a fragment, a per-vertex biome colour, or a quality step), and then I re-run. Owner: Rendering.
 
-## 22o, the biome cover
+## Re-bench of the re-cut 22n and 22o (2026-10-26): the 3x is gone
+
+Rendering found the 3x was ANGLE's emulation of flat varyings (provoking vertex), not the biome shading, and re-cut 22n and 22o with no flat varyings. Build: HEAD 3c8f6838 (which carries 22k, the half-plane, 22l and 22m) against HEAD plus the re-cut 22n, against HEAD plus 22n and 22o. Three interleaved repeats on the Radeon at x1, two at x4 and on the RTX, all valid (load 5 to 24% before each run), reduced mode. Median of the repeats, p50 / p95 ms; frames over 33 ms of 600 or 1,800:
+
+| Scene (Radeon, x1) | main | + 22n | + 22n + 22o |
+|---|---|---|---|
+| Desert, one view | 6.7 / 12.0; 1 | 7.3 / 13.2; 1 | 7.3 / 13.1; 1 |
+| AI match | 6.8 / 12.2; 1 | 7.3 / 12.8; 1 | 7.3 / 12.8; 1 |
+| City beam | 9.4 / 28.8; 7 | 9.6 / 33.0; 18 | 9.6 / 32.8; 16 |
+
+- **The re-cut costs about 0.5 to 0.6 ms a frame on the Radeon (+8%), against +14 ms before** (21.2 ms in the AI match). Draw calls: 105 / 213 / 233 on main, the same with 22n, +10 / +10 / +5 with 22o; 22o adds nothing in frame time on top of 22n.
+- **The city beam is the one place it shows**: p95 28.8 to 33.0 (the 33 ms vsync step) and 7 to 18 frames of 600 over 33 ms (1.2% to 3%); the beam already had slow split frames on main.
+- **Radeon at x4 (the old laptop's GPU and CPU)**: AI match p50 37.9 / 38.5 / 32.8 (main, 22n, 22n + 22o; the machine's drift between repeats is larger than the difference), desert 25.3 / 24.1 / 31.8 and 24.6 on the second repeat; the engine's CPU per frame within 3% (AI 47.1 and 47.4). Beam at x4 p95 85.5 / 104 / 86.2 (one of the two 22n repeats 85.2, the other 104).
+- **RTX at x1 and x4**: unchanged (AI 5.6 / 5.8 / 5.7 at x1; desert 4.9 for all three).
+- **Verdict for the old-laptop budget** (60 fps on the first tier, 30 fps floor on the second): **it fits.** On the Radeon every scene keeps p95 under 14 ms except the city beam, whose p95 sat on the 33 ms step before and still does; the cost is half a millisecond a frame. The beam's extra 33 ms frames (about 10 in 600) are the thing to watch.
+
+## 22o, the biome cover (first cut)
 
 - **Free in frame time.** Radeon x1 AI match 21.2 then 21.1 ms, desert 20.9 then 21.0; RTX x1 4.5, 4.5. At x4, three runs of the desert on the RTX: plain 20.1, 21.0, 13.4; 22o 14.7, 21.1, 13.7 (the first read 14.7 against three builds at about 21 in that repeat; the repeats do not repeat it, so noise).
 - **Draw calls +10 and primitives +5 k**: 105 then 115 (AI), 213 then 223 (desert), 233 then 238 (beam); the engine's CPU per frame within 1 ms at x1.
