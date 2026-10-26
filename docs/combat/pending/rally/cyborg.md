@@ -19,6 +19,14 @@ Combat and Choreography, 2026-10-25. Game Design's frame is `rulings-2026-10-23d
 - **What happens:** he hurls the wreck at the flying body. It strikes and sends the body on along the throw's line, as a thrown object does, and the wreck bursts into scrap, which damages structures by the tier factor. The lift's tell takes its time while the body flies on, so the throw must arrive while the body is still in flight or within 20 ticks of its landing (23d item 11); otherwise the rally has already ended.
 - **Price:** none. Throwables carry no ki and no cooldown.
 - **Legal:** wrecks are always empty, and a wreck with anyone living near it is not a candidate (RL-183).
+- **Legal RL-186:** the pick-up is refused with any civilian within 3 bh of the wreck, indoors or out, and the link is never chosen for a landing near people (the scoring's `exclusions`).
+- **The lift by tier** (Game Design 2026-10-26 item 3): the heaviest wreck each tier lifts is **2, 6, 16 and 57** on World's wreck masses. What the hit does to a body stays the throwables' rule (damage by size). The burst's damage to structures is World's brunt ladder with the tier factor.
+- **Checked against the throwables table** (tier 1 lifts mass 4, a van; tier 2 mass 8, a bus; tier 3 ships):
+  - **The units differ.** The cars' masses are Art's classes (bike 1, sedan 3, van 4, bus 8). A wreck's mass is its graspable piece in cubic body heights (World's `wreck-toss.md`).
+  - **Read as one scale, they fight at tiers 1 and 2:** a tier-1 fighter would lift a mass-4 van but not a mass-3 wreck.
+  - **In heft they agree.** The cars' boxes come to 0.24, 2.04, 3.45 and 15.08 cubic bh (bike, sedan, van, bus). So a solid piece of 2 at tier 1 sits near a hollow van, 6 at tier 2 near a hollow bus, and 16 and 57 sit in the ship range.
+  - **Recommended:** World names its field `wreckMass` (cubic bh), so nobody reads it as the car classes.
+  - **Separately,** World's `props.json` gives each car a `throwTier` (bike 1, sedan 2, van 3, bus 4). That disagrees with the throwables ruling, under which tier 1 lifts the bike, the sedan and the van, and tier 2 the bus.
 
 **Slag Catch** (a lob link)
 - **Input:** RB with Y held to level 2, its landing led to where the body will come down.
