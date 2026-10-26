@@ -245,6 +245,7 @@ Encounter read step 1 against the director (`docs/director/right-stick-step1-not
 - **R30. Commitment.** Every stick command commits the fighter for `L` = 6 ticks, the fast standard thumb's own transfer (Controls' model, until the capture measures it). A stick hold's release locks out `L` too, and **§11's "short settle" becomes `L`.** A face press made inside the commitment or during a hold **queues** on the existing request queue, and starts at its end. So a claw's early press and a standard thumb's later press start on the same tick.
 - **R31. The step carries the blow.** A press queued behind a step is staged as one move: the step's last 6 ticks flow into the blow, a step-strike, so the 6-tick start reads as intent and never as lag (Encounter and Animation).
 - **R32. Mirrors at the same cost.** Every stick command has a form on the D-pad (the pad's mirror, reachable by the left thumb), a key and a swipe. Each costs the same ki, commits the same `L` and starts no later than the stick form.
+- **R32b. The timing rules from right-stick v2** (`rulings-2026-10-26.md` items 13 to 16): a face press commits the stick for `L`, as a stick command commits the buttons; the newest input wins, and a dropped flick gets a lapsed ack; the D-pad acts on the same tick as the stick, never ahead; and a flick that waited acts on the tick its wait ends.
 - **R33. No device detection, ever.** The rules live in the sim, so a keyboard, a claw and paddles are all held to them, and nothing tries to tell one grip from another.
 
 ### 13.2 Quick defence on the left hand
