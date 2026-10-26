@@ -1,0 +1,6 @@
+{
+  "_about": "Alternate data blocks for data/biomes/fire.json's `burn` (forest-fire-linger README): replace the `burn` object with one of these. 'now' is what is on main. 'linger' is the EP's suggestion (a longer burn, a slower spread): a dense stand burns about a minute, three trees in four. 'wide' burns as long but spreads further: a dense stand is lit almost whole and burns 44 s. Measured by sim/world/tools/fire_curve.gd.",
+  "now": { "ticks": 360, "spreadRadius": 280.0, "spread": 0.15, "every": 6, "maxBurning": 80, "quenchDepth": 1.0 },
+  "linger": { "ticks": 660, "spreadRadius": 280.0, "spread": 0.06, "every": 6, "maxBurning": 80, "quenchDepth": 1.0 },
+  "wide": { "ticks": 720, "spreadRadius": 280.0, "spread": 0.09, "every": 6, "maxBurning": 80, "quenchDepth": 1.0 }
+}

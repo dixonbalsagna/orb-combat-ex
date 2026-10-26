@@ -1,0 +1,93 @@
+diff --git a/sim/world/tools/fire_curve.gd b/sim/world/tools/fire_curve.gd
+new file mode 100644
+index 0000000..ffb9fd2
+--- /dev/null
++++ b/sim/world/tools/fire_curve.gd
+@@ -0,0 +1,80 @@
++extends SceneTree
++# How a fire in a stand of trees plays out under two sets of numbers (docs/world/forest-fire.md): the share of the trees lit, burning and burnt each second, for the data's own numbers and for a lingering set
++# (a longer burn and a slower spread), so a look at the two can be chosen. A stand of 40 trees on flammable ground is lit at its middle tree.
++#   godot --headless --path . --script res://sim/world/tools/fire_curve.gd [-- --ticks=660 --spread=0.06 --gap=50]
++func fresh() -> SimState:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {}, {"intro": false})
++	S.out.fx.clear()
++	return S
++
++
++func forestX(S: SimState) -> float:
++	var best: float = -1.0
++	var bn: int = 0
++	for t in S.trees:
++		if WorldFire.flammability(t.x) <= 0.0:
++			continue
++		var n: int = 0
++		for u in S.trees:
++			if absf(SimWrap.sdx(t.x, u.x)) < 700.0:
++				n += 1
++		if n > bn:
++			bn = n
++			best = t.x
++	return best
++
++
++func curve(ticks: int, spread: float, gap: float, label: String) -> void:
++	WorldFire.setOn(true)
++	WorldFire.K_TICKS = ticks
++	WorldFire.K_SPREAD = spread
++	var S := fresh()
++	var fx: float = forestX(S)
++	S.trees.clear()
++	var n: int = 40
++	for k in range(n):
++		var tr := SimState.TreeState.new()
++		tr.x = fx - gap * float(n) * 0.5 + float(k) * gap
++		tr.h = 120.0
++		tr.alive = true
++		S.trees.append(tr)
++	S.trees[n / 2].burn = 1.0 / float(ticks)
++	var line: String = ""
++	var out_s: int = -1
++	var peak: int = 0
++	var lit_ever: int = 1
++	for t in range(ticks * 8):
++		S.tick += 1
++		WorldFire.step(S)
++		var burning: int = 0
++		var burnt: int = 0
++		for tr in S.trees:
++			if tr.alive and tr.burn > 0.0:
++				burning += 1
++			if not tr.alive and tr.burn >= 1.0:
++				burnt += 1
++		peak = maxi(peak, burning)
++		lit_ever = maxi(lit_ever, burning + burnt)
++		if t % 120 == 119 and t < 120 * 16:
++			line += " %d/%d" % [burning, burnt]
++		if burning == 0 and out_s < 0:
++			out_s = int(float(t) / 60.0)
++	print("%s (burn %d ticks = %.0f s, spread %.2f a second, a tree every %.0f units): peak %d burning at once, %d of %d trees lit in all, all out after %d s" % [label, ticks, float(ticks) / 60.0, spread, gap, peak, lit_ever, n, out_s])
++	print("    burning/burnt every 2 s:%s" % line)
++
++
++func _init() -> void:
++	var ticks: int = 660
++	var spread: float = 0.06
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--ticks="):
++			ticks = int(a.substr(8))
++		if a.begins_with("--spread="):
++			spread = float(a.substr(9))
++	var d: Dictionary = WorldFire.data()
++	for gap in [50.0, 110.0]:
++		curve(int(d.burn.ticks), float(d.burn.spread), gap, "the data's numbers")
++		curve(ticks, spread, gap, "the lingering set")
++	WorldFire.setOn(false)
++	quit()
+diff --git a/sim/world/tools/fire_curve.gd.uid b/sim/world/tools/fire_curve.gd.uid
+new file mode 100644
+index 0000000..261ac2c
+--- /dev/null
++++ b/sim/world/tools/fire_curve.gd.uid
+@@ -0,0 +1 @@
++uid://ftqn3db54eqi
