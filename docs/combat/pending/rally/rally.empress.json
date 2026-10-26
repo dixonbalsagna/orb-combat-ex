@@ -1,0 +1,98 @@
+{
+  "schema": "combat.rally/1",
+  "fighter": "EMPRESS",
+  "identity": "dominion",
+  "side": "villain",
+  "frame": "docs/design/rulings-2026-10-23d.md (the daze, the sell and the rally; behind rally.enabled)",
+  "_names": "working labels; Narrative names them",
+  "links": [
+    {
+      "id": "rally.empress.rope_return",
+      "name": "Rope Return",
+      "base": "world",
+      "kind": "own",
+      "input": "laying Velvet Rope across the body's coming path in the rally (LB with RB and B; revision 9 on), then no press: the send carries him across it",
+      "what": "the rope, armed, fires her level-1 beam along itself as he crosses and knocks him back across her line (a knock-back, 20 item 2); the ping-pong across a line she drew",
+      "destination": "back across her line",
+      "price": "the trap's 12 ki and its lay (her guard down 12 ticks)",
+      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tell": "two hem plates set in the air, a rope of light between them",
+      "look": "the line flares, the beam runs post to post, the body is turned back like a ball off a net",
+      "atoms": {
+        "windup": 4,
+        "active": 20,
+        "recover": 4
+      },
+      "needs": "it arms 30 ticks after it is laid, so it is laid while he is still on his way: a read, not a reaction"
+    },
+    {
+      "id": "rally.empress.banner_drop",
+      "name": "Banner Drop",
+      "base": "energy_grab",
+      "kind": "own",
+      "input": "RB with A at the body in flight (revision 9 on)",
+      "what": "four banner staves close round the body in the air, and her payoff, the slam, drags it straight down into the ground under it from any height: a spike from anywhere, not only from above. He lands on one knee: the slam's landing only. On hard ground it glances up as a spike does",
+      "destination": "ground",
+      "price": "the grab's (10 tapped, 14 held)",
+      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tell": "she takes the clasp at her throat",
+      "look": "the staves stand round him in the air, then drive down with him; a crater under his knee",
+      "atoms": {
+        "windup": 10,
+        "active": 12,
+        "recover": 14
+      },
+      "legal": "no lines of light joining the staves into a box, no dome, no cell (e16); the kneel is the landing only, with no taunt, zoom or finisher (e12, e16); one call-out (ln06)"
+    },
+    {
+      "id": "rally.empress.guard_wall",
+      "name": "Guard's Wall",
+      "base": "bank",
+      "kind": "own",
+      "input": "base form only, with a guard on point: no press; a send toward the guard on point",
+      "what": "the guard braces and the body strikes his raised guard and rebounds back along its line: a ricochet off a living wall, the force her send's. The guard strikes nothing, closes on nothing and launches nothing",
+      "destination": "back along its line",
+      "price": "none",
+      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tell": "the guard on point plants his feet and raises his guard toward the coming body",
+      "look": "a ring of force on the guard's raised forearms; he is pushed back a step",
+      "atoms": {
+        "windup": 0,
+        "active": 6,
+        "recover": 10
+      },
+      "needs": "empress-guards.md section 4 says a guard never closes on him, launches him or knocks him back. A rebound off a braced guard is his send's force, not the guard's blow: Game Design to rule whether it fits; Game Design's 23d item 12 asked for her guards taking a link"
+    }
+  ],
+  "sell": {
+    "_frame": "23d item 4: in the daze each landed medium or heavy takes the launch's hit-stop (12), a camera push and a reaction a size larger; the sell is the look, never the number",
+    "medium": {
+      "head": "turns with the blow, the mantle flaring and settling",
+      "body": "rocked back onto one heel",
+      "recover": "her chin comes up as she is pulled in"
+    },
+    "heavy": {
+      "head": "thrown back",
+      "body": "the whole mantle billows as she is driven a step back; she laughs through it",
+      "recover": "a booming laugh and a royal straightening of the shoulders; she never calls her guards"
+    },
+    "send": {
+      "look": "launched with the mantle streaming behind like a banner, laughing"
+    },
+    "voice": "a laugh, loud and unbroken",
+    "scale": {
+      "snapMul": 0.9,
+      "foldMul": 0.9,
+      "stepBh": 1.0
+    },
+    "_legal": "the body is never limp; no slow motion beyond the hit-stop, no taunt over a dazed fighter; each sold blow is one flash event at most (fx08)"
+  },
+  "legalAsks": [
+    "the rope as a rally link",
+    "the banner drop's slam and kneel in the air",
+    "the guard's wall (also Game Design's)"
+  ],
+  "openQuestions": [
+    "Guard's Wall against empress-guards section 4 (see its needs)."
+  ]
+}

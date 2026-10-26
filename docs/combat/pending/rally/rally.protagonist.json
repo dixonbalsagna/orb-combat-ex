@@ -1,0 +1,97 @@
+{
+  "schema": "combat.rally/1",
+  "fighter": "PROTAGONIST",
+  "identity": "control",
+  "side": "hero",
+  "frame": "docs/design/rulings-2026-10-23d.md (the daze, the sell and the rally; behind rally.enabled)",
+  "_names": "working labels; Narrative names them",
+  "links": [
+    {
+      "id": "rally.protagonist.palm_turn",
+      "name": "Palm Turn",
+      "base": "overtake",
+      "kind": "own",
+      "input": "the chase (LT with X or Y) with the stick held across his flight, up or down, instead of back against it",
+      "what": "the zip passes the body and an open palm meets it side-on, turning it 90 degrees onto the stick's line: up into the sky, or down to the ground. The overtake's power. With a neutral stick it turns up and away from people",
+      "destination": "open_air or ground, the stick's choice",
+      "price": "the zip's (20 with X, 30 with Y)",
+      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tell": "his hips turn as he passes, the palm edge-forward",
+      "look": "a flat palm, a turn of the wrist, the body's line bends at a right angle in a burst of cyan",
+      "atoms": {
+        "windup": 6,
+        "active": 4,
+        "recover": 10
+      }
+    },
+    {
+      "id": "rally.protagonist.net_haul",
+      "name": "Net Haul",
+      "base": "energy_grab",
+      "kind": "own",
+      "input": "RB with A at the body in flight (the energy link, 23d item 6)",
+      "what": "Harbour Net catches the body in the air; his payoff, the yank, hauls it into his reach mid-air and his next press lands a blow that sends it on along the stick, with no zip to pay",
+      "destination": "reach, then the stick's line",
+      "price": "the grab's (10 tapped, 14 held)",
+      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tell": "the open hand draws the tow line back to the shoulder",
+      "look": "the net flares round the arms and torso; he hauls hand over hand, then the palm",
+      "atoms": {
+        "windup": 10,
+        "active": 30,
+        "recover": 12
+      },
+      "legal": "the net binds arms and torso; one call-out on the throw or the catch's first 10 ticks (ln06); nothing said over the haul"
+    },
+    {
+      "id": "rally.protagonist.pillar_lift",
+      "name": "Pillar Lift",
+      "base": "world",
+      "kind": "own",
+      "input": "no press: a send that carries the body across his own armed Trip Pillar (TRAP LANDING, Game Design 20 item 12)",
+      "what": "the pillar rises under the body and throws it up and away from people, a knock-back of up to 6 bh (20 item 2), keeping it in the air for his next link",
+      "destination": "open_air",
+      "price": "none at the time (the trap's 12 ki when laid)",
+      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tell": "the pillar's seams flare for 6 ticks",
+      "look": "a stone slab rising under the body, tilted away from the houses",
+      "atoms": {
+        "windup": 6,
+        "active": 8,
+        "recover": 0
+      },
+      "legal": "a solid slab, never a beam of light or around a body (e14)"
+    }
+  ],
+  "sell": {
+    "_frame": "23d item 4: in the daze each landed medium or heavy takes the launch's hit-stop (12), a camera push and a reaction a size larger; the sell is the look, never the number",
+    "medium": {
+      "head": "snaps aside and rolls through the neck; his eyes come back first",
+      "body": "a half step back on sliding feet, arms open",
+      "recover": "pulled in again with a grin"
+    },
+    "heavy": {
+      "head": "driven down and round",
+      "body": "folds over the blow, breath forced out in a visible gust, driven back a step",
+      "recover": "a short laugh and a nod: he grades it"
+    },
+    "send": {
+      "look": "launched with his arms flung wide, still grinning; he turns in the air to watch who sent him"
+    },
+    "voice": "a grunt, then a laugh on the recovery; never an apology",
+    "scale": {
+      "snapMul": 1.0,
+      "foldMul": 1.0,
+      "stepBh": 1.0
+    },
+    "_legal": "the body is never limp; no slow motion beyond the hit-stop, no taunt over a dazed fighter; each sold blow is one flash event at most (fx08)"
+  },
+  "legalAsks": [
+    "the palm turn's open palm and wrist turn",
+    "the net haul in the air (binds, call-out)",
+    "the pillar under a flying body"
+  ],
+  "openQuestions": [
+    "Palm Turn reads the stick across the flight; does any device misread it against the overtake's stick held back?"
+  ]
+}

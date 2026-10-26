@@ -1,0 +1,99 @@
+{
+  "schema": "combat.rally/1",
+  "fighter": "CYBORG",
+  "identity": "appetite (wreckage and metal only)",
+  "side": "villain",
+  "frame": "docs/design/rulings-2026-10-23d.md (the daze, the sell and the rally; behind rally.enabled)",
+  "_names": "working labels; Narrative names them",
+  "links": [
+    {
+      "id": "rally.cyborg.crane_reel",
+      "name": "Crane Reel",
+      "base": "energy_grab",
+      "kind": "own",
+      "input": "RB with A at the body in flight",
+      "what": "the crane hook latches the body mid-flight; his payoff, the throw, reels it back toward him on the cable, swings it round once and flings it 6 bh along the stick: the flight reversed",
+      "destination": "reversed, the stick's line",
+      "price": "the grab's (10 tapped, 14 held)",
+      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tell": "the hook swings once behind him",
+      "look": "the cable snaps taut, the winch screams, the body comes back and goes round",
+      "atoms": {
+        "windup": 10,
+        "active": 24,
+        "recover": 12
+      },
+      "legal": "the hook binds arms or torso, the held fighter struggles; one call-out (ln06); no taunt over the reel"
+    },
+    {
+      "id": "rally.cyborg.wreck_toss",
+      "name": "Wreck Toss",
+      "base": "world",
+      "kind": "own",
+      "input": "with a wreck within 2 bh (a car or a slab of rubble, within his tier's lift), its pick-up (A) and Y at the body in flight",
+      "what": "he hurls the wreck at the flying body; it strikes and sends it on along the throw's line, as a thrown object does (rule-of-cool's throwables). The wreck breaks on him",
+      "destination": "the throw's line",
+      "price": "none (the throwables carry no ki or cooldown)",
+      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tell": "the lift: a forearm plate under the frame",
+      "look": "a wreck tumbling end over end into the body and bursting into scrap",
+      "atoms": {
+        "windup": 14,
+        "active": 6,
+        "recover": 12
+      },
+      "legal": "wreckage holds no one (Art's cars and wrecks are empty); wreckage and metal only"
+    },
+    {
+      "id": "rally.cyborg.slag_catch",
+      "name": "Slag Catch",
+      "base": "energy_lob",
+      "kind": "own",
+      "input": "RB with Y held to level 2, its landing led to where the body will come down",
+      "what": "the slag lands and rolls to the landing; the body comes down in it and the burst pops it 3 bh back up, so the rally goes on even on soft ground where a spike would end it",
+      "destination": "open_air, up from the landing",
+      "price": "the level-2 lob's 12 ki",
+      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tell": "he hammers his chest plate, the grille steps bright",
+      "look": "a glassy track of rolling slag, a burst under the falling body",
+      "atoms": {
+        "windup": 12,
+        "active": 20,
+        "recover": 14
+      },
+      "legal": "the burst is one flash event; the slag rolls, it never seeks people"
+    }
+  ],
+  "sell": {
+    "_frame": "23d item 4: in the daze each landed medium or heavy takes the launch's hit-stop (12), a camera push and a reaction a size larger; the sell is the look, never the number",
+    "medium": {
+      "head": "the sensor housing jerks aside and its lights stutter under a 10% step",
+      "body": "plates dent with a clang and spring back",
+      "recover": "the seams hiss as the flesh beneath knits"
+    },
+    "heavy": {
+      "head": "snapped back, sparks from the neck seams (one burst)",
+      "body": "folds at the waist joint, the chest grille rattling, driven a step back",
+      "recover": "a whirr as the limiter resets; the flesh steams and closes"
+    },
+    "send": {
+      "look": "launched in a shower of loose rivets and wire, limbs swinging on their joints"
+    },
+    "voice": "a mechanical grind and a growl; the hunger lines stay in his voice, never in a mouth",
+    "scale": {
+      "snapMul": 1.1,
+      "foldMul": 1.1,
+      "stepBh": 1.0
+    },
+    "_legal": "the body is never limp; no slow motion beyond the hit-stop, no taunt over a dazed fighter; each sold blow is one flash event at most (fx08)"
+  },
+  "legalAsks": [
+    "the crane reel in the air",
+    "the wreck toss",
+    "the slag catch",
+    "his sell's flicker and sparks under fx08"
+  ],
+  "openQuestions": [
+    "Wreck Toss uses the throwables' pick-up mid-rally: the rule asks him to be free and the rival beyond striking reach, which a rally meets. Agreed?"
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "schema": "combat.rally/1",
+  "fighter": "RIVAL",
+  "identity": "precision",
+  "side": "villain",
+  "frame": "docs/design/rulings-2026-10-23d.md (the daze, the sell and the rally; behind rally.enabled)",
+  "_names": "working labels; Narrative names them",
+  "links": [
+    {
+      "id": "rally.rival.plated_ram",
+      "name": "Plated Ram",
+      "base": "chase",
+      "kind": "own",
+      "input": "the chase with Y (LT with Y); with X it is the plain chase strike",
+      "what": "the zip drives him into the body forearm-plate first, and the body is sent exactly along the stick's line, snapped to one of eight directions, with no bend from the planner: it lands where the line says",
+      "destination": "the stick's exact line",
+      "price": "the zip's with Y (30)",
+      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tell": "the forearm comes up square, the plates lit in a line",
+      "look": "a straight ram, no wind-up flourish; a clean line of violet behind the body",
+      "atoms": {
+        "windup": 8,
+        "active": 4,
+        "recover": 10
+      }
+    },
+    {
+      "id": "rally.rival.ring_hang",
+      "name": "Ring Hang",
+      "base": "energy_grab",
+      "kind": "own",
+      "input": "RB with A at the body in flight",
+      "what": "Rank Ring snaps round the body's arms and torso and his payoff, the bind, holds it where it is in the air; his next shot lands as on an open fighter, inside the catch or within 6 ticks of its end (20 item 3), and that shot sends it on",
+      "destination": "in place, then the shot's line",
+      "price": "the grab's (10 tapped, 14 held)",
+      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tell": "a short closing pull of his fist",
+      "look": "the body stops dead in the air, struggling inside the loop; a needle or a heavy blast follows",
+      "atoms": {
+        "windup": 10,
+        "active": 40,
+        "recover": 6
+      },
+      "legal": "a thin loop that closes, never a disc or above the head; binds arms and torso; the held fighter struggles; one call-out (ln06); no taunt over the hang"
+    },
+    {
+      "id": "rally.rival.stair_spike",
+      "name": "Stair Spike",
+      "base": "spike",
+      "kind": "own",
+      "input": "B from above the body",
+      "what": "one press, one attack: he drives the body down in three short steps of 1 bh, plate, plate, plate, and the third is the crater. On hard ground under the plant speed it glances back up as every spike does; on soft ground the rally ends",
+      "destination": "ground",
+      "price": "none (the spike's)",
+      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tell": "he rises over the body with the fist cocked at the shoulder",
+      "look": "three stepped impacts in a straight vertical line, each a short violet flare, counted as one burst (fx08)",
+      "atoms": {
+        "windup": 10,
+        "active": 9,
+        "recover": 12
+      }
+    }
+  ],
+  "sell": {
+    "_frame": "23d item 4: in the daze each landed medium or heavy takes the launch's hit-stop (12), a camera push and a reaction a size larger; the sell is the look, never the number",
+    "medium": {
+      "head": "snaps with the blow and is snapped straight at once, jaw set",
+      "body": "barely folds; his feet skid back further than anyone's",
+      "recover": "straightens a plate on his forearm while he is pulled in"
+    },
+    "heavy": {
+      "head": "turned hard, his glare back on the attacker before his body follows",
+      "body": "a short fold, a long skid back",
+      "recover": "a sneer: it was luck"
+    },
+    "send": {
+      "look": "launched rigid and straight, arms in to his sides, refusing to flail until the flight turns him"
+    },
+    "voice": "a hiss through the teeth, never a cry",
+    "scale": {
+      "snapMul": 1.2,
+      "foldMul": 0.8,
+      "stepBh": 1.3
+    },
+    "_legal": "the body is never limp; no slow motion beyond the hit-stop, no taunt over a dazed fighter; each sold blow is one flash event at most (fx08)"
+  },
+  "legalAsks": [
+    "the plated ram",
+    "the ring hang in the air",
+    "the three-step spike as one burst"
+  ],
+  "openQuestions": [
+    "Plated Ram's exact line drops the planner's bend: the stick's line wins outright, so a ram into an empty line is the player's choice. Agreed?"
+  ]
+}

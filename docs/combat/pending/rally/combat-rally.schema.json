@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/combat-rally",
+  "title": "combat.rally/1",
+  "description": "DRAFT by Combat for Tools (docs/combat/pending/rally/README.md): data/combat/rally/<fighter>.json, one fighter's own rally links (two or three, each a variant of one of Game Design's link kinds, 23d item 6) and his sell in the daze (item 4). Policy: closed except keys starting with an underscore. Cross-references for Tools' xref (proposed): each link id names its fighter; link ids are unique across the roster; the fighter is a roster id or EMPRESS or CYBORG until they join it",
+  "type": "object",
+  "patternProperties": {
+    "^_": {}
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "fighter",
+    "identity",
+    "side",
+    "links",
+    "sell"
+  ],
+  "properties": {
+    "schema": {
+      "const": "combat.rally/1"
+    },
+    "fighter": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Z_]*$"
+    },
+    "identity": {
+      "type": "string",
+      "minLength": 1
+    },
+    "side": {
+      "enum": [
+        "hero",
+        "villain"
+      ]
+    },
+    "frame": {
+      "type": "string",
+      "minLength": 1
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "id",
+          "name",
+          "base",
+          "kind",
+          "input",
+          "what",
+          "destination",
+          "price",
+          "tech",
+          "tell",
+          "look",
+          "atoms"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^rally\\.[a-z]+\\.[a-z_]+$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "base": {
+            "enum": [
+              "chase",
+              "overtake",
+              "spike",
+              "bank",
+              "energy_lob",
+              "energy_beam",
+              "energy_grab",
+              "world"
+            ]
+          },
+          "kind": {
+            "const": "own"
+          },
+          "input": {
+            "type": "string",
+            "minLength": 1
+          },
+          "what": {
+            "type": "string",
+            "minLength": 1
+          },
+          "destination": {
+            "type": "string",
+            "minLength": 1
+          },
+          "price": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tech": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tell": {
+            "type": "string",
+            "minLength": 1
+          },
+          "look": {
+            "type": "string",
+            "minLength": 1
+          },
+          "atoms": {
+            "type": "object",
+            "required": [
+              "windup",
+              "active",
+              "recover"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "windup": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 120
+              },
+              "active": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 120
+              },
+              "recover": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 120
+              }
+            }
+          },
+          "legal": {
+            "type": "string",
+            "minLength": 1
+          },
+          "needs": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "minItems": 2,
+      "maxItems": 3
+    },
+    "sell": {
+      "type": "object",
+      "required": [
+        "medium",
+        "heavy",
+        "send",
+        "voice",
+        "scale"
+      ],
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "properties": {
+        "medium": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "heavy": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "send": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "voice": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scale": {
+          "type": "object",
+          "required": [
+            "snapMul",
+            "foldMul",
+            "stepBh"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "snapMul": {
+              "type": "number",
+              "minimum": 0.6,
+              "maximum": 1.5
+            },
+            "foldMul": {
+              "type": "number",
+              "minimum": 0.6,
+              "maximum": 1.5
+            },
+            "stepBh": {
+              "type": "number",
+              "minimum": 0.5,
+              "maximum": 2.0
+            }
+          }
+        }
+      }
+    },
+    "legalAsks": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "openQuestions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}
