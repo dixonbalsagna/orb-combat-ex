@@ -23,9 +23,9 @@ Combat and Choreography, 2026-10-25. Game Design's frame is `rulings-2026-10-23d
 **Mantle Wall** (a bank; Narrative renamed it from Guard's Wall)
 - **Input:** no press. A send toward her while she braces (the stick held toward the body with LB).
 - **Tell:** she plants her heel and swings the mantle forward, rigid as a door.
-- **What happens:** the body strikes her braced mantle and rebounds back along its line: a ricochet, with the force the send's. The mantle stands. It never wraps, coils or grabs, so it never reads as a tail.
+- **What happens:** the body strikes her braced mantle and rebounds back along its line: a ricochet, with the force the send's, counting toward the two-ricochets-in-a-row limit. **It works both ways:** a sent fighter can also wall-kick off her braced mantle as off any face. The mantle stands. It never wraps, coils or grabs, so it never reads as a tail.
 - **Look:** the hem plates lock edge to edge, a ring of force where the body meets them, and she is pushed back a step.
-- **Why the change:** Narrative keeps "guard" out of her lines, and a braced mantle means no guard closes, launches or knocks back (`empress-guards.md` §4 is met). It works in every form. Game Design may still rule the design.
+- **Ruled** (Game Design, 30d6539a): Mantle Wall stands in every form, and the guard version is withdrawn. Narrative keeps "guard" out of her lines, and no guard closes, launches or knocks back (`empress-guards.md` §4 is met).
 
 ## Her sell, a size larger (item 4)
 - **A medium:** her head turns with the blow, the mantle flaring and settling. She is rocked back onto one heel, and her chin comes up as she is pulled in.

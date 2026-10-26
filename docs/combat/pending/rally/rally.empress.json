@@ -50,7 +50,7 @@
       "base": "bank",
       "kind": "own",
       "input": "no press: a send toward her while she braces (the stick held toward the body with LB)",
-      "what": "she braces her mantle as a wall and the body strikes it and rebounds back along its line: a ricochet off her braced mantle, the force the send's. The mantle stands; it never wraps, coils or grabs",
+      "what": "she braces her mantle as a wall and the body strikes it and rebounds back along its line: a ricochet off her braced mantle, the force the send's. It counts toward the two-ricochets-in-a-row limit. It works both ways: a sent fighter can also wall-kick off her braced mantle as off any face. The mantle stands; it never wraps, coils or grabs",
       "destination": "back along its line",
       "price": "none",
       "tech": "item 8 with 23d item 17's middle step: 4 ticks for a fresh kind, 6 for a kind used earlier in the rally but not as the last link, 8 for the same kind as the last, and a third of one kind is teched by itself",
@@ -61,8 +61,8 @@
         "active": 6,
         "recover": 10
       },
-      "needs": "Narrative's rename (2026-10-25): 'guard' stays out of her lines, and the bank is her braced mantle, so no guard closes, launches or knocks back (empress-guards.md section 4 is met). Game Design may still rule the design; it works in every form",
-      "_renamed": "Narrative: Guard's Wall became Mantle Wall"
+      "_renamed": "Narrative: Guard's Wall became Mantle Wall",
+      "_ruled": "Game Design (30d6539a): Mantle Wall stands in every form; the guard version is withdrawn; a sent fighter can wall-kick off it; it counts toward the two-in-a-row ricochet limit"
     }
   ],
   "sell": {
@@ -93,9 +93,7 @@
     "the banner drop's slam and kneel in the air",
     "the mantle wall: the mantle never wraps, coils or grabs, never reads as a tail"
   ],
-  "openQuestions": [
-    "Mantle Wall: Game Design may rule the design (a ricochet off her braced mantle, in every form)."
-  ],
+  "openQuestions": [],
   "_flash": "Legal mc04: the flash cap of 3 counted bursts a second holds across the whole rally; a link whose flash would pass it draws as dust, trail and ember instead",
   "_ownKind": "ruled (23d item 17): each own link is its own kind for item 8's grip and item 13's scoring"
 }
