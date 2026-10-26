@@ -11,6 +11,12 @@ Owner: Narrative and Fighter Identity. Version 1, 2026-10-25. Orb: "filler episo
 - **The Cyborg** reads wear and a thing wrecked only, and `home_wear` only for his own yard (ln04, ln05).
 - **Filler never touches the main story.** A filler episode inside a main arc may read its open threads as colour, but it never resolves, opens or skips one, and nothing it does carries back (campaign.md 1.2). **The main story's beats are Orb's:** the main-story slots in section 6 are labelled and empty, never content.
 
+## 1b. How a filler arc uses them (campaign.md 1.4)
+
+- **The first two episodes of a filler arc** each take a **different** one of the four families, chosen by the arc's seed. The episode number (for a card inside a main arc) comes from the season record, and the side-story place from the arc block.
+- **The villain is the climax opponent.** In the rescue the villain is always the **threat**, never the stranded fighter: `opp` and `stranded` are always different fighters, and the stranded one is never the one who bars the way (the samples already follow it: the Empress is the threat, the Cyborg is the one stranded).
+- **The arc's finale** is not one of these four. It uses the `home_threat` and `boss_taunt` families from `beat-templates.md` (the stakes rise at a home; the boss on his ground).
+
 ## 2. The new slots
 
 | Slot | What it is |

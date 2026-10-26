@@ -412,7 +412,8 @@
           "does": "sets out to fetch them"
         }
       ],
-      "note": "Stranded by wrecked ground or flood; never a captive or a victim."
+      "note": "Stranded by wrecked ground or flood; never a captive or a victim.",
+      "rule": "opp is the threat and the climax opponent; stranded is never opp"
     },
     {
       "id": "rescue.rise",
@@ -429,7 +430,8 @@
           "does": "bars the way"
         }
       ],
-      "note": ""
+      "note": "",
+      "rule": "opp is the threat and the climax opponent; stranded is never opp"
     },
     {
       "id": "rescue.twist",
@@ -446,7 +448,8 @@
           "does": "turns out to be unexpected, and cheerful"
         }
       ],
-      "note": "The Cyborg reads wear and a thing wrecked only, never a toll or a person (ln04, ln05)."
+      "note": "The Cyborg reads wear and a thing wrecked only, never a toll or a person (ln04, ln05).",
+      "rule": "opp is the threat and the climax opponent; stranded is never opp"
     },
     {
       "id": "rescue.escalation",
@@ -472,7 +475,8 @@
       "cyborg": {
         "home_wear": "own_yard_only",
         "off_if": "the Cyborg claim is a town or city, not his own yard"
-      }
+      },
+      "rule": "opp is the threat and the climax opponent; stranded is never opp"
     },
     {
       "id": "rescue.climax",
@@ -489,7 +493,8 @@
           "does": "dares them to win the way through"
         }
       ],
-      "note": ""
+      "note": "The climax opponent is the threat, never the stranded fighter (campaign.md 1.4).",
+      "rule": "opp is the threat and the climax opponent; stranded is never opp"
     },
     {
       "id": "rescue.cliffhanger",
@@ -506,7 +511,8 @@
           "does": "safe at last, with one question left open"
         }
       ],
-      "note": ""
+      "note": "",
+      "rule": "opp is the threat and the climax opponent; stranded is never opp"
     }
   ],
   "title_card_formats": {
@@ -963,5 +969,14 @@
       }
     },
     "filler": "Filler has no change slot at all: no filler template changes a fighter."
+  },
+  "arc_fit": {
+    "source": "docs/design/campaign.md section 1.4 (f557faab)",
+    "episode_number": "comes from the season record",
+    "side_place": "comes from the arc block",
+    "filler_arc_episodes_1_and_2": "each takes a different one of the four families, chosen by seed",
+    "villain": "the climax opponent; in the rescue the villain is always the threat, never the stranded fighter",
+    "rescue_rule": "opp (the climax opponent, the threat) and stranded are always different fighters; the stranded fighter is never the one who blocks the way",
+    "finale": "the arc's finale episode uses the home_threat and boss_taunt families (beat_templates.json), not these four"
   }
 }
