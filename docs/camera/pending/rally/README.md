@@ -21,6 +21,12 @@ All four are `cue` events, Encounter's channel:
 
 Without the cues nothing changes. The camera digests of six scenes are byte-identical with the patch and without it.
 
+**As Encounter built them** (7c48f552, `sim/director/rally.gd`):
+- `sell` has text `medium` and amount 1. Only mediums are sold, so the camera's heavy weight is unused.
+- `rally_link` has text `send` at n 0 (the opening, or the turn's send), otherwise the base kind. Source carries the own link.
+- `rally_tech` (Encounter's own) is not read by the camera.
+- The base kinds are `chase`, `overtake`, `spike`, `bank`, `energy_lob`, `energy_beam`, `energy_grab` and `world`. A grab in flight is `energy_grab`, which director-19-rally-grab-kind.patch adds to the size hold. Combat's own grabs, when built, should report that base kind too.
+
 ## 2. The shots, beat by beat
 
 | Beat | The camera | Why, and its limits |

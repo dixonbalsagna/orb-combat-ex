@@ -1,0 +1,3 @@
+The rally's camera in the web build (director-18 on main, rally.enabled on in scratch): left the rally framing off, right on; ai 2, Reduce flashing on, frames from Tools' guarded launcher (session camera-whip).
+- Ticks 929-1084: a send carries the body into a mountainside. With the framing on, the rally's shot keeps him lower and further into the frame as he meets the slope; his place on the screen moves on the spring. The difference is small in this stretch.
+- Not in this clip: the sell and the turn. The web run's rally comes at different ticks from the headless run, which sells at 663, sends at 694 and has no turn in 13 seeds. Headless, the framing changes the picture from the sell (tick 664) to the rally's end (1434).
