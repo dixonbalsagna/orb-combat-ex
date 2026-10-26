@@ -1,18 +1,50 @@
-# The campaign: an episodic arc, toured as a planet run, played solo or together
+# The campaign: main-story and filler episodes and arcs, toured as planet runs, played solo or together
 
-Owner: Game Design. Status: **the design, 2026-10-25.** Paper only. Every number is a first value. It builds on what exists rather than replacing it: the run (`run-mode.md`), the run state (`docs/architecture/run-core.md`), Narrative's beat templates (`homework/done/co-op-campaign-pick/story-beat-samples.md`, data in `docs/narrative/pending/beat_templates.json`), World's rings and homes, and the one-versus-many rules (`empress-guards.md`, `grapple.md`).
+Owner: Game Design. Status: **the design, 2026-10-25,** revised the same day so that filler is one kind of episode and arc, not the frame for the whole campaign (§1). Paper only. Every number is a first value. It builds on what exists rather than replacing it: the run (`run-mode.md`), the run state (`docs/architecture/run-core.md`), Narrative's beat templates (`homework/done/co-op-campaign-pick/story-beat-samples.md`, data in `docs/narrative/pending/beat_templates.json`), World's rings and homes, and the one-versus-many rules (`empress-guards.md`, `grapple.md`).
 
 **Orb's picks** (homework 41, `docs/ep/vision.md`, 2026-10-25):
 - **The shape:** "The Macro Structure (Episodic Arc): Campaigns are framed as a self-contained 'Filler / Post-Season Arc' within the anime's ongoing broadcast. The Micro Structure (Planet Run Ring): Inside each Episode, players navigate a 5-stage planet tour using branching route maps." The Siege (C) is held for a later mode.
+- **Filler is a kind, not the frame** (Orb, 2026-10-25): "just to clarify, filler episodes, filler arcs could be considered separate categories in the game, but not all missions will be filler episodes."
 - **Co-op:** "Drop-in co-op works anywhere (character select, route maps, beat cards, or mid-brawl). No menu separation—players load onto the same planet ring and can physically sprint in opposite directions or converge in real time."
 - **Length:** "as far as we can push procedurally generated dynamic storylines that remain interesting."
 - **A lost run:** "think of whether its fun, cool, balanced to trigger a flat restart. determine and engineer some novel mechanic that encourages the player to start over if they lose rather than ending the run in frustration."
 
 **Standing rules it keeps:** solo or co-op with an optional CPU partner; free roaming, with any enemy engageable and a second player joining an engaged fight without a break (Orb, 2026-10-11); no friendly fire; graded henchmen; a boss per planet; generated beats never add lore, because Orb writes the universe; Legal c08 and ln05 (no reward for deaths, and the beats read places and wear, never a toll); and Orb's minimal HUD.
 
-## 1. The shape in one paragraph
+## 1. The shape
 
-**A campaign is an arc: a filler arc of the imaginary anime's fourth season, set on one procedural planet.** An arc is a few **episodes.** Each episode is one sitting: **a five-stage tour of the planet on a branching route,** with the anime's dramatic shape (a cold open, the rise, a twist, the climax and a cliffhanger) and the run's machinery (fights from the base form, boons, lives). **The route is the planet itself:** the next stages are places on the ring the players are already flying, and they choose by flying there, together or apart. The planet keeps every wound across the arc's episodes, and its fighters remember what happened. A lost episode isn't erased: it airs, and the next episode answers it (§5).
+**The campaign has two kinds of story: the main story, which Orb writes, and filler, which the game generates.** Each comes as single episodes and as arcs. An **episode** is one sitting: **a five-stage tour of a planet on a branching route,** with the anime's dramatic shape (a cold open, the rise, a twist, the climax and a cliffhanger) and the run's machinery (fights from the base form, boons, lives). An **arc** is three episodes on one planet. **The route is the planet itself:** the next stages are places on the ring the players are already flying, and they choose by flying there, together or apart. A lost episode isn't erased: it airs, and the next episode answers it (§5).
+
+### 1.1 The four kinds
+
+| | **Filler episode** | **Filler arc** | **Main-story episode** | **Main-story arc** |
+| :--- | :--- | :--- | :--- | :--- |
+| **What it is** | A one-shot: one episode that stands alone, a side story | Three generated episodes on one procedural planet, with the arc's own villain, threads and boss: a self-contained post-season arc | One chapter of the main story | A chapter run of the main story: its episodes in Orb's order, ending in its finale |
+| **Who writes it** | Generated from Narrative's templates, filling slots and never adding lore | Generated, the same way | **Orb writes its spine and its key beats:** who, where, what happens and how it ends. The game generates the rest around them (the route's other places, hordes, branches, the in-between beats) | Orb's, in the season's order |
+| **Its planet** | Any seed. Inside a main arc, a copy of that arc's planet (§1.2) | One new procedural planet a seed | **Orb's seeded planets,** with the places and homes Orb names | The same |
+| **Its spine** | The five columns (§2.2), every one generated | The same, with the arc's finale replacing the last climax | **The five columns with some fixed:** at least the climax's opponent and place, and any stage Orb pins. The rest are generated | Orb's episodes in order, and Orb's finale |
+| **What it changes** | Nothing beyond itself. It keeps its rewards (keepsakes, items, mastery) | Its own planet and threads, for the arc's length. Nothing in the main story | **It moves the main story:** a win opens the next main-story episode, and the planet's wounds carry into it | The season's story |
+| **Replaying it** | Without end, on new seeds | Without end, on new seeds | Replayable: Orb's fixed beats repeat, and the generated parts vary | The same |
+| **Its tone** | Free to be lighter: Narrative's filler families (a training day, a rivalry game, a tournament on a stage, a rescue), still in each fighter's voice | Narrative's arc shapes (a hunt, a betrayal, a defence) | Orb's voice and Orb's stakes | Orb's |
+| **A loss** | The rescue (§5.1) applies. A lost one-shot simply ends, with its haul paid, and a new seed is one press away: a cheap start is what a one-shot is for | §5: the rescue, and "Previously on" between its episodes | §5. "Previously on" carries the loss into the next attempt at the same chapter | The same |
+
+- **"Fighters never change" holds in every kind** (Legal mc01, §4). A main-story event that Orb writes can change a fighter, such as a form gained in the story or a side switched. That is Orb's script and the same for every player, and it never reads a player's own history. **Legal confirms that authored changes like these sit outside mc01,** since mc01 is about changes caused by what happened between a fighter and the player.
+- **Generated content never adds lore in any kind.** A filler arc's villain is a roster fighter, never a new character, and its places come from the planet's names, which persist.
+
+### 1.2 How they mix
+
+- **A filler episode inside a main arc: yes.** It is the anime's breather between chapters, offered between two main-story episodes. It plays on a copy of the arc's planet as it stands, wounds and all. Its beats may read the arc's open threads as colour, **but it never resolves a main-story thread, and nothing it does carries back.** When the main story resumes, the planet is as the main story left it. That is filler's rule in the anime, and it keeps Orb's chapters exactly as written.
+- **A standalone filler arc: yes.** It is the campaign's endless content, open from the start and played at any time.
+- **A standalone filler episode: yes.** The quickest way in: one sitting, no commitment.
+- **Main-story content inside filler: no.** Filler can't open, close or skip a main-story chapter.
+- **Filler arcs between main arcs** are the season's post-season arcs, as homework 41 pictured: generated, and set anywhere in the season's run.
+
+### 1.3 How a player picks them, or meets them
+
+- **From the start screen,** three doors: **the main story** (its chapters open in order, and the next one is always marked), **a filler arc** (new or continued), and **a filler episode** (one sitting, on a new seed or the planet of an arc he has played).
+- **In the world, between main-story episodes:** when a main-story episode ends, the ring sometimes shows one more place, **a side story** with its own beacon. Flying to it starts a filler episode there and then. Ignoring it, the cliffhanger's "next time" leads on. **Nothing is ever picked from a list in the middle of play.**
+- **The title card says which it is.** A main-story episode carries the season's episode number. **A filler episode carries a half number, such as "Episode 12.5",** as the anime would number one. A filler arc's cards carry its own short title. Each is one line, at the edge, and never on the fighters.
+- **Co-op joins any kind the same way** (§3). A partner who joins a main-story episode advances his own main story only if he has reached that chapter. Otherwise he plays it as a guest, keeping his rewards but not the chapter.
 
 ## 2. The structure
 
@@ -22,9 +54,9 @@ Owner: Game Design. Status: **the design, 2026-10-25.** Paper only. Every number
 | :--- | :--- | :--- | :--- |
 | **The stage** | One fight or challenge on one place of the ring: a horde, a duel, a defence, a pursuit, a two-on-one, the boss | 3 to 7 minutes. Duels and the boss keep Orb's floor of five minutes or more | The match's own state |
 | **The episode** | Five stages on a branching route, with beats between them. **It is a run, in `run-mode.md`'s terms:** fights from base, boons, the ceiling, lives | One sitting, about 40 to 50 minutes | Boons, the ceiling and lives last the episode, as a run's do |
-| **The arc** | Three episodes on one planet: the pilot, the middle and the finale, then the arc's boss | Three sittings, a save across days | The planet (its places, wear, craters and people), the cast's memory, open threads, the hero's anguish and the villain's Dread |
+| **The arc** | Three episodes on one planet: the pilot, the middle and the finale, then the arc's boss. A filler arc's are all generated; a main-story arc's are Orb's chapters (§1.1) | Three sittings, a save across days | The planet (its places, wear, craters and people), the cast's memory, open threads, the hero's anguish and the villain's Dread |
 
-**An arc is three episodes by default** (§4 explains why), and a season is arcs chained, each on a new planet, with the cast's memory carried across.
+**A filler arc is three episodes** (§4 explains why). A main-story arc runs as many as Orb writes. A season is the main story's arcs in Orb's order, with filler arcs and episodes between them, each filler arc on a new planet, and the cast's memory carried across.
 
 ### 2.2 The episode's shape: a dramatic spine on a branching route
 
@@ -107,13 +139,13 @@ Each of the five stages is a column of the route, with **two or three places to 
 - **No procedurally generated enemy individuals** with names, traits or histories. No ladder or chain of command among the cast, and no lieutenant who replaces a fallen boss.
 - **A future feature that wants a fighter's behaviour, numbers or looks to depend on past meetings stops and asks Legal first.**
 
-**How far it goes, by level:**
+**How far generated stories go, by level.** This is the filler's reach. The main story's length is Orb's, and its episodes use the same machinery around Orb's fixed beats, so they stay fresh in their generated parts as filler does.
 
 | Level | What is generated | How long it stays fresh, with the launch content (4 fighters, about 30 templates) |
 | :--- | :--- | :--- |
 | **An episode** | The route (places, kinds, opponents), the fills of the five roles, the twist, the beats | Every episode differs in route and fills. Templates start to repeat in about the third episode, and the picker's rarity score holds them off a little longer |
 | **An arc** (three episodes) | The planet, its homes and places, the arc's villain and his claim, the threads | **Three episodes is the sweet spot:** long enough for the planet's wounds and the rivals' memory to pay off, short enough that the templates don't wear thin |
-| **A season** (arcs chained) | A new planet each arc. The cast's memory carries across arcs | About six arcs before the arc-level shape feels familiar with four fighters. With the roster of twelve and a library of about 90 templates, a season can run twelve arcs or more |
+| **A season** (filler arcs between the main story's) | A new planet each filler arc. The cast's memory carries across arcs | About six arcs before the arc-level shape feels familiar with four fighters. With the roster of twelve and a library of about 90 templates, a season can run twelve arcs or more |
 | **Beyond** | Reruns: an arc again on a new seed, under the challenge tiers (Pressure 1 to 10, `run-mode.md` §4.4) | Without end, as a challenge rather than a story |
 
 **What pushes it further** (each one Narrative's or World's to grow):
@@ -213,6 +245,7 @@ The campaign's beats read these, and no others. Every one follows `docs/legal/be
 3. Then the split (one duel and one horde at once).
 4. Then the arc's carry across two episodes, with "Previously on".
 5. Then the rescue.
+6. Then the first main-story episode, on Orb's seeded planet with Orb's fixed climax, and the side-story place that opens a filler episode from inside it (§1.2, §1.3).
 
 **QA's rows:**
 
@@ -225,6 +258,11 @@ The campaign's beats read these, and no others. Every one follows `docs/legal/be
 | Rematches won after "Previously on" | 50 to 75% (the lesson should help, not decide) |
 | Templates repeated inside one episode | None. Inside an arc, at most 3 |
 
-## 8. For Orb
+## 8. For Orb: the questions only Orb can answer
 
-**One question,** for the EP to ask when it suits: "When you lose, which should happen? (a) A friend steps in to finish the fight, and a lost episode continues as 'Previously on…' with a training drill and a rematch (recommended). (b) Only 'Previously on…'. (c) The comeback bet: retry from the brink for a bigger prize."
+One at a time, for the EP to ask when it suits. Each has a recommendation.
+
+1. **Losing:** "When you lose, which should happen? (a) A friend steps in to finish the fight, and a lost episode continues as 'Previously on…' with a training drill and a rematch (recommended). (b) Only 'Previously on…'. (c) The comeback bet: retry from the brink for a bigger prize."
+2. **How you write the main story:** "For each main-story arc, will you write a spine of one line per episode (who, where, what happens and how it ends), with the game generating the rest around it (recommended)? Or a full script for each episode?"
+3. **Filler inside the main story:** "Should a side-story episode played between two main-story episodes leave the planet as the main story left it, as anime filler does (recommended)? Or should its damage carry into the next main-story chapter?"
+4. **What opens first:** "Should filler arcs and episodes be open from the start while the main story opens chapter by chapter (recommended)? Or should filler open only after the main story's first arc?"
