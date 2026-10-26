@@ -360,6 +360,30 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     assert.strictEqual(id(masherRows([nc('medium', 10), nc('easy', 80)]), 'newcomer.wins.medium').status, 'PASS');
     assert.strictEqual(id(ok, 'design.L17').status, 'INFO');
   });
+  await t('the rally rows (rulings-2026-10-23d section 7): dazes 2-8, rallies 3-10, links median 2-4, repeats at most 25%, auto-tech at most 20%, turns 15-40%, time at most 25%; PENDING without the cues; the full launches count a rally once', async () => {
+    const ends = (m, n, k, why = 'landed', auto = false) => Array.from({ length: m }, (_, i) => [n, i < Math.round(m * k) ? 1 : 0, 300, why, auto]);
+    const mk = (over = {}) => Array.from({ length: 20 }, () => rec({ koAt: 400, pow: { has: true, n: [8, 8], full: [8, 8], fullOpen: [3, 3] }, rally: { has: true, dazes: 5, dazeSrc: { guard_break: 3, perfect_block: 2 }, sells: 3, sellKinds: { medium: 3 }, ends: ends(6, 3, 0.25), seqs: Array.from({ length: 6 }, () => ['chase', 'overtake', 'spike']), ...over } }));
+    const f = D => evaluate({ default: D }), id = (rows, k) => rows.find(r => r.id === k);
+    const good = f(mk());
+    for (const k of ['rally.dazes', 'rally.perMatch', 'rally.links', 'rally.repeat', 'rally.autotech', 'rally.turns', 'rally.time']) assert.strictEqual(id(good, k).status, 'PASS', k + ' ' + id(good, k).value);
+    assert.strictEqual(id(good, 'rally.sells').status, 'INFO'); assert.ok(/0.60/.test(id(good, 'rally.sells').value));
+    assert.strictEqual(id(good, 'design.L16.ai').status, 'PASS');   // 6 opening sends a match, not the 16 sends in all
+    const bad = f(mk({ dazes: 24, ends: ends(14, 0, 0.03, 'teched', true), seqs: Array.from({ length: 14 }, () => ['chase', 'chase', 'chase']) }));
+    for (const k of ['rally.dazes', 'rally.perMatch', 'rally.links', 'rally.repeat', 'rally.autotech', 'rally.turns']) assert.strictEqual(id(bad, k).status, 'FAIL', k);
+    const off = f(Array.from({ length: 20 }, () => rec({ koAt: 400 })));
+    for (const k of ['rally.dazes', 'rally.perMatch', 'rally.links', 'rally.turns', 'rally.sells']) assert.strictEqual(id(off, k).status, 'PENDING', k);
+  });
+  await t('the campaign rows (campaign.md section 7): PENDING without a record; episode 40-50 min, places 322-806, turns 40-60%, rescues 30-60%, rematches 50-75%, no repeated template in an episode and at most 3 in an arc', async () => {
+    const camp = (over = {}) => ({ episodeSec: 45 * 60, columns: [1, 2, 3, 4].map(n => ({ n, turned: n % 2 === 0, places: [{ fromPair: 400 }, { fromPair: -700 }] })), rescues: { n: 10, won: 5 }, rematches: { n: 10, won: 6 }, partner: { stages: 4, won: 3 }, templates: ['a', 'b', 'c', 'd', 'e'], arcTemplates: { a: 2, b: 3 }, ...over });
+    const f = D => evaluate({ default: D }), id = (rows, k) => rows.find(r => r.id === k);
+    const off = f([rec({ koAt: 300 })]);
+    for (const k of ['campaign.episode', 'campaign.places', 'campaign.turns', 'campaign.rescues', 'campaign.rematches', 'campaign.templates']) assert.strictEqual(id(off, k).status, 'PENDING', k);
+    const good = f(Array.from({ length: 4 }, () => rec({ koAt: 300, campaign: camp() })));
+    for (const k of ['campaign.episode', 'campaign.places', 'campaign.turns', 'campaign.rescues', 'campaign.rematches', 'campaign.templates']) assert.strictEqual(id(good, k).status, 'PASS', k + ' ' + id(good, k).value);
+    assert.strictEqual(id(good, 'campaign.partner').status, 'INFO');
+    const bad = f(Array.from({ length: 4 }, () => rec({ koAt: 300, campaign: camp({ episodeSec: 70 * 60, columns: [1, 2, 3, 4].map(n => ({ n, turned: true, places: [{ fromPair: 100 }, { fromPair: 900 }] })), rescues: { n: 10, won: 9 }, rematches: { n: 10, won: 2 }, templates: ['a', 'a', 'b'], arcTemplates: { a: 4 } }) })));
+    for (const k of ['campaign.episode', 'campaign.places', 'campaign.turns', 'campaign.rescues', 'campaign.rematches', 'campaign.templates']) assert.strictEqual(id(bad, k).status, 'FAIL', k);
+  });
   console.log(`godot qa selftest: ${pass} passed, ${fail} failed`);
   process.exit(fail ? 1 : 0);
 })();

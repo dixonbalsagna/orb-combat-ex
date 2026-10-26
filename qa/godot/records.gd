@@ -93,7 +93,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	var rec := {"seed": seed, "arm": arm, "names": [fs[0].name, fs[1].name], "attacks": {"light": 0, "heavy": 0, "sig": 0}, "ambush": 0,
 		"launches": {}, "melee": {}, "beams": [], "parries": [0, 0], "chains": [], "hides": [0, 0], "found": 0, "seam": 0, "maxMove": 0.0,
 		"bad": "", "koAt": -1.0, "winner": -1, "maxTier": [1, 1], "lowSec": 0.0, "lowCas": 0.0, "casByTier": [0.0, 0.0, 0.0, 0.0, 0.0],
-		"fightSec": {}, "dmgVictim": [0.0, 0.0], "batteredIn": 0.0, "breathWear": 0.0, "casTimeline": [], "slides": [], "landings": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "landingsAll": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "cues": {}, "bh": {}, "cueText": {}, "doubleHits": 0, "doubles": [], "brawl": {"ends": {}, "blows": {}, "staggers": {}, "tradeBreaks": 0, "lens": [], "nblows": []}, "strTimeline": [], "dmgByKind": {}, "maxPlayGap": 0.0, "exEnds": {}, "exEndEvents": {}, "flowMax": [0, 0], "flowTo3": [0, 0], "firstContact": {}, "liftsSeen": {}, "reachFlat": [], "reach": {"buried": 0, "n": 0, "far": 0, "maxD": 0.0, "tall": 0, "tallFlat": 0, "maxDy": 0.0}, "heavyLanded": [0, 0], "heavyClashWins": [0, 0], "slideShort": 0, "slideShortPl": 0, "lips": 0, "journeys": {"durSeen": false, "halted": 0, "tumbleSeen": 0, "jn": 0, "tumbledEnd": 0, "jbounced": 0, "jbounces": 0, "n": 0, "capped": 0, "long": 0, "anyBounce": 0, "bounced": 0, "bounces": 0, "tumbled": 0, "lips": 0}, "impactCraters": 0, "skims": 0, "longHaul": 1500.0 * SimConst.TRAV_LAUNCH, "dmgByRegion": {}, "underSec": 0.0, "tierT": [0.0, -1.0, -1.0, -1.0, -1.0], "flights": [], "hiddenSec": [0.0, 0.0], "exLens": [], "exGaps": [], "fxCounts": {}, "events": [], "pow": {"has": false, "n": [0, 0], "full": [0, 0]}, "fronts": 0, "care": [float(fs[0].care), float(fs[1].care)], "start": start_mode}
+		"fightSec": {}, "dmgVictim": [0.0, 0.0], "batteredIn": 0.0, "breathWear": 0.0, "casTimeline": [], "slides": [], "landings": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "landingsAll": {"brunt": 0, "water": 0, "slide": 0, "slam": 0, "bounce": 0, "stop": 0, "wall": 0, "caught": 0, "other": 0}, "cues": {}, "bh": {}, "cueText": {}, "doubleHits": 0, "doubles": [], "brawl": {"ends": {}, "blows": {}, "staggers": {}, "tradeBreaks": 0, "lens": [], "nblows": []}, "strTimeline": [], "dmgByKind": {}, "maxPlayGap": 0.0, "exEnds": {}, "exEndEvents": {}, "flowMax": [0, 0], "flowTo3": [0, 0], "firstContact": {}, "liftsSeen": {}, "reachFlat": [], "reach": {"buried": 0, "n": 0, "far": 0, "maxD": 0.0, "tall": 0, "tallFlat": 0, "maxDy": 0.0}, "heavyLanded": [0, 0], "heavyClashWins": [0, 0], "slideShort": 0, "slideShortPl": 0, "lips": 0, "journeys": {"durSeen": false, "halted": 0, "tumbleSeen": 0, "jn": 0, "tumbledEnd": 0, "jbounced": 0, "jbounces": 0, "n": 0, "capped": 0, "long": 0, "anyBounce": 0, "bounced": 0, "bounces": 0, "tumbled": 0, "lips": 0}, "impactCraters": 0, "skims": 0, "longHaul": 1500.0 * SimConst.TRAV_LAUNCH, "dmgByRegion": {}, "underSec": 0.0, "tierT": [0.0, -1.0, -1.0, -1.0, -1.0], "flights": [], "hiddenSec": [0.0, 0.0], "exLens": [], "exGaps": [], "fxCounts": {}, "events": [], "pow": {"has": false, "n": [0, 0], "full": [0, 0]}, "fronts": 0, "care": [float(fs[0].care), float(fs[1].care)], "start": start_mode, "rally": {"has": false, "dazes": 0, "dazeSrc": {}, "sells": 0, "sellKinds": {}, "opens": 0, "techs": 0, "autoTechs": 0, "ends": [], "seqs": []}}
 	var prev_x: Array = [fs[0].x, fs[1].x]
 	# the zip (docs/design/melee-press-feel.md section 2c; docs/director/brawl-plan.md section 7.4): one record a zip, from the zip_light or zip_heavy cue to its zip_end;
 	# the build may not have it yet, and then the list stays empty
@@ -115,6 +115,11 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	var ended: Array = [false, false]   # a flight ended this tick: its open launch takes the class of the contact if no event named one
 	var new_fl: Array = []   # launch events of this tick
 	var lift: Array = [null, null]   # the open flight off terrain of each fighter: {tick, cause}; counted as seen once it has been in the air 10 ticks (balance-targets 20, second landing ruling)
+	var rl_cur: Array = []        # the rally running: the base kinds of its links so far (Encounter's cue rally_link; the park docs/director/pending/rally, switch rally.enabled)
+	var rl_turn_t: int = -1000   # the tick of the last rally_turn: the send that follows it continues the rally
+	var rl_auto: bool = false    # the rally running had a tech by itself (repetition: rally_tech with k 1)
+	var rl_ticks: Array = []     # the ticks at which a link (not an opening send) landed: the launch_power cues at these ticks are links' sends
+	var lp_list: Array = []      # [tick, actor, full] of every launch_power cue
 	var flight_nf: Array = []   # [the flight's record, its launch record]: "brunt" is set on the flight at the end, when the launch's first contact is known
 	var last_fl: Array = [null, null]   # the latest launch of each fighter, for the bounce, lip and tumble counts of its journey
 	var open_fl: Array = []   # launches whose first contact has not been seen: {"v": victim index, "cls": ""}; balance-targets 18 (one landing class per launch)
@@ -233,6 +238,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			# launch anywhere's cue launch_power (DirBrawl.powerCue, one at each launch while the switch is on): actor the launcher, amount the power at the send after freshness, k 1 at the full line (0.8)
 			if e.type == "cue" and str(e.get("kind")) == "launch_power" and int(e.actor) >= 0 and int(e.actor) < 2:
 				var pa: int = int(e.actor)
+				lp_list.append([S.tick, pa, 1 if float(e.get("k")) >= 1.0 else 0])
 				rec.pow.has = true
 				rec.pow.n[pa] += 1
 				if float(e.get("k")) >= 1.0:
@@ -350,6 +356,37 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			if e.type == "cue":   # the director's cues by kind: perfect_block, dodge_cancel, burst (step 3)
 				var cq: String = str(e.get("kind"))
 				rec.cues[cq] = rec.cues.get(cq, 0) + 1
+				if cq == "daze" or cq == "sell" or cq == "rally_link" or cq == "rally_turn" or cq == "rally_tech" or cq == "rally_end":   # the rally's cues (Encounter's park docs/director/pending/rally): a build without it sends none
+					var rtx: String = str(e.get("text"))
+					rec.rally.has = true
+					if cq == "daze" and rtx == "start":
+						rec.rally.dazes += 1
+						var dsrc: String = str(e.get("source"))
+						rec.rally.dazeSrc[dsrc] = int(rec.rally.dazeSrc.get(dsrc, 0)) + 1
+					elif cq == "sell":
+						rec.rally.sells += 1
+						rec.rally.sellKinds[rtx] = int(rec.rally.sellKinds.get(rtx, 0)) + 1
+					elif cq == "rally_turn":
+						rl_turn_t = S.tick
+					elif cq == "rally_link":
+						if rtx == "send":
+							if S.tick - rl_turn_t > 3:   # an opening send (a turn's send, a tick after the turn cue, continues the rally)
+								rec.rally.opens += 1
+								rl_cur = []
+								rl_auto = false
+						else:
+							rl_cur.append(rtx)
+							rl_ticks.append(S.tick)
+					elif cq == "rally_tech":
+						rec.rally.techs += 1
+						if _ei(e, "k") == 1:
+							rec.rally.autoTechs += 1
+							rl_auto = true
+					elif cq == "rally_end":
+						rec.rally.ends.append([_ei(e, "n"), _ei(e, "k"), _ei(e, "dur"), rtx, rl_auto])   # links, turns, live ticks, why it ended, whether a tech by itself came
+						rec.rally.seqs.append(rl_cur.duplicate())
+						rl_cur = []
+						rl_auto = false
 				if cq == "perfect_block" or cq == "windup" or cq == "miss" or cq == "launcher_open" or cq == "launcher_close" or cq == "energy_reach" or cq == "energy_land" or cq == "burst" or cq == "recoil" or cq == "chase" or cq == "wall_kick" or cq == "counter_rush" or cq == "calm_turn":   # Game Design's rows by strength and kind: the cue's text says which (Encounter's names, brawl-plan.md section 10.3)
 					var cqt: String = cq + ":" + str(e.get("text"))
 					if cq == "windup" and str(e.get("text")) == "start" and _ei(e, "k") == 1:
@@ -582,6 +619,16 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	rec.stage = [fs[0].get("stage"), fs[1].get("stage")]
 	rec.menace = [fs[0].menace, fs[1].menace]
 	rec.anguish = [fs[0].anguish, fs[1].anguish]
+	rec.pow["fullOpen"] = [0, 0]   # full launches that are not a rally link's send: a rally counts once, by its opening send (rulings-2026-10-26 item 11)
+	for lp in lp_list:
+		if int(lp[2]) == 1:
+			var is_link: bool = false
+			for lt in rl_ticks:
+				if absi(int(lt) - int(lp[0])) <= 3:
+					is_link = true
+					break
+			if not is_link:
+				rec.pow.fullOpen[int(lp[1])] += 1
 	for pr in flight_nf:
 		pr[0]["brunt"] = pr[1] != null and str(pr[1].cls) == "brunt"
 	for fl in open_fl:
