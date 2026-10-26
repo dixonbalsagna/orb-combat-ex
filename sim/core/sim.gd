@@ -47,6 +47,11 @@ static func dispose(S: SimState) -> void:
 ## I2a: "v2": [bool, bool] marks the slots whose intents are v2 (the stance follows the held fields), and "assists":
 ## [[names], [names]] the Simple layout's assists per slot (SimAct.ASSISTS).
 static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Dictionary = {}) -> void:
+	if SimPlanetLoad.strict and not SimPlanetLoad.mayStart(setup):   # the game's host loads a gen 2 planet first (SimPlanetLoad): never made cold in a match's start
+		SimPlanetLoad.refused += 1
+		if not FighterData.quiet:
+			push_error("SimCore.newMatch: planet %d (gen %d) is not made: load it first (SimPlanetLoad)" % [int(setup.planet), SimPlanetLoad.genOf(setup)])
+		return
 	S.game.seed = float(seed & 0xFFFFFFFF)
 	S.rng = SimRng.new(seed & 0xFFFFFFFF)
 	S.arenaCols = _arenaCols(setup)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's 4,800

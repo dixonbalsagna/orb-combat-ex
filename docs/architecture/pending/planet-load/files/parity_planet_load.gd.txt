@@ -1,0 +1,70 @@
+## The planet's load (planet-load.md): a host loads a gen 2 planet, and its match's ring, in steps before a match.
+## - with strict on, a match's start refuses a gen 2 planet that is not made, and leaves the state as it was; a gen 1
+##   planet is never refused;
+## - stepped, the load climbs from 0 to 1 through the plates, the climate grid, the places and the ring, and then the
+##   match starts: the same match, to the bit, as one started cold, on a planet that is make's;
+## - a ring an arena names, read in slices of columns, gives the same match as one read in one piece, and a second load
+##   of it has nothing to do.
+func _planetLoad() -> String:
+	var seed: int = 13
+	var su: Dictionary = {"planet": seed, "planetGen": 2, "touch": 3, "arena": {"cols": 2400}, "intro": false}
+	var quiet: bool = FighterData.quiet
+	FighterData.quiet = true
+	WorldPlanet.forget()
+	SimPlanetLoad.strict = true
+	var n0: int = SimPlanetLoad.refused
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 5, {}, {"intro": false})   # a match already running: a refused start leaves it as it was
+	var h0: String = str(SimHash.stateHash(S).gameplay)
+	SimCore.newMatch(S, 1, {}, su)
+	var refusedOk: bool = SimPlanetLoad.refused == n0 + 1 and str(SimHash.stateHash(S).gameplay) == h0 and not SimPlanetLoad.mayStart(su)
+	var gen1Ok: bool = SimPlanetLoad.mayStart({"planet": seed, "planetGen": 1}) and SimPlanetLoad.mayStart({})
+	var job: SimPlanetLoad.Job = SimPlanetLoad.beginFor(su)
+	var phases: Array = [job.phase]
+	var last: float = job.progress()
+	var climbs: bool = last == 0.0
+	while not job.step(SimRun.planetUnitsPerRead * 40):   # 40 reads' worth a step, to keep the check short
+		climbs = climbs and job.progress() >= last and job.progress() < 1.0
+		last = job.progress()
+		if phases[phases.size() - 1] != job.phase:
+			phases.append(job.phase)
+	phases.append(job.phase)
+	climbs = climbs and job.progress() == 1.0
+	SimCore.newMatch(S, 1, {}, su)
+	var startOk: bool = SimPlanetLoad.mayStart(su) and SimPlanetLoad.refused == n0 + 1 and S.planetGen == 2
+	var hLoaded: String = str(SimHash.stateHash(S).gameplay)
+	SimCore.dispose(S)
+	SimPlanetLoad.strict = false
+	var PL: WorldPlanet.Planet = job.P
+	WorldPlanet.forget()
+	var S2 := SimCore.createSim()
+	SimCore.newMatch(S2, 1, {}, su)   # cold: the planet made inside the start, as tools do
+	var sameMatch: bool = str(SimHash.stateHash(S2).gameplay) == hLoaded
+	SimCore.dispose(S2)
+	WorldClimate.useGen(2)
+	var PM: WorldPlanet.Planet = WorldPlanet.make(seed)
+	var same: bool = PL != PM and PL.n == PM.n and PL.kind == PM.kind and PL.px == PM.px and PL.py == PM.py and PL.pz == PM.pz and PL.rad == PM.rad and PL.people == PM.people and PL.grid.ht == PM.grid.ht and PL.grid.adv == PM.grid.adv
+	# a ring an arena names: read in slices of columns by the load, then the same match as one read in one piece
+	var arena: Dictionary = WorldRingPick.arenaOf(WorldRingPick.roundSpec(WorldRingPick.placePoint(PM, 0), 2400, 0.7))
+	WorldClimate.useGen(0)
+	var sr: Dictionary = {"planet": seed, "planetGen": 2, "arena": arena, "intro": false}
+	var jr: SimPlanetLoad.Job = SimPlanetLoad.beginFor(sr)
+	var ringPhase: bool = jr.phase == "ring"
+	while not jr.step(SimRun.planetUnitsPerRead):
+		ringPhase = ringPhase and jr.phase == "ring"
+	var S3 := SimCore.createSim()
+	SimCore.newMatch(S3, 2, {}, sr)
+	var hRing: String = str(SimHash.stateHash(S3).gameplay)
+	SimCore.dispose(S3)
+	var again: bool = SimPlanetLoad.beginFor(sr).done   # read already: nothing to load
+	WorldPlanet.forget()
+	var S4 := SimCore.createSim()
+	SimCore.newMatch(S4, 2, {}, sr)
+	var sameRing: bool = str(SimHash.stateHash(S4).gameplay) == hRing and jr.frames > 1 and again
+	SimCore.dispose(S4)
+	WorldPlanet.forget()
+	WorldClimate.useGen(0)
+	FighterData.quiet = quiet
+	if not refusedOk or not gen1Ok or not climbs or phases != ["plates", "climate", "places", "ring", "done"] or not startOk or not sameMatch or not same or not ringPhase or not sameRing:
+		return "the planet's load: refused cold %s, gen 1 never %s, progress climbs %s, phases %s (want plates, climate, places, ring, done), the match starts %s and is the cold one's %s, make's planet %s (%d places), a named ring in %d steps %s and its match the same %s" % [str(refusedOk), str(gen1Ok), str(climbs), str(phases), str(startOk), str(sameMatch), str(same), PL.n, jr.frames, str(ringPhase), str(sameRing)]
+	return ""

@@ -332,6 +332,7 @@ class PlanetJob extends RefCounted:
 	var P: WorldPlanet.Planet
 	var done: bool = false
 	var _grid = null
+	var _flowDue: bool = false
 	var _st: Dictionary = {}
 
 	func _init(sd: int) -> void:
@@ -359,11 +360,15 @@ class PlanetJob extends RefCounted:
 				return false
 			P.grid = _grid
 			_grid = null
-			if WorldRivers.enabled():   # the drainage of the grid (about 100 ms: FLOW_COST units), its own step of the job
-				WorldRivers.flowOf(P)
-				left -= WorldRivers.FLOW_COST
-				if left <= 0:
-					return false
+			_flowDue = WorldRivers.enabled()
+			if _flowDue and left < WorldRivers.FLOW_COST:   # a frame's slice that ended the grid (and its carry) leaves the flow field to the next; a whole budget (finishNow) goes on
+				return false
+		if _flowDue:   # the drainage of the grid (about 100 ms: FLOW_COST units), a slice of its own
+			_flowDue = false
+			WorldRivers.flowOf(P)
+			left -= WorldRivers.FLOW_COST
+			if left <= 0:
+				return false
 		while true:
 			if WorldPlanet._placeStep(P, _st):
 				WorldPlanet._memoPlanet(key, P)
@@ -373,6 +378,12 @@ class PlanetJob extends RefCounted:
 			if left <= 0:
 				return false
 		return done
+
+
+## Whether make(seed) would find the planet made (by the generation planets are made by now): a host's load step asks
+## before a match's start (SimPlanetLoad).
+static func isMade(seed: int) -> bool:
+	return _planets.has(seed * 4 + WorldClimate.genNow())
 
 
 static func makeJob(seed: int) -> PlanetJob:
@@ -1115,6 +1126,11 @@ static func farPlaces(P: Planet, ring: Dictionary, maxLateral: float = 1.0e18) -
 ## The slice of an explicit ring (WorldRingPick: an axis, the columns, a touch-down), memoised outside the state like sliceFor's. The ring is the arena's, so its columns are SimConst.NC.
 static func _ringKey(seed: int, ring: Dictionary, standing: PackedByteArray) -> String:
 	return "ring/%d/%s/%s/%s/%d/%s" % [seed, str(ring.c), str(ring.u), str(standing.hex_encode()), SimConst.NC, dataHash()]   # dataHash carries the generation: a gen 2 slice is never handed to a gen 1 match
+
+
+## Whether sliceRing would find this ring's slice read already (a host's load step asks before it reads one in steps).
+static func ringRead(seed: int, ring: Dictionary) -> bool:
+	return _slices.has(_ringKey(seed, ring, PackedByteArray()))
 
 
 ## A ring's slice read in steps is put where sliceRing finds it.

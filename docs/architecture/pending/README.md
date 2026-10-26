@@ -2,9 +2,9 @@
 
 Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator, the sim or Godot (`docs/` is hidden from Godot). It holds slices that are built and proven in a scratch copy and wait for the sim slot.
 
-**Parked builds:** the campaign's slice 1b, on World's real calls, is at `docs/sim/pending/campaign-slice1b/`, and slice 1c, the cross-back, on top of it at `docs/sim/pending/campaign-slice1c/` (page: `../campaign-core.md`).
+**Parked builds:** the campaign's slice 1c, the cross-back, is at `docs/sim/pending/campaign-slice1c/` (page: `../campaign-core.md`), and the planet's load step at `planet-load/` (page: `../planet-load.md`).
 
-The planet's pacing in the run's data (`units-to-data/`: `ground.planetUnitsPerRead`) and the campaign's first slice (`docs/sim/pending/campaign-slice1/`) were applied in 622a0465 with Tools' grants, and their scripts are deleted.
+The planet's pacing in the run's data (`units-to-data/`: `ground.planetUnitsPerRead`) and the campaign's first slice (`docs/sim/pending/campaign-slice1/`) were applied in 622a0465 with Tools' grants, and slice 1b (`campaign-slice1b/`, on World's real calls) in 223ffdcc with Tools' and World's; their scripts are deleted.
 
 **A paper, not a build:** `arena-conditions.md`: my conditions on World's shifting arena (windows 0 and 1), with the exact lines: the `arena.cols` guard, and one sim's world statics bound again at every step.
 

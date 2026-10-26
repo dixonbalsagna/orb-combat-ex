@@ -231,7 +231,7 @@ static func beginGround(run: String, chapter: int, opponent: String, opts: Dicti
 	g.opponent = opponent
 	g.planet = planetSeed(run)
 	g.opts = opts
-	g.pj = WorldPlanet.makeJob(g.planet)
+	g.pj = SimPlanetLoad.begin(g.planet)
 	if g.pj.done:   # made already: the ground starts here, as it always did
 		g.start()
 	return g
@@ -250,7 +250,7 @@ class GroundJob extends RefCounted:
 	var home: int = -1
 	var P: WorldPlanet.Planet
 	var opts: Dictionary = {}
-	var pj: WorldPlanet.PlanetJob = null       # the planet being made in steps, until it is whole (null once the ground has started)
+	var pj: SimPlanetLoad.Job = null          # the planet being loaded in steps (SimPlanetLoad), until it is ready (null once the ground has started)
 	var spec: Dictionary = {}                 # the first or the boss's ring (read once, for the report)
 	var job: WorldRingPick.PickJob = null      # a claim's pick
 	var first: WorldRingPick.FirstJob = null   # the first stage's ring
@@ -261,6 +261,10 @@ class GroundJob extends RefCounted:
 	var frames: int = 0
 	var done: bool = false
 	var result: Dictionary = {}
+
+	## How far the planet's load is, 0 to 1, for a loading screen (1 once the ground has started: the reads are quick).
+	func progress() -> float:
+		return 1.0 if pj == null else pj.progress()
 
 	## The ground's start, once the planet is whole (beginGround when it already is, else the first step after the planet's job finishes).
 	func start() -> void:
