@@ -16,6 +16,9 @@ static func play(arcId: String, kind: String, ticks: int, opts: Dictionary = {})
 	var was: bool = SimCampaign.enabled()
 	SimCampaign.on_ = true   # the test turns the campaign on for its run, as the host would (the one switch)
 	var arc: Dictionary = SimCampaign.newArc(arcId, kind, opts)
+	var ld: SimPlanetLoad.Job = SimCampaign.beginLoad(arcId)   # the arc's planet first, a slice a step, as the host loads it while the pair are picked
+	while not ld.step(SimRun.planetUnitsPerRead):
+		pass
 	var P: WorldPlanet.Planet = WorldPlanet.make(SimCampaign.arcPlanet(arcId))
 	var s: Dictionary = SimCampaign.newEpisode(arc, 0, P, {"people": 100000})
 	var es: int = SimCampaign.episodeSeed(arcId, 0)
@@ -33,6 +36,9 @@ static func play(arcId: String, kind: String, ticks: int, opts: Dictionary = {})
 		var site: Dictionary = sites[SimCampaign.mix(es, "choose", c, 0) % sites.size()]
 		var opp: String = String(s.arc.villain) if String(s.arc.villain) != "" else "RIVAL"
 		var su: Dictionary = SimCampaign.stageSetup(s, site, [String(s.player.fighter), opp], P)
+		var rl: SimPlanetLoad.Job = SimPlanetLoad.beginFor(su)   # the stage's ring, read over the flight to the site as the host reads it
+		while not rl.step(SimRun.planetUnitsPerRead):
+			pass
 		var S := SimCore.createSim()
 		SimCore.newMatch(S, SimRun.stageSeed(String(s.run), c + 1, 0), {}, su)
 		var cols: int = S.arenaCols

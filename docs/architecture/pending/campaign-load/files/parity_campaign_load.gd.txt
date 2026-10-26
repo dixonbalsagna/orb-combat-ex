@@ -1,0 +1,16 @@
+	# the campaign's host loads the arc's planet first: with strict on, a column's job refuses a gen 2 planet not made
+	SimPlanetLoad.strict = true
+	WorldClimate.useGen(2)
+	var arcId: String = "c0ffee00c0ffee00"
+	var nr: int = SimPlanetLoad.refused
+	var coldRefused: bool = SimCampaign.beginColumn({"planet": {"seed": SimCampaign.arcPlanet(arcId)}}, null) == null and SimPlanetLoad.refused == nr + 1
+	SimCampaign.beginLoad(arcId).finishNow()
+	var PA: WorldPlanet.Planet = WorldPlanet.make(SimCampaign.arcPlanet(arcId))
+	var sa: Dictionary = SimCampaign.newEpisode(SimCampaign.newArc(arcId, "filler_arc"), 0, PA, {"people": 100000})
+	var campOk: bool = coldRefused and SimCampaign.beginColumn(sa, PA) != null and SimPlanetLoad.refused == nr + 1
+	SimPlanetLoad.strict = false
+	WorldPlanet.forget()
+	WorldClimate.useGen(0)
+	if not campOk:
+		FighterData.quiet = quiet
+		return "the planet's load: the campaign's column refuses a cold gen 2 planet %s, and takes it once the arc's planet is loaded %s" % [str(coldRefused), str(campOk)]

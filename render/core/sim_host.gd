@@ -57,6 +57,14 @@ var load_job: SimPlanetLoad.Job = null   # a gen 2 planet being made before a ma
 var _load_call: Array = []               # the new_match call that waits: [seed, ai, setup, remember]
 var pre_job: SimPlanetLoad.Job = null    # a planet being made ahead of any match, while the player is still choosing (prefetch)
 var _pre_key: String = ""                # what it is making (planet_key); kept after it is done, so the same choice does not start it again
+## The calm turn's rings read ahead in a frame's idle time (World's WorldEpoch.readAhead, docs/world/gen2-read-speed.md section 4). It changes no state: the ring counts as read, and the swap happens, on the same
+## ticks whatever this does, so a replay with it off is the same match. Between a frame's ticks, never inside one.
+const READ_AHEAD_CAP_US: int = 2000     # the most one frame spends on it
+const READ_AHEAD_UNIT_US: int = 20      # one of World's units
+const READ_AHEAD_FRAME_US: int = 16667  # the frame it is measured against (60 a second)
+const READ_AHEAD_LATE_US: int = 22000    # a frame that took longer than this (under about 45 a second) reads nothing: the machine is behind
+var read_ahead: bool = true             # a tool that wants no side work turns it off
+var read_ahead_cols: int = 0            # columns read ahead so far (for a tool)
 
 
 func _init() -> void:
@@ -187,11 +195,28 @@ func advance(frame_dt: float, vw: float, vh: float) -> int:
 		hub.resume()
 	acc += minf(0.1, maxf(0.0, frame_dt))
 	var n: int = 0
+	var t0: int = Time.get_ticks_usec()
 	while acc >= SimConst.DT:
 		tick(vw, vh)
 		acc -= SimConst.DT
 		n += 1
+	_read_ahead(frame_dt, Time.get_ticks_usec() - t0)
 	return n
+
+
+## After a frame's ticks: while a calm turn is warming (WorldEpoch.warmPlan non-empty), the frame's leftover time (a 60-a-second frame less the ticks' cost, at most READ_AHEAD_CAP_US) reads its rings ahead.
+## A frame that was already late reads nothing. Returns the columns read.
+func _read_ahead(frame_dt: float, spent_us: int) -> int:
+	if not read_ahead or S == null or S.epoch == null or frame_dt * 1000000.0 > READ_AHEAD_LATE_US:
+		return 0
+	if WorldEpoch.warmPlan(S).is_empty():
+		return 0
+	var left_us: int = mini(READ_AHEAD_CAP_US, READ_AHEAD_FRAME_US - spent_us)
+	if left_us < READ_AHEAD_UNIT_US:
+		return 0
+	var did: int = WorldEpoch.readAhead(S, left_us / READ_AHEAD_UNIT_US)
+	read_ahead_cols += did
+	return did
 
 
 ## Interpolation factor between the previous and the current tick, for the frame being drawn.

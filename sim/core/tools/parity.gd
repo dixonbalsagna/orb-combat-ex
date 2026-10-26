@@ -5955,7 +5955,8 @@ func _campaign() -> String:
 ## - stepped, the load climbs from 0 to 1 through the plates, the climate grid, the places and the ring, and then the
 ##   match starts: the same match, to the bit, as one started cold, on a planet that is make's;
 ## - a ring an arena names, read in slices of columns, gives the same match as one read in one piece, and a second load
-##   of it has nothing to do.
+##   of it has nothing to do;
+## - the campaign's column job refuses a gen 2 planet not made (strict), and takes it once the arc's planet is loaded.
 func _planetLoad() -> String:
 	var seed: int = 13
 	var su: Dictionary = {"planet": seed, "planetGen": 2, "touch": 3, "arena": {"cols": 2400}, "intro": false}
@@ -6015,6 +6016,22 @@ func _planetLoad() -> String:
 	SimCore.dispose(S4)
 	WorldPlanet.forget()
 	WorldClimate.useGen(0)
+	# the campaign's host loads the arc's planet first: with strict on, a column's job refuses a gen 2 planet not made
+	SimPlanetLoad.strict = true
+	WorldClimate.useGen(2)
+	var arcId: String = "c0ffee00c0ffee00"
+	var nr: int = SimPlanetLoad.refused
+	var coldRefused: bool = SimCampaign.beginColumn({"planet": {"seed": SimCampaign.arcPlanet(arcId)}}, null) == null and SimPlanetLoad.refused == nr + 1
+	SimCampaign.beginLoad(arcId).finishNow()
+	var PA: WorldPlanet.Planet = WorldPlanet.make(SimCampaign.arcPlanet(arcId))
+	var sa: Dictionary = SimCampaign.newEpisode(SimCampaign.newArc(arcId, "filler_arc"), 0, PA, {"people": 100000})
+	var campOk: bool = coldRefused and SimCampaign.beginColumn(sa, PA) != null and SimPlanetLoad.refused == nr + 1
+	SimPlanetLoad.strict = false
+	WorldPlanet.forget()
+	WorldClimate.useGen(0)
+	if not campOk:
+		FighterData.quiet = quiet
+		return "the planet's load: the campaign's column refuses a cold gen 2 planet %s, and takes it once the arc's planet is loaded %s" % [str(coldRefused), str(campOk)]
 	FighterData.quiet = quiet
 	if not refusedOk or not gen1Ok or not climbs or phases != ["plates", "climate", "places", "ring", "done"] or not startOk or not sameMatch or not same or not ringPhase or not sameRing:
 		return "the planet's load: refused cold %s, gen 1 never %s, progress climbs %s, phases %s (want plates, climate, places, ring, done), the match starts %s and is the cold one's %s, make's planet %s (%d places), a named ring in %d steps %s and its match the same %s" % [str(refusedOk), str(gen1Ok), str(climbs), str(phases), str(startOk), str(sameMatch), str(same), PL.n, jr.frames, str(ringPhase), str(sameRing)]

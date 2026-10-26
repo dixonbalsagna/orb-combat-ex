@@ -201,9 +201,22 @@ static func climaxHome(arc: Dictionary, P: WorldPlanet.Planet) -> int:
 	return int(SimRun.homes(P).get(String(arc.villain), -1))
 
 
+## The arc's planet, loaded before its first episode (SimPlanetLoad, planet-load.md): the host steps it a slice a frame
+## from the moment the arc is known (while the pair are picked: Game Design's rulings-2026-10-26 item 27), then
+## WorldPlanet.make finds it made for newEpisode and the columns. Every episode of the arc, and its side stories, fly it.
+static func beginLoad(arcId: String) -> SimPlanetLoad.Job:
+	return SimPlanetLoad.begin(arcPlanet(arcId))
+
+
 ## The current column's job (World's WorldCampaign.beginColumn): the host steps it a ring's read a frame during the
-## beats before the column (500 ms at once on a gen 2 planet), and hands the result to columnDone.
+## beats before the column (500 ms at once on a gen 2 planet), and hands the result to columnDone. With
+## SimPlanetLoad.strict on (the game's host), a gen 2 planet not made is refused (null): the host loads it first.
 static func beginColumn(state: Dictionary, P: WorldPlanet.Planet) -> WorldCampaign.ColumnJob:
+	var seed: int = int(state.planet.seed)
+	if SimPlanetLoad.strict and WorldClimate.genNow() >= 2 and not SimPlanetLoad.ready(seed, WorldClimate.genNow()):   # never made cold in a column's job
+		SimPlanetLoad.refused += 1
+		_err("campaign: planet %d is not made: load it first (SimCampaign.beginLoad)" % seed)
+		return null
 	var a: Dictionary = state.arc
 	var used: Array = []
 	for u in a.used:
