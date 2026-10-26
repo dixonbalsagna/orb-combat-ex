@@ -12,7 +12,7 @@ For every stick command in 13.4, **a player who issues the stick input and the f
 | **FAST** | `L` = 6 ticks | the fastest standard thumb (p10) |
 | **SLOW** | 13 ticks | a slow standard thumb (p90) |
 
-`L` and `W` are read from the data (`rightThumb.lockout` 6, `rightThumb.window` 36), so the capture tool's measured values can replace them without touching the test.
+`L`, `R` and `W` are read from the data (`rightThumb.lockout` 6, `rightThumb.reverseLockout` 8, `rightStick.flickSettle` 2, `rightThumb.window` 36), so the capture tool's measured values can replace them without touching the test.
 
 ## 2. The assertions (A to I)
 
@@ -24,9 +24,9 @@ For every stick command in 13.4, **a player who issues the stick input and the f
 | **D. Latched state** | A shot fired at gap `g` from the aim line's latch (g in `0..W`) leaves at the same angle; the lay lands where the latched flick said; a latched aim survives the thumb leaving the stick and clears on RB's release exactly as ruled | RB flick and hold, LB+RB flick |
 | **E. Read** | A read set with LB plus a flick persists to 90 ticks or its first fire; a rival attack that starts **after** the set fires it identically whatever the face-button timing; a read set while the attack is already running does not fire; one read at a time; 3 ki once | the LB flick rows |
 | **F. Mirror parity: the same tick** | The D-pad form, the arrow-key form and the swipe form of each row have the same ki, the same commitment `L` and act on **exactly the stick form's tick** (the stick's flick settles 2 ticks after the crossing, so the D-pad's command waits the same 2). Neither form is ever faster or slower | every row |
-| **G. Reverse commitment** | A stick input made at gap `g` after a **face press** acts on tick `max(g, L)` after the press. CLAW (g = 0) and FAST (g = 6) act on the same tick; SLOW (g = 13) at 13. The flick's effect is identical for every `g` in `0..W` | every Step, Rush and Aim row, after each of X, Y, B and A |
+| **G. Reverse commitment** | A stick input whose onset is at gap `g` after a **face press** acts on tick `max(g + settle, R)` after the press, with `settle` = 2 (the flick's direction settles 2 ticks after it crosses) and `R` = 8. CLAW (g = 0) and FAST (g = 6) both act on tick 8; SLOW (g = 13) on tick 15. The D-pad form acts on the same tick (rule 4). The flick's effect is identical for every `g` in `0..W` | every Step, Rush and Aim row, after each of X, Y, B and A |
 | **H. Newest wins, nothing silent** | At most one stick command waits. Press, flick, flick: only the second flick acts. Flick, press: the flick is dropped. Every dropped command emits a **lapsed ack** on the tick it is dropped; none is dropped without one | every stick row |
-| **I. A waiting flick acts on the tick its wait ends** | A flick that waited on the reverse commitment acts on the tick the wait ends, with **no extra tick** (the same tick a queued press would start), so the result at every gap is rule 2's | every stick row |
+| **I. A waiting flick acts on the tick its wait ends** | A flick that waited on the reverse commitment acts on the tick the wait ends (tick 8 after the press), with **no extra tick** beyond `R` (the same tick a queued press would start), so the result at every gap is rule 2's | every stick row |
 
 **A queued press is not lost.** The request queue is 3 deep and a request lives 36 ticks. A press queued behind a **hold** can outlive the queue's 36 ticks (a hold may run longer); in that case it expires, which only ever costs the claw (it must press again), so the gate asserts that expiry never makes a claw faster.
 
