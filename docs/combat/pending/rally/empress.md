@@ -27,9 +27,9 @@ Combat and Choreography, 2026-10-25. Game Design's frame is `rulings-2026-10-23d
 - **Look:** the hem plates lock edge to edge, a ring of force where the body meets them, and she is pushed back a step.
 - **Ruled** (Game Design, 30d6539a): Mantle Wall stands in every form, and the guard version is withdrawn. Narrative keeps "guard" out of her lines, and no guard closes, launches or knocks back (`empress-guards.md` §4 is met).
 
-## Her sell, a size larger (item 4)
-- **A medium:** her head turns with the blow, the mantle flaring and settling. She is rocked back onto one heel, and her chin comes up as she is pulled in.
-- **A heavy:** her head is thrown back and the whole mantle billows as she is driven a step back. She laughs through it, then straightens her shoulders royally. She never calls her guards.
-- **The send:** launched with the mantle streaming like a banner, laughing.
+## Her sell, a size larger (item 4, as re-read: two sold mediums, then the send; lights aren't sold)
+- **The first medium:** her head turns with the blow, the mantle flaring and settling. She is rocked back onto one heel, and her chin comes up as she is pulled in.
+- **The second medium,** a step bigger: her head is thrown back and the whole mantle billows as she is driven a step back. She laughs through it, then straightens her shoulders royally. She never calls her guards.
+- **The send** (B, the heaviest blow of the sell, decisive hit-stop 20): launched with the mantle streaming like a banner, laughing.
 - **Voice:** a laugh, loud and unbroken.
 - **Scale:** snap ×0.9, fold ×0.9, step 1.0 bh.

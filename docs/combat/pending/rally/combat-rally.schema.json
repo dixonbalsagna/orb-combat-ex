@@ -152,7 +152,7 @@
       "type": "object",
       "required": [
         "medium",
-        "heavy",
+        "medium2",
         "send",
         "voice",
         "scale"
@@ -166,13 +166,17 @@
           "type": "object",
           "additionalProperties": true
         },
-        "heavy": {
-          "type": "object",
-          "additionalProperties": true
-        },
         "send": {
           "type": "object",
-          "additionalProperties": true
+          "additionalProperties": true,
+          "properties": {
+            "hitStop": {
+              "const": 20
+            }
+          },
+          "required": [
+            "hitStop"
+          ]
         },
         "voice": {
           "type": "string",
@@ -203,6 +207,10 @@
               "maximum": 2.0
             }
           }
+        },
+        "medium2": {
+          "type": "object",
+          "additionalProperties": true
         }
       }
     },

@@ -35,10 +35,10 @@ Combat and Choreography, 2026-10-25. Game Design's frame is `rulings-2026-10-23d
 - **Price:** the level-2 lob's 12 ki.
 - **Legal:** one flash event; the slag rolls and never seeks people.
 
-## His sell, a size larger (item 4)
-- **A medium:** the sensor housing jerks aside and its lights stutter, under a 10% step and 2 Hz (fx09). Plates dent with a clang and spring back, and the seams hiss as the flesh beneath knits.
-- **A heavy:** his head snaps back with sparks from the neck seams (one burst). He folds at the waist joint with the chest grille rattling and is driven a step back. He recovers with a whirr as the limiter resets, the flesh steaming and closing.
-- **The send:** launched in a shower of loose rivets and wire, limbs swinging on their joints.
+## His sell, a size larger (item 4, as re-read: two sold mediums, then the send; lights aren't sold)
+- **The first medium:** the sensor housing jerks aside and its lights stutter, under a 10% step and 2 Hz (fx09). Plates dent with a clang and spring back, and the seams hiss as the flesh beneath knits.
+- **The second medium,** a step bigger: his head snaps back with sparks from the neck seams (one burst). He folds at the waist joint with the chest grille rattling and is driven a step back. He recovers with a whirr as the limiter resets, the flesh steaming and closing.
+- **The send** (B, the heaviest blow of the sell, decisive hit-stop 20): launched in a shower of loose rivets and wire, limbs swinging on their joints.
 - **Voice:** a mechanical grind and a growl. The hunger lines stay in his voice, never in a mouth (ln02).
 - **Scale:** snap ×1.1, fold ×1.1, step 1.0 bh.
 

@@ -27,10 +27,10 @@ Combat and Choreography, 2026-10-25. Game Design's frame is `rulings-2026-10-23d
 - **Price:** none beyond the spike's.
 - **Look:** three stepped impacts in a straight vertical line, merged into one glow that brightens only at the last: one burst event (Legal mc04, to be proven in a clip).
 
-## His sell, a size larger (item 4)
-- **A medium:** his head snaps with the blow and is snapped straight at once, jaw set. He barely folds, and his feet skid back further than anyone's.
-- **A heavy:** his glare comes back to the attacker before his body follows: a short fold and a long skid. He recovers with a sneer (it was luck) and straightens a plate on his forearm as he is pulled in.
-- **The send:** launched rigid and straight, arms in to his sides, refusing to flail until the flight turns him.
+## His sell, a size larger (item 4, as re-read: two sold mediums, then the send; lights aren't sold)
+- **The first medium:** his head snaps with the blow and is snapped straight at once, jaw set. He barely folds, and his feet skid back further than anyone's.
+- **The second medium,** a step bigger: his glare comes back to the attacker before his body follows: a short fold and a long skid. He recovers with a sneer (it was luck) and straightens a plate on his forearm as he is pulled in.
+- **The send** (B, the heaviest blow of the sell, decisive hit-stop 20): launched rigid and straight, arms in to his sides, refusing to flail until the flight turns him.
 - **Voice:** a hiss through the teeth, never a cry.
 - **Scale:** snap ×1.2, fold ×0.8, step 1.3 bh.
 

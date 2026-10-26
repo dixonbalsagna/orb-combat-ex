@@ -78,19 +78,22 @@
     }
   ],
   "sell": {
-    "_frame": "23d item 4: in the daze each landed medium or heavy takes the launch's hit-stop (12), a camera push and a reaction a size larger; the sell is the look, never the number",
+    "_frame": "23d item 4 as Game Design re-read it (2026-10-26 item 18): the sold blows are Y mediums, each played a size larger with the launch's hit-stop (12) and a camera push; B's send ends the sell as its heaviest blow, with the decisive hit-stop (20); lights aren't sold. Two mediums, then the send. The sell is the look, never the number",
     "medium": {
       "head": "the sensor housing jerks aside and its lights stutter under a 10% step",
       "body": "plates dent with a clang and spring back",
       "recover": "the seams hiss as the flesh beneath knits"
     },
-    "heavy": {
+    "medium2": {
       "head": "snapped back, sparks from the neck seams (one burst)",
       "body": "folds at the waist joint, the chest grille rattling, driven a step back",
       "recover": "a whirr as the limiter resets; the flesh steams and closes"
     },
+    "_medium2": "the second sold medium, a step bigger than the first",
     "send": {
-      "look": "launched in a shower of loose rivets and wire, limbs swinging on their joints"
+      "look": "launched in a shower of loose rivets and wire, limbs swinging on their joints",
+      "hitStop": 20,
+      "_send": "B's send: the heaviest blow of the sell, the decisive hit-stop (20)"
     },
     "voice": "a mechanical grind and a growl; the hunger lines stay in his voice, never in a mouth",
     "scale": {

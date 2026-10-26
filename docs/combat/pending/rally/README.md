@@ -34,9 +34,9 @@ Each own link is a variant of one of Game Design's link kinds (item 6), on the s
 
 ## 3. The sell: a size larger, by fighter
 
-In the daze, each landed medium or heavy takes the launch's hit-stop (12), a camera push and a bigger reaction (item 4). **The sell is the look, never the number.** Each fighter sells in character:
+In the daze, **the sold blows are Y mediums:** each takes the launch's hit-stop (12), a camera push and a reaction a size larger. **B's send then ends the sell as its heaviest blow,** with the decisive hit-stop (20). Lights aren't sold: two mediums, then the send (Game Design 2026-10-26 item 18, re-reading 23d item 4). **The sell is the look, never the number.** Each fighter sells in character:
 
-| Fighter | A sold heavy | Its recovery | The send |
+| Fighter | The second sold medium | Its recovery | The send (B) |
 | :--- | :--- | :--- | :--- |
 | **The Protagonist** | Folds over the blow, breath forced out in a visible gust, driven back a step | A short laugh and a nod: he grades it | Launched arms wide, still grinning, turning to watch who sent him |
 | **The Rival** | Barely folds; his glare comes back before his body; a long skid (stepBh 1.3) | A sneer, and a plate straightened on his forearm | Launched rigid, arms in, refusing to flail until the flight turns him |

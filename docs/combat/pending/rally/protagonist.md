@@ -25,10 +25,10 @@ Combat and Choreography, 2026-10-25. Game Design's frame is `rulings-2026-10-23d
 - **What happens:** the seams flare for 6 ticks, then a solid stone slab rises under the body and throws it up and away from people. It is a knock-back of at most 6 bh (Game Design §20), and it keeps the body in the air for his next link.
 - **Price:** nothing at the time; the trap cost 12 ki when he laid it.
 
-## His sell, a size larger (item 4)
-- **A medium:** his head snaps aside and rolls through the neck; his eyes come back first. He gives a half step on sliding feet with his arms open, and is pulled in again grinning.
-- **A heavy:** he folds over the blow, breath forced out in a visible gust, and is driven a step back. He recovers with a short laugh and a nod: he grades it.
-- **The send:** launched with his arms flung wide, still grinning, turning in the air to watch who sent him.
+## His sell, a size larger (item 4, as re-read: two sold mediums, then the send; lights aren't sold)
+- **The first medium:** his head snaps aside and rolls through the neck; his eyes come back first. He gives a half step on sliding feet with his arms open, and is pulled in again grinning.
+- **The second medium,** a step bigger: he folds over the blow, breath forced out in a visible gust, and is driven a step back. He recovers with a short laugh and a nod: he grades it.
+- **The send** (B, the heaviest blow of the sell, decisive hit-stop 20): launched with his arms flung wide, still grinning, turning in the air to watch who sent him.
 - **Voice:** a grunt, then a laugh. Never an apology.
 - **Scale:** snap ×1.0, fold ×1.0, step 1.0 bh.
 
