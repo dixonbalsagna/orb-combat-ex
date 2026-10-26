@@ -126,6 +126,7 @@
         "sepCols",
         "jitter",
         "novelty",
+        "prefer",
         "fallen",
         "openMin"
       ],
@@ -155,6 +156,12 @@
           "minimum": 0.0,
           "maximum": 5.0,
           "description": "What a new kind of ground adds."
+        },
+        "prefer": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 5.0,
+          "description": "What a ring that offers the caller's preferred place adds to its score."
         },
         "fallen": {
           "type": "number",

@@ -1,6 +1,6 @@
 # The campaign's sim foundation (first slice, step 1)
 
-Owner: Simulation and Engine. 2026-10-25 and 26, on the EP's brief: Game Design's `docs/design/campaign.md` §1.1 to §1.4, §2 and §7, under Legal's mc01 to mc03 and mc06 (`docs/legal/campaign-screen.md`). On World's route (`WorldCampaign`, `docs/world/campaign-route.md`). The first slice, on stand-ins for World's calls, was applied in 622a0465. Slice 1b, on World's real calls as this page describes, is parked at `docs/sim/pending/campaign-slice1b/`, and slice 1c, the cross-back, at `docs/sim/pending/campaign-slice1c/`.
+Owner: Simulation and Engine. 2026-10-25 and 26, on the EP's brief: Game Design's `docs/design/campaign.md` §1.1 to §1.4, §2 and §7, under Legal's mc01 to mc03 and mc06 (`docs/legal/campaign-screen.md`). On World's route (`WorldCampaign`, `docs/world/campaign-route.md`). The first slice, on stand-ins for World's calls, was applied in 622a0465, and slice 1b, on World's real calls as this page describes, in 223ffdcc. Slice 1c, the cross-back, is parked at `docs/sim/pending/campaign-slice1c/`.
 
 **Step 1 of the first slice:** one solo episode, five stages on one planet, choosing by flying. Behind `data/fight/campaign.json`'s `enabled` (off), **the campaign's one switch**. With it off nothing moves.
 

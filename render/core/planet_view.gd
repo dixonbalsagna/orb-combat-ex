@@ -22,6 +22,7 @@ extends Node3D
 const TERRAIN_SHADER: Shader = preload("res://render/shaders/terrain.gdshader")
 const WATER_SHADER: Shader = preload("res://render/shaders/water.gdshader")
 const FAR_TOWN_SHADER: Shader = preload("res://render/shaders/far_town.gdshader")
+const COVER_SHADER: Shader = preload("res://render/shaders/cover.gdshader")
 const CROWD_SHADER: Shader = preload("res://render/shaders/crowd.gdshader")
 const BUILDING_SHADER: Shader = preload("res://render/shaders/building.gdshader")
 const STUB_WHOLE := 1.0e9     # a stub height that cuts nothing
@@ -53,6 +54,9 @@ static var cull_on: bool = RenderLook.SPLIT_CULL_ON   # the split's culling (cul
 var _cull: Array = []                  # per copy: [copy, its chunks' union box, [[chunk node, box, left out]...]] (cull_to)
 var culled: int = 0                    # the chunks this pane left out of its last frame (for the checks and the bench)
 var _town_mat: ShaderMaterial = null   # the distant towns' (far_town.gdshader): the ground's uniforms, for the far land they stand on
+var _cover_mat: ShaderMaterial = null  # the biomes' cover (cover.gdshader): the ground's uniforms, for the ground it stands on
+var cover := CoverView.new()           # the cover grown for this world (a second pane draws its source's)
+static var cover_on: bool = RenderLook.COVER_ON   # biome rendering window 2; main's --nocover turns it off
 var _town_nodes: Array = []            # each prop copy's FarTowns (set_far gives them the far land's towns)
 var _bld: MultiMesh                  # every part of every building that is not in row 0: the bodies by building index, then the other parts
 var _tree: MultiMesh
@@ -180,7 +184,12 @@ func build(S: SimState) -> void:
 	if source == null:
 		ground.rebuild(S)
 		_make_props(S)
+		if cover_on:
+			cover.build(S, ground, hash(S.planetRing) if S.planetRing is Dictionary and not S.planetRing.is_empty() else 0)
+		else:
+			cover = CoverView.new()
 	else:
+		cover = source.cover
 		_bld = source._bld
 		_parts = source._parts
 		_inst = source._inst
@@ -254,6 +263,8 @@ func build(S: SimState) -> void:
 			for c in range(_crowd.chunks.size()):
 				_mm_child(n, "Crowd%d" % c, _crowd.chunks[c], _crowd_mats[c])
 			_mm_child(n, "FarTowns", null, _town_mat)
+			for cv in cover.meshes:
+				_mm_child(n, "Cover_%s_%d" % [cv[0], cv[1]], cv[2], _cover_mat)
 			_town_nodes.append(n.get_node("FarTowns"))
 			_town_nodes[-1].visible = false
 		_copies.append(n)
@@ -415,6 +426,8 @@ func update(S: SimState, cam_x: float, heat: PackedFloat32Array = PackedFloat32A
 		c.position.x = float(c.get_meta("k")) * SimConst.W - cam_x
 	if _towns_on:
 		_town_mat.set_shader_parameter("town_cam_x", cam_x)   # where the copies stand, for the far land under each block
+	if _cover_mat != null and not cover.meshes.is_empty():
+		_cover_mat.set_shader_parameter("cover_cam_x", cam_x)   # where the copies stand, for the ground under each shape
 	if ground != null and ground.water_version != _water_drawn:
 		_water_drawn = ground.water_version
 		_water_show(S)
@@ -1094,12 +1107,18 @@ func _make_materials() -> void:
 	_water_mat.shader = WATER_SHADER
 	_town_mat = ShaderMaterial.new()
 	_town_mat.shader = FAR_TOWN_SHADER
+	_cover_mat = ShaderMaterial.new()
+	_cover_mat.shader = COVER_SHADER
+	_cover_mat.set_shader_parameter("biome_pal", RenderBiomeLook.texture())
+	_cover_mat.set_shader_parameter("cover_row", RenderBiomeLook.COVER_ROW)
+	_cover_mat.set_shader_parameter("tone_light", RenderCoverMeshes.TONE_LIGHT)
+	_cover_mat.set_shader_parameter("tone_dark", RenderCoverMeshes.TONE_DARK)
 	_town_mat.set_shader_parameter("town_cols", RenderLook.FAR_TOWN_COLS.map(func(h): return RenderLook.col(h)))
 	_town_mat.set_shader_parameter("town_row0", -RenderLook.Z_TERRAIN_BACK)   # the ground's mesh past the crater rows (ground_rows)
 	_town_mat.set_shader_parameter("town_row_k", 1.0 + RenderLook.ROW_GROWTH)
 	_town_mat.set_shader_parameter("town_stride", float(RenderLook.STRIDES[-1][1]))
 	_town_mat.set_shader_parameter("town_slope", RenderLook.FAR_TOWN_SLOPE)
-	for m in [_terrain_mat, _water_mat, _town_mat]:
+	for m in [_terrain_mat, _water_mat, _town_mat, _cover_mat]:
 		m.set_shader_parameter("heights", ground.tex)
 		m.set_shader_parameter("hot", ground.htex)
 		m.set_shader_parameter("craters", ground.ctex)
@@ -1138,6 +1157,16 @@ func _make_materials() -> void:
 	_terrain_mat.set_shader_parameter("sea_floor", RenderLook.col(RenderLook.SEA_FLOOR))
 	_terrain_mat.set_shader_parameter("crater", RenderLook.col(RenderLook.CRATER))
 	_terrain_mat.set_shader_parameter("crater_desert", RenderLook.col(RenderLook.CRATER_DESERT))
+	_terrain_mat.set_shader_parameter("biome_pal", RenderBiomeLook.texture())   # Art's biome palettes (biome rendering window 1)
+	_terrain_mat.set_shader_parameter("biome_zone", RenderLook.BIOME_ZONE)
+	_terrain_mat.set_shader_parameter("facet_slope", RenderLook.FACET_SLOPE)
+	_terrain_mat.set_shader_parameter("sun_dir", RenderLook.FACET_SUN.normalized())
+	_terrain_mat.set_shader_parameter("rock_slope", RenderLook.ROCK_SLOPE)
+	_terrain_mat.set_shader_parameter("rock_high", RenderLook.ROCK_HIGH)
+	_terrain_mat.set_shader_parameter("depth_step", RenderLook.DEPTH_STEP)
+	_terrain_mat.set_shader_parameter("strata_h", RenderLook.STRATA_H)
+	_terrain_mat.set_shader_parameter("scar_band", RenderLook.SCAR_BAND)
+	_terrain_mat.set_shader_parameter("tone_k", RenderLook.TONE_K)
 	_terrain_mat.set_shader_parameter("ejecta", RenderLook.col(RenderLook.EJECTA))
 	_terrain_mat.set_shader_parameter("char_col", RenderLook.col(RenderLook.CHAR))
 	_terrain_mat.set_shader_parameter("heat_lo", RenderLook.col(RenderLook.HEAT_LO))
@@ -1301,7 +1330,7 @@ func set_world_light(world: Array, win: float) -> void:
 func _apply_wl() -> void:
 	if _wl.is_empty() or _terrain_mat == null:
 		return
-	var by: Dictionary = {"ground": [_terrain_mat], "water": [_water_mat], "buildings": [_bld_mat, _front_mat, _town_mat], "trees": [_tree_mat], "civilians": [_crowd_mat] + _crowd_mats}
+	var by: Dictionary = {"ground": [_terrain_mat], "water": [_water_mat], "buildings": [_bld_mat, _front_mat, _town_mat], "trees": [_tree_mat, _cover_mat], "civilians": [_crowd_mat] + _crowd_mats}
 	for li in range(RenderLook.WORLD_LAYERS.size()):
 		for m in by.get(RenderLook.WORLD_LAYERS[li], []):
 			if m != null:

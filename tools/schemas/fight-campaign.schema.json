@@ -8,6 +8,7 @@
     "schema",
     "enabled",
     "columns",
+    "crossBack",
     "sideShare",
     "arcEpisodes",
     "families",
@@ -26,6 +27,32 @@
       "minimum": 1,
       "maximum": 9,
       "description": "an episode's stages, each a column of the route"
+    },
+    "crossBack": {
+      "type": "object",
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9,
+          "description": "the column whose untaken named place comes back"
+        },
+        "to": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9,
+          "description": "the column it is asked again in (before the climax)"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "the cross-back (campaign.md 2.2): asked of World as WorldCampaign.column's prefer"
     },
     "sideShare": {
       "type": "integer",

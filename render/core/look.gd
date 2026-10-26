@@ -335,6 +335,36 @@ const BIOME: Dictionary = {
 	"ocean": "#2a6b98", "plains": "#5f9140", "city": "#6c7079", "village": "#7c8e4b",
 	"forest": "#2e6a35", "desert": "#cfa85c", "mountains": "#7e766a",
 }
+## Biome rendering window 1 (docs/rendering/biomes.md; Art's docs/art/biomes.md, data/art/biomes.json through
+## render/core/biome_look.gd): each point of the ground takes its biome's lit, mid or shade tone by its normal against
+## the sun FACET_SUN (upper left, a little toward the viewer): lit past FACET_SLOPE more light than the flat, shade past
+## it less. Rock by steepness, in five hard bands from ROCK_SLOPE.x to .y (rise over run); in a rocky biome the rock
+## starts at gentler slopes the higher it is, down to ROCK_HIGH of ROCK_SLOPE.x at twice its rock height. Strata lines
+## every STRATA_H units of height on rock that carries them. DEPTH_STEP: the band's value at its front and back, in three
+## hard steps by depth (the front lighter). A border between two
+## biomes is a zone BIOME_ZONE units wide (a third of Art's 1,200-unit window) stepped in five hard bands. A scar is
+## Art's band where the burn passes SCAR_BAND.y, its edge a rim of SCAR_BAND.x pixels inside it. TONE_K: lit, mid and shade on a colour
+## that has no tones of its own (the sea floor, the streets, the snow).
+const FACET_SLOPE: float = 0.05
+const FACET_SUN := Vector3(-0.5, 0.8, 0.33)
+const ROCK_SLOPE := Vector2(0.45, 1.25)
+const ROCK_HIGH: float = 0.15
+const DEPTH_STEP := Vector2(1.1, 0.94)
+const STRATA_H: float = 220.0
+const BIOME_ZONE: float = 360.0
+const SCAR_BAND := Vector2(1.5, 0.3)
+const TONE_K := Vector3(1.06, 1.0, 0.86)
+## Biome rendering window 2 (render/core/cover_view.gd): the cover. COVER_LAYERS: the spans of depth (z, from the
+## fighter plane back) that each carry a strip's cover at Art's counts per 1,200 units. COVER_CHUNKS: the planet's
+## length cut into this many spans (a MultiMesh each per kind), so the frustum leaves out what is off the screen.
+## COVER_ECO: in a border's zone, the share of shapes that are the pair's ecotone covers. COVER_BUILDING_PAD: no cover
+## within this of a building's footprint. Main's --nocover turns it off.
+const COVER_ON: bool = true
+const COVER_LAYERS: Array = [Vector2(-260.0, -1700.0)]
+const COVER_CHUNKS: int = 4
+const COVER_ECO: float = 0.25
+const COVER_BUILDING_PAD: float = 60.0
+const COVER_BOX_PAD := Vector2(4000.0, 1500.0)   # a span's box for the frustum: below its lowest base (craters) and above its highest (the shapes)
 const SEA_FLOOR := "#5a5346"
 const CRATER := "#4a4237"
 const CRATER_DESERT := "#a98544"

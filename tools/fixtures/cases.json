@@ -297031,6 +297031,22 @@
       }
     },
     {
+      "id": "fight-campaign-cross-back-to-zero",
+      "schema": "fight-campaign.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/campaign.json",
+          "set": {
+            "/crossBack/to": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/crossBack/to"
+      }
+    },
+    {
       "id": "fight-ricochet-valid",
       "schema": "fight-ricochet.schema.json",
       "mutate": [

@@ -5,6 +5,11 @@
   "_enabled": "the campaign's one switch: the campaign's host builds episodes, asks World for columns and keeps the season record only while it is on. data/biomes/campaign.json's own enabled is read by World's tools only",
   "columns": 5,
   "_columns": "an episode's stages, each a column of the route: the cold open, the rise, the twist, the escalation and the climax (campaign.md 2.2)",
+  "crossBack": {
+    "from": 2,
+    "to": 4
+  },
+  "_crossBack": "the cross-back (campaign.md 2.2): column `from`'s untaken named place is asked of World again at column `to` (WorldCampaign.column's prefer); World offers it, leading the sites, when it stands in the band of a ring",
   "sideShare": 500,
   "_sideShare": "thousandths: a main-story episode won offers a side story on about this share of them (campaign.md 1.4: about half, a first value); World then places it, or none is offered when no place is in reach",
   "arcEpisodes": 3,

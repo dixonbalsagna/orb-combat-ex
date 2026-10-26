@@ -39,6 +39,14 @@ uniform vec2 char_fresh = vec2(0.04, 0.2);   // RenderLook.CHAR_FRESH: a groove 
 uniform float char_gain = 1.0;               // 1; under reduced flashing RenderLook.CHAR_CALM
 uniform float heat_gain = 1.0;               // 1; under reduced flashing RenderLook.HEAT_CALM
 uniform float fog_far = 12000.0;
+uniform float facet_slope = 0.05;   // RenderLook.FACET_SUN, FACET_LIGHT, ROCK_SLOPE, ROCK_HIGH, DEPTH_STEP, STRATA_H, SCAR_BAND, TONE_K (biome rendering window 1)
+uniform vec3 sun_dir = vec3(-0.5, 0.8, 0.33);
+uniform vec2 rock_slope = vec2(0.45, 1.25);
+uniform float rock_high = 0.3;
+uniform vec2 depth_step = vec2(1.1, 0.94);
+uniform float strata_h = 60.0;
+uniform vec2 scar_band = vec2(1.5, 0.3);   // the scar's edge rim in pixels, and the burn where its band starts
+uniform vec3 tone_k = vec3(1.06, 1.0, 0.86);
 
 varying float v_base;
 varying vec3 v_col;
@@ -54,6 +62,8 @@ varying float v_rubble;
 varying vec2 v_px;
 varying float v_wz;
 varying float v_street;
+varying float v_s;            // the far land's weight (far_weight): the band's facets below it, the far land's own colour above
+varying vec2 v_grad;          // the ground's slope (d height / dx, / dz), smooth across the mesh: a facet's tone follows it
 varying float v_new;          // how much of its own colour the ground keeps under a crater dug moments ago (ground.gdshaderinc crater_new; over CRATER_OPEN_S, over CRATER_CALM_S with reduced flashing)
 
 void vertex() {
@@ -68,6 +78,8 @@ void vertex() {
 	v_col = biome_colors[int(bio + 0.5)].rgb;
 	v_desert = abs(bio - 5.0) < 0.5 ? 1.0 : 0.0;
 	v_base = b;
+	v_s = s;
+	v_grad = g.yz;
 	if (s > 0.0 && far_map_on) {
 		// the planet's own far land (World's map beside the ring; ground.gdshaderinc far4), turned by the slow drift:
 		// its colour from the biomes' shares at the row's level
@@ -109,23 +121,64 @@ void vertex() {
 }
 
 void fragment() {
-	vec3 c = v_col;
+	// The ground's facet (Art's biome look, biome rendering window 1). Its light: the ground's normal against the sun
+	// (upper left, a little toward the viewer), lit facing it, shade turned from it, mid on the flat (Art's rule along the
+	// strip, and a slope in depth takes the light too). The normal is the ground's own, smooth across the mesh, so a tone's
+	// edge follows the ground's shape as a clean contour, not the mesh's triangles. Its biome's colour steps across a
+	// border's zone in five hard bands (10 to 90 percent).
+	vec3 nrm = normalize(vec3(-v_grad.x, 1.0, -v_grad.y));
+	float lt = dot(nrm, sun_dir) - sun_dir.y;
+	int tone = lt > facet_slope ? 0 : (lt < -facet_slope ? 2 : 1);
+	// The border zone (ground_field.gd zone_rows), read for this pixel's own column: the biomes either side (palette ids;
+	// its own both sides outside one) and its place across the zone, stepped in five hard bands. Read here, not passed
+	// from the vertices: a flat varying costs the old GPUs a rewrite of every draw's index buffer (ANGLE's D3D11), and a
+	// vertex outside a zone carries none of it.
+	float cx = v_px.x / col_w;
+	int ci = int(cx - float(nc) * floor(cx / float(nc))) % nc;
+	int v_ba = int(gf(ci, 21) + 0.5);
+	int v_bb = int(gf(ci, 22) + 0.5);
+	float jb = gf(ci, 23);
+	float du = cx - jb;
+	du -= float(nc) * floor(du / float(nc) + 0.5);
+	float zt = (jb < -1.0e8 || v_ba == v_bb) ? 0.0 : clamp(0.5 + du * col_w / biome_zone, 0.0, 1.0);
+	float zf = zt <= 0.0 ? 0.0 : (zt >= 1.0 ? 1.0 : (floor(zt * 5.0) + 0.5) / 5.0);
+	vec3 rk = biome_tone(zf < 0.5 ? v_ba : v_bb, 11);   // r: the rock has strata; g: a rocky biome's height (/ 10,000) from which rock starts at gentler slopes
+	// Rock by the ground's steepness, in Art's five hard bands from rock_slope.x to .y (so the green and the rock meet along
+	// the slope's contour, stepped); in a rocky biome the rock starts at gentler slopes the higher it is, so the foot stays
+	// green only where it is gentle.
+	float above = rk.g * 10000.0;
+	float g0 = rock_slope.x * (above > 0.0 ? mix(1.0, rock_high, clamp((v_h - above) / above, 0.0, 1.0)) : 1.0);
+	float rr = clamp((length(v_grad) - g0) / max(rock_slope.y - g0, 0.01), 0.0, 1.0);
+	float rs = rr <= 0.0 ? 0.0 : (rr >= 1.0 ? 1.0 : (floor(rr * 5.0) + 0.5) / 5.0);
+	vec3 c = mix(mix(biome_tone(v_ba, tone), biome_tone(v_bb, tone), zf), mix(biome_tone(v_ba, 3 + tone), biome_tone(v_bb, 3 + tone), zf), rs);
+	float tk = tone == 0 ? tone_k.x : (tone == 2 ? tone_k.z : tone_k.y);
+	if (rs > 0.5 && rk.r > 0.5) {
+		// strata lines on the rock: thin dark lines every strata_h of height (antialiased edges only)
+		float sb = v_h / strata_h;
+		float fw = fwidth(sb);
+		float ln = (1.0 - smoothstep(0.0, fw * 1.2, abs(fract(sb + 0.5) - 0.5))) * (1.0 - smoothstep(0.12, 0.3, fw));   // none where the lines would crowd closer than a few pixels
+		c = mix(c, c * 0.62, ln);
+	}
+	c *= mix(depth_step.x, depth_step.y, floor(clamp(v_back, 0.0, 0.999) * 3.0) * 0.5);   // the band's value by depth, in three hard steps
+	c = mix(c, flat_shade(v_col, NORMAL, 0.55) * mix(1.2, 0.95, v_back), v_s);   // the far land: its own colour, shaded as before
 	if (v_base < sea_base && v_h < sea_base) {
-		c = sea_floor.rgb;
+		c = mix(sea_floor.rgb * tk, c, v_s);
 	} else if (v_street > 0.001) {
 		vec4 st = street_paint(v_px, fwidth(v_px.x));
 		if (st.a <= 0.0) {
 			st = block_paint(v_px, fwidth(v_px.x));   // between the streets: an avenue, or the district's paved lot
 		}
-		c = mix(c, st.rgb, st.a * v_street);
+		c = mix(c, st.rgb * tk, st.a * v_street);
 	}
 	if (v_dent < -dent_min) {
-		vec3 earth = v_desert > 0.5 ? crater_desert.rgb : crater.rgb;
+		vec3 earth = mix(biome_tone(v_ba, 6 + tone), biome_tone(v_bb, 6 + tone), zf);   // a crater's inside: the subsoil (Art), not the surface
 		c = v_new > 0.0 ? mix(earth, c, v_new) : earth;
 	} else if (v_dent > 0.5 * dent_min) {
-		c = mix(c, ejecta.rgb, clamp(v_dent / (5.0 * dent_min), 0.0, 0.6) * (1.0 - v_new));
+		c = mix(c, ejecta.rgb * tk, (v_dent > 2.5 * dent_min ? 0.5 : 0.25) * (1.0 - v_new));   // rubble on the rim, in two hard steps
 	}
-	c = mix(c, snow.rgb, smoothstep(snow_from, snow_full, v_h));
+	if (v_h > snow_from) {
+		c = snow.rgb * tk;   // snow on the peaks: a hard edge
+	}
 	if (v_crack > 0.01) {
 		vec2 q = v_px / 70.0;
 		vec2 cell = floor(q);
@@ -144,8 +197,14 @@ void fragment() {
 	// A groove chars as it cools: under a fresh glow the ground keeps its own colour, so a beam's burn does not turn a
 	// broad strip of ground dark in one tick.
 	float fresh = smoothstep(char_fresh.x, char_fresh.y, v_heat);
-	c = mix(c, char_col.rgb, clamp(v_scorch * 1.1, 0.0, 0.92) * char_gain * (1.0 - fresh) * (1.0 - v_new));
-	c = flat_shade(c, NORMAL, 0.55) * mix(1.2, 0.95, v_back);
+	// A beam's scar (Art's damage language): a flat band in the biome's scar colour, a thin edge in its edge colour.
+	float sc = clamp(v_scorch * 1.1, 0.0, 0.92) * char_gain * (1.0 - fresh) * (1.0 - v_new);
+	// The band is where the burn passes scar_band.y; its edge a rim of scar_band.x pixels just inside the band's border, so a
+	// faded scar narrows and goes, and never turns into a wide pale band.
+	if (sc > scar_band.y) {
+		float rim = fwidth(sc) * scar_band.x;
+		c = mix(biome_tone(v_ba, sc > scar_band.y + rim ? 9 : 10), biome_tone(v_bb, sc > scar_band.y + rim ? 9 : 10), zf);
+	}
 	c = c * wl_mul + wl_add;   // the world's light; the lane cue, the pair's mark and a groove's glow below are never dimmed
 	vec4 cue = lane_cue_at(v_px, fwidth(v_px.y));
 	c = mix(c, cue.rgb, cue.a);

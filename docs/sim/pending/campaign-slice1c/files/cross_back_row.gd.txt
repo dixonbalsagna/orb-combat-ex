@@ -1,0 +1,16 @@
+
+
+## The cross-back (campaign.md 2.2) as the episode played it: the place column crossFrom left untaken, asked again at
+## column crossTo, and whether World offered it there (leading, preferred) and the pair flew to it.
+func crossBackRow(arc: Dictionary) -> String:
+	var f: int = SimCampaign.crossFrom
+	var t: int = SimCampaign.crossTo
+	if int(arc.back) < 0:
+		return "cross-back: none asked (column %d left no named place untaken)" % f
+	if arc.columns.size() < t:
+		return "cross-back: place #%d asked; column %d not played" % [int(arc.back), t]
+	for site in arc.columns[t - 1]:
+		if int(site.place) == int(arc.back):
+			var flown: bool = arc.taken.size() >= t and int(arc.taken[t - 1]) == int(site.id)
+			return "cross-back: column %d's untaken place #%d offered again at column %d as site %d%s, %s" % [f, int(arc.back), t, int(site.id), " (preferred, leading)" if int(site.preferred) == 1 else "", "flown to" if flown else "not flown to"]
+	return "cross-back: place #%d asked at column %d, not offered (not standing, or not in the band of any ring)" % [int(arc.back), t]

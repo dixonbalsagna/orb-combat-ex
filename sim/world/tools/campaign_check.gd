@@ -200,6 +200,45 @@ func _init() -> void:
 			break
 	var avoidOk: bool = sdAvoid.is_empty() or (not sdAvoid.b.ok) or int(sdAvoid.b.place) != int(sdAvoid.a.place)
 	ok(avoidOk, "a side story's place keeps clear of a column's own places")
+	# the cross-back (campaign 2.2: column 2's untaken place offered again at column 4): opts.prefer leads the sites when it is a standing named place in the band, else the column is as it was
+	var q: int = -1
+	var arenaQ: Dictionary = {}
+	var esQ: int = 0
+	var plain4: Dictionary = {}
+	for nthq in range(8):
+		for phiq in [0.7, 2.0, 3.3, 4.6]:
+			if q >= 0:
+				break
+			var arq: Dictionary = ringThrough(P7, nthq, 2400, phiq)
+			var baseR: Dictionary = WorldCampaign.rebased(P7, WorldCampaign.specOf(arq), 1200)
+			var inBand: Array = WorldCampaign._candidates(P7, baseR, 1200, WorldCampaign.K_MIN_C, WorldCampaign.K_MAX_C, {})
+			for esq in range(700, 740):
+				var p4: Dictionary = WorldCampaign.column(7, esq, 4, arq, 1200, {"turn": false})
+				var have: Array = []
+				for s in p4.sites:
+					have.append(s.place)
+				for c in inBand:
+					if c.settled and not have.has(c.place) and q < 0:
+						q = c.place   # a standing named place in the band that the column did not offer
+						arenaQ = arq
+						esQ = esq
+						plain4 = p4
+	if q >= 0:
+		var pr: Dictionary = WorldCampaign.column(7, esQ, 4, arenaQ, 1200, {"turn": false, "prefer": q})
+		var usedPr: Dictionary = WorldCampaign.column(7, esQ, 4, arenaQ, 1200, {"turn": false, "prefer": q, "used": [q]})
+		var np: int = 0
+		for s in pr.sites:
+			if s.get("preferred", false):
+				np += 1
+		ok(pr.preferred and pr.sites.size() >= 1 and pr.sites[0].place == q and pr.sites[0].preferred and np == 1 and pr.sites.size() == plain4.sites.size(), "the preferred place %d, which the column did not offer, leads its sites (sites[0], preferred), as one of the same %d places" % [q, plain4.sites.size()])
+		ok(usedPr.sites[0].place == q and JSON.stringify(pr) == JSON.stringify(WorldCampaign.column(7, esQ, 4, arenaQ, 1200, {"turn": false, "prefer": q})), "a place the caller prefers is offered even when it is in `used` (the cross-back names it), and the answer is the same twice")
+		var wornPr: Dictionary = WorldCampaign.column(7, esQ, 4, arenaQ, 1200, {"turn": false, "prefer": q, "wear": {str(q): 3}})
+		var wornNo: Dictionary = WorldCampaign.column(7, esQ, 4, arenaQ, 1200, {"turn": false, "wear": {str(q): 3}})
+		ok(JSON.stringify(wornPr) == JSON.stringify(wornNo) and not wornPr.preferred, "a preferred place that has fallen is not offered: the column is as it was")
+		var far: Dictionary = WorldCampaign.column(7, esQ, 4, arenaQ, 1200, {"turn": false, "prefer": 99999})
+		ok(JSON.stringify(far.sites) == JSON.stringify(plain4.sites) and not far.preferred, "a preferred place that is not on the ring, or not in the band, changes nothing")
+	else:
+		ok(false, "found a standing place in the band that a column 4 did not offer, to prefer")
 	# how often the ring turns (rulings 2026-10-26 item 5: 40 to 60% of columns 1 to 4): 6 planets, 2 rings each, the four columns walked on as an episode would
 	var turnedN: int = 0
 	var colsN: int = 0

@@ -1,0 +1,258 @@
+diff --git a/data/fight/campaign.json b/data/fight/campaign.json
+index 7a0efe5..c75b72c 100644
+--- a/data/fight/campaign.json
++++ b/data/fight/campaign.json
+@@ -5,6 +5,11 @@
+   "_enabled": "the campaign's one switch: the campaign's host builds episodes, asks World for columns and keeps the season record only while it is on. data/biomes/campaign.json's own enabled is read by World's tools only",
+   "columns": 5,
+   "_columns": "an episode's stages, each a column of the route: the cold open, the rise, the twist, the escalation and the climax (campaign.md 2.2)",
++  "crossBack": {
++    "from": 2,
++    "to": 4
++  },
++  "_crossBack": "the cross-back (campaign.md 2.2): column `from`'s untaken named place is asked of World again at column `to` (WorldCampaign.column's prefer); World offers it, leading the sites, when it stands in the band of a ring",
+   "sideShare": 500,
+   "_sideShare": "thousandths: a main-story episode won offers a side story on about this share of them (campaign.md 1.4: about half, a first value); World then places it, or none is offered when no place is in reach",
+   "arcEpisodes": 3,
+diff --git a/sim/core/campaign.gd b/sim/core/campaign.gd
+index 8f28a55..dcaed9f 100644
+--- a/sim/core/campaign.gd
++++ b/sim/core/campaign.gd
+@@ -27,7 +27,7 @@ const MAIN: Array = ["main_episode", "main_arc"]
+ const MASK: int = 0xFFFFFFFF
+ const SEASON_FORMAT: String = "meridian-season"
+ const THREAD_RE: String = "^[A-Za-z0-9_.:-]{1,48}$"   # an id: a roster id, a place id, a short tag; no spaces, no words
+-const SITE_KEYS: Array = ["id", "kind", "place", "arc", "entry", "dir"]   # a site as the run state keeps it: whole numbers and short strings
++const SITE_KEYS: Array = ["id", "kind", "place", "arc", "entry", "dir", "preferred"]   # a site as the run state keeps it: whole numbers and short strings
+ 
+ static var _d = null
+ static var _errors: Array = []
+@@ -36,6 +36,8 @@ static var columns: int = 5
+ static var sideShare: int = 500        # thousandths: a main-story episode won offers a side story on about half
+ static var arcEpisodes: int = 3
+ static var families: Array = ["training_day", "rivalry_game", "tournament", "rescue"]
++static var crossFrom: int = 2        # the cross-back (campaign.md 2.2): column crossFrom's untaken place is asked again at column crossTo
++static var crossTo: int = 4
+ static var ringCols: int = 2400        # the episode's first ring round the player's home (Half: a column's band, 322 to 806 columns each way, fits it)
+ 
+ 
+@@ -55,6 +57,13 @@ static func _ensure() -> void:
+ 	sideShare = _int("sideShare", j.get("sideShare"), 0, 1000)
+ 	arcEpisodes = _int("arcEpisodes", j.get("arcEpisodes"), 1, 9)
+ 	ringCols = _int("ringCols", j.get("ringCols"), 600, SimConst.PLANET_NC)
++	var cb = j.get("crossBack")
++	if not (cb is Dictionary):
++		cb = {}
++	crossFrom = _int("crossBack.from", cb.get("from"), 1, 9)
++	crossTo = _int("crossBack.to", cb.get("to"), 1, 9)
++	if crossTo <= crossFrom or crossTo >= columns:
++		_err("fight/campaign.json: crossBack.to is after crossBack.from and before the climax")
+ 	var fam = j.get("families")
+ 	families = []
+ 	if fam is Array:
+@@ -133,7 +142,7 @@ static func newArc(arcId: String, kind: String, opts: Dictionary = {}) -> Dictio
+ 		fams = [String(opts.get("family", families[SimRun.H(arcId, "family", 0, 0) % families.size()]))]
+ 	return {"id": arcId, "kind": kind, "villain": villain, "player": player, "episode": 0,
+ 		"episodes": arcEpisodes if kind == "filler_arc" else 1, "number": int(opts.get("number", 0)), "follows": int(opts.get("follows", -1)),
+-		"families": fams, "column": 0, "columns": [], "taken": [], "done": false, "ring": {}, "pc": 0, "resize": false, "turns": [], "rings": [],
++		"families": fams, "column": 0, "columns": [], "taken": [], "done": false, "ring": {}, "pc": 0, "resize": false, "turns": [], "rings": [], "back": -1,
+ 		"wear": {}, "used": [], "side": {"offered": false, "place": -1, "family": "", "ring": {}, "how": "", "turn": 0}, "threads": []}
+ 
+ 
+@@ -176,6 +185,7 @@ static func newEpisode(arc: Dictionary, e: int, P: WorldPlanet.Planet, opts: Dic
+ 	a.done = false
+ 	a.turns = []
+ 	a.rings = []
++	a.back = -1
+ 	a.used = []
+ 	a.wear = opts.wear.duplicate(true) if opts.get("wear") is Dictionary else {}
+ 	a.side = {"offered": false, "place": -1, "family": "", "ring": {}, "how": "", "turn": 0}
+@@ -198,20 +208,41 @@ static func beginColumn(state: Dictionary, P: WorldPlanet.Planet) -> WorldCampai
+ 	var used: Array = []
+ 	for u in a.used:
+ 		used.append(int(u))
+-	return WorldCampaign.beginColumn(int(state.planet.seed), episodeSeed(String(a.id), int(a.episode)), int(a.column) + 1, a.ring, int(a.pc),
+-		{"used": used, "wear": a.wear, "pin": climaxHome(a, P), "turn": true})
++	var opts: Dictionary = {"used": used, "wear": a.wear, "pin": climaxHome(a, P), "turn": true}
++	if int(a.column) + 1 == crossTo and crossBackPlace(a) >= 0:
++		opts["prefer"] = crossBackPlace(a)   # the cross-back: World offers it, leading the sites, when it stands in the band of a ring
++	return WorldCampaign.beginColumn(int(state.planet.seed), episodeSeed(String(a.id), int(a.episode)), int(a.column) + 1, a.ring, int(a.pc), opts)
++
++
++## The cross-back's place (campaign.md 2.2): the first named place column crossFrom offered that the pair did not take,
++## nor took in any column before crossTo, in World's order; or -1 (that column is not played yet, or offered no other
++## place). It reads only the columns before crossTo, so it is the same answer at column crossTo and after the episode.
++static func crossBackPlace(arc: Dictionary) -> int:
++	if arc.columns.size() < crossFrom or arc.taken.size() < crossFrom:
++		return -1
++	var used: Array = []
++	for c in range(mini(crossTo - 1, arc.taken.size())):
++		var t: Dictionary = siteOf(arc, c, int(arc.taken[c]))
++		if not t.is_empty() and int(t.place) >= 0:
++			used.append(int(t.place))
++	for site in arc.columns[crossFrom - 1]:
++		if int(site.place) >= 0 and int(site.id) != int(arc.taken[crossFrom - 1]) and not used.has(int(site.place)):
++			return int(site.place)
++	return -1
+ 
+ 
+ ## World's answer for the current column into the state: its sites (as whole numbers and short strings), the ring the
+ ## pair fly from here (World's start: after any turn, its touch-down at the pair) and their column on it, the column's
+ ## ring length (its sites lie on it), whether the stage needs a match of another length (the climax's whole circle),
+-## and the turn's degrees.
++## the turn's degrees, and at column crossTo the place the cross-back asked (back; World marks it preferred if offered).
+ static func columnDone(state: Dictionary, res: Dictionary) -> Dictionary:
+ 	var s: Dictionary = state.duplicate(true)
+ 	var a: Dictionary = s.arc
+ 	if a.done or a.columns.size() != int(a.column):
+ 		_err("campaign: column %d is already made, or the episode is done" % (int(a.column) + 1))
+ 		return s
++	if int(a.column) + 1 == crossTo:
++		a.back = crossBackPlace(a)
+ 	var sites: Array = []
+ 	for site in res.get("sites", []):
+ 		var keep: Dictionary = {}
+diff --git a/sim/core/tools/campaign_episode.gd b/sim/core/tools/campaign_episode.gd
+index 69ffcae..4610a85 100644
+--- a/sim/core/tools/campaign_episode.gd
++++ b/sim/core/tools/campaign_episode.gd
+@@ -31,9 +31,10 @@ func _init() -> void:
+ 			continue
+ 		var ss: PackedStringArray = []
+ 		for x in st.sites:
+-			ss.append("%d:%s%s@%+d" % [x.id, x.kind, "" if int(x.place) < 0 else "#" + str(x.place), x.arc])
++			ss.append("%d:%s%s@%+d%s" % [x.id, x.kind, "" if int(x.place) < 0 else "#" + str(x.place), x.arc, "*" if int(x.get("preferred", 0)) == 1 else ""])   # *: the cross-back's place
+ 		print("  column %d (%d calls, turn %d, a %d-column ring): sites %s; flown to %d; its wear %s; stage %s; run %s" % [st.column, st.calls, st.turn, st.cols, ", ".join(ss), st.site, str(st.stageWear), str(st.stage).substr(0, 16), st.run])
+ 	print("  done %s; wear %s; used %s; side story %s; season after: %s" % [str(arc.done), str(arc.wear), str(arc.used), str(arc.side.offered) + " " + str(arc.side.place) + " " + String(arc.side.how) + " " + str(arc.side.turn), str(SimCampaign.seasonAfter(SimCampaign.newSeason(), a1.state))])
++	print("  %s" % crossBackRow(arc))
+ 	print("  QA's record: %s" % JSON.stringify(a1.campaign, "", false))
+ 	if recordTo != "":
+ 		var f := FileAccess.open(recordTo, FileAccess.WRITE)
+@@ -44,3 +45,19 @@ func _init() -> void:
+ 	var whole: bool = a1.arc.done and a1.stages.size() == SimCampaign.columns
+ 	print("campaign_episode: %s (%d ticks a stage; %.1f s and %.1f s)" % [("the two plays are the same to the bit" if whole else "FAILED: the episode stopped short") if same else "FAILED: the two plays differ", ticks, (t1 - t0) / 1000.0, (t2 - t1) / 1000.0])
+ 	quit(0 if same and whole else 1)
++
++
++## The cross-back (campaign.md 2.2) as the episode played it: the place column crossFrom left untaken, asked again at
++## column crossTo, and whether World offered it there (leading, preferred) and the pair flew to it.
++func crossBackRow(arc: Dictionary) -> String:
++	var f: int = SimCampaign.crossFrom
++	var t: int = SimCampaign.crossTo
++	if int(arc.back) < 0:
++		return "cross-back: none asked (column %d left no named place untaken)" % f
++	if arc.columns.size() < t:
++		return "cross-back: place #%d asked; column %d not played" % [int(arc.back), t]
++	for site in arc.columns[t - 1]:
++		if int(site.place) == int(arc.back):
++			var flown: bool = arc.taken.size() >= t and int(arc.taken[t - 1]) == int(site.id)
++			return "cross-back: column %d's untaken place #%d offered again at column %d as site %d%s, %s" % [f, int(arc.back), t, int(site.id), " (preferred, leading)" if int(site.preferred) == 1 else "", "flown to" if flown else "not flown to"]
++	return "cross-back: place #%d asked at column %d, not offered (not standing, or not in the band of any ring)" % [int(arc.back), t]
+diff --git a/sim/core/tools/parity.gd b/sim/core/tools/parity.gd
+index f573510..0aa48f0 100644
+--- a/sim/core/tools/parity.gd
++++ b/sim/core/tools/parity.gd
+@@ -5862,6 +5862,15 @@ func _campaign() -> String:
+ 		for j in range(k):
+ 			if int(a1.used[j]) == int(a1.used[k]):
+ 				return "the episode used place %d twice" % int(a1.used[k])
++	# the cross-back (campaign.md 2.2): none asked when column 2 left no named place untaken; a seeded filler arc whose rise
++	# left one has it asked at column 4 and offered there, leading the sites (World's prefer)
++	if int(a1.back) != SimCampaign.crossBackPlace(a1) or (int(a1.back) >= 0 and not a1.columns[SimCampaign.crossTo - 1].any(func(x): return int(x.place) == int(a1.back))):
++		return "the cross-back of %s: asked %d, column 2's untaken place %d" % [arcId, int(a1.back), SimCampaign.crossBackPlace(a1)]
++	var backArc: String = "0bac000000017334"   # its rise leaves place 12 untaken; World offers it again at column 4
++	var ab: Dictionary = SimCampaignRun.play(backArc, "filler_arc", 60).arc
++	var lead: Dictionary = ab.columns[SimCampaign.crossTo - 1][0] if ab.columns.size() >= SimCampaign.crossTo and not ab.columns[SimCampaign.crossTo - 1].is_empty() else {}
++	if SimCampaign.crossFrom != 2 or SimCampaign.crossTo != 4 or int(ab.back) < 0 or int(ab.back) != SimCampaign.crossBackPlace(ab) or lead.is_empty() or int(lead.place) != int(ab.back) or int(lead.preferred) != 1:
++		return "the cross-back of %s: from %d to %d, asked %d, column 4 led by %s (want 2 to 4, column 2's untaken place asked, leading and preferred)" % [backArc, SimCampaign.crossFrom, SimCampaign.crossTo, int(ab.back), str(lead)]
+ 	var sj = JSON.parse_string(JSON.stringify(e1.state))
+ 	if SimRun.stateHash(sj) != e1.run or SimRun.checkState(sj) != "":
+ 		return "an episode's run state through JSON: hash %s, check '%s'" % [SimRun.stateHash(sj), SimRun.checkState(sj)]
+diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
+index e3091a1..9e942c1 100644
+--- a/tools/fixtures/cases.json
++++ b/tools/fixtures/cases.json
+@@ -297030,6 +297030,22 @@
+         "pointer": "/ringCols"
+       }
+     },
++    {
++      "id": "fight-campaign-cross-back-to-zero",
++      "schema": "fight-campaign.schema.json",
++      "mutate": [
++        {
++          "file": "data/fight/campaign.json",
++          "set": {
++            "/crossBack/to": 0
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/crossBack/to"
++      }
++    },
+     {
+       "id": "fight-ricochet-valid",
+       "schema": "fight-ricochet.schema.json",
+diff --git a/tools/fixtures/virtual/data/fight/campaign.json b/tools/fixtures/virtual/data/fight/campaign.json
+index 7a0efe5..c75b72c 100644
+--- a/tools/fixtures/virtual/data/fight/campaign.json
++++ b/tools/fixtures/virtual/data/fight/campaign.json
+@@ -5,6 +5,11 @@
+   "_enabled": "the campaign's one switch: the campaign's host builds episodes, asks World for columns and keeps the season record only while it is on. data/biomes/campaign.json's own enabled is read by World's tools only",
+   "columns": 5,
+   "_columns": "an episode's stages, each a column of the route: the cold open, the rise, the twist, the escalation and the climax (campaign.md 2.2)",
++  "crossBack": {
++    "from": 2,
++    "to": 4
++  },
++  "_crossBack": "the cross-back (campaign.md 2.2): column `from`'s untaken named place is asked of World again at column `to` (WorldCampaign.column's prefer); World offers it, leading the sites, when it stands in the band of a ring",
+   "sideShare": 500,
+   "_sideShare": "thousandths: a main-story episode won offers a side story on about this share of them (campaign.md 1.4: about half, a first value); World then places it, or none is offered when no place is in reach",
+   "arcEpisodes": 3,
+diff --git a/tools/schemas/fight-campaign.schema.json b/tools/schemas/fight-campaign.schema.json
+index 41bb1a4..1357031 100644
+--- a/tools/schemas/fight-campaign.schema.json
++++ b/tools/schemas/fight-campaign.schema.json
+@@ -8,6 +8,7 @@
+     "schema",
+     "enabled",
+     "columns",
++    "crossBack",
+     "sideShare",
+     "arcEpisodes",
+     "families",
+@@ -27,6 +28,32 @@
+       "maximum": 9,
+       "description": "an episode's stages, each a column of the route"
+     },
++    "crossBack": {
++      "type": "object",
++      "required": [
++        "from",
++        "to"
++      ],
++      "properties": {
++        "from": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 9,
++          "description": "the column whose untaken named place comes back"
++        },
++        "to": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 9,
++          "description": "the column it is asked again in (before the climax)"
++        }
++      },
++      "additionalProperties": false,
++      "patternProperties": {
++        "^_": true
++      },
++      "description": "the cross-back (campaign.md 2.2): asked of World as WorldCampaign.column's prefer"
++    },
+     "sideShare": {
+       "type": "integer",
+       "minimum": 0,

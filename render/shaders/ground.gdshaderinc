@@ -52,6 +52,8 @@ uniform float rubble_edge = 240.0;   // RenderLook.RUBBLE_EDGE: a heap eases off
 uniform float shore_flood = 24.0;    // RenderLook.SHORE_FLOOD: dry land this shallow under the water beside it is drawn flooded
 uniform float meander_amp = 600.0;   // RenderLook.MEANDER: how far (in x) the far land's biomes wander with depth
 uniform vec4 biome_colors[7] : source_color;   // RenderLook.BIOME in ground_field.gd's BIOME_ORDER
+uniform sampler2D biome_pal : source_color, filter_nearest, repeat_disable;   // RenderBiomeLook: a column per biome, a row per tone (Art's palettes)
+uniform float biome_zone = 360.0;               // RenderLook.BIOME_ZONE: a border's zone, stepped in five hard bands
 uniform vec3 fore_cam = vec3(0.0, 0.0, 3000.0);  // the camera's world position, every frame (planet_view.gd)
 uniform float fore_drop = 0.03;                  // RenderLook.FORE_DROP
 uniform vec2 fore_low = vec2(-1.0e9);          // the fighter plane's lowest ground and top in this pane's view, eased (PaneWorld._fore_low)
@@ -386,6 +388,12 @@ vec4 far4(float xw, float z, float s, bool grad, out bool wet) {
 	}
 	f.z -= k * f.y;   // the sheared field's slope in depth
 	return f;
+}
+
+// Biome b's tone in row r of the palette (RenderBiomeLook: 0 to 2 the ground's lit, mid, shade; 3 to 5 the rock's; 6 to
+// 8 the subsoil's; 9 the scar's band, 10 its edge; 11 red: the rock has strata).
+vec3 biome_tone(int b, int r) {
+	return texelFetch(biome_pal, ivec2(b, r), 0).rgb;
 }
 
 // The fighter-plane row at column i: its ground, and its top (the standing water over the ground, if any).

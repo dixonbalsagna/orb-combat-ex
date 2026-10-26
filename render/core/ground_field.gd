@@ -43,7 +43,11 @@ const ROW_RUBBLE := ROW_TRENCH + 1
 const ROW_RUB_LO := ROW_RUBBLE + 1
 const ROW_RUB_HI := ROW_RUB_LO + 1
 const ROW_SHORE := ROW_RUB_HI + 1
-const ROWS := ROW_SHORE + 1
+const ROW_ZONE_A := ROW_SHORE + 1    # the palette ids (RenderBiomeLook) of the biomes either side of the column's nearest
+const ROW_ZONE_B := ROW_ZONE_A + 1   # border within half RenderLook.BIOME_ZONE (left, then right; the column's own for none),
+const ROW_ZONE_X := ROW_ZONE_B + 1   # and that border's place in columns (between column j - 1 and j: j), NO_BORDER for none
+const ROWS := ROW_ZONE_X + 1
+const NO_BORDER := -1.0e9
 const NO_SHORE := -1.0e9
 const SHORE_CHUNK := 64   # the water and the deform are compared in runs of this many columns, to find the few that changed
 const TW_MAX := 2048
@@ -70,6 +74,7 @@ var rub_lo := PackedFloat32Array()   # rows 18 and 19: the depth range of the he
 var rub_hi := PackedFloat32Array()
 var _rubble_seen := PackedFloat32Array()
 var shore := PackedFloat32Array()    # row 20: the level of the water at or nearest each column (water.gdshader)
+var _zone := PackedFloat32Array()    # rows 21 to 23: the biomes either side of each column's border zone, and the border (zone_rows)
 var rpl: int = 1                     # texture rows per data row
 var tw: int = 1                      # texture width
 var _nsl: int = 0
@@ -102,6 +107,7 @@ func _init() -> void:
 	_heat.resize(nc)
 	cdata.resize(LIST_W * 2 * 4)
 	_far = far_rows()
+	_zone = zone_rows(_far.slice(2 * SimConst.NC))
 	img = Image.create_empty(tw, ROWS * rpl, false, Image.FORMAT_RF)
 	tex = ImageTexture.create_from_image(img)
 	cimg = Image.create_empty(LIST_W, 2, false, Image.FORMAT_RGBAF)
@@ -452,7 +458,7 @@ func _g_col(S: SimState, i: int) -> void:
 
 
 func _upload(S: SimState, craters_changed: bool) -> void:
-	var bytes: PackedByteArray = S.base.to_byte_array() + S.deform.to_byte_array() + g.to_byte_array() + S.scorch.to_byte_array() + S.water.to_byte_array() + _heat.to_byte_array() + lists.to_byte_array() + _far.to_byte_array() + S.crack.to_byte_array() + trench.to_byte_array() + S.rubble.to_byte_array() + rub_lo.to_byte_array() + rub_hi.to_byte_array() + shore.to_byte_array()
+	var bytes: PackedByteArray = S.base.to_byte_array() + S.deform.to_byte_array() + g.to_byte_array() + S.scorch.to_byte_array() + S.water.to_byte_array() + _heat.to_byte_array() + lists.to_byte_array() + _far.to_byte_array() + S.crack.to_byte_array() + trench.to_byte_array() + S.rubble.to_byte_array() + rub_lo.to_byte_array() + rub_hi.to_byte_array() + shore.to_byte_array() + _zone.to_byte_array()
 	img.set_data(tw, ROWS * rpl, false, Image.FORMAT_RF, bytes)
 	tex.update(img)
 	if craters_changed:
@@ -463,6 +469,7 @@ func _upload(S: SimState, craters_changed: bool) -> void:
 ## A new world on the same length (planet_view.gd): the far rows follow its biomes. rebuild() uploads them.
 func far_again() -> void:
 	_far = far_rows()
+	_zone = zone_rows(_far.slice(2 * SimConst.NC))
 
 
 ## The scorch and the heat, the rows the shaders read from `hot` (ground.gdshaderinc gh()): the scorch first, then the heat.
@@ -498,6 +505,47 @@ static func far_rows() -> PackedFloat32Array:
 			out[row * nc + i] = s / float(2 * m + 1)
 			s += raw[row * nc + posmod(i + m + 1, nc)] - raw[row * nc + posmod(i - m, nc)]
 	return out + biome
+
+
+## Each column's border zone (rows ROW_ZONE_A, _B and _X; Art: a border between two biomes is a zone a third of the
+## 1,200-unit window wide, its colour stepped in five hard bands): the palette ids of the biomes left and right of the
+## nearest border within half RenderLook.BIOME_ZONE, and where that border lies (in columns). A column with none has its
+## own biome both sides and NO_BORDER. The planet wraps. One pass over the borders, so a new world (World's turn) costs
+## well under a millisecond.
+static func zone_rows(bio: PackedFloat32Array) -> PackedFloat32Array:
+	var nc: int = bio.size()
+	var half: float = RenderLook.BIOME_ZONE * 0.5 / SimConst.COL
+	var idmap := PackedFloat32Array()
+	for nm in BIOME_ORDER:
+		idmap.append(float(RenderBiomeLook.id_of(nm)))
+	var ids := PackedFloat32Array()
+	ids.resize(nc)
+	for i in range(nc):
+		ids[i] = idmap[clampi(int(bio[i]), 0, idmap.size() - 1)]
+	var out := PackedFloat32Array()
+	out.resize(3 * nc)
+	var dist := PackedFloat32Array()
+	dist.resize(nc)
+	dist.fill(1.0e9)
+	for i in range(nc):
+		out[i] = ids[i]
+		out[nc + i] = ids[i]
+		out[2 * nc + i] = NO_BORDER
+	var m: int = ceili(half)
+	for j in range(nc):
+		var a: float = ids[posmod(j - 1, nc)]
+		var b: float = ids[j]
+		if a == b:
+			continue
+		for k in range(-m, m):   # the columns j + k: k + 0.5 columns from the border between j - 1 and j
+			var dd: float = absf(float(k) + 0.5)
+			var c: int = posmod(j + k, nc)
+			if dd <= half and dd < dist[c]:
+				dist[c] = dd
+				out[c] = a
+				out[nc + c] = b
+				out[2 * nc + c] = float(j)
+	return out
 
 
 ## The bytes the GPU holds for one data row (for tests).

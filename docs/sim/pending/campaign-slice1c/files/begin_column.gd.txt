@@ -1,0 +1,21 @@
+	var opts: Dictionary = {"used": used, "wear": a.wear, "pin": climaxHome(a, P), "turn": true}
+	if int(a.column) + 1 == crossTo and crossBackPlace(a) >= 0:
+		opts["prefer"] = crossBackPlace(a)   # the cross-back: World offers it, leading the sites, when it stands in the band of a ring
+	return WorldCampaign.beginColumn(int(state.planet.seed), episodeSeed(String(a.id), int(a.episode)), int(a.column) + 1, a.ring, int(a.pc), opts)
+
+
+## The cross-back's place (campaign.md 2.2): the first named place column crossFrom offered that the pair did not take,
+## nor took in any column before crossTo, in World's order; or -1 (that column is not played yet, or offered no other
+## place). It reads only the columns before crossTo, so it is the same answer at column crossTo and after the episode.
+static func crossBackPlace(arc: Dictionary) -> int:
+	if arc.columns.size() < crossFrom or arc.taken.size() < crossFrom:
+		return -1
+	var used: Array = []
+	for c in range(mini(crossTo - 1, arc.taken.size())):
+		var t: Dictionary = siteOf(arc, c, int(arc.taken[c]))
+		if not t.is_empty() and int(t.place) >= 0:
+			used.append(int(t.place))
+	for site in arc.columns[crossFrom - 1]:
+		if int(site.place) >= 0 and int(site.id) != int(arc.taken[crossFrom - 1]) and not used.has(int(site.place)):
+			return int(site.place)
+	return -1

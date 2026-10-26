@@ -31,6 +31,7 @@ static var K_STRIDE: int = 8
 static var K_SEP_C: int = 161
 static var K_JIT: float = 0.25
 static var K_NOVEL: float = 0.4
+static var K_PREFER: float = 1.0
 static var K_FALLEN: float = 1.0
 static var K_OPEN_MIN: float = 0.5
 static var K_BEAR: Array = []
@@ -120,6 +121,7 @@ static func _load() -> void:
 	K_SEP_C = int(j.sites.sepCols)
 	K_JIT = float(j.sites.jitter)
 	K_NOVEL = float(j.sites.novelty)
+	K_PREFER = float(j.sites.prefer)
 	K_FALLEN = float(j.sites.fallen)
 	K_OPEN_MIN = float(j.sites.openMin)
 	K_BEAR = j.turn.bearings
@@ -238,16 +240,21 @@ static func _candidates(P: WorldPlanet.Planet, spec: Dictionary, pc: int, minC: 
 
 ## The column's places from the candidates, greedily: the best base score first, a new kind of ground worth `novelty` more, at least sepS seconds of flight between two, and the settled ones the column asks for
 ## taken first. Returns {sites (west to east), score}.
-static func _choose(cands: Array, col: int, epSeed: int, cfg: Dictionary, cols: int, used: Array) -> Dictionary:
+static func _choose(cands: Array, col: int, epSeed: int, cfg: Dictionary, cols: int, used: Array, prefer: int = -1) -> Dictionary:
 	var sepCols: int = K_SEP_C
 	var pool: Array = []
+	var lead = null   # the preferred place, when this ring offers it standing and in the band: it leads, whatever `used` says
 	for c in cands:
-		if c.place >= 0 and used.has(c.place):
-			continue
 		var s: float = 1.0 + (float(cfg.pull) if c.settled else 0.0) - (K_FALLEN if c.fallen else 0.0)
 		s += (SimRng.keyed(epSeed, "camp/c%d" % col, int(c.key)) - 0.5) * 2.0 * K_JIT
 		var cc: Dictionary = c.duplicate()
 		cc["score"] = s
+		if prefer >= 0 and c.place == prefer and c.settled and not c.fallen:
+			cc["preferred"] = true
+			lead = cc
+			continue
+		if c.place >= 0 and used.has(c.place):
+			continue
 		pool.append(cc)
 	var n: int = int(cfg.min)
 	for extra in range(int(cfg.max) - int(cfg.min)):
@@ -258,6 +265,10 @@ static func _choose(cands: Array, col: int, epSeed: int, cfg: Dictionary, cols: 
 	var chosen: Array = []
 	var settledHave: int = 0
 	var total: float = 0.0
+	if lead != null:
+		chosen.append(lead)
+		settledHave = 1
+		total += float(lead.score) + K_PREFER
 	while chosen.size() < n and not pool.is_empty():
 		var forced: bool = int(cfg.settled) - settledHave >= n - chosen.size()
 		var best: int = -1
@@ -296,21 +307,24 @@ static func _choose(cands: Array, col: int, epSeed: int, cfg: Dictionary, cols: 
 	if settledHave < int(cfg.settled):
 		total -= 5.0 * float(int(cfg.settled) - settledHave)
 	chosen.sort_custom(func(a, b): return a.arc < b.arc)
-	return {"sites": chosen, "score": total, "n": n}
+	if lead != null:
+		chosen.erase(lead)
+		chosen.insert(0, lead)   # the preferred place leads
+	return {"sites": chosen, "score": total, "n": n, "preferred": lead != null}
 
 
 static func _publish(sites: Array) -> Array:
 	var out: Array = []
 	for k in range(sites.size()):
 		var s: Dictionary = sites[k]
-		out.append({"id": k, "kind": s.kind, "place": s.place, "arc": s.arc, "entry": s.entry, "half": s.half, "dir": 1 if s.arc >= 0 else -1, "flightS": s.flightS, "settled": s.settled, "biome": s.biome, "fine": s.fine, "feats": s.feats, "wear": s.band, "fallen": s.fallen})
+		out.append({"id": k, "kind": s.kind, "place": s.place, "arc": s.arc, "entry": s.entry, "half": s.half, "dir": 1 if s.arc >= 0 else -1, "flightS": s.flightS, "settled": s.settled, "biome": s.biome, "fine": s.fine, "feats": s.feats, "wear": s.band, "fallen": s.fallen, "preferred": bool(s.get("preferred", false))})
 	return out
 
 
 # ===================================================================== the column
 
 ## The places of column `col` (1 to 5) of an episode on the planet `planetSeed`, with the episode's seed `epSeed`, for a pair standing at column pc of the ring `arena` (a setup's arena).
-## opts: used (place ids the episode has used: not offered again), wear (the run's place state, id as text to band 0 to 3), pin (the climax's home place id: the boss's), turn (false: stay on this ring),
+## opts: used (place ids the episode has used: not offered again), prefer (a place id offered again, the cross-back: when it is a standing named place in the band of a ring it leads the sites, `sites[0]`, `preferred` true, and is exempt from `used`; otherwise the column is as it was), wear (the run's place state, id as text to band 0 to 3), pin (the climax's home place id: the boss's), turn (false: stay on this ring),
 ## minCols and maxCols (the band, columns each way; the data's by default).
 ## Returns {ok (the column has all the places it asks for), col, turn (null, or {deg, from}: the ring turns about the pair's point), arena (the ring the places lie on, the pair at its column pc), start (the same ring
 ## with its touch-down at the pair's point: the next stage's arena), pc (the pair's column in start: cols / 2), cols, resize (the climax's ring is a different length), sites, score, notes}. A site:
@@ -341,6 +355,7 @@ class ColumnJob extends RefCounted:
 	var minC: int = 0
 	var maxC: int = 0
 	var pin: int = -1
+	var prefer: int = -1
 	var degs: Array = []
 	var res: Array = []
 	var notes: Array = []
@@ -360,6 +375,7 @@ class ColumnJob extends RefCounted:
 		minC = int(opts.get("minCols", WorldCampaign.K_MIN_C))
 		maxC = int(opts.get("maxCols", WorldCampaign.K_MAX_C))
 		pin = int(opts.get("pin", -1))
+		prefer = int(opts.get("prefer", -1))
 		base = WorldCampaign.rebased(P, spec, pc)
 		degs = [0.0]
 		if not bool(cfg.pinned) and bool(opts.get("turn", true)):
@@ -379,7 +395,7 @@ class ColumnJob extends RefCounted:
 		while res.size() < degs.size() and left > 0:
 			var dg: float = degs[res.size()]
 			var ts: Dictionary = base if dg == 0.0 else WorldCampaign.turnedSpec(P, base, mid, dg)
-			res.append({"deg": dg, "spec": ts, "res": WorldCampaign._choose(WorldCampaign._candidates(P, ts, mid, minC, maxC, wear), col, epSeed, cfg, cols, used)})
+			res.append({"deg": dg, "spec": ts, "res": WorldCampaign._choose(WorldCampaign._candidates(P, ts, mid, minC, maxC, wear), col, epSeed, cfg, cols, used, prefer)})
 			left -= 1
 		if res.size() < degs.size():
 			return false
@@ -402,7 +418,7 @@ class ColumnJob extends RefCounted:
 				settledN += 1
 		var ok: bool = best.res.sites.size() >= int(cfg.min) and settledN >= int(cfg.settled)
 		result = {"ok": ok, "col": col, "turn": null if float(best.deg) == 0.0 else {"deg": float(best.deg), "from": WorldRingPick.arenaOf(base)}, "arena": WorldRingPick.arenaOf(best.spec), "start": WorldRingPick.arenaOf(best.spec),
-			"pc": mid, "cols": cols, "resize": false, "sites": WorldCampaign._publish(best.res.sites), "score": float(best.total), "notes": notes}
+			"pc": mid, "cols": cols, "resize": false, "sites": WorldCampaign._publish(best.res.sites), "score": float(best.total), "notes": notes, "preferred": bool(best.res.get("preferred", false))}
 		done = true
 		return true
 
@@ -452,7 +468,7 @@ static func _climax(P: WorldPlanet.Planet, epSeed: int, col: int, base: Dictiona
 	var site: Dictionary = {"id": 0, "kind": "city" if city else "town", "place": home, "arc": arc, "entry": entry, "half": half, "dir": side, "flightS": fs, "settled": true, "biome": 8 if city else 7, "fine": "", "feats": ["settled", "home"], "wear": band, "fallen": band >= 3}
 	notes.append("the climax: the ring through the pair and place %d, %d columns%s" % [home, entry, " (the build-up: past the band)" if entry > K_CLIMAX_C else ""])
 	var dgs: float = WorldEpoch.driftOf(base.c, spec.c)
-	return {"ok": true, "col": col, "turn": {"deg": dgs, "from": WorldRingPick.arenaOf(base), "toward": home}, "arena": WorldRingPick.arenaOf(spec), "start": WorldRingPick.arenaOf(spec), "pc": cols / 2, "cols": cols, "resize": cols != int(base.cols), "sites": [site], "score": 1.0, "notes": notes, "far": entry > K_CLIMAX_C}
+	return {"ok": true, "col": col, "turn": {"deg": dgs, "from": WorldRingPick.arenaOf(base), "toward": home}, "arena": WorldRingPick.arenaOf(spec), "start": WorldRingPick.arenaOf(spec), "pc": cols / 2, "cols": cols, "resize": cols != int(base.cols), "sites": [site], "score": 1.0, "notes": notes, "far": entry > K_CLIMAX_C, "preferred": false}
 
 
 # ===================================================================== a side story
