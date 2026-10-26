@@ -1,6 +1,6 @@
 # The right stick: pitches for Orb
 
-Owner: Game Design. Status: **pitches, 2026-10-23,** reconciled with Controls' input side in §10 and §11, which rule where they differ. §11 holds step 1's command set, and §12 rules it against today's director. Paper only. Every number is a first value, and Controls is writing the input side (`docs/controls/right-stick.md`). Orb can pick one pitch or mix them, and §9 recommends one.
+Owner: Game Design. Status: **pitches, 2026-10-23,** reconciled with Controls' input side in §10 and §11, which rule where they differ. §11 holds step 1's command set, §12 rules it against today's director, and §13 reworks it for one thumb (the claw-grip law). Paper only. Every number is a first value, and Controls is writing the input side (`docs/controls/right-stick.md`). Orb can pick one pitch or mix them, and §9 recommends one.
 
 **Orb's ask** (`docs/ep/vision.md`, "The right stick", 2026-10-23): the right stick as an attack, a mobility tool, or a hybrid that changes with what is held (defensive, energy and so on), with the hybrid preferred for agency. A quick flick and a steady hold should do different things. Free-form patterns such as zig-zags should work the way some skateboarding games do their tricks. "Another method of commanding your fighter."
 
@@ -224,3 +224,91 @@ Encounter read step 1 against the director (`docs/director/right-stick-step1-not
 **Two small fits, confirmed.**
 - **When beams lock in a struggle,** the aim line and either stick's beam sweep stop. The struggle's own rules hold, as built: the left stick leans him in, and up or down aims the overwhelm (`rule-of-cool.md`).
 - **R8's repeat count is per fighter and per kind:** two director slots, one for steps and one for hops and drops.
+
+## 13. Step 1, reworked for one thumb (Orb's claw-grip concern)
+
+**Orb** (homework, 2026-10-25): "the thumb that is normally pressing attack buttons is occupied by the right stick. if there is too great a synergy between these two systems that are both occupying the right thumb, then my concern is that some kind of 'claw grip' becomes necessary to compete." Controls answered with the law (`docs/controls/right-thumb.md`). This section adopts it and redraws step 1 to fit it. Where it differs from §11 and §12, it rules.
+
+**For Orb, in short.**
+- The right stick never asks the thumb to be in two places at once. It **sets things that stay set:** where you aim, how you move between exchanges, and what you expect your opponent to do. Then the thumb goes back to the buttons with no hurry.
+- **Quick defence moves to the left hand.** The dodge trigger picks its direction from the left stick.
+- **A claw grip, back paddles or a keyboard can be more comfortable, but never faster.** A test in the build fails if one ever wins.
+
+### 13.1 The law, adopted
+
+- **R28. No pairing in a beat.** No command needs the right stick and a face button inside one window. A stick input never changes a beat that is already running: a blow in flight, a wind-up, a rush. Every right-stick command is one of four kinds:
+  - **a step** in neutral;
+  - **a rush,** which is a director rush and its own beat;
+  - **an aim,** which is latched;
+  - **a read,** which persists.
+- **R29. Gap-invariance.** Whatever the stick sets lasts at least `W` = 36 ticks. A face button that meets it gives the same result for every gap from 0 to `W`. The stick sets a state, the button acts on it, and only the button's own timing says when the blow starts.
+- **R30. Commitment.** Every stick command commits the fighter for `L` = 6 ticks, the fast standard thumb's own transfer (Controls' model, until the capture measures it). A stick hold's release locks out `L` too, and **§11's "short settle" becomes `L`.** A face press made inside the commitment or during a hold **queues** on the existing request queue, and starts at its end. So a claw's early press and a standard thumb's later press start on the same tick.
+- **R31. The step carries the blow.** A press queued behind a step is staged as one move: the step's last 6 ticks flow into the blow, a step-strike, so the 6-tick start reads as intent and never as lag (Encounter and Animation).
+- **R32. Mirrors at the same cost.** Every stick command has a form on the D-pad (the pad's mirror, reachable by the left thumb), a key and a swipe. Each costs the same ki, commits the same `L` and starts no later than the stick form.
+- **R33. No device detection, ever.** The rules live in the sim, so a keyboard, a claw and paddles are all held to them, and nothing tries to tell one grip from another.
+
+### 13.2 Quick defence on the left hand
+
+- **R34. The slip is LT's dodge with the left stick's direction.** LT's tap stays **the one dodge against blows** (§12 ruling 3). At the tap's edge, the left stick's direction picks how he slips:
+
+| Left stick at the tap | The slip | What the exchange reads |
+| :--- | :--- | :--- |
+| Neutral | Today's dodge | The dodge, as now |
+| Away | A slip back off the line | Dodge and read |
+| Toward | A slip in, past the blow to his side | Dodge and counter |
+| Up | A sway up, over a low blow | The dodge, cleared over |
+| Down | A duck under a high blow | The dodge, cleared under |
+
+  It is the same dodge in every case (stance 2, read by the exchange templates), with a direction added. The recoil flip and the pop's tech stay LT's in their own moments, and use the direction as the flip's. **No right-stick input is ever part of a reactive defence.**
+- **R35. The guard keeps its own lean** on the left stick (`nudge.guard`), as today. §5's guard family on the right stick (the slip, the guard's angle, the counters) is retired: the left hand does reactive defence, and the right stick's guard job is the read (§13.3).
+
+### 13.3 The read: fluid slips without timing
+
+Orb asked for fluid slips. Fast slips belong to the left hand (R34). **The right stick offers the other kind: a read, a guess about his next move that you set ahead of time and the director plays out.** It is pillar 2, the stance that chooses intent, back in a modern form.
+
+- **R36. With LB held, a right-stick flick sets a read.** It lasts until it fires or for 90 ticks, whichever comes first, and only one is set at a time: a new flick replaces it. It costs 3 ki to set. It applies only to his attacks that **start after** it is set, so a read is a prediction and never a reaction.
+
+| Flick | The read | When he does it, the director plays |
+| :--- | :--- | :--- |
+| Up | **His heavy** (a heavy or a charged blow) | A slip under it at the contact, and he is open: a stagger, which is a plain opening. A perfect block stays the bigger reward (a reversal, which dazes, `rulings-2026-10-23d.md`) |
+| Down | **His flurry** | The flurry's first blow is slipped by a duck, and his run is broken |
+| Toward | **His grab** (the clinch, the tackle, the energy grab) | The catch is broken as it closes, both are pushed apart, and the grab lockout runs for him |
+| Away | **His shot** | A sidestep with slip frames for that shot |
+
+- **R37. A read can be seen.** His stance shifts with it, a small lean or a hand set, so the rival can read the read and throw something else. A read that doesn't fire costs its 3 ki and nothing more: a wrong guess is a small loss. That follows Orb's "3 of 10" for a failed flashy option.
+- **R38. Mirrors:** LB with the D-pad, the guard key with the arrows, or the guard with a swipe. **On Simple,** the director sets reads for the player at a modest rate, as it throws the pairs.
+
+### 13.4 Step 1, redrawn
+
+Every command, with its kind, how long what it sets lasts, and its commitment. Patterns stay in step 2. Directions are relative to him.
+
+| Family | Command | Kind | How long it lasts | Commitment |
+| :--- | :--- | :--- | :--- | :--- |
+| **Nothing held** | Flick toward from beyond reach: **the lunge** (10 ki) | Rush | The rush. A press in the same tick wins (§12 ruling 1) | The rush's length |
+| | Flick toward in reach: **a step in,** taking back ground given | Step, or a rush in a brawl | | `L` |
+| | Flick away: **a step back,** which in a brawl is giving ground | Step, or a rush in a brawl | Shot slip for its first 4 ticks | `L` |
+| | Flick up or down: **a hop or a drop** | Step | Shot slip for its first 4 ticks | `L` |
+| | Hold toward or away: **the dash** | Hold | While held | Release + `L` |
+| | Hold up or down: **the orbit,** and in a brawl **the cross-up** (§12 ruling 5) | Hold, or a 16-tick rush in a brawl | While held | Release + `L`, or the rush |
+| | Hold into a face: **the wall run.** Hold down near the ground: **the skim** | Hold | While held | Release + `L` |
+| **RB** | Flick: **latch the aim line** (toward clears it, up or down 45°, away behind) | Aim | Until RB is let go | `L` |
+| | Hold: **sweep the line** (32-way, direct) | Aim | Latched where it is let go | Release + `L` |
+| | Hold while his beam is out: **sweep the beam** | Aim | While held | None: he is rooted and both thumbs are free |
+| **LB + RB** | Flick: **where the next lay goes** (up to 3 bh) | Aim | Until the lay, or a shoulder is let go | `L` |
+| **LB** | Flick: **a read** (§13.3) | Read | Until it fires, or 90 ticks | `L` |
+| **LT, RT** | Nothing in step 1 | | | |
+
+- **The D-pad mirrors every row.** Flicks are D-pad taps, holds are D-pad holds, and analogue sweeps are the D-pad's 8 ways, stepped.
+- **Repeats** follow R8 per kind (§12): the third step or hop inside 3 s keeps its movement and loses its slip.
+
+### 13.5 Does any command need a beat-timed stick input?
+
+**None,** as Controls thought. Every timed input in the game is a button:
+- the struggle's surges (X, Y or B on the pulse, A to let go);
+- the perfect block (LB);
+- the wall kick and the bank (LT);
+- the recoil flip and the tech (LT);
+- the rally's air tech (a guard press, `rulings-2026-10-23d.md`);
+- the escape from a catch (presses).
+
+The stick leans and aims in all of them, untimed. Patterns in step 2 are states built from flicks, each under R30, and nothing waits on a beat. **So step 1 can ship with the claw-bot gate green on every row.**
