@@ -85,6 +85,8 @@ var particles: ParticleView
 var host: SimHost
 var started: bool = false
 var manual: bool = false          # tools call frame() or render_view() themselves
+var _match_ever: bool = false     # a match has been built in this session (a load that is cancelled before the first one starts a plain one under the menu)
+var _planet_next: Dictionary = {} # the planet part of the next menu-started match's setup (planet_part), merged by _match_setup
 var fighter_views: Array = []
 var _insets_vp := Vector2.ZERO       # the view's size when the safe-area insets were last read
 var view_cam_x: float = 0.0       # the interpolated camera's wrapped world x this frame
@@ -115,6 +117,8 @@ const FLASH_KEYS: Array = [KEY_1, KEY_2, KEY_3, KEY_4, KEY_5, KEY_6, KEY_7, KEY_
 
 func _ready() -> void:
 	args = parse_args()
+	if not manual:
+		SimPlanetLoad.strict = true   # the game never makes a cold gen 2 planet inside a match's start: the host loads it first, with UI's loading screen (a tool leaves this off)
 	if args.has("flashcap") and not manual:
 		UiHud.notice_auto = false   # a capture run starts on the scene, as a bench does: no notice, no card (below)
 	# A debug route to Animation's study scenes: never taken unless the argument is there (_study_scene), and only by
@@ -180,6 +184,8 @@ func _ready() -> void:
 	ui_hud.pause_menu_opened.connect(_on_pause_menu_opened)
 	ui_hud.pause_menu_closed.connect(_on_pause_menu_closed)
 	ui_hud.new_match_requested.connect(func(): start_match(fresh_seed()))
+	ui_hud.menu_changed.connect(_on_menu_changed)
+	ui_hud.loading_back_requested.connect(_on_loading_back)
 	ui_hud.menu_started.connect(_on_menu_started)   # the start menu's Start, and the match-over card's Play again (docs/ui/start-menu.md)
 	ui_hud.option_changed.connect(_on_option_changed)
 	# The hub's defaults go into the HUD first (its legend and prompts show the layouts in use) ...
@@ -265,6 +271,15 @@ func all_panes() -> Array:
 func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:
 	var own: bool = not (setup is Dictionary)
 	host.new_match(seed, ai, _match_setup(seed) if own else setup, own)
+	if host.loading():
+		ui_hud.show_loading(host.load_phase(), host.load_progress())   # frame() steps the load; the match is built when it is made (_match_built)
+		return
+	_match_built()
+
+
+## What follows the sim's new match: the camera, the far land, the HUD's fighters, the panes and the first picture.
+func _match_built() -> void:
+	_match_ever = true
 	camera_roll.reset()
 	_drift_t0 = host.S.T
 	if far_on:
@@ -294,8 +309,36 @@ func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:
 ## accepted and does nothing.)
 func _match_setup(seed: int = 0) -> Dictionary:
 	if manual or args.has("nointro") or args.has("bench") or args.has("flashcap"):
-		return {}
-	return {"intro": host.intro_record(seed)}
+		return _planet_next.duplicate()
+	var su: Dictionary = {"intro": host.intro_record(seed)}
+	su.merge(_planet_next)
+	return su
+
+
+## The planet a menu's choices name, as the match's setup keys (planet, planetGen, touch, arena); {} while they name none (the menu has no such choice yet: the campaign's and the planet picker's
+## choices will carry `planet`). The one place that reads it, for the early start (_on_menu_changed) and for Start (_on_menu_started), so the two always agree.
+func planet_part(cfg: Dictionary) -> Dictionary:
+	var out: Dictionary = {}
+	if cfg.has("planet"):
+		for k in ["planet", "planetGen", "touch", "arena"]:
+			if cfg.has(k):
+				out[k] = cfg[k]
+	return out
+
+
+## The choices changed (or the menu opened): the planet they name is made ahead, from now, while the player decides.
+func _on_menu_changed(cfg: Dictionary) -> void:
+	host.prefetch(planet_part(cfg))
+
+
+## Back on the loading screen: nothing is kept. The load and the planet made ahead are dropped and the start menu opens again; it is built from the saved choices, which do not include a planet pick, so
+## nothing starts the load again by itself.
+func _on_loading_back() -> void:
+	host.cancel_load()
+	ui_hud.hide_loading()
+	if not _match_ever:
+		start_match(fresh_seed())   # the load was the session's first match: the menu opens over the demo match the game starts with, as at boot
+	ui_hud.show_start_menu(false)
 
 
 ## For Camera's compositor: a new pane, a follower of the first, in a SubViewport of its own (its own World3D),
@@ -495,8 +538,21 @@ func _process(delta: float) -> void:
 		frame(delta)
 
 
+## A frame while a planet loads: a slice of the load, and the screen reads its phase and progress. The match is built the frame its planet is made.
+func _step_load() -> void:
+	if host.load_step():
+		ui_hud.hide_loading()
+		_match_built()
+	else:
+		ui_hud.show_loading(host.load_phase(), host.load_progress())
+
+
 ## One displayed frame: run the ticks this frame time allows, then draw at the interpolation point.
 func frame(delta: float) -> void:
+	if host.loading():
+		_step_load()
+		return
+	host.prefetch_step()   # a planet the menu's choices name is made a slice a frame while the player decides
 	var vp: Vector2 = get_viewport().get_visible_rect().size
 	var t0: int = Time.get_ticks_usec()
 	_sync_split_options()
@@ -1000,10 +1056,12 @@ func _on_menu_started(cfg: Dictionary) -> void:
 	var two: bool = int(cfg.get("players", 1)) == 2
 	var ai := {"p1": false, "p2": not two}
 	var sd: int = fresh_seed()
+	_planet_next = planet_part(cfg)
 	if bool(cfg.get("intros", true)):
 		start_match(sd, ai)
 	else:
-		start_match(sd, ai, {})
+		start_match(sd, ai, _planet_next.duplicate())
+	_planet_next = {}
 	var pads: Array = Input.get_connected_joypads()
 	var next_pad := 0
 	for s in range(2 if two else 1):
@@ -1053,6 +1111,8 @@ func _input(e: InputEvent) -> void:
 	if touch != _touch_last:
 		_touch_last = touch
 		ui_hud.set_option("touch_ui", touch)
+	if host.loading():
+		return   # a planet is loading: no match to press into
 	if e is InputEventScreenTouch or e is InputEventScreenDrag:
 		_touch_event(e)
 	elif e is InputEventJoypadButton or e is InputEventJoypadMotion:
@@ -1172,6 +1232,8 @@ func _flash_key(e: InputEventKey) -> void:
 
 
 func _unhandled_input(e: InputEvent) -> void:
+	if host.loading():
+		return
 	if e is InputEventKey:
 		var code: String = RenderKeys.code(e)
 		get_viewport().set_input_as_handled()

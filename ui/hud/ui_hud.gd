@@ -27,6 +27,8 @@ signal option_changed(key: String, value)   # set_option changed an option's val
 signal settings_opened                     # the Settings screen opened: the host pauses the sim and releases held keys (as for How to play)
 signal settings_closed                     # it closed: the host restores the pause it found
 signal menu_started(config: Dictionary)      # the start menu's Start (or Play again): {players 1 or 2, p1 and p2 "kb" or "pad", intros bool, and the checkboxes}; the host starts the match from it (docs/ui/start-menu.md)
+signal menu_changed(config: Dictionary)      # a choice on the start menu changed (and when it opens): the host may start making the planet the choices name while the player decides (docs/ui/planet-load.md)
+signal loading_back_requested                # Back on the planet loading screen (Esc, a pad's B, a click or tap): the host drops the load and opens the start menu
 signal menu_not_now(url: String)             # "Not now" on the start menu: back to the holding page (the HUD navigates on the web itself; a host may too)
 signal notice_closed(opened_settings: bool)     # the photosensitivity notice was dismissed (true: its OPEN SETTINGS button, which has then opened Settings at the Reduced motion row)
 signal settings_action_requested(action: String)   # a button on the screen was pressed ("remap"): the host opens what it names
@@ -217,6 +219,8 @@ var _notice_drag := false              # a finger or the mouse is dragging the t
 var _l_gate_back: UiLayer
 var _notice_pending: Array = []        # a How to play card asked for while the notice was up: [first_run, page], opened when it closes
 var _l_notice: UiLayer
+var _l_loading: UiLayer
+var _load_state: Dictionary = {}       # the planet loading screen while one is up: {phase, progress} (docs/ui/planet-load.md); empty when none
 ## The register's answer for the split divider's slam flash (UI draws it; Camera supplies the `slam` amount): the host sets `flash_fn(kind, strength, area) -> 0..1`, the share of the
 ## flash it allows (VFX's flash register); UI asks once as a slam begins. Under Reduce flashing or Reduced motion the divider does not flash at all.
 var flash_fn: Callable
@@ -322,6 +326,7 @@ func _ready() -> void:
 	_l_remap = _layer(_paint_remap)
 	_l_fb = _layer(_paint_fb)
 	_l_turn = _layer(_paint_turn)
+	_l_loading = _layer(_paint_loading)   # the planet's loading screen: over every menu and the match, under the notice (a gate that is still up shows first)
 	_l_notice = _layer(_paint_notice)   # last: over everything
 	_fb_text = TextEdit.new()        # the free-text box and the report preview are real text controls, placed by the panel's plan
 	_fb_text.visible = false
@@ -383,7 +388,7 @@ func _chip_layer(slot: int) -> UiLayer:
 
 
 func _all_layers() -> Array:
-	return [_l_caption, _l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_many, _l_tug, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_notice, _l_gate_back]
+	return [_l_caption, _l_letter, _l_strip_base, _l_crown, _l_beat, _l_struggle, _l_toll, _l_strip_marks, _l_ring_base, _l_ring, _l_many, _l_tug, _l_events, _l_feed, _l_debug] + _l_plate + _l_sil + _l_prompts + _l_hints + _l_form + [_l_you, _l_intro, _l_touchctl] + _l_chips + [_l_pause, _l_tele, _l_hint, _l_fbpill, _l_join, _l_pmenu, _l_howto, _l_settings, _l_remap, _l_fb, _l_turn, _l_loading, _l_notice, _l_gate_back]
 
 
 ## Total redraws of every layer so far, for the perf counters.
@@ -1105,6 +1110,9 @@ func _paint_howto(ci: CanvasItem) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if is_loading():
+		_loading_input(event)   # the planet is being made: nothing is pressed into a match that does not exist yet, but Back answers from the first frame
+		return
 	if _turn_open:
 		_turn_input(event)
 		return
@@ -1359,6 +1367,7 @@ func show_start_menu(mid_match: bool = false) -> void:
 	_menu_mid = mid_match
 	_menu_focus = 0
 	show_photo_notice(true)
+	menu_changed.emit(_menu_cfg.duplicate())
 
 
 func is_start_menu_open() -> bool:
@@ -1398,6 +1407,7 @@ func _menu_rows() -> Array:
 func _menu_invalidate() -> void:
 	_menu_focus = clampi(_menu_focus, 0, _menu_rows().size() - 1)
 	_l_notice.invalidate()
+	menu_changed.emit(_menu_cfg.duplicate())
 
 
 ## One of "up", "down", "left", "right", "accept", "back".
@@ -1609,6 +1619,50 @@ func notice_scroll_by(dy: float) -> void:
 	if to != _notice_scroll:
 		_notice_scroll = to
 		_l_notice.invalidate()
+
+
+## The planet loading screen (docs/ui/planet-load.md): the host shows it while Simulation's SimPlanetLoad makes a gen 2 planet in slices, a call a frame with the job's phase
+## (plates, climate, rivers, places, ring) and progress (0 to 1). The layer redraws when the line or the whole percent changes (a hundred times at most, never a frame it does not need).
+## It only reads what the host passes: nothing here touches the sim. hide_loading() when the match starts.
+func show_loading(phase: String, progress: float) -> void:
+	_relayout()
+	_load_state = {"phase": phase, "progress": progress}
+	_l_loading.update_sig(UiLoading.sig(loading_plan()))
+
+
+## Back: Esc or a pad's B, or a click or tap on the button. One signal; the host does the rest.
+func _loading_input(event: InputEvent) -> void:
+	var back := false
+	if event is InputEventKey:
+		back = event.pressed and not event.echo and event.keycode == KEY_ESCAPE
+	elif event is InputEventJoypadButton:
+		back = event.pressed and event.button_index == JOY_BUTTON_B
+	elif event is InputEventMouseButton:
+		back = event.pressed and event.button_index == MOUSE_BUTTON_LEFT and UiLoading.hit_back(loading_plan(), event.position)
+	if back:
+		loading_back_requested.emit()
+	if event is InputEventKey or event is InputEventJoypadButton or event is InputEventMouseButton:
+		get_viewport().set_input_as_handled()
+
+
+func hide_loading() -> void:
+	if _load_state.is_empty():
+		return
+	_load_state = {}
+	_l_loading.update_sig(null)
+
+
+func is_loading() -> bool:
+	return not _load_state.is_empty()
+
+
+func loading_plan() -> Dictionary:
+	return UiLoading.plan(layout.vp, layout.s, dp, layout.safe, _load_state)
+
+
+func _paint_loading(ci: CanvasItem) -> void:
+	if not _load_state.is_empty():
+		UiLoading.draw(ci, loading_plan())
 
 
 func _paint_notice(ci: CanvasItem) -> void:
@@ -3322,7 +3376,7 @@ func _touch_button_at(pos: Vector2) -> String:
 
 ## Watches the fingers on the touch buttons, only to draw them (the sim's own touch layer still owns the input): the press shows on the frame it lands.
 func _input(event: InputEvent) -> void:
-	if not bool(opts["touch_ui"]) or not (event is InputEventScreenTouch):
+	if is_loading() or not bool(opts["touch_ui"]) or not (event is InputEventScreenTouch):
 		return
 	if event.pressed:
 		if _notice_open or _pm_open or _set_open or _rm_open or _howto_open or _fb_open:

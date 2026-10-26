@@ -53,6 +53,10 @@ var _hit_T: Array = [NAN, NAN]       # per slot: the hurtT last asked for
 var _hit_grants: Array = [[], []]    # per slot: the ticks of the body tints granted in the last second (Legal's ceilings)
 var _beam_ok: Dictionary = {}        # a live beam's instance id -> whether its bright form was granted
 var _clash_on: bool = false
+var load_job: SimPlanetLoad.Job = null   # a gen 2 planet being made before a match (docs/architecture/planet-load.md): the match waits for it, the loading screen reads it
+var _load_call: Array = []               # the new_match call that waits: [seed, ai, setup, remember]
+var pre_job: SimPlanetLoad.Job = null    # a planet being made ahead of any match, while the player is still choosing (prefetch)
+var _pre_key: String = ""                # what it is making (planet_key); kept after it is done, so the same choice does not start it again
 
 
 func _init() -> void:
@@ -66,6 +70,17 @@ func new_match(p_seed: int, ai: Dictionary = {}, setup: Dictionary = {}, remembe
 	seed = p_seed & 0xFFFFFFFF
 	var su: Dictionary = hub.setup()   # both slots are v2; a Simple layout sets its assists
 	su.merge(setup, true)
+	load_job = null
+	_load_call = []
+	var key: String = planet_key(su)
+	var ahead: SimPlanetLoad.Job = pre_job if key == _pre_key else null   # the planet made ahead for this very choice (same planet, generation, arena and touch-down), whatever is left of it
+	pre_job = null
+	_pre_key = ""
+	if SimPlanetLoad.strict and not SimPlanetLoad.mayStart(su):
+		# A planet that is not made yet (a gen 2 one, cold) is never made inside a match's start: the match waits, and the loading screen shows the load (load_step a frame, below).
+		load_job = ahead if ahead != null else SimPlanetLoad.beginFor(su)
+		_load_call = [p_seed, ai, setup, remember]
+		return
 	_skip_intro = 0
 	setup_used = su.duplicate(true)
 	SimCore.newMatch(S, seed, ai, su)
@@ -92,6 +107,70 @@ func new_match(p_seed: int, ai: Dictionary = {}, setup: Dictionary = {}, remembe
 	jitter = Vector2.ZERO
 	_cur = _capture()
 	_prev = _cur
+
+
+## What a planet's making depends on, for telling a choice that changed from one that did not: the planet, its generation, the touch-down and the arena. "" when the setup names no planet.
+static func planet_key(setup: Dictionary) -> String:
+	if not setup.has("planet"):
+		return ""
+	return "%s/%d/%s/%s" % [str(setup.planet), SimPlanetLoad.genOf(setup), str(setup.get("touch", 0)), var_to_str(setup.get("arena", {}))]
+
+
+## The planet's seed is known (the player has picked it in the menu) before the match starts: begin making it now, a slice a frame (prefetch_step), while they choose. Called again with what the menu
+## now says: the same choice leaves the work as it is, another choice starts over, and no planet (or a gen 1 one, or one already made) drops it. Only in the game (strict); a tool never prefetches.
+## Generation is pure from the seed, so nothing the match needs is touched. new_match takes up what is left of it.
+func prefetch(setup: Dictionary) -> void:
+	var key: String = planet_key(setup)
+	if key == _pre_key:
+		return
+	pre_job = null
+	_pre_key = ""
+	if key == "" or not SimPlanetLoad.strict or SimPlanetLoad.mayStart(setup):
+		return
+	pre_job = SimPlanetLoad.beginFor(setup)
+	_pre_key = key
+
+
+## One frame's slice of the planet made ahead (the same units a load spends).
+func prefetch_step() -> void:
+	if pre_job != null and pre_job.step(SimRun.planetUnitsPerRead):
+		pre_job = null   # made: the match will find it
+
+
+## Back from the loading screen: nothing kept. The load, the call it waited for and the planet made ahead are dropped (what World has already memoised stays: it is the planet's, not the match's).
+func cancel_load() -> void:
+	load_job = null
+	_load_call = []
+	pre_job = null
+	_pre_key = ""
+
+
+## A planet load is under way: new_match has not started the match yet.
+func loading() -> bool:
+	return load_job != null
+
+
+func load_phase() -> String:
+	return load_job.phase if load_job != null else "done"
+
+
+func load_progress() -> float:
+	return load_job.progress() if load_job != null else 1.0
+
+
+## One frame's slice of the load (SimRun.planetUnitsPerRead units, about 5 ms). When the planet is made the match starts, as new_match would have: the call it was waiting for runs now.
+## Returns true when it has started.
+func load_step() -> bool:
+	if load_job == null or not load_job.step(SimRun.planetUnitsPerRead):
+		return false
+	var call: Array = _load_call
+	load_job = null
+	_load_call = []
+	var was: bool = SimPlanetLoad.strict
+	SimPlanetLoad.strict = false   # made: the match's own start must not refuse (a planet that still reads as cold would be made there, not looped on here)
+	new_match(call[0], call[1], call[2], call[3])
+	SimPlanetLoad.strict = was
+	return true
 
 
 ## Run as many fixed ticks as the frame time allows (overview.md: acc += min(0.1, frame)). Returns the tick count.

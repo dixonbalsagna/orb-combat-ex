@@ -66,6 +66,7 @@ func _run() -> void:
 	await _launch_marks_rules()
 	await _tug_rules()
 	await _cut_rules()
+	await _loading_rules()
 	await _minimal_hud_rules()
 	await _minimal_teach_rules()
 	await _minimal_join_rules()
@@ -6234,6 +6235,111 @@ func _text_warm_rules() -> void:
 			missing.append(UiWarm.GLYPHS[i])
 	_ok(missing.is_empty(), "text warm: the font has every glyph the warm-up draws (%s missing)" % str(missing))
 	_ok(UiData.feature("text_warm"), "text warm: the switch is on as shipped")
+
+
+## The planet loading screen (UiLoading, docs/ui/planet-load.md): one line of words and a thin bar, in the safe area at every size, a bar that only grows and redraws once a percent, shown with no match built.
+func _loading_rules() -> void:
+	var lines := {}
+	for ph in UiLoading.PHASES:
+		var ln: String = UiLoading.line(ph)
+		lines[ln] = true
+		_ok(ln != "prompt.load_" + ph and ln.length() >= 8 and ln.length() <= 40, "loading: the %s phase has its own short line (%s)" % [ph, ln])
+	_ok(lines.size() == UiLoading.PHASES.size(), "loading: the five phases each say something different")
+	_ok(UiLoading.line("a_new_phase") == UiLoading.line("plates") and UiLoading.line("done") != "", "loading: a phase this build does not know says the first one's words, never a path")
+	var sizes: Array = [Vector2(1920, 1080), Vector2(1366, 768), Vector2(1280, 720), Vector2(1024, 576), Vector2(2560, 1080), Vector2(3840, 2160), Vector2(800, 480), Vector2(390, 844), Vector2(1080, 1920), Vector2(360, 640)]
+	for sz in sizes:
+		var lay := UiLayout.new()
+		lay.compute(sz, false)
+		var tag: String = "%dx%d" % [int(sz.x), int(sz.y)]
+		for ph in UiLoading.PHASES:
+			for pg in [0.0, 0.004, 0.37, 0.999, 1.0]:
+				var p: Dictionary = UiLoading.plan(sz, lay.s, 1.0, lay.safe, {"phase": ph, "progress": pg})
+				_ok(bool(p["fits"]), "loading %s: the %s line and the bar fit the safe area at %.3f" % [tag, ph, pg])
+				_ok(int(p["fs"]) >= int(UiLook.MIN_TEXT_PX), "loading %s: the line is over the text floor (%d)" % [tag, int(p["fs"])])
+				var tr: Rect2 = p["track"]
+				var fl: Rect2 = p["fill"]
+				_ok(Rect2(Vector2.ZERO, sz).encloses(tr) and tr.encloses(fl) if fl.size.x > 0.0 else Rect2(Vector2.ZERO, sz).encloses(tr), "loading %s: the bar is on the screen and its fill inside its track" % tag)
+				var bk: Rect2 = p["back"]
+				_ok(Rect2(Vector2.ZERO, sz).encloses(bk) and not bk.intersects(tr) and bk.size.y >= 44.0 and bk.size.x >= 88.0 and bk.position.y > tr.end.y, "loading %s: the Back button is on the screen under the bar, at the menu's touch size" % tag)
+		var a: Dictionary = UiLoading.plan(sz, lay.s, 1.0, lay.safe, {"phase": "climate", "progress": 0.504})
+		var b: Dictionary = UiLoading.plan(sz, lay.s, 1.0, lay.safe, {"phase": "climate", "progress": 0.509})
+		var c: Dictionary = UiLoading.plan(sz, lay.s, 1.0, lay.safe, {"phase": "climate", "progress": 0.51})
+		_ok(UiLoading.sig(a) == UiLoading.sig(b) and UiLoading.sig(a) != UiLoading.sig(c), "loading %s: the picture changes a whole percent at a time, not between" % tag)
+		var lo: Dictionary = UiLoading.plan(sz, lay.s, 1.0, lay.safe, {"phase": "ring", "progress": -3.0})
+		var hi: Dictionary = UiLoading.plan(sz, lay.s, 1.0, lay.safe, {"phase": "ring", "progress": 7.0})
+		_ok(float(lo["progress"]) == 0.0 and float(hi["progress"]) == 1.0 and (hi["fill"] as Rect2).size.x == (hi["track"] as Rect2).size.x, "loading %s: progress outside 0 to 1 is held to it" % tag)
+	# On a real HUD, before any match is built (the host shows it from the start of a load): up, redrawn once a percent, gone on hide, and nothing it does reaches the model.
+	root.size = Vector2i(1280, 720)
+	var hud: UiHud = load("res://ui/hud/ui_hud.tscn").instantiate()
+	hud.size = Vector2(1280, 720)
+	root.add_child(hud)
+	await process_frame
+	_ok(not hud.is_loading() and hud._l_loading.sig == null, "loading: no screen until the host asks")
+	hud.show_loading("plates", 0.0)
+	await process_frame
+	_ok(hud.is_loading() and hud._l_loading.sig != null, "loading: shown with no match built")
+	var changes := 0
+	var prev = hud._l_loading.sig
+	for i in range(1001):
+		hud.show_loading("climate", float(i) / 1000.0)
+		if hud._l_loading.sig != prev:
+			changes += 1
+			prev = hud._l_loading.sig
+	_ok(changes <= 101, "loading: a thousand steps of the bar redraw at most a hundred and one times (%d)" % changes)
+	# Back, from the first frame: Esc, a pad's B, or a click or tap on the button, one signal each; nothing else is read into a match (P and Enter do nothing, a click off the button does nothing).
+	var backs: Array = [0]
+	hud.loading_back_requested.connect(func(): backs[0] += 1)
+	hud.show_loading("plates", 0.0)
+	var bp: Dictionary = hud.loading_plan()
+	var key := func(code: int, pressed: bool = true, echo: bool = false) -> InputEventKey:
+		var e := InputEventKey.new()
+		e.keycode = code
+		e.pressed = pressed
+		e.echo = echo
+		return e
+	hud._unhandled_input(key.call(KEY_P))
+	hud._unhandled_input(key.call(KEY_ENTER))
+	hud._unhandled_input(key.call(KEY_ESCAPE, true, true))
+	hud._unhandled_input(key.call(KEY_ESCAPE, false))
+	_ok(backs[0] == 0 and not hud.is_pause_menu_open(), "loading: P, Enter, a held Esc and an Esc release do not go back, and nothing opens the pause menu")
+	hud._unhandled_input(key.call(KEY_ESCAPE))
+	_ok(backs[0] == 1, "loading: Esc asks to go back")
+	var jb := InputEventJoypadButton.new()
+	jb.button_index = JOY_BUTTON_B
+	jb.pressed = true
+	hud._unhandled_input(jb)
+	_ok(backs[0] == 2, "loading: a pad's B asks to go back")
+	var ja := InputEventJoypadButton.new()
+	ja.button_index = JOY_BUTTON_A
+	ja.pressed = true
+	hud._unhandled_input(ja)
+	var click := func(pos: Vector2) -> InputEventMouseButton:
+		var m := InputEventMouseButton.new()
+		m.button_index = MOUSE_BUTTON_LEFT
+		m.pressed = true
+		m.position = pos
+		return m
+	hud._unhandled_input(click.call(Vector2(5.0, 5.0)))
+	hud._unhandled_input(click.call((bp["track"] as Rect2).get_center()))
+	_ok(backs[0] == 2, "loading: a pad's A, a click on the corner and a click on the bar do not go back")
+	hud._unhandled_input(click.call((bp["back"] as Rect2).get_center()))
+	_ok(backs[0] == 3, "loading: a click or tap on the Back button asks to go back")
+	hud.show_loading("rivers", 0.5)
+	var sg1 = hud._l_loading.sig
+	hud.show_loading("rivers", 0.5)
+	_ok(hud._l_loading.sig == sg1, "loading: the same phase and percent is the same picture")
+	hud.hide_loading()
+	_ok(not hud.is_loading() and hud._l_loading.sig == null, "loading: gone when the match starts")
+	# The menu says when its choices change (the host starts making a named planet while the player decides).
+	var seen_cfg: Array = []
+	hud.menu_changed.connect(func(c): seen_cfg.append(c))
+	hud.show_start_menu(false)
+	_ok(seen_cfg.size() == 1 and (seen_cfg[0] as Dictionary).has("players"), "menu: opening the menu says its choices")
+	hud.menu_action("right")
+	_ok(seen_cfg.size() >= 2, "menu: a changed choice says so")
+	hud.hide_loading()
+	hud.queue_free()
+	await process_frame
 
 
 ## The two grey circles cut on 2026-10-18 (Orb: "the weird gray circle between the two fighters"): the planet ring map and the beam struggle's steady rings, each behind a switch that is off.
