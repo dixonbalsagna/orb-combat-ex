@@ -45,23 +45,24 @@
       "legal": "no lines of light joining the staves into a box, no dome, no cell (e16); the kneel is the landing only, with no taunt, zoom or finisher (e12, e16); one call-out (ln06)"
     },
     {
-      "id": "rally.empress.guard_wall",
-      "name": "Guard's Wall",
+      "id": "rally.empress.mantle_wall",
+      "name": "Mantle Wall",
       "base": "bank",
       "kind": "own",
-      "input": "base form only, with a guard on point: no press; a send toward the guard on point",
-      "what": "the guard braces and the body strikes his raised guard and rebounds back along its line: a ricochet off a living wall, the force her send's. The guard strikes nothing, closes on nothing and launches nothing",
+      "input": "no press: a send toward her while she braces (the stick held toward the body with LB)",
+      "what": "she braces her mantle as a wall and the body strikes it and rebounds back along its line: a ricochet off her braced mantle, the force the send's. The mantle stands; it never wraps, coils or grabs",
       "destination": "back along its line",
       "price": "none",
       "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
-      "tell": "the guard on point plants his feet and raises his guard toward the coming body",
-      "look": "a ring of force on the guard's raised forearms; he is pushed back a step",
+      "tell": "she plants her heel and swings the mantle forward, rigid as a door",
+      "look": "the hem plates lock edge to edge, a ring of force where the body meets them, and she is pushed back a step",
       "atoms": {
         "windup": 0,
         "active": 6,
         "recover": 10
       },
-      "needs": "empress-guards.md section 4 says a guard never closes on him, launches him or knocks him back. A rebound off a braced guard is his send's force, not the guard's blow: Game Design to rule whether it fits; Game Design's 23d item 12 asked for her guards taking a link"
+      "needs": "Narrative's rename (2026-10-25): 'guard' stays out of her lines, and the bank is her braced mantle, so no guard closes, launches or knocks back (empress-guards.md section 4 is met). Game Design may still rule the design; it works in every form",
+      "_renamed": "Narrative: Guard's Wall became Mantle Wall"
     }
   ],
   "sell": {
@@ -90,10 +91,10 @@
   "legalAsks": [
     "the rope as a rally link",
     "the banner drop's slam and kneel in the air",
-    "the guard's wall (also Game Design's)"
+    "the mantle wall: the mantle never wraps, coils or grabs, never reads as a tail"
   ],
   "openQuestions": [
-    "Guard's Wall against empress-guards section 4 (see its needs)."
+    "Mantle Wall: Game Design may rule the design (a ricochet off her braced mantle, in every form)."
   ],
   "_flash": "Legal mc04: the flash cap of 3 counted bursts a second holds across the whole rally; a link whose flash would pass it draws as dust, trail and ember instead"
 }

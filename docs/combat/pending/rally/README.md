@@ -21,8 +21,8 @@ Each own link is a variant of one of Game Design's link kinds (item 6), on the s
 | Fighter, identity | Link 1 | Link 2 | Link 3 |
 | :--- | :--- | :--- | :--- |
 | **The Protagonist,** control | **Palm Turn** (an overtake): the stick held across the flight. An open palm turns the body 90°, up or down by the stick, and up and away from people with no stick | **Net Haul** (the grab in flight): the yank hauls the body to him mid-air, and his next press sends it on with no zip to pay | **Pillar Lift** (a world link): a send across his own Trip Pillar throws the body up and away from people (TRAP LANDING) |
-| **The Rival,** precision | **Plated Ram** (the chase with Y): sent exactly along the stick's line, snapped to eight directions, with no bend | **Ring Hold** (the grab in flight): the bind holds the body still in the air, struggling, and his next shot lands as a normal hit on an open fighter | **Stair Spike** (a spike): one press, three stepped plate impacts straight down, the third the crater |
-| **The Empress,** dominion | **Rope Return** (a world link): Velvet Rope laid across his coming path. Crossing it fires her level-1 beam and knocks him back across her line | **Banner Drop** (the grab in flight): the staves slam him down into the ground from any height, landing him on one knee | **Guard's Wall** (a bank; base form only): the body rebounds off her braced guard. **Game Design to rule** against `empress-guards.md` §4 |
+| **The Rival,** precision | **Plate Chase** (the chase with Y): sent exactly along the stick's line, snapped to eight directions, with no bend | **Ring Hold** (the grab in flight): the bind holds the body still in the air, struggling, and his next shot lands as a normal hit on an open fighter | **Stair Spike** (a spike): one press, three stepped plate impacts straight down, the third the crater |
+| **The Empress,** dominion | **Rope Return** (a world link): Velvet Rope laid across his coming path. Crossing it fires her level-1 beam and knocks him back across her line | **Banner Drop** (the grab in flight): the staves slam him down into the ground from any height, landing him on one knee | **Mantle Wall** (a bank): the body rebounds off her braced mantle, which never wraps or grabs. Game Design may rule the design |
 | **The Demon Cyborg,** appetite | **Crane Reel** (the grab in flight): the hook reels the body back, turns it once at body height (never overhead) and flings it 6 bh along the stick, reversing the flight | **Wreck Toss** (a world link): an empty wreck, with nothing living near, hurled at the flying body sends it on (the throwables' rules) | **Slag Catch** (a lob): level-2 slag led to his landing pops him 3 bh back up, even on soft ground |
 
 **Distinct by design.** The cross-check holds that no two fighters share a link of the same kind and destination.
@@ -99,8 +99,8 @@ Tools' validator in a scratch root, with both drafts and their map rows added:
 
 - **Game Design:**
   - do a fighter's own links count as their own kinds for item 8 and the scoring?
-  - is the Empress's Guard's Wall within `empress-guards.md` §4 (a guard never launches or knocks back)? 23d item 12 asked for her guards taking a link.
-  - is Plated Ram's exact line, with no planner bend, allowed?
+  - the Empress's Mantle Wall (Narrative's rename from Guard's Wall: the bank is her braced mantle, so `empress-guards.md` §4 is met);
+  - is Plate Chase's exact line, with no planner bend, allowed?
   - does the Cyborg's Wreck Toss meet the throwables' pick-up rule mid-rally?
 - **Encounter:** the rally memory the scoring reads (the last two kinds and destinations of the current rally).
-- **Narrative:** the twelve link names (Legal renamed Ring Hang to Ring Hold).
+- **Narrative:** the twelve link names (Legal renamed Ring Hang to Ring Hold; Narrative renamed Guard's Wall to Mantle Wall and Plated Ram to Plate Chase).

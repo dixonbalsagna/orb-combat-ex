@@ -6,7 +6,7 @@ Combat and Choreography, 2026-10-25. Game Design's frame is `rulings-2026-10-23d
 
 ## His links (each its own kind for item 8; the base link's price and tech)
 
-**Plated Ram** (his chase with Y)
+**Plate Chase** (his chase with Y; Narrative renamed it from Plated Ram so it doesn't echo Rank Breaker)
 - **Input:** LT with Y. With X it is the plain chase strike.
 - **Tell:** the forearm comes up square, its plates lit in a line.
 - **What happens:** the zip drives him into the body forearm-plate first. The body is sent exactly along the stick's line, snapped to one of eight directions, with no bend from the planner: it lands where the line says.
@@ -34,4 +34,4 @@ Combat and Choreography, 2026-10-25. Game Design's frame is `rulings-2026-10-23d
 - **Voice:** a hiss through the teeth, never a cry.
 - **Scale:** snap ×1.2, fold ×0.8, step 1.3 bh.
 
-**Open question:** Plated Ram's exact line drops the planner's bend, so a ram into an empty line is the player's choice. Agreed?
+**Open question:** Plate Chase's exact line drops the planner's bend, so a ram into an empty line is the player's choice. Agreed?

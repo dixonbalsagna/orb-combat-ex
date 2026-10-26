@@ -837,6 +837,11 @@
       "id": "mc04",
       "rule": "the rally: the sell is one flash event at most per sold blow, never limp, no slowing beyond the hit-stop, no attacker's taunt over a dazed fighter (the dazed fighter's own laugh or grin is allowed), the camera push brief and eased; grabs in flight follow e12, e16 and ln06 (arms and torso only, the held fighter struggles and is never limp or dangling, no zoom, slow motion, taunt or finisher, the swing never overhead); the Rival's link is named Ring Hold, not Ring Hang; a wreck thrown as a link is empty with nothing living near; the flash cap of 3 a second holds across the whole rally (a link over the cap draws as dust, trail and ember); a stepped spike's flares count as one burst only if they merge into one glow or only the last is bright, proved in a clip; the variety scoring is internal, never shown, and never reads casualties, deaths or a count of people, with no achievement or unlock for a rally's casualties",
       "why": "RL-183; e12, e16, ln06, fx08, c08"
+    },
+    {
+      "id": "mc05",
+      "rule": "elite henchmen under mc01: a trick is picked from the fixed list of six by the stage's seed and stage data only (column, boss, difficulty), never by anything the player did (how he beat the last elite, his habits, the ledger, to counter him); an elite appears in one stage, is never kept, never returns, never remembers the player and is never promoted; the grades are types and not ranks (no henchman becomes a veteran or elite from events, no survivor grows stronger); no name, insignia or story, the one-sided telling part is a silhouette cue; the counter-catch takes arms and torso and never the throat; the blitz's crouch is a lunge-low stance with one limb loaded and the other hand up, no fists at the sides, no scream, the aura a thin outline brightening over at least 0.1 s, no more than two marks at once; a thrown henchman is a combatant and never a civilian; a thrown car is empty with nothing living near it; a downed henchman earns no score, meter, achievement or unlock",
+      "why": "RL-184; mc01"
     }
   ]
 }

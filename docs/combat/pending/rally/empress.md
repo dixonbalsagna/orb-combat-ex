@@ -2,7 +2,7 @@
 
 Combat and Choreography, 2026-10-25. Game Design's frame is `rulings-2026-10-23d.md`. The data is `rally.empress.json`; the names are working labels.
 
-**Who she is in a rally.** She rules the space the body flies through. She draws a line it may not cross, drives it down where she chooses, and in her base form sends it back off her own guard. Her energy links come with revision 9, as her energy kit does (Game Design §20 item 6).
+**Who she is in a rally.** She rules the space the body flies through. She draws a line it may not cross, drives it down where she chooses, and sends it back off her own braced mantle. Her energy links come with revision 9, as her energy kit does (Game Design §20 item 6).
 
 ## Her links (each its own kind for item 8; the base link's price and tech)
 
@@ -20,11 +20,12 @@ Combat and Choreography, 2026-10-25. Game Design's frame is `rulings-2026-10-23d
 - **Price:** the grab's (10, or 14 held).
 - **Legal:** no lines of light join the staves into a box, and there is no dome or cell (e16). No taunt, zoom or finisher over the kneel (e12, e16). One call-out (ln06).
 
-**Guard's Wall** (a bank; base form only, with a guard on point)
-- **Input:** no press. A send toward the guard on point.
-- **What happens:** the guard braces, and the body strikes his raised guard and rebounds back along its line: a ricochet off a living wall. The force is her send's: the guard strikes nothing, closes on nothing and launches nothing.
-- **Look:** a ring of force on the guard's raised forearms as he is pushed back a step.
-- **For Game Design:** `empress-guards.md` §4 says a guard never closes on him, launches him or knocks him back, but 23d item 12 asked for her guards taking a link. This is the version that keeps the guard's own hands clean. Please rule.
+**Mantle Wall** (a bank; Narrative renamed it from Guard's Wall)
+- **Input:** no press. A send toward her while she braces (the stick held toward the body with LB).
+- **Tell:** she plants her heel and swings the mantle forward, rigid as a door.
+- **What happens:** the body strikes her braced mantle and rebounds back along its line: a ricochet, with the force the send's. The mantle stands. It never wraps, coils or grabs, so it never reads as a tail.
+- **Look:** the hem plates lock edge to edge, a ring of force where the body meets them, and she is pushed back a step.
+- **Why the change:** Narrative keeps "guard" out of her lines, and a braced mantle means no guard closes, launches or knocks back (`empress-guards.md` §4 is met). It works in every form. Game Design may still rule the design.
 
 ## Her sell, a size larger (item 4)
 - **A medium:** her head turns with the blow, the mantle flaring and settling. She is rocked back onto one heel, and her chin comes up as she is pulled in.

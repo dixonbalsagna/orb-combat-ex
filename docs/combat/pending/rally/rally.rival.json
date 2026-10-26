@@ -7,8 +7,8 @@
   "_names": "working labels; Narrative names them",
   "links": [
     {
-      "id": "rally.rival.plated_ram",
-      "name": "Plated Ram",
+      "id": "rally.rival.plate_chase",
+      "name": "Plate Chase",
       "base": "chase",
       "kind": "own",
       "input": "the chase with Y (LT with Y); with X it is the plain chase strike",
@@ -22,7 +22,8 @@
         "windup": 8,
         "active": 4,
         "recover": 10
-      }
+      },
+      "_renamed": "Narrative: Plated Ram became Plate Chase, so it doesn't echo Rank Breaker"
     },
     {
       "id": "rally.rival.ring_hold",
@@ -86,12 +87,12 @@
     "_legal": "the body is never limp; no slow motion beyond the hit-stop, no taunt over a dazed fighter; each sold blow is one flash event at most (fx08)"
   },
   "legalAsks": [
-    "the plated ram",
+    "the plate chase",
     "the ring hold in the air",
     "the three-step spike as one burst"
   ],
   "openQuestions": [
-    "Plated Ram's exact line drops the planner's bend: the stick's line wins outright, so a ram into an empty line is the player's choice. Agreed?"
+    "Plate Chase's exact line drops the planner's bend: the stick's line wins outright, so a ram into an empty line is the player's choice. Agreed?"
   ],
   "_flash": "Legal mc04: the flash cap of 3 counted bursts a second holds across the whole rally; a link whose flash would pass it draws as dust, trail and ember instead"
 }

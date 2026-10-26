@@ -2,6 +2,15 @@
 
 Owner: Combat and Choreography. Date: 2026-10-23. Paper only: no data file, nothing built.
 
+**Ruled by Game Design, 2026-10-25** (`docs/design/rulings-2026-10-25.md`), and folded in below:
+- **Accepted as written:** the grades, the turns, lights hitting one body, the crowd caps, the return at most twice, and an elite with no brink.
+- **The domino is raised:** a body sent by a medium dominoes up to 3, and one sent by a heavy, a throw or a launch up to 5.
+- **The relay has no cap:** a body's toughness ends it.
+- **The horde's damage is banded:** a medium player loses 10 to 30% of his health over a horde stage in columns 1 and 2, and 20 to 45% by column 4.
+- **An elite's trick** is a type picked for each spawn: never kept, never named, with no memory (Legal mc01).
+- **The holds are E102's one-body hold,** and in any stage with a second player or a horde, every hit-stop is a one-body hold (recommended until Orb says otherwise).
+- **A downed henchman** pays a little ki and counts toward nothing else (recommended for Orb): fodder 2, grunt 4, veteran 8, elite 15.
+
 **Orb** (co-op answers, `docs/ep/vision.md`): "there's got to be weaker grade opponents, ideally various grades of henchmen created with procedural body parts to create lots of variety". Homework 41 puts them in the campaign's *horde* stage: waves of graded henchmen.
 
 **This builds on:**
@@ -89,7 +98,7 @@ Every tell is body language and sound, never a marker over a fighter (ADR 0010).
 
 - **His body and rule:** the full fighter in a full brawl, as the player's partner under Encounter's partner-and-ring rules. Every rule of the brawl applies: exits, clashes, the clinch, wounds at half rate.
 - **His kit:** the guard row's generated kit (common lights and mediums, one heavy, a bolt). Later, a generator row per elite can draw his own kit from the same posed pieces by seed.
-- **One trick each.** Every elite has exactly one trick, and his silhouette tells which (§5). Each trick is built from a piece we already have:
+- **One trick each.** Every elite has exactly one trick, and his silhouette tells which (§5). **The trick is a type picked for each spawn:** never kept, never named, with no memory, so no elite is a generated individual with traits or a history (Game Design 2026-10-25 item 10; Legal mc01). Each trick is built from a piece we already have:
 
 | Trick | What he does | His tell | The answer | What it is built from |
 | :--- | :--- | :--- | :--- | :--- |
@@ -141,7 +150,7 @@ Every tell is body language and sound, never a marker over a fighter (ADR 0010).
 - **Heavies and launchers** read it in full.
 
 **Bodies meet bodies.**
-- **The domino.** A sent body (struck, thrown or launched) knocks down scuffle bodies of his grade or lower in his path, up to 3. A higher grade stops him and is staggered.
+- **The domino.** A sent body knocks down scuffle bodies of his grade or lower in his path: **up to 3 when a medium sent him, up to 5 when a heavy, a throw or a launch did** (Game Design 2026-10-25 item 5). A heavy through a packed line bowls the line. A higher grade stops him and is staggered.
 - **The return.** A sent grunt or veteran below the wall slam's speed ricochets off a surface back toward the one who sent him, unarmed, landing in reach. The player can hit him again, at most twice in a row (the ricochet's limit). Fodder crumple at the wall. Above that speed it is a wall slam or the building chain, as ruled.
 - **Power has weight.** A launched or sent henchman is a real body. He flies by the launch planner, ploughs into buildings by the brunt rules and craters the ground. A heavy through a line of grunts is collateral.
 - **No friendly fire.** A body sent by one player never hurts a player.
@@ -156,13 +165,13 @@ Every tell is body language and sound, never a marker over a fighter (ADR 0010).
 | **In the air** | No pursuit exchange (there is no exchange). The player may zip to the airborne body and strike it once, which sends it again by that blow's path | As grunts | The pursuit, as in any brawl |
 | **Thrown objects** | A car's path drops fodder and launches grunts | A car staggers him and breaks the armour | As in any brawl |
 | **Bolts** | Drop fodder; flinch grunts | Chip, no flinch | As in any brawl |
-| **The signature beam** | Drops every fodder and grunt on its path | Launches him | Guard or dodge only, with no struggle (a struggle pauses the sim) |
+| **The signature beam** | Drops every fodder and grunt on its path | Launches him | An elite's kit has no beam, so no struggle arises; one that ever has a beam struggles like anyone (item 14) |
 | **Powering up on the ground** | The crater knocks down fodder within its radius | No effect | No effect |
 | **The perfect block** | Drops fodder; staggers a grunt for 20 ticks | Breaks the armour; staggers him for 30 ticks | As in any brawl |
 
-- **The co-op relay.** A body one player sent can be struck in flight by the other, which sends it again by his blow's path, at most twice a body. Two players can juggle a grunt between them.
+- **The co-op relay.** A body one player sent can be struck in flight by the other, which sends it again by his blow's path. **There is no cap** (item 8): the body's toughness ends a relay, and two players juggling a grunt between them pays for itself.
 - **The weight of a hit, with no sim-wide hit-stop.**
-  - The struck henchman alone holds, on his own timer, while everything else runs: 3 ticks for a light, 5 for a medium, 7 for a heavy.
+  - The struck henchman alone holds, on his own timer, while everything else runs: 3 ticks for a light, 5 for a medium, 7 for a heavy. This is E102's one-body hold (`energy-overhaul.md`), one mechanism for both, and it doesn't count toward the freeze budget (item 11).
   - A sweep that hits three bodies holds each in turn, a tick apart, so that the blow reads as passing through them.
   - The striker does not hold in the sim. Rendering may hold his pose at contact for a frame or two, reading the sim's contact tick and writing nothing.
 - **Downed bodies are never faded or dissolved** (Orb, ADR 0010).
@@ -172,6 +181,7 @@ Every tell is body language and sound, never a marker over a fighter (ADR 0010).
 
 **What "satisfying to clear" asks.** These are bands for QA to measure later:
 - A wave of 12 fodder falls to one medium-skill player (the AI as player) in 10 to 20 s.
+- **The horde's damage band** (item 2): a medium player loses 10 to 30% of his health over a horde stage in columns 1 and 2, and 20 to 45% by column 4. If it runs over, the levers are the turn's gap first, then the blow's damage.
 - In a minute of a mixed wave, at least four kinds of body meeting happen: the domino, the sweep, the landing, the return, the relay and the throw.
 - Two hard tests:
   - no player is hit by two bodies within 8 ticks;
@@ -211,7 +221,8 @@ Every tell is body language and sound, never a marker over a fighter (ADR 0010).
                 "struck": {"medium": "stagger", "heavy": "handspring", "launch": "launch"},
                 "perfect": {"stagger": 30, "armour": "broken"}},
     "elite":   {"grade": 3, "body": "fighter", "rule": "brawl", "turnWeight": 2, "health": 0.4, "wounds": 0.5, "brink": false,
-                "kit": "guard", "trickOne": ["counter_catch", "wall_return", "meet", "thrown_henchman", "car", "blitz"]}
+                "kit": "guard", "trickOne": ["counter_catch", "wall_return", "meet", "thrown_henchman", "car", "blitz"],
+                "_trick": "a type picked for each spawn: never kept, never named, no memory (Game Design 2026-10-25 item 10; Legal mc01)"}
   },
   "turns": {"perPlayer": {"easy": 1, "medium": 2, "hard": 2}, "gapTicks": {"easy": 30, "medium": 20, "hard": 12},
             "spacingTicks": 8, "holdMaxS": 3, "behindWindupMin": 20,
@@ -219,8 +230,10 @@ Every tell is body language and sound, never a marker over a fighter (ADR 0010).
   "crowd": {"hop": {"bh": 1.5},
             "paths": {"line": "bowl", "rise": "launch_land_splash", "drop": "shock", "arc_in": "sweep", "arc_out": "sweep", "spin": "all_round"},
             "caps": {"light": 1, "medium": 2, "sweep": 3, "spin": 4, "splashBh": 1},
-            "domino": {"cap": 3, "grades": "same_or_lower"}, "return": {"inARow": 2}, "relay": {"perBody": 2}},
-  "hold": {"light": 3, "medium": 5, "heavy": 7}
+            "domino": {"capMedium": 3, "capHeavy": 5, "_heavy": "a heavy, a throw or a launch", "grades": "same_or_lower"}, "return": {"inARow": 2}, "relay": {"perBody": null, "_relay": "no cap: toughness ends it"}},
+  "hold": {"light": 3, "medium": 5, "heavy": 7, "_hold": "E102's one-body hold; not counted toward the freeze budget"},
+  "kiOnDown": {"fodder": 2, "grunt": 4, "veteran": 8, "elite": 15, "_ki": "recommended for Orb; no score, meter or other reward (c08, mc01)"},
+  "qa": {"damageOverStage": {"columns1and2": [0.10, 0.30], "column4": [0.20, 0.45]}, "fodderWave12Sec": [10, 20]}
 }
 ```
 
@@ -281,11 +294,7 @@ Every tell is body language and sound, never a marker over a fighter (ADR 0010).
 
 ## 6. For others
 
-- **Game Design:** every number above. Also:
-  - that lights hit one body;
-  - the domino, the return and the relay caps;
-  - that an elite has no brink;
-  - whether a downed henchman pays ki (it ties to Research's open question 4, which is Orb's).
+- **Game Design:** ruled (2026-10-25), as above.
 - **Encounter:** the scuffle bodies; the turns (its partner and ring, extended to many light bodies); the travelling string's hop; the crowd readings by path; the domino, the return and the relay.
 - **Simulation:** the light body (position, health, a few timers, grade, type, size class, trick), hashed. The spawn id doubles as the body seed.
 - **Animation:**
@@ -298,6 +307,6 @@ Every tell is body language and sound, never a marker over a fighter (ADR 0010).
 - **Camera:** each pane frames its player and his turn holders.
 - **Audio:** the sound of a wind-up from behind.
 - **Performance:** the render cost of a wave (Research §C).
-- **Orb** (Research's questions, still open):
-  - while an elite brawls one player, the exchange's freezes stop the horde and the other player;
-  - whether henchmen count toward anything.
+- **Orb** (with Game Design's recommendations, 2026-10-25):
+  - an elite's brawl and the horde: every hit-stop a one-body hold in a stage with a second player or a horde, so nothing freezes the other player (item 12);
+  - a downed henchman: a little ki (fodder 2, grunt 4, veteran 8, elite 15) and nothing else (item 13).
