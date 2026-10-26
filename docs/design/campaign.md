@@ -46,6 +46,17 @@ Owner: Game Design. Status: **the design, 2026-10-25,** revised the same day so 
 - **The title card says which it is.** A main-story episode carries the season's episode number. **A filler episode carries a half number, such as "Episode 12.5",** as the anime would number one. A filler arc's cards carry its own short title. Each is one line, at the edge, and never on the fighters.
 - **Co-op joins any kind the same way** (§3). A partner who joins a main-story episode advances his own main story only if he has reached that chapter. Otherwise he plays it as a guest, keeping his rewards but not the chapter.
 
+### 1.4 Filler's slots and families (for Narrative, `docs/narrative/filler-templates.md`)
+
+- **`episode_number`** comes from the **season record:** the save's small record beside the run states, which holds the number of the last main-story episode won (whole numbers, local, Legal mc02). When a side story opens from inside a main arc (§1.3), its run state copies that number into its arc block as the episode it follows, n, and the card reads n.5. A standalone filler episode has none and reads SIDE STORY.
+- **`side_place`** comes from the **run state's arc block.** When a main-story episode ends, a seeded draw (`H(arc, "side", n)`) decides whether a side story is offered (on about half of them, as a first value). If one is, World's ring picker places it on the current ring, within the usual 10 to 25 s of flight. Its place id and its family go into the arc block, and the template reads the name from the planet's places list.
+- **A filler arc reuses the four families, with its own villain.**
+  - Its first two episodes each take one of Narrative's four families (a training day, a rivalry game, a tournament on a stage, a rescue), two different ones picked by the arc's seed, so the arc keeps filler's lighter feel.
+  - The arc's villain is a roster fighter, kept in the arc block as `arc_villain`. He is the climax opponent wherever a family's climax takes a roster opponent. In the rescue, he is the one the stranded fighter needs rescuing from, never the stranded one.
+  - **The finale episode** uses the general families (`home_threat`, `boss_taunt`), and ends on the villain as the arc's boss, with tier 5.
+  - Any column a filler family doesn't cover falls back to the general families.
+  - The villain never changes from play (mc01): only the lines and the grounds do.
+
 ## 2. The structure
 
 ### 2.1 The three levels
