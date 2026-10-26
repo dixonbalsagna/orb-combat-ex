@@ -11,7 +11,7 @@ The EP's brief of 2026-10-26: the rally's rows (`rulings-2026-10-23d.md` §7 wit
 | Dazes a match | 2 to 8 | `daze` cues with text `start`, over the matches; the sources are listed beside it |
 | Rallies a match | 3 to 10 | `rally_end` cues |
 | Links a rally | **median 2 to 4** | each `rally_end`'s `n` (links so far). A rally's links are their own row (item 11) |
-| Two links of one kind in a row | at most 25% of links | the base kinds of a rally's links, in order |
+| Two links of one kind in a row | at most 25% of links | the kinds of a rally's links, in order: the cue's `source` when set (an own link is its own kind, GD 23d item 17: a Palm Turn after an overtake is no repeat), else the base kind (`text`) |
 | Rallies ended by repetition | at most 20% | a rally that ended `teched` after a tech by itself (`rally_tech` with `k` 1) |
 | Rallies that turn at least once | **15 to 40%** | `rally_end`'s `k` (turns) of 1 or more. **The band stays 15 to 40**; the widening to 10 to 40% for AI v AI is applied only on GD's word that links and turns still conflict (item 9) |
 | Rally time | at most 25% of match time | the rallies' live ticks over the matches' fight time |

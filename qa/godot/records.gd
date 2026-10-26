@@ -375,7 +375,8 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 								rl_cur = []
 								rl_auto = false
 						else:
-							rl_cur.append(rtx)
+							var rsrc: String = str(e.get("source"))   # GD 23d item 17: an own link is its own kind, carried in the cue's source; else the base kind (the text)
+							rl_cur.append(rsrc if rsrc != "" and rsrc != "<null>" else rtx)
 							rl_ticks.append(S.tick)
 					elif cq == "rally_tech":
 						rec.rally.techs += 1
