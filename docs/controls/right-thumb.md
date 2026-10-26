@@ -9,7 +9,7 @@ A claw (or back paddles, or a keyboard) wins only where a command's payoff depen
 - **The law (1):** four testable rules, with a "claw bot" gate that fails the build if a zero-transfer player ever out-performs a standard-transfer one (section 4).
 - **Reactive defence on the left hand (2):** LT's dodge tap stays the one dodge against blows, and LT or LB plus the **left** stick's direction picks the slip. Standard grip, no conflict. Game Design's step-1 ruling 3 already puts blow defence on LT.
 - **The right stick as set-and-release reads (3):** a flick sets something that persists (an aim line, a read, a step in neutral) and the thumb goes back to the buttons. Gap-invariant by construction, and GD's latched aim line (R16) is already one.
-- **Mirrors (5):** every stick command also has a button-and-left-stick form with the same cost and a start no earlier than the stick's, which is also the keyboard, touch and accessibility form.
+- **Mirrors (5):** every stick command also has a button-and-left-stick form with the same cost and **the same tick** as the stick's (GD ruled exact parity, 2026-10-26: a faster mirror is a device advantage), which is also the keyboard, touch and accessibility form.
 
 ## 2. Where the advantage actually lives
 
@@ -45,8 +45,9 @@ The capture page (Tools, `tools/capture/right-stick.html`) needs one more block 
 
 1. **No pairing in a beat.** No command needs a right-stick input and a face button inside the same window. A stick input never changes a beat that is already running (a blow in flight, a wind-up). Right-stick commands act in neutral, in Aim (latched), or as a director rush that is its own beat.
 2. **Gap-invariance.** For any stick command followed by a face button within `W`, the **result** (what the pair makes) is identical for every gap from 0 to `W`. The stick sets a state and the button acts on it; only the button's own timing says when the blow starts.
-3. **Commitment and lockout.** Every stick command commits the fighter for at least `L` ticks, and a face press made during that commitment, or during a stick hold, **queues** (the existing 3-deep, 36-tick request queue) and **starts at the commitment's end, or at the hold's release plus `L`**. A claw's early press and a standard thumb's later press start on the same tick.
-4. **Mirror parity.** Every stick command has a button-and-left-stick form (or the D-pad, a key, a swipe) with the same ki, the same commitment and a start **no later than** the stick form's, which is itself 2 ticks late by its own read; so the stick is never the faster form.
+3. **Commitment and lockout, symmetric** (GD's rulings 13 to 16 of 2026-10-26). Every stick command commits the fighter for at least `L` ticks, **and a face press commits the stick for `L` in the same way**: without that, a claw alternating press and stick gains `L` ticks a step. A face press made during a stick commitment, or during a stick hold, **queues** (the existing 3-deep, 36-tick request queue) and **starts at the commitment's end, or at the hold's release plus `L`**. A stick input made during a face press's commitment **waits** and **acts on the tick the wait ends**, exactly as a queued press does (no extra tick). A claw's early input and a standard thumb's later input take effect on the same tick.
+   - **The newest input wins, and nothing is silent.** At most one stick command waits: a later face press, or a later flick, replaces it, and the dropped one gets a **lapsed ack** (a flicker in the hand), as a swallowed press does (`energy-overhaul.md` E3).
+4. **Mirror parity: the same tick.** Every stick command has a button-and-left-stick form (or the D-pad, a key, a swipe) with the same ki, the same commitment and **the same tick** as the stick form's. The stick's flick waits 2 ticks after it crosses to settle its direction, so **the D-pad's command waits the same 2 ticks**: neither form is ever faster.
 
 **The gate (a "claw bot").** A pure-input test, written once Game Design fixes the command list: scripted intents drive the same command pairs with a transfer of 0 (claw) and with `L` (standard fast), over every pair and gap in `0..W`, and assert **the same outcome (state hash on the pair's effect, blow kind, damage, ki) on the same tick**; plus a mirror check (stick form against button form) and an AI-against-AI fight in which one side uses claw timing, which must not win more than a seeded fair-coin margin. It fails the build.
 
@@ -65,7 +66,7 @@ Score: claw advantage (zero is the bar), fluidity, misreads, learnability, touch
 **Added by me.**
 6. **Commitment as the equaliser (rule 3).** The queue already exists; a claw's press and a standard thumb's later press start on the same tick. This is the part that turns "the thumb is busy" into "the thumb is never penalised".
 7. **No device detection, ever.** Nothing in the game tries to tell a claw from a standard grip; the rules are device-agnostic, so there is nothing to evade and nothing unfair to accuse a player of.
-8. **D-pad as the pad's mirror for the stick's neutral-time commands** (aim presets, steps): the left thumb can reach it while the right thumb stays on the buttons; this is rule 4's pad form for aim and steps.
+8. **D-pad as the pad's mirror for the stick's neutral-time commands** (aim presets, steps): the left thumb can reach it while the right thumb stays on the buttons; this is rule 4's pad form for aim and steps, acting on the same tick as the stick's.
 
 ## 6. What this changes in Game Design's step 1
 
@@ -81,6 +82,7 @@ Score: claw advantage (zero is the bar), fluidity, misreads, learnability, touch
 
 ## 7. What it costs, and risks
 
+- **A stick input just after a face press now waits too** (the reverse commitment, rule 3): a flick made within `L` of a press acts at the end of the wait. It is the same 6 ticks the press pays after a flick, so the cost is symmetric.
 - **Latency for a fast standard thumb is zero** (lockout at their p10); for a claw it removes an advantage, which is the point. A player who mashes a face button right after a flick sees the blow start 6 ticks after the flick, not at once: **visible, and it must be explained by the director's choreography** (the step's own animation) so it does not read as lag.
 - **The transfer numbers are assumptions.** If real thumbs are faster than the model, `L` rises; if slower, `W` rises. The capture block decides before any command ships.
 - **A "read" that fires automatically can feel like the game plays for you.** Costs (ki), expiry and a cap of one read at a time keep it a choice; this is Game Design's to tune.

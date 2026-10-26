@@ -14,7 +14,7 @@ For every stick command in 13.4, **a player who issues the stick input and the f
 
 `L` and `W` are read from the data (`rightThumb.lockout` 6, `rightThumb.window` 36), so the capture tool's measured values can replace them without touching the test.
 
-## 2. The assertions (A to F)
+## 2. The assertions (A to I)
 
 | # | Assertion | For which rows |
 | :--- | :--- | :--- |
@@ -23,7 +23,10 @@ For every stick command in 13.4, **a player who issues the stick input and the f
 | **C. Hold lockout** | A press made at any tick **during** a hold queues and starts at `release + L`, whenever in the hold it was made; a press made after the release at `r >= L` starts at `r`. A press made inside the first `L` after release starts at `release + L` | the dash, orbit, wall run, skim |
 | **D. Latched state** | A shot fired at gap `g` from the aim line's latch (g in `0..W`) leaves at the same angle; the lay lands where the latched flick said; a latched aim survives the thumb leaving the stick and clears on RB's release exactly as ruled | RB flick and hold, LB+RB flick |
 | **E. Read** | A read set with LB plus a flick persists to 90 ticks or its first fire; a rival attack that starts **after** the set fires it identically whatever the face-button timing; a read set while the attack is already running does not fire; one read at a time; 3 ki once | the LB flick rows |
-| **F. Mirror parity** | The D-pad form, the arrow-key form and the swipe form of each row have the same ki, the same commitment `L` and a start tick **no later than** the stick form's | every row |
+| **F. Mirror parity: the same tick** | The D-pad form, the arrow-key form and the swipe form of each row have the same ki, the same commitment `L` and act on **exactly the stick form's tick** (the stick's flick settles 2 ticks after the crossing, so the D-pad's command waits the same 2). Neither form is ever faster or slower | every row |
+| **G. Reverse commitment** | A stick input made at gap `g` after a **face press** acts on tick `max(g, L)` after the press. CLAW (g = 0) and FAST (g = 6) act on the same tick; SLOW (g = 13) at 13. The flick's effect is identical for every `g` in `0..W` | every Step, Rush and Aim row, after each of X, Y, B and A |
+| **H. Newest wins, nothing silent** | At most one stick command waits. Press, flick, flick: only the second flick acts. Flick, press: the flick is dropped. Every dropped command emits a **lapsed ack** on the tick it is dropped; none is dropped without one | every stick row |
+| **I. A waiting flick acts on the tick its wait ends** | A flick that waited on the reverse commitment acts on the tick the wait ends, with **no extra tick** (the same tick a queued press would start), so the result at every gap is rule 2's | every stick row |
 
 **A queued press is not lost.** The request queue is 3 deep and a request lives 36 ticks. A press queued behind a **hold** can outlive the queue's 36 ticks (a hold may run longer); in that case it expires, which only ever costs the claw (it must press again), so the gate asserts that expiry never makes a claw faster.
 
@@ -45,11 +48,13 @@ For every stick command in 13.4, **a player who issues the stick input and the f
 | LB | Flick: a read | Read | E, F |
 | LT, RT | nothing in step 1 | | assert a right-stick input does nothing under LT or RT |
 
-**Counts.** About 14 stick rows by 4 face buttons (X, Y, B, A) by 8 gaps is roughly 450 short runs (about 60 ticks each), plus the hold and mirror cases: a few seconds of headless sim.
+**Added by GD's rulings 13 to 16 (2026-10-26):** G, H and I apply to **every stick row** above, whatever its other cases, and F now means the same tick.
+
+**Counts.** About 14 stick rows by 4 face buttons (X, Y, B, A) by 8 gaps is roughly 450 short runs for each of A and B, and the same again for G (the press first, the stick after), plus the hold, mirror and newest-wins cases (H and I, a few dozen sequences): about 1,000 runs of about 60 ticks, still a few seconds of headless sim.
 
 ## 4. The fight check (the whole thing, not one pair)
 
-A seeded script drives a fixed list of commands against a **scripted dummy** that throws blows at fixed ticks. Two timing models run the same list: the STANDARD run spaces each stick command and the next face press by the transfer (13 ticks); the CLAW run issues each next input at the earliest tick it can (0 transfer). The gate asserts that **over 600 ticks the CLAW run's damage dealt, ki spent, blows started and reads fired are no better than the FAST run's, on every seed (50 seeds)**, and that the two end in the same state when the CLAW run is slowed to FAST's spacing. This catches an interaction the single-pair cases miss (a step's lockout stacking with a read, a queued press behind a dash).
+A seeded script drives a fixed list of commands, **alternating stick and face inputs as a claw would**, against a **scripted dummy** that throws blows at fixed ticks. Two timing models run the same list: the STANDARD run spaces each stick command and the next face press by the transfer (13 ticks); the CLAW run issues each next input at the earliest tick it can (0 transfer). The gate asserts that **over 600 ticks the CLAW run's damage dealt, ki spent, blows started and reads fired are no better than the FAST run's, on every seed (50 seeds)**, and that the two end in the same state when the CLAW run is slowed to FAST's spacing. This catches an interaction the single-pair cases miss (a step's lockout stacking with a read, a queued press behind a dash).
 
 ## 5. What the build needs first
 
