@@ -41,7 +41,7 @@ Each of the five stages is a column of the route, with **two or three places to 
 
 - **The arc's finale** replaces column 5 of its last episode with **the arc's boss** on its home ground, with tier 5 and the catastrophe (`run-mode.md` §3).
 - **Branches cross:** a place not taken in column 2 can come back in column 4 as a consequence ("while you fought at the harbour, the Rival took the ridge"). This borrows the Siege's best idea, the fronts you didn't take, without its board.
-- **Graded henchmen** fill the hordes by column: grades 0 and 1 in columns 1 and 2, up to 3 by column 4 (`docs/combat/henchmen-grades.md`).
+- **Graded henchmen** fill the hordes by column: grades 0 and 1 in columns 1 and 2, up to 3 by column 4 (`docs/combat/henchmen-grades.md`). **Henchmen stay anonymous and have no memory** (Legal mc01).
 
 ### 2.3 The route is the ring: choosing by flying
 
@@ -71,7 +71,7 @@ Each of the five stages is a column of the route, with **two or three places to 
 | **Leaving** | His fighter flies off over the horizon, or, if the player who stays asked for one, the CPU partner takes him over. A beat reads it |
 
 - **The CPU partner** is optional in solo, and fully its own mind with one order the player can give (stay close, or go ahead). It never splits from the player unless ordered.
-- **No friendly fire.** Collateral and its costs are shared: a death on the ring is on whoever caused it, by the standing rules.
+- **No friendly fire.** Collateral and its costs are shared: a death on the ring is on whoever caused it, by the standing rules. **That is a count for the meters only:** no per-player casualty tally appears on any screen, results page, comparison, leaderboard or achievement, and menace and anguish stay power meters, not scores (Legal mc02, c08).
 
 ### 3.2 Splitting and converging on one ring
 
@@ -94,9 +94,18 @@ Each of the five stages is a column of the route, with **two or three places to 
 
 **The state that makes it interesting** (all in the run state, `run-core.md` §2 and §12):
 - **The planet's wounds:** places damaged and fallen, craters, the scars of beams, flooded trenches. They persist across the arc, so episode three is fought on the ruins episode one made.
-- **The cast's memory:** who beat whom, where, how close, and what was wrecked (`last`, `wrecked`). **A rival you humiliated comes back angrier, on the ground you wrecked last time.**
+- **The cast's memory:** who beat whom, where, how close, and what was wrecked (`last`, `wrecked`). **A rival you humiliated comes back angrier, on the ground you wrecked last time.** "Angrier" is his lines and the beat's tone, and nothing else (mc01, below).
 - **Open threads:** a debt, a grudge, a cliffhanger's promise (who is coming next), and an ally who switched sides and may switch back.
 - **The two meters:** the hero's anguish and the villain's Dread, which shape the arc's end (`run-mode.md` §5.1, the final arcs).
+
+**What memory may do, and what it may never do** (Legal mc01, `docs/legal/campaign-screen.md`, RL-182). The ledger chooses lines, grounds and beats, and nothing more.
+- **No parameter of any non-player fighter ever changes because of what happened between him and the player:**
+  - no rank, title, promotion or demotion;
+  - no new ability, strength, weakness or fear;
+  - no change of name or look;
+  - no "stronger because he beat you", and no "weaker because you humiliated him".
+- **No procedurally generated enemy individuals** with names, traits or histories. No ladder or chain of command among the cast, and no lieutenant who replaces a fallen boss.
+- **A future feature that wants a fighter's behaviour, numbers or looks to depend on past meetings stops and asks Legal first.**
 
 **How far it goes, by level:**
 
@@ -138,7 +147,7 @@ Episodes are runs, so the run state needs no new kind of carry, only a longer li
 
 ### 5.2 "Previously on": a lost episode airs, and the next one answers it
 
-**When an episode is lost** (its lives are gone), **nothing is erased.** It ends on a "To be continued" card. The planet keeps what the loss did: the place falls, and the villain holds his claim. The rival who won holds the high ground. **The next episode opens with the recap** and answers the loss:
+**When an episode is lost** (its lives are gone), **nothing is erased.** It ends on a "To be continued" card. The planet keeps what the loss did: the place falls, and the villain holds his claim. **"Fallen" is a wear state only:** no card, line or beacon says who or how many were lost there (mc02). The rival who won holds the high ground. **The next episode opens with the recap** and answers the loss:
 - **A training stage replaces the cold open:** a short drill of 60 to 90 seconds, against what beat him. Lost to a beam? Its struggle. Lost to a rally? The air tech.
 - **Clearing the drill gives a lesson,** a small, specific gain for that episode only: for example, against the one who beat him, his first tech window is 2 ticks wider. **It is never a stat that carries past the run** (`run-mode.md` §4.4).
 - **The rise column always offers a rematch place,** with the one who beat him, on the ground that fell.
@@ -160,7 +169,7 @@ Episodes are runs, so the run state needs no new kind of carry, only a longer li
 - A player who loses an episode gets a reason to play the next one (a lesson and a rematch).
 - Neither ever wipes the arc.
 
-**For Legal, ahead of time.** "Rivals remember" stays a matter of beats that read the ledger. It is **no hierarchy and no promotion system** of procedurally generated enemies, which is a protected game mechanic elsewhere. Legal should screen §4's memory and §5.2's rematch before anything is built.
+**Legal passed §4, §5 and §6 with conditions** (`docs/legal/campaign-screen.md`, RL-182: mc01 to mc03). "Rivals remember" stays a matter of beats that read the ledger, under mc01 (§4). The lesson is a gain on the player's side only. **Before the campaign ships or sells, a patent attorney reads the claims Legal names** (mc03, which is in Orb's homework).
 
 ## 6. The ledger's slots, under Legal ln05
 
@@ -176,13 +185,13 @@ The campaign's beats read these, and no others. Every one follows `docs/legal/be
 | `wrecked` | What their last meeting brought down: a tower, the pier, a crater, a fire, or nothing |
 | `home_wear` | A home's state: untouched, damaged or fallen |
 | `place`, `prev_place`, `next` | Place names, and the next opponent and place, for a cliffhanger |
-| `thread` | An open promise: a debt, a grudge, an ally who switched sides |
+| `thread` | An open promise: a debt, a grudge, an ally who switched sides. **About fighters and places' wear only:** never a casualty, a toll, a victim, a promise to avenge anyone, or a debt to the dead (mc02) |
 | `rescued_by` | The ally who stepped in (§5.1) |
-| `lost_episode` | That the last episode was lost, where, and to whom (§5.2) |
+| `lost_episode` | That the last episode was lost: where, and to whom (§5.2). Never what was lost in people (mc02) |
 | `lesson` | What the training stage taught (§5.2) |
 | `n_left` | Stages left before the climax |
 
-`toll_band` stays as Narrative has it: coarse, never a score, and never read by a Cyborg line.
+`toll_band` stays as Narrative has it: coarse, never a score, and never read by a Cyborg line. **Saves across days stay local,** with no personal data. Cloud saves or online co-op would need the privacy line and the store answers changed first (mc02).
 
 ## 7. Who builds it, and the first slice
 
@@ -196,7 +205,7 @@ The campaign's beats read these, and no others. Every one follows `docs/legal/be
 | UI | The edge beacons, boons in the world, the beat card's edge form, "To be continued" |
 | Controls | Drop-in from any pad at any moment, and the CPU partner's one order |
 | QA | The rows below |
-| Legal | §5.4's screen, and §6 |
+| Legal | Done: RL-182 (mc01 to mc03). The patent read (mc03) is due before the campaign ships |
 
 **The first slice:**
 1. One episode, solo, five stages on one planet, choosing by flying.
