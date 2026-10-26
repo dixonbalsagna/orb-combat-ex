@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The rally: stun, sell, bounce</title>
+<style>
+:root{--text-primary:#1f1f1c;--text-secondary:#5f5e5a;--text-muted:#888780;--surface-1:#f6f5f0;--border:#d3d1c7;--bg-accent:#e6f1fb;--text-accent:#0c447c}
+body{font-family:sans-serif;margin:16px;max-width:840px;color:var(--text-primary)}
+button{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;color:var(--text-primary)}
+.lab{font-size:13px;color:var(--text-secondary)}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+#steps{margin:10px 0 0;padding-left:22px;font-size:14px;line-height:1.5}
+#steps li{color:var(--text-muted)}
+#steps li.on{color:var(--text-primary);font-weight:bold}
+kbd{border:1px solid var(--border);border-radius:4px;padding:0 4px;font-size:12px}
+</style>
+</head>
+<body>
+<p>The rally (Research, 2026-10-25): Game Design's rulings 23d (<code>docs/design/rulings-2026-10-23d.md</code>), the balance Orb asked for. An earned daze, the sell (each landed blow in it a size larger), B's send that opens the rally, links of flight attacks with repetition as the guard, and the turn that hands a rally over. Watch the clips step by step, or Play. Flight distances are drawn at half the game's so both fighters stay in the frame; the words at the top right are the director's feed.</p>
+<div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;margin:0 0 12px">
+  <span class="lab">Clip</span><div id="rowC" class="row"></div>
+  <span class="lab">Mode</span><div id="rowM" class="row"></div>
+  <label for="spd" class="lab">Playback speed</label>
+  <div style="display:flex;gap:10px;align-items:center"><input id="spd" type="range" min="10" max="100" step="5" value="100" style="width:180px"><span id="spdo" class="lab">100%</span><span id="pad" class="lab"></span></div>
+</div>
+<canvas id="cv" width="800" height="360" style="width:100%;border:0.5px solid var(--border);border-radius:12px;background:var(--surface-1)"></canvas>
+<ol id="steps"></ol>
+<p class="lab">Play, keyboard: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> fly (and nudge a send; hold back against his flight for the overtake), <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> are X, Y and B (hold <kbd>L</kbd> to charge a heavy; full at 44 ticks breaks a guard), <kbd>Space</kbd> guards (and techs a link as it arrives on you), <kbd>Shift</kbd> is LT (with <kbd>J</kbd> or <kbd>K</kbd> while he flies, the chase; a tap as your chase meets a building, the bank), <kbd>E</kbd> is RB (with <kbd>K</kbd>, a lob where he lands), <kbd>Q</kbd> is RT (the burst). B from above him while he flies is the spike. A gamepad works as it is (left stick, X Y B, LB, RB, LT, RT).</p>
+<script>
+/*SIM*/
+(function () {
+var cv = document.getElementById('cv'), c = cv.getContext('2d');
+var R = { clear: function (col) { c.fillStyle = col; c.fillRect(0, 0, S.W, S.H); },
+  poly: function (p, col) { if (p.length < 6) return; c.fillStyle = col; c.beginPath(); c.moveTo(p[0], p[1]); for (var i = 2; i < p.length; i += 2) c.lineTo(p[i], p[i + 1]); c.closePath(); c.fill(); },
+  text: function (x, y, s, size, col) { c.fillStyle = col; c.font = 'bold ' + Math.round(size * 1.35) + 'px monospace'; c.textBaseline = 'top'; c.fillText(String(s).toUpperCase(), x, y); } };
+var st = { ci: 0, mode: 'demo' }, run = null, keys = {}, spd = 1, acc = 0, last = 0, shown = -1, ac = null;
+function reset() { run = S.newRun(st.ci, st.mode); shown = -1; renderSteps(); }
+function buttons(el, items, get, set) { el.innerHTML = ''; items.forEach(function (it, i) { var b = document.createElement('button'); b.type = 'button'; b.textContent = it; b.addEventListener('click', function () { set(i); paint(); reset(); b.blur(); audio(); }); el.appendChild(b); }); el._get = get; }
+function paintRow(el) { Array.prototype.forEach.call(el.children, function (b, i) { var on = el._get() === i; b.style.background = on ? 'var(--bg-accent)' : 'transparent'; b.style.color = on ? 'var(--text-accent)' : ''; }); }
+var rowC = document.getElementById('rowC'), rowM = document.getElementById('rowM');
+function paint() { [rowC, rowM].forEach(paintRow); }
+buttons(rowC, S.CLIPS.map(function (cl) { return cl.n + ' ' + cl.name; }), function () { return st.mode === 'demo' ? st.ci : -1; }, function (i) { st.ci = i; st.mode = 'demo'; });
+buttons(rowM, ['Watch the clip', 'Play'], function () { return st.mode === 'demo' ? 0 : 1; }, function (i) { st.mode = i ? 'play' : 'demo'; });
+paint();
+var sl = document.getElementById('spd'); sl.addEventListener('input', function () { spd = sl.value / 100; document.getElementById('spdo').textContent = Math.round(sl.value) + '%'; });
+var MAP = { KeyW: 'up', KeyA: 'left', KeyS: 'down', KeyD: 'right', KeyJ: 'X', KeyK: 'Y', KeyL: 'B', Space: 'LB', ShiftLeft: 'LT', ShiftRight: 'LT', KeyE: 'RB', KeyQ: 'RT' };
+function toPlay() { if (st.mode !== 'play') { st.mode = 'play'; paint(); reset(); } }
+window.addEventListener('keydown', function (e) { if (MAP[e.code]) { audio(); toPlay(); keys[MAP[e.code]] = true; e.preventDefault(); } });
+window.addEventListener('keyup', function (e) { if (MAP[e.code]) { keys[MAP[e.code]] = false; e.preventDefault(); } });
+window.addEventListener('blur', function () { keys = {}; });
+function pad() { var ps = navigator.getGamepads ? navigator.getGamepads() : [], g = null; for (var i = 0; i < ps.length; i++) if (ps[i] && ps[i].connected) { g = ps[i]; break; } return g; }
+var padSeen = false;
+function input() {
+  var o = { X: !!keys.X, Y: !!keys.Y, B: !!keys.B, LB: !!keys.LB, LT: !!keys.LT, RB: !!keys.RB, RT: !!keys.RT, mx: (keys.right ? 1 : 0) - (keys.left ? 1 : 0), my: (keys.up ? 1 : 0) - (keys.down ? 1 : 0) }, g = pad();
+  if (g) {
+    if (!padSeen) { padSeen = true; document.getElementById('pad').textContent = 'Gamepad: ' + g.id.slice(0, 40); }
+    var ax = g.axes, bt = function (i) { return g.buttons[i] && (g.buttons[i].pressed || g.buttons[i].value > 0.5); };
+    if (Math.abs(ax[0]) > 0.25) o.mx = ax[0]; if (Math.abs(ax[1]) > 0.25) o.my = -ax[1];
+    o.X = o.X || bt(2); o.Y = o.Y || bt(3); o.B = o.B || bt(1); o.LB = o.LB || bt(4); o.RB = o.RB || bt(5); o.LT = o.LT || bt(6); o.RT = o.RT || bt(7);
+    if (st.mode !== 'play' && (bt(2) || bt(3) || bt(1) || Math.abs(ax[0]) > 0.5)) toPlay();
+  }
+  return o;
+}
+function renderSteps() {
+  var ol = document.getElementById('steps'); ol.innerHTML = '';
+  if (st.mode === 'play') { var li = document.createElement('li'); li.textContent = 'Playing as the Protagonist: the keys are below. The rival guards your heavies, mashes out of a daze, techs some links and turns some of them. Pick a clip to watch again.'; ol.appendChild(li); return; }
+  S.CLIPS[st.ci].steps.forEach(function (s) { var li = document.createElement('li'); li.textContent = s[1]; ol.appendChild(li); });
+}
+function audio() { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; } } }
+function tone(f0, f1, dur, vol, type) { if (!ac) return; var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime; o.type = type || 'square'; o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f1, t + dur); g.gain.setValueAtTime(vol, t); g.gain.linearRampToValueAtTime(0, t + dur); o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + dur + 0.02); }
+var SOUNDS = { hit: function () { tone(140, 70, 0.08, 0.07, 'triangle'); }, sold: function () { tone(110, 45, 0.18, 0.09, 'triangle'); }, send: function () { tone(90, 35, 0.3, 0.1, 'sawtooth'); }, link: function () { tone(160, 60, 0.12, 0.08, 'triangle'); }, zip: function () { tone(400, 900, 0.08, 0.03); }, tech: function () { tone(700, 500, 0.06, 0.04); }, slam: function () { tone(70, 30, 0.25, 0.1, 'sawtooth'); }, splash: function () { tone(300, 120, 0.2, 0.03, 'triangle'); }, block: function () { tone(500, 400, 0.04, 0.03); }, break: function () { tone(220, 60, 0.2, 0.08, 'square'); } };
+function frame(ts) {
+  if (!last) last = ts; var dt = Math.min(50, ts - last); last = ts; acc += dt / 16.667 * spd;
+  var inp = input();
+  while (acc >= 1) { acc -= 1; S.stepRun(run, inp); run.w.sound.forEach(function (k) { if (SOUNDS[k]) SOUNDS[k](); }); }
+  S.draw(run, R);
+  if (st.mode === 'demo') { var k = S.stepOf(run.clip, run.t); if (k !== shown) { shown = k; Array.prototype.forEach.call(document.getElementById('steps').children, function (li, i) { li.className = i === k ? 'on' : ''; }); } }
+  requestAnimationFrame(frame);
+}
+reset(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The rally: stun, sell, bounce</title>
+<style>
+:root{--text-primary:#1f1f1c;--text-secondary:#5f5e5a;--text-muted:#888780;--surface-1:#f6f5f0;--border:#d3d1c7;--bg-accent:#e6f1fb;--text-accent:#0c447c}
+body{font-family:sans-serif;margin:16px;max-width:840px;color:var(--text-primary)}
+button{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;color:var(--text-primary)}
+.lab{font-size:13px;color:var(--text-secondary)}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+#steps{margin:10px 0 0;padding-left:22px;font-size:14px;line-height:1.5}
+#steps li{color:var(--text-muted)}
+#steps li.on{color:var(--text-primary);font-weight:bold}
+kbd{border:1px solid var(--border);border-radius:4px;padding:0 4px;font-size:12px}
+</style>
+</head>
+<body>
+<p>The rally (Research, 2026-10-25): Game Design's rulings 23d (<code>docs/design/rulings-2026-10-23d.md</code>), the balance Orb asked for. An earned daze, the sell (each landed blow in it a size larger), B's send that opens the rally, links of flight attacks with repetition as the guard, and the turn that hands a rally over. Watch the clips step by step, or Play. Flight distances are drawn at half the game's so both fighters stay in the frame; the words at the top right are the director's feed.</p>
+<div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;margin:0 0 12px">
+  <span class="lab">Clip</span><div id="rowC" class="row"></div>
+  <span class="lab">Mode</span><div id="rowM" class="row"></div>
+  <label for="spd" class="lab">Playback speed</label>
+  <div style="display:flex;gap:10px;align-items:center"><input id="spd" type="range" min="10" max="100" step="5" value="100" style="width:180px"><span id="spdo" class="lab">100%</span><span id="pad" class="lab"></span></div>
+</div>
+<canvas id="cv" width="800" height="360" style="width:100%;border:0.5px solid var(--border);border-radius:12px;background:var(--surface-1)"></canvas>
+<ol id="steps"></ol>
+<p class="lab">Play, keyboard: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> fly (and nudge a send; hold back against his flight for the overtake), <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> are X, Y and B (hold <kbd>L</kbd> to charge a heavy; full at 44 ticks breaks a guard), <kbd>Space</kbd> guards (and techs a link as it arrives on you), <kbd>Shift</kbd> is LT (with <kbd>J</kbd> or <kbd>K</kbd> while he flies, the chase; a tap as your chase meets a building, the bank), <kbd>E</kbd> is RB (with <kbd>K</kbd>, a lob where he lands), <kbd>Q</kbd> is RT (the burst). B from above him while he flies is the spike. A gamepad works as it is (left stick, X Y B, LB, RB, LT, RT).</p>
+<script>
+// ==== RALLY SIM (no DOM) ====
+// The daze, the sell and the rally (Game Design's rulings 23d, docs/design/rulings-2026-10-23d.md), on fight-feel.md's launch
+// flight, glances and recoil (docs/design/fight-feel.md) and the brawl's blows (data/director/interrupts.json). A strip of the
+// planet that wraps: plains, a city, a beach, the sea and a cliff. No DOM: the page drives it, and gif.mjs runs the same code
+// in node for the homework clips. 60 ticks a second, no randomness (a hash for every jitter), flat polygons only, and nothing
+// drawn on, over or between the fighters: the director's words sit in a feed at the screen's edge.
+var S = (function () {
+'use strict';
+var W = 800, H = 360;
+var BH = 40;                         // a body height in pixels (1 bh = 75 u)
+var WORLD = 7200;                    // the strip, in pixels; it wraps
+var KEY = '#0a0d14';
+var C = { sky: '#eef0ee', grass: '#c9cfb2', grassDark: '#a8b08c', pave: '#c4c1b8', paveDark: '#9d9a90', sand: '#e6d9b4', sandDark: '#cbbd92',
+  sea: '#7fb0cf', seaDeep: '#5f93b6', seaLite: '#c9e2ef', rock: '#a39a8a', rockDark: '#7d7466', bld: '#cfc5ae', bldDark: '#a99b80', win: '#9d927d',
+  ink: '#1f1f1c', cloud: '#e1e5e3', hud: '#d3d1c7', dim: '#8a877d', panel: '#e6e3d9', crack: '#6d6a62', shade: '#d6d4c9', grey: '#a9a79e', dust: '#cfc7b4' };
+var SPARK = { core: '#ffffff', main: '#f4efe3', edge: '#8a857a' };
+function lane(core, main, edge) { return { core: core, main: main, edge: edge }; }
+var FIGHTERS = [
+  { id: 'protagonist', name: 'Protagonist', body: '#1f4f4a', L: { bolt: lane('#f2fdff', '#10c2ea', '#0b7fb8'), lob: lane('#ecfaff', '#1eb0f4', '#0e6cc4') } },
+  { id: 'rival', name: 'Rival', body: '#33295a', L: { bolt: lane('#f0e6ff', '#4420c4', '#2e0c78'), lob: lane('#f6e6ff', '#5c1ca8', '#3c0c6c') } }];
+
+// ---- first values: 23d items 1 to 11, fight-feel.md sections 1 to 3 and 6, the brawl's blows. Flight distances are drawn at
+// half the game's so that both fighters stay in the frame ----
+var R = { daze: 40, dazeTake: 3, dazeGap: 6, burstAfter: 12, wary: 120,
+  hs: { light: 3, medium: 5, heavy: 8, close: 12, sold: 12, send: 20, link: 14, lob: 12, full: 14, rush: 5 },
+  light: { contact: 2, blow: 12 }, medium: { wind: 12, blow: 18 }, heavy: { wind: 28, full: 44, land: 4, max: 70, blow: 20 }, launcher: { wind: 14 },
+  strike: 0.77, reach: 0.9, runToClose: 4, runGap: 12, stagger: 12, recoilBh: 1.5,
+  peak: 23, flightT: [60, 96], grav: 0.1, fall: 0.55, glanceLine: 7.3, glanceDeg: 40, skipDeg: 40, maxRic: 2,
+  zipMin: 15, zipMul: 1.25, chaseKi: [20, 30], lobKi: 6, techFresh: 4, techUsed: 6, techSame: 8, counter: 20, landLink: 20, bankTap: 4, rushSp: 17 };
+
+function hash(n) { n = (n ^ 61) ^ (n >>> 16); n = (n + (n << 3)) | 0; n ^= n >>> 4; n = Math.imul(n, 0x27d4eb2d); n ^= n >>> 15; return (n >>> 0) / 4294967296; }
+function ease(x) { return x < 0 ? 0 : x > 1 ? 1 : 1 - (1 - x) * (1 - x); }
+function easeIO(x) { return x < 0 ? 0 : x > 1 ? 1 : x < 0.5 ? 2 * x * x : 1 - 2 * (1 - x) * (1 - x); }
+function lerp(a, b, k) { return a + (b - a) * k; }
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function wrap(x) { return ((x % WORLD) + WORLD) % WORLD; }
+function wd(dx) { return ((dx % WORLD) + WORLD * 1.5) % WORLD - WORLD / 2; }    // the shortest arc
+function norm(x, y) { var l = Math.sqrt(x * x + y * y) || 1; return [x / l, y / l]; }
+
+// ---- the strip: terrain, buildings ----
+var GROUND = [[0, 1400, 'grass', 0], [1400, 3150, 'pave', 0], [3150, 3360, 'quay', 0], [3360, 5400, 'sea', 0], [5400, 5700, 'sand', 0], [5700, 6150, 'rock', 0], [6150, 6950, 'rock', 120], [6950, 7200, 'grass', 0]];
+var BUILDINGS = [{ x: 1520, w: 90, h: 150 }, { x: 1700, w: 70, h: 230 }, { x: 1880, w: 110, h: 130 }, { x: 2080, w: 80, h: 270 }, { x: 2290, w: 100, h: 180 },
+  { x: 2510, w: 90, h: 140 }, { x: 2720, w: 120, h: 210 }, { x: 2960, w: 80, h: 120 }];
+var HARD = { pave: true, rock: true, quay: true };
+function seg(x) { x = wrap(x); for (var i = 0; i < GROUND.length; i++) if (x >= GROUND[i][0] && x < GROUND[i][1]) return GROUND[i]; return GROUND[0]; }
+function groundAt(x) { return seg(x)[3]; }
+function bldAt(x, alt, pad) { x = wrap(x); pad = pad || 0; for (var i = 0; i < BUILDINGS.length; i++) { var b = BUILDINGS[i]; if (x > b.x - pad && x < b.x + b.w + pad && alt < b.h + pad) return b; } return null; }
+function floorAt(x, alt) { var b = bldAt(x, -1); return Math.max(groundAt(x), b && (alt == null || alt >= b.h - 4) ? b.h : 0); }
+
+// ---- the world ----
+function mkF(def, x, alt) {
+  return { def: def, x: x, y: alt, vx: 0, vy: 0, dir: 1, ki: 100, inp: {}, prev: {}, st: 'free', guard: false, blow: null, run: 0, lastLand: -99,
+    daze: 0, dazeTake: -99, dazeSrc: '', wary: 0, sold: null, reel: 0, stagger: 0, recoil: null, send: null, down: 0, zip: null, rush: null,
+    counterUntil: -1, lastGuard: -99, lastLT: -99, tech: 0, shake: 0, spin: 0, lean: 0, lob: null };
+}
+function newWorld(clip, take, mode) {
+  var T = clip ? clip.takes[take] : null;
+  var w = { t: 0, mode: mode, P: mkF(FIGHTERS[0], 880, 0), V: mkF(FIGHTERS[1], 911, 0), hs: 0, push: 0, rally: null, feed: [], fx: [], marks: [], shots: [], seq: 0, sound: [],
+    cam: { x: 895, y: 120, z: 1 } };
+  w.P.foe = w.V; w.V.foe = w.P; w.P.side = 'P'; w.V.side = 'V';
+  if (T && T.setup) T.setup(w);
+  w.cam.x = wrap(w.P.x + wd(w.V.x - w.P.x) / 2);
+  return w;
+}
+function say(w, text) { w.feed.unshift({ t: w.t, text: text }); if (w.feed.length > 5) w.feed.pop(); }
+function sound(w, k) { w.sound.push(k); }
+function centre(f) { return [f.x, f.y + BH * 0.5]; }
+function distBh(a, b) { var dx = wd(b.x - a.x), dy = b.y - a.y; return Math.sqrt(dx * dx + dy * dy) / BH; }
+function onGround(f) { return f.y <= floorAt(f.x) + 1; }
+function burst(w, x, alt, r, dur, lc, n) { w.fx.push({ k: 'burst', x: x, y: alt, r: r, t: 0, dur: dur, lc: lc, n: n || 7, rot: hash(w.seq++) * 6.28 }); }
+function chips(w, x, alt, n, col, sp, up) { for (var i = 0; i < n; i++) { var a = hash(w.seq++) * 6.283, v = (sp || 3) * (0.5 + hash(w.seq++)); w.fx.push({ k: 'chip', x: x, y: alt, vx: Math.cos(a) * v, vy: Math.abs(Math.sin(a)) * v * (up ? 1.4 : 0.6) + 1, s: 2 + hash(w.seq++) * 2.5, t: 0, dur: 14 + hash(w.seq++) * 12, col: col, rot: hash(w.seq++) * 6 }); } }
+function streak(w, f, col) { w.fx.push({ k: 'streak', x: f.x, y: f.y + BH * 0.5, vx: f.vx, vy: f.vy, t: 0, dur: 7, col: col }); }
+
+// ---- the brawl's blows (a stand-in for sim/director/brawl.gd) ----
+// X a light, Y a medium, B a heavy (held, it charges, full at 44); B at a dazed fighter is the sure launcher, the send
+function startBlow(w, f, k) {
+  var foe = f.foe;
+  if (k === 'B' && foe.daze > 0) { f.blow = { k: 'send', t: 0, land: R.launcher.wind }; return; }
+  if (k === 'X') f.blow = { k: 'light', t: 0, land: R.light.contact };
+  else if (k === 'Y') f.blow = { k: 'medium', t: 0, land: R.medium.wind };
+  else f.blow = { k: 'heavy', t: 0, land: R.heavy.wind, held: true };
+}
+function blowStep(w, f) {
+  var b = f.blow; if (!b) return; b.t++;
+  if (b.k === 'heavy' && b.held) { if (b.t >= R.heavy.full) b.full = true; if (b.t === R.heavy.full) sound(w, 'charge'); if (!f.inp.B || b.t >= R.heavy.max) { b.held = false; b.land = Math.max(b.t + (b.t >= R.heavy.wind ? R.heavy.land : 0), R.heavy.wind); } else if (b.t >= R.heavy.wind) b.land = b.t + 1; }
+  if (b.t === b.land) landBlow(w, f, b);
+  if (b.t >= b.land + 6 && !(b.k === 'heavy' && b.held)) f.blow = null;
+}
+function inReach(f) { return distBh(f, f.foe) <= R.strike + R.reach; }
+function landBlow(w, f, b) {
+  var foe = f.foe, c = centre(foe), side = wd(foe.x - f.x) >= 0 ? 1 : -1;
+  if (!inReach(f) || foe.send) return;
+  var charged = b.k === 'heavy' && !!b.full, sx = c[0] - side * 10, sy2 = c[1] + 4;
+  if (b.k === 'send') { theSend(w, f); return; }
+  if (foe.daze > 0 && (b.k === 'medium' || b.k === 'heavy')) { sell(w, f, b); return; }
+  if (foe.guard && foe.st === 'free') {
+    if (charged) { daze(w, foe, 'A BROKEN GUARD'); w.hs = R.hs.heavy; burst(w, sx, sy2, 18, 10, SPARK, 8); chips(w, sx, sy2, 6, C.grey, 3); sound(w, 'break'); return; }
+    w.hs = Math.ceil(R.hs[b.k] / 2); chips(w, sx, sy2, 3, C.grey, 2); sound(w, 'block'); return;
+  }
+  // an open hit
+  if (b.k === 'light') {
+    f.run = w.t - f.lastLand <= R.runGap ? f.run + 1 : 1; f.lastLand = w.t;
+    if (f.run >= R.runToClose) { foe.stagger = R.stagger; f.run = 0; say(w, 'FLURRY CLOSE: A STAGGER, NO DAZE'); w.hs = R.hs.close; burst(w, sx, sy2, 14, 8, SPARK, 6); }
+    else { foe.reel = 6; w.hs = f.run > 1 ? 0 : R.hs.light; burst(w, sx, sy2, 8, 6, SPARK, 5); }
+    sound(w, 'hit'); return;
+  }
+  if (b.k === 'medium') { foe.reel = 6; w.hs = R.hs.medium; burst(w, sx, sy2, 11, 8, SPARK, 6); sound(w, 'hit'); return; }
+  if (charged) { daze(w, foe, 'A CLEAN, FULL HEAVY'); w.hs = R.hs.heavy; burst(w, sx, sy2, 18, 10, SPARK, 8); sound(w, 'hit'); return; }
+  foe.recoil = { t: 0, dur: 8, dx: side * R.recoilBh * BH }; w.hs = R.hs.heavy; burst(w, sx, sy2, 14, 9, SPARK, 7); sound(w, 'hit');
+}
+// 23d items 1 to 3: an earned daze of 40 live ticks; his presses take 3 off (one counted every 6); a wary fighter only staggers
+function daze(w, f, src) {
+  if (f.wary > 0) { f.stagger = R.stagger; say(w, 'WARY: A STAGGER, NOT A DAZE'); return; }
+  f.daze = R.daze; f.dazeLive = 0; f.dazeSrc = src; f.guard = false; f.blow = null; say(w, 'DAZED: ' + src);
+}
+// item 4: a landed medium or heavy in the daze is sold: the launch's hit-stop, a camera push, a reaction a size larger
+function sell(w, f, b) {
+  var foe = f.foe, n = (foe.soldN || 0) + 1, side = wd(foe.x - f.x) >= 0 ? 1 : -1, c = centre(foe);
+  foe.soldN = n; foe.sold = { t: 0, size: Math.min(3, n), dx: side * (0.45 + 0.3 * n) * BH, x0: foe.x };
+  w.hs = R.hs.sold; w.push = 0.05 + 0.04 * n; burst(w, c[0] - side * 8, c[1] + 6, 14 + 6 * n, 10, SPARK, 8); chips(w, c[0], c[1], 4 + 2 * n, C.grey, 3);
+  say(w, 'SOLD ' + n + ': A SIZE LARGER'); sound(w, 'sold');
+}
+// item 5: B ends the sell with the send, at full power, the decisive hit-stop; the planner's pick, bent by his stick
+function theSend(w, f) {
+  var foe = f.foe, side = wd(foe.x - f.x) >= 0 ? 1 : -1, st = f.inp, ang = f.sendAng != null ? f.sendAng : 0.42;
+  if (st.my) ang += st.my * 0.35;
+  var u = [side * Math.cos(ang), Math.sin(ang)], sold = foe.daze > 0;
+  foe.daze = 0; foe.soldN = 0; foe.sold = null;
+  send(w, foe, u, 1, 'send'); w.hs = R.hs.send; w.push = 0.1; burst(w, foe.x, foe.y + BH * 0.5, 30, 14, SPARK, 9); chips(w, foe.x, foe.y + BH * 0.4, 10, C.grey, 4, true);
+  openRally(w, f, foe, sold); sound(w, 'send');
+}
+function openRally(w, by, on, sold) { w.rally = { by: by, on: on, links: [], world: [], t: w.t, teched: -1 }; say(w, sold ? 'THE SEND: THE RALLY OPENS' : 'A FULL SEND: A RALLY OPENS'); }
+function endRally(w, why) { if (!w.rally) return; var on = w.rally.on, by = w.rally.by; if (by.zip) { by.zip = null; by.st = 'free'; } on.wary = R.wary; say(w, 'THE RALLY ENDS: ' + why); w.rally = null; }
+
+// ---- a send's flight (fight-feel.md section 1): the kick over 5 ticks, the peak held 3, a glide to 0.4 by tick 30 ----
+function send(w, f, u, power, kind) {
+  var T = Math.round(lerp(R.flightT[0], R.flightT[1], clamp((power - 0.5) / 0.5, 0, 1)));
+  f.send = { t: 0, T: T, ux: u[0], uy: u[1], peak: R.peak * power, g: 0, ric: 0, kind: kind, born: w.t }; f.st = 'sent'; f.down = 0; f.blow = null; f.guard = false; f.zip = null; f.rush = null; f.tech = 0;
+  f.spin = (u[0] >= 0 ? 1 : -1) * 0.35;
+}
+function speedAt(s) { var p = s.peak; if (s.t <= 5) return p * s.t / 5; if (s.t <= 8) return p; if (s.t < 30) return lerp(p, 0.4 * p, (s.t - 8) / 22); return 0.4 * p; }
+function flyStep(w, f) {
+  var s = f.send; s.t++;
+  if (s.t <= s.T) { var sp = speedAt(s); f.vx = s.ux * sp; f.vy = s.uy * sp - s.g; s.g += R.grav; }
+  else { f.vy -= R.fall; f.vx *= 0.985; }
+  if (f.inp.LT && f.side === (w.rally && w.rally.on.side) && s.t > 4) { s.peak *= 0.93; s.g *= 0.9; }      // the brake, LT held while sent
+  f.spin *= 0.995;
+  var n = Math.max(1, Math.ceil(Math.max(Math.abs(f.vx), Math.abs(f.vy)) / 5));
+  for (var i = 0; i < n; i++) { var px = f.x, py = f.y; f.x = wrap(f.x + f.vx / n); f.y += f.vy / n; if (contact(w, f, px, py)) break; }
+  if (s.t % 2 === 0 && s.t < 40) streak(w, f, C.dust);
+}
+// a contact: the face of a building or the cliff, a roof, the ground or the sea
+function contact(w, f, px, py) {
+  var mid = f.y + BH * 0.35, b = bldAt(f.x, mid, 0);
+  if (b) { var fromSide = !(py + BH * 0.35 >= b.h - 2); if (fromSide) { var nx = wd(f.x - (b.x + b.w / 2)) < 0 ? -1 : 1; f.x = wrap(nx < 0 ? b.x - 5 : b.x + b.w + 5); return resolve(w, f, [nx, 0], 'face', b); } f.y = b.h; return resolve(w, f, [0, 1], 'roof', b); }
+  var g = groundAt(f.x);
+  if (f.y < g) { if (py >= groundAt(px) - 0.5 && groundAt(px) < g) { var fn = wd(f.x - px) > 0 ? -1 : 1; f.x = px; f.y = py; return resolve(w, f, [fn, 0], 'face', null); } f.y = g; return resolve(w, f, [0, 1], seg(f.x)[2], null); }
+  return false;
+}
+function resolve(w, f, n, kind, b) {
+  var s = f.send, vx = f.vx, vy = f.vy, sp = Math.sqrt(vx * vx + vy * vy) || 1, vn = vx * n[0] + vy * n[1];
+  if (vn >= 0) return false;
+  var theta = Math.asin(clamp(-vn / sp, 0, 1)) * 180 / Math.PI, hard = kind === 'face' || kind === 'roof' || HARD[kind];
+  function reflect(k, tag) { var rx = vx - 2 * vn * n[0], ry = vy - 2 * vn * n[1], u = norm(rx, ry); s.ux = u[0]; s.uy = u[1]; s.peak = Math.max(sp, speedAt(s)) * k; s.g = 0; s.t = Math.min(s.t, 8); s.T = Math.max(s.T, s.t + 30); s.ric++; s.kind = tag; f.vx = u[0] * sp * k; f.vy = u[1] * sp * k; if (w.rally) w.rally.world.push(tag); }
+  var c = centre(f);
+  if (kind === 'sea') {
+    if (theta < R.skipDeg && sp >= R.glanceLine * 0.8 && s.ric < R.maxRic) { reflect(0.7, 'skip'); chips(w, f.x, 2, 8, C.seaLite, 3, true); w.marks.push({ k: 'ripple', x: f.x, t: w.t }); say(w, 'THE SEA SKIPS HIM'); sound(w, 'splash'); return true; }
+    chips(w, f.x, 2, 14, C.seaLite, 4, true); w.marks.push({ k: 'ripple', x: f.x, t: w.t }); land(w, f, 'IN THE SEA'); sound(w, 'splash'); return true;
+  }
+  if (s.kind === 'spike' && kind !== 'face') {
+    crater(w, f.x, f.y, 1.6); chips(w, f.x, f.y + 2, 12, hard ? C.paveDark : C.sandDark, 4, true); burst(w, f.x, f.y + 6, 24, 12, SPARK, 8);
+    if (hard) { reflect(0.7, 'glance'); s.ux = s.ux * 0.6 + (w.rally ? (wd(f.x - w.rally.by.x) >= 0 ? 0.4 : -0.4) : 0); var u2 = norm(s.ux, Math.abs(s.uy)); s.ux = u2[0]; s.uy = u2[1]; say(w, 'HARD GROUND: HE GLANCES BACK UP'); sound(w, 'slam'); return true; }
+    land(w, f, 'SPIKED INTO SOFT GROUND'); endRally(w, 'SPIKED INTO SOFT GROUND'); sound(w, 'slam'); return true;
+  }
+  if (sp >= R.glanceLine && theta < R.glanceDeg && s.ric < R.maxRic && hard) { reflect(0.7, 'glance'); chips(w, c[0], c[1], 5, C.grey, 3); say(w, kind === 'face' ? 'HE GLANCES OFF THE FACE' : kind === 'roof' ? 'HE GLANCES OFF A ROOF' : 'HE GLANCES OFF THE GROUND'); return true; }
+  if (kind === 'face') { w.marks.push({ k: 'dent', x: f.x, y: f.y + BH * 0.4, n: n[0] }); chips(w, f.x, f.y + BH * 0.4, 10, b ? C.bldDark : C.rockDark, 4); burst(w, f.x, f.y + BH * 0.4, 20, 10, SPARK, 8); s.T = s.t; f.vx = n[0] * 2; s.ux = n[0] * 0.2; s.uy = 0; s.peak = 0; say(w, 'WALL SLAM'); sound(w, 'slam'); return true; }
+  if (sp > 12) crater(w, f.x, f.y, 1);
+  chips(w, f.x, f.y + 2, 6, hard ? C.paveDark : C.dust, 3, true); land(w, f, 'HE LANDS'); return true;
+}
+function crater(w, x, alt, size) { w.marks.push({ k: 'crater', x: x, y: alt, w: size * BH }); if (w.marks.length > 60) w.marks.shift(); }
+function land(w, f, how) { f.send = null; f.st = 'down'; f.down = 0; f.vx = f.vy = 0; f.y = floorAt(f.x, f.y); f.spin = 0; say(w, how); if (w.rally && w.rally.on === f) w.rally.landT = w.t; }
+
+// ---- the rally's links (item 6), each the attacker's own press while the body is in flight ----
+var NAME = { chase: 'THE CHASE STRIKE', overtake: 'THE OVERTAKE', spike: 'THE SPIKE', bank: 'THE BANK', lob: 'THE LOB', counter: 'THE COUNTER-RUSH' };
+function canLink(w, f) { var Rl = w.rally; return Rl && Rl.by === f && !f.zip && !f.send && f.st !== 'down' && (Rl.on.send || (Rl.on.st === 'down' && Rl.on.down <= R.landLink)); }
+function startZip(w, f, mode, k) {
+  var foe = f.foe, cost = mode === 'spike' ? 5 : R.chaseKi[k === 'Y' ? 1 : 0];
+  if (f.ki < cost) { say(w, 'NO KI FOR THE LINK'); return; }
+  f.ki -= cost; f.zip = { mode: mode, k: k, t: 0, phase: 'go' }; f.st = 'zip'; say(w, mode === 'spike' ? 'B FROM ABOVE: THE SPIKE' : mode === 'overtake' ? 'LT+' + k + ', STICK BACK: THE OVERTAKE' : 'LT+' + k + ': THE CHASE'); sound(w, 'zip');
+}
+// (kept for the AI's use) a building's face within a body height and a half of him, below its roof
+function faceNear(f) { var x = wrap(f.x), c = f.y + BH * 0.5; for (var i = 0; i < BUILDINGS.length; i++) { var b = BUILDINGS[i]; if (c > b.h + 6) continue; if (Math.abs(x - b.x) < 1.5 * BH) return { b: b, side: -1 }; if (Math.abs(x - (b.x + b.w)) < 1.5 * BH) return { b: b, side: 1 }; } return null; }
+function zipStep(w, f) {
+  var z = f.zip, foe = f.foe, c = centre(foe), m = centre(f); z.t++;
+  var fv = Math.sqrt(foe.vx * foe.vx + foe.vy * foe.vy), sp = Math.max(R.zipMin, R.zipMul * fv), tx = c[0], ty = c[1];
+  if (z.mode === 'overtake' && z.phase === 'go') { var u = norm(foe.vx, foe.vy); tx = c[0] + u[0] * 3 * BH; ty = Math.max(floorAt(tx) + 1.5 * BH, c[1] + u[1] * 3 * BH); sp *= 1.25; }
+  if (z.phase === 'wall') { if (w.t - z.wallT <= R.bankTap && f.inp.LT && !f.prev.LT || (z.tapT != null && z.wallT - z.tapT <= R.bankTap)) { z.phase = 'bank'; z.mode = 'bank'; z.bankSide = z.wallN || 1; say(w, 'A DODGE TAP AT THE FACE: THE BANK'); sound(w, 'kick'); chips(w, f.x, f.y + BH * 0.5, 6, C.bldDark, 3); w.marks.push({ k: 'dent', x: f.x, y: f.y + BH * 0.5, n: z.wallN || 1 }); }
+    else if (w.t - z.wallT > R.bankTap) { f.zip = null; f.st = 'free'; say(w, 'THE WALL STOPS HIS CHASE'); } return; }
+  if (z.phase === 'meet') { tx = m[0]; ty = m[1]; sp = 0; f.dir = wd(foe.x - f.x) >= 0 ? 1 : -1; }
+  if (z.phase === 'bank') sp *= 1.3;
+  var dx = wd(tx - m[0]), dy = ty - m[1];
+  if (f.inp.LT && !f.prev.LT) z.tapT = w.t;
+  // the chase is his: LT held with the left stick bends it (to meet a face for the bank, say), up to half way
+  if (z.mode === 'chase' && z.phase === 'go' && f.inp.LT && z.t > 2 && (f.inp.mx || f.inp.my)) { var sl = norm(f.inp.mx || 0, f.inp.my || 0), dl = Math.sqrt(dx * dx + dy * dy) || 1; dx = (dx / dl + sl[0]) * dl; dy = (dy / dl + sl[1]) * dl; }
+  var d = Math.sqrt(dx * dx + dy * dy);
+  if (z.phase === 'go' && z.mode === 'overtake' && d < 14) { z.phase = 'meet'; say(w, 'PAST HIM: HEAD-ON'); }
+  if (d > 1 && sp > 0) { var st = Math.min(sp, d), nx = wrap(f.x + dx / d * st), ny = f.y + dy / d * st, hit = bldAt(nx, ny + BH * 0.5, 2);
+    if (hit && z.mode === 'chase' && z.phase === 'go') { var lft = wd(nx - hit.x) < hit.w / 2; f.x = wrap(lft ? hit.x - 4 : hit.x + hit.w + 4); z.wallN = lft ? -1 : 1; z.phase = 'wall'; z.wallT = w.t; f.vx = f.vy = 0; say(w, 'HE MEETS THE FACE'); return; }
+    f.vx = dx / d * st; f.vy = dy / d * st; f.x = nx; f.y = Math.max(floorAt(nx), ny); f.dir = dx >= 0 ? 1 : -1; if (z.t % 2 === 0) streak(w, f, f.def.L.bolt.edge); }
+  if (distBh(f, foe) < 1.05 && (z.mode !== 'overtake' || z.phase === 'meet')) arrival(w, f, z.mode);
+  else if (z.t > 120) { f.zip = null; f.st = 'free'; say(w, 'THE LINK MISSES'); }
+}
+// a link arrives: the defender's tech (item 8), or the link lands and sends him on
+function arrival(w, f, kind) {
+  if (!w.rally) { f.zip = null; f.st = 'free'; return; }
+  var foe = f.foe, Rl = w.rally, last = Rl.links[Rl.links.length - 1], same = last === kind, count = Rl.links.filter(function (k) { return k === kind; }).length;
+  var win = same ? R.techSame : count >= 1 ? R.techUsed : R.techFresh, auto = count >= 2, teched = auto || w.t - foe.lastGuard <= win;
+  var z = f.zip; f.zip = null; f.st = 'free';
+  if (teched) { techLink(w, f, foe, kind, auto, win); return; }
+  Rl.links.push(kind); var c = centre(foe), u;
+  if (kind === 'chase') { var a0 = Math.atan2(foe.vy, foe.vx), sd = foe.vx >= 0 ? 1 : -1; a0 += sd * clamp(f.inp.my || 0, -1, 1) * Math.PI / 6; send(w, foe, [Math.cos(a0), Math.sin(a0)], z && z.k === 'Y' ? 0.9 : 0.8, 'chase'); }
+  else if (kind === 'overtake') { u = norm(-foe.vx, -foe.vy * 0.5 + 0.1 * Math.abs(foe.vx)); send(w, foe, u, 0.85, 'overtake'); }
+  else if (kind === 'bank') { u = norm(z && z.bankSide ? z.bankSide : (f.vx >= 0 ? 1 : -1), 0.42); send(w, foe, u, 0.85, 'bank'); }
+  else if (kind === 'spike') { send(w, foe, [0, -1], 0.95, 'spike'); }
+  else if (kind === 'lob') { u = norm((foe.vx || (wd(foe.x - f.x) >= 0 ? 1 : -1)) * 0.4, 1); send(w, foe, u, 0.6, 'lob'); }
+  w.hs = kind === 'lob' ? R.hs.lob : R.hs.link; burst(w, c[0], c[1], 18, 10, kind === 'lob' ? f.def.L.lob : SPARK, 8);
+  say(w, 'LINK ' + Rl.links.length + ': ' + NAME[kind] + ' (' + win + '-TICK TECH)'); sound(w, 'link');
+}
+function techLink(w, f, foe, kind, auto, win) {
+  var c = centre(foe); foe.send = null; foe.st = 'tech'; foe.tech = 14; foe.vx = foe.vy = 0; foe.counterUntil = w.t + R.counter; foe.spin = 0;
+  f.vx = -(wd(foe.x - f.x) >= 0 ? 1 : -1) * 3; f.recoil = { t: 0, dur: 8, dx: f.vx * 4 };
+  w.rally.teched = w.t; burst(w, c[0], c[1], 12, 8, SPARK, 6); chips(w, c[0], c[1], 4, C.grey, 2);
+  say(w, auto ? 'A THIRD ' + NAME[kind].replace('THE ', '') + ': IT TECHS ITSELF' : 'TECHED IN THE ' + win + '-TICK WINDOW'); sound(w, 'tech');
+}
+// item 10: his counter-rush within 20 ticks; if it lands on the chaser in the air, it is a full send, and the rally is his
+function rushStep(w, f) {
+  var r = f.rush, foe = f.foe, c = centre(foe), m = centre(f); r.t++;
+  var dx = wd(c[0] - m[0]), dy = c[1] - m[1], d = Math.sqrt(dx * dx + dy * dy), st = Math.min(R.rushSp, d);
+  if (d > 1) { f.vx = dx / d * st; f.vy = dy / d * st; f.x = wrap(f.x + f.vx); f.y = Math.max(floorAt(f.x), f.y + f.vy); f.dir = dx >= 0 ? 1 : -1; if (r.t % 2 === 0) streak(w, f, f.def.L.bolt.edge); }
+  if (distBh(f, foe) < 1.05) {
+    f.rush = null; f.st = 'free'; var air = foe.y > floorAt(foe.x) + 8;
+    if (air && !foe.send) { var u = norm(dx >= 0 ? 1 : -1, 0.55); send(w, foe, u, 1, 'turn'); w.hs = R.hs.full; w.push = 0.08; burst(w, c[0], c[1], 26, 12, SPARK, 9); w.rally = null; openRally(w, f, foe, false); say(w, 'THE TURN: THE RALLY IS HIS'); sound(w, 'send'); }
+    else { foe.reel = 8; w.hs = R.hs.rush; burst(w, c[0], c[1], 12, 8, SPARK, 6); endRally(w, 'A RUSH BLOW ON THE GROUND'); }
+  } else if (r.t > 40) { f.rush = null; f.st = 'free'; }
+}
+// the lob where he will land: a straight-line guess of his landing from his flight, then an arc there
+function predictLand(f) {
+  var s = f.send; if (!s) return [f.x, floorAt(f.x), 1];
+  var x = f.x, y = f.y, t = s.t, g = s.g, vx = f.vx, vy = f.vy;
+  for (var i = 1; i < 160; i++) { t++; if (t <= s.T) { var sp = speedAt({ t: t, peak: s.peak }); vx = s.ux * sp; vy = s.uy * sp - g; g += R.grav; } else { vy -= R.fall; vx *= 0.985; } var nx = wrap(x + vx), hb = bldAt(nx, y + vy + BH * 0.35, 4); if (hb && y + BH * 0.35 < hb.h - 2) { var fx = vx > 0 ? hb.x - 5 : hb.x + hb.w + 5; return [fx, groundAt(fx), i + Math.round(Math.sqrt(2 * Math.max(0, y - groundAt(fx)) / R.fall))]; }     // a face: he slams and drops to its foot
+    x = nx; y += vy; if (y <= floorAt(x)) return [x, floorAt(x), i]; }
+  return [x, floorAt(x), 160];
+}
+function throwLob(w, f) {
+  if (f.ki < R.lobKi) { say(w, 'NO KI FOR THE LOB'); return; }
+  var foe = f.foe, p = predictLand(foe), T = Math.max(18, Math.min(100, p[2])), h = [f.x + f.dir * 12, f.y + BH * 0.7], g = 0.35, dx = wd(p[0] - h[0]);
+  f.ki -= R.lobKi; w.shots.push({ k: 'lob', o: f, x: h[0], y: h[1], vx: dx / T, vy: ((p[1] + BH * 0.3 - h[1]) + 0.5 * g * T * T) / T, g: g, t: 0, T: T });
+  say(w, 'RB+Y: A LOB WHERE HE WILL LAND'); sound(w, 'lob');
+}
+function shotsStep(w) {
+  for (var i = w.shots.length - 1; i >= 0; i--) {
+    var s = w.shots[i], foe = s.o.foe; s.t++; s.x = wrap(s.x + s.vx); s.y += s.vy; s.vy -= s.g;
+    if (s.t >= s.T || s.y <= floorAt(s.x)) {
+      burst(w, s.x, Math.max(s.y, floorAt(s.x)) + 4, 26, 14, s.o.def.L.lob, 7); chips(w, s.x, floorAt(s.x) + 2, 8, C.dust, 4, true); w.shots.splice(i, 1); sound(w, 'boom');
+      var near = Math.abs(wd(foe.x - s.x)) < 1.6 * BH && Math.abs(foe.y - s.y) < 2.2 * BH;
+      if (near && w.rally && w.rally.by === s.o && (foe.send || foe.st === 'down')) { var bk = foe.st; if (bk === 'down') { foe.st = 'sent'; foe.send = { t: 30, T: 30, ux: 0, uy: 1, peak: 0, g: 0, ric: 0, kind: 'lob' }; foe.vx = 0; foe.vy = 0; } arrival(w, s.o, 'lob'); }
+    }
+  }
+}
+
+// ---- the tick ----
+function fighterStep(w, f) {
+  var i = f.inp, p = f.prev, buf = f.buf, pr = function (k) { return (i[k] && !p[k]) || buf === k; }, foe = f.foe; f.buf = null;
+  if (i.LT && !p.LT) f.lastLT = w.t;
+  f.reel = Math.max(0, f.reel - 1); f.stagger = Math.max(0, f.stagger - 1); f.wary = Math.max(0, f.wary - 1); f.lean *= 0.85;
+  if (f.st !== 'sent' && f.st !== 'zip' && f.st !== 'tech' && !f.rush) f.dir = wd(foe.x - f.x) >= 0 ? 1 : -1;
+  if (!f.zip && !f.send && f.st !== 'down') f.ki = Math.min(100, f.ki + 4 / 60);
+  // the sold reaction: driven back a step, then pulled in again
+  if (f.sold) { var so = f.sold; so.t++; var k = so.t < 6 ? ease(so.t / 6) : 1 - easeIO((so.t - 6) / 10); f.x = wrap(so.x0 + so.dx * k); if (so.t >= 16) { f.sold = null; f.x = so.x0; } }
+  if (f.recoil) { var rc = f.recoil; rc.t++; f.x = wrap(f.x + rc.dx / rc.dur); if (rc.t >= rc.dur) f.recoil = null; }
+  // the daze: no strike, no guard; his own presses shorten it; RT's burst breaks it after its first 12 ticks
+  if (f.daze > 0) {
+    f.daze--; f.dazeLive = (f.dazeLive || 0) + 1; f.guard = false;     // the burst counts live ticks, not the ones his presses took off
+    if ((pr('X') || pr('Y') || pr('B') || pr('A')) && w.t - f.dazeTake >= R.dazeGap) { f.dazeTake = w.t; f.daze = Math.max(0, f.daze - R.dazeTake); f.dazeOut = (f.dazeOut || 0) + 1; }
+    if (pr('RT') && f.dazeLive >= R.burstAfter && f.ki >= 30) { f.ki -= 30; f.daze = 0; burst(w, f.x, f.y + BH * 0.5, 30, 12, f.def.L.bolt, 9); say(w, 'RT: THE BURST BREAKS THE DAZE'); foe.recoil = { t: 0, dur: 10, dx: (wd(foe.x - f.x) >= 0 ? 1 : -1) * 2 * BH }; }
+    if (f.daze === 0 && !f.send) { say(w, f.dazeOut ? 'HE SHAKES IT OFF (' + f.dazeOut + ' PRESSES)' : 'THE DAZE RUNS OUT'); f.dazeOut = 0; }
+    f.prev = copy(i); return;
+  }
+  if (f.st === 'sent') { if (!(f.send && f.send.born === w.t)) flyStep(w, f); if (pr('RT') && f.send && f.send.t > R.burstAfter && w.rally && w.rally.on === f && f.ki >= 30) { f.ki -= 30; f.send = null; f.st = 'free'; f.vx = f.vy = 0; f.spin = 0; burst(w, f.x, f.y + BH * 0.5, 26, 12, f.def.L.bolt, 9); say(w, 'RT: THE BURST'); endRally(w, 'HIS BURST'); } f.prev = copy(i); return; }
+  if (f.st === 'down') { f.down++; if (f.down > R.landLink + 12 && !(w.rally && w.rally.on === f && (w.rally.by.zip || w.shots.length))) { f.st = 'free'; if (w.rally && w.rally.on === f) endRally(w, 'HE LANDED, NO LINK'); } f.prev = copy(i); return; }
+  if (f.st === 'tech') {
+    f.tech--; f.y = Math.max(floorAt(f.x), f.y - 0.2);
+    if ((pr('X') || pr('Y')) && w.t <= f.counterUntil) { f.rush = { t: 0 }; f.st = 'rush'; say(w, 'HIS COUNTER-RUSH'); sound(w, 'zip'); }
+    else if (f.tech <= 0) { f.st = 'free'; if (w.rally && w.rally.on === f && w.t > f.counterUntil) endRally(w, 'TECHED, NOT TURNED'); }
+    f.prev = copy(i); return;
+  }
+  if (f.rush) { rushStep(w, f); f.prev = copy(i); return; }
+  if (f.zip) { zipStep(w, f); f.prev = copy(i); return; }
+  if (w.rally && w.rally.on === f && f.st === 'free' && w.t <= f.counterUntil && (pr('X') || pr('Y'))) { f.rush = { t: 0 }; f.st = 'rush'; say(w, 'HIS COUNTER-RUSH'); sound(w, 'zip'); f.prev = copy(i); return; }
+  if (w.rally && w.rally.on === f && w.t > f.counterUntil && f.counterUntil > 0 && f.st === 'free') { f.counterUntil = -1; endRally(w, 'TECHED, NOT TURNED'); }
+  // links while he is in flight (or just landed)
+  if (canLink(w, f)) {
+    var above = f.y > foe.y + 0.6 * BH && Math.abs(wd(foe.x - f.x)) < 3.5 * BH;
+    if (i.LT && (pr('X') || pr('Y'))) { var sl2 = Math.sqrt((i.mx || 0) * (i.mx || 0) + (i.my || 0) * (i.my || 0)), fl2 = Math.sqrt(foe.vx * foe.vx + foe.vy * foe.vy), back = sl2 > 0.25 && fl2 > 0 && -((i.mx || 0) * foe.vx + (i.my || 0) * foe.vy) / (sl2 * fl2) >= Math.SQRT1_2; startZip(w, f, back ? 'overtake' : 'chase', pr('Y') ? 'Y' : 'X'); f.prev = copy(i); return; }
+    if (pr('B') && above) { startZip(w, f, 'spike', 'B'); f.prev = copy(i); return; }
+    if (i.RB && pr('Y')) { throwLob(w, f); f.prev = copy(i); return; }
+  }
+  // the brawl: guard, blows; free flight on the left stick
+  f.guard = !!i.LB && !f.blow && f.stagger === 0;
+  var free = !f.blow || (f.blow.t >= f.blow.land && !(f.blow.k === 'heavy' && f.blow.held));     // recover 0: a landed blow frees his line at once
+  if (f.stagger === 0 && f.reel === 0 && free && !f.sold) { if (pr('X')) startBlow(w, f, 'X'); else if (pr('Y') && !i.RB) startBlow(w, f, 'Y'); else if (pr('B')) startBlow(w, f, 'B'); }
+  blowStep(w, f);
+  if (!f.blow && !f.sold && !f.recoil && f.stagger === 0) {
+    var sp = 3, gx = i.gx, gy = i.gy;
+    if (i.fx != null) { gx = foe.x + i.fx * BH; gy = Math.max(floorAt(foe.x), foe.y + (i.fy || 0) * BH); }
+    if (gx != null) { var dx = wd(gx - f.x), dy = (gy == null ? f.y : gy) - f.y, d = Math.sqrt(dx * dx + dy * dy); if (d > 1) { var s2 = Math.min(d, i.gs || (i.fx != null ? 12 : 6)); f.vx = dx / d * s2; f.vy = dy / d * s2; f.x = wrap(f.x + f.vx); f.y += f.vy; } }
+    else if (i.mx || i.my) { f.vx = (i.mx || 0) * sp; f.vy = (i.my || 0) * sp; f.x = wrap(f.x + f.vx); f.y += f.vy; }
+    else { f.vx *= 0.7; f.vy *= 0.7; }
+    var fl = floorAt(f.x); if (f.y < fl) f.y = fl;
+  }
+  f.prev = copy(i);
+}
+function copy(o) { var c = {}; for (var k in o) c[k] = o[k]; return c; }
+// the rival in Play: guards your heavies, mashes out of a daze, techs links (fresh ones less often), turns some of them
+function rivalAI(w) {
+  var f = w.V, P = w.P, o = {}, t = w.t;
+  if (f.daze > 0) { if (t % 14 === 0) o.X = true; }
+  else if (f.st === 'sent' && w.rally) { if (P.zip && distBh(P, f) < 4 && hash(t * 7 + 3) < 0.5) o.LB = true; }
+  else if (f.st === 'tech') { if (hash(Math.floor(t / 9) * 13) < 0.6) o.X = true; }
+  else if (w.rally && w.rally.by === f) { var q = w.rally.on; if (q.send && !f.zip && t % 30 === 10) { o.LT = true; o.X = true; o.mx = q.vx > 0 ? 1 : -1; } }
+  else { var d = distBh(f, P); if (P.blow && P.blow.k === 'heavy') o.LB = true; else if (d > 1.6) { o.gx = P.x + (wd(f.x - P.x) >= 0 ? 1 : -1) * 31; o.gy = P.y; o.gs = 2; } else if (t % 50 === 25) o.X = true; else if (t % 120 < 40) o.LB = true; }
+  return o;
+}
+function fxStep(w) {
+  for (var i = w.fx.length - 1; i >= 0; i--) { var e = w.fx[i]; e.t++; if (e.k === 'chip') { e.x = wrap(e.x + e.vx); e.y += e.vy; e.vy -= 0.3; var fl = floorAt(e.x); if (e.y < fl) { e.y = fl; e.vy *= -0.3; e.vx *= 0.6; } e.rot += 0.2; } if (e.t >= e.dur) w.fx.splice(i, 1); }
+}
+// the camera: eased onto both of them, zoomed to fit both whole bodies inside the band below the HUD's strip, pushed in
+// for a sold blow or the send. It zooms out faster than in, rides a flight closer, and never cuts
+var BAND = [78, H - 26];
+function camStep(w) {
+  var P = w.P, V = w.V, c = w.cam, dx = wd(V.x - P.x), mx = wrap(P.x + dx / 2), fly = P.send || V.send || P.zip || V.zip || P.rush || V.rush;
+  var top = Math.max(P.y, V.y) + BH * 1.15, bot = Math.min(P.y, V.y) - BH * 0.1;
+  var z = clamp(Math.min(W / (Math.abs(dx) + 4 * BH), (BAND[1] - BAND[0]) / (top - bot + 1.6 * BH)), 0.42, 1.9) * (1 + w.push);
+  c.z += (z - c.z) * (z < c.z ? 0.2 : 0.07);
+  var mid = (BAND[0] + BAND[1]) / 2, cy = Math.max((top + bot) / 2 - (H * 0.5 - mid) / c.z, (H * 0.5 - BAND[1] + 4) / c.z);
+  c.x = wrap(c.x + wd(mx - c.x) * (fly ? 0.2 : 0.09)); c.y += (cy - c.y) * (fly ? 0.25 : 0.1);
+  // a soft guarantee: a head nearing the HUD's strip, or a body nearing a side, draws the camera after it faster
+  var hs = H * 0.5 - (top - c.y) * c.z, bs = H * 0.5 - (bot - c.y) * c.z; if (hs < BAND[0]) c.y += (BAND[0] - hs) / c.z * 0.5; if (bs > BAND[1]) c.y -= (bs - BAND[1]) / c.z * 0.5;
+  if (hs < BAND[0] || bs > BAND[1]) c.z += (z - c.z) * 0.15;
+  [P, V].forEach(function (f) { var sx = W / 2 + wd(f.x - c.x) * c.z; if (sx < 30) c.x = wrap(c.x - (30 - sx) / c.z * 0.5); if (sx > W - 30) c.x = wrap(c.x + (sx - W + 30) / c.z * 0.5); });
+  if (w.hs === 0) w.push *= 0.9;
+}
+
+// ---- clips: the homework's GIFs, each a list of takes; a script gives both fighters' inputs tick by tick ----
+// An event is [side, input, from, to, value]: the input is held (or set to value) for from <= t < to.
+function sc(list) { return function (w, side) { var o = {}, t = w.t; for (var i = 0; i < list.length; i++) { var e = list[i]; if (e[0] === side && t >= e[2] && t < e[3]) o[e[1]] = e.length > 4 ? e[4] : true; } return o; }; }
+function taps(side, b, at, len) { return at.map(function (t) { return [side, b, t, t + (len || 3)]; }); }
+function cat() { var o = []; for (var i = 0; i < arguments.length; i++) o = o.concat(arguments[i]); return o; }
+// a fighter already dazed (the clips that start mid-story)
+function preDaze(w, f, src) { f.daze = R.daze; f.dazeLive = 0; f.dazeSrc = src; say(w, 'DAZED: ' + src); }
+function preSent(w, by, on, u, power) { send(w, on, u, power, 'send'); openRally(w, by, on, true); on.send.t = 10; }
+var CLIPS = [
+  { n: 'D1', name: 'The daze, earned', takes: [
+    { len: 230, setup: function (w) { w.P.x = 880; w.V.x = 911; }, input: sc(cat([['V', 'LB', 14, 230]], [['P', 'B', 30, 76]], taps('V', 'X', [100, 106, 112, 118]))) },
+    { len: 150, setup: function (w) { w.P.x = 880; w.V.x = 911; }, input: sc(cat(taps('P', 'X', [20, 26, 32, 38, 44]))) }],
+    steps: [[0, 'In a brawl the rival guards. A fully charged heavy breaks his guard: one of the six earned ways to daze him.', 60],
+      [80, 'Dazed for 40 ticks: he sways with his guard down and can\'t strike or guard. It reads on his body, never with a marker over him.', 96],
+      [98, 'His way out is his own: each of his presses takes 3 ticks off, one counted every 6, so a fast thumb cuts it by more than a third.', 112],
+      [230, 'A flurry\'s close is only a stagger, as it is today: mashing alone never dazes.', 278]] },
+  { n: 'D2', name: 'The sell', takes: [
+    { len: 150, setup: function (w) { w.P.x = 1000; w.V.x = 1031; preDaze(w, w.V, 'A BROKEN GUARD'); }, input: sc(cat(taps('P', 'Y', [1, 25]))) }],
+    steps: [[0, 'Dazed by a broken guard, the rival takes the attacker\'s big hits: the sell.', 6],
+      [13, 'Each landed blow in the daze is sold: the launch\'s hit-stop (12, not 8), a camera push, and a reaction a size larger. His head snaps; he is driven back a step and pulled in again.', 22],
+      [37, 'The next is a size larger again: the body folds. The damage stays each blow\'s own, with no bonus: the sell is the look.', 50],
+      [62, 'Two or three sold blows fit in a daze. B ends it with the send; if he never presses B, the daze runs out and they are back in the brawl.', 100]] },
+  { n: 'D3', name: 'The send opens the rally', takes: [
+    { len: 230, setup: function (w) { w.P.x = 1040; w.V.x = 1071; preDaze(w, w.V, 'A BROKEN GUARD'); w.V.soldN = 2; w.P.sendAng = 0.55; },
+      input: sc(cat(taps('P', 'B', [4]), [['P', 'gx', 50, 98, 1560], ['P', 'gy', 50, 98, 300], ['P', 'gs', 50, 98, 11]], [['P', 'LT', 100, 104]], taps('P', 'X', [100]), [['P', 'my', 100, 140, 1]])) }],
+    steps: [[0, 'B at a dazed fighter is the sure launcher at full power: the send, with the decisive hit-stop (20) and the camera\'s push.', 22],
+      [42, 'The journey: an explosive kick, then a glide long enough to frame them both. The rally is open: from here every press of his while the body flies is a link.', 70],
+      [96, 'He follows above the roofs and throws the first link, the chase strike. The building the body meets next is the world\'s own link.', 130]] },
+  { n: 'D4', name: 'A rally of five different links, over the city and the sea', takes: [
+    { len: 470, setup: function (w) { w.P.x = 2862; w.P.y = 0; w.V.x = 2905; w.V.y = 10; preSent(w, w.P, w.V, [0.1, 0.99], 0.85); },
+      input: sc(cat([['P', 'LT', 10, 13]], taps('P', 'X', [10]), [['P', 'LT', 14, 20], ['P', 'mx', 14, 20, -1]], [['P', 'fx', 36, 58, -2], ['P', 'fy', 36, 58, 0.3]], [['P', 'LT', 58, 61]], taps('P', 'X', [58]), [['P', 'mx', 58, 64, -1]], [['P', 'fx', 104, 125, 0.3], ['P', 'fy', 104, 125, 2.4], ['P', 'gs', 104, 125, 18]], taps('P', 'B', [125]),
+        [['P', 'LT', 184, 187]], taps('P', 'X', [184]), [['P', 'my', 184, 230, 1]], [['P', 'RB', 236, 240]], taps('P', 'Y', [236]))) }],
+    steps: [[0, 'The rally: each link is his own press while the body flies. First the chase (LT and X); at a building\'s face a dodge tap is the bank, a kick off the face that changes his line.', 26],
+      [52, 'Out over the sea, the chase with the stick held back against his flight is the overtake: he passes him and meets him head-on, sending him back the way he came.', 98],
+      [112, 'B from above him: the spike, straight down onto the quay. On hard ground he glances back up, so the rally goes on.', 178],
+      [180, 'At the top of the glance, LT and X: the chase strike. The zip catches him, and the blow sends him on, nudged up by the stick.', 206],
+      [232, 'RB and Y: a lob where he will land, and it meets him as he comes down. Five links of five kinds, each a fresh kind, so each gave him only the 4-tick tech.', 338]] },
+  { n: 'D5', name: 'The turn, and repetition', takes: [
+    { len: 300, setup: function (w) { w.P.x = 260; w.P.y = 60; w.V.x = 290; w.V.y = 80; preSent(w, w.P, w.V, [0.92, 0.4], 0.85); },
+      input: sc(cat([['P', 'LT', 14, 18]], taps('P', 'X', [14]), [['P', 'my', 14, 50, 1]], [['P', 'fx', 50, 56, -2], ['P', 'fy', 50, 56, 0.4]], [['P', 'LT', 56, 60]], taps('P', 'X', [56]), [['P', 'mx', 56, 62, -1]], taps('V', 'LB', [89], 1), taps('V', 'X', [106]), [['V', 'LT', 126, 129]], taps('V', 'X', [126]))) },
+    { len: 180, setup: function (w) { w.P.x = 260; w.P.y = 60; w.V.x = 290; w.V.y = 80; preSent(w, w.P, w.V, [0.92, 0.4], 0.85); },
+      input: sc(cat([['P', 'LT', 14, 18]], taps('P', 'X', [14]), [['P', 'my', 14, 50, 1]], [['P', 'fx', 50, 56, -2], ['P', 'fy', 50, 56, 0.4]], [['P', 'LT', 56, 60]], taps('P', 'X', [56]), [['P', 'my', 56, 90, 0.6]], [['P', 'fx', 92, 100, -2], ['P', 'fy', 92, 100, 0.4]], [['P', 'LT', 100, 104]], taps('P', 'X', [100]))) }],
+    steps: [[0, 'A rally: first the chase strike, nudged up.', 40],
+      [52, 'Then the overtake, a fresh kind, so his tech window is 4 ticks: he guards right as it arrives, and techs it.', 96],
+      [100, 'A teched link gives him the counter-rush within 20 ticks. It lands on the chaser in the air: a full send, and the rally is his now, with his own links.', 146],
+      [300, 'Another take: the same kind again and again. The second chase strike gives him an 8-tick window, and a third of one kind techs itself: the rally falls apart.', 425]] }];
+
+function clipLen(c) { return c.takes.reduce(function (a, t) { return a + t.len; }, 0); }
+function newRun(ci, mode) {
+  if (mode === 'play') return { clip: null, w: newWorld(null, 0, 'play'), t: 0, take: 0, off: 0 };
+  var c = CLIPS[ci]; return { clip: c, w: newWorld(c, 0, 'demo'), t: 0, take: 0, off: 0 };
+}
+function stepRun(run, keys) {
+  var c = run.clip, w = run.w;
+  if (c) {
+    var T = c.takes[run.take];
+    if (w.t >= T.len) { run.off += T.len; run.take++; if (run.take >= c.takes.length) { run.take = 0; run.off = 0; } run.w = w = newWorld(c, run.take, 'demo'); T = c.takes[run.take]; }
+    w.P.inp = T.input(w, 'P'); w.V.inp = T.input(w, 'V');
+  } else { w.P.inp = keys || {}; w.V.inp = rivalAI(w); }
+  w.sound.length = 0;
+  if (w.hs > 0) { w.hs--; w.P.shake = w.V.shake = w.hs; [w.P, w.V].forEach(function (f) { ['X', 'Y', 'B'].forEach(function (k) { if (f.inp[k] && !f.prev[k]) f.buf = k; }); f.prev = copy(f.inp); }); camStep(w); w.t++; run.t = run.off + w.t; return; }
+  w.P.shake = w.V.shake = 0;
+  [w.P, w.V].forEach(function (f) { if (f.inp.LB && !f.prev.LB) f.lastGuard = w.t; });
+  fighterStep(w, w.P); fighterStep(w, w.V); shotsStep(w); fxStep(w);
+  if (w.rally && w.rally.on.st === 'down' && w.rally.on.down > R.landLink && !w.rally.by.zip && !w.shots.length) endRally(w, 'HE LANDED, NO LINK');
+  camStep(w); w.t++; run.t = run.off + w.t;
+}
+function stepOf(c, t) { var k = 0; for (var i = 0; i < c.steps.length; i++) if (t >= c.steps[i][0]) k = i; return k; }
+
+// ---- drawing: the camera's view ----
+function view(w) { var c = w.cam; return { sx: function (x) { return W / 2 + wd(x - c.x) * c.z; }, sy: function (a) { return H * 0.5 - (a - c.y) * c.z; }, z: c.z }; }
+function quad(R2, ax, ay, bx, by, w0, w1, col) { var dx = bx - ax, dy = by - ay, l = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / l, ny = dx / l; R2.poly([ax + nx * w0 / 2, ay + ny * w0 / 2, bx + nx * w1 / 2, by + ny * w1 / 2, bx - nx * w1 / 2, by - ny * w1 / 2, ax - nx * w0 / 2, ay - ny * w0 / 2], col); }
+function ngon(cx, cy, r, n, rot) { var p = []; for (var i = 0; i < n; i++) { var a = rot + i * 2 * Math.PI / n; p.push(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } return p; }
+function star(cx, cy, r1, r2, n, rot) { var p = []; for (var i = 0; i < 2 * n; i++) { var a = rot + i * Math.PI / n, r = i % 2 ? r2 : r1; p.push(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } return p; }
+function limb(R2, a, b, wdt, col) { quad(R2, a[0], a[1], b[0], b[1], wdt, wdt, col); R2.poly(ngon(a[0], a[1], wdt / 2, 8, 0.39), col); R2.poly(ngon(b[0], b[1], wdt / 2, 8, 0.39), col); }
+// clouds: flat shapes drifting at half the camera's speed, so height and speed read in an empty sky
+var CLOUDS = []; for (var ci2 = 0; ci2 < 36; ci2++) CLOUDS.push({ x: ci2 * 200 + hash(ci2 * 7 + 1) * 120, a: 200 + hash(ci2 * 13 + 5) * 380, w: 50 + hash(ci2 * 3 + 9) * 70 });
+function drawWorld(R2, w, v) {
+  R2.clear(C.sky);
+  CLOUDS.forEach(function (cl) { var X = W / 2 + wd(cl.x - w.cam.x * 0.5) * w.cam.z * 0.7, Y = H * 0.5 - (cl.a - w.cam.y * 0.6) * w.cam.z * 0.7, r = cl.w * w.cam.z * 0.7; if (X < -r || X > W + r || Y < -40 || Y > H + 20) return; R2.poly([X - r, Y, X - r * 0.6, Y - r * 0.22, X - r * 0.1, Y - r * 0.32, X + r * 0.4, Y - r * 0.24, X + r, Y], C.cloud); });
+  var c = w.cam, x0 = c.x - W / 2 / c.z - 40, x1 = c.x + W / 2 / c.z + 40;
+  // the ground's segments in view, unwrapped round the camera
+  for (var k = -1; k <= 1; k++) GROUND.forEach(function (g) {
+    var a = g[0] + k * WORLD, b = g[1] + k * WORLD; if (b < x0 - WORLD * 0 && b < x0 || a > x1) return; if (a > x1 || b < x0) return;
+    var col = g[2] === 'sea' ? C.sea : g[2] === 'pave' ? C.pave : g[2] === 'quay' ? C.rock : g[2] === 'sand' ? C.sand : g[2] === 'rock' ? C.rock : C.grass;
+    var top = v.sy(g[3]), A = W / 2 + (a - c.x) * c.z, B = W / 2 + (b - c.x) * c.z;
+    R2.poly([A, top, B, top, B, H, A, H], col);
+    R2.poly([A, top, B, top, B, top + 2, A, top + 2], g[2] === 'sea' ? C.seaLite : g[2] === 'pave' ? C.paveDark : g[2] === 'quay' ? C.rockDark : g[2] === 'sand' ? C.sandDark : g[2] === 'rock' ? C.rockDark : C.grassDark);
+    if (g[2] === 'sea') { for (var s = Math.ceil(a / 60) * 60; s < b; s += 60) { var X = W / 2 + (s - c.x) * c.z, ph = Math.sin(w.t * 0.05 + s * 0.01) * 2 * c.z; R2.poly([X - 6 * c.z, top + 1, X, top - 3 * c.z + ph, X + 6 * c.z, top + 1], C.seaLite); } R2.poly([A, top + 18 * c.z, B, top + 18 * c.z, B, H, A, H], C.seaDeep); }
+  });
+  for (var k2 = -1; k2 <= 1; k2++) BUILDINGS.forEach(function (b) {
+    var a = b.x + k2 * WORLD; if (a + b.w < x0 || a > x1) return;
+    var L = W / 2 + (a - c.x) * c.z, Rr = W / 2 + (a + b.w - c.x) * c.z, top = v.sy(b.h), base = v.sy(0);
+    R2.poly([L, base, Rr, base, Rr, top, L, top], C.bld); R2.poly([L, top, Rr, top, Rr, top + 3 * c.z, L, top + 3 * c.z], C.bldDark);
+    for (var yy = b.h - 22; yy > 14; yy -= 26) for (var xx = 12; xx < b.w - 12; xx += 22) { var X = W / 2 + (a + xx - c.x) * c.z, Y = v.sy(yy); R2.poly([X, Y, X + 8 * c.z, Y, X + 8 * c.z, Y + 10 * c.z, X, Y + 10 * c.z], C.win); }
+  });
+  w.marks.forEach(function (m) {
+    var X = v.sx(m.x);
+    if (m.k === 'crater') { var r = m.w / 2 * c.z, Y = v.sy(m.y); R2.poly([X - r, Y, X - r * 0.6, Y + r * 0.35, X + r * 0.6, Y + r * 0.35, X + r, Y], C.crack); R2.poly([X - r - 4, Y, X - r, Y - 3, X - r + 6, Y], C.dust); R2.poly([X + r + 4, Y, X + r, Y - 3, X + r - 6, Y], C.dust); }
+    else if (m.k === 'dent') { var Y2 = v.sy(m.y), s2 = 9 * c.z; R2.poly(star(X, Y2, s2, s2 * 0.45, 6, 0.3), C.crack); }
+    else if (m.k === 'ripple') { var age = w.t - m.t; if (age < 40) { var rr = (10 + age) * c.z, Y3 = v.sy(0); quad(R2, X - rr, Y3 + 1, X - rr * 0.5, Y3 + 1, 2, 2, C.seaLite); quad(R2, X + rr * 0.5, Y3 + 1, X + rr, Y3 + 1, 2, 2, C.seaLite); } }
+  });
+}
+// one fighter: a body in his own frame (y up from the feet), turned by spin when he flies
+function drawFighter(R2, w, v, f) {
+  var d = f.dir, col = f.def.body, z = v.z, sh = f.shake > 0 ? (f.shake % 2 ? 2 : -2) * (f === w.rally && false ? 1 : 1) : 0;
+  var fl = floorAt(f.x), bx = v.sx(f.x) + sh, by = v.sy(f.y), gy = v.sy(fl);
+  var hgt = Math.max(0, f.y - fl); R2.poly(ngon(v.sx(f.x), gy + 2, 13 * z * Math.max(0.2, 1 - hgt / 220), 8, 0).map(function (q, i) { return i % 2 ? gy + 2 + (q - gy - 2) * 0.22 : q; }), C.shade);
+  var lean = f.lean, pts = { fa: [d * 6, 0], fb: [-d * 5, 0], hip: [0, 16], ch: [0, 31], hd: [0, 38], h1: [d * 11, 30], h2: [d * 7, 25] }, rot = 0;
+  var air = hgt > 4;
+  if (air) { pts.fa = [d * 5, 3]; pts.fb = [-d * 4, 5]; }
+  if (f.guard) { pts.h1 = [d * 10, 34]; pts.h2 = [d * 9, 27]; }
+  if (f.blow) { var b = f.blow, q = b.t >= b.land ? 1 - (b.t - b.land) / 6 : 0, wind = b.t < b.land ? Math.min(1, b.t / Math.max(1, b.land)) : 0;
+    pts.h1 = [d * lerp(lerp(11, -6, wind), 26, q), 31]; lean = lerp(-6 * wind, 10, q); if (b.k === 'heavy' && b.full && b.held) pts.h1 = [-d * 8, 30]; }
+  if (f.daze > 0) { var sw = Math.sin(w.t * 0.18) * 7; lean = sw; pts.h1 = [d * 6, 16]; pts.h2 = [-d * 4, 15]; pts.hd = [d * (2 + sw * 0.4), 36]; }
+  if (f.sold) { var so = f.sold, kk = so.t < 6 ? 1 : Math.max(0, 1 - (so.t - 6) / 10); lean = -9 * so.size * kk; if (so.size >= 2) { pts.ch = [d * 5 * kk, 28]; pts.hip = [-d * 3 * kk, 15]; } pts.h1 = [-d * 6, 22]; pts.h2 = [-d * 8, 26]; f.snap = (2 + 2.5 * so.size) * kk; } else f.snap = 0;     // the head snaps back, the body folds
+  if (f.reel || f.stagger) { lean = -10; pts.h1 = [-d * 4, 26]; }
+  if (f.st === 'down') { rot = -d * Math.PI / 2 * Math.min(1, f.down / 6); if (f.down > R.landLink) rot *= Math.max(0, 1 - (f.down - R.landLink) / 12); }
+  if (f.st === 'sent') { var s = f.send; rot = (s ? s.t : 0) * f.spin; pts.fa = [d * 9, 6]; pts.fb = [-d * 8, 2]; pts.h1 = [d * 14, 36]; pts.h2 = [-d * 12, 34]; }
+  if (f.st === 'tech') { rot = d * Math.PI * 2 * (1 - f.tech / 14); pts.fa = [d * 4, 10]; pts.fb = [-d * 3, 12]; pts.h1 = [d * 6, 24]; }
+  if (f.zip || f.rush) { var u = norm(f.vx, f.vy); lean = 18; rot = Math.atan2(u[0], u[1]) * 0 ; pts.h1 = [d * 22, 30]; pts.fa = [-d * 4, 6]; pts.fb = [-d * 10, 9]; if (f.zip && f.zip.phase === 'wall') { pts.fa = [d * 8, 8]; pts.fb = [d * 6, 2]; lean = -10; } }
+  pts.ch = [pts.ch[0] + d * lean * 0.5, pts.ch[1]]; pts.hd = f.snap ? [pts.ch[0] - d * f.snap, pts.ch[1] + 7 - f.snap * 0.3] : [pts.hd[0] + d * lean * 0.6, pts.hd[1]];
+  var cx = 0, cy = 19, cr = Math.cos(rot), sr = Math.sin(rot);
+  function T(p) { var x = p[0] - cx, y = p[1] - cy, X = x * cr - y * sr, Y = x * sr + y * cr; return [bx + (X + cx) * z, by - (Y + cy) * z]; }
+  var P2 = {}; for (var k in pts) P2[k] = T(pts[k]);
+  limb(R2, P2.fb, P2.hip, 6 * z, col); limb(R2, P2.fa, P2.hip, 6 * z, col); limb(R2, P2.hip, P2.ch, 8 * z, col); limb(R2, P2.ch, P2.h2, 4.5 * z, col);
+  if (f.def.id === 'protagonist') R2.poly(ngon(P2.hd[0], P2.hd[1], 7 * z, 8, 0.39), col); else R2.poly([P2.hd[0], P2.hd[1] - 9 * z, P2.hd[0] + 5.5 * z, P2.hd[1] - 1.5 * z, P2.hd[0] + 4 * z, P2.hd[1] + 7 * z, P2.hd[0] - 4 * z, P2.hd[1] + 7 * z, P2.hd[0] - 5.5 * z, P2.hd[1] - 1.5 * z], col);
+  limb(R2, P2.ch, P2.h1, 4.5 * z, col);
+  if (f.blow && f.blow.k === 'heavy' && f.blow.full && f.blow.held) { var Lb = f.def.L.bolt; R2.poly(ngon(P2.h1[0], P2.h1[1], 4 * z, 8, 0), KEY); R2.poly(ngon(P2.h1[0], P2.h1[1], 3 * z, 8, 0), Lb.main); }
+}
+function drawFx(R2, w, v, e) {
+  if (e.k === 'burst') { var u = e.t / e.dur, r = (u < 0.3 ? e.r * ease(u / 0.3) : e.r * (1 - (u - 0.3) / 0.7 * ((u - 0.3) / 0.7))) * v.z; if (r < 1) return; var X = v.sx(e.x), Y = v.sy(e.y); R2.poly(star(X, Y, r + 2.5, r * 0.5 + 2, e.n, e.rot), KEY); R2.poly(star(X, Y, r, r * 0.5, e.n, e.rot), e.lc.main); R2.poly(star(X, Y, r * 0.6, r * 0.28, e.n, e.rot + 0.3), e.lc.core); return; }
+  if (e.k === 'chip') { var s = e.s * (1 - e.t / e.dur) * v.z; if (s < 0.4) return; var c = Math.cos(e.rot), sn = Math.sin(e.rot), X2 = v.sx(e.x), Y2 = v.sy(e.y); R2.poly([X2 + sn * s, Y2 - c * s, X2 + c * 0.9 * s - sn * 0.6 * s, Y2 + sn * 0.9 * s + c * 0.6 * s, X2 - c * 0.9 * s - sn * 0.6 * s, Y2 - sn * 0.9 * s + c * 0.6 * s], e.col); return; }
+  if (e.k === 'streak') { var k = 1 - e.t / e.dur, l = Math.sqrt(e.vx * e.vx + e.vy * e.vy) || 1, X3 = v.sx(e.x), Y3 = v.sy(e.y); if (k <= 0) return; quad(R2, X3 - e.vx / l * 26 * k * v.z, Y3 + e.vy / l * 26 * k * v.z, X3, Y3, 1, 4 * k * v.z, e.col); }
+}
+function drawShot(R2, w, v, s) { var X = v.sx(s.x), Y = v.sy(s.y), L = s.o.def.L.lob, z = v.z, rot = s.t * 0.1, p = [-0.9, -0.6, 0.2, -0.95, 1, -0.2, 0.8, 0.6, -0.2, 0.9, -1, 0.3]; function shp(r) { var o = []; for (var i = 0; i < p.length; i += 2) o.push(X + (p[i] * Math.cos(rot) - p[i + 1] * Math.sin(rot)) * r, Y + (p[i] * Math.sin(rot) + p[i + 1] * Math.cos(rot)) * r); return o; } R2.poly(shp(11 * z), KEY); R2.poly(shp(9.5 * z), L.edge); R2.poly(shp(8 * z), L.main); R2.poly(shp(3.6 * z), L.core); }
+// the edges of the screen only: each fighter's ki, and the director's feed at the top right
+function drawHud(R2, w) {
+  [w.P, w.V].forEach(function (f, j) { var x0 = j ? W - 14 - 110 : 14, k = 110 * clamp(f.ki / 100, 0, 1); R2.poly([x0, 10, x0 + 110, 10, x0 + 110, 14, x0, 14], C.hud); if (j) R2.poly([x0 + 110 - k, 10, x0 + 110, 10, x0 + 110, 14, x0 + 110 - k, 14], f.def.L.bolt.edge); else R2.poly([x0, 10, x0 + k, 10, x0 + k, 14, x0, 14], f.def.L.bolt.edge); });
+  var Rl = w.rally, lines = w.feed.slice(0, 4).map(function (e) { return e.text; });
+  if (Rl && Rl.links.length) lines.unshift('LINKS: ' + Rl.links.map(function (k) { return k.toUpperCase(); }).join(', '));
+  var bw = 268, bh2 = 10 + lines.length * 11; R2.poly([W - bw - 10, 22, W - 10, 22, W - 10, 22 + bh2, W - bw - 10, 22 + bh2], C.panel);
+  lines.forEach(function (t, i) { R2.text(W - bw - 4, 27 + i * 11, t.slice(0, 44), 7, i === 0 ? C.ink : C.dim); });
+}
+function draw(w, R2) {
+  var v = view(w); drawWorld(R2, w, v);
+  drawFighter(R2, w, v, w.V); drawFighter(R2, w, v, w.P);
+  w.shots.forEach(function (s) { drawShot(R2, w, v, s); }); w.fx.forEach(function (e) { drawFx(R2, w, v, e); });
+  drawHud(R2, w);
+}
+return { W: W, H: H, CLIPS: CLIPS, R: R, newRun: newRun, stepRun: stepRun, draw: function (run, R2) { draw(run.w, R2); }, stepOf: stepOf, clipLen: clipLen };
+})();
+// ==== PAGE (DOM) ====
+(function () {
+var cv = document.getElementById('cv'), c = cv.getContext('2d');
+var R = { clear: function (col) { c.fillStyle = col; c.fillRect(0, 0, S.W, S.H); },
+  poly: function (p, col) { if (p.length < 6) return; c.fillStyle = col; c.beginPath(); c.moveTo(p[0], p[1]); for (var i = 2; i < p.length; i += 2) c.lineTo(p[i], p[i + 1]); c.closePath(); c.fill(); },
+  text: function (x, y, s, size, col) { c.fillStyle = col; c.font = 'bold ' + Math.round(size * 1.35) + 'px monospace'; c.textBaseline = 'top'; c.fillText(String(s).toUpperCase(), x, y); } };
+var st = { ci: 0, mode: 'demo' }, run = null, keys = {}, spd = 1, acc = 0, last = 0, shown = -1, ac = null;
+function reset() { run = S.newRun(st.ci, st.mode); shown = -1; renderSteps(); }
+function buttons(el, items, get, set) { el.innerHTML = ''; items.forEach(function (it, i) { var b = document.createElement('button'); b.type = 'button'; b.textContent = it; b.addEventListener('click', function () { set(i); paint(); reset(); b.blur(); audio(); }); el.appendChild(b); }); el._get = get; }
+function paintRow(el) { Array.prototype.forEach.call(el.children, function (b, i) { var on = el._get() === i; b.style.background = on ? 'var(--bg-accent)' : 'transparent'; b.style.color = on ? 'var(--text-accent)' : ''; }); }
+var rowC = document.getElementById('rowC'), rowM = document.getElementById('rowM');
+function paint() { [rowC, rowM].forEach(paintRow); }
+buttons(rowC, S.CLIPS.map(function (cl) { return cl.n + ' ' + cl.name; }), function () { return st.mode === 'demo' ? st.ci : -1; }, function (i) { st.ci = i; st.mode = 'demo'; });
+buttons(rowM, ['Watch the clip', 'Play'], function () { return st.mode === 'demo' ? 0 : 1; }, function (i) { st.mode = i ? 'play' : 'demo'; });
+paint();
+var sl = document.getElementById('spd'); sl.addEventListener('input', function () { spd = sl.value / 100; document.getElementById('spdo').textContent = Math.round(sl.value) + '%'; });
+var MAP = { KeyW: 'up', KeyA: 'left', KeyS: 'down', KeyD: 'right', KeyJ: 'X', KeyK: 'Y', KeyL: 'B', Space: 'LB', ShiftLeft: 'LT', ShiftRight: 'LT', KeyE: 'RB', KeyQ: 'RT' };
+function toPlay() { if (st.mode !== 'play') { st.mode = 'play'; paint(); reset(); } }
+window.addEventListener('keydown', function (e) { if (MAP[e.code]) { audio(); toPlay(); keys[MAP[e.code]] = true; e.preventDefault(); } });
+window.addEventListener('keyup', function (e) { if (MAP[e.code]) { keys[MAP[e.code]] = false; e.preventDefault(); } });
+window.addEventListener('blur', function () { keys = {}; });
+function pad() { var ps = navigator.getGamepads ? navigator.getGamepads() : [], g = null; for (var i = 0; i < ps.length; i++) if (ps[i] && ps[i].connected) { g = ps[i]; break; } return g; }
+var padSeen = false;
+function input() {
+  var o = { X: !!keys.X, Y: !!keys.Y, B: !!keys.B, LB: !!keys.LB, LT: !!keys.LT, RB: !!keys.RB, RT: !!keys.RT, mx: (keys.right ? 1 : 0) - (keys.left ? 1 : 0), my: (keys.up ? 1 : 0) - (keys.down ? 1 : 0) }, g = pad();
+  if (g) {
+    if (!padSeen) { padSeen = true; document.getElementById('pad').textContent = 'Gamepad: ' + g.id.slice(0, 40); }
+    var ax = g.axes, bt = function (i) { return g.buttons[i] && (g.buttons[i].pressed || g.buttons[i].value > 0.5); };
+    if (Math.abs(ax[0]) > 0.25) o.mx = ax[0]; if (Math.abs(ax[1]) > 0.25) o.my = -ax[1];
+    o.X = o.X || bt(2); o.Y = o.Y || bt(3); o.B = o.B || bt(1); o.LB = o.LB || bt(4); o.RB = o.RB || bt(5); o.LT = o.LT || bt(6); o.RT = o.RT || bt(7);
+    if (st.mode !== 'play' && (bt(2) || bt(3) || bt(1) || Math.abs(ax[0]) > 0.5)) toPlay();
+  }
+  return o;
+}
+function renderSteps() {
+  var ol = document.getElementById('steps'); ol.innerHTML = '';
+  if (st.mode === 'play') { var li = document.createElement('li'); li.textContent = 'Playing as the Protagonist: the keys are below. The rival guards your heavies, mashes out of a daze, techs some links and turns some of them. Pick a clip to watch again.'; ol.appendChild(li); return; }
+  S.CLIPS[st.ci].steps.forEach(function (s) { var li = document.createElement('li'); li.textContent = s[1]; ol.appendChild(li); });
+}
+function audio() { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; } } }
+function tone(f0, f1, dur, vol, type) { if (!ac) return; var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime; o.type = type || 'square'; o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f1, t + dur); g.gain.setValueAtTime(vol, t); g.gain.linearRampToValueAtTime(0, t + dur); o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + dur + 0.02); }
+var SOUNDS = { hit: function () { tone(140, 70, 0.08, 0.07, 'triangle'); }, sold: function () { tone(110, 45, 0.18, 0.09, 'triangle'); }, send: function () { tone(90, 35, 0.3, 0.1, 'sawtooth'); }, link: function () { tone(160, 60, 0.12, 0.08, 'triangle'); }, zip: function () { tone(400, 900, 0.08, 0.03); }, tech: function () { tone(700, 500, 0.06, 0.04); }, slam: function () { tone(70, 30, 0.25, 0.1, 'sawtooth'); }, splash: function () { tone(300, 120, 0.2, 0.03, 'triangle'); }, block: function () { tone(500, 400, 0.04, 0.03); }, break: function () { tone(220, 60, 0.2, 0.08, 'square'); } };
+function frame(ts) {
+  if (!last) last = ts; var dt = Math.min(50, ts - last); last = ts; acc += dt / 16.667 * spd;
+  var inp = input();
+  while (acc >= 1) { acc -= 1; S.stepRun(run, inp); run.w.sound.forEach(function (k) { if (SOUNDS[k]) SOUNDS[k](); }); }
+  S.draw(run, R);
+  if (st.mode === 'demo') { var k = S.stepOf(run.clip, run.t); if (k !== shown) { shown = k; Array.prototype.forEach.call(document.getElementById('steps').children, function (li, i) { li.className = i === k ? 'on' : ''; }); } }
+  requestAnimationFrame(frame);
+}
+reset(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

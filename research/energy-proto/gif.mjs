@@ -4,7 +4,7 @@
 // (30 a second) under a caption bar with the clip's number, name and current step. One still per step, mid-step.
 //   node research/energy-proto/gif.mjs [out dir, default homework/48-energy] [only: comma-separated clip numbers, e.g. C1,C6]
 //   node research/energy-proto/gif.mjs --check     (plays every clip to the end, prints what happened, writes nothing)
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { Img } from '../planet-gen/lib/img.mjs';
 
@@ -110,6 +110,19 @@ function encodeGif(frames, delays) {
 }
 
 // ---- the ten clips and 7b, with one line each for Orb ----
+
+// The README's generated part sits between these markers. Anything outside them (the EP's text and questions) is kept as it
+// is; a README without them gets the part inserted before its first question, and a missing README is written whole.
+const BEGIN = '<!-- research: clips begin (written by research/energy-proto/gif.mjs; edit outside the markers) -->', END = '<!-- research: clips end -->';
+function mergeReadme(path, title, block, question) {
+  const part = [BEGIN, ...block, END].join('\n');
+  if (!existsSync(path)) { writeFileSync(path, [title, '', part, '', ...question].join('\n')); return 'written'; }
+  let s = readFileSync(path, 'utf8'); const a = s.indexOf(BEGIN.slice(0, 30)), b = s.indexOf(END);
+  if (a >= 0 && b > a) s = s.slice(0, a) + part + s.slice(b + END.length);
+  else { const q = s.search(/^\*\*(One|Two|Three) questions?/m); s = q >= 0 ? s.slice(0, q) + part + '\n\n' + s.slice(q) : s.trimEnd() + '\n\n' + part + '\n'; }
+  writeFileSync(path, s); return 'merged';
+}
+
 const STEM = { C1: 'C1-rapid-fire', C2: 'C2-the-lob', C3: 'C3-blast-or-beam', C4: 'C4-pulses', C5: 'C5-loaded', C6: 'C6-beam-struggle', C7: 'C7-two-grabs', C7b: 'C7b-four-grabs', C8: 'C8-mines-and-traps', C9: 'C9-close-and-far', C10: 'C10-one-beam-three-places' };
 const CAP = {
   C1: "Rapid fire (X): one bolt a tap, one a press when mashed, a stream when held (a steady light at the palm); bolts cancel in pairs.",
@@ -179,7 +192,7 @@ E.CLIPS.forEach((clip, ci) => {
   console.log(`${stem}.gif: ${frames.length} frames, ${(gif.length / 1024).toFixed(0)} KB`);
 });
 if (!only) {
-  const L = ['# 48. Energy attacks, step by step (12 min to watch, one question)', '',
+  const L = [
     'Your energy overhaul, built as Game Design wrote it (`docs/design/energy-overhaul.md`) and drawn as the ten clips in its section 13, plus 7b, the four grabs side by side. Each clip is one feature; the bar on top names the clip and the step.',
     '', "The four fighters use Combat's energy kits (Protagonist, Rival, Empress and Demon Cyborg; names provisional), in Art's colour lanes, and are drawn to Legal's look rules: no balls of energy in a hand, one firing hand, straight beams. Bodies are flat stand-ins, two at a time. Knock-backs are drawn shorter than they will be, to fit the picture. C9 and C10 use simple stand-ins for punches, the zip, the sea, houses, trees, fire and water.",
     '', "**Two changes from section 13's text.** In C5 the held charge steps down when her ki runs short and never fires by itself (Game Design's ruling 5). In C7 each fighter shows the payoff Combat gave them: the Protagonist's net ends in the yank, the Rival's ring in the bind.",
@@ -189,7 +202,5 @@ if (!only) {
   E.CLIPS.forEach((c) => L.push(`- ${c.n}. \`${STEM[c.n]}.gif\`: ${CAP[c.n]}`));
   L.push('', '**The steps in each clip:**', '');
   E.CLIPS.forEach((c) => { L.push(`- **${c.n}. ${c.name}**`); c.steps.forEach((s, k) => L.push(`  ${k + 1}. ${s[1]}`)); });
-  L.push('', '**One question:** is this the energy system you had in mind?', '- (a) Yes, build it.', '- (b) Yes, with changes (say which clip and step).', '- (c) Not quite: tell us what is off.', '', 'Your notes:', '');
-  writeFileSync(join(OUT, 'README.md'), L.join('\n'));
-  console.log('README.md written');
+  console.log('README.md ' + mergeReadme(join(OUT, 'README.md'), '# 48. Energy attacks, step by step', L, ['**One question:** is this the energy system you had in mind? (a) yes, (b) yes with changes, (c) not quite.', '', 'Your notes:', '']));
 }

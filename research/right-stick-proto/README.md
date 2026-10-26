@@ -1,13 +1,26 @@
 # Right-stick prototype tools
 
-Research & Prototyping, 2026-10-23. The prototype `docs/ep/prototypes/right-stick-v1.html` is step 1 of Game Design's pitch C, the family stick. The command set is from `docs/design/right-stick-pitches.md` §11, with §12's rulings, and the reads use Controls' fixed thresholds (`docs/controls/right-stick.md` §11). Its clips are for Orb's homework (`homework/49-right-stick/`).
+Research & Prototyping, 2026-10-23, reworked 2026-10-25. The prototype `docs/ep/prototypes/right-stick-v2.html` is step 1 of Game Design's pitch C, the family stick, reworked for one thumb by `docs/design/right-stick-pitches.md` §13 (Controls' law, `docs/controls/right-thumb.md`). The command set is §11's with §12's rulings, and the reads use Controls' fixed thresholds (`docs/controls/right-stick.md` §11). v1 (`right-stick-v1.html`, §11 and §12 only) stays as it was committed.
 
 | File | What |
 | :--- | :--- |
 | `work/sim.js` | The recognizer, the sim and the drawing, with no DOM, between the "STICK SIM" and "PAGE" markers |
 | `work/page.html` | The page: buttons, the gamepad (standard mapping) and keyboard, the step list and sound. Its `/*SIM*/` slot takes `sim.js` |
-| `build.mjs` | Writes the single-file prototype from the two |
-| `gif.mjs` | Runs the sim in node with a scanline rasteriser, the bitmap font and a GIF encoder (copied from `research/energy-proto/gif.mjs`). Makes the six clips, the stills, a sheet per clip and the homework README. `--check` prints what the recognizer read; `--frames` saves chosen ticks |
+| `build.mjs` | Writes `right-stick-v2.html` from the two |
+| `gif.mjs` | Runs the sim in node with a scanline rasteriser, the bitmap font and a GIF encoder (copied from `research/energy-proto/gif.mjs`). Makes the clips, the stills, a sheet per clip and its block of the homework README (between markers, merged, never replacing the EP's text). `--check` prints every note per lane and each lane's ticks; `--frames` saves chosen ticks |
+
+**The clips.** S1 to S4 are §13's: the step-strike queue, the four left-hand slips, the four reads and the D-pad mirror. They render by default into `homework/combat-and-controls/NOW - right stick, reworked/`. R1 to R7 are step 1's commands, now played under §13; `R` as the second argument renders them into a folder named on the command line (their homework is answered and filed in `homework/done/right-stick-step1-first-version/`). S1 and S4 are split takes: two worlds on one clock (`takeSplit`, `run.w2`), drawn side by side through a fixed camera per take, with a tick strip and a small input panel under each lane, at half speed (`slow: 2`).
+
+**Section 13 in the sim** (`LAW`):
+
+- **The commitment (R30).** Every stick command commits him for `L` = 6 ticks, and a hold's release locks out `L` (a beam sweep's release locks nothing, and the brawl cross-up's commitment is its rush). Steps and hops take exactly `L`.
+- **The commitment the other way.** A face press commits the right stick and the D-pad for `L`. It counts from the press. A press made inside a stick commitment counts from that commitment's end instead. A press made with the stick still out counts from the stick's release or next act + `L`, or from its start if the stick is still held then. A held B counts from its last tick down. A press still waiting in the queue counts too, once the stick is free. A flick made inside the commitment is read as if the thumb had just arrived: at that point + `L` + the stick's 2-tick read, or the pad's tap at + `L`. A face press made after the flick takes the thumb back and drops it ("FLICK DROPPED"). A hold counts its 10 ticks from that point + `L`, plus the flick's 3-tick rise when the gesture left rest inside it. So a claw's press-then-stick chain is no faster than one thumb's.
+- **The queue.** Every face press (X, the RB bolt, Y, B's charge, the LB+RB mine) made inside a commitment, a hold, a press under way, the cross-up's arc or a slip waits, 3 deep, for up to `W` = 36 ticks, and starts when nothing holds him. A bolt keeps its 6-tick gap. Something other than the stick that ends a hold (a slip, a read) locks out `L` as a release would, and the stick still held is spent until it is let go.
+- **The step-strike (R31, R29).** A press within `W` of a step in, a take-back, a hop or a drop, measured from where the step ends, is the blow at once. A press queued behind one draws his arm back during it.
+- **R28.** Stick input never changes a press, a rush, a blow, the arc, a charge or a slip already running.
+- **The D-pad (R32).** A tap is a flick, read on the tick it is pressed; a hold reads 8 ways after 10 ticks.
+- **The slip (R34).** LT's tap is the one dodge against blows, and the left stick at the tap picks it: neutral dodges, away slips back, toward slips in (at most 1.1 bh), up sways over a low blow, down ducks under a high one. There is no slip in the cross-up's arc.
+- **The read (R36 to R38).** With LB held a flick sets a read for 90 ticks at 3 ki: up his heavy, down his flurry, toward his grab, away his shot. It fires only on his attacks that start after it and reach him, and it shows in the stance. A wrong read costs the ki.
 
 **The recognizer** (`readStick`) takes one sample a tick and runs these stages in order:
 
@@ -20,27 +33,23 @@ Research & Prototyping, 2026-10-23. The prototype `docs/ep/prototypes/right-stic
    - A hold starts after 10 ticks out.
    - Its angle is read 32 ways.
    - Flight reads it four ways, with 8 degrees of hysteresis at the diagonals.
-5. **Family:** whatever shoulder is held at the first deflection locks the family until the stick rests.
+5. **Family:** whatever shoulder is held at the first deflection locks the family until the stick rests (none: Flight; RB: the aim; LB+RB: the lay; LB: the read).
 
-**Patterns** are only named in the panel, as step 2's:
-
-- **Circle:** a sweep of 300 degrees or more.
-- **Half-circle:** 140 to 250 degrees.
-- **Zig-zag:** two reversals along one line.
-- **Pump:** two flicks the same way in a row within 18 ticks.
+**Patterns** are only named in the panel, as step 2's: a circle (300 degrees or more), a half-circle (140 to 250), a zig-zag (two reversals on one line), a pump (two flicks the same way within 18 ticks).
 
 **Directions** are relative to the rival.
 
 **Simplified in the prototype:**
 
 - The brawl is a small stand-in for `sim/director/brawl.gd` on the data's numbers: bands, striking distance, the leash, the pull, the break and the idle. It has no damage and no blocks.
-- Flicks and holds under LB, LT or RT do nothing (step 2 and 3).
+- The cliff is a rectangle: no move passes through it. A step that would cut the rock goes by the corner at its own length (below the top it stops at the face), and after a detour the next steps keep the move's own speed. A strike spot the face would put inside the rock keeps striking distance along the face, or on the top.
+- The rival is a scripted stand-in: blows at three heights, a heavy (28-tick wind-up), a four-blow flurry, an energy grab (a loop that closes in 24 ticks) and bolts. In Play it throws them in turn.
 - Under a hold the aim line points where the stick points, read 32 ways (GD's R26). A beam turns toward the stick at the fighter's own sweep rate.
-- A pump is two flicks the same way in a row within 18 ticks; up-down strokes are a vertical zig-zag (R27).
 
 ```
 node research/right-stick-proto/build.mjs
-node research/right-stick-proto/gif.mjs --check
-node research/right-stick-proto/gif.mjs homework/49-right-stick          # about 10 s
-node research/right-stick-proto/gif.mjs --frames R2 150,180,210 out.png
+node research/right-stick-proto/gif.mjs --check S1,S2
+node research/right-stick-proto/gif.mjs                                   # S1 to S4 into the NOW folder, about 10 s
+node research/right-stick-proto/gif.mjs <scratch folder> R             # the step-1 set
+node research/right-stick-proto/gif.mjs --frames S1 76,82 out.png
 ```

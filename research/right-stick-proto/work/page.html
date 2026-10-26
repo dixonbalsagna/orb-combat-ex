@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Right stick, step 1</title>
+<title>Right stick, reworked</title>
 <style>
 :root{--text-primary:#1f1f1c;--text-secondary:#5f5e5a;--text-muted:#888780;--surface-1:#f6f5f0;--border:#d3d1c7;--bg-accent:#e6f1fb;--text-accent:#0c447c}
 body{font-family:sans-serif;margin:16px;max-width:1040px;color:var(--text-primary)}
@@ -17,7 +17,7 @@ kbd{border:1px solid var(--border);border-radius:4px;padding:0 4px;font-size:12p
 </style>
 </head>
 <body>
-<p>Right stick, step 1 (Research, 2026-10-23): Game Design's pitch C, the family stick, with the command set in <code>docs/design/right-stick-pitches.md</code> section 11 and Controls' thresholds in <code>docs/controls/right-stick.md</code> section 11. The shoulder held when the stick first leaves the middle picks the family: nothing held is Flight, RB is the aim. The panel on the right is the stick: its trace, the dead zone, the dashed ring a flick must cross, the family and what was read. Patterns come in step 2, so the panel only names them. Watch the clips, or Play with a gamepad or the keyboard.</p>
+<p>Right stick, step 1, v2 (Research, 2026-10-25): step 1 reworked for one thumb, as Game Design's <code>docs/design/right-stick-pitches.md</code> section 13 adopts Controls' law (<code>docs/controls/right-thumb.md</code>). Every stick command commits the fighter for 6 ticks; a face press made inside it, or during a hold, waits and starts at its end, so a claw grip's early press and a normal thumb's later press start on the same tick, and a press behind a step is staged as one step-strike. Quick defence is on the left hand: LT dodges, and the left stick picks the slip. LB with a right flick sets a read of his next move. The D-pad mirrors every stick command. Clips S1 to S4 are the new rules; R1 to R7 are step 1's commands, played under them. The panel on the right is the stick, the left stick, the D-pad, the shoulders, the commitment and what waits.</p>
 <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;margin:0 0 12px">
   <span class="lab">Clip</span><div id="rowC" class="row"></div>
   <span class="lab">Mode</span><div id="rowM" class="row"></div>
@@ -26,7 +26,7 @@ kbd{border:1px solid var(--border);border-radius:4px;padding:0 4px;font-size:12p
 </div>
 <canvas id="cv" width="1020" height="340" style="width:100%;border:0.5px solid var(--border);border-radius:12px;background:var(--surface-1)"></canvas>
 <ol id="steps"></ol>
-<p class="lab">Play: a gamepad works as it is (right stick, left stick, RB, LB, X, Y, B). Keyboard: <kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&rarr;</kbd> <kbd>&darr;</kbd> the right stick (tap to flick, hold to hold, two keys for a diagonal), <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> the left stick, <kbd>E</kbd> holds RB, <kbd>Q</kbd> holds LB, <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> are X, Y and B (hold <kbd>L</kbd> with RB for a beam). The rival drifts and fires now and then.</p>
+<p class="lab">Play: a gamepad works as it is (both sticks, the D-pad, LB, RB, LT, X, Y, B). Keyboard: <kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&rarr;</kbd> <kbd>&darr;</kbd> the right stick (tap to flick, hold to hold, two keys for a diagonal), <kbd>T</kbd> <kbd>F</kbd> <kbd>G</kbd> <kbd>H</kbd> the D-pad, <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> the left stick, <kbd>Shift</kbd> is LT (tap it with a direction on W A S D to slip), <kbd>Q</kbd> holds LB (with a right flick: a read), <kbd>E</kbd> holds RB, <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> are X, Y and B (hold <kbd>L</kbd> with RB for a beam). The rival throws a blow, a heavy, a flurry, a grab and a shot in turn.</p>
 <script>
 /*SIM*/
 (function () {
@@ -44,16 +44,16 @@ buttons(rowC, S.CLIPS.map(function (cl) { return cl.n + ' ' + cl.name; }), funct
 buttons(rowM, ['Watch the clip', 'Play'], function () { return st.mode === 'demo' ? 0 : 1; }, function (i) { st.mode = i ? 'play' : 'demo'; });
 paint();
 var sl = document.getElementById('spd'); sl.addEventListener('input', function () { spd = sl.value / 100; document.getElementById('spdo').textContent = Math.round(sl.value) + '%'; });
-var MAP = { ArrowLeft: 'rl', ArrowRight: 'rr', ArrowUp: 'ru', ArrowDown: 'rd', KeyW: 'lu', KeyA: 'll', KeyS: 'ld', KeyD: 'lr', KeyE: 'RB', KeyQ: 'LB', KeyJ: 'X', KeyK: 'Y', KeyL: 'B' };
+var MAP = { ArrowLeft: 'rl', ArrowRight: 'rr', ArrowUp: 'ru', ArrowDown: 'rd', KeyW: 'lu', KeyA: 'll', KeyS: 'ld', KeyD: 'lr', KeyE: 'RB', KeyQ: 'LB', ShiftLeft: 'LT', ShiftRight: 'LT', KeyT: 'du', KeyF: 'dl', KeyG: 'dd', KeyH: 'dr', KeyJ: 'X', KeyK: 'Y', KeyL: 'B' };
 function toPlay() { if (st.mode !== 'play') { st.mode = 'play'; paint(); reset(); } }
 window.addEventListener('keydown', function (e) { if (MAP[e.code]) { audio(); toPlay(); keys[MAP[e.code]] = true; e.preventDefault(); } });
 window.addEventListener('keyup', function (e) { if (MAP[e.code]) { keys[MAP[e.code]] = false; e.preventDefault(); } });
 window.addEventListener('blur', function () { keys = {}; });
-// the pad's right stick (axes 2 and 3), left stick (0 and 1), LB 4, RB 5, X 2, Y 3, B 1 (the standard mapping)
+// the pad's right stick (axes 2 and 3), left stick (0 and 1), LB 4, RB 5, LT 6, X 2, Y 3, B 1, the D-pad 12 to 15 (the standard mapping)
 function pad() { var ps = navigator.getGamepads ? navigator.getGamepads() : [], g = null; for (var i = 0; i < ps.length; i++) if (ps[i] && ps[i].connected) { g = ps[i]; break; } return g; }
 var padSeen = false;
 function input() {
-  var g = pad(), o = { RB: !!keys.RB, LB: !!keys.LB, X: !!keys.X, Y: !!keys.Y, B: !!keys.B };
+  var g = pad(), o = { RB: !!keys.RB, LB: !!keys.LB, LT: !!keys.LT, du: !!keys.du, dd: !!keys.dd, dl: !!keys.dl, dr: !!keys.dr, X: !!keys.X, Y: !!keys.Y, B: !!keys.B };
   var kx = (keys.rr ? 1 : 0) - (keys.rl ? 1 : 0), ky = (keys.rd ? 1 : 0) - (keys.ru ? 1 : 0), kl = Math.sqrt(kx * kx + ky * ky) || 1;
   o.rx = kx / kl; o.ry = ky / kl; o.lx = (keys.lr ? 1 : 0) - (keys.ll ? 1 : 0); o.ly = (keys.ld ? 1 : 0) - (keys.lu ? 1 : 0);
   if (g) {
@@ -61,7 +61,7 @@ function input() {
     var ax = g.axes, bt = function (i) { return g.buttons[i] && g.buttons[i].pressed; };
     if (Math.abs(ax[2]) > 0.02 || Math.abs(ax[3]) > 0.02) { o.rx = ax[2]; o.ry = ax[3]; }
     if (Math.abs(ax[0]) > 0.2 || Math.abs(ax[1]) > 0.2) { o.lx = ax[0]; o.ly = ax[1]; }
-    o.RB = o.RB || bt(5); o.LB = o.LB || bt(4); o.X = o.X || bt(2); o.Y = o.Y || bt(3); o.B = o.B || bt(1);
+    o.RB = o.RB || bt(5); o.LB = o.LB || bt(4); o.LT = o.LT || bt(6) || (g.buttons[6] && g.buttons[6].value > 0.5); o.du = o.du || bt(12); o.dd = o.dd || bt(13); o.dl = o.dl || bt(14); o.dr = o.dr || bt(15); o.X = o.X || bt(2); o.Y = o.Y || bt(3); o.B = o.B || bt(1);
     if (st.mode !== 'play' && (Math.abs(ax[2]) > 0.5 || Math.abs(ax[3]) > 0.5 || bt(5) || bt(2))) toPlay();
   }
   return o;
@@ -75,7 +75,7 @@ function audio() { if (!ac) { try { ac = new (window.AudioContext || window.webk
 function tone(f0, f1, dur, vol, type) { if (!ac) return; var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime; o.type = type || 'square'; o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f1, t + dur); g.gain.setValueAtTime(vol, t); g.gain.linearRampToValueAtTime(0, t + dur); o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + dur + 0.02); }
 var SOUNDS = { click: function () { tone(1200, 1200, 0.03, 0.05); }, bolt: function () { tone(1600, 900, 0.03, 0.015); }, beam: function () { tone(160, 90, 0.25, 0.05, 'sawtooth'); } };
 function frame(ts) {
-  if (!last) last = ts; var dt = Math.min(50, ts - last); last = ts; acc += dt / 16.667 * spd;
+  if (!last) last = ts; var dt = Math.min(50, ts - last); last = ts; acc += dt / 16.667 * spd * (run.clip && run.clip.takes[run.take].slow ? 1 / run.clip.takes[run.take].slow : 1);     // side-by-side takes play at half speed
   var inp = input();
   while (acc >= 1) { acc -= 1; S.stepRun(run, inp); run.w.sound.forEach(function (k) { if (SOUNDS[k]) SOUNDS[k](); }); }
   S.draw(run, R);
