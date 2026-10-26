@@ -203,6 +203,12 @@ func _run() -> void:
 	await _scenario("fold", func(): return _fold(), {})
 	await _scenario("angle shot", func(): return _angle_shot(), {})
 	await _scenario("power-up angle", func(): return _power_up_angle(), {})
+	await _scenario("takeover divider eased", func(): return _takeover_eased(), {})
+	await _scenario("slam door whip", func(): return _slam_whip(), {})
+	await _scenario("sell push", func(): return _sell_row(), {})
+	await _scenario("rally follow", func(): return _rally_row(false), {})
+	await _scenario("rally turn", func(): return _rally_row(true), {})
+	await _scenario("rally grab holds the size", func(): return _rally_grab(), {})
 	await _scenario("landscape shot", func(): return _landscape(false), {})
 	await _scenario("landscape shot let go by a hit", func(): return _landscape(true), {})
 	await _scenario("arena turn, one view", func(): return _arena_turn(600.0), {})
@@ -3999,6 +4005,279 @@ func _power_up_angle() -> Dictionary:
 	_check(off == 0, "%s: a fighter was off the screen for %d ticks" % [_label, off])
 	stats["detail power-up angle"] = "lowest %.2f degrees, largest step %.3f a tick, cuts %d" % [low, step, cuts]
 	return {}
+
+
+## Split grace (2026-10-23): a shot takes the screen from the split (a transformation on fighter 0) and gives it back. The divider's
+## centre moves with eased speed: its first and last steps are small against its largest, it never steps more than 1.6 times the
+## linear rate's step, and both fighters stay on the screen where they are shown.
+func _takeover_eased() -> Dictionary:
+	var ax: float = 20000.0
+	_pose(ax, 40.0, ax + 9000.0, 40.0)
+	_seed_rig()
+	for _i in range(240):
+		_tick_rig()
+	_check(_rig.sep >= 0.999, "%s: the pair did not split (sep %.3f)" % [_label, _rig.sep])
+	var cs: Array = []
+	_tick_rig([_shot_events("transform", {"actor": 0.0, "tier": 2.0, "source": "x", "dur": 1.5})])
+	cs.append(_rig.current().c.x)
+	for _k in range(200):
+		_tick_rig()
+		cs.append(_rig.current().c.x)
+	var steps: Array = []
+	for k in range(1, cs.size()):
+		steps.append(absf(float(cs[k]) - float(cs[k - 1])))
+	var moving: Array = []
+	for k in range(steps.size()):
+		if float(steps[k]) > 0.05:
+			moving.append(k)
+	var big: float = 0.0
+	for st in steps:
+		big = maxf(big, float(st))
+	var lin: float = (vw * 0.5) * (1.0 - 2.0 * CamParams.CINE_SLIVER) / (CamParams.T_ENGAGE * 60.0)
+	_check(moving.size() >= 4, "%s: the divider did not move (%d moving ticks)" % [_label, moving.size()])
+	if moving.size() >= 4:
+		var first: float = float(steps[int(moving[0])])
+		_check(first <= 0.35 * big, "%s: the divider started at %.1f px a tick (largest %.1f)" % [_label, first, big])
+	_check(big <= 1.6 * lin, "%s: the divider stepped %.1f px in a tick (the linear rate's %.1f)" % [_label, big, lin])
+	stats["detail " + _label] = "moving ticks %d, first step %.1f px, largest %.1f px (linear %.1f)" % [moving.size(), float(steps[int(moving[0])]) if moving.size() > 0 else 0.0, big, lin]
+	return {}
+
+
+## The slam's door as a crisp whip (2026-10-23): a rush at the other fighter from the split; the divider sweeps across in about 12
+## frames (SLAM_TIME), its first and last steps small against its largest (a hard ease at both ends), it lands on the contact (one
+## view on the rush's last tick) and there is no blur (the feather stays the compositor's own).
+func _slam_whip() -> Dictionary:
+	var ax: float = 50000.0
+	_pose(ax, 40.0, ax + 5000.0, 40.0)
+	_seed_rig()
+	for _i in range(150):
+		_tick_rig()
+	var A = _S.fighters[0]
+	var B = _S.fighters[1]
+	var r := SimState.Rush.new()
+	r.tgt = B
+	r.off = -A.face * 60.0
+	r.end = _S.T + 0.6
+	A.rush = r
+	var cs: Array = []
+	var ticks: int = 0
+	var landed_at: int = -1
+	var rush_end: int = -1
+	while ticks < 100:
+		var rem: float = r.end - _S.T
+		var tx: float = B.x + r.off
+		if A.rush != null:
+			if rem <= SplitRig.DT:
+				A.x = SimWrap.wrap(tx)
+				A.rush = null
+				rush_end = ticks
+			else:
+				A.x = SimWrap.wrap(A.x + SimWrap.sdx(A.x, tx) * SplitRig.DT / rem)
+		_tick_rig()
+		var cur: SplitFrame = _rig.current()
+		cs.append(cur.c.x if cur.shows(0) and cur.shows(1) else (vw if cur.shows(0) else 0.0))
+		if landed_at < 0 and _rig.sep <= 0.001:
+			landed_at = ticks
+		ticks += 1
+		if rush_end >= 0 and ticks > rush_end + 10:
+			break
+	_allow_cut_frames = 0
+	var steps: Array = []
+	for k in range(1, cs.size()):
+		steps.append(absf(float(cs[k]) - float(cs[k - 1])))
+	var moving: Array = []
+	var big: float = 0.0
+	for k in range(steps.size()):
+		if float(steps[k]) > 0.5:
+			moving.append(k)
+		big = maxf(big, float(steps[k]))
+	var n_door: int = int(moving[-1]) - int(moving[0]) + 1 if moving.size() > 0 else 0
+	var first: float = float(steps[int(moving[0])]) if moving.size() > 0 else 0.0
+	var last: float = float(steps[int(moving[-1])]) if moving.size() > 0 else 0.0
+	_check(n_door >= 8 and n_door <= 15, "%s: the door took %d frames (a crisp whip is 8 to 15)" % [_label, n_door])
+	_check(first <= 0.4 * big and last <= 0.4 * big, "%s: the door's ends are not eased (first %.1f, last %.1f, largest %.1f px)" % [_label, first, last, big])
+	_check(landed_at >= 0 and rush_end >= 0 and absi(landed_at - rush_end) <= 1, "%s: the door landed at tick %d, the contact at %d" % [_label, landed_at, rush_end])
+	stats["detail " + _label] = "door frames %d, first step %.1f px, last %.1f, largest %.1f, landed at %d, contact at %d" % [n_door, first, last, big, landed_at, rush_end]
+	return {}
+
+
+## The sell (GD rulings 23d item 4): three sold heavies 20 ticks apart in the one view. The view pushes in by about SELL_PUSH x
+## SELL_HEAVY, holds on from the first blow to the last one's stop with no dip, comes back within 1%, and never cuts.
+func _sell_row() -> Dictionary:
+	var ax: float = 20000.0
+	_pose(ax, 40.0, ax + 300.0, 40.0)
+	_seed_rig()
+	for _i in range(200):
+		_tick_rig()
+	var z0: float = _rig.current().cam_z[0]
+	var zs: Array = []
+	var cuts: int = 0
+	for k in range(200):
+		var evs: Array = []
+		if k == 0 or k == 20 or k == 40:
+			evs.append(_shot_events("cue", {"kind": "sell", "actor": 0.0, "target": 1.0, "amount": 2.0}))
+		_tick_rig(evs)
+		zs.append(_rig.current().cam_z[0] / z0)
+		if _rig.current().cut:
+			cuts += 1
+	var peak: float = 0.0
+	var dip: float = 0.0
+	for k in range(zs.size()):
+		peak = maxf(peak, float(zs[k]))
+		if k >= 10 and k <= 40 + int(CamParams.SELL_HOLD * 60.0):
+			dip = maxf(dip, peak - float(zs[k]))
+	var want: float = CamParams.SELL_PUSH * CamParams.SELL_HEAVY
+	_check(peak - 1.0 >= 0.7 * want, "%s: the sell pushed in only %.3f (want about %.3f)" % [_label, peak - 1.0, want])
+	_check(dip <= CamParams.SELL_PUNCH * 1.1 + 0.002, "%s: the push dipped %.4f between sold blows (each blow's punch is %.3f)" % [_label, dip, CamParams.SELL_PUNCH])
+	_check(absf(float(zs[-1]) - 1.0) < 0.01, "%s: the push did not come back (x%.3f)" % [_label, float(zs[-1])])
+	_check(cuts == 0 and _rig.sells == 3, "%s: %d cuts, %d sells" % [_label, cuts, _rig.sells])
+	stats["detail " + _label] = "peak x%.3f, the largest dip while selling %.4f, back to x%.3f" % [peak, dip, float(zs[-1])]
+	return {}
+
+
+## The rally (GD rulings 23d items 6 and 10) in the one view: B is sent at 5,000 u/s with A chasing 600 units behind, a link opens
+## the rally; B lands and lies 15 ticks (the shot holds); a second link is an overtake (B sent back the way he came, A now ahead of
+## him). With `turn`, A's counter-rush sends A instead and the shot moves to him. Checked: no cut, the body always on the screen, the
+## chaser on it while he is near, the body's place on the screen changing speed by at most RALLY_STEP of the width a tick squared
+## (the spring), the shot held over the landing, and it ends after the rally does.
+func _rally_row(turn: bool) -> Dictionary:
+	var res: Array = []
+	for on in [false, true]:
+		_rig.rally_framing = on
+		res.append(_rally_run(turn))
+	_rig.rally_framing = true
+	var r0: Dictionary = res[0]
+	var r1: Dictionary = res[1]
+	_check(int(r1["cuts"]) <= int(r0["cuts"]), "%s: %d cuts (%d without the rally framing)" % [_label, int(r1["cuts"]), int(r0["cuts"])])
+	_check(int(r1["body_off"]) <= int(r0["body_off"]), "%s: the body off the screen %d ticks (%d without)" % [_label, int(r1["body_off"]), int(r0["body_off"])])
+	_check(int(r1["chaser_off"]) < int(r0["chaser_off"]) or int(r0["chaser_off"]) == 0, "%s: the chaser, near, off the screen %d ticks (%d without)" % [_label, int(r1["chaser_off"]), int(r0["chaser_off"])])
+	_check(bool(r1["held"]), "%s: the shot did not hold over the landing between links" % _label)
+	_check(int(r1["turn_cut"]) == 0, "%s: a cut on the turn's tick" % _label)
+	if turn:
+		_check(int(r1["turned_to"]) == 0, "%s: the shot did not move to the new body (slot %d)" % [_label, int(r1["turned_to"])])
+	_check(bool(r1["ended"]), "%s: the shot did not end after the rally" % _label)
+	stats["detail " + _label] = "with / without the rally framing: cuts %d / %d, body off %d / %d, chaser off %d / %d, held %s, the body's largest change of screen speed %.3f / %.3f of the width a tick" % [int(r1["cuts"]), int(r0["cuts"]), int(r1["body_off"]), int(r0["body_off"]), int(r1["chaser_off"]), int(r0["chaser_off"]), str(r1["held"]), float(r1["acc"]), float(r0["acc"])]
+	return {}
+
+
+## A grab in flight (GD 23d item 6, Combat's own links): B is sent, a grab link comes, and A closes from 600 units to the body while
+## B is held. Legal (e12): nothing zoomed over a fighter held in the air, so the shot's size target holds within 1% over the hold.
+func _rally_grab() -> Dictionary:
+	var ax: float = 60000.0
+	_pose(ax, 40.0, ax + 400.0, 40.0)
+	_seed_rig()
+	for _i in range(150):
+		_tick_rig()
+	var A = _S.fighters[0]
+	var B = _S.fighters[1]
+	B.state = "launched"
+	B.vx = 4000.0
+	_tick_rig([_shot_events("launch", {"actor": 1.0, "target": 0.0}), _shot_events("cue", {"kind": "rally_link", "actor": 0.0, "target": 1.0, "text": "chase"})])
+	for _k in range(20):
+		B.x = SimWrap.wrap(B.x + B.vx * SplitRig.DT)
+		A.x = SimWrap.wrap(B.x - 600.0)
+		_tick_rig()
+	B.vx = 0.0
+	var lo: float = 1.0e9
+	var hi: float = 0.0
+	for k in range(30):
+		var evs: Array = []
+		if k == 0:
+			evs.append(_shot_events("cue", {"kind": "rally_link", "actor": 0.0, "target": 1.0, "text": "grab"}))
+		A.x = SimWrap.wrap(B.x - 600.0 + 20.0 * float(k))
+		_tick_rig(evs)
+		if k >= 1:
+			var r_t: float = _rig._own_zoom_target(_S, 1)
+			lo = minf(lo, r_t)
+			hi = maxf(hi, r_t)
+	B.state = "down"
+	for _i in range(120):
+		_tick_rig([_shot_events("cue", {"kind": "rally_end", "actor": 0.0})] if _i == 0 else [])
+	_check(hi / maxf(lo, 0.0001) <= 1.01, "%s: the size target moved %.3f over the grab's hold (held: within 1%%)" % [_label, hi / maxf(lo, 0.0001)])
+	stats["detail " + _label] = "size target over the hold %.4f to %.4f" % [lo, hi]
+	return {}
+
+
+func _rally_run(turn: bool) -> Dictionary:
+	var ax: float = 60000.0
+	_pose(ax, 40.0, ax + 400.0, 40.0)
+	for f in _S.fighters:
+		f.state = "free"
+		f.vx = 0.0
+	_seed_rig()
+	for _i in range(150):
+		_tick_rig()
+	var A = _S.fighters[0]
+	var B = _S.fighters[1]
+	var cuts: int = 0
+	var body_off: int = 0
+	var chaser_off: int = 0
+	var held: bool = true
+	var xs: Array = []
+	var turned_to: int = -1
+	var turn_cut: int = 0
+	var sub: int = 1
+	for k in range(260):
+		var evs: Array = []
+		if k == 0:
+			B.state = "launched"
+			B.vx = 5000.0
+			evs.append(_shot_events("launch", {"actor": 1.0, "target": 0.0}))
+			evs.append(_shot_events("cue", {"kind": "rally_link", "actor": 0.0, "target": 1.0, "text": "send"}))
+		if k == 40:
+			B.state = "down"
+			B.vx = 0.0
+		if k == 55:
+			if turn:
+				A.state = "launched"
+				A.vx = -5000.0
+				B.state = "free"
+				evs.append(_shot_events("cue", {"kind": "rally_turn", "actor": 1.0, "target": 0.0}))
+				sub = 0
+			else:
+				B.state = "launched"
+				B.vx = -5000.0
+				A.x = SimWrap.wrap(B.x - 300.0)
+				evs.append(_shot_events("cue", {"kind": "rally_link", "actor": 0.0, "target": 1.0, "text": "overtake"}))
+		if k == 95:
+			for f in _S.fighters:
+				if f.state == "launched":
+					f.state = "down"
+					f.vx = 0.0
+			evs.append(_shot_events("cue", {"kind": "rally_end", "actor": 0.0}))
+		for f in _S.fighters:
+			f.x = SimWrap.wrap(f.x + float(f.vx) * SplitRig.DT)
+		if k < 40:
+			A.x = SimWrap.wrap(B.x - 600.0)
+		_tick_rig(evs)
+		var cur: SplitFrame = _rig.current()
+		if cur.cut:
+			cuts += 1
+			if k == 55 or k == 56:
+				turn_cut += 1
+		if k > 2 and k < 95:
+			var bs = _S.fighters[sub]
+			var pi: int = sub if cur.shows(sub) else 0
+			var sp: Vector2 = cur.screen_pos(pi, bs.x, bs.y + CamParams.CHEST, float(bs.z))
+			xs.append(sp.x / vw)
+			if not _on_screen(cur, sub):
+				body_off += 1
+			var other = _S.fighters[1 - sub]
+			if absf(SimWrap.sdx(bs.x, other.x)) < 700.0 and k > 10 and not _on_screen(cur, 1 - sub):
+				chaser_off += 1
+		if k >= 40 and k < 55 and _rig.solo_kind != "launch":
+			held = false
+		if k == 56 and turn:
+			turned_to = _rig.solo_slot
+	var acc: float = 0.0
+	for k in range(2, xs.size()):
+		if k == 53 or k == 54:
+			continue   # (the link's own tick: a new send, the body's velocity steps)
+		acc = maxf(acc, absf(float(xs[k]) - 2.0 * float(xs[k - 1]) + float(xs[k - 2])))
+	for f in _S.fighters:
+		f.state = "free"
+		f.vx = 0.0
+	return {"cuts": cuts, "body_off": body_off, "chaser_off": chaser_off, "held": held, "turned_to": turned_to, "turn_cut": turn_cut, "acc": acc, "ended": _rig.solo_kind == "" or _rig.solo_w < 0.999}
 
 
 ## The shot grammar's landscape shot (2026-10-23): the pair flies across a biome border at 480 u/s in the plain one view. Once the

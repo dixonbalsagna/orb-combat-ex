@@ -218,6 +218,16 @@ var angles: bool = true                    # angles by context on a decisive pea
 var angle_shots: int = 0
 var angle_now: String = ""                 # "low" or "high" while an angle holds, for the debug feed
 var _ang_want: String = ""                 # this tick's decisive kind, if any
+var rally_framing: bool = true             # the sell and the rally (CamParams.SELL_*, RALLY_*; GD rulings 23d)
+var sells: int = 0
+var rally_links: int = 0
+var rally_turns: int = 0
+var _rally_on: bool = false                # a rally is live: the launch shot on its body persists from link to link
+var _rally_body: int = -1                  # the fighter in flight (the rally's sent body)
+var _rally_last_t: float = -1.0e9
+var _rally_kind: String = ""               # the last link's base kind (chase, overtake, spike, bank, energy, world, grab)
+var _rally_r_hold: float = -1.0            # a grab in flight holds the shot's size (Legal e12: nothing zoomed over a fighter held in the air)
+var _la_v: Vector2 = Vector2.ZERO          # the launch anchor's spring speed in a rally, shares of the screen a second
 var landscape: bool = true                 # the landscape shot on a new biome or a landmark coming into the frame (CamParams.SCAPE_*)
 var scape_shots: int = 0
 var scape_now: String = ""                  # "biome" or "landmark" while one runs, for the debug feed
@@ -410,6 +420,12 @@ func reset(S: SimState, p_vw: float, p_vh: float) -> void:
 	_ang_want = ""
 	_ang_t = -1.0
 	_ang_last_t = -99.0
+	_rally_on = false
+	_rally_body = -1
+	_rally_last_t = -1.0e9
+	_rally_kind = ""
+	_rally_r_hold = -1.0
+	_la_v = Vector2.ZERO
 	scape_now = ""
 	_scape_biome = ""
 	_scape_new = ""
@@ -798,9 +814,11 @@ func _slam_run(S: SimState) -> void:
 	var p: float = clampf(1.0 - rem / slam_time, 0.0, 1.0)
 	e_slot = _slam_slot
 	sliver = 0.0
-	e = p * p * p
+	# A crisp whip (Research's cuts-and-eases.md): the rusher's pane takes the screen over 12 frames, a hard ease at both ends, and
+	# lands on the contact. The door used to be p cubed, all its speed at the stop: the frame before the contact moved the most.
+	e = _smootherstep(p)
 	e_target = 1.0
-	sep = lerpf(_slam_sep0, 0.0, smoothstep(0.0, 1.0, p))
+	sep = lerpf(_slam_sep0, 0.0, _smootherstep(p))
 	if p >= 1.0 or rem <= 0.0:
 		_slam_slot = -1
 		sep = 0.0
@@ -1212,6 +1230,21 @@ func _read_events(S: SimState, events: Array) -> void:
 			var mk: String = String(_ef(ev, "kind", ""))
 			if mk == "perfect_block":
 				_blow("perfect_block", 4)
+			elif mk == "sell" and rally_framing:
+				_sell(float(_ef(ev, "amount", 1.0)))
+			elif mk == "rally_link" and rally_framing:
+				var rb: int = int(_ef(ev, "target", -1))
+				if rb >= 0 and rb < 2:
+					_rally_on = true
+					_rally_body = rb
+					_rally_last_t = time
+					_rally_kind = String(_ef(ev, "text", ""))
+					_rally_r_hold = -1.0
+					rally_links += 1
+			elif mk == "rally_turn" and rally_framing:
+				_rally_turn(S, int(_ef(ev, "target", -1)))
+			elif mk == "rally_end":
+				_rally_on = false
 			elif mk == "cam_intent" and intent_feed:
 				_read_intent(S, ev)
 			if mk == "lunge_light" or mk == "lunge_heavy" or mk == "charge_light" or mk == "charge_heavy" or mk == "zip_light" or mk == "zip_heavy":
@@ -1600,6 +1633,10 @@ func _update_solo(S: SimState) -> void:
 				elif solo_kind == "":
 					_begin_solo("launch", i, 2, 0.0, S)
 	_launch_evt = [false, false]
+	if _rally_on and (S.fighters[0].state == "launched" or S.fighters[1].state == "launched"):
+		_rally_last_t = time
+	elif _rally_on and time - _rally_last_t > CamParams.RALLY_GAP:
+		_rally_on = false   # no link came after the landing: the rally is over (its own end cue may come first)
 	if _launch_victim >= 0 and S.fighters[_launch_victim].state != "launched" and solo_kind != "hold" and solo_kind != "cut":
 		_launch_victim = -1
 	if chase_slot >= 0:
@@ -1641,8 +1678,8 @@ func _update_solo(S: SimState) -> void:
 				if f.state == "launched":
 					solo_phase = "follow"
 					solo_t = 0.0
-				elif _land_t >= CamParams.LAND_HOLD and f.slide <= 0.0 and not _lh_catching(S, solo_slot):
-					_end_solo(S)
+				elif _land_t >= CamParams.LAND_HOLD and f.slide <= 0.0 and not _lh_catching(S, solo_slot) and not (_rally_on and solo_slot == _rally_body):
+					_end_solo(S)   # (a live rally holds its shot from link to link: the next send is followed from where he lies)
 		"hold":
 			# On the attacker until the impact (a building hit, or the landing, or the cap), then the cut to the victim.
 			var v: int = _launch_victim
@@ -2237,6 +2274,80 @@ func _blow_mult() -> float:
 	return 1.0 + _bp_amp * (rise - smoothstep(CamParams.BLOW_UP + _bp_hold, CamParams.BLOW_UP + _bp_hold + CamParams.BLOW_DOWN, _bp_t))
 
 
+## A sold blow (GD rulings 23d item 4: a medium or a heavy landed in the daze; `weight` 1 a medium, 2 a heavy): the push in harder than
+## any blow, held SELL_HOLD after it. While an earlier push is still up it holds on to this blow's stop; while one lets go, this one
+## rises again from the level it is at (no step). A 12-frame eased punch marks each blow.
+func _sell(weight: float) -> void:
+	if not blow_push or reduced_motion or intro_active:
+		return
+	var amp: float = CamParams.SELL_PUSH * (CamParams.SELL_HEAVY if weight >= 2.0 else 1.0)
+	var hold: float = CamParams.SELL_HOLD
+	if _bp_t >= 0.0 and _bp_t <= CamParams.BLOW_UP + _bp_hold and amp <= _bp_amp:
+		_bp_hold = maxf(_bp_hold, maxf(_bp_t - CamParams.BLOW_UP, 0.0) + hold)
+	else:
+		var lvl: float = clampf((_blow_mult() - 1.0) / amp, 0.0, 0.999)
+		var u: float = pow(1.0 - lvl, 1.0 / 3.0)   # the rise is 1 - u^3: start where it is
+		_bp_amp = amp
+		_bp_t = CamParams.BLOW_UP * (1.0 - u)
+		_bp_hold = hold
+	if _punch_t < 0.0:
+		_punch_amp = CamParams.SELL_PUNCH
+		_punch_len = CamParams.SELL_PUNCH_LEN
+		_punch_t = 0.0
+	sells += 1
+	blows += 1
+
+
+## The rally's shot size for body i at size r (heights): the chaser taken in when the two fit at RALLY_MIN_R or more, eased in
+## between (a chaser far away leaves the body at his own size).
+func _rally_r(S: SimState, i: int, r: float) -> float:
+	if _rally_kind == "grab":
+		# A grab in flight (the haul, the bind, the slam, the reel): the size is held from the grab's first tick to the next send.
+		# Legal (e12, ln06): nothing is said, slowed, zoomed or finished over a fighter held in the air.
+		if _rally_r_hold < 0.0:
+			_rally_r_hold = _rally_r_open(S, i, r)
+		return _rally_r_hold
+	return _rally_r_open(S, i, r)
+
+
+func _rally_r_open(S: SimState, i: int, r: float) -> float:
+	var f = S.fighters[i]
+	var c = S.fighters[1 - i]
+	var dx: float = absf(SimWrap.sdx(f.x, c.x)) + CamParams.BODY_H * 0.5
+	var dy: float = absf(float(c.y) - float(f.y)) + CamParams.BODY_H
+	var r_fit: float = minf(CamParams.RALLY_FIT_X * vw / dx, CamParams.RALLY_FIT_Y * vh / dy) * CamParams.BODY_H / vh
+	if r_fit >= r:
+		return r
+	var w_in: float = smoothstep(CamParams.RALLY_MIN_R * 0.75, CamParams.RALLY_MIN_R, r_fit)
+	return exp(lerpf(log(r), log(maxf(r_fit, CamParams.RALLY_MIN_R)), w_in))
+
+
+## The rally changes hands (GD rulings 23d item 10): the shot on the old body moves to the new one from what is on the screen (his
+## place there and the zoom drawn), then eases to its trailing frame. No cut: they are together at the turn (his counter-rush lands).
+func _rally_turn(S: SimState, nb: int) -> void:
+	if nb < 0 or nb > 1:
+		return
+	rally_turns += 1
+	var ob: int = _rally_body
+	_rally_on = true
+	_rally_body = nb
+	_rally_last_t = time
+	if solo_kind != "launch" or solo_slot != ob or ob == nb or _cur == null or (e > 0.001 and e < 0.999):
+		return   # (no rally shot running, or its pane still opening: his send starts its own launch shot, from what is on the screen)
+	var pi: int = ob if _cur.shows(ob) else (0 if _cur.shows(0) else 1)
+	var f = S.fighters[nb]
+	var sp: Vector2 = _cur.screen_pos(pi, f.x, f.y + CamParams.CHEST, float(f.z))
+	_snap_focus(S, nb)
+	_zo[nb] = _cur.cam_z[pi]
+	_launch_anchor_x = clampf(sp.x / vw, 0.2, 0.8)
+	_launch_anchor_y = clampf(sp.y / vh, 0.2, 0.85)
+	_la_v = Vector2.ZERO
+	solo_slot = nb
+	e_slot = nb
+	solo_phase = "follow"
+	solo_t = 0.0
+
+
 ## A landed blow of this kind (a key of CamParams.BLOW_PUSH) and its hit-stop in ticks: starts a push when it is bigger than what is left of the one running.
 func _blow(kind: String, stop_ticks: int) -> void:
 	if not blow_push or reduced_motion or intro_active or not CamParams.BLOW_PUSH.has(kind):
@@ -2743,6 +2854,8 @@ func _own_zoom_target(S: SimState, i: int) -> float:
 			"launch":
 				r = CamParams.R_LAUNCH * m
 				alt_f = 1.0
+				if _rally_on and i == _rally_body:
+					r = _rally_r(S, i, r)
 			"cut":
 				r = CamParams.R_LAUNCH * m * (1.0 + CamParams.CUT_PUSH)
 				alt_f = 1.0
@@ -2846,8 +2959,17 @@ func _anchor(S: SimState, i: int) -> Vector2:
 			# The attacker stands on the side away from where the opponent was thrown, so the throw has room.
 			var to_v: float = SimWrap.sdx(f.x, S.fighters[_launch_victim].x)
 			want = 0.4 if to_v >= 0.0 else 0.6
-		_launch_anchor_x += (want - _launch_anchor_x) * (1.0 - exp(-DT / 0.25))
-		_launch_anchor_y += (0.62 - _launch_anchor_y) * (1.0 - exp(-DT / 0.25))
+		if _rally_on and solo_kind == "launch" and i == _rally_body:
+			# A rally's anchor moves on a critically damped spring: an overtake's reversal and a spike's drop start and land eased.
+			var want_y: float = CamParams.RALLY_SPIKE_Y if float(f.vy) < -CamParams.RALLY_SPIKE_VY else 0.62
+			var wk: float = CamParams.RALLY_W
+			_la_v += (wk * wk * (Vector2(want, want_y) - Vector2(_launch_anchor_x, _launch_anchor_y)) - 2.0 * wk * _la_v) * DT
+			_launch_anchor_x += _la_v.x * DT
+			_launch_anchor_y += _la_v.y * DT
+		else:
+			_la_v = Vector2.ZERO
+			_launch_anchor_x += (want - _launch_anchor_x) * (1.0 - exp(-DT / 0.25))
+			_launch_anchor_y += (0.62 - _launch_anchor_y) * (1.0 - exp(-DT / 0.25))
 		solo_pt.x = vw * _launch_anchor_x
 		solo_pt.y = vh * _launch_anchor_y
 	if solo_kind == "intro" and solo_slot == i:
@@ -4073,7 +4195,10 @@ func _make_frame(S: SimState) -> SplitFrame:
 	var hn: float = _half_extent_along_n(f.n)
 	var delta: float = 0.0
 	if e_slot >= 0:
-		delta = e * hn * (1.0 - 2.0 * sliver) * (1.0 if e_slot == 0 else -1.0)
+		# Split grace (2026-10-23): the divider sweeps by smoothstep(e), as the panes' anchors move (`_anchor`), so it starts and
+		# lands with them instead of crossing the screen at one speed while they ease. The slam's door keeps its own shape (e = p^3).
+		var ev: float = e if _slam_slot >= 0 else smoothstep(0.0, 1.0, e)
+		delta = ev * hn * (1.0 - 2.0 * sliver) * (1.0 if e_slot == 0 else -1.0)
 	f.c = Vector2(vw * 0.5, vh * 0.5) + f.n * delta
 	var ss: float = _smootherstep(sep)
 	f.gap = maxf(CamParams.GAP_MIN_PX, CamParams.GAP_FRAC * vw)

@@ -473,7 +473,7 @@ What does move the divider at one speed is the expansion `e` (a pane taking the 
 - The cameras do not change: the digests' camera hashes, STATS, SIZE, LAUNCHED and the mass probe are identical to main's in six scenes.
 - New split_sweep row, `takeover divider eased`: a transformation takes the screen from the split and gives it back. First step 10 px a tick, largest 36, against the linear 24 every tick.
 
-Before/after: docs/camera/img/takeover-divider/takeover-divider-before-after.gif.
+Before/after: docs/camera/img/takeover-divider/takeover-divider-before-after.gif. Gates: as director-17's. The flash collapse clip reads the same as main's in both modes.
 
 **The slam's door as a crisp whip (2026-10-23, follow-up 2; parked: docs/camera/pending/director-17-slam-whip.patch, after director-16).** The door is the rusher's pane taking the screen as he closes on the other fighter. It took 0.14 s (8 frames) with the takeover as p cubed: a slow start and all its speed at the stop. Its last frame moved the divider 202 px (at 1024 wide), the largest single step the split makes. It is now Research's crisp whip:
 - 12 frames (`SLAM_TIME` 0.2), the takeover and the separation by smootherstep (a hard ease at both ends), landing on the contact.
@@ -485,5 +485,21 @@ Measured:
 - Mass probe, steps in a pane's camera velocity over 0.01 (and 0.02) of the width a tick, main then this: ai 4 57 (27) to 51 (22); ai 7 87 (40) to 79 (36); ai 39 34 (25) to 37 (25); rushcity 83 (53) to 73 (43); signaturecity 51 (37), unchanged; transform 35 (24) to 29 (18).
 - Cuts, layout changes, strips and the time outside the picture are identical to main's; the share of fighters under 40 px moves by 0.1%.
 
-Gates on bf34d1d4's camera with the half-plane patch, director-16 and director-17: the 18 headless render checks (city: its oks, no failures), split_sweep and determinism plain and --intro pass. Not yet run at the pause (Orb's, 2026-10-23): the flash collapse clip for director-16 and director-17, and the slam's before/after GIF. The script is ready (see docs/camera/pending/README-followups.md).
+Gates on main's camera (668aa2ed, with the half-plane) with director-16 and director-17: the 18 headless render checks (city: its oks, no failures), split_sweep and determinism plain and --intro pass.
 
+The flash collapse clip, main (with the half-plane), then director-16, then director-17:
+- Normal: primary 3, 3, 3; area-15% 3.5, 3.5, 4.5; 2 s memory 2, 2, 1.5.
+- Reduced: primary 2.5, 2.5, 2; area-15% 3.5, 3.5, 3.5; 2 s memory 3, 3, 1.
+
+The whip's longer sweep counts one more change at the lower area threshold in normal mode. Every other reading is equal or better.
+
+Before/after: docs/camera/img/slam-whip/slam-whip-before-after.gif.
+
+**The rally's camera (2026-10-25; parked: docs/camera/pending/rally/, the design and director-18-rally-framing.patch, after director-17).** Game Design's rulings 23d and Combat's rally kits. The design, the cue contract asked of Encounter, the numbers and the proof are in docs/camera/pending/rally/README.md. In short:
+- the sell pushed in and held through the sold blows, with an eased punch on each;
+- the launch shot persisting from link to link, taking in the chaser when both fit at 43 px or more;
+- the anchor on a critically damped spring for the overtake and the spike;
+- a grab in flight holding the size (Legal e12);
+- the turn handed to the new body with no cut.
+
+It is inert until Encounter's cues come: the camera digests are byte-identical.

@@ -157,7 +157,8 @@ const KNOCK_APART_RATE: float = 1500.0  # a chased fighter flying apart this fas
 const T_OPEN_URGENT: float = 0.20       # the split opens this fast when a fighter has left the shared view or one was knocked away
 const T_CLOSE: float = 0.55
 const SLAM_WINDOW: float = 0.8         # a rush this close to its end starts the lean
-const SLAM_TIME: float = 0.14
+const SLAM_TIME: float = 0.2           # the door: a crisp whip of 12 frames timed to land on the contact, a hard ease at both ends, no blur
+                                       # (2026-10-23; was 0.14 with the pane's takeover as p cubed: a slow start and a full-speed stop)
 const SLAM_TIME_REDUCED: float = 0.04   # reduced motion: the slam is a near-cut
 const SLAM_LEAN: float = 0.0           # how far the panes lean together before the slam (0: they hold until 0.14 s from contact)
 const SLAM_STIFF_RAMP: float = 0.06    # the slam's stiff filters come in over this, seconds
@@ -276,6 +277,30 @@ const PANE_LEAD_V1: float = 2500.0
 const PANE_LEAD_TAU: float = 0.35
 const PANE_LEAD_KEEP: float = 0.6
 const BLOW_DOWN: float = 0.25
+# The sell and the rally (Game Design's rulings 23d, 2026-10-25; Encounter's cues sell, rally_link, rally_turn and rally_end):
+# - The sell: a medium or heavy blow landed in the daze is pushed in harder than any blow (SELL_PUSH, a heavy's SELL_HEAVY times
+#   that), held SELL_HOLD after each, so the push holds on while sold blows keep landing; each blow adds a 12-frame eased punch.
+#   A sold blow that lands while an earlier push lets go rises again from where it is (no step).
+# - The rally: the launch shot on the sent body persists from link to link (no layout decision at each landing) until the rally
+#   ends or RALLY_GAP passes after the landing with no link. It takes in the chaser when he is near enough to keep both at RALLY_MIN_R of the height
+#   or more (the pair within RALLY_FIT_X of the width and RALLY_FIT_Y of the height), eased in between; and the body's anchor
+#   moves on a critically damped spring (RALLY_W), so an overtake's reversal and a spike's drop reframe smoothly (a spike, falling
+#   faster than RALLY_SPIKE_VY, sits higher, RALLY_SPIKE_Y, the ground he is driven into in view below him).
+# - A grab in flight (the base kind "grab": a haul, a bind, a slam, a reel) holds the shot's size until the next send: Legal e12,
+#   nothing zoomed over a fighter held in the air.
+# - The turn: the shot moves to the new body from what is on the screen (his place, the zoom), then eases to its own frame. No cut.
+const SELL_PUSH: float = 0.035
+const SELL_HEAVY: float = 1.4
+const SELL_HOLD: float = 0.4           # the camera holds on this long after each sold blow (the sim's hit-stop is 12 ticks; the next blow comes within it)
+const SELL_PUNCH: float = 0.012
+const SELL_PUNCH_LEN: float = 0.2
+const RALLY_GAP: float = 0.6          # a rally ends this long after both are out of flight with no link (the ruling's 20 ticks and a margin)
+const RALLY_FIT_X: float = 0.3
+const RALLY_FIT_Y: float = 0.35
+const RALLY_MIN_R: float = 0.06
+const RALLY_W: float = 8.0
+const RALLY_SPIKE_VY: float = 2500.0
+const RALLY_SPIKE_Y: float = 0.45
 # The launch curve's arrival (docs/camera/director.md step 4b, Simulation's `flight` cue): from `arrive` (the contact about 10 ticks
 # ahead) the chased body's pane widens by ARR_WIDE to take in where he lands, holds it ARR_HOLD past the contact, and lets go over ARR_OUT.
 const ARR_WIDE: float = 0.15
