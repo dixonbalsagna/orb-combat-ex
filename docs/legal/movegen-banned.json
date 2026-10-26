@@ -721,6 +721,11 @@
       "id": "fx09",
       "rule": "kit colours on the red test: the Empress's #d81f3c (about 0.92), the Cyborg's #c8321a (about 0.93) and #ff6a1a (about 0.87) all exceed R/(R+G+B) 0.8 on linear values; the analyser decides and must read red flashes 0 on clips of the largest events in those hues (level-3 beam start and end, a crater's flame column, the heavy blast, a level-2 burst, the banners); peak frames use the white-hot core so the ratio falls below 0.8 and the saturated hue stays on the body of the effect; a brightness wobble or sputter on a beam is held under a 10% step and 2 Hz, or lives in the edge and width and not the luminance; a barrage at 12 ticks counts at most 3 white bursts a second (the rest smoke, dust and ember) unless a clip proves a shared glow that never falls 10% between bursts",
       "why": "RL-179"
+    },
+    {
+      "id": "fx10",
+      "rule": "biome ambient life and beam scars: ambient flecks (snow, ash, leaves, pollen, midges, spray, dust motes, heat motes) never blink or twinkle above 2 Hz, stay small and sparse under the live cap and a small fraction of the screen, heat shimmer stays particles and never a distortion, any tuning keeps heat motes modest and never a field of bright glints or white-hot; scar flecks (sand glints and glass chips, ice steam and chips, volcanic fused flakes and steady orange chips, soil char, wet-ground smoke, rock chips) are steady with no sparkle, no brighter than the beam's own light, at most six a tick, adding no flash event of their own, orange chips steady and amber-orange with red flashes read 0 under a beam over volcanic ground; one clip with the ambient on and one fixed beam clip per ground (sand, ice, volcanic), both modes with the margin rule, before any public pin; plumes at the middle and far framings and inside a beam or clash are read in the release set",
+      "why": "RL-187"
     }
   ],
   "catastrophe": [
