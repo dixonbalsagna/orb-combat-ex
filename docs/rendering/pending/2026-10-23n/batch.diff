@@ -1,6 +1,8 @@
+diff --git a/render/core/look.gd b/render/core/look.gd
+index 1780a5c..6ac54ee 100644
 --- a/render/core/look.gd
 +++ b/render/core/look.gd
-@@ -335,6 +335,25 @@
+@@ -335,6 +335,25 @@ const BIOME: Dictionary = {
  	"ocean": "#2a6b98", "plains": "#5f9140", "city": "#6c7079", "village": "#7c8e4b",
  	"forest": "#2e6a35", "desert": "#cfa85c", "mountains": "#7e766a",
  }
@@ -26,9 +28,11 @@
  const SEA_FLOOR := "#5a5346"
  const CRATER := "#4a4237"
  const CRATER_DESERT := "#a98544"
+diff --git a/render/core/ground_field.gd b/render/core/ground_field.gd
+index e793d47..dc8cce5 100644
 --- a/render/core/ground_field.gd
 +++ b/render/core/ground_field.gd
-@@ -43,7 +43,11 @@
+@@ -43,7 +43,11 @@ const ROW_RUBBLE := ROW_TRENCH + 1
  const ROW_RUB_LO := ROW_RUBBLE + 1
  const ROW_RUB_HI := ROW_RUB_LO + 1
  const ROW_SHORE := ROW_RUB_HI + 1
@@ -41,7 +45,7 @@
  const NO_SHORE := -1.0e9
  const SHORE_CHUNK := 64   # the water and the deform are compared in runs of this many columns, to find the few that changed
  const TW_MAX := 2048
-@@ -70,6 +74,7 @@
+@@ -70,6 +74,7 @@ var rub_lo := PackedFloat32Array()   # rows 18 and 19: the depth range of the he
  var rub_hi := PackedFloat32Array()
  var _rubble_seen := PackedFloat32Array()
  var shore := PackedFloat32Array()    # row 20: the level of the water at or nearest each column (water.gdshader)
@@ -49,7 +53,7 @@
  var rpl: int = 1                     # texture rows per data row
  var tw: int = 1                      # texture width
  var _nsl: int = 0
-@@ -102,6 +107,7 @@
+@@ -102,6 +107,7 @@ func _init() -> void:
  	_heat.resize(nc)
  	cdata.resize(LIST_W * 2 * 4)
  	_far = far_rows()
@@ -57,7 +61,7 @@
  	img = Image.create_empty(tw, ROWS * rpl, false, Image.FORMAT_RF)
  	tex = ImageTexture.create_from_image(img)
  	cimg = Image.create_empty(LIST_W, 2, false, Image.FORMAT_RGBAF)
-@@ -452,7 +458,7 @@
+@@ -452,7 +458,7 @@ func _g_col(S: SimState, i: int) -> void:
  
  
  func _upload(S: SimState, craters_changed: bool) -> void:
@@ -66,7 +70,7 @@
  	img.set_data(tw, ROWS * rpl, false, Image.FORMAT_RF, bytes)
  	tex.update(img)
  	if craters_changed:
-@@ -463,6 +469,7 @@
+@@ -463,6 +469,7 @@ func _upload(S: SimState, craters_changed: bool) -> void:
  ## A new world on the same length (planet_view.gd): the far rows follow its biomes. rebuild() uploads them.
  func far_again() -> void:
  	_far = far_rows()
@@ -74,7 +78,7 @@
  
  
  ## The scorch and the heat, the rows the shaders read from `hot` (ground.gdshaderinc gh()): the scorch first, then the heat.
-@@ -500,6 +507,47 @@
+@@ -500,6 +507,47 @@ static func far_rows() -> PackedFloat32Array:
  	return out + biome
  
  
@@ -122,9 +126,11 @@
  ## The bytes the GPU holds for one data row (for tests).
  func row_bytes(row: int) -> PackedByteArray:
  	var w: int = SimConst.NC * 4
+diff --git a/render/core/planet_view.gd b/render/core/planet_view.gd
+index 2bb6297..a3389ce 100644
 --- a/render/core/planet_view.gd
 +++ b/render/core/planet_view.gd
-@@ -1138,6 +1138,16 @@
+@@ -1138,6 +1138,16 @@ func _make_materials() -> void:
  	_terrain_mat.set_shader_parameter("sea_floor", RenderLook.col(RenderLook.SEA_FLOOR))
  	_terrain_mat.set_shader_parameter("crater", RenderLook.col(RenderLook.CRATER))
  	_terrain_mat.set_shader_parameter("crater_desert", RenderLook.col(RenderLook.CRATER_DESERT))
@@ -141,9 +147,11 @@
  	_terrain_mat.set_shader_parameter("ejecta", RenderLook.col(RenderLook.EJECTA))
  	_terrain_mat.set_shader_parameter("char_col", RenderLook.col(RenderLook.CHAR))
  	_terrain_mat.set_shader_parameter("heat_lo", RenderLook.col(RenderLook.HEAT_LO))
+diff --git a/render/shaders/ground.gdshaderinc b/render/shaders/ground.gdshaderinc
+index bc9fdd4..72b5b2f 100644
 --- a/render/shaders/ground.gdshaderinc
 +++ b/render/shaders/ground.gdshaderinc
-@@ -52,6 +52,8 @@
+@@ -52,6 +52,8 @@ uniform float rubble_edge = 240.0;   // RenderLook.RUBBLE_EDGE: a heap eases off
  uniform float shore_flood = 24.0;    // RenderLook.SHORE_FLOOD: dry land this shallow under the water beside it is drawn flooded
  uniform float meander_amp = 600.0;   // RenderLook.MEANDER: how far (in x) the far land's biomes wander with depth
  uniform vec4 biome_colors[7] : source_color;   // RenderLook.BIOME in ground_field.gd's BIOME_ORDER
@@ -152,7 +160,7 @@
  uniform vec3 fore_cam = vec3(0.0, 0.0, 3000.0);  // the camera's world position, every frame (planet_view.gd)
  uniform float fore_drop = 0.03;                  // RenderLook.FORE_DROP
  uniform vec2 fore_low = vec2(-1.0e9);          // the fighter plane's lowest ground and top in this pane's view, eased (PaneWorld._fore_low)
-@@ -388,6 +390,12 @@
+@@ -388,6 +390,12 @@ vec4 far4(float xw, float z, float s, bool grad, out bool wet) {
  	return f;
  }
  
@@ -165,9 +173,11 @@
  // The fighter-plane row at column i: its ground, and its top (the standing water over the ground, if any).
  float fp_ground(int i) {
  	return gf(i, 0) + gf(i, 1);
+diff --git a/render/shaders/terrain.gdshader b/render/shaders/terrain.gdshader
+index ba3f917..7c1cfef 100644
 --- a/render/shaders/terrain.gdshader
 +++ b/render/shaders/terrain.gdshader
-@@ -39,6 +39,14 @@
+@@ -39,6 +39,14 @@ uniform vec2 char_fresh = vec2(0.04, 0.2);   // RenderLook.CHAR_FRESH: a groove
  uniform float char_gain = 1.0;               // 1; under reduced flashing RenderLook.CHAR_CALM
  uniform float heat_gain = 1.0;               // 1; under reduced flashing RenderLook.HEAT_CALM
  uniform float fog_far = 12000.0;
@@ -182,35 +192,25 @@
  
  varying float v_base;
  varying vec3 v_col;
-@@ -54,6 +62,11 @@
+@@ -54,6 +62,8 @@ varying float v_rubble;
  varying vec2 v_px;
  varying float v_wz;
  varying float v_street;
-+varying flat int v_ba;        // the biomes either side of the vertex's border zone (RenderBiomeLook palette ids; its own both sides outside one),
-+varying flat int v_bb;
-+varying float v_zt;           // and where it lies across the zone, 0 to 1 (the fragment steps it in five bands)
 +varying float v_s;            // the far land's weight (far_weight): the band's facets below it, the far land's own colour above
 +varying vec2 v_grad;          // the ground's slope (d height / dx, / dz), smooth across the mesh: a facet's tone follows it
  varying float v_new;          // how much of its own colour the ground keeps under a crater dug moments ago (ground.gdshaderinc crater_new; over CRATER_OPEN_S, over CRATER_CALM_S with reduced flashing)
  
  void vertex() {
-@@ -68,6 +81,15 @@
+@@ -68,6 +78,8 @@ void vertex() {
  	v_col = biome_colors[int(bio + 0.5)].rgb;
  	v_desert = abs(bio - 5.0) < 0.5 ? 1.0 : 0.0;
  	v_base = b;
 +	v_s = s;
 +	v_grad = g.yz;
-+	// The border zone (ground_field.gd zone_rows): the biomes either side and the vertex's place across it.
-+	v_ba = int(gf(i, 21) + 0.5);
-+	v_bb = int(gf(i, 22) + 0.5);
-+	float jb = gf(i, 23);
-+	float du = UV.x - jb;
-+	du -= float(nc) * floor(du / float(nc) + 0.5);
-+	v_zt = (jb < -1.0e8 || v_ba == v_bb) ? 0.0 : clamp(0.5 + du * col_w / biome_zone, 0.0, 1.0);
  	if (s > 0.0 && far_map_on) {
  		// the planet's own far land (World's map beside the ring; ground.gdshaderinc far4), turned by the slow drift:
  		// its colour from the biomes' shares at the row's level
-@@ -109,23 +131,52 @@
+@@ -109,23 +121,64 @@ void vertex() {
  }
  
  void fragment() {
@@ -223,7 +223,19 @@
 +	vec3 nrm = normalize(vec3(-v_grad.x, 1.0, -v_grad.y));
 +	float lt = dot(nrm, sun_dir) - sun_dir.y;
 +	int tone = lt > facet_slope ? 0 : (lt < -facet_slope ? 2 : 1);
-+	float zf = v_zt <= 0.0 ? 0.0 : (v_zt >= 1.0 ? 1.0 : (floor(v_zt * 5.0) + 0.5) / 5.0);
++	// The border zone (ground_field.gd zone_rows), read for this pixel's own column: the biomes either side (palette ids;
++	// its own both sides outside one) and its place across the zone, stepped in five hard bands. Read here, not passed
++	// from the vertices: a flat varying costs the old GPUs a rewrite of every draw's index buffer (ANGLE's D3D11), and a
++	// vertex outside a zone carries none of it.
++	float cx = v_px.x / col_w;
++	int ci = int(cx - float(nc) * floor(cx / float(nc))) % nc;
++	int v_ba = int(gf(ci, 21) + 0.5);
++	int v_bb = int(gf(ci, 22) + 0.5);
++	float jb = gf(ci, 23);
++	float du = cx - jb;
++	du -= float(nc) * floor(du / float(nc) + 0.5);
++	float zt = (jb < -1.0e8 || v_ba == v_bb) ? 0.0 : clamp(0.5 + du * col_w / biome_zone, 0.0, 1.0);
++	float zf = zt <= 0.0 ? 0.0 : (zt >= 1.0 ? 1.0 : (floor(zt * 5.0) + 0.5) / 5.0);
 +	vec3 rk = biome_tone(zf < 0.5 ? v_ba : v_bb, 11);   // r: the rock has strata; g: a rocky biome's height (/ 10,000) from which rock starts at gentler slopes
 +	// Rock by the ground's steepness, in Art's five hard bands from rock_slope.x to .y (so the green and the rock meet along
 +	// the slope's contour, stepped); in a rocky biome the rock starts at gentler slopes the higher it is, so the foot stays
@@ -269,7 +281,7 @@
  	if (v_crack > 0.01) {
  		vec2 q = v_px / 70.0;
  		vec2 cell = floor(q);
-@@ -144,8 +195,14 @@
+@@ -144,8 +197,14 @@ void fragment() {
  	// A groove chars as it cools: under a fresh glow the ground keeps its own colour, so a beam's burn does not turn a
  	// broad strip of ground dark in one tick.
  	float fresh = smoothstep(char_fresh.x, char_fresh.y, v_heat);
@@ -286,16 +298,21 @@
  	c = c * wl_mul + wl_add;   // the world's light; the lane cue, the pair's mark and a groove's glow below are never dimmed
  	vec4 cue = lane_cue_at(v_px, fwidth(v_px.y));
  	c = mix(c, cue.rgb, cue.a);
+diff --git a/docs/rendering/README.md b/docs/rendering/README.md
+index 348cba4..f23f795 100644
 --- a/docs/rendering/README.md
 +++ b/docs/rendering/README.md
-@@ -663,6 +663,7 @@
+@@ -663,6 +663,7 @@ A slam on the web build (Chrome, seed 1, tick 219): VFX's chunks and flames, non
  
  Both are other directors' work, hosted here as their docs ask (`docs/ui/hud-spec.md` section 14, `audio/README.md` "Hooking it up"). Both only read.
  - **By roster id (2026-10-06; `docs/architecture/pending/fighter-split.md` section 10).** The old HUD looks a fighter up by his roster id: his name and his title are UI's (`UiData.display_name`, `display_title`), and with no title the line is his stance alone. The sim keeps no title and its name is the id. The damage marks' seed belongs to the outfit (`RenderLook.DAMAGE_SEED_97`, the numbers the marks have always had), so the roster's rename moved no mark. The old spellings of the two ids are gone from `DAMAGE_OUTFIT` since the rename (part C). `tools/hud_words_check.gd` asks for the old HUD's words, since no other headless gate draws that HUD.
-+- **Biome rendering, window 1 (2026-10-23, `biomes.md`).** The ground in Art's flat faceted colours (`docs/art/biomes.md`, `data/art/biomes.json` through `render/core/biome_look.gd`): each point takes its biome's lit, mid or shade tone by its normal against the sun, rock by steepness in five hard bands (at gentler slopes higher up in rocky biomes) with strata lines, a hard step by depth, the subsoil inside a crater, Art's scar band with a thin edge, and five hard bands across a 360-unit zone where two biomes meet. Keyed by World's fine biome ids, with the stored alias as the fallback.
++- **Biome rendering, window 1 (2026-10-23, `biomes.md`).** The ground in Art's flat faceted colours (`docs/art/biomes.md`, `data/art/biomes.json` through `render/core/biome_look.gd`): each point takes its biome's lit, mid or shade tone by its normal against the sun, rock by steepness in five hard bands (at gentler slopes higher up in rocky biomes) with strata lines, a hard step by depth, the subsoil inside a crater, Art's scar band with a thin edge, and five hard bands across a 360-unit zone where two biomes meet. Keyed by World's fine biome ids, with the stored alias as the fallback. Each pixel reads its border zone from the ground field: no `flat` varyings, which cost the integrated Radeon two thirds of its frame (ANGLE rewrites each draw's index buffer for them).
  - **The split's culling (2026-10-23, `split-culling.md`).** Each split pane leaves out of its draw the ground's and water's chunks wholly on the hidden side of its divider (Camera's visible half-plane), tested as boxes against the plane the screen line makes through the camera, widened by the planet's bend: nothing that can show is lost. The split held about half again as many ground triangles as one view; in the city-beam scene a pane now leaves out 44 to 52 percent of its own. On (`RenderLook.SPLIT_CULL_ON`; `--nocull` for the A/B).
  - **The far land's towns (2026-10-23, `slow-drift.md`).** Every planet match gets the planet's own far land (World's `S.planetRing`, the turn on or off), its settlements' ground in the city's and village's colours, and the distant towns and cities standing on it as hazed blocks (`far_town.gdshader`), each standing on the ground's mesh, none on a cliff or in the sea. Off with the far land (`RenderLook.FAR_MAP_ON`).
  - **The planet's own far land (2026-10-22, `slow-drift.md`).** On a planet match that may turn, the far rows read World's map of the planet beside the ring (`render/core/far_land.gd`; the shaders' `far4`), each row at the map's mip level for its spacing in depth, so nothing aliases. It shows only from a hard cut: a match's start once the map is whole, else World's next turn. Off by default (`RenderLook.FAR_MAP_ON`; `--farmap`).
+diff --git a/render/core/biome_look.gd b/render/core/biome_look.gd
+new file mode 100644
+index 0000000..b313492
 --- /dev/null
 +++ b/render/core/biome_look.gd
 @@ -0,0 +1,100 @@
@@ -399,13 +416,19 @@
 +	var ca := Color(a)
 +	var cb := Color(b)
 +	return "#" + Color(roundf(lerpf(ca.r8, cb.r8, t)) / 255.0, roundf(lerpf(ca.g8, cb.g8, t)) / 255.0, roundf(lerpf(ca.b8, cb.b8, t)) / 255.0).to_html(false)
+diff --git a/render/core/biome_look.gd.uid b/render/core/biome_look.gd.uid
+new file mode 100644
+index 0000000..1f0ef03
 --- /dev/null
 +++ b/render/core/biome_look.gd.uid
 @@ -0,0 +1 @@
 +uid://bt1owqb8n13ba
+diff --git a/docs/rendering/biomes.md b/docs/rendering/biomes.md
+new file mode 100644
+index 0000000..1db8c0c
 --- /dev/null
 +++ b/docs/rendering/biomes.md
-@@ -0,0 +1,56 @@
+@@ -0,0 +1,65 @@
 +# Biome rendering (Rendering, 2026-10-23)
 +
 +Orb's priority (2026-10-23): "pour resources into improving our planet generation, biomes, fighter animations". Art's biome look bible is the brief (`docs/art/biomes.md`, `data/art/biomes.json`, `art/concepts/biomes/`): flat faceted colours, lit, mid and shade faces, no gradients; transitions in hard steps. This page covers what the render builds of it, window by window.
@@ -449,6 +472,15 @@
 +  - A faded scar narrows and goes.
 +  - A first cut drew the edge wherever the burn was faint, and an old scar became a wide pale band across a desert.
 +- The burned state (ash grey ground, black trees) waits for a fire in the sim and for window 2's cover.
++
++**The cost on old GPUs** (Performance's bench, 2026-10-23; the split, 2026-10-25):
++- **As first parked,** window 1 tripled the integrated Radeon's frame time: the AI match went from 6.5 / 11.3 to 21.2 / 48.3 ms (p50 / p95), with the same draws and primitives.
++- **Not the cause.** The shader was split into compile-time variants and timed on the Radeon. Removing the palette reads, the branches, or the derivatives inside them changed nothing. Even the fragment as it was before window 1 kept the cost.
++- **The cause.** The border zone's biome ids were `flat` varyings. ANGLE's D3D11 path emulates GL's provoking vertex for flat varyings by rewriting each draw's index buffer, every frame. Passing them as plain varyings cut the frame time to a third.
++- **Now** each pixel reads its own column's zone from the ground field (rows 21 to 23) and steps it there:
++  - the desert runs at 7.0 / 8.8 ms and the AI match at 6.8 / 11.0 ms, back to before window 1;
++  - the look is the same except that the zone's five bands sit at their exact place along the strip. A triangle across a zone's edge used to take the zone from one of its vertices.
++- **Rule: no `flat` varyings in a shader.** They cost the old-GPU tier on every draw.
 +
 +**Checked:**
 +- the shaders parse headless and the palette builds;

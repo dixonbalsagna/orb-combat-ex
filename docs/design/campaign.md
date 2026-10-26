@@ -49,7 +49,7 @@ Owner: Game Design. Status: **the design, 2026-10-25,** revised the same day so 
 ### 1.4 Filler's slots and families (for Narrative, `docs/narrative/filler-templates.md`)
 
 - **`episode_number`** comes from the **season record:** the save's small record beside the run states, which holds the number of the last main-story episode won (whole numbers, local, Legal mc02). When a side story opens from inside a main arc (§1.3), its run state copies that number into its arc block as the episode it follows, n, and the card reads n.5. A standalone filler episode has none and reads SIDE STORY.
-- **`side_place`** comes from the **run state's arc block.** When a main-story episode ends, a seeded draw (`H(arc, "side", n)`) decides whether a side story is offered (on about half of them, as a first value). If one is, World's ring picker places it on the current ring, within the usual 10 to 25 s of flight. Its place id and its family go into the arc block, and the template reads the name from the planet's places list.
+- **`side_place`** comes from the **run state's arc block.** When a main-story episode ends, a seeded draw (`H(arc, "side", n)`) decides whether a side story is offered (on about half of them, as a first value). If one is, World's ring picker places it on the current ring, within a column's band (§2.3), widened to the whole ring, or with a turn at the episode's end, if none is in reach (`rulings-2026-10-26.md` item 2). Its place id and its family go into the arc block, and the template reads the name from the planet's places list.
 - **A filler arc reuses the four families, with its own villain.**
   - Its first two episodes each take one of Narrative's four families (a training day, a rivalry game, a tournament on a stage, a rescue), two different ones picked by the arc's seed, so the arc keeps filler's lighter feel.
   - The arc's villain is a roster fighter, kept in the arc block as `arc_villain`. He is the climax opponent wherever a family's climax takes a roster opponent. In the rescue, he is the one the stranded fighter needs rescuing from, never the stranded one.
@@ -88,7 +88,7 @@ Each of the five stages is a column of the route, with **two or three places to 
 
 ### 2.3 The route is the ring: choosing by flying
 
-**There is no map screen.** Between stages, the ring turns at the calm moment (World's shifting arena), so the next column's places lie along the ring the players are on. Each place shows itself in the world, as its threat would:
+**There is no map screen.** The next column's places lie along the ring the players are on. Between stages the ring may turn at the calm moment (World's shifting arena) to bring better places along it. Each place shows itself in the world, as its threat would:
 - smoke and fire over a town under attack;
 - a fighter's aura on the horizon;
 - a horde's dust;
@@ -97,7 +97,8 @@ Each of the five stages is a column of the route, with **two or three places to 
 **The edge HUD may carry one small beacon for each place** at the screen's edge, toward it, with its kind as an icon, and never on the fighters (`minimal-hud.md`).
 
 - **Flying to a place starts its stage** when a player enters its ground. Its arrival beat plays as two or three lines over play, at the edge, skippable, and never stops the fight.
-- **The places of a column sit 10 to 25 seconds of boosted flight apart,** so choosing is a real decision and never a long trip. The climax's home may be farther; that flight is the build-up, and its beat plays on the way.
+- **The ring turns between about half of the columns** (40 to 60%), only when a turn clearly improves what is offered. Otherwise the pair fly on to the next place on the same ring.
+- **The places of a column lie 322 to 806 columns from the pair, each way, on a Half ring** (`rulings-2026-10-26.md` item 1), so choosing is a real choice of direction and never a long trip. The climax's home may be farther; that flight is the build-up, and its beat plays on the way.
 - **A beat card** appears between columns, for two or three lines, while the ring turns. Orb named beat cards as a place to drop in, so they stay. They are skippable, and both players can keep flying during one.
 - **Boons are taken in the world, not on a menu:** the finished stage leaves three marks on the ground (a form, an ability, a rest or lifeline), and flying through one takes it. In co-op, each player takes his own.
 
@@ -263,7 +264,8 @@ The campaign's beats read these, and no others. Every one follows `docs/legal/be
 | Row | Band |
 | :--- | :--- |
 | An episode's length | 40 to 50 minutes median |
-| Flight between a column's places | 10 to 25 s |
+| A column's places from the pair | 322 to 806 columns each way |
+| Columns 1 to 4 that turn the ring | 40 to 60% |
 | Stages won with a partner who joined mid-stage | Read only, to tune ×1.6 |
 | Rescues won | 30 to 60% |
 | Rematches won after "Previously on" | 50 to 75% (the lesson should help, not decide) |

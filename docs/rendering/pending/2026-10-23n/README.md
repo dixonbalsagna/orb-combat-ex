@@ -1,8 +1,10 @@
 # Parked: biome rendering, window 1, the ground in Art's facets (Rendering, 2026-10-23)
 
-**Base:** HEAD plus 22k, Camera's `pane-visible-half-plane.patch`, 22l and 22m (the order they apply in; the chain is clean on 2c1b7c3c).
+**Re-cut 2026-10-25 for the old-GPU tier** (Performance's bench found the first cut tripled the integrated Radeon's frame time). The look is the same; the border zone is now read per pixel, with no `flat` varyings. See "The cost on old GPUs" below.
 
-**Apply last**, from the project root: `git -c core.autocrlf=false apply docs/rendering/pending/2026-10-23n/batch.diff`. Then delete this folder.
+**Base:** HEAD 4dc06456, which carries 22k, Camera's half-plane, 22l and 22m.
+
+**Apply first, then 22o**, from the project root: `git -c core.autocrlf=false apply docs/rendering/pending/2026-10-23n/batch.diff`. Then delete this folder.
 
 ## What it changes
 
@@ -35,9 +37,26 @@ Art's biome look bible (`docs/art/biomes.md` section 8, items 1.1, 1.4 and 1.5),
 | `render/core/look.gd` | `FACET_SLOPE`, `FACET_SUN`, `ROCK_SLOPE`, `ROCK_HIGH`, `DEPTH_STEP`, `STRATA_H`, `BIOME_ZONE`, `SCAR_BAND`, `TONE_K` |
 | `docs/rendering/biomes.md` (new), `docs/rendering/README.md` | the windows and what was checked |
 
+## The cost on old GPUs (the re-cut)
+
+- **The cause, measured.** The shader was split into compile-time variants and timed on the Radeon (frame-bench `--igpu`, all runs valid):
+  - removing the palette reads, the branches, or the derivatives inside them changed nothing;
+  - even the pre-window fragment kept the cost;
+  - the cause was the zone's biome ids as `flat` varyings: ANGLE's D3D11 path rewrites each draw's index buffer for them, every frame.
+- **The fix.** Each pixel reads its own column's zone from the ground field (rows 21 to 23). The terrain shader has no flat varyings now, and three fewer vertex fetches.
+- **On the Radeon** (p50 / p95, ms):
+
+  | Scene | First cut | Re-cut | Before 22n (Performance's) |
+  | :--- | :--- | :--- | :--- |
+  | Desert | 20.5 / 22.2 | 7.0 / 8.8 | 6.5 / 11.9 |
+  | AI match | 20.2 / 38.3 | 6.8 / 11.0 | 6.5 / 11.3 |
+- **The look:**
+  - the same on the desert and the AI match at 1,940 (5 pixels over 2 levels);
+  - at 3,600, only the desert and mountain zone's five bands moved, to their exact place along the strip. A triangle across a zone's edge used to take the zone from one of its vertices.
+
 ## Checked
 
-- **Gates:** the 19 render gates and `split_sweep` pass on HEAD plus all four parks, with 0 script or shader errors.
+- **Gates:** the 19 render gates and `split_sweep` pass on HEAD 4dc06456 plus this park and 22o, with 0 script or shader errors (the re-cut).
 - **Headless:** the shaders parse; 120 of 4,800 columns of the hand-made world lie in a border zone; the zone rows take 0.5 ms natively.
 - **Stills:** `docs/rendering/img/biomes-w1-d3f1ca0e.png` (uncommitted).
   - d3f1ca0e, then main against this park (the scenes below).

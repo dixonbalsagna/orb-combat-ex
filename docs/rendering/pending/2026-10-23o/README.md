@@ -1,6 +1,6 @@
 # Parked: biome rendering, window 2, the cover (Rendering, 2026-10-23)
 
-**Base:** HEAD plus 22k, Camera's `pane-visible-half-plane.patch`, 22l, 22m and 22n (the order they apply in; the chain is clean on 671d850e).
+**Base:** HEAD 4dc06456 (which carries 22k, Camera's half-plane, 22l and 22m) plus 22n as re-cut on 2026-10-25. The changes are the same as the first cut; only the diff's context moved with 22n's re-cut.
 
 **Apply last**, from the project root: `git -c core.autocrlf=false apply docs/rendering/pending/2026-10-23o/batch.diff`. Then delete this folder.
 
@@ -36,7 +36,8 @@ Art's cover (`docs/art/biomes.md` section 8, item 1.3 and the cover's half of 1.
 
 ## Checked
 
-- **Gates:** the 19 render gates and `split_sweep` pass on HEAD plus the chain and this park, with 0 script or shader errors.
+- **Gates:** the 19 render gates and `split_sweep` pass on HEAD 4dc06456 plus the re-cut 22n and this park, with 0 script or shader errors.
+- **Cost:** Performance's bench of the first cut: 10 more draws, no measurable frame time.
 - **Headless:** the shaders parse; the cover builds on the hand-made world and on planet 7 (counts and times in `biomes.md`).
 - **Stills:** `docs/rendering/img/biomes-w2-d3f1ca0e.png` (uncommitted).
   - d3f1ca0e, then window 1 against this park.

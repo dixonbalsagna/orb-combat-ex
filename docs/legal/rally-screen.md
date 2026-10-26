@@ -39,3 +39,10 @@ The points are the AI's and Simple's choice of link; the player's stick wins by 
 
 ## Rows
 `mc04` is in `movegen-banned.json` under "mechanics".
+
+## Addendum (2026-10-26, RL-186): World's reading of "nothing living near it" for Wreck Toss
+Read: `docs/world/wreck-toss.md` (World, 2026-10-25). **The reading holds, with two additions.**
+- **Holds:** (1) a wreck is a fallen building and holds no one: yes. (2) Fighters are not counted near the wreck, because the thrower stands within 2 bh and the target is a combatant: yes, and the same goes for a partner and for henchmen, who are all combatants.
+- **Addition 1: count every living civilian, indoors or out.** The query reads "no living civilian in a standing building within 3 bh of the wreck's edge". Civilians on a street, fleeing or in a crowd are not in a building. **Read any living civilian within 3 bh of the wreck's edge, in a building or in the open,** and refuse the pick-up if there is one.
+- **Addition 2: the landing is the other half of "near".** The pick-up check protects people at the wreck. The burst damages standing buildings near the landing by the brunt ladder, and the landing is wherever the flying fighter is. That is ordinary collateral under the same rules as a sent body (E110's budget, no toll or score), and it is allowed. But **Wreck Toss is never chosen or aimed for its landing near people:** for the Cyborg the planner's "villain toward people" care term does not apply to his wreck link (ln04: nothing in his set targets or uses bystanders), and the scoring still never reads casualties (mc04).
+- The burst's look stays the existing debris, dust and shake: no remains, no bodies, a fallen building's people never shown (c08).
