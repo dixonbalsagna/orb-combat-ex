@@ -17,6 +17,7 @@ Owner: Controls and Game Feel. Date: 2026-09-29. Design first; code in `sim/inpu
 | [right-stick.md](right-stick.md) | **The right stick (Orb's brief), input side:** the deterministic flick / hold / pattern read, modelled misread rates, per-modifier modes, keyboard and touch parity, accessibility, cost |
 | [right-stick-capture.md](right-stick-capture.md) | The real-thumb capture tool for the right stick: a one-page spec (a single HTML page on the Gamepad API, the protocol, the analysis, the bar a pattern must clear) |
 | [right-thumb.md](right-thumb.md) | **No grip beats the standard grip:** the claw problem as four testable rules (gap-invariance, lockout, window, mirrors), the thumb-transfer model, Orb's five directions scored, what it changes in step 1 |
+| [claw-bot-gate.md](claw-bot-gate.md) | The claw-bot gate spec over GD's step-1 rows (assertions A to F, the fight check, the stub proof) and the check of the dodge's left-stick direction read |
 | [phone-test-checklist.md](phone-test-checklist.md) | A 15-minute real-phone test for Orb: landscape, several fingers, left-handed, portrait, latency, browser interference |
 | [touch-bridge.md](touch-bridge.md) | The touch Simple bridge to today's intents: mapping, files, host patch, tests, what UI builds |
 | [input-scheme.md](input-scheme.md) | **Current (ADR 0008):** actions, the three controller layouts, tap and hold rules, keyboard (solo and shared), touch Simple and Full, the intent record, stage plan, tests |
