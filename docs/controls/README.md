@@ -16,6 +16,7 @@ Owner: Controls and Game Feel. Date: 2026-09-29. Design first; code in `sim/inpu
 | [energy-input.md](energy-input.md) | **Energy attacks overhaul, input grammar (proposal):** one grammar for martial and energy, press-by-press per action, devices, beam vs blast, feedback, accessibility |
 | [right-stick.md](right-stick.md) | **The right stick (Orb's brief), input side:** the deterministic flick / hold / pattern read, modelled misread rates, per-modifier modes, keyboard and touch parity, accessibility, cost |
 | [right-stick-capture.md](right-stick-capture.md) | The real-thumb capture tool for the right stick: a one-page spec (a single HTML page on the Gamepad API, the protocol, the analysis, the bar a pattern must clear) |
+| [right-thumb.md](right-thumb.md) | **No grip beats the standard grip:** the claw problem as four testable rules (gap-invariance, lockout, window, mirrors), the thumb-transfer model, Orb's five directions scored, what it changes in step 1 |
 | [phone-test-checklist.md](phone-test-checklist.md) | A 15-minute real-phone test for Orb: landscape, several fingers, left-handed, portrait, latency, browser interference |
 | [touch-bridge.md](touch-bridge.md) | The touch Simple bridge to today's intents: mapping, files, host patch, tests, what UI builds |
 | [input-scheme.md](input-scheme.md) | **Current (ADR 0008):** actions, the three controller layouts, tap and hold rules, keyboard (solo and shared), touch Simple and Full, the intent record, stage plan, tests |
