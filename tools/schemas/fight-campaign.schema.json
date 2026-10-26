@@ -2,18 +2,16 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "meridian/fight-campaign",
   "title": "fight-campaign (schema \"fight.campaign/1\")",
-  "description": "data/fight/campaign.json: the campaign's numbers (docs/design/campaign.md; sim/core/campaign.gd; docs/architecture/campaign-core.md). Campaign-only: no versus match and no fighter reads it (Legal mc01, mc06). Policy: closed except keys starting with an underscore.",
+  "description": "data/fight/campaign.json: the campaign's numbers (docs/design/campaign.md; sim/core/campaign.gd; docs/architecture/campaign-core.md). Campaign-only: no versus match and no fighter reads it (Legal mc01, mc06). Its enabled is the campaign's one switch. Policy: closed except keys starting with an underscore.",
   "type": "object",
   "required": [
     "schema",
     "enabled",
     "columns",
-    "placesPerColumn",
-    "crossBack",
     "sideShare",
     "arcEpisodes",
     "families",
-    "stageCols"
+    "ringCols"
   ],
   "properties": {
     "schema": {
@@ -21,63 +19,13 @@
     },
     "enabled": {
       "type": "boolean",
-      "description": "the switch: the campaign's host uses none of it while it is off"
+      "description": "the campaign's one switch: the host uses none of it while it is off"
     },
     "columns": {
       "type": "integer",
       "minimum": 1,
       "maximum": 9,
       "description": "an episode's stages, each a column of the route"
-    },
-    "placesPerColumn": {
-      "type": "object",
-      "required": [
-        "min",
-        "max"
-      ],
-      "properties": {
-        "min": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 6,
-          "description": "a column's fewest places"
-        },
-        "max": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 6,
-          "description": "a column's most places"
-        }
-      },
-      "additionalProperties": false,
-      "patternProperties": {
-        "^_": true
-      }
-    },
-    "crossBack": {
-      "type": "object",
-      "required": [
-        "from",
-        "to"
-      ],
-      "properties": {
-        "from": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 9,
-          "description": "the column whose untaken place can come back"
-        },
-        "to": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 9,
-          "description": "the column it comes back in"
-        }
-      },
-      "additionalProperties": false,
-      "patternProperties": {
-        "^_": true
-      }
     },
     "sideShare": {
       "type": "integer",
@@ -102,12 +50,12 @@
       },
       "description": "Narrative's filler families"
     },
-    "stageCols": {
+    "ringCols": {
       "type": "integer",
       "minimum": 600,
       "maximum": 4800,
       "multipleOf": 8,
-      "description": "a stage's stand-in ring round its place, in columns"
+      "description": "the episode's first ring, round the player's home, in columns"
     }
   },
   "additionalProperties": false,

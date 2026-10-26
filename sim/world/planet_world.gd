@@ -177,7 +177,7 @@ static func gen(S: SimState, setup: Dictionary) -> bool:
 	S.crack.resize(NC)
 	S.crack.fill(0.0)
 	S.slides.clear()
-	if setup.has("wear") and WorldCampaign.enabled():   # the campaign's place state: a worn place's buildings are already fallen or weakened (window 14; place state only, never a count of people)
+	if setup.has("wear"):   # the campaign's place state (the setup is the switch: the campaign's host gives it wear only while data/fight/campaign.json is on): a worn place's buildings are already fallen or weakened (window 14; place state only, never a count of people)
 		WorldCampaign.applyWear(S, setup.wear)
 	WorldWater.init(S)
 	WorldLakes.apply(S, lakes)

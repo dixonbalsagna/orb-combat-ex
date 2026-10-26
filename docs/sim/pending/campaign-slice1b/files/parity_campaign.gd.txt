@@ -1,0 +1,120 @@
+## The campaign's arc and episode (campaign-core.md), on World's columns:
+## - the data ships off; the seeds are pinned; a filler arc's families and villain;
+## - a whole episode, five columns of World's, played twice and the same to the bit;
+## - each site flown to is one of its column's; the climax is the villain's home on the whole circle; the sites are kept
+##   as whole numbers;
+## - the run state through JSON; a site not of its column refused; the wear merged by the worse band and handed to the
+##   next stage's setup;
+## - a main-story episode's card and the season record (mc02), and its side story's n.5 on a copy of the planet;
+## - threads as ids, filler never resolving a main-story one;
+## - QA's campaign record from the run state (docs/qa/rally-campaign-rows.md), the same through JSON;
+## - no fighter, director or input file names the campaign (Legal mc01, mc06).
+func _campaign() -> String:
+	SimCampaign.reload()
+	if not SimCampaign.errors().is_empty():
+		return "the campaign's data: %s" % str(SimCampaign.errors())
+	if SimCampaign.enabled():
+		return "the campaign is on in the data (it ships off)"
+	var arcId: String = "c0ffee00c0ffee00"
+	var pins: Array = [SimCampaign.episodeSeed(arcId, 0), SimCampaign.episodeRun(arcId, 0), SimCampaign.arcPlanet(arcId), SimCampaign.mix(7, "column", 2, 1), SimCampaign.arcSeed(arcId)]
+	if str(pins) != str([2515801561, "95f415d9fb019b1a", 2172332729, 3808475095, 1643510628]):
+		return "the campaign's seeds: %s (want the pinned five: a port gives the same)" % str(pins)
+	var arc: Dictionary = SimCampaign.newArc(arcId, "filler_arc")
+	if arc.families.size() != 2 or arc.families[0] == arc.families[1] or not SimCampaign.families.has(arc.families[0]) or not SimCampaign.families.has(arc.families[1]) or arc.villain != "RIVAL" or SimCampaign.checkArc(arc) != "" or SimCampaign.cardNumber(arc) != "":
+		return "a filler arc: families %s, villain %s, check '%s', card '%s' (want two different filler families, the RIVAL, sound, no number)" % [str(arc.families), arc.villain, SimCampaign.checkArc(arc), SimCampaign.cardNumber(arc)]
+	# a whole episode on World's columns, twice
+	var e1: Dictionary = SimCampaignRun.play(arcId, "filler_arc", 120)
+	var e2: Dictionary = SimCampaignRun.play(arcId, "filler_arc", 120)
+	if JSON.stringify(e1.stages) != JSON.stringify(e2.stages) or e1.run != e2.run or JSON.stringify(e1.arc) != JSON.stringify(e2.arc):
+		return "an episode played twice differs"
+	var a1: Dictionary = e1.arc
+	var n: int = SimCampaign.columns
+	if not a1.done or a1.taken.size() != n or a1.columns.size() != n or e1.stages.size() != n:
+		return "an episode: done %s, %d taken, %d columns, %d stages (want done and %d of each)" % [str(a1.done), a1.taken.size(), a1.columns.size(), e1.stages.size(), n]
+	var P: WorldPlanet.Planet = WorldPlanet.make(SimCampaign.arcPlanet(arcId))
+	for c in range(n):
+		if SimCampaign.siteOf(a1, c, int(a1.taken[c])).is_empty():
+			return "column %d: site %d flown to is not one of its %s" % [c + 1, int(a1.taken[c]), str(a1.columns[c])]
+	var home: int = int(SimRun.homes(P).get("RIVAL", -1))
+	var last: Dictionary = e1.stages[n - 1]
+	if a1.columns[n - 1].size() != 1 or int(a1.columns[n - 1][0].place) != home or int(last.cols) != SimConst.PLANET_NC:
+		return "the climax: %s on a %d-column ring (want the villain's home, %d, on the whole circle)" % [str(a1.columns[n - 1]), int(last.cols), home]
+	for k in range(a1.used.size()):
+		for j in range(k):
+			if int(a1.used[j]) == int(a1.used[k]):
+				return "the episode used place %d twice" % int(a1.used[k])
+	var sj = JSON.parse_string(JSON.stringify(e1.state))
+	if SimRun.stateHash(sj) != e1.run or SimRun.checkState(sj) != "":
+		return "an episode's run state through JSON: hash %s, check '%s'" % [SimRun.stateHash(sj), SimRun.checkState(sj)]
+	# QA's record: the fights' seconds from the ledger, each column's ring by World's size name, its turn and its places from the pair
+	var qr: Dictionary = e1.campaign
+	var ledTicks: int = 0
+	for rec in e1.state.ledger:
+		ledTicks += int(rec.ticks)
+	var qrOk: bool = qr.arc == arcId and qr.columns.size() == n and int(qr.episodeSec) == int(round(float(ledTicks) * SimConst.DT)) and ledTicks > 0
+	for c in range(mini(n, qr.columns.size())):
+		var qc: Dictionary = qr.columns[c]
+		qrOk = qrOk and int(qc.n) == c + 1 and qc.turned == (int(a1.turns[c]) != 0) and qc.places.size() == a1.columns[c].size() and int(qc.places[0].fromPair) == int(a1.columns[c][0].dir) * int(a1.columns[c][0].entry)
+	qrOk = qrOk and String(qr.columns[n - 1].ring) == "Whole" and (int(a1.rings[0]) != 2400 or String(qr.columns[0].ring) == "Half")
+	qrOk = qrOk and int(qr.rescues.n) == 0 and int(qr.rematches.n) == 0 and int(qr.partner.stages) == 0 and qr.templates.is_empty() and qr.arcTemplates.is_empty()
+	if not qrOk or JSON.stringify(SimCampaign.qaRecord(sj)) != JSON.stringify(qr):
+		return "QA's campaign record: %s (want the arc, %d columns with rings, turns and places from the pair, the ledger's seconds; the same through JSON)" % [JSON.stringify(qr), n]
+	# a site not of the column is refused; the wear is merged by the worse band and handed to the next stage's setup
+	var quiet: bool = FighterData.quiet
+	FighterData.quiet = true
+	var s0: Dictionary = SimCampaign.newEpisode(arc, 0, P, {"people": 100000})
+	var job: WorldCampaign.ColumnJob = SimCampaign.beginColumn(s0, P)
+	job.step(1 << 30)
+	s0 = SimCampaign.columnDone(s0, job.result)
+	var nErr: int = SimCampaign.errors().size()
+	var sr: Dictionary = SimCampaign.advance(s0, {"result": "won", "site": 99, "wear": {}}, P)
+	var refused: bool = SimRun.stateHash(sr) == SimRun.stateHash(s0) and SimCampaign.errors().size() == nErr + 1
+	var site0: Dictionary = s0.arc.columns[0][0]
+	var s1: Dictionary = SimCampaign.advance(s0, {"result": "won", "site": int(site0.id), "wear": {"5": 2}}, P)
+	var w1: Dictionary = s1.arc.wear.duplicate()
+	s1.arc.column = 0   # the same column again, to merge a second stage's wear (a test's shortcut)
+	s1.arc.columns = [s1.arc.columns[0]]
+	var s2: Dictionary = SimCampaign.advance(s1, {"result": "won", "site": int(site0.id), "wear": {"5": 1, "7": 3}}, P)
+	var su: Dictionary = SimCampaign.stageSetup(s2, site0, ["PROTAGONIST", "RIVAL"], P)
+	var wearOk: bool = w1 == {"5": 2} and s2.arc.wear == {"5": 2, "7": 3} and su.wear == s2.arc.wear and su.planet == int(s2.planet.seed)
+	# threads: ids only; filler never resolves a main-story thread
+	var st: Dictionary = SimCampaign.openThread(SimCampaign.openThread(e1.state, "grudge:RIVAL"), "main:the-pier")
+	var st2: Dictionary = SimCampaign.openThread(st, "Lost 400 people")
+	var threadsOk: bool = st.arc.threads == ["grudge:RIVAL", "main:the-pier"] and st2.arc.threads == st.arc.threads
+	threadsOk = threadsOk and SimCampaign.closeThread(st, "main:the-pier").arc.threads == st.arc.threads and SimCampaign.closeThread(st, "grudge:RIVAL").arc.threads == ["main:the-pier"]
+	FighterData.quiet = quiet
+	if not refused or not wearOk or not threadsOk:
+		return "the route: a site not of its column refused %s; the wear %s then %s, in the setup %s; threads %s" % [str(refused), str(w1), str(s2.arc.wear), str(su.wear == s2.arc.wear), str(threadsOk)]
+	# a main-story episode: its card is its number, the season moves up when it is won, and a side story reads n.5
+	var m: Dictionary = {}
+	var mainId: String = ""
+	for k in range(24):   # half of the episodes draw one; World places it in the band, widened or turned (rulings-2026-10-26 item 2)
+		var id: String = "%016x" % (0x5eed000000000000 + k * 7919)
+		if SimRun.H(id, "side", 12, 0) % 1000 >= SimCampaign.sideShare:
+			continue
+		m = SimCampaignRun.play(id, "main_episode", 60, {"number": 12})
+		if m.arc.side.offered:
+			mainId = id
+			break
+	if mainId == "":
+		return "no main-story episode of 24 offered a side story (World found no named place on each's last ring, or on it turned)"
+	var season: Dictionary = SimCampaign.seasonAfter(SimCampaign.newSeason(), m.state)
+	var extra: Dictionary = season.duplicate()
+	extra["player"] = "x"
+	if SimCampaign.cardNumber(m.arc) != "12" or int(season.lastMain) != 12 or SimCampaign.checkSeason(season) != "" or SimCampaign.checkSeason(extra) == "":
+		return "a main-story episode: card '%s', season %s, a season with a name refused %s (want 12, lastMain 12, refused)" % [SimCampaign.cardNumber(m.arc), str(season), str(SimCampaign.checkSeason(extra) != "")]
+	var PM: WorldPlanet.Planet = WorldPlanet.make(SimCampaign.arcPlanet(mainId))
+	var side: Dictionary = SimCampaign.openSide(m.state, PM)
+	if not ["band", "widened", "turned"].has(String(m.arc.side.how)) or side.is_empty() or SimCampaign.cardNumber(side.arc) != "12.5" or side.arc.kind != "filler_episode" or int(side.planet.seed) != int(m.state.planet.seed) or side.arc.wear != m.arc.wear or side.arc.ring != m.arc.side.ring or side.arc.families != [m.arc.side.family]:
+		return "the side story: card '%s', kind %s (want World's how, and 12.5, a filler episode, on the main arc's planet and wear, on its own ring)" % [SimCampaign.cardNumber(side.arc) if not side.is_empty() else "", side.get("arc", {}).get("kind", "")]
+	# no fighter, director or input file names the campaign (Legal mc01 and mc06: nothing of it reaches a fighter)
+	var files: Array = []
+	for dir in ["res://sim/core/", "res://sim/director/", "res://sim/input/"]:
+		for f in DirAccess.get_files_at(dir):
+			if f.ends_with(".gd") and not ["campaign.gd", "run.gd"].has(f):
+				files.append(dir + f)
+	for path in files:
+		var text: String = FileAccess.get_file_as_string(path)
+		if text.contains("SimCampaign") or text.contains("state.arc") or text.contains("arc_villain"):
+			return "%s names the campaign: no fighter reads it (mc01, mc06)" % path
+	return ""

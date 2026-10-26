@@ -297015,19 +297015,19 @@
       }
     },
     {
-      "id": "fight-campaign-stage-cols-stride",
+      "id": "fight-campaign-ring-cols-stride",
       "schema": "fight-campaign.schema.json",
       "mutate": [
         {
           "file": "data/fight/campaign.json",
           "set": {
-            "/stageCols": 1201
+            "/ringCols": 2401
           }
         }
       ],
       "expect": {
         "rule": "multipleOf",
-        "pointer": "/stageCols"
+        "pointer": "/ringCols"
       }
     },
     {

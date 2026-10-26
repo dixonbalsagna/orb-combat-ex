@@ -1,6 +1,6 @@
 # The campaign's sim foundation (first slice, step 1)
 
-Owner: Simulation and Engine. 2026-10-25 and 26, on the EP's brief: Game Design's `docs/design/campaign.md` §1.1 to §1.4, §2 and §7, under Legal's mc01 to mc03 and mc06 (`docs/legal/campaign-screen.md`). On World's route (`WorldCampaign`, `docs/world/campaign-route.md`). Built in two parks: `docs/sim/pending/campaign-slice1/` (the arc block, seeds and season, on stand-ins) and `docs/sim/pending/campaign-slice1b/` (on World's real calls, as this page describes).
+Owner: Simulation and Engine. 2026-10-25 and 26, on the EP's brief: Game Design's `docs/design/campaign.md` §1.1 to §1.4, §2 and §7, under Legal's mc01 to mc03 and mc06 (`docs/legal/campaign-screen.md`). On World's route (`WorldCampaign`, `docs/world/campaign-route.md`). The first slice, on stand-ins for World's calls, was applied in 622a0465. Slice 1b, on World's real calls as this page describes, is parked at `docs/sim/pending/campaign-slice1b/`, and slice 1c, the cross-back, at `docs/sim/pending/campaign-slice1c/`.
 
 **Step 1 of the first slice:** one solo episode, five stages on one planet, choosing by flying. Behind `data/fight/campaign.json`'s `enabled` (off), **the campaign's one switch**. With it off nothing moves.
 
@@ -17,10 +17,10 @@ An episode is a run (`run-mode.md`; the run state, `run-core.md` §12): fights f
 | `villain`, `player` | `arc_villain`: a roster or bench fighter whose role is villain or rival, never the player, drawn by the arc's seed or fixed by the main story; and the player's fighter |
 | `episode`, `episodes`, `number`, `follows` | The episode's index and the arc's length; a main-story episode's number in the season; a side story's main episode (the card reads n.5) |
 | `families` | A filler arc's first two episodes' families (two different ones), or a filler episode's one |
-| `column`, `columns`, `taken`, `done` | The column in play (0 to 4). Each column's sites as World offered them, kept as whole numbers and short strings: `{id, kind, place, arc, entry, dir}`. The site flown to in each, and whether the episode is over |
+| `column`, `columns`, `taken`, `done`, `back` | The column in play (0 to 4). Each column's sites as World offered them, kept as whole numbers and short strings: `{id, kind, place, arc, entry, dir, preferred}`. The site flown to in each, whether the episode is over, and the place the cross-back asked at column 4 (-1: none) |
 | `ring`, `pc`, `resize`, `turns`, `rings` | The ring the pair fly (a setup's `arena`, JSON-safe), their column on it, whether the next stage needs a match of another length (the climax's whole circle), each column's turn in degrees, and each column's ring length |
 | `wear`, `used` | **The run's place state**, World's bands (`{place id as text: 0 to 3}`, from fallen buildings, never people: mc02), and the places the episode has used |
-| `side` | `{offered, place, family, ring}`: the side story a main-story episode won may offer (§1.4) |
+| `side` | `{offered, place, family, ring, how, turn}`: the side story a main-story episode won may offer (§1.4), with World's `how` (band, widened or turned) and the end's turn in whole degrees (0: none) |
 | `threads` | Open threads, ids only (mc02) |
 
 `SimRun.checkState` checks an arc block when a state has one (`SimCampaign.checkArc`: the kind, the id, the lists, the threads as ids, the sites' fields).
@@ -45,6 +45,8 @@ An episode is a run (`run-mode.md`; the run state, `run-core.md` §12): fights f
    - moves the pair's column to the site;
    - steps the column.
    A site that is not one of the column's is refused, and the state is left as it was. After the fifth column the episode is done, and a main-story episode may offer a side story.
+6. **The cross-back** (§2.2, slice 1c, `data/fight/campaign.json` `crossBack` 2 to 4): at column 4, `beginColumn` asks World again for the first named place column 2 offered and the pair didn't take (`crossBackPlace`, World's `prefer`). World offers it, leading the sites and marked `preferred`, when it stands in the band of a ring; otherwise the column is as it would be. The arc block keeps the place asked (`back`) and each site's `preferred`.
+   - **Measured over 40 seeded filler arcs:** column 2 left a named place untaken in 11; World offered it again at column 4 in 5 of those, and the test's seeded flight took it in 3.
 
 ## 4. The one switch, and what World needs
 
@@ -55,14 +57,14 @@ An episode is a run (`run-mode.md`; the run state, `run-core.md` §12): fights f
 ## 5. The season record, the side story, threads
 
 - **The season record** (`newSeason`, `seasonAfter`, `checkSeason`) is `{format: "meridian-season", v: 1, lastMain}`: the number of the last main-story episode won. Whole numbers only, no personal data (mc02), and any other key is refused.
-- **The side story** (§1.4): my draw `H(arc, "side", n)` offers one on `sideShare` (half) of the main-story episodes won. Then World places it (`WorldCampaign.side`: a standing city or town within 10 to 25 s of flight on the ring) with its Close ring, or none is offered.
-  - **Measured on World's 630dcbad: only 6 of 12 climax rings have a place in reach** (8 of 12 first rings), so about a quarter of main-story episodes offer one, not half. Game Design has ruled (`rulings-2026-10-26.md` item 2): widen to any named place on the ring, then turn the ring at the episode's end. That is inside `WorldCampaign.side`, so nothing here changes when World lands it.
+- **The side story** (§1.4): my draw `H(arc, "side", n)` offers one on `sideShare` (half) of the main-story episodes won. Then World places it (`WorldCampaign.side`, `rulings-2026-10-26.md` item 2): a named city or town in the band, else anywhere on the ring, else on the ring turned at the episode's end. It comes with its Close ring, and the arc block keeps World's `how` and the turn for the host to play at the calm moment. If World finds none, none is offered and the draw is spent.
+  - On World's 630dcbad, before the widening, only 6 of 12 climax rings had a place in reach. World's w16 measures 32 of 32 test rings placed (21 in the band, 6 widened, 5 turned).
   - `openSide(main, P)` makes its filler episode (card n.5) on the main arc's planet as it stands (a copy of its wear and places), on the side story's ring. Nothing carries back.
 - **Threads** are ids only (a roster id, a place id or a short tag), and filler can't close a `main:` thread (§1.2).
 - **The card's number** (`cardNumber`): a main-story episode's number, a side story's n.5, or "" (SIDE STORY).
 - **QA's record** (`qaRecord(state)`, the `campaign` object of `docs/qa/rally-campaign-rows.md`), from the run state:
   - `episodeSec`: the fights' seconds from the ledger's ticks (the flights, the beats and the retried fights join when the host times them);
-  - `arc`, and each column's `n`, `ring` (World's size name: Close, Half or Whole), `turned` and its places' `fromPair` (signed columns);
+  - `arc`, and each column's `n`, `ring` (World's size name: Close, Half or Whole), `turned` and its places' `fromPair`: signed columns to the place's near edge, which is World's band measure (0 inside a place; a city's centre can lie past 806);
   - `rescues`, `rematches`, `partner`, `templates` and `arcTemplates` are zero or empty until those steps exist.
   `campaign_episode.gd --record=<file>` writes it as `{"campaign": ...}`.
 
@@ -83,6 +85,7 @@ An episode is a run (`run-mode.md`; the run state, `run-core.md` §12): fights f
   - the state is the same through JSON;
   - a site not of its column is refused;
   - the wear is merged by the worse band and handed to the next stage's setup;
+  - the cross-back: none asked when column 2 left no named place, and a seeded arc's (0bac000000017334, place 12) asked and leading column 4;
   - threads;
   - QA's record (the ledger's seconds, the rings, turns and places), the same through JSON;
   - a main-story episode's card and season record, and a side story's n.5 on the planet as it stands;
@@ -92,7 +95,5 @@ An episode is a run (`run-mode.md`; the run state, `run-core.md` §12): fights f
 ## 8. Not in step 1
 
 Drop-in co-op, two stages at once, the arc's carry across episodes and "Previously on", the rescue, and the main story's fixed beats. Also boons in the world, beat cards, the edge beacons, the families mapped to columns, and Encounter's stage kinds. The test plays each stage as an AI duel at the site, scored won.
-
-**For World:** the cross-back (column 2's untaken place offered again at column 4, §2.2) needs a "prefer" input to `column`.
 
 **In a running sim:** the ring turn between columns is World's `askCampaign`, the host's to call.

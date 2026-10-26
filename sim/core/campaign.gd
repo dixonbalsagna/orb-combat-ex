@@ -2,21 +2,24 @@ class_name SimCampaign
 extends RefCounted
 ## The campaign's sim foundation (Game Design's campaign.md 1.1 to 1.4, 2 and 7; docs/architecture/campaign-core.md):
 ## an episode is a run (SimRun's state, run-core.md section 12) with an arc block, five columns on one planet, and the
-## player choosing each column's place by flying there. Behind data/fight/campaign.json's enabled (off): the campaign's
-## host uses none of it while it is off.
+## pair choosing each column's place by flying there. The places, the ring and its turns are World's (WorldCampaign,
+## docs/world/campaign-route.md); the seeds, the state and the route's bookkeeping are here. Behind
+## data/fight/campaign.json's enabled (off), the one switch: the campaign's host uses none of it while it is off.
 ##
 ##   the arc block (state.arc): the arc's id (16 hex digits, its seed), its kind (filler_episode, filler_arc,
-##                main_episode, main_arc), its villain (a roster fighter: arc_villain), the episode's index, the five
-##                columns' place ids and the places taken, the side-story fields, and the open threads, as ids only;
-##   the seeds:   the episode seed is H(arc, "episode", e); every draw of a column is mixed from it, so an episode is
-##                the same for the same arc, episode and history, on any machine;
-##   the columns: a stage won advances the column, and the next column's places come from the episode seed. Until
-##                World's places-for-column query lands (campaign-core.md section 4), a stand-in picks them from the
-##                planet's standing places;
+##                main_episode, main_arc), its villain (a roster fighter: arc_villain), the episode's index, each
+##                column's sites as World offered them and the site flown to, the ring the pair fly and their column on
+##                it, the run's wear (place state, World's bands) and the places used, the side-story fields, and the
+##                open threads, as ids only;
+##   the seeds:   the episode seed is H(arc, "episode", e) (World's epSeed); every draw of the route comes from it or
+##                from the arc's own;
+##   the columns: the host steps World's column job (beginColumn: a ring's read a frame) during the beats before the
+##                column, and columnDone keeps its answer; a stage won at one of its sites advances the column;
 ##   the season:  a small local record beside the run states, the number of the last main-story episode won (Legal
 ##                mc02: whole numbers, no personal data).
-## No fighter reads any of it (Legal mc01 and mc06): the arc block is in the run state, never in a match's setup, and the
-## parity check holds that no fighter, director or input file names it.
+## No fighter reads any of it (Legal mc01 and mc06): the arc block is in the run state; a stage's setup carries the
+## planet, the ring, the wear and the slots only; and the parity check holds that no fighter, director or input file
+## names it.
 
 const FILE: String = "res://data/fight/campaign.json"
 const KINDS: Array = ["filler_episode", "filler_arc", "main_episode", "main_arc"]
@@ -24,19 +27,16 @@ const MAIN: Array = ["main_episode", "main_arc"]
 const MASK: int = 0xFFFFFFFF
 const SEASON_FORMAT: String = "meridian-season"
 const THREAD_RE: String = "^[A-Za-z0-9_.:-]{1,48}$"   # an id: a roster id, a place id, a short tag; no spaces, no words
+const SITE_KEYS: Array = ["id", "kind", "place", "arc", "entry", "dir"]   # a site as the run state keeps it: whole numbers and short strings
 
 static var _d = null
 static var _errors: Array = []
 static var on_: bool = false
 static var columns: int = 5
-static var placesMin: int = 2
-static var placesMax: int = 3
-static var crossFrom: int = 2          # a place not taken in this column can come back ...
-static var crossTo: int = 4            # ... in this one, as a consequence (campaign.md 2.2)
 static var sideShare: int = 500        # thousandths: a main-story episode won offers a side story on about half
 static var arcEpisodes: int = 3
 static var families: Array = ["training_day", "rivalry_game", "tournament", "rescue"]
-static var stageCols: int = 1200       # the stand-in stage ring round a place (Close), until World's ring turn
+static var ringCols: int = 2400        # the episode's first ring round the player's home (Half: a column's band, 322 to 806 columns each way, fits it)
 
 
 static func _ensure() -> void:
@@ -52,15 +52,9 @@ static func _ensure() -> void:
 		_err("fight/campaign.json: enabled must be true or false")
 	on_ = j.get("enabled") == true
 	columns = _int("columns", j.get("columns"), 1, 9)
-	var pc = j.get("placesPerColumn", {})
-	placesMin = _int("placesPerColumn.min", pc.get("min") if pc is Dictionary else null, 1, 6)
-	placesMax = _int("placesPerColumn.max", pc.get("max") if pc is Dictionary else null, placesMin, 6)
-	var cb = j.get("crossBack", {})
-	crossFrom = _int("crossBack.from", cb.get("from") if cb is Dictionary else null, 1, columns)
-	crossTo = _int("crossBack.to", cb.get("to") if cb is Dictionary else null, crossFrom, columns)
 	sideShare = _int("sideShare", j.get("sideShare"), 0, 1000)
 	arcEpisodes = _int("arcEpisodes", j.get("arcEpisodes"), 1, 9)
-	stageCols = _int("stageCols", j.get("stageCols"), 600, SimConst.PLANET_NC)
+	ringCols = _int("ringCols", j.get("ringCols"), 600, SimConst.PLANET_NC)
 	var fam = j.get("families")
 	families = []
 	if fam is Array:
@@ -100,7 +94,7 @@ static func mix(seed: int, key: String, a: int, b: int) -> int:
 	return SimRng._fmix((x ^ SimRng.imul(b & MASK, 0x85EBCA77)) & MASK)
 
 
-## The episode seed: H(arc, "episode", e). Every draw of the episode's columns is mixed from it.
+## The episode seed: H(arc, "episode", e), World's epSeed. Every draw of the episode's route is mixed from it.
 static func episodeSeed(arcId: String, e: int) -> int:
 	return SimRun.H(arcId, "episode", e, 0)
 
@@ -113,6 +107,11 @@ static func episodeRun(arcId: String, e: int) -> String:
 ## The arc's planet: one planet for every episode of the arc (campaign.md 2.1).
 static func arcPlanet(arcId: String) -> int:
 	return SimRun.H(arcId, "planet", 0, 0)
+
+
+## The arc's 32-bit seed, for World's side story.
+static func arcSeed(arcId: String) -> int:
+	return SimRun.H(arcId, "arc", 0, 0)
 
 
 # ===================================================================== the arc block
@@ -134,8 +133,8 @@ static func newArc(arcId: String, kind: String, opts: Dictionary = {}) -> Dictio
 		fams = [String(opts.get("family", families[SimRun.H(arcId, "family", 0, 0) % families.size()]))]
 	return {"id": arcId, "kind": kind, "villain": villain, "player": player, "episode": 0,
 		"episodes": arcEpisodes if kind == "filler_arc" else 1, "number": int(opts.get("number", 0)), "follows": int(opts.get("follows", -1)),
-		"families": fams, "column": 0, "columns": [], "taken": [], "done": false,
-		"side": {"offered": false, "place": -1, "family": ""}, "threads": []}
+		"families": fams, "column": 0, "columns": [], "taken": [], "done": false, "ring": {}, "pc": 0, "resize": false, "turns": [], "rings": [],
+		"wear": {}, "used": [], "side": {"offered": false, "place": -1, "family": "", "ring": {}, "how": "", "turn": 0}, "threads": []}
 
 
 ## The villain of a generated arc: a roster or bench fighter whose role is villain or rival, not the player, by the
@@ -151,9 +150,18 @@ static func _drawVillain(arcId: String, player: String) -> String:
 	return pool[SimRun.H(arcId, "villain", 0, 0) % pool.size()]
 
 
-## Episode e of an arc as a run state (SimRun.newRun with the episode's run seed, the arc's planet, and the arc block),
-## with its first column's places. opts: mode (story), people (the planet's people, World's census), places (a run
-## state's places to start from: the arc's planet as it stands, or a copy for a side story), assist.
+## The episode's first ring: ringCols round the player's home (World's homes when Orb names them; SimRun's stand-in
+## today), its touch-down on a bearing from the episode seed. The pair start at its middle.
+static func firstRing(arc: Dictionary, P: WorldPlanet.Planet) -> Dictionary:
+	var home: int = int(SimRun.homes(P).get(String(arc.player), 0))
+	var phi: float = float(mix(episodeSeed(String(arc.id), int(arc.episode)), "first", 0, 0)) / 4294967296.0 * SimMathx.TAU
+	return WorldRingPick.arenaOf(WorldRingPick.roundSpec(WorldRingPick.placePoint(P, home), ringCols, phi))
+
+
+## Episode e of an arc as a run state (SimRun.newRun with the episode's run seed, the arc's planet, and the arc block).
+## Its columns come from World's job, a column at a time (beginColumn, columnDone). opts: mode (story), people (the
+## planet's people, World's census), places (a run state's places to start from), wear (the arc's place state as it
+## stands), ring and pc (the ring and the pair's column to start on: a side story's), assist.
 static func newEpisode(arc: Dictionary, e: int, P: WorldPlanet.Planet, opts: Dictionary = {}) -> Dictionary:
 	_ensure()
 	var s: Dictionary = SimRun.newRun(episodeRun(String(arc.id), e), String(opts.get("mode", "story")), String(arc.player), int(opts.get("people", 0)), opts.get("assist", {}))
@@ -163,101 +171,140 @@ static func newEpisode(arc: Dictionary, e: int, P: WorldPlanet.Planet, opts: Dic
 	var a: Dictionary = arc.duplicate(true)
 	a.episode = e
 	a.column = 0
-	a.columns = [columnPlaces(s, a, P, 0)]
+	a.columns = []
 	a.taken = []
 	a.done = false
-	a.side = {"offered": false, "place": -1, "family": ""}
+	a.turns = []
+	a.rings = []
+	a.used = []
+	a.wear = opts.wear.duplicate(true) if opts.get("wear") is Dictionary else {}
+	a.side = {"offered": false, "place": -1, "family": "", "ring": {}, "how": "", "turn": 0}
+	a.ring = opts.ring.duplicate(true) if opts.get("ring") is Dictionary else firstRing(a, P)
+	a.pc = int(opts.get("pc", int(a.ring.cols) / 2))
+	a.resize = false
 	s["arc"] = a
 	return s
 
 
-## The places of column c (0-based) from the episode seed: World's places-for-column query when it lands, a stand-in
-## today. The climax (the last column) is the opponent's home ground; the others take placesMin to placesMax standing
-## places the episode has not fought on, and the column crossTo offers crossFrom's untaken places first.
-static func columnPlaces(s: Dictionary, arc: Dictionary, P: WorldPlanet.Planet, c: int) -> Array:
-	var es: int = episodeSeed(String(arc.id), int(arc.episode))
-	var homes: Dictionary = SimRun.homes(P)
-	var standing: PackedByteArray = SimRun.groundOpts(s, P).standing
-	var taken: Array = arc.taken
-	if c == columns - 1:
-		var home: int = int(homes.get(String(arc.villain), -1))
-		if home >= 0 and standing[home] == 1:
-			return [home]
-	var pool: Array = []
-	for i in range(P.n):
-		if standing[i] == 1 and not _has(taken, i):
-			pool.append(i)
-	# a seeded shuffle of the pool (Fisher-Yates on the column's own draws)
-	for k in range(pool.size() - 1, 0, -1):
-		var j: int = mix(es, "column", c, k) % (k + 1)
-		var t = pool[k]
-		pool[k] = pool[j]
-		pool[j] = t
-	var first: Array = []
-	if c == crossTo - 1 and arc.columns.size() >= crossFrom:
-		for i in arc.columns[crossFrom - 1]:
-			if not _has(taken, int(i)) and standing[int(i)] == 1:
-				first.append(int(i))
-	var n: int = placesMin + mix(es, "count", c, 0) % (placesMax - placesMin + 1)
-	var out: Array = []
-	for i in first + pool:
-		if out.size() >= n:
-			break
-		if not out.has(i):
-			out.append(i)
-	return out
+## The climax's home (the column World pins): the villain's home ground.
+static func climaxHome(arc: Dictionary, P: WorldPlanet.Planet) -> int:
+	return int(SimRun.homes(P).get(String(arc.villain), -1))
 
 
-## The next run state after a stage of the episode (SimRun.carry), and a stage won advances the column: the place
-## fought (end.place, one of the column's) is taken and the next column's places come from the seed. After the last
-## column the episode is done; a main-story episode won may then offer a side story (campaign.md 1.4). A place that is
-## not one of the column's is refused: the state comes back unchanged.
+## The current column's job (World's WorldCampaign.beginColumn): the host steps it a ring's read a frame during the
+## beats before the column (500 ms at once on a gen 2 planet), and hands the result to columnDone.
+static func beginColumn(state: Dictionary, P: WorldPlanet.Planet) -> WorldCampaign.ColumnJob:
+	var a: Dictionary = state.arc
+	var used: Array = []
+	for u in a.used:
+		used.append(int(u))
+	return WorldCampaign.beginColumn(int(state.planet.seed), episodeSeed(String(a.id), int(a.episode)), int(a.column) + 1, a.ring, int(a.pc),
+		{"used": used, "wear": a.wear, "pin": climaxHome(a, P), "turn": true})
+
+
+## World's answer for the current column into the state: its sites (as whole numbers and short strings), the ring the
+## pair fly from here (World's start: after any turn, its touch-down at the pair) and their column on it, the column's
+## ring length (its sites lie on it), whether the stage needs a match of another length (the climax's whole circle),
+## and the turn's degrees.
+static func columnDone(state: Dictionary, res: Dictionary) -> Dictionary:
+	var s: Dictionary = state.duplicate(true)
+	var a: Dictionary = s.arc
+	if a.done or a.columns.size() != int(a.column):
+		_err("campaign: column %d is already made, or the episode is done" % (int(a.column) + 1))
+		return s
+	var sites: Array = []
+	for site in res.get("sites", []):
+		var keep: Dictionary = {}
+		for k in SITE_KEYS:
+			keep[k] = String(site.get(k, "")) if k == "kind" else int(site.get(k, 0))
+		sites.append(keep)
+	a.columns.append(sites)
+	if res.get("start") is Dictionary:
+		a.ring = res.start.duplicate(true)
+		a.pc = int(res.get("pc", int(a.ring.cols) / 2))
+	a.rings.append(int(a.ring.cols))
+	a.resize = res.get("resize", false) == true
+	var t = res.get("turn")
+	a.turns.append(int(round(float(t.deg))) if t is Dictionary else 0)
+	return s
+
+
+## A column's site by its id, or {} when it is not one of them.
+static func siteOf(arc: Dictionary, c: int, id: int) -> Dictionary:
+	if c < 0 or c >= arc.columns.size():
+		return {}
+	for site in arc.columns[c]:
+		if int(site.id) == id:
+			return site
+	return {}
+
+
+## The setup of the stage at one of the current column's sites (flying there starts it): the planet, the ring the
+## pair fly re-centred on the site (World's rebased: its touch-down at pc + the site's arc, so the stage is fought
+## there), the run's wear on its places (World lays it at the start), and the slots.
+static func stageSetup(state: Dictionary, site: Dictionary, slots: Array, P: WorldPlanet.Planet) -> Dictionary:
+	var a: Dictionary = state.arc
+	var at: int = posmod(int(a.pc) + int(site.arc), int(a.ring.cols))
+	var arena: Dictionary = WorldRingPick.arenaOf(WorldCampaign.rebased(P, WorldCampaign.specOf(a.ring), at))
+	return {"planet": int(state.planet.seed), "arena": arena, "wear": a.wear.duplicate(true), "slots": slots.duplicate()}
+
+
+## The next run state after a stage of the episode (SimRun.carry), and a stage won advances the route: end.site (the id
+## of one of the column's sites) is taken, its place joins the used, the stage's wear (end.wear: WorldCampaign.wearOf
+## of its final state) is merged, and the pair's column moves to the site. After the last column the episode is done; a
+## main-story episode won may then offer a side story (campaign.md 1.4). A site that is not one of the column's is
+## refused: the state comes back as it was.
 static func advance(state: Dictionary, end: Dictionary, P: WorldPlanet.Planet) -> Dictionary:
 	_ensure()
 	var arc: Dictionary = state.get("arc", {})
 	if arc.is_empty() or arc.done:
 		return SimRun.carry(state, end)
 	var won: bool = end.get("result") == "won"
-	var place: int = int(end.get("place", -1))
-	if won and not _has(arc.columns[int(arc.column)], place):
-		_err("campaign: place %d is not one of column %d's %s" % [place, int(arc.column) + 1, str(arc.columns[int(arc.column)])])
+	var site: Dictionary = siteOf(arc, int(arc.column), int(end.get("site", -1)))
+	if won and site.is_empty():
+		_err("campaign: site %d is not one of column %d's" % [int(end.get("site", -1)), int(arc.column) + 1])
 		return state.duplicate(true)
 	var s: Dictionary = SimRun.carry(state, end)
 	if not won or s.over != "":
 		return s
 	var a: Dictionary = s.arc
-	a.taken.append(place)
+	a.taken.append(int(site.id))
+	if int(site.place) >= 0:
+		a.used.append(int(site.place))
+	a.wear = WorldCampaign.mergeWear(a.wear, end.get("wear", {}))
+	a.pc = posmod(int(a.pc) + int(site.arc), int(a.ring.cols))
 	a.column = int(a.column) + 1
-	if int(a.column) < columns:
-		a.columns.append(columnPlaces(s, a, P, int(a.column)))
-	else:
+	if int(a.column) >= columns:
 		a.done = true
 		if MAIN.has(a.kind):
-			a.side = sideOffer(s, a, P)
+			a.side = sideOffer(s, a)
 	return s
 
 
-## The side story a main-story episode won may offer (campaign.md 1.4): a seeded draw, H(arc, "side", n), on about
-## sideShare of them; its place a standing one the episode didn't fight on (World's ring picker places it along the
-## ring, within 10 to 25 s of flight, when it lands), and its family one of the filler families.
-static func sideOffer(s: Dictionary, arc: Dictionary, P: WorldPlanet.Planet) -> Dictionary:
+## The side story a main-story episode won may offer (campaign.md 1.4): my seeded draw, H(arc, "side", n), on about
+## sideShare of them; then World places it (WorldCampaign.side: a named city or town in the band, then anywhere on the
+## ring, then on the ring turned at the episode's end: rulings-2026-10-26 item 2) with its Close ring, and the family is
+## one of the filler families. how is World's (band, widened or turned), and turn the end's turn in whole degrees (0:
+## none), which the host plays at the calm moment. World finds none: none is offered, and the draw is spent.
+static func sideOffer(s: Dictionary, arc: Dictionary) -> Dictionary:
+	var none: Dictionary = {"offered": false, "place": -1, "family": "", "ring": {}, "how": "", "turn": 0}
 	var n: int = int(arc.number)
-	var d: int = SimRun.H(String(arc.id), "side", n, 0)
-	if d % 1000 >= sideShare:
-		return {"offered": false, "place": -1, "family": ""}
-	var standing: PackedByteArray = SimRun.groundOpts(s, P).standing
-	var pool: Array = []
-	for i in range(P.n):
-		if standing[i] == 1 and not _has(arc.taken, i):
-			pool.append(i)
-	if pool.is_empty():
-		return {"offered": false, "place": -1, "family": ""}
-	return {"offered": true, "place": pool[SimRun.H(String(arc.id), "side", n, 1) % pool.size()], "family": families[SimRun.H(String(arc.id), "side", n, 2) % families.size()]}
+	if SimRun.H(String(arc.id), "side", n, 0) % 1000 >= sideShare:
+		return none
+	var used: Array = []
+	for u in arc.used:
+		used.append(int(u))
+	var r: Dictionary = WorldCampaign.side(int(s.planet.seed), arcSeed(String(arc.id)), n, arc.ring, int(arc.pc), {"wear": arc.wear, "used": used})
+	if not r.get("ok", false):
+		return none
+	var t = r.get("turn")
+	return {"offered": true, "place": int(r.place), "family": families[SimRun.H(String(arc.id), "side", n, 2) % families.size()], "ring": r.arena.duplicate(true),
+		"how": String(r.get("how", "band")), "turn": int(round(float(t.deg))) if t is Dictionary else 0}
 
 
-## The filler episode a side story opens (campaign.md 1.2 and 1.4): its own arc block, following the main-story
-## episode it came from (the card reads n.5), on a copy of the main arc's planet as it stands; nothing it does carries
-## back (the host keeps the main story's state apart).
+## The filler episode a side story opens (campaign.md 1.2 and 1.4): its own arc block following the main-story episode
+## it came from (the card reads n.5), on the main arc's planet as it stands (a copy of its wear and places) and on the
+## side story's ring; nothing it does carries back (the host keeps the main story's state apart).
 static func openSide(main: Dictionary, P: WorldPlanet.Planet, opts: Dictionary = {}) -> Dictionary:
 	var arc: Dictionary = main.arc
 	if not arc.side.offered:
@@ -265,7 +312,7 @@ static func openSide(main: Dictionary, P: WorldPlanet.Planet, opts: Dictionary =
 		return {}
 	var id: String = "%08x%08x" % [SimRun.H(String(arc.id), "side", int(arc.number), 3), SimRun.H(String(arc.id), "side", int(arc.number), 4)]
 	var side: Dictionary = newArc(id, "filler_episode", {"player": arc.player, "follows": int(arc.number), "family": String(arc.side.family), "villain": String(opts.get("villain", arc.villain))})
-	var s: Dictionary = newEpisode(side, 0, P, {"mode": main.mode, "people": int(main.planet.people), "places": main.places})
+	var s: Dictionary = newEpisode(side, 0, P, {"mode": main.mode, "people": int(main.planet.people), "places": main.places, "wear": arc.wear, "ring": arc.side.ring})
 	s.planet.seed = int(main.planet.seed)   # the main arc's planet, as it stands
 	return s
 
@@ -277,6 +324,35 @@ static func cardNumber(arc: Dictionary) -> String:
 	if int(arc.follows) >= 0:
 		return "%d.5" % int(arc.follows)
 	return ""
+
+
+# ===================================================================== QA's record
+
+## QA's campaign record of an episode (docs/qa/rally-campaign-rows.md), from its run state: the fights' length in
+## seconds (the ledger's ticks: the stages won, and a lost run's last; the flights, beats and retries join when the host
+## times them), the arc, and each column's ring by World's size names, whether the ring turned before it, and its
+## places from the pair in signed columns to their near edge (World's band measure; 0 inside one). Rescues, rematches, a partner and the stage templates stay zero or empty
+## until those steps exist.
+static func qaRecord(state: Dictionary) -> Dictionary:
+	var a: Dictionary = state.get("arc", {})
+	if a.is_empty():
+		return {}
+	var ticks: int = 0
+	for rec in state.ledger:
+		ticks += int(rec.get("ticks", 0))
+	var names: Dictionary = {}
+	var sizes: Dictionary = WorldRingPick.cfg().get("sizes", {})
+	for k in sizes:
+		names[int(sizes[k])] = String(k).capitalize()
+	var cols: Array = []
+	for c in range(a.columns.size()):
+		var places: Array = []
+		for site in a.columns[c]:
+			places.append({"fromPair": int(site.dir) * int(site.entry)})   # World's band measure: to the place's near edge, signed by its side
+		var n: int = int(a.rings[c]) if c < a.rings.size() else 0
+		cols.append({"n": c + 1, "ring": names.get(n, str(n)), "turned": c < a.turns.size() and int(a.turns[c]) != 0, "places": places})
+	return {"episodeSec": int(round(float(ticks) * SimConst.DT)), "arc": String(a.id), "columns": cols, "rescues": {"n": 0, "won": 0},
+		"rematches": {"n": 0, "won": 0}, "partner": {"stages": 0, "won": 0}, "templates": [], "arcTemplates": {}}
 
 
 # ===================================================================== threads
@@ -334,20 +410,17 @@ static func checkArc(arc) -> String:
 		return "the kind is one of %s" % str(KINDS)
 	if not (arc.get("id") is String) or String(arc.id).length() != 16 or not String(arc.id).is_valid_hex_number(false):
 		return "the arc id is 16 hex digits"
-	if not (arc.get("columns") is Array) or arc.columns.size() > columns or not (arc.get("taken") is Array) or not (arc.get("threads") is Array):
-		return "columns, taken and threads are lists"
+	if not (arc.get("columns") is Array) or arc.columns.size() > columns or not (arc.get("taken") is Array) or not (arc.get("threads") is Array) or not (arc.get("wear") is Dictionary) or not (arc.get("used") is Array) or not (arc.get("rings") is Array):
+		return "columns, taken, used, rings and threads are lists, and wear an object"
 	for t in arc.threads:
 		if not (t is String) or not RegEx.create_from_string(THREAD_RE).search(t):
 			return "a thread is an id only"
+	for col in arc.columns:
+		for site in col:
+			for k in site:
+				if not SITE_KEYS.has(k):
+					return "a site holds only %s, not '%s'" % [str(SITE_KEYS), k]
 	return ""
-
-
-## A list of place ids holds v (a list read back from JSON holds floats).
-static func _has(arr: Array, v: int) -> bool:
-	for x in arr:
-		if int(x) == v:
-			return true
-	return false
 
 
 static func _int(where: String, x, lo: int, hi: int) -> int:

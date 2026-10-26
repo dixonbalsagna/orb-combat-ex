@@ -263,7 +263,7 @@ func _init() -> void:
 	ok(str(SimHash.stateHash(worn).gameplay) == str(SimHash.stateHash(worn2).gameplay) and str(SimHash.stateHash(worn).gameplay) != str(SimHash.stateHash(plain).gameplay), "the same wear lays the same stage, and a worn stage is not a fresh one")
 	WorldCampaign.setOn(false)
 	var off := fresh({"planet": 7, "touch": 3, "arena": {"cols": 2400}, "intro": false, "wear": {str(pl): 2}})
-	ok(str(SimHash.stateHash(off).gameplay) == str(SimHash.stateHash(plain).gameplay), "with the campaign off a setup's wear is ignored: the match is the plain one")
+	ok(str(SimHash.stateHash(off).gameplay) == str(SimHash.stateHash(worn).gameplay), "the setup is the switch: with World's own flag off a setup's wear is laid the same (the campaign's one switch is data/fight/campaign.json's, read by its host)")
 	WorldCampaign.setOn(true)
 	# the turn in a running sim: the campaign's bearing, the fight's machinery, no count against the fight's four
 	var S := SimCore.createSim()

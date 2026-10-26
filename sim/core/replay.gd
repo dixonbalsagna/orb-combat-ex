@@ -180,6 +180,8 @@ static func dataHash(setup: Dictionary = {}) -> String:
 		h.text(SimHitstop.dataHash())
 	if setup.get("forms", SimForms.enabled()) == true:   # forms: data/fight/forms.json and each fighter's forms.json, only for a match with them on
 		h.text(SimForms.dataHash())
+	if setup.has("wear"):   # a campaign stage's place state: World lays it by data/biomes/campaign.json's bands (campaign-core.md)
+		h.text(WorldCampaign.dataHash())
 	h.text(WorldBrunt.dataHash())          # World's brunt ladder and lodge: data/biomes/brunt.json
 	# the fighters in its slots, one hash each (FighterData.hashOf): a change to a fighter who is not in the match, the
 	# training dummy's say, leaves the replay alone. The default pairing is the roster's first two.
