@@ -48,3 +48,16 @@ The campaign is not built, so these rows read a record that a campaign run will 
 ## Files (uncommitted)
 
 `qa/godot/records.gd`, `bands.js`, `selftest.js`, and this document.
+
+## Addendum (2026-10-26): the split first-launch rows and the masher's answer (rulings-2026-10-26 items 19 and 21)
+
+Rows only; no run. They read on the next newcomer and masher jobs (`node qa/godot/masher-only.js`, easy and medium).
+
+| Row | Band | How it is read |
+| :--- | :--- | :--- |
+| `newcomer.thrown60.<level>` | at least 75% of matches | the first launcher the lit-B newcomer throws inside 60 s of the first brawl: an opening he used (`launcher_close` used), or the first that landed if none was announced. `players.gd` writes `firstThrowSec` |
+| `newcomer.landed120.<level>` | at least 75% of matches | the first launcher that lands inside 120 s of the first brawl: **a send (the `launch` event) or a pop** (the `pop` cue, target the launcher). `firstLaunchSec` now counts pops too, so `newcomer.first60` reads a landed pop or send as item 19 asks |
+| `newcomer.first60`, `newcomer.wins` (L17) | unchanged | reported beside the two. **L17 holds if they pull apart; the two rows then stand in the first-60 row's place** (item 19) |
+| `masher.answer.<level>` | reported | the AI's perfect blocks per press of the banded masher (the `perfect_block` cue by the AI, or the brawl's `stagger` cue with text `perfect_block` on the masher), beside `masher.<level>` (35 to 50%). Item 21's lever: raise the share in small steps until the masher reads about 45% |
+
+Selftest 30 of 30. A one-job smoke in my scratch (4 matches) shows the new fields written (`firstThrowSec` 5.3 to 8.1 s, `presses` and `perfectBlocksByAI` from masher.gd). Saved jobs from before today read the thrown and answer rows as PENDING.

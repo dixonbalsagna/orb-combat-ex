@@ -49,6 +49,8 @@ func _init() -> void:
 	var lens: Array = []
 	var by_masher: int = 0      # launches the masher caused (the AI was the victim)
 	var on_masher: int = 0      # launches the AI caused (the masher was the victim)
+	var presses: int = 0         # the masher's presses that were consumed (rulings-2026-10-26 item 21: the AI's perfect-block share against a mash is the lever)
+	var pb_ai: int = 0           # perfect blocks by the AI: the cue perfect_block (the defender is the actor), or the brawl's stagger cue with text perfect_block (the actor is the one staggered, the masher)
 	var caught_ai: int = 0      # the AI was launched and the follow-up reached it before it landed (an air catch)
 	var caught_masher: int = 0
 	var t_proc: int = Time.get_ticks_msec()
@@ -87,6 +89,12 @@ func _init() -> void:
 			var prev1: String = S.fighters[1].state
 			var stepped: bool = SimCore.step(S, ins)
 			for ev in S.out.fx:
+				if ev.type == "cue":
+					var evk: String = str(ev.get("kind"))
+					if evk == "perfect_block" and int(ev.actor) != slot:
+						pb_ai += 1
+					elif evk == "stagger" and str(ev.get("text")) == "perfect_block" and int(ev.actor) == slot:
+						pb_ai += 1
 				if ev.type == "launch":
 					if int(ev.actor) == slot:
 						on_masher += 1
@@ -106,6 +114,7 @@ func _init() -> void:
 			if stepped:
 				live += 1
 				if pending:
+					presses += 1
 					pending = false
 					wait = 0
 				if clock != "tick" and live % gap == 0:
@@ -121,5 +130,5 @@ func _init() -> void:
 			wins += 1
 		SimCore.dispose(S)
 	lens.sort()
-	print(JSON.stringify({"masher": true, "level": level if level != "" else "data", "gap": gap, "clock": clock, "forms": forms, "n": n_done, "requested": n, "wallCapped": wall_capped, "budgetStopped": budget_stopped, "wins": wins, "losses": losses, "timeouts": timeouts, "medianSec": (snappedf(lens[lens.size() >> 1], 0.1) if lens.size() > 0 else -1.0), "launchesByMasher": snappedf(float(by_masher) / maxi(1, n_done), 0.01), "launchesOnMasher": snappedf(float(on_masher) / maxi(1, n_done), 0.01), "airCatchesOfAI": snappedf(float(caught_ai) / maxi(1, n_done), 0.01), "airCatchesOfMasher": snappedf(float(caught_masher) / maxi(1, n_done), 0.01)}))
+	print(JSON.stringify({"masher": true, "level": level if level != "" else "data", "gap": gap, "clock": clock, "forms": forms, "n": n_done, "requested": n, "wallCapped": wall_capped, "budgetStopped": budget_stopped, "wins": wins, "losses": losses, "timeouts": timeouts, "medianSec": (snappedf(lens[lens.size() >> 1], 0.1) if lens.size() > 0 else -1.0), "launchesByMasher": snappedf(float(by_masher) / maxi(1, n_done), 0.01), "presses": presses, "perfectBlocksByAI": pb_ai, "launchesOnMasher": snappedf(float(on_masher) / maxi(1, n_done), 0.01), "airCatchesOfAI": snappedf(float(caught_ai) / maxi(1, n_done), 0.01), "airCatchesOfMasher": snappedf(float(caught_masher) / maxi(1, n_done), 0.01)}))
 	quit(0)

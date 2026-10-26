@@ -350,6 +350,21 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     assert.strictEqual(id(f(mk(2, 2, 1)), 'wallkick.perMatch').status, 'PASS'); assert.strictEqual(id(f(mk(2, 2, 1, '')), 'wallkick.perMatch').status, 'INFO'); assert.strictEqual(id(f(mk(2, 2, 3)), 'wallkick.perMatch').status, 'FAIL');   // 0.2 to 2 from a city start; watched from the default start (rulings-2026-10-23 11a)
      assert.strictEqual(id(f(mk(0, 0, 0)), 'wallkick.perMatch').status, 'PENDING'); assert.strictEqual(id(f(mk(0, 0, 0)), 'chase.perMatch').status, 'PENDING');
   });
+  await t('item 19 split rows: a first launcher thrown inside 60 s and one landed inside 120 s, 75% each; PENDING without thrown times; the masher answer row (item 21) reads the perfect-block share', async () => {
+    const { masherRows } = require('./masher');
+    const nc = (thrown, landed, extra = {}) => ({ pair: 'newcomer-medium', n: landed.length, aWins: 40, bWins: 60, brawl: { launcher: { routeBy: landed.map(() => 5), routeOn: landed.map(() => 4), firstLaunchSec: landed, ...(thrown ? { firstThrowSec: thrown } : {}) } }, ...extra });
+    const id = (rows, k) => rows.find(r => r.id === k);
+    const a = masherRows([nc(Array(100).fill(20), [...Array(80).fill(50), ...Array(20).fill(-1)])]);   // thrown 100% inside 60 s; landed 80% inside 120 s (20 never)
+    assert.strictEqual(id(a, 'newcomer.thrown60.medium').status, 'PASS'); assert.strictEqual(id(a, 'newcomer.landed120.medium').status, 'PASS');
+    assert.strictEqual(id(a, 'newcomer.first60.medium').status, 'PASS');
+    const b = masherRows([nc([...Array(70).fill(20), ...Array(30).fill(90)], [...Array(70).fill(100), ...Array(30).fill(200)])]);
+    assert.strictEqual(id(b, 'newcomer.thrown60.medium').status, 'FAIL'); assert.strictEqual(id(b, 'newcomer.landed120.medium').status, 'FAIL');   // 70% each
+    assert.strictEqual(id(masherRows([nc(null, Array(100).fill(30))]), 'newcomer.thrown60.medium').status, 'PENDING');   // an older job has no thrown times
+    const m = (extra) => ({ level: 'medium', gap: 8, forms: true, wins: 45, losses: 55, timeouts: 0, n: 100, medianSec: 120, ...extra });
+    const withP = masherRows([m({ presses: 1000, perfectBlocksByAI: 80 })]).find(r => r.id === 'masher.answer.medium');
+    assert.strictEqual(withP.status, 'INFO'); assert.ok(/8\.0%/.test(withP.value));
+    assert.strictEqual(masherRows([m({})]).find(r => r.id === 'masher.answer.medium').status, 'PENDING');
+  });
   await t('L17: the lit-B newcomer wins 10 to 50% against medium and 50 to 95% against easy', async () => {
     const { masherRows } = require('./masher');
     const nc = (lv, w) => ({ pair: 'newcomer-' + lv, n: 100, aWins: w, bWins: 100 - w, brawl: { launcher: { routeBy: Array(100).fill(5), routeOn: Array(100).fill(5), firstLaunchSec: Array(100).fill(8) } } });
