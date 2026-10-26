@@ -1,12 +1,16 @@
 {
   "schema": "narrative.campaign_templates/1",
   "_about": "PARKED DRAFT (docs/narrative/pending/). The campaign's templates, for docs/design/campaign.md (Orb's hybrid pick, 2026-10-25): the rescue (an ally from the arc's cast flies in), 'Previously on', the training lesson, the guaranteed rematch on fallen ground, threads across episodes, and the cliffhanger cards. Slots only: no new lore or names. Reads the campaign.md section 6 ledger slots; no toll slot; the Cyborg's home_wear reads only his own yard (Legal ln04, ln05). 26 templates, one filled sample each, mapped on the five columns. Claude-written; unmarked by Orb; unscreened by Legal for the campaign (sections 4 and 5.2).",
+  "legal_rules": [
+    "Mc01: no line implies a fighter changed because of past meetings (no stronger because he beat you, no promotion, no rank system); angrier is tone only; henchmen are anonymous and remember nothing.",
+    "Mc02: threads are about fighters and the wear of places only, never a casualty, victim, toll or a debt to the dead; fallen ground is wear, never who was lost there; lost_episode reads place and fighter only."
+  ],
   "new_slots": {
     "episode": "Which episode of the arc: 1, 2 or 3 (the pilot, the middle, the finale).",
     "arc_boss": "The arc's boss fighter (a roster id) whose home ground ends the arc.",
-    "thread": "An open promise carried across episodes: a debt, a grudge, an ally who switched sides, a promised return. A kind and the fighter it names; whole numbers and ids only.",
+    "thread": "An open promise carried across episodes: a favour owed, a grudge, an ally who switched sides, a promised return. A kind and the living fighter it names; whole numbers and ids only. Never a casualty, a victim, a toll or a debt to the dead (Legal Mc02).",
     "rescued_by": "The ally from the arc's cast who flew in when the player fell (campaign.md 5.1).",
-    "lost_episode": "That the last episode was lost, where (a place name) and to whom (a fighter id).",
+    "lost_episode": "That the last episode was lost, where (a place name) and to whom (a fighter id). Place and fighter only (Legal Mc02).",
     "lesson": "What the training stage taught, as a drill name: the beam struggle, the air game, breaking a grab, the guard."
   },
   "columns_map": [
@@ -729,7 +733,7 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Rankhold holds the high ground. The ridge fell."
+          "text": "Rankhold holds the high ground. The ridge is in ruins."
         },
         {
           "who": "RIVAL",
@@ -743,7 +747,7 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Last time, I ranked you low. Climb."
+          "text": "Last time, you lost here. Remember?"
         }
       ]
     },
@@ -815,7 +819,7 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "The harbour fell last time. The Rival waits there."
+          "text": "The harbour was ruined last time. The Rival waits there."
         },
         {
           "who": "PROTAGONIST",
@@ -908,7 +912,7 @@
       "lines": [
         {
           "who": "CYBORG",
-          "text": "I said I'd come back. Hungrier!"
+          "text": "I said I'd come back. Here I am!"
         }
       ]
     },

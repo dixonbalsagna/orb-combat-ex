@@ -68,5 +68,7 @@
       4
     ],
     "_rows": "23d section 7"
-  }
+  },
+  "display": "internal: the points are never shown to a player, and they never read casualties (Legal RL-183)",
+  "flash": "Legal mc04: the flash cap of 3 counted bursts a second holds across the whole rally; a link whose flash would pass it draws as dust, trail and ember instead"
 }

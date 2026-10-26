@@ -26,6 +26,8 @@ The campaign reads the ledger slots of its §6 (`last`, `wrecked`, `home_wear`, 
 - **The Cyborg** reads wear and a thing wrecked only. `home_wear` is valid for him **only for his own breaking yard**, never a claimed town; the three templates that read it carry that rule and `beat-check.py` checks it (`usable()` is the picker's filter). No Cyborg line names people, a toll or a casualty.
 - **"Rivals remember" is beats reading the ledger.** It is not a hierarchy or a promotion system of enemies: nothing here ranks or promotes an enemy, and the rival's memory is only `last`, `wrecked`, `thread` and `lost_episode`.
 - **The training lesson is for that episode only** and never carries past the run (run-mode §4.4); the Rival's lesson lines stay grudging, never open respect.
+- **Legal's Mc01 (RL-182):** no line implies a fighter changed because of past meetings (no "stronger because he beat you", no promotion, no rank system). "Angrier" is tone only. **Henchmen are anonymous and remember nothing**: no template gives one a line, a name or a memory. The Rival's rank gag stays a voice habit, never a standing. I changed two sample lines for this: the recap "Last time, I ranked you low. Climb." is now "Last time, you lost here. Remember?", and the Cyborg's "Hungrier!" return is now "Here I am!".
+- **Legal's Mc02 (RL-182):** a thread is about fighters and the wear of places only, never a casualty, a victim, a toll or a debt to the dead. A debt is a favour between living fighters. **"Fallen" is a wear state, never who was lost there**; `lost_episode` reads a place and a fighter only. I changed two samples for this: "The ridge fell." is now "The ridge is in ruins.", and "The harbour fell last time." is now "The harbour was ruined last time."
 - **Voices** follow the bibles: the Protagonist apologises or promises to mend only after a fight, the Empress's guards speak only in a 3v1 (none of these does), "petitioner" is rare.
 
 ## 3. The nine families, and the six new ones, on the five columns
@@ -93,11 +95,11 @@ campaign.md 5.2. A recap is two in-world radio lines, never a narrator speaking 
 > **Radio:** "To be continued. The harbour took heavy damage."
 
 *prev_stakes* (lost_episode=(the ridge, RIVAL), home_wear=fallen)
-> **Radio:** "Rankhold holds the high ground. The ridge fell."
+> **Radio:** "Rankhold holds the high ground. The ridge is in ruins."
 > **Rival:** "I kept the ground. Come and take it."
 
 *prev_winner* (opp=RIVAL, last=won)
-> **Rival:** "Last time, I ranked you low. Climb."
+> **Rival:** "Last time, you lost here. Remember?"
 
 *prev_hook* (lost_episode=(the harbour, RIVAL), lesson=the beam struggle)
 > **Protagonist:** "Okay. I know what beat me. Again!"
@@ -144,7 +146,7 @@ campaign.md 5.2. The rise column always offers a rematch with the one who won, o
 **Samples** (placeholder names):
 
 *refall_offer* (opp=RIVAL, place=the harbour, home_wear=fallen)
-> **Radio:** "The harbour fell last time. The Rival waits there."
+> **Radio:** "The harbour was ruined last time. The Rival waits there."
 > **Protagonist:** "Back to the harbour. Let's finish it!"
 
 *refall_claim* (opp=RIVAL, place=the harbour, claim=the high ground)
@@ -185,7 +187,7 @@ campaign.md section 4. A thread is a small open promise (a debt, a grudge, a swi
 > **Empress:** "Hahaha! We switched sides again. Surprise!"
 
 *thr_promise_kept* (thread=promised return, opp=CYBORG)
-> **Cyborg:** "I said I'd come back. Hungrier!"
+> **Cyborg:** "I said I'd come back. Here I am!"
 
 ### The cliffhanger cards
 
@@ -208,7 +210,7 @@ The card that ends an episode: to be continued, next episode, the finale, or a t
 
 *cliff_finale* (arc_boss=EMPRESS, episode=2)
 > **Radio:** "Next: the finale, at the boss's home."
-> **Empress:** "We will see you at the throne, rat."
+> **Empress:** "Come to the throne, rat. We will be waiting."
 
 *cliff_thread* (thread=debt)
 > **Radio:** "Still open: the debt. Who collects?"

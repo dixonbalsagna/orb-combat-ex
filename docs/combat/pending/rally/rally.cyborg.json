@@ -12,7 +12,7 @@
       "base": "energy_grab",
       "kind": "own",
       "input": "RB with A at the body in flight",
-      "what": "the crane hook latches the body mid-flight; his payoff, the throw, reels it back toward him on the cable, swings it round once and flings it 6 bh along the stick: the flight reversed",
+      "what": "the crane hook latches the body's arms or torso mid-flight; his payoff, the throw, reels it back toward him on the cable and turns it once, short and at body height (never overhead), then flings it 6 bh along the stick: the flight reversed",
       "destination": "reversed, the stick's line",
       "price": "the grab's (10 tapped, 14 held)",
       "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
@@ -23,14 +23,14 @@
         "active": 24,
         "recover": 12
       },
-      "legal": "the hook binds arms or torso, the held fighter struggles; one call-out (ln06); no taunt over the reel"
+      "legal": "the hook binds arms or torso, the held fighter struggles; the swing is a short turn at body height, never overhead (Legal RL-183); one call-out (ln06); no taunt over the reel"
     },
     {
       "id": "rally.cyborg.wreck_toss",
       "name": "Wreck Toss",
       "base": "world",
       "kind": "own",
-      "input": "with a wreck within 2 bh (a car or a slab of rubble, within his tier's lift), its pick-up (A) and Y at the body in flight",
+      "input": "with an empty wreck within 2 bh (a car or a slab of rubble, inside his tier's lift) and nothing living near it, its pick-up (A), then Y at the body in flight",
       "what": "he hurls the wreck at the flying body; it strikes and sends it on along the throw's line, as a thrown object does (rule-of-cool's throwables). The wreck breaks on him",
       "destination": "the throw's line",
       "price": "none (the throwables carry no ki or cooldown)",
@@ -42,7 +42,7 @@
         "active": 6,
         "recover": 12
       },
-      "legal": "wreckage holds no one (Art's cars and wrecks are empty); wreckage and metal only"
+      "legal": "wrecks are always empty and nothing living is near: a wreck with a person near it is not a candidate (Legal RL-183); wreckage and metal only"
     },
     {
       "id": "rally.cyborg.slag_catch",
@@ -95,5 +95,6 @@
   ],
   "openQuestions": [
     "Wreck Toss uses the throwables' pick-up mid-rally: the rule asks him to be free and the rival beyond striking reach, which a rally meets. Agreed?"
-  ]
+  ],
+  "_flash": "Legal mc04: the flash cap of 3 counted bursts a second holds across the whole rally; a link whose flash would pass it draws as dust, trail and ember instead"
 }

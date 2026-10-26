@@ -21,9 +21,9 @@ Each own link is a variant of one of Game Design's link kinds (item 6), on the s
 | Fighter, identity | Link 1 | Link 2 | Link 3 |
 | :--- | :--- | :--- | :--- |
 | **The Protagonist,** control | **Palm Turn** (an overtake): the stick held across the flight. An open palm turns the body 90°, up or down by the stick, and up and away from people with no stick | **Net Haul** (the grab in flight): the yank hauls the body to him mid-air, and his next press sends it on with no zip to pay | **Pillar Lift** (a world link): a send across his own Trip Pillar throws the body up and away from people (TRAP LANDING) |
-| **The Rival,** precision | **Plated Ram** (the chase with Y): sent exactly along the stick's line, snapped to eight directions, with no bend | **Ring Hang** (the grab in flight): the bind holds the body still in the air, and his next shot lands as on an open fighter | **Stair Spike** (a spike): one press, three stepped plate impacts straight down, the third the crater |
+| **The Rival,** precision | **Plated Ram** (the chase with Y): sent exactly along the stick's line, snapped to eight directions, with no bend | **Ring Hold** (the grab in flight): the bind holds the body still in the air, struggling, and his next shot lands as a normal hit on an open fighter | **Stair Spike** (a spike): one press, three stepped plate impacts straight down, the third the crater |
 | **The Empress,** dominion | **Rope Return** (a world link): Velvet Rope laid across his coming path. Crossing it fires her level-1 beam and knocks him back across her line | **Banner Drop** (the grab in flight): the staves slam him down into the ground from any height, landing him on one knee | **Guard's Wall** (a bank; base form only): the body rebounds off her braced guard. **Game Design to rule** against `empress-guards.md` §4 |
-| **The Demon Cyborg,** appetite | **Crane Reel** (the grab in flight): the hook reels the body back, swings it round and flings it 6 bh along the stick, reversing the flight | **Wreck Toss** (a world link): a wreck hurled at the flying body sends it on (the throwables' rules) | **Slag Catch** (a lob): level-2 slag led to his landing pops him 3 bh back up, even on soft ground |
+| **The Demon Cyborg,** appetite | **Crane Reel** (the grab in flight): the hook reels the body back, turns it once at body height (never overhead) and flings it 6 bh along the stick, reversing the flight | **Wreck Toss** (a world link): an empty wreck, with nothing living near, hurled at the flying body sends it on (the throwables' rules) | **Slag Catch** (a lob): level-2 slag led to his landing pops him 3 bh back up, even on soft ground |
 
 **Distinct by design.** The cross-check holds that no two fighters share a link of the same kind and destination.
 - **The four grabs in flight are the four payoffs:** the yank pulls in, the bind holds still, the slam drives down and the throw reverses.
@@ -66,6 +66,7 @@ The scoring is for the AI's choice of link, for Simple's choice, and for the pla
 
 - **Where the scores land:** the best possible variety total is 72 (+20 fresh kind, +12 fresh destination, +18 world link, +8 parted sea, +8 own link, +6 noise). It ranks a fresh world link through the parted sea first. A repeat sinks, and a third of a kind is never chosen.
 - **The stick still wins.** A held stick keeps only the candidates inside its cone (the planner's `TILT_CONE`) and adds `stickWins` (200) to the stick's side, so variety (72 at most) never overrides the player.
+- **Internal only.** The points are never shown to a player and never read casualties (Legal RL-183).
 - **Personality** is the planner's care term at the landing: the hero sends away from people, and a villain toward them. With no stick, the highest score is taken: spectacle by variety.
 - **What QA reads** (23d §7): two links of one kind in a row at most 25% of links, rallies ended by repetition at most 20%, and a median of 2 to 4 links a rally. The scoring is built to land inside those bands.
 
@@ -76,8 +77,10 @@ The scoring is for the AI's choice of link, for Simple's choice, and for the pla
   - one call-out per grab, on the throw or in the catch's first 10 ticks;
   - nothing is said, slowed, zoomed or finished over a fighter held in the air.
 - **The Empress's staves** are never joined by light into a box, a barrier or a dome, and the kneel is the slam's landing only (e16).
-- **The Rival's ring** is a thin loop, never a disc (e12). **The pillar** is a solid slab (e14). **The Stair Spike's three impacts** count as one burst (fx08).
-- **The Cyborg's set** is wreckage and metal only, and the wrecks hold no one (ln04).
+- **The Rival's ring** is a thin loop, never a disc (e12), and its link is named Ring Hold, never "hang" (RL-183): he struggles and never dangles, and the shot on him is a normal hit. **The pillar** is a solid slab (e14).
+- **The Crane Reel's swing** is a short turn at body height, never overhead (RL-183).
+- **Flash across the whole rally** (mc04): 3 counted bursts a second at most, and a link that would pass it draws as dust, trail and ember. **The Stair Spike's three impacts** merge into one glow that brightens only at the last, to be proven in a clip.
+- **The Cyborg's set** is wreckage and metal only (ln04). A wreck is always empty, and one with anyone living near it is never a candidate (RL-183).
 
 ## 6. Proof
 
@@ -100,4 +103,4 @@ Tools' validator in a scratch root, with both drafts and their map rows added:
   - is Plated Ram's exact line, with no planner bend, allowed?
   - does the Cyborg's Wreck Toss meet the throwables' pick-up rule mid-rally?
 - **Encounter:** the rally memory the scoring reads (the last two kinds and destinations of the current rally).
-- **Narrative:** the twelve link names.
+- **Narrative:** the twelve link names (Legal renamed Ring Hang to Ring Hold).

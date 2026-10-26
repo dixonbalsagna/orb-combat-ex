@@ -25,8 +25,8 @@
       }
     },
     {
-      "id": "rally.rival.ring_hang",
-      "name": "Ring Hang",
+      "id": "rally.rival.ring_hold",
+      "name": "Ring Hold",
       "base": "energy_grab",
       "kind": "own",
       "input": "RB with A at the body in flight",
@@ -41,7 +41,7 @@
         "active": 40,
         "recover": 6
       },
-      "legal": "a thin loop that closes, never a disc or above the head; binds arms and torso; the held fighter struggles; one call-out (ln06); no taunt over the hang"
+      "legal": "Legal RL-183: named Ring Hold, never Hang. A thin loop that closes, never a disc or above the head (e12); it binds arms and torso and the held fighter struggles, never dangling; no zoom, slow motion, taunt or finisher over him; the shot on him is a normal hit; one call-out (ln06)"
     },
     {
       "id": "rally.rival.stair_spike",
@@ -54,7 +54,7 @@
       "price": "none (the spike's)",
       "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
       "tell": "he rises over the body with the fist cocked at the shoulder",
-      "look": "three stepped impacts in a straight vertical line, each a short violet flare, counted as one burst (fx08)",
+      "look": "three stepped impacts in a straight vertical line, merged into one glow that brightens only at the last (Legal mc04: one burst event, to be proven in a clip)",
       "atoms": {
         "windup": 10,
         "active": 9,
@@ -87,10 +87,11 @@
   },
   "legalAsks": [
     "the plated ram",
-    "the ring hang in the air",
+    "the ring hold in the air",
     "the three-step spike as one burst"
   ],
   "openQuestions": [
     "Plated Ram's exact line drops the planner's bend: the stick's line wins outright, so a ram into an empty line is the player's choice. Agreed?"
-  ]
+  ],
+  "_flash": "Legal mc04: the flash cap of 3 counted bursts a second holds across the whole rally; a link whose flash would pass it draws as dust, trail and ember instead"
 }

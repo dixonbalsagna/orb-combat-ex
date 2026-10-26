@@ -1,0 +1,148 @@
+{
+  "schema": "narrative.rally_names/1",
+  "_about": "PARKED DRAFT (docs/narrative/pending/). Names, alternates and flavour for Combat's twelve rally links (docs/combat/pending/rally/*.md), and a call-out or two for a rally changing hands. Combat's working labels are kept where they were good; one is renamed. Call-outs follow Legal's ln06 style: one line, once, at the moment the rally turns; never over a dazed or bound fighter, never the move's name, never a multiplier or a countdown. Claude-written; unmarked by Orb; unscreened by Legal.",
+  "links": {
+    "PROTAGONIST": [
+      {
+        "combat_label": "Palm Turn",
+        "name": "Palm Turn",
+        "alternate": "Palm Steer",
+        "is": "overtake: an open palm turns the flying body 90 degrees up or down",
+        "flavour": "One open palm turns your flight!"
+      },
+      {
+        "combat_label": "Net Haul",
+        "name": "Net Haul",
+        "alternate": "Hand-Over-Hand",
+        "is": "grab in flight: the yank hauls the body to him",
+        "flavour": "I haul you in, hand over hand!"
+      },
+      {
+        "combat_label": "Pillar Lift",
+        "name": "Pillar Lift",
+        "alternate": "Stone Lift",
+        "is": "world link: a send across his pillar throws the body up and away",
+        "flavour": "Cross my pillar and up you go!"
+      }
+    ],
+    "RIVAL": [
+      {
+        "combat_label": "Plated Ram",
+        "name": "Plate Chase",
+        "alternate": "Straight Chase",
+        "is": "chase: sent exactly along the stick's line, no bend",
+        "flavour": "Straight line. No bend. No escape."
+      },
+      {
+        "combat_label": "Ring Hang",
+        "name": "Ring Hang",
+        "alternate": "Loop Hold",
+        "is": "grab in flight: the bind holds the body still in the air",
+        "flavour": "Held in the air. Hold still."
+      },
+      {
+        "combat_label": "Stair Spike",
+        "name": "Stair Spike",
+        "alternate": "Step Spike",
+        "is": "spike: three stepped plate impacts straight down",
+        "flavour": "Three steps down, straight to the ground."
+      }
+    ],
+    "EMPRESS": [
+      {
+        "combat_label": "Rope Return",
+        "name": "Rope Return",
+        "alternate": "Rope Snap",
+        "is": "world link: her rope across the flight fires the beam and knocks him back",
+        "flavour": "Cross our rope and fly back, rat!"
+      },
+      {
+        "combat_label": "Banner Drop",
+        "name": "Banner Drop",
+        "alternate": "Banner Slam",
+        "is": "grab in flight: the banners slam him into the ground from any height",
+        "flavour": "Our banners drop you from any height!"
+      },
+      {
+        "combat_label": "Guard's Wall",
+        "name": "Mantle Wall",
+        "alternate": "Braced Wall",
+        "is": "bank, base form only: the body rebounds off her braced guard",
+        "flavour": "Hit our mantle and bounce back, insect!"
+      }
+    ],
+    "CYBORG": [
+      {
+        "combat_label": "Crane Reel",
+        "name": "Crane Reel",
+        "alternate": "Crane Fling",
+        "is": "grab in flight: the hook reels the body back and flings it 6 bh",
+        "flavour": "Reeled in, swung round, flung back!"
+      },
+      {
+        "combat_label": "Wreck Toss",
+        "name": "Wreck Toss",
+        "alternate": "Scrap Hurl",
+        "is": "world link: a wreck hurled at the flying body",
+        "flavour": "A wreck, thrown at the flying scrap!"
+      },
+      {
+        "combat_label": "Slag Catch",
+        "name": "Slag Catch",
+        "alternate": "Slag Bounce",
+        "is": "lob: level-2 slag pops him 3 bh back up",
+        "flavour": "Slag lands and pops you back up!"
+      }
+    ]
+  },
+  "callouts": {
+    "PROTAGONIST": [
+      {
+        "when": "takes_over",
+        "text": "My turn now! Hang on!",
+        "alternate": "Nice chase! Now it's mine!"
+      },
+      {
+        "when": "loses_it",
+        "text": "Whoa! Nice flip! Your turn!",
+        "alternate": "Ha! You turned it on me!"
+      }
+    ],
+    "RIVAL": [
+      {
+        "when": "takes_over",
+        "text": "Mine now. Try to keep up.",
+        "alternate": "You overreached. Fly, amateur."
+      },
+      {
+        "when": "loses_it",
+        "text": "Lucky flip. It won't repeat.",
+        "alternate": "You turned it. Once."
+      }
+    ],
+    "EMPRESS": [
+      {
+        "when": "takes_over",
+        "text": "Gahaha! Our turn, rat! Fly!",
+        "alternate": "Hahaha! The chase belongs to us!"
+      },
+      {
+        "when": "loses_it",
+        "text": "Hahaha! You flipped us? Cheeky!",
+        "alternate": "Gahaha! Turned on us! Delightful!"
+      }
+    ],
+    "CYBORG": [
+      {
+        "when": "takes_over",
+        "text": "Got you! Now you fly!",
+        "alternate": "My chase now! Hold on!"
+      },
+      {
+        "when": "loses_it",
+        "text": "Whoa! Flipped! My plating's spinning!",
+        "alternate": "Turned on me? Rude!"
+      }
+    ]
+  }
+}

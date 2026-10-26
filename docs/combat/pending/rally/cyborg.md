@@ -9,16 +9,16 @@ Combat and Choreography, 2026-10-25. Game Design's frame is `rulings-2026-10-23d
 **Crane Reel** (the grab in flight)
 - **Input:** RB with A at the flying body.
 - **Tell:** the hook swings once behind him on its cable.
-- **What happens:** the crane hook latches round the body's arms or torso mid-flight, and the foe struggles on the line. His payoff, the throw, reels the body back toward him on the cable, swings it round once and flings it 6 bh along the stick: the flight reversed.
+- **What happens:** the crane hook latches round the body's arms or torso mid-flight, and the foe struggles on the line. His payoff, the throw, reels the body back toward him on the cable and turns it once, short and at body height, never overhead (RL-183), then flings it 6 bh along the stick: the flight reversed.
 - **Price:** the grab's (10, or 14 held).
 - **Legal:** one call-out (ln06), and no taunt over the reel.
 
 **Wreck Toss** (a world link)
-- **Input:** with a wreck within 2 bh (a car or a slab of rubble, inside his tier's lift), its pick-up (A), then Y at the flying body.
+- **Input:** with an empty wreck within 2 bh (a car or a slab of rubble, inside his tier's lift) and nothing living near it, its pick-up (A), then Y at the flying body.
 - **Tell:** the lift: a forearm plate slid under the frame.
 - **What happens:** he hurls the wreck at the flying body. It strikes and sends the body on along the throw's line, as a thrown object does (the throwables' rules), and the wreck bursts into scrap.
 - **Price:** none. Throwables carry no ki and no cooldown.
-- **Legal:** wrecks hold no one (Art's cars and wrecks are empty).
+- **Legal:** wrecks are always empty, and a wreck with anyone living near it is not a candidate (RL-183).
 
 **Slag Catch** (a lob link)
 - **Input:** RB with Y held to level 2, its landing led to where the body will come down.

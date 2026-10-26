@@ -139,6 +139,14 @@
     },
     "qa": {
       "type": "object"
+    },
+    "display": {
+      "type": "string",
+      "minLength": 1
+    },
+    "flash": {
+      "type": "string",
+      "minLength": 1
     }
   }
 }
