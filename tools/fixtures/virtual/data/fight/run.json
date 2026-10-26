@@ -10,6 +10,8 @@
       "whole": 3
     },
     "_framesPerRead": "the host reads one candidate ring every this many frames during the previous stage's beats, by the ring's size (World: a read is about 2.6, 5.3 and 10.3 ms natively at Close, Half and Whole, and about 22, 32 and 63 ms on the old laptop); what is left when the beats end is read at once. The pick is the same however it is stepped",
+    "planetUnitsPerRead": 250,
+    "_planetUnitsPerRead": "planet units a read spends on the planet's own make while it is not made yet (World's host: a gen 2 planet, about a second, is made over the first beats of the stage before it, a frame at a time, and the pick starts when it is whole). A climate cell is a unit, about 20 microseconds, and a place's try-set 1000: 250 is about 5 ms a read",
     "stagesBeforeBoss": 3,
     "_stagesBeforeBoss": "the stages before the boss (Game Design's run-mode.md 8: the MVP is three stages and the boss); the boss is the chapter after them",
     "phases": [

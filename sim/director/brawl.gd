@@ -798,7 +798,7 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 	var d: int = _closeTicks(f, o)   # the gap it closes on the way: it lands this much later
 	if d > 0 and DirRecoil.counter(S, f):
 		d = 0   # out of his recoil flip (Game Design's 1a): the counter-rush closes the gap at once
-	var gapBh: float = maxf(0.0, (DirBands.dist(f, o) - float(DirData.contact().reach)) / DirInterrupt.BH)
+	var gapBh: float = maxf(0.0, (_gapDist(f, o) - float(DirData.contact().reach)) / DirInterrupt.BH)
 	var lead: int
 	var length: int
 	var worth: float
@@ -1214,7 +1214,7 @@ static func contact(S: SimState, ex, b) -> void:
 	var special: bool = bool(a.get("double", false)) or bool(a.get("sure", false)) or bool(a.get("zip", false))
 	# The reach, read as it lands. A blow by rule (the double hit's, a sure one, a zip's) keeps the strike's own limit.
 	var ct: Dictionary = DirData.contact()
-	var far: float = (absf(SimWrap.sdx(f.x, o.x)) if _lg(o, LA_POP_UNTIL) > S.tick else DirBands.dist(f, o)) - float(ct.offset) + (0.0 if special else float(_g(f, PRE)) / 16.0)   # past striking distance, with what its own step through its reach has covered added back
+	var far: float = (absf(SimWrap.sdx(f.x, o.x)) if (_lg(o, LA_POP_UNTIL) > S.tick or _lg(f, LA_POP_UNTIL) > S.tick) else DirBands.dist(f, o)) - float(ct.offset) + (0.0 if special else float(_g(f, PRE)) / 16.0)   # past striking distance, with what its own step through its reach has covered added back
 	if _g(f, GAPV_ON) == 1 and wound and not special:
 		far = float(_g(f, GAPV)) / 16.0   # a blow with a wind-up: the gap as counted since it began (tick, _giveStep)
 	_s(f, PRE, 0)
@@ -1707,7 +1707,9 @@ const LA_POP_UNTIL: int = 35   # the pop (rulings-2026-10-23c 1): S.tick he come
 const LA_POP_AT: int = 36      # ... S.tick it began, plus 1
 const LA_POP_TECH: int = 37    # ... his landing: 1 the AI will tech it, 2 teched (he lands set); 0 neither
 const LA_POP_BURST: int = 38   # ... 1 the AI will burst out after pop.burstAfter
-const LA_N: int = 39
+const LA_POP_SPK: int = 39     # 1 while his coming down is a spike's (23c 9): its landing digs a crater
+const LA_POP_STUN: int = 40    # S.tick his juggle's stun ends (the pop and its landing, or the spike and its recovery): no opening before it
+const LA_N: int = 41
 const LA_RIPK: int = 7         # LA_HITK's mark for a perfect follow-up (the riposte): hard to answer, as a medium (with pops)
 
 
@@ -1795,10 +1797,14 @@ static func _pop(S: SimState, ex, f, o, p: float) -> void:
 	o.rush = r
 	o.vx = 0.0
 	o.vy = 0.0
-	o.stunTicks = maxi(o.stunTicks, ticks + reel)
+	var free: int = int(pc.get("freeAt", 0))
+	var stun: int = mini(free, ticks) if (free > 0 and not again) else ticks + reel   # 23c 12: free from the apex, guard, perfect block and strike in the air
+	o.stunTicks = maxi(o.stunTicks, stun)
 	_ls(o, LA_POP_UNTIL, S.tick + ticks)
 	_ls(o, LA_POP_TECH, 0)
 	_ls(o, LA_POP_BURST, 0)
+	_ls(o, LA_POP_STUN, S.tick + stun)
+	_ls(o, LA_POP_SPK, 0)
 	if not again:
 		_ls(o, LA_POP_AT, S.tick + 1)
 		if o.ai != null:
@@ -1817,6 +1823,38 @@ static func _pop(S: SimState, ex, f, o, p: float) -> void:
 	SimEvents.feed(S, o.name + (" IS BROUGHT DOWN" if again else " IS POPPED UP"), ("a second pop in a row lands him" if again else "power " + str(snappedf(p, 0.01)) + ": " + str(snappedf(h / DirInterrupt.BH, 0.1)) + " bh up and back down in reach over " + str(ticks) + " ticks"))
 
 
+## f spikes a popped o (23c 9): down into the ground under him in spike.fallTicks, where his landing digs a crater and
+## he recovers in spike.recoverTicks unless he techs it. The brawl goes on. No aim, journey, freshness mark, wary window
+## or pay; his blow on its way is lost. Cue "pop": spike.
+static func _spike(S: SimState, ex, f, o) -> void:
+	var sc: Dictionary = popCfg().get("spike", {})
+	var fall: int = int(sc.get("fallTicks", 6))
+	var rec: int = int(sc.get("recoverTicks", 21))
+	_drop(S, ex, o)
+	var r := SimState.Rush.new()
+	r.px = o.x
+	r.py = WorldTerrain.groundY(S, o.x)
+	r.pz = o.z
+	r.end = S.T + float(fall) * SimConst.DT
+	o.rush = r
+	o.vx = 0.0
+	o.vy = 0.0
+	o.stunTicks = maxi(o.stunTicks, fall + rec)
+	_ls(o, LA_POP_UNTIL, S.tick + fall)
+	_ls(o, LA_POP_STUN, S.tick + fall + rec)
+	_ls(o, LA_POP_SPK, 1)
+	_ls(o, LA_POP_TECH, 0)
+	_ls(o, LA_POP_BURST, 0)
+	if o.ai != null and SimRng.keyed(int(S.game.seed), "spike.tech", S.tick * 4 + S.fighters.find(o)) < float(DirAI.lv().get("brawl", {}).get("recoil", {}).get("flip", 0.0)):
+		_ls(o, LA_POP_TECH, 1)
+	var e = _ev(S, o, "pop", "spike")
+	e.target = float(S.fighters.find(f))
+	e.n = S.tick + fall
+	e.dur = float(fall)
+	e.x = o.x
+	SimEvents.feed(S, o.name + " IS SPIKED", "a launcher at a popped fighter slams him into the ground under him: the brawl goes on")
+
+
 ## Each tick (laTick): a popped fighter's tech (a dodge tap in the landing's last techTicks), his burst out (a light
 ## press after burstAfter: down in fallTicks), and his landing (set if teched, else he reels landReel). Cues "pop":
 ## tech, burst, land (n 1 set, 0 reeling).
@@ -1833,8 +1871,16 @@ static func _popTick(S: SimState) -> void:
 			_ls(f, LA_POP_UNTIL, 0)
 			_ls(f, LA_POP_TECH, 0)
 			_ls(f, LA_POP_BURST, 0)
+			var spk: bool = _lg(f, LA_POP_SPK) == 1
+			if spk:
+				_ls(f, LA_POP_SPK, 0)
+				var by = SimRoster.opp(S, f)
+				WorldCrater.dig(S, f.x, WorldCrater.impactEnergy(float(popCfg().get("spike", {}).get("speed", 1800.0)), float(by.tier)), by, "impact", 0.0, 1.0, false)   # the spike's crater, under him
+			if landedSet:
+				_ls(f, LA_POP_STUN, S.tick)
 			var le = _ev(S, f, "pop", "land")
 			le.n = 1 if landedSet else 0
+			le.amount = 1.0 if spk else 0.0
 			continue
 		if _lg(f, LA_POP_TECH) != 2 and until - S.tick <= int(pc.get("techTicks", 8)):
 			var tap: bool = (f.ai == null and f.input != null and f.input.dodge) or (f.ai != null and _lg(f, LA_POP_TECH) == 1)
@@ -1842,8 +1888,12 @@ static func _popTick(S: SimState) -> void:
 				_ls(f, LA_POP_TECH, 2)
 				f.stunTicks = mini(f.stunTicks, until - S.tick)
 				_ev(S, f, "pop", "tech")
+				if _lg(f, LA_POP_SPK) == 0 and DirRecoil.popFlip(S, f, SimRoster.opp(S, f)):
+					var fl: int = int(DirRecoil.cfg().get("flipTicks", 12))
+					_ls(f, LA_POP_UNTIL, S.tick + fl)   # 23c 11: a teched pop landing is a recoil flip: he backflips out and lands set
+					f.stunTicks = fl
 		var at: int = _lg(f, LA_POP_AT) - 1
-		if at >= 0 and S.tick - at >= int(pc.get("burstAfter", 12)) and f.rush != null and float(f.rush.arc) != 0.0:
+		if int(pc.get("freeAt", 0)) <= 0 and at >= 0 and S.tick - at >= int(pc.get("burstAfter", 12)) and f.rush != null and float(f.rush.arc) != 0.0:   # (free from the apex, he strikes instead: 23c 12)
 			var out: bool = (f.ai == null and f.input != null and f.input.light) or (f.ai != null and _lg(f, LA_POP_BURST) == 1)
 			if out:
 				var ft: int = int(pc.get("fallTicks", 6))
@@ -1911,8 +1961,8 @@ static func _bMash(f, p: int) -> bool:
 ## How safe f's launcher is (section 3): 1 sure (he is staggered: an opening), 2 hard to answer (he reels from a medium
 ## or a heavy), 3 answerable (he reels from a light or a bolt, or is free).
 static func _safety(S: SimState, f, o) -> int:
-	if o.stunTicks > 0:
-		return 1
+	if o.stunTicks > 0 and not (popOn() and S.tick < _lg(o, LA_POP_STUN)):
+		return 1   # (a juggle's stun is no opening: 23c 9)
 	var wary: int = int(la().get("waryTicks", 0))
 	if wary > 0 and _lg(o, LA_LANDED) > 0 and _now(S) - (_lg(o, LA_LANDED) - 1) <= wary:
 		return 3   # Game Design's 10c: he came down from a launch within waryTicks, so a launcher that isn't sure is answerable
@@ -2438,10 +2488,18 @@ static func _giveStep(S: SimState, ex, g) -> void:
 ## give.closeMaxTicks.
 static func _closeTicks(f, o) -> int:
 	var gi: Dictionary = cfg().give
-	var gap: float = (DirBands.dist(f, o) - float(DirData.contact().reach)) / DirInterrupt.BH
+	var gap: float = (_gapDist(f, o) - float(DirData.contact().reach)) / DirInterrupt.BH
 	if gap <= 0.0:
 		return 0
 	return mini(int(gi.closeMaxTicks), int(ceil(float(gi.closeTicksPerBh) * gap)))
+
+
+## The gap a blow closes: the pair's distance, or the horizontal gap while one of them is popped (23c 12: he is struck
+## and strikes at his height, and the striker steps up to it as the blow lands).
+static func _gapDist(f, o) -> float:
+	if popOn() and (_lg(o, LA_POP_UNTIL) > 0 or _lg(f, LA_POP_UNTIL) > 0):
+		return absf(SimWrap.sdx(f.x, o.x))
+	return DirBands.dist(f, o)
 
 
 ## f moves toward striking distance from o, on his own side and at o's height: the way that is left, shared over
@@ -3122,7 +3180,9 @@ static func _bigLanded(S: SimState, ex, f, o, a) -> void:
 			if a.has("power"):
 				_ls(f, LA_POW, int(round(float(a.power) * _woundMul(o, String(a.get("piece", ""))) * 1000.0)))
 			var pp: float = _popPower(S, f, o, int(a.get("aim", 0))) if (popOn() and a.has("power")) else 9.0
-			if pp < float(popCfg().get("full", 0.8)):
+			if popOn() and _lg(o, LA_POP_UNTIL) > S.tick:
+				_spike(S, ex, f, o)   # 23c 9: B at a popped fighter is the spike, never a send
+			elif pp < float(popCfg().get("full", 0.8)):
 				_pop(S, ex, f, o, pp)   # rulings-2026-10-23c 1: a weak launch is a pop, and the brawl holds
 			else:
 				_send(S, ex, f, o, int(a.get("aim", 0)), "the launcher", float(c.launcher.flightMul))

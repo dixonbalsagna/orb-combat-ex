@@ -296858,6 +296858,131 @@
       }
     },
     {
+      "id": "fight-run-planet-units-zero",
+      "schema": "fight-run.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/run.json",
+          "set": {
+            "/ground/planetUnitsPerRead": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/ground/planetUnitsPerRead"
+      }
+    },
+    {
+      "id": "fight-campaign-valid",
+      "schema": "fight-campaign.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/campaign.json",
+          "set": {
+            "/schema": "fight.campaign/1"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "fight-campaign-required-enabled",
+      "schema": "fight-campaign.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/campaign.json",
+          "del": [
+            "/enabled"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "fight-campaign-extra-key",
+      "schema": "fight-campaign.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/campaign.json",
+          "set": {
+            "/bonus": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/bonus"
+      }
+    },
+    {
+      "id": "fight-campaign-columns-zero",
+      "schema": "fight-campaign.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/campaign.json",
+          "set": {
+            "/columns": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/columns"
+      }
+    },
+    {
+      "id": "fight-campaign-side-share-over",
+      "schema": "fight-campaign.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/campaign.json",
+          "set": {
+            "/sideShare": 1001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/sideShare"
+      }
+    },
+    {
+      "id": "fight-campaign-family-bad-id",
+      "schema": "fight-campaign.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/campaign.json",
+          "set": {
+            "/families/0": "Training Day"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/families/0"
+      }
+    },
+    {
+      "id": "fight-campaign-stage-cols-stride",
+      "schema": "fight-campaign.schema.json",
+      "mutate": [
+        {
+          "file": "data/fight/campaign.json",
+          "set": {
+            "/stageCols": 1201
+          }
+        }
+      ],
+      "expect": {
+        "rule": "multipleOf",
+        "pointer": "/stageCols"
+      }
+    },
+    {
       "id": "fight-ricochet-valid",
       "schema": "fight-ricochet.schema.json",
       "mutate": [

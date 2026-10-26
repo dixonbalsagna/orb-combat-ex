@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/fight-campaign",
+  "title": "fight-campaign (schema \"fight.campaign/1\")",
+  "description": "data/fight/campaign.json: the campaign's numbers (docs/design/campaign.md; sim/core/campaign.gd; docs/architecture/campaign-core.md). Campaign-only: no versus match and no fighter reads it (Legal mc01, mc06). Policy: closed except keys starting with an underscore.",
+  "type": "object",
+  "required": [
+    "schema",
+    "enabled",
+    "columns",
+    "placesPerColumn",
+    "crossBack",
+    "sideShare",
+    "arcEpisodes",
+    "families",
+    "stageCols"
+  ],
+  "properties": {
+    "schema": {
+      "const": "fight.campaign/1"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "the switch: the campaign's host uses none of it while it is off"
+    },
+    "columns": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9,
+      "description": "an episode's stages, each a column of the route"
+    },
+    "placesPerColumn": {
+      "type": "object",
+      "required": [
+        "min",
+        "max"
+      ],
+      "properties": {
+        "min": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "a column's fewest places"
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 6,
+          "description": "a column's most places"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "crossBack": {
+      "type": "object",
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9,
+          "description": "the column whose untaken place can come back"
+        },
+        "to": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9,
+          "description": "the column it comes back in"
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      }
+    },
+    "sideShare": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000,
+      "description": "thousandths: the share of main-story episodes won that offer a side story"
+    },
+    "arcEpisodes": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9,
+      "description": "a filler arc's episodes"
+    },
+    "families": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z_]{1,32}$"
+      },
+      "description": "Narrative's filler families"
+    },
+    "stageCols": {
+      "type": "integer",
+      "minimum": 600,
+      "maximum": 4800,
+      "multipleOf": 8,
+      "description": "a stage's stand-in ring round its place, in columns"
+    }
+  },
+  "additionalProperties": false,
+  "patternProperties": {
+    "^_": true
+  }
+}

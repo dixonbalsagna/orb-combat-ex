@@ -1,0 +1,1463 @@
+extends SceneTree
+## Scripted players for the agency-pass balance tests (docs/qa/timing-edge-plan.md): a masher, a holder, a tapper with an
+## adjustable timing accuracy, a mix, and the AI, played against each other on the live sim through the real input path (a v2
+## human slot). Each scripted player keeps the press log the sim will keep (SimPressRead, Controls' classifier and thresholds
+## from data/input/timing.json `read`) and reports what the classifier reads, how many of its presses were on the beat, and
+## how its exchanges ended, so the same script measures today's sim (no timing rules: expect no edge) and the agency-pass sim.
+##   godot --headless --path . --script res://qa/godot/players.gd -- <matches> <baseSeed> --a=<spec> --b=<spec> [--capsec=900] [--wall=300] [--budget=3600]
+## Hard caps, so a run cannot hang: --capsec ends a match at that sim time, --wall ends a match after that many real seconds (recorded as a timeout, and counted in wallCapped),
+## --budget stops starting matches after that many real seconds (budgetStopped; n is then the matches run and requested the matches asked for).
+## A spec is kind[:key=value...]:
+##   ai[:level=easy|medium|hard]                     the AI (the director drives the slot)
+##   masher[:gap=8][:kind=L|H][:forms=1]             a press every gap live ticks
+##   holder[:kind=H|L][:hold=16][:rest=24][:forms=1] press and hold the button hold ticks, then rest
+##   holder:timed=1[:acc=100][:win=6]               a hold released on a blow's flash: acc percent of releases land within win ticks of a blow's contact
+##                                                   (Game Design: a hold released within 6 ticks of the flash)
+##   tapper[:acc=100][:jit=1][:win=4][:mix=L][:idle=24][:forms=1]
+##                                                   taps its own blows: acc percent of presses land within the beat window
+##                                                   (win ticks, default beatHalf 4, of a blow's contact), the rest miss it by 3 to 10 ticks more;
+##                                                   win=3 is the steady mash that lands on the beat (Game Design: within 3 ticks);
+##                                                   jit adds a uniform jitter of +-jit ticks to every press; mix is a string of
+##                                                   L and H pressed in turn; between exchanges it requests one every idle ticks
+##   mix[:mix=LLH][:gap=12][:forms=1]                presses in a fixed pattern, off the beat (a rhythm of its own)
+## Add :energy=1 to any scripted player: the energy family is held (RB), so every press is a blast (bolts for a light, a charged shot for a held heavy).
+## Add :stick=1 to any scripted player: a heavy press (and a hold) is made with the stick up and toward the rival, the way Orb's earned
+## launch is thrown (agency slice 1: a heavy pressed with a stick direction that lands clean launches); without it a heavy is a plain heavy.
+## Add :off=7 to a masher: its first tap waits a seeded 0 to 7 ticks (the mirror's second player, so two identical scripts do not tie on every press).
+## Player A takes slot 0 on odd seeds and slot 1 on even ones, so spawn side and slot cancel. Prints one JSON line.
+## Read-only with respect to sim/: it only calls the sim's public functions.
+
+class Pl:
+	static var brawl = null     # the DirBrawl script when the build has one (loaded dynamically: an older export has none), for its reads beatAt, busy and inBrawl
+	var kind: String = "ai"
+	var P: Dictionary = {}
+	var rng := RandomNumberGenerator.new()
+	var log: Array = []
+	var carry: int = -1            # a press the sim did not consume (hit-stop): sent again on the next call
+	var carry_hold: bool = false
+	var carry_ticks: int = 0       # the frozen steps a carried press has waited (the intent's `waited`: a press is graded at its own tick)
+	var plan: Array = []           # [{tick, k}] presses planned against the running exchange's blows
+	var last_press: int = -1000
+	var last_press_tick: int = -1000   # the S.tick of the last press (the clock a tapping player's real rate counts)
+	var G: Dictionary = {}         # the run's brawl counts (the same dictionary _match fills), so a stick script can report its drift
+	var st_since: int = -1         # stick scripts: the S.tick this script first saw its brawl
+	var walk_t0: int = -1          # the S.tick the walker's stick went away (walk=1)
+	var jab_tick: int = -1         # the S.tick of the walker's one blow (jab=N)
+	var jabbed: bool = false
+	var dr_t0: int = -1            # drift=...: the S.tick the stick went down
+	var dr_dir: float = 0.0
+	var dr_last: int = -1          # the S.tick of the last sample, so a hit-stop's frozen iterations are not counted as live ticks
+	var dr_state: String = ""   # the fighter's state on the tick the stick went down (what a slow first move was in)
+	var dr_cx: Array = []          # the brawl's centre x each tick of the window (the director's DirBrawl.centre when the build has it, else the midpoint of the two)
+	var dr_cv: Array = []          # its velocity x each tick, when the build gives one
+	var tap_k: int = -1            # tap=N: the button of the last press, held for N ticks (a pad tap's length) so the wind-up reads a tap and not an edge with no level
+	var tap_left: int = 0
+	var open_n: int = -1           # route: the S.tick the rival's stagger ends, while a launcher_open is on (the B may be thrown until then)
+	var route_b: int = -1000       # route: the S.tick of the last B
+	var nc_at: int = -1             # newcomer: the S.tick he presses B (his gauge filled plus a seeded 0 to react ticks), -1 none
+	var nc_was: bool = false        # newcomer: his gauge was full on the last read
+	var winding_n: int = -1        # follow: the landing tick of this player's own wind-up, while it runs
+	var gv_from: int = -1          # giver: the tick his stick goes away (the rival's wind-up start plus a seeded offset) and the tick it stops
+	var gv_to: int = -1
+	var gv_off: int = 0
+	var gv_x0: float = 0.0
+	var gv_y0: float = 0.0
+	var gv_lat: int = -1
+	var gv_live: int = -1          # giver: live ticks since his window opened (-1: not open). It opens on the first live tick from gv_from on which he is not staggered (stunTicks 0): a staggered fighter does not give ground (EP, 2026-10-13)
+	var gv_last: int = -1          # the S.tick of the last read, so a hit freeze's repeated calls are not counted
+	var gv_stun: int = 0           # his stunTicks at the last read: a live tick he began staggered is not counted against the first step
+	var gv_dur: int = 0
+	var last_live: bool = true     # did the last SimCore.step run a live tick (false in a hit freeze: S.tick advances and nothing can move)
+	var dr_fx: Array = []          # the drifting fighter's own x on each live sample
+	var hold_last_tick: int = -1   # hold=...: the S.tick of the last tick the stick was held in a brawl, and where he stood then
+	var hold_last_x: float = 0.0
+	var hold_run: int = 0          # consecutive live ticks the stick has been held in a brawl
+	var hooked: bool = false       # turret hook=1: this zip has had its shot reported
+	var hk_n: int = 0              # the tick of the way out the shot is reported on (0 to 2, drawn at the tell)
+	var start_off: int = 0         # off=N: the first tap waits a seeded 0 to N ticks, so two identical mashers do not press on the same ticks (the mirror's tie-break)
+	var brawl_prev_c: int = -1         # the last beatAt read, to see a new blow go on its way
+	var brawl_off: int = 0
+	var zip_mask: int = 0          # the stance mask the zipper holds this tick (8: LT, the manoeuvre stance)
+	var zip_phase: int = 0         # 0 free, 1 LT down, 2 the face press made and LT kept down
+	var zip_t0: int = 0
+	var zip_next: int = 0          # the S.tick before which he does not zip again (the price is 20 ki)
+	var brawl_done: bool = true
+	var hold_until: int = -1
+	var hold_kind: int = 0
+	var pending_rel: int = -1      # a timed hold's release tick
+	var rest_until: int = 0
+	var pat_i: int = 0
+	var contacts: Array = []       # contact ticks (live ticks) of the running exchange's blows, both sides
+	var seen_ex = null
+	var blows: Array = []          # a tapper's own pending blows: {b: the beat, off: ticks from the contact to press at, done}
+	var struggle_cb = null         # the contest beat of the struggle this player is pressing through
+	var struggle_off: Array = []
+	var struggle_done: Array = []
+	var d_in: int = 0              # presses made inside an exchange, as the director graded them (its own beat, not ours)
+	var d_on4: int = 0             # ... within beatHalf (4) ticks of a blow's contact (the combo's timed press)
+	var d_on2: int = 0             # ... within blurBeatHalf (2) ticks (the perfect blur's beat)
+	var beat_seen: int = 0         # beats of the running exchange already read for contacts (links add beats as they are taken)
+	var next_idle: int = 0
+	var presses: int = 0
+	var on_beat: int = 0
+	var in_beat_window: int = 0    # presses made during an exchange (the denominator of the on-beat share)
+	var styles: Dictionary = {}
+	var half: int = 4
+	var forms: bool = false
+	var level: String = ""
+
+	func setup(spec: String, seed_: int, slot: int) -> void:
+		var parts: PackedStringArray = spec.split(":")
+		kind = parts[0]
+		P = {}
+		for i in range(1, parts.size()):
+			var kv: PackedStringArray = parts[i].split("=")
+			if kv.size() == 2:
+				P[kv[0]] = kv[1]
+		rng.seed = seed_ * 7919 + slot * 104729 + 13
+		forms = int(P.get("forms", "0")) != 0
+		level = String(P.get("level", ""))
+		half = int(SimPressRead.params()["beatHalf"])
+		start_off = rng.randi_range(0, int(P.get("off", "0"))) if int(P.get("off", "0")) > 0 else 0
+
+	func scripted() -> bool:
+		return kind != "ai"
+
+	func _kind_at(pattern: String) -> int:
+		var c: String = pattern.substr(pat_i % maxi(1, pattern.length()), 1)
+		pat_i += 1
+		return 1 if (c == "H" or c == "Y") else (2 if c == "B" else 0)
+
+	## The offset of one planned press from its blow's contact: on the beat with chance acc (within win ticks), else off it.
+	func _offset() -> int:
+		var acc: float = float(P.get("acc", "100")) / 100.0
+		var jit: int = int(P.get("jit", "1"))
+		var win: int = int(P.get("win", str(half)))
+		var off: int
+		if rng.randf() < acc:
+			off = rng.randi_range(-win, win)
+		else:
+			off = (1 if rng.randf() < 0.5 else -1) * rng.randi_range(win + 3, win + 10)
+		if jit > 0:
+			off += rng.randi_range(-jit, jit)
+		return off
+
+	## Plan the presses for a new exchange: one per blow of this player's own side, on or off the beat.
+	func _plan_exchange(S, slot: int, lt: int) -> void:
+		plan.clear()
+		contacts.clear()
+		blows.clear()
+		beat_seen = 0
+		var ex = S.dirS.ex
+		if ex == null:
+			return
+		_read_beats(S, slot, lt)
+
+	## Read the beats not yet seen: each blow is a contact, and each of this player's own blows gets a press planned against it.
+	## A chain link's blow is a `chainStrike` beat (or, in a blur string, a strike beat) added when the link is taken, so this
+	## runs every call: a timed script follows the links and presses on every blow of its string, as a player watching would.
+	func _read_beats(S, slot: int, lt: int) -> void:
+		var ex = S.dirS.ex
+		if ex == null:
+			return
+		var mine: String = "A" if ex.A == S.fighters[slot] else "D"
+		var pattern: String = String(P.get("mix", "L"))
+		while beat_seen < ex.beats.size():
+			var b = ex.beats[beat_seen]
+			beat_seen += 1
+			var linked: bool = b.op == "chainStrike"
+			if not linked and (b.op != "strike" or b.args == null):
+				continue
+			var contact: int = lt + int(roundf((b.t - ex.t) * 60.0))
+			contacts.append(contact)
+			if linked:
+				if mine != "A" or kind == "holder":
+					continue
+			elif String(b.args.a) != mine:
+				continue
+			var off: int = _offset()
+			if kind == "holder":   # a timed hold: down hold ticks before the release, released at the flash
+				var hold_t: int = int(P.get("hold", "16"))
+				if contact + off - hold_t > lt:
+					plan.append({"tick": contact + off - hold_t, "k": 1 if String(P.get("kind", "H")) == "H" else 0, "rel": contact + off})
+			elif kind == "tapper":
+				blows.append({"b": b, "off": off, "done": false})   # pressed against the director's own contact tick, recomputed every call
+			else:
+				plan.append({"tick": maxi(lt + 1, contact + off), "k": _kind_at(pattern)})
+
+	## The steps until beat b runs, counted as the director counts them (DirAlchemy._blows): the exchange's clock gains a tick,
+	## then every beat at or before it runs. A press sent now is read in the first of those steps.
+	func _steps_to(ex, b) -> int:
+		var n: int = 0
+		var tt: float = ex.t
+		while n <= 40 and (n == 0 or tt < b.t):
+			tt += SimConst.DT
+			n += 1
+		return n
+
+	## The finisher's struggle (Combat's struggle scoring, the contest beat's args): the fighter on the brink presses on the
+	## struggle's beats, each within the half-width on the beat with the script's accuracy. Returns true when to press now.
+	func _struggle_press(S, slot: int) -> bool:
+		var ex = S.dirS.ex
+		if ex == null or int(P.get("struggle", "1")) == 0:
+			return false
+		var cb = null
+		for b in ex.beats:
+			if not b.done and b.op == "contest":
+				cb = b
+				break
+		if cb == null or not cb.args.has("sOpen"):
+			return false
+		if (ex.D if cb.args.w == "A" else ex.A) != S.fighters[slot]:
+			return false
+		var st: Dictionary = DirData.struggle()
+		if st.is_empty():
+			return false
+		if struggle_cb != cb:
+			struggle_cb = cb
+			struggle_off.clear()
+			struggle_done.clear()
+			var win: int = mini(int(P.get("win", str(half))), int(st.halfWidthTicks))
+			var acc: float = float(P.get("acc", "100")) / 100.0
+			for i in range(st.beatTicks.size()):
+				struggle_done.append(false)
+				if rng.randf() < acc:
+					struggle_off.append(rng.randi_range(-win, win))
+				else:
+					struggle_off.append((1 if rng.randf() < 0.5 else -1) * rng.randi_range(int(st.halfWidthTicks) + 2, int(st.halfWidthTicks) + 8))
+		var rel: float = (S.T + SimConst.DT - float(cb.args.sOpen)) * 60.0   # the press is read in the next step
+		for i in range(st.beatTicks.size()):
+			if not struggle_done[i] and rel >= float(st.beatTicks[i]) + float(struggle_off[i]):
+				struggle_done[i] = true
+				return true
+		return false
+
+	## A player who only zip strikes (the zip, melee-press-feel.md section 2c; intent version 4): in the mid band, free and with the ki, he presses LT
+	## (the manoeuvre stance, mask bit 8) and, a tick later, a light with LT kept down; he keeps LT down through the zip, lets it go when a brawl
+	## starts or after 70 ticks, and waits 120 ticks before the next. Inside an exchange or a brawl he taps lights like the masher, so a zip that
+	## ends in a catch or a counter plays on. On a build with no zip the LT press is a dodge and the light an attack, which is what it would be.
+	func _zipper(S, slot: int) -> int:
+		var f = S.fighters[slot]
+		var o = S.fighters[1 - slot]
+		var dist: float = absf(SimWrap.sdx(f.x, o.x)) / 75.0
+		var in_b: bool = brawl != null and bool(brawl.call("inBrawl", S, f))
+		if zip_phase == 0:
+			zip_mask = 0
+			if S.dirS.ex != null:
+				return 0 if S.tick - last_press_tick >= int(P.get("gap", "8")) else -1
+			if f.state == "free" and f.ki >= 20.0 and dist >= 4.0 and dist <= 12.0 and S.tick >= zip_next:
+				zip_phase = 1
+				zip_t0 = S.tick
+				zip_mask = 8
+			return -1
+		if zip_phase == 1:
+			zip_phase = 2
+			zip_mask = 8
+			return 0
+		zip_mask = 8
+		if in_b or S.tick - zip_t0 > 70:
+			zip_phase = 0
+			zip_mask = 0
+			zip_next = S.tick + 120
+		return -1
+
+	## Is f's run (the gauge of the eleventh round: four pips, one for each point of the run) at the points that close? 0 when the build has no run.
+	static func gauge_full(f) -> bool:
+		if brawl == null or not has_m(brawl, "_g"):
+			return false
+		var cm: Dictionary = brawl.get_script_constant_map()
+		if not cm.has("RUN") or not cm.has("RUN_U"):
+			return false
+		var c = brawl.call("cfg")
+		var close: int = int(c.flurry.runToClose) if (typeof(c) == TYPE_DICTIONARY and c.has("flurry")) else 4
+		return int(brawl.call("_g", f, cm["RUN"])) >= int(cm["RUN_U"]) * close
+
+	## Does this kind's launches count as the route's (the first launch, launches by and on him)?
+	static func counts_as_route(k: String) -> bool:
+		return k == "route" or k == "newcomer"
+
+	## Whether a loaded script defines the method (has_method does not see a script's own static functions on every build).
+	static func has_m(sc, name: String) -> bool:
+		for m in sc.get_script_method_list():
+			if str(m.name) == name:
+				return true
+		return false
+
+	static var _centre_has: int = -1
+	## Whether this build's DirBrawl has the centre read (C1), looked up once.
+	static func centre_ok() -> bool:
+		if _centre_has < 0:
+			_centre_has = 1 if (brawl != null and has_m(brawl, "centre")) else 0
+		return _centre_has == 1
+
+	## C1's stick scripts (brawl-plan.md section 9; brawl-second-pass.md section 1). walk=1: after wat live ticks (default 24) in a brawl the player stops pressing and holds his stick away from the rival
+	## (jab=N throws one light N ticks into the walk, wguard=1 holds guard, wheld=1 holds the light button). drift=east|west|away|toward: from dat ticks (24) for dlen ticks (60) he holds that
+	## stick and keeps playing his script; the brawl's centre is read each tick, and the latency of the first move, the rate in bh a second and the largest step go to the run's counts.
+	func stick_script(S, slot: int, it, k: int) -> int:
+		var walk: bool = int(P.get("walk", "0")) != 0
+		var drift: String = String(P.get("drift", ""))
+		var hold: String = String(P.get("sthold", ""))
+		give_stick(S, slot, it)
+		if not walk and drift == "" and hold == "":
+			return k
+		var f = S.fighters[slot]
+		var o = S.fighters[1 - slot]
+		var inb: bool = brawl != null and bool(brawl.call("inBrawl", S, f))
+		if not inb:
+			if dr_cx.size() > 0:
+				_drift_done()
+			hold_run = 0
+			hold_last_tick = -1
+			st_since = -1
+			walk_t0 = -1
+			jab_tick = -1
+			jabbed = false
+			return k
+		if st_since < 0:
+			st_since = S.tick
+		var age: int = S.tick - st_since
+		var toward: float = SimMathx.jsign(SimWrap.sdx(f.x, o.x))
+		if walk and age >= int(P.get("wat", "24")):
+			it.mx = -toward
+			if walk_t0 < 0:
+				walk_t0 = S.tick
+			k = -1
+			var jb: int = int(P.get("jab", "0"))
+			if jb > 0 and not jabbed and S.tick - walk_t0 >= jb:
+				jabbed = true
+				jab_tick = S.tick
+				k = 0
+			if int(P.get("wguard", "0")) != 0:
+				it.guard = true
+			if int(P.get("wheld", "0")) != 0:
+				it.lightHeld = true
+		if hold != "":
+			# sthold=east|west|away|toward: the stick is held on every live tick of a brawl. A tick on which it does nothing is a dead tick (brawl-second-pass.md section 11: a hard test outside a knock-back and its kind):
+			# after the ramp (14 ticks) the fighter must still be moving along the stick, read as his own step on the live tick before; the state he was in is counted.
+			var hd: float = 1.0 if hold == "east" else (-1.0 if hold == "west" else (toward if hold == "toward" else -toward))
+			it.mx = hd
+			if S.tick != hold_last_tick:
+				if hold_last_tick >= 0 and S.tick - hold_last_tick == 1:
+					hold_run += 1
+					if hold_run >= 14 and not G.is_empty() and not last_live:
+						G.freezeHeld += 1   # held through a hit freeze: nothing can move, so it is neither a live nor a dead tick
+					elif hold_run >= 14 and not G.is_empty():
+						G.holdTicks += 1
+						var hk: String = hold if hold in ["east", "west", "toward", "away"] else "other"
+						var hb: Dictionary = G.holdByDir.get(hk, {"held": 0, "dead": 0})
+						hb.held = int(hb.held) + 1
+						G.holdByDir[hk] = hb
+						var stp: float = SimWrap.sdx(hold_last_x, f.x) * hd
+						var exempt: bool = f.state == "launched" or f.state == "down" or f.state == "dropped" or f.state == "buried" or f.state == "held" or f.state == "thrown" or f.state == "lifted" or f.state == "carried"
+						if stp < 0.001 and not exempt:
+							G.deadTicks += 1
+							var hb2: Dictionary = G.holdByDir.get(hk, {"held": 0, "dead": 0})
+							hb2.dead = int(hb2.dead) + 1
+							G.holdByDir[hk] = hb2
+							G.deadStates[str(f.state)] = int(G.deadStates.get(str(f.state), 0)) + 1
+							# the cause: a stagger or daze (the core gates his input: stunTicks), a building face or the ground one step along the stick, or neither
+							var cause: String = "other"
+							if int(f.stunTicks) > 0:
+								cause = "stun"
+							else:
+								cause = _blocked_ahead(S, f, hd)
+							G.deadCause[cause] = int(G.deadCause.get(cause, 0)) + 1
+				else:
+					hold_run = 0
+				hold_last_tick = S.tick
+				hold_last_x = f.x
+		var dat: int = int(P.get("dat", "24"))
+		if drift != "" and age >= dat and age < dat + int(P.get("dlen", "60")):
+			var dd: float = 1.0 if drift == "east" else (-1.0 if drift == "west" else (toward if drift == "toward" else -toward))
+			it.mx = dd
+			if dr_t0 < 0:
+				dr_t0 = S.tick
+				dr_dir = dd
+				dr_state = str(f.state)
+				dr_cx = []
+				dr_cv = []
+				dr_fx = []
+			if S.tick != dr_last and (last_live or dr_cx.size() == 0):
+				dr_last = S.tick
+				var cc = _centre(S, f)
+				dr_cx.append(cc[0])
+				dr_cv.append(cc[1])
+				dr_fx.append(f.x)
+			# the AI's own stick (DirBrawl.stick: its nudge, kept out of its intent): the ticks it holds against the player's
+			if o.ai != null and not G.is_empty() and brawl != null and S.dirS.ex != null and Pl.has_m(brawl, "stick"):
+				var ast = brawl.call("stick", S.dirS.ex, o)
+				if ast.size() > 0:
+					G.aiStickTicks += 1
+					if float(ast[0]) * dd < -0.5:
+						G.aiOpposeTicks += 1
+		elif drift != "" and dr_cx.size() > 0:
+			_drift_done()
+		return k
+
+	## The giver and a follower (brawl-second-pass.md section 1, giving ground): giver is a player who presses nothing and, from a seeded 0 to goff (22) ticks after the rival's wind-up starts, holds his stick away
+	## from the rival until the blow's landing tick plus 10; his own step is read on the way. follow=1 on a presser: while his own wind-up runs his stick is held toward the rival (the rival walks the blow after him).
+	func give_stick(S, slot: int, it) -> void:
+		var f = S.fighters[slot]
+		var o = S.fighters[1 - slot]
+		var toward: float = SimMathx.jsign(SimWrap.sdx(f.x, o.x))
+		if kind == "giver" and gv_from >= 0 and S.tick >= gv_from and S.tick < gv_to:
+			it.mx = -toward
+			# the first step is read in LIVE ticks from the tick his window opens (a 7-tick hit freeze runs while S.tick counts straight through it, and a staggered fighter gives no ground by rule)
+			if S.tick != gv_last:
+				if gv_live < 0:
+					if last_live and int(f.stunTicks) == 0:
+						gv_live = 0
+						gv_x0 = f.x
+						gv_y0 = f.y
+				else:
+					if last_live and gv_stun == 0:
+						gv_live += 1
+					if gv_lat < 0 and gv_live > 0 and (absf(SimWrap.sdx(gv_x0, f.x)) > 0.05 or absf(f.y - gv_y0) > 0.05):
+						gv_lat = gv_live
+				gv_last = S.tick
+				gv_stun = int(f.stunTicks)
+		if int(P.get("follow", "0")) != 0 and winding_n >= S.tick:
+			it.mx = toward
+
+	## A windup cue (Encounter's names, brawl-plan.md section 10.3): text start or end, actor the winder. This player's own wind-up is tracked for follow; the giver logs the rival's.
+	func on_windup(S, myslot: int, wa: int, txt: String, e) -> void:
+		if wa == myslot:
+			winding_n = int(e.get("n")) if txt == "start" else -1
+			return
+		if kind != "giver" or G.is_empty():
+			return
+		if txt == "start":
+			gv_dur = int(e.get("dur"))
+			gv_off = rng.randi_range(0, int(P.get("goff", "22")))
+			gv_from = S.tick + gv_off
+			gv_to = int(e.get("n")) + 10
+			gv_lat = -1
+			gv_live = -1
+			gv_last = -1
+			gv_stun = 0
+		elif txt == "end":
+			var en: Dictionary = {"off": gv_off, "dur": gv_dur, "k": int(e.get("k")), "lat": gv_lat, "open": gv_live >= 0, "miss": "", "t": S.tick}
+			if S.tick - int(G.lastMissTick) <= 2:
+				en.miss = String(G.lastMissText)
+			G.giveLog.append(en)
+			gv_from = -1
+			gv_to = -1
+
+	## A building face or the ground within a step along the stick (WorldStructures.blockedAt reads both): the geometry that stops a held stick without any rule doing it.
+	func _blocked_ahead(S, f, dirx: float) -> String:
+		if not ResourceLoader.exists("res://sim/world/structures.gd") or not ResourceLoader.exists("res://sim/world/terrain.gd"):
+			return "other"
+		var ws = load("res://sim/world/structures.gd")
+		var wt = load("res://sim/world/terrain.gd")
+		if not Pl.has_m(ws, "blockedAt") or not Pl.has_m(wt, "groundY"):
+			return "other"
+		var ax: float = f.x + dirx * 30.0
+		var ground_only: bool = f.y - 30.0 < float(wt.call("groundY", S, ax, 0.0))
+		# a building face: blocked with the ground's own part taken out (the margin test is also true for a fighter near the ground)
+		if bool(ws.call("blockedAt", S, ax, f.y + 60.0, 0.0, 30.0)) and not (f.y + 60.0 - 30.0 < float(wt.call("groundY", S, ax, 0.0))):
+			return "building"
+		return "ground" if ground_only else "other"
+
+	## The brawl's centre as [x, vx or null]: DirBrawl.centre when the build has it, else the midpoint of the two fighters.
+	func _centre(S, f) -> Array:
+		if S.dirS.ex != null and Pl.centre_ok():
+			var c = brawl.call("centre", S, S.dirS.ex)
+			if typeof(c) == TYPE_DICTIONARY and c.has("x"):
+				return [float(c.x), (float(c.vx) if c.has("vx") else null)]
+		var o = S.fighters[1 - S.fighters.find(f)]
+		return [f.x + SimWrap.sdx(f.x, o.x) * 0.5, null]
+
+	func _drift_done() -> void:
+		var n: int = dr_cx.size()
+		if n >= 12 and not G.is_empty():
+			var steps: Array = []
+			for i in range(n - 1):
+				steps.append(SimWrap.sdx(float(dr_cx[i]), float(dr_cx[i + 1])) * dr_dir)
+			var lat: int = -1
+			for i in range(n):
+				# the fighter's own step along the stick on a live tick (against an AI the pair is often moving already, so the pair's speed rising is not the read)
+				var moved: bool = i > 0 and SimWrap.sdx(float(dr_fx[i - 1]), float(dr_fx[i])) * dr_dir > 0.05
+				if moved:
+					lat = i
+					break
+			var tot: float = 0.0
+			var cnt: int = 0
+			var mx: float = 0.0
+			for i in range(8, steps.size()):
+				tot += float(steps[i])
+				cnt += 1
+			for st in steps:
+				mx = maxf(mx, absf(float(st)))
+			G.driftN += 1
+			G.driftLat.append(lat if lat >= 0 else 999)
+			var lk: String = str(lat if lat >= 0 else 999)
+			G.driftLatHist[lk] = int(G.driftLatHist.get(lk, 0)) + 1
+			if lat < 0 or lat > 2:
+				G.driftSlowStates[dr_state] = int(G.driftSlowStates.get(dr_state, 0)) + 1
+			if cnt > 0:
+				G.driftRate.append(tot / float(cnt) * 60.0 / 75.0)   # bh a second along the stick, after the ramp
+			G.driftMaxStep = maxf(float(G.driftMaxStep), mx / 75.0)
+		dr_cx = []
+		dr_cv = []
+		dr_fx = []
+		dr_t0 = -1
+
+	## A bolt turret for the drop row (melee-press-feel.md section 2c: a shot on the way out drops a zipper). With the energy family held (energy=1) it presses a bolt, with chance p percent (default 25),
+	## on every tick while the rival's zip is in any phase and no exchange is running (inside one an energy press is a link, not a bolt). In practice the way out is 3 to 10 ticks and a bolt needs 6 to leave,
+	## and the zip's reach is itself a brawl (no bolt can be pressed in it), so a real bolt reaches a zipper on the way out only by luck: the row reports the coverage.
+	## hook=1: the turret presses no bolts. Once a zip, on a tick of its way out (0 to 2, drawn at the tell), it reports a shot of power 1 to DirZip.shot after the step, the way Encounter's own check does:
+	## the module's answer, the drop and its cues are then read as for a real hit (the damage of the shot is not applied).
+	func _turret(S, slot: int) -> int:
+		var zc = load("res://sim/director/zip.gd") if ResourceLoader.exists("res://sim/director/zip.gd") else null
+		if zc == null or S.dirS.ex != null or int(P.get("hook", "0")) != 0:
+			return -1
+		var zr = zc.call("read", S, S.fighters[1 - slot])
+		if typeof(zr) != TYPE_DICTIONARY or zr.is_empty():
+			return -1
+		if rng.randi_range(0, 99) < int(P.get("p", "25")):
+			return 0
+		return -1
+
+	## After the step: the hooked turret's shot report (see above).
+	func post_hook(S, slot: int) -> void:
+		if kind != "turret" or int(P.get("hook", "0")) == 0 or not ResourceLoader.exists("res://sim/director/zip.gd"):
+			return
+		var zc = load("res://sim/director/zip.gd")
+		var zr = zc.call("read", S, S.fighters[1 - slot])
+		if typeof(zr) != TYPE_DICTIONARY or zr.is_empty():
+			return
+		var ph: String = str(zr.get("phase", ""))
+		if ph == "tell":
+			hooked = false
+			hk_n = rng.randi_range(0, 2)
+		elif ph == "out" and not hooked and int(zr.get("n", 0)) >= hk_n:
+			hooked = true
+			zc.call("shot", S, S.fighters[1 - slot], {"power": 1.0})
+
+	## The tapper inside a brawl. The beat list holds a light's blow for 2 ticks only, so the old oracle never sees it (the script went blind). The
+	## director's own read is DirBrawl.beatAt(S, f): the S.tick of his blow on its way (B2: its beat point), or -1. A rhythm player throws one blow
+	## at a time, never a flurry (taps slower than 12 ticks are not one): a new blow goes on its way, the next press is planned at its read tick plus
+	## the script's offset (accuracy and window as before), and not sooner than `minGap` ticks (default 14) after his last press.
+	## With the line free and nothing on its way he starts the next blow after `idle` ticks, as he starts an exchange outside a brawl.
+	func _brawl_press(S, slot: int) -> int:
+		var f = S.fighters[slot]
+		var c: int = int(brawl.call("beatAt", S, f))
+		var min_gap: int = int(P.get("mingap", "14"))
+		if c >= 0:
+			if brawl_prev_c < 0:
+				brawl_off = _offset()
+				brawl_done = false
+			brawl_prev_c = c
+			if not brawl_done and S.tick + 1 >= c + brawl_off and S.tick - last_press_tick >= min_gap:
+				brawl_done = true
+				return _kind_at(String(P.get("mix", "L")))
+			return -1
+		brawl_prev_c = -1
+		if not bool(brawl.call("busy", S, f)) and S.tick - last_press_tick >= maxi(min_gap, int(P.get("idle", "24"))):
+			return _kind_at(String(P.get("mix", "L")))
+		return -1
+
+	## The newcomer's B lights (a launcher_open or launcher_link cue names him): he presses a seeded 0 to react ticks later, once while a press is not already planned and not within 40 ticks of his last B.
+	func lit(tick: int) -> void:
+		if kind == "newcomer" and nc_at < 0 and tick - route_b > 40:
+			nc_at = tick + rng.randi_range(0, int(P.get("react", "20")))
+
+	## A press is due on the gap cadence: clock=tick the absolute S.tick count (every gap-th S.tick from start_off), since a gap of S.ticks after the last consumed press, live a gap of live ticks.
+	func _due(S, lt: int, ck: String) -> bool:
+		var gap: int = int(P.get("gap", "8"))
+		if S.tick < start_off:
+			return false
+		if ck == "tick":
+			return (S.tick - start_off) % gap == 0
+		if ck == "since":
+			return S.tick - last_press_tick >= gap
+		return lt - last_press >= gap
+
+	## The press to send this call: -1 none, 0 light, 1 heavy. `hold` is set when the button stays down.
+	func decide(S, slot: int, lt: int) -> int:
+		if carry >= 0:
+			return carry
+		match kind:
+			"masher":
+				var gap: int = int(P.get("gap", "8"))
+				# clock=tick: the taps count S.tick, which runs through hit-stop (a player's real tap rate; the brawl's flurry counts it); the default counts live ticks
+				# clock=tick: the taps fall on every gap-th S.tick by the absolute count, as masher.gd's do (a human's rate is real time, so a hit-stop delays a press and does not shift the next one);
+				# clock=since: a press when gap S.ticks have passed since the last press was consumed (what clock=tick was before 2026-10-12: it read 12 of 100 against medium where masher.gd read 54);
+				# the default counts live ticks since the last press
+				var ck: String = String(P.get("clock", "live"))
+				var due: bool
+				if ck == "tick":
+					due = S.tick >= start_off and (S.tick - start_off) % gap == 0
+				elif ck == "since":
+					due = S.tick - last_press_tick >= gap
+				else:
+					due = lt - last_press >= gap
+				if S.tick < start_off:
+					due = false
+				if due:
+					var bt: String = String(P.get("btn", ""))
+					if bt == "Y":
+						return 1
+					if bt == "B":
+						return 2
+					if bt == "X":
+						return 0
+					return 1 if String(P.get("kind", "L")) == "H" else 0
+			"route":
+				# Orb's test 3 (brawl-second-pass.md section 13; the sixth round, a): mash X every gap ticks (default 8) and press B in EVERY opening (the rival staggered for the launcher's minimum): a launch when the
+				# launcher is ready, the hammer when it is not; then X again. An opening is read from DirBrawl.launcherOpen (pinged or not); a build without it falls back to the launcher_open ping (open_n).
+				var ob: int = open_n
+				var ob_min: int = S.tick
+				if brawl != null and Pl.has_m(brawl, "launcherOpen"):
+					ob = int(brawl.call("launcherOpen", S, S.fighters[slot]))
+					ob_min = S.tick + 1   # the stagger has ticks left (launcherOpen is S.tick plus his stunTicks)
+				if ob >= ob_min and S.tick - route_b > 40:
+					route_b = S.tick
+					return 2
+				# one clock with the pair masher (clock=tick: the absolute S.tick cadence): the route's X count differs from its masher's only by the B's it pressed
+				if _due(S, lt, String(P.get("clock", "since"))):
+					return 0
+			"newcomer":
+				# rulings-2026-10-23 7b: with launch anywhere and the minimal HUD there is no gauge to fill; what teaches him is the lit B (the cue launcher_open or launcher_link names him). He presses B a seeded 0 to `react` ticks (default 20)
+				# after it lights, sure or not. trigger=gauge keeps the earlier script (B after his run fills).
+				if String(P.get("trigger", "lit")) == "lit":
+					if nc_at >= 0 and S.tick >= nc_at and S.tick - route_b > 40:
+						route_b = S.tick
+						nc_at = -1
+						return 2
+					if _due(S, lt, String(P.get("clock", "tick"))):
+						return 0
+				else:
+				# the eleventh round's scripted newcomer (brawl-second-pass.md section 14): mashes X on a slow clock (default 10) and presses B within `react` ticks (a seeded 0 to react, default 20) of his
+				# gauge filling (his run at the close), as a first-time player would after the gauge shows; the press is dropped if the gauge empties first; one B in 40 ticks. No reaction to the opening itself.
+					if not Pl.gauge_full(S.fighters[slot]):
+						nc_at = -1
+						nc_was = false
+					elif not nc_was:
+						nc_was = true
+						nc_at = S.tick + rng.randi_range(0, int(P.get("react", "20")))
+					if nc_at >= 0 and S.tick >= nc_at and S.tick - route_b > 40:
+						route_b = S.tick
+						nc_at = -1
+						return 2
+					if _due(S, lt, String(P.get("clock", "tick"))):
+						return 0
+			"mix":
+				var gap2: int = int(P.get("gap", "12"))
+				if lt - last_press >= gap2:
+					return _kind_at(String(P.get("mix", "LLH")))
+			"holder":
+				if int(P.get("timed", "0")) != 0:
+					if S.dirS.ex != seen_ex:
+						seen_ex = S.dirS.ex
+						_plan_exchange(S, slot, lt)
+					while not plan.is_empty() and int(plan[0]["tick"]) < lt - 1:
+						plan.pop_front()
+					if lt >= hold_until and not plan.is_empty() and int(plan[0]["tick"]) <= lt:
+						var pk: Dictionary = plan.pop_front()
+						hold_kind = int(pk["k"])
+						pending_rel = int(pk["rel"])
+						return hold_kind
+					if S.dirS.ex == null and lt >= hold_until and lt >= next_idle:   # nothing to time against: request an exchange with an ordinary hold
+						hold_kind = _hk()
+						pending_rel = -1
+						return hold_kind
+					# inside a brawl there is no flash to release on (the heavy's flash is B2/B3's), so the timed hold plays as a plain one rather than going blind
+					if brawl != null and bool(brawl.call("inBrawl", S, S.fighters[slot])) and plan.is_empty() and lt >= hold_until and lt >= rest_until:
+						hold_kind = _hk()
+						pending_rel = -1
+						return hold_kind
+				elif lt >= hold_until and lt >= rest_until:
+					hold_kind = _hk()
+					return hold_kind
+			"zipper":
+				return _zipper(S, slot)
+			"giver":
+				return -1
+			"turret":
+				return _turret(S, slot)
+			"tapper":
+				if S.dirS.ex != seen_ex:
+					seen_ex = S.dirS.ex
+					_plan_exchange(S, slot, lt)
+				elif S.dirS.ex != null and int(P.get("follow", "1")) != 0:
+					_read_beats(S, slot, lt)
+				var ex = S.dirS.ex
+				if ex != null:
+					if _struggle_press(S, slot):
+						return 0
+					if brawl != null and bool(brawl.call("inBrawl", S, S.fighters[slot])):
+						return _brawl_press(S, slot)
+					for e in blows:
+						if e.done:
+							continue
+						if e.b.done:
+							e.done = true
+							continue
+						if _steps_to(ex, e.b) <= 1 - int(e.off):
+							e.done = true
+							return _kind_at(String(P.get("mix", "L")))
+				elif lt >= next_idle:
+					return _kind_at(String(P.get("mix", "L")))
+		return -1
+
+	## The press went through at live tick lt (kind k): log it, read the beat, classify.
+	func pressed(k: int, lt: int, held: bool, S = null, slot: int = -1) -> void:
+		var beat: int = SimPressRead.beat_offset(lt, contacts)
+		SimPressRead.push(log, mini(k, 1), 0, lt, beat)
+		last_press = lt
+		last_press_tick = S.tick if S != null else lt
+		presses += 1
+		if S != null and slot >= 0 and S.dirS.ex != null:
+			var f = S.fighters[slot]
+			var cnt: int = int(f.act.dirI[DirAlchemy.COUNT])
+			if cnt > 0:
+				var db: int = int(f.act.dirI[DirAlchemy.BEAT0 + (cnt - 1) % DirAlchemy.RING])
+				if db != SimPressRead.NO_BEAT:
+					d_in += 1
+					if absi(db) <= half:
+						d_on4 += 1
+					if absi(db) <= int(SimPressRead.params().get("blurBeatHalf", 2)):
+						d_on2 += 1
+		if beat != SimPressRead.NO_BEAT:
+			in_beat_window += 1
+			if absi(beat) <= half:
+				on_beat += 1
+		var now_c: int = lt
+		if kind == "holder":   # a hold reads as a hold once it has been down holdTicks: classify at the release
+			now_c = lt + int(P.get("hold", "16"))
+		var st: String = String(SimPressRead.classify(log, now_c, {"offset": 0})["style"])
+		styles[st] = int(styles.get(st, 0)) + 1
+		if kind == "tapper" or kind == "holder":
+			next_idle = lt + int(P.get("idle", "24"))
+		if kind == "holder":
+			hold_until = pending_rel if (int(P.get("timed", "0")) != 0 and pending_rel > lt) else lt + int(P.get("hold", "16"))
+			rest_until = hold_until + int(P.get("rest", "24"))
+			SimPressRead.release(log, mini(k, 1), hold_until)
+
+	## The button a holder holds: B is 2 (a signature edge with sigHeld), H or Y is 1, anything else (L, X) 0.
+	func _hk() -> int:
+		var kd: String = String(P.get("kind", "H"))
+		return 2 if kd == "B" else (1 if (kd == "H" or kd == "Y") else 0)
+
+	## rehold=1: a hold ends when its burst ends or its brawl does, so the next decision presses again (one press an approach; brawl-second-pass.md section 14, the fifth round).
+	func rehold_release(lt: int) -> void:
+		if kind == "holder" and int(P.get("rehold", "0")) != 0:
+			hold_until = lt
+			rest_until = lt + 2
+
+	func is_holding(lt: int) -> bool:
+		return kind == "holder" and lt < hold_until
+
+
+func _init() -> void:
+	var pos: Array = []
+	var spec_a: String = "masher"
+	var spec_b: String = "ai:level=medium"
+	var capsec: float = 900.0
+	var wall: float = 300.0       # real seconds one match may take before it is ended as a timeout
+	var budget: float = 3600.0    # real seconds the whole run may take before it stops starting matches
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--wall="):
+			wall = float(a.substr(7))
+		elif a.begins_with("--budget="):
+			budget = float(a.substr(9))
+		elif a.begins_with("--a="):
+			spec_a = a.substr(4)
+		elif a.begins_with("--b="):
+			spec_b = a.substr(4)
+		elif a.begins_with("--capsec="):
+			capsec = float(a.substr(9))
+		else:
+			pos.append(a)
+	var n: int = int(pos[0]) if pos.size() > 0 else 20
+	var base: int = int(pos[1]) if pos.size() > 1 else 1
+	SimInputData.load_and_apply()
+	if ResourceLoader.exists("res://sim/director/brawl.gd"):
+		Pl.brawl = load("res://sim/director/brawl.gd")
+	var g: Dictionary = _gblank()
+	var sums: Array = [_blank(), _blank()]
+	var wins: Array = [0, 0]
+	var timeouts: int = 0
+	var lens: Array = []
+	var brinks: Array = []   # brink to KO of each match that ended in a KO: seconds from the loser's first brink_enter
+	var t_proc: int = Time.get_ticks_msec()
+	var n_done: int = 0
+	var wall_capped: int = 0
+	var budget_stopped: bool = false
+	for i in range(n):
+		if float(Time.get_ticks_msec() - t_proc) > budget * 1000.0:
+			budget_stopped = true
+			break
+		var seed: int = base + i
+		var slot_a: int = 0 if seed % 2 == 1 else 1
+		var res: Dictionary = _match(seed, [spec_a, spec_b], [slot_a, 1 - slot_a], capsec, sums, int(wall * 1000.0), g)
+		n_done += 1
+		if res.get("wall", false):
+			wall_capped += 1
+		lens.append(res.t)
+		if res.brink >= 0.0:
+			brinks.append(res.brink)
+		if res.winner < 0:
+			timeouts += 1
+		else:
+			wins[res.winner] += 1
+	lens.sort()
+	var out: Dictionary = {"players": true, "a": spec_a, "b": spec_b, "n": n_done, "requested": n, "wallCapped": wall_capped, "budgetStopped": budget_stopped, "aWins": wins[0], "bWins": wins[1], "timeouts": timeouts, "medianSec": snappedf(lens[lens.size() >> 1], 0.1) if lens.size() > 0 else -1.0, "brinkToKoMedian": (snappedf(_med(brinks), 0.1) if brinks.size() > 0 else -1.0), "alternationShare": snappedf(float(sums[0].alternations) / maxf(1.0, float(sums[0].pairs)), 0.001), "stats": [_report(sums[0], maxi(1, n_done), g.sec), _report(sums[1], maxi(1, n_done), g.sec)], "brawl": _greport(g)}
+	var dbg := []
+	for w in sums:
+		var d := {}
+		for k in w.keys():
+			if String(k).begins_with("dmg") or String(k).begins_with("popOn_") or String(k) == "sendsDbg" or String(k).begins_with("lauWind") or String(k) == "damage":
+				d[k] = w[k]
+		dbg.append(d)
+	out["dbg"] = dbg
+	print(JSON.stringify(out))
+	quit(0)
+
+
+func _med(a: Array) -> float:
+	var b: Array = a.duplicate()
+	b.sort()
+	return float(b[b.size() >> 1])
+
+
+func _blank() -> Dictionary:
+	return {"presses": 0, "onBeat": 0, "inExchange": 0, "styles": {}, "exchanges": 0, "launchEnds": 0, "otherEnds": 0, "damage": 0.0, "hits": 0, "heavyHits": 0, "launchesEarned": 0, "launchesTaken": 0, "airCatches": 0, "alternations": 0, "pairs": 0, "flowMax": 0, "flowTo3": 0, "end_launch": 0, "end_knockback": 0, "end_continue": 0, "strings5": 0, "locks5": 0, "dIn": 0, "dOn4": 0, "dOn2": 0, "closes": 0, "strOpens": 0, "strHits": 0, "strStrays": 0}
+
+
+func _report(s: Dictionary, n: int, secs: float = 0.0) -> Dictionary:
+	var ex: float = maxf(1.0, float(s.exchanges))
+	return {"pressesPerMatch": snappedf(float(s.presses) / n, 0.1), "onBeatShare": snappedf(float(s.onBeat) / maxf(1.0, float(s.inExchange)), 0.001), "styles": s.styles, "exchangesPerMatch": snappedf(float(s.exchanges) / n, 0.1), "launchShareOfExchanges": snappedf(float(s.launchEnds) / ex, 0.001), "damagePerMatch": snappedf(float(s.damage) / n, 1.0), "damagePerExchange": snappedf(float(s.damage) / ex, 0.1), "hitsPerMatch": snappedf(float(s.hits) / n, 0.1), "heavyHitsPerMatch": snappedf(float(s.heavyHits) / n, 0.1), "launchesEarnedPerMatch": snappedf(float(s.launchesEarned) / n, 0.1), "launchesTakenPerMatch": snappedf(float(s.launchesTaken) / n, 0.1), "endsLaunch": s.end_launch, "endsKnockback": s.end_knockback, "endsContinue": s.end_continue, "flowMax": s.flowMax, "flowTo3PerMatch": snappedf(float(s.flowTo3) / n, 0.1), "blurStrings": s.strings5, "blurLocked": s.locks5, "blurLockShare": snappedf(float(s.locks5) / maxf(1.0, float(s.strings5)), 0.001), "directorOnBeat4": snappedf(float(s.dOn4) / maxf(1.0, float(s.dIn)), 0.001), "directorOnBeat2": snappedf(float(s.dOn2) / maxf(1.0, float(s.dIn)), 0.001), "directorPresses": s.dIn, "struggles": s.strOpens, "struggleHits": s.strHits, "struggleStrays": s.strStrays, "closes": s.closes, "closesPerMin": snappedf(float(s.closes) / maxf(0.001, secs / 60.0), 0.1)}
+
+
+## The brawl's per-run counts (Game Design's rows, melee-press-feel.md sections 9 and 9d): closes, who made them, the trade's break, momentum.
+func _gblank() -> Dictionary:
+	return {"sec": 0.0, "brawls": 0, "ends": {}, "blows": {}, "closes": 0, "closesBrink": 0, "closesOneBrink": 0, "heavyStaggers": 0, "tradeBreaks": 0, "onLimit": 0, "late": 0, "momBreaks": 0, "momChanges": 0, "decided": 0, "slot0Wins": 0, "limit": -1, "perfectBlocks": 0, "guardBreaks": 0, "trades": 0, "firstSlotSeq": [], "zips": 0, "zipEnds": {}, "doubleHits": 0, "lastBlow": -1000, "walkBrawls": 0, "walkEarly": 0, "walkLags": [], "driftN": 0, "driftLat": [], "driftRate": [], "driftMaxStep": 0.0, "centreTicks": 0, "centreSpeedTicks": 0, "centreMaxStep": 0.0, "centreOver": 0, "centrePosMax": 0.0, "centrePosOver": 0, "holdTicks": 0, "firstCloser": [], "freezeHeld": 0, "holdByDir": {}, "flashGapMin": 99999, "flashMax60": 0, "deadCause": {}, "driftLatHist": {}, "driftSlowStates": {}, "closeSamples": [], "blowMoveMax": 0.0, "blowMoveN": 0, "blowMoveOver": 0, "aiStickTicks": 0, "aiOpposeTicks": 0, "deadTicks": 0, "deadStates": {}, "dblPer": [], "dblDurMin": 9999, "dblDurMax": 0, "giveLog": [], "lastMissTick": -1000, "lastMissText": "", "lcOpen": 0, "lcUsed": 0, "lcLapsed": 0, "routeBy": [], "routeFullBy": [], "routeFullOn": [], "powHas": false, "routeOn": [], "firstLaunchSec": [], "energy": {"blastHit": 0, "pendActor": -1, "pendTarget": -9, "bolt": 0, "blast": 0, "announce": {}, "late": 0, "src": {}, "kb": [], "flashTicks": [], "pendBlast": -1000}, "burstN": 0, "burstBlows": [], "windupN": 0, "dropStart": 0, "dropLand": 0, "dropEnd": 0, "dropStateBad": 0, "dropEndBad": 0, "exact": 0, "draws": 0, "drawsAfterClose": 0, "drawChanges": 0, "leads": 0, "early": 0, "lateTicks": []}
+
+
+## An event field as an int, 0 when the build's event has no such field.
+func _ei(e, k: String) -> int:
+	var v = e.get(k)
+	return int(v) if v != null else 0
+
+
+## The giver's log: wind-ups that were given ground against, by the blow's strength (dur 20 or more is the heavy) and by how late the stick went away (off, ticks after the wind-up started).
+func _givesum(g: Dictionary) -> Dictionary:
+	var out: Dictionary = {"n": 0, "notOpen": 0, "noMove": 0, "latMax": 0, "heavy": {"n16": 0, "m16": 0, "nl": 0, "ml": 0}, "medium": {"n6": 0, "m6": 0, "nl": 0, "ml": 0}, "missTexts": {}}
+	for en in g.giveLog:
+		out.n += 1
+		# a wind-up whose window never opened (he was staggered to its end) has no first step to read; one that opened and never moved is counted apart
+		if not bool(en.get("open", true)):
+			out.notOpen += 1
+		elif int(en.lat) < 0:
+			out.noMove += 1
+		out.latMax = maxi(int(out.latMax), int(en.lat))
+		var gave: bool = String(en.miss) == "gave_ground"
+		if String(en.miss) != "":
+			out.missTexts[String(en.miss)] = int(out.missTexts.get(String(en.miss), 0)) + 1
+		if int(en.dur) >= 20:
+			if int(en.off) <= 16:
+				out.heavy.n16 += 1
+				out.heavy.m16 += 1 if gave else 0
+			else:
+				out.heavy.nl += 1
+				out.heavy.ml += 1 if gave else 0
+		else:
+			if int(en.off) <= 6:
+				out.medium.n6 += 1
+				out.medium.m6 += 1 if gave else 0
+			else:
+				out.medium.nl += 1
+				out.medium.ml += 1 if gave else 0
+	return out
+
+
+## Energy in reach: bolts and blasts pressed, the announced press to contact, the knock-backs of the blasts that landed clean (bh), and the full flashes (k 1): the shortest gap between two and the most in any 60 ticks.
+func _energysum(g: Dictionary) -> Dictionary:
+	var en: Dictionary = g.energy
+	var ft: Array = en.flashTicks
+	var gap: int = 99999
+	var most: int = 0
+	for i in range(ft.size()):
+		if i > 0:
+			gap = mini(gap, int(ft[i]) - int(ft[i - 1]))
+		var c: int = 0
+		for j in range(i, ft.size()):
+			if int(ft[j]) - int(ft[i]) < 60:
+				c += 1
+			else:
+				break
+		most = maxi(most, c)
+	return {"blastHit": en.blastHit, "bolt": en.bolt, "blast": en.blast, "announce": en.announce, "late": en.late, "src": en.src, "kb": en.kb, "flashes": ft.size(), "flashMinGap": (int(g.flashGapMin) if int(g.flashGapMin) < 99999 else -1), "flashMax60": int(g.flashMax60)}
+
+
+func _mean(a: Array) -> float:
+	var t: float = 0.0
+	for v in a:
+		t += float(v)
+	return t / maxf(1.0, float(a.size()))
+
+
+func _p95(a: Array) -> int:
+	if a.size() == 0:
+		return 0
+	var b: Array = a.duplicate()
+	b.sort()
+	return int(b[mini(b.size() - 1, int(float(b.size()) * 0.95))])
+
+
+func _greport(g: Dictionary) -> Dictionary:
+	var mins: float = maxf(0.001, g.sec / 60.0)
+	return {"brawls": g.brawls, "brawlsPerMin": snappedf(float(g.brawls) / mins, 0.1), "ends": g.ends, "blows": g.blows,
+		"closes": g.closes, "closesPerMin": snappedf(float(g.closes) / mins, 0.1), "heavyStaggers": g.heavyStaggers,
+		"closesByBrinkFighter": g.closesBrink, "closesWhileOneOnBrink": g.closesOneBrink, "brinkCloseShare": snappedf(float(g.closesBrink) / maxf(1.0, float(g.closesOneBrink)), 0.001),
+		"tradeBreaks": g.tradeBreaks, "tradeBreaksOnLimit": g.onLimit, "tradeLimit": g.limit, "breakToCloseLate": g.late,
+		"momentumBreaks": g.momBreaks, "momentumChanges": g.momChanges, "momentumChangeShare": snappedf(float(g.momChanges) / maxf(1.0, float(g.momBreaks)), 0.001),
+		"decided": g.decided, "firstSlotWins": g.slot0Wins, "firstSlotShare": snappedf(float(g.slot0Wins) / maxf(1.0, float(g.decided)), 0.001),
+		"perfectBlocks": g.perfectBlocks, "guardBreaks": g.guardBreaks, "trades": g.trades,
+		"exactTradeFields": g.exact > 0 and g.exact == g.tradeBreaks, "levelTrades": g.drawsAfterClose, "levelChanges": g.drawChanges, "levelChangeShare": snappedf(float(g.drawChanges) / maxf(1.0, float(g.drawsAfterClose)), 0.001),
+		"firstSlotSeq": g.firstSlotSeq, "zips": g.zips, "zipEnds": g.zipEnds, "doubleHits": g.doubleHits, "walk": {"brawls": g.walkBrawls, "early": g.walkEarly, "lagMin": (g.walkLags.min() if g.walkLags.size() > 0 else -1), "lagMax": (g.walkLags.max() if g.walkLags.size() > 0 else -1), "n": g.walkLags.size()}, "drift": {"latHist": g.driftLatHist, "slowStates": g.driftSlowStates, "aiStickTicks": g.aiStickTicks, "aiOpposeTicks": g.aiOpposeTicks, "n": g.driftN, "latMax": (g.driftLat.max() if g.driftLat.size() > 0 else -1), "latMean": (snappedf(_mean(g.driftLat), 0.01) if g.driftLat.size() > 0 else -1.0), "rateBhPerSec": (snappedf(_mean(g.driftRate), 0.001) if g.driftRate.size() > 0 else -1.0), "maxStepBh": snappedf(g.driftMaxStep, 0.001)}, "centre": {"ticks": g.centreTicks, "speedTicks": g.centreSpeedTicks, "maxStepBh": snappedf(g.centreMaxStep, 0.001), "over": g.centreOver, "posMaxBh": snappedf(g.centrePosMax, 0.001), "posOver": g.centrePosOver}, "hold": {"ticks": g.holdTicks, "freezeHeld": g.freezeHeld, "byDir": g.holdByDir, "dead": g.deadTicks, "deadStates": g.deadStates, "deadCause": g.deadCause}, "doublePer": g.dblPer, "firstCloser": g.firstCloser, "doubleDur": [g.dblDurMin if g.dblDurMin < 9999 else -1, g.dblDurMax], "give": _givesum(g), "launcher": {"open": g.lcOpen, "used": g.lcUsed, "lapsed": g.lcLapsed, "routeBy": g.routeBy, "routeOn": g.routeOn, "routeFullBy": g.routeFullBy, "routeFullOn": g.routeFullOn, "powHas": g.powHas, "firstLaunchSec": g.firstLaunchSec}, "energy": _energysum(g), "burst": {"n": g.burstN, "blows": g.burstBlows}, "windupN": g.windupN, "closing": {"samples": g.closeSamples, "blowMoveMaxBh": snappedf(g.blowMoveMax, 0.001), "blowMoveN": g.blowMoveN, "blowMoveOver": g.blowMoveOver}, "drop": {"start": g.dropStart, "land": g.dropLand, "end": g.dropEnd, "stateBad": g.dropStateBad, "endBad": g.dropEndBad}, "breaksByLead": g.leads, "breaksByDraw": g.draws, "breaksEarly": g.early, "breakLateMax": (g.lateTicks.max() if g.lateTicks.size() > 0 else 0), "breakLateP95": _p95(g.lateTicks)}
+
+
+## One match: specs[i] plays slot slots[i]. Returns {winner: 0 or 1 (the spec's index), -1 for a timeout, t}.
+func _match(seed: int, specs: Array, slots: Array, capsec: float, sums: Array, wall_ms: int = 300000, g: Dictionary = {}) -> Dictionary:
+	var pl: Array = []
+	for i in range(2):
+		var p := Pl.new()
+		p.setup(specs[i], seed, slots[i])
+		p.G = g
+		pl.append(p)
+	var lvl: String = ""
+	for p in pl:
+		if p.kind == "ai" and p.level != "":
+			lvl = p.level
+	var dai = load("res://sim/director/ai.gd")   # loaded as a resource: a typed class reference would not parse on a sim before step 3
+	dai.set("level", lvl)
+	var by_slot: Array = [null, null]
+	by_slot[slots[0]] = pl[0]
+	by_slot[slots[1]] = pl[1]
+	var S: SimState = SimCore.createSim()
+	var ai: Dictionary = {"p1": not by_slot[0].scripted(), "p2": not by_slot[1].scripted()}
+	SimCore.newMatch(S, seed, ai, {"v2": [by_slot[0].scripted(), by_slot[1].scripted()]})
+	var lt: int = 0
+	if not g.is_empty():
+		g.lastMissTick = -1000   # a miss read from the last match is not this match's
+		g.lastMissText = ""
+	var m_flash0: int = g.energy.flashTicks.size() if not g.is_empty() else 0   # the flashes of this match start here (S.tick restarts each match)
+	var m_dbl0: int = g.doubleHits if not g.is_empty() else 0   # per-match counts for the pairs' rows
+	var m_fb: int = -1
+	var m_fc: int = -1   # the first flurry close of this match: the index (0 or 1) of the script that made it
+	var m_fl: int = -1
+	var m_rby: int = 0
+	var m_ron: int = 0
+	var m_fullby: int = 0   # launches by the route's player at a power of 0.8 or more (the sent body's launchPower, after freshness); stays 0 on a build without the field
+	var m_fullon: int = 0
+	var pfx: Array = [0.0, 0.0]    # last tick's positions: no blow may move its attacker more than 0.6 bh in a tick (C2t's closing rule)
+	var pfy: Array = [0.0, 0.0]
+	var cprev_ex = null            # C1: the brawl whose centre was read last tick, and where it was
+	var cprev_x: float = 0.0
+	var cprev_y: float = 0.0
+	var ticks: int = 0
+	var cur_ex = null
+	var ex_launch: bool = false
+	var ex_attacker: int = -1
+	var last_att: int = -1
+	var ex_hits: int = 0           # damaging strikes the running exchange's attacker has landed (a string of five or more is the blur's whole length)
+	var ex_heavies: int = 0
+	var ex_locked: bool = false    # the perfect blur locked in this exchange (cue blur_locked)
+	var brink_t: Dictionary = {}   # slot -> first brink_enter time
+	var ko_t: float = -1.0
+	var brink_now := {}            # fighter index -> on the brink now (brink_enter and brink_exit)
+	var last_closer: int = -1      # the fighter who made the last close in this brawl
+	var tb_tick: int = -1          # the S.tick of a trade's break still waiting for its close
+	if not g.is_empty() and g.limit < 0 and Pl.brawl != null:
+		g.limit = int(Pl.brawl.call("cfg").flurry.tradeMaxTicks)
+	var wall0: int = Time.get_ticks_msec()
+	var walled: bool = false
+	while S.T < capsec and not (S.game.ko != null and S.game.koT > 3.0) and ticks < 400000:
+		ticks += 1
+		if (ticks & 255) == 0 and Time.get_ticks_msec() - wall0 > wall_ms:
+			walled = true
+			break
+		var ins: Array = [null, null]
+		var sent: Array = [-1, -1]
+		var carried: Array = [false, false]
+		for slot in range(2):
+			var p = by_slot[slot]
+			if not p.scripted():
+				continue
+			carried[slot] = p.carry >= 0
+			var it := SimIntent.new()
+			if p.carry >= 0:
+				it.waited = mini(15, p.carry_ticks)   # a press the freeze held waited this many steps; the sim grades it at its own tick
+			if p.forms and S.fighters[slot].act.formReady:
+				it.transform = true
+			var k: int = p.decide(S, slot, lt)
+			if p.kind == "zipper":
+				it.stanceMask = p.zip_mask
+				if p.zip_phase == 0 and S.dirS.ex == null:   # fly in to the mid band
+					var zdx: float = SimWrap.sdx(S.fighters[slot].x, S.fighters[1 - slot].x)
+					it.mx = signf(zdx) if absf(zdx) > 12.0 * 75.0 else 0.0
+					it.dash = absf(zdx) > 40.0 * 75.0
+			if int(p.P.get("approach", "0")) != 0 and S.dirS.ex == null:   # fly in to a brawl's distance (a script with nothing to approach him: the burst's pair against a rival who never moves)
+				var apx: float = SimWrap.sdx(S.fighters[slot].x, S.fighters[1 - slot].x)
+				it.mx = signf(apx) if absf(apx) > 3.0 * 75.0 else 0.0
+				it.dash = absf(apx) > 20.0 * 75.0
+			k = p.stick_script(S, slot, it, k)
+			if k >= 0:
+				if k == 1:
+					it.heavy = true
+				elif k == 2:
+					it.sig = true   # B: a signature edge with no stance held (brawl-plan.md section 10.1)
+				else:
+					it.light = true
+				if int(p.P.get("tap", "0")) > 0:
+					p.tap_k = k
+					p.tap_left = int(p.P.get("tap", "0"))
+			if p.kind == "holder" and k >= 0:
+				if k == 2:
+					it.sigHeld = true
+					it.sig = true
+				elif k == 1:
+					it.heavyHeld = true
+				else:
+					it.lightHeld = true
+			if p.tap_left > 0:
+				p.tap_left -= 1
+				if p.tap_k == 1:
+					it.heavyHeld = true
+				elif p.tap_k == 2:
+					it.sigHeld = true
+				else:
+					it.lightHeld = true
+			if int(p.P.get("stick", "0")) != 0 and (k >= 1 or (p.is_holding(lt) and p.hold_kind == 1)):
+				var rival = S.fighters[1 - slot]
+				it.mx = 0.8 * SimMathx.jsign(SimWrap.sdx(S.fighters[slot].x, rival.x))
+				it.my = 0.7
+			if int(p.P.get("energy", "0")) != 0:
+				it.mode = 1   # the energy family held: presses are bolts and charged shots, not melee
+			if p.is_holding(lt):
+				if p.hold_kind == 2:
+					it.sigHeld = true
+				elif p.hold_kind == 1 and "heavyHeld" in it:
+					it.set("heavyHeld", true)
+				elif "lightHeld" in it:
+					it.set("lightHeld", true)
+			ins[slot] = it
+			sent[slot] = k
+		var stepped: bool = SimCore.step(S, ins)
+		for lp in pl:
+			lp.last_live = stepped
+		if stepped:
+			lt += 1
+			for hp in pl:
+				hp.post_hook(S, 0 if by_slot[0] == hp else 1)
+		for slot in range(2):
+			var p = by_slot[slot]
+			if not p.scripted():
+				continue
+			if sent[slot] >= 0:
+				if stepped:
+					p.carry = -1
+					p.pressed(sent[slot], lt, p.kind == "holder", S, slot)
+				else:
+					p.carry = sent[slot]
+					p.carry_ticks = (p.carry_ticks + 1) if carried[slot] else 1
+		# the brawl's events (docs/director/brawl-b1.md section 4), counted for Game Design's rows
+		if not g.is_empty():
+			if tb_tick >= 0 and S.tick - tb_tick > 28:   # 24 ticks, and 4 for a hit-stop (a pressing probe read 25 once)
+				g.late += 1
+				tb_tick = -2
+			for e in S.out.fx:
+				if e.type == "brink_enter":
+					brink_now[int(e.actor)] = true
+				elif e.type == "brink_exit":
+					brink_now.erase(int(e.actor))
+				elif e.type == "launch":
+					# SimFx.launch(S, f, by): the event's actor is the body that was SENT and its target the one who launched him. Up to 2026-10-17 this read the actor as the launcher, so every "launches by him",
+					# "on him" and "first launch" figure of the route (and from 2026-10-16 the newcomer) was the other way round: they counted the launches OF the route's player, not by him.
+					var lsent: int = int(e.actor)
+					var lby: int = int(e.target)
+					if m_fb >= 0 and lby >= 0 and lby < 2 and Pl.counts_as_route(by_slot[lby].kind):
+						m_rby += 1
+						if m_fl < 0:
+							m_fl = S.tick
+					if lsent >= 0 and lsent < 2 and Pl.counts_as_route(by_slot[lsent].kind):
+						m_ron += 1
+				elif e.type == "knockback":
+					# the blast's own: from its actor to its target within 3 ticks (a string's ender; a cold blast has none)
+					if S.tick - int(g.energy.pendBlast) <= 3 and int(e.victim) == int(g.energy.get("pendTarget", -9)):
+						g.energy.kb.append(snappedf(float(e.amount) / 75.0, 0.01))
+						g.energy.pendBlast = -1000
+				elif e.type == "drop_start" or e.type == "drop_land" or e.type == "drop_end":   # the drop is an event type of its own (sim/core/fx.gd), not a cue
+					var dka: int = int(e.actor)
+					if e.type == "drop_start":
+						g.dropStart += 1
+						if dka >= 0 and dka < 2 and S.fighters[dka].state != "dropped":
+							g.dropStateBad += 1
+					elif e.type == "drop_land":
+						g.dropLand += 1
+					else:
+						g.dropEnd += 1
+						if dka >= 0 and dka < 2 and S.fighters[dka].state == "dropped":
+							g.dropEndBad += 1
+				elif e.type == "cue":
+					var ck: String = str(e.get("kind"))
+					if ck == "launch_power":
+						# launch anywhere's cue (DirBrawl.powerCue): actor the launcher, target the sent body, k 1 at 0.8 or more after freshness
+						g.powHas = true
+						if float(e.get("k")) >= 1.0:
+							var pby: int = int(e.actor)
+							var pto: int = int(e.target)
+							if pby >= 0 and pby < 2 and Pl.counts_as_route(by_slot[pby].kind):
+								m_fullby += 1
+							if pto >= 0 and pto < 2 and Pl.counts_as_route(by_slot[pto].kind):
+								m_fullon += 1
+					elif ck == "brawl_start":
+						g.brawls += 1
+						last_closer = -1
+						if m_fb < 0:
+							m_fb = S.tick
+					elif ck == "launcher_link":
+						var lka: int = int(e.actor)
+						if lka >= 0 and lka < 2:
+							by_slot[lka].lit(S.tick)
+					elif ck == "brawl_end":
+						var why: String = str(e.get("text"))
+						g.ends[why] = int(g.ends.get(why, 0)) + 1
+						for rp2 in pl:
+							rp2.rehold_release(lt)
+						tb_tick = -1
+						last_closer = -1
+						# C1's walk-out: both scripts had their sticks away; the end must come at least 12 ticks after the later of the two sticks, and after a jab's press
+						if pl[0].walk_t0 >= 0 and pl[1].walk_t0 >= 0:
+							g.walkBrawls += 1
+							if why == "walk":
+								var lb: int = maxi(pl[0].walk_t0, pl[1].walk_t0)
+								lb = maxi(lb, maxi(pl[0].jab_tick, pl[1].jab_tick))
+								var lag: int = S.tick - lb
+								g.walkLags.append(lag)
+								if lag < 12:
+									g.walkEarly += 1
+					elif ck == "double_hit":
+						g.doubleHits += 1
+						var ddur: int = _ei(e, "dur")
+						g.dblDurMin = mini(int(g.dblDurMin), ddur)
+						g.dblDurMax = maxi(int(g.dblDurMax), ddur)
+					elif ck == "drop_start":
+						g.dropStart += 1
+						var dsa: int = int(e.actor)
+						if dsa >= 0 and dsa < 2 and S.fighters[dsa].state != "dropped":
+							g.dropStateBad += 1
+					elif ck == "drop_land":
+						g.dropLand += 1
+					elif ck == "drop_end":
+						g.dropEnd += 1
+						var dea: int = int(e.actor)
+						if dea >= 0 and dea < 2 and S.fighters[dea].state == "dropped":
+							g.dropEndBad += 1
+					elif ck == "windup":
+						var wtx: String = str(e.get("text"))
+						if wtx == "start":
+							g.windupN += 1
+							if g.closeSamples.size() < 400:   # the blow lands d ticks later than its own time (Encounter's closing rule: d the smaller of 4 and twice the gap in bh rounded up): dur, ticks to the landing tick, the gap in bh at the press
+								var cdd: float = absf(SimWrap.sdx(S.fighters[0].x, S.fighters[1].x)) / 75.0
+								g.closeSamples.append([_ei(e, "dur"), _ei(e, "n") - S.tick, snappedf(cdd, 0.01)])
+						for wsl in range(2):
+							if by_slot[wsl].scripted():
+								by_slot[wsl].on_windup(S, wsl, int(e.actor), wtx, e)
+					elif ck == "miss":
+						g.lastMissTick = S.tick
+						g.lastMissText = str(e.get("text"))
+						if g.giveLog.size() > 0 and S.tick - int(g.giveLog[g.giveLog.size() - 1].t) <= 2 and String(g.giveLog[g.giveLog.size() - 1].miss) == "":
+							g.giveLog[g.giveLog.size() - 1].miss = str(e.get("text"))
+					elif ck == "launcher_open":
+						g.lcOpen += 1
+						if int(e.actor) >= 0 and int(e.actor) < 2:
+							by_slot[int(e.actor)].lit(S.tick)
+						var loa: int = int(e.actor)
+						if loa >= 0 and loa < 2 and by_slot[loa].kind == "route":
+							by_slot[loa].open_n = _ei(e, "n")
+					elif ck == "launcher_close":
+						var lca: int = int(e.actor)
+						if lca >= 0 and lca < 2 and by_slot[lca].kind == "route":
+							if str(e.get("text")) == "used":
+								g.lcUsed += 1
+							else:
+								g.lcLapsed += 1
+							by_slot[lca].open_n = -1
+					elif ck == "burst":
+						if str(e.get("text")) == "start":
+							g.burstN += 1
+						else:
+							g.burstBlows.append(_ei(e, "k"))
+							var rba: int = int(e.actor)
+							if rba >= 0 and rba < 2:
+								by_slot[rba].rehold_release(lt)
+					elif ck == "energy_reach":
+						var etx: String = str(e.get("text"))
+						g.energy[etx] = int(g.energy.get(etx, 0)) + 1
+						var ann: int = _ei(e, "n") - S.tick
+						var ak: String = etx + ":" + str(ann)
+						g.energy.announce[ak] = int(g.energy.announce.get(ak, 0)) + 1
+					elif ck == "energy_land":
+						var elt: String = str(e.get("text"))
+						var esrc: String = elt + ":" + str(e.get("source"))
+						g.energy.src[esrc] = int(g.energy.src.get(esrc, 0)) + 1
+						if _ei(e, "k") == 1:
+							g.energy.flashTicks.append(S.tick)
+						if elt == "blast" and str(e.get("source")) == "hit":
+							g.energy.pendBlast = S.tick
+							g.energy.pendActor = int(e.actor)
+							g.energy.pendTarget = int(e.target)
+							g.energy.blastHit = int(g.energy.get("blastHit", 0)) + 1
+					elif ck == "blow":
+						g.lastBlow = S.tick
+						var bat: int = int(e.actor)
+						var bsrc: String = str(e.get("source"))
+						if bat >= 0 and bat < 2 and stepped and bsrc != "lunge" and bsrc != "zip":
+							var bmx: float = SimWrap.sdx(float(pfx[bat]), S.fighters[bat].x)
+							var bmy: float = S.fighters[bat].y - float(pfy[bat])
+							var bms: float = sqrt(bmx * bmx + bmy * bmy) / 75.0
+							g.blowMoveN += 1
+							g.blowMoveMax = maxf(float(g.blowMoveMax), bms)
+							if bms > 0.6 + 0.001:
+								g.blowMoveOver += 1
+						var bt: String = str(e.get("text"))
+						g.blows[bt] = int(g.blows.get(bt, 0)) + 1
+					elif ck == "trade":
+						g.trades += 1
+					elif ck == "perfect_block":
+						g.perfectBlocks += 1
+					elif ck == "guard_break":
+						g.guardBreaks += 1
+					elif ck == "zip_light" or ck == "zip_heavy":
+						g.zips += 1
+					elif ck == "zip_end":
+						var zt: String = str(e.get("text"))
+						g.zipEnds[zt] = int(g.zipEnds.get(zt, 0)) + 1
+					elif ck == "trade_break":
+						g.tradeBreaks += 1
+						# the break comes on the first live tick at or after the limit (a hit-stop holds the sim), so lateness is counted and a break before the limit is the fault
+						var lim: int = _ei(e, "amount") if _ei(e, "amount") > 0 else g.limit
+						var late_by: int = _ei(e, "n") - lim
+						if late_by < 0:
+							g.early += 1
+						else:
+							g.lateTicks.append(late_by)
+						if late_by == 0:
+							g.onLimit += 1
+						tb_tick = S.tick
+						var how: String = str(e.get("text"))
+						if how == "lead" or how == "draw":   # the exact fields (Encounter's next slice): who it breaks for, the runs, how it was settled, who closed last
+							g.exact += 1
+							var kk: int = _ei(e, "k")     # 0 nobody has closed in this brawl, 1 the actor, 2 the target
+							if how == "lead":
+								g.leads += 1
+							else:
+								g.draws += 1
+								if kk > 0:
+									g.drawsAfterClose += 1
+									if kk == 2:
+										g.drawChanges += 1    # a draw that went against the last closer: the momentum changed hands
+						if last_closer >= 0:
+							g.momBreaks += 1
+							if int(e.actor) != last_closer:
+								g.momChanges += 1
+					elif ck == "stagger" and str(e.get("text")) == "flurry":
+						var closer: int = int(e.target)
+						g.closes += 1
+						if closer >= 0 and closer < 2 and m_fc < 0:
+							m_fc = _idx(pl, by_slot[closer])
+						if closer >= 0 and closer < 2 and by_slot[closer].scripted():
+							sums[_idx(pl, by_slot[closer])].closes += 1
+						if brink_now.has(closer) != brink_now.has(1 - closer):
+							g.closesOneBrink += 1
+							if brink_now.has(closer):
+								g.closesBrink += 1
+						last_closer = closer
+						if tb_tick >= 0:
+							tb_tick = -1
+					elif ck == "stagger" and str(e.get("text")) == "heavy":
+						g.heavyStaggers += 1
+		if stepped:
+			for pi in range(2):
+				pfx[pi] = S.fighters[pi].x
+				pfy[pi] = S.fighters[pi].y
+		# C1: the centre's step each tick of every brawl (a hard test: at most 0.3 bh); on a build with no DirBrawl.centre nothing is counted
+		if not g.is_empty() and Pl.centre_ok() and S.dirS.ex != null and S.dirS.ex.tpl == "brawl" and stepped:
+			var cen = Pl.brawl.call("centre", S, S.dirS.ex)
+			if typeof(cen) == TYPE_DICTIONARY and cen.has("x"):
+				var cy: float = float(cen.y) if cen.has("y") else 0.0
+				if cen.has("vx") and cen.has("vy"):   # the cap is on the nudge: the speed the pair moves at on the next tick (units a second), in bh a tick (brawl-c1.md section 3)
+					var spd: float = sqrt(float(cen.vx) * float(cen.vx) + float(cen.vy) * float(cen.vy)) / 60.0 / 75.0
+					g.centreSpeedTicks += 1
+					g.centreMaxStep = maxf(float(g.centreMaxStep), spd)
+					if spd > 0.3 + 0.001:
+						g.centreOver += 1
+				if cprev_ex == S.dirS.ex:
+					var cdx: float = SimWrap.sdx(cprev_x, float(cen.x))
+					var cst: float = sqrt(cdx * cdx + (cy - cprev_y) * (cy - cprev_y)) / 75.0
+					g.centreTicks += 1
+					g.centrePosMax = maxf(float(g.centrePosMax), cst)   # reported beside it: a strike places its attacker, and the middle jumps
+					if cst > 0.3 + 0.001:
+						g.centrePosOver += 1
+				cprev_ex = S.dirS.ex
+				cprev_x = float(cen.x)
+				cprev_y = cy
+			else:
+				cprev_ex = null
+		else:
+			cprev_ex = null
+		# exchange endings and per-player counts, from this tick's events
+		for e in S.out.fx:
+			if e.type == "damage" and e.number and int(e.attacker) >= 0 and int(e.attacker) < 2 and e.amount > 0.0:
+				var who = sums[_idx(pl, by_slot[int(e.attacker)])]
+				who.damage += e.amount
+				who.hits += 1
+				var vv: int = int(e.victim)
+				if vv >= 0 and vv < 2:
+					var vic = S.fighters[vv]
+					var dk: String = "dmgPopped" if DirBrawl._lg(vic, DirBrawl.LA_POP_UNTIL) > 0 else ("dmgJourney" if vic.launchBy != null else "dmgBrawl")
+					who[dk] = float(who.get(dk, 0.0)) + e.amount
+				if int(e.attacker) == ex_attacker and cur_ex != null:
+					ex_hits += 1
+					if str(e.get("kind")) == "heavy":
+						ex_heavies += 1
+				if str(e.get("kind")) == "heavy":
+					who.heavyHits += 1
+			elif e.type == "cue" and str(e.get("kind")) == "pop":
+				var pv = sums[_idx(pl, by_slot[int(e.actor)])]
+				var pk: String = "popOn_" + str(e.get("text"))
+				pv[pk] = int(pv.get(pk, 0)) + 1
+			elif e.type == "cue" and str(e.get("kind")) == "windup" and str(e.get("text")) == "start" and float(e.get("k")) > 0.0:
+				var lw = sums[_idx(pl, by_slot[int(e.actor)])]
+				lw["lauWind"] = int(lw.get("lauWind", 0)) + 1
+				var tg = S.fighters[int(e.target)] if int(e.target) >= 0 and int(e.target) < 2 else null
+				if tg != null and DirBrawl._lg(tg, DirBrawl.LA_POP_UNTIL) > S.tick:
+					lw["lauWindAtPopped"] = int(lw.get("lauWindAtPopped", 0)) + 1
+					if DirBrawl._lg(tg, DirBrawl.LA_POP_UNTIL) > int(e.n):
+						lw["lauWindLandsInPop"] = int(lw.get("lauWindLandsInPop", 0)) + 1
+			elif e.type == "cue" and str(e.get("kind")) == "launch_power":
+				var sv = sums[_idx(pl, by_slot[int(e.actor)])]
+				sv["sendsDbg"] = int(sv.get("sendsDbg", 0)) + 1
+			elif e.type == "brink_enter":
+				if not brink_t.has(int(e.actor)):
+					brink_t[int(e.actor)] = S.T
+			elif e.type == "ko":
+				ko_t = S.T
+			elif e.type == "struggle_press":
+				var sw = sums[_idx(pl, by_slot[int(e.actor)])]
+				if str(e.get("kind")) == "hit":
+					sw.strHits += 1
+				else:
+					sw.strStrays += 1
+			elif e.type == "cue" and str(e.get("kind")) == "struggle":
+				sums[_idx(pl, by_slot[int(e.actor)])].strOpens += 1
+			elif e.type == "cue" and str(e.get("kind")) == "blur_locked" and int(e.actor) == ex_attacker and cur_ex != null:
+				ex_locked = true
+			elif e.type == "exchange_end":   # slice 3: the director's ending of this player's exchange (the actor is the attacker)
+				var xw = sums[_idx(pl, by_slot[int(e.actor)])]
+				var xk: String = "end_" + str(e.get("kind"))
+				xw[xk] = int(xw.get(xk, 0)) + 1
+			elif e.type == "flow":   # slice 3: the flow count; nothing but the HUD and QA reads it
+				var fwho = sums[_idx(pl, by_slot[int(e.actor)])]
+				fwho.flowMax = maxi(int(fwho.flowMax), int(e.n))
+				if int(e.n) == 3:
+					fwho.flowTo3 += 1
+			elif e.type == "launch":
+				var victim: int = int(e.actor)
+				var lau: int = int(e.target)
+				ex_launch = true
+				if lau >= 0 and lau < 2:
+					sums[_idx(pl, by_slot[lau])].launchesEarned += 1
+				sums[_idx(pl, by_slot[victim])].launchesTaken += 1
+		S.out.fx.clear()
+		S.out.feed.clear()
+		if S.dirS.ex != cur_ex:
+			if cur_ex != null and ex_attacker >= 0 and (str(cur_ex.kind) == "light" or str(cur_ex.kind) == "heavy"):
+				var sm = sums[_idx(pl, by_slot[ex_attacker])]
+				if ex_hits >= 5 and ex_heavies == 0:   # a five-blow string with no heavy: the blur's whole length
+					sm.strings5 += 1
+					if ex_locked:
+						sm.locks5 += 1
+				if ex_launch:
+					sm.launchEnds += 1
+				else:
+					sm.otherEnds += 1
+			cur_ex = S.dirS.ex
+			ex_launch = false
+			ex_hits = 0
+			ex_heavies = 0
+			ex_locked = false
+			ex_attacker = S.fighters.find(cur_ex.A) if cur_ex != null else -1
+			if cur_ex != null and (str(cur_ex.kind) == "light" or str(cur_ex.kind) == "heavy"):
+				sums[_idx(pl, by_slot[ex_attacker])].exchanges += 1
+				# turn-taking: does the attacker change from one melee exchange to the next (the trade of stomach punches)
+				if last_att >= 0:
+					sums[0].pairs += 1
+					if last_att != ex_attacker:
+						sums[0].alternations += 1
+				last_att = ex_attacker
+	var winner: int = -1
+	if S.game.ko != null:
+		var loser_slot: int = S.fighters.find(S.game.ko)
+		winner = 1 - _idx(pl, by_slot[loser_slot])
+	var t: float = S.T
+	var brink: float = -1.0
+	if S.game.ko != null:
+		var ls: int = S.fighters.find(S.game.ko)
+		if brink_t.has(ls):
+			brink = (ko_t if ko_t >= 0.0 else S.T) - float(brink_t[ls])
+	for i in range(2):
+		sums[i].presses += pl[i].presses
+		sums[i].onBeat += pl[i].on_beat
+		sums[i].inExchange += pl[i].in_beat_window
+		sums[i].dIn += pl[i].d_in
+		sums[i].dOn4 += pl[i].d_on4
+		sums[i].dOn2 += pl[i].d_on2
+		for st in pl[i].styles:
+			sums[i].styles[st] = int(sums[i].styles.get(st, 0)) + int(pl[i].styles[st])
+	if not g.is_empty():
+		g.sec += t
+		if winner >= 0 and S.game.ko != null:
+			g.decided += 1
+			if 1 - S.fighters.find(S.game.ko) == 0:   # the winner took the first slot (slot 0)
+				g.slot0Wins += 1
+				g.firstSlotSeq.append(1)
+			else:
+				g.firstSlotSeq.append(0)
+		else:
+			g.firstSlotSeq.append(-1)   # no winner (a timeout)
+	if not g.is_empty():
+		var mf: Array = g.energy.flashTicks.slice(m_flash0)
+		for fi in range(mf.size()):
+			if fi > 0:
+				g.flashGapMin = mini(int(g.flashGapMin), int(mf[fi]) - int(mf[fi - 1]))
+			var fc: int = 0
+			for fj in range(fi, mf.size()):
+				if int(mf[fj]) - int(mf[fi]) < 60:
+					fc += 1
+				else:
+					break
+			g.flashMax60 = maxi(int(g.flashMax60), fc)
+		g.firstCloser.append(m_fc)
+		g.dblPer.append(g.doubleHits - m_dbl0)
+		for rp in pl:
+			if Pl.counts_as_route(rp.kind):
+				g.routeBy.append(m_rby)
+				g.routeOn.append(m_ron)
+				g.routeFullBy.append(m_fullby)
+				g.routeFullOn.append(m_fullon)
+				g.firstLaunchSec.append(snappedf(float(m_fl - m_fb) / 60.0, 0.1) if (m_fb >= 0 and m_fl >= 0) else -1.0)
+				break
+	SimCore.dispose(S)
+	return {"winner": winner, "t": t, "brink": brink, "wall": walled}
+
+
+## The index (0 or 1) of player object p in the pl array of the match, found through the sums' order: players are kept in spec order.
+var _pl_ref: Array = []
+
+func _idx(pl: Array, p) -> int:
+	return 0 if pl[0] == p else 1

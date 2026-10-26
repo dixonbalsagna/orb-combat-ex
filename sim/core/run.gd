@@ -40,9 +40,8 @@ static var _errors: Array = []
 static var _claims: Dictionary = {}
 static var _order: Array = []
 static var groundOn_: bool = false
-## Planet units (a climate cell, about 20 microseconds; a place's try-set is 1000) spent on the planet's own make for each read a host asks of the ground, when the planet is not made yet (WorldPlanet.makeJob):
-## about 5 ms a read, so a gen 2 planet (about a second) is made over the first beats of the stage before it, a frame at a time, and the pick starts when it is whole.
-const PLANET_UNITS_PER_READ: int = 250
+static var planetUnitsPerRead: int = 250   # data: ground.planetUnitsPerRead, planet units a read spends on a cold planet's make (World: a climate
+                                          # cell about 20 microseconds, a place's try-set 1000: about 5 ms a read)
 static var framesPerRead: Dictionary = {"close": 1, "half": 1, "whole": 3}
 static var stages: int = 3
 static var phases: Array = ["early", "early", "mid"]
@@ -80,6 +79,7 @@ static func _ensure() -> void:
 	for sz in SIZES:
 		framesPerRead[sz] = _int("ground.framesPerRead." + sz, fr.get(sz), 1, 10)
 	stages = _int("ground.stagesBeforeBoss", g.get("stagesBeforeBoss"), 1, 12)
+	planetUnitsPerRead = _int("ground.planetUnitsPerRead", g.get("planetUnitsPerRead"), 1, 100000)
 	var ph = g.get("phases")
 	phases = []
 	if ph is Array:
@@ -288,12 +288,12 @@ class GroundJob extends RefCounted:
 			home = int(hm.get(opponent, -1))
 			job = WorldRingPick.beginPick(P, SimRun.claim(opponent), size, stream, {"home": home, "standing": standing, "damaged": damaged, "used": used})
 
-	## Reads up to n more candidates; true when the ground is picked. While the planet is still being made the reads go to it (PLANET_UNITS_PER_READ each) and nothing is picked until it is whole (the same call then goes on to the pick, so finishNow still finishes).
+	## Reads up to n more candidates; true when the ground is picked. While the planet is still being made the reads go to it (SimRun.planetUnitsPerRead each, from the data) and nothing is picked until it is whole (the same call then goes on to the pick, so finishNow still finishes).
 	func step(n: int) -> bool:
 		if done or n <= 0:
 			return done
 		if pj != null:
-			if not pj.step(n * SimRun.PLANET_UNITS_PER_READ):
+			if not pj.step(n * SimRun.planetUnitsPerRead):
 				return false
 			start()
 		if job != null:
@@ -383,6 +383,10 @@ static func checkState(state) -> String:
 			return "%s is an object" % k
 	if not (state.get("ledger") is Array):
 		return "the ledger is a list"
+	if state.has("arc"):   # a campaign episode's arc block (SimCampaign, campaign-core.md)
+		var r: String = SimCampaign.checkArc(state.arc)
+		if r != "":
+			return "arc: " + r
 	return ""
 
 

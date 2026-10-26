@@ -1,0 +1,31 @@
+{
+  "_note": "The campaign's numbers (Game Design's docs/design/campaign.md; sim/core/campaign.gd; docs/architecture/campaign-core.md). Campaign-only: no versus match reads this file, and no fighter reads anything of the campaign (Legal mc01, mc06).",
+  "schema": "fight.campaign/1",
+  "enabled": false,
+  "_enabled": "the one switch: the campaign's host builds episodes, columns and the season record only while it is on",
+  "columns": 5,
+  "_columns": "an episode's stages, each a column of the route: the cold open, the rise, the twist, the escalation and the climax (campaign.md 2.2)",
+  "placesPerColumn": {
+    "min": 2,
+    "max": 3
+  },
+  "_placesPerColumn": "the places a column offers, chosen by flying (campaign.md 2.2); the climax is the opponent's home ground, one place",
+  "crossBack": {
+    "from": 2,
+    "to": 4
+  },
+  "_crossBack": "a place not taken in column `from` can come back in column `to` as a consequence (campaign.md 2.2: the rise's untaken place returns at the escalation)",
+  "sideShare": 500,
+  "_sideShare": "thousandths: a main-story episode won offers a side story on about this share of them (campaign.md 1.4: about half, a first value)",
+  "arcEpisodes": 3,
+  "_arcEpisodes": "a filler arc's episodes: the pilot, the middle and the finale (campaign.md 2.1)",
+  "families": [
+    "training_day",
+    "rivalry_game",
+    "tournament",
+    "rescue"
+  ],
+  "_families": "Narrative's filler families (docs/narrative/filler-templates.md filler_kind): a filler arc's first two episodes take two different ones by the arc's seed",
+  "stageCols": 1200,
+  "_stageCols": "a stage's stand-in ring round its place (Close), until World's ring turn puts a column's places along the ring the players fly"
+}

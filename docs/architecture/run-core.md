@@ -196,6 +196,8 @@ Orb wants the opponents' stages assigned programmatically in story mode. World's
 1. When a stage ends, and the carry has the places' states, the host begins the next stage's ground: `SimRun.beginGround(run, chapter, opponent, opts)`.
 2. During that stage's beats, it calls `job.frame()` once a frame. That reads a candidate every `framesPerRead` frames for the ring's size: 1 at Close and Half, 3 at Whole. World measured a read at about 2.6, 5.3 and 10.3 ms natively, and about 22, 32 and 63 ms on the old laptop.
 3. If the beats end before the pick, `finishNow()` reads the rest at once.
+
+**A cold planet comes first** (World's host, gen 2 window 12, on main since 4dc06456). When the planet isn't made yet, `beginGround` starts its make as a job (`WorldPlanet.makeJob`), and the first steps spend `ground.planetUnitsPerRead` (250, about 5 ms) a read on it, before the pick starts. Warm (every later stage), it starts at once as before. **Until the planet is whole, a job's `rule`, `size` and `home` are empty:** a host reads them after the pick, as the tools and checks do. World proved cold, warm and `finishNow` give the same ground. The number moves from code to data in `pending/units-to-data/`.
 4. `job.setup()` is the next stage's `{planet, arena}`: the ring as exact bits (`WorldRingPick.arenaOf`), which the stage's header carries. The stage then replays from its header and never picks again.
 
 | Chapter | The ring | Size |

@@ -644,6 +644,10 @@
       "schema": "fight-run.schema.json"
     },
     {
+      "match": "data/fight/campaign.json",
+      "schema": "fight-campaign.schema.json"
+    },
+    {
       "match": "data/fight/ricochet.json",
       "schema": "fight-ricochet.schema.json"
     }

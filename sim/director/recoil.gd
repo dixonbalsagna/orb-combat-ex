@@ -159,6 +159,42 @@ static func heavyRecoil(S: SimState, ex, f, o) -> bool:
 	return true
 
 
+## Game Design's 23c 11: a teched pop landing (DirBrawl._popTick) is a recoil flip: the same backflip away from o,
+## landing set where it ends, and the counter-rush within counterTicks after it. Inside the brawl (kind 4, locked).
+## False with recoil flips off: then the tech is the tech alone.
+static func popFlip(S: SimState, f, o) -> bool:
+	if not on() or not f.act.v2:
+		return false
+	var c: Dictionary = cfg()
+	var dir: float = _away(o, f)
+	var ticks: int = int(c.flipTicks)
+	var travel: float = float(c.flipBh) * BH
+	var base: float = f.rush.py if f.rush != null else f.y
+	var so := Callable(WorldContact, "slideObstacle")
+	if so.is_valid():
+		var ob = so.call(S, f.x, f.z, dir, travel)
+		if ob is Dictionary and ob.get("hit", false):
+			travel = maxf(0.0, float(ob.d) - DirLaunch.BUMP_SHORT)
+	var r := SimState.Rush.new()
+	r.px = SimWrap.wrap(f.x + dir * travel)
+	r.py = maxf(base, WorldTerrain.groundY(S, r.px))
+	r.pz = f.z
+	r.end = S.T + float(ticks) * SimConst.DT
+	r.arc = float(c.arcBh) * BH * dir
+	f.rush = r
+	f.vx = 0.0
+	f.vy = 0.0
+	f.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(f.x, o.x)), f.face)
+	DirBrawl.recoilFree(f)
+	_s(f, RC_LEFT, 0)
+	_s(f, RC_AI, 0)
+	_s(f, RC_KIND, 4)
+	_s(f, RC_AIR, ticks)
+	_cue(S, f, o, "flip", "backflip", f.x, f.y, r.px, S.tick + ticks, ticks, true)
+	SimEvents.feed(S, f.name + " RECOIL FLIP", "out of the pop's landing: he lands set in " + str(ticks) + ", and his next blow within " + str(int(c.counterTicks)) + " is a counter-rush")
+	return true
+
+
 ## While he is in the air of his flip: his presses wait for the landing.
 static func flipping(S: SimState, f) -> bool:
 	return on() and _g(f, RC_AIR) > 0

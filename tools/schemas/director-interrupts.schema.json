@@ -2554,6 +2554,35 @@
                     "stringPoints": {
                       "type": "integer",
                       "minimum": 1
+                    },
+                    "freeAt": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Game Design's 23c 12: ticks after the pop at which he is free in the air (its apex); 0: stunned to the landing and landReel after it."
+                    },
+                    "spike": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "fallTicks",
+                        "recoverTicks",
+                        "speed"
+                      ],
+                      "description": "Game Design's 23c 9: B at a popped fighter spikes him into the ground under him: down in fallTicks, a crater as an impact at speed, and recoverTicks of recovery unless he techs it.",
+                      "properties": {
+                        "fallTicks": {
+                          "type": "integer",
+                          "minimum": 1
+                        },
+                        "recoverTicks": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "speed": {
+                          "type": "number",
+                          "minimum": 0
+                        }
+                      }
                     }
                   }
                 },
