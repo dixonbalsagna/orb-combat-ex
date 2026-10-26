@@ -98,6 +98,32 @@ export function guardSurvives(ticks, clickTick, mag = 0.9, within = 6) {
   for (let i = clickTick - within; i <= clickTick; i++) { if (i < 0 || i >= ticks.length) continue; if (rescale(Math.hypot(ticks[i][0], ticks[i][1])) > mag) return false; }
   return true;
 }
+/** Thumb transfer in one thumb-block trial (docs/controls/right-thumb.md): the times, in ms, between the bottom face button (index 0) and the right stick, from the raw frames. Pure.
+ *  b2s: from the button's release to the stick going on (rescaled 0.6); s2b: from the stick coming back to rest (0.2) to the button's next press; a negative value is an overlap (a claw, or paddles).
+ *  Returns { b2s, s2b, total, complete } with null for what the trial lacks. */
+export function thumbTransfer(cap, tr) {
+  const S = cap.samples.slice(tr.i0, tr.i1), B = cap.buttons.slice(tr.b0 == null ? 0 : tr.b0, tr.b1 == null ? cap.buttons.length : tr.b1).filter((b) => b[2] === 0);
+  const press = B.filter((b) => b[3] === 1).map((b) => b[1]), release = B.filter((b) => b[3] === 0).map((b) => b[1]);
+  let on = null, off = null;
+  for (const s of S) { const m = rescale(Math.hypot(s[2], s[3])); if (on === null) { if (m >= ON) on = s[1]; } else if (off === null && m <= LOW) { off = s[1]; break; } }
+  const seq = tr.expect.seq, out = { b2s: null, s2b: null, total: null, complete: false };
+  if (seq === 'aba') {
+    const a1 = press[0], r1 = release.find((r) => a1 != null && r > a1), a2 = press[1];
+    if (r1 != null && on != null) out.b2s = on - r1;
+    if (off != null && a2 != null) out.s2b = a2 - off;
+    if (a1 != null && a2 != null) out.total = a2 - a1;
+    out.complete = out.b2s != null && out.s2b != null;
+  } else if (seq === 'b2s') {
+    const a1 = press[0], r1 = release.find((r) => a1 != null && r > a1);
+    if (r1 != null && on != null) out.b2s = on - r1;
+    out.complete = out.b2s != null;
+  } else if (seq === 's2b') {
+    const a = off != null ? press.find((p) => p > (on != null ? on : 0)) : null;
+    if (off != null && a != null) out.s2b = a - off;
+    out.complete = out.s2b != null;
+  }
+  return out;
+}
 export const angleErr = (a, sector) => { let d = (a - sector * 45) % 360; if (d > 180) d -= 360; if (d < -180) d += 360; return Math.abs(d); };
 
 // ------------------------------------------------------------------ loading
@@ -269,6 +295,22 @@ export function analyse(caps, o = {}) {
     }
   }
 
+  // ---- 10b. thumb transfer, per pad and grip (the no-claw law)
+  const thumbRows = {};
+  for (const m of meta.filter((x) => x.kind === 'thumb' && x.mode === 'gamepad')) {
+    const r = thumbTransfer(m.cap, m.tr), grip = m.cap.person.grip || 'unknown', seq = m.tr.expect.seq;
+    const moves = seq === 'aba' ? ['b2s', 's2b', 'total'] : seq === 'b2s' ? ['b2s'] : ['s2b'];
+    for (const mv of moves) {
+      const k = `${m.pad}|${grip}|${m.tr.speed}|${seq}|${mv}`;
+      const row = (thumbRows[k] = thumbRows[k] || { pad: m.pad, grip, pace: m.tr.speed, seq, move: mv, trials: 0, v: [] });
+      row.trials++; if (r[mv] != null) row.v.push(r[mv]);
+    }
+  }
+  T.tables.thumb = Object.values(thumbRows).sort((a, b) => (a.pad + a.grip + a.seq + a.move + a.pace).localeCompare(b.pad + b.grip + b.seq + b.move + b.pace)).map((r) => {
+    const [p50, p90] = percentiles(r.v, [50, 90]);
+    return { pad: r.pad, grip: r.grip, pace: r.pace, seq: r.seq, move: r.move, trials: r.trials, n: r.v.length, median: p50 == null ? null : Math.round(p50), p90: p90 == null ? null : Math.round(p90), overlap: r.move === 'total' ? null : pct(r.v.filter((v) => v < 0).length, r.v.length) };
+  });
+
   // ---- 10. the keyboard
   const kb = meta.filter((m) => m.mode === 'keyboard' && (m.tr.block === 'flick4' || m.tr.block === 'flick8'));
   if (kb.length) {
@@ -343,6 +385,12 @@ function show(T) {
   h(`11. Against the proposed bars (docs/controls/right-stick-capture.md), at flick rise ${T.rise}`);
   for (const b of T.tables.bars) L.push(`  ${b.pass === true ? 'PASS' : b.pass === false ? 'FAIL' : 'INFO'}  ${b.measure.padEnd(58)} bar ${b.bar.padEnd(34)} got ${b.value}${b.note ? `  (${b.note})` : ''}`);
   if (!T.tables.bars.length) L.push('  (not enough trials)');
+  h('12. Thumb transfer between the bottom face button and the right stick (ms; b2s = button release to stick on, s2b = stick at rest to button press; a negative value is an overlap)');
+  if (!T.tables.thumb.length) L.push('  (no thumb-block trials on a pad)');
+  else {
+    L.push(`  ${'pad'.padEnd(34)} ${'grip'.padEnd(8)} ${'pace'.padEnd(11)} ${'sequence'.padEnd(8)} ${'move'.padEnd(6)}  n/trials  median     p90  overlap%`);
+    for (const r of T.tables.thumb) L.push(`  ${String(r.pad).slice(0, 34).padEnd(34)} ${r.grip.padEnd(8)} ${String(r.pace).padEnd(11)} ${r.seq.padEnd(8)} ${r.move.padEnd(6)} ${f(r.n, 3)}/${String(r.trials).padEnd(5)} ${f(r.median, 7)} ${f(r.p90, 7)} ${f(r.overlap, 8)}`);
+  }
   return L.join('\n');
 }
 

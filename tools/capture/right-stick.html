@@ -103,6 +103,20 @@ canvas { width:180px; height:180px; max-width:50vw; border:1px solid var(--line)
     for (n = 0; n < 10; n++) { var d2 = DIRS4[n % 4]; thd.push({ id: 'hard.' + d2.name, n: nextN('hd' + d2.name), speed: 'hardest', expect: { kind: 'hard', dir: d2.name, sector: d2.sector }, win_ms: 1500, say: verb + ' ' + d2.name + ' as hard as you can', big: d2.arrow, hint: 'as hard as possible' }); }
     block('hard', 'Hard flicks', 'Ten flicks as hard as you can. (Your pad may click the stick; that is what we are measuring.)', thd);
 
+    if (mode === 'gamepad') {
+      // Controls' no-claw law: how long the one thumb takes to move between the bottom face button (A on Xbox, the cross on PlayStation, B on a Switch pad) and the right stick.
+      var BTN = 'the bottom button';
+      var tt = [];
+      [['aba', 'comfortable'], ['aba', 'fast'], ['b2s', 'comfortable'], ['b2s', 'fast'], ['s2b', 'comfortable'], ['s2b', 'fast']].forEach(function (c) {
+        shuffle(DIRS4, rnd).forEach(function (d) {
+          var say = c[0] === 'aba' ? 'Press ' + BTN + ', flick ' + d.name + ', then press ' + BTN + ' again' : c[0] === 'b2s' ? 'Press ' + BTN + ', then flick ' + d.name : 'Flick ' + d.name + ', then press ' + BTN;
+          var big = c[0] === 'aba' ? 'A ' + d.arrow + ' A' : c[0] === 'b2s' ? 'A ' + d.arrow : d.arrow + ' A';
+          tt.push({ id: 'thumb.' + c[0] + '.' + c[1], n: nextN('t' + c[0] + c[1] + d.name), speed: c[1], expect: { kind: 'thumb', seq: c[0], dir: d.name, sector: d.sector }, win_ms: c[0] === 'aba' ? 3200 : 2400, say: say + (c[1] === 'fast' ? ', as fast as you can without mistakes' : ''), big: big, hint: c[1] === 'fast' ? 'quick, clean, in order' : 'at your own steady pace' });
+        });
+      });
+      block('thumb', 'Thumb moves', 'How long your thumb takes to move between the bottom face button (A on an Xbox pad, ✕ on PlayStation, B on a Switch pad) and the right stick, and back. Three sequences, each at a comfortable pace and as fast as you can: button then flick then button, button then flick, and flick then button. Four of each, in each of four directions.', tt);
+    }
+
     block('idle', 'Idle', 'Ten seconds with your hands on the ' + (mode === 'gamepad' ? 'pad' : mode === 'touch' ? 'phone' : 'keyboard') + ', not pressing anything.', [{ id: 'idle', n: 1, speed: null, expect: { kind: 'idle' }, win_ms: 10000, say: 'Keep still, hands on', big: '·', countdown: true }]);
 
     var tf = [];
@@ -123,7 +137,7 @@ canvas { width:180px; height:180px; max-width:50vw; border:1px solid var(--line)
   // ---------------------------------------------------------------- state
   var app = document.getElementById('app');
   var S = {
-    screen: 'intro', mode: 'gamepad', person: { code: '', hand: 'right', thumb: 'right', rating: 'regular', pad_model: '' }, soundOn: true,
+    screen: 'intro', mode: 'gamepad', person: { code: '', hand: 'right', thumb: 'right', rating: 'regular', grip: 'thumbs', pad_model: '' }, soundOn: true,
     padIndex: -1, ax: 2, ay: 3, axisRange: null, blocks: [], bi: 0, ti: 0, phase: 'idle', phaseStart: 0, trialRec: null, trials: [], events: [], samples: [], buttons: [], touch: [], keys: [],
     prevBtn: [], restDts: [], lastF: 0, started: null, complete: false, hidden: false, padLost: false, askedLabel: null, saved: false, endedEarly: false, fileBlobUrl: null
   };
@@ -162,7 +176,7 @@ canvas { width:180px; height:180px; max-width:50vw; border:1px solid var(--line)
     app.appendChild(el('h1', { text: 'Right-stick capture' }));
     app.appendChild(el('div', { class: 'card' }, [
       el('p', { text: 'Thank you for helping. This takes about nine minutes. You will be asked to flick, hold and sweep the right stick of a game pad (or swipe on a phone, or tap the arrow keys) while this page records how your thumb moves.' }),
-      el('p', { text: 'What is recorded: the stick position on every screen frame, button presses, which prompt you were doing, and a few answers about you (below). No name, no email, no account.' }),
+      el('p', { text: 'What is recorded: the stick position on every screen frame, button presses, which prompt you were doing, and a few answers about you (below), including how you hold the pad. No name, no email, no account.' }),
       el('p', { text: 'Nothing is sent anywhere. This page has no network access at all. At the end it saves one file to your computer, and you pass that file on to whoever asked you to do this. You can stop at any time and still save what you have.' })
     ]));
     app.appendChild(el('div', { class: 'row' }, [btn('Start', showAbout, true, 'start')]));
@@ -182,6 +196,7 @@ canvas { width:180px; height:180px; max-width:50vw; border:1px solid var(--line)
       field('How are you taking part?', select([['gamepad', 'With a game pad'], ['touch', 'With a finger on a phone or tablet'], ['keyboard', 'With the arrow keys']], S.mode, function (v) { S.mode = v; })),
       field('Which hand is on the right stick (or the pad)?', select([['right', 'Right hand'], ['left', 'Left hand']], S.person.hand, function (v) { S.person.hand = v; })),
       field('Which thumb is on the right stick?', select([['right', 'Right thumb'], ['left', 'Left thumb']], S.person.thumb, function (v) { S.person.thumb = v; })),
+      field('How do you hold the pad?', select([['thumbs', 'Thumbs on the sticks and face buttons (the usual grip)'], ['claw', 'Claw: a finger on the face buttons while the thumb stays on the stick'], ['paddles', 'Back paddles or remapped buttons'], ['other', 'Something else']], S.person.grip, function (v) { S.person.grip = v; })),
       field('How much do you play with sticks?', select([['new', 'New to sticks'], ['regular', 'Regular'], ['fps_fighting', 'Fighting-game or shooter player']], S.person.rating, function (v) { S.person.rating = v; }))
     ]);
     app.appendChild(card);
@@ -444,7 +459,7 @@ canvas { width:180px; height:180px; max-width:50vw; border:1px solid var(--line)
       format: 'meridian.right-stick-capture/1',
       page: { version: VERSION },
       saved_iso: new Date().toISOString(), started_iso: S.started, complete: !!complete,
-      person: { code: S.person.code, hand: S.person.hand, thumb: S.person.thumb, rating: S.person.rating, pad_model: S.mode === 'gamepad' ? S.person.pad_model : '' },
+      person: { code: S.person.code, hand: S.person.hand, thumb: S.person.thumb, rating: S.person.rating, grip: S.person.grip, pad_model: S.mode === 'gamepad' ? S.person.pad_model : '' },
       env: {
         mode: S.mode, user_agent: navigator.userAgent, screen: { w: screen.width, h: screen.height, dpr: window.devicePixelRatio || 1 }, frame_ms_median_at_rest: dt, frame_hz_estimate: dt ? Math.round(10000 / dt) / 10 : 0,
         gamepad: S.mode === 'gamepad' ? { mapping: gp ? gp.mapping : '', axes: gp ? gp.axes.length : 0, buttons: gp ? gp.buttons.length : 0, axis_x: S.ax, axis_y: S.ay } : null

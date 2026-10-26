@@ -7,7 +7,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import vm from 'node:vm';
-import { analyse, loadCaptures, percentiles, quant, rescale, trialTicks, traceStats, angleErr, guardSurvives } from './right-stick-analyse.mjs';
+import { analyse, loadCaptures, percentiles, quant, rescale, trialTicks, traceStats, angleErr, guardSurvives, thumbTransfer } from './right-stick-analyse.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 let ran = 0, failed = 0;
@@ -28,6 +28,7 @@ const csp = /<meta http-equiv="Content-Security-Policy" content="([^"]*)"/.exec(
 check('the page carries a policy that forbids any request (default-src none, connect-src none)', !!csp && /default-src 'none'/.test(csp[1]) && /connect-src 'none'/.test(csp[1]) && !/https?:|\*/.test(csp[1]));
 check('the page promises nothing is sent and says what is recorded', /Nothing is sent anywhere/.test(html) && /No name, no email/.test(html));
 check('the page saves one JSON file through a blob link', /new Blob\(\[JSON\.stringify/.test(code) && /a\.download = name/.test(code));
+check('the page asks how the pad is held (the grip) and saves it', /How do you hold the pad\?/.test(html) && /grip: S\.person\.grip/.test(code));
 check('the page has the three variants', /'gamepad'/.test(code) && /'touch'/.test(code) && /'keyboard'/.test(code) && /getGamepads/.test(code) && /pointerdown/.test(code) && /keydown/.test(code));
 check('the page can be stopped at any time and saves what it has', /Stop and save what I have/.test(code) && /finish\(false\)/.test(code));
 check('the page keeps the Gamepad API timestamp, the frame time and the raw axes', /gp\.timestamp, f, /.test(code) && /gp\.axes\[S\.ax\]/.test(code));
@@ -40,15 +41,20 @@ if (proto) vm.runInContext(proto[1] + ';this.bp = buildProtocol; this.es = estim
 let seed = 7; const rnd = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
 for (const mode of ['gamepad', 'touch', 'keyboard']) {
   const b = ctx.bp(mode, rnd), ids = b.map((x) => x.id), count = (id) => (b.find((x) => x.id === id) || { trials: [] }).trials.length;
-  check(`${mode}: the blocks are in the spec's order`, ids.join() === 'rest,flick4,flick8,hold,pump,zigzag,circle,free,hard,idle,fight', ids.join());
+  check(`${mode}: the blocks are in the spec's order (the thumb block, pad only, after the hard flicks)`, ids.join() === (mode === 'gamepad' ? 'rest,flick4,flick8,hold,pump,zigzag,circle,free,hard,thumb,idle,fight' : 'rest,flick4,flick8,hold,pump,zigzag,circle,free,hard,idle,fight'), ids.join());
+  if (mode === 'gamepad') {
+    const th = b.find((x) => x.id === 'thumb').trials;
+    check('gamepad: the thumb block is 4 directions x (button-flick-button, button-flick, flick-button) x (comfortable, fast) = 24 timed trials', th.length === 24 && ['aba', 'b2s', 's2b'].every((q) => ['comfortable', 'fast'].every((p) => th.filter((x) => x.expect.seq === q && x.speed === p).length === 4 && ['up', 'right', 'down', 'left'].every((d) => th.filter((x) => x.expect.seq === q && x.speed === p && x.expect.dir === d).length === 1))));
+    check('gamepad: a thumb trial says what to press and where to flick', th.every((x) => /bottom button/.test(x.say) && /flick/i.test(x.say) && Number.isInteger(x.expect.sector)));
+  }
   check(`${mode}: four-way flicks are 6 a direction comfortable and 3 fast`, count('flick4') === 36 && b[1].trials.filter((t) => t.speed === 'fast').length === 12 && ['up', 'right', 'down', 'left'].every((d) => b[1].trials.filter((t) => t.id === `flick4.${d}.comfortable`).length === 6 && b[1].trials.filter((t) => t.id === `flick4.${d}.fast`).length === 3));
   check(`${mode}: eight-way flicks are 3 a direction`, count('flick8') === 24 && b[2].trials.every((t, _, a) => a.filter((u) => u.id === t.id).length === 3));
   check(`${mode}: holds are 3 a direction and 1.5 s`, count('hold') === 12 && b[3].trials.every((t) => t.expect.hold_ms === 1500));
   check(`${mode}: 6 double flicks, 8 zig-zags (horizontal and vertical, 3 and 4 strokes), 18 circles, 2 free sweeps of 20 s, 10 hard flicks, 10 s idle, 5 fight trials`,
-    count('pump') === 6 && count('zigzag') === 8 && count('circle') === 18 && count('free') === 2 && b[7].trials.every((t) => t.win_ms === 20000) && count('hard') === 10 && b[9].trials[0].win_ms === 10000 && count('fight') === 5);
+    count('pump') === 6 && count('zigzag') === 8 && count('circle') === 18 && count('free') === 2 && b[7].trials.every((t) => t.win_ms === 20000) && count('hard') === 10 && b.find((x) => x.id === 'idle').trials[0].win_ms === 10000 && count('fight') === 5);
   check(`${mode}: every trial states what it expects, with a sector where there is a direction`, b.every((x) => x.trials.every((t) => t.expect && t.expect.kind && (t.expect.dir === undefined || Number.isInteger(t.expect.sector) || ['horizontal', 'vertical', 'cw', 'ccw'].includes(t.expect.dir) || t.expect.axis))));
   const s = ctx.es(b);
-  check(`${mode}: the run takes about nine minutes of trials or less (${s} s of trials; the parts' screens add the rest)`, s >= 420 && s <= 560, String(s));
+  check(`${mode}: the run takes about nine minutes of trials or less (${s} s of trials; the parts' screens add the rest)`, s >= 420 && s <= (mode === 'gamepad' ? 640 : 560), String(s));
 }
 
 // ------------------------------------------------------------------ helpers of the analysis
@@ -80,7 +86,7 @@ function pathFor(kind, a, t) {
 }
 function synth(opts) {
   const hz = opts.hz, dt = 1000 / hz, code = opts.code;
-  const cap = { format: 'meridian.right-stick-capture/1', page: { version: 1 }, complete: true, person: { code, hand: 'right', thumb: 'right', rating: opts.rating, pad_model: opts.pad || '' }, env: { mode: opts.mode, frame_hz_estimate: hz, gamepad: opts.mode === 'gamepad' ? { mapping: 'standard', axes: 4, buttons: 17, axis_x: 2, axis_y: 3 } : null }, trials: [], events: [], samples: [], buttons: [], touch: [], keys: [] };
+  const cap = { format: 'meridian.right-stick-capture/1', page: { version: 1 }, complete: true, person: { code, hand: 'right', thumb: 'right', rating: opts.rating, grip: opts.grip || 'thumbs', pad_model: opts.pad || '' }, env: { mode: opts.mode, frame_hz_estimate: hz, gamepad: opts.mode === 'gamepad' ? { mapping: 'standard', axes: 4, buttons: 17, axis_x: 2, axis_y: 3 } : null }, trials: [], events: [], samples: [], buttons: [], touch: [], keys: [] };
   let f = 1000, clickNext = null;
   const trials = [];
   const add = (block, prompt, speed, expect, win_ms, kind, a, extra = {}) => trials.push({ block, prompt, speed, expect, win_ms, kind, a, ...extra });
@@ -92,6 +98,17 @@ function synth(opts) {
   for (const size of ['quarter', 'half', 'full']) for (const sign of [1, -1]) for (let r = 0; r < 2; r++) add('circle', `circle.${size}.${sign > 0 ? 'ccw' : 'cw'}`, 'comfortable', { kind: size, dir: sign > 0 ? 'ccw' : 'cw' }, 3000, 'circle', { size, sign, start: r * Math.PI / 2 });
   add('free', 'free', null, { kind: 'free' }, 20000, 'free');
   for (const [name, s] of DIRS.filter((d) => d[1] % 2 === 0)) add('hard', `hard.${name}`, 'hardest', { kind: 'hard', dir: name, sector: s }, 1500, 'hard', ang(s), { click: opts.clicks });
+  if (opts.mode === 'gamepad') {
+    // the thumb block: the bottom button, the stick, the bottom button, with the gaps a person of this grip leaves (a claw overlaps them)
+    for (const seq of ['aba', 'b2s', 's2b']) for (const pace of ['comfortable', 'fast']) for (const [name, s] of DIRS.filter((d) => d[1] % 2 === 0).slice(0, 2)) {
+      const gapB = (opts.claw ? -60 : pace === 'fast' ? 60 : 150), gapS = (opts.claw ? -30 : pace === 'fast' ? 70 : 180);
+      const events = []; let flickStart;
+      if (seq === 'aba' || seq === 'b2s') { events.push([300, 1], [380, 0]); flickStart = 380 + gapB; } else flickStart = 400;
+      const offAt = flickStart + 196;   // the stick is back under 0.2 (rescaled) 196 ms after a 40/120/60 ms flick starts
+      if (seq === 'aba') events.push([offAt + gapS, 1], [offAt + gapS + 80, 0]); if (seq === 's2b') events.push([offAt + gapS, 1], [offAt + gapS + 80, 0]);
+      add('thumb', `thumb.${seq}.${pace}`, pace, { kind: 'thumb', seq, dir: name, sector: s }, seq === 'aba' ? 3200 : 2400, 'thumb', ang(s), { thumb: { flickStart, events } });
+    }
+  }
   add('idle', 'idle', null, { kind: 'idle' }, 10000, 'idle');
   const drift = opts.drift || 0;
   const stickAt = (kind, a, tms) => {
@@ -109,7 +126,9 @@ function synth(opts) {
     let down = false, prevMag = 0;
     frames(tr.win_ms, (tms) => {
       if (opts.mode === 'gamepad') {
-        const [x, y] = stickAt(tr.kind, tr.a, tms); cap.samples.push([f, f, x, y]);
+        const [x, y] = tr.kind === 'thumb' ? (tms >= tr.thumb.flickStart ? [pathFor('flick', tr.a, (tms - tr.thumb.flickStart) / 1000)[0] + drift, -(pathFor('flick', tr.a, (tms - tr.thumb.flickStart) / 1000)[1] + drift)] : [drift, -drift]) : stickAt(tr.kind, tr.a, tms);
+        cap.samples.push([f, f, x, y]);
+        if (tr.kind === 'thumb') { tr.thumb.sent = tr.thumb.sent || 0; while (tr.thumb.sent < tr.thumb.events.length && tr.thumb.events[tr.thumb.sent][0] <= tms) { const e = tr.thumb.events[tr.thumb.sent++]; cap.buttons.push([f, f, 0, e[1], e[1]]); } }
         if (tr.click && tr.kind === 'hard') { if (tms >= 40 && tms < 41 + dt && !down) { down = true; cap.buttons.push([f, f, 11, 1, 1]); } if (down && tms > 140 && down !== 'up') { cap.buttons.push([f, f, 11, 0, 0]); down = 'up'; } }
       } else if (opts.mode === 'touch') {
         const [x, y] = pathFor(tr.kind, tr.a, tms / 1000); const mag = Math.hypot(x, y);
@@ -138,7 +157,7 @@ try {
   const caps = [
     synth({ code: 'ALPHA', rating: 'fps_fighting', mode: 'gamepad', hz: 60, pad: 'Xbox 360 Controller (STANDARD GAMEPAD)', clicks: false }),
     synth({ code: 'BRAVO', rating: 'regular', mode: 'gamepad', hz: 144, pad: 'DualSense Wireless Controller (STANDARD GAMEPAD)', clicks: true }),
-    synth({ code: 'CHARLIE', rating: 'new', mode: 'gamepad', hz: 60, pad: 'Pro Controller (STANDARD GAMEPAD)', clicks: false, drift: 0.02 }),
+    synth({ code: 'CHARLIE', rating: 'new', mode: 'gamepad', hz: 60, pad: 'Pro Controller (STANDARD GAMEPAD)', clicks: false, drift: 0.02, grip: 'claw', claw: true }),
     synth({ code: 'DELTA', rating: 'regular', mode: 'touch', hz: 60 }),
     synth({ code: 'ECHO', rating: 'regular', mode: 'keyboard', hz: 60 })
   ];
@@ -173,9 +192,16 @@ try {
     check('ideal circles and zig-zags are mostly recognised on a pad', Object.values(rec).some((r) => r.n > 0) && Object.values(rec).every((r) => r.pct >= 60), JSON.stringify(rec));
     check('the touch and keyboard captures are analysed too (the keyboard table and the spans are present)', !!TA.tables.keyboard && TA.tables.keyboard.trials > 0 && TA.tables.distributions['span half (ticks)'].n >= 5, JSON.stringify(TA.tables.keyboard));
     check('the bars table lists the spec\'s measures with a verdict', ['four-way flick recall and direction', 'hold read as a hold', 'false patterns at idle'].every((m) => T.tables.bars.some((x) => x.measure === m)) && T.tables.bars.every((x) => x.pass === true || x.pass === false || x.pass === null));
+    const thumb = (pad, grip, pace, seq, move) => T.tables.thumb.find((r) => r.pad.startsWith(pad) && r.grip === grip && r.pace === pace && r.seq === seq && r.move === move);
+    const near = (r, want, tol = 25) => r && r.n === r.trials && Math.abs(r.median - want) <= tol;
+    check('thumb transfer: every thumb trial yields its times, per pad and grip', T.tables.thumb.length === 3 * 2 * 5 + 0 && T.tables.thumb.every((r) => r.n === r.trials && r.n > 0), JSON.stringify(T.tables.thumb.filter((r) => r.n !== r.trials)));
+    check('thumb transfer (60 Hz pad, thumbs): button to stick 90 and 180 ms, stick to button 70 and 180 ms, as scripted (the stick takes 28 ms to reach 0.6)', near(thumb('Xbox', 'thumbs', 'comfortable', 'b2s', 'b2s'), 178) && near(thumb('Xbox', 'thumbs', 'fast', 'b2s', 'b2s'), 88) && near(thumb('Xbox', 'thumbs', 'comfortable', 's2b', 's2b'), 180) && near(thumb('Xbox', 'thumbs', 'fast', 's2b', 's2b'), 70), JSON.stringify(T.tables.thumb.filter((r) => r.pad.startsWith('Xbox')).map((r) => [r.pace, r.seq, r.move, r.median])));
+    check('thumb transfer (144 Hz pad): the same times within a frame', near(thumb('DualSense', 'thumbs', 'comfortable', 'aba', 'b2s'), 178, 20) && near(thumb('DualSense', 'thumbs', 'comfortable', 'aba', 's2b'), 180, 20) && near(thumb('DualSense', 'thumbs', 'fast', 'aba', 'total'), 406, 20), JSON.stringify(T.tables.thumb.filter((r) => r.pad.startsWith('DualSense')).map((r) => [r.pace, r.seq, r.move, r.median])));
+    check('thumb transfer: a claw grip overlaps (negative times, all of them) and is told apart by grip', (() => { const r = thumb('Pro Controller', 'claw', 'comfortable', 'b2s', 'b2s'), q = thumb('Pro Controller', 'claw', 'fast', 's2b', 's2b'); return r && q && r.median < 0 && r.overlap === 100 && q.median < 0 && q.overlap === 100 && T.tables.thumb.every((x) => x.pad.startsWith('Pro Controller') === (x.grip === 'claw')); })(), JSON.stringify(T.tables.thumb.filter((r) => r.pad.startsWith('Pro')).map((r) => [r.pace, r.seq, r.move, r.median, r.overlap])));
+    check('thumb transfer: the p90 is never below the median', T.tables.thumb.every((r) => r.p90 >= r.median));
     // the command line, end to end
     const r = spawnSync(process.execPath, [join(HERE, 'right-stick-analyse.mjs'), tmp, '--export-traces', join(tmp, 'tr'), '--json', join(tmp, 'tables.json')], { encoding: 'utf8' });
-    check('the command prints the eleven tables and writes the traces and the json', r.status === 0 && /1\. Who took part/.test(r.stdout) && /11\. Against the proposed bars/.test(r.stdout) && existsSync(join(tmp, 'tr', 'ALPHA.traces.json')) && existsSync(join(tmp, 'tables.json')), (r.stderr || r.stdout).slice(0, 300));
+    check('the command prints the twelve tables and writes the traces and the json', r.status === 0 && /1\. Who took part/.test(r.stdout) && /11\. Against the proposed bars/.test(r.stdout) && /12\. Thumb transfer/.test(r.stdout) && existsSync(join(tmp, 'tr', 'ALPHA.traces.json')) && existsSync(join(tmp, 'tables.json')), (r.stderr || r.stdout).slice(0, 300));
     const trs = JSON.parse(readFileSync(join(tmp, 'tr', 'ALPHA.traces.json'), 'utf8'));
     const circles = trs.trials.filter((x) => x.block === 'circle');
     check('the exported traces keep each circle trial\'s direction (clockwise or anticlockwise) and each flick\'s sector', circles.length > 0 && circles.every((x) => x.dir === 'cw' || x.dir === 'ccw') && new Set(circles.map((x) => x.dir)).size === 2 && trs.trials.filter((x) => x.block === 'flick4').every((x) => Number.isInteger(x.sector)));
