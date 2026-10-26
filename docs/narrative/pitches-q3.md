@@ -109,8 +109,11 @@ Orb: "Powerups and transformations strike me as a genre staple so I want this fu
 | 1 to 3 | Joke | Rev 2 is only louder. Rev 3 adds a hat. |
 | 4 to 8 | Joke | Rev 4 is one pixel taller. Rev 5 is the same body with a second pair of eyes. Rev 6 is smaller. Rev 7 adds a cape. Rev 8 changes nothing except the anger. |
 | 9 | Real | Field Revision: armour and a new beam. |
-| 10 to 11 | Real | Executive Revision: the stylus tail (item g) ramps up. |
+| 10 | Real | Executive Revision: the stylus tail (item g) ramps up. |
+| 11 | Real | Council Revision: see `docs/design/moveset-rules.md`. |
 | 12 | Real | Final Approved Revision: full power and unique abilities. |
+
+*Aligned 2026-10-23 to the one revision order in `docs/design/moveset-rules.md`: 9 Field, 10 Executive, 11 Council, 12 Final Approved (this table had Executive at 10 to 11).*
 
 **The Cyborg (molts).**
 

@@ -65,6 +65,8 @@ The Empress's guard is a 3v1 character. In a 1v1 she is alone and talks only to 
 4. **The Cyborg's hunger stays on fighters (comic) and wreckage,** never on civilians or children, and nothing has him absorb a fighter's power or form (the genre's glutton signature). His taunt for a wrecked street is now about steel ("Good steel in there!"), not food. No depicted biting or swallowing until the rating decision.
 5. **No "Demon Cyborg" in public text.** The internal title in `identity.md` ("Demon Cyborg") is a working data field; it should not appear on a page, a store listing or in a trailer. Public copy says "the Cyborg".
 
+6. **Legal ln07 (RL-181, 2026-10-23): "snack" as an address stays.** ln02 covers depicted eating, not dialogue, so the Cyborg's spoken "snack" for an opponent stays in Orb's approved lines, aimed at **fighters only** (never a bystander, civilian or child) and never played over an on-screen bite. Mouth words (spit, snack, bite, chew, jaw, teeth and the like) stay out of **move names and flavour text**, anything an artist reads; the energy names already follow that.
+
 ## 10. Questions for Orb
 
 1. (Ruled.) The after-the-bell apology stands.

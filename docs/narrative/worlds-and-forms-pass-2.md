@@ -59,8 +59,11 @@ She hates to change. Each revision is the smallest change she could get away wit
 | **4 (the hat)** | A joke she takes seriously. | She adds a hat, and every guard member turns to check whether they should salute the hat. |
 | **6 (smaller)** | An insult to her own image, endured. | She shrinks a size, and her train stays the same length, trailing behind like an apology. |
 | **9 (Field Revision)** | She finally admits the fight is serious. | Armour plates close over her regalia one by one, and she smooths each one as it settles, reluctantly. |
-| **11 (Executive Revision)** | The train becomes the weapon. | The train unfurls and every hem catches the light, and she lets out a long sigh, like a woman lifting a very heavy box. |
+| **10 (Executive Revision)** | The train becomes the weapon. | The train unfurls and every hem catches the light, and she lets out a long sigh, like a woman lifting a very heavy box. |
+| **11 (Council Revision)** | Not written in this pass: see `moveset-rules.md` (the fleet's shadow passes over and her volleys become barrages). | |
 | **12 (Final Approved)** | Total commitment: the only form she has not been dreading. | The guard fall silent and drop their salutes, and she smiles for the first time without checking who sees it. |
+
+*Aligned 2026-10-23 to the one revision order in `docs/design/moveset-rules.md`: 9 Field, 10 Executive, 11 Council, 12 Final Approved (this table had Executive at 11).*
 
 ### The Protagonist: pushing past his limits (Hot Blood)
 

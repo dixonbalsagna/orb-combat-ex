@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check the beat-template library against Legal's ln04 and ln05 (docs/legal/beat-templates-screen.md).
 
-Usage: python docs/narrative/beat-check.py [docs/narrative/pending/beat_templates.json]
+Usage: python docs/narrative/beat-check.py [docs/narrative/pending/beat_templates.json | pending/campaign_templates.json]
 
 What it checks (exit 1 on any failure):
   1. No template reads a slot the Cyborg may never read (toll_band, or a name matching the forbidden patterns),
@@ -37,6 +37,10 @@ def usable(tpl, opponent, ctx, rules):
 
 def main(path):
     d = json.load(open(path, encoding="utf-8"))
+    if "picker_rules" not in d or "slots" not in d:
+        base = json.load(open(os.path.join(HERE, "pending", "beat_templates.json"), encoding="utf-8"))
+        d.setdefault("picker_rules", base["picker_rules"])
+        d.setdefault("slots", base["slots"])
     rules = d["picker_rules"]
     bad = 0
 
