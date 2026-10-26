@@ -35,8 +35,8 @@
       },
       {
         "combat_label": "Ring Hang",
-        "name": "Ring Hang",
-        "alternate": "Loop Hold",
+        "name": "Ring Hold",
+        "alternate": "Ring Bind",
         "is": "grab in flight: the bind holds the body still in the air",
         "flavour": "Held in the air. Hold still."
       },
@@ -99,7 +99,7 @@
     "PROTAGONIST": [
       {
         "when": "takes_over",
-        "text": "My turn now! Hang on!",
+        "text": "My turn now! Hold on!",
         "alternate": "Nice chase! Now it's mine!"
       },
       {

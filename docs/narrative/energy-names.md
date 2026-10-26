@@ -68,7 +68,7 @@ A call-out is said when the move happens: the grab lands, the beam is released a
 | The Anti-hero (the rival) | **Open Loop** (alt Laid Ring)<br>*Block, and an open loop waits. Step in.* | **Standing Pin** (alt Upright Pin)<br>*One needle, standing point up.* | **Hanging Plate** (alt Hanging Slab)<br>*A small plate, hanging flat. Don't touch.* |
 | The Empress | **Furled Banners** (alt Banner Ring)<br>*Our banners wait, furled, for the petitioner.* | **Hanging Sliver** (alt Still Cut)<br>*One upright sliver, hanging still. Do touch it.* | **Resting Crown** (alt Little Crown)<br>*A small crown, resting. It is not for wearing.* |
 | The Cyborg | **Cable Coil** (alt Laid Hook)<br>*A hook on a coil of cable. Step closer.* | **Hanging Rivet** (alt Pinned Rivet)<br>*One hot rivet, hanging still in the air.* | **Slag Clot** (alt Cracked Clot)<br>*A crusted clot of slag, glowing at the cracks.* |
-| The Protagonist | **Harbour Hammock** (alt Slack Net)<br>*Block, and a loose net hangs there. Walk in.* | **Flint Mine** (alt Spark Pinch)<br>*A pinch of sparks, hanging like struck flint.* | **Scorch Cup** (alt Heat Cup)<br>*A hot lump, sitting in a scorched cup.* |
+| The Protagonist | **Harbour Hammock** (alt Slack Net)<br>*Block, and a loose net waits there. Walk in.* | **Flint Mine** (alt Spark Pinch)<br>*A pinch of sparks, hanging like struck flint.* | **Scorch Cup** (alt Heat Cup)<br>*A hot lump, sitting in a scorched cup.* |
 
 ## 6. Questions for Orb
 
