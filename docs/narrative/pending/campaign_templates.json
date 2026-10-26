@@ -657,11 +657,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Get up, amateur. I'll take it from here."
+          "text": "Get up, amateur. I'll take it from here.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "You came! Thanks! Hit her hard!"
+          "text": "You came! Thanks! Hit her hard!",
+          "source": "claude"
         }
       ]
     },
@@ -671,7 +673,8 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "Another rat? Gahaha! The more, the merrier!"
+          "text": "Another rat? Gahaha! The more, the merrier!",
+          "source": "claude"
         }
       ]
     },
@@ -681,11 +684,13 @@
       "lines": [
         {
           "who": "PROTAGONIST",
-          "text": "I owe you one. Don't say it."
+          "text": "I owe you one. Don't say it.",
+          "source": "claude"
         },
         {
           "who": "RIVAL",
-          "text": "Don't thank me. Pay me back."
+          "text": "Don't thank me. Pay me back.",
+          "source": "claude"
         }
       ]
     },
@@ -695,11 +700,13 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "Hahaha! We saved you, rat. Remember it!"
+          "text": "Hahaha! We saved you, rat. Remember it!",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "I remember! Fight beside me?"
+          "text": "I remember! Fight beside me?",
+          "source": "claude"
         }
       ]
     },
@@ -709,11 +716,13 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Last time, the Rival took the ridge."
+          "text": "Last time, the Rival took the ridge.",
+          "source": "claude"
         },
         {
           "who": "RADIO",
-          "text": "The harbour still stands. For now."
+          "text": "The harbour still stands. For now.",
+          "source": "claude"
         }
       ]
     },
@@ -723,7 +732,8 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "To be continued. The harbour took heavy damage."
+          "text": "To be continued. The harbour took heavy damage.",
+          "source": "claude"
         }
       ]
     },
@@ -733,11 +743,13 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Rankhold holds the high ground. The ridge is in ruins."
+          "text": "Rankhold holds the high ground. The ridge is in ruins.",
+          "source": "claude"
         },
         {
           "who": "RIVAL",
-          "text": "I kept the ground. Come and take it."
+          "text": "I kept the ground. Come and take it.",
+          "source": "claude"
         }
       ]
     },
@@ -747,7 +759,8 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Last time, you lost here. Remember?"
+          "text": "Last time, you lost here. Remember?",
+          "source": "claude"
         }
       ]
     },
@@ -757,7 +770,8 @@
       "lines": [
         {
           "who": "PROTAGONIST",
-          "text": "Okay. I know what beat me. Again!"
+          "text": "Okay. I know what beat me. Again!",
+          "source": "claude"
         }
       ]
     },
@@ -767,11 +781,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Stand there. Block it, if you can."
+          "text": "Stand there. Block it, if you can.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Okay, teach me! I'm listening!"
+          "text": "Okay, teach me! I'm listening!",
+          "source": "claude"
         }
       ]
     },
@@ -781,7 +797,8 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Today's lesson: beating the beam."
+          "text": "Today's lesson: beating the beam.",
+          "source": "claude"
         }
       ]
     },
@@ -791,11 +808,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Fine. You learned something. Don't waste it."
+          "text": "Fine. You learned something. Don't waste it.",
+          "source": "claude"
         },
         {
           "who": "RADIO",
-          "text": "Lesson learned: the air game."
+          "text": "Lesson learned: the air game.",
+          "source": "claude"
         }
       ]
     },
@@ -805,11 +824,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Again. Your feet were wrong."
+          "text": "Again. Your feet were wrong.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Again! One more try!"
+          "text": "Again! One more try!",
+          "source": "claude"
         }
       ]
     },
@@ -819,11 +840,13 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "The harbour was ruined last time. The Rival waits there."
+          "text": "The harbour was ruined last time. The Rival waits there.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Back to the harbour. Let's finish it!"
+          "text": "Back to the harbour. Let's finish it!",
+          "source": "claude"
         }
       ]
     },
@@ -833,7 +856,8 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Same ruins. Same result, amateur."
+          "text": "Same ruins. Same result, amateur.",
+          "source": "claude"
         }
       ]
     },
@@ -843,7 +867,8 @@
       "lines": [
         {
           "who": "CYBORG",
-          "text": "Good wreckage here. I saved some!"
+          "text": "Good wreckage here. I saved some!",
+          "source": "claude"
         }
       ]
     },
@@ -854,11 +879,13 @@
         {
           "who": "PROTAGONIST",
           "text": "Quiet again. We'll rebuild it, promise.",
-          "after_fight": true
+          "after_fight": true,
+          "source": "claude"
         },
         {
           "who": "CROWD",
-          "text": "Please don't break it again."
+          "text": "Please don't break it again.",
+          "source": "claude"
         }
       ]
     },
@@ -868,7 +895,8 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "You owe us a favour, rat."
+          "text": "You owe us a favour, rat.",
+          "source": "claude"
         }
       ]
     },
@@ -878,11 +906,13 @@
       "lines": [
         {
           "who": "PROTAGONIST",
-          "text": "Debt's paid. We're even now!"
+          "text": "Debt's paid. We're even now!",
+          "source": "claude"
         },
         {
           "who": "RIVAL",
-          "text": "Even? Don't get cosy."
+          "text": "Even? Don't get cosy.",
+          "source": "claude"
         }
       ]
     },
@@ -892,7 +922,8 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "I haven't forgotten last time. Have you?"
+          "text": "I haven't forgotten last time. Have you?",
+          "source": "claude"
         }
       ]
     },
@@ -902,7 +933,8 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "Hahaha! We switched sides again. Surprise!"
+          "text": "Hahaha! We switched sides again. Surprise!",
+          "source": "claude"
         }
       ]
     },
@@ -912,7 +944,8 @@
       "lines": [
         {
           "who": "CYBORG",
-          "text": "I said I'd come back. Here I am!"
+          "text": "I said I'd come back. Here I am!",
+          "source": "claude"
         }
       ]
     },
@@ -922,7 +955,8 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "To be continued. Next episode answers this."
+          "text": "To be continued. Next episode answers this.",
+          "source": "claude"
         }
       ]
     },
@@ -932,7 +966,8 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Next episode: the Empress, on the open plains."
+          "text": "Next episode: the Empress, on the open plains.",
+          "source": "claude"
         }
       ]
     },
@@ -942,11 +977,13 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Next: the finale, at the boss's home."
+          "text": "Next: the finale, at the boss's home.",
+          "source": "claude"
         },
         {
           "who": "EMPRESS",
-          "text": "Come to the throne, rat. We will be waiting."
+          "text": "Come to the throne, rat. We will be waiting.",
+          "source": "claude"
         }
       ]
     },
@@ -956,9 +993,17 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Still open: the debt. Who collects?"
+          "text": "Still open: the debt. Who collects?",
+          "source": "claude"
         }
       ]
     }
-  ]
+  ],
+  "provenance": {
+    "record": "ai01 (the AI-provenance record, docs/narrative/pending/provenance_hw11.json; mixed sources go in one list)",
+    "ai_drafted": "Every line in this file's samples is drafted by Claude (Anthropic), from the voice bibles. Each sample line carries source: claude.",
+    "orbs": "No line is Orb's. Orb's own marks, rewrites and choices will be recorded here when they come; none is recorded yet.",
+    "main_story_slots": "Hold no text at all. When Orb writes them, those lines are Orb's, with source: orb.",
+    "public_statement": "The public AI statement names categories (text and dialogue), never vendors, and never claims a line as human-written unless this record shows it (Legal RL-153)."
+  }
 }

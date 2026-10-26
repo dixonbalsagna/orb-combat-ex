@@ -220,6 +220,10 @@ For a main-story episode the same five columns apply, but their beats are Orb's.
 | `ORB.episode.cliffhanger` | Orb writes the card. |
 | `ORB.arc.finale` | Orb writes the finale. |
 
+**Legal's mc06 (campaign screen addendum).** A main-story **change slot** is the place where Orb's story changes a fighter (a form gained, a side switched). It is labelled `ORB.change.fighter` and holds no text. It triggers **by story position or by an explicit authored choice only, never by how a fighter fared against the player**, so no ledger result (`last`, `wrecked` or any other) can fire it, and its **outcomes are a fixed list that Orb authors**: the generator may pick only from it. Filler has no change slot at all: no filler template changes a fighter.
+
+**Provenance (ai01).** Every sample line in this file is **drafted by Claude (Anthropic)** from the voice bibles, and each carries `source: claude` in the data. **No line is Orb's** yet; Orb's marks and rewrites will be recorded as `source: orb` when they come. The main-story slots hold no text, and when Orb writes them those lines are Orb's. The same note and per-line `source` are now in `beat_templates.json` and `campaign_templates.json`. The public AI statement names categories (text and dialogue), never vendors, and never claims a line as human-written unless the record shows it (RL-153).
+
 ## 7. What it needs
 
 - **Game Design:** the filler kinds as the doors campaign.md 1.3 names; `episode_number` and `side_place` from the ledger; and whether a filler arc uses the same families with its own villain.

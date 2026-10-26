@@ -834,11 +834,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Took you long enough. Come up, amateur."
+          "text": "Took you long enough. Come up, amateur.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Nice view! Is the whole stair yours?"
+          "text": "Nice view! Is the whole stair yours?",
+          "source": "claude"
         }
       ]
     },
@@ -849,11 +851,13 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "Our plains now, petitioner. Admire the horizon!"
+          "text": "Our plains now, petitioner. Admire the horizon!",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Flat and clear. I'll see you coming!"
+          "text": "Flat and clear. I'll see you coming!",
+          "source": "claude"
         }
       ]
     },
@@ -864,11 +868,13 @@
       "lines": [
         {
           "who": "CYBORG",
-          "text": "Come in! Plenty of scrap, plenty of room!"
+          "text": "Come in! Plenty of scrap, plenty of room!",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Big yard! Where do the cranes go?"
+          "text": "Big yard! Where do the cranes go?",
+          "source": "claude"
         }
       ]
     },
@@ -879,11 +885,13 @@
       "lines": [
         {
           "who": "PROTAGONIST",
-          "text": "Same crooked plank. Good to be home!"
+          "text": "Same crooked plank. Good to be home!",
+          "source": "claude"
         },
         {
           "who": "RIVAL",
-          "text": "Cute pier. Shame about the company."
+          "text": "Cute pier. Shame about the company.",
+          "source": "claude"
         }
       ]
     },
@@ -894,11 +902,13 @@
       "lines": [
         {
           "who": "PROTAGONIST",
-          "text": "Warm-up crowd! Save some for me!"
+          "text": "Warm-up crowd! Save some for me!",
+          "source": "claude"
         },
         {
           "who": "RIVAL",
-          "text": "Keep up. I'm taking the left."
+          "text": "Keep up. I'm taking the left.",
+          "source": "claude"
         }
       ]
     },
@@ -909,11 +919,13 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "You broke our tower, rat. We'll break your arm."
+          "text": "You broke our tower, rat. We'll break your arm.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Fair! Hit me as hard as you like!"
+          "text": "Fair! Hit me as hard as you like!",
+          "source": "claude"
         }
       ]
     },
@@ -924,11 +936,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Lucky swing. I've been counting the days."
+          "text": "Lucky swing. I've been counting the days.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Count harder! I've been training too!"
+          "text": "Count harder! I've been training too!",
+          "source": "claude"
         }
       ]
     },
@@ -939,11 +953,13 @@
       "lines": [
         {
           "who": "CYBORG",
-          "text": "Time called it. My stomach didn't!"
+          "text": "Time called it. My stomach didn't!",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Fine! Round two. Bring more plating!"
+          "text": "Fine! Round two. Bring more plating!",
+          "source": "claude"
         }
       ]
     },
@@ -954,11 +970,13 @@
       "lines": [
         {
           "who": "CYBORG",
-          "text": "You left good wreckage back there. Thanks!"
+          "text": "You left good wreckage back there. Thanks!",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Don't thank me. Fight me!"
+          "text": "Don't thank me. Fight me!",
+          "source": "claude"
         }
       ]
     },
@@ -969,11 +987,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "You, the loud one. I owe you a rematch."
+          "text": "You, the loud one. I owe you a rematch.",
+          "source": "claude"
         },
         {
           "who": "EMPRESS",
-          "text": "Hahaha! Come and collect, clown!"
+          "text": "Hahaha! Come and collect, clown!",
+          "source": "claude"
         }
       ]
     },
@@ -984,11 +1004,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Back again? I ranked you last time."
+          "text": "Back again? I ranked you last time.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Rank me again. I'll climb!"
+          "text": "Rank me again. I'll climb!",
+          "source": "claude"
         }
       ]
     },
@@ -999,11 +1021,13 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "We let you win, rat. Try that twice!"
+          "text": "We let you win, rat. Try that twice!",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "You let me? Then let me again!"
+          "text": "You let me? Then let me again!",
+          "source": "claude"
         }
       ]
     },
@@ -1014,11 +1038,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "A fluke. Flukes don't repeat."
+          "text": "A fluke. Flukes don't repeat.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Then show me the real one!"
+          "text": "Then show me the real one!",
+          "source": "claude"
         }
       ]
     },
@@ -1029,11 +1055,13 @@
       "lines": [
         {
           "who": "CYBORG",
-          "text": "Your crater's still warm. Good steel in it!"
+          "text": "Your crater's still warm. Good steel in it!",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Keep your eyes on me, not the dirt!"
+          "text": "Keep your eyes on me, not the dirt!",
+          "source": "claude"
         }
       ]
     },
@@ -1044,11 +1072,13 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "Time ended it. We refuse to be timed!"
+          "text": "Time ended it. We refuse to be timed!",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Ha! Then no clock this time!"
+          "text": "Ha! Then no clock this time!",
+          "source": "claude"
         }
       ]
     },
@@ -1059,11 +1089,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Did you think the road was empty?"
+          "text": "Did you think the road was empty?",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Oh, hello! Ready when you are!"
+          "text": "Oh, hello! Ready when you are!",
+          "source": "claude"
         }
       ]
     },
@@ -1074,11 +1106,13 @@
       "lines": [
         {
           "who": "CYBORG",
-          "text": "Shortcut! It goes right through my yard."
+          "text": "Shortcut! It goes right through my yard.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "This is not on the map!"
+          "text": "This is not on the map!",
+          "source": "claude"
         }
       ]
     },
@@ -1089,11 +1123,13 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "Only one of you? How careless, rat."
+          "text": "Only one of you? How careless, rat.",
+          "source": "claude"
         },
         {
           "who": "RIVAL",
-          "text": "Careless? I'm exactly where I meant to be."
+          "text": "Careless? I'm exactly where I meant to be.",
+          "source": "claude"
         }
       ]
     },
@@ -1104,11 +1140,13 @@
       "lines": [
         {
           "who": "PROTAGONIST",
-          "text": "Surprise! I've been waiting up here!"
+          "text": "Surprise! I've been waiting up here!",
+          "source": "claude"
         },
         {
           "who": "RIVAL",
-          "text": "Predictable. I counted your footsteps."
+          "text": "Predictable. I counted your footsteps.",
+          "source": "claude"
         }
       ]
     },
@@ -1119,11 +1157,13 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Streets are clear. Something is coming this way."
+          "text": "Streets are clear. Something is coming this way.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Everyone inside! I'll meet it!"
+          "text": "Everyone inside! I'll meet it!",
+          "source": "claude"
         }
       ]
     },
@@ -1134,15 +1174,18 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "Hahaha! Carry on. We'll take the winner."
+          "text": "Hahaha! Carry on. We'll take the winner.",
+          "source": "claude"
         },
         {
           "who": "RIVAL",
-          "text": "Stay out of this."
+          "text": "Stay out of this.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "The more the merrier! Who's first?"
+          "text": "The more the merrier! Who's first?",
+          "source": "claude"
         }
       ]
     },
@@ -1153,11 +1196,13 @@
       "lines": [
         {
           "who": "CYBORG",
-          "text": "That wreck is mine. I smelled it first!"
+          "text": "That wreck is mine. I smelled it first!",
+          "source": "claude"
         },
         {
           "who": "RIVAL",
-          "text": "Back off, scrap. I'm busy."
+          "text": "Back off, scrap. I'm busy.",
+          "source": "claude"
         }
       ]
     },
@@ -1168,11 +1213,13 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Someone's watching from the ridge. Not moving."
+          "text": "Someone's watching from the ridge. Not moving.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Let them look. Show them something!"
+          "text": "Let them look. Show them something!",
+          "source": "claude"
         }
       ]
     },
@@ -1183,11 +1230,13 @@
       "lines": [
         {
           "who": "PROTAGONIST",
-          "text": "Need a hand? Keep your guard up!"
+          "text": "Need a hand? Keep your guard up!",
+          "source": "claude"
         },
         {
           "who": "RIVAL",
-          "text": "I didn't ask. Stay out of my way."
+          "text": "I didn't ask. Stay out of my way.",
+          "source": "claude"
         }
       ]
     },
@@ -1198,11 +1247,13 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Nobody knows who it is yet."
+          "text": "Nobody knows who it is yet.",
+          "source": "claude"
         },
         {
           "who": "CROWD",
-          "text": "Is that another fighter?"
+          "text": "Is that another fighter?",
+          "source": "claude"
         }
       ]
     },
@@ -1213,11 +1264,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "I rank myself first. Goodbye, amateur."
+          "text": "I rank myself first. Goodbye, amateur.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Fine! I'll beat you both!"
+          "text": "Fine! I'll beat you both!",
+          "source": "claude"
         }
       ]
     },
@@ -1228,11 +1281,13 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "Hahaha! We choose our side. Today, yours."
+          "text": "Hahaha! We choose our side. Today, yours.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Welcome aboard! Try to keep up!"
+          "text": "Welcome aboard! Try to keep up!",
+          "source": "claude"
         }
       ]
     },
@@ -1243,11 +1298,13 @@
       "lines": [
         {
           "who": "CYBORG",
-          "text": "Wrecks on both sides. I'm torn!"
+          "text": "Wrecks on both sides. I'm torn!",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Pick me! I promise a good fight!"
+          "text": "Pick me! I promise a good fight!",
+          "source": "claude"
         }
       ]
     },
@@ -1258,11 +1315,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "I never switched. I outranked you."
+          "text": "I never switched. I outranked you.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Sure! Whatever you say!"
+          "text": "Sure! Whatever you say!",
+          "source": "claude"
         }
       ]
     },
@@ -1273,11 +1332,13 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "Partners? We have a court."
+          "text": "Partners? We have a court.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Then bring your court along!"
+          "text": "Then bring your court along!",
+          "source": "claude"
         }
       ]
     },
@@ -1288,11 +1349,13 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Smoke over Mendquay! The pier's burning!"
+          "text": "Smoke over Mendquay! The pier's burning!",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Not my pier! Move, move!"
+          "text": "Not my pier! Move, move!",
+          "source": "claude"
         }
       ]
     },
@@ -1303,11 +1366,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Someone's climbing my stair. Hold the fight."
+          "text": "Someone's climbing my stair. Hold the fight.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Go! Then I want my turn!"
+          "text": "Go! Then I want my turn!",
+          "source": "claude"
         }
       ]
     },
@@ -1318,11 +1383,13 @@
       "lines": [
         {
           "who": "CYBORG",
-          "text": "Home's all wreckage now. Lovely fuel!"
+          "text": "Home's all wreckage now. Lovely fuel!",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Come on, then. Fight me for it!"
+          "text": "Come on, then. Fight me for it!",
+          "source": "claude"
         }
       ]
     },
@@ -1333,11 +1400,13 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "Someone cracks our banners? Move, rat!"
+          "text": "Someone cracks our banners? Move, rat!",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Go! I'll wait right here!"
+          "text": "Go! I'll wait right here!",
+          "source": "claude"
         }
       ]
     },
@@ -1349,11 +1418,13 @@
         {
           "who": "PROTAGONIST",
           "text": "Sorry about the pier, everyone. I'll help rebuild.",
-          "after_fight": true
+          "after_fight": true,
+          "source": "claude"
         },
         {
           "who": "CROWD",
-          "text": "Just don't break it twice!"
+          "text": "Just don't break it twice!",
+          "source": "claude"
         }
       ]
     },
@@ -1364,7 +1435,8 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "We are watching, rat. Do hurry up!"
+          "text": "We are watching, rat. Do hurry up!",
+          "source": "claude"
         }
       ]
     },
@@ -1375,11 +1447,13 @@
       "lines": [
         {
           "who": "CYBORG",
-          "text": "Tick tock, snack. My stomach's counting!"
+          "text": "Tick tock, snack. My stomach's counting!",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Let it count. I'm ready!"
+          "text": "Let it count. I'm ready!",
+          "source": "claude"
         }
       ]
     },
@@ -1390,11 +1464,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "That's all? Third-rate, start to finish."
+          "text": "That's all? Third-rate, start to finish.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Again! I just found your timing!"
+          "text": "Again! I just found your timing!",
+          "source": "claude"
         }
       ]
     },
@@ -1405,11 +1481,13 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "Your friend looks lost, rat. Poor thing!"
+          "text": "Your friend looks lost, rat. Poor thing!",
+          "source": "claude"
         },
         {
           "who": "RIVAL",
-          "text": "Lost? I'm taking your crown."
+          "text": "Lost? I'm taking your crown.",
+          "source": "claude"
         }
       ]
     },
@@ -1420,11 +1498,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Your pier's still crooked. So are you."
+          "text": "Your pier's still crooked. So are you.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Crooked but standing! Come and see!"
+          "text": "Crooked but standing! Come and see!",
+          "source": "claude"
         }
       ]
     },
@@ -1435,7 +1515,8 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Next: Rankhold. Someone's waiting on the stair."
+          "text": "Next: Rankhold. Someone's waiting on the stair.",
+          "source": "claude"
         }
       ]
     },
@@ -1446,7 +1527,8 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Someone's coming. We'll meet them next time."
+          "text": "Someone's coming. We'll meet them next time.",
+          "source": "claude"
         }
       ]
     },
@@ -1457,11 +1539,13 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "While you fought, the harbour took damage."
+          "text": "While you fought, the harbour took damage.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Then let's go and help!"
+          "text": "Then let's go and help!",
+          "source": "claude"
         }
       ]
     },
@@ -1472,7 +1556,8 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "We will see you at the throne, rat."
+          "text": "We will see you at the throne, rat.",
+          "source": "claude"
         }
       ]
     },
@@ -1483,11 +1568,13 @@
       "lines": [
         {
           "who": "PROTAGONIST",
-          "text": "Same time next stage? Don't be late!"
+          "text": "Same time next stage? Don't be late!",
+          "source": "claude"
         },
         {
           "who": "RIVAL",
-          "text": "I'm never late. You're early."
+          "text": "I'm never late. You're early.",
+          "source": "claude"
         }
       ]
     }
@@ -1533,5 +1620,12 @@
       "home_wear"
     ],
     "filter": "A template is usable for a Cyborg opponent only if none of its reads is a forbidden slot or matches a forbidden pattern, and, if it reads home_wear, only when the home is his own breaking yard. toll_band and any count are never put into a Cyborg line's context at all."
+  },
+  "provenance": {
+    "record": "ai01 (the AI-provenance record, docs/narrative/pending/provenance_hw11.json; mixed sources go in one list)",
+    "ai_drafted": "Every line in this file's samples is drafted by Claude (Anthropic), from the voice bibles. Each sample line carries source: claude.",
+    "orbs": "No line is Orb's. Orb's own marks, rewrites and choices will be recorded here when they come; none is recorded yet.",
+    "main_story_slots": "Hold no text at all. When Orb writes them, those lines are Orb's, with source: orb.",
+    "public_statement": "The public AI statement names categories (text and dialogue), never vendors, and never claims a line as human-written unless this record shows it (Legal RL-153)."
   }
 }

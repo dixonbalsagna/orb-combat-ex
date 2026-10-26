@@ -365,3 +365,5 @@ Legal passed the library with three conditions (`docs/legal/beat-templates-scree
 1. Which sample lines sound right, and which fighter reads wrong? (Mark the samples.)
 2. Should a partner (human or CPU) speak in a beat, or only the opponent and the radio?
 3. How long should a beat be: one line, two or three?
+
+**Provenance (ai01).** Every sample line here is drafted by Claude (Anthropic) from the voice bibles and carries `source: claude` in the data; no line is Orb's yet (Orb's marks will be recorded as `source: orb`). The public AI statement names categories, never vendors.

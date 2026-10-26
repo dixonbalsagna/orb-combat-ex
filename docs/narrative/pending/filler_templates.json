@@ -560,13 +560,55 @@
     ]
   },
   "main_story_slots": {
-    "ORB.episode.cold_open": "Orb writes: who, where, what happens.",
-    "ORB.episode.rise": "Orb writes.",
-    "ORB.episode.twist": "Orb writes.",
-    "ORB.episode.escalation": "Orb writes.",
-    "ORB.episode.climax": "Orb writes: the climax's opponent and place (at least).",
-    "ORB.episode.cliffhanger": "Orb writes the card.",
-    "ORB.arc.finale": "Orb writes the finale."
+    "ORB.episode.cold_open": {
+      "meaning": "Orb writes: who, where, what happens.",
+      "text": "none: Orb writes it",
+      "source_when_written": "orb",
+      "triggers_by": "story position or an authored choice only (mc06)"
+    },
+    "ORB.episode.rise": {
+      "meaning": "Orb writes.",
+      "text": "none: Orb writes it",
+      "source_when_written": "orb",
+      "triggers_by": "story position or an authored choice only (mc06)"
+    },
+    "ORB.episode.twist": {
+      "meaning": "Orb writes.",
+      "text": "none: Orb writes it",
+      "source_when_written": "orb",
+      "triggers_by": "story position or an authored choice only (mc06)"
+    },
+    "ORB.episode.escalation": {
+      "meaning": "Orb writes.",
+      "text": "none: Orb writes it",
+      "source_when_written": "orb",
+      "triggers_by": "story position or an authored choice only (mc06)"
+    },
+    "ORB.episode.climax": {
+      "meaning": "Orb writes: the climax's opponent and place (at least).",
+      "text": "none: Orb writes it",
+      "source_when_written": "orb",
+      "triggers_by": "story position or an authored choice only (mc06)"
+    },
+    "ORB.episode.cliffhanger": {
+      "meaning": "Orb writes the card.",
+      "text": "none: Orb writes it",
+      "source_when_written": "orb",
+      "triggers_by": "story position or an authored choice only (mc06)"
+    },
+    "ORB.arc.finale": {
+      "meaning": "Orb writes the finale.",
+      "text": "none: Orb writes it",
+      "source_when_written": "orb",
+      "triggers_by": "story position or an authored choice only (mc06)"
+    },
+    "ORB.change.fighter": {
+      "meaning": "A main-story change to a fighter.",
+      "text": "none: Orb writes it",
+      "source_when_written": "orb",
+      "triggers_by": "story position or an authored choice only (mc06)",
+      "outcomes": "a fixed authored list"
+    }
   },
   "samples": [
     {
@@ -575,11 +617,13 @@
       "lines": [
         {
           "who": "PROTAGONIST",
-          "text": "Training ground! My favourite kind of place!"
+          "text": "Training ground! My favourite kind of place!",
+          "source": "claude"
         },
         {
           "who": "RIVAL",
-          "text": "Don't get excited. Warm-up first."
+          "text": "Don't get excited. Warm-up first.",
+          "source": "claude"
         }
       ]
     },
@@ -589,11 +633,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Your guard's dropping. Fix it."
+          "text": "Your guard's dropping. Fix it.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Okay! Show me how!"
+          "text": "Okay! Show me how!",
+          "source": "claude"
         }
       ]
     },
@@ -603,7 +649,8 @@
       "lines": [
         {
           "who": "CYBORG",
-          "text": "Training? Is there a wreck to hit?"
+          "text": "Training? Is there a wreck to hit?",
+          "source": "claude"
         }
       ]
     },
@@ -613,11 +660,13 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "The practice wall is cracked. Careful."
+          "text": "The practice wall is cracked. Careful.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Easy with the wall! Aim at me!"
+          "text": "Easy with the wall! Aim at me!",
+          "source": "claude"
         }
       ]
     },
@@ -627,11 +676,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Final drill. Hit me if you can."
+          "text": "Final drill. Hit me if you can.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Bring it! Best lesson yet!"
+          "text": "Bring it! Best lesson yet!",
+          "source": "claude"
         }
       ]
     },
@@ -641,7 +692,8 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Class dismissed. Tomorrow, a harder drill."
+          "text": "Class dismissed. Tomorrow, a harder drill.",
+          "source": "claude"
         }
       ]
     },
@@ -651,11 +703,13 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Best of three. Loser picks the ground."
+          "text": "Best of three. Loser picks the ground.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Deal! I'm hungry for a win!"
+          "text": "Deal! I'm hungry for a win!",
+          "source": "claude"
         }
       ]
     },
@@ -665,11 +719,13 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Round one goes to the Rival."
+          "text": "Round one goes to the Rival.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "One down! Next round!"
+          "text": "One down! Next round!",
+          "source": "claude"
         }
       ]
     },
@@ -679,11 +735,13 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "Make room, rats. We're playing too."
+          "text": "Make room, rats. We're playing too.",
+          "source": "claude"
         },
         {
           "who": "RIVAL",
-          "text": "This is a private game."
+          "text": "This is a private game.",
+          "source": "claude"
         }
       ]
     },
@@ -693,7 +751,8 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Last rounds. Nobody holds back now."
+          "text": "Last rounds. Nobody holds back now.",
+          "source": "claude"
         }
       ]
     },
@@ -703,11 +762,13 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Final round. The winner picks the ground."
+          "text": "Final round. The winner picks the ground.",
+          "source": "claude"
         },
         {
           "who": "RIVAL",
-          "text": "Everything rides on this one."
+          "text": "Everything rides on this one.",
+          "source": "claude"
         }
       ]
     },
@@ -717,7 +778,8 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "A rematch is promised. The loser picks."
+          "text": "A rematch is promised. The loser picks.",
+          "source": "claude"
         }
       ]
     },
@@ -727,11 +789,13 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Round one on the stage. Four fighters."
+          "text": "Round one on the stage. Four fighters.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "A tournament! This is great!"
+          "text": "A tournament! This is great!",
+          "source": "claude"
         }
       ]
     },
@@ -741,7 +805,8 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "First round. Don't embarrass me."
+          "text": "First round. Don't embarrass me.",
+          "source": "claude"
         }
       ]
     },
@@ -751,7 +816,8 @@
       "lines": [
         {
           "who": "CYBORG",
-          "text": "I signed up too. Is food free?"
+          "text": "I signed up too. Is food free?",
+          "source": "claude"
         }
       ]
     },
@@ -761,7 +827,8 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "Gahaha! Even the stage trembles!"
+          "text": "Gahaha! Even the stage trembles!",
+          "source": "claude"
         }
       ]
     },
@@ -771,11 +838,13 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "The final. One fighter takes the stage."
+          "text": "The final. One fighter takes the stage.",
+          "source": "claude"
         },
         {
           "who": "EMPRESS",
-          "text": "The title is ours, rat!"
+          "text": "The title is ours, rat!",
+          "source": "claude"
         }
       ]
     },
@@ -785,7 +854,8 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "A winner is crowned. A rematch is coming."
+          "text": "A winner is crowned. A rematch is coming.",
+          "source": "claude"
         }
       ]
     },
@@ -795,11 +865,13 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "A fighter is stranded across the ring."
+          "text": "A fighter is stranded across the ring.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Then let's go and fetch them!"
+          "text": "Then let's go and fetch them!",
+          "source": "claude"
         }
       ]
     },
@@ -809,7 +881,8 @@
       "lines": [
         {
           "who": "RIVAL",
-          "text": "Turn back. The road is mine."
+          "text": "Turn back. The road is mine.",
+          "source": "claude"
         }
       ]
     },
@@ -819,7 +892,8 @@
       "lines": [
         {
           "who": "CYBORG",
-          "text": "About time! I'm starving down here!"
+          "text": "About time! I'm starving down here!",
+          "source": "claude"
         }
       ]
     },
@@ -829,11 +903,13 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "The ground is giving way near the route."
+          "text": "The ground is giving way near the route.",
+          "source": "claude"
         },
         {
           "who": "PROTAGONIST",
-          "text": "Hurry! Fly over it!"
+          "text": "Hurry! Fly over it!",
+          "source": "claude"
         }
       ]
     },
@@ -843,7 +919,8 @@
       "lines": [
         {
           "who": "EMPRESS",
-          "text": "Win, rat, and take your friend home!"
+          "text": "Win, rat, and take your friend home!",
+          "source": "claude"
         }
       ]
     },
@@ -853,9 +930,38 @@
       "lines": [
         {
           "who": "RADIO",
-          "text": "Safe at last. But how did they get there?"
+          "text": "Safe at last. But how did they get there?",
+          "source": "claude"
         }
       ]
     }
-  ]
+  ],
+  "provenance": {
+    "record": "ai01 (the AI-provenance record, docs/narrative/pending/provenance_hw11.json; mixed sources go in one list)",
+    "ai_drafted": "Every line in this file's samples is drafted by Claude (Anthropic), from the voice bibles. Each sample line carries source: claude.",
+    "orbs": "No line is Orb's. Orb's own marks, rewrites and choices will be recorded here when they come; none is recorded yet.",
+    "main_story_slots": "Hold no text at all. When Orb writes them, those lines are Orb's, with source: orb.",
+    "public_statement": "The public AI statement names categories (text and dialogue), never vendors, and never claims a line as human-written unless this record shows it (Legal RL-153)."
+  },
+  "legal_mc06": {
+    "rule": "Any main-story change slot (a fighter changes in Orb's story: a form gained, a side switched) triggers by story position or by an explicit authored choice only, never by how a fighter fared against the player. Its outcomes are a fixed authored list.",
+    "change_slots": {
+      "ORB.change.fighter": {
+        "what": "A fighter changes in the main story (a form gained, a side switched).",
+        "trigger": [
+          "story_position",
+          "authored_choice"
+        ],
+        "never_triggered_by": [
+          "how the fighter fared against the player",
+          "last",
+          "wrecked",
+          "any ledger result"
+        ],
+        "outcomes": "A fixed list Orb authors (empty until Orb writes it); the generator may pick only from it, in the order or by the choice Orb authors.",
+        "text": "none: Orb writes it"
+      }
+    },
+    "filler": "Filler has no change slot at all: no filler template changes a fighter."
+  }
 }

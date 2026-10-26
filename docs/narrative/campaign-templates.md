@@ -228,3 +228,5 @@ The card that ends an episode: to be continued, next episode, the finale, or a t
 1. Should a **recap** be spoken by the radio only, or may a fighter open it ("Last time, I ranked you low.")? Both are in the samples.
 2. Is the **rescuer** best a rival who owes the hero, or someone from an earlier twist? The samples use the Rival and the Empress.
 3. Which **threads** should the arc carry: debts, grudges, a switched ally, a promised return? They imply history, which Orb writes.
+
+**Provenance (ai01).** Every sample line here is drafted by Claude (Anthropic) from the voice bibles and carries `source: claude` in the data; no line is Orb's yet (Orb's marks will be recorded as `source: orb`). The public AI statement names categories, never vendors.
