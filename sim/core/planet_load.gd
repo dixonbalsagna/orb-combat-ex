@@ -9,8 +9,8 @@ extends RefCounted
 ##   climate  World's PlanetJob: the climate grid, a slice of cells a step, then the wind's carry;
 ##   rivers   the flow field when rivers are on (World's job makes it as a step of its own);
 ##   places   the cities and towns, a try-set a step;
-##   ring     a match's ring read (beginFor only): World's RingJob, a slice of columns a step, memoised where the match
-##            finds it (an arena with no ring of its own, a touch-down's, is read in one piece).
+##   ring     a match's ring read (beginFor only): World's RingJob (an arena that names its ring) or SliceJob (a
+##            touch-down's), a slice of columns a step, memoised where the match finds it.
 ## The planet and the ring are the same however they are stepped (make(seed) is World's job run to the end). Behind
 ## gen 2: a gen 1 planet is quick, and newMatch still makes it as it always did.
 ## strict: the game's host sets it. SimCore.newMatch then refuses a setup whose gen 2 planet is not made (it is left as
@@ -75,6 +75,7 @@ class Job extends RefCounted:
 	var _cols: int = 0             # the match's arena, in columns (0: no ring to read)
 	var _ring: Dictionary = {}     # its ring, when the arena names one
 	var _rj = null                 # World's RingJob over it
+	var _sj = null                 # World's SliceJob over a touch-down's ring
 	var _ringDone: bool = true
 
 	func _init(sd: int, g: int, setup: Dictionary) -> void:
@@ -122,9 +123,8 @@ class Job extends RefCounted:
 					WorldPlateB.stateOf(P)
 				phase = "climate"
 			elif not pj.done:
-				var placing: bool = phase == "places"
 				pj.step(u)
-				spent += maxi(u, WorldPlanet.PlanetJob.PLACE_COST) if placing else u   # a step makes one try-set at least
+				spent += u   # World's job goes on where it left off (a try, a row of the carry, a few cells of the flow field): a step spends the slice
 			elif _flow > 0 and P.flow == null:   # a planet made whole elsewhere, without its flow field
 				WorldRivers.flowOf(P)
 			elif not _ringDone:
@@ -146,10 +146,13 @@ class Job extends RefCounted:
 	func _readRing(u: int) -> void:
 		var nc: int = SimConst.NC
 		SimConst.setArena(_cols)
-		if _ring.is_empty():   # a touch-down's ring: World has no stepped read for it, so one piece
-			var arena = _setup.get("arena", {})
-			WorldPlanet.sliceFor(seed, int(_setup.get("touch", 0)), PackedByteArray(), false, int(arena.get("side", 1)) if arena is Dictionary else 1)
-			_ringDone = true
+		if _ring.is_empty():   # a touch-down's ring: World's SliceJob (the pick a circle a step, the columns a slice, the held places), memoised where sliceFor finds it
+			if _sj == null:
+				var arena = _setup.get("arena", {})
+				_sj = WorldPlanet.SliceJob.new(seed, int(_setup.get("touch", 0)), PackedByteArray(), false, int(arena.get("side", 1)) if arena is Dictionary else 1)
+			if _sj.step(u):
+				_ringDone = true
+			spent += u
 		else:
 			if _rj == null:
 				_rj = WorldPlanet.RingJob.new(P, _ring)

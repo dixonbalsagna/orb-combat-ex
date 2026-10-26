@@ -7,6 +7,11 @@ extends SceneTree
 
 func _init() -> void:
 	var fast: bool = "--fast" in OS.get_cmdline_user_args()
+	var gen: int = 1
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--gen="):
+			gen = int(a.substr(6))
+	WorldClimate.useGen(gen)   # the generation the planets are made by (window 20: gen 2's read is proved the same by its hashes)
 	var lines: Array = []
 	var totUs: float = 0.0
 	var totCols: int = 0
@@ -22,7 +27,7 @@ func _init() -> void:
 			var us: float = float(Time.get_ticks_usec() - t0)
 			totUs += us
 			totCols += SimConst.NC
-			lines.append("%d/%d hash %d held %d  %.1f us/col (%.0f ms)" % [seed, cols, WorldPlanet.sliceHash(sl), sl.held.size(), us / float(SimConst.NC), us / 1000.0])
+			lines.append("g%d %d/%d hash %d held %d  %.1f us/col (%.0f ms)" % [gen, seed, cols, WorldPlanet.sliceHash(sl), sl.held.size(), us / float(SimConst.NC), us / 1000.0])
 	for l in lines:
 		print(l)
 	print("RINGBENCH: %.1f us/col over %d columns" % [totUs / float(maxi(totCols, 1)), totCols])

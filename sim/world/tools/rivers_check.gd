@@ -208,6 +208,39 @@ func _init() -> void:
 			if FM.river(F7.px[i], F7.py[i], F7.pz[i]) > 0:
 				hit += 1
 	ok(offMarks == 0 and marked > cells and hit == cells and classOk and FM.rivers == FM2.rivers, "the far map's river layer: nothing with the rivers off; on, %d texels marked for %d river cells, every river cell's own texel among them, sizes 1 to 3, the same twice" % [marked, cells])
+	# the flow field made a few cells at a time is the whole one to the last bit, and the planet job makes it in steps (window 20)
+	var Fw: WorldRivers.Flow = WorldRivers.Flow.new(P7.grid)
+	var stepsOk: bool = true
+	var callsAt: String = ""
+	for chunk in [1, 7, 1000, 20000]:
+		var Fs := WorldRivers.Flow.new(P7.grid, false)
+		var calls: int = 1
+		while not Fs.step(chunk):
+			calls += 1
+		callsAt += " %d (%d calls)" % [chunk, calls]
+		if Fs.recv != Fw.recv or Fs.flow != Fw.flow or Fs.order != Fw.order or Fs.px != Fw.px or Fs.py != Fw.py or Fs.pz != Fw.pz or Fs.rivers != Fw.rivers or Fs.landCells != Fw.landCells or Fs.spent < Fs.w * Fs.h:
+			stepsOk = false
+	ok(stepsOk and Fw.rivers > 0, "the flow field made in steps of a given number of cells is the whole one, bit for bit (steps of%s; %d river cells)" % [callsAt, Fw.rivers])
+	WorldPlanet.forget()
+	var job: WorldPlanet.PlanetJob = WorldPlanet.makeJob(7)
+	var worstMs: float = 0.0
+	var flowWorst: float = 0.0
+	var flowCalls: int = 0
+	var jobCalls: int = 0
+	while not job.done and jobCalls < 100000:
+		var inFlow: bool = job._flow != null
+		var tj: int = Time.get_ticks_usec()
+		job.step(200)
+		var dtj: float = float(Time.get_ticks_usec() - tj) / 1000.0
+		worstMs = maxf(worstMs, dtj)
+		if inFlow:
+			flowWorst = maxf(flowWorst, dtj)
+			flowCalls += 1
+		jobCalls += 1
+	var jf: WorldRivers.Flow = job.P.flow
+	ok(job.done and jf != null and jf.recv == Fw.recv and jf.flow == Fw.flow and jf.order == Fw.order and jf.rivers == Fw.rivers, "a planet job with the rivers on makes the same flow field, in %d calls of a budget of 200" % jobCalls)
+	ok(flowCalls >= 5 and flowWorst < 30.0, "the flow field is made in steps: %d calls of the job spent on it, the longest %.1f ms (it was one call of about 155 ms); the longest call of the job at all is %.1f ms (a place's step: its own)" % [flowCalls, flowWorst, worstMs])
+	WorldPlanet.forget()
 	WorldRivers.setOn(false)
 	print("RIVERS: %d check(s) failed" % fails)
 	quit()

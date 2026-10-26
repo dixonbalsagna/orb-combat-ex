@@ -327,19 +327,40 @@ static func _edge(P: WorldPlanet.Planet, px: float, py: float, pz: float) -> voi
 static var _rA: float = 0.0
 static var _rB: float = 0.0
 static var _dk := PackedFloat64Array()
+static var _cand := PackedInt32Array()
+static var _zP = null        # the planet and the ball (centre, squared radius) round a point where no plate edge reaches: _terms is 0 for every point inside it (derived data, a memo of what _terms would return)
+static var _zx: float = 0.0
+static var _zy: float = 0.0
+static var _zz: float = 0.0
+static var _zR2: float = -1.0
 
 
 static func _terms(P: WorldPlanet.Planet, px: float, py: float, pz: float) -> void:
+	if _zP == P:   # inside a ball round a point where no edge reaches (below): nothing to add, as the full read would find
+		var zx: float = px - _zx
+		var zy: float = py - _zy
+		var zz: float = pz - _zz
+		if zx * zx + zy * zy + zz * zz < _zR2:
+			_rA = 0.0
+			_rB = 0.0
+			return
 	var pl: Plates = platesOf(P)
 	var n: int = pl.n
 	if _dk.size() != n:
 		_dk.resize(n)
+	var cx: PackedFloat64Array = pl.cx
+	var cy: PackedFloat64Array = pl.cy
+	var cz: PackedFloat64Array = pl.cz
 	var b1: float = -2.0
+	var b2: float = -2.0
 	for i in range(n):
-		var d: float = px * pl.cx[i] + py * pl.cy[i] + pz * pl.cz[i]
+		var d: float = px * cx[i] + py * cy[i] + pz * cz[i]
 		_dk[i] = d
 		if d > b1:
+			b2 = b1
 			b1 = d
+		elif d > b2:
+			b2 = d
 	var wr: float = K_R_WIDTH
 	var wf: float = K_F_WIDTH
 	var wm: float = wr if wr > wf else wf
@@ -348,14 +369,37 @@ static func _terms(P: WorldPlanet.Planet, px: float, py: float, pz: float) -> vo
 	var reach: float = 2.5 * wg
 	_rA = 0.0
 	_rB = 0.0
+	# Where the nearest plate leads the second by more than cut + the wobble (which is more than reach), no pair of plates passes the tests below (a plate but the nearest is farther than reach from it, and the
+	# nearest is farther than cut + wobble from every other): the sums are 0 and the wobble is not read. Every dot product moves by at most the distance the point moves, so the lead falls by at most twice
+	# that: inside a ball of 0.45 of the spare lead round this point it is the same 0 (a little under half, for the float rounding).
+	var thr: float = cut + K_WOB_AMP
+	if b1 - b2 > thr + 1.0e-9:
+		var rr: float = 0.45 * (b1 - b2 - thr)
+		_zP = P
+		_zx = px
+		_zy = py
+		_zz = pz
+		_zR2 = rr * rr
+		return
 	var wob: float = 1.0e9
 	var mc: float = K_R_MINCONV
+	# only a plate within reach + cut + wobble of the nearest can be either plate of a pair that passes the tests below: they are listed (a hair wider, the tests decide) in index order, and both loops run over the list
+	var lo: float = b1 - reach - (cut + K_WOB_AMP) - 1.0e-9
+	if _cand.size() != n:
+		_cand.resize(n)
+	var m: int = 0
 	for i in range(n):
+		if _dk[i] >= lo:
+			_cand[m] = i
+			m += 1
+	for ii in range(m):
+		var i: int = _cand[ii]
 		var di: float = _dk[i]
 		if di < b1 - reach:
 			continue
 		var gate: float = _bump(b1 - di, wg)   # 1 for the nearest plate itself
-		for k in range(n):
+		for kk in range(m):
+			var k: int = _cand[kk]
 			var dk: float = _dk[k]
 			if k == i or dk > di or (dk == di and k < i):
 				continue

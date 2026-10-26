@@ -33,6 +33,42 @@ static var _errors: Array = []
 static var _hash: String = ""
 static var _alias := PackedByteArray()
 static var curGen: int = 0   # 0: the data's gen; a tool or a match's setup sets it (useGen)
+# The data's numbers the column read uses, as typed statics (made by _cache when the file is loaded; the data is never changed after): a dictionary read of each, a column, was a fifth of the read (window 20).
+static var _kJitScale: float = 0.0
+static var _kJitSeed: int = 0
+static var _kJit: float = 0.0
+static var _kEq: float = 0.0
+static var _kPow: float = 1.0
+static var _kLapse: float = 0.0
+static var _kHScale: float = 1.0
+static var _kNScale: float = 0.0
+static var _kNOct: int = 1
+static var _kNAmp: float = 0.0
+static var _kTSeed: int = 0
+static var _kWBand: float = 0.0
+static var _kWAdv: float = 0.0
+static var _kBias: float = 0.0
+static var _kMScale: float = 0.0
+static var _kMOct: int = 1
+static var _kMSeed: int = 0
+static var _kWNoise: float = 0.0
+static var _kVHMin: float = 0.0
+static var _kVScale: float = 0.0
+static var _kVOct: int = 1
+static var _kVSeed: int = 0
+static var _kVAbove: float = 0.0
+static var _kBeachH: float = 0.0
+static var _kHighB: float = 0.0
+static var _kHighH: float = 0.0
+static var _kWetMoist: float = 0.0
+static var _kWetH: float = 0.0
+static var _kWetTemp: float = 0.0
+static var _kTE := PackedFloat64Array()
+static var _kME := PackedFloat64Array()
+static var _kTab := PackedInt32Array()
+static var _kNM: int = 1
+static var _cT: float = 0.0   # climateAt's answer, for plain (which would build an Array to read two numbers)
+static var _cM: float = 0.0
 
 
 static func data() -> Dictionary:
@@ -91,6 +127,53 @@ static func _load() -> void:
 	_alias.resize(j.fine.size())
 	for k in range(j.fine.size()):
 		_alias[k] = int(j.fine[k].alias)
+	_cache(j)
+
+
+static func _cache(j: Dictionary) -> void:
+	var tp: Dictionary = j.temp
+	var mp: Dictionary = j.moist
+	_kJitScale = float(tp.jitScale)
+	_kJitSeed = int(tp.jitSeed)
+	_kJit = float(tp.jit)
+	_kEq = float(tp.eq)
+	_kPow = float(tp.pow)
+	_kLapse = float(tp.lapse)
+	_kHScale = float(tp.hScale)
+	_kNScale = float(tp.noiseScale)
+	_kNOct = int(tp.noiseOct)
+	_kNAmp = float(tp.noiseAmp)
+	_kTSeed = int(tp.seed)
+	_kWBand = float(mp.wBand)
+	_kWAdv = float(mp.wAdv)
+	_kBias = float(mp.bias)
+	_kMScale = float(mp.noiseScale)
+	_kMOct = int(mp.noiseOct)
+	_kMSeed = int(mp.seed)
+	_kWNoise = float(mp.wNoise)
+	var vc: Dictionary = j.volcanic
+	_kVHMin = float(vc.hMin)
+	_kVScale = float(vc.scale)
+	_kVOct = int(vc.oct)
+	_kVSeed = int(vc.seed)
+	_kVAbove = float(vc.above)
+	_kBeachH = float(j.coast.beachH)
+	_kHighB = float(j.b.highlandH)
+	_kHighH = float(j.highland.h)
+	_kWetMoist = float(j.wetland.moistMin)
+	_kWetH = float(j.wetland.hMax)
+	_kWetTemp = float(j.wetland.tempMin)
+	_kTE.resize(j.tempEdges.size())
+	for k in range(j.tempEdges.size()):
+		_kTE[k] = float(j.tempEdges[k])
+	_kME.resize(j.moistEdges.size())
+	for k in range(j.moistEdges.size()):
+		_kME[k] = float(j.moistEdges[k])
+	_kNM = j.moistEdges.size() + 1
+	_kTab.resize((j.tempEdges.size() + 1) * _kNM)
+	for ti in range(j.tempEdges.size() + 1):
+		for mi in range(_kNM):
+			_kTab[ti * _kNM + mi] = int(j.table[ti][mi])
 
 
 ## The generation planets are made by now: a tool's or a setup's choice, else the data's.
@@ -180,75 +263,121 @@ class Grid extends RefCounted:
 			_cs[k] = SimDetMath.cos(th)
 			_sn[k] = SimDetMath.sin(th)
 
-	## Reads up to n more cells' heights, then (once whole) carries the moisture; true when the grid is made.
+	var spent: int = 0         # units spent: a cell a unit, then the carry's rows (the job's budget is told in these)
+	var _cph: int = 0          # the carry's phase: 0 not begun, 1 the wind's rows, 2 the blend by the wind, 3 the blend between rows, 4 the blend along the rows, 5 made
+	var _crow: int = 0
+	var _east := PackedFloat32Array()   # wind toward -longitude
+	var _west := PackedFloat32Array()   # wind toward +longitude
+	var _mix := PackedFloat32Array()
+	var _vb := PackedFloat32Array()
+
+	## Does up to n more units of the work: the cells' heights (a unit a cell), then (once whole) the moisture's carry (ten units a row of the wind, one a row of each blend); true when the grid is made. A budget
+	## of the whole job or more goes through it in the one call.
 	func step(n: int) -> bool:
 		if done:
 			return true
+		var left: int = n
 		var total: int = w * h
-		var last: int = mini(total, cell + n)
-		for i in range(cell, last):
-			var r: int = i / w
-			var k: int = i - r * w
-			var y: float = -1.0 + (float(r) + 0.5) * 2.0 / float(h)
-			var c: float = sqrt(1.0 - y * y)
-			ht[i] = WorldPlanet.ground(P, c * _cs[k], y, c * _sn[k])
-		cell = last
-		if cell >= total:
-			_carry()
-			done = true
+		if cell < total:
+			var last: int = mini(total, cell + n)
+			for i in range(cell, last):
+				var r: int = i / w
+				var k: int = i - r * w
+				var y: float = -1.0 + (float(r) + 0.5) * 2.0 / float(h)
+				var c: float = sqrt(1.0 - y * y)
+				ht[i] = WorldPlanet.ground(P, c * _cs[k], y, c * _sn[k])
+			left -= last - cell
+			spent += last - cell
+			cell = last
+			if cell < total:
+				return false
+			_cph = 1
+			_crow = 0
+			_east.resize(total)
+			_west.resize(total)
+			_mix.resize(total)
+			_vb.resize(total)
+		if left > 0 or n >= total:
+			_carry(left)
 		return done
 
 	func finishNow() -> void:
-		step(w * h)
+		step(1 << 40)
 
-	## The wind's moisture, both ways round each row twice (so the carry crosses the seam), then the two blended by the latitude's wind and blurred a little between rows.
-	func _carry() -> void:
+	## The wind's moisture, both ways round each row twice (so the carry crosses the seam), then the two blended by the latitude's wind and blurred a little between rows; stepped by rows, the same arithmetic.
+	func _carry(left0: int) -> void:
+		var left: int = left0
 		var d: Dictionary = WorldClimate.data().moist
 		var evap: float = d.evap
 		var rain0: float = d.rain0
 		var rainOro: float = d.rainOro
 		var oroH: float = d.oroH
-		var east := PackedFloat32Array()   # wind toward -longitude
-		var west := PackedFloat32Array()   # wind toward +longitude
-		east.resize(w * h)
-		west.resize(w * h)
-		for r in range(h):
-			var base: int = r * w
-			for dir in range(2):
-				var m: float = 0.0
-				for lap in range(2 * w):
-					var k: int = lap % w if dir == 0 else w - 1 - (lap % w)
-					var kp: int = (k - 1 + w) % w if dir == 0 else (k + 1) % w
-					var hh: float = ht[base + k]
-					if hh < 0.0:
-						m = minf(1.0, m + evap)
-					else:
-						var rise: float = maxf(0.0, hh - maxf(ht[base + kp], 0.0))
-						m = maxf(0.0, m - rain0 - rainOro * rise / oroH)
-					if lap >= w:
-						if dir == 0:
-							west[base + k] = m
-						else:
-							east[base + k] = m
-		var mix := PackedFloat32Array()
-		mix.resize(w * h)
-		for r in range(h):
-			var y: float = -1.0 + (float(r) + 0.5) * 2.0 / float(h)
-			var we: float = WorldClimate.westerly(y)
-			for k in range(w):
-				mix[r * w + k] = west[r * w + k] * we + east[r * w + k] * (1.0 - we)
 		var b: float = d.blur
-		var vb := PackedFloat32Array()
-		vb.resize(w * h)
-		for r in range(h):
-			var ra: int = maxi(0, r - 1)
-			var rb: int = mini(h - 1, r + 1)
-			for k in range(w):
-				vb[r * w + k] = mix[r * w + k] * (1.0 - 2.0 * b) + mix[ra * w + k] * b + mix[rb * w + k] * b
 		var bh: float = d.blurLon
-		for r in range(h):
-			for k in range(w):
-				adv[r * w + k] = vb[r * w + k] * (1.0 - 2.0 * bh) + vb[r * w + (k - 1 + w) % w] * bh + vb[r * w + (k + 1) % w] * bh
+		while _cph < 5 and (left > 0 or left0 >= (1 << 30)):
+			if _cph == 1:
+				var r: int = _crow
+				var base: int = r * w
+				for dir in range(2):
+					var m: float = 0.0
+					for lap in range(2 * w):
+						var k: int = lap % w if dir == 0 else w - 1 - (lap % w)
+						var kp: int = (k - 1 + w) % w if dir == 0 else (k + 1) % w
+						var hh: float = ht[base + k]
+						if hh < 0.0:
+							m = minf(1.0, m + evap)
+						else:
+							var rise: float = maxf(0.0, hh - maxf(ht[base + kp], 0.0))
+							m = maxf(0.0, m - rain0 - rainOro * rise / oroH)
+						if lap >= w:
+							if dir == 0:
+								_west[base + k] = m
+							else:
+								_east[base + k] = m
+				_crow += 1
+				left -= 10
+				spent += 10
+				if _crow >= h:
+					_cph = 2
+					_crow = 0
+			elif _cph == 2:
+				var r: int = _crow
+				var y: float = -1.0 + (float(r) + 0.5) * 2.0 / float(h)
+				var we: float = WorldClimate.westerly(y)
+				for k in range(w):
+					_mix[r * w + k] = _west[r * w + k] * we + _east[r * w + k] * (1.0 - we)
+				_crow += 1
+				left -= 1
+				spent += 1
+				if _crow >= h:
+					_cph = 3
+					_crow = 0
+			elif _cph == 3:
+				var r: int = _crow
+				var ra: int = maxi(0, r - 1)
+				var rb: int = mini(h - 1, r + 1)
+				for k in range(w):
+					_vb[r * w + k] = _mix[r * w + k] * (1.0 - 2.0 * b) + _mix[ra * w + k] * b + _mix[rb * w + k] * b
+				_crow += 1
+				left -= 1
+				spent += 1
+				if _crow >= h:
+					_cph = 4
+					_crow = 0
+			else:
+				var r: int = _crow
+				for k in range(w):
+					adv[r * w + k] = _vb[r * w + k] * (1.0 - 2.0 * bh) + _vb[r * w + (k - 1 + w) % w] * bh + _vb[r * w + (k + 1) % w] * bh
+				_crow += 1
+				left -= 1
+				spent += 1
+				if _crow >= h:
+					_cph = 5
+					done = true
+					_east = PackedFloat32Array()
+					_west = PackedFloat32Array()
+					_mix = PackedFloat32Array()
+					_vb = PackedFloat32Array()
 
 
 ## The planet's grid (built when first asked: about the cost of a few hundred ring columns, once a planet).
@@ -281,19 +410,25 @@ static func advAt(G: Grid, px: float, py: float, pz: float) -> float:
 
 ## The temperature (about 0 to 1) and moisture (0 to 1) at a point of height h.
 static func climateAt(P: WorldPlanet.Planet, px: float, py: float, pz: float, h: float) -> Array:
-	var d: Dictionary = data()
-	var tp: Dictionary = d.temp
-	var mp: Dictionary = d.moist
+	_climTM(P, px, py, pz, h)
+	return [_cT, _cM]
+
+
+## climateAt's arithmetic, its two numbers left in _cT and _cM.
+static func _climTM(P: WorldPlanet.Planet, px: float, py: float, pz: float, h: float) -> void:
+	if not _loaded:
+		_load()
 	# the latitude wobbles by up to jit (a slow noise), so the belts of climate are wavy and not ruled lines
-	var yj: float = SimMathx.jclamp(py + (WorldPlanet._fbm(P.R, px, py, pz, tp.jitScale, 2, P.seed + int(tp.jitSeed)) - 0.5) * 2.0 * float(tp.jit), -1.0, 1.0)
+	var yj: float = SimMathx.jclamp(py + (WorldPlanet._fbm(P.R, px, py, pz, _kJitScale, 2, P.seed + _kJitSeed) - 0.5) * 2.0 * _kJit, -1.0, 1.0)
 	var cl: float = sqrt(maxf(0.0, 1.0 - yj * yj))
-	var T: float = float(tp.eq) * SimDetMath.pow(cl, float(tp.pow)) - float(tp.lapse) * maxf(h, 0.0) / float(tp.hScale)
-	T += (WorldPlanet._fbm(P.R, px, py, pz, tp.noiseScale, int(tp.noiseOct), P.seed + int(tp.seed)) - 0.5) * 2.0 * float(tp.noiseAmp)
+	var T: float = _kEq * SimDetMath.pow(cl, _kPow) - _kLapse * maxf(h, 0.0) / _kHScale
+	T += (WorldPlanet._fbm(P.R, px, py, pz, _kNScale, _kNOct, P.seed + _kTSeed) - 0.5) * 2.0 * _kNAmp
 	var G: Grid = gridOf(P)
-	var M: float = float(mp.wBand) * bandWet(yj) + float(mp.wAdv) * advAt(G, px, py, pz)
-	M += float(mp.bias)
-	M += (WorldPlanet._fbm(P.R, px, py, pz, mp.noiseScale, int(mp.noiseOct), P.seed + int(mp.seed)) - 0.5) * 2.0 * float(mp.wNoise)
-	return [T, SimMathx.jclamp(M, 0.0, 1.0)]
+	var M: float = _kWBand * bandWet(yj) + _kWAdv * advAt(G, px, py, pz)
+	M += _kBias
+	M += (WorldPlanet._fbm(P.R, px, py, pz, _kMScale, _kMOct, P.seed + _kMSeed) - 0.5) * 2.0 * _kWNoise
+	_cT = T
+	_cM = SimMathx.jclamp(M, 0.0, 1.0)
 
 
 ## The fine biome of ordinary land at a point of height h (sea and ice are the surface function's); sets P.outF and returns the stored biome it reads as.
@@ -301,38 +436,39 @@ static func plain(P: WorldPlanet.Planet, px: float, py: float, pz: float, h: flo
 	if h < 0.0:
 		P.outF = F_OCEAN
 		return WorldPlanet.BIO_OCEAN
+	if not _loaded:
+		_load()
 	var onB: bool = WorldLand.plateB()   # Research's B plates: their volcanic score makes the volcanic fields, in place of the noise (window 13)
 	var bv: bool = onB and WorldPlateB.volcAt(P, px, py, pz) > WorldPlateB.K.volcanic
-	if h > P.c.mountainAbove and not bv:
+	var above: float = P.c.mountainAbove
+	if h > above and not bv:
 		P.outF = F_MOUNTAINS
 		return WorldPlanet.BIO_MOUNTAINS
-	var d: Dictionary = data()
-	var cm: Array = climateAt(P, px, py, pz, h)
-	var T: float = cm[0]
-	var M: float = cm[1]
-	var vc: Dictionary = d.volcanic
+	_climTM(P, px, py, pz, h)
+	var T: float = _cT
+	var M: float = _cM
 	var fine: int
-	if bv and T >= float(d.tempEdges[0]) and h >= float(d.coast.beachH):   # not too cold for it, and not a beach (Research's notCold)
+	if bv and T >= _kTE[0] and h >= _kBeachH:   # not too cold for it, and not a beach (Research's notCold)
 		fine = F_VOLCANIC
-	elif h > P.c.mountainAbove:
+	elif h > above:
 		fine = F_MOUNTAINS
-	elif not onB and h >= float(vc.hMin) and WorldPlanet._fbm(P.R, px, py, pz, vc.scale, int(vc.oct), P.seed + int(vc.seed)) > float(vc.above):
+	elif not onB and h >= _kVHMin and WorldPlanet._fbm(P.R, px, py, pz, _kVScale, _kVOct, P.seed + _kVSeed) > _kVAbove:
 		fine = F_VOLCANIC
-	elif h >= (float(d.b.highlandH) if onB else float(d.highland.h)):
+	elif h >= (_kHighB if onB else _kHighH):
 		fine = F_HIGHLAND
-	elif h < float(d.coast.beachH):
+	elif h < _kBeachH:
 		fine = F_BEACH
-	elif M >= float(d.wetland.moistMin) and h < float(d.wetland.hMax) and T >= float(d.wetland.tempMin):
+	elif M >= _kWetMoist and h < _kWetH and T >= _kWetTemp:
 		fine = F_WETLAND
 	else:
 		var ti: int = 0
-		for e in d.tempEdges:
-			if T >= float(e):
+		for e in _kTE:
+			if T >= e:
 				ti += 1
 		var mi: int = 0
-		for e in d.moistEdges:
-			if M >= float(e):
+		for e in _kME:
+			if M >= e:
 				mi += 1
-		fine = int(d.table[ti][mi])
+		fine = _kTab[ti * _kNM + mi]
 	P.outF = fine
 	return _alias[fine]

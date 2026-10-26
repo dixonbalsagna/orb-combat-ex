@@ -238,13 +238,49 @@ static func _vn(x: float, y: float, z: float, s: int) -> float:
 static var _octOff: int = 0
 
 
+## Octaves of _vn at the planet's scale, normalised to [0, 1). _vn is written out inside the octave loop (the same arithmetic in the same order, so the same bits): a call an octave and a dictionary read a call were
+## a third of the cost of a column of the ring (window 20).
 static func _fbm(R: float, px: float, py: float, pz: float, scale: float, oct: int, s: int) -> float:
 	var sum: float = 0.0
 	var amp: float = 0.5
 	var tot: float = 0.0
 	var k: float = R / scale
+	var slots: Dictionary = _vcSlot
 	for o in range(maxi(1, oct - _octOff)):
-		sum += amp * _vn(px * k, py * k, pz * k, s + o * 101)
+		var x: float = px * k
+		var y: float = py * k
+		var z: float = pz * k
+		var fx: float = floor(x)
+		var fy: float = floor(y)
+		var fz: float = floor(z)
+		var ix: int = int(fx)
+		var iy: int = int(fy)
+		var iz: int = int(fz)
+		var tx: float = x - fx
+		var ty: float = y - fy
+		var tz: float = z - fz
+		tx = tx * tx * (3.0 - 2.0 * tx)
+		ty = ty * ty * (3.0 - 2.0 * ty)
+		tz = tz * tz * (3.0 - 2.0 * tz)
+		var sd: int = s + o * 101
+		var slot: int = slots.get(sd, -1)
+		if slot < 0:
+			slot = _vcNew(sd)
+		var kb: int = slot * 3
+		if _vcKey[kb] != ix or _vcKey[kb + 1] != iy or _vcKey[kb + 2] != iz:
+			_vcFill(slot, ix, iy, iz, sd)
+		var vb: int = slot * 8
+		var c000: float = _vcVal[vb]
+		var a: float = c000 + (_vcVal[vb + 1] - c000) * tx
+		var c010: float = _vcVal[vb + 2]
+		var b: float = c010 + (_vcVal[vb + 3] - c010) * tx
+		var c001: float = _vcVal[vb + 4]
+		var c: float = c001 + (_vcVal[vb + 5] - c001) * tx
+		var c011: float = _vcVal[vb + 6]
+		var d: float = c011 + (_vcVal[vb + 7] - c011) * tx
+		var e: float = a + (b - a) * ty
+		var f: float = c + (d - c) * ty
+		sum += amp * (e + (f - e) * tz)
 		tot += amp
 		amp *= 0.5
 		k *= 2.0
@@ -318,8 +354,8 @@ static func _newPlanet(seed: int, gn: int) -> Planet:
 
 
 static func _memoPlanet(key: int, P: Planet) -> void:
-	if _planets.size() > 6:
-		_planets.clear()
+	while _planets.size() >= 7 and not _planets.has(key):
+		_planets.erase(_planets.keys()[0])   # the oldest made goes (a Dictionary keeps its insertion order): the others stay, a host that loads a planet right before its match no longer loses them all
 	_planets[key] = P
 
 
@@ -327,12 +363,13 @@ static func _memoPlanet(key: int, P: Planet) -> void:
 ## (cost PLACE_COST units, about 20 ms) at a time. `step(budget)` returns true when `P` is whole and memoised, where make(seed) then finds it at once. make(seed) is this job run to the end.
 class PlanetJob extends RefCounted:
 	const PLACE_COST: int = 1000
+	const FLOW_CELLS: int = 50   # ticks of the flow field's work (about 0.4 us each) to a budget unit (about 20 us): about 370,000 whole, FLOW_COST units
 	var seed: int = 0
 	var key: int = 0
 	var P: WorldPlanet.Planet
 	var done: bool = false
 	var _grid = null
-	var _flowDue: bool = false
+	var _flow = null   # the rivers' drainage of the grid, stepped (WorldRivers.Flow)
 	var _st: Dictionary = {}
 
 	func _init(sd: int) -> void:
@@ -348,33 +385,42 @@ class PlanetJob extends RefCounted:
 			_grid = WorldClimate.Grid.new(P)
 		_st = WorldPlanet._placeBegin(P)
 
+	## Spends up to `budget` units: the grid's cells and its carry's rows, the flow field's cells, the places' tries (a unit is about 20 us); every piece goes on where it left off, so a call is about the budget (a
+	## try, a row of the wind or a circle may go a little over) and never a whole piece. A budget of the whole job or more goes through every piece in the one call.
 	func step(budget: int) -> bool:
 		if done:
 			return true
 		var left: int = budget
 		if _grid != null:
-			var before: int = _grid.cell
+			var before: int = _grid.spent
 			_grid.step(left)
-			left -= _grid.cell - before
+			left -= _grid.spent - before
 			if not _grid.done:
 				return false
 			P.grid = _grid
 			_grid = null
-			_flowDue = WorldRivers.enabled()
-			if _flowDue and left < WorldRivers.FLOW_COST:   # a frame's slice that ended the grid (and its carry) leaves the flow field to the next; a whole budget (finishNow) goes on
+			if WorldRivers.enabled() and P.flow == null:   # the drainage of the grid (about 155 ms whole), made a few cells at a time
+				_flow = WorldRivers.Flow.new(P.grid, false)
+			if left <= 0:
 				return false
-		if _flowDue:   # the drainage of the grid (about 100 ms: FLOW_COST units), a slice of its own
-			_flowDue = false
-			WorldRivers.flowOf(P)
-			left -= WorldRivers.FLOW_COST
+		if _flow != null:
+			var s0: int = _flow.spent
+			var fin: bool = _flow.step(maxi(1, left * FLOW_CELLS))
+			left -= maxi(1, (_flow.spent - s0 + FLOW_CELLS - 1) / FLOW_CELLS)
+			if not fin:
+				return false
+			P.flow = _flow
+			_flow = null
 			if left <= 0:
 				return false
 		while true:
-			if WorldPlanet._placeStep(P, _st):
+			_st.spent = 0
+			var fin2: bool = WorldPlanet._placeStep(P, _st, maxi(1, left))
+			left -= maxi(1, int(_st.spent))
+			if fin2:
 				WorldPlanet._memoPlanet(key, P)
 				done = true
 				return true
-			left -= PLACE_COST
 			if left <= 0:
 				return false
 		return done
@@ -622,13 +668,28 @@ static func _arc(P: Planet, a: Array, bx: float, by: float, bz: float) -> float:
 	return P.R * acosf(a[0] * bx + a[1] * by + a[2] * bz)
 
 
-static func _tryPlace(P: Planet, r: SimRng, kind: int, radius: float, tries: int, polar: bool) -> bool:
+## What a try costs in the job's units (one is about 20 us): the height test, the gap test, the score (a gen 2 planet's climate and site reads): measured 53, 124 and 284 us a try.
+const TRY_U_H: int = 3
+const TRY_U_GAP: int = 3
+const TRY_U_SCORE: int = 8
+
+
+static func _tsBegin() -> Dictionary:
+	return {"k": 0, "best": null, "bs": -1.0e9, "done": false}
+
+
+## Up to `units` of a try-set's work, resuming at ts.k (the tries' draws in the same order as ever, so the same places): returns the units spent; ts.done when the set is made (the best of its tries placed).
+static func _tryRun(P: Planet, r: SimRng, kind: int, radius: float, tries: int, polar: bool, ts: Dictionary, units: int) -> int:
 	var c: Dictionary = P.c
-	var best = null
-	var bs: float = -1.0e9
-	for k in range(tries):
+	var spent: int = 0
+	var best = ts.best
+	var bs: float = ts.bs
+	var k: int = ts.k
+	while k < tries and spent < units:
+		k += 1
 		var p: Array = _randUnit(r)
 		var h: float = ground(P, p[0], p[1], p[2])
+		spent += TRY_U_H
 		if h < c.placeHMin or h > c.placeHMax or (polar and absf(p[1]) > c.placeYMax):
 			continue
 		var dmin: float = 1.0e9
@@ -636,12 +697,14 @@ static func _tryPlace(P: Planet, r: SimRng, kind: int, radius: float, tries: int
 			var g: float = _arc(P, p, P.px[i], P.py[i], P.pz[i]) - P.rad[i] - radius
 			if g < dmin:
 				dmin = g
+		spent += TRY_U_GAP
 		if dmin < c.placeGap:
 			continue
 		var sc: float = dmin * c.scoreGap - absf(h - c.scoreH0) * c.scoreHW + r.next()
 		if P.gen >= 2:   # window 4: a harbour for a city, a fertile biome, nothing on ice, in the sea or on a range
 			if sc + WorldSites.maxBonus(kind) <= bs:
 				continue   # the climate term cannot lift it past the best so far
+			spent += TRY_U_SCORE
 			var bonus: float = WorldSites.score(P, kind, p[0], p[1], p[2], bs - sc)
 			if bonus <= -1.0e8:
 				continue
@@ -649,15 +712,25 @@ static func _tryPlace(P: Planet, r: SimRng, kind: int, radius: float, tries: int
 		if sc > bs:
 			bs = sc
 			best = p
-	if best != null:
-		P.kind.append(kind)
-		P.px.append(best[0])
-		P.py.append(best[1])
-		P.pz.append(best[2])
-		P.rad.append(radius)
-		P.n += 1
-		return true
-	return false
+	ts.k = k
+	ts.best = best
+	ts.bs = bs
+	if k >= tries:
+		ts.done = true
+		if best != null:
+			P.kind.append(kind)
+			P.px.append(best[0])
+			P.py.append(best[1])
+			P.pz.append(best[2])
+			P.rad.append(radius)
+			P.n += 1
+	return spent
+
+
+static func _tryPlace(P: Planet, r: SimRng, kind: int, radius: float, tries: int, polar: bool) -> bool:
+	var ts: Dictionary = _tsBegin()
+	_tryRun(P, r, kind, radius, tries, polar, ts, 1 << 40)
+	return ts.best != null
 
 
 ## The places of a planet: first as picture A placed them (one stream, the ordinary ground), then the ones that fell inside a polar cap are placed again outside it
@@ -669,20 +742,27 @@ static func _placeAll(P: Planet) -> void:
 
 
 static func _placeBegin(P: Planet) -> Dictionary:
-	return {"r": SimRng.new(P.seed * int(P.c.placeSeedMul) + 1), "r2": null, "i": 0, "phase": 0, "dropped": [0, 0]}
+	return {"r": SimRng.new(P.seed * int(P.c.placeSeedMul) + 1), "r2": null, "i": 0, "phase": 0, "dropped": [0, 0], "ts": null, "spent": 0}
 
 
-## One _tryPlace (or the step between the two streams, or the last step); true when the places are all made.
-static func _placeStep(P: Planet, st: Dictionary) -> bool:
+## Up to `units` of a try-set (a few tries: _tryRun), or the step between the two streams, or the last step; true when the places are all made. The default is a whole try-set a call, as it always was.
+## st.spent adds up the units a call spent (the job's budget is told in these).
+static func _placeStep(P: Planet, st: Dictionary, units: int = 1 << 40) -> bool:
 	var c: Dictionary = P.c
 	var nc: int = int(c.cities)
 	var nt: int = int(c.towns)
 	if int(st.phase) == 0:
 		var i: int = st.i
-		if i < nc:
-			_tryPlace(P, st.r, KIND_CITY, c.cityRadius, int(c.cityTries), false)
-		elif i < nc + nt:
-			_tryPlace(P, st.r, KIND_TOWN, c.townRadius, int(c.townTries), false)
+		if i < nc + nt:
+			if st.ts == null:
+				st.ts = _tsBegin()
+			if i < nc:
+				st.spent += _tryRun(P, st.r, KIND_CITY, c.cityRadius, int(c.cityTries), false, st.ts, units)
+			else:
+				st.spent += _tryRun(P, st.r, KIND_TOWN, c.townRadius, int(c.townTries), false, st.ts, units)
+			if not st.ts.done:
+				return false
+			st.ts = null
 		st.i = i + 1
 		if int(st.i) < nc + nt:
 			return false
@@ -719,10 +799,15 @@ static func _placeStep(P: Planet, st: Dictionary) -> bool:
 	var nd: int = int(dr[KIND_CITY]) + int(dr[KIND_TOWN])
 	var j: int = st.i
 	if j < nd:
+		if st.ts == null:
+			st.ts = _tsBegin()
 		if j < int(dr[KIND_CITY]):
-			_tryPlace(P, st.r2, KIND_CITY, c.cityRadius, int(c.replaceTries), true)
+			st.spent += _tryRun(P, st.r2, KIND_CITY, c.cityRadius, int(c.replaceTries), true, st.ts, units)
 		else:
-			_tryPlace(P, st.r2, KIND_TOWN, c.townRadius, int(c.replaceTries), true)
+			st.spent += _tryRun(P, st.r2, KIND_TOWN, c.townRadius, int(c.replaceTries), true, st.ts, units)
+		if not st.ts.done:
+			return false
+		st.ts = null
 		st.i = j + 1
 		if int(st.i) < nd:
 			return false
@@ -904,7 +989,8 @@ static func readBegin(P: Planet, circ: Dictionary, T: Array) -> Slice:
 	return S
 
 
-## Columns i0 up to i1 (exclusive) of the slice.
+## Columns i0 up to i1 (exclusive) of the slice. The planet's numbers are read once a call, and a gen 2 planet on the stored continents takes surfAt's ordinary-ground path (the continents, the plates' shape, the
+## polar edge, the climate's biome) written out here, the same arithmetic in the same order; where a column is in the polar zone surfAt itself is called (window 20).
 static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
 	var c: Dictionary = P.c
 	var circ: Dictionary = S.circ
@@ -916,24 +1002,67 @@ static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
 	var ca: Array = circ.get("c", u)
 	var tc: int = touchCol()
 	var fine2: bool = P.gen >= 2
+	var fast: bool = fine2 and not WorldLand.plateB()
+	var R: float = P.R
+	var sd0: int = P.seed
+	var u0: float = u[0]
+	var u1: float = u[1]
+	var u2: float = u[2]
+	var v0: float = v[0]
+	var v1: float = v[1]
+	var v2: float = v[2]
+	var ca0: float = ca[0]
+	var ca1: float = ca[1]
+	var ca2: float = ca[2]
+	var contScale: float = c.contScale
+	var contOct: int = int(c.contOct)
+	var seaShift: float = c.seaShift
+	var hMul: float = c.hMul
+	var rangeFrom: float = c.rangeFrom
+	var reliefScale: float = c.reliefScale
+	var reliefOct: int = int(c.reliefOct)
+	var sRelief: int = int(c.sRelief)
+	var rangeMul: float = c.rangeMul
+	var reliefBase: float = c.reliefBase
+	var keepV: float = WorldLand.keep()
+	var polarY0: float = c.polarY
+	var detailScale: float = c.detailScale
+	var detailOct: int = int(c.detailOct)
+	var dseed: int = sd0 + int(c.sDetail)
+	var detailAmp: float = c.detailAmp
+	var detailSheet: float = c.detailSheet
 	for i in range(i0, i1):
-		var ang: float = float(i - tc) * SimConst.COL / (P.R * stf)
+		var ang: float = float(i - tc) * SimConst.COL / (R * stf)
 		var co: float = SimDetMath.cos(ang)
 		var si: float = SimDetMath.sin(ang)
-		var qx: float = u[0] * co + v[0] * si
-		var qy: float = u[1] * co + v[1] * si
-		var qz: float = u[2] * co + v[2] * si
+		var qx: float = u0 * co + v0 * si
+		var qy: float = u1 * co + v1 * si
+		var qz: float = u2 * co + v2 * si
 		if small:
-			qx = ca[0] * ct + stf * qx
-			qy = ca[1] * ct + stf * qy
-			qz = ca[2] * ct + stf * qz
-		surfAt(P, qx, qy, qz)
+			qx = ca0 * ct + stf * qx
+			qy = ca1 * ct + stf * qy
+			qz = ca2 * ct + stf * qz
+		var done: bool = false
+		if fast:
+			var e: float = (_fbm(R, qx, qy, qz, contScale, contOct, sd0) - 0.5) * 2.0
+			var g: float = (e + seaShift) * hMul
+			if e > rangeFrom:
+				var m: float = _fbm(R, qx, qy, qz, reliefScale, reliefOct, sd0 + sRelief)
+				g += (e - rangeFrom) * rangeMul * (reliefBase + m) * keepV
+			g = WorldLand.shape(P, qx, qy, qz, g)
+			if absf(qy) < polarY0 + WorldLand.polarWob(P, qx, qy, qz):
+				P.outF = -1
+				P.outH = g
+				P.outB = WorldClimate.plain(P, qx, qy, qz, g)
+				done = true
+		if not done:
+			surfAt(P, qx, qy, qz)
 		var h: float = P.outH
 		var b: int = P.outB
 		if b >= BIO_PLAINS and b <= BIO_MOUNTAINS:
-			h += (_fbm(P.R, qx, qy, qz, c.detailScale, int(c.detailOct), P.seed + int(c.sDetail)) - 0.5) * c.detailAmp
+			h += (_fbm(R, qx, qy, qz, detailScale, detailOct, dseed) - 0.5) * detailAmp
 		elif b == BIO_ICE_SHEET and h > 100.0:
-			h += (_fbm(P.R, qx, qy, qz, c.detailScale, int(c.detailOct), P.seed + int(c.sDetail)) - 0.5) * c.detailAmp * c.detailSheet
+			h += (_fbm(R, qx, qy, qz, detailScale, detailOct, dseed) - 0.5) * detailAmp * detailSheet
 		S.heights[i] = h
 		S.biomes[i] = b
 		if fine2:
@@ -999,10 +1128,85 @@ static func sliceFor(seed: int, touch: int, standing: PackedByteArray = PackedBy
 	if not r.ok:
 		return null
 	var S: Slice = readSlice(P, ringThrough(r.circle, SimConst.NC, side), r.T, standing)   # the arena's columns: the great circle itself at 4,800, else a ring through the touch-down
-	if _slices.size() > 4:
-		_slices.clear()
-	_slices[key] = S
+	_memoSlice(key, S)
 	return S
+
+
+## A touch-down's ring read in steps (what sliceFor reads in one piece): the touch's point and candidate circles, each circle evaluated (a step takes at most one: about 96 surface reads, 4 to 6 ms) until one meets the
+## minimum, then the ring's columns a slice at a time, then its held places; at the end the slice is memoised where sliceFor finds it, so sliceFor (and a match's start) then returns it at once. The slice is the
+## same one, bit for bit. `slice` is null when no circle met the minimum (sliceFor's null). The planet is World's memo (make(seed): a cold planet would be made in one piece here, so a host loads it first); the arena's
+## columns (SimConst.NC) must be the same for every call as for the first.
+class SliceJob extends RefCounted:
+	const COLUMN_UNITS: int = 2   # a ring column's read, in units (about 40 us on a gen 2 planet)
+	const HELD_UNITS: int = 100   # the held places and the fine biomes' blend (about 2 ms)
+	var seed: int = 0
+	var touch: int = 0
+	var standing := PackedByteArray()
+	var relaxed: bool = false
+	var side: int = 1
+	var key: String = ""
+	var slice = null
+	var done: bool = false
+	var _ph: int = 0   # 0 the planet and the candidates, 1 the circles, 2 the columns, 3 the held places
+	var _P: WorldPlanet.Planet
+	var _T: Array = []
+	var _cand: Array = []
+	var _ci: int = 0
+	var _S = null
+	var _i: int = 0
+
+	func _init(sd: int, tch: int, st: PackedByteArray = PackedByteArray(), rel: bool = false, sd2: int = 1) -> void:
+		seed = sd
+		touch = tch
+		standing = st
+		relaxed = rel
+		side = sd2
+		key = "%d/%d/%s/%d/%s/%d/%d" % [sd, tch, str(st.hex_encode()), 1 if rel else 0, WorldPlanet.dataHash(), SimConst.NC, sd2]
+		if WorldPlanet._slices.has(key):
+			slice = WorldPlanet._slices[key]
+			done = true
+
+	func step(units: int) -> bool:
+		if done:
+			return true
+		var left: int = maxi(1, units)
+		while left > 0 and not done:
+			if _ph == 0:
+				_P = WorldPlanet.make(seed)
+				_T = WorldPlanet.touchPoint(_P, touch)
+				_cand = WorldPlanet.candidates(_P, _T, touch, standing)
+				_ph = 1
+				left -= 1
+			elif _ph == 1:
+				if _ci >= _cand.size():
+					done = true   # no circle met the minimum: sliceFor's null (not memoised)
+					return true
+				var c: Dictionary = _P.c
+				var circ: Dictionary = _cand[_ci]
+				_ci += 1
+				var needC: int = int(c.relaxCities) if relaxed else int(c.minCities)
+				var needT: int = int(c.relaxTowns) if relaxed else int(c.minTowns)
+				var e: Dictionary = WorldPlanet.evalCircle(_P, circ, standing, needC, needT)
+				left -= 1 if e.get("skipped", false) else 2 * int(c.samples)
+				if WorldPlanet.meets(c, e, relaxed):
+					_S = WorldPlanet.readBegin(_P, WorldPlanet.ringThrough(circ, SimConst.NC, side), _T)
+					_i = 0
+					_ph = 2
+			elif _ph == 2:
+				var j: int = mini(SimConst.NC, _i + maxi(1, left / COLUMN_UNITS))
+				WorldPlanet.readColumns(_P, _S, _i, j)
+				left -= (j - _i) * COLUMN_UNITS
+				_i = j
+				if _i >= SimConst.NC:
+					_ph = 3
+			else:
+				WorldPlanet.readHeld(_P, _S, standing)
+				left -= HELD_UNITS
+				slice = _S
+				WorldPlanet._memoSlice(key, _S)
+				_S = null
+				done = true
+		return done
 
 
 ## The ground beside a ring (window 2, the slow drift: Rendering's far land and sky read the planet's own ground, not a wander): the height and biome at column i of the ring, moved `z` units
@@ -1135,9 +1339,14 @@ static func ringRead(seed: int, ring: Dictionary) -> bool:
 
 ## A ring's slice read in steps is put where sliceRing finds it.
 static func memoRing(seed: int, ring: Dictionary, slice: Slice) -> void:
-	if _slices.size() > 4:
-		_slices.clear()
-	_slices[_ringKey(seed, ring, PackedByteArray())] = slice
+	_memoSlice(_ringKey(seed, ring, PackedByteArray()), slice)
+
+
+## The slice memo keeps a few (five); a sixth evicts the oldest, not all.
+static func _memoSlice(key: String, S: Slice) -> void:
+	while _slices.size() > 4 and not _slices.has(key):
+		_slices.erase(_slices.keys()[0])
+	_slices[key] = S
 
 
 static func sliceRing(seed: int, ring: Dictionary, standing: PackedByteArray = PackedByteArray()) -> Slice:
@@ -1146,9 +1355,7 @@ static func sliceRing(seed: int, ring: Dictionary, standing: PackedByteArray = P
 		return _slices[key]
 	var P: Planet = make(seed)
 	var S: Slice = readSlice(P, ring, ring.u, standing)
-	if _slices.size() > 4:
-		_slices.clear()
-	_slices[key] = S
+	_memoSlice(key, S)
 	return S
 
 

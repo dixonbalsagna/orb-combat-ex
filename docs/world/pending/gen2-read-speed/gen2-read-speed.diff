@@ -1,0 +1,2067 @@
+diff --git a/docs/world/gen2-read-speed.md b/docs/world/gen2-read-speed.md
+new file mode 100644
+index 0000000..ab0cb54
+--- /dev/null
++++ b/docs/world/gen2-read-speed.md
+@@ -0,0 +1,32 @@
++# The gen 2 ring read and the planet's load in steps (World, window 20, 2026-10-26)
++
++Parked in `docs/world/pending/gen2-read-speed/`. Everything here gives the same planet, the same ring and the same match as before, to the last bit, and runs behind no switch: the golden does not move.
++
++## 1. The ring read (Performance: gen 2 130 us a column at x1, gen 1 about 50; target under 60)
++
++**What the cost is.** A land column of a gen 2 ring runs about 28 octaves of the lattice noise (continents and relief, the plate edges' ridges and shoreline, the polar edge, temperature, moisture, the jitter, the volcanic field, the surface detail): about 25 of its 51 native microseconds. The rest is the plate pairs (7), the trig (3), and the climate's and biome's arithmetic. Native, this PC: gen 1 16.5 us a column, gen 2 46.6 (a mixed bench ring) and 51 to 57 (the calm turn's own land rings).
++
++**What was cut** (`mk_p20a.py`, `mk_p20b.py`, `mk_p20c.py`): the noise written out in the octave loop (no call an octave); the climate data's numbers kept as typed statics instead of dictionary reads a column (`WorldClimate._cache`); `readColumns` reading the planet's numbers once a call and taking the ordinary-ground path of `surfAt` inline; the plate pairs of `WorldLand._terms` over the plates that can pair (and a ball inside which it is known to add nothing). All the same arithmetic in the same order.
++
++**What it bought.** The bench ring (`ring_bench`): 46.6 to 35.2-36.9 us a column (-21 to -24%; gen 1 16.5 to 14.4). The calm turn's real rings (`warm_ring_prof`, `epoch_prof`, 97% land): 57 to 54 us a column, the whole warm 295 to 285 ms for the 4,800 columns. **That is nowhere near the 60 us web target** (which needs about 22 us native): the 28 octaves at 0.9 us each are the cost, and a bit-exact octave cannot be made much cheaper in GDScript (an integer-floor variant measured no faster; the corner cache already hits 99% of octaves). The remaining levers are structural and not mine: fewer columns a tick in the state's `k` (a longer warm), reading a ring's columns only as the swap needs them, or a coarser gen 2 read (a different planet).
++
++Proof: `read_digest.gd` (float64 heights, biomes and fine biomes of 24,000 points on four planets, both generations) and `ring_bench` hashes identical to the base for all of them; `planet_digest.gd` (places, grid, flow field and two touch-down slices, both generations, rivers on and off) identical to HEAD plus planet-load.
++
++## 2. The planet's load in steps (EP's add-on)
++
++Each piece goes on where it left off, bounded by the units a read gets (`SimRun.planetUnitsPerRead`, 250: about 5 ms; a unit is about 20 us).
++
++| Piece | One call before | After |
++| :--- | :--- | :--- |
++| The wind's carry (ends the grid) | 17 to 26 ms | `Grid.step`: ten units a row of the wind, one a row of each blend |
++| The flow field (rivers on) | 136 to 149 ms | `Flow.new(G, false)` and `step(ticks)`: setup, seeds, the flood (a pop is 15 ticks), drainage, runoff, count; a tick is 0.4 us; `PlanetJob.FLOW_CELLS` ticks a unit; `FLOW_COST` is now 7,400 units |
++| A place's try-set | 72 to 80 ms (cities); the replacement sets up to 117 | `_tryRun` resumes a set at its next try (a try is 3, 6 or 14 units by how far it gets: measured 53, 124, 284 us), draw for draw |
++| A touch-down's ring | one `sliceFor` call, 80 to 90 ms | `WorldPlanet.SliceJob`: the pick a circle a step (one circle is 96 surface reads, 4 to 6 ms), the columns a slice, the held places; memoised where `sliceFor` finds it |
++
++Measured at a budget of 250 on this PC (the machine 35 to 40% busy): the planet job's longest call 148.8 to **7.7 ms**; the longest touch-down step 7.9 ms; a touch-down's match after the host's load is the cold one to the bit and starts in 5 ms. (7 to 8 ms is the 5 ms budget plus one try, one circle or a row of the wind.)
++
++`WorldPlanet._planets` and `_slices` evict the oldest entry, not all of them: an eighth planet drops the first only.
++
++**Not done.** Research's B plates (49 to 55 ms in one call, `WorldPlateB.stateOf`) and a B planet's slower try-sets (a try is dearer: the weights are measured without B). Simulation's `planet_load.gd` wants two lines (`grant_sim_load.py`): `spent += u` for the job's steps (the try-set floor of `PLACE_COST` units is gone) and `SliceJob` for a touch-down's ring.
++
++Checks: `step_check.gd` (stepped equals whole at budgets 250, 37 and the whole, with and without rivers and for gen 1; `SliceJob` equals `sliceFor` for three touch-downs; the host's load then the match is the cold match; the eviction), `rivers_check.gd` (the stepped flow field equals the whole one at chunks of 1, 7, 1,000 and 20,000). Tools: `job_prof` (the job's calls), `try_prof`, `flow_prof`, `touch_prof`, `step_prof`, `warm_ring_prof`, `ring_prof`, `epoch_prof`.
+diff --git a/sim/world/climate.gd b/sim/world/climate.gd
+index 04ad142..66effbc 100644
+--- a/sim/world/climate.gd
++++ b/sim/world/climate.gd
+@@ -33,6 +33,42 @@ static var _errors: Array = []
+ static var _hash: String = ""
+ static var _alias := PackedByteArray()
+ static var curGen: int = 0   # 0: the data's gen; a tool or a match's setup sets it (useGen)
++# The data's numbers the column read uses, as typed statics (made by _cache when the file is loaded; the data is never changed after): a dictionary read of each, a column, was a fifth of the read (window 20).
++static var _kJitScale: float = 0.0
++static var _kJitSeed: int = 0
++static var _kJit: float = 0.0
++static var _kEq: float = 0.0
++static var _kPow: float = 1.0
++static var _kLapse: float = 0.0
++static var _kHScale: float = 1.0
++static var _kNScale: float = 0.0
++static var _kNOct: int = 1
++static var _kNAmp: float = 0.0
++static var _kTSeed: int = 0
++static var _kWBand: float = 0.0
++static var _kWAdv: float = 0.0
++static var _kBias: float = 0.0
++static var _kMScale: float = 0.0
++static var _kMOct: int = 1
++static var _kMSeed: int = 0
++static var _kWNoise: float = 0.0
++static var _kVHMin: float = 0.0
++static var _kVScale: float = 0.0
++static var _kVOct: int = 1
++static var _kVSeed: int = 0
++static var _kVAbove: float = 0.0
++static var _kBeachH: float = 0.0
++static var _kHighB: float = 0.0
++static var _kHighH: float = 0.0
++static var _kWetMoist: float = 0.0
++static var _kWetH: float = 0.0
++static var _kWetTemp: float = 0.0
++static var _kTE := PackedFloat64Array()
++static var _kME := PackedFloat64Array()
++static var _kTab := PackedInt32Array()
++static var _kNM: int = 1
++static var _cT: float = 0.0   # climateAt's answer, for plain (which would build an Array to read two numbers)
++static var _cM: float = 0.0
+ 
+ 
+ static func data() -> Dictionary:
+@@ -91,6 +127,53 @@ static func _load() -> void:
+ 	_alias.resize(j.fine.size())
+ 	for k in range(j.fine.size()):
+ 		_alias[k] = int(j.fine[k].alias)
++	_cache(j)
++
++
++static func _cache(j: Dictionary) -> void:
++	var tp: Dictionary = j.temp
++	var mp: Dictionary = j.moist
++	_kJitScale = float(tp.jitScale)
++	_kJitSeed = int(tp.jitSeed)
++	_kJit = float(tp.jit)
++	_kEq = float(tp.eq)
++	_kPow = float(tp.pow)
++	_kLapse = float(tp.lapse)
++	_kHScale = float(tp.hScale)
++	_kNScale = float(tp.noiseScale)
++	_kNOct = int(tp.noiseOct)
++	_kNAmp = float(tp.noiseAmp)
++	_kTSeed = int(tp.seed)
++	_kWBand = float(mp.wBand)
++	_kWAdv = float(mp.wAdv)
++	_kBias = float(mp.bias)
++	_kMScale = float(mp.noiseScale)
++	_kMOct = int(mp.noiseOct)
++	_kMSeed = int(mp.seed)
++	_kWNoise = float(mp.wNoise)
++	var vc: Dictionary = j.volcanic
++	_kVHMin = float(vc.hMin)
++	_kVScale = float(vc.scale)
++	_kVOct = int(vc.oct)
++	_kVSeed = int(vc.seed)
++	_kVAbove = float(vc.above)
++	_kBeachH = float(j.coast.beachH)
++	_kHighB = float(j.b.highlandH)
++	_kHighH = float(j.highland.h)
++	_kWetMoist = float(j.wetland.moistMin)
++	_kWetH = float(j.wetland.hMax)
++	_kWetTemp = float(j.wetland.tempMin)
++	_kTE.resize(j.tempEdges.size())
++	for k in range(j.tempEdges.size()):
++		_kTE[k] = float(j.tempEdges[k])
++	_kME.resize(j.moistEdges.size())
++	for k in range(j.moistEdges.size()):
++		_kME[k] = float(j.moistEdges[k])
++	_kNM = j.moistEdges.size() + 1
++	_kTab.resize((j.tempEdges.size() + 1) * _kNM)
++	for ti in range(j.tempEdges.size() + 1):
++		for mi in range(_kNM):
++			_kTab[ti * _kNM + mi] = int(j.table[ti][mi])
+ 
+ 
+ ## The generation planets are made by now: a tool's or a setup's choice, else the data's.
+@@ -180,75 +263,121 @@ class Grid extends RefCounted:
+ 			_cs[k] = SimDetMath.cos(th)
+ 			_sn[k] = SimDetMath.sin(th)
+ 
+-	## Reads up to n more cells' heights, then (once whole) carries the moisture; true when the grid is made.
++	var spent: int = 0         # units spent: a cell a unit, then the carry's rows (the job's budget is told in these)
++	var _cph: int = 0          # the carry's phase: 0 not begun, 1 the wind's rows, 2 the blend by the wind, 3 the blend between rows, 4 the blend along the rows, 5 made
++	var _crow: int = 0
++	var _east := PackedFloat32Array()   # wind toward -longitude
++	var _west := PackedFloat32Array()   # wind toward +longitude
++	var _mix := PackedFloat32Array()
++	var _vb := PackedFloat32Array()
++
++	## Does up to n more units of the work: the cells' heights (a unit a cell), then (once whole) the moisture's carry (ten units a row of the wind, one a row of each blend); true when the grid is made. A budget
++	## of the whole job or more goes through it in the one call.
+ 	func step(n: int) -> bool:
+ 		if done:
+ 			return true
++		var left: int = n
+ 		var total: int = w * h
+-		var last: int = mini(total, cell + n)
+-		for i in range(cell, last):
+-			var r: int = i / w
+-			var k: int = i - r * w
+-			var y: float = -1.0 + (float(r) + 0.5) * 2.0 / float(h)
+-			var c: float = sqrt(1.0 - y * y)
+-			ht[i] = WorldPlanet.ground(P, c * _cs[k], y, c * _sn[k])
+-		cell = last
+-		if cell >= total:
+-			_carry()
+-			done = true
++		if cell < total:
++			var last: int = mini(total, cell + n)
++			for i in range(cell, last):
++				var r: int = i / w
++				var k: int = i - r * w
++				var y: float = -1.0 + (float(r) + 0.5) * 2.0 / float(h)
++				var c: float = sqrt(1.0 - y * y)
++				ht[i] = WorldPlanet.ground(P, c * _cs[k], y, c * _sn[k])
++			left -= last - cell
++			spent += last - cell
++			cell = last
++			if cell < total:
++				return false
++			_cph = 1
++			_crow = 0
++			_east.resize(total)
++			_west.resize(total)
++			_mix.resize(total)
++			_vb.resize(total)
++		if left > 0 or n >= total:
++			_carry(left)
+ 		return done
+ 
+ 	func finishNow() -> void:
+-		step(w * h)
++		step(1 << 40)
+ 
+-	## The wind's moisture, both ways round each row twice (so the carry crosses the seam), then the two blended by the latitude's wind and blurred a little between rows.
+-	func _carry() -> void:
++	## The wind's moisture, both ways round each row twice (so the carry crosses the seam), then the two blended by the latitude's wind and blurred a little between rows; stepped by rows, the same arithmetic.
++	func _carry(left0: int) -> void:
++		var left: int = left0
+ 		var d: Dictionary = WorldClimate.data().moist
+ 		var evap: float = d.evap
+ 		var rain0: float = d.rain0
+ 		var rainOro: float = d.rainOro
+ 		var oroH: float = d.oroH
+-		var east := PackedFloat32Array()   # wind toward -longitude
+-		var west := PackedFloat32Array()   # wind toward +longitude
+-		east.resize(w * h)
+-		west.resize(w * h)
+-		for r in range(h):
+-			var base: int = r * w
+-			for dir in range(2):
+-				var m: float = 0.0
+-				for lap in range(2 * w):
+-					var k: int = lap % w if dir == 0 else w - 1 - (lap % w)
+-					var kp: int = (k - 1 + w) % w if dir == 0 else (k + 1) % w
+-					var hh: float = ht[base + k]
+-					if hh < 0.0:
+-						m = minf(1.0, m + evap)
+-					else:
+-						var rise: float = maxf(0.0, hh - maxf(ht[base + kp], 0.0))
+-						m = maxf(0.0, m - rain0 - rainOro * rise / oroH)
+-					if lap >= w:
+-						if dir == 0:
+-							west[base + k] = m
+-						else:
+-							east[base + k] = m
+-		var mix := PackedFloat32Array()
+-		mix.resize(w * h)
+-		for r in range(h):
+-			var y: float = -1.0 + (float(r) + 0.5) * 2.0 / float(h)
+-			var we: float = WorldClimate.westerly(y)
+-			for k in range(w):
+-				mix[r * w + k] = west[r * w + k] * we + east[r * w + k] * (1.0 - we)
+ 		var b: float = d.blur
+-		var vb := PackedFloat32Array()
+-		vb.resize(w * h)
+-		for r in range(h):
+-			var ra: int = maxi(0, r - 1)
+-			var rb: int = mini(h - 1, r + 1)
+-			for k in range(w):
+-				vb[r * w + k] = mix[r * w + k] * (1.0 - 2.0 * b) + mix[ra * w + k] * b + mix[rb * w + k] * b
+ 		var bh: float = d.blurLon
+-		for r in range(h):
+-			for k in range(w):
+-				adv[r * w + k] = vb[r * w + k] * (1.0 - 2.0 * bh) + vb[r * w + (k - 1 + w) % w] * bh + vb[r * w + (k + 1) % w] * bh
++		while _cph < 5 and (left > 0 or left0 >= (1 << 30)):
++			if _cph == 1:
++				var r: int = _crow
++				var base: int = r * w
++				for dir in range(2):
++					var m: float = 0.0
++					for lap in range(2 * w):
++						var k: int = lap % w if dir == 0 else w - 1 - (lap % w)
++						var kp: int = (k - 1 + w) % w if dir == 0 else (k + 1) % w
++						var hh: float = ht[base + k]
++						if hh < 0.0:
++							m = minf(1.0, m + evap)
++						else:
++							var rise: float = maxf(0.0, hh - maxf(ht[base + kp], 0.0))
++							m = maxf(0.0, m - rain0 - rainOro * rise / oroH)
++						if lap >= w:
++							if dir == 0:
++								_west[base + k] = m
++							else:
++								_east[base + k] = m
++				_crow += 1
++				left -= 10
++				spent += 10
++				if _crow >= h:
++					_cph = 2
++					_crow = 0
++			elif _cph == 2:
++				var r: int = _crow
++				var y: float = -1.0 + (float(r) + 0.5) * 2.0 / float(h)
++				var we: float = WorldClimate.westerly(y)
++				for k in range(w):
++					_mix[r * w + k] = _west[r * w + k] * we + _east[r * w + k] * (1.0 - we)
++				_crow += 1
++				left -= 1
++				spent += 1
++				if _crow >= h:
++					_cph = 3
++					_crow = 0
++			elif _cph == 3:
++				var r: int = _crow
++				var ra: int = maxi(0, r - 1)
++				var rb: int = mini(h - 1, r + 1)
++				for k in range(w):
++					_vb[r * w + k] = _mix[r * w + k] * (1.0 - 2.0 * b) + _mix[ra * w + k] * b + _mix[rb * w + k] * b
++				_crow += 1
++				left -= 1
++				spent += 1
++				if _crow >= h:
++					_cph = 4
++					_crow = 0
++			else:
++				var r: int = _crow
++				for k in range(w):
++					adv[r * w + k] = _vb[r * w + k] * (1.0 - 2.0 * bh) + _vb[r * w + (k - 1 + w) % w] * bh + _vb[r * w + (k + 1) % w] * bh
++				_crow += 1
++				left -= 1
++				spent += 1
++				if _crow >= h:
++					_cph = 5
++					done = true
++					_east = PackedFloat32Array()
++					_west = PackedFloat32Array()
++					_mix = PackedFloat32Array()
++					_vb = PackedFloat32Array()
+ 
+ 
+ ## The planet's grid (built when first asked: about the cost of a few hundred ring columns, once a planet).
+@@ -281,19 +410,25 @@ static func advAt(G: Grid, px: float, py: float, pz: float) -> float:
+ 
+ ## The temperature (about 0 to 1) and moisture (0 to 1) at a point of height h.
+ static func climateAt(P: WorldPlanet.Planet, px: float, py: float, pz: float, h: float) -> Array:
+-	var d: Dictionary = data()
+-	var tp: Dictionary = d.temp
+-	var mp: Dictionary = d.moist
++	_climTM(P, px, py, pz, h)
++	return [_cT, _cM]
++
++
++## climateAt's arithmetic, its two numbers left in _cT and _cM.
++static func _climTM(P: WorldPlanet.Planet, px: float, py: float, pz: float, h: float) -> void:
++	if not _loaded:
++		_load()
+ 	# the latitude wobbles by up to jit (a slow noise), so the belts of climate are wavy and not ruled lines
+-	var yj: float = SimMathx.jclamp(py + (WorldPlanet._fbm(P.R, px, py, pz, tp.jitScale, 2, P.seed + int(tp.jitSeed)) - 0.5) * 2.0 * float(tp.jit), -1.0, 1.0)
++	var yj: float = SimMathx.jclamp(py + (WorldPlanet._fbm(P.R, px, py, pz, _kJitScale, 2, P.seed + _kJitSeed) - 0.5) * 2.0 * _kJit, -1.0, 1.0)
+ 	var cl: float = sqrt(maxf(0.0, 1.0 - yj * yj))
+-	var T: float = float(tp.eq) * SimDetMath.pow(cl, float(tp.pow)) - float(tp.lapse) * maxf(h, 0.0) / float(tp.hScale)
+-	T += (WorldPlanet._fbm(P.R, px, py, pz, tp.noiseScale, int(tp.noiseOct), P.seed + int(tp.seed)) - 0.5) * 2.0 * float(tp.noiseAmp)
++	var T: float = _kEq * SimDetMath.pow(cl, _kPow) - _kLapse * maxf(h, 0.0) / _kHScale
++	T += (WorldPlanet._fbm(P.R, px, py, pz, _kNScale, _kNOct, P.seed + _kTSeed) - 0.5) * 2.0 * _kNAmp
+ 	var G: Grid = gridOf(P)
+-	var M: float = float(mp.wBand) * bandWet(yj) + float(mp.wAdv) * advAt(G, px, py, pz)
+-	M += float(mp.bias)
+-	M += (WorldPlanet._fbm(P.R, px, py, pz, mp.noiseScale, int(mp.noiseOct), P.seed + int(mp.seed)) - 0.5) * 2.0 * float(mp.wNoise)
+-	return [T, SimMathx.jclamp(M, 0.0, 1.0)]
++	var M: float = _kWBand * bandWet(yj) + _kWAdv * advAt(G, px, py, pz)
++	M += _kBias
++	M += (WorldPlanet._fbm(P.R, px, py, pz, _kMScale, _kMOct, P.seed + _kMSeed) - 0.5) * 2.0 * _kWNoise
++	_cT = T
++	_cM = SimMathx.jclamp(M, 0.0, 1.0)
+ 
+ 
+ ## The fine biome of ordinary land at a point of height h (sea and ice are the surface function's); sets P.outF and returns the stored biome it reads as.
+@@ -301,38 +436,39 @@ static func plain(P: WorldPlanet.Planet, px: float, py: float, pz: float, h: flo
+ 	if h < 0.0:
+ 		P.outF = F_OCEAN
+ 		return WorldPlanet.BIO_OCEAN
++	if not _loaded:
++		_load()
+ 	var onB: bool = WorldLand.plateB()   # Research's B plates: their volcanic score makes the volcanic fields, in place of the noise (window 13)
+ 	var bv: bool = onB and WorldPlateB.volcAt(P, px, py, pz) > WorldPlateB.K.volcanic
+-	if h > P.c.mountainAbove and not bv:
++	var above: float = P.c.mountainAbove
++	if h > above and not bv:
+ 		P.outF = F_MOUNTAINS
+ 		return WorldPlanet.BIO_MOUNTAINS
+-	var d: Dictionary = data()
+-	var cm: Array = climateAt(P, px, py, pz, h)
+-	var T: float = cm[0]
+-	var M: float = cm[1]
+-	var vc: Dictionary = d.volcanic
++	_climTM(P, px, py, pz, h)
++	var T: float = _cT
++	var M: float = _cM
+ 	var fine: int
+-	if bv and T >= float(d.tempEdges[0]) and h >= float(d.coast.beachH):   # not too cold for it, and not a beach (Research's notCold)
++	if bv and T >= _kTE[0] and h >= _kBeachH:   # not too cold for it, and not a beach (Research's notCold)
+ 		fine = F_VOLCANIC
+-	elif h > P.c.mountainAbove:
++	elif h > above:
+ 		fine = F_MOUNTAINS
+-	elif not onB and h >= float(vc.hMin) and WorldPlanet._fbm(P.R, px, py, pz, vc.scale, int(vc.oct), P.seed + int(vc.seed)) > float(vc.above):
++	elif not onB and h >= _kVHMin and WorldPlanet._fbm(P.R, px, py, pz, _kVScale, _kVOct, P.seed + _kVSeed) > _kVAbove:
+ 		fine = F_VOLCANIC
+-	elif h >= (float(d.b.highlandH) if onB else float(d.highland.h)):
++	elif h >= (_kHighB if onB else _kHighH):
+ 		fine = F_HIGHLAND
+-	elif h < float(d.coast.beachH):
++	elif h < _kBeachH:
+ 		fine = F_BEACH
+-	elif M >= float(d.wetland.moistMin) and h < float(d.wetland.hMax) and T >= float(d.wetland.tempMin):
++	elif M >= _kWetMoist and h < _kWetH and T >= _kWetTemp:
+ 		fine = F_WETLAND
+ 	else:
+ 		var ti: int = 0
+-		for e in d.tempEdges:
+-			if T >= float(e):
++		for e in _kTE:
++			if T >= e:
+ 				ti += 1
+ 		var mi: int = 0
+-		for e in d.moistEdges:
+-			if M >= float(e):
++		for e in _kME:
++			if M >= e:
+ 				mi += 1
+-		fine = int(d.table[ti][mi])
++		fine = _kTab[ti * _kNM + mi]
+ 	P.outF = fine
+ 	return _alias[fine]
+diff --git a/sim/world/land.gd b/sim/world/land.gd
+index dcf6dba..2e14c91 100644
+--- a/sim/world/land.gd
++++ b/sim/world/land.gd
+@@ -327,19 +327,40 @@ static func _edge(P: WorldPlanet.Planet, px: float, py: float, pz: float) -> voi
+ static var _rA: float = 0.0
+ static var _rB: float = 0.0
+ static var _dk := PackedFloat64Array()
++static var _cand := PackedInt32Array()
++static var _zP = null        # the planet and the ball (centre, squared radius) round a point where no plate edge reaches: _terms is 0 for every point inside it (derived data, a memo of what _terms would return)
++static var _zx: float = 0.0
++static var _zy: float = 0.0
++static var _zz: float = 0.0
++static var _zR2: float = -1.0
+ 
+ 
+ static func _terms(P: WorldPlanet.Planet, px: float, py: float, pz: float) -> void:
++	if _zP == P:   # inside a ball round a point where no edge reaches (below): nothing to add, as the full read would find
++		var zx: float = px - _zx
++		var zy: float = py - _zy
++		var zz: float = pz - _zz
++		if zx * zx + zy * zy + zz * zz < _zR2:
++			_rA = 0.0
++			_rB = 0.0
++			return
+ 	var pl: Plates = platesOf(P)
+ 	var n: int = pl.n
+ 	if _dk.size() != n:
+ 		_dk.resize(n)
++	var cx: PackedFloat64Array = pl.cx
++	var cy: PackedFloat64Array = pl.cy
++	var cz: PackedFloat64Array = pl.cz
+ 	var b1: float = -2.0
++	var b2: float = -2.0
+ 	for i in range(n):
+-		var d: float = px * pl.cx[i] + py * pl.cy[i] + pz * pl.cz[i]
++		var d: float = px * cx[i] + py * cy[i] + pz * cz[i]
+ 		_dk[i] = d
+ 		if d > b1:
++			b2 = b1
+ 			b1 = d
++		elif d > b2:
++			b2 = d
+ 	var wr: float = K_R_WIDTH
+ 	var wf: float = K_F_WIDTH
+ 	var wm: float = wr if wr > wf else wf
+@@ -348,14 +369,37 @@ static func _terms(P: WorldPlanet.Planet, px: float, py: float, pz: float) -> vo
+ 	var reach: float = 2.5 * wg
+ 	_rA = 0.0
+ 	_rB = 0.0
++	# Where the nearest plate leads the second by more than cut + the wobble (which is more than reach), no pair of plates passes the tests below (a plate but the nearest is farther than reach from it, and the
++	# nearest is farther than cut + wobble from every other): the sums are 0 and the wobble is not read. Every dot product moves by at most the distance the point moves, so the lead falls by at most twice
++	# that: inside a ball of 0.45 of the spare lead round this point it is the same 0 (a little under half, for the float rounding).
++	var thr: float = cut + K_WOB_AMP
++	if b1 - b2 > thr + 1.0e-9:
++		var rr: float = 0.45 * (b1 - b2 - thr)
++		_zP = P
++		_zx = px
++		_zy = py
++		_zz = pz
++		_zR2 = rr * rr
++		return
+ 	var wob: float = 1.0e9
+ 	var mc: float = K_R_MINCONV
++	# only a plate within reach + cut + wobble of the nearest can be either plate of a pair that passes the tests below: they are listed (a hair wider, the tests decide) in index order, and both loops run over the list
++	var lo: float = b1 - reach - (cut + K_WOB_AMP) - 1.0e-9
++	if _cand.size() != n:
++		_cand.resize(n)
++	var m: int = 0
+ 	for i in range(n):
++		if _dk[i] >= lo:
++			_cand[m] = i
++			m += 1
++	for ii in range(m):
++		var i: int = _cand[ii]
+ 		var di: float = _dk[i]
+ 		if di < b1 - reach:
+ 			continue
+ 		var gate: float = _bump(b1 - di, wg)   # 1 for the nearest plate itself
+-		for k in range(n):
++		for kk in range(m):
++			var k: int = _cand[kk]
+ 			var dk: float = _dk[k]
+ 			if k == i or dk > di or (dk == di and k < i):
+ 				continue
+diff --git a/sim/world/planet.gd b/sim/world/planet.gd
+index c93f370..045fe45 100644
+--- a/sim/world/planet.gd
++++ b/sim/world/planet.gd
+@@ -238,13 +238,49 @@ static func _vn(x: float, y: float, z: float, s: int) -> float:
+ static var _octOff: int = 0
+ 
+ 
++## Octaves of _vn at the planet's scale, normalised to [0, 1). _vn is written out inside the octave loop (the same arithmetic in the same order, so the same bits): a call an octave and a dictionary read a call were
++## a third of the cost of a column of the ring (window 20).
+ static func _fbm(R: float, px: float, py: float, pz: float, scale: float, oct: int, s: int) -> float:
+ 	var sum: float = 0.0
+ 	var amp: float = 0.5
+ 	var tot: float = 0.0
+ 	var k: float = R / scale
++	var slots: Dictionary = _vcSlot
+ 	for o in range(maxi(1, oct - _octOff)):
+-		sum += amp * _vn(px * k, py * k, pz * k, s + o * 101)
++		var x: float = px * k
++		var y: float = py * k
++		var z: float = pz * k
++		var fx: float = floor(x)
++		var fy: float = floor(y)
++		var fz: float = floor(z)
++		var ix: int = int(fx)
++		var iy: int = int(fy)
++		var iz: int = int(fz)
++		var tx: float = x - fx
++		var ty: float = y - fy
++		var tz: float = z - fz
++		tx = tx * tx * (3.0 - 2.0 * tx)
++		ty = ty * ty * (3.0 - 2.0 * ty)
++		tz = tz * tz * (3.0 - 2.0 * tz)
++		var sd: int = s + o * 101
++		var slot: int = slots.get(sd, -1)
++		if slot < 0:
++			slot = _vcNew(sd)
++		var kb: int = slot * 3
++		if _vcKey[kb] != ix or _vcKey[kb + 1] != iy or _vcKey[kb + 2] != iz:
++			_vcFill(slot, ix, iy, iz, sd)
++		var vb: int = slot * 8
++		var c000: float = _vcVal[vb]
++		var a: float = c000 + (_vcVal[vb + 1] - c000) * tx
++		var c010: float = _vcVal[vb + 2]
++		var b: float = c010 + (_vcVal[vb + 3] - c010) * tx
++		var c001: float = _vcVal[vb + 4]
++		var c: float = c001 + (_vcVal[vb + 5] - c001) * tx
++		var c011: float = _vcVal[vb + 6]
++		var d: float = c011 + (_vcVal[vb + 7] - c011) * tx
++		var e: float = a + (b - a) * ty
++		var f: float = c + (d - c) * ty
++		sum += amp * (e + (f - e) * tz)
+ 		tot += amp
+ 		amp *= 0.5
+ 		k *= 2.0
+@@ -318,8 +354,8 @@ static func _newPlanet(seed: int, gn: int) -> Planet:
+ 
+ 
+ static func _memoPlanet(key: int, P: Planet) -> void:
+-	if _planets.size() > 6:
+-		_planets.clear()
++	while _planets.size() >= 7 and not _planets.has(key):
++		_planets.erase(_planets.keys()[0])   # the oldest made goes (a Dictionary keeps its insertion order): the others stay, a host that loads a planet right before its match no longer loses them all
+ 	_planets[key] = P
+ 
+ 
+@@ -327,12 +363,13 @@ static func _memoPlanet(key: int, P: Planet) -> void:
+ ## (cost PLACE_COST units, about 20 ms) at a time. `step(budget)` returns true when `P` is whole and memoised, where make(seed) then finds it at once. make(seed) is this job run to the end.
+ class PlanetJob extends RefCounted:
+ 	const PLACE_COST: int = 1000
++	const FLOW_CELLS: int = 50   # ticks of the flow field's work (about 0.4 us each) to a budget unit (about 20 us): about 370,000 whole, FLOW_COST units
+ 	var seed: int = 0
+ 	var key: int = 0
+ 	var P: WorldPlanet.Planet
+ 	var done: bool = false
+ 	var _grid = null
+-	var _flowDue: bool = false
++	var _flow = null   # the rivers' drainage of the grid, stepped (WorldRivers.Flow)
+ 	var _st: Dictionary = {}
+ 
+ 	func _init(sd: int) -> void:
+@@ -348,33 +385,42 @@ class PlanetJob extends RefCounted:
+ 			_grid = WorldClimate.Grid.new(P)
+ 		_st = WorldPlanet._placeBegin(P)
+ 
++	## Spends up to `budget` units: the grid's cells and its carry's rows, the flow field's cells, the places' tries (a unit is about 20 us); every piece goes on where it left off, so a call is about the budget (a
++	## try, a row of the wind or a circle may go a little over) and never a whole piece. A budget of the whole job or more goes through every piece in the one call.
+ 	func step(budget: int) -> bool:
+ 		if done:
+ 			return true
+ 		var left: int = budget
+ 		if _grid != null:
+-			var before: int = _grid.cell
++			var before: int = _grid.spent
+ 			_grid.step(left)
+-			left -= _grid.cell - before
++			left -= _grid.spent - before
+ 			if not _grid.done:
+ 				return false
+ 			P.grid = _grid
+ 			_grid = null
+-			_flowDue = WorldRivers.enabled()
+-			if _flowDue and left < WorldRivers.FLOW_COST:   # a frame's slice that ended the grid (and its carry) leaves the flow field to the next; a whole budget (finishNow) goes on
++			if WorldRivers.enabled() and P.flow == null:   # the drainage of the grid (about 155 ms whole), made a few cells at a time
++				_flow = WorldRivers.Flow.new(P.grid, false)
++			if left <= 0:
++				return false
++		if _flow != null:
++			var s0: int = _flow.spent
++			var fin: bool = _flow.step(maxi(1, left * FLOW_CELLS))
++			left -= maxi(1, (_flow.spent - s0 + FLOW_CELLS - 1) / FLOW_CELLS)
++			if not fin:
+ 				return false
+-		if _flowDue:   # the drainage of the grid (about 100 ms: FLOW_COST units), a slice of its own
+-			_flowDue = false
+-			WorldRivers.flowOf(P)
+-			left -= WorldRivers.FLOW_COST
++			P.flow = _flow
++			_flow = null
+ 			if left <= 0:
+ 				return false
+ 		while true:
+-			if WorldPlanet._placeStep(P, _st):
++			_st.spent = 0
++			var fin2: bool = WorldPlanet._placeStep(P, _st, maxi(1, left))
++			left -= maxi(1, int(_st.spent))
++			if fin2:
+ 				WorldPlanet._memoPlanet(key, P)
+ 				done = true
+ 				return true
+-			left -= PLACE_COST
+ 			if left <= 0:
+ 				return false
+ 		return done
+@@ -622,13 +668,28 @@ static func _arc(P: Planet, a: Array, bx: float, by: float, bz: float) -> float:
+ 	return P.R * acosf(a[0] * bx + a[1] * by + a[2] * bz)
+ 
+ 
+-static func _tryPlace(P: Planet, r: SimRng, kind: int, radius: float, tries: int, polar: bool) -> bool:
++## What a try costs in the job's units (one is about 20 us): the height test, the gap test, the score (a gen 2 planet's climate and site reads): measured 53, 124 and 284 us a try.
++const TRY_U_H: int = 3
++const TRY_U_GAP: int = 3
++const TRY_U_SCORE: int = 8
++
++
++static func _tsBegin() -> Dictionary:
++	return {"k": 0, "best": null, "bs": -1.0e9, "done": false}
++
++
++## Up to `units` of a try-set's work, resuming at ts.k (the tries' draws in the same order as ever, so the same places): returns the units spent; ts.done when the set is made (the best of its tries placed).
++static func _tryRun(P: Planet, r: SimRng, kind: int, radius: float, tries: int, polar: bool, ts: Dictionary, units: int) -> int:
+ 	var c: Dictionary = P.c
+-	var best = null
+-	var bs: float = -1.0e9
+-	for k in range(tries):
++	var spent: int = 0
++	var best = ts.best
++	var bs: float = ts.bs
++	var k: int = ts.k
++	while k < tries and spent < units:
++		k += 1
+ 		var p: Array = _randUnit(r)
+ 		var h: float = ground(P, p[0], p[1], p[2])
++		spent += TRY_U_H
+ 		if h < c.placeHMin or h > c.placeHMax or (polar and absf(p[1]) > c.placeYMax):
+ 			continue
+ 		var dmin: float = 1.0e9
+@@ -636,12 +697,14 @@ static func _tryPlace(P: Planet, r: SimRng, kind: int, radius: float, tries: int
+ 			var g: float = _arc(P, p, P.px[i], P.py[i], P.pz[i]) - P.rad[i] - radius
+ 			if g < dmin:
+ 				dmin = g
++		spent += TRY_U_GAP
+ 		if dmin < c.placeGap:
+ 			continue
+ 		var sc: float = dmin * c.scoreGap - absf(h - c.scoreH0) * c.scoreHW + r.next()
+ 		if P.gen >= 2:   # window 4: a harbour for a city, a fertile biome, nothing on ice, in the sea or on a range
+ 			if sc + WorldSites.maxBonus(kind) <= bs:
+ 				continue   # the climate term cannot lift it past the best so far
++			spent += TRY_U_SCORE
+ 			var bonus: float = WorldSites.score(P, kind, p[0], p[1], p[2], bs - sc)
+ 			if bonus <= -1.0e8:
+ 				continue
+@@ -649,15 +712,25 @@ static func _tryPlace(P: Planet, r: SimRng, kind: int, radius: float, tries: int
+ 		if sc > bs:
+ 			bs = sc
+ 			best = p
+-	if best != null:
+-		P.kind.append(kind)
+-		P.px.append(best[0])
+-		P.py.append(best[1])
+-		P.pz.append(best[2])
+-		P.rad.append(radius)
+-		P.n += 1
+-		return true
+-	return false
++	ts.k = k
++	ts.best = best
++	ts.bs = bs
++	if k >= tries:
++		ts.done = true
++		if best != null:
++			P.kind.append(kind)
++			P.px.append(best[0])
++			P.py.append(best[1])
++			P.pz.append(best[2])
++			P.rad.append(radius)
++			P.n += 1
++	return spent
++
++
++static func _tryPlace(P: Planet, r: SimRng, kind: int, radius: float, tries: int, polar: bool) -> bool:
++	var ts: Dictionary = _tsBegin()
++	_tryRun(P, r, kind, radius, tries, polar, ts, 1 << 40)
++	return ts.best != null
+ 
+ 
+ ## The places of a planet: first as picture A placed them (one stream, the ordinary ground), then the ones that fell inside a polar cap are placed again outside it
+@@ -669,20 +742,27 @@ static func _placeAll(P: Planet) -> void:
+ 
+ 
+ static func _placeBegin(P: Planet) -> Dictionary:
+-	return {"r": SimRng.new(P.seed * int(P.c.placeSeedMul) + 1), "r2": null, "i": 0, "phase": 0, "dropped": [0, 0]}
++	return {"r": SimRng.new(P.seed * int(P.c.placeSeedMul) + 1), "r2": null, "i": 0, "phase": 0, "dropped": [0, 0], "ts": null, "spent": 0}
+ 
+ 
+-## One _tryPlace (or the step between the two streams, or the last step); true when the places are all made.
+-static func _placeStep(P: Planet, st: Dictionary) -> bool:
++## Up to `units` of a try-set (a few tries: _tryRun), or the step between the two streams, or the last step; true when the places are all made. The default is a whole try-set a call, as it always was.
++## st.spent adds up the units a call spent (the job's budget is told in these).
++static func _placeStep(P: Planet, st: Dictionary, units: int = 1 << 40) -> bool:
+ 	var c: Dictionary = P.c
+ 	var nc: int = int(c.cities)
+ 	var nt: int = int(c.towns)
+ 	if int(st.phase) == 0:
+ 		var i: int = st.i
+-		if i < nc:
+-			_tryPlace(P, st.r, KIND_CITY, c.cityRadius, int(c.cityTries), false)
+-		elif i < nc + nt:
+-			_tryPlace(P, st.r, KIND_TOWN, c.townRadius, int(c.townTries), false)
++		if i < nc + nt:
++			if st.ts == null:
++				st.ts = _tsBegin()
++			if i < nc:
++				st.spent += _tryRun(P, st.r, KIND_CITY, c.cityRadius, int(c.cityTries), false, st.ts, units)
++			else:
++				st.spent += _tryRun(P, st.r, KIND_TOWN, c.townRadius, int(c.townTries), false, st.ts, units)
++			if not st.ts.done:
++				return false
++			st.ts = null
+ 		st.i = i + 1
+ 		if int(st.i) < nc + nt:
+ 			return false
+@@ -719,10 +799,15 @@ static func _placeStep(P: Planet, st: Dictionary) -> bool:
+ 	var nd: int = int(dr[KIND_CITY]) + int(dr[KIND_TOWN])
+ 	var j: int = st.i
+ 	if j < nd:
++		if st.ts == null:
++			st.ts = _tsBegin()
+ 		if j < int(dr[KIND_CITY]):
+-			_tryPlace(P, st.r2, KIND_CITY, c.cityRadius, int(c.replaceTries), true)
++			st.spent += _tryRun(P, st.r2, KIND_CITY, c.cityRadius, int(c.replaceTries), true, st.ts, units)
+ 		else:
+-			_tryPlace(P, st.r2, KIND_TOWN, c.townRadius, int(c.replaceTries), true)
++			st.spent += _tryRun(P, st.r2, KIND_TOWN, c.townRadius, int(c.replaceTries), true, st.ts, units)
++		if not st.ts.done:
++			return false
++		st.ts = null
+ 		st.i = j + 1
+ 		if int(st.i) < nd:
+ 			return false
+@@ -904,7 +989,8 @@ static func readBegin(P: Planet, circ: Dictionary, T: Array) -> Slice:
+ 	return S
+ 
+ 
+-## Columns i0 up to i1 (exclusive) of the slice.
++## Columns i0 up to i1 (exclusive) of the slice. The planet's numbers are read once a call, and a gen 2 planet on the stored continents takes surfAt's ordinary-ground path (the continents, the plates' shape, the
++## polar edge, the climate's biome) written out here, the same arithmetic in the same order; where a column is in the polar zone surfAt itself is called (window 20).
+ static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
+ 	var c: Dictionary = P.c
+ 	var circ: Dictionary = S.circ
+@@ -916,24 +1002,67 @@ static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
+ 	var ca: Array = circ.get("c", u)
+ 	var tc: int = touchCol()
+ 	var fine2: bool = P.gen >= 2
++	var fast: bool = fine2 and not WorldLand.plateB()
++	var R: float = P.R
++	var sd0: int = P.seed
++	var u0: float = u[0]
++	var u1: float = u[1]
++	var u2: float = u[2]
++	var v0: float = v[0]
++	var v1: float = v[1]
++	var v2: float = v[2]
++	var ca0: float = ca[0]
++	var ca1: float = ca[1]
++	var ca2: float = ca[2]
++	var contScale: float = c.contScale
++	var contOct: int = int(c.contOct)
++	var seaShift: float = c.seaShift
++	var hMul: float = c.hMul
++	var rangeFrom: float = c.rangeFrom
++	var reliefScale: float = c.reliefScale
++	var reliefOct: int = int(c.reliefOct)
++	var sRelief: int = int(c.sRelief)
++	var rangeMul: float = c.rangeMul
++	var reliefBase: float = c.reliefBase
++	var keepV: float = WorldLand.keep()
++	var polarY0: float = c.polarY
++	var detailScale: float = c.detailScale
++	var detailOct: int = int(c.detailOct)
++	var dseed: int = sd0 + int(c.sDetail)
++	var detailAmp: float = c.detailAmp
++	var detailSheet: float = c.detailSheet
+ 	for i in range(i0, i1):
+-		var ang: float = float(i - tc) * SimConst.COL / (P.R * stf)
++		var ang: float = float(i - tc) * SimConst.COL / (R * stf)
+ 		var co: float = SimDetMath.cos(ang)
+ 		var si: float = SimDetMath.sin(ang)
+-		var qx: float = u[0] * co + v[0] * si
+-		var qy: float = u[1] * co + v[1] * si
+-		var qz: float = u[2] * co + v[2] * si
++		var qx: float = u0 * co + v0 * si
++		var qy: float = u1 * co + v1 * si
++		var qz: float = u2 * co + v2 * si
+ 		if small:
+-			qx = ca[0] * ct + stf * qx
+-			qy = ca[1] * ct + stf * qy
+-			qz = ca[2] * ct + stf * qz
+-		surfAt(P, qx, qy, qz)
++			qx = ca0 * ct + stf * qx
++			qy = ca1 * ct + stf * qy
++			qz = ca2 * ct + stf * qz
++		var done: bool = false
++		if fast:
++			var e: float = (_fbm(R, qx, qy, qz, contScale, contOct, sd0) - 0.5) * 2.0
++			var g: float = (e + seaShift) * hMul
++			if e > rangeFrom:
++				var m: float = _fbm(R, qx, qy, qz, reliefScale, reliefOct, sd0 + sRelief)
++				g += (e - rangeFrom) * rangeMul * (reliefBase + m) * keepV
++			g = WorldLand.shape(P, qx, qy, qz, g)
++			if absf(qy) < polarY0 + WorldLand.polarWob(P, qx, qy, qz):
++				P.outF = -1
++				P.outH = g
++				P.outB = WorldClimate.plain(P, qx, qy, qz, g)
++				done = true
++		if not done:
++			surfAt(P, qx, qy, qz)
+ 		var h: float = P.outH
+ 		var b: int = P.outB
+ 		if b >= BIO_PLAINS and b <= BIO_MOUNTAINS:
+-			h += (_fbm(P.R, qx, qy, qz, c.detailScale, int(c.detailOct), P.seed + int(c.sDetail)) - 0.5) * c.detailAmp
++			h += (_fbm(R, qx, qy, qz, detailScale, detailOct, dseed) - 0.5) * detailAmp
+ 		elif b == BIO_ICE_SHEET and h > 100.0:
+-			h += (_fbm(P.R, qx, qy, qz, c.detailScale, int(c.detailOct), P.seed + int(c.sDetail)) - 0.5) * c.detailAmp * c.detailSheet
++			h += (_fbm(R, qx, qy, qz, detailScale, detailOct, dseed) - 0.5) * detailAmp * detailSheet
+ 		S.heights[i] = h
+ 		S.biomes[i] = b
+ 		if fine2:
+@@ -999,12 +1128,87 @@ static func sliceFor(seed: int, touch: int, standing: PackedByteArray = PackedBy
+ 	if not r.ok:
+ 		return null
+ 	var S: Slice = readSlice(P, ringThrough(r.circle, SimConst.NC, side), r.T, standing)   # the arena's columns: the great circle itself at 4,800, else a ring through the touch-down
+-	if _slices.size() > 4:
+-		_slices.clear()
+-	_slices[key] = S
++	_memoSlice(key, S)
+ 	return S
+ 
+ 
++## A touch-down's ring read in steps (what sliceFor reads in one piece): the touch's point and candidate circles, each circle evaluated (a step takes at most one: about 96 surface reads, 4 to 6 ms) until one meets the
++## minimum, then the ring's columns a slice at a time, then its held places; at the end the slice is memoised where sliceFor finds it, so sliceFor (and a match's start) then returns it at once. The slice is the
++## same one, bit for bit. `slice` is null when no circle met the minimum (sliceFor's null). The planet is World's memo (make(seed): a cold planet would be made in one piece here, so a host loads it first); the arena's
++## columns (SimConst.NC) must be the same for every call as for the first.
++class SliceJob extends RefCounted:
++	const COLUMN_UNITS: int = 2   # a ring column's read, in units (about 40 us on a gen 2 planet)
++	const HELD_UNITS: int = 100   # the held places and the fine biomes' blend (about 2 ms)
++	var seed: int = 0
++	var touch: int = 0
++	var standing := PackedByteArray()
++	var relaxed: bool = false
++	var side: int = 1
++	var key: String = ""
++	var slice = null
++	var done: bool = false
++	var _ph: int = 0   # 0 the planet and the candidates, 1 the circles, 2 the columns, 3 the held places
++	var _P: WorldPlanet.Planet
++	var _T: Array = []
++	var _cand: Array = []
++	var _ci: int = 0
++	var _S = null
++	var _i: int = 0
++
++	func _init(sd: int, tch: int, st: PackedByteArray = PackedByteArray(), rel: bool = false, sd2: int = 1) -> void:
++		seed = sd
++		touch = tch
++		standing = st
++		relaxed = rel
++		side = sd2
++		key = "%d/%d/%s/%d/%s/%d/%d" % [sd, tch, str(st.hex_encode()), 1 if rel else 0, WorldPlanet.dataHash(), SimConst.NC, sd2]
++		if WorldPlanet._slices.has(key):
++			slice = WorldPlanet._slices[key]
++			done = true
++
++	func step(units: int) -> bool:
++		if done:
++			return true
++		var left: int = maxi(1, units)
++		while left > 0 and not done:
++			if _ph == 0:
++				_P = WorldPlanet.make(seed)
++				_T = WorldPlanet.touchPoint(_P, touch)
++				_cand = WorldPlanet.candidates(_P, _T, touch, standing)
++				_ph = 1
++				left -= 1
++			elif _ph == 1:
++				if _ci >= _cand.size():
++					done = true   # no circle met the minimum: sliceFor's null (not memoised)
++					return true
++				var c: Dictionary = _P.c
++				var circ: Dictionary = _cand[_ci]
++				_ci += 1
++				var needC: int = int(c.relaxCities) if relaxed else int(c.minCities)
++				var needT: int = int(c.relaxTowns) if relaxed else int(c.minTowns)
++				var e: Dictionary = WorldPlanet.evalCircle(_P, circ, standing, needC, needT)
++				left -= 1 if e.get("skipped", false) else 2 * int(c.samples)
++				if WorldPlanet.meets(c, e, relaxed):
++					_S = WorldPlanet.readBegin(_P, WorldPlanet.ringThrough(circ, SimConst.NC, side), _T)
++					_i = 0
++					_ph = 2
++			elif _ph == 2:
++				var j: int = mini(SimConst.NC, _i + maxi(1, left / COLUMN_UNITS))
++				WorldPlanet.readColumns(_P, _S, _i, j)
++				left -= (j - _i) * COLUMN_UNITS
++				_i = j
++				if _i >= SimConst.NC:
++					_ph = 3
++			else:
++				WorldPlanet.readHeld(_P, _S, standing)
++				left -= HELD_UNITS
++				slice = _S
++				WorldPlanet._memoSlice(key, _S)
++				_S = null
++				done = true
++		return done
++
++
+ ## The ground beside a ring (window 2, the slow drift: Rendering's far land and sky read the planet's own ground, not a wander): the height and biome at column i of the ring, moved `z` units
+ ## sideways over the surface (z positive toward the ring's centre, negative away from it, along the great circle through the column at right angles to the ring). At z = 0 it is the slice's
+ ## own column, height and biome to the bit. Returns [height, biome]. A pure function of the planet and the ring: no state, no clock.
+@@ -1135,9 +1339,14 @@ static func ringRead(seed: int, ring: Dictionary) -> bool:
+ 
+ ## A ring's slice read in steps is put where sliceRing finds it.
+ static func memoRing(seed: int, ring: Dictionary, slice: Slice) -> void:
+-	if _slices.size() > 4:
+-		_slices.clear()
+-	_slices[_ringKey(seed, ring, PackedByteArray())] = slice
++	_memoSlice(_ringKey(seed, ring, PackedByteArray()), slice)
++
++
++## The slice memo keeps a few (five); a sixth evicts the oldest, not all.
++static func _memoSlice(key: String, S: Slice) -> void:
++	while _slices.size() > 4 and not _slices.has(key):
++		_slices.erase(_slices.keys()[0])
++	_slices[key] = S
+ 
+ 
+ static func sliceRing(seed: int, ring: Dictionary, standing: PackedByteArray = PackedByteArray()) -> Slice:
+@@ -1146,9 +1355,7 @@ static func sliceRing(seed: int, ring: Dictionary, standing: PackedByteArray = P
+ 		return _slices[key]
+ 	var P: Planet = make(seed)
+ 	var S: Slice = readSlice(P, ring, ring.u, standing)
+-	if _slices.size() > 4:
+-		_slices.clear()
+-	_slices[key] = S
++	_memoSlice(key, S)
+ 	return S
+ 
+ 
+diff --git a/sim/world/rivers.gd b/sim/world/rivers.gd
+index 49dc37f..66424c1 100644
+--- a/sim/world/rivers.gd
++++ b/sim/world/rivers.gd
+@@ -13,7 +13,7 @@ extends RefCounted
+ 
+ const PATH := "res://data/biomes/rivers.json"
+ const SCHEMA := "biomes.rivers/1"
+-const FLOW_COST: int = 5000   # a planet job's budget units the flow field costs (about 100 ms: a unit is about 20 microseconds)
++const FLOW_COST: int = 7400   # a planet job's budget units the flow field costs (about 147 ms made in steps: a unit is about 20 microseconds)
+ 
+ static var _d: Dictionary = {}
+ static var _loaded: bool = false
+@@ -150,7 +150,22 @@ class Flow extends RefCounted:
+ 	var rivers: int = 0
+ 	var landCells: int = 0
+ 
+-	func _init(G: WorldClimate.Grid) -> void:
++	var _G: WorldClimate.Grid
++	var _ph: int = 0        # the phase: 0 setup (a row a time), 1 the flood's seeds, 2 the flood, 3 the drainage down the steepest way, 4 the runoff added up, 5 the count, 6 made
++	var _pos: int = 0
++	var done: bool = false
++	var spent: int = 0      # ticks of work done so far (the job's budget is told in these: PlanetJob.FLOW_CELLS to a unit)
++	var _cs := PackedFloat64Array()
++	var _sn := PackedFloat64Array()
++	var _seen := PackedByteArray()
++	var _heapP := PackedFloat64Array()
++	var _heapI := PackedInt32Array()
++	var _fill := PackedFloat64Array()
++	var _out := PackedInt32Array()
++
++	## `run` true (the default): the whole field now. False: only the start; `step` does the rest a few cells at a time (the planet job's).
++	func _init(G: WorldClimate.Grid, run: bool = true) -> void:
++		_G = G
+ 		w = G.w
+ 		h = G.h
+ 		var n: int = w * h
+@@ -161,109 +176,159 @@ class Flow extends RefCounted:
+ 		px.resize(n)
+ 		py.resize(n)
+ 		pz.resize(n)
+-		var d: Dictionary = WorldClimate.data()
+-		var mp: Dictionary = d.moist
+-		var tp: Dictionary = d.temp
+-		var cs := PackedFloat64Array()
+-		var sn := PackedFloat64Array()
+-		cs.resize(w)
+-		sn.resize(w)
++		_cs.resize(w)
++		_sn.resize(w)
+ 		for k in range(w):
+ 			var th: float = SimMathx.TAU * (float(k) + 0.5) / float(w)
+-			cs[k] = SimDetMath.cos(th)
+-			sn[k] = SimDetMath.sin(th)
+-		for r in range(h):
+-			var y: float = -1.0 + (float(r) + 0.5) * 2.0 / float(h)
+-			var c: float = sqrt(maxf(0.0, 1.0 - y * y))
+-			var band: float = float(mp.wBand) * WorldClimate.bandWet(y) + float(mp.bias)
+-			var tEq: float = float(tp.eq) * SimDetMath.pow(c, float(tp.pow))
+-			for k in range(w):
+-				var i: int = r * w + k
+-				px[i] = c * cs[k]
+-				py[i] = y
+-				pz[i] = c * sn[k]
+-				var ht: float = G.ht[i]
+-				if ht < 0.0:
+-					continue
+-				landCells += 1
+-				var T: float = tEq - float(tp.lapse) * ht / float(tp.hScale)
+-				if T < WorldRivers.K_FROZEN:
+-					continue
+-				var M: float = clampf(band + float(mp.wAdv) * G.adv[i], 0.0, 1.0)
+-				flow[i] = maxf(0.0, M - WorldRivers.K_DRY) * WorldRivers.K_GAIN
+-		# the priority flood from the sea inward: the lowest unvisited cell next (ties to the lower index), each neighbour reached takes it as its receiver
+-		var seen := PackedByteArray()
+-		seen.resize(n)
+-		var heapP := PackedFloat64Array()
+-		var heapI := PackedInt32Array()
+-		for i in range(n):
+-			if G.ht[i] < 0.0:
+-				seen[i] = 1
+-				_push(heapP, heapI, G.ht[i], i)
+-		var fill := PackedFloat64Array()
+-		fill.resize(n)
+-		for i in range(n):
+-			fill[i] = G.ht[i]
+-		var out := PackedInt32Array()
+-		while heapI.size() > 0:
+-			var cur: int = heapI[0]
+-			_pop(heapP, heapI)
+-			out.append(cur)
+-			var r0: int = cur / w
+-			var k0: int = cur - r0 * w
+-			for dr in range(-1, 2):
+-				var rr: int = r0 + dr
+-				if rr < 0 or rr >= h:
+-					continue
+-				for dk in range(-1, 2):
+-					if dr == 0 and dk == 0:
+-						continue
+-					var nb: int = rr * w + posmod(k0 + dk, w)
+-					if seen[nb] != 0:
+-						continue
+-					seen[nb] = 1
+-					recv[nb] = cur
+-					fill[nb] = maxf(G.ht[nb], fill[cur])
+-					_push(heapP, heapI, fill[nb], nb)
+-		order = out
+-		# a cell the flood did not raise (not in a filled pit) drains down its steepest way: the lowest neighbour by slope over the cell's own arc (a lat-lon cell is wide at the equator and narrow toward the
+-		# poles), so the rivers follow the land and not the flood's front. A strictly lower filled height is acyclic, and the flood's pop order (nondecreasing in filled height) still has every receiver first.
+-		var dlon: float = SimMathx.TAU / float(w)
+-		for i in range(n):
+-			if G.ht[i] < 0.0 or fill[i] > G.ht[i] + 1.0e-9:
+-				continue
+-			var r1: int = i / w
+-			var k1: int = i - r1 * w
+-			var cl: float = sqrt(maxf(1.0e-9, 1.0 - py[i] * py[i]))
+-			var bs: float = 0.0
+-			var bn: int = -1
+-			for dr in range(-1, 2):
+-				var rr: int = r1 + dr
+-				if rr < 0 or rr >= h:
+-					continue
+-				for dk in range(-1, 2):
+-					if dr == 0 and dk == 0:
+-						continue
+-					var nb: int = rr * w + posmod(k1 + dk, w)
+-					if fill[nb] >= fill[i]:
++			_cs[k] = SimDetMath.cos(th)
++			_sn[k] = SimDetMath.sin(th)
++		if run:
++			step(1 << 40)
++
++	## Does up to `cells` ticks of the work (a tick is about 0.4 us: a cell of the setup, a seed or the runoff one, a cell drained two, a cell popped from the flood fifteen; a phase may run a little over); true when the field is made. The same loops as a
++	## whole make, resumed, so the same arrays.
++	func step(cells: int) -> bool:
++		if done:
++			return true
++		var G: WorldClimate.Grid = _G
++		var n: int = w * h
++		var left: int = cells
++		while left > 0 and _ph < 6:
++			if _ph == 0:
++				var d: Dictionary = WorldClimate.data()
++				var mp: Dictionary = d.moist
++				var tp: Dictionary = d.temp
++				while _pos < h and left > 0:
++					var r: int = _pos
++					var y: float = -1.0 + (float(r) + 0.5) * 2.0 / float(h)
++					var c: float = sqrt(maxf(0.0, 1.0 - y * y))
++					var band: float = float(mp.wBand) * WorldClimate.bandWet(y) + float(mp.bias)
++					var tEq: float = float(tp.eq) * SimDetMath.pow(c, float(tp.pow))
++					for k in range(w):
++						var i: int = r * w + k
++						px[i] = c * _cs[k]
++						py[i] = y
++						pz[i] = c * _sn[k]
++						var ht: float = G.ht[i]
++						if ht < 0.0:
++							continue
++						landCells += 1
++						var T: float = tEq - float(tp.lapse) * ht / float(tp.hScale)
++						if T < WorldRivers.K_FROZEN:
++							continue
++						var M: float = clampf(band + float(mp.wAdv) * G.adv[i], 0.0, 1.0)
++						flow[i] = maxf(0.0, M - WorldRivers.K_DRY) * WorldRivers.K_GAIN
++					_pos += 1
++					left -= w
++					spent += w
++				if _pos >= h:
++					_ph = 1
++					_pos = 0
++					_seen.resize(n)
++			elif _ph == 1:
++				# the priority flood from the sea inward: the lowest unvisited cell next (ties to the lower index), each neighbour reached takes it as its receiver
++				while _pos < n and left > 0:
++					if G.ht[_pos] < 0.0:
++						_seen[_pos] = 1
++						_push(_heapP, _heapI, G.ht[_pos], _pos)
++					_pos += 1
++					left -= 1
++					spent += 1
++				if _pos >= n:
++					_fill.resize(n)
++					for i in range(n):
++						_fill[i] = G.ht[i]
++					_ph = 2
++					_pos = 0
++			elif _ph == 2:
++				while _heapI.size() > 0 and left > 0:
++					var cur: int = _heapI[0]
++					_pop(_heapP, _heapI)
++					_out.append(cur)
++					var r0: int = cur / w
++					var k0: int = cur - r0 * w
++					for dr in range(-1, 2):
++						var rr: int = r0 + dr
++						if rr < 0 or rr >= h:
++							continue
++						for dk in range(-1, 2):
++							if dr == 0 and dk == 0:
++								continue
++							var nb: int = rr * w + posmod(k0 + dk, w)
++							if _seen[nb] != 0:
++								continue
++							_seen[nb] = 1
++							recv[nb] = cur
++							_fill[nb] = maxf(G.ht[nb], _fill[cur])
++							_push(_heapP, _heapI, _fill[nb], nb)
++					left -= 15
++					spent += 15
++				if _heapI.size() == 0:
++					order = _out
++					_ph = 3
++					_pos = 0
++			elif _ph == 3:
++				# a cell the flood did not raise (not in a filled pit) drains down its steepest way: the lowest neighbour by slope over the cell's own arc (a lat-lon cell is wide at the equator and narrow toward the
++				# poles), so the rivers follow the land and not the flood's front. A strictly lower filled height is acyclic, and the flood's pop order (nondecreasing in filled height) still has every receiver first.
++				var dlon: float = SimMathx.TAU / float(w)
++				while _pos < n and left > 0:
++					var i: int = _pos
++					_pos += 1
++					left -= 2
++					spent += 2
++					if G.ht[i] < 0.0 or _fill[i] > G.ht[i] + 1.0e-9:
+ 						continue
+-					var ax: float = dlon * cl * float(dk)
+-					var ay: float = (2.0 / float(h)) / cl * float(dr)
+-					var sl: float = (fill[i] - fill[nb]) / sqrt(ax * ax + ay * ay)
+-					if sl > bs or (sl == bs and bn >= 0 and nb < bn):
+-						bs = sl
+-						bn = nb
+-			if bn >= 0:
+-				recv[i] = bn
+-		# runoff added up downstream: a cell is reached after its receiver, so the reverse order visits every cell before its receiver
+-		for q in range(out.size() - 1, -1, -1):
+-			var i2: int = out[q]
+-			var rc: int = recv[i2]
+-			if rc >= 0 and G.ht[i2] >= 0.0:
+-				flow[rc] += flow[i2]
+-		for i in range(n):
+-			if G.ht[i] >= 0.0 and flow[i] >= WorldRivers.K_RIVER:
+-				rivers += 1
++					var r1: int = i / w
++					var k1: int = i - r1 * w
++					var cl: float = sqrt(maxf(1.0e-9, 1.0 - py[i] * py[i]))
++					var bs: float = 0.0
++					var bn: int = -1
++					for dr in range(-1, 2):
++						var rr: int = r1 + dr
++						if rr < 0 or rr >= h:
++							continue
++						for dk in range(-1, 2):
++							if dr == 0 and dk == 0:
++								continue
++							var nb: int = rr * w + posmod(k1 + dk, w)
++							if _fill[nb] >= _fill[i]:
++								continue
++							var ax: float = dlon * cl * float(dk)
++							var ay: float = (2.0 / float(h)) / cl * float(dr)
++							var sl: float = (_fill[i] - _fill[nb]) / sqrt(ax * ax + ay * ay)
++							if sl > bs or (sl == bs and bn >= 0 and nb < bn):
++								bs = sl
++								bn = nb
++					if bn >= 0:
++						recv[i] = bn
++				if _pos >= n:
++					_ph = 4
++					_pos = _out.size() - 1
++			elif _ph == 4:
++				# runoff added up downstream: a cell is reached after its receiver, so the reverse order visits every cell before its receiver
++				while _pos >= 0 and left > 0:
++					var i2: int = _out[_pos]
++					var rc: int = recv[i2]
++					if rc >= 0 and G.ht[i2] >= 0.0:
++						flow[rc] += flow[i2]
++					_pos -= 1
++					left -= 1
++					spent += 1
++				if _pos < 0:
++					_ph = 5
++			else:
++				for i in range(n):
++					if G.ht[i] >= 0.0 and flow[i] >= WorldRivers.K_RIVER:
++						rivers += 1
++				_ph = 6
++				done = true
++				_seen = PackedByteArray()
++				_heapP = PackedFloat64Array()
++				_heapI = PackedInt32Array()
++				_fill = PackedFloat64Array()
++				_out = PackedInt32Array()
++				_G = null
++		return done
+ 
+ 	static func _less(pa: float, ia: int, pb: float, ib: int) -> bool:
+ 		return pa < pb or (pa == pb and ia < ib)
+diff --git a/sim/world/tools/epoch_prof.gd b/sim/world/tools/epoch_prof.gd
+new file mode 100644
+index 0000000..0dc3109
+--- /dev/null
++++ b/sim/world/tools/epoch_prof.gd
+@@ -0,0 +1,49 @@
++extends SceneTree
++# The calm turn's warm ticks at the real rate (Performance's k = 32; docs/perf/gen2-bench-2026-10-26.md): each tick of WorldEpoch.tick after a turn is decided, timed, with the ring's read (RingJob.step) and the swap's
++# preparation (_prep) told apart: the worst tick is what the frame feels. Gen 1 and gen 2 side by side.
++#   godot --headless --path . --script res://sim/world/tools/epoch_prof.gd [-- --k=32 --seed=7]
++func run(gen: int, k: int, seed: int) -> void:
++	WorldClimate.useGen(gen)
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {}, {"planet": seed, "touch": 3, "arena": {"cols": 2400, "turn": true}, "planetGen": gen, "intro": false})
++	for t in range(30):
++		SimCore.step(S)
++	S.T = 100.0
++	var px: float = 0.5 * (S.fighters[0].x + S.fighters[1].x)
++	var c: Array = WorldEpoch.ask(S, "prof", px, 1, 0)
++	WorldEpoch.choose(S, c.size() - 1, k, 2.5)
++	var times: Array = []
++	var g: int = 0
++	while S.epoch.next != null and g < 400:
++		var t0: int = Time.get_ticks_usec()
++		WorldEpoch.tick(S, g > 60)
++		times.append(float(Time.get_ticks_usec() - t0))
++		g += 1
++	var sum: float = 0.0
++	var mx: float = 0.0
++	for t in times:
++		sum += t
++		mx = maxf(mx, t)
++	var first: float = times[0]
++	var rings: int = 2
++	print("gen %d, k %d: %d ticks to the swap; first tick %.2f ms, mean %.2f ms, worst %.2f ms; the whole warm %.0f ms for %d columns of rings (%.0f us a column all in)" % [gen, k, times.size(), first / 1000.0, sum / float(times.size()) / 1000.0, mx / 1000.0, sum / 1000.0, rings * SimConst.NC, sum / float(rings * SimConst.NC)])
++	var worst3: String = ""
++	var sorted: Array = times.duplicate()
++	sorted.sort()
++	sorted.reverse()
++	for q in range(5):
++		worst3 += " %.1f" % (sorted[q] / 1000.0)
++	print("    the five worst ticks (ms):%s" % worst3)
++
++
++func _init() -> void:
++	var k: int = 32
++	var seed: int = 7
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--k="):
++			k = int(a.substr(4))
++		if a.begins_with("--seed="):
++			seed = int(a.substr(7))
++	run(1, k, seed)
++	run(2, k, seed)
++	quit()
+diff --git a/sim/world/tools/epoch_prof.gd.uid b/sim/world/tools/epoch_prof.gd.uid
+new file mode 100644
+index 0000000..5f65e6e
+--- /dev/null
++++ b/sim/world/tools/epoch_prof.gd.uid
+@@ -0,0 +1 @@
++uid://c5jr5b4pav0rg
+diff --git a/sim/world/tools/flow_prof.gd b/sim/world/tools/flow_prof.gd
+new file mode 100644
+index 0000000..a9286ad
+--- /dev/null
++++ b/sim/world/tools/flow_prof.gd
+@@ -0,0 +1,23 @@
++extends SceneTree
++# What the flow field's cells cost by phase (setup, seeds, flood, drainage, runoff): Flow.step in small calls, the time and the cells spent by the phase the call began in.
++#   godot --headless --path . --script res://sim/world/tools/flow_prof.gd
++func _init() -> void:
++	WorldClimate.useGen(2)
++	WorldPlanet.forget()
++	var P := WorldPlanet.make(13)
++	var F := WorldRivers.Flow.new(P.grid, false)
++	var us: Dictionary = {}
++	var cells: Dictionary = {}
++	var worst: Dictionary = {}
++	while not F.done:
++		var ph: int = F._ph
++		var s0: int = F.spent
++		var t0: int = Time.get_ticks_usec()
++		F.step(200)
++		var d: float = float(Time.get_ticks_usec() - t0)
++		us[ph] = us.get(ph, 0.0) + d
++		cells[ph] = cells.get(ph, 0) + F.spent - s0
++		worst[ph] = maxf(worst.get(ph, 0.0), d)
++	for ph in us.keys():
++		print("phase ", ph, ": ", cells[ph], " cells, ", snappedf(us[ph] / 1000.0, 0.1), " ms = ", snappedf(us[ph] / float(maxi(1, cells[ph])), 0.01), " us a cell, worst call ", snappedf(worst[ph] / 1000.0, 0.1), " ms")
++	quit()
+diff --git a/sim/world/tools/flow_prof.gd.uid b/sim/world/tools/flow_prof.gd.uid
+new file mode 100644
+index 0000000..1ac90e1
+--- /dev/null
++++ b/sim/world/tools/flow_prof.gd.uid
+@@ -0,0 +1 @@
++uid://dthddb5ij1j6w
+diff --git a/sim/world/tools/job_prof.gd b/sim/world/tools/job_prof.gd
+new file mode 100644
+index 0000000..c70cd29
+--- /dev/null
++++ b/sim/world/tools/job_prof.gd
+@@ -0,0 +1,33 @@
++extends SceneTree
++# The planet job's calls (WorldPlanet.PlanetJob.step) timed one by one with what each was doing: the grid's cells, the carry that ends the grid, the flow field's steps, the places' steps.
++#   godot --headless --path . --script res://sim/world/tools/job_prof.gd [-- --budget=200 --rivers]
++func _init() -> void:
++	var budget: int = 200
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--budget="):
++			budget = int(a.substr(9))
++	WorldClimate.useGen(2)
++	WorldRivers.setOn("--rivers" in OS.get_cmdline_user_args())
++	WorldPlanet.forget()
++	var t0: int = Time.get_ticks_usec()
++	var job: WorldPlanet.PlanetJob = WorldPlanet.makeJob(7)
++	print("makeJob (the places' start): ", float(Time.get_ticks_usec() - t0) / 1000.0, " ms")
++	var rows: Array = []
++	var total: float = 0.0
++	while not job.done and rows.size() < 100000:
++		var what: String = "grid" if job._grid != null else ("flow" if job.get("_flow") != null else "places")
++		var t1: int = Time.get_ticks_usec()
++		job.step(budget)
++		var dt: float = float(Time.get_ticks_usec() - t1) / 1000.0
++		total += dt
++		rows.append([dt, what, rows.size()])
++	rows.sort_custom(func(a, b): return a[0] > b[0])
++	var top: String = ""
++	for q in range(mini(6, rows.size())):
++		top += " %.1f ms (%s call %d)," % [rows[q][0], rows[q][1], rows[q][2]]
++	print(rows.size(), " calls of budget ", budget, ", ", total, " ms in all; the six longest:", top)
++	var by: Dictionary = {}
++	for r in rows:
++		by[r[1]] = by.get(r[1], 0.0) + r[0]
++	print("by what: ", by)
++	quit()
+diff --git a/sim/world/tools/job_prof.gd.uid b/sim/world/tools/job_prof.gd.uid
+new file mode 100644
+index 0000000..7803a9f
+--- /dev/null
++++ b/sim/world/tools/job_prof.gd.uid
+@@ -0,0 +1 @@
++uid://dk1lmroiga65n
+diff --git a/sim/world/tools/planet_digest.gd b/sim/world/tools/planet_digest.gd
+new file mode 100644
+index 0000000..1d65f6d
+--- /dev/null
++++ b/sim/world/tools/planet_digest.gd
+@@ -0,0 +1,54 @@
++extends SceneTree
++# A fingerprint of what a planet is: its places, its climate grid, its flow field and the slice of a touch-down's ring, for planets of both generations (rivers on for gen 2's second line). Compare the lines before
++# and after a change to the generation: they must be identical, line for line.
++#   godot --headless --path . --script res://sim/world/tools/planet_digest.gd
++func fnv(b: PackedByteArray) -> int:
++	var h: int = 2166136261
++	for x in b:
++		h = ((h ^ x) * 16777619) & 0xFFFFFFFF
++	return h
++
++
++func digest(seed: int, gen: int, rivers: bool) -> String:
++	WorldClimate.useGen(gen)
++	WorldRivers.setOn(rivers)
++	WorldPlanet.forget()
++	var P := WorldPlanet.make(seed)
++	var pb := PackedByteArray()
++	pb.append_array(P.kind)
++	pb.append_array(P.px.to_byte_array())
++	pb.append_array(P.py.to_byte_array())
++	pb.append_array(P.pz.to_byte_array())
++	pb.append_array(P.rad.to_byte_array())
++	var s: String = "gen %d seed %d rivers %s: %d places %d" % [gen, seed, str(rivers), P.n, fnv(pb)]
++	if gen >= 2:
++		s += " grid %d" % fnv(P.grid.adv.to_byte_array())
++		s += " ht %d" % fnv(P.grid.ht.to_byte_array())
++		if rivers:
++			var F: WorldRivers.Flow = WorldRivers.flowOf(P)
++			var fb := PackedByteArray()
++			fb.append_array(F.recv.to_byte_array())
++			fb.append_array(F.flow.to_byte_array())
++			fb.append_array(F.order.to_byte_array())
++			s += " flow %d" % fnv(fb)
++	SimConst.setArena(2400)
++	for touch in [1, 2]:
++		var sl: WorldPlanet.Slice = WorldPlanet.sliceFor(seed, touch)
++		if sl == null:
++			s += " slice%d null" % touch
++		else:
++			var sb := PackedByteArray()
++			sb.append_array(sl.heights.to_byte_array())
++			sb.append_array(sl.biomes)
++			sb.append_array(sl.fine)
++			s += " slice%d %d held %d" % [touch, fnv(sb), sl.held.size()]
++	return s
++
++
++func _init() -> void:
++	for seed in [7, 13]:
++		print(digest(seed, 1, false))
++		print(digest(seed, 2, false))
++		print(digest(seed, 2, true))
++	WorldRivers.setOn(false)
++	quit()
+diff --git a/sim/world/tools/read_digest.gd b/sim/world/tools/read_digest.gd
+new file mode 100644
+index 0000000..259aa82
+--- /dev/null
++++ b/sim/world/tools/read_digest.gd
+@@ -0,0 +1,48 @@
++extends SceneTree
++# A digest of what the planet's read returns, to the last bit of the float64 (window 20: a faster read must be this same read): surfAt at 24,000 seeded points of the sphere and along rings, per planet and generation,
++# as FNV-1a over the bytes of the heights (float64), the biomes and the fine biomes. Compare before and after a change to the noise or to a landform: every line must be identical.
++#   godot --headless --path . --script res://sim/world/tools/read_digest.gd [-- --gens=1,2 --seeds=7,3,11,25]
++func fnv(h: int, bytes: PackedByteArray) -> int:
++	for i in range(bytes.size()):
++		h = SimRng.imul((h ^ bytes[i]) & 0xFFFFFFFF, 0x01000193)
++	return h
++
++
++func _init() -> void:
++	var gens: Array = [1, 2]
++	var seeds: Array = [7, 3, 11, 25]
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--gens="):
++			gens = Array(a.substr(7).split(",")).map(func(v): return int(v))
++		if a.begins_with("--seeds="):
++			seeds = Array(a.substr(8).split(",")).map(func(v): return int(v))
++	for gen in gens:
++		WorldClimate.useGen(gen)
++		for sd in seeds:
++			var P := WorldPlanet.make(sd)
++			var r := SimRng.new(4242 + sd)
++			var hh := PackedFloat64Array()
++			var bb := PackedByteArray()
++			var ff := PackedByteArray()
++			for k in range(24000):
++				var q: Array
++				if k < 12000:
++					q = WorldPlanet._randUnit(r)
++				else:   # a ring's columns in order, a few rings: what a ring read feeds the noise
++					var cols: int = 1200
++					var ringNo: int = (k - 12000) / cols
++					var T: Array = WorldPlanet.unitFromDraws(0.11 + 0.07 * float(ringNo), 0.5 + 0.03 * float(ringNo))
++					var spec: Dictionary = WorldRingPick.roundSpec(T, cols, 0.4 + float(ringNo))
++					var ring: Dictionary = WorldRingPick.ringFrom(spec.c, cols, spec.t)
++					var ang: float = float((k - 12000) % cols) * SimConst.COL / (P.R * float(ring.st))
++					q = WorldRingPick.ringPoint(ring, ang)
++				WorldPlanet.surfAt(P, q[0], q[1], q[2])
++				hh.append(P.outH)
++				bb.append(P.outB)
++				ff.append(P.outF + 1)
++			var h: int = 0x811c9dc5
++			h = fnv(h, hh.to_byte_array())
++			h = fnv(h, bb)
++			h = fnv(h, ff)
++			print("g%d seed %d: digest %d over %d points" % [gen, sd, h, hh.size()])
++	quit()
+diff --git a/sim/world/tools/read_digest.gd.uid b/sim/world/tools/read_digest.gd.uid
+new file mode 100644
+index 0000000..6c4506d
+--- /dev/null
++++ b/sim/world/tools/read_digest.gd.uid
+@@ -0,0 +1 @@
++uid://chebjbls7tpmx
+diff --git a/sim/world/tools/ring_bench.gd b/sim/world/tools/ring_bench.gd
+index f0ebf8b..8a87dc1 100644
+--- a/sim/world/tools/ring_bench.gd
++++ b/sim/world/tools/ring_bench.gd
+@@ -7,6 +7,11 @@ extends SceneTree
+ 
+ func _init() -> void:
+ 	var fast: bool = "--fast" in OS.get_cmdline_user_args()
++	var gen: int = 1
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--gen="):
++			gen = int(a.substr(6))
++	WorldClimate.useGen(gen)   # the generation the planets are made by (window 20: gen 2's read is proved the same by its hashes)
+ 	var lines: Array = []
+ 	var totUs: float = 0.0
+ 	var totCols: int = 0
+@@ -22,7 +27,7 @@ func _init() -> void:
+ 			var us: float = float(Time.get_ticks_usec() - t0)
+ 			totUs += us
+ 			totCols += SimConst.NC
+-			lines.append("%d/%d hash %d held %d  %.1f us/col (%.0f ms)" % [seed, cols, WorldPlanet.sliceHash(sl), sl.held.size(), us / float(SimConst.NC), us / 1000.0])
++			lines.append("g%d %d/%d hash %d held %d  %.1f us/col (%.0f ms)" % [gen, seed, cols, WorldPlanet.sliceHash(sl), sl.held.size(), us / float(SimConst.NC), us / 1000.0])
+ 	for l in lines:
+ 		print(l)
+ 	print("RINGBENCH: %.1f us/col over %d columns" % [totUs / float(maxi(totCols, 1)), totCols])
+diff --git a/sim/world/tools/ring_prof.gd b/sim/world/tools/ring_prof.gd
+new file mode 100644
+index 0000000..f42edc0
+--- /dev/null
++++ b/sim/world/tools/ring_prof.gd
+@@ -0,0 +1,98 @@
++extends SceneTree
++# Where a gen 2 ring column's microseconds go (window 20): each stage of readColumns timed over a Half ring's columns in order (the noise's corner cache sees the same sequence a ring read gives it).
++#   godot --headless --path . --script res://sim/world/tools/ring_prof.gd [-- --gen=2 --seed=7]
++var P: WorldPlanet.Planet
++
++
++func timed(label: String, f: Callable, n: int) -> float:
++	var best: float = 1.0e18
++	for rep in range(3):
++		var t0: int = Time.get_ticks_usec()
++		f.call()
++		best = minf(best, float(Time.get_ticks_usec() - t0))
++	print("  %-34s %7.1f us/col" % [label, best / float(n)])
++	return best / float(n)
++
++
++func _init() -> void:
++	var gen: int = 2
++	var seed: int = 7
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--gen="):
++			gen = int(a.substr(6))
++		if a.begins_with("--seed="):
++			seed = int(a.substr(7))
++	WorldClimate.useGen(gen)
++	P = WorldPlanet.make(seed)
++	var cols: int = 2400
++	SimConst.setArena(cols)
++	var T: Array = WorldPlanet.unitFromDraws(0.37 + 0.05 * float(seed % 7), 0.62)
++	var spec: Dictionary = WorldRingPick.roundSpec(T, cols, 0.9)
++	var ring: Dictionary = WorldRingPick.ringFrom(spec.c, cols, spec.t)
++	if "--warm" in OS.get_cmdline_user_args():   # the first ring a real calm turn reads (a match's decided turn), not the bench's round ring
++		var S := SimCore.createSim()
++		SimCore.newMatch(S, 1, {}, {"planet": seed, "touch": 3, "arena": {"cols": 2400, "turn": true}, "planetGen": gen, "intro": false})
++		for t in range(30):
++			SimCore.step(S)
++		S.T = 100.0
++		var px: float = 0.5 * (S.fighters[0].x + S.fighters[1].x)
++		var c: Array = WorldEpoch.ask(S, "prof", px, 1, 0)
++		WorldEpoch.choose(S, c.size() - 1, 32, 2.5)
++		var w = S.epoch.warm[0]
++		ring = WorldRingPick.ringFrom(w.spec.c, int(w.spec.cols), w.spec.t)
++		P = WorldPlanet.make(int(S.epoch.seed))
++	var n: int = cols
++	var qs := PackedFloat64Array()
++	qs.resize(n * 3)
++	var stf: float = ring.st
++	var tc: int = WorldPlanet.touchCol()
++	var t0: int = Time.get_ticks_usec()
++	for i in range(n):
++		var ang: float = float(i - tc) * SimConst.COL / (P.R * stf)
++		var co: float = SimDetMath.cos(ang)
++		var si: float = SimDetMath.sin(ang)
++		qs[3 * i] = ring.c[0] * ring.ct + stf * (ring.u[0] * co + ring.v[0] * si)
++		qs[3 * i + 1] = ring.c[1] * ring.ct + stf * (ring.u[1] * co + ring.v[1] * si)
++		qs[3 * i + 2] = ring.c[2] * ring.ct + stf * (ring.u[2] * co + ring.v[2] * si)
++	print("gen %d planet %d, a ring of %d columns" % [gen, seed, n])
++	print("  %-34s %7.1f us/col" % ["trig and the point (one pass)", float(Time.get_ticks_usec() - t0) / float(n)])
++	var fb := func() -> void:
++		for i in range(n):
++			WorldPlanet._fbm(P.R, qs[3 * i], qs[3 * i + 1], qs[3 * i + 2], 6000.0, 2, 77)
++	timed("one fbm, 2 octaves (reference)", fb, n)
++	var sw: float = timed("surfAt (ground + biome)", func() -> void:
++		for i in range(n):
++			WorldPlanet.surfAt(P, qs[3 * i], qs[3 * i + 1], qs[3 * i + 2]), n)
++	timed("ground (continents, relief, landforms)", func() -> void:
++		for i in range(n):
++			WorldPlanet.ground(P, qs[3 * i], qs[3 * i + 1], qs[3 * i + 2]), n)
++	var cgen: Dictionary = P.c
++	timed("continent fbm only", func() -> void:
++		for i in range(n):
++			WorldPlanet._fbm(P.R, qs[3 * i], qs[3 * i + 1], qs[3 * i + 2], cgen.contScale, int(cgen.contOct), P.seed), n)
++	if gen >= 2:
++		timed("WorldLand.shape (landforms)", func() -> void:
++			for i in range(n):
++				WorldLand.shape(P, qs[3 * i], qs[3 * i + 1], qs[3 * i + 2], 800.0), n)
++		timed("WorldLand._terms (plate pairs)", func() -> void:
++			for i in range(n):
++				WorldLand._terms(P, qs[3 * i], qs[3 * i + 1], qs[3 * i + 2]), n)
++		timed("polarWob", func() -> void:
++			for i in range(n):
++				WorldLand.polarWob(P, qs[3 * i], qs[3 * i + 1], qs[3 * i + 2]), n)
++		timed("climateAt (temperature, moisture)", func() -> void:
++			for i in range(n):
++				WorldClimate.climateAt(P, qs[3 * i], qs[3 * i + 1], qs[3 * i + 2], 400.0), n)
++		timed("plain (the fine biome of ordinary land)", func() -> void:
++			for i in range(n):
++				WorldClimate.plain(P, qs[3 * i], qs[3 * i + 1], qs[3 * i + 2], 400.0), n)
++	timed("detail fbm", func() -> void:
++		for i in range(n):
++			WorldPlanet._fbm(P.R, qs[3 * i], qs[3 * i + 1], qs[3 * i + 2], cgen.detailScale, int(cgen.detailOct), P.seed + int(cgen.sDetail)), n)
++	var S: WorldPlanet.Slice = WorldPlanet.readBegin(P, ring, ring.u)
++	timed("readColumns (the whole step)", func() -> void:
++		WorldPlanet.readColumns(P, S, 0, n), n)
++	var th: int = Time.get_ticks_usec()
++	WorldPlanet.readHeld(P, S)
++	print("  readHeld once (sites, blend): %.1f ms (%.1f us/col)" % [float(Time.get_ticks_usec() - th) / 1000.0, float(Time.get_ticks_usec() - th) / float(n)])
++	quit()
+diff --git a/sim/world/tools/ring_prof.gd.uid b/sim/world/tools/ring_prof.gd.uid
+new file mode 100644
+index 0000000..f67f209
+--- /dev/null
++++ b/sim/world/tools/ring_prof.gd.uid
+@@ -0,0 +1 @@
++uid://c7d450ef8i7cb
+diff --git a/sim/world/tools/rivers_check.gd b/sim/world/tools/rivers_check.gd
+index a9b640a..138d60a 100644
+--- a/sim/world/tools/rivers_check.gd
++++ b/sim/world/tools/rivers_check.gd
+@@ -208,6 +208,39 @@ func _init() -> void:
+ 			if FM.river(F7.px[i], F7.py[i], F7.pz[i]) > 0:
+ 				hit += 1
+ 	ok(offMarks == 0 and marked > cells and hit == cells and classOk and FM.rivers == FM2.rivers, "the far map's river layer: nothing with the rivers off; on, %d texels marked for %d river cells, every river cell's own texel among them, sizes 1 to 3, the same twice" % [marked, cells])
++	# the flow field made a few cells at a time is the whole one to the last bit, and the planet job makes it in steps (window 20)
++	var Fw: WorldRivers.Flow = WorldRivers.Flow.new(P7.grid)
++	var stepsOk: bool = true
++	var callsAt: String = ""
++	for chunk in [1, 7, 1000, 20000]:
++		var Fs := WorldRivers.Flow.new(P7.grid, false)
++		var calls: int = 1
++		while not Fs.step(chunk):
++			calls += 1
++		callsAt += " %d (%d calls)" % [chunk, calls]
++		if Fs.recv != Fw.recv or Fs.flow != Fw.flow or Fs.order != Fw.order or Fs.px != Fw.px or Fs.py != Fw.py or Fs.pz != Fw.pz or Fs.rivers != Fw.rivers or Fs.landCells != Fw.landCells or Fs.spent < Fs.w * Fs.h:
++			stepsOk = false
++	ok(stepsOk and Fw.rivers > 0, "the flow field made in steps of a given number of cells is the whole one, bit for bit (steps of%s; %d river cells)" % [callsAt, Fw.rivers])
++	WorldPlanet.forget()
++	var job: WorldPlanet.PlanetJob = WorldPlanet.makeJob(7)
++	var worstMs: float = 0.0
++	var flowWorst: float = 0.0
++	var flowCalls: int = 0
++	var jobCalls: int = 0
++	while not job.done and jobCalls < 100000:
++		var inFlow: bool = job._flow != null
++		var tj: int = Time.get_ticks_usec()
++		job.step(200)
++		var dtj: float = float(Time.get_ticks_usec() - tj) / 1000.0
++		worstMs = maxf(worstMs, dtj)
++		if inFlow:
++			flowWorst = maxf(flowWorst, dtj)
++			flowCalls += 1
++		jobCalls += 1
++	var jf: WorldRivers.Flow = job.P.flow
++	ok(job.done and jf != null and jf.recv == Fw.recv and jf.flow == Fw.flow and jf.order == Fw.order and jf.rivers == Fw.rivers, "a planet job with the rivers on makes the same flow field, in %d calls of a budget of 200" % jobCalls)
++	ok(flowCalls >= 5 and flowWorst < 30.0, "the flow field is made in steps: %d calls of the job spent on it, the longest %.1f ms (it was one call of about 155 ms); the longest call of the job at all is %.1f ms (a place's step: its own)" % [flowCalls, flowWorst, worstMs])
++	WorldPlanet.forget()
+ 	WorldRivers.setOn(false)
+ 	print("RIVERS: %d check(s) failed" % fails)
+ 	quit()
+diff --git a/sim/world/tools/step_check.gd b/sim/world/tools/step_check.gd
+new file mode 100644
+index 0000000..e7b977a
+--- /dev/null
++++ b/sim/world/tools/step_check.gd
+@@ -0,0 +1,126 @@
++extends SceneTree
++# The planet's load in steps (window 20 add-on, docs/world/gen2-readiness.md): the climate grid and its carry, the flow field, the places' tries and a touch-down's ring read a slice at a time are the
++# whole ones, bit for bit; no call is a whole piece; the memos evict the oldest.
++#   godot --headless --path . --script res://sim/world/tools/step_check.gd
++var fails: int = 0
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func samePlanet(A: WorldPlanet.Planet, B: WorldPlanet.Planet) -> bool:
++	if A.n != B.n or A.kind != B.kind or A.px != B.px or A.py != B.py or A.pz != B.pz or A.rad != B.rad or A.people != B.people:
++		return false
++	if A.gen >= 2:
++		if A.grid.adv != B.grid.adv or A.grid.ht != B.grid.ht:
++			return false
++		if (A.flow == null) != (B.flow == null):
++			return false
++		if A.flow != null and (A.flow.recv != B.flow.recv or A.flow.flow != B.flow.flow or A.flow.order != B.flow.order):
++			return false
++	return true
++
++
++## Runs a job at a budget a call; returns [calls, longest call ms, longest call while ...] and leaves the planet memoised.
++func run(seed: int, budget: int) -> Array:
++	WorldPlanet.forget()
++	var job: WorldPlanet.PlanetJob = WorldPlanet.makeJob(seed)
++	var calls: int = 0
++	var worst: float = 0.0
++	while not job.done and calls < 1000000:
++		var t0: int = Time.get_ticks_usec()
++		job.step(budget)
++		worst = maxf(worst, float(Time.get_ticks_usec() - t0) / 1000.0)
++		calls += 1
++	return [calls, worst, job.P]
++
++
++func _init() -> void:
++	WorldClimate.useGen(2)
++	for rivers in [false, true]:
++		WorldRivers.setOn(rivers)
++		WorldPlanet.forget()
++		var ref: WorldPlanet.Planet = WorldPlanet.make(13)
++		if rivers:
++			WorldRivers.flowOf(ref)
++		var line: String = ""
++		var allSame: bool = true
++		var worst250: float = 0.0
++		for budget in [250, 37, 1 << 40]:
++			var r: Array = run(13, budget)
++			var P: WorldPlanet.Planet = r[2]
++			if rivers and P.flow == null:
++				allSame = false
++			if not samePlanet(ref, P):
++				allSame = false
++			line += " %s (%d calls, longest %.1f ms)" % ["whole" if budget > 100000 else str(budget), r[0], r[1]]
++			if budget == 250:
++				worst250 = r[1]
++		ok(allSame, "a gen 2 planet%s made by the job at a budget of 250, 37 and the whole is the one make gives, bit for bit:%s" % [" with rivers" if rivers else "", line])
++		ok(worst250 < 25.0, "at the read's budget (250 units, about 5 ms) no call of the job is long: the longest %.1f ms (the grid's carry, the flow field and a try-set were 17 to 140 ms in one call)" % worst250)
++	WorldRivers.setOn(false)
++	WorldClimate.useGen(1)
++	var ref1: WorldPlanet.Planet = WorldPlanet.make(13)
++	var r1: Array = run(13, 40)
++	ok(samePlanet(ref1, r1[2]), "a gen 1 planet made by the job at a budget of 40 is make's (%d calls)" % r1[0])
++	# a touch-down's ring in steps
++	WorldClimate.useGen(2)
++	SimConst.setArena(2400)
++	for touch in [1, 2, 3]:
++		WorldPlanet.forget()
++		WorldPlanet.make(13)
++		var whole: WorldPlanet.Slice = WorldPlanet.sliceFor(13, touch)
++		WorldPlanet.forget()
++		WorldPlanet.make(13)
++		var job := WorldPlanet.SliceJob.new(13, touch)
++		var calls: int = 0
++		var worst: float = 0.0
++		while not job.done and calls < 100000:
++			var t0: int = Time.get_ticks_usec()
++			job.step(250)
++			worst = maxf(worst, float(Time.get_ticks_usec() - t0) / 1000.0)
++			calls += 1
++		var same: bool = (whole == null and job.slice == null) or (whole != null and job.slice != null and whole.heights == job.slice.heights and whole.biomes == job.slice.biomes and whole.fine == job.slice.fine and str(whole.held) == str(job.slice.held) and WorldPlanet.sliceHash(whole) == WorldPlanet.sliceHash(job.slice))
++		var memo: bool = whole == null or WorldPlanet.sliceFor(13, touch) == job.slice
++		ok(same and memo, "touch %d: the ring read in steps of 250 units (%d calls, the longest %.1f ms) is sliceFor's slice, bit for bit, and sliceFor then returns it from the memo" % [touch, calls, worst])
++	WorldClimate.useGen(1)
++	# the host's load (Simulation's SimPlanetLoad) over World's stepped job and SliceJob: a touch-down's match after the load is the cold one
++	var setup: Dictionary = {"planet": 13, "touch": 2, "arena": {"cols": 2400}, "planetGen": 2, "intro": false}
++	WorldPlanet.forget()
++	WorldClimate.useGen(2)
++	var cold := SimCore.createSim()
++	SimCore.newMatch(cold, 1, {}, setup)
++	for t in range(20):
++		SimCore.step(cold)
++	var hCold: String = str(SimHash.stateHash(cold).gameplay)
++	WorldPlanet.forget()
++	var ld: SimPlanetLoad.Job = SimPlanetLoad.beginFor(setup)
++	var frames: int = 0
++	var worstLoad: float = 0.0
++	while not ld.done and frames < 100000:
++		var t0: int = Time.get_ticks_usec()
++		ld.step(SimRun.planetUnitsPerRead)
++		worstLoad = maxf(worstLoad, float(Time.get_ticks_usec() - t0) / 1000.0)
++		frames += 1
++	var t1: int = Time.get_ticks_usec()
++	var warm := SimCore.createSim()
++	SimCore.newMatch(warm, 1, {}, setup)
++	var startMs: float = float(Time.get_ticks_usec() - t1) / 1000.0
++	for t in range(20):
++		SimCore.step(warm)
++	ok(ld.done and str(SimHash.stateHash(warm).gameplay) == hCold, "a touch-down's match started after the host's load (%d frames at the read's budget, the longest %.1f ms) is the cold one, bit for bit; its start then takes %.0f ms" % [frames, worstLoad, startMs])
++	WorldClimate.useGen(1)
++	# the memos evict the oldest
++	WorldPlanet.forget()
++	for sd in range(1, 9):
++		WorldPlanet.make(sd)
++	var have: Array = []
++	for sd in range(1, 9):
++		have.append(WorldPlanet.isMade(sd))
++	ok(not have[0] and have.slice(1).all(func(x): return x) and WorldPlanet._planets.size() == 7, "an eighth planet evicts the oldest only: seed 1 is gone, seeds 2 to 8 stay (%d kept)" % WorldPlanet._planets.size())
++	WorldPlanet.forget()
++	print("STEP: %d check(s) failed" % fails)
++	quit()
+diff --git a/sim/world/tools/step_check.gd.uid b/sim/world/tools/step_check.gd.uid
+new file mode 100644
+index 0000000..08acd23
+--- /dev/null
++++ b/sim/world/tools/step_check.gd.uid
+@@ -0,0 +1 @@
++uid://bl4d5crnv2mnj
+diff --git a/sim/world/tools/step_prof.gd b/sim/world/tools/step_prof.gd
+new file mode 100644
+index 0000000..88691d4
+--- /dev/null
++++ b/sim/world/tools/step_prof.gd
+@@ -0,0 +1,36 @@
++extends SceneTree
++# A ring read k columns a call from a planet just made, as the calm turn does: the first calls (the planet's own cold work, the climate grid) and the rest, per call and per column.
++#   godot --headless --path . --script res://sim/world/tools/step_prof.gd [-- --k=32 --gen=2]
++func _init() -> void:
++	var k: int = 32
++	var gen: int = 2
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--k="):
++			k = int(a.substr(4))
++		if a.begins_with("--gen="):
++			gen = int(a.substr(6))
++	WorldClimate.useGen(gen)
++	SimConst.setArena(2400)
++	for round in range(2):
++		var t0: int = Time.get_ticks_usec()
++		var P := WorldPlanet.make(7)
++		print("round ", round, ": make ", float(Time.get_ticks_usec() - t0) / 1000.0, " ms")
++		var T: Array = WorldPlanet.unitFromDraws(0.37, 0.62)
++		var spec: Dictionary = WorldRingPick.roundSpec(T, 2400, 0.9)
++		var ring: Dictionary = WorldRingPick.ringFrom(spec.c, 2400, spec.t)
++		var job := WorldPlanet.RingJob.new(P, ring)
++		var times: Array = []
++		while not job.done:
++			var t1: int = Time.get_ticks_usec()
++			job.step(k)
++			times.append(float(Time.get_ticks_usec() - t1))
++		var firsts: String = ""
++		for q in range(4):
++			firsts += " %.2f" % (times[q] / 1000.0)
++		var rest: float = 0.0
++		var worst: float = 0.0
++		for q in range(4, times.size()):
++			rest += times[q]
++			worst = maxf(worst, times[q])
++		print("  ", times.size(), " calls of ", k, " columns; the first four calls (ms):", firsts, "; the rest: mean ", rest / float(times.size() - 4) / 1000.0, " ms a call (", rest / float(times.size() - 4) / float(k), " us a column), worst ", worst / 1000.0, " ms")
++	quit()
+diff --git a/sim/world/tools/step_prof.gd.uid b/sim/world/tools/step_prof.gd.uid
+new file mode 100644
+index 0000000..ed35b99
+--- /dev/null
++++ b/sim/world/tools/step_prof.gd.uid
+@@ -0,0 +1 @@
++uid://b46doweq6ialk
+diff --git a/sim/world/tools/touch_prof.gd b/sim/world/tools/touch_prof.gd
+new file mode 100644
+index 0000000..8c4753a
+--- /dev/null
++++ b/sim/world/tools/touch_prof.gd
+@@ -0,0 +1,43 @@
++extends SceneTree
++# A touch-down's ring read (WorldPlanet.sliceFor), piece by piece: the touch point, the candidate circles, each circle's evaluation, the read of the ring.
++#   godot --headless --path . --script res://sim/world/tools/touch_prof.gd [-- --seed=13 --cols=2400 --gen=2]
++func _init() -> void:
++	var seed: int = 13
++	var cols: int = 2400
++	var gen: int = 2
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--seed="):
++			seed = int(a.substr(7))
++		if a.begins_with("--cols="):
++			cols = int(a.substr(7))
++		if a.begins_with("--gen="):
++			gen = int(a.substr(6))
++	WorldClimate.useGen(gen)
++	SimConst.setArena(cols)
++	var P := WorldPlanet.make(seed)
++	for touch in [1, 2, 3, 5]:
++		var t0: int = Time.get_ticks_usec()
++		var T: Array = WorldPlanet.touchPoint(P, touch)
++		var t1: int = Time.get_ticks_usec()
++		var cand: Array = WorldPlanet.candidates(P, T, touch, PackedByteArray())
++		var t2: int = Time.get_ticks_usec()
++		var evals: Array = []
++		var picked = null
++		var c: Dictionary = P.c
++		for circ in cand:
++			var te: int = Time.get_ticks_usec()
++			var e: Dictionary = WorldPlanet.evalCircle(P, circ, PackedByteArray(), int(c.minCities), int(c.minTowns))
++			evals.append(float(Time.get_ticks_usec() - te) / 1000.0)
++			if WorldPlanet.meets(c, e, false):
++				picked = circ
++				break
++		var t3: int = Time.get_ticks_usec()
++		var s: String = ""
++		for q in evals:
++			s += " %.1f" % q
++		print("touch %d: point %.2f ms, %d candidates %.2f ms, evaluations (ms):%s, in all %.1f ms; samples a circle %s" % [touch, float(t1 - t0) / 1000.0, cand.size(), float(t2 - t1) / 1000.0, s, float(t3 - t2) / 1000.0, str(c.samples)])
++		if picked != null:
++			var t4: int = Time.get_ticks_usec()
++			var sl: WorldPlanet.Slice = WorldPlanet.readSlice(P, WorldPlanet.ringThrough(picked, SimConst.NC, 1), WorldPlanet.touchPoint(P, touch), PackedByteArray())
++			print("   the ring read: %.1f ms (%d columns)" % [float(Time.get_ticks_usec() - t4) / 1000.0, SimConst.NC])
++	quit()
+diff --git a/sim/world/tools/touch_prof.gd.uid b/sim/world/tools/touch_prof.gd.uid
+new file mode 100644
+index 0000000..4a50631
+--- /dev/null
++++ b/sim/world/tools/touch_prof.gd.uid
+@@ -0,0 +1 @@
++uid://beyje7unas26r
+diff --git a/sim/world/tools/try_prof.gd b/sim/world/tools/try_prof.gd
+new file mode 100644
+index 0000000..2c1ad78
+--- /dev/null
++++ b/sim/world/tools/try_prof.gd
+@@ -0,0 +1,36 @@
++extends SceneTree
++# What a place-try costs, by how far it gets (the height test 3, the gap test 6, the score 14 units): each try timed on its own (a budget of one unit a call).
++#   godot --headless --path . --script res://sim/world/tools/try_prof.gd [-- --seed=13 --b]
++func _init() -> void:
++	var seed: int = 13
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--seed="):
++			seed = int(a.substr(7))
++	WorldClimate.useGen(2)
++	if "--b" in OS.get_cmdline_user_args():
++		WorldLand.setB(true)
++	WorldPlanet.forget()
++	var P := WorldPlanet._newPlanet(seed, 2)
++	WorldClimate.gridOf(P)
++	var st: Dictionary = WorldPlanet._placeBegin(P)
++	var sum: Dictionary = {}
++	var cnt: Dictionary = {}
++	var worst: Dictionary = {}
++	var fin: bool = false
++	var n: int = 0
++	while not fin:
++		st.spent = 0
++		var t0: int = Time.get_ticks_usec()
++		fin = WorldPlanet._placeStep(P, st, 1)
++		var us: float = float(Time.get_ticks_usec() - t0)
++		var k: int = int(st.spent)
++		sum[k] = sum.get(k, 0.0) + us
++		cnt[k] = cnt.get(k, 0) + 1
++		worst[k] = maxf(worst.get(k, 0.0), us)
++		n += 1
++	var keys: Array = sum.keys()
++	keys.sort()
++	for k in keys:
++		print("units ", k, ": ", cnt[k], " calls, mean ", snappedf(sum[k] / float(cnt[k]), 0.1), " us, worst ", worst[k], " us")
++	print(n, " calls")
++	quit()
+diff --git a/sim/world/tools/try_prof.gd.uid b/sim/world/tools/try_prof.gd.uid
+new file mode 100644
+index 0000000..43d7770
+--- /dev/null
++++ b/sim/world/tools/try_prof.gd.uid
+@@ -0,0 +1 @@
++uid://bfcaqk16ebcjd
+diff --git a/sim/world/tools/warm_ring_prof.gd b/sim/world/tools/warm_ring_prof.gd
+new file mode 100644
+index 0000000..98304fc
+--- /dev/null
++++ b/sim/world/tools/warm_ring_prof.gd
+@@ -0,0 +1,48 @@
++extends SceneTree
++# The rings a calm turn really reads (the match's decided turn), read k columns a call as WorldEpoch._warm does: per call and per column, the first calls told apart.
++#   godot --headless --path . --script res://sim/world/tools/warm_ring_prof.gd [-- --k=32 --seed=7 --gen=2]
++func _init() -> void:
++	var k: int = 32
++	var seed: int = 7
++	var gen: int = 2
++	for a in OS.get_cmdline_user_args():
++		if a.begins_with("--k="):
++			k = int(a.substr(4))
++		if a.begins_with("--seed="):
++			seed = int(a.substr(7))
++		if a.begins_with("--gen="):
++			gen = int(a.substr(6))
++	WorldClimate.useGen(gen)
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {}, {"planet": seed, "touch": 3, "arena": {"cols": 2400, "turn": true}, "planetGen": gen, "intro": false})
++	for t in range(30):
++		SimCore.step(S)
++	S.T = 100.0
++	var px: float = 0.5 * (S.fighters[0].x + S.fighters[1].x)
++	var c: Array = WorldEpoch.ask(S, "prof", px, 1, 0)
++	WorldEpoch.choose(S, c.size() - 1, k, 2.5)
++	var E = S.epoch
++	for w in E.warm:
++		var P := WorldPlanet.make(int(E.seed))
++		var ring: Dictionary = WorldRingPick.ringFrom(w.spec.c, int(w.spec.cols), w.spec.t)
++		var job := WorldPlanet.RingJob.new(P, ring)
++		var times: Array = []
++		while not job.done:
++			var t1: int = Time.get_ticks_usec()
++			job.step(k)
++			times.append(float(Time.get_ticks_usec() - t1))
++		var firsts: String = ""
++		for q in range(3):
++			firsts += " %.2f" % (times[q] / 1000.0)
++		var sum: float = 0.0
++		var worst: float = 0.0
++		for t in times:
++			sum += t
++			worst = maxf(worst, t)
++		var hs: String = ""
++		var nland: int = 0
++		for i in range(SimConst.NC):
++			if job.slice.heights[i] > 0.0:
++				nland += 1
++		print("ring (", w.spec.cols, " columns, ", nland, " above sea): ", times.size(), " calls; first three (ms):", firsts, "; all ", sum / 1000.0, " ms = ", sum / float(SimConst.NC), " us a column; worst call ", worst / 1000.0, " ms")
++	quit()
+diff --git a/sim/world/tools/warm_ring_prof.gd.uid b/sim/world/tools/warm_ring_prof.gd.uid
+new file mode 100644
+index 0000000..02756f0
+--- /dev/null
++++ b/sim/world/tools/warm_ring_prof.gd.uid
+@@ -0,0 +1 @@
++uid://bc2x8sec3h1uw
