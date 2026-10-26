@@ -15,7 +15,7 @@
       "what": "the rope, armed, fires her level-1 beam along itself as he crosses and knocks him back across her line (a knock-back, 20 item 2); the ping-pong across a line she drew",
       "destination": "back across her line",
       "price": "the trap's 12 ki and its lay (her guard down 12 ticks)",
-      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tech": "item 8 with 23d item 17's middle step: 4 ticks for a fresh kind, 6 for a kind used earlier in the rally but not as the last link, 8 for the same kind as the last, and a third of one kind is teched by itself",
       "tell": "two hem plates set in the air, a rope of light between them",
       "look": "the line flares, the beam runs post to post, the body is turned back like a ball off a net",
       "atoms": {
@@ -34,7 +34,7 @@
       "what": "four banner staves close round the body in the air, and her payoff, the slam, drags it straight down into the ground under it from any height: a spike from anywhere, not only from above. He lands on one knee: the slam's landing only. On hard ground it glances up as a spike does",
       "destination": "ground",
       "price": "the grab's (10 tapped, 14 held)",
-      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tech": "item 8 with 23d item 17's middle step: 4 ticks for a fresh kind, 6 for a kind used earlier in the rally but not as the last link, 8 for the same kind as the last, and a third of one kind is teched by itself",
       "tell": "she takes the clasp at her throat",
       "look": "the staves stand round him in the air, then drive down with him; a crater under his knee",
       "atoms": {
@@ -53,7 +53,7 @@
       "what": "she braces her mantle as a wall and the body strikes it and rebounds back along its line: a ricochet off her braced mantle, the force the send's. The mantle stands; it never wraps, coils or grabs",
       "destination": "back along its line",
       "price": "none",
-      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tech": "item 8 with 23d item 17's middle step: 4 ticks for a fresh kind, 6 for a kind used earlier in the rally but not as the last link, 8 for the same kind as the last, and a third of one kind is teched by itself",
       "tell": "she plants her heel and swings the mantle forward, rigid as a door",
       "look": "the hem plates lock edge to edge, a ring of force where the body meets them, and she is pushed back a step",
       "atoms": {
@@ -96,5 +96,6 @@
   "openQuestions": [
     "Mantle Wall: Game Design may rule the design (a ricochet off her braced mantle, in every form)."
   ],
-  "_flash": "Legal mc04: the flash cap of 3 counted bursts a second holds across the whole rally; a link whose flash would pass it draws as dust, trail and ember instead"
+  "_flash": "Legal mc04: the flash cap of 3 counted bursts a second holds across the whole rally; a link whose flash would pass it draws as dust, trail and ember instead",
+  "_ownKind": "ruled (23d item 17): each own link is its own kind for item 8's grip and item 13's scoring"
 }

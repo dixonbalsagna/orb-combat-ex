@@ -16,14 +16,14 @@ Paper and parked data; nothing is built. The names are working labels for Narrat
 
 ## 2. Each fighter's own links
 
-Each own link is a variant of one of Game Design's link kinds (item 6), on the same buttons, so nothing new is learned. Each counts as **its own kind** for item 8's repetition and for the scoring. That is proposed, and Game Design is asked to confirm it.
+Each own link is a variant of one of Game Design's link kinds (item 6), on the same buttons, so nothing new is learned. Each counts as **its own kind** for item 8's grip and for the scoring (ruled, 23d item 17). Item 8's tech ladder is now 4 ticks for a fresh kind, 6 for a kind used earlier in the rally, 8 for the same as the last, and a third of one kind is teched by itself.
 
 | Fighter, identity | Link 1 | Link 2 | Link 3 |
 | :--- | :--- | :--- | :--- |
 | **The Protagonist,** control | **Palm Turn** (an overtake): the stick held across the flight. An open palm turns the body 90°, up or down by the stick, and up and away from people with no stick | **Net Haul** (the grab in flight): the yank hauls the body to him mid-air, and his next press sends it on with no zip to pay | **Pillar Lift** (a world link): a send across his own Trip Pillar throws the body up and away from people (TRAP LANDING) |
 | **The Rival,** precision | **Plate Chase** (the chase with Y): sent exactly along the stick's line, snapped to eight directions, with no bend | **Ring Hold** (the grab in flight): the bind holds the body still in the air, struggling, and his next shot lands as a normal hit on an open fighter | **Stair Spike** (a spike): one press, three stepped plate impacts straight down, the third the crater |
 | **The Empress,** dominion | **Rope Return** (a world link): Velvet Rope laid across his coming path. Crossing it fires her level-1 beam and knocks him back across her line | **Banner Drop** (the grab in flight): the staves slam him down into the ground from any height, landing him on one knee | **Mantle Wall** (a bank): the body rebounds off her braced mantle, which never wraps or grabs. Game Design may rule the design |
-| **The Demon Cyborg,** appetite | **Crane Reel** (the grab in flight): the hook reels the body back, turns it once at body height (never overhead) and flings it 6 bh along the stick, reversing the flight | **Wreck Toss** (a world link): an empty wreck, with nothing living near, hurled at the flying body sends it on (the throwables' rules) | **Slag Catch** (a lob): level-2 slag led to his landing pops him 3 bh back up, even on soft ground |
+| **The Demon Cyborg,** appetite | **Crane Reel** (the grab in flight): the hook reels the body back, turns it once at body height (never overhead) and flings it 6 bh along the stick, reversing the flight | **Wreck Toss** (a world link, two presses: A then Y): an empty wreck, with nothing living near, hurled at the flying body sends it on, arriving in flight or within 20 ticks of the landing | **Slag Catch** (a lob): level-2 slag led to his landing pops him 3 bh back up, even on soft ground |
 
 **Distinct by design.** The cross-check holds that no two fighters share a link of the same kind and destination.
 - **The four grabs in flight are the four payoffs:** the yank pulls in, the bind holds still, the slam drives down and the throw reverses.
@@ -56,7 +56,7 @@ The scoring is for the AI's choice of link, for Simple's choice, and for the pla
 | :--- | ---: | :--- |
 | A kind not used yet in this rally | **+20** | Fresh kinds score highest. Item 8 gives a fresh kind the tightest tech (4 ticks) |
 | The same kind as the last link | −20 | Item 8's 8-tick tech |
-| The same kind as the link before that | −10 | |
+| A kind used earlier in this rally, not the last | −10 | Item 8's 6-tick middle step (23d item 17) |
 | A third of one kind | −1,000 | It is teched by itself (item 8), so it is never chosen |
 | A destination new to this rally | +12 | Where the link sends him, by the same rule |
 | The same destination as the last link | −12 | The one before that scores −6 |
@@ -97,10 +97,11 @@ Tools' validator in a scratch root, with both drafts and their map rows added:
 
 ## 7. Open questions
 
-- **Game Design:**
-  - do a fighter's own links count as their own kinds for item 8 and the scoring?
-  - the Empress's Mantle Wall (Narrative's rename from Guard's Wall: the bank is her braced mantle, so `empress-guards.md` §4 is met);
-  - is Plate Chase's exact line, with no planner bend, allowed?
-  - does the Cyborg's Wreck Toss meet the throwables' pick-up rule mid-rally?
-- **Encounter:** the rally memory the scoring reads (the last two kinds and destinations of the current rally).
+- **Settled by Game Design** (23d §8):
+  - own links are their own kinds, with the 4, 6 and 8-tick ladder (item 17);
+  - Plate Chase's exact line is allowed (item 19);
+  - Wreck Toss is two presses (item 20);
+  - Palm Turn's stick sectors don't overlap (item 21).
+- **The Empress's Mantle Wall against GD's item 18.** Item 18 rules her guard as the living wall: a surface, working both ways. This page draws her own braced mantle instead, after Narrative's rename. The EP has asked Game Design which stands, so Mantle Wall stays as drawn until then.
+- **Encounter:** the rally memory the scoring reads (the current rally's kinds and its last two destinations).
 - **Narrative:** the twelve link names (Legal renamed Ring Hang to Ring Hold; Narrative renamed Guard's Wall to Mantle Wall and Plated Ram to Plate Chase).

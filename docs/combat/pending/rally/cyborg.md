@@ -14,9 +14,9 @@ Combat and Choreography, 2026-10-25. Game Design's frame is `rulings-2026-10-23d
 - **Legal:** one call-out (ln06), and no taunt over the reel.
 
 **Wreck Toss** (a world link)
-- **Input:** with an empty wreck within 2 bh (a car or a slab of rubble, inside his tier's lift) and nothing living near it, its pick-up (A), then Y at the flying body.
+- **Input:** two presses, each one action (23d item 20): the pick-up (A), then the throw (Y) at the flying body. He must be free (not inside a zip), the body out of striking reach (a rally gives that), and the wreck within 2 bh, inside his tier's lift, empty, with nothing living near it.
 - **Tell:** the lift: a forearm plate slid under the frame.
-- **What happens:** he hurls the wreck at the flying body. It strikes and sends the body on along the throw's line, as a thrown object does (the throwables' rules), and the wreck bursts into scrap.
+- **What happens:** he hurls the wreck at the flying body. It strikes and sends the body on along the throw's line, as a thrown object does, and the wreck bursts into scrap, which damages structures by the tier factor. The lift's tell takes its time while the body flies on, so the throw must arrive while the body is still in flight or within 20 ticks of its landing (23d item 11); otherwise the rally has already ended.
 - **Price:** none. Throwables carry no ki and no cooldown.
 - **Legal:** wrecks are always empty, and a wreck with anyone living near it is not a candidate (RL-183).
 
@@ -34,4 +34,4 @@ Combat and Choreography, 2026-10-25. Game Design's frame is `rulings-2026-10-23d
 - **Voice:** a mechanical grind and a growl. The hunger lines stay in his voice, never in a mouth (ln02).
 - **Scale:** snap ×1.1, fold ×1.1, step 1.0 bh.
 
-**Open question:** Wreck Toss uses the throwables' pick-up mid-rally. The rule asks that he be free and the rival beyond striking reach, which a rally meets. Agreed?
+**Settled** (23d item 20): allowed, as a world link in two presses.

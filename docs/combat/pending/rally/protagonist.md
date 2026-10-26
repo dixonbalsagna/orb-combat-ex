@@ -32,4 +32,4 @@ Combat and Choreography, 2026-10-25. Game Design's frame is `rulings-2026-10-23d
 - **Voice:** a grunt, then a laugh. Never an apology.
 - **Scale:** snap ×1.0, fold ×1.0, step 1.0 bh.
 
-**Open question:** Palm Turn reads the stick held across the flight. Can any device misread it against the overtake's stick held back?
+**Settled** (23d item 21): "back" is within 45° of the reverse of the flight and "across" within 45° of either perpendicular, so the sectors touch only at their edges. Controls adds a dead band if the capture shows misreads.

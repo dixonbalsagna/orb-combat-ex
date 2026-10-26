@@ -12,10 +12,10 @@
       "base": "chase",
       "kind": "own",
       "input": "the chase with Y (LT with Y); with X it is the plain chase strike",
-      "what": "the zip drives him into the body forearm-plate first, and the body is sent exactly along the stick's line, snapped to one of eight directions, with no bend from the planner: it lands where the line says",
+      "what": "the zip drives him into the body forearm-plate first, and the body is sent exactly along the stick's line, snapped to one of eight directions, with no bend from the planner. With the stick neutral, the line is straight on along the chase. An empty line is his choice, and the choreographer scores it low for variety, which is his trade (23d item 19)",
       "destination": "the stick's exact line",
       "price": "the zip's with Y (30)",
-      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tech": "item 8 with 23d item 17's middle step: 4 ticks for a fresh kind, 6 for a kind used earlier in the rally but not as the last link, 8 for the same kind as the last, and a third of one kind is teched by itself",
       "tell": "the forearm comes up square, the plates lit in a line",
       "look": "a straight ram, no wind-up flourish; a clean line of violet behind the body",
       "atoms": {
@@ -23,7 +23,8 @@
         "active": 4,
         "recover": 10
       },
-      "_renamed": "Narrative: Plated Ram became Plate Chase, so it doesn't echo Rank Breaker"
+      "_renamed": "Narrative: Plated Ram became Plate Chase, so it doesn't echo Rank Breaker",
+      "_ruled": "23d item 19: allowed. The tier's collateral budget still caps the deaths on that line (no borrowing at tiers 1 and 2: a place over budget evacuates), and a surface on the line is met by the ricochet rules"
     },
     {
       "id": "rally.rival.ring_hold",
@@ -34,7 +35,7 @@
       "what": "Rank Ring snaps round the body's arms and torso and his payoff, the bind, holds it where it is in the air; his next shot lands as on an open fighter, inside the catch or within 6 ticks of its end (20 item 3), and that shot sends it on",
       "destination": "in place, then the shot's line",
       "price": "the grab's (10 tapped, 14 held)",
-      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tech": "item 8 with 23d item 17's middle step: 4 ticks for a fresh kind, 6 for a kind used earlier in the rally but not as the last link, 8 for the same kind as the last, and a third of one kind is teched by itself",
       "tell": "a short closing pull of his fist",
       "look": "the body stops dead in the air, struggling inside the loop; a needle or a heavy blast follows",
       "atoms": {
@@ -53,7 +54,7 @@
       "what": "one press, one attack: he drives the body down in three short steps of 1 bh, plate, plate, plate, and the third is the crater. On hard ground under the plant speed it glances back up as every spike does; on soft ground the rally ends",
       "destination": "ground",
       "price": "none (the spike's)",
-      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tech": "item 8 with 23d item 17's middle step: 4 ticks for a fresh kind, 6 for a kind used earlier in the rally but not as the last link, 8 for the same kind as the last, and a third of one kind is teched by itself",
       "tell": "he rises over the body with the fist cocked at the shoulder",
       "look": "three stepped impacts in a straight vertical line, merged into one glow that brightens only at the last (Legal mc04: one burst event, to be proven in a clip)",
       "atoms": {
@@ -91,8 +92,7 @@
     "the ring hold in the air",
     "the three-step spike as one burst"
   ],
-  "openQuestions": [
-    "Plate Chase's exact line drops the planner's bend: the stick's line wins outright, so a ram into an empty line is the player's choice. Agreed?"
-  ],
-  "_flash": "Legal mc04: the flash cap of 3 counted bursts a second holds across the whole rally; a link whose flash would pass it draws as dust, trail and ember instead"
+  "openQuestions": [],
+  "_flash": "Legal mc04: the flash cap of 3 counted bursts a second holds across the whole rally; a link whose flash would pass it draws as dust, trail and ember instead",
+  "_ownKind": "ruled (23d item 17): each own link is its own kind for item 8's grip and item 13's scoring"
 }

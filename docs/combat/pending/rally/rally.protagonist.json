@@ -15,7 +15,7 @@
       "what": "the zip passes the body and an open palm meets it side-on, turning it 90 degrees onto the stick's line: up into the sky, or down to the ground. The overtake's power. With a neutral stick it turns up and away from people",
       "destination": "open_air or ground, the stick's choice",
       "price": "the zip's (20 with X, 30 with Y)",
-      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tech": "item 8 with 23d item 17's middle step: 4 ticks for a fresh kind, 6 for a kind used earlier in the rally but not as the last link, 8 for the same kind as the last, and a third of one kind is teched by itself",
       "tell": "his hips turn as he passes, the palm edge-forward",
       "look": "a flat palm, a turn of the wrist, the body's line bends at a right angle in a burst of cyan",
       "atoms": {
@@ -33,7 +33,7 @@
       "what": "Harbour Net catches the body in the air; his payoff, the yank, hauls it into his reach mid-air and his next press lands a blow that sends it on along the stick, with no zip to pay",
       "destination": "reach, then the stick's line",
       "price": "the grab's (10 tapped, 14 held)",
-      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tech": "item 8 with 23d item 17's middle step: 4 ticks for a fresh kind, 6 for a kind used earlier in the rally but not as the last link, 8 for the same kind as the last, and a third of one kind is teched by itself",
       "tell": "the open hand draws the tow line back to the shoulder",
       "look": "the net flares round the arms and torso; he hauls hand over hand, then the palm",
       "atoms": {
@@ -52,7 +52,7 @@
       "what": "the pillar rises under the body and throws it up and away from people, a knock-back of up to 6 bh (20 item 2), keeping it in the air for his next link",
       "destination": "open_air",
       "price": "none at the time (the trap's 12 ki when laid)",
-      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tech": "item 8 with 23d item 17's middle step: 4 ticks for a fresh kind, 6 for a kind used earlier in the rally but not as the last link, 8 for the same kind as the last, and a third of one kind is teched by itself",
       "tell": "the pillar's seams flare for 6 ticks",
       "look": "a stone slab rising under the body, tilted away from the houses",
       "atoms": {
@@ -91,8 +91,8 @@
     "the net haul in the air (binds, call-out)",
     "the pillar under a flying body"
   ],
-  "openQuestions": [
-    "Palm Turn reads the stick across the flight; does any device misread it against the overtake's stick held back?"
-  ],
-  "_flash": "Legal mc04: the flash cap of 3 counted bursts a second holds across the whole rally; a link whose flash would pass it draws as dust, trail and ember instead"
+  "openQuestions": [],
+  "_flash": "Legal mc04: the flash cap of 3 counted bursts a second holds across the whole rally; a link whose flash would pass it draws as dust, trail and ember instead",
+  "_ownKind": "ruled (23d item 17): each own link is its own kind for item 8's grip and item 13's scoring",
+  "_settled": "23d item 21: the overtake reads 'back' within 45 degrees of the reverse of the flight and Palm Turn 'across' within 45 degrees of either perpendicular; Controls adds a dead band if the capture shows misreads"
 }

@@ -15,7 +15,7 @@
       "what": "the crane hook latches the body's arms or torso mid-flight; his payoff, the throw, reels it back toward him on the cable and turns it once, short and at body height (never overhead), then flings it 6 bh along the stick: the flight reversed",
       "destination": "reversed, the stick's line",
       "price": "the grab's (10 tapped, 14 held)",
-      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tech": "item 8 with 23d item 17's middle step: 4 ticks for a fresh kind, 6 for a kind used earlier in the rally but not as the last link, 8 for the same kind as the last, and a third of one kind is teched by itself",
       "tell": "the hook swings once behind him",
       "look": "the cable snaps taut, the winch screams, the body comes back and goes round",
       "atoms": {
@@ -30,11 +30,11 @@
       "name": "Wreck Toss",
       "base": "world",
       "kind": "own",
-      "input": "with an empty wreck within 2 bh (a car or a slab of rubble, inside his tier's lift) and nothing living near it, its pick-up (A), then Y at the body in flight",
-      "what": "he hurls the wreck at the flying body; it strikes and sends it on along the throw's line, as a thrown object does (rule-of-cool's throwables). The wreck breaks on him",
+      "input": "two presses, each one action: the pick-up (A), then the throw (Y) at the body in flight. He must be free (not inside a zip), the body out of striking reach (a rally gives that), and the wreck within 2 bh, inside his tier's lift, empty, with nothing living near it",
+      "what": "he hurls the wreck at the flying body; it strikes and sends the body on along the throw's line, as a thrown object does, and bursts into scrap, which damages structures by the tier factor. The lift's tell takes its time while the body flies on, so the throw must arrive while the body is still in flight or within the 20 ticks after it lands (23d item 11); otherwise the rally has already ended",
       "destination": "the throw's line",
-      "price": "none (the throwables carry no ki or cooldown)",
-      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "price": "none: throwables carry no ki (23d item 20)",
+      "tech": "item 8 with 23d item 17's middle step: 4 ticks for a fresh kind, 6 for a kind used earlier in the rally but not as the last link, 8 for the same kind as the last, and a third of one kind is teched by itself",
       "tell": "the lift: a forearm plate under the frame",
       "look": "a wreck tumbling end over end into the body and bursting into scrap",
       "atoms": {
@@ -42,7 +42,8 @@
         "active": 6,
         "recover": 12
       },
-      "legal": "wrecks are always empty and nothing living is near: a wreck with a person near it is not a candidate (Legal RL-183); wreckage and metal only"
+      "legal": "wrecks are always empty and nothing living is near: a wreck with a person near it is not a candidate (Legal RL-183); wreckage and metal only",
+      "_ruled": "23d item 20: allowed, as a world link in two presses"
     },
     {
       "id": "rally.cyborg.slag_catch",
@@ -53,7 +54,7 @@
       "what": "the slag lands and rolls to the landing; the body comes down in it and the burst pops it 3 bh back up, so the rally goes on even on soft ground where a spike would end it",
       "destination": "open_air, up from the landing",
       "price": "the level-2 lob's 12 ki",
-      "tech": "item 8: 4 ticks the first time in a rally, 8 if the last link was this one, a third in a rally is teched by itself",
+      "tech": "item 8 with 23d item 17's middle step: 4 ticks for a fresh kind, 6 for a kind used earlier in the rally but not as the last link, 8 for the same kind as the last, and a third of one kind is teched by itself",
       "tell": "he hammers his chest plate, the grille steps bright",
       "look": "a glassy track of rolling slag, a burst under the falling body",
       "atoms": {
@@ -93,8 +94,7 @@
     "the slag catch",
     "his sell's flicker and sparks under fx08"
   ],
-  "openQuestions": [
-    "Wreck Toss uses the throwables' pick-up mid-rally: the rule asks him to be free and the rival beyond striking reach, which a rally meets. Agreed?"
-  ],
-  "_flash": "Legal mc04: the flash cap of 3 counted bursts a second holds across the whole rally; a link whose flash would pass it draws as dust, trail and ember instead"
+  "openQuestions": [],
+  "_flash": "Legal mc04: the flash cap of 3 counted bursts a second holds across the whole rally; a link whose flash would pass it draws as dust, trail and ember instead",
+  "_ownKind": "ruled (23d item 17): each own link is its own kind for item 8's grip and item 13's scoring"
 }

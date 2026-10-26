@@ -48,7 +48,7 @@
       "required": [
         "kindNew",
         "kindLast",
-        "kindSecondLast",
+        "kindEarlier",
         "kindThird",
         "destNew",
         "destLast",
@@ -64,11 +64,6 @@
           "maximum": 500
         },
         "kindLast": {
-          "type": "number",
-          "minimum": -2000,
-          "maximum": 500
-        },
-        "kindSecondLast": {
           "type": "number",
           "minimum": -2000,
           "maximum": 500
@@ -119,6 +114,11 @@
             "minimum": -2000,
             "maximum": 500
           }
+        },
+        "kindEarlier": {
+          "type": "number",
+          "minimum": -2000,
+          "maximum": 500
         }
       }
     },

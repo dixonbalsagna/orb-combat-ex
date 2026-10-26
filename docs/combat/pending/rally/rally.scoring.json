@@ -12,7 +12,7 @@
     "energy_grab",
     "world"
   ],
-  "ownKinds": "each fighter's own link counts as its own kind (proposed); their ids are in combat/rally/<fighter>.json",
+  "ownKinds": "ruled (23d item 17): each fighter's own link is its own kind; their ids are in combat/rally/<fighter>.json",
   "destinations": [
     "building",
     "cliff",
@@ -30,9 +30,9 @@
   "variety": {
     "kindNew": 20,
     "kindLast": -20,
-    "kindSecondLast": -10,
+    "kindEarlier": -10,
     "kindThird": -1000,
-    "_kind": "a kind not among the rally's links so far scores kindNew; the same kind as the last link kindLast, as the one before kindSecondLast; a third of one kind is item 8's auto-tech, so it is never chosen (kindThird)",
+    "_kind": "a kind not among the rally's links so far scores kindNew; a kind used earlier in the rally but not as the last link kindEarlier; the same kind as the last link kindLast; a third of one kind is item 8's auto-tech, so it is never chosen (kindThird). It follows item 8's ladder of 4, 6 and 8 ticks (23d item 17)",
     "destNew": 12,
     "destLast": -12,
     "destSecondLast": -6,
