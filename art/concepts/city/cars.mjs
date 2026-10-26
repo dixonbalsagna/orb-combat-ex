@@ -25,7 +25,7 @@ const shade = (c, k) => { const n = parseInt(c.slice(1), 16), f = v => Math.max(
 
 // ---- the four vehicles: p = {body, dark, glass}; w = 0 whole, 1 wrecked
 export const VEHICLES = {
-  sedan: { name: 'Sedan', length: 193, height: 62, wheel_r: 14, mass_class: 3, throw_tier: 2, hit_box: [193, 62], draw(p, w) {
+  sedan: { name: 'Sedan', length: 193, height: 62, wheel_r: 14, mass_class: 3, throw_tier: 1, hit_box: [193, 62], draw(p, w) {
     const top = w ? -46 : -62, ride = w ? 6 : 0;
     let s = poly([[0, -12], [193, -12], [193, -30], [176, -38], [142, -38], [118, top], [64, top], [34, -38], [8, -38], [0, -30]], p.body);   // body and cabin in one outline
     s += poly([[0, -12], [193, -12], [193, -20], [0, -20]], shade(p.body, 0.78));
@@ -35,7 +35,7 @@ export const VEHICLES = {
     if (w) s += poly([[150, -38], [176, -38], [193, -30], [180, -26], [150, -30]], SOOT, 'opacity="0.55"') + poly([[0, -12], [193, -12], [193, -17], [0, -17]], SOOT, 'opacity="0.5"');
     return w ? tilt(s, -7, 193, -12) : s;
   } },
-  van: { name: 'Van', length: 223, height: 86, wheel_r: 17, mass_class: 4, throw_tier: 3, hit_box: [223, 86], draw(p, w) {
+  van: { name: 'Van', length: 223, height: 86, wheel_r: 17, mass_class: 4, throw_tier: 1, hit_box: [223, 86], draw(p, w) {
     const top = w ? -66 : -86;
     let s = poly([[0, -14], [223, -14], [223, -44], [200, -60], [176, top], [0, top]], p.body);
     s += poly([[0, -14], [223, -14], [223, -22], [0, -22]], shade(p.body, 0.78));
@@ -46,7 +46,7 @@ export const VEHICLES = {
     if (w) s += poly([[0, top], [176, top], [160, top + 14], [0, top + 10]], SOOT, 'opacity="0.55"') + poly([[0, -14], [223, -14], [223, -20], [0, -20]], SOOT, 'opacity="0.5"');
     return w ? tilt(s, -9, 223, -14) : s;
   } },
-  bus: { name: 'Bus', length: 516, height: 137, wheel_r: 22, mass_class: 8, throw_tier: 4, hit_box: [516, 137], draw(p, w) {
+  bus: { name: 'Bus', length: 516, height: 137, wheel_r: 22, mass_class: 8, throw_tier: 2, hit_box: [516, 137], draw(p, w) {
     const top = w ? -104 : -126;
     let s = poly([[0, -22], [516, -22], [516, -86], [500, -110], [492, top], [8, top], [0, -112]], p.body);
     s += poly([[0, -22], [516, -22], [516, -32], [0, -32]], shade(p.body, 0.78));
@@ -76,7 +76,7 @@ const PAINTS = [['downtown', 3, 'sage'], ['downtown', 0, 'steel'], ['mid_rise', 
 });
 const LANES = { protagonist: '#8fd6ff', rival: '#9a80d8', empress: '#3c7d1c', cyborg: '#47d7a7', dummy: '#c6bade' };
 const paintCheck = PAINTS.map(p => { let w = [99, '']; for (const [n, c] of Object.entries(LANES)) { const d = dE00(p.body, c); if (d < w[0]) w = [d, n]; } return { id: p.id, body: p.body, nearest_lane: w[1], dE00: +w[0].toFixed(1) }; });
-writeFileSync(join(ROOT, 'data', 'art', 'vehicles.json'), JSON.stringify({ version: 1, note: 'The city\'s cars (docs/art/cars.md): four silhouettes and a wreck state, side-on, in world units (a fighter is 75), painted in the city tints. Written by art/concepts/city/cars.mjs; do not edit by hand. mass_class and throw_tier are Art\'s suggestions for Combat and Game Design, not rules. Proposals pending Legal; Tools adds the schema.', vehicles: Object.fromEntries(Object.entries(VEHICLES).map(([k, v]) => [k, { name: v.name, length: v.length, height: v.height, wheel_radius: v.wheel_r, hit_box: v.hit_box, mass_class: v.mass_class, throw_tier: v.throw_tier }])), paints: PAINTS.map(p => ({ id: p.id, name: p.name, body: p.body, dark: p.dark, glass: p.glass })), lit: LIT, tyre: TYRE, soot: SOOT, wreck: { rules: 'the same silhouette lower and askew: the roof crushed by about a quarter, the body tilted 6 to 9 degrees about the front axle, one wheel off or sprung (the bike: the front wheel off), the glass out (soot-dark, never see-through), the lights dark, a soot band along the roof and the sill; no flame, no smoke in the art (VFX\'s if wanted), no people', throw: 'seen thrown it tumbles as a flat box: the long side is the read at 46 px, so no part sticks out further than a quarter of its length' }, paint_vs_lane_colours: paintCheck }, null, 2) + '\n');
+writeFileSync(join(ROOT, 'data', 'art', 'vehicles.json'), JSON.stringify({ version: 1, note: 'The city\'s cars (docs/art/cars.md): four silhouettes and a wreck state, side-on, in world units (a fighter is 75), painted in the city tints. Written by art/concepts/city/cars.mjs; do not edit by hand. throw_tier follows Game Design\'s throwables ruling (rule-of-cool.md: tier 1 lifts a bike, sedan or van, tier 2 a bus); mass_class is Art\'s suggestion for Combat, not a rule. Proposals pending Legal; Tools adds the schema.', vehicles: Object.fromEntries(Object.entries(VEHICLES).map(([k, v]) => [k, { name: v.name, length: v.length, height: v.height, wheel_radius: v.wheel_r, hit_box: v.hit_box, mass_class: v.mass_class, throw_tier: v.throw_tier }])), paints: PAINTS.map(p => ({ id: p.id, name: p.name, body: p.body, dark: p.dark, glass: p.glass })), lit: LIT, tyre: TYRE, soot: SOOT, wreck: { rules: 'the same silhouette lower and askew: the roof crushed by about a quarter, the body tilted 6 to 9 degrees about the front axle, one wheel off or sprung (the bike: the front wheel off), the glass out (soot-dark, never see-through), the lights dark, a soot band along the roof and the sill; no flame, no smoke in the art (VFX\'s if wanted), no people', throw: 'seen thrown it tumbles as a flat box: the long side is the read at 46 px, so no part sticks out further than a quarter of its length' }, paint_vs_lane_colours: paintCheck }, null, 2) + '\n');
 
 // ---- the sheet
 const text = (x, y, t, { size = 12, weight = 400, fill = '#1b1428', anchor = 'start', op = 1 } = {}) => `<text x="${F(x)}" y="${F(y)}" font-family="'Segoe UI', system-ui, Arial, sans-serif" font-size="${size}" font-weight="${weight}" fill="${fill}" text-anchor="${anchor}" opacity="${op}">${String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</text>`;
@@ -119,7 +119,7 @@ function sheet() {
     'Sizes are real-world lengths at the game\'s scale (a fighter is 75 units, about 1.75 m): the sedan 193 by 62, the van 223 by 86, the bus 516 by 137, the bike 90 by 56. Wheels are octagons (radius 14, 17, 22, 15). Each car is about 10 rigid parts: body, cabin, glass, two wheels, lights, a sill band; the bus 14; the bike 8. About 120, 150, 260 and 90 triangles (estimates).',
     'Paints: six, the walls of the city\'s tints (low chroma, in the same family as the buildings, so a street of cars reads as part of the city and never as a fighter); the glass is the tint\'s dark glass; the lights are the city\'s one lit colour, small and steady, and go dark in the wreck. Nothing is orange or yellow (a taxi would be fire\'s colour), mid blue (the sea\'s) or a saturated red (blood\'s). The lane colours are far from every paint except the training dummy\'s pale lavender-grey ring, which sits near a light grey car: the dummy is told apart by his keyline.',
     'The wreck: the same silhouette made lower and askew (the roof crushed by about a quarter, the body tilted 6 to 9 degrees, one wheel off or sprung, the bike\'s front wheel off), the glass out and soot-dark, the lights dark, a soot band along the roof and the sill. No flame or smoke in the art, and no people in or around a car. A thrown car that lands becomes the wreck.',
-    'For Combat: Art suggests mass classes (bike 1, sedan 3, van 4, bus 8) and the first tier that can throw each (tier 1 the bike, 2 the sedan, 3 the van, 4 the bus), with the hit box the car\'s own size; these are suggestions in `data/art/vehicles.json`, not rules.',
+    'For Combat: Art suggests mass classes (bike 1, sedan 3, van 4, bus 8) and the first tier that can throw each (tier 1 lifts the bike, the sedan and the van, tier 2 lifts the bus: the throwables ruling in rule-of-cool.md, as the props data has it), with the hit box the car\'s own size; the tiers follow the ruling; the mass classes are suggestions in `data/art/vehicles.json`, not rules.',
   ];
   let yy = ny + 22; lines.forEach(l => { const ws = l.split(' '); let cur = ''; for (const t of ws) { if ((cur + ' ' + t).length > 232) { b += text(30, yy, cur, { size: 12 }); yy += 15; cur = t; } else cur = (cur + ' ' + t).trim(); } b += text(30, yy, cur, { size: 12 }); yy += 21; });
   writeFileSync(join(ROOT, 'art', 'concepts', 'city', 'cars.svg'), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${b}</svg>`);

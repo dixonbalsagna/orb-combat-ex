@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "note": "The city's cars (docs/art/cars.md): four silhouettes and a wreck state, side-on, in world units (a fighter is 75), painted in the city tints. Written by art/concepts/city/cars.mjs; do not edit by hand. mass_class and throw_tier are Art's suggestions for Combat and Game Design, not rules. Proposals pending Legal; Tools adds the schema.",
+  "note": "The city's cars (docs/art/cars.md): four silhouettes and a wreck state, side-on, in world units (a fighter is 75), painted in the city tints. Written by art/concepts/city/cars.mjs; do not edit by hand. throw_tier follows Game Design's throwables ruling (rule-of-cool.md: tier 1 lifts a bike, sedan or van, tier 2 a bus); mass_class is Art's suggestion for Combat, not a rule. Proposals pending Legal; Tools adds the schema.",
   "vehicles": {
     "sedan": {
       "name": "Sedan",
@@ -12,7 +12,7 @@
         62
       ],
       "mass_class": 3,
-      "throw_tier": 2
+      "throw_tier": 1
     },
     "van": {
       "name": "Van",
@@ -24,7 +24,7 @@
         86
       ],
       "mass_class": 4,
-      "throw_tier": 3
+      "throw_tier": 1
     },
     "bus": {
       "name": "Bus",
@@ -36,7 +36,7 @@
         137
       ],
       "mass_class": 8,
-      "throw_tier": 4
+      "throw_tier": 2
     },
     "bike": {
       "name": "Bike",
@@ -53,46 +53,46 @@
   },
   "paints": [
     {
-      "id": "sage",
-      "name": "Sage and rose glass",
-      "body": "#b8bdb4",
-      "dark": "#52564e",
-      "glass": "#8e7675"
+      "id": "pine",
+      "name": "Pine and plum glass",
+      "body": "#a5c2b7",
+      "dark": "#405a51",
+      "glass": "#8c7584"
     },
     {
       "id": "steel",
-      "name": "Steel and bronze glass",
-      "body": "#b4bcc7",
-      "dark": "#4e565f",
-      "glass": "#8c795e"
+      "name": "Steel and plum glass",
+      "body": "#afbccf",
+      "dark": "#495665",
+      "glass": "#867786"
     },
     {
-      "id": "buff",
-      "name": "Buff brick",
-      "body": "#dbc5b3",
-      "dark": "#715e4e",
-      "glass": "#7c8e9d"
+      "id": "terracotta",
+      "name": "Terracotta and teal glass",
+      "body": "#f2bdaf",
+      "dark": "#84554a",
+      "glass": "#6f929a"
     },
     {
-      "id": "slate",
-      "name": "Slate green and rose glass",
-      "body": "#c2cac3",
-      "dark": "#5c645d",
-      "glass": "#9e8585"
+      "id": "mauve",
+      "name": "Mauve and teal glass",
+      "body": "#debfda",
+      "dark": "#735971",
+      "glass": "#729191"
     },
     {
-      "id": "sandstone",
-      "name": "Sandstone and slate glass",
-      "body": "#c9baa8",
-      "dark": "#605243",
-      "glass": "#678086"
+      "id": "plum",
+      "name": "Plum and teal glass",
+      "body": "#d0b3c9",
+      "dark": "#664d60",
+      "glass": "#63827f"
     },
     {
       "id": "graphite",
-      "name": "Graphite and amber glass",
+      "name": "Graphite and teal glass",
       "body": "#babcc0",
       "dark": "#535558",
-      "glass": "#8b796a"
+      "glass": "#668180"
     }
   ],
   "lit": "#f3cf86",
@@ -104,34 +104,34 @@
   },
   "paint_vs_lane_colours": [
     {
-      "id": "sage",
-      "body": "#b8bdb4",
-      "nearest_lane": "dummy",
-      "dE00": 20.6
+      "id": "pine",
+      "body": "#a5c2b7",
+      "nearest_lane": "cyborg",
+      "dE00": 16.4
     },
     {
       "id": "steel",
-      "body": "#b4bcc7",
+      "body": "#afbccf",
       "nearest_lane": "dummy",
-      "dE00": 13.3
+      "dE00": 12.6
     },
     {
-      "id": "buff",
-      "body": "#dbc5b3",
+      "id": "terracotta",
+      "body": "#f2bdaf",
       "nearest_lane": "dummy",
-      "dE00": 22
+      "dE00": 21.1
     },
     {
-      "id": "slate",
-      "body": "#c2cac3",
-      "nearest_lane": "protagonist",
-      "dE00": 20
+      "id": "mauve",
+      "body": "#debfda",
+      "nearest_lane": "dummy",
+      "dE00": 7.1
     },
     {
-      "id": "sandstone",
-      "body": "#c9baa8",
+      "id": "plum",
+      "body": "#d0b3c9",
       "nearest_lane": "dummy",
-      "dE00": 22.9
+      "dE00": 7.4
     },
     {
       "id": "graphite",
