@@ -1,6 +1,6 @@
 {
   "schema": "biomes.land/1",
-  "_about": "Planet generation 2's landforms (docs/world/planet-gen2.md, window 3; read by sim/world/land.gd): the shape of the ground a gen 2 planet adds to the stored continents. plates: a few seeded plates (a centre and a drift each), nearest and second nearest at a point give its plate edge and, from the two drifts, whether the plates close on each other. ranges: where they close, a ridged range along the edge (amp units, edge width in dot-product units, wobbled by a noise so the line is not straight, broken by a ridged noise). rifts: where they part, a valley on land and a mid-sea ridge in the sea. coast: noise that moves the shoreline, strongest at sea level and gone inland and at depth, so there are bays and capes. plateaus: on high dry land a terrace mask turns slopes into flat tops with steep sides (step units apart, the riser a fraction of a step), and canyons: ridged-noise lines cut into the plateaus. polar: the polar zone's edge (the latitude where the stored planet's ordinary ground gives way to its poles) is moved by a noise of amp (in the sine of the latitude) so a continent ends raggedly, not on a ruled line. keep: the share of the stored planet's own range relief a gen 2 planet keeps (the plates build the ranges; the old blobs are weaker).",
+  "_about": "Planet generation 2's landforms (docs/world/planet-gen2.md, window 3; read by sim/world/land.gd): the shape of the ground a gen 2 planet adds to the stored continents. plates: a few seeded plates (a centre and a drift each), nearest and second nearest at a point give its plate edge and, from the two drifts, whether the plates close on each other. ranges: where they close, a ridged range along the edge (amp units, edge width in dot-product units, wobbled by a noise so the line is not straight, broken by a ridged noise). rifts: where they part, a valley on land and a mid-sea ridge in the sea. coast: noise that moves the shoreline, strongest at sea level and gone inland and at depth, so there are bays and capes. plateaus: on high dry land a terrace mask turns slopes into flat tops with steep sides (step units apart, the riser a fraction of a step), and canyons: ridged-noise lines cut into the plateaus. polar: the polar zone's edge (the latitude where the stored planet's ordinary ground gives way to its poles) is moved by a noise of amp (in the sine of the latitude) so a continent ends raggedly, not on a ruled line. keep: the share of the stored planet's own range relief a gen 2 planet keeps (the plates build the ranges; the old blobs are weaker). b: window 12's switch, off: when true a gen 2 planet's ground is Research's B plates (data/biomes/plates-b.json, sim/world/plateb.gd) in place of the plates, ranges, rifts, shoreline, plateaus and canyons above.",
   "plates": {
     "n": 14,
     "seed": 9701,
@@ -62,5 +62,8 @@
     "amp": 0.07,
     "seed": 9763
   },
-  "keep": 0.55
+  "keep": 0.55,
+  "b": {
+    "enabled": false
+  }
 }

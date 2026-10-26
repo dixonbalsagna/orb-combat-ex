@@ -356,7 +356,7 @@ static func predictFlight(S: SimState, x0: float, y0: float, vx0: float, vy0: fl
 		x = SimWrap.wrap(x + vx * dt)
 		travel += vx * dt
 		y += vy * dt
-		if y < 0.0 and WorldTerrain.seaAt(S, x):
+		if y < WorldWater.seaTop(S, x):
 			vx *= kWx
 			vy *= kWy
 			if SimDetMath.hypot(vx, vy) < 200.0 and t > 0.3:
@@ -373,7 +373,7 @@ static func predictFlight(S: SimState, x0: float, y0: float, vx0: float, vy0: fl
 			var dir: float = 1.0 if vx >= 0.0 else -1.0
 			var d: float = minf(WorldSlide.slideDistance(spN, WorldSlide.slope(S, x, dir), trav), SimConst.W * 0.25)
 			return {"x": SimWrap.wrap(x + dir * d), "travel": absf(travel) + d, "water": false, "t": t, "land": x, "slide": d}
-	return {"x": x, "travel": absf(travel), "water": y < 0.0 and WorldTerrain.seaAt(S, x), "t": t, "land": x}
+	return {"x": x, "travel": absf(travel), "water": y < WorldWater.seaTop(S, x), "t": t, "land": x}
 
 
 ## special marks a signature, a finisher or a break launch: its ground impact may leave a big crater (world/crater.gd).
@@ -393,7 +393,7 @@ static func doLaunch(S: SimState, att, tgt, plan: Dictionary, force: float, spec
 	tgt.rush = null
 	if tgt.hidden:
 		SimHiding.regainLock(S, tgt)   # a launch gives him away: the lock comes back announced (found, and no new break for a while)
-	tgt.wet = tgt.y < 0.0 and WorldTerrain.seaAt(S, tgt.x)
+	tgt.wet = tgt.y < WorldWater.seaTop(S, tgt.x)
 	if "slideFeet" in tgt:
 		tgt.slideFeet = String(plan.get("slide", "")) == "feet"   # World's flag for a slide on the feet (ground-contact.md section 24), once the field exists
 	tgt.launchT = WorldSlide.launchTravel(plan.ux, plan.uy)

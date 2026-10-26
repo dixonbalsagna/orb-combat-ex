@@ -17,6 +17,7 @@ static var _errors: Array = []
 static var _hash: String = ""
 
 static var K_KEEP: float = 1.0
+static var K_B_ON: bool = false   # window 12: the ground is Research's B plates (WorldPlateB) in place of the landforms below
 static var K_WOB_SCALE: float = 9000.0
 static var K_WOB_OCT: int = 1
 static var K_WOB_AMP: float = 0.05
@@ -87,7 +88,7 @@ static func dataErrors() -> Array:
 static func dataHash() -> String:
 	if not _loaded:
 		_load()
-	return _hash
+	return _hash + ("/b" + WorldPlateB.dataHash() if K_B_ON else "")   # plates-b.json counts only while the switch is on
 
 
 ## The share of the stored planet's own range relief a gen 2 planet keeps.
@@ -95,6 +96,20 @@ static func keep() -> float:
 	if not _loaded:
 		_load()
 	return K_KEEP
+
+
+## Whether a gen 2 planet's ground is Research's B plates (land.json b.enabled).
+static func plateB() -> bool:
+	if not _loaded:
+		_load()
+	return K_B_ON
+
+
+## For tools and checks: the switch for this process (the file is not touched). On only if plates-b.json is clean.
+static func setB(on: bool) -> void:
+	if not _loaded:
+		_load()
+	K_B_ON = on and WorldPlateB.dataErrors().is_empty()
 
 
 static func _load() -> void:
@@ -110,7 +125,7 @@ static func _load() -> void:
 	if not (j is Dictionary) or j.get("schema", "") != SCHEMA:
 		_errors.append("land.json: not a %s object" % SCHEMA)
 		return
-	for k in ["plates", "ranges", "rifts", "coast", "plateaus", "canyons", "polar", "keep"]:
+	for k in ["plates", "ranges", "rifts", "coast", "plateaus", "canyons", "polar", "keep", "b"]:
 		if not j.has(k):
 			_errors.append("land.json: %s is missing" % k)
 	if _errors.is_empty():
@@ -124,11 +139,14 @@ static func _load() -> void:
 			_errors.append("land.json: canyons.edge is under 1")
 		if float(j.keep) < 0.0 or float(j.keep) > 1.0:
 			_errors.append("land.json: keep is in [0, 1]")
+		if bool(j.b.enabled) and not WorldPlateB.dataErrors().is_empty():
+			_errors.append("land.json: b is on but plates-b.json is not clean: " + str(WorldPlateB.dataErrors()))
 	if not _errors.is_empty():
 		return
 	_d = j
 	_hash = str(text.hash())
 	K_KEEP = float(j.keep)
+	K_B_ON = bool(j.b.enabled)
 	var pw: Dictionary = j.plates
 	K_WOB_SCALE = float(pw.wobScale)
 	K_WOB_OCT = int(pw.wobOct)

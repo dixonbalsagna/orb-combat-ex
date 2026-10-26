@@ -1,0 +1,18 @@
+{
+  "schema": "biomes.water/1",
+  "_about": "Water v2 (docs/world/water-v2.md; read by sim/world/fill.gd): holes the fight digs fill with water where water would plausibly come from. enabled: the whole model (off: the water module is exactly as it was, gen 1 bit for bit). A hole opens a fill window when ground in the touched span is dug at least minDug below its original height; the window then fills each column toward its target level: the level of open water within near.reach columns (the sea at 0, a lake's flat surface, water already standing), for ground at most near.maxRise above it, and the biome's water table (table: the depth below the original ground the water stands at, 0 or missing for a dry biome; near: true if the table is there only with open water in reach). The fill is a cheap local rate, rate units of depth a step toward the target, behind a front that runs from the source at front columns a step (a seeping table has no front). A window is at most halfMax columns either side, at most maxWindows fills at once, closes after settle quiet steps or ageMax steps. It never trapping, lifting or slowing a fighter (Game Design 23b row 15) and does no damage (row 17). wade.below: water shallower than this is waded (a body passing through it is not dragged or sunk; it still skims). wave: a slam (impact energy at least minE) into water standing minDepth deep throws a ring wave that pushes anything within band of the surface and within radius units of the slam push units outward over steps steps. douse: a fill or wave that covers a column scorched at least scorchMin puts the fire out (an event for the steam; the sim keeps no fire).",
+  "enabled": false,
+  "table": {
+    "wetland": { "depth": 6.0, "near": false },
+    "beach": { "depth": 14.0, "near": false },
+    "jungle": { "depth": 45.0, "near": false },
+    "taiga": { "depth": 70.0, "near": true },
+    "sea_ice": { "depth": 3.0, "near": false },
+    "tundra": { "depth": 40.0, "near": true }
+  },
+  "near": { "reach": 36, "maxRise": 40.0, "front": 3.0 },
+  "fill": { "rate": 9.0, "minDug": 6.0, "halfMax": 120, "pad": 6, "maxWindows": 4, "ageMax": 400, "settle": 3 },
+  "wade": { "below": 75.0 },
+  "wave": { "minE": 6.0, "minDepth": 40.0, "radius": 600.0, "band": 100.0, "push": 75.0, "steps": 6 },
+  "douse": { "scorchMin": 0.3 }
+}

@@ -94,6 +94,17 @@ The EP's 10-agent review of the stack (each finding adversarially verified) foun
 
 Not changed (refuted by the review): the canopy tree scan, the epoch slice hash's fine bytes, load-only rules, absorb up to 3, polar.amp, journeyControl's reference start, biome multipliers under the tumble band.
 
+## Windows 8 to 11 (parked, each behind a switch or inert on gen 1)
+
+- **8** (`scratch-build/gen2-w8/`): the skate hand-over and the reference run behind `data/biomes/skate.json` (off), the wading rule of ruling 12.
+- **9** (`gen2-w9/`): Simulation's two notes on 8: `skate.json` is hashed as its parsed data (`FighterData._canon`), and the reference run is its own function with a proof it writes nothing to the state.
+- **10** (`gen2-w10/`, [water-v2.md](water-v2.md)): water v2 behind `data/biomes/water.json` (off): sources and the water table, the fill cue, the skim on filled water, and the sim side of Game Design's rows 14 to 17 (scar skip, crater wave, douse).
+- **11** (`gen2-w11/`): the owners' sea-rule lines for lakes at altitude: `WorldWater.seaTop(S, x)` is the surface the rules measure from (0 over the sea, a deep lake's own surface, none elsewhere), and Simulation's fighter.gd (1 line) and Encounter's launch.gd (3), beam.gd (1) and ai.gd (7) use it. Gen 1 is bit for bit (0 plus 30 is 30).
+
+## Window 12: Research's B plates ([plates-b.md](plates-b.md); `scratch-build/gen2-w12/`)
+
+`land.json` gets `b.enabled` (false). On, a gen 2 planet's ground is Research's round-2 plate-lite ground (`sim/world/plateb.gd`, numbers in `data/biomes/plates-b.json`) in place of window 3's plates, ranges, rifts, shoreline, plateaus and canyons. The port agrees with Research's JS (`sim/world/tools/b_check.gd` against `b_vectors.json`) to 5e-13 in height on 720 points of three seeds, 89% of them to the last bit. A sample (height and biome) costs 51 us against 38 us for window 3's ground (gen 1: 13 us), so B adds about a third. Off, nothing changes.
+
 ## What is next
 
 Rivers (a per-planet drainage grid as a time-sliced job), the ash strip beside vents, Combat's biome-park steps for World (aftermaths, the reference stop of ruling 12, props the planner can find), a gen 2 planet in the lobby; and Orb's look at gen 2 before the default flips.

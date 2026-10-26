@@ -346,7 +346,7 @@ const FX_FIELDS: Dictionary = {
 	"left_ground": ["actor", "x", "y", "z", "spd", "n", "cause", "vx", "vy", "slope", "contacts", "dur"], "bounce": ["actor", "x", "y", "z", "spd", "n", "k", "keep", "vn", "vt", "surface", "sina", "slope", "contacts", "dur"],
 	"land": ["actor", "x", "y", "z", "spd", "n", "kind", "sina", "slope", "surface", "vn", "vt", "contacts", "dur"], "tumble_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "dur"],
 	"journey_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "lips", "nb", "dur"],
-	"arena_turn": ["n", "x", "amount", "k"], "interior_contact": ["actor", "x", "y", "z", "spd", "n", "b", "floor", "kind", "nx", "ny", "vn", "vt", "keep", "punch", "k", "stop"], "interior_end": ["actor", "x", "y", "z", "spd", "n", "b", "end", "contacts", "t"],
+	"arena_turn": ["n", "x", "amount", "k"], "water_fill": ["x", "y", "n", "r", "spd", "k", "amount", "dur", "cause"], "water_wave": ["x", "y", "n", "r", "spd", "amount", "dur"], "water_douse": ["x", "w", "n"], "interior_contact": ["actor", "x", "y", "z", "spd", "n", "b", "floor", "kind", "nx", "ny", "vn", "vt", "keep", "punch", "k", "stop"], "interior_end": ["actor", "x", "y", "z", "spd", "n", "b", "end", "contacts", "t"],
 	"cue": ["actor", "kind", "text", "source"], "struggle_press": ["actor", "kind", "n"],
 }
 

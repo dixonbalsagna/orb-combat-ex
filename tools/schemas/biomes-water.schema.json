@@ -1,0 +1,227 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-water",
+  "title": "biomes.water/1",
+  "description": "data/biomes/water.json: water v2 (docs/world/water-v2.md; WorldFill). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore. Table names are checked against climate.json's fine biomes by WorldFill's load and fill_check.",
+  "type": "object",
+  "required": [
+    "schema",
+    "_about",
+    "enabled",
+    "table",
+    "near",
+    "fill",
+    "wade",
+    "wave",
+    "douse"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "biomes.water/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "enabled": {
+      "type": "boolean",
+      "description": "Water v2 on or off; off, the water module is as it was."
+    },
+    "table": {
+      "type": "object",
+      "description": "Wet biomes (climate.json's fine names) and how far below the original ground their water stands.",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "depth",
+          "near"
+        ],
+        "additionalProperties": false,
+        "description": "One biome's table.",
+        "properties": {
+          "depth": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 500.0,
+            "description": "Units below the original ground."
+          },
+          "near": {
+            "type": "boolean",
+            "description": "true: the table is there only with open water in reach."
+          }
+        }
+      }
+    },
+    "near": {
+      "type": "object",
+      "required": [
+        "reach",
+        "maxRise",
+        "front"
+      ],
+      "additionalProperties": false,
+      "description": "Open water as a source.",
+      "properties": {
+        "reach": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 400,
+          "description": "Columns within which open water feeds a hole."
+        },
+        "maxRise": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 500.0,
+          "description": "Ground at most this far above the water's level is fed."
+        },
+        "front": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 100.0,
+          "description": "Columns a step the front runs from the source."
+        }
+      }
+    },
+    "fill": {
+      "type": "object",
+      "required": [
+        "rate",
+        "minDug",
+        "halfMax",
+        "pad",
+        "maxWindows",
+        "ageMax",
+        "settle"
+      ],
+      "additionalProperties": false,
+      "description": "How a fill runs.",
+      "properties": {
+        "rate": {
+          "type": "number",
+          "exclusiveMinimum": 0.0,
+          "maximum": 200.0,
+          "description": "Depth added a step toward the target."
+        },
+        "minDug": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 500.0,
+          "description": "Ground dug at least this far below its original height opens a fill."
+        },
+        "halfMax": {
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 480,
+          "description": "Columns either side of a window's centre, at most."
+        },
+        "pad": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Columns added round the touched span."
+        },
+        "maxWindows": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16,
+          "description": "Fills open at once."
+        },
+        "ageMax": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5000,
+          "description": "Steps after which a window closes."
+        },
+        "settle": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50,
+          "description": "Quiet steps after which a window closes."
+        }
+      }
+    },
+    "wade": {
+      "type": "object",
+      "required": [
+        "below"
+      ],
+      "additionalProperties": false,
+      "description": "Shallow water.",
+      "properties": {
+        "below": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1000.0,
+          "description": "Water shallower than this is waded: no drag, no sink."
+        }
+      }
+    },
+    "wave": {
+      "type": "object",
+      "required": [
+        "minE",
+        "minDepth",
+        "radius",
+        "band",
+        "push",
+        "steps"
+      ],
+      "additionalProperties": false,
+      "description": "The crater wave.",
+      "properties": {
+        "minE": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1000.0,
+          "description": "Impact energy a slam needs."
+        },
+        "minDepth": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1000.0,
+          "description": "Water this deep must stand where it lands."
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 1.0,
+          "maximum": 20000.0,
+          "description": "Ring radius in units."
+        },
+        "band": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1000.0,
+          "description": "A body within this of the surface is pushed."
+        },
+        "push": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1000.0,
+          "description": "Units outward in all."
+        },
+        "steps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Over this many steps."
+        }
+      }
+    },
+    "douse": {
+      "type": "object",
+      "required": [
+        "scorchMin"
+      ],
+      "additionalProperties": false,
+      "description": "Water douses fire.",
+      "properties": {
+        "scorchMin": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "A column scorched at least this is a fire line a fill puts out."
+        }
+      }
+    }
+  }
+}

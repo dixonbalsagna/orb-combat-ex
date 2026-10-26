@@ -448,6 +448,14 @@
       "schema": "biomes-skate.schema.json"
     },
     {
+      "match": "data/biomes/water.json",
+      "schema": "biomes-water.schema.json"
+    },
+    {
+      "match": "data/biomes/plates-b.json",
+      "schema": "biomes-plates-b.schema.json"
+    },
+    {
       "match": "data/biomes/planet.json",
       "schema": "biomes-planet.schema.json"
     },

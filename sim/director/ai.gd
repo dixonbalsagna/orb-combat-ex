@@ -169,10 +169,11 @@ static func aiInput(S: SimState, f) -> void:
 	# a target it has lost (QA: the roam ran before the hunt, so a roaming hunter did not search).
 	var lure: float = DirLocation.roam(S, f) if st != 3.0 and not wantsCharge and not o.hidden and DirBands.who(S) < 0 else 0.0
 	var sea: bool = WorldTerrain.seaAt(S, f.x)
+	var top: float = WorldWater.seaTop(S, f.x) if sea else 0.0   # the water's surface: 0 over the sea, a lake's own
 	if lure != 0.0:
 		i.mx = lure
 		i.dash = true
-		i.my = 1.0 if sea and f.y < SURFACE_Y else 0.0
+		i.my = 1.0 if sea and f.y < top + SURFACE_Y else 0.0
 	elif st == 0.0 and o.hidden and o.lastSeen != null:
 		# Hunt: sweep random offsets around the last known position, re-rolled every 1.2 to 2.4 s.
 		a.sT -= SimConst.DT
@@ -185,13 +186,13 @@ static func aiInput(S: SimState, f) -> void:
 		i.mx = SimMathx.jsign(sd) if absf(sd) > 60.0 else 0.0
 		i.dash = absf(sd) > 1500.0
 		# Sweep low over land; over the sea, sweep at the surface rather than diving.
-		i.my = -1.0 if not sea else (1.0 if f.y < SURFACE_Y else 0.0)
+		i.my = -1.0 if not sea else (1.0 if f.y < top + SURFACE_Y else 0.0)
 	elif st == 0.0 and dist <= circleR:
 		# In reach an AGGRESSIVE fighter never halts (dynamic feel): it circles the opponent on an ellipse, weaving,
 		# until its attack beat. The two slots circle half a turn apart. No draws.
 		var ph: float = S.T * circleRate + (3.14159265358979 if f == S.fighters[1] else 0.0)
 		var cx: float = SimWrap.sdx(f.x, o.x + circleX * SimDetMath.sin(ph))
-		var cy: float = SimMathx.jmax(o.y, SURFACE_Y) if sea else o.y
+		var cy: float = SimMathx.jmax(o.y, top + SURFACE_Y) if sea else o.y
 		cy = cy + circleY * SimDetMath.cos(ph) - f.y
 		i.mx = SimMathx.jsign(cx) if absf(cx) > 20.0 else 0.0
 		i.my = SimMathx.jsign(cy) if absf(cy) > 20.0 else 0.0
@@ -199,7 +200,7 @@ static func aiInput(S: SimState, f) -> void:
 		i.mx = SimMathx.jsign(d) if dist > 130.0 else 0.0
 		i.dash = dist > 700.0
 		# Close in on the opponent's height, but not below the surface: underwater is for hiding, not fighting.
-		var ty: float = SimMathx.jmax(o.y, SURFACE_Y) if sea else o.y
+		var ty: float = SimMathx.jmax(o.y, top + SURFACE_Y) if sea else o.y
 		var dy: float = ty - f.y
 		i.my = SimMathx.jsign(dy) if absf(dy) > 40.0 else 0.0
 	elif st == 1.0:
@@ -238,7 +239,7 @@ static func aiInput(S: SimState, f) -> void:
 			i.mx = -SimMathx.jsign(d) if d != 0.0 else 1.0
 			i.dash = false
 	# Underwater and not hiding there: dash for the surface (underwater is a hiding state, not a place to fight).
-	if sea and f.y < 0.0 and i.my > 0.0:
+	if sea and f.y < top and i.my > 0.0:
 		i.dash = true
 	if st == 3.0 or not DirChase.steer(S, f, o, i):   # 7c: its chase of a launch it threw (not in Escape): the zip's rush, which the cap doesn't hold
 		_capApproach(S, f, o, i)   # 4d: at a human, its free-flight approach is held near Camera's whip limit

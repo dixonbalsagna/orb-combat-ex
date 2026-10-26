@@ -292639,6 +292639,102 @@
       }
     },
     {
+      "id": "water-enabled-not-boolean",
+      "schema": "biomes-water.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/water.json",
+          "set": {
+            "/enabled": "on"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/enabled"
+      }
+    },
+    {
+      "id": "water-fill-rate-zero",
+      "schema": "biomes-water.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/water.json",
+          "set": {
+            "/fill/rate": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/fill/rate"
+      }
+    },
+    {
+      "id": "water-wave-steps-zero",
+      "schema": "biomes-water.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/water.json",
+          "set": {
+            "/wave/steps": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/wave/steps"
+      }
+    },
+    {
+      "id": "platesb-plates-two",
+      "schema": "biomes-plates-b.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/plates-b.json",
+          "set": {
+            "/params/plates": 2
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/params/plates"
+      }
+    },
+    {
+      "id": "platesb-vref-zero",
+      "schema": "biomes-plates-b.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/plates-b.json",
+          "set": {
+            "/params/vRef": 0
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMinimum",
+        "pointer": "/params/vRef"
+      }
+    },
+    {
+      "id": "platesb-landshare-one",
+      "schema": "biomes-plates-b.schema.json",
+      "mutate": [
+        {
+          "file": "data/biomes/plates-b.json",
+          "set": {
+            "/params/landShare": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "exclusiveMaximum",
+        "pointer": "/params/landShare"
+      }
+    },
+    {
       "id": "rings-turn-bearing-over-10",
       "schema": "biomes-rings.schema.json",
       "mutate": [

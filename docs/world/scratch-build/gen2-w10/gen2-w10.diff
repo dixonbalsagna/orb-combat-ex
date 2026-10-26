@@ -1,0 +1,991 @@
+diff --git a/data/biomes/water.json b/data/biomes/water.json
+new file mode 100644
+index 0000000..53b90da
+--- /dev/null
++++ b/data/biomes/water.json
+@@ -0,0 +1,18 @@
++{
++  "schema": "biomes.water/1",
++  "_about": "Water v2 (docs/world/water-v2.md; read by sim/world/fill.gd): holes the fight digs fill with water where water would plausibly come from. enabled: the whole model (off: the water module is exactly as it was, gen 1 bit for bit). A hole opens a fill window when ground in the touched span is dug at least minDug below its original height; the window then fills each column toward its target level: the level of open water within near.reach columns (the sea at 0, a lake's flat surface, water already standing), for ground at most near.maxRise above it, and the biome's water table (table: the depth below the original ground the water stands at, 0 or missing for a dry biome; near: true if the table is there only with open water in reach). The fill is a cheap local rate, rate units of depth a step toward the target, behind a front that runs from the source at front columns a step (a seeping table has no front). A window is at most halfMax columns either side, at most maxWindows fills at once, closes after settle quiet steps or ageMax steps. It never trapping, lifting or slowing a fighter (Game Design 23b row 15) and does no damage (row 17). wade.below: water shallower than this is waded (a body passing through it is not dragged or sunk; it still skims). wave: a slam (impact energy at least minE) into water standing minDepth deep throws a ring wave that pushes anything within band of the surface and within radius units of the slam push units outward over steps steps. douse: a fill or wave that covers a column scorched at least scorchMin puts the fire out (an event for the steam; the sim keeps no fire).",
++  "enabled": false,
++  "table": {
++    "wetland": { "depth": 6.0, "near": false },
++    "beach": { "depth": 14.0, "near": false },
++    "jungle": { "depth": 45.0, "near": false },
++    "taiga": { "depth": 70.0, "near": true },
++    "sea_ice": { "depth": 3.0, "near": false },
++    "tundra": { "depth": 40.0, "near": true }
++  },
++  "near": { "reach": 36, "maxRise": 40.0, "front": 3.0 },
++  "fill": { "rate": 9.0, "minDug": 6.0, "halfMax": 120, "pad": 6, "maxWindows": 4, "ageMax": 400, "settle": 3 },
++  "wade": { "below": 75.0 },
++  "wave": { "minE": 6.0, "minDepth": 40.0, "radius": 600.0, "band": 100.0, "push": 75.0, "steps": 6 },
++  "douse": { "scorchMin": 0.3 }
++}
+diff --git a/sim/core/hash.gd b/sim/core/hash.gd
+index 07e4af8..7a8555d 100644
+--- a/sim/core/hash.gd
++++ b/sim/core/hash.gd
+@@ -346,7 +346,7 @@ const FX_FIELDS: Dictionary = {
+ 	"left_ground": ["actor", "x", "y", "z", "spd", "n", "cause", "vx", "vy", "slope", "contacts", "dur"], "bounce": ["actor", "x", "y", "z", "spd", "n", "k", "keep", "vn", "vt", "surface", "sina", "slope", "contacts", "dur"],
+ 	"land": ["actor", "x", "y", "z", "spd", "n", "kind", "sina", "slope", "surface", "vn", "vt", "contacts", "dur"], "tumble_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "dur"],
+ 	"journey_end": ["actor", "x", "y", "z", "spd", "n", "kind", "contacts", "lips", "nb", "dur"],
+-	"arena_turn": ["n", "x", "amount", "k"], "interior_contact": ["actor", "x", "y", "z", "spd", "n", "b", "floor", "kind", "nx", "ny", "vn", "vt", "keep", "punch", "k", "stop"], "interior_end": ["actor", "x", "y", "z", "spd", "n", "b", "end", "contacts", "t"],
++	"arena_turn": ["n", "x", "amount", "k"], "water_fill": ["x", "y", "n", "r", "spd", "k", "amount", "dur", "cause"], "water_wave": ["x", "y", "n", "r", "spd", "amount", "dur"], "water_douse": ["x", "w", "n"], "interior_contact": ["actor", "x", "y", "z", "spd", "n", "b", "floor", "kind", "nx", "ny", "vn", "vt", "keep", "punch", "k", "stop"], "interior_end": ["actor", "x", "y", "z", "spd", "n", "b", "end", "contacts", "t"],
+ 	"cue": ["actor", "kind", "text", "source"], "struggle_press": ["actor", "kind", "n"],
+ }
+ 
+diff --git a/sim/world/contact.gd b/sim/world/contact.gd
+index 4b84844..40df852 100644
+--- a/sim/world/contact.gd
++++ b/sim/world/contact.gd
+@@ -134,6 +134,9 @@ static func dataHash() -> String:
+ 	var h := SimHash.Hasher.new()
+ 	h.text("biomes.contact")
+ 	FighterData._canon(h, _parsed)   # the parsed data without the "_" notes, like the other loaders: a changed note keeps old replays
++	if WorldFill.on():
++		h.text("biomes.water")
++		FighterData._canon(h, WorldFill.parsed())   # water v2's switch, on: a replay must know
+ 	if skateOn():
+ 		h.text("biomes.skate")
+ 		FighterData._canon(h, _skateParsed)   # the parsed data without the "_" notes, like contact.json: a changed note keeps old replays
+@@ -461,7 +464,7 @@ static func moveAir(S: SimState, b: Body, dt: float, ev: Array) -> void:
+ 			ev.append({"k": "skim", "x": b.x, "y": wsurf, "speed": wsp, "n": int(b.bounces)})
+ 	if not inW and b.wet and b.y > wsurf:
+ 		b.wet = false
+-	if inW:
++	if inW and not WorldFill.wading(S, b.x):   # shallow water is waded: no drag, no sink (water v2; he still skimmed above)
+ 		b.vy += grav   # water holds him up: it cancels the gravity of this tick, whatever it is
+ 		b.vx *= SimDetMath.pow(0.05, dt)
+ 		b.vy *= SimDetMath.pow(0.1, dt)
+diff --git a/sim/world/crater.gd b/sim/world/crater.gd
+index ad34d59..de8accb 100644
+--- a/sim/world/crater.gd
++++ b/sim/world/crater.gd
+@@ -313,6 +313,8 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
+ 	var cols: int = n + int(ceil(absf(skid) / COL)) + REPOSE_PAD
+ 	minG = minf(minG, relax(S, c0, cols))
+ 	WorldTerrain.lowRefresh(S, c0, cols)
++	if kind == "impact":
++		WorldFill.slam(S, xw, E)   # a slam into water already standing throws the wave (before the fill reacts to this hole)
+ 	WorldWater.touched(S, c0, cols, minG)
+ 	return rec
+ 
+diff --git a/sim/world/fill.gd b/sim/world/fill.gd
+new file mode 100644
+index 0000000..dc30040
+--- /dev/null
++++ b/sim/world/fill.gd
+@@ -0,0 +1,322 @@
++class_name WorldFill
++extends RefCounted
++## Water v2 (docs/world/water-v2.md; data/biomes/water.json, off by default): holes the fight digs fill with water where water would plausibly come from. The sea, a lake and water already standing are sources
++## for ground close to them; wet biomes (wetland, beach, jungle, and taiga and tundra near water) have a water table a hole is dug through. The fill is a cheap local rate behind a front, in windows that open only
++## where terrain was dug and close when nothing moves; it is a cosmetic backdrop to the fight (it never traps, lifts or slows a fighter, never does damage) with a cue for the renderer: the "water_fill" event.
++## Windows are entries of S.waterWin with more than four elements (the flow model's have four, so with the switch off nothing here runs and the state is as it was):
++##   fill [c0, half, quiet, age, 1, startTick, startCol, nearLevel, tableDepth, nearCol, doused]    wave [c0, half, quiet, age, 2, startTick, x, push, stepsLeft, surface, 0]
++## Deterministic, float64, no draw; the per-tick cost is zero when no window is open and bounded by maxWindows x (2 halfMax + 1) columns every second tick when one is.
++
++const PATH := "res://data/biomes/water.json"
++const SCHEMA := "biomes.water/1"
++const NONE: float = -1.0e9
++
++static var _d: Dictionary = {}
++static var _loaded: bool = false
++static var _errors: Array = []
++static var K_ON: bool = false
++static var _tableD: Dictionary = {}   # biome name -> [depth, near]
++static var K_REACH: int = 36
++static var K_RISE: float = 40.0
++static var K_FRONT: float = 3.0
++static var K_RATE: float = 9.0
++static var K_MINDUG: float = 6.0
++static var K_HALFMAX: int = 120
++static var K_PAD: int = 6
++static var K_MAXWIN: int = 4
++static var K_AGEMAX: int = 400
++static var K_SETTLE: int = 3
++static var K_WADE: float = 75.0
++static var K_WAVE_E: float = 6.0
++static var K_WAVE_DEPTH: float = 40.0
++static var K_WAVE_R: float = 600.0
++static var K_WAVE_BAND: float = 100.0
++static var K_WAVE_PUSH: float = 75.0
++static var K_WAVE_STEPS: int = 6
++static var K_DOUSE: float = 0.3
++
++
++static func data() -> Dictionary:
++	if not _loaded:
++		_load()
++	return _d
++
++
++static func dataErrors() -> Array:
++	if not _loaded:
++		_load()
++	return _errors
++
++
++static func on() -> bool:
++	if not _loaded:
++		_load()
++	return K_ON
++
++
++static func parsed() -> Dictionary:
++	return data()
++
++
++static func _load() -> void:
++	_loaded = true
++	_errors = []
++	_d = {}
++	var f := FileAccess.open(PATH, FileAccess.READ)
++	if f == null:
++		return   # no file: the water module is as it was
++	var j = JSON.parse_string(f.get_as_text())
++	if not (j is Dictionary) or j.get("schema", "") != SCHEMA:
++		_errors.append("water.json: not a %s object" % SCHEMA)
++		return
++	for k in ["enabled", "table", "near", "fill", "wade", "wave", "douse"]:
++		if not j.has(k):
++			_errors.append("water.json: %s is missing" % k)
++	if not _errors.is_empty():
++		return
++	var names: Array = []
++	for g in WorldClimate.data().get("fine", []):
++		names.append(String(g.name))
++	for k in j.table:
++		if not names.has(String(k)):
++			_errors.append("water.json: table names %s, which climate.json does not have" % String(k))
++	if int(j.fill.halfMax) < 4 or int(j.fill.maxWindows) < 1 or float(j.fill.rate) <= 0.0 or int(j.near.reach) < 1 or float(j.near.front) <= 0.0:
++		_errors.append("water.json: fill.halfMax at least 4, maxWindows at least 1, rate above 0, near.reach at least 1, near.front above 0")
++	if not _errors.is_empty():
++		return
++	_d = j
++	K_ON = bool(j.enabled)
++	_tableD = {}
++	for k in j.table:
++		_tableD[String(k)] = [float(j.table[k].depth), bool(j.table[k].near)]
++	K_REACH = int(j.near.reach)
++	K_RISE = float(j.near.maxRise)
++	K_FRONT = float(j.near.front)
++	K_RATE = float(j.fill.rate)
++	K_MINDUG = float(j.fill.minDug)
++	K_HALFMAX = int(j.fill.halfMax)
++	K_PAD = int(j.fill.pad)
++	K_MAXWIN = int(j.fill.maxWindows)
++	K_AGEMAX = int(j.fill.ageMax)
++	K_SETTLE = int(j.fill.settle)
++	K_WADE = float(j.wade.below)
++	K_WAVE_E = float(j.wave.minE)
++	K_WAVE_DEPTH = float(j.wave.minDepth)
++	K_WAVE_R = float(j.wave.radius)
++	K_WAVE_BAND = float(j.wave.band)
++	K_WAVE_PUSH = float(j.wave.push)
++	K_WAVE_STEPS = int(j.wave.steps)
++	K_DOUSE = float(j.douse.scorchMin)
++
++
++## Water shallower than this at x is waded: a body passing through it is not dragged or sunk (it still skims). Always false with the switch off.
++static func wading(S: SimState, x: float) -> bool:
++	if not on():
++		return false
++	var d: float = S.water[int(floor(SimWrap.wrap(x) / SimConst.COL)) % SimConst.NC]
++	return d < K_WADE
++
++
++static func _openLevel(S: SimState, i: int) -> float:
++	var NC: int = SimConst.NC
++	if S.base[i] < WorldWater.RESERVOIR_BASE:
++		return WorldWater.SEA_LEVEL
++	if S.water[i] >= WorldWater.MIN_DEPTH:
++		return S.base[i] + WorldTerrain.lowD(S)[i] + S.water[i]
++	return NONE
++
++
++## Terrain changed round column c0 (half width cols): if ground in it is dug well below its original height, open (or widen) a fill window.
++static func open(S: SimState, c0: int, cols: int) -> void:
++	var NC: int = SimConst.NC
++	var dfm: PackedFloat32Array = WorldTerrain.lowD(S)
++	var deepC: int = -1
++	var deepest: float = -K_MINDUG
++	for k in range(-cols, cols + 1):
++		var i: int = (c0 + k + NC) % NC
++		if dfm[i] <= deepest:
++			deepest = dfm[i]
++			deepC = i
++	if deepC < 0:
++		return
++	var hw: int = mini(K_HALFMAX, cols + K_PAD)
++	var nfill: int = 0
++	for w in S.waterWin:
++		if w.size() > 4 and int(w[4]) == 1:
++			nfill += 1
++			if absi(WorldWater.colDelta(deepC, int(w[0]))) <= int(w[1]) + hw:
++				w[1] = mini(K_HALFMAX, maxi(int(w[1]), absi(WorldWater.colDelta(deepC, int(w[0]))) + hw))
++				w[2] = 0
++				return
++	if nfill >= K_MAXWIN:
++		return
++	# the biome's water table at the deepest hole, and the open water in reach
++	var td: float = NONE
++	var needNear: bool = false
++	var nm: String = WorldBiomes.fineNameAt((float(deepC) + 0.5) * SimConst.COL)
++	if _tableD.has(nm):
++		td = _tableD[nm][0]
++		needNear = _tableD[nm][1]
++	var srcCol: int = -1
++	var nearLevel: float = NONE
++	var dugLo: int = deepC   # the dug span's two ends: open water in reach of either end feeds the whole run of dug ground (a scar joins the sea to its far end)
++	var dugHi: int = deepC
++	for k in range(-cols, cols + 1):
++		var ik: int = (c0 + k + NC) % NC
++		if dfm[ik] <= -K_MINDUG:
++			dugLo = ik if absi(WorldWater.colDelta(c0, ik)) >= 0 and (WorldWater.colDelta(c0, ik) < WorldWater.colDelta(c0, dugLo)) else dugLo
++			dugHi = ik if (WorldWater.colDelta(c0, ik) > WorldWater.colDelta(c0, dugHi)) else dugHi
++	for d in range(0, K_REACH + 1):
++		for e in [dugLo, dugHi]:
++			for sgn in [1, -1]:
++				var j: int = posmod(e + sgn * d, NC)
++				var lv: float = _openLevel(S, j)
++				if lv != NONE and S.base[deepC] <= lv + K_RISE:
++					srcCol = j
++					nearLevel = lv
++					break
++			if srcCol >= 0:
++				break
++		if srcCol >= 0:
++			break
++	if srcCol < 0 and (td == NONE or needNear):
++		return   # no water would come: a dry hole stays dry
++	var entry: Array = [c0, hw, 0, 0, 1, S.tick, srcCol if srcCol >= 0 else deepC, nearLevel, td if (srcCol >= 0 or not needNear) else NONE, srcCol, 0]
++	S.waterWin.append(entry)
++	_cue(S, entry, deepest)
++
++
++static func _cue(S: SimState, w: Array, dug: float) -> void:
++	var e := SimFx._ev(S, "water_fill")
++	var COL: float = SimConst.COL
++	var stepS: float = float(WorldWater.STEP_TICKS) * SimConst.DT
++	var start: int = int(w[6])
++	e.x = (float(start) + 0.5) * COL
++	e.y = float(w[7]) if float(w[7]) != NONE else S.base[start] - float(w[8])
++	e.n = int(w[1]) * 2 + 1
++	e.r = float(w[1]) * COL
++	e.spd = K_FRONT * COL / stepS if int(w[9]) >= 0 else 0.0   # a seeping table has no front
++	e.k = K_RATE / stepS
++	e.amount = absf(dug)
++	e.dur = (absf(dug) / K_RATE + (float(w[1]) / K_FRONT if int(w[9]) >= 0 else 0.0)) * stepS
++	e.cause = "sea" if (int(w[9]) >= 0 and float(w[7]) == WorldWater.SEA_LEVEL) else ("water" if int(w[9]) >= 0 else "table")
++
++
++## One step of a fill or wave window; true when it is done and should be dropped.
++static func stepWindow(S: SimState, w: Array) -> bool:
++	if int(w[4]) == 2:
++		return _stepWave(S, w)
++	var NC: int = SimConst.NC
++	var base: PackedFloat32Array = S.base
++	var dfm: PackedFloat32Array = WorldTerrain.lowD(S)
++	var wat: PackedFloat32Array = S.water
++	var lo: int = int(w[0]) - int(w[1])
++	var hi: int = int(w[0]) + int(w[1])
++	var age: int = int(w[3])
++	var start: int = int(w[6])
++	var near: float = float(w[7])
++	var td: float = float(w[8])
++	var nearCol: int = int(w[9])
++	var reach: float = K_FRONT * float(age + 1)
++	var moved: float = 0.0
++	var wetNew: int = 0
++	var scorchHit: bool = false
++	var pending: bool = false
++	var elig := PackedByteArray()   # near water: a column is fed if it is within reach of the source or in an unbroken run of ground below the source's level that is (a dug scar joins the sea to its far end)
++	if near != NONE:
++		elig.resize(hi - lo + 1)
++		var runStart: int = -1
++		var runIn: bool = false
++		for j in range(lo, hi + 2):
++			var below: bool = false
++			if j <= hi:
++				var ii: int = posmod(j, NC)
++				below = base[ii] >= WorldWater.RESERVOIR_BASE and base[ii] + dfm[ii] < near
++			if below:
++				if runStart < 0:
++					runStart = j
++					runIn = false
++				if absi(WorldWater.colDelta(nearCol, posmod(j, NC))) <= K_REACH and base[posmod(j, NC)] <= near + K_RISE:
++					runIn = true
++			elif runStart >= 0:
++				if runIn:
++					for q in range(runStart, j):
++						elig[q - lo] = 1
++				runStart = -1
++	for j in range(lo, hi + 1):
++		var i: int = posmod(j, NC)
++		if base[i] < WorldWater.RESERVOIR_BASE:
++			continue
++		var g: float = base[i] + dfm[i]
++		var tl: float = NONE
++		if near != NONE and elig[j - lo] == 1:
++			tl = near
++			if float(absi(WorldWater.colDelta(start, i))) > reach:
++				pending = true   # the front has not got here yet: the window stays open for it
++				continue
++		if td != NONE:
++			tl = maxf(tl, base[i] - td)
++		if tl == NONE or tl <= g:
++			continue
++		var want: float = tl - g
++		var cur: float = wat[i]
++		if cur >= want:
++			continue
++		var add: float = minf(K_RATE, want - cur)
++		if cur < WorldWater.MIN_DEPTH and cur + add >= WorldWater.MIN_DEPTH:
++			wetNew += 1
++			if S.scorch.size() == NC and S.scorch[i] >= K_DOUSE:
++				scorchHit = true
++		wat[i] = cur + add
++		moved += add
++	S.water = wat
++	w[3] = age + 1
++	if scorchHit and int(w[10]) == 0:
++		w[10] = 1
++		var e := SimFx._ev(S, "water_douse")   # a fill reached a scorched line: the fire goes out (the renderer's steam)
++		e.x = (float(w[6]) + 0.5) * SimConst.COL
++		e.w = float(w[1]) * 2.0 * SimConst.COL
++		e.n = wetNew
++	if moved < 0.05 and not pending:
++		w[2] = int(w[2]) + 1
++	else:
++		w[2] = 0
++	return int(w[2]) >= K_SETTLE or int(w[3]) >= K_AGEMAX
++
++
++## A slam of impact energy E at x: if it lands in water standing deep enough, a ring wave pushes whatever is at the surface near it outward (rule of cool: Game Design 23b row 16), over a few steps.
++static func slam(S: SimState, x: float, E: float) -> void:
++	if not on() or E < K_WAVE_E:
++		return
++	var NC: int = SimConst.NC
++	var c: int = int(floor(SimWrap.wrap(x) / SimConst.COL)) % NC
++	var depth: float = S.water[c]
++	if depth < K_WAVE_DEPTH:
++		return
++	for w in S.waterWin:
++		if w.size() > 4 and int(w[4]) == 2 and absi(WorldWater.colDelta(c, int(w[0]))) < 4:
++			return   # a wave is already running here
++	var surface: float = S.base[c] + WorldTerrain.lowD(S)[c] + depth
++	S.waterWin.append([c, int(ceil(K_WAVE_R / SimConst.COL)), 0, 0, 2, S.tick, SimWrap.wrap(x), K_WAVE_PUSH, K_WAVE_STEPS, surface, 0])
++	var e := SimFx._ev(S, "water_wave")
++	e.x = SimWrap.wrap(x)
++	e.y = surface
++	e.r = K_WAVE_R
++	e.amount = K_WAVE_PUSH
++	e.n = K_WAVE_STEPS
++	e.dur = float(K_WAVE_STEPS) * float(WorldWater.STEP_TICKS) * SimConst.DT
++	e.spd = K_WAVE_R / e.dur
++
++
++static func _stepWave(S: SimState, w: Array) -> bool:
++	var left: int = int(w[8])
++	var x0: float = float(w[6])
++	var surface: float = float(w[9])
++	var per: float = float(w[7]) / float(K_WAVE_STEPS)
++	for f in S.fighters:
++		var dx: float = SimWrap.sdx(x0, f.x)
++		if absf(dx) <= K_WAVE_R and absf(f.y - surface) <= K_WAVE_BAND:
++			f.x = SimWrap.wrap(f.x + (1.0 if dx >= 0.0 else -1.0) * per)   # outward, a little each step: never a hold or a lift
++	w[8] = left - 1
++	w[3] = int(w[3]) + 1
++	return int(w[8]) <= 0
+diff --git a/sim/world/fill.gd.uid b/sim/world/fill.gd.uid
+new file mode 100644
+index 0000000..c07f424
+--- /dev/null
++++ b/sim/world/fill.gd.uid
+@@ -0,0 +1 @@
++uid://dtj78m5p3n1bf
+diff --git a/sim/world/tools/fill_check.gd b/sim/world/tools/fill_check.gd
+new file mode 100644
+index 0000000..692b870
+--- /dev/null
++++ b/sim/world/tools/fill_check.gd
+@@ -0,0 +1,228 @@
++extends SceneTree
++# Water v2 (docs/world/water-v2.md, data/biomes/water.json, off by default): holes the fight digs fill with water where water would plausibly come from; the skim stays; shallow water is waded; the three payoffs.
++#   godot --headless --path . --script res://sim/world/tools/fill_check.gd
++var fails: int = 0
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func evs(S: SimState, type: String) -> Array:
++	var out: Array = []
++	for e in S.out.fx:
++		if e.type == type:
++			out.append(e)
++	return out
++
++
++## A flat world: sea on columns 0 to 299 (the sea floor at -300), a plain at 30 from there on; the fine biome of every column `fine` (a gen 2 world), or none (the hand-made biomes).
++func world(fine: int) -> SimState:
++	var S := SimCore.createSim()
++	SimCore.newMatch(S, 1, {}, {"intro": false})
++	var nc: int = SimConst.NC
++	S.base.fill(30.0)
++	for i in range(300):
++		S.base[i] = -300.0
++	S.deform.fill(0.0)
++	S.rubble.fill(0.0)
++	S.scorch.fill(0.0)
++	S.buildings.clear()
++	S.trees.clear()
++	S.craters.clear()
++	WorldWater.init(S)
++	if fine >= 0:
++		var pc := PackedByteArray()
++		pc.resize(nc)
++		pc.fill(1)
++		var fc := PackedByteArray()
++		fc.resize(nc)
++		fc.fill(fine)
++		WorldBiomes.planetCols = pc
++		WorldBiomes.fineCols = fc
++		WorldBiomes.worldId = WorldBiomes.claim()
++		S.worldId = WorldBiomes.worldId
++	S.fighters[0].x = 40000.0
++	S.fighters[1].x = 41000.0
++	return S
++
++
++## A hole dug as a fight digs one: columns c0 +- half lowered by `depth`, then the water module told, as the crater and the beam code tell it.
++func dig(S: SimState, c0: int, half: int, depth: float) -> void:
++	for k in range(-half, half + 1):
++		S.deform[c0 + k] = -depth * (1.0 - absf(float(k)) / float(half + 1) * 0.3)
++	WorldWater.touched(S, c0, half + 4, 30.0 - depth)
++
++
++func settle(S: SimState, steps: int) -> int:
++	var n: int = 0
++	while n < steps and not S.waterWin.is_empty():
++		for t in range(WorldWater.STEP_TICKS):
++			WorldWater.step(S)
++		n += 1
++	return n
++
++
++func wetCols(S: SimState, lo: int, hi: int) -> int:
++	var c: int = 0
++	for i in range(lo, hi + 1):
++		if S.water[i] >= WorldWater.MIN_DEPTH:
++			c += 1
++	return c
++
++
++func _init() -> void:
++	ok(WorldFill.dataErrors().is_empty(), "water.json is clean (%s)" % str(WorldFill.dataErrors()))
++	ok(not WorldFill.on(), "the switch (data/biomes/water.json enabled) is off in the data")
++	WorldFill.on()
++	# --- off: a hole on the plain by the sea stays dry, as it always did, and no window opens
++	WorldFill.K_ON = false
++	var S0: SimState = world(-1)
++	dig(S0, 330, 6, 50.0)
++	var n0: int = settle(S0, 400)
++	ok(wetCols(S0, 320, 340) == 0 and S0.waterWin.is_empty() and evs(S0, "water_fill").is_empty(), "off: a trench dug by the sea on higher ground stays dry and opens no window (the no-inland-flooding rule)")
++	# --- on: the same hole fills from the sea, behind a front, to sea level
++	WorldFill.K_ON = true
++	var S1: SimState = world(-1)
++	dig(S1, 330, 6, 50.0)
++	var hasWin: bool = S1.waterWin.size() == 1 and S1.waterWin[0].size() > 4
++	var cue: Array = evs(S1, "water_fill")
++	ok(hasWin and cue.size() == 1 and cue[0].cause == "sea" and cue[0].spd > 0.0 and cue[0].k > 0.0, "on: the same trench opens a fill window and one water_fill cue (cause %s, front %.0f units/s, rate %.0f/s, %d columns)" % [cue[0].cause if cue.size() > 0 else "-", cue[0].spd if cue.size() > 0 else 0.0, cue[0].k if cue.size() > 0 else 0.0, int(cue[0].n) if cue.size() > 0 else 0])
++	var peek: int = 0
++	var frontOk: bool = true
++	var firstFar: int = -1
++	while not S1.waterWin.is_empty() and peek < 400:
++		for t in range(WorldWater.STEP_TICKS):
++			WorldWater.step(S1)
++		peek += 1
++		if peek == 10:
++			# the front runs from the source (the sea's edge at column 299): at step 3 the near columns are wet and the far ones are not
++			frontOk = S1.water[324] >= WorldWater.MIN_DEPTH or S1.water[325] >= WorldWater.MIN_DEPTH or S1.water[326] >= WorldWater.MIN_DEPTH
++			if S1.water[336] >= WorldWater.MIN_DEPTH:
++				firstFar = 336
++	var lvl: float = S1.base[330] + S1.deform[330] + S1.water[330]
++	ok(wetCols(S1, 320, 340) >= 9 and absf(lvl) < 0.5, "on: the trench is wet (%d columns) with its surface at the sea's level (%.2f) and the window closed after %d steps" % [wetCols(S1, 320, 340), lvl, peek])
++	ok(frontOk and firstFar < 0, "the fill is a front from the source: at step 10 the near end is wet and the far end is not yet")
++	ok(S1.world.casualties == 0.0 and S1.craters.size() == 0, "the fill does no damage and makes no casualty (Game Design row 17)")
++	# --- a dry biome far from water stays dry; a wetland seeps
++	var S2: SimState = world(WorldClimate.F_DESERT)
++	dig(S2, 4000, 6, 50.0)
++	settle(S2, 400)
++	ok(wetCols(S2, 3980, 4020) == 0 and S2.waterWin.is_empty(), "a hole in a desert far from water stays dry")
++	var S3: SimState = world(WorldClimate.F_WETLAND)
++	dig(S3, 4000, 6, 50.0)
++	var wasWin: int = S3.waterWin.size()
++	var c3: Array = evs(S3, "water_fill")
++	settle(S3, 400)
++	var l3: float = S3.base[4000] + S3.deform[4000] + S3.water[4000]
++	ok(wasWin == 1 and c3.size() == 1 and c3[0].cause == "table" and absf(l3 - (30.0 - 6.0)) < 0.5, "a hole in a wetland far from water seeps full to its table (surface %.1f, the ground's 30 less 6), cue cause %s with no front" % [l3, c3[0].cause if c3.size() > 0 else "-"])
++	var S4: SimState = world(WorldClimate.F_JUNGLE)
++	dig(S4, 4000, 6, 20.0)
++	settle(S4, 400)
++	ok(wetCols(S4, 3980, 4020) == 0, "a jungle hole shallower than its water table (45) stays dry")
++	# --- the skim: a scar dug along the plain, flooded, is skimmable; dry it is not
++	var skims: Array = []
++	for state in [false, true]:
++		WorldFill.K_ON = state
++		var Ss: SimState = world(-1)
++		for i in range(305, 405):
++			Ss.deform[i] = -50.0
++		WorldWater.touched(Ss, 355, 54, -20.0)
++		settle(Ss, 600)
++		var b: WorldContact.Body = WorldContact.launchBody(305.5 * SimConst.COL, 8.0, 2200.0, -60.0, 1.0, 2.0)
++		var jr: Dictionary = WorldContact.journey(Ss, b)
++		var sk: int = 0
++		for c in jr.contacts:
++			if c.kind == "skim":
++				sk += 1
++		skims.append(sk)
++	WorldFill.K_ON = true
++	ok(skims[0] == 0 and skims[1] >= 3 and skims[1] <= 6, "a send along a dug scar: dry it skims %d times, flooded %d (the sea's rules: at most 6, 85%% kept each)" % [skims[0], skims[1]])
++	# --- shallow water is waded: no drag, no sink
++	var drag: Array = []
++	for wade in [0.0, 75.0]:
++		WorldFill.K_WADE = wade
++		var Sw: SimState = world(-1)
++		for i in range(305, 405):
++			Sw.deform[i] = -50.0
++		WorldWater.touched(Sw, 355, 54, -20.0)
++		settle(Sw, 600)
++		var b2: WorldContact.Body = WorldContact.launchBody(305.5 * SimConst.COL, 4.0, 400.0, -30.0, 1.0, 2.0)   # slow: below the skim speed
++		var j2: Dictionary = WorldContact.journey(Sw, b2)
++		drag.append(float(j2.dist))
++	WorldFill.K_WADE = 75.0
++	ok(drag[1] > drag[0] * 1.3, "a slow body through a shallow fill is waded, not dragged to a stop: %.0f units (%.0f with nothing counted as shallow, where the sea's drag stops it)" % [drag[1], drag[0]])
++	# --- the crater wave: a slam into standing water pushes whatever is at the surface outward
++	var Sv: SimState = world(-1)
++	Sv.base[400] = Sv.base[400]
++	for i in range(380, 421):
++		Sv.deform[i] = -80.0
++		Sv.water[i] = 100.0   # a flooded crater (it filled earlier)
++	var surface: float = Sv.base[400] + Sv.deform[400] + Sv.water[400]
++	Sv.fighters[0].x = 400.0 * SimConst.COL + 200.0
++	Sv.fighters[0].y = surface + 10.0
++	var x0: float = Sv.fighters[0].x
++	WorldFill.slam(Sv, 400.0 * SimConst.COL, 20.0)
++	var waves: Array = evs(Sv, "water_wave")
++	var guard: int = 0
++	while not Sv.waterWin.is_empty() and guard < 50:
++		for t in range(WorldWater.STEP_TICKS):
++			WorldWater.step(Sv)
++		guard += 1
++	var pushed: float = Sv.fighters[0].x - x0
++	ok(waves.size() == 1 and pushed > 60.0 and pushed < 90.0, "a slam into a flooded crater throws one ring wave (water_wave) and pushes a fighter at the surface %.0f units outward, over %d steps" % [pushed, guard])
++	var Sd: SimState = world(-1)
++	for i in range(380, 421):
++		Sd.deform[i] = -80.0
++	Sd.fighters[0].y = 5000.0
++	var xf: float = Sd.fighters[0].x
++	WorldFill.slam(Sd, 400.0 * SimConst.COL, 20.0)
++	ok(Sd.waterWin.is_empty() and evs(Sd, "water_wave").is_empty(), "a slam into a dry crater throws no wave")
++	# --- fire: a fill that reaches scorched ground puts it out (the event the steam hangs on)
++	var Sf: SimState = world(-1)
++	for i in range(318, 326):
++		Sf.scorch[i] = 0.8
++	dig(Sf, 322, 6, 50.0)
++	settle(Sf, 400)
++	ok(evs(Sf, "water_douse").size() == 1, "a fill reaching a scorched line emits one water_douse (the sim keeps no fire; the steam is the renderer's)")
++	# --- cost: a step with four fill windows against today's worst (eight flow windows), and nothing when none is open
++	var Sc: SimState = world(-1)
++	for k in range(4):
++		var c0: int = 1000 + k * 300
++		Sc.waterWin.append([c0, 120, 0, 0, 1, 0, c0, 0.0, 40.0, c0, 0])
++		for i in range(c0 - 6, c0 + 7):
++			Sc.deform[i] = -60.0
++	Sc.waterTick = 1.0
++	var t0: int = Time.get_ticks_usec()
++	var reps: int = 50
++	for r in range(reps):
++		for w in Sc.waterWin:
++			w[2] = 0
++			w[3] = 0
++		Sc.waterTick = 1.0
++		WorldWater.step(Sc)
++	var fillUs: float = float(Time.get_ticks_usec() - t0) / float(reps)
++	var Sg: SimState = world(-1)
++	Sg.waterWin.clear()
++	for k in range(8):
++		Sg.waterWin.append([2000 + k * 600, 240, 0, 0])
++	t0 = Time.get_ticks_usec()
++	for r in range(reps):
++		for w in Sg.waterWin:
++			w[2] = 0
++			w[3] = 0
++		Sg.waterTick = 1.0
++		WorldWater.step(Sg)
++	var flowUs: float = float(Time.get_ticks_usec() - t0) / float(reps)
++	var Sn: SimState = world(-1)
++	t0 = Time.get_ticks_usec()
++	for r in range(20000):
++		WorldWater.step(Sn)
++	var idleUs: float = float(Time.get_ticks_usec() - t0) / 20000.0
++	print("  (a water step: four fill windows %.0f us, today's worst, eight flow windows, %.0f us; no window open %.2f us a tick)" % [fillUs, flowUs, idleUs])
++	ok(fillUs < flowUs and idleUs < 2.0, "the cost: four open fills cost %.0f us a step against today's worst of %.0f, and a tick with nothing open costs %.2f us" % [fillUs, flowUs, idleUs])
++	WorldFill.K_ON = false
++	print("FILL: %d check(s) failed" % fails)
++	quit()
+diff --git a/sim/world/tools/fill_check.gd.uid b/sim/world/tools/fill_check.gd.uid
+new file mode 100644
+index 0000000..d992dba
+--- /dev/null
++++ b/sim/world/tools/fill_check.gd.uid
+@@ -0,0 +1 @@
++uid://dfoqlt2wexodb
+diff --git a/sim/world/water.gd b/sim/world/water.gd
+index 9160530..9d31073 100644
+--- a/sim/world/water.gd
++++ b/sim/world/water.gd
+@@ -114,6 +114,8 @@ static func touched(S: SimState, c0: int, cols: int, minG: float) -> void:
+ 			S.water[i] = maxf(0.0, SEA_LEVEL - (base[i] + dfm[i]))
+ 	if not S.planetRing.is_empty():
+ 		WorldLakes.refill(S, c0, cols)   # a gen 2 ring's lakes stand flat when their bed is dug
++	if WorldFill.on():
++		WorldFill.open(S, c0, cols)   # water v2: a hole dug where water would come fills (its own windows)
+ 	if minG >= WET_GROUND:
+ 		return
+ 	var hw: int = mini(MAX_HALF, cols + PAD_COLS)
+@@ -130,6 +132,8 @@ static func touched(S: SimState, c0: int, cols: int, minG: float) -> void:
+ 	if not (near and hole):
+ 		return
+ 	for w in S.waterWin:
++		if w.size() > 4:
++			continue   # a fill or wave window (WorldFill) is not a flow window
+ 		var dc: int = absi(colDelta(c0, w[0]))
+ 		if dc <= w[1] + hw:
+ 			w[1] = mini(MAX_HALF, maxi(w[1], dc + hw))
+@@ -159,6 +163,12 @@ static func step(S: SimState) -> void:
+ 	var wi: int = 0
+ 	while wi < S.waterWin.size():
+ 		var w: Array = S.waterWin[wi]
++		if w.size() > 4:
++			if WorldFill.stepWindow(S, w):
++				S.waterWin.remove_at(wi)
++			else:
++				wi += 1
++			continue
+ 		var lo: int = w[0] - w[1]
+ 		var hi: int = w[0] + w[1]
+ 		var flux := PackedFloat32Array()
+diff --git a/tools/fixtures/cases.json b/tools/fixtures/cases.json
+index 6ef58c3..d842ff0 100644
+--- a/tools/fixtures/cases.json
++++ b/tools/fixtures/cases.json
+@@ -292636,6 +292636,54 @@
+         "pointer": "/minSkate"
+       }
+     },
++    {
++      "id": "water-enabled-not-boolean",
++      "schema": "biomes-water.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/water.json",
++          "set": {
++            "/enabled": "on"
++          }
++        }
++      ],
++      "expect": {
++        "rule": "type",
++        "pointer": "/enabled"
++      }
++    },
++    {
++      "id": "water-fill-rate-zero",
++      "schema": "biomes-water.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/water.json",
++          "set": {
++            "/fill/rate": 0
++          }
++        }
++      ],
++      "expect": {
++        "rule": "exclusiveMinimum",
++        "pointer": "/fill/rate"
++      }
++    },
++    {
++      "id": "water-wave-steps-zero",
++      "schema": "biomes-water.schema.json",
++      "mutate": [
++        {
++          "file": "data/biomes/water.json",
++          "set": {
++            "/wave/steps": 0
++          }
++        }
++      ],
++      "expect": {
++        "rule": "minimum",
++        "pointer": "/wave/steps"
++      }
++    },
+     {
+       "id": "rings-turn-bearing-over-10",
+       "schema": "biomes-rings.schema.json",
+diff --git a/tools/schemas/biomes-water.schema.json b/tools/schemas/biomes-water.schema.json
+new file mode 100644
+index 0000000..fc15b77
+--- /dev/null
++++ b/tools/schemas/biomes-water.schema.json
+@@ -0,0 +1,227 @@
++{
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "$id": "meridian/biomes-water",
++  "title": "biomes.water/1",
++  "description": "data/biomes/water.json: water v2 (docs/world/water-v2.md; WorldFill). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore. Table names are checked against climate.json's fine biomes by WorldFill's load and fill_check.",
++  "type": "object",
++  "required": [
++    "schema",
++    "_about",
++    "enabled",
++    "table",
++    "near",
++    "fill",
++    "wade",
++    "wave",
++    "douse"
++  ],
++  "additionalProperties": false,
++  "properties": {
++    "schema": {
++      "const": "biomes.water/1"
++    },
++    "_about": {
++      "type": "string"
++    },
++    "enabled": {
++      "type": "boolean",
++      "description": "Water v2 on or off; off, the water module is as it was."
++    },
++    "table": {
++      "type": "object",
++      "description": "Wet biomes (climate.json's fine names) and how far below the original ground their water stands.",
++      "additionalProperties": {
++        "type": "object",
++        "required": [
++          "depth",
++          "near"
++        ],
++        "additionalProperties": false,
++        "description": "One biome's table.",
++        "properties": {
++          "depth": {
++            "type": "number",
++            "minimum": 0.0,
++            "maximum": 500.0,
++            "description": "Units below the original ground."
++          },
++          "near": {
++            "type": "boolean",
++            "description": "true: the table is there only with open water in reach."
++          }
++        }
++      }
++    },
++    "near": {
++      "type": "object",
++      "required": [
++        "reach",
++        "maxRise",
++        "front"
++      ],
++      "additionalProperties": false,
++      "description": "Open water as a source.",
++      "properties": {
++        "reach": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 400,
++          "description": "Columns within which open water feeds a hole."
++        },
++        "maxRise": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 500.0,
++          "description": "Ground at most this far above the water's level is fed."
++        },
++        "front": {
++          "type": "number",
++          "minimum": 0.1,
++          "maximum": 100.0,
++          "description": "Columns a step the front runs from the source."
++        }
++      }
++    },
++    "fill": {
++      "type": "object",
++      "required": [
++        "rate",
++        "minDug",
++        "halfMax",
++        "pad",
++        "maxWindows",
++        "ageMax",
++        "settle"
++      ],
++      "additionalProperties": false,
++      "description": "How a fill runs.",
++      "properties": {
++        "rate": {
++          "type": "number",
++          "exclusiveMinimum": 0.0,
++          "maximum": 200.0,
++          "description": "Depth added a step toward the target."
++        },
++        "minDug": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 500.0,
++          "description": "Ground dug at least this far below its original height opens a fill."
++        },
++        "halfMax": {
++          "type": "integer",
++          "minimum": 4,
++          "maximum": 480,
++          "description": "Columns either side of a window's centre, at most."
++        },
++        "pad": {
++          "type": "integer",
++          "minimum": 0,
++          "maximum": 100,
++          "description": "Columns added round the touched span."
++        },
++        "maxWindows": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 16,
++          "description": "Fills open at once."
++        },
++        "ageMax": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 5000,
++          "description": "Steps after which a window closes."
++        },
++        "settle": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 50,
++          "description": "Quiet steps after which a window closes."
++        }
++      }
++    },
++    "wade": {
++      "type": "object",
++      "required": [
++        "below"
++      ],
++      "additionalProperties": false,
++      "description": "Shallow water.",
++      "properties": {
++        "below": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 1000.0,
++          "description": "Water shallower than this is waded: no drag, no sink."
++        }
++      }
++    },
++    "wave": {
++      "type": "object",
++      "required": [
++        "minE",
++        "minDepth",
++        "radius",
++        "band",
++        "push",
++        "steps"
++      ],
++      "additionalProperties": false,
++      "description": "The crater wave.",
++      "properties": {
++        "minE": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 1000.0,
++          "description": "Impact energy a slam needs."
++        },
++        "minDepth": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 1000.0,
++          "description": "Water this deep must stand where it lands."
++        },
++        "radius": {
++          "type": "number",
++          "minimum": 1.0,
++          "maximum": 20000.0,
++          "description": "Ring radius in units."
++        },
++        "band": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 1000.0,
++          "description": "A body within this of the surface is pushed."
++        },
++        "push": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 1000.0,
++          "description": "Units outward in all."
++        },
++        "steps": {
++          "type": "integer",
++          "minimum": 1,
++          "maximum": 100,
++          "description": "Over this many steps."
++        }
++      }
++    },
++    "douse": {
++      "type": "object",
++      "required": [
++        "scorchMin"
++      ],
++      "additionalProperties": false,
++      "description": "Water douses fire.",
++      "properties": {
++        "scorchMin": {
++          "type": "number",
++          "minimum": 0.0,
++          "maximum": 1.0,
++          "description": "A column scorched at least this is a fire line a fill puts out."
++        }
++      }
++    }
++  }
++}
+diff --git a/tools/schemas/map.json b/tools/schemas/map.json
+index b254b26..6d9aa45 100644
+--- a/tools/schemas/map.json
++++ b/tools/schemas/map.json
+@@ -447,6 +447,10 @@
+       "match": "data/biomes/skate.json",
+       "schema": "biomes-skate.schema.json"
+     },
++    {
++      "match": "data/biomes/water.json",
++      "schema": "biomes-water.schema.json"
++    },
+     {
+       "match": "data/biomes/planet.json",
+       "schema": "biomes-planet.schema.json"

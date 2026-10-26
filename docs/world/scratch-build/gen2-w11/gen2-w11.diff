@@ -1,0 +1,217 @@
+diff --git a/sim/core/fighter.gd b/sim/core/fighter.gd
+index 8e61c3e..803ceb2 100644
+--- a/sim/core/fighter.gd
++++ b/sim/core/fighter.gd
+@@ -518,7 +518,7 @@ static func flightSpeed(S: SimState, f, dash: bool) -> float:
+ 		# 15 s); close in, it is the melee dash it always was.
+ 		var sep: float = absf(SimWrap.sdx(f.x, SimRoster.opp(S, f).x))
+ 		sp *= 1.0 + (SimConst.TRAV_FREE - 1.0) * SimMathx.jclamp((sep - SimConst.BOOST_NEAR) / (SimConst.BOOST_FAR - SimConst.BOOST_NEAR), 0.0, 1.0)
+-	if f.y < 0.0 and WorldTerrain.seaAt(S, f.x):
++	if f.y < WorldWater.seaTop(S, f.x):   # in the sea or a deep lake: below its surface
+ 		sp *= 0.55
+ 	return sp
+ 
+diff --git a/sim/director/ai.gd b/sim/director/ai.gd
+index 7fe8cbf..bbfef62 100644
+--- a/sim/director/ai.gd
++++ b/sim/director/ai.gd
+@@ -169,10 +169,11 @@ static func aiInput(S: SimState, f) -> void:
+ 	# a target it has lost (QA: the roam ran before the hunt, so a roaming hunter did not search).
+ 	var lure: float = DirLocation.roam(S, f) if st != 3.0 and not wantsCharge and not o.hidden and DirBands.who(S) < 0 else 0.0
+ 	var sea: bool = WorldTerrain.seaAt(S, f.x)
++	var top: float = WorldWater.seaTop(S, f.x) if sea else 0.0   # the water's surface: 0 over the sea, a lake's own
+ 	if lure != 0.0:
+ 		i.mx = lure
+ 		i.dash = true
+-		i.my = 1.0 if sea and f.y < SURFACE_Y else 0.0
++		i.my = 1.0 if sea and f.y < top + SURFACE_Y else 0.0
+ 	elif st == 0.0 and o.hidden and o.lastSeen != null:
+ 		# Hunt: sweep random offsets around the last known position, re-rolled every 1.2 to 2.4 s.
+ 		a.sT -= SimConst.DT
+@@ -185,13 +186,13 @@ static func aiInput(S: SimState, f) -> void:
+ 		i.mx = SimMathx.jsign(sd) if absf(sd) > 60.0 else 0.0
+ 		i.dash = absf(sd) > 1500.0
+ 		# Sweep low over land; over the sea, sweep at the surface rather than diving.
+-		i.my = -1.0 if not sea else (1.0 if f.y < SURFACE_Y else 0.0)
++		i.my = -1.0 if not sea else (1.0 if f.y < top + SURFACE_Y else 0.0)
+ 	elif st == 0.0 and dist <= circleR:
+ 		# In reach an AGGRESSIVE fighter never halts (dynamic feel): it circles the opponent on an ellipse, weaving,
+ 		# until its attack beat. The two slots circle half a turn apart. No draws.
+ 		var ph: float = S.T * circleRate + (3.14159265358979 if f == S.fighters[1] else 0.0)
+ 		var cx: float = SimWrap.sdx(f.x, o.x + circleX * SimDetMath.sin(ph))
+-		var cy: float = SimMathx.jmax(o.y, SURFACE_Y) if sea else o.y
++		var cy: float = SimMathx.jmax(o.y, top + SURFACE_Y) if sea else o.y
+ 		cy = cy + circleY * SimDetMath.cos(ph) - f.y
+ 		i.mx = SimMathx.jsign(cx) if absf(cx) > 20.0 else 0.0
+ 		i.my = SimMathx.jsign(cy) if absf(cy) > 20.0 else 0.0
+@@ -199,7 +200,7 @@ static func aiInput(S: SimState, f) -> void:
+ 		i.mx = SimMathx.jsign(d) if dist > 130.0 else 0.0
+ 		i.dash = dist > 700.0
+ 		# Close in on the opponent's height, but not below the surface: underwater is for hiding, not fighting.
+-		var ty: float = SimMathx.jmax(o.y, SURFACE_Y) if sea else o.y
++		var ty: float = SimMathx.jmax(o.y, top + SURFACE_Y) if sea else o.y
+ 		var dy: float = ty - f.y
+ 		i.my = SimMathx.jsign(dy) if absf(dy) > 40.0 else 0.0
+ 	elif st == 1.0:
+@@ -238,7 +239,7 @@ static func aiInput(S: SimState, f) -> void:
+ 			i.mx = -SimMathx.jsign(d) if d != 0.0 else 1.0
+ 			i.dash = false
+ 	# Underwater and not hiding there: dash for the surface (underwater is a hiding state, not a place to fight).
+-	if sea and f.y < 0.0 and i.my > 0.0:
++	if sea and f.y < top and i.my > 0.0:
+ 		i.dash = true
+ 	if st == 3.0 or not DirChase.steer(S, f, o, i):   # 7c: its chase of a launch it threw (not in Escape): the zip's rush, which the cap doesn't hold
+ 		_capApproach(S, f, o, i)   # 4d: at a human, its free-flight approach is held near Camera's whip limit
+diff --git a/sim/director/beam.gd b/sim/director/beam.gd
+index 9f9b317..c625d25 100644
+--- a/sim/director/beam.gd
++++ b/sim/director/beam.gd
+@@ -281,7 +281,7 @@ static func sampleBeam(S: SimState, b, s: float) -> void:
+ 		if b.variant == "GLASS TRENCH":
+ 			SimFx.spark(S, x, g + 6.0, 2, "#ffd98a", 300.0)
+ 	b.levelled += WorldStructures.damageArea(S, x, y, (26.0 + P * 8.0) * SimConst.WS, (110.0 + P * 75.0) * b.sf, A, false, 0.0, maxi(0, b.cap - b.levelled), BEAM_KEEP, 1.0)
+-	if y < 30.0 and WorldTerrain.seaAt(S, x):
++	if y < WorldWater.seaTop(S, x) + 30.0:
+ 		SimFx.beamSplash(S, x)   # the consumer rolls the prototype's 60% splash
+ 	if b.variant == "FIRESTORM" and y < g + 140.0 * SimConst.WS:
+ 		SimFx.fire(S, x, g, 1)
+diff --git a/sim/director/launch.gd b/sim/director/launch.gd
+index c13d629..24f375e 100644
+--- a/sim/director/launch.gd
++++ b/sim/director/launch.gd
+@@ -356,7 +356,7 @@ static func predictFlight(S: SimState, x0: float, y0: float, vx0: float, vy0: fl
+ 		x = SimWrap.wrap(x + vx * dt)
+ 		travel += vx * dt
+ 		y += vy * dt
+-		if y < 0.0 and WorldTerrain.seaAt(S, x):
++		if y < WorldWater.seaTop(S, x):
+ 			vx *= kWx
+ 			vy *= kWy
+ 			if SimDetMath.hypot(vx, vy) < 200.0 and t > 0.3:
+@@ -373,7 +373,7 @@ static func predictFlight(S: SimState, x0: float, y0: float, vx0: float, vy0: fl
+ 			var dir: float = 1.0 if vx >= 0.0 else -1.0
+ 			var d: float = minf(WorldSlide.slideDistance(spN, WorldSlide.slope(S, x, dir), trav), SimConst.W * 0.25)
+ 			return {"x": SimWrap.wrap(x + dir * d), "travel": absf(travel) + d, "water": false, "t": t, "land": x, "slide": d}
+-	return {"x": x, "travel": absf(travel), "water": y < 0.0 and WorldTerrain.seaAt(S, x), "t": t, "land": x}
++	return {"x": x, "travel": absf(travel), "water": y < WorldWater.seaTop(S, x), "t": t, "land": x}
+ 
+ 
+ ## special marks a signature, a finisher or a break launch: its ground impact may leave a big crater (world/crater.gd).
+@@ -393,7 +393,7 @@ static func doLaunch(S: SimState, att, tgt, plan: Dictionary, force: float, spec
+ 	tgt.rush = null
+ 	if tgt.hidden:
+ 		SimHiding.regainLock(S, tgt)   # a launch gives him away: the lock comes back announced (found, and no new break for a while)
+-	tgt.wet = tgt.y < 0.0 and WorldTerrain.seaAt(S, tgt.x)
++	tgt.wet = tgt.y < WorldWater.seaTop(S, tgt.x)
+ 	if "slideFeet" in tgt:
+ 		tgt.slideFeet = String(plan.get("slide", "")) == "feet"   # World's flag for a slide on the feet (ground-contact.md section 24), once the field exists
+ 	tgt.launchT = WorldSlide.launchTravel(plan.ux, plan.uy)
+diff --git a/sim/world/tools/sea_rules_check.gd b/sim/world/tools/sea_rules_check.gd
+new file mode 100644
+index 0000000..f580d79
+--- /dev/null
++++ b/sim/world/tools/sea_rules_check.gd
+@@ -0,0 +1,71 @@
++extends SceneTree
++# Window 11: the sea's rules measure from the water's surface, not from absolute zero, so a deep lake at altitude follows them (Game Design 23b rows 13 and 15) and the sea is exactly as it was.
++#   godot --headless --path . --script res://sim/world/tools/sea_rules_check.gd
++var fails: int = 0
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func _init() -> void:
++	# the hand-made world (no lake): seaTop is 0 over its sea and nothing elsewhere, as `y < 0 and seaAt` was
++	var S1 := SimCore.createSim()
++	SimCore.newMatch(S1, 1, {}, {"intro": false})
++	var seaOk: bool = true
++	var landOk: bool = true
++	var sea_x: float = -1.0
++	for i in range(0, SimConst.NC, 7):
++		var x: float = (float(i) + 0.5) * SimConst.COL
++		var top: float = WorldWater.seaTop(S1, x)
++		if WorldTerrain.seaAt(S1, x):
++			if sea_x < 0.0:
++				sea_x = x
++			if top != 0.0:
++				seaOk = false
++		elif top != WorldWater.NO_SEA:
++			landOk = false
++	ok(seaOk and landOk and sea_x >= 0.0, "on a world without a lake seaTop is exactly 0 over the sea and NO_SEA elsewhere (so every line reads as it did)")
++	var f1 = S1.fighters[0]
++	f1.x = sea_x
++	f1.y = -50.0
++	var sp_in: float = SimFighter.flightSpeed(S1, f1, false)
++	f1.y = 50.0
++	var sp_out: float = SimFighter.flightSpeed(S1, f1, false)
++	ok(absf(sp_in - 0.55 * sp_out) < 1.0e-9, "over the sea a fighter below 0 flies at 0.55 of his speed, above it at full (as before)")
++	# a gen 2 lake at altitude
++	var S2 := SimCore.createSim()
++	SimCore.newMatch(S2, 1, {}, {"intro": false})
++	var nc: int = SimConst.NC
++	S2.base.fill(800.0)
++	S2.deform.fill(0.0)
++	for i in range(1000, 1101):
++		S2.base[i] = 500.0
++	WorldWater.init(S2)
++	for i in range(1000, 1101):
++		S2.water[i] = 300.0   # a lake: floor 500, surface 800
++	var pc := PackedByteArray()
++	pc.resize(nc)
++	pc.fill(1)
++	var fc := PackedByteArray()
++	fc.resize(nc)
++	fc.fill(WorldClimate.F_PLAINS)
++	WorldBiomes.planetCols = pc
++	WorldBiomes.fineCols = fc
++	WorldBiomes.worldId = WorldBiomes.claim()
++	S2.worldId = WorldBiomes.worldId
++	var xl: float = 1050.5 * SimConst.COL
++	ok(WorldTerrain.seaAt(S2, xl) and absf(WorldWater.seaTop(S2, xl) - 800.0) < 1.0e-6 and WorldWater.seaTop(S2, 500.5 * SimConst.COL) == WorldWater.NO_SEA, "a deep lake at altitude: seaTop is its surface (800), and dry land beside it has none")
++	var f2 = S2.fighters[0]
++	f2.x = xl
++	f2.y = 750.0   # 50 below the lake's surface, 250 above its floor: absolute y is far above 0
++	var lake_in: float = SimFighter.flightSpeed(S2, f2, false)
++	f2.y = 850.0
++	var lake_out: float = SimFighter.flightSpeed(S2, f2, false)
++	ok(absf(lake_in - 0.55 * lake_out) < 1.0e-9, "a fighter below a lake's surface flies at 0.55 of his speed as in the sea, and above it at full")
++	var pf: Dictionary = DirLaunch.predictFlight(S2, xl, 900.0, 0.0, -200.0, 1.0)
++	ok(bool(pf.water), "a launch that falls into a deep lake is predicted to end in water, as one into the sea is")
++	print("SEARULES: %d check(s) failed" % fails)
++	quit()
+diff --git a/sim/world/tools/sea_rules_check.gd.uid b/sim/world/tools/sea_rules_check.gd.uid
+new file mode 100644
+index 0000000..0f4cefc
+--- /dev/null
++++ b/sim/world/tools/sea_rules_check.gd.uid
+@@ -0,0 +1 @@
++uid://bvx7iurs36fnk
+diff --git a/sim/world/water.gd b/sim/world/water.gd
+index 9d31073..6d5c918 100644
+--- a/sim/world/water.gd
++++ b/sim/world/water.gd
+@@ -66,6 +66,20 @@ static func surfaceAt(S: SimState, x: float) -> float:
+ 	return S.base[i] + WorldTerrain.lowD(S)[i] + d if d >= MIN_DEPTH else DRY
+ 
+ 
++const NO_SEA: float = -1.0e18   # seaTop where there is no sea-like water: nothing is below it
++
++
++## The surface the sea's rules measure from at x: the sea level over the sea, a gen 2 lake deep enough to hide in: its own surface (Game Design 23b row 13: lakes follow the sea's rules), and NO_SEA where there
++## is neither. On any world without a lake it is 0 over the sea and NO_SEA elsewhere, which is `y < 0 and seaAt` as the rules were written.
++static func seaTop(S: SimState, x: float) -> float:
++	var i: int = int(floor(SimWrap.wrap(x) / SimConst.COL)) % SimConst.NC
++	if S.base[i] < RESERVOIR_BASE:
++		return SEA_LEVEL
++	if S.water[i] >= HIDE_MIN_DEPTH and WorldGround.live():
++		return S.base[i] + WorldTerrain.lowD(S)[i] + S.water[i]
++	return NO_SEA
++
++
+ ## Start of a match: reservoir columns full to sea level, and the shallows connected to them (an unbroken run of ground
+ ## below SHORE_WET) full to the same level; nothing else is wet, and only craters make new water.
+ static func init(S: SimState) -> void:

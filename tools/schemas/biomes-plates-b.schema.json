@@ -1,0 +1,567 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/biomes-plates-b",
+  "title": "biomes.plates-b/1",
+  "description": "data/biomes/plates-b.json: planet generation 2's B plates (Research's PB, research/planet-gen/gen/plates.mjs; WorldPlateB, window 12). Version field: schema. Policy: every key required, objects closed except keys starting with an underscore. Order checks (cells at least plates) are WorldPlateB's own load and b_check.",
+  "type": "object",
+  "required": [
+    "schema",
+    "_about",
+    "params"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "biomes.plates-b/1"
+    },
+    "_about": {
+      "type": "string"
+    },
+    "params": {
+      "type": "object",
+      "required": [
+        "plates",
+        "contArea",
+        "minSpeed",
+        "areaPts",
+        "sArea",
+        "landShare",
+        "minSep",
+        "sepTries",
+        "cells",
+        "cellSep",
+        "warpScale",
+        "warpOct",
+        "warpAmp",
+        "crustScale",
+        "crustOct",
+        "crustBias",
+        "shelfW",
+        "crustOctM",
+        "southShelf",
+        "contH",
+        "contRelief",
+        "oceanH",
+        "oceanRelief",
+        "abyssH",
+        "coastScale",
+        "coastAmp",
+        "alongScale",
+        "alongOct",
+        "interiorScale",
+        "interiorOct",
+        "interiorH",
+        "oldScale",
+        "oldOct",
+        "oldH",
+        "oldW",
+        "oldRel",
+        "oldRelW",
+        "oldLo",
+        "blendW",
+        "blendWig",
+        "bw",
+        "edgeWiggle",
+        "edgeWiggle2",
+        "segMin",
+        "junctionW",
+        "capW",
+        "capThrough",
+        "capShort",
+        "domW",
+        "capRound",
+        "capJit",
+        "junctionEase",
+        "quadW",
+        "typeW",
+        "vRef",
+        "rangeH",
+        "arcH",
+        "trenchH",
+        "ridgeH",
+        "riftH",
+        "shoulderH",
+        "apron",
+        "coreW",
+        "crestLo",
+        "peakLo",
+        "peakW",
+        "knee",
+        "upCap",
+        "riftOpen",
+        "riftOpenW",
+        "riftSeg",
+        "riftLap",
+        "riftOff",
+        "riftW",
+        "islSp",
+        "islR",
+        "islGap",
+        "islStretch",
+        "islShape",
+        "islTop",
+        "platH",
+        "reliefScale",
+        "reliefOct",
+        "peakScale",
+        "peakOct",
+        "hotspots",
+        "chain",
+        "chainStep",
+        "hotR",
+        "hotH",
+        "hotSize",
+        "hotShape",
+        "hotStretch",
+        "hotActive",
+        "northFade",
+        "northFadeW",
+        "southFade",
+        "southFadeW",
+        "southCut",
+        "volcPatch",
+        "volcPatchW",
+        "volcGain",
+        "detailScale",
+        "detailOct",
+        "detailAmp",
+        "detailRamp",
+        "volcanic",
+        "sPlate",
+        "sPole",
+        "sType",
+        "sWarp",
+        "sCrust",
+        "sRelief",
+        "sIsland",
+        "sHot",
+        "sDetail",
+        "sWidth",
+        "sInterior",
+        "sOld",
+        "sRift"
+      ],
+      "additionalProperties": false,
+      "description": "Research's PB, one number each.",
+      "properties": {
+        "plates": {
+          "type": "integer",
+          "minimum": 3
+        },
+        "contArea": {
+          "type": "number"
+        },
+        "minSpeed": {
+          "type": "number"
+        },
+        "areaPts": {
+          "type": "integer",
+          "minimum": 100
+        },
+        "sArea": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "landShare": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "exclusiveMaximum": 1
+        },
+        "minSep": {
+          "type": "number"
+        },
+        "sepTries": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cells": {
+          "type": "integer",
+          "minimum": 3
+        },
+        "cellSep": {
+          "type": "number"
+        },
+        "warpScale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "warpOct": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "warpAmp": {
+          "type": "number"
+        },
+        "crustScale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "crustOct": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "crustBias": {
+          "type": "number"
+        },
+        "shelfW": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "crustOctM": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "southShelf": {
+          "type": "number"
+        },
+        "contH": {
+          "type": "number"
+        },
+        "contRelief": {
+          "type": "number"
+        },
+        "oceanH": {
+          "type": "number"
+        },
+        "oceanRelief": {
+          "type": "number"
+        },
+        "abyssH": {
+          "type": "number"
+        },
+        "coastScale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "coastAmp": {
+          "type": "number"
+        },
+        "alongScale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "alongOct": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "interiorScale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "interiorOct": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "interiorH": {
+          "type": "number"
+        },
+        "oldScale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "oldOct": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "oldH": {
+          "type": "number"
+        },
+        "oldW": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "oldRel": {
+          "type": "number"
+        },
+        "oldRelW": {
+          "type": "number"
+        },
+        "oldLo": {
+          "type": "number"
+        },
+        "blendW": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "blendWig": {
+          "type": "number"
+        },
+        "bw": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "edgeWiggle": {
+          "type": "number"
+        },
+        "edgeWiggle2": {
+          "type": "number"
+        },
+        "segMin": {
+          "type": "number"
+        },
+        "junctionW": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "capW": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "capThrough": {
+          "type": "number"
+        },
+        "capShort": {
+          "type": "number"
+        },
+        "domW": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "capRound": {
+          "type": "number"
+        },
+        "capJit": {
+          "type": "number"
+        },
+        "junctionEase": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "quadW": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "typeW": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "vRef": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "rangeH": {
+          "type": "number"
+        },
+        "arcH": {
+          "type": "number"
+        },
+        "trenchH": {
+          "type": "number"
+        },
+        "ridgeH": {
+          "type": "number"
+        },
+        "riftH": {
+          "type": "number"
+        },
+        "shoulderH": {
+          "type": "number"
+        },
+        "apron": {
+          "type": "number"
+        },
+        "coreW": {
+          "type": "number"
+        },
+        "crestLo": {
+          "type": "number"
+        },
+        "peakLo": {
+          "type": "number"
+        },
+        "peakW": {
+          "type": "number"
+        },
+        "knee": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "upCap": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "riftOpen": {
+          "type": "number"
+        },
+        "riftOpenW": {
+          "type": "number"
+        },
+        "riftSeg": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "riftLap": {
+          "type": "number"
+        },
+        "riftOff": {
+          "type": "number"
+        },
+        "riftW": {
+          "type": "number"
+        },
+        "islSp": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "islR": {
+          "type": "number"
+        },
+        "islGap": {
+          "type": "number"
+        },
+        "islStretch": {
+          "type": "number"
+        },
+        "islShape": {
+          "type": "number"
+        },
+        "islTop": {
+          "type": "number"
+        },
+        "platH": {
+          "type": "number"
+        },
+        "reliefScale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "reliefOct": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "peakScale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "peakOct": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "hotspots": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "chain": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "chainStep": {
+          "type": "number"
+        },
+        "hotR": {
+          "type": "number"
+        },
+        "hotH": {
+          "type": "number"
+        },
+        "hotSize": {
+          "type": "number"
+        },
+        "hotShape": {
+          "type": "number"
+        },
+        "hotStretch": {
+          "type": "number"
+        },
+        "hotActive": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "northFade": {
+          "type": "number"
+        },
+        "northFadeW": {
+          "type": "number"
+        },
+        "southFade": {
+          "type": "number"
+        },
+        "southFadeW": {
+          "type": "number"
+        },
+        "southCut": {
+          "type": "number"
+        },
+        "volcPatch": {
+          "type": "number"
+        },
+        "volcPatchW": {
+          "type": "number"
+        },
+        "volcGain": {
+          "type": "number"
+        },
+        "detailScale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "detailOct": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "detailAmp": {
+          "type": "number"
+        },
+        "detailRamp": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "volcanic": {
+          "type": "number"
+        },
+        "sPlate": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sPole": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sType": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sWarp": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sCrust": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sRelief": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sIsland": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sHot": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sDetail": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sWidth": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sInterior": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sOld": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sRift": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

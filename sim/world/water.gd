@@ -66,6 +66,20 @@ static func surfaceAt(S: SimState, x: float) -> float:
 	return S.base[i] + WorldTerrain.lowD(S)[i] + d if d >= MIN_DEPTH else DRY
 
 
+const NO_SEA: float = -1.0e18   # seaTop where there is no sea-like water: nothing is below it
+
+
+## The surface the sea's rules measure from at x: the sea level over the sea, a gen 2 lake deep enough to hide in: its own surface (Game Design 23b row 13: lakes follow the sea's rules), and NO_SEA where there
+## is neither. On any world without a lake it is 0 over the sea and NO_SEA elsewhere, which is `y < 0 and seaAt` as the rules were written.
+static func seaTop(S: SimState, x: float) -> float:
+	var i: int = int(floor(SimWrap.wrap(x) / SimConst.COL)) % SimConst.NC
+	if S.base[i] < RESERVOIR_BASE:
+		return SEA_LEVEL
+	if S.water[i] >= HIDE_MIN_DEPTH and WorldGround.live():
+		return S.base[i] + WorldTerrain.lowD(S)[i] + S.water[i]
+	return NO_SEA
+
+
 ## Start of a match: reservoir columns full to sea level, and the shallows connected to them (an unbroken run of ground
 ## below SHORE_WET) full to the same level; nothing else is wet, and only craters make new water.
 static func init(S: SimState) -> void:
@@ -114,6 +128,8 @@ static func touched(S: SimState, c0: int, cols: int, minG: float) -> void:
 			S.water[i] = maxf(0.0, SEA_LEVEL - (base[i] + dfm[i]))
 	if not S.planetRing.is_empty():
 		WorldLakes.refill(S, c0, cols)   # a gen 2 ring's lakes stand flat when their bed is dug
+	if WorldFill.on():
+		WorldFill.open(S, c0, cols)   # water v2: a hole dug where water would come fills (its own windows)
 	if minG >= WET_GROUND:
 		return
 	var hw: int = mini(MAX_HALF, cols + PAD_COLS)
@@ -130,6 +146,8 @@ static func touched(S: SimState, c0: int, cols: int, minG: float) -> void:
 	if not (near and hole):
 		return
 	for w in S.waterWin:
+		if w.size() > 4:
+			continue   # a fill or wave window (WorldFill) is not a flow window
 		var dc: int = absi(colDelta(c0, w[0]))
 		if dc <= w[1] + hw:
 			w[1] = mini(MAX_HALF, maxi(w[1], dc + hw))
@@ -159,6 +177,12 @@ static func step(S: SimState) -> void:
 	var wi: int = 0
 	while wi < S.waterWin.size():
 		var w: Array = S.waterWin[wi]
+		if w.size() > 4:
+			if WorldFill.stepWindow(S, w):
+				S.waterWin.remove_at(wi)
+			else:
+				wi += 1
+			continue
 		var lo: int = w[0] - w[1]
 		var hi: int = w[0] + w[1]
 		var flux := PackedFloat32Array()

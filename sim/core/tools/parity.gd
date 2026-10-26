@@ -5700,6 +5700,7 @@ func _runGround() -> String:
 	if g1.result.get("turned", true):
 		return "the first stage turned a ring that meets Close's minimum"
 	var coast: String = "0123456789abcdef"   # its stand-in home is a coastal city: the ring round it is 70% ocean
+	WorldPlanet.make(SimRun.planetSeed(coast))   # made already, as in a run's later stages: a cold planet is made over the first reads (host_check), which are not candidates
 	var gc: SimRun.GroundJob = SimRun.beginGround(coast, 1, "RIVAL")
 	var fc: int = 1
 	while not gc.frame():

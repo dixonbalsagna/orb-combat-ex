@@ -313,6 +313,8 @@ static func _dig(S: SimState, x: float, energy: float, cause, kind: String, dirx
 	var cols: int = n + int(ceil(absf(skid) / COL)) + REPOSE_PAD
 	minG = minf(minG, relax(S, c0, cols))
 	WorldTerrain.lowRefresh(S, c0, cols)
+	if kind == "impact":
+		WorldFill.slam(S, xw, E)   # a slam into water already standing throws the wave (before the fill reacts to this hole)
 	WorldWater.touched(S, c0, cols, minG)
 	return rec
 

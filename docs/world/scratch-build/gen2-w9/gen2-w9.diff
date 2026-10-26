@@ -1,0 +1,107 @@
+diff --git a/sim/world/contact.gd b/sim/world/contact.gd
+index 1115218..4b84844 100644
+--- a/sim/world/contact.gd
++++ b/sim/world/contact.gd
+@@ -135,8 +135,8 @@ static func dataHash() -> String:
+ 	h.text("biomes.contact")
+ 	FighterData._canon(h, _parsed)   # the parsed data without the "_" notes, like the other loaders: a changed note keeps old replays
+ 	if skateOn():
+-		h.text("skate")
+-		h.text(_skateHash)   # ruling 12's switch, on: a replay must know
++		h.text("biomes.skate")
++		FighterData._canon(h, _skateParsed)   # the parsed data without the "_" notes, like contact.json: a changed note keeps old replays
+ 	return h.hex()
+ 
+ 
+@@ -151,7 +151,7 @@ static func skateOn() -> bool:
+ 			if j is Dictionary and j.get("schema", "") == "biomes.skate/1":
+ 				K_SKATE = bool(j.get("enabled", false))
+ 				K_SKATE_MIN = float(j.get("minSkate", 120.0))
+-				_skateHash = str(text.hash())
++				_skateParsed = j
+ 	return K_SKATE
+ 
+ 
+@@ -246,7 +246,7 @@ const CTRL_NONE: int = 1000000                # ctrlT when a journey has no refe
+ static var K_SKATE: bool = false              # ruling 12 at runtime (data/biomes/skate.json): control returns at the reference stop and the body skates on
+ static var K_SKATE_MIN: float = 120.0         # ... only if it still has this much speed (a few ticks' difference between the two runs is not a skate)
+ static var _skateLoaded: bool = false
+-static var _skateHash: String = ""
++static var _skateParsed: Dictionary = {}
+ static var _refOn: bool = false               # journeyControl's reference run: the surface's own braking, grip and rough 1
+ static var _colLook := PackedByteArray()      # a gen 2 world's look class per column (WorldGround.LOOKS; 255: the surface is the look); empty on any other world
+ static var _gFur := PackedFloat64Array()
+@@ -315,14 +315,7 @@ static func _skateCheck(S: SimState, f, b: Body) -> void:
+ 		return
+ 	if int(f.ctrlT) == -1:
+ 		if b.mode == SKID and b.vN > 0.0:
+-			var ref: Body = _cloneBody(b)
+-			_refOn = true
+-			var rt: int = 0
+-			while not ref.done and rt < TICK_CAP:
+-				stepBody(S, ref, SimConst.DT, [])
+-				rt += 1
+-			_refOn = false
+-			f.ctrlT = int(f.jT) + rt
++			f.ctrlT = int(f.jT) + _refRun(S, b)
+ 		elif b.mode == TUMBLE:
+ 			f.ctrlT = CTRL_NONE
+ 		return
+@@ -331,6 +324,19 @@ static func _skateCheck(S: SimState, f, b: Body) -> void:
+ 		b.end = "control"
+ 
+ 
++## The reference run of a skid: a copy of the body stepped on reference ground to its end, the ticks it takes. It reads the state and writes nothing to it (the steps' events go to a throwaway list; no
++## terrain, crater, fx or random draw): skate_check proves the state hash is the same with it and without.
++static func _refRun(S: SimState, b: Body) -> int:
++	var ref: Body = _cloneBody(b)
++	_refOn = true
++	var rt: int = 0
++	while not ref.done and rt < TICK_CAP:
++		stepBody(S, ref, SimConst.DT, [])
++		rt += 1
++	_refOn = false
++	return rt
++
++
+ ## The skate after control is back (called each tick from SimFighter.step while skateV is above 0): the body slides on with the real braking, as the skid did, and stops at a wall or at the stop speed.
+ static func stepSkate(S: SimState, f, dt: float) -> void:
+ 	var vN: float = f.skateV
+diff --git a/sim/world/tools/skate_check.gd b/sim/world/tools/skate_check.gd
+index 41abb31..bd498b8 100644
+--- a/sim/world/tools/skate_check.gd
++++ b/sim/world/tools/skate_check.gd
+@@ -119,5 +119,33 @@ func _init() -> void:
+ 	var h2: String = str(SimHash.stateHash(S0).gameplay)
+ 	S0.fighters[0].skateV = 0.0
+ 	ok(h0 != h1 and h0 != h2 and h0 == str(SimHash.stateHash(S0).gameplay), "the state hash carries a control tick or a skate only while one is set")
++	# the reference run writes nothing to the state: the same hash, random stream, terrain, craters and slides with it and without
++	var Sr: SimState = world(5)
++	var fr = Sr.fighters[0]
++	fr.hp = 1.0e9
++	fr.launchBy = Sr.fighters[1]
++	fr.launchT = 1.0
++	fr.x = 2400.0 * SimConst.COL
++	fr.y = WorldTerrain.groundY(Sr, fr.x) + 400.0
++	fr.vx = 3000.0
++	fr.vy = -800.0
++	fr.state = "launched"
++	var guard: int = 0
++	while fr.slide <= 0.0 and guard < 600:
++		SimFighter.stepLaunched(Sr, fr, SimConst.DT)
++		guard += 1
++	var hb: String = str(SimHash.stateHash(Sr).gameplay)
++	var rng0: int = Sr.rng.state_i32()
++	var def0: float = 0.0
++	for v in Sr.deform:
++		def0 += v
++	var cr0: int = Sr.craters.size()
++	var sl0: int = Sr.slides.size()
++	var fx0: int = Sr.fxEvents.size() if "fxEvents" in Sr else 0
++	var rt: int = WorldContact._refRun(Sr, WorldContact.toBody(Sr, fr))
++	var def1: float = 0.0
++	for v in Sr.deform:
++		def1 += v
++	ok(guard < 600 and rt > 10 and str(SimHash.stateHash(Sr).gameplay) == hb and Sr.rng.state_i32() == rng0 and def1 == def0 and Sr.craters.size() == cr0 and Sr.slides.size() == sl0, "the reference run (%d ticks) writes nothing to the state: the same hash, random stream, terrain, craters and slides with it and without" % rt)
+ 	print("SKATE: %d check(s) failed" % fails)
+ 	quit()

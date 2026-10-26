@@ -134,9 +134,12 @@ static func dataHash() -> String:
 	var h := SimHash.Hasher.new()
 	h.text("biomes.contact")
 	FighterData._canon(h, _parsed)   # the parsed data without the "_" notes, like the other loaders: a changed note keeps old replays
+	if WorldFill.on():
+		h.text("biomes.water")
+		FighterData._canon(h, WorldFill.parsed())   # water v2's switch, on: a replay must know
 	if skateOn():
-		h.text("skate")
-		h.text(_skateHash)   # ruling 12's switch, on: a replay must know
+		h.text("biomes.skate")
+		FighterData._canon(h, _skateParsed)   # the parsed data without the "_" notes, like contact.json: a changed note keeps old replays
 	return h.hex()
 
 
@@ -151,7 +154,7 @@ static func skateOn() -> bool:
 			if j is Dictionary and j.get("schema", "") == "biomes.skate/1":
 				K_SKATE = bool(j.get("enabled", false))
 				K_SKATE_MIN = float(j.get("minSkate", 120.0))
-				_skateHash = str(text.hash())
+				_skateParsed = j
 	return K_SKATE
 
 
@@ -246,7 +249,7 @@ const CTRL_NONE: int = 1000000                # ctrlT when a journey has no refe
 static var K_SKATE: bool = false              # ruling 12 at runtime (data/biomes/skate.json): control returns at the reference stop and the body skates on
 static var K_SKATE_MIN: float = 120.0         # ... only if it still has this much speed (a few ticks' difference between the two runs is not a skate)
 static var _skateLoaded: bool = false
-static var _skateHash: String = ""
+static var _skateParsed: Dictionary = {}
 static var _refOn: bool = false               # journeyControl's reference run: the surface's own braking, grip and rough 1
 static var _colLook := PackedByteArray()      # a gen 2 world's look class per column (WorldGround.LOOKS; 255: the surface is the look); empty on any other world
 static var _gFur := PackedFloat64Array()
@@ -315,20 +318,26 @@ static func _skateCheck(S: SimState, f, b: Body) -> void:
 		return
 	if int(f.ctrlT) == -1:
 		if b.mode == SKID and b.vN > 0.0:
-			var ref: Body = _cloneBody(b)
-			_refOn = true
-			var rt: int = 0
-			while not ref.done and rt < TICK_CAP:
-				stepBody(S, ref, SimConst.DT, [])
-				rt += 1
-			_refOn = false
-			f.ctrlT = int(f.jT) + rt
+			f.ctrlT = int(f.jT) + _refRun(S, b)
 		elif b.mode == TUMBLE:
 			f.ctrlT = CTRL_NONE
 		return
 	if int(f.ctrlT) < CTRL_NONE and b.mode != AIR and b.vN > K_SKATE_MIN and int(f.jT) >= int(f.ctrlT):
 		b.done = true
 		b.end = "control"
+
+
+## The reference run of a skid: a copy of the body stepped on reference ground to its end, the ticks it takes. It reads the state and writes nothing to it (the steps' events go to a throwaway list; no
+## terrain, crater, fx or random draw): skate_check proves the state hash is the same with it and without.
+static func _refRun(S: SimState, b: Body) -> int:
+	var ref: Body = _cloneBody(b)
+	_refOn = true
+	var rt: int = 0
+	while not ref.done and rt < TICK_CAP:
+		stepBody(S, ref, SimConst.DT, [])
+		rt += 1
+	_refOn = false
+	return rt
 
 
 ## The skate after control is back (called each tick from SimFighter.step while skateV is above 0): the body slides on with the real braking, as the skid did, and stops at a wall or at the stop speed.
@@ -455,7 +464,7 @@ static func moveAir(S: SimState, b: Body, dt: float, ev: Array) -> void:
 			ev.append({"k": "skim", "x": b.x, "y": wsurf, "speed": wsp, "n": int(b.bounces)})
 	if not inW and b.wet and b.y > wsurf:
 		b.wet = false
-	if inW:
+	if inW and not WorldFill.wading(S, b.x):   # shallow water is waded: no drag, no sink (water v2; he still skimmed above)
 		b.vy += grav   # water holds him up: it cancels the gravity of this tick, whatever it is
 		b.vx *= SimDetMath.pow(0.05, dt)
 		b.vy *= SimDetMath.pow(0.1, dt)

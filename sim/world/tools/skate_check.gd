@@ -119,5 +119,33 @@ func _init() -> void:
 	var h2: String = str(SimHash.stateHash(S0).gameplay)
 	S0.fighters[0].skateV = 0.0
 	ok(h0 != h1 and h0 != h2 and h0 == str(SimHash.stateHash(S0).gameplay), "the state hash carries a control tick or a skate only while one is set")
+	# the reference run writes nothing to the state: the same hash, random stream, terrain, craters and slides with it and without
+	var Sr: SimState = world(5)
+	var fr = Sr.fighters[0]
+	fr.hp = 1.0e9
+	fr.launchBy = Sr.fighters[1]
+	fr.launchT = 1.0
+	fr.x = 2400.0 * SimConst.COL
+	fr.y = WorldTerrain.groundY(Sr, fr.x) + 400.0
+	fr.vx = 3000.0
+	fr.vy = -800.0
+	fr.state = "launched"
+	var guard: int = 0
+	while fr.slide <= 0.0 and guard < 600:
+		SimFighter.stepLaunched(Sr, fr, SimConst.DT)
+		guard += 1
+	var hb: String = str(SimHash.stateHash(Sr).gameplay)
+	var rng0: int = Sr.rng.state_i32()
+	var def0: float = 0.0
+	for v in Sr.deform:
+		def0 += v
+	var cr0: int = Sr.craters.size()
+	var sl0: int = Sr.slides.size()
+	var fx0: int = Sr.fxEvents.size() if "fxEvents" in Sr else 0
+	var rt: int = WorldContact._refRun(Sr, WorldContact.toBody(Sr, fr))
+	var def1: float = 0.0
+	for v in Sr.deform:
+		def1 += v
+	ok(guard < 600 and rt > 10 and str(SimHash.stateHash(Sr).gameplay) == hb and Sr.rng.state_i32() == rng0 and def1 == def0 and Sr.craters.size() == cr0 and Sr.slides.size() == sl0, "the reference run (%d ticks) writes nothing to the state: the same hash, random stream, terrain, craters and slides with it and without" % rt)
 	print("SKATE: %d check(s) failed" % fails)
 	quit()

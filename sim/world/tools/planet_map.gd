@@ -2,6 +2,7 @@ extends SceneTree
 # An equirectangular map of a planet's biomes (and a hillshade of its heights), for looking at a generation:
 #   godot --headless --path . --script res://sim/world/tools/planet_map.gd -- --seeds=7,3,11,25 --gens=1,2 --w=720 --out=<folder>
 # --places marks the places on the fine and height pictures (a city a red square, a town a yellow one).
+# --b turns land.json's b switch on for the run (Research's B plates, window 12; the files are planet-<seed>-gen2b-*.png).
 # --edges draws the plates' edges on the height picture (red closing, blue parting, yellow neither); --height=0 leaves the height picture out.
 # Writes <out>/planet-<seed>-gen<g>-height.png (heights by colour, sea to snow), <out>/planet-<seed>-gen<g>-stored.png (the stored biomes: what the renderer sees) and, for gen 2, -fine.png (the fine biomes) and prints the share of each biome and the cost a sample.
 const LEGACY: Array = ["#2f5f9e", "#9bbf5a", "#3f7a3a", "#d9c27a", "#8b8479", "#eef3f7", "#c9dcea"]
@@ -14,6 +15,7 @@ func _init() -> void:
 	var out: String = "."
 	var edges: bool = false
 	var places: bool = false
+	var useB: bool = false
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--seeds="):
 			seeds = Array(a.substr(8).split(",")).map(func(v): return int(v))
@@ -27,6 +29,11 @@ func _init() -> void:
 			edges = true
 		if a == "--places":
 			places = true
+		if a == "--b":
+			useB = true
+	if useB:
+		WorldLand.setB(true)   # Research's B plates for this run (window 12)
+	var tag: String = "b" if useB else ""
 	var h: int = w / 2
 	var fine: Array = WorldClimate.data().fine
 	for sd in seeds:
@@ -83,10 +90,10 @@ func _init() -> void:
 							var qy: int = clampi(pyl + dy, 0, h - 1)
 							imgF.set_pixel(qx, qy, mc)
 							imgH.set_pixel(qx, qy, mc)
-			imgL.save_png("%s/planet-%d-gen%d-stored.png" % [out, sd, g])
-			imgH.save_png("%s/planet-%d-gen%d-height.png" % [out, sd, g])
+			imgL.save_png("%s/planet-%d-gen%d%s-stored.png" % [out, sd, g, tag if g >= 2 else ""])
+			imgH.save_png("%s/planet-%d-gen%d%s-height.png" % [out, sd, g, tag if g >= 2 else ""])
 			if g >= 2:
-				imgF.save_png("%s/planet-%d-gen%d-fine.png" % [out, sd, g])
+				imgF.save_png("%s/planet-%d-gen%d%s-fine.png" % [out, sd, g, tag if g >= 2 else ""])
 			var tot: float = float(w * h)
 			var sl: String = ""
 			for b in range(7):

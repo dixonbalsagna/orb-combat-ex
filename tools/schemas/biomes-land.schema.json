@@ -14,7 +14,8 @@
     "plateaus",
     "canyons",
     "polar",
-    "keep"
+    "keep",
+    "b"
   ],
   "additionalProperties": false,
   "properties": {
@@ -413,6 +414,19 @@
           "minimum": 0,
           "maximum": 1000000,
           "description": "Seed offset."
+        }
+      }
+    },
+    "b": {
+      "type": "object",
+      "required": [
+        "enabled"
+      ],
+      "additionalProperties": false,
+      "description": "Window 12's switch: true makes a gen 2 planet's ground Research's B plates (data/biomes/plates-b.json), false the plates and landforms above.",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
         }
       }
     },

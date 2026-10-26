@@ -518,7 +518,7 @@ static func flightSpeed(S: SimState, f, dash: bool) -> float:
 		# 15 s); close in, it is the melee dash it always was.
 		var sep: float = absf(SimWrap.sdx(f.x, SimRoster.opp(S, f).x))
 		sp *= 1.0 + (SimConst.TRAV_FREE - 1.0) * SimMathx.jclamp((sep - SimConst.BOOST_NEAR) / (SimConst.BOOST_FAR - SimConst.BOOST_NEAR), 0.0, 1.0)
-	if f.y < 0.0 and WorldTerrain.seaAt(S, f.x):
+	if f.y < WorldWater.seaTop(S, f.x):   # in the sea or a deep lake: below its surface
 		sp *= 0.55
 	return sp
 

@@ -283,6 +283,7 @@ class Planet extends RefCounted:
 	var gen: int = 1                         # the generation this planet is made by (WorldClimate.genNow)
 	var grid = null                          # gen 2: the climate grid (WorldClimate.Grid), made when first asked
 	var plates = null                        # gen 2: the plates (WorldLand.Plates), made when first asked
+	var platesB = null                       # gen 2 with land.json's b on: the B plates (WorldPlateB.State), made when first asked
 
 
 ## Memoised by the seed: the planet is a pure function of it and of the data.
@@ -410,6 +411,8 @@ static func _worley(P: Planet, which: int, px: float, py: float, pz: float, cell
 
 ## The ordinary ground (no ice): the continents and the ranges. Height in units.
 static func ground(P: Planet, px: float, py: float, pz: float) -> float:
+	if P.gen >= 2 and WorldLand.plateB():
+		return WorldPlateB.ground(P, px, py, pz)   # Research's B plates in place of everything below (window 12)
 	var c: Dictionary = P.c
 	var s: int = P.seed
 	var e: float = (_fbm(P.R, px, py, pz, c.contScale, int(c.contOct), s) - 0.5) * 2.0

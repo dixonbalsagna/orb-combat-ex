@@ -1,0 +1,162 @@
+diff --git a/sim/core/run.gd b/sim/core/run.gd
+index 0a1bbd7..5c6685b 100644
+--- a/sim/core/run.gd
++++ b/sim/core/run.gd
+@@ -40,6 +40,9 @@ static var _errors: Array = []
+ static var _claims: Dictionary = {}
+ static var _order: Array = []
+ static var groundOn_: bool = false
++## Planet units (a climate cell, about 20 microseconds; a place's try-set is 1000) spent on the planet's own make for each read a host asks of the ground, when the planet is not made yet (WorldPlanet.makeJob):
++## about 5 ms a read, so a gen 2 planet (about a second) is made over the first beats of the stage before it, a frame at a time, and the pick starts when it is whole.
++const PLANET_UNITS_PER_READ: int = 250
+ static var framesPerRead: Dictionary = {"close": 1, "half": 1, "whole": 3}
+ static var stages: int = 3
+ static var phases: Array = ["early", "early", "mid"]
+@@ -227,28 +230,10 @@ static func beginGround(run: String, chapter: int, opponent: String, opts: Dicti
+ 	g.choice = int(opts.get("choice", 0))
+ 	g.opponent = opponent
+ 	g.planet = planetSeed(run)
+-	g.P = WorldPlanet.make(g.planet)
+-	g.standing = opts.get("standing", PackedByteArray())
+-	g.damaged = opts.get("damaged", [])
+-	g.used = opts.get("used", [])
+-	var hm: Dictionary = opts.get("homes", homes(g.P))
+-	g.rule = ruleOf(chapter)
+-	g.size = sizeFor(opponent, chapter, String(opts.get("kind", "")))
+-	var stream: int = H(run, "ground", chapter, g.choice)
+-	if g.rule == "first":
+-		g.home = int(hm.get(String(opts.get("player", "PROTAGONIST")), -1))
+-		if g.home >= 0:   # stepped like the others: one read, 13 when the ring is turned toward land
+-			g.first = WorldRingPick.beginFirstRing(g.P, g.home, stream, {"standing": g.standing, "damaged": g.damaged})
+-	elif g.rule == "boss":
+-		g.home = int(hm.get(opponent, -1))
+-		var b = WorldRingPick.bossRing(g.P, g.home, g.standing) if g.home >= 0 else null
+-		if b != null:
+-			g.spec = b
+-			g.spec["place"] = g.home
+-	if g.spec.is_empty() and g.first == null:
+-		g.rule = "boss_claim" if g.rule == "boss" else "claim"
+-		g.home = int(hm.get(opponent, -1))
+-		g.job = WorldRingPick.beginPick(g.P, claim(opponent), g.size, stream, {"home": g.home, "standing": g.standing, "damaged": g.damaged, "used": g.used})
++	g.opts = opts
++	g.pj = WorldPlanet.makeJob(g.planet)
++	if g.pj.done:   # made already: the ground starts here, as it always did
++		g.start()
+ 	return g
+ 
+ 
+@@ -264,6 +249,8 @@ class GroundJob extends RefCounted:
+ 	var planet: int = 0
+ 	var home: int = -1
+ 	var P: WorldPlanet.Planet
++	var opts: Dictionary = {}
++	var pj: WorldPlanet.PlanetJob = null       # the planet being made in steps, until it is whole (null once the ground has started)
+ 	var spec: Dictionary = {}                 # the first or the boss's ring (read once, for the report)
+ 	var job: WorldRingPick.PickJob = null      # a claim's pick
+ 	var first: WorldRingPick.FirstJob = null   # the first stage's ring
+@@ -275,10 +262,40 @@ class GroundJob extends RefCounted:
+ 	var done: bool = false
+ 	var result: Dictionary = {}
+ 
+-	## Reads up to n more candidates; true when the ground is picked.
++	## The ground's start, once the planet is whole (beginGround when it already is, else the first step after the planet's job finishes).
++	func start() -> void:
++		pj = null
++		P = WorldPlanet.make(planet)
++		standing = opts.get("standing", PackedByteArray())
++		damaged = opts.get("damaged", [])
++		used = opts.get("used", [])
++		var hm: Dictionary = opts.get("homes", SimRun.homes(P))
++		rule = SimRun.ruleOf(chapter)
++		size = SimRun.sizeFor(opponent, chapter, String(opts.get("kind", "")))
++		var stream: int = SimRun.H(run, "ground", chapter, choice)
++		if rule == "first":
++			home = int(hm.get(String(opts.get("player", "PROTAGONIST")), -1))
++			if home >= 0:   # stepped like the others: one read, 13 when the ring is turned toward land
++				first = WorldRingPick.beginFirstRing(P, home, stream, {"standing": standing, "damaged": damaged})
++		elif rule == "boss":
++			home = int(hm.get(opponent, -1))
++			var b = WorldRingPick.bossRing(P, home, standing) if home >= 0 else null
++			if b != null:
++				spec = b
++				spec["place"] = home
++		if spec.is_empty() and first == null:
++			rule = "boss_claim" if rule == "boss" else "claim"
++			home = int(hm.get(opponent, -1))
++			job = WorldRingPick.beginPick(P, SimRun.claim(opponent), size, stream, {"home": home, "standing": standing, "damaged": damaged, "used": used})
++
++	## Reads up to n more candidates; true when the ground is picked. While the planet is still being made the reads go to it (PLANET_UNITS_PER_READ each) and nothing is picked until it is whole (the same call then goes on to the pick, so finishNow still finishes).
+ 	func step(n: int) -> bool:
+ 		if done or n <= 0:
+ 			return done
++		if pj != null:
++			if not pj.step(n * SimRun.PLANET_UNITS_PER_READ):
++				return false
++			start()
+ 		if job != null:
+ 			var before: int = job.evs.size()
+ 			done = job.step(n)
+diff --git a/sim/core/tools/parity.gd b/sim/core/tools/parity.gd
+index f5aba56..c03aa35 100644
+--- a/sim/core/tools/parity.gd
++++ b/sim/core/tools/parity.gd
+@@ -5700,6 +5700,7 @@ func _runGround() -> String:
+ 	if g1.result.get("turned", true):
+ 		return "the first stage turned a ring that meets Close's minimum"
+ 	var coast: String = "0123456789abcdef"   # its stand-in home is a coastal city: the ring round it is 70% ocean
++	WorldPlanet.make(SimRun.planetSeed(coast))   # made already, as in a run's later stages: a cold planet is made over the first reads (host_check), which are not candidates
+ 	var gc: SimRun.GroundJob = SimRun.beginGround(coast, 1, "RIVAL")
+ 	var fc: int = 1
+ 	while not gc.frame():
+diff --git a/sim/world/tools/host_check.gd b/sim/world/tools/host_check.gd
+new file mode 100644
+index 0000000..b663dde
+--- /dev/null
++++ b/sim/world/tools/host_check.gd
+@@ -0,0 +1,39 @@
++extends SceneTree
++# Window 12: SimRun.beginGround's planet made in steps (WorldPlanet.makeJob): a cold gen 2 planet is made over the reads, a frame at a time, and the ground it picks is the one a warm call picks.
++#   godot --headless --path . --script res://sim/world/tools/host_check.gd
++var fails: int = 0
++
++
++func ok(c: bool, w: String) -> void:
++	print("  %s  %s" % ["ok  " if c else "FAIL", w])
++	if not c:
++		fails += 1
++
++
++func _init() -> void:
++	WorldClimate.useGen(2)
++	var run: String = "00000000000000a7"
++	WorldPlanet.forget()
++	var g: SimRun.GroundJob = SimRun.beginGround(run, 1, "RIVAL")
++	ok(g.pj != null and not g.pj.done and g.rule == "" and g.job == null and g.first == null, "cold: the planet is pending and the ground has not started")
++	var n: int = 0
++	var worst: int = 0
++	var t0: int = Time.get_ticks_usec()
++	while not g.done and n < 200000:
++		var t1: int = Time.get_ticks_usec()
++		g.step(1)
++		worst = maxi(worst, Time.get_ticks_usec() - t1)
++		n += 1
++	var total: int = Time.get_ticks_usec() - t0
++	ok(g.done and g.pj == null and g.rule != "", "stepped to the end: %d reads in %.0f ms, the longest one %.1f ms" % [n, float(total) / 1000.0, float(worst) / 1000.0])
++	var cold: String = JSON.stringify(g.result)
++	var w: SimRun.GroundJob = SimRun.beginGround(run, 1, "RIVAL")
++	ok(w.pj == null and w.rule != "", "warm: the planet is whole and the ground starts in beginGround, as it always did")
++	w.finishNow()
++	ok(JSON.stringify(w.result) == cold, "the same ground, cold and warm")
++	WorldPlanet.forget()
++	var c2: SimRun.GroundJob = SimRun.beginGround(run, 1, "RIVAL")
++	c2.finishNow()
++	ok(JSON.stringify(c2.result) == cold, "finishNow on a cold job: the same ground")
++	print("HOST: %d check(s) failed" % fails)
++	quit()
+diff --git a/sim/world/tools/host_check.gd.uid b/sim/world/tools/host_check.gd.uid
+new file mode 100644
+index 0000000..770fe49
+--- /dev/null
++++ b/sim/world/tools/host_check.gd.uid
+@@ -0,0 +1 @@
++uid://c63pkg5ydt0i8
