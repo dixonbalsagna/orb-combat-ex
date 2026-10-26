@@ -1,0 +1,15 @@
+# Fires in the forests (World, window 18, 2026-10-26)
+
+A cheap cosmetic for the fights, behind a switch (`data/biomes/fire.json` `enabled`, **off**: the trees, the golden and every replay are as they were). Parked in `docs/world/pending/forest-fire/`; check `sim/world/tools/fire_check.gd`.
+
+**Why this one.** Pillar 6 says the landscape answers back, and the trees are the part of it that does not: a blast or a beam fells the trees inside its radius at once and leaves the rest standing, untouched, an inch from a crater. The tree state already has a `burn` field (hashed; nothing ever set it). A forest that catches and burns beside a fight is the cheapest "the planet is being hurt" there is, it needs no new art in the sim, and it is only a look.
+
+**What it does.** `WorldStructures.damageArea` fells the trees inside 0.7 of a sample's radius, as before. With the fires on, the standing trees from 0.7 to 1.3 of that radius may catch: a chance (0.6) times the ground's flammability (forest 1, taiga 0.8, savanna 0.7, plains and jungle 0.3, highland 0.1; desert, tundra, beach, wetland and the rest 0; by the fine biome on a gen 2 planet, the biome's name elsewhere), from a keyed draw. A burning tree's `burn` rises from 0 to 1 over 6 seconds (360 ticks), dies at 1 (dead and charred), may light a flammable tree within 280 units every sixth tick (0.15 a second at point-blank, falling with the distance), at most 80 burning at once, and goes out in water (any water at its column). It never hurts a fighter, a building or a person and adds no casualty or loss (`fire_check` compares them with the fires off).
+
+**For Rendering and VFX (the cue).** The state is the tree's own: `burn` 0 and alive is a tree; `0 < burn < 1` and alive is burning (draw flames, the intensity `burn`); `burn` 1 and not alive is charred (a stump); `burn` 0 and not alive is felled (as today). The existing `fire` fx event marks an ignition (`n` 2) and a burnout (`n` 1) at the tree's foot. No new event, no Simulation line.
+
+**Where it is hooked.** `WorldStructures.damageArea` (World's): `WorldFire.ignite` after the tree loop. `WorldWater.step` (World's, called every tick): `WorldFire.step`, which does nothing when no tree burns. The replay's data hash carries `fire.json` while the fires are on (`contact.gd`'s data hash, World's).
+
+**Measured** (`fire_check.gd`): on the hand-made world a blast of radius 600 fells 5 trees and lights 3 beyond them; each burns out, nothing catches with the switch off; a dense stand made by hand (a tree every 50 units) is lit at one tree and burns all 40 (26 at the peak), then is out; water puts a fire out; the fires on or off are the same state while nothing burns; a tick with fires burning costs 30 µs on 66 trees (a bucket per nine columns keeps the spread test local).
+
+**Not done.** A fire does not spread to buildings (it would need collateral rules: Game Design's), does not make smoke beyond the existing `fire` fx, and does not change the biome after it (a burnt forest stays a forest). The numbers are mine and untested for feel: `ignite.chance`, `burn.ticks` and `burn.spread` are the knobs.
