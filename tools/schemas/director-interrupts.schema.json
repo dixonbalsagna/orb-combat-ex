@@ -2797,6 +2797,44 @@
                     }
                   },
                   "additionalProperties": false
+                },
+                "answer": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "enabled",
+                    "leadTicks",
+                    "firstFree",
+                    "mashTicks"
+                  ],
+                  "description": "The AI's guessed answer to a launcher, timed to the contact; the levels that never guess at a player's first launcher; the mash it perfect-blocks (Encounter, Game Design 2026-10-26 items 19 to 21).",
+                  "properties": {
+                    "_note": {
+                      "type": "string"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "leadTicks": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "firstFree": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "easy",
+                          "medium",
+                          "hard"
+                        ]
+                      }
+                    },
+                    "mashTicks": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  }
                 }
               },
               "required": [
@@ -4173,6 +4211,195 @@
         "maxTicks"
       ],
       "additionalProperties": false
+    },
+    "water": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "surfaceTicks",
+        "riseTicks"
+      ],
+      "description": "A fighter dropped into water surfaces (Game Design's rulings-2026-10-26 row 6): within surfaceTicks of going under, rising over riseTicks.",
+      "properties": {
+        "_note": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "surfaceTicks": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "riseTicks": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "rally": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "daze",
+        "waryTicks",
+        "sell",
+        "tech",
+        "read",
+        "own",
+        "endTicks",
+        "queueTicks",
+        "turnTicks",
+        "airBh",
+        "spikeAboveBh"
+      ],
+      "properties": {
+        "_note": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "daze": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "ticks",
+            "shave",
+            "shaveEvery",
+            "burstAfter"
+          ],
+          "properties": {
+            "ticks": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "shave": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "shaveEvery": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "burstAfter": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "waryTicks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sell": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "weight",
+            "bLeftTicks"
+          ],
+          "properties": {
+            "weight": {
+              "type": "string"
+            },
+            "bLeftTicks": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "tech": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "fresh",
+            "earlier",
+            "repeat",
+            "autoAt"
+          ],
+          "properties": {
+            "fresh": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "earlier": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "repeat": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "autoAt": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "read": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "leanMin",
+            "sectorDeg"
+          ],
+          "properties": {
+            "leanMin": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sectorDeg": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "own": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "fighter",
+              "base"
+            ],
+            "properties": {
+              "fighter": {
+                "type": "string",
+                "minLength": 1
+              },
+              "base": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "endTicks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "queueTicks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "turnTicks": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "airBh": {
+          "type": "number",
+          "minimum": 0
+        },
+        "spikeAboveBh": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "description": "The daze, the sell and the rally (Game Design's rulings-2026-10-23d; sim/director/rally.gd)."
     }
   },
   "additionalProperties": false,

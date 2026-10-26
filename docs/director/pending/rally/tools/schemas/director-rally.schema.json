@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/director-rally",
+  "title": "director.rally/1",
+  "description": "DRAFT by Combat for Tools: data/director/rally.json (Encounter's), the choreographer's variety scoring for rally links (Game Design 23d item 13), in the launch planner's points. Policy: closed except keys starting with an underscore. Cross-references (proposed): every destination in worldPlace is in destinations; every own kind is a link id in data/combat/rally/",
+  "type": "object",
+  "patternProperties": {
+    "^_": {}
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "kinds",
+    "destinations",
+    "variety",
+    "stick"
+  ],
+  "properties": {
+    "schema": {
+      "const": "director.rally/1"
+    },
+    "kinds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "ownKinds": {
+      "type": "string",
+      "minLength": 1
+    },
+    "destinations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "variety": {
+      "type": "object",
+      "patternProperties": {
+        "^_": {}
+      },
+      "additionalProperties": false,
+      "required": [
+        "kindNew",
+        "kindLast",
+        "kindEarlier",
+        "kindThird",
+        "destNew",
+        "destLast",
+        "worldLink",
+        "worldPlace",
+        "ownLink",
+        "noise"
+      ],
+      "properties": {
+        "kindNew": {
+          "type": "number",
+          "minimum": -2000,
+          "maximum": 500
+        },
+        "kindLast": {
+          "type": "number",
+          "minimum": -2000,
+          "maximum": 500
+        },
+        "kindThird": {
+          "type": "number",
+          "minimum": -2000,
+          "maximum": 500
+        },
+        "destNew": {
+          "type": "number",
+          "minimum": -2000,
+          "maximum": 500
+        },
+        "destLast": {
+          "type": "number",
+          "minimum": -2000,
+          "maximum": 500
+        },
+        "destSecondLast": {
+          "type": "number",
+          "minimum": -2000,
+          "maximum": 500
+        },
+        "worldLink": {
+          "type": "number",
+          "minimum": -2000,
+          "maximum": 500
+        },
+        "ownLink": {
+          "type": "number",
+          "minimum": -2000,
+          "maximum": 500
+        },
+        "noise": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 50
+        },
+        "cantPay": {
+          "type": "string",
+          "minLength": 1
+        },
+        "worldPlace": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": -2000,
+            "maximum": 500
+          }
+        },
+        "kindEarlier": {
+          "type": "number",
+          "minimum": -2000,
+          "maximum": 500
+        }
+      }
+    },
+    "stick": {
+      "type": "object",
+      "required": [
+        "wins"
+      ],
+      "additionalProperties": true
+    },
+    "personality": {
+      "type": "string",
+      "minLength": 1
+    },
+    "neutralStick": {
+      "type": "string",
+      "minLength": 1
+    },
+    "qa": {
+      "type": "object"
+    },
+    "display": {
+      "type": "string",
+      "minLength": 1
+    },
+    "flash": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

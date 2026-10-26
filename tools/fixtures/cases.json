@@ -301662,6 +301662,80 @@
         "rule": "minimum",
         "pointer": "/maxAngle"
       }
+    },
+    {
+      "id": "director-rally-valid",
+      "schema": "director-rally.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/rally.json",
+          "set": {
+            "/variety/kindNew": 22
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "director-rally-key-required",
+      "schema": "director-rally.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/rally.json",
+          "del": [
+            "/variety"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "director-rally-unknown-key",
+      "schema": "director-rally.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/rally.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "director-rally-variety-type",
+      "schema": "director-rally.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/rally.json",
+          "set": {
+            "/variety/kindNew": "high"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/variety/kindNew"
+      }
+    },
+    {
+      "id": "director-rally-underscore-key-ok",
+      "schema": "director-rally.schema.json",
+      "mutate": [
+        {
+          "file": "data/director/rally.json",
+          "set": {
+            "/variety/_why": "comment"
+          }
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

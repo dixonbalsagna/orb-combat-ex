@@ -55,6 +55,8 @@ static func _request(S: SimState, A, kind: String) -> void:
 	var big: bool = DirBrawl.isB(A, kind)   # B with no stance held is the heavy (brawl-second-pass.md section 2)
 	if not DirBrawl.holding:
 		DirAlchemy.log(S, A, SimAct.HEAVY if big else KIND.find(kind), A.act.mode, big)   # the press log (a hold's own press is the director's, and not in it)
+	if DirRally.queues(S, A, kind):
+		return   # 10-26 item 7: a link press while his rally's send still holds him waits for his first free tick
 	if DirBrawl.takes(S, A, kind):
 		return   # a brawl is on and he is in it: the press is a blow on his own line, never a request
 	if not DirBrawl.holding:
@@ -633,6 +635,8 @@ static func dirUpdate(S: SimState, dt: float) -> void:
 	DirWindows.afterTick(S)   # 4c: a freeze that starts now leaves every open window its live ticks (hit-stop by weight only)
 	DirCalm.tick(S)   # 7b: the calm turn notes when each fighter came to rest
 	DirBrawl.laTick(S)   # 10c: launch anywhere notes when each fighter came down from a launch
+	DirWater.tick(S)   # a drop into the water surfaces within water.surfaceTicks (rulings-2026-10-26 row 6)
+	DirRally.tick(S)   # 23d: the daze, and each rally's end
 
 
 static func _update(S: SimState, dt: float) -> void:

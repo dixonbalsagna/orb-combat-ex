@@ -577,6 +577,12 @@
                     "counter"
                   ],
                   "additionalProperties": false
+                },
+                "perfectVsMash": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Game Design 10-26 item 21: its perfect-block chance in a brawl against a mash (interrupts.json brawl.launcher.anywhere.answer.mashTicks), at least; read only with answer.enabled."
                 }
               },
               "description": "The AI's brawl play at this level.",
@@ -693,6 +699,62 @@
               "minimum": 0,
               "maximum": 1,
               "description": "The share of its sends it chases (Game Design's 5d: 10, 25, 40%)."
+            },
+            "rally": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "The AI in a rally (rulings-2026-10-23d): its share of chasing a body it sent in a rally of its own (in place of chaseShare), its tech shares at a link's arrival (a kind new to the rally, one used before, the same as the last), its daze mash (a shave every daze.shaveEvery) and burst out, its burst out of a link in flight. Its choice of link is the choreographer's scoring (data/director/rally.json).",
+              "required": [
+                "link",
+                "sells",
+                "tech",
+                "techEarlier",
+                "techRepeat",
+                "dazeMash",
+                "dazeBurst",
+                "airBurst"
+              ],
+              "properties": {
+                "link": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "sells": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "tech": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "techEarlier": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "techRepeat": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "dazeMash": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "dazeBurst": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "airBurst": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              }
             }
           },
           "additionalProperties": false,
@@ -1154,6 +1216,12 @@
                     "counter"
                   ],
                   "additionalProperties": false
+                },
+                "perfectVsMash": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Game Design 10-26 item 21: its perfect-block chance in a brawl against a mash (interrupts.json brawl.launcher.anywhere.answer.mashTicks), at least; read only with answer.enabled."
                 }
               },
               "description": "The AI's brawl play at this level.",
@@ -1270,6 +1338,62 @@
               "minimum": 0,
               "maximum": 1,
               "description": "The share of its sends it chases (Game Design's 5d: 10, 25, 40%)."
+            },
+            "rally": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "The AI in a rally (rulings-2026-10-23d): its share of chasing a body it sent in a rally of its own (in place of chaseShare), its tech shares at a link's arrival (a kind new to the rally, one used before, the same as the last), its daze mash (a shave every daze.shaveEvery) and burst out, its burst out of a link in flight. Its choice of link is the choreographer's scoring (data/director/rally.json).",
+              "required": [
+                "link",
+                "sells",
+                "tech",
+                "techEarlier",
+                "techRepeat",
+                "dazeMash",
+                "dazeBurst",
+                "airBurst"
+              ],
+              "properties": {
+                "link": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "sells": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "tech": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "techEarlier": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "techRepeat": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "dazeMash": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "dazeBurst": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "airBurst": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              }
             }
           },
           "additionalProperties": false,
@@ -1731,6 +1855,12 @@
                     "counter"
                   ],
                   "additionalProperties": false
+                },
+                "perfectVsMash": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Game Design 10-26 item 21: its perfect-block chance in a brawl against a mash (interrupts.json brawl.launcher.anywhere.answer.mashTicks), at least; read only with answer.enabled."
                 }
               },
               "description": "The AI's brawl play at this level.",
@@ -1847,6 +1977,62 @@
               "minimum": 0,
               "maximum": 1,
               "description": "The share of its sends it chases (Game Design's 5d: 10, 25, 40%)."
+            },
+            "rally": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "The AI in a rally (rulings-2026-10-23d): its share of chasing a body it sent in a rally of its own (in place of chaseShare), its tech shares at a link's arrival (a kind new to the rally, one used before, the same as the last), its daze mash (a shave every daze.shaveEvery) and burst out, its burst out of a link in flight. Its choice of link is the choreographer's scoring (data/director/rally.json).",
+              "required": [
+                "link",
+                "sells",
+                "tech",
+                "techEarlier",
+                "techRepeat",
+                "dazeMash",
+                "dazeBurst",
+                "airBurst"
+              ],
+              "properties": {
+                "link": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "sells": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "tech": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "techEarlier": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "techRepeat": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "dazeMash": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "dazeBurst": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "airBurst": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              }
             }
           },
           "additionalProperties": false,

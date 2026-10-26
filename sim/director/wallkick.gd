@@ -38,7 +38,7 @@ static func cfg() -> Dictionary:
 
 
 static func on() -> bool:
-	return DirInterrupt.on() and bool(cfg().get("enabled", false))
+	return DirInterrupt.on() and (bool(cfg().get("enabled", false)) or DirRally.on())   # (on with the rally: 23d)
 
 
 static func _base() -> int:
@@ -101,6 +101,14 @@ static func tick(S: SimState) -> void:
 ## World's wall contact (WorldBrunt.hit, a face that holds), before its damage: true when the kick takes it. Sets his
 ## push; World halves the slam and ends the journey.
 static func atWall(S: SimState, f, b, edge: float, dir: float, spN: float) -> bool:
+	var k: bool = _atWall(S, f, b, edge, dir, spN)
+	DirRally.worldLink(S, f, "face")   # 10-26 item 22(a): a face met in a rally's flight is a world link
+	if not k:
+		DirRally.slammed(S, f)   # 23d 1: a wall slam dazes him once he is up (with the rally on)
+	return k
+
+
+static func _atWall(S: SimState, f, b, edge: float, dir: float, spN: float) -> bool:
 	if not on() or _g(f, WK_ARM) != f.launchN + 1:
 		return false
 	var c: Dictionary = cfg()

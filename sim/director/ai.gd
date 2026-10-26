@@ -144,6 +144,8 @@ static func aiInput(S: SimState, f) -> void:
 		i.heavy = true
 	if f.state == "free" and (DirRecoil.aiPress(S, f) == 1 or DirWallKick.aiPress(S, f) == 1):
 		i.light = true   # its counter-rush out of a recoil flip (DirRecoil), or its rush blow off a wall kick (DirWallKick)
+	if a.st == 3.0 and DirRally.noEscape(S, f):
+		a.st = 0.0   # 10-26 item 22(d): no Escape for the attacker while his rally runs, nor for its body while sent
 	var st: float = a.st
 	# The held states for the chosen stance: Guard holds guard; Dodge re-taps the dodge before its window lapses; Escape
 	# sprints (and moves away, below); Press holds nothing. They are written in every state, so a downed AI keeps its guard.

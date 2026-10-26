@@ -32,7 +32,7 @@ static func cfg() -> Dictionary:
 
 
 static func on() -> bool:
-	return DirInterrupt.on() and bool(cfg().get("enabled", false))
+	return DirInterrupt.on() and (bool(cfg().get("enabled", false)) or DirRally.on())   # (on with the rally: 23d)
 
 
 static func _base() -> int:
@@ -65,8 +65,10 @@ static func _price(heavy: bool) -> float:
 ## A player's attack press (DirExchange.requestAttack, before the zip's): true when the chase takes it. LT with X or Y while
 ## his own launch flies starts it; a press during it is spent.
 static func takes(S: SimState, A, kind: String) -> bool:
-	if not on() or A.ai != null or kind == "sig":
+	if not on() or A.ai != null:
 		return false
+	if kind == "sig":
+		return _spikePress(S, A)   # 23d 6: B from above him in a rally is the spike
 	if chasing(A):
 		DirBrawl._ev(S, A, "press_ack", "chase", DirBrawl._cell(kind)).n = S.tick
 		return true
@@ -81,6 +83,40 @@ static func takes(S: SimState, A, kind: String) -> bool:
 		return true   # no ki, no chase (the press is spent: a launched rival has no other answer)
 	_begin(S, A, D, heavy)
 	return true
+
+
+## A player's B (kind "sig"): in a rally of his, with his rival in flight and him above, the spike link (23d 6): a
+## chase whose catch slams him straight down. Pressed during a chase, it makes that chase's catch the spike. False
+## otherwise: B is what it always was.
+static func _spikePress(S: SimState, A) -> bool:
+	if not DirRally.on() or not DirBrawl.isB(A, "sig"):
+		return false
+	var D = SimRoster.opp(S, A)
+	if not DirRally._owner(S, A, D) or D.state != "launched" or D.launchBy != A:
+		return false
+	if chasing(A):
+		_s(A, CH_W, 3)
+		DirBrawl._ev(S, A, "press_ack", "spike", "b").n = S.tick
+		return true
+	if A.state != "free" or A.stunTicks > 0 or S.dirS.ex != null or S.game.ko != null or A.y <= D.y + float(DirRally.cfg().get("spikeAboveBh", 0.5)) * DirInterrupt.BH:
+		return false
+	_begin(S, A, D, false, true)
+	return true
+
+
+## A link press that waited for his first free tick (DirRally.queues; 10-26 item 7): its chase starts now. k: 1 X,
+## 2 Y, 3 B.
+static func startQueued(S: SimState, A, D, k: int) -> void:
+	if k == 3:
+		_spikePress(S, A)
+		return
+	if chasing(A) or D.state != "launched" or D.launchBy != A or D.launchSpecial:
+		return
+	var heavy: bool = k == 2
+	if A.ki < _price(heavy):
+		DirBrawl._ev(S, A, "press_ack", "chase_no_ki", DirBrawl._cell("heavy" if heavy else "light")).n = S.tick
+		return
+	_begin(S, A, D, heavy)
 
 
 ## The AI (DirAI.aiInput, before the approach cap): its draw at a send of its own, and its start. True while it chases
@@ -98,8 +134,13 @@ static func steer(S: SimState, f, o, i: SimIntent) -> bool:
 		var sh: float = float(DirAI.lv().get("chaseShare", 0.0))
 		if _sky(S, o):
 			sh *= float(cfg().get("skyMul", 1.0))
+		if DirRally._owner(S, f, o):
+			sh = float(DirRally._ai().get("link", sh))   # 23d: in a rally of its own, its level's link share
 		if f.ki >= _price(false) and SimRng.keyed(int(S.game.seed), "chase.ai", o.launchN * 4 + S.fighters.find(f)) < sh:
-			_s(f, CH_AT, S.tick + int(DirAI.skill().get("reactTicks", 14)) + 1)
+			var rt: int = int(DirAI.skill().get("reactTicks", 14))
+			if DirRally._owner(S, f, o):
+				rt = maxi(0, rt - DirRally.sinceSend(S, f))   # 10-26 item 7: in a rally its reaction runs from the send, not from when it was free
+			_s(f, CH_AT, S.tick + rt + 1)
 	if _g(f, CH_AT) == 0 or S.tick + 1 < _g(f, CH_AT) or f.state != "free" or f.rush != null or S.dirS.ex != null:
 		return false
 	_s(f, CH_AT, 0)
@@ -109,10 +150,12 @@ static func steer(S: SimState, f, o, i: SimIntent) -> bool:
 	return true
 
 
-static func _begin(S: SimState, A, D, heavy: bool) -> void:
-	A.ki -= _price(heavy)
+static func _begin(S: SimState, A, D, heavy: bool, spike: bool = false) -> void:
+	if not spike:
+		A.ki -= _price(heavy)   # (the rally's spike is a B: no zip price)
 	_s(A, CH_ON, DirBrawl._now(S) + 1)
-	_s(A, CH_W, 2 if heavy else 1)
+	_s(A, CH_W, 3 if spike else (2 if heavy else 1))
+	DirRally.commitStick(S, A, D)   # the stick's class, read once at the commit (Controls' rule)
 	_cue(S, A, D, "start")
 	SimEvents.feed(S, A.name + " CHASES", "a zip after " + D.name + "'s flight (" + str(int(_price(heavy))) + " ki): at " + str(int(_speed(D))) + " u/s")
 
@@ -132,7 +175,7 @@ static func tick(S: SimState) -> void:
 		if _g(A, CH_ON) <= 0:
 			continue
 		var D = SimRoster.opp(S, A)
-		if A.state != "free" or S.game.ko != null or S.dirS.ex != null or DirBrawl._now(S) - (_g(A, CH_ON) - 1) > int(c.get("maxTicks", 120)):
+		if A.state != "free" or S.game.ko != null or S.dirS.ex != null or (DirBrawl._now(S) - (_g(A, CH_ON) - 1) > int(c.get("maxTicks", 120)) and not DirRally._owner(S, A, D)):
 			_end(S, A, D, "stopped")
 			continue
 		if D.state != "launched":
@@ -151,7 +194,10 @@ static func tick(S: SimState) -> void:
 		var tl: int = int(ceil(float(land.get("t", 99.0)) * DirData.TICKS_PER_SEC))
 		var r := SimState.Rush.new()
 		r.tgt = D
-		if tl > 0 and tl < n:
+		if tl > 0 and tl < n and DirRally._owner(S, A, D):
+			n = maxi(1, tl - 1)   # 10-26 item 22(e): a rally's chase always arrives, at him before his landing
+			r.off = 0.0
+		elif tl > 0 and tl < n:
 			r.off = DirBands._endOff(S, D, SimMathx.jsign(SimWrap.sdx(D.x, A.x)) if SimWrap.sdx(D.x, A.x) != 0.0 else -D.face)   # beside him where he lands
 			n = tl
 		else:
@@ -167,7 +213,12 @@ static func tick(S: SimState) -> void:
 ## The catch: the zip's blow lands and sends him on, the chaser's stick its tilt.
 static func _catch(S: SimState, A, D) -> void:
 	var c: Dictionary = cfg()
-	var heavy: bool = _g(A, CH_W) == 2
+	var kind: String = DirRally.linkKind(S, A, D, _g(A, CH_W) == 3, _g(A, CH_W) == 2) if DirRally.on() else "chase"   # 23d 6, 17 to 19: the link's kind
+	if DirRally.on() and DirRally.teched(S, A, D, kind):
+		A.rush = null
+		_end(S, A, D, "teched")
+		return   # 23d 8: he teched its arrival
+	var heavy: bool = _g(A, CH_W) == 2 or kind == "spike"
 	var dmg: float = float(DirZip.cfg().get("heavy", {}).get("damage", 132.0)) if heavy else float(DirBrawl.cfg().get("light", {}).get("damage", 26.0))
 	A.rush = null
 	A.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(A.x, D.x)), A.face)
@@ -176,7 +227,21 @@ static func _catch(S: SimState, A, D) -> void:
 		_end(S, A, D, "catch")
 		return
 	var force: float = float(c.get("sendForce", 1600.0))
-	var r: Dictionary = DirLaunch.chooseLaunch(S, A, D, force, false, "", _tilt(A), true)
+	var tilt: int = _tilt(A)
+	if kind == "spike":
+		tilt = 5   # straight down
+	elif kind == "palm_turn":
+		tilt = DirRally.palmTilt(A)   # the Protagonist's open palm turns him across his flight (23d item 21)
+	elif kind == "overtake":
+		tilt = 7 if D.vx > 0.0 else 3   # back the way he came: the zip passes him and meets him head-on
+		A.x = SimWrap.wrap(D.x + SimMathx.jsign(D.vx) * float(c.get("catchBh", 1.5)) * DirInterrupt.BH)
+		A.face = -SimMathx.jsign(D.vx)
+	var r: Dictionary
+	if kind == "plate_chase":
+		var pl: Dictionary = DirRally.plateLine(S, A, D)   # the Rival's exact line, with no bend (23d item 19)
+		r = {"best": pl, "top": [pl], "all": [pl]}
+	else:
+		r = DirLaunch.chooseLaunch(S, A, D, force, false, "", tilt, true)
 	var all: PackedStringArray = []
 	for k in r.all:
 		all.append(k.name + " " + SimMathx.jstr(SimMathx.jround(k.s)))
@@ -190,6 +255,7 @@ static func _catch(S: SimState, A, D) -> void:
 		DirCamIntent.launched(S, D)
 		DirCalm.atSend(S, A, D, r.best)
 		DirBrawl.markKind(S, D, lkind)
+		DirRally.onLink(S, A, D, kind, r.best)   # 23d 6: a rally's link
 	_end(S, A, D, "catch")
 
 

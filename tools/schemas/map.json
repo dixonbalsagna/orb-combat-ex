@@ -392,6 +392,10 @@
       "schema": "director-interrupts.schema.json"
     },
     {
+      "match": "data/director/rally.json",
+      "schema": "director-rally.schema.json"
+    },
+    {
       "match": "data/director/launch.json",
       "schema": "director-launch.schema.json"
     },

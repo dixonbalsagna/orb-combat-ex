@@ -420,6 +420,8 @@ static func _aiBlocks(S: SimState, ex) -> void:
 		# A heavy it sees, a B wound in the open (brawl-second-pass.md section 14): its level's own share.
 		if DirBrawl.isBrawl(ex) and int(b.args.get("bk", -1)) == DirBrawl.BIG and lv.get("brawl", {}).has("perfectVsHeavy"):
 			chance = float(lv.brawl.perfectVsHeavy)
+		if DirBrawl.isBrawl(ex) and lv.get("brawl", {}).has("perfectVsMash") and bool(DirBrawl.la().get("answer", {}).get("enabled", false)) and DirBrawl.mashing(S, ex.A if f == ex.D else ex.D):
+			chance = maxf(chance, float(lv.brawl.perfectVsMash))   # 10-26 item 21: a mash is readable, so its level answers it
 		if p > 0.0 and S.rng.next() < chance:
 			guardPress(S, f)
 
@@ -482,7 +484,7 @@ static func _beforeWindup(ex) -> bool:
 static func _canBurst(S: SimState, f) -> bool:
 	var c: Dictionary = data().burst
 	var ex = S.dirS.ex
-	if f.ki < float(c.ki) or f.act.burstCool > 0 or f.state == "launched" or (f.state == "down" and not DirBury.canBurst(f)):   # buried, he bursts out once the follow-up's time is over
+	if f.ki < float(c.ki) or f.act.burstCool > 0 or (f.state == "launched" and not DirRally.burstInFlight(S, f)) or DirRally.burstHeld(S, f) or (f.state == "down" and not DirBury.canBurst(f)):   # buried, he bursts out once the follow-up's time is over
 		return false
 	return ex == null or (ex.kind != "sig" and not DirExchange.finisherPlanned(ex) and not DirBury.diving(S, f) and not DirBrawl.doubling(ex))   # a burst cannot escape a dive on its way
 
@@ -498,6 +500,7 @@ static func burst(S: SimState, f) -> bool:
 	f.ki -= float(c.ki)
 	f.act.burstCool = int(c.cooldownTicks)
 	DirBury.burstOut(S, f)   # a buried fighter's burst throws him out of his crater
+	DirRally.burstOut(S, f)   # 23d: it breaks his daze, and ends a rally's flight
 	SimFx.ring(S, f.x, f.y + 34.0, float(c.rangeBh) * BH * 2.0, f.aura, 0.5, 14.0)
 	if o.input.guard and o.stunTicks <= 0:
 		f.stunTicks = maxi(f.stunTicks, int(c.baitStaggerTicks))

@@ -38,7 +38,7 @@ static func cfg() -> Dictionary:
 
 
 static func on() -> bool:
-	return DirInterrupt.on() and bool(cfg().get("enabled", false))
+	return DirInterrupt.on() and (bool(cfg().get("enabled", false)) or DirRally.on())   # (on with the rally: 23d)
 
 
 static func _base() -> int:
@@ -211,6 +211,7 @@ static func counter(S: SimState, f) -> bool:
 		return false
 	_s(f, RC_CR, 0)
 	_s(f, RC_AIC, 0)
+	DirRally.markCounter(S, f)   # 23d 10: the turn, if it lands on the chaser in the air
 	var e = _ev(S, f, "counter_rush")
 	e.target = float(S.fighters.find(SimRoster.opp(S, f)))
 	SimEvents.feed(S, f.name + " COUNTER-RUSH", "out of his recoil flip: no crouch, no return, the first move his")

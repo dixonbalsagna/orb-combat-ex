@@ -435,7 +435,9 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 		force *= lpow
 		if "launchPower" in tgt:
 			tgt.launchPower = lpow * (DirBrawl.freshMul(S, tgt, 4) if DirBrawl.freshHurts() else 1.0)   # for World's building aim (when granted)
+	DirRally.openNoDown(S, att, tgt, lpow, longOnly, tilt)   # 10-26 item 22(b): a rally's opening send is never down on a neutral stick
 	var r: Dictionary = DirLaunch.chooseLaunch(S, att, tgt, force, longOnly, String(args.get("sends", "")) if args != null else "", tilt, forced or (gate.get("enabled", false) and not DirData.contact().is_empty()), lpow >= 0.0)
+	DirRally.clearNoDown()
 	var parts: PackedStringArray = []
 	for k in r.top:
 		parts.append(k.name + " " + SimMathx.jstr(SimMathx.jround(k.s)))
@@ -474,8 +476,9 @@ static func launchBeat(S: SimState, ex, att, tgt, force: float, longOnly: bool =
 	DirLaunch.doLaunch(S, att, tgt, r.best, force, longOnly)
 	if lpow >= 0.0:
 		DirBrawl.paySend(tgt, lpow * kf)   # 9a: a launcher's send pays on its journey (after the send: its launch number)
+	DirRally.onSend(S, att, tgt, (lpow * kf) if lpow >= 0.0 else -1.0, args, r.best)   # 23d 6: a full send opens a rally
 	DirBrawl.powerCue(S, att, tgt, lkind, (lpow * kf) if lpow >= 0.0 else 1.0)
-	holdSend(S, longOnly, (lpow * kf) if lpow >= 0.0 else 1.0)   # hit-stop by weight: the send holds a launch's stop
+	holdSend(S, longOnly or (args != null and bool(args.get("decisive", false))), (lpow * kf) if lpow >= 0.0 else 1.0)   # hit-stop by weight: the send holds a launch's stop
 	DirCamIntent.launched(S, tgt)   # the camera-intent feed: with the launch curve, the touchdown is the curve's
 	DirCalm.atSend(S, att, tgt, r.best)   # the calm-moment turn: the moment after this landing is coming, so World is asked now
 	DirBrawl.markKind(S, tgt, lkind)

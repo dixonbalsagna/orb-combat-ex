@@ -521,7 +521,8 @@ static func perfectBlocked(S: SimState, ex, a, d, o: Dictionary, launch: bool) -
 	var c: Dictionary = cfg()
 	var n: int = int(c.perfectBlock.staggerTicks)
 	o["turned"] = true
-	a.stunTicks = maxi(a.stunTicks, n)
+	if not (DirRally.pbDazes(a) and DirRally.daze(S, ex, d, a, "perfect_block")):   # 23d 1 (10-26 items 23, 25): a perfect block that turns a charged blow or an ender dazes the one it turned; a launcher keeps its reversal
+		a.stunTicks = maxi(a.stunTicks, n)
 	_drop(S, ex, a)
 	_tradeReset(ex)
 	_s(d, RIP_UNTIL, S.tick + int(c.riposteTicks))
@@ -760,7 +761,7 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 			paid = true
 	var lcOpen: bool = _g(f, LC_UNTIL) > 0 and (o.stunTicks > 0 or S.tick <= _g(f, LC_UNTIL))   # an opening: the window around the close
 	var any: bool = anywhere()   # launch anywhere (the thirteenth round), behind its switch
-	var lau: bool = st == 2 and not paid and (lcOpen or (any and _linked(S, f, p))) and not (any and _bMash(f, p)) and f.ki >= float(c.launcher.ki)
+	var lau: bool = st == 2 and not paid and (lcOpen or DirRally.dazed(S, o) or (any and _linked(S, f, p))) and not (any and _bMash(f, p)) and f.ki >= float(c.launcher.ki)
 	var safety: int = _safety(S, f, o) if (lau and any) else 0   # 1 sure, 2 hard to answer, 3 answerable
 	if st > 0 and not paid:
 		# A press he can't pay for throws the strongest blow he can pay for (brawl-second-pass.md section 8): a B becomes
@@ -860,6 +861,8 @@ static func _throw(S: SimState, f, st: int, p: int, paid: bool, arrived: bool, a
 		_s(o, GAVE, 0)   # the rival has not given ground against this wind-up yet
 	_s(f, FLAV, 1 if energy else (2 if lau else 0))
 	_s(f, LC_LATE, 1 if (lau and o.stunTicks <= 0) else 0)   # thrown after the stagger: he can answer it
+	if lau and any:
+		_ls(f, LA_LAU1, 1)   # his first launcher of the match is thrown (10-26 item 19)
 	var dmg: float = worth * _unit()
 	# The press behind the blow, for the launch's earners: its weight, its stick and its intent. Its rhythm is the brawl's own.
 	var pp: int = DirAlchemy.last(S, f)
@@ -1272,7 +1275,7 @@ static func contact(S: SimState, ex, b) -> void:
 	if energy != "":
 		_shotHit(S, ex, f, o, dmg, a, ex.sD if o == ex.D else ex.sA)   # a point-blank shot is the blast's own hit, with no exchange
 	else:
-		DirMelee.weigh(S, a.o, DirMash.name(S, f, weightOf(a)))   # hit-stop by weight: the blow names its weight (a mash's later blows light_flow)
+		DirMelee.weigh(S, a.o, DirRally.sellWeight(S, f, o, a, DirMash.name(S, f, weightOf(a))))   # hit-stop by weight: the blow names its weight (a mash's later blows light_flow)
 		DirMelee.strike(S, ex, f, o, dmg, a.o)
 	_inTick = was
 	f.ambush = false   # an ambush is its first blow
@@ -1318,12 +1321,15 @@ static func contact(S: SimState, ex, b) -> void:
 			return   # he reversed it (section 9f): the attacker staggers in place, and the guard is not broken
 		if kind == BIG:
 			_tradeReset(ex)
-			_stagger(S, ex, f, o, int(c.heavy.staggerTicks), "", true)   # a broken guard is an opening
+			if not (DirRally.breakDazes(a) and DirRally.daze(S, ex, f, o, "guard_break")):   # 10-26 items 23, 24: only a charged blow or a tapped heavy outside a string dazes
+				_stagger(S, ex, f, o, int(c.heavy.staggerTicks), "", true)   # a broken guard is an opening (23d 1: with the rally on, a daze)
 			var gb = _ev(S, o, "guard_break")
 			gb.target = float(S.fighters.find(f))
 			gb.n = int(c.heavy.staggerTicks)
 			SimEvents.feed(S, f.name + " BREAKS THE GUARD", o.name + " staggers in place for " + str(int(c.heavy.staggerTicks)) + " ticks")
 		return
+	if DirRally.turn(S, ex, f, o, a):
+		return   # 23d 10: his counter-rush lands on the chaser in the air: a full send, and the rally is his
 	_s(f, STRING_N, _g(f, STRING_N) + 1)
 	if anywhere():
 		_ls(f, LA_LINK, S.tick)   # his string's link: B within anywhere.link of this is the launcher
@@ -1393,6 +1399,8 @@ static func contact(S: SimState, ex, b) -> void:
 		var chNow: int = _now(S)
 		_ls(f, LA_CH_N, (_lg(f, LA_CH_N) + 1) if (_lg(f, LA_CH_AT) > 0 and chNow - _lg(f, LA_CH_AT) <= int(la().get("chainGapTicks", 24))) else 1)
 		_ls(f, LA_CH_AT, chNow)   # 2a: his landed blows in one chain of links
+	if DirRally.whiffPunish(S, ex, f, o, a):
+		return   # 23d 1: his heavy's whiff, punished: a daze in place of the reel
 	if kind == BIG:
 		_bigLanded(S, ex, f, o, a)
 		return
@@ -1709,7 +1717,8 @@ const LA_POP_TECH: int = 37    # ... his landing: 1 the AI will tech it, 2 teche
 const LA_POP_BURST: int = 38   # ... 1 the AI will burst out after pop.burstAfter
 const LA_POP_SPK: int = 39     # 1 while his coming down is a spike's (23c 9): its landing digs a crater
 const LA_POP_STUN: int = 40    # S.tick his juggle's stun ends (the pop and its landing, or the spike and its recovery): no opening before it
-const LA_N: int = 41
+const LA_LAU1: int = 41        # 1 once he has thrown a launcher this match (10-26 item 19: the AI never guesses at his first)
+const LA_N: int = 42
 const LA_RIPK: int = 7         # LA_HITK's mark for a perfect follow-up (the riposte): hard to answer, as a medium (with pops)
 
 
@@ -2101,6 +2110,9 @@ static func _laAnswerPlan(S: SimState, f, o) -> void:
 	_ls(o, LA_ANS, 0)
 	if o.ai == null:
 		return   # a player answers for himself
+	var an: Dictionary = la().get("answer", {})
+	if bool(an.get("enabled", false)) and f.ai == null and _lg(f, LA_LAU1) == 0 and (an.get("firstFree", []) as Array).has(DirAI.level if DirAI.level != "" else String(DirAI.skill().level)):
+		return   # 10-26 item 19: on easy and medium it never guesses at a player's first launcher of a match
 	var share: float = float(DirAI.lv().get("brawl", {}).get("anywhere", {}).get("answer", 0.0))
 	if share <= 0.0 or SimRng.keyed(int(S.game.seed), "brawl.answerLauncher", S.tick * 8 + S.fighters.find(o)) >= share:
 		return
@@ -2109,7 +2121,9 @@ static func _laAnswerPlan(S: SimState, f, o) -> void:
 
 ## The AI's guess, once a tick: a launcher that isn't sure winds on it, thrown while the guess held, and its reaction time
 ## has passed since it was thrown: it presses guard (never sooner, so it never answers within its reaction time; the
-## contact is still inside the perfect window). The guess is spent with the press, or lapses.
+## contact is still inside the perfect window). The guess is spent with the press, or lapses. With anywhere.answer on,
+## the press is timed to the contact (answer.leadTicks before it): the guess was made before the throw, and a press its
+## reaction time after the throw came at the contact or later, since the wind-up is as long.
 static func _laAnswerTick(S: SimState, f) -> void:
 	var until: int = _lg(f, LA_ANS)
 	if until <= 0:
@@ -2121,12 +2135,23 @@ static func _laAnswerTick(S: SimState, f) -> void:
 	var o = ex.D if f == ex.A else ex.A
 	var began: int = _g(o, LAND_AT)   # S.tick his launcher was thrown (his line is busy until it lands)
 	if _g(o, FLAV) == 2 and _g(o, LINE) == 1 and _g(o, LC_LATE) == 1 and began <= until:
-		if f.stunTicks <= 0 and S.tick - began >= int(DirAI.skill().get("reactTicks", 14)):
+		var due: bool = S.tick - began >= int(DirAI.skill().get("reactTicks", 14))
+		var an: Dictionary = la().get("answer", {})
+		if bool(an.get("enabled", false)):
+			due = _g(o, CONTACT) - _now(S) <= int(an.get("leadTicks", 3))   # inside the perfect window, in live ticks
+		if f.stunTicks <= 0 and due:
 			_ls(f, LA_ANS, 0)
 			DirInterrupt.guardPress(S, f)
 		return
 	if S.tick > until:
 		_ls(f, LA_ANS, 0)   # no launcher came while the guess held
+
+
+## True while f mashes (10-26 item 21): his last two light presses came within anywhere.answer.mashTicks of each other,
+## and the last of them as recently. A mash is rhythmic and readable: the AI's perfect block against it is DirInterrupt's.
+static func mashing(S: SimState, f) -> bool:
+	var m: int = int(la().get("answer", {}).get("mashTicks", 9))
+	return _g(f, TAP_GAP) > 0 and _g(f, TAP_GAP) <= m and S.tick - _g(f, LAST_TAP) <= m
 
 
 ## The AI launches in its string at a hard-to-answer moment (section 8): once a landed blow, at its level's
@@ -2558,6 +2583,8 @@ static func _miss(S: SimState, ex, f, o, kind: int, wind: bool, energy: String, 
 	if open > 0:
 		_s(f, FREE_AT, S.tick + open)
 		_s(f, OPEN_UNTIL, _now(S) + open)
+		if kind == BIG:
+			DirRally.whiffed(S, f, open)   # 23d 1: a heavy's whiff, punished in it, dazes him
 	if wind:
 		_wEnd(S, f, kind, 4)
 	var e = _ev(S, f, "miss", "gave_ground" if (_g(o, GAVE) == 1 and not placed) else "reach", _cellOf(2 if kind == BIG else (1 if kind == MEDIUM else 0)))
@@ -2603,7 +2630,7 @@ static func _quarter(f, o) -> int:
 ## that way. With no stick it is the planner's own pick; so it is with the stick away, until a turning send exists,
 ## and with the stick down when he stands on the ground. mul: its share of a heavy's launch force (launcher.flightMul).
 ## The brawl ends with it.
-static func _send(S: SimState, ex, f, o, aim: int, why: String, mul: float) -> void:
+static func _send(S: SimState, ex, f, o, aim: int, why: String, mul: float, extra: Dictionary = {}) -> void:
 	var tilt: int = 0
 	if aim == 1:
 		tilt = 1
@@ -2612,6 +2639,7 @@ static func _send(S: SimState, ex, f, o, aim: int, why: String, mul: float) -> v
 	elif aim == 2:
 		tilt = 3 if SimWrap.sdx(f.x, o.x) >= 0.0 else 7
 	var la: Dictionary = {"forced": true, "tilt": tilt, "why": why}
+	la.merge(extra, true)   # (23d: the sell's send is sold and decisive)
 	if _lg(f, LA_POW) > 0:
 		la["power"] = float(_lg(f, LA_POW)) / 1000.0   # the launcher's power: freshness is applied once the send is picked
 		var want: String = _sendOf(aim)
@@ -3179,6 +3207,13 @@ static func _bigLanded(S: SimState, ex, f, o, a) -> void:
 		if bool(a.get("ready", false)):
 			if a.has("power"):
 				_ls(f, LA_POW, int(round(float(a.power) * _woundMul(o, String(a.get("piece", ""))) * 1000.0)))
+			if DirRally.dazed(S, o):
+				if a.has("power"):
+					_ls(f, LA_POW, 1000)   # 23d 5: B at a dazed fighter is the sure launcher at full power, whatever the string
+				_send(S, ex, f, o, int(a.get("aim", 0)), "the sell's send", float(c.launcher.flightMul), {"sold": true, "decisive": true})
+				if a.has("power"):
+					_ls(f, LA_POW, 0)
+				return
 			var pp: float = _popPower(S, f, o, int(a.get("aim", 0))) if (popOn() and a.has("power")) else 9.0
 			if popOn() and _lg(o, LA_POP_UNTIL) > S.tick:
 				_spike(S, ex, f, o)   # 23c 9: B at a popped fighter is the spike, never a send
@@ -3195,7 +3230,8 @@ static func _bigLanded(S: SimState, ex, f, o, a) -> void:
 		return
 	if bool(a.get("charged", false)):
 		if float(a.get("charge", 0.0)) >= 1.0:
-			_send(S, ex, f, o, int(a.get("aim", 0)), "a heavy charged to full", 1.0)
+			if not DirRally.daze(S, ex, f, o, "charged_heavy"):   # 23d 1: with the rally on, a clean full charge dazes
+				_send(S, ex, f, o, int(a.get("aim", 0)), "a heavy charged to full", 1.0)
 		else:
 			_knock(S, ex, f, o, 0.0, int(a.get("aim", 0)))
 		return
@@ -3734,6 +3770,8 @@ static func aiInput(S: SimState, f) -> void:
 	if _aiPart(S, ex, f, o, bl):
 		return   # it holds away with the rival, to walk out
 	var gap: int = int(bl.get("tapGap", 10))
+	if DirRally.aiSell(S, ex, f, o, i, bl):
+		return   # 10-26 item 10: at a dazed rival it sells its mediums before B
 	# The launcher: a tap of B while the stagger it caused holds the window open, at its level's share.
 	if anywhere() and _aiLaunchInString(S, f, c):
 		_s(f, AI_RIP, 0)

@@ -252,6 +252,7 @@ static func chooseLaunch(S: SimState, A, D, force: float, longOnly: bool = false
 			k.s -= REPEAT_1
 		if k.name == S.dirS.lastLaunch2:
 			k.s -= REPEAT_2
+		k.s += DirRally.variety(S, A, k)   # 23d 13: a rally's variety (0 outside one)
 	# Stable sort by score, highest first: an insertion sort keeps equal scores in candidate order.
 	for i in range(1, c.size()):
 		var key = c[i]
