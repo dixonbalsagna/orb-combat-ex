@@ -1,0 +1,861 @@
+{
+  "schema": "narrative.filler_templates/1",
+  "_about": "PARKED DRAFT (docs/narrative/pending/). Beat templates for the four filler families in docs/design/campaign.md section 1: training_day, rivalry_game, tournament, rescue. Same shape as beat_templates.json (slots, templates, beats, samples). Slots only; no new lore or names; main-story beats are Orb's and appear here only as labelled empty slots. Follows Legal mc01 to mc03, ln05 and c08, and the voice bibles. Claude-written; unmarked by Orb; unscreened by Legal for the filler kinds.",
+  "new_slots": {
+    "filler_kind": "training_day, rivalry_game, tournament or rescue.",
+    "episode_number": "The main episode a filler episode follows, as a whole number n; the card reads n.5. Absent for a standalone filler episode.",
+    "side_place": "The place on the ring that shows a side story (its name).",
+    "round": "A whole number and its total (round 2 of 3) for a game or a tournament. Never a score of damage or deaths.",
+    "contest": "What a rivalry game or a tournament is played for: a clean launch, a race along the ring, a best of three. Never a count of wreckage or of the lost.",
+    "stranded": "A cast fighter who is stranded across the ring by wrecked ground or a flooded valley (a rescue). Never a captive and never a victim.",
+    "guest": "A cast fighter who drops in to a filler episode."
+  },
+  "families": [
+    "training_day",
+    "rivalry_game",
+    "tournament",
+    "rescue"
+  ],
+  "columns": [
+    "1. Cold open",
+    "2. Rise",
+    "3. Twist",
+    "4. Escalation",
+    "5. Climax",
+    "Cliffhanger card"
+  ],
+  "templates": [
+    {
+      "id": "training_day.cold_open",
+      "family": "training_day",
+      "column": "1. Cold open",
+      "reads": [
+        "place",
+        "opp",
+        "p1"
+      ],
+      "beats": [
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "enjoys the practice ground"
+        },
+        {
+          "role": "opp",
+          "hook": "needle",
+          "does": "tells them to warm up"
+        }
+      ],
+      "note": "A practice place, a sparring partner, low stakes."
+    },
+    {
+      "id": "training_day.rise",
+      "family": "training_day",
+      "column": "2. Rise",
+      "reads": [
+        "opp",
+        "p1"
+      ],
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "drill",
+          "does": "corrects the player's guard"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "asks to be shown"
+        }
+      ],
+      "note": "The Rival's correction is grudging, never open respect."
+    },
+    {
+      "id": "training_day.twist",
+      "family": "training_day",
+      "column": "3. Twist",
+      "reads": [
+        "guest",
+        "place"
+      ],
+      "beats": [
+        {
+          "role": "guest",
+          "hook": "drop_in",
+          "does": "arrives to watch or join"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "welcomes them"
+        }
+      ],
+      "note": "The Cyborg reads wear and a thing wrecked only, never a toll or a person (ln04, ln05)."
+    },
+    {
+      "id": "training_day.escalation",
+      "family": "training_day",
+      "column": "4. Escalation",
+      "reads": [
+        "place",
+        "home_wear"
+      ],
+      "beats": [
+        {
+          "role": "radio",
+          "hook": "report",
+          "does": "a practice wall is cracked"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "aims the fight away from it"
+        }
+      ],
+      "note": "Place and wear only.",
+      "cyborg": {
+        "home_wear": "own_yard_only",
+        "off_if": "the Cyborg claim is a town or city, not his own yard"
+      }
+    },
+    {
+      "id": "training_day.climax",
+      "family": "training_day",
+      "column": "5. Climax",
+      "reads": [
+        "opp",
+        "place"
+      ],
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "claim",
+          "does": "sets the last drill"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "accepts"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "training_day.cliffhanger",
+      "family": "training_day",
+      "column": "Cliffhanger card",
+      "reads": [
+        "next"
+      ],
+      "beats": [
+        {
+          "role": "radio",
+          "hook": "warn",
+          "does": "class is over; a harder drill is next"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "rivalry_game.cold_open",
+      "family": "rivalry_game",
+      "column": "1. Cold open",
+      "reads": [
+        "opp",
+        "contest",
+        "p1"
+      ],
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "wager",
+          "does": "proposes the game"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "accepts"
+        }
+      ],
+      "note": "Bragging rights only; no stakes of harm."
+    },
+    {
+      "id": "rivalry_game.rise",
+      "family": "rivalry_game",
+      "column": "2. Rise",
+      "reads": [
+        "opp",
+        "round"
+      ],
+      "beats": [
+        {
+          "role": "radio",
+          "hook": "tally",
+          "does": "calls the round"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "wants the next"
+        }
+      ],
+      "note": "A round count is a whole number, never a damage or death tally."
+    },
+    {
+      "id": "rivalry_game.twist",
+      "family": "rivalry_game",
+      "column": "3. Twist",
+      "reads": [
+        "guest",
+        "contest"
+      ],
+      "beats": [
+        {
+          "role": "guest",
+          "hook": "join",
+          "does": "asks to play too"
+        },
+        {
+          "role": "opp",
+          "hook": "needle",
+          "does": "objects"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "rivalry_game.escalation",
+      "family": "rivalry_game",
+      "column": "4. Escalation",
+      "reads": [
+        "opp",
+        "round"
+      ],
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "boast",
+          "does": "calls the last rounds serious"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "rivalry_game.climax",
+      "family": "rivalry_game",
+      "column": "5. Climax",
+      "reads": [
+        "opp",
+        "round",
+        "contest"
+      ],
+      "beats": [
+        {
+          "role": "radio",
+          "hook": "tally",
+          "does": "calls the deciding round"
+        },
+        {
+          "role": "opp",
+          "hook": "claim",
+          "does": "names what it decides"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "rivalry_game.cliffhanger",
+      "family": "rivalry_game",
+      "column": "Cliffhanger card",
+      "reads": [
+        "opp",
+        "next"
+      ],
+      "beats": [
+        {
+          "role": "radio",
+          "hook": "warn",
+          "does": "a rematch is promised; the loser picks the ground"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "tournament.cold_open",
+      "family": "tournament",
+      "column": "1. Cold open",
+      "reads": [
+        "place",
+        "round"
+      ],
+      "beats": [
+        {
+          "role": "radio",
+          "hook": "open",
+          "does": "announces the first round on the stage"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "is delighted"
+        }
+      ],
+      "note": "The tournament is a stage and rounds: no new body, league or rule is named."
+    },
+    {
+      "id": "tournament.rise",
+      "family": "tournament",
+      "column": "2. Rise",
+      "reads": [
+        "opp",
+        "round"
+      ],
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "needle",
+          "does": "meets the player in the early rounds"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "tournament.twist",
+      "family": "tournament",
+      "column": "3. Twist",
+      "reads": [
+        "guest",
+        "round"
+      ],
+      "beats": [
+        {
+          "role": "guest",
+          "hook": "entrant",
+          "does": "turns out to have entered too"
+        }
+      ],
+      "note": "The Cyborg reads wear and a thing wrecked only, never a toll or a person (ln04, ln05)."
+    },
+    {
+      "id": "tournament.escalation",
+      "family": "tournament",
+      "column": "4. Escalation",
+      "reads": [
+        "opp",
+        "round",
+        "place"
+      ],
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "boast",
+          "does": "the semi-final shakes the stage"
+        }
+      ],
+      "note": "The stage shakes; no one is hurt."
+    },
+    {
+      "id": "tournament.climax",
+      "family": "tournament",
+      "column": "5. Climax",
+      "reads": [
+        "opp",
+        "round"
+      ],
+      "beats": [
+        {
+          "role": "radio",
+          "hook": "open",
+          "does": "calls the final"
+        },
+        {
+          "role": "opp",
+          "hook": "claim",
+          "does": "wants the title"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "tournament.cliffhanger",
+      "family": "tournament",
+      "column": "Cliffhanger card",
+      "reads": [
+        "next"
+      ],
+      "beats": [
+        {
+          "role": "radio",
+          "hook": "warn",
+          "does": "the winner is crowned; a rematch is promised"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "rescue.cold_open",
+      "family": "rescue",
+      "column": "1. Cold open",
+      "reads": [
+        "stranded",
+        "place"
+      ],
+      "beats": [
+        {
+          "role": "radio",
+          "hook": "report",
+          "does": "a cast fighter is stranded across the ring"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "sets out to fetch them"
+        }
+      ],
+      "note": "Stranded by wrecked ground or flood; never a captive or a victim."
+    },
+    {
+      "id": "rescue.rise",
+      "family": "rescue",
+      "column": "2. Rise",
+      "reads": [
+        "opp",
+        "place"
+      ],
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "block",
+          "does": "bars the way"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "rescue.twist",
+      "family": "rescue",
+      "column": "3. Twist",
+      "reads": [
+        "stranded",
+        "guest"
+      ],
+      "beats": [
+        {
+          "role": "stranded",
+          "hook": "found",
+          "does": "turns out to be unexpected, and cheerful"
+        }
+      ],
+      "note": "The Cyborg reads wear and a thing wrecked only, never a toll or a person (ln04, ln05)."
+    },
+    {
+      "id": "rescue.escalation",
+      "family": "rescue",
+      "column": "4. Escalation",
+      "reads": [
+        "place",
+        "home_wear"
+      ],
+      "beats": [
+        {
+          "role": "radio",
+          "hook": "report",
+          "does": "the ground gives way near the route"
+        },
+        {
+          "role": "p1",
+          "hook": "react",
+          "does": "hurries"
+        }
+      ],
+      "note": "Place and wear only.",
+      "cyborg": {
+        "home_wear": "own_yard_only",
+        "off_if": "the Cyborg claim is a town or city, not his own yard"
+      }
+    },
+    {
+      "id": "rescue.climax",
+      "family": "rescue",
+      "column": "5. Climax",
+      "reads": [
+        "opp",
+        "stranded"
+      ],
+      "beats": [
+        {
+          "role": "opp",
+          "hook": "claim",
+          "does": "dares them to win the way through"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "id": "rescue.cliffhanger",
+      "family": "rescue",
+      "column": "Cliffhanger card",
+      "reads": [
+        "stranded",
+        "next"
+      ],
+      "beats": [
+        {
+          "role": "radio",
+          "hook": "warn",
+          "does": "safe at last, with one question left open"
+        }
+      ],
+      "note": ""
+    }
+  ],
+  "title_card_formats": {
+    "main": "EPISODE {n}: {title}   (Orb's number and Orb's title)",
+    "filler_in_main": "EPISODE {n}.5: {title}   (n = the main episode it follows; a generated title)",
+    "standalone_filler_episode": "SIDE STORY: {title}   (no number: it sits outside the season)",
+    "filler_arc": "{ARC TITLE} · EPISODE {k} OF 3   (the arc's own short title: The {planet} Special)"
+  },
+  "title_patterns": {
+    "training_day": [
+      "A Day at {place}",
+      "Training at {place}",
+      "The Long Drill"
+    ],
+    "rivalry_game": [
+      "The Bet at {place}",
+      "Best of Three",
+      "The Game at {place}"
+    ],
+    "tournament": [
+      "The {place} Tournament",
+      "Four on the Stage",
+      "The Final at {place}"
+    ],
+    "rescue": [
+      "Bring {stranded} Home",
+      "Cut Off at {place}",
+      "The Far Road"
+    ]
+  },
+  "side_place_callouts": {
+    "training_day": [
+      "A practice yard on the ring. Spar?",
+      "A training ground ahead. Warm up?",
+      "Someone is drilling at {place}."
+    ],
+    "rivalry_game": [
+      "A game is on at {place}.",
+      "Two rivals, a bet, a side story.",
+      "A friendly game ahead. Join?"
+    ],
+    "tournament": [
+      "A tournament on the stage ahead.",
+      "Rounds are starting at {place}.",
+      "A side story: the stage is open."
+    ],
+    "rescue": [
+      "Someone's stranded at {place}.",
+      "A rescue ahead. Fly to it?",
+      "A fighter is cut off. Help?"
+    ]
+  },
+  "main_story_slots": {
+    "ORB.episode.cold_open": "Orb writes: who, where, what happens.",
+    "ORB.episode.rise": "Orb writes.",
+    "ORB.episode.twist": "Orb writes.",
+    "ORB.episode.escalation": "Orb writes.",
+    "ORB.episode.climax": "Orb writes: the climax's opponent and place (at least).",
+    "ORB.episode.cliffhanger": "Orb writes the card.",
+    "ORB.arc.finale": "Orb writes the finale."
+  },
+  "samples": [
+    {
+      "template": "training_day.cold_open",
+      "slots": "place=the practice yard, opp=RIVAL",
+      "lines": [
+        {
+          "who": "PROTAGONIST",
+          "text": "Training ground! My favourite kind of place!"
+        },
+        {
+          "who": "RIVAL",
+          "text": "Don't get excited. Warm-up first."
+        }
+      ]
+    },
+    {
+      "template": "training_day.rise",
+      "slots": "opp=RIVAL",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "Your guard's dropping. Fix it."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Okay! Show me how!"
+        }
+      ]
+    },
+    {
+      "template": "training_day.twist",
+      "slots": "guest=CYBORG, place=the practice yard",
+      "lines": [
+        {
+          "who": "CYBORG",
+          "text": "Training? Is there a wreck to hit?"
+        }
+      ]
+    },
+    {
+      "template": "training_day.escalation",
+      "slots": "place=the practice yard, home_wear=damaged",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "The practice wall is cracked. Careful."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Easy with the wall! Aim at me!"
+        }
+      ]
+    },
+    {
+      "template": "training_day.climax",
+      "slots": "opp=RIVAL",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "Final drill. Hit me if you can."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Bring it! Best lesson yet!"
+        }
+      ]
+    },
+    {
+      "template": "training_day.cliffhanger",
+      "slots": "next=a harder drill",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "Class dismissed. Tomorrow, a harder drill."
+        }
+      ]
+    },
+    {
+      "template": "rivalry_game.cold_open",
+      "slots": "opp=RIVAL, contest=best of three",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "Best of three. Loser picks the ground."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Deal! I'm hungry for a win!"
+        }
+      ]
+    },
+    {
+      "template": "rivalry_game.rise",
+      "slots": "opp=RIVAL, round=1 of 3",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "Round one goes to the Rival."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "One down! Next round!"
+        }
+      ]
+    },
+    {
+      "template": "rivalry_game.twist",
+      "slots": "guest=EMPRESS, contest=best of three",
+      "lines": [
+        {
+          "who": "EMPRESS",
+          "text": "Make room, rats. We're playing too."
+        },
+        {
+          "who": "RIVAL",
+          "text": "This is a private game."
+        }
+      ]
+    },
+    {
+      "template": "rivalry_game.escalation",
+      "slots": "opp=RIVAL, round=2 of 3",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "Last rounds. Nobody holds back now."
+        }
+      ]
+    },
+    {
+      "template": "rivalry_game.climax",
+      "slots": "opp=RIVAL, round=3 of 3, contest=best of three",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "Final round. The winner picks the ground."
+        },
+        {
+          "who": "RIVAL",
+          "text": "Everything rides on this one."
+        }
+      ]
+    },
+    {
+      "template": "rivalry_game.cliffhanger",
+      "slots": "opp=RIVAL, next=a rematch",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "A rematch is promised. The loser picks."
+        }
+      ]
+    },
+    {
+      "template": "tournament.cold_open",
+      "slots": "place=the stage, round=1 of 3",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "Round one on the stage. Four fighters."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "A tournament! This is great!"
+        }
+      ]
+    },
+    {
+      "template": "tournament.rise",
+      "slots": "opp=RIVAL, round=1 of 3",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "First round. Don't embarrass me."
+        }
+      ]
+    },
+    {
+      "template": "tournament.twist",
+      "slots": "guest=CYBORG, round=2 of 3",
+      "lines": [
+        {
+          "who": "CYBORG",
+          "text": "I signed up too. Is food free?"
+        }
+      ]
+    },
+    {
+      "template": "tournament.escalation",
+      "slots": "opp=EMPRESS, round=2 of 3, place=the stage",
+      "lines": [
+        {
+          "who": "EMPRESS",
+          "text": "Gahaha! Even the stage trembles!"
+        }
+      ]
+    },
+    {
+      "template": "tournament.climax",
+      "slots": "opp=EMPRESS, round=3 of 3",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "The final. One fighter takes the stage."
+        },
+        {
+          "who": "EMPRESS",
+          "text": "The title is ours, rat!"
+        }
+      ]
+    },
+    {
+      "template": "tournament.cliffhanger",
+      "slots": "next=a rematch",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "A winner is crowned. A rematch is coming."
+        }
+      ]
+    },
+    {
+      "template": "rescue.cold_open",
+      "slots": "stranded=CYBORG, place=the far ridge",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "A fighter is stranded across the ring."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Then let's go and fetch them!"
+        }
+      ]
+    },
+    {
+      "template": "rescue.rise",
+      "slots": "opp=RIVAL, place=the road",
+      "lines": [
+        {
+          "who": "RIVAL",
+          "text": "Turn back. The road is mine."
+        }
+      ]
+    },
+    {
+      "template": "rescue.twist",
+      "slots": "stranded=CYBORG, guest=EMPRESS",
+      "lines": [
+        {
+          "who": "CYBORG",
+          "text": "About time! I'm starving down here!"
+        }
+      ]
+    },
+    {
+      "template": "rescue.escalation",
+      "slots": "place=the far ridge, home_wear=damaged",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "The ground is giving way near the route."
+        },
+        {
+          "who": "PROTAGONIST",
+          "text": "Hurry! Fly over it!"
+        }
+      ]
+    },
+    {
+      "template": "rescue.climax",
+      "slots": "opp=EMPRESS, stranded=CYBORG",
+      "lines": [
+        {
+          "who": "EMPRESS",
+          "text": "Win, rat, and take your friend home!"
+        }
+      ]
+    },
+    {
+      "template": "rescue.cliffhanger",
+      "slots": "stranded=CYBORG",
+      "lines": [
+        {
+          "who": "RADIO",
+          "text": "Safe at last. But how did they get there?"
+        }
+      ]
+    }
+  ]
+}
