@@ -132,7 +132,7 @@ const CAP = {
   S1: 'Side by side on one clock: a claw presses X on the flick\'s own tick, a normal thumb 6 ticks later, and both blows start on the same tick, the step flowing into the strike. A press made during a hold waits for the release plus 6, the same as a press made then.',
   S2: 'LT is the one dodge against blows, and the left stick picks the slip: away slips back off the line, toward slips in past his fist and inside his arm, up sways over a low blow, down ducks under a high one.',
   S3: 'LB with a right flick sets a read for up to 90 ticks at 3 ki, and it shows in the stance: up reads his heavy (he is left open), down his flurry (his run is broken), toward his grab (it breaks as it closes), away his shot (a sidestep). Last, a wrong read: it costs the ki and nothing more.',
-  S4: 'The stick against the D-pad, side by side: a tap is the flick (the step or the lunge), LB with a tap is the read, and a held direction is the hold (the dash). The pad\'s form costs the same and starts no later.',
+  S4: 'The stick against the D-pad, side by side: a tap is the flick (the step or the lunge), LB with a tap is the read, and a held direction is the hold (the dash). The pad\'s form costs the same and acts on the same tick (GD\'s ruling 15).',
   R1: 'Flight, with nothing held: a flick toward him from range is the lunge (10 ki); in reach it is a step in; a flick away steps back and slips a shot; flicks up and down hop and drop.',
   R2: 'Holds continue their flicks: a hold away or toward is the dash; in reach, a hold up or down is the orbit, and held through it is the cross-up onto his other side.',
   R3: 'A hold into the cliff face runs him up it; near the ground or the water, a hold down skims along the surface while the left stick steers.',

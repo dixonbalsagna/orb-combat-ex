@@ -73,7 +73,7 @@ function renderSteps() {
 }
 function audio() { if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; } } }
 function tone(f0, f1, dur, vol, type) { if (!ac) return; var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime; o.type = type || 'square'; o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f1, t + dur); g.gain.setValueAtTime(vol, t); g.gain.linearRampToValueAtTime(0, t + dur); o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + dur + 0.02); }
-var SOUNDS = { click: function () { tone(1200, 1200, 0.03, 0.05); }, bolt: function () { tone(1600, 900, 0.03, 0.015); }, beam: function () { tone(160, 90, 0.25, 0.05, 'sawtooth'); } };
+var SOUNDS = { nack: function () { tone(260, 200, 0.06, 0.03); }, click: function () { tone(1200, 1200, 0.03, 0.05); }, bolt: function () { tone(1600, 900, 0.03, 0.015); }, beam: function () { tone(160, 90, 0.25, 0.05, 'sawtooth'); } };
 function frame(ts) {
   if (!last) last = ts; var dt = Math.min(50, ts - last); last = ts; acc += dt / 16.667 * spd * (run.clip && run.clip.takes[run.take].slow ? 1 / run.clip.takes[run.take].slow : 1);     // side-by-side takes play at half speed
   var inp = input();
