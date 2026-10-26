@@ -87,6 +87,21 @@ func duplicate() -> SplitFrame:
 
 ## Weight of pane 1 at screen point p (pane 0's is one minus this). Zero or one away from the divider; a smooth blend
 ## across the feather while the panes dissolve into one view.
+## Pane i's visible region on the screen, for culling what lies wholly on the hidden side of the divider (Rendering, the
+## split's second terrain draw: Performance, 2026-10-23). {"all": true} when the pane fills the screen, {"none": true} when it
+## is not drawn, else {"n": Vector2, "d": float}: a screen point p (px) can show in pane i only if n.dot(p) >= d. Conservative:
+## d sits past the divider by its feather, half its line, the largest shake (a pane's camera jitter moves its picture, not the
+## divider) and VIS_MARGIN_PX. The same test as weight1, so the compositor never shows a pixel the plane excludes.
+func visible_half_plane(i: int) -> Dictionary:
+	if not bool(active[i]):
+		return {"none": true}
+	if not bool(active[1 - i]):
+		return {"all": true}
+	var m: float = feather + gap * 0.5 + CamParams.SHAKE_CAP * CamParams.SHAKE_PREF_TOP * vh + CamParams.VIS_MARGIN_PX
+	var nn: Vector2 = n if i == 1 else -n
+	return {"n": nn, "d": nn.dot(c) - m}
+
+
 func weight1(p: Vector2) -> float:
 	if not bool(active[1]):
 		return 0.0

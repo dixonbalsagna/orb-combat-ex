@@ -21,6 +21,7 @@ extends Node3D
 
 const TERRAIN_SHADER: Shader = preload("res://render/shaders/terrain.gdshader")
 const WATER_SHADER: Shader = preload("res://render/shaders/water.gdshader")
+const FAR_TOWN_SHADER: Shader = preload("res://render/shaders/far_town.gdshader")
 const CROWD_SHADER: Shader = preload("res://render/shaders/crowd.gdshader")
 const BUILDING_SHADER: Shader = preload("res://render/shaders/building.gdshader")
 const STUB_WHOLE := 1.0e9     # a stub height that cuts nothing
@@ -48,6 +49,11 @@ var _water_drawn: int = -1              # the ground's water_version this pane l
 var _crowd_mat: ShaderMaterial
 var _terrain_mat: ShaderMaterial
 var _water_mat: ShaderMaterial
+static var cull_on: bool = RenderLook.SPLIT_CULL_ON   # the split's culling (cull_to); main's --nocull turns it off
+var _cull: Array = []                  # per copy: [copy, its chunks' union box, [[chunk node, box, left out]...]] (cull_to)
+var culled: int = 0                    # the chunks this pane left out of its last frame (for the checks and the bench)
+var _town_mat: ShaderMaterial = null   # the distant towns' (far_town.gdshader): the ground's uniforms, for the far land they stand on
+var _town_nodes: Array = []            # each prop copy's FarTowns (set_far gives them the far land's towns)
 var _bld: MultiMesh                  # every part of every building that is not in row 0: the bodies by building index, then the other parts
 var _tree: MultiMesh
 var _tree_mat: ShaderMaterial        # this pane's trees (their own, so the world's light tints them alone)
@@ -128,6 +134,8 @@ func build(S: SimState) -> void:
 		remove_child(c)
 		c.free()
 	_copies.clear()
+	_town_nodes.clear()
+	_far_sent = -1   # the new copies' towns come with the next set_far
 	if _built_nc != SimConst.NC:
 		# The arena's length changed (World's shifting arena; and the first build): the ground's data, its meshes and
 		# the materials that read them are sized by it, so they are made again. A second pane takes the first's.
@@ -225,6 +233,7 @@ func build(S: SimState) -> void:
 		var cm: ShaderMaterial = _crowd_mat.duplicate() as ShaderMaterial
 		cm.set_shader_parameter("id_base", _crowd.firsts[c])
 		_crowd_mats.append(cm)
+	_cull.clear()
 	var nk: int = copies_each_side()
 	var np: int = prop_copies_each_side()
 	for k in range(-nk, nk + 1):
@@ -244,9 +253,114 @@ func build(S: SimState) -> void:
 			_mm_child(n, "Trees", _tree, _tree_mat)
 			for c in range(_crowd.chunks.size()):
 				_mm_child(n, "Crowd%d" % c, _crowd.chunks[c], _crowd_mats[c])
+			_mm_child(n, "FarTowns", null, _town_mat)
+			_town_nodes.append(n.get_node("FarTowns"))
+			_town_nodes[-1].visible = false
 		_copies.append(n)
+		_cull_items(n)
 	if source == null:
 		refresh(S, true)
+
+
+## A copy's ground and water chunks for the split's culling (cull_to): a terrain chunk and the water chunk of the same mesh
+## (the same columns and rows) as one box, from the meshes' own boxes (which the shaders' heights stay inside), kept as
+## centres and half sizes; and the copy's whole box.
+func _cull_items(n: Node3D) -> void:
+	var nodes: Array = []
+	var pk := PackedFloat32Array()   # per box: centre x, y, z, half size x, y, z
+	var all := AABB()
+	for m in range(_terrain_meshes.size()):
+		var group: Array = []
+		var box := AABB()
+		for nm in ["Terrain%d" % m, "Water%d" % m]:
+			var mi := n.get_node_or_null(nm) as MeshInstance3D
+			if mi != null and mi.mesh != null:
+				box = mi.mesh.get_aabb() if group.is_empty() else box.merge(mi.mesh.get_aabb())
+				group.append(mi)
+		if group.is_empty():
+			continue
+		all = box if nodes.is_empty() else all.merge(box)
+		nodes.append(group)
+		var e: Vector3 = box.size * 0.5
+		var c: Vector3 = box.position + e
+		pk.append_array(PackedFloat32Array([c.x, c.y, c.z, e.x, e.y, e.z]))
+	var out := PackedByteArray()
+	out.resize(nodes.size())
+	_cull.append([n, all, nodes, pk, out])
+
+
+## The split's culling (Performance, 2026-10-23: each split pane draws the whole world, though only its side of the
+## divider shows): this pane leaves out of its draw the ground's and water's chunks that lie wholly on the hidden side
+## of its visible half-plane (Camera's SplitFrame.visible_half_plane: a screen point p can show only if n.p >= d, widened
+## by the divider's feather, its line, the largest shake and a margin). A line on the screen is a plane through the
+## camera, so a chunk is left out only when its whole box, widened by the planet's bend (mats.sag_max's bound), lies
+## behind that plane: nothing that can show is lost. A chunk left out has its render layers cleared (`visible` stays the
+## planet's own: the water's chunks show only where there is water). hp: {"n", "d"}, {"all"} or {} (draw everything),
+## {"none"} (the pane is not drawn: left as it is).
+func cull_to(cam: Camera3D, hp: Dictionary) -> void:
+	if hp.has("none"):
+		return
+	var pl: Array = _view_plane(cam, hp) if cull_on and hp.has("n") else []
+	culled = 0
+	var bp: Vector3 = mats.bend_params()   # bend, the camera's distance, the focus depth
+	for cc in _cull:
+		var ox: float = (cc[0] as Node3D).position.x
+		var out: PackedByteArray = cc[4]
+		var pk: PackedFloat32Array = cc[3]
+		var whole: int = 1
+		if not pl.is_empty():
+			var b: AABB = cc[1]
+			var e: Vector3 = b.size * 0.5
+			var c: Vector3 = b.position + e
+			whole = _side(pl, bp, c.x + ox, c.y, c.z, e.x, e.y, e.z)   # 1 all can show, -1 none can, 0 test each chunk
+		for j in range(out.size()):
+			var o: int = 0
+			if whole < 0:
+				o = 1
+			elif whole == 0:
+				var q: int = j * 6
+				o = 1 if _side(pl, bp, pk[q] + ox, pk[q + 1], pk[q + 2], pk[q + 3], pk[q + 4], pk[q + 5]) < 0 else 0
+			if o != out[j]:
+				out[j] = o
+				for mi in cc[2][j]:
+					(mi as MeshInstance3D).layers = 0 if o == 1 else 1
+			culled += o
+		cc[4] = out
+
+
+## The world plane the pane's screen line lies in, through the camera: [its normal (toward what can show), the camera's
+## place]; [] for a line it cannot place.
+func _view_plane(cam: Camera3D, hp: Dictionary) -> Array:
+	var n: Vector2 = hp["n"]
+	var nn: float = n.length_squared()
+	if nn < 1e-12:
+		return []
+	var p0: Vector2 = n * (float(hp["d"]) / nn)
+	var t: Vector2 = Vector2(-n.y, n.x).normalized() * 4096.0
+	var nrm: Vector3 = cam.project_ray_normal(p0 - t).cross(cam.project_ray_normal(p0 + t))
+	if nrm.length_squared() < 1e-18:
+		return []
+	if nrm.dot(cam.project_ray_normal(p0 + n.normalized() * 64.0)) < 0.0:
+		nrm = -nrm
+	return [nrm, cam.global_position]
+
+
+## Which side of the plane a box (centre cx, cy, cz, half sizes ex, ey, ez, in the pane's world) is on, widened by the
+## bend (bp: mats.bend_params; RenderMats.sag_max's bound, inline): 1 wholly where it can show, -1 wholly where it
+## cannot, 0 across.
+static func _side(pl: Array, bp: Vector3, cx: float, cy: float, cz: float, ex: float, ey: float, ez: float) -> int:
+	var x0: float = cx - ex
+	var x1: float = cx + ex
+	var b_far: float = maxf(bp.z - (cz - ez), 0.0)
+	var b_near: float = maxf(bp.z - (cz + ez), 0.0)
+	var drop: float = bp.x * maxf(x0 * x0, x1 * x1) * clampf((b_far - 60.0) / 1200.0, 0.0, 1.0) * bp.y / (bp.y + b_near)
+	var nrm: Vector3 = pl[0]
+	var o: Vector3 = pl[1]
+	var s: float = nrm.x * (cx - o.x) + nrm.y * (cy - drop * 0.5 - o.y) + nrm.z * (cz - o.z)
+	var r: float = absf(nrm.x) * ex + absf(nrm.y) * (ey + absf(drop) * 0.5) + absf(nrm.z) * ez
+	if s - r >= 0.0:
+		return 1
+	return -1 if s + r < 0.0 else 0
 
 
 ## The ground's and water's copies each side of the camera: PLANET_COPIES planets of the whole planet's length, so a
@@ -299,6 +413,8 @@ func update(S: SimState, cam_x: float, heat: PackedFloat32Array = PackedFloat32A
 		_water_mat.set_shader_parameter("crater_now", S.T)
 	for c in _copies:
 		c.position.x = float(c.get_meta("k")) * SimConst.W - cam_x
+	if _towns_on:
+		_town_mat.set_shader_parameter("town_cam_x", cam_x)   # where the copies stand, for the far land under each block
 	if ground != null and ground.water_version != _water_drawn:
 		_water_drawn = ground.water_version
 		_water_show(S)
@@ -965,6 +1081,7 @@ func _mm_child(parent: Node3D, n: String, mm: MultiMesh, mat: Material = null) -
 var _calm: bool = false              # the grooves are drawn calm (set_calm)
 var _drift_sent: float = 0.0         # the slow drift's tan last sent to the ground's materials (set_drift)
 var _far_sent: int = -1              # the far land's version last sent to the ground's materials (set_far)
+var _towns_on: bool = false          # the distant towns are drawn (set_far)
 var _crater_now: float = -1.0        # the match time last sent to the ground's materials (a new crater's age)
 
 
@@ -975,7 +1092,14 @@ func _make_materials() -> void:
 	_far_sent = -1
 	_water_mat = ShaderMaterial.new()
 	_water_mat.shader = WATER_SHADER
-	for m in [_terrain_mat, _water_mat]:
+	_town_mat = ShaderMaterial.new()
+	_town_mat.shader = FAR_TOWN_SHADER
+	_town_mat.set_shader_parameter("town_cols", RenderLook.FAR_TOWN_COLS.map(func(h): return RenderLook.col(h)))
+	_town_mat.set_shader_parameter("town_row0", -RenderLook.Z_TERRAIN_BACK)   # the ground's mesh past the crater rows (ground_rows)
+	_town_mat.set_shader_parameter("town_row_k", 1.0 + RenderLook.ROW_GROWTH)
+	_town_mat.set_shader_parameter("town_stride", float(RenderLook.STRIDES[-1][1]))
+	_town_mat.set_shader_parameter("town_slope", RenderLook.FAR_TOWN_SLOPE)
+	for m in [_terrain_mat, _water_mat, _town_mat]:
 		m.set_shader_parameter("heights", ground.tex)
 		m.set_shader_parameter("hot", ground.htex)
 		m.set_shader_parameter("craters", ground.ctex)
@@ -1127,6 +1251,7 @@ func set_drift(t: float) -> void:
 	_drift_sent = t
 	_terrain_mat.set_shader_parameter("drift_tan", t)
 	_water_mat.set_shader_parameter("drift_tan", t)
+	_town_mat.set_shader_parameter("drift_tan", t)
 
 
 ## The planet's own far land (render/core/far_land.gd): its map and the ring on the ground's materials, when they change.
@@ -1136,6 +1261,11 @@ func set_far(f: FarLand) -> void:
 	_far_sent = f.version
 	f.apply(_terrain_mat)
 	f.apply(_water_mat)
+	f.apply(_town_mat)
+	_towns_on = f.on and f.towns != null
+	for n in _town_nodes:
+		n.multimesh = f.towns if _towns_on else null
+		n.visible = _towns_on
 
 
 func set_calm(on: bool) -> void:
@@ -1171,7 +1301,7 @@ func set_world_light(world: Array, win: float) -> void:
 func _apply_wl() -> void:
 	if _wl.is_empty() or _terrain_mat == null:
 		return
-	var by: Dictionary = {"ground": [_terrain_mat], "water": [_water_mat], "buildings": [_bld_mat, _front_mat], "trees": [_tree_mat], "civilians": [_crowd_mat] + _crowd_mats}
+	var by: Dictionary = {"ground": [_terrain_mat], "water": [_water_mat], "buildings": [_bld_mat, _front_mat, _town_mat], "trees": [_tree_mat], "civilians": [_crowd_mat] + _crowd_mats}
 	for li in range(RenderLook.WORLD_LAYERS.size()):
 		for m in by.get(RenderLook.WORLD_LAYERS[li], []):
 			if m != null:

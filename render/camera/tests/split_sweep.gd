@@ -580,6 +580,18 @@ func _frame_checks(fr: SplitFrame, cur: SplitFrame, alpha: float = 1.0) -> void:
 			var head: float = a.y - (CamParams.BODY_H * 0.5 + CamParams.BODY_H * 1.0) * fr.cam_z[i]
 			if head < 0.0:
 				_fail_once("headroom", "%s: fighter %d has less than a body height of headroom" % [_label, i])
+	# The visible half-plane (Rendering culls on it): every sampled point a pane shows lies inside its plane.
+	for gy in range(3):
+		for gx in range(5):
+			var pt: Vector2 = Vector2(vw * (0.05 + 0.225 * gx), vh * (0.1 + 0.4 * gy))
+			var w1p: float = fr.weight1(pt)
+			for i in range(2):
+				var wi: float = w1p if i == 1 else 1.0 - w1p
+				if wi > 0.001:
+					var hp: Dictionary = fr.visible_half_plane(i)
+					var inside: bool = hp.has("all") or (hp.has("n") and Vector2(hp["n"]).dot(pt) >= float(hp["d"]))
+					if not inside:
+						_fail_once("visplane", "%s: pane %d shows %s but its visible half-plane excludes it (%s)" % [_label, i, str(pt), str(hp)])
 	# 3. limits between consecutive display frames
 	if _prev_disp != null and not cur.cut:
 		var dt: float = 1.0 / DISPLAY_HZ

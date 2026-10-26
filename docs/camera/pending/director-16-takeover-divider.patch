@@ -1,0 +1,67 @@
+--- a/render/camera/split_rig.gd
++++ b/render/camera/split_rig.gd
+@@ -4073,7 +4073,10 @@
+ 	var hn: float = _half_extent_along_n(f.n)
+ 	var delta: float = 0.0
+ 	if e_slot >= 0:
+-		delta = e * hn * (1.0 - 2.0 * sliver) * (1.0 if e_slot == 0 else -1.0)
++		# Split grace (2026-10-23): the divider sweeps by smoothstep(e), as the panes' anchors move (`_anchor`), so it starts and
++		# lands with them instead of crossing the screen at one speed while they ease. The slam's door keeps its own shape (e = p^3).
++		var ev: float = e if _slam_slot >= 0 else smoothstep(0.0, 1.0, e)
++		delta = ev * hn * (1.0 - 2.0 * sliver) * (1.0 if e_slot == 0 else -1.0)
+ 	f.c = Vector2(vw * 0.5, vh * 0.5) + f.n * delta
+ 	var ss: float = _smootherstep(sep)
+ 	f.gap = maxf(CamParams.GAP_MIN_PX, CamParams.GAP_FRAC * vw)
+--- a/render/camera/tests/split_sweep.gd
++++ b/render/camera/tests/split_sweep.gd
+@@ -203,6 +203,7 @@
+ 	await _scenario("fold", func(): return _fold(), {})
+ 	await _scenario("angle shot", func(): return _angle_shot(), {})
+ 	await _scenario("power-up angle", func(): return _power_up_angle(), {})
++	await _scenario("takeover divider eased", func(): return _takeover_eased(), {})
+ 	await _scenario("landscape shot", func(): return _landscape(false), {})
+ 	await _scenario("landscape shot let go by a hit", func(): return _landscape(true), {})
+ 	await _scenario("arena turn, one view", func(): return _arena_turn(600.0), {})
+@@ -4001,6 +4002,42 @@
+ 	return {}
+ 
+ 
++## Split grace (2026-10-23): a shot takes the screen from the split (a transformation on fighter 0) and gives it back. The divider's
++## centre moves with eased speed: its first and last steps are small against its largest, it never steps more than 1.6 times the
++## linear rate's step, and both fighters stay on the screen where they are shown.
++func _takeover_eased() -> Dictionary:
++	var ax: float = 20000.0
++	_pose(ax, 40.0, ax + 9000.0, 40.0)
++	_seed_rig()
++	for _i in range(240):
++		_tick_rig()
++	_check(_rig.sep >= 0.999, "%s: the pair did not split (sep %.3f)" % [_label, _rig.sep])
++	var cs: Array = []
++	_tick_rig([_shot_events("transform", {"actor": 0.0, "tier": 2.0, "source": "x", "dur": 1.5})])
++	cs.append(_rig.current().c.x)
++	for _k in range(200):
++		_tick_rig()
++		cs.append(_rig.current().c.x)
++	var steps: Array = []
++	for k in range(1, cs.size()):
++		steps.append(absf(float(cs[k]) - float(cs[k - 1])))
++	var moving: Array = []
++	for k in range(steps.size()):
++		if float(steps[k]) > 0.05:
++			moving.append(k)
++	var big: float = 0.0
++	for st in steps:
++		big = maxf(big, float(st))
++	var lin: float = (vw * 0.5) * (1.0 - 2.0 * CamParams.CINE_SLIVER) / (CamParams.T_ENGAGE * 60.0)
++	_check(moving.size() >= 4, "%s: the divider did not move (%d moving ticks)" % [_label, moving.size()])
++	if moving.size() >= 4:
++		var first: float = float(steps[int(moving[0])])
++		_check(first <= 0.35 * big, "%s: the divider started at %.1f px a tick (largest %.1f)" % [_label, first, big])
++	_check(big <= 1.6 * lin, "%s: the divider stepped %.1f px in a tick (the linear rate's %.1f)" % [_label, big, lin])
++	stats["detail " + _label] = "moving ticks %d, first step %.1f px, largest %.1f px (linear %.1f)" % [moving.size(), float(steps[int(moving[0])]) if moving.size() > 0 else 0.0, big, lin]
++	return {}
++
++
+ ## The shot grammar's landscape shot (2026-10-23): the pair flies across a biome border at 480 u/s in the plain one view. Once the
+ ## middle has stayed in the new ground SCAPE_SETTLE, the view eases out (never a fighter under SCAPE_MIN_R of the height, or his size
+ ## before if that was smaller), tilts low and leans toward the new ground, holds and eases back: one shot, no cut, the angle never

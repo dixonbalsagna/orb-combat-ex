@@ -17,7 +17,7 @@ World's window 2 (`docs/world/shifting-arena-design.md`): between turns the aren
 
 ## The planet's own far land (2026-10-22)
 
-On a planet match that may turn (World's epoch), the far land is the planet's own ground beside the ring, read from World's `WorldFarMap` (`render/core/far_land.gd`).
+On a planet match, the far land is the planet's own ground beside the ring, read from World's `WorldFarMap` (`render/core/far_land.gd`). Since 2026-10-23 that is every planet match, the turn on or off: the ring comes from World's `S.planetRing`, which a turn keeps up to date.
 
 - **The map:**
   - a `RenderLook.FAR_MAP_N` (192) square octahedral map of the planet's heights and biomes;
@@ -28,7 +28,8 @@ On a planet match that may turn (World's epoch), the far land is the planet's ow
   - World's `field()` is not called. It is the check: a GDScript twin of the shader reads within 0.004 units of it on planet 7, at ten depths from -120,000 to 9,000.
 - **Its look:**
   - each texel carries its biome's far multiplier and relief amplitude (`FAR_RELIEF`), so the far relief is drawn as before, over the planet's own shape;
-  - the colour comes from the biomes' shares at the texel.
+  - the colour comes from the biomes' shares at the texel;
+  - a settlement's ground (World's `WorldFarMap.sites`, a town's or a city's radius round its centre) takes the village's or the city's colour.
 - **No aliasing.** The map has mip levels. A far row reads the level whose texel matches the rows' spacing in depth there (`far_lod`: `ROW_GROWTH` of the distance, up to `FAR_MAP_LOD_MAX` 5). Without them, the planet's small seas aliased between the sparse far rows into streaks along the horizon.
 - **Only from a hard cut:**
   - it shows from a match's first frame if the map is whole by then, else from World's next turn (`arena_turn`), under its cut;
@@ -36,10 +37,13 @@ On a planet match that may turn (World's epoch), the far land is the planet's ow
   - it never switches in view.
 - **The slow drift turns it too:** the place read moves along the ring by z × tan(angle), relief and all. It also fixes 22i, which turned the base and the biomes but left the relief noise fixed: the relief now turns too, with the sheared field's slope in depth.
 - **Off by default:** `RenderLook.FAR_MAP_ON` false. Main's `--farmap` (`?farmap=1`) turns it on; `--farnow` (`?farnow=1`) builds the map whole at the match's start, for stills and probes.
-- **Not yet:**
-  - a planet match without World's turn keeps the band's far land: the render reads the ring from the epoch (`S.epoch.ring`);
-  - after a turn, the far land beside the carry zone's columns (the old ring's) is read beside the new ring; the rings cross at the pivot, so near it they nearly agree;
-  - settlements are not in World's map, so no towns or cities stand in the far land.
+- **The distant towns and cities** (2026-10-23; `far_land.gd` `_make_towns`, `render/shaders/far_town.gdshader`): World's places (`WorldPlanet.farPlaces`) stand on the far land as blocks, low for a town and taller toward a city's middle, in Art's grey and tan tones, hazed into the sky as the ground is.
+  - **Where a place is drawn.** Behind the fighter plane each column's way runs over the surface toward the ring's axis and on past it, so behind a small ring the ways meet at the axis (12,800 units back on a 2,400-column ring) and fan out again. A place inside the ring is drawn on its own column's way, short of the axis; every place is also drawn on the opposite column's way, past it. Near the axis the far land is drawn wider than the planet, and a town's blocks spread as wide as its ground's colour (up to `FAR_TOWN_WIDE`).
+  - **Standing on the drawn ground.** A block's foot is the height of the ground's mesh under it (the quad of its columns and rows, split as the mesh is split), not the far read between the mesh's points, which can be hundreds of units off on a slope with the rows thousands of units apart. So no block floats or sinks.
+  - **What is left out:** a place the ring passes through (the band's own); blocks short of where the far land is whole (`FAR_BLEND` past the crater rows); a foot in the sea or a lake; a foot on ground steeper than `FAR_TOWN_SLOPE` (a town does not climb a cliff).
+  - **Turned by the slow drift** with the land under it, and made again only at a cut (a match's start, World's turn).
+  - **The numbers** are `RenderLook.FAR_TOWN_*`: the reach (60,000 units), a city's and a town's blocks, sizes and heights (the band's buildings are 400 units at the median), the spread, the foot's sink, the palette.
+- **Not yet:** after a turn, the far land beside the carry zone's columns (the old ring's) is read beside the new ring; the rings cross at the pivot, so near it they nearly agree.
 
 ## Checked
 
@@ -55,3 +59,8 @@ On a planet match that may turn (World's epoch), the far land is the planet's ow
     - the shader's twin against World's `field()` and `farField` (above);
     - the hard cut: off at the start of a new planet's match, whole after 575 steps, still off until a cut, on after a turn, on at once for the same planet again, inactive on the hand-made world.
   - `img/farland-d3f1ca0e.png` (uncommitted): d3f1ca0e, then planet 7 on a 2,400-column ring at ticks 600, 3,000 and 6,600, and at 7,200 with the drift on; the band's far land on the left, the planet's own on the right (seed 4, the AI match, reduced; Tools' launcher).
+- The follow-ups (2026-10-23), on HEAD plus World's far-sites:
+  - `gates9` with `cue_check` and `flash_check` (the 19 render gates) and `split_sweep` pass with it off, with 0 script or shader errors.
+  - A native probe on planet 7 with the turn off, on 2,400-, 4,800- and 1,200-column rings: the far land is on from a match's start with `--farnow`; 752, 481 and 813 town blocks; the hand-made world has none.
+  - The same match with the turn on and off draws the same frames (ticks 600 to 6,600).
+  - `img/fartowns-d3f1ca0e.png` (uncommitted): d3f1ca0e, then 22j's far land and the follow-ups' at ticks 600, 3,000 and 6,600.

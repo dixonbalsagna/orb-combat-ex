@@ -220,6 +220,7 @@ func _ready() -> void:
 		set_legacy_hud(true)
 	roll_on = RenderLook.CAMERA_ROLL_ON or args.has("roll")   # the camera roll on climaxes: off by default (2026-10-22)
 	drift_on = RenderLook.SLOW_DRIFT_ON or args.has("drift")   # the slow drift of the far land and sky: off by default (2026-10-22)
+	PlanetView.cull_on = RenderLook.SPLIT_CULL_ON and not args.has("nocull")   # the split's culling: on; --nocull for the A/B (2026-10-23)
 	far_on = RenderLook.FAR_MAP_ON or args.has("farmap")   # the planet's own far land: off by default (2026-10-22)
 	_far_now = args.has("farnow")
 	hud.key_help = args.has("keyhelp")   # the greybox prompt and key help: off by Orb's minimal rule (2026-10-19)
@@ -576,6 +577,7 @@ func render_view(a: float) -> void:
 				panes[i].occlusion = occlusion
 				panes[i].cutaway = PaneWorld.request(cw[i] if cw is Array and i < cw.size() else ({"only": i} if two else {}), cl[i] if cl is Array and i < cl.size() else null)
 				panes[i].focus_z = float(fzs[i]) if fzs != null and i < fzs.size() else 0.0
+				panes[i].vis_plane = split_frame.visible_half_plane(i) if split_frame.has_method("visible_half_plane") else {}   # Camera's: the split's culling
 				panes[i].near_lobbies = bool(split_rig.get("depth_dolly")) if split_rig != null else false   # Camera's depth follow: its rule for a near tower goes with it
 				panes[i].render(host, a, split_frame.cam_x[i], Vector3(0.0, split_frame.cam_y[i], split_frame.cam_z[i]), j, pitch, _roll(a))
 				if float(split_frame.cam_z[i]) > zmax:
@@ -1272,7 +1274,7 @@ const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off",
 ## without UI's notice, change how a match starts or hold a debug value, and are dropped unless the page is on a local
 ## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze, keyhelp, roll.
 const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]
-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow"]
+const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull"]
 
 
 ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of

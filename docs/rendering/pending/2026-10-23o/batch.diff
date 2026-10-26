@@ -1,0 +1,1347 @@
+diff --git a/render/core/biome_look.gd b/render/core/biome_look.gd
+index b313492..5d264fe 100644
+--- a/render/core/biome_look.gd
++++ b/render/core/biome_look.gd
+@@ -9,7 +9,9 @@ extends RefCounted
+ ## a beam's scar band and its edge; and in the last row, red: whether the biome's rock carries strata lines (desert,
+ ## mountains, volcanic, highland), green: the height above which its ground is rock whatever its slope (ROCK_ABOVE, in
+ ## tens of thousands of units; Art's mountains are green only at the foot). The render's own biome names
+-## (GroundField.BIOME_ORDER) map onto these by id_of.
++## (GroundField.BIOME_ORDER) map onto these by id_of. Window 2: rows COVER_ROW to COVER_ROW + 15 hold the cover's 16
++## palette slots for the biome (RenderCoverMeshes: vegetation, secondary and rock, each lit, mid and shade; trunk;
++## accent; char; ash; shallow water; the ground's lit and shade, the whites and slates of the ices).
+ 
+ const DATA_PATH := "res://data/art/biomes.json"
+ const FINE: Array = ["ocean", "plains", "forest", "desert", "mountains", "ice_sheet", "sea_ice", "jungle", "savanna", "tundra", "taiga", "wetland", "beach", "highland", "volcanic"]
+@@ -24,14 +26,41 @@ const ROW_ROCK: int = 3      # lit, mid, shade
+ const ROW_SUB: int = 6       # lit, mid, shade
+ const ROW_SCAR: int = 9      # the band, then its edge
+ const ROW_STRATA: int = 11   # red 1: the rock carries strata lines; green: ROCK_ABOVE / 10,000
+-const ROWS: int = 12
++const COVER_ROW: int = 12  # the cover's slots (RenderCoverMeshes.SLOTS of them)
++const ROWS: int = 28
+ const LITE := "#fff6e0"      # Art's lite() and dark() (art/concepts/biomes/draw.mjs)
+ const DARK := "#0c0a14"
+ const STRATA: Array = ["desert", "mountains", "volcanic", "highland"]
+ const SCAR_DEFAULT: Array = ["#221c18", "#4a4036"]
+-const ROCK_ABOVE: Dictionary = {"mountains": 1200.0, "highland": 900.0}   # units: above this the ground is rock
++const ROCK_ABOVE: Dictionary = {"mountains": 900.0, "highland": 700.0}   # units: above this the ground is rock
+ 
+ static var _tex: ImageTexture = null
++static var _data = null
++static var _loaded: bool = false
++
++
++## Art's data (data/art/biomes.json), read once; null when it is missing.
++static func data():
++	if not _loaded:
++		_loaded = true
++		_data = JSON.parse_string(FileAccess.get_file_as_string(DATA_PATH)) if FileAccess.file_exists(DATA_PATH) else null
++	return _data
++
++
++## Art's entry for a biome by name: its own, else Art's older name for it, else its stored alias's; {} for none (the
++## city, the village, or no data).
++static func entry(name: String) -> Dictionary:
++	var d = data()
++	if d is Dictionary and d.get("biomes") is Dictionary:
++		for key in [name, OLD.get(name, ""), ALIAS.get(name, "")]:
++			if key != "" and d.biomes.has(key):
++				return d.biomes[key]
++	return {}
++
++
++## A palette column's biome name (a fine name, "city" or "village").
++static func name_of(id: int) -> String:
++	return FINE[id] if id >= 0 and id < FINE.size() else ("city" if id == CITY else "village")
+ 
+ 
+ ## The palette column of a biome by name: one of World's fine names, or the render's own (GroundField.BIOME_ORDER: the
+@@ -48,12 +77,19 @@ static func id_of(name: String) -> int:
+ ## The palette texture (made once): RGBA8, sRGB colours as the data writes them (the shaders read it as a source colour).
+ static func texture() -> ImageTexture:
+ 	if _tex == null:
+-		var d = JSON.parse_string(FileAccess.get_file_as_string(DATA_PATH)) if FileAccess.file_exists(DATA_PATH) else null
++		var d = data()
+ 		var img := Image.create_empty(WIDTH, ROWS, false, Image.FORMAT_RGBA8)
+ 		for k in range(COUNT):
+ 			var t: Array = tones(d, k)
+-			for r in range(ROWS):
++			for r in range(COVER_ROW):
+ 				img.set_pixel(k, r, t[r])
++			var e: Dictionary = entry(name_of(k))
++			if e.is_empty():
++				e = entry("plains")   # the city's and the village's cover, if any stands there, in the plains' colours
++			if e.get("palette") is Dictionary:
++				var sc: PackedColorArray = RenderCoverMeshes.slot_colours(e.palette)
++				for r in range(sc.size()):
++					img.set_pixel(k, COVER_ROW + r, sc[r])
+ 		_tex = ImageTexture.create_from_image(img)
+ 	return _tex
+ 
+@@ -62,13 +98,8 @@ static func texture() -> ImageTexture:
+ ## city and the village, the render's own colour as the mid face with Art's lite and dark for the others, and a
+ ## neighbour's rock and subsoil. Without the data, the render's own biome colours.
+ static func tones(d, k: int) -> Array:
+-	var name: String = FINE[k] if k < FINE.size() else ("city" if k == CITY else "village")
+-	var b: Dictionary = {}
+-	if d is Dictionary and d.get("biomes") is Dictionary:
+-		for key in [name, OLD.get(name, ""), ALIAS.get(name, "")]:
+-			if key != "" and d.biomes.has(key):
+-				b = d.biomes[key]
+-				break
++	var name: String = name_of(k)
++	var b: Dictionary = entry(name) if d is Dictionary else {}
+ 	var g: Array = []
+ 	var r: Array = []
+ 	var sub: String = ""
+diff --git a/render/core/cover_meshes.gd b/render/core/cover_meshes.gd
+new file mode 100644
+index 0000000..584696b
+--- /dev/null
++++ b/render/core/cover_meshes.gd
+@@ -0,0 +1,769 @@
++class_name RenderCoverMeshes
++extends RefCounted
++## Art's 33 biome cover silhouettes (docs/art/biomes-cover.md) as flat meshes the renderer can instance. Each shape is
++## ported from its cover function in art/concepts/biomes/draw.mjs: a few flat polygons, faceted fans and thin lines in
++## the XY plane, x across and y up, with no RGB in it. A vertex's COLOR holds a palette slot (r) and a tone step (g), and
++## the renderer looks the slot up in the palette of the biome the shape stands in (data/art/biomes.json), so one mesh
++## serves every biome a kind grows in. Render only.
++##
++## A kind is drawn as Art's sheet draws it (art/concepts/biomes/covers.mjs): at the middle of its height range
++## (DRAW_H), with draw.mjs's own generator seeded SEED, so the shapes and their triangle counts are the sheet's. Then
++## the clean and charred shapes are fitted to one frame: together they span y from 0 to 1 with the foot at 0, and x is
++## scaled by the same factor about the shape's root (x = 0), so the drawing's proportions hold. An instance of data
++## height h is scaled by h * height_scale(kind) and lowered by ground_line(kind) of that, so it stands where Art drew
++## it: a vent's steam rises above its cone, a pool and a crevasse lie under the ground line, a sea stack's foot is in
++## the swell.
++##
++## Triangles are flat and without indices (each keeps its facet's colour), wound clockwise seen from +z (Godot's front
++## face), with the normal (0, 0, 1). They keep the drawing's order: each polygon lies LAYER_Z in front of the one drawn
++## before it, so a canopy covers its trunk without fighting it in depth. The keyline is not geometry (Rendering's
++## outline, as Art says). The numbers inside the shape functions are draw.mjs's own, in units. Each kind is built once,
++## both states together, and kept.
++
++## The palette slots. COLOR.r is (slot + 0.5) / SLOTS, so a shader reads the slot as int(COLOR.r * 16.0), even from
++## 8-bit vertex colours (read raw, with no sRGB conversion). slot_colours() gives each slot's colour for a biome.
++const VEG_LIT: int = 0       # vegetation, lit face: palette.vegetation[0] (canopies, palm fronds, cacti, fir tiers)
++const VEG_MID: int = 1       # vegetation, mid face
++const VEG_SHADE: int = 2     # vegetation, shade face (and a flower's stem)
++const SEC_LIT: int = 3       # secondary cover, lit face: palette.secondary[0] (grasses, reeds, ferns, scrub; a vent's steam)
++const SEC_MID: int = 4       # secondary cover, mid face (and a jungle tree's lianas)
++const SEC_SHADE: int = 5     # secondary cover, shade face (and a reed's seed head, darkened)
++const ROCK_LIT: int = 6      # rock, lit face: palette.rock[0]
++const ROCK_MID: int = 7      # rock, mid face (and a mesa's talus)
++const ROCK_SHADE: int = 8    # rock, shade face
++const TRUNK: int = 9         # trunks, branches, roots and driftwood: palette.trunk
++# The accent (slot 10) is palette.accent: spruce snow, snow patches, flowers, whitecaps, the lava's glow and crust, a
++# pool's rim, and the termite tower's red earth.
++const ACCENT: int = 10       # the biome's accent: palette.accent
++const CHAR: int = 11         # burned black, CHAR_COLOUR in every biome (burned trunks and stubs)
++const ASH: int = 12          # ash grey, ASH_COLOUR in every biome (the bank under burned stubs)
++const WATER: int = 13        # shallow water: palette.water.shallow (a pool; a crevasse's depth and a berg's foot, toned)
++const SNOW: int = 14         # the ground's lit face: palette.ground[0], the warm white of the ices (spires, floes, bergs)
++const ICE: int = 15          # the ground's shade face: palette.ground[2], the slate of the ices
++const SLOTS: int = 16
++
++const CHAR_COLOUR := Color("#2c2622")   # draw.mjs's CHAR[1]
++const ASH_COLOUR := Color("#5a554f")    # draw.mjs's stubs' ash
++
++## The tone step. COLOR.g is 0.5 + tone / 2: a tone above 0 lifts the slot's colour toward TONE_LIGHT by that share, one
++## below 0 darkens it toward TONE_DARK (draw.mjs's lite() and dark(), mixed in sRGB as toned() does), and at 0.5 the
++## slot's own colour shows. It carries the colours draw.mjs derives from one palette entry (a palm's lit trunk side, a
++## reed's seed head, burned rock). The few it mixes with a second entry, or fixes outright, take the nearest slot and tone.
++const TONE_LIGHT := Color("#fff6e0")
++const TONE_DARK := Color("#0c0a14")
++const TONE_CHAR_LIT: float = 0.13        # a burned trunk's lit side (draw.mjs's CHAR[0], #4a4038)
++const TONE_SCORCH: float = -0.42         # burned rock: draw.mjs takes a boulder's, scree's or mesa's rock half way to #241c16
++const TONE_TRUNK_LIT: float = 0.12       # a palm trunk's lit side
++const TONE_BUTTRESS: float = -0.12       # a jungle tree's buttress (the trunk 12 percent toward black)
++const TONE_SEED_HEAD: float = -0.3       # a reed's seed head
++const TONE_PETAL: float = 0.25           # a flower's lit petals above the accent, its shade petals below
++const TONE_STEAM: float = 0.2            # a vent's steam, lit face
++const TONE_DRIFTWOOD: float = 0.26       # bleached driftwood (draw.mjs: the trunk 35 percent toward #d8d0c0)
++const TONE_SNOW_SHADE: float = -0.2      # a snow patch's shade (draw.mjs: the accent 35 percent toward the slate #485765)
++const TONE_LAVA_CRUST: float = -0.5      # cooled lava's crust (draw.mjs's #7a3220)
++const TONE_CREVASSE: float = -0.53       # a crevasse's depth (draw.mjs's #1b3350)
++const TONE_BERG_SEA: float = 0.08        # a berg's foot under the sea (draw.mjs's #3a7893)
++const TONE_TERMITE: float = 0.06         # a termite tower (draw.mjs lightens the subsoil, which has no slot: the accent's red earth)
++const TONE_TERMITE_SHADE: float = -0.36  # its shade face
++# A mesa's tones on ROCK_MID, clean and charred: its talus (draw.mjs: rock mid 35 percent toward ground mid), and the
++# shaded half of a lit and of a mid band (draw.mjs lays rock shade over the bands at 45 percent).
++const MESA_SKIRT := Vector2(0.12, -0.17)
++const MESA_SHADE_LIT := Vector2(0.0, -0.44)
++const MESA_SHADE_MID := Vector2(-0.13, -0.49)
++
++const SEED: int = 1234                   # draw.mjs's generator seed for every shape, as on Art's sheet
++const PX_PER_UNIT: float = 86.0 / 75.0   # the sheet's scale (a fighter is 75 units, 86 px): line widths are in its pixels
++# Each polygon's lift toward the camera over the one drawn before it, as a share of the height. 0 lays the shape
++# strictly flat, and then only the triangle order keeps the drawing's.
++const LAYER_Z: float = 0.002
++# draw.mjs's fan(): the angle (degrees, y up) its outer edge faces picks a fan triangle's face: lit from the upper left
++# round to the left, shade from below to the right, mid between.
++const FAN_LIT_FROM: float = 95.0
++const FAN_LIT_TO: float = 200.0
++const FAN_SHADE_FROM: float = 255.0
++const FAN_SHADE_TO: float = 40.0
++
++## The height each kind is drawn at, in units: the middle of its height range over every biome it grows in (the cover
++## h in data/art/biomes.json), where Art's sheet draws it. draw.mjs mixes widths fixed in units (a reed blade, a basalt
++## column, a pool's span) with ones that grow with the height, so the proportions are the ones at this height. The
++## order is Art's table's.
++const DRAW_H := {
++	"stack": 190.0, "whitecap": 16.0, "palm": 195.0, "dunegrass": 30.0, "boulder": 66.0, "driftwood": 17.0,
++	"tree": 235.0, "tuft": 30.0, "shrub": 43.0, "acacia": 160.0, "termite": 70.0, "fir": 270.0,
++	"jungletree": 315.0, "fern": 80.0, "flower": 40.0, "reed": 90.0, "mangrove": 160.0, "pool": 7.0,
++	"cactus": 130.0, "scrub": 37.0, "mesa": 200.0, "scree": 35.0, "snowpatch": 12.0, "basaltcol": 125.0,
++	"vent": 55.0, "lavaflow": 12.0, "spruce": 250.0, "krummholz": 45.0, "icespire": 110.0, "crevasse": 12.0,
++	"nunatak": 160.0, "berg": 155.0, "floeblock": 22.0,
++}
++
++static var _meshes: Dictionary = {}   # kind -> [clean, charred] ArrayMesh (the same mesh twice when burning changes nothing)
++static var _tris: Dictionary = {}     # kind -> Vector2i(clean, charred) triangles
++static var _fit: Dictionary = {}      # kind -> Vector2(height_scale, ground_line)
++
++
++## The 33 kinds, in the order of Art's table.
++static func kinds() -> PackedStringArray:
++	return PackedStringArray(DRAW_H.keys())
++
++
++## The kind's mesh, clean or charred (Art's burned state: a black trunk with bare branches for a tree, black stubs on an
++## ash bank for grass and ferns, the rock darkened for a boulder, scree or mesa, the very same mesh for the kinds fire
++## does not touch). A mesh with no surface when the state draws nothing: a burned pool is gone. Null, with an error, for
++## a kind Art has not drawn.
++static func mesh(kind: String, charred: bool) -> ArrayMesh:
++	if not _built(kind):
++		return null
++	return _meshes[kind][1 if charred else 0]
++
++
++## The kind's triangles, clean or charred.
++static func triangles(kind: String, charred: bool) -> int:
++	if not _built(kind):
++		return 0
++	var t: Vector2i = _tris[kind]
++	return t.y if charred else t.x
++
++
++## The mesh's height (its 1.0) in units of the kind's data height: scale an instance of height h by h * height_scale.
++static func height_scale(kind: String) -> float:
++	if not _built(kind):
++		return 1.0
++	return (_fit[kind] as Vector2).x
++
++
++## Where draw.mjs's ground line lies in the mesh, as a share of its height (0 for most kinds; a pool's or a crevasse's is
++## near 1): lower an instance by this times its scaled height, so its ground line sits on the ground.
++static func ground_line(kind: String) -> float:
++	if not _built(kind):
++		return 0.0
++	return (_fit[kind] as Vector2).y
++
++
++## Each slot's colour for one biome, from its palette in data/art/biomes.json ("palette": vegetation, secondary, rock
++## and ground as [lit, mid, shade], trunk, accent, water.shallow), indexed by slot. A reference for the renderer's own
++## lookup; toned() applies a vertex's tone to it.
++static func slot_colours(palette: Dictionary) -> PackedColorArray:
++	var c := PackedColorArray()
++	c.resize(SLOTS)
++	for i in range(3):
++		c[VEG_LIT + i] = Color(String(palette.vegetation[i]))
++		c[SEC_LIT + i] = Color(String(palette.secondary[i]))
++		c[ROCK_LIT + i] = Color(String(palette.rock[i]))
++	c[TRUNK] = Color(String(palette.trunk))
++	c[ACCENT] = Color(String(palette.accent))
++	c[CHAR] = CHAR_COLOUR
++	c[ASH] = ASH_COLOUR
++	c[WATER] = Color(String(palette.water.shallow))
++	c[SNOW] = Color(String(palette.ground[0]))
++	c[ICE] = Color(String(palette.ground[2]))
++	return c
++
++
++## A slot's colour with a vertex's tone step (its COLOR.g) applied, as draw.mjs's lite() and dark() mix it.
++static func toned(c: Color, g: float) -> Color:
++	var t: float = (g - 0.5) * 2.0
++	if t >= 0.0:
++		return c.lerp(TONE_LIGHT, t)
++	return c.lerp(TONE_DARK, -t)
++
++
++## One shape being drawn: its triangles in Art's units, and draw.mjs's generator.
++class _Build:
++	var pos := PackedVector3Array()      # x and y in units; z is the polygon's place in the drawing order
++	var paints := PackedVector2Array()   # per vertex: its slot and tone
++	var layer: int = 0
++	var tris: int = 0
++	var _s: int = 0
++
++	func _init(start: int) -> void:
++		_s = start & 0xffffffff
++
++	## draw.mjs's rng() to the bit: the next number in [0, 1). The state is kept as an unsigned 32-bit value.
++	func rnd() -> float:
++		_s = (_s + 0x6d2b79f5) & 0xffffffff
++		var t: int = _s
++		t = _imul(t ^ (t >> 15), t | 1)
++		t = (t ^ ((t + _imul(t ^ (t >> 7), t | 61)) & 0xffffffff)) & 0xffffffff
++		return float((t ^ (t >> 14)) & 0xffffffff) / 4294967296.0
++
++	## Math.imul on unsigned 32-bit values, split so that no product passes 48 bits.
++	static func _imul(a: int, b: int) -> int:
++		return (a * (b & 0xffff) + (((a * (b >> 16)) & 0xffff) << 16)) & 0xffffffff
++
++
++## Builds both states of a kind once, fits them to one frame (so the swap on burning keeps the shape's place and
++## scale) and keeps them. False, with an error, for a kind Art has not drawn.
++static func _built(kind: String) -> bool:
++	if _meshes.has(kind):
++		return true
++	if not DRAW_H.has(kind):
++		push_error("RenderCoverMeshes: no cover kind '%s'" % kind)
++		return false
++	var h: float = DRAW_H[kind]
++	var clean := _Build.new(SEED)
++	_shape(clean, kind, h, false)
++	var burned := _Build.new(SEED)
++	_shape(burned, kind, h, true)
++	var lo: float = 0.0
++	var hi: float = 0.0
++	for b: _Build in [clean, burned]:
++		for p in b.pos:
++			lo = minf(lo, p.y)
++			hi = maxf(hi, p.y)
++	var e: float = maxf(hi - lo, 0.001)
++	var m: ArrayMesh = _finish(clean, lo, e)
++	var same: bool = clean.pos == burned.pos and clean.paints == burned.paints
++	_meshes[kind] = [m, m if same else _finish(burned, lo, e)]
++	_tris[kind] = Vector2i(clean.tris, burned.tris)
++	_fit[kind] = Vector2(e / h, -lo / e)
++	return true
++
++
++## The drawn shape as a mesh in the kind's frame: y from lo becomes 0, and a height of e becomes 1.
++static func _finish(b: _Build, lo: float, e: float) -> ArrayMesh:
++	var m := ArrayMesh.new()
++	var n: int = b.pos.size()
++	if n == 0:
++		return m
++	var verts := PackedVector3Array()
++	var nrms := PackedVector3Array()
++	var cols := PackedColorArray()
++	verts.resize(n)
++	nrms.resize(n)
++	cols.resize(n)
++	for i in range(n):
++		var p: Vector3 = b.pos[i]
++		var k: Vector2 = b.paints[i]
++		verts[i] = Vector3(p.x / e, (p.y - lo) / e, p.z * LAYER_Z)
++		nrms[i] = Vector3(0.0, 0.0, 1.0)
++		cols[i] = Color((k.x + 0.5) / float(SLOTS), 0.5 + 0.5 * clampf(k.y, -1.0, 1.0), 0.0, 1.0)
++	var arrays: Array = []
++	arrays.resize(Mesh.ARRAY_MAX)
++	arrays[Mesh.ARRAY_VERTEX] = verts
++	arrays[Mesh.ARRAY_NORMAL] = nrms
++	arrays[Mesh.ARRAY_COLOR] = cols
++	m.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
++	return m
++
++
++# ---------------------------------------------------------------------------------------------------- drawing
++
++## A paint: a slot and a tone step.
++static func _k(slot: int, tone: float = 0.0) -> Vector2:
++	return Vector2(slot, tone)
++
++
++## A lit, mid and shade ramp from a lit slot (the two after it are its mid and shade), all at one tone.
++static func _ramp(lit: int, tone: float = 0.0) -> PackedVector2Array:
++	return PackedVector2Array([Vector2(lit, tone), Vector2(lit + 1, tone), Vector2(lit + 2, tone)])
++
++
++## Points from a flat list of x, y pairs, in units.
++static func _pts(xy: Array) -> PackedVector2Array:
++	var out := PackedVector2Array()
++	for i in range(0, xy.size(), 2):
++		out.append(Vector2(float(xy[i]), float(xy[i + 1])))
++	return out
++
++
++## A filled polygon (draw.mjs's poly): cut into simple loops where its edges cross, each loop triangulated (a fan from
++## its first point if that fails). A polygon of n points makes n - 2 triangles, as Art counts them.
++static func _poly(b: _Build, pts: PackedVector2Array, paint: Vector2) -> void:
++	for loop: PackedVector2Array in _loops(pts):
++		var idx: PackedInt32Array = Geometry2D.triangulate_polygon(loop)
++		if idx.size() != 3 * (loop.size() - 2):
++			idx = PackedInt32Array()
++			for i in range(1, loop.size() - 1):
++				idx.append(0)
++				idx.append(i)
++				idx.append(i + 1)
++		for k in range(0, idx.size(), 3):
++			_tri(b, loop[idx[k]], loop[idx[k + 1]], loop[idx[k + 2]], paint)
++	b.layer += 1
++
++
++## A polygon as simple loops. Where two of its edges cross it is cut in two at the crossing, and an SVG fills both
++## parts (a cactus arm's pinched elbow, a frond folded over itself), so both are kept. The loops of a polygon of n
++## points hold n + 2 points per cut, so they still make n - 2 triangles in all.
++static func _loops(pts: PackedVector2Array) -> Array[PackedVector2Array]:
++	var out: Array[PackedVector2Array] = []
++	var n: int = pts.size()
++	for i in range(n):
++		for j in range(i + 2, n):
++			if i == 0 and j == n - 1:
++				continue   # neighbours across the wrap
++			var hit: Variant = Geometry2D.segment_intersects_segment(pts[i], pts[(i + 1) % n], pts[j], pts[(j + 1) % n])
++			if hit == null:
++				continue
++			var x: Vector2 = hit
++			var a := PackedVector2Array([x])
++			for k in range(i + 1, j + 1):
++				a.append(pts[k])
++			var c := PackedVector2Array([x])
++			for k in range(j + 1, n + i + 1):
++				c.append(pts[k % n])
++			out.append_array(_loops(a))
++			out.append_array(_loops(c))
++			return out
++	out.append(pts)
++	return out
++
++
++## A thin line (draw.mjs's line), its width in the sheet's pixels: a quad for each segment.
++static func _line(b: _Build, pts: PackedVector2Array, width_px: float, paint: Vector2) -> void:
++	var half: float = 0.5 * width_px / PX_PER_UNIT
++	for i in range(pts.size() - 1):
++		var p: Vector2 = pts[i]
++		var q: Vector2 = pts[i + 1]
++		var side: Vector2 = (q - p).orthogonal().normalized() * half
++		_tri(b, p - side, p + side, q + side, paint)
++		_tri(b, p - side, q + side, q - side, paint)
++	b.layer += 1
++
++
++## A faceted fan about a centre (draw.mjs's fan): each triangle takes the ramp's lit, mid or shade by the way its outer
++## edge faces.
++static func _fan(b: _Build, c: Vector2, ring: PackedVector2Array, ramp: PackedVector2Array) -> void:
++	var n: int = ring.size()
++	for i in range(n):
++		var p: Vector2 = ring[i]
++		var q: Vector2 = ring[(i + 1) % n]
++		var m: Vector2 = (p + q) * 0.5 - c
++		var ang: float = fposmod(rad_to_deg(atan2(m.y, m.x)), 360.0)
++		var paint: Vector2 = ramp[1]
++		if ang > FAN_LIT_FROM and ang < FAN_LIT_TO:
++			paint = ramp[0]
++		elif ang >= FAN_SHADE_FROM or ang < FAN_SHADE_TO:
++			paint = ramp[2]
++		_tri(b, c, p, q, paint)
++	b.layer += 1
++
++
++## draw.mjs's blob: n points round an ellipse about c, each pushed out or in by up to jit of its radius.
++static func _blob(b: _Build, c: Vector2, rx: float, ry: float, n: int, jit: float) -> PackedVector2Array:
++	var out := PackedVector2Array()
++	for i in range(n):
++		var a: float = float(i) / float(n) * TAU
++		var k: float = 1.0 + (b.rnd() - 0.5) * 2.0 * jit
++		out.append(Vector2(c.x + cos(a) * rx * k, c.y + sin(a) * ry * k))
++	return out
++
++
++## One triangle, wound clockwise seen from +z (Godot's front face), on the current layer.
++static func _tri(b: _Build, p0: Vector2, p1: Vector2, p2: Vector2, paint: Vector2) -> void:
++	var z: float = float(b.layer)
++	b.pos.append(Vector3(p0.x, p0.y, z))
++	if (p1 - p0).cross(p2 - p0) > 0.0:
++		b.pos.append(Vector3(p2.x, p2.y, z))
++		b.pos.append(Vector3(p1.x, p1.y, z))
++	else:
++		b.pos.append(Vector3(p1.x, p1.y, z))
++		b.pos.append(Vector3(p2.x, p2.y, z))
++	b.paints.append(paint)
++	b.paints.append(paint)
++	b.paints.append(paint)
++	b.tris += 1
++
++
++# ---------------------------------------------------------------------------------------------------- the shapes
++# Each draws at the origin (draw.mjs's x and y) with height h, in the order draw.mjs draws, so the generator's numbers
++# fall where they fall on Art's sheet.
++
++static func _shape(b: _Build, kind: String, h: float, charred: bool) -> void:
++	match kind:
++		"stack": _stack(b, h)
++		"whitecap": _whitecap(b, h)
++		"palm": _palm(b, h, charred)
++		"dunegrass": _dunegrass(b, h, charred)
++		"boulder": _boulder(b, h, charred)
++		"driftwood": _driftwood(b, h)
++		"tree": _tree(b, h, charred)
++		"tuft": _tuft(b, h, charred)
++		"shrub": _shrub(b, h, charred)
++		"acacia": _acacia(b, h, charred)
++		"termite": _termite(b, h)
++		"fir": _fir(b, h, charred, false)
++		"jungletree": _jungletree(b, h, charred)
++		"fern": _fern(b, h, charred)
++		"flower": _flower(b, h, charred)
++		"reed": _reed(b, h, charred)
++		"mangrove": _mangrove(b, h, charred)
++		"pool": _pool(b, h, charred)
++		"cactus": _cactus(b, h, charred)
++		"scrub": _scrub(b, h, charred)
++		"mesa": _mesa(b, h, charred)
++		"scree": _scree(b, h, charred)
++		"snowpatch": _snowpatch(b, h)
++		"basaltcol": _basaltcol(b, h)
++		"vent": _vent(b, h)
++		"lavaflow": _lavaflow(b, h)
++		"spruce": _fir(b, h * 1.05, charred, true)
++		"krummholz": _krummholz(b, h, charred)
++		"icespire": _icespire(b, h)
++		"crevasse": _crevasse(b, h)
++		"nunatak": _nunatak(b, h)
++		"berg": _berg(b, h)
++		"floeblock": _floeblock(b, h)
++
++
++## A burned tree (draw.mjs's charredTree): a black trunk with a lit side, and bare branches.
++static func _charred_tree(b: _Build, foot: Vector2, h: float, branches: int) -> void:
++	var w: float = maxf(3.0, h * 0.035)
++	var x: float = foot.x
++	var y: float = foot.y
++	_poly(b, _pts([x - w, y, x + w, y, x + w * 0.55, y + h * 0.7, x - w * 0.55, y + h * 0.7]), _k(CHAR))
++	_poly(b, _pts([x - w, y, x - w * 0.2, y, x - w * 0.1, y + h * 0.68, x - w * 0.55, y + h * 0.7]), _k(CHAR, TONE_CHAR_LIT))
++	for _i in range(branches):
++		var t: float = 0.35 + b.rnd() * 0.4
++		var s: float = -1.0 if b.rnd() < 0.5 else 1.0
++		var bx: float = x + s * w * 0.4
++		var by: float = y + h * t
++		var l: float = h * (0.14 + b.rnd() * 0.14)
++		var tip := Vector2(bx + s * l, by + l * (0.7 + b.rnd() * 0.4))
++		_line(b, PackedVector2Array([Vector2(bx, by), tip]), maxf(1.4, w * 0.7), _k(CHAR))
++
++
++## Burned grass (draw.mjs's stubs): n black stubs spread across the base, and a low ash bank.
++static func _stubs(b: _Build, h: float, n: int, spread: float) -> void:
++	for _i in range(n):
++		var bx: float = (b.rnd() - 0.5) * spread
++		var s: float = (b.rnd() - 0.5) * 6.0
++		var top := Vector2(bx + s, maxf(5.0, h * (0.1 + b.rnd() * 0.14)))
++		_poly(b, PackedVector2Array([Vector2(bx - 2.0, 0.0), Vector2(bx + 2.0, 0.0), top]), _k(CHAR))
++	_poly(b, _pts([-spread * 0.5, 0.0, spread * 0.5, 0.0, spread * 0.3, 4.0, -spread * 0.3, 5.0]), _k(ASH))
++
++
++static func _tree(b: _Build, h: float, charred: bool) -> void:
++	if charred:
++		_charred_tree(b, Vector2.ZERO, h * 0.9, 5)
++		return
++	var tw: float = h * 0.035
++	_poly(b, _pts([-tw * 1.3, 0.0, tw * 1.3, 0.0, tw * 0.8, h * 0.5, -tw * 0.8, h * 0.5]), _k(TRUNK))
++	var c := Vector2(0.0, h * 0.7)
++	_fan(b, c, _blob(b, c, h * 0.3, h * 0.3, 8, 0.16), _ramp(VEG_LIT))
++	if b.rnd() < 0.5:
++		var c2 := Vector2(h * 0.14, h * 0.88)
++		_fan(b, c2, _blob(b, c2, h * 0.18, h * 0.16, 7, 0.16), _ramp(VEG_LIT))
++
++
++## A fir; with snow, the spruce (drawn 1.05 times its height, snow on each tier).
++static func _fir(b: _Build, h: float, charred: bool, snow: bool) -> void:
++	if charred:
++		_charred_tree(b, Vector2.ZERO, h * 0.95, 6)
++		return
++	var bw: float = h * 0.2
++	_poly(b, _pts([-3.0, 0.0, 3.0, 0.0, 2.4, h * 0.2, -2.4, h * 0.2]), _k(TRUNK))
++	for i in range(5):
++		var t0: float = 0.12 + i * 0.17
++		var w: float = bw * (1.0 - i * 0.17)
++		var by: float = h * t0
++		var ty: float = h * minf(1.0, t0 + 0.34)
++		_poly(b, _pts([-w, by, 0.0, ty, 0.0, by]), _k(VEG_LIT))
++		_poly(b, _pts([0.0, by, 0.0, ty, w, by]), _k(VEG_SHADE))
++	if snow:
++		for i in range(5):
++			var t0: float = 0.12 + i * 0.17
++			var w: float = bw * (1.0 - i * 0.17) * 0.5
++			var by: float = h * (t0 + 0.17)
++			_poly(b, _pts([-w, by, 0.0, h * minf(1.0, t0 + 0.34), w, by]), _k(ACCENT))
++
++
++static func _acacia(b: _Build, h: float, charred: bool) -> void:
++	if charred:
++		_charred_tree(b, Vector2.ZERO, h * 0.8, 4)
++		return
++	var tw: float = h * 0.03
++	_poly(b, _pts([-tw * 1.4, 0.0, tw * 1.4, 0.0, tw * 0.7, h * 0.55, -tw * 0.7, h * 0.55]), _k(TRUNK))
++	_poly(b, _pts([-tw * 0.7, h * 0.5, -h * 0.28, h * 0.78, -h * 0.24, h * 0.8, 0.0, h * 0.58]), _k(TRUNK))
++	_poly(b, _pts([tw * 0.7, h * 0.5, h * 0.3, h * 0.76, h * 0.26, h * 0.78, 0.0, h * 0.58]), _k(TRUNK))
++	var crown := _pts([-h * 0.55, h * 0.8, -h * 0.36, h * 0.93, 0.0, h * 0.99, h * 0.38, h * 0.93, h * 0.58, h * 0.8,
++			h * 0.3, h * 0.74, -h * 0.28, h * 0.74])
++	_fan(b, Vector2(0.0, h * 0.84), crown, _ramp(VEG_LIT))
++
++
++static func _jungletree(b: _Build, h: float, charred: bool) -> void:
++	if charred:
++		_charred_tree(b, Vector2.ZERO, h * 0.85, 6)
++		return
++	var tw: float = h * 0.04
++	_poly(b, _pts([-tw * 3.0, 0.0, -tw, h * 0.18, tw, h * 0.18, tw * 3.0, 0.0]), _k(TRUNK, TONE_BUTTRESS))
++	_poly(b, _pts([-tw, h * 0.1, tw, h * 0.1, tw * 0.8, h * 0.78, -tw * 0.8, h * 0.78]), _k(TRUNK))
++	for crown: Vector3 in [Vector3(-h * 0.2, 0.74, 0.26), Vector3(h * 0.22, 0.78, 0.24), Vector3(0.0, 0.88, 0.3)]:
++		var c := Vector2(crown.x, h * crown.y)
++		_fan(b, c, _blob(b, c, h * crown.z, h * crown.z * 0.7, 8, 0.14), _ramp(VEG_LIT))
++	for i in range(3):
++		var lx: float = (i - 1) * h * 0.18
++		_line(b, _pts([lx, h * 0.7, lx + 3.0 * (i - 1), h * 0.3]), 1.6, _k(SEC_MID))
++
++
++static func _fern(b: _Build, h: float, charred: bool) -> void:
++	if charred:
++		_stubs(b, h, 5, 40.0)
++		return
++	for i in range(6):
++		var a: float = (i / 5.0 - 0.5) * 2.2 + (b.rnd() - 0.5) * 0.2
++		var l: float = h * (0.7 + b.rnd() * 0.3)
++		var ex: float = sin(a) * l * 0.9
++		var ey: float = cos(a) * l * 0.8
++		var mx: float = sin(a) * l * 0.4
++		var my: float = cos(a) * l * 0.7 + l * 0.2
++		_poly(b, _pts([0.0, 0.0, mx - 3.0, my, ex, ey, mx + 3.0, my - 2.0]), _k(SEC_LIT if i % 2 == 1 else SEC_MID))
++
++
++static func _flower(b: _Build, h: float, charred: bool) -> void:
++	if charred:
++		_stubs(b, h * 0.5, 2, 14.0)
++		return
++	_line(b, _pts([0.0, 0.0, 0.0, h]), 2.0, _k(VEG_SHADE))
++	var c := Vector2(0.0, h)
++	var ring := PackedVector2Array()
++	for i in range(10):
++		var a: float = i / 10.0 * TAU
++		ring.append(c + Vector2(cos(a), sin(a)) * h * (0.24 if i % 2 == 1 else 0.4))
++	_fan(b, c, ring, PackedVector2Array([_k(ACCENT, TONE_PETAL), _k(ACCENT), _k(ACCENT, -TONE_PETAL)]))
++
++
++static func _palm(b: _Build, h: float, charred: bool) -> void:
++	var lean: float = (b.rnd() - 0.5) * h * 0.3
++	if charred:
++		_poly(b, _pts([-4.0, 0.0, 4.0, 0.0, lean + 2.0, h * 0.85, lean - 2.0, h * 0.85]), _k(CHAR))
++		return
++	_poly(b, _pts([-5.0, 0.0, 5.0, 0.0, lean + 3.0, h * 0.85, lean - 3.0, h * 0.85]), _k(TRUNK))
++	_poly(b, _pts([-5.0, 0.0, -1.0, 0.0, lean, h * 0.85, lean - 3.0, h * 0.85]), _k(TRUNK, TONE_TRUNK_LIT))
++	var tx: float = lean
++	var ty: float = h * 0.85
++	var l: float = h * 0.42
++	for i in range(7):
++		var a: float = (i / 6.0 - 0.5) * 3.0
++		var ex: float = tx + sin(a) * l
++		var ey: float = ty + cos(a) * l * 0.2 - absf(sin(a)) * l * 0.45
++		var mx: float = tx + sin(a) * l * 0.55
++		var my: float = ty + cos(a) * l * 0.35 + l * 0.1
++		_poly(b, _pts([tx, ty, mx, my + 5.0, ex, ey, mx, my - 3.0]), _k(VEG_LIT + i % 3))
++
++
++static func _mangrove(b: _Build, h: float, charred: bool) -> void:
++	if charred:
++		_charred_tree(b, Vector2(0.0, h * 0.15), h * 0.6, 3)
++		return
++	for i in range(5):
++		var s: float = (i - 2) * h * 0.14
++		_line(b, _pts([s * 0.2, h * 0.35, s * 0.9, h * 0.18, s, 0.0]), 2.4, _k(TRUNK))
++	_poly(b, _pts([-5.0, h * 0.3, 5.0, h * 0.3, 3.5, h * 0.6, -3.5, h * 0.6]), _k(TRUNK))
++	var c := Vector2(0.0, h * 0.75)
++	_fan(b, c, _blob(b, c, h * 0.32, h * 0.22, 8, 0.16), _ramp(VEG_LIT))
++
++
++static func _reed(b: _Build, h: float, charred: bool) -> void:
++	if charred:
++		_stubs(b, h, 9, 44.0)
++		return
++	for i in range(8):
++		var bx: float = (i - 4) * 5.0 + (b.rnd() - 0.5) * 4.0
++		var hh: float = h * (0.7 + b.rnd() * 0.5)
++		var lean: float = (b.rnd() - 0.5) * h * 0.2
++		_poly(b, _pts([bx - 2.2, 0.0, bx + 2.2, 0.0, bx + lean, hh]), _k(SEC_LIT + i % 3))
++		if i % 3 == 0:
++			var hx: float = bx + lean
++			_poly(b, _pts([hx - 2.0, hh - 9.0, hx + 2.0, hh - 9.0, hx + 1.4, hh + 6.0, hx - 1.4, hh + 6.0]), _k(SEC_SHADE, TONE_SEED_HEAD))
++
++
++## A pool of standing water, sunk below the ground line, with a pale rim line. Burned, it is gone.
++static func _pool(b: _Build, h: float, charred: bool) -> void:
++	if charred:
++		return
++	var w: float = 90.0 + b.rnd() * 60.0
++	_poly(b, _pts([-w, 0.5, -w * 0.5, -h, w * 0.5, -h * 1.1, w, 0.5]), _k(WATER))
++	_line(b, _pts([-w * 0.6, 0.8, w * 0.6, 0.8]), 1.4, _k(ACCENT))
++
++
++static func _cactus(b: _Build, h: float, charred: bool) -> void:
++	if charred:
++		_poly(b, _pts([-6.0, 0.0, 6.0, 0.0, 5.0, h * 0.9, -5.0, h * 0.9]), _k(CHAR))
++		return
++	var w: float = maxf(6.0, h * 0.075)
++	_poly(b, _pts([-w, 0.0, 0.0, 0.0, 0.0, h * 0.95, -w * 0.5, h]), _k(VEG_LIT))
++	_poly(b, _pts([0.0, 0.0, w, 0.0, w * 0.5, h, 0.0, h * 0.95]), _k(VEG_SHADE))
++	for s: float in [-1.0, 1.0]:
++		var ay: float = h * (0.45 if s < 0.0 else 0.6)
++		var ax: float = s * h * 0.28
++		var arm := _pts([0.0, ay - 5.0, ax - s * w * 0.2, ay - 5.0, ax - s * w * 0.2, ay + h * 0.3, ax + s * w * 1.1, ay + h * 0.3,
++				ax + s * w * 1.1, ay - 5.0, ax + s * w * 0.9, ay - 11.0, ax - s * w * 0.5, ay - 11.0, s * w * 0.4, ay + 8.0])
++		_poly(b, arm, _k(VEG_LIT if s < 0.0 else VEG_SHADE))
++
++
++static func _scrub(b: _Build, h: float, charred: bool) -> void:
++	if charred:
++		_stubs(b, h, 5, 44.0)
++		return
++	for i in range(7):
++		var bx: float = (i - 3) * h * 0.2
++		var lean: float = (i - 3) * h * 0.16 + (b.rnd() - 0.5) * 6.0
++		var top: float = h * (0.7 + b.rnd() * 0.5)
++		_poly(b, _pts([bx - 4.0, 0.0, bx + 4.0, 0.0, bx + lean, top]), _k(SEC_LIT + i % 3))
++
++
++static func _shrub(b: _Build, h: float, charred: bool) -> void:
++	if charred:
++		_stubs(b, h, 5, 40.0)
++		return
++	var c := Vector2(0.0, h * 0.4)
++	_fan(b, c, _blob(b, c, h * 0.7, h * 0.4, 7, 0.15), _ramp(VEG_LIT))
++
++
++static func _tuft(b: _Build, h: float, charred: bool) -> void:
++	if charred:
++		_stubs(b, h, 5, 26.0)
++		return
++	for i in range(7):
++		var bx: float = (i - 3) * 3.2
++		var lean: float = (i - 3) * h * 0.1 + (b.rnd() - 0.5) * 6.0
++		var top: float = h * (0.7 + b.rnd() * 0.5)
++		_poly(b, _pts([bx - 1.8, 0.0, bx + 1.8, 0.0, bx + lean, top]), _k(SEC_LIT + i % 3))
++
++
++static func _dunegrass(b: _Build, h: float, charred: bool) -> void:
++	if charred:
++		_stubs(b, h, 5, 26.0)
++		return
++	for i in range(6):
++		var bx: float = (i - 3) * 3.0
++		var lean: float = (i - 3) * h * 0.22
++		_poly(b, _pts([bx - 1.4, 0.0, bx + 1.4, 0.0, bx + lean, h * (0.8 + b.rnd() * 0.4)]), _k(SEC_LIT + i % 2))
++
++
++static func _krummholz(b: _Build, h: float, charred: bool) -> void:
++	if charred:
++		_charred_tree(b, Vector2.ZERO, h, 3)
++		return
++	_poly(b, _pts([-3.0, 0.0, 3.0, 0.0, 8.0, h * 0.45, 3.0, h * 0.5]), _k(TRUNK))
++	for dx: float in [0.4, 0.9, 1.3]:
++		var c := Vector2(h * dx * 0.5, h * (0.5 + dx * 0.05))
++		_fan(b, c, _blob(b, c, h * 0.34, h * 0.2, 7, 0.14), _ramp(VEG_LIT))
++	_poly(b, _pts([h * 0.1, h * 0.66, h * 0.55, h * 0.74, h * 0.7, h * 0.64]), _k(ACCENT))
++
++
++static func _boulder(b: _Build, h: float, charred: bool) -> void:
++	var rock := _pts([-h * 0.95, 0.0, -h * 0.7, h * 0.7, -h * 0.1, h * 0.95, h * 0.6, h * 0.75, h * 0.95, 0.0])
++	_fan(b, Vector2(0.0, h * 0.4), rock, _ramp(ROCK_LIT, TONE_SCORCH if charred else 0.0))
++
++
++static func _scree(b: _Build, h: float, charred: bool) -> void:
++	var tone: float = TONE_SCORCH if charred else 0.0
++	for i in range(9):
++		var bx: float = (i - 4) * 14.0 + (b.rnd() - 0.5) * 6.0
++		var s: float = 5.0 + b.rnd() * h * 0.5
++		_poly(b, _pts([bx - s, 0.0, bx - s * 0.2, s * 0.9, bx + s * 0.8, 0.0]), _k(ROCK_LIT + i % 3, tone))
++
++
++## A mesa: a talus skirt and five strata bands. draw.mjs lays a translucent shade over the right of the bands; here each
++## band is cut where that shade begins, and its right part takes the shaded tone (22 triangles where Art counts 14).
++static func _mesa(b: _Build, h: float, charred: bool) -> void:
++	var ci: int = 1 if charred else 0
++	var scorch: float = TONE_SCORCH if charred else 0.0
++	var w: float = h * 0.34
++	_poly(b, _pts([-w * 2.3, 0.0, -w * 0.95, h * 0.3, w * 0.95, h * 0.3, w * 2.3, 0.0]), _k(ROCK_MID, MESA_SKIRT[ci]))
++	var cut: float = w * 0.1
++	for i in range(5):
++		var t0: float = 0.3 + i * 0.14
++		var t1: float = t0 + 0.14
++		var w0: float = w * (1.0 - (t0 - 0.3) * 0.2)
++		var w1: float = w * (1.0 - (t1 - 0.3) * 0.2)
++		var y0: float = h * t0
++		var y1: float = h * minf(1.0, t1)
++		var lit: bool = i % 2 == 0
++		_poly(b, _pts([-w0, y0, -w1, y1, cut, y1, cut, y0]), _k(ROCK_LIT if lit else ROCK_MID, scorch))
++		_poly(b, _pts([cut, y0, cut, y1, w1, y1, w0, y0]), _k(ROCK_MID, (MESA_SHADE_LIT if lit else MESA_SHADE_MID)[ci]))
++
++
++## A sea stack, its foot 10 units under the swell, with two shade lines of strata.
++static func _stack(b: _Build, h: float) -> void:
++	var w: float = h * 0.2
++	var v := _pts([-w * 1.5, -10.0, -w * 1.2, h * 0.4, -w * 0.8, h * 0.82, -w * 0.1, h, w * 0.7, h * 0.9, w * 1.0, h * 0.5,
++			w * 1.5, -10.0])
++	_poly(b, v, _k(ROCK_MID))
++	_poly(b, PackedVector2Array([v[3], v[4], v[5], v[6], Vector2(w * 0.1, -10.0)]), _k(ROCK_SHADE))
++	_poly(b, PackedVector2Array([v[0], v[1], v[2], v[3], Vector2(-w * 0.1, h * 0.4)]), _k(ROCK_LIT))
++	_line(b, _pts([-w * 1.3, h * 0.35, w * 1.1, h * 0.4]), 1.1, _k(ROCK_SHADE))
++	_line(b, _pts([-w * 0.9, h * 0.68, w * 0.8, h * 0.72]), 1.1, _k(ROCK_SHADE))
++
++
++static func _basaltcol(b: _Build, h: float) -> void:
++	for i in range(5):
++		var cx: float = (i - 2) * 16.0
++		var hh: float = h * (0.55 + 0.45 * (1.0 - absi(i - 2) / 2.4)) * (0.85 + b.rnd() * 0.2)
++		_poly(b, _pts([cx - 7.0, 0.0, cx - 7.0, hh, cx, hh + 4.0, cx + 7.0, hh, cx + 7.0, 0.0]), _k(ROCK_MID if i % 2 == 1 else ROCK_LIT))
++		_poly(b, _pts([cx, 0.0, cx, hh + 4.0, cx + 7.0, hh, cx + 7.0, 0.0]), _k(ROCK_SHADE))
++
++
++## A vent: a low cone and three puffs of steam rising from it.
++static func _vent(b: _Build, h: float) -> void:
++	_poly(b, _pts([-h * 0.8, 0.0, -h * 0.15, h * 0.7, h * 0.15, h * 0.7, h * 0.8, 0.0]), _k(ROCK_MID))
++	_poly(b, _pts([0.0, 0.0, 0.0, h * 0.7, h * 0.15, h * 0.7, h * 0.8, 0.0]), _k(ROCK_SHADE))
++	var steam := PackedVector2Array([_k(SEC_LIT, TONE_STEAM), _k(SEC_LIT), _k(SEC_MID)])
++	for i in range(3):
++		var c := Vector2(i * 6.0, h * (0.9 + i * 0.5))
++		_fan(b, c, _blob(b, c, h * (0.3 + i * 0.12), h * (0.22 + i * 0.08), 7, 0.14), steam)
++
++
++static func _lavaflow(b: _Build, h: float) -> void:
++	var w: float = 180.0 + b.rnd() * 80.0
++	_poly(b, _pts([-w, 0.0, -w * 0.5, h, w * 0.5, h * 1.1, w, 0.0]), _k(ACCENT, TONE_LAVA_CRUST))
++	_poly(b, _pts([-w * 0.6, h * 0.5, -w * 0.2, h * 0.9, w * 0.35, h * 0.95, w * 0.7, h * 0.4]), _k(ACCENT))
++
++
++static func _icespire(b: _Build, h: float) -> void:
++	for spire: Vector2 in [Vector2(-h * 0.22, 0.7), Vector2(0.0, 1.0), Vector2(h * 0.2, 0.55)]:
++		var dx: float = spire.x
++		var hh: float = h * spire.y
++		var w: float = h * 0.14 * (0.8 + spire.y * 0.4)
++		_poly(b, _pts([dx - w, 0.0, dx - w * 0.5, hh * 0.8, dx, hh, dx, 0.0]), _k(SNOW))
++		_poly(b, _pts([dx, 0.0, dx, hh, dx + w * 0.6, hh * 0.75, dx + w, 0.0]), _k(ICE))
++
++
++## A crevasse: a dark crack running down into the ice, almost all of it below the ground line.
++static func _crevasse(b: _Build, h: float) -> void:
++	var w: float = 14.0 + b.rnd() * 10.0
++	_poly(b, _pts([-w, 0.6, -w * 0.3, -h * 3.0, w * 0.2, -h * 5.0, w * 0.5, -h * 2.8, w, 0.6]), _k(WATER, TONE_CREVASSE))
++
++
++static func _nunatak(b: _Build, h: float) -> void:
++	_poly(b, _pts([-h * 0.7, 0.0, -h * 0.25, h * 0.7, 0.0, h, h * 0.3, h * 0.65, h * 0.8, 0.0]), _k(ROCK_MID))
++	_poly(b, _pts([0.0, 0.0, 0.0, h, h * 0.3, h * 0.65, h * 0.8, 0.0]), _k(ROCK_SHADE))
++	_poly(b, _pts([-h * 0.2, h * 0.75, 0.0, h, h * 0.2, h * 0.78, 0.0, h * 0.7]), _k(SNOW))
++
++
++static func _snowpatch(b: _Build, h: float) -> void:
++	var w: float = 50.0 + b.rnd() * 70.0
++	_poly(b, _pts([-w, 0.0, -w * 0.5, h, w * 0.4, h * 1.1, w, 0.0]), _k(ACCENT))
++	_poly(b, _pts([w * 0.1, 1.0, w * 0.4, h * 1.1, w, 0.0]), _k(ACCENT, TONE_SNOW_SHADE))
++
++
++## A berg: the white above the sea with its slate face, and its foot under the water.
++static func _berg(b: _Build, h: float) -> void:
++	var w: float = h * 0.9
++	_poly(b, _pts([-w, 0.0, -w * 0.7, h * 0.45, -w * 0.2, h, w * 0.15, h * 0.7, w * 0.6, h * 0.85, w, 0.0]), _k(SNOW))
++	_poly(b, _pts([w * 0.1, 0.0, w * 0.15, h * 0.7, w * 0.6, h * 0.85, w, 0.0]), _k(ICE))
++	_poly(b, _pts([-w, 0.0, w, 0.0, w * 0.7, -h * 0.4, -w * 0.5, -h * 0.45]), _k(WATER, TONE_BERG_SEA))
++
++
++static func _floeblock(b: _Build, h: float) -> void:
++	var w: float = h * 1.1
++	_poly(b, _pts([-w, 0.0, -w, h, w * 0.6, h, w * 0.6, 0.0]), _k(SNOW))
++	_poly(b, _pts([w * 0.6, 0.0, w * 0.6, h, w, h * 0.7, w, 0.0]), _k(ICE))
++
++
++static func _termite(b: _Build, h: float) -> void:
++	_poly(b, _pts([-h * 0.5, 0.0, -h * 0.3, h * 0.6, -h * 0.08, h, h * 0.1, h * 0.95, h * 0.32, h * 0.55, h * 0.5, 0.0]), _k(ACCENT, TONE_TERMITE))
++	_poly(b, _pts([h * 0.04, 0.0, h * 0.1, h * 0.95, h * 0.32, h * 0.55, h * 0.5, 0.0]), _k(ACCENT, TONE_TERMITE_SHADE))
++
++
++static func _driftwood(b: _Build, h: float) -> void:
++	var l: float = 70.0 + b.rnd() * 40.0
++	_poly(b, _pts([-l, 1.0, -l * 0.9, h, l * 0.8, h * 1.1, l, 3.0]), _k(TRUNK, TONE_DRIFTWOOD))
++	_line(b, _pts([-l * 0.3, h, -l * 0.2, h * 2.4]), 2.2, _k(TRUNK, TONE_DRIFTWOOD))
++
++
++static func _whitecap(b: _Build, h: float) -> void:
++	var l: float = 26.0 + b.rnd() * 50.0
++	_poly(b, _pts([-l, 0.0, -l * 0.3, h * 0.9, l * 0.1, h * 0.3, l * 0.5, h, l, 0.0]), _k(ACCENT))
+diff --git a/render/core/cover_meshes.gd.uid b/render/core/cover_meshes.gd.uid
+new file mode 100644
+index 0000000..04f93d4
+--- /dev/null
++++ b/render/core/cover_meshes.gd.uid
+@@ -0,0 +1 @@
++uid://c4fbt4ua7dg4j
+diff --git a/render/core/cover_view.gd b/render/core/cover_view.gd
+new file mode 100644
+index 0000000..30647b2
+--- /dev/null
++++ b/render/core/cover_view.gd
+@@ -0,0 +1,192 @@
++class_name CoverView
++extends RefCounted
++## Biome rendering window 2 (docs/rendering/biomes.md; Art's docs/art/biomes.md and biomes-cover.md): the cover that
++## grows on the band's ground, behind the fighter plane. Each strip of Art's 1,200-unit window carries, in each of
++## RenderLook.COVER_LAYERS (a span of depth), the cover Art's data gives the biome under it ("cover": a kind, how many a
++## strip, a height range): trees, tufts, boulders, cacti, reeds, firs and the rest, as Art's flat silhouettes
++## (RenderCoverMeshes) standing in the strip's plane. Across a border's zone each shape takes the neighbour's cover by
++## the zone's band share (Art: the cover mixes by probability), and the zone has its own ecotone covers (Art's pairs).
++## A water column carries only what floats or stands in the sea. No cover where the band's buildings stand, in the
++## city or the village (their streets and houses are theirs), or in front of the fighter plane.
++##
++## Made once for a world (the band's biomes, the buildings), the same in every pane and every copy: one MultiMesh for
++## each kind in each of COVER_CHUNKS spans of the planet's length, so the frustum leaves out the spans off the screen.
++## Where each shape stands is the ground's (render/shaders/cover.gdshader reads the ground under its foot, craters and
++## all, and leaves a shape out inside a crater). Seeded by the world and the strip, so the same world grows the same
++## cover. Render only.
++
++const STRIP: float = 1200.0   # Art's window: the cover counts are per this much of the strip
++const WATER_KINDS: Array = ["whitecap", "floeblock", "berg", "stack", "foam"]   # what stands or floats in the sea
++const FLOAT_KINDS: Array = ["whitecap", "floeblock", "berg", "foam"]            # what floats at the water's level
++const SAME: Dictionary = {"foam": "whitecap"}   # a kind Art's data names that is drawn as another (draw.mjs: foam is a small whitecap)
++
++var meshes: Array = []   # [kind, chunk, MultiMesh] for the planet copies (planet_view.gd)
++var count: int = 0       # the shapes placed
++
++
++## Grow the cover for the world in S (its band's biomes, its buildings) on ground field g (the zone rows). seed: the
++## world's (the same world grows the same cover).
++func build(S: SimState, g: GroundField, seed: int) -> void:
++	meshes.clear()
++	count = 0
++	var nc: int = SimConst.NC
++	var w: float = SimConst.W
++	var bio: PackedFloat32Array = g.row_bytes(GroundField.ROW_BIOME).to_float32_array()
++	var za: PackedFloat32Array = g.row_bytes(GroundField.ROW_ZONE_A).to_float32_array()
++	var zb: PackedFloat32Array = g.row_bytes(GroundField.ROW_ZONE_B).to_float32_array()
++	var zx: PackedFloat32Array = g.row_bytes(GroundField.ROW_ZONE_X).to_float32_array()
++	var known: PackedStringArray = RenderCoverMeshes.kinds()
++	var per: Dictionary = {}   # kind -> [[Transform3D, palette id, floats], ...] by chunk
++	var strips: int = int(ceil(w / STRIP))
++	var near: Array = _buildings_by_strip(S, strips)
++	var rng := RandomNumberGenerator.new()
++	for si in range(strips):
++		for li in range(RenderLook.COVER_LAYERS.size()):
++			var layer: Vector2 = RenderLook.COVER_LAYERS[li]
++			rng.seed = hash([seed, si, li])
++			var x0: float = float(si) * STRIP
++			var mid: int = posmod(int((x0 + STRIP * 0.5) / SimConst.COL), nc)
++			var n_here: int = _count_of(RenderBiomeLook.name_of(int(za[mid])))   # how many candidates this strip draws
++			for k in range(n_here):
++				var x: float = x0 + rng.randf() * STRIP
++				if x >= w:
++					continue
++				var z: float = lerpf(layer.x, layer.y, rng.randf())
++				var col: int = posmod(int(x / SimConst.COL), nc)
++				# the biome this shape grows in: the zone's other side by its band share (Art's five bands)
++				var id: int = int(za[col])
++				var other: int = int(zb[col])
++				var share: float = 0.0
++				if other != id and zx[col] > -1.0e8:
++					var t: float = clampf(0.5 + (x / SimConst.COL - zx[col]) * SimConst.COL / RenderLook.BIOME_ZONE, 0.0, 1.0)
++					share = 0.0 if t <= 0.0 else (1.0 if t >= 1.0 else (floor(t * 5.0) + 0.5) / 5.0)
++				var pick: int = other if rng.randf() < share else id
++				var name: String = RenderBiomeLook.name_of(pick)
++				var kind: String = ""
++				if other != id and share > 0.0 and share < 1.0 and rng.randf() < RenderLook.COVER_ECO:
++					kind = _eco(RenderBiomeLook.name_of(id), RenderBiomeLook.name_of(other), rng)
++				var e: Dictionary = {}
++				if kind == "":
++					e = _cover_pick(name, rng)
++					kind = String(e.get("k", ""))
++				kind = String(SAME.get(kind, kind))
++				if kind == "" or not known.has(kind):
++					continue
++				var wet: bool = S.base[col] < WorldWater.RESERVOIR_BASE
++				if wet != WATER_KINDS.has(kind):
++					continue
++				if _in_building(near[si], x, z):
++					continue
++				var hr: Array = e.get("h", [RenderCoverMeshes.DRAW_H.get(kind, 50.0), RenderCoverMeshes.DRAW_H.get(kind, 50.0)])
++				var h: float = lerpf(float(hr[0]), float(hr[1]), rng.randf())
++				var s: float = h * RenderCoverMeshes.height_scale(kind)
++				var flip: float = -1.0 if rng.randf() < 0.5 else 1.0
++				var xf := Transform3D(Basis.from_scale(Vector3(s * flip, s, s)), Vector3(x, -RenderCoverMeshes.ground_line(kind) * s, z))
++				var ch: int = mini(int(x / w * float(RenderLook.COVER_CHUNKS)), RenderLook.COVER_CHUNKS - 1)
++				if not per.has(kind):
++					per[kind] = []
++					for c in range(RenderLook.COVER_CHUNKS):
++						per[kind].append([])
++				per[kind][ch].append([xf, pick, 1.0 if FLOAT_KINDS.has(kind) else 0.0])
++				count += 1
++	# Each span's box for the frustum: the instances stand at height 0 in their transforms and the shader lifts them to the
++	# ground, so the box spans the span's ground (less the deepest crater, plus the tallest shape), not the transforms.
++	var boxes: Array = []
++	var cw: float = w / float(RenderLook.COVER_CHUNKS)
++	var zr: Vector2 = Vector2(INF, -INF)
++	for layer in RenderLook.COVER_LAYERS:
++		zr = Vector2(minf(zr.x, minf(layer.x, layer.y)), maxf(zr.y, maxf(layer.x, layer.y)))
++	for c in range(RenderLook.COVER_CHUNKS):
++		var lo: float = INF
++		var hi: float = -INF
++		for col in range(int(float(c) * cw / SimConst.COL), mini(nc, int(float(c + 1) * cw / SimConst.COL) + 1)):
++			lo = minf(lo, S.base[col])
++			hi = maxf(hi, S.base[col])
++		lo -= RenderLook.COVER_BOX_PAD.x
++		hi += RenderLook.COVER_BOX_PAD.y
++		boxes.append(AABB(Vector3(float(c) * cw - 600.0, lo, zr.x - 600.0), Vector3(cw + 1200.0, hi - lo, zr.y - zr.x + 1200.0)))
++	for kind in per:
++		for c in range(RenderLook.COVER_CHUNKS):
++			var list: Array = per[kind][c]
++			if list.is_empty():
++				continue
++			var mm := MultiMesh.new()
++			mm.transform_format = MultiMesh.TRANSFORM_3D
++			mm.use_colors = true        # white: the renderer multiplies the vertex colour (the slot and tone) by the instance's
++			mm.use_custom_data = true
++			mm.mesh = RenderCoverMeshes.mesh(kind, false)
++			mm.instance_count = list.size()
++			for i in range(list.size()):
++				mm.set_instance_transform(i, list[i][0])
++				mm.set_instance_color(i, Color.WHITE)
++				mm.set_instance_custom_data(i, Color((float(list[i][1]) + 0.5) / 32.0, float(list[i][2]), 0.0, 0.0))
++			mm.custom_aabb = boxes[c]
++			meshes.append([kind, c, mm])
++
++
++## How many shapes a strip of this biome carries (Art's counts, summed); 0 for the city, the village or no data.
++static func _count_of(name: String) -> int:
++	if name == "city" or name == "village":
++		return 0
++	var n: int = 0
++	for c in RenderBiomeLook.entry(name).get("cover", []):
++		n += int(c.n)
++	return n
++
++
++## One of the biome's covers, by Art's counts as weights; {} for none.
++static func _cover_pick(name: String, rng: RandomNumberGenerator) -> Dictionary:
++	if name == "city" or name == "village":
++		return {}
++	var list: Array = RenderBiomeLook.entry(name).get("cover", [])
++	var total: int = 0
++	for c in list:
++		total += int(c.n)
++	if total <= 0:
++		return {}
++	var r: int = rng.randi_range(0, total - 1)
++	for c in list:
++		r -= int(c.n)
++		if r < 0:
++			return c
++	return {}
++
++
++## An ecotone cover of the pair (Art's "neighbours": the covers that appear only where the two meet), or "".
++static func _eco(a: String, b: String, rng: RandomNumberGenerator) -> String:
++	for pair in [[a, b], [b, a]]:
++		for nb in RenderBiomeLook.entry(pair[0]).get("neighbours", []):
++			if String(nb.get("id", "")) == pair[1] and (nb.get("eco", []) as Array).size() > 0:
++				var eco: Array = nb.eco
++				return String(eco[rng.randi_range(0, eco.size() - 1)])
++	return ""
++
++
++## The buildings that reach into each strip (with the margin), so a shape is checked only against its own strip's.
++static func _buildings_by_strip(S: SimState, strips: int) -> Array:
++	var out: Array = []
++	out.resize(strips)
++	for i in range(strips):
++		out[i] = []
++	var m: float = RenderLook.COVER_BUILDING_PAD
++	for b in S.buildings:
++		var half: float = float(b.w) * 0.5 + m
++		var s0: int = int(floor((float(b.x) - half) / STRIP))
++		var s1: int = int(floor((float(b.x) + half) / STRIP))
++		for si in range(s0, s1 + 1):
++			out[posmod(si, strips)].append(b)
++	return out
++
++
++## Whether (x, z) lies on one of these buildings' footprints (its width across, its depth either way of its z: the
++## render reads B1's footprint the same way), with a margin.
++static func _in_building(list: Array, x: float, z: float) -> bool:
++	var m: float = RenderLook.COVER_BUILDING_PAD
++	for b in list:
++		if absf(SimWrap.sdx(float(b.x), x)) > float(b.w) * 0.5 + m:
++			continue
++		var bz: float = float(b.z) if "z" in b else 0.0
++		var bd: float = absf(float(b.d)) if "d" in b else 0.0
++		if absf(z - bz) <= bd + m:
++			return true
++	return false
+diff --git a/render/core/cover_view.gd.uid b/render/core/cover_view.gd.uid
+new file mode 100644
+index 0000000..cf5ece6
+--- /dev/null
++++ b/render/core/cover_view.gd.uid
+@@ -0,0 +1 @@
++uid://5nhqxu6lobkf
+diff --git a/render/shaders/cover.gdshader b/render/shaders/cover.gdshader
+new file mode 100644
+index 0000000..385fe59
+--- /dev/null
++++ b/render/shaders/cover.gdshader
+@@ -0,0 +1,51 @@
++// The biomes' cover (biome rendering window 2; render/core/cover_view.gd, render/core/cover_meshes.gd): Art's flat
++// silhouettes standing in the strip's plane on the band's ground. Each instance's foot reads the ground under it as the
++// terrain draws it (ground4: craters, grooves and all), so a shape rises and falls with the ground, and a shape inside a
++// crater is gone (Art: the cover inside a crater is removed). What floats (a whitecap, a floe) sits at the water's level.
++// A vertex's colour is its palette slot (COLOR.r) and tone step (COLOR.g) in the palette of the biome it grows in
++// (INSTANCE_CUSTOM.r: RenderBiomeLook's column; the cover's rows from COVER_ROW), lit, mid and shade as Art drew it;
++// hazed into the sky as the ground is.
++shader_type spatial;
++render_mode unshaded, cull_disabled;
++
++#include "res://render/shaders/color.gdshaderinc"
++#include "res://render/shaders/bend.gdshaderinc"
++#include "res://render/shaders/ground.gdshaderinc"
++#include "res://render/shaders/skycol.gdshaderinc"
++
++uniform vec3 wl_mul = vec3(1.0);   // the world's light, as the trees take it
++uniform vec3 wl_add = vec3(0.0);
++uniform float fog_far = 12000.0;
++uniform float cover_cam_x = 0.0;   // this pane's camera x: a copy stands at k x the arena's length less it (planet_view.gd)
++uniform int cover_row = 12;        // RenderBiomeLook.COVER_ROW
++uniform vec4 tone_light : source_color = vec4(1.0, 0.965, 0.878, 1.0);   // RenderCoverMeshes.TONE_LIGHT and TONE_DARK (Art's lite() and dark())
++uniform vec4 tone_dark : source_color = vec4(0.047, 0.039, 0.078, 1.0);
++
++varying vec3 v_col;
++varying vec3 v_view;
++varying float v_wz;
++
++void vertex() {
++	// The foot's place on the band (any copy reads the same: the band repeats with the arena's length).
++	float x = MODEL_MATRIX[3].x + cover_cam_x;
++	float z = MODEL_MATRIX[3].z;
++	float xm = x - world_w * floor(x / world_w);
++	int i = int(xm / col_w) % nc;
++	vec4 g = ground4(i, xm, z, false, 0.0);
++	float foot = INSTANCE_CUSTOM.g > 0.5 ? max(g.x, 0.0) : g.x;
++	VERTEX.y += foot / length(MODEL_MATRIX[1].xyz);
++	VERTEX = g.w < -dent_min ? vec3(0.0) : VERTEX;   // inside a crater: gone (all its corners meet)
++	int b = int(INSTANCE_CUSTOM.r * 32.0);
++	int slot = int(COLOR.r * 16.0);
++	float tone = (COLOR.g - 0.5) * 2.0;
++	vec3 c = texelFetch(biome_pal, ivec2(b, cover_row + slot), 0).rgb;
++	v_col = tone >= 0.0 ? mix(c, tone_light.rgb, tone) : mix(c, tone_dark.rgb, -tone);
++	vec4 bw = bent_world(MODEL_MATRIX, VERTEX);
++	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
++	v_wz = bw.z;
++	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
++}
++
++void fragment() {
++	ALBEDO = haze_ground(v_col * wl_mul + wl_add, v_view, -v_wz, fog_far);
++}
+diff --git a/render/shaders/cover.gdshader.uid b/render/shaders/cover.gdshader.uid
+new file mode 100644
+index 0000000..23b3493
+--- /dev/null
++++ b/render/shaders/cover.gdshader.uid
+@@ -0,0 +1 @@
++uid://cjf7pt7hhvjn3
+diff --git a/render/core/look.gd b/render/core/look.gd
+index 6ac54ee..11c5539 100644
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -348,12 +348,23 @@ const BIOME: Dictionary = {
+ const FACET_SLOPE: float = 0.05
+ const FACET_SUN := Vector3(-0.5, 0.8, 0.33)
+ const ROCK_SLOPE := Vector2(0.45, 1.25)
+-const ROCK_HIGH: float = 0.3
++const ROCK_HIGH: float = 0.15
+ const DEPTH_STEP := Vector2(1.1, 0.94)
+ const STRATA_H: float = 220.0
+ const BIOME_ZONE: float = 360.0
+ const SCAR_BAND := Vector2(1.5, 0.3)
+ const TONE_K := Vector3(1.06, 1.0, 0.86)
++## Biome rendering window 2 (render/core/cover_view.gd): the cover. COVER_LAYERS: the spans of depth (z, from the
++## fighter plane back) that each carry a strip's cover at Art's counts per 1,200 units. COVER_CHUNKS: the planet's
++## length cut into this many spans (a MultiMesh each per kind), so the frustum leaves out what is off the screen.
++## COVER_ECO: in a border's zone, the share of shapes that are the pair's ecotone covers. COVER_BUILDING_PAD: no cover
++## within this of a building's footprint. Main's --nocover turns it off.
++const COVER_ON: bool = true
++const COVER_LAYERS: Array = [Vector2(-260.0, -1700.0)]
++const COVER_CHUNKS: int = 4
++const COVER_ECO: float = 0.25
++const COVER_BUILDING_PAD: float = 60.0
++const COVER_BOX_PAD := Vector2(4000.0, 1500.0)   # a span's box for the frustum: below its lowest base (craters) and above its highest (the shapes)
+ const SEA_FLOOR := "#5a5346"
+ const CRATER := "#4a4237"
+ const CRATER_DESERT := "#a98544"
+diff --git a/render/core/planet_view.gd b/render/core/planet_view.gd
+index a3389ce..dc43b79 100644
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -22,6 +22,7 @@ extends Node3D
+ const TERRAIN_SHADER: Shader = preload("res://render/shaders/terrain.gdshader")
+ const WATER_SHADER: Shader = preload("res://render/shaders/water.gdshader")
+ const FAR_TOWN_SHADER: Shader = preload("res://render/shaders/far_town.gdshader")
++const COVER_SHADER: Shader = preload("res://render/shaders/cover.gdshader")
+ const CROWD_SHADER: Shader = preload("res://render/shaders/crowd.gdshader")
+ const BUILDING_SHADER: Shader = preload("res://render/shaders/building.gdshader")
+ const STUB_WHOLE := 1.0e9     # a stub height that cuts nothing
+@@ -53,6 +54,9 @@ static var cull_on: bool = RenderLook.SPLIT_CULL_ON   # the split's culling (cul
+ var _cull: Array = []                  # per copy: [copy, its chunks' union box, [[chunk node, box, left out]...]] (cull_to)
+ var culled: int = 0                    # the chunks this pane left out of its last frame (for the checks and the bench)
+ var _town_mat: ShaderMaterial = null   # the distant towns' (far_town.gdshader): the ground's uniforms, for the far land they stand on
++var _cover_mat: ShaderMaterial = null  # the biomes' cover (cover.gdshader): the ground's uniforms, for the ground it stands on
++var cover := CoverView.new()           # the cover grown for this world (a second pane draws its source's)
++static var cover_on: bool = RenderLook.COVER_ON   # biome rendering window 2; main's --nocover turns it off
+ var _town_nodes: Array = []            # each prop copy's FarTowns (set_far gives them the far land's towns)
+ var _bld: MultiMesh                  # every part of every building that is not in row 0: the bodies by building index, then the other parts
+ var _tree: MultiMesh
+@@ -180,7 +184,12 @@ func build(S: SimState) -> void:
+ 	if source == null:
+ 		ground.rebuild(S)
+ 		_make_props(S)
++		if cover_on:
++			cover.build(S, ground, hash(S.planetRing) if S.planetRing is Dictionary and not S.planetRing.is_empty() else 0)
++		else:
++			cover = CoverView.new()
+ 	else:
++		cover = source.cover
+ 		_bld = source._bld
+ 		_parts = source._parts
+ 		_inst = source._inst
+@@ -254,6 +263,8 @@ func build(S: SimState) -> void:
+ 			for c in range(_crowd.chunks.size()):
+ 				_mm_child(n, "Crowd%d" % c, _crowd.chunks[c], _crowd_mats[c])
+ 			_mm_child(n, "FarTowns", null, _town_mat)
++			for cv in cover.meshes:
++				_mm_child(n, "Cover_%s_%d" % [cv[0], cv[1]], cv[2], _cover_mat)
+ 			_town_nodes.append(n.get_node("FarTowns"))
+ 			_town_nodes[-1].visible = false
+ 		_copies.append(n)
+@@ -415,6 +426,8 @@ func update(S: SimState, cam_x: float, heat: PackedFloat32Array = PackedFloat32A
+ 		c.position.x = float(c.get_meta("k")) * SimConst.W - cam_x
+ 	if _towns_on:
+ 		_town_mat.set_shader_parameter("town_cam_x", cam_x)   # where the copies stand, for the far land under each block
++	if _cover_mat != null and not cover.meshes.is_empty():
++		_cover_mat.set_shader_parameter("cover_cam_x", cam_x)   # where the copies stand, for the ground under each shape
+ 	if ground != null and ground.water_version != _water_drawn:
+ 		_water_drawn = ground.water_version
+ 		_water_show(S)
+@@ -1094,12 +1107,18 @@ func _make_materials() -> void:
+ 	_water_mat.shader = WATER_SHADER
+ 	_town_mat = ShaderMaterial.new()
+ 	_town_mat.shader = FAR_TOWN_SHADER
++	_cover_mat = ShaderMaterial.new()
++	_cover_mat.shader = COVER_SHADER
++	_cover_mat.set_shader_parameter("biome_pal", RenderBiomeLook.texture())
++	_cover_mat.set_shader_parameter("cover_row", RenderBiomeLook.COVER_ROW)
++	_cover_mat.set_shader_parameter("tone_light", RenderCoverMeshes.TONE_LIGHT)
++	_cover_mat.set_shader_parameter("tone_dark", RenderCoverMeshes.TONE_DARK)
+ 	_town_mat.set_shader_parameter("town_cols", RenderLook.FAR_TOWN_COLS.map(func(h): return RenderLook.col(h)))
+ 	_town_mat.set_shader_parameter("town_row0", -RenderLook.Z_TERRAIN_BACK)   # the ground's mesh past the crater rows (ground_rows)
+ 	_town_mat.set_shader_parameter("town_row_k", 1.0 + RenderLook.ROW_GROWTH)
+ 	_town_mat.set_shader_parameter("town_stride", float(RenderLook.STRIDES[-1][1]))
+ 	_town_mat.set_shader_parameter("town_slope", RenderLook.FAR_TOWN_SLOPE)
+-	for m in [_terrain_mat, _water_mat, _town_mat]:
++	for m in [_terrain_mat, _water_mat, _town_mat, _cover_mat]:
+ 		m.set_shader_parameter("heights", ground.tex)
+ 		m.set_shader_parameter("hot", ground.htex)
+ 		m.set_shader_parameter("craters", ground.ctex)
+@@ -1311,7 +1330,7 @@ func set_world_light(world: Array, win: float) -> void:
+ func _apply_wl() -> void:
+ 	if _wl.is_empty() or _terrain_mat == null:
+ 		return
+-	var by: Dictionary = {"ground": [_terrain_mat], "water": [_water_mat], "buildings": [_bld_mat, _front_mat, _town_mat], "trees": [_tree_mat], "civilians": [_crowd_mat] + _crowd_mats}
++	var by: Dictionary = {"ground": [_terrain_mat], "water": [_water_mat], "buildings": [_bld_mat, _front_mat, _town_mat], "trees": [_tree_mat, _cover_mat], "civilians": [_crowd_mat] + _crowd_mats}
+ 	for li in range(RenderLook.WORLD_LAYERS.size()):
+ 		for m in by.get(RenderLook.WORLD_LAYERS[li], []):
+ 			if m != null:
+diff --git a/render/core/main.gd b/render/core/main.gd
+index 4404b0d..ff2aa1a 100644
+--- a/render/core/main.gd
++++ b/render/core/main.gd
+@@ -221,6 +221,7 @@ func _ready() -> void:
+ 	roll_on = RenderLook.CAMERA_ROLL_ON or args.has("roll")   # the camera roll on climaxes: off by default (2026-10-22)
+ 	drift_on = RenderLook.SLOW_DRIFT_ON or args.has("drift")   # the slow drift of the far land and sky: off by default (2026-10-22)
+ 	PlanetView.cull_on = RenderLook.SPLIT_CULL_ON and not args.has("nocull")   # the split's culling: on; --nocull for the A/B (2026-10-23)
++	PlanetView.cover_on = RenderLook.COVER_ON and not args.has("nocover")   # the biomes' cover: on; --nocover for the A/B (2026-10-23)
+ 	far_on = RenderLook.FAR_MAP_ON or args.has("farmap")   # the planet's own far land: off by default (2026-10-22)
+ 	_far_now = args.has("farnow")
+ 	hud.key_help = args.has("keyhelp")   # the greybox prompt and key help: off by Orb's minimal rule (2026-10-19)
+@@ -1274,7 +1275,7 @@ const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off",
+ ## without UI's notice, change how a match starts or hold a debug value, and are dropped unless the page is on a local
+ ## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze, keyhelp, roll.
+ const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]
+-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull"]
++const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover"]
+ 
+ 
+ ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of
+diff --git a/docs/rendering/biomes.md b/docs/rendering/biomes.md
+index c9f77e0..aa3f36f 100644
+--- a/docs/rendering/biomes.md
++++ b/docs/rendering/biomes.md
+@@ -21,7 +21,7 @@ Orb's priority (2026-10-23): "pour resources into improving our planet generatio
+   - This is Art's rule along the strip (rising to the right is lit), and a slope in depth takes the light as well, so a hillside facing the camera is not one flat slab.
+   - The normal is the ground's own, smooth across the mesh, so a tone's edge follows the ground's shape as a clean contour. A first cut used each triangle's own face, and a fine crater bowl broke into sawteeth.
+ - **Rock.** It comes in by steepness, in Art's five hard bands from `ROCK_SLOPE.x` (0.45 rise over run) to `.y` (1.25), so the green and the rock meet along the slope's contour, stepped.
+-  - In a rocky biome (mountains from 1,200 units, highland from 900) the rock starts at gentler slopes the higher it is, down to `ROCK_HIGH` (0.3) of that at twice the height. A mountain stays green only at its foot, and only where the foot is gentle.
++  - In a rocky biome (mountains from 900 units, highland from 700) the rock starts at gentler slopes the higher it is, down to `ROCK_HIGH` (0.15) of that at twice the height. A mountain stays green only at its foot, and only where the foot is gentle.
+   - A first cut turned all ground above a height to rock: one flat green slab cut by a straight line (the EP's look call).
+ - **Strata.** Thin dark lines every `STRATA_H` (220) units of height run on rock that carries them (desert, mountains, volcanic, highland), where the rock's bands dominate. They leave out where they would crowd closer than a few pixels.
+ - **Depth.** The band's value steps by depth in three hard steps (`DEPTH_STEP`: 1.1 at the front to 0.94 at the back), so open flat ground (a desert) still reads near and far. The tones themselves are the light. The far land keeps its own colour and shading until window 3 makes it Art's ladder.
+@@ -47,9 +47,39 @@ Orb's priority (2026-10-23): "pour resources into improving our planet generatio
+ - the 19 render gates and `split_sweep`;
+ - stills against d3f1ca0e and main (`img/biomes-w1-d3f1ca0e.png`): the desert, three mountain scenes, the city-beam crater, planet 7.
+ 
+-## Window 2: the cover (next)
++## Window 2: the cover
+ 
+-Art's 33 silhouettes (`docs/art/biomes-cover.md`) are ported to mesh builders, flat in the plane of the strip with a palette slot per vertex (scratch, 405 triangles clean and 303 charred, matching Art's counts except the mesa). Next: scattered per biome by Art's densities, mixed by probability across a zone, charred by the burn state.
++Art's cover silhouettes (`docs/art/biomes-cover.md`) grow on the band's ground behind the fighter plane.
++- **The shapes** (`render/core/cover_meshes.gd`, `RenderCoverMeshes`): ported from Art's `draw.mjs` to flat meshes in the strip's plane.
++  - There are 33 kinds, clean and charred: 405 and 303 triangles, matching Art's counts except the mesa (22 for 14: its shaded half is cut out as a band).
++  - A vertex carries a palette slot (vegetation, secondary and rock, each lit, mid and shade; trunk; accent; char; ash; water; the ices' white and slate) and a tone step (Art's `lite` and `dark`). The colours are the palette's cover rows for the biome it grows in (`RenderBiomeLook`, rows 12 to 27), so one mesh serves every biome.
++  - A shape stands as Art's sheet draws it (`height_scale`, `ground_line`).
++- **Where they grow** (`render/core/cover_view.gd`, `CoverView`):
++  - **Counts.** Each 1,200-unit strip carries, in each depth span of `COVER_LAYERS` (260 to 1,700 units behind the fighter plane), Art's count of each of its biome's covers, at Art's heights, mirrored at random.
++  - **Borders.** Across a border's zone a shape takes the neighbour's cover by the zone's band share, and `COVER_ECO` (a quarter) of the zone's shapes are the pair's ecotone covers (Art's `neighbours`).
++  - **Water.** A water column carries only what stands or floats in the sea (stacks, whitecaps, floes, bergs).
++  - **None** on a building's footprint (`COVER_BUILDING_PAD`), in the city or the village, or in front of the fighter plane.
++  - **Made once a world,** seeded by the world: the hand-made world grows about 1,350 shapes in 7 ms, planet 7's ring about 800 in 3 ms.
++  - **Drawing.** One MultiMesh per kind in each quarter of the arena's length (`COVER_CHUNKS`), so the frustum leaves out what is off the screen. A pane's copies draw them, a second pane its source's.
++- **On the ground** (`render/shaders/cover.gdshader`):
++  - each shape's foot reads the ground under it as the terrain draws it, so it rises and falls with the ground;
++  - what floats sits at the water's level;
++  - a shape inside a crater is gone (Art: the cover inside a crater is removed);
++  - hazed as the ground is, and lit by the world light as the trees are.
++- **On** (`RenderLook.COVER_ON`); main's `--nocover` turns it off.
++- **Not yet:**
++  - the charred swap by the burn state (the damage window);
++  - Art's newer kinds (tor, heath);
++  - the cover in front of the fighter plane and in the far land.
++- **Two traps in the Compatibility renderer, both met here:**
++  - a MultiMesh without `use_colors` hands the shader black for `COLOR`, so every shape drew in the palette's first column and slot. The instances carry white, and the vertex colour comes through;
++  - the instances stand at height 0 in their transforms and the shader lifts them to the ground, so the frustum culled the mountains' cover with the box at sea level. Each span's MultiMesh carries a `custom_aabb` over its ground (`COVER_BOX_PAD`).
++- **The EP's watch point on window 1:** a step more rock on the mountains (from 900 units, highland from 700, down to `ROCK_HIGH` 0.15).
++
++**Checked:**
++- the shaders parse headless; the cover builds on the hand-made world and on planet 7;
++- the 19 render gates and `split_sweep`;
++- stills against d3f1ca0e and window 1 (`img/biomes-w2-d3f1ca0e.png`): the desert (two scenes), three mountain scenes, the city-beam scene, planet 7.
+ 
+ ## Window 3: the far land and the sky (after)
+ 
+diff --git a/docs/rendering/README.md b/docs/rendering/README.md
+index cc25fd4..acce221 100644
+--- a/docs/rendering/README.md
++++ b/docs/rendering/README.md
+@@ -663,6 +663,7 @@ A slam on the web build (Chrome, seed 1, tick 219): VFX's chunks and flames, non
+ 
+ Both are other directors' work, hosted here as their docs ask (`docs/ui/hud-spec.md` section 14, `audio/README.md` "Hooking it up"). Both only read.
+ - **By roster id (2026-10-06; `docs/architecture/pending/fighter-split.md` section 10).** The old HUD looks a fighter up by his roster id: his name and his title are UI's (`UiData.display_name`, `display_title`), and with no title the line is his stance alone. The sim keeps no title and its name is the id. The damage marks' seed belongs to the outfit (`RenderLook.DAMAGE_SEED_97`, the numbers the marks have always had), so the roster's rename moved no mark. The old spellings of the two ids are gone from `DAMAGE_OUTFIT` since the rename (part C). `tools/hud_words_check.gd` asks for the old HUD's words, since no other headless gate draws that HUD.
++- **Biome rendering, window 2 (2026-10-23, `biomes.md`).** The cover: Art's 33 flat silhouettes (`render/core/cover_meshes.gd`) grown on the band's ground behind the fighter plane by Art's counts per 1,200 units (`render/core/cover_view.gd`), mixed by band share across a border's zone with the pair's ecotone covers, none on buildings, in the city or the village; each shape's foot on the ground as the terrain draws it, gone inside a crater (`render/shaders/cover.gdshader`). One MultiMesh per kind per quarter of the arena. On; main's `--nocover` turns it off.
+ - **Biome rendering, window 1 (2026-10-23, `biomes.md`).** The ground in Art's flat faceted colours (`docs/art/biomes.md`, `data/art/biomes.json` through `render/core/biome_look.gd`): each point takes its biome's lit, mid or shade tone by its normal against the sun, rock by steepness in five hard bands (at gentler slopes higher up in rocky biomes) with strata lines, a hard step by depth, the subsoil inside a crater, Art's scar band with a thin edge, and five hard bands across a 360-unit zone where two biomes meet. Keyed by World's fine biome ids, with the stored alias as the fallback.
+ - **The split's culling (2026-10-23, `split-culling.md`).** Each split pane leaves out of its draw the ground's and water's chunks wholly on the hidden side of its divider (Camera's visible half-plane), tested as boxes against the plane the screen line makes through the camera, widened by the planet's bend: nothing that can show is lost. The split held about half again as many ground triangles as one view; in the city-beam scene a pane now leaves out 44 to 52 percent of its own. On (`RenderLook.SPLIT_CULL_ON`; `--nocull` for the A/B).
+ - **The far land's towns (2026-10-23, `slow-drift.md`).** Every planet match gets the planet's own far land (World's `S.planetRing`, the turn on or off), its settlements' ground in the city's and village's colours, and the distant towns and cities standing on it as hazed blocks (`far_town.gdshader`), each standing on the ground's mesh, none on a cliff or in the sea. Off with the far land (`RenderLook.FAR_MAP_ON`).

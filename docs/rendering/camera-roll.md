@@ -20,7 +20,7 @@ The main panes' cameras roll about their view axis on the fight's top climaxes o
     - **Weight:** 1 or 2 is 0.25, 3 is 0.5, 4 is 0.75, and 5 or `finisher` is 1. It is never under the event's own weight.
     - **Direction:** it leans toward `story_d`'s side of `story_a`.
   - Otherwise the event's own weight applies, leaning toward the loser's side of the winner. That covers the feed off, no story held, and no rig stepped (main's `--nosplit`, the tools).
-- **Timing:** it comes in over 0.25 s of match time, holds 0.8 s and goes back over 0.9 s, each eased. A hit-stop holds it.
+- **Timing:** it comes in over 0.5 s of match time (30 frames, the low end of Research's dutch roll in `cuts-and-eases.md`; 0.25 s until 2026-10-23), holds 0.8 s and goes back over 0.9 s, each eased. A hit-stop holds it.
 - **A second climax mid-roll:** it turns the roll from where it stands and never snaps.
 
 The numbers are `RenderLook.ROLL_DEG` and `ROLL_TIMES`.

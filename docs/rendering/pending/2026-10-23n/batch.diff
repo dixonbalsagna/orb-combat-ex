@@ -1,0 +1,464 @@
+--- a/render/core/look.gd
++++ b/render/core/look.gd
+@@ -335,6 +335,25 @@
+ 	"ocean": "#2a6b98", "plains": "#5f9140", "city": "#6c7079", "village": "#7c8e4b",
+ 	"forest": "#2e6a35", "desert": "#cfa85c", "mountains": "#7e766a",
+ }
++## Biome rendering window 1 (docs/rendering/biomes.md; Art's docs/art/biomes.md, data/art/biomes.json through
++## render/core/biome_look.gd): each point of the ground takes its biome's lit, mid or shade tone by its normal against
++## the sun FACET_SUN (upper left, a little toward the viewer): lit past FACET_SLOPE more light than the flat, shade past
++## it less. Rock by steepness, in five hard bands from ROCK_SLOPE.x to .y (rise over run); in a rocky biome the rock
++## starts at gentler slopes the higher it is, down to ROCK_HIGH of ROCK_SLOPE.x at twice its rock height. Strata lines
++## every STRATA_H units of height on rock that carries them. DEPTH_STEP: the band's value at its front and back, in three
++## hard steps by depth (the front lighter). A border between two
++## biomes is a zone BIOME_ZONE units wide (a third of Art's 1,200-unit window) stepped in five hard bands. A scar is
++## Art's band where the burn passes SCAR_BAND.y, its edge a rim of SCAR_BAND.x pixels inside it. TONE_K: lit, mid and shade on a colour
++## that has no tones of its own (the sea floor, the streets, the snow).
++const FACET_SLOPE: float = 0.05
++const FACET_SUN := Vector3(-0.5, 0.8, 0.33)
++const ROCK_SLOPE := Vector2(0.45, 1.25)
++const ROCK_HIGH: float = 0.3
++const DEPTH_STEP := Vector2(1.1, 0.94)
++const STRATA_H: float = 220.0
++const BIOME_ZONE: float = 360.0
++const SCAR_BAND := Vector2(1.5, 0.3)
++const TONE_K := Vector3(1.06, 1.0, 0.86)
+ const SEA_FLOOR := "#5a5346"
+ const CRATER := "#4a4237"
+ const CRATER_DESERT := "#a98544"
+--- a/render/core/ground_field.gd
++++ b/render/core/ground_field.gd
+@@ -43,7 +43,11 @@
+ const ROW_RUB_LO := ROW_RUBBLE + 1
+ const ROW_RUB_HI := ROW_RUB_LO + 1
+ const ROW_SHORE := ROW_RUB_HI + 1
+-const ROWS := ROW_SHORE + 1
++const ROW_ZONE_A := ROW_SHORE + 1    # the palette ids (RenderBiomeLook) of the biomes either side of the column's nearest
++const ROW_ZONE_B := ROW_ZONE_A + 1   # border within half RenderLook.BIOME_ZONE (left, then right; the column's own for none),
++const ROW_ZONE_X := ROW_ZONE_B + 1   # and that border's place in columns (between column j - 1 and j: j), NO_BORDER for none
++const ROWS := ROW_ZONE_X + 1
++const NO_BORDER := -1.0e9
+ const NO_SHORE := -1.0e9
+ const SHORE_CHUNK := 64   # the water and the deform are compared in runs of this many columns, to find the few that changed
+ const TW_MAX := 2048
+@@ -70,6 +74,7 @@
+ var rub_hi := PackedFloat32Array()
+ var _rubble_seen := PackedFloat32Array()
+ var shore := PackedFloat32Array()    # row 20: the level of the water at or nearest each column (water.gdshader)
++var _zone := PackedFloat32Array()    # rows 21 to 23: the biomes either side of each column's border zone, and the border (zone_rows)
+ var rpl: int = 1                     # texture rows per data row
+ var tw: int = 1                      # texture width
+ var _nsl: int = 0
+@@ -102,6 +107,7 @@
+ 	_heat.resize(nc)
+ 	cdata.resize(LIST_W * 2 * 4)
+ 	_far = far_rows()
++	_zone = zone_rows(_far.slice(2 * SimConst.NC))
+ 	img = Image.create_empty(tw, ROWS * rpl, false, Image.FORMAT_RF)
+ 	tex = ImageTexture.create_from_image(img)
+ 	cimg = Image.create_empty(LIST_W, 2, false, Image.FORMAT_RGBAF)
+@@ -452,7 +458,7 @@
+ 
+ 
+ func _upload(S: SimState, craters_changed: bool) -> void:
+-	var bytes: PackedByteArray = S.base.to_byte_array() + S.deform.to_byte_array() + g.to_byte_array() + S.scorch.to_byte_array() + S.water.to_byte_array() + _heat.to_byte_array() + lists.to_byte_array() + _far.to_byte_array() + S.crack.to_byte_array() + trench.to_byte_array() + S.rubble.to_byte_array() + rub_lo.to_byte_array() + rub_hi.to_byte_array() + shore.to_byte_array()
++	var bytes: PackedByteArray = S.base.to_byte_array() + S.deform.to_byte_array() + g.to_byte_array() + S.scorch.to_byte_array() + S.water.to_byte_array() + _heat.to_byte_array() + lists.to_byte_array() + _far.to_byte_array() + S.crack.to_byte_array() + trench.to_byte_array() + S.rubble.to_byte_array() + rub_lo.to_byte_array() + rub_hi.to_byte_array() + shore.to_byte_array() + _zone.to_byte_array()
+ 	img.set_data(tw, ROWS * rpl, false, Image.FORMAT_RF, bytes)
+ 	tex.update(img)
+ 	if craters_changed:
+@@ -463,6 +469,7 @@
+ ## A new world on the same length (planet_view.gd): the far rows follow its biomes. rebuild() uploads them.
+ func far_again() -> void:
+ 	_far = far_rows()
++	_zone = zone_rows(_far.slice(2 * SimConst.NC))
+ 
+ 
+ ## The scorch and the heat, the rows the shaders read from `hot` (ground.gdshaderinc gh()): the scorch first, then the heat.
+@@ -500,6 +507,47 @@
+ 	return out + biome
+ 
+ 
++## Each column's border zone (rows ROW_ZONE_A, _B and _X; Art: a border between two biomes is a zone a third of the
++## 1,200-unit window wide, its colour stepped in five hard bands): the palette ids of the biomes left and right of the
++## nearest border within half RenderLook.BIOME_ZONE, and where that border lies (in columns). A column with none has its
++## own biome both sides and NO_BORDER. The planet wraps. One pass over the borders, so a new world (World's turn) costs
++## well under a millisecond.
++static func zone_rows(bio: PackedFloat32Array) -> PackedFloat32Array:
++	var nc: int = bio.size()
++	var half: float = RenderLook.BIOME_ZONE * 0.5 / SimConst.COL
++	var idmap := PackedFloat32Array()
++	for nm in BIOME_ORDER:
++		idmap.append(float(RenderBiomeLook.id_of(nm)))
++	var ids := PackedFloat32Array()
++	ids.resize(nc)
++	for i in range(nc):
++		ids[i] = idmap[clampi(int(bio[i]), 0, idmap.size() - 1)]
++	var out := PackedFloat32Array()
++	out.resize(3 * nc)
++	var dist := PackedFloat32Array()
++	dist.resize(nc)
++	dist.fill(1.0e9)
++	for i in range(nc):
++		out[i] = ids[i]
++		out[nc + i] = ids[i]
++		out[2 * nc + i] = NO_BORDER
++	var m: int = ceili(half)
++	for j in range(nc):
++		var a: float = ids[posmod(j - 1, nc)]
++		var b: float = ids[j]
++		if a == b:
++			continue
++		for k in range(-m, m):   # the columns j + k: k + 0.5 columns from the border between j - 1 and j
++			var dd: float = absf(float(k) + 0.5)
++			var c: int = posmod(j + k, nc)
++			if dd <= half and dd < dist[c]:
++				dist[c] = dd
++				out[c] = a
++				out[nc + c] = b
++				out[2 * nc + c] = float(j)
++	return out
++
++
+ ## The bytes the GPU holds for one data row (for tests).
+ func row_bytes(row: int) -> PackedByteArray:
+ 	var w: int = SimConst.NC * 4
+--- a/render/core/planet_view.gd
++++ b/render/core/planet_view.gd
+@@ -1138,6 +1138,16 @@
+ 	_terrain_mat.set_shader_parameter("sea_floor", RenderLook.col(RenderLook.SEA_FLOOR))
+ 	_terrain_mat.set_shader_parameter("crater", RenderLook.col(RenderLook.CRATER))
+ 	_terrain_mat.set_shader_parameter("crater_desert", RenderLook.col(RenderLook.CRATER_DESERT))
++	_terrain_mat.set_shader_parameter("biome_pal", RenderBiomeLook.texture())   # Art's biome palettes (biome rendering window 1)
++	_terrain_mat.set_shader_parameter("biome_zone", RenderLook.BIOME_ZONE)
++	_terrain_mat.set_shader_parameter("facet_slope", RenderLook.FACET_SLOPE)
++	_terrain_mat.set_shader_parameter("sun_dir", RenderLook.FACET_SUN.normalized())
++	_terrain_mat.set_shader_parameter("rock_slope", RenderLook.ROCK_SLOPE)
++	_terrain_mat.set_shader_parameter("rock_high", RenderLook.ROCK_HIGH)
++	_terrain_mat.set_shader_parameter("depth_step", RenderLook.DEPTH_STEP)
++	_terrain_mat.set_shader_parameter("strata_h", RenderLook.STRATA_H)
++	_terrain_mat.set_shader_parameter("scar_band", RenderLook.SCAR_BAND)
++	_terrain_mat.set_shader_parameter("tone_k", RenderLook.TONE_K)
+ 	_terrain_mat.set_shader_parameter("ejecta", RenderLook.col(RenderLook.EJECTA))
+ 	_terrain_mat.set_shader_parameter("char_col", RenderLook.col(RenderLook.CHAR))
+ 	_terrain_mat.set_shader_parameter("heat_lo", RenderLook.col(RenderLook.HEAT_LO))
+--- a/render/shaders/ground.gdshaderinc
++++ b/render/shaders/ground.gdshaderinc
+@@ -52,6 +52,8 @@
+ uniform float shore_flood = 24.0;    // RenderLook.SHORE_FLOOD: dry land this shallow under the water beside it is drawn flooded
+ uniform float meander_amp = 600.0;   // RenderLook.MEANDER: how far (in x) the far land's biomes wander with depth
+ uniform vec4 biome_colors[7] : source_color;   // RenderLook.BIOME in ground_field.gd's BIOME_ORDER
++uniform sampler2D biome_pal : source_color, filter_nearest, repeat_disable;   // RenderBiomeLook: a column per biome, a row per tone (Art's palettes)
++uniform float biome_zone = 360.0;               // RenderLook.BIOME_ZONE: a border's zone, stepped in five hard bands
+ uniform vec3 fore_cam = vec3(0.0, 0.0, 3000.0);  // the camera's world position, every frame (planet_view.gd)
+ uniform float fore_drop = 0.03;                  // RenderLook.FORE_DROP
+ uniform vec2 fore_low = vec2(-1.0e9);          // the fighter plane's lowest ground and top in this pane's view, eased (PaneWorld._fore_low)
+@@ -388,6 +390,12 @@
+ 	return f;
+ }
+ 
++// Biome b's tone in row r of the palette (RenderBiomeLook: 0 to 2 the ground's lit, mid, shade; 3 to 5 the rock's; 6 to
++// 8 the subsoil's; 9 the scar's band, 10 its edge; 11 red: the rock has strata).
++vec3 biome_tone(int b, int r) {
++	return texelFetch(biome_pal, ivec2(b, r), 0).rgb;
++}
++
+ // The fighter-plane row at column i: its ground, and its top (the standing water over the ground, if any).
+ float fp_ground(int i) {
+ 	return gf(i, 0) + gf(i, 1);
+--- a/render/shaders/terrain.gdshader
++++ b/render/shaders/terrain.gdshader
+@@ -39,6 +39,14 @@
+ uniform float char_gain = 1.0;               // 1; under reduced flashing RenderLook.CHAR_CALM
+ uniform float heat_gain = 1.0;               // 1; under reduced flashing RenderLook.HEAT_CALM
+ uniform float fog_far = 12000.0;
++uniform float facet_slope = 0.05;   // RenderLook.FACET_SUN, FACET_LIGHT, ROCK_SLOPE, ROCK_HIGH, DEPTH_STEP, STRATA_H, SCAR_BAND, TONE_K (biome rendering window 1)
++uniform vec3 sun_dir = vec3(-0.5, 0.8, 0.33);
++uniform vec2 rock_slope = vec2(0.45, 1.25);
++uniform float rock_high = 0.3;
++uniform vec2 depth_step = vec2(1.1, 0.94);
++uniform float strata_h = 60.0;
++uniform vec2 scar_band = vec2(1.5, 0.3);   // the scar's edge rim in pixels, and the burn where its band starts
++uniform vec3 tone_k = vec3(1.06, 1.0, 0.86);
+ 
+ varying float v_base;
+ varying vec3 v_col;
+@@ -54,6 +62,11 @@
+ varying vec2 v_px;
+ varying float v_wz;
+ varying float v_street;
++varying flat int v_ba;        // the biomes either side of the vertex's border zone (RenderBiomeLook palette ids; its own both sides outside one),
++varying flat int v_bb;
++varying float v_zt;           // and where it lies across the zone, 0 to 1 (the fragment steps it in five bands)
++varying float v_s;            // the far land's weight (far_weight): the band's facets below it, the far land's own colour above
++varying vec2 v_grad;          // the ground's slope (d height / dx, / dz), smooth across the mesh: a facet's tone follows it
+ varying float v_new;          // how much of its own colour the ground keeps under a crater dug moments ago (ground.gdshaderinc crater_new; over CRATER_OPEN_S, over CRATER_CALM_S with reduced flashing)
+ 
+ void vertex() {
+@@ -68,6 +81,15 @@
+ 	v_col = biome_colors[int(bio + 0.5)].rgb;
+ 	v_desert = abs(bio - 5.0) < 0.5 ? 1.0 : 0.0;
+ 	v_base = b;
++	v_s = s;
++	v_grad = g.yz;
++	// The border zone (ground_field.gd zone_rows): the biomes either side and the vertex's place across it.
++	v_ba = int(gf(i, 21) + 0.5);
++	v_bb = int(gf(i, 22) + 0.5);
++	float jb = gf(i, 23);
++	float du = UV.x - jb;
++	du -= float(nc) * floor(du / float(nc) + 0.5);
++	v_zt = (jb < -1.0e8 || v_ba == v_bb) ? 0.0 : clamp(0.5 + du * col_w / biome_zone, 0.0, 1.0);
+ 	if (s > 0.0 && far_map_on) {
+ 		// the planet's own far land (World's map beside the ring; ground.gdshaderinc far4), turned by the slow drift:
+ 		// its colour from the biomes' shares at the row's level
+@@ -109,23 +131,52 @@
+ }
+ 
+ void fragment() {
+-	vec3 c = v_col;
++	// The ground's facet (Art's biome look, biome rendering window 1). Its light: the ground's normal against the sun
++	// (upper left, a little toward the viewer), lit facing it, shade turned from it, mid on the flat (Art's rule along the
++	// strip, and a slope in depth takes the light too). The normal is the ground's own, smooth across the mesh, so a tone's
++	// edge follows the ground's shape as a clean contour, not the mesh's triangles. Its biome's colour steps across a
++	// border's zone in five hard bands (10 to 90 percent).
++	vec3 nrm = normalize(vec3(-v_grad.x, 1.0, -v_grad.y));
++	float lt = dot(nrm, sun_dir) - sun_dir.y;
++	int tone = lt > facet_slope ? 0 : (lt < -facet_slope ? 2 : 1);
++	float zf = v_zt <= 0.0 ? 0.0 : (v_zt >= 1.0 ? 1.0 : (floor(v_zt * 5.0) + 0.5) / 5.0);
++	vec3 rk = biome_tone(zf < 0.5 ? v_ba : v_bb, 11);   // r: the rock has strata; g: a rocky biome's height (/ 10,000) from which rock starts at gentler slopes
++	// Rock by the ground's steepness, in Art's five hard bands from rock_slope.x to .y (so the green and the rock meet along
++	// the slope's contour, stepped); in a rocky biome the rock starts at gentler slopes the higher it is, so the foot stays
++	// green only where it is gentle.
++	float above = rk.g * 10000.0;
++	float g0 = rock_slope.x * (above > 0.0 ? mix(1.0, rock_high, clamp((v_h - above) / above, 0.0, 1.0)) : 1.0);
++	float rr = clamp((length(v_grad) - g0) / max(rock_slope.y - g0, 0.01), 0.0, 1.0);
++	float rs = rr <= 0.0 ? 0.0 : (rr >= 1.0 ? 1.0 : (floor(rr * 5.0) + 0.5) / 5.0);
++	vec3 c = mix(mix(biome_tone(v_ba, tone), biome_tone(v_bb, tone), zf), mix(biome_tone(v_ba, 3 + tone), biome_tone(v_bb, 3 + tone), zf), rs);
++	float tk = tone == 0 ? tone_k.x : (tone == 2 ? tone_k.z : tone_k.y);
++	if (rs > 0.5 && rk.r > 0.5) {
++		// strata lines on the rock: thin dark lines every strata_h of height (antialiased edges only)
++		float sb = v_h / strata_h;
++		float fw = fwidth(sb);
++		float ln = (1.0 - smoothstep(0.0, fw * 1.2, abs(fract(sb + 0.5) - 0.5))) * (1.0 - smoothstep(0.12, 0.3, fw));   // none where the lines would crowd closer than a few pixels
++		c = mix(c, c * 0.62, ln);
++	}
++	c *= mix(depth_step.x, depth_step.y, floor(clamp(v_back, 0.0, 0.999) * 3.0) * 0.5);   // the band's value by depth, in three hard steps
++	c = mix(c, flat_shade(v_col, NORMAL, 0.55) * mix(1.2, 0.95, v_back), v_s);   // the far land: its own colour, shaded as before
+ 	if (v_base < sea_base && v_h < sea_base) {
+-		c = sea_floor.rgb;
++		c = mix(sea_floor.rgb * tk, c, v_s);
+ 	} else if (v_street > 0.001) {
+ 		vec4 st = street_paint(v_px, fwidth(v_px.x));
+ 		if (st.a <= 0.0) {
+ 			st = block_paint(v_px, fwidth(v_px.x));   // between the streets: an avenue, or the district's paved lot
+ 		}
+-		c = mix(c, st.rgb, st.a * v_street);
++		c = mix(c, st.rgb * tk, st.a * v_street);
+ 	}
+ 	if (v_dent < -dent_min) {
+-		vec3 earth = v_desert > 0.5 ? crater_desert.rgb : crater.rgb;
++		vec3 earth = mix(biome_tone(v_ba, 6 + tone), biome_tone(v_bb, 6 + tone), zf);   // a crater's inside: the subsoil (Art), not the surface
+ 		c = v_new > 0.0 ? mix(earth, c, v_new) : earth;
+ 	} else if (v_dent > 0.5 * dent_min) {
+-		c = mix(c, ejecta.rgb, clamp(v_dent / (5.0 * dent_min), 0.0, 0.6) * (1.0 - v_new));
++		c = mix(c, ejecta.rgb * tk, (v_dent > 2.5 * dent_min ? 0.5 : 0.25) * (1.0 - v_new));   // rubble on the rim, in two hard steps
++	}
++	if (v_h > snow_from) {
++		c = snow.rgb * tk;   // snow on the peaks: a hard edge
+ 	}
+-	c = mix(c, snow.rgb, smoothstep(snow_from, snow_full, v_h));
+ 	if (v_crack > 0.01) {
+ 		vec2 q = v_px / 70.0;
+ 		vec2 cell = floor(q);
+@@ -144,8 +195,14 @@
+ 	// A groove chars as it cools: under a fresh glow the ground keeps its own colour, so a beam's burn does not turn a
+ 	// broad strip of ground dark in one tick.
+ 	float fresh = smoothstep(char_fresh.x, char_fresh.y, v_heat);
+-	c = mix(c, char_col.rgb, clamp(v_scorch * 1.1, 0.0, 0.92) * char_gain * (1.0 - fresh) * (1.0 - v_new));
+-	c = flat_shade(c, NORMAL, 0.55) * mix(1.2, 0.95, v_back);
++	// A beam's scar (Art's damage language): a flat band in the biome's scar colour, a thin edge in its edge colour.
++	float sc = clamp(v_scorch * 1.1, 0.0, 0.92) * char_gain * (1.0 - fresh) * (1.0 - v_new);
++	// The band is where the burn passes scar_band.y; its edge a rim of scar_band.x pixels just inside the band's border, so a
++	// faded scar narrows and goes, and never turns into a wide pale band.
++	if (sc > scar_band.y) {
++		float rim = fwidth(sc) * scar_band.x;
++		c = mix(biome_tone(v_ba, sc > scar_band.y + rim ? 9 : 10), biome_tone(v_bb, sc > scar_band.y + rim ? 9 : 10), zf);
++	}
+ 	c = c * wl_mul + wl_add;   // the world's light; the lane cue, the pair's mark and a groove's glow below are never dimmed
+ 	vec4 cue = lane_cue_at(v_px, fwidth(v_px.y));
+ 	c = mix(c, cue.rgb, cue.a);
+--- a/docs/rendering/README.md
++++ b/docs/rendering/README.md
+@@ -663,6 +663,7 @@
+ 
+ Both are other directors' work, hosted here as their docs ask (`docs/ui/hud-spec.md` section 14, `audio/README.md` "Hooking it up"). Both only read.
+ - **By roster id (2026-10-06; `docs/architecture/pending/fighter-split.md` section 10).** The old HUD looks a fighter up by his roster id: his name and his title are UI's (`UiData.display_name`, `display_title`), and with no title the line is his stance alone. The sim keeps no title and its name is the id. The damage marks' seed belongs to the outfit (`RenderLook.DAMAGE_SEED_97`, the numbers the marks have always had), so the roster's rename moved no mark. The old spellings of the two ids are gone from `DAMAGE_OUTFIT` since the rename (part C). `tools/hud_words_check.gd` asks for the old HUD's words, since no other headless gate draws that HUD.
++- **Biome rendering, window 1 (2026-10-23, `biomes.md`).** The ground in Art's flat faceted colours (`docs/art/biomes.md`, `data/art/biomes.json` through `render/core/biome_look.gd`): each point takes its biome's lit, mid or shade tone by its normal against the sun, rock by steepness in five hard bands (at gentler slopes higher up in rocky biomes) with strata lines, a hard step by depth, the subsoil inside a crater, Art's scar band with a thin edge, and five hard bands across a 360-unit zone where two biomes meet. Keyed by World's fine biome ids, with the stored alias as the fallback.
+ - **The split's culling (2026-10-23, `split-culling.md`).** Each split pane leaves out of its draw the ground's and water's chunks wholly on the hidden side of its divider (Camera's visible half-plane), tested as boxes against the plane the screen line makes through the camera, widened by the planet's bend: nothing that can show is lost. The split held about half again as many ground triangles as one view; in the city-beam scene a pane now leaves out 44 to 52 percent of its own. On (`RenderLook.SPLIT_CULL_ON`; `--nocull` for the A/B).
+ - **The far land's towns (2026-10-23, `slow-drift.md`).** Every planet match gets the planet's own far land (World's `S.planetRing`, the turn on or off), its settlements' ground in the city's and village's colours, and the distant towns and cities standing on it as hazed blocks (`far_town.gdshader`), each standing on the ground's mesh, none on a cliff or in the sea. Off with the far land (`RenderLook.FAR_MAP_ON`).
+ - **The planet's own far land (2026-10-22, `slow-drift.md`).** On a planet match that may turn, the far rows read World's map of the planet beside the ring (`render/core/far_land.gd`; the shaders' `far4`), each row at the map's mip level for its spacing in depth, so nothing aliases. It shows only from a hard cut: a match's start once the map is whole, else World's next turn. Off by default (`RenderLook.FAR_MAP_ON`; `--farmap`).
+--- /dev/null
++++ b/render/core/biome_look.gd
+@@ -0,0 +1,100 @@
++class_name RenderBiomeLook
++extends RefCounted
++## Art's biome look (docs/art/biomes.md, data/art/biomes.json) for the ground's shaders (biome rendering window 1;
++## docs/rendering/biomes.md): one small palette texture, a column per biome and a row per tone. The columns are World's
++## fine biomes by their ids (data/biomes/climate.json "fine": FINE), then the render's own city and village (Art draws
++## none). Each is Art's entry under its name; until Art's data carries every fine name, Art's older name for it (OLD) or
++## its stored alias (ALIAS: World's fallback for a consumer that knows only the stored seven). The rows: the ground's
++## lit, mid and shade faces; the rock's; the subsoil's (a crater's inside: Art's lite 0.14, the subsoil, Art's dark 0.3);
++## a beam's scar band and its edge; and in the last row, red: whether the biome's rock carries strata lines (desert,
++## mountains, volcanic, highland), green: the height above which its ground is rock whatever its slope (ROCK_ABOVE, in
++## tens of thousands of units; Art's mountains are green only at the foot). The render's own biome names
++## (GroundField.BIOME_ORDER) map onto these by id_of.
++
++const DATA_PATH := "res://data/art/biomes.json"
++const FINE: Array = ["ocean", "plains", "forest", "desert", "mountains", "ice_sheet", "sea_ice", "jungle", "savanna", "tundra", "taiga", "wetland", "beach", "highland", "volcanic"]
++const ALIAS: Dictionary = {"ice_sheet": "mountains", "sea_ice": "plains", "jungle": "forest", "savanna": "plains", "tundra": "plains", "taiga": "forest", "wetland": "plains", "beach": "desert", "highland": "mountains", "volcanic": "mountains"}
++const OLD: Dictionary = {"ice_sheet": "ice", "sea_ice": "seaice"}
++const CITY: int = 15
++const VILLAGE: int = 16
++const COUNT: int = 17
++const WIDTH: int = 32
++const ROW_GROUND: int = 0    # lit, mid, shade
++const ROW_ROCK: int = 3      # lit, mid, shade
++const ROW_SUB: int = 6       # lit, mid, shade
++const ROW_SCAR: int = 9      # the band, then its edge
++const ROW_STRATA: int = 11   # red 1: the rock carries strata lines; green: ROCK_ABOVE / 10,000
++const ROWS: int = 12
++const LITE := "#fff6e0"      # Art's lite() and dark() (art/concepts/biomes/draw.mjs)
++const DARK := "#0c0a14"
++const STRATA: Array = ["desert", "mountains", "volcanic", "highland"]
++const SCAR_DEFAULT: Array = ["#221c18", "#4a4036"]
++const ROCK_ABOVE: Dictionary = {"mountains": 1200.0, "highland": 900.0}   # units: above this the ground is rock
++
++static var _tex: ImageTexture = null
++
++
++## The palette column of a biome by name: one of World's fine names, or the render's own (GroundField.BIOME_ORDER: the
++## stored five, the city, the village). A fine biome's column is its fine id.
++static func id_of(name: String) -> int:
++	if name == "city":
++		return CITY
++	if name == "village":
++		return VILLAGE
++	var i: int = FINE.find(name)
++	return i if i >= 0 else FINE.find("plains")
++
++
++## The palette texture (made once): RGBA8, sRGB colours as the data writes them (the shaders read it as a source colour).
++static func texture() -> ImageTexture:
++	if _tex == null:
++		var d = JSON.parse_string(FileAccess.get_file_as_string(DATA_PATH)) if FileAccess.file_exists(DATA_PATH) else null
++		var img := Image.create_empty(WIDTH, ROWS, false, Image.FORMAT_RGBA8)
++		for k in range(COUNT):
++			var t: Array = tones(d, k)
++			for r in range(ROWS):
++				img.set_pixel(k, r, t[r])
++		_tex = ImageTexture.create_from_image(img)
++	return _tex
++
++
++## Biome k's ROWS colours: Art's entry for the fine biome (its own name, else Art's older name, else its alias's); for the
++## city and the village, the render's own colour as the mid face with Art's lite and dark for the others, and a
++## neighbour's rock and subsoil. Without the data, the render's own biome colours.
++static func tones(d, k: int) -> Array:
++	var name: String = FINE[k] if k < FINE.size() else ("city" if k == CITY else "village")
++	var b: Dictionary = {}
++	if d is Dictionary and d.get("biomes") is Dictionary:
++		for key in [name, OLD.get(name, ""), ALIAS.get(name, "")]:
++			if key != "" and d.biomes.has(key):
++				b = d.biomes[key]
++				break
++	var g: Array = []
++	var r: Array = []
++	var sub: String = ""
++	var scar: Array = SCAR_DEFAULT
++	if not b.is_empty():
++		g = b.palette.ground
++		r = b.palette.rock
++		sub = b.palette.subsoil
++		if b.get("scar") is Dictionary:
++			scar = [b.scar.fill, b.scar.edge]
++	else:
++		var mid: String = RenderLook.BIOME.get(name, RenderLook.BIOME.get(ALIAS.get(name, "plains"), "#5f9140"))
++		g = [_mix(mid, LITE, 0.14), mid, _mix(mid, DARK, 0.25)]
++		r = ["#908a77", "#7e7a6e", "#5a574e"]
++		sub = "#5c574f" if name == "city" else "#6b5338"
++	var out: Array = []
++	for h in g + r:
++		out.append(RenderLook.col(h))
++	out.append_array([RenderLook.col(_mix(sub, LITE, 0.14)), RenderLook.col(sub), RenderLook.col(_mix(sub, DARK, 0.3))])
++	out.append_array([RenderLook.col(scar[0]), RenderLook.col(scar[1])])
++	out.append(Color(1.0 if STRATA.has(name) else 0.0, float(ROCK_ABOVE.get(name, 0.0)) / 10000.0, 0.0, 1.0))
++	return out
++
++
++## Art's mix() of two hex colours, rounded to whole channels as Art rounds them.
++static func _mix(a: String, b: String, t: float) -> String:
++	var ca := Color(a)
++	var cb := Color(b)
++	return "#" + Color(roundf(lerpf(ca.r8, cb.r8, t)) / 255.0, roundf(lerpf(ca.g8, cb.g8, t)) / 255.0, roundf(lerpf(ca.b8, cb.b8, t)) / 255.0).to_html(false)
+--- /dev/null
++++ b/render/core/biome_look.gd.uid
+@@ -0,0 +1 @@
++uid://bt1owqb8n13ba
+--- /dev/null
++++ b/docs/rendering/biomes.md
+@@ -0,0 +1,56 @@
++# Biome rendering (Rendering, 2026-10-23)
++
++Orb's priority (2026-10-23): "pour resources into improving our planet generation, biomes, fighter animations". Art's biome look bible is the brief (`docs/art/biomes.md`, `data/art/biomes.json`, `art/concepts/biomes/`): flat faceted colours, lit, mid and shade faces, no gradients; transitions in hard steps. This page covers what the render builds of it, window by window.
++
++## Window 1: the ground in Art's facets
++
++**The palette** (`render/core/biome_look.gd`, `RenderBiomeLook`): a 32 by 12 texture made once from Art's data.
++- **A column per biome:** World's fine biomes by id (`data/biomes/climate.json` "fine": 0 ocean to 14 volcanic), then the render's own city (15) and village (16).
++- **Each fine biome is Art's entry under its name.** Until Art's data carries every fine name, it falls back to Art's older name (ice, seaice) or to the biome's stored alias (World's fallback).
++- **The city and the village** are the render's own colours as the mid face, with Art's `lite` and `dark` for the others.
++- **A row per tone:**
++  - the ground's lit, mid and shade faces;
++  - the rock's;
++  - the subsoil's (Art's crater inside: `lite` 0.14, the subsoil, `dark` 0.3);
++  - a beam's scar band and its edge;
++  - whether the rock carries strata lines (desert, mountains, volcanic, highland).
++- **The render's band biomes map onto it** by name (`id_of`): today's five stored biomes, the city and the village. The fine id reaches the band when World's window 2 plumbs it into the match.
++
++**The facets** (`terrain.gdshader`):
++- **The tone.** A point of the ground takes its biome's lit, mid or shade tone by its normal against the sun (`FACET_SUN`: upper left, a little toward the viewer). It is lit past `FACET_SLOPE` (0.05) more light than flat ground, shade past it less, and mid on the flat.
++  - This is Art's rule along the strip (rising to the right is lit), and a slope in depth takes the light as well, so a hillside facing the camera is not one flat slab.
++  - The normal is the ground's own, smooth across the mesh, so a tone's edge follows the ground's shape as a clean contour. A first cut used each triangle's own face, and a fine crater bowl broke into sawteeth.
++- **Rock.** It comes in by steepness, in Art's five hard bands from `ROCK_SLOPE.x` (0.45 rise over run) to `.y` (1.25), so the green and the rock meet along the slope's contour, stepped.
++  - In a rocky biome (mountains from 1,200 units, highland from 900) the rock starts at gentler slopes the higher it is, down to `ROCK_HIGH` (0.3) of that at twice the height. A mountain stays green only at its foot, and only where the foot is gentle.
++  - A first cut turned all ground above a height to rock: one flat green slab cut by a straight line (the EP's look call).
++- **Strata.** Thin dark lines every `STRATA_H` (220) units of height run on rock that carries them (desert, mountains, volcanic, highland), where the rock's bands dominate. They leave out where they would crowd closer than a few pixels.
++- **Depth.** The band's value steps by depth in three hard steps (`DEPTH_STEP`: 1.1 at the front to 0.94 at the back), so open flat ground (a desert) still reads near and far. The tones themselves are the light. The far land keeps its own colour and shading until window 3 makes it Art's ladder.
++- **Hard edges elsewhere too:**
++  - snow on the peaks starts at a height;
++  - a crater's rim rubble comes in two steps;
++  - the sea floor, the streets and the snow take `TONE_K` for their facets.
++
++**Borders** (`ground_field.gd` `zone_rows`, rows 21 to 23): Art's transition, a zone a third of the 1,200-unit window wide (`BIOME_ZONE` 360 units).
++- **Each column in a zone** carries the palette ids of the biomes either side of its nearest border, and where that border lies.
++- **The shader steps the colour across the zone in five hard bands,** 10, 30, 50, 70 and 90 percent of the way to the other biome.
++- **Cost:** a pass over the borders, well under a millisecond at a new world.
++
++**Damage** (Art's grammar):
++- **A crater's inside** is the subsoil's tone, not the surface's.
++- **A beam's scar** is a flat band in the biome's scar colour where the burn passes `SCAR_BAND.y` (0.3), with an edge rim of `SCAR_BAND.x` (1.5) pixels inside it in the edge colour: glassy green-black with a pale edge on sand, slate on ice, black char elsewhere.
++  - A faded scar narrows and goes.
++  - A first cut drew the edge wherever the burn was faint, and an old scar became a wide pale band across a desert.
++- The burned state (ash grey ground, black trees) waits for a fire in the sim and for window 2's cover.
++
++**Checked:**
++- the shaders parse headless and the palette builds;
++- the 19 render gates and `split_sweep`;
++- stills against d3f1ca0e and main (`img/biomes-w1-d3f1ca0e.png`): the desert, three mountain scenes, the city-beam crater, planet 7.
++
++## Window 2: the cover (next)
++
++Art's 33 silhouettes (`docs/art/biomes-cover.md`) are ported to mesh builders, flat in the plane of the strip with a palette slot per vertex (scratch, 405 triangles clean and 303 charred, matching Art's counts except the mesa). Next: scattered per biome by Art's densities, mixed by probability across a zone, charred by the burn state.
++
++## Window 3: the far land and the sky (after)
++
++Art's three-ridge value ladder for the far land, replacing the haze band, and the sky's tint per biome.

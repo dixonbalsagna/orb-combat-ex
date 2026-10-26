@@ -444,11 +444,15 @@ const HAZE_SAT: float = 0.7
 ## --roll (or ?roll=1 on a page) turns it on.
 const CAMERA_ROLL_ON: bool = false
 const ROLL_DEG := Vector2(4.0, 8.0)
-const ROLL_TIMES := Vector3(0.25, 0.8, 0.9)
+const ROLL_TIMES := Vector3(0.5, 0.8, 0.9)   # in over 0.5 s (30 frames: Research's cuts-and-eases.md), held, back
 ## The slow drift (World's window 2; docs/rendering/slow-drift.md): the far land and the sky turn round the fight at
 ## DRIFT_DEG_PER_MIN degrees a minute of match time, up to DRIFT_MAX_DEG, from 0 at a match's start and again at World's
 ## turn (under its hard cut). Render only; off unless SLOW_DRIFT_ON or main's --drift (?drift=1 on a page).
 const SLOW_DRIFT_ON: bool = false
+## The split's culling (planet_view.gd cull_to): a pane leaves out of its draw the ground's and water's chunks that lie
+## wholly on the hidden side of its visible half-plane (Camera's SplitFrame.visible_half_plane). Nothing that can show
+## is lost, so it is on; main's --nocull (?nocull=1) turns it off.
+const SPLIT_CULL_ON: bool = true
 const DRIFT_DEG_PER_MIN: float = 3.0
 const DRIFT_MAX_DEG: float = 30.0
 ## The planet's own far land (World's WorldFarMap; render/core/far_land.gd): on a planet match that may turn, the far
@@ -458,6 +462,17 @@ const FAR_MAP_ON: bool = false
 const FAR_MAP_N: int = 192
 const FAR_MAP_STEP: int = 64
 const FAR_MAP_LOD_MAX: int = 5   # the coarsest mip level a far row reads (a texel of about 13,000 units at 192)
+## The distant towns and cities on the planet's far land (render/core/far_land.gd, far_town.gdshader): the places within
+## FAR_TOWN_REACH behind the fighter plane, as blocks spread over FAR_TOWN_SPREAD of each place's radius.
+## FAR_CITY and FAR_TOWN: [blocks, width min, width max, height min, height max] in units; taller toward the middle.
+const FAR_TOWN_REACH: float = 60000.0
+const FAR_TOWN_SPREAD: float = 0.8
+const FAR_CITY: Array = [48, 180.0, 420.0, 300.0, 2400.0]
+const FAR_TOWN: Array = [14, 140.0, 280.0, 120.0, 450.0]
+const FAR_TOWN_WIDE: float = 4.0   # near the ring's axis the far land is drawn wider than the planet: a town's blocks spread with it, up to this
+const FAR_TOWN_FOOT: float = 0.4   # a block's foot sinks this much of its height below the ground (a slope never shows under it)
+const FAR_TOWN_SLOPE: float = 0.8  # no block stands on ground steeper than this (rise over run): a town does not climb a cliff
+const FAR_TOWN_COLS: Array = ["#9a97a0", "#8a93a0", "#a8a29a", "#c2a888", "#b39878", "#a8927e"]   # a city's three, a town's three
 ## The climaxes that roll, each with its weight (0: ROLL_DEG.x, 1: ROLL_DEG.y): the sim's events by type, and a decisive
 ## exchange won by its kind. Motivated and rare (the EP, 2026-10-22): a plain knock-back, a heavy clash, a beam won, an
 ## interrupt, a shot and a barrage do not roll.

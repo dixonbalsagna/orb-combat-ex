@@ -29,6 +29,7 @@ var shadows: Array = []            # per fighter: the ground shadow under him (r
 var source: PaneWorld = null       # a second pane: the first, whose world it draws
 var view_cam_x: float = 0.0        # this frame's camera's wrapped world x
 var drift: float = 0.0             # the slow drift's angle this frame (radians; World's window 2), set by main; 0 off
+var vis_plane: Dictionary = {}     # Camera's visible half-plane for this pane this frame (SplitFrame.visible_half_plane), set by main; {} draws everything
 var far: FarLand = null            # the planet's own far land (render/core/far_land.gd), set by main; null off
 var markers: bool = true           # the fighters' head markers (the stance badge); main's inset pane has none
 var occlusion: int = OCCL_HOLE     # main sets it (a debug toggle)
@@ -168,6 +169,7 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 	if source == null and host.vfx.enabled and host.vfx.react_enabled:
 		planet.blow_windows(S, host.vfx.react.blowouts)   # the facades' windows go out with VFX's glass
 	planet.update(S, cam_x, host.impact.heat, host.impact.heat_changed)
+	planet.cull_to(cam_rig, vis_plane)   # the split's culling: chunks wholly on this pane's hidden side are not drawn
 	for i in range(fighter_views.size()):
 		var v: FighterView = fighter_views[i]
 		var pose: Vector3 = host.fighter_pose(i, a)

@@ -206,6 +206,7 @@ const ANCHOR_REPORT_STEP: float = 0.15   # the frame's reported anchor moves at 
 const DIVIDER_STEP: float = 0.06       # divider centre motion per tick, times vw, outside the slam
 const SHAKE_CAP: float = 0.03          # times vh
 const SHAKE_HIT_STEP: float = 1.0
+const VIS_MARGIN_PX: float = 8.0       # SplitFrame.visible_half_plane's slack past the largest shake (SHAKE_CAP x SHAKE_PREF_TOP of the height) and the divider's feather and line
 
 # --- the lag bound (camera v2 section 2) ---
 const LAG_SOFT: float = 0.06           # a tracked fighter this far from his anchor (screen widths): ordinary filter

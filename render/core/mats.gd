@@ -139,6 +139,13 @@ func sag(x: float, z: float) -> float:
 	return _bend * x * x * k
 
 
+## The bend's three numbers (bend, the camera's distance, the focus depth), for a bound on what it may bring into view
+## (PlanetView._side: the largest x squared, the depth weight's ramp at the deepest and its perspective term at the
+## shallowest).
+func bend_params() -> Vector3:
+	return Vector3(_bend, _dist, _focus)
+
+
 ## focus: the depth of the camera's focus plane (0: the fighter plane). It is sent only once it has ever moved.
 func set_bend(b: float, dist: float, focus: float = 0.0) -> void:
 	if focus != _focus:
