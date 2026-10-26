@@ -113,6 +113,30 @@ func _init() -> void:
 		SimCore.step(warm)
 	ok(ld.done and str(SimHash.stateHash(warm).gameplay) == hCold, "a touch-down's match started after the host's load (%d frames at the read's budget, the longest %.1f ms) is the cold one, bit for bit; its start then takes %.0f ms" % [frames, worstLoad, startMs])
 	WorldClimate.useGen(1)
+	# Research's B plates in steps (window 20, second add-on): the plates made a slice at a time are the whole make's, and a planet job with B on goes in steps
+	WorldClimate.useGen(2)
+	WorldLand.setB(true)
+	WorldPlanet.forget()
+	var Pw := WorldPlanet._newPlanet(13, 2)
+	var Sw: WorldPlateB.State = WorldPlateB.stateOf(Pw)
+	var Ps := WorldPlanet._newPlanet(13, 2)
+	var bCalls: int = 0
+	var bWorst: float = 0.0
+	while bCalls < 100000:
+		var tb: int = Time.get_ticks_usec()
+		var bdone: bool = WorldPlateB.step(Ps, 250)
+		bWorst = maxf(bWorst, float(Time.get_ticks_usec() - tb) / 1000.0)
+		bCalls += 1
+		if bdone:
+			break
+	var Ss: WorldPlateB.State = Ps.platesB
+	ok(Ss != null and Ss.cf == Sw.cf and Ss.bf == Sw.bf and Ss.plate == Sw.plate and Ss.lift == Sw.lift and Ss.hot == Sw.hot and Ss.hotB == Sw.hotB and Ss.pe == Sw.pe, "the B plates made at 250 units a call (%d calls, the longest %.1f ms; it was one call of 46 ms) are the whole make's, bit for bit" % [bCalls, bWorst])
+	WorldPlanet.forget()
+	var refB: WorldPlanet.Planet = WorldPlanet.make(13)
+	var rb: Array = run(13, 250)
+	ok(samePlanet(refB, rb[2]) and rb[1] < 25.0, "a gen 2 planet with the B plates on made by the job at 250 units is the one make gives, bit for bit (%d calls, the longest %.1f ms)" % [rb[0], rb[1]])
+	WorldLand.setB(false)
+	WorldClimate.useGen(1)
 	# the memos evict the oldest
 	WorldPlanet.forget()
 	for sd in range(1, 9):

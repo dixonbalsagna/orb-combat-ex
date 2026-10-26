@@ -263,6 +263,13 @@ static func stateOf(P: WorldPlanet.Planet) -> State:
 
 
 static func _make(seed: int, R: float) -> State:
+	var ctx: Dictionary = _makeBegin(seed, R)
+	_makeArea(ctx, 1 << 40)
+	return _makeEnd(ctx)
+
+
+## The plates' cells and drifts (under a millisecond): the state the area sample and the end go on from.
+static func _makeBegin(seed: int, R: float) -> Dictionary:
 	var Pm: Prm = K
 	var nc: int = Pm.cells
 	var c: Array = []
@@ -291,12 +298,42 @@ static func _make(seed: int, R: float) -> State:
 		area.append(0.0)
 	var under: Array = []
 	var cn: Array = []
-	for k in range(Pm.areaPts):
+	return {"seed": seed, "R": R, "c": c, "plate": plate, "pw": pw, "area": area, "under": under, "cn": cn, "k": 0}
+
+
+## Up to n more of the area sample's points (a point is about 20 us: 39 of the make's 46 ms are its 2,000); true when all are read.
+static func _makeArea(ctx: Dictionary, n: int) -> bool:
+	var Pm: Prm = K
+	var seed: int = ctx.seed
+	var R: float = ctx.R
+	var nc: int = Pm.cells
+	var c: Array = ctx.c
+	var plate: Array = ctx.plate
+	var area: Array = ctx.area
+	var under: Array = ctx.under
+	var cn: Array = ctx.cn
+	var last: int = mini(Pm.areaPts, int(ctx.k) + n)
+	for k in range(int(ctx.k), last):
 		var p: Array = _randUnit(seed, Pm.sArea, k)
 		var pi: int = plate[_nearest(c, 0, nc, p)]
 		area[pi] += 1.0 / float(Pm.areaPts)
 		under.append(pi)
 		cn.append((WorldPlanet._fbm(R, p[0], p[1], p[2], Pm.crustScale, Pm.crustOct, seed + Pm.sCrust) - 0.5) * 2.0)
+	ctx.k = last
+	return last >= Pm.areaPts
+
+
+## The rest of the make (about a millisecond): the plates' types, the land share, the hotspots, the pair table, the state.
+static func _makeEnd(ctx: Dictionary) -> State:
+	var Pm: Prm = K
+	var seed: int = ctx.seed
+	var nc: int = Pm.cells
+	var c: Array = ctx.c
+	var plate: Array = ctx.plate
+	var pw: Array = ctx.pw
+	var area: Array = ctx.area
+	var under: Array = ctx.under
+	var cn: Array = ctx.cn
 	var rank: Array = []
 	for i in range(Pm.plates):
 		rank.append([draw(seed, Pm.sType, i), i])
@@ -310,11 +347,11 @@ static func _make(seed: int, R: float) -> State:
 		if cum + area[i] * 0.5 <= Pm.contArea:
 			pbias[i] = Pm.crustBias
 			cum += area[i]
-	var cvs: Array = []
+	var cvs := PackedFloat64Array()   # the land share's order statistic is the same value whatever the order of ties: a native sort of the values, not a comparator sort of pairs (5 ms)
 	for k in range(Pm.areaPts):
-		cvs.append([cn[k] + pbias[under[k]], k])
-	cvs.sort_custom(_cmpDesc)
-	var lift: float = -float(cvs[int(floor(Pm.landShare * float(Pm.areaPts)))][0])
+		cvs.append(cn[k] + pbias[under[k]])
+	cvs.sort()
+	var lift: float = -float(cvs[Pm.areaPts - 1 - int(floor(Pm.landShare * float(Pm.areaPts)))])
 	var w: Array = []
 	var bias: Array = []
 	for i in range(nc):
@@ -416,6 +453,25 @@ static func _make(seed: int, R: float) -> State:
 	S.cv.resize(3)
 	S.ready.resize(3)
 	return S
+
+
+## Makes P's B plates a slice at a time (a host's load, SimPlanetLoad): `units` of about 20 us (an area point is one; the start and the end are 30 and 50). True when P.platesB is made.
+static func step(P: WorldPlanet.Planet, units: int) -> bool:
+	if P.platesB != null:
+		return true
+	if not _loaded:
+		_load()
+	var left: int = units
+	var ctx = P.platesBJob
+	if ctx == null:
+		ctx = _makeBegin(P.seed, P.R)
+		P.platesBJob = ctx
+		left -= 30
+	if not _makeArea(ctx, maxi(1, left)):
+		return false
+	P.platesB = _makeEnd(ctx)
+	P.platesBJob = null
+	return true
 
 
 static func _bump(t: float) -> float:

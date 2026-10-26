@@ -279,15 +279,16 @@ class Grid extends RefCounted:
 		var left: int = n
 		var total: int = w * h
 		if cell < total:
-			var last: int = mini(total, cell + n)
+			var cu: int = 3 if WorldLand.plateB() else 1   # a cell on the B plates' ground costs about 65 us, on the stored continents' about 20
+			var last: int = mini(total, cell + maxi(1, n / cu))
 			for i in range(cell, last):
 				var r: int = i / w
 				var k: int = i - r * w
 				var y: float = -1.0 + (float(r) + 0.5) * 2.0 / float(h)
 				var c: float = sqrt(1.0 - y * y)
 				ht[i] = WorldPlanet.ground(P, c * _cs[k], y, c * _sn[k])
-			left -= last - cell
-			spent += last - cell
+			left -= (last - cell) * cu
+			spent += (last - cell) * cu
 			cell = last
 			if cell < total:
 				return false

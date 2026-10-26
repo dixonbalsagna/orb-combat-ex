@@ -117,11 +117,12 @@ class Job extends RefCounted:
 		var was: int = WorldClimate.curGen
 		WorldClimate.useGen(gen)
 		while true:
-			if phase == "plates":   # made by the first ground read in one piece: a step of their own
+			if phase == "plates":   # gen 2's plates are small (made here in one piece); Research's B plates (46 ms) are made a slice at a time: the phase stays until they are
 				WorldLand.platesOf(P)
-				if WorldLand.plateB():
-					WorldPlateB.stateOf(P)
-				phase = "climate"
+				if not WorldLand.plateB() or WorldPlateB.step(P, u):
+					phase = "climate"
+				else:
+					spent += u
 			elif not pj.done:
 				pj.step(u)
 				spent += u   # World's job goes on where it left off (a try, a row of the carry, a few cells of the flow field): a step spends the slice

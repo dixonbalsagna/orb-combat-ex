@@ -1,7 +1,7 @@
 extends SceneTree
 # The calm turn's warm ticks at the real rate (Performance's k = 32; docs/perf/gen2-bench-2026-10-26.md): each tick of WorldEpoch.tick after a turn is decided, timed, with the ring's read (RingJob.step) and the swap's
 # preparation (_prep) told apart: the worst tick is what the frame feels. Gen 1 and gen 2 side by side.
-#   godot --headless --path . --script res://sim/world/tools/epoch_prof.gd [-- --k=32 --seed=7]
+#   godot --headless --path . --script res://sim/world/tools/epoch_prof.gd [-- --k=32 --seed=7 --total]
 func run(gen: int, k: int, seed: int) -> void:
 	WorldClimate.useGen(gen)
 	var S := SimCore.createSim()
@@ -14,7 +14,7 @@ func run(gen: int, k: int, seed: int) -> void:
 	WorldEpoch.choose(S, c.size() - 1, k, 2.5)
 	var times: Array = []
 	var g: int = 0
-	while S.epoch.next != null and g < 400:
+	while S.epoch.next != null and g < 1200:
 		var t0: int = Time.get_ticks_usec()
 		WorldEpoch.tick(S, g > 60)
 		times.append(float(Time.get_ticks_usec() - t0))
@@ -37,6 +37,7 @@ func run(gen: int, k: int, seed: int) -> void:
 
 
 func _init() -> void:
+	WorldRingPick.cfg().turn["warmTotal"] = 1 if "--total" in OS.get_cmdline_user_args() else 0   # --total: k shared among the rings (the turn data's warmTotal)
 	var k: int = 32
 	var seed: int = 7
 	for a in OS.get_cmdline_user_args():

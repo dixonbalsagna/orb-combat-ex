@@ -17,6 +17,7 @@ class_name WorldEpoch
 static var _PI: float = SimMathx.f64("400921fb54442d18")   # pi from its bits, and SimDetMath for every sin and cos: no engine trig in the sim (the parity lint allows no float literal over 15 digits)
 const WT_STEP: int = 600      # columns of the carry weights made a warm tick
 const HASH_STEP: int = 3000   # bytes of a ring's slice hash made a warm tick
+const HELD_TICKS: int = 2     # of the preparation's prepTicks, the first ones are the ring's blend and held places (the rest are the preparation proper)
 static var _plans: Dictionary = {}   # worldId -> the swap's preparation: {wt, wtN, e: {ring key -> entry}}: derived data outside the state, made by the warm ticks from what the swap does not change
 static var _jobs: Dictionary = {}   # "worldId/bearing" -> RingJob (the warm read of a candidate ring, kept whole until the swap): derived data outside the state; the state keeps how many columns it was asked for
 
@@ -204,31 +205,83 @@ static func _dropJobs(S: SimState) -> void:
 ## carried into a process that has not got a job makes it again and reads up to `cols` at once (the same columns, a hitch). True when every ring is read.
 static func _warm(S: SimState) -> bool:
 	var E = S.epoch
-	var n: int = int(E.next.k)
+	var n: int = _share(E)
 	var all: bool = true
 	for w in E.warm:
 		if int(w.cols) >= SimConst.NC:
 			continue
-		var key: String = _jkey(S, float(w.deg))
-		var job = _jobs.get(key)
-		if job == null:
-			var P := WorldPlanet.make(int(E.seed))
-			job = WorldPlanet.RingJob.new(P, WorldRingPick.ringFrom(w.spec.c, int(w.spec.cols), w.spec.t))
-			if int(w.cols) > 0:
-				job.step(int(w.cols))   # the catch-up of a carried state
-			_jobs[key] = job
-		job.step(n)
-		w.cols = int(w.cols) + n
-		if job.done:
+		var job = _jobFor(S, E, w)
+		var target: int = int(w.cols) + n
+		job.readTo(target)   # up to the counted columns: a job a host has read ahead is there already
+		w.cols = target
+		if target >= SimConst.NC:   # the count says read (never how far a host's job has got: a replay warms on the same tick)
 			w.cols = maxi(int(w.cols), SimConst.NC)
 			if int(w.ptk) < 0:
 				w.ptk = 0   # read: its preparation's ticks begin (the first is this one: _prep, below)
-			WorldPlanet.memoRing(int(E.seed), job.ring, job.slice)
 		else:
 			w.cols = mini(int(w.cols), SimConst.NC - 1)
 			all = false
 	_prep(S, E)
 	return all
+
+
+## The columns a warm tick reads of each ring: the pick's k each (the turn data's `warmTotal` 0, as always), or k in all shared among the warm rings (`warmTotal` 1: a launch pick's two rings cost a tick what a form pick's one does).
+static func _share(E: Dictionary) -> int:
+	var n: int = int(E.next.k)
+	if int(data().get("warmTotal", 0)) == 1 and E.warm.size() > 1:
+		n = maxi(1, n / E.warm.size())
+	return n
+
+
+## The warm ring's job (derived data outside the state): made when first asked, caught up to the columns the state counts.
+static func _jobFor(S: SimState, E: Dictionary, w: Dictionary):
+	var key: String = _jkey(S, float(w.deg))
+	var job = _jobs.get(key)
+	if job == null:
+		var P := WorldPlanet.make(int(E.seed))
+		job = WorldPlanet.RingJob.new(P, WorldRingPick.ringFrom(w.spec.c, int(w.spec.cols), w.spec.t))
+		job.lazy = true   # the columns on the warm ticks; the blend and the places in the preparation's first two ticks
+		if int(w.cols) > 0:
+			job.readTo(int(w.cols))   # the catch-up of a carried state
+		_jobs[key] = job
+	return job
+
+
+## A host's idle time (Rendering's SimHost, a frame with time left): steps the decided turn's rings' jobs on past the columns the state has counted, `units` of about 20 us (a column of gen 2 is about 3) in all,
+## the ring nearest to done first. The state is not touched (the slices are derived data outside it): a ring counts as read, and the swap happens, on the same ticks whatever a host does; the sim's tick then finds
+## its columns read and reads nothing. Returns the columns read now. A host calls it between sim ticks (never from inside one).
+static func readAhead(S: SimState, units: int, colUnits: int = 3) -> int:
+	var E = S.epoch
+	if E == null or E.next == null:
+		return 0
+	var left: int = maxi(0, units / maxi(1, colUnits))
+	var did: int = 0
+	var best: Array = []
+	for w in E.warm:
+		var job = _jobFor(S, E, w)
+		if not job.done:
+			best.append(job)
+	best.sort_custom(func(a, b): return a.i > b.i)
+	for job in best:
+		if left <= 0:
+			break
+		var from: int = job.i
+		job.step(left)
+		did += job.i - from
+		left -= job.i - from
+	return did
+
+
+## What is warming, for a host that reads ahead: [[columns read now, columns of the ring, counted by the state]] a warm ring.
+static func warmPlan(S: SimState) -> Array:
+	var E = S.epoch
+	var out: Array = []
+	if E == null or E.next == null:
+		return out
+	for w in E.warm:
+		var job = _jobs.get(_jkey(S, float(w.deg)))
+		out.append([int(job.i) if job != null else 0, SimConst.NC, int(w.cols)])
+	return out
 
 
 # ===================================================================== the swap's preparation
@@ -277,10 +330,18 @@ static func _prep(S: SimState, E: Dictionary) -> void:
 		if ep == null:
 			ep = _entry()
 			pl.e[key] = ep
-		_hashTo(ep, job.slice, int(job.i))   # the slice's heights are hashed as the columns are read
+		_hashTo(ep, job.slice, mini(int(w.cols), SimConst.NC - 1 if job.slice.pending or not job.done else SimConst.NC))   # the slice's heights are hashed as the columns are counted read (a job a host has read ahead is not the count); the biomes wait for the blend
 		if int(w.ptk) >= 0 and int(w.ptk) < pt:
-			_prepTo(S, E, pl, ep, job.slice, int(w.ptk), pt)   # the preparation's tick p of prepTicks
-			w.ptk = int(w.ptk) + 1
+			var p: int = int(w.ptk)
+			var ht: int = mini(HELD_TICKS, pt - 1)
+			if p < ht:   # the ring's last step, the blend and the held places, off the tick it was read on: half the blend, then the rest and the places
+				if not job.done:
+					job.heldStep(SimConst.NC / ht if p < ht - 1 else 1 << 30)
+				if p == ht - 1:
+					WorldPlanet.memoRing(int(E.seed), job.ring, job.slice)   # whole now: where sliceRing finds it
+			else:
+				_prepTo(S, E, pl, ep, job.slice, p - ht, pt - ht)   # the preparation's tick of prepTicks - HELD_TICKS
+			w.ptk = p + 1
 
 
 static func _entry() -> Dictionary:
@@ -313,6 +374,8 @@ static func _hashTo(ep: Dictionary, sl: WorldPlanet.Slice, ncols: int) -> void:
 ## The preparation due by tick p of pt: the stage that needs the whole slice at p 0, then the new places' layouts spread so that all are laid by the last tick, and the assembly on it. Anything due that
 ## is not yet made (a preparation lost and begun again) is made now, so the state after tick p is the same whatever came before.
 static func _prepTo(S: SimState, E: Dictionary, pl: Dictionary, ep: Dictionary, sl: WorldPlanet.Slice, p: int, pt: int) -> void:
+	if sl.pending:   # a ring whose blend and places are not made (a preparation begun again): made now, the same
+		WorldPlanet.heldStep(WorldPlanet.make(sl.seed), sl, 1 << 30)
 	if int(pl.wtN) < SimConst.NC:
 		_wtStep(E, pl, SimConst.NC)
 	_hashTo(ep, sl, SimConst.NC)
@@ -555,7 +618,7 @@ static func swap(S: SimState) -> void:
 	var key: String = _jkey(S, float(nx.bearing))
 	var job = _jobs.get(key)
 	var sl: WorldPlanet.Slice
-	if job != null and job.done:
+	if job != null and job.i >= SimConst.NC and not job.slice.pending:   # read whole (a lazy job's `done` is set by its preparation's ticks: a lost preparation finds the slice whole all the same)
 		sl = job.slice
 	else:
 		E.cold = int(E.cold) + 1   # a ring read on the swap tick: only for a state carried into a process that never warmed it (the same slice, and a hitch). tick() swaps only on a ring the state counts as read, so this stays 0

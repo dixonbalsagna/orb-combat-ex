@@ -1,6 +1,6 @@
 extends SceneTree
 # The planet job's calls (WorldPlanet.PlanetJob.step) timed one by one with what each was doing: the grid's cells, the carry that ends the grid, the flow field's steps, the places' steps.
-#   godot --headless --path . --script res://sim/world/tools/job_prof.gd [-- --budget=200 --rivers]
+#   godot --headless --path . --script res://sim/world/tools/job_prof.gd [-- --budget=200 --rivers --b]
 func _init() -> void:
 	var budget: int = 200
 	for a in OS.get_cmdline_user_args():
@@ -8,6 +8,7 @@ func _init() -> void:
 			budget = int(a.substr(9))
 	WorldClimate.useGen(2)
 	WorldRivers.setOn("--rivers" in OS.get_cmdline_user_args())
+	WorldLand.setB("--b" in OS.get_cmdline_user_args())
 	WorldPlanet.forget()
 	var t0: int = Time.get_ticks_usec()
 	var job: WorldPlanet.PlanetJob = WorldPlanet.makeJob(7)

@@ -321,6 +321,7 @@ class Planet extends RefCounted:
 	var flow = null                          # gen 2 with rivers.json on: the drainage of that grid (WorldRivers.Flow), made when first asked
 	var plates = null                        # gen 2: the plates (WorldLand.Plates), made when first asked
 	var platesB = null                       # gen 2 with land.json's b on: the B plates (WorldPlateB.State), made when first asked
+	var platesBJob = null                    # their make in steps (WorldPlateB.step): the state it has reached
 
 
 ## Memoised by the seed: the planet is a pure function of it and of the data.
@@ -391,6 +392,9 @@ class PlanetJob extends RefCounted:
 		if done:
 			return true
 		var left: int = budget
+		if P.gen >= 2 and WorldLand.plateB() and P.platesB == null:   # Research's B plates (46 ms), a slice at a time: the first ground read would make them in one piece
+			if not WorldPlateB.step(P, left) or budget < (1 << 30):
+				return false
 		if _grid != null:
 			var before: int = _grid.spent
 			_grid.step(left)
@@ -672,6 +676,10 @@ static func _arc(P: Planet, a: Array, bx: float, by: float, bz: float) -> float:
 const TRY_U_H: int = 3
 const TRY_U_GAP: int = 3
 const TRY_U_SCORE: int = 8
+## With the B plates on a try is dearer (measured 119, 200 and 649 us a try: 6, 10 and 32 units).
+const TRY_B_H: int = 6
+const TRY_B_GAP: int = 4
+const TRY_B_SCORE: int = 22
 
 
 static func _tsBegin() -> Dictionary:
@@ -682,6 +690,13 @@ static func _tsBegin() -> Dictionary:
 static func _tryRun(P: Planet, r: SimRng, kind: int, radius: float, tries: int, polar: bool, ts: Dictionary, units: int) -> int:
 	var c: Dictionary = P.c
 	var spent: int = 0
+	var uH: int = TRY_U_H
+	var uG: int = TRY_U_GAP
+	var uS: int = TRY_U_SCORE
+	if P.gen >= 2 and WorldLand.plateB():
+		uH = TRY_B_H
+		uG = TRY_B_GAP
+		uS = TRY_B_SCORE
 	var best = ts.best
 	var bs: float = ts.bs
 	var k: int = ts.k
@@ -689,7 +704,7 @@ static func _tryRun(P: Planet, r: SimRng, kind: int, radius: float, tries: int, 
 		k += 1
 		var p: Array = _randUnit(r)
 		var h: float = ground(P, p[0], p[1], p[2])
-		spent += TRY_U_H
+		spent += uH
 		if h < c.placeHMin or h > c.placeHMax or (polar and absf(p[1]) > c.placeYMax):
 			continue
 		var dmin: float = 1.0e9
@@ -697,14 +712,14 @@ static func _tryRun(P: Planet, r: SimRng, kind: int, radius: float, tries: int, 
 			var g: float = _arc(P, p, P.px[i], P.py[i], P.pz[i]) - P.rad[i] - radius
 			if g < dmin:
 				dmin = g
-		spent += TRY_U_GAP
+		spent += uG
 		if dmin < c.placeGap:
 			continue
 		var sc: float = dmin * c.scoreGap - absf(h - c.scoreH0) * c.scoreHW + r.next()
 		if P.gen >= 2:   # window 4: a harbour for a city, a fertile biome, nothing on ice, in the sea or on a range
 			if sc + WorldSites.maxBonus(kind) <= bs:
 				continue   # the climate term cannot lift it past the best so far
-			spent += TRY_U_SCORE
+			spent += uS
 			var bonus: float = WorldSites.score(P, kind, p[0], p[1], p[2], bs - sc)
 			if bonus <= -1.0e8:
 				continue
@@ -964,6 +979,8 @@ class Slice extends RefCounted:
 	var circ: Dictionary = {}
 	var T: Array = []
 	var seed: int = 0
+	var pending: bool = false                 # a warm ring's columns are read and its blend and held places are not yet (WorldPlanet.heldBegin, heldStep)
+	var hctx = null
 
 
 ## Reads the circle as columns. One surfAt a column; the fine relief only on ordinary land (and a quarter of it on an ice sheet). The held places, with their
@@ -1073,6 +1090,29 @@ static func readColumns(P: Planet, S: Slice, i0: int, i1: int) -> void:
 static func readHeld(P: Planet, S: Slice, standing: PackedByteArray = PackedByteArray()) -> void:
 	if P.gen >= 2:
 		WorldSites.blend(P, S)   # window 4: the fine biomes meet in a ragged band (the last step of every read, whole or stepped, before anything hashes the biomes)
+	_heldPlaces(P, S, standing)
+
+
+## The last step of a read in two: the blend (stepped) and then the places. `heldBegin` marks a slice whose columns are read as pending; `heldStep` spends up to `units` of the blend (a column a unit) and, when it
+## is done, lays the places; true when the slice is as readHeld leaves it (the same one, to the bit).
+static func heldBegin(P: Planet, S: Slice) -> void:
+	S.pending = true
+	S.hctx = WorldSites.blendBegin(P, S) if P.gen >= 2 else {}
+
+
+static func heldStep(P: Planet, S: Slice, units: int, standing: PackedByteArray = PackedByteArray()) -> bool:
+	if not S.pending:
+		return true
+	if P.gen >= 2 and not S.hctx.is_empty():
+		if not WorldSites.blendStep(S, S.hctx, units):
+			return false
+	_heldPlaces(P, S, standing)
+	S.pending = false
+	S.hctx = null
+	return true
+
+
+static func _heldPlaces(P: Planet, S: Slice, standing: PackedByteArray) -> void:
 	var c: Dictionary = P.c
 	var circ: Dictionary = S.circ
 	var u: Array = circ.u
@@ -1100,11 +1140,21 @@ class RingJob extends RefCounted:
 	var slice: WorldPlanet.Slice
 	var i: int = 0
 	var done: bool = false
+	var lazy: bool = false     # the columns only: the blend and the places are left to heldStep (the calm turn's warm: its preparation does them a few ticks later)
+	var _began: bool = false
 
 	func _init(p: WorldPlanet.Planet, r: Dictionary) -> void:
 		P = p
 		ring = r
 		slice = WorldPlanet.readBegin(P, ring, ring.u)
+
+	## Reads on to column `target` (the columns up to it are read; at the end the places): a job already past it does nothing, so a host that read ahead leaves the sim's tick nothing to do.
+	func readTo(target: int) -> bool:
+		if done:
+			return true
+		if i < target:
+			return step(target - i)
+		return false
 
 	func step(n: int) -> bool:
 		if done:
@@ -1113,7 +1163,22 @@ class RingJob extends RefCounted:
 		WorldPlanet.readColumns(P, slice, i, j)
 		i = j
 		if i >= SimConst.NC:
+			if lazy:
+				if not _began:
+					_began = true
+					WorldPlanet.heldBegin(P, slice)
+				return false
 			WorldPlanet.readHeld(P, slice)
+			done = true
+		return done
+
+	## A lazy job's last step: up to `units` of the blend, then the places; true when the job is done (the slice whole).
+	func heldStep(units: int) -> bool:
+		if done:
+			return true
+		if i < SimConst.NC or not _began:
+			return false
+		if WorldPlanet.heldStep(P, slice, units):
 			done = true
 		return done
 

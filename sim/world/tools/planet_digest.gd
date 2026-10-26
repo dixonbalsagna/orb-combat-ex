@@ -9,9 +9,10 @@ func fnv(b: PackedByteArray) -> int:
 	return h
 
 
-func digest(seed: int, gen: int, rivers: bool) -> String:
+func digest(seed: int, gen: int, rivers: bool, b: bool = false) -> String:
 	WorldClimate.useGen(gen)
 	WorldRivers.setOn(rivers)
+	WorldLand.setB(b)
 	WorldPlanet.forget()
 	var P := WorldPlanet.make(seed)
 	var pb := PackedByteArray()
@@ -20,7 +21,17 @@ func digest(seed: int, gen: int, rivers: bool) -> String:
 	pb.append_array(P.py.to_byte_array())
 	pb.append_array(P.pz.to_byte_array())
 	pb.append_array(P.rad.to_byte_array())
-	var s: String = "gen %d seed %d rivers %s: %d places %d" % [gen, seed, str(rivers), P.n, fnv(pb)]
+	var s: String = "gen %d seed %d rivers %s%s: %d places %d" % [gen, seed, str(rivers), " B" if b else "", P.n, fnv(pb)]
+	if b:
+		var S: WorldPlateB.State = WorldPlateB.stateOf(P)
+		var bb := PackedByteArray()
+		bb.append_array(S.cf.to_byte_array())
+		bb.append_array(S.bf.to_byte_array())
+		bb.append_array(S.hot.to_byte_array())
+		bb.append_array(S.hotB.to_byte_array())
+		bb.append_array(S.pe.to_byte_array())
+		bb.append_array(S.plate.to_byte_array())
+		s += " plates %d lift %s" % [fnv(bb), var_to_str(S.lift)]
 	if gen >= 2:
 		s += " grid %d" % fnv(P.grid.adv.to_byte_array())
 		s += " ht %d" % fnv(P.grid.ht.to_byte_array())
@@ -50,5 +61,8 @@ func _init() -> void:
 		print(digest(seed, 1, false))
 		print(digest(seed, 2, false))
 		print(digest(seed, 2, true))
+	for seed in [7, 13]:
+		print(digest(seed, 2, false, true))
+	WorldLand.setB(false)
 	WorldRivers.setOn(false)
 	quit()

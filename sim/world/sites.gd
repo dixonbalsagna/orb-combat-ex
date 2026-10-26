@@ -197,11 +197,18 @@ static func _fnv(id: String) -> int:
 ## The ragged border: a gen 2 slice's fine biomes (and the stored ones, by alias) blended where two biomes of the set meet. Runs of one biome are found on the circle; a column takes the biome of the
 ## nearer neighbouring run with a chance that falls from `max` next to the border to 0 at `width` columns, two keyed draws, one to each `cell` columns and one to each four cells, averaged, so the patches are not single columns and they cluster.
 static func blend(P: WorldPlanet.Planet, S: WorldPlanet.Slice) -> void:
+	var ctx: Dictionary = blendBegin(P, S)
+	if not ctx.is_empty():
+		blendStep(S, ctx, 1 << 40)
+
+
+## The start of a stepped blend ({} when there is nothing to blend): the runs are visited in order from the first border, as blend always did, a few columns a blendStep.
+static func blendBegin(P: WorldPlanet.Planet, S: WorldPlanet.Slice) -> Dictionary:
 	if not _loaded:
 		_load()
 	var n: int = S.fine.size()
 	if n == 0 or K_E_W <= 0 or K_E_MAX <= 0.0:
-		return
+		return {}
 	var fine: PackedByteArray = S.fine
 	var s0: int = -1
 	for i in range(n):
@@ -209,44 +216,85 @@ static func blend(P: WorldPlanet.Planet, S: WorldPlanet.Slice) -> void:
 			s0 = i
 			break
 	if s0 < 0:
-		return   # one biome all the way round
-	var out: PackedByteArray = fine.duplicate()
+		return {}   # one biome all the way round
 	var seed: int = (P.seed + K_E_SEED) & 0xFFFFFFFF
-	var x1: int = SimRng._fmix((seed ^ _fnv("ecotone")) & SimRng.MASK)   # SimRng.keyed(seed, key, n) is _fmix(x ^ imul(n, 0x9E3779B1)) with x = _fmix(seed ^ fnv(key)): the first half, once
-	var x2: int = SimRng._fmix((seed ^ _fnv("ecotone.big")) & SimRng.MASK)
-	var i: int = 0
-	while i < n:
-		var a: int = (s0 + i) % n
-		var f: int = fine[a]
-		var rl: int = 1
-		while i + rl < n and fine[(s0 + i + rl) % n] == f:
-			rl += 1
-		var prev: int = fine[(a + n - 1) % n]
-		var next: int = fine[(s0 + i + rl) % n]
-		if f < _inset.size() and _inset[f] == 1:
-			var pOk: bool = prev < _inset.size() and _inset[prev] == 1 and prev != f
-			var nOk: bool = next < _inset.size() and _inset[next] == 1 and next != f
-			if pOk or nOk:
-				for k in range(rl):
-					var dl: int = k + 1
-					var dr: int = rl - k
-					var g: int = -1
-					var d: int = 0
-					if pOk and (not nOk or dl <= dr):
-						g = prev
-						d = dl
-					elif nOk:
-						g = next
-						d = dr
-					if g < 0 or d > K_E_W:
-						continue
-					var p: float = K_E_MAX * (1.0 - float(d - 1) / float(K_E_W))
-					var col: int = (s0 + i + k) % n
-					var u: float = 0.5 * (float(SimRng._fmix(x1 ^ SimRng.imul((col / K_E_CELL) & SimRng.MASK, 0x9E3779B1))) + float(SimRng._fmix(x2 ^ SimRng.imul((col / (4 * K_E_CELL)) & SimRng.MASK, 0x9E3779B1)))) / 4294967296.0   # two scales, so the patches cluster
-					if u < p:
-						out[col] = g
-		i += rl
+	return {"n": n, "s0": s0, "fine": fine, "out": fine.duplicate(),
+		"x1": SimRng._fmix((seed ^ _fnv("ecotone")) & SimRng.MASK),   # SimRng.keyed(seed, key, n) is _fmix(x ^ imul(n, 0x9E3779B1)) with x = _fmix(seed ^ fnv(key)): the first half, once
+		"x2": SimRng._fmix((seed ^ _fnv("ecotone.big")) & SimRng.MASK),
+		"i": 0, "k": -1, "rl": 0, "f": 0, "prev": 0, "next": 0, "pOk": false, "nOk": false}
+
+
+## Up to `units` more columns of the blend (a column of an active run is one unit, a run that is not active a sixteenth of its length); true when the slice's fine and stored biomes are the blended ones.
+static func blendStep(S: WorldPlanet.Slice, ctx: Dictionary, units: int) -> bool:
+	var n: int = ctx.n
+	var s0: int = ctx.s0
+	var fine: PackedByteArray = ctx.fine
+	var out: PackedByteArray = ctx.out
+	var x1: int = ctx.x1
+	var x2: int = ctx.x2
+	var left: int = units
+	while int(ctx.i) < n and left > 0:
+		var i: int = ctx.i
+		if int(ctx.k) < 0:
+			var a: int = (s0 + i) % n
+			var f: int = fine[a]
+			var rl: int = 1
+			while i + rl < n and fine[(s0 + i + rl) % n] == f:
+				rl += 1
+			var prev: int = fine[(a + n - 1) % n]
+			var next: int = fine[(s0 + i + rl) % n]
+			var act: bool = false
+			var pOk: bool = false
+			var nOk: bool = false
+			if f < _inset.size() and _inset[f] == 1:
+				pOk = prev < _inset.size() and _inset[prev] == 1 and prev != f
+				nOk = next < _inset.size() and _inset[next] == 1 and next != f
+				act = pOk or nOk
+			if not act:
+				ctx.i = i + rl
+				left -= maxi(1, rl / 16)
+				continue
+			ctx.rl = rl
+			ctx.f = f
+			ctx.prev = prev
+			ctx.next = next
+			ctx.pOk = pOk
+			ctx.nOk = nOk
+			ctx.k = 0
+		var rl2: int = ctx.rl
+		var pOk2: bool = ctx.pOk
+		var nOk2: bool = ctx.nOk
+		var prev2: int = ctx.prev
+		var next2: int = ctx.next
+		var k0: int = ctx.k
+		var kend: int = mini(rl2, k0 + left)
+		for k in range(k0, kend):
+			var dl: int = k + 1
+			var dr: int = rl2 - k
+			var g: int = -1
+			var d: int = 0
+			if pOk2 and (not nOk2 or dl <= dr):
+				g = prev2
+				d = dl
+			elif nOk2:
+				g = next2
+				d = dr
+			if g < 0 or d > K_E_W:
+				continue
+			var p: float = K_E_MAX * (1.0 - float(d - 1) / float(K_E_W))
+			var col: int = (s0 + i + k) % n
+			var u: float = 0.5 * (float(SimRng._fmix(x1 ^ SimRng.imul((col / K_E_CELL) & SimRng.MASK, 0x9E3779B1))) + float(SimRng._fmix(x2 ^ SimRng.imul((col / (4 * K_E_CELL)) & SimRng.MASK, 0x9E3779B1)))) / 4294967296.0   # two scales, so the patches cluster
+			if u < p:
+				out[col] = g
+		left -= kend - k0
+		ctx.k = kend
+		if kend >= rl2:
+			ctx.i = i + rl2
+			ctx.k = -1
+	if int(ctx.i) < n:
+		return false
 	for c in range(n):
 		if out[c] != fine[c]:
 			S.biomes[c] = WorldClimate.aliasOf(int(out[c]))
 	S.fine = out
+	return true
