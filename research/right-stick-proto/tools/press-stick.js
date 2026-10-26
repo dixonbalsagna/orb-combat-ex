@@ -1,15 +1,15 @@
 // Press, then stick (from sweep3b): a face press of every kind (taps, held buttons, B's charge and beam, the mine, a blow
 // into a brawl), then a stick or D-pad command of every family, gesture and direction, its onset swept across the press's
-// commitment. The law (items 13 and 16): the press commits the stick and the D-pad for L from `from` (the press, or a held
-// B's last tick down, or the tick a charge fires with B still held); a flick read inside waits and acts at from + L, with no
-// extra tick; a hold counts its 10 ticks from from + L (plus the 3-tick rise when a slow gesture left rest inside it).
+// commitment. The law (items 13 and 16, gate G): the press commits the stick and the D-pad from `from` (the press, or a held
+// B's last tick down, or the tick a charge fires with B still held); a flick read inside waits and acts at from + R (8), with
+// no extra tick; a hold counts its 10 ticks from from + L (plus the 3-tick rise when a slow gesture left rest inside it).
 //   EARLY  any grip: a stick result before that floor
 //   LATE   one thumb (the stick 6 after the thumb leaves the button, or the D-pad at any onset): a result later than
 //          max(the same gesture alone, the floor); LOST: nothing, where the gesture alone acted and he was free to
 //   (counted, not breaches: SLOW, the claw's waiting flick acting after the floor; ROOTED, nothing while his beam roots him)
 // node press-stick.js [--quick]
 'use strict';
-const H = require('./harness.js'), { L, hold: HOLDT, rise: RISE } = H.LAW;
+const H = require('./harness.js'), { L, R, hold: HOLDT, rise: RISE } = H.LAW;
 const T0 = 20;
 // btn: the press at T0; sh: shoulders held to `end`; from: where its commitment counts from; leave: the thumb's last tick on it
 const PRESSES = {
@@ -56,7 +56,7 @@ function main(quick) {
   const say = (k, breach, ex) => { T.add(k, ex); if (breach) breaches++; };
   for (const pk in PRESSES) for (const fam in FAMS) for (const g of GEST) for (const dir of DIRS) for (const pad of [false, true]) {
     if (pad && (g[1] === 3 || g[0] === 'slow')) continue;          // the D-pad has one tap and one hold
-    const p = PRESSES[pk], from = T0 + (FAMS[fam].RB && p.fromRB != null ? p.fromRB : p.from), lock = from + L, oneThumb = T0 + p.leave + L;
+    const p = PRESSES[pk], from = T0 + (FAMS[fam].RB && p.fromRB != null ? p.fromRB : p.from), lock = from + L, lockF = from + R, oneThumb = T0 + p.leave + L;
     const onsets = []; for (let d = -3; d <= 8; d++) onsets.push(from + d); for (let d = 0; d <= 2; d++) if (onsets.indexOf(oneThumb + d) < 0) onsets.push(oneThumb + d);
     for (const on of onsets) {
       n++;
@@ -64,8 +64,8 @@ function main(quick) {
       const cf = c.first, bf = ctl.first, where = `${pk} ${fam} ${g[0]}${g[1]} ${dir}${pad ? ' D-pad' : ''} onset ${on} (press ${T0}, commitment from ${from})`;
       if (!bf || bf.t <= T0) continue;                            // alone it does nothing, or it acts before the press: gate A's case
       const holdFirst = bf.k === 'H', slowIn = g[0] === 'slow' && on < lock;
-      const floor = holdFirst ? lock + HOLDT + (slowIn ? RISE : 0) : lock, want = Math.max(bf.t, floor);
-      if (isAct(cf) && cf.t < (holdFirst ? lock + HOLDT : lock)) { say(`EARLY ${pk} ${fam} ${g[0]}${pad ? ' D-pad' : ''}`, true, `${where}: ${cf.t} ${cf.what || cf.cmd} before the law's ${floor} | alone ${bf.t} ${bf.what || bf.cmd}`); continue; }
+      const floor = holdFirst ? lock + HOLDT + (slowIn ? RISE : 0) : lockF, want = Math.max(bf.t, floor);
+      if (isAct(cf) && cf.t < (holdFirst ? lock + HOLDT : lockF)) { say(`EARLY ${pk} ${fam} ${g[0]}${pad ? ' D-pad' : ''}`, true, `${where}: ${cf.t} ${cf.what || cf.cmd} before the law's ${floor} | alone ${bf.t} ${bf.what || bf.cmd}`); continue; }
       // a hold after its flick (the sharp hold): its own start against the floor
       const ch = c.firstH, bh = ctl.firstH;
       if (!holdFirst && ch && bh && ch.t < lock + HOLDT) say(`EARLY hold ${pk} ${fam} ${g[0]}${pad ? ' D-pad' : ''}`, true, `${where}: hold ${ch.t} ${ch.cmd} before the law's ${lock + HOLDT}`);

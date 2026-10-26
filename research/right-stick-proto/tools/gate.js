@@ -1,14 +1,14 @@
 // The claw-bot gate's named cases (docs/controls/claw-bot-gate.md section 2), each checked against the law's own tick:
 // A  a press made inside a stick command's commitment starts at its end, the same at every gap (B: the same result)
 // C  a press made during a hold starts at release + L
-// G  a stick input inside a face press's commitment acts at press + L (item 13), from the stick or the D-pad
+// G  a stick input inside a face press's commitment acts at max(onset + 2, press + R), R = 8 (items 13, 16; Controls' gate G)
 // I  with no extra tick (item 16): the claw's stick and the one-thumb's D-pad tap get the same tick
 // H  newest wins, nothing silent (item 14): flick, flick keeps the second; flick, press drops the flick; each with an ack
 // F  mirror parity (item 15): the D-pad acts on the stick's tick, 2 after onset (the stick's flick reads 2 after crossing)
 // M  the right stick and the D-pad a few ticks apart (two thumbs): both act
 // plus the earlier gate's own cases (rs-gate, rs-gate2). Prints each breach, then the count. node gate.js [-v]
 'use strict';
-const H = require('./harness.js'), { L } = H.LAW;
+const H = require('./harness.js'), { L, R } = H.LAW;
 const VERBOSE = process.argv.includes('-v');
 const POS = { range: [230, 60, 430, 80], close: [300, 60, 360, 60], tight: [545, 0, 585, 0], far: [160, 60, 540, 80] };
 const FAMS = { flight: {}, aim: { RB: 1 }, lay: { RB: 1, LB: 1 }, read: { LB: 1 } };
@@ -28,7 +28,7 @@ const PRESS = { X: { btn: 'X', sh: {}, kind: 'X' }, bolt: { btn: 'X', sh: { RB: 
 const ROWS = [['flight', 0, 'close'], ['flight', 180, 'close'], ['flight', 90, 'close'], ['flight', 270, 'range'], ['flight', 0, 'far'], ['aim', 90, 'range'], ['aim', 180, 'range'], ['lay', 0, 'range'], ['read', 90, 'tight'], ['read', 0, 'tight']];
 
 function caseG() {
-  // G and I: press at 20, then a flick (2 ticks out) or a D-pad tap at onset 20 + g; the law's tick is max(onset + 2, 26),
+  // G and I: press at 20, then a flick (2 ticks out) or a D-pad tap at onset 20 + g; the law's tick is max(onset + 2, 28),
   // the same for the claw's stick and the one-thumb's D-pad, with the same result. At g = -2 the flick reads on the press's
   // own tick: one of the two must wait for the other (a ranged X wins over a toward flick, section 12 row 1)
   for (const pk in PRESS) for (const [fam, dir, pos] of ROWS) for (const g of [-2, -1, 0, 2, 3, 5, 6, 7, 13]) {
@@ -43,12 +43,12 @@ function caseG() {
     if (c.t <= 20) {                                          // the same tick (or before): whichever acts first, the other waits
       for (const [x, r, nm] of [[a, rs, 'stick'], [b, rp, 'D-pad']]) {
         const q = firstPress(r, 20), stickFirst = x && x.t === c.t && x.k === 'S';
-        ok(stickFirst ? !q || q.t >= c.t + L : (x && x.what === 'FLICK SPENT IN PRESS') || (q && q.t === 20 && (!x || x.t >= 20 + L)), name + ' (' + nm + ', same tick)', `flick ${tag(x)}, press ${tag(q)}`);
+        ok(stickFirst ? !q || q.t >= c.t + L : (x && x.what === 'FLICK SPENT IN PRESS') || (q && q.t === 20 && (!x || x.t >= 20 + R)), name + ' (' + nm + ', same tick)', `flick ${tag(x)}, press ${tag(q)}`);
       }
       continue;
     }
     if (!pr || pr.t !== 20) { ok(true, name, ''); continue; }
-    const want = Math.max(c.t, 20 + L);
+    const want = Math.max(c.t, 20 + R);
     ok(a && a.t === want, name + ' (stick)', `acts ${tag(a)}, law ${want}, alone ${tag(c)}`);
     ok(b && b.t === want, name + ' (D-pad)', `acts ${tag(b)}, law ${want}, alone ${tag(c)}`);
     ok(a && b && a.what === b.what, name + ' (same result)', `stick ${tag(a)}, D-pad ${tag(b)}`);
@@ -97,7 +97,7 @@ function caseH() {
   let r = go('range', (s) => { rb(s); H.hold(s, 'X', 20, 21); H.gesture(s, 21, 'flick', 90, 2); H.gesture(s, 24, 'flick', 270, 2); });
   let d = r.E.find((e) => e.k === 'D'), a = firstStick(r, 21);
   ok(d && d.what === 'FLICK REPLACED' && d.t === 26 && d.ack, 'H press, flick, flick: the first is replaced with an ack', tag(d) + ' ack ' + (d && d.ack));
-  ok(a && a.t === 26 && /LATCH LOW/.test(a.what), 'H press, flick, flick: only the second acts, at 26', tag(a));
+  ok(a && a.t === 20 + R && /LATCH LOW/.test(a.what), 'H press, flick, flick: only the second acts, at press + R', tag(a));
   r = go('range', (s) => { rb(s); H.hold(s, 'X', 20, 21); H.gesture(s, 21, 'flick', 90, 2); H.hold(s, 'Y', 24, 25); });
   d = r.E.find((e) => e.k === 'D'); a = firstStick(r, 21);
   ok(d && d.what === 'FLICK DROPPED' && d.t === 24 && d.ack, 'H flick, press: dropped on the press tick with an ack', tag(d));
@@ -152,14 +152,14 @@ function caseM() {
 function caseOld() {
   // the earlier gate's cases, now with the law's ticks
   let r = go('range', (s) => { H.hold(s, 'RB', 0, 80); H.hold(s, 'X', 20, 21); H.gesture(s, 20, 'flick', 90, 3); });
-  ok(firstStick(r, 20) && firstStick(r, 20).t === 26, 'old RB X then flick (claw, same tick)', tag(firstStick(r, 20)));
+  ok(firstStick(r, 20) && firstStick(r, 20).t === 20 + R, 'old RB X then flick (claw, same tick)', tag(firstStick(r, 20)));
   r = go('tight', (s) => { H.hold(s, 'X', 20, 21); H.hold(s, 'LB', 21, 40); H.gesture(s, 21, 'flick', 90, 3); });
-  ok(firstStick(r, 21) && firstStick(r, 21).t === 26, 'old X then read (claw)', tag(firstStick(r, 21)));
-  // a held B: its commitment counts from its last tick down (B 20..39, it fires at 40, so the stick waits to 45)
+  ok(firstStick(r, 21) && firstStick(r, 21).t === 20 + R, 'old X then read (claw)', tag(firstStick(r, 21)));
+  // a held B: its commitment counts from its last tick down (B 20..39, it fires at 40, so the stick waits to 39 + R = 47)
   r = go('range', (s) => { H.hold(s, 'RB', 0, 90); H.hold(s, 'B', 20, 40); H.gesture(s, 40, 'flick', 90, 2); }, 80);
-  ok(firstStick(r, 40) && firstStick(r, 40).t === 45, 'old held B then flick (claw)', tag(firstStick(r, 40)));
+  ok(firstStick(r, 40) && firstStick(r, 40).t === 39 + R, 'old held B then flick (claw)', tag(firstStick(r, 40)));
   r = go('range', (s) => { H.hold(s, 'RB', 0, 90); H.hold(s, 'B', 20, 40); H.gesture(s, 40, 'flick', 90, 1, true); }, 80);
-  ok(firstStick(r, 40) && firstStick(r, 40).t === 45, 'old held B then D-pad tap', tag(firstStick(r, 40)));
+  ok(firstStick(r, 40) && firstStick(r, 40).t === 39 + R, 'old held B then D-pad tap', tag(firstStick(r, 40)));
   // the queued B behind an aim flick starts at the commitment's end, as one thumb's tap at that end does
   const qb = go('range', (s) => { H.hold(s, 'RB', 0, 80); H.gesture(s, 20, 'flick', 270, 2); H.hold(s, 'B', 22, 23); });
   const ob = go('range', (s) => { H.hold(s, 'RB', 0, 80); H.gesture(s, 20, 'flick', 270, 2); H.hold(s, 'B', 28, 29); });

@@ -10,7 +10,8 @@ const SIM = process.env.RS_SIM ? path.resolve(process.env.RS_SIM) : path.join(RE
 const MA = '// ==== STICK SIM (no DOM) ====', MB = '// ==== PAGE (DOM) ====';
 
 // the law's numbers (docs/controls/right-thumb.md section 3, rulings-2026-10-26 items 13 to 16), not the sim's own
-const LAW = { L: 6, W: 36, settle: 2, hold: 10, rise: 3, qMax: 3 };
+// R: the reverse commitment, press to a stick input's act (Controls' rule 3, gate G): the onset's 6 plus the settle's 2
+const LAW = { L: 6, R: 8, W: 36, settle: 2, hold: 10, rise: 3, qMax: 3 };
 
 function below() { try { os.setPriority(0, os.constants.priority.PRIORITY_BELOW_NORMAL); } catch (e) { /* not allowed: run as is */ } }
 function simText() { const s = fs.readFileSync(SIM, 'utf8'), a = s.indexOf(MA), b = s.indexOf(MB); return s.slice(a < 0 ? 0 : a, b < 0 ? s.length : b); }
@@ -148,8 +149,8 @@ function faceRefs(r, spec) {
 
 // the law's checks over one run of any input (chains.js, one-thumb.js): returns [{ k, t, why }], each a breach
 //   EARLY PRESS   a press starts inside a stick commitment (R30, gate A and C)
-//   EARLY STICK   a stick or D-pad act inside a face press's commitment (items 13 and 16): a flick before ref + L, a hold
-//                 before ref + L + 10
+//   EARLY STICK   a stick or D-pad act inside a face press's commitment (items 13 and 16, gate G): a flick before ref + R, a
+//                 hold before ref + L + 10
 //   SILENT        a waiting flick cleared with no ack, a dropped one or a refused press with no flicker, or a press that
 //                 did nothing at all (item 14, E3); a catch is his grab, not silence, and unmapped presses are skipped
 function lawCheck(r, spec) {
@@ -161,7 +162,7 @@ function lawCheck(r, spec) {
     if (e.k === 'S' || e.k === 'H') for (const f of refs) {
       if (e.t <= f.free || e.t >= f.until) continue;
       if (e.k === 'H' && f.hold && !E.some((x) => x.t > f.t && x.t <= e.t && (x.k === 'Z' || x.k === 'K'))) continue;    // the hold he was already in
-      const need = f.ref + LAW.L + (e.k === 'H' ? LAW.hold : 0);
+      const need = f.ref + (e.k === 'H' ? LAW.L + LAW.hold : LAW.R);
       if (e.t < need) out.push({ k: 'EARLY STICK', t: e.t, why: `${e.what || e.cmd}${e.dpad ? ' (D-pad)' : ''} at ${e.t}, before ${need}: the ${f.b} at ${f.t} counts from ${f.ref}` });
     }
     if (e.k === 'C' && !e.caught && !caughtAt(e.t)) {

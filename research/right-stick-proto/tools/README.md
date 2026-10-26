@@ -29,7 +29,7 @@ The timing checkers patch nothing. They read the sim the way a player's debug vi
 
 **What follows for every grip.**
 - **Stick, then press.** A press made inside a stick command's commitment starts at the commitment's end. A flick commits for `L` from its act, a lunge for its rush, a hold until release + `L`, and the brawl's cross-up for its arc. A beam sweep commits nothing.
-- **Press, then stick.** A stick input made inside a face press's commitment waits and acts on the tick the commitment ends (items 13 and 16). The same goes for a D-pad tap, which the left thumb can make at any time. So press + `L` is the floor for every grip, and the claw's stick reaching it is not a gain.
+- **Press, then stick.** A stick input made inside a face press's commitment waits and acts on the tick the commitment ends (items 13 and 16). That end is press + `R` = 8 (Controls' rule 3 and gate G): the fastest standard thumb reaches the stick at press + 6 and its flick settles 2 ticks later. The same goes for a D-pad tap, which the left thumb can make at any time. So press + 8 is the floor for every grip: a claw and a fast one-thumb both act on it. A hold still counts its 10 ticks from press + `L`.
 - **Holds.** A hold counts its 10 ticks from the commitment's end, plus 3 when a slow gesture left rest inside it.
 - **Reads.** The D-pad acts 2 ticks after its onset. The stick's flick acts 2 ticks after it crosses (item 15).
 

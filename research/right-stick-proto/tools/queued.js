@@ -10,7 +10,7 @@
 //                commitments (the law allows only those)
 // node queued.js [--quick]
 'use strict';
-const H = require('./harness.js'), { L, hold: HOLDT, rise: RISE } = H.LAW;
+const H = require('./harness.js'), { L, R, hold: HOLDT, rise: RISE } = H.LAW;
 const POS = { close: [300, 60, 360, 60], far: [160, 60, 540, 80] };
 // the blocker from 20; Q: the queued press's tick; from: where its commitment counts from (Q, or the stick commitment's end)
 const BLOCK = {
@@ -58,8 +58,8 @@ function main(quick) {
       if (!b || b.t < B.Q || at < B.Q) continue;                          // nothing to time, or the gesture came before the press
       // a press made with the stick (or the D-pad) already out counts from the stick's act instead: no floor on that act
       const out = at === B.Q && !(gk === 'slow') && !/^pad/.test(gk), pressFrom = queuedHere && !out ? from : -99;
-      const hold = b.k === 'H', floor = pressFrom + L + (hold ? HOLDT + (gk === 'slow' && at < pressFrom + L ? RISE : 0) : 0), want = Math.max(b.t, floor);
-      if (a && a.k !== 'S-' && a.t < (hold ? pressFrom + L + HOLDT : pressFrom + L)) bad(`EARLY ${bk} ${pk} ${fam} ${gk}`, `${where}: ${a.t} ${a.what || a.cmd}, floor ${floor} | ${H.showE(c.r.E, B.Q)}`);
+      const hold = b.k === 'H', floor = hold ? pressFrom + L + HOLDT + (gk === 'slow' && at < pressFrom + L ? RISE : 0) : pressFrom + R, want = Math.max(b.t, floor);
+      if (a && a.k !== 'S-' && a.t < (hold ? pressFrom + L + HOLDT : pressFrom + R)) bad(`EARLY ${bk} ${pk} ${fam} ${gk}`, `${where}: ${a.t} ${a.what || a.cmd}, floor ${floor} | ${H.showE(c.r.E, B.Q)}`);
       else if (legal && a && a.t > want && (a.what || a.cmd) === (b.what || b.cmd)) bad(`LATE ${bk} ${pk} ${fam} ${gk}`, `${where}: ${a.t} ${a.what || a.cmd}, the law's ${want} | ${H.showE(c.r.E, B.Q)} | no queued press: ${H.showE(ctl.r.E, B.Q)}`);
       // (R28: a press under way takes no flight command, so a hold that meets one is not lost)
       else if (legal && !a && b.k !== 'S-' && !c.r.trace.some((x) => x.t >= at && (x.rooted || x.caught || (fam === 'flight' && (x.seq || x.blow))))) bad(`LOST ${bk} ${pk} ${fam} ${gk}`, `${where}: nothing, alone ${b.t} ${b.what || b.cmd} | ${H.showE(c.r.E, B.Q)}`);

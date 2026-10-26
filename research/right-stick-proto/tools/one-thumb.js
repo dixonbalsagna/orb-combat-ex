@@ -9,7 +9,7 @@
 // Counted, not breaches: FLICK DROPPED and FLICK REPLACED (newest wins), a queued press lapsing (W), refusals.
 // node one-thumb.js [count] [seed]
 'use strict';
-const H = require('./harness.js'), { L } = H.LAW;
+const H = require('./harness.js'), { L, R: RL } = H.LAW;     // RL: the reverse commitment (main's R is the random source)
 const POS = [[300, 60, 360, 60], [230, 60, 430, 80], [160, 60, 540, 80], [300, 60, 345, 60], [600, 30, 300, 130], [545, 0, 585, 0], [300, 4, 420, 60]];
 const DIRS = [0, 45, 90, 180, 270, 200];
 const FAMSH = { flight: {}, aim: { RB: 1 }, lay: { RB: 1, LB: 1 }, read: { LB: 1 }, rt: { RT: 1 } };
@@ -34,7 +34,7 @@ function play(R) {
       for (const s in FAMSH[fam]) H.hold(spec, s, t, t + d + rise + 2);
       H.gesture(spec, t, g === 'slow' ? 'slow' : g === 'hold' ? 'hold' : 'flick', dir, d);
       plan.push(`${fam} ${g}${g[0] === 'f' ? '' : d} ${dir}@${t}`);
-      if (g[0] === 'f') taps.push({ t, read: d === 1 ? t + 1 : t + 2, pad: false, k: plan[plan.length - 1] });
+      if (g[0] === 'f') taps.push({ t, read: t + 2, pad: false, k: plan[plan.length - 1] });
       free = t + d + rise; t = free;
     } else if (want === 'pad') {
       const fam = pick(['flight', 'aim', 'lay', 'read']), dir = pick(DIRS), d = R() < 0.7 ? 1 : pick([12, 16]);
@@ -76,11 +76,16 @@ function main(count, seed) {
       }
       if (e.k !== 'W') continue;
       if (!tp.pad) {
-        const f = refs.filter((x) => x.t <= tp.read && tp.read < x.until && x.ref + L > tp.read).pop();
-        bad('DEFERRED right-stick flick' + (f && f.ref > f.t ? ' (a queued press counted from a later tick)' : ''), `${tp.k}: waits from ${e.t}${f ? `, behind the ${f.b} at ${f.t} counted from ${f.ref}` : ''} | ${ex()}`); continue;
+        // one thumb's flick waits only behind a press that queued and counts from its start: info, unless it acts later than the law
+        const f = refs.filter((x) => x.t <= tp.read && tp.read < x.until && x.ref + RL > tp.read).pop(), dn = r.E.find((x) => x.t > e.t && ((x.k === 'S' || x.k === 'S-') && x.waited === e.from || x.k === 'D' || x.k === 'C'));
+        const lawT = Math.max(tp.read, ...refs.filter((g) => g.t <= tp.read && tp.read < g.until).map((g) => g.ref + RL));
+        if (dn && (dn.k === 'S' || dn.k === 'S-') && dn.t > lawT) bad('WAIT OVER right-stick flick', `${tp.k}: acts ${dn.t}, the law's ${lawT} | ${ex()}`);
+        else if (f && f.ref > f.t) T.add('info a right-stick flick waits behind a queued press (counted from its start, gate G)', `${tp.k}: waits from ${e.t} to ${dn ? dn.t : '?'}, the ${f.b} at ${f.t} counted from ${f.ref}`);
+        else bad('DEFERRED right-stick flick', `${tp.k}: waits from ${e.t}${f ? `, behind the ${f.b} at ${f.t} counted from ${f.ref}` : ''} | ${ex()}`);
+        continue;
       }
       const done = r.E.find((x) => x.t > e.t && ((x.k === 'S' || x.k === 'S-') && x.waited === e.from || x.k === 'D' || x.k === 'C'));
-      const end = Math.max(tp.read, ...refs.filter((f) => f.t <= tp.read && tp.read < f.until).map((f) => f.ref + L));
+      const end = Math.max(tp.read, ...refs.filter((f) => f.t <= tp.read && tp.read < f.until).map((f) => f.ref + RL));
       const acted = done && (done.k === 'S' || done.k === 'S-'), newer = acted && refs.find((f) => f.t > tp.read && f.t < done.t);
       if (newer) bad('NOT DROPPED: a newer press queued while a D-pad tap waited, and the tap still acted', `${tp.k}: acts ${done.t}, after the ${newer.b} at ${newer.t} | ${ex()}`);
       else if (acted && done.t > end) bad('WAIT OVER D-pad tap', `${tp.k}: acts ${done.t}, the commitment ends ${end} | ${ex()}`);

@@ -63,7 +63,9 @@ var BR = { closeMaxBh: 0.6, strike: 58 / 75, leash: 2.4, give: 5 / 60, pull: 0.5
 var SPARK = { core: '#ffffff', main: '#f4efe3', edge: '#8a857a' };
 // Section 13's law (R28 to R38): a stick command commits him for L ticks; a face press inside the commitment or a hold
 // queues (3 deep, kept W ticks) and starts at its end; a read lasts until it fires or 90 ticks, for 3 ki
-var LAW = { L: 6, W: 36, qMax: 3, readT: 90, readKi: 3, slipT: 12 };
+// and a face press holds a stick or D-pad input back R ticks: the thumb's 6 to the stick plus the flick's 2-tick settle (Controls'
+// right-thumb.md rule 3, claw-bot gate G), so a claw's flick and a standard thumb's both act on press + 8
+var LAW = { L: 6, R: 8, W: 36, qMax: 3, readT: 90, readKi: 3, slipT: 12 };
 var N = { boltGap: 6, beamLv: [30, 54, 84], beamLen: [20, 36, 54], pulseAdd: 4, lobT: 36 };
 
 function hash(n) { n = (n ^ 61) ^ (n >>> 16); n = (n + (n << 3)) | 0; n ^= n >>> 4; n = Math.imul(n, 0x27d4eb2d); n ^= n >>> 15; return (n >>> 0) / 4294967296; }
@@ -549,13 +551,13 @@ function fighterStep(w, f, inp, ev) {
   var pressed = lungeFirst && press(w, f); if (pressed) { f.faceT = w.t; dropPend(w, f, w.t); }
   // the right stick's events, in the family locked at the first deflection
   if (ev) {
-    var fam = ev.flick ? ev.ffam : ev.fam, flick = ev.flick; f.evSrc = ev.src; var lock = Math.max(f.faceT == null ? -99 : f.faceT, f.bchg && !inp.B && f.bLast != null ? f.bLast : -99, f.q.reduce(function (m, e) { return e.on && !(f.stickT != null && f.stickT >= e.t) ? m : Math.max(m, qEff(w, f, e, inp)); }, -99)) + LAW.L;     // a press made with the stick out locks it once the stick lets go or acts
+    var fam = ev.flick ? ev.ffam : ev.fam, flick = ev.flick; f.evSrc = ev.src; var lock = Math.max(f.faceT == null ? -99 : f.faceT, f.bchg && !inp.B && f.bLast != null ? f.bLast : -99, f.q.reduce(function (m, e) { return e.on && !(f.stickT != null && f.stickT >= e.t) ? m : Math.max(m, qEff(w, f, e, inp)); }, -99)), lockF = lock + LAW.R; lock += LAW.L;     // a press made with the stick out locks it once the stick lets go or acts; a flick waits R, a hold counts from L
     // a stick command inside a face press's commitment (from its press, or the stick commitment it was made in, or a held B's
     // last tick; a press still queued counts too) is read as if the thumb had just arrived: a flick at lock + its read (the
     // pad's tap at lock), a hold 10 ticks after lock (13 if the gesture left rest inside it), unless a later press drops the
     // flick; the press's own toward flick is spent in it (section 12)
-    if (flick) { if (f.pend) nack(w, f, 'FLICK REPLACED'); f.pend = null; if (!(fam === 'flight' && pressed && rel(f, flick) === 'toward') && w.t < lock) { f.pend = { flick: flick, fam: fam, dpad: ev.src === 'pad', src: ev.src, t: w.t }; flick = null; } }
-    else if (f.pend && w.t >= lock) { flick = f.pend.flick; fam = f.pend.fam; f.evSrc = f.pend.src; f.pend = null; }
+    if (flick) { if (f.pend) nack(w, f, 'FLICK REPLACED'); f.pend = null; if (!(fam === 'flight' && pressed && rel(f, flick) === 'toward') && w.t < lockF) { f.pend = { flick: flick, fam: fam, dpad: ev.src === 'pad', src: ev.src, t: w.t }; flick = null; } }
+    else if (f.pend && w.t >= lockF) { flick = f.pend.flick; fam = f.pend.fam; f.evSrc = f.pend.src; f.pend = null; }
     var chg = !!(f.bchg && inp.B), holdOk = w.t >= lock + RS.holdTicks + (w.rd.on && !w.rd.isFlick && w.rd.lastRest < lock ? RS.flickRise : 0);
     if (flick) { if (fam === 'flight' && pressed && rel(f, flick) === 'toward') note(w.rd, w.t, 'FLICK SPENT IN PRESS'); else if (fam === 'flight' && (f.seq || f.cross || f.blow || rushing(f) || chg || f.dodgeT > 0)) nack(w, f, f.seq ? 'PRESS UNDER WAY' : chg ? 'CHARGING: HE HOLDS' : 'MOVE UNDER WAY'); else if (fam === 'flight' && !f.beam) flightFlick(w, f, flick); else if (fam === 'aim' && chg) nack(w, f, 'CHARGING: THE LINE HOLDS'); else if (fam === 'aim' && f.beam && !f.beam.end) { /* the beam's sweep reads the hold */ } else if (fam === 'aim' && rb) aimFlick(w, f, flick); else if (chg) nack(w, f, 'CHARGING: HE HOLDS'); else if (fam === 'lay' && lb && rb) layFlick(w, f, flick); else if (fam === 'read') readFlick(w, f, flick); else if (fam === 'none') nack(w, f, 'NOTHING IN STEP 1'); else nack(w, f, 'FLICK: NOT READY'); }
     fam = ev.fam;
