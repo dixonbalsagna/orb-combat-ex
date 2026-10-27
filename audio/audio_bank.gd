@@ -30,7 +30,15 @@ var warming: bool = false         # the async warm-up is running: sounds are bei
 var async_ok: bool = false        # a node in the tree gives the warm-up its frames (AudioVoices sets it when it enters the tree)
 var skipped: int = 0              # plays dropped (silent) because the sound was not rendered yet while warming
 var _wq: Array = []               # [id, variant] pairs still to render for the async warm-up, in the order they are wanted
+## The common hits, named by Performance's phone probe as the cues lost most (impact.light, impact.light.lite, impact.heavy, energy.bolt, then
+## crater, whiff, medium): FIRST are the cheap ones (about 85 ms of CPU in all at 1x), rendered in the run's first slice and before anything
+## else; SECOND are the dear ones (heavy, crater, medium, the blast), right after the intro's babble and grunts. Within a rank: this order.
+const WARM_FIRST := ["impact.light", "impact.light.lite", "impact.whiff", "impact.guard", "impact.absorbed", "energy.bolt", "energy.bolt.lite", "windup.medium", "ui.launcher",
+	"launcher.rest", "perfect.tick", "perfect.tok", "perfect.break", "charge.tick.light", "charge.tick.heavy", "energy.gather", "double.charge"]
+const WARM_SECOND := ["impact.medium", "impact.heavy", "impact.crater", "energy.blast", "windup.heavy", "impact.double", "impact.medium.grind", "charge.hum", "charge.hum.y"]
 signal warmed                     # the async warm-up has rendered everything it was given
+var boot_slice_us: int = 120000   # the run's first slice, inside warm() at boot: long enough for the FIRST set at 1x (a block of 0.1 s in a boot of 25 s or more)
+var _boot_slice: bool = false
 var warm_quiet: int = -1          # the host's word: 1 nothing is playing (a card, a menu, the sim paused), 0 a fight is on, -1 judge by the cue traffic
 var quiet_budget_us: int = 25000  # microseconds of synthesis a frame while nothing is playing (a long frame costs nothing behind a card)
 var play_budget_us: int = 6000    # ... while a fight is on
@@ -287,6 +295,19 @@ func stream_a(id: String, variant: int) -> AudioStreamWAV:
 	return _cache[key]
 
 
+## The variant of this sound to play now: the one asked for if it is rendered, else any that is (the variants differ by a little pitch, decay
+## and level only), else -1.
+func pick_ready(id: String, variant: int) -> int:
+	var n: int = variants(id)
+	var v: int = posmod(variant, n)
+	if _cache.has("%s#%d" % [id, v]):
+		return v
+	for k in range(n):
+		if _cache.has("%s#%d" % [id, k]):
+			return k
+	return -1
+
+
 ## Is this variant rendered (so a play is free)?
 func is_ready(id: String, variant: int) -> bool:
 	return _cache.has("%s#%d" % [id, posmod(variant, variants(id))])
@@ -295,15 +316,28 @@ func is_ready(id: String, variant: int) -> bool:
 ## Most wanted first: the babble and the grunts of the intro, then the hits and the rest of the match's sounds, then the head flashes,
 ## then the optional sets (drones, surfaces). Within a rank, the bank's own order.
 func warm_rank(id: String) -> int:
-	if id.begins_with("babble."):
+	if WARM_FIRST.has(id):
 		return 0
-	if id.begins_with("voice."):
+	if id.begins_with("babble."):
 		return 1
-	if id.begins_with("flash."):
+	if id.begins_with("voice."):
+		return 2
+	if WARM_SECOND.has(id):
 		return 3
+	if id.begins_with("flash."):
+		return 5
 	if id.begins_with("drone.") or id.begins_with("amb.") or id.begins_with("surf."):
-		return 4
-	return 2
+		return 6
+	return 4
+
+
+## The place of an id within its rank: the order of the lists above, else the bank's own order.
+func _warm_pos(id: String, k: int) -> int:
+	var a: int = WARM_FIRST.find(id)
+	if a >= 0:
+		return a
+	var b: int = WARM_SECOND.find(id)
+	return b if b >= 0 else k
 
 
 ## Everything warm() would render, in the order the async warm-up wants it.
@@ -316,7 +350,7 @@ func warm_plan(with_extras: bool = true) -> Array:
 			all.append(id)
 	var order: Array = []
 	for k in range(all.size()):
-		order.append([warm_rank(String(all[k])), k, String(all[k])])
+		order.append([warm_rank(String(all[k])), _warm_pos(String(all[k]), k), String(all[k])])
 	order.sort()
 	var ids_sorted: Array = []
 	for o in order:
@@ -324,9 +358,33 @@ func warm_plan(with_extras: bool = true) -> Array:
 	return ids_sorted
 
 
-## Queue that plan and start the frame-by-frame run.
+## The queue the run works through: each rank in turn, and within a rank the first variant of every sound, then the second of every sound,
+## and so on, so every sound has one variant ready as early as possible (a cue for a variant not yet rendered plays another that is).
+func warm_queue(with_extras: bool = true) -> Array:
+	var plan: Array = warm_plan(with_extras)
+	var q: Array = []
+	var i: int = 0
+	while i < plan.size():
+		var r: int = warm_rank(String(plan[i]))
+		var j: int = i
+		var most: int = 1
+		while j < plan.size() and warm_rank(String(plan[j])) == r:
+			most = maxi(most, variants(String(plan[j])))
+			j += 1
+		for v in range(most):
+			for k in range(i, j):
+				if v < variants(String(plan[k])) and not _cache.has("%s#%d" % [plan[k], v]):
+					q.append([String(plan[k]), v])
+		i = j
+	return q
+
+
+## Queue that and start the frame-by-frame run (its first slice, here, renders the cheap common hits).
 func warm_async_begin(with_extras: bool = true) -> void:
-	warm_ids_async(warm_plan(with_extras))
+	_wq.append_array(warm_queue(with_extras))
+	_boot_slice = true
+	if not warming and not _wq.is_empty():
+		Callable(self, "_warm_run").call()
 
 
 ## Queue these ids (every variant) behind what is already queued: the host's call for the ring's beds (AudioWorld.warm_beds), say.
@@ -385,7 +443,8 @@ func _warm_run() -> void:
 	warming = true
 	AudioSlice.on = true
 	AudioSlice.budget_fn = Callable(self, "_pick_budget")
-	AudioSlice.budget_us = _pick_budget()
+	AudioSlice.budget_us = boot_slice_us if _boot_slice else _pick_budget()
+	_boot_slice = false
 	AudioSlice.start_frame()
 	while not _wq.is_empty():
 		var q: Array = _wq.pop_front()

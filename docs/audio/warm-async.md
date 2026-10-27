@@ -29,6 +29,17 @@ The first cut dropped it. Now **its sound jumps to the front of the queue** (`ba
 
 `bank.skipped` counts them; `bank.skipped_log` is a debug ring of the last 64 (`{sound, variant, why, late_ms, ms}`; why is `late`, `timeout` or `overflow`); `bank.skipped_by_sound` counts all of them; `bank.skipped_report()` prints "skipped N: impact.heavy x3, ... (played late: M)". `bank.deferred_played` counts the cues that waited and then played.
 
+## The common hits first (warm-async-3)
+
+Performance's re-probe of the re-cut (`docs/perf/audio-warm-async-2-2026-10-26.md`, 404fea20) cut the lost cues from 42 to 11 at x4 and from 189 to about 30 at x6, but the ones still lost were the common hits (impact.light, impact.light.lite, impact.heavy, energy.bolt, then crater, whiff, medium): a jump to the front costs the sound's whole render, which at x6 is longer than a hit's own length. So the queue is now ordered by what the fight plays most (`AudioBank.WARM_FIRST` and `WARM_SECOND`):
+
+1. **The cheap common hits**, about 85 ms of CPU in all at 1x: impact.light, light.lite, whiff, guard, absorbed, energy.bolt and bolt.lite, windup.medium, ui.launcher, the perfect and charge ticks, energy.gather. **The run's first slice, inside `warm()` at boot, is 120 ms long** (`bank.boot_slice_us`), enough to render these at 1x; at x6 it renders the first part and the first frames the rest. It adds 0.1 s to a boot block of 25 s or more.
+2. The intro's babble. 3. The grunts.
+4. **The dear common hits**, right after: medium, heavy, crater, the blast, the double, the heavy wind-up, the grind.
+5. The rest of the match's sounds, 6. the head flashes, 7. the optional sets.
+
+**Within a rank the queue is variant-major**: the first variant of every sound, then the second of every sound, and so on, so every sound has a variant ready as early as possible. **A cue for a variant not yet rendered plays another variant of the same sound** (they differ by a little pitch, decay and level only) instead of waiting; only a sound with no variant rendered yet holds its cue (and jumps to the front, as before). The cue log is not touched (the choice is made in `AudioVoices`).
+
 ## Proof (scratch export of HEAD, the first park then the re-cut applied)
 
 - **Bit-identical.** `warm_hashes.gd`: the sha256 of every buffer the bank can render (305 clips) is the same with and without the parks. `warm_async_check`: all 285 clips rendered across thousands of frames (a 1 ms budget) have the same streams as `warm()`'s.

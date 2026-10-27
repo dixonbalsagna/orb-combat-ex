@@ -85,8 +85,9 @@ func _run_deferred() -> void:
 	for d in _deferred:
 		var c: AudioCues.Cue = d.cue
 		var late: float = float(now - int(d.at))
-		if bank.is_ready(c.sound, c.variant):
-			var own_ms: float = bank.stream(c.sound, c.variant).get_length() * 1000.0 / maxf(c.pitch, 0.1)
+		var pv: int = bank.pick_ready(c.sound, c.variant)
+		if pv >= 0:
+			var own_ms: float = bank.stream(c.sound, pv).get_length() * 1000.0 / maxf(c.pitch, 0.1)
 			if late > own_ms:
 				bank.note_skip(c.sound, c.variant, "late", late)
 			else:
@@ -162,9 +163,12 @@ func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:
 	if dist >= float(mix.space.max_distance):
 		dropped += 1
 		return false
-	if bank.warming and not bank.is_ready(cue.sound, cue.variant):
-		_defer(cue, cam_x, zoom)      # not rendered yet: its sound goes to the front of the queue, and the cue waits for it
-		return false
+	var vsel: int = cue.variant
+	if bank.warming and not bank.is_ready(cue.sound, vsel):
+		vsel = bank.pick_ready(cue.sound, vsel)      # another variant of the same sound is rendered: play that one
+		if vsel < 0:
+			_defer(cue, cam_x, zoom)      # none is: its sound goes to the front of the queue, and the cue waits for it
+			return false
 	var slot: int = _take(cue)
 	if slot < 0:
 		dropped += 1
@@ -172,7 +176,7 @@ func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:
 	var p: AudioStreamPlayer2D = _pool[slot]
 	p.stop()
 	_kill_tween(slot)
-	p.stream = _looped(bank.stream(cue.sound, cue.variant)) if cue.loop else bank.stream(cue.sound, cue.variant)
+	p.stream = _looped(bank.stream(cue.sound, vsel)) if cue.loop else bank.stream(cue.sound, vsel)
 	p.volume_db = cue.gain_db + distance_db(dist)
 	p.pitch_scale = cue.pitch
 	p.bus = cue.bus

@@ -61,7 +61,24 @@ func _run() -> void:
 	sorted_plan.sort()
 	sorted_want.sort()
 	ok(sorted_plan == sorted_want and ranks_ok, "the plan is every sound warm() renders (%d ids), once each, in rank order (babble, grunts, hits, flashes, optional sets)" % plan.size())
-	ok(sync_bank.warm_rank(String(plan[0])) == 0 and sync_bank.warm_rank(String(plan[plan.size() - 1])) >= 3, "it starts with the intro's babble and ends with the optional sets (%s ... %s)" % [plan[0], plan[plan.size() - 1]])
+	ok(sync_bank.warm_rank(String(plan[0])) == 0 and sync_bank.warm_rank(String(plan[plan.size() - 1])) >= 5, "it starts with the cheap common hits and ends with the optional sets (%s ... %s)" % [plan[0], plan[plan.size() - 1]])
+	var first_n: int = AudioBank.WARM_FIRST.size()
+	var first_ok: bool = true
+	for k in range(first_n):
+		first_ok = first_ok and String(plan[k]) == String(AudioBank.WARM_FIRST[k])
+	ok(first_ok, "the first %d are the cheap common hits in their order (impact.light first); the babble and the grunts follow, then the dear hits (heavy, crater, medium, blast)" % first_n)
+	var q0: Array = sync_bank.warm_queue(true)
+	var seen_v1: bool = false
+	var vmajor: bool = true
+	for k in range(q0.size()):
+		var qe: Array = q0[k]
+		if sync_bank.warm_rank(String(qe[0])) != 0:
+			break
+		if int(qe[1]) >= 1:
+			seen_v1 = true
+		elif seen_v1:
+			vmajor = false
+	ok(vmajor and int(q0[0][1]) == 0 and String(q0[0][0]) == "impact.light" and String(q0[1][0]) == "impact.light.lite", "the queue takes the first variant of every common hit before the second of any (impact.light#0, impact.light.lite#0, ...)")
 
 	print("2. bit-identical to the block")
 	var t0: int = Time.get_ticks_usec()
@@ -72,6 +89,7 @@ func _run() -> void:
 	async_bank.quiet_budget_us = budget_us          # a small budget for the identity run: thousands of yields
 	async_bank.play_budget_us = budget_us
 	async_bank.pending_budget_us = budget_us
+	async_bank.boot_slice_us = budget_us
 	AudioSlice.max_slice_us = 0
 	AudioSlice.yields = 0
 	var frames: int = 0
@@ -160,6 +178,7 @@ func _run() -> void:
 	# the run really takes the budget the bank names, frame by frame
 	var b6r := AudioBank.new()
 	b6r.warm_quiet = 1
+	b6r.boot_slice_us = b6r.quiet_budget_us
 	AudioSlice.max_slice_us = 0
 	b6r.warm_async_begin(false)
 	while b6r.warming:
@@ -174,7 +193,7 @@ func _run() -> void:
 	await process_frame
 	bank7.warm_async_begin(false)
 	var c7 := AudioCues.Cue.new()
-	c7.sound = "impact.light"
+	c7.sound = "impact.crater"          # a dear hit, not in the cheap set rendered in the first slice
 	c7.variant = 0
 	c7.gain_db = -6.0
 	c7.pitch = 1.0
@@ -186,12 +205,33 @@ func _run() -> void:
 	while bank7.skipped == 0 and w7 < 4000:
 		await process_frame
 		w7 += 1
-	ok(bank7.skipped == 1 and bank7.deferred_played == 0 and bank7.skipped_log.size() == 1 and bank7.skipped_log[0].sound == "impact.light" and bank7.skipped_log[0].why == "late", "a cue that would play later than its own length is lost, and named: %s" % bank7.skipped_report())
+	ok(bank7.skipped == 1 and bank7.deferred_played == 0 and bank7.skipped_log.size() == 1 and bank7.skipped_log[0].sound == "impact.crater" and bank7.skipped_log[0].why == "late", "a cue that would play later than its own length is lost, and named: %s" % bank7.skipped_report())
 	for i in range(70):
 		bank7.note_skip("impact.heavy", 0, "timeout", 6000.0)
 	ok(bank7.skipped_log.size() == 64 and bank7.skipped_by_sound["impact.heavy"] == 70, "the debug ring keeps the last 64 and the counts keep all")
 	await _wait_warmed(bank7)
 	v7.queue_free()
+
+	print("8. the common hits first")
+	var bank8 := AudioBank.new()
+	var v8 := AudioVoices.new(bank8)
+	root.add_child(v8)
+	await process_frame
+	bank8.boot_slice_us = 30000          # a short first slice for this test: the first variants of the cheap hits, not all of them
+	bank8.warm_async_begin(false)
+	ok(bank8.is_ready("impact.light", 0) and bank8.is_ready("energy.bolt", 0), "the run's first slice (inside warm(), %.0f ms) has rendered the cheap common hits' first variants" % (float(bank8.boot_slice_us) / 1000.0))
+	var asked: int = 0
+	var pitch_cue := AudioCues.Cue.new()
+	pitch_cue.sound = "impact.light"
+	pitch_cue.variant = 3
+	pitch_cue.gain_db = -6.0
+	pitch_cue.pitch = 1.0
+	pitch_cue.bus = "Sfx"
+	var took: bool = v8.play(pitch_cue, 0.0, 1.0)
+	ok(bank8.warming and not bank8.is_ready("impact.light", 3) and took and bank8.deferred_n == 0 and bank8.skipped == 0, "a cue for a variant not yet rendered plays another variant of the same sound at once (waiting %d, skipped %d)" % [bank8.deferred_n, bank8.skipped])
+	ok(bank8.pick_ready("impact.light", 3) >= 0 and bank8.pick_ready("impact.crater", 0) == -1, "pick_ready gives the asked variant, else a rendered one, else -1")
+	await _wait_warmed(bank8)
+	v8.queue_free()
 
 	print("\nwarm async check %s" % ("FAILED (%d)" % fails if fails > 0 else "passed"))
 	quit(1 if fails > 0 else 0)
