@@ -31,6 +31,7 @@ Owner: Performance and Platform (`docs/directors/performance-platform.md`).
 | `audit-run.mjs` | The matrix of runs, one browser at a time, waiting for a quiet machine; `audit-summary.mjs` turns a folder of runs into the tables |
 | `native-cpu-bench.ps1` | Headless native Godot's CPU-side cost (sim tick, FX and camera, view update); no GPU |
 | `scratch-hooks/` | The measuring code the site builder adds to a scratch export (never to the repo) |
+| `freeze-probe.mjs`, `crumbs-test.mjs` | The phone-freeze probe (mobile emulation, long tasks, boot marks, taps, `--eval-at`) and the breadcrumbs park's 34-check page test |
 | `phone-emu-check.mjs`, `web-head.mjs`, `make-placeholder-icons.mjs` | The phone work: emulation checks, the head block of the web export's page, placeholder Home Screen icons |
 
 Every browser here is started through `tools/machine/browser.mjs` (below-normal priority, a core mask, a time limit, a session-named profile); `phone-emu-check.mjs` now starts its browser through the same launcher.

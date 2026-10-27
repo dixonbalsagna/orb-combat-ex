@@ -66,8 +66,9 @@
   }
   function store() { try { return w.localStorage; } catch (e) { return null; } }
   function load() { var s = store(); try { return s ? JSON.parse(s.getItem(KEY) || 'null') : null; } catch (e) { return null; } }
-  function erase() { var s = store(); try { if (s) { s.removeItem(KEY); } } catch (e) { } }
-  var prev = load();
+  // Once the note is dismissed or the report copied the record is gone and this visit writes no more: the record is cleared, not just replaced.
+  function erase() { var s = store(); spent = true; try { if (s) { s.removeItem(KEY); } } catch (e) { } }
+  var prev = load(), spent = false;
   var c = { v: 1, ua: stripUrls(w.navigator.userAgent, 300), dpr: w.devicePixelRatio || 1, scr: [w.screen.width, w.screen.height], inner: [w.innerWidth, w.innerHeight], mem: w.navigator.deviceMemory || null, cores: w.navigator.hardwareConcurrency || null, stage: 'page_loaded', stageAt: 0, beatAt: 0, dl: 0, clean: false, stalls: [], long: [], vis: [], ctx: [], err: [] };
   function longStall(r) {
     var yes = false;
@@ -81,6 +82,7 @@
     c.beatAt = now();
     try {
       if (!s) { return; }
+      if (spent) { s.removeItem(KEY); return; }
       if (starting(c) || longStall(c) || c.ctx.length > 0) { s.setItem(KEY, JSON.stringify(c)); } else { s.removeItem(KEY); }
     } catch (e) { }
   }
@@ -178,7 +180,7 @@
     return longStall(r) || (!r.clean && starting(r)) || r.ctx.length > 0;
   }
   function copy(text, btn) {
-    function done(ok) { btn.firstChild.nodeValue = ok ? WORDS.copied : WORDS.copy_failed; }
+    function done(ok) { btn.firstChild.nodeValue = ok ? WORDS.copied : WORDS.copy_failed; if (ok) { erase(); } }
     function fallback() {
       var ta = d.createElement('textarea');
       ta.value = text; ta.style.cssText = 'position:fixed;left:0;top:0;width:90%;height:40%;z-index:8;';
@@ -189,7 +191,7 @@
       done(ok);
     }
     try {
-      if (w.navigator.clipboard && w.navigator.clipboard.writeText) { w.navigator.clipboard.writeText(text).then(function () { done(true); erase(); }, function () { fallback(); }); return; }
+      if (w.navigator.clipboard && w.navigator.clipboard.writeText) { w.navigator.clipboard.writeText(text).then(function () { done(true); }, function () { fallback(); }); return; }
     } catch (e) { }
     fallback();
   }
