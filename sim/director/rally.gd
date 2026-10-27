@@ -628,7 +628,7 @@ static func counterLive(S: SimState, f, o) -> bool:
 	var cr: int = _g(f, RL_CRUSH) - 1
 	if cr >= 0 and _now(S) - cr <= int(cfg().get("turnTicks", 60)):
 		return true
-	return DirRecoil.due(S, f)
+	return DirRecoil.due(S, f) or DirWallKick.due(S, f)   # (10-26 item 37: his wall kick's rush blow too)
 
 
 static func turn(S: SimState, ex, f, o, a) -> bool:
@@ -640,8 +640,35 @@ static func turn(S: SimState, ex, f, o, a) -> bool:
 	_s(f, RL_CRUSH, 0)
 	if DirRecoil.due(S, f):
 		DirRecoil.counter(S, f)   # his window's blow is the counter-rush: it spends the window, with its cue
+	elif DirWallKick.due(S, f):
+		DirWallKick.rushBlow(S, f)   # 10-26 item 37: his kick's rush blow is the counter-rush, as a flip's
 	DirBrawl._send(S, ex, f, o, 0, "the turn", 1.0)
 	return true
+
+
+## 10-26 item 37: D's answer to f's rally is under way: his recoil flip in the air, his wall kick's push, or his
+## counter-rush (counterLive). The rally stays open while it is.
+static func answering(S: SimState, D, f) -> bool:
+	return DirRecoil.flipping(S, D) or DirWallKick.pushing(S, D) or counterLive(S, D, f)
+
+
+## 10-26 item 37(3): the defending AI's counter-rush share after an answer in a rally of the other's (its level's
+## rally.counter), in place of the recoil flip's (brawl.recoil.counter). dflt outside a rally.
+static func counterShare(S: SimState, f, dflt: float) -> float:
+	if not on() or f == null or not _owner(S, SimRoster.opp(S, f), f):
+		return dflt
+	return float(_ai().get("counter", dflt))
+
+
+## 23d item 9: a rally's body lands (World's land contact this tick: a skid, a tumble or a slam), and his recoil flip's
+## window opens as a knock-back skid's does (DirRecoil.landed). 10-26 item 37: the counter-rush after the flip lands on
+## a committed chaser, as after the air tech.
+static func _landing(S: SimState, A, D) -> void:
+	var di: int = S.fighters.find(D)
+	for e in S.out.fx:
+		if int(e.tick) == S.tick and String(e.type) == "land" and int(e.actor) == di:
+			DirRecoil.landed(S, A, D)
+			return
 
 
 ## His counter-rush was spent (DirRecoil.counter): the turn may follow when it lands.
@@ -771,6 +798,7 @@ static func tick(S: SimState) -> void:
 		if D.state == "launched":
 			_release(S, f, D, now)
 			_worldContacts(S, f, D)
+			_landing(S, f, D)   # 23d item 9: his landing opens his recoil flip's window (10-26 item 37)
 			_s(f, RL_LAND, 0)
 			if D.ai != null and _g(D, RL_AIB) != 2 and now - (maxi(_g(f, RL_LA), 1) - 1) == int(dc.get("burstAfter", 12)) and SimRng.keyed(int(S.game.seed), "rally.airBurst", S.tick * 4 + S.fighters.find(D)) < float(_ai().get("airBurst", 0.0)):
 				_s(D, RL_AIB, 2)
@@ -787,5 +815,5 @@ static func tick(S: SimState) -> void:
 		var ld: int = _g(f, RL_LAND) - 1
 		if ld < 0:
 			_s(f, RL_LAND, now + 1)
-		elif now - ld > int(c.get("endTicks", 20)) and not DirChase.chasing(f):
-			end(S, f, "landed")
+		elif now - ld > int(c.get("endTicks", 20)) and not DirChase.chasing(f) and not answering(S, D, f):
+			end(S, f, "landed")   # (10-26 item 37: not while his answer is under way)

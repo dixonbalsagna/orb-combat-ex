@@ -150,7 +150,7 @@ static func _atWall(S: SimState, f, b, edge: float, dir: float, spN: float) -> b
 	_s(f, WK_VY, int(round(uy * sp)))
 	_s(f, WK_CR, int(c.get("rushBlowTicks", 20)) if toward else 0)
 	_s(f, WK_AIC, 0)
-	if toward and f.ai != null and SimRng.keyed(int(S.game.seed), "wallkick.counter", S.tick * 4 + S.fighters.find(f)) < float(DirRecoil._ai().get("counter", 0.0)):
+	if toward and f.ai != null and SimRng.keyed(int(S.game.seed), "wallkick.counter", S.tick * 4 + S.fighters.find(f)) < DirRally.counterShare(S, f, float(DirRecoil._ai().get("counter", 0.0))):   # (in a rally its rally.counter: 10-26 item 37)
 		var at: Array = DirRecoil.cfg().get("aiCounterTicks", [2, 8])
 		var t: int = int(at[0]) + int(SimRng.keyed(int(S.game.seed), "wallkick.counterAt", S.tick * 4 + S.fighters.find(f)) * float(int(at[1]) - int(at[0]) + 1))
 		_s(f, WK_AIC, mini(n + t, int(c.get("rushBlowTicks", 20))) + 1)
@@ -184,6 +184,7 @@ static func rushBlow(S: SimState, f) -> bool:
 		return false
 	_s(f, WK_CR, 0)
 	_s(f, WK_AIC, 0)
+	DirRally.markCounter(S, f)   # 10-26 item 37: the turn, if it lands on the chaser in the air (as a flip's)
 	SimFx.cue(S, f, "counter_rush", "wall_kick", "")
 	var e = S.out.fx[S.out.fx.size() - 1]
 	e.target = float(S.fighters.find(SimRoster.opp(S, f)))

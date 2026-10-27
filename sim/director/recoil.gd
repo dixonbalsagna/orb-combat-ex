@@ -293,11 +293,19 @@ static func _endSkid(S: SimState, f) -> bool:
 	return f.state == "free"
 
 
+## 23d item 9 (DirRally._landing): a rally's body lands, and his window opens as a knock-back skid's does (kind 1: a
+## dodge tap in its first windowTicks flips him out of the journey), once a journey, with no flourish.
+static func landed(S: SimState, att, tgt) -> void:
+	if not on() or (_g(tgt, RC_KIND) == 1 and _g(tgt, RC_LN) == tgt.launchN):
+		return
+	knocked(S, att, tgt, 0.0, 1, S.tick)
+
+
 ## He lands set: his counter-rush window opens, and the AI draws its press.
 static func _land(S: SimState, f) -> void:
 	var c: Dictionary = cfg()
 	_s(f, RC_CR, int(c.counterTicks))
-	if f.ai != null and SimRng.keyed(int(S.game.seed), "recoil.counter", S.tick * 4 + S.fighters.find(f)) < float(_ai().get("counter", 0.0)):
+	if f.ai != null and SimRng.keyed(int(S.game.seed), "recoil.counter", S.tick * 4 + S.fighters.find(f)) < DirRally.counterShare(S, f, float(_ai().get("counter", 0.0))):   # (in a rally its rally.counter: 10-26 item 37)
 		var at: Array = c.aiCounterTicks
 		var t: int = int(at[0]) + int(SimRng.keyed(int(S.game.seed), "recoil.counterAt", S.tick * 4 + S.fighters.find(f)) * float(int(at[1]) - int(at[0]) + 1))
 		_s(f, RC_AIC, mini(t, int(c.counterTicks)) + 1)

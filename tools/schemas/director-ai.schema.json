@@ -753,6 +753,12 @@
                   "type": "number",
                   "minimum": 0,
                   "maximum": 1
+                },
+                "counter": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Game Design 10-26 item 37: the defending AI's counter-rush share after its answer (an air tech, a recoil flip, a wall kick) in a rally of the other's, in place of brawl.recoil.counter."
                 }
               }
             }
@@ -1392,6 +1398,12 @@
                   "type": "number",
                   "minimum": 0,
                   "maximum": 1
+                },
+                "counter": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Game Design 10-26 item 37: the defending AI's counter-rush share after its answer (an air tech, a recoil flip, a wall kick) in a rally of the other's, in place of brawl.recoil.counter."
                 }
               }
             }
@@ -2031,6 +2043,12 @@
                   "type": "number",
                   "minimum": 0,
                   "maximum": 1
+                },
+                "counter": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Game Design 10-26 item 37: the defending AI's counter-rush share after its answer (an air tech, a recoil flip, a wall kick) in a rally of the other's, in place of brawl.recoil.counter."
                 }
               }
             }
