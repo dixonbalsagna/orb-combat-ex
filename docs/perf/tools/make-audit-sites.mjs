@@ -92,7 +92,7 @@ const SPEC = {
   r22o: { patches: ['docs/rendering/pending/2026-10-23n/batch.diff', 'docs/rendering/pending/2026-10-23o/batch.diff'], hooks: ['perf', 'slice', 'cullstat', 'desert'] },
   gen2: { patches: [], hooks: ['perf', 'slice', 'gen2'] },
   pb: { patches: [], hooks: ['perf', 'slice', 'pbiome'] },
-  pblay: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'layers', 'pbiome'] },
+  pblay: { patches: [], hooks: ['perf', 'slice', 'layers', 'pbiome'] },
   plain: { patches: [], hooks: [] },
   bootprof: { patches: [], hooks: ['bootprof'] },
   crumbs: { patches: [], hooks: ['bootprof', 'crumbs'] },
