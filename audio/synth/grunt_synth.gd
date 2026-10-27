@@ -23,6 +23,10 @@ const B4: float = 250.0
 
 ## One variant of a gesture as a mono buffer. jit widens each variant a little (pitch, formants, length).
 static func render(def: Dictionary, bank_seed: int, id: String, variant: int) -> PackedFloat32Array:
+	return AudioSlice.run_sync(Callable(GruntSynth, "render_a"), [def, bank_seed, id, variant])
+
+
+static func render_a(def: Dictionary, bank_seed: int, id: String, variant: int) -> PackedFloat32Array:
 	var rate: int = int(def.get("rate", 24000))
 	var fs: float = float(rate)
 	var sd: int = SimRng.deriveSeed(bank_seed, "audio.bank." + id + "." + str(variant))
@@ -36,7 +40,7 @@ static func render(def: Dictionary, bank_seed: int, id: String, variant: int) ->
 	var n: int = int(dur * fs)
 	var out := PackedFloat32Array()
 	out.resize(n)
-	var noise: PackedFloat32Array = AudioDsp.noise(n, SimRng.deriveSeed(sd, "breath"))
+	var noise: PackedFloat32Array = await AudioDspA.noise(n, SimRng.deriveSeed(sd, "breath"))
 
 	var f0a: float = float(def.f0[0]) * jf0
 	var f0b: float = float(def.f0[1]) * jf0
@@ -88,64 +92,70 @@ static func render(def: Dictionary, bank_seed: int, id: String, variant: int) ->
 	var body_amp: float = 1.0
 	var t_body: float = attack + hold
 
-	for i in range(n):
-		var t: float = float(i) / fs
-		if i % UPDATE == 0:
-			var s: float = smoothstep(g0, g1, t)
-			for m in range(3):
-				var F: float = lerpf(fa[m], fb[m], s)
-				var B: float = lerpf(float(va.bw[m]), float(vb.bw[m]), s)
-				_resonator(m, F, B, fs, ca, cb, cc)
-		# voiced envelope: silent through the breath's lead, ramp, hold, then fall
-		var tv: float = t - delay
-		var ve: float = 0.0
-		if tv > 0.0:
-			if tv < attack:
-				ve = tv / attack
-			elif tv < t_body:
-				ve = 1.0
-			else:
-				ve = body_amp
-				body_amp *= dec
-		# glottal pulse train: differentiated Rosenberg-style flow, per-cycle jitter, shimmer and creak
-		var f0: float = (f0b + (f0a - f0b) * f_settle) * cyc_f
-		f_settle *= f_step
-		phase += f0 / fs
-		if phase >= 1.0:
-			phase -= 1.0
-			cycles += 1
-			cyc_f = 1.0 + jitter * (rnd.next() * 2.0 - 1.0)
-			cyc_a = 1.0 + shimmer * (rnd.next() * 2.0 - 1.0)
-			cyc_fry = (1.0 - fry) if (cycles & 1) == 1 else 1.0
-		var g: float = _glottal(phase, oq)
-		var src: float = (g - g_prev) * (fs / maxf(f0, 20.0)) * cyc_a * cyc_fry * ve
-		g_prev = g
-		# breath: loudest in the "h" lead, a whisper of it through the vowel
-		var ne: float = breath * (exp(-t / h_on) + breath_body * ve)
-		var x: float = src + noise[i] * ne * 3.0
-		# cascade of the four formants
-		var y: float = x
-		for m in range(4):
-			var yn: float = ca[m] * y + cb[m] * y1[m] + cc[m] * y2[m]
-			y2[m] = y1[m]
-			y1[m] = yn
-			y = yn
-		# chest: a low resonance fed by the raw voiced source
-		if chest_gain > 0.0:
-			var xc: float = src
-			var ync: float = ca[4] * xc + cb[4] * y1[4] + cc[4] * y2[4]
-			y2[4] = y1[4]
-			y1[4] = ync
-			y += ync * chest_gain
-		out[i] = y
+	var _c17: int = 0
+	var _e17: int = n
+	while _c17 < _e17:
+		for i in range(_c17, mini(_c17 + 1024, _e17)):
+			var t: float = float(i) / fs
+			if i % UPDATE == 0:
+				var s: float = smoothstep(g0, g1, t)
+				for m in range(3):
+					var F: float = lerpf(fa[m], fb[m], s)
+					var B: float = lerpf(float(va.bw[m]), float(vb.bw[m]), s)
+					_resonator(m, F, B, fs, ca, cb, cc)
+			# voiced envelope: silent through the breath's lead, ramp, hold, then fall
+			var tv: float = t - delay
+			var ve: float = 0.0
+			if tv > 0.0:
+				if tv < attack:
+					ve = tv / attack
+				elif tv < t_body:
+					ve = 1.0
+				else:
+					ve = body_amp
+					body_amp *= dec
+			# glottal pulse train: differentiated Rosenberg-style flow, per-cycle jitter, shimmer and creak
+			var f0: float = (f0b + (f0a - f0b) * f_settle) * cyc_f
+			f_settle *= f_step
+			phase += f0 / fs
+			if phase >= 1.0:
+				phase -= 1.0
+				cycles += 1
+				cyc_f = 1.0 + jitter * (rnd.next() * 2.0 - 1.0)
+				cyc_a = 1.0 + shimmer * (rnd.next() * 2.0 - 1.0)
+				cyc_fry = (1.0 - fry) if (cycles & 1) == 1 else 1.0
+			var g: float = _glottal(phase, oq)
+			var src: float = (g - g_prev) * (fs / maxf(f0, 20.0)) * cyc_a * cyc_fry * ve
+			g_prev = g
+			# breath: loudest in the "h" lead, a whisper of it through the vowel
+			var ne: float = breath * (exp(-t / h_on) + breath_body * ve)
+			var x: float = src + noise[i] * ne * 3.0
+			# cascade of the four formants
+			var y: float = x
+			for m in range(4):
+				var yn: float = ca[m] * y + cb[m] * y1[m] + cc[m] * y2[m]
+				y2[m] = y1[m]
+				y1[m] = yn
+				y = yn
+			# chest: a low resonance fed by the raw voiced source
+			if chest_gain > 0.0:
+				var xc: float = src
+				var ync: float = ca[4] * xc + cb[4] * y1[4] + cc[4] * y2[4]
+				y2[4] = y1[4]
+				y1[4] = ync
+				y += ync * chest_gain
+			out[i] = y
+		_c17 += 1024
+		if AudioSlice.due():
+			await AudioSlice.next_frame()
 
 	# Level first, then saturate (drive is relative to full scale), then set the final peak.
-	AudioDsp.dc_block(out, 30.0, rate)
-	AudioDsp.normalize(out, 1.0)
-	AudioDsp.saturate(out, float(def.get("drive", 0.0)))
-	AudioDsp.dc_block(out, 30.0, rate)
-	AudioDsp.normalize(out, AudioDsp.db_to_lin(float(def.get("peak_db", -5.0))))
-	AudioDsp.fade(out, 0.002, 0.012, rate)
+	await AudioDspA.dc_block(out, 30.0, rate)
+	await AudioDspA.normalize(out, 1.0)
+	await AudioDspA.saturate(out, float(def.get("drive", 0.0)))
+	await AudioDspA.dc_block(out, 30.0, rate)
+	await AudioDspA.normalize(out, AudioDsp.db_to_lin(float(def.get("peak_db", -5.0))))
+	await AudioDspA.fade(out, 0.002, 0.012, rate)
 	return out
 
 

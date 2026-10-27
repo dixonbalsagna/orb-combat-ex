@@ -1,0 +1,10 @@
+{
+  "audio/audio_bank.gd": "d19827fa3028ec133604c683cdd32d1dc28ceedf7475bd4e765d065571fbb1c6",
+  "audio/audio_voices.gd": "50d73fea0b29f31b553de86d5d4b385dc60f4c7ac08263fc4d8b6d343bef801c",
+  "audio/synth/impact_synth.gd": "db2ee4e905f8f5f814a792c9974ee28ed9152d82cbffb20d65fecbc8115d12ed",
+  "audio/synth/grunt_synth.gd": "00317b09952cd4bf14d158c544e1242c1f2029435c554610b0f811d6edac6fb5",
+  "audio/synth/flash_synth.gd": "f5f5d865cd66ac8395d48f787021604cdbed7389e2edff80e3e2d49536952d73",
+  "audio/synth/babble_synth.gd": "5e072e9ff700ab00b99c50b3ed912507b2609d83c30bee03f21e22a1a087cdd4",
+  "audio/synth/drone_synth.gd": "f4df7e64fecc641d0d6d1c335a215af81ec826adf95eacf38e40032ca406816a",
+  "audio/synth/ambience_synth.gd": "fdf8516344692d26c7c9da04f4ac1db89c12d16dee5e7846a28962798f067a20"
+}

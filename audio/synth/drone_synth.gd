@@ -12,16 +12,26 @@ extends RefCounted
 
 
 static func render(recipe: Dictionary) -> PackedFloat32Array:
+	return AudioSlice.run_sync(Callable(DroneSynth, "render_a"), [recipe])
+
+
+static func render_a(recipe: Dictionary) -> PackedFloat32Array:
 	var rate: int = int(recipe.get("rate", 32000))
 	var n: int = int(round(float(recipe.get("seconds", 2.0)) * float(rate)))
 	var cycles: int = maxi(1, int(round(float(recipe.f) * float(n) / float(rate))))
 	var w: float = TAU * float(cycles) / float(n)
 	var out := PackedFloat32Array()
 	out.resize(n)
-	for i in range(n):
-		var s: float = 0.0
-		for p in recipe.partials:
-			s += float(p[1]) * sin(w * float(int(p[0])) * float(i))
-		out[i] = s
-	AudioDsp.normalize(out, AudioDsp.db_to_lin(float(recipe.get("peak_db", -12.0))))
+	var _c31: int = 0
+	var _e31: int = n
+	while _c31 < _e31:
+		for i in range(_c31, mini(_c31 + 1024, _e31)):
+			var s: float = 0.0
+			for p in recipe.partials:
+				s += float(p[1]) * sin(w * float(int(p[0])) * float(i))
+			out[i] = s
+		_c31 += 1024
+		if AudioSlice.due():
+			await AudioSlice.next_frame()
+	await AudioDspA.normalize(out, AudioDsp.db_to_lin(float(recipe.get("peak_db", -12.0))))
 	return out

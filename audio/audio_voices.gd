@@ -33,6 +33,7 @@ func _init(p_bank: AudioBank = null) -> void:
 
 func _ready() -> void:
 	setup_buses(mix)
+	bank.async_ok = true             # the warm-up may use this node's frames (AudioBank.warm)
 	_listener = AudioListener2D.new()
 	add_child(_listener)
 	_listener.make_current()
@@ -121,6 +122,9 @@ func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:
 	var dist: float = absf(dx)
 	if dist >= float(mix.space.max_distance):
 		dropped += 1
+		return false
+	if bank.warming and not bank.is_ready(cue.sound, cue.variant):
+		bank.skipped += 1      # not rendered yet: dropped, silently, while the warm-up runs (the most wanted sounds are first)
 		return false
 	var slot: int = _take(cue)
 	if slot < 0:
