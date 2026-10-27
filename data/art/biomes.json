@@ -1512,9 +1512,9 @@
         }
       },
       "far_ladder": {
-        "far1": "#dde4e8",
-        "far2": "#e1e5e6",
-        "far3": "#e5e6e5"
+        "far1": "#d8e2e8",
+        "far2": "#bccad6",
+        "far3": "#9cb0c0"
       },
       "orbit": "#e6e6e3",
       "profile": {
@@ -1669,9 +1669,9 @@
         }
       },
       "far_ladder": {
-        "far1": "#d0d9df",
-        "far2": "#d5dcdf",
-        "far3": "#dbdfdf"
+        "far1": "#d0dbe4",
+        "far2": "#b0c2d0",
+        "far3": "#90a8bb"
       },
       "orbit": "#bacbda",
       "profile": {

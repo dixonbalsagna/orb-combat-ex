@@ -175,7 +175,7 @@ Two tones: a warm-white lit face and a cold slate face; crevasses; rock peaks th
 | Rock | #7e766a | #6a645c | #4a463f |
 | Vegetation | #ebe8e2 | #ebe8e2 | #485765 |
 
-Subsoil (what a crater shows) #485765; secondary cover #ebe8e2; trunk #485765; water shallow #2f6a84, deep #1b3f57; accent #5f8aa2; sky at noon #4c8ccc (top) to #d4e2ec (horizon); far land #dde4e8, #e1e5e6, #e5e6e5; from orbit #e6e6e3.
+Subsoil (what a crater shows) #485765; secondary cover #ebe8e2; trunk #485765; water shallow #2f6a84, deep #1b3f57; accent #5f8aa2; sky at noon #4c8ccc (top) to #d4e2ec (horizon); far land #d8e2e8, #bccad6, #9cb0c0; from orbit #e6e6e3.
 
 **Ground profile:** sheet, amplitude 26 units over about 600; far land: shelf. **Cover:** icespire (3 per 1,200 units, 60 to 160 units tall); crevasse (3 per 1,200 units, 10 to 14 units tall); nunatak (1 per 1,200 units, 120 to 200 units tall); snowpatch (4 per 1,200 units, 8 to 14 units tall).
 
@@ -204,7 +204,7 @@ Flat floes with a warm-white top and a slate edge in dark cold water; bergs. She
 | Rock | #e3e4e0 | #e3e4e0 | #485765 |
 | Vegetation | #e3e4e0 | #e3e4e0 | #485765 |
 
-Subsoil (what a crater shows) #485765; secondary cover #e3e4e0; trunk #485765; water shallow #2f6a84, deep #1b3f57; accent #5f8aa2; sky at noon #5890c0 (top) to #c4d2de (horizon); far land #d0d9df, #d5dcdf, #dbdfdf; from orbit #bacbda.
+Subsoil (what a crater shows) #485765; secondary cover #e3e4e0; trunk #485765; water shallow #2f6a84, deep #1b3f57; accent #5f8aa2; sky at noon #5890c0 (top) to #c4d2de (horizon); far land #d0dbe4, #b0c2d0, #90a8bb; from orbit #bacbda.
 
 **Ground profile:** floes, amplitude 10 units over about 260; far land: floesfar. **Cover:** berg (2 per 1,200 units, 90 to 220 units tall); floeblock (5 per 1,200 units, 14 to 30 units tall); icespire (1 per 1,200 units, 60 to 110 units tall).
 
