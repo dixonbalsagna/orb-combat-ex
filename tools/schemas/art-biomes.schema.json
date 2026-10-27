@@ -77,6 +77,32 @@
         "^_": true
       }
     },
+    "sky_tint": {
+      "type": "object",
+      "required": [
+        "horizon",
+        "top"
+      ],
+      "properties": {
+        "horizon": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.5,
+          "description": "How far each sky key's horizon colour is mixed (OKLab) toward the orbit colour of the planet's dominant biome. 0 switches the tint off."
+        },
+        "top": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.5,
+          "description": "The same for the top of the sky."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "A fixed per-planet sky tint, set once at planet generation; never changes while playing."
+    },
     "biomes": {
       "type": "object",
       "required": [

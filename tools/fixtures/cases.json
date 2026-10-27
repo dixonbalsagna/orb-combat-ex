@@ -299180,6 +299180,233 @@
       }
     },
     {
+      "id": "art-biomes-sky-tint-valid",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/sky_tint/horizon": 0.2
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-biomes-sky-tint-off-ok",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/sky_tint/horizon": 0,
+            "/sky_tint/top": 0
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-biomes-sky-tint-top-edge-ok",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/sky_tint/horizon": 0.5,
+            "/sky_tint/top": 0.5
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-biomes-sky-tint-underscore-key-ok",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/sky_tint/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-biomes-sky-tint-absent-ok",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "del": [
+            "/sky_tint"
+          ]
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "art-biomes-sky-tint-horizon-negative",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/sky_tint/horizon": -0.01
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/sky_tint/horizon"
+      }
+    },
+    {
+      "id": "art-biomes-sky-tint-horizon-over",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/sky_tint/horizon": 0.51
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/sky_tint/horizon"
+      }
+    },
+    {
+      "id": "art-biomes-sky-tint-top-negative",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/sky_tint/top": -0.01
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/sky_tint/top"
+      }
+    },
+    {
+      "id": "art-biomes-sky-tint-top-over",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/sky_tint/top": 0.51
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/sky_tint/top"
+      }
+    },
+    {
+      "id": "art-biomes-sky-tint-horizon-type",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/sky_tint/horizon": "some"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/sky_tint/horizon"
+      }
+    },
+    {
+      "id": "art-biomes-sky-tint-top-type",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/sky_tint/top": "0.1"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/sky_tint/top"
+      }
+    },
+    {
+      "id": "art-biomes-sky-tint-key-required-horizon",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "del": [
+            "/sky_tint/horizon"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/sky_tint"
+      }
+    },
+    {
+      "id": "art-biomes-sky-tint-key-required-top",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "del": [
+            "/sky_tint/top"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/sky_tint"
+      }
+    },
+    {
+      "id": "art-biomes-sky-tint-unknown-key",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/sky_tint/bottom": 0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/sky_tint/bottom"
+      }
+    },
+    {
+      "id": "art-biomes-sky-tint-not-an-object",
+      "schema": "art-biomes.schema.json",
+      "mutate": [
+        {
+          "file": "data/art/biomes.json",
+          "set": {
+            "/sky_tint": 0.1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/sky_tint"
+      }
+    },
+    {
       "id": "audio-world-cues-valid",
       "schema": "audio-world-cues.schema.json",
       "mutate": [

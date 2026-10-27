@@ -4,12 +4,17 @@
   "rules": {
     "faces": "lit, mid and shade are the three faces of one surface; flat colours with the keyline (#0a0d14); no gradients, no blur, no fades",
     "readability": "an aura stays 20 or more CIEDE2000 from every ground, rock, vegetation and water tone and a body 15 or more from ground, rock and vegetation, at every sky key with the world-light tint (the rival coat and the sea are advisory)",
-    "far_land": "three ridges, each hazed toward the horizon: far1 nearest and darkest",
+    "far_land": "three ridges, each hazed toward the horizon: far1 the farthest and lightest, far3 the nearest and darkest",
     "orbit": "the colour a biome reads as from far away, 12 percent toward the atmosphere blue (8 for ice)"
   },
   "orbit_separation": {
     "min": 9.3,
     "pair": "mountains / highland"
+  },
+  "sky_tint": {
+    "horizon": 0.1,
+    "top": 0.04,
+    "_note": "A fixed per-planet sky tint, set once at planet generation and never changed while playing (no movement, no fade): every sky key mixes its horizon colour 0.10 and its top colour 0.04 in OKLab toward the orbit colour of the dominant biome of the planet. Set both to 0 to switch it off. Ruled 2026-10-27 by the EP for Orb; Rendering builds it."
   },
   "_cover_set": [
     {
