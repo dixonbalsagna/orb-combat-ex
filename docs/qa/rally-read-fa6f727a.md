@@ -128,3 +128,28 @@ node qa/godot/autopsy.js <records.json> [N=20]
 ```
 
 Self-test 31 of 31 (new case: damage shares, launch spacing, KO near an anywhere action, the HP at the first one, matches without the field skipped); `node qa/run-all.js` all 7 passed.
+
+## Third addendum (2026-10-27): the pop's full line, in steps (GD rulings 10-26 item 42)
+
+**Build:** clean `git archive` of **b474baac** (rally-tune2 741c8483 and `rally.linkWorth` 0.8 as on main), with the working copy of `qa/godot/` laid over it (the committed harness plus the uncommitted autopsy flag, `QA_AUTOPSY=1`, which changes no sim figure). Overlay, disclosed: `brawl.launcher.anywhere.enabled`, `answer.enabled`, `water.enabled` and `rally.enabled` true; `linkWorth` left at 0.8. Seeds 1 to 200 (100 for the newcomer and masher jobs), `--jobs=3`, below-normal priority, 781 to 803 s a run, no job invalid. One lever per arm, one arm at a time. Arm 3 was run because arm 2's p10 was under 300.
+
+| | Arm 0: HEAD | Arm 1: pop.full 0.76 | Arm 2: pop.full 0.72 | Arm 3: 0.72 + stringPoints 3 |
+| :--- | :--- | :--- | :--- | :--- |
+| p10 (95% bootstrap interval) | **284.0** (270.4 to 303.0) | **277.7** (267.6 to 302.5) | **296.6** (278.9 to 319.5) | **305.6** (283.3 to 319.9) |
+| Median (360 to 480) | 366.5 | 389.2 | 398.6 | 396.6 |
+| p90 (at most 600) | 489.7 | 532.2 | 544.3 | 540.9 |
+| Rallies a match (3 to 10) | 4.36 | 5.62 | 6.00 | 5.91 |
+| Full launches, L16 (6 to 12) | 6.94 | 8.68 | 9.13 | 9.13 |
+| Links a rally, median (2 to 4) | 2 (last hands 1) | 2 (1) | 2 (1) | 2 (1) |
+| Rallies that turn (15 to 40%) | 18.5% | 19.0% | 17.8% | 18.7% |
+| Rally time (at most 25%) | 5.6% | 6.9% | 7.4% | 7.2% |
+| Pops a match | 12.0 | 11.6 | 11.5 | 11.8 |
+| Newcomer v medium (L17, 10 to 50%) | 14% | 19% | 24% | 28% |
+| Newcomer v easy (L17, 50 to 95%) | 74% | 94% | 93% | **96%** (over the band by 1) |
+| Masher easy / medium / hard (60+; 35 to 50; at most 15) | 98 / 44 / 1 | 98 / 39 / 0 | 99 / 46 / 0 | 99 / 42 / 0 |
+
+The first-launch rows (first60, thrown60, landed120) read 100% at both levels in every arm.
+
+**Reading:** p10 climbs with the steps, 284 → 278 → 297 → 306, but arm 1 is inside the noise of arm 0 (the intervals overlap by 30 s) and **arm 3 is the only arm at 300 or above, with an interval of 283 to 320 that straddles it**. The pops a match hardly move (12.0 to 11.8): the lever does not remove pops, it turns the late-string repeat pops into sends (as GD intended), so full launches (L16) rise 6.9 → 9.1, rallies 4.4 → 5.9, and the launch gap in the shortest 20 matches grows 12.6 s → 18.9 s. The loser's brawl damage per second falls 8% overall (26.3 → 24.2) and 6% in the shortest 20 (33.5 → 31.6). The cost shows in L17: the newcomer wins more at both levels (medium 14 → 28%, still inside 10 to 50; **easy 74 → 96%, one point over its 95% band, within the ±5 point noise of 100 matches**: arms 1 and 2 read 94 and 93).
+
+**Against the stop rule** (the first arm with p10 at least 300 and everything else in band): **arm 3 is the first with p10 at 300 or more (305.6)**, and every row is in band but `newcomer.wins.easy` at 96% against its 95% ceiling. p90 is 541 (under 600), L16 9.13, the median 397. If the easy newcomer's ceiling is held strictly, the next lever is easy's answer share (rulings item 20), not the pop. A longer read, at 200 matches for the newcomer, would put its error near ±3.5 points.
