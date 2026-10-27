@@ -112,7 +112,7 @@ Every asset gets a row in `docs/legal/asset-origins.md` (tool, model, date, prom
 4. A beam or heavy blow leaving a crater. (Check the single frame against the stacking rule below.)
 5. A two-player moment, with the other player's permission.
 6. The world wrapping: a fighter leaves one edge and returns round the other side.
-7. End card: the wordmark, "Play free in your browser" [if so], Legal's statement. No platform or engine logo unless its brand rules allow, never as an endorsement, and no "official" in the title.
+7. End card: the wordmark, "Play free in your browser" [if so; on the Steam trailer "Play in your browser", no "free", until Legal has read the distribution agreement, B5], Legal's statement. No platform or engine logo unless its brand rules allow, never as an endorsement, and no "official" in the title.
 
 **Conditions from Legal (`store-copy-screen.md` section 4):**
 - **Wordmark:** plain, in a licensed font. No chrome-bevelled or gold-and-orange 3D letters, no star or dragon motif, no letters that echo a franchise logo.
