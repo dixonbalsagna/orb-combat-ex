@@ -1369,6 +1369,36 @@ func _forest_fire() -> void:
 	_check(xa.size() > 0 and xa == xb, "the same burning tree draws the same fire twice (%d flames)" % xa.size())
 	var embers: Array = h1.debris.bits.filter(func(b): return b.kind == VfxDebris.EMBER)
 	_check(embers.size() <= VfxLook.EMBER_CAP, "the embers stay under the pool's cap (%d)" % embers.size())
+	var kinds: Array = ["tree", "fir", "spruce", "palm", "acacia", "jungletree", "mangrove"]
+	var crown_ok: bool = true
+	for k in kinds:
+		var pr: Array = VfxForestFire._profile(k)
+		crown_ok = crown_ok and pr[0] >= 0.0 and pr[1] > pr[0] and pr[1] <= 1.0 and pr[2].size() == VfxForestFire.PROF_BANDS
+	_check(crown_ok, "every tree kind has a crown read from its cover mesh (start, end, widths)")
+	_check(VfxForestFire._profile("palm")[0] > 0.5 and VfxForestFire._profile("fir")[0] < 0.25 and VfxForestFire._profile("acacia")[0] > 0.6, "a palm's and an acacia's crown sits high on a bare trunk, a fir's reaches nearly to the ground")
+	_check(VfxForestFire._hw(VfxForestFire._profile("acacia"), 0.85) > 2.0 * VfxForestFire._hw(VfxForestFire._profile("fir"), 0.9), "an acacia's umbrella is wider than a fir's tip")
+	var sp0: Vector2 = VfxForestFire.live_span(VfxForestFire._profile("fir"), 0.05)
+	var sp1: Vector2 = VfxForestFire.live_span(VfxForestFire._profile("fir"), 0.45)
+	var sp2: Vector2 = VfxForestFire.live_span(VfxForestFire._profile("fir"), 0.95)
+	_check(sp1.y < sp0.y and sp2.y < sp1.y and sp2.y > VfxForestFire._profile("fir")[0] and sp2.x < sp0.x, "the fire sinks with the char line and reaches down the trunk, never below the crown's foot at the top (%.2f, %.2f, %.2f)" % [sp0.y, sp1.y, sp2.y])
+	var low := func(kind: String) -> float:
+		stand.call(24, 0.2, true)
+		var hkind := VfxHub.new()
+		hkind.reset(S, 6)
+		hkind.px_per_unit = 0.3
+		hkind.forestfire.kind_of = func(_i): return kind
+		for k in range(40):
+			_tick(S, hkind, [])
+		var lo_y: float = 1.0e9
+		for b in hkind.debris.bits:
+			if b.kind == VfxDebris.FLAME:
+				lo_y = minf(lo_y, b.y - WorldTerrain.groundY(S, b.x, b.z))
+		return lo_y
+	var lp: float = low.call("palm")
+	var lf: float = low.call("fir")
+	_check(lp < 1.0e8 and lf < 1.0e8 and lp > 0.55 * 150.0 and lf < lp - 20.0, "the flames follow the kind's crown: a palm's start high up (%.0f), a fir's low (%.0f)" % [lp, lf])
+	var kin := VfxHub.new()
+	_check(not kin.forestfire.kind_of.is_valid() and kin.forestfire._kind(3) == "tree", "with no kind hook every tree is the broadleaf")
 
 
 func _earth() -> void:

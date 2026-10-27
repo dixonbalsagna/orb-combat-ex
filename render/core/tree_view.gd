@@ -114,6 +114,13 @@ func update(S: SimState) -> void:
 				charred.set_instance_transform(_slot[ti], _hidden(x))
 
 
+## The cover kind tree ti was given ("" before the world is built): VFX's forest fire reads it to set its flames in the tree's crown.
+func kind_at(ti: int) -> String:
+	if ti < 0 or ti >= _at.size():
+		return ""
+	return String(_kinds[_at[ti]][0])
+
+
 ## One of the tree kinds Art's cover gives the biome, by Art's counts as weights; FALLBACK where it names none.
 static func _pick(name: String, rng: RandomNumberGenerator) -> String:
 	var list: Array = []

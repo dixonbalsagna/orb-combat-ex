@@ -1092,7 +1092,7 @@
     }
   },
   "fire": {
-    "_note": "Window 4: what a burning tree looks like (forest_fire.gd; World's burn field, sim/world/fire.gd, sets the tree's own burn). Cel flames in the crown (the pool's flame bit, steady orange), a few embers rising, a thin dark column of smoke. `scan.every` ticks it looks for the burning trees within the framing's span (`span`, as the ambient block's) and keeps the nearest `max_trees`; the rest of a big stand only counts. Rates are a second per tree at full intensity, scaled by quality and halved in reduced motion (no smoke then). `flame.cap` leaves the pool's explosions (earth.json flame.alive_cap 40) their room. Flame size is a share of the tree's width (the planet view's tree is a cone TREE_W wide at its foot); h is where in the tree's height it sits, and the flame is set on the cone's skin there.",
+    "_note": "Window 4: what a burning tree looks like (forest_fire.gd; World's burn field, sim/world/fire.gd, sets the tree's own burn). Cel flames in the crown (the pool's flame bit, steady orange), a few embers rising, a thin dark column of smoke. `scan.every` ticks it looks for the burning trees within the framing's span (`span`, as the ambient block's) and keeps the nearest `max_trees`; the rest of a big stand only counts. Rates are a second per tree at full intensity, scaled by quality and halved in reduced motion (no smoke then). `flame.cap` leaves the pool's explosions (earth.json flame.alive_cap 40) their room. Flame size is a share of TREE_W; h is where in the tree's live crown it sits (0 the crown's foot, or the trunk once the crown has charred, 1 the char line), and the flame is set inside the kind's silhouette at that height (render/core/cover_meshes.gd, read only).",
     "scan": {
       "every": 6,
       "max_trees": 24
@@ -1111,8 +1111,8 @@
       "min": 30,
       "max": 150,
       "h": [
-        0.12,
-        0.68
+        0.0,
+        1.0
       ],
       "rise": [
         50,

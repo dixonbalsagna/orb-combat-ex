@@ -197,6 +197,8 @@ func render(host: SimHost, a: float, cam_x: float, cam: Vector3, jitter: Vector2
 	_view_cues(cam, vp)
 	if source == null and host.vfx.enabled and host.vfx.react_enabled:
 		planet.blow_windows(S, host.vfx.react.blowouts)   # the facades' windows go out with VFX's glass
+	if source == null:
+		host.vfx.forestfire.kind_of = planet.trees.kind_at   # a burning tree's fire follows its crown (VFX, forest_fire.gd)
 	planet.update(S, cam_x, host.impact.heat, host.impact.heat_changed)
 	planet.cull_to(cam_rig, vis_plane)   # the split's culling: chunks wholly on this pane's hidden side are not drawn
 	for i in range(fighter_views.size()):
