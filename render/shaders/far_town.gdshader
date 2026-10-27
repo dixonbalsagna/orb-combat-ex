@@ -5,6 +5,8 @@
 shader_type spatial;
 render_mode unshaded, cull_disabled;
 
+#define FAR_MAP   // its blocks stand on the planet's own far map only
+
 #include "res://render/shaders/color.gdshaderinc"
 #include "res://render/shaders/bend.gdshaderinc"
 #include "res://render/shaders/ground.gdshaderinc"

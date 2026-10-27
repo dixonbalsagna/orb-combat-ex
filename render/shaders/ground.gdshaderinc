@@ -62,6 +62,14 @@ uniform vec2 fore_far = vec2(2.0, 6.0);           // RenderLook.FORE_FAR
 uniform vec3 fore_strides = vec3(400.0, 2000.0, 3375.0);   // RenderLook.STRIDES' depths: the ground mesh's column stride is 1, 2, 4 and 8 up to each
 uniform float fore_span = 2.0;                   // RenderLook.FORE_SPAN: the fighter plane's profile the rule reads is its lowest within this many columns either side
 
+// The loops' bounds as uniforms with their values (no code sets them): D3D's compiler cannot unroll a loop whose
+// bound it does not know, so each loop body is compiled once (Performance's phone-freeze report).
+uniform int loop_10 = 10;
+uniform int loop_2 = 2;
+uniform int loop_3 = 3;
+uniform int loop_6 = 6;
+uniform int loop_1 = 1;
+
 float gf(int i, int row) {
 	return texelFetch(heights, ivec2(i % tw, row * rpl + i / tw), 0).r;
 }
@@ -154,7 +162,7 @@ float crater_open(vec4 a, vec4 b, float dx, float z) {
 vec3 ground_offset4(int i, float xw, float z, out float closed) {
 	vec3 s = vec3(0.0);
 	closed = 0.0;
-	for (int k = 0; k < 6; k++) {
+	for (int k = 0; k < loop_6; k++) {
 		float fi = gf(i, 6 + k);
 		if (fi < 0.0) {
 			break;
@@ -211,7 +219,7 @@ float ground_offset(int i, float xw, float z) {
 float crater_new(int i, float xw, float z, float dur) {
 	float keep = 1.0;
 	bool any = false;
-	for (int k = 0; k < 6; k++) {
+	for (int k = 0; k < loop_6; k++) {
 		float fi = gf(i, 6 + k);
 		if (fi < 0.0) {
 			break;
@@ -242,7 +250,7 @@ vec3 far_noise3(float x, float z) {
 	float t = 6.2831853 / world_w;
 	vec3 n = vec3(0.0);
 	vec4 k[3] = vec4[3](vec4(5.0, 0.00061 / far_scale, 0.3, 0.45), vec4(17.0, -0.0013 / far_scale, 1.7, 0.3), vec4(43.0, 0.0029 / far_scale, 4.1, 0.25));
-	for (int j = 0; j < 3; j++) {
+	for (int j = 0; j < loop_3; j++) {
 		float fx = k[j].x * t;
 		float p = fx * x + k[j].y * z + k[j].z;
 		float c = cos(p) * k[j].w;
@@ -349,10 +357,23 @@ vec4 far_texel(sampler2D tex, int i, int j, int L) {
 
 // A map texture at a far_cell, bilinear (WorldFarMap.height).
 vec4 far_fetch(sampler2D tex, ivec2 i0, vec2 f, int L) {
-	vec4 a = far_texel(tex, i0.x, i0.y, L);
-	vec4 b = far_texel(tex, i0.x + 1, i0.y, L);
-	vec4 c = far_texel(tex, i0.x, i0.y + 1, L);
-	vec4 d = far_texel(tex, i0.x + 1, i0.y + 1, L);
+	// The four texels from one far_texel in a loop: the compiler keeps one copy of it, not four.
+	vec4 a = vec4(0.0);
+	vec4 b = vec4(0.0);
+	vec4 c = vec4(0.0);
+	vec4 d = vec4(0.0);
+	for (int k = 0; k <= loop_3; k++) {
+		vec4 t = far_texel(tex, i0.x + (k & 1), i0.y + (k >> 1), L);
+		if (k == 0) {
+			a = t;
+		} else if (k == 1) {
+			b = t;
+		} else if (k == 2) {
+			c = t;
+		} else {
+			d = t;
+		}
+	}
 	return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
 }
 
@@ -360,32 +381,49 @@ vec4 far_fetch(sampler2D tex, ivec2 i0, vec2 f, int L) {
 // the band's water row says the place is wet. The place read turns with the slow drift (a shear by depth, so the
 // fighter plane never moves), relief and all. far_map_on: the planet's own ground beside the ring with its biome's
 // relief; else the band's columns wandering into the distance (far_x). grad: work out the slope.
+// The map's branch is compiled only with FAR_MAP defined (the _far variants, while the far land is on): D3D's
+// compiler took a third of the terrain's compile over it, and the default game never reads it.
 vec4 far4(float xw, float z, float s, bool grad, out bool wet) {
 	float k = drift_tan * s;
 	float xd = xw - z * k;
 	vec4 f;
 	wet = false;
+#ifdef FAR_MAP
 	if (far_map_on) {
 		int L = far_lod(z);
 		float d = 0.5 * far_texel_w * exp2(float(L));   // the slope is read over half a texel of the level
 		float c = xd / col_w;
 		ivec2 i0;
 		vec2 fr;
-		far_cell(far_dir(c, z), L, i0, fr);
-		vec4 m = far_fetch(far_map, i0, fr, L);
+		// The place, a step along and a step in depth from one sample in a loop (one copy, not three).
+		vec4 m = vec4(0.0);
+		float rx = 0.0;
+		float rz = 0.0;
+		for (int k = 0; k < (grad ? loop_3 : loop_1); k++) {
+			far_cell(far_dir(k == 1 ? c + d / col_w : c, k == 2 ? z + d : z), L, i0, fr);
+			vec4 t = far_fetch(far_map, i0, fr, L);
+			if (k == 0) {
+				m = t;
+			} else if (k == 1) {
+				rx = t.r;
+			} else {
+				rz = t.r;
+			}
+		}
 		vec3 n = far_noise3(xd, z);
 		f = vec4(m.r + m.g * n.x, m.g * n.y, m.g * n.z, m.b);
 		if (grad) {
-			far_cell(far_dir(c + d / col_w, z), L, i0, fr);
-			f.y += (far_fetch(far_map, i0, fr, L).r - m.r) / d;
-			far_cell(far_dir(c, z + d), L, i0, fr);
-			f.z += (far_fetch(far_map, i0, fr, L).r - m.r) / d;
+			f.y += (rx - m.r) / d;
+			f.z += (rz - m.r) / d;
 		}
 	} else {
+#endif
 		float xs = far_x(xw, z, s);
 		f = vec4(far_height3(xs, xd, z), gfx(xs, 0));
 		wet = gfx(xs, 4) >= wet_min;
+#ifdef FAR_MAP
 	}
+#endif
 	f.z -= k * f.y;   // the sheared field's slope in depth
 	return f;
 }
@@ -425,17 +463,17 @@ vec3 fore_cap3(float xr, float z, float ox, bool top) {
 	// difference across one column, which changes smoothly as the camera moves (the lowest column's own slope flipped
 	// from tick to tick where two columns stood near the same height). The columns are read once.
 	float ys[10];
-	for (int k = 0; k < 10; k++) {
+	for (int k = 0; k < loop_10; k++) {
 		int ii = int(mod(c0 + float(k - 4), float(nc)));
 		ys[k] = top ? fp_top(ii) : fp_ground(ii);
 	}
 	float span = min(fore_span, 3.0);
 	float lows[3] = {1.0e9, 1.0e9, 1.0e9};   // the profile's lowest at c - 0.5, c and c + 0.5
-	for (int q = 0; q < 3; q++) {
+	for (int q = 0; q < loop_3; q++) {
 		float p = c - c0 + 0.5 * float(q - 1);   // -0.5 to 1.5 columns from c0
 		float pf = floor(p);
 		float fr = p - pf;
-		for (int k = -3; k <= 3; k++) {
+		for (int k = -3; k <= loop_3; k++) {
 			if (abs(float(k)) > span) {
 				continue;
 			}
@@ -466,14 +504,24 @@ void fore_fall(inout float h, inout vec2 grad, inout float top, float xr, float 
 		return;
 	}
 	bool dry = top <= h;
-	vec3 ct = fore_cap3(xr, z, ox, true);
+	// The top's cap and the ground's from one fore_cap3 in a loop: the compiler keeps one copy of it, not two. The caps do
+	// not depend on h or top, so taking both first changes nothing.
+	vec3 ct = vec3(0.0);
+	vec3 cg = vec3(0.0);
+	for (int k = 0; k <= loop_1; k++) {
+		vec3 cap = fore_cap3(xr, z, ox, k == 0);
+		if (k == 0) {
+			ct = cap;
+		} else {
+			cg = cap;
+		}
+	}
 	float cut = top - ct.x;
 	if (cut > 0.0) {
 		h -= cut;
 		top = ct.x;
 		grad = dry ? ct.yz : grad + ct.yz;
 	}
-	vec3 cg = fore_cap3(xr, z, ox, false);
 	if (h > cg.x) {
 		h = cg.x;
 		grad = cg.yz;
@@ -514,15 +562,22 @@ vec4 ground4(int i, float xw, float z, bool exact, float ox) {
 // coarser column stride (linear between the coarse columns), so the finer and the coarser run meet without a crack.
 // ox: the planet copy's world offset (MODEL_MATRIX's translation).
 vec4 ground_vertex(float col, float flag, float z, float ox) {
-	if (flag > 1.5) {
-		float st = floor(flag + 0.5);
-		float c0 = floor(col / st + 0.0001) * st;
-		float fr = (col - c0) / st;
-		vec4 g0 = ground4(int(c0) % nc, c0 * col_w, z, false, ox);
-		vec4 g1 = ground4(int(c0 + st) % nc, (c0 + st) * col_w, z, false, ox);
-		return mix(g0, g1, fr);
+	// Its one or two columns' ground from one ground4 in a loop: the compiler keeps one copy of it, not three.
+	bool snap = flag > 1.5;
+	float st = snap ? floor(flag + 0.5) : 1.0;
+	float c0 = snap ? floor(col / st + 0.0001) * st : col;
+	vec4 g0 = vec4(0.0);
+	vec4 g1 = vec4(0.0);
+	for (int k = 0; k <= (snap ? loop_1 : 0); k++) {
+		float ck = c0 + float(k) * st;
+		vec4 gk = ground4((snap ? int(ck) : int(ck + 0.5)) % nc, ck * col_w, z, !snap && flag > 0.5, ox);
+		if (k == 0) {
+			g0 = gk;
+		} else {
+			g1 = gk;
+		}
 	}
-	return ground4(int(col + 0.5) % nc, col * col_w, z, flag > 0.5, ox);
+	return snap ? mix(g0, g1, (col - c0) / st) : g0;
 }
 
 
@@ -660,7 +715,7 @@ vec4 block_paint(vec2 px, float upx) {
 // upz: world units a pixel spans in depth, so the stripe is never thinner than a pixel or two.
 vec4 lane_cue_at(vec2 px, float upz) {
 	vec4 c = vec4(0.0);
-	for (int k = 0; k < 2; k++) {
+	for (int k = 0; k < loop_2; k++) {
 		if (lane_cue[k].w <= 0.0) {
 			continue;
 		}

@@ -59,6 +59,11 @@ var split_frame: SplitFrame = null  # this frame's, while a compositor is attach
 ## Attaching one resets the rig to the current state; without one the rig costs nothing (about 0.05 ms a tick).
 var split_view: SplitView = null   # Camera's compositor in the game (null in the tools)
 var flashcap: FlashCapture = null     # Tools' capture hook (--flashcap, on the web ?flashcap=1): the game is stepped from the page; null in normal play
+static var render_scale: float = 1.0      # the 3D render scale (_render_scale): lower on a phone
+var _build_queue: Array = []             # the boot's pane build still to run (_step_build): _match_built's steps
+var _build_phase: String = ""            # the loading screen's phase while they run (the sim's last)
+var boot: RenderBoot = null             # the boot's compile, spread over frames (render/core/boot.gd); null once it is done
+var _crumb_at: String = ""             # the last stage said to the page's freeze breadcrumbs (_crumb)
 var cam_pitch: float = 0.0          # the cameras' pitch in degrees (Alt+F9), unless the rig's frame carries its own
 var occlusion: int = PaneWorld.OCCL_HOLE   # every pane's occlusion method (Ctrl+F9)
 var inset: PaneWorld = null         # Camera's inset pane (make_inset), or null
@@ -145,6 +150,8 @@ func _ready() -> void:
 	fighter_views = pane.fighter_views
 	SimInputData.load_and_apply()   # the input data and SimAct's three numbers, before the host builds its hub
 	cam_pitch = float(args.get("pitch", 0.0))
+	render_scale = _render_scale()
+	get_viewport().scaling_3d_scale = render_scale   # the game's own viewport; each pane's in _pane_viewport
 	occlusion = PaneWorld.OCCL_STUB if String(args.get("occl", "hole")) == "stub" else PaneWorld.OCCL_HOLE
 	PlanetView.streets = not args.has("nostreets")
 	FighterView.damage_on = not args.has("nodamage")
@@ -220,6 +227,13 @@ func _ready() -> void:
 	audio = AudioVoices.new(host.audio_cues.bank)
 	add_child(audio)
 	host.audio_cues.bank.warm()   # render every sound now, so none renders in the middle of a fight (headless too: a tool times first plays as the game has them)
+	if not manual and not args.has("nowarmup") and _boot_staged():
+		# The game's own start on a screen (render/core/boot.gd; the EP's boot brief): the boot's line now and pane 0
+		# hidden; the match's pieces, then the panes' (a load phase of their own, _step_build), then the programs'
+		# compile a few a frame. The sim waits for it all (frame()).
+		boot = RenderBoot.new()
+		add_child(boot)
+		boot.begin([pane], RenderLook.BOOT_WORDS)
 	host.stepped_start = not manual and not args.has("syncstart") and not args.has("flashcap")   # the match starts in pieces, the loading screen between them (docs/architecture/match-start.md); a tool's main starts it whole
 	start_match(int(args["seed"]) if args.has("seed") else fresh_seed())
 	if args.has("human"):
@@ -243,9 +257,13 @@ func _ready() -> void:
 			else:
 				split_view.attach(self)
 	if not manual and not args.has("nowarmup"):
-		var warm := RenderWarmup.new()
-		add_child(warm)
-		warm.start(pane.get_world_3d())   # after the split view: pane 0's own world, with its environment
+		if boot != null:
+			if not host.loading() and _build_queue.is_empty():
+				boot.compile(all_panes(), pane.get_world_3d())   # a start that was whole (--syncstart): the panes are built already
+		else:
+			var warm := RenderWarmup.new()
+			add_child(warm)
+			warm.start(pane.get_world_3d())   # after the split view: pane 0's own world, with its environment
 	# Tools' capture hook (--flashcap, on the web /play/?flashcap=1): the game is stepped a tick at a time from the
 	# page, for the frame analyser. Never in normal play, and never under a tool's own main.
 	if args.has("flashcap") and not manual and OS.has_feature("web") and get_parent() == get_tree().root:
@@ -274,16 +292,38 @@ func all_panes() -> Array:
 ## A new match. setup: additions to the match setup; left out, the game's own (_match_setup), and the host files the
 ## opening it composes in the session's intro memory.
 func start_match(seed: int, ai: Dictionary = {}, setup = null) -> void:
+	_build_queue.clear()   # a match started while the boot builds the panes (the notice's Start): those steps were the old match's
 	var own: bool = not (setup is Dictionary)
 	host.new_match(seed, ai, _match_setup(seed) if own else setup, own)
 	if host.loading():
 		ui_hud.show_loading(host.load_phase(), host.load_progress())   # frame() steps the load; the match is built when it is made (_match_built)
 		return
 	_match_built()
+	if boot != null:
+		boot.compile(all_panes(), pane.get_world_3d())   # a match built whole while the boot waited for its panes (once: boot.compile)
 
 
 ## What follows the sim's new match: the camera, the far land, the HUD's fighters, the panes and the first picture.
 func _match_built() -> void:
+	for st in _match_built_steps():
+		while not st.call():
+			pass
+
+
+## _match_built as steps (each a Callable that returns true when done; the boot runs them a few a frame, _step_build):
+## the camera, the far land and the HUD's fighters; each pane's build (PaneWorld.build_steps); the flashes and the
+## split; the first picture; the split's attach that waited for the boot's match.
+func _match_built_steps() -> Array:
+	var steps: Array = [_mb_begin]
+	for p in all_panes():
+		steps.append(_mb_pane_hub.bind(p))
+		steps.append_array(p.build_steps(host.S))
+		steps.append(_mb_pane_flashes.bind(p))
+	steps.append_array([_mb_end, _mb_picture, _mb_attach])
+	return steps
+
+
+func _mb_begin() -> bool:
 	_match_ever = true
 	camera_roll.reset()
 	_drift_t0 = host.S.T
@@ -291,19 +331,38 @@ func _match_built() -> void:
 		far_land.begin(host.S, _far_now)   # a match's start is a cut: the planet's far land shows from here if its map is whole
 	var fl: Array = UiSimBridge.fighters(host.S)
 	ui_hud.setup(fl[0], fl[1])
-	for p in all_panes():
-		p.vfx_layer.hub = host.vfx
-		p.build(host.S)
-		for v in p.fighter_views:
-			v.flashes_on = flashes_on
+	return true
+
+
+func _mb_pane_hub(p: PaneWorld) -> bool:
+	p.vfx_layer.hub = host.vfx
+	return true
+
+
+func _mb_pane_flashes(p: PaneWorld) -> bool:
+	for v in p.fighter_views:
+		v.flashes_on = flashes_on
+	return true
+
+
+func _mb_end() -> bool:
 	for i in range(fighter_views.size()):
 		_setup_flash(fighter_views[i], i)
 	var vp: Vector2 = get_viewport().get_visible_rect().size
 	split_rig.reset(host.S, vp.x, vp.y)
+	return true
+
+
+func _mb_picture() -> bool:
 	render_view(host.alpha())
+	return true
+
+
+func _mb_attach() -> bool:
 	if _attach_pending:
 		_attach_pending = false
 		split_view.attach(self)
+	return true
 
 
 ## What the game adds to a match's setup: a composed intro (docs/architecture/dynamic-intros.md, the record form).
@@ -415,6 +474,7 @@ func move_pane0(size: Vector2i) -> SubViewport:
 static func _pane_viewport(size: Vector2i) -> SubViewport:
 	var sv := SubViewport.new()
 	sv.size = size
+	sv.scaling_3d_scale = render_scale   # the phone's lower 3D scale, as the game's own viewport (_render_scale)
 	sv.own_world_3d = true
 	sv.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	return sv
@@ -548,18 +608,106 @@ func _process(delta: float) -> void:
 
 ## A frame while a planet loads: a slice of the load, and the screen reads its phase and progress. The match is built the frame its planet is made.
 func _step_load() -> void:
+	if not _build_queue.is_empty():
+		_step_build()
+		return
+	var phase: String = host.load_phase()
 	if host.load_step():
-		ui_hud.hide_loading()
-		_match_built()
+		if boot != null and not boot.compiling():
+			# The boot: the panes' pieces a few a frame too, a load phase of their own after the sim's, the loading screen
+			# still up with its bar full (it never goes back); then the compile (_step_build). A match that loads while the
+			# boot compiles is built whole below: its programs are the ones being compiled.
+			_build_queue = _match_built_steps()
+			_build_phase = phase
+			ui_hud.show_loading(_build_phase, 1.0)
+			_step_build()
+		else:
+			ui_hud.hide_loading()
+			_match_built()
 	else:
-		ui_hud.show_loading(host.load_phase(), host.load_progress())
+		ui_hud.show_loading(phase, host.load_progress())
+
+
+## The boot's own load phase, after the sim's: _match_built's steps until RenderLook.BOOT_STEP_MS has gone this frame
+## (a step that is not done goes again). When the last is done the loading screen goes and the boot compiles the built
+## panes' programs (render/core/boot.gd).
+func _step_build() -> void:
+	var t0: int = Time.get_ticks_usec()
+	while not _build_queue.is_empty() and Time.get_ticks_usec() - t0 < int(RenderLook.BOOT_STEP_MS * 1000.0):
+		if (_build_queue[0] as Callable).call():
+			_build_queue.pop_front()
+	if not _build_queue.is_empty():
+		return
+	ui_hud.hide_loading()
+	if boot != null:
+		boot.compile(all_panes(), pane.get_world_3d())
+
+
+## The 3D render scale: RenderLook.TOUCH_3D_SCALE on the web with a coarse pointer (a phone or a tablet; a laptop's
+## touchscreen with a mouse keeps its pixels), else 1. A phone draws at 2 to 3 times the pixels of its screen's points,
+## and the 3D's cost goes with the pixels (Performance: the Radeon's AI match 5.0 ms at 0.4 megapixels, 10.8 ms at a
+## pixel ratio of 2.6); UI's layers are drawn at the full ratio, so the words stay sharp. The page's ?touchscale=1
+## forces it on a desktop.
+func _render_scale() -> float:
+	if manual or not OS.has_feature("web"):
+		return 1.0
+	if args.has("touchscale"):
+		return RenderLook.TOUCH_3D_SCALE
+	return RenderLook.TOUCH_3D_SCALE if bool(JavaScriptBridge.eval("!!(window.matchMedia && matchMedia('(pointer: coarse)').matches)", true)) else 1.0
+
+
+## The boot spreads the first compile over frames (render/core/boot.gd) on the game's own start on a screen. A tool, the
+## capture hook, a bench, a scripted run and a headless run keep the warm-up's single frame, as before.
+func _boot_staged() -> bool:
+	if DisplayServer.get_name() == "headless" or get_parent() != get_tree().root:
+		return false
+	for a in ["flashcap", "bench", "frames", "shot", "nobootstage"]:
+		if args.has(a):
+			return false
+	return true
+
+
+## A boot frame: the sim waits, UI's notice and cards stay live, and the audio warm-up takes its quiet budget.
+func _step_boot(delta: float) -> void:
+	if _match_ever:
+		ui_hud.advance(delta)   # once the match's first step has set the HUD's fighters up
+	host.audio_cues.bank.warm_quiet = 1
+	_crumb()
+
+
+## Performance's freeze breadcrumbs (docs/perf/web-shell/ocx-crumbs.js): the stage the game is in, said to the page
+## once when it changes: first_frame (the first frame is up), card (the notice or the How to play card), intro, playing.
+## Nothing on a desktop build or headless.
+func _crumb() -> void:
+	if not OS.has_feature("web"):
+		return
+	var st: String = "playing"
+	if _crumb_at == "":
+		st = "first_frame"
+	elif ui_hud.is_notice_open() or ui_hud.is_howto_open():
+		st = "card"
+	elif host.loading() or not _build_queue.is_empty() or boot != null:
+		return   # the match starting or the boot compiling, no card up: the stage stays (nothing here reads the sim then)
+	elif host.intro_running():
+		st = "intro"
+	if st != _crumb_at:
+		_crumb_at = st
+		JavaScriptBridge.eval("window.__ocx && window.__ocx.crumbs && window.__ocx.crumbs.stage && window.__ocx.crumbs.stage('%s')" % st, true)
 
 
 ## One displayed frame: run the ticks this frame time allows, then draw at the interpolation point.
 func frame(delta: float) -> void:
-	if host.loading():
-		_step_load()
+	if host.loading() or not _build_queue.is_empty():
+		_step_load()   # the match's pieces, then (the boot) the panes'
+		host.audio_cues.bank.warm_quiet = 1   # nothing is played while the match starts: the audio warm-up's quiet budget
+		_crumb()
 		return
+	if boot != null:
+		if boot.running():
+			_step_boot(delta)
+			return
+		boot = null
+	_crumb()
 	host.prefetch_step()   # a planet the menu's choices name is made a slice a frame while the player decides
 	var vp: Vector2 = get_viewport().get_visible_rect().size
 	var t0: int = Time.get_ticks_usec()
@@ -598,6 +746,9 @@ func frame(delta: float) -> void:
 	_sync_players()
 	render_view(host.alpha())
 	ui_hud.advance(0.0 if host.paused else delta)
+	# Audio's warm-up takes its quiet budget while nothing is being played: the sim held, or a notice, a card, the start
+	# menu or the loading screen up (an AI match plays behind the first-start card, so the pause alone does not say it).
+	host.audio_cues.bank.warm_quiet = 1 if host.paused or ui_hud.is_notice_open() or ui_hud.is_howto_open() or ui_hud.is_start_menu_open() or ui_hud.is_loading() else 0
 	for c in host.pending_cues:
 		audio.play(c, view_cam_x, cam_rig.zoom)
 	host.pending_cues.clear()
@@ -1240,8 +1391,8 @@ func _flash_key(e: InputEventKey) -> void:
 
 
 func _unhandled_input(e: InputEvent) -> void:
-	if host.loading():
-		return
+	if host.loading() or not _build_queue.is_empty() or (boot != null and boot.running()):
+		return   # the match starting, or the boot: no new match or take-over meanwhile
 	if e is InputEventKey:
 		var code: String = RenderKeys.code(e)
 		get_viewport().set_input_as_handled()
@@ -1345,7 +1496,7 @@ const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off",
 ## without UI's notice, change how a match starts or hold a debug value, and are dropped unless the page is on a local
 ## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze, keyhelp, roll.
 const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]
-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover"]
+const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale"]
 
 
 ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of

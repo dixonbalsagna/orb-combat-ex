@@ -21,6 +21,8 @@ extends Node3D
 
 const TERRAIN_SHADER: Shader = preload("res://render/shaders/terrain.gdshader")
 const WATER_SHADER: Shader = preload("res://render/shaders/water.gdshader")
+const TERRAIN_FAR_SHADER: Shader = preload("res://render/shaders/terrain_far.gdshader")   # with the planet's own far map (set_far)
+const WATER_FAR_SHADER: Shader = preload("res://render/shaders/water_far.gdshader")
 const FAR_TOWN_SHADER: Shader = preload("res://render/shaders/far_town.gdshader")
 const COVER_SHADER: Shader = preload("res://render/shaders/cover.gdshader")
 const CROWD_SHADER: Shader = preload("res://render/shaders/crowd.gdshader")
@@ -45,6 +47,7 @@ var _water_meshes: Array = []
 var _water_cols := PackedInt32Array()   # per water mesh: its first and last column (-1, -1: the far mesh, the whole planet)
 var _built_nc: int = 0                  # the arena's length in columns the ground's data, meshes and materials were made for
 var _built_cols := PackedByteArray()    # the world's biome by column (S.planetCols; empty for the hand-made world) the far rows were made for
+var _mesh_jobs: Array = []                # the ground's meshes still to make (_bs_meshes), a chunk each
 var _water_nodes: Array = []            # this pane's water nodes per mesh, one a copy
 var _water_drawn: int = -1              # the ground's water_version this pane last decided its water chunks for
 var _crowd_mat: ShaderMaterial
@@ -134,6 +137,19 @@ var _calm_at: float = INF              # the earliest of those
 
 ## Build the planet for the match in S (after SimCore.newMatch).
 func build(S: SimState) -> void:
+	for st in build_steps(S):
+		while not st.call():
+			pass
+
+
+## The build as steps for a caller that draws frames between them (main.gd, the first match of the game's own start on a
+## screen): each a Callable that returns true when it is done (one that returns false goes again: the ground's meshes,
+## a chunk a call). Run one after another they are build().
+func build_steps(S: SimState) -> Array:
+	return [_bs_begin.bind(S), _bs_materials, _bs_meshes, _bs_share.bind(S), _bs_setup.bind(S), _bs_copies, _bs_refresh.bind(S)]
+
+
+func _bs_begin(S: SimState) -> bool:
 	for c in _copies:
 		remove_child(c)
 		c.free()
@@ -162,10 +178,14 @@ func build(S: SimState) -> void:
 		_terrain_meshes = source._terrain_meshes
 		_water_meshes = source._water_meshes
 		_water_cols = source._water_cols
+	return true
+
+
+func _bs_materials() -> bool:
 	if _terrain_mat == null:
 		_make_materials()
 		if source == null:
-			_make_ground_meshes()
+			_mesh_jobs = _ground_mesh_jobs()   # made a chunk a step (_bs_meshes)
 		_tree_mat = mats.flat_named("trees", Color.WHITE)
 		_crowd_mat = ShaderMaterial.new()
 		_crowd_mat.shader = CROWD_SHADER
@@ -181,6 +201,17 @@ func build(S: SimState) -> void:
 		_crowd_mat.set_shader_parameter("startle_arms", RenderLook.STARTLE_ARMS)
 		_crowd_mat.set_shader_parameter("startle_crouch", RenderLook.STARTLE_CROUCH)
 		_crowd_mat.set_shader_parameter("startle_tremble", RenderLook.STARTLE_TREMBLE)
+	return true
+
+
+## The ground's meshes, a chunk a call (_ground_mesh_job); true when none is left.
+func _bs_meshes() -> bool:
+	if not _mesh_jobs.is_empty():
+		_ground_mesh_job(_mesh_jobs.pop_front())
+	return _mesh_jobs.is_empty()
+
+
+func _bs_share(S: SimState) -> bool:
 	if source == null:
 		ground.rebuild(S)
 		_make_props(S)
@@ -213,6 +244,10 @@ func build(S: SimState) -> void:
 		_spread = source._spread
 		_marks = source._marks
 		_busy = source._busy
+	return true
+
+
+func _bs_setup(S: SimState) -> bool:
 	if _front_mat == null:
 		_front_mat = _building_mat()
 		_bld_mat = _building_mat()
@@ -243,6 +278,10 @@ func build(S: SimState) -> void:
 		cm.set_shader_parameter("id_base", _crowd.firsts[c])
 		_crowd_mats.append(cm)
 	_cull.clear()
+	return true
+
+
+func _bs_copies() -> bool:
 	var nk: int = copies_each_side()
 	var np: int = prop_copies_each_side()
 	for k in range(-nk, nk + 1):
@@ -269,8 +308,13 @@ func build(S: SimState) -> void:
 			_town_nodes[-1].visible = false
 		_copies.append(n)
 		_cull_items(n)
+	return true
+
+
+func _bs_refresh(S: SimState) -> bool:
 	if source == null:
 		refresh(S, true)
+	return true
 
 
 ## A copy's ground and water chunks for the split's culling (cull_to): a terrain chunk and the water chunk of the same mesh
@@ -1288,6 +1332,12 @@ func set_far(f: FarLand) -> void:
 	if _terrain_mat == null or f.version == _far_sent:
 		return
 	_far_sent = f.version
+	# The far map's variants only while it is on: the default shaders leave its code out, a third of the terrain's compile
+	# on D3D (the start freeze). A shader set again keeps the material's values.
+	var tw: Shader = TERRAIN_FAR_SHADER if f.on else TERRAIN_SHADER
+	if _terrain_mat.shader != tw:
+		_terrain_mat.shader = tw
+		_water_mat.shader = WATER_FAR_SHADER if f.on else WATER_SHADER
 	f.apply(_terrain_mat)
 	f.apply(_water_mat)
 	f.apply(_town_mat)
@@ -1398,6 +1448,12 @@ static func stride_at(z: float) -> int:
 ## stride (UV2.y = that stride) so they meet exactly. The finest run and the middle runs are cut into chunks of
 ## CHUNK_COLS columns, culled by the frustum; the coarsest runs (far in front and far behind) are one light mesh.
 func _make_ground_meshes() -> void:
+	for job in _ground_mesh_jobs():
+		_ground_mesh_job(job)
+
+
+## The ground's meshes as jobs, in the order they are made: [rows, stride, sf, sl, far, c0, c1] for each run's chunks.
+func _ground_mesh_jobs() -> Array:
 	var rows: Array = ground_rows()
 	var runs: Array = []      # [rows, stride]; neighbouring runs share their boundary row (the row at the limit)
 	var start: int = 0
@@ -1424,6 +1480,7 @@ func _make_ground_meshes() -> void:
 			order.push_front(k)
 		else:
 			order.append(k)
+	var jobs: Array = []
 	for k in order:
 		var st: int = runs[k][1]
 		var far: bool = st == largest
@@ -1431,15 +1488,22 @@ func _make_ground_meshes() -> void:
 		var sf: int = runs[k - 1][1] if not far and k > 0 and runs[k - 1][1] > st else 0
 		var sl: int = runs[k + 1][1] if not far and k + 1 < runs.size() and runs[k + 1][1] > st else 0
 		for c0 in range(0, SimConst.NC, cc):
-			var c1: int = mini(c0 + cc, SimConst.NC)   # a partial last chunk on an arena that is not a multiple of the chunk
-			var tv: Array = [[], []]
-			_grid(tv[0], c0, c1, runs[k][0], st, sf, sl, false)
-			_grid(tv[1], c0, c1, runs[k][0], st, 0, 0, true)
-			if tv[0].is_empty():
-				continue
-			_terrain_meshes.append(_finish(tv[0], c0 * SimConst.COL, c1 * SimConst.COL, false))
-			_water_meshes.append(_finish(tv[1], c0 * SimConst.COL, c1 * SimConst.COL, true))
-			_water_cols.append_array([-1, -1] if far else [c0, c1])
+			jobs.append([runs[k][0], st, sf, sl, far, c0, mini(c0 + cc, SimConst.NC)])   # a partial last chunk on an arena that is not a multiple of the chunk
+	return jobs
+
+
+## One chunk's ground and water meshes (a job of _ground_mesh_jobs).
+func _ground_mesh_job(j: Array) -> void:
+	var c0: int = j[5]
+	var c1: int = j[6]
+	var tv: Array = [[], []]
+	_grid(tv[0], c0, c1, j[0], j[1], j[2], j[3], false)
+	_grid(tv[1], c0, c1, j[0], j[1], 0, 0, true)
+	if tv[0].is_empty():
+		return
+	_terrain_meshes.append(_finish(tv[0], c0 * SimConst.COL, c1 * SimConst.COL, false))
+	_water_meshes.append(_finish(tv[1], c0 * SimConst.COL, c1 * SimConst.COL, true))
+	_water_cols.append_array([-1, -1] if j[4] else [c0, c1])
 
 
 ## A top grid (ground) or surface grid (water) over columns c0..c1 at the given stride and rows, appended to the

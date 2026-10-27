@@ -43,6 +43,20 @@ const FORE_SPAN: int = 2
 const FORE_FAR := Vector2(2.0, 6.0)
 const FORE_LOW_REACH: float = 1.25
 const FORE_LOW_S: float = 0.25
+## The boot (render/core/boot.gd): the shaders compiled a few a frame. BOOT_FRAME_MS: a frame shorter than this lets the
+## next draw one more program (up to BOOT_PER_MAX), a longer one sets it back to one. The line under the splash: its
+## words, ink, track and ground, and the bar's size in pixels. Static: no fade, no spinner.
+## A phone's 3D render scale (main.gd _render_scale): the share of the screen's pixels the 3D is drawn at on the web with a
+## coarse pointer; UI stays at the full ratio. The EP's brief: 0.5 to 0.75.
+const TOUCH_3D_SCALE: float = 0.6
+const BOOT_FRAME_MS: float = 250.0
+const BOOT_PER_MAX: int = 4
+const BOOT_STEP_MS: float = 30.0   # the first match's build: steps run until this has gone in a frame (main.gd _step_build)
+const BOOT_WORDS: String = "Preparing the graphics"
+const BOOT_INK := "#8a93a6"
+const BOOT_TRACK := "#252b37"
+const BOOT_GROUND := "#0d1017"
+const BOOT_BAR := Vector2(240.0, 2.0)
 const WATER_FALL_BODY: float = 4.0   # water that fell this far under the foreground rule shows its body, not its surface
 const Z_TERRAIN_BACK: float = -1125.0 * WS   # back of the crater rows: tier-4 rims reach about 2 x 4,300
 ## Ground rows are generated, not listed: spacing ROW_STEP0 at the fighter plane (fighter scale), growing by

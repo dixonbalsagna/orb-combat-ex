@@ -108,39 +108,68 @@ func _init() -> void:
 
 ## A new match: the planet and the fighters. A second pane builds after the first.
 func build(S: SimState) -> void:
+	for st in build_steps(S):
+		while not st.call():
+			pass
+
+
+## The build as steps (PlanetView.build_steps): the planet's, then a fighter's views a step, then VFX's layer.
+func build_steps(S: SimState) -> Array:
 	planet.source = source.planet if source != null else null
-	planet.build(S)
-	build_fighters(S)
+	var steps: Array = planet.build_steps(S)
+	steps.append(_bs_fighters_begin)
+	for i in range(S.fighters.size()):
+		steps.append(_bs_fighter.bind(S, i))
+	steps.append(_bs_vfx.bind(S))
+	return steps
+
+
+func _bs_fighters_begin() -> bool:
+	for v in fighter_views:
+		fighters_root.remove_child(v)
+		v.free()
+	fighter_views.clear()
+	return true
+
+
+func _bs_fighter(S: SimState, i: int) -> bool:
+	_build_fighter(S, i)
+	return true
+
+
+func _bs_vfx(S: SimState) -> bool:
 	vfx_layer.build(S)
+	return true
 
 
 ## The fighters' views, built from the sim's fighters for a new match. (A lane colour that changes later, a
 ## colour-blind preset, is taken by the same views: FighterView.set_lane.)
 func build_fighters(S: SimState) -> void:
-	for v in fighter_views:
-		fighters_root.remove_child(v)
-		v.free()
-	fighter_views.clear()
+	_bs_fighters_begin()
 	for i in range(S.fighters.size()):
-		var v := FighterView.new()
-		fighters_root.add_child(v)
-		v.markers = markers
-		v.build(S.fighters[i])
-		if source != null and i < source.fighter_views.size():
-			v.flash_view.set_leader(source.fighter_views[i].flash_view)
-		fighter_views.append(v)
-		if i >= shadows.size():
-			# kept across matches (its material is tracked for the pane's bend once)
-			var sh := MeshInstance3D.new()
-			sh.name = "Shadow%d" % i
-			sh.mesh = _shadow_mesh()
-			var sm := ShaderMaterial.new()
-			sm.shader = SHADOW_SHADER
-			mats.track(sm)
-			sh.material_override = sm
-			sh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			fighters_root.add_child(sh)
-			shadows.append(sh)
+		_build_fighter(S, i)
+
+
+func _build_fighter(S: SimState, i: int) -> void:
+	var v := FighterView.new()
+	fighters_root.add_child(v)
+	v.markers = markers
+	v.build(S.fighters[i])
+	if source != null and i < source.fighter_views.size():
+		v.flash_view.set_leader(source.fighter_views[i].flash_view)
+	fighter_views.append(v)
+	if i >= shadows.size():
+		# kept across matches (its material is tracked for the pane's bend once)
+		var sh := MeshInstance3D.new()
+		sh.name = "Shadow%d" % i
+		sh.mesh = _shadow_mesh()
+		var sm := ShaderMaterial.new()
+		sm.shader = SHADOW_SHADER
+		mats.track(sm)
+		sh.material_override = sm
+		sh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		fighters_root.add_child(sh)
+		shadows.append(sh)
 
 
 ## Draw one frame from a camera: its wrapped world x (float64), cam.y and cam.z (the reference camera's height and
