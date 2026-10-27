@@ -136,13 +136,15 @@ static func steer(S: SimState, f, o, i: SimIntent) -> bool:
 			sh *= float(cfg().get("skyMul", 1.0))
 		if DirRally._owner(S, f, o):
 			sh = float(DirRally._ai().get("link", sh))   # 23d: in a rally of its own, its level's link share
-		if f.ki >= _price(false) and SimRng.keyed(int(S.game.seed), "chase.ai", o.launchN * 4 + S.fighters.find(f)) < sh:
+		if (f.ki >= _price(false) or DirRally.waitsKi(S, f, o)) and SimRng.keyed(int(S.game.seed), "chase.ai", o.launchN * 4 + S.fighters.find(f)) < sh:
 			var rt: int = int(DirAI.skill().get("reactTicks", 14))
 			if DirRally._owner(S, f, o):
 				rt = maxi(0, rt - DirRally.sinceSend(S, f))   # 10-26 item 7: in a rally its reaction runs from the send, not from when it was free
 			_s(f, CH_AT, S.tick + rt + 1)
 	if _g(f, CH_AT) == 0 or S.tick + 1 < _g(f, CH_AT) or f.state != "free" or f.rush != null or S.dirS.ex != null:
 		return false
+	if f.ki < _price(false) and DirRally.waitsKi(S, f, o):
+		return false   # 10-26 item 40: in its own rally its drawn link waits for the ki while he flies
 	_s(f, CH_AT, 0)
 	if f.ki < _price(false):
 		return false

@@ -24,7 +24,8 @@ class_name DirRally
 ##    yet in the rally, tech.earlier (6) for one used before but not last, tech.repeat (8) for the same as the last; the
 ##    autoAt-th (3rd) of one kind is teched by itself. A teched link ends his journey in the air with the recoil flip's
 ##    counter-rush; landing it on the chaser in the air is a full send of him, and the rally is the other's (the turn).
-##  - The ends (11): he lands and no link follows within endTicks (20); a teched link isn't turned within the
+##  - The ends (11): he lands and no link follows within endTicks (20), "ki" when the attacker is short of the next
+##    link's price then (10-26 item 40), else "landed"; a teched link isn't turned within the
 ##    counter-rush's ticks; his burst in flight (after a link's first burstAfter ticks); a KO. Each link's send carries
 ##    power 1 for its journey's pay, so the rally's last landing pays by 9a.
 ##  - The choreographer (13, Combat's data/director/rally.json): the planner's candidates in a rally score its
@@ -587,6 +588,13 @@ static func noEscape(S: SimState, f) -> bool:
 	return f.state == "launched" and _owner(S, SimRoster.opp(S, f), f)
 
 
+## 10-26 item 40: the AI's link in its own rally, drawn at its share, waits for the zip's price while the body flies
+## and starts the moment its ki allows (DirChase.steer), as a player presses. The rally ends when the attacker has no
+## ki for the next link (23d item 11), not when the AI's one draw came too early.
+static func waitsKi(S: SimState, A, D) -> bool:
+	return on() and _owner(S, A, D)
+
+
 ## 10-26 item 33: a link's blow deals rally.linkWorth of its damage (the opening send and the sell are not links).
 static func linkWorth(S: SimState, A, D) -> float:
 	return float(cfg().get("linkWorth", 1.0)) if _owner(S, A, D) else 1.0
@@ -662,13 +670,18 @@ static func counterShare(S: SimState, f, dflt: float) -> float:
 
 ## 23d item 9: a rally's body lands (World's land contact this tick: a skid, a tumble or a slam), and his recoil flip's
 ## window opens as a knock-back skid's does (DirRecoil.landed). 10-26 item 37: the counter-rush after the flip lands on
-## a committed chaser, as after the air tech.
+## a committed chaser, as after the air tech. 10-26 item 39: only at the landing that would end his flight. A contact
+## that carries the flight on is a link, not a landing: a skip across water and a glance off a face are World's bounces
+## (no land), and a slam's hop (a spike's bounce off hard ground) is a land his leaving the ground follows this tick.
 static func _landing(S: SimState, A, D) -> void:
 	var di: int = S.fighters.find(D)
+	var down: bool = false
 	for e in S.out.fx:
-		if int(e.tick) == S.tick and String(e.type) == "land" and int(e.actor) == di:
-			DirRecoil.landed(S, A, D)
-			return
+		var ty: String = String(e.type)
+		if (ty == "land" or ty == "left_ground") and int(e.tick) == S.tick and int(e.actor) == di:
+			down = ty == "land"   # the tick's last contact decides: a land, or the flight carried on
+	if down:
+		DirRecoil.landed(S, A, D)
 
 
 ## His counter-rush was spent (DirRecoil.counter): the turn may follow when it lands.
@@ -816,4 +829,4 @@ static func tick(S: SimState) -> void:
 		if ld < 0:
 			_s(f, RL_LAND, now + 1)
 		elif now - ld > int(c.get("endTicks", 20)) and not DirChase.chasing(f) and not answering(S, D, f):
-			end(S, f, "landed")   # (10-26 item 37: not while his answer is under way)
+			end(S, f, "ki" if f.ki < DirChase._price(false) else "landed")   # (10-26 item 37: not while his answer is under way; item 40: "ki" when he is short of the next link)
