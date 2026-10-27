@@ -60,6 +60,7 @@
     "minDeg": 2.0,
     "warmCols": 32,
     "fallbackDeg": 2.5,
+    "warmTotal": 1,
     "prepTicks": 6
   }
 }

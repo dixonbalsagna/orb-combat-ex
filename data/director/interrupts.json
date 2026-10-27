@@ -498,6 +498,7 @@
     "setSpeed": 60,
     "warmCols": 16,
     "warmColsMax": 32,
+    "warmColsGen2": 12,
     "formTicks": 30,
     "predictMargin": 1500,
     "score": {"rivalHome": 5, "landmark": 4, "city": 3, "ownHome": 2, "town": 1}

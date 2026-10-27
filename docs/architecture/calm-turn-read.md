@@ -1,6 +1,6 @@
 # The calm turn's ring read on gen 2: k, or a lazy read (paper)
 
-Owner: Simulation and Engine. 2026-10-26, on the EP's question from World's gen 2 read-speed work (`docs/world/gen2-read-speed.md`, parked in `docs/world/pending/gen2-read-speed/`). Paper only.
+Owner: Simulation and Engine. 2026-10-26, on the EP's question from World's gen 2 read-speed work (`docs/world/gen2-read-speed.md`). The build is parked at `pending/calm-k/` (§6).
 
 ## 1. Where the cost sits
 
@@ -25,40 +25,60 @@ The only lazy read that helps is a **progressive swap:**
 
 ## 3. Lever (a), a lower k: recommended, as a total a tick
 
+Game Design accepted it (`rulings-2026-10-26.md` item 28), with each warm begun at the earliest moment its choice is known.
+
 - **`K`: the columns read a tick across all the warmed rings, in the state** (`E.next.k`, set at the pick from data). One ring reads `K`; two rings read `K / 2` each.
-  - A launch pick then costs the same a tick as a form pick. Today it costs double.
+  - Today Encounter shares a budget of 16 to 32 a tick between the rings (`DirCalm._rate`: a landing's two at most 16 each, a form step's one up to 32), so at 32 a tick a gen 2 read is about 44 ms at x6.
   - **The first value: `K` = 12.** About 16 ms a tick at x6, 10 at x4, 0.7 native.
 - **What it does to the warm:**
 
-| Pick | Today (`k` 32 a ring) | `K` = 12 | `K` = 16 |
+| Pick | Today | `K` = 12 | `K` = 16 |
 | :--- | :--- | :--- | :--- |
-| A form pick, one ring, Half | 75 ticks, 1.25 s | 200 ticks, 3.3 s | 150 ticks, 2.5 s |
-| A form pick, one ring, Whole | 150 ticks, 2.5 s | 400 ticks, 6.7 s | 300 ticks, 5 s |
-| A launch pick, two rings, Half | 75 ticks, 1.25 s (double the cost) | 400 ticks, 6.7 s | 300 ticks, 5 s |
-| A launch pick, two rings, Whole | 150 ticks, 2.5 s | 800 ticks, 13.3 s | 600 ticks, 10 s |
+| A form pick, one ring, Half | 75 ticks at 32, 1.25 s | 200 ticks, 3.3 s | 150 ticks, 2.5 s |
+| A form pick, one ring, Whole | 150 ticks at 32, 2.5 s | 400 ticks, 6.7 s | 300 ticks, 5 s |
+| A launch pick, two rings, Half | 150 ticks at 16 each, 2.5 s | 400 ticks, 6.7 s | 300 ticks, 5 s |
+| A launch pick, two rings, Whole | 300 ticks at 16 each, 5 s | 800 ticks, 13.3 s | 600 ticks, 10 s |
 
-- **For Game Design:** a launch pick's moment (the landing) comes within a second or two of the send. With a 5 to 7 s warm the pick waits, warming, for a later moment (Encounter's rule already). So **a launch's turn usually lands at the next calm moment, not the one the launch made.** A form pick's 3.3 s fits a pause better.
+- **When the warm begins** (item 28):
+  - a launch's at its throw, which is the send (`DirCalm.atSend`), as now;
+  - a form step's at its ready tell (`SimFx.transformReady`), not its pause. The pivot is then predicted (the pair may move before the step), so World's smallest bearing is warmed as the fallback, as a landing's is.
+  - A warm not done by its moment waits for the next one (Encounter's rule).
 - **Determinism:**
   - `K` is in the state and comes from data, so it is the same on every platform;
   - a ring is warm when `cols` reaches its length, a count of ticks since the pick;
   - nothing a host does moves it.
+- **Gen 2 only.** On a gen 1 planet the pick passes today's rate, so the reads are the same to the bit.
+
+## 4. World's interface for it (World's park)
+
+- **`data/biomes/rings.json` `turn.warmTotal`** (0 or 1, default 0). At 1, `WorldEpoch._warm` reads `k / E.warm.size()` of each warm ring a tick: `E.next.k` is the total.
+- **`_warm` reads each ring to its counted columns** (`RingJob.readTo`).
+- **`WorldEpoch.readAhead(S, units, colUnits = 3)`:** a host's idle time steps the warm jobs further ahead, so the sim's tick reads nothing. It touches no state. It helps where there is idle time (x1, x4), not on the phone tier, where `K` does the bounding.
+- **`WorldEpoch.warmPlan(S)`:** the warm's plan, for a host or a HUD.
+- **The carry-zone skip is declined** (World): it saves 8%, not the 31% this page first said, and it changes the swap.
+
+## 5. The worst tick
+
+- `_prep` was not the worst tick. At `K` 12 shared, the worst was the tick when two rings finished their read together (8 ms native).
+- World moved the blend and the held places into the preparation's first two ticks, to the bit. The worst is now 4.4 ms native, and `prepTicks` stays 6.
+
+## 6. As built (`pending/calm-k/`, on World's gen2-read-speed-b, on main since cb42a242)
+
+- **World** (`grant_world.py`):
+  - `turn.warmTotal` 1;
+  - `WorldEpoch._share` shares `k` on a gen 2 planet only (the step binds the match's generation), so **a gen 1 pick is as it always was, its hash included.**
+- **Encounter's lines** (a grant):
+  - on a gen 2 planet the pick passes `calmTurn.warmColsGen2` (12) in all, whatever the lead: the total under `warmTotal`, else each ring's share;
+  - `DirCalm.totalK(S)` says which, and the waiting pick's rate (`warmRate`) divides by the rings only then;
+  - a form step's pause on gen 2 asks only if a new ring could be warm at `K` by its end;
+  - `DirCalm.atReady` asks at the ready tell, with a predicted pivot and the fallback ring.
   
-  This is today's rule with a smaller number.
-- **Who changes what:**
-  - Encounter: the pick's `k`, a total split over the rings (its data's `warmCols` and `warmColsMax` become 12);
-  - World: `_warm` reads `n / rings` of each ring (a line);
-  - Game Design: whether the longer warm reads fine.
-
-## 4. Two cheap additions (World's lines, same determinism)
-
-1. **Skip the carry zone's columns,** if the swap never reads the new ring's columns inside the zone (World to confirm: the slice hash covers the whole ring today, so it would cover the read part). This saves 31% of a Half ring (750 of 2,400 columns) and 16% of a Whole one. A Half form pick at `K` = 12 drops from 3.3 to 2.3 s.
-2. **A host's read-ahead.**
-   - `_warm` reads each ring *up to* its counted columns (`readTo(cols)`) in place of *n more* (`step(n)`). A host with idle time in a frame steps the same jobs further ahead (`WorldEpoch.readAhead(S, budget)`), and the sim's tick then reads nothing.
-   - The state's count is untouched, so warm-ness and the swap tick don't move.
-   - It helps where there is idle time (x1, x4), not the phone tier, where `K` does the bounding.
-   - Rendering's host would call it.
-   - Threads would do more, but the web's threads need cross-origin isolation, and World's noise cache is not thread-safe.
-
-## 5. Not the read
-
-World measured the calm turn's worst tick (10 ms native) as **a swap-preparation step** (`WorldEpoch._prep`), not the read: about 60 ms at x6, over the budget on its own. Lowering `K` does not touch it. It needs splitting in World's `_prep`, and `prepTicks` (6) may need to grow with it.
+  On gen 1 every line takes today's path.
+- **Mine:** the ready tell calls `DirCalm.atReady` (`SimFx.transformReady`), and parity's "the calm turn on gen 2".
+- **Tools:** `calmTurn.warmColsGen2` and `turn.warmTotal` in their schemas.
+- **Measured** (native, on 9490ac21; 4 AI matches of 3 minutes on a gen 2 Half ring, QA's calm probe):
+  - the same 3 turns (1, 1, 1 and 0 a match), one of them from a ready tell; none bad, none cold;
+  - every ask at 12 (before: seven at 32, one at 16);
+  - the worst tick while warming 4.6 ms (5.0 before), the mean 0.45 ms (0.44 before);
+  - the ticks held for warming 1,435 (643 before).
+- **Gen 1:** four AI matches with the calm turn on hash as HEAD does, every 600 ticks and at the end. World's `calm_digest` with `warmTotal` 1 gives the base's gen 1 lines without it.

@@ -1,0 +1,4 @@
+	var k: int = _rate(int(cands[i].spec.get("cols", SimConst.NC)), due - S.tick - (_prep() - 1), rings)   # read by the moment less World's preparation
+	if gen2(S):   # gen 2: K a tick in all, whatever the lead (the total when World shares it, else each ring's share)
+		k = gen2Cols() if totalK(S) else maxi(1, gen2Cols() / rings)
+	WorldEpoch.choose(S, i, k, fb)   # the sim reads k columns of each ring a tick (World's tick; on gen 2 with warmTotal, k in all)

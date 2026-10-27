@@ -3975,6 +3975,11 @@
           "minimum": 1,
           "description": "The most (the EP: 32): the rate asked is the columns over the ticks to the moment, between the two (the calm_turn cue carries it), and the swap waits the columns over it, in ticks, since the pick; a pausing form step whose new ring would need more is not a moment for one."
         },
+        "warmColsGen2": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "On a gen 2 planet (Game Design's rulings-2026-10-26 item 28; docs/architecture/calm-turn-read.md): the columns a pick's rings are read a tick in all, whatever the lead (one ring all of it, two half each), so no tick hitches on a slow device; a form step's warm begins at its ready tell."
+        },
         "formTicks": {
           "type": "integer",
           "minimum": 0,
@@ -4031,6 +4036,7 @@
         "setSpeed",
         "warmCols",
         "warmColsMax",
+        "warmColsGen2",
         "formTicks",
         "predictMargin",
         "score"

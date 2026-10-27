@@ -228,7 +228,7 @@ static func _warm(S: SimState) -> bool:
 ## The columns a warm tick reads of each ring: the pick's k each (the turn data's `warmTotal` 0, as always), or k in all shared among the warm rings (`warmTotal` 1: a launch pick's two rings cost a tick what a form pick's one does).
 static func _share(E: Dictionary) -> int:
 	var n: int = int(E.next.k)
-	if int(data().get("warmTotal", 0)) == 1 and E.warm.size() > 1:
+	if int(data().get("warmTotal", 0)) == 1 and E.warm.size() > 1 and WorldClimate.genNow() >= 2:   # gen 2 only: a gen 1 pick's k is each ring's, as always
 		n = maxi(1, n / E.warm.size())
 	return n
 

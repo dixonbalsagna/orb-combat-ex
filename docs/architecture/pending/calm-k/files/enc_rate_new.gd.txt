@@ -1,0 +1,7 @@
+## The waiting pick's rate (columns of each ring a tick: World keeps it as choose set it; on gen 2 with World's
+## warmTotal it is the total, and each ring reads its share).
+static func warmRate(S: SimState) -> int:
+	var k: int = maxi(1, int(S.epoch.next.get("k", int(cfg().get("warmColsMax", 32)))))
+	if totalK(S) and S.epoch.warm.size() > 1:
+		return maxi(1, k / S.epoch.warm.size())
+	return k

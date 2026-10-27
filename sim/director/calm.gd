@@ -33,6 +33,22 @@ static func on(S: SimState) -> bool:
 	return bool(cfg().get("enabled", false)) and S.epoch != null
 
 
+## A gen 2 planet's slower read (Game Design's rulings-2026-10-26 item 28; docs/architecture/calm-turn-read.md): a
+## pick's rings are read gen2Cols columns a tick in all (calmTurn.warmColsGen2), so no tick hitches on a slow device.
+## A gen 1 planet's pick is as it always was, its k each ring's.
+static func gen2(S: SimState) -> bool:
+	return (int(S.planetGen) if int(S.planetGen) > 0 else int(WorldClimate.data().get("gen", 1))) >= 2
+
+
+static func gen2Cols() -> int:
+	return maxi(1, int(cfg().get("warmColsGen2", 12)))
+
+
+## Whether World reads a pick's k as the total a tick across its rings: its turn.warmTotal, on a gen 2 planet only.
+static func totalK(S: SimState) -> bool:
+	return gen2(S) and int(WorldEpoch.data().get("warmTotal", 0)) == 1
+
+
 const CM_WAS: int = 0    # his state at the director's last tick: 0 other, 1 launched, 2 down
 const CM_REST: int = 1   # the live tick he came to rest (his journey's end: down after the slide, or out of a flight
                          # into the water), plus 1; 0 none
@@ -104,8 +120,8 @@ static func atPause(S: SimState, f, pz: Dictionary) -> void:
 	if S.epoch.next != null and _groundFits(S) and S.tick - int(S.epoch.next.get("tick", S.tick)) + lead >= warmTicks(S):
 		return   # the pick waiting keeps the ground rule here and is warm by the pause's end: it takes this moment
 	var cols: int = int(S.epoch.ring.get("cols", SimConst.NC))
-	if int(ceil(float(cols) / float(lead))) > int(cfg().get("warmColsMax", 32)):
-		return   # a new ring can't be warm by the pause's end: the next moment
+	if int(ceil(float(cols) / float(lead))) > (gen2Cols() if gen2(S) else int(cfg().get("warmColsMax", 32))):
+		return   # a new ring can't be warm by the pause's end: the next moment (on gen 2 the ready tell began the warm)
 	var o = SimRoster.opp(S, f)
 	var spread: float = 0.5 * absf(SimWrap.sdx(f.x, o.x))
 	if spread * _sinDeg(_leastDeg()) > _moveMax():
@@ -114,6 +130,24 @@ static func atPause(S: SimState, f, pz: Dictionary) -> void:
 		return
 	var side: int = 1 if SimWrap.sdx(f.x, o.x) >= 0.0 else -1
 	_ask(S, f, o, "form", SimWrap.wrap(f.x + 0.5 * SimWrap.sdx(f.x, o.x)), side, S.tick + lead, spread)
+
+
+## A form step is ready (SimFx.transformReady, its ready tell), on a gen 2 planet: the warm begins here, the earliest
+## moment the choice is known (Game Design's rulings-2026-10-26 item 28), since at gen2Cols a tick a ring takes longer
+## than a pause. The pivot is predicted (the pair's midpoint now: they may move before the step), so World's smallest
+## bearing is warmed as the fallback, as a landing's. A pick already waiting is kept. The moment is the step's pause, or
+## a later one (the waiting rule).
+static func atReady(S: SimState, f) -> void:
+	if not on(S) or not gen2(S) or S.epoch.next != null:
+		return
+	var o = SimRoster.opp(S, f)
+	if o == null:
+		return
+	var spread: float = 0.5 * absf(SimWrap.sdx(f.x, o.x)) + float(cfg().get("predictMargin", 1500.0))
+	var side: int = 1 if SimWrap.sdx(f.x, o.x) >= 0.0 else -1
+	var cols: int = int(S.epoch.ring.get("cols", SimConst.NC))
+	var due: int = S.tick + int(ceil(float(cols) / float(maxi(1, gen2Cols() / 2)))) + _prep()   # read at K in all, two rings
+	_ask(S, f, o, "ready", SimWrap.wrap(f.x + 0.5 * SimWrap.sdx(f.x, o.x)), side, due, spread)
 
 
 ## A launch is sent (DirMelee.launchBeat, after doLaunch): the moment after its landing is coming.
@@ -156,7 +190,9 @@ static func _ask(S: SimState, a, b, why: String, mid: float, side: int, due: int
 	var fb: float = 0.0 if why == "form" else _leastDeg()   # a form pick's pivot is exact: one ring
 	var rings: int = 2 if fb > 0.0 and fb < absf(float(cands[i].bearing)) - 0.0001 else 1
 	var k: int = _rate(int(cands[i].spec.get("cols", SimConst.NC)), due - S.tick - (_prep() - 1), rings)   # read by the moment less World's preparation
-	WorldEpoch.choose(S, i, k, fb)   # the sim reads k columns of each ring a tick (World's tick)
+	if gen2(S):   # gen 2: K a tick in all, whatever the lead (the total when World shares it, else each ring's share)
+		k = gen2Cols() if totalK(S) else maxi(1, gen2Cols() / rings)
+	WorldEpoch.choose(S, i, k, fb)   # the sim reads k columns of each ring a tick (World's tick; on gen 2 with warmTotal, k in all)
 	SimFx.cue(S, a, "calm_turn", "asked", why)
 	var e = S.out.fx[S.out.fx.size() - 1]
 	e.target = float(S.fighters.find(b))
@@ -259,9 +295,13 @@ static func _rate(cols: int, lead: int, rings: int) -> int:
 	return clampi(int(ceil(float(cols) / float(maxi(1, lead)))), lo, hi)
 
 
-## The waiting pick's rate (columns of each ring a tick: World keeps it as choose set it).
+## The waiting pick's rate (columns of each ring a tick: World keeps it as choose set it; on gen 2 with World's
+## warmTotal it is the total, and each ring reads its share).
 static func warmRate(S: SimState) -> int:
-	return maxi(1, int(S.epoch.next.get("k", int(cfg().get("warmColsMax", 32)))))
+	var k: int = maxi(1, int(S.epoch.next.get("k", int(cfg().get("warmColsMax", 32)))))
+	if totalK(S) and S.epoch.warm.size() > 1:
+		return maxi(1, k / S.epoch.warm.size())
+	return k
 
 
 ## The ticks the sim needs to read the waiting pick's rings at that rate, from the pick (each ring k columns a tick),

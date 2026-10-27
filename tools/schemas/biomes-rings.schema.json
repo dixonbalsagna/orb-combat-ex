@@ -294,6 +294,7 @@
         "minDeg",
         "warmCols",
         "fallbackDeg",
+        "warmTotal",
         "prepTicks"
       ],
       "additionalProperties": false,
@@ -370,6 +371,14 @@
           "minimum": 0,
           "maximum": 10,
           "description": "The bearing in degrees of the second ring a decided turn warms (a landing off the pivot falls back to it), unless Encounter's pick brings its own; 0 for none."
+        },
+        "warmTotal": {
+          "type": "integer",
+          "enum": [
+            0,
+            1
+          ],
+          "description": "1: a pick's k is the total columns a tick across the rings it warms, each reading its share (the calm turn's read, docs/architecture/calm-turn-read.md); 0: k of each ring"
         },
         "prepTicks": {
           "type": "integer",
