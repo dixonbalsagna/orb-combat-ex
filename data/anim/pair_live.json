@@ -1,5 +1,6 @@
 {
  "schema": "anim.pairlive/1",
+ "bake": {"slice_us": 4000},
  "aliases": {
   "rival": "antihero",
   "anti-hero": "antihero",

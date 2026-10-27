@@ -1031,7 +1031,7 @@ func _is_taunt(id: String) -> bool:
 ## nothing repeats inside ten blows; a two-limb key set is skipped when a limb of its kind is broken; the gated key sets join only while their gate is open. "" when he
 ## is not one of the pair, the live pair is off, or no key set of his fits.
 func _pair_pick(S: SimState, f, ex, ordinal: int, heavy: bool, piece: String = "") -> String:
-	if pair_key == "" or not RenderAnim.pair_live or not AnimData.pair_lists.has(pair_key):
+	if pair_key == "" or not RenderAnim.pair_live or not AnimData.pair_ready(pair_key):
 		return ""
 	var lst: Dictionary = AnimData.pair_lists[pair_key]
 	# the planner's own pick, when the beat carries it (args.piece, "strike.jab": the alchemist's beats will)
@@ -4802,7 +4802,7 @@ func _reaction_layer(T: float) -> void:
 			pose_id = "react.fold" if amp > 0.7 else pose_id
 		_mix_pose(AnimData.pose(pose_id), w * (0.55 if RenderAnim.ragdoll_enabled else 0.7))
 		var add_id: String = "react." + String(r.region)
-		if AnimData.poses.has(add_id):
+		if AnimData.pose_exists(add_id):
 			AnimPose.add(q, AnimData.pose(add_id).q, w)
 		# a damped wave up the spine
 		var ix: Dictionary = AnimRig.index

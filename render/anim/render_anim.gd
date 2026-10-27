@@ -243,6 +243,8 @@ static func consume(S: SimState, events: Array) -> void:
 	for e in events:
 		match e.type:
 			"tick":
+				if AnimData.bake_pending() == 0:   # the incremental bake: a few milliseconds of the queue a tick (docs/animation/incremental-bake.md)
+					_log_pair_bake(S)
 				for f in S.fighters:
 					fighter(S, f).on_tick(float(e.dt), bool(e.frozen), S, f)
 			"crater":
@@ -444,10 +446,12 @@ static func _log_pair_bake(S: SimState) -> void:
 		var k: String = AnimData.fighter_key(String(fo.id))
 		if k != "":
 			keys[k] = true
-	if keys.is_empty() or AnimData.pair_lists.size() < keys.size():
+	if keys.is_empty() or AnimData.pair_lists.size() < keys.size() or not AnimData.bake_idle():
 		return
 	_bake_logged = true
 	print("pair bake: %d ms, %d poses" % [int(round(float(AnimData.pair_bake_usec) / 1000.0)), AnimData.pair_bake_poses])
+	if AnimData.lazy:
+		print("pair bake incremental: %d poses queued, %d baked on demand, %d queue runs, longest piece %.1f ms" % [AnimData.bake_deferred, AnimData.bake_demand, AnimData.bake_drains, float(AnimData.bake_worst_us) / 1000.0])
 
 
 ## What a far taunt's pick needs to know of the moment: whether he is in the air (the bounce is ground only) and whether any blow has landed yet this match (the nod opens a stand-off).

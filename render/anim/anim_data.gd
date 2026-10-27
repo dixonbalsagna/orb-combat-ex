@@ -36,6 +36,17 @@ static var pair_lists: Dictionary = {}     # fighter key -> {light, heavy, gated
 static var pair_bake_usec: int = 0         # microseconds spent baking fighters' waves in this run (the match-start cost)
 static var pair_bake_poses: int = 0
 static var _waves_done: Dictionary = {}
+static var lazy: bool = false             # the incremental bake (docs/animation/incremental-bake.md): load_all and ensure_fighter register every pose and queue its bake; the queue is drained a few milliseconds a tick, and a pose asked for first is baked on the spot. On in the game (no -s script), off in the tools; --lazy-bake and --eager-bake force it
+static var _pend: Dictionary = {}          # id -> the sketch not yet baked
+static var _pend_order: Array = []         # the ids in the order they are baked
+static var _pend_head: int = 0
+static var _work: Array = []               # the fighters' wave loads and pick-list builds not yet done, in order: {k: wave, wn} and {k: lists, key, names}
+static var _queued: Dictionary = {}        # fighter key -> true once his work is queued
+static var bake_drains: int = 0            # times something asked for a pose that was not there while waves were still queued, and the queue was run to the end
+static var bake_slice_us: int = 4000       # data/anim/pair_live.json bake.slice_us: the most a tick spends baking
+static var bake_deferred: int = 0          # poses the incremental bake queued in this run
+static var bake_demand: int = 0            # of them baked on the spot because something asked first
+static var bake_worst_us: int = 0          # the longest single slice or on-demand bake
 static var flight: Dictionary = {}       # data/anim/flight.json: the flight lead, a launched body turned head first along its velocity (docs 9.23)
 static var agency: Dictionary = {}       # data/anim/agency.json: how the agency slice's events (knockback, embed, taunt, charges) map to poses
 static var intro: Dictionary = {}        # data/anim/intro.json: the opening's timings and each shape's staredown beat
@@ -58,12 +69,22 @@ static var target_fix: Dictionary = {}    # data/anim/targets.json: pose id -> t
 static var effector_poses: Dictionary = {}   # data/anim/effectors.json: pose id -> authored clavicle hunch
 
 
+static var read_usec: int = 0               # microseconds spent reading and parsing the animation data files in this run
+static var read_n: int = 0
+static var read_biggest: Dictionary = {}
+
+
 static func _read(name: String) -> Dictionary:
+	var t0: int = Time.get_ticks_usec()
 	var txt: String = FileAccess.get_file_as_string(DIR + name)
 	if txt == "":
 		push_error("AnimData: cannot read " + DIR + name)
 		return {}
 	var j = JSON.parse_string(txt)
+	var dt: int = Time.get_ticks_usec() - t0
+	read_usec += dt
+	read_n += 1
+	read_biggest[name] = dt
 	return j if typeof(j) == TYPE_DICTIONARY else {}
 
 
@@ -71,6 +92,11 @@ static func load_all() -> void:
 	if loaded:
 		return
 	loaded = true
+	var cla: PackedStringArray = OS.get_cmdline_args()
+	var cua: PackedStringArray = OS.get_cmdline_user_args()
+	lazy = not (cla.has("-s") or cla.has("--script")) and not cua.has("--eager-bake")
+	if cua.has("--lazy-bake"):
+		lazy = true
 	AnimRig.setup()
 	var ej: Dictionary = _read("effectors.json")
 	var hj: Dictionary = ej.get("hunch", {})
@@ -109,8 +135,11 @@ static func load_all() -> void:
 				if effector_poses[id].has(sd):
 					sk["hunch_" + sd] = effector_poses[id][sd]
 		sk = _fixed(id, sk)
-		poses[id] = AnimPose.bake(id, sk)
 		raw[id] = sk
+		if lazy:
+			_queue(id, sk)
+		else:
+			poses[id] = AnimPose.bake(id, sk)
 	var kj: Dictionary = _read("keysets.json")
 	keysets = kj.get("keysets", {})
 	picks = kj.get("picks", {})
@@ -169,10 +198,92 @@ static func load_all() -> void:
 	quality_levels = _read("quality.json").get("levels", {})
 	fighters_cfg = _read("fighters.json").get("fighters", {})
 	pair = _read("pair_live.json")
+	bake_slice_us = int(pair.get("bake", {}).get("slice_us", 4000))
 
 
 ## One parked wave's files (poses, key sets, sequences, cues, entries).
 ## A pose's sketch with its re-aimed targets (data/anim/targets.json) in place of the authored ones.
+## Bakes one queued pose now (the same bake the eager path runs on the same sketch: the pose is identical, only later).
+static func _bake_one(id: String) -> void:
+	if not _pend.has(id):
+		return
+	var sk: Dictionary = _pend[id]
+	_pend.erase(id)
+	poses[id] = AnimPose.bake(id, sk)
+
+
+## One queued piece of a fighter's waves: a wave loaded (its sketches queued for baking, its key sets, sequences and entries registered) or his pick lists built.
+static func _work_one() -> void:
+	var w: Dictionary = _work.pop_front()
+	if String(w.k) == "wave":
+		_wave_once(String(w.wn))
+	else:
+		_build_lists(String(w.key), w.names)
+
+
+## Everything queued of the fighters' waves, run now (something asked for what is not loaded yet).
+static func _drain_work() -> void:
+	while not _work.is_empty():
+		_work_one()
+
+
+## Is this fighter's pick-list data ready? Runs the queued work to the end for him if it is not (a blow asked for it before the match-start queue got there).
+static func pair_ready(key: String) -> bool:
+	if key == "":
+		return false
+	while not pair_lists.has(key) and not _work.is_empty():
+		_work_one()
+	return pair_lists.has(key)
+
+
+## Does the queue still hold anything (waves, lists or poses)?
+static func bake_idle() -> bool:
+	return _work.is_empty() and _pend.is_empty()
+
+
+## The incremental bake's work, in order, until about `budget_us` microseconds are spent (at least one piece): the fighters' wave loads and list builds first, then the queued poses. Returns how many pieces are left.
+## Called once a tick by RenderAnim.consume.
+static func bake_pending(budget_us: int = -1) -> int:
+	if _pend.is_empty() and _work.is_empty():
+		return 0
+	var budget: int = bake_slice_us if budget_us < 0 else budget_us
+	var t0: int = Time.get_ticks_usec()
+	var npose: int = poses.size()
+	while true:
+		var u0: int = Time.get_ticks_usec()
+		if not _work.is_empty():
+			_work_one()
+		elif _pend_head < _pend_order.size():
+			var id: String = _pend_order[_pend_head]
+			_pend_head += 1
+			if _pend.has(id):
+				_bake_one(id)
+		else:
+			break
+		bake_worst_us = maxi(bake_worst_us, Time.get_ticks_usec() - u0)
+		if Time.get_ticks_usec() - t0 >= budget:
+			break
+	if _pend_head >= _pend_order.size():
+		_pend_order.clear()
+		_pend_head = 0
+	pair_bake_usec += Time.get_ticks_usec() - t0
+	pair_bake_poses += poses.size() - npose
+	return _pend.size() + _work.size()
+
+
+## Bakes everything still queued (the tools that read AnimData.poses directly, and load_every_wave, call this first).
+static func bake_all() -> void:
+	_drain_work()
+	bake_pending(1 << 40)
+
+
+static func _queue(id: String, sk: Dictionary) -> void:
+	poses.erase(id)   # a later wave's pose of the same id replaces an earlier one, baked or not
+	_pend[id] = sk
+	_pend_order.append(id)
+	bake_deferred += 1
+
+
 static func _fixed(id: String, sk: Dictionary) -> Dictionary:
 	if not target_fix.has(id):
 		return sk
@@ -187,9 +298,12 @@ static func _load_wave(wn: String) -> void:
 	var wp: Dictionary = _read("waves/" + wn + ".poses.json").get("poses", {})
 	for id in wp:
 		var wsk: Dictionary = _fixed(id, wp[id])
-		poses[id] = AnimPose.bake(id, wsk)
 		raw[id] = wsk
 		wave_of[id] = wn
+		if lazy:
+			_queue(id, wsk)
+		else:
+			poses[id] = AnimPose.bake(id, wsk)
 	if FileAccess.file_exists(DIR + "waves/" + wn + ".keysets.json"):
 		var wk: Dictionary = _read("waves/" + wn + ".keysets.json").get("keysets", {})
 		for kid in wk:
@@ -227,6 +341,7 @@ static func load_every_wave() -> void:
 	names.sort()
 	for wn in names:
 		_load_wave(wn)
+	bake_all()
 
 
 ## The fighter of data/anim/fighters.json a roster id plays as: his key, or the id he replaces (PROTAGONIST and RIVAL; the old placeholder spellings no longer resolve). "" for none.
@@ -253,8 +368,6 @@ static func ensure_fighter(roster_id: String) -> String:
 		return ""
 	if pair_lists.has(key):
 		return key
-	var t0: int = Time.get_ticks_usec()
-	var npose: int = poses.size()
 	var names: Array = []
 	var wv: Dictionary = fighters_cfg[key].get("waves", {})
 	for k in wv:
@@ -263,9 +376,31 @@ static func ensure_fighter(roster_id: String) -> String:
 		else:
 			names.append(String(wv[k]))
 	names.append_array(pair.get("shared", []))
+	if lazy:
+		if _queued.has(key):
+			return key
+		_queued[key] = true
+		for wn in names:
+			_work.append({"k": "wave", "wn": String(wn)})
+		_work.append({"k": "lists", "key": key, "names": names})
+		return key
+	var t0: int = Time.get_ticks_usec()
+	var npose: int = poses.size()
 	for wn in names:
-		if not _waves_done.has(String(wn)) and FileAccess.file_exists(DIR + "waves/" + String(wn) + ".poses.json"):
-			_load_wave(String(wn))
+		_wave_once(String(wn))
+	_build_lists(key, names)
+	pair_bake_usec += Time.get_ticks_usec() - t0
+	pair_bake_poses += poses.size() - npose
+	return key
+
+
+static func _wave_once(wn: String) -> void:
+	if not _waves_done.has(wn) and FileAccess.file_exists(DIR + "waves/" + wn + ".poses.json"):
+		_load_wave(wn)
+
+
+## A fighter's pick lists and entries by name, built from his waves' manifests and entries once they are loaded.
+static func _build_lists(key: String, names: Array) -> void:
 	var gated: Dictionary = {}
 	for g in pair.get("gated", []):
 		gated[String(g.strike)] = g
@@ -297,14 +432,11 @@ static func ensure_fighter(roster_id: String) -> String:
 				if not String(eid).contains("~"):
 					lst.entries[String(eid).substr(String(eid).find(".") + 1)] = String(eid)
 	pair_lists[key] = lst
-	pair_bake_usec += Time.get_ticks_usec() - t0
-	pair_bake_poses += poses.size() - npose
-	return key
 
 
 ## The key set of the strike a beat names (strike.jab, the planner's own pick once the alchemist's beats carry it) as the fighter's own; "" when he has none of that name.
 static func resolve_strike(key: String, piece: String) -> String:
-	if piece == "" or key == "" or not pair_lists.has(key):
+	if piece == "" or key == "" or not pair_ready(key):
 		return ""
 	return String(pair_lists[key].by_name.get(piece.substr(piece.find(".") + 1) if piece.begins_with("strike.") else piece, ""))
 
@@ -315,20 +447,35 @@ static func resolve_entry(key: String, id: String) -> String:
 		return ""
 	if entries.has(id):
 		return id
-	if key == "" or not pair_lists.has(key):
+	if key == "" or not pair_ready(key):
 		return ""
 	var nm: String = id.substr(id.find(".") + 1) if id.begins_with("entry.") else id
 	return String(pair_lists[key].entries.get(nm, ""))
 
 
 static func pose_exists(id: String) -> bool:
-	return poses.has(id)
+	if poses.has(id) or _pend.has(id):
+		return true
+	if not _work.is_empty():
+		bake_drains += 1   # it may be a pose of a wave not loaded yet: load them all, then ask again
+		_drain_work()
+		return poses.has(id) or _pend.has(id)
+	return false
 
 
 static func pose(id: String, mirror: bool = false) -> AnimPose:
+	if _pend.has(id):
+		bake_demand += 1
+		_bake_one(id)
+	elif not poses.has(id) and not _work.is_empty():
+		_drain_work()
+		if _pend.has(id):
+			_bake_one(id)
 	var p = poses.get(id)
 	if p == null:
 		push_error("AnimData: unknown pose " + id)
+		if poses.is_empty():
+			bake_pending(1)
 		return poses.values()[0]
 	if not mirror:
 		return p

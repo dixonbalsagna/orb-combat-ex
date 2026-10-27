@@ -280501,6 +280501,186 @@
       }
     },
     {
+      "id": "anim-pairlive-bake-valid",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/slice_us": 8000
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-bake-edges-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/slice_us": 500
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-bake-top-edge-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/slice_us": 50000
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-bake-underscore-key-ok",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/_why": "a note"
+          }
+        }
+      ],
+      "expect": null
+    },
+    {
+      "id": "anim-pairlive-key-required-bake",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "del": [
+            "/bake"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-key-required-slice-us",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "del": [
+            "/bake/slice_us"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": "/bake"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-unknown-key",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/bake/extra"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-slice-under",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/slice_us": 499
+          }
+        }
+      ],
+      "expect": {
+        "rule": "minimum",
+        "pointer": "/bake/slice_us"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-slice-over",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/slice_us": 50001
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/bake/slice_us"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-slice-fraction",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/slice_us": 4000.5
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bake/slice_us"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-slice-type",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake/slice_us": "fast"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bake/slice_us"
+      }
+    },
+    {
+      "id": "anim-pairlive-bake-type",
+      "schema": "anim-pairlive.schema.json",
+      "mutate": [
+        {
+          "file": "data/anim/pair_live.json",
+          "set": {
+            "/bake": 4000
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/bake"
+      }
+    },
+    {
       "id": "anim-wave-manifest-bad-wave-name",
       "schema": "anim-wave-manifest.schema.json",
       "mutate": [

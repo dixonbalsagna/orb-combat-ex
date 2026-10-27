@@ -6,6 +6,7 @@
   "type": "object",
   "required": [
     "schema",
+    "bake",
     "shared",
     "gated",
     "spray_gap",
@@ -16,6 +17,25 @@
   "properties": {
     "schema": {
       "const": "anim.pairlive/1"
+    },
+    "bake": {
+      "type": "object",
+      "required": [
+        "slice_us"
+      ],
+      "properties": {
+        "slice_us": {
+          "type": "integer",
+          "minimum": 500,
+          "maximum": 50000,
+          "description": "The most microseconds a tick spends baking poses (the incremental bake)."
+        }
+      },
+      "additionalProperties": false,
+      "patternProperties": {
+        "^_": true
+      },
+      "description": "The incremental bake (docs/animation/incremental-bake.md): how much of a tick the pose bake may take."
     },
     "aliases": {
       "type": "object",

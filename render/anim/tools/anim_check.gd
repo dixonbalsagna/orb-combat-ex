@@ -2873,6 +2873,58 @@ func _test_grip_throw() -> void:
 	print("grip throws: %s" % " | ".join(seen))
 
 
+## The incremental bake's queue (docs/animation/incremental-bake.md). A queued pose exists before it is baked, is baked in order a slice at a time or at once when asked for, and is exactly the pose the eager bake makes of the same sketch;
+## the pick-list work queued for a fighter is done when something asks for it. (The whole-game comparison is tools/bake_check.gd: the same hash eager and lazy.)
+func _test_incremental_bake() -> void:
+	AnimData.load_all()
+	var bad: Array = []
+	var src: String = "stance.aggressive"
+	var sk: Dictionary = AnimData.raw[src]
+	var want: AnimPose = AnimPose.bake("zz.bake.want", sk)
+	AnimData._queue("zz.bake.a", sk)
+	AnimData._queue("zz.bake.b", sk)
+	AnimData._queue("zz.bake.c", sk)
+	if AnimData.poses.has("zz.bake.a") or not AnimData.pose_exists("zz.bake.a") or AnimData.bake_idle():
+		bad.append("a queued pose must exist and not be baked yet")
+	# one slice bakes at least one, in order
+	AnimData.bake_pending(0)
+	if not AnimData.poses.has("zz.bake.a") or AnimData.poses.has("zz.bake.c"):
+		bad.append("a slice of 0 microseconds bakes exactly the first queued pose")
+	# asked for out of order: baked on the spot
+	var pc: AnimPose = AnimData.pose("zz.bake.c")
+	if pc == null or not AnimData.poses.has("zz.bake.c") or AnimData.poses.has("zz.bake.b"):
+		bad.append("asking for the last queued pose bakes that one only")
+	AnimData.bake_all()
+	if not AnimData.bake_idle() or not AnimData.poses.has("zz.bake.b"):
+		bad.append("bake_all leaves the queue empty and every pose baked")
+	var same: bool = true
+	for nm in ["zz.bake.a", "zz.bake.b", "zz.bake.c"]:
+		var p: AnimPose = AnimData.poses[nm]
+		for i in range(AnimRig.N):
+			if not p.q[i].is_equal_approx(want.q[i]):
+				same = false
+		if not p.hips.is_equal_approx(want.hips):
+			same = false
+	if not same:
+		bad.append("a queued pose is not the pose the eager bake makes of the same sketch")
+	for nm in ["zz.bake.a", "zz.bake.b", "zz.bake.c"]:
+		AnimData.poses.erase(nm)
+	# the fighter's queued waves and lists: done on demand
+	if AnimData.lazy:
+		bad.append("the tools bake eagerly (lazy is off under -s)")
+	var was: bool = AnimData.lazy
+	AnimData.lazy = true
+	var key: String = AnimData.ensure_fighter("REFERENCE")
+	var queued: int = AnimData._work.size()
+	var ready: bool = AnimData.pair_ready(key) if key != "" else true
+	AnimData.lazy = was
+	AnimData.bake_all()
+	if key != "" and (not ready or not AnimData.pair_lists.has(key) or not AnimData._work.is_empty()):
+		bad.append("a fighter's queued work is run when his pick lists are asked for")
+	_expect(bad.is_empty(), "incremental bake: a queued pose exists, bakes in order or on demand, is the eager pose, and a fighter's queued waves run when asked for: %s" % str(bad))
+	print("incremental bake: the queue holds, orders and drains; the eager and lazy poses are identical; %d pieces queued for one fighter" % queued)
+
+
 func _test_pulled() -> void:
 	AnimData.load_every_wave()
 	main.start_match(4, {"p1": false, "p2": false})
@@ -5551,6 +5603,7 @@ func _run() -> void:
 	_test_grip_feed()
 	_test_grip_throw()
 	_test_shake()
+	_test_incremental_bake()
 	_test_pulled()
 	_test_bends()
 	_test_styles()
