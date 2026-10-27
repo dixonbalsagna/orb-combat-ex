@@ -452,6 +452,9 @@ static func plateLine(S: SimState, A, D) -> Dictionary:
 		var vl: float = maxf(SimDetMath.hypot(D.vx, D.vy), 0.001)
 		ux = D.vx / vl
 		uy = D.vy / vl
+		if uy < -0.3:
+			ux = SimMathx.jsign(D.vx) if D.vx != 0.0 else float(A.face)
+			uy = 0.0   # 10-26 item 32: on a neutral stick a link's send is never down (his flight laid flat)
 	return {"name": "PLATE CHASE", "ux": ux, "uy": uy, "s": 0.0}   # (no score: his choice, not the planner's)
 
 
@@ -529,6 +532,12 @@ static func clearNoDown() -> void:
 	_noDown = false
 
 
+## 10-26 item 32: set around the planner's pick for a link's send (DirChase._catch): on a neutral stick it goes across
+## or up, as the opening's does; a held-down stick still wins, and the spike is the deliberate down link.
+static func linkNoDown(tilt: int, kind: String) -> void:
+	_noDown = on() and tilt == 0 and kind != "spike"
+
+
 ## 10-26 item 22(a): the world's links count, with no press. A send of a rally carried into a building (World's
 ## building_hit on the body), across water (a skim beside him) or against a face (DirWallKick.atWall: a cliff or a
 ## building's face) is a link, one a send. No tech: his answers to it are the wall kick, the brake and the burst.
@@ -578,6 +587,11 @@ static func noEscape(S: SimState, f) -> bool:
 	return f.state == "launched" and _owner(S, SimRoster.opp(S, f), f)
 
 
+## 10-26 item 33: a link's blow deals rally.linkWorth of its damage (the opening send and the sell are not links).
+static func linkWorth(S: SimState, A, D) -> float:
+	return float(cfg().get("linkWorth", 1.0)) if _owner(S, A, D) else 1.0
+
+
 ## The choreographer's variety for the planner's candidates in a rally (DirLaunch.chooseLaunch, each candidate; Combat's
 ## destination and world terms): a destination new to this rally destNew, the last one's destLast, the one before
 ## destSecondLast; a world candidate (a building, a mountainside, the sea) worldLink and its place. 0 outside a rally.
@@ -605,16 +619,27 @@ static func variety(S: SimState, A, k: Dictionary) -> float:
 
 ## The turn (DirBrawl.contact, a blow of f's landing clean on o): f's counter-rush, spent within turnTicks, lands on o in
 ## the air while o owns a rally on f: a full send of o, and the rally is f's. True when it took the blow.
-static func turn(S: SimState, ex, f, o, a) -> bool:
-	if not on() or not _owner(S, o, f):
+## 10-26 item 30: f's blow on o is the counter-rush of o's rally: the one he flew in with (RL_CRUSH, within
+## turnTicks of its press), or his next blow inside his counter window (DirRecoil.due: an air tech's, a wall kick's or
+## a flip's). It lands on the chaser through his guard (DirBrawl.contact), a perfect block aside.
+static func counterLive(S: SimState, f, o) -> bool:
+	if not on() or f == null or o == null or not _owner(S, o, f):
 		return false
 	var cr: int = _g(f, RL_CRUSH) - 1
-	if cr < 0 or _now(S) - cr > int(cfg().get("turnTicks", 60)):
+	if cr >= 0 and _now(S) - cr <= int(cfg().get("turnTicks", 60)):
+		return true
+	return DirRecoil.due(S, f)
+
+
+static func turn(S: SimState, ex, f, o, a) -> bool:
+	if not counterLive(S, f, o):
 		return false
 	var g: float = WorldTerrain.groundY(S, o.x)
 	if o.y - g <= float(cfg().get("airBh", 1.0)) * DirInterrupt.BH:
 		return false   # the chaser is down: a plain blow
 	_s(f, RL_CRUSH, 0)
+	if DirRecoil.due(S, f):
+		DirRecoil.counter(S, f)   # his window's blow is the counter-rush: it spends the window, with its cue
 	DirBrawl._send(S, ex, f, o, 0, "the turn", 1.0)
 	return true
 
@@ -756,8 +781,8 @@ static func tick(S: SimState) -> void:
 			continue   # 10-26 row 6: a drop into the water lands when he surfaces
 		var tk: int = _g(f, RL_TECH) - 1
 		if tk >= 0:
-			if now - tk > int(DirRecoil.cfg().get("counterTicks", 20)):
-				end(S, f, "teched")
+			if now - tk > int(DirRecoil.cfg().get("counterTicks", 20)) and not counterLive(S, D, f):
+				end(S, f, "teched")   # (10-26 item 30: not while his counter-rush is on its way)
 			continue
 		var ld: int = _g(f, RL_LAND) - 1
 		if ld < 0:

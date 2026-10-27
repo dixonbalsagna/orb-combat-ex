@@ -220,6 +220,7 @@ static func _catch(S: SimState, A, D) -> void:
 		return   # 23d 8: he teched its arrival
 	var heavy: bool = _g(A, CH_W) == 2 or kind == "spike"
 	var dmg: float = float(DirZip.cfg().get("heavy", {}).get("damage", 132.0)) if heavy else float(DirBrawl.cfg().get("light", {}).get("damage", 26.0))
+	dmg *= DirRally.linkWorth(S, A, D)   # 10-26 item 33: a link deals its share of the blow
 	A.rush = null
 	A.face = SimDamage.jor(SimMathx.jsign(SimWrap.sdx(A.x, D.x)), A.face)
 	SimDamage.hit(S, null, A, D, dmg, {"kind": "zip", "ignoreStance": true, "noParry": true, "stop": 0.08 if heavy else 0.05, "shake": 9.0 if heavy else 5.0})
@@ -241,7 +242,9 @@ static func _catch(S: SimState, A, D) -> void:
 		var pl: Dictionary = DirRally.plateLine(S, A, D)   # the Rival's exact line, with no bend (23d item 19)
 		r = {"best": pl, "top": [pl], "all": [pl]}
 	else:
+		DirRally.linkNoDown(tilt, kind)   # 10-26 item 32: on a neutral stick no link's send is down (the spike aside)
 		r = DirLaunch.chooseLaunch(S, A, D, force, false, "", tilt, true)
+		DirRally.clearNoDown()
 	var all: PackedStringArray = []
 	for k in r.all:
 		all.append(k.name + " " + SimMathx.jstr(SimMathx.jround(k.s)))

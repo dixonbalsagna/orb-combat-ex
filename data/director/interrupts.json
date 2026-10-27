@@ -661,6 +661,7 @@
     },
     "endTicks": 20,
     "queueTicks": 12,
+    "linkWorth": 0.8,
     "turnTicks": 60,
     "airBh": 1,
     "spikeAboveBh": 0.5,

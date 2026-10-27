@@ -2301,7 +2301,7 @@ func _sell(weight: float) -> void:
 ## The rally's shot size for body i at size r (heights): the chaser taken in when the two fit at RALLY_MIN_R or more, eased in
 ## between (a chaser far away leaves the body at his own size).
 func _rally_r(S: SimState, i: int, r: float) -> float:
-	if _rally_kind == "grab":
+	if _rally_kind == "grab" or _rally_kind == "energy_grab":
 		# A grab in flight (the haul, the bind, the slam, the reel): the size is held from the grab's first tick to the next send.
 		# Legal (e12, ln06): nothing is said, slowed, zoomed or finished over a fighter held in the air.
 		if _rally_r_hold < 0.0:

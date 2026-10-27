@@ -1242,8 +1242,9 @@ static func contact(S: SimState, ex, b) -> void:
 	ex.kind = "heavy" if kind == BIG else ("medium" if kind == MEDIUM else "light")   # the core reads the exchange's kind as the blow's weight
 	ex.sA = 0.0 if quiet(ex) else ex.A.stance   # a zipper has no guard in reach
 	ex.sD = ex.D.stance
-	if o.stance == 1.0 and (_g(o, LINE) != 0 or now < _g(o, OPEN_UNTIL) or o.stunTicks > 0):
-		# A fighter with a blow of his own on its way, open after a miss, or staggered is not guarding, whatever he holds.
+	if o.stance == 1.0 and (_g(o, LINE) != 0 or now < _g(o, OPEN_UNTIL) or o.stunTicks > 0 or DirRally.counterLive(S, f, o)):
+		# A fighter with a blow of his own on its way, open after a miss, or staggered is not guarding, whatever he holds;
+		# nor a rally's chaser against its counter-rush (10-26 item 30: he is committed to his arrival; a perfect block aside).
 		if o == ex.A:
 			ex.sA = 0.0
 		else:

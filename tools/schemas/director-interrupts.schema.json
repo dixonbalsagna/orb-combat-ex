@@ -4397,6 +4397,12 @@
         "spikeAboveBh": {
           "type": "number",
           "minimum": 0
+        },
+        "linkWorth": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Game Design 10-26 item 33: the share of its blow's damage a rally link deals (the opening send and the sell are not links)."
         }
       },
       "description": "The daze, the sell and the rally (Game Design's rulings-2026-10-23d; sim/director/rally.gd)."

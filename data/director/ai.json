@@ -82,7 +82,7 @@
       "mineShare": 0.02,
       "approachReact": [0.1, 0.05, 0.1],
       "chaseShare": 0.1,
-      "rally": {"link": 0.6, "sells": 0, "tech": 0.08, "techEarlier": 0.2, "techRepeat": 0.4, "dazeMash": 0.2, "dazeBurst": 0.05, "airBurst": 0.03}
+      "rally": {"link": 0.75, "sells": 0, "tech": 0.08, "techEarlier": 0.2, "techRepeat": 0.4, "dazeMash": 0.2, "dazeBurst": 0.05, "airBurst": 0.03}
     },
     "medium": {
       "forms": {"holdS": 10, "whenAbove": true}, "brawl": {"tapGap": 8, "tapGapMax": 11, "string": [3, 5], "guardShare": 0.4, "guardTicks": [20, 60], "grapple": {"catch": 0.04, "pummel": 0.65, "tech": 0.3}, "anywhere": {"launcher": 0.35, "inString": 0.12, "answer": 0.25}, "recoil": {"flip": 0.6, "counter": 0.7}, "perfectMul": 0.15, "nudgeShare": 0.3, "walkOut": 0.2, "mixMedium": 0.004, "mixHeavy": 0.002, "heavyIntoFlurry": 0.01, "mediumIntoHeavy": 0.2, "burst": 0.08, "digIn": 0.55, "giveGround": 0.45, "follow": 0.6, "launcher": 0.25, "charge": 0.15, "energy": 0.12, "breakGuard": 0.1, "mediumVsHeavies": 0.4, "perfectVsHeavy": 0.15, "perfectVsMash": 0.02},
@@ -115,7 +115,7 @@
       "mineShare": 0.04,
       "approachReact": [0.2, 0.1, 0.15],
       "chaseShare": 0.25,
-      "rally": {"link": 0.75, "sells": 2, "tech": 0.15, "techEarlier": 0.3, "techRepeat": 0.55, "dazeMash": 0.4, "dazeBurst": 0.15, "airBurst": 0.06}
+      "rally": {"link": 0.9, "sells": 2, "tech": 0.15, "techEarlier": 0.3, "techRepeat": 0.55, "dazeMash": 0.4, "dazeBurst": 0.15, "airBurst": 0.06}
     },
     "hard": {
       "forms": {"holdS": 75, "whenAbove": true, "coilUnder": 60, "untilBattered": true}, "brawl": {"tapGap": 6, "tapGapMax": 6, "string": [3, 5], "guardShare": 0.4, "guardTicks": [20, 60], "grapple": {"catch": 0.06, "pummel": 0.85, "tech": 0.45}, "anywhere": {"launcher": 0.6, "inString": 0.2, "answer": 0.4}, "recoil": {"flip": 0.85, "counter": 0.9}, "perfectMul": 0.45, "nudgeShare": 0.65, "walkOut": 0.3, "mixMedium": 0.006, "mixHeavy": 0.003, "heavyIntoFlurry": 0.05, "mediumIntoHeavy": 0.5, "burst": 0.08, "digIn": 0.75, "giveGround": 0.7, "follow": 0.9, "launcher": 0.6, "charge": 0.45, "energy": 0.15, "breakGuard": 0.18, "mediumVsHeavies": 0.7, "perfectVsHeavy": 0.3, "perfectVsMash": 0.04},
@@ -148,7 +148,7 @@
       "mineShare": 0.06,
       "approachReact": [0.3, 0.2, 0.2],
       "chaseShare": 0.4,
-      "rally": {"link": 0.9, "sells": 2, "tech": 0.2, "techEarlier": 0.45, "techRepeat": 0.7, "dazeMash": 0.6, "dazeBurst": 0.3, "airBurst": 0.1}
+      "rally": {"link": 0.95, "sells": 2, "tech": 0.2, "techEarlier": 0.45, "techRepeat": 0.7, "dazeMash": 0.6, "dazeBurst": 0.3, "airBurst": 0.1}
     }
   }
 }
