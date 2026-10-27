@@ -30,6 +30,7 @@
 //   pb         the scene pb: a rendered planet match (pgen=1|2, pplanet=N, pbiome=desert|forest|city|coast) with the pair idle on that ground (hook-pbiome.mjs)
 //   plain      the commit as it is, no hook (the live-site repro of a phone freeze, 257a766c)
 //   bootprof   the pin with time marks through main._ready and the first frames (hook-bootprof.mjs; window.__bp)
+//   p1f, a1f   HEAD (with Audio's first park on main) with boot marks and counters, and the same plus the re-cut park docs/audio/pending/warm-async-2 (apply.py from the park folder)
 //   p89, a89   HEAD with boot marks, and HEAD plus Audio's warm-async park (python apply.py from the park folder) with marks on its end and its skipped cues
 //   s22k, s22l 22k + Camera's half-plane patch, without and with 22l (the split culling; ?nocull=1 turns 22l off in the s22l build)
 //   warmmarks  base + UI's parked boot warm-up of the HUD's overlay marks (docs/ui/pending/warm-marks)
@@ -94,6 +95,8 @@ const SPEC = {
   crumbs: { patches: [], hooks: ['bootprof', 'crumbs'] },
   p89: { patches: [], hooks: ['bootprof2'] },
   a89: { patches: [], hooks: ['warmasync', 'bootprof2', 'warmmarksaudio'] },
+  p1f: { patches: [], hooks: ['bootprof2', 'warmmarksaudio2'] },
+  a1f: { patches: [], hooks: ['warmasync2', 'bootprof2', 'warmmarksaudio2'] },
   evlog: { patches: [], hooks: ['perf', 'slice', 'evlog'] },
   evprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'evlog'] },
   aura: { patches: ['docs/vfx/pending/aura3d/apply.patch', 'docs/vfx/pending/aura3d/grant-fighter-view.patch'], hooks: ['perf', 'slice', 'aura'] },
@@ -103,7 +106,7 @@ const SPEC = {
   layerprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'layers'] },
   lowprof: { patches: [], hooks: ['perf', 'slice', 'prof', 'slicec8', 'depth', 'lowq'] },
 };
-const HOOK = { perf: ['hook-perf.mjs'], slice: ['hook-slice.mjs', SLICE_LIB], prof: ['hook-prof.mjs'], slicec8: ['hook-slice-c8.mjs'], depth: ['hook-depth.mjs'], layers: ['hook-layers.mjs'], lowq: ['hook-lowq.mjs'], aura: ['hook-aura.mjs'], evlog: ['hook-evlog.mjs'], latency: ['hook-latency.mjs'], strip: ['hook-strip.mjs'], ring: ['hook-ring.mjs'], turn: ['hook-turn.mjs'], calm7b: ['hook-calm7b.mjs'], turnprof: ['hook-turnprof.mjs'], cullstat: ['hook-cullstat.mjs'], desert: ['hook-desert.mjs'], gen2: ['hook-gen2.mjs'], pbiome: ['hook-pbiome.mjs'], bootprof: ['hook-bootprof.mjs'], crumbs: ['hook-crumbs.mjs'], bootprof2: ['hook-bootprof2.mjs'], warmasync: ['hook-warmasync.mjs'], warmmarksaudio: ['hook-warmmarks-audio.mjs'] };
+const HOOK = { perf: ['hook-perf.mjs'], slice: ['hook-slice.mjs', SLICE_LIB], prof: ['hook-prof.mjs'], slicec8: ['hook-slice-c8.mjs'], depth: ['hook-depth.mjs'], layers: ['hook-layers.mjs'], lowq: ['hook-lowq.mjs'], aura: ['hook-aura.mjs'], evlog: ['hook-evlog.mjs'], latency: ['hook-latency.mjs'], strip: ['hook-strip.mjs'], ring: ['hook-ring.mjs'], turn: ['hook-turn.mjs'], calm7b: ['hook-calm7b.mjs'], turnprof: ['hook-turnprof.mjs'], cullstat: ['hook-cullstat.mjs'], desert: ['hook-desert.mjs'], gen2: ['hook-gen2.mjs'], pbiome: ['hook-pbiome.mjs'], bootprof: ['hook-bootprof.mjs'], crumbs: ['hook-crumbs.mjs'], bootprof2: ['hook-bootprof2.mjs'], warmasync: ['hook-warmasync.mjs'], warmmarksaudio: ['hook-warmmarks-audio.mjs'], warmasync2: ['hook-warmasync2.mjs'], warmmarksaudio2: ['hook-warmmarks-audio2.mjs'] };
 
 function godot(dir, args, log, limitS) {
   return new Promise((ok) => {
