@@ -25,6 +25,11 @@ const root = mkdtempSync(join(tmpdir(), 'crumbs-test-'));
 mkdirSync(join(root, 'play'));
 writeFileSync(join(root, 'play', 'index.html'), `<!doctype html><html><head><meta charset='utf-8'>${head}</head><body><progress id='status-progress' value='0' max='100'></progress><div id='status'>loading</div><canvas id='canvas'></canvas></body></html>`);
 
+// A second stub page with a click-through like the interim site's: a full-window gate over everything, its two buttons and the About link, then the empty slot the note goes into.
+writeFileSync(join(root, 'play', 'gated.html'), `<!doctype html><html><head><meta charset='utf-8'>${head}</head><body><progress id='status-progress' value='0' max='100'></progress><div id='status'>loading</div><canvas id='canvas'></canvas><div id="gate" style="position:fixed;left:0;top:0;right:0;bottom:0;z-index:100000;overflow:auto;background:#0e1015;color:#e6e9ef;font:18px sans-serif;padding:16px"><h1 id="gate-title">This game contains flashing effects</h1><p>Words of the notice, a few lines long so the buttons are well down the page on a small phone. Words of the notice, a few lines long so the buttons are well down the page on a small phone.</p><p><button id="gate-start" type="button">I understand, start</button> <a id="gate-notnow" href="../">Not now</a></p><p id="gate-under">Reduce flashing is on.</p><p><a href="../about/">About</a></p>
+<div id="ocx-note-slot"></div>
+</div></body></html>`);
+
 const KEY = 'ocx.crumbs.v1';
 const results = [];
 const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail: detail === undefined ? undefined : detail }); console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail === undefined ? '' : '  ' + JSON.stringify(detail).slice(0, 300)}`); };
@@ -104,6 +109,24 @@ try {
   check('a failed copy says how to select the text by hand', (await ev(`document.getElementById('ocx-crumbs-note').querySelector('button').innerText`)) === 'Couldn' + String.fromCharCode(39) + 't copy. Press and hold the text to select it.');
   await ev(`Array.from(document.getElementById('ocx-crumbs-note').querySelectorAll('button')).find((x) => x.innerText === 'Dismiss').click(); 1`); await sleep(2600);
   check('dismiss removes the note and clears the record for good', (await ev(`document.getElementById('ocx-crumbs-note')`)) === null && (await key()) === null, await key());
+
+  // 4b. With a click-through: the note goes into the gate's slot, in the flow below its buttons, and covers none of the gate (at three phone sizes); dismiss empties the slot.
+  const gurl = url.replace('index.html', 'gated.html');
+  const stalled = JSON.stringify({ v: 1, ua: 'x', dpr: 2.6, scr: [360, 640], inner: [360, 640], mem: 4, cores: 8, stage: 'running', stageAt: 41000, beatAt: 90000, dl: 100, clean: true, stalls: [[300, 41200, 'page_loaded']], long: [], vis: [], ctx: [], err: [] });
+  for (const [w, h] of [[360, 640], [375, 667], [915, 412]]) {
+    await page.send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 2, mobile: true });
+    await page.send('Page.navigate', { url: url.replace('/play/index.html', '/none') }); await sleep(400);
+    await ev(`localStorage.setItem('${KEY}', ${JSON.stringify(stalled)}); 1`);
+    await page.send('Page.navigate', { url: gurl }); await sleep(900);
+    const g = JSON.parse(await ev(`JSON.stringify((() => { const slot = document.getElementById('ocx-note-slot'), n = document.getElementById('ocx-crumbs-note'); const r = (id) => document.getElementById(id).getBoundingClientRect(); const top = (id) => { const b = r(id); const e = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return e && (e.id === id || document.getElementById(id).contains(e)); }; const nb = n && n.getBoundingClientRect(); return { inSlot: !!n && n.parentNode === slot, pos: n && getComputedStyle(n).position, below: !!n && nb.top >= r('gate-start').bottom && nb.top >= r('gate-notnow').bottom, startOk: top('gate-start'), notNowOk: top('gate-notnow'), noteOverGate: !!n && document.elementFromPoint(nb.left + nb.width / 2, nb.top + 4) !== null && document.getElementById('gate').contains(document.elementFromPoint(nb.left + nb.width / 2, nb.top + 4)), gateScrolls: document.getElementById('gate').scrollHeight > document.getElementById('gate').clientHeight, text: n && n.innerText.slice(0, 40) }; })())`));
+    check(`gate ${w}x${h}: the note is in the gate's slot, in the flow (not fixed)`, g.inSlot && g.pos === 'static', g);
+    check(`gate ${w}x${h}: the note sits below the gate's buttons`, g.below, null);
+    check(`gate ${w}x${h}: the gate's two buttons are on top and reachable`, g.startOk && g.notNowOk, null);
+    check(`gate ${w}x${h}: the note is part of the gate (scrolls with it, nothing floats over the game)`, g.noteOverGate, null);
+  }
+  await ev(`Array.from(document.getElementById('ocx-crumbs-note').querySelectorAll('button')).find((x) => x.innerText === 'Dismiss').click(); 1`); await sleep(300);
+  check('gate: dismiss empties the slot and clears the record', (await ev(`document.getElementById('ocx-note-slot').children.length`)) === 0 && (await key()) === null);
+  await page.send('Emulation.setDeviceMetricsOverride', { width: 915, height: 412, deviceScaleFactor: 2.625, mobile: true });
 
   // 5. A visit closed before the game was running (abandoned mid-boot) also offers the note.
   await prime(JSON.stringify({ v: 1, ua: 'x', dpr: 2.6, scr: [915, 412], inner: [915, 412], mem: 4, cores: 8, stage: 'starting', stageAt: 1000, beatAt: 8000, dl: 100, clean: false, stalls: [], long: [], vis: [], ctx: [], err: [] }));
