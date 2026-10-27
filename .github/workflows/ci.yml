@@ -118,6 +118,8 @@ jobs:
       # Headless Chrome (preinstalled on the runner) plays a page that flashes on purpose through the capture driver and the frame analyser.
       - name: Pixel pipeline self-test (headless Chrome, mock page)
         run: node tools/flash/pixel-selftest.mjs --require-browser
+      - name: Clip identity self-test (a clip records its seed and pairing; two different matches are not shown side by side)
+        run: node tools/flash/clip-id-selftest.mjs --require-browser
       - uses: ./.github/actions/setup-godot
       - name: Import project
         run: '"$GODOT" --headless --path . --import'

@@ -14,11 +14,13 @@
 //     tick:   number                            the sim tick now shown,
 //   }
 // The driver calls start(), then for each of `ticks` ticks step() followed by Page.captureScreenshot, so no frame is skipped or doubled whatever the machine's speed.
-// Output: <out>/frame-000001.png ... and <out>/clip.json ({ scenario, reduced, fps: 60, ticks, width, height, page }).
+// Output: <out>/frame-000001.png ... and <out>/clip.json ({ scenario, seed (asked, null when none), seedPlayed, slots, pairing, variant, reduced, fps: 60, ticks, width, height, page }): the match is recorded
+// whole (tools/flash/clip-id.mjs), and tools/flash/side-by-side.mjs refuses to put two different matches side by side.
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { matchRecord, matchText } from './clip-id.mjs';   // which match a clip is: recorded in clip.json, printed in the start line, compared by side-by-side.mjs
 import { Cdp, launchBrowser, serve, browserExe, cpuLoad } from '../machine/browser.mjs';   // the one guarded launcher (docs/tools/machine-captures.md)
 
 const argv = process.argv.slice(2);
@@ -44,6 +46,7 @@ const SEED = opt('--seed') === undefined ? null : Number(opt('--seed'));
 const SLOTS = opt('--slots') ? opt('--slots').split(',') : null;      // a pairing: two roster ids (the hook may not offer it yet)
 const VARIANT = opt('--variant') === undefined ? 0 : Number(opt('--variant'));   // a different run of a fixed scene (the hook's variant)
 const SKIP = opt('--skip') === undefined ? null : Number(opt('--skip'));   // ticks to run without drawing before the clip starts (the hook may not offer it yet)
+const MATCH = matchRecord({ scenario: SCENARIO, seed: SEED, slots: SLOTS, variant: VARIANT });   // with no --seed the hook plays its own default seed on the default pair: it is recorded as that, never left blank
 const TIMEOUT_S = Number(opt('--timeout', 900));
 const BROWSER = opt('--browser', 'chrome');
 const exe = opt('--browser-path') || browserExe(BROWSER);
@@ -90,7 +93,7 @@ try {
   while (Date.now() < deadline && !ready) { await sleep(500); ready = await page.eval('Boolean(window.__flashcap && window.__flashcap.ready)').catch(() => false); }
   if (!ready) throw new Error(`the page offers no window.__flashcap that becomes ready (the contract is at the top of tools/flash/capture-web.mjs); the build does not have it yet`);
   await page.eval(`window.__flashcap.start(${JSON.stringify(SCENARIO)}, { reduced: ${REDUCED}${SEED === null ? '' : ', seed: ' + SEED}${SLOTS ? ', slots: ' + JSON.stringify(SLOTS) : ''}${SKIP === null ? '' : ', skip: ' + SKIP}${VARIANT ? ', variant: ' + VARIANT : ''} })`);
-  log(`${pageUrl}: ${SCENARIO}${REDUCED ? ' (reduced)' : ''}, ${TICKS} ticks at ${WIDTH}x${HEIGHT}`);
+  log(`${pageUrl}: ${SCENARIO}${REDUCED ? ' (reduced)' : ''}, ${TICKS} ticks at ${WIDTH}x${HEIGHT}; ${matchText(MATCH)}`);
   let last = -1;
   const tStart = Date.now();
   const inWindow = [];
@@ -125,7 +128,7 @@ try {
   }
   const loadAfter = await cpuLoad(1000);
   const guard = browser ? { tag: String(browser.profile).split(/[\\/]/).pop(), session: browser.entry.session, purpose: browser.entry.purpose, cpuPercent: browser.entry.cpuPercent, timeoutS: browser.entry.timeoutS, priority: 'below-normal', hardEndMs: browser.deadlineMs } : null;
-  writeFileSync(join(OUT, 'clip.json'), JSON.stringify({ scenario: SCENARIO, seed: SEED, reduced: REDUCED, fps: 60, inWindow, ticks: TICKS, width: WIDTH, height: HEIGHT, mode: modeRead, probe, budget: has('--budget'), hold: has('--hold'), mergeZoom: has('--merge-zoom'), applied, variant: VARIANT, page: pageUrl, guard, loadBefore, loadAfter, framesPerSecond: Math.round((TICKS / Math.max(1, (Date.now() - tStart) / 1000)) * 100) / 100 }, null, 2) + '\n');
+  writeFileSync(join(OUT, 'clip.json'), JSON.stringify({ ...MATCH, reduced: REDUCED, fps: 60, inWindow, ticks: TICKS, width: WIDTH, height: HEIGHT, mode: modeRead, probe, budget: has('--budget'), hold: has('--hold'), mergeZoom: has('--merge-zoom'), applied, variant: VARIANT, page: pageUrl, guard, loadBefore, loadAfter, framesPerSecond: Math.round((TICKS / Math.max(1, (Date.now() - tStart) / 1000)) * 100) / 100 }, null, 2) + '\n');
   log(`${TICKS} frames in ${Math.round((Date.now() - tStart) / 1000)} s of capture (${(TICKS / Math.max(1, (Date.now() - tStart) / 1000)).toFixed(2)} frames a second${has('--software') ? ', software rendering' : ''})`);
   log(`wrote ${TICKS} frames to ${OUT}; next: node tools/flash/analyse-frames.js ${OUT}`);
 } catch (e) {

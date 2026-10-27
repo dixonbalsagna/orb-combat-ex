@@ -5,16 +5,27 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
+import { readMatch, differences, matchText } from './clip-id.mjs';
 const { decodePng, encodePng } = createRequire(import.meta.url)('./wcag.js');
 
 const argv = process.argv.slice(2);
 const opt = (n, d) => { const i = argv.indexOf(n); return i >= 0 ? argv[i + 1] : d; };
 const L = opt('--left'), R = opt('--right'), OUT = opt('--out');
-if (!L || !R || !OUT) { console.error('usage: node tools/flash/side-by-side.mjs --left <dir> --right <dir> --out <dir> [--from 1] [--to N] [--step 3] [--stills 5] [--stills-at t,t] [--labels a,b] [--name n] [--delay 5]'); process.exit(2); }
+if (!L || !R || !OUT) { console.error('usage: node tools/flash/side-by-side.mjs --left <dir> --right <dir> --out <dir> [--from 1] [--to N] [--step 3] [--stills 5] [--stills-at t,t] [--labels a,b] [--name n] [--delay 5] [--allow-different]'); process.exit(2); }
 const from = Number(opt('--from', 1)), to = Number(opt('--to', 3600)), step = Number(opt('--step', 3)), delay = Number(opt('--delay', 5));
 const labels = (opt('--labels', 'left,right')).split(',');
 const name = opt('--name', 'side-by-side');
+// Two clips of different matches are not a regression: the pair is refused unless the two sides carry the same scenario, seed, pairing and variant (the clip.json capture-web.mjs wrote), or --allow-different
+// says the difference is the point. A side with no record (a clip from before it, or a folder of frames from elsewhere) is shown with a warning, because there is nothing to compare.
+const sides = [['left', L], ['right', R]].map(([which, dir]) => ({ which, ...readMatch(dir) }));
+for (const s of sides) console.log(s.match ? `${s.which}: ${matchText(s.match)}${s.match.derived ? ' (derived from an older clip.json: the pairing was not recorded)' : ''}` : `${s.which}: no match record (${s.why})`);
+if (sides.every((s) => s.match)) {
+  const diff = differences(sides[0].match, sides[1].match);
+  if (diff.length && !argv.includes('--allow-different')) { console.error(`side-by-side: REFUSED: the two clips are not the same match (${diff.join('; ')}). Capture both with the same --seed and --slots, or pass --allow-different if the difference is the point.`); process.exit(1); }
+  if (diff.length) console.error(`side-by-side: WARNING: the two clips are not the same match (${diff.join('; ')}); --allow-different was given`);
+} else console.error('side-by-side: WARNING: a side has no match record, so the two cannot be checked to be the same match; capture with tools/flash/capture-web.mjs to get one');
 mkdirSync(OUT, { recursive: true });
+writeFileSync(join(OUT, `${name}-clips.json`), JSON.stringify({ left: sides[0].match, right: sides[1].match, leftDir: L, rightDir: R, sameMatch: sides.every((s) => s.match) ? differences(sides[0].match, sides[1].match).length === 0 : null }, null, 2) + String.fromCharCode(10));   // the match of each side, beside the stills and the GIF
 const fp = (d, t) => join(d, `frame-${String(t).padStart(6, '0')}.png`);
 
 // ---- a 3x5 font for 0-9, a-f and a few marks
