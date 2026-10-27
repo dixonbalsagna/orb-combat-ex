@@ -164,6 +164,27 @@ if (play) {
     // the note goes inside the click-through, in the slot the gate provides, so it never moves or covers the gate's buttons; over the game only when there is no gate
     if (!/id="ocx-note-slot"/.test(play.slice(play.indexOf('id="gate"')))) bad('the freeze breadcrumbs are on, but the gate has no note slot (id ocx-note-slot, below its words and buttons)');
     if (!script.includes('ocx-note-slot')) bad("the freeze breadcrumbs' script does not use the gate's note slot (id ocx-note-slot): its note would sit over the gate's buttons on a small phone");
+    // Legal's four conditions for the note inside the click-through (RL-190, 1f6b42dc)
+    // (1) it sits OUTSIDE the notice's own words: one empty slot, a child of the gate's own box after the About paragraph, so the word-for-word checks above still compare the notice untouched, and the script puts nothing into any other part of the gate
+    const gateTail = play.slice(play.indexOf('id="gate"'));
+    if ((gateTail.match(/id="ocx-note-slot"/g) || []).length !== 1) bad('the gate must have exactly one note slot (id ocx-note-slot)');
+    if (!/href="[^"]*about[^"]*"[^>]*>[^<]*<\/a><\/p>\n<div id="ocx-note-slot"><\/div>\n<\/div>/.test(gateTail)) bad("the gate's note slot must be an empty div of the gate's own box, straight after the About paragraph (outside every paragraph, heading, button and link of the notice)");
+    if (/slot\.(style|parentNode|parentElement|innerHTML|outerHTML|textContent|className|classList|setAttribute|remove)\b/.test(script)) bad("the freeze breadcrumbs' script does more to the gate's slot than append its note to it");
+    // (2) never above the warning or the buttons, and never pushing them off a small screen: the slot comes after the heading, both controls and the About link; the gate stays a fixed, scrolling, topmost box; and the note's own style in the slot is plain flow (no position, layer, offset, order, transform, float or negative margin)
+    const at = (s) => gateTail.indexOf(s);
+    const order = [at('id="gate-title"'), at('id="gate-start"'), at('id="gate-notnow"'), gateTail.search(/href="[^"]*about[^"]*"/), at('id="ocx-note-slot"')];
+    if (order.some((v, i) => v < 0 || (i > 0 && v <= order[i - 1]))) bad('the note slot is not after the gate\'s heading, its "I understand, start" button, "Not now" and the About link: the note would sit above the warning or the buttons');
+    const gateStyle = (/^id="gate"[^>]*style="([^"]*)"/.exec(gateTail) || [])[1] || '';
+    const gateZ = Number((/z-index:\s*(\d+)/.exec(gateStyle) || [])[1] || 0);
+    if (!/position:fixed/.test(gateStyle) || !/overflow:auto/.test(gateStyle) || gateZ < 1000) bad('the gate is no longer a fixed, scrolling, topmost box (position:fixed, overflow:auto, a high z-index): a note under its buttons could push them off a small screen or sit above them');
+    const slotStyle = (/slot\s*\?\s*'([^']*)'/.exec(script) || [])[1];
+    if (slotStyle === undefined) bad("the freeze breadcrumbs' script has no note style for when the slot is used");
+    else if (/(^|;)\s*(position|z-index|top|bottom|left|right|inset|order|transform|float|translate)\s*:|margin[a-z-]*\s*:[^;]*-\s*\d|display\s*:\s*none/.test(slotStyle)) bad("the note's style inside the gate is not plain flow (a position, layer, offset, order, transform, float, negative margin or display:none would let it cover or move the gate's buttons)");
+    // (3) Dismiss and Copy never change the gate's state or let anything skip it: the script never names the gate or the start function, never clicks or dispatches an event, looks up only its own elements (and the engine's status ones to read), and the gate's start is bound to its own button
+    if (/__startGame|\bgate\b|dispatchEvent|\.click\s*\(|\.submit\s*\(|location\s*=[^=]|location\.(href|assign|replace)\b/.test(script)) bad("the freeze breadcrumbs' script names the gate or its start function, clicks, dispatches an event or navigates: Dismiss and Copy must never change the gate's state");
+    for (const m of script.matchAll(/getElementById\('([^']*)'\)/g)) if (!/^(ocx-[a-z-]+|status|status-progress)$/.test(m[1])) bad(`the freeze breadcrumbs' script looks up #${m[1]}: it may touch only its own ocx- elements (and read the engine's status ones)`);
+    if (/querySelector|getElementsBy|\.closest\s*\(|\b(document|window|d|w)\.addEventListener\('(click|pointerdown|pointerup|mousedown|mouseup|touchstart|touchend)'/.test(script)) bad("the freeze breadcrumbs' script reaches elements by a query or listens for clicks on the whole page, where it could catch the gate's controls");
+    if (!/var (\w+) = document\.getElementById\('gate-start'\);[\s\S]{0,120}?\1\.addEventListener\('click'/.test(gateTail)) bad("the gate's start is not bound to its own button (a click listener on the gate or the page could be reached by the note's buttons)");
     for (const claim of ['prepared once', 'it is still working']) if (script.includes(claim)) bad(`the freeze breadcrumbs' start line still says "${claim}": Legal (docs/legal/crumbs-screen.md section 2) took that claim out (a real hang looks the same; nothing promises once)`);
     if (script.includes('PLACEHOLDER')) bad('the freeze breadcrumbs still carry PLACEHOLDER words (the start line, the note, the buttons): the visitor must never read them; the words come from Community and Marketing and pass Legal first (docs/legal/crumbs-screen.md section 2)');
   }

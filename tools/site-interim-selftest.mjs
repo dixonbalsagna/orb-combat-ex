@@ -144,6 +144,26 @@ try {
       check('with the switch on the gate has the note slot, after its words and buttons and inside it', /id="ocx-note-slot"/.test(gateHtml) && gateHtml.indexOf('id="gate-start"') < gateHtml.indexOf('id="ocx-note-slot"') && gateHtml.indexOf('id="ocx-note-slot"') < gateHtml.indexOf('</div>\n</div>', gateHtml.indexOf('id="gate"')) + 20);
       check('with the switch off the gate is as it was: no slot', !/ocx-note-slot/.test(readFileSync(join(good, 'play/index.html'), 'utf8')));
       const variants = [['the build line reads unknown', (x) => x.replace("BUILD = '" + BUILD + "'", "BUILD = 'unknown'"), /build line reads "unknown"/], ['the build token is still unfilled', (x) => x.replace("BUILD = '" + BUILD + "'", "BUILD = '@@BUILD@@'"), /build line reads "@@BUILD@@"/], ['the build line is not the exported tree\'s own', (x) => x.replace("BUILD = '" + BUILD + "'", "BUILD = 'fffffff 2026-10-26'"), /not the exported tree's own/], ['the build line has no date', (x) => x.replace("BUILD = '" + BUILD + "'", "BUILD = 'abc1234'"), /build line reads "abc1234"/], ['the gate has no note slot', (x) => x.replace('<div id="ocx-note-slot"></div>', ''), /no note slot/], ['the park does not use the slot', (x) => x.split('ocx-note-slot').join('ocx-no-slot').replace('<div id="ocx-no-slot"></div>', '<div id="ocx-note-slot"></div>'), /does not use the gate's note slot/]];
+      // Legal's conditions for the note inside the click-through (RL-190): (1) outside the notice's words, (2) never above or over the warning and buttons, (3) Dismiss and Copy never change the gate's state
+      const SLOT = '<div id="ocx-note-slot"></div>';
+      variants.push(
+        ['(1) the slot sits above the buttons, inside the notice', (x) => x.replace('\n' + SLOT, '').replace('</h1>', '</h1>' + SLOT), /(straight after the About paragraph|not after the gate's heading)/],
+        ['(1) the slot is inside the About paragraph', (x) => x.replace('\n' + SLOT, '').replace('</a></p>\n</div>', '</a>' + SLOT + '</p>\n</div>'), /straight after the About paragraph/],
+        ['(1) the slot is not empty (words of its own in the notice)', (x) => x.replace(SLOT, '<div id="ocx-note-slot">words</div>'), /straight after the About paragraph/],
+        ['(1) the gate has two slots', (x) => x.replace(SLOT, SLOT + SLOT), /exactly one note slot/],
+        ['(1) the script restyles the gate\'s slot', (x) => x.replace("var slot = d.getElementById('ocx-note-slot');", "var slot = d.getElementById('ocx-note-slot'); slot.style.margin = '0';"), /more to the gate's slot than append/],
+        ['(2) the note\'s style in the gate is position:fixed', (x) => x.replace("slot ? '", "slot ? 'position:fixed;"), /not plain flow/],
+        ['(2) the note\'s style in the gate has a layer', (x) => x.replace("slot ? '", "slot ? 'z-index:9;"), /not plain flow/],
+        ['(2) the note\'s style in the gate has a negative margin', (x) => x.replace("slot ? '", "slot ? 'margin-top:-40px;"), /not plain flow/],
+        ['(2) the gate is no longer a fixed box', (x) => x.replace('aria-labelledby="gate-title" style="position:fixed', 'aria-labelledby="gate-title" style="position:absolute'), /no longer a fixed, scrolling, topmost box/],
+        ['(2) the gate no longer scrolls', (x) => x.replace('z-index:100000;overflow:auto', 'z-index:100000;overflow:hidden'), /no longer a fixed, scrolling, topmost box/],
+        ['(3) the script names the gate', (x) => x.replace("var slot = d.getElementById('ocx-note-slot');", "var slot = d.getElementById('ocx-note-slot'); var g = d.getElementById('gate');"), /names the gate or its start function/],
+        ['(3) the script calls the start function', (x) => x.replace("var slot = d.getElementById('ocx-note-slot');", "var slot = d.getElementById('ocx-note-slot'); var s = w.__startGame;"), /names the gate or its start function/],
+        ['(3) the script clicks something', (x) => x.replace("var slot = d.getElementById('ocx-note-slot');", "var slot = d.getElementById('ocx-note-slot'); slot.click();"), /names the gate or its start function/],
+        ['(3) the script looks up an element that is not its own', (x) => x.replace("var slot = d.getElementById('ocx-note-slot');", "var slot = d.getElementById('ocx-note-slot'); var o = d.getElementById('game-ok');"), /looks up #game-ok/],
+        ['(3) the script listens for clicks on the whole page', (x) => x.replace("var slot = d.getElementById('ocx-note-slot');", "var slot = d.getElementById('ocx-note-slot'); d.addEventListener('click', function () { });"), /listens for clicks on the whole page/],
+        ['(3) the gate\'s start is bound to the gate, not its button', (x) => x.replace("button.addEventListener('click'", "gate.addEventListener('click'"), /not bound to its own button/],
+      );
       let vn = 0;
       for (const [what, fn, re] of variants) { const dv = join(tmp, 'crumbs-var-' + (++vn)); cpSync(sc, dv, { recursive: true }); edit(dv, 'play/index.html', fn); const rv = verify(dv, on, rootOn); check(`${what}: the checker fails`, rv.status === 1 && re.test(rv.stderr), rv.stderr.slice(0, 220)); }
     }
