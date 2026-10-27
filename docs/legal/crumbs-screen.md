@@ -35,3 +35,13 @@ The report goes only where the visitor pastes it (to Orb), by the visitor's choi
 
 ## Rows
 `p04` is in `movegen-banned.json`.
+
+## Addendum (2026-10-26, RL-189): Community's words (phone-freeze-words.md, cd10b372), picked 1A, 2A and 3A
+**Pass, with three changes.**
+- **1A** ("First start can take a minute or more on a phone. The page may not respond. Reloading starts the wait over."): **pass.** No "once", no "still working", no promise.
+- **2A, second sentence: change it.** "It stays on your device until you choose to paste it somewhere" stops being exact once "Copy a report" puts the text on the clipboard, which some phones sync or a keyboard app reads, and the game cannot control that. Use: **"The game sends nothing. Copying puts it on your clipboard, and you choose where to paste it."** (Community's point (a) is right: claim only what the game does.) The same change in the "stopped early" and "graphics" cases.
+- **2A, third case: neutral cause.** "Your phone took the graphics away" asserts a cause nobody has proven (the browser or the driver may have dropped them). Use: **"Last time the game lost its graphics."**
+- **The copy-failed line** ("Couldn't copy. Press and hold the text to select it."): **pass.** It also confirms what p04 limit 1 needs: **the report text is shown in the note before the visitor copies it** (not only after a failed copy). If it is shown only on failure now, show it always.
+- **3A** ("Orb Combat EX freeze report, made on this device. It lists device details, timings and errors. The game sent nothing."): **pass.** True as written; "device details, timings and errors" is the honest description (not "no personal data").
+- **(b) The build line** (the commit's short hash and the build's date): **pass.** It is a build fact and not the visitor's clock; take the date from the build, never from `Date.now()` or the visitor's time zone. p04's "no clock timestamps" means the visitor's clock.
+- **p04 wording:** "never leaves the device except by the visitor's paste" is refined to "the game never sends it; copying puts it on the clipboard and the visitor chooses where to paste it".
