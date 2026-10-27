@@ -60,6 +60,10 @@ var _town_mat: ShaderMaterial = null   # the distant towns' (far_town.gdshader):
 var _cover_mat: ShaderMaterial = null  # the biomes' cover (cover.gdshader): the ground's uniforms, for the ground it stands on
 var cover := CoverView.new()           # the cover grown for this world (a second pane draws its source's)
 static var cover_on: bool = RenderLook.COVER_ON   # biome rendering window 2; main's --nocover turns it off
+var water_fill := RenderWaterFill.new()   # the fills' and waves' drama on the water (the first pane's; a second sends its source's)
+var _water_cues: Array = []               # this frame's water cues, [event, T], read at the next update with the ground
+var _wf_sent: int = -1                    # the water_fill version this pane's water material has
+static var fill_on: bool = RenderLook.WATER_FILL_ON   # the water window; main's --nofill turns it off
 var _town_nodes: Array = []            # each prop copy's FarTowns (set_far gives them the far land's towns)
 var _bld: MultiMesh                  # every part of every building that is not in row 0: the bodies by building index, then the other parts
 var _tree: MultiMesh
@@ -215,6 +219,8 @@ func _bs_share(S: SimState) -> bool:
 	if source == null:
 		ground.rebuild(S)
 		_make_props(S)
+		water_fill.clear()
+		_water_cues.clear()
 		if cover_on:
 			cover.build(S, ground, hash(S.planetRing) if S.planetRing is Dictionary and not S.planetRing.is_empty() else 0)
 		else:
@@ -475,6 +481,15 @@ func update(S: SimState, cam_x: float, heat: PackedFloat32Array = PackedFloat32A
 	if ground != null and ground.water_version != _water_drawn:
 		_water_drawn = ground.water_version
 		_water_show(S)
+	var wf: RenderWaterFill = water_fill if source == null else source.water_fill
+	if source == null:
+		for c in _water_cues:
+			wf.take(S, c[0], c[1])
+		_water_cues.clear()
+		wf.expire(S.T)
+	if wf.version != _wf_sent and _water_mat != null:
+		_wf_sent = wf.version
+		wf.apply(_water_mat)   # only when a fill or ring comes or goes
 	if source != null:
 		_send_spread(S, source)
 		return
@@ -502,7 +517,9 @@ func _send_spread(S: SimState, src: PlanetView) -> void:
 func consume(events: Array, T: float = 0.0) -> void:
 	flight.consume(events)
 	for e in events:
-		if e.type == "crater" or e.type == "scorch" or e.type == "debris":
+		if fill_on and (e.type == "water_fill" or e.type == "water_wave"):
+			_water_cues.append([e, T])   # World's water v2 cues: drawn from the next update, with the ground
+		elif e.type == "crater" or e.type == "scorch" or e.type == "debris":
 			_blows.append(e.x)
 			if e.type == "crater":
 				_blasts.append([float(e.x), float(e.y)])
@@ -1229,6 +1246,12 @@ func _make_materials() -> void:
 	_water_mat.set_shader_parameter("water", RenderLook.WATER)
 	_water_mat.set_shader_parameter("surface", RenderLook.WATER_SURFACE)
 	_water_mat.set_shader_parameter("fall_body", RenderLook.WATER_FALL_BODY)
+	_water_mat.set_shader_parameter("foam", RenderLook.WATER_FOAM)
+	_water_mat.set_shader_parameter("water_line", RenderLook.WATER_LINE)
+	_water_mat.set_shader_parameter("water_shallow", RenderLook.WATER_SHALLOW)
+	_water_mat.set_shader_parameter("fill_t", Vector4(RenderLook.WATER_FILL_T.x, RenderLook.WATER_FILL_T.y, RenderLook.WATER_FILL_T.z, RenderLook.WATER_PILE))
+	_water_mat.set_shader_parameter("foam_band", RenderLook.WATER_FOAM_BAND)
+	_wf_sent = -1   # a new material takes the live fills
 
 
 ## The lane table's streets for the ground shader (render/core/lanes.gd: World's S.lanes once L1 lands, a stand-in

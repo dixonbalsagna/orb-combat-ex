@@ -244,6 +244,7 @@ func _ready() -> void:
 	drift_on = RenderLook.SLOW_DRIFT_ON or args.has("drift")   # the slow drift of the far land and sky: off by default (2026-10-22)
 	PlanetView.cull_on = RenderLook.SPLIT_CULL_ON and not args.has("nocull")   # the split's culling: on; --nocull for the A/B (2026-10-23)
 	PlanetView.cover_on = RenderLook.COVER_ON and not args.has("nocover")   # the biomes' cover: on; --nocover for the A/B (2026-10-23)
+	PlanetView.fill_on = RenderLook.WATER_FILL_ON and not args.has("nofill")   # the water fill's drama: on; --nofill for the A/B
 	far_on = RenderLook.FAR_MAP_ON or args.has("farmap")   # the planet's own far land: off by default (2026-10-22)
 	_far_now = args.has("farnow")
 	hud.key_help = args.has("keyhelp")   # the greybox prompt and key help: off by Orb's minimal rule (2026-10-19)
@@ -1496,7 +1497,7 @@ const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off",
 ## without UI's notice, change how a match starts or hold a debug value, and are dropped unless the page is on a local
 ## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze, keyhelp, roll.
 const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]
-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale"]
+const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill"]
 
 
 ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of

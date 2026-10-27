@@ -15,6 +15,12 @@
 // most shore_flood, as World's sea edge leaves a strip of up to 0.25 bh) is drawn flooded at that level, so the
 // waterline is where the land rises through it and the drop at the sea's last column stays under water; deeper low
 // land beside water stays dry, as the sim has it.
+// The waterline (Art's flat facets, the water window): in the near water a foam line water_line.x pixels wide where the
+// land rises through the surface, and a shallow band to water_shallow.x deep, so a new pool and the coast read as water
+// with an edge. The fill's drama (render/core/water_fill.gd, from World's water_fill and water_wave cues): a crest that
+// runs with the front over the water filling behind it, piles up at the hole's far wall (or where two fronts meet) and
+// falls back as a slosh that settles; a wave's ring runs out over the surface and narrows to nothing. Both lift only
+// wet near water (the sim's S.water stays the truth); the foam is a hard band on the crest and the ring.
 // It fogs into the sky like the ground. UV.x: terrain column. UV2.y: 1 on the fighter-plane row. Same data as the
 // terrain (ground.gdshaderinc).
 // (The body of water.gdshader and water_far.gdshader; FAR_MAP: the planet's own far map.)
@@ -29,6 +35,20 @@ uniform vec4 water : source_color;
 uniform vec4 surface : source_color;
 uniform float fall_body = 4.0;   // RenderLook.WATER_FALL_BODY: a sheet that fell this far shows its body
 uniform float fog_far = 12000.0;
+uniform vec4 foam : source_color = vec4(0.894, 0.925, 0.933, 0.92);   // RenderLook.WATER_FOAM (Art's sea accent)
+uniform vec2 water_line = vec2(1.5, 0.92);     // RenderLook.WATER_LINE: the waterline's width in pixels, its alpha
+uniform vec2 water_shallow = vec2(28.0, 0.28); // RenderLook.WATER_SHALLOW: the shallow band's depth, its share of the foam
+// The fill's drama (render/core/water_fill.gd; the clock is crater_now, the sim's time). The loops run to wf_n and
+// ww_n, uniforms, so the driver's compiler keeps one copy of each body.
+uniform int wf_n = 0;      // the live fills, at most 4
+uniform vec4 wf_a[4];      // x (the front's source), y (the surface it heads for), its speed (units a second), t0 (its start)
+uniform vec4 wf_b[4];      // its run behind x (from .x to .y units from x) and ahead (.z to .w)
+uniform vec4 wf_c[4];      // the crest's height, the slosh's
+uniform int ww_n = 0;      // the live rings, at most 2
+uniform vec4 ww_a[2];      // x, y (the surface), t0, the radius it runs out to
+uniform vec4 ww_b[2];      // its lift, the time it runs
+uniform vec4 fill_t = vec4(0.22, 0.55, 0.3, 1.6);   // RenderLook.WATER_FILL_T, WATER_PILE: the crest's length behind the front (s), the slosh's period and settle time (s), the pile at a wall
+uniform vec2 foam_band = vec2(14.0, 50.0);   // RenderLook.WATER_FOAM_BAND: the foam line's width on a front, a pile or a ring (units); the ring's width
 
 varying float v_wet;
 varying float v_depth;
@@ -37,6 +57,54 @@ varying float v_under;
 varying vec3 v_view;
 varying float v_wz;
 varying vec2 v_px;
+varying float v_near;
+
+// The fill's drama at band x and depth z: x the surface's lift, y the foam (0 to 1 on a crest or a ring).
+vec2 water_drama(float x, float z) {
+	vec2 o = vec2(0.0);
+	for (int j = 0; j < wf_n; j++) {
+		vec4 a = wf_a[j];
+		float ds = x - a.x;
+		ds -= world_w * round(ds / world_w);
+		float u = abs(ds);
+		vec2 r = ds < 0.0 ? wf_b[j].xy : wf_b[j].zw;   // this side's run
+		if (r.y <= r.x || u < r.x - col_w || u > r.y + col_w) {
+			continue;
+		}
+		float tau = crater_now - a.w;
+		float f = a.z * tau;                            // the front, from the source
+		float lc = max(a.z * fill_t.x, 3.0 * col_w);    // the crest's length behind it
+		float h = wf_c[j].x;
+		float c = 0.0;
+		if (f < r.y) {
+			// Running: a wedge from the front back, taller as it nears the wall; the foam a thin line on the front.
+			float pile = 1.0 + (fill_t.w - 1.0) * clamp(1.0 - (r.y - f) / lc, 0.0, 1.0);
+			c = u <= f ? h * pile * max(0.0, 1.0 - (f - u) / lc) : 0.0;
+			o.x += c;
+			o.y = max(o.y, (u <= f && u > f - foam_band.x) ? 1.0 : 0.0);
+		} else {
+			// At the wall: the pile falls back, and the pool sloshes end to end and settles; the foam a line on the pile
+			// while it stands.
+			float t_wall = tau - r.y / a.z;
+			float e = exp(-t_wall / fill_t.z);
+			c = h * fill_t.w * e * max(0.0, 1.0 - (r.y - u) / lc);
+			float m = cos(3.14159265 * clamp((u - r.x) / max(r.y - r.x, col_w), 0.0, 1.0));
+			o.x += c - wf_c[j].y * e * sin(6.2831853 * t_wall / fill_t.y) * m;
+			o.y = max(o.y, (e > 0.5 && u > r.y - foam_band.x) ? 1.0 : 0.0);
+		}
+	}
+	for (int j = 0; j < ww_n; j++) {
+		vec4 a = ww_a[j];
+		float ds = x - a.x;
+		ds -= world_w * round(ds / world_w);
+		float q = clamp((crater_now - a.z) / ww_b[j].y, 0.0, 1.0);
+		float rr = a.w * (1.0 - (1.0 - q) * (1.0 - q));   // runs out fast and slows
+		float off = abs(length(vec2(ds, z)) - rr);
+		o.x += ww_b[j].x * max(0.0, 1.0 - off / foam_band.y) * (1.0 - q);
+		o.y = max(o.y, (q < 0.6 && off < 0.5 * foam_band.x) ? 1.0 : 0.0);   // the foam a thin line on the ring's crest, while it runs
+	}
+	return o;
+}
 
 void vertex() {
 	int i = int(UV.x + 0.5) % nc;
@@ -70,7 +138,12 @@ void vertex() {
 			v_wet = 1.0;
 			v_ok = 1.0;
 		}
+		if (!shore && v_wet > 0.5 && wf_n + ww_n > 0) {
+			surf += max(water_drama(xw, z).x, -0.6 * max(surf - ground, 0.0));   // the fill's crest, slosh and ring (never below the floor)
+		}
+		v_near = 1.0;
 	} else {
+		v_near = 0.0;
 		bool wet;
 		vec4 f = far4(xw, z, s, false, wet);
 		ground = mix(b, f.x, s);
@@ -110,10 +183,26 @@ void fragment() {
 	if (v_wet < 0.5 || v_depth <= 0.0 || v_ok < 0.5) {
 		discard;
 	}
+	float depth_px = fwidth(v_depth);   // the depth's change a pixel, worked out outside any branch (the waterline's width)
 	vec3 c;
 	float a;
-	c = mix(surface.rgb, water.rgb, v_under) * wl_mul + wl_add;   // the world's light; the lane cue is never dimmed
+	c = mix(surface.rgb, water.rgb, v_under);
 	a = mix(surface.a, 0.5 + 0.25 * clamp(v_depth / 340.0, 0.0, 1.0), v_under);
+	if (v_under < 0.5) {
+		// Art's waterline: a foam line where the land rises through the surface, a shallow band, hard edged.
+		if (v_depth < depth_px * water_line.x) {
+			c = foam.rgb;
+			a = water_line.y;
+		} else if (v_depth < water_shallow.x) {
+			c = mix(c, foam.rgb, water_shallow.y);
+			a = mix(a, foam.a, water_shallow.y);
+		}
+		if (v_near > 0.5 && wf_n + ww_n > 0 && water_drama(v_px.x, v_px.y).y > 0.5) {
+			c = foam.rgb;   // the crest's and the ring's foam
+			a = foam.a;
+		}
+	}
+	c = c * wl_mul + wl_add;   // the world's light; the lane cue is never dimmed
 	vec4 cue = lane_cue_at(v_px, fwidth(v_px.y));   // the lane cue lies on the surface
 	c = mix(c, cue.rgb, cue.a);
 	a = max(a, cue.a);

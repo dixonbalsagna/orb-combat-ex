@@ -57,6 +57,26 @@ const BOOT_INK := "#8a93a6"
 const BOOT_TRACK := "#252b37"
 const BOOT_GROUND := "#0d1017"
 const BOOT_BAR := Vector2(240.0, 2.0)
+## The water window (render/core/water_fill.gd, water.gdshaderinc; docs/rendering/water-fill.md): World's water_fill and
+## water_wave cues as drama on the water. WATER_CREST: the crest's height, this share of the hole's depth between .y
+## and .z units. WATER_SLOSH: the slosh's height as a share of the crest's. WATER_FILL_T: the crest's length behind the
+## front (seconds of the front's run), the slosh's period and its settle time (seconds). WATER_PILE: the crest's height
+## at a wall (or where two fronts meet), times. WATER_FILL_REACH: World's near.reach (columns): within it a bump does
+## not end a run. WATER_RING: the ring's lift, its width, and the least time it runs (World's wave runs a fifth of a
+## second). WATER_FOAM_BAND: the foam, a thin hard line on the running front, on the pile at a wall and on the ring's
+## crest (.x, units), and the ring's width (.y). WATER_FOAM: Art's sea accent, for the foam and the waterline. WATER_LINE: the waterline's width in pixels and its alpha; WATER_SHALLOW: the shallow band
+## to this depth, at this share of the foam. Main's --nofill turns the drama off (the waterline stays).
+const WATER_FILL_ON: bool = true
+const WATER_CREST := Vector3(0.18, 10.0, 40.0)
+const WATER_SLOSH: float = 0.5
+const WATER_FILL_T := Vector3(0.22, 0.55, 0.3)
+const WATER_PILE: float = 1.6
+const WATER_FILL_REACH: int = 36
+const WATER_RING := Vector3(10.0, 50.0, 0.8)
+const WATER_FOAM_BAND := Vector2(14.0, 50.0)
+const WATER_FOAM := Color(0.894, 0.925, 0.933, 0.92)
+const WATER_LINE := Vector2(1.5, 0.92)
+const WATER_SHALLOW := Vector2(28.0, 0.28)
 const WATER_FALL_BODY: float = 4.0   # water that fell this far under the foreground rule shows its body, not its surface
 const Z_TERRAIN_BACK: float = -1125.0 * WS   # back of the crater rows: tier-4 rims reach about 2 x 4,300
 ## Ground rows are generated, not listed: spacing ROW_STEP0 at the fighter plane (fighter scale), growing by
