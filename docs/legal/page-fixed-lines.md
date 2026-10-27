@@ -37,3 +37,24 @@ With flash work paused, "We are fixing them" and "while we fix them" are untrue.
 
 If flash work restarts, "we are working to fix them" may come back on all of these. The addenda in `photosensitivity-note.md` are the history; the live words are in this file.
 
+## Addendum (2026-10-27, RL-192): the game's own notice strings (ui/data/terms.json, UI's file)
+The in-game notice still carries the **old Addendum 11 words**: "We are fixing them" (untrue since flash work paused on 2026-10-18), "analyser" (British) and a "reach ... and a few that go over it on stricter readings" sentence that differs from the cleared notice. **Not cleared as they are.** The in-game notice and the page's gate carry the same words; use these exactly (keys under `prompt`):
+
+- **`menu_notice`** (the whole notice in one string):
+  > This game contains flashing effects. Our own automated check found some scenes that go over the recommended limit of three flashes a second, and they are not fixed yet. No independent analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.
+- **`photo_title`:** unchanged ("This game contains flashing effects.").
+- **`photo_body_a`** (the card version that names the scenes; the named scenes are true and may stay):
+  > Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second, and they are not fixed yet.
+- **`photo_body_b`:**
+  > No independent photosensitivity analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.
+  ("we recommend not playing" becomes "please do not play", the cleared words.)
+- **`menu_rf_locked`** (also the lock line under the button while the lock flag is true):
+  > Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes.
+- **`ui/data/settings.json`, the "Flashing effects notice" help:** "...and that no independent photosensitivity analyzer has been run." (replaces "has not yet been tested with a photosensitivity analyser": no "tested").
+- **`ui/data/options.json`, label "Colour-blind mode":** "Color-blind mode" (visible labels are American; the id stays).
+
+Conditions:
+1. `menu_rf_on`, `menu_rf_off` and the options help ("Turning it off restores full effects") are true only while the toggle exists. **In the interim build the lock flag is true and the toggle is hidden, so these must not show;** the picture in docs/rendering/img/lookgate/lookgate-boot-notice.png shows the toggle and `menu_rf_on`, so confirm the interim export sets the lock flag (Tools' check already fails the export otherwise).
+2. Tools' word-for-word check covers the in-game strings as well as the page, and its British-spelling scan runs over `ui/data/*.json`.
+3. This is a words change in the live build, so it lands with the boot park and before the pin moves, and the nightly runs on the new commit (pin rule).
+4. No other word changes; no "safe", "tested" or "compliant".

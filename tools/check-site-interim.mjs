@@ -13,8 +13,9 @@
 //     "I understand, start", "Not now", the Reduce flashing line, the AI line) or the About page lacks the AI line, the privacy line of the feedback target in use (ui/data/send.json),
 //     the Godot (MIT) line or the Open Sans (OFL) line; or any page uses "safe", "seizure-safe", "tested for photosensitivity", "WCAG compliant", "certified" or "no flashing";
 //   - the freeze breadcrumbs are on /play/ without tools/site.json "crumbs": true (or absent with it), or their script has a network call or a URL;
+//   - the game's own strings (ui/data/*.json, Legal's RL-192 condition 2): the in-game notice (ui/data/terms.json prompt.menu_notice, photo_title, photo_body_a, photo_body_b, menu_rf_locked), the help of the settings row 'Flashing effects notice' and the label 'Color-blind mode' are not Legal's lines word for word (owner mode), a string promises a fix (owner mode), or any string a player reads has a British spelling (every mode; the still-pending ones are listed in tools/site-ui-spelling.json);
 //   - the placeholder-name scan finds KAI, VORR, Meridian or Calamity in a page, or in a file of the game's pack that is not on the allowlist (tools/site-name-scan.json).
-//   node tools/check-site-interim.mjs --site <site dir> [--config <site.json>] [--root <repo root>] [--record <release-pass.json>] [--today YYYY-MM-DD] [--no-pack-scan]
+//   node tools/check-site-interim.mjs --site <site dir> [--config <site.json>] [--root <repo root>] [--record <release-pass.json>] [--ui-allow <site-ui-spelling.json>] [--today YYYY-MM-DD] [--no-pack-scan]
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve, relative, sep } from 'node:path';
 import { siteNotice } from './site-notice.mjs';
@@ -48,6 +49,17 @@ const OWNER_FLASH = 'This game contains flashing effects. Our own automated chec
 const OWNER_LOCK = 'Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes.';
 // British spellings Legal lists; the public text is American English (Orb's rule p03). Internal setting ids may keep them: only text a visitor can read is scanned.
 const BRITISH = /\b(colour|behaviour|grey|centre|artefact|programme|catalogue|neighbour|organis|recognis|licence|analyser)/i;
+// The game's own notice strings (ui/data/terms.json, UI's file), Legal's RL-192 addendum in docs/legal/page-fixed-lines.md: the in-game notice carries the same words as the gate. Word for word, in owner mode.
+const GAME_STRINGS = {
+  menu_notice: OWNER_FLASH,
+  photo_title: 'This game contains flashing effects.',
+  photo_body_a: 'Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second, and they are not fixed yet.',
+  photo_body_b: 'No independent photosensitivity analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.',
+  menu_rf_locked: OWNER_LOCK,
+};
+const SETTINGS_FLASH_END = 'and that no independent photosensitivity analyzer has been run.';   // the end of the help of the settings row "Flashing effects notice" (ui/data/settings.json)
+const COLOR_BLIND_LABEL = 'Color-blind mode';   // ui/data/options.json options.colour_vision.label (the id stays)
+const PROMISES_FIX = /working to fix them|we are fixing them|while we fix them/i;
 const visibleText = (html) => textOf(html.replace(/<ul class="small">[\s\S]*?<\/ul>/g, ' '));   // not the engine's own component list (third-party names); <pre> texts are dropped by textOf
 const decode = (s) => s.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 const textOf = (html) => decode(html.replace(/<pre>[\s\S]*?<\/pre>/g, ' ').replace(/<style>[\s\S]*?<\/style>/g, ' ').replace(/<script>[\s\S]*?<\/script>/g, ' ').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ');
@@ -303,6 +315,45 @@ try {
   const m = /"reduce_flashing":\s*(true|false)/.exec(hud);
   if (m && m[1] !== 'true') bad('"Reduce flashing" is off in ui/hud/ui_hud.gd (opts default)');
 } catch { /* the file is UI's; the data default above is the gate */ }
+
+// ---- the game's own strings (ui/data/*.json): the in-game notice word for word (owner mode) and the American-spelling scan (every mode). Legal's RL-192 condition 2.
+{
+  const dir = join(root, 'ui/data');
+  const ui = {};
+  let names = [];
+  try { names = readdirSync(dir).filter((f) => f.endsWith('.json')).sort(); } catch (e) { bad(`ui/data could not be listed: ${e.message}`); }
+  for (const f of names) { try { ui[f] = JSON.parse(readFileSync(join(dir, f), 'utf8')); } catch (e) { bad(`ui/data/${f} could not be read: ${e.message}`); } }
+  // the text a player reads: every string value, not the keys (the ids that contain "colour" are internal), not an _underscore note, not a file's own top-level "note" (its description for the team), not an id
+  const ID_LIKE = /^[a-z0-9]+(_[a-z0-9]+)+$/;
+  const strings = (v, at, out, top) => {
+    if (Array.isArray(v)) v.forEach((x, i) => strings(x, `${at}/${i}`, out, false));
+    else if (v && typeof v === 'object') { for (const [k, x] of Object.entries(v)) { if (k.startsWith('_') || (top && k === 'note')) continue; if (k === 'id' && typeof x === 'string') continue; strings(x, `${at}/${k}`, out, false); } }
+    else if (typeof v === 'string' && !ID_LIKE.test(v)) out.push([at, v]);
+    return out;
+  };
+  // British spellings still in the game's text that RL-192 does not name, pending Legal's ruling and UI's swap: tools/site-ui-spelling.json (file + pointer, with the reason); anything else fails
+  let allowFile = resolve(opt('--ui-allow') || join(here, 'site-ui-spelling.json'));
+  let allow = [];
+  try { allow = JSON.parse(readFileSync(allowFile, 'utf8')).allow || []; } catch (e) { bad(`the in-game spelling allowlist could not be read (${allowFile}): ${e.message}`); }
+  const used = new Set();
+  for (const f of names) for (const [at, s] of strings(ui[f], '', [], true)) {
+    const m = BRITISH.exec(s);
+    if (!m) continue;
+    const i = allow.findIndex((a) => a && a.file === `ui/data/${f}` && a.pointer === at);
+    if (i >= 0) { used.add(i); continue; }
+    bad(`ui/data/${f} ${at} uses the British spelling "${m[0]}" in text a player reads (the game's text is American English: docs/legal/page-fixed-lines.md, RL-192 condition 2): ${JSON.stringify(s.length > 80 ? s.slice(0, 80) + '...' : s)}`);
+  }
+  allow.forEach((a, i) => { if (!used.has(i)) console.log(`interim site check note: tools/site-ui-spelling.json lists ${a && a.file} ${a && a.pointer}, which no longer holds a British spelling: remove the entry`); });
+  if (OWNER) {
+    for (const f of names) for (const [at, s] of strings(ui[f], '', [], true)) if (PROMISES_FIX.test(s)) bad(`ui/data/${f} ${at} promises a fix ("we are fixing them" and its kin are untrue since flash work paused, 2026-10-18: docs/legal/page-fixed-lines.md, RL-192)`);
+    const prompt = ui['terms.json'] && ui['terms.json'].prompt;
+    for (const [k, want] of Object.entries(GAME_STRINGS)) if (!prompt || prompt[k] !== want) bad(`ui/data/terms.json prompt.${k} is not Legal's line word for word (docs/legal/page-fixed-lines.md, RL-192 addendum): ${JSON.stringify(prompt && typeof prompt[k] === 'string' ? (prompt[k].length > 80 ? prompt[k].slice(0, 80) + '...' : prompt[k]) : prompt && prompt[k])}`);
+    const row = ui['settings.json'] && Array.isArray(ui['settings.json'].sections) ? ui['settings.json'].sections.flatMap((s) => (Array.isArray(s.items) ? s.items : [])).find((it) => it && typeof it === 'object' && it.action === 'photo_notice') : null;
+    if (!row || typeof row.help !== 'string' || !row.help.endsWith(SETTINGS_FLASH_END) || /\btested\b/i.test(row.help)) bad(`ui/data/settings.json: the help of the "Flashing effects notice" row does not end "${SETTINGS_FLASH_END}" (and must not say "tested"): docs/legal/page-fixed-lines.md, RL-192 addendum`);
+    const cv = ui['options.json'] && ui['options.json'].options && ui['options.json'].options.colour_vision;
+    if (!cv || cv.label !== COLOR_BLIND_LABEL) bad(`ui/data/options.json options.colour_vision.label is not "${COLOR_BLIND_LABEL}" (docs/legal/page-fixed-lines.md, RL-192 addendum)`);
+  }
+}
 
 // ---- the words file itself
 if (words) {

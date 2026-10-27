@@ -1,0 +1,4 @@
+{
+  "_about": "In-game strings (ui/data/*.json) that may still carry a British spelling, by file and pointer, while a ruling or a swap is pending. Empty since Legal's RL-193 (2026-10-27) ruled American for the eleven that RL-192 did not name, and UI swapped them. tools/check-site-interim.mjs fails on any British spelling in text a player reads that is not listed here, prints a note for an entry that no longer matches (remove it), and fails if this file is missing. Entries look like {\"file\": \"ui/data/howto.json\", \"pointer\": \"/pages/5/title\", \"why\": \"...\"}.",
+  "allow": []
+}

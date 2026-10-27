@@ -71,7 +71,7 @@
         { "icon": "toll", "col": 1, "text": "The box at the top counts the damage to the world." },
         { "icon": "strip", "col": 1, "text": "The strip is the whole planet. It wraps." },
         { "note": "reopen", "col": 1, "text": "" },
-        { "icon": "first_run_about", "col": 1, "text": "About this game and its licences: Pause, then About." }
+        { "icon": "first_run_about", "col": 1, "text": "About this game and its licenses: Pause, then About." }
       ]
     },
     {
@@ -86,12 +86,12 @@
     },
     {
       "id": "about_more",
-      "title": "Licence and privacy",
+      "title": "License and privacy",
       "items": [
-        { "col": 0, "text": "Licence: not chosen yet. All rights reserved for now." },
-        { "col": 0, "text": "Made with Godot Engine. Copyright (c) 2014-present Godot Engine contributors; copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur. Released under the MIT licence." },
-        { "col": 0, "text": "The font is Open Sans. Copyright 2020 The Open Sans Project Authors. Released under the SIL Open Font Licence 1.1." },
-        { "col": 0, "text": "The full licence texts, and the licences of the other parts built into the engine, are on the next page." },
+        { "col": 0, "text": "License: not chosen yet. All rights reserved for now." },
+        { "col": 0, "text": "Made with Godot Engine. Copyright (c) 2014-present Godot Engine contributors; copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur. Released under the MIT license." },
+        { "col": 0, "text": "The font is Open Sans. Copyright 2020 The Open Sans Project Authors. Released under the SIL Open Font License 1.1." },
+        { "col": 0, "text": "The full license texts, and the licenses of the other parts built into the engine, are on the next page." },
         { "icon": "about_privacy_none", "col": 1, "text": "This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button copies a report to your clipboard for you to paste to Orb; nothing is sent by the game." },
         { "icon": "about_privacy_github", "col": 1, "text": "This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button opens a public GitHub issue page only when you click it." },
         { "icon": "about_privacy_private", "col": 1, "text": "This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button opens a private email or form only when you click it. What you send reaches Orb only: please leave out personal details." },
@@ -100,9 +100,9 @@
     },
     {
       "id": "licences",
-      "title": "Third-party licences",
+      "title": "Third-party licenses",
       "items": [
-        { "col": 0, "text": "The licences of the parts this game is built from, in full. Scroll with Up and Down, or drag." }
+        { "col": 0, "text": "The licenses of the parts this game is built from, in full. Scroll with Up and Down, or drag." }
       ]
     }
   ]

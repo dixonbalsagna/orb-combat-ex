@@ -77,13 +77,24 @@ const build = (out, c, extra = ['--local']) => { writeCfg(c); return node('build
 
 // a repo root of the shipped prefs and feedback target the checker reads
 const OLD_PRIVACY = 'This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button copies a report to your clipboard for you to paste to Orb; nothing is sent by the game.';
+// the game's own notice strings as Legal's RL-192 addendum gives them (docs/legal/page-fixed-lines.md), written out here on purpose: a drift in the checker's copy must show
+const GAME_PROMPT = {
+  photo_title: 'This game contains flashing effects.',
+  photo_body_a: 'Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second, and they are not fixed yet.',
+  photo_body_b: 'No independent photosensitivity analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.',
+  menu_notice: 'This game contains flashing effects. Our own automated check found some scenes that go over the recommended limit of three flashes a second, and they are not fixed yet. No independent analyzer has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.',
+  menu_rf_locked: 'Reduce flashing is on and cannot be turned off in this version. It lowers some effects but does not remove the flagged scenes.',
+};
+const GAME_SETTINGS_HELP = 'The notice shown when the game starts: it contains flashing effects, what Reduced motion does and does not change, and that no independent photosensitivity analyzer has been run.';
 function prefsRoot(name, { options = true, feature = true, hud = true, target = 'none', lock = true, howto = OLD_PRIVACY, build = null } = {}) {
   const r = join(tmp, name);
   mkdirSync(r, { recursive: true });
   if (build) writeFileSync(join(r, 'build_info.json'), JSON.stringify({ commit: build.split(' ')[0], date: build.split(' ')[1] }));
   mkdirSync(join(r, 'ui/data'), { recursive: true });
   mkdirSync(join(r, 'ui/hud'), { recursive: true });
-  writeFileSync(join(r, 'ui/data/options.json'), JSON.stringify({ schema: 1, options: { reduce_flashing: { default: options } } }));
+  writeFileSync(join(r, 'ui/data/options.json'), JSON.stringify({ schema: 1, options: { reduce_flashing: { default: options }, colour_vision: { default: 'off', label: 'Color-blind mode', help: 'Swaps the colors that carry meaning.' } } }));
+  writeFileSync(join(r, 'ui/data/terms.json'), JSON.stringify({ schema: 1, note: 'Every word, as data. Colour notes stay.', prompt: { ...GAME_PROMPT } }));
+  writeFileSync(join(r, 'ui/data/settings.json'), JSON.stringify({ schema: 1, sections: [{ id: 'access', title: 'Accessibility', items: ['colour_vision', { action: 'photo_notice', label: 'Flashing effects notice', value: 'Read', help: GAME_SETTINGS_HELP }] }] }));
   writeFileSync(join(r, 'ui/data/features.json'), JSON.stringify({ schema: 1, features: { reduce_flashing: feature, lock_reduce_flashing: lock } }));
   writeFileSync(join(r, 'ui/data/send.json'), JSON.stringify({ schema: 1, _target: target }));
   writeFileSync(join(r, 'ui/data/howto.json'), JSON.stringify({ pages: [{ rows: [{ icon: 'about_privacy_none', col: 1, text: howto }, { icon: 'about_privacy_github', col: 1, text: 'x' }] }] }));
@@ -283,7 +294,7 @@ try {
     check('the owner-approved site builds from a stub export WITHOUT a recorded run (not --local)', ob.status === 0, (ob.stderr || ob.stdout).slice(0, 400));
     check('the build says it is owner-approved and prints the record as report only', /OWNER-APPROVED \(Orb 2026-10-18\)/.test(ob.stdout) && /report-only:/.test(ob.stdout), ob.stdout.slice(0, 400));
     const goodO = join(tmp, 'site-owner');
-    const verifyO = (d, c = ownerCfg(), root = goodRoot) => { writeCfg(c); return node('check-site-interim.mjs', ['--site', d, '--config', cfgFile, '--root', root, '--record', recordFile, '--today', '2026-10-19', '--no-pack-scan']); };
+    const verifyO = (d, c = ownerCfg(), root = goodRoot, extra = []) => { writeCfg(c); return node('check-site-interim.mjs', ['--site', d, '--config', cfgFile, '--root', root, '--record', recordFile, '--today', '2026-10-19', '--no-pack-scan', ...extra]); };
     const r1 = verifyO(goodO);
     check('the checker passes the owner-approved site with an empty pass file', r1.status === 0, (r1.stderr || r1.stdout).slice(0, 500));
     const gateO = readFileSync(join(goodO, 'play/index.html'), 'utf8');
@@ -321,6 +332,51 @@ try {
     failO('owner mode: the check still fails when a page uses a forbidden word', (d) => edit(d, 'about/index.html', (t) => t.replace('</body>', '<p>This build is safe.</p>\n</body>')));
     failO('owner mode: the check still fails when a page links to the game with a query (a skip)', (d) => edit(d, 'about/index.html', (t) => t.replace('href="../play/"', 'href="../play/?nointro=1"')));
     failO('owner mode: an expiry that is set is still enforced', () => {}, ownerCfg({ expires: '2026-10-18' }));
+    // the game's own strings (ui/data/*.json): Legal's RL-192 condition 2, the in-game notice word for word and the American-spelling scan over every file
+    {
+      let ur = 0;
+      const uiRoot = (fn) => { const r = prefsRoot('root-ui-' + (++ur)); fn((f, g) => { const p = join(r, 'ui/data', f); const j = JSON.parse(readFileSync(p, 'utf8')); g(j); writeFileSync(p, JSON.stringify(j)); }, r); return r; };
+      const rO = verifyO(goodO, ownerCfg(), goodRoot);
+      check("owner mode: the game's own strings pass when they are Legal's RL-192 lines", rO.status === 0, (rO.stderr || rO.stdout).slice(0, 300));
+      const OLD = {
+        menu_notice: 'This game contains flashing effects, and our own automated check found scenes that reach the recommended limit of three flashes a second, and a few that go over it on stricter readings. We are fixing them, and no independent analyser has been run. If you or someone in your family has photosensitive epilepsy, please do not play this version.',
+        photo_body_a: 'Our own automated check has found some scenes, such as a camera fly-past of collapsing buildings and some beam impacts, that flash more often than the recommended limit of three times a second. We are fixing them.',
+        photo_body_b: 'No independent photosensitivity analyser has been run. If you or someone in your family has photosensitive epilepsy, we recommend not playing this version.',
+        menu_rf_locked: 'Reduce flashing is on. It lowers some effects but does not remove the flagged scenes.',
+        photo_title: 'This game contains flashing effects',
+      };
+      for (const [k, old] of Object.entries(OLD)) failO(`owner mode: the check fails when terms.json prompt.${k} is the old, uncleared text`, () => {}, ownerCfg(), uiRoot((e) => e('terms.json', (j) => { j.prompt[k] = old; })));
+      failO('owner mode: the check fails when the in-game notice differs by one word from Legal\'s', () => {}, ownerCfg(), uiRoot((e) => e('terms.json', (j) => { j.prompt.menu_notice = j.prompt.menu_notice.replace('some scenes', 'a few scenes'); })));
+      failO('owner mode: the check fails when a prompt key is missing', () => {}, ownerCfg(), uiRoot((e) => e('terms.json', (j) => { delete j.prompt.menu_rf_locked; })));
+      failO('owner mode: the check fails when terms.json is missing', () => {}, ownerCfg(), uiRoot((e, r) => rmSync(join(r, 'ui/data/terms.json'))));
+      failO('owner mode: the check fails when the settings help still says "tested ... analyser"', () => {}, ownerCfg(), uiRoot((e) => e('settings.json', (j) => { j.sections[0].items[1].help = 'The notice shown when the game starts: it contains flashing effects, what Reduced motion does and does not change, and that the game has not yet been tested with a photosensitivity analyser.'; })));
+      failO('owner mode: the check fails when the settings help says "tested" with the American spelling', () => {}, ownerCfg(), uiRoot((e) => e('settings.json', (j) => { j.sections[0].items[1].help = 'The notice shown when the game starts, and that the game has not yet been tested with a photosensitivity analyzer.'; })));
+      failO('owner mode: the check fails when the settings row for the notice is gone', () => {}, ownerCfg(), uiRoot((e) => e('settings.json', (j) => { j.sections[0].items.pop(); })));
+      failO('owner mode: the check fails when the label is still "Colour-blind mode"', () => {}, ownerCfg(), uiRoot((e) => e('options.json', (j) => { j.options.colour_vision.label = 'Colour-blind mode'; })));
+      failO('owner mode: the check fails when any in-game string promises a fix', () => {}, ownerCfg(), uiRoot((e) => e('terms.json', (j) => { j.prompt.extra = 'We are fixing them.'; })));
+      // the spelling scan runs in every mode, over every file of ui/data
+      fail('the check fails on a British spelling in any in-game string (terms.json: centre)', () => {}, cfg(), uiRoot((e) => e('terms.json', (j) => { j.prompt.extra = 'The centre of the screen.'; })));
+      fail('the check fails on a British spelling in a help text of another file (options.json: colour)', () => {}, cfg(), uiRoot((e) => e('options.json', (j) => { j.options.colour_vision.help = 'Swaps the colour that carries meaning.'; })));
+      failO('owner mode: the check fails on a British spelling in howto.json (licence)', () => {}, ownerCfg(), uiRoot((e) => e('howto.json', (j) => { j.pages[0].rows[1].text = 'The licence is not chosen yet.'; })));
+      failO('owner mode: the check fails on a British spelling in the notice (analyser) even if it were also word for word elsewhere', () => {}, ownerCfg(), uiRoot((e) => e('terms.json', (j) => { j.prompt.extra = 'No independent analyser has been run.'; })));
+      // what it does not scan: keys and ids (internal), an _underscore note, a file's own top-level note, an id string
+      const rId = uiRoot((e) => e('terms.json', (j) => { j._why = 'colour, grey and centre'; j.note = 'Colour notes for the team'; j.pages = [{ id: 'licences', title: 'Licenses' }]; j.colour_vision = { colour_grey: 'x' }; j.ids = ['colour_vision']; }));
+      const rIdR = verifyO(goodO, ownerCfg(), rId);
+      check('owner mode: the scan skips keys, ids, _underscore notes and a file\'s own top-level note', rIdR.status === 0, (rIdR.stderr || rIdR.stdout).slice(0, 300));
+      // the allowlist: a British spelling UI has not swapped yet is let through only when it is listed by file and pointer
+      const pending = uiRoot((e) => e('howto.json', (j) => { j.pages[0].rows[1].text = 'The licence is not chosen yet.'; }));
+      const allowFile = join(tmp, 'ui-allow.json');
+      writeFileSync(allowFile, JSON.stringify({ allow: [{ file: 'ui/data/howto.json', pointer: '/pages/0/rows/1/text', why: 'pending' }] }));
+      const rA = verifyO(goodO, ownerCfg(), pending, ['--ui-allow', allowFile]);
+      check('owner mode: a British spelling listed in the allowlist (by file and pointer) is let through', rA.status === 0, (rA.stderr || rA.stdout).slice(0, 300));
+      writeFileSync(allowFile, JSON.stringify({ allow: [{ file: 'ui/data/howto.json', pointer: '/pages/0/rows/0/text', why: 'wrong pointer' }] }));
+      const rB = verifyO(goodO, ownerCfg(), pending, ['--ui-allow', allowFile]);
+      check('owner mode: an allowlist entry for another pointer lets nothing through', rB.status === 1 && /howto\.json \/pages\/0\/rows\/1\/text/.test(rB.stderr), (rB.stderr || rB.stdout).slice(0, 300));
+      const rC = verifyO(goodO, ownerCfg(), goodRoot, ['--ui-allow', allowFile]);
+      check('owner mode: an allowlist entry that no longer matches only prints a note (remove it)', rC.status === 0 && /no longer holds a British spelling/.test(rC.stdout), (rC.stderr || rC.stdout).slice(0, 300));
+      const rD = verifyO(goodO, ownerCfg(), goodRoot, ['--ui-allow', join(tmp, 'no-such-allow.json')]);
+      check('owner mode: a missing allowlist file is a failure, not a pass', rD.status === 1, (rD.stderr || rD.stdout).slice(0, 300));
+    }
     writeRecord();
   }
   // no interim: nothing to check, passes
