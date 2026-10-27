@@ -397,6 +397,22 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     const off = f(Array.from({ length: 20 }, () => rec({ koAt: 400 })));
     for (const k of ['rally.dazes', 'rally.perMatch', 'rally.links', 'rally.turns', 'rally.sells']) assert.strictEqual(id(off, k).status, 'PENDING', k);
   });
+  await t('the autopsy (QA_AUTOPSY=1, field "at"): damage by source, launch spacing, KOs near an anywhere action, the HP at the first one; matches without the field are skipped', async () => {
+    const { autopsy } = require('./autopsy');
+    const at = (ko, over = {}) => ({ dv: {}, dc: { '1|brawl': 800, '1|pop': 100, '1|energy': 100, '0|brawl': 500 }, lt: [[600, 1, 0, 0.5, 0.6], [660, 1, 0, 0.4, 0.6], [1500, 1, 0, 0.1, 0.6]], lpw: [], lc: [[590, 0, 'flurry', 0.5], [1400, 0, 'daze', 0.2]], pops: [[640, 0, 'up', 0.45], [700, -1, 'tech', 0.45]], link: [], ko, maxhp: [1600, 1600], ticks: ko + 10, ...over });
+    const rec = (sec, over = {}) => ({ winner: 0, koAt: sec, at: at(Math.round(sec * 60)), ...over });
+    const recs = [rec(300), rec(400), rec(500), { winner: 0, koAt: 450 }];   // the last has no field at: skipped
+    const r = autopsy(recs, 1);
+    assert.strictEqual(r.all.n, 3); assert.strictEqual(r.short.n, 1); assert.strictEqual(r.short.medianSec, 300);
+    assert.strictEqual(r.all.loserDamageShare.pop, 10);   // the loser is fighter 1: 800 brawl, 100 pop, 100 energy of 1000
+    assert.strictEqual(r.all.loserDamageShare.brawl, 80);
+    assert.strictEqual(r.all.launchesOnLoserAMatch, 3); assert.strictEqual(r.all.gapsN, 6);   // three launches, two gaps a match
+    assert.strictEqual(r.all.gapUnder2sPct, 50);   // 600 to 660 is 1 s; 660 to 1500 is 14 s
+    assert.strictEqual(r.all.firstAnywhereHpMedian, 0.5);   // the first anywhere action: the launcher thrown at 590 on a target at 0.5
+    assert.strictEqual(r.all.koWithin2sOfAnywhereAct, 0);   // the last action (a launcher at 1400) is long before the KO
+    const near = autopsy([rec(25, { at: at(1500) })], 1);   // a KO at tick 1500, a launcher thrown at tick 1400: 1.7 s
+    assert.strictEqual(near.all.koWithin2sOfAnywhereAct, 1);
+  });
   await t('the campaign rows (campaign.md section 7): PENDING without a record; episode 40-50 min, places 322-806, turns 40-60%, rescues 30-60%, rematches 50-75%, no repeated template in an episode and at most 3 in an arc', async () => {
     const camp = (over = {}) => ({ episodeSec: 45 * 60, columns: [1, 2, 3, 4].map(n => ({ n, turned: n % 2 === 0, places: [{ fromPair: 400 }, { fromPair: -700 }] })), rescues: { n: 10, won: 5 }, rematches: { n: 10, won: 6 }, partner: { stages: 4, won: 3 }, templates: ['a', 'b', 'c', 'd', 'e'], arcTemplates: { a: 2, b: 3 }, ...over });
     const f = D => evaluate({ default: D }), id = (rows, k) => rows.find(r => r.id === k);

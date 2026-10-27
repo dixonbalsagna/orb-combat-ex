@@ -115,6 +115,20 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	var ended: Array = [false, false]   # a flight ended this tick: its open launch takes the class of the contact if no event named one
 	var new_fl: Array = []   # launch events of this tick
 	var lift: Array = [null, null]   # the open flight off terrain of each fighter: {tick, cause}; counted as seen once it has been in the air 10 ticks (balance-targets 20, second landing ruling)
+	var at_on: bool = OS.get_environment("QA_AUTOPSY") == "1"   # the autopsy below is written to the record as the field "at" only when QA_AUTOPSY=1: normal runs keep their record shape (QA_AUTOPSY=1 node qa/godot/run-arm.js ...; docs/qa/rally-read-fa6f727a.md, second addendum)
+	var at_dv: Dictionary = {}   # the autopsy (2026-10-26, GD 10-26 item 34): damage by "victim|his state|kind"
+	var at_lt: Array = []       # ... every launch: [tick, sent, launcher, sent hp share, launcher hp share]
+	var at_lpw: Array = []      # ... every launch_power cue: [tick, launcher, power, kind]
+	var at_lc: Array = []       # ... every launcher thrown (launcher_close used): [tick, slot, the opening's reason]
+	var at_open: Array = ["", ""]   # ... the reason of each slot's last launcher_open
+	var at_pops: Array = []     # ... every pop: [tick, launcher, kind]
+	var at_ko: int = -1         # ... the tick of the KO
+	var at_dc: Dictionary = {}   # v2: damage by "victim|context": pop, launcher blow, rally link, full-launch landing, other landing, energy, brawl, other
+	var at_link: Array = []     # v2: [tick, body] of every rally link (not the opening send)
+	var pop_until: Array = [-1, -1]
+	var lc_t: Array = [-100, -100]
+	var link_t: Array = [-100, -100]
+	var last_full: Array = [0, 0]
 	var rl_cur: Array = []        # the rally running: the base kinds of its links so far (Encounter's cue rally_link; the park docs/director/pending/rally, switch rally.enabled)
 	var rl_turn_t: int = -1000   # the tick of the last rally_turn: the send that follows it continues the rally
 	var rl_all_n: int = 0          # the links of the hands that already ended "turned" (the rally goes on in the other's hands: Encounter's probe counts it once, with the last hands' links)
@@ -154,6 +168,7 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 		var dT: float = S.T - prev_t
 		prev_t = S.T
 		if S.game.ko != null and rec.koAt < 0.0:
+			at_ko = S.tick
 			rec.koAt = S.T
 			rec.winner = 1 - fs.find(S.game.ko)
 		var top: int = 1
@@ -241,6 +256,9 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			if e.type == "cue" and str(e.get("kind")) == "launch_power" and int(e.actor) >= 0 and int(e.actor) < 2:
 				var pa: int = int(e.actor)
 				lp_list.append([S.tick, pa, 1 if float(e.get("k")) >= 1.0 else 0])
+				at_lpw.append([S.tick, pa, snappedf(float(e.get("amount")), 0.01), str(e.get("text"))])
+				if int(e.target) >= 0 and int(e.target) < 2:
+					last_full[int(e.target)] = 1 if float(e.get("k")) >= 1.0 else 0
 				rec.pow.has = true
 				rec.pow.n[pa] += 1
 				if float(e.get("k")) >= 1.0:
@@ -248,6 +266,9 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			# one landing class per launch, by first contact (balance-targets 18): brunt (a building first), water (a skim or splash, or an impact in the sea), slide (a first ground contact carrying on for 2 bh = 150 units or more), else slam
 			if e.type == "launch":
 				var v0: int = int(e.actor)
+				if v0 >= 0 and v0 < 2:
+					var lb0: int = int(e.target)
+					at_lt.append([S.tick, v0, lb0, snappedf(fs[v0].hp / maxf(1.0, fs[v0].maxhp), 0.001), (snappedf(fs[lb0].hp / maxf(1.0, fs[lb0].maxhp), 0.001) if lb0 >= 0 and lb0 < 2 else -1.0)])
 				for fl in open_fl:
 					if fl.v == v0 and fl.cls == "":
 						fl.cls = "other"   # launched again before any contact
@@ -321,6 +342,25 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			# damage by kind (blasts and signatures as shares of the match's damage) and the play events that end a gap
 			if e.type == "damage" and e.amount > 0.0:
 				var dk: String = str(e.get("kind"))
+				if at_on and int(e.victim) >= 0 and int(e.victim) < 2:
+					var dkey: String = str(int(e.victim)) + "|" + str(fs[int(e.victim)].state) + "|" + dk
+					at_dv[dkey] = float(at_dv.get(dkey, 0.0)) + float(e.amount)
+					var av: int = int(e.victim)
+					var actx: String = "other"
+					if S.tick <= int(pop_until[av]):
+						actx = "pop"
+					elif S.tick - int(lc_t[av]) >= 0 and S.tick - int(lc_t[av]) <= 14:
+						actx = "launcher blow"
+					elif S.tick - int(link_t[av]) >= 0 and S.tick - int(link_t[av]) <= 60:
+						actx = "rally link"
+					elif dk == "impact":
+						actx = "landing (full launch)" if int(last_full[av]) == 1 else "landing (other)"
+					elif dk == "beam" or dk == "blast":
+						actx = "energy"
+					elif str(fs[av].state) == "locked":
+						actx = "brawl"
+					var ackey: String = str(av) + "|" + actx
+					at_dc[ackey] = float(at_dc.get(ackey, 0.0)) + float(e.amount)
 				rec.dmgByKind[dk] = float(rec.dmgByKind.get(dk, 0.0)) + float(e.amount)
 				if int(e.attacker) >= 0:
 					last_play = S.T
@@ -358,6 +398,15 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 			if e.type == "cue":   # the director's cues by kind: perfect_block, dodge_cancel, burst (step 3)
 				var cq: String = str(e.get("kind"))
 				rec.cues[cq] = rec.cues.get(cq, 0) + 1
+				if cq == "launcher_open" and int(e.actor) >= 0 and int(e.actor) < 2:
+					at_open[int(e.actor)] = str(e.get("text"))
+				elif cq == "launcher_close" and str(e.get("text")) == "used" and int(e.actor) >= 0 and int(e.actor) < 2:
+					at_lc.append([S.tick, int(e.actor), at_open[int(e.actor)], snappedf(fs[1 - int(e.actor)].hp / maxf(1.0, fs[1 - int(e.actor)].maxhp), 0.001)])
+					lc_t[1 - int(e.actor)] = S.tick
+				elif cq == "pop":
+					at_pops.append([S.tick, int(e.target), str(e.get("text")), (snappedf(fs[int(e.actor)].hp / maxf(1.0, fs[int(e.actor)].maxhp), 0.001) if int(e.actor) >= 0 and int(e.actor) < 2 else -1.0)])
+					if int(e.actor) >= 0 and int(e.actor) < 2 and str(e.get("text")) != "land" and str(e.get("text")) != "tech" and str(e.get("text")) != "burst":
+						pop_until[int(e.actor)] = int(e.n)
 				if cq == "daze" or cq == "sell" or cq == "rally_link" or cq == "rally_turn" or cq == "rally_tech" or cq == "rally_end":   # the rally's cues (Encounter's park docs/director/pending/rally): a build without it sends none
 					var rtx: String = str(e.get("text"))
 					rec.rally.has = true
@@ -380,6 +429,9 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 							var rsrc: String = str(e.get("source"))   # GD 23d item 17: an own link is its own kind, carried in the cue's source; else the base kind (the text)
 							rl_cur.append(rsrc if rsrc != "" and rsrc != "<null>" else rtx)
 							rl_ticks.append(S.tick)
+							if int(e.target) >= 0 and int(e.target) < 2:
+								link_t[int(e.target)] = S.tick
+								at_link.append([S.tick, int(e.target)])
 					elif cq == "rally_tech":
 						rec.rally.techs += 1
 						if _ei(e, "k") == 1:
@@ -628,6 +680,8 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	rec.stage = [fs[0].get("stage"), fs[1].get("stage")]
 	rec.menace = [fs[0].menace, fs[1].menace]
 	rec.anguish = [fs[0].anguish, fs[1].anguish]
+	if at_on:
+		rec["at"] = {"dv": at_dv, "lt": at_lt, "lpw": at_lpw, "lc": at_lc, "pops": at_pops, "ko": at_ko, "dc": at_dc, "link": at_link, "ticks": S.tick, "maxhp": [fs[0].maxhp, fs[1].maxhp]}
 	rec.pow["fullOpen"] = [0, 0]   # full launches that are not a rally link's send: a rally counts once, by its opening send (rulings-2026-10-26 item 11)
 	for lp in lp_list:
 		if int(lp[2]) == 1:

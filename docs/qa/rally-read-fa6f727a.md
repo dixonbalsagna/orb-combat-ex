@@ -117,3 +117,14 @@ Launcher openings (anywhere on, a match): perfect block 3.88, flurry 4.10, daze 
 **One line:** the short tail is driven by the pop and its hold of the brawl, not by launch damage: the anywhere flow supplies under 4% of the loser's damage, but it keeps the two fighters in reach (12 pops a match, a launch every 11 s against 27 s), lifting the brawl's damage rate by 15%, and switching only the pops off swings the median from 393 s to 672 s (p90 757 s, over its 600 s ceiling), so the pop carries more length than the whole of launch anywhere does. A lever for p10 should be a **partial pop** (fewer pops a match, or a pop that costs the popper a recovery), not the launches' pay.
 
 Caveats. One run of 200 on each arm; the pop-off arm is one reading and overshoots, so it locates the driver but not the dose. The damage contexts are windows (a launcher blow 14 ticks, a rally link 60 ticks, a pop until its cue's end), so a blow struck in a window counts to the window. The answer's counter-launch is not separable. The autopsy capture lives in a scratch copy of `records.gd`; I can land it in `qa/godot/records.gd` if the EP wants the fields kept.
+
+### The autopsy in the repo (2026-10-26)
+
+`qa/godot/records.gd` now carries the capture, **off by default**: the field `at` is written only when `QA_AUTOPSY=1` is set in the environment (the child Godot processes inherit it), so normal runs keep their record shape. Checked on real runs of 2 matches: without the flag no record has `at`; with it every record does; the records are otherwise byte-identical and the sim hashes are the same. The analysis is `qa/godot/autopsy.js`:
+
+```
+QA_AUTOPSY=1 node qa/godot/run-arm.js --count=200 --out=<records.json>
+node qa/godot/autopsy.js <records.json> [N=20]
+```
+
+Self-test 31 of 31 (new case: damage shares, launch spacing, KO near an anywhere action, the HP at the first one, matches without the field skipped); `node qa/run-all.js` all 7 passed.
