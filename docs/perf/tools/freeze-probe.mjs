@@ -116,6 +116,7 @@ try {
   result.probe = probe ? JSON.parse(probe) : null;
   result.gpu = await page.eval(`(() => { try { const gl = document.createElement('canvas').getContext('webgl2'); const e = gl.getExtension('WEBGL_debug_renderer_info'); return gl.getParameter(e.UNMASKED_RENDERER_WEBGL) + ' | max texture ' + gl.getParameter(gl.MAX_TEXTURE_SIZE) + ' | max varyings ' + gl.getParameter(gl.MAX_VARYING_VECTORS); } catch (e) { return String(e); } })()`).catch(() => null);
   result.note = await page.eval("JSON.stringify({ note: (document.getElementById('ocx-crumbs-note') || {}).innerText || null, line: (document.getElementById('ocx-stage-line') || {}).innerText || null, report: window.__ocx && window.__ocx.crumbs ? window.__ocx.crumbs.report() : null })").then((x) => JSON.parse(x)).catch(() => null);
+  result.bpskip = await page.eval('JSON.stringify(window.__bpskip || null)').then((x) => JSON.parse(x)).catch(() => null);
   result.bp = await page.eval('JSON.stringify(window.__bp || null)').then((x) => JSON.parse(x)).catch(() => null);
   result.shots = shot;
 } catch (e) {
