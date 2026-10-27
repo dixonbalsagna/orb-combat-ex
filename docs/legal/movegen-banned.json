@@ -667,6 +667,11 @@
       "id": "p03",
       "rule": "American spelling in every public string (Orb, 2026-10-18): analyzer, License (the licence line, 'Licenses, notices and privacy', 'MIT License', 'SIL Open Font License 1.1' which is the licence's official spelling), color, behavior, gray, center, artifact, program, catalog, neighbor, organization, recognize; the change is spelling only and no other word in a fixed line (the gate notice, the lock line, the AI line, the privacy line) moves; Tools' word-for-word checks are updated in the same commit; the public page's flash notice carries the gate's words exactly (addendum 11), not an older version; licence names keep their official spelling; internal Legal files may stay British",
       "why": "RL-162"
+    },
+    {
+      "id": "p04",
+      "rule": "freeze breadcrumbs (a local-only technical record): the privacy sentence while the switch is on discloses the record and its contents and says the game sends nothing and the report goes only where the visitor pastes it, and does not say 'collects no personal data'; the existing privacy line stays unchanged while the switch is off, and Tools' word-for-word check keys both to the switch; the start line says only 'Starting. The first start can take a minute or more on a phone, and the page may look stuck while it loads.' (no 'prepared once', no 'it is still working'); the line and the note never start the game, skip the click-through or cover its buttons on a small phone; the visitor sees the exact report text before copying; the GPU string is read only when the report is made; no identifiers, no clock timestamps (relative times only), no URL query or hash, error text shortened with URLs stripped to host and path; one record replaced each visit and cleared once the note is dismissed or the report copied; the report never leaves the device except by the visitor's paste, and any automatic sending stops for Legal first; Orb keeps pasted reports private and deletes them after use; Tools confirms no cookie is set before 'does not use trackers' is printed",
+      "why": "RL-188"
     }
   ],
   "signature": [
