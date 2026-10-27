@@ -34,91 +34,144 @@ const SETTLEMENTS: Array = [
 ## multiplied by the feature scale WS (and the mountains by MS), so the planet is PS times longer with WS times bigger
 ## things on it (SimConst).
 static func genWorld(S: SimState) -> void:
-	var r := SimRng.new(4242)
+	var J := genBegin(S)
+	while not genStep(S, J):
+		pass
+
+
+## genWorld in pieces, for a match's start in steps (SimCore.beginMatch; docs/architecture/match-start.md). genBegin makes
+## the job; genStep runs one piece and is true when the world is whole: the ground HEIGHT_SLICE columns a piece, then the
+## smoothing and the platforms, then a settlement a piece (or the old rows in one), then the lanes, and last the people,
+## the trees and the arrays. The same work in the same order as genWorld has always done, so the world is the same however
+## it is stepped.
+const HEIGHT_SLICE: int = 1200
+
+
+class GenJob extends RefCounted:
+	var r: SimRng
+	var t := PackedFloat32Array()
+	var i: int = 0
+	var phase: int = 0
+	var spans: Array = []
+	var totals: Array = []
+	var newPop: float = -1.0
+	var dOff: int = 0
+	var si: int = -1
+	var dlist: Array = []
+
+
+static func genBegin(S: SimState) -> GenJob:
+	var J := GenJob.new()
+	J.r = SimRng.new(4242)
+	var NC: int = SimConst.NC
+	S.deform.resize(NC)
+	S.deform.fill(0.0)
+	J.t.resize(NC)
+	return J
+
+
+static func genStep(S: SimState, J: GenJob) -> bool:
 	var NC: int = SimConst.NC
 	var WS: float = SimConst.WS
 	var PS: float = SimConst.PS
-	S.deform.resize(NC)
-	S.deform.fill(0.0)
-	var t := PackedFloat32Array()
-	t.resize(NC)
-	for i in range(NC):
-		var xn: float = float(i) * SimConst.COL / PS
-		var b: String = WorldBiomes.biomeAt(float(i) * SimConst.COL)
-		var n: float = SimDetMath.sin(xn * 0.0021) * 0.5 + SimDetMath.sin(xn * 0.0057 + 1.3) * 0.3 + SimDetMath.sin(xn * 0.013 + 2.1) * 0.2
-		if b == "ocean":
-			t[i] = (-340.0 + n * 35.0) * WS
-		elif b == "mountains":
-			var k: float = SimMathx.jclamp((xn - 6500.0) / 1100.0, 0.0, 1.0)
-			var env: float = SimDetMath.sin(SimMathx.PI * k)
-			t[i] = env * (330.0 + 560.0 * absf(SimDetMath.sin(xn * 0.0042 + 0.7)) * (0.55 + 0.45 * SimDetMath.sin(xn * 0.013))) * SimConst.MS
-		elif b == "desert":
-			t[i] = n * 28.0 * WS
-		elif b == "plains":
-			t[i] = n * 16.0 * WS
-		elif b == "forest":
-			t[i] = (10.0 + n * 22.0) * WS
+	if J.phase == 0:   # the ground, a slice of columns
+		var t: PackedFloat32Array = J.t
+		var i1: int = mini(NC, J.i + HEIGHT_SLICE)
+		for i in range(J.i, i1):
+			var xn: float = float(i) * SimConst.COL / PS
+			var b: String = WorldBiomes.biomeAt(float(i) * SimConst.COL)
+			var n: float = SimDetMath.sin(xn * 0.0021) * 0.5 + SimDetMath.sin(xn * 0.0057 + 1.3) * 0.3 + SimDetMath.sin(xn * 0.013 + 2.1) * 0.2
+			if b == "ocean":
+				t[i] = (-340.0 + n * 35.0) * WS
+			elif b == "mountains":
+				var k: float = SimMathx.jclamp((xn - 6500.0) / 1100.0, 0.0, 1.0)
+				var env: float = SimDetMath.sin(SimMathx.PI * k)
+				t[i] = env * (330.0 + 560.0 * absf(SimDetMath.sin(xn * 0.0042 + 0.7)) * (0.55 + 0.45 * SimDetMath.sin(xn * 0.013))) * SimConst.MS
+			elif b == "desert":
+				t[i] = n * 28.0 * WS
+			elif b == "plains":
+				t[i] = n * 16.0 * WS
+			elif b == "forest":
+				t[i] = (10.0 + n * 22.0) * WS
+			else:
+				t[i] = 0.0
+		J.t = t
+		J.i = i1
+		if J.i >= NC:
+			J.phase = 1
+		return false
+	if J.phase == 1:   # the smoothing, the base, the platforms
+		# Four wrapped box blurs of half width SMOOTH_HALF columns (the original 12 columns of 8 units, times PS, in columns
+		# of COL), ping-ponging between two float32 buffers. A running sum keeps the cost linear.
+		var half: int = int(round(12.0 * 8.0 * PS / SimConst.COL))
+		var kw: float = float(2 * half + 1)
+		var a := J.t
+		var bf := PackedFloat32Array()
+		bf.resize(NC)
+		for p in range(4):
+			var s: float = 0.0
+			for k in range(-half, half + 1):
+				s += a[(k + NC) % NC]
+			bf[0] = s / kw
+			for i in range(1, NC):
+				s += a[(i + half) % NC] - a[(i - half - 1 + NC) % NC]
+				bf[i] = s / kw
+			var tmp := a
+			a = bf
+			bf = tmp
+		S.base = a.duplicate()
+		S.buildings.clear()
+		S.trees.clear()
+		J.spans = _platforms(S)
+		# Front streets first (the original layout, draw for draw), then the extra rows of each settlement.
+		J.totals = []
+		J.newPop = -1.0
+		if bool(WorldSettle.data().get("enabled", false)):
+			J.newPop = 0.0
+			J.dOff = 0
+			J.si = -1
+			J.dlist = []
+			J.phase = 2
 		else:
-			t[i] = 0.0
-	# Four wrapped box blurs of half width SMOOTH_HALF columns (the original 12 columns of 8 units, times PS, in columns
-	# of COL), ping-ponging between two float32 buffers. A running sum keeps the cost linear.
-	var half: int = int(round(12.0 * 8.0 * PS / SimConst.COL))
-	var kw: float = float(2 * half + 1)
-	var a := t
-	var bf := PackedFloat32Array()
-	bf.resize(NC)
-	for p in range(4):
-		var s: float = 0.0
-		for k in range(-half, half + 1):
-			s += a[(k + NC) % NC]
-		bf[0] = s / kw
-		for i in range(1, NC):
-			s += a[(i + half) % NC] - a[(i - half - 1 + NC) % NC]
-			bf[i] = s / kw
-		var tmp := a
-		a = bf
-		bf = tmp
-	S.base = a.duplicate()
-	S.buildings.clear()
-	S.trees.clear()
-	var spans: Array = _platforms(S)
-	# Front streets first (the original layout, draw for draw), then the extra rows of each settlement.
-	var totals: Array = []
-	var newPop: float = -1.0
-	if bool(WorldSettle.data().get("enabled", false)):
-		newPop = 0.0
-		var dOff: int = 0
-		var si: int = -1
-		var dlist: Array = []
-		for sd in WorldSettle.data().settlements:
-			si += 1
-			var g: Dictionary = WorldSettle.generate(S, sd)
+			for st in SETTLEMENTS:
+				J.totals.append(_row(S, J.r, J.spans[J.totals.size()][0], J.spans[J.totals.size()][1], st.kind, 1, 1.0, 1.0, 0.0))
+			for k in range(SETTLEMENTS.size()):
+				var st = SETTLEMENTS[k]
+				for rw in st.rows:
+					_row(S, J.r, J.spans[k][0], J.spans[k][1], rw[1], rw[0], rw[2], rw[3], rw[4] * WS)
+			J.phase = 3
+		return false
+	if J.phase == 2:   # a settlement a piece, then the lanes
+		var sets: Array = WorldSettle.data().settlements
+		if J.si + 1 < sets.size():
+			J.si += 1
+			var si: int = J.si
+			var g: Dictionary = WorldSettle.generate(S, sets[si])
 			for dd in g.districts:
 				dd["settlement"] = si
-				dlist.append(dd)
+				J.dlist.append(dd)
 			for ei in range(g.buildings.size()):
 				var e = g.buildings[ei]
 				var nb := SimState.Building.new()
 				nb.place = si
 				nb.plan = ei
 				nb.x = e.x; nb.w = e.w; nb.d = e.d; nb.h = e.h; nb.kind = e.kind; nb.row = float(e.row); nb.z = e.z; nb.seed = e.seed
-				nb.district = dOff + int(e.district); nb.shape = String(e.shape); nb.landmark = int(e.landmark)
+				nb.district = J.dOff + int(e.district); nb.shape = String(e.shape); nb.landmark = int(e.landmark)
 				nb.floors = e.floors
 				nb.fmask = (1 << nb.floors) - 1
 				nb.maxhp = e.maxhp; nb.hp = e.maxhp; nb.alive = true
 				nb.pop = float(e.pop); nb.popAlive = nb.pop
-				newPop += nb.pop
+				J.newPop += nb.pop
 				S.buildings.append(nb)
-			dOff += g.districts.size()
-		S.lanes = WorldLanes.build(S, dlist)
-	else:
-		for st in SETTLEMENTS:
-			totals.append(_row(S, r, spans[totals.size()][0], spans[totals.size()][1], st.kind, 1, 1.0, 1.0, 0.0))
-		for k in range(SETTLEMENTS.size()):
-			var st = SETTLEMENTS[k]
-			for rw in st.rows:
-				_row(S, r, spans[k][0], spans[k][1], rw[1], rw[0], rw[2], rw[3], rw[4] * WS)
+			J.dOff += g.districts.size()
+			return false
+		S.lanes = WorldLanes.build(S, J.dlist)
+		J.phase = 3
+		return false
 	# Conserve each settlement's population: rescale all its rows to the front street's total.
+	var r: SimRng = J.r
+	var totals: Array = J.totals
+	var newPop: float = J.newPop
 	var pop: float = 0.0
 	var byS: Array = []
 	for k in range(SETTLEMENTS.size()):
@@ -163,6 +216,7 @@ static func genWorld(S: SimState) -> void:
 	S.slides.clear()
 	WorldWater.init(S)
 	WorldCollateral.init(S)
+	return true
 
 
 ## The platform under each settlement: trim the span to where the natural ground first reaches TRIM_G (from each end), lift

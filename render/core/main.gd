@@ -85,6 +85,7 @@ var particles: ParticleView
 var host: SimHost
 var started: bool = false
 var manual: bool = false          # tools call frame() or render_view() themselves
+var _attach_pending: bool = false   # the split view waits for the boot's match, started in pieces (_match_built attaches it)
 var _match_ever: bool = false     # a match has been built in this session (a load that is cancelled before the first one starts a plain one under the menu)
 var _planet_next: Dictionary = {} # the planet part of the next menu-started match's setup (planet_part), merged by _match_setup
 var fighter_views: Array = []
@@ -219,6 +220,7 @@ func _ready() -> void:
 	audio = AudioVoices.new(host.audio_cues.bank)
 	add_child(audio)
 	host.audio_cues.bank.warm()   # render every sound now, so none renders in the middle of a fight (headless too: a tool times first plays as the game has them)
+	host.stepped_start = not manual and not args.has("syncstart")   # the match starts in pieces, the loading screen between them (docs/architecture/match-start.md); a tool's main starts it whole
 	start_match(int(args["seed"]) if args.has("seed") else fresh_seed())
 	if args.has("human"):
 		take_over()
@@ -236,7 +238,10 @@ func _ready() -> void:
 		add_child(split_view)
 		_sync_split_options()
 		if not args.has("nosplit"):
-			split_view.attach(self)
+			if host.loading():
+				_attach_pending = true   # the boot's match is starting in pieces: the split attaches when it is built (_match_built), after it, as after a whole start
+			else:
+				split_view.attach(self)
 	if not manual and not args.has("nowarmup"):
 		var warm := RenderWarmup.new()
 		add_child(warm)
@@ -296,6 +301,9 @@ func _match_built() -> void:
 	var vp: Vector2 = get_viewport().get_visible_rect().size
 	split_rig.reset(host.S, vp.x, vp.y)
 	render_view(host.alpha())
+	if _attach_pending:
+		_attach_pending = false
+		split_view.attach(self)
 
 
 ## What the game adds to a match's setup: a composed intro (docs/architecture/dynamic-intros.md, the record form).

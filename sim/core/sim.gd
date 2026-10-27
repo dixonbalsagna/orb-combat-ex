@@ -47,13 +47,98 @@ static func dispose(S: SimState) -> void:
 ## I2a: "v2": [bool, bool] marks the slots whose intents are v2 (the stance follows the held fields), and "assists":
 ## [[names], [names]] the Simple layout's assists per slot (SimAct.ASSISTS).
 static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Dictionary = {}) -> void:
+	var j := beginMatch(S, seed, ai, setup)
+	while not j.step():
+		pass
+
+
+## A match's start in pieces (docs/architecture/match-start.md; Performance's phone freeze, 2026-10-26): a host steps one
+## piece a frame and draws its loading screen between them. The pieces are newMatch's own work in its own order, cut at
+## its seams: the head (with a planet's world, or the first piece of WorldTerrain's); the world (WorldTerrain's GenJob:
+## the ground in slices, the smoothing, a settlement a piece, the rest); the fighters; the setups, a few a piece; the
+## intro; the mood. newMatch is this job run to its end, so the state is the same however it is stepped. Each piece binds
+## the match's statics first (the arena's length, a planet's biome columns, its generation), so another sim stepping
+## between two pieces does not change it. A setup refused (SimPlanetLoad.strict, a gen 2 planet not made) is a job done at
+## once that touched nothing.
+static func beginMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Dictionary = {}) -> MatchJob:
+	var j := MatchJob.new()
+	j.S = S
+	j.seed = seed
+	j.ai = ai
+	j.setup = setup
 	if SimPlanetLoad.strict and not SimPlanetLoad.mayStart(setup):   # the game's host loads a gen 2 planet first (SimPlanetLoad): never made cold in a match's start
 		SimPlanetLoad.refused += 1
 		if not FighterData.quiet:
 			push_error("SimCore.newMatch: planet %d (gen %d) is not made: load it first (SimPlanetLoad)" % [int(setup.planet), SimPlanetLoad.genOf(setup)])
-		return
-	S.game.seed = float(seed & 0xFFFFFFFF)
-	S.rng = SimRng.new(seed & 0xFFFFFFFF)
+		j.refused = true
+		j.done = true
+	return j
+
+
+class MatchJob extends RefCounted:
+	const AFTER_WORLD: int = 7   # the pieces after the world's (for progress)
+	var S: SimState
+	var seed: int = 0
+	var ai: Dictionary = {}
+	var setup: Dictionary = {}
+	var phase: int = 0
+	var gj = null                # World's GenJob, while the world is made
+	var planetCols := PackedByteArray()
+	var fineCols := PackedByteArray()
+	var gen: int = 0
+	var pieces: int = 0
+	var done: bool = false
+	var refused: bool = false
+
+	## One piece; true when the match has started (or was refused).
+	func step() -> bool:
+		if done:
+			return true
+		pieces += 1
+		if phase > 0:   # the match's statics, as the head set them (another sim may have stepped since)
+			SimConst.setArena(S.arenaCols)
+			WorldBiomes.planetCols = planetCols
+			WorldBiomes.fineCols = fineCols
+			WorldClimate.curGen = gen
+		match phase:
+			0:
+				SimCore._mHead(self)
+			1:
+				if WorldTerrain.genStep(S, gj):
+					gj = null
+					phase = 2
+			2:
+				SimCore._mFighters(self)
+			3:
+				SimCore._mSetupsA(self)
+			4:
+				SimCore._mSetupsB(self)
+			5:
+				SimCore._mSetupsC(self)
+			6:
+				SimIntro.setup(S, setup) # the intro phase, when the setup asks for it
+				phase = 7
+			7:
+				SimCore._mEnd(self)
+		planetCols = WorldBiomes.planetCols   # what this match's pieces have set, bound again at the next
+		fineCols = WorldBiomes.fineCols
+		gen = WorldClimate.curGen
+		return done
+
+	## How far the start is, 0 to 1, for a loading screen: the pieces done over an estimate of them all (the head, the
+	## ground's slices, the smoothing, a piece a settlement, the lanes, the rest, and the pieces after the world).
+	func progress() -> float:
+		if done:
+			return 1.0
+		var est: int = 1 + int(ceil(float(SimConst.PLANET_NC) / float(WorldTerrain.HEIGHT_SLICE))) + 3 + WorldSettle.data().get("settlements", []).size() + AFTER_WORLD
+		return clampf(float(pieces) / float(maxi(est, pieces + 1)), 0.0, 0.99)
+
+
+static func _mHead(J: MatchJob) -> void:
+	var S: SimState = J.S
+	var setup: Dictionary = J.setup
+	S.game.seed = float(J.seed & 0xFFFFFFFF)
+	S.rng = SimRng.new(J.seed & 0xFFFFFFFF)
 	S.arenaCols = _arenaCols(setup)   # the arena's length in columns (World: a ring of the planet's; needs a planet), else the planet's 4,800
 	SimConst.setArena(S.arenaCols)
 	WorldBiomes.planetCols = PackedByteArray()
@@ -61,8 +146,16 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
 	WorldClimate.useGen(0)   # the data's generation unless the setup names one (WorldPlanetWorld.gen)
 	S.planetRing = {}   # World: the planet match's ring (planet_world.gd sets it)
 	S.epoch = null   # World's calm-moment turn (world/epoch.gd): a planet match with it on sets it
+	J.phase = 2
 	if not (setup.has("planet") and WorldPlanetWorld.gen(S, setup)):   # a setup with a planet reads its world from the slice; without one, today's world
-		WorldTerrain.genWorld(S)
+		J.gj = WorldTerrain.genBegin(S)   # in pieces (WorldTerrain.genStep): genWorld's work in genWorld's order
+		J.phase = 1
+
+
+static func _mFighters(J: MatchJob) -> void:
+	var S: SimState = J.S
+	var ai: Dictionary = J.ai
+	var setup: Dictionary = J.setup
 	S.fineCols = WorldBiomes.fineCols
 	S.planetGen = WorldClimate.curGen
 	S.planetCols = WorldBiomes.planetCols   # the statics a world sets belong to this match: step takes them again when another match has built since
@@ -121,28 +214,51 @@ static func newMatch(S: SimState, seed: int, ai: Dictionary = {}, setup: Diction
 	S.dirS.homeWait = 0
 	S.dirS.sideT = 0
 	S.dirS.sideWay = 0
+	J.phase = 3
+
+
+static func _mSetupsA(J: MatchJob) -> void:
+	var S: SimState = J.S
+	var setup: Dictionary = J.setup
 	SimAct.setup(S, setup)   # I2a: each fighter's action state
 	S.cata = null   # no catastrophe yet (the tier-5 window sets it up from the stage's ceiling)
 	S.depthOn = setup.get("depth", SimDepth.enabled()) == true   # fighters in depth: the data's switch (data/combat/depth.json), or the setup's own for this match
 	S.brakeOn = setup.get("brake", SimBrake.enabled()) == true   # the air brake: the data's switch (data/fight/brake.json), or the setup's own for this match
 	SimBrake.setup(S)   # each fighter's brake state while the brake is on
+	J.phase = 4
+
+
+static func _mSetupsB(J: MatchJob) -> void:
+	var S: SimState = J.S
+	var setup: Dictionary = J.setup
 	S.formsOn = setup.get("forms", SimForms.enabled()) == true   # forms: the data's switch (data/fight/forms.json), or the setup's own for this match
 	SimForms.setup(S)   # each fighter's form state while forms are on, and his own steps when his data has them
 	SimBoons.apply(S, setup)   # the run's rare boons (the setup's "boons"): none in versus
 	S.flightOn = setup.get("flight", SimFlight.enabled()) == true   # the launch's curve: the data's switch (data/fight/flight.json), or the setup's own
 	SimFlight.setup(S)   # each fighter's flight state while the curve is on
+	J.phase = 5
+
+
+static func _mSetupsC(J: MatchJob) -> void:
+	var S: SimState = J.S
+	var setup: Dictionary = J.setup
 	S.hitstopOn = setup.get("hitstop", SimHitstop.enabled()) == true   # hit-stop by weight: the data's switch (data/fight/hitstop.json), or the setup's own
 	SimHitstop.setup(S)   # the freeze budget while it is on
 	S.ricOn = setup.get("ricochet", SimRicochet.enabled()) == true   # the ricochet's glance: the data's switch (data/fight/ricochet.json), or the setup's own
 	WorldTerrain.initRows(S)   # T: the depth rows exist only when depth is on
 	SimPause.reset(S)        # Q10: the pause bank
 	SimShots.reset(S)        # no shots in flight
-	SimIntro.setup(S, setup) # the intro phase, when the setup asks for it
+	J.phase = 6
+
+
+static func _mEnd(J: MatchJob) -> void:
+	var S: SimState = J.S
 	SimMood.reset(S)   # M1: the mood, the act and each fighter's style
 	S.out.feed.clear()
 	S.out.fx.clear()
 	S.tick = 0
 	S.dt = 0.0
+	J.done = true
 
 
 ## The arena's columns from the setup, guarded: setup.arena {"cols": n, "side": 1 or -1} with a setup.planet, n a whole number from 600 to 4,800 and a multiple of 8 (the ground's largest stride: Rendering's chunks and copies; a ring a fight fits in); anything else is the planet's own 4,800, with an error (World: docs/world/shifting-arena-design.md section 3).

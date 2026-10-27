@@ -55,6 +55,9 @@ var _beam_ok: Dictionary = {}        # a live beam's instance id -> whether its 
 var _clash_on: bool = false
 var load_job: SimPlanetLoad.Job = null   # a gen 2 planet being made before a match (docs/architecture/planet-load.md): the match waits for it, the loading screen reads it
 var _load_call: Array = []               # the new_match call that waits: [seed, ai, setup, remember]
+var stepped_start: bool = false          # the game's: a match starts in pieces (SimCore.beginMatch), the loading screen between them (docs/architecture/match-start.md); a tool's host starts it whole
+var match_job = null                     # a match starting in pieces (SimCore.MatchJob): load_step runs one a frame
+var _start_args: Array = []              # what the host does when it has started: [setup, remember]
 var pre_job: SimPlanetLoad.Job = null    # a planet being made ahead of any match, while the player is still choosing (prefetch)
 var _pre_key: String = ""                # what it is making (planet_key); kept after it is done, so the same choice does not start it again
 ## The calm turn's rings read ahead in a frame's idle time (World's WorldEpoch.readAhead, docs/world/gen2-read-speed.md section 4). It changes no state: the ring counts as read, and the swap happens, on the same
@@ -91,7 +94,19 @@ func new_match(p_seed: int, ai: Dictionary = {}, setup: Dictionary = {}, remembe
 		return
 	_skip_intro = 0
 	setup_used = su.duplicate(true)
-	SimCore.newMatch(S, seed, ai, su)
+	if stepped_start:   # the match's start in pieces: the head now, the rest a piece a frame (load_step), the loading screen between them
+		match_job = SimCore.beginMatch(S, seed, ai, su)
+		_start_args = [su, remember]
+		if not match_job.step():
+			return
+		match_job = null   # refused (a gen 2 planet not made): done at once, as newMatch is
+	else:
+		SimCore.newMatch(S, seed, ai, su)
+	_started(su, remember)
+
+
+## The host's part once the sim's match has started: the sky, the flashes, the camera, the effects and the first capture.
+func _started(su: Dictionary, remember: bool) -> void:
 	sky.reset(S)
 	hit_flash_T = [-INF, -INF]
 	_hit_T = [NAN, NAN]
@@ -149,26 +164,35 @@ func prefetch_step() -> void:
 func cancel_load() -> void:
 	load_job = null
 	_load_call = []
+	match_job = null   # a match half started is dropped too: the next new_match starts one whole
+	_start_args = []
 	pre_job = null
 	_pre_key = ""
 
 
 ## A planet load is under way: new_match has not started the match yet.
 func loading() -> bool:
-	return load_job != null
+	return load_job != null or match_job != null
 
 
 func load_phase() -> String:
-	return load_job.phase if load_job != null else "done"
+	return load_job.phase if load_job != null else ("match" if match_job != null else "done")
 
 
 func load_progress() -> float:
-	return load_job.progress() if load_job != null else 1.0
+	return load_job.progress() if load_job != null else (match_job.progress() if match_job != null else 1.0)
 
 
 ## One frame's slice of the load (SimRun.planetUnitsPerRead units, about 5 ms). When the planet is made the match starts, as new_match would have: the call it was waiting for runs now.
 ## Returns true when it has started.
 func load_step() -> bool:
+	if load_job == null and match_job != null:   # the match's own start, a piece a frame
+		if not match_job.step():
+			return false
+		match_job = null
+		_started(_start_args[0], _start_args[1])
+		_start_args = []
+		return true
 	if load_job == null or not load_job.step(SimRun.planetUnitsPerRead):
 		return false
 	var call: Array = _load_call
@@ -178,7 +202,7 @@ func load_step() -> bool:
 	SimPlanetLoad.strict = false   # made: the match's own start must not refuse (a planet that still reads as cold would be made there, not looped on here)
 	new_match(call[0], call[1], call[2], call[3])
 	SimPlanetLoad.strict = was
-	return true
+	return match_job == null   # with stepped_start the match's own pieces follow, a frame each
 
 
 ## Run as many fixed ticks as the frame time allows (overview.md: acc += min(0.1, frame)). Returns the tick count.

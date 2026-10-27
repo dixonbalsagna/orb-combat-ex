@@ -92,6 +92,7 @@ func _init() -> void:
 	check("the run's state and carry", _runState())
 	check("the campaign's arc and episode", _campaign())
 	check("the planet's load", _planetLoad())
+	check("the match's start in pieces", _matchStart())
 	check("the curve's shared functions, the brake's control back, the camera feed", _shared())
 	check("the air brake", _brake())
 	check("forms: five steps and the slingshot", _forms())
@@ -6035,6 +6036,56 @@ func _planetLoad() -> String:
 	FighterData.quiet = quiet
 	if not refusedOk or not gen1Ok or not climbs or phases != ["plates", "climate", "places", "ring", "done"] or not startOk or not sameMatch or not same or not ringPhase or not sameRing:
 		return "the planet's load: refused cold %s, gen 1 never %s, progress climbs %s, phases %s (want plates, climate, places, ring, done), the match starts %s and is the cold one's %s, make's planet %s (%d places), a named ring in %d steps %s and its match the same %s" % [str(refusedOk), str(gen1Ok), str(climbs), str(phases), str(startOk), str(sameMatch), str(same), PL.n, jr.frames, str(ringPhase), str(sameRing)]
+	return ""
+
+
+## A match's start in pieces (match-start.md): SimCore.beginMatch stepped a piece at a time is newMatch to the bit, for
+## the default world (its ground in slices, a settlement a piece), with the intro and with a planet, while another sim on
+## another arena is stepped between every two pieces; both then play 120 ticks the same. A refused start touches nothing.
+func _matchStart() -> String:
+	var quiet: bool = FighterData.quiet
+	FighterData.quiet = true
+	var other := SimCore.createSim()
+	SimCore.newMatch(other, 5, {}, {"planet": 13, "touch": 2, "arena": {"cols": 1200}, "intro": false})   # another arena's statics between the pieces
+	var lines: PackedStringArray = []
+	var bad: bool = false
+	for su in [{"intro": false}, {"intro": "skip"}, {"planet": 7, "touch": 3, "intro": false}]:
+		var A := SimCore.createSim()
+		SimCore.newMatch(A, 21, {}, su)
+		var B := SimCore.createSim()
+		var j := SimCore.beginMatch(B, 21, {}, su)
+		var n: int = 1
+		var climbs: bool = true
+		var last: float = j.progress()
+		while not j.step():
+			n += 1
+			climbs = climbs and j.progress() >= last
+			last = j.progress()
+			SimCore.step(other)
+		var same: bool = str(SimHash.stateHash(A).gameplay) == str(SimHash.stateHash(B).gameplay)
+		for t in range(120):
+			SimCore.step(A)
+			SimCore.step(B)
+			SimCore.step(other)
+		same = same and str(SimHash.stateHash(A).gameplay) == str(SimHash.stateHash(B).gameplay)
+		lines.append("%s: %d pieces, same %s, progress climbs %s" % [str(su), n, str(same), str(climbs)])
+		bad = bad or not same or not climbs or n < (9 if not su.has("planet") else 7)
+		SimCore.dispose(A)
+		SimCore.dispose(B)
+	# a refused start (strict, a gen 2 planet not made) touches nothing
+	var R := SimCore.createSim()
+	SimCore.newMatch(R, 3, {}, {"intro": false})
+	var h0: String = str(SimHash.stateHash(R).gameplay)
+	SimPlanetLoad.strict = true
+	var jr := SimCore.beginMatch(R, 4, {}, {"planet": 29, "planetGen": 2, "intro": false})
+	SimPlanetLoad.strict = false
+	var refusedOk: bool = jr.done and jr.refused and jr.step() and str(SimHash.stateHash(R).gameplay) == h0
+	SimCore.dispose(R)
+	SimCore.dispose(other)
+	WorldClimate.useGen(0)
+	FighterData.quiet = quiet
+	if bad or not refusedOk:
+		return "the match's start in pieces: %s; a refused start touches nothing %s" % ["; ".join(lines), str(refusedOk)]
 	return ""
 
 
