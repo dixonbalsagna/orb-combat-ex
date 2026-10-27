@@ -341,6 +341,10 @@ const CROWD_CHUNK_PAD: float = 400.0
 const Z_TREE_MIN: float = -120.0 * WS
 const Z_TREE_MAX: float = -30.0 * WS
 const TREE_W: float = 26.0 * WS
+## The fellable trees (render/core/tree_view.gd): a burning tree's crown chars down from the top in TREE_BURN_STEPS hard
+## steps of its burn; a burned-out tree is Art's charred shape at TREE_CHAR_H of the tree's height (a shortened trunk).
+const TREE_BURN_STEPS: int = 5
+const TREE_CHAR_H: float = 0.6
 const ROOF_H: float = 16.0 * WS
 const Z_PARTICLES: float = 10.0
 const Z_BEAMS: float = 6.0

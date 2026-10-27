@@ -4,7 +4,8 @@
 // crater is gone (Art: the cover inside a crater is removed). What floats (a whitecap, a floe) sits at the water's level.
 // A vertex's colour is its palette slot (COLOR.r) and tone step (COLOR.g) in the palette of the biome it grows in
 // (INSTANCE_CUSTOM.r: RenderBiomeLook's column; the cover's rows from COVER_ROW), lit, mid and shade as Art drew it;
-// hazed into the sky as the ground is.
+// hazed into the sky as the ground is. A fellable tree (render/core/tree_view.gd) is drawn by this shader too: while it
+// burns (INSTANCE_CUSTOM.b, its burn in hard steps) its crown is char from the top down to that share of its height.
 shader_type spatial;
 render_mode unshaded, cull_disabled;
 
@@ -20,12 +21,17 @@ uniform float cover_cam_x = 0.0;   // this pane's camera x: a copy stands at k x
 uniform int cover_row = 12;        // RenderBiomeLook.COVER_ROW
 uniform vec4 tone_light : source_color = vec4(1.0, 0.965, 0.878, 1.0);   // RenderCoverMeshes.TONE_LIGHT and TONE_DARK (Art's lite() and dark())
 uniform vec4 tone_dark : source_color = vec4(0.047, 0.039, 0.078, 1.0);
+uniform vec4 char_col : source_color = vec4(0.173, 0.149, 0.133, 1.0);   // RenderCoverMeshes.CHAR_COLOUR: a burning crown
 
 varying vec3 v_col;
 varying vec3 v_view;
 varying float v_wz;
+varying float v_up;     // the shape's height share here (Art's frame: 0 at the foot, 1 at the top)
+varying float v_burn;   // a burning tree's burn step; 0 for the cover
 
 void vertex() {
+	v_up = VERTEX.y;
+	v_burn = INSTANCE_CUSTOM.b;
 	// The foot's place on the band (any copy reads the same: the band repeats with the arena's length).
 	float x = MODEL_MATRIX[3].x + cover_cam_x;
 	float z = MODEL_MATRIX[3].z;
@@ -47,5 +53,6 @@ void vertex() {
 }
 
 void fragment() {
-	ALBEDO = haze_ground(v_col * wl_mul + wl_add, v_view, -v_wz, fog_far);
+	vec3 c = (v_burn > 0.0 && v_up > 1.0 - v_burn) ? char_col.rgb : v_col;   // a hard line: no gradient
+	ALBEDO = haze_ground(c * wl_mul + wl_add, v_view, -v_wz, fog_far);
 }

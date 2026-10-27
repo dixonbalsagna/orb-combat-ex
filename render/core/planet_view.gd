@@ -67,8 +67,8 @@ static var fill_on: bool = RenderLook.WATER_FILL_ON   # the water window; main's
 static var ladder_on: bool = RenderLook.FAR_LADDER_ON   # biome rendering window 3; main's --noladder turns it off
 var _town_nodes: Array = []            # each prop copy's FarTowns (set_far gives them the far land's towns)
 var _bld: MultiMesh                  # every part of every building that is not in row 0: the bodies by building index, then the other parts
-var _tree: MultiMesh
-var _tree_mat: ShaderMaterial        # this pane's trees (their own, so the world's light tints them alone)
+var trees := RenderTrees.new()       # the fellable trees in Art's silhouettes (tree_view.gd); a second pane draws its source's
+var _tree_mat: ShaderMaterial        # this pane's trees (the cover's shader, their own material, so the world's light tints them alone)
 var _wl: Array = []                  # the world's light (SkyDrive.world_at), kept for materials made later
 var _wl_win: float = RenderLook.WINDOW_LIT_SHARE
 var _crowd: RenderCrowdChunks        # the crowd, in chunks the camera culls (crowd_chunks.gd); shared by panes
@@ -128,7 +128,6 @@ var _copies: Array = []
 var _bld_seen: Array = []          # per building: [curH, alive, fmask, hp, stage], the height and stage as it last stood
 var _drawn: Array = []             # per building: [height, stage 0 to 3, standing] as drawn (a falling one keeps its last look)
 var _grow := PackedInt32Array()    # this refresh's buildings with more people than figures at home
-var _tree_seen: Array = []         # per tree: alive
 var _tree_z := PackedFloat64Array()
 var _crowd_first := PackedInt32Array()
 var _crowd_x := PackedFloat64Array()   # world x per person
@@ -191,7 +190,6 @@ func _bs_materials() -> bool:
 		_make_materials()
 		if source == null:
 			_mesh_jobs = _ground_mesh_jobs()   # made a chunk a step (_bs_meshes)
-		_tree_mat = mats.flat_named("trees", Color.WHITE)
 		_crowd_mat = ShaderMaterial.new()
 		_crowd_mat.shader = CROWD_SHADER
 		_crowd_mat.set_shader_parameter("outline_col", RenderLook.col(RenderLook.CROWD_OUTLINE))
@@ -235,7 +233,7 @@ func _bs_share(S: SimState) -> bool:
 		_city = source._city
 		_n_inst = source._n_inst
 		_n_inst0 = source._n_inst0
-		_tree = source._tree
+		trees = source.trees
 		_crowd = source._crowd
 		_bld0 = source._bld0
 		_row0 = source._row0
@@ -305,7 +303,8 @@ func _bs_copies() -> bool:
 		if absi(k) <= np:
 			_mm_child(n, "Buildings", _bld, _bld_mat)
 			_mm_child(n, "Buildings0", _bld0, _front_mat)
-			_mm_child(n, "Trees", _tree, _tree_mat)
+			for tm in trees.meshes:
+				_mm_child(n, tm[0], tm[1], _tree_mat)
 			for c in range(_crowd.chunks.size()):
 				_mm_child(n, "Crowd%d" % c, _crowd.chunks[c], _crowd_mats[c])
 			_mm_child(n, "FarTowns", null, _town_mat)
@@ -479,6 +478,8 @@ func update(S: SimState, cam_x: float, heat: PackedFloat32Array = PackedFloat32A
 		_town_mat.set_shader_parameter("town_cam_x", cam_x)   # where the copies stand, for the far land under each block
 	if _cover_mat != null and not cover.meshes.is_empty():
 		_cover_mat.set_shader_parameter("cover_cam_x", cam_x)   # where the copies stand, for the ground under each shape
+	if _tree_mat != null and not trees.meshes.is_empty():
+		_tree_mat.set_shader_parameter("cover_cam_x", cam_x)    # ... and under each tree
 	if ground != null and ground.water_version != _water_drawn:
 		_water_drawn = ground.water_version
 		_water_show(S)
@@ -796,15 +797,7 @@ func refresh(S: SimState, force: bool) -> void:
 		if add > 0:
 			flight.arrived[bi] = maxi(0, flight.arrived[bi] - add)
 			_set_crowd(S, bi, b, _shown[bi] + add)
-	for ti in range(S.trees.size()):
-		var t = S.trees[ti]
-		if (dchg and (force or dirty[_col(t.x)] == 1)) or t.alive != _tree_seen[ti]:
-			_tree_seen[ti] = t.alive
-			if t.alive:
-				var g: float = ground.ground_at(S, t.x, _tree_z[ti])
-				_tree.set_instance_transform(ti, Transform3D(Basis.from_scale(Vector3(RenderLook.TREE_W, t.h, RenderLook.TREE_W)), Vector3(t.x, g + t.h * 0.5, _tree_z[ti])))
-			else:
-				_tree.set_instance_transform(ti, _hidden(t.x))
+	trees.update(S)   # the fellable trees' states (tree_view.gd); the shader reads the ground under each foot
 	# A wave is over: what it has not reached changes now. A second wave inside it goes on alone; with none, the
 	# building is as it stands, its marks whole.
 	if not _busy.is_empty():
@@ -1175,12 +1168,19 @@ func _make_materials() -> void:
 	_cover_mat.set_shader_parameter("cover_row", RenderBiomeLook.COVER_ROW)
 	_cover_mat.set_shader_parameter("tone_light", RenderCoverMeshes.TONE_LIGHT)
 	_cover_mat.set_shader_parameter("tone_dark", RenderCoverMeshes.TONE_DARK)
+	_tree_mat = ShaderMaterial.new()   # the fellable trees: the cover's shader (tree_view.gd)
+	_tree_mat.shader = COVER_SHADER
+	_tree_mat.set_shader_parameter("biome_pal", RenderBiomeLook.texture())
+	_tree_mat.set_shader_parameter("cover_row", RenderBiomeLook.COVER_ROW)
+	_tree_mat.set_shader_parameter("tone_light", RenderCoverMeshes.TONE_LIGHT)
+	_tree_mat.set_shader_parameter("tone_dark", RenderCoverMeshes.TONE_DARK)
+	_tree_mat.set_shader_parameter("char_col", RenderCoverMeshes.CHAR_COLOUR)
 	_town_mat.set_shader_parameter("town_cols", RenderLook.FAR_TOWN_COLS.map(func(h): return RenderLook.col(h)))
 	_town_mat.set_shader_parameter("town_row0", -RenderLook.Z_TERRAIN_BACK)   # the ground's mesh past the crater rows (ground_rows)
 	_town_mat.set_shader_parameter("town_row_k", 1.0 + RenderLook.ROW_GROWTH)
 	_town_mat.set_shader_parameter("town_stride", float(RenderLook.STRIDES[-1][1]))
 	_town_mat.set_shader_parameter("town_slope", RenderLook.FAR_TOWN_SLOPE)
-	for m in [_terrain_mat, _water_mat, _town_mat, _cover_mat]:
+	for m in [_terrain_mat, _water_mat, _town_mat, _cover_mat, _tree_mat]:
 		m.set_shader_parameter("heights", ground.tex)
 		m.set_shader_parameter("hot", ground.htex)
 		m.set_shader_parameter("craters", ground.ctex)
@@ -2115,12 +2115,6 @@ static func _stub_texture(m: ShaderMaterial, n: int) -> Array:
 func _make_props(S: SimState) -> void:
 	var nb: int = S.buildings.size()
 	var box := BoxMesh.new()
-	var cone := CylinderMesh.new()
-	cone.top_radius = 0.0
-	cone.bottom_radius = 0.5
-	cone.height = 1.0
-	cone.radial_segments = 6
-	cone.rings = 0
 	var z0: float = 0.0
 	var z1: float = 0.0
 	_row0.resize(nb)
@@ -2176,7 +2170,6 @@ func _make_props(S: SimState) -> void:
 	_blown.resize(nb)
 	_blown.fill(0)
 	_blow_seen.clear()
-	_tree = _multimesh(cone, S.trees.size(), 400.0)
 	_bld_seen.clear()
 	_drawn.clear()
 	_foot.resize(nb)
@@ -2199,12 +2192,11 @@ func _make_props(S: SimState) -> void:
 		_bld_seen.append([-1.0, false, -1, -1.0, 0])
 		_drawn.append([0.0, 0, false])
 	var tr := SimRng.new(SimRng.deriveSeed(4242, "render.trees"))
-	_tree_seen.clear()
 	_tree_z.resize(S.trees.size())
 	for ti in range(S.trees.size()):
-		_tree_seen.append(null)
 		_tree_z[ti] = tr.range_(RenderLook.Z_TREE_MIN, RenderLook.Z_TREE_MAX)
-		_tree.set_instance_color(ti, RenderLook.col(RenderLook.TREE if tr.next() < 0.5 else RenderLook.TREE_TOP))
+		tr.next()   # (the cone's colour once: the depths stay as they were)
+	trees.build(S, ground, _tree_z)
 	var cr := SimRng.new(SimRng.deriveSeed(4242, "render.crowd"))
 	_crowd_first.resize(nb + 1)
 	_crowd_x.clear()
