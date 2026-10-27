@@ -3,6 +3,9 @@
 // skipped with a note. window.__bp = [[name, performance.now() ms], ...] in the page's clock (the probe's page-script marks wasm_instantiate_* and pck/wasm response ends use the same clock).
 import { readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 const root = process.argv[2];
+const NATIVE = process.argv.includes('--native');   // a desktop export: each mark is a printed line `BP <name> <engine ms>` on the console build's stdout, not a page mark
+const WEB_BP = '\tif OS.has_feature("web"):\n\t\tJavaScriptBridge.eval("(window.__bp = window.__bp || []).push([\'%s\', performance.now()]);" % n, true)\n';
+const fixBp = (t) => (NATIVE ? t.split(WEB_BP).join('\tprint("BP %s %d" % [n, Time.get_ticks_msec()])\n') : t);
 const p = root + '/render/core/main.gd';
 let lines = readFileSync(p, 'utf8').split('\n');
 const notes = [];
@@ -59,8 +62,8 @@ func _bp_once(n: String) -> void:
 		_bp_seen[n] = true
 		_bp(n)
 `;
-writeFileSync(p, s);
-writeFileSync(root + '/bp_early.gd', `extends Node
+writeFileSync(p, fixBp(s));
+writeFileSync(root + '/bp_early.gd', fixBp(`extends Node
 # SCRATCH: the engine is up (the project's settings, servers and the autoloads are made); then the main scene's own load is timed.
 func _bp(n: String) -> void:
 	if OS.has_feature("web"):
@@ -75,7 +78,7 @@ func _init() -> void:
 	keep.append(ResourceLoader.load("res://render/main.tscn"))
 	_bp("main_scene_loaded")
 	keep = []
-`);
+`));
 let pg = readFileSync(root + '/project.godot', 'utf8');
 if (/^\[autoload\]/m.test(pg)) throw new Error('project.godot already has [autoload]; edit the hook');
 pg += '\n[autoload]\n\nBpEarly="*res://bp_early.gd"\n';

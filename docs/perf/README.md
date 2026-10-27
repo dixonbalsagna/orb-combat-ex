@@ -15,6 +15,7 @@ Owner: Performance and Platform (`docs/directors/performance-platform.md`).
 | [batch-1b66c4bb-2026-10-23.md](batch-1b66c4bb-2026-10-23.md) | Item 3 on Encounter's four parks (off): no change in the steady frame cost; one x4 pair that read slower was noise |
 | [render-chain-22k-22o-2026-10-23.md](render-chain-22k-22o-2026-10-23.md) | Rendering's chain on the Radeon and RTX: 22l works, 22n triples the Radeon's frame time, 22o is free in frame time; UI's warm-marks is neutral |
 | [gen2-bench-2026-10-26.md](gen2-bench-2026-10-26.md) | World's gen 2 readiness benches in the web build (RTX/Radeon x1, x4, x6): planet make 1.7 s (9.5 s old laptop, 16 s phone), match start, calm-turn warm tick, water step, flow field, memory; verdicts |
+| [desktop-boot-2026-10-27.md](desktop-boot-2026-10-27.md) | The Windows export of d7647634 (117.6 MB, built), the web side of the desktop comparison (RTX and Radeon bench, x1 and x4), platform notes for Steam (Windows gaps, what a Linux/Deck export needs, native-web parity); the native launches wait on Orb |
 | [coast-layer-cut-2026-10-27.md](coast-layer-cut-2026-10-27.md) | The gen 2 coast on the Radeon, layer by layer: the terrain is 47 to 53% of the frame (fragment-bound; the water costs 0.8 to 1.4 ms), the p95 tail is the wide shots, and at x4 no layer is in it (the CPU frame is) |
 | [boot-start-block-2026-10-27.md](boot-start-block-2026-10-27.md) | What is in the start block on 3d276d57 (x1 4.4 s, x4 15.5 s: the script load is 70%, SimHost's graph 6.4 s at x4), the full boot to playable (22.6 s / 40.7 s), the breadcrumbs stages (card is held through the compile) |
 | [audio-warm-async-3-2026-10-27.md](audio-warm-async-3-2026-10-27.md) | Audio's warm-async 3 (common hits first, variant by variant, 120 ms boot slice) on 19e56ab3, x4/x6: skipped 0 at x4 and 6 to 7 at x6 (was about 10 and 30), none of the common light hits; the x4 warm-up 12 s shorter, the x6 warm-up not shorter (108 to 110 s) until the host.paused line lands |
@@ -36,6 +37,7 @@ Owner: Performance and Platform (`docs/directors/performance-platform.md`).
 | `native-cpu-bench.ps1` | Headless native Godot's CPU-side cost (sim tick, FX and camera, view update); no GPU |
 | `scratch-hooks/` | The measuring code the site builder adds to a scratch export (never to the repo) |
 | `freeze-probe.mjs`, `crumbs-test.mjs` | The phone-freeze probe (mobile emulation, long tasks, boot marks, taps, `--eval-at`) and the breadcrumbs park's 37-check page test |
+| `make-desktop-export.mjs`, `bench-page.mjs` | A headless Windows Desktop export of a commit (with optional native boot marks), and the game's own bench on the web build with the choice of GPU |
 | `phone-emu-check.mjs`, `web-head.mjs`, `make-placeholder-icons.mjs` | The phone work: emulation checks, the head block of the web export's page, placeholder Home Screen icons |
 
 Every browser here is started through `tools/machine/browser.mjs` (below-normal priority, a core mask, a time limit, a session-named profile); `phone-emu-check.mjs` now starts its browser through the same launcher.

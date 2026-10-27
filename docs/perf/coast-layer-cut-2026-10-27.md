@@ -21,6 +21,20 @@ Owner: Performance and Platform, for the EP and Rendering. Scratch export of f50
 - **RTX**: 3.3 ms for the whole picture and every cut within 0.2 ms: the scene is not GPU-bound there (live p50 6.2, p95 7.8).
 - **x4 on the Radeon is a different story, and no layer is in it**: live p50 30.4, p95 47.3 ms, but the paused frame is 9.8 ms with every cut (the GPU side hides behind the CPU). The extra is the main thread's per-frame work in the wasm: view update 8.3 ms a frame (1.3 ms at x1), tick 1.5 ms (0.3), and the engine's own scene work (the renderer process 20.8 ms a frame against 5.2 at x1). Hiding a layer does not shorten it (a hidden node is still updated). I could not reproduce a 25 ms p95 on the Radeon at x1 (9.9 to 12.1 ms); at x4 it is 47 ms.
 
+## Matching Rendering's p95 25 ms (added 2026-10-27, same export, Radeon x1)
+
+Rendering's setup (`--scene pb --page-args "pgen=2&pbiome=coast&pplanet=7" --igpu --reduced --ticks 600`, no layers) reproduces here: three runs p50 11.7 to 12.0, **p95 25.9 to 26.0**, p99 33 to 34, max 444 to 479 ms. The cause is the part of the match it measures, not `--reduced`:
+
+| Run (Radeon x1, coast, 600 ticks) | p50 | p95 | p99 | max |
+|---|---|---|---|---|
+| Rendering's setup, ticks 120 to about 720 (`--reduced`), 3 runs | 11.7 to 12.0 | 25.9 to 26.0 | 33.2 to 33.9 | 444 to 479 |
+| the same without `--reduced`, 2 runs | 11.7, 11.9 | 26.0, 26.1 | 34.0, 34.1 | 444, 461 |
+| `--reduced`, started late (warm 600: ticks 600 to 1200) | 9.2 | 10.9 | 12.0 | 13.3 |
+
+- The 25 ms tail is the **opening of the match**: 73 of 599 frames are over 25 ms (12%), and the frames at that point draw 355 to 365 calls and 227k to 451k primitives (p95 451k), against 229 calls and 147k once the camera has settled. It is the wide opening shot, the same cause as the tick-60 row above, so the terrain's fragment cost is the layer behind it too. The first frame of the run is a 444 ms hitch (the scene's first draw).
+- Water hidden gives the same p95 because the water is 0.8 to 1.4 ms of a 16 ms wide-shot frame; the terrain is 8.5 ms of it.
+- The p50 11.7 ms mixes the two parts (the opening and the settled shot), so the table above, not the p50, is the way to read the coast.
+
 ## Owners and what it points to
 
 - Terrain fragment cost on a weak GPU: **Rendering** (`ground.gdshaderinc`, `terrain.gdshaderinc`; the by-band ground, 22f), with **World** for the mesh's density (about 60k primitives near, 95k in a wide shot). Levers, none measured: a cheaper terrain shader on the Radeon tier (fewer texture and noise reads), a coarser far terrain in wide shots, and keeping the camera's wide shots short.
