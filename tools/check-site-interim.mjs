@@ -12,6 +12,7 @@
 //   - the gate's words lack what Legal ruled (flashing effects, the finding against three a second, "no independent analyzer has been run", the advice for photosensitive epilepsy,
 //     "I understand, start", "Not now", the Reduce flashing line, the AI line) or the About page lacks the AI line, the privacy line of the feedback target in use (ui/data/send.json),
 //     the Godot (MIT) line or the Open Sans (OFL) line; or any page uses "safe", "seizure-safe", "tested for photosensitivity", "WCAG compliant", "certified" or "no flashing";
+//   - the freeze breadcrumbs are on /play/ without tools/site.json "crumbs": true (or absent with it), or their script has a network call or a URL;
 //   - the placeholder-name scan finds KAI, VORR, Meridian or Calamity in a page, or in a file of the game's pack that is not on the allowlist (tools/site-name-scan.json).
 //   node tools/check-site-interim.mjs --site <site dir> [--config <site.json>] [--root <repo root>] [--record <release-pass.json>] [--today YYYY-MM-DD] [--no-pack-scan]
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -108,7 +109,7 @@ if (play) {
   const canvasAt = play.indexOf('<canvas');
   if (gateAt < 0 || !(gateAt > bodyAt && gateAt < canvasAt)) bad('/play/: the gate is missing or is not before the game canvas in the body');
   if (!/id="gate-start"/.test(play)) bad('/play/: the gate has no button');
-  const clickAt = play.indexOf("addEventListener('click'");
+  const clickAt = play.indexOf("addEventListener('click'", Math.max(0, gateAt));   // the gate's own script, after its overlay: a head script that listens for clicks (the breadcrumbs) comes before it
   if (clickAt < 0 || !/__startGame\s*\(\)/.test(play.slice(clickAt, clickAt + 400))) bad("/play/: the gate's button does not call window.__startGame");
   if (/<(audio|video)\b[^>]*\bautoplay\b/i.test(play)) bad('/play/: an audio or video element autoplays');
   if (!play.includes('<meta name="robots" content="noindex">')) bad('/play/ is not noindex');
@@ -140,6 +141,21 @@ if (play) {
   if (OWNER && !gateText.includes(OWNER_LOCK)) bad("/play/: the gate's lock line is not Legal's fixed line word for word");
   if (OWNER && /working to fix them|we are fixing them/i.test(gateText)) bad('/play/: the gate promises a fix ("working to fix them"): flash work is paused, so the notice must say "not fixed yet"');
   for (const re of FORBIDDEN) if (re.test(gateText)) bad(`/play/'s gate uses a word Legal forbids: ${re}`);
+}
+
+// The freeze breadcrumbs (tools/site-crumbs.mjs; docs/perf/phone-freeze-2026-10-26.md): local-only, and only while tools/site.json says "crumbs": true. The page must carry them exactly when the switch is on,
+// and their script must make no network call (nothing may be sent off the device).
+{
+  const marker = 'ocx.crumbs.v1';
+  const carries = !!play && play.includes(marker);
+  if (config.crumbs === true && play && !carries) bad('tools/site.json says "crumbs": true, but /play/ does not carry the freeze breadcrumbs (they are folded into the Web preset by tools/site-crumbs.mjs --apply before the export)');
+  if (config.crumbs !== true && carries) bad('/play/ carries the freeze breadcrumbs but tools/site.json does not say "crumbs": true: the breadcrumbs are a switched park, and the preset in the repository must not hold them');
+  if (carries) {
+    const script = (play.match(/<script>[\s\S]*?<\/script>/g) || []).find((s) => s.includes(marker)) || '';
+    for (const [re, what] of [[/\bfetch\s*\(/, 'fetch'], [/XMLHttpRequest/, 'XMLHttpRequest'], [/sendBeacon/, 'sendBeacon'], [/WebSocket/, 'WebSocket'], [/EventSource/, 'EventSource'], [/importScripts|import\s*\(/, 'an import'], [/new\s+Image\b|new\s+Worker\b|\.src\s*=/, 'an image, worker or src'], [/https?:\/\//, 'a URL'], [/document\.cookie/, 'a cookie'], [/navigator\.serviceWorker/, 'a service worker']])
+      if (re.test(script)) bad(`the freeze breadcrumbs' script uses ${what}: nothing may be sent off the device`);
+    if (!script) bad('the freeze breadcrumbs marker is on /play/ but not inside one of its inline scripts');
+  }
 }
 
 // every other page: static, no game, only links to the gate, About or the holding page; the words; the scan

@@ -15,6 +15,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { applyCrumbs, crumbsOn } from './site-crumbs.mjs';
 
 const HERE = import.meta.dirname;
 const REPO = resolve(HERE, '..');
@@ -71,6 +72,9 @@ export function exportPinned(pin, webDir, o = {}) {
     writeFileSync(ff, txt.replace(/"lock_reduce_flashing"\s*:\s*false/, '"lock_reduce_flashing": true'));
     void nl; void cr;
   }
+  // the freeze breadcrumbs (tools/site-crumbs.mjs, off unless tools/site.json says "crumbs": true): folded into THIS tree's Web preset only, by the repository's own web-head.mjs, so the pinned
+  // commit need not carry them and the committed preset never does
+  if (o.crumbs) applyCrumbs(join(tree, 'export_presets.cfg'));
   run(['--headless', '--path', tree, '--import']);
   run(['--headless', '--path', tree, '--export-release', 'Web', join(webDir, 'index.html')]);
   if (!existsSync(join(webDir, 'index.html'))) throw new Error('the pinned export produced no index.html');
@@ -89,7 +93,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     if (!pin) { console.error('site pin: the site is offline: there is no pinned commit to export'); process.exit(2); }
     try {
       const godot = opt('--godot') || process.env.GODOT;
-      const tree = exportPinned(pin, resolve(web), { tree: opt('--tree'), godot, godotNode: opt('--godot-node'), lock: !!config.interim });
+      const tree = exportPinned(pin, resolve(web), { tree: opt('--tree'), godot, godotNode: opt('--godot-node'), lock: !!config.interim, crumbs: crumbsOn(config) });
       console.log(`pinned ${pin.slice(0, 8)} exported to ${web} (tree ${tree})`);
     } catch (e) { console.error(`site pin: ${e.message}`); process.exit(1); }
   } else {

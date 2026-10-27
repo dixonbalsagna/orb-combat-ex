@@ -172,6 +172,9 @@ jobs:
       # build_info.json (commit and commit date) for the feedback report; git-ignored, packed by the export's include_filter.
       - name: Write build_info.json
         run: node tools/write-build-info.mjs --commit "${GITHUB_SHA}"
+      # The freeze breadcrumbs (docs/perf/phone-freeze-2026-10-26.md): local-only, folded into THIS checkout's Web preset only when tools/site.json says "crumbs": true; off otherwise (the step prints which).
+      - name: Fold the freeze breadcrumbs into the Web preset (only when tools/site.json says so)
+        run: node tools/site-crumbs.mjs --apply
       - name: Export Web (Compatibility, single-threaded)
         run: |
           mkdir -p "${RUNNER_TEMP}/web"

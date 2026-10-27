@@ -97,6 +97,35 @@ try {
   const good = join(tmp, 'site-good');
   const r0 = verify(good, cfg());
   check('the checker passes the built interim site', r0.status === 0, (r0.stderr || r0.stdout).slice(0, 500));
+  // the freeze breadcrumbs (tools/site-crumbs.mjs): /play/ carries them exactly when tools/site.json says "crumbs": true, and their script (the real park's, from web-head.mjs) makes no network call
+  {
+    const head = spawnSync(process.execPath, [join(here, '..', 'docs', 'perf', 'tools', 'web-head.mjs'), '--print', '--crumbs'], { encoding: 'utf8' });
+    check('web-head prints the head block with the real breadcrumbs park', head.status === 0 && head.stdout.includes('ocx.crumbs.v1') && head.stdout.includes('<!--ocx:begin-->'), (head.stderr || '').slice(0, 200));
+    const webC = join(tmp, 'web-crumbs');
+    mkdirSync(webC, { recursive: true });
+    writeFileSync(join(webC, 'index.html'), exportHtml.replace('<title>Orb Combat EX</title>', '<title>Orb Combat EX</title>' + head.stdout.trim()));
+    for (const f of ['index.js', 'index.wasm', 'index.pck']) writeFileSync(join(webC, f), 'x');
+    const on = { ...cfg(), crumbs: true };
+    writeCfg(on);
+    const bc = node('build-site.mjs', ['--web', webC, '--out', join(tmp, 'site-crumbs'), '--config', cfgFile, '--local']);
+    check('an interim site builds from an export that carries the breadcrumbs', bc.status === 0, (bc.stderr || bc.stdout).slice(0, 300));
+    const sc = join(tmp, 'site-crumbs');
+    check('"crumbs": true and the breadcrumbs on /play/: the checker passes', verify(sc, on).status === 0, (verify(sc, on).stderr || '').slice(0, 300));
+    const off = verify(sc, cfg());
+    check('breadcrumbs on /play/ with no "crumbs": true: the checker fails (a switched park must not ride in the preset)', off.status === 1 && /does not say "crumbs": true/.test(off.stderr), off.stderr.slice(0, 200));
+    const miss = verify(good, on);
+    check('"crumbs": true but /play/ has none: the checker fails', miss.status === 1 && /does not carry the freeze breadcrumbs/.test(miss.stderr), miss.stderr.slice(0, 200));
+    check('"crumbs": false or absent with a plain page passes (the default)', verify(good, { ...cfg(), crumbs: false }).status === 0 && verify(good, cfg()).status === 0);
+    let n = 0;
+    for (const [what, inject] of [['a fetch', "fetch('x');"], ['an XMLHttpRequest', 'new XMLHttpRequest();'], ['sendBeacon', "navigator.sendBeacon('x');"], ['a WebSocket', "new WebSocket('x');"], ['a URL', "var u = 'https://example.com';"], ['an image src', 'var i = new Image();']]) {
+      const d = join(tmp, 'crumbs-bad-' + (++n));
+      cpSync(sc, d, { recursive: true });
+      edit(d, 'play/index.html', (t) => t.replace("KEY = 'ocx.crumbs.v1',", () => "KEY = 'ocx.crumbs.v1', zz = (function () { " + inject + " }()),"));
+      check(`(the edit for ${what} landed)`, readFileSync(join(d, 'play/index.html'), 'utf8').includes('zz = (function'));
+      const r = verify(d, on);
+      check(`breadcrumbs whose script has ${what}: the checker fails`, r.status === 1 && /nothing may be sent off the device/.test(r.stderr), r.stderr.slice(0, 200));
+    }
+  }
   const playHtml = readFileSync(join(good, 'play/index.html'), 'utf8');
   check('the gate is first in the body, "Not now" goes to ../ and the page is noindex', /<body>\n<div id="gate"/.test(playHtml) && /<a id="gate-notnow" href="\.\.\/"/.test(playHtml) && playHtml.includes('<meta name="robots" content="noindex">'));
   check('/, /bench/, /band/ and /404.html are the one holding page and hold no script or game file', ['index.html', 'bench/index.html', 'band/index.html', '404.html'].every((p) => readFileSync(join(good, p), 'utf8') === readFileSync(join(good, 'index.html'), 'utf8') && !/<script/i.test(readFileSync(join(good, p), 'utf8'))) && !existsSync(join(good, 'bench/index.pck')));
