@@ -34,7 +34,40 @@ void fragment() {
 	vec3 base = COLOR.rgb;
 	float a = 0.0;
 	float alpha_mul = COLOR.a;
-	if (shape > 7.5) {
+	if (shape > 12.5) {
+		// burst star: a flat eight-point star, a body and a darker heart (one frame, never a flicker)
+		float ang = atan(p.y, p.x);
+		float r = length(p);
+		float spikes = 0.5 + 0.5 * cos(ang * 8.0 + sd * 0.8);
+		float rad = mix(0.34, 1.0, pow(spikes, 1.7));
+		a = edge(r - rad, aa);
+		base = mix(base * 0.88, base, step(r, 0.42));
+	} else if (shape > 11.5) {
+		// splinter: a long thin shard of wood, pointed at the head (+x), a lit edge along one side
+		float d = max(abs(p.y) - 0.3 * (1.0 - 0.85 * smoothstep(-0.2, 1.0, p.x)), abs(p.x) - 1.0);
+		a = edge(d, aa);
+		base = mix(base * 0.82, min(base * 1.25, vec3(1.0)), step(0.05, p.y));
+	} else if (shape > 10.5) {
+		// ash flake: an irregular thin flake, a shaded side and a lit one
+		float d = max(max(abs(p.x) - 0.95, abs(p.y) - 0.72), abs(p.x + p.y * 1.2) - 1.15 - 0.25 * sd);
+		a = edge(d, aa);
+		base = mix(base * 0.72, base, step(0.0, -p.x * 0.5 + p.y * 0.6));
+	} else if (shape > 9.5) {
+		// snow: a rounded hexagonal flake, a body and a darker rim (two steps, hard edge)
+		vec2 q = abs(p);
+		float d = max(q.x * 0.866 + q.y * 0.5, q.y) - 0.9;
+		a = edge(d, aa);
+		float inner = edge(d + 0.32, aa);
+		base = mix(base * 0.84, base, inner);
+	} else if (shape > 8.5) {
+		// leaf: a pointed oval, wide a third of the way along, a midrib and two value steps
+		float t = clamp((p.x + 1.0) * 0.5, 0.0, 1.0);
+		float w = 0.66 * sin(3.14159265 * pow(t, 0.8));
+		float d = max(abs(p.y) - w, abs(p.x) - 1.0);
+		a = edge(d, aa);
+		float rib = step(abs(p.y), 0.07) * step(-0.75, p.x);
+		base = mix(mix(base * 0.8, min(base * 1.18, vec3(1.0)), step(0.0, p.y)), min(base * 1.4, vec3(1.0)), rib);
+	} else if (shape > 7.5) {
 		// flame: a cel tongue in three bands (outer, mid, core) that leans and wobbles with its age (mode), a rounded base, a
 		// second small lick beside it, and a blunt tip; the outer band is the body colour, the others the flame_mid and flame_core uniforms
 		float f = v_custom.z;

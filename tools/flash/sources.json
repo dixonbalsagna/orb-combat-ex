@@ -12,7 +12,8 @@
     "cut_dip",
     "cut_in_panel",
     "transform_cut",
-    "double_hit"
+    "double_hit",
+    "biome_star"
   ],
   "reserved": [
     "body_hit",
@@ -229,6 +230,39 @@
         "damage": 40
       },
       "ticks": 1800,
+      "seeds": [
+        12345
+      ]
+    },
+    {
+      "id": "plumedesert",
+      "minTicks": 1200,
+      "minEvents": {
+        "crater": 3
+      },
+      "ticks": 1500,
+      "seeds": [
+        12345
+      ]
+    },
+    {
+      "id": "plumeice",
+      "minTicks": 1200,
+      "minEvents": {
+        "crater": 3
+      },
+      "ticks": 1500,
+      "seeds": [
+        12345
+      ]
+    },
+    {
+      "id": "plumevolc",
+      "minTicks": 1200,
+      "minEvents": {
+        "crater": 3
+      },
+      "ticks": 1500,
       "seeds": [
         12345
       ]

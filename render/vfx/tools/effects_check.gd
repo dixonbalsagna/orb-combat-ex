@@ -196,6 +196,7 @@ func _run() -> void:
 	_react()
 	_speed()
 	_earth()
+	_biome_fx()
 	_trails()
 	_intro()
 	_intro_marks()
@@ -986,8 +987,168 @@ func _speed() -> void:
 
 
 ## Earth, material and fire (docs/vfx/earth-plan.md): `debris` as tumbling chunks, `fire` as flames, the ground-contact events.
+## Biome effects (docs/vfx/biome-fx.md): Art's plume language, by the fine biome and the causer's tier.
+func _biome_fx() -> void:
+	print("biome effects")
+	var S := SimCore.createSim()
+	SimCore.newMatch(S, 6)
+	VfxBiome.override_biome = ""
+	var dat: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/vfx/biome.json"))
+	var art: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/art/biomes.json"))
+	var ids: Array = art["biomes"].keys()
+	var bad: Array = []
+	for id in ids:
+		var k: String = String(art["biomes"][id]["plume"]["kind"])
+		if k != "water" and not dat["kinds"].has(k):
+			bad.append(id)
+	_check(ids.size() == 15 and bad.is_empty(), "Art's fifteen biomes all have a plume the effects can draw (%d ids, missing ejecta for %s)" % [ids.size(), str(bad)])
+	_check(VfxBiome.spec("desert")["kind"] == "sand" and VfxBiome.spec("volcanic")["embers"] and VfxBiome.spec("jungle")["steam"] and VfxBiome.spec("beach")["wet"] and VfxBiome.spec("sea_ice")["ring"], "the plume specs are Art's: desert sand, volcanic embers, jungle steam, a wet beach, a ringed sea ice")
+	_check(VfxBiome.spec("village_harbour").is_empty() and VfxBiome.spec("city").is_empty() and VfxBiome.spec("atlantis").is_empty(), "a village, the city and a name Art has not drawn have no plume: nothing added")
+	var desert_x: float = SimWrap.wrap(6000.0 * SimConst.PS)
+	var forest_x: float = SimWrap.wrap(5000.0 * SimConst.PS)
+	var mount_x: float = SimWrap.wrap(7000.0 * SimConst.PS)
+	var plains_x: float = SimWrap.wrap(2250.0 * SimConst.PS)
+	var city_x: float = SimWrap.wrap(3000.0 * SimConst.PS)
+	_check(VfxBiome.key_at(S, desert_x) == "desert" and VfxBiome.key_at(S, forest_x) == "forest" and VfxBiome.key_at(S, mount_x) == "mountains" and VfxBiome.key_at(S, plains_x) == "plains" and VfxBiome.key_at(S, city_x) == "city", "with no fine ids in the match the stored biome's name is read (desert, forest, mountains, plains, city)")
+	var land := func(x: float, kind: String, spd: float): return VfxMock.ev("land", {"actor": 0.0, "x": x, "y": WorldTerrain.groundY(S, x), "z": 0.0, "spd": spd, "n": 1, "surface": "soil", "kind": kind, "vn": -spd * 0.8, "vt": spd * 0.3, "sina": 0.9, "slope": 0.0, "contacts": 1, "dur": 0.1})
+	var crater := func(x: float, e: float): return VfxMock.ev("crater", {"x": x, "y": WorldTerrain.groundY(S, x), "r": 220.0, "depth": 60.0, "energy": e, "cause": "impact", "owner": 0.0, "special": 0.0, "rim": 20.0, "z": 0.0})
+	var run := func(x: float, evs: Array, tier: float, enabled: bool, reduced: bool, biome: String) -> VfxHub:
+		VfxBiome.override_biome = biome
+		var h := VfxHub.new()
+		h.reset(S, 6)
+		h.px_per_unit = 0.3
+		h.biomefx_enabled = enabled
+		h.reduced_motion = reduced
+		S.fighters[0].tier = tier
+		S.fighters[0].vx = 2000.0
+		_tick(S, h, evs)
+		VfxBiome.override_biome = ""
+		return h
+	var kinds := func(h: VfxHub, k: int) -> int:
+		return h.debris.bits.filter(func(b): return b.kind == k).size()
+	# the villages and the city: nothing added
+	var hv: VfxHub = run.call(city_x, [land.call(city_x, "slam", 3500.0)], 2.0, true, false, "")
+	_check(hv.biomefx.emitted == 0 and hv.biomefx.columns == 0, "in the city the biome effects add nothing")
+	var ho: VfxHub = run.call(plains_x, [land.call(plains_x, "slam", 3500.0)], 2.0, true, false, "ocean")
+	_check(ho.biomefx.emitted == 0, "the open ocean's plume is the water effects' own: nothing added here")
+	# a crater: the column, the star, the ejecta and the skirt, in Art's colours
+	var hc: VfxHub = run.call(desert_x, [crater.call(desert_x, 14.0)], 3.0, true, false, "")
+	var sp: Dictionary = VfxBiome.spec("desert")
+	var puffs: Array = hc.debris.bits.filter(func(b): return b.kind == VfxDebris.PUFF)
+	var in_art: int = puffs.filter(func(b): return b.col.is_equal_approx(sp["lit"]) or b.col.is_equal_approx(sp["mid"]) or b.col.is_equal_approx(sp["shade"])).size()
+	_check(hc.biomefx.columns == 1 and hc.biomefx.stars == 1 and kinds.call(hc, VfxDebris.STAR) == 1, "a crater in the desert: one column and one burst star (%d columns, %d stars)" % [hc.biomefx.columns, hc.biomefx.stars])
+	_check(in_art >= 5, "the puffs are Art's desert colours (%d of %d puffs in lit, mid or shade)" % [in_art, puffs.size()])
+	var top := 0.0
+	var foot := 1e9
+	for b in puffs:
+		if b.col.is_equal_approx(sp["lit"]) or b.col.is_equal_approx(sp["mid"]):
+			top = maxf(top, b.y)
+		foot = minf(foot, b.y)
+	_check(top - foot > 80.0, "the column stands up out of the ground (%.0f units from foot to top)" % (top - foot))
+	# the star lasts a frame or two
+	var star0: int = kinds.call(hc, VfxDebris.STAR)
+	_tick(S, hc, [])
+	_tick(S, hc, [])
+	_check(star0 == 1 and kinds.call(hc, VfxDebris.STAR) == 0, "the star is gone in two ticks: one still burst, never a flicker")
+	# Legal's fx07: a puff whose luminance steps 10% or more from the ground's counts at full weight; under that it may count less, never under 0.3
+	var gnd := Color("#70a246")
+	_check(VfxBiome.puff_weight(Color("#ffffff"), gnd) == 1.0 and VfxBiome.puff_weight(Color("#1f2329"), gnd) == 1.0, "a white puff and a black puff on green count at full weight (%.2f, %.2f)" % [VfxBiome.puff_weight(Color("#ffffff"), gnd), VfxBiome.puff_weight(Color("#1f2329"), gnd)])
+	_check(VfxBiome.puff_weight(gnd, gnd) == 0.3 and VfxBiome.puff_weight(gnd.lightened(0.05), gnd) < 1.0 and VfxBiome.puff_weight(gnd.lightened(0.05), gnd) > 0.3, "a puff the ground's own colour counts 0.3 and one a little off it in between")
+	var wsteps: bool = true
+	for id in ids:
+		var spx: Dictionary = VfxBiome.spec(String(id))
+		if spx.is_empty():
+			continue
+		for key in ["lit", "mid", "shade"]:
+			var stp: float = absf(VfxBiome._lum(spx[key]) - VfxBiome._lum(spx["ground"]))
+			var w: float = VfxBiome.puff_weight(spx[key], spx["ground"])
+			wsteps = wsteps and ((stp >= 0.10 and w == 1.0) or (stp < 0.10 and w < 1.0))
+	_check(wsteps, "in all fifteen biomes every plume colour with a step of 10% or more from its ground has weight 1.0")
+	# the star never twice in a second: two craters at once give one star
+	var hs2 := VfxHub.new()
+	hs2.reset(S, 6)
+	hs2.px_per_unit = 0.3
+	VfxBiome.override_biome = "desert"
+	_tick(S, hs2, [crater.call(desert_x, 14.0)])
+	for k in range(20):
+		_tick(S, hs2, [])
+	_tick(S, hs2, [crater.call(desert_x + 900.0, 14.0)])
+	VfxBiome.override_biome = ""
+	_check(hs2.biomefx.stars == 1, "a second crater within a second has no star (%d stars)" % hs2.biomefx.stars)
+	# a slam and its crater in one tick make one column
+	var hd: VfxHub = run.call(desert_x, [land.call(desert_x, "slam", 3500.0), crater.call(desert_x, 14.0)], 3.0, true, false, "")
+	_check(hd.biomefx.columns == 1, "a slam and the crater it digs make one column, not two (%d)" % hd.biomefx.columns)
+	# by tier and by speed
+	var h1: VfxHub = run.call(desert_x, [crater.call(desert_x, 14.0)], 1.0, true, false, "")
+	var h4: VfxHub = run.call(desert_x, [crater.call(desert_x, 14.0)], 4.0, true, false, "")
+	var top1 := 0.0
+	var top4 := 0.0
+	for b in h1.debris.bits.filter(func(b): return b.kind == VfxDebris.PUFF):
+		top1 = maxf(top1, b.y)
+	for b in h4.debris.bits.filter(func(b): return b.kind == VfxDebris.PUFF):
+		top4 = maxf(top4, b.y)
+	_check(top4 > top1 + 60.0 and int(h4.biomefx.made.get("chunk", 0)) > int(h1.biomefx.made.get("chunk", 0)) * 1.5, "tier 4 builds a taller plume and throws well over one and a half times the chunks of tier 1 (top %.0f against %.0f; %d against %d chunks)" % [top4, top1, int(h4.biomefx.made.get("chunk", 0)), int(h1.biomefx.made.get("chunk", 0))])
+	var hs: VfxHub = run.call(desert_x, [land.call(desert_x, "slam", 700.0)], 2.0, true, false, "")
+	var hf: VfxHub = run.call(desert_x, [land.call(desert_x, "slam", 3500.0)], 2.0, true, false, "")
+	_check(int(hs.biomefx.made.get("chunk", 0)) < int(hf.biomefx.made.get("chunk", 0)), "a slow landing throws less (%d against %d chunks)" % [int(hs.biomefx.made.get("chunk", 0)), int(hf.biomefx.made.get("chunk", 0))])
+	# reduced motion: fewer, and no star (a low-priority flash is refused in the register's reduced mode)
+	var hr: VfxHub = run.call(desert_x, [crater.call(desert_x, 14.0)], 3.0, true, true, "")
+	_check(hr.debris.bits.size() < hc.debris.bits.size() and kinds.call(hr, VfxDebris.STAR) == 0, "reduced motion: fewer bits and no star (%d against %d bits)" % [hr.debris.bits.size(), hc.debris.bits.size()])
+	# the fifteen, each on its own ejecta
+	var checks: Dictionary = {}
+	for id in ids:
+		var hh: VfxHub = run.call(plains_x, [crater.call(plains_x, 14.0)], 3.0, true, false, String(id))
+		checks[id] = hh
+	_check(int(checks["ocean"].biomefx.made.get("puff", 0)) == 0, "ocean: nothing added")
+	var cnt := func(id: String, k: int) -> int: return checks[id].debris.bits.filter(func(b): return b.kind == k).size()
+	_check(cnt.call("forest", VfxDebris.LEAF) > 4 and cnt.call("jungle", VfxDebris.LEAF) > 4 and int(checks["jungle"].biomefx.made.get("steam", 0)) > 0, "forest and jungle throw leaf diamonds, and the jungle's ground steams (%d, %d leaves, %d steam)" % [cnt.call("forest", VfxDebris.LEAF), cnt.call("jungle", VfxDebris.LEAF), int(checks["jungle"].biomefx.made.get("steam", 0))])
+	_check(cnt.call("tundra", VfxDebris.SNOW) > 4 and cnt.call("taiga", VfxDebris.SNOW) > 4 and cnt.call("ice_sheet", VfxDebris.SNOW) > 4 and cnt.call("sea_ice", VfxDebris.SNOW) > 4, "tundra, taiga, ice sheet and sea ice throw snow crystals")
+	_check(int(checks["sea_ice"].biomefx.made.get("ring", 0)) == 1 and int(checks["beach"].biomefx.made.get("ring", 0)) == 1 and int(checks["desert"].biomefx.made.get("ring", 0)) == 0, "the sea ice has its ring of black water and the beach its ring of wet sand, the desert none")
+	_check(cnt.call("volcanic", VfxDebris.ASH) > 2 and cnt.call("volcanic", VfxDebris.EMBER) == 0, "volcanic ground throws ash flakes and ember CHIPS (steady), never the pulsing ember bit (%d ash, %d ember bits)" % [cnt.call("volcanic", VfxDebris.ASH), cnt.call("volcanic", VfxDebris.EMBER)])
+	var vsp: Dictionary = VfxBiome.spec("volcanic")
+	var chips: int = checks["volcanic"].debris.bits.filter(func(b): return b.kind == VfxDebris.CHUNK and b.col.is_equal_approx(vsp["ej0"])).size()
+	_check(chips > 2, "the ember chips are Art's orange (%d)" % chips)
+	_check(cnt.call("savanna", VfxDebris.LEAF) > 1 and int(checks["wetland"].biomefx.made.get("splinter", 0)) > 1 and int(checks["desert"].biomefx.made.get("splinter", 0)) > 1, "savanna tumbles grass, the wetland flings reed, the desert's dune face slumps in streaks")
+	var all_made: bool = true
+	for id in ids:
+		if String(art["biomes"][id]["plume"]["kind"]) != "water":
+			all_made = all_made and checks[id].biomefx.columns == 1 and int(checks[id].biomefx.made.get("puff", 0)) > 3
+	_check(all_made, "every biome but the open ocean builds a column")
+	# deterministic
+	var hd1: VfxHub = run.call(desert_x, [crater.call(desert_x, 14.0)], 3.0, true, false, "")
+	var hd2: VfxHub = run.call(desert_x, [crater.call(desert_x, 14.0)], 3.0, true, false, "")
+	var same: bool = hd2.debris.bits.size() == hd1.debris.bits.size()
+	if same:
+		for i in range(hd1.debris.bits.size()):
+			same = same and hd1.debris.bits[i].x == hd2.debris.bits[i].x and hd1.debris.bits[i].vy == hd2.debris.bits[i].vy
+	_check(same, "the same crater gives the same bits")
+	# bounces, slides: each has its piece
+	var hb: VfxHub = run.call(forest_x, [VfxMock.ev("bounce", {"actor": 0.0, "x": forest_x, "y": WorldTerrain.groundY(S, forest_x), "z": 0.0, "vn": -1500.0, "surface": "soil", "n": 1})], 2.0, true, false, "")
+	_check(kinds.call(hb, VfxDebris.LEAF) > 1, "a bounce in the forest sheds leaves (%d)" % kinds.call(hb, VfxDebris.LEAF))
+	var hsl: VfxHub = run.call(mount_x, [VfxMock.ev("slide", {"x": mount_x, "x1": mount_x + 900.0, "w": 120.0, "energy": 8.0, "variant": "ground", "z1": 0.0, "owner": 0.0})], 2.0, true, false, "")
+	_check(int(hsl.biomefx.made.get("chunk", 0)) > 3, "a slide's end in the mountains throws rock (%s)" % str(hsl.biomefx.made))
+	# the flecks come down and are gone; the chunks that were meant to stay stay a few seconds, then go
+	var hz: VfxHub = run.call(forest_x, [crater.call(forest_x, 12.0)], 2.0, true, false, "")
+	for k in range(120):
+		_tick(S, hz, [])
+	var stayed: int = kinds.call(hz, VfxDebris.CHUNK)
+	for k in range(420):
+		_tick(S, hz, [])
+	_check(stayed > 0 and kinds.call(hz, VfxDebris.LEAF) == 0 and kinds.call(hz, VfxDebris.CHUNK) == 0, "debris that lands stays two seconds on (%d chunks), and leaves and chunks are all gone in nine (%d leaves, %d chunks left)" % [stayed, kinds.call(hz, VfxDebris.LEAF), kinds.call(hz, VfxDebris.CHUNK)])
+	# the pool's caps hold under a flood
+	var hfl := VfxHub.new()
+	hfl.reset(S, 6)
+	hfl.px_per_unit = 0.3
+	VfxBiome.override_biome = "jungle"
+	for k in range(40):
+		_tick(S, hfl, [land.call(forest_x, "slam", 3500.0), crater.call(forest_x, 20.0)])
+	VfxBiome.override_biome = ""
+	_check(hfl.debris.bits.size() <= VfxLook.DEBRIS_CAP, "a flood of impacts stays inside the pool's cap (%d of %d)" % [hfl.debris.bits.size(), VfxLook.DEBRIS_CAP])
+
+
 func _earth() -> void:
 	print("earth, material and fire")
+	VfxBiome.override_biome = "city"      # this tests earth.gd on its own: the biome's plume (biome.gd) has its own checks, _biome_fx
 	var S := SimCore.createSim()
 	SimCore.newMatch(S, 6)
 	var plains: float = SimWrap.wrap(2250.0 * SimConst.PS)
@@ -1246,6 +1407,7 @@ func _earth() -> void:
 				print("    differs: %s.%s" % [gk, k])
 	_check(same, "data/vfx/earth.json and the built-in defaults agree")
 	SimCore.dispose(S)
+	VfxBiome.override_biome = ""
 
 
 ## Trails across contacts (the sim's land, bounce and journey_end): the path breaks at each contact, a trail on the ground fades fast,

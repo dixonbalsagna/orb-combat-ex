@@ -50,7 +50,7 @@ const CAP_REDUCED: int = 1
 const LOW_CAP: int = 2
 ## The sources that leave a slot free: everything a fight makes many of (VFX's, and Rendering's body hit, head flash and cue flare: docs/rendering/flash-sources.md). A perfect block's
 ## guard flash is NOT low: a skill moment the player earned, it may take the third slot (the EP's ruling, 2026-10-06).
-const LOW: Array = ["energy", "block", "shot_hit", "mine", "zip_break", "body_hit", "head_flash", "cue_flare", "divider_slam", "far_impact"]
+const LOW: Array = ["energy", "block", "shot_hit", "mine", "zip_break", "body_hit", "head_flash", "cue_flare", "divider_slam", "far_impact", "biome_star"]
 ## THE CATASTROPHE CLASS (docs/vfx/catastrophe-plan.md section 1; Legal c01 to c05, run-mode section 3.2): a world-scale light event (the blast cloud's fireball, the crust breach's flare, a big
 ## impact seen from the exosphere, a meteor) is asked with ask_cat(), which adds to the ordinary rules: one event per CAT_GAP ticks across the screen, a rise of at least CAT_RISE_MIN ticks
 ## and a fall of at least CAT_FALL_MIN (cat_shape() clamps them), a calm form under `reduced` (a lower peak, a slower rise and fall, and no second event within CAT_REPEAT_QUIET), and a peak
@@ -71,7 +71,7 @@ const CAT_KEEP: int = 600                 # ticks an event's answer and peak are
 ## close framing (about 1.3 px a world unit).
 const DEFAULT_WEIGHT: Dictionary = {
 	"energy": 0.15, "block": 0.05, "shot_hit": 0.4, "mine": 0.4, "zip_break": 0.1, "body_hit": 0.17, "head_flash": 0.07, "guard_flash": 0.2, "cue_flare": 0.4,
-	"double_hit": 0.15, "charge_full": 0.05, "divider_slam": 0.3,
+	"double_hit": 0.15, "charge_full": 0.05, "divider_slam": 0.3, "biome_star": 0.1,
 	"explosion": 1.0, "transform": 1.0, "beam": 1.0, "beam_clash": 1.0, "far_impact": 0.03,
 }
 

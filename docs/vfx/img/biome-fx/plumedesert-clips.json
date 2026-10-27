@@ -1,0 +1,21 @@
+{
+  "left": {
+    "scenario": "plumedesert",
+    "seed": 12345,
+    "seedPlayed": 12345,
+    "slots": null,
+    "pairing": "default",
+    "variant": 0
+  },
+  "right": {
+    "scenario": "plumedesert",
+    "seed": 12345,
+    "seedPlayed": 12345,
+    "slots": null,
+    "pairing": "default",
+    "variant": 0
+  },
+  "leftDir": "C:/Users/itsha/AppData/Local/Temp/claude/C--Users-itsha-Documents-Claude-Proj-Breakers-Like/ea6bb020-cc36-4a6d-a6c9-2b604d01280b/scratchpad/lk_lkA_plumedesert",
+  "rightDir": "C:/Users/itsha/AppData/Local/Temp/claude/C--Users-itsha-Documents-Claude-Proj-Breakers-Like/ea6bb020-cc36-4a6d-a6c9-2b604d01280b/scratchpad/lk_lkB_plumedesert",
+  "sameMatch": true
+}

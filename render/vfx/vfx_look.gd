@@ -78,6 +78,7 @@ const PRESS_DEFAULT: bool = false         # the melee press styles on screen (pr
 const GLARE_DEFAULT: bool = true          # the rival's glasses glare (glare.gd; Legal RL-066), on his taunt and a signature's wind-up
 const BEAMPLAY_DEFAULT: bool = true       # the beam plays on screen: the crossing, a swat, a split, a walk, a wade, a late answer (Encounter's slice 8)
 const EARTH_DEFAULT: bool = true         # tumbling material chunks, cel flames and the ground-contact effects
+const BIOMEFX_DEFAULT: bool = true       # what an impact and a landing throw up depends on the biome's material (biome.gd; Orb, 2026-10-23)
 ## Cracks are a pure function of the sim's records (S.craters, S.slides) plus the match seed (render/vfx/crack_gen.gd),
 ## so a seek, a snapshot or a late join draws the same ones. Lengths and widths are in crater radii r or trench half
 ## widths hw; numbers of lines grow with sqrt(energy).

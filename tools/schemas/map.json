@@ -524,6 +524,10 @@
       "schema": "vfx-earth.schema.json"
     },
     {
+      "match": "data/vfx/biome.json",
+      "schema": "vfx-biome.schema.json"
+    },
+    {
       "match": "data/vfx/power.json",
       "schema": "vfx-power.schema.json"
     },

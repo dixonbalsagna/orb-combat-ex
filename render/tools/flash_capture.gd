@@ -30,11 +30,11 @@ extends RefCounted
 ## The scenarios' rules are a copy of tools/flash/flash_worst.gd's (tools/ is not in an export). Tools' drift check
 ## fails when the two differ (docs/tools/flash-check.md): change them together.
 
-const SCENARIOS: Array = ["mash", "mashcity", "clash", "signature", "signaturecity", "rushcity", "transform", "collapse", "mashdummy", "ring", "launchai", "clashcity", "signaturedummy", "blastdummy", "ai"]
+const SCENARIOS: Array = ["mash", "mashcity", "clash", "signature", "signaturecity", "rushcity", "transform", "collapse", "mashdummy", "ring", "launchai", "clashcity", "signaturedummy", "blastdummy", "plumedesert", "plumeice", "plumevolc", "ai"]
 const SEED: int = 12345
 const FORM_TICKS: Array = [300, 1500]
 ## Which slots are the AI's (true) in each scenario.
-const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true], "mashdummy": [false, true], "ring": [false, true], "launchai": [false, true], "clashcity": [false, false], "signaturedummy": [false, true], "blastdummy": [false, true]}
+const AI_SLOTS: Dictionary = {"mash": [false, false], "mashcity": [false, false], "clash": [false, false], "signature": [false, true], "signaturecity": [false, true], "rushcity": [false, true], "transform": [true, true], "collapse": [true, true], "ai": [true, true], "plumedesert": [false, false], "plumeice": [false, false], "plumevolc": [false, false], "mashdummy": [false, true], "ring": [false, true], "launchai": [false, true], "clashcity": [false, false], "signaturedummy": [false, true], "blastdummy": [false, true]}
 
 var main: Node
 var scenario: String = ""
@@ -84,6 +84,7 @@ func begin(sc: String, reduced: bool, seed: int = 0, skip: int = 0, variant: int
 		err = "no scenario '%s' (%s): playing ai" % [sc, ", ".join(PackedStringArray(SCENARIOS))]
 		sc = "ai"
 	scenario = sc
+	VfxBiome.override_biome = ""      # the plume clips force a biome for their own run only (_plume)
 	var ai: Array = AI_SLOTS[sc]
 	var host: SimHost = main.host
 	# a pairing other than the roster's first two: the page's `slots` (two fighter ids, tools/flash/capture-web.mjs --slots), as flash_worst.gd's --slots does
@@ -267,6 +268,12 @@ func drive(sc: String, t: int, S: SimState) -> void:
 			_ring(t, S)
 		"launchai":     # player one launches the AI
 			_launch_ai(t, S)
+		"plumedesert":    # a desert crater's plume, at the close framing (Legal's fx07)
+			_plume(t, S, "desert")
+		"plumeice":       # an ice-sheet impact's plume
+			_plume(t, S, "ice_sheet")
+		"plumevolc":      # a volcanic impact's plume, with its steady ember chips
+			_plume(t, S, "volcanic")
 		"ai":           # the real AI match, forms readied at 300 and 1500, a tier raised at 900
 			_ready_forms(S, t, FORM_TICKS)
 			if t == 900:
@@ -352,6 +359,25 @@ func _blast_dummy(t: int, S: SimState) -> void:
 
 
 ## The pair set down again `variant` x 450 units along the world from where the scene put them.
+## A crater's plume in a biome at the close framing (Legal's fx07: a staged desert crater, an ice impact and a volcanic impact, in both modes): the pair stands 220 units apart on flat ground and the second
+## is thrown down onto it every 150 ticks (a slam and the crater it digs), the biome forced for the run (World's fine ids are not in every match; VfxBiome.override_biome). The same in
+## tools/flash/flash_worst.gd and render/tools/flash_capture.gd (the drift check).
+func _plume(t: int, S: SimState, biome: String) -> void:
+	if t == 0:
+		VfxBiome.override_biome = biome
+		for i in range(2):
+			var f = S.fighters[i]
+			f.x = SimWrap.wrap(2250.0 * SimConst.PS + (-110.0 if i == 0 else 110.0))
+			f.y = WorldTerrain.groundY(S, f.x) + 10.0
+			f.vx = 0.0
+			f.vy = 0.0
+			f.tier = 3.0
+	if t % 150 == 30:
+		var tg = S.fighters[1]
+		tg.y = WorldTerrain.groundY(S, tg.x) + 300.0
+		DirLaunch.doLaunch(S, S.fighters[0], tg, {"ux": 0.25, "uy": -0.97, "name": "SLAM DOWN"}, 2600.0, false)
+
+
 func _apply_variant(S: SimState, variant: int) -> void:
 	for f in S.fighters:
 		f.x = SimWrap.wrap(f.x + 450.0 * float(variant))

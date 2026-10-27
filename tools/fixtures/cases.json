@@ -301916,6 +301916,83 @@
         }
       ],
       "expect": null
+    },
+    {
+      "id": "vfx-biome-unknown-key",
+      "schema": "vfx-biome.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/biome.json",
+          "set": {
+            "/extra": 1
+          }
+        }
+      ],
+      "expect": {
+        "rule": "additionalProperties",
+        "pointer": "/extra"
+      }
+    },
+    {
+      "id": "vfx-biome-tier-k-too-big",
+      "schema": "vfx-biome.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/biome.json",
+          "set": {
+            "/tier_k/0": 9
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maximum",
+        "pointer": "/tier_k/0"
+      }
+    },
+    {
+      "id": "vfx-biome-emitter-kind",
+      "schema": "vfx-biome.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/biome.json",
+          "set": {
+            "/kinds/dirt/0/kind": "bogus"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "enum",
+        "pointer": "/kinds/dirt/0/kind"
+      }
+    },
+    {
+      "id": "vfx-biome-star-flag-type",
+      "schema": "vfx-biome.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/biome.json",
+          "set": {
+            "/events/slam/star": "yes"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "type",
+        "pointer": "/events/slam/star"
+      }
+    },
+    {
+      "id": "vfx-biome-underscore-key-ok",
+      "schema": "vfx-biome.schema.json",
+      "mutate": [
+        {
+          "file": "data/vfx/biome.json",
+          "set": {
+            "/_why": "comment"
+          }
+        }
+      ],
+      "expect": null
     }
   ],
   "text": [

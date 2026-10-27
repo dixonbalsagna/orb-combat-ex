@@ -1,0 +1,137 @@
+{
+  "version": 2,
+  "_note": "VFX's biome effects (docs/vfx/biome-fx.md), in Art's plume language (docs/art/biomes.md section 5): an impact is a billowing column of overlapping faceted puffs (the high ones first, so the low ones sit in front), one flat pale burst star on the first frame, ejecta on arcs, a skirt of low puffs along the ground and debris that lands and stays. What changes with the biome is the colour, the height and the ejecta, and those come from Art's data/art/biomes.json (`plume`: kind, cols [lit, mid, shade], ej [two ejecta colours], h, w, and the flags ring, steam, wet, embers), read by the fine biome's name (World's 15 ids). This file holds how the composition is drawn and what each kind's ejecta are: `kinds` is Art's plume kind. A biome with no plume spec (the villages and the city) adds nothing, and `water` (the open ocean) is the water effects' own. Counts are at tier 1 and speed share 1, then multiplied by the speed share, by `tier_k` for the causer's tier (1 to 4: pillar 4), by quality (1, 0.7, 0.35; halved in reduced motion) and by 0.55 at an intro landing. Speeds are world units a second, sizes world units, lives seconds. Colour tokens: lit, mid, shade (the plume's), ej0, ej1 (the ejecta's). Authored by the VFX Director session (Claude, claude-sonnet-5-5), 2026-10-23. Presentation only: read by render/vfx/biome.gd, never by the sim.",
+  "tier_k": [0.7, 1.0, 1.45, 2.0],
+  "scale": {
+    "base": 0.3,
+    "per_k": 0.35,
+    "min": 0.3,
+    "max": 1.2
+  },
+  "column": {
+    "puff_h": 40,
+    "min": 5,
+    "max": 9,
+    "taper": 0.45,
+    "size_k": 1.1,
+    "grow": 1.4,
+    "life": [1.1, 1.8],
+    "rise": [30, 70],
+    "drift": 26
+  },
+  "skirt": {
+    "n": 5,
+    "max": 9,
+    "size_k": 0.26,
+    "vx": [90, 320],
+    "vy": [10, 40],
+    "life": [1.2, 1.9]
+  },
+  "star": {
+    "r_k": 0.5,
+    "r_max": 130,
+    "life": 0.025
+  },
+  "steam": {
+    "n": 3,
+    "max": 5,
+    "size": [40, 70],
+    "grow": 1.8,
+    "life": [1.4, 2.0],
+    "vy": [50, 90],
+    "spread": 60,
+    "col": "#b9c1c0"
+  },
+  "ring": {
+    "r0": 0.2,
+    "grow": 2.2,
+    "life": 0.9
+  },
+  "events": {
+    "slam": {
+      "plume": 0.7,
+      "star": false,
+      "ejecta": 1.0,
+      "skirt": 1.0,
+      "ring": true
+    },
+    "crater": {
+      "plume": 1.0,
+      "star": true,
+      "ejecta": 1.3,
+      "skirt": 1.2,
+      "ring": true
+    },
+    "skid": {
+      "plume": 0.0,
+      "star": false,
+      "ejecta": 0.6,
+      "skirt": 0.8,
+      "ring": false
+    },
+    "bounce": {
+      "plume": 0.35,
+      "star": false,
+      "ejecta": 0.5,
+      "skirt": 0.5,
+      "ring": false
+    },
+    "leave": {
+      "plume": 0.0,
+      "star": false,
+      "ejecta": 0.4,
+      "skirt": 0.4,
+      "ring": false
+    },
+    "slide_end": {
+      "plume": 0.5,
+      "star": false,
+      "ejecta": 0.8,
+      "skirt": 1.0,
+      "ring": false
+    },
+    "skid_tick": {
+      "plume": 0.0,
+      "star": false,
+      "ejecta": 0.12,
+      "skirt": 0.0,
+      "ring": false
+    }
+  },
+  "kinds": {
+    "dirt": [
+      {"kind": "chunk", "n": 12, "max": 24, "cols": ["ej0", "ej1"], "size": [10, 20], "life": [1.0, 1.8], "vx": [160, 700], "vy": [250, 800], "dir": "both", "spread": 60, "mode": 2, "stay": 0.2},
+      {"kind": "chunk", "n": 6, "max": 12, "cols": ["ej1"], "size": [16, 28], "life": [1.0, 1.7], "vx": [100, 420], "vy": [180, 520], "dir": "both", "spread": 50, "mode": 2, "stay": 0.2}
+    ],
+    "leaf": [
+      {"kind": "leaf", "n": 12, "max": 26, "cols": ["ej0", "mid", "lit"], "size": [18, 32], "life": [2.0, 3.2], "vx": [60, 340], "vy": [220, 620], "dir": "both", "spread": 70, "grav": 0.12, "drag": 0.03},
+      {"kind": "chunk", "n": 5, "max": 10, "cols": ["ej1"], "size": [10, 18], "life": [1.0, 1.8], "vx": [120, 520], "vy": [220, 640], "dir": "both", "spread": 50, "mode": 2, "stay": 0.2}
+    ],
+    "sand": [
+      {"kind": "chunk", "n": 10, "max": 22, "cols": ["ej0", "ej1"], "size": [8, 14], "life": [0.8, 1.5], "vx": [200, 900], "vy": [80, 360], "dir": "both", "spread": 60, "grav": 0.5, "drag": 0.02, "mode": 2},
+      {"kind": "splinter", "n": 6, "max": 12, "cols": ["lit", "ej0"], "size": [30, 64], "life": [0.7, 1.3], "vx": [400, 1100], "vy": [5, 50], "dir": "both", "spread": 60, "grav": 0.15, "drag": 0.06}
+    ],
+    "dust": [
+      {"kind": "chunk", "n": 10, "max": 22, "cols": ["ej1", "ej0"], "size": [8, 16], "life": [0.9, 1.6], "vx": [180, 800], "vy": [120, 480], "dir": "both", "spread": 60, "grav": 0.6, "drag": 0.02, "mode": 2, "stay": 0.2},
+      {"kind": "leaf", "n": 6, "max": 12, "cols": ["ej0"], "size": [14, 26], "life": [1.6, 2.6], "vx": [80, 360], "vy": [160, 460], "dir": "both", "spread": 60, "grav": 0.15, "drag": 0.03}
+    ],
+    "rock": [
+      {"kind": "chunk", "n": 10, "max": 22, "cols": ["ej0", "mid", "shade"], "size": [12, 24], "life": [1.0, 1.8], "vx": [220, 840], "vy": [280, 920], "dir": "both", "spread": 50, "mode": 2, "stay": 0.2},
+      {"kind": "chunk", "n": 4, "max": 8, "cols": ["ej1"], "size": [7, 13], "life": [0.9, 1.5], "vx": [160, 600], "vy": [260, 760], "dir": "both", "spread": 50, "mode": 2, "stay": 0.2},
+      {"kind": "chunk", "n": 6, "max": 12, "cols": ["mid", "shade"], "size": [8, 14], "life": [1.4, 2.2], "vx": [260, 700], "vy": [20, 120], "dir": "both", "spread": 60, "grav": 0.7, "drag": 0.03, "mode": 2}
+    ],
+    "snow": [
+      {"kind": "snow", "n": 14, "max": 28, "cols": ["ej0", "lit"], "size": [10, 20], "life": [1.4, 2.6], "vx": [60, 380], "vy": [240, 700], "dir": "both", "spread": 60, "grav": 0.22, "drag": 0.02},
+      {"kind": "chunk", "n": 6, "max": 12, "cols": ["ej1"], "size": [9, 17], "life": [0.9, 1.6], "vx": [120, 520], "vy": [240, 700], "dir": "both", "spread": 50, "mode": 2, "stay": 0.2}
+    ],
+    "mud": [
+      {"kind": "chunk", "n": 9, "max": 18, "cols": ["mid", "shade"], "size": [12, 24], "life": [1.0, 1.8], "vx": [120, 520], "vy": [240, 720], "dir": "both", "spread": 50, "mode": 2, "stay": 0.2},
+      {"kind": "splinter", "n": 6, "max": 12, "cols": ["ej1", "ej0"], "size": [28, 52], "life": [0.9, 1.5], "vx": [100, 480], "vy": [200, 560], "dir": "both", "spread": 60, "grav": 0.9}
+    ],
+    "ash": [
+      {"kind": "chunk", "n": 10, "max": 20, "cols": ["shade", "mid"], "size": [12, 24], "life": [1.0, 1.8], "vx": [200, 800], "vy": [280, 900], "dir": "both", "spread": 50, "mode": 2, "stay": 0.2},
+      {"kind": "chunk", "n": 8, "max": 14, "cols": ["ej0"], "size": [8, 14], "life": [1.0, 1.7], "vx": [120, 520], "vy": [240, 760], "dir": "both", "spread": 50, "grav": 0.8, "mode": 2, "needs": "embers", "stay": 0.2},
+      {"kind": "ash", "n": 8, "max": 16, "cols": ["ej1", "mid"], "size": [9, 17], "life": [2.0, 3.2], "vx": [50, 280], "vy": [150, 520], "dir": "both", "spread": 60, "grav": 0.1, "drag": 0.02}
+    ]
+  }
+}

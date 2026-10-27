@@ -97,6 +97,8 @@ var _vision_sig: String = ""                    # the colour-blind preset and th
 var explosions_enabled: bool = VfxLook.EXPLOSIONS_DEFAULT   # the blasts erupt in flame, sparks, smoke and a smouldering scorch; a knocked-loose shot tumbles and smokes (explode.gd)
 var earth_enabled: bool = VfxLook.EARTH_DEFAULT   # material chunks for `debris`, cel flames for `fire`, and the ground-contact events (docs/vfx/earth-plan.md)
 var earth := VfxEarth.new()
+var biomefx := VfxBiome.new()                       # the biome's own material on top of earth's (biome.gd, data/vfx/biome.json)
+var biomefx_enabled: bool = VfxLook.BIOMEFX_DEFAULT
 var debris := VfxDebris.new()
 var water := VfxWater.new()
 var holes: Array = []               # Hole
@@ -164,6 +166,9 @@ func reset(S: SimState, p_seed: int) -> void:
 	shots.flashes = flashes
 	earth.debris = debris
 	earth.reset()
+	biomefx.debris = debris
+	biomefx.flashes = flashes
+	biomefx.reset()
 	water.debris = debris
 	water.reset()
 	debris.water = water
@@ -313,6 +318,7 @@ func _consume(S: SimState, events: Array) -> void:
 				_speed_heavy(S, e)
 	debris.now = fx_now(S)
 	earth.entrance_now = false
+	earth.biomefx = biomefx if biomefx_enabled else null
 	if transform_enabled and standing_aura_enabled:
 		aura.step_mark(frozen)
 		for e in events:
@@ -449,7 +455,7 @@ func _consume(S: SimState, events: Array) -> void:
 						earth.on_slide_end(S, e)
 				"crater":
 					if earth_enabled:
-						earth.on_crater_ejecta(e)
+						earth.on_crater_ejecta(e, S)
 					if react_enabled:
 						react.on_crater(S, e, self)
 					if blast_enabled:

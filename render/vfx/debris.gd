@@ -8,7 +8,7 @@ extends RefCounted
 ## height for the bounce). A fixed number of draws per spawned bit, so the streams do not depend on the quality level:
 ## quality only decides how many of the drawn bits are kept.
 
-enum { GLASS, TRI, STEEL, CHUNK, PUFF, RING, EMBER, SPRAY, FLAME }
+enum { GLASS, TRI, STEEL, CHUNK, PUFF, RING, EMBER, SPRAY, FLAME, LEAF, SNOW, ASH, SPLINTER, STAR }   # the shard shader's shape numbers; the last five are the biome's (biome.gd)
 
 class Bit:
 	var kind: int = 0
@@ -33,6 +33,8 @@ class Bit:
 	var glass: bool = false        # an ember that is a glass fleck (a glass trench): keeps its own colour
 	var ky: float = -1e9           # a water streak ends when it falls back below this height (the surface)
 	var mode: int = 0              # a chunk: 0 concrete (the shared rim colour), 2 earth (lit and shaded sides of its own colour)
+	var aw: float = 1.0            # a puff's weight in the pool's drawn-area budget: a plume puff close to its ground in luminance counts less (biome.gd), the default 1
+	var stay: bool = false         # a biome chunk that lands and stays (Art: debris that lands stays): not buried in dust a moment after it comes to rest
 
 ## A spawn waiting for its time (an implode's ripple delay): sim time to fire, and what to do.
 class Job:
@@ -65,6 +67,7 @@ var water: VfxWater:             # the water effects (set by the hub); a plunge'
 		return _water_ref.get_ref() if _water_ref != null else null
 var _tone: int = 0              # 0 mid, 1 shadow (a back layer), 2 light (a front layer)
 var _tint: Color = Color(0.0, 0.0, 0.0, 0.0)   # a puff's own colour instead of the biome's, while set (dust_puff)
+var _aw: float = 1.0          # the area weight of the puff being made (dust_puff)
 var jobs: Array = []          # Job, waiting
 var now: float = 0.0           # the effects clock (hub.fx_now): sim time plus the intro's pre-clock ticks, so a landing's jobs run during the intro, when the sim clock stands still
 var spawned: int = 0          # counters for the tests
@@ -126,7 +129,7 @@ func step(S: SimState, dt: float) -> void:
 			_ember_area += b.sx * b.sy
 		elif b.kind == PUFF:
 			var fin: float = b.sx + b.grow * maxf(b.life - b.age, 0.0)
-			_puff_area += 0.785 * fin * fin
+			_puff_area += 0.785 * fin * fin * b.aw
 		if b.age >= b.life:
 			bits[i] = bits[bits.size() - 1]
 			bits.pop_back()
@@ -136,6 +139,10 @@ func step(S: SimState, dt: float) -> void:
 			var k: float = pow(1.0 - b.drag, dt * 60.0)
 			b.vx *= k
 			b.vy *= k
+		if b.kind == LEAF or b.kind == SNOW or b.kind == ASH:
+			# a flake or a leaf sways as it comes down: a sideways push that swings with its own seed (no random draw)
+			var sway: float = 300.0 if b.kind == LEAF else (120.0 if b.kind == SNOW else 100.0)
+			b.vx += sin(b.age * (3.0 + 3.0 * b.seed) + b.seed * 40.0) * sway * dt
 		b.x = SimWrap.wrap(b.x + b.vx * dt)
 		b.y += b.vy * dt
 		b.rot += b.spin * dt
@@ -148,7 +155,12 @@ func step(S: SimState, dt: float) -> void:
 			var g: float = WorldTerrain.groundY(S, b.x, b.z)      # the ground at the bit's own depth (the plane's with depth off)
 			if b.y < g:
 				b.y = g
-				if b.bounces < 2 and absf(b.vy) > 120.0:
+				if b.kind == LEAF or b.kind == SNOW or b.kind == ASH:
+					b.vy = 0.0
+					b.vx *= 0.3
+					b.spin = 0.0
+					b.age = maxf(b.age, b.life - 0.4)      # a flake or a leaf that has landed is gone in a moment: nothing lies on the ground
+				elif b.bounces < 2 and absf(b.vy) > 120.0:
 					b.vy = -b.vy * 0.32
 					b.vx *= 0.6
 					b.spin *= 0.5
@@ -157,7 +169,7 @@ func step(S: SimState, dt: float) -> void:
 					b.vy = 0.0
 					b.vx *= 0.85
 					b.spin = 0.0
-					if b.kind == CHUNK and b.mode == 2:
+					if b.kind == CHUNK and b.mode == 2 and not b.stay:
 						b.age = maxf(b.age, b.life - 0.3)   # an earth chunk that has come to rest is buried in dust within 0.3 s: it must not lie on the sand as a dark dash
 	_spray_alive = spray_n
 	_rubble_alive = rubble_n
@@ -500,6 +512,7 @@ func _puff_at(x: float, y: float, z: float, vx: float, vy: float, s0: float, s1:
 	if _tint.a > 0.0:
 		b.col = _tint.darkened(0.25) if _tone == 1 else (_tint.lightened(0.2) if _tone == 2 else _tint)
 	b.col2 = VfxPalette.dust(_biome, "shadow")
+	b.aw = _aw
 	b.seed = _rd.next()
 	_add(b)
 
@@ -543,7 +556,7 @@ func _add(b: Bit) -> void:
 		return
 	if b.kind == PUFF:
 		var fin2: float = b.sx + b.grow * b.life
-		var a2: float = 0.785 * fin2 * fin2
+		var a2: float = 0.785 * fin2 * fin2 * b.aw
 		if _puff_area + a2 > puff_area_cap:
 			dropped += 1
 			return
@@ -810,6 +823,111 @@ func chunk(x: float, y: float, z: float, vx: float, vy: float, size: float, life
 	_add(b)
 
 
+## A fleck of a biome's material (biome.gd): kind CHUNK, SNOW, LEAF, ASH, SPLINTER or SPRAY; col its body, col2 the chunk's lit tone; mode the chunk's; grav a share of DEBRIS_GRAV; drag a share lost a
+## tick; spin the most it turns; rsp a number in -1..1 the caller drew (the bit's turn and seed come from it, so this draws nothing from the pool's streams); ky a spray's kill height.
+func fleck(kind: int, x: float, y: float, z: float, vx: float, vy: float, size: float, life: float, col: Color, col2: Color, mode: int, grav: float, drag: float, spin: float, rsp: float, ky: float = -1e9, stay: bool = false) -> void:
+	if kind == SPRAY and _spray_alive >= 120:
+		return
+	var b := Bit.new()
+	b.kind = kind
+	b.x = SimWrap.wrap(x)
+	b.y = y
+	b.z = z
+	b.vx = vx
+	b.vy = vy
+	b.sx = size
+	match kind:
+		LEAF:
+			b.sy = size * 0.55
+		ASH:
+			b.sy = size * 0.8
+		SPLINTER:
+			b.sy = maxf(size * 0.16, 3.0)
+		SPRAY:
+			b.sy = maxf(size * 0.2, 7.0)
+		CHUNK:
+			b.sy = size * 0.8
+		_:
+			b.sy = size
+	b.life = life
+	b.grav = VfxLook.DEBRIS_GRAV * grav
+	b.drag = drag
+	b.col = col
+	b.col2 = col2
+	b.mode = mode
+	b.seed = fposmod(sin(x * 0.071 + y * 0.113 + vx * 0.003 + rsp * 5.0) * 43758.5453, 1.0)
+	b.rot = atan2(vy, vx) if (kind == SPRAY or kind == SPLINTER) else rsp * PI
+	b.spin = 0.0 if (kind == SPRAY or kind == SPLINTER) else rsp * spin
+	if kind == SPLINTER:
+		b.spin = rsp * spin
+	b.ky = ky if kind == SPRAY else -1e9
+	b.stay = stay
+	if kind == SPRAY:
+		_spray_alive += 1
+	_add(b)
+
+
+## An ember of a biome's fire (a burned or volcanic ground): the same bit as a scorch's, on Art's ramp, under the pool's ember budget, cap and drawn-area limit.
+func ember_bit(x: float, y: float, z: float, vx: float, vy: float, length: float, life: float, grav: float) -> void:
+	if _ember_tick >= VfxLook.EMBER_PER_TICK or _ember_alive >= VfxLook.EMBER_CAP:
+		return
+	if _ember_area + length * 9.0 > ember_area_cap:
+		return
+	var b := Bit.new()
+	b.kind = EMBER
+	b.x = SimWrap.wrap(x)
+	b.y = y
+	b.z = z
+	b.vx = vx
+	b.vy = vy
+	b.sx = length
+	b.sy = 9.0
+	b.life = life
+	b.grav = VfxLook.DEBRIS_GRAV * grav
+	b.col = VfxPalette.ember("hot")
+	b.col2 = Color.WHITE
+	b.rot = atan2(vy, vx)
+	b.seed = fposmod(sin(x * 0.071 + y * 0.113 + vx * 0.003) * 43758.5453, 1.0)
+	_ember_tick += 1
+	_ember_alive += 1
+	_ember_area += b.sx * b.sy
+	_add(b)
+
+
+## The biome's burst star (biome.gd): one flat pale star on the first frame, r its diameter, life a hundredth or two of a second (it is never a flicker: it is drawn once).
+func star(x: float, y: float, z: float, r: float, life: float, col: Color) -> void:
+	var b := Bit.new()
+	b.kind = STAR
+	b.x = SimWrap.wrap(x)
+	b.y = y
+	b.z = z
+	b.sx = r
+	b.sy = r
+	b.life = life
+	b.grav = 0.0
+	b.col = col
+	b.seed = fposmod(sin(x * 0.071 + y * 0.113) * 43758.5453, 1.0)
+	_add(b)
+
+
+## A flat ring on the ground in a colour (biome.gd: the ring wave of the sea ice, a beach's dark wet sand): a band that widens and thins out as it goes.
+func ring_tint(x: float, y: float, z: float, r0: float, r1: float, life: float, col: Color) -> void:
+	var b := Bit.new()
+	b.kind = RING
+	b.mode = 3
+	b.x = SimWrap.wrap(x)
+	b.y = y
+	b.z = z
+	b.sx = r0 * 2.0
+	b.sy = r0 * 2.0
+	b.grow = (r1 - r0) * 2.0 / maxf(life, 0.1)
+	b.life = life
+	b.grav = 0.0
+	b.col = col
+	b.seed = 0.0
+	_add(b)
+
+
 ## A cel flame: a three-banded tongue that rises with a wobble and shrinks as it burns out. size: its width (the tongue is
 ## 1.35 times as tall). Counted for the cap (the caller checks it).
 func flame(x: float, y: float, z: float, vx: float, vy: float, size: float, life: float) -> void:
@@ -842,10 +960,12 @@ func smoke(x: float, y: float, z: float, size: float, life: float) -> void:
 
 
 ## A dust puff in a biome's colours (the contact and settle effects, earth.gd): size s0 to s1 over its life.
-func dust_puff(biome: String, x: float, y: float, z: float, vx: float, vy: float, s0: float, s1: float, life: float, tone: int = 0, tint: Color = Color(0.0, 0.0, 0.0, 0.0)) -> void:
+func dust_puff(biome: String, x: float, y: float, z: float, vx: float, vy: float, s0: float, s1: float, life: float, tone: int = 0, tint: Color = Color(0.0, 0.0, 0.0, 0.0), aw: float = 1.0) -> void:
 	_biome = biome
 	_tone = tone
 	_tint = tint
+	_aw = aw
 	_puff_at(x, y, z, vx, vy, s0, s1, life, tone == 2)
 	_tone = 0
 	_tint = Color(0.0, 0.0, 0.0, 0.0)
+	_aw = 1.0

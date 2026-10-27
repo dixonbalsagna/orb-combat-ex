@@ -1,0 +1,659 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "meridian/vfx-biome",
+  "title": "vfx biome effects (version 2)",
+  "description": "data/vfx/biome.json: how an impact, a landing, a skid, a crater and a knockback slide are drawn in each biome (render/vfx/biome.gd, docs/vfx/biome-fx.md), in Art's plume language (docs/art/biomes.md section 5): a column of overlapping faceted puffs, one burst star, ejecta on arcs, a skirt of low puffs. The colours, heights and widths are Art's (data/art/biomes.json, `plume`, by the fine biome's name); this file holds the composition and each plume kind's ejecta (`kinds`, by Art's plume kind). `tier_k` is the share of the effect for the causer's tier 1 to 4 (pillar 4). Presentation only: read by render/vfx/biome.gd, never by the sim. Version field: version. Policy: closed except keys starting with an underscore. Cross-checks (every plume kind of Art's data has ejecta, or is `water`) are in effects_check.",
+  "type": "object",
+  "required": [
+    "version",
+    "tier_k",
+    "scale",
+    "column",
+    "skirt",
+    "star",
+    "steam",
+    "ring",
+    "events",
+    "kinds"
+  ],
+  "properties": {
+    "version": {
+      "const": 2
+    },
+    "tier_k": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "number",
+        "minimum": 0.1,
+        "maximum": 4
+      }
+    },
+    "scale": {
+      "type": "object",
+      "properties": {
+        "base": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "per_k": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "min": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "max": {
+          "type": "number",
+          "minimum": 0.2,
+          "maximum": 3
+        }
+      },
+      "additionalProperties": false
+    },
+    "column": {
+      "type": "object",
+      "properties": {
+        "puff_h": {
+          "type": "number",
+          "minimum": 20,
+          "maximum": 200
+        },
+        "min": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 12
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        },
+        "taper": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.9
+        },
+        "size_k": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 1.5
+        },
+        "grow": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "life": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "rise": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "drift": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 200
+        }
+      },
+      "additionalProperties": false
+    },
+    "skirt": {
+      "type": "object",
+      "properties": {
+        "n": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 20
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "size_k": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 1
+        },
+        "vx": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "vy": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "life": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "star": {
+      "type": "object",
+      "properties": {
+        "r_k": {
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 1
+        },
+        "r_max": {
+          "type": "number",
+          "minimum": 10,
+          "maximum": 300
+        },
+        "life": {
+          "type": "number",
+          "minimum": 0.005,
+          "maximum": 0.05
+        }
+      },
+      "additionalProperties": false
+    },
+    "steam": {
+      "type": "object",
+      "properties": {
+        "n": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 8
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "size": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "grow": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 3
+        },
+        "life": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "vy": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "spread": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 200
+        },
+        "col": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ring": {
+      "type": "object",
+      "properties": {
+        "r0": {
+          "type": "number",
+          "minimum": 0.05,
+          "maximum": 1
+        },
+        "grow": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "life": {
+          "type": "number",
+          "minimum": 0.2,
+          "maximum": 3
+        }
+      },
+      "additionalProperties": false
+    },
+    "events": {
+      "type": "object",
+      "properties": {
+        "slam": {
+          "type": "object",
+          "required": [
+            "plume",
+            "star",
+            "ejecta",
+            "skirt",
+            "ring"
+          ],
+          "description": "What an event draws: the column's share (0 none), whether the burst star is made, and the ejecta's, the skirt's shares.",
+          "properties": {
+            "plume": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "star": {
+              "type": "boolean"
+            },
+            "ejecta": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "skirt": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "ring": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "crater": {
+          "type": "object",
+          "required": [
+            "plume",
+            "star",
+            "ejecta",
+            "skirt",
+            "ring"
+          ],
+          "description": "What an event draws: the column's share (0 none), whether the burst star is made, and the ejecta's, the skirt's shares.",
+          "properties": {
+            "plume": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "star": {
+              "type": "boolean"
+            },
+            "ejecta": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "skirt": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "ring": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "skid": {
+          "type": "object",
+          "required": [
+            "plume",
+            "star",
+            "ejecta",
+            "skirt",
+            "ring"
+          ],
+          "description": "What an event draws: the column's share (0 none), whether the burst star is made, and the ejecta's, the skirt's shares.",
+          "properties": {
+            "plume": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "star": {
+              "type": "boolean"
+            },
+            "ejecta": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "skirt": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "ring": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "bounce": {
+          "type": "object",
+          "required": [
+            "plume",
+            "star",
+            "ejecta",
+            "skirt",
+            "ring"
+          ],
+          "description": "What an event draws: the column's share (0 none), whether the burst star is made, and the ejecta's, the skirt's shares.",
+          "properties": {
+            "plume": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "star": {
+              "type": "boolean"
+            },
+            "ejecta": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "skirt": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "ring": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "leave": {
+          "type": "object",
+          "required": [
+            "plume",
+            "star",
+            "ejecta",
+            "skirt",
+            "ring"
+          ],
+          "description": "What an event draws: the column's share (0 none), whether the burst star is made, and the ejecta's, the skirt's shares.",
+          "properties": {
+            "plume": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "star": {
+              "type": "boolean"
+            },
+            "ejecta": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "skirt": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "ring": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "slide_end": {
+          "type": "object",
+          "required": [
+            "plume",
+            "star",
+            "ejecta",
+            "skirt",
+            "ring"
+          ],
+          "description": "What an event draws: the column's share (0 none), whether the burst star is made, and the ejecta's, the skirt's shares.",
+          "properties": {
+            "plume": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "star": {
+              "type": "boolean"
+            },
+            "ejecta": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "skirt": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "ring": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
+        "skid_tick": {
+          "type": "object",
+          "required": [
+            "plume",
+            "star",
+            "ejecta",
+            "skirt",
+            "ring"
+          ],
+          "description": "What an event draws: the column's share (0 none), whether the burst star is made, and the ejecta's, the skirt's shares.",
+          "properties": {
+            "plume": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 2
+            },
+            "star": {
+              "type": "boolean"
+            },
+            "ejecta": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "skirt": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 3
+            },
+            "ring": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "slam",
+        "crater",
+        "skid",
+        "bounce",
+        "leave",
+        "slide_end",
+        "skid_tick"
+      ],
+      "additionalProperties": false
+    },
+    "kinds": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "$ref": "#/$defs/emitter"
+        }
+      }
+    }
+  },
+  "patternProperties": {
+    "^_": {}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "emitter": {
+      "type": "object",
+      "required": [
+        "kind",
+        "cols"
+      ],
+      "description": "One emitter of ejecta: a kind of thing, how many (at tier 1 and speed share 1), the colour tokens it picks from and how it flies. Pairs are [min, max].",
+      "properties": {
+        "kind": {
+          "enum": [
+            "chunk",
+            "snow",
+            "leaf",
+            "ash",
+            "splinter"
+          ]
+        },
+        "n": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 40
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 40
+        },
+        "cols": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {
+            "enum": [
+              "lit",
+              "mid",
+              "shade",
+              "ej0",
+              "ej1"
+            ]
+          }
+        },
+        "size": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "life": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "vx": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "vy": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "dir": {
+          "enum": [
+            "both",
+            "back",
+            "fwd",
+            "up"
+          ]
+        },
+        "spread": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 400
+        },
+        "grav": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "drag": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.2
+        },
+        "mode": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 2
+        },
+        "stay": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "needs": {
+          "enum": [
+            "embers"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -23,6 +23,7 @@ static var _data: Dictionary = {}
 static var _loaded: bool = false
 
 var debris: VfxDebris
+var biomefx: VfxBiome = null     # set by the hub while the biome effects are on: the biome's material on top of the chunks and dust below
 var deb_made: int = 0          # counters for the tests
 var flames_made: int = 0
 var contact_made: int = 0      # chunks and puffs thrown for contact events
@@ -73,6 +74,16 @@ func _q() -> float:
 ## A count scaled by quality, rounded, with the remainder decided by a draw so the average is right.
 func _lk() -> float:
 	return 0.55 if entrance_now else 1.0
+
+
+## The biome's own material for one event (biome.gd): `ev` its key in data/vfx/biome.json, s the event's speed share, actor the fighter who caused it (his tier scales it).
+func _bfx(S: SimState, ev: String, x: float, y: float, z: float, dirx: float, s: float, actor: int) -> void:
+	if biomefx == null:
+		return
+	var tier: int = 1
+	if S != null and actor >= 0 and actor < S.fighters.size():
+		tier = VfxReact.tier_of(S.fighters[actor])
+	biomefx.emit(ev, S, x, y, z, dirx, s, tier, _q(), _lk())
 
 
 func _count(n: float) -> int:
@@ -214,6 +225,7 @@ func on_contact(S: SimState, e) -> void:
 				cm = p("land", "paving_chunks")
 				dm = p("land", "paving_dust")
 			var tones: Array = tones_for_surface(surf, x)
+			_bfx(S, "slam" if kind == "slam" else "skid", x, y, z, 0.0 if kind == "slam" else dirx, s, int(e.actor))
 			if kind == "slam":
 				_chunks(x, y, z, _count(ck * s * cm), tones, 0.0, 0.0, 250.0 * s, 900.0 * s, 650.0 * s, 0.7 + 0.5 * s)
 				_dust(x, y, z, _count(dk * s * dm), s, 0.0, 380.0 * s, biome)
@@ -228,6 +240,7 @@ func on_contact(S: SimState, e) -> void:
 			var vn: float = absf(float(e.vn))
 			var sb: float = clampf(vn / p("bounce", "vn_ref"), 0.25, 1.8)
 			var tones2: Array = tones_for_surface(surf2, x)
+			_bfx(S, "bounce", x, y, z, dirx, sb, int(e.actor))
 			_chunks(x, y, z, _count(p("bounce", "chunks") * sb), tones2, dirx, 200.0, 200.0 * sb, 600.0 * sb, 160.0, 0.6 + 0.4 * sb)
 			_dust(x, y, z, _count(p("bounce", "dust") * sb), sb, dirx, 60.0, biome)
 		"left_ground":
@@ -246,6 +259,7 @@ func on_contact(S: SimState, e) -> void:
 				debris.chunk(x, y + 6.0, z, cos(ang) * sp, sin(ang) * sp, sz, debris._rd.range_(1.0, 2.0), tones3, 2, 11.0)
 				contact_made += 1
 			_dust(x, y, z, _count(p("leave", "dust") * sl), sl, -dirx, 60.0, biome)
+			_bfx(S, "leave", x, y, z, dv.x if absf(dv.x) > 0.01 else dirx, sl, int(e.actor))
 		"tumble_end":
 			if String(e.kind) == "air":
 				return
@@ -284,6 +298,7 @@ func step_skid(S: SimState) -> void:
 			var sz: float = debris._rd.range_(p("land", "size_min") * 0.5, p("land", "size_max") * 0.7)
 			debris.chunk(f.x, WorldTerrain.groundY(S, f.x) + 4.0, f.z + 6.0, -dirx * debris._rd.range_(60.0, 380.0) * s, debris._rd.range_(120.0, 450.0) * s, sz, debris._rd.range_(0.8, 1.5), tones, 2, 12.0)
 			contact_made += 1
+			_bfx(S, "skid_tick", f.x, WorldTerrain.groundY(S, f.x) + 4.0, f.z + 6.0, dirx, s, i)
 			if _skid_n[i] % maxi(int(p("skid", "dust_every")), 1) == 0:
 				debris.dust_puff(biome, f.x, WorldTerrain.groundY(S, f.x) + 6.0, f.z + 10.0, -dirx * debris._rd.range_(40.0, 200.0), debris._rd.range_(20.0, 90.0), 36.0, 80.0, debris._rd.range_(1.0, 1.8))
 				contact_made += 1
@@ -314,12 +329,13 @@ func on_dust(e, keep_mul: float = 1.0) -> void:
 
 ## A crater (the sim's `crater` event): the ejecta thrown out of the bowl as tumbling chunks of its own earth, and the dust that
 ## lifts off the rim, as Rendering's ImpactFx drew them as squares. More and bigger with the energy.
-func on_crater_ejecta(e) -> void:
+func on_crater_ejecta(e, S: SimState = null) -> void:
 	var x: float = float(e.x)
 	var biome: String = VfxPalette.biome_key(x)
 	var E: float = float(e.energy)
 	var r: float = float(e.r)
 	var z: float = float(e.get("z") if e.get("z") != null else 0.0)
+	_bfx(S, "crater", x, float(e.y), z, 0.0, clampf(E / 10.0, 0.4, 2.0), int(e.owner) if e.get("owner") != null else -1)
 	var tones: Array = tones_for_surface("soil", x)
 	var sws: float = sqrt(SimConst.WS)             # the sim's world-scale factor for speeds of things thrown by world-scale events
 	var sp: float = (260.0 + 90.0 * sqrt(maxf(E, 0.0))) * sws
@@ -351,6 +367,7 @@ func on_slide_end(S: SimState, e) -> void:
 	var biome: String = VfxPalette.biome_key(x)
 	var paved: bool = String(e.variant) == "paved"
 	var tones: Array = tones_for_surface("paving" if paved else "soil", x)
+	_bfx(S, "slide_end", x, y, z, 0.0, clampf(float(e.energy) / 6.0, 0.4, 2.0), int(e.owner) if e.get("owner") != null else -1)
 	var n: int = clampi(int(4.0 + float(e.energy)), 4, 14)
 	for k in range(n):
 		var sz: float = debris._rd.range_(18.0, 36.0)
