@@ -117,6 +117,8 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 	var lift: Array = [null, null]   # the open flight off terrain of each fighter: {tick, cause}; counted as seen once it has been in the air 10 ticks (balance-targets 20, second landing ruling)
 	var rl_cur: Array = []        # the rally running: the base kinds of its links so far (Encounter's cue rally_link; the park docs/director/pending/rally, switch rally.enabled)
 	var rl_turn_t: int = -1000   # the tick of the last rally_turn: the send that follows it continues the rally
+	var rl_all_n: int = 0          # the links of the hands that already ended "turned" (the rally goes on in the other's hands: Encounter's probe counts it once, with the last hands' links)
+	var rl_all_dur: int = 0        # ... and their live ticks
 	var rl_auto: bool = false    # the rally running had a tech by itself (repetition: rally_tech with k 1)
 	var rl_ticks: Array = []     # the ticks at which a link (not an opening send) landed: the launch_power cues at these ticks are links' sends
 	var lp_list: Array = []      # [tick, actor, full] of every launch_power cue
@@ -384,7 +386,13 @@ func run_match(seed: int, arm: String, cap: int, capsec: float, wall_ms: int = 3
 							rec.rally.autoTechs += 1
 							rl_auto = true
 					elif cq == "rally_end":
-						rec.rally.ends.append([_ei(e, "n"), _ei(e, "k"), _ei(e, "dur"), rtx, rl_auto])   # links, turns, live ticks, why it ended, whether a tech by itself came
+						if rtx == "turned":   # not a rally end: it goes on in the other's hands (the next send, with the rally_turn cue before it). The hand's links and time are carried to the final end
+							rl_all_n += _ei(e, "n")
+							rl_all_dur += _ei(e, "dur")
+						else:
+							rec.rally.ends.append([_ei(e, "n"), _ei(e, "k"), _ei(e, "dur") + rl_all_dur, rtx, rl_auto, _ei(e, "n") + rl_all_n])   # last hands' links, turns, live ticks of all hands, why it ended, whether a tech by itself came, links of all hands
+							rl_all_n = 0
+							rl_all_dur = 0
 						rec.rally.seqs.append(rl_cur.duplicate())
 						rl_cur = []
 						rl_auto = false

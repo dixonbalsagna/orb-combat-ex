@@ -61,3 +61,18 @@ Rows only; no run. They read on the next newcomer and masher jobs (`node qa/godo
 | `masher.answer.<level>` | reported | the AI's perfect blocks per press of the banded masher (the `perfect_block` cue by the AI, or the brawl's `stagger` cue with text `perfect_block` on the masher), beside `masher.<level>` (35 to 50%). Item 21's lever: raise the share in small steps until the masher reads about 45% |
 
 Selftest 30 of 30. A one-job smoke in my scratch (4 matches) shows the new fields written (`firstThrowSec` 5.3 to 8.1 s, `presses` and `perfectBlocksByAI` from masher.gd). Saved jobs from before today read the thrown and answer rows as PENDING.
+
+## Addendum 2 (2026-10-26): a turned hand is not a rally (the links' median 1 against 2)
+
+`records.gd` kept an end for every `rally_end`, "turned" ones included, so a rally that changed hands made two entries, the first usually short. Encounter's probe skips the "turned" end and reads the last hands' links as the rally's. Now: a `turned` end adds its links and live ticks to a carry and writes no entry; the rally's final end writes `[last hands' links, turns, live ticks of all hands, why, auto-tech, links of all hands]`. So rallies a match, the turn share, rally time and the auto-tech share count one rally per opening send, and the repeat row is unchanged (each hand's links are still its own sequence, as in the probe).
+
+- `rally.links` (band 2 to 4): the **last hands'** links, the probe's reading, until Game Design says which reading the band means.
+- `rally.links.all` (reported): the links of every hand of the rally together.
+
+## Addendum 3 (2026-10-26): the band counts every link across both hands (GD rulings 10-26 item 36 step 1)
+
+`rally.links` (2 to 4) is now, per rally, the links of every hand plus one for each turn's own send (the new attacker's "send" after a turn); the opening send never counts, and a rally with none counts 0. A record entry is `[last hands' links, turns, live ticks of all hands, why, auto-tech, links of all hands without the turns' sends]`, so the count is entry[5] + entry[1]. `rally.links.last` (INFO) is the last hands' links alone, the probe's reading; `rally.links.all` is retired in its favour. Selftest has a turned rally whose median is 2 only when the turn's send is counted.
+
+### The full read on the tune's commit (GD 10-26 item 34), planned
+1. **Main read:** a scratch export of the tune's commit, `rally.enabled` true, `node qa/godot/run-arm.js --count=200` (3 jobs, below-normal priority, valid-run gate). The rows that matter: `2.len.p10` (whole-match, at least 300 s; the error at 200 matches is about 8 s), median 360 to 480, p90 at most 600, the rally rows, L16, L17.
+2. **If p10 reads under 300 on the 200:** the same 200 seeds three more times, each with one park off, in separate scratch copies of the data: the launch answer (`brawl.launcher.anywhere.answer.enabled` false), the water's surface (`data/director/interrupts.json` `water.enabled` false), the rally (`rally.enabled` false). The parks since 23c; it read 319 s at 23c. The park whose removal brings p10 back is the one whose own sends are first in GD's lever order. Same seeds, so the three are paired against the main read.

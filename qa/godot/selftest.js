@@ -383,6 +383,15 @@ const ctx = A => ({ A, runRecords: async () => [rec()] });
     for (const k of ['rally.dazes', 'rally.perMatch', 'rally.links', 'rally.repeat', 'rally.autotech', 'rally.turns', 'rally.time']) assert.strictEqual(id(good, k).status, 'PASS', k + ' ' + id(good, k).value);
     assert.strictEqual(id(good, 'rally.sells').status, 'INFO'); assert.ok(/0.60/.test(id(good, 'rally.sells').value));
     assert.strictEqual(id(good, 'design.L16.ai').status, 'PASS');   // 6 opening sends a match, not the 16 sends in all
+    // GD item 36 step 1: the band counts every link across both hands, the turn's own send as one, the opening send not, a rally with none as 0; the last hands' links are an INFO row. An entry is [last hands' links, turns, live ticks of all hands, why, auto-tech, links of all hands without the turns' sends]
+    { const E = [...Array.from({ length: 6 }, () => [1, 1, 300, 'landed', false, 1]), ...Array.from({ length: 3 }, () => [3, 0, 300, 'landed', false, 3]), [0, 0, 300, 'landed', false, 0]];   // counts 2 (one link and the turn's send) x6, 3 x3, 0 x1: the median is 2
+      const tr = f(mk({ ends: E })), band = id(tr, 'rally.links');
+      assert.strictEqual(band.status, 'PASS'); assert.ok(/20 with none/.test(band.note));   // the turn's send is counted (without it the median is 1)
+      assert.ok(/^1 \(/.test(id(tr, 'rally.links.last').value));   // the last hands' links alone: median 1
+      const noTurnSend = f(mk({ ends: Array.from({ length: 10 }, () => [1, 0, 300, 'landed', false, 1]) }));   // one link and no turn: the median is 1, below the band
+      assert.strictEqual(id(noTurnSend, 'rally.links').status, 'FAIL');
+      assert.strictEqual(id(f(mk({ ends: E.map(e => [...e.slice(0, 5)]) })), 'rally.links').status, 'PASS'); }   // an entry with no all-hands count reads as its own links plus its turns
+
     const bad = f(mk({ dazes: 24, ends: ends(14, 0, 0.03, 'teched', true), seqs: Array.from({ length: 14 }, () => ['chase', 'chase', 'chase']) }));
     for (const k of ['rally.dazes', 'rally.perMatch', 'rally.links', 'rally.repeat', 'rally.autotech', 'rally.turns']) assert.strictEqual(id(bad, k).status, 'FAIL', k);
     const off = f(Array.from({ length: 20 }, () => rec({ koAt: 400 })));
