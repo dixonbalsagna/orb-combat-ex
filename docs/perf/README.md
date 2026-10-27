@@ -15,6 +15,7 @@ Owner: Performance and Platform (`docs/directors/performance-platform.md`).
 | [batch-1b66c4bb-2026-10-23.md](batch-1b66c4bb-2026-10-23.md) | Item 3 on Encounter's four parks (off): no change in the steady frame cost; one x4 pair that read slower was noise |
 | [render-chain-22k-22o-2026-10-23.md](render-chain-22k-22o-2026-10-23.md) | Rendering's chain on the Radeon and RTX: 22l works, 22n triples the Radeon's frame time, 22o is free in frame time; UI's warm-marks is neutral |
 | [gen2-bench-2026-10-26.md](gen2-bench-2026-10-26.md) | World's gen 2 readiness benches in the web build (RTX/Radeon x1, x4, x6): planet make 1.7 s (9.5 s old laptop, 16 s phone), match start, calm-turn warm tick, water step, flow field, memory; verdicts |
+| [phone-freeze-2026-10-26.md](phone-freeze-2026-10-26.md) | Why the live demo may freeze on a phone: the boot is one 22 s block (56 s at 6x CPU); the audio bank warm-up and the first frame are the bulk; context-loss alert; the local-only freeze breadcrumbs park (ocx-crumbs.js) |
 | [stores-and-consoles.md](stores-and-consoles.md) | Where the game can be listed, consoles included, with requirements, cost, order, and what PlayStation friends can do today |
 | [phone-web-fullscreen.md](phone-web-fullscreen.md) | Full screen, Home Screen install and landscape on phones in the web build; a checklist for a real phone |
 | `web-shell/` | The web page's phone block (`ocx-shell.js`, the manifest, placeholder icons, the site-builder patch) |

@@ -28,7 +28,7 @@ const SCENE = opt('--scene', 'mashcity');
 const LABEL = opt('--label', 'run');
 const THROTTLE = Number(opt('--throttle', 1));
 const TICKS = Number(opt('--ticks', 600)), WARM = Number(opt('--warm', 120));
-const W = Number(opt('--width', 1280)), H = Number(opt('--height', 720));
+const W = Number(opt('--width', 1280)), H = Number(opt('--height', 720)), DPR = Number(opt('--dpr', 1));   // --dpr 2.625 with --width 915 --height 412 is a phone's pixel count (2402 by 1082)
 const SEED = opt('--seed') === undefined ? null : Number(opt('--seed'));
 const SLOTS = opt('--slots') ? opt('--slots').split(',') : null;
 const SESSION = opt('--session', process.env.MERIDIAN_SESSION || 'meridian-performance-platform');
@@ -91,7 +91,7 @@ try {
   });
   page = await Cdp.open(b.target.webSocketDebuggerUrl);
   await page.send('Page.enable');
-  await page.send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: 1, mobile: false });
+  await page.send('Emulation.setDeviceMetricsOverride', { width: W, height: H, deviceScaleFactor: DPR, mobile: false });
   await page.send('Page.navigate', { url });
   const t0 = Date.now();
   let ready = false;

@@ -4,6 +4,7 @@
 //
 //   node docs/perf/tools/web-head.mjs --check            exit 1 if export_presets.cfg does not hold the current block
 //   node docs/perf/tools/web-head.mjs --write            rewrite the Web preset's html/head_include (only the marked block)
+//   node docs/perf/tools/web-head.mjs --write --crumbs   also add the freeze breadcrumbs (web-shell/ocx-crumbs.js; a park: off by default)
 //   node docs/perf/tools/web-head.mjs --write --manifest also link manifest.webmanifest (do this only together with the
 //                                                        build-site patch that ships the file, see docs/perf/phone-web-fullscreen.md)
 //   node docs/perf/tools/web-head.mjs --print            print the block
@@ -37,25 +38,26 @@ const metas = [
   "<meta name='apple-mobile-web-app-capable' content='yes'>",
 ];
 
-function stripScript(src) {
+function stripScript(src, file = 'ocx-shell.js') {
   const lines = src.split(/\r?\n/);
   const out = [];
   lines.forEach((raw, i) => {
     const t = raw.trim();
     if (t === '' || t.startsWith('//')) return;
     if (t.includes('"') || t.includes('\\') || t.includes('`') || t.includes('//') || t.includes('$GODOT'))
-      throw new Error(`ocx-shell.js line ${i + 1}: a double quote, backslash, backtick, double slash or $GODOT would break the one-line cfg string`);
+      throw new Error(`${file} line ${i + 1}: a double quote, backslash, backtick, double slash or $GODOT would break the one-line cfg string`);
     if (!/[;{}(,]$/.test(t) && !/^[)}\]]/.test(t) && !/[{(\[,:?&|+-]$/.test(t))
-      throw new Error(`ocx-shell.js line ${i + 1}: a line must end in ; { } ( or , so joining lines is safe: ${t}`);
+      throw new Error(`${file} line ${i + 1}: a line must end in ; { } ( or , so joining lines is safe: ${t}`);
     out.push(t);
   });
   return out.join(' ');
 }
 
-function block(withManifest) {
+function block(withManifest, withCrumbs) {
   const js = stripScript(readFileSync(join(here, '..', 'web-shell', 'ocx-shell.js'), 'utf8'));
   const link = withManifest ? "<link rel='manifest' href='manifest.webmanifest'>" : '';
-  return BEGIN + metas.join('') + link + '<style>' + css + '</style><script>' + js + '</script>' + END;
+  const crumbs = withCrumbs ? '<script>' + stripScript(readFileSync(join(here, '..', 'web-shell', 'ocx-crumbs.js'), 'utf8'), 'ocx-crumbs.js') + '</script>' : '';   // the freeze breadcrumbs (a park: only with --crumbs)
+  return BEGIN + metas.join('') + link + '<style>' + css + '</style><script>' + js + '</script>' + crumbs + END;
 }
 
 const cfg = readFileSync(cfgPath, 'utf8');
@@ -75,9 +77,10 @@ let cur = m[1];
 const a = cur.indexOf(BEGIN), b = cur.indexOf(END);
 const rest = a >= 0 && b > a ? cur.slice(0, a) + cur.slice(b + END.length) : cur;
 const withManifest = flag('--manifest') || (a >= 0 && cur.includes("rel='manifest'") && !flag('--no-manifest'));
-const next = rest + block(withManifest);
+const withCrumbs = flag('--crumbs') || (a >= 0 && cur.includes('ocx.crumbs.v1') && !flag('--no-crumbs'));
+const next = rest + block(withManifest, withCrumbs);
 
-if (flag('--print')) { console.log(block(withManifest)); process.exit(0); }
+if (flag('--print')) { console.log(block(withManifest, withCrumbs)); process.exit(0); }
 if (flag('--check')) {
   if (next === cur) { console.log('head_include is current (' + next.length + ' characters)'); process.exit(0); }
   console.error('head_include is out of date: run node docs/perf/tools/web-head.mjs --write');
