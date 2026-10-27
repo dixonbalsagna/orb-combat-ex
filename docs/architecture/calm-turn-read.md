@@ -1,6 +1,6 @@
 # The calm turn's ring read on gen 2: k, or a lazy read (paper)
 
-Owner: Simulation and Engine. 2026-10-26, on the EP's question from World's gen 2 read-speed work (`docs/world/gen2-read-speed.md`). The build is parked at `pending/calm-k/` (§6).
+Owner: Simulation and Engine. 2026-10-26, on the EP's question from World's gen 2 read-speed work (`docs/world/gen2-read-speed.md`). Applied in d7647634 with World's, Encounter's and Tools' lines (§6).
 
 ## 1. Where the cost sits
 
@@ -62,7 +62,7 @@ Game Design accepted it (`rulings-2026-10-26.md` item 28), with each warm begun 
 - `_prep` was not the worst tick. At `K` 12 shared, the worst was the tick when two rings finished their read together (8 ms native).
 - World moved the blend and the held places into the preparation's first two ticks, to the bit. The worst is now 4.4 ms native, and `prepTicks` stays 6.
 
-## 6. As built (`pending/calm-k/`, on World's gen2-read-speed-b, on main since cb42a242)
+## 6. As built (applied in d7647634, on World's gen2-read-speed-b, on main since cb42a242)
 
 - **World** (`grant_world.py`):
   - `turn.warmTotal` 1;

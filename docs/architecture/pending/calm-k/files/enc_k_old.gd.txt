@@ -1,2 +1,0 @@
-	var k: int = _rate(int(cands[i].spec.get("cols", SimConst.NC)), due - S.tick - (_prep() - 1), rings)   # read by the moment less World's preparation
-	WorldEpoch.choose(S, i, k, fb)   # the sim reads k columns of each ring a tick (World's tick)

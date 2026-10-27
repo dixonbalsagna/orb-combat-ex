@@ -1,3 +1,0 @@
-## The waiting pick's rate (columns of each ring a tick: World keeps it as choose set it).
-static func warmRate(S: SimState) -> int:
-	return maxi(1, int(S.epoch.next.get("k", int(cfg().get("warmColsMax", 32)))))
