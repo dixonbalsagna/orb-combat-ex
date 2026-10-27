@@ -1,0 +1,57 @@
+# Steam readiness: Legal's half
+
+Owner: Legal and IP Compliance. 2026-10-27. RL-194. A checklist of what must be true before a Steam store page and a release. Community writes the store-page and marketing half. A screen, not legal advice. Status: **done**, **open** or **Orb's call**. "Unconfirmed" means I could not verify it today; no figure below is a guess.
+
+Sources checked today: Valve's [Steam Direct](https://partner.steamgames.com/steamdirect), [app fee](https://partner.steamgames.com/doc/gettingstarted/appfee), [content survey](https://partner.steamgames.com/doc/gettingstarted/contentsurvey), [Steamworks SDK Access Agreement](https://partner.steamgames.com/documentation/sdk_access_agreement) and [open-source distribution](https://partner.steamgames.com/doc/sdk/uploading/distributing_opensource) pages (primary); GamingOnLinux's January 2026 report on the AI form (secondary); the GodotSteam repository page on Codeberg (primary for its licence).
+
+## A. Money and accounts
+| # | Item | Status | Owner | Source |
+|---|---|---|---|---|
+| A1 | **App fee: $100 per app,** not refundable, recoupable in the payment after the product reaches $1,000 Adjusted Gross Revenue (store or in-app). A free game never recoups it. Taxes may apply. Only a Steamworks admin pays; the credit is usable only by the payer. | **Orb's call** (spend, ADR 0005) | Orb | Valve app fee page |
+| A2 | Paperwork, then **bank, tax and identity verification, 15 to 30 days** (Valve's figure). The bank account holder name must match the legal ID. | Open | Orb | Valve Steam Direct page |
+| A3 | **30 days between paying the fee and releasing,** and a **public "Coming Soon" page for at least two weeks** (for a first few titles). Store page or build review: 1 to 5 days. | Open | Orb | Valve Steam Direct page |
+| A4 | Individual or company: the tax form differs. My Oregon figures stay unverified. | **Orb's call** | Orb | guide-company-or-individual-oregon.md |
+| A5 | Copyright-holder name for the LICENSE files and the store (legal name, LLC or project name; the bank name must match the ID). | **Orb's call** | Orb | pre-store-checklist.md section 5 |
+
+## B. The Steamworks SDK and an open-source repo
+| # | Item | Status | Owner | Source |
+|---|---|---|---|---|
+| B1 | The SDK Access Agreement licenses the SDK in source form **"solely to develop the Licensee Software"** and lets you redistribute only **the redistributable_bin part, with your game, in object code form.** It does not say we may publish the SDK's headers or other files. **Do not commit the SDK, its headers or its binaries to the public repo;** fetch them in a build step from Orb's own download. | **Open (rule)** | Tools, Platform | Valve SDK Access Agreement s1.1 |
+| B2 | Whether the agreement bars public posting of the headers is **unconfirmed** (it is silent). Treat as barred. If a wrapper must ship the library, ship only the redistributable file inside the game's own build. | Unconfirmed | Legal | same |
+| B3 | **Open-source licences:** Valve says permissive licences (MIT, BSD, Apache 2.0) are generally fine and copyleft such as the GPL can be incompatible, and that an app with incompatible code **must not be distributed via Steam.** Our code is MIT (shape A) and Godot is MIT. No GPL code goes in (existing rule). | Open until Orb picks the licence (D2) | Legal | Valve open-source page; licence-register.md |
+| B4 | **GodotSteam** (the usual route for Godot): its repository states the **MIT** licence. Its site says the standard build comes with Valve's SDK, so the Valve terms apply to those libraries. How GodotSteam's own build bundles the SDK, and whether that fits the Valve agreement, is **unconfirmed**: read its README and licence files on Codeberg before adding it, and add a row to licence-register.md. The web build can't use Steam, so Steam code lives in a separate desktop-only layer and never in the web export. | Unconfirmed | Legal, Platform | Codeberg repo; godotsteam.com |
+| B5 | The **Steam Distribution Agreement** (what Valve asks of the game, such as key sales and pricing terms) is not read in this session. | **Unconfirmed** | Legal | read before the fee |
+
+## C. AI disclosure (Valve's content survey)
+| # | Item | Status | Owner | Source |
+|---|---|---|---|---|
+| C1 | Valve's survey asks about **pre-generated** AI content (ships in the game and is consumed by players, made with AI tools in development) and **live-generated** (made by AI while the game runs, with a statement of guardrails). Efficiency tools and code assistants are **"not the focus"**; the form covers content that ships (artwork, sound, narrative, localization), and also what appears on the store page. | Open | Orb, Community | Valve content survey; GamingOnLinux Jan 2026 |
+| C2 | **Our answer:** pre-generated: **yes**: art, animation, music (Suno), writing and design documents are AI-made or AI-drafted; say so in detail, from the provenance records (tool, model, date, brief). Live-generated: **no**: the fight director and world are ordinary game code. Code written by AI assistants: Valve's form does not name code, so the survey may not ask; **Orb's rule is to disclose everywhere, so say it in the store text anyway** (the AI line on the page). Never "human-made". | Open | Community, Legal | ai-disclosure rule; page-fixed-lines.md |
+| C3 | Valve says disclosure must be accurate; the AI line on the store page matches the repo's AI line word for word. | Open | Community | RL-088 |
+
+## D. Open blockers on the books
+| # | Item | Status | Owner | Source |
+|---|---|---|---|---|
+| D1 | **Title clash** with the small OrbCombat project (GitHub, last pushed 2026-06-16, GPL-3.0). Run the formal register search (US, EU, UK, Japan; classes 9, 28, 41), re-check Steam, GitHub and the stores on the day, then decide. **No store page or fee until this is done.** | Open | Orb, Legal | name-screening.md |
+| D2 | **Licence:** shape A (MIT code; art, music, writing and name all rights reserved) recommended; Orb has not chosen. Place the LICENSE files, and the third-party notices (Godot MIT, fonts). | **Orb's call** | Orb | licence-recommendation.md; RL-088 |
+| D3 | **Fighter concepts:** Legal's review of the concept set; Art's h10 finisher clips (RL-167); the stomp choice (no head stomp, or a rare gated finisher); the "glass the whole street" swap; the eating-finisher question. | Open / **Orb's call** | Legal, Orb | fighter-concepts-review.md; guide-stomp-and-ratings.md |
+| D4 | **Photosensitivity:** the interim is Orb's owner decision (RL-172, to 2026-11-01), not a Legal pass. A store release needs the **release gate**: primary reading at most 2.5, no sensitivity run above 3, margin rule, second captures, an independent analyzer or the honest "none has been run" line, and the notice on the store page in the page's words. The `signature` clip finding (normal mode 3.5) must be explained first. | Open | Tools, Legal | photosensitivity-note.md |
+
+## E. Ratings, privacy and licence text
+| # | Item | Status | Owner | Source |
+|---|---|---|---|---|
+| E1 | **Ratings:** Valve's General Content survey generates ratings for several regional boards, shown on the store page; you must disclose all mature content that players may encounter, even in the build but not shown. Answer honestly **with the stomp and the finishers in it** and keep a copy of the answers. A real rating may bar a German release or raise the age gate. Not confirmed: which boards and which tiers Valve covers today (**unconfirmed**; IARC's own questionnaire is separate, for itch.io and others). | Open | Orb, Legal | Valve content survey; guide-stomp-and-ratings.md |
+| E2 | **Privacy text:** the privacy line says the game sends no personal data. Steam features (accounts, achievements, cloud saves, overlay) are Valve's and collect data under Valve's policy; if we use any, the privacy text names them and says Valve handles that data. Whether Valve requires a privacy-policy link for every store page is **unconfirmed**. | Open | Legal, Community | RL-089; page-fixed-lines.md |
+| E3 | **EULA or licence shown at install:** Valve supports a licence agreement shown with the game; the exact mechanism and whether it is required are **unconfirmed**. Without one, the in-game "Licenses, notices and privacy" screen must show the licence and the third-party notices. | Unconfirmed | Legal, UI | licence-register.md |
+| E4 | **Store-page words:** Legal reads the page, trailer, screenshots and capsules before they go live (franchise lookalikes, "tested/safe", photosensitivity notice, AI line, "working title"). | Open | Community, Legal | store-copy-screen.md; never-use-words.md |
+| E5 | **Steam Deck and controller glyphs:** use Steam Input glyphs on Steam, or plain lettered glyphs; the neutral diamond likely fails Deck Verified. | Open | Controls | RL-037, RL-089 |
+
+## F. Anything else Legal needs before release
+1. A lawyer's one sitting (about an hour, before the first sale, not before the page): the licence files, the title, the store text and the patent question on the campaign's nemesis mechanic (mc03, US 10,926,179, adjusted expiry 2036-08-11 per Google Patents; unconfirmed in USPTO's records).
+2. Keep the records Valve and a buyer might ask for: the provenance sheet (asset-origins.md), the licence register, the originality screens (review-log.md) and the survey answers.
+3. Take-down plan: the demo's kill switch exists; a store build needs the same plan for a Valve or rights-holder complaint, with an email address that is read.
+4. Music: Suno's paid-plan terms and records before any sale (suno-music.md).
+5. Children and privacy: the game collects nothing; no account of ours; fine as long as that stays true.
+
+## Order
+D1 (title search) and D2 (licence), then A1 (Orb pays), then B5 and B4 (read the two Valve and GodotSteam terms), E1 and C2 (the answers), D4 (the flash release gate), E4 (page read). Nothing past A1 is worth starting before D1.

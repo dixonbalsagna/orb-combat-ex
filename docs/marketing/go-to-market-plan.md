@@ -172,7 +172,7 @@ Numbers are estimates unless a source is given. They are set so that hitting one
   - the verified identity and tax details Steam requires (`docs/legal/pre-store-checklist.md` section 5);
   - the AI survey answered;
   - counsel's read of the store text (`licence-recommendation.md` section 9).
-- **Facts:** Steam's page review takes about 3 to 5 business days (ask for 7; Legal read 1 to 5). A new game must show a public Coming Soon page for at least 2 weeks before release, and **there are 30 days between paying the fee and being allowed to release** (Legal section 6). Identity, tax and bank setup is free and can start earlier. Paying the fee starts the 30-day clock, so no demo, Next Fest or launch date can be earlier than 30 days after payment.
+- **Facts:** Steam's page review takes about 3 to 5 business days (ask for 7; Legal read 1 to 5). A new game must show a public Coming Soon page for at least 2 weeks before release, and **there are 21 days between paying the fee and being allowed to release** (Steamworks Onboarding page, read 2026-10-27; Legal section 6 says 30, so Legal reconciles; tax verification itself can take up to 30 days). Identity, tax and bank setup is free and can start earlier. Paying the fee starts the clock, so no launch date can be earlier than 21 days after payment (30 until Legal reconciles).
 - **Do:** open the page early, add the free-browser link and a "Play now in your browser" line, and send itch followers to the wishlist button.
 - **Hours:** 4 to 5 a week.
 - **Move on when (about 12 weeks after the page opens):** 1,000 wishlists. For scale, a commonly cited "healthy launch" is 7,000 to 10,000 wishlists, which you are unlikely to reach.
