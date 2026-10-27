@@ -5,6 +5,10 @@ func _initialize() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
 			out_path = a.substr(6)
+	if out_path == "":
+		push_error("warm_hashes: no output file; run with -- --out=FILE")
+		quit(1)
+		return
 	var bank := AudioBank.new()
 	bank.world["enabled"] = true
 	var ids: Array = []
@@ -17,6 +21,10 @@ func _initialize() -> void:
 		if not ids.has(did):
 			ids.append(did)
 	var f := FileAccess.open(out_path, FileAccess.WRITE)
+	if f == null:
+		push_error("warm_hashes: cannot open %s" % out_path)
+		quit(1)
+		return
 	for id in ids:
 		for v in range(bank.variants(id)):
 			var b: PackedFloat32Array = bank.buffer(id, v)
