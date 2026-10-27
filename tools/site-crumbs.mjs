@@ -39,10 +39,17 @@ export function applyPrivacy(root) {
 /** Is the switch on in a site config? Only the value true counts. Pure. */
 export function crumbsOn(config) { return !!config && config.crumbs === true; }
 
-/** Folds the breadcrumbs into a preset file with web-head.mjs (the repository's own copy). Throws when it cannot. */
-export function applyCrumbs(cfgPath) {
+/** The build line of a tree: its short commit and its own date, from the build_info.json beside the preset (tools/write-build-info.mjs writes it; the pinned export writes it too). null when there is none. */
+export function buildLineOf(dir) {
+  try { const b = JSON.parse(readFileSync(join(dir, 'build_info.json'), 'utf8')); const v = `${b.commit} ${b.date}`; return BUILD_LINE.test(v) ? v : null; } catch { return null; }
+}
+export const BUILD_LINE = /^[0-9a-f]{4,40} [0-9]{4}-[0-9]{2}-[0-9]{2}$/;
+
+/** Folds the breadcrumbs into a preset file with web-head.mjs (the repository's own copy), with the build line "<short hash> <YYYY-MM-DD>" in the report (web-head --build). Throws when it cannot, or when there is no build line: a report must never read "build: unknown". */
+export function applyCrumbs(cfgPath, build) {
   if (!existsSync(cfgPath)) throw new Error(`${cfgPath} does not exist: nothing to fold the breadcrumbs into`);
-  const r = spawnSync(process.execPath, [WEB_HEAD, '--write', '--crumbs', '--cfg', cfgPath], { encoding: 'utf8' });
+  if (!BUILD_LINE.test(String(build || ''))) throw new Error(`no build line ("<short hash> <YYYY-MM-DD>", got ${JSON.stringify(build)}): write build_info.json first (tools/write-build-info.mjs) or pass --build`);
+  const r = spawnSync(process.execPath, [WEB_HEAD, '--write', '--crumbs', '--build', build, '--cfg', cfgPath], { encoding: 'utf8' });
   if (r.status !== 0) throw new Error(`web-head.mjs --write --crumbs failed (exit ${r.status}): ${(r.stderr || r.stdout || '').trim().slice(0, 300)}`);
   return r.stdout.trim();
 }
@@ -57,11 +64,12 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     if (!on) { console.log('site crumbs: off (tools/site.json has no "crumbs": true); the preset is left as it is'); process.exit(0); }
     try {
       const cfgPath = resolve(opt('--cfg') || join(REPO, 'export_presets.cfg'));
-      console.log(`site crumbs: on; ${applyCrumbs(cfgPath)}`);
+      const build = opt('--build') || buildLineOf(dirname(cfgPath));
+      console.log(`site crumbs: on; build ${build}; ${applyCrumbs(cfgPath, build)}`);
       console.log(`site crumbs: the in-game privacy line ${applyPrivacy(opt('--root') ? resolve(opt('--root')) : dirname(cfgPath)) ? 'set to Legal\'s paragraph' : 'already is Legal\'s paragraph'}`);
     } catch (e) { console.error(`site crumbs: ${e.message}`); process.exit(1); }
     process.exit(0);
   }
-  console.error('usage: node tools/site-crumbs.mjs --status | --apply [--config <site.json>] [--cfg <export_presets.cfg>]');
+  console.error('usage: node tools/site-crumbs.mjs --status | --apply [--config <site.json>] [--cfg <export_presets.cfg>] [--build "<short hash> <YYYY-MM-DD>"]');
   process.exit(2);
 }

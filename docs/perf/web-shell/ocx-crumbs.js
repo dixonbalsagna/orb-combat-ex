@@ -1,5 +1,5 @@
 // Freeze breadcrumbs for the web export's page (a PARK, off until the EP lands it): window.__ocx.crumbs. Source of truth for the script that docs/perf/tools/web-head.mjs --crumbs folds
-// into export_presets.cfg (web preset, html/head_include), after ocx-shell.js. Owner: Performance and Platform. Written 2026-10-26; re-cut 2026-10-26 to Legal's five limits (docs/legal/crumbs-screen.md, p04).
+// into export_presets.cfg (web preset, html/head_include), after ocx-shell.js. Owner: Performance and Platform. Written 2026-10-26; re-cut 2026-10-26 to Legal's five limits (docs/legal/crumbs-screen.md, p04), with the cleared words (docs/marketing/phone-freeze-words.md, Legal RL-188/189).
 //
 // What it does, and does not:
 //  - LOCAL ONLY. It keeps ONE small record in this browser's localStorage (key ocx.crumbs.v1) and nothing else. No network, no cookie (nothing here touches one), no third-party script, nothing is sent anywhere.
@@ -7,37 +7,39 @@
 //    main thread of 3 s or more (found when the page wakes: a stall cannot be drawn on while it lasts), the long tasks, visibility changes, a lost WebGL context, shortened errors, and the device facts
 //    a report needs (browser, screen, pixel ratio, memory, cores).
 //  - Legal's limits (p04), and where each is kept:
-//      1. The visitor sees the exact report before copying: the note's first button shows it as plain text (scrolling inside its own box, buttons above it) and Copy copies that text and nothing else.
-//      2. The browser string and the graphics string stay; the graphics string is read only when the report is made (when the visitor asks to see it), never at boot.
+//      1. The visitor sees the exact report before copying: the note always shows it, as plain text (scrolling inside its own box, buttons above it), and Copy copies that text and nothing else.
+//      2. The browser string and the graphics string stay; the graphics string is read only when the report is made (when a note is put up), never on a visit with no note.
 //      3. No identifier, no clock time (every time is a number of milliseconds from the page's start, never a date), no page URL, query or hash. Error text is cut to 120 characters and any URL in it
 //         (or in the browser string) is cut to host and path.
 //      4. One record, replaced on every visit. A visit that reaches the running game with no long stall leaves NO record; the record is kept only while the start is under way, after a stall of 5 s
 //         or more, or after a lost graphics context. Dismissing the note or copying the report removes it.
 //      5. No cookie is set.
 //  - On the NEXT load, if the last visit ended in a stall of 5 s or more, or was closed before the game was running, or lost its graphics context, a small dismissable note offers the report.
-//  - The words the visitor reads are the PLACEHOLDERS in WORDS below until Community and Marketing's words pass Legal (docs/marketing/phone-freeze-words.md has the draft). {braces} are filled in.
+//  - The words the visitor reads are the table WORDS below, exactly as Legal cleared them (the context-loss overlay's two strings are the exception: Legal's neutral phrase, not yet seen). {braces} are filled in.
+//  - The report ends its opening lines with a build line: the commit's short hash and the build's own date, put in by web-head.mjs when it folds the script (the token below), never the visitor's clock.
 //  - A frozen main thread cannot show a message: the only thing the page can do about the freeze itself is the one static line it puts up BEFORE the heavy start.
 // Write for the folder script: single quotes only, a semicolon at the end of every statement, no regex literals, no backslashes, no double slashes inside a line, no template strings.
 (function () {
   var w = window, d = document, KEY = 'ocx.crumbs.v1', STALL_MS = 3000, BEAT_MS = 500, FLUSH_MS = 2000, REPORT_STALL_MS = 5000, ERR_MAX = 120;
+  var BUILD = '@@BUILD@@';
+  var APOS = String.fromCharCode(39);
   var WORDS = {
-    start_line: 'PLACEHOLDER start line. Stage: {stage}.',
-    stage_page_loaded: 'starting',
-    stage_downloading: 'downloading {dl}%',
-    stage_starting: 'getting ready',
-    note_stall: 'PLACEHOLDER note: froze for {s} seconds.',
-    note_early: 'PLACEHOLDER note: stopped before it finished starting.',
-    note_ctx: 'PLACEHOLDER note: the graphics were taken away.',
-    btn_show: 'PLACEHOLDER copy a report',
-    btn_dismiss: 'PLACEHOLDER dismiss',
-    shown_above: 'PLACEHOLDER exactly what will be copied:',
-    btn_copy: 'PLACEHOLDER copy',
-    btn_close: 'PLACEHOLDER close',
-    copied: 'PLACEHOLDER copied',
-    copy_failed: 'PLACEHOLDER could not copy; press and hold the text to select it',
-    report_open: 'PLACEHOLDER report opening line',
-    ctx_message: 'PLACEHOLDER graphics lost message',
-    ctx_button: 'PLACEHOLDER reload',
+    start_line: '{stage}. The first start can take a minute or more on a phone, and the page may look stuck while it loads.',
+    stage_page_loaded: 'Starting',
+    stage_downloading: 'Downloading {dl}%',
+    stage_starting: 'Preparing the game and its graphics',
+    note_tail: ' The game sends nothing. Copying puts it on your clipboard, and you choose where to paste it.',
+    note_stall: 'Last time the game froze for {s} seconds.',
+    note_early: 'Last time the game stopped before it finished starting.',
+    note_ctx: 'Last time the game lost its graphics.',
+    shown_above: 'This is exactly what will be copied:',
+    btn_copy: 'Copy a report',
+    btn_dismiss: 'Dismiss',
+    copied: 'Copied',
+    copy_failed: 'Couldn' + APOS + 't copy. Press and hold the text to select it.',
+    report_open: 'Orb Combat EX freeze report, made on this device. It lists device details, timings and errors. The game sent nothing.',
+    ctx_message: 'The game lost its graphics.',
+    ctx_button: 'Reload',
   };
   function fill(text, map) {
     var out = text;
@@ -163,7 +165,7 @@
   w.addEventListener('webglcontextrestored', function () { c.ctx.push([now(), 'restored', c.stage]); flush(); }, true);
   w.addEventListener('error', function (e) { c.err.push([now(), stripUrls(e.message)]); if (c.err.length > 6) { c.err.shift(); } });
   w.addEventListener('pagehide', function () { c.clean = !starting(c); flush(); });
-  // The report: made only when the visitor asks to see it. The graphics string is read here and nowhere else.
+  // The report: made only when a note is put up. The graphics string is read here and nowhere else.
   function gpu() {
     try {
       var cv = d.createElement('canvas'), gl = cv.getContext('webgl2') || cv.getContext('webgl');
@@ -172,7 +174,7 @@
     } catch (e) { return 'unavailable'; }
   }
   function reportText(r) {
-    var rows = [WORDS.report_open, 'browser: ' + r.ua, 'screen: ' + r.scr.join('x') + ', window ' + r.inner.join('x') + ', pixel ratio ' + r.dpr, 'memory (GB, rounded by the browser): ' + r.mem + ', cores: ' + r.cores, 'graphics: ' + gpu(), 'last stage: ' + r.stage + ' at ' + Math.round(r.stageAt / 1000) + ' s from the page start, last heartbeat at ' + Math.round(r.beatAt / 1000) + ' s, download ' + r.dl + '%', 'ended cleanly: ' + r.clean, 'stalls (start ms, length ms, stage): ' + JSON.stringify(r.stalls), 'long tasks over 0.5 s (start ms, length ms, stage): ' + JSON.stringify(r.long), 'visibility (ms, state): ' + JSON.stringify(r.vis), 'graphics context (ms, event, stage): ' + JSON.stringify(r.ctx), 'errors (ms, text): ' + JSON.stringify(r.err)];
+    var rows = [WORDS.report_open, 'build: ' + (BUILD.indexOf('@@') === 0 ? 'unknown' : BUILD), 'browser: ' + r.ua, 'screen: ' + r.scr.join('x') + ', window ' + r.inner.join('x') + ', pixel ratio ' + r.dpr, 'memory (GB, rounded by the browser): ' + r.mem + ', cores: ' + r.cores, 'graphics: ' + gpu(), 'last stage: ' + r.stage + ' at ' + Math.round(r.stageAt / 1000) + ' s from the page start, last heartbeat at ' + Math.round(r.beatAt / 1000) + ' s, download ' + r.dl + '%', 'ended cleanly: ' + r.clean, 'stalls (start ms, length ms, stage): ' + JSON.stringify(r.stalls), 'long tasks over 0.5 s (start ms, length ms, stage): ' + JSON.stringify(r.long), 'visibility (ms, state): ' + JSON.stringify(r.vis), 'graphics context (ms, event, stage): ' + JSON.stringify(r.ctx), 'errors (ms, text): ' + JSON.stringify(r.err)];
     return rows.join(String.fromCharCode(10));
   }
   function worth(r) {
@@ -195,45 +197,38 @@
     } catch (e) { }
     fallback();
   }
+  // The note: the cleared sentence for the case, the report shown at once as plain text (scrolling in its own box), and the two buttons above the text so they stay reachable on a small phone.
   function note(r) {
     var box = d.createElement('div');
     box.id = 'ocx-crumbs-note';
-    box.style.cssText = 'position:fixed;left:8px;right:8px;top:8px;max-height:70%;overflow:auto;background:#101418;color:#dde;border:1px solid #445;border-radius:8px;font:13px sans-serif;padding:8px 10px;z-index:6;display:flex;gap:8px;align-items:center;flex-wrap:wrap;';
+    // Inside the click-through when the page has one (a slot the gate provides: id ocx-note-slot, below its buttons, in the flow): the gate's words and buttons stay where they are. Over the game only without it.
+    var slot = d.getElementById('ocx-note-slot');
+    box.style.cssText = slot ? 'margin:0;max-height:none;background:#101418;color:#dde;border:1px solid #445;border-radius:8px;font:12px sans-serif;padding:6px 8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;' : 'position:fixed;left:6px;right:6px;top:6px;max-height:48%;overflow:auto;background:#101418;color:#dde;border:1px solid #445;border-radius:8px;font:12px sans-serif;padding:6px 8px;z-index:6;display:flex;gap:6px;align-items:center;flex-wrap:wrap;';
     var worst = null;
     r.stalls.forEach(function (s) { if (!worst || s[1] > worst[1]) { worst = s; } });
-    var what = r.ctx.length > 0 ? WORDS.note_ctx : (worst && worst[1] >= REPORT_STALL_MS ? fill(WORDS.note_stall, { s: Math.round(worst[1] / 1000), stage: worst[2] }) : WORDS.note_early);
+    var what = r.ctx.length > 0 ? WORDS.note_ctx : (worst && worst[1] >= REPORT_STALL_MS ? fill(WORDS.note_stall, { s: Math.round(worst[1] / 1000) }) : WORDS.note_early);
     var msg = d.createElement('span');
-    msg.appendChild(d.createTextNode(what));
-    msg.style.cssText = 'flex:1 1 220px;';
+    msg.appendChild(d.createTextNode(what + WORDS.note_tail));
+    msg.style.cssText = 'flex:1 1 100%;';
     function btn(label, fn) {
       var b = d.createElement('button');
       b.appendChild(d.createTextNode(label));
-      b.style.cssText = 'font:13px sans-serif;padding:6px 10px;border-radius:6px;border:1px solid #667;background:#223;color:#fff;';
+      b.style.cssText = 'font:12px sans-serif;padding:5px 9px;border-radius:6px;border:1px solid #667;background:#223;color:#fff;';
       b.addEventListener('click', fn);
       return b;
     }
     function remove() { if (box.parentNode) { box.parentNode.removeChild(box); } erase(); prev = null; }
-    var bShow = btn(WORDS.btn_show, function () {
-      if (d.getElementById('ocx-crumbs-report')) { return; }
-      var text = reportText(r);
-      var wrap = d.createElement('div');
-      wrap.style.cssText = 'flex:1 1 100%;display:flex;gap:8px;flex-wrap:wrap;align-items:center;';
-      var lab = d.createElement('span');
-      lab.appendChild(d.createTextNode(WORDS.shown_above));
-      lab.style.cssText = 'flex:1 1 100%;';
-      var bCopy = btn(WORDS.btn_copy, function () { copy(pre.firstChild.nodeValue, bCopy); });
-      var bClose = btn(WORDS.btn_close, remove);
-      var pre = d.createElement('pre');
-      pre.id = 'ocx-crumbs-report';
-      pre.style.cssText = 'flex:1 1 100%;margin:0;padding:6px;max-height:34vh;overflow:auto;background:#000;color:#cde;font:11px monospace;white-space:pre-wrap;word-break:break-all;border-radius:6px;';
-      pre.appendChild(d.createTextNode(text));
-      wrap.appendChild(lab); wrap.appendChild(bCopy); wrap.appendChild(bClose); wrap.appendChild(pre);
-      box.appendChild(wrap);
-      bShow.style.display = 'none';
-    });
+    var pre = d.createElement('pre');
+    pre.id = 'ocx-crumbs-report';
+    pre.style.cssText = 'flex:1 1 100%;margin:0;padding:5px;max-height:16vh;overflow:auto;background:#000;color:#cde;font:10px monospace;white-space:pre-wrap;word-break:break-all;border-radius:6px;';
+    pre.appendChild(d.createTextNode(reportText(r)));
+    var lab = d.createElement('span');
+    lab.appendChild(d.createTextNode(WORDS.shown_above));
+    lab.style.cssText = 'flex:1 1 100%;';
+    var bCopy = btn(WORDS.btn_copy, function () { copy(pre.firstChild.nodeValue, bCopy); });
     var bDismiss = btn(WORDS.btn_dismiss, remove);
-    box.appendChild(msg); box.appendChild(bShow); box.appendChild(bDismiss);
-    d.body.appendChild(box);
+    box.appendChild(msg); box.appendChild(bCopy); box.appendChild(bDismiss); box.appendChild(lab); box.appendChild(pre);
+    (slot || d.body).appendChild(box);
   }
   function boot() {
     addLine();

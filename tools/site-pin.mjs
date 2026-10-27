@@ -74,7 +74,10 @@ export function exportPinned(pin, webDir, o = {}) {
   }
   // the freeze breadcrumbs (tools/site-crumbs.mjs, off unless tools/site.json says "crumbs": true): folded into THIS tree's Web preset only, by the repository's own web-head.mjs, so the pinned
   // commit need not carry them and the committed preset never does
-  if (o.crumbs) { applyCrumbs(join(tree, 'export_presets.cfg')); applyPrivacy(tree); }   // and the game's own About line says what the page says (Legal's switch-on words)
+  if (o.crumbs) {   // the report's build line is the pin's short hash and its commit date; the game's own About line says what the page says (Legal's switch-on words)
+    applyCrumbs(join(tree, 'export_presets.cfg'), `${pin.slice(0, 7)} ${date}`);
+    applyPrivacy(tree);
+  }
   run(['--headless', '--path', tree, '--import']);
   run(['--headless', '--path', tree, '--export-release', 'Web', join(webDir, 'index.html')]);
   if (!existsSync(join(webDir, 'index.html'))) throw new Error('the pinned export produced no index.html');

@@ -125,7 +125,7 @@ if (config.interim) {
   play = replaceOnce(play, '<title>Orb Combat EX</title>', '<title>Orb Combat EX</title>\n\t\t<meta name="robots" content="noindex">');
   play = replaceOnce(play, "\t\tsetStatusMode('progress');\n\t\tengine.startGame({", "\t\twindow.__startGame = function () {\n\t\tsetStatusMode('progress');\n\t\tengine.startGame({");
   play = replaceOnce(play, '\t\t}, displayFailureNotice);\n\t}\n}());', '\t\t}, displayFailureNotice);\n\t\t};\n\t}\n}());');
-  play = replaceOnce(play, '\t<body>\n', `\t<body>\n${gateOverlay(text, { holding: '../', about: '../about/' })}\n`);
+  play = replaceOnce(play, '\t<body>\n', `\t<body>\n${gateOverlay(text, { holding: '../', about: '../about/' }, { noteSlot: config.crumbs === true })}\n`);
   play = replaceOnce(play, '\t</body>', `\t\t${GATE_SCRIPT}\n\t</body>`);
   writeFileSync(join(outDir, 'play', 'index.html'), play);
   const put = (where, html) => { mkdirSync(join(outDir, where, '..'), { recursive: true }); writeFileSync(join(outDir, where), html); };

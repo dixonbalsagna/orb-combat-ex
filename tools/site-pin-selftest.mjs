@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { hashesAt, problemsWith, INTERIM_WAIVES } from './flash/release-pass.mjs';
 import { pinOf, exportPinned } from './site-pin.mjs';
-import { crumbsOn, CRUMBS_PRIVACY } from './site-crumbs.mjs';
+import { applyCrumbs, crumbsOn, CRUMBS_PRIVACY } from './site-crumbs.mjs';
 
 let ran = 0, failed = 0;
 const check = (name, ok, extra) => { ran++; if (!ok) { failed++; console.log(`  FAIL ${name}${extra ? ': ' + extra : ''}`); } };
@@ -126,6 +126,9 @@ try {
   exportPinned(Ce, web4, { repo: dir, tree: tree4, godotNode: stub, crumbs: true });
   const cfgOn = readFileSync(join(tree4, 'export_presets.cfg'), 'utf8');
   check('with crumbs on, the pinned tree\'s Web preset carries the breadcrumbs (and the shell block), and so does the stub\'s pack', cfgOn.includes('ocx.crumbs.v1') && cfgOn.includes('<!--ocx:begin-->') && readFileSync(join(web4, 'index.pck'), 'utf8').includes('ocx.crumbs.v1'));
+  const bi = JSON.parse(readFileSync(join(tree4, 'build_info.json'), 'utf8'));
+  check("with crumbs on, the report's build line is the pin's short hash and its commit date, the tree's own build_info (never unknown)", cfgOn.includes(`BUILD = '${bi.commit} ${bi.date}'`) && /^[0-9a-f]{7}$/.test(bi.commit) && /^\d{4}-\d{2}-\d{2}$/.test(bi.date) && !cfgOn.includes('@@BUILD@@') && !cfgOn.includes("BUILD = 'unknown'"), bi.commit + ' ' + bi.date);
+  check('applyCrumbs refuses a missing or malformed build line', (() => { for (const b of [undefined, '', 'unknown', 'abc 2026-01-01', 'abcdef0 26-1-1']) { try { applyCrumbs(join(tree4, 'export_presets.cfg'), b); return false; } catch (e) { if (!/no build line/.test(e.message)) return false; } } return true; })());
   const howtoOn = JSON.parse(readFileSync(join(tree4, 'ui/data/howto.json'), 'utf8')).rows;
   check('with crumbs on, the game own About line (the none variant only) is Legals switch-on paragraph in the pinned tree', howtoOn[0].text === CRUMBS_PRIVACY && howtoOn[1].text === 'other');
   check('the other preset and the existing head line are kept', cfgOn.includes('platform="Windows Desktop"') && cfgOn.includes('<style>x{}</style>'));

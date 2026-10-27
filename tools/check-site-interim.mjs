@@ -20,7 +20,7 @@ import { join, resolve, relative, sep } from 'node:path';
 import { siteNotice } from './site-notice.mjs';
 import { scanHtml, scanPack, unallowed } from './site-name-scan.mjs';
 import { INTERIM_WAIVES } from './flash/release-pass.mjs';
-import { CRUMBS_PRIVACY } from './site-crumbs.mjs';
+import { CRUMBS_PRIVACY, BUILD_LINE } from './site-crumbs.mjs';
 
 const args = process.argv.slice(2);
 const opt = (n) => { const i = args.indexOf(n); return i >= 0 ? args[i + 1] : undefined; };
@@ -156,6 +156,14 @@ if (play) {
     for (const [re, what] of [[/\bfetch\s*\(/, 'fetch'], [/XMLHttpRequest/, 'XMLHttpRequest'], [/sendBeacon/, 'sendBeacon'], [/WebSocket/, 'WebSocket'], [/EventSource/, 'EventSource'], [/importScripts|import\s*\(/, 'an import'], [/new\s+Image\b|new\s+Worker\b|\.src\s*=/, 'an image, worker or src'], [/https?:\/\//, 'a URL'], [/document\.cookie/, 'a cookie'], [/navigator\.serviceWorker/, 'a service worker']])
       if (re.test(script)) bad(`the freeze breadcrumbs' script uses ${what}: nothing may be sent off the device`);
     if (!script) bad('the freeze breadcrumbs marker is on /play/ but not inside one of its inline scripts');
+    // the report's build line: the pin's short hash and its commit date (never "unknown", never the unfilled token), and the same as the tree's own build_info.json
+    const bm = /BUILD = '([^']*)'/.exec(script);
+    if (!bm) bad('the freeze breadcrumbs script has no build line (var BUILD)');
+    else if (!BUILD_LINE.test(bm[1])) bad(`the freeze breadcrumbs' build line reads "${bm[1]}": it must be "<short hash> <YYYY-MM-DD>" (tools/site-crumbs.mjs --apply and the pinned export pass it), so a report never reads "build: unknown"`);
+    else { try { const bi = JSON.parse(readFileSync(join(root, 'build_info.json'), 'utf8')); if (`${bi.commit} ${bi.date}` !== bm[1]) bad(`the freeze breadcrumbs' build line "${bm[1]}" is not the exported tree's own (${bi.commit} ${bi.date})`); } catch { /* no build_info.json in this root */ } }
+    // the note goes inside the click-through, in the slot the gate provides, so it never moves or covers the gate's buttons; over the game only when there is no gate
+    if (!/id="ocx-note-slot"/.test(play.slice(play.indexOf('id="gate"')))) bad('the freeze breadcrumbs are on, but the gate has no note slot (id ocx-note-slot, below its words and buttons)');
+    if (!script.includes('ocx-note-slot')) bad("the freeze breadcrumbs' script does not use the gate's note slot (id ocx-note-slot): its note would sit over the gate's buttons on a small phone");
     for (const claim of ['prepared once', 'it is still working']) if (script.includes(claim)) bad(`the freeze breadcrumbs' start line still says "${claim}": Legal (docs/legal/crumbs-screen.md section 2) took that claim out (a real hang looks the same; nothing promises once)`);
     if (script.includes('PLACEHOLDER')) bad('the freeze breadcrumbs still carry PLACEHOLDER words (the start line, the note, the buttons): the visitor must never read them; the words come from Community and Marketing and pass Legal first (docs/legal/crumbs-screen.md section 2)');
   }

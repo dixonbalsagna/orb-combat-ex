@@ -8,11 +8,13 @@
 //   node docs/perf/tools/web-head.mjs --write --manifest also link manifest.webmanifest (do this only together with the
 //                                                        build-site patch that ships the file, see docs/perf/phone-web-fullscreen.md)
 //   node docs/perf/tools/web-head.mjs --print            print the block
+//   --build "<short hash> <YYYY-MM-DD>"   the report's build line (else env OCX_BUILD, else build_info.json beside the preset, else git there, else unknown); only with --crumbs
 //   --cfg <file>   work on another copy of export_presets.cfg (for a scratch export)
 //
 // The block sits between <!--ocx:begin--> and <!--ocx:end-->. Everything outside it (Tools' key guard, long-press
 // block and scroll lock) is left exactly as it is.
 import { readFileSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -53,10 +55,32 @@ function stripScript(src, file = 'ocx-shell.js') {
   return out.join(' ');
 }
 
+// The build line of the breadcrumbs' report: the commit's short hash and the build's OWN date (the commit's date), never the visitor's clock. From --build "<hash> <YYYY-MM-DD>", else the environment's OCX_BUILD,
+// else the build_info.json beside the preset (tools/write-build-info.mjs writes it, the export packs it, the feedback report reads it: {commit, date}), else git in the preset's folder, else unknown.
+function buildId() {
+  const i = process.argv.indexOf('--build');
+  let v = i >= 0 ? process.argv[i + 1] : process.env.OCX_BUILD;
+  if (!v) {
+    try {
+      const bi = JSON.parse(readFileSync(join(dirname(resolve(cfgPath)), 'build_info.json'), 'utf8'));
+      v = String(bi.commit) + ' ' + String(bi.date);
+    } catch { v = ''; }
+  }
+  if (!v) {
+    try {
+      const dir = dirname(resolve(cfgPath));
+      const h = execFileSync('git', ['-C', dir, 'rev-parse', '--short', 'HEAD'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+      const d = execFileSync('git', ['-C', dir, 'log', '-1', '--format=%cs'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+      v = h + ' ' + d;
+    } catch { v = ''; }
+  }
+  return /^[0-9a-f]{4,40} [0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(v || '') ? v : 'unknown';
+}
+
 function block(withManifest, withCrumbs) {
   const js = stripScript(readFileSync(join(here, '..', 'web-shell', 'ocx-shell.js'), 'utf8'));
   const link = withManifest ? "<link rel='manifest' href='manifest.webmanifest'>" : '';
-  const crumbs = withCrumbs ? '<script>' + stripScript(readFileSync(join(here, '..', 'web-shell', 'ocx-crumbs.js'), 'utf8'), 'ocx-crumbs.js') + '</script>' : '';   // the freeze breadcrumbs (a park: only with --crumbs)
+  const crumbs = withCrumbs ? '<script>' + stripScript(readFileSync(join(here, '..', 'web-shell', 'ocx-crumbs.js'), 'utf8').split('@@BUILD@@').join(buildId()), 'ocx-crumbs.js') + '</script>' : '';   // the freeze breadcrumbs (a park: only with --crumbs)
   return BEGIN + metas.join('') + link + '<style>' + css + '</style><script>' + js + '</script>' + crumbs + END;
 }
 

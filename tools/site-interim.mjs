@@ -75,7 +75,7 @@ export function aboutPage(text, lic, links) {
 }
 
 /** The overlay of /play/: the click-through. The engine starts only from its button (see the gate wrapping in tools/build-site.mjs). "Not now" goes to the holding page. */
-export function gateOverlay(text, hrefs) {
+export function gateOverlay(text, hrefs, opts = {}) {
   const small = 'font-size:.85rem;color:#aab1be';
   return `<div id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title" style="position:fixed;left:0;top:0;right:0;bottom:0;z-index:100000;overflow:auto;background:#0e1015;color:#e6e9ef;font:18px/1.55 system-ui,-apple-system,'Segoe UI',Roboto,sans-serif">
 <div style="max-width:36rem;margin:0 auto;padding:1.5rem 1.25rem 3rem">
@@ -85,7 +85,7 @@ ${blocksHtml(text.gate.blocks)}
 <a id="gate-notnow" href="${esc(hrefs.holding)}" style="margin-left:1rem;color:#aab1be;font-size:.95rem">${esc(text.gate.not_now)}</a></p>
 <p id="gate-under" style="${small}">${esc(text.gate.under)}</p>
 <p id="gate-ai" style="${small}">${esc(text.gate.ai)}</p>
-<p style="font-size:.85rem"><a style="color:#8fb8ff" href="${esc(hrefs.about)}">${esc(text.gate.about)}</a></p>
+<p style="font-size:.85rem"><a style="color:#8fb8ff" href="${esc(hrefs.about)}">${esc(text.gate.about)}</a></p>${opts.noteSlot ? '\n<div id="ocx-note-slot"></div>' : ''}
 </div>
 </div>`;
 }

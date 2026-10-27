@@ -77,8 +77,10 @@ const build = (out, c, extra = ['--local']) => { writeCfg(c); return node('build
 
 // a repo root of the shipped prefs and feedback target the checker reads
 const OLD_PRIVACY = 'This game collects and sends no personal data. The web version is hosted on GitHub Pages, which keeps its own server logs. The feedback button copies a report to your clipboard for you to paste to Orb; nothing is sent by the game.';
-function prefsRoot(name, { options = true, feature = true, hud = true, target = 'none', lock = true, howto = OLD_PRIVACY } = {}) {
+function prefsRoot(name, { options = true, feature = true, hud = true, target = 'none', lock = true, howto = OLD_PRIVACY, build = null } = {}) {
   const r = join(tmp, name);
+  mkdirSync(r, { recursive: true });
+  if (build) writeFileSync(join(r, 'build_info.json'), JSON.stringify({ commit: build.split(' ')[0], date: build.split(' ')[1] }));
   mkdirSync(join(r, 'ui/data'), { recursive: true });
   mkdirSync(join(r, 'ui/hud'), { recursive: true });
   writeFileSync(join(r, 'ui/data/options.json'), JSON.stringify({ schema: 1, options: { reduce_flashing: { default: options } } }));
@@ -104,20 +106,30 @@ try {
   check('the checker passes the built interim site', r0.status === 0, (r0.stderr || r0.stdout).slice(0, 500));
   // the freeze breadcrumbs (tools/site-crumbs.mjs): /play/ carries them exactly when tools/site.json says "crumbs": true, and their script (the real park's, from web-head.mjs) makes no network call
   {
-    const head = spawnSync(process.execPath, [join(here, '..', 'docs', 'perf', 'tools', 'web-head.mjs'), '--print', '--crumbs'], { encoding: 'utf8' });
+    // a copy of Performance's tool and park: the note-slot patch (docs/tools/pending/ocx-note-slot.patch) is applied to the copy when the park does not use the gate's slot yet, so this test holds before and after it lands
+    const perf = join(tmp, 'perf-copy');
+    cpSync(join(here, '..', 'docs', 'perf', 'tools', 'web-head.mjs'), join(perf, 'docs/perf/tools/web-head.mjs'));
+    cpSync(join(here, '..', 'docs', 'perf', 'web-shell'), join(perf, 'docs/perf/web-shell'), { recursive: true });
+    cpSync(join(here, '..', 'export_presets.cfg'), join(perf, 'export_presets.cfg'));
+    const shellJs = join(perf, 'docs/perf/web-shell/ocx-crumbs.js');
+    if (!readFileSync(shellJs, 'utf8').includes('ocx-note-slot')) { const ap = spawnSync('git', ['apply', join(here, '..', 'docs', 'tools', 'pending', 'ocx-note-slot.patch')], { cwd: perf, encoding: 'utf8' }); check('the note-slot patch applies to the park', ap.status === 0, ap.stderr.slice(0, 200)); }
+    const BUILD = 'abc1234 2026-10-26';
+    const head = spawnSync(process.execPath, [join(perf, 'docs/perf/tools/web-head.mjs'), '--print', '--crumbs', '--build', BUILD], { encoding: 'utf8' });
     check('web-head prints the head block with the real breadcrumbs park', head.status === 0 && head.stdout.includes('ocx.crumbs.v1') && head.stdout.includes('<!--ocx:begin-->'), (head.stderr || '').slice(0, 200));
     const webC = join(tmp, 'web-crumbs');
     mkdirSync(webC, { recursive: true });
-    const finalWords = head.stdout.trim().split('PLACEHOLDER ').join('').split('prepared once').join('prepared').split('it is still working').join('please wait');   // stands for the words that pass Legal; the park carries placeholders until then
+    const finalWords = head.stdout.trim();   // Performance's finished words (Legal's, docs/legal/crumbs-screen.md)
     writeFileSync(join(webC, 'index.html'), exportHtml.replace('<title>Orb Combat EX</title>', '<title>Orb Combat EX</title>' + finalWords));
-    check('the real park still carries PLACEHOLDER words (so the switch must stay off until the words land)', head.stdout.includes('PLACEHOLDER'));
+    check('the real park carries Legal\'s words: no PLACEHOLDER and neither of the two struck claims', !head.stdout.includes('PLACEHOLDER') && !head.stdout.includes('prepared once') && !head.stdout.includes('it is still working'));
+    check('the real park\'s build line is the one passed (never unknown)', head.stdout.includes(`BUILD = '${BUILD}'`) && !head.stdout.includes('@@BUILD@@'));
+    check('the real park uses the gate\'s note slot', head.stdout.includes('ocx-note-slot'));
     for (const f of ['index.js', 'index.wasm', 'index.pck']) writeFileSync(join(webC, f), 'x');
     const on = { ...cfg(), crumbs: true };
     writeCfg(on);
     const bc = node('build-site.mjs', ['--web', webC, '--out', join(tmp, 'site-crumbs'), '--config', cfgFile, '--local']);
     check('an interim site builds from an export that carries the breadcrumbs', bc.status === 0, (bc.stderr || bc.stdout).slice(0, 300));
     const sc = join(tmp, 'site-crumbs');
-    const rootOn = prefsRoot('root-crumbs', { howto: CRUMBS_PRIVACY });
+    const rootOn = prefsRoot('root-crumbs', { howto: CRUMBS_PRIVACY, build: BUILD });
     check('"crumbs": true and the breadcrumbs on /play/: the checker passes', verify(sc, on, rootOn).status === 0, (verify(sc, on, rootOn).stderr || '').slice(0, 300));
     const off = verify(sc, cfg());
     check('breadcrumbs on /play/ with no "crumbs": true: the checker fails (a switched park must not ride in the preset)', off.status === 1 && /does not say "crumbs": true/.test(off.stderr), off.stderr.slice(0, 200));
@@ -126,6 +138,15 @@ try {
     check('"crumbs": false or absent with a plain page passes (the default)', verify(good, { ...cfg(), crumbs: false }).status === 0 && verify(good, cfg()).status === 0);
     for (const claim of ['prepared once', 'it is still working']) { const dq = join(tmp, 'crumbs-claim-' + claim.length); cpSync(sc, dq, { recursive: true }); edit(dq, 'play/index.html', (x) => x.replace('KEY = ', () => "var zz = '" + claim + "'; KEY = ")); const rq = verify(dq, on, rootOn); check(`the start line that says "${claim}" (Legal took it out): the checker fails`, rq.status === 1 && rq.stderr.includes(claim), rq.stderr.slice(0, 200)); }
     { const dp = join(tmp, 'crumbs-placeholder'); cpSync(sc, dp, { recursive: true }); edit(dp, 'play/index.html', (x) => x.replace("start_line: '", "start_line: 'PLACEHOLDER ")); const rp = verify(dp, on, rootOn); check('breadcrumbs that still carry PLACEHOLDER words: the checker fails', rp.status === 1 && /PLACEHOLDER words/.test(rp.stderr), rp.stderr.slice(0, 200)); }
+    // the build line and the note's slot (the hand-off: the gate provides the slot, the park puts its note there)
+    {
+      const gateHtml = readFileSync(join(sc, 'play/index.html'), 'utf8');
+      check('with the switch on the gate has the note slot, after its words and buttons and inside it', /id="ocx-note-slot"/.test(gateHtml) && gateHtml.indexOf('id="gate-start"') < gateHtml.indexOf('id="ocx-note-slot"') && gateHtml.indexOf('id="ocx-note-slot"') < gateHtml.indexOf('</div>\n</div>', gateHtml.indexOf('id="gate"')) + 20);
+      check('with the switch off the gate is as it was: no slot', !/ocx-note-slot/.test(readFileSync(join(good, 'play/index.html'), 'utf8')));
+      const variants = [['the build line reads unknown', (x) => x.replace("BUILD = '" + BUILD + "'", "BUILD = 'unknown'"), /build line reads "unknown"/], ['the build token is still unfilled', (x) => x.replace("BUILD = '" + BUILD + "'", "BUILD = '@@BUILD@@'"), /build line reads "@@BUILD@@"/], ['the build line is not the exported tree\'s own', (x) => x.replace("BUILD = '" + BUILD + "'", "BUILD = 'fffffff 2026-10-26'"), /not the exported tree's own/], ['the build line has no date', (x) => x.replace("BUILD = '" + BUILD + "'", "BUILD = 'abc1234'"), /build line reads "abc1234"/], ['the gate has no note slot', (x) => x.replace('<div id="ocx-note-slot"></div>', ''), /no note slot/], ['the park does not use the slot', (x) => x.split('ocx-note-slot').join('ocx-no-slot').replace('<div id="ocx-no-slot"></div>', '<div id="ocx-note-slot"></div>'), /does not use the gate's note slot/]];
+      let vn = 0;
+      for (const [what, fn, re] of variants) { const dv = join(tmp, 'crumbs-var-' + (++vn)); cpSync(sc, dv, { recursive: true }); edit(dv, 'play/index.html', fn); const rv = verify(dv, on, rootOn); check(`${what}: the checker fails`, rv.status === 1 && re.test(rv.stderr), rv.stderr.slice(0, 220)); }
+    }
     let n = 0;
     for (const [what, inject] of [['a fetch', "fetch('x');"], ['an XMLHttpRequest', 'new XMLHttpRequest();'], ['sendBeacon', "navigator.sendBeacon('x');"], ['a WebSocket', "new WebSocket('x');"], ['a URL', "var u = 'https://example.com';"], ['an image src', 'var i = new Image();']]) {
       const d = join(tmp, 'crumbs-bad-' + (++n));
@@ -140,7 +161,7 @@ try {
   {
     const legal = readFileSync(join(here, '..', 'docs', 'legal', 'crumbs-screen.md'), 'utf8');
     check('the constant is Legal\'s paragraph word for word (it is quoted in docs/legal/crumbs-screen.md)', legal.split(/\r?\n/).includes('> ' + CRUMBS_PRIVACY));
-    const on = { ...cfg(), crumbs: true }, rootOn = prefsRoot('root-crumbs2', { howto: CRUMBS_PRIVACY }), sc = join(tmp, 'site-crumbs');
+    const on = { ...cfg(), crumbs: true }, rootOn = prefsRoot('root-crumbs2', { howto: CRUMBS_PRIVACY, build: 'abc1234 2026-10-26' }), sc = join(tmp, 'site-crumbs');
     const aboutOn = readFileSync(join(sc, 'about/index.html'), 'utf8'), aboutOff = readFileSync(join(good, 'about/index.html'), 'utf8');
     const plain = (h) => h.replace(/<[^>]+>/g, ' ').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/\s+/g, ' ');
     check('with the switch on, the built About page carries Legal\'s paragraph and no longer today\'s line', plain(aboutOn).includes(CRUMBS_PRIVACY) && !plain(aboutOn).includes('collects and sends no personal data'));
