@@ -1,7 +1,0 @@
-	var cb = j.get("crossBack")
-	if not (cb is Dictionary):
-		cb = {}
-	crossFrom = _int("crossBack.from", cb.get("from"), 1, 9)
-	crossTo = _int("crossBack.to", cb.get("to"), 1, 9)
-	if crossTo <= crossFrom or crossTo >= columns:
-		_err("fight/campaign.json: crossBack.to is after crossBack.from and before the climax")

@@ -1,6 +1,6 @@
 # A match's start in pieces
 
-Owner: Simulation and Engine. 2026-10-27, on the EP's brief after Performance's phone freeze (`docs/perf/phone-freeze-2026-10-26.md`). There, the boot's `start_match` was one main-thread block: 1.1 s on this PC's web build, 4.8 s at 4x CPU, 7.9 s at 6x. Parked at `pending/match-start/`.
+Owner: Simulation and Engine. 2026-10-27, on the EP's brief after Performance's phone freeze (`docs/perf/phone-freeze-2026-10-26.md`). There, the boot's `start_match` was one main-thread block: 1.1 s on this PC's web build, 4.8 s at 4x CPU, 7.9 s at 6x. Applied in d9d4fb2d with World's and Rendering's lines.
 
 ## 1. Where the time goes
 

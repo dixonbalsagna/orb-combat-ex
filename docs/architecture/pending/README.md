@@ -2,9 +2,9 @@
 
 Owner: Simulation and Engine. Nothing in this folder is run by CI, the validator, the sim or Godot (`docs/` is hidden from Godot). It holds slices that are built and proven in a scratch copy and wait for the sim slot.
 
-**Parked builds:** the campaign's slice 1c, the cross-back, is at `docs/sim/pending/campaign-slice1c/` (page: `../campaign-core.md`), and the planet's load step at `planet-load/` (page: `../planet-load.md`).
+**Parked build:** `calm-k/`: the calm turn's read at a total K of 12 a tick on a gen 2 planet, a form's warm begun at its ready tell (Game Design's rulings 10-26 item 28; page: `../calm-turn-read.md` §6). Gen 1 is untouched, hash included.
 
-The planet's pacing in the run's data (`units-to-data/`: `ground.planetUnitsPerRead`) and the campaign's first slice (`docs/sim/pending/campaign-slice1/`) were applied in 622a0465 with Tools' grants, and slice 1b (`campaign-slice1b/`, on World's real calls) in 223ffdcc with Tools' and World's; their scripts are deleted.
+The planet's pacing in the run's data (`units-to-data/`: `ground.planetUnitsPerRead`) and the campaign's first slice (`docs/sim/pending/campaign-slice1/`) were applied in 622a0465 with Tools' grants, and slice 1b (`campaign-slice1b/`, on World's real calls) in 223ffdcc with Tools' and World's. Also applied: slice 1c (`campaign-slice1c/`, the cross-back) in c9bd20d1; the planet's load step (`planet-load/`) in 0c62c856 with World's lines; the campaign's load of its arc's planet (`campaign-load/`) in b2793a1e; and a match's start in pieces (`match-start/`, page `../match-start.md`) in d9d4fb2d with World's and Rendering's lines. Their scripts are deleted.
 
 **A paper, not a build:** `arena-conditions.md`: my conditions on World's shifting arena (windows 0 and 1), with the exact lines: the `arena.cols` guard, and one sim's world statics bound again at every step.
 

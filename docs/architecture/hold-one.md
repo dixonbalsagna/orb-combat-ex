@@ -31,7 +31,18 @@ Owner: Simulation and Engine. 2026-10-23, paper only, on the EP's brief (`docs/d
 2. **Shift his motion windows at the release (recommended).** As (1), and when his hold ends every stamp that drives his motion moves on by the ticks he was held. That is a rush's end and its recoil's in the core, plus whatever Encounter's windows Encounter names. It needs a list of those fields, kept as fields are added.
 3. **A body's own clock.** Each fighter keeps `f.T`, advanced only while he is free, and his timers read it. That is the cleanest in principle, but it is a rewrite of every stamp in 16 director files and the core, with a golden regeneration.
 
-## Questions for Game Design
+## Ruled (Game Design, `energy-overhaul.md` E103 and E104)
+
+- **The budget:** a one-body hold doesn't count toward the 18% or the 40% blocks.
+- **Anti-pin:** after a hold he has 6 free ticks before another can start, and he is held at most 24 ticks in any 60. QA has a row for it.
+- **The bolt's 4-tick reel** is a flinch he moves and acts in, not a hold. It is Encounter's and Animation's.
+- **In reach** is the brawl's engage distance.
+- **The way for his clock-stamped windows:** (2), the stamps that drive his motion shifted at the release, is accepted.
+- **The build** waits on Orb's answer to `energy-overhaul.md` §18; then it is mine, behind the hit-stop switch.
+
+So the core adds the anti-pin state to the body's hold (the free ticks left, and the held ticks of a rolling 60, hashed with `holdT`). The budget's `frozen()` counts only whole-sim stops.
+
+## The questions as they were asked
 
 1. **The budget (E103).** Does a one-body hold count toward the 18% and the 40% blocks? The budget guards against the screen freezing, and a one-body hold freezes one figure, not the screen. I would count it at half, or not at all.
 2. **A stream that keeps landing.** A held body that is hit again has his hold merged by the longer, so mines, lobs or a stream could pin him over and over. Give him a guard after a hold (say 6 free ticks before another hold can start), or a share of a window he can be held for?

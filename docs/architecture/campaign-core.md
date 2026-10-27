@@ -1,6 +1,6 @@
 # The campaign's sim foundation (first slice, step 1)
 
-Owner: Simulation and Engine. 2026-10-25 and 26, on the EP's brief: Game Design's `docs/design/campaign.md` §1.1 to §1.4, §2 and §7, under Legal's mc01 to mc03 and mc06 (`docs/legal/campaign-screen.md`). On World's route (`WorldCampaign`, `docs/world/campaign-route.md`). The first slice, on stand-ins for World's calls, was applied in 622a0465, and slice 1b, on World's real calls as this page describes, in 223ffdcc. Slice 1c, the cross-back, is parked at `docs/sim/pending/campaign-slice1c/`.
+Owner: Simulation and Engine. 2026-10-25 and 26, on the EP's brief: Game Design's `docs/design/campaign.md` §1.1 to §1.4, §2 and §7, under Legal's mc01 to mc03 and mc06 (`docs/legal/campaign-screen.md`). On World's route (`WorldCampaign`, `docs/world/campaign-route.md`). The first slice, on stand-ins for World's calls, was applied in 622a0465; slice 1b, on World's real calls as this page describes, in 223ffdcc; and slice 1c, the cross-back, in c9bd20d1. The arc's planet loaded first (§3 item 0) was applied in b2793a1e.
 
 **Step 1 of the first slice:** one solo episode, five stages on one planet, choosing by flying. Behind `data/fight/campaign.json`'s `enabled` (off), **the campaign's one switch**. With it off nothing moves.
 
@@ -34,6 +34,7 @@ An episode is a run (`run-mode.md`; the run state, `run-core.md` §12): fights f
 
 ## 3. The route, a column at a time
 
+0. **The arc's planet is loaded first** (`beginLoad(arcId)`, `planet-load.md`): the host steps it a slice a frame from the moment the arc is known, while the pair are picked, then `WorldPlanet.make` finds it made for `newEpisode` and the columns. With `SimPlanetLoad.strict` on, `beginColumn` refuses a gen 2 planet that isn't made. Each stage's ring can be read the same way over the flight to its site (`SimPlanetLoad.beginFor(stageSetup)`).
 1. **The first ring** is `ringCols` (2,400, a Half ring, which a column's band of 322 to 806 columns each way fits: `rulings-2026-10-26.md` item 1) round the player's home, on a bearing from the episode seed. The pair start at its middle.
 2. **`beginColumn(state, P)`** begins World's column job (`WorldCampaign.beginColumn`) for the current column. It passes the ring, the pair's column, the used places, the wear and the climax's pin (the villain's home). **The host steps it a ring's read a frame over the beats before the column** (nine reads, about 11 ms each; 500 ms at once on a gen 2 planet).
 3. **`columnDone(state, job.result)`** keeps the column's sites, and makes World's `start` the ring the pair fly (after any turn, its touch-down at the pair), with their column on it.

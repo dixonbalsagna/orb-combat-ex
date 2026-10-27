@@ -1,9 +1,0 @@
-	# the cross-back (campaign.md 2.2): none asked when column 2 left no named place untaken; a seeded filler arc whose rise
-	# left one has it asked at column 4 and offered there, leading the sites (World's prefer)
-	if int(a1.back) != SimCampaign.crossBackPlace(a1) or (int(a1.back) >= 0 and not a1.columns[SimCampaign.crossTo - 1].any(func(x): return int(x.place) == int(a1.back))):
-		return "the cross-back of %s: asked %d, column 2's untaken place %d" % [arcId, int(a1.back), SimCampaign.crossBackPlace(a1)]
-	var backArc: String = "0bac000000017334"   # its rise leaves place 12 untaken; World offers it again at column 4
-	var ab: Dictionary = SimCampaignRun.play(backArc, "filler_arc", 60).arc
-	var lead: Dictionary = ab.columns[SimCampaign.crossTo - 1][0] if ab.columns.size() >= SimCampaign.crossTo and not ab.columns[SimCampaign.crossTo - 1].is_empty() else {}
-	if SimCampaign.crossFrom != 2 or SimCampaign.crossTo != 4 or int(ab.back) < 0 or int(ab.back) != SimCampaign.crossBackPlace(ab) or lead.is_empty() or int(lead.place) != int(ab.back) or int(lead.preferred) != 1:
-		return "the cross-back of %s: from %d to %d, asked %d, column 4 led by %s (want 2 to 4, column 2's untaken place asked, leading and preferred)" % [backArc, SimCampaign.crossFrom, SimCampaign.crossTo, int(ab.back), str(lead)]

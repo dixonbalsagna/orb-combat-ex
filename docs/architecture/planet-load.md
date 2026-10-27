@@ -1,6 +1,6 @@
 # The planet's load step
 
-Owner: Simulation and Engine. 2026-10-26, on the EP's brief after Performance's gen 2 bench (`docs/perf/gen2-bench-2026-10-26.md`). A cold gen 2 planet takes 1.7 s on this PC, 9.5 s on an old laptop and 16 s on a phone. A match start with a cold planet takes 1.8, 10.5 and 17.8 s; with the planet made, 6, 35 and 58 ms. So a host loads the planet in steps before the match, and no match's start makes a gen 2 planet cold. Parked at `pending/planet-load/`.
+Owner: Simulation and Engine. 2026-10-26, on the EP's brief after Performance's gen 2 bench (`docs/perf/gen2-bench-2026-10-26.md`). A cold gen 2 planet takes 1.7 s on this PC, 9.5 s on an old laptop and 16 s on a phone. A match start with a cold planet takes 1.8, 10.5 and 17.8 s; with the planet made, 6, 35 and 58 ms. So a host loads the planet in steps before the match, and no match's start makes a gen 2 planet cold. Applied in 0c62c856 with World's lines, and the campaign's load (`SimCampaign.beginLoad`) in b2793a1e.
 
 ## 1. `SimPlanetLoad`
 
@@ -14,6 +14,7 @@ Owner: Simulation and Engine. 2026-10-26, on the EP's brief after Performance's 
   4. `places`: the cities and towns, a try-set a step.
   5. `ring` (`beginFor` only): the match's ring, read as `newMatch` reads it (its arena's columns, its generation) and memoised where the match finds it. An arena that names its ring (a run's, a campaign's: `WorldRingPick.arenaOf`) is read with World's `RingJob`, about 62 columns a slice. A touch-down's ring (`{"cols": n}` and a `touch`) has no stepped read, so it is one piece. A ring already read (World's `ringRead`) is skipped.
 - **The planet and the match are the same however they are stepped.** `make(seed)` is World's job run to the end. Parity compares the planets, and a match started after the load with one started cold, to the bit, and the same for a ring read in slices.
+- **A choice that changes, and a Back** (Game Design's `rulings-2026-10-26.md` item 27: the load begins as soon as the planet's seed is known, while the fighter is picked, and starts again if the choice changes; any wait left keeps a Back that keeps nothing) are the host's (UI). A job the host drops is garbage: World memoises nothing of a planet until it is whole, and a ring's read only when it is done.
 - **`ready(seed, gen)`:** the planet is made (World's memo) and, with rivers on, its flow field too. **`mayStart(setup)`:** no planet, a gen 1 planet, or a gen 2 planet that is ready.
 
 ## 2. No cold gen 2 planet in a match's start
@@ -27,7 +28,7 @@ Owner: Simulation and Engine. 2026-10-26, on the EP's brief after Performance's 
 
 - **A versus match (the host):** before `SimCore.newMatch` with a planet setup, `beginFor(setup)`, a step a frame with the loading screen on `progress()` and `phase` until it is done, then the match. A planet made and a ring read already are done at once. This is Rendering's `SimHost.new_match` and UI's loading screen (the hook is below).
 - **The run:** `SimRun.beginGround`'s `GroundJob` loads its planet with `SimPlanetLoad` (the same steps), and `GroundJob.progress()` reads the load's progress (1 once the ground has started).
-- **The campaign:** the arc's planet is loaded before the first column (`SimPlanetLoad.begin(state.planet.seed)`). World's column job makes the planet if it is cold, in one piece.
+- **The campaign:** the arc's planet is loaded before its first episode (`SimCampaign.beginLoad(arcId)`, from the moment the arc is known), since `newEpisode` and World's column jobs read it. With `strict` on, `SimCampaign.beginColumn` refuses a gen 2 planet that isn't made. Each stage's ring can be read over the flight to its site with `beginFor(stageSetup)`, as the test's episode does.
 
 ## 4. What a load costs, and the pieces that are one chunk each
 
@@ -65,4 +66,4 @@ Native, on this PC (seed 13, gen 2, slices of 250 units, two runs each, the mach
 - **UI:** a loading screen that reads `progress()` (0 to 1) and `phase` (plates, climate, rivers, places, ring).
 - **The campaign's and the run's hosts:**
   - the run's `GroundJob` already loads its planet (`GroundJob.progress()`);
-  - the campaign loads the arc's planet before its first column, with `SimPlanetLoad.begin(state.planet.seed)`.
+  - the campaign loads the arc's planet with `SimCampaign.beginLoad(arcId)`, before its first episode.
