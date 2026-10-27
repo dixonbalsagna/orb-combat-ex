@@ -80,8 +80,10 @@ Simulation timed `_match_built` at 1.4 s natively on the first boot. A probe of 
 ## Around the boot (`main.gd`)
 
 - **Audio's quiet budget.** `host.audio_cues.bank.warm_quiet` is 1 while the sim is held or a notice, a card, the start menu or the loading screen is up (an AI match plays behind the first-start card); 0 otherwise.
-- **Performance's freeze breadcrumbs.** The four stages are said to the page once each as they change, through `window.__ocx.crumbs.stage(...)` (nothing on a desktop build or headless):
+- **Performance's freeze breadcrumbs.** The stages are said to the page once each as they change, through `window.__ocx.crumbs.stage(...)` (nothing on a desktop build or headless):
   - `first_frame`: the first frame is up;
+  - `loading`: the match's pieces or the panes' run;
+  - `compiling`: the boot compiles the programs (it and `loading` are tested before the card, so a stall while the first-run card is up is named for what runs; Performance's start-block profile, 2026-10-27);
   - `card`: the notice or the How to play card;
   - `intro`;
   - `playing`.

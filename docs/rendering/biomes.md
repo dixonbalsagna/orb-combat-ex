@@ -14,7 +14,7 @@ Orb's priority (2026-10-23): "pour resources into improving our planet generatio
   - the subsoil's (Art's crater inside: `lite` 0.14, the subsoil, `dark` 0.3);
   - a beam's scar band and its edge;
   - whether the rock carries strata lines (desert, mountains, volcanic, highland).
-- **The render's band biomes map onto it** by name (`id_of`): today's five stored biomes, the city and the village. The fine id reaches the band when World's window 2 plumbs it into the match.
+- **The render's band biomes map onto it** by name (`id_of`). On a gen 2 planet each column is its fine biome (`WorldBiomes.fineNameAt`, 2026-10-27), so all 15 of Art's palettes draw there: the ground, the cover, the far land's ridges and the trees. A town's or a city's ground is the city or the village. On the hand-made world (no fine columns) it is the stored biome, the city or the village. The stored row stays for the far map's shares and the far relief. `--nofine` is the A/B switch.
 
 **The facets** (`terrain.gdshader`):
 - **The tone.** A point of the ground takes its biome's lit, mid or shade tone by its normal against the sun (`FACET_SUN`: upper left, a little toward the viewer). It is lit past `FACET_SLOPE` (0.05) more light than flat ground, shade past it less, and mid on the flat.

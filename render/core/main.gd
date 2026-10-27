@@ -246,6 +246,7 @@ func _ready() -> void:
 	PlanetView.cover_on = RenderLook.COVER_ON and not args.has("nocover")   # the biomes' cover: on; --nocover for the A/B (2026-10-23)
 	PlanetView.fill_on = RenderLook.WATER_FILL_ON and not args.has("nofill")   # the water fill's drama: on; --nofill for the A/B
 	PlanetView.ladder_on = RenderLook.FAR_LADDER_ON and not args.has("noladder")   # the far land's ridges: on; --noladder for the A/B
+	GroundField.fine_on = not args.has("nofine")   # gen 2's fine palettes in the band: on; --nofine for the A/B
 	far_on = RenderLook.FAR_MAP_ON or args.has("farmap")   # the planet's own far land: off by default (2026-10-22)
 	_far_now = args.has("farnow")
 	hud.key_help = args.has("keyhelp")   # the greybox prompt and key help: off by Orb's minimal rule (2026-10-19)
@@ -678,18 +679,22 @@ func _step_boot(delta: float) -> void:
 
 
 ## Performance's freeze breadcrumbs (docs/perf/web-shell/ocx-crumbs.js): the stage the game is in, said to the page
-## once when it changes: first_frame (the first frame is up), card (the notice or the How to play card), intro, playing.
-## Nothing on a desktop build or headless.
+## once when it changes: first_frame (the first frame is up), loading (the match's pieces or the panes' run), compiling
+## (the boot compiles the programs), card (the notice or the How to play card), intro, playing. The boot's own stages
+## come before the card, so a stall while a card is up is named for what is running. Nothing on a desktop build or
+## headless; nothing here reads the sim while the match loads.
 func _crumb() -> void:
 	if not OS.has_feature("web"):
 		return
 	var st: String = "playing"
 	if _crumb_at == "":
 		st = "first_frame"
+	elif host.loading() or not _build_queue.is_empty():
+		st = "loading"
+	elif boot != null:
+		st = "compiling"
 	elif ui_hud.is_notice_open() or ui_hud.is_howto_open():
 		st = "card"
-	elif host.loading() or not _build_queue.is_empty() or boot != null:
-		return   # the match starting or the boot compiling, no card up: the stage stays (nothing here reads the sim then)
 	elif host.intro_running():
 		st = "intro"
 	if st != _crumb_at:
@@ -1498,7 +1503,7 @@ const CHARGE_OPTIONS: Array = ["latch_charge", "latch_charge_p2", "charges_off",
 ## without UI's notice, change how a match starts or hold a debug value, and are dropped unless the page is on a local
 ## host (gate_args). What a public page's link may still set are look switches: skyreact, panhaze, nopanhaze, keyhelp, roll.
 const LOCAL_ONLY_ARGS: Array = ["study", "flashcap", "nointro", "staticsky", "sky", "skymood"]
-const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder"]
+const URL_ARGS: Array = ["nointro", "skyreact", "study", "flashcap", "panhaze", "nopanhaze", "staticsky", "sky", "skymood", "keyhelp", "roll", "drift", "farmap", "farnow", "nocull", "nocover", "touchscale", "nofill", "noladder", "nofine"]
 
 
 ## The scene a debug route asks for, or "" (the game, as always). --study opens Animation's flurry study in place of

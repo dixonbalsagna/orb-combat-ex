@@ -507,11 +507,15 @@ static func far_rows() -> PackedFloat32Array:
 	return out + biome
 
 
+static var fine_on: bool = true   # gen 2's fine palettes in the band (zone_rows); main's --nofine turns them off
+
+
 ## Each column's border zone (rows ROW_ZONE_A, _B and _X; Art: a border between two biomes is a zone a third of the
 ## 1,200-unit window wide, its colour stepped in five hard bands): the palette ids of the biomes left and right of the
 ## nearest border within half RenderLook.BIOME_ZONE, and where that border lies (in columns). A column with none has its
 ## own biome both sides and NO_BORDER. The planet wraps. One pass over the borders, so a new world (World's turn) costs
-## well under a millisecond.
+## well under a millisecond. On a gen 2 planet a column's biome is its fine one (WorldBiomes.fineNameAt: all 15 of
+## Art's palettes; a town's or a city's ground its own), not the stored one bio holds (the far map's shares keep that).
 static func zone_rows(bio: PackedFloat32Array) -> PackedFloat32Array:
 	var nc: int = bio.size()
 	var half: float = RenderLook.BIOME_ZONE * 0.5 / SimConst.COL
@@ -522,6 +526,14 @@ static func zone_rows(bio: PackedFloat32Array) -> PackedFloat32Array:
 	ids.resize(nc)
 	for i in range(nc):
 		ids[i] = idmap[clampi(int(bio[i]), 0, idmap.size() - 1)]
+	if fine_on and WorldBiomes.fineCols.size() == nc and WorldBiomes.planetCols.size() == nc:
+		var by: Dictionary = {}   # a fine id (or a settlement's stored code + 256) -> its palette id, looked up once
+		for i in range(nc):
+			var st: int = WorldBiomes.planetCols[i]
+			var key: int = 256 + st if st >= 7 else int(WorldBiomes.fineCols[i])
+			if not by.has(key):
+				by[key] = float(RenderBiomeLook.id_of(WorldBiomes.fineNameAt((float(i) + 0.5) * SimConst.COL)))
+			ids[i] = by[key]
 	var out := PackedFloat32Array()
 	out.resize(3 * nc)
 	var dist := PackedFloat32Array()
