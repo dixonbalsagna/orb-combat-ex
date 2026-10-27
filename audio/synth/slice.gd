@@ -9,6 +9,7 @@ static var on: bool = false           # slicing active: a warm-up is running acr
 static var budget_us: int = 6000      # microseconds of synthesis a frame may take (a knob: the warm-up takes about 1.8 s of CPU on a desktop)
 static var max_slice_us: int = 0      # the longest single run between two yields seen (for the checks and the probe)
 static var yields: int = 0
+static var budget_fn: Callable = Callable()   # asked for the budget at the start of every frame the run gets (the bank's: adaptive)
 static var _t0: int = 0
 
 
@@ -26,6 +27,8 @@ static func next_frame() -> void:
 	yields += 1
 	await Engine.get_main_loop().process_frame
 	_t0 = Time.get_ticks_usec()
+	if budget_fn.is_valid():
+		budget_us = int(budget_fn.call())
 
 
 ## Run a coroutine to the end as an ordinary call: slicing is switched off for it, so it never suspends (and any slicing run that is

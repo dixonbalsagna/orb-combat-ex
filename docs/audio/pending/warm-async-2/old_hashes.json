@@ -1,0 +1,7 @@
+{
+  "audio/synth/slice.gd": "d6261d1a76fa7e2d4b9ca48ae7d927aaaeea4670705899f60631823ed3fa2ea5",
+  "audio/audio_bank.gd": "d9e48a80b4e58e8b6dba74d4547df38658a9e31e7861a97e77288a9e8f2a7bc3",
+  "audio/audio_voices.gd": "c0023c277aca04c3afb0ef6bba4ecb00a969b6290829d99f6f78b0816e878b93",
+  "audio/tools/warm_async_check.gd": "804320026e20c560059138ec5996cf897e912ff85c494eaa9056eadadd149aa8",
+  "docs/audio/warm-async.md": "fd9b077d6ebb568ac05fc175d91f705ccfc527f6d31cad147ee6fb802ce3e676"
+}

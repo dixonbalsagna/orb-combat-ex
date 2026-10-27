@@ -24,6 +24,9 @@ var _clock: float = 0.0
 var _duck: Dictionary = {}     # bus name -> {db, until}: a bus held down for a moment by a cue
 var _base_db: Dictionary = {}  # bus name -> its level in mix.json
 const DUCK_RELEASE := 0.08     # seconds to come back up
+var _deferred: Array = []      # {cue, cam_x, zoom, at}: cues whose sound the warm-up has not rendered yet; they play when it has, if not too late
+const DEFER_MAX := 24
+const DEFER_TIMEOUT_MS := 6000
 
 
 func _init(p_bank: AudioBank = null) -> void:
@@ -49,6 +52,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_clock += delta
+	_run_deferred()
 	for bus in _duck.keys():
 		var d: Dictionary = _duck[bus]
 		var idx: int = AudioServer.get_bus_index(bus)
@@ -60,6 +64,40 @@ func _process(delta: float) -> void:
 		elif idx != -1:
 			var k: float = clampf(left / DUCK_RELEASE, 0.0, 1.0)     # 1 while held, then a short ramp back up
 			AudioServer.set_bus_volume_db(idx, float(_base_db.get(bus, 0.0)) + float(d.db) * k)
+
+
+## A cue for a sound the warm-up has not rendered: move that sound to the front of the queue, and hold the cue. It plays when the sound
+## is ready if it would not be later than its own length; otherwise it is lost (and named in bank.skipped_log).
+func _defer(cue: AudioCues.Cue, cam_x: float, zoom: float) -> void:
+	bank.warm_want(cue.sound, cue.variant)
+	if _deferred.size() >= DEFER_MAX:
+		var o: Dictionary = _deferred.pop_front()
+		bank.note_skip(o.cue.sound, o.cue.variant, "overflow", float(Time.get_ticks_msec() - int(o.at)))
+	_deferred.append({"cue": cue, "cam_x": cam_x, "zoom": zoom, "at": Time.get_ticks_msec()})
+	bank.deferred_n = _deferred.size()
+
+
+func _run_deferred() -> void:
+	if _deferred.is_empty():
+		return
+	var now: int = Time.get_ticks_msec()
+	var keep: Array = []
+	for d in _deferred:
+		var c: AudioCues.Cue = d.cue
+		var late: float = float(now - int(d.at))
+		if bank.is_ready(c.sound, c.variant):
+			var own_ms: float = bank.stream(c.sound, c.variant).get_length() * 1000.0 / maxf(c.pitch, 0.1)
+			if late > own_ms:
+				bank.note_skip(c.sound, c.variant, "late", late)
+			else:
+				bank.deferred_played += 1
+				play(c, d.cam_x, d.zoom)
+		elif late > DEFER_TIMEOUT_MS:
+			bank.note_skip(c.sound, c.variant, "timeout", late)
+		else:
+			keep.append(d)
+	_deferred = keep
+	bank.deferred_n = _deferred.size()
 
 
 ## How far a bus is held down right now, in dB (0 when it is not).
@@ -114,6 +152,7 @@ func distance_db(dist: float) -> float:
 
 ## Play a cue for a camera at cam_x with zoom pixels per world unit. Returns true if a voice took it.
 func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:
+	bank.last_ask_ms = Time.get_ticks_msec()      # the cue traffic: the warm-up's budget reads it when the host has not said
 	if cue.sound == "" and cue.stop_group != "":
 		return stop_group(cue.stop_group, cue.fade_ms)
 	var dx: float = 0.0 if cue.ambient else SimWrap.sdx(cam_x, cue.x)
@@ -124,7 +163,7 @@ func play(cue: AudioCues.Cue, cam_x: float, zoom: float = 1.0) -> bool:
 		dropped += 1
 		return false
 	if bank.warming and not bank.is_ready(cue.sound, cue.variant):
-		bank.skipped += 1      # not rendered yet: dropped, silently, while the warm-up runs (the most wanted sounds are first)
+		_defer(cue, cam_x, zoom)      # not rendered yet: its sound goes to the front of the queue, and the cue waits for it
 		return false
 	var slot: int = _take(cue)
 	if slot < 0:

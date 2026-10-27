@@ -31,6 +31,16 @@ var async_ok: bool = false        # a node in the tree gives the warm-up its fra
 var skipped: int = 0              # plays dropped (silent) because the sound was not rendered yet while warming
 var _wq: Array = []               # [id, variant] pairs still to render for the async warm-up, in the order they are wanted
 signal warmed                     # the async warm-up has rendered everything it was given
+var warm_quiet: int = -1          # the host's word: 1 nothing is playing (a card, a menu, the sim paused), 0 a fight is on, -1 judge by the cue traffic
+var quiet_budget_us: int = 25000  # microseconds of synthesis a frame while nothing is playing (a long frame costs nothing behind a card)
+var play_budget_us: int = 6000    # ... while a fight is on
+var pending_budget_us: int = 10000   # ... while cues wait for their sound in play
+var last_ask_ms: int = -100000    # when AudioVoices was last asked for any cue (the traffic)
+var quiet_after_ms: int = 1500    # no cue asked for this long is "nothing is playing" when the host has not said
+var deferred_n: int = 0           # cues waiting in AudioVoices for their sound to be rendered
+var deferred_played: int = 0      # cues that waited and then played
+var skipped_log: Array = []       # debug ring of the last 64 cues lost: {sound, variant, why, late_ms, ms}
+var skipped_by_sound: Dictionary = {}
 
 
 func _init() -> void:
@@ -329,9 +339,53 @@ func warm_ids_async(id_list: Array) -> void:
 		Callable(self, "_warm_run").call()        # a coroutine: it runs until its first yield, then a frame at a time
 
 
+## The budget for the next frame of the run: big while nothing is playing, 6 ms in play, a little more while cues wait for their sound.
+func _pick_budget() -> int:
+	var quiet: bool = warm_quiet == 1 or (warm_quiet < 0 and Time.get_ticks_msec() - last_ask_ms > quiet_after_ms)
+	if quiet:
+		return quiet_budget_us
+	if deferred_n > 0:
+		return pending_budget_us
+	return play_budget_us
+
+
+## A cue is waiting for this sound: render it next (sliced like the rest), ahead of the queue.
+func warm_want(id: String, variant: int) -> void:
+	var v: int = posmod(variant, variants(id))
+	for k in range(_wq.size()):
+		if _wq[k][0] == id and _wq[k][1] == v:
+			_wq.remove_at(k)
+			break
+	_wq.push_front([id, v])
+
+
+## Name a cue that was lost (debug): why is "late" (it would have played later than its own length), "timeout" or "overflow".
+func note_skip(id: String, variant: int, why: String, late_ms: float) -> void:
+	skipped += 1
+	skipped_by_sound[id] = int(skipped_by_sound.get(id, 0)) + 1
+	skipped_log.append({"sound": id, "variant": variant, "why": why, "late_ms": int(late_ms), "ms": Time.get_ticks_msec()})
+	if skipped_log.size() > 64:
+		skipped_log.pop_front()
+
+
+## The lost cues by sound, most first, for a probe to print.
+func skipped_report() -> String:
+	var rows: Array = []
+	for k in skipped_by_sound:
+		rows.append([int(skipped_by_sound[k]), String(k)])
+	rows.sort()
+	rows.reverse()
+	var parts: PackedStringArray = []
+	for r in rows:
+		parts.append("%s x%d" % [r[1], r[0]])
+	return "skipped %d: %s (played late: %d)" % [skipped, ", ".join(parts), deferred_played]
+
+
 func _warm_run() -> void:
 	warming = true
 	AudioSlice.on = true
+	AudioSlice.budget_fn = Callable(self, "_pick_budget")
+	AudioSlice.budget_us = _pick_budget()
 	AudioSlice.start_frame()
 	while not _wq.is_empty():
 		var q: Array = _wq.pop_front()
@@ -339,6 +393,7 @@ func _warm_run() -> void:
 		if AudioSlice.due():
 			await AudioSlice.next_frame()
 	AudioSlice.on = false
+	AudioSlice.budget_fn = Callable()
 	warming = false
 	warmed.emit()
 
