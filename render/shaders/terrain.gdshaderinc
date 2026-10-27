@@ -46,9 +46,20 @@ uniform vec2 depth_step = vec2(1.1, 0.94);
 uniform float strata_h = 60.0;
 uniform vec2 scar_band = vec2(1.5, 0.3);   // the scar's edge rim in pixels, and the burn where its band starts
 uniform vec3 tone_k = vec3(1.06, 1.0, 0.86);
+// Biome rendering window 3: the far land's ridges (RenderLook.FAR_LADDER_*; RenderBiomeLook rows ladder_row to + 2).
+uniform bool ladder_on = true;
+uniform int ladder_row = 28;
+uniform float ladder_from = 0.5;
+uniform vec2 ladder_z = vec2(22000.0, 36000.0);
+uniform vec3 ladder_haze = vec3(0.0, 0.12, 0.25);
+uniform vec3 ladder_tone = vec3(1.04, 1.0, 0.92);
+uniform vec4 ladder_n[7] : source_color;   // the nearest and farthest ridge of each of GroundField.BIOME_ORDER (the far map's shares)
+uniform vec4 ladder_f[7] : source_color;
 
 varying float v_base;
 varying vec3 v_col;
+varying vec3 v_lad_n;         // the far land's nearest and farthest ridge colour (window 3); the middle is halfway
+varying vec3 v_lad_f;
 varying float v_desert;
 varying float v_dent;
 varying float v_h;
@@ -75,6 +86,9 @@ void vertex() {
 	float s = far_weight(z);
 	float bio = gf(i, 14);   // the column's biome, BIOME_ORDER (desert 5)
 	v_col = biome_colors[int(bio + 0.5)].rgb;
+	int pid = int(gf(i, 21) + 0.5);   // the column's palette id (zone A: its own biome outside a zone)
+	v_lad_n = biome_tone(pid, ladder_row);
+	v_lad_f = biome_tone(pid, ladder_row + 2);
 	v_desert = abs(bio - 5.0) < 0.5 ? 1.0 : 0.0;
 	v_base = b;
 	v_s = s;
@@ -91,7 +105,14 @@ void vertex() {
 		vec4 w1 = far_fetch(far_bio1, i0, fr, L);
 		vec3 fc = biome_colors[0].rgb * w0.x + biome_colors[1].rgb * w0.y + biome_colors[2].rgb * w0.z + biome_colors[3].rgb * w0.w
 			+ biome_colors[4].rgb * w1.x + biome_colors[5].rgb * w1.y + biome_colors[6].rgb * w1.z;
-		v_col = mix(v_col, fc / max(dot(w0, vec4(1.0)) + w1.x + w1.y + w1.z, 0.001), s);
+		float wsum = max(dot(w0, vec4(1.0)) + w1.x + w1.y + w1.z, 0.001);
+		v_col = mix(v_col, fc / wsum, s);
+		vec3 ln = ladder_n[0].rgb * w0.x + ladder_n[1].rgb * w0.y + ladder_n[2].rgb * w0.z + ladder_n[3].rgb * w0.w
+			+ ladder_n[4].rgb * w1.x + ladder_n[5].rgb * w1.y + ladder_n[6].rgb * w1.z;
+		vec3 lf = ladder_f[0].rgb * w0.x + ladder_f[1].rgb * w0.y + ladder_f[2].rgb * w0.z + ladder_f[3].rgb * w0.w
+			+ ladder_f[4].rgb * w1.x + ladder_f[5].rgb * w1.y + ladder_f[6].rgb * w1.z;
+		v_lad_n = mix(v_lad_n, ln / wsum, s);
+		v_lad_f = mix(v_lad_f, lf / wsum, s);
 		v_desert = w1.y > 0.5 ? 1.0 : 0.0;
 		v_base = mix(b, far_fetch(far_map, i0, fr, L).b, s);
 	} else if (s > 0.0) {
@@ -100,6 +121,11 @@ void vertex() {
 #endif
 		float xs = far_x(xw, z, s);
 		v_col = mix(v_col, biome_rgb(xs), s);
+		float cf = xs / col_w;
+		cf -= float(nc) * floor(cf / float(nc));
+		int fid = int(gf(min(int(cf), nc - 1), 21) + 0.5);   // the far column's palette id
+		v_lad_n = mix(v_lad_n, biome_tone(fid, ladder_row), s);
+		v_lad_f = mix(v_lad_f, biome_tone(fid, ladder_row + 2), s);
 		v_desert = abs(far_biome(xs) - 5.0) < 0.5 ? 1.0 : 0.0;
 		v_base = mix(b, gfx(xs, 0), s);
 	}
@@ -163,8 +189,18 @@ void fragment() {
 		c = mix(c, c * 0.62, ln);
 	}
 	c *= mix(depth_step.x, depth_step.y, floor(clamp(v_back, 0.0, 0.999) * 3.0) * 0.5);   // the band's value by depth, in three hard steps
-	c = mix(c, flat_shade(v_col, NORMAL, 0.55) * mix(1.2, 0.95, v_back), v_s);   // the far land: its own colour, shaded as before
-	if (v_base < sea_base && v_h < sea_base) {
+	// The far land (window 3, Art's value ladder): past ladder_from of the far blend, its biome's three ridges by depth
+	// behind the fighter plane in hard steps, nearest the darkest, lit, mid and shade by the same light; hazed below by
+	// the ridge's own step. Without the ladder, its own colour shaded as before.
+	int lk = -1;
+	if (ladder_on && v_s >= ladder_from) {
+		float zb = -v_px.y;
+		lk = zb < ladder_z.x ? 0 : (zb < ladder_z.y ? 1 : 2);
+		c = (lk == 0 ? v_lad_n : (lk == 1 ? mix(v_lad_n, v_lad_f, 0.5) : v_lad_f)) * (tone == 0 ? ladder_tone.x : (tone == 2 ? ladder_tone.z : ladder_tone.y));
+	} else if (!ladder_on) {
+		c = mix(c, flat_shade(v_col, NORMAL, 0.55) * mix(1.2, 0.95, v_back), v_s);   // the far land: its own colour, shaded as before
+	}
+	if (lk < 0 && v_base < sea_base && v_h < sea_base) {
 		c = mix(sea_floor.rgb * tk, c, v_s);
 	} else if (v_street > 0.001) {
 		vec4 st = street_paint(v_px, fwidth(v_px.x));
@@ -218,5 +254,5 @@ void fragment() {
 	float opened = 1.0 - v_new;   // a new crater's glow comes with its opening too
 	c = mix(c, glow, smoothstep(0.2, 1.0, hh) * 0.85 * heat_gain * opened) + glow * max(0.0, hh - 1.0) * 0.6 * heat_gain * heat_gain * opened;
 	// Aerial perspective: hazing toward the horizon, the ground takes the sky's colour in its own direction.
-	ALBEDO = haze_ground(c, v_view, -v_wz, fog_far);   // the haze by depth (skycol.gdshaderinc)
+	ALBEDO = lk >= 0 ? haze_step(c, v_view, -v_wz, fog_far, lk == 0 ? ladder_haze.x : (lk == 1 ? ladder_haze.y : ladder_haze.z)) : haze_ground(c, v_view, -v_wz, fog_far);   // the haze by depth (skycol.gdshaderinc); the far land's in its ridges' steps
 }

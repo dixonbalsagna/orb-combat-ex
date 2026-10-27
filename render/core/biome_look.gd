@@ -11,7 +11,9 @@ extends RefCounted
 ## tens of thousands of units; Art's mountains are green only at the foot). The render's own biome names
 ## (GroundField.BIOME_ORDER) map onto these by id_of. Window 2: rows COVER_ROW to COVER_ROW + 15 hold the cover's 16
 ## palette slots for the biome (RenderCoverMeshes: vegetation, secondary and rock, each lit, mid and shade; trunk;
-## accent; char; ash; shallow water; the ground's lit and shade, the whites and slates of the ices).
+## accent; char; ash; shallow water; the ground's lit and shade, the whites and slates of the ices). Window 3: rows
+## LADDER_ROW to LADDER_ROW + 2 hold the far land's three ridges (Art's far_ladder), nearest first: Art's rule is that
+## each further ridge is lighter, so the three are ordered by value (the data names them both ways round).
 
 const DATA_PATH := "res://data/art/biomes.json"
 const FINE: Array = ["ocean", "plains", "forest", "desert", "mountains", "ice_sheet", "sea_ice", "jungle", "savanna", "tundra", "taiga", "wetland", "beach", "highland", "volcanic"]
@@ -27,7 +29,9 @@ const ROW_SUB: int = 6       # lit, mid, shade
 const ROW_SCAR: int = 9      # the band, then its edge
 const ROW_STRATA: int = 11   # red 1: the rock carries strata lines; green: ROCK_ABOVE / 10,000
 const COVER_ROW: int = 12  # the cover's slots (RenderCoverMeshes.SLOTS of them)
-const ROWS: int = 28
+const LADDER_ROW: int = 28 # the far land's three ridges, nearest (darkest) to farthest (lightest)
+const ROWS: int = 31
+const CITY_GREY := "#8c9098"   # a city's far ridges: the plains' ladder half toward this grey
 const LITE := "#fff6e0"      # Art's lite() and dark() (art/concepts/biomes/draw.mjs)
 const DARK := "#0c0a14"
 const STRATA: Array = ["desert", "mountains", "volcanic", "highland"]
@@ -90,6 +94,9 @@ static func texture() -> ImageTexture:
 				var sc: PackedColorArray = RenderCoverMeshes.slot_colours(e.palette)
 				for r in range(sc.size()):
 					img.set_pixel(k, COVER_ROW + r, sc[r])
+			var lad: Array = ladder(k)
+			for r in range(3):
+				img.set_pixel(k, LADDER_ROW + r, lad[r])
 		_tex = ImageTexture.create_from_image(img)
 	return _tex
 
@@ -122,6 +129,26 @@ static func tones(d, k: int) -> Array:
 	out.append_array([RenderLook.col(scar[0]), RenderLook.col(scar[1])])
 	out.append(Color(1.0 if STRATA.has(name) else 0.0, float(ROCK_ABOVE.get(name, 0.0)) / 10000.0, 0.0, 1.0))
 	return out
+
+
+## Biome k's far land: Art's three ridges (far_ladder far1 to far3) ordered nearest first by value, darkest nearest (Art:
+## each ridge lighter than the one in front). The village takes the plains'; the city the plains' half toward a grey.
+## Without data, the ground's mid toward Art's lite in three steps.
+static func ladder(k: int) -> Array:
+	var name: String = name_of(k)
+	var e: Dictionary = entry("plains" if name == "city" or name == "village" else name)
+	var out: Array = []
+	if e.get("far_ladder") is Dictionary and e.far_ladder.has("far1"):
+		for key in ["far1", "far2", "far3"]:
+			var h: String = String(e.far_ladder[key])
+			out.append(RenderLook.col(_mix(h, CITY_GREY, 0.5) if name == "city" else h))
+		out.sort_custom(func(a, b): return a.get_luminance() < b.get_luminance())
+	else:
+		var mid: String = RenderLook.BIOME.get(name, "#5f9140")
+		for t in [0.2, 0.35, 0.5]:
+			out.append(RenderLook.col(_mix(mid, LITE, t)))
+	return out
+
 
 
 ## Art's mix() of two hex colours, rounded to whole channels as Art rounds them.

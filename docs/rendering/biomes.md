@@ -90,6 +90,24 @@ Art's cover silhouettes (`docs/art/biomes-cover.md`) grow on the band's ground b
 - the 19 render gates and `split_sweep`;
 - stills against d3f1ca0e and window 1 (`img/biomes-w2-d3f1ca0e.png`): the desert (two scenes), three mountain scenes, the city-beam scene, planet 7.
 
-## Window 3: the far land and the sky (after)
+## Window 3: the far land and the sky
 
-Art's three-ridge value ladder for the far land, replacing the haze band, and the sky's tint per biome.
+Art's value ladder (`docs/art/biomes.md` 8.1.2; `docs/art/sky-and-distance.md`, row 6) in place of the haze's ramp on the far land. The sky's tint by biome is held back (below).
+- **The ridges** (`terrain.gdshaderinc`, both terrain shaders; `biome_look.gd` rows 28 to 30). Past `FAR_LADDER_FROM` (half) of the far blend, the far land takes its biome's three ridge colours from Art's `far_ladder`, by depth behind the fighter plane, in hard steps:
+  - the nearest ridge to `FAR_LADDER_Z.x` (22,000 units);
+  - the middle one to `.y` (36,000);
+  - the farthest beyond.
+- **Their order.** Art's rule is that each further ridge is lighter and less saturated. The data names the three both ways round (the plains' far1 is the lightest, the ice sheet's the darkest), so they are ordered by value, the darkest nearest.
+- **Their faces.** Each ridge is lit, mid or shade by the same sun as the band, at `FAR_LADDER_TONE` (1.04, 1, 0.92): one flat colour with its three faces, no gradient.
+- **The haze in steps.** Each ridge is taken a fixed share toward the horizon band (`FAR_LADDER_HAZE`: none, 0.12, 0.25), toward the same target as the band's haze, so the ladder follows the time of day. It still meets the sky at the far edge as before.
+- **The biome.** The far land's biome comes from its column's palette id (the far rows' own column), or, on the planet's far map, from the shares of the stored seven. The city takes the plains' ridges half toward a grey, the village the plains'.
+- **The sky's tint by biome: held back.** Built and measured, not shipped. Each band's OKLab moved by the mean, over the arena, of its biomes' noon skies (Art's `sky_noon`) against the plains', once a world.
+  - On a mixed world it is near nothing: 0.001 to 0.004 in OKLab on the hand-made world. A ring spans many biomes.
+  - It moved the sky off Art's keys by a few bits (the sky gate checks them to the bit).
+  - A tint that shows would follow the biome around the camera, which moves as the camera flies: a design call for Art and the EP. The code is in `docs/rendering/wip/2026-10-23/window3/h91_w3.py`.
+- **On** (`FAR_LADDER_ON`); main's `--noladder` is the A/B switch.
+- **What it does to the picture** (2026-10-27, gen 2 planet 7 and the hand-made world, the capture hook's scenes):
+  - The ridges cover most of the far land in a wide view: a launch's high camera, the mountain walls behind a fight.
+  - Art's ridge colours lie close to the hazed colour the far land had, so the change is the flattening into three hard steps, not a new hue. At fight framing the far land is a thin strip and the change is under 2% of the frame.
+  - Cost: the terrain's programs wait about 110 ms more at the boot (4.53 to 4.64 s over the 17 programs that read the ground, this PC). The far land reads its column's three ridge colours in the vertex stage.
+- **Not yet:** the far land's colour steps across a biome border follow the far mesh's vertices (smooth over a row), not the band's five hard bands.

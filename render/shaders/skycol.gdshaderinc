@@ -65,6 +65,15 @@ vec2 haze_parts(vec3 view, float depth, float far) {
 
 // The ground's colour hazed (haze_parts: x toward the horizon band taken down to haze_value of its value and haze_sat
 // of its saturation, the far mountains' ladder; y into the sky at the far edge).
+// The far land's haze in steps (biome rendering window 3, Art's value ladder): a ridge's flat colour taken a fixed share k
+// toward the horizon band (as haze_ground's target), not by a ramp; into the sky at the far edge as the ground is.
+vec3 haze_step(vec3 c, vec3 view, float depth, float far, float k) {
+	vec2 h = haze_parts(view, depth, far);
+	vec3 band = sky_horizon.rgb;
+	vec3 toward = mix(vec3(dot(band, vec3(0.2126, 0.7152, 0.0722))), band, haze_sat) * haze_value;
+	return mix(mix(c, toward, k), sky_color(elevation(view)), h.y);
+}
+
 vec3 haze_ground(vec3 c, vec3 view, float depth, float far) {
 	vec2 h = haze_parts(view, depth, far);
 	vec3 band = sky_horizon.rgb;

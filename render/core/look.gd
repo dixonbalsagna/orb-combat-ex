@@ -57,6 +57,15 @@ const BOOT_INK := "#8a93a6"
 const BOOT_TRACK := "#252b37"
 const BOOT_GROUND := "#0d1017"
 const BOOT_BAR := Vector2(240.0, 2.0)
+## Biome rendering window 3 (docs/rendering/biomes.md; Art's far ladder): the far land past FAR_LADDER_FROM of the far
+## blend takes its biome's three ridges by depth behind the fighter plane: the nearest to FAR_LADDER_Z.x, the middle to
+## .y, the farthest beyond, each lit, mid and shade by FAR_LADDER_TONE and taken FAR_LADDER_HAZE of the way toward the
+## horizon band (the haze in steps). Main's --noladder turns it off.
+const FAR_LADDER_ON: bool = true
+const FAR_LADDER_FROM: float = 0.5
+const FAR_LADDER_Z := Vector2(22000.0, 36000.0)
+const FAR_LADDER_HAZE := Vector3(0.0, 0.12, 0.25)
+const FAR_LADDER_TONE := Vector3(1.04, 1.0, 0.92)
 ## The water window (render/core/water_fill.gd, water.gdshaderinc; docs/rendering/water-fill.md): World's water_fill and
 ## water_wave cues as drama on the water. WATER_CREST: the crest's height, this share of the hole's depth between .y
 ## and .z units. WATER_SLOSH: the slosh's height as a share of the crest's. WATER_FILL_T: the crest's length behind the

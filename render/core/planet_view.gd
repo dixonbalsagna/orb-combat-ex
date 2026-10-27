@@ -64,6 +64,7 @@ var water_fill := RenderWaterFill.new()   # the fills' and waves' drama on the w
 var _water_cues: Array = []               # this frame's water cues, [event, T], read at the next update with the ground
 var _wf_sent: int = -1                    # the water_fill version this pane's water material has
 static var fill_on: bool = RenderLook.WATER_FILL_ON   # the water window; main's --nofill turns it off
+static var ladder_on: bool = RenderLook.FAR_LADDER_ON   # biome rendering window 3; main's --noladder turns it off
 var _town_nodes: Array = []            # each prop copy's FarTowns (set_far gives them the far land's towns)
 var _bld: MultiMesh                  # every part of every building that is not in row 0: the bodies by building index, then the other parts
 var _tree: MultiMesh
@@ -1228,6 +1229,14 @@ func _make_materials() -> void:
 	_terrain_mat.set_shader_parameter("strata_h", RenderLook.STRATA_H)
 	_terrain_mat.set_shader_parameter("scar_band", RenderLook.SCAR_BAND)
 	_terrain_mat.set_shader_parameter("tone_k", RenderLook.TONE_K)
+	_terrain_mat.set_shader_parameter("ladder_on", ladder_on)   # the far land's ridges (biome rendering window 3)
+	_terrain_mat.set_shader_parameter("ladder_row", RenderBiomeLook.LADDER_ROW)
+	_terrain_mat.set_shader_parameter("ladder_from", RenderLook.FAR_LADDER_FROM)
+	_terrain_mat.set_shader_parameter("ladder_z", RenderLook.FAR_LADDER_Z)
+	_terrain_mat.set_shader_parameter("ladder_haze", RenderLook.FAR_LADDER_HAZE)
+	_terrain_mat.set_shader_parameter("ladder_tone", RenderLook.FAR_LADDER_TONE)
+	_terrain_mat.set_shader_parameter("ladder_n", GroundField.BIOME_ORDER.map(func(b): return RenderBiomeLook.ladder(RenderBiomeLook.id_of(b))[0]))
+	_terrain_mat.set_shader_parameter("ladder_f", GroundField.BIOME_ORDER.map(func(b): return RenderBiomeLook.ladder(RenderBiomeLook.id_of(b))[2]))
 	_terrain_mat.set_shader_parameter("ejecta", RenderLook.col(RenderLook.EJECTA))
 	_terrain_mat.set_shader_parameter("char_col", RenderLook.col(RenderLook.CHAR))
 	_terrain_mat.set_shader_parameter("heat_lo", RenderLook.col(RenderLook.HEAT_LO))
