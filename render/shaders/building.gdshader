@@ -166,21 +166,22 @@ uniform vec2 mark_tall = vec2(0.5, 0.9);       // RenderLook.MARK_TALL: its heig
 uniform vec2 mark_crack = vec2(3.0, 2.2);      // RenderLook.MARK_CRACK: cracks a mark, and how far they run as a multiple of the dent's reach
 uniform vec2 open_near = vec2(300.0, 600.0);   // RenderLook.NEAR_CLIP: a column nearer the lens than the second is thinned toward a ghost, and is one at the first     // RenderLook.OPEN_GHOST: the share of a column's pixels gone inside the patch
 
-varying flat vec4 v_cut;      // x, y, z: the mask's three parts; w: floor height
-varying flat vec2 v_base;     // x: the base's world y; y: the top standing floor
-varying flat float v_back;    // 1 on the back wall (model normal toward -z)
-varying flat vec4 v_win;      // x, y, z: the mask of floors whose windows are out; w: floor height (0: no windows)
-varying flat vec3 v_winb;     // x: the wall's base (world y); y: floors standing; z: the building, for the windows' hash
+varying vec4 vi_cut;      // x, y, z: the mask's three parts; w: floor height
+varying vec2 vi_base;     // x: the base's world y; y: the top standing floor
+varying float vi_back;    // 1 on the back wall (model normal toward -z)
+varying vec4 vi_win;      // x, y, z: the mask of floors whose windows are out; w: floor height (0: no windows)
+varying vec3 vi_winb;     // x: the wall's base (world y); y: floors standing; z: the building, for the windows' hash
 varying vec4 v_face;          // x: along the wall, from its middle; y: the wall's length; z: 1 on a wall, 0 on a box's top, -1 on a roof; w: along the building's width, from its middle
-varying flat vec3 v_dmg;      // x: World's damage stage, 0 to 3; y: the top as drawn (world y); z: the instance's width
-varying flat vec4 v_hole0;    // each hole's two ends on this pane's screen, in pixels (xy: the chest, zw: the other end)
-varying flat vec4 v_hole1;
+varying vec3 vi_dmg;      // x: World's damage stage, 0 to 3; y: the top as drawn (world y); z: the instance's width
+varying vec4 vi_hole0;    // each hole's two ends on this pane's screen, in pixels (xy: the chest, zw: the other end)
+varying vec4 vi_hole1;
 varying float v_wy;
 varying vec3 v_view;          // from the camera, in world axes, for the sky's colour behind (the pan haze)
-varying flat vec4 v_look;     // x: the look; y: rows of windows a floor; z: the row's haze, 0 to 1; w: the city look (7c)
-varying flat vec3 v_open;     // this pane's lobby: x the share of it open (0: shut; negative on a part inside the shell or stuck onto it), y its top (world y; under -1.5e9: a building with no lobby), z the tower's share of the patch
-varying flat vec4 v_shell;    // the footprint of the tower's shell at the street: xy its middle (x across from the camera, z in depth), zw half its width and depth (0: none)
-varying flat vec2 v_frame;    // x: the height over the building's base from which this part is its outermost wall (it carries the frame's columns there; huge: never); y: four times what rows 5 to 9 of win_tex hold (1 marks, 2 a stage spreading) plus the core's state (0 whole, 1 cracked, 2 broken)
+varying vec4 vi_look;     // x: the look; y: rows of windows a floor; z: the row's haze, 0 to 1; w: the city look (7c)
+varying vec3 vi_open;     // this pane's lobby: x the share of it open (0: shut; negative on a part inside the shell or stuck onto it), y its top (world y; under -1.5e9: a building with no lobby), z the tower's share of the patch
+varying vec4 vi_shell;    // the footprint of the tower's shell at the street: xy its middle (x across from the camera, z in depth), zw half its width and depth (0: none)
+varying vec2 vi_frame;    // x: the height over the building's base from which this part is its outermost wall (it carries the frame's columns there; huge: never); y: four times what rows 5 to 9 of win_tex hold (1 marks, 2 a stage spreading) plus the core's state (0 whole, 1 cracked, 2 broken)
+varying float vi_inst;       // the instance, for the masks the fragment reads again (a 24-bit mask through a plain varying can lose its last bit)
 
 // A world point on this pane's screen, in FRAGCOORD's pixels.
 vec2 screen_px(mat4 view, mat4 proj, vec3 p, vec2 size) {
@@ -189,12 +190,13 @@ vec2 screen_px(mat4 view, mat4 proj, vec3 p, vec2 size) {
 }
 
 void vertex() {
+	vi_inst = float(INSTANCE_ID);
 	vec4 so = texelFetch(stub_tex, ivec2(min(INSTANCE_ID, textureSize(stub_tex, 0).x - 1), 0), 0);
 	float stub = so.r;
-	v_open = so.gba;
+	vi_open = so.gba;
 	vec4 c = texelFetch(cut_tex, ivec2(min(INSTANCE_ID, textureSize(cut_tex, 0).x - 1), 0), 0);
 	float top_floor = floor(c.z / 16384.0);
-	v_cut = vec4(c.x, c.y, c.z - top_floor * 16384.0, c.w);
+	vi_cut = vec4(c.x, c.y, c.z - top_floor * 16384.0, c.w);
 	int id = min(INSTANCE_ID, textureSize(win_tex, 0).x - 1);
 	// The part's shape: the box's top is narrowed (a taper) or sloped down to one side (a lean). A plain box (1, 1, 0)
 	// is left as it is, to the bit.
@@ -222,24 +224,24 @@ void vertex() {
 	NORMAL = nm;
 	vec4 w = MODEL_MATRIX * vec4(mv, 1.0);
 	float top = MODEL_MATRIX[3].y + 0.5 * length(MODEL_MATRIX[1].xyz);
-	v_base = vec2(top - (top_floor + 1.0) * c.w, top_floor);
-	v_back = n0.z < -0.5 ? 1.0 : 0.0;
+	vi_base = vec2(top - (top_floor + 1.0) * c.w, top_floor);
+	vi_back = n0.z < -0.5 ? 1.0 : 0.0;
 	float stubbed = COLOR.a < 0.5 ? stub - 1.0 : stub;
 	w.y = min(w.y, stubbed);
 	v_wy = w.y;
-	v_win = texelFetch(win_tex, ivec2(id, 0), 0);
+	vi_win = texelFetch(win_tex, ivec2(id, 0), 0);
 	vec4 wb = texelFetch(win_tex, ivec2(id, 1), 0);
 	bool zface = abs(n0.z) > 0.5;
 	float sx = length(MODEL_MATRIX[0].xyz);
 	float sz = length(MODEL_MATRIX[2].xyz);
-	v_winb = vec3(wb.x, wb.y, float(INSTANCE_ID) + (zface ? 0.0 : 0.5));
+	vi_winb = vec3(wb.x, wb.y, float(INSTANCE_ID) + (zface ? 0.0 : 0.5));
 	v_face = vec4(zface ? v0.x * sx : v0.z * sz, zface ? sx : sz, COLOR.a < 0.5 ? -1.0 : (abs(n0.y) < 0.5 ? 1.0 : 0.0), v0.x * sx);
-	v_dmg = vec3(wb.z, min(top, stubbed), sx);
+	vi_dmg = vec3(wb.z, min(top, stubbed), sx);
 	vec4 fr4 = texelFetch(win_tex, ivec2(id, 4), 0);
-	v_look = vec4(sh.w, max(1.0, wb.w), row_haze.x * clamp((-(MODEL_MATRIX[3].z + 0.5 * sz - haze_focus) - row_haze.y) / max(row_haze.z - row_haze.y, 1.0), 0.0, 1.0), fr4.w);
-	v_frame = vec2(fr4.x, fr4.y + 4.0 * fr4.z);   // the core's state, and four times what rows 5 to 12 hold (1 marks, 2 a stage spreading, 4 a second wave inside it, 8 a blow-out's wave)
+	vi_look = vec4(sh.w, max(1.0, wb.w), row_haze.x * clamp((-(MODEL_MATRIX[3].z + 0.5 * sz - haze_focus) - row_haze.y) / max(row_haze.z - row_haze.y, 1.0), 0.0, 1.0), fr4.w);
+	vi_frame = vec2(fr4.x, fr4.y + 4.0 * fr4.z);   // the core's state, and four times what rows 5 to 12 hold (1 marks, 2 a stage spreading, 4 a second wave inside it, 8 a blow-out's wave)
 	vec4 shl = texelFetch(win_tex, ivec2(id, 3), 0);
-	v_shell = vec4(MODEL_MATRIX[3].x + shl.x, MODEL_MATRIX[3].z + shl.y, shl.z, shl.w);
+	vi_shell = vec4(MODEL_MATRIX[3].x + shl.x, MODEL_MATRIX[3].z + shl.y, shl.z, shl.w);
 	vec4 bw = bent_world(mat4(1.0), w.xyz);
 	v_view = bw.xyz - INV_VIEW_MATRIX[3].xyz;
 	POSITION = PROJECTION_MATRIX * (VIEW_MATRIX * bw);
@@ -261,13 +263,13 @@ void vertex() {
 			POSITION = vec4(2.0, 2.0, 2.0, 1.0);
 		}
 	}
-	v_hole0 = vec4(0.0);
-	v_hole1 = vec4(0.0);
+	vi_hole0 = vec4(0.0);
+	vi_hole1 = vec4(0.0);
 	if (hole[0].w > 0.0) {
-		v_hole0 = vec4(screen_px(VIEW_MATRIX, PROJECTION_MATRIX, hole[0].xyz, VIEWPORT_SIZE), screen_px(VIEW_MATRIX, PROJECTION_MATRIX, hole_to[0].xyz, VIEWPORT_SIZE));
+		vi_hole0 = vec4(screen_px(VIEW_MATRIX, PROJECTION_MATRIX, hole[0].xyz, VIEWPORT_SIZE), screen_px(VIEW_MATRIX, PROJECTION_MATRIX, hole_to[0].xyz, VIEWPORT_SIZE));
 	}
 	if (hole[1].w > 0.0) {
-		v_hole1 = vec4(screen_px(VIEW_MATRIX, PROJECTION_MATRIX, hole[1].xyz, VIEWPORT_SIZE), screen_px(VIEW_MATRIX, PROJECTION_MATRIX, hole_to[1].xyz, VIEWPORT_SIZE));
+		vi_hole1 = vec4(screen_px(VIEW_MATRIX, PROJECTION_MATRIX, hole[1].xyz, VIEWPORT_SIZE), screen_px(VIEW_MATRIX, PROJECTION_MATRIX, hole_to[1].xyz, VIEWPORT_SIZE));
 	}
 }
 
@@ -365,6 +367,22 @@ vec3 core_look(vec4 shell, vec3 eye, vec3 view, float t, bool xface, vec3 stone,
 }
 
 void fragment() {
+	// The per-instance and per-face values, rebuilt from plain varyings (no flat varyings: they cost the old GPUs a
+	// rewrite of every draw's index buffer). The masks are read again; the small integers are rounded.
+	int inst = int(vi_inst + 0.5);
+	vec4 cmask = texelFetch(cut_tex, ivec2(min(inst, textureSize(cut_tex, 0).x - 1), 0), 0);
+	vec4 v_cut = vec4(cmask.x, cmask.y, cmask.z - floor(cmask.z / 16384.0) * 16384.0, cmask.w);
+	vec4 v_win = texelFetch(win_tex, ivec2(min(inst, textureSize(win_tex, 0).x - 1), 0), 0);
+	vec2 v_base = vec2(vi_base.x, round(vi_base.y));
+	float v_back = vi_back > 0.5 ? 1.0 : 0.0;
+	vec3 v_winb = vec3(vi_winb.x, round(vi_winb.y), round(vi_winb.z * 2.0) * 0.5);
+	vec3 v_dmg = vec3(round(vi_dmg.x), vi_dmg.y, vi_dmg.z);
+	vec4 v_hole0 = vi_hole0;
+	vec4 v_hole1 = vi_hole1;
+	vec4 v_look = vi_look;   // its ids are read as int(v + 0.5) where they are used
+	vec3 v_open = vi_open;
+	vec4 v_shell = vi_shell;
+	vec2 v_frame = vec2(vi_frame.x, round(vi_frame.y));
 	float lit_w = 0.0;   // the share of this pixel that is a lit pane (the world's light leaves it)
 	if (ref_cull > 0.5 && v_cut.w <= 0.0 && !FRONT_FACING) {
 		discard;

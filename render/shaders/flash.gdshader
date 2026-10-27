@@ -35,9 +35,9 @@ uniform float mirror = 1.0;              // the node's mirror: a glyph's place m
 
 varying vec2 v_p;        // the point in the shape's frame (layout units; glyph units for glyphs)
 varying vec4 v_col;
-varying flat vec4 v_s;   // x: 0 disc, 1 triangle, 2 box, 3 bang, 4 question; y, z: length and half width (radius;
+varying vec4 v_s;   // x: 0 disc, 1 triangle, 2 box, 3 bang, 4 question; y, z: length and half width (radius;
                          // half sides); w: round tip, or a glyph's rim pad
-varying flat float v_sc; // a glyph's scale (layout units per glyph unit)
+varying float v_sc; // a glyph's scale (layout units per glyph unit)
 varying vec2 v_w;        // the point in the flash's frame (layout units)
 
 // The question mark's hook (gen.mjs glyphPolys), glyph units, y up; the wedges' own is squarer.

@@ -40,8 +40,8 @@ uniform float damage_seed = 0.0;      // so two fighters are not marked alike
 uniform float damage_detail = 1.0;
 
 varying vec3 v_rest;
-varying flat float v_dmg;
-varying flat float v_head;
+varying float v_dmg;
+varying float v_head;
 
 void vertex() {
 	int r = bone_region[clamp(int(UV2.y + 0.5), 0, 31)];
