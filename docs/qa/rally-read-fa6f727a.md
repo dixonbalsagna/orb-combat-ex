@@ -173,3 +173,24 @@ The first-launch rows (first60, thrown60, landed120) read 100% at both levels in
 **p10 holds: 305.7 s, the interval 292 to 319 now clear of 296 but still straddling 300 by 8 s below.** Every whole-match and rally row is in band.
 
 **The easy newcomer is over its ceiling and it is real:** 97.0% on 200 matches, with a 95% interval of 94.6 to 99.4 (±2.4 points), so 95 is at the very bottom of what the read allows. Both halves agree (96 and 98). Per the EP's rule I stop here: the pop-line steps are the landing dose for p10, and the easy newcomer's win share, which rose with them (74% at HEAD, 94, 93, 96, 97), is for easy's answer share (rulings item 20).
+
+## Fifth addendum (2026-10-27): easy's answer share, 0.3 and 0.25 (GD rulings 10-26 §2j, item 44)
+
+**Build:** clean `git archive` of **de029972**, the committed `qa/godot/` laid over it, the same overlay as the fourth addendum (anywhere, answer, water and rally on, `linkWorth` 0.8, `pop.full` 0.72, `pop.stringPoints` 3), plus **one key changed per arm: `levels.easy.brawl.anywhere.answer`** (0.2 in the fourth addendum, **0.3** and **0.25** here). Newcomer seeds 1 to 100 and 101 to 200, the masher levels on 100, `--jobs=3`, below-normal priority, one run at a time; no job timed out or was capped. Wilson 95% intervals.
+
+| Easy's answer share | 0.2 (fourth addendum) | 0.25 | 0.3 |
+| :--- | :--- | :--- | :--- |
+| Newcomer v easy (L17, 50 to 95%; GD target 82 to 92%) | 97.0% (194 of 200) | **88.5%** (177 of 200; 87 and 90 on the two halves; interval 83.3 to 92.2) | 71.5% (143 of 200; interval 64.9 to 77.3) |
+| Newcomer v medium (10 to 50%) | 27.5% (55 of 200) | 27.5% (55 of 200; 27 and 28 on the halves; interval 21.8 to 34.1) | 27.5% (55 of 200) |
+| First-launch rows (first60, thrown60, landed120), easy and medium | 100% | 100% (200 of 200 on every row, both levels) | 100% |
+| Masher easy / medium / hard (60+; 35 to 50; at most 15) | 99 / 39 / 0 | 99 / 39 / 0 | 99 / 39 / 0 |
+| Perfect-block share per masher press, easy / medium / hard | not read | 0.4% / 0.7% / 1.4% | 0.4% / 0.7% / 1.4% |
+| Whole-match rows (p10, median, p90, rallies, L16, links, turns) | 305.7 / 398.6 / 549.3, 5.71, 8.99, 2, 19.9% | not re-run (see below) | identical to 0.2 |
+
+**0.25 settles it:** the newcomer v easy reads 88.5%, inside 82 to 92%, and its whole interval (83.3 to 92.2) is under 95 and over 82. By the item 44 rule there is no interpolated read and no third read. **The value to land is `levels.easy.brawl.anywhere.answer` = 0.25.**
+
+**The other rows at 0.25:** the newcomer v medium is unchanged at 27.5% (it does not touch easy), every first-launch row holds at 100%, and the masher reads 99 / 39 / 0 at easy / medium / hard, all in band. The masher numbers are identical to the digit at 0.2, 0.25 and 0.3 (even the 771 / 1705 / 3336 perfect blocks), so the masher job does not move with the lever (the cause is not read here; the lit-B newcomer is the row that does).
+
+**Whole-match rows were not re-run at 0.25:** AI-versus-AI plays the medium level on both sides, and easy's key is not read there. The evidence is the 0.2 and 0.3 runs, whose whole-match rows were identical to the digit (median 398.6, p10 305.7, p90 549.3, rallies 5.71, L16 8.99, links 2, turns 19.9%, rally time 7.5%). A third identical run would add nothing.
+
+**Where the lever sits:** the newcomer v easy falls 97.0 → 88.5 → 71.5 as the share goes 0.2 → 0.25 → 0.3, about 1.7 points per 0.01 near 0.25, so the band 82 to 92 spans roughly 0.23 to 0.27. 0.25 is the middle of it, with the margin on both sides.
