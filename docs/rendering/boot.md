@@ -86,3 +86,29 @@ Simulation timed `_match_built` at 1.4 s natively on the first boot. A probe of 
   - `intro`;
   - `playing`.
 - **A phone's render scale.** On the web with a coarse pointer (a phone or a tablet), the game's viewport and every pane's draw their 3D at `RenderLook.TOUCH_3D_SCALE` (0.6) of the screen's pixels. UI's layers stay at the full ratio. `?touchscale=1` forces it on a desktop.
+
+## Where the rest of the compile goes (main 3d276d57)
+
+A scratch probe timed how long the page waits on each shader program's link, which is where the driver's compile blocks, with each program's pass defines. It ran at x1 on this PC through Tools' launcher.
+
+| Programs | Count | Wait |
+| :--- | :--- | :--- |
+| The engine's default specializations: the four scene passes (colour and depth, plain and instanced), with lights and fog on | 100 | 10.3 s |
+| What the game draws: the same passes with fog and lights off (`DISABLE_FOG`, `DISABLE_LIGHT_*`) | 33 | 3.6 s |
+| 2D (canvas) | 25 | 0.3 s |
+
+- **Every 3D material shader compiles six programs at its first draw.** Four are the engine's default specializations: Godot's GLES3 back end compiles the default of every scene pass when a shader is first bound. Two are the specialization the game draws. Our scene is unshaded and has no fog, so it never draws the defaults.
+  - The terrain is drawn plain, yet its instanced programs compile too.
+  - The building casts no shadow, yet its depth programs compile too.
+- **The building:**
+  - its six programs wait 2.8 s in all: colour 770, 784 and 786 ms; depth about 155 ms each;
+  - only the last colour program and one depth program are drawn.
+- **The start block:** two programs with no marker of ours (probably Godot's default 3D material) wait 0.83 s each at 0.6 s and 1.5 s.
+- **Not in our code:**
+  - Godot has no project setting for this.
+  - Its shader cache cannot help on the web: WebGL has no program binaries.
+  - Removing the defaults needs an engine change in a custom export template: compile a pass's default only when it is drawn. With `KHR_parallel_shader_compile`, which Chrome has, the rest could compile off the main thread.
+- **The building's own code** (FXC timed offline on ANGLE's HLSL, d3dcompiler_47, best of two; about 0.8 s a colour program):
+  - the window block is about two thirds of it, and the held hits' marks are a quarter;
+  - constant loop bounds and gradients inside branches are **not** the cost (both changed, no gain);
+  - a smaller window block would save in all six programs, but the gain is far smaller than the engine's defaults.
