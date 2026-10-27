@@ -28,6 +28,10 @@
       "schema": "combat-depth.schema.json"
     },
     {
+      "match": "data/combat/sigvariants.json",
+      "schema": "combat-sigvariants.schema.json"
+    },
+    {
       "match": "data/art/flashes.json",
       "schema": "art-flashes.schema.json"
     },

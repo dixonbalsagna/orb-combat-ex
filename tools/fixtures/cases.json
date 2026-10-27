@@ -288162,6 +288162,74 @@
       "expect": null
     },
     {
+      "id": "sigvariants-name-lower",
+      "schema": "combat-sigvariants.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/sigvariants.json",
+          "set": {
+            "/variants/jungle/name": "vine shear"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "pattern",
+        "pointer": "/variants/jungle/name"
+      }
+    },
+    {
+      "id": "sigvariants-scorch-three",
+      "schema": "combat-sigvariants.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/sigvariants.json",
+          "set": {
+            "/variants/tundra/scorch": [
+              1,
+              1,
+              1
+            ]
+          }
+        }
+      ],
+      "expect": {
+        "rule": "maxItems",
+        "pointer": "/variants/tundra/scorch"
+      }
+    },
+    {
+      "id": "sigvariants-aftermath-kind",
+      "schema": "combat-sigvariants.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/sigvariants.json",
+          "set": {
+            "/variants/beach/aftermath/kind": "tsunami"
+          }
+        }
+      ],
+      "expect": {
+        "rule": "oneOf",
+        "pointer": "/variants/beach/aftermath"
+      }
+    },
+    {
+      "id": "sigvariants-fineon-required",
+      "schema": "combat-sigvariants.schema.json",
+      "mutate": [
+        {
+          "file": "data/combat/sigvariants.json",
+          "del": [
+            "/fineOn"
+          ]
+        }
+      ],
+      "expect": {
+        "rule": "required",
+        "pointer": ""
+      }
+    },
+    {
       "id": "collateral-schema-version",
       "schema": "biomes-collateral.schema.json",
       "mutate": [
