@@ -153,3 +153,23 @@ The first-launch rows (first60, thrown60, landed120) read 100% at both levels in
 **Reading:** p10 climbs with the steps, 284 → 278 → 297 → 306, but arm 1 is inside the noise of arm 0 (the intervals overlap by 30 s) and **arm 3 is the only arm at 300 or above, with an interval of 283 to 320 that straddles it**. The pops a match hardly move (12.0 to 11.8): the lever does not remove pops, it turns the late-string repeat pops into sends (as GD intended), so full launches (L16) rise 6.9 → 9.1, rallies 4.4 → 5.9, and the launch gap in the shortest 20 matches grows 12.6 s → 18.9 s. The loser's brawl damage per second falls 8% overall (26.3 → 24.2) and 6% in the shortest 20 (33.5 → 31.6). The cost shows in L17: the newcomer wins more at both levels (medium 14 → 28%, still inside 10 to 50; **easy 74 → 96%, one point over its 95% band, within the ±5 point noise of 100 matches**: arms 1 and 2 read 94 and 93).
 
 **Against the stop rule** (the first arm with p10 at least 300 and everything else in band): **arm 3 is the first with p10 at 300 or more (305.6)**, and every row is in band but `newcomer.wins.easy` at 96% against its 95% ceiling. p90 is 541 (under 600), L16 9.13, the median 397. If the easy newcomer's ceiling is held strictly, the next lever is easy's answer share (rulings item 20), not the pop. A longer read, at 200 matches for the newcomer, would put its error near ±3.5 points.
+
+## Fourth addendum (2026-10-27): arm 3 confirmed on the shipping state (de029972)
+
+**Build:** clean `git archive` of **de029972** (rally-tune3 on b474baac), the committed `qa/godot/` laid over it, overlay as before: anywhere, answer, water and rally on, `linkWorth` 0.8, **`pop.full` 0.72 and `pop.stringPoints` 3** (the arm 3 of the third addendum). Seeds 1 to 200, `--jobs=3`, below-normal priority, no job invalid. The newcomer jobs cap at 100 matches a run, so the 200 are two runs on seeds 1 to 100 and 101 to 200, added together.
+
+| | Arm 3 on b474baac | Arm 3 on de029972 |
+| :--- | :--- | :--- |
+| p10 (95% bootstrap interval) | 305.6 (283.3 to 319.9) | **305.7** (292.0 to 319.1) |
+| Median / p90 | 396.6 / 540.9 | 398.6 / 549.3 |
+| Rallies a match / L16 | 5.91 / 9.13 | 5.71 / 8.99 |
+| Links median (last hands) / turns | 2 (1) / 18.7% | 2 (1) / 19.9% |
+| Repeat links / auto-tech / rally time | 0.1% / 0.0% / 7.2% | 0.6% / 0.0% / 7.5% |
+| Pops a match | 11.8 | 11.7 |
+| Newcomer v medium (10 to 50%) | 28% (100) | **27.5%** (55 of 200) |
+| Newcomer v easy (50 to 95%) | 96% (100) | **97.0%** (194 of 200; 96 and 98 on the two halves) |
+| Masher easy / medium / hard (100) | 99 / 42 / 0 | 99 / 39 / 0 |
+
+**p10 holds: 305.7 s, the interval 292 to 319 now clear of 296 but still straddling 300 by 8 s below.** Every whole-match and rally row is in band.
+
+**The easy newcomer is over its ceiling and it is real:** 97.0% on 200 matches, with a 95% interval of 94.6 to 99.4 (±2.4 points), so 95 is at the very bottom of what the read allows. Both halves agree (96 and 98). Per the EP's rule I stop here: the pop-line steps are the landing dose for p10, and the easy newcomer's win share, which rose with them (74% at HEAD, 94, 93, 96, 97), is for easy's answer share (rulings item 20).
